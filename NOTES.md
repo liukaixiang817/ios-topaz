@@ -10,8 +10,20 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION — repair verified; preserve Android via independent root image
+### CURRENT NEXT ACTION — new readonly iOS file-root boot sent; await screen evidence
 
+- LATEST PHONE STATE: exec1963 temporary fastboot boot SENT SUCCESSFULLY,
+  46180KB send1.065s,boot0.092s,total1.169s,return0. Image0004 and payload
+  hashes below. Immediately before reboot: fresh RO FIEMAP exactly equals
+  staged182extents; LUN0 first1MiB exactly equals original backup; all persistent
+  partitions unmounted,userdataRO1,temp<45C; exact private serial/product checked.
+  Ignored evidence file-root-0001/boot.json + boot.log. Boot success here means
+  fastboot accepted the temporary image, NOT proof XNU mounted HFS or launchd ran.
+  Current XNU has no USB control/log return. Need user photo of final screen
+  (especially POLARIS FILE ROOT, BSD root, hfs, launchd or panic). Do not reboot
+  until evidence captured. No boot/recovery/GPT flash; existing Android+Windows
+  preserved. This is a readonly16GiB first-stage root, NOT complete triple boot,
+  64GiB installed system, SpringBoard or working apps.
 - USER-AUTHORIZED MINIMAL REPAIR COMPLETE (exec52177). Whole phone userdata
   SHA matched original verified backup: b1af42b854345e101854dcccab182928512c9f749542da89fc1100aa2303dd97
   (115167178752bytes,526.2s with tested ARM SHA2 helper). Applied exactly
@@ -24,11 +36,15 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   IMPORTANT: use adb shell for remote fsck exit status; adb exec-out can return
   transport0 despite failed remote command. Prior read-only logs were NOT clean.
   User approval applies only to this completed minimal repair, not formatting.
-  Next: stage verified16GiB iOS root as a new unencrypted file, export a fresh
-  read-only FIEMAP, implement read-only XNU file-backed root; final64GiB/UI pending.
+  Image staging and read-only XNU driver now complete; hardware result awaited.
+  Final64GiB layout, writes/data overlay, GUI/apps and triple-boot menu pending.
   Earlier “not authorized/no phone writes” paragraphs below are historical.
 - New read-only file-root implementation0803 committed f0b30fd and pushed;
-  CI39965897634/job120455570100 currently building. Implementation: explicit polarisfileroot=1,
+  CI39965897634/job120455570100 SUCCESS. Kernel downloaded to
+  xnu/out-polaris-0004/kernel.development.sweet; ZIP CRC/profile/commit/SHA
+  verified:7ab50370045b23b1a5c27fa4985f61e9d398384dfb23033fe070b4bb5ab2bb04.
+  Artifact12506739001,60270259bytes; ci-39965897634.log saved;0803 applied.
+  Implementation: explicit polarisfileroot=1,
   exact DT geometry, contiguous logical FIEMAP coverage/no physical overlap,
   bounded per-extent READ(10), hard rejection of all write commands, GPT head
   CRC plus independent userdata bounds validation, first/last image block CRC
@@ -36,13 +52,33 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   No topaz input/USB/persistent logger startup. Default RAM path unchanged.
   tools/polaris_file_root.py builds private metadata, mkadt-polaris supports it.
   ASan/UBSan actual C map/GPT/CDB tests and manifest/ADT roundtrip PASS;
-  original probe allowlist and ADT tests PASS. Patch dry-run PASS. Kernel CI
-  and actual file-root boot pending; do not claim Apple launchd/GUI success.
+  original probe allowlist and ADT tests PASS. Patch dry-run and kernel CI PASS. QEMU RAM and negative metadata checks PASS;
+  actual file-root result awaited; do not claim Apple launchd/GUI success.
 - tools/polaris-sha256.c uses attributed public-domain ARM SHA2 compression;
   static aarch64-musl build,12 phone vectors against hashlib PASS (empty,abc,
   padding/block boundaries,1MiB and1MiB+7). Read-only/O_NOFOLLOW source;
   block devices require runtime RO and exact full size. Full userdata hash
   succeeded. CPU limits restored to1056000 after repair,37C.
+- New kernel QEMU RAM regression exec46493 PASS150s: PID1/heartbeats,
+  no panic observed,0unknown glyphs. qemu-file-root-0004-ram/. Initial attempt
+  exec31907 never started QEMU (sandbox denied local monitor socket); preserved
+  separately in *-sandbox-refused, rerun with socket permission succeeded.
+  Negative missing-map test:30s snapshot too early (CPU init), extended run
+  exec14660; QMP physical RAM console ring shows explicit
+  POLARIS FILE ROOT: REFUSED metadata; no MMIO, followed by expected
+  IOFindBSDRoot: SWEET UFS root ufsroot0 unavailable:22 panic. This is an
+  intentional negative test, not a successful boot or regression failure.
+  qemu-file-root-0004-refuse-long/{console-ring.txt,negative-check.json}.
+  Hardware temporary boot now sent; see latest phone state at top.
+  Phone payload file-root-0001/phone-payload.bin SHA256
+  286d3a832f1fc403b2bd7f918dea4e30e3db797911826776c76209f149d66adc;
+  actual freestanding C loader validator PASS. Packaged temp image
+  shim/out/polaris-xnu-file-root-0004/polaris-xnu-file-root-0004.img,
+  47288320bytes,SHA0f57ba516ed169b6dc630b9e7ea7d5c2f6387a40563559314d5bb381f0ffbd98.
+  No RAM root in phone payload; rd=ufsroot0 polarisfileroot=1 ufsrw=0 rootrw=0
+  sweetlog=0. File-root init never starts unrelated topaz input/USB/log drivers.
+  Private boot-file-root-0004.py checks QEMU evidence, artifact SHA, freshRO
+  FIEMAP equality and GPT-head byte equality before temporary fastboot boot.
 - Independent16GiB image STAGED AND VERIFIED on phone (exec48672 exit0):
   /polaris-ios/root-20H392-v1.img,17179869184bytes, SHA256 matches host
   689a8cd1df0fc0093706272241a9ac77d5eddd7a62df5d340913ec6abcd7ce2b.
