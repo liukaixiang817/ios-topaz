@@ -10,7 +10,21 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION —0007 early hardware evidence saved; await later state
+### CURRENT NEXT ACTION —0007 later crash evidence; need retained D lines/video
+
+- LATEST0007 PHOTO: hardware-later-daemon-crashes.jpg/.json in private
+  daemon-loops-0007/. Startup DID progress past usermanagerd: fmfd/contactsd/
+  privacyaccountingd/coreduetd, backboardd IOK lookup visible. Not established
+  as a usermanagerd hang. cryptexd[206] SIGABRT ns18/code2, same
+  "unexpected failure: mkdirat: [22: Invalid argument]"; locationd[209]
+  SIGABRT ns2/code6. Cache slide0x30ab0000. IOAccessoryManager lookup0found.
+  Many coreduetd AKS selector17 logs obscure output; success0 is from the
+  compatibility implementation, NOT proof real keystore hardware works.
+  This photo does NOT include the retained POLARIS DIAG block. Need a15-20s
+  video of the current screen (report every10s) or a photo capturing D CRASH,
+  D MKDIR/path/stage, D FCNTL, D COW. Especially actual MCM err/xerr still
+  unknown. Do not request another reboot or declare errors fixed before
+  collecting those records. Current phone remains0007 XNU, no new boot/write.
 
 - NEW0007 PHOTO (2026-10-24): hardware-early-startup.jpg/.json privately in
   daemon-loops-0007/. Explicit POLARIS DIAG and D COW active=1,groups31->43
@@ -23,7 +37,8 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   of a fatal condition. No D CRASH/MKDIR/FCNTL or panic visible in this image.
   Do NOT conclude0006 daemon failures fixed, no later-service/GUI/app proof.
   Leave phone running; ask whether logs still progress, only unchanged COW
-  reports recur, or retained errors appear. Async state question pending.
+  reports recur, or retained errors appear. Later photo above answers the
+  prior async state question: startup progressed and crashes appeared.
   Do NOT request FASTBOOT or restart merely from this early photograph.
   If genuinely stalled at usermanagerd, the old sweetsample boot argument
   alone won't work on polaris: sweet_sample_start is currently only called
