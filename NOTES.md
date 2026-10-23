@@ -10,6 +10,59 @@ and DO NOT authorize erasing this phone. No destructive step is approved.
 
 ### Milestone update ~20:00 local (supersedes details below where different)
 
+**Further update ~20:25 local:**
+- **`08a3ca8`** adds CI `target_platform=polaris`, a profile stager, isolated
+  `xnu/profiles/polaris/0800-polaris-ram-only-platform.patch`, and
+  `tools/mkadt-polaris.py`. Stager chooses 79 sweet patches + 3 stage scripts +
+  one overlay (83 files); excludes ALL topaz 0080+ drivers/assumptions. Machine
+  config internally remains SWEET. `POLARIS_RAM_ONLY=1` returns ENXIO at the
+  start of sweet_ufs_init, before DT lookup or MMIO. CPU/platform personalities
+  use qcom,kryo385 / xiaomi,polaris. Compiler explicitly cortex-a75 ARMv8.2.
+- Important console mapping detail: polaris framebuffer 0x9d400000 is NOT a
+  32MiB block boundary. Keep early block descriptor PA **0x9c000000**, point
+  early C pixels at 0x9d400000, stage-0 marker row2128, height2160, and relocate
+  final VA to SWEET_EARLY_FB_VA + **0x1400000**. Last displayed byte fits in
+  that block. Host tests cover bounds; not a hardware proof.
+- Reconstructed relevant first-79-patch source files from Apple's
+  xnu-8796.141.3 in `research/polaris/xnu-fixture/`; pre-overlay copies under
+  `research/polaris/pre-kernel-profile/`. New overlay passes git apply --check
+  against those source copies. No generated kernel headers/buildtree yet, so
+  no single-file XNU compile or full kernel build yet. **No CI dispatched.**
+- 21 host tests now pass. ADT 3904 bytes with no /product (Apple d22ap.adt not
+  downloaded), 1 CPU0, no UFS/WLAN/display service nodes, RAM
+  0x180000000+0xfc8a0000. Generated under shim/out/polaris-probe-0001/.
+  Both bus/memory clock properties still compatibility placeholders; do not
+  call them measurements. Linux CPU0 max actually 1766400kHz, MIDR sysfs
+  **0x517f803c**. MMFR0 sysfs absent: still need real diagnostic observation.
+- **`0798719`** adds `tools/build-polaris-backup-recovery.py` plus archive and
+  init-policy tests. Official polaris TWRP downloaded to
+  `research/polaris/twrp-3.7.0_9-0-polaris.img`, 63467520 bytes, official
+  SHA-256 **54905f7abae89b345c4b1a03d12fe74c1ff06cf5aa41119f1a7228dc22765ea0**.
+  Do not flash this source image or use its UI during raw backups.
+- Ready custom temporary backup image:
+  **shim/out/polaris-backup-recovery/polaris-backup-recovery.img**,
+  63381504 bytes, SHA-256
+  **f9ad6529c1632fa2116377ec5f12c78f6d5cf7f5a1baa0b0f1bec4b5a518bd99**.
+  Header v0, original kernel unchanged. Only init.rc and regular prop.default
+  changed; default.prop -> prop.default symlink preserved. Minimal init starts
+  only /sbin/ueventd and /sbin/adbd, exports LD_LIBRARY_PATH=/sbin, root adbd,
+  configfs/functionfs USB at a600000.dwc3; no UI/factoryreset/disk mounts/fsck.
+  Reboot property handler retained. NOT booted yet. Need live root/USB and
+  mountinfo verification before any userdata backup. Earlier hashes in tool
+  logs from intermediate builder revisions are superseded by f9ad6529 above.
+- Windows exec **1260**: all 30 chunks read, gzip/length checks pass, concatenated
+  raw SHA-256 computed locally; currently computing **source SHA-256 on phone**.
+  Still do NOT reboot until final VERIFIED line / manifest verified=true.
+- Official gh 2.103.0 at
+  research/host-tools/gh/gh_2.103.0_macOS_arm64/bin/gh; verified release checksum.
+  No existing login. Asked user via async question to run gh auth login --web
+  with their repo account; waiting for reply. Do not try to extract credentials
+  or claim CI ran. After login, push branch and dispatch xnu.yml with
+  target_platform=polaris, machine_config=SWEET, macos_version=13.5.
+- User offered to operate phone if needed; told them no action needed during
+  backup, keep USB attached and do not reboot/switch Windows. No phone restart
+  has happened as of this update. No resize, filesystem edit or partition write.
+
 - **`541cd86`**: standalone polaris CPU/FDT/framebuffer probe, builder and QEMU
   runner committed. 11 host tests pass. Actual probe executes in QEMU
   Cortex-A76 with FP/SIMD disabled; matching FDT draws expected screen and
