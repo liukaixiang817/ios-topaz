@@ -1,0 +1,165 @@
+--- a/bsd/dev/sweet_sample.c
++++ b/bsd/dev/sweet_sample.c
+@@ -23,6 +23,59 @@
+ extern task_t proc_task(proc_t);
+ extern int hz;
+ extern void sweet_sample_start(void);
++
++#if defined(POLARIS_RAM_ONLY)
++/* Explicit opt-in, register-only samples. Never enable the legacy stack
++ * walker on polaris: it can fault user pages while holding the task lock. */
++extern void polaris_sample_task(const char *, int, task_t);
++extern kern_return_t thread_terminate(thread_t);
++
++static const char * const polaris_sample_names[] = {
++    "launchd", "SpringBoard", "backboardd", "datamigrator",
++    "com.apple.datamigrator", "migrationpluginwrapper", "usermanagerd"
++};
++struct polaris_sample_pass { unsigned seen, mask; };
++
++static int
++polaris_sample_proc(proc_t p, void *arg)
++{
++    struct polaris_sample_pass *pass = arg;
++    char name[64];
++    /* proc_iterate owns a proc reference; p_name retains long executable
++     * names, unlike proc_name(), which only returns the 16-byte p_comm. */
++    strlcpy(name, proc_best_name(p), sizeof(name));
++    for (unsigned i = 0; i < sizeof(polaris_sample_names) / sizeof(polaris_sample_names[0]); i++) {
++        if (strcmp(name, polaris_sample_names[i]) != 0) { continue; }
++        task_t task = proc_task(p);
++        if (task != TASK_NULL) {
++            task_reference(task);
++            polaris_sample_task(name, proc_pid(p), task);
++            task_deallocate(task);
++            pass->mask |= 1u << i;
++            pass->seen++;
++        }
++        break;
++    }
++    return pass->seen >= 7 ? PROC_RETURNED_DONE : PROC_RETURNED;
++}
++
++static void
++polaris_sample_thread(__unused void *arg, __unused wait_result_t wr)
++{
++    static int chan;
++    (void)tsleep(&chan, PZERO, "polsmp", 60 * hz);
++    for (unsigned i = 0; i < 24; i++) {
++        struct polaris_sample_pass pass = {0};
++        printf("\nPOLARIS SAMPLE %u: saved registers only, no user-memory reads\n", i);
++        /* Never wait for an exec/fork transition just to collect evidence. */
++        proc_iterate(PROC_ALLPROCLIST | PROC_NOWAITTRANS, polaris_sample_proc, &pass, NULL, NULL);
++        printf("PS END %u: found=%u mask=0x%x\n", i, pass.seen, pass.mask);
++        (void)tsleep(&chan, PZERO, "polsmp", 30 * hz);
++    }
++    printf("POLARIS SAMPLE: finished after 24 passes\n");
++    thread_terminate(current_thread());
++}
++#endif
+ 
+ static char sweet_sample_names[128];
+ 
+@@ -82,6 +135,18 @@
+ sweet_sample_start(void)
+ {
+ 	thread_t thread;
++#if defined(POLARIS_RAM_ONLY)
++    unsigned enabled = 0, diagnostic = 0;
++    if (!PE_parse_boot_argn("polarissample", &enabled, sizeof(enabled)) || enabled != 1 ||
++        !PE_parse_boot_argn("polarisdiag", &diagnostic, sizeof(diagnostic)) || diagnostic != 1) {
++        return;
++    }
++    if (kernel_thread_start(polaris_sample_thread, NULL, &thread) == KERN_SUCCESS) {
++        printf("POLARIS SAMPLE: armed, first 60s, interval 30s, passes 24, threads <=8/task\n");
++        thread_deallocate(thread);
++    }
++    return;
++#endif
+ 	if (kernel_thread_start(sweet_sample_thread, NULL, &thread) == KERN_SUCCESS) {
+ 		thread_deallocate(thread);
+ 	}
+--- a/bsd/kern/bsd_init.c
++++ b/bsd/kern/bsd_init.c
+@@ -1046,6 +1046,13 @@
+ 	bsd_init_kprintf("calling bsd_utaskbootstrap\n");
+ 	bsd_utaskbootstrap();
+ 
++#if defined(POLARIS_RAM_ONLY)
++    /* BSD process lists and PID 1 now exist, for both RAM and file roots.
++     * This is a no-op unless both diagnostic boot arguments are explicit. */
++    extern void sweet_sample_start(void);
++    sweet_sample_start();
++#endif
++
+ 	pal_kernel_announce();
+ 
+ 	bsd_init_kprintf("calling mountroot_post_hook\n");
+--- a/osfmk/kern/exception.c
++++ b/osfmk/kern/exception.c
+@@ -1087,6 +1087,65 @@
+ 	task_unlock(task);
+ }
+ 
++#if defined(POLARIS_RAM_ONLY)
++/* Best-effort saved state, not a stackshot: never stop a target or fault its
++ * user pages. Task/thread references keep the allocation/PCB alive. Copy only
++ * bounded kernel-resident fields; release every lock before formatting text. */
++void polaris_sample_task(const char *name, int pid, task_t task);
++void
++polaris_sample_task(const char *name, int pid, task_t task)
++{
++    thread_t refs[8], thread;
++    unsigned count = 0, total;
++    uint64_t mh;
++    uint32_t slide;
++    if (!task_lock_try(task)) {
++        printf("PS %s[%d]: task busy, skipped\n", name, pid);
++        return;
++    }
++    mh = task->mach_header_vm_address;
++    slide = task->task_shared_region_slide; /* cached, UINT32_MAX = unavailable */
++    total = task->thread_count;
++    queue_iterate(&task->threads, thread, thread_t, task_threads) {
++        if (count == sizeof(refs) / sizeof(refs[0])) { break; }
++        thread_reference(thread);
++        refs[count++] = thread;
++    }
++    task_unlock(task);
++    printf("PS %s[%d] slide=0x%x mh=0x%llx threads=%u sampled=%u\n",
++        name, pid, slide, mh, total, count);
++    for (unsigned i = 0; i < count; i++) {
++        uint64_t pc = 0, lr = 0, sp = 0, fp = 0, x16 = 0;
++        uint64_t tid, event, continuation;
++        unsigned state;
++        bool valid = false;
++        thread = refs[i];
++        spl_t s = splsched();
++        thread_lock(thread);
++        arm_saved_state_t *ss = find_user_regs(thread);
++        if (ss && is_saved_state64(ss)) {
++            pc = get_saved_state_pc(ss);
++            lr = get_saved_state_lr(ss);
++            sp = get_saved_state_sp(ss);
++            fp = get_saved_state_fp(ss);
++            x16 = get_saved_state_reg(ss, 16);
++            valid = true;
++        }
++        tid = thread->thread_id;
++        event = thread->wait_event;
++        continuation = (uintptr_t)thread->continuation;
++        state = (unsigned)thread->state;
++        thread_unlock(thread);
++        splx(s);
++        thread_deallocate(thread);
++        printf("PS %s t%u id=%llu state=0x%x event=0x%llx cont=0x%llx\n",
++            name, i, tid, state, event, continuation);
++        printf("PS %s t%u valid=%u pc=0x%llx lr=0x%llx sp=0x%llx fp=0x%llx x16=0x%llx\n",
++            name, i, valid, pc, lr, sp, fp, x16);
++    }
++}
++#endif
++
+ #endif /* ARM64_BOARD_CONFIG_SWEET */
+ 
+ kern_return_t

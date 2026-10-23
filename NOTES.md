@@ -10,27 +10,39 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION —0010 visible console boot sent; collect readable logs
+### CURRENT NEXT ACTION —0011 bounded process sampler prepared; build and simulate
 
-- CURRENT PHONE STATE:0010 VISIBLE-CONSOLE temporary boot SENT,
- exec82216 exit0,2026-10-23T16:45:34.971662Z (=2026-10-24 Australia/Melbourne),
- fastboot1.182s. Preflight exec20724 PASS: fresh182extents/GPT identical,
- outerext4clean,userdataunmountedRO1,32C,CPU caps1056000. Final guarded script
- rechecked root recovery,device/size/map/GPT/temp and actual C payload validator;
- same907/fbfda0c7 kernel and0009 test provenance, exact prepared image SHA.
- Image shim/out/polaris-xnu-display-console-0010/polaris-xnu-display-console-0010.img,
- 47288320bytes,SHA9bdb9e564df240f1d6757506f4950c93b111edf85224d4021f0dc21886ee4a42;
- payloadSHA313787018963b2d57cae263c031a7994710a3fb3d2ef74b5685f1bda6c6b8f7e.
- Console0/physical copies1Hz are the ONLY parameter differences vs0009; no
- kernel rebuild/source change or phone persistent writes. Configuration source
- commitc325258. Phone now XNU log-profile transport sent, not recovery.
- Need15-20s video or several photos of current screen after about1min, including
- CRASH, POLARIS DIAG/D RAM/D COW, SWEET FB selector/swap and exec stages.
- Existing COW reporter every10s; display can overwrite text each second, so
- video/burst matters. A retained static logo alone cannot identify blocked
- daemon or prove migration. Do not modify root/disable startup checks blindly.
- Keep boot until evidence captured; no USB log/reboot control. Full desktop,
- touch,Apps,persistent64GiB/tripleboot remain unfinished.
+- CURRENT PHONE STATE: temporary root recovery (new exec91445 PASS), not XNU.
+ User returned FASTBOOT after0010 photos; known recovery temporarily booted.
+ New process-sample-0011/preflight.json: fresh182extents/GPT identical, ext4
+ clean,userdata unmounted/runtimeRO1,33C,CPU caps1056000. No persistent writes.
+-0010 three readable photos privately saved display-console-0010/hardware-logo-
+ diagnostics-{1,2,3}.jpg and JSON. com.apple.datamigrator exec visible; later
+ repeated fairplayd.H2/bluetoothd exec. RAM512MiB,groups20856..21095/32768,
+ dirty335196..337008KiB,written1108340..1117420KiB,UFS-error0,refused0. This is
+ NOT exhausted. Storage-busy reporter followed by fresh accounting, not proof
+ of deadlock. Only first retained mkdir MCM e2/lookup missing root logs dir;
+ no GUI crash visible in these late snapshots, NOT lifetime-health/GUI proof.
+ Current saved frames cannot identify blocked SpringBoard/backboardd/migration.
+-0808 adds explicit polarissample1 AND polarisdiag1 register-only sampling,
+ started after BSD bootstrap (both RAM/file-root paths); previously legacy
+ sampler never started on polaris. First60s, then30s,24passes,max7processes,
+ max8threads/task. Full executable names, saved PC/LR/SP/FP/x16, cached cache
+ slide (ffffffff=unavailable), thread state/wait event/continuation. No user
+ memory reads/stack faults, process suspension, disk logger, MMIO, or return
+ value bypass. Task lock try-only; thread refs retained then lock released;
+ short scheduler lock copy, all output outside locks. Legacy walker unchanged
+ for other profiles. Three actual CI-header/options local compiles PASS;
+ exact patch apply/output check PASS. Full CI/new-kernel QEMU NOT yet run.
+ Private source baselines/scripts/evidence process-sample-0011/. Public boot
+ profile tools/polaris-ios-process-diagnostic.cmdline preserves512MiB volatile
+ COW,ufsrw0,displayon/visibleconsole1Hz; adds polarissample1 only.
+- Next commit/push completed sampler, use ghCI, verify source/profile/hash,
+ sequential QEMU enabled (known sleeping named synthetic processes) and both
+ opt-in gates. No actual Apple GUI claim from simulations. Then guarded
+ temporary0011 boot with fresh readonly map/GPT/temp checks. Phone root/base,
+ Android/Windows untouched. Real home screen,touch,USB,Apps,persistent64GiB and
+ triple-boot remain unfinished. Don’t repeat repair/staging or set ufsrw1.
 
 -0009 user observation (2026-10-24): static Apple Logo WITHOUT progress bar
  for over3min. No photo/video yet; no visible daemon logs available. This is
