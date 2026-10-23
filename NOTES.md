@@ -40,6 +40,8 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   Existing CDB read-only allowlist unchanged; ufsrw must0, no base/UFS writes.
   Diagnostic accounting uses try-lock, never waits for storage; reports actual
   reserved bytes,dirty/write volume/refusals. Allocation-refusal logs bounded.
+  Follow-up adds atomic used/limit snapshots to FIRST retained failure lines,
+  so a later full overlay cannot be mistaken for the state at the first error.
   Native ASan/UBSan6tests PASS, including real8200groups crossing old8192 limit,
   readbacks, overwrites with full arena, failed allocation preserving data,
   bounds and invalid budgets. Actual CI-header single-file Apple clang PASS.

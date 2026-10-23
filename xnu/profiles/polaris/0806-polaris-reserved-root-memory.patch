@@ -36,7 +36,7 @@
 +#endif
 --- a/bsd/dev/sweet_ufs.c
 +++ b/bsd/dev/sweet_ufs.c
-@@ -45,14 +45,29 @@
+@@ -45,14 +45,31 @@
  #include "polaris_ram_cow.h"
  static struct polaris_cow polaris_root_cow;
  static bool polaris_ram_cow_enabled;
@@ -53,6 +53,7 @@
 +static struct polaris_cow_arena polaris_root_arena;
 +static uint64_t polaris_cow_failures;
 +static unsigned polaris_ram_mib = 128;
++static unsigned polaris_cow_used_snapshot, polaris_cow_limit_snapshot;
 +
 +static int
 +polaris_ram_reserve(unsigned mib)
@@ -70,11 +71,23 @@
 +    polaris_root_arena.size = bytes;
 +    polaris_ram_mib = mib;
 +    polaris_root_cow.limit = groups;
++    __atomic_store_n(&polaris_cow_limit_snapshot, groups, __ATOMIC_RELAXED);
 +    return 0;
  }
  static struct polaris_extent polaris_file_map[POLARIS_MAP_MAX];
  static unsigned polaris_file_count;
-@@ -177,12 +192,20 @@
+@@ -160,7 +177,9 @@
+     if (!polaris_diag_enabled() || slot >= POLARIS_DIAG_SLOTS || !text) { return; }
+     lck_spin_lock(&polaris_diag_lock);
+     if (!polaris_diag_lines[slot][0]) {
+-        strlcpy(polaris_diag_lines[slot], text, POLARIS_DIAG_BYTES);
++        snprintf(polaris_diag_lines[slot], POLARIS_DIAG_BYTES, "%s [cow=%u/%u]", text,
++            __atomic_load_n(&polaris_cow_used_snapshot, __ATOMIC_RELAXED),
++            __atomic_load_n(&polaris_cow_limit_snapshot, __ATOMIC_RELAXED));
+     }
+     lck_spin_unlock(&polaris_diag_lock);
+ }
+@@ -177,12 +196,20 @@
          lck_spin_unlock(&polaris_diag_lock);
          if (line[0]) { printf("%s\n", line); }
      }
@@ -101,7 +114,7 @@
      return true;
  }
  #endif
-@@ -672,8 +695,11 @@
+@@ -672,10 +699,14 @@
  		} else if (!error) {
  			memcpy((char *)bounce + skip, vaddr + done, want);
  			if (!polaris_cow_put(&polaris_root_cow, lba, blocks, bounce,
@@ -114,8 +127,11 @@
 +                }
  				error = ENOSPC;
  			}
++            __atomic_store_n(&polaris_cow_used_snapshot, polaris_root_cow.used, __ATOMIC_RELAXED);
  		}
-@@ -846,12 +872,14 @@
+ #else
+ 		if (rd) {
+@@ -846,12 +877,14 @@
  polaris_file_root_init(void)
  {
      uint32_t enabled = 0, probe = 0, rw = 0, rootrw = 0, cow = 0;
@@ -131,7 +147,7 @@
          printf("POLARIS FILE ROOT: disabled or conflicting boot arguments\n");
          return ENXIO;
      }
-@@ -877,6 +905,11 @@
+@@ -877,6 +910,11 @@
          layout[2], layout[0], layout[1])) {
          printf("POLARIS FILE ROOT: REFUSED extent geometry; no MMIO\n");
          return EINVAL;
@@ -143,7 +159,7 @@
      }
      lck_mtx_lock(&sweet_ufs_lock);
      int error = ENXIO;
-@@ -951,7 +984,7 @@
+@@ -951,7 +989,7 @@
       * The UFS CDB gate still rejects every WRITE/UNMAP/SYNC command. */
      polaris_ram_cow_enabled = cow == 1;
      polaris_root_cow.nblocks = layout[2];
@@ -152,7 +168,7 @@
      su.writable = polaris_ram_cow_enabled;
      su.first_block = 0; /* Logical image offset; translated per request. */
      su.nblocks = layout[2];
-@@ -966,7 +999,7 @@
+@@ -966,7 +1004,7 @@
      printf("POLARIS FILE ROOT: verified GPT + HFSX, %llu MiB, %u extents, base READ ONLY\n",
          su.nblocks * UFS_BLOCK >> 20, polaris_file_count);
      if (polaris_ram_cow_enabled) {
