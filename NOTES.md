@@ -42,6 +42,13 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
  guards unchanged. Actual2CI-header ARM64 object compiles PASS,exactpatch
  application/output PASS,nativeASan/UBSan bounds PASS. FullCI/new-kernel QEMU
  NOT yet run; no new phone boot. Publiccmdline retainsall storage/CPU gates.
+ Source1d06f9ea19c6fb9d9f8a9bc23a5c0e30ff0d6503 pushed;CI40001585107
+ firstattempt FAILED before any steps:job120578752139 cancelled18:28:52Z,
+ "The job was not acquired by Runner of type hosted even after multiple
+ attempts",macOSarm64 capacity annotations. Same run rerun attempt2 requested;
+ ci-watch-retry.log ongoing. No compile diagnostics or artifact on firstattempt.
+ Synthetic64MiB fixture prepared:SpringBoard14frames,lsd2frames,MCM unmappedFP;
+ native12frame bounds PASS. Newkernel simulation scripts ready,not yet run.
  Keep current boot until evidence saved;no USB restart/log channel. Full home,
  physicaltouch,USB,Apps,persistent64GiB/tripleboot unfinished. All logical iOS
  writes volatile512MiB RAM ONLY,ufsrw0;no base/Android/Windows/GPT writes.
