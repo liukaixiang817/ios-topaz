@@ -145,3 +145,45 @@ Hardware source references for future work:
 [Xiaomi polaris kernel](https://github.com/MiCode/Xiaomi_Kernel_OpenSource/tree/polaris-o-oss)
 and [edk2-porting firmware](https://github.com/edk2-porting/edk2-msm).
 These are references; the installed Mindows UEFI version has not been identified.
+
+## First XNU build profile (not yet compiled or booted)
+
+GitHub Actions now accepts `target_platform=polaris`. This stages sweet's
+0001–0079 baseline plus the isolated polaris overlay, excluding topaz's drivers
+and CPU assumptions. It remains the `SWEET` machine configuration internally,
+with a `POLARIS_RAM_ONLY` compile flag that refuses UFS initialization before
+mapping registers. The overlay selects Kryo 385/platform personalities and an
+explicit Cortex-A75 ARMv8.2 compiler target to avoid Apple CPU defaults.
+
+The splash starts 20 MiB into a 32 MiB translation block. Its early mapping
+therefore retains the aligned physical block at `0x9c000000`, with pixels and
+the final virtual alias offset by `0x1400000`. Replacing the block descriptor's
+base with `0x9d400000` would be invalid. Console height is 2160.
+
+`tools/mkadt-polaris.py` produces a single-CPU RAM-root ADT for the observed
+8GB phone, using the upper bank at `0x180000000 + 0xfc8a0000`. It publishes no
+UFS/WLAN/display-service nodes. `--qemu` substitutes the emulator GIC/timer.
+Bus and memory frequency fields inherited from the scaffold are compatibility
+placeholders, not measurements. CPU0's 1.7664 GHz maximum was read from Linux.
+
+Patch hunks have been checked against source reconstructed through 0079, and
+host tests cover profile isolation, ADT serialization and mapping bounds.
+No complete kernel build or hardware validation has happened; gh authentication
+is still needed. No compiled kernel should be booted merely because these
+host checks pass.
+
+## Offline Android backup image
+
+`tools/build-polaris-backup-recovery.py` accepts only the official polaris
+TWRP 3.7.0_9-0 image with SHA-256
+`54905f7abae89b345c4b1a03d12fe74c1ff06cf5aa41119f1a7228dc22765ea0`.
+It preserves its kernel and archive metadata, retains property symlinks and
+replaces only `init.rc` and the regular property file. Only ueventd and root
+adbd are started; no recovery UI, factory-reset job, persistent filesystem
+mount or filesystem repair is configured. Root ADB is temporary to this image.
+
+The resulting ignored `shim/out/polaris-backup-recovery/` image is for
+temporary RAM boot only. Host archive/configuration checks passed; USB/root
+access and the absence of mounted userdata still require live verification
+before running the userdata backup tool. Keep the official image and backups
+local; do not distribute the downloaded recovery binary through this repo.
