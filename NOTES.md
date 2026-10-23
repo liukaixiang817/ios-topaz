@@ -10,7 +10,27 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION —0008 simulations passed; guarded phone boot next
+### CURRENT NEXT ACTION —0008 temporary boot sent; collect hardware diagnostics
+
+- CURRENT PHONE STATE:0008 temporary boot SENT, exec73225 exit0,
+ 2026-10-23T16:03:28.665376Z (=2026-10-24 Australia/Melbourne),fastboot total
+ 1.171s. Guarded boot-capacity-0008.py passed actual C payload validator,
+ exact tested kernel SHA/provenance, QEMU checks, root recovery identity,
+ userdata unmounted/runtimeRO1,size115167178752bytes,fresh182extents identical,
+ GPT first1MiB identical,temp<45C. No flash/GPT/Windows/base-image writes.
+ Image shim/out/polaris-xnu-capacity-0008/polaris-xnu-capacity-0008.img,
+ 47288320bytes,SHA32113028a643f67e7c8f21b1e96cd2f36af0f1afae160da0378307df71128827;
+ payloadSHA8052f935ce0ea78e22b948becfa1aefb0ab301041cc43fc9a211f970f7db4548.
+ Canonical diagnostic args polarisrammb=512,polarisdiag1,crashslot0x1dcff9a70,
+ ufsrw0/rootrw1/polarisramcow1,sweetlog0,sweetscan=-. Logical iOS writes remain
+ volatile only; base immutable. Boot transport acceptance NOT proof of hardware
+ reservation/root mount/Apple services. Need current15-20s video or photo of
+ D COW/D RAM/D CRASH/D MKDIR/D FCNTL; first-error lines append[cow=used/limit].
+ Keep screen running until captured; XNU USB log/reboot unavailable. Do NOT ask
+ for FASTBOOT again before collecting screen evidence. No home screen/apps
+ validated, no persistent64GiB/triple-boot menu completed. Next use FIRST failure
+ snapshot, not just later exhausted accounting, to guide the actual fix.
+ Private boot.json/boot.log and verification.json in root-capacity-0008/.
 
 -0008 kernel downloaded/verified SHA256
   4da8b6d2dfb715a9c4b711a1d73cce7bf4b6b00fbf73c3d53d6d1a3f3ca03a1a,
