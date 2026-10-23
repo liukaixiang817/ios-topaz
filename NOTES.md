@@ -21,7 +21,25 @@ and DO NOT authorize erasing this phone. No destructive step is approved.
   completed CPU startup thread prints saved report every10s using IOSleep,
   only when explicit polarisufsprobe=1 was accepted. No repeated UFS requests
   or register reads in reporter; original command allowlist unchanged. Patch
-  dry-run PASS and existing policy/ADT tests5 PASS. CI build pending.
+  dry-run PASS and existing policy/ADT tests5 PASS. Commitcdd0fb0 pushed;
+  CI39948294850 SUCCESS,job120396248096. Kernel downloaded and CRC/SHA
+  f632d230c4fcea02a6c9c071a24e197625c8a130ee5f60f30cee6d4f00fa595a verified,
+  xnu/out-polaris-0003/kernel.development.sweet; build log saved. User returned
+  FASTBOOT; exact device confirmed. QEMU exec10775 PASS150s,exit0 with
+  polarisufsprobe=1 but no hardware probe ADT node: repeated REFUSED metadata
+  + queue not taken + PID1/heartbeats,0unknown glyphs,no panic observed.
+  Evidence qemu-ufs-report-0003/.
+  Phone payload ea299dd93ced0903bf7da884894d085d52a3445fa24887c0a49b12605f88ae3a,
+  actual C validator PASS. Image temporary boot SENT (never flashed):
+  shim/out/polaris-xnu-ufs-probe-0003/polaris-xnu-ufs-probe-0003.img,
+  47280128bytes,SHA40584739a6bcea233bf72c735216bbc10d60c1b1e09ffe100f635db6c739c5ec.
+  Exec10998 exit0,send46172KB1.073s,boot0.091s,total1.173s.
+  research/polaris/xnu-ufs-probe-0003/{boot.log,boot.json}. Hardware result
+  NOT observed yet. Awaiting user report of repeated POLARIS UFS RESULT/QUEUE
+  lines; user told wait30s, no reboot. Current phone on new temporary image,
+  no USB control/logging. No storage success claim before reading actual result.
+  Kernel artifact12499616895,60261462bytes; logsci-39948294850.log.
+  Local root image remains verified; no user sudo/rebuild needed.
 
 - User requires real home screen/apps and preservation of Android + Windows.
   Full iOS/triple boot is NOT complete. No partition/GPT/format/flash changes.
