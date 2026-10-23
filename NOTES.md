@@ -8,71 +8,65 @@ and DO NOT authorize erasing this phone. No destructive step is approved.
 
 ## Current handoff, 2026-10-23 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION — full-system bring-up; UFS handoff observed, root builder ready
+### CURRENT NEXT ACTION — verified local root; read-only UFS kernel ready for tests
 
-- User explicitly requests continuing to home screen and working apps. Original
-  sweet notes document home screen but also app failures; do not promise that
-  all apps already work or transplant sweet/topaz hardware MMIO unreviewed.
-- User returned phone to FASTBOOT. New Linux wrapper optionally captures only
-  twelve read-only UFSHCI registers before resuming Linux, using verified
-  /soc/ufshc@1d84000 reg1d84000+2500 and a128-byte RAM FDT property. No UIC,
-  SCSI, doorbell/reset/DMA register writes in this snapshot. Original CPU-only
-  evidence preserved with new --outdir option. QEMU3 wrapper cases pass;
-  QEMU does NOT emulate this Qualcomm UFS MMIO.
-- **Actual snapshot+automatic ADB return SUCCESS**, exec37985 exit0:
-  shim/out/polaris-linux-ufs-snapshot-0001/polaris-linux-probe-0001.img,
-  SHA8610617b21bdd43802931048c2ac78c12a0df19bd811a017428a0a138a29af4c.
-  send61924KB1.437s,boot0.091s,total1.541s. Evidence
-  research/polaris/ufs-handoff-0001/{boot.log,registers.bin,registers.json}.
+- User requires real home screen/apps and preservation of Android + Windows.
+  Full iOS/triple boot is NOT complete. No partition/GPT/format/flash changes.
+  Original sweet's home screen/app failures are not polaris validation.
+- **Mac root image BUILD SUCCESS**, privileged exec68967 exit0. User authorized
+  agent-run local administrator authentication; no credentials saved in repo.
+  research/polaris/ios16-root-20H392-macos-v1.img,17179869184bytes,
+  SHA256689a8cd1df0fc0093706272241a9ac77d5eddd7a62df5d340913ec6abcd7ce2b.
+  Same-stem JSON complete=true; launchd/dyld/SystemVersion content hashes,
+  root ownership/modes verified. HFSX geometry16GiB, fsck_hfs read-only OK.
+  Image detached, user-owned0600. DO NOT ask user to rebuild/run sudo again.
+  Root tweaks warn mobileactivationd container absent/data ark skipped.
+  Apple launchd/SpringBoard/apps NOT tested by this host-image verification.
+- Initial root build failed before copy: -format UDRW invalid for blank image.
+  Fixed -type UDIF and fsck_hfs via read-only/nomount raw device (13da2b7).
+  Empty failed directory preserved*.failed-create.build; 64MiB smoke PASS.
+- **CI39944761112 SUCCESS**, job120384578742, commit49c69a642b1170d2f848eaacc9c04324114c8d5c.
+  xnu/out-polaris-0002/kernel.development.sweet downloaded; ZIP CRC and SHA256
+  d2028c1e22122b7d80bdaa88f5cc923160269d5aa44a7a69954c595d9a1ea5ef PASS.
+  Explicit -R liukaixiang817/ios-topaz required for gh (default resolves upstream).
+  Artifact12498490081 (60255768bytes), buildtree12497473676; buildtree NOT downloaded.
+  Logs research/polaris/ci-39944761112.log. Slow full downloadexec20464 stopped;
+  download-ci-kernel-0002.py ranges exec10951 completed. Kernel symbol
+  _polaris_ufs_probe confirmed; policy tests5 PASS (actual C under ASan/UBSan,
+  exhaustive single-byte CDB mutations, CRC vector, ADT checks).
+- New0801 opt-in probe requires polarisufsprobe=1 AND /polaris-ufs-probe exact
+  reg1d84000+2500 and backup-head CRC metadata. After CPU startup it permits
+  only LUN0 TUR + READ10 LBA0/count256 (1MiB), before any descriptor/doorbell.
+  WRITE/UNMAP/SYNC/other ranges rejected even with ufsrw. Checks response
+  tag/residual, GPT signatures, CRC; restores old idle queue on completion,
+  retains permanent DMA/queue on timeout without reset/abort. Normal UFS root
+  remains ENXIO, no BSD disk/mount/persistent log/input/USB startup. High DMA
+  and IOMMU behavior UNPROVEN. No hardware UFS read result yet.
+- Earlier read-only Linux handoff snapshot succeeded (commit8246b44):
+  research/polaris/ufs-handoff-0001/{registers.bin,registers.json,boot.log}.
   CAP1587031f (64-bit DMA),VER210,HCS10f,HCE1,IS400,IE0,
-  UTRLBA9b9ef000/upper0,DBR0,RSR1,UTMRLDBR0/RSR0. Host/link enabled,
-  idle queue. **Does not yet prove XNU UFS reads or root filesystem access.**
-- Phone NOW in temporary headless recovery with root ADB, not XNU; same
-  data-unmounted ramdisk, never flashed. Original data-preserving constraint.
-- tools/mkiosroot-macos.py prepared: default read-only plan; --execute requires
-  Mac root to retain numeric ownership. Sources verified read-only attachments;
-  new16GiB HFSX local image under research/, cryptex hardlinks and established
-  root tweaks, critical hash/owner/mode checks, fsck and raw geometry verification.
-  No phone operations. Syntax, HFS/UDIF bounds + symlink escape checks passed;
-  plan succeeded. User executed sudo; first build FAILED before copying:
-  hdiutil blank-image creation rejects -format UDRW. Fixed to -type UDIF;
-  actual64MiB root-builder-smoke-0001.dmg creation/mount/detach/geometry PASS.
-  Found/fixed fsck_hfs regular-file ioctl failure too: now attaches only the
-  new image read-only/nomount and checks its raw device; smoke fsck exit0,
-  "appears to be OK". Empty failed build directory preserved under
-  ios16-root-20H392-macos-v1.failed-create.build. No output image created.
-  **Awaiting user rerun of the same sudo command** via async question;
-  tool sudo -n still requires password. Do not duplicate a user-running build.
-  Default output ios16-root-20H392-macos-v1.img; privileged copy NOT verified.
-  UFS snapshot/root-builder milestone commit8246b44; compatibility fix follows.
-- Root-builder compatibility fix committed13da2b7. New0801 profile prepares
-  a bounded read-only UFS probe (not yet compiled/hardware tested). Requires
-  polarisufsprobe=1 AND /polaris-ufs-probe exact1d84000+2500 with private
-  backup CRC metadata. Runs after CPU startup; normal UFS root remains ENXIO.
-  Lowest SCSI submission layer only permits LUN0 TUR and exact READ10 LBA0,
-  256x4096 bytes. All WRITE/UNMAP/SYNC/other ranges rejected before DMA/doorbell.
-  Verifies response tag/residual, GPT signatures and CRC; restores old idle
-  queue after completion, leaves permanent DMA/queue untouched on timeout.
-  No block device/root mounts/persistent logging/input/USB startup. DMA at
-  high addresses/IOMMU behavior remains unproven; hardware may time out.
-- tools/mkadt-polaris.py --ufs-probe-head accepts verified1MiB head backup;
-  default tree unchanged, QEMU+probe rejected (hardware MMIO not emulated).
-  Host tests5 PASS including actual C policy under ASan/UBSan, exhaustive
-  single-byte CDB mutations, CRC known vector and ADT bounds. Patch dry-run
-  against post0800 fixture PASS. Commit49c69a6 pushed; CI39944761112
-  in_progress/build (explicit -R liukaixiang817/ios-topaz needed for gh,
-  otherwise gh resolves upstream MakrSas). No new phone boot yet.
-  Live ADB first1MiB equals initial backup byte-for-byte; private record
-  research/polaris/ufs-head-current-check.json. Phone root recovery36C,
-  only RAM/pseudo filesystems mounted. Probe ADT prepared at
-  research/polaris/ufs-probe-phone-0001.adt; not booted.
-  gh run watch is active in exec49015, logci-39944761112-watch.log; last
-  API status in_progress at22:18 local. Await CI, inspect logs with explicit
-  -R, download/verify kernel and test default no-probe boot in QEMU before
-  any hardware probe. No new kernel artifact downloaded or phone image packed.
-  Root build directory still absent at last check; user sudo rerun pending.
-- Root image transport and eventual64GiB layout remain pending; no partition
-  shrink/GPT edit/format authorized. Keep phone in headless recovery meanwhile.
+  UTRLBA9b9ef000/upper0,DBR0,RSR1,UTMRLDBR0/RSR0. Host/link enabled and idle;
+  does not prove XNU transport. Current LUN0 first1MiB matches original
+  backup byte-for-byte; private ufs-head-current-check.json records it.
+- Phone last root ADB temporary headless recovery,36C, persistent partitions
+  unmounted. No user action pending. QEMU default/no-probe exec46256 reached
+  PID1/heartbeats but PANICKED on interrupt hygiene at~104s guest time:
+  handler14.51ms >13.631488ms threshold. Evidence qemu-ufs-kernel-0002/.
+  Apple original machine_routines_common.c:893 confirms timing assertion.
+  Host scheduling/IO delay is a hypothesis, not proven. Repeat under idle
+  host running exec94256,150s,qemu-ufs-kernel-0002-idle/. Do not boot phone
+  until result evaluated. No timeout guards disabled or kernel patch made.
+- Hardware probe payload prepared research/polaris/ufs-probe-phone-0002.bin,
+  SHA55de6f04e1d5092f41836121ecc55768c4483bcf15170708567bec364850e4b8.
+  Actual C copy validator PASS entry18149a488,args182518000,top18251c000.
+  Temporary image shim/out/polaris-xnu-ufs-probe-0002/polaris-xnu-ufs-probe-0002.img,
+  47280128bytes,SHA7eb804d68b15829a998f5768e1c80c318fa774128d7608c01adc44c8a7f4565f.
+  Not sent yet. After QEMU default RAM-init success, may temporary boot probe
+  from root ADB via fastboot. No USB control in XNU; result needs screen photo.
+- Root transport/persistent file storage and eventual64GiB layout unresolved.
+  Userdata backup superblock is ext4,4KiB,INCOMPAT10046 (encryption supported).
+  Do NOT infer an unencrypted image file path or erase userdata. No partition
+  shrinking/GPT edits/format authorized. Preserve all verified OS/critical backups.
 
 ### Confirmed XNU synthetic PID1 hardware milestone
 
