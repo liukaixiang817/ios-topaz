@@ -45,10 +45,23 @@ and DO NOT authorize erasing this phone. No destructive step is approved.
   tool sudo -n still requires password. Do not duplicate a user-running build.
   Default output ios16-root-20H392-macos-v1.img; privileged copy NOT verified.
   UFS snapshot/root-builder milestone commit8246b44; compatibility fix follows.
-- Next kernel work: bounded read-only UFS probe with explicit opt-in, no write
-  CDBs/root mounts/log writes/input/USB side effects; current polaris kernel
-  continues to refuse UFS. Root image transport and eventual64GiB layout remain
-  pending; no partition shrink/GPT edit/format authorized.
+- Root-builder compatibility fix committed13da2b7. New0801 profile prepares
+  a bounded read-only UFS probe (not yet compiled/hardware tested). Requires
+  polarisufsprobe=1 AND /polaris-ufs-probe exact1d84000+2500 with private
+  backup CRC metadata. Runs after CPU startup; normal UFS root remains ENXIO.
+  Lowest SCSI submission layer only permits LUN0 TUR and exact READ10 LBA0,
+  256x4096 bytes. All WRITE/UNMAP/SYNC/other ranges rejected before DMA/doorbell.
+  Verifies response tag/residual, GPT signatures and CRC; restores old idle
+  queue after completion, leaves permanent DMA/queue untouched on timeout.
+  No block device/root mounts/persistent logging/input/USB startup. DMA at
+  high addresses/IOMMU behavior remains unproven; hardware may time out.
+- tools/mkadt-polaris.py --ufs-probe-head accepts verified1MiB head backup;
+  default tree unchanged, QEMU+probe rejected (hardware MMIO not emulated).
+  Host tests5 PASS including actual C policy under ASan/UBSan, exhaustive
+  single-byte CDB mutations, CRC known vector and ADT bounds. Patch dry-run
+  against post0800 fixture PASS. CI build pending; no new phone boot yet.
+- Root image transport and eventual64GiB layout remain pending; no partition
+  shrink/GPT edit/format authorized. Keep phone in headless recovery meanwhile.
 
 ### Confirmed XNU synthetic PID1 hardware milestone
 

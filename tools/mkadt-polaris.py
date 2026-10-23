@@ -9,6 +9,7 @@ import argparse
 import hashlib
 from pathlib import Path
 import sys
+import zlib
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import adt
@@ -32,7 +33,9 @@ def child(node, name):
     return next(c for c in node.children if props(c).get("name") == name.encode() + b"\0")
 
 
-def build(seed=None, qemu=False):
+def build(seed=None, qemu=False, ufs_head=None):
+    if ufs_head is not None and qemu:
+        raise ValueError('QEMU cannot probe the phone UFS controller')
     # Reuse the Apple boot-policy scaffold, with one CPU and no UFS node.
     # Explicitly replace/remove all topaz hardware values below.
     root = mkadt.build(seed=seed, qemu=True)
@@ -64,6 +67,14 @@ def build(seed=None, qemu=False):
     setprop(console, "reg", mkadt.u64(FB, FB_SIZE))
     for name, value in (("width", WIDTH), ("height", HEIGHT), ("stride", STRIDE)):
         setprop(console, name, mkadt.u32(value))
+    if ufs_head is not None:
+        if len(ufs_head) != 1 << 20 or ufs_head[510:512] != b'\x55\xaa' or ufs_head[4096:4104] != b'EFI PART':
+            raise ValueError('probe needs the verified 1 MiB LUN0 GPT head backup')
+        probe = adt.Node()
+        setprop(probe, 'name', b'polaris-ufs-probe\0')
+        setprop(probe, 'reg', mkadt.u64(0x1d84000, 0x2500))
+        setprop(probe, 'head-crc32', mkadt.u32(zlib.crc32(ufs_head)))
+        root.children.append(probe)
     return root
 
 
@@ -71,7 +82,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("output", type=Path)
     parser.add_argument("--qemu", action="store_true")
+    parser.add_argument('--ufs-probe-head', type=Path,
+                        help='verified LUN0 head backup for optional read-only probe; needs polarisufsprobe=1')
     args = parser.parse_args()
-    blob = adt.serialize(build(qemu=args.qemu))
+    blob = adt.serialize(build(qemu=args.qemu,
+                              ufs_head=args.ufs_probe_head.read_bytes() if args.ufs_probe_head else None))
     args.output.write_bytes(blob)
-    print(f"{args.output}: {len(blob)} bytes; RAM root only, CPU0; no UFS node")
+    print(f"{args.output}: {len(blob)} bytes; RAM root only, CPU0; UFS probe={bool(args.ufs_probe_head)}")

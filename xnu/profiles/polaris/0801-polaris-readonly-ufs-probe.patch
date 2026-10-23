@@ -1,0 +1,217 @@
+--- /dev/null
++++ b/bsd/dev/polaris_ufs_probe_policy.h
+@@ -0,0 +1,42 @@
++/* Narrow diagnostic policy; no generic block-device access. */
++#ifndef POLARIS_UFS_PROBE_POLICY_H
++#define POLARIS_UFS_PROBE_POLICY_H
++
++static inline bool
++polaris_probe_cdb_allowed(const uint8_t *cdb, unsigned n, uint32_t len,
++    bool write, uint8_t lun)
++{
++	if (!cdb || write || lun != 0) {
++		return false;
++	}
++	/* TEST UNIT READY, with no optional fields. */
++	if (n == 6 && len == 0) {
++		for (unsigned i = 0; i < n; i++) {
++			if (cdb[i]) { return false; }
++		}
++		return true;
++	}
++	/* Exactly READ(10), LBA 0, 256 x 4096-byte blocks, no flags. */
++	static const uint8_t read_head[10] = {0x28, 0, 0, 0, 0, 0, 0, 1, 0, 0};
++	if (n != sizeof(read_head) || len != (1u << 20)) {
++		return false;
++	}
++	for (unsigned i = 0; i < n; i++) {
++		if (cdb[i] != read_head[i]) { return false; }
++	}
++	return true;
++}
++
++static inline uint32_t
++polaris_probe_crc32(const uint8_t *p, unsigned n)
++{
++	uint32_t crc = ~0u;
++	while (n--) {
++		crc ^= *p++;
++		for (unsigned bit = 0; bit < 8; bit++) {
++			crc = (crc >> 1) ^ (0xedb88320u & (0u - (crc & 1)));
++		}
++	}
++	return ~crc;
++}
++#endif
+--- a/bsd/dev/sweet_ufs.c
++++ b/bsd/dev/sweet_ufs.c
+@@ -39,6 +39,9 @@
+ #include <pexpert/device_tree.h>
+ #include <libkern/libkern.h>
+ #include <machine/atomic.h>
++#if defined(POLARIS_RAM_ONLY)
++#include "polaris_ufs_probe_policy.h"
++#endif
+ 
+ extern ppnum_t pmap_find_phys(pmap_t pmap, addr64_t va);
+ /* osfmk/arm/machine_routines.h, not exported to the BSD layer */
+@@ -148,6 +151,13 @@
+ static int
+ ufs_scsi(const uint8_t *cdb, unsigned cdb_len, uint32_t len, bool write)
+ {
++#if defined(POLARIS_RAM_ONLY)
++	/* Gate before descriptor construction or ANY doorbell write. Even a
++	 * caller with ufsrw=1 cannot issue WRITE, UNMAP or SYNCHRONIZE CACHE. */
++	if (!polaris_probe_cdb_allowed(cdb, cdb_len, len, write, su.lun)) {
++		return EPERM;
++	}
++#endif
+ 	struct utrd *utrd = (struct utrd *)(su.dma + DMA_UTRL);
+ 	struct ucd *ucd = (struct ucd *)(su.dma + DMA_UCD);
+ 	uint64_t ucd_pa = su.dma_pa + DMA_UCD, bounce_pa = su.dma_pa + DMA_BOUNCE;
+@@ -219,7 +229,9 @@
+ 	while (ufs_rd(REG_UTRLDBR) & 1) {
+ 		uint64_t now = mach_absolute_time();
+ 		if (now > deadline) {
++#if !defined(POLARIS_RAM_ONLY)
+ 			ufs_wr(REG_UTRLCLR, ~1u);
++#endif
+ 			printf("SWEET UFS: command 0x%02x timed out\n", cdb[0]);
+ 			return ETIMEDOUT;
+ 		}
+@@ -253,6 +265,14 @@
+ 		    cdb[0], ocs, ucd->resp[0], ucd->resp[6], ucd->resp[7]);
+ 		return EIO;
+ 	}
++#if defined(POLARIS_RAM_ONLY)
++	/* Never call a short/stale read a successful integrity check. */
++	if (ucd->resp[1] || ucd->resp[2] != su.lun || ucd->resp[3] != su.tag ||
++	    ucd->resp[12] || ucd->resp[13] || ucd->resp[14] || ucd->resp[15]) {
++		printf("POLARIS UFS: unexpected response flags/tag/residual\n");
++		return EIO;
++	}
++#endif
+ 	return 0;
+ }
+ 
+@@ -386,6 +406,98 @@
+ 	}
+ 	return 0;
+ }
++
++#if defined(POLARIS_RAM_ONLY)
++/* Called once by the CPU startup thread, after timer/scheduler initialization.
++ * No BSD disk registration, filesystem mount, persistent logging or input/USB
++ * driver startup. The normal sweet_ufs_init remains disabled on this platform.
++ */
++void polaris_ufs_probe(void);
++void
++polaris_ufs_probe(void)
++{
++	uint32_t enabled = 0;
++	if (!PE_parse_boot_argn("polarisufsprobe", &enabled, sizeof(enabled)) || enabled != 1) {
++		return;
++	}
++	DTEntry node;
++	uintptr_t const *reg = NULL;
++	uint32_t const *expected = NULL;
++	unsigned int size = 0;
++	if (SecureDTLookupEntry(NULL, "/polaris-ufs-probe", &node) != kSuccess ||
++	    SecureDTGetProperty(node, "reg", (void const **)&reg, &size) != kSuccess ||
++	    size != 2 * sizeof(uintptr_t) || reg[0] != 0x1d84000 || reg[1] != 0x2500 ||
++	    SecureDTGetProperty(node, "head-crc32", (void const **)&expected, &size) != kSuccess ||
++	    size != sizeof(uint32_t)) {
++		printf("POLARIS UFS: probe refused, missing validated hardware/backup metadata\n");
++		return;
++	}
++	lck_mtx_lock(&sweet_ufs_lock);
++	if (su.regs || su.dma) { goto out; }
++	su.regs = ml_io_map(reg[0], reg[1]);
++	if (!su.regs) { goto out; }
++	/* Only the observed enabled, idle UFSHCI 2.1 handoff is supported. */
++	if (ufs_rd(0x08) != 0x210 || !(ufs_rd(REG_HCE) & 1) ||
++	    (ufs_rd(REG_HCS) & (HCS_DP | HCS_UTRLRDY)) != (HCS_DP | HCS_UTRLRDY) ||
++	    ufs_rd(REG_UTRLDBR) || ufs_rd(0x78) || ufs_rd(0x80)) {
++		printf("POLARIS UFS: probe refused, host/link/queues not in expected state\n");
++		goto out;
++	}
++	if (kmem_alloc_contig(kernel_map, &su.dma, DMA_SIZE, PAGE_MASK, 0, 0,
++	    KMA_DATA | KMA_ZERO | KMA_PERMANENT, VM_KERN_MEMORY_IOKIT) != KERN_SUCCESS) {
++		printf("POLARIS UFS: contiguous DMA allocation failed\n");
++		goto out;
++	}
++	ppnum_t pn = pmap_find_phys(kernel_pmap, (addr64_t)su.dma);
++	if (!pn) { goto out; }
++	su.dma_pa = ptoa_64(pn);
++	su.lun = 0;
++	su.cache = su.wait = su.ready = su.writable = false;
++	uint32_t old_lo = ufs_rd(REG_UTRLBA), old_hi = ufs_rd(REG_UTRLBAU);
++	uint32_t old_rsr = ufs_rd(REG_UTRLRSR), old_ie = ufs_rd(REG_IE);
++	printf("POLARIS UFS: read-only probe, LUN0 LBA0+256, DMA 0x%llx\n", su.dma_pa);
++	int error = ufs_take_over_host();
++	if (!error) {
++		static const uint8_t tur[6] = {0};
++		for (unsigned i = 0; i < 3; i++) {
++			error = ufs_scsi(tur, sizeof(tur), 0, false);
++			if (!error || error == ETIMEDOUT) { break; }
++		}
++	}
++	if (!error) { error = ufs_read_blocks(0, 256); }
++	if (!error) {
++		const uint8_t *b = (const uint8_t *)(su.dma + DMA_BOUNCE);
++		uint32_t crc = polaris_probe_crc32(b, BOUNCE_SIZE);
++		bool valid = b[510] == 0x55 && b[511] == 0xaa &&
++		    memcmp(b + UFS_BLOCK, "EFI PART", 8) == 0 && crc == *expected;
++		printf("POLARIS UFS: HEAD CRC32 %08x expected %08x %s\n",
++		    crc, *expected, valid ? "MATCH" : "MISMATCH");
++	} else {
++		printf("POLARIS UFS: read-only probe error %d\n", error);
++	}
++	/* On timeout leave the queue and its permanent DMA allocation alone.
++	 * No controller reset/abort: an outstanding DMA must never use freed RAM.
++	 */
++	if (error != ETIMEDOUT && !ufs_rd(REG_UTRLDBR) && !ufs_rd(0x78)) {
++		ufs_wr(REG_UTRLRSR, 0);
++		ufs_wr(REG_UTRLBA, old_lo);
++		ufs_wr(REG_UTRLBAU, old_hi);
++		ufs_wr(REG_UTRLRSR, old_rsr);
++		__builtin_arm_dsb(0xf);
++		if (ufs_rd(REG_UTRLBA) == old_lo && ufs_rd(REG_UTRLBAU) == old_hi &&
++		    ufs_rd(REG_UTRLRSR) == old_rsr) {
++			ufs_wr(REG_IE, old_ie);
++			printf("POLARIS UFS: idle queue restored; probe complete\n");
++		} else {
++			printf("POLARIS UFS: queue restoration failed; DMA retained\n");
++		}
++	} else {
++		printf("POLARIS UFS: pending/timeout; queue and DMA retained\n");
++	}
++out:
++	lck_mtx_unlock(&sweet_ufs_lock);
++}
++#endif
+ 
+ static int
+ sweet_ufs_open(__unused dev_t dev, int flags, __unused int devtype, __unused struct proc *p)
+--- a/iokit/Kernel/arm/SweetCPU.cpp
++++ b/iokit/Kernel/arm/SweetCPU.cpp
+@@ -20,6 +20,9 @@
+ 
+ extern "C" void sweet_secondary_entry(void);
+ extern "C" boolean_t sweet_cpu_signal_is_enabled(unsigned int cpu);
++#if defined(POLARIS_RAM_ONLY)
++extern "C" void polaris_ufs_probe(void);
++#endif
+ 
+ class SweetCPU;
+ static SweetCPU *sweet_cpus[MAX_CPUS];
+@@ -175,6 +178,9 @@
+ 	ml_set_max_cpus(topology->max_cpu_id + 1);
+ 	IOLog("SWEET CPU: %u/%u CPUs initialized, SGI1 verified\n",
+ 	    topology->num_cpus, topology->num_cpus);
++#if defined(POLARIS_RAM_ONLY)
++	polaris_ufs_probe();
++#endif
+ 	thread_terminate(current_thread());
+ }
+ 

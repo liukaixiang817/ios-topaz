@@ -2,6 +2,7 @@ import importlib.util
 from pathlib import Path
 import struct
 import unittest
+import zlib
 from unittest.mock import patch
 
 spec = importlib.util.spec_from_file_location("polaris", Path(__file__).resolve().parents[1] / "mkadt-polaris.py")
@@ -10,6 +11,21 @@ spec.loader.exec_module(polaris)
 
 
 class ADTTests(unittest.TestCase):
+    def test_optional_ufs_probe_is_bounded_and_not_for_qemu(self):
+        head = bytearray(1 << 20)
+        head[510:512] = b'\x55\xaa'
+        head[4096:4104] = b'EFI PART'
+        with patch.object(polaris.mkadt, 'd22ap_product', return_value=None):
+            root = polaris.build(seed=b'x' * 64, ufs_head=head)
+            props = polaris.props(polaris.child(root, 'polaris-ufs-probe'))
+            self.assertEqual(struct.unpack('<2Q', props['reg']), (0x1d84000, 0x2500))
+            self.assertEqual(struct.unpack('<I', props['head-crc32'])[0], zlib.crc32(head))
+            with self.assertRaises(ValueError):
+                polaris.build(qemu=True, ufs_head=head)
+            for invalid in (b'', head[:-1], bytes(1 << 20)):
+                with self.assertRaises(ValueError):
+                    polaris.build(seed=b'x' * 64, ufs_head=invalid)
+
     def build(self, qemu=False):
         with patch.object(polaris.mkadt, "d22ap_product", return_value=None):
             root = polaris.build(seed=b"x" * 64, qemu=qemu)
