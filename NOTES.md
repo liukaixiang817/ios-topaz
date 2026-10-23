@@ -10,7 +10,19 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION —0008 capacity fix prepared; phone in RO recovery
+### CURRENT NEXT ACTION —0008 CI passed; simulations before temporary boot
+
+- Latest source commit0d5066dfca2181c711c30f254e8500c0f60a2995 (0806 arena,
+  first-failure COW snapshots), after ac9d97c54d2ebaee2348b49f55dcbd97398c9362.
+  CI39981234529/job120509720556 SUCCESS, full compile/link and artifact upload;
+  full gh log research/polaris/ci-39981234529.log. Earlier ac9 CI39980680792
+  cancelled as superseded. Downloading exact0d artifact with profile/entryCRC/
+  kernelSHA checks. New-kernel QEMU RAM/diagnostic/512MiB arena negative test
+  NOT YET run; hardware still recovery, no new boot. Private scripts prepared
+  under root-capacity-0008; boot-capacity-0008.py gates exact kernel SHA across
+  all QEMU results and fresh phone RO filemap/GPT/temp checks. Negative test
+  privately adds only file-root metadata to QEMU ADT, expects missing UFS host
+  refusal AFTER reserve; that ADT must NEVER be used on the phone.
 
 - NEW DECISIVE0007 PHOTOS: hardware-retained-errors-{1,2,3}.jpg/.json in
   daemon-loops-0007/. D COW active1,8192/8192groups,UFS-error0:128MiB backing
