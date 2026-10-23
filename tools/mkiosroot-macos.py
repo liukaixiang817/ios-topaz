@@ -131,7 +131,7 @@ def main():
     try:
         run(['hdiutil', 'create', '-size', f'{args.size_gib}g', '-fs',
              'Case-sensitive Journaled HFS+', '-layout', 'NONE', '-volname',
-             'iOSRoot', '-nospotlight', '-format', 'UDRW', partial])
+             'iOSRoot', '-nospotlight', '-type', 'UDIF', partial])
         attached = plistlib.loads(run(['hdiutil', 'attach', '-nobrowse', '-noautoopen',
                      '-owners', 'on', '-mountpoint', mount, '-plist', partial], capture=True))
         (work / 'attachment.plist').write_bytes(plistlib.dumps(attached))
@@ -195,7 +195,17 @@ def main():
             raise ValueError('filesystem capacity differs from requested image size')
         if partial.stat().st_size != length:
             with partial.open('r+b') as f: f.truncate(length)
-        run(['/sbin/fsck_hfs', '-fn', partial])
+        # macOS fsck_hfs requires a device for its block-size ioctl; a regular
+        # image file fails even when its raw HFSX geometry is correct. Attach
+        # only our new image, read-only and without mounting the filesystem.
+        checked = plistlib.loads(run(['hdiutil', 'attach', '-nomount',
+                                     '-readonly', '-plist', partial], capture=True))
+        check_entities = checked['system-entities']
+        device = check_entities[0]['dev-entry']
+        if len(check_entities) != 1 or 'mount-point' in check_entities[0]:
+            raise ValueError('expected one unmounted raw HFSX image device')
+        run(['/sbin/fsck_hfs', '-fn', device.replace('/dev/disk', '/dev/rdisk', 1)])
+        run(['hdiutil', 'detach', device]); device = None
         sha = digest(partial)
         partial.rename(output)
         completed = True

@@ -34,9 +34,17 @@ and DO NOT authorize erasing this phone. No destructive step is approved.
   new16GiB HFSX local image under research/, cryptex hardlinks and established
   root tweaks, critical hash/owner/mode checks, fsck and raw geometry verification.
   No phone operations. Syntax, HFS/UDIF bounds + symlink escape checks passed;
-  plan succeeded. **Actual privileged copy NOT run yet.** sudo -n says password
-  required. Need user terminal execution after presenting the concrete command;
-  never ask for password in chat. Default output ios16-root-20H392-macos-v1.img.
+  plan succeeded. User executed sudo; first build FAILED before copying:
+  hdiutil blank-image creation rejects -format UDRW. Fixed to -type UDIF;
+  actual64MiB root-builder-smoke-0001.dmg creation/mount/detach/geometry PASS.
+  Found/fixed fsck_hfs regular-file ioctl failure too: now attaches only the
+  new image read-only/nomount and checks its raw device; smoke fsck exit0,
+  "appears to be OK". Empty failed build directory preserved under
+  ios16-root-20H392-macos-v1.failed-create.build. No output image created.
+  **Awaiting user rerun of the same sudo command** via async question;
+  tool sudo -n still requires password. Do not duplicate a user-running build.
+  Default output ios16-root-20H392-macos-v1.img; privileged copy NOT verified.
+  UFS snapshot/root-builder milestone commit8246b44; compatibility fix follows.
 - Next kernel work: bounded read-only UFS probe with explicit opt-in, no write
   CDBs/root mounts/log writes/input/USB side effects; current polaris kernel
   continues to refuse UFS. Root image transport and eventual64GiB layout remain
