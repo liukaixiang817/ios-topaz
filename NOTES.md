@@ -1,4 +1,68 @@
-# iOS 16 on sweet (Redmi Note 10 Pro, SM7150) - working notes
+# Active target: MIX 2S / polaris (2026-10-23)
+
+**Read this before the historical sweet/topaz notes below.** The current user
+has a rooted MIX 2S (SDM845), Android 13 + Mindows Windows 11, and requests a
+third iOS 16 system with about 64 GiB while preserving all existing data.
+Earlier permissions to erase sweet/topaz userdata belong to different phones
+and DO NOT authorize erasing this phone. No destructive step is approved.
+
+## Current handoff, 2026-10-23 (Australia/Melbourne)
+
+- Base `e477291`, branch `codex/polaris-preflight`. Completed preflight commit
+  **`fe89171`** adds `tools/polaris-preflight.py`, six host GPT tests,
+  `POLARIS.md`, and a README warning. Six tests pass; live collection succeeds.
+- User confirmed Shell root access. MagiskSU is `/debug_ramdisk/su`, outside
+  adb's PATH. `adb exec-out` still gets an old Magisk PTY: use
+  `stty raw -echo 2>/dev/null` inside su, and redirect dd stderr to avoid binary
+  corruption. The tool rejects size/hash mismatches; two earlier collections
+  retain incomplete `.partial` files and MUST NOT be used as verified backups.
+- Official Google adb/fastboot downloaded to ignored
+  `research/host-tools/platform-tools/`; version 37.0.1. USB access needs host
+  sandbox escalation. `adb -d` selects the one USB phone; do not log its serial
+  in git. Root is uid 0, Magisk domain. No phone reboot or partition write done.
+- **Verified recovery materials:** `backup/polaris-20261023-193109/` contains
+  27 binary files, **910647361 bytes**, each checked against a second phone-side
+  SHA-256 and rechecked locally against `manifest.json`. Both GPT regions of
+  all six UFS LUNs, full sdb/sdc/sdd/sdf, boot/recovery/dtbo/abl_a/abl_b/devinfo,
+  persist/persistbak/modem/mindowsesp, plus live.dtb. `inventory.txt`,
+  `layout.json`, private `cmdline.txt` are also local. All backup/research files
+  are ignored. **No complete Android or Windows user-data backup exists yet.**
+- Both GPT headers and arrays pass CRC on every LUN; no overlaps. Logical
+  sector size 4096; sysfs sizes/starts are in 512-byte units. LUN0 biggest gap
+  is only 4096 bytes. `userdata` = sda22 (107.258 GiB, GPT LBAs
+  33161216..61278202); mindowsesp = sda23 (0.293 GiB,
+  1703936..1780736); mindowswin = sda24 (119.707 GiB,
+  1780738..33161215). `/data` is ext4 with file encryption, about 18 GiB used /
+  86 GiB free. Free filesystem capacity is not unallocated partition space.
+- Boot and recovery images have Android header **v1**, 4096-byte pages.
+  Current topaz `shim/build.sh` emits v4; do not assume it boots on polaris.
+- Live FDT decompiled to ignored `research/polaris/live.dts`. Verified DT facts:
+  GICD 0x17a00000/0x10000, GICR 0x17a60000/0x100000 stride 0x20000; UFS
+  0x1d84000/0x2500; timer 19.2MHz, virtual INTID19; PSCI SMC; CPU reg values
+  0x0,0x100,..0x700. RAM ranges 0x80000000+0x100000000 and
+  0x180000000+0xfc8a0000; reserved carve-outs still need review. Splash
+  reservation 0x9d400000+0x2400000 does NOT establish scanout base/stride.
+  Actual boot command selects dsi_jdi_fhd_nt35596s_video_display. Do not infer
+  active hardware from all the inactive panel/touch nodes in the FDT.
+- No polaris kernel/boot image/root/UEFI entry exists; no kernel CI run was
+  dispatched. Historical CI IDs and on-phone iOS claims below refer to other
+  hardware. RECOVERY.md reports previous topaz GPT loss after UFS writes;
+  later guard patches do not establish safety on this phone.
+- User is arranging backup space and explicitly requested **continue other
+  adaptation first**. Mac had ~103 GiB free; combined raw userdata+Windows
+  need ~227 GiB, excluding firmware and working space. Proceed with offline
+  polaris shim/platform work while they arrange storage. Do not resize or
+  format anything or reuse a default userdata root. First eventual hardware
+  experiments must be temporary boots with RAM roots and no UFS/log writes.
+- Next concrete work: isolate a polaris shim build/profile using measured
+  CPU/GIC/boot format, verify framebuffer from firmware/DT without guesses,
+  cross-compile locally; then separate XNU platform config. See POLARIS.md
+  for the longer sequence. Filesystem shrinking/GPT changes need full backups,
+  a concrete reviewed boundary plan and immediate user confirmation.
+
+---
+
+# Historical iOS 16 on sweet (Redmi Note 10 Pro, SM7150) - working notes
 
 ## Agent handoff / active work (2026-10-15, latest)
 
