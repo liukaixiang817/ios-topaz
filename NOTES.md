@@ -48,21 +48,30 @@ and DO NOT authorize erasing this phone. No destructive step is approved.
   UTRLBA9b9ef000/upper0,DBR0,RSR1,UTMRLDBR0/RSR0. Host/link enabled and idle;
   does not prove XNU transport. Current LUN0 first1MiB matches original
   backup byte-for-byte; private ufs-head-current-check.json records it.
-- Phone last root ADB temporary headless recovery,36C, persistent partitions
-  unmounted. No user action pending. QEMU default/no-probe exec46256 reached
+- Before latest boot phone root ADB temporary headless recovery,36C, all
+  persistent partitions unmounted. QEMU default/no-probe exec46256 reached
   PID1/heartbeats but PANICKED on interrupt hygiene at~104s guest time:
   handler14.51ms >13.631488ms threshold. Evidence qemu-ufs-kernel-0002/.
   Apple original machine_routines_common.c:893 confirms timing assertion.
-  Host scheduling/IO delay is a hypothesis, not proven. Repeat under idle
-  host running exec94256,150s,qemu-ufs-kernel-0002-idle/. Do not boot phone
-  until result evaluated. No timeout guards disabled or kernel patch made.
+  Host scheduling/IO delay is a hypothesis, not proven. SAME kernel/payload
+  idle-host repeat exec94256 exit0,150s,qemu-ufs-kernel-0002-idle/: PID1 and
+  23 still-alive lines,0unknown glyphs,no panic observed. No timeout guards
+  disabled or kernel patch made. Both results retained; initial failure not
+  silently discarded. Original issue was after userspace, no UFS probe enabled.
 - Hardware probe payload prepared research/polaris/ufs-probe-phone-0002.bin,
   SHA55de6f04e1d5092f41836121ecc55768c4483bcf15170708567bec364850e4b8.
   Actual C copy validator PASS entry18149a488,args182518000,top18251c000.
   Temporary image shim/out/polaris-xnu-ufs-probe-0002/polaris-xnu-ufs-probe-0002.img,
   47280128bytes,SHA7eb804d68b15829a998f5768e1c80c318fa774128d7608c01adc44c8a7f4565f.
-  Not sent yet. After QEMU default RAM-init success, may temporary boot probe
-  from root ADB via fastboot. No USB control in XNU; result needs screen photo.
+  **Temporary fastboot boot SENT**, exec80317 exit0; same device identity,
+  image SHA and no persistent mounts rechecked before automatic adb reboot.
+  send46172KB OKAY1.081s,bootOKAY0.091s,total1.184s. Private records
+  research/polaris/xnu-ufs-probe-0002/{boot.log,boot.json}. No flashing.
+  ABL acceptance is NOT proof of probe result. Awaiting user screen reading
+  via async: POLARIS UFS HEAD CRC32 ... MATCH/MISMATCH,probe error/timed out.
+  User told wait~30s and do not reboot. Current XNU has no USB logs/control;
+  may require physical buttons after observation. Do not claim UFS success
+  or ask user to run the completed Mac root build again.
 - Root transport/persistent file storage and eventual64GiB layout unresolved.
   Userdata backup superblock is ext4,4KiB,INCOMPAT10046 (encryption supported).
   Do NOT infer an unencrypted image file path or erase userdata. No partition
