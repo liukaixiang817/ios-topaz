@@ -19,10 +19,12 @@ def main():
     ap.add_argument('--qemu', default='qemu-system-aarch64')
     ap.add_argument('--fdtput', default='fdtput')
     ap.add_argument('--dtb', required=True, type=Path)
+    ap.add_argument('--build-dir', type=Path)
+    ap.add_argument('--outdir', type=Path)
     a = ap.parse_args()
     root = Path(__file__).resolve().parents[1]
-    build = root / 'shim/out/polaris-linux-probe-0001'
-    out = root / 'research/polaris/qemu-linux-probe'
+    build = a.build_dir.resolve() if a.build_dir else root / 'shim/out/polaris-linux-probe-0001'
+    out = a.outdir.resolve() if a.outdir else root / 'research/polaris/qemu-linux-probe'
     out.mkdir(parents=True, exist_ok=True)
     spec = importlib.util.spec_from_file_location('builder', root / 'tools/build-polaris-linux-probe.py')
     builder = importlib.util.module_from_spec(spec)

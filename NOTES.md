@@ -8,7 +8,41 @@ and DO NOT authorize erasing this phone. No destructive step is approved.
 
 ## Current handoff, 2026-10-23 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION — XNU runs synthetic PID1 on actual MIX 2S
+### CURRENT NEXT ACTION — full-system bring-up; UFS handoff observed, root builder ready
+
+- User explicitly requests continuing to home screen and working apps. Original
+  sweet notes document home screen but also app failures; do not promise that
+  all apps already work or transplant sweet/topaz hardware MMIO unreviewed.
+- User returned phone to FASTBOOT. New Linux wrapper optionally captures only
+  twelve read-only UFSHCI registers before resuming Linux, using verified
+  /soc/ufshc@1d84000 reg1d84000+2500 and a128-byte RAM FDT property. No UIC,
+  SCSI, doorbell/reset/DMA register writes in this snapshot. Original CPU-only
+  evidence preserved with new --outdir option. QEMU3 wrapper cases pass;
+  QEMU does NOT emulate this Qualcomm UFS MMIO.
+- **Actual snapshot+automatic ADB return SUCCESS**, exec37985 exit0:
+  shim/out/polaris-linux-ufs-snapshot-0001/polaris-linux-probe-0001.img,
+  SHA8610617b21bdd43802931048c2ac78c12a0df19bd811a017428a0a138a29af4c.
+  send61924KB1.437s,boot0.091s,total1.541s. Evidence
+  research/polaris/ufs-handoff-0001/{boot.log,registers.bin,registers.json}.
+  CAP1587031f (64-bit DMA),VER210,HCS10f,HCE1,IS400,IE0,
+  UTRLBA9b9ef000/upper0,DBR0,RSR1,UTMRLDBR0/RSR0. Host/link enabled,
+  idle queue. **Does not yet prove XNU UFS reads or root filesystem access.**
+- Phone NOW in temporary headless recovery with root ADB, not XNU; same
+  data-unmounted ramdisk, never flashed. Original data-preserving constraint.
+- tools/mkiosroot-macos.py prepared: default read-only plan; --execute requires
+  Mac root to retain numeric ownership. Sources verified read-only attachments;
+  new16GiB HFSX local image under research/, cryptex hardlinks and established
+  root tweaks, critical hash/owner/mode checks, fsck and raw geometry verification.
+  No phone operations. Syntax, HFS/UDIF bounds + symlink escape checks passed;
+  plan succeeded. **Actual privileged copy NOT run yet.** sudo -n says password
+  required. Need user terminal execution after presenting the concrete command;
+  never ask for password in chat. Default output ios16-root-20H392-macos-v1.img.
+- Next kernel work: bounded read-only UFS probe with explicit opt-in, no write
+  CDBs/root mounts/log writes/input/USB side effects; current polaris kernel
+  continues to refuse UFS. Root image transport and eventual64GiB layout remain
+  pending; no partition shrink/GPT edit/format authorized.
+
+### Confirmed XNU synthetic PID1 hardware milestone
 
 - **Hardware userspace milestone CONFIRMED by user photographs**. Second
   photo shows `BSD root: md0`, `/sbin/launchd` load attempt, explicit

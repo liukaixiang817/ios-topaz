@@ -18,6 +18,7 @@ import sys
 import zlib
 
 MARKER = b'POLARISREGS1'.ljust(16, b'\0') + bytes(96)
+UFS_MARKER = b'POLARISUFS1'.ljust(16, b'\0') + bytes(112)
 SOURCE_SHA = 'f9ad6529c1632fa2116377ec5f12c78f6d5cf7f5a1baa0b0f1bec4b5a518bd99'
 
 
@@ -51,9 +52,13 @@ def main():
     ap.add_argument('--cc', default='clang')
     ap.add_argument('--fdtput', default='fdtput')
     ap.add_argument('--mkbootimg', required=True)
+    ap.add_argument('--outdir', type=Path)
+    ap.add_argument('--ufs-snapshot', action='store_true', help='read-only UFSHCI entry register capture')
     a = ap.parse_args()
     root = Path(__file__).resolve().parents[1]
-    out = root / 'shim/out/polaris-linux-probe-0001'
+    out = a.outdir.resolve() if a.outdir else root / 'shim/out/polaris-linux-probe-0001'
+    if a.ufs_snapshot and not a.outdir:
+        ap.error('--ufs-snapshot requires a separate --outdir to preserve CPU-only evidence')
     out.mkdir(parents=True, exist_ok=True)
     source = (root / 'shim/out/polaris-backup-recovery/polaris-backup-recovery.img').read_bytes()
     assert hashlib.sha256(source).hexdigest() == SOURCE_SHA
@@ -80,6 +85,8 @@ def main():
     flags = ['-O2', '-ffreestanding', '-nostdlib', '-fno-pic', '-fno-pie',
              '-fno-stack-protector', '-mgeneral-regs-only', '-mstrict-align',
              '-Wall', '-Wextra', '-Werror']
+    if a.ufs_snapshot:
+        flags += ['-DPOLARIS_UFS_SNAPSHOT=1']
     objects = []
     for name in ('linux-probe.S', 'linux-probe.c', 'dt.c'):
         path = root / 'shim/polaris' / name
@@ -124,6 +131,9 @@ wrapper_end = .; /DISCARD/ : { *(.comment) *(.note*) *(.eh_frame*) } }
         path.write_bytes(trees[offset:offset + size])
         subprocess.run([a.fdtput, '-p', '-t', 'bx', str(path), '/chosen',
                         'polaris,boot-registers', *[f'{b:02x}' for b in MARKER]], check=True)
+        if a.ufs_snapshot:
+            subprocess.run([a.fdtput, '-p', '-t', 'bx', str(path), '/chosen',
+                            'polaris,ufs-handoff', *[f'{b:02x}' for b in UFS_MARKER]], check=True)
         patched.append(path.read_bytes())
         offset += size
         count += 1
@@ -154,6 +164,7 @@ wrapper_end = .; /DISCARD/ : { *(.comment) *(.note*) *(.eh_frame*) } }
                   dtb_count=count, wrapper_offset=wrapper_offset, resume_offset=resume,
                   original_entry=target, wrapper_size=len(wrapper),
                   original_kernel_size=old_size, image_size=len(image),
+                  ufs_snapshot=a.ufs_snapshot,
                   purpose='RAM FDT register capture, resume headless Linux; no flash')
     (out / 'manifest.json').write_text(json.dumps(record, indent=2) + '\n')
     print(json.dumps(record, indent=2))
