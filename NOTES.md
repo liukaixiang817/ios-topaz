@@ -10,7 +10,15 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION —0009 fitted display prepared; phone in RO recovery
+### CURRENT NEXT ACTION —0009 CI passed; QEMU before guarded display boot
+
+- CI39984984336/job120521705845 now SUCCESS; Build16:18:55..16:23:15Z,
+ full compile/link and artifact collection completed. Source90739277724a905ab3401a930f84364c5fac211b.
+ Download/profile/entryCRC/kernelSHA verification ongoing; gh full log being
+ saved research/polaris/ci-39984984336.log. New-kernel QEMU tests not yet run;
+ phone still ROOT RO RECOVERY. Avoid parallel QEMUs after0008 interrupt timing
+ panic; planned gated30s,on150s,off150s sequential, then check-qemu.py and guarded
+ boot-display-0009.py. Off fixture actual synthetic diagnostic children from0008.
 
 - Display source commit90739277724a905ab3401a930f84364c5fac211b pushed;
  CI39984984336/job120521705845 queued on macos-14 at last check. Watch session
