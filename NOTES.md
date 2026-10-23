@@ -10,8 +10,45 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION — new readonly iOS file-root boot sent; await screen evidence
+### CURRENT NEXT ACTION — HFS mount verified; launchd platform compatibility + RAM writes
 
+- RAM COW overlay0804 implemented, native ASan/UBSan tests PASS (actual shared
+  header, randomized full-image reference model, collisions/overlap, bounds,
+  ENOSPC and allocator failure with no exposure of uninitialized RAM).
+  4KiB logical blocks,16KiB groups,8192groups maximum128MiB plus bounded
+  metadata. Reads overlay dirty RAM blocks on immutable file; writes perform
+  base-read/merge then RAM copy only. CDB read-only gate remains unchanged;
+  never calls ufs_write_blocks on POLARIS, sync is RAM-only/no SCSI flush.
+  Explicit polarisramcow=1 rootrw=1 ufsrw=0; default file root stays readonly.
+  No topaz logger/input/USB startup. All changes disappear on reboot; persistent
+  iOS writes/64GiB/GUI/apps still pending. CI/QEMU/hardware validation pending.
+- Recovery read-only preflight exec(resume) PASS: fresh182extent map identical,
+  GPT first1MiB byte-identical, ext4 clean/state1/no needs_recovery; userdata
+  unmounted/runtimeRO1,35C, CPU caps1056000. Evidence launchd-compat-0005/
+  preflight.json. Phone idle in root temporary recovery.0005 compat image
+  packaged but NOT booted; prefer upcoming0006 RAM COW boot once CI/tests pass.
+- NEW HARDWARE EVIDENCE (user photo,2026-10-24):0004 verifies GPT+HFSX,
+  16384MiB/182extents/READ ONLY; BSD root ufsroot0; hfs mounted iOSRoot.
+  Then /sbin/launchd exec dies namespace9 code0xe = OS_REASON_EXEC /
+  EXEC_EXIT_REASON_WRONG_PLATFORM (Apple xnu-8796.141.3 reason.h defines14;
+  kern_exec.c macOS-platform check, DEVELOPMENT unentitled_ios_sim_launch).
+  This is NOT a bad file SHA or invalid-page signature failure. Actual kernel
+  contains tunable. Missing compatibility args were an avoidable omission;
+  canonical tools/polaris-ios-readonly.cmdline now includes known working
+  unentitled_ios_sim_launch=1 ignition_level=1 launchd_unsecure_cache=1.
+  Private file-root-0001/hardware-result.json + hardware-hfs-mounted-platform-panic.jpg.
+- QEMU0005 runs actual Apple launchd/dyld (hashes equal verified source) from
+  minimal64MiB HFS RAM fixture with corrected args: exec launchd, then namespace35
+  LIBIGNITION / failed to reserve stdin descriptor /dev/null (fixture omitted
+  /dev, so devfs mount failed ENOENT). Proves platform gate and Apple EL0 entry;
+  does NOT validate normal launchd initialization/shared cache/services.
+  qemu-launchd-compat-0005/compatibility-result.json. No new kernel CI needed.
+- User returned FASTBOOT; known recovery temporarily booted exec6044,send1.427s,
+  boot0.091s,total1.534s. Initial wait wrongly expected get-state=device; actual
+  ADB state=recovery, so timed out though recovery was online. Corrected and
+  resumed read-only preflight. Phone is root temporary recovery, not XNU now.
+  Need volatile root-write layer (RAM COW) for launchd startup without raw UFS
+  writes; currently planning/implementing, no phone data write authorized.
 - LATEST PHONE STATE: exec1963 temporary fastboot boot SENT SUCCESSFULLY,
   46180KB send1.065s,boot0.092s,total1.169s,return0. Image0004 and payload
   hashes below. Immediately before reboot: fresh RO FIEMAP exactly equals

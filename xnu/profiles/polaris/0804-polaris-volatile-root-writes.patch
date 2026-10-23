@@ -1,0 +1,220 @@
+--- /dev/null
++++ b/bsd/dev/polaris_ram_cow.h
+@@ -0,0 +1,97 @@
++/* Volatile 4KiB block overlay. Caller serializes access and supplies ONLY a
++ * RAM allocator. No block-device handle, SCSI command or disk write exists here.
++ * Allocations are 16KiB groups; valid bits expose only fully copied blocks.
++ */
++#ifndef POLARIS_RAM_COW_H
++#define POLARIS_RAM_COW_H
++#include <stdbool.h>
++#include <stdint.h>
++#include <stddef.h>
++#define POLARIS_COW_GROUPS 8192u /* at most 128MiB plus bounded metadata */
++#define POLARIS_COW_BUCKETS 1024u
++#define POLARIS_COW_BLOCK 4096u
++#define POLARIS_COW_BYTES 16384u
++struct polaris_cow_group {
++    uint64_t number;
++    uint8_t *data;
++    uint32_t next;
++    uint8_t valid;
++};
++struct polaris_cow {
++    uint64_t nblocks;
++    unsigned limit, used;
++    uint32_t buckets[POLARIS_COW_BUCKETS]; /* index+1; zero means absent */
++    struct polaris_cow_group groups[POLARIS_COW_GROUPS];
++};
++typedef void *(*polaris_cow_alloc)(size_t bytes, void *context);
++
++static inline struct polaris_cow_group *
++polaris_cow_find(struct polaris_cow *c, uint64_t number)
++{
++    for (uint32_t i = c->buckets[number % POLARIS_COW_BUCKETS]; i;
++        i = c->groups[i - 1].next) {
++        if (c->groups[i - 1].number == number) return &c->groups[i - 1];
++    }
++    return NULL;
++}
++
++static inline bool
++polaris_cow_range(struct polaris_cow *c, uint64_t lba, uint32_t blocks)
++{
++    return c && c->limit && c->limit <= POLARIS_COW_GROUPS &&
++        c->used <= c->limit && c->nblocks && c->nblocks <= (UINT64_C(64) << 18) &&
++        blocks && blocks <= 256 && lba < c->nblocks && blocks <= c->nblocks - lba;
++}
++
++/* Apply dirty blocks over a buffer already filled from the immutable base. */
++static inline bool
++polaris_cow_overlay(struct polaris_cow *c, uint64_t lba, uint32_t blocks, void *buffer)
++{
++    if (!buffer || !polaris_cow_range(c, lba, blocks)) return false;
++    for (uint32_t i = 0; i < blocks; i++) {
++        uint64_t block = lba + i;
++        struct polaris_cow_group *g = polaris_cow_find(c, block / 4);
++        unsigned slot = block % 4;
++        if (g && (g->valid & (1u << slot))) {
++            __builtin_memcpy((uint8_t *)buffer + i * POLARIS_COW_BLOCK,
++                g->data + slot * POLARIS_COW_BLOCK, POLARIS_COW_BLOCK);
++        }
++    }
++    return true;
++}
++
++/* Store whole blocks. The caller performs partial-block read/merge first.
++ * Preallocate every needed group BEFORE modifying data/valid bits. Allocation
++ * failure can retain empty groups, but cannot expose partial/garbage blocks or
++ * change an existing overlay block. Those empty groups remain reusable.
++ */
++static inline bool
++polaris_cow_put(struct polaris_cow *c, uint64_t lba, uint32_t blocks,
++    const void *buffer, polaris_cow_alloc allocate, void *context)
++{
++    if (!buffer || !allocate || !polaris_cow_range(c, lba, blocks)) return false;
++    uint64_t first = lba / 4, last = (lba + blocks - 1) / 4;
++    unsigned needed = 0;
++    for (uint64_t group = first; group <= last; group++)
++        if (!polaris_cow_find(c, group)) needed++;
++    if (needed > c->limit - c->used) return false;
++    for (uint64_t group = first; group <= last; group++) {
++        if (polaris_cow_find(c, group)) continue;
++        uint8_t *data = allocate(POLARIS_COW_BYTES, context);
++        if (!data) return false;
++        struct polaris_cow_group *g = &c->groups[c->used];
++        g->number = group; g->data = data; g->valid = 0;
++        unsigned bucket = group % POLARIS_COW_BUCKETS;
++        g->next = c->buckets[bucket]; c->buckets[bucket] = ++c->used;
++    }
++    for (uint32_t i = 0; i < blocks; i++) {
++        uint64_t block = lba + i;
++        struct polaris_cow_group *g = polaris_cow_find(c, block / 4);
++        unsigned slot = block % 4;
++        __builtin_memcpy(g->data + slot * POLARIS_COW_BLOCK,
++            (const uint8_t *)buffer + i * POLARIS_COW_BLOCK, POLARIS_COW_BLOCK);
++        g->valid |= (uint8_t)(1u << slot);
++    }
++    return true;
++}
++#endif
+--- a/bsd/dev/sweet_ufs.c
++++ b/bsd/dev/sweet_ufs.c
+@@ -42,6 +42,18 @@
+ #if defined(POLARIS_RAM_ONLY)
+ #include "polaris_ufs_probe_policy.h"
+ #include "polaris_filemap.h"
++#include "polaris_ram_cow.h"
++static struct polaris_cow polaris_root_cow;
++static bool polaris_ram_cow_enabled;
++static void *
++polaris_ram_allocate(size_t bytes, __unused void *context)
++{
++	vm_offset_t memory = 0;
++	if (bytes != POLARIS_COW_BYTES || kmem_alloc_contig(kernel_map, &memory,
++	    bytes, PAGE_MASK, 0, 0, KMA_DATA | KMA_ZERO | KMA_PERMANENT,
++	    VM_KERN_MEMORY_IOKIT) != KERN_SUCCESS) { return NULL; }
++	return (void *)memory;
++}
+ static struct polaris_extent polaris_file_map[POLARIS_MAP_MAX];
+ static unsigned polaris_file_count;
+ static bool polaris_file_active, polaris_io_failed;
+@@ -589,7 +601,7 @@
+ 		void *bounce = (void *)(su.dma + DMA_BOUNCE);
+ 		uint64_t physical = su.first_block + lba;
+ #if defined(POLARIS_RAM_ONLY)
+-		if (!polaris_file_active || !rd ||
++		if (!polaris_file_active || (!rd && !polaris_ram_cow_enabled) ||
+ 		    !polaris_map_read(polaris_file_map, polaris_file_count,
+ 		    lba, blocks, &physical, &blocks)) {
+ 			error = EINVAL;
+@@ -597,6 +609,23 @@
+ 		}
+ 		want = MIN(want, blocks * UFS_BLOCK - skip);
+ #endif
++#if defined(POLARIS_RAM_ONLY)
++		/* Always obtain full base blocks before overlaying RAM changes, including
++		 * partial-block writes. NEVER call ufs_write_blocks on this platform. */
++		error = ufs_read_blocks(physical, blocks);
++		if (!error && polaris_ram_cow_enabled &&
++		    !polaris_cow_overlay(&polaris_root_cow, lba, blocks, bounce)) { error = EIO; }
++		if (!error && rd) {
++			memcpy(vaddr + done, (const char *)bounce + skip, want);
++		} else if (!error) {
++			memcpy((char *)bounce + skip, vaddr + done, want);
++			if (!polaris_cow_put(&polaris_root_cow, lba, blocks, bounce,
++			    polaris_ram_allocate, NULL)) {
++				printf("POLARIS RAM COW: allocation limit/failure, refusing write\n");
++				error = ENOSPC;
++			}
++		}
++#else
+ 		if (rd) {
+ 			error = ufs_read_blocks(physical, blocks);
+ 			if (!error) {
+@@ -612,6 +641,7 @@
+ 				error = ufs_write_blocks(su.first_block + lba, blocks);
+ 			}
+ 		}
++#endif
+ 		if (error) {
+ 			break;
+ 		}
+@@ -659,6 +689,10 @@
+ 		return 0;
+ 	case DKIOCSYNCHRONIZE:
+ 	case DKIOCSYNCHRONIZECACHE: {
++#if defined(POLARIS_RAM_ONLY)
++		/* Serialized RAM writes are already coherent; no device flush exists. */
++		return 0;
++#endif
+ 		if (!su.writable) {
+ 			return 0;
+ 		}
+@@ -759,12 +793,13 @@
+ static int
+ polaris_file_root_init(void)
+ {
+-    uint32_t enabled = 0, probe = 0, rw = 0, rootrw = 0;
++    uint32_t enabled = 0, probe = 0, rw = 0, rootrw = 0, cow = 0;
+     PE_parse_boot_argn("polarisfileroot", &enabled, sizeof(enabled));
+     PE_parse_boot_argn("polarisufsprobe", &probe, sizeof(probe));
+     PE_parse_boot_argn("ufsrw", &rw, sizeof(rw));
+     PE_parse_boot_argn("rootrw", &rootrw, sizeof(rootrw));
+-    if (enabled != 1 || probe || rw || rootrw) {
++    PE_parse_boot_argn("polarisramcow", &cow, sizeof(cow));
++    if (enabled != 1 || probe || rw || cow > 1 || rootrw > 1 || rootrw != cow) {
+         printf("POLARIS FILE ROOT: disabled or conflicting boot arguments\n");
+         return ENXIO;
+     }
+@@ -860,6 +895,12 @@
+             }
+         }
+     }
++    /* The only writable logical root is backed by bounded volatile RAM.
++     * The UFS CDB gate still rejects every WRITE/UNMAP/SYNC command. */
++    polaris_ram_cow_enabled = cow == 1;
++    polaris_root_cow.nblocks = layout[2];
++    polaris_root_cow.limit = POLARIS_COW_GROUPS;
++    su.writable = polaris_ram_cow_enabled;
+     su.first_block = 0; /* Logical image offset; translated per request. */
+     su.nblocks = layout[2];
+     su.bmajor = bdevsw_add(-1, &sweet_ufs_bdevsw);
+@@ -867,11 +908,14 @@
+     su.cmajor = cdevsw_add_with_bdev(-1, &sweet_ufs_cdevsw, su.bmajor);
+     if (su.cmajor < 0) { error = ENXIO; goto out; }
+     su.bdev = makedev(su.bmajor, 0);
+-    devfs_make_node(su.bdev, DEVFS_BLOCK, UID_ROOT, GID_OPERATOR, 0400, "ufsroot0");
+-    devfs_make_node(makedev(su.cmajor, 0), DEVFS_CHAR, UID_ROOT, GID_OPERATOR, 0400, "rufsroot0");
++    devfs_make_node(su.bdev, DEVFS_BLOCK, UID_ROOT, GID_OPERATOR, su.writable ? 0600 : 0400, "ufsroot0");
++    devfs_make_node(makedev(su.cmajor, 0), DEVFS_CHAR, UID_ROOT, GID_OPERATOR, su.writable ? 0600 : 0400, "rufsroot0");
+     su.ready = true;
+-    printf("POLARIS FILE ROOT: verified GPT + HFSX, %llu MiB, %u extents, READ ONLY\n",
++    printf("POLARIS FILE ROOT: verified GPT + HFSX, %llu MiB, %u extents, base READ ONLY\n",
+         su.nblocks * UFS_BLOCK >> 20, polaris_file_count);
++    if (polaris_ram_cow_enabled) {
++        printf("POLARIS RAM COW: enabled,128MiB limit; writes discarded on reboot\n");
++    }
+ out:
+     if (error) {
+         polaris_file_active = false;
