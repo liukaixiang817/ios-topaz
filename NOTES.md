@@ -10,61 +10,76 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION —0012 hardware callers decoded; trace LaunchServices dependency
+### CURRENT NEXT ACTION —0013 validated and prepared; awaiting physical FASTBOOT
 
-- CURRENT PHONE STATE:0012 XNU still running. Five actual photos saved under
- wait-callers-0012/hardware-sample-7-8-{1,2}.jpg,hardware-sample-15-{1,2}.jpg,
- hardware-sample-16.jpg; hardware-sample-7-8.json and symbols JSON saved.
- Hardware stack=1/nofault caller walker WORKS. Samples7,8,15,16 found4/mask47,
- cache slide41030000,SpringBoard26/3threads,backboardd56/14threads,usermanagerd84.
- FB selector mask284000238429178,swaps7/present4/pixels8614080 unchanged across
- all snapshots:real CPU panel copies occurred,contents unknown,NOhome/Appproof.
- RAM COW20252..20334/32768,dirty<=324712KiB,reserved512MiB,UFS-error0/refused0,
- not exhausted. FirstMCMmkdir retained group90/path root logs,e2 lookup.
-- Exact Apple20H392 symbolication:SpringBoard TID212 waits UL_UNFAIR_LOCK
- op1000002/valueb02/address222da24b8 = CoreServices gSessionLock (unslid
-1e1d724b8),_LSContextInitCommon+212,LSApplicationRecord bundle lookup from
- CCSModuleRepository filtering modules. TID287 is synchronous NSXPC reply
- wait;6frames truncate at Foundation __NSXPCCONNECTION_IS_WAITING... actual
- endpoint/caller above this and lock owner/third thread NOT yet identified.
- Main backboardd307 and usermanagerd330 are ordinary CFRunLoop receive-only
- Mach waits,opt507000806:message id fields meaningless withoutSEND. Do NOT
- infer startup RPC deadlock from those. Backboardd361 waits dispatch_group:
- binary+18a78 belongs BKButtonHapticsController asset callback,NOT established
- window-server blocker. Exact disassembly saved privately. No bypass justified.
-- NEXT:complete deeper SpringBoard synchronous-request callers + third thread,
- sample lsd/containermanagerd separately with bounded output;focus on actual
- LaunchServices dependency. Existing0012 onlyfirst2threads/6frames misses it.
- 0810 prepared:explicitpolariswait1 selects SpringBoard/lsd/containermanagerd
- in turn every15s,first60s,36passes,max3threads/12frames. Six addresses per
- bounded192byte line with offset;Mach savedargs for all selected Machwaits.
- Default0012mode still2threads/6frames/allpriornames. Residentreader/map/CPU
- guards unchanged. Actual2CI-header ARM64 object compiles PASS,exactpatch
- application/output PASS,nativeASan/UBSan bounds PASS. FullCI/new-kernel QEMU
- NOT yet run; no new phone boot. Publiccmdline retainsall storage/CPU gates.
- Source1d06f9ea19c6fb9d9f8a9bc23a5c0e30ff0d6503 pushed;CI40001585107
- firstattempt FAILED before any steps:job120578752139 cancelled18:28:52Z,
- "The job was not acquired by Runner of type hosted even after multiple
- attempts",macOSarm64 capacity annotations. Same run rerun attempt2 SUCCESS,
- job120593650207 build5m16s;full gh log ci-40001585107.log confirms0810.
- Exactpolaris/profile/source checked;artifact12523873372,bytes60322627,
- ZIPentryCRC and kernelSHAab50b65d640233492cad41540e10db4323c532df2e0769513c71d2eb42d80bc9
- verified;xnu/out-polaris-0013/kernel.development.sweet. No artifact firstattempt.
- Synthetic64MiB fixture prepared:SpringBoard14frames,lsd2frames,MCM unmappedFP;
- native12frame bounds PASS. REFERENCE0012kernel legacy180s fixture/checker PASS,
- 6framecap/oldmask67/unmappedFP/no panic;NOT0013 proof. Actual0013 sequential
- tests NOW RUNNING exec33288:on300s PASS,exact12frames/twosegments +lsd2frame
- +MCMunbacked n0/e2;3targetrotation/masks2,80,100,repeatcycles,PID1/displaystart,
- no panic in screen/full ring,0unknown glyphs. Only synthetic1thread/target,
- notAppleGUI or actual3threadselectionproof. Off200sCURRENT;thenCPUguard200s,
- nodiag90s,legacy180s. All checks/provenance in launchservices-0013/.
- validate-and-prepare.py logs validation-progress.log;on success will package
- phone image and saveprepared/verificationJSON. NOnewphoneboot;current0012XNU.
- Physical FASTBOOT request pending;read-only USB check found no knownfastboot.
- Do not run boot-phone.py until all5samekernel checks PASS andfresh ROpreflight.
- Keep current boot until evidence saved;no USB restart/log channel. Full home,
- physicaltouch,USB,Apps,persistent64GiB/tripleboot unfinished. All logical iOS
- writes volatile512MiB RAM ONLY,ufsrw0;no base/Android/Windows/GPT writes.
+- LATEST OBSERVED PHONE:0012 XNU in user photos,samples7/8/15/16. Two subsequent
+ exact-device read-only USB checks found NOFASTBOOT;0013 NOTsent,NOnewrecovery
+ boot or partition write. Actual current screen unconfirmed. Physical Power+
+ VolumeDown FASTBOOT request pending;user has not replied to this request yet.
+ deployment-state.json records prepared_waiting_for_fastboot. Do not infer
+ FASTBOOT from older replies or a newly resent old photo. Fullhome,physical
+ touch,USB,normalApps,persistent64GiB/tripleboot still unfinished.
+-0013 source1d06f9ea19c6fb9d9f8a9bc23a5c0e30ff0d6503,0810focused diagnostics.
+ CI40001585107 attempt2 SUCCESS/job120593650207,build5m16s;fullgh log
+ research/polaris/ci-40001585107.log. Attempt1job120578752139 failed before
+ any steps,hostedmacOS runnercapacity;rerun same source succeeded. Artifact
+12523873372/60322627bytes,polaris profile/exactcommit/ZIPentryCRC/kernelSHA
+ verified:xnu/out-polaris-0013/kernel.development.sweet,
+ SHAab50b65d640233492cad41540e10db4323c532df2e0769513c71d2eb42d80bc9.
+- ALL5 sequential newkernel QEMUtests PASS,exec33288exit0,102assertions:
+ focuson300s,stackoff200s,missingexplicitCPUargument200s,nodiag90s,legacy180s.
+ Focus rotates SpringBoard/lsd/containermanagerd,masks2/80/100,one perpass in
+ syntheticfixture;14passes on300s. Exact12frame chain in two6address lines,
+ lsd exact2frames,unbackedMCMFP n0/e2;off/CPUargument guard allB n0/e4;outergate
+ no sampler/counters;legacy old5targets/mask67/exact6framecap. PID1alive,
+ displaystart,no panic screen/fullRAMrings,0unknown glyphs. Samekernel/fixture
+ provenances for all5. NOApple services,GUI,App,UFS,touch,or actualSMP proof.
+ Fixture1thread/target;3thread selection is a codebound,not positive3threadtest.
+ PriorREFERENCE0012kernel180s also passed newfixture/legacychecker ONLY.
+-0013 temporary image PREPARED and SHA rechecked,47288320bytes:
+ shim/out/polaris-xnu-launchservices-0013/polaris-xnu-launchservices-0013.img
+ imageSHAc62a879e185646b87a75edd6d6d4f9cec16d301598a564246d15615bd3bc5647,
+ payloadSHAd3988402a8a1caa4a82c3d4ab4144d59892b17065ae7a346509058021df4e041.
+ ActualCpayload copy-plan validator PASS. prepared.json/verification.json/
+ qemu-check.json and per-modechecks/provenances in launchservices-0013/.
+ Cmdline tools/polaris-ios-launchservices-diagnostic.cmdline retains ufsrw0,
+ polarisramcow1/512MiB,rootrw1,sweetlog0,sweetscan=-,explicitcpus1,CPUdisplay,
+ visibleconsole1Hz,polarissample1/polarisstack1;adds polariswait1 only.
+- NEXT when physicalFASTBOOT available:run private launchservices-0013/
+ preflight.py (knownrecoveryhash,polaris/root/size,unmounted/runtimeRO1,
+ cleanext4,fresh182FIEMAP/GPThead,temp<45C),then boot-phone.py. Boot script
+ rechecks5samekernelprovenances/Cpayload/imageSHA andfreshROphonechecks,
+ then adb reboot bootloader + temporary fastboot boot;NOflash/GPT/Windows
+ or base-image writes. Never repair/stage again,never enableufsrw1. Save actual
+ boot result inNOTES. Need NEWscreen/video after0013boot to capture eachfocus
+ phase withheader/slide,T/M/L/B lines;current0012photos are not0013evidence.
+-0810 explicitpolariswait1 focuses one service perpass,first60s,interval15s,
+ 36passes,max3threads/12frames. Six addresses per192byteboundedline,offseto,
+ savedMachargs for allselectedMachwaits. Withoutfocus flag legacy2threads/
+6frames/oldnames preserved. Residentreader/map/CPUguards byte-identical to
+0809;2actualCI-header ARM64 object compiles,exactpatchapply/output,native
+ ASan/UBSan incl12framecap PASS. Generic armedbanner stilldescribeslegacy
+ defaults;per-passfocusbanner is authoritative for focus limits. No startup,
+ locking,errno,filesystem,display/input hardware behavior bypass added.
+-0012 HARDWARE:fivephotos wait-callers-0012/hardware-sample-7-8-{1,2}.jpg,
+ hardware-sample-15-{1,2}.jpg,hardware-sample-16.jpg;transcription/symbol JSON.
+ Realnofaultcallerwalk WORKS,cache slide41030000;SpringBoard26/3threads,
+ backboardd56/14threads,usermanagerd84. FBmask284000238429178,swaps7/present4/
+ pixels8614080 unchanged across samples7/8/15/16:realCPU copies,contentsunknown,
+ NOhome/Appproof. RAMCOW20252..20334/32768,reserved512MiB,dirty<=324712KiB,
+ UFS-error0/refused0,not exhausted. FirstMCMmkdir group90/e2/rootlogslookup.
+- Exact20H392 callers:SpringBoard212 waits UL_UNFAIR_LOCK op1000002/valueb02,
+ address222da24b8 = CoreServices gSessionLock (unslid1e1d724b8),
+ _LSContextInitCommon+212 ->LSApplicationRecord bundlelookup from
+ CCSModuleRepository modulefilter. SpringBoard287 waits synchronous NSXPC
+ reply;6frames truncate at Foundation waiting-for-reply marker. Actualendpoint
+ and thirdthread/lockowner not yet identified,NOdeadlock proof. Backboardd307/
+ usermanagerd330 in ordinaryCFRunLoop receive-only waits,opt507000806:
+ messageID meaningless withoutSEND. Backboardd361 groupwait mainbinary+18a78
+ is BKButtonHapticsController assetcallback,NOTestablishedwindowserverblocker.
+ Exactdisassembly saved. lsd/MCM launchdjobs present;lsdentry jumps to
+ CoreServices _LSServerMain unslid181cec36c. Framebuffernotify usesCanDrop,
+ zero-timeout send;doesnot prove timeralive. Do not bypass checks from guesses.
 -0012 temporary boot SENT exec46178exit0,fastboot1.166s,
  2026-10-23T18:01:42.248259Z (=2026-10-24 Australia/Melbourne). Guarded boot
  rechecked exact280fsource/profile/kernelSHA,all4QEMUresults/provenances,
