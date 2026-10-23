@@ -8,6 +8,40 @@ and DO NOT authorize erasing this phone. No destructive step is approved.
 
 ## Current handoff, 2026-10-23 (Australia/Melbourne)
 
+### Integrated shim+XNU QEMU result
+
+- Exec43952 completed0: actual polaris shim cold-loads the verified polaris
+  XNU+RAM init, reaches PID1 and repeated heartbeats,150seconds,no visible
+  panic,0unknown glyphs. result.json actual_shim=true. No host kernel segment
+  preloading in this mode. Evidence research/polaris/qemu-xnu-loader-0001/.
+- tools/qemu-sweet.py new integration flags validated by actual execution;
+  ABI unit test still passes. No XNU phone packaging/boot attempted yet.
+
+### Backup/thermal update ~21:10 local
+
+- system/vendor/cust all fully verified (exec37168 exited0); manifests under
+  backup/polaris-full-system-20261023-205755/, vendor-20261023-210355/,
+  cust-20261023-210608/. userdata1216 still source-hashing,~93.85GB of115.17GB
+  read,0writebytes. Wait for exec91104 final VERIFIED before reboot.
+- Battery observed85%, temp520 (=52C), charging. Both cpufreq governors were
+  performance. Runtime-only maximum reduced to supported1056000kHz on cpu0
+  andcpu4 clusters to cool during remaining verification; minfreq300000/825600.
+  This is sysfs runtime tuning, no persistent partition write. User told keep
+  USB attached and place phone somewhere ventilated. Wait for cooldown before
+  a hardware experiment. Record actual next temperature; do not assume cooled.
+- Apple sources remain3 read-only mounts (recorded above). Small local HFS
+  ownership test created research/polaris/ownership-test.dmg: hdiutil from
+  folder under ordinary user maps source root owner0:0 to501:20 even with
+  -anyowners; do NOT use that result for iOS root. Test image detached. A real
+  Mac root-image builder needs privileged ownership-preserving copy (or other
+  verified implementation). No root image built yet; no sudo requested yet.
+- tools/qemu-sweet.py adds optional --loader-image + --linux-dtb (polaris only)
+  to test actual shim cold-RAM copy/handoff; no host kernel RAM load in this
+  mode. Integrated run exec43952 in research/polaris/qemu-xnu-loader-0001,
+  same verified kernel/QEMU ADT/init; running150seconds. Source Linux FDT is
+  verified Android live.dtb with only chosen initrd-start/end edited by fdtput
+  for0x84000000..0x8501ecc0. Not a phone boot. Result still pending.
+
 ### XNU QEMU userspace milestone ~21:05 local
 
 - Kernel **downloaded + ZIP CRC + SHA256 VERIFIED**, 17485224bytes,

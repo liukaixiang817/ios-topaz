@@ -2,8 +2,9 @@
 
 The requested target is **Android + Mindows Windows 11 + iOS 16**, preserving
 existing data and reserving about 64 GiB for iOS. The existing topaz installation
-procedure does not satisfy this: it replaces `userdata`. The first polaris XNU build is queued; no
-iOS boot image, iOS root or UEFI iOS entry has been built or tested here.
+procedure does not satisfy this: it replaces `userdata`. The first polaris XNU
+kernel builds and runs a static test init in QEMU. No XNU hardware boot,
+iOS root, iOS GUI or UEFI iOS entry has been tested on this phone.
 
 ## Standalone boot diagnostic 0001
 
@@ -152,7 +153,7 @@ Hardware source references for future work:
 and [edk2-porting firmware](https://github.com/edk2-porting/edk2-msm).
 These are references; the installed Mindows UEFI version has not been identified.
 
-## First XNU build profile (CI queued; not yet booted)
+## First XNU build profile (CI and QEMU pass; no hardware result)
 
 GitHub Actions now accepts `target_platform=polaris`. This stages sweet's
 0001–0079 baseline plus the isolated polaris overlay, excluding topaz's drivers
@@ -175,16 +176,22 @@ placeholders, not measurements. CPU0's 1.7664 GHz maximum was read from Linux.
 Patch hunks have been checked against source reconstructed through 0079, and
 host tests cover profile isolation, ADT serialization and mapping bounds.
 The first CI run is [39933084495](https://github.com/liukaixiang817/ios-topaz/actions/runs/39933084495),
-commit `b50a1063fe9d1734bc341d676c4689c0b0facb47`; it was observed queued.
-No complete kernel build or XNU hardware validation has happened. No compiled
-kernel should be booted merely because these host checks pass.
+commit `b50a1063fe9d1734bc341d676c4689c0b0facb47`; **successful**. The
+17485224-byte arm64 kernel SHA-256 is
+`30a8a7502adb35d6d1d6b4dbdf54b2d7b4864fbce39cb203cfa6d7de60eda2b6`.
+The CI log confirms the overlay and compiler flags. Disassembly confirms the
+UFS root-device entry calls printf and returns ENXIO without controller access.
+No XNU hardware validation has happened.
 
 Use `tools/qemu-sweet.py PAYLOAD OUTDIR --platform polaris --qemu /path/to/qemu
 --nm /usr/bin/nm --kernel MATCHING_KERNEL` with the **QEMU** polaris ADT.
 This selects the 1080×2160 framebuffer at 0x9d400000 for both boot arguments and
 snapshots. The runner sizes emulator RAM to cover the payload’s upper bank.
-A host ABI check covers the 64-bit addresses above 4GiB and video fields; the
-new polaris XNU kernel has not run in QEMU yet.
+A host ABI check covers the 64-bit addresses above 4GiB and video fields.
+Both direct loading and the actual new polaris shim reach **PID1** with the
+static RAM init and repeated five-second heartbeats in 150-second QEMU runs,
+with zero undecodable glyphs and no visible panic. This tests a synthetic
+init, not Apple launchd or an iOS GUI.
 
 ## Offline Android backup image
 
@@ -224,3 +231,11 @@ no ready Android boot image or XNU kernel. The QEMU cases use a synthetic
 parked entry: one proves the copy/BSS/boot_args layout above4GiB; another proves
 an out-of-bounds segment leaves destination RAM unchanged. Both pass without
 exceptions. Neither is an XNU/iOS boot or hardware test.
+
+Actual shim integration can be tested with `qemu-sweet.py --platform polaris
+--loader-image shim/out/polaris-ram-loader/Image --linux-dtb INPUT.dtb` plus
+the normal payload/kernel arguments. Copy the verified Linux FDT and set its
+`/chosen/linux,initrd-start/end` to the raw payload at0x84000000. In this mode
+QEMU does **not** preload the kernel destination: the real shim validates,
+copies and jumps. The successful integration result is under ignored
+`research/polaris/qemu-xnu-loader-0001/`.

@@ -161,6 +161,8 @@ def main():
     ap.add_argument('--secs', type=float, default=20)
     ap.add_argument('--gdb', action='store_true', help='start halted, gdb stub on :1234, no timeout')
     ap.add_argument('--hmp', action='append', default=[], help='extra monitor command run after stop (repeatable), e.g. "x /8gx 0xfffffe..."')
+    ap.add_argument('--loader-image', help='test the actual polaris shim Image instead of host-side segment copies')
+    ap.add_argument('--linux-dtb', help='polaris FDT with initrd at 0x84000000 (required with --loader-image)')
     ap.add_argument('--platform', choices=FRAMEBUFFERS, default='sweet', help='framebuffer geometry for boot_args and snapshots')
     ap.add_argument('--qemu', default='qemu-system-aarch64', help='QEMU executable')
     ap.add_argument('--nm', default='llvm-nm', help='Mach-O nm executable (LLVM or macOS)')
@@ -168,6 +170,10 @@ def main():
     ap.add_argument('--kernel', help='matching unstripped kernel, for exact framebuffer text decoding (uses llvm-nm)')
     ap.add_argument('--fail-on-panic', action='store_true', help='exit 2 for a visible panic, 3 for incomplete/blank decoding; requires --kernel')
     a = ap.parse_args()
+    if bool(a.loader_image) != bool(a.linux_dtb):
+        ap.error('--loader-image and --linux-dtb are required together')
+    if a.loader_image and a.platform != 'polaris':
+        ap.error('--loader-image currently requires --platform polaris')
     if a.fail_on_panic and not a.kernel:
         ap.error('--fail-on-panic requires --kernel')
     payload = open(a.payload, 'rb').read()
@@ -186,7 +192,7 @@ def main():
     fb_base, _, fb_height, fb_stride = framebuffer
     phys_base, img, ba_pa, entry_pa = build_image(payload, framebuffer)
     open(f'{out}/ram.bin', 'wb').write(img)
-    open(f'{out}/stub.bin', 'wb').write(stub(ba_pa, entry_pa))
+    open(f'{out}/stub.bin', 'wb').write(stub(0x90000000, 0x80080000) if a.loader_image else stub(ba_pa, entry_pa))
     print(f'phys_base={phys_base:#x} boot_args={ba_pa:#x} entry={entry_pa:#x}', file=sys.stderr)
 
     mon = f'{out}/mon.sock'
@@ -198,9 +204,15 @@ def main():
     cmd = [a.qemu, '-M', 'virt,gic-version=3', '-cpu', a.cpu, '-smp', '1', '-m', f'{ram_gib}G',
            '-nographic', '-serial', f'file:{out}/serial.txt', '-qmp', f'unix:{mon},server,nowait',
            '-d', 'int,guest_errors,unimp', '-D', f'{out}/qemu.log', '-no-reboot',
-           '-device', f'loader,file={out}/ram.bin,addr={phys_base:#x},force-raw=on',
            '-device', f'loader,file={out}/stub.bin,addr={STUB_PA:#x},force-raw=on',
            '-device', f'loader,addr={STUB_PA:#x},cpu-num=0']
+    if a.loader_image:
+        open(f'{out}/payload.bin', 'wb').write(payload)
+        cmd += ['-device', f'loader,file={os.path.abspath(a.loader_image)},addr=0x80080000,force-raw=on',
+                '-device', f'loader,file={os.path.abspath(a.linux_dtb)},addr=0x90000000,force-raw=on',
+                '-device', f'loader,file={out}/payload.bin,addr=0x84000000,force-raw=on']
+    else:
+        cmd += ['-device', f'loader,file={out}/ram.bin,addr={phys_base:#x},force-raw=on']
     if a.gdb:
         cmd += ['-S', '-gdb', 'tcp::1234']
     p = subprocess.Popen(cmd, stdin=subprocess.DEVNULL)
@@ -227,9 +239,10 @@ def main():
         os.unlink(f'{out}/fb.raw')
     else:
         print(f'qemu exited early: {p.returncode}', file=sys.stderr)
-    for f in ('ram.bin',):
-        os.unlink(f'{out}/{f}')
-    result.update(platform=a.platform, framebuffer_base=hex(fb_base), framebuffer_height=fb_height)
+    for f in ('ram.bin', 'payload.bin'):
+        if os.path.exists(f'{out}/{f}'):
+            os.unlink(f'{out}/{f}')
+    result.update(actual_shim=bool(a.loader_image), platform=a.platform, framebuffer_base=hex(fb_base), framebuffer_height=fb_height)
     open(f'{out}/result.json', 'w').write(json.dumps(result, indent=2) + '\n')
     print(json.dumps(result), file=sys.stderr)
     print(f'{out}/fb.png  {out}/regs.txt  {out}/qemu.log', file=sys.stderr)
