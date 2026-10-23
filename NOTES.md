@@ -10,39 +10,72 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION —0011 bounded process sampler prepared; build and simulate
+### CURRENT NEXT ACTION —0011 process diagnostic boot sent; capture PS screen evidence
 
-- CURRENT PHONE STATE: temporary root recovery (new exec91445 PASS), not XNU.
- User returned FASTBOOT after0010 photos; known recovery temporarily booted.
- New process-sample-0011/preflight.json: fresh182extents/GPT identical, ext4
- clean,userdata unmounted/runtimeRO1,33C,CPU caps1056000. No persistent writes.
--0010 three readable photos privately saved display-console-0010/hardware-logo-
- diagnostics-{1,2,3}.jpg and JSON. com.apple.datamigrator exec visible; later
- repeated fairplayd.H2/bluetoothd exec. RAM512MiB,groups20856..21095/32768,
- dirty335196..337008KiB,written1108340..1117420KiB,UFS-error0,refused0. This is
- NOT exhausted. Storage-busy reporter followed by fresh accounting, not proof
- of deadlock. Only first retained mkdir MCM e2/lookup missing root logs dir;
- no GUI crash visible in these late snapshots, NOT lifetime-health/GUI proof.
- Current saved frames cannot identify blocked SpringBoard/backboardd/migration.
--0808 adds explicit polarissample1 AND polarisdiag1 register-only sampling,
- started after BSD bootstrap (both RAM/file-root paths); previously legacy
- sampler never started on polaris. First60s, then30s,24passes,max7processes,
- max8threads/task. Full executable names, saved PC/LR/SP/FP/x16, cached cache
- slide (ffffffff=unavailable), thread state/wait event/continuation. No user
- memory reads/stack faults, process suspension, disk logger, MMIO, or return
- value bypass. Task lock try-only; thread refs retained then lock released;
- short scheduler lock copy, all output outside locks. Legacy walker unchanged
- for other profiles. Three actual CI-header/options local compiles PASS;
- exact patch apply/output check PASS. Full CI/new-kernel QEMU NOT yet run.
- Private source baselines/scripts/evidence process-sample-0011/. Public boot
- profile tools/polaris-ios-process-diagnostic.cmdline preserves512MiB volatile
- COW,ufsrw0,displayon/visibleconsole1Hz; adds polarissample1 only.
-- Next commit/push completed sampler, use ghCI, verify source/profile/hash,
- sequential QEMU enabled (known sleeping named synthetic processes) and both
- opt-in gates. No actual Apple GUI claim from simulations. Then guarded
- temporary0011 boot with fresh readonly map/GPT/temp checks. Phone root/base,
- Android/Windows untouched. Real home screen,touch,USB,Apps,persistent64GiB and
- triple-boot remain unfinished. Don’t repeat repair/staging or set ufsrw1.
+- CURRENT PHONE STATE:0011 temporary XNU diagnostic image SENT; exec4751 exit0,
+ fastboot1.170s,2026-10-23T17:23:44.830990Z (=2026-10-24 Australia/Melbourne).
+ Transport acceptance only; actual screen/kernel/GUI state NOT yet observed.
+ Image shim/out/polaris-xnu-process-sample-0011/polaris-xnu-process-sample-0011.img,
+ 47288320bytes,SHA c5a717a71ee5aa08d9198c80e59676ddef828c5847765964ca477ac7886bec52;
+ payloadSHA5db2b09fcfd8bdf5c66a20adb42f86611c0b57c5b427df8daa40999b22a3cd1b.
+ Guarded process-sample-0011/boot-phone.py rechecked exact source/profile/hash,
+ every new-kernel QEMU provenance/check,actual C payload copy-plan validator,
+ exact prepared image SHA,phone polaris/rootrecovery/size,userdata unmountedRO1,
+ fresh182extent map/GPT head identical,temp<45C. Earlier fresh recovery exec91445
+ preflight PASS,33C,clean ext4,CPU caps1056000. No new persistent phone writes.
+- NEXT: about2min after start, capture45s video OR burst full-screen photos when
+ POLARIS SAMPLE/PS appears. First sample60s after BSD bootstrap,then30s,24passes.
+ Need complete SpringBoard/backboardd/datamigrator/migrationpluginwrapper and
+ launchd PS headers (PID,cache slide,mach header) +t0 PC/LR/x16/state/continuation,
+ PS END mask and any new CRASH/D RAM/D COW. Console wraps circularly at67columns
+ /67rows; register lines wrap and multiple tasks may overwrite earlier rows,
+ so video/burst matters. No USB log or restart channel. Keep this boot until
+ evidence saved; do NOT request another FASTBOOT merely from recurring COW text.
+ New sampler is best-effort saved state, not synchronized stackshot; no user
+ stack/heap reads, no suspension. Symbolicate actual PC/LR against20H392 cache
+ and current kernel for continuation. UINT32_MAX cache slide means unavailable.
+ Full desktop,touch,USB,Apps,persistent64GiB/tripleboot still unfinished.
+- Sampler source816042632e4958de66ca3983403d4628a6f3f985; CI39991203030/
+ job120543103266 SUCCESS,full gh log research/polaris/ci-39991203030.log.
+ Exact polaris profile/source,artifact12518986572 (60298281bytes),ZIP kernel
+ entryCRC and kernelSHA verified. Kernel xnu/out-polaris-0011/kernel.development.sweet
+ SHA66ec476e4ff8a33dc285d245db1932bff4774b3887121fcf61b3d0710dee8dd5.
+ Linked kernel contains new sampler symbols/banner. Three actual CI-header
+ syntax AND ARM64 object compiles PASS,no stubs; nm confirms BSD init->sampler
+ ->register snapshot. Exact patch apply/output check PASS. Platform isolation
+ 3tests PASS. No source/driver/return-value bypass after these checks.
+- New-kernel sequential QEMU suite PASS exec62078: enabled200s,noarg90s,
+ nodiag90s. Synthetic3 known select93 children: exact PC0x100000464,x16=93,
+ valid LR,wait state1; full22-character migrationpluginwrapper name preserved.
+ Four matching processes/mask27, multiple completed passes,<=8threads/task;
+ both explicit opt-in gates silent when missing. CPU fitted display start
+ preserved,PID1 alive,no panic in full RAM rings,0unknown glyphs in all3.
+ Same kernel and fixture hashes verified. Tests do NOT run Apple services/GUI,
+ real UFS or physical input. qemu-check.json/verification.json and all per-test
+ provenance saved process-sample-0011/. Prior0009 fixture smoke90s also PASS.
+ Initial QMP path too long corrected with short qref path; original evidence
+ retained. Initial exec-log assertions inapplicable to static fixture without
+ LC_BUILD_VERSION; smoke scope corrected to3child-entry markers only, NEW
+ sampler separately verified exact identities/PCs. No kernel protection bypass.
+-0808: explicit polarissample1 AND polarisdiag1; starts after BSD bootstrap on
+ both RAM/file-root paths. Legacy sampler was never started on polaris. Max
+ 7matching processes and8threads/task; cached slide,header,PC/LR/SP/FP/x16,
+ thread state/wait event/continuation. Task trylock/thread refs,release tasklock
+ before short scheduler-lock snapshots; all formatting outside locks. No user
+ memory reads/page faults,MMIO,disk logger,process suspension,or syscall result
+ changes. Other profiles retain original behavior. Public boot profile
+ tools/polaris-ios-process-diagnostic.cmdline adds polarissample1 to prior
+ visible console1Hz,CPU display,512MiB RAMCOW,ufsrw0/rootrw1/sweetlog0/sweetscan=-.
+-0010 three readable hardware photos saved display-console-0010/hardware-logo-
+ diagnostics-{1,2,3}.jpg/.json. com.apple.datamigrator exec visible; later repeated
+ fairplayd.H2/bluetoothd exec. RAM512MiB,groups20856..21095/32768,dirty335196..
+ 337008KiB,written1108340..1117420KiB,UFS-error0,refused0: NOT exhausted. Storage
+ busy reporter followed by fresh accounting,not proof of deadlock. Only first
+ retained mkdir MCM e2/lookup missing root logs dir visible. No GUI crash in
+ these late snapshots,NOT lifetime health/desktop proof. User then returned
+ FASTBOOT; temporary known recovery and all preflight checks passed above.
+- Do not repeat userdata repair/staging,enable ufsrw1,format/resize/GPT/Windows
+ writes,or overwrite immutable16GiB root. Android/data preservation scope holds.
 
 -0009 user observation (2026-10-24): static Apple Logo WITHOUT progress bar
  for over3min. No photo/video yet; no visible daemon logs available. This is
