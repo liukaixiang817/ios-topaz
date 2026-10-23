@@ -10,7 +10,26 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION —0008 CI passed; simulations before temporary boot
+### CURRENT NEXT ACTION —0008 simulations passed; guarded phone boot next
+
+-0008 kernel downloaded/verified SHA256
+  4da8b6d2dfb715a9c4b711a1d73cce7bf4b6b00fbf73c3d53d6d1a3f3ca03a1a,
+  xnu/out-polaris-0008/kernel.development.sweet. Artifact12513099018,
+  60292491bytes; exact0d source/profile,ZIP entryCRC and kernelSHA verified.
+  0806 applied in complete gh log; no new kernel compile/link failures.
+  QEMU diagnostic150s PASS: exact cryptex mkdir0705 succeeds twice, synthetic
+  first failures retained with[cow=0/0], mkdir/fcntl records repeated, PID1 alive,
+  no panic/0unknown glyphs. QEMU arena negative test reads actual kernel globals:
+  reserved536870912bytes,used0,base nonzero,then expected host/link refusal and
+  root-unavailable panic6 (QEMU has NO UFS host); this is NOT a successful boot.
+  Initial RAM run alongside the other two QEMUs: PID1 alive then interrupt-mask
+  duration42.998992ms exceeded13.631488ms; preserved qemu-0008-ram-first/.
+  Isolated repeat SAME kernel/args150s PASS, PID1 alive,no panic in screen/ring,
+  0unknown glyphs. Host scheduling cause plausible but NOT proven; no hygiene
+  protection disabled. No actual Apple service/UFS COW/GUI validation in QEMU.
+  Private verification.json and per-test provenance SHA saved. Phone boot script
+  now requires all these checks and exact matching tested SHA. Phone still RO
+  recovery until boot.json confirms sent; no new persistent phone writes.
 
 - Latest source commit0d5066dfca2181c711c30f254e8500c0f60a2995 (0806 arena,
   first-failure COW snapshots), after ac9d97c54d2ebaee2348b49f55dcbd97398c9362.
