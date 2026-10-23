@@ -1,0 +1,105 @@
+--- a/bsd/dev/sweet_ufs.c
++++ b/bsd/dev/sweet_ufs.c
+@@ -412,6 +412,21 @@
+  * No BSD disk registration, filesystem mount, persistent logging or input/USB
+  * driver startup. The normal sweet_ufs_init remains disabled on this platform.
+  */
++static bool polaris_probe_report_enabled;
++static char polaris_probe_status[128];
++static const char *polaris_probe_queue_status = "not taken";
++bool polaris_ufs_probe_report(void);
++bool
++polaris_ufs_probe_report(void)
++{
++	/* Same startup thread owns both the probe and its retained report. This
++	 * function never touches UFS registers or submits another command. */
++	if (!polaris_probe_report_enabled) { return false; }
++	printf("\nPOLARIS UFS RESULT: %s\n", polaris_probe_status);
++	printf("POLARIS UFS QUEUE: %s (no new I/O)\n", polaris_probe_queue_status);
++	return true;
++}
++
+ void polaris_ufs_probe(void);
+ void
+ polaris_ufs_probe(void)
+@@ -420,6 +435,8 @@
+ 	if (!PE_parse_boot_argn("polarisufsprobe", &enabled, sizeof(enabled)) || enabled != 1) {
+ 		return;
+ 	}
++	polaris_probe_report_enabled = true;
++	strlcpy(polaris_probe_status, "REFUSED: initialization incomplete", sizeof(polaris_probe_status));
+ 	DTEntry node;
+ 	uintptr_t const *reg = NULL;
+ 	uint32_t const *expected = NULL;
+@@ -429,6 +446,7 @@
+ 	    size != 2 * sizeof(uintptr_t) || reg[0] != 0x1d84000 || reg[1] != 0x2500 ||
+ 	    SecureDTGetProperty(node, "head-crc32", (void const **)&expected, &size) != kSuccess ||
+ 	    size != sizeof(uint32_t)) {
++		strlcpy(polaris_probe_status, "REFUSED: hardware/backup metadata", sizeof(polaris_probe_status));
+ 		printf("POLARIS UFS: probe refused, missing validated hardware/backup metadata\n");
+ 		return;
+ 	}
+@@ -440,11 +458,13 @@
+ 	if (ufs_rd(0x08) != 0x210 || !(ufs_rd(REG_HCE) & 1) ||
+ 	    (ufs_rd(REG_HCS) & (HCS_DP | HCS_UTRLRDY)) != (HCS_DP | HCS_UTRLRDY) ||
+ 	    ufs_rd(REG_UTRLDBR) || ufs_rd(0x78) || ufs_rd(0x80)) {
++		strlcpy(polaris_probe_status, "REFUSED: host/link/queue state", sizeof(polaris_probe_status));
+ 		printf("POLARIS UFS: probe refused, host/link/queues not in expected state\n");
+ 		goto out;
+ 	}
+ 	if (kmem_alloc_contig(kernel_map, &su.dma, DMA_SIZE, PAGE_MASK, 0, 0,
+ 	    KMA_DATA | KMA_ZERO | KMA_PERMANENT, VM_KERN_MEMORY_IOKIT) != KERN_SUCCESS) {
++		strlcpy(polaris_probe_status, "REFUSED: DMA allocation", sizeof(polaris_probe_status));
+ 		printf("POLARIS UFS: contiguous DMA allocation failed\n");
+ 		goto out;
+ 	}
+@@ -472,8 +492,11 @@
+ 		    memcmp(b + UFS_BLOCK, "EFI PART", 8) == 0 && crc == *expected;
+ 		printf("POLARIS UFS: HEAD CRC32 %08x expected %08x %s\n",
+ 		    crc, *expected, valid ? "MATCH" : "MISMATCH");
++		snprintf(polaris_probe_status, sizeof(polaris_probe_status),
++		    "%s CRC32 %08x expected %08x", valid ? "MATCH" : "MISMATCH", crc, *expected);
+ 	} else {
+ 		printf("POLARIS UFS: read-only probe error %d\n", error);
++		snprintf(polaris_probe_status, sizeof(polaris_probe_status), "ERROR %d", error);
+ 	}
+ 	/* On timeout leave the queue and its permanent DMA allocation alone.
+ 	 * No controller reset/abort: an outstanding DMA must never use freed RAM.
+@@ -487,11 +510,14 @@
+ 		if (ufs_rd(REG_UTRLBA) == old_lo && ufs_rd(REG_UTRLBAU) == old_hi &&
+ 		    ufs_rd(REG_UTRLRSR) == old_rsr) {
+ 			ufs_wr(REG_IE, old_ie);
++			polaris_probe_queue_status = "restored";
+ 			printf("POLARIS UFS: idle queue restored; probe complete\n");
+ 		} else {
++			polaris_probe_queue_status = "restore failed; DMA retained";
+ 			printf("POLARIS UFS: queue restoration failed; DMA retained\n");
+ 		}
+ 	} else {
++		polaris_probe_queue_status = "pending/timeout; DMA retained";
+ 		printf("POLARIS UFS: pending/timeout; queue and DMA retained\n");
+ 	}
+ out:
+--- a/iokit/Kernel/arm/SweetCPU.cpp
++++ b/iokit/Kernel/arm/SweetCPU.cpp
+@@ -22,6 +22,7 @@
+ extern "C" boolean_t sweet_cpu_signal_is_enabled(unsigned int cpu);
+ #if defined(POLARIS_RAM_ONLY)
+ extern "C" void polaris_ufs_probe(void);
++extern "C" bool polaris_ufs_probe_report(void);
+ #endif
+ 
+ class SweetCPU;
+@@ -180,6 +181,12 @@
+ 	    topology->num_cpus, topology->num_cpus);
+ #if defined(POLARIS_RAM_ONLY)
+ 	polaris_ufs_probe();
++	/* The explicit diagnostic mode keeps its result visible after BSD/init
++	 * logs wrap the console. Sleep in this completed CPU startup thread;
++	 * no mutex is held, and only the saved result is printed, no more I/O. */
++	while (polaris_ufs_probe_report()) {
++		IOSleep(10000);
++	}
+ #endif
+ 	thread_terminate(current_thread());
+ }

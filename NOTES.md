@@ -10,6 +10,19 @@ and DO NOT authorize erasing this phone. No destructive step is approved.
 
 ### CURRENT NEXT ACTION — verified local root; read-only UFS kernel ready for tests
 
+- Latest user photo CONFIRMS probe reached "idle queue restored; probe complete"
+  and RAM init PID1/two heartbeats. Private evidence
+  research/polaris/xnu-ufs-probe-0002/hardware-pid1-queue-restored.jpg and
+  hardware-result.json. CRC MATCH/MISMATCH and any earlier errors NOT visible.
+  This restoration branch also runs after non-timeout errors: do NOT infer
+  successful UFS reads from it. No timeout branch on this observed path.
+  Need keep final diagnostic status visible without issuing more storage reads.
+- Added0802 retained-report overlay: save CRC/error/refusal and queue status;
+  completed CPU startup thread prints saved report every10s using IOSleep,
+  only when explicit polarisufsprobe=1 was accepted. No repeated UFS requests
+  or register reads in reporter; original command allowlist unchanged. Patch
+  dry-run PASS and existing policy/ADT tests5 PASS. CI build pending.
+
 - User requires real home screen/apps and preservation of Android + Windows.
   Full iOS/triple boot is NOT complete. No partition/GPT/format/flash changes.
   Original sweet's home screen/app failures are not polaris validation.
@@ -67,9 +80,8 @@ and DO NOT authorize erasing this phone. No destructive step is approved.
   image SHA and no persistent mounts rechecked before automatic adb reboot.
   send46172KB OKAY1.081s,bootOKAY0.091s,total1.184s. Private records
   research/polaris/xnu-ufs-probe-0002/{boot.log,boot.json}. No flashing.
-  ABL acceptance is NOT proof of probe result. Awaiting user screen reading
-  via async: POLARIS UFS HEAD CRC32 ... MATCH/MISMATCH,probe error/timed out.
-  User told wait~30s and do not reboot. Current XNU has no USB logs/control;
+  User photo received: queue restored and PID1, but CRC line not visible;
+  see latest observation above. No CRC result confirmed. Current XNU has no USB logs/control;
   may require physical buttons after observation. Do not claim UFS success
   or ask user to run the completed Mac root build again.
 - Root transport/persistent file storage and eventual64GiB layout unresolved.
