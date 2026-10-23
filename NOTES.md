@@ -10,33 +10,46 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION —0012 caller kernel verified; negative gates running
+### CURRENT NEXT ACTION —0012 caller diagnostic boot sent; capture compact caller/FB evidence
 
-- CURRENT PHONE STATE: temporary ROOT READONLY RECOVERY. User returned FASTBOOT
- after0011 evidence; preflight exec85081 PASS: fresh182extent map/GPT identical,
- clean outerext4,userdataunmountedRO1,35C,CPU caps1056000. NO0012 phone boot yet.
- No repeat repair/staging,format/resize/GPT/Windows/base-image writes allowed.
+- CURRENT PHONE STATE:0012 temporary XNU diagnostic boot SENT,exec46178exit0,
+ fastboot1.166s,2026-10-23T18:01:42.248259Z (=2026-10-24 Australia/Melbourne).
+ Transport acceptance ONLY,actual0012 kernel/screen/GUI not yet observed.
+ Guarded boot rechecked exact280f source/profile/kernelSHA,all4QEMU results/
+ provenances,actualCpayloadplan,exactpreparedimageSHA,phone polaris/root/size,
+ userdataunmountedRO1,fresh182extent map/GPT head identical,temp<45C. No flash,
+ GPT,Windows,base-image writes. iOS writes volatile512MiB RAM only,ufsrw0.
+ Initial recovery/preflight85081passed35C/clean ext4/caps1056000 before build.
+- NEXT: about2min after start,capture full-screen FB + PS PID/slide/header,
+ T state/PC/LR/sc,M packedMach metadata,L lock args,B caller-address lines.
+ Compact2threads should preserve main backboardd and SpringBoard evidence in
+ 67x67circular console; burst photos or45s video if wrapping. Firstsample60s
+ afterBSDbootstrap,then30s,24passes. Keep this boot until evidence saved; no
+ USB restart/log channel. Do NOT request another FASTBOOT from just COW text.
+ Do not change startup/keystore/locking/errno checks without actual callers.
+ Decode M metadata via wait-callers-0012/ipc-argument-layout.json: packedports
+ lowremote/highlocal,id high32 signed(ifSEND),recv high32 receive-name. Send
+ fields may be meaningless in receive-only wait; port names process-local.
+ Full home,touch,USB,Apps,persistent64GiB/tripleboot still unfinished.
 -0012 source280f1288d6dd1743ea6b788670ab535b14777e4d; CI39996796313/
  job120562312461 SUCCESS,full gh log research/polaris/ci-39996796313.log.
  Exact source/polaris profile/artifact12519894168 (60315294bytes),ZIP entryCRC
  and kernelSHA verified. Kernel xnu/out-polaris-0012/kernel.development.sweet
  SHA25eb4cc035318a35f3aa1be677bf847679d560cf98e483fa926e0b1f37e37850.
  All new source baselines/private scripts/test results wait-callers-0012/.
-- ENABLED200s actual-new-kernel QEMU PASS:3 exact resident two-frame chains
- [0x10000045c,0x10000044c],savedPC/sc93,unbacked FP=SP+64KiB returns n0/e2,
- stack1,mask67,PID1 alive,multiple completed samples,no panic in full RAM ring
- or screen,0unknown glyphs. Actual reader integration proof,synthetic only.
- Per-mode qemu-check-on.json bound to25eb4cc0...; remaining off180s,missing
- explicitcpus180s,nodiag90s RUNNING sequentially exec92409,stop on any failure.
- Do NOT boot until full qemu-check.json passes with all4 matching provenances.
- QEMU does NOT validate Apple services,physical UFS/touch,GUI or Apps,or SMP.
-- Mac-only image prepared,actual C copy-plan validator PASS; prepared.json:
+- ALL4 new-kernel sequential QEMU tests PASS exec92409:enabled200s,
+ stackoff180s,missingexplicitcpus180s,nodiag90s.3exact resident2frame chains
+ [0x10000045c,0x10000044c],unbackedFP n0/e2,correct savedPC/sc93,mask67,
+ multiple samples,all frame/CPU-argument/outergates correct,PID1/displaystart
+ intact,no panic screen/full rings,0unknown glyphs. All4same25eb4cc0... kernel
+ and fixture provenance. Full qemu-check.json/verification.json saved.
+ Tests synthetic ONLY,not Apple services,physical UFS,touch,GUI,Apps,or SMP.
+- Phone image same prepared/validated artifact used above:
  shim/out/polaris-xnu-wait-callers-0012/polaris-xnu-wait-callers-0012.img,
  47288320bytes,SHA1ee4940efa9fbe7e85d6cf98801e350dae7bdfb5a21762538182e07da6087133,
  payloadSHA78f1d98c7ca3a287a09d71eed2160e1ae96bac45d50e5d6c8bf19b1ece373478.
- Guarded boot-phone.py rechecks precise280f kernel/profile/hash,all tests/
- provenances,actualCpayloadplan,exactimagehash,phone/model/root/size/RO/mounts,
- freshmap/GPT/temp<45 before temporary fastboot boot. Not executed yet.
+ ActualCcopy-plan PASS. boot.json/boot.log/phone-boot.log record sent state.
+ Guarded script is not a reason to reboot again before current evidence.
 -0809 adds compact max2threads/task and optional polarisstack1 reader,6frames.
  Explicitcpus1 AND maximum possible CPU0/online1 required,or no frame reads.
  Task/map/thread refs with try-only tasklock; all locks released before reads.
