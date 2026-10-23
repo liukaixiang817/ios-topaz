@@ -10,7 +10,24 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION —0007 temporary boot sent; await retained daemon errors
+### CURRENT NEXT ACTION —0007 early hardware evidence saved; await later state
+
+- NEW0007 PHOTO (2026-10-24): hardware-early-startup.jpg/.json privately in
+  daemon-loops-0007/. Explicit POLARIS DIAG and D COW active=1,groups31->43
+  /8192,UFS-error=0: FIRST direct hardware confirmation of enabled RAM COW
+  and changing allocation count (43groups=704512bytes at photographed stage).
+  Actual corecrypto FIPS POST all tests PASSED/result=true. keybagd reports
+  System Keybag loaded, then launchd exec usermanagerd. Warnings: /private/var
+  mount does not support Data Protection, cannot set tmp classD, options DT
+  entry absent. These warnings are followed by continued startup; not proof
+  of a fatal condition. No D CRASH/MKDIR/FCNTL or panic visible in this image.
+  Do NOT conclude0006 daemon failures fixed, no later-service/GUI/app proof.
+  Leave phone running; ask whether logs still progress, only unchanged COW
+  reports recur, or retained errors appear. Async state question pending.
+  Do NOT request FASTBOOT or restart merely from this early photograph.
+  If genuinely stalled at usermanagerd, the old sweetsample boot argument
+  alone won't work on polaris: sweet_sample_start is currently only called
+  below the non-polaris sweet_ufs_init branch, bypassed by file-root init.
 
 - LATEST PHONE STATE:0007 temporary diagnostic boot SENT SUCCESSFULLY
   (exec28408,return0,total1.176s),2026-10-23T15:24:09.901701Z
@@ -25,7 +42,8 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   Canonical diagnostic cmdline has polarisdiag=1,
   polariscrashslot=0x1dcff9a70,sweetscan=- plus previous RAM-COW args;
   ufsrw=0 sweetlog=0, bounded128MiB volatile writes only.
-  Fastboot acceptance is NOT hardware diagnostic/Apple-service success.
+  Fastboot acceptance alone was not hardware success; early hardware evidence
+  now confirms the reporter/COW mode above, not later Apple-service success.
   Need photo/video of POLARIS DIAG / D CRASH / D MKDIR / D FCNTL / D COW,
   especially actual MCM err/xerr and cryptexd pathname/stage. Records reprint
   every10s but other daemon logs can scroll over them. Keep current screen
@@ -43,7 +61,7 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   no dereferencing user pointers in kernel. No syscall result changes or
   storage write policy changes. Diagnostic profile disables large heap dumps.
   Local four-file Apple-clang compile with actual CI headers/options PASS
-  (no stubs); full CI/kernel link and QEMU integration still pending.
+  (no stubs); full CI/kernel link and QEMU integration PASS below.
   Private sources/originals/logs in daemon-loops-0007/.
 - Commit0cb4726e8640e4b33dabf31a869b60c4911154cd pushed; CI39975701824,
   job120489586542 SUCCESS; full compile/link and0805 applied. Downloaded
@@ -63,7 +81,7 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   errno9/path/stage and fcntl errno25/cmd32767 captured; first mkdir error
   retained despite second different pathname. diagnostic-check.json PASS.
   Default profile prints no POLARIS DIAG; PID1 alive. This validates diagnostic
-  plumbing, NOT Apple services/UFS COW/GUI. Guarded phone boot prepared next.
+  plumbing, NOT Apple services/UFS COW/GUI. Guarded phone boot sent above.
 - Offline GUI audit: common SweetFramebuffer.cpp uses PE_current_console /
   physical IOSurface plus CPU memcpy, no DSI/MDP register access in this path.
   Polaris ADT currently intentionally removes disp0. Existing fallback presents
@@ -105,7 +123,7 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   identify precise SQLite and mkdirat errors, add bounded opt-in diagnostics
   if necessary, keeping ufsrw=0/base immutable. No destructive actions authorized.
 
-### Prior0006 boot/build record (phone now in recovery, see above)
+### Prior0006 boot/build record (superseded by0007 above)
 
 - LATEST PHONE STATE:0006 temporary boot SENT (exec10746,return0),
   send46180KB1.078s,boot0.091s,total1.180s. No flash/GPT/Windows writes.
