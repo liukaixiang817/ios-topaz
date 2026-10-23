@@ -10,7 +10,35 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION —0011 process diagnostic boot sent; capture PS screen evidence
+### CURRENT NEXT ACTION —0011 hardware PS captured; prepare bounded caller/frame evidence
+
+- Five photos now privately saved process-sample-0011/: hardware-sample-5.jpg,
+ hardware-sample-6.jpg,hardware-sample-10-11-{1,2,3}.jpg; structured
+ hardware-process-state.json and hardware-sample-5-symbols.json. Actual sampler
+ VERIFIED hardware,PS END5,6,10,11 found4/mask47: launchd,SpringBoard,backboardd,
+ usermanagerd. No selected migration process at those instants. SpringBoard
+ PID26,3threads,cache slide4675c000,mh100140000; persistent t0 ID210 MachIPC
+ receive (_mach_msg2_trap+8,_mach_msg2_internal+76),t1 ID1153 unfair lock wait
+ (__ulock_wait+8,__os_unfair_lock_lock_slow+172),t2 ID1177 parked workqueue.
+ Main/blocking caller NOT known from PC/LR alone; these waits do NOT prove
+ deadlock or successful GUI. Backboardd only t5..t7 visible (IPC receive),main
+ overwritten by circular console. Need compact max2thread traces with bounded
+ caller frames/IPC argument metadata,plus display swap/present/pixel counts to
+ distinguish startup waits from event loop/console obscuring an actual frame.
+ No blind startup/locking/keystore/errno bypass. No home/App proof.
+- COW groups20474..20520/32768,dirty326744..327472KiB,reserved512MiB,UFS-error0,
+ refused0. First MCM mkdir e2/lookup missing root logs directory retained at
+ group12515; no RAM exhaustion. Launchd worker IDs change; mount_hfs exec seen,
+ fairplayd.H2/bluetoothd repeatedly exec. No panic in these snapshots,not proof
+ of lifetime absence. No additional persistent phone write this turn.
+- Physical FASTBOOT request pending: current XNU has no USB restart/log port;
+ user may return while new caller diagnostic is being prepared. If confirmed,
+ temporarily boot known recovery and only read-only mapping/GPT/temp preflight.
+ Do not repeat repair/staging or overwrite root. Strict no-fault reader under
+ consideration: single-CPU topology/runtime guard,reference target vm_map,
+ bounded 16-byte resident translations via active pmap's nofault API and
+ checked RAM aperture; NO KDP APIs outside debugger,NO copyin/page faults while
+ locks held,NO exception handler changes. Not implemented/tested yet.
 
 - CURRENT PHONE STATE:0011 temporary XNU diagnostic image SENT; exec4751 exit0,
  fastboot1.170s,2026-10-23T17:23:44.830990Z (=2026-10-24 Australia/Melbourne).
