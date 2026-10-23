@@ -8,6 +8,42 @@ and DO NOT authorize erasing this phone. No destructive step is approved.
 
 ## Current handoff, 2026-10-23 (Australia/Melbourne)
 
+### XNU QEMU userspace milestone ~21:05 local
+
+- Kernel **downloaded + ZIP CRC + SHA256 VERIFIED**, 17485224bytes,
+  xnu/out-polaris-0001/kernel.development.sweet, expected30a8a750...eda2b6.
+  8x256KiB HTTP range fetching completed; generic60MB downloads unnecessary.
+  CI log saved research/polaris/ci-39933084495.log (27MB), confirms overlay
+  applied and POLARIS_RAM_ONLY/cortex-a75 compiler flags. No buildtree yet.
+- Mach-O arm64, cpusub0, entryVAfffffe000749a488. Disassembly of exported
+  sweet_ufs_rootdev: calls printf, returns6 (ENXIO), no MMIO. Static init/open
+  helpers optimized away. Use CLT llvm-objdump --disassemble-symbols (without
+  --macho); LLDB crashes in CTF symbol reader on this kernel (host tool bug).
+- **Actual polaris XNU reaches userspace PID1 in QEMU**,150seconds,
+  research/polaris/qemu-xnu-0001/{fb.png,fb.txt,regs.txt,qemu.log,result.json}.
+  Screen shows BSD root md0, init runningPID1 and repeated5second heartbeats;
+  exact glyph decoder0 unknown, no visible panic. QEMU log has6 Data Aborts
+  (ordinary VM faults possible),0 Undefined Instructions; do NOT call the
+  XNU log exception-free. This is synthetic static init, not Apple launchd/UI.
+- First QEMU attempt was sandbox-denied Unix monitor socket and exited1;
+  rerun with escalation completed successfully. Emulator only, no phone I/O.
+- Actual payload payload-qemu-0001.bin also passes the real C loader validator:
+  physbase180000000, entryPA18149a488, bootargs182518000, top18251c000;
+  RAM init at18250c000+8000. No integrated real-shim+XNU test or hardware XNU yet.
+- **system full backup verified**: backup/polaris-full-system-20261023-205755/.
+  vendor now running, then cust (exec37168). userdata sourceSHA still running
+  (exec91104), last observed~69GB of115GB read,0writebytes; do not reboot.
+- Apple OS/SystemOS/AppOS all downloaded, ZIP CRC + BuildManifestSHA384 pass.
+  Mac hdiutil can read them; all3 attached **read-only** for local root prep:
+  research/ipsw-x/{mount-os,mount-systemos,mount-appos}. Attachment records:
+  research/ipsw-x/*-attachment.plist and active-attachments.json. Current base
+  devices disk6 (OS),disk8(SystemOS),disk10(AppOS); detach ONLY using recorded
+  image identity, never assume IDs remain constant. No copy/edits made yet.
+- Removed ONLY old interrupted Windows partial7757365248bytes at
+  backup/polaris-full-mindowswin-20261023-194150/ after verified Windows hash
+  checked; that directory contained only the incomplete partial. All verified
+  backups remain intact. Critical incomplete earlier small dumps remain.
+
 ### First XNU CI success / offline backup milestone ~20:55 local
 
 - **CI39933084495 SUCCESS**, actual Build completed09:46:57UTC,
