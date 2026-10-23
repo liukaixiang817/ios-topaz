@@ -10,7 +10,35 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION —0009 CI passed; QEMU before guarded display boot
+### CURRENT NEXT ACTION —0009 QEMU complete; guarded temporary display boot
+
+-0009 sequential QEMU suite COMPLETE PASS (exec59300): display-on150s and
+ default/off150s both PID1 alive,no panic in screen or complete RAM ring,
+ 0unknown glyphs. Explicit missing-argument guard30s confirms driver refusal
+ and CPU initialization (no PID1 boot claim). Default/off replays synthetic
+ valid mkdir0705 twice + failed mkdir/fcntl/crash slots, first errors retained
+ with[cow=0/0],all assertions PASS. check-qemu.json (actual filenameqemu-check.json)
+ ties all three provenance kernelSHAs tofbfda0c7...; service,fit,gate checks PASS.
+ Native blitter tests and actual two-file local compile previously PASS; no
+ actual Apple GUI or panel presentation proof yet. Guarded boot-display-0009.py
+ ready to run next using markedphoneADT and same tested kernel. Phone currently
+ root RO recovery; all new persistent files so far only on Mac.
+
+- Verified0009 kernel SHA256
+ fbfda0c765677b7e74b4e5ec96efb8e91116e1a885fdcba5de033dcd0b12ba9e,
+ xnu/out-polaris-0009/kernel.development.sweet; artifact12516160902,
+ 60292214bytes. Profile source9073927/platformpolaris,ZIP entryCRC/kernelSHA
+ checked, full gh log ci-39984984336.log confirms0807 applied.
+ QEMU gated30s: explicit missing bootarg refused driver, CPU initialized,
+ no panic; PID1 NOT reached in30s, so this is ONLY guard validation. Initial
+ run-checks.py had overbroad PID1 assertion for this short test; scope corrected,
+ same captured test retained, no kernel protection/timeout bypass.
+ QEMU display-on150s PASS: actual driver prints CPU fit1125x2436->997x2160
+ at41,0 on1080x2160; AppleCLCD default surface1 registered using0x9d400000,
+ stride4320. PID1 alive,no panic in ring/screen,0unknown glyphs. No actual
+ IOSurface presentation/Apple GUI/user input exercised by the RAM init.
+ Default/off150s synthetic diagnostic regression CURRENTLY RUNNING exec59300;
+ then check-qemu.py + guarded boot-display-0009.py. Phone still RO recovery.
 
 - CI39984984336/job120521705845 now SUCCESS; Build16:18:55..16:23:15Z,
  full compile/link and artifact collection completed. Source90739277724a905ab3401a930f84364c5fac211b.
