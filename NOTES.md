@@ -10,7 +10,29 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION — diagnose Apple daemon loops; phone in RO recovery
+### CURRENT NEXT ACTION —0007 temporary boot sent; await retained daemon errors
+
+- LATEST PHONE STATE:0007 temporary diagnostic boot SENT SUCCESSFULLY
+  (exec28408,return0,total1.176s),2026-10-23T15:24:09.901701Z
+  =2026-10-24 Australia/Melbourne. Guarded script boot-diagnostic-0007.py:
+  kernel/profile/commit checks, both new QEMU checks PASS, actual C loader
+  validator PASS, exact phone/product/partition size, userdata unmountedRO1,
+  fresh182extents identical, GPT first1MiB identical,temp<45C before reboot.
+  No flash/GPT/Windows writes. Image
+  shim/out/polaris-xnu-diagnostic-0007/polaris-xnu-diagnostic-0007.img,
+  47288320bytes,SHA44da994895015ff8a866e817586fbff6438fc4a9d6429890943e93cfb87fcea2;
+  payloadSHA86caa7bbcb4c045c965ac5401f0c7524e9322868615feb1a221d453bfb815c1d.
+  Canonical diagnostic cmdline has polarisdiag=1,
+  polariscrashslot=0x1dcff9a70,sweetscan=- plus previous RAM-COW args;
+  ufsrw=0 sweetlog=0, bounded128MiB volatile writes only.
+  Fastboot acceptance is NOT hardware diagnostic/Apple-service success.
+  Need photo/video of POLARIS DIAG / D CRASH / D MKDIR / D FCNTL / D COW,
+  especially actual MCM err/xerr and cryptexd pathname/stage. Records reprint
+  every10s but other daemon logs can scroll over them. Keep current screen
+  until evidence saved. XNU USB log/reboot control not ported; do not ask for
+  FASTBOOT again until the new screen evidence is captured. Then recovery
+  physical power+vol-down is still necessary. No home screen/apps verified.
+  Private boot.json/boot.log under research/polaris/daemon-loops-0007/.
 
 -0805 diagnostic overlay prepared: explicit polarisdiag=1 retains first
   per-category failures in a fixed3.75KiB RAM table, reprints every10s via
@@ -23,7 +45,42 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   Local four-file Apple-clang compile with actual CI headers/options PASS
   (no stubs); full CI/kernel link and QEMU integration still pending.
   Private sources/originals/logs in daemon-loops-0007/.
-- LATEST PHONE STATE (2026-10-24): user returned FASTBOOT after two0006
+- Commit0cb4726e8640e4b33dabf31a869b60c4911154cd pushed; CI39975701824,
+  job120489586542 SUCCESS; full compile/link and0805 applied. Downloaded
+  xnu/out-polaris-0007/kernel.development.sweet, SHA256
+  958c532f9d4079c0f56fdd1fcfb463ef4714f7033cd908ab939009ea4cc829ac;
+  profile/commit/ZIP entry CRC/kernel SHA verified, ci-39975701824.log saved.
+  Artifact12511633153,60287891bytes.
+  Native ASan/UBSan COW + map/CDB policy
+  checks PASS (4unittests). Patch dry-run against exact pre0805 sources PASS.
+  Synthetic64MiB QEMU fixture prepared with named MCM/cryptex children for
+  invalid-fd mkdir/invalid fcntl/crash-slot capture; expected synthetic crashes
+  do NOT represent Apple-service validation. Fixture validated on0006:
+  both named children exec/trap, PID1 stays alive150s,no panic,0unknownglyphs.
+  New0007 QEMU RAM+diagnostic tests PASS150s each (exec2529,47958),
+  no panic observed,0unknownglyphs. Actual simulated MCM/cryptex crash strings
+  recovered through the configured user-space slot and reprinted; mkdir badfd
+  errno9/path/stage and fcntl errno25/cmd32767 captured; first mkdir error
+  retained despite second different pathname. diagnostic-check.json PASS.
+  Default profile prints no POLARIS DIAG; PID1 alive. This validates diagnostic
+  plumbing, NOT Apple services/UFS COW/GUI. Guarded phone boot prepared next.
+- Offline GUI audit: common SweetFramebuffer.cpp uses PE_current_console /
+  physical IOSurface plus CPU memcpy, no DSI/MDP register access in this path.
+  Polaris ADT currently intentionally removes disp0. Existing fallback presents
+  iPhone X1125x2436 but CROPS to physical dimensions; on1080x2160 this would
+  lose138logical pixels at each vertical edge. Future display enablement needs
+  explicit polaris opt-in/verified geometry and full-frame scaling or another
+  suitable layout; do not claim a complete screen from service publication.
+- USB offline audit for future unattended logs: live DT DWC3@a600000,
+  high-speed, QUSB2@88e2000 and SMMU s1-bypass, wrapper0xa600000+0xf8c00;
+  USB30_PRIM GDSC absolute0x10f004. MiCode official polaris-o-oss
+  drivers/clk/qcom/gcc-sdm845.c shows master CBCR0xf00c, sleep0xf010,
+  mock-utmi0xf014, clkref0x8c008. Existing sweet_usb.c uses DIFFERENT
+  master/sleep/utmi/clkref offsets0xf010/0xf014/0xf018/0x8c010! Do not enable
+  it unchanged. cfg-noc0x502c,aggre0x8201c,ahb2phy0x6a004 match.
+  Source saved privately daemon-loops-0007/gcc-sdm845.c and summarized JSON.
+  No USB MMIO/probe/gadget startup or network setup on this phone this turn.
+- Prior recovery state (2026-10-24): user returned FASTBOOT after two0006
   photos; known recovery temporarily booted. daemon-loops-0007/preflight.json
   PASS: root recovery, fresh182extent map identical, GPT head byte-identical,
   ext4 state1/no needs_recovery, userdata unmounted/runtimeRO1,35C and CPU
