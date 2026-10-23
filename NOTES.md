@@ -31,14 +31,26 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
  group12515; no RAM exhaustion. Launchd worker IDs change; mount_hfs exec seen,
  fairplayd.H2/bluetoothd repeatedly exec. No panic in these snapshots,not proof
  of lifetime absence. No additional persistent phone write this turn.
-- Physical FASTBOOT request pending: current XNU has no USB restart/log port;
+- User returned FASTBOOT; recovery/preflight exec85081 PASS:182extents/GPT
+ identical,ext4clean,userdataunmountedRO1,35C,caps1056000. CURRENT PHONE ROOT
+ READONLY RECOVERY. New0809 prepared; no new kernel CI/QEMU/hardware yet.
+ Three actual-CI-header ARM64 object compiles PASS; native shared walker
+ ASan/UBSan bounds/failure/cycle/overflow/zeroLR checks PASS,exact patch apply
+ PASS. Compactmax2threads,6resident frames,optional polarisstack1+explicitcpus1
+ +maxpossibleCPU0+online1 guard; active pmap nofault AT translation,checked
+ RAM/cache type then16byte kernel-aperture nofault copy while singleCPU IRQs
+ masked. No task/thread locks held,restore map/IRQs/preemption on every path.
+ Unmapped frame returns immediately; zeroLR ends chain (no scan of emptyLR
+ frames). Adds relaxed independent cumulative framebuffer method mask/swap/
+ present/pixel counters,not proof of GUI. Sources/baselines wait-callers-0012/.
+- Historical physical-key rationale: current XNU has no USB restart/log port;
  user may return while new caller diagnostic is being prepared. If confirmed,
  temporarily boot known recovery and only read-only mapping/GPT/temp preflight.
  Do not repeat repair/staging or overwrite root. Strict no-fault reader under
  consideration: single-CPU topology/runtime guard,reference target vm_map,
  bounded 16-byte resident translations via active pmap's nofault API and
  checked RAM aperture; NO KDP APIs outside debugger,NO copyin/page faults while
- locks held,NO exception handler changes. Not implemented/tested yet.
+ locks held,NO exception handler changes. Now implemented as0809 above; full new-kernel integration tests pending.
 
 - CURRENT PHONE STATE:0011 temporary XNU diagnostic image SENT; exec4751 exit0,
  fastboot1.170s,2026-10-23T17:23:44.830990Z (=2026-10-24 Australia/Melbourne).
