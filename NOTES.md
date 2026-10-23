@@ -10,7 +10,28 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION —0009 QEMU complete; guarded temporary display boot
+### CURRENT NEXT ACTION —0009 display boot sent; collect actual screen evidence
+
+- CURRENT PHONE STATE:0009 DISPLAY temporary boot SENT,exec82812 exit0,
+ 2026-10-23T16:32:38.530021Z (=2026-10-24 Australia/Melbourne),fastboot1.183s.
+ Guarded boot-display-0009.py: exact907 kernel/profile/hash,all QEMU guards
+ and matching provenance, actual C copy-plan validator PASS. Just before reboot:
+ correct polaris/rootrecovery/partition size,userdataunmountedRO1,fresh182extents
+ identical,GPT first1MiB identical,temp<45C. No flash/GPT/Windows/base writes.
+ Image shim/out/polaris-xnu-display-0009/polaris-xnu-display-0009.img,
+ 47288320bytes,SHA8ca5f1481a3424f9c4da50b1466c1b886fb11c98e7a5bb79450f20392f8b0f07;
+ payloadSHAfdefc493f14e2ebd17da2a8a30fda3efdd865ec01df8461a84d529a02dc8b79b.
+ Canonical display args preserve ufsrw0/rootrw1/polarisramcow1/budget512,
+ polarisdiag1/crashslot0x1dcff9a70,sweetlog0,sweetscan=-; newpolarisdisplay1,
+ sweetfb_noconsole1,sweetfb_hz5. Marked ADT adds disp0 only; WLAN absent.
+ First successful bounded CPU copy may mute text; SpringBoard/backboardd crash
+ unmutes it so subsequent diagnostics visible. Transport acceptance does NOT
+ prove a real panel frame, SpringBoard stability, physical touch or working App.
+ Need current screen photo or15-20s video after about1minute; retain this boot
+ until actual screen evidence saved. XNU USB log/reboot not ported. DO NOT ask
+ for FASTBOOT again until new evidence collected. Physical touch,USB,
+ persistent64GiB/tripleboot,App interaction remain unfinished. Latest kernel
+ and all provenance/boot/QEMU evidence in display-0009/,CI39984984336.
 
 -0009 sequential QEMU suite COMPLETE PASS (exec59300): display-on150s and
  default/off150s both PID1 alive,no panic in screen or complete RAM ring,
