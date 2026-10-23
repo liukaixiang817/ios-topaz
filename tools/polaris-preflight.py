@@ -168,7 +168,7 @@ cat /proc/meminfo
             save(f"{disk}.img", f"dd if={source} bs=1048576 2>/dev/null", disk_bytes)
     (out / "layout.json").write_text(json.dumps(layouts, indent=2) + "\n")
     if args.backup_critical:
-        for name in ("boot", "recovery", "dtbo", "abl_a", "abl_b", "devinfo",
+        for name in ("boot", "recovery", "dtbo", "abl_a", "abl_b", "devinfo", "misc", "switch",
                      "persist", "persistbak", "modem", "mindowsesp"):
             source = f"/dev/block/bootdevice/by-name/{name}"
             size = int(remote(f"blockdev --getsize64 {source}", root=True))

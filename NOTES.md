@@ -8,6 +8,68 @@ and DO NOT authorize erasing this phone. No destructive step is approved.
 
 ## Current handoff, 2026-10-23 (Australia/Melbourne)
 
+### Milestone update ~20:00 local (supersedes details below where different)
+
+- **`541cd86`**: standalone polaris CPU/FDT/framebuffer probe, builder and QEMU
+  runner committed. 11 host tests pass. Actual probe executes in QEMU
+  Cortex-A76 with FP/SIMD disabled; matching FDT draws expected screen and
+  parks, wrong-board FDT leaves framebuffer untouched. Both have zero guest
+  exceptions/invalid-memory logs. Screenshot and result:
+  `research/polaris/qemu-probe/matching/fb.png`, `.../result.json`. This is CPU
+  emulation, NOT a hardware boot or an iOS/XNU boot.
+- Ready diagnostic **`shim/out/polaris-probe-0001/polaris-probe-0001.img`**,
+  573440 bytes, SHA-256
+  **`4fb6d76f1cc335caaccae71c86d664fbb26046680c9d89ac22c30f80c1d5611a`**.
+  Linux Image `_end`/image_size = 81920, appended verified live DTB, empty cpio
+  ramdisk; boot header v1 / 4096 pages / base 0 / kernel_offset 0x8000 /
+  ramdisk_offset 0x1000000 / tags_offset 0x100 / OS field 0x1a00016c matches
+  backed-up Android boot. No UFS/SCSI/loader/persistent-log/reset code linked.
+  ABL acceptance and real scanout are **not tested**. No reboot yet.
+- Build with Clang `-target aarch64-none-elf -mcpu=cortex-a53
+  -mgeneral-regs-only`, and Zig 0.15.2 as linker. **Do not compile probe C with
+  Zig's cc driver:** its output contained SIMD despite the general-regs-only
+  flag and trapped with ESR 0x1fe00000 before console; using host Clang fixes
+  it. Zig's host objcopy also fails with this macOS 27 SDK; builder flattens
+  checked zero-based ELF PT_LOAD segments directly. It retains `.text.head`
+  with KEEP in the shared linker script (Zig links with section GC).
+- Verified host tools: official Zig archive SHA-256
+  3cc2bab367e185cdfb27501c4b30b1b0653c28d9f73df8dc91488e66ece5fa6b,
+  under `research/host-tools/zig-aarch64-macos-0.15.2/`; official AOSP
+  Android 10 r1 `research/host-tools/mkbootimg.py`, SHA-256
+  4d87cfb5482efcd556008cfe563ae442a934acb7ef0df082d422307f26a120b7.
+  That mkbootimg expects YYYY-MM-DD patch dates, not YYYY-MM.
+- Upstream edk2-msm source pinned at
+  e1952621f419f8db60ed28271264e1b5184c571d confirms framebuffer 0x9d400000,
+  1080x2160, stride 4320, BGRX; downloaded references in research/polaris/.
+  This corroborates the splash reservation but does not prove real scanout.
+- Added and verified `misc.img` (4194304 bytes, empty BCB command) and
+  `switch.img` (16384 bytes) to the existing critical manifest: now **29 files,
+  914858049 bytes**. The preflight collector includes them on future runs.
+- User said backup space is ready and sent a screenshot showing ~500 GB.
+  `df` still reports ~95 GiB because it excludes reclaimable space. Unsandboxed
+  Foundation capacity API for backup/: immediate ~101.5 GB, **important usage
+  499526999111 bytes**; user screenshot is consistent. Do not claim no space.
+  Never delete user's snapshots/files to free space without their request.
+- **Windows full backup IN PROGRESS**: `tools/polaris-backup.py mindowswin
+  --adb research/host-tools/platform-tools/adb --jobs 4`, exec session **1260**,
+  output **`backup/polaris-full-mindowswin-20261023-195539/`**. Four independent
+  read-only 4-GiB chunk streams, gzip/size checks, then whole raw stream SHA-256
+  vs fresh device-side sha256sum. Do not reboot or boot Windows during this.
+  Do not mark complete until manifest `verified=true` and final VERIFIED line.
+  First single-stream attempt at `...-194150/` was interrupted (SIGINT, cleaned
+  up its adb child); ~7.8GB `.partial` is incomplete, NOT a valid backup.
+- Current Android userdata is mounted; the backup tool was tested and correctly
+  refused it. Need an offline root ADB environment with userdata unmounted.
+  Existing installed recovery is stock MIUI (ro.debuggable=0); it has a
+  factoryreset service. Do not boot its UI casually or pass wipe/format args.
+  Extracted privately at research/polaris/recovery/. Preparing an isolated
+  RAM-only recovery environment with no recovery/factoryreset service and no
+  userdata/cache mounts is a possible next step. Official TWRP polaris page
+  lists twrp-3.7.0_9-0-polaris.img; not downloaded yet, never flashed.
+- No kernel CI dispatched, no iOS root built, no GPT/filesystem change. Next:
+  finish Windows backup, prepare offline Android backup, then temporary probe
+  boot and record physical screen/CPU facts. Actual XNU polaris work remains.
+
 - Base `e477291`, branch `codex/polaris-preflight`. Completed preflight commit
   **`fe89171`** adds `tools/polaris-preflight.py`, six host GPT tests,
   `POLARIS.md`, and a README warning. Six tests pass; live collection succeeds.
