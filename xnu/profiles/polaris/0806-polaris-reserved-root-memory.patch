@@ -1,0 +1,163 @@
+--- /dev/null
++++ b/bsd/dev/polaris_cow_arena.h
+@@ -0,0 +1,33 @@
++/* Fixed RAM backing for the volatile root. Reserve before storage I/O starts;
++ * subsequent allocations cannot fault, reclaim memory or recurse into VFS. */
++#ifndef POLARIS_COW_ARENA_H
++#define POLARIS_COW_ARENA_H
++#include <stdbool.h>
++#include <stddef.h>
++#include <stdint.h>
++#define POLARIS_ARENA_GRANULE 16384u
++struct polaris_cow_arena {
++    uint8_t *base;
++    size_t size, used;
++};
++
++static inline bool
++polaris_arena_budget(unsigned mib, size_t *bytes, unsigned *groups)
++{
++    if (!bytes || !groups || mib < 16 || mib > 512) return false;
++    *bytes = (size_t)mib << 20;
++    *groups = (unsigned)(*bytes / POLARIS_ARENA_GRANULE);
++    return true;
++}
++
++static inline void *
++polaris_arena_allocate(size_t bytes, void *context)
++{
++    struct polaris_cow_arena *arena = context;
++    if (!arena || !arena->base || bytes != POLARIS_ARENA_GRANULE ||
++        arena->used > arena->size || bytes > arena->size - arena->used) return NULL;
++    void *result = arena->base + arena->used;
++    arena->used += bytes;
++    return result;
++}
++#endif
+--- a/bsd/dev/sweet_ufs.c
++++ b/bsd/dev/sweet_ufs.c
+@@ -45,14 +45,29 @@
+ #include "polaris_ram_cow.h"
+ static struct polaris_cow polaris_root_cow;
+ static bool polaris_ram_cow_enabled;
+-static void *
+-polaris_ram_allocate(size_t bytes, __unused void *context)
+-{
+-	vm_offset_t memory = 0;
+-	if (bytes != POLARIS_COW_BYTES || kmem_alloc_contig(kernel_map, &memory,
+-	    bytes, PAGE_MASK, 0, 0, KMA_DATA | KMA_ZERO | KMA_PERMANENT,
+-	    VM_KERN_MEMORY_IOKIT) != KERN_SUCCESS) { return NULL; }
+-	return (void *)memory;
++#include "polaris_cow_arena.h"
++_Static_assert(POLARIS_ARENA_GRANULE == POLARIS_COW_BYTES, "COW arena granularity");
++static struct polaris_cow_arena polaris_root_arena;
++static uint64_t polaris_cow_failures;
++static unsigned polaris_ram_mib = 128;
++
++static int
++polaris_ram_reserve(unsigned mib)
++{
++    size_t bytes;
++    unsigned groups;
++    vm_offset_t memory = 0;
++    if (polaris_root_arena.base || !polaris_arena_budget(mib, &bytes, &groups) ||
++        groups > POLARIS_COW_GROUPS) { return EINVAL; }
++    /* Root not mounted yet, before UFS locking/commands. These wired pages
++     * never need to be allocated or reclaimed during a filesystem request. */
++    if (kmem_alloc(kernel_map, &memory, bytes, KMA_DATA | KMA_ZERO | KMA_PERMANENT,
++        VM_KERN_MEMORY_IOKIT) != KERN_SUCCESS) { return ENOMEM; }
++    polaris_root_arena.base = (uint8_t *)memory;
++    polaris_root_arena.size = bytes;
++    polaris_ram_mib = mib;
++    polaris_root_cow.limit = groups;
++    return 0;
+ }
+ static struct polaris_extent polaris_file_map[POLARIS_MAP_MAX];
+ static unsigned polaris_file_count;
+@@ -177,12 +192,20 @@
+         lck_spin_unlock(&polaris_diag_lock);
+         if (line[0]) { printf("%s\n", line); }
+     }
+-    /* Read accounting under its existing lock; never submit storage I/O. */
+-    lck_mtx_lock(&sweet_ufs_lock);
+-    unsigned used = polaris_root_cow.used;
+-    bool active = polaris_ram_cow_enabled, failed = polaris_io_failed;
+-    lck_mtx_unlock(&sweet_ufs_lock);
+-    printf("D COW: active=%u groups=%u/8192 UFS-error=%u\n", active, used, failed);
++    /* A diagnostic must not wait behind a busy/stalled storage request. */
++    if (lck_mtx_try_lock(&sweet_ufs_lock)) {
++        unsigned used = polaris_root_cow.used, limit = polaris_root_cow.limit;
++        unsigned reserved = (unsigned)(polaris_root_arena.size >> 20);
++        uint64_t dirty = polaris_root_cow.dirty_blocks, written = polaris_root_cow.written_blocks;
++        uint64_t failures = polaris_cow_failures;
++        bool active = polaris_ram_cow_enabled, failed = polaris_io_failed;
++        lck_mtx_unlock(&sweet_ufs_lock);
++        printf("D COW: active=%u groups=%u/%u UFS-error=%u\n", active, used, limit, failed);
++        printf("D RAM: reserved=%uMiB dirty=%lluKiB written=%lluKiB refused=%llu\n",
++            reserved, dirty * 4, written * 4, failures);
++    } else {
++        printf("D COW: storage busy; reporting without waiting\n");
++    }
+     return true;
+ }
+ #endif
+@@ -672,8 +695,11 @@
+ 		} else if (!error) {
+ 			memcpy((char *)bounce + skip, vaddr + done, want);
+ 			if (!polaris_cow_put(&polaris_root_cow, lba, blocks, bounce,
+-			    polaris_ram_allocate, NULL)) {
+-				printf("POLARIS RAM COW: allocation limit/failure, refusing write\n");
++			    polaris_arena_allocate, &polaris_root_arena)) {
++                polaris_cow_failures++;
++                if (polaris_cow_failures == 1 || !(polaris_cow_failures & (polaris_cow_failures - 1))) {
++                    printf("POLARIS RAM COW: RAM budget exhausted; write refused (%llu)\n", polaris_cow_failures);
++                }
+ 				error = ENOSPC;
+ 			}
+ 		}
+@@ -846,12 +872,14 @@
+ polaris_file_root_init(void)
+ {
+     uint32_t enabled = 0, probe = 0, rw = 0, rootrw = 0, cow = 0;
++    uint32_t ram_mib = 128;
+     PE_parse_boot_argn("polarisfileroot", &enabled, sizeof(enabled));
+     PE_parse_boot_argn("polarisufsprobe", &probe, sizeof(probe));
+     PE_parse_boot_argn("ufsrw", &rw, sizeof(rw));
+     PE_parse_boot_argn("rootrw", &rootrw, sizeof(rootrw));
+     PE_parse_boot_argn("polarisramcow", &cow, sizeof(cow));
+-    if (enabled != 1 || probe || rw || cow > 1 || rootrw > 1 || rootrw != cow) {
++    PE_parse_boot_argn("polarisrammb", &ram_mib, sizeof(ram_mib));
++    if (enabled != 1 || probe || rw || cow > 1 || rootrw > 1 || rootrw != cow || ram_mib < 16 || ram_mib > 512) {
+         printf("POLARIS FILE ROOT: disabled or conflicting boot arguments\n");
+         return ENXIO;
+     }
+@@ -877,6 +905,11 @@
+         layout[2], layout[0], layout[1])) {
+         printf("POLARIS FILE ROOT: REFUSED extent geometry; no MMIO\n");
+         return EINVAL;
++    }
++    /* Reserve bounded volatile backing BEFORE any host access or storage lock. */
++    if (cow && polaris_ram_reserve(ram_mib)) {
++        printf("POLARIS RAM COW: could not reserve %uMiB; root refused, no MMIO\n", ram_mib);
++        return ENOMEM;
+     }
+     lck_mtx_lock(&sweet_ufs_lock);
+     int error = ENXIO;
+@@ -951,7 +984,7 @@
+      * The UFS CDB gate still rejects every WRITE/UNMAP/SYNC command. */
+     polaris_ram_cow_enabled = cow == 1;
+     polaris_root_cow.nblocks = layout[2];
+-    polaris_root_cow.limit = POLARIS_COW_GROUPS;
++    /* Limit was validated and reserved before UFS initialization. */
+     su.writable = polaris_ram_cow_enabled;
+     su.first_block = 0; /* Logical image offset; translated per request. */
+     su.nblocks = layout[2];
+@@ -966,7 +999,7 @@
+     printf("POLARIS FILE ROOT: verified GPT + HFSX, %llu MiB, %u extents, base READ ONLY\n",
+         su.nblocks * UFS_BLOCK >> 20, polaris_file_count);
+     if (polaris_ram_cow_enabled) {
+-        printf("POLARIS RAM COW: enabled,128MiB limit; writes discarded on reboot\n");
++        printf("POLARIS RAM COW: enabled,%uMiB reserved; writes discarded on reboot\n", polaris_ram_mib);
+     }
+ out:
+     if (error) {

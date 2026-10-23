@@ -10,7 +10,42 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION —0007 later crash evidence; need retained D lines/video
+### CURRENT NEXT ACTION —0008 capacity fix prepared; phone in RO recovery
+
+- NEW DECISIVE0007 PHOTOS: hardware-retained-errors-{1,2,3}.jpg/.json in
+  daemon-loops-0007/. D COW active1,8192/8192groups,UFS-error0:128MiB backing
+  EXHAUSTED. First retained errors: cryptexd mkdir e22 fd3 stage=create,
+  relative com.apple.security.cryptexd; MCM mkdir e2 fd-2 stage=lookup,
+  /private/var/root/Library/Logs/MobileContainerManager. lockdownd local workers
+  init error(-1,underlying detail truncated); locationd assertion
+  CLAutoCohortUtilities.mm:111 createDirectoryAtPath; backboardd abort() called.
+  No retained MCM SQLite fatal text seen this boot. Error records lack original
+  timestamps/group counts: NOT proof that ENOSPC caused the FIRST mkdir EINVAL.
+  Reporter DID continue running; earlier absence in photos was not evidence
+  of a diagnostic-thread deadlock. HID user clients opened, not real touch proof.
+- User returned FASTBOOT; known recovery temporarily booted (exec39600),
+  root-capacity-0008/preflight.json PASS: fresh182extents identical, GPT head
+  identical, ext4 clean,userdata unmountedRO1,35C,CPU caps1056000.
+  No new persistent filesystem writes/repair; phone CURRENTLY ROOT RECOVERY.
+- cryptexd disassembly: opens /var/db with0x100100, mkdirat(fd,
+  com.apple.security.cryptexd,0705), unexpected errors fatal at main+0x343c4.
+  Independently reproduced exact flags/path/mode on0007 QEMU RAM HFS:
+  VALID_MKDIRAT_0705_PASS twice,150s no panic/0unknownglyphs. Does not reproduce
+  actual phone image attributes or the UFS COW path. Source root journal is8MiB,
+  not128MiB (read-only journal geometry saved). No blanket mkdir errno bypass.
+-0806 PREPARED: explicit polarisrammb16..512(default128), phone profiles512.
+  Reserve wired RAM before UFS lock/commands; finite16KiB arena allocator does
+  NO runtime VM allocation/reclaim during storage requests. Shared COW maximum
+ 32768groups,512MiB plus bounded metadata, dirty/written-block accounting.
+  Existing CDB read-only allowlist unchanged; ufsrw must0, no base/UFS writes.
+  Diagnostic accounting uses try-lock, never waits for storage; reports actual
+  reserved bytes,dirty/write volume/refusals. Allocation-refusal logs bounded.
+  Native ASan/UBSan6tests PASS, including real8200groups crossing old8192 limit,
+  readbacks, overwrites with full arena, failed allocation preserving data,
+  bounds and invalid budgets. Actual CI-header single-file Apple clang PASS.
+  Local tree research/polaris/buildtree-0004 now includes0806+updated shared
+  header; originals and evidence in root-capacity-0008/. Full CI/new-kernel QEMU
+  and hardware not yet run. Remaining GUI/input/persistent64GiB unfinished.
 
 - LATEST0007 PHOTO: hardware-later-daemon-crashes.jpg/.json in private
   daemon-loops-0007/. Startup DID progress past usermanagerd: fmfd/contactsd/

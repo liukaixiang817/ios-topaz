@@ -7,7 +7,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stddef.h>
-#define POLARIS_COW_GROUPS 8192u /* at most 128MiB plus bounded metadata */
+#define POLARIS_COW_GROUPS 32768u /* maximum512MiB; caller selects a lower budget */
 #define POLARIS_COW_BUCKETS 1024u
 #define POLARIS_COW_BLOCK 4096u
 #define POLARIS_COW_BYTES 16384u
@@ -20,6 +20,7 @@ struct polaris_cow_group {
 struct polaris_cow {
     uint64_t nblocks;
     unsigned limit, used;
+    uint64_t dirty_blocks, written_blocks;
     uint32_t buckets[POLARIS_COW_BUCKETS]; /* index+1; zero means absent */
     struct polaris_cow_group groups[POLARIS_COW_GROUPS];
 };
@@ -88,10 +89,12 @@ polaris_cow_put(struct polaris_cow *c, uint64_t lba, uint32_t blocks,
         uint64_t block = lba + i;
         struct polaris_cow_group *g = polaris_cow_find(c, block / 4);
         unsigned slot = block % 4;
+        if (!(g->valid & (1u << slot))) c->dirty_blocks++;
         __builtin_memcpy(g->data + slot * POLARIS_COW_BLOCK,
             (const uint8_t *)buffer + i * POLARIS_COW_BLOCK, POLARIS_COW_BLOCK);
         g->valid |= (uint8_t)(1u << slot);
     }
+    c->written_blocks += blocks;
     return true;
 }
 #endif
