@@ -10,7 +10,45 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION — RAM-COW0006 temporary boot sent; await screen evidence
+### CURRENT NEXT ACTION — diagnose Apple daemon loops; phone in RO recovery
+
+-0805 diagnostic overlay prepared: explicit polarisdiag=1 retains first
+  per-category failures in a fixed3.75KiB RAM table, reprints every10s via
+  the existing startup reporter. mkdir error stage/path for cryptexd/MCM,
+  MCM fcntl errno/cmd, and six GUI/bootstrap daemons' __os_crash messages.
+  20H392 libsystem_c disassembly verifies message slot0x1dcff9a70; explicit
+  polariscrashslot boot argument + current cache slide, bounded copyin/copyinstr,
+  no dereferencing user pointers in kernel. No syscall result changes or
+  storage write policy changes. Diagnostic profile disables large heap dumps.
+  Local four-file Apple-clang compile with actual CI headers/options PASS
+  (no stubs); full CI/kernel link and QEMU integration still pending.
+  Private sources/originals/logs in daemon-loops-0007/.
+- LATEST PHONE STATE (2026-10-24): user returned FASTBOOT after two0006
+  photos; known recovery temporarily booted. daemon-loops-0007/preflight.json
+  PASS: root recovery, fresh182extent map identical, GPT head byte-identical,
+  ext4 state1/no needs_recovery, userdata unmounted/runtimeRO1,35C and CPU
+  caps1056000. No persistent filesystem writes or repair this turn.
+-0006 hardware photos DO verify real Apple launchd starts Apple daemons;
+  repeated crashes/respawns, PIDs187..2600+, NOT a desktop or working apps.
+  No kernel panic visible. Shared cache slide0x8478000 (not0x84780000).
+  containermanagerd trap PC0x1cd16183c = unslid0x1c4ce983c:
+  +[MCMSQLiteDB openDBWithURL:error:]+896. Disassembly proves sqlite_open_v2
+  succeeded, but sqlite3_exec(schema/PRAGMA initialization) failed, followed by
+  _os_crash("Failed to initialize database, err = %d, xerr = %x") and BRK.
+  Error numbers/database path are not yet known; do NOT assume RAM limit,
+  missing container parent dirs, or repair by disabling failures.
+  lockdownd main+0x94150 is "Failed to intialize local workers" fatal path.
+  cryptexd ns18/code2: unexpected failure: mkdirat: [22: Invalid argument].
+  locationd SIGABRT repeatedly. GUI/rendering/input/persistent writes remain
+  unfinished. Private photos/hardware-result.json in ram-cow-0006/.
+- Official ipsw3.1.738 verified/install under ignored research/host-tools/,
+  archive SHA151b71da8c73912dbfbb95fc64e6b4929524279cb8cf5a3839932586e4ab8154.
+  Read-only Apple cache indexed to daemon-loops-0007/dsc/cache.a2s;
+  mcm-sqlite.disass.txt and lockdown-trap.disass.txt saved privately. Next:
+  identify precise SQLite and mkdirat errors, add bounded opt-in diagnostics
+  if necessary, keeping ufsrw=0/base immutable. No destructive actions authorized.
+
+### Prior0006 boot/build record (phone now in recovery, see above)
 
 - LATEST PHONE STATE:0006 temporary boot SENT (exec10746,return0),
   send46180KB1.078s,boot0.091s,total1.180s. No flash/GPT/Windows writes.

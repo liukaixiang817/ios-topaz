@@ -1,0 +1,1 @@
+debug=0xc serial=3 cpus=1 keepsyms=1 -enable_kprintf_spam -noprogress rd=ufsroot0 polarisfileroot=1 polarisramcow=1 ufsrw=0 rootrw=1 sweetlog=0 unentitled_ios_sim_launch=1 ignition_level=1 launchd_unsecure_cache=1 polarisdiag=1 polariscrashslot=0x1dcff9a70 sweetscan=-

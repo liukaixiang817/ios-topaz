@@ -1,0 +1,253 @@
+--- a/bsd/dev/sweet_ufs.c
++++ b/bsd/dev/sweet_ufs.c
+@@ -136,6 +136,57 @@
+ static LCK_GRP_DECLARE(sweet_ufs_grp, "sweet_ufs");
+ static LCK_MTX_DECLARE(sweet_ufs_lock, &sweet_ufs_grp);
+ 
++#if defined(POLARIS_RAM_ONLY)
++/* Opt-in bring-up evidence, RAM only. Keep the FIRST failure per category so
++ * a respawn storm cannot erase it. Copy/print outside the spin lock; no MMIO,
++ * filesystem calls, dynamic allocation or changes to syscall results. */
++#define POLARIS_DIAG_SLOTS 16
++#define POLARIS_DIAG_BYTES 240
++static LCK_SPIN_DECLARE(polaris_diag_lock, &sweet_ufs_grp);
++static char polaris_diag_lines[POLARIS_DIAG_SLOTS][POLARIS_DIAG_BYTES];
++bool polaris_diag_enabled(void);
++void polaris_diag_record(unsigned slot, const char *text);
++
++bool
++polaris_diag_enabled(void)
++{
++    uint32_t enabled = 0;
++    return PE_parse_boot_argn("polarisdiag", &enabled, sizeof(enabled)) && enabled == 1;
++}
++
++void
++polaris_diag_record(unsigned slot, const char *text)
++{
++    if (!polaris_diag_enabled() || slot >= POLARIS_DIAG_SLOTS || !text) { return; }
++    lck_spin_lock(&polaris_diag_lock);
++    if (!polaris_diag_lines[slot][0]) {
++        strlcpy(polaris_diag_lines[slot], text, POLARIS_DIAG_BYTES);
++    }
++    lck_spin_unlock(&polaris_diag_lock);
++}
++
++static bool
++polaris_diag_report(void)
++{
++    if (!polaris_diag_enabled()) { return false; }
++    char line[POLARIS_DIAG_BYTES];
++    printf("\nPOLARIS DIAG: first failures, RAM only\n");
++    for (unsigned i = 0; i < POLARIS_DIAG_SLOTS; i++) {
++        lck_spin_lock(&polaris_diag_lock);
++        memcpy(line, polaris_diag_lines[i], sizeof(line));
++        lck_spin_unlock(&polaris_diag_lock);
++        if (line[0]) { printf("%s\n", line); }
++    }
++    /* Read accounting under its existing lock; never submit storage I/O. */
++    lck_mtx_lock(&sweet_ufs_lock);
++    unsigned used = polaris_root_cow.used;
++    bool active = polaris_ram_cow_enabled, failed = polaris_io_failed;
++    lck_mtx_unlock(&sweet_ufs_lock);
++    printf("D COW: active=%u groups=%u/8192 UFS-error=%u\n", active, used, failed);
++    return true;
++}
++#endif
++
+ static inline uint32_t
+ ufs_rd(uint32_t off)
+ {
+@@ -442,7 +493,8 @@
+ {
+ 	/* Same startup thread owns both the probe and its retained report. This
+ 	 * function never touches UFS registers or submits another command. */
+-	if (!polaris_probe_report_enabled) { return false; }
++	bool diagnostic = polaris_diag_report();
++	if (!polaris_probe_report_enabled) { return diagnostic; }
+ 	printf("\nPOLARIS UFS RESULT: %s\n", polaris_probe_status);
+ 	printf("POLARIS UFS QUEUE: %s (no new I/O)\n", polaris_probe_queue_status);
+ 	return true;
+--- a/osfmk/kern/exception.c
++++ b/osfmk/kern/exception.c
+@@ -835,6 +835,44 @@
+ void sweet_crash_log(const char *name, int pid, int sig, uint64_t code, uint64_t subcode);
+ static void sweet_crash_strings(const char *name);
+ 
++#if defined(POLARIS_RAM_ONLY)
++#include <sys/errno.h>
++extern bool polaris_diag_enabled(void);
++extern void polaris_diag_record(unsigned, const char *);
++
++static void
++polaris_crash_message(const char *name, uint64_t slide)
++{
++    static const char *const targets[] = {
++        "containermanager", "lockdownd", "cryptexd", "locationd", "backboardd", "SpringBoard"
++    };
++    unsigned index;
++    for (index = 0; index < sizeof(targets) / sizeof(targets[0]); index++) {
++        if (!strcmp(name, targets[index])) { break; }
++    }
++    if (index == sizeof(targets) / sizeof(targets[0]) || !polaris_diag_enabled()) { return; }
++    /* Explicit, symbolicated userland __os_crash message slot, NOT a kernel
++     * address. For 20H392 libsystem_c __os_crash stores x0 at 0x1dcff9a70.
++     * Other caches require re-symbolication and a different boot argument. */
++    uint64_t slot = 0, message = 0;
++    char text[180], line[240];
++    size_t length = 0;
++    if (!PE_parse_boot_argn("polariscrashslot", &slot, sizeof(slot)) || (slot & 7) ||
++        slot < 0x100000000ULL || slot > 0x7fffffffffULL ||
++        slide > 0x7fffffffffULL - slot ||
++        copyin((user_addr_t)(slot + slide), &message, sizeof(message)) || !message) { return; }
++    bzero(text, sizeof(text));
++    int error = copyinstr((user_addr_t)message, text, sizeof(text), &length);
++    if (error && error != ENAMETOOLONG) { return; }
++    text[sizeof(text) - 1] = 0;
++    for (unsigned i = 0; text[i]; i++) {
++        if ((unsigned char)text[i] < 0x20 || (unsigned char)text[i] > 0x7e) { text[i] = '.'; }
++    }
++    snprintf(line, sizeof(line), "D CRASH %s: %s", name, text);
++    polaris_diag_record(index, line);
++}
++#endif
++
+ void
+ sweet_crash_log(const char *name, int pid, int sig, uint64_t code, uint64_t subcode)
+ {
+@@ -872,6 +910,9 @@
+ 		fp = frame[0];
+ 	}
+ 	printf("%s\n", line);
++#if defined(POLARIS_RAM_ONLY)
++	polaris_crash_message(name, slide);
++#endif
+ 
+ 	if (sig == 11 || sig == 10) {
+ 		/* Which mapping the faulting address is in, or which two it falls between. */
+--- a/bsd/vfs/vfs_syscalls.c
++++ b/bsd/vfs/vfs_syscalls.c
+@@ -9715,6 +9715,32 @@
+  *	vn_create:???
+  */
+ /* ARGSUSED */
++#if defined(POLARIS_RAM_ONLY)
++extern bool polaris_diag_enabled(void);
++extern void polaris_diag_record(unsigned, const char *);
++
++static void
++polaris_mkdir_error(user_addr_t path, int fd, const char *stage, int error, enum uio_seg segflg)
++{
++    if (!error || error == EEXIST || segflg != UIO_USERSPACE || !polaris_diag_enabled()) { return; }
++    const char *name = current_proc()->p_comm;
++    unsigned slot;
++    if (!strcmp(name, "cryptexd")) { slot = 6; }
++    else if (!strcmp(name, "containermanager")) { slot = 7; }
++    else { return; }
++    char text[160] = {0}, line[240];
++    size_t length = 0;
++    int copy_error = copyinstr(path, text, sizeof(text), &length);
++    if (copy_error && copy_error != ENAMETOOLONG) { strlcpy(text, "<unreadable>", sizeof(text)); }
++    text[sizeof(text) - 1] = 0;
++    for (unsigned i = 0; text[i]; i++) {
++        if ((unsigned char)text[i] < 0x20 || (unsigned char)text[i] > 0x7e) { text[i] = '.'; }
++    }
++    snprintf(line, sizeof(line), "D MKDIR %s e=%d fd=%d %s: %s", name, error, fd, stage, text);
++    polaris_diag_record(slot, line);
++}
++#endif
++
+ static int
+ mkdir1at(vfs_context_t ctx, user_addr_t path, struct vnode_attr *vap, int fd,
+     enum uio_seg segflg)
+@@ -9723,6 +9749,9 @@
+ 	int error;
+ 	int update_flags = 0;
+ 	int batched;
++#if defined(POLARIS_RAM_ONLY)
++	const char *stage = "lookup";
++#endif
+ 	struct nameidata nd;
+ 
+ 	AUDIT_ARG(mode, vap->va_mode);
+@@ -9734,6 +9763,9 @@
+ continue_lookup:
+ 	error = nameiat(&nd, fd);
+ 	if (error) {
++#if defined(POLARIS_RAM_ONLY)
++		polaris_mkdir_error(path, fd, stage, error, segflg);
++#endif
+ 		return error;
+ 	}
+ 	dvp = nd.ni_dvp;
+@@ -9755,6 +9787,9 @@
+ 	 * EACCESS/EPERM--so if we authorize for mkdir on "/" for "mkdir -p /tmp/foo/bar/baz"
+ 	 * it will fail in a spurious  manner.  Need to figure out if this is valid behavior.
+ 	 */
++#if defined(POLARIS_RAM_ONLY)
++	stage = "authorize";
++#endif
+ 	if ((error = vn_authorize_mkdir(dvp, &nd.ni_cnd, vap, ctx, NULL)) != 0) {
+ 		if (error == EACCES || error == EPERM) {
+ 			int error2;
+@@ -9789,6 +9824,9 @@
+ 	/*
+ 	 * make the directory
+ 	 */
++#if defined(POLARIS_RAM_ONLY)
++	stage = "create";
++#endif
+ 	if ((error = vn_create(dvp, &vp, &nd, vap, 0, 0, NULL, ctx)) != 0) {
+ 		if (error == EKEEPLOOKING) {
+ 			nd.ni_vp = vp;
+@@ -9815,6 +9853,9 @@
+ #endif
+ 
+ out:
++#if defined(POLARIS_RAM_ONLY)
++	polaris_mkdir_error(path, fd, stage, error, segflg);
++#endif
+ 	/*
+ 	 * nameidone has to happen before we vnode_put(dvp)
+ 	 * since it may need to release the fs_nodelock on the dvp
+--- a/bsd/kern/kern_descrip.c
++++ b/bsd/kern/kern_descrip.c
+@@ -2730,6 +2730,22 @@
+ 	return sys_fcntl_outdrop(p, fd, fp, vp, error);
+ }
+ 
++#if defined(POLARIS_RAM_ONLY)
++extern bool polaris_diag_enabled(void);
++extern void polaris_diag_record(unsigned, const char *);
++
++static void
++polaris_fcntl_error(proc_t p, int fd, int cmd, int error)
++{
++    if (!error || strcmp(p->p_comm, "containermanager") || !polaris_diag_enabled()) { return; }
++    unsigned slot = (cmd == F_SETPROTECTIONCLASS || cmd == F_GETPROTECTIONCLASS) ? 8 :
++        ((cmd == F_FULLFSYNC || cmd == F_BARRIERFSYNC) ? 9 : 10);
++    char line[160];
++    snprintf(line, sizeof(line), "D FCNTL %s e=%d fd=%d cmd=%d", p->p_comm, error, fd, cmd);
++    polaris_diag_record(slot, line);
++}
++#endif
++
+ int
+ sys_fcntl_nocancel(proc_t p, struct fcntl_nocancel_args *uap, int32_t *retval)
+ {
+@@ -5223,9 +5239,15 @@
+ 	}
+ 
+ outdrop:
++#if defined(POLARIS_RAM_ONLY)
++	polaris_fcntl_error(p, fd, cmd, error);
++#endif
+ 	return sys_fcntl_outdrop(p, fd, fp, vp, error);
+ 
+ out:
++#if defined(POLARIS_RAM_ONLY)
++	polaris_fcntl_error(p, fd, cmd, error);
++#endif
+ 	return sys_fcntl_out(p, fd, fp, error);
+ }
+ 
