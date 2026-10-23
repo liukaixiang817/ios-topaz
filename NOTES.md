@@ -12,6 +12,15 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ### CURRENT NEXT ACTION —0009 fitted display prepared; phone in RO recovery
 
+- Display source commit90739277724a905ab3401a930f84364c5fac211b pushed;
+ CI39984984336/job120521705845 queued on macos-14 at last check. Watch session
+ 90985/private display-0009/ci-watch.log. Phone remains RO recovery. Exact-source
+ downloader download-ci-kernel-0009.py and marked phone/QEMU ADTs prepared;
+ QEMU on150s,off150s,gated30s checks and boot-display-0009.py NOT executed yet.
+ Need wait full CI,download/hash/profile verify,run actual new-kernel simulations,
+ then guarded temporary boot. Public current patch does not enable physical
+ touch or the foreign sweet_touch.c; never call that unmodified on polaris.
+
 -0008 hardware milestone: six photos saved root-capacity-0008/hardware-
  springboard-{1,2,3}.jpg and hardware-springboard-later-{1,2,3}.jpg, JSON.
  COW active1,512MiB reserved,13162->15273/32768groups,UFS-error0,refused0;
