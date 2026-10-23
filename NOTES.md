@@ -8,7 +8,31 @@ and DO NOT authorize erasing this phone. No destructive step is approved.
 
 ## Current handoff, 2026-10-23 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION — automatic hardware register capture succeeded
+### CURRENT NEXT ACTION — second standalone display test pending
+
+- Automatic raw entry-register capture is committed/pushed **a878ce8**;
+  real CPU EL1/16KiB support now established (details below).
+- Added package-polaris-ram-boot.py: hash-pinned known recovery supplies
+  gzip+unchanged65compiledDTBs, boot-v0 options and text_offset80000. Verifies
+  exact packed kernel/ramdisk and gzip roundtrip. No phone commands in tool.
+- Diagnostic0002 uses same diagnostic code as0001; only packaging changed.
+  shim/out/polaris-probe-0002/polaris-probe-0002.img,30380032bytes,
+  SHA7fb2d9812c88676ac5d79fb9531131a6bbd93f04350ef06890a309f0af44dc94.
+  New exact Image passed QEMU matching/wrong-board cases,0exceptions;
+  evidence research/polaris/qemu-probe-0002/. Host syntax/diff checks pass.
+- **Temporary hardware boot sent**: exec81270 exited0,29668KB sendOKAY0.693s,
+  bootOKAY0.091s,total0.792s. research/polaris/probe-0002-boot.log.
+  **Awaiting user screen result**. Asked: if black, Power+VolumeDown to
+  FASTBOOT and reply; if diagnostic text, report and hold screen. No ADB
+  expected in this standalone probe. Do not assume either outcome.
+- RAM-only XNU boot image also packaged locally, **NOT BOOTED**:
+  shim/out/polaris-xnu-ram-0001/polaris-xnu-ram-0001.img,47280128bytes,
+  SHAb0d3cf98d0093d19c95f7d55d734d15b05238304b7e20e892b561e8d355fcd32.
+  Contains bounded loader plus phone-specific validated payloadc7984033...
+  and known DTB table; no storage support in polaris XNU. Keep blocked on
+  display/standalone execution evidence. No iOS root or GUI installed.
+
+### Automatic hardware register capture succeeded
 
 - Standalone diagnostic0001 fastboot send560KB/boot both OKAY (0.110s), but
   **user saw black screen**. No execution/framebuffer proof from that attempt.

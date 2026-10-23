@@ -70,6 +70,13 @@ The property is readable at
 This establishes CPU entry conditions; it does not establish a working
 framebuffer or an XNU/iOS hardware boot. Logs remain in ignored `research/`.
 
+`tools/package-polaris-ram-boot.py` packages a reviewed shim with the same
+gzip format, original 65-DTB table, text offset and boot options as the working
+headless recovery. It verifies the packed bytes, decompression and unchanged
+DTB table. It accepts an explicit ramdisk (empty archive for diagnostics or
+validated RAM payload for the XNU loader). It contains no phone commands;
+packaging alone does not establish execution or display on hardware.
+
 ## Full OS partition backups
 
 ```sh

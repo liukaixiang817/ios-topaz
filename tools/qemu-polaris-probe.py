@@ -41,10 +41,12 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--qemu", default="qemu-system-aarch64")
     parser.add_argument("--dtb", type=Path, required=True)
+    parser.add_argument("--image", type=Path, help="alternate diagnostic Image")
+    parser.add_argument("--outdir", type=Path, help="keep variant evidence separately")
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
-    image = root / "shim/out/polaris-probe-0001/Image"
-    out = root / "research/polaris/qemu-probe"
+    image = args.image.resolve() if args.image else root / "shim/out/polaris-probe-0001/Image"
+    out = args.outdir.resolve() if args.outdir else root / "research/polaris/qemu-probe"
     out.mkdir(parents=True, exist_ok=True)
     stub = out / "entry.bin"
     stub.write_bytes(struct.pack("<4I2Q", 0x58000080, 0x580000b0, 0xd61f0200,
