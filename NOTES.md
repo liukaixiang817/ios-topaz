@@ -10,7 +10,27 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION —0010 console profile prepared; user returned FASTBOOT
+### CURRENT NEXT ACTION —0010 visible console boot sent; collect readable logs
+
+- CURRENT PHONE STATE:0010 VISIBLE-CONSOLE temporary boot SENT,
+ exec82216 exit0,2026-10-23T16:45:34.971662Z (=2026-10-24 Australia/Melbourne),
+ fastboot1.182s. Preflight exec20724 PASS: fresh182extents/GPT identical,
+ outerext4clean,userdataunmountedRO1,32C,CPU caps1056000. Final guarded script
+ rechecked root recovery,device/size/map/GPT/temp and actual C payload validator;
+ same907/fbfda0c7 kernel and0009 test provenance, exact prepared image SHA.
+ Image shim/out/polaris-xnu-display-console-0010/polaris-xnu-display-console-0010.img,
+ 47288320bytes,SHA9bdb9e564df240f1d6757506f4950c93b111edf85224d4021f0dc21886ee4a42;
+ payloadSHA313787018963b2d57cae263c031a7994710a3fb3d2ef74b5685f1bda6c6b8f7e.
+ Console0/physical copies1Hz are the ONLY parameter differences vs0009; no
+ kernel rebuild/source change or phone persistent writes. Configuration source
+ commitc325258. Phone now XNU log-profile transport sent, not recovery.
+ Need15-20s video or several photos of current screen after about1min, including
+ CRASH, POLARIS DIAG/D RAM/D COW, SWEET FB selector/swap and exec stages.
+ Existing COW reporter every10s; display can overwrite text each second, so
+ video/burst matters. A retained static logo alone cannot identify blocked
+ daemon or prove migration. Do not modify root/disable startup checks blindly.
+ Keep boot until evidence captured; no USB log/reboot control. Full desktop,
+ touch,Apps,persistent64GiB/tripleboot remain unfinished.
 
 -0009 user observation (2026-10-24): static Apple Logo WITHOUT progress bar
  for over3min. No photo/video yet; no visible daemon logs available. This is
