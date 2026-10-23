@@ -8,7 +8,36 @@ and DO NOT authorize erasing this phone. No destructive step is approved.
 
 ## Current handoff, 2026-10-23 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION — first XNU RAM hardware image sent; screen result pending
+### CURRENT NEXT ACTION — XNU runs synthetic PID1 on actual MIX 2S
+
+- **Hardware userspace milestone CONFIRMED by user photographs**. Second
+  photo shows `BSD root: md0`, `/sbin/launchd` load attempt, explicit
+  `*** SWEET userspace: init running as PID 1 ***` and many repeated
+  `SWEET init: still alive` lines. This is the static test init from
+  tools/sweet-init.S (served by mockfs), NOT Apple's launchd or an iOS GUI.
+- First photo showed CPU/VM initialization and last line `1/1 CPUs initialized,
+  SGI1 verified`; it was intermediate progress. **Do not diagnose a timer
+  hang from that earlier photo**: later photo proves progress to userspace.
+  No timer workaround or new kernel build was started for that hypothesis.
+- Proven hardware stack: bounded loader, polaris CI kernel39933084495
+  (30a8a750...eda2b6), phone ADT/payloadc7984033..., RAM md0, user-mode
+  syscalls/devfs console and repeated select-based heartbeat. Single CPU.
+  Build/image identity and send logs are in the launch details below.
+- Private evidence saved (ignored, photos0600) at research/polaris/xnu-ram-0001/
+  hardware-bootstrap.jpg,hardware-pid1.jpg,hardware-result.json. Keep out of git.
+- Phone currently running this RAM-only XNU test; **no ADB USB stack in XNU**,
+  no pending user-action question. It can remain in test loop; eventual return
+  to FASTBOOT requires physical Power+VolumeDown. Do not assume USB can reboot it.
+- Next substantive work: establish a read-only SDM845 UFS path and/or verified
+  root image transport, build ownership-correct iOS root on host, then bring
+  up Apple userspace. Touch/power/graphics service drivers remain unported.
+  Existing sweet/topaz MMIO must not be reused unreviewed. The polaris kernel
+  currently explicitly returns ENXIO before UFS controller access, no UFS DT node.
+- Full iOS/triple boot is **not complete**. No partition resize/GPT edit/format,
+  filesystem writes or installation performed; all five OS backups remain.
+  User's data-preserving requirement still controls; no destructive permission.
+
+### First XNU RAM boot packaging and launch details
 
 - Automatic raw entry-register capture is committed/pushed **a878ce8**;
   real CPU EL1/16KiB support now established (details below).
@@ -35,9 +64,8 @@ and DO NOT authorize erasing this phone. No destructive step is approved.
   kernel SHA256 rechecked and match. Exec51585 exited0: send46172KB
   OKAY1.069s,bootOKAY0.091s,total1.171s. Logs under ignored
   research/polaris/xnu-ram-0001/{boot.log,boot.json}.
-  **Awaiting user screen result** after20seconds; asked for last lines,
-  PID1/still-alive/panic/STOP/exception and any ESR/ELR. Asked to keep screen
-  and not reboot. Bootloader acceptance is NOT proof XNU executed.
+  User photographs subsequently confirm hardware PID1 and repeated
+  still-alive heartbeats; see current milestone above.
   No iOS root or GUI installed. Latest packaging commit e8aba2b pushed.
 
 ### Automatic hardware register capture succeeded

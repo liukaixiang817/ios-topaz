@@ -3,8 +3,10 @@
 The requested target is **Android + Mindows Windows 11 + iOS 16**, preserving
 existing data and reserving about 64 GiB for iOS. The existing topaz installation
 procedure does not satisfy this: it replaces `userdata`. The first polaris XNU
-kernel builds and runs a static test init in QEMU. No XNU hardware boot,
-iOS root, iOS GUI or UEFI iOS entry has been tested on this phone.
+kernel builds and runs a static test init in QEMU **and on the actual MIX 2S**.
+User photographs confirm PID 1 and repeated still-alive heartbeats from a
+RAM-only boot. Apple userspace, iOS GUI, persistent iOS root and a UEFI iOS
+entry have not been brought up.
 
 ## Standalone boot diagnostic 0001
 
@@ -80,8 +82,9 @@ packaging alone does not establish execution or display on hardware.
 Diagnostic0002 using this packaging displayed diagnostic text on the actual
 MIX 2S (user observation). The exact cause of the first raw-image black screen
 is not isolated because gzip, DTB table and header fields changed together.
-This establishes shim execution and framebuffer output; XNU hardware boot
-is the next separate test.
+This establishes shim execution and framebuffer output. A subsequent pure-RAM
+XNU boot reached static PID 1 on hardware and repeatedly printed its heartbeat.
+The test program occupies `/sbin/launchd` in mockfs; it is not Apple launchd.
 
 ## Full OS partition backups
 
