@@ -8,7 +8,47 @@ and DO NOT authorize erasing this phone. No destructive step is approved.
 
 ## Current handoff, 2026-10-23 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION — all backups verified, awaiting user cooldown/reconnect
+### CURRENT NEXT ACTION — automatic hardware register capture succeeded
+
+- Standalone diagnostic0001 fastboot send560KB/boot both OKAY (0.110s), but
+  **user saw black screen**. No execution/framebuffer proof from that attempt.
+  User held Power+VolumeDown; known backup recovery temporarily booted again
+  (61896KB,1.545s), root ADB returned. Pstore mounted empty, no last_kmsg;
+  recovery lacks /dev/mem and exposes only MIDR/REVIDR in sysfs. Data unmounted.
+- Implemented **Linux entry wrapper** for automatic register capture. Source
+  recovery is pinned SHAf9ad6529..., original gzip kernel+65DTBs preserved
+  except entry branch/Image size; adds12KiB wrapper after original image_size
+  and112-byte /chosen/polaris,boot-registers property to each tree. Wrapper
+  records read-only CPU registers into RAM FDT, resumes original Linux branch
+  at offset0x1d80000. Same headless ramdisk, boot options/OS header preserved.
+- New tools build-polaris-linux-probe.py / qemu-polaris-linux-probe.py and
+  shim/polaris/linux-probe.{S,c}. QEMU3 cases PASS: valid register capture;
+  wrong board and bad marker no FDT writes; original entry and x0..x3/SP
+  preserved;0exceptions. python compile/diff checks pass. No kernel CI needed.
+- **Actual hardware automatic roundtrip SUCCESS** (exec94392 exited0):
+  shim/out/polaris-linux-probe-0001/polaris-linux-probe-0001.img,
+  63397888bytes,SHA799fb4447515428351d68378f19b3bdc37f3640aaf19a618d89f63540b071ea0.
+  fastboot send61912KB/boot OKAY,total1.540s; root ADB returned automatically.
+  research/polaris/linux-probe-0001/{boot.log,registers.bin,registers.json}.
+  Raw **EL4 (EL1),MIDR517f803c,MPIDR81000000,MMFR0101122,MMFR110212122,
+  PFR011112222,SCTLRc00800,CNTFRQ124f800 (19.2MHz),DTB841c0000,DAIF1c0**.
+  Record completion1. TGran16=1 confirmed; MMU/DC off; CPU affinity0.
+- Phone NOW in instrumented temporary headless recovery, root ADB. Last37C,
+  all persistent filesystems unmounted; CPU max1056000kHz reapplied runtime.
+  No user action currently pending. User requests maximum unattended work.
+- Next: resolve standalone raw-Image black screen/container/display and build
+  a bounded RAM-only XNU hardware image using the proven gzip+DTB packaging.
+  Do not infer working display from register capture. No XNU phone boot yet.
+- Phone-specific host payload validated (NOT hardware booted/packaged):
+  shim/out/polaris-ram-loader/payload-phone-0001.bin,16903360bytes,
+  SHAc79840337f8e39d1d1fc5e7a02d6f4c26f4f2987e2c5575f2a5bb2f74559bcf6.
+  Actual C validator PASS, embedded hardware GIC17a00000/17a60000,timer19,
+  19.2MHz checked; no UFS node. Entry18149a488,args182518000,top18251c000.
+  Synthetic RAM init only, NOT Apple launchd/iOS; never use QEMU ADT on phone.
+- All5 full/critical backups remain verified, no persistent partition writes,
+  GPT/resize/format/iOS install. Previous handoff commitdb91249.
+
+### Previous backup completion / cooldown handoff
 
 - **ALL5 full partition backups verified**; userdata exec91104 exited0:
   backup/polaris-full-userdata-20261023-203417/,115167178752raw,

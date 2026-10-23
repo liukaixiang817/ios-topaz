@@ -26,7 +26,8 @@ Zig 0.15.2 for the ELF link, and the AOSP Android 10 mkbootimg for boot header
 v1. It rejects absolute relocations in allocated C sections, validates the
 Linux Image header, and compares the packed kernel and ramdisk with inputs.
 The empty ramdisk has no executable init. The device's verified DTB is appended
-to the Image; ABL acceptance of this raw uncompressed image remains untested.
+to the Image. On hardware, fastboot accepted this raw image but the user saw
+a black screen; execution and scanout were not established by that attempt.
 Outputs are ignored under `shim/out/polaris-probe-0001/`.
 
 QEMU's Cortex-A76 runs the actual Image from RAM with FP/SIMD disabled. The
@@ -39,6 +40,35 @@ a8r8g8b8 layout are corroborated by `polaris.dsc`, `sdm845.dsc` and
 `SimpleFbDxe.c` at upstream edk2-msm commit
 `e1952621f419f8db60ed28271264e1b5184c571d`. Actual scanout still needs an
 on-device observation.
+
+## Automatic entry-register capture through recovery
+
+`tools/build-polaris-linux-probe.py` adds a small wrapper to the hash-pinned,
+previously verified headless recovery. It records CPU registers into a fixed
+112-byte property in the in-memory FDT, then resumes the original Linux entry.
+Only the original Image's entry branch and advertised size change; the rest
+of its original bytes and the headless ramdisk are preserved. Each of the
+65 appended DTBs gets the preallocated property. No flash command is included.
+
+```sh
+python3 tools/build-polaris-linux-probe.py --zig /path/to/zig \
+  --fdtput /path/to/fdtput --mkbootimg /path/to/AOSP/mkbootimg.py
+python3 tools/qemu-polaris-linux-probe.py --qemu /path/to/qemu-system-aarch64 \
+  --fdtput /path/to/fdtput --dtb /path/to/verified/live.dtb
+```
+
+QEMU checks the actual wrapper, the original branch target, preservation of
+x0..x3/SP, exact FDT write boundaries, and unchanged FDT on wrong-board or
+bad-marker inputs. The original Linux entry is parked in this test.
+
+The temporary hardware boot **returned to root ADB automatically**. The raw
+entry registers were EL=4 (EL1), MIDR=0x517f803c, MPIDR=0x81000000,
+MMFR0=0x101122, MMFR1=0x10212122, PFR0=0x11112222, SCTLR=0xc00800,
+CNTFRQ=0x124f800 (19.2MHz), DAIF=0x1c0. MMFR0 confirms 16KiB granule support.
+The property is readable at
+`/sys/firmware/devicetree/base/chosen/polaris,boot-registers`.
+This establishes CPU entry conditions; it does not establish a working
+framebuffer or an XNU/iOS hardware boot. Logs remain in ignored `research/`.
 
 ## Full OS partition backups
 
