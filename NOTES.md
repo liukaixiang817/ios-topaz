@@ -8,6 +8,29 @@ and DO NOT authorize erasing this phone. No destructive step is approved.
 
 ## Current handoff, 2026-10-23 (Australia/Melbourne)
 
+### RAM loader core milestone
+
+- Commit `242c910` adds polaris QEMU framebuffer/boot_args geometry (22 tests).
+- New separate `shim/polaris/{boot,loader,payload}.c`, payload.h implement the
+  bounded v1 FDT-initrd handoff. Destination RAM must be exactly
+  0x180000000+0xfc8a0000; payload source stays in lower bank, maximum128MiB;
+  no magic scanning/embedded fallback. Validate every segment/ADT/boot_args
+  bound and destination overlap before any copy, require entry in initialized
+  bytes, CPU0/EL1/MMU+DC off and TGran16=1. No storage code linked.
+- `tools/build-polaris-ram-loader.py` cross-compiles the core only (86016-byte
+  Image, no Android boot packaging or kernel). All allocated C sections pass
+  absolute-relocation audit. Preserve the earlier diagnostic0001 separately.
+- **27 host tests pass**, including actual C validator truncation/overflow/
+  overlap/source-bank cases. `tools/qemu-polaris-ram-loader.py` runs actual
+  Image under Cortex-A76: valid-copy reaches synthetic parked entry
+  0x180004000, checks9-byte copy+BSS clearing+upper-bank736-byte boot_args;
+  malformed destination leaves entire first64KiB destination unchanged.
+  Both cases have no QEMU exceptions/invalid accesses. Results under ignored
+  `research/polaris/qemu-ram-loader/result.json`. This is **NOT an XNU boot**.
+- CI39933084495 now observed in_progress, Build step; dependencies succeeded.
+  userdata exec91104 continues; at last output16 of27 chunks passed (indices
+  are completion-order, not contiguous). No phone restart during this backup.
+
 ### QEMU tooling milestone (before the first kernel result)
 
 - `tools/qemu-sweet.py --platform polaris` uses 0x9d400000 /1080x2160/4320

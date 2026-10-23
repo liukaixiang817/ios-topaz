@@ -203,3 +203,24 @@ mountinfo confirms no persistent block filesystem is mounted. The full
 107.258GiB userdata backup is in progress, and must pass a whole-partition
 source SHA-256 comparison before it is marked verified. Keep the official image and backups
 local; do not distribute the downloaded recovery binary through this repo.
+
+## Bounded RAM loader core
+
+The separate `shim/polaris/boot.c` + `loader.c` + `payload.c` core reads the
+v1 `/chosen/linux,initrd-start/end` properties without scanning. It validates
+all payload source/destination/ADT/boot argument bounds before copying,
+requires the observed upper bank, and rejects overlap and invalid entry points.
+The handoff checks CPU0, EL1, caches/MMU off and the 16KiB granule. No storage
+code is linked into this loader. The kernel itself must also be the verified
+polaris RAM-only profile; a loader cannot make an arbitrary kernel safe.
+
+```sh
+python3 tools/build-polaris-ram-loader.py --zig /path/to/zig
+python3 tools/qemu-polaris-ram-loader.py --qemu /path/to/qemu-system-aarch64
+```
+
+The builder currently emits only an ELF and Image for emulator testing, with
+no ready Android boot image or XNU kernel. The QEMU cases use a synthetic
+parked entry: one proves the copy/BSS/boot_args layout above4GiB; another proves
+an out-of-bounds segment leaves destination RAM unchanged. Both pass without
+exceptions. Neither is an XNU/iOS boot or hardware test.
