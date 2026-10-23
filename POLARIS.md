@@ -2,7 +2,7 @@
 
 The requested target is **Android + Mindows Windows 11 + iOS 16**, preserving
 existing data and reserving about 64 GiB for iOS. The existing topaz installation
-procedure does not satisfy this: it replaces `userdata`. No polaris XNU kernel,
+procedure does not satisfy this: it replaces `userdata`. The first polaris XNU build is queued; no
 iOS boot image, iOS root or UEFI iOS entry has been built or tested here.
 
 ## Standalone boot diagnostic 0001
@@ -54,6 +54,12 @@ partition. Only then does it remove `.partial` suffixes and mark the manifest
 verified. Mounted target devices are refused. These commands do not enter
 recovery or mount/unmount anything themselves. Do not reboot or switch OS
 until the backup and source verification finish.
+
+Windows is fully backed up and verified: 128534437888 raw bytes,
+31879606683 compressed bytes, whole raw SHA-256
+`f0bef9ef67242a445a401eaf27d3f19328bedcb85e8ec97887a2162f37950d0a`.
+The local manifest is under `backup/polaris-full-mindowswin-20261023-195539/`.
+Android userdata is still in progress; do not reboot during backup.
 
 ## Read-only collection
 
@@ -146,7 +152,7 @@ Hardware source references for future work:
 and [edk2-porting firmware](https://github.com/edk2-porting/edk2-msm).
 These are references; the installed Mindows UEFI version has not been identified.
 
-## First XNU build profile (not yet compiled or booted)
+## First XNU build profile (CI queued; not yet booted)
 
 GitHub Actions now accepts `target_platform=polaris`. This stages sweet's
 0001–0079 baseline plus the isolated polaris overlay, excluding topaz's drivers
@@ -168,9 +174,17 @@ placeholders, not measurements. CPU0's 1.7664 GHz maximum was read from Linux.
 
 Patch hunks have been checked against source reconstructed through 0079, and
 host tests cover profile isolation, ADT serialization and mapping bounds.
-No complete kernel build or hardware validation has happened; gh authentication
-is still needed. No compiled kernel should be booted merely because these
-host checks pass.
+The first CI run is [39933084495](https://github.com/liukaixiang817/ios-topaz/actions/runs/39933084495),
+commit `b50a1063fe9d1734bc341d676c4689c0b0facb47`; it was observed queued.
+No complete kernel build or XNU hardware validation has happened. No compiled
+kernel should be booted merely because these host checks pass.
+
+Use `tools/qemu-sweet.py PAYLOAD OUTDIR --platform polaris --qemu /path/to/qemu
+--nm /usr/bin/nm --kernel MATCHING_KERNEL` with the **QEMU** polaris ADT.
+This selects the 1080×2160 framebuffer at 0x9d400000 for both boot arguments and
+snapshots. The runner sizes emulator RAM to cover the payload’s upper bank.
+A host ABI check covers the 64-bit addresses above 4GiB and video fields; the
+new polaris XNU kernel has not run in QEMU yet.
 
 ## Offline Android backup image
 
@@ -183,7 +197,9 @@ adbd are started; no recovery UI, factory-reset job, persistent filesystem
 mount or filesystem repair is configured. Root ADB is temporary to this image.
 
 The resulting ignored `shim/out/polaris-backup-recovery/` image is for
-temporary RAM boot only. Host archive/configuration checks passed; USB/root
-access and the absence of mounted userdata still require live verification
-before running the userdata backup tool. Keep the official image and backups
+temporary RAM boot only. Host archive/configuration checks passed. On 2026-10-23, fastboot temporarily
+booted the image (61896KB sent, booting OKAY, 1.543s); root ADB works and
+mountinfo confirms no persistent block filesystem is mounted. The full
+107.258GiB userdata backup is in progress, and must pass a whole-partition
+source SHA-256 comparison before it is marked verified. Keep the official image and backups
 local; do not distribute the downloaded recovery binary through this repo.

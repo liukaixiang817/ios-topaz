@@ -8,6 +8,30 @@ and DO NOT authorize erasing this phone. No destructive step is approved.
 
 ## Current handoff, 2026-10-23 (Australia/Melbourne)
 
+### QEMU tooling milestone (before the first kernel result)
+
+- `tools/qemu-sweet.py --platform polaris` uses 0x9d400000 /1080x2160/4320
+  in boot_args, framebuffer dumps, PNG and glyph decoding. Original sweet
+  defaults retained. --qemu and --nm support explicit host executable paths;
+  nm uses -U -n, accepted by macOS and LLVM nm. Existing RAM sizing covers
+  0x180000000+0xfc8a0000 (9GiB QEMU RAM starting at0x40000000).
+- New ABI test checks actual packed boot_args, upper-bank physical pointers,
+  segment bytes and entry stub literals; **22 host tests pass**. No actual
+  polaris XNU QEMU run yet; awaiting the first CI kernel. Do not confuse the
+  earlier standalone diagnostic QEMU result with XNU.
+
+### Milestone update ~20:45 local
+
+- First polaris XNU CI successfully registered by qualifying branch push.
+  **Run 39933084495**, commit **b50a1063fe9d1734bc341d676c4689c0b0facb47**:
+  https://github.com/liukaixiang817/ios-topaz/actions/runs/39933084495
+  Observed queued, job120345897284. Branch event defaults target_platform to
+  polaris, machine SWEET, macOS13.5, DEVELOPMENT; RAM-only overlay/UFS refused.
+  Do not dispatch a duplicate. Registration issue resolved without browser.
+- Offline userdata backup continues (exec91104); do not reboot. At early check
+  1/27 chunks validated and ~3GB compressed received; ~52GiB immediate host free.
+  No disk edits or iOS installation; kernel not built or booted yet.
+
 ### Milestone update ~20:40 local
 
 - Temporary backup image sent with fastboot boot: sending 61896KB OKAY,

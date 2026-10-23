@@ -24,13 +24,18 @@ import argparse, json, os, socket, struct, subprocess, sys, time, zlib
 
 FB_BASE, FB_W, FB_H = 0x9c000000, 1080, 2400
 FB_STRIDE = FB_W * 4
+FRAMEBUFFERS = {
+    "sweet": (FB_BASE, FB_W, FB_H, FB_STRIDE),
+    "polaris": (0x9d400000, 1080, 2160, 4320),
+}
 PAGE = 0x4000
 STUB_PA = 0x40200000	# above the dtb QEMU places at RAM base
 BOOT_LINE_LENGTH = 608
 
 
-def build_image(payload):
+def build_image(payload, framebuffer=None):
     """Return (phys_base, ram_image, boot_args_pa, entry_pa)."""
+    fb_base, fb_w, fb_h, fb_stride = framebuffer or FRAMEBUFFERS["sweet"]
     magic, ver, nsegs = struct.unpack_from('<8sII', payload, 0)
     assert magic == b'SWEETXNU' and ver == 1, 'not a SWEETXNU v1 payload'
     virt_base, entry_va, adt_off, adt_size, kernel_end, phys_base, mem_size = \
@@ -47,7 +52,7 @@ def build_image(payload):
         img[o:o + fsize] = payload[foff:foff + fsize]
     img[adt_pa - phys_base:adt_pa - phys_base + adt_size] = payload[adt_off:adt_off + adt_size]
     ba = struct.pack('<HH4x4Q6QI4xQI', 2, 2, virt_base, phys_base, mem_size, top,
-                     FB_BASE, 1, FB_STRIDE, FB_W, FB_H, 32, 0, adt_pa - delta, adt_size)
+                     fb_base, 1, fb_stride, fb_w, fb_h, 32, 0, adt_pa - delta, adt_size)
     ba += cmdline + b'\0' * 4 + struct.pack('<QQ', 0, mem_size)
     assert len(ba) == 736
     img[ba_pa - phys_base:ba_pa - phys_base + len(ba)] = ba
@@ -59,15 +64,18 @@ def stub(ba_pa, entry_pa):
     return struct.pack('<4I2Q', 0x58000080, 0x580000a1, 0xd61f0020, 0xd503201f, ba_pa, entry_pa)
 
 
-def write_png(path, raw):
+def write_png(path, raw, framebuffer=None):
+    _, width, height, stride = framebuffer or FRAMEBUFFERS["sweet"]
+    if len(raw) != stride * height:
+        raise ValueError("framebuffer dump size mismatch")
     rows = []
-    for y in range(FB_H):
-        line = raw[y * FB_STRIDE:(y + 1) * FB_STRIDE]
-        rgb = bytearray(FB_W * 3)	# a8r8g8b8 little endian = B G R A in memory
+    for y in range(height):
+        line = raw[y * stride:(y + 1) * stride]
+        rgb = bytearray(width * 3)	# a8r8g8b8 little endian = B G R A in memory
         rgb[0::3], rgb[1::3], rgb[2::3] = line[2::4], line[1::4], line[0::4]
         rows.append(b'\0' + bytes(rgb))
     chunk = lambda t, d: struct.pack('>I', len(d)) + t + d + struct.pack('>I', zlib.crc32(t + d))
-    png = b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', FB_W, FB_H, 8, 2, 0, 0, 0))
+    png = b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', width, height, 8, 2, 0, 0, 0))
     png += chunk(b'IDAT', zlib.compress(b''.join(rows), 6)) + chunk(b'IEND', b'')
     open(path, 'wb').write(png)
 
@@ -83,16 +91,17 @@ def payload_data(payload, va, size):
     raise ValueError(f'VA {va:#x}+{size:#x} not in initialized payload segments')
 
 
-def decode_screen(raw, font):
+def decode_screen(raw, font, framebuffer=None):
     """Exact glyph matching for pe_serial.c's 2x, white-on-black fbcon."""
+    _, width, height, stride = framebuffer or FRAMEBUFFERS["sweet"]
     glyphs = {font[c * 16:(c + 1) * 16]: chr(c) for c in range(32, 127)}
     rows, unknown = [], 0
-    for row in range(FB_H // 32):
+    for row in range(height // 32):
         chars = []
-        for col in range(FB_W // 16):
+        for col in range(width // 16):
             glyph = bytearray(16)
             for y in range(16):
-                offset = (row * 32 + y * 2) * FB_STRIDE + col * 16 * 4
+                offset = (row * 32 + y * 2) * stride + col * 16 * 4
                 for x in range(8):
                     if raw[offset + x * 8:offset + x * 8 + 4] == b'\xff' * 4:
                         glyph[y] |= 1 << x
@@ -152,6 +161,9 @@ def main():
     ap.add_argument('--secs', type=float, default=20)
     ap.add_argument('--gdb', action='store_true', help='start halted, gdb stub on :1234, no timeout')
     ap.add_argument('--hmp', action='append', default=[], help='extra monitor command run after stop (repeatable), e.g. "x /8gx 0xfffffe..."')
+    ap.add_argument('--platform', choices=FRAMEBUFFERS, default='sweet', help='framebuffer geometry for boot_args and snapshots')
+    ap.add_argument('--qemu', default='qemu-system-aarch64', help='QEMU executable')
+    ap.add_argument('--nm', default='llvm-nm', help='Mach-O nm executable (LLVM or macOS)')
     ap.add_argument('--cpu', default='cortex-a76')	# ARMv8.2 like Kryo 470, same ID_AA64MMFR0
     ap.add_argument('--kernel', help='matching unstripped kernel, for exact framebuffer text decoding (uses llvm-nm)')
     ap.add_argument('--fail-on-panic', action='store_true', help='exit 2 for a visible panic, 3 for incomplete/blank decoding; requires --kernel')
@@ -161,7 +173,7 @@ def main():
     payload = open(a.payload, 'rb').read()
     font = None
     if a.kernel:
-        symbols = subprocess.check_output(['llvm-nm', '--defined-only', a.kernel], text=True)
+        symbols = subprocess.check_output([a.nm, '-U', '-n', a.kernel], text=True)
         fonts = [int(line.split()[0], 16) for line in symbols.splitlines()
                  if line.split()[-1:] == ['_iso_font']]
         if len(fonts) != 1:
@@ -170,7 +182,9 @@ def main():
     os.makedirs(a.outdir, exist_ok=True)
     out = os.path.abspath(a.outdir)
 
-    phys_base, img, ba_pa, entry_pa = build_image(payload)
+    framebuffer = FRAMEBUFFERS[a.platform]
+    fb_base, _, fb_height, fb_stride = framebuffer
+    phys_base, img, ba_pa, entry_pa = build_image(payload, framebuffer)
     open(f'{out}/ram.bin', 'wb').write(img)
     open(f'{out}/stub.bin', 'wb').write(stub(ba_pa, entry_pa))
     print(f'phys_base={phys_base:#x} boot_args={ba_pa:#x} entry={entry_pa:#x}', file=sys.stderr)
@@ -181,7 +195,7 @@ def main():
     # virt RAM starts at 0x40000000: cover the payload's RAM (mkadt.py --highmem needs 8G).
     mem_size = struct.unpack_from('<Q', payload, 0x40)[0]
     ram_gib = max(4, -(-(phys_base + mem_size - 0x40000000) // (1 << 30)))
-    cmd = ['qemu-system-aarch64', '-M', 'virt,gic-version=3', '-cpu', a.cpu, '-smp', '1', '-m', f'{ram_gib}G',
+    cmd = [a.qemu, '-M', 'virt,gic-version=3', '-cpu', a.cpu, '-smp', '1', '-m', f'{ram_gib}G',
            '-nographic', '-serial', f'file:{out}/serial.txt', '-qmp', f'unix:{mon},server,nowait',
            '-d', 'int,guest_errors,unimp', '-D', f'{out}/qemu.log', '-no-reboot',
            '-device', f'loader,file={out}/ram.bin,addr={phys_base:#x},force-raw=on',
@@ -199,15 +213,15 @@ def main():
         time.sleep(0.2)
     result = {'status': 'qemu_exited', 'qemu_returncode': p.returncode}
     if p.poll() is None:
-        _, regs, *extra = qmp(mon, 'stop', 'info registers', *a.hmp, pmemsave=(FB_BASE, FB_STRIDE * FB_H, f'{out}/fb.raw'))
+        _, regs, *extra = qmp(mon, 'stop', 'info registers', *a.hmp, pmemsave=(fb_base, fb_stride * fb_height, f'{out}/fb.raw'))
         open(f'{out}/regs.txt', 'w').write(regs + ''.join(f'\n(qemu) {c}\n{r}' for c, r in zip(a.hmp, extra)))
         p.kill()
         p.wait()
         raw = open(f'{out}/fb.raw', 'rb').read()
-        write_png(f'{out}/fb.png', raw)
+        write_png(f'{out}/fb.png', raw, framebuffer)
         result = {'status': 'not_decoded'}
         if font is not None:
-            screen, unknown = decode_screen(raw, font)
+            screen, unknown = decode_screen(raw, font, framebuffer)
             open(f'{out}/fb.txt', 'w').write(screen)
             result = screen_result(screen, unknown)
         os.unlink(f'{out}/fb.raw')
@@ -215,6 +229,7 @@ def main():
         print(f'qemu exited early: {p.returncode}', file=sys.stderr)
     for f in ('ram.bin',):
         os.unlink(f'{out}/{f}')
+    result.update(platform=a.platform, framebuffer_base=hex(fb_base), framebuffer_height=fb_height)
     open(f'{out}/result.json', 'w').write(json.dumps(result, indent=2) + '\n')
     print(json.dumps(result), file=sys.stderr)
     print(f'{out}/fb.png  {out}/regs.txt  {out}/qemu.log', file=sys.stderr)
