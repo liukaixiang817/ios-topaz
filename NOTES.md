@@ -10,9 +10,33 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION —0009 display boot sent; collect actual screen evidence
+### CURRENT NEXT ACTION —0010 console profile prepared; user returned FASTBOOT
 
-- CURRENT PHONE STATE:0009 DISPLAY temporary boot SENT,exec82812 exit0,
+-0009 user observation (2026-10-24): static Apple Logo WITHOUT progress bar
+ for over3min. No photo/video yet; no visible daemon logs available. This is
+ NOT proof of stable SpringBoard, stuck migration, kernel panic, or GUI success.
+ Read-only exact-device USB check found neither ADB nor FASTBOOT control while
+ XNU running. Source confirms noconsole1 mutes console after first valid CPU
+ presentation; later first GUI fatal signal would unmute. Need readable logs
+ before choosing any root/filesystem/daemon changes. Do not infer migration or
+ bypass startup checks from the logo alone.
+- Console0010 prepared on Mac, SAME kernel907/fbfda0c7 (CI39984984336 already
+ validated). ONLY parameter changes vs0009: sweetfb_noconsole1->0 and sweetfb_hz
+ 5->1, allowing diagnostic text between frames. Marked ADT byte-identical to0009;
+ ufsrw0/polarisramcow1/budget512/base immutability unchanged. Actual C payload
+ copy-plan validator PASS; image47288320bytes,
+ shim/out/polaris-xnu-display-console-0010/polaris-xnu-display-console-0010.img,
+ SHA9bdb9e564df240f1d6757506f4950c93b111edf85224d4021f0dc21886ee4a42.
+ Prepared.json and guarded boot-display-console-0010.py under research/polaris;
+ requires same tested kernel/provenance and exact prepared-image SHA, then fresh
+ phone RO map/GPT/temp checks. No new kernel CI needed (no kernel code change).
+- User returned FASTBOOT; temporary known recovery/read-only preflight currently
+ running exec session from this turn; check display-console-0010/preflight.json
+ and result before boot. Current physical state transitioning recovery, not yet
+ new XNU boot. DO NOT rerun repair/staging/format or enable UFS writes.
+ Physical touch,USB,App operation,persistent64GiB/tripleboot unfinished.
+
+- PRIOR0009 DISPLAY temporary boot SENT,exec82812 exit0,
  2026-10-23T16:32:38.530021Z (=2026-10-24 Australia/Melbourne),fastboot1.183s.
  Guarded boot-display-0009.py: exact907 kernel/profile/hash,all QEMU guards
  and matching provenance, actual C copy-plan validator PASS. Just before reboot:
