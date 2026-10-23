@@ -35,7 +35,13 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 - NEXT:complete deeper SpringBoard synchronous-request callers + third thread,
  sample lsd/containermanagerd separately with bounded output;focus on actual
  LaunchServices dependency. Existing0012 onlyfirst2threads/6frames misses it.
- Prepare/compile/CI/validate before another temporary boot;no new source yet.
+ 0810 prepared:explicitpolariswait1 selects SpringBoard/lsd/containermanagerd
+ in turn every15s,first60s,36passes,max3threads/12frames. Six addresses per
+ bounded192byte line with offset;Mach savedargs for all selected Machwaits.
+ Default0012mode still2threads/6frames/allpriornames. Residentreader/map/CPU
+ guards unchanged. Actual2CI-header ARM64 object compiles PASS,exactpatch
+ application/output PASS,nativeASan/UBSan bounds PASS. FullCI/new-kernel QEMU
+ NOT yet run; no new phone boot. Publiccmdline retainsall storage/CPU gates.
  Keep current boot until evidence saved;no USB restart/log channel. Full home,
  physicaltouch,USB,Apps,persistent64GiB/tripleboot unfinished. All logical iOS
  writes volatile512MiB RAM ONLY,ufsrw0;no base/Android/Windows/GPT writes.
