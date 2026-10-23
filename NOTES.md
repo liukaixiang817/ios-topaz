@@ -8,15 +8,47 @@ and DO NOT authorize erasing this phone. No destructive step is approved.
 
 ## Current handoff, 2026-10-23 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION — verified local root; read-only UFS kernel ready for tests
+### CURRENT NEXT ACTION — hardware UFS read verified; preserve-data root placement
 
-- Latest user photo CONFIRMS probe reached "idle queue restored; probe complete"
-  and RAM init PID1/two heartbeats. Private evidence
-  research/polaris/xnu-ufs-probe-0002/hardware-pid1-queue-restored.jpg and
-  hardware-result.json. CRC MATCH/MISMATCH and any earlier errors NOT visible.
-  This restoration branch also runs after non-timeout errors: do NOT infer
-  successful UFS reads from it. No timeout branch on this observed path.
-  Need keep final diagnostic status visible without issuing more storage reads.
+- **Hardware UFS read VERIFIED by latest user photo**: repeated
+  POLARIS UFS RESULT: MATCH CRC32 91045173 expected 91045173;
+  POLARIS UFS QUEUE: restored (no new I/O), plus live init heartbeats.
+  The bounded LUN0 LBA0/count256 read (1MiB,4KiB blocks) matches the initial
+  backup CRC and GPT signatures. Repeated display reports saved outcome,
+  NOT repeated disk reads. Evidence ignored/private xnu-ufs-probe-0003/
+  hardware-ufs-match.jpg and hardware-result.json. Hardware UFS transport
+  works for this one bounded range; no iOS root/GUI/general-write validation.
+- Next: read-only filesystem inspection for a data-preserving image-file
+  placement, since no64GiB unallocated partition exists. No shrink/format/GPT
+  or userdata erasure permission. Must verify encryption, space, file extent
+  stability and boot-time validation before considering any file-backed disk.
+  User returned FASTBOOT; known backup recovery temporarily booted exec37245
+  send61896KB1.442s,boot0.091s,total1.546s; root ADB returned. Logs under
+  research/polaris/root-placement-0001/. Phone now headless recovery34C,
+  CPU max1056000kHz; userdata UNMOUNTED and runtime blockdev RO=1. No phone
+  writes. Host root image complete; no sudo rebuild needed.
+- Read-only filesystem inspection: userdata115167178752bytes,ext4/4KiB,
+  INCOMPAT10046,needs_recovery=true (journal replay required). Set block RO=1
+  BEFORE mount ro,noload,nodev,nosuid,noexec. No journal replay on phone.
+  C inspector tools/polaris-fs-inspect.c cross-compiled aarch64-linux-musl
+  with Zig -Wall -Wextra -Werror; binary pushed only to /dev (tmpfs).
+  FS_IOC_GETFLAGS + GET_ENCRYPTION_POLICY confirm root inode2 NOT encrypted,
+  ENODATA/no policy; /local IS encrypted (flags80800,policy ioctl success).
+  Do not place raw-readable iOS image in /data/local/tmp. statvfs available
+  92165570560bytes; df gives different reserved-space view. Initial lsattr
+  did not display encryption and /local/tmp lookup failed; use ioctl evidence.
+  Unmounted after inspection; first4096bytes match preinspection exactly.
+- Installed keg-only Homebrew e2fsprogs1.47.4 for HOST-copy checks. Reconstructing
+  verified userdata backup to sparse host userdata-workcopy.img (exec42818,
+  reconstruct.log). Each chunk + whole raw hash validated; source gzip files
+  untouched, free-space floor8GiB. Do not start a duplicate reconstruction.
+  Prepared ignored check-userdata-workcopy.py: APFS clonefile (no copy fallback),
+  e2fsck -p -E journal_only on NEW clone, then e2fsck -fn. NOT run yet.
+  Phone filesystem remains protected. Sources: kernel.org ext4 ro,noload
+  documentation and fscrypt/FIEMAP docs; raw file extents require careful
+  validation and cannot be treated as a permanently safe writable mapping.
+- Prior0002 photo showed only queue restored and PID1; its CRC was unobserved.
+  That ambiguity is now resolved by0003, not by reinterpreting old evidence.
 - Added0802 retained-report overlay: save CRC/error/refusal and queue status;
   completed CPU startup thread prints saved report every10s using IOSleep,
   only when explicit polarisufsprobe=1 was accepted. No repeated UFS requests
@@ -34,10 +66,9 @@ and DO NOT authorize erasing this phone. No destructive step is approved.
   shim/out/polaris-xnu-ufs-probe-0003/polaris-xnu-ufs-probe-0003.img,
   47280128bytes,SHA40584739a6bcea233bf72c735216bbc10d60c1b1e09ffe100f635db6c739c5ec.
   Exec10998 exit0,send46172KB1.073s,boot0.091s,total1.173s.
-  research/polaris/xnu-ufs-probe-0003/{boot.log,boot.json}. Hardware result
-  NOT observed yet. Awaiting user report of repeated POLARIS UFS RESULT/QUEUE
-  lines; user told wait30s, no reboot. Current phone on new temporary image,
-  no USB control/logging. No storage success claim before reading actual result.
+  research/polaris/xnu-ufs-probe-0003/{boot.log,boot.json}. Hardware MATCH
+  observed in latest photo; see above. Phone on temporary XNU pending user
+  return to FASTBOOT; no USB control/logging.
   Kernel artifact12499616895,60261462bytes; logsci-39948294850.log.
   Local root image remains verified; no user sudo/rebuild needed.
 
@@ -71,8 +102,9 @@ and DO NOT authorize erasing this phone. No destructive step is approved.
   WRITE/UNMAP/SYNC/other ranges rejected even with ufsrw. Checks response
   tag/residual, GPT signatures, CRC; restores old idle queue on completion,
   retains permanent DMA/queue on timeout without reset/abort. Normal UFS root
-  remains ENXIO, no BSD disk/mount/persistent log/input/USB startup. High DMA
-  and IOMMU behavior UNPROVEN. No hardware UFS read result yet.
+  remains ENXIO, no BSD disk/mount/persistent log/input/USB startup. The0003
+  hardware test now verifies transport for the allocated DMA and1MiB read;
+  this is not proof for arbitrary allocations, ranges or write commands.
 - Earlier read-only Linux handoff snapshot succeeded (commit8246b44):
   research/polaris/ufs-handoff-0001/{registers.bin,registers.json,boot.log}.
   CAP1587031f (64-bit DMA),VER210,HCS10f,HCE1,IS400,IE0,
