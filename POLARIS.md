@@ -60,7 +60,15 @@ Windows is fully backed up and verified: 128534437888 raw bytes,
 31879606683 compressed bytes, whole raw SHA-256
 `f0bef9ef67242a445a401eaf27d3f19328bedcb85e8ec97887a2162f37950d0a`.
 The local manifest is under `backup/polaris-full-mindowswin-20261023-195539/`.
-Android userdata is still in progress; do not reboot during backup.
+Android userdata is now fully verified too: 115167178752 raw bytes,
+21389839339 compressed bytes, whole raw SHA-256
+`b1af42b854345e101854dcccab182928512c9f749542da89fc1100aa2303dd97`.
+System, vendor and cust are also fully backed up with matching source hashes.
+The local `backup/polaris-recovery-index-20261023.json` lists all manifests.
+Together the five full partitions are 236.78GiB raw /52.46GiB compressed.
+Gzip chunks represent ordered raw byte ranges, not Android sparse images;
+reconstruct in manifest order and verify the whole raw hash before any restore.
+Keep these device-specific files private.
 
 ## Read-only collection
 
@@ -207,8 +215,8 @@ The resulting ignored `shim/out/polaris-backup-recovery/` image is for
 temporary RAM boot only. Host archive/configuration checks passed. On 2026-10-23, fastboot temporarily
 booted the image (61896KB sent, booting OKAY, 1.543s); root ADB works and
 mountinfo confirms no persistent block filesystem is mounted. The full
-107.258GiB userdata backup is in progress, and must pass a whole-partition
-source SHA-256 comparison before it is marked verified. Keep the official image and backups
+107.258GiB userdata backup completed successfully with a matching fresh
+whole-partition source SHA-256; no filesystem was mounted during either read. Keep the official image and backups
 local; do not distribute the downloaded recovery binary through this repo.
 
 ## Bounded RAM loader core

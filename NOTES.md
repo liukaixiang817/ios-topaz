@@ -8,6 +8,44 @@ and DO NOT authorize erasing this phone. No destructive step is approved.
 
 ## Current handoff, 2026-10-23 (Australia/Melbourne)
 
+### CURRENT NEXT ACTION — all backups verified, awaiting user cooldown/reconnect
+
+- **ALL5 full partition backups verified**; userdata exec91104 exited0:
+  backup/polaris-full-userdata-20261023-203417/,115167178752raw,
+  21389839339compressed, rawSHA256
+  **b1af42b854345e101854dcccab182928512c9f749542da89fc1100aa2303dd97**,
+  elapsed2310s. Source hash PID1216 finished; no backup process still needed.
+- Recovery index **backup/polaris-recovery-index-20261023.json** (ignored,0600)
+  includes all5 full manifests plus both critical snapshot manifests. Full
+  partitions combined236.78GiBraw/52.46GiBcompressed. Chunk filenames/lengths
+  rechecked; all promoted from.partial. system/vendor/cust sourceSHA:
+  system d68d9360f573472ad9aaa3a614025d862536d83eab8a547308b8b25f7465ed79
+  vendor af8db49c6e7a3573664582cb10f8f495f082150ddcdbfb2343be54e817560b3b
+  cust68af470a48607f9a0e98c381795df293151c229283c112830cb04b033f107ea9.
+- Phone still in custom temporary root-ADB recovery (never flashed). Last
+  measured battery500 (=50C), charging85%; clocks capped1056000kHz runtime.
+  **Asked user via async to unplug USB, ventilate/cool, then reconnect and
+  reply “已接回”. Awaiting response.** Do not assume unplug/reconnect happened.
+  All backups are now complete so unplugging/rebooting no longer interrupts
+  a backup. Read temperature after reconnect before the next experiment.
+- Next phone action after cooling: temporary fastboot boot diagnostic0001,
+  shim/out/polaris-probe-0001/polaris-probe-0001.img, SHA256
+  4fb6d76f1cc335caaccae71c86d664fbb26046680c9d89ac22c30f80c1d5611a.
+  Bind adb/fastboot to the one same phone without serial in git. Send/boot
+  OKAY establishes only ABL acceptance; require user physical screen report
+  of EL/MIDR/MPIDR/MMFR0/CNTFRQ. Probe has no storage/power driver and parks;
+  no ADB expected. User may need hold Power+VolDown to return fastboot.
+- Kernel CI39933084495+direct/integrated QEMU PID1 proven; commits **3fcc754**
+  (actual-shim integration), **05999ab** (earlier QEMU evidence), f9c74f7
+  (offline coverage), a2fa680(loader),242c910(QEMUvideo). Branch pushed through
+  3fcc754; no duplicate CI from notes/shim-only pushes. No XNU hardware boot.
+- No GPT edit, filesystem resize/format, root flash or iOS installation yet.
+  Android/Windows retain their partitions. No destructive step authorized.
+- Apple sources remain readonly mounts per attachment records; ownership test
+  image is detached. True iOS root build remains pending root-preserving copy
+  and driver bring-up. Computer Use manifest exists but tools/skill not loaded
+  this turn; no desktop operation performed. GitHub issue solved through CLI.
+
 ### Integrated shim+XNU QEMU result
 
 - Exec43952 completed0: actual polaris shim cold-loads the verified polaris
