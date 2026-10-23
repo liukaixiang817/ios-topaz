@@ -3,7 +3,57 @@
 The requested target is **Android + Mindows Windows 11 + iOS 16**, preserving
 existing data and reserving about 64 GiB for iOS. The existing topaz installation
 procedure does not satisfy this: it replaces `userdata`. No polaris XNU kernel,
-boot image, iOS root or UEFI iOS entry has been built or tested here.
+iOS boot image, iOS root or UEFI iOS entry has been built or tested here.
+
+## Standalone boot diagnostic 0001
+
+An isolated polaris probe now cross-compiles and passes QEMU checks. It reads
+the CPU feature registers, checks the supplied FDT's model/SoC/splash range,
+draws a 1080×2160 framebuffer console and parks. **It does not boot iOS.**
+No disk driver, XNU loader, SCSI command, persistent log or power-control code
+is linked. A non-polaris tree is refused before framebuffer writes.
+
+```sh
+python3 tools/build-polaris-probe.py --zig /path/to/zig \
+  --mkbootimg /path/to/AOSP/mkbootimg.py --dtb /path/to/verified/live.dtb
+python3 tools/qemu-polaris-probe.py --qemu /path/to/qemu-system-aarch64 \
+  --dtb /path/to/verified/live.dtb
+```
+
+The builder uses Clang for `aarch64-none-elf` with general-register-only code,
+Zig 0.15.2 for the ELF link, and the AOSP Android 10 mkbootimg for boot header
+v1. It rejects absolute relocations in allocated C sections, validates the
+Linux Image header, and compares the packed kernel and ramdisk with inputs.
+The empty ramdisk has no executable init. The device's verified DTB is appended
+to the Image; ABL acceptance of this raw uncompressed image remains untested.
+Outputs are ignored under `shim/out/polaris-probe-0001/`.
+
+QEMU's Cortex-A76 runs the actual Image from RAM with FP/SIMD disabled. The
+matching-tree case must show the expected console and parked state without
+exceptions; the wrong-board case must leave framebuffer RAM untouched. This
+does not emulate Qualcomm ABL, XPUs or the physical display.
+
+The framebuffer address (`0x9d400000`), size (1080×2160), stride (4320) and
+a8r8g8b8 layout are corroborated by `polaris.dsc`, `sdm845.dsc` and
+`SimpleFbDxe.c` at upstream edk2-msm commit
+`e1952621f419f8db60ed28271264e1b5184c571d`. Actual scanout still needs an
+on-device observation.
+
+## Full OS partition backups
+
+```sh
+python3 tools/polaris-backup.py mindowswin --adb /path/to/adb --jobs 4
+# userdata is permitted only when unmounted in an offline root recovery:
+python3 tools/polaris-backup.py userdata --adb /path/to/adb --su none --jobs 4
+```
+
+This reads 4 GiB chunks in parallel and streams gzip to ignored `backup/`.
+It checks gzip integrity and raw length, then hashes the concatenated raw
+contents in order and compares with a fresh SHA-256 of the original phone
+partition. Only then does it remove `.partial` suffixes and mark the manifest
+verified. Mounted target devices are refused. These commands do not enter
+recovery or mount/unmount anything themselves. Do not reboot or switch OS
+until the backup and source verification finish.
 
 ## Read-only collection
 
@@ -67,8 +117,10 @@ on topaz; the later guard patch does not establish safety on polaris.
 
 1. Obtain and verify complete Android and Windows data backups before any
    storage migration. The current Mac has about 103 GiB free, less than the
-   roughly 227 GiB combined raw partition sizes. The critical backups already
-   made cannot substitute for these user-data backups.
+   roughly 227 GiB combined raw partition sizes. A later macOS Important Usage
+   capacity check reported about 499.5 GB including reclaimable space, matching
+   the user's screenshot; compressed backups can proceed. The critical
+   backups already made cannot substitute for these user-data backups.
 2. Implement an isolated polaris shim/platform configuration. Verify reserved
    RAM, framebuffer format/stride and bootloader handoff from the actual device;
    do not reuse topaz's Gold-core handoff or its appended-v4-image assumption.
