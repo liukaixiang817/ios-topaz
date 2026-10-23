@@ -59,7 +59,18 @@ and DO NOT authorize erasing this phone. No destructive step is approved.
   default tree unchanged, QEMU+probe rejected (hardware MMIO not emulated).
   Host tests5 PASS including actual C policy under ASan/UBSan, exhaustive
   single-byte CDB mutations, CRC known vector and ADT bounds. Patch dry-run
-  against post0800 fixture PASS. CI build pending; no new phone boot yet.
+  against post0800 fixture PASS. Commit49c69a6 pushed; CI39944761112
+  in_progress/build (explicit -R liukaixiang817/ios-topaz needed for gh,
+  otherwise gh resolves upstream MakrSas). No new phone boot yet.
+  Live ADB first1MiB equals initial backup byte-for-byte; private record
+  research/polaris/ufs-head-current-check.json. Phone root recovery36C,
+  only RAM/pseudo filesystems mounted. Probe ADT prepared at
+  research/polaris/ufs-probe-phone-0001.adt; not booted.
+  gh run watch is active in exec49015, logci-39944761112-watch.log; last
+  API status in_progress at22:18 local. Await CI, inspect logs with explicit
+  -R, download/verify kernel and test default no-probe boot in QEMU before
+  any hardware probe. No new kernel artifact downloaded or phone image packed.
+  Root build directory still absent at last check; user sudo rerun pending.
 - Root image transport and eventual64GiB layout remain pending; no partition
   shrink/GPT edit/format authorized. Keep phone in headless recovery meanwhile.
 
