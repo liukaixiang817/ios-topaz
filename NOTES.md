@@ -45,10 +45,19 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
  Source1d06f9ea19c6fb9d9f8a9bc23a5c0e30ff0d6503 pushed;CI40001585107
  firstattempt FAILED before any steps:job120578752139 cancelled18:28:52Z,
  "The job was not acquired by Runner of type hosted even after multiple
- attempts",macOSarm64 capacity annotations. Same run rerun attempt2 requested;
- ci-watch-retry.log ongoing. No compile diagnostics or artifact on firstattempt.
+ attempts",macOSarm64 capacity annotations. Same run rerun attempt2 SUCCESS,
+ job120593650207 build5m16s;full gh log ci-40001585107.log confirms0810.
+ Exactpolaris/profile/source checked;artifact12523873372,bytes60322627,
+ ZIPentryCRC and kernelSHAab50b65d640233492cad41540e10db4323c532df2e0769513c71d2eb42d80bc9
+ verified;xnu/out-polaris-0013/kernel.development.sweet. No artifact firstattempt.
  Synthetic64MiB fixture prepared:SpringBoard14frames,lsd2frames,MCM unmappedFP;
- native12frame bounds PASS. Newkernel simulation scripts ready,not yet run.
+ native12frame bounds PASS. REFERENCE0012kernel legacy180s fixture/checker PASS,
+ 6framecap/oldmask67/unmappedFP/no panic;NOT0013 proof. Actual0013 sequential
+ tests NOW RUNNING exec33288/on300s,off200s,CPUguard200s,nodiag90s,legacy180s.
+ validate-and-prepare.py logs validation-progress.log;on success will package
+ phone image and saveprepared/verificationJSON. NOnewphoneboot;current0012XNU.
+ Physical FASTBOOT request pending;read-only USB check found no knownfastboot.
+ Do not run boot-phone.py until all5samekernel checks PASS andfresh ROpreflight.
  Keep current boot until evidence saved;no USB restart/log channel. Full home,
  physicaltouch,USB,Apps,persistent64GiB/tripleboot unfinished. All logical iOS
  writes volatile512MiB RAM ONLY,ufsrw0;no base/Android/Windows/GPT writes.
