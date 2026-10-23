@@ -53,7 +53,11 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
  Synthetic64MiB fixture prepared:SpringBoard14frames,lsd2frames,MCM unmappedFP;
  native12frame bounds PASS. REFERENCE0012kernel legacy180s fixture/checker PASS,
  6framecap/oldmask67/unmappedFP/no panic;NOT0013 proof. Actual0013 sequential
- tests NOW RUNNING exec33288/on300s,off200s,CPUguard200s,nodiag90s,legacy180s.
+ tests NOW RUNNING exec33288:on300s PASS,exact12frames/twosegments +lsd2frame
+ +MCMunbacked n0/e2;3targetrotation/masks2,80,100,repeatcycles,PID1/displaystart,
+ no panic in screen/full ring,0unknown glyphs. Only synthetic1thread/target,
+ notAppleGUI or actual3threadselectionproof. Off200sCURRENT;thenCPUguard200s,
+ nodiag90s,legacy180s. All checks/provenance in launchservices-0013/.
  validate-and-prepare.py logs validation-progress.log;on success will package
  phone image and saveprepared/verificationJSON. NOnewphoneboot;current0012XNU.
  Physical FASTBOOT request pending;read-only USB check found no knownfastboot.
