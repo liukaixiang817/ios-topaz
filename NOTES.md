@@ -10,8 +10,56 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION — HFS mount verified; launchd platform compatibility + RAM writes
+### CURRENT NEXT ACTION — RAM-COW0006 temporary boot sent; await screen evidence
 
+- LATEST PHONE STATE:0006 temporary boot SENT (exec10746,return0),
+  send46180KB1.078s,boot0.091s,total1.180s. No flash/GPT/Windows writes.
+  Image shim/out/polaris-xnu-ram-cow-0006/polaris-xnu-ram-cow-0006.img,
+  47288320bytes,SHA33143c51dca1d23ce362f7c881f05a888c34e20fe0ce2ee6118eb3d7955447b9.
+  PayloadSHA1138e54bdeb9d034be5ede55820fa9129b683292e1a7a5c578e41e9631d9c123.
+  Actual C loader validator PASS. Immediately before reboot root recovery:
+  model/serial/size/path checked, fresh182extent map equal, GPT head equal,
+  userdataRO1/unmounted,temp<45C. ram-cow-0006/boot.{json,log}.
+  Args from tools/polaris-ios-ramcow.cmdline: polarisramcow=1 rootrw=1 ufsrw=0
+  plus platform/ignition/cache args. Logical HFS writes use128MiB RAM overlay;
+  underlying UFS always read-only. NEVER set ufsrw=1 to work around a failure.
+  This is volatile bring-up: all writes vanish on reboot; persistent64GiB,
+  triple-boot menu, home screen/apps remain unfinished. Fastboot accepted image;
+  no proof yet RAM COW enabled on hardware or launchd/services advanced.
+  Need user photo of final lines now; current XNU has no USB log/reboot control.
+  Preserve screen until photographed; later physical power+vol-down needed if
+  panic/stop. Do not blindly run recovery/staging/repair scripts again.
+- Kernel0006 downloaded and verified:0b54be84305229ebf7d5f22975dd4137b87a2ef867175ce86a3345fad026e7f5,
+  xnu/out-polaris-0006/kernel.development.sweet, CI39969996591/job120469836157
+  SUCCESS,profilecommit877bf3ef8756954af4e554f8bf32da0abff9f70f.
+  ZIP CRC/SHA/profile checked; ci-39969996591.log saved. New kernel QEMU RAM
+  regression exec9791 PASS150s,PID1/heartbeats,no panic observed,0unknownglyphs.
+  qemu-ram-cow-0006-ram includes full RAM console ring. This is default RAM
+  path regression; actual COW data engine tested natively, hardware still pending.
+  Actual-Apple minimal fixture exec75497 reaches exec launchd + libignition
+  hello from launchd.1, then expected DYLD namespace6/code1 missing libSystem/cache
+  (fixture deliberately excludes shared cache). Not a normal-system boot PASS.
+  qemu-ram-cow-0006-apple/expected-result.json records scope; HFS md0 journal
+  shutdown also prints unsupported flush0x19 (md0 fixture only). Hardware path
+  RAM-COW sync ioctl returns0 without SCSI, source never writable.
+  Full RAM logs captured. Guarded temporary phone boot now sent; see top.
+- Read-only GUI hardware metadata saved under gui-hardware-0001/ while
+  recovery idle. Input device registered synaptics_dsx; I2C3 address0x20
+  dsx-i2c-force; additional3-0038 ft5x46 entry needs binding verification,
+  existence/name alone is not proof of hardware. Recovery fb0 advertises
+  dummy640x400/stride2560, NOT the proven ABL splash1080x2160/stride4320;
+  do not substitute recovery fb0 geometry into the XNU phone ADT.
+  No input events or I2C transactions read/sent; descriptions/sysfs only.
+- Additional local single-file cross-compile PASS (exit0), using actual previous
+  CI buildtree artifact12507665954 (ZIP SHA256+CRC verified), exact patched
+  source+generated headers/config and real CI command flags; local Apple clang,
+  NO XNU builtin/type-verification stubs. Only bsd/dev/sweet_ufs.c syntax, not
+  full kernel/link proof. Private buildtree-0004/cow-local-compile.{log,json}.
+  Original gh run download was slow; verified IPv4 ranged download completed.
+  CI39969996591/job120469836157 SUCCESS after queue; artifact12508314362
+  (60297205bytes), download/range verification in progress.0804 applied in logs.
+  Prepared ignored run-qemu-0006.py {ram,apple} and boot-ram-cow-0006.py for
+  validation/boot; run boot script only after new kernel and both QEMU results.
 - RAM COW overlay0804 implemented, native ASan/UBSan tests PASS (actual shared
   header, randomized full-image reference model, collisions/overlap, bounds,
   ENOSPC and allocator failure with no exposure of uninitialized RAM).
@@ -21,8 +69,9 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   never calls ufs_write_blocks on POLARIS, sync is RAM-only/no SCSI flush.
   Explicit polarisramcow=1 rootrw=1 ufsrw=0; default file root stays readonly.
   No topaz logger/input/USB startup. All changes disappear on reboot; persistent
-  iOS writes/64GiB/GUI/apps still pending. Commit877bf3e pushed; CI39969996591/job120469836157 queued (macOS runner).
-  Kernel build/QEMU/hardware validation pending.
+  iOS writes/64GiB/GUI/apps still pending. Commit877bf3e pushed; CI39969996591/job120469836157 SUCCESS.
+  New-kernel RAM regression and Apple exec tests complete (scope above);
+  hardware result pending photo.
 - Recovery read-only preflight exec(resume) PASS: fresh182extent map identical,
   GPT first1MiB byte-identical, ext4 clean/state1/no needs_recovery; userdata
   unmounted/runtimeRO1,35C, CPU caps1056000. Evidence launchd-compat-0005/
