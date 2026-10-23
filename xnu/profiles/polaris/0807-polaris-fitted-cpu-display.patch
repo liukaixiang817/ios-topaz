@@ -1,0 +1,255 @@
+--- /dev/null
++++ b/iokit/Kernel/arm/polaris_display_blit.h
+@@ -0,0 +1,102 @@
++/* Bounded CPU-only BGRA presentation. No device registers or storage access.
++ * Caller serializes swaps and supplies persistent column workspace. */
++#ifndef POLARIS_DISPLAY_BLIT_H
++#define POLARIS_DISPLAY_BLIT_H
++#include <stdbool.h>
++#include <stdint.h>
++#include <stddef.h>
++
++struct polaris_fb_view { uint32_t x, y, width, height; };
++struct polaris_fb_rect { int32_t x, y, width, height; };
++
++static inline bool
++polaris_fb_fit(uint32_t pw, uint32_t ph, uint32_t lw, uint32_t lh,
++    struct polaris_fb_view *v)
++{
++    if (!v || pw < 2 || ph < 2 || lw < 2 || lh < 2 ||
++        pw > 4096 || ph > 4096 || lw > 4096 || lh > 4096) return false;
++    uint32_t w = pw, h = ph;
++    if ((uint64_t)pw * lh > (uint64_t)ph * lw)
++        w = (uint32_t)((uint64_t)ph * lw / lh);
++    else h = (uint32_t)((uint64_t)pw * lh / lw);
++    if (w < 2 || h < 2) return false;
++    *v = (struct polaris_fb_view){(pw - w) / 2, (ph - h) / 2, w, h};
++    return true;
++}
++
++static inline bool
++polaris_fb_buffer(uint32_t w, uint32_t h, uint32_t stride,
++    size_t offset, size_t length)
++{
++    if (!w || !h || w > 16384 || h > 16384 || stride < (uint64_t)w * 4 ||
++        stride > (1u << 20) || offset > length) return false;
++    uint64_t end = (uint64_t)(h - 1) * stride + (uint64_t)w * 4;
++    return end <= length - offset;
++}
++
++/* Preserve both endpoints when resampling, including a one-pixel source. */
++static inline uint32_t
++polaris_fb_sample(uint32_t value, uint32_t source, uint32_t target)
++{
++    return source > 1 && target > 1 ?
++        (uint32_t)((uint64_t)value * (source - 1) / (target - 1)) : 0;
++}
++
++static inline uint64_t
++polaris_fb_blit(uint8_t *dst, size_t dstlen, uint32_t pw, uint32_t ph,
++    uint32_t dstride, uint32_t lw, uint32_t lh,
++    const uint8_t *src, size_t srclen, uint32_t sw, uint32_t sh,
++    uint32_t sstride, size_t offset, struct polaris_fb_rect a,
++    struct polaris_fb_rect b, uint32_t *columns, size_t column_count)
++{
++    struct polaris_fb_view v;
++    if (!dst || !src || !columns || !polaris_fb_fit(pw, ph, lw, lh, &v) ||
++        column_count < v.width || !polaris_fb_buffer(pw, ph, dstride, 0, dstlen) ||
++        !polaris_fb_buffer(sw, sh, sstride, offset, srclen) ||
++        a.x < 0 || a.y < 0 || a.width <= 0 || a.height <= 0 ||
++        (uint64_t)a.x + a.width > sw || (uint64_t)a.y + a.height > sh ||
++        b.width <= 0 || b.height <= 0 || b.width > 16384 || b.height > 16384 ||
++        b.x < -16384 || b.x > 16384 || b.y < -16384 || b.y > 16384)
++        return 0;
++    /* One division per column/row, none in the inner pixel loop. */
++    for (uint32_t x = 0; x < v.width; x++) {
++        int64_t logical = polaris_fb_sample(x, lw, v.width);
++        int64_t relative = logical - b.x;
++        columns[x] = relative < 0 || relative >= b.width ? UINT32_MAX :
++            (uint32_t)a.x + polaris_fb_sample((uint32_t)relative,
++                (uint32_t)a.width, (uint32_t)b.width);
++    }
++    uint64_t copied = 0;
++    for (uint32_t y = 0; y < v.height; y++) {
++        int64_t relative = (int64_t)polaris_fb_sample(y, lh, v.height) - b.y;
++        if (relative < 0 || relative >= b.height) continue;
++        uint32_t sy = (uint32_t)a.y + polaris_fb_sample((uint32_t)relative,
++            (uint32_t)a.height, (uint32_t)b.height);
++        const uint8_t *row = src + offset + (uint64_t)sy * sstride;
++        uint8_t *out = dst + (uint64_t)(y + v.y) * dstride + (uint64_t)v.x * 4;
++        for (uint32_t x = 0; x < v.width; x++) {
++            if (columns[x] == UINT32_MAX) continue;
++            __builtin_memcpy(out + (uint64_t)x * 4, row + (uint64_t)columns[x] * 4, 4);
++            copied++;
++        }
++    }
++    return copied;
++}
++
++static inline bool
++polaris_fb_black_bars(uint8_t *dst, size_t length, uint32_t pw, uint32_t ph,
++    uint32_t stride, uint32_t lw, uint32_t lh)
++{
++    struct polaris_fb_view v;
++    if (!dst || !polaris_fb_fit(pw, ph, lw, lh, &v) ||
++        !polaris_fb_buffer(pw, ph, stride, 0, length)) return false;
++    for (uint32_t y = 0; y < ph; y++) {
++        uint8_t *row = dst + (uint64_t)y * stride;
++        for (uint32_t x = 0; x < pw; x++) {
++            if (x >= v.x && x < v.x + v.width && y >= v.y && y < v.y + v.height) continue;
++            __builtin_memset(row + (uint64_t)x * 4, 0, 4);
++        }
++    }
++    return true;
++}
++#endif
+--- a/iokit/Kernel/arm/SweetFramebuffer.cpp
++++ b/iokit/Kernel/arm/SweetFramebuffer.cpp
+@@ -35,6 +35,10 @@
+  * the first swap on (it still reaches the persistent log; panics draw).
+  */
+ #include "SweetSurface.h"
++#if defined(POLARIS_RAM_ONLY)
++#include "polaris_display_blit.h"
++#include <libkern/c++/OSData.h>
++#endif
+ 
+ extern "C" int sweet_console_muted;     /* osfmk/console/serial_console.c */
+ 
+@@ -100,6 +104,9 @@
+ 	static void vsyncFired(OSObject *owner, IOTimerEventSource *sender);
+ 
+ public:
++#if defined(POLARIS_RAM_ONLY)
++    uint32_t fPolarisColumns[1080]; /* persistent, no per-frame allocation */
++#endif
+ 	uint64_t      fPhys;
+ 	uint32_t      fWidth, fHeight, fRowBytes;
+ 	uint32_t      fLogicalW, fLogicalH;     /* size reported to userland */
+@@ -157,6 +164,17 @@
+ 	if (!IOService::start(provider)) {
+ 		return false;
+ 	}
++#if defined(POLARIS_RAM_ONLY)
++    uint32_t enabled = 0, marker = 0;
++    OSData *property = OSDynamicCast(OSData, provider->getProperty("polaris,boot-framebuffer"));
++    if (property && property->getLength() == sizeof(marker)) {
++        memcpy(&marker, property->getBytesNoCopy(), sizeof(marker));
++    }
++    if (!PE_parse_boot_argn("polarisdisplay", &enabled, sizeof(enabled)) || enabled != 1 || marker != 1) {
++        IOLog("POLARIS DISPLAY: disabled; explicit ADT and boot argument required\n");
++        return false;
++    }
++#endif
+ 	PE_current_console(&video);
+ 	fPhys = video.v_baseAddr;
+ 	fWidth = (uint32_t)video.v_width;
+@@ -166,6 +184,14 @@
+ 		IOLog("SWEET FB: no boot framebuffer\n");
+ 		return false;
+ 	}
++#if defined(POLARIS_RAM_ONLY)
++    /* Only the verified ABL framebuffer. No display controller MMIO. */
++    if (fPhys != 0x9d400000ULL || fWidth != 1080 || fHeight != 2160 ||
++        fRowBytes != 4320 || (video.v_depth & 0xff) != 32) {
++        IOLog("POLARIS DISPLAY: REFUSED unexpected framebuffer geometry\n");
++        return false;
++    }
++#endif
+ 	int native = 0;
+ 	PE_parse_boot_argn("sweetfb_native", &native, sizeof(native));
+ 	fLogicalW = fWidth;
+@@ -174,6 +200,16 @@
+ 		fLogicalW = SWEET_FB_LOGICAL_W;
+ 		fLogicalH = SWEET_FB_LOGICAL_H;
+ 	}
++#if defined(POLARIS_RAM_ONLY)
++    if (native) {
++        IOLog("POLARIS DISPLAY: REFUSED native canvas; use the fitted iPhone canvas\n");
++        return false;
++    }
++    struct polaris_fb_view view;
++    if (!polaris_fb_fit(fWidth, fHeight, fLogicalW, fLogicalH, &view)) { return false; }
++    IOLog("POLARIS DISPLAY: CPU fit %ux%u -> %ux%u at %u,%u on %ux%u\n",
++        fLogicalW, fLogicalH, view.width, view.height, view.x, view.y, fWidth, fHeight);
++#endif
+ 	fOffX = (int32_t)(fLogicalW - fWidth) / 2;
+ 	fOffY = (int32_t)(fLogicalH - fHeight) / 2;
+ 	fLock = IOLockAlloc();
+@@ -314,6 +350,7 @@
+ 	uint32_t mask = get32(rec, 0x104);
+ 
+ 
++#if !defined(POLARIS_RAM_ONLY)
+ 	if (!fConsolePaused) {
+ 		int quiet = 0;
+ 		fConsolePaused = true;
+@@ -324,6 +361,7 @@
+ 		}
+ 	}
+ 
++#endif
+ 	for (uint32_t layer = 0; layer < SWEET_FB_LAYERS; layer++) {
+ 		uint32_t id = get32(rec, 0x54 + 4 * layer);
+ 		const uint8_t *a = rec + 0x64 + 16 * layer;
+@@ -353,12 +391,45 @@
+ 			w = (int32_t)s->width;
+ 			h = (int32_t)s->height;
+ 		}
++#if !defined(POLARIS_RAM_ONLY)
+ 		if (sx < 0 || sy < 0) {
+ 			sx = sy = 0;
+ 		}
+ 		if (dx < 0 || dy < 0) {
+ 			dx = dy = 0;
+ 		}
++#endif
++#if defined(POLARIS_RAM_ONLY)
++        int32_t aw = (int32_t)get32(a, 8), ah = (int32_t)get32(a, 12);
++        if (sx < 0 || sy < 0 || s->width > 16384 || s->height > 16384 ||
++            (uint32_t)sx >= s->width || (uint32_t)sy >= s->height) {
++            s->release();
++            continue;
++        }
++        if (aw <= 0) { aw = (int32_t)s->width - sx; }
++        if (ah <= 0) { ah = (int32_t)s->height - sy; }
++        uint64_t copied = 0;
++        if (src && bpe == 4 && s->elementWidth == 1 && s->elementHeight == 1 && s->memory) {
++            copied = polaris_fb_blit((uint8_t *)fPixels, (size_t)fRowBytes * fHeight,
++                fWidth, fHeight, fRowBytes, fLogicalW, fLogicalH,
++                (const uint8_t *)src, s->memory->getLength(), s->width, s->height,
++                s->bytesPerRow, s->offset,
++                (struct polaris_fb_rect){sx, sy, aw, ah},
++                (struct polaris_fb_rect){dx, dy, w, h}, fPolarisColumns, 1080);
++        }
++        if (copied && !fConsolePaused) {
++            polaris_fb_black_bars((uint8_t *)fPixels, (size_t)fRowBytes * fHeight,
++                fWidth, fHeight, fRowBytes, fLogicalW, fLogicalH);
++            fConsolePaused = true;
++            IOLog("POLARIS DISPLAY: first CPU frame fitted, %llu pixels\n", copied);
++            int quiet = 0;
++            if (PE_parse_boot_argn("sweetfb_noconsole", &quiet, sizeof(quiet)) && quiet == 1) {
++                sweet_console_muted = 1;
++            }
++        }
++        s->release();
++        continue;
++#endif
+ 		/* Logical (presented) display coordinates -> panel coordinates. */
+ 		dx -= fOffX;
+ 		dy -= fOffY;
+--- a/osfmk/kern/exception.c
++++ b/osfmk/kern/exception.c
+@@ -911,6 +911,12 @@
+ 	}
+ 	printf("%s\n", line);
+ #if defined(POLARIS_RAM_ONLY)
++    /* A GUI crash must reveal the existing RAM diagnostics on screen again.
++     * Leave rendering and signal/exception behavior unchanged. */
++    if (polaris_diag_enabled() && (!strcmp(name, "SpringBoard") || !strcmp(name, "backboardd"))) {
++        extern int sweet_console_muted;
++        sweet_console_muted = 0;
++    }
+ 	polaris_crash_message(name, slide);
+ #endif
+ 

@@ -26,9 +26,9 @@ class ADTTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     polaris.build(seed=b'x' * 64, ufs_head=invalid)
 
-    def build(self, qemu=False):
+    def build(self, qemu=False, display=False):
         with patch.object(polaris.mkadt, "d22ap_product", return_value=None):
-            root = polaris.build(seed=b"x" * 64, qemu=qemu)
+            root = polaris.build(seed=b"x" * 64, qemu=qemu, display=display)
         return polaris.adt.parse(polaris.adt.serialize(root))[0]
 
     def test_hardware_identity_and_ram(self):
@@ -58,6 +58,20 @@ class ADTTests(unittest.TestCase):
             self.assertEqual(struct.unpack("<4Q", gic["reg"]),
                              (dist - 0x1000000, 0x10000, redist - 0x1000000, 0x100000))
             self.assertEqual(struct.unpack("<I", gic["virtual-timer-intid"])[0], timer)
+
+    def test_display_opt_in_preserves_verified_geometry_and_no_wlan(self):
+        for qemu in (False, True):
+            root = self.build(qemu=qemu, display=True)
+            io = polaris.child(root, 'arm-io')
+            self.assertNotIn(b'wlan\0', [polaris.props(c)['name'] for c in io.children])
+            panel = polaris.props(polaris.child(io, 'disp0'))
+            self.assertEqual(panel['compatible'], b'sweet,display\0')
+            for key, value in [('canvas-width', 1125), ('canvas-height', 2436),
+                               ('polaris,boot-framebuffer', 1)]:
+                self.assertEqual(struct.unpack('<I', panel[key])[0], value)
+            fb = polaris.props(polaris.child(root, 'sweet-fbcon'))
+            self.assertEqual(struct.unpack('<2Q', fb['reg']), (0x9d400000, 0x2400000))
+            self.assertEqual(struct.unpack('<I', fb['stride'])[0], 4320)
 
 
 if __name__ == "__main__":

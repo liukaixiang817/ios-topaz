@@ -3,7 +3,8 @@
 
 Requires the polaris kernel patch profile. Defaults to a console/RAM-init
 tree. An explicit fresh manifest enables a read-only file root on userdata;
-WLAN and display-service nodes remain absent pending their own adaptation.
+WLAN remains absent. --display explicitly enables the bounded CPU framebuffer
+service; it also requires the polarisdisplay=1 kernel argument.
 The phone's upper RAM bank is from its verified live DT, not topaz constants.
 """
 import argparse
@@ -36,7 +37,7 @@ def child(node, name):
     return next(c for c in node.children if props(c).get("name") == name.encode() + b"\0")
 
 
-def build(seed=None, qemu=False, ufs_head=None, file_root=None):
+def build(seed=None, qemu=False, ufs_head=None, file_root=None, display=False):
     if ufs_head is not None and qemu:
         raise ValueError('QEMU cannot probe the phone UFS controller')
     if file_root is not None and (qemu or ufs_head is not None):
@@ -63,7 +64,13 @@ def build(seed=None, qemu=False, ufs_head=None, file_root=None):
         setprop(cpu, name, mkadt.u32(timebase))
     arm_io = child(root, "arm-io")
     arm_io.children = [node for node in arm_io.children
-                       if props(node).get("name") not in (b"wlan\0", b"disp0\0")]
+                       if props(node).get("name") != b"wlan\0" and
+                       (display or props(node).get("name") != b"disp0\0")]
+    if display:
+        panel = child(arm_io, 'disp0')
+        setprop(panel, 'polaris,boot-framebuffer', mkadt.u32(1))
+        setprop(panel, 'canvas-width', mkadt.u32(1125))
+        setprop(panel, 'canvas-height', mkadt.u32(2436))
     gic = child(arm_io, "gic")
     dist, redist = (0x8000000, 0x80a0000) if qemu else (GICD, GICR)
     setprop(gic, "reg", mkadt.u64(dist - SOC_BASE, 0x10000, redist - SOC_BASE, 0x100000))
@@ -97,12 +104,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("output", type=Path)
     parser.add_argument("--qemu", action="store_true")
+    parser.add_argument('--display', action='store_true',
+                        help='enable CPU framebuffer service; needs polarisdisplay=1')
     parser.add_argument('--ufs-probe-head', type=Path,
                         help='verified LUN0 head backup for optional read-only probe; needs polarisufsprobe=1')
     parser.add_argument('--file-root-manifest', type=Path,
                         help='fresh readonly metadata from polaris_file_root.py; needs polarisfileroot=1')
     args = parser.parse_args()
-    blob = adt.serialize(build(qemu=args.qemu,
+    blob = adt.serialize(build(qemu=args.qemu, display=args.display,
                               ufs_head=args.ufs_probe_head.read_bytes() if args.ufs_probe_head else None,
                               file_root=json.loads(args.file_root_manifest.read_text()) if args.file_root_manifest else None))
     args.output.write_bytes(blob)

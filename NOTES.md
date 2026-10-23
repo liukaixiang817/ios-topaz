@@ -10,9 +10,43 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION —0008 temporary boot sent; collect hardware diagnostics
+### CURRENT NEXT ACTION —0009 fitted display prepared; phone in RO recovery
 
-- CURRENT PHONE STATE:0008 temporary boot SENT, exec73225 exit0,
+-0008 hardware milestone: six photos saved root-capacity-0008/hardware-
+ springboard-{1,2,3}.jpg and hardware-springboard-later-{1,2,3}.jpg, JSON.
+ COW active1,512MiB reserved,13162->15273/32768groups,UFS-error0,refused0;
+ written up288448KiB. Only retained mkdir error visible: containermanager
+ e2 fd-2 lookup /private/var/root/Library/Logs/MobileContainerManager,
+ first at12514/32768. Earlier cryptex/locationd/lockdown failures NOT visible
+ in these snapshots; not proof of permanent health. SpringBoard repeatedly
+ SIGTRAP5 ns2/code5,PC0x1a7b18ca8,cache slide0xc1b0000,unslid0x19b968ca8:
+ FrontBoardServices -[FBSDisplayMonitor _initWithBookendObserver:transformer:]
+ +1160. Exact disassembly nil main-display object branch -> crashlog + BRK0.
+ Current polaris ADT intentionally omits disp0, consistent with this failure.
+ backboardd IOK and many daemons progress; no GUI/apps/physical touch proof.
+ securityd selector10 returns0xe00002c7 from compatibility stub; not proven
+ cause of SpringBoard crash. Actual new evidence does NOT show RAM exhaustion.
+- User returned FASTBOOT. Known recovery temporarily booted exec53563 exit0;
+ display-0009/preflight.json PASS: fresh182extent map/GPT identical,outerext4
+ clean,userdataunmountedRO1,33C,CPU caps1056000. CURRENT PHONE ROOT RECOVERY.
+ No persistent filesystem writes or repair this turn.
+-0807 PREPARED: opt-in ADT disp0 + polarisdisplay1 bootarg; driver requires
+ verified0x9d400000,1080x2160,stride4320,32bpp, rejects native canvas. CPU-only
+ bounded nearest resampling fits logical1125x2436 into997x2160 at41,0 with
+ narrow black sidebars; preserves source endpoint pixels. Existing topaz
+ behavior untouched. No display controller registers or storage code changed.
+ Persistent column workspace avoids allocation/division inside pixel loops.
+ Actual shared-header ASan/UBSan tests cover complete frame corners,padded
+ strides,source offsets,onepixel source,clipping,invalid lengths/overflow and
+ 400 small destination cases. ADT default remains no display/WLAN; --display
+ creates only the marked display. Seven tests PASS. Two actual CI-header
+ single-file cross-compiles PASS. Patch dry-run PASS; full CI/new-kernel QEMU
+ and hardware not yet run. GUI fatal signal unmutes console; first successful
+ fitted frame may mute it with sweetfb_noconsole1, diagnostic RAM ring retained.
+ tools/polaris-ios-display.cmdline uses budget512 and5Hz CPU presentation.
+ Physical touch, USB, persistent64GiB/tripleboot and working Apps unfinished.
+
+- PRIOR0008 temporary boot SENT, exec73225 exit0,
  2026-10-23T16:03:28.665376Z (=2026-10-24 Australia/Melbourne),fastboot total
  1.171s. Guarded boot-capacity-0008.py passed actual C payload validator,
  exact tested kernel SHA/provenance, QEMU checks, root recovery identity,
