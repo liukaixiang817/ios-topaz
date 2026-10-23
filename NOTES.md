@@ -21,7 +21,8 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   never calls ufs_write_blocks on POLARIS, sync is RAM-only/no SCSI flush.
   Explicit polarisramcow=1 rootrw=1 ufsrw=0; default file root stays readonly.
   No topaz logger/input/USB startup. All changes disappear on reboot; persistent
-  iOS writes/64GiB/GUI/apps still pending. CI/QEMU/hardware validation pending.
+  iOS writes/64GiB/GUI/apps still pending. Commit877bf3e pushed; CI39969996591/job120469836157 queued (macOS runner).
+  Kernel build/QEMU/hardware validation pending.
 - Recovery read-only preflight exec(resume) PASS: fresh182extent map identical,
   GPT first1MiB byte-identical, ext4 clean/state1/no needs_recovery; userdata
   unmounted/runtimeRO1,35C, CPU caps1056000. Evidence launchd-compat-0005/
@@ -43,13 +44,19 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   /dev, so devfs mount failed ENOENT). Proves platform gate and Apple EL0 entry;
   does NOT validate normal launchd initialization/shared cache/services.
   qemu-launchd-compat-0005/compatibility-result.json. No new kernel CI needed.
+- Corrected minimal fixture adds /dev,private/tmp,var/log,SystemVersion;
+  QEMU0005-v2 reaches Apple libignition "hello from launchd.1",platform2,
+  ignition_level1, then expected DYLD namespace6/code1 missing libSystem/shared
+  cache (fixture deliberately has none). Captured whole RAM console via HMP
+  pmemsave with quoted path. qemu-launchd-compat-0005-v2/{console-ring.txt,
+  compatibility-result.json}. Confirms Apple dyld entry, NOT full launchd/services.
 - User returned FASTBOOT; known recovery temporarily booted exec6044,send1.427s,
   boot0.091s,total1.534s. Initial wait wrongly expected get-state=device; actual
   ADB state=recovery, so timed out though recovery was online. Corrected and
   resumed read-only preflight. Phone is root temporary recovery, not XNU now.
   Need volatile root-write layer (RAM COW) for launchd startup without raw UFS
   writes; currently planning/implementing, no phone data write authorized.
-- LATEST PHONE STATE: exec1963 temporary fastboot boot SENT SUCCESSFULLY,
+- PRIOR PHONE BOOT (superseded by new recovery above): exec1963 temporary fastboot boot SENT SUCCESSFULLY,
   46180KB send1.065s,boot0.092s,total1.169s,return0. Image0004 and payload
   hashes below. Immediately before reboot: fresh RO FIEMAP exactly equals
   staged182extents; LUN0 first1MiB exactly equals original backup; all persistent
