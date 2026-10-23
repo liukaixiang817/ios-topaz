@@ -8,6 +8,24 @@ and DO NOT authorize erasing this phone. No destructive step is approved.
 
 ## Current handoff, 2026-10-23 (Australia/Melbourne)
 
+### Milestone update ~20:35 local
+
+- Windows backup **VERIFIED**: `backup/polaris-full-mindowswin-20261023-195539/`,
+  manifest verified=true, 128534437888 raw bytes, 31879606683 compressed bytes,
+  raw SHA-256 **f0bef9ef67242a445a401eaf27d3f19328bedcb85e8ec97887a2162f37950d0a**.
+  All 30 chunks pass gzip/length checks and concatenated SHA matches a fresh
+  full phone-side SHA. Exec 1260 exited 0. Safe to leave Android for the next
+  temporary backup environment; Android userdata remains NOT backed up yet.
+- User completed gh login; repo ADMIN permission verified. Branch through
+  `116435f` pushed to origin/codex/polaris-preflight. Actions permissions show
+  enabled=true, but workflows list is empty despite xnu.yml on origin/topaz.
+  Both workflow dispatch and enable-by-filename return 404. **No CI run yet.**
+  Asked user to open repository /actions and enable fork workflows if prompted.
+- Ready RAM-only backup recovery hash rechecked against f9ad6529...18bd99.
+  Next: temporary fastboot boot (never flash), verify root ADB and no persistent
+  block mounts, then start full userdata backup. No phone reboot yet at this
+  milestone; no partition write/resize/format.
+
 ### Milestone update ~20:00 local (supersedes details below where different)
 
 **Further update ~20:25 local:**
