@@ -8,6 +8,26 @@ and DO NOT authorize erasing this phone. No destructive step is approved.
 
 ## Current handoff, 2026-10-23 (Australia/Melbourne)
 
+### Milestone update ~20:40 local
+
+- Temporary backup image sent with fastboot boot: sending 61896KB OKAY,
+  booting OKAY, total 1.543s. **Live root ADB works**, device polaris; mountinfo
+  contains only RAM/kernel/configfs/functionfs filesystems, no persistent block
+  devices. userdata=sda22, Windows=sda24. No image was flashed.
+- Full userdata backup is running in exec **91104**, output directory
+  `backup/polaris-full-userdata-20261023-203417/` (115167178752 bytes,27 chunks).
+  Do not reboot until final VERIFIED and source SHA comparison. Offline root
+  mode uses --su none. Initial chunk passes gzip/length checks.
+- User saw no fork-enable button and explicitly requested Computer Use.
+  Plugin manifest exists but its local skills directory is empty, and no
+  desktop-control tool is exposed in ALL_TOOLS, even after the plugin tag.
+  Do not claim desktop interactions happened. Continue via gh.
+- Actions permission API PUT enabled=true succeeds but workflows still empty.
+  Default topaz has xnu.yml; its only push branch was main, so no qualifying
+  push has registered a workflow in this new fork. Add a branch-specific push
+  trigger for codex/polaris-preflight and default that branch to polaris;
+  this is a registration attempt, not yet an observed successful run.
+
 ### Milestone update ~20:35 local
 
 - Windows backup **VERIFIED**: `backup/polaris-full-mindowswin-20261023-195539/`,
