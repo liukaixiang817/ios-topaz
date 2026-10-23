@@ -4,12 +4,51 @@
 has a rooted MIX 2S (SDM845), Android 13 + Mindows Windows 11, and requests a
 third iOS 16 system with about 64 GiB while preserving all existing data.
 Earlier permissions to erase sweet/topaz userdata belong to different phones
-and DO NOT authorize erasing this phone. No destructive step is approved.
+and DO NOT authorize erasing this phone. On 2026-10-24 the user explicitly
+approved ONLY the proposed minimal userdata metadata repair, then continuing
+iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
-## Current handoff, 2026-10-23 (Australia/Melbourne)
+## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION — filesystem inconsistency found; host-only repair verified
+### CURRENT NEXT ACTION — repair verified; preserve Android via independent root image
 
+- USER-AUTHORIZED MINIMAL REPAIR COMPLETE (exec52177). Whole phone userdata
+  SHA matched original verified backup: b1af42b854345e101854dcccab182928512c9f749542da89fc1100aa2303dd97
+  (115167178752bytes,526.2s with tested ARM SHA2 helper). Applied exactly
+  e2fsck -f -y -E fixes_only: exit1; journal orphan cleanup, two malformed
+  empty orphan entries, free counters and quotas corrected, consistent with
+  host-clone experiment. Subsequent -f -n -E fixes_only: exit0, all five passes,
+  no outstanding warnings/repair requests. Header clean(state1),needs_recovery
+  cleared; block RO restored, all persistent partitions unmounted,37C.
+  Private evidence research/polaris/userdata-repair-0001/result.json and logs.
+  IMPORTANT: use adb shell for remote fsck exit status; adb exec-out can return
+  transport0 despite failed remote command. Prior read-only logs were NOT clean.
+  User approval applies only to this completed minimal repair, not formatting.
+  Next: stage verified16GiB iOS root as a new unencrypted file, export a fresh
+  read-only FIEMAP, implement read-only XNU file-backed root; final64GiB/UI pending.
+  Earlier “not authorized/no phone writes” paragraphs below are historical.
+- New read-only file-root implementation0803 prepared: explicit polarisfileroot=1,
+  exact DT geometry, contiguous logical FIEMAP coverage/no physical overlap,
+  bounded per-extent READ(10), hard rejection of all write commands, GPT head
+  CRC plus independent userdata bounds validation, first/last image block CRC
+  and HFSX geometry checks. Timeout latches further I/O off, retains DMA.
+  No topaz input/USB/persistent logger startup. Default RAM path unchanged.
+  tools/polaris_file_root.py builds private metadata, mkadt-polaris supports it.
+  ASan/UBSan actual C map/GPT/CDB tests and manifest/ADT roundtrip PASS;
+  original probe allowlist and ADT tests PASS. Patch dry-run PASS. Kernel CI
+  and actual file-root boot pending; do not claim Apple launchd/GUI success.
+- tools/polaris-sha256.c uses attributed public-domain ARM SHA2 compression;
+  static aarch64-musl build,12 phone vectors against hashlib PASS (empty,abc,
+  padding/block boundaries,1MiB and1MiB+7). Read-only/O_NOFOLLOW source;
+  block devices require runtime RO and exact full size. Full userdata hash
+  succeeded. CPU limits restored to1056000 after repair,37C.
+- Independent16GiB image currently copying with ignored stage-file-root-0001.py
+  (exec48672). New root-owned0700 /polaris-ios directory, no encrypted parent;
+  only new root-20H392-v1.img is written, no existing file overwritten. First
+  attempts exited during RO preflight because /dev inspector was absent/not
+  executable; pushed known tools to tmpfs, chmod700, resumed before any copy.
+  Script will unmount/restoreRO, verify file SHA/FIEMAP and outer ext4 fsck.
+  Do not boot until state staging_verified in file-root-0001/staging.json.
 - **Hardware UFS read VERIFIED by latest user photo**: repeated
   POLARIS UFS RESULT: MATCH CRC32 91045173 expected 91045173;
   POLARIS UFS QUEUE: restored (no new I/O), plus live init heartbeats.

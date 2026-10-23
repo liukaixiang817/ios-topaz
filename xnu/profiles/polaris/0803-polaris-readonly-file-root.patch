@@ -1,0 +1,358 @@
+--- /dev/null
++++ b/bsd/dev/polaris_filemap.h
+@@ -0,0 +1,124 @@
++/* Read-only file extent mapping shared with the polaris XNU overlay.
++ * All addresses/counts are in 4096-byte device blocks, not bytes.
++ * A fresh map must be exported with the outer filesystem unmounted before
++ * boot. It never grants raw-write access, even if the outer file is immutable.
++ */
++#ifndef POLARIS_FILEMAP_H
++#define POLARIS_FILEMAP_H
++#include <stdbool.h>
++#include <stdint.h>
++#define POLARIS_MAP_MAX 4096u
++#define POLARIS_FILE_MAX_BLOCKS (UINT64_C(64) << 18)
++struct polaris_extent {
++    uint64_t logical, physical, blocks;
++};
++
++static inline uint64_t polaris_le64(const uint8_t *p)
++{
++    uint64_t value = 0;
++    for (unsigned i = 0; i < 8; i++) value |= (uint64_t)p[i] << (8 * i);
++    return value;
++}
++static inline uint32_t polaris_le32(const uint8_t *p)
++{
++    return (uint32_t)p[0] | (uint32_t)p[1] << 8 |
++        (uint32_t)p[2] << 16 | (uint32_t)p[3] << 24;
++}
++
++/* The caller must FIRST verify the entire 1MiB head against the backup CRC.
++ * Independently bind the supplied map to the exact userdata GPT entry, so an
++ * otherwise well-formed map cannot select Windows or firmware partitions. */
++static inline bool
++polaris_userdata_bounds(const uint8_t *head, uint64_t start, uint64_t blocks)
++{
++    const unsigned bytes = 1u << 20;
++    static const char signature[] = "EFI PART", name[] = "userdata";
++    if (!head || !blocks || blocks > UINT64_MAX - start ||
++        head[510] != 0x55 || head[511] != 0xaa) return false;
++    for (unsigned i = 0; i < 8; i++)
++        if (head[4096 + i] != (uint8_t)signature[i]) return false;
++    uint64_t table = polaris_le64(head + 4096 + 72);
++    uint32_t count = polaris_le32(head + 4096 + 80);
++    uint32_t stride = polaris_le32(head + 4096 + 84);
++    if (table < 2 || table >= 256 || !count || stride < 128 || stride % 8 ||
++        (uint64_t)count * stride > bytes - table * 4096) return false;
++    unsigned found = 0;
++    for (unsigned i = 0; i < count; i++) {
++        const uint8_t *entry = head + table * 4096 + (uint64_t)i * stride;
++        bool match = true;
++        for (unsigned j = 0; j < 36; j++) {
++            uint8_t expected = j < sizeof(name) - 1 ? (uint8_t)name[j] : 0;
++            if (entry[56 + 2*j] != expected || entry[57 + 2*j]) match = false;
++        }
++        if (!match) continue;
++        if (++found != 1 || polaris_le64(entry + 32) != start ||
++            polaris_le64(entry + 40) != start + blocks - 1) return false;
++    }
++    return found == 1;
++}
++
++static inline bool
++polaris_map_valid(const struct polaris_extent *map, unsigned count,
++    uint64_t file_blocks, uint64_t partition_start, uint64_t partition_blocks)
++{
++    if (!map || !count || count > POLARIS_MAP_MAX || !file_blocks ||
++        file_blocks > POLARIS_FILE_MAX_BLOCKS || partition_start < 256 ||
++        partition_start > UINT32_MAX || !partition_blocks ||
++        partition_blocks > (UINT64_C(1) << 32) - partition_start) return false;
++    uint64_t next = 0;
++    for (unsigned i = 0; i < count; i++) {
++        const struct polaris_extent *e = &map[i];
++        if (e->logical != next || !e->blocks || next > file_blocks ||
++            e->blocks > file_blocks - next || e->physical < partition_start ||
++            e->physical - partition_start >= partition_blocks ||
++            e->blocks > partition_blocks - (e->physical - partition_start)) return false;
++        for (unsigned j = 0; j < i; j++) {
++            const struct polaris_extent *p = &map[j];
++            if (e->physical < p->physical + p->blocks &&
++                p->physical < e->physical + e->blocks) return false;
++        }
++        next += e->blocks;
++    }
++    return next == file_blocks;
++}
++
++/* Translate one bounded transfer; never cross an extent or the 1MiB bounce. */
++static inline bool
++polaris_map_read(const struct polaris_extent *map, unsigned count,
++    uint64_t logical, uint32_t wanted, uint64_t *physical, uint32_t *blocks)
++{
++    if (!map || !count || count > POLARIS_MAP_MAX || !wanted || wanted > 256 ||
++        !physical || !blocks) return false;
++    for (unsigned i = 0; i < count; i++) {
++        const struct polaris_extent *e = &map[i];
++        if (logical >= e->logical && logical - e->logical < e->blocks) {
++            uint64_t offset = logical - e->logical, remaining = e->blocks - offset;
++            if (e->physical > UINT32_MAX || offset > UINT32_MAX - e->physical) return false;
++            *physical = e->physical + offset;
++            *blocks = remaining < wanted ? (uint32_t)remaining : wanted;
++            return *blocks && *blocks - 1 <= UINT32_MAX - *physical;
++        }
++    }
++    return false;
++}
++
++/* Call only with a previously validated map. No writes/flags/other opcodes. */
++static inline bool
++polaris_map_cdb_allowed(const struct polaris_extent *map, unsigned count,
++    const uint8_t *cdb, unsigned n, uint32_t bytes, bool write, uint8_t lun)
++{
++    if (!map || !count || count > POLARIS_MAP_MAX || !cdb || write || lun ||
++        n != 10 || cdb[0] != 0x28 || cdb[1] || cdb[6] || cdb[9]) return false;
++    uint64_t lba = (uint32_t)cdb[2] << 24 | (uint32_t)cdb[3] << 16 |
++        (uint32_t)cdb[4] << 8 | cdb[5];
++    uint32_t blocks = (uint32_t)cdb[7] << 8 | cdb[8];
++    if (!blocks || blocks > 256 || bytes != blocks * 4096 ||
++        blocks - 1 > UINT32_MAX - lba) return false;
++    for (unsigned i = 0; i < count; i++) {
++        const struct polaris_extent *e = &map[i];
++        if (lba >= e->physical && lba - e->physical < e->blocks &&
++            blocks <= e->blocks - (lba - e->physical)) return true;
++    }
++    return false;
++}
++#endif
+--- a/bsd/dev/sweet_ufs.c
++++ b/bsd/dev/sweet_ufs.c
+@@ -41,6 +41,10 @@
+ #include <machine/atomic.h>
+ #if defined(POLARIS_RAM_ONLY)
+ #include "polaris_ufs_probe_policy.h"
++#include "polaris_filemap.h"
++static struct polaris_extent polaris_file_map[POLARIS_MAP_MAX];
++static unsigned polaris_file_count;
++static bool polaris_file_active, polaris_io_failed;
+ #endif
+ 
+ extern ppnum_t pmap_find_phys(pmap_t pmap, addr64_t va);
+@@ -154,7 +158,10 @@
+ #if defined(POLARIS_RAM_ONLY)
+ 	/* Gate before descriptor construction or ANY doorbell write. Even a
+ 	 * caller with ufsrw=1 cannot issue WRITE, UNMAP or SYNCHRONIZE CACHE. */
+-	if (!polaris_probe_cdb_allowed(cdb, cdb_len, len, write, su.lun)) {
++	if (polaris_io_failed) { return ETIMEDOUT; }
++	if (!polaris_probe_cdb_allowed(cdb, cdb_len, len, write, su.lun) &&
++	    !(polaris_file_active && polaris_map_cdb_allowed(polaris_file_map,
++	    polaris_file_count, cdb, cdb_len, len, write, su.lun))) {
+ 		return EPERM;
+ 	}
+ #endif
+@@ -231,6 +238,8 @@
+ 		if (now > deadline) {
+ #if !defined(POLARIS_RAM_ONLY)
+ 			ufs_wr(REG_UTRLCLR, ~1u);
++#else
++			polaris_io_failed = true; /* Never reuse outstanding descriptors. */
+ #endif
+ 			printf("SWEET UFS: command 0x%02x timed out\n", cdb[0]);
+ 			return ETIMEDOUT;
+@@ -556,7 +565,9 @@
+ 		error = EROFS;
+ 		goto done;
+ 	}
+-	if (off > part_bytes || count > part_bytes - off) {
++	if (buf_blkno(bp) < 0 || !su.secsize ||
++	    (uint64_t)buf_blkno(bp) > UINT64_MAX / su.secsize ||
++	    off > part_bytes || count > part_bytes - off) {
+ 		error = EINVAL;
+ 		goto done;
+ 	}
+@@ -576,15 +587,25 @@
+ 		uint32_t want = MIN(count - done, BOUNCE_SIZE - skip);
+ 		uint32_t blocks = (skip + want + UFS_BLOCK - 1) / UFS_BLOCK;
+ 		void *bounce = (void *)(su.dma + DMA_BOUNCE);
++		uint64_t physical = su.first_block + lba;
++#if defined(POLARIS_RAM_ONLY)
++		if (!polaris_file_active || !rd ||
++		    !polaris_map_read(polaris_file_map, polaris_file_count,
++		    lba, blocks, &physical, &blocks)) {
++			error = EINVAL;
++			break;
++		}
++		want = MIN(want, blocks * UFS_BLOCK - skip);
++#endif
+ 		if (rd) {
+-			error = ufs_read_blocks(su.first_block + lba, blocks);
++			error = ufs_read_blocks(physical, blocks);
+ 			if (!error) {
+ 				memcpy(vaddr + done, (const char *)bounce + skip, want);
+ 			}
+ 		} else {
+ 			/* Partial device blocks at either end: read, merge, write back. */
+ 			if (skip || (want % UFS_BLOCK)) {
+-				error = ufs_read_blocks(su.first_block + lba, blocks);
++				error = ufs_read_blocks(physical, blocks);
+ 			}
+ 			if (!error) {
+ 				memcpy((char *)bounce + skip, vaddr + done, want);
+@@ -721,13 +742,154 @@
+ 	.d_type       = D_DISK,
+ };
+ 
++#if defined(POLARIS_RAM_ONLY)
++/* Exact-size DT reads avoid unaligned native-pointer dereferences. */
++static bool
++polaris_dt_copy(DTEntry node, const char *name, void *out, unsigned length)
++{
++    void const *property = NULL;
++    unsigned size = 0;
++    if (SecureDTGetProperty(node, name, &property, &size) != kSuccess || size != length) {
++        return false;
++    }
++    memcpy(out, property, length);
++    return true;
++}
++
++static int
++polaris_file_root_init(void)
++{
++    uint32_t enabled = 0, probe = 0, rw = 0, rootrw = 0;
++    PE_parse_boot_argn("polarisfileroot", &enabled, sizeof(enabled));
++    PE_parse_boot_argn("polarisufsprobe", &probe, sizeof(probe));
++    PE_parse_boot_argn("ufsrw", &rw, sizeof(rw));
++    PE_parse_boot_argn("rootrw", &rootrw, sizeof(rootrw));
++    if (enabled != 1 || probe || rw || rootrw) {
++        printf("POLARIS FILE ROOT: disabled or conflicting boot arguments\n");
++        return ENXIO;
++    }
++    DTEntry node;
++    uint64_t reg[2], layout[3]; /* partition start/count, file blocks */
++    uint32_t version, crc[3]; /* GPT head, first and last 4KiB image blocks */
++    void const *extents = NULL;
++    unsigned size = 0;
++    if (SecureDTLookupEntry(NULL, "/polaris-file-root", &node) != kSuccess ||
++        !polaris_dt_copy(node, "reg", reg, sizeof(reg)) ||
++        reg[0] != 0x1d84000 || reg[1] != 0x2500 ||
++        !polaris_dt_copy(node, "version", &version, sizeof(version)) || version != 1 ||
++        !polaris_dt_copy(node, "layout", layout, sizeof(layout)) ||
++        !polaris_dt_copy(node, "crc32", crc, sizeof(crc)) ||
++        SecureDTGetProperty(node, "extents", &extents, &size) != kSuccess ||
++        !size || size % sizeof(struct polaris_extent) || size > sizeof(polaris_file_map)) {
++        printf("POLARIS FILE ROOT: REFUSED metadata; no MMIO\n");
++        return EINVAL;
++    }
++    polaris_file_count = size / sizeof(struct polaris_extent);
++    memcpy(polaris_file_map, extents, size);
++    if (!polaris_map_valid(polaris_file_map, polaris_file_count,
++        layout[2], layout[0], layout[1])) {
++        printf("POLARIS FILE ROOT: REFUSED extent geometry; no MMIO\n");
++        return EINVAL;
++    }
++    lck_mtx_lock(&sweet_ufs_lock);
++    int error = ENXIO;
++    if (su.regs || su.dma) { goto out; }
++    su.regs = ml_io_map(reg[0], reg[1]);
++    if (!su.regs) { goto out; }
++    if (ufs_rd(0x08) != 0x210 || !(ufs_rd(REG_HCE) & 1) ||
++        (ufs_rd(REG_HCS) & (HCS_DP | HCS_UTRLRDY)) != (HCS_DP | HCS_UTRLRDY) ||
++        ufs_rd(REG_UTRLDBR) || ufs_rd(0x78) || ufs_rd(0x80)) {
++        printf("POLARIS FILE ROOT: REFUSED host/link/queue state\n");
++        goto out;
++    }
++    if (kmem_alloc_contig(kernel_map, &su.dma, DMA_SIZE, PAGE_MASK, 0, 0,
++        KMA_DATA | KMA_ZERO | KMA_PERMANENT, VM_KERN_MEMORY_IOKIT) != KERN_SUCCESS) {
++        error = ENOMEM;
++        goto out;
++    }
++    ppnum_t pn = pmap_find_phys(kernel_pmap, (addr64_t)su.dma);
++    if (!pn) { error = ENOMEM; goto out; }
++    su.dma_pa = ptoa_64(pn);
++    su.lun = 0;
++    su.cache = su.writable = su.ready = false;
++    su.wait = true;
++    su.secsize = DEV_BSIZE;
++    error = ufs_take_over_host();
++    if (!error) {
++        static const uint8_t tur[6] = {0};
++        for (unsigned i = 0; i < 3; i++) {
++            error = ufs_scsi(tur, sizeof(tur), 0, false);
++            if (!error || error == ETIMEDOUT) { break; }
++        }
++    }
++    if (!error) { error = ufs_read_blocks(0, 256); }
++    if (error) { goto out; }
++    const uint8_t *b = (const uint8_t *)(su.dma + DMA_BOUNCE);
++    if (polaris_probe_crc32(b, BOUNCE_SIZE) != crc[0] ||
++        !polaris_userdata_bounds(b, layout[0], layout[1])) {
++        printf("POLARIS FILE ROOT: REFUSED GPT/partition mismatch\n");
++        error = EINVAL;
++        goto out;
++    }
++    /* The CDB allowlist opens ONLY after geometry and on-device GPT agree.
++     * This never allows WRITE(10), cache flush, UNMAP or raw partition access. */
++    polaris_file_active = true;
++    for (unsigned i = 0; i < 2; i++) {
++        uint64_t physical;
++        uint32_t blocks;
++        if (!polaris_map_read(polaris_file_map, polaris_file_count,
++            i ? layout[2] - 1 : 0, 1, &physical, &blocks)) {
++            error = EINVAL; goto out;
++        }
++        error = ufs_read_blocks(physical, blocks);
++        if (error) { goto out; }
++        if (polaris_probe_crc32(b, UFS_BLOCK) != crc[i + 1]) {
++            printf("POLARIS FILE ROOT: REFUSED image edge %u CRC mismatch\n", i);
++            error = EINVAL; goto out;
++        }
++        if (!i) {
++            const uint8_t *h = b + 1024;
++            uint32_t block_size = (uint32_t)h[40] << 24 | (uint32_t)h[41] << 16 |
++                (uint32_t)h[42] << 8 | h[43];
++            uint32_t total = (uint32_t)h[44] << 24 | (uint32_t)h[45] << 16 |
++                (uint32_t)h[46] << 8 | h[47];
++            if (h[0] != 'H' || h[1] != 'X' || h[2] || h[3] != 5 ||
++                block_size != UFS_BLOCK || total != layout[2]) {
++                printf("POLARIS FILE ROOT: REFUSED HFSX geometry\n");
++                error = EINVAL; goto out;
++            }
++        }
++    }
++    su.first_block = 0; /* Logical image offset; translated per request. */
++    su.nblocks = layout[2];
++    su.bmajor = bdevsw_add(-1, &sweet_ufs_bdevsw);
++    if (su.bmajor < 0) { error = ENXIO; goto out; }
++    su.cmajor = cdevsw_add_with_bdev(-1, &sweet_ufs_cdevsw, su.bmajor);
++    if (su.cmajor < 0) { error = ENXIO; goto out; }
++    su.bdev = makedev(su.bmajor, 0);
++    devfs_make_node(su.bdev, DEVFS_BLOCK, UID_ROOT, GID_OPERATOR, 0400, "ufsroot0");
++    devfs_make_node(makedev(su.cmajor, 0), DEVFS_CHAR, UID_ROOT, GID_OPERATOR, 0400, "rufsroot0");
++    su.ready = true;
++    printf("POLARIS FILE ROOT: verified GPT + HFSX, %llu MiB, %u extents, READ ONLY\n",
++        su.nblocks * UFS_BLOCK >> 20, polaris_file_count);
++out:
++    if (error) {
++        polaris_file_active = false;
++        printf("POLARIS FILE ROOT: stopped, error %d; DMA retained\n", error);
++    }
++    /* No firmware reset or DMA free, including on timeout. No topaz input,
++     * USB, sampling or disk-backed console logger is started here. */
++    lck_mtx_unlock(&sweet_ufs_lock);
++    return error;
++}
++#endif
++
+ static int
+ sweet_ufs_init(void)
+ {
+ #if defined(POLARIS_RAM_ONLY)
+-	/* First polaris kernels must never take over the UFS controller. */
+-	printf("POLARIS: UFS disabled; use a RAM root for bring-up\n");
+-	return ENXIO;
++	/* Explicit, bounded, read-only file root; absent metadata fails closed. */
++	return polaris_file_root_init();
+ #endif
+ 	DTEntry node;
+ 	uintptr_t const *reg = NULL;

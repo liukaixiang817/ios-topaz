@@ -7,6 +7,7 @@ The phone's upper RAM bank is from its verified live DT, not topaz constants.
 """
 import argparse
 import hashlib
+import json
 from pathlib import Path
 import sys
 import zlib
@@ -14,6 +15,7 @@ import zlib
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import adt
 import mkadt
+import polaris_file_root
 
 PHYS_BASE, MEM_SIZE = 0x180000000, 0xfc8a0000
 FB, FB_SIZE, WIDTH, HEIGHT, STRIDE = 0x9d400000, 0x2400000, 1080, 2160, 4320
@@ -33,9 +35,11 @@ def child(node, name):
     return next(c for c in node.children if props(c).get("name") == name.encode() + b"\0")
 
 
-def build(seed=None, qemu=False, ufs_head=None):
+def build(seed=None, qemu=False, ufs_head=None, file_root=None):
     if ufs_head is not None and qemu:
         raise ValueError('QEMU cannot probe the phone UFS controller')
+    if file_root is not None and (qemu or ufs_head is not None):
+        raise ValueError('file root requires phone hardware and excludes probe mode')
     # Reuse the Apple boot-policy scaffold, with one CPU and no UFS node.
     # Explicitly replace/remove all topaz hardware values below.
     root = mkadt.build(seed=seed, qemu=True)
@@ -75,6 +79,16 @@ def build(seed=None, qemu=False, ufs_head=None):
         setprop(probe, 'reg', mkadt.u64(0x1d84000, 0x2500))
         setprop(probe, 'head-crc32', mkadt.u32(zlib.crc32(ufs_head)))
         root.children.append(probe)
+    if file_root is not None:
+        polaris_file_root.validate(file_root)
+        disk = adt.Node()
+        setprop(disk, 'name', b'polaris-file-root\0')
+        setprop(disk, 'reg', mkadt.u64(0x1d84000, 0x2500))
+        setprop(disk, 'version', mkadt.u32(1))
+        setprop(disk, 'layout', mkadt.u64(*file_root['layout']))
+        setprop(disk, 'crc32', mkadt.u32(*file_root['crc32']))
+        setprop(disk, 'extents', b''.join(mkadt.u64(*e) for e in file_root['extents']))
+        root.children.append(disk)
     return root
 
 
@@ -84,8 +98,11 @@ if __name__ == "__main__":
     parser.add_argument("--qemu", action="store_true")
     parser.add_argument('--ufs-probe-head', type=Path,
                         help='verified LUN0 head backup for optional read-only probe; needs polarisufsprobe=1')
+    parser.add_argument('--file-root-manifest', type=Path,
+                        help='fresh readonly metadata from polaris_file_root.py; needs polarisfileroot=1')
     args = parser.parse_args()
     blob = adt.serialize(build(qemu=args.qemu,
-                              ufs_head=args.ufs_probe_head.read_bytes() if args.ufs_probe_head else None))
+                              ufs_head=args.ufs_probe_head.read_bytes() if args.ufs_probe_head else None,
+                              file_root=json.loads(args.file_root_manifest.read_text()) if args.file_root_manifest else None))
     args.output.write_bytes(blob)
-    print(f"{args.output}: {len(blob)} bytes; RAM root only, CPU0; UFS probe={bool(args.ufs_probe_head)}")
+    print(f"{args.output}: {len(blob)} bytes; CPU0; UFS probe={bool(args.ufs_probe_head)}, readonly file root={bool(args.file_root_manifest)}")
