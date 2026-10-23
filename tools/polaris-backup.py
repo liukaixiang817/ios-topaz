@@ -19,7 +19,7 @@ import time
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("partition", choices=["mindowswin", "userdata"])
+    parser.add_argument("partition", choices=["mindowswin", "userdata", "system", "vendor", "cust"])
     parser.add_argument("--adb", default="adb")
     parser.add_argument("--jobs", type=int, choices=range(1, 5), default=4)
     parser.add_argument("--su", choices=["/debug_ramdisk/su", "/system/bin/su", "/sbin/su", "none"],

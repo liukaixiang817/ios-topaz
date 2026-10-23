@@ -8,6 +8,47 @@ and DO NOT authorize erasing this phone. No destructive step is approved.
 
 ## Current handoff, 2026-10-23 (Australia/Melbourne)
 
+### First XNU CI success / offline backup milestone ~20:55 local
+
+- **CI39933084495 SUCCESS**, actual Build completed09:46:57UTC,
+  job completed09:47:19UTC. Commit b50a106; profile artifact says
+  target_platform=polaris, machine_config=SWEET. Kernel expected SHA256
+  **30a8a7502adb35d6d1d6b4dbdf54b2d7b4864fbce39cb203cfa6d7de60eda2b6**,
+  17485224 bytes raw,6576057 compressed. Not downloaded/verified yet.
+- GitHub Azure artifact transport is extremely slow. Kernel artifact12493370896
+  is60MB, mostly a53MB compressed link archive; only kernel+hash+profile needed.
+  Official signed HTTP ranges obtained SHA256SUMS and build-profile.txt with
+  ZIP CRC checks. Exec49464 runs ignored research/polaris/download-ci-kernel.py
+  with8 parallel256KiB ranges and final CRC+SHA check. Do not print signed URLs
+  or credential-bearing exceptions. Full redundant downloads were SIGINTed.
+  Old exec3349 gh run-view --log may still be fetching logs (0bytes last check).
+- Android userdata **all27 chunks received and gzip/length checked**; exec91104
+  now computing source SHA-256 on phone after local concatenated digest.
+  Do NOT reboot until final VERIFIED. Need retain current offline state.
+- New offline critical collection **backup/polaris-20261023-205328/**:
+  **38 files,934958000 bytes**, all local hashes and fresh phone hashes pass.
+  Adds keystore/ssd/frp/fsg/vbmeta/keymaster_a/b/tz_a/b. ALL12 GPT head/tail
+  regions byte-identical to initial collection; common boot/recovery/firmware
+  also match. live.dtb differs (TWRP vs Android); persist.img differs between
+  earlier Android snapshot and offline snapshot. Preserve both. Timing/source
+  of persist changes not proved; no persistent filesystems mounted in custom
+  environment and no write command issued by our tools.
+- tools/polaris-preflight.py now supports --su none for root recovery and adds
+  the key-material partitions; full backup tool permits system/vendor/cust.
+  Started sequential offline full backups of these3 to complement userdata.
+- Apple CDN metadata extracted via remotezip, ZIP CRC checked. BuildManifest
+  confirms16.7.16/20H392/d22ap. IM4P DeviceTree SHA384 matches manifest:
+  e2574f463f5b5bbb45ba8c939e107865c27b4e5d06600cda77bfa033959ca88562045dd389a3a96afd6c9e7bad5dac94.
+  compression_tool LZFSE decompress:186084-byte ADT, SHA256
+  9e670987c80493bd69aba7be62e3179c04663324d9249b0973675baac175dbf1.
+  /product has61 properties; regenerated polaris phone/QEMU ADTs6592bytes.
+  Downloaded SystemOS+AppOS pass manifestSHA384; OS stilldownloadingexec36263.
+  All Apple files ignored under research/ipsw-x, never commit.
+- RAM init built from tools/sweet-init.S using Clang+mkinit.py,16635bytes,
+  SHA256f5de3714ff95e6a3b9ece30723f677de0f3f74ec5eb985a00c5ae872f0ac9bf1.
+  research/polaris/ram-init; for mockfs rd=md0 QEMU test when kernel is verified.
+  No XNU QEMU or phone boot yet. Loader core committed **a2fa680** and pushed.
+
 ### RAM loader core milestone
 
 - Commit `242c910` adds polaris QEMU framebuffer/boot_args geometry (22 tests).

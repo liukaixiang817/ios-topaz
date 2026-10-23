@@ -86,7 +86,7 @@ def parse_gpt(head, tail, disk_bytes, block_size):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--adb", default="adb")
-    parser.add_argument("--su", choices=["/debug_ramdisk/su", "/system/bin/su", "/sbin/su"],
+    parser.add_argument("--su", choices=["/debug_ramdisk/su", "/system/bin/su", "/sbin/su", "none"],
                         default="/debug_ramdisk/su")
     parser.add_argument("--backup-critical", action="store_true",
                         help="also read boot/recovery/ESP/firmware; excludes OS user data")
@@ -96,7 +96,8 @@ def main():
     def root_command(command):
         # Older MagiskSU allocates a PTY even under adb exec-out. Disable its
         # newline conversion before streaming binary data (verified by SHA-256).
-        return f"{args.su} -c {shlex.quote('stty raw -echo 2>/dev/null; ' + command)}"
+        script = "stty raw -echo 2>/dev/null; " + command
+        return script if args.su == "none" else f"{args.su} -c {shlex.quote(script)}"
 
     def remote(command, root=False, timeout=60):
         if root:
@@ -169,7 +170,9 @@ cat /proc/meminfo
     (out / "layout.json").write_text(json.dumps(layouts, indent=2) + "\n")
     if args.backup_critical:
         for name in ("boot", "recovery", "dtbo", "abl_a", "abl_b", "devinfo", "misc", "switch",
-                     "persist", "persistbak", "modem", "mindowsesp"):
+                     "persist", "persistbak", "modem", "mindowsesp",
+                     "keystore", "ssd", "frp", "fsg", "vbmeta", "keymaster_a",
+                     "keymaster_b", "tz_a", "tz_b"):
             source = f"/dev/block/bootdevice/by-name/{name}"
             size = int(remote(f"blockdev --getsize64 {source}", root=True))
             save(f"{name}.img", f"dd if={source} bs=1048576 2>/dev/null", size)
