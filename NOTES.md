@@ -10,27 +10,40 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION —0012 caller diagnostic boot sent; capture compact caller/FB evidence
+### CURRENT NEXT ACTION —0012 hardware callers decoded; trace LaunchServices dependency
 
-- CURRENT PHONE STATE:0012 temporary XNU diagnostic boot SENT,exec46178exit0,
- fastboot1.166s,2026-10-23T18:01:42.248259Z (=2026-10-24 Australia/Melbourne).
- Transport acceptance ONLY,actual0012 kernel/screen/GUI not yet observed.
- Guarded boot rechecked exact280f source/profile/kernelSHA,all4QEMU results/
- provenances,actualCpayloadplan,exactpreparedimageSHA,phone polaris/root/size,
- userdataunmountedRO1,fresh182extent map/GPT head identical,temp<45C. No flash,
- GPT,Windows,base-image writes. iOS writes volatile512MiB RAM only,ufsrw0.
- Initial recovery/preflight85081passed35C/clean ext4/caps1056000 before build.
-- NEXT: about2min after start,capture full-screen FB + PS PID/slide/header,
- T state/PC/LR/sc,M packedMach metadata,L lock args,B caller-address lines.
- Compact2threads should preserve main backboardd and SpringBoard evidence in
- 67x67circular console; burst photos or45s video if wrapping. Firstsample60s
- afterBSDbootstrap,then30s,24passes. Keep this boot until evidence saved; no
- USB restart/log channel. Do NOT request another FASTBOOT from just COW text.
- Do not change startup/keystore/locking/errno checks without actual callers.
- Decode M metadata via wait-callers-0012/ipc-argument-layout.json: packedports
- lowremote/highlocal,id high32 signed(ifSEND),recv high32 receive-name. Send
- fields may be meaningless in receive-only wait; port names process-local.
- Full home,touch,USB,Apps,persistent64GiB/tripleboot still unfinished.
+- CURRENT PHONE STATE:0012 XNU still running. Five actual photos saved under
+ wait-callers-0012/hardware-sample-7-8-{1,2}.jpg,hardware-sample-15-{1,2}.jpg,
+ hardware-sample-16.jpg; hardware-sample-7-8.json and symbols JSON saved.
+ Hardware stack=1/nofault caller walker WORKS. Samples7,8,15,16 found4/mask47,
+ cache slide41030000,SpringBoard26/3threads,backboardd56/14threads,usermanagerd84.
+ FB selector mask284000238429178,swaps7/present4/pixels8614080 unchanged across
+ all snapshots:real CPU panel copies occurred,contents unknown,NOhome/Appproof.
+ RAM COW20252..20334/32768,dirty<=324712KiB,reserved512MiB,UFS-error0/refused0,
+ not exhausted. FirstMCMmkdir retained group90/path root logs,e2 lookup.
+- Exact Apple20H392 symbolication:SpringBoard TID212 waits UL_UNFAIR_LOCK
+ op1000002/valueb02/address222da24b8 = CoreServices gSessionLock (unslid
+1e1d724b8),_LSContextInitCommon+212,LSApplicationRecord bundle lookup from
+ CCSModuleRepository filtering modules. TID287 is synchronous NSXPC reply
+ wait;6frames truncate at Foundation __NSXPCCONNECTION_IS_WAITING... actual
+ endpoint/caller above this and lock owner/third thread NOT yet identified.
+ Main backboardd307 and usermanagerd330 are ordinary CFRunLoop receive-only
+ Mach waits,opt507000806:message id fields meaningless withoutSEND. Do NOT
+ infer startup RPC deadlock from those. Backboardd361 waits dispatch_group:
+ binary+18a78 belongs BKButtonHapticsController asset callback,NOT established
+ window-server blocker. Exact disassembly saved privately. No bypass justified.
+- NEXT:complete deeper SpringBoard synchronous-request callers + third thread,
+ sample lsd/containermanagerd separately with bounded output;focus on actual
+ LaunchServices dependency. Existing0012 onlyfirst2threads/6frames misses it.
+ Prepare/compile/CI/validate before another temporary boot;no new source yet.
+ Keep current boot until evidence saved;no USB restart/log channel. Full home,
+ physicaltouch,USB,Apps,persistent64GiB/tripleboot unfinished. All logical iOS
+ writes volatile512MiB RAM ONLY,ufsrw0;no base/Android/Windows/GPT writes.
+-0012 temporary boot SENT exec46178exit0,fastboot1.166s,
+ 2026-10-23T18:01:42.248259Z (=2026-10-24 Australia/Melbourne). Guarded boot
+ rechecked exact280fsource/profile/kernelSHA,all4QEMUresults/provenances,
+ Cpayloadvalidator,exactimageSHA,phonepolaris/root/size,userdataunmountedRO1,
+ fresh182extents/GPT head identical,temp<45C. Earlier preflight85081PASS35C.
 -0012 source280f1288d6dd1743ea6b788670ab535b14777e4d; CI39996796313/
  job120562312461 SUCCESS,full gh log research/polaris/ci-39996796313.log.
  Exact source/polaris profile/artifact12519894168 (60315294bytes),ZIP entryCRC
