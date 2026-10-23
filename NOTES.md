@@ -8,7 +8,7 @@ and DO NOT authorize erasing this phone. No destructive step is approved.
 
 ## Current handoff, 2026-10-23 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION — diagnostic0002 displays text; XNU RAM boot next
+### CURRENT NEXT ACTION — first XNU RAM hardware image sent; screen result pending
 
 - Automatic raw entry-register capture is committed/pushed **a878ce8**;
   real CPU EL1/16KiB support now established (details below).
@@ -25,15 +25,19 @@ and DO NOT authorize erasing this phone. No destructive step is approved.
   **User confirmed diagnostic text is visible**. This establishes execution
   and framebuffer output for the gzip/compiled-DTB packaging. The first raw
   image black screen cause is not isolated (several packaging fields changed).
-  Asked user to hold Power+VolumeDown and reply when in FASTBOOT; currently
-  awaiting that reply before the first XNU RAM-only hardware experiment.
-- RAM-only XNU boot image also packaged locally, **NOT BOOTED**:
+  User then entered FASTBOOT as requested. Identity matched original backup.
+  Diagnostic display milestone committed433f96d.
+- RAM-only XNU boot image **sent via temporary fastboot boot**:
   shim/out/polaris-xnu-ram-0001/polaris-xnu-ram-0001.img,47280128bytes,
   SHAb0d3cf98d0093d19c95f7d55d734d15b05238304b7e20e892b561e8d355fcd32.
   Contains bounded loader plus phone-specific validated payloadc7984033...
   and known DTB table; no storage support in polaris XNU. Image/payload/CI
-  kernel SHA256 rechecked and match. Standalone display gate now satisfied;
-  proceed after user enters FASTBOOT, bind identity to original backup.
+  kernel SHA256 rechecked and match. Exec51585 exited0: send46172KB
+  OKAY1.069s,bootOKAY0.091s,total1.171s. Logs under ignored
+  research/polaris/xnu-ram-0001/{boot.log,boot.json}.
+  **Awaiting user screen result** after20seconds; asked for last lines,
+  PID1/still-alive/panic/STOP/exception and any ESR/ELR. Asked to keep screen
+  and not reboot. Bootloader acceptance is NOT proof XNU executed.
   No iOS root or GUI installed. Latest packaging commit e8aba2b pushed.
 
 ### Automatic hardware register capture succeeded
