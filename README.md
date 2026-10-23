@@ -1,5 +1,11 @@
 # ios-topaz
 
+**MIX 2S / Mindows users:** `polaris` (SDM845) is not supported by this
+topaz port. Do not run its flash instructions on a MIX 2S: they overwrite
+Android data. See [POLARIS.md](POLARIS.md) for the read-only preflight and
+the remaining port work. Existing UEFI/Windows support does not make this
+XNU kernel compatible with that hardware.
+
 **Apple's iOS 16 running on a Redmi Note 12 4G.**
 
 This is a port of [dipa-studio/ios-sweet](https://github.com/dipa-studio/ios-sweet) (Apple's open-source XNU kernel, xnu-8796, on a Redmi Note 10 Pro) to the Xiaomi **Redmi Note 12 4G** (`topaz` / `tapas`, Qualcomm **SM6225 "khaje"** / Snapdragon 685). On top of it runs the **unmodified iOS 16.7.16 (20H392) userland of the iPhone X**: launchd, the system daemons, backboardd and SpringBoard.
