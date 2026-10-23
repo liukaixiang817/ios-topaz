@@ -77,6 +77,12 @@ DTB table. It accepts an explicit ramdisk (empty archive for diagnostics or
 validated RAM payload for the XNU loader). It contains no phone commands;
 packaging alone does not establish execution or display on hardware.
 
+Diagnostic0002 using this packaging displayed diagnostic text on the actual
+MIX 2S (user observation). The exact cause of the first raw-image black screen
+is not isolated because gzip, DTB table and header fields changed together.
+This establishes shim execution and framebuffer output; XNU hardware boot
+is the next separate test.
+
 ## Full OS partition backups
 
 ```sh

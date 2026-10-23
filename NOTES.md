@@ -8,7 +8,7 @@ and DO NOT authorize erasing this phone. No destructive step is approved.
 
 ## Current handoff, 2026-10-23 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION — second standalone display test pending
+### CURRENT NEXT ACTION — diagnostic0002 displays text; XNU RAM boot next
 
 - Automatic raw entry-register capture is committed/pushed **a878ce8**;
   real CPU EL1/16KiB support now established (details below).
@@ -22,15 +22,19 @@ and DO NOT authorize erasing this phone. No destructive step is approved.
   evidence research/polaris/qemu-probe-0002/. Host syntax/diff checks pass.
 - **Temporary hardware boot sent**: exec81270 exited0,29668KB sendOKAY0.693s,
   bootOKAY0.091s,total0.792s. research/polaris/probe-0002-boot.log.
-  **Awaiting user screen result**. Asked: if black, Power+VolumeDown to
-  FASTBOOT and reply; if diagnostic text, report and hold screen. No ADB
-  expected in this standalone probe. Do not assume either outcome.
+  **User confirmed diagnostic text is visible**. This establishes execution
+  and framebuffer output for the gzip/compiled-DTB packaging. The first raw
+  image black screen cause is not isolated (several packaging fields changed).
+  Asked user to hold Power+VolumeDown and reply when in FASTBOOT; currently
+  awaiting that reply before the first XNU RAM-only hardware experiment.
 - RAM-only XNU boot image also packaged locally, **NOT BOOTED**:
   shim/out/polaris-xnu-ram-0001/polaris-xnu-ram-0001.img,47280128bytes,
   SHAb0d3cf98d0093d19c95f7d55d734d15b05238304b7e20e892b561e8d355fcd32.
   Contains bounded loader plus phone-specific validated payloadc7984033...
-  and known DTB table; no storage support in polaris XNU. Keep blocked on
-  display/standalone execution evidence. No iOS root or GUI installed.
+  and known DTB table; no storage support in polaris XNU. Image/payload/CI
+  kernel SHA256 rechecked and match. Standalone display gate now satisfied;
+  proceed after user enters FASTBOOT, bind identity to original backup.
+  No iOS root or GUI installed. Latest packaging commit e8aba2b pushed.
 
 ### Automatic hardware register capture succeeded
 
