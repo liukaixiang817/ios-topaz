@@ -8,7 +8,7 @@ and DO NOT authorize erasing this phone. No destructive step is approved.
 
 ## Current handoff, 2026-10-23 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION — hardware UFS read verified; preserve-data root placement
+### CURRENT NEXT ACTION — filesystem inconsistency found; host-only repair verified
 
 - **Hardware UFS read VERIFIED by latest user photo**: repeated
   POLARIS UFS RESULT: MATCH CRC32 91045173 expected 91045173;
@@ -38,15 +38,42 @@ and DO NOT authorize erasing this phone. No destructive step is approved.
   92165570560bytes; df gives different reserved-space view. Initial lsattr
   did not display encryption and /local/tmp lookup failed; use ioctl evidence.
   Unmounted after inspection; first4096bytes match preinspection exactly.
-- Installed keg-only Homebrew e2fsprogs1.47.4 for HOST-copy checks. Reconstructing
-  verified userdata backup to sparse host userdata-workcopy.img (exec42818,
-  reconstruct.log). Each chunk + whole raw hash validated; source gzip files
-  untouched, free-space floor8GiB. Do not start a duplicate reconstruction.
-  Prepared ignored check-userdata-workcopy.py: APFS clonefile (no copy fallback),
-  e2fsck -p -E journal_only on NEW clone, then e2fsck -fn. NOT run yet.
-  Phone filesystem remains protected. Sources: kernel.org ext4 ro,noload
-  documentation and fscrypt/FIEMAP docs; raw file extents require careful
-  validation and cannot be treated as a permanently safe writable mapping.
+- Host backup reconstruction COMPLETE: initial exec42818 stopped at8GiB reserve;
+  macOS subsequently reported287GiB free. Resumed exec66870 rehashed all22
+  completed chunks from disk, decoded remaining5 and verified115167178752bytes,
+  SHAb1af42b854345e101854dcccab182928512c9f749542da89fc1100aa2303dd97.
+  userdata-workcopy.img is0400,63,681,003,520 allocated bytes; original gzip
+  backups untouched. No duplicate reconstruction needed.
+- Installed host e2fsprogs1.47.4; APFS clonefile copies only for experiments:
+  journal-only exit0 then full read-only check exit4 (exec87476); normal preen
+  exit4 (unexpected orphan-chain inconsistency); unrestricted host-clone fix
+  exit1 then read-only check0 (exec76607). Finally MINIMAL host clone
+  `e2fsck -f -y -E fixes_only` exit1, subsequent `-fn` exit0 (exec72764).
+  Evidence root-placement-0001/offline-fixes-only.json and minimal-*.log.
+  Fixes_only skips extent-tree optimization. Journal replay clears3 ordinary
+  orphaned inodes;2 additional malformed orphan entries (3711784,4710489)
+  have links0,size0,blocks0; fixes empty orphan metadata, free block/inode
+  counters and quota accounting. No claim of application-level data recovery.
+  Phone remains UNMOUNTED, blockdev RO=1,34C, no filesystem repairs/writes.
+  **Do not silently apply any host repair to phone. User has not approved it.**
+- New tools/polaris-file-extents.c + polaris-extent-policy.h inspect only a
+  regular allocated unencrypted image on readonly ext4. Reject unknown flags,
+  holes, delayed/unwritten/encoded/shared extents, overflow and physical overlap.
+  statvfs blocks EXCLUDE ext4 overhead; bound physical ranges using exact
+  mounted device sysfs size instead. No sync ioctl, no mounts/raw writes.
+  Native ASan/UBSan boundary tests PASS; aarch64-musl Zig cross-compile PASS.
+  Phone RAM-only32MiB ext4 fixture exec37583 PASS: exported8KiB file mapping
+  reconstructs exact host fixture bytes, sparse and tmpfs inputs refused;
+  readonly loop detached and userdata RO rechecked. First fixture run passed
+  mapping but redundant loop detach returned ENXIO (umount auto-released it);
+  verified no loop/mount remained, fixed cleanup and reran successfully.
+  Evidence extent-fixture-0001/hardware-result.json. Never treat FIEMAP snapshot
+  as persistent write permission; phone iOS file not created.
+- Preparing same-version static e2fsck for phone-side READ-ONLY verification
+  and a reviewable minimal repair proposal. Official1.47.4 source tarball
+  SHA2cec05f39c20ee621f14926195664e66e6017190ac8e4bbdb16d86082e43c5da
+  matches Homebrew formula. Build exec92200 in ignored host-tools/
+  e2fsprogs-polaris-build; no phone repair authorized or started.
 - Prior0002 photo showed only queue restored and PID1; its CRC was unobserved.
   That ambiguity is now resolved by0003, not by reinterpreting old evidence.
 - Added0802 retained-report overlay: save CRC/error/refusal and queue status;
