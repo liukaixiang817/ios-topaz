@@ -27,7 +27,8 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   Next: stage verified16GiB iOS root as a new unencrypted file, export a fresh
   read-only FIEMAP, implement read-only XNU file-backed root; final64GiB/UI pending.
   Earlier “not authorized/no phone writes” paragraphs below are historical.
-- New read-only file-root implementation0803 prepared: explicit polarisfileroot=1,
+- New read-only file-root implementation0803 committed f0b30fd and pushed;
+  CI39965897634/job120455570100 currently building. Implementation: explicit polarisfileroot=1,
   exact DT geometry, contiguous logical FIEMAP coverage/no physical overlap,
   bounded per-extent READ(10), hard rejection of all write commands, GPT head
   CRC plus independent userdata bounds validation, first/last image block CRC
@@ -42,13 +43,20 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   padding/block boundaries,1MiB and1MiB+7). Read-only/O_NOFOLLOW source;
   block devices require runtime RO and exact full size. Full userdata hash
   succeeded. CPU limits restored to1056000 after repair,37C.
-- Independent16GiB image currently copying with ignored stage-file-root-0001.py
-  (exec48672). New root-owned0700 /polaris-ios directory, no encrypted parent;
-  only new root-20H392-v1.img is written, no existing file overwritten. First
-  attempts exited during RO preflight because /dev inspector was absent/not
-  executable; pushed known tools to tmpfs, chmod700, resumed before any copy.
-  Script will unmount/restoreRO, verify file SHA/FIEMAP and outer ext4 fsck.
-  Do not boot until state staging_verified in file-root-0001/staging.json.
+- Independent16GiB image STAGED AND VERIFIED on phone (exec48672 exit0):
+  /polaris-ios/root-20H392-v1.img,17179869184bytes, SHA256 matches host
+  689a8cd1df0fc0093706272241a9ac77d5eddd7a62df5d340913ec6abcd7ce2b.
+  New parent root0:0/0700, no fscrypt policy; file0600. ADB copy503.115s,
+  32.6MB/s. RO FIEMAP182extents, all allocated/unencrypted/bounded; actual C
+  validator accepts real GPT/map. Outer ext4 -fn -E fixes_only exit0, clean
+  log. Unmounted/runtimeRO1,38C; remaining FS available74996064256bytes.
+  Private file-root-0001/staging.json=staging_verified,extents.json,manifest.json,
+  actual-c-map-validation.json,after-staging-fsck.log; phone.adt11260bytes.
+  No Android boot or writable remount since mapping. Re-export if either occurs.
+  First attempts exited during RO preflight (missing/not-executable tmpfs tool),
+  before any copy; known inspectors pushed/chmod700 then success. No overwrite
+  of an existing file, GPT/Windows untouched. Final64GiB capacity still pending;
+  this16GiB root establishes the read-only Apple-userspace boot path first.
 - **Hardware UFS read VERIFIED by latest user photo**: repeated
   POLARIS UFS RESULT: MATCH CRC32 91045173 expected 91045173;
   POLARIS UFS QUEUE: restored (no new I/O), plus live init heartbeats.

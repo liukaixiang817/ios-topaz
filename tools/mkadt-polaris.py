@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""ADT for single-CPU, RAM-root XNU bring-up on the observed 8GB MIX 2S.
+"""ADT for single-CPU XNU bring-up on the observed 8GB MIX 2S.
 
-Requires the polaris kernel patch profile. UFS, WLAN and display-service nodes
-are deliberately absent; this is a console/RAM-init tree, not an iOS GUI tree.
+Requires the polaris kernel patch profile. Defaults to a console/RAM-init
+tree. An explicit fresh manifest enables a read-only file root on userdata;
+WLAN and display-service nodes remain absent pending their own adaptation.
 The phone's upper RAM bank is from its verified live DT, not topaz constants.
 """
 import argparse
