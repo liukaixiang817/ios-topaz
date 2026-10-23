@@ -69,11 +69,38 @@ and DO NOT authorize erasing this phone. No destructive step is approved.
   verified no loop/mount remained, fixed cleanup and reran successfully.
   Evidence extent-fixture-0001/hardware-result.json. Never treat FIEMAP snapshot
   as persistent write permission; phone iOS file not created.
-- Preparing same-version static e2fsck for phone-side READ-ONLY verification
-  and a reviewable minimal repair proposal. Official1.47.4 source tarball
-  SHA2cec05f39c20ee621f14926195664e66e6017190ac8e4bbdb16d86082e43c5da
-  matches Homebrew formula. Build exec92200 in ignored host-tools/
-  e2fsprogs-polaris-build; no phone repair authorized or started.
+- Static phone e2fsck1.47.4 BUILD SUCCESS (exec8821 configure0/build0).
+  Binary research/host-tools/e2fsprogs-polaris-build/e2fsck/e2fsck,
+  SHAc0f15d9832a098adab25bd858907605ad432b9f777d83e0e9f4cb8cd02bf0c94.
+  Official source SHA2cec05f39c20ee621f14926195664e66e6017190ac8e4bbdb16d86082e43c5da
+  checked against Homebrew formula. ARM64 ELF static/no interpreter checked.
+  Build/configure in that ignored directory; build-manifest.json records identity.
+  Zig conftest calls from build cwd stalled; compiler wrapper normalizes path
+  arguments and runs from repository root, after which configure/build succeeded.
+  No claim of a diagnosed Zig root cause. Obsolete probe processes stopped.
+- Phone RAM fixture exec47648 PASS: intentionally bad inode refcount + free
+  counter detected by -fn (exit4, SHA unchanged), -fy -E fixes_only repaired
+  (exit1), -fn then0; synthetic file content unchanged. Original counter-only
+  fixture returned0 despite a warning: **do not judge cleanliness by exit alone**.
+  Evidence extent-fixture-0001/phone-fsck-result.json,phone-fsck-*.log.
+  Actual userdata READ-ONLY inspection exec34069: exit0 but journal skipped
+  and logs DO report corrupt orphan list, bitmap/count/xattr/quota differences.
+  This is NOT clean: pending journal can explain some differences; host-clone
+  replay still leaves the two empty orphan entries and accounting errors above.
+  Header4096bytes unchanged, block RO1, all persistent volumes unmounted,35C.
+  root-placement-0001/phone-readonly-fsck.{json,log}. No phone repair performed.
+- Minimal repair proposal prepared in ignored root-placement-0001/
+  repair-proposal.json: exact device + full partition SHA recheck against
+  verified backup before any write; `e2fsck -f -y -E fixes_only` ONLY userdata,
+  then read-only check/log review and restore runtime RO. No format/shrink/GPT,
+  Windows/bootloader writes or extent optimization. User confirmation REQUIRED
+  before applying to phone; original request preserves all data. Host experiment
+  passes but cannot promise application-level integrity or zero risk.
+- Commits1e586ce (UFS hardware evidence + directory inspector) and7202b7a
+  (extent inspector + offline checks) pushed to origin/codex/polaris-preflight.
+  Additional backing-device RO check added to inspector and verified again
+  on phone RAM fixture exec96906 (PASS). iOS file not yet placed on phone;
+  general UFS root/file mapping driver, Apple userspace, GUI/apps still pending.
 - Prior0002 photo showed only queue restored and PID1; its CRC was unobserved.
   That ambiguity is now resolved by0003, not by reinterpreting old evidence.
 - Added0802 retained-report overlay: save CRC/error/refusal and queue status;

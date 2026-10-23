@@ -65,6 +65,17 @@ int main(int argc, char **argv)
         fprintf(stderr, "invalid backing device size\n"); close(fd); return 1;
     }
     uint64_t backing_bytes = sectors * 512;
+    snprintf(sys_path, sizeof(sys_path), "/sys/dev/block/%u:%u/ro",
+             major(st.st_dev), minor(st.st_dev));
+    FILE *ro_file = fopen(sys_path, "r");
+    unsigned readonly = 0;
+    if (!ro_file) { perror("backing readonly state"); close(fd); return 1; }
+    parsed = fscanf(ro_file, "%u %c", &readonly, &extra);
+    fclose(ro_file);
+    if (parsed != 1 || readonly != 1) {
+        fprintf(stderr, "backing block device must also be read-only\n");
+        close(fd); return 1;
+    }
     /* A bounded single ioctl avoids incomplete pagination and enormous maps.
      * Fail closed if more extents exist. Caller may choose another strategy. */
     enum { MAX_EXTENTS = 16384 };
