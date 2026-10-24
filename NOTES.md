@@ -10,7 +10,42 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION — 0027 sent; observe USB / GUI / saved GMU clock result
+### CURRENT NEXT ACTION — 0028 bounded clock acknowledgement / first-failure evidence
+
+- Actual0027 Settings photo andhuman **操作正常，但是GPU驱动还不正常**:
+  USB **R7 S12 E5 C7f Q0/2/402/2 L2400**; GPU **G301 P5 K1/7
+  R80000000/0 M0 T10416**. EP0 transferresourcecommand2 nowtimesout with
+  CMDACT; DEPSTARTCFGcompleted. CX P5 is stillsuccess. K1includes callbackIO,
+  immediatecontrolreadbackmismatch, orlive-snapshotinconsistency. Previous
+  cleanup overwrote the originalstage with7, so the exactfailingregister is
+  UNPROVEN. TCXOconfig0/rootOFFpassed admission; firmware notexecuted.
+  T10416 isone10.416mselapsedpresentation,notFPS/CPU/speedup. Privatephoto/
+  hash/observations atcontinuation-0028/hardware-0027-observation.json.
+- IMPLEMENTED0833: clockcontrol requests nowconfirm maskedreadback for at
+  most500one-us polls, ratherthanmisclassifying oneimmediatedifference asIO.
+  Preservefirstfailure step/op/offset/expected/actual/mask throughallcleanup;
+  split AON/CXO/source/GMU stages. K1callbackIO/7requestACKtimeout/8live-state
+  changed are distinct; K5stillmeansrestorationfailure. K6requiresallclockson
+  underreset andrequestsrestored. Bar now K=result/firstfailedstep,
+  F=firstfailedoffset/actual, R=initialRCGcmd/config. RAMlogsretain allfields,
+  expectedmask andackpollcount. Existing500us root/branch/power bounds,
+  resetownership/parentguard/requestrestoration remain; noGPUCSR/FW/SMMU.
+- USBactivation/commands unchanged. SaveDCFG/DCTL/DSTS exactly atfirstcommand
+  failure underexistingmutex, publishwiththerecord. Bar B=dcfg/dctl/dsts;
+  D USB CTRL RAMlogfullsnapshot. No newclock/PHY guess basedon a timeout.
+- Allphonearguments andADT staybyteidentical0027: mode4,Hz20,CPU1,
+  512MiBRAMCOW/ufsrw0. No newdisplayoptimization orSMPadmission.
+- Native17 tests finalPASS underASan/UBSan: delayedACK1/500µs succeeds,
+  beyondbound501µs honestlyfails (includingcleanup), ignoredwrites, allread/
+  postedwrite faults, livechange andfirstfailureretention. Newdevelopmenttest
+  initially expected501µscleanupsuccess; correctedtestexpectation because
+  restorewasalsodelayed501µs. Privatefailureexplanationretained; no waitbound
+  changed for that fixturecorrection. TwoactualCI-headerARM64unitscompile
+  PASS/allimportsresolve against0027+newobjects. Thirteenorderedpatches
+  0821..0833 applywithoutfuzz/offset;18filesmatchactualcompiletree.
+  FullCI/exactkernelruns/imagepending; phone remains0027. Commit/build first.
+
+### 0027 GMU clock acquisition / USB resource ordering
 
 - Actual0026 Settings photo reads **U2 R7 S12 E5 C7f Q0/1/401/2 L2400**,
   **G303 P5 CX00222001 HW00005ff4 M80004220 X80000001 T10277**.
@@ -82,11 +117,8 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   Readonly hostwatch14216 exited0:21samples/61.579s, no known-phone USB
   VID or matchingECM through **12:14:44.753737UTC**. Hostnetwork unchanged;
   no RAMlog or panel captured. This absence doesnotidentify the newfailedstage.
-- NEXT human GUIflow lockscreen→home→Settings→return, savedGPU P/K/R/M
-  andUSB S/E/Q/L. Asyncquestionssent, awaitinghumanfeedback. Phone now0027.
-  IfECMappears later, collectRAMlog/panel
-  withtools/polaris-usb-debug.py. Actual0026GUIworked;0027GUI/USB/clocktrial
-  outcomes pending. GPUfirmwareexecution/acceleration remainunfinished.
+- Laterhuman/photo confirms normalGUI and P5/K1/7 plusUSBresourcecommand2
+  timeout, see0028above. Phone remains0027; noUSB/RAMlog/panel orGPUexecution.
 
 
 ### 0026 USB2 low power / CX request trial / frame cadence

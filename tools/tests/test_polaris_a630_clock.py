@@ -17,10 +17,19 @@ class A630ClockTests(unittest.TestCase):
 struct mock {
  uint32_t reg[5],cfg,hw,gx,gx_gmu,ahb,cx;
  unsigned reads,writes,waits,fail_read,fail_write,stall_root,stall_gmu,stall_disable,clock_reads;
- unsigned cx_cycled,collapsed;
+ unsigned cx_cycled,collapsed,ack_delay,drop_index,live_zero_reset;
+ unsigned pending[5];uint32_t pending_value[5];
  struct a630_clock_snapshot clock;
 };
 static int index_of(uint32_t off){for(int i=0;i<5;i++)if(off==a630_clock_offsets[i])return i;return -1;}
+static void apply(struct mock *m,int i,uint32_t value){
+ m->reg[i]=value;
+ if(i<4){
+  bool on=!!(value&a630_clock_masks[i]);
+  bool stuck=on?((i==2&&m->stall_root)||(i==3&&m->stall_gmu)):m->stall_disable;
+  if(!stuck){if(on)m->reg[i]&=~A630_POWER_ON;else m->reg[i]|=A630_POWER_ON;}
+ }
+}
 static bool rd(void *p,unsigned region,uint32_t off,uint32_t *v){
  struct mock *m=p;if(++m->reads==m->fail_read)return false;
  if(region==0){assert(off==0x71004);*v=m->ahb;return true;}
@@ -30,7 +39,9 @@ static bool rd(void *p,unsigned region,uint32_t off,uint32_t *v){
  else if(off==0x100c)*v=m->gx;
  else if(off==0x1064)*v=m->gx_gmu;
  else if(off==0x1124)*v=m->cfg;
- else{int i=index_of(off);assert(i>=0&&!m->collapsed);m->clock_reads++;*v=m->reg[i];}
+ else{int i=index_of(off);assert(i>=0&&!m->collapsed);m->clock_reads++;
+  if(m->pending[i]&&!--m->pending[i])apply(m,i,m->pending_value[i]);
+  *v=(m->live_zero_reset&&i==4&&m->clock.step==9)?0:m->reg[i];}
  return true;
 }
 static bool wr(void *p,unsigned region,uint32_t off,uint32_t value){
@@ -44,11 +55,9 @@ static bool wr(void *p,unsigned region,uint32_t off,uint32_t value){
   assert(((value^m->reg[i])&~a630_clock_masks[i])==0);
   if(i<4)assert(m->reg[4]&1); /* Reset before any clock write. */
   if(i==4&&!(value&1))assert((m->reg[2]&A630_POWER_ON)&&(m->reg[3]&A630_POWER_ON));
-  m->reg[i]=value;
-  if(i<4){
-   bool on=!!(value&a630_clock_masks[i]);
-   bool stuck=on?((i==2&&m->stall_root)||(i==3&&m->stall_gmu)):m->stall_disable;
-   if(!stuck){if(on)m->reg[i]&=~A630_POWER_ON;else m->reg[i]|=A630_POWER_ON;}
+  if(m->drop_index!=(unsigned)i+1){
+   if(m->ack_delay){m->pending[i]=m->ack_delay;m->pending_value[i]=value;}
+   else apply(m,i,value);
   }
  }
  return m->writes!=m->fail_write; /* Fail after a posted write. */
@@ -87,7 +96,23 @@ int main(void){
   assert(e==A630_CLK_IO||e==A630_CLK_RESTORE_FAILED);
   assert(!m.clock.changed||m.clock.restored||e==A630_CLK_RESTORE_FAILED);
  }
+ /* Successful delayed requests must not be classified as I/O failure. */
+ for(unsigned delay=1;delay<=500;delay+=499){
+  m=fresh();m.ack_delay=delay;assert(trial(&m)==A630_CLK_READY_RESTORED);
+  assert(m.clock.restored&&!m.clock.failed_op&&m.clock.request_polls>=delay);
+ }
+ m=fresh();m.ack_delay=501;assert(trial(&m)==A630_CLK_RESTORE_FAILED&&!m.clock.restored);
+ assert(m.clock.failed_step==2&&m.clock.failed_op==3&&m.clock.failed_offset==0x111c);
+ for(unsigned drop=3;drop<=5;drop++){
+  m=fresh();m.drop_index=drop;assert(trial(&m)==A630_CLK_REQUEST_TIMEOUT&&m.clock.restored);
+  assert(m.clock.failed_op==3&&m.clock.failed_offset==a630_clock_offsets[drop-1]);
+ }
+ m=fresh();m.live_zero_reset=1;assert(trial(&m)==A630_CLK_STATE_CHANGED&&m.clock.restored);
+ assert(m.clock.failed_step==9&&m.clock.failed_op==5&&m.clock.failed_offset==0x111c);
+ m=fresh();m.fail_write=1;m.fail_read=12;assert(trial(&m)==A630_CLK_RESTORE_FAILED);
+ assert(m.clock.failed_step==2&&m.clock.failed_op==2&&m.clock.failed_offset==0x111c);
  m=fresh();m.stall_root=1;assert(trial(&m)==A630_CLK_ROOT_TIMEOUT&&m.clock.restored&&m.clock.polls>=500);
+ assert(m.clock.failed_step==6&&m.clock.failed_op==4&&m.clock.failed_offset==0x1120);
  m=fresh();m.stall_gmu=1;assert(trial(&m)==A630_CLK_BRANCH_TIMEOUT&&m.clock.restored&&m.clock.polls>=500);
  m=fresh();m.stall_disable=1;assert(trial(&m)==A630_CLK_RESTORE_FAILED&&!m.clock.restored&&(m.reg[4]&1));
  m=fresh();m.cx=0x222001;m.hw=0x5ff4;struct a630_power_snapshot power;

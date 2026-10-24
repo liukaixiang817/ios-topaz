@@ -40,10 +40,10 @@ uint32_t polaris_a630_details(char *out, uint32_t capacity)
     if (!__atomic_load_n(&a630_published, __ATOMIC_ACQUIRE))
         return (uint32_t)snprintf(out, capacity, "GPU pending");
     if (a630_mode == 4)
-        return (uint32_t)snprintf(out, capacity, "G%x P%u K%u/%u R%x/%x M%x",
+        return (uint32_t)snprintf(out, capacity, "G%x P%u K%u/%u F%x/%x R%x/%x",
             polaris_a630_status(), a630_power_saved.result, a630_clock_saved.result,
-            a630_clock_saved.step, a630_clock_saved.before[2], a630_clock_saved.config,
-            a630_clock_saved.live[3]);
+            a630_clock_saved.failed_step, a630_clock_saved.failed_offset, a630_clock_saved.failed_value,
+            a630_clock_saved.before[2], a630_clock_saved.config);
     return (uint32_t)snprintf(out, capacity, "G%x P%u CX%08x HW%08x M%08x X%08x",
         polaris_a630_status(), a630_power_saved.result, a630_saved.cx, a630_saved.cx_hw,
         a630_saved.clocks[1], a630_saved.clocks[2]);
@@ -140,6 +140,9 @@ void polaris_a630_report(void)
         c->result, c->reads, c->writes, c->step, c->changed, c->restored, c->polls,
         c->before[2], c->config, c->live[0], c->live[1], c->live[2], c->live[3],
         c->before[4], c->live[4], c->after[4]);
+    printf("D GPU CLOCK FAIL: step=%u op=%u offset=%x expected=%x actual=%x mask=%x ack_polls=%u\n",
+        c->failed_step, c->failed_op, c->failed_offset, c->failed_expected,
+        c->failed_value, c->failed_mask, c->request_polls);
     printf("D GPU POWER: result=%u reads=%u writes=%u changed=%u restored=%u polls=%u req=%x/%x hw=%x/%x/%x\n",
         p->result, p->reads, p->writes, p->changed, p->request_restored, p->polls,
         p->before, p->after, p->before_hw, p->on_hw, p->after_hw);
