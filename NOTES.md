@@ -22,6 +22,28 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT ACTION —0034 temporary boot SENT; USB observer89914 ACTIVE
+
+- Newcleanmetadata revalidation71830 EXIT0 **23:15:22.098756UTC**:
+  full16GiB SHA689a8cd1/all182maps/GPTunchanged,headerbefore/afteridentical,
+  userdataRO1/unmounted,28C. Initialstrictpreflightfailure83992 preserved;
+  no repair/journalreplay/partitionwrite. ExactnewbaselineheaderSHA
+  **32311c08288222efa453fe7563912667d215f59894307c547a2624246bd178b5**.
+  Futurepreflightsmustusefresh0034cleanheaderbaseline, not0013oldpendingone.
+- Supplementalfreshproofwrapperpassed,proofage14.442s. **0034bootSENT**
+  Sending/BootingOKAY,total1.183s, sent **2026-10-24T23:15:46.254548+00:00**.
+  FirstUSBsample **2026-10-24T23:15:46.335060+00:00**, gap**0.080512s**.
+  InitialAndroid18d1:d00d bootloaderidentityonly, notnativeXNUUSBproof.
+- **Observer89914 ACTIVE**, no time/discoveryexit. DoNOTrestart/reboot/stop
+  beforeactualsameboot human“已进入系统”/explicitcancel. IfECMappearsattempt
+  RAMlog/panelwhileobservercontinues. QuestionasksactualGUIbootcompleteand
+  GB/GE(especiallyfw)/UMrawrows, orlastbootlogline. NoactualGPUFW/USB/render
+  resultyet. DesktopCPUrendered; HFI/GX/CP/CoreAnimationstillnotconnected.
+- ImageSHA d4a9f6473ea462d49bdc8dc6b11686e6133d8e4687aa8531a9265fc9ab268607,
+  exactCI40141037084 SUCCESS,78firstpasschecks/26native/3ARM64units/final
+  independentcheckPASS. Frozen12hostscripts+2supplementalreadonlyscripts.
+  Sourceb4c0c57(codef5a49a0), no0034partitionwrites orhostnetworkchange.
+
 ###0034 initial preflight STOPPED; fresh clean-header read-only verification ACTIVE
 
 - HumanalreadyFASTBOOT; no repeatquestionneeded. Preflight83992 temporary
