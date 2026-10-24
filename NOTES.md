@@ -43,7 +43,7 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   changed for that fixturecorrection. TwoactualCI-headerARM64unitscompile
   PASS/allimportsresolve against0027+newobjects. Thirteenorderedpatches
   0821..0833 applywithoutfuzz/offset;18filesmatchactualcompiletree.
-  FullCI/exactkernelruns/finalimagecheck nowPASS below; phone remains0027.
+  FullCI/exactkernelruns/finalimagecheck nowPASS below; temporary0028 sent.
 - Source **8ea72f159448421814294e5359cb1c348131ab66** committed/pushed;
   CI **40093825732/job120871827583 SUCCESS**, Build4m31s
   (12:25:33–12:30:04UTC).
@@ -63,7 +63,7 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   clockwaiver; originalfailure remainsfailed/unresolved. Base120s FIRSTPASS16,
   actualasync90s selectedattempt2 PASS19, mode4zeroMMIO60s FIRSTPASS16:
   **51selectedchecksPASS**. Pipeline23693 exited0 **12:37:48.577178UTC**.
-- **0028 PREPARED, NOT BOOTED** image
+- **0028 TEMPORARY BOOT SENT** image
   `shim/out/polaris-xnu-readdebug-0028/polaris-xnu-readdebug-0028.img`,
   47407104bytes SHA **c48bfa9b7741ce8889d84851fe325c13e3275d04f6abaa2f84f0810697e1990d**;
   payload SHA **d842371cb50fced8238f6791564f3e7fc47a9151e11b7e52373fb225cdb06597**.
@@ -72,13 +72,18 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   firmwares, all3selectedrun+1failureprovenances, Cpayloadvalidator/rebuild,
   embeddedimage/manifest/65DTBs allverified. PhoneADT ANDarguments byteidentical
   0027: mode4/Hz20/CPU1/512MiBRAMCOW/ufsrw0. No GPUfirmware/acceleration.
-- NEXT requestphysicalFASTBOOT because0027USBunavailable. Onlyafterhuman
-  confirmation, continuation-0028/run-device-step.py preflight thenboot-phone:
-  knownheadlessrecovery, freshfull16GiBhash/182maps/GPT/header/RO/unmounted/
-  temperaturecheck, then temporary0028boot. Neverrepairpendingouterjournal.
-  BootwrapperrequiresfinalPASS/freshproof<600s. Thenreadonlywatch-usb.py;
-  ifECMappears, captureRAMlog/panel withtools/polaris-usb-debug.py. Human
-  checks GUIflow andtop K/F/R/P plusUSB S/E/Q/L/B. No0028phoneactionyet.
+- Human confirmedFASTBOOT. Preflight35699 exited0 at
+  **12:43:01.071003UTC**: full16GiBhash/182maps/GPT/outerheader unchanged,
+  userdataRO1/unmounted,34C. Pendingouterjournal neitherreplayed norrepaired.
+  Bootwrapper34650 exited0: Sending/BootingOKAY,total1.186s; temporary0028
+  sent **12:43:22.714123UTC**, proofage21.643120s. No partitionwrite.
+- Readonlyhostwatch31118 exited0:21samples/61.467s, no known-phone USB VID
+  or matchingECM through **12:44:32.440541UTC**. Hostnetwork unchanged;
+  no RAMlog or panel captured. Asyncquestion asks normalGUIflow andtop
+  P/K/F/R plusUSB S/E/Q/L/B; awaitinghumanfeedback. NEXT usefirstfailurefields
+  to identify actualclockgate beforechanging hardwaresequence. IfECMappears,
+  captureRAMlog/panel withtools/polaris-usb-debug.py. GPUfirmware/acceleration
+  stillunfinished; no0028physicalGUI/clockresult orUSBsuccess claimyet.
 
 
 

@@ -325,8 +325,13 @@ after network/PID1/allfourVMchildren passed. Original evidence is retained;
 an identical standard-clock retry passes, with both provenances compared
 identical. The original failure remains unresolved; no threshold waiver.
 The three selected modes pass51checks, and independent source/payload/image
-checks pass12:38:23UTC. The0028image is prepared, with no phone action yet.
-GPU firmware execution and acceleration remain unfinished.
+checks pass12:38:23UTC. After human FASTBOOT confirmation, a fresh full16GiB
+hash/182maps/GPT/header/RO check passes12:43:01UTC (unmounted,34C). Temporary
+0028 is sent12:43:22UTC, Sending/BootingOKAY,total1.186s. No partition write
+or outer journal replay. Host observation finds no known-phone USB device or
+matching ECM over21samples/61.467s through12:44:32UTC; no network change or
+RAM log/panel capture. Physical GUI/first-failure fields are pending. GPU
+firmware execution and acceleration remain unfinished.
 
 ## Standalone boot diagnostic 0001
 
