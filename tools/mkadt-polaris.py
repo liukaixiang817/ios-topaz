@@ -40,11 +40,13 @@ def child(node, name):
 
 
 def build(seed=None, qemu=False, ufs_head=None, file_root=None, display=False,
-          wifi_mac=None):
+          wifi_mac=None, touch=False):
     if ufs_head is not None and qemu:
         raise ValueError('QEMU cannot probe the phone UFS controller')
     if file_root is not None and (qemu or ufs_head is not None):
         raise ValueError('file root requires phone hardware and excludes probe mode')
+    if touch and qemu:
+        raise ValueError('physical Synaptics input is not available in QEMU')
     if wifi_mac is not None:
         if not isinstance(wifi_mac, bytes) or len(wifi_mac) != 6:
             raise ValueError('Wi-Fi factory identity must be exactly six raw bytes')
@@ -110,6 +112,15 @@ def build(seed=None, qemu=False, ufs_head=None, file_root=None, display=False,
         setprop(disk, 'crc32', mkadt.u32(*file_root['crc32']))
         setprop(disk, 'extents', b''.join(mkadt.u64(*e) for e in file_root['extents']))
         root.children.append(disk)
+    if touch:
+        # Only an explicit caller may enable hardware access; the kernel also
+        # requires polaristouch=1 (input) or2 (capability probe without events).
+        device = adt.Node()
+        setprop(device, 'name', b'polaris-touch\0')
+        setprop(device, 'version', mkadt.u32(1))
+        setprop(device, 'reg', mkadt.u64(0xa98000, 0x4000))
+        setprop(device, 'address', mkadt.u32(0x20))
+        root.children.append(device)
     return root
 
 
@@ -121,12 +132,14 @@ if __name__ == "__main__":
                         help='enable CPU framebuffer service; needs polarisdisplay=1')
     parser.add_argument('--wifi-mac-file', type=Path,
                         help='private file containing six raw verified factory Wi-Fi MAC bytes; does not enable WLAN')
+    parser.add_argument('--touch', action='store_true',
+                        help='opt in to MIX2S Synaptics input; also needs polaristouch=1 or2')
     parser.add_argument('--ufs-probe-head', type=Path,
                         help='verified LUN0 head backup for optional read-only probe; needs polarisufsprobe=1')
     parser.add_argument('--file-root-manifest', type=Path,
                         help='fresh readonly metadata from polaris_file_root.py; needs polarisfileroot=1')
     args = parser.parse_args()
-    blob = adt.serialize(build(qemu=args.qemu, display=args.display,
+    blob = adt.serialize(build(qemu=args.qemu, display=args.display, touch=args.touch,
                               wifi_mac=args.wifi_mac_file.read_bytes() if args.wifi_mac_file else None,
                               ufs_head=args.ufs_probe_head.read_bytes() if args.ufs_probe_head else None,
                               file_root=json.loads(args.file_root_manifest.read_text()) if args.file_root_manifest else None))

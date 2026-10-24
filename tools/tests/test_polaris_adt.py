@@ -97,6 +97,19 @@ class ADTTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     polaris.build(seed=b'x' * 64, wifi_mac=identity)
 
+    def test_touch_requires_explicit_phone_opt_in(self):
+        with patch.object(polaris.mkadt, 'd22ap_product', return_value=None):
+            base = polaris.build(seed=b'x' * 64)
+            root = polaris.build(seed=b'x' * 64, touch=True)
+            with self.assertRaises(ValueError):
+                polaris.build(qemu=True, touch=True)
+        root = polaris.adt.parse(polaris.adt.serialize(root))[0]
+        touch = polaris.props(polaris.child(root, 'polaris-touch'))
+        self.assertEqual(struct.unpack('<QQ', touch['reg']), (0xa98000, 0x4000))
+        self.assertEqual(struct.unpack('<I', touch['address']), (0x20,))
+        root.children = [n for n in root.children if polaris.props(n)['name'] != b'polaris-touch\0']
+        self.assertEqual(polaris.adt.serialize(root), polaris.adt.serialize(base))
+
 
 if __name__ == "__main__":
     unittest.main()

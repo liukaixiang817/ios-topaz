@@ -10,7 +10,45 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION —0014 temporary boot sent;observe screen;0013 late lockscreen confirmed
+### CURRENT NEXT ACTION —0014 lockscreen/no touch confirmed;port exact Synaptics input
+
+-0811 INPUT implementation staged locally: newbsd/dev/polaris_touch.c,
+ shared testedGENI/RMI/mapheaders;BSDlateinit caller;Polaris-only HIDinverse
+ mapping/2160pxbottomedge. Explicitpolaristouch1input/2probe AND exactADTnode;
+ defaultnoMMIO. GPIO33/34mux2onlyfromGPIO/expectedmux,reset99/IRQ125 untouched,
+ inheritedhighreset required. OnlyGCCAHB1/S6votes20/21/28,XO/1selection;
+ loadedI2Cfw/idle32bitFIFO required. NoPll/PMIC/reset/firmware/diskwrites.
+ BoundedRMI10pagePDT/F01/F12 discovery,currentCtrl28stride,Data15presence,
+ finger/gloveonly,20mspoll,threebadreadsrelease/stop;normalvolatileF01byte.
+ NativeASan/UBSan4tests PASS includingexactshippedheaders,protocolcapabilities,
+ down/move/up/invalidbounds,FIFOshortword/NACK/timeout/foreignbusy/abortfail,
+ monotoneinversefit/homeedge;8ADT+3profiletestsPASS. All7patchfilesapply+MATCH.
+ ThreeactualCI-headerARM64objectcompilesPASS (newdriver,BSDinit,SweetHID).
+ touch-0015/source-audit.json +test/compilelogs retained. FullCI NOTbuilt yet.
+ tools/polaris-ios-touch.cmdline adds polaristouch1 andraisesCPUcopy1->5Hz
+ forinteraction;consolevisible,ufsrw0/RAM512/rootimage protectionsunchanged.
+ NeedfullCI/newkernelQEMUthenpreparedhardwareimagebeforephysicalkeyrequest.
+ ActualICpower/firmwareretention unknown;driver maystop safely withdiagnosis,
+ notyetphysicaltouch/homeproof. Current0014running,doNOTrequestrebootyet.
+
+- NEW0014 HARDWARE:threephotos 13A41938... savedprivately as wifi-identity-0014/
+ hardware-lockscreen-no-input-{1,2,3}.jpg +hardware-lockscreen-no-input.json.
+ Red/pink4:15clock,camera,homeindicator,charging icon visible withconsoleoverlay.
+ Userreports touches doNOTwork/cannotenterhome. Actual0014GUIlockscreen now
+ confirmed;home/input/Appunfinished. No timingbenefit inferredfromMACchange.
+ COWmax26819/32768,dirty427876KiB,reserved512MiB,UFS-error0/refused0,notfull.
+- Sourcecause confirmed:POLARIS_RAM_ONLY returns polaris_file_root_init before
+ common sweet_keys_init/sweet_touch_init;SweetHIDTouch onlypublishes event
+ service. DoNOTenableforeignGoodix/Focaltech GPIO8/9/90driver. LiveDT bound
+ Synaptics@0x20,S3330,/soc/i2c@a98000,wrapper1/S6,GPIO33/34qup14 mux2,
+ reset99 NORTH,IRQ125 EAST. Exact MiCode polaris-o-oss pinctrl-v2/geniI2C/
+ Synaptics sources fetched throughGitHubconnector;private touch-0015/.
+ GCC S6RCG18738/branch18734,AHB1800c/18010,votebits20/21/28 verified.
+ SharedHID currently assumes1080x2400/centercrop;needs inverse997x2160fit
+ and2160height/edgegesture forpolaris. PlanexplicitADT+bootarg gated driver,
+ boundedRMI functiondiscovery/currentreportlayout,realcontacts only;no fake
+ swipe/firmwareflash/PMICreset/persistentwrites. Currentphonekeep0014XNU;
+ no newbuild/phonebootyet. Snapshotoriginals saved before source edits.
 
 - CURRENT PHONE:0014 temporaryboot SENT,exec4554exit0,FASTBOOT1.181s,
  2026-10-24T02:56:05.002993+00:00 (2026-10-24 Australia/Melbourne). Exactprepared
@@ -24,7 +62,7 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
  Bootscript repeatedfreshmap/header/GPT/RO/temp checks then adbbootloader+
  fastbootboot. boot.json/phone-boot.log/preflight.json/full-image-readonly-
  verification.json/deployment-state.json retainedprivately. Actual0014screen
- notyetobserved:neednewphoto after~2-3min,plusfocusedcaller/header iftext.
+ nowobserved above:lockscreen works,physicalinput fails.
  Keepthisboot;no USBrestart/logchannel;doNOTrequestanotherrebootsolelyforlogs.
  GUIhome,touch/USB,Apps,persistent64GiB/tripleboot remainunfinished.
 

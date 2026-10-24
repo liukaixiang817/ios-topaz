@@ -1,0 +1,734 @@
+--- a/bsd/conf/files
++++ b/bsd/conf/files
+@@ -108,6 +108,7 @@
+ bsd/dev/sweet_sample.c			standard
+ bsd/dev/sweet_keys.c			standard
+ bsd/dev/sweet_touch.c			standard
++bsd/dev/polaris_touch.c			standard
+ bsd/dev/sweet_rpmh.c			standard
+ bsd/dev/sweet_spmi.c			standard
+ bsd/dev/sweet_usb.c			standard
+--- a/bsd/kern/bsd_init.c
++++ b/bsd/kern/bsd_init.c
+@@ -1051,6 +1051,8 @@
+      * This is a no-op unless both diagnostic boot arguments are explicit. */
+     extern void sweet_sample_start(void);
+     sweet_sample_start();
++    extern void polaris_touch_init(void);
++    polaris_touch_init();
+ #endif
+ 
+ 	pal_kernel_announce();
+--- a/iokit/Kernel/arm/hid/SweetHID.cpp
++++ b/iokit/Kernel/arm/hid/SweetHID.cpp
+@@ -21,6 +21,9 @@
+ #include <IOKit/IOTimerEventSource.h>
+ #include <libkern/c++/OSArray.h>
+ #include <pexpert/pexpert.h>
++#if defined(POLARIS_RAM_ONLY)
++#include "../polaris_touch_map.h"
++#endif
+ 
+ #include "IOHIDEventService.h"
+ #include "IOHIDEventServiceUserClient.h"
+@@ -458,22 +461,35 @@
+ 	if (finger < 0 || finger >= SWEET_TOUCH_FINGERS) {
+ 		return;
+ 	}
++#if defined(POLARIS_RAM_ONLY)
++    int32_t px, py; bool edge;
++    if (!polaris_touch_map(x, y, &px, &py, &edge)) { return; }
++#else
+ 	x = x < 0 ? 0 : (x > 1079 ? 1079 : x);
+ 	y = y < 0 ? 0 : (y > 2399 ? 2399 : y);
++#endif
+ 
+ 	IOLockLock(fLock);
+ 	bool was = fDown[finger];
+ 	/* Panel pixels -> the presented 1125x2436 display (SweetFramebuffer.cpp). */
++#if defined(POLARIS_RAM_ONLY)
++    IOFixed nx = (IOFixed)px, ny = (IOFixed)py;
++#else
+ 	IOFixed nx = (IOFixed)(((int64_t)(x + fOffX) << 16) / fLogicalW);
+ 	IOFixed ny = (IOFixed)(((int64_t)(y + fOffY) << 16) / fLogicalH);
++#endif
+ 	bool moved = down && (nx != fX[finger] || ny != fY[finger]);
+ 	if (was == down && !moved) {
+ 		IOLockUnlock(fLock);
+ 		return;
+ 	}
+ 	if (!was && down) {
++#if defined(POLARIS_RAM_ONLY)
++        fEdge[finger] = edge;
++#else
+ 		fEdge[finger] = x < SWEET_TOUCH_EDGE_PX || x > 1079 - SWEET_TOUCH_EDGE_PX ||
+ 		    y < SWEET_TOUCH_EDGE_PX || y > 2399 - SWEET_TOUCH_EDGE_PX;
++#endif
+ 	}
+ 
+ 	collection = IOHIDEvent::digitizerEvent(now, 0, kIOHIDDigitizerTransducerTypeHand, false, 0, 0, 0);
+@@ -559,3 +575,10 @@
+ 		gSweetTouch->touch(finger, down != 0, x, y);
+ 	}
+ }
++
++#if defined(POLARIS_RAM_ONLY)
++extern "C" int polaris_hid_touch_ready(void)
++{
++    return gSweetTouch != NULL;
++}
++#endif
+--- /dev/null
++++ b/bsd/dev/polaris_touch.c
+@@ -0,0 +1,286 @@
++/* MIX2S/S3330 input: explicit board gate, GENI FIFO, bounded RMI discovery.
++ * No firmware upload, hardware reset, PMIC, display-controller or disk writes.
++ * Pin/clock facts: live polaris DT and MiCode polaris-o-oss sources.
++ */
++#if defined(POLARIS_RAM_ONLY)
++#include <sys/param.h>
++#include <sys/systm.h>
++#include <kern/clock.h>
++#include <kern/thread.h>
++#include <kern/sched_prim.h>
++#include <machine/machine_routines.h>
++#include <pexpert/pexpert.h>
++#include <pexpert/device_tree.h>
++#include "polaris_geni_i2c.h"
++#include "polaris_rmi.h"
++
++extern vm_offset_t ml_io_map(vm_offset_t, vm_size_t);
++extern kern_return_t thread_terminate(thread_t);
++extern int polaris_hid_touch_ready(void);
++extern void sweet_hid_touch(int, int, int, int);
++void polaris_touch_init(void);
++
++static struct {
++    vm_offset_t gcc, se, pin[4];
++    struct polaris_geni bus;
++    struct polaris_rmi_layout rmi;
++    uint32_t mode;
++    int page;
++    uint16_t down;
++    int x[10], y[10];
++    unsigned frames;
++} pt;
++static int pt_wait_channel;
++static const uint32_t pt_gpio_pa[] = {
++    0x03921000, 0x03922000, /* GPIO33/34 NORTH: qup14 mux2 */
++    0x03963000,            /* GPIO99 NORTH: reset, must already be high */
++    0x0357d000             /* GPIO125 EAST: active-low IRQ */
++};
++
++static uint32_t pt_rd(vm_offset_t base, uint32_t off)
++{
++    uint32_t v = *(volatile uint32_t *)(base + off);
++    __asm__ volatile("dmb oshld" ::: "memory"); return v;
++}
++static void pt_wr(vm_offset_t base, uint32_t off, uint32_t value)
++{
++    __asm__ volatile("dmb oshst" ::: "memory");
++    *(volatile uint32_t *)(base + off) = value;
++    __asm__ volatile("dsb osh" ::: "memory");
++}
++static void pt_wait(unsigned ms)
++{
++    uint64_t d; clock_interval_to_deadline(ms, NSEC_PER_MSEC, &d);
++    (void)assert_wait_deadline(&pt_wait_channel, THREAD_UNINT, d);
++    thread_block(THREAD_CONTINUE_NULL);
++}
++static bool pt_clear(vm_offset_t base, uint32_t off, uint32_t mask)
++{
++    for (unsigned i = 0; i < 5000; ++i) {
++        if (!(pt_rd(base, off) & mask)) { return true; }
++        delay(1);
++    }
++    return false;
++}
++static uint32_t pt_bus_read(void *ctx, uint32_t off)
++{ (void)ctx; return pt_rd(pt.se, off); }
++static void pt_bus_write(void *ctx, uint32_t off, uint32_t value)
++{ (void)ctx; pt_wr(pt.se, off, value); }
++static void pt_bus_delay(void *ctx, unsigned us)
++{ (void)ctx; delay(us); }
++
++static bool pt_board_gate(void)
++{
++    DTEntry root, node;
++    const void *v; unsigned n;
++    uint64_t reg[2]; uint32_t ver, address;
++    if (SecureDTLookupEntry(NULL, "/", &root) != kSuccess ||
++        SecureDTGetProperty(root, "compatible", &v, &n) != kSuccess) { return false; }
++    bool board = false;
++    const char *p = v;
++    for (unsigned i = 0; i < n;) {
++        unsigned len = 0;
++        while (i + len < n && p[i + len]) { ++len; }
++        if (i + len == n) { break; }
++        if (len == 14 && !memcmp(p + i, "xiaomi,polaris", 14)) { board = true; }
++        i += len + 1;
++    }
++    if (!board || SecureDTLookupEntry(NULL, "/polaris-touch", &node) != kSuccess) { return false; }
++    if (SecureDTGetProperty(node, "reg", &v, &n) != kSuccess || n != sizeof(reg)) { return false; }
++    memcpy(reg, v, sizeof(reg));
++    if (SecureDTGetProperty(node, "version", &v, &n) != kSuccess || n != sizeof(ver)) { return false; }
++    memcpy(&ver, v, sizeof(ver));
++    if (SecureDTGetProperty(node, "address", &v, &n) != kSuccess || n != sizeof(address)) { return false; }
++    memcpy(&address, v, sizeof(address));
++    return reg[0] == 0xa98000 && reg[1] == 0x4000 && ver == 1 && address == 0x20;
++}
++
++static bool pt_clocks(unsigned *level)
++{
++    const uint32_t rcg = 0x18738, votes = (1u << 20) | (1u << 21) | (1u << 28);
++    /* Enable only the board's AHB/S6 gates at the inherited rate. Establish
++     * idle ownership before changing its source/divider or FIFO registers. */
++    pt_wr(pt.gcc, 0x5200c, pt_rd(pt.gcc, 0x5200c) | votes);
++    if (!pt_clear(pt.gcc, 0x1800c, 1u << 31) ||
++        !pt_clear(pt.gcc, 0x18010, 1u << 31) || !pt_clear(pt.gcc, 0x18734, 1u << 31)) { return false; }
++    pt.se = ml_io_map(0xa98000, 0x4000);
++    if (!pt.se) { return false; }
++    uint32_t inherited_fw = pt_rd(pt.se, 0x68), inherited_status = pt_rd(pt.se, PG_STATUS);
++    printf("POLARIS TOUCH: inherited fw=%x status=%x\n", inherited_fw, inherited_status);
++    if (((inherited_fw >> 8) & 255u) != 3 || (pt_rd(pt.se, 0x64) & 1u) ||
++        (inherited_status & 0x1001u) || (pt_rd(pt.se, PG_TX_COUNT) & 0xfffffffu) ||
++        (pt_rd(pt.se, PG_RX_COUNT) & 0x1ffffffu)) { return false; }
++    uint32_t cfg = pt_rd(pt.gcc, rcg + 4), dfs = pt_rd(pt.gcc, rcg + 0x14);
++    printf("POLARIS TOUCH: GCC vote=%x cfg=%x dfs=%x\n", pt_rd(pt.gcc, 0x5200c), cfg, dfs);
++    *level = 0;
++    if (dfs & 1u) {
++        bool found = false;
++        for (unsigned i = 0; i < 8; ++i) {
++            cfg = pt_rd(pt.gcc, rcg + 0x1c + i * 4u);
++            if ((cfg & 0x371fu) == 1u) { *level = i; found = true; break; }
++        }
++        if (!found) { printf("POLARIS TOUCH: no XO/1 DFS level; stop\n"); return false; }
++    } else {
++        /* Only S6's mux/divider; XO/1. No PLL, voltage or display clock vote. */
++        pt_wr(pt.gcc, rcg + 4, (cfg & ~(0x371fu | (1u << 20))) | 1u);
++        pt_wr(pt.gcc, rcg, pt_rd(pt.gcc, rcg) | 1u);
++        if (!pt_clear(pt.gcc, rcg, 1u)) { return false; }
++    }
++    pt_wr(pt.gcc, 0x5200c, pt_rd(pt.gcc, 0x5200c) | votes);
++    return pt_clear(pt.gcc, 0x1800c, 1u << 31) &&
++        pt_clear(pt.gcc, 0x18010, 1u << 31) && pt_clear(pt.gcc, 0x18734, 1u << 31);
++}
++
++static bool pt_engine(unsigned level)
++{
++    uint32_t fw = pt_rd(pt.se, 0x68), tx = pt_rd(pt.se, 0xe24), rx = pt_rd(pt.se, 0xe28);
++    printf("POLARIS TOUCH: SE14 fw=%x status=%x tx=%x rx=%x ios=%x\n",
++        fw, pt_rd(pt.se, PG_STATUS), tx, rx, pt_rd(pt.se, 0x908));
++    if (((fw >> 8) & 255u) != 3 || (pt_rd(pt.se, 0x64) & 1u) ||
++        ((tx >> 24) & 63u) != 32 || ((rx >> 24) & 63u) != 32 ||
++        ((tx >> 16) & 63u) < 2 || ((rx >> 16) & 63u) < 2 ||
++        ((tx >> 16) & 63u) > 64 || ((rx >> 16) & 63u) > 64 ||
++        (pt_rd(pt.se, PG_STATUS) & 0x1001u) ||
++        (pt_rd(pt.se, PG_TX_COUNT) & 0xfffffffu) ||
++        (pt_rd(pt.se, PG_RX_COUNT) & 0x1ffffffu)) {
++        printf("POLARIS TOUCH: require idle inherited I2C firmware/FIFOs; stop\n"); return false;
++    }
++    for (unsigned i = 0; i < 4; ++i) {
++        printf("POLARIS TOUCH: gpio%u cfg=%x io=%x\n",
++            (const unsigned[]){33,34,99,125}[i], pt_rd(pt.pin[i], 0), pt_rd(pt.pin[i], 4));
++    }
++    uint32_t reset = pt_rd(pt.pin[2], 0), irq = pt_rd(pt.pin[3], 0);
++    if ((reset & 0x3cu) || !(reset & 0x200u) || !(pt_rd(pt.pin[2], 4) & 2u) ||
++        (irq & 0x23cu)) {
++        printf("POLARIS TOUCH: reset/IRQ not inherited ready; no reset or PMIC write\n"); return false;
++    }
++    for (unsigned i = 0; i < 2; ++i) {
++        unsigned mux = (pt_rd(pt.pin[i], 0) >> 2) & 15u;
++        if (mux != 0 && mux != 2) { printf("POLARIS TOUCH: bus pin owned by mux%u; stop\n", mux); return false; }
++    }
++    /* SDA/SCL only, exact DT: qup14,2mA,no bias. Reset/IRQ remain untouched. */
++    for (unsigned i = 0; i < 2; ++i) {
++        pt_wr(pt.pin[i], 0, (pt_rd(pt.pin[i], 0) & ~0x3ffu) | (2u << 2));
++    }
++    pt_wr(pt.se, 0xe18, 0); pt_wr(pt.se, 0xe1c, 0); /* poll; no GSI/IRQ routing */
++    pt_wr(pt.se, 0x644, 0); pt_wr(pt.se, PG_CLEAR, 0xffffffffu); pt_wr(pt.se, 0x648, 0xffffffffu);
++    pt_wr(pt.se, 0x258, 0); /* FIFO only */
++    pt_wr(pt.se, 0x28, pt_rd(pt.se, 0x28) | 0x7fu);
++    pt_wr(pt.se, 0xe30, pt_rd(pt.se, 0xe30) | 0x0fu);
++    pt_wr(pt.se, 0x24, 0x7f); pt_wr(pt.se, 0x20, 1);
++    pt_wr(pt.se, 0x7c, level); pt_wr(pt.se, 0x48, (7u << 4) | 1u);
++    pt_wr(pt.se, 0x278, (10u << 20) | (11u << 10) | 26u); /* vendor100kHz at XO */
++    pt_wr(pt.se, 0x254, 0);
++    pt_wr(pt.se, 0x260, 0x7f8fe); pt_wr(pt.se, 0x264, 0xffefe);
++    pt_wr(pt.se, 0x284, 0x7f8fe); pt_wr(pt.se, 0x288, 0xffefe);
++    pt_wr(pt.se, PG_TX_WM, 0); pt_wr(pt.se, 0x810, 0);
++    pt_wr(pt.se, 0x814, ((rx >> 16) & 63u) - 1u);
++    pt_wr(pt.se, 0x614, PG_DONE | PG_ERRORS | PG_WATERMARKS);
++    return pt_rd(pt.se, 0x260) == 0x7f8fe && pt_rd(pt.se, 0x264) == 0xffefe &&
++        pt_rd(pt.se, 0x284) == 0x7f8fe && pt_rd(pt.se, 0x288) == 0xffefe;
++}
++
++static int pt_page(uint16_t reg)
++{
++    int page = reg >> 8;
++    if (pt.page == page) { return 0; }
++    uint8_t b[2] = {0xff, (uint8_t)page};
++    int e = pg_message(&pt.bus, b, 2, NULL, 0, false);
++    if (!e) { pt.page = page; }
++    return e;
++}
++static int pt_read(void *ctx, uint16_t reg, uint8_t *buf, size_t n)
++{
++    (void)ctx;
++    if (!polaris_rmi_span(reg, n)) { return PG_BAD_ARGUMENT; }
++    int e = pt_page(reg); if (e) { return e; }
++    uint8_t b = (uint8_t)reg;
++    e = pg_message(&pt.bus, &b, 1, NULL, 0, true);
++    if (!e) { e = pg_message(&pt.bus, NULL, 0, buf, n, false); }
++    if (e) { pt.page = -1; }
++    return e;
++}
++static int pt_control(uint16_t reg, uint8_t value)
++{
++    if (reg != pt.rmi.f01_control || !polaris_rmi_span(reg, 1)) { return PG_BAD_ARGUMENT; }
++    int e = pt_page(reg); if (e) { return e; }
++    uint8_t b[2] = {(uint8_t)reg, value};
++    return pg_message(&pt.bus, b, 2, NULL, 0, false);
++}
++static void pt_release(void)
++{
++    for (unsigned i = 0; i < 10; ++i) {
++        if (pt.down & (1u << i)) { sweet_hid_touch(i, 0, pt.x[i], pt.y[i]); }
++    }
++    pt.down = 0;
++}
++static void pt_thread(void *arg, wait_result_t result)
++{
++    (void)arg; (void)result;
++    pt_wait(5000);
++    for (unsigned i = 0; i < 30 && !polaris_hid_touch_ready(); ++i) { pt_wait(1000); }
++    if (!polaris_hid_touch_ready()) { printf("POLARIS TOUCH: HID not ready; stop\n"); goto done; }
++    pt.gcc = ml_io_map(0x100000, 0x60000);
++    for (unsigned i = 0; i < 4; ++i) { pt.pin[i] = ml_io_map(pt_gpio_pa[i], 0x1000); }
++    if (!pt.gcc || !pt.pin[0] || !pt.pin[1] || !pt.pin[2] || !pt.pin[3]) { goto done; }
++    unsigned level;
++    if (!pt_clocks(&level)) { printf("POLARIS TOUCH: clock guard failed\n"); goto done; }
++    if (!pt_engine(level)) { goto done; }
++    pt.bus.read = pt_bus_read; pt.bus.write = pt_bus_write; pt.bus.delay_us = pt_bus_delay;
++    pt.page = -1;
++    int e = polaris_rmi_discover(pt_read, NULL, &pt.rmi);
++    printf("POLARIS TOUCH: RMI discover=%d irq=%x\n", e, pt.bus.irq_seen);
++    if (e) { goto done; }
++    printf("POLARIS TOUCH: F01=%x/%x F12=%x/%x report=%x present=%x n=%u stride=%u max=%u,%u\n",
++        pt.rmi.f01_control, pt.rmi.f01_data, pt.rmi.f12_control, pt.rmi.f12_data,
++        pt.rmi.report, pt.rmi.presence, pt.rmi.fingers, pt.rmi.stride, pt.rmi.max_x, pt.rmi.max_y);
++    if (pt.mode == 2) { printf("POLARIS TOUCH: probe complete; no HID events\n"); goto done; }
++    uint8_t control, status;
++    if (pt_read(NULL, pt.rmi.f01_data, &status, 1) || (status & 0x40u) ||
++        pt_read(NULL, pt.rmi.f01_control, &control, 1)) { goto done; }
++    /* Standard volatile F01 normal/configured state; preserve other flags. */
++    uint8_t normal = (control & ~3u) | 0x80u;
++    if (normal != control && pt_control(pt.rmi.f01_control, normal)) { goto done; }
++    if (pt_read(NULL, pt.rmi.f01_control, &control, 1) || (control & 0x83u) != 0x80u) {
++        printf("POLARIS TOUCH: normal/configured readback failed\n"); goto done;
++    }
++    unsigned errors = 0, ticks = 0;
++    printf("POLARIS TOUCH: polling real S3330 contacts,20ms; physical1080x2160\n");
++    while (!pt.bus.dead) {
++        struct polaris_rmi_frame f;
++        e = polaris_rmi_sample(pt_read, NULL, &pt.rmi, &f);
++        if (e) {
++            if (++errors >= 3) { printf("POLARIS TOUCH: stopped report=%d irq=%x\n", e, pt.bus.irq_seen); break; }
++        } else {
++            errors = 0;
++            for (unsigned i = 0; i < pt.rmi.fingers; ++i) {
++                bool down = (f.mask & (1u << i)) != 0;
++                if (down) {
++                    int x = (int)((uint64_t)f.x[i] * 1079u / pt.rmi.max_x);
++                    int y = (int)((uint64_t)f.y[i] * 2159u / pt.rmi.max_y);
++                    sweet_hid_touch(i, 1, x, y); pt.x[i] = x; pt.y[i] = y;
++                } else if (pt.down & (1u << i)) { sweet_hid_touch(i, 0, pt.x[i], pt.y[i]); }
++            }
++            if (pt.down != f.mask) { printf("POLARIS TOUCH: contacts=%x frame=%u\n", f.mask, pt.frames); }
++            pt.down = f.mask; ++pt.frames;
++        }
++        if (++ticks == 1500) { printf("POLARIS TOUCH: frames=%u down=%x\n", pt.frames, pt.down); ticks = 0; }
++        pt_wait(20);
++    }
++    pt_release();
++done:
++    (void)thread_terminate(current_thread()); thread_block(THREAD_CONTINUE_NULL);
++}
++void polaris_touch_init(void)
++{
++    thread_t t;
++    if (!PE_parse_boot_argn("polaristouch", &pt.mode, sizeof(pt.mode)) || !pt.mode) { return; }
++    if ((pt.mode != 1 && pt.mode != 2) || !pt_board_gate()) {
++        printf("POLARIS TOUCH: disabled; exact board ADT required\n"); return;
++    }
++    printf("POLARIS TOUCH: armed mode=%u;5s startup delay\n", pt.mode);
++    kern_return_t kr = kernel_thread_start(pt_thread, NULL, &t);
++    if (kr == KERN_SUCCESS) { thread_deallocate(t); }
++    else { printf("POLARIS TOUCH: thread start failed %d\n", kr); }
++}
++#endif
+--- /dev/null
++++ b/bsd/dev/polaris_geni_i2c.h
+@@ -0,0 +1,142 @@
++#ifndef POLARIS_GENI_I2C_H
++#define POLARIS_GENI_I2C_H
++
++#include <stdint.h>
++#include <stddef.h>
++#include <stdbool.h>
++
++/* Bounded FIFO messages. Register access is supplied by the board driver;
++ * native tests exercise the identical transaction/error/abort state machine.
++ * No DMA, firmware loading, address scan, reset or power controller access.
++ */
++#define PG_STATUS 0x40u
++#define PG_CMD 0x600u
++#define PG_CTRL 0x604u
++#define PG_IRQ 0x610u
++#define PG_CLEAR 0x618u
++#define PG_TX 0x700u
++#define PG_RX 0x780u
++#define PG_TX_COUNT 0x800u
++#define PG_RX_COUNT 0x804u
++#define PG_TX_WM 0x80cu
++#define PG_DONE 1u
++#define PG_NACK (1u << 10)
++#define PG_ERRORS (0x3eu | (1u << 9) | (1u << 10) | (1u << 12) | \
++                   (1u << 13) | (3u << 24) | (3u << 28))
++#define PG_WATERMARKS ((1u << 26) | (1u << 27) | (1u << 30))
++
++enum { PG_OK, PG_BAD_ARGUMENT, PG_BUSY, PG_IO, PG_TIMEOUT, PG_NO_DEVICE };
++struct polaris_geni {
++    void *ctx;
++    uint32_t (*read)(void *, uint32_t);
++    void (*write)(void *, uint32_t, uint32_t);
++    void (*delay_us)(void *, unsigned);
++    bool dead, held;
++    uint32_t irq_seen;
++};
++
++static inline bool pg_wait_idle(struct polaris_geni *g, unsigned us)
++{
++    for (unsigned i = 0; i < us; ++i) {
++        if (!(g->read(g->ctx, PG_STATUS) & 1u)) { return true; }
++        g->delay_us(g->ctx, 1);
++    }
++    return false;
++}
++
++/* Never call this for an inherited busy sequencer; only our own command/bus. */
++static inline void pg_abort_owned(struct polaris_geni *g)
++{
++    g->write(g->ctx, PG_CTRL, 2u);
++    bool done = false;
++    for (unsigned i = 0; i < 5000; ++i) {
++        if (g->read(g->ctx, PG_IRQ) & (1u << 5)) { done = true; break; }
++        g->delay_us(g->ctx, 1);
++    }
++    if (!done || !pg_wait_idle(g, 5000)) { g->dead = true; }
++    /* Drain at most the verified hardware FIFO depth (<=64 words). */
++    unsigned count = g->read(g->ctx, PG_RX_COUNT) & 0x1ffffffu;
++    if (count > 64) { g->dead = true; count = 64; }
++    for (unsigned i = 0; i < count; ++i) { (void)g->read(g->ctx, PG_RX); }
++    g->write(g->ctx, PG_CLEAR, 0xffffffffu);
++    if (g->read(g->ctx, PG_TX_COUNT) & 0xfffffffu) { g->dead = true; }
++    g->held = false;
++}
++
++static inline int
++pg_message(struct polaris_geni *g, const uint8_t *tx, size_t nt,
++    uint8_t *rx, size_t nr, bool stretch)
++{
++    if (!g || !g->read || !g->write || !g->delay_us || nt > 2 || nr > 80 ||
++        (!nt && !nr) || (nt && nr) || (nt && !tx) || (nr && !rx) || (nr && stretch)) {
++        return PG_BAD_ARGUMENT;
++    }
++    if (g->dead) { return PG_IO; }
++    if (!pg_wait_idle(g, 5000)) {
++        if (g->held) { pg_abort_owned(g); }
++        return PG_BUSY;
++    }
++    if (!g->held && (g->read(g->ctx, PG_STATUS) & 0x1000u)) {
++        return PG_BUSY; /* An inherited held bus is not ours to abort. */
++    }
++    if ((g->read(g->ctx, PG_TX_COUNT) & 0xfffffffu) ||
++        (g->read(g->ctx, PG_RX_COUNT) & 0x1ffffffu)) {
++        if (g->held) { pg_abort_owned(g); }
++        g->dead = true;
++        return PG_IO;
++    }
++    g->irq_seen = 0;
++    g->write(g->ctx, PG_CLEAR, 0xffffffffu);
++    g->write(g->ctx, PG_TX_WM, nt ? 1u : 0u);
++    g->write(g->ctx, nr ? 0x270u : 0x26cu, (uint32_t)(nr ? nr : nt));
++    /* Only the observed Synaptics address0x20; no scanning other ICs. */
++    g->write(g->ctx, PG_CMD, ((nr ? 2u : 1u) << 27) | (0x20u << 9) |
++        (stretch ? 4u : 0u));
++    unsigned got = 0, sent = 0;
++    int error = PG_TIMEOUT;
++    for (unsigned i = 0; i < 20000; ++i) {
++        uint32_t irq = g->read(g->ctx, PG_IRQ);
++        g->irq_seen |= irq;
++        if (irq & PG_ERRORS) {
++            error = (irq & PG_NACK) ? PG_NO_DEVICE : PG_IO;
++            for (unsigned j = 0; j < 5000 && !(irq & PG_DONE); ++j) {
++                g->delay_us(g->ctx, 1);
++                irq = g->read(g->ctx, PG_IRQ); g->irq_seen |= irq;
++            }
++            if ((irq & PG_DONE) && !(g->read(g->ctx, PG_STATUS) & 1u) &&
++                !(g->read(g->ctx, PG_TX_COUNT) & 0xfffffffu) &&
++                !(g->read(g->ctx, PG_RX_COUNT) & 0x1ffffffu)) {
++                g->write(g->ctx, PG_CLEAR, irq); g->held = false;
++                return error;
++            }
++            break;
++        }
++        if (nt && !sent && (irq & (1u << 30))) {
++            uint32_t word = tx[0];
++            if (nt == 2) { word |= (uint32_t)tx[1] << 8; }
++            g->write(g->ctx, PG_TX, word); sent = (unsigned)nt;
++            g->write(g->ctx, PG_TX_WM, 0);
++        }
++        uint32_t count = g->read(g->ctx, PG_RX_COUNT) & 0x1ffffffu;
++        if (count > 64 || count > (nr - got + 3u) / 4u) { error = PG_IO; break; }
++        while (count--) {
++            uint32_t word = g->read(g->ctx, PG_RX);
++            for (unsigned j = 0; j < 4 && got < nr; ++j) { rx[got++] = (uint8_t)(word >> (8u * j)); }
++        }
++        if (irq & PG_DONE) {
++            irq = g->read(g->ctx, PG_IRQ); g->irq_seen |= irq;
++            if (irq & PG_ERRORS) { continue; }
++            g->write(g->ctx, PG_CLEAR, irq);
++            if (got == nr && sent == nt && !(g->read(g->ctx, PG_STATUS) & 1u)) {
++                g->held = stretch; return PG_OK;
++            }
++            error = PG_IO; break;
++        }
++        g->write(g->ctx, PG_CLEAR, irq & PG_WATERMARKS);
++        g->delay_us(g->ctx, 1);
++    }
++    pg_abort_owned(g);
++    return error;
++}
++
++#endif
+--- /dev/null
++++ b/bsd/dev/polaris_rmi.h
+@@ -0,0 +1,187 @@
++#ifndef POLARIS_RMI_H
++#define POLARIS_RMI_H
++
++#include <stdint.h>
++#include <stddef.h>
++#include <stdbool.h>
++
++/* Synaptics RMI4/F12 register interpretation, independent of the bus.
++ * Discover present registers and the existing report format; never upload
++ * firmware or guess fixed coordinate/data addresses. Return values are local
++ * protocol errors, not kernel errno values. Read callback returns zero on success.
++ */
++#define POLARIS_RMI_FINGERS 10u
++enum { POLARIS_RMI_OK, POLARIS_RMI_IO, POLARIS_RMI_FORMAT,
++       POLARIS_RMI_UNSUPPORTED, POLARIS_RMI_RESET };
++typedef int (*polaris_rmi_read_fn)(void *, uint16_t, uint8_t *, size_t);
++
++struct polaris_rmi_layout {
++    uint16_t f01_query, f01_control, f01_data;
++    uint16_t f12_query, f12_control, f12_data, report, presence;
++    uint16_t max_x, max_y;
++    uint8_t fingers, stride, report_mask, interrupt_bytes, presence_bytes;
++};
++struct polaris_rmi_frame {
++    uint16_t mask;
++    uint16_t x[POLARIS_RMI_FINGERS], y[POLARIS_RMI_FINGERS];
++};
++
++static inline uint16_t polaris_rmi_le16(const uint8_t *p)
++{ return (uint16_t)(p[0] | ((uint16_t)p[1] << 8)); }
++
++static inline unsigned polaris_rmi_bits(uint32_t v)
++{
++    unsigned n = 0;
++    while (v) { n += v & 1u; v >>= 1; }
++    return n;
++}
++
++static inline bool polaris_rmi_span(uint16_t reg, size_t n)
++{
++    /* 0xff is the page selector; do not turn a register read into a page wrap. */
++    return n && n <= 80 && (unsigned)(reg & 255u) + n <= 255u;
++}
++
++static inline int
++polaris_rmi_read(polaris_rmi_read_fn read, void *ctx, uint16_t reg,
++    uint8_t *buf, size_t n)
++{
++    if (!read || !buf || !polaris_rmi_span(reg, n)) { return POLARIS_RMI_FORMAT; }
++    return read(ctx, reg, buf, n) ? POLARIS_RMI_IO : POLARIS_RMI_OK;
++}
++
++static inline int
++polaris_rmi_discover(polaris_rmi_read_fn read, void *ctx, struct polaris_rmi_layout *out)
++{
++    struct polaris_rmi_layout l = {0};
++    bool f01 = false, f12 = false;
++    unsigned intr = 0;
++    uint8_t d[6], b[9], q5[9] = {0}, q8[5] = {0};
++    if (!out) { return POLARIS_RMI_FORMAT; }
++    /* Vendor PDT has five six-byte descriptors/page, up to ten pages. */
++    for (unsigned page = 0; page < 10; ++page) {
++        for (unsigned at = 0xe9; at > 0xd0; at -= 6) {
++            uint16_t a = (uint16_t)((page << 8) | at);
++            int e = polaris_rmi_read(read, ctx, a, d, sizeof(d));
++            if (e) { return e; }
++            if (!d[5]) { break; }
++            intr += d[4] & 7u;
++            if (intr > 64) { return POLARIS_RMI_UNSUPPORTED; }
++            if (d[5] == 1 || d[5] == 0x12) {
++                if ((d[5] == 1 && f01) || (d[5] == 0x12 && f12)) {
++                    return POLARIS_RMI_UNSUPPORTED;
++                }
++                uint16_t q = (uint16_t)((page << 8) | d[0]);
++                uint16_t c = (uint16_t)((page << 8) | d[2]);
++                uint16_t data = (uint16_t)((page << 8) | d[3]);
++                if (d[5] == 1) {
++                    f01 = true; l.f01_query = q; l.f01_control = c; l.f01_data = data;
++                } else {
++                    f12 = true; l.f12_query = q; l.f12_control = c; l.f12_data = data;
++                }
++            }
++        }
++    }
++    if (!f01 || !f12 || !intr) { return POLARIS_RMI_UNSUPPORTED; }
++    l.interrupt_bytes = (uint8_t)((intr + 7u) / 8u);
++    int e = polaris_rmi_read(read, ctx, l.f01_query, b, 1);
++    if (e) { return e; }
++    if (b[0] != 1) { return POLARIS_RMI_UNSUPPORTED; } /* Synaptics manufacturer */
++    if ((l.f12_query & 255u) > 246u) { return POLARIS_RMI_FORMAT; }
++    e = polaris_rmi_read(read, ctx, l.f12_query + 4, b, 1);
++    if (e) { return e; }
++    unsigned size5 = b[0];
++    if (size5 < 5 || size5 > sizeof(q5)) { return POLARIS_RMI_UNSUPPORTED; }
++    e = polaris_rmi_read(read, ctx, l.f12_query + 5, q5, size5);
++    if (e) { return e; }
++    uint32_t controls = (uint32_t)q5[1] | ((uint32_t)q5[2] << 8) |
++        ((uint32_t)q5[3] << 16) | ((uint32_t)q5[4] << 24);
++    if ((controls & ((1u << 8) | (1u << 23) | (1u << 28))) !=
++        ((1u << 8) | (1u << 23) | (1u << 28))) {
++        return POLARIS_RMI_UNSUPPORTED;
++    }
++    unsigned c8 = polaris_rmi_bits(controls & 0xffu);
++    unsigned c23 = polaris_rmi_bits(controls & ((1u << 23) - 1u));
++    unsigned c28 = polaris_rmi_bits(controls & ((1u << 28) - 1u));
++    if ((l.f12_control & 255u) + c28 >= 255u) { return POLARIS_RMI_FORMAT; }
++    e = polaris_rmi_read(read, ctx, l.f12_control + c8, b, 4);
++    if (e) { return e; }
++    l.max_x = polaris_rmi_le16(b); l.max_y = polaris_rmi_le16(b + 2);
++    if (!l.max_x || !l.max_y || l.max_x > 16383 || l.max_y > 16383) {
++        return POLARIS_RMI_UNSUPPORTED;
++    }
++    e = polaris_rmi_read(read, ctx, l.f12_control + c23, b, 2);
++    if (e) { return e; }
++    if (!(b[0] & 1u) || !b[1] || b[1] > POLARIS_RMI_FINGERS) {
++        return POLARIS_RMI_UNSUPPORTED;
++    }
++    l.fingers = b[1];
++    e = polaris_rmi_read(read, ctx, l.f12_control + c28, b, 1);
++    if (e) { return e; }
++    l.report_mask = b[0]; l.stride = (uint8_t)polaris_rmi_bits(b[0]);
++    if ((b[0] & 0x1fu) != 0x1fu) { return POLARIS_RMI_UNSUPPORTED; }
++    e = polaris_rmi_read(read, ctx, l.f12_query + 7, b, 1);
++    if (e) { return e; }
++    unsigned size8 = b[0];
++    if (size8 < 2 || size8 > sizeof(q8)) { return POLARIS_RMI_UNSUPPORTED; }
++    e = polaris_rmi_read(read, ctx, l.f12_query + 8, q8, size8);
++    if (e) { return e; }
++    if (!(q8[1] & 2u)) { return POLARIS_RMI_UNSUPPORTED; }
++    if ((l.f12_data & 255u) + (q8[1] & 1u) >= 255u) { return POLARIS_RMI_FORMAT; }
++    l.report = l.f12_data + (q8[1] & 1u);
++    if (!polaris_rmi_span(l.report, (size_t)l.fingers * l.stride) ||
++        !polaris_rmi_span(l.f01_data, (size_t)l.interrupt_bytes + 1u)) {
++        return POLARIS_RMI_FORMAT;
++    }
++    if (size8 >= 3 && (q8[2] & 0x80u)) {
++        uint16_t present = (uint16_t)(q8[1] | ((uint16_t)q8[2] << 8));
++        unsigned offset = polaris_rmi_bits(present & 0x7fffu);
++        if ((l.f12_data & 255u) + offset >= 255u) { return POLARIS_RMI_FORMAT; }
++        l.presence = l.f12_data + offset;
++        l.presence_bytes = (uint8_t)((l.fingers + 7u) / 8u);
++        if (!polaris_rmi_span(l.presence, l.presence_bytes)) { return POLARIS_RMI_FORMAT; }
++    }
++    *out = l;
++    return POLARIS_RMI_OK;
++}
++
++static inline int
++polaris_rmi_sample(polaris_rmi_read_fn read, void *ctx,
++    const struct polaris_rmi_layout *l, struct polaris_rmi_frame *out)
++{
++    struct polaris_rmi_frame f = {0};
++    uint8_t status[9], buf[80], present[2];
++    if (!l || !out || !l->fingers || l->fingers > POLARIS_RMI_FINGERS ||
++        l->stride < 5 || l->stride > 8 || !l->interrupt_bytes || l->interrupt_bytes > 8 ||
++        l->presence_bytes > 2 || !l->max_x || !l->max_y ||
++        l->max_x > 16383 || l->max_y > 16383 || (l->report_mask & 0x1fu) != 0x1fu) {
++        return POLARIS_RMI_FORMAT;
++    }
++    int e = polaris_rmi_read(read, ctx, l->f01_data, status, l->interrupt_bytes + 1u);
++    if (e) { return e; }
++    if ((status[0] & 0xc0u) || (status[0] & 15u) > 1u) { return POLARIS_RMI_RESET; }
++    uint16_t active = (uint16_t)((1u << l->fingers) - 1u);
++    if (l->presence_bytes) {
++        present[0] = present[1] = 0;
++        e = polaris_rmi_read(read, ctx, l->presence, present, l->presence_bytes);
++        if (e) { return e; }
++        active &= polaris_rmi_le16(present);
++    }
++    if (active) {
++        unsigned count = l->fingers;
++        while (count && !(active & (1u << (count - 1u)))) { --count; }
++        e = polaris_rmi_read(read, ctx, l->report, buf, (size_t)count * l->stride);
++        if (e) { return e; }
++        for (unsigned i = 0; i < count; ++i) {
++            const uint8_t *p = buf + i * l->stride;
++            if (!(active & (1u << i)) || (p[0] != 1 && p[0] != 6)) { continue; }
++            unsigned x = polaris_rmi_le16(p + 1), y = polaris_rmi_le16(p + 3);
++            if (x > l->max_x || y > l->max_y) { return POLARIS_RMI_FORMAT; }
++            f.mask |= (uint16_t)(1u << i); f.x[i] = (uint16_t)x; f.y[i] = (uint16_t)y;
++        }
++    }
++    *out = f;
++    return POLARIS_RMI_OK;
++}
++
++#endif
+--- /dev/null
++++ b/iokit/Kernel/arm/polaris_touch_map.h
+@@ -0,0 +1,27 @@
++#ifndef POLARIS_TOUCH_MAP_H
++#define POLARIS_TOUCH_MAP_H
++
++#include <stdint.h>
++#include <stdbool.h>
++
++/* Inverse of the verified 1125x2436 -> 997x2160 fit at (41,0).
++ * Coordinates refer to physical 1080x2160 pixels, not the old 2400px panel.
++ * Letterbox contacts clamp to the adjacent logical edge. */
++static inline bool
++polaris_touch_map(int x, int y, int32_t *nx, int32_t *ny, bool *edge)
++{
++    if (!nx || !ny || !edge || x < 0 || x >= 1080 || y < 0 || y >= 2160) {
++        return false;
++    }
++    *edge = x < 48 || x > 1079 - 48 || y < 48 || y > 2159 - 48;
++    int vx = x - 41;
++    if (vx < 0) { vx = 0; }
++    if (vx > 996) { vx = 996; }
++    /* The copier maps first/last destination pixels to first/last source
++     * pixels; normalize those logical coordinates by the iPhone canvas. */
++    *nx = (int32_t)(((int64_t)vx * 1124 * 65536) / (996 * 1125));
++    *ny = (int32_t)(((int64_t)y * 2435 * 65536) / (2159 * 2436));
++    return true;
++}
++
++#endif
