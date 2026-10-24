@@ -10,10 +10,18 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION —0020 FINAL first-frame fix building; keep0019 running
+### CURRENT NEXT ACTION —0020 FINAL kernel verified; regressions running; keep0019
 
 - FINAL0020source9209e0c4ed2a8a4cef054c847bff01d6688e18e1 pushed,
-  CI40072563674 in progress. Includes0817AKSlog budget/interactivequietprofile
+  CI40072563674/job120808957838 SUCCESS, Build4m44s
+  (07:02:43–07:07:27UTC). Full gh log ci-40072563674.log retrieved; first
+  transfer HTTP2CANCEL preservedci-log-fetch-attempt1.log. Orchestration16026
+  stopped BEFOREkerneldownload (hostlogfetcherror, notkernel/testfailure);
+  resumed12957 nowrunning original-clock bootstrap120/gate200/default200/
+  nodiag90 sequentially. FinalkernelSHA
+  e44670d516730f02235bb991debc96628e94f9e6833a4773adaabc4024af7e12,
+  xnu/out-polaris-0020/kernel.development.sweet; artifact12551767382,
+  60389792bytes, profile/ZIPCRC/SHA verified. Includes0817AKSlog budget/interactivequietprofile
   AND0818 firstframe mute-before-diagnostic fix. Private scripts NOWpin9209e0c/
   40072563674. Earlier943c011/CI40071727505 candidate was NEVERphonebooted;
   bootstrap13PASS only, gate deliberatelyinterrupted50034exit143; allraw
