@@ -32,10 +32,22 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
  MiCodepinctrl-v2exactpinregisterfactsverified;upstreami2c-algo-bitprimary
  reference savedprivatelytouch-0016/i2c-algo-bit.c,blob
  a8e89df665b904d77b86586853a3fb5f010f92e0. NoPMIC/reset/firmware/diskwrites.
+- Source d75b8a315894e84320eb0b7e0529bac213adbae0 committed+pushed;
+ CI40061321613/job120775252245 SUCCESS,watchsession67689exit0,
+ touch-0016/ci-watch.log. Preparednewkernel downloader/profile/SHAguards,
+ sequentialgate200/default200/nodiag90QEMU,phoneprepare/Cvalidator and
+ readonlypreflight/boot scripts syntacticallychecked. PhoneADTmustbe byte-
+ identical0015,samecmdline;onlycompiledkernel changes. No0016imagepreparedyet.
+- FinalCIbuild4m58s;artifact12548065591/60375087bytes. Exactprofile/
+ source+ZIPCRC+kernelSHA VERIFIED, xnu/out-polaris-0016/kernel.development.sweet,
+ SHAe902583256841aed95d1d91af3d9ef6866ece894d56dc99a46b70376e937d13f.
+ Fullghlogresearch/polaris/ci-40061321613.log. NewkernelQEMUgate200s PASS29checks;
+ default200s nowrunning,thennodiag90s;touch-0016/validation-run.log,exec37105.
+ NoactualGPIO/controllerdata/homeproof;phone0015unchanged.
 - Nativewire-levelmodel+ASan/UBSan testsPASS (write/read80/repeatedSTART,
  finalNACK/shortclockstretch/address+dataNACK/busybus/clocktimeout/arbitration/
  bounds/fixedaddress/admissionguard);exactshippedheadertestPASS. Patchboth
- filesapplyMATCH,actualCI-headerARM64objectsPASS. CI/fullkernel NOTbuiltyet.
+ filesapplyMATCH,actualCI-headerARM64objectsPASS. CI/fullkernelSUCCESS;newkerneldownload/QEMU pipelineexec37105RUNNING,notyetverified.
  NeedcompletekernelCI+newkernelQEMU+preparedimagebeforephysicalkeyrequest.
  Currentphone0015lockscreen/driverstopped;KEEPthisboot,noFASTBOOTrequestyet.
 
