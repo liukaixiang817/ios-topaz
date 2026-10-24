@@ -414,9 +414,17 @@ with no new failure/retry; independent final source/payload/image checks pass
 journalreplay. PhoneADT/arguments remain byteidentical0030
 (CPU1/Hz20/mode4/512MiBRAMCOW/ufsrw0). Observer52930 starts14:30:03UTC,
 approximately10.210s afterboot; initialsample has no known-phoneUSB/ECM.
-Keepwatchrunning untilthehuman's “已进入系统” confirmation or explicitcancel;
-do not restart or stop on elapsedtime/discovery. PhysicalGUI/eightdiagnostic
-rows pending. No USB connection or GPU execution is proven.
+The human confirms “已进入系统，GPU依旧不工作”. Observer52930 stops cleanly
+14:37:53UTC:47samples/470.497s, zeroinspectionerrors, no known-phoneUSB/ECM;
+allrows persist inJSON/NDJSON. No reboot/networkchange/RAMlog/panelcapture.
+Settings photo shows matchingparameterreadbacks1/0/0 and firstcommand9
+completed inonepoll; resourcecommand2 remains402 after1000polls andreturn.
+Before-reset/before-EP0 GCTL00112000 lacksDSBLCLKGTNG. ThecapturedliveDT
+explicitlyrequires snps,disable-clk-gating; pinnedoriginalcore.c appliesbit0
+foraninternalRAM-clockerratum. Nativegadget doesnotyetapplythisquirk. This
+isaconcretemissinginitializationstep; itscausallinktotimeoutneedsphysical
+retest. GPUpower/clocks/reset snapshots stillpassP5K6/0, withoutfirmware
+execution oracceleration. Preserve0031evidencewhileimplementingtheUSBfix.
 The new guarded flat GMU transfer component is preparatory and unlinked;
 physical reset/bus/SMMU/HFI admission is still required before firmware start.
 

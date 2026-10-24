@@ -22,7 +22,32 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT NEXT ACTION — observe temporary0031 until human boot confirmation
+### CURRENT NEXT ACTION — implement missing USB DT clock-gating quirk
+
+- User **“已进入系统，GPU依旧不工作”** confirms0031bootcomplete. Settings
+  photo showsUSBparams requested/readback **1/0/0 ==1/0/0**,
+  **UC9/9/1>2/402/1000 live402 GSTS7e800000**. FirstDEPSTARTCFGcompleted;
+  SETTRANSFRESOURCE remainsactive after1000polls andafterreturn. Bothbefore
+  reset/beforeEP0 **GCTL00112000**, missingrequiredDSBLCLKGTNGbit0. HWP1
+  **0162493b**,HWP3 **10420085** (32physicalEPs/16IN), PHY2400,PIPE03080002.
+  Thisrulesout lostparameterwrites inthatcapturedcommand; itdoesnotprove
+  thetimeoutcause. Apply theDT-specifiedmaskedclockgatingquirk, thenretest.
+  GPU **P5K6/0F0/0**, CXrequest00222001restored, hardwarepower
+  00005ff4/80001fe0/00005ff4; GMUBCR0/1/0,liveGMUsource2,branch4221.
+  StillnoGPUfirmware/acceleration. T10310isone10.310mselapsedpresentation.
+  Private0031/hardware-0031-observation.json pinsphoto/hash/rawrows/limits.
+- Observer52930 stopped cleanlyonthisboot's humanmarker, EXIT0
+  **14:37:53.884833UTC**, **47samples/470.497s**, no known-phoneUSB/ECM,
+  zeroinspectionerrors; allrowsmatchfsyncedNDJSON. No RAMlog/panelcapture,
+  hostnetworkchange orreboot. Onlyrecordedwindow, not600s/fullstartupnegative.
+  **Observer STOPPED byhumanconfirmation; do not restart it.**
+- USBclock-gating helper draft tools/polaris-dwc3-clock.h andnative test
+  currentlyuncommitted/unlinked. ModelPASS for ACK1/1000, ownership/masked
+  restore, halted/role/resetguards, preservingunrelatedbits, retainedrequest
+  whenCMDACTactive andstale-restoredflag. Mustintegrateaftersoftreset/before
+  EP0, retainforworkinggadget, publishactualbefore/live/after/error/restored.
+  Refusegateundo whileanyusedEPcommandactive. Fix headerincludecontract to
+  actualunderscoredXNUheaders beforeintegration. No0032phoneaction/imageyet.
 
 - **0031 TEMPORARY BOOT SENT**, human confirmedFASTBOOT. Preflight26963 exited0
   **14:29:30.773800UTC**: freshfull16GiBhash/182maps/GPT/header unchanged,
@@ -32,9 +57,8 @@ early samples only. On0029 the human already confirmed boot complete and said
   Continuousreadonlywatch **session52930** starts **14:30:03.386UTC**,
   approximately10.210s afterboot; do not claim coverage of that initialgap.
   Initialsample no known-phoneUSB/ECM; no boot-window negative conclusion.
-  **KEEPWATCHRUNNING until human “已进入系统” or explicit cancellation.**
-  No600s/discovery exit. OnECM immediately attemptRAMlog/panel whilewatching.
-  PhysicalGUI/eightUSBGPUsnapshotrows pending. No restart.
+  HumanGUI/eightUSBGPUsnapshotrows andobserverstop nowrecordedabove.
+  No600s/discovery exit wasused; stoppedonlyonhumanconfirmation. No restart.
 - New source/DT finding while0031watchcontinues: capturedlive.dtb at
   probe-0001-recovery has **snps,disable-clk-gating** on
   `/soc/ssusb@a600000/dwc3@a600000`. Pinnedoriginalcore.c1222 reads it;
@@ -42,10 +66,10 @@ early samples only. On0029 the human already confirmed boot complete and said
   stuck workaround. Current nativegadget preservesABL GCTL anddoesnotapply
   thisquirk; earlieradmission GCTL112000 hasbit0clear. This is a concrete
   missing board requirement, **not yet proven timeoutcause or repaired**.
-  Current0031UB/US/UP/UC snapshots stillpending. Private
+  Current0031UB/US/UP/UC snapshots nowconfirmGCTLbit0clear. Private
   0031/usb-clock-gating-source-review.json pins DT/sourceSHA andscope.
   Nextprepare ownedmaskedbit0 request/ACK with honestretention if a command
-  remainsactive; no newphonewrite or reboot beforehumanconfirmation.
+  remainsactive; no0032phonewrite orrebootyet.
 
 - User confirms **“已进入系统”** on0030 and requests priority USB/GPU fixes
   with more diagnostic lines. Settings photo saves **U2 R7 S12 E5 C7f V0/1
