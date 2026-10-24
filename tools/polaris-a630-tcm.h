@@ -5,7 +5,7 @@
  * The contiguous 32KiB AHB window spans the named DTCM_START at 0x7000;
  * do not describe the entire window as instruction-only ITCM.
  *
- * NOT connected to a hardware mode. A future caller must own the upstream
+ * The caller must own the upstream
  * power/clock/mapping lifetime, establish CM3 reset separately, and pass
  * only the immutable firmware already checked against its recorded hash.
  * On failure, the caller must retain CM3 reset; this helper does no cleanup
@@ -17,7 +17,9 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include "polaris-a630-images.h"
+#ifndef POLARIS_A630_IMAGES_H
+#error Include Polaris firmware image definitions first
+#endif
 
 #define A630_GMU_GPU_WORD_BASE 0x1a800u
 #define A630_GMU_REGISTER_BYTES 0x30000u

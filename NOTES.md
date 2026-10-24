@@ -22,7 +22,31 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT NEXT ACTION — implement missing USB DT clock-gating quirk
+### CURRENT NEXT ACTION — validate0032 GMU load / USB clock-gating candidate
+
+- Latest user priority is actualGPU driver first, plus USB RAMlogs/panelcapture.
+  Implemented0837 candidate: mode5 calls original32KiB GMU transfer/readback
+  inside verifiedCX/required-clock lease, withGPUCC GMU_BCR still asserted.
+  Reads originalPolaris CSR offsets, refuses runningFW/HFI, asserts/confirms
+  CM3SYSRESET1; copies/verifies8192words. Never releasesCM3reset/startsFW,
+  configuresSMMU/HFI DMA/GX or advertisesacceleration. After any attemptedCM3
+  write, retainsBCR throughclockcleanup andpowercleanup (K9/reset_retained1
+  is intentionalretention, not restored). Mode4oldclocktrialunchanged.
+  **HardwareCSR/TCMresponse underBCR remainsUNPROVEN**, so failingACK/readback
+  is reported rather than assumedworking. NewGM/GTsavedrows andRAMLOAD/TCM
+  report firstfailureoffset/expected/actual/writes. Tenfixedpanelrows total.
+- USB0837 applies capturedDT snps,disable-clk-gating (GCTLbit0) aftersoftreset
+  beforeHSsession/EP0, ownedmaskedACK<=1000us. Retainsbit forworkinggadget;
+  failurecleanuprequiresHALT andnoactiveEP0..5command, otherwisekeepsrequest
+  andreportsretention. Frozenbegin/finalrecords showbefore/live/after/error.
+  ActualUSBconnection/endpointtimeoutfix remainsUNPROVEN. NoPHYreset/PLL/GX/
+  rate/rail change. Source-reviewprivate0032/source-review.json.
+- Local21nativeASan/UBSan testsPASS; actualCI-headerARM64USB/A630/framebuffer
+  compilesPASS/allimportsresolve against0031. Eightactualsaved-detail formatter
+  bodiesPASS maximum32bitvalues<=67chars, pending/count0..4/capacity1/null.
+  Seventeenorderedpatches0821..0837 applywithoutfuzz/offset;22files matchactual
+  compiletree. FullCI/exactkernel/image checks pending; NO0032phoneactionyet.
+  Currentphone0031bootcomplete, observerstopped byhuman, GPUunaccelerated.
 
 - User **“已进入系统，GPU依旧不工作”** confirms0031bootcomplete. Settings
   photo showsUSBparams requested/readback **1/0/0 ==1/0/0**,

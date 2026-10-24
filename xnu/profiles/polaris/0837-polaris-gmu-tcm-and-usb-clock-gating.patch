@@ -1,0 +1,769 @@
+--- a/bsd/dev/sweet_usb.c
++++ b/bsd/dev/sweet_usb.c
+@@ -91,7 +91,7 @@
+ enum polaris_usb_start_phase {
+     PU_QUEUED = 1, PU_WORKER, PU_DMA, PU_NET_ALLOC, PU_NET_ATTACH,
+     PU_NET_PLUMB, PU_NET_SOCKET, PU_NET_ADDRESS, PU_NET_READY, PU_RESET, PU_EVENTS,
+-    PU_EP0, PU_VBUS, PU_RUN, PU_POLL, PU_READY
++    PU_EP0, PU_VBUS, PU_RUN, PU_POLL, PU_READY, PU_CLOCK_GATE
+ };
+ static uint64_t polaris_usb_start_state;
+ static uint32_t polaris_usb_worker_started;
+@@ -208,6 +208,25 @@
+ #include "polaris_dwc3_command.h"
+ #include "polaris_dwc3_endpoints.h"
+ #include "polaris_dwc3_session.h"
++#include "polaris_dwc3_clock.h"
++static struct pdwc3_gate polaris_gate_begin_saved, polaris_gate_end_saved;
++static uint32_t polaris_gate_begin_published, polaris_gate_end_published;
++static const struct pdwc3_gate *polaris_gate_snapshot(void)
++{
++    if (__atomic_load_n(&polaris_gate_end_published, __ATOMIC_ACQUIRE)) return &polaris_gate_end_saved;
++    if (__atomic_load_n(&polaris_gate_begin_published, __ATOMIC_ACQUIRE)) return &polaris_gate_begin_saved;
++    return NULL;
++}
++static void polaris_gate_publish(const struct pdwc3_gate *s, bool final)
++{
++    if (final) {
++        polaris_gate_end_saved = *s;
++        __atomic_store_n(&polaris_gate_end_published, 1, __ATOMIC_RELEASE);
++    } else {
++        polaris_gate_begin_saved = *s;
++        __atomic_store_n(&polaris_gate_begin_published, 1, __ATOMIC_RELEASE);
++    }
++}
+ static struct pdwc3_session polaris_session_begin_saved, polaris_session_end_saved;
+ static uint32_t polaris_session_begin_published, polaris_session_end_published;
+ static const struct pdwc3_session *polaris_session_snapshot(void)
+@@ -250,6 +269,10 @@
+ static uint32_t polaris_diag_command_count;
+ static void polaris_usb_command_report(void)
+ {
++    const struct pdwc3_gate *g = polaris_gate_snapshot();
++    if (g) printf("D USB GATE: error=%u start_error=%u gctl=%x/%x/%x changed=%u restored=%u polls=%u/%u busy=%x/%x\n",
++        g->error, g->start_error, g->before, g->live, g->after, g->changed, g->restored,
++        g->polls, g->restore_polls, g->busy_ep, g->busy_command);
+     const struct pdwc3_session *v = polaris_session_snapshot();
+     if (v) printf("D USB SESSION: error=%u start_error=%u hs=%x/%x/%x changed=%x restored=%u polls=%u/%u\n",
+         v->error, v->start_error, v->before, v->live, v->after, v->changed, v->restored,
+@@ -583,7 +606,8 @@
+     *(volatile uint32_t *)((vm_offset_t)ctx + off) = value;
+     __asm__ volatile("dsb sy" ::: "memory");
+ }
+-static void polaris_session_abort(const struct pdwc3_io *io, struct pdwc3_session *s)
++static void polaris_session_abort(const struct pdwc3_io *io, struct pdwc3_session *s,
++    const struct pdwc3_io *gate_io, struct pdwc3_gate *gate)
+ {
+     /* Session rollback is permitted only after our controller is halted.
+      * No poll thread has started on any failure path that calls this. */
+@@ -597,6 +621,8 @@
+         (dwc_rd(DSTS) & DSTS_DEVCTRLHLT);
+     polaris_dwc3_session_restore(io, s, halted);
+     polaris_session_publish(s, true);
++    polaris_dwc3_clock_restore(gate_io, gate);
++    polaris_gate_publish(gate, true);
+ }
+ #endif
+ 
+@@ -1186,8 +1212,12 @@
+         if (!__atomic_load_n(&polaris_diag_start_published[line], __ATOMIC_ACQUIRE))
+             return (uint32_t)snprintf(out, size, "U%u snapshot pending", line);
+         const uint32_t *v = polaris_diag_start[line];
+-        if (!line) return (uint32_t)snprintf(out, size,
+-            "UB g%08x u2%08x u3%08x h1%08x h3%08x", v[0], v[2], v[3], v[9], v[10]);
++        if (!line) {
++            const struct pdwc3_gate *g = polaris_gate_snapshot();
++            return (uint32_t)snprintf(out, size,
++                "UB g%08x u2%08x u3%08x K%x/%x a%08x", v[0], v[2], v[3],
++                g ? g->error : 0xfu, g ? g->restored : 0u, g ? g->after : 0u);
++        }
+         return (uint32_t)snprintf(out, size, "US g%08x d%08x/%08x/%08x e%08x",
+             v[0], v[4], v[5], v[6], v[7]);
+     }
+@@ -1258,22 +1288,40 @@
+ 	}
+ 
+ #if defined(POLARIS_RAM_ONLY)
++    /* Captured Polaris DT: snps,disable-clk-gating. The original core sets
++     * GCTL bit0 for an internal RAM-clock erratum. Own only that bit. */
++    PU_PROGRESS(PU_CLOCK_GATE, 0);
++    const struct pdwc3_io gate_io = {NULL, polaris_command_read,
++        polaris_command_write, polaris_command_wait};
++    struct pdwc3_gate gate;
++    if (polaris_dwc3_clock_begin(&gate_io, true, &gate)) {
++        polaris_dwc3_clock_restore(&gate_io, &gate);
++        polaris_gate_publish(&gate, true);
++        PU_PROGRESS(PU_CLOCK_GATE, EIO); return;
++    }
++    polaris_gate_publish(&gate, false);
+     /* Original Qualcomm wrapper establishes a valid HS session before
+      * starting peripheral mode. Previously EP0 failures skipped this step.
+      * Keep the proven soft-reset sequence; set/confirm HS requests before
+      * endpoint commands, without touching any SuperSpeed lane signal. */
+     PU_PROGRESS(PU_VBUS, 0);
+     if ((dwc_rd(DCTL) & DCTL_RUN_STOP) || !(dwc_rd(DSTS) & DSTS_DEVCTRLHLT)) {
++        polaris_dwc3_clock_restore(&gate_io, &gate);
++        polaris_gate_publish(&gate, true);
+         PU_PROGRESS(PU_VBUS, EBUSY); return;
+     }
+     vm_offset_t session_qs = ml_io_map(QSCRATCH_PA, 0x100);
+-    if (!session_qs) { PU_PROGRESS(PU_VBUS, ENOMEM); return; }
++    if (!session_qs) {
++        polaris_dwc3_clock_restore(&gate_io, &gate);
++        polaris_gate_publish(&gate, true);
++        PU_PROGRESS(PU_VBUS, ENOMEM); return;
++    }
+     const struct pdwc3_io session_io = {(void *)session_qs, polaris_session_read,
+         polaris_session_write, polaris_command_wait};
+     struct pdwc3_session session;
+     if (polaris_dwc3_session_begin(&session_io, &session)) {
+         PU_PROGRESS(PU_VBUS, EIO);
+-        polaris_session_abort(&session_io, &session); return;
++        polaris_session_abort(&session_io, &session, &gate_io, &gate); return;
+     }
+     polaris_session_publish(&session, false);
+ #endif
+@@ -1308,7 +1356,7 @@
+ 		printf("SWEET USB: endpoint 0 setup failed\n");
+ 		PU_PROGRESS(PU_EP0, EIO);
+ #if defined(POLARIS_RAM_ONLY)
+-        polaris_session_abort(&session_io, &session);
++        polaris_session_abort(&session_io, &session, &gate_io, &gate);
+ #endif
+ 		return;
+ 	}
+@@ -1318,7 +1366,7 @@
+     /* STARTTRANSFER failure must not be reported as a ready gadget. */
+     if (__atomic_load_n(&polaris_ep_failure_published, __ATOMIC_ACQUIRE)) {
+         PU_PROGRESS(PU_EP0, EIO);
+-        polaris_session_abort(&session_io, &session); return;
++        polaris_session_abort(&session_io, &session, &gate_io, &gate); return;
+     }
+ #endif
+ 
+@@ -1346,7 +1394,7 @@
+ 	if (dwc_rd(DSTS) & DSTS_DEVCTRLHLT) {
+         PU_PROGRESS(PU_RUN, ETIMEDOUT);
+ #if defined(POLARIS_RAM_ONLY)
+-        polaris_session_abort(&session_io, &session);
++        polaris_session_abort(&session_io, &session, &gate_io, &gate);
+ #endif
+         return;
+     }
+@@ -1357,7 +1405,7 @@
+ #if defined(POLARIS_RAM_ONLY)
+     else {
+         PU_PROGRESS(PU_POLL, EIO);
+-        polaris_session_abort(&session_io, &session); return;
++        polaris_session_abort(&session_io, &session, &gate_io, &gate); return;
+     }
+ #endif
+ #if defined(POLARIS_RAM_ONLY)
+--- a/bsd/dev/polaris_a630.c
++++ b/bsd/dev/polaris_a630.c
+@@ -1,6 +1,7 @@
+ /* Original Polaris A630 firmware consumer and guarded hardware bring-up.
+  * Mode3 briefly owns the CX request; mode4 also tests parked-CXO GMU clocks
+- * under block reset. Neither executes firmware nor registers acceleration.
++ * under block reset. Mode5 also loads/verifies the original GMU image while
++ * retaining block reset. No mode executes firmware or registers acceleration.
+  */
+ #if defined(POLARIS_RAM_ONLY)
+ #include <sys/param.h>
+@@ -16,6 +17,8 @@
+ #include "polaris_a630_clock.h"
+ #include "polaris_a630_hfi.h"
+ #include "polaris_a630_images.h"
++#include "polaris_a630_tcm.h"
++#include "polaris_a630_gmu.h"
+ extern vm_offset_t ml_io_map(vm_offset_t, vm_size_t);
+ void polaris_a630_init(void);
+ void polaris_a630_report(void);
+@@ -25,6 +28,8 @@
+ static struct a630_probe a630_saved;
+ static struct a630_power_snapshot a630_power_saved;
+ static struct a630_clock_snapshot a630_clock_saved;
++static struct a630_gmu_snapshot a630_gmu_saved;
++static struct a630_image a630_gmu_image;
+ static uint32_t a630_mode;
+ static uint32_t a630_started, a630_published, a630_firmware_ok, a630_abi_ok;
+ static uint8_t a630_host_hfi[A630_HFI_BYTES] __attribute__((aligned(16384)));
+@@ -40,7 +45,7 @@
+     if (!out || !capacity) return 0;
+     if (!__atomic_load_n(&a630_published, __ATOMIC_ACQUIRE))
+         return (uint32_t)snprintf(out, capacity, "GPU pending");
+-    if (a630_mode == 4)
++    if (a630_mode >= 4)
+         return (uint32_t)snprintf(out, capacity, "G%x P%u K%u/%u F%x/%x R%x/%x",
+             polaris_a630_status(), a630_power_saved.result, a630_clock_saved.result,
+             a630_clock_saved.failed_step, a630_clock_saved.failed_offset, a630_clock_saved.failed_value,
+@@ -54,7 +59,7 @@
+ {
+     if (!out || !size) return 0;
+     out[0] = 0;
+-    if (line >= 2) return 0;
++    if (line >= 4) return 0;
+     if (!__atomic_load_n(&a630_published, __ATOMIC_ACQUIRE))
+         return (uint32_t)snprintf(out, size, "GPU snapshot pending");
+     const struct a630_power_snapshot *p = &a630_power_saved;
+@@ -62,8 +67,15 @@
+     if (!line) return (uint32_t)snprintf(out, size,
+         "GP rq%08x/%08x hw%08x/%08x/%08x",
+         p->before, p->after, p->before_hw, p->on_hw, p->after_hw);
+-    return (uint32_t)snprintf(out, size, "GC rs%08x/%08x/%08x r%08x m%08x",
++    if (line == 1) return (uint32_t)snprintf(out, size, "GC rs%08x/%08x/%08x r%08x m%08x",
+         c->before[4], c->live[4], c->after[4], c->live[2], c->live[3]);
++    const struct a630_gmu_snapshot *g = &a630_gmu_saved;
++    if (line == 2) return (uint32_t)snprintf(out, size,
++        "GM %x/%x rs%08x/%08x fw%08x h%08x",
++        g->result, g->stage, g->reset_before, g->reset_held, g->fw_init, g->hfi);
++    return (uint32_t)snprintf(out, size, "GT %x/%x @%08x w%x e%08x a%08x",
++        g->tcm.result, g->tcm.phase, g->tcm.offset, g->tcm.writes,
++        g->tcm.expected, g->tcm.actual);
+ }
+ 
+ static bool a630_property(DTEntry node, const char *name, const void **data, unsigned *size)
+@@ -113,11 +125,12 @@
+     const struct a630_image images[6] = {{gmu, gn}, {sqe, sn}, {mdt, mn},
+         {b00, n0}, {b01, n1}, {b02, n2}};
+     if (!a630_images_valid(images)) return false;
++    a630_gmu_image = images[0]; /* Immutable, hash-checked ADT storage. */
+     printf("POLARIS A630: verified original GMU%u SQE%u version=%x ZAP%u; no firmware executed\n",
+         gn, sn, a630_image_word(sqe + 4), mn);
+     return true;
+ }
+-struct a630_io { vm_offset_t base[3]; };
++struct a630_io { vm_offset_t base[3]; bool gmu_lease; };
+ static bool a630_read_register(void *opaque, unsigned region, uint32_t off, uint32_t *value)
+ {
+     static const uint64_t addresses[3] = {0x100000, 0x5090000, 0x506a000};
+@@ -133,7 +146,16 @@
+ static bool a630_write_register(void *opaque, unsigned region, uint32_t off, uint32_t value)
+ {
+     struct a630_io *io = opaque;
+-    /* Exact GPUCC request/clock/reset allowlist; no GMU CSR write. */
++    /* Mode5's exclusive lease admits only CM3 reset assertion and the
++     * original flat TCM window. No reset release, HFI, SMMU or GPU write. */
++    if (region == 2 && io->gmu_lease && io->base[2] &&
++        ((off == A630_GMU_CM3_RESET && value == 1) ||
++         (off >= A630_GMU_FLAT_START && off < A630_GMU_FLAT_START + A630_GMU_FLAT_BYTES && !(off & 3)))) {
++        *(volatile uint32_t *)(io->base[2] + off) = value;
++        __asm__ volatile("dsb sy" ::: "memory");
++        return true;
++    }
++    /* Exact GPUCC request/clock/reset allowlist. */
+     if (region != 1 || !io->base[1] ||
+         (off != A630_CX_REQUEST && off != 0x109c &&
+          off != 0x1120 && off != 0x1098 && off != 0x111c)) return false;
+@@ -142,10 +164,38 @@
+     return true;
+ }
+ static void a630_delay_us(void *opaque __unused, uint32_t us) { delay(us); }
++static bool a630_gmu_admitted(void *opaque)
++{
++    struct a630_io *io = opaque;
++    /* This lease exists only inside the clock hook, on its exclusive boot
++     * thread, while CX and all required clocks are observed live and BCR=1. */
++    return io->gmu_lease;
++}
++static bool a630_gmu_read(void *io, uint32_t off, uint32_t *value)
++{ return a630_gmu_admitted(io) && a630_read_register(io, 2, off, value); }
++static bool a630_gmu_write(void *io, uint32_t off, uint32_t value)
++{ return a630_gmu_admitted(io) && a630_write_register(io, 2, off, value); }
++static bool a630_gmu_sync(void *io)
++{
++    if (!a630_gmu_admitted(io)) return false;
++    __asm__ volatile("dsb sy" ::: "memory"); return true;
++}
++static bool a630_gmu_on(void *opaque)
++{
++    struct a630_io *io = opaque;
++    const struct a630_tcm_io tcm = {a630_gmu_admitted, a630_gmu_read,
++        a630_gmu_write, a630_gmu_sync};
++    io->gmu_lease = true;
++    printf("POLARIS GMU: accessing CSR/TCM under block reset; no firmware execution\n");
++    a630_gmu_prepare(true, a630_firmware_ok, &a630_gmu_image, &tcm,
++        a630_delay_us, io, &a630_gmu_saved);
++    io->gmu_lease = false;
++    return !a630_gmu_saved.retain_block_reset;
++}
+ static void a630_clock_on(void *io)
+ {
+-    a630_clock_trial(true, true, a630_read_register, a630_write_register,
+-        a630_delay_us, io, &a630_clock_saved);
++    a630_clock_trial_with_hook(true, true, a630_read_register, a630_write_register,
++        a630_delay_us, io, &a630_clock_saved, a630_mode == 5 ? a630_gmu_on : NULL, io);
+ }
+ void polaris_a630_report(void)
+ {
+@@ -153,6 +203,13 @@
+     const struct a630_probe *s = &a630_saved;
+     const struct a630_power_snapshot *p = &a630_power_saved;
+     const struct a630_clock_snapshot *c = &a630_clock_saved;
++    const struct a630_gmu_snapshot *g = &a630_gmu_saved;
++    printf("D GPU LOAD: result=%u stage=%u block_reset_retained=%u reset=%x/%x fw=%x hfi=%x counter=%x polls=%u\n",
++        g->result, g->stage, g->retain_block_reset, g->reset_before, g->reset_held,
++        g->fw_init, g->hfi, g->counter, g->polls);
++    printf("D GPU TCM: result=%u phase=%u offset=%x expected=%x actual=%x reads=%u writes=%u barriers=%u\n",
++        g->tcm.result, g->tcm.phase, g->tcm.offset, g->tcm.expected, g->tcm.actual,
++        g->tcm.reads, g->tcm.writes, g->tcm.barriers);
+     printf("D GPU CLOCK: result=%u reads=%u writes=%u step=%u changed=%x restored=%u polls=%u rcg=%x/%x live=%x/%x/%x/%x reset=%x/%x/%x\n",
+         c->result, c->reads, c->writes, c->step, c->changed, c->restored, c->polls,
+         c->before[2], c->config, c->live[0], c->live[1], c->live[2], c->live[3],
+@@ -175,7 +232,7 @@
+ {
+     unsigned mode = 0;
+     PE_parse_boot_argn("polarisgpu", &mode, sizeof(mode));
+-    if ((mode != 1 && mode != 2 && mode != 3 && mode != 4) ||
++    if ((mode < 1 || mode > 5) ||
+         __atomic_exchange_n(&a630_started, 1, __ATOMIC_ACQ_REL)) return;
+     a630_mode = mode;
+     DTEntry node;
+@@ -196,17 +253,18 @@
+     if (hardware) memcpy(physical, reg, sizeof(physical));
+     hardware = hardware && physical[0] == 0x16a00000 && physical[1] == 0x10000 &&
+         physical[2] == 0x16a60000 && physical[3] == 0x100000;
+-    struct a630_io io = {{0, 0, 0}};
++    struct a630_io io = {{0, 0, 0}, false};
+     bool admitted = board && hardware && a630_firmware_ok && a630_abi_ok;
+     /* Mode1 checks firmware/host ABI only, including in a synthetic guest.
+      * Modes2/3/4 first save the same read-only, initial hardware snapshot. */
+-    a630_probe((mode >= 2 && mode <= 4) ? 1 : 0, admitted,
++    a630_probe((mode >= 2 && mode <= 5) ? 1 : 0, admitted,
+         a630_read_register, &io, &a630_saved);
+     /* Clock/reset trial is nested inside our observed CX-ON interval. No
+-     * GMU register/firmware/SMMU access, and no reads after CX cleanup. */
+-    a630_power_trial_with_hook((mode == 3 || mode == 4) && a630_saved.result != A630_IO,
++     * Mode5 adds reset-held CSR/TCM access, no SMMU or execution; mode4 is
++     * unchanged. No GMU reads after clock/CX cleanup. */
++    a630_power_trial_with_hook(mode >= 3 && a630_saved.result != A630_IO,
+         admitted, a630_read_register, a630_write_register, a630_delay_us, &io,
+-        &a630_power_saved, mode == 4 ? a630_clock_on : NULL, &io);
++        &a630_power_saved, mode >= 4 ? a630_clock_on : NULL, &io);
+     if (a630_power_saved.result == A630_POWER_IO ||
+         a630_power_saved.result == A630_POWER_RESTORE_FAILED ||
+         a630_clock_saved.result == A630_CLK_IO ||
+--- a/bsd/dev/polaris_a630_clock.h
++++ b/bsd/dev/polaris_a630_clock.h
+@@ -5,6 +5,7 @@
+  */
+ #ifndef POLARIS_A630_CLOCK_H
+ #define POLARIS_A630_CLOCK_H
++#include <stddef.h>
+ #ifndef POLARIS_A630_POWER_H
+ #error Include the Polaris CX power definitions first
+ #endif
+@@ -12,13 +13,13 @@
+ enum a630_clock_result {
+     A630_CLK_DISABLED, A630_CLK_IO, A630_CLK_REFUSED, A630_CLK_ROOT_TIMEOUT,
+     A630_CLK_BRANCH_TIMEOUT, A630_CLK_RESTORE_FAILED, A630_CLK_READY_RESTORED,
+-    A630_CLK_REQUEST_TIMEOUT, A630_CLK_STATE_CHANGED
++    A630_CLK_REQUEST_TIMEOUT, A630_CLK_STATE_CHANGED, A630_CLK_READY_RESET_HELD
+ };
+ struct a630_clock_snapshot {
+     uint32_t result, step, reads, writes, polls, changed, restored;
+     uint32_t cfg_ahb, cx_hw, gx, gx_gmu, config;
+     uint32_t failed_step, failed_op, failed_offset, failed_expected, failed_value, failed_mask;
+-    uint32_t request_polls;
++    uint32_t request_polls, reset_retained;
+     uint32_t before[5], live[5], after[5];
+ };
+ struct a630_clock_io {
+@@ -85,9 +86,12 @@
+     a630_clk_failure(io, 4, off, on ? 0 : A630_POWER_ON, value, A630_POWER_ON);
+     return false;
+ }
+-static inline enum a630_clock_result a630_clock_trial(bool enabled, bool exact_board,
++/* Hook runs exclusively after verified clocks, under GMU_BCR. Returning
++ * false retains block reset through/after clock cleanup, including on error.
++ * This permits TCM access without ever running partially loaded firmware. */
++static inline enum a630_clock_result a630_clock_trial_with_hook(bool enabled, bool exact_board,
+     a630_read read, a630_write write, a630_wait_us wait, void *ctx,
+-    struct a630_clock_snapshot *s)
++    struct a630_clock_snapshot *s, bool (*hook)(void *), void *hook_ctx)
+ {
+     if (!s) return A630_CLK_DISABLED;
+     *s = (struct a630_clock_snapshot){0};
+@@ -137,6 +141,7 @@
+         a630_clk_failure(&io, 5, a630_clock_offsets[i], 0, s->live[i], A630_POWER_ON); goto restore;
+     }
+     s->result = A630_CLK_READY_RESTORED;
++    if (hook && !hook(hook_ctx)) s->reset_retained = 1;
+ restore:
+     s->step = 10;
+     {
+@@ -147,19 +152,28 @@
+         }
+         /* Release our block-reset only once source and GMU clock are stopped.
+          * A failed cleanup keeps reset asserted and never claims restoration. */
+-        if (ok && (s->changed & (1u << 4)))
++        if (ok && !s->reset_retained && (s->changed & (1u << 4)))
+             if (!a630_clk_set(&io, 4, s->before[4])) ok = false;
+         for (unsigned i = 0; i < 5; i++) {
+             if (!a630_clk_read(&io, 1, a630_clock_offsets[i], &s->after[i])) { ok = false; continue; }
+-            if ((s->after[i] ^ s->before[i]) & a630_clock_masks[i]) {
++            uint32_t expected = i == 4 && s->reset_retained ? s->before[i] | 1u : s->before[i];
++            if ((s->after[i] ^ expected) & a630_clock_masks[i]) {
+                 a630_clk_failure(&io, 5, a630_clock_offsets[i], s->before[i],
+                     s->after[i], a630_clock_masks[i]); ok = false;
+             }
+         }
+-        if (ok) s->restored = 1;
++        if (ok && s->reset_retained) s->result = A630_CLK_READY_RESET_HELD;
++        else if (ok) s->restored = 1;
+         else s->result = A630_CLK_RESTORE_FAILED;
+     }
+ done:
+     return (enum a630_clock_result)s->result;
+ }
++static inline enum a630_clock_result a630_clock_trial(bool enabled, bool exact_board,
++    a630_read read, a630_write write, a630_wait_us wait, void *ctx,
++    struct a630_clock_snapshot *s)
++{
++    return a630_clock_trial_with_hook(enabled, exact_board, read, write, wait,
++        ctx, s, NULL, NULL);
++}
+ #endif
+--- /dev/null
++++ b/bsd/dev/polaris_a630_tcm.h
+@@ -0,0 +1,124 @@
++/* Original Polaris A630 flat GMU transfer, not a firmware-start routine.
++ *
++ * MiCode c7cb50c1: adreno.c subtracts gmu2gpu_offset before word->byte
++ * conversion; adreno_a6xx.c loads 0x2000 words from ITCM_START (0x1b400).
++ * The contiguous 32KiB AHB window spans the named DTCM_START at 0x7000;
++ * do not describe the entire window as instruction-only ITCM.
++ *
++ * The caller must own the upstream
++ * power/clock/mapping lifetime, establish CM3 reset separately, and pass
++ * only the immutable firmware already checked against its recorded hash.
++ * On failure, the caller must retain CM3 reset; this helper does no cleanup
++ * that could execute a partially written image.
++ * This helper never releases reset, starts firmware, or configures DMA/HFI.
++ */
++#ifndef POLARIS_A630_TCM_H
++#define POLARIS_A630_TCM_H
++#include <stdbool.h>
++#include <stddef.h>
++#include <stdint.h>
++#ifndef POLARIS_A630_IMAGES_H
++#error Include Polaris firmware image definitions first
++#endif
++
++#define A630_GMU_GPU_WORD_BASE 0x1a800u
++#define A630_GMU_REGISTER_BYTES 0x30000u
++#define A630_GMU_CM3_RESET 0x14000u
++#define A630_GMU_FLAT_START 0x3000u
++#define A630_GMU_FLAT_BYTES 0x8000u
++
++enum a630_tcm_result {
++    A630_TCM_DISABLED, A630_TCM_ARGUMENT, A630_TCM_LEASE_LOST,
++    A630_TCM_IO, A630_TCM_NOT_RESET, A630_TCM_MISMATCH,
++    A630_TCM_VERIFIED
++};
++enum a630_tcm_phase { A630_TCM_ADMISSION, A630_TCM_COPY, A630_TCM_READBACK };
++struct a630_tcm_snapshot {
++    uint32_t result, phase, offset, expected, actual, reads, writes, barriers;
++};
++struct a630_tcm_io {
++    bool (*admitted)(void *); /* exclusive, live power/clock/mapping lease */
++    bool (*read)(void *, uint32_t byte_offset, uint32_t *);
++    bool (*write)(void *, uint32_t byte_offset, uint32_t);
++    bool (*sync)(void *); /* posted writes must finish before readback */
++};
++
++static inline bool a630_gmu_word_offset(uint32_t gpu_word, uint32_t *local_byte)
++{
++    if (!local_byte || gpu_word < A630_GMU_GPU_WORD_BASE ||
++        gpu_word - A630_GMU_GPU_WORD_BASE >= A630_GMU_REGISTER_BYTES / 4)
++        return false;
++    *local_byte = (gpu_word - A630_GMU_GPU_WORD_BASE) * 4;
++    return true;
++}
++
++static inline bool a630_tcm_guard(const struct a630_tcm_io *io, void *ctx,
++                                struct a630_tcm_snapshot *s)
++{
++    if (!io->admitted(ctx)) { s->result = A630_TCM_LEASE_LOST; return false; }
++    uint32_t reset;
++    s->offset = A630_GMU_CM3_RESET;
++    s->expected = 1;
++    s->actual = 0;
++    s->reads++;
++    if (!io->read(ctx, A630_GMU_CM3_RESET, &reset)) {
++        s->result = A630_TCM_IO; return false;
++    }
++    s->actual = reset;
++    if (reset != 1) { s->result = A630_TCM_NOT_RESET; return false; }
++    return true;
++}
++
++static inline enum a630_tcm_result
++a630_tcm_load(bool exact_board, bool original_hash_verified,
++              const struct a630_image *image, const struct a630_tcm_io *io,
++              void *ctx, struct a630_tcm_snapshot *s)
++{
++    if (!s) return A630_TCM_ARGUMENT;
++    *s = (struct a630_tcm_snapshot){0};
++    if (!exact_board || !original_hash_verified) return A630_TCM_DISABLED;
++    if (!image || !image->data || image->bytes != A630_GMU_FLAT_BYTES ||
++        !io || !io->admitted || !io->read || !io->write || !io->sync) {
++        s->result = A630_TCM_ARGUMENT; return A630_TCM_ARGUMENT;
++    }
++    /* Validate the original little-endian CM3 vector before any MMIO. */
++    uint32_t sp = a630_image_word(image->data);
++    uint32_t reset = a630_image_word(image->data + 4);
++    if (sp < 0x40000 || sp > 0x44000 || (sp & 7) ||
++        !(reset & 1) || reset >= image->bytes) {
++        s->result = A630_TCM_ARGUMENT; return A630_TCM_ARGUMENT;
++    }
++    if (!a630_tcm_guard(io, ctx, s)) return (enum a630_tcm_result)s->result;
++    s->phase = A630_TCM_COPY;
++    for (uint32_t at = 0; at < image->bytes; at += 4) {
++        if (!a630_tcm_guard(io, ctx, s)) return (enum a630_tcm_result)s->result;
++        s->offset = A630_GMU_FLAT_START + at;
++        s->expected = a630_image_word(image->data + at);
++        s->actual = 0;
++        s->writes++;
++        if (!io->write(ctx, s->offset, s->expected)) {
++            s->result = A630_TCM_IO; return A630_TCM_IO;
++        }
++    }
++    /* No reset/firmware-start write occurs on either success or failure. */
++    if (!a630_tcm_guard(io, ctx, s)) return (enum a630_tcm_result)s->result;
++    s->barriers++;
++    if (!io->sync(ctx)) { s->result = A630_TCM_IO; return A630_TCM_IO; }
++    s->phase = A630_TCM_READBACK;
++    for (uint32_t at = 0; at < image->bytes; at += 4) {
++        if (!a630_tcm_guard(io, ctx, s)) return (enum a630_tcm_result)s->result;
++        s->offset = A630_GMU_FLAT_START + at;
++        s->expected = a630_image_word(image->data + at);
++        s->actual = 0;
++        s->reads++;
++        if (!io->read(ctx, s->offset, &s->actual)) {
++            s->result = A630_TCM_IO; return A630_TCM_IO;
++        }
++        if (s->actual != s->expected) {
++            s->result = A630_TCM_MISMATCH; return A630_TCM_MISMATCH;
++        }
++    }
++    if (!a630_tcm_guard(io, ctx, s)) return (enum a630_tcm_result)s->result;
++    s->result = A630_TCM_VERIFIED; return A630_TCM_VERIFIED;
++}
++#endif
+--- /dev/null
++++ b/bsd/dev/polaris_a630_gmu.h
+@@ -0,0 +1,74 @@
++/* Original A630 flat firmware loading. MiCode c7cb50c1 adreno_a6xx.c
++ * a6xx_gmu_start defines CM3_SYSRESET=1 as processor reset; fw_load writes
++ * 8192 words through ITCM_START. Reference redwood_adreno.c steps6/10/14
++ * independently exercise CSR/TCM before execution. Use Polaris addresses
++ * and format, not the A642L/A660 firmware or register namespace.
++ *
++ * Invoked only inside the verified, exclusive CX/clock lease, under GMU_BCR.
++ * Never release block/CM3 reset, configure DMA, or execute this image. If a
++ * reset write was attempted, caller MUST retain block reset even on failure.
++ * A reset-held bus may refuse writes; report the first failure, not success.
++ */
++#ifndef POLARIS_A630_GMU_H
++#define POLARIS_A630_GMU_H
++#ifndef POLARIS_A630_TCM_H
++#error Include Polaris TCM definitions first
++#endif
++enum a630_gmu_result {
++    A630_GMU_DISABLED, A630_GMU_ARGUMENT, A630_GMU_LEASE,
++    A630_GMU_IO, A630_GMU_RUNNING, A630_GMU_RESET_TIMEOUT,
++    A630_GMU_LOADED, A630_GMU_TRANSFER_FAILED
++};
++struct a630_gmu_snapshot {
++    uint32_t result, stage, retain_block_reset, polls;
++    uint32_t reset_before, reset_held, fw_init, hfi, counter;
++    struct a630_tcm_snapshot tcm;
++};
++static inline enum a630_gmu_result
++a630_gmu_prepare(bool board, bool hash_verified, const struct a630_image *image,
++    const struct a630_tcm_io *io, void (*wait)(void *, uint32_t), void *ctx,
++    struct a630_gmu_snapshot *s)
++{
++    if (!s) return A630_GMU_ARGUMENT;
++    *s = (struct a630_gmu_snapshot){0};
++    if (!board || !hash_verified) return A630_GMU_DISABLED;
++    if (!io || !io->admitted || !io->read || !io->write || !io->sync || !wait ||
++        !image || !image->data || image->bytes != A630_GMU_FLAT_BYTES) {
++        s->result = A630_GMU_ARGUMENT; return A630_GMU_ARGUMENT;
++    }
++    if (!io->admitted(ctx)) { s->result = A630_GMU_LEASE; return A630_GMU_LEASE; }
++    s->stage = 1;
++    if (!io->read(ctx, 0x14000, &s->reset_before) ||
++        !io->read(ctx, 0x14070, &s->fw_init) ||
++        !io->read(ctx, 0x14600, &s->hfi) ||
++        !io->read(ctx, 0x14220, &s->counter)) {
++        s->result = A630_GMU_IO; return A630_GMU_IO;
++    }
++    if (s->fw_init == 0xbabeface || s->hfi & 1u) {
++        s->result = A630_GMU_RUNNING; return A630_GMU_RUNNING;
++    }
++    s->stage = 2;
++    if (!io->admitted(ctx)) { s->result = A630_GMU_LEASE; return A630_GMU_LEASE; }
++    s->retain_block_reset = 1; /* Includes failed or posted reset writes. */
++    if (!io->write(ctx, 0x14000, 1) || !io->sync(ctx)) {
++        s->result = A630_GMU_IO; return A630_GMU_IO;
++    }
++    for (unsigned n = 0; n < 1000; n++) {
++        if (!io->admitted(ctx)) { s->result = A630_GMU_LEASE; return A630_GMU_LEASE; }
++        s->polls++;
++        if (!io->read(ctx, 0x14000, &s->reset_held)) {
++            s->result = A630_GMU_IO; return A630_GMU_IO;
++        }
++        if (s->reset_held == 1) break;
++        wait(ctx, 1);
++    }
++    if (s->reset_held != 1) {
++        s->result = A630_GMU_RESET_TIMEOUT; return A630_GMU_RESET_TIMEOUT;
++    }
++    s->stage = 3;
++    if (a630_tcm_load(board, hash_verified, image, io, ctx, &s->tcm) != A630_TCM_VERIFIED) {
++        s->result = A630_GMU_TRANSFER_FAILED; return A630_GMU_TRANSFER_FAILED;
++    }
++    s->stage = 4; s->result = A630_GMU_LOADED; return A630_GMU_LOADED;
++}
++#endif
+--- /dev/null
++++ b/bsd/dev/polaris_dwc3_clock.h
+@@ -0,0 +1,112 @@
++/* Polaris live DT requests snps,disable-clk-gating. Original MiCode
++ * c7cb50c1 core.c sets GCTL.DSBLCLKGTNG for the internal-RAM clock erratum.
++ * The admitted caller owns controller startup and supplies MMIO barriers.
++ * Keep the request on for a working gadget. Undo only our newly set bit,
++ * on a halted controller with no outstanding endpoint command.
++ */
++#ifndef POLARIS_DWC3_CLOCK_H
++#define POLARIS_DWC3_CLOCK_H
++#ifndef POLARIS_DWC3_COMMAND_H
++#error Include Polaris DWC3 command definitions first
++#endif
++#include <stdbool.h>
++
++#define PDWC3_GATE_GCTL 0xc110u
++#define PDWC3_GATE_DCTL 0xc704u
++#define PDWC3_GATE_DSTS 0xc70cu
++#define PDWC3_GATE_DISABLE 1u
++#define PDWC3_GATE_POLLS 1000u
++enum pdwc3_gate_error {
++    PDWC3_GATE_OK, PDWC3_GATE_ARGUMENT, PDWC3_GATE_UNSAFE,
++    PDWC3_GATE_ACK_TIMEOUT, PDWC3_GATE_RESTORE_TIMEOUT, PDWC3_GATE_COMMAND_ACTIVE
++};
++struct pdwc3_gate {
++    uint32_t error, start_error, attempted, changed, restored;
++    uint32_t before, live, after, dctl, dsts, busy_ep, busy_command;
++    uint32_t reads, writes, polls, restore_polls;
++};
++
++static inline uint32_t pdwc3_gate_read(const struct pdwc3_io *io,
++                                     struct pdwc3_gate *s, uint32_t off)
++{
++    s->reads++;
++    return io->read(io->ctx, off);
++}
++static inline bool pdwc3_gate_halted(const struct pdwc3_io *io, struct pdwc3_gate *s)
++{
++    s->dctl = pdwc3_gate_read(io, s, PDWC3_GATE_DCTL);
++    s->dsts = pdwc3_gate_read(io, s, PDWC3_GATE_DSTS);
++    return !(s->dctl & ((1u << 31) | (1u << 30))) && (s->dsts & (1u << 22));
++}
++static inline bool pdwc3_gate_device(uint32_t gctl)
++{
++    return ((gctl >> 12) & 3u) == 2 && !(gctl & (1u << 11));
++}
++static inline enum pdwc3_gate_error
++polaris_dwc3_clock_begin(const struct pdwc3_io *io, bool admitted, struct pdwc3_gate *s)
++{
++    if (!s) return PDWC3_GATE_ARGUMENT;
++    *s = (struct pdwc3_gate){.error=PDWC3_GATE_ARGUMENT,
++        .start_error=PDWC3_GATE_ARGUMENT, .busy_ep=UINT32_MAX};
++    if (!io || !io->read || !io->write || !io->wait_us) return PDWC3_GATE_ARGUMENT;
++    s->start_error = PDWC3_GATE_OK;
++    if (!admitted) { s->error = s->start_error = PDWC3_GATE_UNSAFE; return PDWC3_GATE_UNSAFE; }
++    s->attempted = 1;
++    if (!pdwc3_gate_halted(io, s)) { s->error = s->start_error = PDWC3_GATE_UNSAFE; return PDWC3_GATE_UNSAFE; }
++    s->before = pdwc3_gate_read(io, s, PDWC3_GATE_GCTL);
++    if (!pdwc3_gate_device(s->before)) { s->error = s->start_error = PDWC3_GATE_UNSAFE; return PDWC3_GATE_UNSAFE; }
++    s->changed = !(s->before & PDWC3_GATE_DISABLE);
++    if (s->changed) {
++        s->writes++;
++        io->write(io->ctx, PDWC3_GATE_GCTL, s->before | PDWC3_GATE_DISABLE);
++    }
++    for (unsigned i = 0; i < PDWC3_GATE_POLLS; i++) {
++        s->polls++;
++        s->live = pdwc3_gate_read(io, s, PDWC3_GATE_GCTL);
++        s->after = s->live;
++        if (!pdwc3_gate_device(s->live)) {
++            s->error = s->start_error = PDWC3_GATE_UNSAFE; return PDWC3_GATE_UNSAFE;
++        }
++        if (s->live & PDWC3_GATE_DISABLE) { s->error = PDWC3_GATE_OK; return PDWC3_GATE_OK; }
++        io->wait_us(io->ctx, 1);
++    }
++    s->error = s->start_error = PDWC3_GATE_ACK_TIMEOUT; return PDWC3_GATE_ACK_TIMEOUT;
++}
++
++static inline enum pdwc3_gate_error
++polaris_dwc3_clock_restore(const struct pdwc3_io *io, struct pdwc3_gate *s)
++{
++    if (!s || !io || !io->read || !io->write || !io->wait_us) return PDWC3_GATE_ARGUMENT;
++    s->restored = s->restore_polls = 0;
++    s->busy_ep = UINT32_MAX; s->busy_command = 0;
++    if (!s->attempted || !pdwc3_gate_halted(io, s)) {
++        s->error = PDWC3_GATE_UNSAFE; return PDWC3_GATE_UNSAFE;
++    }
++    uint32_t current = pdwc3_gate_read(io, s, PDWC3_GATE_GCTL);
++    s->after = current;
++    if (!pdwc3_gate_device(current)) { s->error = PDWC3_GATE_UNSAFE; return PDWC3_GATE_UNSAFE; }
++    if (!s->changed) { s->restored = 1; s->error = s->start_error; return PDWC3_GATE_OK; }
++    /* All used physical endpoints0..5 are halted before startup rollback.
++     * Never re-enable gating underneath a timed-out active command. Keep
++     * the owned request and report retention rather than false cleanup. */
++    for (unsigned ep = 0; ep < 6; ep++) {
++        uint32_t command = pdwc3_gate_read(io, s, 0xc80cu + 16u * ep);
++        if (command & PDWC3_CMDACT) {
++            s->busy_ep = ep; s->busy_command = command;
++            s->error = PDWC3_GATE_COMMAND_ACTIVE; return PDWC3_GATE_COMMAND_ACTIVE;
++        }
++    }
++    s->writes++;
++    io->write(io->ctx, PDWC3_GATE_GCTL, current & ~PDWC3_GATE_DISABLE);
++    for (unsigned i = 0; i < PDWC3_GATE_POLLS; i++) {
++        s->restore_polls++;
++        s->after = pdwc3_gate_read(io, s, PDWC3_GATE_GCTL);
++        if (!pdwc3_gate_device(s->after)) { s->error = PDWC3_GATE_UNSAFE; return PDWC3_GATE_UNSAFE; }
++        if (!(s->after & PDWC3_GATE_DISABLE)) {
++            s->restored = 1; s->error = s->start_error; return PDWC3_GATE_OK;
++        }
++        io->wait_us(io->ctx, 1);
++    }
++    s->error = PDWC3_GATE_RESTORE_TIMEOUT; return PDWC3_GATE_RESTORE_TIMEOUT;
++}
++#endif
+--- a/iokit/Kernel/arm/SweetFramebuffer.cpp
++++ b/iokit/Kernel/arm/SweetFramebuffer.cpp
+@@ -168,18 +168,18 @@
+ extern "C" uint32_t polaris_a630_diagnostic_line(unsigned, char *, uint32_t);
+ static void polaris_status_bar(AppleCLCD *fb)
+ {
+-    char text[8][136];
++    char text[10][136];
+     polaris_usb_status(text[0], sizeof(text[0]));
+     unsigned n = polaris_a630_details(text[1], sizeof(text[1]));
+     if (n < sizeof(text[1])) snprintf(text[1] + n, sizeof(text[1]) - n,
+         " T%u", __atomic_load_n(&fb->fPolarisLastUS, __ATOMIC_RELAXED));
+     for (unsigned i = 0; i < 4; i++)
+         polaris_usb_diagnostic_line(i, text[2 + i], sizeof(text[2 + i]));
+-    for (unsigned i = 0; i < 2; i++)
++    for (unsigned i = 0; i < 4; i++)
+         polaris_a630_diagnostic_line(i, text[6 + i], sizeof(text[6 + i]));
+     /* Fixed double-size diagnostic rows, saved state only. Keep output
+      * inside the actual panel and never poll MMIO from the display loop. */
+-    unsigned lines = fb->fHeight / 32 < 8 ? fb->fHeight / 32 : 8;
++    unsigned lines = fb->fHeight / 32 < 10 ? fb->fHeight / 32 : 10;
+     for (unsigned line = 0; line < lines; line++) {
+         for (unsigned y = 0; y < 32; y++) {
+             uint32_t *row = (uint32_t *)(fb->fPixels + (uint64_t)(line * 32 + y) * fb->fRowBytes);

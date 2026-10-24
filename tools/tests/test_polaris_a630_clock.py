@@ -67,6 +67,10 @@ static struct mock fresh(void){return (struct mock){.reg={0,0x80000000,0x8000020
  .cfg=1,.hw=0x80005ff4,.gx_gmu=0x80000000,.cx=0x222000};}
 static unsigned trial(struct mock *m){return a630_clock_trial(true,true,rd,wr,wait_us,m,&m->clock);}
 static void clock_hook(void *p){struct mock *m=p;assert(m->hw&A630_POWER_ON);trial(m);}
+static bool held_hook(void *p){struct mock *m=p;
+ assert(m->hw&A630_POWER_ON);assert(m->reg[4]&1);
+ assert(!(m->reg[1]&A630_POWER_ON)&&!(m->reg[2]&A630_POWER_ON)&&!(m->reg[3]&A630_POWER_ON));
+ return false;}
 int main(void){
  struct mock m=fresh();struct a630_clock_snapshot s;
  assert(a630_clock_trial(false,true,rd,wr,wait_us,&m,&s)==A630_CLK_DISABLED&&!m.reads);
@@ -87,6 +91,12 @@ int main(void){
  assert(m.clock.restored&&m.reg[2]==0x80000200&&m.reg[3]==0x80004220&&!m.reg[4]);
  assert(!(m.clock.live[2]&A630_POWER_ON)&&!(m.clock.live[3]&A630_POWER_ON)&&(m.clock.live[4]&1));
  unsigned reads=m.reads,writes=m.writes;
+ m=fresh();assert(a630_clock_trial_with_hook(true,true,rd,wr,wait_us,&m,&m.clock,held_hook,&m)==A630_CLK_READY_RESET_HELD);
+ assert(m.clock.reset_retained&&!m.clock.restored&&m.reg[4]==1);
+ assert(m.reg[2]==0x80000200&&m.reg[3]==0x80004220);
+ m=fresh();m.stall_disable=1;
+ assert(a630_clock_trial_with_hook(true,true,rd,wr,wait_us,&m,&m.clock,held_hook,&m)==A630_CLK_RESTORE_FAILED);
+ assert(m.reg[4]==1&&!m.clock.restored);
  /* AON is not in the phone's GMU consumer clock list. A zero, off or
   * hardware-controlled observation must never lead to an AON write or
   * suppress verification of the clocks the GMU actually consumes. */

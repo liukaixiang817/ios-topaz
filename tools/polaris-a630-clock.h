@@ -5,6 +5,7 @@
  */
 #ifndef POLARIS_A630_CLOCK_H
 #define POLARIS_A630_CLOCK_H
+#include <stddef.h>
 #ifndef POLARIS_A630_POWER_H
 #error Include the Polaris CX power definitions first
 #endif
@@ -12,13 +13,13 @@
 enum a630_clock_result {
     A630_CLK_DISABLED, A630_CLK_IO, A630_CLK_REFUSED, A630_CLK_ROOT_TIMEOUT,
     A630_CLK_BRANCH_TIMEOUT, A630_CLK_RESTORE_FAILED, A630_CLK_READY_RESTORED,
-    A630_CLK_REQUEST_TIMEOUT, A630_CLK_STATE_CHANGED
+    A630_CLK_REQUEST_TIMEOUT, A630_CLK_STATE_CHANGED, A630_CLK_READY_RESET_HELD
 };
 struct a630_clock_snapshot {
     uint32_t result, step, reads, writes, polls, changed, restored;
     uint32_t cfg_ahb, cx_hw, gx, gx_gmu, config;
     uint32_t failed_step, failed_op, failed_offset, failed_expected, failed_value, failed_mask;
-    uint32_t request_polls;
+    uint32_t request_polls, reset_retained;
     uint32_t before[5], live[5], after[5];
 };
 struct a630_clock_io {
@@ -85,9 +86,12 @@ static inline bool a630_clk_poll(struct a630_clock_io *io, unsigned index, bool 
     a630_clk_failure(io, 4, off, on ? 0 : A630_POWER_ON, value, A630_POWER_ON);
     return false;
 }
-static inline enum a630_clock_result a630_clock_trial(bool enabled, bool exact_board,
+/* Hook runs exclusively after verified clocks, under GMU_BCR. Returning
+ * false retains block reset through/after clock cleanup, including on error.
+ * This permits TCM access without ever running partially loaded firmware. */
+static inline enum a630_clock_result a630_clock_trial_with_hook(bool enabled, bool exact_board,
     a630_read read, a630_write write, a630_wait_us wait, void *ctx,
-    struct a630_clock_snapshot *s)
+    struct a630_clock_snapshot *s, bool (*hook)(void *), void *hook_ctx)
 {
     if (!s) return A630_CLK_DISABLED;
     *s = (struct a630_clock_snapshot){0};
@@ -137,6 +141,7 @@ static inline enum a630_clock_result a630_clock_trial(bool enabled, bool exact_b
         a630_clk_failure(&io, 5, a630_clock_offsets[i], 0, s->live[i], A630_POWER_ON); goto restore;
     }
     s->result = A630_CLK_READY_RESTORED;
+    if (hook && !hook(hook_ctx)) s->reset_retained = 1;
 restore:
     s->step = 10;
     {
@@ -147,19 +152,28 @@ restore:
         }
         /* Release our block-reset only once source and GMU clock are stopped.
          * A failed cleanup keeps reset asserted and never claims restoration. */
-        if (ok && (s->changed & (1u << 4)))
+        if (ok && !s->reset_retained && (s->changed & (1u << 4)))
             if (!a630_clk_set(&io, 4, s->before[4])) ok = false;
         for (unsigned i = 0; i < 5; i++) {
             if (!a630_clk_read(&io, 1, a630_clock_offsets[i], &s->after[i])) { ok = false; continue; }
-            if ((s->after[i] ^ s->before[i]) & a630_clock_masks[i]) {
+            uint32_t expected = i == 4 && s->reset_retained ? s->before[i] | 1u : s->before[i];
+            if ((s->after[i] ^ expected) & a630_clock_masks[i]) {
                 a630_clk_failure(&io, 5, a630_clock_offsets[i], s->before[i],
                     s->after[i], a630_clock_masks[i]); ok = false;
             }
         }
-        if (ok) s->restored = 1;
+        if (ok && s->reset_retained) s->result = A630_CLK_READY_RESET_HELD;
+        else if (ok) s->restored = 1;
         else s->result = A630_CLK_RESTORE_FAILED;
     }
 done:
     return (enum a630_clock_result)s->result;
+}
+static inline enum a630_clock_result a630_clock_trial(bool enabled, bool exact_board,
+    a630_read read, a630_write write, a630_wait_us wait, void *ctx,
+    struct a630_clock_snapshot *s)
+{
+    return a630_clock_trial_with_hook(enabled, exact_board, read, write, wait,
+        ctx, s, NULL, NULL);
 }
 #endif

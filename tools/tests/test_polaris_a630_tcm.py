@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[2]
 class A630TCMTests(unittest.TestCase):
     def test_flat_transfer_admission_and_failures(self):
         source = r'''
+#include "polaris-a630-images.h"
 #include "polaris-a630-tcm.h"
 #include <assert.h>
 #include <stdlib.h>
