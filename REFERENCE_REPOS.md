@@ -151,7 +151,13 @@ request acknowledgement and frozen first-failure details. It changes no
 clock source/rate, firmware/SMMU action, display or phone argument. Temporary
 0028 was sent12:43:22UTC after another successful read-only fullroot check.
 The host finds no known-phone USB device or matching ECM over61.467s;
-saved first-failure fields await human transcription. Actual GPU firmware
+later photos save K7/3 F1004/0, an AON request ACK timeout. Original live
+GMU clocks and sdm845-gpu.dtsi require CX_GMU/CXO/AXI/MEMNOC, not AON. Pinned
+[mainline SDM845 GPUCC](https://github.com/torvalds/linux/blob/v6.12/drivers/clk/qcom/gpucc-sdm845.c)
+Gitblob ef26690cf504237f41acfd2ddea498b7e0eda5d3 independently agrees on the
+two required GPUCC branches.0029 leaves AON read-only and removes that extra
+prerequisite while retaining strict required-clock/reset/restoration checks.
+No hardware cause for AON readback0 is established. Actual GPU firmware
 execution and accelerated rendering remain unfinished.
 
 The reference's [xl host tool](https://github.com/oosexgang/hackios-xnu-kernel/blob/d82c64a3a31cd27a0a0afbf6e213e467e44b1b4c/xl)

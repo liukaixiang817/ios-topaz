@@ -10,7 +10,39 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION — 0028 bounded clock acknowledgement / first-failure evidence
+### CURRENT NEXT ACTION — 0029 use the actual GMU consumer clocks
+
+- Actual0028 photos: initial white App area later renders Settings. No return
+  swipe result yet. GPU **G303 P5 K7/3 F1004/0 R80000000/0**; USB **R7 S12 E5
+  C7f Q0/2/402/2 L2400 B480800/0/520018**. K7 is the bounded request ACK
+  timeout at step3/AON offset0x1004,actual0; the earlier GMU_BCR ACK passed.
+  This identifies the first failed request, not why its bit did not latch.
+  CX power/restoration P5 still succeeds. DCFG480800/DCTL0/DSTS520018 are
+  saved at the first resource-command timeout, not a USB connection.
+  T10174/T12871 are separate elapsed presentations, not FPS/CPU/performance.
+  Photo hashes/observations: continuation-0029/hardware-0028-observation.json.
+- Source-supported correction0834 removes an extra AON dependency: live
+  /soc/qcom,gmu lists GPUCC CX_GMU/CXO and GCC AXI/MEMNOC, not CXO_AON.
+  Original sdm845-gpu.dtsi agrees; mainline v6.12 gpucc-sdm845.c only exports
+  CX_GMU/CXO branches. AON remains a read-only before/live/after observation;
+  offset1004 is removed from the hardware write allowlist. Required CXO,
+  GMU source/branch ACK/status, held GMU reset and reverse restoration remain
+  strict. No relaxed clock check, firmware execution or accelerator advertised.
+- Mainline gpucc-sdm845.c Gitblob ef26690cf504237f41acfd2ddea498b7e0eda5d3
+  and a6xx_gmu.c 37927bdd6fbed850262dbc45db44f157667a17f3 fetched through
+  GitHub and verified byte-for-byte. Private pinned sources in continuation-0029.
+  AON being protected/tied on is unproven; do not infer that from readback0.
+- Native17 ASan/UBSan tests PASS, including zero/off/HW-controlled AON values,
+  forbidding every AON write, all required-clock dropped ACKs and cleanup
+  failure paths. Two actual CI-header ARM64 units compile/all imports resolve
+  against0028. Fourteen ordered patches0821..0834 apply without fuzz/offset;
+  all18files match the actual compile tree. FullCI/exactkernel tests pending.
+- Phone stays0028. Keep the byteidentical ADT and arguments from0028, mode4,
+  CPU1/Hz20/512MiBRAMCOW/ufsrw0. USB sequence unchanged until its saved state
+  supports a specific fix. NEXT fullCI, exactkernel standard-clock tests,
+  independent image check, then request physical FASTBOOT only when prepared.
+
+### 0028 bounded clock acknowledgement / first-failure evidence
 
 - Actual0027 Settings photo andhuman **操作正常，但是GPU驱动还不正常**:
   USB **R7 S12 E5 C7f Q0/2/402/2 L2400**; GPU **G301 P5 K1/7
@@ -80,10 +112,10 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 - Readonlyhostwatch31118 exited0:21samples/61.467s, no known-phone USB VID
   or matchingECM through **12:44:32.440541UTC**. Hostnetwork unchanged;
   no RAMlog or panel captured. Asyncquestion asks normalGUIflow andtop
-  P/K/F/R plusUSB S/E/Q/L/B; awaitinghumanfeedback. NEXT usefirstfailurefields
-  to identify actualclockgate beforechanging hardwaresequence. IfECMappears,
+  P/K/F/R plusUSB S/E/Q/L/B; laterphotos identifyAONrequestACKtimeout,
+  see0029above. IfECMappears,
   captureRAMlog/panel withtools/polaris-usb-debug.py. GPUfirmware/acceleration
-  stillunfinished; no0028physicalGUI/clockresult orUSBsuccess claimyet.
+  stillunfinished; Settingslaterappears, noUSBsuccess orGPUexecution.
 
 
 

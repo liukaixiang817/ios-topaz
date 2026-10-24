@@ -51,7 +51,7 @@ static bool wr(void *p,unsigned region,uint32_t off,uint32_t value){
   if(value&1){m->hw&=~A630_POWER_ON;m->collapsed=1;}
   else{m->hw|=A630_POWER_ON;m->cx_cycled=1;}
  }else{
-  int i=index_of(off);assert(i>=0&&(m->hw&A630_POWER_ON)&&!m->collapsed);
+  int i=index_of(off);assert(i>0&&(m->hw&A630_POWER_ON)&&!m->collapsed);
   assert(((value^m->reg[i])&~a630_clock_masks[i])==0);
   if(i<4)assert(m->reg[4]&1); /* Reset before any clock write. */
   if(i==4&&!(value&1))assert((m->reg[2]&A630_POWER_ON)&&(m->reg[3]&A630_POWER_ON));
@@ -63,7 +63,7 @@ static bool wr(void *p,unsigned region,uint32_t off,uint32_t value){
  return m->writes!=m->fail_write; /* Fail after a posted write. */
 }
 static void wait_us(void *p,uint32_t us){assert(us==1);((struct mock*)p)->waits++;}
-static struct mock fresh(void){return (struct mock){.reg={0x14001,1,0x80000200,0x80004220,0},
+static struct mock fresh(void){return (struct mock){.reg={0,0x80000000,0x80000200,0x80004220,0},
  .cfg=1,.hw=0x80005ff4,.gx_gmu=0x80000000,.cx=0x222000};}
 static unsigned trial(struct mock *m){return a630_clock_trial(true,true,rd,wr,wait_us,m,&m->clock);}
 static void clock_hook(void *p){struct mock *m=p;assert(m->hw&A630_POWER_ON);trial(m);}
@@ -78,14 +78,23 @@ int main(void){
    case 4:m.cfg|=0x500;break;case 5:m.cfg|=0x100000;break;
    case 6:m.cfg=2;break;case 7:m.reg[2]|=1;break;
    case 8:m.reg[2]&=~A630_POWER_ON;break;case 9:m.reg[3]|=1;break;
-   case 10:m.reg[0]|=2;break;case 11:m.reg[4]=1;break;
+   case 10:m.reg[1]|=2;break;case 11:m.reg[4]=1;break;
   }
   assert(trial(&m)==A630_CLK_REFUSED&&!m.writes);
  }
  m=fresh();assert(trial(&m)==A630_CLK_READY_RESTORED);
+ assert(!(m.clock.changed&1)&&m.clock.before[0]==0&&m.clock.live[0]==0&&m.clock.after[0]==0);
  assert(m.clock.restored&&m.reg[2]==0x80000200&&m.reg[3]==0x80004220&&!m.reg[4]);
  assert(!(m.clock.live[2]&A630_POWER_ON)&&!(m.clock.live[3]&A630_POWER_ON)&&(m.clock.live[4]&1));
  unsigned reads=m.reads,writes=m.writes;
+ /* AON is not in the phone's GMU consumer clock list. A zero, off or
+  * hardware-controlled observation must never lead to an AON write or
+  * suppress verification of the clocks the GMU actually consumes. */
+ for(unsigned aon=0;aon<4;aon++){
+  m=fresh();m.reg[0]=((aon&1)?A630_POWER_ON:0)|((aon&2)?2u:0);
+  assert(trial(&m)==A630_CLK_READY_RESTORED&&m.clock.restored);
+  assert(!(m.clock.changed&1)&&m.reg[0]==m.clock.before[0]);
+ }
  for(unsigned fail=1;fail<=reads;fail++){
   m=fresh();m.fail_read=fail;unsigned e=trial(&m);
   assert(e==A630_CLK_IO||e==A630_CLK_RESTORE_FAILED);
@@ -103,7 +112,7 @@ int main(void){
  }
  m=fresh();m.ack_delay=501;assert(trial(&m)==A630_CLK_RESTORE_FAILED&&!m.clock.restored);
  assert(m.clock.failed_step==2&&m.clock.failed_op==3&&m.clock.failed_offset==0x111c);
- for(unsigned drop=3;drop<=5;drop++){
+ for(unsigned drop=2;drop<=5;drop++){
   m=fresh();m.drop_index=drop;assert(trial(&m)==A630_CLK_REQUEST_TIMEOUT&&m.clock.restored);
   assert(m.clock.failed_op==3&&m.clock.failed_offset==a630_clock_offsets[drop-1]);
  }

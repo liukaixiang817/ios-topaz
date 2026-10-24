@@ -118,7 +118,7 @@ static bool a630_write_register(void *opaque, unsigned region, uint32_t off, uin
     struct a630_io *io = opaque;
     /* Exact GPUCC request/clock/reset allowlist; no GMU CSR write. */
     if (region != 1 || !io->base[1] ||
-        (off != A630_CX_REQUEST && off != 0x1004 && off != 0x109c &&
+        (off != A630_CX_REQUEST && off != 0x109c &&
          off != 0x1120 && off != 0x1098 && off != 0x111c)) return false;
     *(volatile uint32_t *)(io->base[1] + off) = value;
     __asm__ volatile("dsb sy" ::: "memory");
@@ -143,6 +143,8 @@ void polaris_a630_report(void)
     printf("D GPU CLOCK FAIL: step=%u op=%u offset=%x expected=%x actual=%x mask=%x ack_polls=%u\n",
         c->failed_step, c->failed_op, c->failed_offset, c->failed_expected,
         c->failed_value, c->failed_mask, c->request_polls);
+    printf("D GPU AON: readonly=%x/%x/%x; required=CXO,GMU_ROOT,CX_GMU\n",
+        c->before[0], c->live[0], c->after[0]);
     printf("D GPU POWER: result=%u reads=%u writes=%u changed=%u restored=%u polls=%u req=%x/%x hw=%x/%x/%x\n",
         p->result, p->reads, p->writes, p->changed, p->request_restored, p->polls,
         p->before, p->after, p->before_hw, p->on_hw, p->after_hw);

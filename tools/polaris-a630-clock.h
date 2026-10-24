@@ -25,9 +25,13 @@ struct a630_clock_io {
     a630_read read; a630_write write; a630_wait_us wait; void *ctx;
     struct a630_clock_snapshot *s;
 };
-/* AON, CXO, source force-enable, CX GMU, GMU block reset. */
+/* AON observation only, CXO, source force-enable, CX GMU, GMU block reset.
+ * The live SDM845 GMU clock list requests CX_GMU/CXO, not CXO_AON. Keep
+ * 0x1004 read-only:0028 found its request bit never acknowledged. Neither
+ * its request nor its status is a prerequisite for these required clocks.
+ */
 static const uint32_t a630_clock_offsets[5] = {0x1004, 0x109c, 0x1120, 0x1098, 0x111c};
-static const uint32_t a630_clock_masks[5] = {1, 1, 2, 1, 1};
+static const uint32_t a630_clock_masks[5] = {0, 1, 2, 1, 1};
 /* Preserve the first failure across cleanup. Ops:1read/2write/3request
  * acknowledgement/4clock-status wait/5live state. Offsets are GPUCC unless
  * the operation is the initial GCC cfg-AHB read. */
@@ -106,13 +110,10 @@ static inline enum a630_clock_result a630_clock_trial(bool enabled, bool exact_b
         (s->config & 0x103700u) || (s->config & 31u) > 1 ||
         (s->before[2] & 0xf3u) || !(s->before[2] & A630_POWER_ON) ||
         (s->before[3] & 3u) || !(s->before[3] & A630_POWER_ON) ||
-        (s->before[0] & 2u) || (s->before[1] & 2u) || (s->before[4] & 1u)) goto done;
+        (s->before[1] & 2u) || (s->before[4] & 1u)) goto done;
     s->result = A630_CLK_IO; s->step = 2;
     if (!a630_clk_set(&io, 4, 1)) goto restore; /* Hold processor in block reset first. */
-    s->step = 3;
-    if (!a630_clk_set(&io, 0, 1)) goto restore;
-    s->result = A630_CLK_BRANCH_TIMEOUT;
-    if (!a630_clk_poll(&io, 0, true)) goto restore;
+    /* Do not enable CXO_AON: it is not a clock consumed by this GMU. */
     s->step = 4; s->result = A630_CLK_IO;
     if (!a630_clk_set(&io, 1, 1)) goto restore;
     s->result = A630_CLK_BRANCH_TIMEOUT;
@@ -132,7 +133,7 @@ static inline enum a630_clock_result a630_clock_trial(bool enabled, bool exact_b
     if (!(s->live[4] & 1)) {
         a630_clk_failure(&io, 5, a630_clock_offsets[4], 1, s->live[4], 1); goto restore;
     }
-    for (unsigned i = 0; i < 4; i++) if (s->live[i] & A630_POWER_ON) {
+    for (unsigned i = 1; i < 4; i++) if (s->live[i] & A630_POWER_ON) {
         a630_clk_failure(&io, 5, a630_clock_offsets[i], 0, s->live[i], A630_POWER_ON); goto restore;
     }
     s->result = A630_CLK_READY_RESTORED;

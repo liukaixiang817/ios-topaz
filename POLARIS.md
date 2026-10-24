@@ -333,6 +333,21 @@ matching ECM over21samples/61.467s through12:44:32UTC; no network change or
 RAM log/panel capture. Physical GUI/first-failure fields are pending. GPU
 firmware execution and acceleration remain unfinished.
 
+Actual0028 photos first show a white App area and later Settings content.
+The saved GPU state is G303 P5 K7/3 F1004/0 R80000000/0: request ACK timed
+out at AON0x1004, after GMU block-reset acknowledgement. This establishes the
+failed request, not protection or a particular hardware cause. USB remains
+S12/E5 Q0/2/402/2, with first-failure DCFG480800/DCTL0/DSTS520018.
+
+0029 removes the unnecessary AON prerequisite. The live GMU consumer clock
+list and original sdm845-gpu.dtsi request CX_GMU/CXO/AXI/MEMNOC, not AON;
+[Linux v6.12 gpucc-sdm845.c](https://github.com/torvalds/linux/blob/v6.12/drivers/clk/qcom/gpucc-sdm845.c)
+exports only the CX_GMU/CXO branches. AON stays read-only, including in the
+hardware write allowlist. Required-clock acknowledgement/status checks,
+held reset and restoration remain strict. Native17 tests and two actual
+ARM64 compiles pass; full CI and exact-kernel runs are pending. Phone0028
+continues unchanged; no GPU firmware execution or acceleration is established.
+
 ## Standalone boot diagnostic 0001
 
 An isolated polaris probe now cross-compiles and passes QEMU checks. It reads
