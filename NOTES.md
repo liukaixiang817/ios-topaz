@@ -10,7 +10,7 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION — 0020 Settings works after wait; 0021 USB debug implemented
+### CURRENT NEXT ACTION — 0021 prepared/verified; collect original A630 firmware then temporary boot
 
 - NEW user correction: **Settings eventually enters normally**; the earlier
   white view was observed before it finished loading. Home, Settings content
@@ -27,12 +27,33 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   (07:40:43–07:45:25UTC), full `ci-40075056990.log` saved. Kernel
   `xnu/out-polaris-0021/kernel.development.sweet` SHA
   **202f1b5a2024b48f6b5164e5f15261cd5c8c83c20a98086476c7dbc0c94dace0**,
-  profile/ZIPCRC/SHA verified. Pipeline3148 running bootstrap120/gate200/
-  default200/nodiag90/perf90 sequentially. Bootstrap FIRSTstandard run FAILED
-  rtclockIRQ20.874ms vs13.631488ms threshold; fullrawartifacts/failureJSON
-  retained. Identicalstandardretry running; no threshold/source/input change.
-  Timer cause remains unknown. USBmissingboard correctly reports reads0.
-  No0021deviceaction; noFASTBOOT until finalchecks/image are prepared.
+  profile/ZIPCRC/SHA verified. Pipeline3148 exited0 at
+  **2026-10-24T08:04:08UTC (19:04:08 Melbourne)**. All5 selected standard-clock
+  runs PASS: bootstrap120s/15checks (attempt2), gate200s/31 (attempt2),
+  default200s/31, nodiag90s/11 and actualdebugprofile perf90s/11 (firstattempt).
+  **99 functional checks**, no counted-clock fallback. Bootstrap FIRSTstandard
+  run FAILED rtclockIRQ20.874ms vs13.631488ms threshold; gate FIRSTstandard
+  also FAILED samehandler threshold. Both fullrawartifacts/failureJSON retained;
+  both IDENTICALstandard retries passed without threshold/source/input changes.
+  Originalfailedruns remainfailures; timer cause remains unknown.
+  USBmissingboard correctly reports reads0. QEMU does not emulate real USB.
+- Final0021image `shim/out/polaris-xnu-netdebug-0021/polaris-xnu-netdebug-0021.img`,
+  **47308800bytes**, SHA256
+  **460ed0ca589cc28dbc6291fdf9693bc12a89b2b96977e08b396681add3ba06d0**;
+  payload SHA256
+  **cb2bb61f22c7532e58b13ebf503500b8b2fc31bc0ecf9a6f0b97ed69a06d645e**.
+  Actual Cpayload validator PASS. Fresh final-prepared-check PASS
+  **08:04:33UTC**: rebuiltpayload byteidentical, bootimage embeds exactpayload,
+  all5kernel/fixture/ADT/harness provenance records match, bothfailedattempts
+  retained and inputsidentical to retries, kernelbuildinputs unchanged since
+  source3e34d77. Later HFIhelper development is explicitly UNLINKED from0021.
+  Removing ONLYUSBnode restores0020ADT byteidentically. Args onlydisable
+  sample/stack/wait andaddpolarisusb2; CPU1/5Hz/input/identity/root unchanged.
+  Private `netdebug-0021/{prepared,verification,qemu-check,final-prepared-check,
+  deployment-state}.json`; currentphone metadata corrected to0020.
+  No0021deviceaction yet. Next physicalFASTBOOT, then freshreadonlyroot
+  preflight, boundedreadonlyoriginalA630 vendorcollector, then boot-phone
+  only onintegrity/unmounted/RO/temp admission and proofage<600s.
 - A630 HFI port foundation is now implemented in
   `tools/polaris-a630-hfi.h`, with originalqueue table ABI (168bytes, queues
   0/4/5,4096bytes each,16byteguards), checkedmessagepacking andbounded
@@ -46,7 +67,7 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   release/acquire atomics alone are not device-coherency proof. This is an
   actual A630communications component for thenextdriver, not acceleration.
 - GPU primarysources: MiCode `polaris-o-oss` pinnedcommit
-  **c7cb50c18f812629b9620b2b8fa684bc40d82080**. Eight exactGitblobs verified,
+  **c7cb50c18f812629b9620b2b8fa684bc40d82080**. Nine exactGitblobs verified,
   private `gpu-630-0001/vendor/` and vendor-source-provenance.json. A630entry
   requires **a630_sqe.fw, a630_gmu.bin, a630_zap**. Original flatGMUimage is
   allocated into an SMMU code mapping; reference642Luses a660 blockfirmware.
@@ -91,7 +112,7 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   residentcaller/stack/wait sampling andadds polarisusb2. This removes
   diagnostic work; **speedup is unmeasured**, noGPU/SMP/frequency claim.
   FullCI, newexactkernelQEMU (including missing USBmarker and this actual
-  profile), payload/imagehash/provenance still required beforeFASTBOOT.
+  profile), payload/imagehash/provenance now completed as recorded above.
   Need actualUSB enumeration/ping/receivedlogs before callingdebugavailable;
   SSHrequires additionally a userspace daemon, not yet installed.
 - GPU audit: liveDT identifies Adreno630 chip06030001, GPU5000000/40000,
@@ -99,8 +120,11 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   GPU-SMMU5040000/10000. Reference targets642L/SC7280 anddifferentfirmware/
   voltage/clocks/HFI, so do not copy itsbring-up registers/Metal advertised
   capabilities. CPU topology currently has ONLYoneADTnode; cpus=Nalone
-  cannot enablemorecores. Audit/validateSDM845SMP andgenuineGPUstartup with
-  telemetry rather than guessfrequency orpublishfakeGPUservice.
+  cannot enablemorecores. OfflineQEMU DT audit in`smp-0001`: clusters2 and
+  sockets2 BOTH produce CPU MPIDRs0,1, unlikephone0,100; enablingvirtualization
+  does give matchingPSCI SMCmethod. NoSMPADT/codechange or SMPkernelrun yet.
+  Establish correctMPIDR/GIC/PSCI/coherency before a phoneSMPattempt; no
+  measuredspeedup orpublishedGPUservice claim.
 - User confirmed physical FASTBOOT. Readonly preflight session **32442 PASS**;
   boot session **91613 exited 0**, Sending/Booting both OKAY, total 1.180s.
   Temporary boot sent **2026-10-24T07:24:24.530289+00:00**, 18:24:24 Melbourne.

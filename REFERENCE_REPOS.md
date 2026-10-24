@@ -81,7 +81,8 @@ The human launch-time estimate is10–30seconds. Current rendering remains CPU.
 The reference GPU is642L using `a660_gmu.bin` block records, with GMU/clock
 and SMMU registers at different physical addresses. Original polaris630 uses
 `a630_gmu.bin` as a flat code image, `a630_sqe.fw`, its own zap set, and the
-HFI_USE_REG quirk. Seven relevant MiCode sources are pinned at
+HFI_USE_REG quirk. Nine relevant MiCode sources, including the original GPU
+clock controller and GMU memory definitions, are pinned at
 `c7cb50c18f812629b9620b2b8fa684bc40d82080` with verified Git blobs under
 ignored `research/polaris/gpu-630-0001/vendor/`. Compare these with the
 reference's `redwood_adreno.c`, Mesa bridge and Metal plugin as separate

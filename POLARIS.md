@@ -24,6 +24,14 @@ installed. The macOS receiver is `tools/polaris-usb-log.py`; its plan mode
 changes no network configuration. The debug profile disables repeated caller
 stack sampling; the effect on App launch time has not been measured.
 
+Build0021 is now prepared and verified: full kernel CI40075056990 succeeded,
+five selected standard-clock QEMU modes pass99 functional checks, and exact
+payload/image integrity passes. Bootstrap and gate first attempts hit the
+known timer-handler threshold; unchanged standard-clock retries passed and
+both original failures are retained. This does not establish a timer fix or
+physical USB success. See the active handoff for hashes and the next readonly
+recovery/temporary-boot sequence.
+
 The GPU port is based on this phone's live DT and Xiaomi's original
 [polaris GPU sources](https://github.com/MiCode/Xiaomi_Kernel_OpenSource/tree/c7cb50c18f812629b9620b2b8fa684bc40d82080/drivers/gpu/msm),
 compared with the local HackiOS kernel and userland references in
