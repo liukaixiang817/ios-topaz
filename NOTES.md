@@ -22,7 +22,31 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT ACTION —0033 temporarily booted; USB observer52998 ACTIVE
+### CURRENT ACTION —0033 photo localizes PLL admission and USB clock setup
+
+- Human confirmed0033 GUI complete; Settings works. Observer52998 remains
+  STOPPED, EXIT0 16:22:24.832109UTC,27samples/270.973s; no nativeXNUUSB/ECM.
+  No RAMlog/panelcapture, hostnetworkchange, reboot orpartitionwrite.
+- Newactualphoto B20CFCDB supplies GB3/1, MODEd8100005 L31 FRAC4000:
+  **PLL admission rejects before bus/SMMU/GMU execution. GS0/0 andGE0/0
+  mean unattempted, not a firmware execution failure.** Original32KiB TCM
+  transferunderreset remainsproven GM6/4 GT6/2 w2000. UIisCPUrendered.
+- Sourcechecked originalFabiaenable: FSM(bit20) uses ACTIVE(bit30); manual
+  USER_CTL/OPMODE prerequisites must not reject this inheritedFSM PLL.
+  Locked600MHz proven from MODE/L/FRAC; exact USER/OPMODE notyetvisible.
+  Next0034 will use ownedGPLL0vote/main600MHz tap with RCG/3=200MHz, noPLL
+  reprogramming; add rawUSER/OPMODE andsource/rollback savedrows.
+- USBactualcmd9ACK1poll, EP0cmd2busy402 after1000polls; GCTL112001,
+  DCTL0,DSTS520030, PIPE03080002, PHY2400. Originaldwc3-msm.c HS post-reset
+  sequence explicitly gatesPIPE, selectsUTMI+softwarePHYSTATUS, ungatesPIPE
+  (QSCRATCHGENERAL_CFG bits8,0,3). Nativepathomitsit. Implement ownedmasked
+  sequencewith2ussettling/ACKs andsafe rollback; physicalcauseunproven.
+- Privatehardware-0033-observation.json recordsphotoSHA/rawrows. Prior
+  observermustnotrestart. Build/test0034 beforeaskingnewphysicalFASTBOOT.
+- Originalcmd_db MX0,16,16,256,384 duplicatesvalid; preserveindices forfuture
+  HFI. NoHFI/GX/SQE/CP/3Dsubmitted; nohardwareaccelerationclaim.
+
+###0033 boot/observation history (superseded by human stop above)
 
 - Actualhumanconfirmed0033FASTBOOT. Freshpreflight4260 EXIT0
   **2026-10-24T16:16:48.068474UTC**: full16GiBSHA/182maps/GPT/headerunchanged,
