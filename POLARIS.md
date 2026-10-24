@@ -35,6 +35,12 @@ pending Android ext4 journal as part of a boot check.
 
 ## Current GPU and debug work
 
+Allow at least10minutes for boot and USB discovery, per the user's current
+timing requirement. Future negative host observations require >=600s without
+another boot. Historical ~61s observations below are early sampling only;
+they do not exclude later enumeration. Successful enumeration can be used
+immediately. A late600s observation of the still-running0028 is in progress.
+
 USB debug build0021 uses a separate versioned board node and `polarisusb=2`.
 It checks the SDM845 USB power, clock and halted-device state before entering
 the existing CDC-ECM code. It does not power up clocks or a PHY. After the
@@ -345,8 +351,12 @@ list and original sdm845-gpu.dtsi request CX_GMU/CXO/AXI/MEMNOC, not AON;
 exports only the CX_GMU/CXO branches. AON stays read-only, including in the
 hardware write allowlist. Required-clock acknowledgement/status checks,
 held reset and restoration remain strict. Native17 tests and two actual
-ARM64 compiles pass; full CI and exact-kernel runs are pending. Phone0028
-continues unchanged; no GPU firmware execution or acceleration is established.
+ARM64 compiles pass. Full [CI40095790392](https://github.com/liukaixiang817/ios-topaz/actions/runs/40095790392)
+succeeds in5m16s. Allthree exact-kernel standard-clock modes FIRST PASS51checks,
+with no new failures or retries. Independent source/payload/image checks pass
+13:05:40UTC.0029 is prepared and unbooted; wait for the current0028 ten-minute
+USB observation before requesting another temporary boot. Phone0028 continues
+unchanged; no GPU firmware execution or acceleration is established.
 
 ## Standalone boot diagnostic 0001
 

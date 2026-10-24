@@ -8,7 +8,13 @@ and DO NOT authorize erasing this phone. On 2026-10-24 the user explicitly
 approved ONLY the proposed minimal userdata metadata repair, then continuing
 iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
-## Current handoff, 2026-10-24 (Australia/Melbourne)
+## Current handoff, 2026-10-25 (Australia/Melbourne)
+
+**User timing requirement (2026-10-25 local): allow at least10minutes for
+boot/USB discovery. A negative USB observation requires a continuous >=600s
+window after temporary boot; earlier ~61s records are only early samples,
+not completed boot-window negatives. Positive enumeration may be collected
+immediately. Never interrupt that window with another boot.**
 
 ### CURRENT NEXT ACTION — 0029 use the actual GMU consumer clocks
 
@@ -36,11 +42,49 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   forbidding every AON write, all required-clock dropped ACKs and cleanup
   failure paths. Two actual CI-header ARM64 units compile/all imports resolve
   against0028. Fourteen ordered patches0821..0834 apply without fuzz/offset;
-  all18files match the actual compile tree. FullCI/exactkernel tests pending.
+  all18files match the actual compile tree. FullCI/exactkernel/image checks
+  nowPASS below; no0029phoneaction taken.
+- Source **490b2e91c2ad85b44ddb5e580855db32891105d9** committed/pushed;
+  CI **40095790392/job120877657651 SUCCESS**, Build5m16s
+  (12:53:39–12:58:55UTC). Fullghlog research/polaris/ci-40095790392.log saved.
+  Verifiedkernel xnu/out-polaris-0029/kernel.development.sweet SHA
+  **641492ac4cb96fe32a18d4f663ff3379fd550375e9a1e6445523eac7ccb76239**.
+  Privatepipeline16653 exited0 **13:05:23.235448UTC**: exactsource/profile/
+  CRC+SHAverifiedartifact; CPU1 standardclock base120s FIRSTPASS16,
+  actualasyncnetwork90s FIRSTPASS19, mode4zeroMMIO60s FIRSTPASS16.
+  **51selectedchecksPASS**, all4VMchildren ineach; networkphase9/error0.
+  No newfailure/retry. PriorSMP/synctimerfailures remainunresolved; no waiver.
+- **0029 PREPARED, NOT BOOTED** image
+  `shim/out/polaris-xnu-readdebug-0029/polaris-xnu-readdebug-0029.img`,
+  47407104bytes SHA **0b79064260ce72474e750608ec2fa3aa4fa535ad919f3eb5e4b6ca7f1b8d3236**;
+  payload SHA **2156aebf965dfab732424da3d1b4589c7f38e98e7a617887dbb1e6305910d686**.
+  Independentfinalcheck **PASS13:05:40.352456UTC**: source/profile/CIpatchapply,
+  frozen17nativeinputs,2actualARM64objects/imports,14patches/18files, original6
+  firmwares, all3exactkernelrunprovenances, Cpayloadvalidator/rebuild,
+  embeddedimage/manifest/65DTBs verified. PhoneADT ANDarguments byteidentical
+  0028,CPU1/Hz20/mode4/512MiBRAMCOW/ufsrw0. NoGPUfirmware/acceleration.
 - Phone stays0028. Keep the byteidentical ADT and arguments from0028, mode4,
   CPU1/Hz20/512MiBRAMCOW/ufsrw0. USB sequence unchanged until its saved state
-  supports a specific fix. NEXT fullCI, exactkernel standard-clock tests,
-  independent image check, then request physical FASTBOOT only when prepared.
+  supports a specific fix. NEXT finishcurrent0028ten-minuteUSBwindow, then
+  requestphysicalFASTBOOT. Onlyafterhumanconfirmation use0029run-device-step.py
+  preflight thenboot-phone: freshfull16GiBhash/182maps/GPT/header/RO/unmounted/
+  temperaturecheck, temporaryboot only, no pendingouterjournal repair/replay.
+  Watch0029USB for >=600s; ifECMappears collectRAMlog/panel. Human checksGUI
+  andtopP/K/F/R plusUSB S/E/Q/L/B. K6onlyprovesrequiredclocksunderreset and
+  requestsrestored; GPUfirmware/SMMU/submission/acceleration remainunfinished.
+- Independent USB source review while CI runs: original dwc3-msm.c Gitblob
+  1e740593ea66c200df3323d4f6e064aa25c5bf29 verifies VBUS/session-valid before
+  device-mode/vbus connect (3865..3916). Our existing override is after EP0
+  commands, so the observed early return skips it. Possible missing session/
+  PHY clock is only a hypothesis: original also resumes/notifies PHY and
+  resets DBM; ordering alone is not equivalent initialization. No USB change
+  in0029. Private usb-vbus-source-review.json retains source and limitations.
+- User nowrequires >=10min USB discovery.0029/watch-usb.py uses600s minimum
+  negative window/10s polling. A late0028 observation isrunning in36640 via
+  continuation-0028/watch-usb-long.py; outputusb-enumeration-long.json keeps
+  original61s evidence intact. No restart/network/partition changes. Waitfor
+  this window tofinish before requesting another boot. Clocktestpipeline
+  pipeline16653 andfinalimagechecks havecompletedPASS asabove.
 
 ### 0028 bounded clock acknowledgement / first-failure evidence
 

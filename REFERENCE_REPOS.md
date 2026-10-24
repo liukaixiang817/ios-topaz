@@ -94,6 +94,11 @@ SSH connection has yet been established on polaris.
 
 ## USB debug versus SSH
 
+The user reports slow boots and requires at least10minutes for USB discovery.
+Use >=600s observation for a negative result; the historical61s observations
+are early samples only and cannot exclude later enumeration.0029's host
+watcher now follows this requirement; do not restart during the window.
+
 The0024 physical snapshot reports USB S12/E5: EP0 setup failed after the
 interface/address and controller-reset stages. The original Polaris
 [DWC3 endpoint command path](https://github.com/MiCode/Xiaomi_Kernel_OpenSource/blob/c7cb50c18f812629b9620b2b8fa684bc40d82080/drivers/usb/dwc3/gadget.c#L330)
@@ -157,6 +162,9 @@ GMU clocks and sdm845-gpu.dtsi require CX_GMU/CXO/AXI/MEMNOC, not AON. Pinned
 Gitblob ef26690cf504237f41acfd2ddea498b7e0eda5d3 independently agrees on the
 two required GPUCC branches.0029 leaves AON read-only and removes that extra
 prerequisite while retaining strict required-clock/reset/restoration checks.
+Full CI40095790392 and allthree selected standard-clock modes pass51checks
+on the first attempt; independent source/payload/image validation also passes.
+0029 is prepared, unbooted; current0028's ten-minute USB observation continues.
 No hardware cause for AON readback0 is established. Actual GPU firmware
 execution and accelerated rendering remain unfinished.
 
