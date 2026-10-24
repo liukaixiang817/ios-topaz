@@ -10,7 +10,58 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION —0019 correct F01 write-only command verification; rebuild
+### CURRENT NEXT ACTION —0019 PREPARED; wait physical FASTBOOT reply
+
+- User has been asked to hold Power+VolumeDown and reply FASTBOOT for0019.
+  WAIT for that confirmation; no0019 device operation yet. Current phone is
+  still0018: real lockscreen, first swipe one vibration then no response;
+  D TOUCHphase6/result13/done1/frames0/down0. Haptic cause unknown, not input
+  proof. Photos saved privately touch-0018/hardware-lockscreen-no-input.json.
+- ON CONFIRMATION: run
+  `python3 research/polaris/touch-0019/run-device-step.py preflight`, only PASS
+  permits `python3 research/polaris/touch-0019/run-device-step.py boot-phone`.
+  This is exact fresh full16GiBhash/182extents/header/GPT/unmountedRO/temp
+  admission, not repair or Android FS health certification. Preserve pending
+  ext4journal;ufsrw0/RAM512 only. No staging/replay/format/GPT/Windows writes.
+  XNU has no USB reboot/log channel, so physical key request is necessary.
+-0019 FIX: RMI4 Ctrl0 CONFIGURED bit7 is a command whose readback is0;0018
+  incorrectly requires (control&83)==80. Correct mode verifies normal sleep
+  bits and Data0 UNCONFIGURED bit7clear, rejects flash/CRC/fatal/transport
+  errors, at mostoneexistingvolatilebytewrite; up to100ms read-only settling,
+  no repeatedwrite/reset. Exact retained D TF/TC/TL diagnostics added. Native
+  regression models actual read0 and proves oldpredicate wrongly rejects it.
+  Protocol check: Synaptics511-000136-01RevE section3.1.1 and primary Linux
+  rmi_f01.c Data0verification; private touch-0019/f01-protocol-review.json.
+  This is a proven software protocol bug; actual0019 touch/UI still unproven.
+- Correctsourcecf1e4f8611942aa0357bca54447d35c570eb8243;
+  CI40069077256/job120798419939 SUCCESS, Build4m25s (06:09:56–06:14:21UTC).
+  Full log research/polaris/ci-40069077256.log; artifact12550770763,
+  60379320bytes. Profile/ZIPCRC/SHA verified. Earlierdiagnosticcandidate
+  f0fe99f/CI40068757656 cancelled/superseded and NEVERphonebooted.
+- Prepared pipeline session72823 exit0 at2026-10-24T06:26:01UTC (17:26Melbourne).
+  All4 original-clock runs FIRSTPASS:bootstrap120s13checks,gate200s29checks,
+  default200s29checks,nodiag90s9checks =80 functionalchecks. No retry/failure/
+  counted-clock mode used for0019. Historical0018 timing failures retained;
+  their cause remains unknown, this pass does not establish a timing fix.
+  Local23tests PASS (ASan/UBSan actual sharedmode/header, touch/GPIO/wake,
+  profile/ADT), actualCI-headerARM64touchobject PASS,0816bothfilesapplyMATCH.
+- Kernel xnu/out-polaris-0019/kernel.development.sweet SHA
+  b272e0cba3389f502bd70254e70f29cf3b4a95ab9e50bc57b303526f7608967a.
+  Image shim/out/polaris-xnu-touch-0019/polaris-xnu-touch-0019.img,
+  47304704bytes, SHA24cab98b96d0a836b4a868ee3e8ecd8e1907365221d105e8c6502e96db964a82.
+  Payload SHA c55a0ba4c8112bad45b455f56eda74e6fee3774ed6151acaaab412dd064f0663.
+  ActualCpayloadvalidator PASS; allfreshhashes/sourceprovenance rechecked in
+  final-prepared-check.json. PhoneADT byte-identical0018; samefactoryidentity,
+  seed,manifest,bootargs; no firmware/PMIC/bus/HID/wake/power changes in0019.
+- Evidence/scripts private research/polaris/touch-0019/: prepared.json,
+  verification.json,qemu-check.json,validation.log,hardware-decoder.json,
+  final-prepared-check.json,deployment-state.json. No kernel build inputs
+  changed aftercf1e4f8. On actualboot ask bottomswipe and save NEW0019 photos:
+  D TOUCH,TF,TC,TL,TW,TG,TI,TIF,TRMI. Phase7/frames alone notphysicalproof;
+  require realdown/move/up plus corresponding UI. Neverreuse0018observations.
+
+### 0018 hardware evidence and 0019 implementation history
+
 
 - User confirmed FASTBOOT;0018 readonly preflight session31199 PASS, then
   boot session89716 exit0, fastboot Sending/Booting OKAY (1.174s total), sent
