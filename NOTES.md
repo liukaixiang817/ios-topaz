@@ -10,20 +10,25 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION —0019 PREPARED; wait physical FASTBOOT reply
+### CURRENT NEXT ACTION —0019 temporary boot sent; await NEW screen/swipe evidence
 
-- User has been asked to hold Power+VolumeDown and reply FASTBOOT for0019.
-  WAIT for that confirmation; no0019 device operation yet. Current phone is
-  still0018: real lockscreen, first swipe one vibration then no response;
-  D TOUCHphase6/result13/done1/frames0/down0. Haptic cause unknown, not input
-  proof. Photos saved privately touch-0018/hardware-lockscreen-no-input.json.
-- ON CONFIRMATION: run
-  `python3 research/polaris/touch-0019/run-device-step.py preflight`, only PASS
-  permits `python3 research/polaris/touch-0019/run-device-step.py boot-phone`.
-  This is exact fresh full16GiBhash/182extents/header/GPT/unmountedRO/temp
-  admission, not repair or Android FS health certification. Preserve pending
-  ext4journal;ufsrw0/RAM512 only. No staging/replay/format/GPT/Windows writes.
-  XNU has no USB reboot/log channel, so physical key request is necessary.
+- User confirmed physical FASTBOOT. Fresh0019 preflight session19852 PASS,
+  then boot session72375 exit0, Sending/Booting OKAY (1.178s total), sent
+  2026-10-24T06:31:16.020351+00:00 =17:31:16 Melbourne. This is successful boot
+  transport only; NEW0019 GUI/physical input not yet observed. Current phone
+  is0019. Prior0018 lockscreen/onevibration/phase6result13frames0 are history,
+  not0019 observations. No0019 touch/home success claim.
+- Fresh full16GiB hash at2026-10-24T06:30:32.668902+00:00 equals immutablebase
+  689a8cd1df0fc0093706272241a9ac77d5eddd7a62df5d340913ec6abcd7ce2b,
+  182extents/freshmap/GPT/header unchanged, unmounted/blockRO1,33C;
+  completehash took77.497s. Nojournalreplay/repair/staging/partition
+  writes; pendingouterext4journal preserved. ufsrw0/RAM512 retained.
+  preflight.json/boot.json/full-image-readonly-verification.json and sanitized
+  logs saved privately research/polaris/touch-0019/.
+- NEXT: Keep0019 running. New screen/bottomswipe async question pending; await
+  actual user result. If still no input, need NEW0019 D TOUCH/TF/TC/TL/TW/
+  TG/TI/TIF/TRMI photos. Request photos in ordinary chat, not async texttool.
+  Do not request anotherreboot justforlogs. XNU has no USB reboot/logchannel.
 -0019 FIX: RMI4 Ctrl0 CONFIGURED bit7 is a command whose readback is0;0018
   incorrectly requires (control&83)==80. Correct mode verifies normal sleep
   bits and Data0 UNCONFIGURED bit7clear, rejects flash/CRC/fatal/transport
