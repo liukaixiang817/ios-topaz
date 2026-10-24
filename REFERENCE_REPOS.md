@@ -90,6 +90,21 @@ hardware, submission and userland stages. See `POLARIS.md` for the actual
 address map and current USB debug prerequisite. No accelerated rendering or
 SSH connection has yet been established on polaris.
 
+## USB debug versus SSH
+
+The reference's `xl` drives a resident UEFI loader's fastboot-protocol server
+in `xnuloader/loader.c:3411`. It supports logs, screenshots, stop and reboot.
+`usb_start()` obtains Qualcomm USBDeviceProtocol through UEFI Boot Services.
+Its kernel return trampoline is additionally gated on ARM_PGSHIFT12; our
+kernel uses16KiB pages and the current LinuxImage shim does not retain UEFI
+Boot Services. It requires a real loader/CPU/memory/cache integration port.
+None of its foreign EFI prebuilts has been executed on polaris.
+
+The userland `rc.jobs.ssh` starts Procursus OpenSSH with public-key login over
+the reference's working Wi-Fi interface. It is a separate userspace/network
+path. Current polaris0021 did not enumerate its attempted native USB ECM
+interface; no RAM log connection or SSH is available yet.
+
 ## Future refresh
 
 Check each reference checkout for local edits first. Fetching newer upstream

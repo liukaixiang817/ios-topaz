@@ -1,0 +1,189 @@
+--- a/bsd/dev/sweet_ufs.c
++++ b/bsd/dev/sweet_ufs.c
+@@ -43,12 +43,15 @@
+ #include "polaris_ufs_probe_policy.h"
+ #include "polaris_filemap.h"
+ #include "polaris_ram_cow.h"
++#include "polaris_ram_io.h"
+ static struct polaris_cow polaris_root_cow;
+ static bool polaris_ram_cow_enabled;
+ #include "polaris_cow_arena.h"
+ _Static_assert(POLARIS_ARENA_GRANULE == POLARIS_COW_BYTES, "COW arena granularity");
+ static struct polaris_cow_arena polaris_root_arena;
+ static uint64_t polaris_cow_failures;
++/* All updates/snapshots hold sweet_ufs_lock; no periodic MMIO sampling. */
++static uint64_t polaris_base_calls, polaris_ram_reads, polaris_ram_merges, polaris_full_writes;
+ static unsigned polaris_ram_mib = 128;
+ static unsigned polaris_cow_used_snapshot, polaris_cow_limit_snapshot;
+ 
+@@ -206,11 +209,15 @@
+         unsigned reserved = (unsigned)(polaris_root_arena.size >> 20);
+         uint64_t dirty = polaris_root_cow.dirty_blocks, written = polaris_root_cow.written_blocks;
+         uint64_t failures = polaris_cow_failures;
++        uint64_t base_calls = polaris_base_calls, ram_reads = polaris_ram_reads;
++        uint64_t ram_merges = polaris_ram_merges, full_writes = polaris_full_writes;
+         bool active = polaris_ram_cow_enabled, failed = polaris_io_failed;
+         lck_mtx_unlock(&sweet_ufs_lock);
+         printf("D COW: active=%u groups=%u/%u UFS-error=%u\n", active, used, limit, failed);
+         printf("D RAM: reserved=%uMiB dirty=%lluKiB written=%lluKiB refused=%llu\n",
+             reserved, dirty * 4, written * 4, failures);
++        printf("D IO: base_calls=%llu ram_reads=%llu ram_merges=%llu full_writes=%llu\n",
++            base_calls, ram_reads, ram_merges, full_writes);
+     } else {
+         printf("D COW: storage busy; reporting without waiting\n");
+     }
+@@ -393,6 +400,16 @@
+ 	};
+ 	return ufs_scsi(cdb, sizeof(cdb), count * UFS_BLOCK, false);
+ }
++
++#if defined(POLARIS_RAM_ONLY)
++static int
++polaris_ram_read_immutable(void *context, uint64_t lba, uint32_t count, void *buffer)
++{
++    (void)context;
++    if (buffer != (void *)(su.dma + DMA_BOUNCE)) return EINVAL;
++    return ufs_read_blocks(lba, count); /* READ(10) only, same admission policy */
++}
++#endif
+ 
+ /*
+  * WRITE(10) of count device blocks from the bounce buffer to lba. The range
+@@ -693,25 +710,40 @@
+ 		want = MIN(want, blocks * UFS_BLOCK - skip);
+ #endif
+ #if defined(POLARIS_RAM_ONLY)
+-		/* Always obtain full base blocks before overlaying RAM changes, including
+-		 * partial-block writes. NEVER call ufs_write_blocks on this platform. */
+-		error = ufs_read_blocks(physical, blocks);
+-		if (!error && polaris_ram_cow_enabled &&
+-		    !polaris_cow_overlay(&polaris_root_cow, lba, blocks, bounce)) { error = EIO; }
+-		if (!error && rd) {
+-			memcpy(vaddr + done, (const char *)bounce + skip, want);
+-		} else if (!error) {
+-			memcpy((char *)bounce + skip, vaddr + done, want);
+-			if (!polaris_cow_put(&polaris_root_cow, lba, blocks, bounce,
+-			    polaris_arena_allocate, &polaris_root_arena)) {
++        if (polaris_ram_cow_enabled) {
++            const struct polaris_ram_request request = {
++                .logical = lba, .physical = physical, .blocks = blocks,
++                .skip = skip, .bytes = want, .read = rd,
++                .data = vaddr + done, .bounce = bounce
++            };
++            struct polaris_ram_result result = polaris_ram_io(&polaris_root_cow,
++                &request, polaris_arena_allocate, &polaris_root_arena,
++                polaris_ram_read_immutable, NULL);
++            if (result.source == POLARIS_RAM_BASE && result.status != POLARIS_RAM_INVALID)
++                polaris_base_calls++;
++            if (result.status == POLARIS_RAM_OK) {
++                if (result.source == POLARIS_RAM_OVERWRITE) polaris_full_writes++;
++                else if (result.source == POLARIS_RAM_CACHED) {
++                    if (rd) polaris_ram_reads++;
++                    else polaris_ram_merges++;
++                }
++            }
++            error = result.status == POLARIS_RAM_OK ? 0 :
++                result.status == POLARIS_RAM_BASE_ERROR ? result.base_error :
++                result.status == POLARIS_RAM_FULL ? ENOSPC : EINVAL;
++            if (result.status == POLARIS_RAM_FULL) {
+                 polaris_cow_failures++;
+                 if (polaris_cow_failures == 1 || !(polaris_cow_failures & (polaris_cow_failures - 1))) {
+                     printf("POLARIS RAM COW: RAM budget exhausted; write refused (%llu)\n", polaris_cow_failures);
+                 }
+-				error = ENOSPC;
+-			}
++            }
+             __atomic_store_n(&polaris_cow_used_snapshot, polaris_root_cow.used, __ATOMIC_RELAXED);
+-		}
++        } else {
++            /* Read-only roots without COW retain the original base path. */
++            polaris_base_calls++;
++            error = ufs_read_blocks(physical, blocks);
++            if (!error && rd) memcpy(vaddr + done, (const char *)bounce + skip, want);
++        }
+ #else
+ 		if (rd) {
+ 			error = ufs_read_blocks(physical, blocks);
+--- /dev/null
++++ b/bsd/dev/polaris_ram_io.h
+@@ -0,0 +1,80 @@
++/* Volatile root I/O. Caller holds its UFS/COW mutex for this entire call.
++ * Base callback can READ immutable blocks only. Complete cached reads and
++ * whole-block overwrites do not call it. A miss never exposes stale bounce
++ * bytes; partial writes preserve untouched bytes from RAM or the base.
++ */
++#ifndef POLARIS_RAM_IO_H
++#define POLARIS_RAM_IO_H
++#if defined(POLARIS_RAM_ONLY)
++#include "polaris_ram_cow.h"
++#else
++#include "polaris-ram-cow.h"
++#endif
++
++enum polaris_ram_source {
++    POLARIS_RAM_BASE, POLARIS_RAM_CACHED, POLARIS_RAM_OVERWRITE
++};
++enum polaris_ram_status {
++    POLARIS_RAM_OK, POLARIS_RAM_INVALID, POLARIS_RAM_BASE_ERROR, POLARIS_RAM_FULL
++};
++struct polaris_ram_request {
++    uint64_t logical, physical;
++    uint32_t blocks, skip, bytes;
++    bool read;
++    void *data, *bounce;
++};
++struct polaris_ram_result {
++    enum polaris_ram_status status;
++    enum polaris_ram_source source;
++    int base_error;
++};
++typedef int (*polaris_ram_read_base)(void *, uint64_t, uint32_t, void *);
++
++/* Two passes: an incomplete cache hit must leave the output untouched. */
++static inline bool
++polaris_cow_copy_complete(struct polaris_cow *c, uint64_t lba,
++    uint32_t blocks, void *buffer)
++{
++    if (!buffer || !polaris_cow_range(c, lba, blocks)) return false;
++    for (uint32_t i = 0; i < blocks; i++) {
++        uint64_t block = lba + i;
++        struct polaris_cow_group *g = polaris_cow_find(c, block / 4);
++        if (!g || !g->data || !(g->valid & (1u << (block % 4)))) return false;
++    }
++    return polaris_cow_overlay(c, lba, blocks, buffer);
++}
++
++static inline struct polaris_ram_result
++polaris_ram_io(struct polaris_cow *c, const struct polaris_ram_request *r,
++    polaris_cow_alloc allocate, void *allocator,
++    polaris_ram_read_base read_base, void *reader)
++{
++    struct polaris_ram_result out = {POLARIS_RAM_INVALID, POLARIS_RAM_BASE, 0};
++    if (!r || !r->data || !r->bounce || !read_base ||
++        !polaris_cow_range(c, r->logical, r->blocks) ||
++        r->physical > UINT64_MAX - (r->blocks - 1) ||
++        r->skip >= POLARIS_COW_BLOCK || !r->bytes ||
++        r->bytes > r->blocks * POLARIS_COW_BLOCK - r->skip ||
++        (r->skip + r->bytes + POLARIS_COW_BLOCK - 1) / POLARIS_COW_BLOCK != r->blocks ||
++        (!r->read && !allocate)) return out;
++    if (!r->read && !r->skip && r->bytes == r->blocks * POLARIS_COW_BLOCK) {
++        out.source = POLARIS_RAM_OVERWRITE;
++    } else if (polaris_cow_copy_complete(c, r->logical, r->blocks, r->bounce)) {
++        out.source = POLARIS_RAM_CACHED;
++    } else {
++        out.base_error = read_base(reader, r->physical, r->blocks, r->bounce);
++        if (out.base_error) { out.status = POLARIS_RAM_BASE_ERROR; return out; }
++        if (!polaris_cow_overlay(c, r->logical, r->blocks, r->bounce)) return out;
++    }
++    if (r->read) {
++        __builtin_memmove(r->data, (uint8_t *)r->bounce + r->skip, r->bytes);
++    } else {
++        __builtin_memmove((uint8_t *)r->bounce + r->skip, r->data, r->bytes);
++        if (!polaris_cow_put(c, r->logical, r->blocks, r->bounce, allocate, allocator)) {
++            out.status = POLARIS_RAM_FULL; return out;
++        }
++    }
++    out.status = POLARIS_RAM_OK;
++    return out;
++}
++#endif

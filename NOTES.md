@@ -12,6 +12,37 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ### CURRENT NEXT ACTION — 0021 works but Settings45s; prepare A55 SMP, continue A630 port
 
+- IMPLEMENTED0022candidate: **0820RAM-I/O fast path** and explicit2A55ADT/
+  `cpus=2` profile. The old strategy read UFSbefore EVERYRAMwrite/read,
+  evenwholeblockoverwrites/fullCOWhits. New testedactualrequesthelper
+  `tools/polaris-ram-io.h` skipsbase callback onwholeoverwrites/fullRAMhits;
+  partialmisses readbase+overlay beforemerge,unchangedRAMquota/ENOSPC and
+  immutablebase. ExactexistingUFSmutex holds forentirehelper/arena/COW/base
+  operation; noSMPunsynchronizedCOWaccess. READ(10)onlycallback,unchangedraw
+  admission/mapbounds/ufsrw0/512MiB. New D IO savedcounters; noextra MMIOthread.
+  **4RAMtestsPASS**,includingactualhelperASan/UBSan and1000mixedrandompartial
+  requests versusindependentfullimage model/exactbasecallbackcounts,
+  bounds/baseIOerror/ENOSPC/partialallocationfailures/baseimmutability.
+  ActualCI-headerARM64UFSobjectPASS;0820bothfilesapplyMATCH. Firstlocalobject
+  compilefailed nativehyphen vs shippedunderscoreCOWheaderpath; original
+  logs/JSON retainedperf-0022/*.attempt1, conditionalinclude corrected, recompile
+  PASS. **No full0022CI/newkernel/regression/image yet; noFASTBOOTrequest.**
+- `tools/polaris-smp.py` addsONLYCPU1/MPIDR0x100 toexactphysicalPolarisADT;
+  uniquephandle/privateL2id1,stoppedstate, sameCPU0properties/timebase/L3,
+  removalrestoresentire0021ADTbyteidentically. Rejectsothercounts/foreignRAM/
+  bootCPU/GIC/QEMU/duplicatehandles. **5testsPASS**, actualprivate0022ADT
+  generated. `tools/polaris-ios-smp.cmdline` differsfrom0021onlycpus1→2;
+  display5Hz/root/input/USB gates unchanged. NoA75/frequency/voltage change.
+  Next fullCI thennewexactkernel CPU1control/CPU2SMP syntheticregressions,
+  payload/imageprovenance, thenphysicalFASTBOOTonlyafterprepared.
+- UseraskedUSBavailability/referenceimplementation. AnsweredexplicitlyNO:
+  current0021hostECMabsent,noSSH. Reference`xl`/xnuloader has residentUEFI
+  QualcommUSBDeviceProtocol fastbootserver forlog/screenshot/stop/reboot;
+  itsOpenSSH scenario requiresworkingWiFi+Procursus+keys. CurrentLinuxImage
+  shimdoesnotretainUEFIBootServices. Reference`loader_return.c`also gates
+  returntrampolineonARM_PGSHIFT12,ours16KiB. ReusingrequiresactualSDM845
+  loader/memory/cache/CPUintegration,notcopyingscript/foreignEFIprebuilts.
+
 - NEW USER OBSERVATION0021: **operationsnormal; Settings took45seconds until
   text appeared**. Previous0020estimate10–30s was alsohuman, not a controlled
   benchmark. Disablingresident sampling has **not demonstratedaspeedup**.
