@@ -22,7 +22,19 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT NEXT ACTION — verified0031, await humanFASTBOOT
+### CURRENT NEXT ACTION — observe temporary0031 until human boot confirmation
+
+- **0031 TEMPORARY BOOT SENT**, human confirmedFASTBOOT. Preflight26963 exited0
+  **14:29:30.773800UTC**: freshfull16GiBhash/182maps/GPT/header unchanged,
+  userdataRO1/unmounted,33C; pendingouterjournal neitherreplayed norrepaired.
+  Bootwrapper22758 exited0: Sending/BootingOKAY,total1.168s; temporary0031
+  sent **14:29:53.176486UTC**, proofage22.402686s; no partitionwrite.
+  Continuousreadonlywatch **session52930** starts **14:30:03.386UTC**,
+  approximately10.210s afterboot; do not claim coverage of that initialgap.
+  Initialsample no known-phoneUSB/ECM; no boot-window negative conclusion.
+  **KEEPWATCHRUNNING until human “已进入系统” or explicit cancellation.**
+  No600s/discovery exit. OnECM immediately attemptRAMlog/panel whilewatching.
+  PhysicalGUI/eightUSBGPUsnapshotrows pending. No restart.
 
 - User confirms **“已进入系统”** on0030 and requests priority USB/GPU fixes
   with more diagnostic lines. Settings photo saves **U2 R7 S12 E5 C7f V0/1
@@ -53,7 +65,7 @@ early samples only. On0029 the human already confirmed boot complete and said
   formatterfunctions tested underASan/UBSan: maximum32bit values fit67characters,
   pending/0..4command states, capacity1/null safe. Sixteen ordered patches
   0821..0836 applywithoutfuzz/offset; all19filesmatchactualcompiletree.
-  FullCI/exactkernel/image checks nowPASS below. Phone remains0030; no0031 action.
+  FullCI/exactkernel/image checks nowPASS below; temporary0031nowsentasabove.
 - Source **6d0d5d5c05150b69f929c3255ba4ed4c0a6f3b93** committed/pushed;
   CI **40101091548/job120893206891 SUCCESS**, Build4m15s
   (14:07:46–14:12:01UTC).
@@ -71,7 +83,7 @@ early samples only. On0029 the human already confirmed boot complete and said
   native19inputs,3ARM64objects/imports,16patch19files andsavedformatterfixture.
   No physical0031 action before allchecks/image validation. Current0030's
   human-completedobserver staysstopped.
-- **0031 PREPARED, NOT BOOTED** image
+- **0031 verified image, now temporarily booted**
   `shim/out/polaris-xnu-readdebug-0031/polaris-xnu-readdebug-0031.img`,
   47423488bytes SHA **e1746530122185419b9915aa23f42e051780d0b97086143eb21c13942944b6c9**;
   payload SHA **627b1969582dcb7431c2c061791184e31fabf6d80098d3880c7a4ada13bc9b79**.
@@ -81,8 +93,8 @@ early samples only. On0029 the human already confirmed boot complete and said
   3exactkernelrunprovenances,Cpayloadvalidator/rebuild,image/manifest/65DTBs
   allverified. PhoneADT ANDarguments byteidentical0030: CPU1/Hz20/mode4/
   512MiBRAMCOW/ufsrw0. TCMhelper isunlinked; no newGPUCSR/firmware/SMMU action.
-  Next: askhumanFASTBOOT, freshread-onlyfullrootcheck, temporary0031boot,
-  continuousUSBwatch untilhuman“已进入系统”. No0031preflight/boot yet.
+  Freshpreflight/temporarybootcompletedasabove. Next: continuousUSBwatch
+  untilhuman“已进入系统”, captureifECMappears, inspecteightdiagnosticrows.
 - GPU preparation: unlinked tools/polaris-a630-tcm.h converts original
   GPU-relativewords toGMU-localbytes and copies/verifies the original32KiB
   flat image only with exactboard/recordedhash/liveexclusivelease and CM3

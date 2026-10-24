@@ -408,10 +408,15 @@ and maximum-width formatter checks pass. Full
 [CI40101091548](https://github.com/liukaixiang817/ios-topaz/actions/runs/40101091548)
 passes in4m15s. Allthree exact-kernel standard-clock modes FIRSTPASS60checks,
 with no new failure/retry; independent final source/payload/image checks pass
-14:18:09UTC.0031 is prepared, not booted, with byteidentical0030 phoneADT and
-arguments (CPU1/Hz20/mode4/512MiBRAMCOW/ufsrw0). Next is a freshread-onlycheck
-and temporaryboot afterhumanFASTBOOT, then continuousUSBwatch until their
-“已进入系统” confirmation. No USB connection or GPU execution is proven.
+14:18:09UTC. HumanFASTBOOTconfirmation andanotherfullread-onlycheck pass
+14:29:30UTC:33C,unmounted,16GiBhash/182maps/GPT/header unchanged. Temporary
+0031 is sent14:29:53UTC, Sending/BootingOKAY,total1.168s; no partitionwrite or
+journalreplay. PhoneADT/arguments remain byteidentical0030
+(CPU1/Hz20/mode4/512MiBRAMCOW/ufsrw0). Observer52930 starts14:30:03UTC,
+approximately10.210s afterboot; initialsample has no known-phoneUSB/ECM.
+Keepwatchrunning untilthehuman's “已进入系统” confirmation or explicitcancel;
+do not restart or stop on elapsedtime/discovery. PhysicalGUI/eightdiagnostic
+rows pending. No USB connection or GPU execution is proven.
 The new guarded flat GMU transfer component is preparatory and unlinked;
 physical reset/bus/SMMU/HFI admission is still required before firmware start.
 
