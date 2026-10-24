@@ -22,16 +22,16 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-###0034 local complete — remote push awaiting explicit approval
+###0034 push/build explicitly approved; full verification starting
 
 - Sourcecommit **f5a49a002096e5ff9f0f508965ddc98430181017** localonly.
   Autoreviewrejected combinedcommit+push becausepublicremotepushauthorization
   wasnotexplicit. Localcommitthenallowed. Readonlyremoteverification:
   origin **https://github.com/liukaixiang817/ios-topaz.git**, public,viewerADMIN.
-  Asyncquestionrequestsexplicitpushauthorization; **do not push until answered**.
-  NoCIstarted/no0034image/no0034phoneaction. Pendingapproval/privateevidence
-  continuation-0034/pending-approval.json; scripts preparedwithRUN_ID_0034
-  placeholder andmustresolve/freezeonce actualrunexists.
+  Human now explicitly answered **“允许推送并构建”** for this exact public
+  repo/branch. Approval persists; proceed with push and GitHub Actions build.
+  No0034image/phoneaction yet. Scripts prepared withRUN_ID_0034 placeholder;
+  resolve exact CI source/run and freeze before pipeline starts.
 -0839 fixesFSM/manualPLLadmission; ownsGPLL0vote0x52000bit0+GPUmainoutput
   0x52004bit15, RCGsource5/HID5=200MHz. NoPLLrate/postdivider/voltagechanges.
   OnlyreleaseourrequestsafterGMUcontainment, retainonuncertainty.
@@ -42,7 +42,7 @@ early samples only. On0029 the human already confirmed boot complete and said
 - PASS26ASan/UBSan tests,3actualCI-headerARM64units/imports,19patches27files
   nofuzz/offset,13detailrows<=67characters,original48RSC/PDC+12SMMUDTpairs,
   originalPLL/HSsequence/liveDTcheck; observer8simulationtestsPASS.
-- Afterapproval:pushsource,identifyexactCIrun; replaceRUN_ID_0034 in12scripts,
+- Next:pushsource,identifyexactCIrun; replaceRUN_ID_0034 in12scripts,
   freezehashes/pipeline-input-check.json; build-validate-prepare.py fullCI +
   exactstandardclockbase120s/async90s/noMMIO60s (78checks) +image;
   final-prepared-check.py. OnlythennewphysicalFASTBOOTquestion/preflightboot.
