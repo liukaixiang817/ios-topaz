@@ -1,10 +1,12 @@
 # MIX 2S (polaris): current bring-up and safety constraints
 
 The requested target is **Android + Mindows Windows 11 + iOS 16**, preserving
-existing data. The current temporary build **0021** runs real iOS 16.7.16
-(20H392) on the MIX 2S. The user confirms physical swipe into the home screen,
-Settings content after a wait, and swipe back home. Settings launch currently
-needs about 45 seconds by human estimate (0020 was estimated at 10–30 seconds
+existing data. Temporary build **0023** was sent successfully at09:59:17UTC
+on2026-10-24; GUI/input/performance confirmation is pending. The last confirmed
+working build **0021** runs real iOS 16.7.16 (20H392) on the MIX 2S, with
+physical swipe into the home screen, Settings content after a wait, and swipe
+back home. Its first Settings launch needs about45seconds by human estimate
+(0020 was estimated at10–30seconds
 under different conditions). An immediate second open on the same0021 boot
 takes under3seconds. These are separate first/repeat measurements; latency/FPS
 are not instrumented.
@@ -24,7 +26,8 @@ It checks the SDM845 USB power, clock and halted-device state before entering
 the existing CDC-ECM code. It does not power up clocks or a PHY. After the
 actual0021 boot, the host observed neither its USB device nor its ECM NIC
 over one minute, and a later read-only check also found no interface.
-**USB debugging and SSH are currently unavailable.** The exact refusal
+The0023 host observation also found noUSBdevice orECM over61.540seconds
+(21samples, last10:00:43UTC). **USB debugging and SSH are currently unavailable.** The exact refusal
 stage is not known without the saved D USB / D UCLK values. No SSH daemon is
 installed. The macOS receiver is `tools/polaris-usb-log.py`; its plan mode
 changes no network configuration. The debug profile disables repeated caller
@@ -106,8 +109,9 @@ optional cross-core diagnostics. Its complete kernel build passed
 [CI40082914361](https://github.com/liukaixiang817/ios-topaz/actions/runs/40082914361),
 and its exact artifact passed three selected single-CPU modes (120/60/90s,
 42assertions) with the standard QEMU clock. Its temporary image and payload
-integrity checks passed; it has not been booted on the phone.
-Current phone behavior is still0021 above.
+integrity checks passed. A fresh full16GiB root hash,182file mappings, GPT and
+outer header all match; only the temporary boot was sent, with the outer
+journal unchanged. GUI/input/performance and USB results are still pending.
 The intended hardware profile stays on one CPU while SMP failures are
 investigated, with the same512MiB RAM COW and `ufsrw=0`.
 
@@ -139,7 +143,8 @@ python3 tools/polaris-usb-debug.py screenshot --output /tmp/polaris.png
 Plan mode changes no network configuration. If the private ECM address is
 missing, `--configure` requires root, adds only192.168.7.1/24 on the matching
 ECM NIC and removes its own alias on exit. Output must be new and is mode0600.
-This interface remains unproven on the phone because0021 has not enumerated.
+This interface remains unproven on the phone; neither0021 nor0023 enumerated
+during their host observations. No log/PNG has been captured from the phone.
 
 The same debug flag adds a16pixel-high status strip after the first GUI frame,
 using saved RAM state only. `U` is USB mode, `R` its result (0disabled,1read

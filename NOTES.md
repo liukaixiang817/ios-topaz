@@ -14,16 +14,18 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 - User explicitly narrowed USB needs to **logs and screenshots; SSH is not
   needed now**, and asked to continue multicore CPU/GPU adaptation using the
-  reference repos. Phone still runs0021. User confirms USB cable remains
-  connected; fresh sanitized host observation09:21:59UTC still has no matching
-  phone/debug USB device or ECM interface. No host network settings changed.
+  reference repos. **0023 temporaryboot sent09:59:17.582883UTC** after the
+  user's FASTBOOT confirmation; GUI/input/performance confirmation pending.
+  User confirms USB cable remains connected. 0023readonlyhostwatch24629
+  exited0:21observations/61.540s, noVID1209/PID1 andnoECM at10:00:43UTC.
+  USBlog/screenshotconnection remains unavailable. No host network settings changed.
 - IMPLEMENTED0821: original A630 firmware consumer in kernel, six SHA256
   checks using built-in LTC SHA256, shared bounded flatGMU/SQE/splitZAP parser,
   hostHFI layout/initialization helper checked (its unused storage is optimized
   away; no resident DMA queue or GMU communication is established).
   Mode1 is firmware/ABI only;
   mode2 additionally probes original GCC/GPUCC/GMU registers, checking physical
-  Polaris GIC, cfgAHB and CX/clock gates before deeper regions. No MMIO writes,
+  Polaris relativeGICmap, cfgAHB and CX/clock gates before deeper regions. No MMIO writes,
   SMMU changes, secure authentication, firmware execution or GPU service.
   Firmware ADTversion2 adds exact register ranges. Actual original six-file
   parser+hash check PASS; private newphoneADT93296bytes SHA
@@ -75,7 +77,7 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   `object-import-check.json` PASS/missing0. Six affected ARM64 TUs PASS including final
   CPUobserver; own GPU/debug/USB/frame symbols and crosscorecallback/records/
   cpu_xcall import verified (static check helper was inlined, initial observer
-  assumption retained separately). No0023device action yet.
+  assumption retained separately).
 - Correctedsource **6876a4af4b3077c3cfa0634023e9c7f06d1357cf** pushed;
   CI **40082914361/job120839958079 SUCCESS**, Build4m09s
   (09:41:16–09:45:25UTC). Full `ci-40082914361.log` saved; exactsource/profile,
@@ -96,7 +98,7 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   cause still unestablished. Raw q-crosscpu console/registers/provenance and
   failedcheck retained; `scheduler-lock-diagnosis.json` proves current symbol.
   No CPU2phone admission, no threshold changes or retry to hide this failure.
-- **0023 CPU1 PREPARED, not booted.** Image
+- **0023 CPU1 temporaryboot SENT; humanGUIconfirmation pending.** Image
   `shim/out/polaris-xnu-readdebug-0023/polaris-xnu-readdebug-0023.img`,
   47407104bytes SHA
   **72a12f36457a25f30347e195ffec0e61fe4b0fa0bbe88b3c7169fc715ec3949e**;
@@ -104,21 +106,33 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   Cpayload validatorPASS; rebuiltpayload/embeddedimage/provenance/actualfirmware/
   ADTisolation/11patchedfiles/6ARM64objects allfinalcheckPASS09:54:31UTC.
   `final-prepared-check.json`, `deployment-state.json` saved privately under
-  continuation-0023. No0023device/preflight/boot action yet. Currentphone0021.
-- NEXT: requestphysicalFASTBOOT for the verified CPU1 diagnostic candidate;
-  run private `run-device-step.py preflight` (freshfull16GiBhash,182maps,
-  unchangedGPT/header,ro+noload/unmounted), then `boot-phone` within600seconds.
-  ActualGUI/input remain necessary checks. Run staged readonly `watch-usb.py`
-  afterboot; ifECM appears use the new log/screenshot reader. Ifnot, collect
+  continuation-0023. Sourcechanges committed6876a4a, preparedhandoff9c9ae59,
+  bothpushed. Workingimageintegrity matchespreparedproof.
+- Actualpreflight55415 exited0 **09:58:57.708566UTC**, full16GiBhash
+  **77.361seconds**,182maps/GPT/headerunchanged,RO1,unmounted,36C.
+  Outerjournal remains pending/unchanged; no replay orrepair.
+  Actualboot25921 exited0 **09:59:17.582883UTC** (20:59:17Melbourne),
+  Sending/BootingOKAY,total1.179s, freshproofage19.874s.
+  Private boot/preflight/fullhash/sanitizedlogs saved; onlytemporaryboot,
+  baseimageimmutable/alllogicaliOSwritesRAM512MiB,ufsrw0.
+- NEXT: Twohumanquestions pending: GUI/Settingsfirst+
+  repeat timings, and topstatus U/R/N/G. IfnoECM, collect
   the saved on-screen U/R/N/GD/C/G strip values before changing clock/power
   code. ComparehumanSettingscold/warm times separately; no speedup claimed.
   USBconnection/GPUacceleration/phoneSMPremainUNPROVEN. Continue genuine
   A630GMU/SMMU/secure-firmware work and SMP diagnosis without weakening checks.
+- Addressclarification: ADT `/arm-io/gic/reg`16a00000/16a60000 is RELATIVE
+  to arm-ioSOCbase01000000, so physical GIC is17a00000/17a60000, matching
+  liveDT. The exactphone gate intentionally compares the relative ADT values;
+  do not change it to physical values without bus translation. CurrentCPU0/16
+  postpanicPCs bothsymbolize to_handle_debugger_trap; they do NOT recover the
+  originalschedulerlockholderstack or prove a failurecause. Private
+  postpanic-symbols.json preserves these bounded observations.
 
-### 0022 stopped validation and current0021 evidence
+### 0022 stopped validation and prior0021 evidence
 
 
-- **Current phone remains0021, unchanged.** Human confirms normal GUI/touch/
+- **Prior0021 baseline.** Human confirms normal GUI/touch/
   Settings/return. First Settings open about45seconds; immediate reopen on the
   same boot **under3seconds**. These are human estimates, not controlled
   instrumentation. Cold loading appears to dominate; GPU/I/O causality is
