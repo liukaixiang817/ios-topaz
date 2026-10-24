@@ -257,8 +257,12 @@ resolution and the ten-patch/sixteen-file chain pass. Full
 [CI40089926936](https://github.com/liukaixiang817/ios-topaz/actions/runs/40089926936)
 succeeds in4m38s. The three standard-clock modes pass48checks on their first
 runs; source/firmware/payload/image validation passes11:38:18UTC. The0026
-temporary image is prepared, with no phone action yet. Physical USB, CX trial
-and performance results remain pending; the phone still runs0025.
+temporary image passed another full16GiBhash/182maps/GPT/header/RO check
+at11:41:19UTC and was sent at11:41:57UTC (Sending/Booting OKAY,1.173s).
+No partition write. The host again sees no known-phone USB device or ECM
+in21samples/61.698s through11:43:08UTC; no host network settings changed,
+log or panel captured. Physical GUI, saved USB stage/command, CX trial and
+performance results remain pending.
 
 ## Standalone boot diagnostic 0001
 

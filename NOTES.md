@@ -10,7 +10,7 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION — 0026 USB2 low power / CX request trial / frame cadence
+### CURRENT NEXT ACTION — 0026 sent; observe USB / GUI / saved CX trial result
 
 - Actual0025 works: human answers **能操作，稍稍快了点**. Physical Settings
   list photo shows **U2 R7 S12 E5 C7f Q0/1/401/2** and
@@ -52,7 +52,7 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   ARM64units compile PASS; all imports resolve against0025+newobjects.
   Ten ordered patches0821..0830 apply without fuzz/offset; all16resulting
   files match actualcompiletree. Full CI and exact-kernel standard-clock
-  runs nowPASS below. Phone remains0025; no0026phoneactionyet.
+  runs nowPASS below. Temporary0026 now sent; physical results pending below.
 - Source **14f5abbf159206ba26bff8e0262d9a18cd9a4487** committed/pushed;
   CI **40089926936/job120860350673 SUCCESS**, Build4m38s
   (11:27:01–11:31:39UTC). Private pipeline76710 retrieves the full gh log,
@@ -67,7 +67,7 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   actual asyncnetworkAPI reaches phase9/error0. Mode3 on syntheticGIC
   records GPU power result0/read0/write0. No new failures/retries; prior SMP
   and synccomparison failures remain unresolved. No hardware emulation claim.
-- **0026 PREPARED, NOT BOOTED**: image
+- **0026 TEMPORARY BOOT SENT**: image
   `shim/out/polaris-xnu-readdebug-0026/polaris-xnu-readdebug-0026.img`,
   47407104bytes SHA **f17521e8fac62833dc7608365083d31c6111af9bc88033d3169b22d4654ec1df**;
   payload SHA **92b86841fcfd40d2aad70fb5da2adaea425f61c493687a31f95647e6219dc12f**.
@@ -76,14 +76,20 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   original6firmwares,3exactkernelrunprovenances, Cpayloadvalidator/rebuiltpayload,
   embeddedimage/manifest/65DTBs allverified. PhoneADTbyteidentical0025; args
   differONLY hz10→20/gpu2→3. CPU1/512MiBRAMCOW/ufsrw0 retained.
-- NEXT: request physical FASTBOOT because0025 has no working USB link.
-  Only afterhumanconfirmation, usecontinuation-0026/run-device-step.py preflight
-  thenboot-phone: knownheadlessrecovery, freshfull16GiBhash/182maps/GPT/header/
-  RO/unmounted/tempcheck, then temporaryboot0026. Neverrepairpendingjournal.
-  BootwrapperrequiresfinalPASS andfreshproof<600s. Thenreadonlywatch-usb.py;
-  ifECMappears, collectRAMlog/panel withtools/polaris-usb-debug.py. Human
-  validation: lockscreen→home→Settings→return, top S/E/Q/L andnewGPU P.
-  No0026deviceactionhasoccurred; physical USB/CXtrial/performancepending.
+- Human confirmedFASTBOOT. Preflight27424 exited0 at
+  **11:41:19.754073UTC**: full16GiBhash/182maps/GPT/outerheader unchanged,
+  userdataRO1/unmounted,35C. Pendingouterjournal was neitherreplayed nor
+  repaired. Bootwrapper66479 exited0: Sending/BootingOKAY,total1.173s;
+  temporary0026 sent **11:41:57.170546UTC**, proofage37.416473s.
+  No partitionwrite. Readonly hostwatch21438 exited0:21samples/61.698s,
+  no known-phone USB VID or matchingECM through **11:43:08.194421UTC**.
+  Hostnetworksettings unchanged; no RAMlog or panel captured. USBconnection
+  remains unavailable; this absence does not identify the new failing stage.
+- NEXT: human GUIflow lockscreen→home→Settings→return, saved S/E/Q/L and
+  GPU P result. Asyncquestionssent, awaitinghumanfeedback. Phone now0026.
+  IfECMappears later, collectRAMlog/panel using
+  tools/polaris-usb-debug.py. GUI/USB/CXtrial/performancepending; do not claim
+  workingGPUacceleration, GMUfirmwareexecution or SMPphoneadmission.
 
 ### 0025 EP0 wake / CPU display / CX status correction
 

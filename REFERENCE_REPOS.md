@@ -109,7 +109,8 @@ then EP0 SETEPCONFIG timed out with CMDACT set. The admitted controller ID
 verified Gitblob4959c26d3b71b89347e9118b1fb732b512ba8c05, requires temporarily
 clearing both SUSPHY and ENBLSLPM for this high-speed controller.0026 follows
 that rule, restores both controls with unrelated bits preserved, and keeps
-its existing1000poll bound. It remains untested on the physical phone.
+its existing1000poll bound. Temporary0026 was sent; the host still sees no
+USB device/ECM over61.698s, and the saved physical failure record is pending.
 
 The live Polaris DT's gpu_cx_gdsc points hw-ctrl-addr to0x5091540.
 The matching original
