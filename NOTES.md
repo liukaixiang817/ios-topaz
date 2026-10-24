@@ -10,7 +10,51 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION — 0025 EP0 wake / CPU display / CX status correction
+### CURRENT NEXT ACTION — 0026 USB2 low power / CX request trial / frame cadence
+
+- Actual0025 works: human answers **能操作，稍稍快了点**. Physical Settings
+  list photo shows **U2 R7 S12 E5 C7f Q0/1/401/2** and
+  **G303 CX00222001 HW00005ff4 M80004220 X80000001 T10458**.
+  DEPSTARTCFG9 completed; EP0 SETEPCONFIG1 then timed out with CMDACT set
+  (response0x401/error2). Saved boot-time CX collapse request1/HW POWER_ON0,
+  GMUclockOFF/CXOclockOFF confirm prerequisites still off. One presentation
+  took10.458ms elapsed, not an average, FPS, CPU load or before/after timing.
+  Photo hash/observations are private undercontinuation-0026.
+- IMPLEMENTED0828: DWC3ID5533300a is3.30a. Pinned Linuxv6.12 gadget.c,
+  Gitblob4959c26d3b71b89347e9118b1fb732b512ba8c05, explicitly requires both
+  SUSPHY and ENBLSLPM clear around HS endpoint commands. Earlier0825 used
+  only the old vendor SUSPHY sequence. Clear/restore both controls under
+  the existing command mutex; preserve unrelated bits and1000poll bound.
+  First failure now adds L(savedGUSB2PHYCFG) toQ(ep/cmd/response/error).
+  This remains a candidate, not a physical USB success.
+- IMPLEMENTED0829: explicitpolarisgpu3 bounded CX-only power-request trial.
+  Requires exactboard/GICmap/originalfirmware+ABI, rechecks cfgAHB and current
+  CX/HW/GX, refuses HW-control/SW-override/unclear existing request/stale GX.
+  Only clears GPUCC_CX_GDSCR.SW_COLLAPSE, observes HW POWER_ON for at most
+  500one-us polls (liveDTtimeout), then RMW-restores original collapse
+  request and verifies its readback. No OFF-status wait, matching liveDT's
+  no-status-check-on-disable; other masters can keep the domain powered.
+  Native fault paths never silently claim cleanup. No clock/rail/reset,
+  GMU firmware/SMMU operation or accelerated service added.
+  Read-only initialGPUprobe runs BEFORE the trial; no hardware reads follow
+  its cleanup, so a collapsing domain is not probed. P reports trial result:
+  0disabled/1IO/2AHBoff/3alreadyON/4refused/5ONobserved+requestrestored/
+  6enabletimeout/7restorefailed. G/rawCX/HW/M/X remain the initial snapshot.
+- IMPLEMENTED0830: elapsed-time presentation deadlines instead of everyN
+  callbacks. Requested20Hz upper limit; interval=max(requestedinterval,
+  4×lastpresentationelapsed), with outlier backoff capped200ms. This is a
+  heuristic based on wall time, not a CPU-utilization guarantee. Persistent
+  buffers and fittedgeometry remain. Proposedargs ONLY hz10→20/gpu2→3;
+  keepCPU1/512MiBRAMCOW/ufsrw0 and identicalphoneADT.
+- Final native15 tests PASS with ASan/UBSan, including all four USB low-power
+  combinations, GPU power refusal/timeout/read+posted-write-failure/restore
+  paths and frame-budget rounding/overflow/outlier cases. Three real-header
+  ARM64units compile PASS; all imports resolve against0025+newobjects.
+  Ten ordered patches0821..0830 apply without fuzz/offset; all16resulting
+  files match actualcompiletree. Full CI and new exact-kernel standard-clock
+  runs remain pending. No0026image/request/phoneactionyet; phone remains0025.
+
+### 0025 EP0 wake / CPU display / CX status correction
 
 - Actual0024 GUI is restored: human confirms lockscreen/desktop appears,
   but operation stutters. Two physical photos show the home screen and
@@ -80,14 +124,10 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   No partition write. Readonly host USB observation6744 exited0:21samples,
   61.571s, no known-phone USB VID or matching ECM NIC through
   **11:09:55.957915UTC**. Host network settings unchanged; no log or panel
-  captured. Physical GUI/stutter and larger saved status rows were requested,
-  with no response yet. This bounded absence does not identify the new
-  hardware failure phase; obtain S/E/Q before changing further controller state.
-- NEXT: obtain physical GUI/S/E/Q,
-  CX/HW/M/X and T result. If the matching ECM appears, capture RAM log and
-  panel via the bounded snapshot reader. USB success and speed improvement
-  are unproven; GPUexecution remains disabled. Do not reboot again without
-  first collecting these0025 observations.
+  captured. Later human/photo confirm Settings is usable and slightly faster,
+  with the exact failure and GPU snapshot recorded in0026 above.
+- Those observations now drive0026 above. USB connection/GPUexecution remain
+  unavailable; quantified speed improvement is not established.
 
 ### 0024 USB startup isolation after0023 GUI regression
 

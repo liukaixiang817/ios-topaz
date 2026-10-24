@@ -21,24 +21,24 @@ static uint32_t rd(void *p,uint32_t off) {
     struct mock *m=p;m->reads++;
     if(off==PDWC3_PHYCFG)return m->phy;
     assert(off==0xc80cu+m->ep*16);
-    /* An asserted SUSPHY stalls the command on the modeled hardware. */
+    /* Either low-power control stalls HS commands on DWC3 3.30a. */
     m->polls++;
-    if((m->phy&PDWC3_SUSPHY)||m->mode==2)return m->cmd|PDWC3_CMDACT;
+    if((m->phy&PDWC3_LOW_POWER)||m->mode==2)return m->cmd|PDWC3_CMDACT;
     if(m->mode==3 && m->polls<4)return m->cmd|PDWC3_CMDACT;
     return m->mode==1 ? 0x2000u|m->cmd : m->response;
 }
 static void wr(void *p,uint32_t off,uint32_t value) {
     struct mock *m=p;
     if(off==PDWC3_PHYCFG){
-        assert((value^m->phy)==PDWC3_SUSPHY);
-        if(value&PDWC3_SUSPHY)assert(m->writes==4);
+        assert(((value^m->phy)&~PDWC3_LOW_POWER)==0);
+        if(value&PDWC3_LOW_POWER)assert(m->writes==4);
         else assert(!m->writes);
         m->phy=value;return;
     }
     assert(m->writes<4);
     m->offsets[m->writes]=off;m->values[m->writes++]=value;
     if(m->writes==4){
-        assert(!(m->phy&PDWC3_SUSPHY));
+        assert(!(m->phy&PDWC3_LOW_POWER));
         /* A current unrelated bit must survive the later restore. */
         m->phy|=1u<<13;
     }
@@ -46,8 +46,8 @@ static void wr(void *p,uint32_t off,uint32_t value) {
 static void wait_us(void *p,uint32_t us){assert(us==1);((struct mock*)p)->waits++;}
 int main(void){
     struct pdwc3_result s;
-    for(unsigned sus=0;sus<2;sus++)for(unsigned mode=0;mode<4;mode++){
-        struct mock m={.phy=0x8100u|(sus?PDWC3_SUSPHY:0),.ep=1,.cmd=0x20009,
+    for(unsigned bits=0;bits<4;bits++)for(unsigned mode=0;mode<4;mode++){
+        struct mock m={.phy=0x8001u|((bits&1)?PDWC3_SUSPHY:0)|((bits&2)?PDWC3_ENBLSLPM:0),.ep=1,.cmd=0x20009,
             .mode=mode,.response=0x70001};m.initial=m.phy;
         struct pdwc3_io io={&m,rd,wr,wait_us};
         unsigned e=polaris_dwc3_command(&io,1,m.cmd,11,22,33,&s);

@@ -1,6 +1,6 @@
 /* DWC3 endpoint commands for the admitted, high-speed Polaris gadget.
- * Register semantics checked against MiCode c7cb50c1 drivers/usb/dwc3/gadget.c:
- * endpoint commands temporarily clear GUSB2PHYCFG.SUSPHY, then restore it.
+ * DWC_usb3 3.30a (the phone reports 0x5533300a) needs both low-power controls
+ * clear for HS endpoint commands. Checked against Linux v6.12 gadget.c.
  * The caller serializes commands and provides its existing MMIO barriers.
  */
 #ifndef POLARIS_DWC3_COMMAND_H
@@ -8,6 +8,8 @@
 #include <stdint.h>
 #define PDWC3_PHYCFG 0xc200u
 #define PDWC3_SUSPHY (1u << 6)
+#define PDWC3_ENBLSLPM (1u << 8)
+#define PDWC3_LOW_POWER (PDWC3_SUSPHY | PDWC3_ENBLSLPM)
 #define PDWC3_CMDACT (1u << 10)
 #define PDWC3_COMMAND_POLLS 1000u
 enum pdwc3_error { PDWC3_OK, PDWC3_STATUS, PDWC3_TIMEOUT, PDWC3_ARGUMENT };
@@ -30,8 +32,9 @@ polaris_dwc3_command(const struct pdwc3_io *io, unsigned ep, uint32_t command,
         !(command & 15u) || (command & PDWC3_CMDACT)) return PDWC3_ARGUMENT;
     uint32_t base = 0xc800u + ep * 16u;
     s->phy_before = io->read(io->ctx, PDWC3_PHYCFG);
-    if (s->phy_before & PDWC3_SUSPHY)
-        io->write(io->ctx, PDWC3_PHYCFG, s->phy_before & ~PDWC3_SUSPHY);
+    uint32_t saved = s->phy_before & PDWC3_LOW_POWER;
+    if (saved)
+        io->write(io->ctx, PDWC3_PHYCFG, s->phy_before & ~PDWC3_LOW_POWER);
     io->write(io->ctx, base + 8, p0);
     io->write(io->ctx, base + 4, p1);
     io->write(io->ctx, base, p2);
@@ -46,10 +49,10 @@ polaris_dwc3_command(const struct pdwc3_io *io, unsigned ep, uint32_t command,
         }
         io->wait_us(io->ctx, 1);
     }
-    /* Restore only our SUSPHY change; preserve any other current bits. */
+    /* Restore our two controls on every path, preserving unrelated bits. */
     s->phy_after = io->read(io->ctx, PDWC3_PHYCFG);
-    if (s->phy_before & PDWC3_SUSPHY) {
-        s->phy_after |= PDWC3_SUSPHY;
+    if (saved) {
+        s->phy_after = (s->phy_after & ~PDWC3_LOW_POWER) | saved;
         io->write(io->ctx, PDWC3_PHYCFG, s->phy_after);
     }
     return (enum pdwc3_error)s->error;

@@ -1,0 +1,81 @@
+--- a/iokit/Kernel/arm/SweetFramebuffer.cpp
++++ b/iokit/Kernel/arm/SweetFramebuffer.cpp
+@@ -38,6 +38,7 @@
+ #if defined(POLARIS_RAM_ONLY)
+ #include "polaris_display_blit.h"
+ #include "polaris_display_staged.h"
++#include "polaris_display_cadence.h"
+ #include <libkern/c++/OSData.h>
+ #endif
+ 
+@@ -111,6 +112,8 @@
+     uint8_t fPolarisPresent[SWEET_FB_SWAP_REC_SIZE];
+     uint32_t fPolarisLastUS, fPolarisMaxUS;
+     uint64_t fPolarisTotalNS;
++    uint64_t fPolarisNextPresent;
++    uint32_t fPolarisFrameHz;
+     bool fDebugStatus;
+     uint32_t debugCapture(void *, uint32_t);
+ #endif
+@@ -238,6 +241,7 @@
+     }
+     fPolarisLastUS = fPolarisMaxUS = 0;
+     fPolarisTotalNS = 0;
++    fPolarisNextPresent = 0;
+ #endif
+ 	PE_current_console(&video);
+ 	fPhys = video.v_baseAddr;
+@@ -294,6 +298,11 @@
+ 	}
+ 	uint32_t hz = 10;
+ 	PE_parse_boot_argn("sweetfb_hz", &hz, sizeof(hz));
++#if defined(POLARIS_RAM_ONLY)
++    if (!hz) hz = 10;
++    if (hz > 30) hz = 30;
++    fPolarisFrameHz = hz;
++#endif
+ 	fFlushTicks = (hz == 0 || hz >= 60) ? 1 : 60 / hz;
+ 	fVsync->setTimeoutUS(SWEET_FB_VSYNC_US);
+ 
+@@ -349,7 +358,11 @@
+ 		sender->setTimeoutUS(SWEET_FB_VSYNC_US);
+ 		return;
+ 	}
++#if defined(POLARIS_RAM_ONLY)
++    bool flush = fb->fDirty && now >= fb->fPolarisNextPresent;
++#else
+ 	bool flush = fb->fDirty && (count % fb->fFlushTicks) == 0;
++#endif
+ 	uint8_t *rec = NULL;
+ 	if (flush) {
+ #if defined(POLARIS_RAM_ONLY)
+@@ -375,6 +388,9 @@
+         if (us > __atomic_load_n(&fb->fPolarisMaxUS, __ATOMIC_RELAXED))
+             __atomic_store_n(&fb->fPolarisMaxUS, us, __ATOMIC_RELAXED);
+         __atomic_fetch_add(&fb->fPolarisTotalNS, elapsed, __ATOMIC_RELAXED);
++        uint64_t interval = 0;
++        nanoseconds_to_absolutetime((uint64_t)polaris_fb_interval_us(fb->fPolarisFrameHz, us) * 1000, &interval);
++        fb->fPolarisNextPresent = started + interval;
+ #else
+ 		IOFreeData(rec, SWEET_FB_SWAP_REC_SIZE);
+ #endif
+--- a/iokit/Kernel/arm/polaris_display_cadence.h
++++ b/iokit/Kernel/arm/polaris_display_cadence.h
+@@ -0,0 +1,17 @@
++/* CPU presentation interval: requested limit plus a measured copy budget.
++ * Elapsed wall time can include preemption, so one outlier is capped at
++ * a 200ms interval; it must not freeze the UI for seconds after a pause.
++ */
++#ifndef POLARIS_DISPLAY_CADENCE_H
++#define POLARIS_DISPLAY_CADENCE_H
++#include <stdint.h>
++static inline uint32_t polaris_fb_interval_us(uint32_t hz, uint32_t elapsed_us)
++{
++    if (!hz) hz = 10;
++    if (hz > 30) hz = 30;
++    uint32_t base = (1000000u + hz - 1) / hz;
++    uint64_t budget = (uint64_t)elapsed_us * 4;
++    if (budget > 200000) budget = 200000;
++    return budget > base ? (uint32_t)budget : base;
++}
++#endif
