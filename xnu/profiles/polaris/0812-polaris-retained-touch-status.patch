@@ -1,0 +1,168 @@
+--- a/bsd/dev/polaris_touch.c
++++ b/bsd/dev/polaris_touch.c
+@@ -30,6 +30,25 @@
+     int x[10], y[10];
+     unsigned frames;
+ } pt;
++/* Relaxed individual diagnostic fields, not a coherent hardware snapshot.
++ * Reporter only reads saved RAM, never waits for I2C/storage locks. */
++enum { PD_PHASE, PD_ERROR, PD_FW, PD_STATUS, PD_IRQ, PD_REG, PD_LEN,
++       PD_A, PD_B, PD_FRAMES, PD_DOWN, PD_DONE, PD_COUNT };
++static uint32_t pt_diag[PD_COUNT];
++static void pd(unsigned field, uint32_t value)
++{ __atomic_store_n(&pt_diag[field], value, __ATOMIC_RELAXED); }
++static uint32_t pget(unsigned field)
++{ return __atomic_load_n(&pt_diag[field], __ATOMIC_RELAXED); }
++void polaris_touch_report(void);
++void polaris_touch_report(void)
++{
++    if (!pget(PD_PHASE)) { return; }
++    printf("D TOUCH: phase=%u result=%u done=%u frames=%u down=%x\n",
++        pget(PD_PHASE), pget(PD_ERROR), pget(PD_DONE), pget(PD_FRAMES), pget(PD_DOWN));
++    printf("D TREG: fw=%x status=%x irq=%x\n", pget(PD_FW), pget(PD_STATUS), pget(PD_IRQ));
++    printf("D TRMI: reg=%x n=%u data=%x/%x\n",
++        pget(PD_REG), pget(PD_LEN), pget(PD_A), pget(PD_B));
++}
+ static int pt_wait_channel;
+ static const uint32_t pt_gpio_pa[] = {
+     0x03921000, 0x03922000, /* GPIO33/34 NORTH: qup14 mux2 */
+@@ -106,11 +125,13 @@
+     pt.se = ml_io_map(0xa98000, 0x4000);
+     if (!pt.se) { return false; }
+     uint32_t inherited_fw = pt_rd(pt.se, 0x68), inherited_status = pt_rd(pt.se, PG_STATUS);
++    pd(PD_FW, inherited_fw); pd(PD_STATUS, inherited_status);
+     printf("POLARIS TOUCH: inherited fw=%x status=%x\n", inherited_fw, inherited_status);
+     if (((inherited_fw >> 8) & 255u) != 3 || (pt_rd(pt.se, 0x64) & 1u) ||
+         (inherited_status & 0x1001u) || (pt_rd(pt.se, PG_TX_COUNT) & 0xfffffffu) ||
+         (pt_rd(pt.se, PG_RX_COUNT) & 0x1ffffffu)) { return false; }
+     uint32_t cfg = pt_rd(pt.gcc, rcg + 4), dfs = pt_rd(pt.gcc, rcg + 0x14);
++    pd(PD_REG, 0x100000 + rcg + 4); pd(PD_LEN, 8); pd(PD_A, cfg); pd(PD_B, dfs);
+     printf("POLARIS TOUCH: GCC vote=%x cfg=%x dfs=%x\n", pt_rd(pt.gcc, 0x5200c), cfg, dfs);
+     *level = 0;
+     if (dfs & 1u) {
+@@ -152,6 +173,8 @@
+     uint32_t reset = pt_rd(pt.pin[2], 0), irq = pt_rd(pt.pin[3], 0);
+     if ((reset & 0x3cu) || !(reset & 0x200u) || !(pt_rd(pt.pin[2], 4) & 2u) ||
+         (irq & 0x23cu)) {
++        unsigned i = ((reset & 0x3cu) || !(reset & 0x200u) || !(pt_rd(pt.pin[2], 4) & 2u)) ? 2u : 3u;
++        pd(PD_REG, pt_gpio_pa[i]); pd(PD_LEN, 8); pd(PD_A, pt_rd(pt.pin[i],0)); pd(PD_B, pt_rd(pt.pin[i],4));
+         printf("POLARIS TOUCH: reset/IRQ not inherited ready; no reset or PMIC write\n"); return false;
+     }
+     for (unsigned i = 0; i < 2; ++i) {
+@@ -186,18 +209,27 @@
+     if (pt.page == page) { return 0; }
+     uint8_t b[2] = {0xff, (uint8_t)page};
+     int e = pg_message(&pt.bus, b, 2, NULL, 0, false);
++    pd(PD_IRQ,pt.bus.irq_seen);
+     if (!e) { pt.page = page; }
+     return e;
+ }
+ static int pt_read(void *ctx, uint16_t reg, uint8_t *buf, size_t n)
+ {
+     (void)ctx;
++    pd(PD_REG,reg); pd(PD_LEN,(uint32_t)n); pd(PD_A,0); pd(PD_B,0);
+     if (!polaris_rmi_span(reg, n)) { return PG_BAD_ARGUMENT; }
+     int e = pt_page(reg); if (e) { return e; }
+     uint8_t b = (uint8_t)reg;
+     e = pg_message(&pt.bus, &b, 1, NULL, 0, true);
+     if (!e) { e = pg_message(&pt.bus, NULL, 0, buf, n, false); }
++    pd(PD_IRQ,pt.bus.irq_seen);
+     if (e) { pt.page = -1; }
++    else {
++        uint32_t a=0,bv=0;
++        for (unsigned i=0;i<n && i<4;i++) { a |= (uint32_t)buf[i] << (8*i); }
++        for (unsigned i=4;i<n && i<8;i++) { bv |= (uint32_t)buf[i] << (8*(i-4)); }
++        pd(PD_A,a); pd(PD_B,bv);
++    }
+     return e;
+ }
+ static int pt_control(uint16_t reg, uint8_t value)
+@@ -212,29 +244,35 @@
+     for (unsigned i = 0; i < 10; ++i) {
+         if (pt.down & (1u << i)) { sweet_hid_touch(i, 0, pt.x[i], pt.y[i]); }
+     }
+-    pt.down = 0;
++    pt.down = 0; pd(PD_DOWN,0);
+ }
+ static void pt_thread(void *arg, wait_result_t result)
+ {
+     (void)arg; (void)result;
++    pd(PD_PHASE,1);
+     pt_wait(5000);
++    pd(PD_PHASE,2);
+     for (unsigned i = 0; i < 30 && !polaris_hid_touch_ready(); ++i) { pt_wait(1000); }
+-    if (!polaris_hid_touch_ready()) { printf("POLARIS TOUCH: HID not ready; stop\n"); goto done; }
++    if (!polaris_hid_touch_ready()) { pd(PD_ERROR,10); printf("POLARIS TOUCH: HID not ready; stop\n"); goto done; }
++    pd(PD_PHASE,3);
+     pt.gcc = ml_io_map(0x100000, 0x60000);
+     for (unsigned i = 0; i < 4; ++i) { pt.pin[i] = ml_io_map(pt_gpio_pa[i], 0x1000); }
+     if (!pt.gcc || !pt.pin[0] || !pt.pin[1] || !pt.pin[2] || !pt.pin[3]) { goto done; }
+     unsigned level;
+-    if (!pt_clocks(&level)) { printf("POLARIS TOUCH: clock guard failed\n"); goto done; }
+-    if (!pt_engine(level)) { goto done; }
++    if (!pt_clocks(&level)) { pd(PD_ERROR,11); printf("POLARIS TOUCH: clock guard failed\n"); goto done; }
++    pd(PD_PHASE,4);
++    if (!pt_engine(level)) { pd(PD_ERROR,12); goto done; }
+     pt.bus.read = pt_bus_read; pt.bus.write = pt_bus_write; pt.bus.delay_us = pt_bus_delay;
+     pt.page = -1;
++    pd(PD_PHASE,5);
+     int e = polaris_rmi_discover(pt_read, NULL, &pt.rmi);
+     printf("POLARIS TOUCH: RMI discover=%d irq=%x\n", e, pt.bus.irq_seen);
+-    if (e) { goto done; }
++    if (e) { pd(PD_ERROR,e); goto done; }
+     printf("POLARIS TOUCH: F01=%x/%x F12=%x/%x report=%x present=%x n=%u stride=%u max=%u,%u\n",
+         pt.rmi.f01_control, pt.rmi.f01_data, pt.rmi.f12_control, pt.rmi.f12_data,
+         pt.rmi.report, pt.rmi.presence, pt.rmi.fingers, pt.rmi.stride, pt.rmi.max_x, pt.rmi.max_y);
+-    if (pt.mode == 2) { printf("POLARIS TOUCH: probe complete; no HID events\n"); goto done; }
++    if (pt.mode == 2) { pd(PD_PHASE,8); printf("POLARIS TOUCH: probe complete; no HID events\n"); goto done; }
++    pd(PD_PHASE,6); pd(PD_ERROR,13);
+     uint8_t control, status;
+     if (pt_read(NULL, pt.rmi.f01_data, &status, 1) || (status & 0x40u) ||
+         pt_read(NULL, pt.rmi.f01_control, &control, 1)) { goto done; }
+@@ -244,15 +282,17 @@
+     if (pt_read(NULL, pt.rmi.f01_control, &control, 1) || (control & 0x83u) != 0x80u) {
+         printf("POLARIS TOUCH: normal/configured readback failed\n"); goto done;
+     }
++    pd(PD_PHASE,7); pd(PD_ERROR,0);
+     unsigned errors = 0, ticks = 0;
+     printf("POLARIS TOUCH: polling real S3330 contacts,20ms; physical1080x2160\n");
+     while (!pt.bus.dead) {
+         struct polaris_rmi_frame f;
+         e = polaris_rmi_sample(pt_read, NULL, &pt.rmi, &f);
+         if (e) {
++            pd(PD_ERROR,e);
+             if (++errors >= 3) { printf("POLARIS TOUCH: stopped report=%d irq=%x\n", e, pt.bus.irq_seen); break; }
+         } else {
+-            errors = 0;
++            errors = 0; pd(PD_ERROR,0);
+             for (unsigned i = 0; i < pt.rmi.fingers; ++i) {
+                 bool down = (f.mask & (1u << i)) != 0;
+                 if (down) {
+@@ -262,13 +302,15 @@
+                 } else if (pt.down & (1u << i)) { sweet_hid_touch(i, 0, pt.x[i], pt.y[i]); }
+             }
+             if (pt.down != f.mask) { printf("POLARIS TOUCH: contacts=%x frame=%u\n", f.mask, pt.frames); }
+-            pt.down = f.mask; ++pt.frames;
++            pt.down = f.mask; ++pt.frames; pd(PD_DOWN,pt.down); pd(PD_FRAMES,pt.frames);
+         }
+         if (++ticks == 1500) { printf("POLARIS TOUCH: frames=%u down=%x\n", pt.frames, pt.down); ticks = 0; }
+         pt_wait(20);
+     }
+     pt_release();
+ done:
++    if (!pget(PD_ERROR) && pget(PD_PHASE) != 7 && pget(PD_PHASE) != 8) { pd(PD_ERROR,14); }
++    pd(PD_DONE,1);
+     (void)thread_terminate(current_thread()); thread_block(THREAD_CONTINUE_NULL);
+ }
+ void polaris_touch_init(void)
+--- a/bsd/dev/sweet_ufs.c
++++ b/bsd/dev/sweet_ufs.c
+@@ -188,6 +188,8 @@
+ polaris_diag_report(void)
+ {
+     if (!polaris_diag_enabled()) { return false; }
++    extern void polaris_touch_report(void);
++    polaris_touch_report(); /* saved RAM only; no bus access or waits */
+     char line[POLARIS_DIAG_BYTES];
+     printf("\nPOLARIS DIAG: first failures, RAM only\n");
+     for (unsigned i = 0; i < POLARIS_DIAG_SLOTS; i++) {

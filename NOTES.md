@@ -12,6 +12,19 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ### CURRENT NEXT ACTION —0014 lockscreen/no touch confirmed;port exact Synaptics input
 
+-0811source24d2bfbd6e10233b578bcaf3608f9e6b2eb24e93 pushed;initialCI
+40058349228/job120766219551 building. Beforehardwaretest added0812 retained
+ touchstatus:3boundedlines inperiodicRAMdiagnostics evenafterinitialthread
+ stops. Atomic32bit savedphase/result/firmware/status/IRQ/lastreg+8data bytes/
+ frames/contactmask;reporter neveraccessesbus orwaits onlocks. Phase1delay,
+2HID,3clock/fwownership,4pins/FIFO,5RMI,6configured,7polling,8probecomplete;
+ done1meansworkerended,notnecessarilyfailure. Errors10HID/11clock/12engine/
+13configured/14mapping;RMI1IO/2format/3unsupported/4reset. Details private
+ retained-status-patch-check.json. Both0812filesapply+MATCH;4actualCI-header
+ ARM64compilesPASS includingtouch andstorage reporter. Fullnative/testedheader
+ contracts unchanged. NeednewcompletekernelCIfor0812,thenQEMUandpreparedimage;
+ original0811CI isbaselineonly andmaycancelonnewpush. No phone0015bootyet.
+
 -0811 INPUT implementation staged locally: newbsd/dev/polaris_touch.c,
  shared testedGENI/RMI/mapheaders;BSDlateinit caller;Polaris-only HIDinverse
  mapping/2160pxbottomedge. Explicitpolaristouch1input/2probe AND exactADTnode;
