@@ -22,6 +22,52 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT ACTION —0035 independently VERIFIED; needs new physical FASTBOOT
+
+- Publiccodeonlysource **57e5706115a723d599e3009ba17f66113841c5e0**, private
+  equivalentef3fb5a. CI **40143097727/job121018747923 SUCCESS**,
+ 23:31:44–23:37:25UTC **5m41s**, fullghlogresearch/polaris/ci-40143097727.log.
+  Kernel xnu/out-polaris-0035/kernel.development.sweet SHA
+  **4a9c9ba902ddf732b2290ce1dbcf9d79536b2913fe20514b6ebabd969d48c154**.
+- SelectedstandardclockCPU1base120s**SECOND PASS27**, asyncnetwork90sFIRST
+  PASS30,mode6wrongboard60sFIRSTPASS27 =**84checks**. All4VMchildreneach.
+  **Firstbasefailed**15.566msinterruptsmasked vsunchanged13.631488msthreshold,
+  machine_routines_common.c:897/caller__ml_handle_interrupts_disabled_duration;
+  causeUNESTABLISHED (newdiagnosticprintfexecutes, hardwareMMIOzero).
+  Originalpanic/provenance/driver/initialfrozenmanifest retainedq-base-a1,
+  base-initial-failure.json. Initialpipeline74571EXIT1. No timingwaiver.
+- Exactrecheck64485 completed120s/no_panic, thenhostpostprocessingfailed
+  dueELF T/t-onlyfilteronMach-O S/s symbols. **Hosterror, no thirdbase run**:
+  actualsavedoutputpassedall27originalchecks; everykernel/payload/args/ADT/
+  workload/harness/timingparameteridentical. Archivedrecheckdriver+blockhash,
+  postprocess-recovery.json. Fixedclassifier+continuedONLYremaining2cases
+  in59078EXIT0. Savedfailedrunsremainfailed. PriorSMP/syncfailuresunresolved.
+  Hostvalidation/finalscriptchangesrefrozen, originalversionsretained.
+- Native27ASan/UBSan,3actualCI-headerARM64units/imports,20patch28files,
+  17savedpanelrows/15detailrows<=67chars, originalprofile+halt/CGCTLsourcechecks
+  PASS. LiveSMMU**qcom,smmu-v2** selectsqsmmuv2_arch_ops (notSC7280v500).
+- Image **shim/out/polaris-xnu-readdebug-0035/polaris-xnu-readdebug-0035.img**,
+  **47460352bytes**, SHA
+  **4bbd505cc5fb1a8bfa1c672aa13eefba6c6f30e06ba0d0332909961c95387514**;
+  payload **2c321d406a9cdba9ce56d8323c38c6c16558f25fc90923cb63baeb3de60f934c**.
+  Independentfinalchecker29619EXIT0 PASS **23:48:36.569103UTC**, exactCI/source/
+  profile/hashes/provenance, savedbaseproof/remainingcaseproof, Cpayloadvalidator/
+  rebuild, imageembedding/65DTBs/frozeninputs. Source-onlypublication6files,
+  parentb4c0c57, privateNOTES/historyexcludedverified. Argsidentical0034:
+  CPU1/20Hz/512MiBRAMCOW/ufsrw0. NoactualGPU/USBsuccessclaim/3Dsubmission.
+- Phone0034Settingsworking,actualhumanGUIconfirmed,89914STOPPED. **No0035
+  deviceactions.** AsknewphysicalFASTBOOTbecauseUSBstillunavailable.
+  Afteractualreply:0035/run-device-step.py preflight (nowbaseline0034clean
+  header32311c08; full16GiBSHA/182maps/GPT/RO/unmounted/temp); then0035/
+  boot-and-watch.py. HostbootnowrequiresfreshfullrootproofevenifFSalreadyclean.
+  No partitionwrites. DoNOTrerunfinalcheckerafterdeviceactions.
+- Onbootwatchuntilactualsameboot“已进入系统”/explicitcancel, neverstopon
+  time/discovery. AttemptRAMlog/panelonECM. NeedGB/GS/SH/GEfw andURrealresults.
+- Managedsource-onlyworktree remainsattached:
+  /Users/lkx/.codex/worktrees/polaris-source-publish/ios-topaz at57e5706.
+  Keepprivateoperationalnoteslocal; futurepublicsourcepushfromthatworktree
+  HEAD:refs/heads/codex/polaris-preflight, neverpushcurrentprivatenoteshistory.
+
 ###0035 source-only CI ACTIVE; local run records remain private
 
 - Publicsource **57e5706115a723d599e3009ba17f66113841c5e0**, parentpublicb4c0c57;
