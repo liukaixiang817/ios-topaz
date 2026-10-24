@@ -22,7 +22,35 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT NEXT ACTION —0032 temporarily booted; observe USB until human confirms system entry
+### CURRENT NEXT ACTION —0032 Settings works; implement real GPU execution/rendering path
+
+- **Latestuserexplicitpriority: “我希望你尽快实现GPU功能，把图像交由GPU绘制”.**
+  Mainnexttarget actualGPU-owned testimage + completedcommand/fence, then
+  CoreAnimation. No accelerationclaim fromloadedfirmware/clocks/GPUservice.
+  Userconfirmed0032 **“已进入系统，能操作设置”**. Earlierreportedlogwait
+  advancedtoApplelogoandSettings; progresscontinuedwithoutreportedreboot.
+  Initialtentativebootregression classificationWITHDRAWN: slowbootobserved,
+  no actualpanic/reboot/failedGUIboot proved. Photos/hash/rawfacts saved in
+  continuation-0032/hardware-0032-observation.json.
+- **RealGPUmilestonePROVEN:** GM6/4,GT6/2,w2000; original32KiB/8192word
+  image copiedandreadbackunderGMU_BCR, CM3SYSRESET1ACKin1poll. TCMreads24579,
+  writes8192,barriers1; finalguard14000 expected1 actual1. FWINIT0,HFI0;
+  **firmwareNOTexecuted, NOacceleration**. ClockK9/0 intentionallyretains
+  BCR0/1/1afterTCMwrite; clocksundone,CXrequest222001restored. InitialGCC
+  CFG1,MEMNOC80004220,SNOC80000001. T10142isone10.142msCPUframecopy,notFPS.
+  CSR/TCMresponseunderBCR isnowphysicallyPROVEN; resetrelease/runtime
+  clocks/RPMh/SMMU/HFI/GX/ZAP/SQE/CPsubmission remainunimplemented.
+- USBphysicalquirk result: GCTL112000→112001 ACK1poll; retainedbitbecause
+  EP0cmd2stillactive402 after1000polls; GATEerror5/start0/restored0 ishonest
+  retention, notquirkACKfailure. DEPSTARTCFG9completed1poll; params1/0/0
+  readback1/0/0. **ClockgatingquirkdidNOTresolvetimeout**. HSsession0→10100000
+  →0 restored1. DCTL0,DSTS520020. Neednewrootcausereview, notclaimUSBfixed.
+- **Observer42785 STOPPED cleanly** bysameboot actualhumanconfirmation,
+  EXIT0 **2026-10-24T15:29:34.495523+00:00**, **87samples/871.748s**.
+  FirstsampleAndroid18d1:d00d bootloaderthenabsent; no nativeXNUUSB/ECM,
+  zeroinspectionerrors. All87rowsmatchfsyncedNDJSON. No RAMlog/panelcapture,
+  hostnetworkchange orreboot. Onlyrecordedwindow, notfullhardwaredisproof.
+  DoNOTrestart0032observer. Nextphysicalbootonlyaftervalidatednewimage.
 
 - **0032 TEMPORARY BOOT SENT** after actualhuman“已到FASTBOOT”. Freshpreflight
   session11911 EXIT0 **2026-10-24T15:14:28.170379+00:00**: full16GiBSHA/182maps/GPT/header
