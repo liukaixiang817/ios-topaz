@@ -293,8 +293,12 @@ and twelve ordered patches/eighteen files pass. Full
 [CI40091997436](https://github.com/liukaixiang817/ios-topaz/actions/runs/40091997436)
 succeeds in4m26s; allthree standard-clock modes FIRST PASS51checks, with no
 new failures or retries. Independent source/firmware/payload/image validation
-passes12:09:42UTC. The0027image is prepared; no0027phoneaction has occurred.
-The phone remains0026;0027 changes
+passes12:09:42UTC. A fresh full16GiBhash/182maps/GPT/header/RO check passes
+at12:12:55UTC, and temporary0027 is sent12:13:33UTC (Sending/BootingOKAY,
+1.176s). No partition write. The host sees no known-phone USB device or ECM
+in21samples/61.579s through12:14:44UTC; network settings unchanged, no log
+or panel captured. GUI, saved USB stage and clock-trial outcomes are pending.
+0027 changes
 only polarisgpu3→4 in arguments, leaving display settings, one CPU,512MiB
 RAM COW, ufsrw0 and the ADT unchanged.
 

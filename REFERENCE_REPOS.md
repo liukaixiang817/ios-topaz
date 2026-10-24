@@ -142,8 +142,9 @@ refused. It does not execute the firmware or borrow the redwood address map.
 
 The original gadget.c allocates transfer resources immediately after
 DEPSTARTCFG0, before SETEPCONFIG.0027 follows that order and HS EP0 packet64,
-retaining the existing command serialization and bounds. Physical outcome
-remains pending.
+retaining the existing command serialization and bounds. Temporary0027 was
+sent; host enumeration remains absent over61.579s, with saved endpoint and
+GPU clock-trial states awaiting physical observation.
 
 The reference's [xl host tool](https://github.com/oosexgang/hackios-xnu-kernel/blob/d82c64a3a31cd27a0a0afbf6e213e467e44b1b4c/xl)
 drives a resident UEFI loader's fastboot-protocol server in
