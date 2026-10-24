@@ -10,7 +10,7 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION —0016 temporary boot SENT;observe actual input and home
+### CURRENT NEXT ACTION —0016 lockscreen/no touch reported;need NEW diagnostic photo
 
 - 0016preparedandSENT asbelow;source d75b8a315894e84320eb0b7e0529bac213adbae0,
 0813-polaris-gpio-i2c-fallback.patch committed+pushed. CI40061321613 SUCCESS,
@@ -45,12 +45,16 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
  bootloader+temporaryfastbootboot. Privateboot.json/boot-phone-sanitized.log/
  boot.log/preflight.json/full-image-readonly-verification.json/
  deployment-state.json saved. Source+handoffs d75b8a3/f8cc613/93f7519 pushed.
-- TRANSPORTacceptanceONLY;actual0016screen/touch/home/App NOTyetobserved.
- ASYNCquestionpending:waitlockscreen,swipephysicalbottomedgeonce,report
- noresponse/home/stillbooting. Keepthisboot;nonewrebootrequested. Neednew
- photoD TOUCH/TREG/TIF/TRMI ifnoinput;hardware-decoder.json explainspath,
- linebits/buserrors. NoUSBcontrol/restart/logport. HardwareGPIOownership/
- power/pullups/ACK/data unknownuntilrealphoto;QEMUpassesnothardwareproof.
+- NEW0016USERREPORT: "锁屏出现，但触摸无反应". Savedprivate touch-0016/
+ hardware-user-report-no-response.json +deployment-state.json. Lockscreen
+ reportedbyuser;noNEWphoto/statevaluesyet. Home/physicalinput/App NOTproven.
+ PriorbottomswipequestionANSWERED;noFASTBOOTrequestpending. Keep0016running.
+ NeedNEW0016photo D TOUCH/TREG/TIF/TRMI,especiallyD TIF path/lines/bus plus
+ phase/result. DoNOTreuse0015phase3/result11as0016stateorassumeGPIOfallback
+ wasselected. HardwareGPIOownership/power/pullups/ACK/data stillunknown.
+ hardware-decoder.json explainscodes. NoUSBcontrol/restart/logport. No new
+ source/CI/reboot solelyfromnonspecificnoresponse;waitdiagnostic evidence.
+ Latestprevioushandoff963dd5c pushed;thisreport recordedbeforestop.
 - EVIDENCE:four0015photos F16F697B.../7F7501AC... savedprivatelytouch-0015/
  hardware-clock-stop-{1..4}.jpg +hardware-clock-stop.json. Actualred4:10lock
  screen/camera amidconsoleoverdraw. D TOUCH phase3/result11/done1/frames0/
