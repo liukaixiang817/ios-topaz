@@ -1,6 +1,6 @@
-/* Original Polaris A630 firmware consumer and read-only hardware admission.
- * This stage does not start firmware, map SMMU streams, authenticate ZAP or
- * register an accelerated service. Hardware writes are deliberately absent.
+/* Original Polaris A630 firmware consumer and guarded hardware bring-up.
+ * Mode3 briefly owns the CX request; mode4 also tests parked-CXO GMU clocks
+ * under block reset. Neither executes firmware nor registers acceleration.
  */
 #if defined(POLARIS_RAM_ONLY)
 #include <sys/param.h>
@@ -13,6 +13,7 @@
 #include <corecrypto/ccsha2.h>
 #include "polaris_a630_probe.h"
 #include "polaris_a630_power.h"
+#include "polaris_a630_clock.h"
 #include "polaris_a630_hfi.h"
 #include "polaris_a630_images.h"
 extern vm_offset_t ml_io_map(vm_offset_t, vm_size_t);
@@ -22,6 +23,8 @@ uint32_t polaris_a630_status(void);
 uint32_t polaris_a630_details(char *, uint32_t);
 static struct a630_probe a630_saved;
 static struct a630_power_snapshot a630_power_saved;
+static struct a630_clock_snapshot a630_clock_saved;
+static uint32_t a630_mode;
 static uint32_t a630_started, a630_published, a630_firmware_ok, a630_abi_ok;
 static uint8_t a630_host_hfi[A630_HFI_BYTES] __attribute__((aligned(16384)));
 
@@ -36,6 +39,11 @@ uint32_t polaris_a630_details(char *out, uint32_t capacity)
     if (!out || !capacity) return 0;
     if (!__atomic_load_n(&a630_published, __ATOMIC_ACQUIRE))
         return (uint32_t)snprintf(out, capacity, "GPU pending");
+    if (a630_mode == 4)
+        return (uint32_t)snprintf(out, capacity, "G%x P%u K%u/%u R%x/%x M%x",
+            polaris_a630_status(), a630_power_saved.result, a630_clock_saved.result,
+            a630_clock_saved.step, a630_clock_saved.before[2], a630_clock_saved.config,
+            a630_clock_saved.live[3]);
     return (uint32_t)snprintf(out, capacity, "G%x P%u CX%08x HW%08x M%08x X%08x",
         polaris_a630_status(), a630_power_saved.result, a630_saved.cx, a630_saved.cx_hw,
         a630_saved.clocks[1], a630_saved.clocks[2]);
@@ -105,21 +113,33 @@ static bool a630_read_register(void *opaque, unsigned region, uint32_t off, uint
     __asm__ volatile("dsb sy" ::: "memory");
     return true;
 }
-static bool a630_write_request(void *opaque, unsigned region, uint32_t off, uint32_t value)
+static bool a630_write_register(void *opaque, unsigned region, uint32_t off, uint32_t value)
 {
     struct a630_io *io = opaque;
-    /* Only the CX collapse request, already mapped by the guarded reads. */
-    if (region != 1 || off != A630_CX_REQUEST || !io->base[1]) return false;
+    /* Exact GPUCC request/clock/reset allowlist; no GMU CSR write. */
+    if (region != 1 || !io->base[1] ||
+        (off != A630_CX_REQUEST && off != 0x1004 && off != 0x109c &&
+         off != 0x1120 && off != 0x1098 && off != 0x111c)) return false;
     *(volatile uint32_t *)(io->base[1] + off) = value;
     __asm__ volatile("dsb sy" ::: "memory");
     return true;
 }
 static void a630_delay_us(void *opaque __unused, uint32_t us) { delay(us); }
+static void a630_clock_on(void *io)
+{
+    a630_clock_trial(true, true, a630_read_register, a630_write_register,
+        a630_delay_us, io, &a630_clock_saved);
+}
 void polaris_a630_report(void)
 {
     if (!__atomic_load_n(&a630_published, __ATOMIC_ACQUIRE)) return;
     const struct a630_probe *s = &a630_saved;
     const struct a630_power_snapshot *p = &a630_power_saved;
+    const struct a630_clock_snapshot *c = &a630_clock_saved;
+    printf("D GPU CLOCK: result=%u reads=%u writes=%u step=%u changed=%x restored=%u polls=%u rcg=%x/%x live=%x/%x/%x/%x reset=%x/%x/%x\n",
+        c->result, c->reads, c->writes, c->step, c->changed, c->restored, c->polls,
+        c->before[2], c->config, c->live[0], c->live[1], c->live[2], c->live[3],
+        c->before[4], c->live[4], c->after[4]);
     printf("D GPU POWER: result=%u reads=%u writes=%u changed=%u restored=%u polls=%u req=%x/%x hw=%x/%x/%x\n",
         p->result, p->reads, p->writes, p->changed, p->request_restored, p->polls,
         p->before, p->after, p->before_hw, p->on_hw, p->after_hw);
@@ -133,8 +153,9 @@ void polaris_a630_init(void)
 {
     unsigned mode = 0;
     PE_parse_boot_argn("polarisgpu", &mode, sizeof(mode));
-    if ((mode != 1 && mode != 2 && mode != 3) ||
+    if ((mode != 1 && mode != 2 && mode != 3 && mode != 4) ||
         __atomic_exchange_n(&a630_started, 1, __ATOMIC_ACQ_REL)) return;
+    a630_mode = mode;
     DTEntry node;
     bool board = SecureDTLookupEntry(NULL, "/polaris-a630-firmware", &node) == kSuccess &&
         a630_u32(node, "version", 2) && a630_u32(node, "chip-id", 0x06030001) &&
@@ -156,17 +177,18 @@ void polaris_a630_init(void)
     struct a630_io io = {{0, 0, 0}};
     bool admitted = board && hardware && a630_firmware_ok && a630_abi_ok;
     /* Mode1 checks firmware/host ABI only, including in a synthetic guest.
-     * Modes2/3 first save the same read-only, initial hardware snapshot. */
-    a630_probe((mode == 2 || mode == 3) ? 1 : 0, admitted,
+     * Modes2/3/4 first save the same read-only, initial hardware snapshot. */
+    a630_probe((mode >= 2 && mode <= 4) ? 1 : 0, admitted,
         a630_read_register, &io, &a630_saved);
-    /* Mode3 is a bounded CX-only trial, restoring the original request.
-     * No GMU or other hardware reads follow the trial: its collapse request
-     * can be taking effect asynchronously, even after a successful restore.
-     * No clock/rail/reset/firmware/SMMU operation or GPU service is added. */
-    a630_power_trial(mode == 3 && a630_saved.result != A630_IO, admitted,
-        a630_read_register, a630_write_request, a630_delay_us, &io, &a630_power_saved);
+    /* Clock/reset trial is nested inside our observed CX-ON interval. No
+     * GMU register/firmware/SMMU access, and no reads after CX cleanup. */
+    a630_power_trial_with_hook((mode == 3 || mode == 4) && a630_saved.result != A630_IO,
+        admitted, a630_read_register, a630_write_register, a630_delay_us, &io,
+        &a630_power_saved, mode == 4 ? a630_clock_on : NULL, &io);
     if (a630_power_saved.result == A630_POWER_IO ||
-        a630_power_saved.result == A630_POWER_RESTORE_FAILED)
+        a630_power_saved.result == A630_POWER_RESTORE_FAILED ||
+        a630_clock_saved.result == A630_CLK_IO ||
+        a630_clock_saved.result == A630_CLK_RESTORE_FAILED)
         a630_saved.result = A630_IO;
     __atomic_store_n(&a630_published, 1, __ATOMIC_RELEASE);
     polaris_a630_report();

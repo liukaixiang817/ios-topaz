@@ -1,6 +1,7 @@
 /* One bounded CX power-request trial, following the live Polaris DT and
  * MiCode c7cb50c1 gdsc-regulator.c. No clocks, rails, resets, GMU or SMMU
- * are changed. The only writable register is GPUCC_CX_GDSCR.SW_COLLAPSE.
+ * are changed by this helper itself. Its optional hook runs inside our CX
+ * ON interval; the only power-helper write is GPUCC_CX_GDSCR.SW_COLLAPSE.
  * A successful trial observes POWER_ON and restores the original request;
  * other masters may keep the domain on (DT: no-status-check-on-disable).
  */
@@ -27,10 +28,11 @@ struct a630_power_snapshot {
 };
 typedef bool (*a630_write)(void *, unsigned, uint32_t, uint32_t);
 typedef void (*a630_wait_us)(void *, uint32_t);
+typedef void (*a630_power_on_hook)(void *);
 static inline enum a630_power_result
-a630_power_trial(bool enabled, bool exact_board, a630_read read,
+a630_power_trial_with_hook(bool enabled, bool exact_board, a630_read read,
     a630_write write, a630_wait_us wait_us, void *ctx,
-    struct a630_power_snapshot *s)
+    struct a630_power_snapshot *s, a630_power_on_hook hook, void *hook_ctx)
 {
     if (!s) return A630_POWER_DISABLED;
     *s = (struct a630_power_snapshot){0};
@@ -64,6 +66,7 @@ a630_power_trial(bool enabled, bool exact_board, a630_read read,
         }
         if (s->on_hw & A630_POWER_ON) {
             s->step = 3; s->result = A630_POWER_ON_REQUEST_RESTORED;
+            if (hook) hook(hook_ctx); /* Runs only while our CX request is ON. */
             break;
         }
         wait_us(ctx, 1);
@@ -91,4 +94,12 @@ done:
 #undef CX_WRITE
     return (enum a630_power_result)s->result;
 }
+static inline enum a630_power_result
+a630_power_trial(bool enabled, bool exact_board, a630_read read,
+    a630_write write, a630_wait_us wait_us, void *ctx, struct a630_power_snapshot *s)
+{
+    return a630_power_trial_with_hook(enabled, exact_board, read, write, wait_us,
+        ctx, s, (a630_power_on_hook)0, (void *)0);
+}
+
 #endif

@@ -10,7 +10,49 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION — 0026 sent; observe USB / GUI / saved CX trial result
+### CURRENT NEXT ACTION — 0027 GMU clock acquisition / USB resource ordering
+
+- Actual0026 Settings photo reads **U2 R7 S12 E5 C7f Q0/1/401/2 L2400**,
+  **G303 P5 CX00222001 HW00005ff4 M80004220 X80000001 T10277**.
+  Human: **操作正常，变化不大**, then clarifies firstappopen alreadyfast;
+  remainingpriority is animation/scroll stutter and actualGPUacceleration.
+  P5 confirms CX POWER_ON observed and originalcollapse requestreadback
+  restored; it does NOT prove OFFstatus or GPUexecution. L2400 alreadyhad
+  SUSPHY/ENBLSLPM clear, so0026lowpowerfix did notchange the failedcommand.
+  T10277 isone10.277ms elapsedpresentation, not averageFPS/CPU/speedup.
+  Photo/hash/privateinterpretation atcontinuation-0027/hardware-0026-observation.json.
+- Stop raising displayHz.0027keeps current20Hz/cadence,CPU1,phoneADT,
+  512MiBRAMCOW/ufsrw0; only proposedargchange ispolarisgpu3→4.
+- IMPLEMENTED0832: original SDM845 GPUCC clock-control helper, invoked only
+  inside our observedCX-ON interval. RecheckcfgAHB/CX/GX/GXGMU; refuse
+  active/owned clocks/reset, hardwarecontrol, nonparkedTCXOsource or pending
+  RCGupdate. Neverreparent PLL, changeCFG/rate/rail, touchGX/GMUCSR/SMMU.
+  For parkedTCXO19.2MHz only: hold GPUCC_GMU_BCR reset, enable AON/CXO,
+  forceGMURCGon, enable CX_GMUbranch. Everypoll≤500one-us. Save liveclock
+  values while resetheld; reverseallclockrequests and verify stoppedGMU/
+  RCG before releasing our reset, then restore originalCXcollapse request.
+  Onclockcleanupfailure retainreset and reportfailure, neverclaimrestoration.
+  P remainsCXresult; mode4bar K=result/step, R=originalCMD/config, M=liveGMU.
+  K0disabled/1IO/2refused/3root-timeout/4branch-timeout/5restorefailed/
+  6allclocksonunderreset+requestsrestored. No firmwareexecuted/acceleration.
+- IMPLEMENTED0831: align DWC3 startup with pinnedoriginal gadget.c resource
+  ordering: DEPSTARTCFG0, one transferresource onhardwareEP0..5, then EP0
+  OUT/IN config atHSmaxpacket64. SET_CONFIGURATION configuresECM endpoints
+  without another DEPSTARTCFG2/resource allocation. Actualsamehelper tested
+  for exactsequence/parameters andstoponeveryfailure; existingserialized
+  lowpowerhelper/1000pollbound/admission retained. PhysicalUSBcandidateonly.
+- PrimaryMiCode clk-rcg2.c/clk-branch.c/core.c/gadget.h fetchedviaGitHub,
+  Gitblobverified against c7cb50c1; privateexactsources/reviewmanifest retained.
+  Reference stilldifferentGPU; no redwoodregisters/firmware copiedblindly.
+- Native17 tests PASS withASan/UBSan, including everyclockread/postedwrite
+  failure andrestorationfailure, resetheldbeforeclockwrite, boundedtimeouts,
+  hookexecutedonlyinsideCXON andnoMMIOaftercollapse. TwoactualCI-header
+  ARM64unitscompilePASS/allimportsresolve against0026+newobjects. Twelve
+  orderedpatches0821..0832 applywithoutfuzz/offset, all18filesmatchcompiletree.
+  FullCI/standard-clock exactkernelruns/imagepending. Phone remains0026;
+  no0027phoneaction/requestyet. Commit andbuild before requestingFASTBOOT.
+
+### 0026 USB2 low power / CX request trial / frame cadence
 
 - Actual0025 works: human answers **能操作，稍稍快了点**. Physical Settings
   list photo shows **U2 R7 S12 E5 C7f Q0/1/401/2** and
@@ -85,11 +127,10 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   no known-phone USB VID or matchingECM through **11:43:08.194421UTC**.
   Hostnetworksettings unchanged; no RAMlog or panel captured. USBconnection
   remains unavailable; this absence does not identify the new failing stage.
-- NEXT: human GUIflow lockscreen→home→Settings→return, saved S/E/Q/L and
-  GPU P result. Asyncquestionssent, awaitinghumanfeedback. Phone now0026.
-  IfECMappears later, collectRAMlog/panel using
-  tools/polaris-usb-debug.py. GUI/USB/CXtrial/performancepending; do not claim
-  workingGPUacceleration, GMUfirmwareexecution or SMPphoneadmission.
+- Laterhuman/photo confirms Settingsvisible, operationnormal/subjectivelylittle
+  change, CXtrialP5 andsameUSBcommandtimeout. See0027above. USBconnection,
+  workingGPUacceleration, GMUfirmwareexecution and SMPphoneadmission remain
+  unestablished. Phone still0026.
 
 ### 0025 EP0 wake / CPU display / CX status correction
 

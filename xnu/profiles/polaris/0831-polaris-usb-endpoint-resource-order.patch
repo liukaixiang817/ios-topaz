@@ -1,0 +1,93 @@
+--- a/bsd/dev/sweet_usb.c
++++ b/bsd/dev/sweet_usb.c
+@@ -206,6 +206,7 @@
+ 
+ #if defined(POLARIS_RAM_ONLY)
+ #include "polaris_dwc3_command.h"
++#include "polaris_dwc3_endpoints.h"
+ static struct pdwc3_result polaris_ep_failure;
+ static uint32_t polaris_ep_failure_published;
+ static void polaris_usb_command_report(void)
+@@ -467,6 +468,12 @@
+ #endif
+ }
+ 
++#if defined(POLARIS_RAM_ONLY)
++static int polaris_endpoint_command(void *ctx __unused, unsigned ep,
++    uint32_t command, uint32_t p0, uint32_t p1, uint32_t p2)
++{ return ud_epcmd(ep, command, p0, p1, p2); }
++#endif
++
+ /* One TRB (at DMA offset trb) on physical endpoint ep. */
+ static void
+ ud_start_trb(unsigned ep, uint32_t trb, uint32_t buf, uint32_t len, uint32_t ctl)
+@@ -576,6 +583,9 @@
+ 	if (__atomic_load_n(&ud.configured, __ATOMIC_ACQUIRE)) {
+ 		return;
+ 	}
++#if defined(POLARIS_RAM_ONLY)
++    if (polaris_dwc3_ecm(polaris_endpoint_command, NULL)) {
++#else
+ 	if (ud_epcmd(0, DEPCMD_DEPSTARTCFG | (2u << 16), 0, 0, 0) ||
+ 	    ud_epcmd(EP_RX, DEPCMD_SETEPCONFIG, (2u << 1) | (512u << 3), (1u << 8) | ((uint32_t)EP_RX << 25), 0) ||
+ 	    ud_epcmd(EP_RX, DEPCMD_SETTRANSFRESOURCE, 1, 0, 0) ||
+@@ -584,6 +594,7 @@
+ 	    ud_epcmd(EP_INT, DEPCMD_SETEPCONFIG, (3u << 1) | (16u << 3) | (2u << 17),
+ 	    (1u << 8) | (8u << 16) | ((uint32_t)EP_INT << 25), 0) ||
+ 	    ud_epcmd(EP_INT, DEPCMD_SETTRANSFRESOURCE, 1, 0, 0)) {
++#endif
+ 		printf("SWEET USB: data endpoints setup failed\n");
+ 		return;
+ 	}
+@@ -1098,13 +1109,17 @@
+ 	/* Events: disconnect, USB reset, connect done */
+ 	dwc_wr(DEVTEN, 0x7);
+ 
+-	/* Endpoint 0 OUT/IN: start config, control type, max packet 512 until connect done. */
++	/* HS-only Polaris uses EP0 max packet64 and allocates resources first. */
+ 	PU_PROGRESS(PU_EP0, 0);
++#if defined(POLARIS_RAM_ONLY)
++    if (polaris_dwc3_ep0(polaris_endpoint_command, NULL)) {
++#else
+ 	if (ud_epcmd(0, DEPCMD_DEPSTARTCFG, 0, 0, 0) ||
+ 	    ud_epcmd(0, DEPCMD_SETEPCONFIG, (0u << 1) | (512u << 3), (1u << 8) | (1u << 10) | (0u << 25), 0) ||
+ 	    ud_epcmd(0, DEPCMD_SETTRANSFRESOURCE, 1, 0, 0) ||
+ 	    ud_epcmd(1, DEPCMD_SETEPCONFIG, (0u << 1) | (512u << 3), (1u << 8) | (1u << 10) | (1u << 25), 0) ||
+ 	    ud_epcmd(1, DEPCMD_SETTRANSFRESOURCE, 1, 0, 0)) {
++#endif
+ 		printf("SWEET USB: endpoint 0 setup failed\n");
+ 		PU_PROGRESS(PU_EP0, EIO);
+ 		return;
+--- /dev/null
++++ b/bsd/dev/polaris_dwc3_endpoints.h
+@@ -0,0 +1,30 @@
++/* HS-only ECM resource ordering from pinned SDM845 gadget.c:
++ * DEPSTARTCFG(0), one resource for each used hardware endpoint, then
++ * SETEPCONFIG. Resources survive USB bus resets, not controller resets.
++ */
++#ifndef POLARIS_DWC3_ENDPOINTS_H
++#define POLARIS_DWC3_ENDPOINTS_H
++#include <stdint.h>
++typedef int (*pdwc3_ep_command)(void *, unsigned, uint32_t, uint32_t, uint32_t, uint32_t);
++static inline int polaris_dwc3_ep0(pdwc3_ep_command command, void *ctx)
++{
++    if (!command) return -1;
++    if (command(ctx, 0, 9, 0, 0, 0)) return -1;
++    /* Hardware endpoints0..5 cover EP0 plus ECM bulk and interrupt IN. */
++    for (unsigned ep = 0; ep < 6; ep++)
++        if (command(ctx, ep, 2, 1, 0, 0)) return -1;
++    for (unsigned ep = 0; ep < 2; ep++)
++        if (command(ctx, ep, 1, 64u << 3, (1u << 8) | (1u << 10) | (ep << 25), 0)) return -1;
++    return 0;
++}
++static inline int polaris_dwc3_ecm(pdwc3_ep_command command, void *ctx)
++{
++    if (!command) return -1;
++    /* Do not reset/reallocate transfer resources on SET_CONFIGURATION. */
++    if (command(ctx, 2, 1, (2u << 1) | (512u << 3), (1u << 8) | (2u << 25), 0) ||
++        command(ctx, 3, 1, (2u << 1) | (512u << 3) | (1u << 17), (1u << 8) | (3u << 25), 0) ||
++        command(ctx, 5, 1, (3u << 1) | (16u << 3) | (2u << 17),
++            (1u << 8) | (8u << 16) | (5u << 25), 0)) return -1;
++    return 0;
++}
++#endif
