@@ -24,6 +24,10 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### CURRENT ACTION —0035 independently VERIFIED; needs new physical FASTBOOT
 
+- Actualhumanagainconfirmed0034 “已进入系统”. ItsobserverremainsSTOPPED;
+  noobserverrestartedandno0035deviceaction. New0035physicalFASTBOOTquestion
+  sent23:49–23:52UTC; awaitingactualnewreply. Thisconfirmationbelongs0034,
+  neveruseittostopfuture0035observation. Exactpreparedimageunchanged.
 - Publiccodeonlysource **57e5706115a723d599e3009ba17f66113841c5e0**, private
   equivalentef3fb5a. CI **40143097727/job121018747923 SUCCESS**,
  23:31:44–23:37:25UTC **5m41s**, fullghlogresearch/polaris/ci-40143097727.log.
