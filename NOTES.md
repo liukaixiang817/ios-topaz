@@ -22,6 +22,15 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   Sequential QEMU gate200/default200/nodiag90 and
   prepared phone image still required. Keep the current 0016 boot; request
   physical FASTBOOT only after the new image and checks are ready.
+- New-kernel QEMU gate200s PASS (29checks). Default200s FIRST ATTEMPT FAILED:
+  rtclock_intr took25.383008ms, threshold13.631488ms, after PID1 alive, before
+  synthetic target sampling. Physical touch disabled/no board marker; no
+  hardware wake code armed. Timer handler resolved from this exact kernel.
+  Cause unestablished; emulator/host scheduling is a possibility, not a fact.
+  Full ring/screen/QEMU log/provenance retained under touch-0017/
+  qemu-0017-default-attempt1 plus qemu-default-attempt1-failure.json and
+  validation-attempt1.log. One identical default retry next; retain passed
+  gate result. No timeout/panic checks weakened. Still no physical reboot.
 - User supplied HackiOS references. Read and pinned kernel
   **d82c64a3a31cd27a0a0afbf6e213e467e44b1b4c** and userland
   **a79ff0772a3454fd1ef127e181e5b3bce6c9ce18**. Private source copies and blob
