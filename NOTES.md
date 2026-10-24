@@ -45,7 +45,10 @@ early samples only. On0029 the human already confirmed boot complete and said
   compilesPASS/allimportsresolve against0031. Eightactualsaved-detail formatter
   bodiesPASS maximum32bitvalues<=67chars, pending/count0..4/capacity1/null.
   Seventeenorderedpatches0821..0837 applywithoutfuzz/offset;22files matchactual
-  compiletree. FullCI/exactkernel/image checks pending; NO0032phoneactionyet.
+  compiletree. Source d005eca815124bbbdc55811dd4e27844ec8b5a35 committed/pushed;
+  CI40104334481 inprogress, privatepipeline69378 waiting/building. Elevenhost
+  scripts frozen to thissource/run; observer8simulatedchecksPASS. FullCI/
+  exactkernel/image checks pending; NO0032phoneactionyet.
   Currentphone0031bootcomplete, observerstopped byhuman, GPUunaccelerated.
 
 - User **“已进入系统，GPU依旧不工作”** confirms0031bootcomplete. Settings
