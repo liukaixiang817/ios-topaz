@@ -50,13 +50,18 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   for exec transitions. Normal focused samples unchanged. Need real-kernel
   QEMU fallback case plus existing modes; native tests are not phone proof.
 - 0018 source173eda1e48dfe66e2eb2e446b39bc09e7f3130c3 committed+pushed;
-  CI40065872971/job120788889616 building. Private touch-0018/ source-audit,
+  CI40065872971/job120788889616 SUCCESS; full gh log ci-40065872971.log.
+  Private touch-0018/ source-audit,
   native-adt-profile.log/object-compile.json/patch-check.json retain proofs.
   Synthetic missing-GUI fixture caller-bootstrap.raw prepared, SHA
   94e5a98094e58733183d1bc28480669be3955d414b33b544e56e32732d00343c;
   rename only synthetic SpringBoard child/init path, six children still wait.
   New phone ADT candidate adds only irq-input125; removal restores0017 exactly.
-  No0018 kernel downloaded/QEMU run/prepared phone image/phone boot yet.
+  Exact-kernel download and sequential validation pipeline started. First
+  bootstrap120s (new missing-target path), then gate200/default200/nodiag90.
+  Current pipeline exec46766; logs download.log/validation-run.log. All passes
+  and C copy-plan/hash/one-property ADT proof required before FASTBOOT request.
+  No0018 prepared phone image/phone boot yet. Keep0017/no new physical action.
 
 ### 0017 actual temporary boot history
 
