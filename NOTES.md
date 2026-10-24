@@ -10,7 +10,7 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION —0018 lockscreen, touch stops at F01 phase6; diagnose0019
+### CURRENT NEXT ACTION —0019 correct F01 write-only command verification; rebuild
 
 - User confirmed FASTBOOT;0018 readonly preflight session31199 PASS, then
   boot session89716 exit0, fastboot Sending/Booting OKAY (1.174s total), sent
@@ -74,16 +74,33 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   status/control before+after/desired/F01addresses plus D TL discovered layout.
   Configure writes the SAME single volatile F01control byte at most once,
   preserves other bits, then observes readiness up to6reads/5x20ms waits;
-  never retries a write or resets the controller. Requires strict existing
-  control mask80/83 plus clear unconfigured status before sending contacts.
+  never retries a write or resets the controller. FINAL predicate verifies
+  normal sleep bits and Data0 UNCONFIGURED clear; ignores command bit7 echo.
   Flash/CRC/fatal status denied with exact evidence, rather than emitting from
-  potentially stale discovery. No claim this is0018's cause; bounded read-only
-  settling may resolve delayed acceptance, otherwise precise failure persists.
+  potentially stale discovery. New protocol review BELOW found a definite
+  invalid check in0018; full physicalinput still requires hardware evidence.
   Wake/IRQ/bus/ADT/cmdline/HID/PMIC/storage untouched. Actual shared-header
   ASan/UBSan tests and exact shipped-header identity PASS; baseline touch/GPIO/
   wake regressions PASS (10tests total), actual CI-header ARM64touch object
   PASS,0816bothfiles apply+MATCH. Full exact-kernel CI/QEMU/packaging still
   required; no0019 temporary image or phone boot yet.
+- Sourcef0fe99f2006e32869fcd5072536c59c7e21f9406 pushed;0019 fullCI
+  40068757656/job120797451003 in progress. Local full23 native tests PASS,
+  actual-header ARM64touch object PASS. New same-ADT packaging/read-only
+  boot wrappers and original-clock QEMU runners staged privately touch-0019/.
+- F01 PROTOCOL BUG FOUND before deploying candidate: Synaptics RMI4 spec
+  511-000136-01RevE section3.1.1 says Ctrl0 CONFIGURED bit7 reads0; actual
+  state is Data0 UNCONFIGURED bit7.0018 demands (Ctrl0&83)==80, so normal
+  control0 is falsely rejected. Google kernel/common rmi_f01.c commit
+  d28bdaff5e260852621d45edd3af017cc5d16925 lines447-453/561-573 writes
+  Ctrl0 command then checks Data0, consistent with local MiCode driver.
+  Private f01-protocol-review.json retains primary spec mirror/source links.
+  Correct0816 helper predicate to normal low2 sleep bits plus Data0 bit7clear;
+  native mock now models command read0 and asserts old0018check would fail.
+  Also retain real ignoredcommand/unconfigured and asleep readback refusal.
+  f0fe99f/CI40068757656 diagnostics candidate retained the bad bit predicate,
+  is SUPERSEDED before ANYphoneboot; do not download/deploy that artifact.
+  New local compilation/tests and corrected sourceCI needed next.
 
 ### 0017 hardware failure and 0018 implementation/validation history
 

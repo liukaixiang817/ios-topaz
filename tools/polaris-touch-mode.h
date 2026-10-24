@@ -6,6 +6,8 @@
 
 /* F01 is the only writable RMI register here. Configure once, then observe
  * readiness for at most100ms without issuing another write, reset or command.
+ * RMI4 spec511-000136-01 RevE section3.1.1: Ctrl0 bit7 is a command,
+ * reads as zero; Data0 bit7 (Unconfigured) is the actual state to verify.
  * The polaris vendor driver uses bit7=CONFIGURED and status6=CRC in progress.
  * CRC/flash/fatal status is denied here: discovery may need repeating after
  * such a transition, so no coordinates from the old layout may be emitted.
@@ -60,7 +62,8 @@ static inline int polaris_touch_mode(struct polaris_touch_mode *m)
         if (e) { return pm_fail(m,PM_IO,e); }
         m->valid|=8u;
         if (pm_status_bad(m->status_after)) { return pm_fail(m,PM_STATUS,0); }
-        if ((m->control_after & 0x83u)==0x80u && !(m->status_after & 0x80u)) {
+        /* Never require Ctrl0 bit7 to echo the configured command. */
+        if (!(m->control_after & 3u) && !(m->status_after & 0x80u)) {
             m->step=PM_READY; return PM_OK;
         }
         if (i<5) { m->sleep_ms(m->ctx,20); m->waited_ms+=20; }
