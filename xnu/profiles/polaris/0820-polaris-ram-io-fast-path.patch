@@ -49,7 +49,7 @@
  
  /*
   * WRITE(10) of count device blocks from the bounce buffer to lba. The range
-@@ -693,25 +710,40 @@
+@@ -693,25 +710,42 @@
  		want = MIN(want, blocks * UFS_BLOCK - skip);
  #endif
  #if defined(POLARIS_RAM_ONLY)
@@ -68,12 +68,13 @@
 +            const struct polaris_ram_request request = {
 +                .logical = lba, .physical = physical, .blocks = blocks,
 +                .skip = skip, .bytes = want, .read = rd,
++                .halted = polaris_io_failed,
 +                .data = vaddr + done, .bounce = bounce
 +            };
 +            struct polaris_ram_result result = polaris_ram_io(&polaris_root_cow,
 +                &request, polaris_arena_allocate, &polaris_root_arena,
 +                polaris_ram_read_immutable, NULL);
-+            if (result.source == POLARIS_RAM_BASE && result.status != POLARIS_RAM_INVALID)
++            if (result.base_read)
 +                polaris_base_calls++;
 +            if (result.status == POLARIS_RAM_OK) {
 +                if (result.source == POLARIS_RAM_OVERWRITE) polaris_full_writes++;
@@ -84,7 +85,8 @@
 +            }
 +            error = result.status == POLARIS_RAM_OK ? 0 :
 +                result.status == POLARIS_RAM_BASE_ERROR ? result.base_error :
-+                result.status == POLARIS_RAM_FULL ? ENOSPC : EINVAL;
++                result.status == POLARIS_RAM_FULL ? ENOSPC :
++                result.status == POLARIS_RAM_STOPPED ? EIO : EINVAL;
 +            if (result.status == POLARIS_RAM_FULL) {
                  polaris_cow_failures++;
                  if (polaris_cow_failures == 1 || !(polaris_cow_failures & (polaris_cow_failures - 1))) {
@@ -106,7 +108,7 @@
  			error = ufs_read_blocks(physical, blocks);
 --- /dev/null
 +++ b/bsd/dev/polaris_ram_io.h
-@@ -0,0 +1,80 @@
+@@ -0,0 +1,87 @@
 +/* Volatile root I/O. Caller holds its UFS/COW mutex for this entire call.
 + * Base callback can READ immutable blocks only. Complete cached reads and
 + * whole-block overwrites do not call it. A miss never exposes stale bounce
@@ -124,18 +126,21 @@
 +    POLARIS_RAM_BASE, POLARIS_RAM_CACHED, POLARIS_RAM_OVERWRITE
 +};
 +enum polaris_ram_status {
-+    POLARIS_RAM_OK, POLARIS_RAM_INVALID, POLARIS_RAM_BASE_ERROR, POLARIS_RAM_FULL
++    POLARIS_RAM_OK, POLARIS_RAM_INVALID, POLARIS_RAM_BASE_ERROR, POLARIS_RAM_FULL,
++    POLARIS_RAM_STOPPED
 +};
 +struct polaris_ram_request {
 +    uint64_t logical, physical;
 +    uint32_t blocks, skip, bytes;
 +    bool read;
++    bool halted; /* latched controller failure: DMA may still own bounce */
 +    void *data, *bounce;
 +};
 +struct polaris_ram_result {
 +    enum polaris_ram_status status;
 +    enum polaris_ram_source source;
 +    int base_error;
++    bool base_read;
 +};
 +typedef int (*polaris_ram_read_base)(void *, uint64_t, uint32_t, void *);
 +
@@ -158,7 +163,10 @@
 +    polaris_cow_alloc allocate, void *allocator,
 +    polaris_ram_read_base read_base, void *reader)
 +{
-+    struct polaris_ram_result out = {POLARIS_RAM_INVALID, POLARIS_RAM_BASE, 0};
++    struct polaris_ram_result out = {POLARIS_RAM_INVALID, POLARIS_RAM_BASE, 0, false};
++    /* A timed-out DMA owns the bounce buffer until reboot. This must precede
++     * cache copies and full overwrites too, not just the hardware callback. */
++    if (r && r->halted) { out.status = POLARIS_RAM_STOPPED; return out; }
 +    if (!r || !r->data || !r->bounce || !read_base ||
 +        !polaris_cow_range(c, r->logical, r->blocks) ||
 +        r->physical > UINT64_MAX - (r->blocks - 1) ||
@@ -171,6 +179,7 @@
 +    } else if (polaris_cow_copy_complete(c, r->logical, r->blocks, r->bounce)) {
 +        out.source = POLARIS_RAM_CACHED;
 +    } else {
++        out.base_read = true;
 +        out.base_error = read_base(reader, r->physical, r->blocks, r->bounce);
 +        if (out.base_error) { out.status = POLARIS_RAM_BASE_ERROR; return out; }
 +        if (!polaris_cow_overlay(c, r->logical, r->blocks, r->bounce)) return out;

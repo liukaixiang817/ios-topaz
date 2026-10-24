@@ -52,6 +52,19 @@ int main(void) {
     q.read=true;memset(data,0,4096);v=polaris_ram_io(c,&q,NULL,NULL,read_base,&b);
     assert(v.status==POLARIS_RAM_OK && v.source==POLARIS_RAM_CACHED && b.calls==0);
     for(unsigned i=0;i<4096;i++)assert(data[i]==0x42);
+    /* Controller failure may leave DMA live: no cached read, full overwrite,
+     * allocation or even bounce copy is permitted after the latch. */
+    q.halted=true;memset(data,0xac,4096);memset(bounce,0xab,4096);
+    v=polaris_ram_io(c,&q,NULL,NULL,read_base,&b);
+    assert(v.status==POLARIS_RAM_STOPPED && !v.base_read && b.calls==0);
+    for(unsigned i=0;i<4096;i++)assert(data[i]==0xac && bounce[i]==0xab);
+    q.read=false;v=polaris_ram_io(c,&q,ram,NULL,read_base,&b);
+    assert(v.status==POLARIS_RAM_STOPPED && !v.base_read && c->used==1);
+    for(unsigned i=0;i<4096;i++)assert(c->groups[0].data[i]==0x42 && bounce[i]==0xab);
+    q.logical=16;q.physical=0x1010;allocations=10;
+    v=polaris_ram_io(c,&q,ram,NULL,read_base,&b);
+    assert(v.status==POLARIS_RAM_STOPPED && c->used==1 && allocations==10 && b.calls==0);
+    allocations=-1;q.halted=false;q.logical=0;q.physical=0x1000;
     /* A hit on the first block plus miss on the second must copy nothing. */
     memset(bounce,0x91,8192);assert(!polaris_cow_copy_complete(c,0,2,bounce));
     for(unsigned i=0;i<8192;i++)assert(bounce[i]==0x91);

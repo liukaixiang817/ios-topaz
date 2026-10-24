@@ -12,15 +12,28 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ### CURRENT NEXT ACTION — 0021 works but Settings45s; prepare A55 SMP, continue A630 port
 
--0022source **4ae26812dee8064160a34be589877dca50996cf7** pushed;
+-0022reviewcorrection IMPLEMENTED beforeanyphoneaction: the RAMbypassmust
+  honorlatched`polaris_io_failed` BEFORE anybounce/RAMcopy/allocation, because
+  timedoutDMAstillownsbufferuntilreboot. Requestnowcarrieshaltedstateunder
+  existingUFSmutex; helperreturnsSTOPPED/EIOwithouttouchingbuffers orcallback,
+  includingfullcachehits/overwrites. Addednativeassertionsforcachedread,
+  overwriteandnewallocationafterfailure; all2RAM-I/Otests PASS withASan/UBSan,
+  original1000requestmodelstillPASS. ActualCIheaderARM64UFSrecompilePASS and
+  final0820bothfilesapplyMATCH; fullnewCI/sourcepin next. No0022physicalrequest
+  orboot hasoccurred.
+- **SUPERSEDED0022candidate1** source
+  **4ae26812dee8064160a34be589877dca50996cf7**;
   CI **40078382913/job120826570076 SUCCESS**, Build4m04s
   (08:31:58–08:36:02UTC), full `ci-40078382913.log` saved. Exactprofile,
   ZIPCRC and SHA verified; newkernel `xnu/out-polaris-0022/kernel.development.sweet`
   SHA **6e8024e146081fe120c4d1a53c65365d4f97a7e45af9a31dd8b05077baa28532**.
-  Orchestrator **2112RUNNING**, currentlynewkernel CPU1control120s, then
-  CPU2bootstrap90s andCPU2stress180s, allstandardclocksequentially.
-  On exactknownrtclockpanic retainoriginal +oneidenticalstandardretry;
-  no countedclock/thresholdwaiver. No0022phoneaction; waitfinalimageproof.
+  Orchestrator **2112stopped143byreview** after CPU1control120s/12checks and
+  CPU2bootstrap90s/12checks FIRSTstandardPASS. CPU2stresswasincompletewhen
+  fourexactmatchinglocalprocesseswereSIGTERMstopped, not a reportedkernelpanic.
+  Entirecandidateinputs/logs/kernel/ranges retained privately
+  **perf-0022-candidate1-4ae2681/** withsuperseded.json/review-stop-processes.json.
+  **NEVERdeploythiskernel**, missinglatchedDMAguarddescribedabove. Newcandidate
+  inperf-0022/; rerunnewexactkernelregressionsaftercorrectedCI, no clockwaiver.
 - Newprivate `perf-0022/stress-test.raw` synthetic64MiBHFSX, SHA
   **cf1ded21b9cdfbeffd2896b3a525845164cfea8f7afdf70a44f1aa6f49ea8a81**.
   PID1forks4children; each256cycles mmap64KiB/touch+verifyall4pages/munmap,

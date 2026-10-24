@@ -15,18 +15,21 @@ enum polaris_ram_source {
     POLARIS_RAM_BASE, POLARIS_RAM_CACHED, POLARIS_RAM_OVERWRITE
 };
 enum polaris_ram_status {
-    POLARIS_RAM_OK, POLARIS_RAM_INVALID, POLARIS_RAM_BASE_ERROR, POLARIS_RAM_FULL
+    POLARIS_RAM_OK, POLARIS_RAM_INVALID, POLARIS_RAM_BASE_ERROR, POLARIS_RAM_FULL,
+    POLARIS_RAM_STOPPED
 };
 struct polaris_ram_request {
     uint64_t logical, physical;
     uint32_t blocks, skip, bytes;
     bool read;
+    bool halted; /* latched controller failure: DMA may still own bounce */
     void *data, *bounce;
 };
 struct polaris_ram_result {
     enum polaris_ram_status status;
     enum polaris_ram_source source;
     int base_error;
+    bool base_read;
 };
 typedef int (*polaris_ram_read_base)(void *, uint64_t, uint32_t, void *);
 
@@ -49,7 +52,10 @@ polaris_ram_io(struct polaris_cow *c, const struct polaris_ram_request *r,
     polaris_cow_alloc allocate, void *allocator,
     polaris_ram_read_base read_base, void *reader)
 {
-    struct polaris_ram_result out = {POLARIS_RAM_INVALID, POLARIS_RAM_BASE, 0};
+    struct polaris_ram_result out = {POLARIS_RAM_INVALID, POLARIS_RAM_BASE, 0, false};
+    /* A timed-out DMA owns the bounce buffer until reboot. This must precede
+     * cache copies and full overwrites too, not just the hardware callback. */
+    if (r && r->halted) { out.status = POLARIS_RAM_STOPPED; return out; }
     if (!r || !r->data || !r->bounce || !read_base ||
         !polaris_cow_range(c, r->logical, r->blocks) ||
         r->physical > UINT64_MAX - (r->blocks - 1) ||
@@ -62,6 +68,7 @@ polaris_ram_io(struct polaris_cow *c, const struct polaris_ram_request *r,
     } else if (polaris_cow_copy_complete(c, r->logical, r->blocks, r->bounce)) {
         out.source = POLARIS_RAM_CACHED;
     } else {
+        out.base_read = true;
         out.base_error = read_base(reader, r->physical, r->blocks, r->bounce);
         if (out.base_error) { out.status = POLARIS_RAM_BASE_ERROR; return out; }
         if (!polaris_cow_overlay(c, r->logical, r->blocks, r->bounce)) return out;
