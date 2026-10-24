@@ -41,7 +41,8 @@ static bool rd(void *p,unsigned region,uint32_t off,uint32_t *v){
  else if(off==0x1124)*v=m->cfg;
  else{int i=index_of(off);assert(i>=0&&!m->collapsed);m->clock_reads++;
   if(m->pending[i]&&!--m->pending[i])apply(m,i,m->pending_value[i]);
-  *v=(m->live_zero_reset&&i==4&&m->clock.step==9)?0:m->reg[i];}
+  *v=(m->live_zero_reset&&i==4&&
+       ((m->live_zero_reset==1&&m->clock.step==9)||(m->live_zero_reset==2&&m->clock.step==10)))?0:m->reg[i];}
  return true;
 }
 static bool wr(void *p,unsigned region,uint32_t off,uint32_t value){
@@ -94,6 +95,9 @@ int main(void){
  m=fresh();assert(a630_clock_trial_with_hook(true,true,rd,wr,wait_us,&m,&m.clock,held_hook,&m)==A630_CLK_READY_RESET_HELD);
  assert(m.clock.reset_retained&&!m.clock.restored&&m.reg[4]==1);
  assert(m.reg[2]==0x80000200&&m.reg[3]==0x80004220);
+ m=fresh();m.live_zero_reset=2;
+ assert(a630_clock_trial_with_hook(true,true,rd,wr,wait_us,&m,&m.clock,held_hook,&m)==A630_CLK_RESTORE_FAILED);
+ assert(m.clock.reset_retained&&m.clock.failed_expected==1&&m.clock.failed_value==0&&m.clock.failed_offset==0x111c);
  m=fresh();m.stall_disable=1;
  assert(a630_clock_trial_with_hook(true,true,rd,wr,wait_us,&m,&m.clock,held_hook,&m)==A630_CLK_RESTORE_FAILED);
  assert(m.reg[4]==1&&!m.clock.restored);

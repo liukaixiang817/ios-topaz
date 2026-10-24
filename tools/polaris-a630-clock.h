@@ -158,7 +158,7 @@ restore:
             if (!a630_clk_read(&io, 1, a630_clock_offsets[i], &s->after[i])) { ok = false; continue; }
             uint32_t expected = i == 4 && s->reset_retained ? s->before[i] | 1u : s->before[i];
             if ((s->after[i] ^ expected) & a630_clock_masks[i]) {
-                a630_clk_failure(&io, 5, a630_clock_offsets[i], s->before[i],
+                a630_clk_failure(&io, 5, a630_clock_offsets[i], expected,
                     s->after[i], a630_clock_masks[i]); ok = false;
             }
         }

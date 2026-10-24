@@ -49,6 +49,13 @@ early samples only. On0029 the human already confirmed boot complete and said
   CI40104334481 inprogress, privatepipeline69378 waiting/building. Elevenhost
   scripts frozen to thissource/run; observer8simulatedchecksPASS. FullCI/
   exactkernel/image checks pending; NO0032phoneactionyet.
+  Firstd005eca CI40104334481 SUCCESS (kernelSHA52b8818a20f0e424c44f71695626030756368e6c7a7b29c40463a017de71cccc),
+  butpipeline69378 deliberatelystopped143 duringbaseguest tocorrect retained-
+  reset cleanup's expectedfailurevalue (1, notoriginal0). Oldbuild/interrupted
+  guest/logs/scripts preserved incontinuation-0032-d005eca; manuallyinterrupted
+  guest isneitherPASS nortimerfailure. Addednativefaultcase verifiesexpected1.
+  Correctedlocal21tests/3ARM64units/17patch22files/importchecks PASS. Need
+  correctedcommit/fullCI/exactguest/image beforephysicaluse.
   Currentphone0031bootcomplete, observerstopped byhuman, GPUunaccelerated.
 
 - User **“已进入系统，GPU依旧不工作”** confirms0031bootcomplete. Settings
