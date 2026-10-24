@@ -1,0 +1,162 @@
+--- a/bsd/dev/polaris_touch.c
++++ b/bsd/dev/polaris_touch.c
+@@ -15,6 +15,7 @@
+ #include "polaris_geni_i2c.h"
+ #include "polaris_gpio_i2c.h"
+ #include "polaris_touch_wake.h"
++#include "polaris_touch_mode.h"
+ #include "polaris_rmi.h"
+ 
+ extern vm_offset_t ml_io_map(vm_offset_t, vm_size_t);
+@@ -43,7 +44,11 @@
+        PD_A, PD_B, PD_FRAMES, PD_DOWN, PD_DONE, PD_IF, PD_TX, PD_RX,
+        PD_PATH, PD_LINES, PD_BUS, PD_WSTEP, PD_WERR, PD_WCHANGE, PD_WROLL,
+        PD_WLINES, PD_ENCFG, PD_ENIO, PD_RSTCFG, PD_RSTIO, PD_OLD_RSTCFG,
+-       PD_OLD_RSTIO, PD_IRQCFG, PD_IRQIO, PD_OLD_IRQCFG, PD_OLD_IRQIO, PD_COUNT };
++       PD_OLD_RSTIO, PD_IRQCFG, PD_IRQIO, PD_OLD_IRQCFG, PD_OLD_IRQIO,
++       PD_FSTEP,PD_FERR,PD_FIO,PD_FVALID,PD_FWRITES,PD_FCHECKS,PD_FWAIT,
++       PD_FSBEFORE,PD_FSAFTER,PD_FCBEFORE,PD_FCAFTER,PD_FWANT,
++       PD_FC,PD_FD,PD_F12C,PD_F12D,PD_REPORT,PD_PRESENT,PD_FINGERS,
++       PD_STRIDE,PD_MAXX,PD_MAXY,PD_COUNT };
+ static uint32_t pt_diag[PD_COUNT];
+ static void pd(unsigned field, uint32_t value)
+ { __atomic_store_n(&pt_diag[field], value, __ATOMIC_RELAXED); }
+@@ -60,6 +65,17 @@
+         pget(PD_IF), pget(PD_TX), pget(PD_RX), pget(PD_PATH), pget(PD_LINES), pget(PD_BUS));
+     printf("D TRMI: reg=%x n=%u data=%x/%x\n",
+         pget(PD_REG), pget(PD_LEN), pget(PD_A), pget(PD_B));
++    if (pget(PD_FC) || pget(PD_FD)) {
++        printf("D TF: step=%u error=%u io=%u valid=%x writes=%u checks=%u wait=%u\n",
++            pget(PD_FSTEP),pget(PD_FERR),pget(PD_FIO),pget(PD_FVALID),
++            pget(PD_FWRITES),pget(PD_FCHECKS),pget(PD_FWAIT));
++        printf("D TC: status=%x/%x control=%x/%x want=%x addr=%x/%x\n",
++            pget(PD_FSBEFORE),pget(PD_FSAFTER),pget(PD_FCBEFORE),pget(PD_FCAFTER),
++            pget(PD_FWANT),pget(PD_FC),pget(PD_FD));
++        printf("D TL: f12=%x/%x report=%x present=%x n=%u stride=%u max=%u,%u\n",
++            pget(PD_F12C),pget(PD_F12D),pget(PD_REPORT),pget(PD_PRESENT),
++            pget(PD_FINGERS),pget(PD_STRIDE),pget(PD_MAXX),pget(PD_MAXY));
++    }
+     if (pt.wake) {
+         printf("D TW: step=%u error=%u changed=%x rollback=%u lines=%x\n",
+             pget(PD_WSTEP),pget(PD_WERR),pget(PD_WCHANGE),pget(PD_WROLL),pget(PD_WLINES));
+@@ -388,6 +404,23 @@
+     uint8_t b[2] = {(uint8_t)reg, value};
+     return pt_message(b, 2, NULL, 0, false);
+ }
++static int pt_mode_write(void *ctx, uint16_t reg, uint8_t value)
++{ (void)ctx; return pt_control(reg,value); }
++static void pt_mode_sleep(void *ctx, unsigned ms)
++{ (void)ctx; pt_wait(ms); }
++static bool pt_mode_ready(void)
++{
++    struct polaris_touch_mode m={.read=pt_read,.write=pt_mode_write,
++        .sleep_ms=pt_mode_sleep,.control_reg=pt.rmi.f01_control,.status_reg=pt.rmi.f01_data};
++    int e=polaris_touch_mode(&m);
++    pd(PD_FSTEP,m.step);pd(PD_FERR,m.error);pd(PD_FIO,m.io);pd(PD_FVALID,m.valid);
++    pd(PD_FWRITES,m.writes);pd(PD_FCHECKS,m.checks);pd(PD_FWAIT,m.waited_ms);
++    pd(PD_FSBEFORE,m.status_before);pd(PD_FSAFTER,m.status_after);
++    pd(PD_FCBEFORE,m.control_before);pd(PD_FCAFTER,m.control_after);pd(PD_FWANT,m.want);
++    printf("POLARIS TOUCH: F01 mode step=%u error=%d status=%x/%x control=%x/%x want=%x\n",
++        m.step,e,m.status_before,m.status_after,m.control_before,m.control_after,m.want);
++    return e==PM_OK;
++}
+ static void pt_release(void)
+ {
+     for (unsigned i = 0; i < 10; ++i) {
+@@ -425,17 +458,14 @@
+     printf("POLARIS TOUCH: F01=%x/%x F12=%x/%x report=%x present=%x n=%u stride=%u max=%u,%u\n",
+         pt.rmi.f01_control, pt.rmi.f01_data, pt.rmi.f12_control, pt.rmi.f12_data,
+         pt.rmi.report, pt.rmi.presence, pt.rmi.fingers, pt.rmi.stride, pt.rmi.max_x, pt.rmi.max_y);
++    pd(PD_FC,pt.rmi.f01_control);pd(PD_FD,pt.rmi.f01_data);
++    pd(PD_F12C,pt.rmi.f12_control);pd(PD_F12D,pt.rmi.f12_data);
++    pd(PD_REPORT,pt.rmi.report);pd(PD_PRESENT,pt.rmi.presence);
++    pd(PD_FINGERS,pt.rmi.fingers);pd(PD_STRIDE,pt.rmi.stride);
++    pd(PD_MAXX,pt.rmi.max_x);pd(PD_MAXY,pt.rmi.max_y);
+     if (pt.mode == 2) { pd(PD_PHASE,8); printf("POLARIS TOUCH: probe complete; no HID events\n"); goto done; }
+     pd(PD_PHASE,6); pd(PD_ERROR,13);
+-    uint8_t control, status;
+-    if (pt_read(NULL, pt.rmi.f01_data, &status, 1) || (status & 0x40u) ||
+-        pt_read(NULL, pt.rmi.f01_control, &control, 1)) { goto done; }
+-    /* Standard volatile F01 normal/configured state; preserve other flags. */
+-    uint8_t normal = (control & ~3u) | 0x80u;
+-    if (normal != control && pt_control(pt.rmi.f01_control, normal)) { goto done; }
+-    if (pt_read(NULL, pt.rmi.f01_control, &control, 1) || (control & 0x83u) != 0x80u) {
+-        printf("POLARIS TOUCH: normal/configured readback failed\n"); goto done;
+-    }
++    if (!pt_mode_ready()) { goto done; }
+     pd(PD_PHASE,7); pd(PD_ERROR,0);
+     unsigned errors = 0, ticks = 0;
+     printf("POLARIS TOUCH: polling real S3330 contacts,20ms; physical1080x2160\n");
+--- /dev/null
++++ b/bsd/dev/polaris_touch_mode.h
+@@ -0,0 +1,70 @@
++#ifndef POLARIS_TOUCH_MODE_H
++#define POLARIS_TOUCH_MODE_H
++
++#include <stdint.h>
++#include <stddef.h>
++
++/* F01 is the only writable RMI register here. Configure once, then observe
++ * readiness for at most100ms without issuing another write, reset or command.
++ * The polaris vendor driver uses bit7=CONFIGURED and status6=CRC in progress.
++ * CRC/flash/fatal status is denied here: discovery may need repeating after
++ * such a transition, so no coordinates from the old layout may be emitted.
++ */
++enum { PM_OK, PM_ARGUMENT, PM_IO, PM_STATUS, PM_VERIFY };
++enum { PM_STATUS_BEFORE=1, PM_CONTROL_BEFORE, PM_WRITE,
++       PM_CONTROL_AFTER, PM_STATUS_AFTER, PM_READY };
++struct polaris_touch_mode {
++    void *ctx;
++    int (*read)(void *, uint16_t, uint8_t *, size_t);
++    int (*write)(void *, uint16_t, uint8_t);
++    void (*sleep_ms)(void *, unsigned);
++    uint16_t control_reg, status_reg;
++    unsigned step, error, io, valid, writes, checks, waited_ms;
++    uint8_t status_before, status_after, control_before, control_after, want;
++};
++static inline int pm_fail(struct polaris_touch_mode *m, unsigned error, int io)
++{ m->error=error; m->io=(unsigned)io; return (int)error; }
++static inline int pm_status_bad(uint8_t status)
++{ return (status & 0x40u) || (status & 15u)>1u; }
++static inline int polaris_touch_mode(struct polaris_touch_mode *m)
++{
++    if (!m) { return PM_ARGUMENT; }
++    m->step=m->error=m->io=m->valid=m->writes=m->checks=m->waited_ms=0;
++    m->status_before=m->status_after=m->control_before=m->control_after=m->want=0;
++    if (!m->read || !m->write || !m->sleep_ms ||
++        (m->control_reg & 255u)==255u || (m->status_reg & 255u)==255u ||
++        m->control_reg==m->status_reg) { return pm_fail(m,PM_ARGUMENT,0); }
++    int e;
++    m->step=PM_STATUS_BEFORE;
++    e=m->read(m->ctx,m->status_reg,&m->status_before,1);
++    if (e) { return pm_fail(m,PM_IO,e); }
++    m->valid|=1u;
++    if (pm_status_bad(m->status_before)) { return pm_fail(m,PM_STATUS,0); }
++    m->step=PM_CONTROL_BEFORE;
++    e=m->read(m->ctx,m->control_reg,&m->control_before,1);
++    if (e) { return pm_fail(m,PM_IO,e); }
++    m->valid|=2u;
++    m->want=(uint8_t)((m->control_before & ~3u) | 0x80u);
++    if (m->want!=m->control_before) {
++        m->step=PM_WRITE; m->writes=1;
++        e=m->write(m->ctx,m->control_reg,m->want);
++        if (e) { return pm_fail(m,PM_IO,e); }
++    }
++    for (unsigned i=0;i<6;i++) {
++        m->step=PM_CONTROL_AFTER; ++m->checks;
++        e=m->read(m->ctx,m->control_reg,&m->control_after,1);
++        if (e) { return pm_fail(m,PM_IO,e); }
++        m->valid|=4u;
++        m->step=PM_STATUS_AFTER;
++        e=m->read(m->ctx,m->status_reg,&m->status_after,1);
++        if (e) { return pm_fail(m,PM_IO,e); }
++        m->valid|=8u;
++        if (pm_status_bad(m->status_after)) { return pm_fail(m,PM_STATUS,0); }
++        if ((m->control_after & 0x83u)==0x80u && !(m->status_after & 0x80u)) {
++            m->step=PM_READY; return PM_OK;
++        }
++        if (i<5) { m->sleep_ms(m->ctx,20); m->waited_ms+=20; }
++    }
++    return pm_fail(m,PM_VERIFY,0);
++}
++#endif

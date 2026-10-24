@@ -10,12 +10,13 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION —0018 temporary boot sent; await NEW hardware evidence
+### CURRENT NEXT ACTION —0018 lockscreen, touch stops at F01 phase6; diagnose0019
 
 - User confirmed FASTBOOT;0018 readonly preflight session31199 PASS, then
   boot session89716 exit0, fastboot Sending/Booting OKAY (1.174s total), sent
   2026-10-24T05:54:27.163896+00:00 =16:54:27 Melbourne. This confirms transfer
-  and boot command only;0018 GUI/input not yet observed.
+  and boot command only. NEW0018 user observations/photos below now confirm
+  lockscreen, but no physical input frames or successful swipe.
 - Fresh0018 preflight at05:54:02UTC: complete16GiB hash equals immutable base
   689a8cd1df0fc0093706272241a9ac77d5eddd7a62df5d340913ec6abcd7ce2b,
   182extents/fresh map/GPT/header unchanged, blockRO1/unmounted,34C. No
@@ -30,7 +31,8 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   gate first attempt FAILED17.974992ms. All three failures retained. Original
   default timing is FAILED/UNRESOLVED, not repaired or waived; counted-clock
   results prove control flow only, not physical CPU timing/performance. The
-  temporary phone image is for diagnosis; no0018 physical touch/GUI proof.
+  temporary phone image is for diagnosis; GUI observed below, no physical
+  touch or successful home-swipe proof.
 - CI40065872971/job120788889616 SUCCESS, source173eda1e48dfe66e2eb2e446b39bc09e7f3130c3;
   kernel SHA3667c43f6ae37bf31bfb65dc1492fce2cd6b1b24f02fbf5a37f439cd1ae2a096.
   Actual C copy-plan validator PASS, actual new image/payload/kernel hashes
@@ -47,12 +49,41 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   kernel/source/profile changes after173eda1; host-only optional timing helper
   commit2a9ea19 does not alter phone/kernel. Native15+hostABI1 checks PASS,
   actual-header ARM64objects5PASS, all6patchfilesapplyMATCH.
-- NEXT: Keep0018 running; bottom-edge swipe/screen-status async question sent,
-  awaiting user reply. If no lockscreen, need NEW0018 D BOOT/D P/PID1/K and
-  D TOUCH/TW/TG/TI/TIF/TRMI photos. Request photos in ordinary chat, not async
-  text tool. Do not ask another reboot merely for logs. Original0017 IRQ
-  output-low/no-GUI facts below must not be reused as0018 observation. No
-  phone0018 startup/touch result is yet available; root/partitions preserved.
+- NEW0018 user: first swipe vibrated once; still lockscreen, second swipe no
+  response. Photos BD9C151C... all3 saved0600 privately as
+  touch-0018/hardware-lockscreen-no-input-{1..3}.jpg, hashes/transcription in
+  hardware-lockscreen-no-input.json. Lock time fragment visible. Haptic cause
+  UNKNOWN, not physical touch/HID proof. D TOUCHphase6/result13/done1/frames0/
+  down0;TREGfw300/status0/irq0;TIFfifo1/tx0/rx0/path2/lines3/bus0;
+  TRMIregc/n1/data0/0. D TWstep7/error0/changed6/rollback0/lines3;
+  TG en3c3/3 reset203/3 was201/0;TIirq1c3/0 was201/0 opt1.
+  Wake/IRQ input fix passed, controller discovery returned success; worker
+  ended during F01 normal/configured admission before polling. Error13 covers
+  several checks; exact failed substep not retained, do not invent cause.
+  GPIO IRQ input low is legal. Photo3COW23787/32768,dirty379308KiB,
+  written1228344KiB,UFSerror0/refused0. GUI recovered vs0017;0017 cause unknown.
+- NEXT: Keep0018 running; no repeated swipe/reboot request needed. Audit F01
+  initialization against polaris vendor code, add bounded retained status/
+  before-write/desired/readback/exact-step/error diagnostics. Vendor checks
+  CRC-in-progress before configuration; evaluate bounded status/readback wait
+  without weakening mode/flash/format guards. No firmware/PMIC/disk writes.
+  Build/test newsource and prepare0019 before requesting physical FASTBOOT.
+  Existing standard default-clock QEMU failures remain unresolved above.
+- IMPLEMENTED0019 candidate:0816 adds shared tested F01 admission helper,
+  retained D TF exactstep/error/io/valid/write-attempts/checks/wait and D TC
+  status/control before+after/desired/F01addresses plus D TL discovered layout.
+  Configure writes the SAME single volatile F01control byte at most once,
+  preserves other bits, then observes readiness up to6reads/5x20ms waits;
+  never retries a write or resets the controller. Requires strict existing
+  control mask80/83 plus clear unconfigured status before sending contacts.
+  Flash/CRC/fatal status denied with exact evidence, rather than emitting from
+  potentially stale discovery. No claim this is0018's cause; bounded read-only
+  settling may resolve delayed acceptance, otherwise precise failure persists.
+  Wake/IRQ/bus/ADT/cmdline/HID/PMIC/storage untouched. Actual shared-header
+  ASan/UBSan tests and exact shipped-header identity PASS; baseline touch/GPIO/
+  wake regressions PASS (10tests total), actual CI-header ARM64touch object
+  PASS,0816bothfiles apply+MATCH. Full exact-kernel CI/QEMU/packaging still
+  required; no0019 temporary image or phone boot yet.
 
 ### 0017 hardware failure and 0018 implementation/validation history
 
