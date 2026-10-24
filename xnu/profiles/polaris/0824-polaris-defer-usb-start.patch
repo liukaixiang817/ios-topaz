@@ -1,0 +1,331 @@
+--- a/bsd/dev/sweet_usb.c
++++ b/bsd/dev/sweet_usb.c
+@@ -15,6 +15,9 @@
+ #include <sys/systm.h>
+ #include <kern/clock.h>
+ #include <kern/thread.h>
++#if defined(POLARIS_RAM_ONLY)
++#include <mach/thread_act.h>
++#endif
+ #include <kern/sched_prim.h>
+ #include <machine/machine_routines.h>
+ #include <arm/caches_internal.h>
+@@ -83,6 +86,23 @@
+ static unsigned polaris_usb_mode;
+ static uint32_t polaris_usb_published;
+ static uint32_t polaris_usb_attempted;
++/* Saved progress is independent of controller admission. One worker owns
++ * gadget setup; BSD startup never waits for network attachment or USB. */
++enum polaris_usb_start_phase {
++    PU_QUEUED = 1, PU_WORKER, PU_DMA, PU_NET_ALLOC, PU_NET_ATTACH,
++    PU_NET_PLUMB, PU_NET_SOCKET, PU_NET_ADDRESS, PU_NET_READY, PU_RESET, PU_EVENTS,
++    PU_EP0, PU_VBUS, PU_RUN, PU_POLL, PU_READY
++};
++static uint64_t polaris_usb_start_state;
++static uint32_t polaris_usb_worker_started;
++static void polaris_usb_schedule(vm_offset_t);
++static void polaris_usb_progress(unsigned phase, int error)
++{
++    uint64_t state = ((uint64_t)(uint32_t)error << 32) | phase;
++    __atomic_store_n(&polaris_usb_start_state, state, __ATOMIC_RELEASE);
++    printf("POLARIS USB START: phase=%u error=%d\n", phase, error);
++}
++#define PU_PROGRESS(phase, error) polaris_usb_progress((phase), (error))
+ struct polaris_usb_io { vm_offset_t base[2]; };
+ 
+ static bool
+@@ -117,6 +137,8 @@
+ void
+ polaris_usb_report(void)
+ {
++    uint64_t state = __atomic_load_n(&polaris_usb_start_state, __ATOMIC_ACQUIRE);
++    if (state) printf("D USB START: phase=%u error=%d\n", (unsigned)state, (int)(state >> 32));
+     if (!__atomic_load_n(&polaris_usb_published, __ATOMIC_ACQUIRE)) return;
+     const struct polaris_usb_snapshot *s = &polaris_usb_saved;
+     printf("D USB: mode=%u result=%u reads=%u id=%x gctl=%x dctl=%x dsts=%x\n",
+@@ -134,6 +156,22 @@
+     DTEntry node;
+     void const *p = NULL;
+     PE_parse_boot_argn("polarisusb", &mode, sizeof(mode));
++    unsigned nettest = 0;
++    PE_parse_boot_argn("polarisusbnettest", &nettest, sizeof(nettest));
++    if (mode == 0 && (nettest == 1 || nettest == 2)) {
++        /* Synthetic network-only diagnostic. No admission probe, DMA,
++         * controller or PHY access. Explicit QEMU GIC map is required. */
++        DTEntry gic; uint64_t map[4];
++        if (SecureDTLookupEntry(NULL, "/arm-io/gic", &gic) != kSuccess ||
++            SecureDTGetProperty(gic, "reg", &p, &size) != kSuccess || size != sizeof(map)) return;
++        memcpy(map, p, sizeof(map));
++        if (map[0] != 0x7000000 || map[1] != 0x10000 || map[2] != 0x70a0000 ||
++            SecureDTLookupEntry(NULL, "/polaris-usb", &node) == kSuccess ||
++            __atomic_exchange_n(&polaris_usb_attempted, 1, __ATOMIC_ACQ_REL)) return;
++        extern void polaris_usb_network_test(unsigned);
++        polaris_usb_network_test(nettest);
++        return;
++    }
+     if (mode != 1 && mode != 2) return;
+     if (__atomic_exchange_n(&polaris_usb_attempted, 1, __ATOMIC_ACQ_REL)) return;
+     bool board = SecureDTLookupEntry(NULL, "/polaris-usb", &node) == kSuccess &&
+@@ -155,9 +193,13 @@
+     if (result == POLARIS_USB_READY && mode == 2) {
+         /* Only a verified halted DWC3 in device mode reaches the existing
+          * volatile gadget setup. DMA stays in RAM; no storage or shell API. */
+-        sweet_usb_gadget_start(io.base[1]);
++        polaris_usb_schedule(io.base[1]);
+     }
+ }
++#endif
++
++#if !defined(POLARIS_RAM_ONLY)
++#define PU_PROGRESS(phase, error) do { } while (0)
+ #endif
+ 
+ void
+@@ -688,14 +730,18 @@
+ }
+ 
+ /* ue0, 192.168.7.2/24 (the host side is 192.168.7.1). */
+-static void
++static int
+ ud_if_create(void)
+ {
+ 	struct ifnet_init_eparams init;
+ 	static lck_grp_t *grp;
+-
++	errno_t err;
++
++	PU_PROGRESS(PU_NET_ALLOC, 0);
+ 	grp = lck_grp_alloc_init("sweet_usb", LCK_GRP_ATTR_NULL);
++	if (grp == NULL) { PU_PROGRESS(PU_NET_ALLOC, ENOMEM); return ENOMEM; }
+ 	ud.lock = lck_mtx_alloc_init(grp, LCK_ATTR_NULL);
++	if (ud.lock == NULL) { PU_PROGRESS(PU_NET_ALLOC, ENOMEM); return ENOMEM; }
+ 
+ 	bzero(&init, sizeof(init));
+ 	init.ver = IFNET_INIT_CURRENT_VERSION;
+@@ -717,29 +763,38 @@
+ 	init.detach = ud_if_detach;
+ 	init.broadcast_addr = etherbroadcastaddr;
+ 	init.broadcast_len = ETHER_ADDR_LEN;
+-	if (ifnet_allocate_extended(&init, &ud.ifp) != 0) {
++	err = ifnet_allocate_extended(&init, &ud.ifp);
++	if (err != 0) {
+ 		printf("SWEET USB: ifnet_allocate failed\n");
+ 		ud.ifp = NULL;
+-		return;
++		PU_PROGRESS(PU_NET_ALLOC, err);
++		return err;
+ 	}
+ 	ifnet_set_addrlen(ud.ifp, ETHER_ADDR_LEN);
+ 	ifnet_set_hdrlen(ud.ifp, sizeof(struct ether_header));
+ 	ifnet_set_mtu(ud.ifp, ETHERMTU);
+ 	ifnet_set_baudrate(ud.ifp, 480000000);
+ 	ifnet_set_flags(ud.ifp, IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST, 0xffff);
+-	if (ifnet_attach(ud.ifp, NULL) != 0) {
++	PU_PROGRESS(PU_NET_ATTACH, 0);
++	err = ifnet_attach(ud.ifp, NULL);
++	if (err != 0) {
+ 		printf("SWEET USB: ifnet_attach failed\n");
++		ifnet_release(ud.ifp);
+ 		ud.ifp = NULL;
+-		return;
++		PU_PROGRESS(PU_NET_ATTACH, err);
++		return err;
+ 	}
+ 	ifnet_set_lladdr(ud.ifp, ud_phone_mac, ETHER_ADDR_LEN);
+ 
+-	errno_t err = proto_plumb(PF_INET, ud.ifp);
++	PU_PROGRESS(PU_NET_PLUMB, 0);
++	err = proto_plumb(PF_INET, ud.ifp);
+ 	socket_t so = NULL;
++	if (err) { PU_PROGRESS(PU_NET_PLUMB, err); return err; }
++	PU_PROGRESS(PU_NET_SOCKET, 0);
++	err = sock_socket(PF_INET, SOCK_DGRAM, 0, NULL, NULL, &so);
++	if (err) { PU_PROGRESS(PU_NET_SOCKET, err); return err; }
+ 	if (err == 0) {
+-		err = sock_socket(PF_INET, SOCK_DGRAM, 0, NULL, NULL, &so);
+-	}
+-	if (err == 0) {
++		PU_PROGRESS(PU_NET_ADDRESS, 0);
+ 		struct ifaliasreq ifra;
+ 		bzero(&ifra, sizeof(ifra));
+ 		snprintf(ifra.ifra_name, sizeof(ifra.ifra_name), "ue0");
+@@ -758,8 +813,11 @@
+ 		err = sock_ioctl(so, SIOCAIFADDR, &ifra);
+ 		sock_close(so);
+ 	}
+-	ifnet_set_flags(ud.ifp, IFF_UP | IFF_RUNNING, IFF_UP | IFF_RUNNING);
++	if (err) { PU_PROGRESS(PU_NET_ADDRESS, err); return err; }
++	if (err == 0) ifnet_set_flags(ud.ifp, IFF_UP | IFF_RUNNING, IFF_UP | IFF_RUNNING);
+ 	printf("SWEET USB: ue0 192.168.7.2/24 %s (err %d)\n", err ? "NOT configured" : "up", err);
++	PU_PROGRESS(PU_NET_READY, err);
++	return err;
+ }
+ 
+ static void
+@@ -915,10 +973,14 @@
+     if (!__atomic_load_n(&polaris_usb_published, __ATOMIC_ACQUIRE))
+         return (uint32_t)snprintf(out, size, "USB pending");
+     const struct polaris_usb_snapshot *s = &polaris_usb_saved;
++    uint64_t state = __atomic_load_n(&polaris_usb_start_state, __ATOMIC_ACQUIRE);
++    unsigned on = 0;
++    for (unsigned i = 0; i < POLARIS_USB_CLOCKS && s->reads >= i + 2; i++)
++        if (!(s->clocks[i] & (1u << 31))) on |= 1u << i;
+     return (uint32_t)snprintf(out, size,
+-        "U%u R%u N%u GD=%08x C=%08x/%08x/%08x/%08x/%08x/%08x/%08x",
+-        polaris_usb_mode, s->result, s->reads, s->gdscr, s->clocks[0],
+-        s->clocks[1], s->clocks[2], s->clocks[3], s->clocks[4], s->clocks[5], s->clocks[6]);
++        "U%u R%u N%u S%u E%d GD=%08x C=%02x",
++        polaris_usb_mode, s->result, s->reads, (unsigned)state,
++        (int)(state >> 32), s->gdscr, on);
+ }
+ bool polaris_usb_connected(void);
+ bool
+@@ -934,17 +996,22 @@
+ 	thread_t thread;
+ 
+ 	ud.dwc = dwc;
+-	if (kmem_alloc_contig(kernel_map, &ud.dma, UD_SIZE, PAGE_MASK, 0, 0,
+-	    KMA_DATA | KMA_ZERO | KMA_PERMANENT, VM_KERN_MEMORY_IOKIT) != KERN_SUCCESS) {
++	PU_PROGRESS(PU_DMA, 0);
++	kern_return_t allocation = kmem_alloc_contig(kernel_map, &ud.dma, UD_SIZE, PAGE_MASK, 0, 0,
++	    KMA_DATA | KMA_ZERO | KMA_PERMANENT, VM_KERN_MEMORY_IOKIT);
++	if (allocation != KERN_SUCCESS) {
+ 		printf("SWEET USB: no DMA memory\n");
++		PU_PROGRESS(PU_DMA, allocation);
+ 		return;
+ 	}
+ 	ppnum_t pn = pmap_find_phys(kernel_pmap, (addr64_t)ud.dma);
+ 	if (!pn) {
++		PU_PROGRESS(PU_DMA, EFAULT);
+ 		return;
+ 	}
+ 	ud.dma_pa = ptoa_64(pn);
+-	ud_if_create();
++	int net_error = ud_if_create();
++	if (net_error) return; /* No hardware activation without its network endpoint. */
+ #if defined(POLARIS_RAM_ONLY)
+     if (ud.ifp == NULL || ud.lock == NULL) {
+         printf("POLARIS USB: network allocation failed; controller left halted\n");
+@@ -953,6 +1020,7 @@
+ #endif
+ 
+ 	/* Device controller soft reset (PHY and global setup stay as ABL left them). */
++	PU_PROGRESS(PU_RESET, 0);
+ 	dwc_wr(DCTL, DCTL_CSFTRST);
+ 	int i;
+ 	for (i = 0; i < 500 && (dwc_rd(DCTL) & DCTL_CSFTRST); i++) {
+@@ -961,9 +1029,11 @@
+ 	printf("SWEET USB: soft reset %s after %d ms, GCTL 0x%08x DCFG 0x%08x\n",
+ 	    (dwc_rd(DCTL) & DCTL_CSFTRST) ? "STUCK" : "done", i, dwc_rd(GCTL), dwc_rd(DCFG));
+ 	if (dwc_rd(DCTL) & DCTL_CSFTRST) {
+-		return;
+-	}
+-
++		PU_PROGRESS(PU_RESET, ETIMEDOUT);
++		return;
++	}
++
++	PU_PROGRESS(PU_EVENTS, 0);
+ 	dwc_wr(GEVNTADRLO, (uint32_t)(ud.dma_pa + UD_EVT));
+ 	dwc_wr(GEVNTADRHI, (uint32_t)((ud.dma_pa + UD_EVT) >> 32));
+ 	dwc_wr(GEVNTSIZ, (1u << 31) | UD_EVT_SIZE);     /* interrupt masked: polled */
+@@ -977,17 +1047,20 @@
+ 	dwc_wr(DEVTEN, 0x7);
+ 
+ 	/* Endpoint 0 OUT/IN: start config, control type, max packet 512 until connect done. */
++	PU_PROGRESS(PU_EP0, 0);
+ 	if (ud_epcmd(0, DEPCMD_DEPSTARTCFG, 0, 0, 0) ||
+ 	    ud_epcmd(0, DEPCMD_SETEPCONFIG, (0u << 1) | (512u << 3), (1u << 8) | (1u << 10) | (0u << 25), 0) ||
+ 	    ud_epcmd(0, DEPCMD_SETTRANSFRESOURCE, 1, 0, 0) ||
+ 	    ud_epcmd(1, DEPCMD_SETEPCONFIG, (0u << 1) | (512u << 3), (1u << 8) | (1u << 10) | (1u << 25), 0) ||
+ 	    ud_epcmd(1, DEPCMD_SETTRANSFRESOURCE, 1, 0, 0)) {
+ 		printf("SWEET USB: endpoint 0 setup failed\n");
++		PU_PROGRESS(PU_EP0, EIO);
+ 		return;
+ 	}
+ 	dwc_wr(DALEPENA, 0x3);
+ 	ud_start_setup();
+ 
++	PU_PROGRESS(PU_VBUS, 0);
+ 	vm_offset_t qs = ml_io_map(QSCRATCH_PA, 0x100);
+ 	if (qs != 0) {
+ 		uint32_t hs = usb_rd(qs, QSCRATCH_HS_PHY_CTRL), ss = usb_rd(qs, QSCRATCH_SS_PHY_CTRL);
+@@ -1000,14 +1073,20 @@
+ 		    usb_rd(qs, QSCRATCH_HS_PHY_CTRL), usb_rd(qs, QSCRATCH_SS_PHY_CTRL));
+ 	}
+ 
++	PU_PROGRESS(PU_RUN, 0);
+ 	dwc_wr(DCTL, dwc_rd(DCTL) | DCTL_RUN_STOP);
+ 	for (i = 0; i < 500 && (dwc_rd(DSTS) & DSTS_DEVCTRLHLT); i++) {
+ 		delay(1000);
+ 	}
+ 	printf("SWEET USB: running (DSTS 0x%08x after %d ms), DMA at 0x%llx\n", dwc_rd(DSTS), i, ud.dma_pa);
++	if (dwc_rd(DSTS) & DSTS_DEVCTRLHLT) { PU_PROGRESS(PU_RUN, ETIMEDOUT); return; }
++	PU_PROGRESS(PU_POLL, 0);
+ 	if (kernel_thread_start(ud_thread, NULL, &thread) == KERN_SUCCESS) {
+ 		thread_deallocate(thread);
+ 	}
++#if defined(POLARIS_RAM_ONLY)
++    else { PU_PROGRESS(PU_POLL, EIO); return; }
++#endif
+ #if defined(POLARIS_RAM_ONLY)
+     extern void polaris_debug_start(void);
+     polaris_debug_start();
+@@ -1017,5 +1096,45 @@
+ 	if (livelog && ud.ifp != NULL && kernel_thread_start(ud_log_thread, NULL, &thread) == KERN_SUCCESS) {
+ 		thread_deallocate(thread);
+ 	}
+-}
++	PU_PROGRESS(PU_READY, 0); /* Initialized; host enumeration is still separate. */
++}
++
++#if defined(POLARIS_RAM_ONLY)
++static void
++polaris_usb_worker(void *arg, wait_result_t wr __unused)
++{
++    PU_PROGRESS(PU_WORKER, 0);
++    if (arg == NULL) {
++        int err = ud_if_create();
++        printf("POLARIS USB NETTEST: %s error=%d; no MMIO or DMA\n", err ? "FAIL" : "PASS", err);
++    } else {
++        sweet_usb_gadget_start((vm_offset_t)arg);
++    }
++    thread_terminate(current_thread());
++}
++static void
++polaris_usb_schedule(vm_offset_t dwc)
++{
++    if (__atomic_exchange_n(&polaris_usb_worker_started, 1, __ATOMIC_ACQ_REL)) return;
++    PU_PROGRESS(PU_QUEUED, 0);
++    thread_t worker;
++    kern_return_t kr = kernel_thread_start(polaris_usb_worker, (void *)dwc, &worker);
++    if (kr == KERN_SUCCESS) thread_deallocate(worker);
++    else PU_PROGRESS(PU_QUEUED, kr);
++}
++void polaris_usb_network_test(unsigned);
++void
++polaris_usb_network_test(unsigned mode)
++{
++    if (mode == 1) polaris_usb_schedule(0);
++    else {
++        /* Deliberately retain the old synchronous call context as a
++         * hardware-free diagnostic comparison, never the phone profile. */
++        PU_PROGRESS(PU_WORKER, 0);
++        int err = ud_if_create();
++        printf("POLARIS USB NETTEST: %s error=%d; synchronous, no MMIO or DMA\n",
++            err ? "FAIL" : "PASS", err);
++    }
++}
++#endif
+ #endif /* ARM64_BOARD_CONFIG_SWEET */
+--- a/bsd/dev/sweet_ufs.c
++++ b/bsd/dev/sweet_ufs.c
+@@ -195,6 +195,8 @@
+     polaris_touch_report();
+     extern void polaris_usb_report(void);
+     polaris_usb_report(); /* saved RAM only; no bus access or waits */
++    extern void polaris_a630_report(void);
++    polaris_a630_report(); /* saved RAM only, even before a GUI frame */
+     char line[POLARIS_DIAG_BYTES];
+     printf("\nPOLARIS DIAG: first failures, RAM only\n");
+     for (unsigned i = 0; i < POLARIS_DIAG_SLOTS; i++) {

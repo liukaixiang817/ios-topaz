@@ -10,12 +10,48 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION — 0023 read-only USB snapshots / A630 prerequisites / cross-core diagnostics
+### CURRENT NEXT ACTION — 0024 USB startup isolation after0023 GUI regression
+
+- Human supplied9photos from actual0023: no GUI/lockscreen, progressbar and
+  repeateddiagnostics. Touchframes grow17400→33000 while base_calls3943,
+  ram_reads3,ram_merges5,full_writes22,COWgroups50,dirty660KiB,written864KiB
+  stayfixed; UFS-error0/refused0. This is a boot regression, not a measured
+  slowSettings launch. Currentphone remains0023 in this state; no newbootyet.
+- Photos exposeUSB **mode2/result7/reads13**,ID5533300a,GCTL112000,
+  savedDCTL10f08000,DSTS d2cd2c,GDSCRf8222000,master4221,othersixclocks1.
+  AdmissionPASSED; this does NOT prove gadget setup or enumeration. Prior
+  blanketpower/clockrefusalhypothesis is notsupported by these actualvalues.
+  A630init precedes the only lateUSBcall on fileroot; earlyUFSprobepath
+  returns beforeUSB. Synchronousgadgetsetup onBSDstartup is now the leading
+  suspectedblocker, exactwaitingcall/cause STILLUNPROVEN.
+- IMPLEMENTED0824 `0824-polaris-defer-usb-start.patch`: schedule oneUSBworker
+  after existingexactread-onlyadmission; BSDstartup no longer waits for DMA,
+  ifnet_attach/proto_plumb/address/socket/reset/endpointsetup. Savedatomic
+  phase/error state before each step, visible in periodic RAMdiagnostics and
+  compacttopstatus S/E; originaladmissionregisters remainunchanged. Stop on
+  actualnetwork/reset/start/threadfailure. Add savedA630report to periodic
+  diagnostics so noGUIframe is needed to seefirmware/probestatus.
+- Hardware-free `polarisusbnettest=1/2` uses the actualnetworkcreationfunction
+  asynchronously/synchronously for comparison, only withpolarisusb0,
+  syntheticQEMUGIC and noUSBboardnode. NoDMA/controller/PHY access in this
+  diagnostic. Willtest actualkernel network attachment plusPID1/VMprogress;
+  earlier0023QEMUcasesnever exercised admittedgadget/networksetup.
+- Local7USBgate/debugprotocoltests PASS (ASan/UBSan included), exact0824
+  nofuzz/offsetapplymatches2files; bothactualCI-headerARM64unitscompiledPASS,
+  allundefinedsymbolsresolve against exact0023kernel. Private evidence,
+  originalsources and9photo hashes undercontinuation-0024. No rawdevice
+  evidence inGit, no partitionwrites, no changes to512MiBRAMCOW/ufsrw0.
+- NEXT: commit/push0824, fullActionsbuild, exactartifact/actualnetwork-only
+  and selectedCPU1bootchecks. Preserve synccomparisoneven ifblocked/failed;
+  do notlabelas provenhardwarecause. No0024image orFASTBOOTrequestuntil
+  finalverified. Keep oneCPU and noGPUexecution; priorSMPfailuresunresolved.
+
+### 0023 read-only USB snapshots / A630 prerequisites / cross-core diagnostics
 
 - User explicitly narrowed USB needs to **logs and screenshots; SSH is not
   needed now**, and asked to continue multicore CPU/GPU adaptation using the
   reference repos. **0023 temporaryboot sent09:59:17.582883UTC** after the
-  user's FASTBOOT confirmation; GUI/input/performance confirmation pending.
+  user's FASTBOOT confirmation; laterphotosconfirmGUIstartupregressionabove.
   User confirms USB cable remains connected. 0023readonlyhostwatch24629
   exited0:21observations/61.540s, noVID1209/PID1 andnoECM at10:00:43UTC.
   USBlog/screenshotconnection remains unavailable. No host network settings changed.
@@ -98,7 +134,7 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   cause still unestablished. Raw q-crosscpu console/registers/provenance and
   failedcheck retained; `scheduler-lock-diagnosis.json` proves current symbol.
   No CPU2phone admission, no threshold changes or retry to hide this failure.
-- **0023 CPU1 temporaryboot SENT; humanGUIconfirmation pending.** Image
+- **0023 CPU1 temporaryboot SENT; laterphotosshowGUIregression.** Image
   `shim/out/polaris-xnu-readdebug-0023/polaris-xnu-readdebug-0023.img`,
   47407104bytes SHA
   **72a12f36457a25f30347e195ffec0e61fe4b0fa0bbe88b3c7169fc715ec3949e**;
@@ -115,8 +151,8 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   Sending/BootingOKAY,total1.179s, freshproofage19.874s.
   Private boot/preflight/fullhash/sanitizedlogs saved; onlytemporaryboot,
   baseimageimmutable/alllogicaliOSwritesRAM512MiB,ufsrw0.
-- NEXT: Twohumanquestions pending: GUI/Settingsfirst+
-  repeat timings, and topstatus U/R/N/G. IfnoECM, collect
+- Previoushumanquestions answeredbyphotos: noGUI,USBresult7 asabove.
+  IfnoECM, collect
   the saved on-screen U/R/N/GD/C/G strip values before changing clock/power
   code. ComparehumanSettingscold/warm times separately; no speedup claimed.
   USBconnection/GPUacceleration/phoneSMPremainUNPROVEN. Continue genuine
