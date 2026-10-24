@@ -54,6 +54,17 @@ early samples only. On0029 the human already confirmed boot complete and said
   pending/0..4command states, capacity1/null safe. Sixteen ordered patches
   0821..0836 applywithoutfuzz/offset; all19filesmatchactualcompiletree.
   FullCI/exactkernel/image checks pending. Phone remains0030; no0031 action.
+- Source **6d0d5d5c05150b69f929c3255ba4ed4c0a6f3b93** committed/pushed;
+  CI **40101091548/job120893206891** building (Buildstarted14:07:46UTC).
+  Privatepipeline **session67813** waits for exactsourceCI, savesfullghlog,
+  verifiesdownloadprofile/CRC/SHA, then CPU1standardclock120sbase/90sactual
+  asyncnetwork/60smode4zeroMMIO, expected60checks. Two newchecks percase
+  ensure no USB trace/registersnapshot MMIO on syntheticnon-boardguests.
+  Frozen11hostscripts includecontinuousobserver andsameboothumanstophelper;
+  observer8simulatedchecks PASS. Independentfinalchecker also requires exact
+  native19inputs,3ARM64objects/imports,16patch19files andsavedformatterfixture.
+  No physical0031 action before allchecks/image validation. Current0030's
+  human-completedobserver staysstopped.
 - GPU preparation: unlinked tools/polaris-a630-tcm.h converts original
   GPU-relativewords toGMU-localbytes and copies/verifies the original32KiB
   flat image only with exactboard/recordedhash/liveexclusivelease and CM3
