@@ -49,6 +49,14 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   stage/error and iOS exec-policy check count. No faulting user pages or waits
   for exec transitions. Normal focused samples unchanged. Need real-kernel
   QEMU fallback case plus existing modes; native tests are not phone proof.
+- 0018 source173eda1e48dfe66e2eb2e446b39bc09e7f3130c3 committed+pushed;
+  CI40065872971/job120788889616 building. Private touch-0018/ source-audit,
+  native-adt-profile.log/object-compile.json/patch-check.json retain proofs.
+  Synthetic missing-GUI fixture caller-bootstrap.raw prepared, SHA
+  94e5a98094e58733183d1bc28480669be3955d414b33b544e56e32732d00343c;
+  rename only synthetic SpringBoard child/init path, six children still wait.
+  New phone ADT candidate adds only irq-input125; removal restores0017 exactly.
+  No0018 kernel downloaded/QEMU run/prepared phone image/phone boot yet.
 
 ### 0017 actual temporary boot history
 
