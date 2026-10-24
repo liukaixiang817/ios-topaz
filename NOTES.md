@@ -10,15 +10,40 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION —0013 validated and prepared; awaiting physical FASTBOOT
+### CURRENT NEXT ACTION —0013 sent; capture focused SpringBoard/lsd/MCM callers
 
-- LATEST OBSERVED PHONE:0012 XNU in user photos,samples7/8/15/16. Two subsequent
- exact-device read-only USB checks found NOFASTBOOT;0013 NOTsent,NOnewrecovery
- boot or partition write. Actual current screen unconfirmed. Physical Power+
- VolumeDown FASTBOOT request pending;user has not replied to this request yet.
- deployment-state.json records prepared_waiting_for_fastboot. Do not infer
- FASTBOOT from older replies or a newly resent old photo. Fullhome,physical
- touch,USB,normalApps,persistent64GiB/tripleboot still unfinished.
+- CURRENT PHONE STATE:0013 temporary boot SENT,exec64648exit0,FASTBOOT1.170s,
+ 2026-10-24T02:25:14.942595Z (=2026-10-24 Australia/Melbourne). Transport
+ acceptance ONLY;actual0013kernel/screen/GUI not yet observed. Image/kernel/
+ payload hashes below unchanged,all5QEMU+Cpayloadprovenances rechecked.
+ Keep this boot forNEWfocusedcaller evidence;no USBrestart/logchannel. First
+ sample60s afterBSD,then15s pertarget,SpringBoard/lsd/containermanagerd rotate.
+ Capturefullheader/slide and T/M/L/B,including o=6 deeperframes and thirdthread;
+ 45svideo/fullscreen burst around2min shouldcover all3focusphases. Old0012
+ photos are not0013evidence. Fullhome/touch/USB/Apps/persistent64GiB unfinished.
+- User returnedFASTBOOT;knownhashrecovery booted,theninitial preflight STOPPED
+ before filesystem mount:newouter ext4 needs_recovery bit. Currentstate1,
+ incompat10046 (afterapprovedrepair10042),mountcount3;cause/unobservedAndroid
+ boot unknown. DoNOTinferwritecause or callthisclean. GPTmatches,rootrecovery,
+ userdataunmountedRO1,temp31C. No journalreplay/repair/staging done thisturn.
+- StrongerREADONLYfile-root verification performed instead of touchingext4:
+ ro,noload,nodev,nosuid,noexec mount on alreadyRO1device;verifiedoldSHA2helper,
+ fresh182FIEMAP exactly matchespayload,full17179869184byte imageSHA
+689a8cd1df0fc0093706272241a9ac77d5eddd7a62df5d340913ec6abcd7ce2b MATCH
+ originalimmutablebase in74.656s;secondFIEMAPsame,thenunmounted. Outer4KiBheader
+ byte-identical before/after verification,GPTmatches. Preflight expressly says
+ outer_filesystem_clean=false,needs_journal_recovery=true;Android journal left
+ unchanged. File-root XNU nevermountsouterext4:reads onlytheseverifiedrawextent
+ bytes;alllogicalwrites remainRAMCOW512/ufsrw0. DoesNOTcertifyAndroidFShealth.
+- Finalhostadmission requiresknownext4state1/onlyknownRECOVERfeaturedifference,
+ full16GiBSHA/freshmapproof<600s,same liverecoverybootID,unchangedouterheader,
+ userdataunmountedRO1,size/deviceidentity,GPThead,temp<45C. Bootscriptchecks
+ all5samekernel/QEMU,Cpayload,exactpreparedimageSHA,fresh182mapagain,then
+ adb rebootbootloader + temporaryfastbootboot. Temp33C. No flash,GPT,Windows,
+ baseimage orAndroidmetadatawrites. Finish-readonly-preflight.py,
+ full-image-readonly-verification.json,preflight-stopped.json,preflight.json,
+ boot.json/boot.log/phone-boot.log/deployment-state.json retainedprivately.
+ NEXT:decodeNEW0013focusedhardwarecallers before anyfix/bypass oranotherboot.
 -0013 source1d06f9ea19c6fb9d9f8a9bc23a5c0e30ff0d6503,0810focused diagnostics.
  CI40001585107 attempt2 SUCCESS/job120593650207,build5m16s;fullgh log
  research/polaris/ci-40001585107.log. Attempt1job120578752139 failed before
@@ -36,7 +61,7 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
  provenances for all5. NOApple services,GUI,App,UFS,touch,or actualSMP proof.
  Fixture1thread/target;3thread selection is a codebound,not positive3threadtest.
  PriorREFERENCE0012kernel180s also passed newfixture/legacychecker ONLY.
--0013 temporary image PREPARED and SHA rechecked,47288320bytes:
+-0013 temporary image PREPARED/SENT and SHA rechecked,47288320bytes:
  shim/out/polaris-xnu-launchservices-0013/polaris-xnu-launchservices-0013.img
  imageSHAc62a879e185646b87a75edd6d6d4f9cec16d301598a564246d15615bd3bc5647,
  payloadSHAd3988402a8a1caa4a82c3d4ab4144d59892b17065ae7a346509058021df4e041.
@@ -45,14 +70,10 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
  Cmdline tools/polaris-ios-launchservices-diagnostic.cmdline retains ufsrw0,
  polarisramcow1/512MiB,rootrw1,sweetlog0,sweetscan=-,explicitcpus1,CPUdisplay,
  visibleconsole1Hz,polarissample1/polarisstack1;adds polariswait1 only.
-- NEXT when physicalFASTBOOT available:run private launchservices-0013/
- preflight.py (knownrecoveryhash,polaris/root/size,unmounted/runtimeRO1,
- cleanext4,fresh182FIEMAP/GPThead,temp<45C),then boot-phone.py. Boot script
- rechecks5samekernelprovenances/Cpayload/imageSHA andfreshROphonechecks,
- then adb reboot bootloader + temporary fastboot boot;NOflash/GPT/Windows
- or base-image writes. Never repair/stage again,never enableufsrw1. Save actual
- boot result inNOTES. Need NEWscreen/video after0013boot to capture eachfocus
- phase withheader/slide,T/M/L/B lines;current0012photos are not0013evidence.
+-0013bootnowSENT as above;doNOTrerun initialpreflight.py fromXNU or waive
+ pendingjournalchecks. Futurebootneedsfreshmap/fullimageproof asappropriate;
+ neverrepair/stageagain orenableufsrw1. Actualfocusedhardwarecaller evidence
+ stillpending;current0012photos doNOTconfirm0013boot orGUI.
 -0810 explicitpolariswait1 focuses one service perpass,first60s,interval15s,
  36passes,max3threads/12frames. Six addresses per192byteboundedline,offseto,
  savedMachargs for allselectedMachwaits. Withoutfocus flag legacy2threads/
