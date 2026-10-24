@@ -10,9 +10,9 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION —0015 temporary boot SENT; observe actual touch/home
+### CURRENT NEXT ACTION —0015 touch produces logs per user, no UI response; decode NEW log
 
-- 0015 temporaryimagePREPARED,notbooted. Source35fe4d492b6a7a50e5c7115beaa7dfee514af9c4,
+- 0015 temporaryimagebuilt andSENT asbelow. Source35fe4d492b6a7a50e5c7115beaa7dfee514af9c4,
  CI40058661910/job120767328465 SUCCESS (build4m41s). Artifact12546850582/
 60363320bytes,exactprofile/source+ZIPCRC+kernelSHA verified. Kernel
  xnu/out-polaris-0015/kernel.development.sweet,
@@ -50,13 +50,21 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
  thenadbbootloader+temporaryfastbootboot. Wrapperredactedserial fromoutput.
  Privateboot.json/boot-phone-sanitized.log/boot.log/preflight.json/
  full-image-readonly-verification.json/deployment-state.json retained.
-- Transportacceptance ONLY;actual0015screen/touch/home/App NOTyetobserved.
- ASYNCquestionpending:waitlockscreen,swipefromphysicalbottomedge once,
- reportnoresponse/home/stillbooting. DoNOTrebootforrepetitiveCOWlogs.
- Ifnoinput,neednew0015photo/video withretainedD TOUCH/TREG/TRMI lines:
- phase/result/done/frames/down andlastreg/data distinguishinitguard/report/
- HIDpath. Phase7not itselfphysicaltouchproof. NoUSBcontrol/restartport.
- Source/handoffcommits35fe4d4,a7d9e15,b98272a pushed;latestphonehandoff below.
+- NEW0015USERREPORT: "触摸后冒了一堆log，但是依旧无反应". Savedprivate
+ touch-0015/hardware-user-report-no-response.json +deployment-state.json.
+ Thisisreportedtemporalassociation,NOTyetproofcontroller/HIDeventswork;
+ exactloglines andnew0015screenunavailable. Successfulhome/App NOTproven.
+ No furtherphysicalrebootrequest. Keepcurrent0015running andrequestclear
+ NEWlogphoto (ordinarychat,NOTuploadrequestinasynctool). PreferPOLARIS TOUCH:
+ contacts=/SWEET HID: touch down/up andD TOUCH/TREG/TRMI savedstatus.
+ ActualsourcecontactslinefiresonlyafterrealRMIframe andHIDcall;SWEETHID
+ down/up loggedbefore dispatchEvent,notproofbackboarddconsumed. Periodic
+ D TOUCH linesalonearenotcontactproof;phase7aloneisnotphysicalinputproof.
+ DefaultconsoleoverdrawcanobscureUIindependently;needphotobeforefix/newbuild.
+ Legacydifferentphone notes show1CPUtouchlatency~1min;possiblehypothesisonly,
+ NOTcurrentdiagnosis andNOTpermissiontoenableuntestedSDM845SMP.
+ NoUSBcontrol/restartport. No newsourcechange/CI initiatedwithoutlog evidence.
+ Source/handoff35fe4d4,a7d9e15,b98272a,e807d06 pushed;latestreporthandoff below.
 
 -0811source24d2bfbd6e10233b578bcaf3608f9e6b2eb24e93 pushed;initialCI
 40058349228/job120766219551 building. Beforehardwaretest added0812 retained
