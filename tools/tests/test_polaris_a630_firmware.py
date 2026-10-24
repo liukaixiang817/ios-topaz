@@ -134,6 +134,17 @@ class FirmwareTests(unittest.TestCase):
         self.assertEqual(props['gmu-bin-sha256'], hashlib.sha256(props['gmu-bin']).digest())
         parsed.children.remove(node)
         self.assertEqual(board.adt.serialize(parsed), before)
+        runnable = board.adt.parse(fw.attach(before, fixture(), execution=True))[0]
+        runnode = board.child(runnable, 'polaris-a630-firmware')
+        runprops = board.props(runnode)
+        self.assertEqual(runprops['version'], struct.pack('<I', 3))
+        self.assertEqual(runprops['pdc-reg'], struct.pack('<QQ', 0xb200000, 0x300000))
+        self.assertEqual(runprops['smmu-disable-atos'], struct.pack('<I', 1))
+        self.assertEqual(runprops['smmu-iommu-cells'], struct.pack('<I', 1))
+        self.assertEqual(runprops['smmu-stream-id'], struct.pack('<I', 5))
+        self.assertEqual(runprops['gmu-hz'], struct.pack('<I', 200000000))
+        runnable.children.remove(runnode)
+        self.assertEqual(board.adt.serialize(runnable), before)
         with self.assertRaises(ValueError):
             fw.attach(after, fixture())
         with self.assertRaises(ValueError):

@@ -7,6 +7,7 @@
  */
 #ifndef POLARIS_A630_POWER_H
 #define POLARIS_A630_POWER_H
+#include <stddef.h>
 #ifndef POLARIS_A630_PROBE_H
 #error Include the Polaris read-only probe definitions first
 #endif
@@ -20,19 +21,20 @@
 enum a630_power_result {
     A630_POWER_DISABLED, A630_POWER_IO, A630_POWER_AHB_OFF,
     A630_POWER_ALREADY_ON, A630_POWER_REFUSED, A630_POWER_ON_REQUEST_RESTORED,
-    A630_POWER_TIMEOUT, A630_POWER_RESTORE_FAILED
+    A630_POWER_TIMEOUT, A630_POWER_RESTORE_FAILED, A630_POWER_RESOURCES_HELD
 };
 struct a630_power_snapshot {
-    uint32_t result, step, reads, writes, changed, request_restored, polls;
+    uint32_t result, step, reads, writes, changed, request_restored, polls, resources_retained;
     uint32_t cfg, before, before_hw, gx, on_hw, after, after_hw;
 };
 typedef bool (*a630_write)(void *, unsigned, uint32_t, uint32_t);
 typedef void (*a630_wait_us)(void *, uint32_t);
 typedef void (*a630_power_on_hook)(void *);
 static inline enum a630_power_result
-a630_power_trial_with_hook(bool enabled, bool exact_board, a630_read read,
+a630_power_trial_with_lifetime(bool enabled, bool exact_board, a630_read read,
     a630_write write, a630_wait_us wait_us, void *ctx,
-    struct a630_power_snapshot *s, a630_power_on_hook hook, void *hook_ctx)
+    struct a630_power_snapshot *s, a630_power_on_hook hook, void *hook_ctx,
+    bool (*can_stop)(void *))
 {
     if (!s) return A630_POWER_DISABLED;
     *s = (struct a630_power_snapshot){0};
@@ -72,6 +74,9 @@ a630_power_trial_with_hook(bool enabled, bool exact_board, a630_read read,
         wait_us(ctx, 1);
     }
 restore:
+    if (can_stop && !can_stop(hook_ctx)) {
+        s->resources_retained = 1; s->result = A630_POWER_RESOURCES_HELD; goto done;
+    }
     s->step = 4;
     {
         uint32_t current;
@@ -93,6 +98,14 @@ done:
 #undef CX_READ
 #undef CX_WRITE
     return (enum a630_power_result)s->result;
+}
+static inline enum a630_power_result
+a630_power_trial_with_hook(bool enabled, bool exact_board, a630_read read,
+    a630_write write, a630_wait_us wait_us, void *ctx,
+    struct a630_power_snapshot *s, a630_power_on_hook hook, void *hook_ctx)
+{
+    return a630_power_trial_with_lifetime(enabled,exact_board,read,write,wait_us,
+        ctx,s,hook,hook_ctx,NULL);
 }
 static inline enum a630_power_result
 a630_power_trial(bool enabled, bool exact_board, a630_read read,

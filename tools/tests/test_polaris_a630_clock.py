@@ -72,6 +72,7 @@ static bool held_hook(void *p){struct mock *m=p;
  assert(m->hw&A630_POWER_ON);assert(m->reg[4]&1);
  assert(!(m->reg[1]&A630_POWER_ON)&&!(m->reg[2]&A630_POWER_ON)&&!(m->reg[3]&A630_POWER_ON));
  return false;}
+static bool retain_resources(void *p){(void)p;return false;}
 int main(void){
  struct mock m=fresh();struct a630_clock_snapshot s;
  assert(a630_clock_trial(false,true,rd,wr,wait_us,&m,&s)==A630_CLK_DISABLED&&!m.reads);
@@ -145,6 +146,9 @@ int main(void){
  m=fresh();m.cx=0x222001;unsigned before=m.clock_reads;
  assert(a630_power_trial_with_hook(true,false,rd,wr,wait_us,&m,&power,clock_hook,&m)==A630_POWER_DISABLED);
  assert(m.clock_reads==before&&!m.reads&&!m.writes);
+ m=fresh();assert(a630_clock_trial_with_lifetime(true,true,rd,wr,wait_us,&m,&m.clock,held_hook,&m,retain_resources)==A630_CLK_RESOURCES_HELD);
+ assert(m.clock.resources_retained&&!m.clock.restored&&m.reg[4]==1);
+ assert(!(m.reg[2]&A630_POWER_ON)&&!(m.reg[3]&A630_POWER_ON));
  return 0;
 }
 '''

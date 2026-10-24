@@ -22,6 +22,39 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+###0033 in progress — real GMU execution/SMMU prerequisite, not3D acceleration
+
+- Latestuserrequests actualGPUimage rendering ASAP. Implemented new0838
+  candidate, localvalidationPASS; fullCI/image/phonepending: owned4KiB/39-bitSMMUv2 tables for
+  resident16KiBHFIat60000000, exactSID5/mask0 fromcapturedone-cellIOMMU;
+  qcom,disable-atos enforced (NOATS1PR). RuntimeIDgeometry/freeCB1..4 checks;
+  never touchesHYP CB5..7, preservesforeignstreams/sharedimplregisters.
+- Originalclockprofile admitsONLYrunninginherited600MHzFabiaPLL with/2tap,
+  requestsGPU tap16+DDRSS44038+MEMNOC7100c+SNOC71018, GMUsource602=200MHz.
+  NoPLL/voltage reprogram. ActualPLLstate/hardwareadmissionUNPROVEN.
+- Original48-registerRSC/PDCprofile (polaris_o_oss c7cb50c1) staged under
+  CM3reset; PDC300000@b200000, originalTCS3MXwakevalue2. AfterBCRrelease,
+  reload/readback32KiBflatFW, configureTCM_BOOT2, chip06030100, queueaddress,
+  fence, HW_ACTIVE/noIFPC; releaseCM3andwait freshBABEFACE<=10000us.
+  Immediatelycontain/reassertreset andrestoreSMMU/profile/bus/clocks/CX;
+  permanentDMAallocations neverfreed. Onuncertaincontainment retainallleases.
+  NoHFIstart/OOB/GX/SQE/ZAP/CPsubmission/CoreAnimationacceleration yet.
+- Fournewnative models testedMMUboundary/permissions, SMMUownership/atomic64
+  TTBR/everyIOfailure/TLBtimeout/rollback, busPLLrate/ownedvotes/rollback,
+  FWfreshACK/stalestate/timeout/everypostedwrite/cleanupfailure. Oldpower/
+  clockAPI testsalsoPASS, newretainedlifetimetestsPASS. ActualCI-headerUSB,
+  A630,framebuffer3unitscompilePASS/allimportsresolve; full25nativeASan/UBSan,
+  18orderedpatches/26files nofuzz/offset,11actualformatterrows<=67charsPASS.
+  Original48RSC/PDCwrites andall12liveDTattachpairsmatchindependently.
+  AddedsavedGB/GS/GE rows;13displayrows total. HostimageADT v3 onlyfor
+  executionmode; olddefaulttransportv2unchanged. 0033CI/image/phonepending.
+- Primarydriver sources pinnedGitblobs inprivate0033/vendor: arm-smmu.c
+  28ef920447654990e32fbdd031dcb30c3bd8175d; io-pgtable-arm.c
+  981172de13f6c4374c2e6ee69b6f7ad4d15c12eb; clk-alpha-pll.c
+  514c0ad356c73a1f0e11416130421e14b8332deb. Keeprawsources/firmwareprivate.
+  Currentphone0032Settingsworking; actualhumanconfirmedbootcomplete andits
+  USBobserverremainsSTOPPED. No0033phoneaction. NoGPUaccelerationclaim.
+
 ### CURRENT NEXT ACTION —0032 Settings works; implement real GPU execution/rendering path
 
 - **Latestuserexplicitpriority: “我希望你尽快实现GPU功能，把图像交由GPU绘制”.**

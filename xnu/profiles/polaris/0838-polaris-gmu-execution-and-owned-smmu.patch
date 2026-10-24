@@ -1,0 +1,1221 @@
+--- a/bsd/dev/polaris_a630.c
++++ b/bsd/dev/polaris_a630.c
+@@ -1,7 +1,9 @@
+ /* Original Polaris A630 firmware consumer and guarded hardware bring-up.
+  * Mode3 briefly owns the CX request; mode4 also tests parked-CXO GMU clocks
+  * under block reset. Mode5 also loads/verifies the original GMU image while
+- * retaining block reset. No mode executes firmware or registers acceleration.
++ * retaining block reset. Mode6 builds owned SMMU mappings and attempts a
++ * fresh GMU firmware boot at the original200MHz, then contains and unwinds.
++ * No mode registers acceleration, starts HFI/GX or submits3D work yet.
+  */
+ #if defined(POLARIS_RAM_ONLY)
+ #include <sys/param.h>
+@@ -10,6 +12,8 @@
+ #include <pexpert/pexpert.h>
+ #include <pexpert/device_tree.h>
+ #include <kern/clock.h>
++#include <vm/pmap.h>
++#include <vm/vm_kern.h>
+ #include <corecrypto/ccdigest.h>
+ #include <corecrypto/ccsha2.h>
+ #include "polaris_a630_probe.h"
+@@ -19,7 +23,12 @@
+ #include "polaris_a630_images.h"
+ #include "polaris_a630_tcm.h"
+ #include "polaris_a630_gmu.h"
++#include "polaris_a630_mmu.h"
++#include "polaris_a630_smmu.h"
++#include "polaris_a630_bus.h"
++#include "polaris_a630_boot.h"
+ extern vm_offset_t ml_io_map(vm_offset_t, vm_size_t);
++extern ppnum_t pmap_find_phys(pmap_t, addr64_t);
+ void polaris_a630_init(void);
+ void polaris_a630_report(void);
+ uint32_t polaris_a630_status(void);
+@@ -29,6 +38,12 @@
+ static struct a630_power_snapshot a630_power_saved;
+ static struct a630_clock_snapshot a630_clock_saved;
+ static struct a630_gmu_snapshot a630_gmu_saved;
++static struct a630_smmu_snapshot a630_smmu_saved;
++static struct a630_bus_snapshot a630_bus_saved;
++static struct a630_boot_snapshot a630_boot_saved;
++static struct a630_mmu a630_tables;
++static vm_offset_t a630_dma;
++static uint32_t a630_dma_ready;
+ static struct a630_image a630_gmu_image;
+ static uint32_t a630_mode;
+ static uint32_t a630_started, a630_published, a630_firmware_ok, a630_abi_ok;
+@@ -59,7 +74,7 @@
+ {
+     if (!out || !size) return 0;
+     out[0] = 0;
+-    if (line >= 4) return 0;
++    if (line >= 7) return 0;
+     if (!__atomic_load_n(&a630_published, __ATOMIC_ACQUIRE))
+         return (uint32_t)snprintf(out, size, "GPU snapshot pending");
+     const struct a630_power_snapshot *p = &a630_power_saved;
+@@ -73,9 +88,18 @@
+     if (line == 2) return (uint32_t)snprintf(out, size,
+         "GM %x/%x rs%08x/%08x fw%08x h%08x",
+         g->result, g->stage, g->reset_before, g->reset_held, g->fw_init, g->hfi);
+-    return (uint32_t)snprintf(out, size, "GT %x/%x @%08x w%x e%08x a%08x",
++    if (line == 3) return (uint32_t)snprintf(out, size, "GT %x/%x @%08x w%x e%08x a%08x",
+         g->tcm.result, g->tcm.phase, g->tcm.offset, g->tcm.writes,
+         g->tcm.expected, g->tcm.actual);
++    const struct a630_bus_snapshot *b=&a630_bus_saved;
++    const struct a630_smmu_snapshot *m=&a630_smmu_saved;
++    const struct a630_boot_snapshot *e=&a630_boot_saved;
++    if (line == 4) return (uint32_t)snprintf(out,size,"GB %x/%x p%08x L%04x F%04x @%x:%05x v%08x",
++        b->error&15,b->stage&15,b->pll[0],b->pll[1]&65535,b->pll[4]&65535,b->bank&15,b->offset&0xfffff,b->actual);
++    if (line == 5) return (uint32_t)snprintf(out,size,"GS %x/%x c%x s%x @%x e%x a%x r%x/%x",
++        m->error&15,m->stage&15,m->bank&255,m->slot&255,m->failed_offset,m->expected,m->actual,m->restored&1,m->restore_error&15);
++    return (uint32_t)snprintf(out,size,"GE %x/%x fw%08x @%x:%x e%x a%x r%x/%x",
++        e->error&15,e->stage&15,e->fw,e->failed_bank&15,e->failed_offset,e->expected,e->actual,e->stopped&1,e->restore_error&15);
+ }
+ 
+ static bool a630_property(DTEntry node, const char *name, const void **data, unsigned *size)
+@@ -130,28 +154,65 @@
+         gn, sn, a630_image_word(sqe + 4), mn);
+     return true;
+ }
+-struct a630_io { vm_offset_t base[3]; bool gmu_lease; };
++struct a630_io { vm_offset_t base[5]; bool gmu_lease, runtime_lease, can_stop; };
++static bool a630_pdc_offset(uint32_t off)
++{
++    for (unsigned n=0;n<A630_BOOT_PROFILE;n++)
++        if (a630_boot_profile[n].bank==4 && a630_boot_profile[n].offset==off) return true;
++    return false;
++}
++static bool a630_smmu_offset(uint32_t off,bool wide)
++{
++    return off<0xd000 && !(off&3) &&
++        (off<0x8000 || (off&0xfff)<0x800) &&
++        (!wide || (off>=0x8000 && ((off&0xfff)==0x20 || (off&0xfff)==0x28)));
++}
++static uint32_t __attribute__((noinline)) a630_load32(vm_offset_t address)
++{
++    uint32_t v;__asm__ volatile("ldr %w0, [%1]":"=r"(v):"r"(address):"memory");return v;
++}
++static void __attribute__((noinline)) a630_store32(vm_offset_t address,uint32_t v)
++{
++    /* HYP emulates the register form; do not emit str wzr. */
++    __asm__ volatile("str %w0, [%1]"::"r"(v),"r"(address):"memory");
++}
+ static bool a630_read_register(void *opaque, unsigned region, uint32_t off, uint32_t *value)
+ {
+-    static const uint64_t addresses[3] = {0x100000, 0x5090000, 0x506a000};
+-    static const uint32_t sizes[3] = {0x90000, 0x9000, 0x30000};
++    static const uint64_t addresses[5] = {0x100000, 0x5090000, 0x506a000,0x5040000,0xb200000};
++    static const uint32_t sizes[5] = {0x90000, 0x9000, 0x30000,0x10000,0x300000};
+     struct a630_io *io = opaque;
+-    if (region >= 3 || (off & 3) || off > sizes[region] - 4) return false;
++    if (region >= 5 || (off & 3) || off > sizes[region] - 4) return false;
++    if ((region==3 && (!io->runtime_lease || !a630_smmu_offset(off,false))) ||
++        (region==4 && (!io->runtime_lease || !a630_pdc_offset(off)))) return false;
+     if (!io->base[region]) io->base[region] = ml_io_map(addresses[region], sizes[region]);
+     if (!io->base[region]) return false;
+-    *value = *(volatile uint32_t *)(io->base[region] + off);
++    *value = a630_load32(io->base[region] + off);
+     __asm__ volatile("dsb sy" ::: "memory");
+     return true;
+ }
+ static bool a630_write_register(void *opaque, unsigned region, uint32_t off, uint32_t value)
+ {
+     struct a630_io *io = opaque;
++    if (io->runtime_lease && region<5 && io->base[region]) {
++        bool allowed = region==0 && (off==0x52004 || off==0x44038 || off==0x7100c || off==0x71018);
++        if (region==1 && off==0x1124) allowed=true;
++        if (region==3 && a630_smmu_offset(off,false)) allowed=true;
++        if (region==4 && a630_pdc_offset(off)) allowed=true;
++        if (region==2) {
++            const uint32_t config[]={0x14000,0x14730,0x14070,0x14004,0x14614,
++                0x14610,0x24c44,0x14608,0x1303c,0x14300,0x143a0};
++            for(unsigned n=0;n<sizeof(config)/sizeof(config[0]);n++)if(off==config[n])allowed=true;
++            for(unsigned n=0;n<A630_BOOT_PROFILE;n++)
++                if(a630_boot_profile[n].bank==2&&a630_boot_profile[n].offset==off)allowed=true;
++        }
++        if (allowed) {a630_store32(io->base[region]+off,value);__asm__ volatile("dsb sy":::"memory");return true;}
++    }
+     /* Mode5's exclusive lease admits only CM3 reset assertion and the
+      * original flat TCM window. No reset release, HFI, SMMU or GPU write. */
+     if (region == 2 && io->gmu_lease && io->base[2] &&
+         ((off == A630_GMU_CM3_RESET && value == 1) ||
+          (off >= A630_GMU_FLAT_START && off < A630_GMU_FLAT_START + A630_GMU_FLAT_BYTES && !(off & 3)))) {
+-        *(volatile uint32_t *)(io->base[2] + off) = value;
++        a630_store32(io->base[2] + off,value);
+         __asm__ volatile("dsb sy" ::: "memory");
+         return true;
+     }
+@@ -159,7 +220,7 @@
+     if (region != 1 || !io->base[1] ||
+         (off != A630_CX_REQUEST && off != 0x109c &&
+          off != 0x1120 && off != 0x1098 && off != 0x111c)) return false;
+-    *(volatile uint32_t *)(io->base[1] + off) = value;
++    a630_store32(io->base[1] + off,value);
+     __asm__ volatile("dsb sy" ::: "memory");
+     return true;
+ }
+@@ -179,6 +240,93 @@
+ {
+     if (!a630_gmu_admitted(io)) return false;
+     __asm__ volatile("dsb sy" ::: "memory"); return true;
++}
++static bool a630_runtime_owned(void *opaque)
++{struct a630_io *io=opaque;return io->gmu_lease&&io->runtime_lease;}
++static bool a630_runtime_held(void *opaque)
++{
++    struct a630_io *io=opaque;uint32_t bcr,reset,gx;
++    return a630_runtime_owned(io) && a630_read_register(io,1,0x111c,&bcr) &&
++        a630_read_register(io,2,0x14000,&reset) && a630_read_register(io,1,0x100c,&gx) &&
++        (bcr&1) && reset==1 && !(gx&0x80000000u);
++}
++static bool a630_clean_owned(void *opaque,const void *p,size_t bytes)
++{
++    uintptr_t va=(uintptr_t)p;
++    if(!a630_runtime_owned(opaque)||!a630_dma_ready||va<a630_dma||
++        va-a630_dma>0x24000||bytes>0x24000-(va-a630_dma))return false;
++    for(uintptr_t at=va&~(uintptr_t)63;at<va+bytes;at+=64)
++        __asm__ volatile("dc civac, %0"::"r"(at):"memory");
++    __asm__ volatile("dsb sy":::"memory");return true;
++}
++static bool a630_smmu_read(void *io,uint32_t off,uint32_t *v)
++{return a630_read_register(io,3,off,v);}
++static bool a630_smmu_write(void *io,uint32_t off,uint32_t v)
++{return a630_write_register(io,3,off,v);}
++static bool a630_smmu_read64(void *opaque,uint32_t off,uint64_t *v)
++{
++    struct a630_io *io=opaque;
++    if(!a630_runtime_owned(io)||!a630_smmu_offset(off,true)||!io->base[3])return false;
++    __asm__ volatile("ldr %0, [%1]":"=r"(*v):"r"(io->base[3]+off):"memory");
++    __asm__ volatile("dsb sy":::"memory");return true;
++}
++static bool a630_smmu_write64(void *opaque,uint32_t off,uint64_t v)
++{
++    struct a630_io *io=opaque;
++    if(!a630_runtime_owned(io)||!a630_smmu_offset(off,true)||!io->base[3])return false;
++    __asm__ volatile("str %0, [%1]"::"r"(v),"r"(io->base[3]+off):"memory");
++    __asm__ volatile("dsb sy":::"memory");return true;
++}
++static bool a630_prepare_dma(void)
++{
++    if(kmem_alloc_contig(kernel_map,&a630_dma,0x24000,PAGE_MASK,0,0,
++        KMA_DATA|KMA_ZERO|KMA_PERMANENT,VM_KERN_MEMORY_IOKIT)!=KERN_SUCCESS)return false;
++    ppnum_t pn=pmap_find_phys(kernel_pmap,(addr64_t)a630_dma);
++    if(!pn)return false;
++    uint64_t physical=ptoa_64(pn);
++    if(physical>=A630_MMU_PA_LIMIT-0x24000)return false;
++    for(unsigned n=0;n<0x24000;n+=PAGE_SIZE)
++        if(ptoa_64(pmap_find_phys(kernel_pmap,(addr64_t)a630_dma+n))!=physical+n)return false;
++    if(!a630_mmu_init(&a630_tables,(void*)a630_dma,physical,32))return false;
++    for(unsigned n=0;n<A630_HFI_BYTES;n+=4096)
++        if(a630_mmu_map(&a630_tables,0x60000000+n,physical+0x20000+n,0)!=A630_MMU_OK)return false;
++    if(!a630_hfi_init((void*)(a630_dma+0x20000),A630_HFI_BYTES,0x60000000))return false;
++    a630_dma_ready=1;return true;
++}
++static bool a630_resources_can_stop(void *opaque)
++{return ((struct a630_io*)opaque)->can_stop;}
++static void a630_runtime_boot(struct a630_io *io)
++{
++    const struct a630_bus_io bus={a630_read_register,a630_write_register,
++        a630_delay_us,a630_runtime_held,io};
++    const struct a630_smmu_io smmu={a630_runtime_held,a630_smmu_read,a630_smmu_write,
++        a630_smmu_read64,a630_smmu_write64,a630_clean_owned,a630_gmu_sync,a630_delay_us};
++    const struct a630_boot_io boot={a630_read_register,a630_write_register,a630_delay_us,
++        a630_runtime_owned,a630_gmu_sync,io};
++    const struct a630_tcm_io tcm={a630_gmu_admitted,a630_gmu_read,a630_gmu_write,a630_gmu_sync};
++    bool bcr_attempted=false,clean=true;
++    io->runtime_lease=true;io->can_stop=false;
++    printf("POLARIS GMU: original200MHz/bus, owned stream5/HFI; fresh firmware boot trial\n");
++    if(a630_bus_begin(true,&bus,&a630_bus_saved)!=A630_BUS_READY)goto cleanup;
++    if(a630_smmu_begin(true,true,&a630_tables,&smmu,io,&a630_smmu_saved)!=A630_SMMU_READY)goto cleanup;
++    if(!a630_clean_owned(io,(void*)(a630_dma+0x20000),A630_HFI_BYTES))goto cleanup;
++    bcr_attempted=true;
++    if(!a630_boot_set(&boot,&a630_boot_saved,1,0x111c,0,1))goto cleanup;
++    /* BCR can reset TCM/control state: assert CM3 reset and reload/read back
++     * the original image AFTER deasserting BCR, before executing anything. */
++    if(!a630_boot_set(&boot,&a630_boot_saved,2,0x14000,1,UINT32_MAX))goto cleanup;
++    if(!a630_boot_configure(&boot,&a630_boot_saved))goto cleanup;
++    if(!a630_boot_set(&boot,&a630_boot_saved,2,0x14730,1,UINT32_MAX))goto cleanup;
++    if(a630_gmu_prepare(true,true,&a630_gmu_image,&tcm,a630_delay_us,io,&a630_gmu_saved)!=A630_GMU_LOADED)goto cleanup;
++    a630_boot_start(&boot,&a630_boot_saved);
++cleanup:
++    if(bcr_attempted && !a630_boot_stop(&boot,&a630_boot_saved))clean=false;
++    if(clean && !a630_smmu_end(&smmu,io,&a630_smmu_saved))clean=false;
++    if(clean && !a630_bus_end(&bus,&a630_bus_saved))clean=false;
++    /* Uncertain containment retains CX/clocks/BCR and permanent DMA pages.
++     * No asynchronous client can acquire this exclusive boot-time lease. */
++    io->can_stop=clean;
++    if(clean)io->runtime_lease=false;
+ }
+ static bool a630_gmu_on(void *opaque)
+ {
+@@ -189,13 +337,18 @@
+     printf("POLARIS GMU: accessing CSR/TCM under block reset; no firmware execution\n");
+     a630_gmu_prepare(true, a630_firmware_ok, &a630_gmu_image, &tcm,
+         a630_delay_us, io, &a630_gmu_saved);
++    if(a630_mode==6 && a630_dma_ready && a630_gmu_saved.result==A630_GMU_LOADED)
++        a630_runtime_boot(io);
+     io->gmu_lease = false;
+     return !a630_gmu_saved.retain_block_reset;
+ }
+ static void a630_clock_on(void *io)
+ {
+-    a630_clock_trial_with_hook(true, true, a630_read_register, a630_write_register,
+-        a630_delay_us, io, &a630_clock_saved, a630_mode == 5 ? a630_gmu_on : NULL, io);
++    a630_clock_trial_with_lifetime(true, true, a630_read_register, a630_write_register,
++        a630_delay_us, io, &a630_clock_saved, a630_mode >= 5 ? a630_gmu_on : NULL, io,
++        a630_mode==6 ? a630_resources_can_stop : NULL);
++    if(a630_mode==6 && (a630_clock_saved.result==A630_CLK_RESTORE_FAILED ||
++        a630_clock_saved.resources_retained))((struct a630_io*)io)->can_stop=false;
+ }
+ void polaris_a630_report(void)
+ {
+@@ -204,6 +357,17 @@
+     const struct a630_power_snapshot *p = &a630_power_saved;
+     const struct a630_clock_snapshot *c = &a630_clock_saved;
+     const struct a630_gmu_snapshot *g = &a630_gmu_saved;
++    const struct a630_smmu_snapshot *m=&a630_smmu_saved;
++    const struct a630_bus_snapshot *b=&a630_bus_saved;
++    const struct a630_boot_snapshot *e=&a630_boot_saved;
++    printf("D GPU BUS: error=%u stage=%u PLL=%x/%x/%x/%x/%x cfg=%x cmd=%x fail=%u:%x expected=%x actual=%x restored=%u/%u held=%u/%u\n",
++        b->error,b->stage,b->pll[0],b->pll[1],b->pll[2],b->pll[3],b->pll[4],b->config,b->command,
++        b->bank,b->offset,b->expected,b->actual,b->restored,b->restore_error,c->resources_retained,p->resources_retained);
++    printf("D GPU SMMU: error=%u stage=%u ID=%x/%x/%x/%x cb=%u stream=%u slot=%u root=%llx fail=%x expected=%x actual=%x restored=%u/%u ATOS=disabled DMA=%u\n",
++        m->error,m->stage,m->id[0],m->id[1],m->id[2],m->id[3],m->bank,A630_SMMU_STREAM,m->slot,
++        (unsigned long long)m->root,m->failed_offset,m->expected,m->actual,m->restored,m->restore_error,a630_dma_ready);
++    printf("D GPU EXEC: error=%u stage=%u FW_INIT=%x started=%u stopped=%u profile=%u fail=%u:%x expected=%x actual=%x polls=%u restored=%u/%u; HFI/GX/3D not started\n",
++        e->error,e->stage,e->fw,e->started,e->stopped,e->changed,e->failed_bank,e->failed_offset,e->expected,e->actual,e->polls,e->restored,e->restore_error);
+     printf("D GPU LOAD: result=%u stage=%u block_reset_retained=%u reset=%x/%x fw=%x hfi=%x counter=%x polls=%u\n",
+         g->result, g->stage, g->retain_block_reset, g->reset_before, g->reset_held,
+         g->fw_init, g->hfi, g->counter, g->polls);
+@@ -232,17 +396,21 @@
+ {
+     unsigned mode = 0;
+     PE_parse_boot_argn("polarisgpu", &mode, sizeof(mode));
+-    if ((mode < 1 || mode > 5) ||
++    if ((mode < 1 || mode > 6) ||
+         __atomic_exchange_n(&a630_started, 1, __ATOMIC_ACQ_REL)) return;
+     a630_mode = mode;
+     DTEntry node;
+     bool board = SecureDTLookupEntry(NULL, "/polaris-a630-firmware", &node) == kSuccess &&
+-        a630_u32(node, "version", 2) && a630_u32(node, "chip-id", 0x06030001) &&
++        (a630_u32(node,"version",3) || (mode<6 && a630_u32(node,"version",2))) &&
++        a630_u32(node, "chip-id", 0x06030001) &&
+         a630_u32(node, "sqe-code-offset", 4) &&
+         a630_reg(node, "gcc-reg", 0x100000, 0x90000) &&
+         a630_reg(node, "gpucc-reg", 0x5090000, 0x9000) &&
+         a630_reg(node, "gmu-reg", 0x506a000, 0x30000) &&
+         a630_reg(node, "smmu-reg", 0x5040000, 0x10000);
++    if(mode==6)board=board && a630_reg(node,"pdc-reg",0xb200000,0x300000) &&
++        a630_u32(node,"smmu-disable-atos",1) && a630_u32(node,"smmu-iommu-cells",1) &&
++        a630_u32(node,"smmu-stream-id",5) && a630_u32(node,"gmu-hz",200000000);
+     a630_firmware_ok = board && a630_firmware(node);
+     if (a630_firmware_ok)
+         a630_abi_ok = a630_hfi_init(a630_host_hfi, sizeof(a630_host_hfi), 0x60000000);
+@@ -253,18 +421,20 @@
+     if (hardware) memcpy(physical, reg, sizeof(physical));
+     hardware = hardware && physical[0] == 0x16a00000 && physical[1] == 0x10000 &&
+         physical[2] == 0x16a60000 && physical[3] == 0x100000;
+-    struct a630_io io = {{0, 0, 0}, false};
++    struct a630_io io = {.can_stop=true};
+     bool admitted = board && hardware && a630_firmware_ok && a630_abi_ok;
++    if(mode==6 && admitted)admitted=a630_prepare_dma();
+     /* Mode1 checks firmware/host ABI only, including in a synthetic guest.
+      * Modes2/3/4 first save the same read-only, initial hardware snapshot. */
+-    a630_probe((mode >= 2 && mode <= 5) ? 1 : 0, admitted,
++    a630_probe((mode >= 2 && mode <= 6) ? 1 : 0, admitted,
+         a630_read_register, &io, &a630_saved);
+-    /* Clock/reset trial is nested inside our observed CX-ON interval. No
+-     * Mode5 adds reset-held CSR/TCM access, no SMMU or execution; mode4 is
+-     * unchanged. No GMU reads after clock/CX cleanup. */
+-    a630_power_trial_with_hook(mode >= 3 && a630_saved.result != A630_IO,
++    /* Nested exclusive lifetime: mode5 only loads under reset; mode6 may
++     * execute GMU firmware, then must contain it before removing mappings,
++     * buses, clocks or CX. No GMU reads after clock/CX cleanup. */
++    a630_power_trial_with_lifetime(mode >= 3 && a630_saved.result != A630_IO,
+         admitted, a630_read_register, a630_write_register, a630_delay_us, &io,
+-        &a630_power_saved, mode >= 4 ? a630_clock_on : NULL, &io);
++        &a630_power_saved, mode >= 4 ? a630_clock_on : NULL, &io,
++        mode==6 ? a630_resources_can_stop : NULL);
+     if (a630_power_saved.result == A630_POWER_IO ||
+         a630_power_saved.result == A630_POWER_RESTORE_FAILED ||
+         a630_clock_saved.result == A630_CLK_IO ||
+--- a/bsd/dev/polaris_a630_power.h
++++ b/bsd/dev/polaris_a630_power.h
+@@ -7,6 +7,7 @@
+  */
+ #ifndef POLARIS_A630_POWER_H
+ #define POLARIS_A630_POWER_H
++#include <stddef.h>
+ #ifndef POLARIS_A630_PROBE_H
+ #error Include the Polaris read-only probe definitions first
+ #endif
+@@ -20,19 +21,20 @@
+ enum a630_power_result {
+     A630_POWER_DISABLED, A630_POWER_IO, A630_POWER_AHB_OFF,
+     A630_POWER_ALREADY_ON, A630_POWER_REFUSED, A630_POWER_ON_REQUEST_RESTORED,
+-    A630_POWER_TIMEOUT, A630_POWER_RESTORE_FAILED
++    A630_POWER_TIMEOUT, A630_POWER_RESTORE_FAILED, A630_POWER_RESOURCES_HELD
+ };
+ struct a630_power_snapshot {
+-    uint32_t result, step, reads, writes, changed, request_restored, polls;
++    uint32_t result, step, reads, writes, changed, request_restored, polls, resources_retained;
+     uint32_t cfg, before, before_hw, gx, on_hw, after, after_hw;
+ };
+ typedef bool (*a630_write)(void *, unsigned, uint32_t, uint32_t);
+ typedef void (*a630_wait_us)(void *, uint32_t);
+ typedef void (*a630_power_on_hook)(void *);
+ static inline enum a630_power_result
+-a630_power_trial_with_hook(bool enabled, bool exact_board, a630_read read,
++a630_power_trial_with_lifetime(bool enabled, bool exact_board, a630_read read,
+     a630_write write, a630_wait_us wait_us, void *ctx,
+-    struct a630_power_snapshot *s, a630_power_on_hook hook, void *hook_ctx)
++    struct a630_power_snapshot *s, a630_power_on_hook hook, void *hook_ctx,
++    bool (*can_stop)(void *))
+ {
+     if (!s) return A630_POWER_DISABLED;
+     *s = (struct a630_power_snapshot){0};
+@@ -72,6 +74,9 @@
+         wait_us(ctx, 1);
+     }
+ restore:
++    if (can_stop && !can_stop(hook_ctx)) {
++        s->resources_retained = 1; s->result = A630_POWER_RESOURCES_HELD; goto done;
++    }
+     s->step = 4;
+     {
+         uint32_t current;
+@@ -95,6 +100,14 @@
+     return (enum a630_power_result)s->result;
+ }
+ static inline enum a630_power_result
++a630_power_trial_with_hook(bool enabled, bool exact_board, a630_read read,
++    a630_write write, a630_wait_us wait_us, void *ctx,
++    struct a630_power_snapshot *s, a630_power_on_hook hook, void *hook_ctx)
++{
++    return a630_power_trial_with_lifetime(enabled,exact_board,read,write,wait_us,
++        ctx,s,hook,hook_ctx,NULL);
++}
++static inline enum a630_power_result
+ a630_power_trial(bool enabled, bool exact_board, a630_read read,
+     a630_write write, a630_wait_us wait_us, void *ctx, struct a630_power_snapshot *s)
+ {
+--- a/bsd/dev/polaris_a630_clock.h
++++ b/bsd/dev/polaris_a630_clock.h
+@@ -13,13 +13,14 @@
+ enum a630_clock_result {
+     A630_CLK_DISABLED, A630_CLK_IO, A630_CLK_REFUSED, A630_CLK_ROOT_TIMEOUT,
+     A630_CLK_BRANCH_TIMEOUT, A630_CLK_RESTORE_FAILED, A630_CLK_READY_RESTORED,
+-    A630_CLK_REQUEST_TIMEOUT, A630_CLK_STATE_CHANGED, A630_CLK_READY_RESET_HELD
++    A630_CLK_REQUEST_TIMEOUT, A630_CLK_STATE_CHANGED, A630_CLK_READY_RESET_HELD,
++    A630_CLK_RESOURCES_HELD
+ };
+ struct a630_clock_snapshot {
+     uint32_t result, step, reads, writes, polls, changed, restored;
+     uint32_t cfg_ahb, cx_hw, gx, gx_gmu, config;
+     uint32_t failed_step, failed_op, failed_offset, failed_expected, failed_value, failed_mask;
+-    uint32_t request_polls, reset_retained;
++    uint32_t request_polls, reset_retained, resources_retained;
+     uint32_t before[5], live[5], after[5];
+ };
+ struct a630_clock_io {
+@@ -89,9 +90,10 @@
+ /* Hook runs exclusively after verified clocks, under GMU_BCR. Returning
+  * false retains block reset through/after clock cleanup, including on error.
+  * This permits TCM access without ever running partially loaded firmware. */
+-static inline enum a630_clock_result a630_clock_trial_with_hook(bool enabled, bool exact_board,
++static inline enum a630_clock_result a630_clock_trial_with_lifetime(bool enabled, bool exact_board,
+     a630_read read, a630_write write, a630_wait_us wait, void *ctx,
+-    struct a630_clock_snapshot *s, bool (*hook)(void *), void *hook_ctx)
++    struct a630_clock_snapshot *s, bool (*hook)(void *), void *hook_ctx,
++    bool (*can_stop)(void *))
+ {
+     if (!s) return A630_CLK_DISABLED;
+     *s = (struct a630_clock_snapshot){0};
+@@ -143,6 +145,10 @@
+     s->result = A630_CLK_READY_RESTORED;
+     if (hook && !hook(hook_ctx)) s->reset_retained = 1;
+ restore:
++    if (can_stop && !can_stop(hook_ctx)) {
++        s->resources_retained = 1; s->result = A630_CLK_RESOURCES_HELD;
++        return A630_CLK_RESOURCES_HELD;
++    }
+     s->step = 10;
+     {
+         bool ok = true;
+@@ -169,6 +175,12 @@
+ done:
+     return (enum a630_clock_result)s->result;
+ }
++static inline enum a630_clock_result a630_clock_trial_with_hook(bool enabled, bool exact_board,
++    a630_read read, a630_write write, a630_wait_us wait, void *ctx,
++    struct a630_clock_snapshot *s, bool (*hook)(void *), void *hook_ctx)
++{
++    return a630_clock_trial_with_lifetime(enabled,exact_board,read,write,wait,ctx,s,hook,hook_ctx,NULL);
++}
+ static inline enum a630_clock_result a630_clock_trial(bool enabled, bool exact_board,
+     a630_read read, a630_write write, a630_wait_us wait, void *ctx,
+     struct a630_clock_snapshot *s)
+--- a/iokit/Kernel/arm/SweetFramebuffer.cpp
++++ b/iokit/Kernel/arm/SweetFramebuffer.cpp
+@@ -168,18 +168,18 @@
+ extern "C" uint32_t polaris_a630_diagnostic_line(unsigned, char *, uint32_t);
+ static void polaris_status_bar(AppleCLCD *fb)
+ {
+-    char text[10][136];
++    char text[13][136];
+     polaris_usb_status(text[0], sizeof(text[0]));
+     unsigned n = polaris_a630_details(text[1], sizeof(text[1]));
+     if (n < sizeof(text[1])) snprintf(text[1] + n, sizeof(text[1]) - n,
+         " T%u", __atomic_load_n(&fb->fPolarisLastUS, __ATOMIC_RELAXED));
+     for (unsigned i = 0; i < 4; i++)
+         polaris_usb_diagnostic_line(i, text[2 + i], sizeof(text[2 + i]));
+-    for (unsigned i = 0; i < 4; i++)
++    for (unsigned i = 0; i < 7; i++)
+         polaris_a630_diagnostic_line(i, text[6 + i], sizeof(text[6 + i]));
+     /* Fixed double-size diagnostic rows, saved state only. Keep output
+      * inside the actual panel and never poll MMIO from the display loop. */
+-    unsigned lines = fb->fHeight / 32 < 10 ? fb->fHeight / 32 : 10;
++    unsigned lines = fb->fHeight / 32 < 13 ? fb->fHeight / 32 : 13;
+     for (unsigned line = 0; line < lines; line++) {
+         for (unsigned y = 0; y < 32; y++) {
+             uint32_t *row = (uint32_t *)(fb->fPixels + (uint64_t)(line * 32 + y) * fb->fRowBytes);
+--- /dev/null
++++ b/bsd/dev/polaris_a630_mmu.h
+@@ -0,0 +1,150 @@
++/* A630 SMMUv2 stage1 tables, independent of XNU's 16KiB CPU granule.
++ * Original MiCode c7cb50c1 io-pgtable-arm.c: 4KiB, 3 levels, 39-bit IOVA.
++ * Only owned, resident buffers are mapped. No hardware operation occurs here.
++ * The hardware adapter must clean changed tables and synchronize the SMMU
++ * before allowing GMU/GPU DMA. Polaris DT disables ATOS: do not use ATS1PR.
++ */
++#ifndef POLARIS_A630_MMU_H
++#define POLARIS_A630_MMU_H
++#include <stdbool.h>
++#include <stdint.h>
++#include <stddef.h>
++
++#define A630_MMU_PAGE 4096u
++#define A630_MMU_ENTRIES 512u
++#define A630_MMU_MAX_TABLES 32u
++#define A630_MMU_PA_LIMIT (UINT64_C(1) << 36)
++#define A630_MMU_VA_LIMIT (UINT64_C(1) << 39)
++#define A630_MMU_ADDRESS UINT64_C(0x0000000ffffff000)
++#define A630_MMU_XN (UINT64_C(3) << 53)
++#define A630_MMU_AF (UINT64_C(1) << 10)
++#define A630_MMU_NG (UINT64_C(1) << 11)
++#define A630_MMU_OUTER_SHARED (UINT64_C(2) << 8)
++enum a630_mmu_flags {
++    A630_MMU_CACHED = 1, A630_MMU_USER = 2, A630_MMU_READONLY = 4,
++    A630_MMU_EXEC = 8
++};
++enum a630_mmu_error {
++    A630_MMU_OK, A630_MMU_ARGUMENT, A630_MMU_FULL,
++    A630_MMU_CONFLICT, A630_MMU_CORRUPT, A630_MMU_UNMAPPED
++};
++struct a630_mmu {
++    uint64_t *memory, physical;
++    uint32_t capacity, used, dirty;
++    uint8_t level[A630_MMU_MAX_TABLES];
++};
++static inline bool a630_mmu_init(struct a630_mmu *s, void *memory,
++                                uint64_t physical, uint32_t tables)
++{
++    if (!s) return false;
++    *s = (struct a630_mmu){0};
++    if (!memory || ((uintptr_t)memory & (A630_MMU_PAGE - 1)) ||
++        (physical & (A630_MMU_PAGE - 1)) || !tables || tables > A630_MMU_MAX_TABLES ||
++        physical >= A630_MMU_PA_LIMIT ||
++        (uint64_t)tables * A630_MMU_PAGE > A630_MMU_PA_LIMIT - physical) return false;
++    __builtin_memset(memory, 0, (size_t)tables * A630_MMU_PAGE);
++    *s = (struct a630_mmu){.memory=memory, .physical=physical,
++        .capacity=tables, .used=1, .dirty=1, .level={1}};
++    return true;
++}
++static inline bool a630_mmu_valid(const struct a630_mmu *s)
++{
++    return s && s->memory && s->used && s->used <= s->capacity &&
++        s->capacity <= A630_MMU_MAX_TABLES &&
++        !((uintptr_t)s->memory & (A630_MMU_PAGE - 1)) &&
++        !(s->physical & (A630_MMU_PAGE - 1)) &&
++        s->physical < A630_MMU_PA_LIMIT &&
++        (uint64_t)s->capacity * A630_MMU_PAGE <= A630_MMU_PA_LIMIT - s->physical;
++}
++/* Never follow a physical table pointer outside this owned allocation. */
++static inline uint64_t *a630_mmu_table(struct a630_mmu *s, uint64_t entry, unsigned level)
++{
++    if (!a630_mmu_valid(s) || (entry & 3) != 3 ||
++        entry & ~(A630_MMU_ADDRESS | UINT64_C(3))) return NULL;
++    uint64_t physical = entry & A630_MMU_ADDRESS;
++    if (physical < s->physical || physical - s->physical >= (uint64_t)s->used * A630_MMU_PAGE)
++        return NULL;
++    if (s->level[(physical - s->physical) / A630_MMU_PAGE] != level) return NULL;
++    return s->memory + (physical - s->physical) / sizeof(uint64_t);
++}
++static inline uint64_t a630_mmu_leaf(uint64_t physical, unsigned flags)
++{
++    return physical | ((flags & A630_MMU_EXEC) ? 0 : A630_MMU_XN) | A630_MMU_AF | A630_MMU_NG |
++        A630_MMU_OUTER_SHARED | UINT64_C(3) |
++        ((flags & A630_MMU_CACHED) ? UINT64_C(1) << 2 : 0) |
++        ((flags & A630_MMU_USER) ? UINT64_C(1) << 6 : 0) |
++        ((flags & A630_MMU_READONLY) ? UINT64_C(1) << 7 : 0);
++}
++/* Single 4KiB mapping. Reject replacement and partial allocation failure.
++ * Higher-level tables are installed only once both levels are available. */
++static inline enum a630_mmu_error
++a630_mmu_map(struct a630_mmu *s, uint64_t iova, uint64_t physical, unsigned flags)
++{
++    if (!a630_mmu_valid(s) || iova >= A630_MMU_VA_LIMIT ||
++        physical >= A630_MMU_PA_LIMIT || ((iova | physical) & (A630_MMU_PAGE - 1)) ||
++        flags & ~15u) return A630_MMU_ARGUMENT;
++    /* The device must never gain write access to its own translation tables. */
++    if (physical >= s->physical && physical - s->physical < (uint64_t)s->capacity * A630_MMU_PAGE)
++        return A630_MMU_ARGUMENT;
++    uint64_t *one = &s->memory[(iova >> 30) & 511];
++    uint64_t *two = NULL, *three = NULL;
++    unsigned needed = 0;
++    if (*one) {
++        two = a630_mmu_table(s, *one, 2);
++        if (!two || two == s->memory) return A630_MMU_CORRUPT;
++    } else needed++;
++    uint64_t *middle = two ? &two[(iova >> 21) & 511] : NULL;
++    if (middle && *middle) {
++        three = a630_mmu_table(s, *middle, 3);
++        if (!three || three == two || three == s->memory) return A630_MMU_CORRUPT;
++    } else needed++;
++    uint64_t value = a630_mmu_leaf(physical, flags);
++    if (three && three[(iova >> 12) & 511])
++        return three[(iova >> 12) & 511] == value ? A630_MMU_OK : A630_MMU_CONFLICT;
++    if (needed > s->capacity - s->used) return A630_MMU_FULL;
++    if (!two) {
++        unsigned index = s->used++;
++        two = s->memory + index * A630_MMU_ENTRIES;
++        s->level[index] = 2;
++        *one = (s->physical + (uint64_t)index * A630_MMU_PAGE) | 3;
++        s->dirty |= 1; /* root */
++        middle = &two[(iova >> 21) & 511];
++    }
++    if (!three) {
++        unsigned index = s->used++;
++        three = s->memory + index * A630_MMU_ENTRIES;
++        s->level[index] = 3;
++        *middle = (s->physical + (uint64_t)index * A630_MMU_PAGE) | 3;
++        s->dirty |= 1u << ((uint64_t)(two - s->memory) / A630_MMU_ENTRIES);
++    }
++    three[(iova >> 12) & 511] = value;
++    s->dirty |= 1u << ((uint64_t)(three - s->memory) / A630_MMU_ENTRIES);
++    return A630_MMU_OK;
++}
++/* Software table walk for validation; never silently substitute it for an
++ * actual device-completion check. No ATOS request is issued on this board. */
++static inline enum a630_mmu_error
++a630_mmu_lookup(struct a630_mmu *s, uint64_t iova, uint64_t *physical, uint64_t *pte)
++{
++    if (!a630_mmu_valid(s) || !physical || !pte || iova >= A630_MMU_VA_LIMIT)
++        return A630_MMU_ARGUMENT;
++    uint64_t entry = s->memory[(iova >> 30) & 511];
++    if (!entry) return A630_MMU_UNMAPPED;
++    uint64_t *two = a630_mmu_table(s, entry, 2);
++    if (!two || two == s->memory) return A630_MMU_CORRUPT;
++    entry = two[(iova >> 21) & 511];
++    if (!entry) return A630_MMU_UNMAPPED;
++    uint64_t *three = a630_mmu_table(s, entry, 3);
++    if (!three || three == two || three == s->memory) return A630_MMU_CORRUPT;
++    entry = three[(iova >> 12) & 511];
++    uint64_t allowed = A630_MMU_ADDRESS | A630_MMU_XN | A630_MMU_AF | A630_MMU_NG |
++        A630_MMU_OUTER_SHARED | UINT64_C(0xc7);
++    if (!entry) return A630_MMU_UNMAPPED;
++    if ((entry & 3) != 3 || entry & ~allowed || !(entry & A630_MMU_AF) ||
++        ((entry & A630_MMU_XN) && (entry & A630_MMU_XN) != A630_MMU_XN))
++        return A630_MMU_CORRUPT;
++    *physical = (entry & A630_MMU_ADDRESS) | (iova & (A630_MMU_PAGE - 1));
++    *pte = entry;
++    return A630_MMU_OK;
++}
++#endif
+--- /dev/null
++++ b/bsd/dev/polaris_a630_smmu.h
+@@ -0,0 +1,273 @@
++/* Polaris GMU kernel stream5, SMMUv2 stage1. Sources: captured polaris DT,
++ * MiCode c7cb50c1 arm-smmu.c/io-pgtable-arm.c. Contexts5..7 are protected;
++ * preserve every other stream/context. qcom,disable-atos is mandatory:
++ * never issue ATS1PR, even for a translation test. Real HFI completion must
++ * establish device DMA, not a software page-table walk.
++ * Caller owns GPU power/clocks and holds both GMU and 3D processors stopped.
++ * All backing pages stay resident through success, failure and cleanup.
++ */
++#ifndef POLARIS_A630_SMMU_H
++#define POLARIS_A630_SMMU_H
++#ifndef POLARIS_A630_MMU_H
++#error Include Polaris translation table definitions first
++#endif
++#define A630_SMMU_BYTES 0x10000u
++#define A630_SMMU_POLLS 500000u
++#define A630_SMMU_STREAM 5u
++#define A630_SMMU_IMPLS 12u
++enum a630_smmu_error {
++    A630_SMMU_DISABLED, A630_SMMU_ARGUMENT, A630_SMMU_LEASE,
++    A630_SMMU_IO, A630_SMMU_LAYOUT, A630_SMMU_OWNERSHIP,
++    A630_SMMU_ACK, A630_SMMU_TLB, A630_SMMU_READY, A630_SMMU_RESTORE
++};
++struct a630_smmu_io {
++    bool (*stopped)(void *); /* live exclusive lease, GMU/3D halted */
++    bool (*read)(void *, uint32_t, uint32_t *);
++    bool (*write)(void *, uint32_t, uint32_t);
++    bool (*read64)(void *, uint32_t, uint64_t *);
++    bool (*write64)(void *, uint32_t, uint64_t);
++    bool (*clean)(void *, const void *, size_t);
++    bool (*sync)(void *);
++    void (*wait)(void *, uint32_t);
++};
++struct a630_smmu_snapshot {
++    uint32_t error, start_error, stage, changed, restored;
++    uint32_t id[4], page, banks, stage2_banks, matches, half;
++    uint32_t slot, bank, context, global, smr, s2cr, cbar, cba2r, foreign;
++    uint32_t control[5], impl[A630_SMMU_IMPLS];
++    uint64_t ttbr[2], root;
++    uint32_t failed_offset, expected, actual, polls, restore_error;
++};
++static const uint32_t a630_smmu_impl_offsets[A630_SMMU_IMPLS] = {
++    0x6000,0x6060,0x678c,0x6794,0x6800,0x6900,
++    0x6924,0x6928,0x6930,0x6960,0x6b64,0x6b68
++};
++static const uint32_t a630_smmu_impl_values[A630_SMMU_IMPLS] = {
++    0x2378,0x1055,8,0x28,6,0x3ff,0x204,0x11000,0x800,0xffffffff,0x1a5551,0x9a82a382
++};
++/* SCTLR, TCR2, TCR, MAIR0, MAIR1. TTBRs use atomic64 accesses separately. */
++static const uint32_t a630_smmu_control[5] = {0,0x10,0x30,0x38,0x3c};
++static inline bool a630_smmu_lease(const struct a630_smmu_io *io, void *ctx,
++                                 struct a630_smmu_snapshot *s)
++{
++    if (io->stopped(ctx)) return true;
++    s->error = A630_SMMU_LEASE; return false;
++}
++static inline bool a630_smmu_rd(const struct a630_smmu_io *io, void *ctx,
++    struct a630_smmu_snapshot *s, uint32_t off, uint32_t *value)
++{
++    if (!a630_smmu_lease(io,ctx,s)) return false;
++    if (io->read(ctx,off,value)) return true;
++    s->error = A630_SMMU_IO; s->failed_offset = off; return false;
++}
++static inline bool a630_smmu_set(const struct a630_smmu_io *io, void *ctx,
++    struct a630_smmu_snapshot *s, uint32_t off, uint32_t value, uint32_t mask)
++{
++    if (!a630_smmu_lease(io,ctx,s)) return false;
++    s->changed = 1; /* Includes a write callback failing after a posted write. */
++    if (!io->write(ctx,off,value)) {
++        s->error = A630_SMMU_IO; s->failed_offset = off; return false;
++    }
++    uint32_t actual;
++    if (!a630_smmu_rd(io,ctx,s,off,&actual)) return false;
++    if ((actual ^ value) & mask) {
++        s->error = A630_SMMU_ACK; s->failed_offset = off;
++        s->expected = value; s->actual = actual; return false;
++    }
++    return true;
++}
++static inline bool a630_smmu_set64(const struct a630_smmu_io *io, void *ctx,
++    struct a630_smmu_snapshot *s, uint32_t off, uint64_t value)
++{
++    if (!a630_smmu_lease(io,ctx,s)) return false;
++    uint64_t actual = 0; s->changed = 1;
++    if (!io->write64(ctx,off,value)) {
++        s->error = A630_SMMU_IO; s->failed_offset = off; return false;
++    }
++    if (!a630_smmu_lease(io,ctx,s)) return false;
++    if (!io->read64(ctx,off,&actual)) {
++        s->error = A630_SMMU_IO; s->failed_offset = off; return false;
++    }
++    if (actual != value) {
++        s->error = A630_SMMU_ACK; s->failed_offset = off;
++        s->expected = (uint32_t)value; s->actual = (uint32_t)actual; return false;
++    }
++    return true;
++}
++static inline bool a630_smmu_tlb(const struct a630_smmu_io *io, void *ctx,
++    struct a630_smmu_snapshot *s)
++{
++    if (!a630_smmu_lease(io,ctx,s)) return false;
++    if (!io->write(ctx,s->context+0x610,s->bank) ||
++        !io->write(ctx,s->context+0x7f0,0) || !io->sync(ctx)) {
++        s->error = A630_SMMU_IO; return false;
++    }
++    uint32_t value = 0;
++    for (unsigned i=0;i<A630_SMMU_POLLS;i++) {
++        s->polls++;
++        if (!a630_smmu_rd(io,ctx,s,s->context+0x7f4,&value)) return false;
++        if (!(value&1)) return true;
++        io->wait(ctx,1);
++    }
++    s->error = A630_SMMU_TLB; s->failed_offset = s->context+0x7f4;
++    s->expected = 0; s->actual = value; return false;
++}
++/* Geometry alone never authorizes MMIO. The outer adapter gates these
++ * parsed values against exact DT ranges and stopped processor ownership. */
++static inline bool a630_smmu_geometry(struct a630_smmu_snapshot *s)
++{
++    if (!(s->id[0]&(1u<<30)) || !(s->id[0]&(1u<<27)) ||
++        !(s->id[2]&(1u<<12)) || (s->id[1]&(1u<<31))) return false;
++    s->page = 4096; s->banks = s->id[1]&255;
++    s->stage2_banks = (s->id[1]>>16)&255;
++    s->matches = s->id[0]&255;
++    s->half = (2u << ((s->id[1]>>28)&7))*s->page;
++    unsigned oas=(s->id[2]>>4)&15, ubs=(s->id[2]>>8)&15;
++    return s->half == A630_SMMU_BYTES/2 && s->banks>1 &&
++        s->banks<=s->half/s->page && s->stage2_banks<s->banks &&
++        s->matches && s->matches<=128 && ((s->id[0]>>9)&15)>=3 &&
++        oas>=1 && oas<=5 && ubs>=2 && ubs<=5;
++}
++static inline bool a630_smmu_callbacks(const struct a630_smmu_io *io)
++{
++    return io && io->stopped && io->read && io->write && io->read64 && io->write64 &&
++        io->clean && io->sync && io->wait;
++}
++static inline enum a630_smmu_error
++a630_smmu_begin(bool exact_board, bool atos_disabled, struct a630_mmu *tables,
++    const struct a630_smmu_io *io, void *ctx, struct a630_smmu_snapshot *s)
++{
++    if (!s) return A630_SMMU_ARGUMENT;
++    *s=(struct a630_smmu_snapshot){.slot=UINT32_MAX,.bank=UINT32_MAX};
++    if (!exact_board) return A630_SMMU_DISABLED;
++    if (!atos_disabled || !a630_smmu_callbacks(io) || !a630_mmu_valid(tables)) {
++        s->error=A630_SMMU_ARGUMENT; goto done;
++    }
++    s->stage=1;
++    for (unsigned n=0;n<4;n++)
++        if (!a630_smmu_rd(io,ctx,s,n==3?0x3c:0x20+4*n,&s->id[n])) goto done;
++    if (!a630_smmu_geometry(s)) {s->error=A630_SMMU_LAYOUT;goto done;}
++    s->stage=2;
++    uint32_t used=1, free_slot=UINT32_MAX;
++    for (unsigned n=0;n<s->matches;n++) {
++        uint32_t smr,s2cr;
++        if (!a630_smmu_rd(io,ctx,s,0x800+4*n,&smr) ||
++            !a630_smmu_rd(io,ctx,s,0xc00+4*n,&s2cr)) goto done;
++        if (!(smr&(1u<<31))) {if(free_slot==UINT32_MAX)free_slot=n;continue;}
++        unsigned mask=(smr>>16)&0x7fff, id=smr&0x7fff;
++        if (!((A630_SMMU_STREAM^id)&~mask)) {
++            /* An overlapping/wildcard match could affect another stream. */
++            if (mask || s->slot!=UINT32_MAX) {s->error=A630_SMMU_OWNERSHIP;goto done;}
++            s->slot=n; s->smr=smr; s->s2cr=s2cr;
++        } else if (((s2cr>>16)&3)==0) {
++            s->foreign=1;
++            if ((s2cr&255)<32) used|=1u<<(s2cr&255);
++        }
++    }
++    if (s->slot==UINT32_MAX) {
++        if (free_slot==UINT32_MAX) {s->error=A630_SMMU_OWNERSHIP;goto done;}
++        s->slot=free_slot;
++        if (!a630_smmu_rd(io,ctx,s,0x800+4*s->slot,&s->smr) ||
++            !a630_smmu_rd(io,ctx,s,0xc00+4*s->slot,&s->s2cr)) goto done;
++    }
++    /* CB0 is reserved for the later 3D context;5..7 belong to HYP. */
++    for (unsigned n=1;n<s->banks && n<5;n++) {
++        uint32_t control;
++        if (n<s->stage2_banks || used&(1u<<n)) continue;
++        if (!a630_smmu_rd(io,ctx,s,s->half+n*s->page,&control)) goto done;
++        if (!(control&1)) {s->bank=n;s->context=s->half+n*s->page;break;}
++    }
++    if (s->bank==UINT32_MAX) {s->error=A630_SMMU_OWNERSHIP;goto done;}
++    s->stage=3;
++    if (!a630_smmu_rd(io,ctx,s,0,&s->global) ||
++        !a630_smmu_rd(io,ctx,s,s->page+4*s->bank,&s->cbar) ||
++        !a630_smmu_rd(io,ctx,s,s->page+0x800+4*s->bank,&s->cba2r)) goto done;
++    for (unsigned n=0;n<5;n++)
++        if (!a630_smmu_rd(io,ctx,s,s->context+a630_smmu_control[n],&s->control[n])) goto done;
++    if (!a630_smmu_lease(io,ctx,s)) goto done;
++    if (!io->read64(ctx,s->context+0x20,&s->ttbr[0]) ||
++        !io->read64(ctx,s->context+0x28,&s->ttbr[1])) {s->error=A630_SMMU_IO;goto done;}
++    for (unsigned n=0;n<A630_SMMU_IMPLS;n++)
++        if (!a630_smmu_rd(io,ctx,s,a630_smmu_impl_offsets[n],&s->impl[n])) goto done;
++    /* Shared implementation registers may not be changed under another
++     * stream. An existing translation owner must already have installed the
++     * board values, and the global fault/enable policy must already match. */
++    if (s->foreign) {
++        if ((s->global&0x401)!=0x400) {s->error=A630_SMMU_OWNERSHIP;goto done;}
++        for (unsigned n=0;n<A630_SMMU_IMPLS;n++)
++            if (s->impl[n]!=a630_smmu_impl_values[n]) {s->error=A630_SMMU_OWNERSHIP;goto done;}
++    }
++    if (!a630_smmu_lease(io,ctx,s)) goto done;
++    if (!io->clean(ctx,tables->memory,(size_t)tables->used*4096) || !io->sync(ctx)) {
++        s->error=A630_SMMU_IO;goto done;
++    }
++    s->stage=4;
++    /* Make this stream fault while its new context is being programmed. */
++    if (!a630_smmu_set(io,ctx,s,0xc00+4*s->slot,(s->s2cr&~0x30000u)|0x20000,0x30000) ||
++        !a630_smmu_set(io,ctx,s,0x800+4*s->slot,s->smr&~(1u<<31),1u<<31)) goto done;
++    for (unsigned n=0;n<A630_SMMU_IMPLS;n++)
++        if (!s->foreign && !a630_smmu_set(io,ctx,s,a630_smmu_impl_offsets[n],a630_smmu_impl_values[n],UINT32_MAX)) goto done;
++    s->stage=5;
++    s->root=tables->physical|((uint64_t)s->bank<<48);
++    if (!a630_smmu_set(io,ctx,s,s->context,0,1) ||
++        !a630_smmu_set(io,ctx,s,s->page+0x800+4*s->bank,1,1) ||
++        !a630_smmu_set(io,ctx,s,s->page+4*s->bank,0x1f300,0x3ffff) ||
++        !a630_smmu_set64(io,ctx,s,s->context+0x20,s->root) ||
++        !a630_smmu_set64(io,ctx,s,s->context+0x28,0) ||
++        !a630_smmu_set(io,ctx,s,s->context+0x10,0x38001,UINT32_MAX) ||
++        !a630_smmu_set(io,ctx,s,s->context+0x30,0x803519,UINT32_MAX) ||
++        !a630_smmu_set(io,ctx,s,s->context+0x38,0xf404ff44,UINT32_MAX) ||
++        !a630_smmu_set(io,ctx,s,s->context+0x3c,0,UINT32_MAX) ||
++        !a630_smmu_tlb(io,ctx,s) ||
++        !a630_smmu_set(io,ctx,s,s->context,0xc01127,0xc011ff)) goto done;
++    s->stage=6;
++    /* Reject unmatched streams, preserve every existing match. */
++    if (!a630_smmu_set(io,ctx,s,0,(s->global|0x400u)&~1u,0x401) ||
++        !a630_smmu_set(io,ctx,s,0x800+4*s->slot,(1u<<31)|A630_SMMU_STREAM,UINT32_MAX) ||
++        !a630_smmu_set(io,ctx,s,0xc00+4*s->slot,
++            (s->s2cr&~0x030303ffu)|0x300|s->bank,0x030303ff)) goto done;
++    if (!io->sync(ctx)) {s->error=A630_SMMU_IO;goto done;}
++    tables->dirty=0; s->stage=7;s->error=A630_SMMU_READY;
++done:
++    s->start_error=s->error;return (enum a630_smmu_error)s->error;
++}
++/* Only after all GMU/3D bus masters have stopped. If that cannot be
++ * established, leave the pages resident and the power/clock lease held.
++ * Cleanup has its own failure record and never erases the initial failure. */
++static inline bool a630_smmu_end(const struct a630_smmu_io *io, void *ctx,
++                               struct a630_smmu_snapshot *s)
++{
++    if (!s || !a630_smmu_callbacks(io)) return false;
++    if (!s->changed) return true;
++    struct a630_smmu_snapshot r=*s;
++    r.error=0;r.failed_offset=0;r.expected=0;r.actual=0;r.polls=0;
++    if (!a630_smmu_lease(io,ctx,&r)) goto failed;
++    /* No more stream requests may enter the context during teardown. */
++    if (!a630_smmu_set(io,ctx,&r,0xc00+4*s->slot,
++            (s->s2cr&~0x30000u)|0x20000,0x30000) ||
++        !a630_smmu_set(io,ctx,&r,0x800+4*s->slot,s->smr&~(1u<<31),UINT32_MAX) ||
++        !a630_smmu_set(io,ctx,&r,s->context,0,1) ||
++        !a630_smmu_tlb(io,ctx,&r)) goto failed;
++    if (!a630_smmu_set64(io,ctx,&r,s->context+0x20,s->ttbr[0]) ||
++        !a630_smmu_set64(io,ctx,&r,s->context+0x28,s->ttbr[1])) goto failed;
++    for (unsigned n=1;n<5;n++)
++        if (!a630_smmu_set(io,ctx,&r,s->context+a630_smmu_control[n],s->control[n],UINT32_MAX)) goto failed;
++    if (!a630_smmu_set(io,ctx,&r,s->page+4*s->bank,s->cbar,0x3ffff) ||
++        !a630_smmu_set(io,ctx,&r,s->page+0x800+4*s->bank,s->cba2r,1) ||
++        !a630_smmu_set(io,ctx,&r,s->context,s->control[0],0xc011ff)) goto failed;
++    if (!s->foreign) {
++        for (unsigned n=0;n<A630_SMMU_IMPLS;n++)
++            if (!a630_smmu_set(io,ctx,&r,a630_smmu_impl_offsets[n],s->impl[n],UINT32_MAX)) goto failed;
++        uint32_t current;
++        if (!a630_smmu_rd(io,ctx,&r,0,&current) ||
++            !a630_smmu_set(io,ctx,&r,0,(current&~0x401u)|(s->global&0x401),0x401)) goto failed;
++    }
++    if (!a630_smmu_set(io,ctx,&r,0xc00+4*s->slot,s->s2cr,0x030303ff) ||
++        !a630_smmu_set(io,ctx,&r,0x800+4*s->slot,s->smr,UINT32_MAX)) goto failed;
++    if (!io->sync(ctx)) {r.error=A630_SMMU_IO;goto failed;}
++    s->restored=1;s->restore_error=0;return true;
++failed:
++    s->restored=0;s->restore_error=r.error?r.error:A630_SMMU_RESTORE;
++    return false;
++}
++#endif
+--- /dev/null
++++ b/bsd/dev/polaris_a630_bus.h
+@@ -0,0 +1,107 @@
++/* SDM845 GMU200MHz/bus lease. Original c7cb50c1 gcc-sdm845.c,
++ * gpucc-sdm845.c, clk-alpha-pll.c and clk-branch.c. Never reprogram a PLL.
++ * Caller holds CX power, GMU_BCR, CM3_SYSRESET and the existing CXO/GMU
++ * clock lease. All mutations are restored only while these are held.
++ */
++#ifndef POLARIS_A630_BUS_H
++#define POLARIS_A630_BUS_H
++#ifndef POLARIS_A630_POWER_H
++#error Include the Polaris power definitions first
++#endif
++enum a630_bus_error { A630_BUS_DISABLED, A630_BUS_IO, A630_BUS_LEASE,
++    A630_BUS_PLL, A630_BUS_ACK, A630_BUS_TIMEOUT, A630_BUS_READY };
++struct a630_bus_snapshot {
++    uint32_t error,start_error,stage,changed,restored,restore_error;
++    uint32_t pll[5],before[4],live[4],config,command,bank,offset,expected,actual,polls;
++};
++static const uint32_t a630_bus_offsets[4]={0x52004,0x44038,0x7100c,0x71018};
++static const uint32_t a630_bus_masks[4]={1u<<16,1,1,1};
++struct a630_bus_io {a630_read read;a630_write write;a630_wait_us wait;
++    bool (*held)(void *);void *ctx;};
++static inline bool a630_bus_read(const struct a630_bus_io *io,struct a630_bus_snapshot *s,
++                                unsigned region,uint32_t off,uint32_t *v)
++{
++    if(!io->held(io->ctx)){s->error=A630_BUS_LEASE;return false;}
++    if(io->read(io->ctx,region,off,v))return true;
++    s->error=A630_BUS_IO;s->bank=region;s->offset=off;return false;
++}
++static inline bool a630_bus_write(const struct a630_bus_io *io,struct a630_bus_snapshot *s,
++                                 unsigned region,uint32_t off,uint32_t v,uint32_t mask)
++{
++    uint32_t current;
++    if(!a630_bus_read(io,s,region,off,&current))return false;
++    v=(current&~mask)|(v&mask);
++    if(!io->write(io->ctx,region,off,v)){s->error=A630_BUS_IO;s->bank=region;s->offset=off;return false;}
++    if(!a630_bus_read(io,s,region,off,&current))return false;
++    if((current^v)&mask){s->error=A630_BUS_ACK;s->bank=region;s->offset=off;s->expected=v;s->actual=current;return false;}
++    return true;
++}
++static inline bool a630_bus_poll(const struct a630_bus_io *io,struct a630_bus_snapshot *s,
++                                unsigned region,uint32_t off,uint32_t mask,uint32_t value)
++{
++    uint32_t actual=0;
++    for(unsigned n=0;n<500;n++){
++        s->polls++;
++        if(!a630_bus_read(io,s,region,off,&actual))return false;
++        if((actual&mask)==value)return true;
++        io->wait(io->ctx,1);
++    }
++    s->error=A630_BUS_TIMEOUT;s->bank=region;s->offset=off;s->expected=value;s->actual=actual;return false;
++}
++static inline bool a630_bus_source(const struct a630_bus_io *io,struct a630_bus_snapshot *s,uint32_t cfg)
++{
++    if(!a630_bus_write(io,s,1,0x1124,cfg,0x371f))return false;
++    uint32_t cmd;
++    if(!a630_bus_read(io,s,1,0x1120,&cmd) ||
++       !io->write(io->ctx,1,0x1120,cmd|1)) {s->error=A630_BUS_IO;return false;}
++    return a630_bus_poll(io,s,1,0x1120,1,0);
++}
++static inline enum a630_bus_error a630_bus_begin(bool enabled,const struct a630_bus_io *io,
++                                                struct a630_bus_snapshot *s)
++{
++    if(!s)return A630_BUS_IO;
++    *s=(struct a630_bus_snapshot){0};
++    if(!enabled)return A630_BUS_DISABLED;
++    if(!io||!io->read||!io->write||!io->wait||!io->held){s->error=A630_BUS_IO;goto done;}
++    s->stage=1;
++    /* Fabia PLL: mode,L,USER_CTL_LO,OPMODE,16-bit fractional numerator.
++     * Only accept the running inherited600MHz PLL and its /2 output. */
++    const uint32_t off[5]={0,4,0xc,0x2c,0x38};
++    for(unsigned n=0;n<5;n++)if(!a630_bus_read(io,s,0,off[n],&s->pll[n]))goto done;
++    if(!(s->pll[0]&(1u<<31)) || !(s->pll[0]&0x40000001u) ||
++       (s->pll[1]&0xffff)!=31 || (s->pll[4]&0xffff)!=0x4000 ||
++       ((s->pll[2]>>8)&15)!=1 || (s->pll[2]&3)!=3 || s->pll[3]!=1){s->error=A630_BUS_PLL;goto done;}
++    for(unsigned n=0;n<4;n++)if(!a630_bus_read(io,s,0,a630_bus_offsets[n],&s->before[n]))goto done;
++    if(!a630_bus_read(io,s,1,0x1124,&s->config)||!a630_bus_read(io,s,1,0x1120,&s->command))goto done;
++    if((s->config&0x371f)>1 || (s->command&1)){s->error=A630_BUS_LEASE;goto done;}
++    s->stage=2;
++    for(unsigned n=0;n<4;n++){
++        s->changed|=1u<<n;
++        if(!a630_bus_write(io,s,0,a630_bus_offsets[n],a630_bus_masks[n],a630_bus_masks[n]))goto done;
++        if(!n)io->wait(io->ctx,500); /* Original gate2 source settling. */
++        else if(!a630_bus_poll(io,s,0,a630_bus_offsets[n],1u<<31,0))goto done;
++        if(!a630_bus_read(io,s,0,a630_bus_offsets[n],&s->live[n]))goto done;
++    }
++    s->stage=3;s->changed|=16;
++    if(!a630_bus_source(io,s,0x602))goto done;
++    s->stage=4;s->error=A630_BUS_READY;
++done:
++    s->start_error=s->error;return (enum a630_bus_error)s->error;
++}
++static inline bool a630_bus_end(const struct a630_bus_io *io,struct a630_bus_snapshot *s)
++{
++    if(!s||!io||!io->held)return false;
++    if(!s->changed)return true;
++    struct a630_bus_snapshot r=*s;r.error=0;
++    /* Never withdraw a source or bus with a live bus master. */
++    if(!io->held(io->ctx)){r.error=A630_BUS_LEASE;goto failed;}
++    if((s->changed&16)&&!a630_bus_source(io,&r,s->config))goto failed;
++    for(int n=3;n>=0;n--)if(s->changed&(1u<<n)){
++        if(!a630_bus_write(io,&r,0,a630_bus_offsets[n],s->before[n],a630_bus_masks[n]))goto failed;
++        io->wait(io->ctx,10); /* Voted-clock OFF is request-only, as Linux. */
++    }
++    s->restored=1;s->restore_error=0;return true;
++failed:
++    s->restored=0;s->restore_error=r.error?r.error:A630_BUS_IO;return false;
++}
++#endif
+--- /dev/null
++++ b/bsd/dev/polaris_a630_boot.h
+@@ -0,0 +1,196 @@
++/* A630 original32KiB GMU boot, not GPU3D readiness. MiCode c7cb50c1
++ * adreno_a6xx.c:_load_gmu_rpmh_ucode/a6xx_gmu_fw_start/a6xx_gmu_start.
++ * Caller owns CX/200MHz/bus/SMMU, resident HFI, halted3D and CM3 reset.
++ * No OOB/GX request, HFI start, TZ authentication or CP command is sent.
++ * A fresh BABEFACE is the only firmware-boot success criterion.
++ */
++#ifndef POLARIS_A630_BOOT_H
++#define POLARIS_A630_BOOT_H
++#ifndef POLARIS_A630_POWER_H
++#error Include the Polaris register callbacks first
++#endif
++#define A630_BOOT_PROFILE 48u
++struct a630_boot_register {unsigned bank;uint32_t offset,value,mask;};
++static const struct a630_boot_register a630_boot_profile[A630_BOOT_PROFILE]={
++    {2,0x23010,0x01000000,0x01000000}, /* A6XX_GPU_RSCC_RSC_STATUS0_DRV0 */
++    {2,0x2302c,0x00000001,0xffffffff}, /* A6XX_RSCC_PDC_SLAVE_ID_DRV0 */
++    {2,0x23038,0x00000000,0xffffffff}, /* A6XX_RSCC_HIDDEN_TCS_CMD0_DATA */
++    {2,0x23034,0x00000000,0xffffffff}, /* A6XX_RSCC_HIDDEN_TCS_CMD0_ADDR */
++    {2,0x23040,0x00000000,0xffffffff}, /* A6XX_RSCC_HIDDEN_TCS_CMD0_DATA+2 */
++    {2,0x2303c,0x00000000,0xffffffff}, /* A6XX_RSCC_HIDDEN_TCS_CMD0_ADDR+2 */
++    {2,0x23048,0x80000000,0xffffffff}, /* A6XX_RSCC_HIDDEN_TCS_CMD0_DATA+4 */
++    {2,0x23044,0x00000000,0xffffffff}, /* A6XX_RSCC_HIDDEN_TCS_CMD0_ADDR+4 */
++    {2,0x23400,0x00000000,0xffffffff}, /* A6XX_RSCC_OVERRIDE_START_ADDR */
++    {2,0x23020,0x00004520,0xffffffff}, /* A6XX_RSCC_PDC_SEQ_START_ADDR */
++    {2,0x23024,0x00004510,0xffffffff}, /* A6XX_RSCC_PDC_MATCH_VALUE_LO */
++    {2,0x23028,0x00004514,0xffffffff}, /* A6XX_RSCC_PDC_MATCH_VALUE_HI */
++    {2,0x23600,0xa7a506a0,0xffffffff}, /* A6XX_RSCC_SEQ_MEM_0_DRV0 */
++    {2,0x23604,0xa1e6a6e7,0xffffffff}, /* A6XX_RSCC_SEQ_MEM_0_DRV0+1 */
++    {2,0x23608,0xa2e081e1,0xffffffff}, /* A6XX_RSCC_SEQ_MEM_0_DRV0+2 */
++    {2,0x2360c,0xe9a982e2,0xffffffff}, /* A6XX_RSCC_SEQ_MEM_0_DRV0+3 */
++    {2,0x23610,0x0020e8a8,0xffffffff}, /* A6XX_RSCC_SEQ_MEM_0_DRV0+4 */
++    {4,0x280000,0xfebea1e1,0xffffffff}, /* PDC_GPU_SEQ_MEM_0 */
++    {4,0x280004,0xa5a4a3a2,0xffffffff}, /* PDC_GPU_SEQ_MEM_0+1 */
++    {4,0x280008,0x8382a6e0,0xffffffff}, /* PDC_GPU_SEQ_MEM_0+2 */
++    {4,0x28000c,0xbce3e284,0xffffffff}, /* PDC_GPU_SEQ_MEM_0+3 */
++    {4,0x280010,0x002081fc,0xffffffff}, /* PDC_GPU_SEQ_MEM_0+4 */
++    {4,0x855cc,0x00000007,0xffffffff}, /* PDC_GPU_TCS1_CMD_ENABLE_BANK */
++    {4,0x855d0,0x00000000,0xffffffff}, /* PDC_GPU_TCS1_CMD_WAIT_FOR_CMPL_BANK */
++    {4,0x855c8,0x00000000,0xffffffff}, /* PDC_GPU_TCS1_CONTROL */
++    {4,0x855d4,0x00010108,0xffffffff}, /* PDC_GPU_TCS1_CMD0_MSGID */
++    {4,0x855d8,0x00030010,0xffffffff}, /* PDC_GPU_TCS1_CMD0_ADDR */
++    {4,0x855dc,0x00000001,0xffffffff}, /* PDC_GPU_TCS1_CMD0_DATA */
++    {4,0x855e4,0x00010108,0xffffffff}, /* PDC_GPU_TCS1_CMD0_MSGID+4 */
++    {4,0x855e8,0x00030000,0xffffffff}, /* PDC_GPU_TCS1_CMD0_ADDR+4 */
++    {4,0x855ec,0x00000000,0xffffffff}, /* PDC_GPU_TCS1_CMD0_DATA+4 */
++    {4,0x855f4,0x00010108,0xffffffff}, /* PDC_GPU_TCS1_CMD0_MSGID+8 */
++    {4,0x855f8,0x00030080,0xffffffff}, /* PDC_GPU_TCS1_CMD0_ADDR+8 */
++    {4,0x855fc,0x00000000,0xffffffff}, /* PDC_GPU_TCS1_CMD0_DATA+8 */
++    {4,0x8575c,0x00000007,0xffffffff}, /* PDC_GPU_TCS3_CMD_ENABLE_BANK */
++    {4,0x85760,0x00000000,0xffffffff}, /* PDC_GPU_TCS3_CMD_WAIT_FOR_CMPL_BANK */
++    {4,0x85758,0x00000000,0xffffffff}, /* PDC_GPU_TCS3_CONTROL */
++    {4,0x85764,0x00010108,0xffffffff}, /* PDC_GPU_TCS3_CMD0_MSGID */
++    {4,0x85768,0x00030010,0xffffffff}, /* PDC_GPU_TCS3_CMD0_ADDR */
++    {4,0x8576c,0x00000002,0xffffffff}, /* PDC_GPU_TCS3_CMD0_DATA */
++    {4,0x85774,0x00010108,0xffffffff}, /* PDC_GPU_TCS3_CMD0_MSGID+4 */
++    {4,0x85778,0x00030000,0xffffffff}, /* PDC_GPU_TCS3_CMD0_ADDR+4 */
++    {4,0x8577c,0x00000003,0xffffffff}, /* PDC_GPU_TCS3_CMD0_DATA+4 */
++    {4,0x85784,0x00010108,0xffffffff}, /* PDC_GPU_TCS3_CMD0_MSGID+8 */
++    {4,0x85788,0x00030080,0xffffffff}, /* PDC_GPU_TCS3_CMD0_ADDR+8 */
++    {4,0x8578c,0x00000003,0xffffffff}, /* PDC_GPU_TCS3_CMD0_DATA+8 */
++    {4,0x84520,0x00000000,0xffffffff}, /* PDC_GPU_SEQ_START_ADDR */
++    {4,0x84500,0x80000001,0x80000001}, /* PDC_GPU_ENABLE_PDC */
++};
++struct a630_boot_io {a630_read read;a630_write write;a630_wait_us wait;
++    bool (*owned)(void *);bool (*sync)(void *);void *ctx;};
++enum a630_boot_error {A630_BOOT_DISABLED,A630_BOOT_IO,A630_BOOT_LEASE,
++    A630_BOOT_ACK,A630_BOOT_RUNNING,A630_BOOT_TIMEOUT,A630_BOOT_READY};
++struct a630_boot_snapshot {
++    uint32_t error,start_error,stage,changed,restored,restore_error,started,stopped;
++    uint32_t before[A630_BOOT_PROFILE],fw,bcr,reset,busy,gx,hfi;
++    uint32_t failed_bank,failed_offset,expected,actual,polls;
++};
++static inline bool a630_boot_read(const struct a630_boot_io *io,struct a630_boot_snapshot *s,
++                                 unsigned bank,uint32_t off,uint32_t *v)
++{
++    if(!io->owned(io->ctx)){s->error=A630_BOOT_LEASE;return false;}
++    if(io->read(io->ctx,bank,off,v))return true;
++    s->error=A630_BOOT_IO;s->failed_bank=bank;s->failed_offset=off;return false;
++}
++static inline bool a630_boot_set(const struct a630_boot_io *io,struct a630_boot_snapshot *s,
++                                unsigned bank,uint32_t off,uint32_t v,uint32_t mask)
++{
++    uint32_t actual;
++    if(!a630_boot_read(io,s,bank,off,&actual))return false;
++    v=(actual&~mask)|(v&mask);
++    if(!io->write(io->ctx,bank,off,v)){
++        s->error=A630_BOOT_IO;s->failed_bank=bank;s->failed_offset=off;return false;
++    }
++    for(unsigned n=0;n<500;n++){
++        if(!a630_boot_read(io,s,bank,off,&actual))return false;
++        if(!((actual^v)&mask))return true;
++        io->wait(io->ctx,1);
++    }
++    s->error=A630_BOOT_ACK;s->failed_bank=bank;s->failed_offset=off;
++    s->expected=v;s->actual=actual;return false;
++}
++static inline bool a630_boot_poll(const struct a630_boot_io *io,struct a630_boot_snapshot *s,
++                                 unsigned bank,uint32_t off,uint32_t value,uint32_t mask,unsigned limit)
++{
++    uint32_t actual=0;
++    for(unsigned n=0;n<limit;n++){
++        s->polls++;
++        if(!a630_boot_read(io,s,bank,off,&actual))return false;
++        if((actual&mask)==value)return true;
++        io->wait(io->ctx,1);
++    }
++    s->error=A630_BOOT_TIMEOUT;s->failed_bank=bank;s->failed_offset=off;
++    s->expected=value;s->actual=actual;return false;
++}
++/* Set up sequencers while CM3 is held. These are the original A630 TCS
++ * addresses/values, not SC7280's layout. This profile only configures them;
++ * it does not issue a rail vote or trigger the sequencers. */
++static inline bool a630_boot_configure(const struct a630_boot_io *io,struct a630_boot_snapshot *s)
++{
++    *s=(struct a630_boot_snapshot){0};s->stage=1;
++    if(!io||!io->read||!io->write||!io->wait||!io->owned||!io->sync){s->error=A630_BOOT_IO;goto done;}
++    if(!a630_boot_read(io,s,2,0x14000,&s->reset)||
++       !a630_boot_read(io,s,2,0x14070,&s->fw)||
++       !a630_boot_read(io,s,2,0x14600,&s->hfi)||
++       !a630_boot_read(io,s,2,0x23404,&s->busy)||
++       !a630_boot_read(io,s,1,0x100c,&s->gx))goto done;
++    if(s->reset!=1||s->fw==0xbabeface||(s->hfi&1)||s->busy||(s->gx&0x80000000u)){s->error=A630_BOOT_RUNNING;goto done;}
++    for(unsigned n=0;n<A630_BOOT_PROFILE;n++){
++        const struct a630_boot_register *r=&a630_boot_profile[n];
++        if(!a630_boot_read(io,s,r->bank,r->offset,&s->before[n]))goto done;
++    }
++    s->stage=2;s->changed=A630_BOOT_PROFILE;
++    if(!a630_boot_set(io,s,4,0x84500,0,0x80000001))goto done;
++    for(unsigned n=0;n<A630_BOOT_PROFILE;n++){
++        const struct a630_boot_register *r=&a630_boot_profile[n];
++        if(!a630_boot_set(io,s,r->bank,r->offset,r->value,r->mask))goto done;
++    }
++    if(!io->sync(io->ctx)){s->error=A630_BOOT_IO;goto done;}
++    s->stage=3;return true;
++done:
++    s->start_error=s->error;return false;
++}
++/* Image must have just been copied and read back after BCR release; the
++ * caller verifies its hash and actual SMMU/HFI allocation before invoking.
++ * The HFI contents are clean/resident. No HFI/GX enable follows here. */
++static inline bool a630_boot_start(const struct a630_boot_io *io,struct a630_boot_snapshot *s)
++{
++    if(s->stage!=3||s->error)return false;
++    s->stage=4;
++    const struct a630_boot_register config[]={
++        {2,0x14730,1,0xffffffff}, /* GENERAL_7: TCM retention */
++        {2,0x14070,0,0xffffffff}, /* Fresh FW_INIT_RESULT */
++        {2,0x14004,2,0xffffffff}, /* Original TCM_BOOT enum */
++        {2,0x14614,0x60000000,0xffffffff},
++        {2,0x14610,1,0xffffffff},
++        {2,0x24c44,0x80a008a0,0xffffffff}, /* Fence range */
++        {2,0x14608,0x06030100,0xffffffff}, /* Original chip-id compression */
++        {2,0x1303c,1,0xffffffff}, /* GMU_SYS_BUS_CONFIG */
++        {2,0x14300,0x09c40400,0xffffffff}, /* GPU_HW_ACTIVE; no IFPC */
++        {2,0x143a0,0xf11,0xf11}, /* RPMh capability, no OOB request */
++    };
++    for(unsigned n=0;n<sizeof(config)/sizeof(config[0]);n++){
++        const struct a630_boot_register *r=&config[n];
++        if(!a630_boot_set(io,s,r->bank,r->offset,r->value,r->mask))goto done;
++    }
++    if(!a630_boot_set(io,s,2,0x14000,1,0xffffffff)||!io->sync(io->ctx)){
++        if(!s->error)s->error=A630_BOOT_IO;goto done;
++    }
++    s->stage=5;s->started=1; /* Includes a posted release whose callback fails. */
++    if(!a630_boot_set(io,s,2,0x14000,0,0xffffffff)||!io->sync(io->ctx)){
++        if(!s->error)s->error=A630_BOOT_IO;goto done;
++    }
++    if(!a630_boot_poll(io,s,2,0x14070,0xbabeface,0xffffffff,10000))goto done;
++    if(!a630_boot_read(io,s,2,0x14070,&s->fw))goto done;
++    s->stage=6;s->error=A630_BOOT_READY;
++done:
++    s->start_error=s->error;return s->error==A630_BOOT_READY;
++}
++/* Contain first, restore second. BCR confirmation also gates SMMU teardown.
++ * Keep all allocations, power and clocks when containment is uncertain. */
++static inline bool a630_boot_stop(const struct a630_boot_io *io,struct a630_boot_snapshot *s)
++{
++    struct a630_boot_snapshot r=*s;r.error=0;
++    if(!a630_boot_set(io,&r,2,0x14000,1,0xffffffff)||
++       !a630_boot_set(io,&r,1,0x111c,1,1)||
++       !a630_boot_poll(io,&r,1,0x111c,1,1,1000))goto failed;
++    io->wait(io->ctx,20);
++    if(!a630_boot_poll(io,&r,2,0x23404,0,0xffffffff,1000))goto failed;
++    s->stopped=1;
++    if(s->changed&&!a630_boot_set(io,&r,4,0x84500,0,0x80000001))goto failed;
++    for(unsigned n=s->changed?s->changed-1:0;n>0;n--){
++        const struct a630_boot_register *p=&a630_boot_profile[n-1];
++        if(!a630_boot_set(io,&r,p->bank,p->offset,s->before[n-1],p->mask))goto failed;
++    }
++    if(s->changed&&!a630_boot_set(io,&r,4,0x84500,s->before[A630_BOOT_PROFILE-1],0x80000001))goto failed;
++    if(!io->sync(io->ctx)){r.error=A630_BOOT_IO;goto failed;}
++    s->restored=1;s->restore_error=0;return true;
++failed:
++    s->restored=0;s->restore_error=r.error?r.error:A630_BOOT_IO;return false;
++}
++#endif

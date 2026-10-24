@@ -13,13 +13,14 @@
 enum a630_clock_result {
     A630_CLK_DISABLED, A630_CLK_IO, A630_CLK_REFUSED, A630_CLK_ROOT_TIMEOUT,
     A630_CLK_BRANCH_TIMEOUT, A630_CLK_RESTORE_FAILED, A630_CLK_READY_RESTORED,
-    A630_CLK_REQUEST_TIMEOUT, A630_CLK_STATE_CHANGED, A630_CLK_READY_RESET_HELD
+    A630_CLK_REQUEST_TIMEOUT, A630_CLK_STATE_CHANGED, A630_CLK_READY_RESET_HELD,
+    A630_CLK_RESOURCES_HELD
 };
 struct a630_clock_snapshot {
     uint32_t result, step, reads, writes, polls, changed, restored;
     uint32_t cfg_ahb, cx_hw, gx, gx_gmu, config;
     uint32_t failed_step, failed_op, failed_offset, failed_expected, failed_value, failed_mask;
-    uint32_t request_polls, reset_retained;
+    uint32_t request_polls, reset_retained, resources_retained;
     uint32_t before[5], live[5], after[5];
 };
 struct a630_clock_io {
@@ -89,9 +90,10 @@ static inline bool a630_clk_poll(struct a630_clock_io *io, unsigned index, bool 
 /* Hook runs exclusively after verified clocks, under GMU_BCR. Returning
  * false retains block reset through/after clock cleanup, including on error.
  * This permits TCM access without ever running partially loaded firmware. */
-static inline enum a630_clock_result a630_clock_trial_with_hook(bool enabled, bool exact_board,
+static inline enum a630_clock_result a630_clock_trial_with_lifetime(bool enabled, bool exact_board,
     a630_read read, a630_write write, a630_wait_us wait, void *ctx,
-    struct a630_clock_snapshot *s, bool (*hook)(void *), void *hook_ctx)
+    struct a630_clock_snapshot *s, bool (*hook)(void *), void *hook_ctx,
+    bool (*can_stop)(void *))
 {
     if (!s) return A630_CLK_DISABLED;
     *s = (struct a630_clock_snapshot){0};
@@ -143,6 +145,10 @@ static inline enum a630_clock_result a630_clock_trial_with_hook(bool enabled, bo
     s->result = A630_CLK_READY_RESTORED;
     if (hook && !hook(hook_ctx)) s->reset_retained = 1;
 restore:
+    if (can_stop && !can_stop(hook_ctx)) {
+        s->resources_retained = 1; s->result = A630_CLK_RESOURCES_HELD;
+        return A630_CLK_RESOURCES_HELD;
+    }
     s->step = 10;
     {
         bool ok = true;
@@ -168,6 +174,12 @@ restore:
     }
 done:
     return (enum a630_clock_result)s->result;
+}
+static inline enum a630_clock_result a630_clock_trial_with_hook(bool enabled, bool exact_board,
+    a630_read read, a630_write write, a630_wait_us wait, void *ctx,
+    struct a630_clock_snapshot *s, bool (*hook)(void *), void *hook_ctx)
+{
+    return a630_clock_trial_with_lifetime(enabled,exact_board,read,write,wait,ctx,s,hook,hook_ctx,NULL);
 }
 static inline enum a630_clock_result a630_clock_trial(bool enabled, bool exact_board,
     a630_read read, a630_write write, a630_wait_us wait, void *ctx,

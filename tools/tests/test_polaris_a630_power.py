@@ -38,6 +38,7 @@ static bool wr(void *p,unsigned region,uint32_t off,uint32_t value){
 static void wait_us(void *p,uint32_t us){assert(us==1);((struct mock*)p)->waits++;}
 static struct mock fresh(void){return (struct mock){.request=0x222001,.hw=0x5ff4,.ack=2};}
 static unsigned trial(struct mock *m,struct a630_power_snapshot *s){return a630_power_trial(true,true,rd,wr,wait_us,m,s);}
+static bool retain(void *p){(void)p;return false;}
 int main(void){
  struct a630_power_snapshot s;struct mock m=fresh();
  assert(a630_power_trial(false,true,rd,wr,wait_us,&m,&s)==A630_POWER_DISABLED&&!m.calls);
@@ -68,6 +69,8 @@ int main(void){
  }
  m=fresh();m.fail_write=1;assert(trial(&m,&s)==A630_POWER_IO&&s.request_restored);
  m=fresh();m.fail_write=2;assert(trial(&m,&s)==A630_POWER_RESTORE_FAILED&&!s.request_restored);
+ m=fresh();assert(a630_power_trial_with_lifetime(true,true,rd,wr,wait_us,&m,&s,0,&m,retain)==A630_POWER_RESOURCES_HELD);
+ assert(s.resources_retained&&!s.request_restored&&m.writes==1&&m.request==0x222000);
  return 0;
 }
 '''
