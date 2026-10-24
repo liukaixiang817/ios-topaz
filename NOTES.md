@@ -22,6 +22,28 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT ACTION —0034 GUI confirmed;0035 fixes source-identified omissions
+
+- Actualhuman “已进入系统”; observer89914STOPPED EXIT0, **54samples/541.099s**,
+  no nativeUSB/ECM,zeroinspectionerrors; NDJSONallmatch. NoRAMlog/panelcapture
+  orhostnetworkchange. No furtherbootuntilnewvalidatedimage/physicalFASTBOOT.
+- ActualphotoDD567B91: **GB6/4 READY**, src0505, PLLd8100005 L31/FRAC4000,
+  USER103/OPMODE0 confirmsFSM admissionfix. **GS6/4** failsimploffset6b68,
+  requested9a82a382/readbacka8000082, cleanup1/0. **GE0/0 unattempted**:
+  stillnoGMUfirmwareexecutionorGPUrendering. PriorbusPLLblockresolved.
+- USB**UM4/4**: beginstage4READY, GENERAL4→d; cleanupBUSY4 retainsmux,
+  EP0resourcecmd2stillCMDACT402/1000polls. PIPE/UTMIclockselectionproven;
+  itdidnotresolvecmdtimeout. NoUSBsuccessclaim.
+- Originalarm-smmu.c qsmmuv2_device_reset haltsmicroMMU(6000bit2), waits
+  IDLEbit3 beforeimplwrites, thenresumes. Nativeomitsit.0035willaddowned
+  halt/ACK/timeout/resumewithsafeunwind; keepimplreadbackfailurechecks.
+- Originaldwc3-msm.c resetcallback also setsCGCTL(QSCRATCH+28)bits3/4 for
+  RAMmasterclock; nativeomitsit. Addownedrequest/readback/busy-safehold.
+  Theseareprimarysource-backedmissingsteps, physicalcauseyetunproven.
+- Preserveprivate0034hardwarephotoSHA/rawrows. DoNOTrestartobserver.
+  Keepoperationalnoteslocal(publicpushnotapproved); use source-onlypublication
+  excludingprivatehandoffcommits fornextGPU/USBfix CI.
+
 ###0034 handoff — keep live observer; await actual human result
 
 - Observer89914 stillACTIVE, **28samples/272.011s** sofar;
