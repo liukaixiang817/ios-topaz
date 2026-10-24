@@ -56,11 +56,21 @@ Useful input details already reviewed:
 - The USB server belongs to a resident EFI loader using Qualcomm UEFI device
   protocols. Porting it requires loader, firmware, memory and CPU integration.
 
-At the time of this review, polaris 0016 stops before I2C because GPIO99 keeps
-the touch controller in reset. The 0017 fix uses polaris GPIO23/GPIO99 and its
-vendor timing. Reference HID/userland changes are a later investigation if
-physical reports become available. See `NOTES.md` for the active build and
-hardware status.
+Polaris 0019 now receives physical S3330 reports and the user confirmed a
+real swipe into the home screen. Its F01 command/status check was corrected
+using the Synaptics specification and primary Linux driver. A later tap leaves
+the screen covered by logs; application usability remains unproven.
+
+For 0020, the reference's bounded selector logging and first-frame console
+handoff are relevant. Our implementation retains its existing
+`sweet_console_muted` gate after a valid CPU frame and preserves RAM logging
+and panic output. Do not copy the reference's `PE_initialize_console()` call
+into this platform: earlier bring-up found the associated read-only-late
+console state unsafe to change. The logging budget is independently written;
+AKS protocol replies, encryption, HID event semantics, foreign MMIO and
+reference userland injection offsets are unchanged. `SWEET SURF sel 41` is a
+logged success/no-op here, so its presence alone does not identify an App
+failure. See `NOTES.md` for current evidence and validation.
 
 ## Future refresh
 

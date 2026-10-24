@@ -10,14 +10,22 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION —0019 temporary boot sent; await NEW screen/swipe evidence
+### CURRENT NEXT ACTION —0019 physical touch/home confirmed; prepare0020 clean GUI
 
-- User confirmed physical FASTBOOT. Fresh0019 preflight session19852 PASS,
-  then boot session72375 exit0, Sending/Booting OKAY (1.178s total), sent
-  2026-10-24T06:31:16.020351+00:00 =17:31:16 Melbourne. This is successful boot
-  transport only; NEW0019 GUI/physical input not yet observed. Current phone
-  is0019. Prior0018 lockscreen/onevibration/phase6result13frames0 are history,
-  not0019 observations. No0019 touch/home success claim.
+- User CONFIRMS0019 realtouch/swipe reaches main home screen. Later icon/tap
+  causes screen filled with log/noGUI; exact App unknown. Photos981671B7...
+  all3 saved0600 touch-0019/hardware-home-console-overdraw-{1..3}.jpg and
+  hardware-home-console-overdraw.json (hashes/transcription). No visiblepanic.
+  D TOUCHphase7/result0/done0/frames21762→22150→22553/down0, GPIOI2Cpath2/
+  lines3/bus0; worker stillpolling, snapshotsdon'tproveeachfingercontact.
+  D TFstep6/error0/io0/validf/writes1/checks1/wait0;TCstatus81/0 control0/0
+  want80 addrc/6;TLf12=12/8 report8 present a n10 stride8 max1079,2159.
+  F01protocolfix nowpassed onphone; first successful physicalhomeuserproof.
+  Appsworking/stablecontinuedinput NOT proven. Photo3COW22637/32768,
+  dirty361140KiB/written1160944KiB/UFSerror0/refused0. Photo2FBswaps59/
+  present43/pixels92601360. SURFsel41 sourceisnoop-success, not failureproof.
+-0019 readonlypreflight19852 PASS, temporaryboot72375exit0 at
+  2026-10-24T06:31:16.020351+00:00 =17:31:16 Melbourne. Exactsource/hashbelow.
 - Fresh full16GiB hash at2026-10-24T06:30:32.668902+00:00 equals immutablebase
   689a8cd1df0fc0093706272241a9ac77d5eddd7a62df5d340913ec6abcd7ce2b,
   182extents/freshmap/GPT/header unchanged, unmounted/blockRO1,33C;
@@ -25,10 +33,32 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   writes; pendingouterext4journal preserved. ufsrw0/RAM512 retained.
   preflight.json/boot.json/full-image-readonly-verification.json and sanitized
   logs saved privately research/polaris/touch-0019/.
-- NEXT: Keep0019 running. New screen/bottomswipe async question pending; await
-  actual user result. If still no input, need NEW0019 D TOUCH/TF/TC/TL/TW/
-  TG/TI/TIF/TRMI photos. Request photos in ordinary chat, not async texttool.
-  Do not request anotherreboot justforlogs. XNU has no USB reboot/logchannel.
+- NEXT: Keep0019 running, no newphysicalrequest until0020prepared. User
+  says screen goes all-log aftertap; no clear Appname. Confirmed source
+  sweetfb_noconsole0 leaves console drawing overGUI; all AKS calls including
+  hot success17/35 logged. Consulted local HackiOS MiniAppleKeyStore once-per-
+  selector logging and MiniIOMobileFramebuffer firstpicture console handoff,
+  inject.c event semantics, inject_sb software-rendering caveats. Plan0020
+  interactive boot profile (quiet1 only afteractualvalidCPUframe), bound
+  repetitive AKSlogging while preservingreturns/DER, retainRAMlogs/diag and
+  panicconsole. No speculative sel41/crypto/HID/firmware/PMIC changes based
+  justonlog. Need build/native+actualobject/exactkernelregressions/packaging
+  beforephysicalFASTBOOT request. Applicationlaunchcause stillunknown.
+- IMPLEMENTED0020 candidate:0817 changes ONLY Polaris AKS logging, same
+  returnvalues/DER/arguments. Fixed257bucket counters; first2successes per
+  selector,first4errors and powers-of-two repetitions thereafter, saturated
+  counters and out-of-rangebucket. No per-callprocname/formatting on suppressed
+  calls. New tools/polaris-ios-interactive.cmdline differs fromtouchprofile
+  ONLY sweetfb_noconsole0→1; existing firstvalidCPUframe mutes drawing, early
+  boot stillvisible. RAMring append precedesmute; panicactive bypass unchanged.
+  Native25tests PASS (includesactualheader flood/error/separatebucket/saturation/
+  8threadconcurrency and shippedheaderidentity; alltouch/wake/GPIO/mode/ADT/
+  profile regressions). ActualCI-header ARM64KeyStoreC++object PASS;
+  0817bothfilesapplyMATCH. Exactexisting_cnputs body nativeASan/UBSan with
+  mockedRAM/screen/panicIO passes4routingcases; not realframebuffer/phoneproof.
+  Later0019photos6E7AA3D2 savedprivately;frames33575→33971→34366,lines3/bus0,
+  no visiblepanic;COW26249/32768/dirty419880KiB/refused0/UFSerror0. App cause
+  unknown. Need fullCI/newkernelQEMU/image beforephysicalrequest.
 -0019 FIX: RMI4 Ctrl0 CONFIGURED bit7 is a command whose readback is0;0018
   incorrectly requires (control&83)==80. Correct mode verifies normal sleep
   bits and Data0 UNCONFIGURED bit7clear, rejects flash/CRC/fatal/transport
@@ -37,7 +67,8 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   regression models actual read0 and proves oldpredicate wrongly rejects it.
   Protocol check: Synaptics511-000136-01RevE section3.1.1 and primary Linux
   rmi_f01.c Data0verification; private touch-0019/f01-protocol-review.json.
-  This is a proven software protocol bug; actual0019 touch/UI still unproven.
+  Proven softwareprotocolbug;0019 actualtouch/home nowconfirmed above,
+  stableApps/continuedinput stillunproven.
 - Correctsourcecf1e4f8611942aa0357bca54447d35c570eb8243;
   CI40069077256/job120798419939 SUCCESS, Build4m25s (06:09:56–06:14:21UTC).
   Full log research/polaris/ci-40069077256.log; artifact12550770763,
@@ -61,9 +92,9 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 - Evidence/scripts private research/polaris/touch-0019/: prepared.json,
   verification.json,qemu-check.json,validation.log,hardware-decoder.json,
   final-prepared-check.json,deployment-state.json. No kernel build inputs
-  changed aftercf1e4f8. On actualboot ask bottomswipe and save NEW0019 photos:
-  D TOUCH,TF,TC,TL,TW,TG,TI,TIF,TRMI. Phase7/frames alone notphysicalproof;
-  require realdown/move/up plus corresponding UI. Neverreuse0018observations.
+  changed aftercf1e4f8. NEW0019photos and userhomeconfirmation nowrecorded;
+  phase7/frames alone cannotprovecontinuedfingerresponse/App rendering.
+  Need nextversion cleanGUI and actualAppopening/returnhome tests.
 
 ### 0018 hardware evidence and 0019 implementation history
 

@@ -1,0 +1,79 @@
+--- a/iokit/Kernel/arm/SweetKeyStore.cpp
++++ b/iokit/Kernel/arm/SweetKeyStore.cpp
+@@ -10,9 +10,9 @@
+  * answer is kIOReturnNotFound; answering with a handle is the path a
+  * userspace reboot takes, so no bag file is needed.
+  *
+- * Every call is logged (selector, caller, argument shapes, result) so the
+- * next selectors the system needs show up on the console; unknown ones fail
+- * with kIOReturnUnsupported.
++ * Diagnostic builds log selector/caller/argument shapes/result. Polaris
++ * bounds repeated logs so background queries do not continuously format
++ * and draw console messages over the GUI. Unknown methods still fail kIOReturnUnsupported.
+  */
+ #include <pexpert/arm64/board_config.h>
+ 
+@@ -24,6 +24,10 @@
+ #include <IOKit/IOMemoryDescriptor.h>
+ #include <libkern/c++/OSString.h>
+ #include <sys/proc.h>
++#if defined(POLARIS_RAM_ONLY)
++#include "polaris_log_budget.h"
++static struct polaris_log_budget polaris_aks_log;
++#endif
+ 
+ /* libaks selectors (AppleKeyStore.framework, iOS 16.7). */
+ enum {
+@@ -232,10 +236,16 @@
+ 		break;
+ 	}
+ 
++#if defined(POLARIS_RAM_ONLY)
++    if (polaris_log_allow(&polaris_aks_log,selector,ret!=kIOReturnSuccess)) {
++#endif
+ 	char name[32];
+ 	proc_selfname(name, sizeof(name));
+ 	IOLog("SWEET AKS: %s sel %u arg0 %llu in %u/%u out %u/%u -> 0x%x\n", name, selector,
+ 	    arg0, in_scalars, in_struct, out_scalars, out_struct, ret);
++#if defined(POLARIS_RAM_ONLY)
++    }
++#endif
+ 	return ret;
+ }
+ #endif /* SWEET */
+--- /dev/null
++++ b/iokit/Kernel/arm/polaris_log_budget.h
+@@ -0,0 +1,33 @@
++#ifndef POLARIS_LOG_BUDGET_H
++#define POLARIS_LOG_BUDGET_H
++#include <stdint.h>
++#include <stdbool.h>
++
++/* Fixed memory, no clock/locks/allocations or caller strings on the hot path.
++ * Per selector: two successes; first four errors and powers of two thereafter.
++ * Selectors outside the known range share a separate overflow bucket. The
++ * counters saturate, so even a long-lived busy client cannot restart a flood.
++ */
++#define POLARIS_LOG_SELECTORS 256u
++struct polaris_log_budget {
++    uint32_t success[POLARIS_LOG_SELECTORS + 1];
++    uint32_t error[POLARIS_LOG_SELECTORS + 1];
++};
++static inline uint32_t plog_tick(uint32_t *p)
++{
++    uint32_t n=__atomic_load_n(p,__ATOMIC_RELAXED);
++    while (n!=UINT32_MAX) {
++        if (__atomic_compare_exchange_n(p,&n,n+1,true,__ATOMIC_RELAXED,__ATOMIC_RELAXED)) {
++            return n+1;
++        }
++    }
++    return UINT32_MAX;
++}
++static inline bool
++polaris_log_allow(struct polaris_log_budget *b, uint32_t selector, bool error)
++{
++    unsigned slot=selector<POLARIS_LOG_SELECTORS ? selector : POLARIS_LOG_SELECTORS;
++    uint32_t n=plog_tick(error ? &b->error[slot] : &b->success[slot]);
++    return error ? (n<=4 || (n && !(n & (n-1)))) : n<=2;
++}
++#endif
