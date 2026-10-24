@@ -1,0 +1,331 @@
+--- a/bsd/dev/polaris_touch.c
++++ b/bsd/dev/polaris_touch.c
+@@ -12,6 +12,7 @@
+ #include <pexpert/pexpert.h>
+ #include <pexpert/device_tree.h>
+ #include "polaris_geni_i2c.h"
++#include "polaris_gpio_i2c.h"
+ #include "polaris_rmi.h"
+ 
+ extern vm_offset_t ml_io_map(vm_offset_t, vm_size_t);
+@@ -23,6 +24,9 @@
+ static struct {
+     vm_offset_t gcc, se, pin[4];
+     struct polaris_geni bus;
++    struct polaris_gpio_i2c gpio;
++    uint32_t gpio_cfg[2];
++    bool use_gpio;
+     struct polaris_rmi_layout rmi;
+     uint32_t mode;
+     int page;
+@@ -33,7 +37,8 @@
+ /* Relaxed individual diagnostic fields, not a coherent hardware snapshot.
+  * Reporter only reads saved RAM, never waits for I2C/storage locks. */
+ enum { PD_PHASE, PD_ERROR, PD_FW, PD_STATUS, PD_IRQ, PD_REG, PD_LEN,
+-       PD_A, PD_B, PD_FRAMES, PD_DOWN, PD_DONE, PD_COUNT };
++       PD_A, PD_B, PD_FRAMES, PD_DOWN, PD_DONE, PD_IF, PD_TX, PD_RX,
++       PD_PATH, PD_LINES, PD_BUS, PD_COUNT };
+ static uint32_t pt_diag[PD_COUNT];
+ static void pd(unsigned field, uint32_t value)
+ { __atomic_store_n(&pt_diag[field], value, __ATOMIC_RELAXED); }
+@@ -46,6 +51,8 @@
+     printf("D TOUCH: phase=%u result=%u done=%u frames=%u down=%x\n",
+         pget(PD_PHASE), pget(PD_ERROR), pget(PD_DONE), pget(PD_FRAMES), pget(PD_DOWN));
+     printf("D TREG: fw=%x status=%x irq=%x\n", pget(PD_FW), pget(PD_STATUS), pget(PD_IRQ));
++    printf("D TIF: fifo=%x tx=%x rx=%x path=%u lines=%x bus=%u\n",
++        pget(PD_IF), pget(PD_TX), pget(PD_RX), pget(PD_PATH), pget(PD_LINES), pget(PD_BUS));
+     printf("D TRMI: reg=%x n=%u data=%x/%x\n",
+         pget(PD_REG), pget(PD_LEN), pget(PD_A), pget(PD_B));
+ }
+@@ -125,11 +132,21 @@
+     pt.se = ml_io_map(0xa98000, 0x4000);
+     if (!pt.se) { return false; }
+     uint32_t inherited_fw = pt_rd(pt.se, 0x68), inherited_status = pt_rd(pt.se, PG_STATUS);
++    uint32_t disabled = pt_rd(pt.se, 0x64), tx = pt_rd(pt.se, PG_TX_COUNT), rx = pt_rd(pt.se, PG_RX_COUNT);
+     pd(PD_FW, inherited_fw); pd(PD_STATUS, inherited_status);
+-    printf("POLARIS TOUCH: inherited fw=%x status=%x\n", inherited_fw, inherited_status);
+-    if (((inherited_fw >> 8) & 255u) != 3 || (pt_rd(pt.se, 0x64) & 1u) ||
+-        (inherited_status & 0x1001u) || (pt_rd(pt.se, PG_TX_COUNT) & 0xfffffffu) ||
+-        (pt_rd(pt.se, PG_RX_COUNT) & 0x1ffffffu)) { return false; }
++    pd(PD_IF, disabled); pd(PD_TX, tx); pd(PD_RX, rx);
++    printf("POLARIS TOUCH: inherited fw=%x status=%x fifo=%x tx=%x rx=%x\n",
++        inherited_fw, inherited_status, disabled, tx, rx);
++    unsigned path = pb_transport(inherited_fw, inherited_status, disabled, tx, rx);
++    pd(PD_PATH, path);
++    if (path == PB_DENY) { return false; }
++    if (path == PB_GPIO) {
++        /* No FIFO draining, DMA/GSI reconfiguration or firmware change.
++         * Only an idle engine may yield its physical pins to GPIO. */
++        pt.use_gpio = true; *level = 0;
++        printf("POLARIS TOUCH: idle I2C without usable FIFO; GPIO transport\n");
++        return true;
++    }
+     uint32_t cfg = pt_rd(pt.gcc, rcg + 4), dfs = pt_rd(pt.gcc, rcg + 0x14);
+     pd(PD_REG, 0x100000 + rcg + 4); pd(PD_LEN, 8); pd(PD_A, cfg); pd(PD_B, dfs);
+     printf("POLARIS TOUCH: GCC vote=%x cfg=%x dfs=%x\n", pt_rd(pt.gcc, 0x5200c), cfg, dfs);
+@@ -203,12 +220,65 @@
+         pt_rd(pt.se, 0x284) == 0x7f8fe && pt_rd(pt.se, 0x288) == 0xffefe;
+ }
+ 
++static unsigned pt_gpio_levels(void *ctx)
++{
++    (void)ctx;
++    unsigned lines = (pt_rd(pt.pin[0], 4) & 1u) | ((pt_rd(pt.pin[1], 4) & 1u) << 1);
++    pd(PD_LINES, lines); return lines;
++}
++static void pt_gpio_low(void *ctx, unsigned pin, bool low)
++{
++    (void)ctx;
++    /* Output latch is permanently zero: OE=1 sinks, OE=0 releases. */
++    if (pin < 2) { pt_wr(pt.pin[pin], 0, pt.gpio_cfg[pin] | (low ? 0x200u : 0)); }
++}
++static bool pt_gpio_engine(void)
++{
++    uint32_t status = pt_rd(pt.se, PG_STATUS);
++    pd(PD_STATUS,status);
++    if (status & 0x1001u) { return false; }
++    for (unsigned i = 0; i < 4; ++i) {
++        printf("POLARIS TOUCH: gpio%u cfg=%x io=%x\n",
++            (const unsigned[]){33,34,99,125}[i], pt_rd(pt.pin[i],0), pt_rd(pt.pin[i],4));
++    }
++    uint32_t reset=pt_rd(pt.pin[2],0), irq=pt_rd(pt.pin[3],0);
++    if ((reset & 0x3cu) || !(reset & 0x200u) || !(pt_rd(pt.pin[2],4) & 2u) || (irq & 0x23cu)) {
++        unsigned i=((reset & 0x3cu) || !(reset & 0x200u) || !(pt_rd(pt.pin[2],4)&2u)) ? 2u : 3u;
++        pd(PD_REG,pt_gpio_pa[i]); pd(PD_LEN,8); pd(PD_A,pt_rd(pt.pin[i],0)); pd(PD_B,pt_rd(pt.pin[i],4));
++        return false;
++    }
++    for (unsigned i = 0; i < 2; ++i) {
++        unsigned mux=(pt_rd(pt.pin[i],0)>>2)&15u;
++        if (mux!=0 && mux!=2) { return false; }
++    }
++    /* Observe a released bus before taking pins; no bus-clear clock train. */
++    for (unsigned i=0;i<4;i++) {
++        if (pt_gpio_levels(NULL)!=3u) { return false; }
++        delay(5);
++    }
++    for (unsigned i=0;i<2;i++) {
++        pt.gpio_cfg[i]=pt_rd(pt.pin[i],0)&~0x3ffu; /* GPIO/input,2mA,no bias */
++        pt_wr(pt.pin[i],0,pt.gpio_cfg[i]); /* release before changing latch */
++        pt_wr(pt.pin[i],4,0);            /* output=0; never drive high */
++        if ((pt_rd(pt.pin[i],0)&0x3ffu) || (pt_rd(pt.pin[i],4)&2u)) { return false; }
++    }
++    pt.gpio.low=pt_gpio_low; pt.gpio.levels=pt_gpio_levels; pt.gpio.delay_us=pt_bus_delay;
++    if (pt_gpio_levels(NULL)!=3u) { return false; }
++    printf("POLARIS TOUCH: GPIO33/34 open-drain,100kHz ceiling; no hardware reset\n");
++    return true;
++}
++static int pt_message(const uint8_t *tx, size_t nt, uint8_t *rx, size_t nr, bool stretch)
++{
++    int e=pt.use_gpio ? pb_message(&pt.gpio,tx,nt,rx,nr,stretch) : pg_message(&pt.bus,tx,nt,rx,nr,stretch);
++    pd(PD_BUS,(uint32_t)e); return e;
++}
++
+ static int pt_page(uint16_t reg)
+ {
+     int page = reg >> 8;
+     if (pt.page == page) { return 0; }
+     uint8_t b[2] = {0xff, (uint8_t)page};
+-    int e = pg_message(&pt.bus, b, 2, NULL, 0, false);
++    int e = pt_message(b, 2, NULL, 0, false);
+     pd(PD_IRQ,pt.bus.irq_seen);
+     if (!e) { pt.page = page; }
+     return e;
+@@ -220,8 +290,8 @@
+     if (!polaris_rmi_span(reg, n)) { return PG_BAD_ARGUMENT; }
+     int e = pt_page(reg); if (e) { return e; }
+     uint8_t b = (uint8_t)reg;
+-    e = pg_message(&pt.bus, &b, 1, NULL, 0, true);
+-    if (!e) { e = pg_message(&pt.bus, NULL, 0, buf, n, false); }
++    e = pt_message(&b, 1, NULL, 0, true);
++    if (!e) { e = pt_message(NULL, 0, buf, n, false); }
+     pd(PD_IRQ,pt.bus.irq_seen);
+     if (e) { pt.page = -1; }
+     else {
+@@ -237,7 +307,7 @@
+     if (reg != pt.rmi.f01_control || !polaris_rmi_span(reg, 1)) { return PG_BAD_ARGUMENT; }
+     int e = pt_page(reg); if (e) { return e; }
+     uint8_t b[2] = {(uint8_t)reg, value};
+-    return pg_message(&pt.bus, b, 2, NULL, 0, false);
++    return pt_message(b, 2, NULL, 0, false);
+ }
+ static void pt_release(void)
+ {
+@@ -261,7 +331,7 @@
+     unsigned level;
+     if (!pt_clocks(&level)) { pd(PD_ERROR,11); printf("POLARIS TOUCH: clock guard failed\n"); goto done; }
+     pd(PD_PHASE,4);
+-    if (!pt_engine(level)) { pd(PD_ERROR,12); goto done; }
++    if (!(pt.use_gpio ? pt_gpio_engine() : pt_engine(level))) { pd(PD_ERROR,12); goto done; }
+     pt.bus.read = pt_bus_read; pt.bus.write = pt_bus_write; pt.bus.delay_us = pt_bus_delay;
+     pt.page = -1;
+     pd(PD_PHASE,5);
+@@ -285,7 +355,7 @@
+     pd(PD_PHASE,7); pd(PD_ERROR,0);
+     unsigned errors = 0, ticks = 0;
+     printf("POLARIS TOUCH: polling real S3330 contacts,20ms; physical1080x2160\n");
+-    while (!pt.bus.dead) {
++    while (!(pt.use_gpio ? pt.gpio.dead : pt.bus.dead)) {
+         struct polaris_rmi_frame f;
+         e = polaris_rmi_sample(pt_read, NULL, &pt.rmi, &f);
+         if (e) {
+@@ -309,6 +379,7 @@
+     }
+     pt_release();
+ done:
++    if (pt.use_gpio && pt.gpio.low) { pb_release(&pt.gpio); }
+     if (!pget(PD_ERROR) && pget(PD_PHASE) != 7 && pget(PD_PHASE) != 8) { pd(PD_ERROR,14); }
+     pd(PD_DONE,1);
+     (void)thread_terminate(current_thread()); thread_block(THREAD_CONTINUE_NULL);
+--- /dev/null
++++ b/bsd/dev/polaris_gpio_i2c.h
+@@ -0,0 +1,150 @@
++#ifndef POLARIS_GPIO_I2C_H
++#define POLARIS_GPIO_I2C_H
++
++#include <stdint.h>
++#include <stddef.h>
++#include <stdbool.h>
++
++/* Exact-board fallback for an idle GENI I2C engine without usable FIFOs.
++ * low(...,false) MUST release the pin, never drive it high. No bus-clear
++ * pulses, controller reset, address scan or firmware upload. SDA=0,SCL=1.
++ * Shared with wire-level native tests; only slave0x20 is permitted.
++ */
++enum { PB_OK, PB_BAD_ARGUMENT, PB_BUSY, PB_IO, PB_TIMEOUT, PB_NO_DEVICE,
++       PB_ARBITRATION };
++struct polaris_gpio_i2c {
++    void *ctx;
++    void (*low)(void *, unsigned, bool);
++    unsigned (*levels)(void *);
++    void (*delay_us)(void *, unsigned);
++    unsigned remaining;
++    bool held, dead;
++};
++
++/* An idle I2C sequencer is mandatory for either transport. A disabled or
++ * inherited nonempty FIFO must remain untouched; the board can instead
++ * release/remux its two verified bus pins and use open-drain GPIO. */
++enum { PB_DENY, PB_FIFO, PB_GPIO };
++static inline unsigned
++pb_transport(uint32_t fw, uint32_t status, uint32_t disabled,
++    uint32_t tx, uint32_t rx)
++{
++    if (((fw >> 8) & 255u) != 3 || (status & 0x1001u)) { return PB_DENY; }
++    return (disabled & 1u) || (tx & 0xfffffffu) || (rx & 0x1ffffffu) ? PB_GPIO : PB_FIFO;
++}
++
++static inline void pb_release(struct polaris_gpio_i2c *g)
++{
++    g->low(g->ctx, 0, false); g->low(g->ctx, 1, false); g->held = false;
++}
++static inline bool pb_pause(struct polaris_gpio_i2c *g, unsigned us)
++{
++    if (us > g->remaining) { return false; }
++    g->remaining -= us; g->delay_us(g->ctx, us); return true;
++}
++static inline int pb_scl_high(struct polaris_gpio_i2c *g)
++{
++    g->low(g->ctx, 1, false);
++    while (!(g->levels(g->ctx) & 2u)) {
++        if (!pb_pause(g, 1)) { return PB_TIMEOUT; }
++    }
++    return PB_OK;
++}
++static inline int pb_start(struct polaris_gpio_i2c *g)
++{
++    if (!g->held) {
++        pb_release(g);
++        /* No attempt to recover an inherited busy/stuck bus. */
++        for (unsigned i = 0; i < 4; ++i) {
++            if ((g->levels(g->ctx) & 3u) != 3u) { return PB_BUSY; }
++            if (!pb_pause(g, 5)) { return PB_TIMEOUT; }
++        }
++    } else {
++        g->low(g->ctx, 0, false);
++        if (!pb_pause(g, 5)) { return PB_TIMEOUT; }
++        int e = pb_scl_high(g); if (e) { return e; }
++        if (!pb_pause(g, 5)) { return PB_TIMEOUT; }
++        if (!(g->levels(g->ctx) & 1u)) { return PB_ARBITRATION; }
++    }
++    g->low(g->ctx, 0, true);
++    if (!pb_pause(g, 5)) { return PB_TIMEOUT; }
++    g->low(g->ctx, 1, true); g->held = true;
++    return PB_OK;
++}
++static inline int pb_stop(struct polaris_gpio_i2c *g)
++{
++    g->low(g->ctx, 0, true);
++    if (!pb_pause(g, 5)) { return PB_TIMEOUT; }
++    int e = pb_scl_high(g); if (e) { return e; }
++    if (!pb_pause(g, 5)) { return PB_TIMEOUT; }
++    g->low(g->ctx, 0, false); g->held = false;
++    if (!pb_pause(g, 5)) { return PB_TIMEOUT; }
++    return (g->levels(g->ctx) & 3u) == 3u ? PB_OK : PB_IO;
++}
++static inline int pb_write_bit(struct polaris_gpio_i2c *g, bool bit)
++{
++    g->low(g->ctx, 0, !bit);
++    if (!pb_pause(g, 5)) { return PB_TIMEOUT; }
++    int e = pb_scl_high(g); if (e) { return e; }
++    if (!pb_pause(g, 5)) { return PB_TIMEOUT; }
++    if (bit && !(g->levels(g->ctx) & 1u)) { return PB_ARBITRATION; }
++    g->low(g->ctx, 1, true);
++    return PB_OK;
++}
++static inline int pb_read_bit(struct polaris_gpio_i2c *g, bool *bit)
++{
++    g->low(g->ctx, 0, false);
++    if (!pb_pause(g, 5)) { return PB_TIMEOUT; }
++    int e = pb_scl_high(g); if (e) { return e; }
++    if (!pb_pause(g, 5)) { return PB_TIMEOUT; }
++    *bit = (g->levels(g->ctx) & 1u) != 0;
++    g->low(g->ctx, 1, true);
++    return PB_OK;
++}
++static inline int pb_tx(struct polaris_gpio_i2c *g, uint8_t byte)
++{
++    for (unsigned i = 0; i < 8; ++i) {
++        int e = pb_write_bit(g, (byte & (0x80u >> i)) != 0); if (e) { return e; }
++    }
++    bool nack; int e = pb_read_bit(g, &nack);
++    return e ? e : nack ? PB_NO_DEVICE : PB_OK;
++}
++static inline int pb_rx(struct polaris_gpio_i2c *g, uint8_t *byte, bool last)
++{
++    uint8_t value = 0;
++    for (unsigned i = 0; i < 8; ++i) {
++        bool bit; int e = pb_read_bit(g, &bit); if (e) { return e; }
++        value = (uint8_t)((value << 1) | bit);
++    }
++    int e = pb_write_bit(g, last); if (e) { return e; }
++    g->low(g->ctx, 0, false); *byte = value;
++    return PB_OK;
++}
++static inline int
++pb_message(struct polaris_gpio_i2c *g, const uint8_t *tx, size_t nt,
++    uint8_t *rx, size_t nr, bool stretch)
++{
++    if (!g || !g->low || !g->levels || !g->delay_us || nt > 2 || nr > 80 ||
++        (!nt && !nr) || (nt && nr) || (nt && !tx) || (nr && !rx) || (nr && stretch)) {
++        return PB_BAD_ARGUMENT;
++    }
++    if (g->dead) { return PB_IO; }
++    /* 80 bytes at <=100kHz fit comfortably; clock stretching shares this
++     * finite budget with every bit/START/STOP, not a fresh timeout per bit. */
++    g->remaining = 24000;
++    int e = pb_start(g);
++    if (!e) { e = pb_tx(g, nr ? 0x41u : 0x40u); }
++    for (size_t i = 0; !e && i < nt; ++i) { e = pb_tx(g, tx[i]); }
++    for (size_t i = 0; !e && i < nr; ++i) { e = pb_rx(g, &rx[i], i + 1 == nr); }
++    if (!e && stretch) { g->low(g->ctx, 0, false); return PB_OK; }
++    if (!e || e == PB_NO_DEVICE) {
++        int stop = pb_stop(g); if (stop) { e = stop; }
++    }
++    /* Never force a STOP after lost arbitration, a foreign busy bus or a
++     * failed clock rise. Release both lines without recovery clock pulses. */
++    if (e && e != PB_NO_DEVICE) { g->dead = true; }
++    pb_release(g);
++    return e;
++}
++
++#endif

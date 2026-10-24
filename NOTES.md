@@ -10,7 +10,36 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION —0015 touch produces logs per user, no UI response; decode NEW log
+### CURRENT NEXT ACTION —0015 actual FIFO admission stop;0016 bounded GPIO fallback staged
+
+- NEW0015fourphotos F16F697B.../7F7501AC... savedprivately as touch-0015/
+ hardware-clock-stop-{1..4}.jpg +hardware-clock-stop.json. Actual0015lockscreen
+ red4:10/camera renderswithconsoleoverdraw. Allsnapshots D TOUCH phase3,
+ result11,done1,frames0/down0;TREGfw300/status0/irq0;TRMIreg0/n0/data0/0.
+ SourceprovesAHB/S6gates+SEmap passed,protocol3I2C,engineidle,stopped BEFORE
+ GCCcfgsnapshot andBEFORE RMIreads. Remaining0015guardcausesFIFOdisabled OR
+ nonemptyTX/RX,valueswerenotretained;doNOTclaimwhichwithoutnewregisters.
+ No decodedtouch/HIDcontacts/home. Logburstwasnotphysicaltouchproof.
+- 0016implementationstaged:0813-polaris-gpio-i2c-fallback.patch addsactual
+ sharedtestedopen-drainGPIOtransport andretainsIF/TX/RX/path/lines/result.
+ Exactboard/explicitflagunchanged;requiresprotocol3+M/Sidle;onlydisabled/
+ inheritednonemptyFIFOschoosefallback,neverclearFIFO/reconfigureGSI/resetFW.
+ Validateinheritedreset99high/IRQ125input,GPIO33/34muxGPIO0/qup14only,bus
+ physicallyreleasedhigh BEFOREGPIOinputremux;outputlatchzero,OEonlysinks/
+ releases,neverdriveshigh. SameRMIboundedfunctiondiscovery/normalF01state.
+ Fixedslave20,TX<=2/RX<=80,repeatedSTART,ACK/NACK,clockstretch+arbitration,
+ shared24msdelaybudget/finitebitloops;releaseonerror,no busclearclocktrain.
+ MiCodepinctrl-v2exactpinregisterfactsverified;upstreami2c-algo-bitprimary
+ reference savedprivatelytouch-0016/i2c-algo-bit.c,blob
+ a8e89df665b904d77b86586853a3fb5f010f92e0. NoPMIC/reset/firmware/diskwrites.
+- Nativewire-levelmodel+ASan/UBSan testsPASS (write/read80/repeatedSTART,
+ finalNACK/shortclockstretch/address+dataNACK/busybus/clocktimeout/arbitration/
+ bounds/fixedaddress/admissionguard);exactshippedheadertestPASS. Patchboth
+ filesapplyMATCH,actualCI-headerARM64objectsPASS. CI/fullkernel NOTbuiltyet.
+ NeedcompletekernelCI+newkernelQEMU+preparedimagebeforephysicalkeyrequest.
+ Currentphone0015lockscreen/driverstopped;KEEPthisboot,noFASTBOOTrequestyet.
+
+### 0015 build, boot and user-report history
 
 - 0015 temporaryimagebuilt andSENT asbelow. Source35fe4d492b6a7a50e5c7115beaa7dfee514af9c4,
  CI40058661910/job120767328465 SUCCESS (build4m41s). Artifact12546850582/
