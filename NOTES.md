@@ -64,6 +64,13 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   research/polaris/interactive-0020/, sameADT/immutablebase/physicalinput,
   onlyphonebootargdifferencequiet1. Full exactkernel regressions+payload
   validator/hash/provenance required before physicalFASTBOOT request.
+-0020 CI40071727505/job120806418401 SUCCESS; actualsource943c011.
+  Full log ci-40071727505.log; artifact12551299043 (60379813bytes),
+  sourceprofile/ZIPCRC/SHA verified. Kernelxnu/out-polaris-0020/kernel.development.sweet
+  SHA9da0eff89488324e2a93f6c4377e9e1fae4a51c731fd91a5492eb87cf5199d4b.
+  Orchestration session50034 nowrunning exactkernel original-clock sequential
+  bootstrap120/gate200/default200/nodiag90, privateinteractive-0020/validation.log.
+  No0020phoneimage/boot yet; no physicalrequest untilallchecks/imagecomplete.
 -0019 FIX: RMI4 Ctrl0 CONFIGURED bit7 is a command whose readback is0;0018
   incorrectly requires (control&83)==80. Correct mode verifies normal sleep
   bits and Data0 UNCONFIGURED bit7clear, rejects flash/CRC/fatal/transport
