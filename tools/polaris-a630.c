@@ -17,6 +17,7 @@ extern vm_offset_t ml_io_map(vm_offset_t, vm_size_t);
 void polaris_a630_init(void);
 void polaris_a630_report(void);
 uint32_t polaris_a630_status(void);
+uint32_t polaris_a630_details(char *, uint32_t);
 static struct a630_probe a630_saved;
 static uint32_t a630_started, a630_published, a630_firmware_ok, a630_abi_ok;
 static uint8_t a630_host_hfi[A630_HFI_BYTES] __attribute__((aligned(16384)));
@@ -25,6 +26,16 @@ uint32_t polaris_a630_status(void)
 {
     if (!__atomic_load_n(&a630_published, __ATOMIC_ACQUIRE)) return 0;
     return a630_saved.result | (a630_firmware_ok << 8) | (a630_abi_ok << 9);
+}
+
+uint32_t polaris_a630_details(char *out, uint32_t capacity)
+{
+    if (!out || !capacity) return 0;
+    if (!__atomic_load_n(&a630_published, __ATOMIC_ACQUIRE))
+        return (uint32_t)snprintf(out, capacity, "GPU pending");
+    return (uint32_t)snprintf(out, capacity, "G%x CX%08x HW%08x M%08x X%08x",
+        polaris_a630_status(), a630_saved.cx, a630_saved.cx_hw,
+        a630_saved.clocks[1], a630_saved.clocks[2]);
 }
 
 static bool a630_property(DTEntry node, const char *name, const void **data, unsigned *size)

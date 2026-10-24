@@ -80,7 +80,7 @@ static bool rd(void *ctx,unsigned region,uint32_t off,uint32_t *v) {
         case 0x1098:*v=m->clocks[1];break;case 0x109c:*v=m->clocks[2];break;
         case 0x1120:case 0x1124:*v=0;break;default:assert(0);}return true;
     }
-    assert(region==2 && m->cx>>31 && m->hw>>31);
+    assert(region==2 && m->hw>>31);
     assert(!((m->mem|m->snoc|m->clocks[0]|m->clocks[1]|m->clocks[2])>>31));
     assert(off==0x14070 || off==0x14220 || off==0x14224);m->gmu++;*v=off;return true;
 }
@@ -103,6 +103,12 @@ int main(void) {
     m=(struct mock){.cx=1u<<31,.hw=1u<<31};
     assert(a630_probe(1,true,rd,&m,&s)==A630_PREREQUISITES);
     assert(s.reads==14 && m.gmu==3 && s.counter_low==0x14220 && s.counter_high==0x14224);
+    /* POWER_ON lives in the DT-selected status register. The request
+     * register is not required to mirror it, and cannot override it. */
+    m=(struct mock){.cx=0,.hw=1u<<31};
+    assert(a630_probe(1,true,rd,&m,&s)==A630_PREREQUISITES && m.gmu==3);
+    m=(struct mock){.cx=1u<<31,.hw=0};
+    assert(a630_probe(1,true,rd,&m,&s)==A630_CX_OFF && !m.gmu);
     return 0;
 }
 '''

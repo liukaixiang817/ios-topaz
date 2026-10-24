@@ -10,14 +10,54 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION — 0024 USB startup isolation after0023 GUI regression
+### CURRENT NEXT ACTION — 0025 EP0 wake / CPU display / CX status correction
+
+- Actual0024 GUI is restored: human confirms lockscreen/desktop appears,
+  but operation stutters. Two physical photos show the home screen and
+  **R7 N13 S12 E5 GD=f8222000 C=7f G=303**. The USB worker passed network
+  setup and reset, then failed EP0 configuration; the old stage-only EIO
+  does not identify which command or timeout/status. The new photographs
+  and observations are private undercontinuation-0025.
+- G303 means accepted original firmware and host ABI checks plus CX_OFF
+  under the old probe. It does NOT by itself establish physical CX off:
+  found a probe bug requiring both request and hardware registers'bit31.
+  Live DT's gpu_cx_gdsc selects hw-ctrl-addr0x5091540; pinned original
+  drivers/clk/qcom/gdsc-regulator.c polls that status register instead.
+  0827 uses that authoritative hardware status, keeps all clock gates,
+  and exposes saved raw CX/HW/GMUclock/CXO values. No GPU power write,
+  firmware execution, SMMU modification or acceleration is added.
+- IMPLEMENTED0825: admitted high-speed DWC3 endpoint commands temporarily
+  clear GUSB2PHYCFG.SUSPHY then restore just that bit on all return paths,
+  following pinned vendor gadget.c. A separate command mutex serializes
+  suspend save/restore across endpoints. Retain first failed ep/command/
+  response/polls/error/PHY snapshot, visible in logs and compact Q field.
+  Same1000poll bound, existing controller admission unchanged. This is a
+  source-supported candidate fix, not a proven physical USB repair.
+- IMPLEMENTED0826: gather each visible scanline in persistent cacheable
+  RAM, then contiguous-copy it to the existing panel mapping; clip valid
+  columns once, preserve resampling endpoints and alias fallback. Reuse
+  a persistent swap record instead of allocating/freeing per presentation.
+  Record copy duration/max/total; T in new larger two-row status is last
+  CPU copy microseconds. Proposed0025 changes only sweetfb_hz5→10 in phone
+  args; this is a requested upper limit, not measured FPS or GPU acceleration.
+- Local13 meaningful tests PASS, including ASan/UBSan: endpoint command
+  ordering/restoration on success/status/timeout,1500 differential clipped
+  display cases/fullpanel/padding/alias/invalidbounds, original display,
+  GPU read gates and existing USB parser/loss/CRC/PNG checks.
+  Three actual CI-header ARM64 units compiled PASS: sweet_usb.c,
+  polaris_a630.c,SweetFramebuffer.cpp. Complete source build, import/chain
+  verification and new exact-kernel QEMU runs still required. No0025 image,
+  FASTBOOT request or physical boot yet. Phone remains0024,CPU1/RAMCOW512.
+
+### 0024 USB startup isolation after0023 GUI regression
 
 - Human supplied9photos from actual0023: no GUI/lockscreen, progressbar and
   repeateddiagnostics. Touchframes grow17400→33000 while base_calls3943,
   ram_reads3,ram_merges5,full_writes22,COWgroups50,dirty660KiB,written864KiB
   stayfixed; UFS-error0/refused0. This is a boot regression, not a measured
   slowSettings launch. The phone has now received temporary0024; the host
-  still sees no USB interface, and its GUI result is pending below.
+  still sees no USB interface. Later human/photos confirm GUI restoration
+  with stutter and saved USB failure S12/E5 (see0025 above).
 - Photos exposeUSB **mode2/result7/reads13**,ID5533300a,GCTL112000,
   savedDCTL10f08000,DSTS d2cd2c,GDSCRf8222000,master4221,othersixclocks1.
   AdmissionPASSED; this does NOT prove gadget setup or enumeration. Prior
@@ -89,16 +129,14 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   total1.172s; temporary0024 sent **10:34:44.601879UTC**, proof age37.323s.
   No partition write. Readonly USB host observation91957 exited0:21samples,
   61.567s, no known-phone USB VID or matching ECM NIC, final10:35:55.659060UTC;
-  no host network settings changed. Physical lockscreen/GUI and USB S/E
-  requested, no result yet. No USB/debug connection,
+  no host network settings changed. Human and photos now confirm GUI returns,
+  but operation stutters; saved USB S12/E5. No USB/debug connection,
   performance improvement, GPU execution or phone SMP success is established.
 - Pinned SDM845 SetCPUFreqDxe source was also fetched and verified against
   blobd5950805fbc3ad48c41c164820fc2aa9a1264176: it requests maximum CPU/L3
   performance throughEFI_CLOCK_PROTOCOL. Source inspection only; no live
   clock evidence, driver execution, frequency/voltage change or SMP fix.
-- NEXT: obtain physical GUI/S/E result.
-  ConfirmGUIrestoration andUSBhostenumeration; ifnoUSBcollect S/E plusD GPU/GMU
-  fromsavedlogs/photos.
+- These physical results now drive0025 above.
   Keep oneCPU and noGPUexecution; priorSMPfailuresunresolved. UEFIGUID/memory
   probe is nextresidentloaderfeasibilitystep; no bootchainorpartitionwrite.
 

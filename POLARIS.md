@@ -5,7 +5,8 @@ existing data. Temporary build **0023** was sent successfully at09:59:17UTC
 on2026-10-24; subsequent photos show a startup regression with logs and no GUI.
 USB admission passes (result7/read13), but no debug interface appears.
 Build0024 was temporarily sent at10:34:44UTC after a fresh read-only check;
-the host still sees no USB debug interface, and its GUI result is pending.
+the host still sees no USB debug interface. The user/photos confirm the GUI
+returns, with stuttering interaction and USB stage12/error5 (EP0 setup).
 The last confirmed
 working build **0021** runs real iOS 16.7.16 (20H392) on the MIX 2S, with
 physical swipe into the home screen, Settings content after a wait, and swipe
@@ -188,8 +189,9 @@ does not establish the physical stall's cause. The exact image/payload pass
 integrity checks. Its fresh16GiB hash,182maps,GPT and outer header all match;
 the temporary boot was sent at10:34:44UTC (Sending/Booting OKAY,1.172s).
 The host then observed no known-phone USB device or matching ECM NIC over
-61.567seconds/21samples, ending10:35:55UTC. GUI restoration and the saved USB
-phase/error still need physical observation. This retains the same
+61.567seconds/21samples, ending10:35:55UTC. Physical photos then confirm GUI
+restoration and S12/E5; the failed endpoint command is not yet identified.
+This retains the same
 phone ADT/arguments, one CPU,512MiB RAM COW and `ufsrw=0` as0023.
 
 ## Standalone boot diagnostic 0001

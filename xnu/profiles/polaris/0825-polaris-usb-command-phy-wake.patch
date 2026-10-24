@@ -1,0 +1,185 @@
+--- a/bsd/dev/sweet_usb.c
++++ b/bsd/dev/sweet_usb.c
+@@ -96,6 +96,7 @@
+ static uint64_t polaris_usb_start_state;
+ static uint32_t polaris_usb_worker_started;
+ static void polaris_usb_schedule(vm_offset_t);
++static void polaris_usb_command_report(void);
+ static void polaris_usb_progress(unsigned phase, int error)
+ {
+     uint64_t state = ((uint64_t)(uint32_t)error << 32) | phase;
+@@ -137,6 +138,7 @@
+ void
+ polaris_usb_report(void)
+ {
++    polaris_usb_command_report();
+     uint64_t state = __atomic_load_n(&polaris_usb_start_state, __ATOMIC_ACQUIRE);
+     if (state) printf("D USB START: phase=%u error=%d\n", (unsigned)state, (int)(state >> 32));
+     if (!__atomic_load_n(&polaris_usb_published, __ATOMIC_ACQUIRE)) return;
+@@ -202,6 +204,19 @@
+ #define PU_PROGRESS(phase, error) do { } while (0)
+ #endif
+ 
++#if defined(POLARIS_RAM_ONLY)
++#include "polaris_dwc3_command.h"
++static struct pdwc3_result polaris_ep_failure;
++static uint32_t polaris_ep_failure_published;
++static void polaris_usb_command_report(void)
++{
++    if (!__atomic_load_n(&polaris_ep_failure_published, __ATOMIC_ACQUIRE)) return;
++    const struct pdwc3_result *s = &polaris_ep_failure;
++    printf("D USB CMD: ep=%u cmd=%x response=%x polls=%u error=%u phy=%x/%x\n",
++        s->ep, s->command, s->response, s->polls, s->error, s->phy_before, s->phy_after);
++}
++#endif
++
+ void
+ sweet_usb_probe(void)
+ {
+@@ -365,6 +380,9 @@
+ 	/* network */
+ 	ifnet_t     ifp;
+ 	lck_mtx_t  *lock;           /* TX ring and TX endpoint */
++#if defined(POLARIS_RAM_ONLY)
++    lck_mtx_t *command_lock; /* serializes SUSPHY save/restore across endpoints */
++#endif
+ 	mbuf_t      txq[UD_TXQ];
+ 	unsigned    txq_head, txq_count;
+ 	bool        tx_busy;
+@@ -384,6 +402,15 @@
+ 	return usb_rd(ud.dwc, off);
+ }
+ 
++#if defined(POLARIS_RAM_ONLY)
++static uint32_t polaris_command_read(void *ctx __unused, uint32_t off)
++{ return dwc_rd(off); }
++static void polaris_command_write(void *ctx __unused, uint32_t off, uint32_t value)
++{ dwc_wr(off, value); }
++static void polaris_command_wait(void *ctx __unused, uint32_t us)
++{ delay(us); }
++#endif
++
+ static void
+ ud_sync(uint32_t off, uint32_t len)
+ {
+@@ -402,6 +429,23 @@
+ static int
+ ud_epcmd(unsigned ep, uint32_t cmd, uint32_t p0, uint32_t p1, uint32_t p2)
+ {
++#if defined(POLARIS_RAM_ONLY)
++    struct pdwc3_result s;
++    /* All command callers are polled worker/network threads. This separate
++     * lock never takes the TX-ring lock and permits callers already holding it. */
++    lck_mtx_lock(ud.command_lock);
++    const struct pdwc3_io io = {NULL, polaris_command_read,
++        polaris_command_write, polaris_command_wait};
++    enum pdwc3_error error = polaris_dwc3_command(&io, ep, cmd, p0, p1, p2, &s);
++    if (error && !__atomic_load_n(&polaris_ep_failure_published, __ATOMIC_RELAXED)) {
++        polaris_ep_failure = s;
++        __atomic_store_n(&polaris_ep_failure_published, 1, __ATOMIC_RELEASE);
++        printf("POLARIS USB COMMAND: ep=%u cmd=%x response=%x polls=%u error=%u phy=%x/%x\n",
++            s.ep, s.command, s.response, s.polls, s.error, s.phy_before, s.phy_after);
++    }
++    lck_mtx_unlock(ud.command_lock);
++    return error ? -1 : 0;
++#else
+ 	dwc_wr(DEPCMDPAR0(ep), p0);
+ 	dwc_wr(DEPCMDPAR1(ep), p1);
+ 	dwc_wr(DEPCMDPAR2(ep), p2);
+@@ -420,6 +464,7 @@
+ 	}
+ 	printf("SWEET USB: ep%u cmd 0x%x timeout\n", ep, cmd & 0xf);
+ 	return -1;
++#endif
+ }
+ 
+ /* One TRB (at DMA offset trb) on physical endpoint ep. */
+@@ -742,6 +787,10 @@
+ 	if (grp == NULL) { PU_PROGRESS(PU_NET_ALLOC, ENOMEM); return ENOMEM; }
+ 	ud.lock = lck_mtx_alloc_init(grp, LCK_ATTR_NULL);
+ 	if (ud.lock == NULL) { PU_PROGRESS(PU_NET_ALLOC, ENOMEM); return ENOMEM; }
++#if defined(POLARIS_RAM_ONLY)
++    ud.command_lock = lck_mtx_alloc_init(grp, LCK_ATTR_NULL);
++    if (!ud.command_lock) { PU_PROGRESS(PU_NET_ALLOC, ENOMEM); return ENOMEM; }
++#endif
+ 
+ 	bzero(&init, sizeof(init));
+ 	init.ver = IFNET_INIT_CURRENT_VERSION;
+@@ -977,10 +1026,13 @@
+     unsigned on = 0;
+     for (unsigned i = 0; i < POLARIS_USB_CLOCKS && s->reads >= i + 2; i++)
+         if (!(s->clocks[i] & (1u << 31))) on |= 1u << i;
+-    return (uint32_t)snprintf(out, size,
+-        "U%u R%u N%u S%u E%d GD=%08x C=%02x",
+-        polaris_usb_mode, s->result, s->reads, (unsigned)state,
+-        (int)(state >> 32), s->gdscr, on);
++    uint32_t n = (uint32_t)snprintf(out, size, "U%u R%u S%u E%d C%02x",
++        polaris_usb_mode, s->result, (unsigned)state, (int)(state >> 32), on);
++    if (n < size && __atomic_load_n(&polaris_ep_failure_published, __ATOMIC_ACQUIRE))
++        n += (uint32_t)snprintf(out + n, size - n, " Q%u/%x/%x/%u",
++            polaris_ep_failure.ep, polaris_ep_failure.command,
++            polaris_ep_failure.response, polaris_ep_failure.error);
++    return n;
+ }
+ bool polaris_usb_connected(void);
+ bool
+--- a/bsd/dev/polaris_dwc3_command.h
++++ b/bsd/dev/polaris_dwc3_command.h
+@@ -0,0 +1,57 @@
++/* DWC3 endpoint commands for the admitted, high-speed Polaris gadget.
++ * Register semantics checked against MiCode c7cb50c1 drivers/usb/dwc3/gadget.c:
++ * endpoint commands temporarily clear GUSB2PHYCFG.SUSPHY, then restore it.
++ * The caller serializes commands and provides its existing MMIO barriers.
++ */
++#ifndef POLARIS_DWC3_COMMAND_H
++#define POLARIS_DWC3_COMMAND_H
++#include <stdint.h>
++#define PDWC3_PHYCFG 0xc200u
++#define PDWC3_SUSPHY (1u << 6)
++#define PDWC3_CMDACT (1u << 10)
++#define PDWC3_COMMAND_POLLS 1000u
++enum pdwc3_error { PDWC3_OK, PDWC3_STATUS, PDWC3_TIMEOUT, PDWC3_ARGUMENT };
++struct pdwc3_result {
++    uint32_t ep, command, response, phy_before, phy_after, polls, error;
++};
++struct pdwc3_io {
++    void *ctx;
++    uint32_t (*read)(void *, uint32_t);
++    void (*write)(void *, uint32_t, uint32_t);
++    void (*wait_us)(void *, uint32_t);
++};
++static inline enum pdwc3_error
++polaris_dwc3_command(const struct pdwc3_io *io, unsigned ep, uint32_t command,
++    uint32_t p0, uint32_t p1, uint32_t p2, struct pdwc3_result *s)
++{
++    if (!s) return PDWC3_ARGUMENT;
++    *s = (struct pdwc3_result){.ep=ep,.command=command,.error=PDWC3_ARGUMENT};
++    if (!io || !io->read || !io->write || !io->wait_us || ep >= 32 ||
++        !(command & 15u) || (command & PDWC3_CMDACT)) return PDWC3_ARGUMENT;
++    uint32_t base = 0xc800u + ep * 16u;
++    s->phy_before = io->read(io->ctx, PDWC3_PHYCFG);
++    if (s->phy_before & PDWC3_SUSPHY)
++        io->write(io->ctx, PDWC3_PHYCFG, s->phy_before & ~PDWC3_SUSPHY);
++    io->write(io->ctx, base + 8, p0);
++    io->write(io->ctx, base + 4, p1);
++    io->write(io->ctx, base, p2);
++    io->write(io->ctx, base + 12, command | PDWC3_CMDACT);
++    s->error = PDWC3_TIMEOUT;
++    for (unsigned i = 0; i < PDWC3_COMMAND_POLLS; i++) {
++        s->response = io->read(io->ctx, base + 12);
++        s->polls++;
++        if (!(s->response & PDWC3_CMDACT)) {
++            s->error = ((s->response >> 12) & 15u) ? PDWC3_STATUS : PDWC3_OK;
++            break;
++        }
++        io->wait_us(io->ctx, 1);
++    }
++    /* Restore only our SUSPHY change; preserve any other current bits. */
++    s->phy_after = io->read(io->ctx, PDWC3_PHYCFG);
++    if (s->phy_before & PDWC3_SUSPHY) {
++        s->phy_after |= PDWC3_SUSPHY;
++        io->write(io->ctx, PDWC3_PHYCFG, s->phy_after);
++    }
++    return (enum pdwc3_error)s->error;
++}
++#endif

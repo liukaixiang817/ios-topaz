@@ -35,7 +35,10 @@ a630_probe(unsigned mode, bool exact_board, a630_read read, void *ctx, struct a6
     A630_READ(1, 0x109c, s->clocks[2]);
     A630_READ(1, 0x1120, s->rcgr[0]);
     A630_READ(1, 0x1124, s->rcgr[1]);
-    if (!(s->cx & (1u << 31)) || !(s->cx_hw & (1u << 31))) {
+    /* Live Polaris DT names 0x5091540 as gpu_cx_gdsc's hw-ctrl-addr.
+     * Its POWER_ON is authoritative; GDSCR is the request register, not
+     * a second independent power prerequisite (vendor gdsc driver). */
+    if (!(s->cx_hw & (1u << 31))) {
         s->result = A630_CX_OFF; return A630_CX_OFF;
     }
     if ((s->gcc[1] | s->gcc[2] | s->clocks[0] | s->clocks[1] | s->clocks[2]) & (1u << 31)) {
