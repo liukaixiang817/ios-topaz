@@ -12,10 +12,13 @@ enum a630_bus_error { A630_BUS_DISABLED, A630_BUS_IO, A630_BUS_LEASE,
     A630_BUS_PLL, A630_BUS_ACK, A630_BUS_TIMEOUT, A630_BUS_READY };
 struct a630_bus_snapshot {
     uint32_t error,start_error,stage,changed,restored,restore_error;
-    uint32_t pll[5],before[4],live[4],config,command,bank,offset,expected,actual,polls;
+    uint32_t pll[5],before[5],live[5],config,command,source,bank,offset,expected,actual,polls;
 };
-static const uint32_t a630_bus_offsets[4]={0x52004,0x44038,0x7100c,0x71018};
-static const uint32_t a630_bus_masks[4]={1u<<16,1,1,1};
+/* Retain GPLL0 as well as its GPU main output. Source5/HID5 divides the
+ * inherited600MHz by3, yielding200MHz independently of the even divider.
+ * Do not change USER_CTL, OPMODE, PLL rate or any other client's votes. */
+static const uint32_t a630_bus_offsets[5]={0x52000,0x52004,0x44038,0x7100c,0x71018};
+static const uint32_t a630_bus_masks[5]={1,1u<<15,1,1,1};
 struct a630_bus_io {a630_read read;a630_write write;a630_wait_us wait;
     bool (*held)(void *);void *ctx;};
 static inline bool a630_bus_read(const struct a630_bus_io *io,struct a630_bus_snapshot *s,
@@ -65,25 +68,34 @@ static inline enum a630_bus_error a630_bus_begin(bool enabled,const struct a630_
     if(!io||!io->read||!io->write||!io->wait||!io->held){s->error=A630_BUS_IO;goto done;}
     s->stage=1;
     /* Fabia PLL: mode,L,USER_CTL_LO,OPMODE,16-bit fractional numerator.
-     * Only accept the running inherited600MHz PLL and its /2 output. */
+     * Original clk_fabia_pll_enable distinguishes FSM from manual control:
+     * FSM needs ACTIVE; OPMODE/output setup is only for the manual path.
+     * In either mode require a locked, enabled inherited600MHz source. */
     const uint32_t off[5]={0,4,0xc,0x2c,0x38};
     for(unsigned n=0;n<5;n++)if(!a630_bus_read(io,s,0,off[n],&s->pll[n]))goto done;
-    if(!(s->pll[0]&(1u<<31)) || !(s->pll[0]&0x40000001u) ||
+    bool fsm=(s->pll[0]&(1u<<20))!=0;
+    if((s->pll[0]&0x80000001u)!=0x80000001u ||
        (s->pll[1]&0xffff)!=31 || (s->pll[4]&0xffff)!=0x4000 ||
-       ((s->pll[2]>>8)&15)!=1 || (s->pll[2]&3)!=3 || s->pll[3]!=1){s->error=A630_BUS_PLL;goto done;}
-    for(unsigned n=0;n<4;n++)if(!a630_bus_read(io,s,0,a630_bus_offsets[n],&s->before[n]))goto done;
+       (fsm ? !(s->pll[0]&(1u<<30)) : (!(s->pll[2]&1) || s->pll[3]!=1))){
+        s->error=A630_BUS_PLL;goto done;
+    }
+    s->source=0x505;
+    for(unsigned n=0;n<5;n++)if(!a630_bus_read(io,s,0,a630_bus_offsets[n],&s->before[n]))goto done;
     if(!a630_bus_read(io,s,1,0x1124,&s->config)||!a630_bus_read(io,s,1,0x1120,&s->command))goto done;
     if((s->config&0x371f)>1 || (s->command&1)){s->error=A630_BUS_LEASE;goto done;}
     s->stage=2;
-    for(unsigned n=0;n<4;n++){
+    for(unsigned n=0;n<5;n++){
         s->changed|=1u<<n;
         if(!a630_bus_write(io,s,0,a630_bus_offsets[n],a630_bus_masks[n],a630_bus_masks[n]))goto done;
-        if(!n)io->wait(io->ctx,500); /* Original gate2 source settling. */
+        if(!n) {
+            if(!a630_bus_poll(io,s,0,0,(1u<<31)|(fsm ? 1u<<30 : 0),
+                                      (1u<<31)|(fsm ? 1u<<30 : 0)))goto done;
+        } else if(n==1)io->wait(io->ctx,500); /* Original gate2 settling. */
         else if(!a630_bus_poll(io,s,0,a630_bus_offsets[n],1u<<31,0))goto done;
         if(!a630_bus_read(io,s,0,a630_bus_offsets[n],&s->live[n]))goto done;
     }
-    s->stage=3;s->changed|=16;
-    if(!a630_bus_source(io,s,0x602))goto done;
+    s->stage=3;s->changed|=32;
+    if(!a630_bus_source(io,s,s->source))goto done;
     s->stage=4;s->error=A630_BUS_READY;
 done:
     s->start_error=s->error;return (enum a630_bus_error)s->error;
@@ -95,8 +107,8 @@ static inline bool a630_bus_end(const struct a630_bus_io *io,struct a630_bus_sna
     struct a630_bus_snapshot r=*s;r.error=0;
     /* Never withdraw a source or bus with a live bus master. */
     if(!io->held(io->ctx)){r.error=A630_BUS_LEASE;goto failed;}
-    if((s->changed&16)&&!a630_bus_source(io,&r,s->config))goto failed;
-    for(int n=3;n>=0;n--)if(s->changed&(1u<<n)){
+    if((s->changed&32)&&!a630_bus_source(io,&r,s->config))goto failed;
+    for(int n=4;n>=0;n--)if(s->changed&(1u<<n)){
         if(!a630_bus_write(io,&r,0,a630_bus_offsets[n],s->before[n],a630_bus_masks[n]))goto failed;
         io->wait(io->ctx,10); /* Voted-clock OFF is request-only, as Linux. */
     }

@@ -1,0 +1,389 @@
+From: ios-polaris bring-up
+Subject: [PATCH] Admit inherited FSM PLL; establish original HS PIPE clock
+
+--- a/bsd/dev/polaris_a630_bus.h
++++ b/bsd/dev/polaris_a630_bus.h
+@@ -12,10 +12,13 @@
+     A630_BUS_PLL, A630_BUS_ACK, A630_BUS_TIMEOUT, A630_BUS_READY };
+ struct a630_bus_snapshot {
+     uint32_t error,start_error,stage,changed,restored,restore_error;
+-    uint32_t pll[5],before[4],live[4],config,command,bank,offset,expected,actual,polls;
++    uint32_t pll[5],before[5],live[5],config,command,source,bank,offset,expected,actual,polls;
+ };
+-static const uint32_t a630_bus_offsets[4]={0x52004,0x44038,0x7100c,0x71018};
+-static const uint32_t a630_bus_masks[4]={1u<<16,1,1,1};
++/* Retain GPLL0 as well as its GPU main output. Source5/HID5 divides the
++ * inherited600MHz by3, yielding200MHz independently of the even divider.
++ * Do not change USER_CTL, OPMODE, PLL rate or any other client's votes. */
++static const uint32_t a630_bus_offsets[5]={0x52000,0x52004,0x44038,0x7100c,0x71018};
++static const uint32_t a630_bus_masks[5]={1,1u<<15,1,1,1};
+ struct a630_bus_io {a630_read read;a630_write write;a630_wait_us wait;
+     bool (*held)(void *);void *ctx;};
+ static inline bool a630_bus_read(const struct a630_bus_io *io,struct a630_bus_snapshot *s,
+@@ -65,25 +68,34 @@
+     if(!io||!io->read||!io->write||!io->wait||!io->held){s->error=A630_BUS_IO;goto done;}
+     s->stage=1;
+     /* Fabia PLL: mode,L,USER_CTL_LO,OPMODE,16-bit fractional numerator.
+-     * Only accept the running inherited600MHz PLL and its /2 output. */
++     * Original clk_fabia_pll_enable distinguishes FSM from manual control:
++     * FSM needs ACTIVE; OPMODE/output setup is only for the manual path.
++     * In either mode require a locked, enabled inherited600MHz source. */
+     const uint32_t off[5]={0,4,0xc,0x2c,0x38};
+     for(unsigned n=0;n<5;n++)if(!a630_bus_read(io,s,0,off[n],&s->pll[n]))goto done;
+-    if(!(s->pll[0]&(1u<<31)) || !(s->pll[0]&0x40000001u) ||
++    bool fsm=(s->pll[0]&(1u<<20))!=0;
++    if((s->pll[0]&0x80000001u)!=0x80000001u ||
+        (s->pll[1]&0xffff)!=31 || (s->pll[4]&0xffff)!=0x4000 ||
+-       ((s->pll[2]>>8)&15)!=1 || (s->pll[2]&3)!=3 || s->pll[3]!=1){s->error=A630_BUS_PLL;goto done;}
+-    for(unsigned n=0;n<4;n++)if(!a630_bus_read(io,s,0,a630_bus_offsets[n],&s->before[n]))goto done;
++       (fsm ? !(s->pll[0]&(1u<<30)) : (!(s->pll[2]&1) || s->pll[3]!=1))){
++        s->error=A630_BUS_PLL;goto done;
++    }
++    s->source=0x505;
++    for(unsigned n=0;n<5;n++)if(!a630_bus_read(io,s,0,a630_bus_offsets[n],&s->before[n]))goto done;
+     if(!a630_bus_read(io,s,1,0x1124,&s->config)||!a630_bus_read(io,s,1,0x1120,&s->command))goto done;
+     if((s->config&0x371f)>1 || (s->command&1)){s->error=A630_BUS_LEASE;goto done;}
+     s->stage=2;
+-    for(unsigned n=0;n<4;n++){
++    for(unsigned n=0;n<5;n++){
+         s->changed|=1u<<n;
+         if(!a630_bus_write(io,s,0,a630_bus_offsets[n],a630_bus_masks[n],a630_bus_masks[n]))goto done;
+-        if(!n)io->wait(io->ctx,500); /* Original gate2 source settling. */
++        if(!n) {
++            if(!a630_bus_poll(io,s,0,0,(1u<<31)|(fsm ? 1u<<30 : 0),
++                                      (1u<<31)|(fsm ? 1u<<30 : 0)))goto done;
++        } else if(n==1)io->wait(io->ctx,500); /* Original gate2 settling. */
+         else if(!a630_bus_poll(io,s,0,a630_bus_offsets[n],1u<<31,0))goto done;
+         if(!a630_bus_read(io,s,0,a630_bus_offsets[n],&s->live[n]))goto done;
+     }
+-    s->stage=3;s->changed|=16;
+-    if(!a630_bus_source(io,s,0x602))goto done;
++    s->stage=3;s->changed|=32;
++    if(!a630_bus_source(io,s,s->source))goto done;
+     s->stage=4;s->error=A630_BUS_READY;
+ done:
+     s->start_error=s->error;return (enum a630_bus_error)s->error;
+@@ -95,8 +107,8 @@
+     struct a630_bus_snapshot r=*s;r.error=0;
+     /* Never withdraw a source or bus with a live bus master. */
+     if(!io->held(io->ctx)){r.error=A630_BUS_LEASE;goto failed;}
+-    if((s->changed&16)&&!a630_bus_source(io,&r,s->config))goto failed;
+-    for(int n=3;n>=0;n--)if(s->changed&(1u<<n)){
++    if((s->changed&32)&&!a630_bus_source(io,&r,s->config))goto failed;
++    for(int n=4;n>=0;n--)if(s->changed&(1u<<n)){
+         if(!a630_bus_write(io,&r,0,a630_bus_offsets[n],s->before[n],a630_bus_masks[n]))goto failed;
+         io->wait(io->ctx,10); /* Voted-clock OFF is request-only, as Linux. */
+     }
+--- a/bsd/dev/polaris_a630.c
++++ b/bsd/dev/polaris_a630.c
+@@ -74,7 +74,7 @@
+ {
+     if (!out || !size) return 0;
+     out[0] = 0;
+-    if (line >= 7) return 0;
++    if (line >= 8) return 0;
+     if (!__atomic_load_n(&a630_published, __ATOMIC_ACQUIRE))
+         return (uint32_t)snprintf(out, size, "GPU snapshot pending");
+     const struct a630_power_snapshot *p = &a630_power_saved;
+@@ -98,8 +98,10 @@
+         b->error&15,b->stage&15,b->pll[0],b->pll[1]&65535,b->pll[4]&65535,b->bank&15,b->offset&0xfffff,b->actual);
+     if (line == 5) return (uint32_t)snprintf(out,size,"GS %x/%x c%x s%x @%x e%x a%x r%x/%x",
+         m->error&15,m->stage&15,m->bank&255,m->slot&255,m->failed_offset,m->expected,m->actual,m->restored&1,m->restore_error&15);
+-    return (uint32_t)snprintf(out,size,"GE %x/%x fw%08x @%x:%x e%x a%x r%x/%x",
++    if (line == 6) return (uint32_t)snprintf(out,size,"GE %x/%x fw%08x @%x:%x e%x a%x r%x/%x",
+         e->error&15,e->stage&15,e->fw,e->failed_bank&15,e->failed_offset,e->expected,e->actual,e->stopped&1,e->restore_error&15);
++    return (uint32_t)snprintf(out,size,"GL u%08x o%08x src%04x v%08x/%08x r%x/%x",
++        b->pll[2],b->pll[3],b->source&65535,b->live[0],b->live[1],b->restored&1,b->restore_error&15);
+ }
+ 
+ static bool a630_property(DTEntry node, const char *name, const void **data, unsigned *size)
+@@ -194,7 +196,7 @@
+ {
+     struct a630_io *io = opaque;
+     if (io->runtime_lease && region<5 && io->base[region]) {
+-        bool allowed = region==0 && (off==0x52004 || off==0x44038 || off==0x7100c || off==0x71018);
++        bool allowed = region==0 && (off==0x52000 || off==0x52004 || off==0x44038 || off==0x7100c || off==0x71018);
+         if (region==1 && off==0x1124) allowed=true;
+         if (region==3 && a630_smmu_offset(off,false)) allowed=true;
+         if (region==4 && a630_pdc_offset(off)) allowed=true;
+@@ -360,8 +362,8 @@
+     const struct a630_smmu_snapshot *m=&a630_smmu_saved;
+     const struct a630_bus_snapshot *b=&a630_bus_saved;
+     const struct a630_boot_snapshot *e=&a630_boot_saved;
+-    printf("D GPU BUS: error=%u stage=%u PLL=%x/%x/%x/%x/%x cfg=%x cmd=%x fail=%u:%x expected=%x actual=%x restored=%u/%u held=%u/%u\n",
+-        b->error,b->stage,b->pll[0],b->pll[1],b->pll[2],b->pll[3],b->pll[4],b->config,b->command,
++    printf("D GPU BUS: error=%u stage=%u PLL=%x/%x/%x/%x/%x cfg=%x cmd=%x source=%x fail=%u:%x expected=%x actual=%x restored=%u/%u held=%u/%u\n",
++        b->error,b->stage,b->pll[0],b->pll[1],b->pll[2],b->pll[3],b->pll[4],b->config,b->command,b->source,
+         b->bank,b->offset,b->expected,b->actual,b->restored,b->restore_error,c->resources_retained,p->resources_retained);
+     printf("D GPU SMMU: error=%u stage=%u ID=%x/%x/%x/%x cb=%u stream=%u slot=%u root=%llx fail=%x expected=%x actual=%x restored=%u/%u ATOS=disabled DMA=%u\n",
+         m->error,m->stage,m->id[0],m->id[1],m->id[2],m->id[3],m->bank,A630_SMMU_STREAM,m->slot,
+--- a/bsd/dev/sweet_usb.c
++++ b/bsd/dev/sweet_usb.c
+@@ -209,6 +209,7 @@
+ #include "polaris_dwc3_endpoints.h"
+ #include "polaris_dwc3_session.h"
+ #include "polaris_dwc3_clock.h"
++#include "polaris_dwc3_hs_clock.h"
+ static struct pdwc3_gate polaris_gate_begin_saved, polaris_gate_end_saved;
+ static uint32_t polaris_gate_begin_published, polaris_gate_end_published;
+ static const struct pdwc3_gate *polaris_gate_snapshot(void)
+@@ -225,6 +226,24 @@
+     } else {
+         polaris_gate_begin_saved = *s;
+         __atomic_store_n(&polaris_gate_begin_published, 1, __ATOMIC_RELEASE);
++    }
++}
++static struct pdwc3_hs_clock polaris_hs_begin_saved, polaris_hs_end_saved;
++static uint32_t polaris_hs_begin_published, polaris_hs_end_published;
++static const struct pdwc3_hs_clock *polaris_hs_snapshot(void)
++{
++    if (__atomic_load_n(&polaris_hs_end_published, __ATOMIC_ACQUIRE)) return &polaris_hs_end_saved;
++    if (__atomic_load_n(&polaris_hs_begin_published, __ATOMIC_ACQUIRE)) return &polaris_hs_begin_saved;
++    return NULL;
++}
++static void polaris_hs_publish(const struct pdwc3_hs_clock *s, bool final)
++{
++    if (final) {
++        polaris_hs_end_saved = *s;
++        __atomic_store_n(&polaris_hs_end_published, 1, __ATOMIC_RELEASE);
++    } else {
++        polaris_hs_begin_saved = *s;
++        __atomic_store_n(&polaris_hs_begin_published, 1, __ATOMIC_RELEASE);
+     }
+ }
+ static struct pdwc3_session polaris_session_begin_saved, polaris_session_end_saved;
+@@ -273,6 +292,10 @@
+     if (g) printf("D USB GATE: error=%u start_error=%u gctl=%x/%x/%x changed=%u restored=%u polls=%u/%u busy=%x/%x\n",
+         g->error, g->start_error, g->before, g->live, g->after, g->changed, g->restored,
+         g->polls, g->restore_polls, g->busy_ep, g->busy_command);
++    const struct pdwc3_hs_clock *h = polaris_hs_snapshot();
++    if (h) printf("D USB HS CLOCK: error=%u start=%u stage=%u general=%x/%x/%x changed=%u restored=%u/%u polls=%u/%u writes=%u busy=%x/%x\n",
++        h->error,h->start_error,h->stage,h->before,h->live,h->after,h->changed,
++        h->restored,h->restore_error,h->polls,h->restore_polls,h->writes,h->busy_ep,h->busy_command);
+     const struct pdwc3_session *v = polaris_session_snapshot();
+     if (v) printf("D USB SESSION: error=%u start_error=%u hs=%x/%x/%x changed=%x restored=%u polls=%u/%u\n",
+         v->error, v->start_error, v->before, v->live, v->after, v->changed, v->restored,
+@@ -599,15 +622,15 @@
+ { return ud_epcmd(ep, command, p0, p1, p2); }
+ 
+ static uint32_t polaris_session_read(void *ctx, uint32_t off)
+-{ return off == PDWC3_HS_PHY_CTRL ? usb_rd((vm_offset_t)ctx, off) : 0; }
++{ return (off == PDWC3_HS_PHY_CTRL || off == PDWC3_HS_GENERAL) ? usb_rd((vm_offset_t)ctx, off) : 0; }
+ static void polaris_session_write(void *ctx, uint32_t off, uint32_t value)
+ {
+-    if (off != PDWC3_HS_PHY_CTRL) return;
++    if (off != PDWC3_HS_PHY_CTRL && off != PDWC3_HS_GENERAL) return;
+     *(volatile uint32_t *)((vm_offset_t)ctx + off) = value;
+     __asm__ volatile("dsb sy" ::: "memory");
+ }
+ static void polaris_session_abort(const struct pdwc3_io *io, struct pdwc3_session *s,
+-    const struct pdwc3_io *gate_io, struct pdwc3_gate *gate)
++    const struct pdwc3_io *gate_io, struct pdwc3_gate *gate, struct pdwc3_hs_clock *hs)
+ {
+     /* Session rollback is permitted only after our controller is halted.
+      * No poll thread has started on any failure path that calls this. */
+@@ -619,6 +642,8 @@
+     }
+     bool halted = !(dwc_rd(DCTL) & (DCTL_RUN_STOP | DCTL_CSFTRST)) &&
+         (dwc_rd(DSTS) & DSTS_DEVCTRLHLT);
++    polaris_dwc3_hs_clock_restore(io, gate_io, hs);
++    polaris_hs_publish(hs, true);
+     polaris_dwc3_session_restore(io, s, halted);
+     polaris_session_publish(s, true);
+     polaris_dwc3_clock_restore(gate_io, gate);
+@@ -1207,7 +1232,14 @@
+ {
+     if (!out || !size) return 0;
+     out[0] = 0;
+-    if (line >= 4) return 0;
++    if (line >= 5) return 0;
++    if (line == 4) {
++        const struct pdwc3_hs_clock *h = polaris_hs_snapshot();
++        if (!h) return (uint32_t)snprintf(out, size, "UM snapshot pending");
++        return (uint32_t)snprintf(out,size,"UM %x/%x q%08x/%08x/%08x r%x/%x b%x",
++            h->error&15,h->stage&15,h->before,h->live,h->after,h->restored&1,
++            h->restore_error&15,h->busy_command);
++    }
+     if (line < 2) {
+         if (!__atomic_load_n(&polaris_diag_start_published[line], __ATOMIC_ACQUIRE))
+             return (uint32_t)snprintf(out, size, "U%u snapshot pending", line);
+@@ -1319,11 +1351,20 @@
+     const struct pdwc3_io session_io = {(void *)session_qs, polaris_session_read,
+         polaris_session_write, polaris_command_wait};
+     struct pdwc3_session session;
++    struct pdwc3_hs_clock hs_clock = {0};
+     if (polaris_dwc3_session_begin(&session_io, &session)) {
+         PU_PROGRESS(PU_VBUS, EIO);
+-        polaris_session_abort(&session_io, &session, &gate_io, &gate); return;
++        polaris_session_abort(&session_io, &session, &gate_io, &gate, &hs_clock); return;
+     }
+     polaris_session_publish(&session, false);
++    /* Original HS post-reset clock mux sequence, before endpoint commands.
++     * Only QSCRATCH GENERAL bits0/3/8; do not reset PHYs or touch lanes. */
++    if (polaris_dwc3_hs_clock_begin(&session_io, &gate_io, true, &hs_clock)) {
++        polaris_hs_publish(&hs_clock, false);
++        PU_PROGRESS(PU_VBUS, EIO);
++        polaris_session_abort(&session_io, &session, &gate_io, &gate, &hs_clock); return;
++    }
++    polaris_hs_publish(&hs_clock, false);
+ #endif
+ 
+ 	PU_PROGRESS(PU_EVENTS, 0);
+@@ -1356,7 +1397,7 @@
+ 		printf("SWEET USB: endpoint 0 setup failed\n");
+ 		PU_PROGRESS(PU_EP0, EIO);
+ #if defined(POLARIS_RAM_ONLY)
+-        polaris_session_abort(&session_io, &session, &gate_io, &gate);
++        polaris_session_abort(&session_io, &session, &gate_io, &gate, &hs_clock);
+ #endif
+ 		return;
+ 	}
+@@ -1366,7 +1407,7 @@
+     /* STARTTRANSFER failure must not be reported as a ready gadget. */
+     if (__atomic_load_n(&polaris_ep_failure_published, __ATOMIC_ACQUIRE)) {
+         PU_PROGRESS(PU_EP0, EIO);
+-        polaris_session_abort(&session_io, &session, &gate_io, &gate); return;
++        polaris_session_abort(&session_io, &session, &gate_io, &gate, &hs_clock); return;
+     }
+ #endif
+ 
+@@ -1394,7 +1435,7 @@
+ 	if (dwc_rd(DSTS) & DSTS_DEVCTRLHLT) {
+         PU_PROGRESS(PU_RUN, ETIMEDOUT);
+ #if defined(POLARIS_RAM_ONLY)
+-        polaris_session_abort(&session_io, &session, &gate_io, &gate);
++        polaris_session_abort(&session_io, &session, &gate_io, &gate, &hs_clock);
+ #endif
+         return;
+     }
+@@ -1405,7 +1446,7 @@
+ #if defined(POLARIS_RAM_ONLY)
+     else {
+         PU_PROGRESS(PU_POLL, EIO);
+-        polaris_session_abort(&session_io, &session, &gate_io, &gate); return;
++        polaris_session_abort(&session_io, &session, &gate_io, &gate, &hs_clock); return;
+     }
+ #endif
+ #if defined(POLARIS_RAM_ONLY)
+--- a/iokit/Kernel/arm/SweetFramebuffer.cpp
++++ b/iokit/Kernel/arm/SweetFramebuffer.cpp
+@@ -168,18 +168,18 @@
+ extern "C" uint32_t polaris_a630_diagnostic_line(unsigned, char *, uint32_t);
+ static void polaris_status_bar(AppleCLCD *fb)
+ {
+-    char text[13][136];
++    char text[15][136];
+     polaris_usb_status(text[0], sizeof(text[0]));
+     unsigned n = polaris_a630_details(text[1], sizeof(text[1]));
+     if (n < sizeof(text[1])) snprintf(text[1] + n, sizeof(text[1]) - n,
+         " T%u", __atomic_load_n(&fb->fPolarisLastUS, __ATOMIC_RELAXED));
+-    for (unsigned i = 0; i < 4; i++)
++    for (unsigned i = 0; i < 5; i++)
+         polaris_usb_diagnostic_line(i, text[2 + i], sizeof(text[2 + i]));
+-    for (unsigned i = 0; i < 7; i++)
+-        polaris_a630_diagnostic_line(i, text[6 + i], sizeof(text[6 + i]));
++    for (unsigned i = 0; i < 8; i++)
++        polaris_a630_diagnostic_line(i, text[7 + i], sizeof(text[7 + i]));
+     /* Fixed double-size diagnostic rows, saved state only. Keep output
+      * inside the actual panel and never poll MMIO from the display loop. */
+-    unsigned lines = fb->fHeight / 32 < 13 ? fb->fHeight / 32 : 13;
++    unsigned lines = fb->fHeight / 32 < 15 ? fb->fHeight / 32 : 15;
+     for (unsigned line = 0; line < lines; line++) {
+         for (unsigned y = 0; y < 32; y++) {
+             uint32_t *row = (uint32_t *)(fb->fPixels + (uint64_t)(line * 32 + y) * fb->fRowBytes);
+--- /dev/null
++++ b/bsd/dev/polaris_dwc3_hs_clock.h
+@@ -0,0 +1,93 @@
++/* Original SDM845 dwc3-msm.c CONTROLLER_POST_RESET_EVENT, c7cb50c1:
++ * HS/full-speed mode gates PIPE, selects UTMI and software PHY status,
++ * waits2us per transition, then ungates PIPE. No PHY/lane/reset writes.
++ * Admitted caller owns a halted HS gadget and serializes all commands.
++ */
++#ifndef POLARIS_DWC3_HS_CLOCK_H
++#define POLARIS_DWC3_HS_CLOCK_H
++#ifndef POLARIS_DWC3_COMMAND_H
++#error Include Polaris DWC3 command definitions first
++#endif
++#include <stdbool.h>
++#define PDWC3_HS_GENERAL 8u
++#define PDWC3_HS_SELECT 9u
++#define PDWC3_HS_DISABLE (1u << 8)
++#define PDWC3_HS_MASK (PDWC3_HS_SELECT | PDWC3_HS_DISABLE)
++enum pdwc3_hs_error { PDWC3_HS_OK, PDWC3_HS_ARGUMENT, PDWC3_HS_UNSAFE,
++    PDWC3_HS_ACK, PDWC3_HS_BUSY };
++struct pdwc3_hs_clock {
++    uint32_t error,start_error,stage,before,live,after,attempted,changed,restored;
++    uint32_t polls,writes,restore_error,restore_polls,busy_ep,busy_command;
++};
++static inline bool pdwc3_hs_io(const struct pdwc3_io *io)
++{return io&&io->read&&io->write&&io->wait_us;}
++static inline bool pdwc3_hs_idle(const struct pdwc3_io *core,struct pdwc3_hs_clock *s)
++{
++    uint32_t control=core->read(core->ctx,0xc704),status=core->read(core->ctx,0xc70c);
++    uint32_t global=core->read(core->ctx,0xc110);
++    if((control&0xc0000000u)||!(status&(1u<<22))||((global>>12)&3)!=2||
++       (global&(1u<<11))){s->error=PDWC3_HS_UNSAFE;return false;}
++    for(unsigned ep=0;ep<6;ep++){
++        uint32_t command=core->read(core->ctx,0xc80c+16*ep);
++        if(command&PDWC3_CMDACT){s->busy_ep=ep;s->busy_command=command;
++            s->error=PDWC3_HS_BUSY;return false;}
++    }
++    return true;
++}
++static inline bool pdwc3_hs_update(const struct pdwc3_io *qs,struct pdwc3_hs_clock *s,
++                                 uint32_t value,uint32_t mask,bool restoring)
++{
++    uint32_t current=qs->read(qs->ctx,PDWC3_HS_GENERAL);
++    s->writes++;
++    qs->write(qs->ctx,PDWC3_HS_GENERAL,(current&~mask)|(value&mask));
++    for(unsigned n=0;n<PDWC3_COMMAND_POLLS;n++){
++        if(restoring)s->restore_polls++;else s->polls++;
++        s->after=qs->read(qs->ctx,PDWC3_HS_GENERAL);
++        if(!((s->after^value)&mask)){qs->wait_us(qs->ctx,2);return true;}
++        qs->wait_us(qs->ctx,1);
++    }
++    s->error=PDWC3_HS_ACK;return false;
++}
++static inline enum pdwc3_hs_error polaris_dwc3_hs_clock_begin(
++    const struct pdwc3_io *qs,const struct pdwc3_io *core,bool admitted,
++    struct pdwc3_hs_clock *s)
++{
++    if(!s)return PDWC3_HS_ARGUMENT;
++    *s=(struct pdwc3_hs_clock){.error=PDWC3_HS_ARGUMENT,.busy_ep=UINT32_MAX};
++    if(!pdwc3_hs_io(qs)||!pdwc3_hs_io(core))goto done;
++    if(!admitted){s->error=PDWC3_HS_UNSAFE;goto done;}
++    if(!pdwc3_hs_idle(core,s))goto done;
++    s->attempted=1;s->before=qs->read(qs->ctx,PDWC3_HS_GENERAL);s->after=s->before;
++    /* An inherited disabled PIPE has no admitted running source to borrow. */
++    if(s->before&PDWC3_HS_DISABLE){s->error=PDWC3_HS_UNSAFE;goto done;}
++    s->changed=((s->before&PDWC3_HS_MASK)!=PDWC3_HS_SELECT);
++    if(s->changed){
++        s->stage=1;
++        if(!pdwc3_hs_update(qs,s,PDWC3_HS_DISABLE,PDWC3_HS_DISABLE,false))goto done;
++        s->stage=2;
++        if(!pdwc3_hs_update(qs,s,PDWC3_HS_SELECT,PDWC3_HS_SELECT,false))goto done;
++        s->stage=3;
++        if(!pdwc3_hs_update(qs,s,0,PDWC3_HS_DISABLE,false))goto done;
++    }
++    s->stage=4;s->error=PDWC3_HS_OK;
++done:
++    s->live=s->after;s->start_error=s->error;return (enum pdwc3_hs_error)s->error;
++}
++static inline bool polaris_dwc3_hs_clock_restore(const struct pdwc3_io *qs,
++    const struct pdwc3_io *core,struct pdwc3_hs_clock *s)
++{
++    if(!s)return false;
++    s->restored=s->restore_polls=s->restore_error=0;
++    if(!pdwc3_hs_io(qs)||!pdwc3_hs_io(core)){s->restore_error=PDWC3_HS_ARGUMENT;return false;}
++    if(!s->attempted||!s->changed){s->restored=1;return true;}
++    /* A timed-out command may still own the PIPE clock. Retain the source;
++     * never switch or gate it underneath that command, even while halted. */
++    if(!pdwc3_hs_idle(core,s))goto fail;
++    if(!pdwc3_hs_update(qs,s,PDWC3_HS_DISABLE,PDWC3_HS_DISABLE,true)||
++       !pdwc3_hs_update(qs,s,s->before,PDWC3_HS_SELECT,true)||
++       !pdwc3_hs_update(qs,s,s->before,PDWC3_HS_DISABLE,true))goto fail;
++    s->restored=1;s->error=s->start_error;return true;
++fail:
++    s->restore_error=s->error;return false;
++}
++#endif

@@ -22,6 +22,24 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+###0034 local implementation verified; full build pending
+
+- New0839 candidate fixesFSM/manualPLLadmission, ownsGPLL0vote0x52000bit0
+  andGPUmain600MHztap0x52004bit15, RCGsource5/HID5=200MHz. NoPLLrate,
+  postdivider, voltage orotherclientvotechanges. Onlyreleaseourrequests
+  afterGMUcontainment; retainonuncertainty. Firmware/SMMU pathunchanged.
+- USBaddsoriginalHSPIPE/UTMI QSCRATCHGENERAL8 sequence: bit8gate,
+  bits0/3select, bit8ungate; eachwriteACK+2ussettle. OnlyadmittedhaltedHS
+  controller/noactivecommands. Onbusycommand retainclock; safeownedmasked
+  rollbackelse. NewUMandGLsnapshotrows,15total; noMMIOfromdisplayloop.
+- LocalPASS26ASan/UBSan tests,3actualCI-headerARM64units/allimports,
+  19orderedpatches/27files nofuzz/offset,13detailrows<=67characters,
+  original48RSC/PDCand12SMMUDTpairs; originalPLL/HSsequence/liveDTcheck.
+  FullCI/exactguesttests/image/phonepending; nohardwareaccelerationclaim.
+- Phone0033Settingsworks; humanconfirmedbootcomplete; observerstaysSTOPPED.
+  ActualGB3/1PLLguardfailure, GS/GEunattempted, USBEP0cmd2busy402.
+  Build0034andindependentlyverifybeforephysicalFASTBOOTrequest.
+
 ### CURRENT ACTION —0033 photo localizes PLL admission and USB clock setup
 
 - Human confirmed0033 GUI complete; Settings works. Observer52998 remains

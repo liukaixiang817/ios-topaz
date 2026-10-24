@@ -74,7 +74,7 @@ uint32_t polaris_a630_diagnostic_line(unsigned line, char *out, uint32_t size)
 {
     if (!out || !size) return 0;
     out[0] = 0;
-    if (line >= 7) return 0;
+    if (line >= 8) return 0;
     if (!__atomic_load_n(&a630_published, __ATOMIC_ACQUIRE))
         return (uint32_t)snprintf(out, size, "GPU snapshot pending");
     const struct a630_power_snapshot *p = &a630_power_saved;
@@ -98,8 +98,10 @@ uint32_t polaris_a630_diagnostic_line(unsigned line, char *out, uint32_t size)
         b->error&15,b->stage&15,b->pll[0],b->pll[1]&65535,b->pll[4]&65535,b->bank&15,b->offset&0xfffff,b->actual);
     if (line == 5) return (uint32_t)snprintf(out,size,"GS %x/%x c%x s%x @%x e%x a%x r%x/%x",
         m->error&15,m->stage&15,m->bank&255,m->slot&255,m->failed_offset,m->expected,m->actual,m->restored&1,m->restore_error&15);
-    return (uint32_t)snprintf(out,size,"GE %x/%x fw%08x @%x:%x e%x a%x r%x/%x",
+    if (line == 6) return (uint32_t)snprintf(out,size,"GE %x/%x fw%08x @%x:%x e%x a%x r%x/%x",
         e->error&15,e->stage&15,e->fw,e->failed_bank&15,e->failed_offset,e->expected,e->actual,e->stopped&1,e->restore_error&15);
+    return (uint32_t)snprintf(out,size,"GL u%08x o%08x src%04x v%08x/%08x r%x/%x",
+        b->pll[2],b->pll[3],b->source&65535,b->live[0],b->live[1],b->restored&1,b->restore_error&15);
 }
 
 static bool a630_property(DTEntry node, const char *name, const void **data, unsigned *size)
@@ -194,7 +196,7 @@ static bool a630_write_register(void *opaque, unsigned region, uint32_t off, uin
 {
     struct a630_io *io = opaque;
     if (io->runtime_lease && region<5 && io->base[region]) {
-        bool allowed = region==0 && (off==0x52004 || off==0x44038 || off==0x7100c || off==0x71018);
+        bool allowed = region==0 && (off==0x52000 || off==0x52004 || off==0x44038 || off==0x7100c || off==0x71018);
         if (region==1 && off==0x1124) allowed=true;
         if (region==3 && a630_smmu_offset(off,false)) allowed=true;
         if (region==4 && a630_pdc_offset(off)) allowed=true;
@@ -360,8 +362,8 @@ void polaris_a630_report(void)
     const struct a630_smmu_snapshot *m=&a630_smmu_saved;
     const struct a630_bus_snapshot *b=&a630_bus_saved;
     const struct a630_boot_snapshot *e=&a630_boot_saved;
-    printf("D GPU BUS: error=%u stage=%u PLL=%x/%x/%x/%x/%x cfg=%x cmd=%x fail=%u:%x expected=%x actual=%x restored=%u/%u held=%u/%u\n",
-        b->error,b->stage,b->pll[0],b->pll[1],b->pll[2],b->pll[3],b->pll[4],b->config,b->command,
+    printf("D GPU BUS: error=%u stage=%u PLL=%x/%x/%x/%x/%x cfg=%x cmd=%x source=%x fail=%u:%x expected=%x actual=%x restored=%u/%u held=%u/%u\n",
+        b->error,b->stage,b->pll[0],b->pll[1],b->pll[2],b->pll[3],b->pll[4],b->config,b->command,b->source,
         b->bank,b->offset,b->expected,b->actual,b->restored,b->restore_error,c->resources_retained,p->resources_retained);
     printf("D GPU SMMU: error=%u stage=%u ID=%x/%x/%x/%x cb=%u stream=%u slot=%u root=%llx fail=%x expected=%x actual=%x restored=%u/%u ATOS=disabled DMA=%u\n",
         m->error,m->stage,m->id[0],m->id[1],m->id[2],m->id[3],m->bank,A630_SMMU_STREAM,m->slot,

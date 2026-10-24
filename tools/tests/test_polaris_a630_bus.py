@@ -19,9 +19,9 @@ static bool op(struct model *x){return ++x->op!=x->fail;}
 static bool held(void *x){return ((struct model*)x)->held;}
 static bool rd(void *ctx,unsigned b,uint32_t o,uint32_t *v){struct model *x=ctx;assert(b<2&&o<0x90000);if(!op(x))return false;*v=x->r[b][o/4];return true;}
 static bool wr(void *ctx,unsigned b,uint32_t o,uint32_t v){
- struct model *x=ctx;assert(x->held);assert((b==0&&(o==0x52004||o==0x44038||o==0x7100c||o==0x71018))||(b==1&&(o==0x1120||o==0x1124)));
+ struct model *x=ctx;assert(x->held);assert((b==0&&(o==0x52000||o==0x52004||o==0x44038||o==0x7100c||o==0x71018))||(b==1&&(o==0x1120||o==0x1124)));
  x->writes++;x->r[b][o/4]=v;
- if(b==0&&o!=0x52004&&!x->stuck)x->r[b][o/4]=(v&1)?v&~0x80000000u:v|0x80000000u;
+ if(b==0&&o!=0x52000&&o!=0x52004&&!x->stuck)x->r[b][o/4]=(v&1)?v&~0x80000000u:v|0x80000000u;
  if(b==1&&o==0x1120&&!x->stuck)x->r[b][o/4]&=~1u;
  return op(x);
 }
@@ -30,7 +30,7 @@ static const struct a630_bus_io io={rd,wr,wait_us,held,&m};
 static void reset(void){
  memset(&m,0,sizeof(m));m.held=true;
  m.r[0][0]=0xc0100001;m.r[0][1]=31;m.r[0][3]=0x103;m.r[0][0x2c/4]=1;m.r[0][0x38/4]=0x4000;
- m.r[0][0x52004/4]=0x123;m.r[0][0x44038/4]=0x80004000;
+ m.r[0][0x52000/4]=0xa0;m.r[0][0x52004/4]=0x123;m.r[0][0x44038/4]=0x80004000;
  m.r[0][0x7100c/4]=0x80004220;m.r[0][0x71018/4]=0x80000001;
  m.r[1][0x1120/4]=2;m.r[1][0x1124/4]=1;
  memcpy(m.saved,m.r,sizeof(m.r));
@@ -45,7 +45,8 @@ int main(void){struct a630_bus_snapshot s;
  reset();assert(a630_bus_begin(false,&io,&s)==A630_BUS_DISABLED&&!m.op);
  m.held=false;assert(a630_bus_begin(true,&io,&s)==A630_BUS_LEASE&&!m.op);
  reset();assert(a630_bus_begin(true,&io,&s)==A630_BUS_READY);unsigned count=m.op;
- assert(m.r[1][0x1124/4]==0x602&&m.r[0][0x52004/4]==0x10123);
+ assert(m.r[1][0x1124/4]==0x505&&s.source==0x505);
+ assert(m.r[0][0x52000/4]==0xa1&&m.r[0][0x52004/4]==0x8123);
  assert(m.r[0][0x44038/4]==0x4001&&m.r[0][0x7100c/4]==0x4221&&m.r[0][0x71018/4]==1);
  assert(a630_bus_end(&io,&s)&&s.restored);restored();
  for(unsigned fail=1;fail<=count;fail++){
@@ -59,12 +60,31 @@ int main(void){struct a630_bus_snapshot s;
   m.op=0;m.fail=fail;assert(!a630_bus_end(&io,&s)&&s.restore_error&&!s.restored);
   m.fail=0;assert(a630_bus_end(&io,&s));restored();
  }
+ /* Real0033 FSM MODE plus arbitrary manual-only output/divider controls.
+  * They do not change the600MHz main rate or the FSM ACTIVE contract. */
+ for(unsigned n=0;n<16;n++){
+  reset();m.r[0][0]=0xd8100005;m.r[0][3]=n<<8;m.r[0][0x2c/4]=0;
+  memcpy(m.saved,m.r,sizeof(m.r));
+  assert(a630_bus_begin(true,&io,&s)==A630_BUS_READY);
+  assert(s.source==0x505&&m.r[1][0x1124/4]==0x505);
+  assert(a630_bus_end(&io,&s));restored();
+ }
  for(unsigned n=0;n<5;n++){
-  reset();const unsigned offs[]={0,4,0xc,0x2c,0x38};m.r[0][offs[n]/4]=0;
+  reset();
+  if(n==0)m.r[0][0]&=~(1u<<31);if(n==1)m.r[0][0]&=~(1u<<30);
+  if(n==2)m.r[0][0]&=~1u;if(n==3)m.r[0][1]=30;if(n==4)m.r[0][0x38/4]=0x4001;
+  assert(a630_bus_begin(true,&io,&s)==A630_BUS_PLL&&!m.writes);
+ }
+ reset();m.r[0][0]=0x80000005; /* Manual mode need not assert ACTIVE. */
+ memcpy(m.saved,m.r,sizeof(m.r));assert(a630_bus_begin(true,&io,&s)==A630_BUS_READY);
+ assert(a630_bus_end(&io,&s));restored();
+ for(unsigned n=0;n<2;n++){
+  reset();m.r[0][0]=0x80000005;
+  if(n==0)m.r[0][3]=2;else m.r[0][0x2c/4]=0;
   assert(a630_bus_begin(true,&io,&s)==A630_BUS_PLL&&!m.writes);
  }
  reset();m.stuck=true;assert(a630_bus_begin(true,&io,&s)==A630_BUS_TIMEOUT);
- assert(s.offset==0x44038&&s.polls==500);m.stuck=false;assert(a630_bus_end(&io,&s));restored();
+ assert(s.offset==0x44038&&s.polls==501);m.stuck=false;assert(a630_bus_end(&io,&s));restored();
  reset();assert(a630_bus_begin(true,&io,&s)==A630_BUS_READY);m.held=false;
  unsigned writes=m.writes;assert(!a630_bus_end(&io,&s)&&m.writes==writes);return 0;
 }
