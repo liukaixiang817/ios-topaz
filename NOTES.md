@@ -62,6 +62,25 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   Current pipeline exec46766; logs download.log/validation-run.log. All passes
   and C copy-plan/hash/one-property ADT proof required before FASTBOOT request.
   No0018 prepared phone image/phone boot yet. Keep0017/no new physical action.
+- 0018 exact kernel downloaded/profile+ZIPCRC+SHA verified:
+  3667c43f6ae37bf31bfb65dc1492fce2cd6b1b24f02fbf5a37f439cd1ae2a096.
+  NEW bootstrap120s first attempt PASS,13checks: missing GUI target fallback,
+  PID1 named/regs/continuation,8process rows,initial exec stage5/error0, no
+  panic and no touch hardware armed. Evidence qemu-0018-bootstrap/ plus
+  qemu-check-bootstrap.json; source-derived guide hardware-decoder.json.
+  Gate200/default200/nodiag90 still required; initial exec46766 stopped below.
+- Initial exec46766 stopped exit1 at gate200 FIRST ATTEMPT: timer IRQ
+  rtclock_intr17.974992ms >13.631488ms threshold, after original3targets and
+  multiple focus cycles. Only failed gate check is no_panic; hardware touch
+  never armed/exactboardmarker absent. Cause unestablished. Full ring/screen/
+  QEMU/provenance kept qemu-0018-gate-attempt1/, plus gate-attempt1-failure
+  JSON and validation-attempt1.log. One identical gate retry; successful
+  bootstrap retained, no panic/timeout checks changed. Remaining modes and
+  prepared image still required; no physical reboot request.
+- Identical retry pipeline exec38333 active; validation-retry.log reuses
+  passed bootstrap and re-applies its13checks, then reruns gate once. Source
+  and expected phone/kernel/fixture inputs unchanged. CI build took3m39s;
+  artifact12549700220/60386231bytes, exact profile/ZIP CRC/SHA verified.
 
 ### 0017 actual temporary boot history
 
