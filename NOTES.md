@@ -35,6 +35,17 @@ early samples only. On0029 the human already confirmed boot complete and said
   **KEEPWATCHRUNNING until human “已进入系统” or explicit cancellation.**
   No600s/discovery exit. OnECM immediately attemptRAMlog/panel whilewatching.
   PhysicalGUI/eightUSBGPUsnapshotrows pending. No restart.
+- New source/DT finding while0031watchcontinues: capturedlive.dtb at
+  probe-0001-recovery has **snps,disable-clk-gating** on
+  `/soc/ssusb@a600000/dwc3@a600000`. Pinnedoriginalcore.c1222 reads it;
+  838..846 sets GCTL.DSBLCLKGTNG(bit0) for the documented internalRAM-clock
+  stuck workaround. Current nativegadget preservesABL GCTL anddoesnotapply
+  thisquirk; earlieradmission GCTL112000 hasbit0clear. This is a concrete
+  missing board requirement, **not yet proven timeoutcause or repaired**.
+  Current0031UB/US/UP/UC snapshots stillpending. Private
+  0031/usb-clock-gating-source-review.json pins DT/sourceSHA andscope.
+  Nextprepare ownedmaskedbit0 request/ACK with honestretention if a command
+  remainsactive; no newphonewrite or reboot beforehumanconfirmation.
 
 - User confirms **“已进入系统”** on0030 and requests priority USB/GPU fixes
   with more diagnostic lines. Settings photo saves **U2 R7 S12 E5 C7f V0/1
