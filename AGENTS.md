@@ -2,6 +2,9 @@
 
 - Read `NOTES.md` before starting; it contains the project goal, hardware facts,
   current blocker, local artifact locations and the next concrete action.
+- For future iOS adaptation, consult the two local HackiOS reference clones
+  indexed in `REFERENCE_REPOS.md`. Check relevant kernel/userland approaches
+  against the current phone's own DT and vendor sources before porting them.
 - The user switches agents frequently. Update the active handoff in `NOTES.md`
   after each milestone and before stopping. Record commits, CI run IDs, exact
   build/boot results and unfinished work. Distinguish observations from guesses.

@@ -10,7 +10,48 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION —0016 stopped at assertedGPIO99;implement explicit board wake
+### CURRENT NEXT ACTION —0017 built source; await CI and validate before reboot
+
+- 0017 source **3a5f1363e0e81671bc59385285c4d29ed018afad** committed and
+  pushed. CI **40063497975**, job **120781795518**, SUCCESS, build4m21s.
+  Full gh log: research/polaris/ci-40063497975.log. Local native,
+  ADT/profile and four actual-header ARM64 object checks passed as below.
+  Exact-kernel download/profile/ZIP CRC/SHA verified: artifact12547524758,
+  60387285bytes; kernel SHA
+  cd92119429903240ea29b45515d7b84a9d66c3e2f4653e6875e73b68213fa8dd.
+  Sequential QEMU gate200/default200/nodiag90 and
+  prepared phone image still required. Keep the current 0016 boot; request
+  physical FASTBOOT only after the new image and checks are ready.
+- User supplied HackiOS references. Read and pinned kernel
+  **d82c64a3a31cd27a0a0afbf6e213e467e44b1b4c** and userland
+  **a79ff0772a3454fd1ef127e181e5b3bce6c9ce18**. Private source copies and blob
+  manifest: research/polaris/reference-hackios-20261024/. No upstream scripts,
+  binaries or phone operations executed. Sources:
+  https://github.com/oosexgang/hackios-xnu-kernel/blob/d82c64a3a31cd27a0a0afbf6e213e467e44b1b4c/docs/PORTING.md
+  and userland/src/inject.c in the userland repository.
+- Both repositories now fully cloned locally with history (not shallow):
+  research/reference-repos/hackios-xnu-kernel (50MiB) and
+  research/reference-repos/hackios-xnu-userland (10MiB). HEADs match the pins
+  above; clean checkouts and git connectivity checks PASS. These ignored
+  checkouts remain outside our Git history. REFERENCE_REPOS.md indexes them
+  for future work; AGENTS.md points future agents to that index.
+- Reference findings: redwood SD778G uses Goodix GT9916/FocalTech FT3680 SPI,
+  PM8350C ldoc2 RPMh and reset GPIO105. Those addresses, regulators, firmware
+  and timings do not describe polaris SD845/S3330 I2C. Its vendor-order power
+  setup supports checking power/reset before report parsing, but 0017 timings
+  and pins come from polaris live DT/MiCode, not this foreign driver.
+- Reference input path: kernel /dev/redwood-touch queue -> injected backboardd
+  virtual HID service -> hand/finger events with DisplayIntegrated/Built-In
+  and sticky FromEdgeTip. make_service() retries until the server opens the
+  service, addressing a documented startup race. Useful future comparison if
+  polaris produces physical frames but UI ignores them; current 0016 stops
+  before I2C, so no evidence yet that its HID path is the blocker. Our path
+  remains the existing kernel IOHID service; no injector/root image change.
+- Reference inject_sb.c also defaults to forced unlock after ten seconds;
+  reaching home under that mode is not proof of physical swipe/input. The
+  resident EFI loader's USB server uses Qualcomm UEFI protocols and optionally
+  another CPU; this is an architectural port, not an available restart command
+  for the current bare shim/XNU boot. Retain physical-key workflow for 0017.
 
 - NEWfour0016photos6BD07919... savedprivatelytouch-0016/hardware-reset-low-
 {1..4}.jpg +hardware-reset-low.json. D TOUCH phase4/result12/done1/frames0/
