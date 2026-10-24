@@ -10,26 +10,61 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION —0020 FINAL kernel verified; regressions running; keep0019
+### CURRENT NEXT ACTION — 0020 prepared and verified; await physical FASTBOOT
 
-- FINAL0020source9209e0c4ed2a8a4cef054c847bff01d6688e18e1 pushed,
-  CI40072563674/job120808957838 SUCCESS, Build4m44s
-  (07:02:43–07:07:27UTC). Full gh log ci-40072563674.log retrieved; first
-  transfer HTTP2CANCEL preservedci-log-fetch-attempt1.log. Orchestration16026
-  stopped BEFOREkerneldownload (hostlogfetcherror, notkernel/testfailure);
-  resumed12957 nowrunning original-clock bootstrap120/gate200/default200/
-  nodiag90 sequentially. FinalkernelSHA
-  e44670d516730f02235bb991debc96628e94f9e6833a4773adaabc4024af7e12,
-  xnu/out-polaris-0020/kernel.development.sweet; artifact12551767382,
-  60389792bytes, profile/ZIPCRC/SHA verified. Includes0817AKSlog budget/interactivequietprofile
-  AND0818 firstframe mute-before-diagnostic fix. Private scripts NOWpin9209e0c/
-  40072563674. Earlier943c011/CI40071727505 candidate was NEVERphonebooted;
-  bootstrap13PASS only, gate deliberatelyinterrupted50034exit143; allraw
-  kernel/rangecache/partialtests archived candidate1-943c011/ before newinputs.
-  Final newCI/exactkernel/sequentialregressions/Cpayload/hash stillneeded.
-  Do not ask physicalFASTBOOT until prepared. Currentphone remains0019 with
-  userconfirmedphysicalhome, laterconsoleoverdraw, App usabilityunknown.
-
+- Final source **9209e0c4ed2a8a4cef054c847bff01d6688e18e1**. CI
+  **40072563674**, job **120808957838** SUCCESS; Build 4m44s
+  (07:02:43–07:07:27 UTC). Artifact 12551767382, 60389792 bytes;
+  exact profile, ZIP CRC and kernel SHA verified. Full log
+  `research/polaris/ci-40072563674.log` retained.
+- Preparation session **12957 exited 0**, 2026-10-24T07:20:28 UTC
+  (18:20:28 Melbourne). All four ORIGINAL standard-clock modes FIRST PASS:
+  bootstrap 120s/13 checks; gate 200s/29; default 200s/29; nodiag 90s/9.
+  **80 functional checks; no retry, panic or instruction-count fallback.**
+  These synthetic fixtures test boot/gates/caller diagnostics; they do not
+  prove real GPIO/HID, Apple GUI or App stability. Earlier 0018 timer failures
+  remain unresolved historical evidence; this pass does not establish a fix.
+- Kernel `xnu/out-polaris-0020/kernel.development.sweet` SHA256
+  **e44670d516730f02235bb991debc96628e94f9e6833a4773adaabc4024af7e12**.
+  Temporary image `shim/out/polaris-xnu-interactive-0020/polaris-xnu-interactive-0020.img`,
+  47304704 bytes, SHA256
+  **18c0a0c7453b50741af1259475446bb749693e9cabf0115b38f4d8442e524b86**.
+  Payload SHA256
+  **31803226aaac0802fe4d73d1a66d084ff35b729dc138176f3dedad7f3c679c2b**.
+- Actual C payload validator PASS. Fresh final integrity check PASS at
+  07:20:35 UTC: rebuilt payload identical, Android boot image embeds that
+  exact payload, all four QEMU provenance records match the final kernel,
+  fixtures/ADT/harness hashes match, build inputs unchanged since source.
+  Phone ADT is byte-identical to proven 0019; phone arguments differ ONLY
+  `sweetfb_noconsole=0` → `1`. Real touch, GPIO/power, factory identity and
+  immutable file root stay the same; `ufsrw=0`, 512 MiB RAM COW retained.
+- Changes: 0817 bounds repetitive Polaris AKS logging while preserving all
+  protocol replies; 0818 mutes console drawing BEFORE the first-frame
+  diagnostic can overwrite the newly copied GUI. Early boot still draws;
+  remaining diagnostics reach RAM and panic drawing remains available.
+  Local 25 tests PASS, actual CI-header ARM64 KeyStore and framebuffer
+  objects PASS, both patches/all three files apply and match. Exact-source
+  ASan/UBSan console-routing and first-frame A/B harnesses PASS; mocked IO
+  establishes ordering/routing only, not physical rendering.
+- Evidence/scripts: private `research/polaris/interactive-0020/`:
+  `prepared.json`, `verification.json`, `qemu-check.json`, `validation.log`,
+  `final-prepared-check.json`, `host-script-audit.json`, `deployment-state.json`.
+  First CI log transfer HTTP2 CANCEL stopped orchestration 16026 BEFORE any
+  kernel download/test; original failure retained, bounded log transfer retry
+  succeeded. Not a kernel/test failure. Earlier candidate 943c011/CI40071727505
+  was never phone-booted; partial tests/kernel/range cache remain archived in
+  `candidate1-943c011/`. Never deploy that candidate.
+- Current phone remains **0019**, user-confirmed physical swipe into home,
+  followed by console-overdraw symptoms; exact App and App usability unknown.
+  No 0020 device action yet. Once user replies physical FASTBOOT, run:
+  `python3 research/polaris/interactive-0020/run-device-step.py preflight`.
+  Only on PASS run the same wrapper with `boot-phone`, within the fresh
+  proof's 600-second admission window. Headless recovery/full16GiB hash,
+  map/header/GPT/RO/unmounted/temperature checks are required. Never replay
+  the outer pending journal, repair/stage again, flash or alter partitions.
+  Then test a real swipe into home → Settings → return home, and ask whether
+  the GUI stays visible and touch continues responding. No claim that Apps,
+  GPU, Wi-Fi or other hardware are fixed before actual observation.
 
 - User CONFIRMS0019 realtouch/swipe reaches main home screen. Later icon/tap
   causes screen filled with log/noGUI; exact App unknown. Photos981671B7...
