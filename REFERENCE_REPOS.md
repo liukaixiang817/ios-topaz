@@ -72,6 +72,23 @@ reference userland injection offsets are unchanged. `SWEET SURF sel 41` is a
 logged success/no-op here, so its presence alone does not identify an App
 failure. See `NOTES.md` for current evidence and validation.
 
+## GPU correspondence now under review
+
+Polaris0020 now reaches Settings after a delay and returns to home by a real
+swipe; initial white screen was not a confirmed persistent rendering fault.
+The human launch-time estimate is10–30seconds. Current rendering remains CPU.
+
+The reference GPU is642L using `a660_gmu.bin` block records, with GMU/clock
+and SMMU registers at different physical addresses. Original polaris630 uses
+`a630_gmu.bin` as a flat code image, `a630_sqe.fw`, its own zap set, and the
+HFI_USE_REG quirk. Seven relevant MiCode sources are pinned at
+`c7cb50c18f812629b9620b2b8fa684bc40d82080` with verified Git blobs under
+ignored `research/polaris/gpu-630-0001/vendor/`. Compare these with the
+reference's `redwood_adreno.c`, Mesa bridge and Metal plugin as separate
+hardware, submission and userland stages. See `POLARIS.md` for the actual
+address map and current USB debug prerequisite. No accelerated rendering or
+SSH connection has yet been established on polaris.
+
 ## Future refresh
 
 Check each reference checkout for local edits first. Fetching newer upstream

@@ -19,6 +19,42 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   operation, GPU/App work and a debug or SSH connection. Current phone stays
   on0020. Evidence `interactive-0020/hardware-settings-white.json` preserves
   both reports and the corrected interpretation.
+- Human timing baseline for0020 Settings launch: **10–30 seconds**, rough
+  user estimate, not instrumented. User re-emphasized correspondingGPUport
+  from reference repos; continue genuineAdreno630bring-up and telemetry.
+-0021source **3e34d77bca06fe40a929c8463c12080dc99ddedf** pushed.
+  CI **40075056990/job120816519636 SUCCESS**, Build4m42s
+  (07:40:43–07:45:25UTC), full `ci-40075056990.log` saved. Kernel
+  `xnu/out-polaris-0021/kernel.development.sweet` SHA
+  **202f1b5a2024b48f6b5164e5f15261cd5c8c83c20a98086476c7dbc0c94dace0**,
+  profile/ZIPCRC/SHA verified. Pipeline3148 running bootstrap120/gate200/
+  default200/nodiag90/perf90 sequentially. Bootstrap FIRSTstandard run FAILED
+  rtclockIRQ20.874ms vs13.631488ms threshold; fullrawartifacts/failureJSON
+  retained. Identicalstandardretry running; no threshold/source/input change.
+  Timer cause remains unknown. USBmissingboard correctly reports reads0.
+  No0021deviceaction; noFASTBOOT until finalchecks/image are prepared.
+- GPU primarysources: MiCode `polaris-o-oss` pinnedcommit
+  **c7cb50c18f812629b9620b2b8fa684bc40d82080**. Seven exactGitblobs verified,
+  private `gpu-630-0001/vendor/` and vendor-source-provenance.json. A630entry
+  requires **a630_sqe.fw, a630_gmu.bin, a630_zap**. Original flatGMUimage is
+  allocated into an SMMU code mapping; reference642Luses a660 blockfirmware.
+  LiveDT also has HFI_USE_REG quirk; not the reference's power-up messages.
+  No vendorcode/firmware executed. Existing verified modem backup FAT16
+  inventory638files contains NOa630/a6xx/GMUcandidates; this says nothing
+  aboutvendorpartition. Original depth8 parser bound was reached; retained
+  failedattempt thencompletedboundeddepth32 walk, not kernel/testfailure.
+- Staged NOTYETEXECUTED originalfirmware collector:
+  `research/polaris/gpu-630-0001/collect-vendor-readonly.py`. Once0021ready and
+  userphysicallyFASTBOOT, perform normalrootreadonlypreflight, then this
+  boundedcollector, then boot-phone only if allblocks unmounted/RO/GPT/root
+  remain valid within600s. Collector requires knownrootrecovery/polaris,
+  exact **vendor=sde47/4294967296bytes**, exactsdeGPTheadfrombackup,
+  setsblockRO1, verifiesext4header, mounts **ro,noload,nodev,nosuid,noexec**,
+  copies ONLY bounded a630filenames insidevendor (noescapingsymlinks), checks
+  remote/localSHA, saveshost0600, alwaysunmounts and rechecksheader/GPT.
+  No repair/replay/staging, no partition write or firmware execution.
+  Abort on any integrity change. AcquiringoriginalA630blobs and USBtelemetry
+  enables the nextactualGPUinitialization stages withoutforeignfirmware.
 - IMPLEMENTED0021 opt-in USBnetwork/RAM-console prerequisite. Exact liveDT
   controller/PHY/scratch addresses match the oldUSB core, but SDM845 GCC
   master/sleep/UTMI/clkref offsets DIFFER from original sweet. Existing
@@ -30,7 +66,7 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   firmware programming, UFSwrite or remote shell API. All other platforms
   retain original USBpath. Retained D USB/D UCLK mean ADMISSIONstate, never
   proof of a configured link. ExistingECM192.168.7.2/UDP5140 used for RAMlogs.
-- LOCAL0021:16tests PASS (actualhelper ASan/UBSan: noMMIObeforeoptin,
+- LOCAL0021:28tests PASS (actualhelper ASan/UBSan: noMMIObeforeoptin,
   no gatedcore access, each clockoff, signature/role/running/transport
   refusals; ADTremoval restoresprior tree; existingADT/profile regressions).
   ActualCIheader ARM64USB/BSDinit/UFSobjects allPASS.0819all4filesapplyMATCH.

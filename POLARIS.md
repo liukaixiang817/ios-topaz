@@ -1,12 +1,53 @@
-# MIX 2S (polaris): preflight, not an installable port
+# MIX 2S (polaris): current bring-up and safety constraints
 
 The requested target is **Android + Mindows Windows 11 + iOS 16**, preserving
-existing data and reserving about 64 GiB for iOS. The existing topaz installation
-procedure does not satisfy this: it replaces `userdata`. The first polaris XNU
-kernel builds and runs a static test init in QEMU **and on the actual MIX 2S**.
-User photographs confirm PID 1 and repeated still-alive heartbeats from a
-RAM-only boot. Apple userspace, iOS GUI, persistent iOS root and a UEFI iOS
-entry have not been brought up.
+existing data. The current temporary build **0020** runs real iOS 16.7.16
+(20H392) on the MIX 2S. The user confirms physical swipe into the home screen,
+Settings content after a wait, and swipe back home. Settings launch currently
+needs about 10–30 seconds by human estimate. Latency/FPS are not instrumented.
+GPU acceleration, Wi-Fi, full App compatibility and a persistent UEFI iOS entry
+remain unfinished. Read `NOTES.md` for the current source, image and handoff.
+
+The 16GiB HFSX root file already exists inside Android userdata. Its base is
+immutable; all logical iOS writes go into a 512MiB volatile RAM COW. Keep
+`ufsrw=0`, use only temporary `fastboot boot`, and preserve every existing
+Android/Windows partition and backup. Never replay or repair the outer
+pending Android ext4 journal as part of a boot check.
+
+## Current GPU and debug work
+
+USB debug build0021 uses a separate versioned board node and `polarisusb=2`.
+It checks the SDM845 USB power, clock and halted-device state before entering
+the existing CDC-ECM code. It does not power up clocks or a PHY. Enumeration,
+IP and RAM log reception still require an actual phone test; no SSH daemon is
+installed. The macOS receiver is `tools/polaris-usb-log.py`; its plan mode
+changes no network configuration. The debug profile disables repeated caller
+stack sampling; the effect on App launch time has not been measured.
+
+The GPU port is based on this phone's live DT and Xiaomi's original
+[polaris GPU sources](https://github.com/MiCode/Xiaomi_Kernel_OpenSource/tree/c7cb50c18f812629b9620b2b8fa684bc40d82080/drivers/gpu/msm),
+compared with the local HackiOS kernel and userland references in
+`REFERENCE_REPOS.md`.
+
+| Polaris component | Physical range / requirement |
+| --- | --- |
+| Adreno630 | DT chip ID `0x06030001`; registers `0x05000000` / `0x40000` |
+| GPU clock controller | `0x05090000` / `0x9000` |
+| GMU / power sequencer | `0x0506a000` / `0x30000`; PDC `0x0b200000` / `0x300000` |
+| GPU SMMU | `0x05040000` / `0x10000` |
+| Original firmware | `a630_gmu.bin`, `a630_sqe.fw`, `a630_zap` image set |
+
+The reference boots an Adreno642L with a660 block firmware and a different
+GMU memory layout. Polaris's original driver loads a flat A630 GMU image and
+its DT enables the HFI register quirk. Port power/clock admission, firmware
+mapping, HFI, SMMU, secure zap loading, command completion and the Mesa bridge
+in that order, verifying each stage. An advertised GPU service by itself
+would not establish command execution or accelerated iOS rendering.
+
+Original GPU firmware collection is staged for the next known headless
+recovery session. It reads only the GPT-pinned vendor partition through a
+read-only, noload mount, compares hashes, and unmounts without repair. Raw
+firmware and device sources stay in ignored `research/polaris/gpu-630-0001/`.
 
 ## Standalone boot diagnostic 0001
 
