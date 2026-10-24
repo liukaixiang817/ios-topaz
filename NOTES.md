@@ -56,6 +56,17 @@ early samples only. On0029 the human already confirmed boot complete and said
   guest isneitherPASS nortimerfailure. Addednativefaultcase verifiesexpected1.
   Correctedlocal21tests/3ARM64units/17patch22files/importchecks PASS. Need
   correctedcommit/fullCI/exactguest/image beforephysicaluse.
+  Correction committed/pushed daf2b02fc40259bf4e8937e344b1aac1ee80c83e;
+  CI40104792558/job120904130327 inprogress. Newpipeline87972 awaitsCI then
+  three exactstandardclockCPU1guests (base120s,actualasyncnetwork90s,
+  mode5wrong-board/noMMIO60s) andimage; no0032phoneaction. New11scripts frozen.
+  Privategpu-next-backend-review.json also pins sixcapturedliveDTfields:
+  GPUuserstream0, secure1/2, GMUuser4/kernel5, realSMMU/GMUranges; original
+  HFI16KiB and60000000noncachedkernelVMA. ReferenceRedwoodGPU's msm-like
+  GEM/submit/fence/IOSurfacebridge requires actualreadybackend; currentPolaris
+  doesnotprovideit. AfterTCMproof, establish reset/frequency/RPMh/SMMU/HFI
+  lifecycle andactualscratchcommandcompletion beforeenablingCoreAnimation.
+  No securecontext/TZ/GX/SMMU/DDR/DMA write ispartof0032.
   Currentphone0031bootcomplete, observerstopped byhuman, GPUunaccelerated.
 
 - User **“已进入系统，GPU依旧不工作”** confirms0031bootcomplete. Settings
