@@ -71,6 +71,21 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   Orchestration session50034 nowrunning exactkernel original-clock sequential
   bootstrap120/gate200/default200/nodiag90, privateinteractive-0020/validation.log.
   No0020phoneimage/boot yet; no physicalrequest untilallchecks/imagecomplete.
+-0020 FIRST-CANDIDATE943c011 SUPERSEDED beforephoneboot. Sourceaudit
+  found existing firstCPUframe IOLog beforequietmute, which can redrawover
+  thejustcopiedGUI. Stopped ONLYownedpreparationtree (5processes;50034exit143),
+  deliberateinterrupt, not a passing/failingkernelvalidation. Kept oldCI400717
+  success/kernel9da0.../bootstrap13PASS/partialgate in
+  interactive-0020/candidate1-943c011/, including oldcompressedrangecache.
+  Nooldphoneimage/deviceaction. Do notdeploy candidate943c011.
+- ADDED0818: onexistingcopied>0firstframe path, setquietmute beforehandoff
+  diagnostic; logstillRAM. Noearlymute oninvalid/noCPUframe. Exactsource
+  branch nativeA/B withmockbootarg/bars/log sinks reproduces oldquietscreen1,
+  newquietscreen0/RAM1; noframe,quiet0,repeat controlsPASS (ASan/UBSan).
+  This testsordering, not actualrendering/phone. NewactualCI-headerARM64
+  framebufferobject PASS;0817+0818all3filesapplyMATCH; profile3tests rechecked
+  PASS. KeyStoreobject/header/native25proof unchanged. Need newCI/exactkernel
+  regressions/image; sourcepins must beupdatedafternewcommit. Currentphone0019.
 -0019 FIX: RMI4 Ctrl0 CONFIGURED bit7 is a command whose readback is0;0018
   incorrectly requires (control&83)==80. Correct mode verifies normal sleep
   bits and Data0 UNCONFIGURED bit7clear, rejects flash/CRC/fatal/transport

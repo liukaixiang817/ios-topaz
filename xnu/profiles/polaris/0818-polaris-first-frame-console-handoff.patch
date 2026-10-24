@@ -1,0 +1,17 @@
+--- a/iokit/Kernel/arm/SweetFramebuffer.cpp
++++ b/iokit/Kernel/arm/SweetFramebuffer.cpp
+@@ -442,11 +442,13 @@
+             polaris_fb_black_bars((uint8_t *)fPixels, (size_t)fRowBytes * fHeight,
+                 fWidth, fHeight, fRowBytes, fLogicalW, fLogicalH);
+             fConsolePaused = true;
+-            IOLog("POLARIS DISPLAY: first CPU frame fitted, %llu pixels\n", copied);
+             int quiet = 0;
+             if (PE_parse_boot_argn("sweetfb_noconsole", &quiet, sizeof(quiet)) && quiet == 1) {
+                 sweet_console_muted = 1;
+             }
++            /* Keep the handoff diagnostic in RAM without redrawing the
++             * console over the frame we have just copied. */
++            IOLog("POLARIS DISPLAY: first CPU frame fitted, %llu pixels\n", copied);
+         }
+         s->release();
+         continue;
