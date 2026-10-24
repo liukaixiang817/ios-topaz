@@ -10,14 +10,56 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION — 0020 temporary boot sent; await GUI/App observation
+### CURRENT NEXT ACTION — 0020 Settings works after wait; 0021 USB debug implemented
 
+- NEW user correction: **Settings eventually enters normally**; the earlier
+  white view was observed before it finished loading. Home, Settings content
+  and bottom swipe return are now human-confirmed on0020. Startup latency,
+  FPS and GPU acceleration are not measured/proven. User requests faster
+  operation, GPU/App work and a debug or SSH connection. Current phone stays
+  on0020. Evidence `interactive-0020/hardware-settings-white.json` preserves
+  both reports and the corrected interpretation.
+- IMPLEMENTED0021 opt-in USBnetwork/RAM-console prerequisite. Exact liveDT
+  controller/PHY/scratch addresses match the oldUSB core, but SDM845 GCC
+  master/sleep/UTMI/clkref offsets DIFFER from original sweet. Existing
+  Polaris fileroot earlyreturn also skipped USBstartup. New0819 admits only
+  explicit polarisusb1(probe)/2(ECM) and exactversioned polaris-usb DTnode;
+  read-only helper checks GDSC/7clockpaths before mappingDWC3, then checks
+  signature/device role/halted state. Only mode2/READY calls existingvolatile
+  ECMsetup, with one-shot init and allocation refusal. NOclock/PHY/PMIC/
+  firmware programming, UFSwrite or remote shell API. All other platforms
+  retain original USBpath. Retained D USB/D UCLK mean ADMISSIONstate, never
+  proof of a configured link. ExistingECM192.168.7.2/UDP5140 used for RAMlogs.
+- LOCAL0021:16tests PASS (actualhelper ASan/UBSan: noMMIObeforeoptin,
+  no gatedcore access, each clockoff, signature/role/running/transport
+  refusals; ADTremoval restoresprior tree; existingADT/profile regressions).
+  ActualCIheader ARM64USB/BSDinit/UFSobjects allPASS.0819all4filesapplyMATCH.
+  `tools/polaris-usb-log.py` macOS receiver restricts ECMdescriptor NIC and
+  sourceIP, adds onlyECMprivatealias whenexplicit, savesrawlogs0600 and
+  cleansitsalias onexit. Readonlyhostplan:ECMabsent, nohostnetwork changes.
+  Native/source/patch evidence private `research/polaris/netdebug-0021/`.
+- `tools/polaris-ios-usb-debug.cmdline`: retainsCPU1,display5Hz,quietGUI,
+  crash/first-error diagnostics,immutablebase/RAM512/ufsrw0. Disablesonly
+  residentcaller/stack/wait sampling andadds polarisusb2. This removes
+  diagnostic work; **speedup is unmeasured**, noGPU/SMP/frequency claim.
+  FullCI, newexactkernelQEMU (including missing USBmarker and this actual
+  profile), payload/imagehash/provenance still required beforeFASTBOOT.
+  Need actualUSB enumeration/ping/receivedlogs before callingdebugavailable;
+  SSHrequires additionally a userspace daemon, not yet installed.
+- GPU audit: liveDT identifies Adreno630 chip06030001, GPU5000000/40000,
+  GPUCC5090000/9000, GMU506a000/30000 + PDCb200000/300000,
+  GPU-SMMU5040000/10000. Reference targets642L/SC7280 anddifferentfirmware/
+  voltage/clocks/HFI, so do not copy itsbring-up registers/Metal advertised
+  capabilities. CPU topology currently has ONLYoneADTnode; cpus=Nalone
+  cannot enablemorecores. Audit/validateSDM845SMP andgenuineGPUstartup with
+  telemetry rather than guessfrequency orpublishfakeGPUservice.
 - User confirmed physical FASTBOOT. Readonly preflight session **32442 PASS**;
   boot session **91613 exited 0**, Sending/Booting both OKAY, total 1.180s.
   Temporary boot sent **2026-10-24T07:24:24.530289+00:00**, 18:24:24 Melbourne.
-  This proves transfer/command acceptance only; **0020 GUI, physical touch
-  and application stability await human observation**. Async question asks
-  real swipe into home → Settings → return home. Do not reboot for logs.
+  The initial command proof is now supplemented by the user observation above.
+  Settings now eventually renders peruser; general App stability/performance
+  remain unmeasured. Do not reboot
+  solely for logs.
 - Fresh full 16GiB root hash at **2026-10-24T07:24:03.496744+00:00** matches
   immutable base 689a8cd1df0fc0093706272241a9ac77d5eddd7a62df5d340913ec6abcd7ce2b.
   All182 extents/fresh maps/GPT/outer header unchanged, block RO1 and
@@ -68,8 +110,8 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   succeeded. Not a kernel/test failure. Earlier candidate 943c011/CI40071727505
   was never phone-booted; partial tests/kernel/range cache remain archived in
   `candidate1-943c011/`. Never deploy that candidate.
-- Current phone is the **0020 temporary boot attempt**, with actual GUI/App
-  status pending. Prior0019 physical swipe into home was user-confirmed;
+- Current phone runs **0020**, with real home/return gestures confirmed and
+  Settings content white. Prior0019 physical swipe into home was user-confirmed;
   a later tap led to console-overdraw symptoms, exact App unknown. Preserve
   current phone for controlled Settings/return-home observation. Do not
   claim Apps, GPU, Wi-Fi or continued touch are fixed before that observation.

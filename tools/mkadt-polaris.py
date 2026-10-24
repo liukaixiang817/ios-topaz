@@ -40,7 +40,10 @@ def child(node, name):
 
 
 def build(seed=None, qemu=False, ufs_head=None, file_root=None, display=False,
-          wifi_mac=None, touch=False, touch_wake=False, touch_irq_input=False):
+          wifi_mac=None, touch=False, touch_wake=False, touch_irq_input=False,
+          usb=False):
+    if usb and qemu:
+        raise ValueError('physical SDM845 USB is not available in QEMU')
     if ufs_head is not None and qemu:
         raise ValueError('QEMU cannot probe the phone UFS controller')
     if file_root is not None and (qemu or ufs_head is not None):
@@ -130,6 +133,14 @@ def build(seed=None, qemu=False, ufs_head=None, file_root=None, display=False,
         if touch_irq_input:
             setprop(device, 'irq-input', mkadt.u32(125))
         root.children.append(device)
+    if usb:
+        device = adt.Node()
+        setprop(device, 'name', b'polaris-usb\0')
+        setprop(device, 'version', mkadt.u32(1))
+        setprop(device, 'reg', mkadt.u64(0xa600000, 0xcd00))
+        setprop(device, 'gcc-reg', mkadt.u64(0x100000, 0x90000))
+        setprop(device, 'scratch-reg', mkadt.u64(0xa6f8800, 0x100))
+        root.children.append(device)
     return root
 
 
@@ -147,6 +158,8 @@ if __name__ == "__main__":
                         help='explicitly permit fixed TP enableGPIO23 and release of held resetGPIO99; requires --touch')
     parser.add_argument('--touch-irq-input', action='store_true',
                         help='release observed GPIO125 output-low to vendor input state while reset held; requires --touch-wake')
+    parser.add_argument('--usb', action='store_true',
+                        help='opt in to exact SDM845 USB; also needs polarisusb=1(probe) or2(ECM), no PHY/clock power-up')
     parser.add_argument('--ufs-probe-head', type=Path,
                         help='verified LUN0 head backup for optional read-only probe; needs polarisufsprobe=1')
     parser.add_argument('--file-root-manifest', type=Path,
@@ -155,6 +168,7 @@ if __name__ == "__main__":
     blob = adt.serialize(build(qemu=args.qemu, display=args.display, touch=args.touch,
                               touch_wake=args.touch_wake,
                               touch_irq_input=args.touch_irq_input,
+                              usb=args.usb,
                               wifi_mac=args.wifi_mac_file.read_bytes() if args.wifi_mac_file else None,
                               ufs_head=args.ufs_probe_head.read_bytes() if args.ufs_probe_head else None,
                               file_root=json.loads(args.file_root_manifest.read_text()) if args.file_root_manifest else None))
