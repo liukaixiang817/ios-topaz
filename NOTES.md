@@ -43,7 +43,44 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   changed for that fixturecorrection. TwoactualCI-headerARM64unitscompile
   PASS/allimportsresolve against0027+newobjects. Thirteenorderedpatches
   0821..0833 applywithoutfuzz/offset;18filesmatchactualcompiletree.
-  FullCI/exactkernelruns/imagepending; phone remains0027. Commit/build first.
+  FullCI/exactkernelruns/finalimagecheck nowPASS below; phone remains0027.
+- Source **8ea72f159448421814294e5359cb1c348131ab66** committed/pushed;
+  CI **40093825732/job120871827583 SUCCESS**, Build4m31s
+  (12:25:33–12:30:04UTC).
+  Fullghlog research/polaris/ci-40093825732.log saved.
+  Privatepipeline23693 verifiesexactsource/
+  profile+CRC/SHAverifieddownload, then CPU1standardclock base120s/actual
+  asyncnetwork90s/mode4zeroMMIO60s; expected51checks. Verifiedkernel
+  xnu/out-polaris-0028/kernel.development.sweet SHA
+  **0009083b6eba2d2e74775738eb480f0d21ad2a9eb77359798be6f641dd249deb**.
+  Baseguest FIRSTPASS16checks. Asyncnetworkfirststandard90s run FAILED
+  _rtclock_intr23.892992ms vs13.631488ms threshold atmachine_routines_common.c893,
+  after networkphase9/error0, all4VMchildren/PID1PASS. Originalrawconsole,
+  registerdump/result/provenance atq-async-net-a1 retained. Causeunestablished;
+  identicalstandardclockparameters attempt2 PASS19checks; provenanceobjects
+  comparedidentical (source/kernel/args/ADT/fixture/payload/harness/stub/driver/
+  timing/seconds/CPUcounts), privateidentical-retry-check.json PASS. No threshold/
+  clockwaiver; originalfailure remainsfailed/unresolved. Base120s FIRSTPASS16,
+  actualasync90s selectedattempt2 PASS19, mode4zeroMMIO60s FIRSTPASS16:
+  **51selectedchecksPASS**. Pipeline23693 exited0 **12:37:48.577178UTC**.
+- **0028 PREPARED, NOT BOOTED** image
+  `shim/out/polaris-xnu-readdebug-0028/polaris-xnu-readdebug-0028.img`,
+  47407104bytes SHA **c48bfa9b7741ce8889d84851fe325c13e3275d04f6abaa2f84f0810697e1990d**;
+  payload SHA **d842371cb50fced8238f6791564f3e7fc47a9151e11b7e52373fb225cdb06597**.
+  Independentfinalcheck **PASS12:38:23.944655UTC**: source/profile/CIpatchapply,
+  frozen17nativeinputs,2actualARM64objects/imports,13patches/18files, original6
+  firmwares, all3selectedrun+1failureprovenances, Cpayloadvalidator/rebuild,
+  embeddedimage/manifest/65DTBs allverified. PhoneADT ANDarguments byteidentical
+  0027: mode4/Hz20/CPU1/512MiBRAMCOW/ufsrw0. No GPUfirmware/acceleration.
+- NEXT requestphysicalFASTBOOT because0027USBunavailable. Onlyafterhuman
+  confirmation, continuation-0028/run-device-step.py preflight thenboot-phone:
+  knownheadlessrecovery, freshfull16GiBhash/182maps/GPT/header/RO/unmounted/
+  temperaturecheck, then temporary0028boot. Neverrepairpendingouterjournal.
+  BootwrapperrequiresfinalPASS/freshproof<600s. Thenreadonlywatch-usb.py;
+  ifECMappears, captureRAMlog/panel withtools/polaris-usb-debug.py. Human
+  checks GUIflow andtop K/F/R/P plusUSB S/E/Q/L/B. No0028phoneactionyet.
+
+
 
 ### 0027 GMU clock acquisition / USB resource ordering
 

@@ -302,6 +302,32 @@ or panel captured. GUI, saved USB stage and clock-trial outcomes are pending.
 only polarisgpu3→4 in arguments, leaving display settings, one CPU,512MiB
 RAM COW, ufsrw0 and the ADT unchanged.
 
+Actual0027 human feedback confirms normal operation, with GPU still inactive.
+The Settings photo shows G301 P5 K1/7 R80000000/0 M0 and USB Q0/2/402/2,
+S12/E5. The new resource command2 timed out before endpoint configuration.
+K1 is ambiguous: the driver also used it for an immediate request-readback
+mismatch or live-state inconsistency; cleanup overwrote the first stage.
+It is not proof of a bus access failure or a particular failed register.
+
+Source0028 gives clock requests a bounded500us masked-readback confirmation
+and preserves the first failure's stage, operation, offset, expected/actual
+values and mask through cleanup. Request acknowledgement timeout (K7) and
+live-state inconsistency (K8) are separate from callback I/O (K1). The bar
+shows K=result/firstfailedstep, F=offset/actual, R=initialsource/config. USB B
+records DCFG/DCTL/DSTS at the first command timeout, with no activation change.
+Phone arguments and ADT remain byteidentical0027. Native17 tests, including
+delayed acknowledgement and cleanup failures, two actual-header ARM64 units,
+and thirteen patches/eighteen files pass. Full
+[CI40093825732](https://github.com/liukaixiang817/ios-topaz/actions/runs/40093825732)
+succeeds in4m31s. Base120s and mode4 zero-MMIO60s FIRST PASS; asyncnetwork90s
+first run failed the known timer-handler threshold23.892992ms vs13.631488ms,
+after network/PID1/allfourVMchildren passed. Original evidence is retained;
+an identical standard-clock retry passes, with both provenances compared
+identical. The original failure remains unresolved; no threshold waiver.
+The three selected modes pass51checks, and independent source/payload/image
+checks pass12:38:23UTC. The0028image is prepared, with no phone action yet.
+GPU firmware execution and acceleration remain unfinished.
+
 ## Standalone boot diagnostic 0001
 
 An isolated polaris probe now cross-compiles and passes QEMU checks. It reads
