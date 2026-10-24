@@ -38,7 +38,9 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   columns once, preserve resampling endpoints and alias fallback. Reuse
   a persistent swap record instead of allocating/freeing per presentation.
   Record copy duration/max/total; T in new larger two-row status is last
-  CPU copy microseconds. Proposed0025 changes only sweetfb_hz5→10 in phone
+  presentation microseconds (elapsed wall time, including preemption/waits;
+  excludes status-bar drawing, not a CPU-load or FPS measurement).
+  0025 changes only sweetfb_hz5→10 in phone
   args; this is a requested upper limit, not measured FPS or GPU acceleration.
 - Local13 meaningful tests PASS, including ASan/UBSan: endpoint command
   ordering/restoration on success/status/timeout,1500 differential clipped
@@ -60,7 +62,7 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   all fourVMchildren finish in each. No new failures/retries. Prior sync
   comparison and SMP failures remain unresolved, with original evidence kept.
   No actual USB/GMU/SMMU hardware or accelerated drawing is emulated.
-- **0025 PREPARED/notbooted** image
+- **0025 TEMPORARY BOOT SENT** image
   `shim/out/polaris-xnu-readdebug-0025/polaris-xnu-readdebug-0025.img`,
   47407104bytes SHA **fc735a2201a3aa350e5b15016c3fdf98bc07b5845315ebe225eaa626a02ab885**;
   payload SHA **38efc594c798882466ec5ee25e099e81b9e2ef4772c0aa145ba6569db07ebd71**.
@@ -69,12 +71,23 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   threeARM64objects/imports, originalfirmware, Cpayloadvalidator/rebuiltpayload,
   embeddedimage/manifest/65DTBs verified. ADT byteidentical0024; args differ
   ONLY sweetfb_hz5→10. CPU1/512MiBRAMCOW/ufsrw0 retained. Boot wrapper requires
-  this final check and a fresh readonly preflight; no0025 device action yet.
-- NEXT: request FASTBOOT for verified0025, then fresh RO full16GiBhash/182maps/
-  GPT/header/unmounted/temperature check and temporaryboot within600s.
-  Observe GUI continuity and stutter, hostUSBenumeration, savedS/E/Q,
-  CX/HW/M/X and Tmicroseconds. USB success and speed improvement unproven;
-  GPUexecution remains disabled. Current phone remains0024.
+  this final check and a fresh readonly preflight.
+- Human confirmed FASTBOOT. Preflight28953 exited0 and passed at
+  **11:07:51.730623UTC**: full16GiBhash/182maps/GPT/outerheader unchanged,
+  RO1 and unmounted,35C. Pending outer journal was not replayed or repaired.
+  Boot wrapper61271 exited0: Sending/Booting OKAY,total1.178s;
+  **temporary0025 sent11:08:35.106241UTC**, proof age43.376s.
+  No partition write. Readonly host USB observation6744 exited0:21samples,
+  61.571s, no known-phone USB VID or matching ECM NIC through
+  **11:09:55.957915UTC**. Host network settings unchanged; no log or panel
+  captured. Physical GUI/stutter and larger saved status rows were requested,
+  with no response yet. This bounded absence does not identify the new
+  hardware failure phase; obtain S/E/Q before changing further controller state.
+- NEXT: obtain physical GUI/S/E/Q,
+  CX/HW/M/X and T result. If the matching ECM appears, capture RAM log and
+  panel via the bounded snapshot reader. USB success and speed improvement
+  are unproven; GPUexecution remains disabled. Do not reboot again without
+  first collecting these0025 observations.
 
 ### 0024 USB startup isolation after0023 GUI regression
 

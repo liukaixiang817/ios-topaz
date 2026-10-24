@@ -4,9 +4,11 @@ The requested target is **Android + Mindows Windows 11 + iOS 16**, preserving
 existing data. Temporary build **0023** was sent successfully at09:59:17UTC
 on2026-10-24; subsequent photos show a startup regression with logs and no GUI.
 USB admission passes (result7/read13), but no debug interface appears.
-Build0024 was temporarily sent at10:34:44UTC after a fresh read-only check;
-the host still sees no USB debug interface. The user/photos confirm the GUI
-returns, with stuttering interaction and USB stage12/error5 (EP0 setup).
+Build0024 restored the GUI with stuttering interaction; its saved USB
+stage12/error5 identified EP0 setup failure, with no host debug interface.
+Build0025 was temporarily sent at11:08:35UTC after another full read-only
+check. The host observed no known-phone USB device or matching ECM NIC over
+61.571seconds; its GUI/performance and saved phase/command results are pending.
 The last confirmed
 working build **0021** runs real iOS 16.7.16 (20H392) on the MIX 2S, with
 physical swipe into the home screen, Settings content after a wait, and swipe
@@ -207,7 +209,9 @@ resampling endpoints, bounds and alias fallback, and reuses a permanent swap
 record. The proposed phone arguments change only the requested presentation
 limit from5Hz to10Hz. This is CPU rendering; actual FPS and speed improvement
 remain unmeasured. Larger status rows expose saved USB command information,
-raw CX/hardware/GMU-clock/CXO values, and T: last CPU copy time in microseconds.
+raw CX/hardware/GMU-clock/CXO values, and T: last presentation's elapsed
+microseconds, including any preemption/waits and excluding status-bar drawing.
+T does not measure CPU utilization or actual FPS.
 
 The old GPU probe required POWER_ON in both the CX request and hardware
 registers. The live Polaris DT selects0x5091540 as hw-ctrl-addr, and the
@@ -220,8 +224,13 @@ Full kernel [CI40087572192](https://github.com/liukaixiang817/ios-topaz/actions/
 passes. Thirteen native tests, three real-header ARM64 units, import resolution
 and the seven-patch/fourteen-file chain pass. The exact kernel passes all three
 selected standard-clock modes (120/90/60s,45assertions) on their first runs.
-Final independent source/payload/image checks pass at11:03:41UTC;0025 is ready
-for a temporary test and has not been booted. Prior SMP and synchronous timer
+Final independent source/payload/image checks pass at11:03:41UTC. After a
+fresh full16GiBhash/182maps/GPT/header/RO/unmounted check, temporary0025 was
+sent at11:08:35UTC (Sending/Booting OKAY,1.178s). The subsequent host watch found
+no known-phone USB device or matching ECM NIC in21samples/61.571s, ending
+11:09:55UTC; no log or panel was captured. GUI/performance and saved status
+results still need physical observation.
+Prior SMP and synchronous timer
 failures remain unresolved. Hardware USB success, GPU execution and a speed
 improvement have not yet been demonstrated.
 
