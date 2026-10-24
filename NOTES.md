@@ -100,7 +100,15 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   Also retain real ignoredcommand/unconfigured and asleep readback refusal.
   f0fe99f/CI40068757656 diagnostics candidate retained the bad bit predicate,
   is SUPERSEDED before ANYphoneboot; do not download/deploy that artifact.
-  New local compilation/tests and corrected sourceCI needed next.
+  Final corrected local23tests PASS, actual-header ARM64touch object PASS,
+  regenerated0816bothfilesapplyMATCH. Sourcecf1e4f8611942aa0357bca54447d35c570eb8243
+  committed+pushed; CI40069077256 in progress. Old40068757656 cancelled by
+  superseding qualifying push, never phone booted. Private scripts now pin
+  cf1e4f8/40069077256; hardware-decoder.json describes D TF/TC/TL fields.
+  Next: exact corrected CI kernel, original-clock regression modes with at
+  mostoneidenticalretry for proven rtclock threshold; preserve failures and
+  record counted-clock functional scope separately if required. No phantom
+  pass or timer-threshold relaxation. New0019image still not prepared/booted.
 
 ### 0017 hardware failure and 0018 implementation/validation history
 
