@@ -22,7 +22,21 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT NEXT ACTION —0032 verified; await human FASTBOOT, then readonly preflight/temporary boot
+### CURRENT NEXT ACTION —0032 temporarily booted; observe USB until human confirms system entry
+
+- **0032 TEMPORARY BOOT SENT** after actualhuman“已到FASTBOOT”. Freshpreflight
+  session11911 EXIT0 **2026-10-24T15:14:28.170379+00:00**: full16GiBSHA/182maps/GPT/header
+  unchanged,userdataRO1/unmounted,35C; pendingjournal untouched. Boot/watch
+  session42785: Sending/BootingOKAY,total1.179s; sent **2026-10-24T15:15:02.663904+00:00**,
+  proofage34.493525s. No partitionwrite. Immediateexecwatcher starts
+  **2026-10-24T15:15:02.743922+00:00**, gap0.080018s; firstsamplegap0.080605s.
+  Firstsample stillsawAndroid18d1:d00d bootloaderidentity, NOT proof ofnative
+  XNUUSB. ECM notyetproven. Do notmake a negativeboot-windowconclusion.
+  **Observer42785 ACTIVE; neverstopontime/discovery, neverrebootduringwatch.**
+  OnECMfound attemptRAMlog/panelwhilewatchcontinues. Newhumanquestion asks
+  actual“已进入系统” andsavedGM/GTrows (orlastbootlogline ifstuck). Stoponly
+  using0032stop-usb-observation.py andactualsameboot confirmation/cancellation.
+  GPUhardwareoutcome/FWexecution/acceleration remainunproven.
 
 - **0032 PREPARED/INDEPENDENTLY VERIFIED, NOT BOOTED.** Correctedsource
   daf2b02fc40259bf4e8937e344b1aac1ee80c83e; CI40104792558/job120904130327
