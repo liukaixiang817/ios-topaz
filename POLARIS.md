@@ -60,10 +60,23 @@ headers. It is not linked into build0021. Device cache maintenance, GMU
 startup, SMMU mappings, doorbells and GPU command execution remain to be
 connected and tested before the Metal/Mesa userland bridge can accelerate Apps.
 
-Original GPU firmware collection is staged for the next known headless
-recovery session. It reads only the GPT-pinned vendor partition through a
-read-only, noload mount, compares hashes, and unmounts without repair. Raw
-firmware and device sources stay in ignored `research/polaris/gpu-630-0001/`.
+Original GPU firmware collection has completed in the known headless recovery:
+read-only/noload vendor, matching GPT/header and hashes, then unmounted.
+The original32KiB GMU, SQE and all three split ZAP segments are present.
+`tools/polaris-a630-firmware.py` validates that collection and stages a private
+firmware-only ADT node without changing the base tree or advertising a GPU.
+Five bounds/provenance/isolation tests and the actual firmware transport check
+pass. Neither this node nor a GPU firmware consumer is in the running0021
+image. Secure authentication and actual GMU/CP execution remain unfinished.
+Raw firmware and device sources stay in ignored `research/polaris/gpu-630-0001/`.
+
+0021 temporary boot was sent successfully at08:14:05UTC on2026-10-24 after a
+fresh full-root read-only check. The user confirms normal operation but a
+45second Settings launch. Reduced diagnostic sampling has not demonstrated
+a speedup. The host observed no USB device/ECM NIC over one minute; no debug
+connection or SSH is established. Independent QEMU testing now establishes
+the existing kernel's two-core CPU_ON/SGI/EL1-idle path with MPIDRs0/0x100;
+this is not a phone SMP or performance result. Running0021 remains one CPU.
 
 ## Standalone boot diagnostic 0001
 

@@ -10,7 +10,54 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION — 0021 prepared/verified; collect original A630 firmware then temporary boot
+### CURRENT NEXT ACTION — 0021 works but Settings45s; prepare A55 SMP, continue A630 port
+
+- NEW USER OBSERVATION0021: **operationsnormal; Settings took45seconds until
+  text appeared**. Previous0020estimate10–30s was alsohuman, not a controlled
+  benchmark. Disablingresident sampling has **not demonstratedaspeedup**.
+  Currentphone0021GUI/input/Settings nowhuman-confirmed. Prioritize an
+  explicit2A55CPUcandidate after exacttopology/PSCI/SGI tests; keep GPU work.
+- UserconfirmedphysicalFASTBOOT. Readonlypreflight **28742PASS**:
+  complete16GiB hash77.508s,samebase,182extents/GPT/outerheaderunchanged,
+  blockRO1/unmounted,35C at **08:13:06.282313UTC**. Nojournalreplay/repair/
+  staging/partitionwrites. OriginalA630collector **96477exit0**,08:13:27UTC:
+  vendor=sde47/4GiB,exactGPTandext4headerunchanged,RO1/unmounted,notexecuted.
+-0021boot **57507exit0**,Sending/BootingOKAY,total1.174s;
+  **2026-10-24T08:14:05.023305UTC =19:14:05 Melbourne**. Exactpreparedimage/
+  payload/kernelmatchhashesbelow,proofage58.741s. Freshdeploymentcheck
+  PASS08:16:35UTC, private `netdebug-0021/deployment-check.json`.
+- HostUSBwatch **42872exit0**:21readonlyobservations over61.546s,
+  **NO1209:0001device/expectedECM NIC observed**. Secondreceiverplanalsoabsent.
+  NoIPalias/networkchange/ping/captureattempted. **USBdebug andSSH NOTavailable**;
+  absencedoesnotidentifywhichsavedUSBgate refused. Need D USB/D UCLK from
+  physicalbootlogs before power/clockchanges; do not reboots solelyforlogs.
+- All requiredoriginalA630firmware nowhost0600 underignored
+  `gpu-630-0001/phone-vendor-firmware/`: GMU32768B,SQE31980B,ZAPmdt6684B,
+  b00=148B,b01=6536B,b02=1968B. Remote/localSHAmatch. ZAPELFexact3segments,
+  allpresent;optionalb03/mbn absence is NOTmissingrequireddata. GMUflat0x8000
+  matchesoriginal0x2000wordTCMcopy;SQEskip4B,7994codewords,version0x016ee187.
+  Private `vendor-firmware-manifest.json`, `firmware-format-check.json`.
+- IMPLEMENTED `tools/polaris-a630-firmware.py`: boundedsource/hash/image
+  checks,GMUvectors,SQEwordspan,ELF32ZAPsplitmetadata/loadbounds; refusesbad/
+  foreign/symlinkcollections. AddsONLYfirmwarenode toexactphysicalPolarisADT;
+  removingrestoresoriginalbyteidentically,noGPUservice. **5testsPASS** and
+  actual6filetransportPASS: private `firmware-transport.adt`,93088B,SHA
+  **dcbf96396083cab7d49264379972f51d0667d15acad5d87eb439c22dc7d4156b**.
+  NEVERgitrawfirmware/ADT. NOTinrunning0021; no kernelconsumer/GMUstart,
+  secureauthenticationorGPUexecutionyet. Firstlocaltestloader importerror
+  fixedbyexplicittoolsimportpath; subsequent5PASS,nohardwareinvolved.
+- IndependentSMPexperiment `smp-0001/two-cpu-check.json`: existing0021kernel,
+  45sstandardclock,samefixture,2logicalcores MPIDR0/100,CPU_ONrc0,
+  SGI1bothcoresOK,2/2initialized,userfixturealive,noobservedpanic. Direct
+  QEMUCPU16registersnapshot EL1t `_cpu_idle+0x1ec` independently establishes
+  secondaryexecution. Initialcheckerincorrectlyexpectedkprintfserialmessage
+  intheprintfRAMring; observerfailure retained `two-cpu-check-initial-observer.json`,
+  amendedchecksuseindependentregisterproof. NoCPUcodechange/clockwaiver.
+  QEMU17vCPUs provides0x100atindex16;other15PSCIoff;GICR17frames,EL2entry
+  dropsbootCPUtoEL1,PSCI SMC. Privateharnessonly;0021phoneimageunchanged.
+  **No phoneSMP orperformanceproof**,current0021 CPU1/5Hz.
+
+### Prior0021 preparation snapshot and0020 baseline (superseded by current handoff above)
 
 - NEW user correction: **Settings eventually enters normally**; the earlier
   white view was observed before it finished loading. Home, Settings content
