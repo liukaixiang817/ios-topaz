@@ -10,9 +10,41 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION —0014 identity-only image validated; needs physical FASTBOOT
+### CURRENT NEXT ACTION —0014 temporary boot sent;observe screen;0013 late lockscreen confirmed
 
--0014 PREPARED,not booted: tools/mkadt-polaris.py explicit --wifi-mac-file
+- CURRENT PHONE:0014 temporaryboot SENT,exec4554exit0,FASTBOOT1.181s,
+ 2026-10-24T02:56:05.002993+00:00 (2026-10-24 Australia/Melbourne). Exactprepared
+ imageSHA6e6eb1b6661c08024b9244593ac43d9c1a2b57444c2ee8f09be1934c128b25b3,
+ payload6accc02c770941f99046d0a4061b206421d0588a762915f7bff7258f6053a5da,
+ same0013kernelab50b65d...;Ccopyplan/newQEMU/priorall5provenances rechecked.
+ Freshreadonlypreflightexec75654PASS34C:full16GiB baseSHA689a8cd1... MATCH
+ in77.461s,fresh182maps before/after/exactpayloadmap;outer4KiBheader
+ unchanged7c19bb29...,GPTheadmatches,userdataunmountedRO1. Headerstillpending
+ Androidjournal,not certifiedclean;NOreplay/repair/staging/devicepartitionwrite.
+ Bootscript repeatedfreshmap/header/GPT/RO/temp checks then adbbootloader+
+ fastbootboot. boot.json/phone-boot.log/preflight.json/full-image-readonly-
+ verification.json/deployment-state.json retainedprivately. Actual0014screen
+ notyetobserved:neednewphoto after~2-3min,plusfocusedcaller/header iftext.
+ Keepthisboot;no USBrestart/logchannel;doNOTrequestanotherrebootsolelyforlogs.
+ GUIhome,touch/USB,Apps,persistent64GiB/tripleboot remainunfinished.
+
+- NEW REAL GUI MILESTONE on0013 BEFORE any0014boot: user supplied threephotos
+ 10145E3A... retainedprivately as launchservices-0013/hardware-late-lockscreen-
+{1,2,3}.jpg +hardware-late-lockscreen.json. Photo3shows red/pink date/time
+ Wednesday,December31/4:28,camera affordance,bottomhomeindicator;real iOSlock
+ screen rendered amid visiblekernelconsole remnants. This ISactual GUI proof,
+ NOT successfulunlock/home/input/App proof. Wrongdate/coloredclock alone are
+ not panic evidence. Photo2 vmd425/thread4613 CPUwarning ~51%over174s,spindump
+ exec;no panic shown. RAMCOW26356/32768,dirty420556KiB,reserved512MiB,UFS-error0/
+ refused0;not exhausted. Real0013 eventuallyprogressed: priorwaitsnapshots
+ doNOTestablishpermanentstall/deadlock;doNOTcredit not-yet-booted0014forGUI.
+- User explicitly returnedFASTBOOT afterthelate0013GUIphotos;keep-screen
+ suggestion superseded by physicalstate. Freshreadonlypreflight and0014boot
+ nowcompleteabove. Retains diagnosticconsole/args for identity-only comparison.
+ Actual0013GUI cannotbeattributed to0014identitychange;earlierwaitsamples
+ represented transientstate,not provenpermanentstall. Neednew0014screen.
+
+-0014 PREPARATION record (nowSENT asabove): tools/mkadt-polaris.py explicit --wifi-mac-file
  accepts only6raw nonzero unicast bytes;adds /chosen/mac-address-wifi0 only.
  No address default,no WLAN node/network driver. All7ADTtests PASS inclfull
  tree serialization roundtrip/default restoration/invalid inputs. Real0014tree
@@ -25,16 +57,15 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 200s PASS,exec13889exit0,26checks:PID1alive/displaystartup,targetrotation,
  exact12/2frame traces,unbackedFPstop,no panic fullring/screen,0unknownglyphs.
  Othergates reuse prior exactkernel all5regressions;not rerun. NativeAppleMG
- lookup/GUI/UFS/input/App NOTexecuted in QEMU;real0014phone stillNOTbooted.
+ lookup/GUI/UFS/input/App NOTexecuted in QEMU;real0014screen pending.
  Private0014prepare.py,
  native-path-analysis.json,prepared.json,preflight.py,boot-phone.py retained.
  Preflight requires sameknownouterheader,RO1/noload,fresh182maps before/after
  full16GiB imageSHA,unchangedheader/GPT,unmount,temp<45C;no repair/replay/write.
  Source commit4798fe7 +hardware-recorda8b85f8 pushed to origin. Readonly
- exactphoneUSB check:noFASTBOOT/noADB while0013XNU. PhysicalFASTBOOT request
- nowpending;userasked toholdPower+VolumeDown and replywhenready. No0014
- phonebootattemptyet. Afterreply run0014/preflight.py thenboot-phone.py
- onlyonfreshPASS;do not reuse0013preflight. GUIunfinished.
+ exactphoneUSB check:noFASTBOOT/noADB while0013XNU. Userhasnowreturned
+ FASTBOOT;new0014readonlypreflight/temporaryboot nowcompleteabove. Never
+ reuseoldpreflight orreenableUFSwrites. GUIhome/input/Appunfinished.
 
 - NEW0013 HARDWARE OBSERVED: user photos hardware-focus-{1..4}.jpg and clearer
  hardware-focus-later-{1,2}.jpg under research/polaris/launchservices-0013/.
