@@ -22,6 +22,36 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+###0034 VERIFIED; human already FASTBOOT; preflight/temporary boot next
+
+- ExactCIhead **b4c0c572fe0b9c385d31046f8cb160ac305ec4f1**, fixf5a49a0.
+  **CI40141037084/job121012644809 SUCCESS**,23:02:00–23:06:29UTC,4m29s.
+  Fullghlogresearch/polaris/ci-40141037084.log. Kernel
+  xnu/out-polaris-0034/kernel.development.sweet SHA
+  **7f4c77c52718fabc3e25c2f33c29f9c8bd319fe0f131786186c3d6d2a9532ffb**.
+- Pipeline45440 EXIT0 **2026-10-24T23:11:50.620296UTC**: FIRSTPASS base120s25,
+  asyncnetwork90s28,mode6wrongboard/noMMIO60s25 =**78checks**, allfourVMchildren.
+  No newtimerfailure/retry. PriorSMP/syncclockfailuresremainunresolved;
+  CPU1only. Native26ASan/UBSan,3actualARM64units/imports,19patch27files,
+  15savedpanelrows/sourceprofilechecksPASS; twelvehostscriptsfrozen.
+- Image **shim/out/polaris-xnu-readdebug-0034/polaris-xnu-readdebug-0034.img**,
+  **47460352bytes**, SHA
+  **d4a9f6473ea462d49bdc8dc6b11686e6133d8e4687aa8531a9265fc9ab268607**;
+  payloadSHA **ff352a70d195b4b3d70965ae1d42b6ff1fb2f099a091a435c7e2e824b0f1766b**.
+  Independentfinalchecker43332 EXIT0 PASS **23:12:01.783754UTC**: exactsource/
+  profile/CIpatches/CRC/SHA,allguestprovenance,payloadCvalidator/rebuild,
+  exactimageembedding/65DTBs andfrozeninputs. Argsidentical0033CPU1/20Hz/
+  512MiBRAMCOW/ufsrw0. NoactualGPUexecution/rendering/USBclaimyet.
+- **Human now says “手机已经进入fastboot准备好”**, savedprivateconfirmation.
+  **Do NOT askFASTBOOTagain.** Next0034/run-device-step.py preflight:
+  temporaryknownrecovery,full16GiBSHA/182maps/GPT/header/RO/unmounted/temp;
+  thenboot-and-watch.py. No partitionwrites. Do notrerunfinal-prepared-check
+  afterdeviceactions (itcorrectlyassertsnotyetbooted). Observer0033staysstopped.
+- On0034boot success watchimmediatelyuntilactualsameboot human“已进入系统”
+  orexplicitcancel, no time/discoveryexit. AttemptRAMlog/panelifECMappears.
+  NewUM/GLrawrows differentiateclockrequest failures. DesktopstillCPUrendered;
+  thisbootattemptsGMUfirmwareandUSB, HFI/GX/CP/CoreAnimationstillfuturework.
+
 ###0034 full CI / exact-kernel validation ACTIVE
 
 - User explicitly approved **“允许推送并构建”** for public
