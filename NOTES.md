@@ -10,7 +10,27 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION —0013 hardware decoded; supply verified factory Wi-Fi identity
+### CURRENT NEXT ACTION —0014 identity-only image validated; needs physical FASTBOOT
+
+-0014 PREPARED,not booted: tools/mkadt-polaris.py explicit --wifi-mac-file
+ accepts only6raw nonzero unicast bytes;adds /chosen/mac-address-wifi0 only.
+ No address default,no WLAN node/network driver. All7ADTtests PASS inclfull
+ tree serialization roundtrip/default restoration/invalid inputs. Real0014tree
+ minus one property is byte-identical to0013phone.adt;no args/kernel changes.
+ Image shim/out/polaris-xnu-wifi-identity-0014/polaris-xnu-wifi-identity-0014.img
+47288320bytes,SHA6e6eb1b6661c08024b9244593ac43d9c1a2b57444c2ee8f09be1934c128b25b3,
+ payloadSHA6accc02c770941f99046d0a4061b206421d0588a762915f7bff7258f6053a5da.
+ ActualCpayloadvalidator PASS. Reuses exact0013kernel ab50b65d...;gh rechecked
+ CI40001585107 attempt2 success/source1d06f9ea. New syntheticidentity QEMUon
+200s PASS,exec13889exit0,26checks:PID1alive/displaystartup,targetrotation,
+ exact12/2frame traces,unbackedFPstop,no panic fullring/screen,0unknownglyphs.
+ Othergates reuse prior exactkernel all5regressions;not rerun. NativeAppleMG
+ lookup/GUI/UFS/input/App NOTexecuted in QEMU;real0014phone stillNOTbooted.
+ Private0014prepare.py,
+ native-path-analysis.json,prepared.json,preflight.py,boot-phone.py retained.
+ Preflight requires sameknownouterheader,RO1/noload,fresh182maps before/after
+ full16GiB imageSHA,unchangedheader/GPT,unmount,temp<45C;no repair/replay/write.
+ User physicalFASTBOOT needed next;currentphone0013XNU. GUIunfinished.
 
 - NEW0013 HARDWARE OBSERVED: user photos hardware-focus-{1..4}.jpg and clearer
  hardware-focus-later-{1,2}.jpg under research/polaris/launchservices-0013/.
@@ -35,9 +55,9 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
  debugfs extracted /wlan_mac.bin (18byte wlan0= +12hex),valid6byte unicast
  factory address. Backup hash unchanged;no mount/replay/device writes. Private
  factory-wifi-identity.json/factory-wifi-mac.raw;never commit device address.
- NEXT implement explicit ADT identity opt-in using these bytes through native
+ Explicit ADT identity opt-in nowimplemented as0014above through native
  /chosen path,retaining absent WLAN node/no foreign driver. Same0013kernel;
- validate serialization/default preservation/payload before nexttemporaryboot.
+ serialization/default preservation/payload/newQEMU PASS.
  Keep currentphone XNU until concrete newimage verified;no USBrestart channel.
 - Actual FBmask284000238429178,swaps7/presents5/pixels10767600 static across
  observed focused samples;contents unknown,NOhome/App proof. COW max21287/

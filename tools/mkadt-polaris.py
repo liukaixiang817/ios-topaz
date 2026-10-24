@@ -3,7 +3,9 @@
 
 Requires the polaris kernel patch profile. Defaults to a console/RAM-init
 tree. An explicit fresh manifest enables a read-only file root on userdata;
-WLAN remains absent. --display explicitly enables the bounded CPU framebuffer
+WLAN remains absent. An explicit --wifi-mac-file supplies verified factory
+identity bytes to MobileGestalt without advertising a network driver.
+--display explicitly enables the bounded CPU framebuffer
 service; it also requires the polarisdisplay=1 kernel argument.
 The phone's upper RAM bank is from its verified live DT, not topaz constants.
 """
@@ -37,11 +39,17 @@ def child(node, name):
     return next(c for c in node.children if props(c).get("name") == name.encode() + b"\0")
 
 
-def build(seed=None, qemu=False, ufs_head=None, file_root=None, display=False):
+def build(seed=None, qemu=False, ufs_head=None, file_root=None, display=False,
+          wifi_mac=None):
     if ufs_head is not None and qemu:
         raise ValueError('QEMU cannot probe the phone UFS controller')
     if file_root is not None and (qemu or ufs_head is not None):
         raise ValueError('file root requires phone hardware and excludes probe mode')
+    if wifi_mac is not None:
+        if not isinstance(wifi_mac, bytes) or len(wifi_mac) != 6:
+            raise ValueError('Wi-Fi factory identity must be exactly six raw bytes')
+        if not any(wifi_mac) or wifi_mac[0] & 1:
+            raise ValueError('Wi-Fi factory identity must be a nonzero unicast address')
     # Reuse the Apple boot-policy scaffold, with one CPU and no UFS node.
     # Explicitly replace/remove all topaz hardware values below.
     root = mkadt.build(seed=seed, qemu=True)
@@ -53,6 +61,11 @@ def build(seed=None, qemu=False, ufs_head=None, file_root=None, display=False):
     setprop(chosen, "system-firmware-version", b"polaris-ram-bringup\0")
     setprop(chosen, "unique-chip-id", mkadt.u64(0x504f4c4152495301))  # synthetic, not device data
     setprop(chosen, "boot-manifest-hash", hashlib.sha384(b"polaris boot manifest").digest())
+    if wifi_mac is not None:
+        # iOS 16.7/20H392 MobileGestalt checks this CFData before falling back
+        # to IONetworkController notifications (19c571710..19c571770).
+        # The caller must supply verified device data, never a shared default.
+        setprop(chosen, 'mac-address-wifi0', wifi_mac)
     timebase = 62500000 if qemu else 19200000
     cpu = child(child(root, "cpus"), "cpu0")
     setprop(cpu, "compatible", b"qcom,kryo385\0ARM,v8\0")
@@ -106,12 +119,15 @@ if __name__ == "__main__":
     parser.add_argument("--qemu", action="store_true")
     parser.add_argument('--display', action='store_true',
                         help='enable CPU framebuffer service; needs polarisdisplay=1')
+    parser.add_argument('--wifi-mac-file', type=Path,
+                        help='private file containing six raw verified factory Wi-Fi MAC bytes; does not enable WLAN')
     parser.add_argument('--ufs-probe-head', type=Path,
                         help='verified LUN0 head backup for optional read-only probe; needs polarisufsprobe=1')
     parser.add_argument('--file-root-manifest', type=Path,
                         help='fresh readonly metadata from polaris_file_root.py; needs polarisfileroot=1')
     args = parser.parse_args()
     blob = adt.serialize(build(qemu=args.qemu, display=args.display,
+                              wifi_mac=args.wifi_mac_file.read_bytes() if args.wifi_mac_file else None,
                               ufs_head=args.ufs_probe_head.read_bytes() if args.ufs_probe_head else None,
                               file_root=json.loads(args.file_root_manifest.read_text()) if args.file_root_manifest else None))
     args.output.write_bytes(blob)

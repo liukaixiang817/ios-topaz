@@ -73,6 +73,30 @@ class ADTTests(unittest.TestCase):
             self.assertEqual(struct.unpack('<2Q', fb['reg']), (0x9d400000, 0x2400000))
             self.assertEqual(struct.unpack('<I', fb['stride'])[0], 4320)
 
+    def test_wifi_identity_is_raw_data_and_adds_no_network_service(self):
+        # Locally administered fixture only; never embed a phone's address.
+        identity = bytes.fromhex('020000000001')
+        for qemu in (False, True):
+            with patch.object(polaris.mkadt, 'd22ap_product', return_value=None):
+                original = polaris.build(seed=b'x' * 64, qemu=qemu, display=True)
+                root = polaris.build(seed=b'x' * 64, qemu=qemu, display=True,
+                                     wifi_mac=identity)
+            root = polaris.adt.parse(polaris.adt.serialize(root))[0]
+            chosen = polaris.child(root, 'chosen')
+            self.assertEqual(polaris.props(chosen)['mac-address-wifi0'], identity)
+            # Removing the sole added property restores the entire default tree.
+            chosen.props = [p for p in chosen.props if p[0] != 'mac-address-wifi0']
+            self.assertEqual(polaris.adt.serialize(root), polaris.adt.serialize(original))
+
+    def test_wifi_identity_rejects_text_wrong_sizes_zero_and_multicast(self):
+        invalid = [b'', b'x' * 5, b'x' * 7, b'02:00:00:00:00:01',
+                   '020000000001', bytes(6), bytes.fromhex('010000000001'),
+                   b'\xff' * 6]
+        for identity in invalid:
+            with self.subTest(identity_type=type(identity).__name__, size=len(identity)):
+                with self.assertRaises(ValueError):
+                    polaris.build(seed=b'x' * 64, wifi_mac=identity)
+
 
 if __name__ == "__main__":
     unittest.main()
