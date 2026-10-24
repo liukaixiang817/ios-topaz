@@ -170,8 +170,16 @@ Full CI40095790392 and allthree selected standard-clock modes pass51checks
 on the first attempt; independent source/payload/image validation also passes.
 After0028's ten-minute USB observation completed without enumeration, human
 FASTBOOT confirmation and another full read-only check, temporary0029 was
-sent13:13:23UTC. Its own >=600s USB observation is running; physical GUI and
-clock results are pending.
+sent13:13:23UTC. Later Settings photo confirms P5 K6/0 F0/0: required clocks
+observed under reset and requests restored. The human confirms bootcomplete
+and explicitly cancels furtherUSBobservation; no complete600s negative for0029.
+The original [Polaris peripheral start sequence](https://github.com/MiCode/Xiaomi_Kernel_OpenSource/blob/c7cb50c18f812629b9620b2b8fa684bc40d82080/drivers/usb/dwc3/dwc3-msm.c#L3865)
+sets HS session-valid before device-mode/connect, and sets SS lane-present
+only for SuperSpeed.0030 follows that ordering before EP0, after the already
+proven soft reset. It masks/acknowledges owned HS bits and restores them on
+startup failure only after confirmed halt. No SS writes for HS-only Polaris.
+The original also manages PHY/DBM state; this scoped fix remains a candidate,
+not a proven complete USB port or cause. No foreign EFI services are invoked.
 No hardware cause for AON readback0 is established. Actual GPU firmware
 execution and accelerated rendering remain unfinished.
 

@@ -14,9 +14,47 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 boot/USB discovery. A negative USB observation requires a continuous >=600s
 window after temporary boot; earlier ~61s records are only early samples,
 not completed boot-window negatives. Positive enumeration may be collected
-immediately. Never interrupt that window with another boot.**
+immediately. Never interrupt that window with another boot. The user can
+explicitly cancel observation: on0029 they confirmed boot complete and said
+“无需观察”; watcher stopped at13:21:23UTC, with no full-window negative claim.**
 
-### CURRENT NEXT ACTION — 0029 use the actual GMU consumer clocks
+### CURRENT NEXT ACTION — 0030 USB HS session before endpoint commands
+
+- Actual0029 Settings photo/user confirms bootcomplete: **G303 P5 K6/0 F0/0
+  R80000000/0**, USB **R7 S12 E5 C7f Q0/2/402/2 L2400 B480800/0/520018**.
+  T10401 is one10.401ms elapsedpresentation, not FPS/CPU. P5/K6 prove required
+  CXO/root/CX_GMU clocks observedON while GMU_BCR held and ownedrequests
+  restored, with no firstfailure. G303 remains initialCX-off snapshot.
+  No GMU firmware/SMMU/submission or acceleratedrendering yet. Photo/hash:
+  continuation-0029/hardware-0029-observation.json. Preserve this stage.
+- Userexplicitlycancelled further0029USBobservation afterbootcomplete.
+  Exactobserverprocess interrupted, session25047 exits130; cancellation
+  **13:21:23.005405UTC**,479.316496s sinceboot. Rowswere notexported before
+  interruption; no complete600s negative for0029. No reboot/networkchange.
+  Privateusb-observation-cancelled.json records reason and limits.
+- IMPLEMENTED0835: source-supported USB HS session-valid setup AFTER the
+  already-successful softreset but BEFORE events/EP0commands, which previously
+  returned beforethelateVBUSoverride. Keep existing resetsequence. Follow pinned
+  originaldwc3-msm.c3865..3916; for HS-only do not mutateSS lane-present.
+  Mask/confirm onlyUTMI_OTG_VBUS_VALID/SW_SESSVLD_SEL, <=1000one-us polls;
+  restoreonlynewlysetbits onstartupfailure, preserve unrelatedbits. Refuse
+  rollbackunlessDCTLrun/resetclear andDSTScontrollerHALTconfirmed; ifwehad
+  setRUN_STOP, clearitfirst anduseexisting500x1msstopbound. Unknown/live
+  controllerstate reportsV4/0 andretainsrequests, notfalsecleanup. Freeze
+  immutablebegin/finalrecords forRAM/statusbar withrelease/acquire publication.
+  BarV=error/restored; D USB SESSION savesrawbefore/live/after/changed/polls.
+  STARTTRANSFERsetupfailure nowstopsstartupbeforeRUN/ready. This is a
+  candidate prerequisite fix, not a proven USB cause. SuccessfulUSBlogs/panel
+  will support GMU firmware/reset/SMMU/command-path work; do not executeGMU
+  blindly or advertiseacceleration.0029clock/ADT/args/storage remain unchanged.
+- New realheaderhelper tools/polaris-dwc3-session.h hasASan/UBSan coverage
+  ofallinitialHSstates, noSSwrites, ownedmask/unrelatedlivechanges, ACK1/1000,
+  ignoredwrites, not-haltedrollbackrefusal andrestoretimeout. All18native
+  testsPASS. TwoactualCI-headerARM64unitscompilePASS/allimportsresolve
+  against0029. Fifteenorderedpatches0821..0835 applywithoutfuzz/offset;
+  all19filesmatchactualcompiletree. FullCI/exactkernel/imagechecks pending.
+
+### 0029 use the actual GMU consumer clocks
 
 - Actual0028 photos: initial white App area later renders Settings. No return
   swipe result yet. GPU **G303 P5 K7/3 F1004/0 R80000000/0**; USB **R7 S12 E5
@@ -70,8 +108,8 @@ immediately. Never interrupt that window with another boot.**
   outerheader unchanged,userdataRO1/unmounted,34C; no journal repair/replay.
   Bootwrapper47584 exited0: Sending/BootingOKAY,total1.184s;0029 sent
   **13:13:23.688909UTC**, proofage20.586220s; no partitionwrite.
-  Readonlyhostwatch25047 running for >=600s. NEXT awaititscompletedwindow;
-  ifECMappears collectRAMlog/panel. Human asyncquestion checksGUI
+  Readonlyhostwatch25047 latercancelledatuserrequest, seecurrenthandoff.
+  Humanphoto confirmsSettings andP5/K6; no USBlog/panelcapture. Human checksGUI
   andtopP/K/F/R plusUSB S/E/Q/L/B. K6onlyprovesrequiredclocksunderreset and
   requestsrestored; GPUfirmware/SMMU/submission/acceleration remainunfinished.
 - Independent USB source review while CI runs: original dwc3-msm.c Gitblob
@@ -89,7 +127,8 @@ immediately. Never interrupt that window with another boot.**
   This is a latewindow on the same0028boot, not coverage of all startup time.
   No restart/network/partition changes, RAMlog or panel capture. Physical
   FASTBOOT requested onlyafter this window completed; humanconfirmed and
-  temporary0029now sent asabove. Actual0029GUI/clockresult/USBsuccess pending.
+  temporary0029now sent asabove. LaterGUI/clocksuccess confirmed, USBsaved
+  EP0resourcecommand2timeout persists; observationcancelledbyuser asabove.
 
 ### 0028 bounded clock acknowledgement / first-failure evidence
 

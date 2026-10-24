@@ -1,0 +1,242 @@
+--- a/bsd/dev/sweet_usb.c
++++ b/bsd/dev/sweet_usb.c
+@@ -207,11 +207,36 @@
+ #if defined(POLARIS_RAM_ONLY)
+ #include "polaris_dwc3_command.h"
+ #include "polaris_dwc3_endpoints.h"
++#include "polaris_dwc3_session.h"
++static struct pdwc3_session polaris_session_begin_saved, polaris_session_end_saved;
++static uint32_t polaris_session_begin_published, polaris_session_end_published;
++static const struct pdwc3_session *polaris_session_snapshot(void)
++{
++    if (__atomic_load_n(&polaris_session_end_published, __ATOMIC_ACQUIRE))
++        return &polaris_session_end_saved;
++    if (__atomic_load_n(&polaris_session_begin_published, __ATOMIC_ACQUIRE))
++        return &polaris_session_begin_saved;
++    return NULL;
++}
++static void polaris_session_publish(const struct pdwc3_session *s, bool final)
++{
++    if (final) {
++        polaris_session_end_saved = *s;
++        __atomic_store_n(&polaris_session_end_published, 1, __ATOMIC_RELEASE);
++    } else {
++        polaris_session_begin_saved = *s;
++        __atomic_store_n(&polaris_session_begin_published, 1, __ATOMIC_RELEASE);
++    }
++}
+ static struct pdwc3_result polaris_ep_failure;
+ static uint32_t polaris_ep_control[3]; /* DCFG/DCTL/DSTS at first failure. */
+ static uint32_t polaris_ep_failure_published;
+ static void polaris_usb_command_report(void)
+ {
++    const struct pdwc3_session *v = polaris_session_snapshot();
++    if (v) printf("D USB SESSION: error=%u start_error=%u hs=%x/%x/%x changed=%x restored=%u polls=%u/%u\n",
++        v->error, v->start_error, v->before, v->live, v->after, v->changed, v->restored,
++        v->polls, v->restore_polls);
+     if (!__atomic_load_n(&polaris_ep_failure_published, __ATOMIC_ACQUIRE)) return;
+     const struct pdwc3_result *s = &polaris_ep_failure;
+     printf("D USB CMD: ep=%u cmd=%x response=%x polls=%u error=%u phy=%x/%x\n",
+@@ -478,6 +503,30 @@
+ static int polaris_endpoint_command(void *ctx __unused, unsigned ep,
+     uint32_t command, uint32_t p0, uint32_t p1, uint32_t p2)
+ { return ud_epcmd(ep, command, p0, p1, p2); }
++
++static uint32_t polaris_session_read(void *ctx, uint32_t off)
++{ return off == PDWC3_HS_PHY_CTRL ? usb_rd((vm_offset_t)ctx, off) : 0; }
++static void polaris_session_write(void *ctx, uint32_t off, uint32_t value)
++{
++    if (off != PDWC3_HS_PHY_CTRL) return;
++    *(volatile uint32_t *)((vm_offset_t)ctx + off) = value;
++    __asm__ volatile("dsb sy" ::: "memory");
++}
++static void polaris_session_abort(const struct pdwc3_io *io, struct pdwc3_session *s)
++{
++    /* Session rollback is permitted only after our controller is halted.
++     * No poll thread has started on any failure path that calls this. */
++    uint32_t control = dwc_rd(DCTL);
++    if (control & DCTL_RUN_STOP) {
++        dwc_wr(DCTL, control & ~DCTL_RUN_STOP);
++        for (unsigned i = 0; i < 500 && !(dwc_rd(DSTS) & DSTS_DEVCTRLHLT); i++)
++            delay(1000);
++    }
++    bool halted = !(dwc_rd(DCTL) & (DCTL_RUN_STOP | DCTL_CSFTRST)) &&
++        (dwc_rd(DSTS) & DSTS_DEVCTRLHLT);
++    polaris_dwc3_session_restore(io, s, halted);
++    polaris_session_publish(s, true);
++}
+ #endif
+ 
+ /* One TRB (at DMA offset trb) on physical endpoint ep. */
+@@ -1045,6 +1094,9 @@
+         if (!(s->clocks[i] & (1u << 31))) on |= 1u << i;
+     uint32_t n = (uint32_t)snprintf(out, size, "U%u R%u S%u E%d C%02x",
+         polaris_usb_mode, s->result, (unsigned)state, (int)(state >> 32), on);
++    const struct pdwc3_session *session = polaris_session_snapshot();
++    if (n < size && session)
++        n += (uint32_t)snprintf(out + n, size - n, " V%u/%u", session->error, session->restored);
+     if (n < size && __atomic_load_n(&polaris_ep_failure_published, __ATOMIC_ACQUIRE))
+         n += (uint32_t)snprintf(out + n, size - n, " Q%u/%x/%x/%u L%x B%x/%x/%x",
+             polaris_ep_failure.ep, polaris_ep_failure.command,
+@@ -1103,6 +1155,27 @@
+ 		return;
+ 	}
+ 
++#if defined(POLARIS_RAM_ONLY)
++    /* Original Qualcomm wrapper establishes a valid HS session before
++     * starting peripheral mode. Previously EP0 failures skipped this step.
++     * Keep the proven soft-reset sequence; set/confirm HS requests before
++     * endpoint commands, without touching any SuperSpeed lane signal. */
++    PU_PROGRESS(PU_VBUS, 0);
++    if ((dwc_rd(DCTL) & DCTL_RUN_STOP) || !(dwc_rd(DSTS) & DSTS_DEVCTRLHLT)) {
++        PU_PROGRESS(PU_VBUS, EBUSY); return;
++    }
++    vm_offset_t session_qs = ml_io_map(QSCRATCH_PA, 0x100);
++    if (!session_qs) { PU_PROGRESS(PU_VBUS, ENOMEM); return; }
++    const struct pdwc3_io session_io = {(void *)session_qs, polaris_session_read,
++        polaris_session_write, polaris_command_wait};
++    struct pdwc3_session session;
++    if (polaris_dwc3_session_begin(&session_io, &session)) {
++        PU_PROGRESS(PU_VBUS, EIO);
++        polaris_session_abort(&session_io, &session); return;
++    }
++    polaris_session_publish(&session, false);
++#endif
++
+ 	PU_PROGRESS(PU_EVENTS, 0);
+ 	dwc_wr(GEVNTADRLO, (uint32_t)(ud.dma_pa + UD_EVT));
+ 	dwc_wr(GEVNTADRHI, (uint32_t)((ud.dma_pa + UD_EVT) >> 32));
+@@ -1129,11 +1202,22 @@
+ #endif
+ 		printf("SWEET USB: endpoint 0 setup failed\n");
+ 		PU_PROGRESS(PU_EP0, EIO);
++#if defined(POLARIS_RAM_ONLY)
++        polaris_session_abort(&session_io, &session);
++#endif
+ 		return;
+ 	}
+ 	dwc_wr(DALEPENA, 0x3);
+ 	ud_start_setup();
+-
++#if defined(POLARIS_RAM_ONLY)
++    /* STARTTRANSFER failure must not be reported as a ready gadget. */
++    if (__atomic_load_n(&polaris_ep_failure_published, __ATOMIC_ACQUIRE)) {
++        PU_PROGRESS(PU_EP0, EIO);
++        polaris_session_abort(&session_io, &session); return;
++    }
++#endif
++
++#if !defined(POLARIS_RAM_ONLY)
+ 	PU_PROGRESS(PU_VBUS, 0);
+ 	vm_offset_t qs = ml_io_map(QSCRATCH_PA, 0x100);
+ 	if (qs != 0) {
+@@ -1146,6 +1230,7 @@
+ 		printf("SWEET USB: VBUS override on: HS_PHY_CTRL 0x%08x SS_PHY_CTRL 0x%08x\n",
+ 		    usb_rd(qs, QSCRATCH_HS_PHY_CTRL), usb_rd(qs, QSCRATCH_SS_PHY_CTRL));
+ 	}
++#endif
+ 
+ 	PU_PROGRESS(PU_RUN, 0);
+ 	dwc_wr(DCTL, dwc_rd(DCTL) | DCTL_RUN_STOP);
+@@ -1153,13 +1238,22 @@
+ 		delay(1000);
+ 	}
+ 	printf("SWEET USB: running (DSTS 0x%08x after %d ms), DMA at 0x%llx\n", dwc_rd(DSTS), i, ud.dma_pa);
+-	if (dwc_rd(DSTS) & DSTS_DEVCTRLHLT) { PU_PROGRESS(PU_RUN, ETIMEDOUT); return; }
++	if (dwc_rd(DSTS) & DSTS_DEVCTRLHLT) {
++        PU_PROGRESS(PU_RUN, ETIMEDOUT);
++#if defined(POLARIS_RAM_ONLY)
++        polaris_session_abort(&session_io, &session);
++#endif
++        return;
++    }
+ 	PU_PROGRESS(PU_POLL, 0);
+ 	if (kernel_thread_start(ud_thread, NULL, &thread) == KERN_SUCCESS) {
+ 		thread_deallocate(thread);
+ 	}
+ #if defined(POLARIS_RAM_ONLY)
+-    else { PU_PROGRESS(PU_POLL, EIO); return; }
++    else {
++        PU_PROGRESS(PU_POLL, EIO);
++        polaris_session_abort(&session_io, &session); return;
++    }
+ #endif
+ #if defined(POLARIS_RAM_ONLY)
+     extern void polaris_debug_start(void);
+--- a/bsd/dev/polaris_dwc3_session.h
++++ b/bsd/dev/polaris_dwc3_session.h
+@@ -0,0 +1,74 @@
++/* Polaris HS session setup, before EP0 commands. Original dwc3-msm.c sets
++ * UTMI_OTG_VBUS_VALID/SW_SESSVLD_SEL before starting peripheral mode.
++ * Only these two HS request bits are owned; an HS gadget never writes SS.
++ * The caller proves the controller halted before rolling requests back.
++ */
++#ifndef POLARIS_DWC3_SESSION_H
++#define POLARIS_DWC3_SESSION_H
++#include <stdbool.h>
++#ifndef POLARIS_DWC3_COMMAND_H
++#error Include the Polaris DWC3 command definitions first
++#endif
++#define PDWC3_HS_PHY_CTRL 0x10u
++#define PDWC3_SESSION_MASK ((1u << 20) | (1u << 28))
++enum pdwc3_session_error {
++    PDWC3_SESSION_OK, PDWC3_SESSION_ARGUMENT, PDWC3_SESSION_TIMEOUT,
++    PDWC3_SESSION_RESTORE_TIMEOUT, PDWC3_SESSION_NOT_HALTED
++};
++struct pdwc3_session {
++    uint32_t error, start_error, before, live, after, changed, restored, polls, restore_polls;
++};
++static inline bool pdwc3_session_valid(const struct pdwc3_io *io)
++{ return io && io->read && io->write && io->wait_us; }
++static inline enum pdwc3_session_error polaris_dwc3_session_begin(
++    const struct pdwc3_io *io, struct pdwc3_session *s)
++{
++    if (!s) return PDWC3_SESSION_ARGUMENT;
++    *s = (struct pdwc3_session){.error=PDWC3_SESSION_ARGUMENT,
++        .start_error=PDWC3_SESSION_ARGUMENT};
++    if (!pdwc3_session_valid(io)) return PDWC3_SESSION_ARGUMENT;
++    s->before = io->read(io->ctx, PDWC3_HS_PHY_CTRL);
++    s->changed = ~s->before & PDWC3_SESSION_MASK;
++    if (s->changed) io->write(io->ctx, PDWC3_HS_PHY_CTRL, s->before | s->changed);
++    s->error = PDWC3_SESSION_TIMEOUT;
++    for (unsigned i = 0; i < PDWC3_COMMAND_POLLS; i++) {
++        s->polls++;
++        s->live = io->read(io->ctx, PDWC3_HS_PHY_CTRL);
++        if ((s->live & PDWC3_SESSION_MASK) == PDWC3_SESSION_MASK) {
++            s->error = PDWC3_SESSION_OK; break;
++        }
++        io->wait_us(io->ctx, 1);
++    }
++    s->start_error = s->error;
++    return (enum pdwc3_session_error)s->error;
++}
++static inline enum pdwc3_session_error polaris_dwc3_session_restore(
++    const struct pdwc3_io *io, struct pdwc3_session *s, bool halted)
++{
++    if (!s) return PDWC3_SESSION_ARGUMENT;
++    s->restored = 0; s->restore_polls = 0;
++    if (!pdwc3_session_valid(io)) {
++        s->error = PDWC3_SESSION_ARGUMENT; return PDWC3_SESSION_ARGUMENT;
++    }
++    if (!halted) {
++        s->error = PDWC3_SESSION_NOT_HALTED; return PDWC3_SESSION_NOT_HALTED;
++    }
++    s->after = io->read(io->ctx, PDWC3_HS_PHY_CTRL);
++    if (s->changed) {
++        uint32_t target = (s->after & ~s->changed) | (s->before & s->changed);
++        io->write(io->ctx, PDWC3_HS_PHY_CTRL, target);
++        for (unsigned i = 0; i < PDWC3_COMMAND_POLLS; i++) {
++            s->restore_polls++;
++            s->after = io->read(io->ctx, PDWC3_HS_PHY_CTRL);
++            if (!((s->after ^ s->before) & s->changed)) {
++                s->restored = 1; return PDWC3_SESSION_OK;
++            }
++            io->wait_us(io->ctx, 1);
++        }
++        s->error = PDWC3_SESSION_RESTORE_TIMEOUT;
++        return PDWC3_SESSION_RESTORE_TIMEOUT;
++    }
++    s->restored = 1;
++    return PDWC3_SESSION_OK;
++}
++#endif

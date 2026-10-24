@@ -360,9 +360,24 @@ with no new failures or retries. Independent source/payload/image checks pass
 13:05:40UTC. After the late0028 ten-minute USB window, the human confirmed
 FASTBOOT. Another full16GiBhash/182maps/GPT/header/RO check passes13:13:03UTC
 (unmounted,34C). Temporary0029 is sent13:13:23UTC, Sending/BootingOKAY,total
-1.184s. No partition write or outer journal replay. Host USB observation now
-runs for >=600s; GUI/clock fields and enumeration remain pending. No GPU
-firmware execution or acceleration is established.
+1.184s. No partition write or outer journal replay. The human confirms boot
+complete and a Settings photo shows P5 K6/0 F0/0: required clocks were observed
+running under block reset and their requests restored. G303 is the initial
+CX-off snapshot. GPU firmware execution and acceleration remain unfinished.
+USB still saves resource-command2 timeout. The user explicitly says no more
+observation is needed; watcher25047 stops13:21:23UTC,479.316496s afterboot.
+Its rows were not exported and no completed600s negative is claimed for0029.
+
+0030 preserves that successful clock stage and corrects the USB HS session
+order, following the pinned original dwc3-msm.c. After the existing successful
+soft reset, assert/confirm HS VBUS/session-valid before EP0 commands. Restore
+only newly set signal bits on startup failure, preserving unrelated fields;
+rollback requires a confirmed halted controller. Do not write SS lane-present
+for an HS-only gadget. Immutable before/final snapshots expose V=error/restored
+and the raw RAM record. Failed setup STARTTRANSFER no longer proceeds to RUN
+or reports ready.18native tests, two actual ARM64 compiles/import checks and
+fifteen patches/nineteen files pass. Full CI and exact-kernel runs are pending;
+neither a working USB link nor GPU firmware execution is established.
 
 ## Standalone boot diagnostic 0001
 
