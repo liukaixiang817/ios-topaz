@@ -22,7 +22,52 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-###0033 in progress — real GMU execution/SMMU prerequisite, not3D acceleration
+###0033 PREPARED/INDEPENDENTLY VERIFIED — needs new physical FASTBOOT
+
+- Source **ea800af95ab0dc1b299c5f284d782c810a309832**; CI **40109458219**,
+  job120917950066 SUCCESS. Build15:59:45–16:04:49UTC **5m04s**. Fullghlog
+  research/polaris/ci-40109458219.log saved; firstlogfetchunexpectedEOF retained
+  ci-log-fetch-retry1.log, secondfetchsuccessful. Exactkernel
+  xnu/out-polaris-0033/kernel.development.sweet SHA
+  **69a429304b54404550ce070eac4df260938ff03c44d8233d0cf5f22669b095f2**.
+- Pipeline42603 EXIT0 **2026-10-24T16:13:17.353649UTC**. Standardclock CPU1
+  base120sFIRSTPASS24; actualasyncnetwork90sSECONDselectedPASS27; mode6
+  wrong-board/noMMIO60sFIRSTPASS24, **75selectedchecks**. All4VMchildreneach.
+  Asyncfirstattempt hitknownrtclockthreshold assertion; originalfailedrun,
+  exactprovenance andresult preservedq-async-net-a1. Sameparameterssecondrun
+  passed; **firstfailure remainsfailed, causeunestablished**. No time/clock
+  waiver. PriorSMP/syncnetworktimerfailuresremainunresolved. Native25ASan/
+  UBSan,3actualCI-headerARM64units/imports,18patch26files,11actualsavedformatter
+  rows<=67characters/13displayrows, original48RSC/PDCand12DTimplpairsPASS.
+- Image **shim/out/polaris-xnu-readdebug-0033/polaris-xnu-readdebug-0033.img**,
+  **47456256bytes**, SHA
+  **810651aa225b29f54b71bde4443b35f34492975f25cbf40df788310b0bd85e7e**.
+  Payload **e889f63f4a830725fd5f0fb9b4819fd0e09271809db0eb688415f178f2f9c504**.
+  Independentfinalchecker56919 EXIT0 PASS **16:13:27.731699UTC**, validates
+  exactsource/CIpatchapplication/CRC/SHA, localinputhashes, allselectedrun
+  provenance, Cpayloadvalidator/rebuild, exactimageembedding/65DTBs and12
+  frozenhostscripts. ADT addsfirmwarenodev3 contractonly; removingnode restores
+  0021byteidentically. Soleargumentchangefrom0032 **polarisgpu5→6**.
+  CPU1/20Hz/512MiBRAMCOW/ufsrw0 unchanged. **GPUexecutionNOTproven**;
+  mode6onlyattempts freshGMUbootthencontains/restores. NoHFI/GX/3Dsubmission,
+  acceleration, actualUSBconnection ornewphoneaction yet.
+- Currentphone0032Settingsworking; humanconfirmedbootcomplete, observer
+  remainsSTOPPED. NewphysicalFASTBOOT neededbecausecurrentnativeUSBunavailable.
+  Afteractualhumanreply:0033/run-device-step.py preflight (freshfull16GiBhash/
+  182maps/GPT/header/RO/unmounted/temp), then0033/boot-and-watch.py. Temporary
+  bootonly, no partitionwrites. Watchcontinuouslyuntilsameboot actualhuman
+  **“已进入系统”**, neverstopontime/discovery; attemptRAMlog/panelifECMappears.
+  Optionalpreflightreadonlydebugfs cmd_db/GPUfrequencycaptureprepared for
+  originalARC/BCMtables. No debugfs mount orphysicalmemorydump; unavailable
+  virtualfilesjustrecordunavailable. Scriptupdated/frozenbeforedeviceaction.
+- Next3Dsource-onlyreview savedgpu-next-execution-review.json: actualPolaris
+  ZAPreserved **8c415000/2000** (reference8b71a000NOTapplicable); capturedlive
+  chipid06030001 andgpu-quirk-hfi-use-reg confirmed. AfterfreshGMUbootproof:
+  originalARC/MXvotes+SPTPRAC/HFI INIT/FW_VER/perf/BW ACKs, GPUstream0/ring/SQE/
+  signedZAP/CPinit, actualGPU-ownedtestimageandfence, thenMesa/IOUserClient/
+  CoreAnimation. NoclaimthatloadedFW/clockrequestsarehardwareacceleration.
+
+###0033 implementation provenance (superseded by prepared state above)
 
 - Latestuserrequests actualGPUimage rendering ASAP. Implemented new0838
   candidate, localvalidationPASS; fullCI/image/phonepending: owned4KiB/39-bitSMMUv2 tables for
