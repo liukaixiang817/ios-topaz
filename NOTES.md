@@ -22,6 +22,24 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+###0034 handoff — keep live observer; await actual human result
+
+- Observer89914 stillACTIVE, **28samples/272.011s** sofar;
+  allrowsmatchfsyncedNDJSON, noinspectionerrors/nativeECMyet. Thisis
+  anintermediatewindowonly; **NOdeadline/negativebootconclusion**, neverstop
+  beforeactualhumanconfirmation/cancel. NewquestionpendingGB/GEfw/UMplus
+  “已进入系统”. No furtherboot. OnECMcollectRAMlogandpanelwhilewatchcontinues.
+- Sourceresearch saved0034/next-HFI-source-plan.json: originalA630HFI_USE_REG
+  needsGX/MXOOBandSPTPRACbeforeHFIstart; INIT5/FWVER2/PERF43/BW160/TEST1
+  words,ACK126/id+seq+error0,ver10010000,ascendingGPUtable/duplicateMXindices.
+  Sourceonly; no newHFI/GX/CPrequest andno newkernelchange after0034.
+- **PublicoperationalNOTES push was rejected**: explicitapproval covered
+  fixsource, notadditionaldeviceboot/storage/observation records. Localnotes
+  commits preserved; doNOTpushtheseprivatehandoffcommits withoutappropriate
+  authorization. Publicremotestillb4c0c57; kernel/codealreadybuilt/pushed.
+  Thisdoesnotblockcurrentphoneverification. Futurecodepushmustpreservelocal
+  handoffwhileexcludingunapprovedrunrecords (orobtainexplicitpermission).
+
 ### CURRENT ACTION —0034 temporary boot SENT; USB observer89914 ACTIVE
 
 - Newcleanmetadata revalidation71830 EXIT0 **23:15:22.098756UTC**:
