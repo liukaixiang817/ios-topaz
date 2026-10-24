@@ -22,7 +22,37 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT NEXT ACTION — validate0032 GMU load / USB clock-gating candidate
+### CURRENT NEXT ACTION —0032 verified; await human FASTBOOT, then readonly preflight/temporary boot
+
+- **0032 PREPARED/INDEPENDENTLY VERIFIED, NOT BOOTED.** Correctedsource
+  daf2b02fc40259bf4e8937e344b1aac1ee80c83e; CI40104792558/job120904130327
+  SUCCESS. Build **14:57:51–15:03:20UTC (5m29s)**; fullghlog saved at
+  research/polaris/ci-40104792558.log. Exactkernel
+  xnu/out-polaris-0032/kernel.development.sweet SHA
+  **3457ca9917e4ca1984e7203bf5f0cc4ad4171ed208febf696a74e7ca6f547ec6**.
+  Pipeline87972 EXIT0 **15:09:45.572041UTC**: FIRSTPASS base120s21checks,
+  actualasyncnetwork90s24checks, mode5wrong-board/noMMIO60s21checks,
+  **66total**, all4VMchildren ineach. No newtimerfailure/retry; priorSMP/
+  synctimerfailures unresolved. Firstd005eca manualinterruption preserved
+  separately andnotcountedasPASS ortimerfailure. Native21ASan/UBSan,
+  3actualCI-headerARM64units/imports,17patch22files,actualformatterfixtures,
+  continuousobserver8simulatedtests allPASS. Elevenhostscripts frozen.
+- Image **shim/out/polaris-xnu-readdebug-0032/polaris-xnu-readdebug-0032.img**,
+  **47423488bytes**, SHA
+  **17e47dff28a16b786ab8339fa8a2da42e83c84f196087d2e98c19cd1cc457457**;
+  payloadSHA **49c38bd143bc629a1381aea5ed0df24b8ae226299a2c3dc2a2df74322f50934f**.
+  Independentfinalchecker43509 EXIT0 PASS **15:10:10.508714UTC** validates
+  source/CIprofile/CRC/SHA,actualCIpatchapplication,alllocalinputs,guest
+  provenances,payloadCvalidator+rebuild, exactimageembedding/65DTBs.
+  PhoneADT byteidentical0031; soleargumentchange **polarisgpu4→5**.
+  CPU1/20Hz/512MiBRAMCOW/ufsrw0 remain. NoGPUfirmwareexecution/SMMU/HFI DMA/
+  acceleration, physicalUSBproof or0032phoneaction yet. One-timereadonlyhost
+  check15:10:47UTC foundknownphoneNOTinFASTBOOT. Currentphone0031bootcomplete;
+  its human-stoppedobserver staysstopped. NewphysicalFASTBOOTquestion sent.
+  Afteractualhumanreply: run0032/run-device-step.py preflight (freshfull16GiB
+  hash/182extents/GPT/header/RO/unmounted/temp), thenboot-phone, immediately
+  start0032watch-usb.py andcontinueuntilsameboot's human“已进入系统”. OnECM
+  discoveryattemptRAMlog/panelwhilewatchcontinues. No fixedtimeout/reboot.
 
 - Latest user priority is actualGPU driver first, plus USB RAMlogs/panelcapture.
   Implemented0837 candidate: mode5 calls original32KiB GMU transfer/readback
