@@ -59,6 +59,11 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   Later0019photos6E7AA3D2 savedprivately;frames33575→33971→34366,lines3/bus0,
   no visiblepanic;COW26249/32768/dirty419880KiB/refused0/UFSerror0. App cause
   unknown. Need fullCI/newkernelQEMU/image beforephysicalrequest.
+-0020 source943c01164f8c86a7741ad835d3e503dda7fba56e committed+pushed;
+  CI40071727505 in progress. Preparation scripts staged under private
+  research/polaris/interactive-0020/, sameADT/immutablebase/physicalinput,
+  onlyphonebootargdifferencequiet1. Full exactkernel regressions+payload
+  validator/hash/provenance required before physicalFASTBOOT request.
 -0019 FIX: RMI4 Ctrl0 CONFIGURED bit7 is a command whose readback is0;0018
   incorrectly requires (control&83)==80. Correct mode verifies normal sleep
   bits and Data0 UNCONFIGURED bit7clear, rejects flash/CRC/fatal/transport
