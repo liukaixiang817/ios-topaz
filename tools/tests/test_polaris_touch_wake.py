@@ -21,7 +21,7 @@ class TouchWakeTests(unittest.TestCase):
 #include "polaris-touch-wake.h"
 struct board {
     uint32_t cfg[3],out[3];unsigned now,power_at,reset_ready,writes,sleeps,lines_reads;
-    bool rails,enable_stuck,reset_stuck,lines_drop,after_reset_drop;
+    bool rails,enable_stuck,reset_stuck,lines_drop,after_reset_drop,irq_write_stuck;
 };
 static unsigned idx(unsigned pin) {
     assert(pin==23 || pin==99 || pin==125);return pin==23?0:pin==99?1:2;
@@ -36,8 +36,13 @@ static uint32_t rd(void *ctx,unsigned pin,unsigned off) {
     return b->out[i] | high;
 }
 static void wr(void *ctx,unsigned pin,unsigned off,uint32_t value) {
-    struct board *b=ctx;unsigned i=idx(pin);assert(pin==23 || pin==99);
+    struct board *b=ctx;unsigned i=idx(pin);assert(pin==23 || pin==99 || pin==125);
     assert(off==0 || off==4);b->writes++;
+    if(pin==125) {
+        assert(off==0 && !b->out[1]); /* Input configuration only, reset held. */
+        if(!b->irq_write_stuck)b->cfg[i]=value;
+        return;
+    }
     if(pin==23)assert(!b->out[1]); /* Never change supply on a running controller. */
     bool before=enabled(b);
     if(!off)b->cfg[i]=value;
@@ -77,6 +82,27 @@ int main(void) {
     assert(polaris_touch_wake(&g)==PW_OWNER && !b.writes);
     g=init(&b);b.cfg[2]=0x200;
     assert(polaris_touch_wake(&g)==PW_OWNER && g.failed_pin==125 && !b.writes);
+    /* Actual0017 state: enable high; reset and attention handed off low. */
+    g=init(&b);b.cfg[0]=0x3c3;b.out[0]=2;b.cfg[2]=0x201;g.irq_input=true;
+    assert(!polaris_touch_wake(&g) && g.step==7 && g.changed==6);
+    assert(b.writes==3 && b.cfg[2]==0x1c3 && !b.out[2] && b.out[1]==2);
+    assert(g.old_irq_cfg==0x201 && g.irq_cfg==0x1c3 && b.cfg[0]==0x3c3);
+    g=init(&b);b.cfg[2]=0x201;g.irq_input=true;b.reset_stuck=true;
+    assert(polaris_touch_wake(&g)==PW_RESET && g.changed==7 && g.rolled_back);
+    assert(b.cfg[2]==0x201 && b.cfg[1]==0x201 && !b.out[1] && !b.out[0]);
+    g=init(&b);b.cfg[2]=0x201;g.irq_input=true;b.irq_write_stuck=true;
+    assert(polaris_touch_wake(&g)==PW_IRQ && g.step==9 && g.changed==4 && g.rolled_back);
+    assert(b.writes==2 && !b.now && b.cfg[2]==0x201);
+    g=init(&b);b.cfg[2]=0x201;g.irq_input=true;b.out[1]=2;
+    assert(polaris_touch_wake(&g)==PW_OWNER && !b.writes); /* Running controller preserved. */
+    g=init(&b);b.cfg[2]=0x205;g.irq_input=true;
+    assert(polaris_touch_wake(&g)==PW_OWNER && !b.writes); /* Foreign mux preserved. */
+    g=init(&b);b.cfg[2]=0x201;g.irq_input=true;b.out[2]=2;
+    assert(polaris_touch_wake(&g)==PW_OWNER && !b.writes); /* Unexpected high output. */
+    g=init(&b);b.cfg[2]=0xf0000201;g.irq_input=true;
+    assert(!polaris_touch_wake(&g) && b.cfg[2]==0xf00001c3);
+    g=init(&b);b.cfg[2]=0x201;g.irq_input=true;b.rails=false;
+    assert(polaris_touch_wake(&g)==PW_LINES && b.cfg[2]==0x201 && !b.out[0] && !b.out[1]);
     g=init(&b);b.cfg[0]=0x205;
     assert(polaris_touch_wake(&g)==PW_OWNER && g.failed_pin==23 && !b.writes);
     g=init(&b);b.enable_stuck=true;

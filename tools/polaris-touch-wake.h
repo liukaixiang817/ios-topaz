@@ -7,7 +7,7 @@
 /* Explicit board opt-in only. Live polaris DT: fixed TP enableGPIO23,
  * active-low resetGPIO99, IRQ125. Never pulse an already released reset.
  * PMIC/voltage registers and panel resetGPIO6 are outside this interface. */
-enum { PW_OK, PW_ARGUMENT, PW_OWNER, PW_ENABLE, PW_LINES, PW_RESET };
+enum { PW_OK, PW_ARGUMENT, PW_OWNER, PW_ENABLE, PW_LINES, PW_RESET, PW_IRQ };
 struct polaris_touch_wake {
     void *ctx;
     uint32_t (*read)(void *, unsigned, unsigned);
@@ -15,9 +15,10 @@ struct polaris_touch_wake {
     void (*sleep_ms)(void *, unsigned);
     unsigned (*lines)(void *);
     unsigned step, error, changed, failed_pin, line_state;
-    bool rolled_back;
+    bool rolled_back, irq_input;
     uint32_t old_enable_cfg, old_enable_io, old_reset_cfg, old_reset_io;
     uint32_t enable_cfg, enable_io, reset_cfg, reset_io;
+    uint32_t old_irq_cfg, old_irq_io, irq_cfg, irq_io;
 };
 
 static inline bool pw_gpio_output(uint32_t cfg)
@@ -41,6 +42,10 @@ pw_failed(struct polaris_touch_wake *g, unsigned error, unsigned pin)
         g->write(g->ctx,23,4,g->old_enable_io & 2u);
         g->write(g->ctx,23,0,g->old_enable_cfg);
     }
+    if (g->changed & 4u) {
+        /* Reset restored first. Never write the IRQ output latch. */
+        g->write(g->ctx,125,0,g->old_irq_cfg);
+    }
     g->rolled_back=g->changed!=0;
     return (int)error;
 }
@@ -53,8 +58,21 @@ static inline int polaris_touch_wake(struct polaris_touch_wake *g)
     g->old_enable_io=g->enable_io=g->read(g->ctx,23,4);
     g->old_reset_cfg=g->reset_cfg=g->read(g->ctx,99,0);
     g->old_reset_io=g->reset_io=g->read(g->ctx,99,4);
+    g->old_irq_cfg=g->irq_cfg=g->read(g->ctx,125,0);
+    g->old_irq_io=g->irq_io=g->read(g->ctx,125,4);
     if (!pw_gpio_output(g->reset_cfg)) { return pw_failed(g,PW_OWNER,99); }
-    if (g->read(g->ctx,125,0)&0x23cu) { return pw_failed(g,PW_OWNER,125); }
+    if (g->irq_cfg&0x23cu) {
+        /* Separate exact-board opt-in, only observed GPIO/output-low with
+         * reset held. Vendor ts_active: GPIO,16mA,pull-up; direction input. */
+        if (!g->irq_input || (g->reset_io&2u) ||
+            (g->irq_cfg&0x3ffu)!=0x201u || (g->irq_io&3u)) {
+            return pw_failed(g,PW_OWNER,125);
+        }
+        g->step=9;g->changed|=4u;
+        g->write(g->ctx,125,0,(g->irq_cfg&~0x3ffu)|0x1c3u);
+        g->irq_cfg=g->read(g->ctx,125,0);g->irq_io=g->read(g->ctx,125,4);
+        if ((g->irq_cfg&0x3ffu)!=0x1c3u) { return pw_failed(g,PW_IRQ,125); }
+    }
     if (g->reset_io & 2u) {
         /* Preserve an already running controller; no power/reset writes. */
         g->line_state=g->lines(g->ctx)&3u;g->step=8;return PW_OK;

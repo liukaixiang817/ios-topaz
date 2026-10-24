@@ -110,6 +110,20 @@ class ADTTests(unittest.TestCase):
         root.children = [n for n in root.children if polaris.props(n)['name'] != b'polaris-touch\0']
         self.assertEqual(polaris.adt.serialize(root), polaris.adt.serialize(base))
 
+    def test_touch_irq_input_requires_wake_and_preserves_prior_tree(self):
+        with patch.object(polaris.mkadt, 'd22ap_product', return_value=None):
+            base = polaris.build(seed=b'x' * 64, touch=True, touch_wake=True)
+            root = polaris.build(seed=b'x' * 64, touch=True, touch_wake=True,
+                                 touch_irq_input=True)
+            for args in [{'touch_irq_input': True}, {'touch': True, 'touch_irq_input': True},
+                         {'qemu': True, 'touch': True, 'touch_wake': True, 'touch_irq_input': True}]:
+                with self.assertRaises(ValueError):
+                    polaris.build(**args)
+        node = polaris.child(root, 'polaris-touch')
+        self.assertEqual(struct.unpack('<I', polaris.props(node)['irq-input']), (125,))
+        node.props = [prop for prop in node.props if prop[0] != 'irq-input']
+        self.assertEqual(polaris.adt.serialize(root), polaris.adt.serialize(base))
+
     def test_touch_wake_is_separate_explicit_board_opt_in(self):
         with patch.object(polaris.mkadt, 'd22ap_product', return_value=None):
             base = polaris.build(seed=b'x' * 64, touch=True)

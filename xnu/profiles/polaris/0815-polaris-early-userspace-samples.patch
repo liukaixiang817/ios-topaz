@@ -1,0 +1,170 @@
+--- a/bsd/dev/sweet_sample.c
++++ b/bsd/dev/sweet_sample.c
+@@ -38,6 +38,40 @@
+ };
+ struct polaris_sample_pass { unsigned seen, mask; const char *focus; };
+ 
++static uint32_t polaris_boot_stage, polaris_boot_error, polaris_exec_checks;
++void polaris_boot_record(unsigned, int);
++void polaris_boot_exec_check(void);
++void polaris_boot_record(unsigned stage, int error)
++{
++    __atomic_store_n(&polaris_boot_error,(uint32_t)error,__ATOMIC_RELAXED);
++    __atomic_store_n(&polaris_boot_stage,stage,__ATOMIC_RELAXED);
++}
++void polaris_boot_exec_check(void)
++{ (void)__atomic_fetch_add(&polaris_exec_checks,1,__ATOMIC_RELAXED); }
++
++struct polaris_boot_pass { unsigned total, rows, pid1; };
++static int polaris_boot_proc(proc_t p, void *arg)
++{
++    struct polaris_boot_pass *pass=arg;
++    int pid=proc_pid(p);
++    ++pass->total;
++    if (pass->rows<8 || pid==1) {
++        printf("D P: %d %s st=%u lf=%x f=%x\n",pid,proc_best_name(p),
++            (unsigned)p->p_stat,(unsigned)p->p_lflag,(unsigned)p->p_flag);
++        ++pass->rows;
++    }
++    if (pid==1 && !pass->pid1) {
++        pass->pid1=1;
++        task_t task=proc_task(p);
++        if (task!=TASK_NULL) {
++            task_reference(task);
++            polaris_sample_task(proc_best_name(p),pid,task,1);
++            task_deallocate(task);
++        }
++    }
++    return PROC_RETURNED;
++}
++
+ static int
+ polaris_sample_proc(proc_t p, void *arg)
+ {
+@@ -83,6 +117,17 @@
+         /* Never wait for an exec/fork transition just to collect evidence. */
+         proc_iterate(PROC_ALLPROCLIST | PROC_NOWAITTRANS, polaris_sample_proc, &pass, NULL, NULL);
+         printf("PS END %u: found=%u mask=0x%x\n", i, pass.seen, pass.mask);
++        if (focused && !pass.seen) {
++            /* Report PID1 even before it has an executable name. No waiting
++             * for exec transitions, no faulting user pages, max3 threads. */
++            struct polaris_boot_pass boot={0};
++            printf("D BOOT: stage=%u error=%d exec_checks=%u\n",
++                __atomic_load_n(&polaris_boot_stage,__ATOMIC_RELAXED),
++                (int)__atomic_load_n(&polaris_boot_error,__ATOMIC_RELAXED),
++                __atomic_load_n(&polaris_exec_checks,__ATOMIC_RELAXED));
++            proc_iterate(PROC_ALLPROCLIST | PROC_NOWAITTRANS,polaris_boot_proc,&boot,NULL,NULL);
++            printf("PB END %u: procs=%u rows=%u pid1=%u\n",i,boot.total,boot.rows,boot.pid1);
++        }
+         (void)tsleep(&chan, PZERO, "polsmp", (focused ? 15 : 30) * hz);
+     }
+     printf("POLARIS SAMPLE: finished\n");
+--- a/bsd/kern/bsd_init.c
++++ b/bsd/kern/bsd_init.c
+@@ -1081,21 +1081,33 @@
+ 	bsd_init_kprintf("done\n");
+ }
+ 
++#if defined(POLARIS_RAM_ONLY)
++extern void polaris_boot_record(unsigned, int);
++#endif
+ void
+ bsdinit_task(void)
+ {
+ 	proc_t p = current_proc();
+ 
+ 	process_name("init", p);
++#if defined(POLARIS_RAM_ONLY)
++    polaris_boot_record(1,0);
++#endif
+ 
+ 	/* Set up exception-to-signal reflection */
+ 	ux_handler_setup();
++#if defined(POLARIS_RAM_ONLY)
++    polaris_boot_record(2,0);
++#endif
+ 
+ #if CONFIG_MACF
+ 	mac_cred_label_associate_user(proc_ucred(p));
+ #endif
+ 
+ 	vm_init_before_launchd();
++#if defined(POLARIS_RAM_ONLY)
++    polaris_boot_record(3,0);
++#endif
+ 
+ #if CONFIG_XNUPOST
+ 	int result = bsd_list_tests();
+@@ -1108,6 +1120,9 @@
+ 	bsd_init_kprintf("bsd_do_post - done");
+ 
+ 	load_init_program(p);
++#if defined(POLARIS_RAM_ONLY)
++    polaris_boot_record(5,0);
++#endif
+ 	lock_trace = 1;
+ }
+ 
+--- a/bsd/kern/kern_exec.c
++++ b/bsd/kern/kern_exec.c
+@@ -6755,6 +6755,10 @@
+ 	int error;
+ 	struct execve_args init_exec_args;
+ 	user_addr_t argv0 = USER_ADDR_NULL, argv1 = USER_ADDR_NULL;
++#if defined(POLARIS_RAM_ONLY)
++    extern void polaris_boot_record(unsigned,int);
++    polaris_boot_record(6,0);
++#endif
+ 
+ 	/*
+ 	 * Validate inputs and pre-conditions
+@@ -6828,7 +6832,14 @@
+ 	 */
+ 	set_security_token(p);
+ 
++#if defined(POLARIS_RAM_ONLY)
++    polaris_boot_record(7,0);
++    error=execve(p,&init_exec_args,retval);
++    polaris_boot_record(8,error);
++    return error;
++#else
+ 	return execve(p, &init_exec_args, retval);
++#endif
+ }
+ 
+ static const char * init_programs[] = {
+@@ -7414,6 +7425,10 @@
+ #if defined(ARM64_BOARD_CONFIG_SWEET)
+ 			/* SWEET runs every iOS binary this way: one short line per exec. */
+ 			printf("exec %s\n", p->p_name);
++#if defined(POLARIS_RAM_ONLY)
++            extern void polaris_boot_exec_check(void);
++            polaris_boot_exec_check();
++#endif
+ #else
+ 			printf("Allowing spawn of iOS binary %s since it has "
+ 			    "com.apple.private.security.no-sandbox entitlement or unentitled_ios_sim_launch "
+--- a/osfmk/kern/exception.c
++++ b/osfmk/kern/exception.c
+@@ -1155,7 +1155,7 @@
+     printf("PS %s[%d] s=%x h=%llx n=%u/%u stack=%u\n", name, pid, slide, mh, count, total, map != VM_MAP_NULL);
+     for (unsigned i = 0; i < count; i++) {
+         uint64_t pc = 0, lr = 0, sp = 0, fp = 0, regs[8] = {0}, x16 = 0;
+-        uint64_t tid;
++        uint64_t tid, wait_event, continuation;
+         unsigned state;
+         bool valid = false;
+         thread = refs[i];
+@@ -1170,9 +1170,12 @@
+             valid = true;
+         }
+         tid = thread->thread_id; state = (unsigned)thread->state;
++        wait_event=(uint64_t)thread->wait_event;
++        continuation=(uint64_t)thread->continuation;
+         thread_unlock(thread); splx(s);
+         thread_deallocate(thread);
+         printf("T %d/%u id=%llu st=%x v=%u pc=%llx lr=%llx sc=%lld\n", pid, i, tid, state, valid, pc, lr, (int64_t)x16);
++        if (pid==1) { printf("K %d/%u wait=%llx cont=%llx\n",pid,i,wait_event,continuation); }
+         if ((focused || i == 0) && (int64_t)x16 == -47) {
+             printf("M %d/%u opt=%llx ports=%llx id=%llx recv=%llx\n", pid, i, regs[1], regs[3], regs[4], regs[5]);
+         }

@@ -40,7 +40,7 @@ def child(node, name):
 
 
 def build(seed=None, qemu=False, ufs_head=None, file_root=None, display=False,
-          wifi_mac=None, touch=False, touch_wake=False):
+          wifi_mac=None, touch=False, touch_wake=False, touch_irq_input=False):
     if ufs_head is not None and qemu:
         raise ValueError('QEMU cannot probe the phone UFS controller')
     if file_root is not None and (qemu or ufs_head is not None):
@@ -49,6 +49,8 @@ def build(seed=None, qemu=False, ufs_head=None, file_root=None, display=False,
         raise ValueError('physical Synaptics input is not available in QEMU')
     if touch_wake and (not touch or qemu):
         raise ValueError('touch wake requires explicit phone touch opt-in')
+    if touch_irq_input and not touch_wake:
+        raise ValueError('touch IRQ input requires explicit board wake opt-in')
     if wifi_mac is not None:
         if not isinstance(wifi_mac, bytes) or len(wifi_mac) != 6:
             raise ValueError('Wi-Fi factory identity must be exactly six raw bytes')
@@ -125,6 +127,8 @@ def build(seed=None, qemu=False, ufs_head=None, file_root=None, display=False,
         if touch_wake:
             setprop(device, 'wake-version', mkadt.u32(1))
             setprop(device, 'wake-gpios', mkadt.u32(23, 99))
+        if touch_irq_input:
+            setprop(device, 'irq-input', mkadt.u32(125))
         root.children.append(device)
     return root
 
@@ -141,6 +145,8 @@ if __name__ == "__main__":
                         help='opt in to MIX2S Synaptics input; also needs polaristouch=1 or2')
     parser.add_argument('--touch-wake', action='store_true',
                         help='explicitly permit fixed TP enableGPIO23 and release of held resetGPIO99; requires --touch')
+    parser.add_argument('--touch-irq-input', action='store_true',
+                        help='release observed GPIO125 output-low to vendor input state while reset held; requires --touch-wake')
     parser.add_argument('--ufs-probe-head', type=Path,
                         help='verified LUN0 head backup for optional read-only probe; needs polarisufsprobe=1')
     parser.add_argument('--file-root-manifest', type=Path,
@@ -148,6 +154,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     blob = adt.serialize(build(qemu=args.qemu, display=args.display, touch=args.touch,
                               touch_wake=args.touch_wake,
+                              touch_irq_input=args.touch_irq_input,
                               wifi_mac=args.wifi_mac_file.read_bytes() if args.wifi_mac_file else None,
                               ufs_head=args.ufs_probe_head.read_bytes() if args.ufs_probe_head else None,
                               file_root=json.loads(args.file_root_manifest.read_text()) if args.file_root_manifest else None))

@@ -10,7 +10,47 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT PHONE —0017 temporary boot sent; await physical input report
+### CURRENT NEXT ACTION —0017 no lockscreen; IRQ direction and early startup
+
+- NEW0017 photos B8114285... (two) and2226B4B6... (later) saved privately as
+  touch-0017/hardware-no-lockscreen-{1..3}.jpg +hardware-no-lockscreen.json.
+  User confirms no lockscreen. Samples18..27: SpringBoard/lsd/MCM all found0,
+  FB calls/swaps/present/pixels0; COW45/32768,dirty584KiB/written748KiB stable,
+  UFS-error0/refused0. This boot has not reached the observed0016 GUI stage.
+  Earliest startup cause unknown; no evidence touch failure causes this stall.
+- D TOUCHphase9/result15/done1/frames0/down0;fw300/status0/irq0;TIFfifo1/
+  tx0/rx0/path2/lines0/bus0. D TWstep1/error2/changed0/rollback0/lines0.
+  D TG en3c3/3,reset201/0,was201/0;TRMIreg357d000/n8/data201/0. Exact source
+  identifies GPIO125 IRQ direction guard: GPIO output low, not input. Wake
+  made NO GPIO writes; GPIO23 already output high, reset99 still asserted.
+  lines0/bus0 are unmeasured defaults. Failed touch worker has ended.
+- LiveDT ts_active8d explicitly GPIO99/125,GPIO mux,16mA,pull-up; MiCode
+  Synapticscore set_gpio configures IRQ as input before power/reset. Verified
+  pinctrl-v2 GPIO125 EAST. Plan0018 separately opted-in IRQ125 input release,
+  only from observed GPIO/output-low state while reset held, with rollback;
+  preserve old opt-in behavior. Also add bounded PID1/early startup diagnostics
+  when focused GUI targets are absent. Do not infer the GUI stall's cause.
+- Keep current0017 running; swipe question ANSWERED no lockscreen. No new
+  physical reboot request. Newsource/native+actual-header builds/fullCI and
+  newkernelQEMU/preparedimage required before asking FASTBOOT. Exact0017
+  source snapshots saved touch-0018/originals/ before changes. Full local
+  HackiOS references remain indexed in REFERENCE_REPOS.md.
+- IMPLEMENTED0018: separate ADT irq-input125 (requires wake opt-in). Only
+  observed GPIO125cfg201/io0 while reset99 held low may become GPIO/input/
+  pull-up16mA per liveDT; no IRQ latch write, reject foreign mux/high latch/
+  running controller. Readback, retained D TI before/after, and rollback after
+  restoring reset preserve inherited state on failure. Absent new marker
+  preserves0017 behavior. Native actual-sequence electrical/timing model+
+  exact shipped header2tests,10ADT+3profiletests ALL PASS (15total);5 actual
+  CI-header ARM64 objects PASS;0814/0815 all6files apply+MATCH.
+- Added0018 early startup diagnostics: when focused GUI target absent, bounded
+  process rows and PID1 (regardless executable name), max3threads/12resident
+  frames, saved wait_event/continuation. D BOOT retains bsdinit/initialexec
+  stage/error and iOS exec-policy check count. No faulting user pages or waits
+  for exec transitions. Normal focused samples unchanged. Need real-kernel
+  QEMU fallback case plus existing modes; native tests are not phone proof.
+
+### 0017 actual temporary boot history
 
 - User answered "已到 FASTBOOT". Fresh0017 readonly preflight exec14876
   exit0 PASS, battery32C. Full16GiB base SHA689a8cd1... MATCH in77.449s; fresh182maps
