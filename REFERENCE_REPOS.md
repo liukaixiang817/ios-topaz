@@ -102,15 +102,29 @@ native gadget omitted that step.0025 implements the sequence with command
 serialization and a saved first-failure record; physical USB success remains
 unproven.
 
+The0025 physical command snapshot is Q0/1/401/2: DEPSTARTCFG completed,
+then EP0 SETEPCONFIG timed out with CMDACT set. The admitted controller ID
+5533300a identifies DWC_usb3 3.30a. The official Linuxv6.12
+[endpoint command implementation](https://github.com/torvalds/linux/blob/v6.12/drivers/usb/dwc3/gadget.c#L308),
+verified Gitblob4959c26d3b71b89347e9118b1fb732b512ba8c05, requires temporarily
+clearing both SUSPHY and ENBLSLPM for this high-speed controller.0026 follows
+that rule, restores both controls with unrelated bits preserved, and keeps
+its existing1000poll bound. It remains untested on the physical phone.
+
 The live Polaris DT's gpu_cx_gdsc points hw-ctrl-addr to0x5091540.
 The matching original
 [gdsc-regulator.c](https://github.com/MiCode/Xiaomi_Kernel_OpenSource/blob/c7cb50c18f812629b9620b2b8fa684bc40d82080/drivers/clk/qcom/gdsc-regulator.c#L105)
 selects that hardware status register for its POWER_ON poll. Our initial
 read-only probe incorrectly required POWER_ON in both request and status
 registers.0025 corrects that requirement while keeping the clock gates.
-The G303 physical snapshot reflects the old probe and does not establish
-physical CX power state. Raw saved values are exposed in the larger0025 bar;
-no GPU firmware execution or acceleration has yet been demonstrated.
+The earlier0024 G303 alone reflects the old probe; the corrected0025 raw
+snapshot CX00222001/HW00005ff4 now establishes that CX was initially off.
+Original gdsc-regulator.c and the live DT support0026's bounded CX request
+trial: clear SW_COLLAPSE only, poll POWER_ON up to500us, restore the original
+request, and do not wait for OFF (other masters may vote on). Parentcx.lvl
+rail and clocks are not changed. The trial does not load or execute firmware
+and does not provide accelerated rendering. Native tests cover refusal,
+timeout, posted-write failure and restoration; physical outcome is pending.
 
 The reference's [xl host tool](https://github.com/oosexgang/hackios-xnu-kernel/blob/d82c64a3a31cd27a0a0afbf6e213e467e44b1b4c/xl)
 drives a resident UEFI loader's fastboot-protocol server in

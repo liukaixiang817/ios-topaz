@@ -51,8 +51,39 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   paths and frame-budget rounding/overflow/outlier cases. Three real-header
   ARM64units compile PASS; all imports resolve against0025+newobjects.
   Ten ordered patches0821..0830 apply without fuzz/offset; all16resulting
-  files match actualcompiletree. Full CI and new exact-kernel standard-clock
-  runs remain pending. No0026image/request/phoneactionyet; phone remains0025.
+  files match actualcompiletree. Full CI and exact-kernel standard-clock
+  runs nowPASS below. Phone remains0025; no0026phoneactionyet.
+- Source **14f5abbf159206ba26bff8e0262d9a18cd9a4487** committed/pushed;
+  CI **40089926936/job120860350673 SUCCESS**, Build4m38s
+  (11:27:01–11:31:39UTC). Private pipeline76710 retrieves the full gh log,
+  downloads exact source/profile CRC/SHA-verified kernel, then runs
+  CPU1 base120s/asyncnetwork90s/newmode3 noMMIO60s and prepares without any
+  phone action. All three cases additionally require power result0/read0/write0.
+  Fullci-40089926936.log saved; verified kernel SHA
+  **728df82d2932138daae2794b4166dc6cd2b97b6842d172069ea0e4078f6ef66a**
+  atxnu/out-polaris-0026/kernel.development.sweet. Pipeline76710 exited0 at
+  **11:37:43.631072UTC**. CPU1 base120s/asyncnetwork90s/mode3 noMMIO60s
+  all FIRST PASS,**48assertions**, all fourVMchildren finish in each. The
+  actual asyncnetworkAPI reaches phase9/error0. Mode3 on syntheticGIC
+  records GPU power result0/read0/write0. No new failures/retries; prior SMP
+  and synccomparison failures remain unresolved. No hardware emulation claim.
+- **0026 PREPARED, NOT BOOTED**: image
+  `shim/out/polaris-xnu-readdebug-0026/polaris-xnu-readdebug-0026.img`,
+  47407104bytes SHA **f17521e8fac62833dc7608365083d31c6111af9bc88033d3169b22d4654ec1df**;
+  payload SHA **92b86841fcfd40d2aad70fb5da2adaea425f61c493687a31f95647e6219dc12f**.
+  Final independent check **PASS11:38:18.266876UTC**: source/profile/CI
+  patchapplication, frozen15nativeinputs,3ARM64objects/imports,10patches/16files,
+  original6firmwares,3exactkernelrunprovenances, Cpayloadvalidator/rebuiltpayload,
+  embeddedimage/manifest/65DTBs allverified. PhoneADTbyteidentical0025; args
+  differONLY hz10→20/gpu2→3. CPU1/512MiBRAMCOW/ufsrw0 retained.
+- NEXT: request physical FASTBOOT because0025 has no working USB link.
+  Only afterhumanconfirmation, usecontinuation-0026/run-device-step.py preflight
+  thenboot-phone: knownheadlessrecovery, freshfull16GiBhash/182maps/GPT/header/
+  RO/unmounted/tempcheck, then temporaryboot0026. Neverrepairpendingjournal.
+  BootwrapperrequiresfinalPASS andfreshproof<600s. Thenreadonlywatch-usb.py;
+  ifECMappears, collectRAMlog/panel withtools/polaris-usb-debug.py. Human
+  validation: lockscreen→home→Settings→return, top S/E/Q/L andnewGPU P.
+  No0026deviceactionhasoccurred; physical USB/CXtrial/performancepending.
 
 ### 0025 EP0 wake / CPU display / CX status correction
 

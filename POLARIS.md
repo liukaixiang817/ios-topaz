@@ -8,9 +8,12 @@ Build0024 restored the GUI with stuttering interaction; its saved USB
 stage12/error5 identified EP0 setup failure, with no host debug interface.
 Build0025 was temporarily sent at11:08:35UTC after another full read-only
 check. The host observed no known-phone USB device or matching ECM NIC over
-61.571seconds; its GUI/performance and saved phase/command results are pending.
-The last confirmed
-working build **0021** runs real iOS 16.7.16 (20H392) on the MIX 2S, with
+61.571seconds. The human confirms usable operation, slightly faster, and a
+Settings photo shows scrollable content. USB remains S12/E5, Q0/1/401/2:
+EP0 SETEPCONFIG timed out with CMDACT set. GPU initial CX request00222001 /
+HW00005ff4 confirms CX off; GMU and CXO clocks are off. T10458 is one
+presentation's10.458ms elapsed wall time, not average FPS or CPU utilization.
+Earlier working build **0021** runs real iOS 16.7.16 (20H392) on the MIX 2S, with
 physical swipe into the home screen, Settings content after a wait, and swipe
 back home. Its first Settings launch needs about45seconds by human estimate
 (0020 was estimated at10–30seconds
@@ -35,8 +38,8 @@ actual0021 boot, the host observed neither its USB device nor its ECM NIC
 over one minute, and a later read-only check also found no interface.
 The0023 host observation also found noUSBdevice orECM over61.540seconds
 (21samples, last10:00:43UTC). **USB debugging and SSH are currently unavailable.**
-On0024, the saved progress identifies EP0 configuration failure (S12/E5);
-the exact failed endpoint command is not yet known. No SSH daemon is
+On0025, Q0/1/401/2 identifies EP0 SETEPCONFIG command1 timeout;
+DEPSTARTCFG9 completed first. No SSH daemon is
 installed. The macOS receiver is `tools/polaris-usb-log.py`; its plan mode
 changes no network configuration. The debug profile disables repeated caller
 stack sampling; this has not demonstrated a speedup.
@@ -228,11 +231,34 @@ Final independent source/payload/image checks pass at11:03:41UTC. After a
 fresh full16GiBhash/182maps/GPT/header/RO/unmounted check, temporary0025 was
 sent at11:08:35UTC (Sending/Booting OKAY,1.178s). The subsequent host watch found
 no known-phone USB device or matching ECM NIC in21samples/61.571s, ending
-11:09:55UTC; no log or panel was captured. GUI/performance and saved status
-results still need physical observation.
+11:09:55UTC; no log or panel was captured. The human subsequently confirms
+operation and slightly faster interaction; this is not a quantified benchmark.
 Prior SMP and synchronous timer
-failures remain unresolved. Hardware USB success, GPU execution and a speed
-improvement have not yet been demonstrated.
+failures remain unresolved. Hardware USB success, GPU execution and a
+quantified speed improvement have not yet been demonstrated.
+
+The0026 source adds three changes; its full build and exact-kernel regression
+pass. DWC3 3.30a requires both SUSPHY and ENBLSLPM clear around
+endpoint commands; the new helper restores both controls on every return path
+under the existing command mutex and retains the1000poll bound. A new explicit
+polarisgpu3 mode briefly clears only CX SW_COLLAPSE, checks HW POWER_ON for
+at most500one-us polls, then restores the original collapse request and checks
+its readback. It follows the live DT's no-status-check-on-disable: another
+master can keep the domain on. No rail, clock, reset, firmware execution,
+SMMU operation or accelerated service is added. P reports its trial result;
+G/CX/HW/M/X retain the initial snapshot.
+
+Display presentation uses elapsed-time deadlines with a requested20Hz upper
+limit and a backoff based on the previous presentation's elapsed time, capped
+at200ms. This heuristic is not a CPU-utilization guarantee. Only hz10→20 and
+gpu2→3 change in phone arguments; one CPU, identical ADT,512MiB RAM COW and
+ufsrw0 remain. Fifteen native tests, three actual-header ARM64 units, import
+resolution and the ten-patch/sixteen-file chain pass. Full
+[CI40089926936](https://github.com/liukaixiang817/ios-topaz/actions/runs/40089926936)
+succeeds in4m38s. The three standard-clock modes pass48checks on their first
+runs; source/firmware/payload/image validation passes11:38:18UTC. The0026
+temporary image is prepared, with no phone action yet. Physical USB, CX trial
+and performance results remain pending; the phone still runs0025.
 
 ## Standalone boot diagnostic 0001
 
