@@ -125,7 +125,25 @@ trial: clear SW_COLLAPSE only, poll POWER_ON up to500us, restore the original
 request, and do not wait for OFF (other masters may vote on). Parentcx.lvl
 rail and clocks are not changed. The trial does not load or execute firmware
 and does not provide accelerated rendering. Native tests cover refusal,
-timeout, posted-write failure and restoration; physical outcome is pending.
+timeout, posted-write failure and restoration. The later0026 Settings photo
+shows P5: POWER_ON observed and the original collapse request restored. It
+proves that bounded step, without proving GPU/GMU execution or an OFF status.
+
+The next component follows the original
+[gpucc-sdm845.c](https://github.com/MiCode/Xiaomi_Kernel_OpenSource/blob/c7cb50c18f812629b9620b2b8fa684bc40d82080/drivers/clk/qcom/gpucc-sdm845.c#L414),
+[clk-rcg2.c](https://github.com/MiCode/Xiaomi_Kernel_OpenSource/blob/c7cb50c18f812629b9620b2b8fa684bc40d82080/drivers/clk/qcom/clk-rcg2.c#L149)
+and [clk-branch.c](https://github.com/MiCode/Xiaomi_Kernel_OpenSource/blob/c7cb50c18f812629b9620b2b8fa684bc40d82080/drivers/clk/qcom/clk-branch.c#L80).
+Gitblobs35bcf5aec32630eba579dbb15246afe840f2b51d and
+fa0ca364c0234fbbbc939d9f57941fc5456fa281 were verified before use.
+The0027 clock helper holds GMU in block reset, accepts only an already parked
+TCXO19.2MHz source, polls root/branch status, and reverses its requests before
+releasing reset. Unknown parents, hardware control or active consumers are
+refused. It does not execute the firmware or borrow the redwood address map.
+
+The original gadget.c allocates transfer resources immediately after
+DEPSTARTCFG0, before SETEPCONFIG.0027 follows that order and HS EP0 packet64,
+retaining the existing command serialization and bounds. Physical outcome
+remains pending.
 
 The reference's [xl host tool](https://github.com/oosexgang/hackios-xnu-kernel/blob/d82c64a3a31cd27a0a0afbf6e213e467e44b1b4c/xl)
 drives a resident UEFI loader's fastboot-protocol server in

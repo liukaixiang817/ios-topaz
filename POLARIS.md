@@ -20,6 +20,10 @@ back home. Its first Settings launch needs about45seconds by human estimate
 under different conditions). An immediate second open on the same0021 boot
 takes under3seconds. These are separate first/repeat measurements; latency/FPS
 are not instrumented.
+The current0026 human report supersedes those launch estimates for current
+behavior: first opening is already fast, interaction works, and scrolling /
+animation still stutter with little subjective change. A physical photo shows
+CX power-trial P5 but no running GPU firmware or accelerated rendering.
 GPU acceleration, Wi-Fi, full App compatibility and a persistent UEFI iOS entry
 remain unfinished. Read `NOTES.md` for the current source, image and handoff.
 
@@ -261,8 +265,38 @@ temporary image passed another full16GiBhash/182maps/GPT/header/RO check
 at11:41:19UTC and was sent at11:41:57UTC (Sending/Booting OKAY,1.173s).
 No partition write. The host again sees no known-phone USB device or ECM
 in21samples/61.698s through11:43:08UTC; no host network settings changed,
-log or panel captured. Physical GUI, saved USB stage/command, CX trial and
-performance results remain pending.
+log or panel captured. A later photo shows Settings and **P5**, confirming
+CX POWER_ON was observed and the original collapse request was restored.
+Saved G/CX/HW/M/X remain the initial snapshot; P5 does not prove an OFF
+status, running GMU firmware or acceleration. USB still shows S12/E5,
+Q0/1/401/2, L2400: both low-power bits were already clear. The human confirms
+normal operation with little speed change; first app opening is already fast.
+Current priority is GPU acceleration for scrolling/animation; stop raising
+presentation frequency.
+
+Source0027 adds reset-held SDM845 GMU clock acquisition, nested inside the
+owned CX-ON interval. It only accepts an idle GMU clock source already parked
+at19.2MHz TCXO, asserts GPUCC_GMU_BCR, enables AON/CXO/source/CX_GMU clocks,
+then restores clock requests in reverse before releasing reset and restoring
+CX collapse. Every wait is bounded500one-us polls. A failed clock cleanup
+retains reset and reports failure. There is no PLL/voltage/rate change, GMU
+CSR access, firmware execution, SMMU operation or accelerated service. K shows
+clock result/step; K6 means clocks were observed on under reset and requests
+restored, not a running GPU.
+
+The same source aligns DWC3 resource allocation with the pinned original
+vendor driver: DEPSTARTCFG0, resources for hardware endpoints0..5, EP0 OUT/IN
+configuration at HSmaxpacket64, and no second resource allocation during
+SET_CONFIGURATION. It is a candidate repair for the persistent EP0 timeout.
+Seventeen native tests under ASan/UBSan, two actual-header ARM64 units/imports,
+and twelve ordered patches/eighteen files pass. Full
+[CI40091997436](https://github.com/liukaixiang817/ios-topaz/actions/runs/40091997436)
+succeeds in4m26s; allthree standard-clock modes FIRST PASS51checks, with no
+new failures or retries. Independent source/firmware/payload/image validation
+passes12:09:42UTC. The0027image is prepared; no0027phoneaction has occurred.
+The phone remains0026;0027 changes
+only polarisgpu3→4 in arguments, leaving display settings, one CPU,512MiB
+RAM COW, ufsrw0 and the ADT unchanged.
 
 ## Standalone boot diagnostic 0001
 

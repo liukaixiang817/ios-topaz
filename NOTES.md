@@ -49,8 +49,41 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   hookexecutedonlyinsideCXON andnoMMIOaftercollapse. TwoactualCI-header
   ARM64unitscompilePASS/allimportsresolve against0026+newobjects. Twelve
   orderedpatches0821..0832 applywithoutfuzz/offset, all18filesmatchcompiletree.
-  FullCI/standard-clock exactkernelruns/imagepending. Phone remains0026;
-  no0027phoneaction/requestyet. Commit andbuild before requestingFASTBOOT.
+  FullCI/standard-clock exactkernelruns/finalimagecheck nowPASS below. Phone remains0026;
+  no0027phoneaction/requestyet.
+- Source **17ca66cd8675b10526828f36344216424b1c0cfb** committed/pushed;
+  CI **40091997436/job120866411548 SUCCESS**, Build4m26s
+  (11:58:28–12:02:54UTC).
+  Full gh log saved atresearch/polaris/ci-40091997436.log.
+  Privatepipeline47374 waits for exactsource/profile
+  and CRC/SHAverifieddownload, then selectedCPU1 base120s/asyncnetwork90s/
+  mode4 noMMIO60s. Eachcase additionallyrequires D GPU CLOCK result0/read0/
+  write0. Pipeline47374 exited0 at **12:08:52.056111UTC**: allthreeCPU1
+  standard-clock cases FIRST PASS,**51assertions**, allfourVMchildren finish
+  ineach; actualasyncnetwork phase9/error0. Mode4syntheticGIC has GPU power
+  andclock result0/read0/write0. No newfailures/retries. PriorSMP/synccomparison
+  failures remainunresolved; noactualUSB/GPUhardware emulation claim.
+- Verifiedkernel `xnu/out-polaris-0027/kernel.development.sweet` SHA
+  **601f1321437d272ba6d34ebe128d213d7706fa043696dbe187a8a8b86cf20ed6**.
+  **0027 PREPARED, NOT BOOTED** image
+  `shim/out/polaris-xnu-readdebug-0027/polaris-xnu-readdebug-0027.img`,
+  47407104bytes SHA **05f59a76b8403d0fa582a3e551670311daa1940ebfd1ab6811216e591d82887b**;
+  payload SHA **4a9fee2405464956e2cd819629d0292c46cbbfe1c1e9e6dd313a57fd13ed96c4**.
+  Finalindependentcheck **PASS12:09:42.118911UTC**: source/profile/CIpatchapply,
+  frozen17nativeinputs,2actualARM64objects/imports,12patches/18files, original6
+  firmwareimages,3exactkernelrunprovenances, Cpayloadvalidator/rebuiltpayload,
+  embeddedimage/manifest/65DTBs allverified. ADTbyteidentical0026; ONLYarg
+  change polarisgpu3→4; keepHz20/CPU1/512MiBRAMCOW/ufsrw0.
+- NEXT requestphysicalFASTBOOT because0026USBstillunavailable. Onlyafterhuman
+  confirmation, continuation-0027/run-device-step.py preflight thenboot-phone:
+  knownheadlessrecovery, freshfull16GiBhash/182maps/GPT/header/RO/unmounted/
+  temperaturecheck then temporary0027boot. Neverrepairpendingjournal.
+  BootwrapperrequiresfinalPASS andfreshproof<600s. Thenwatch-usb.py readonly;
+  ifECMappears, collectRAMlog/panel withtools/polaris-usb-debug.py. Human
+  checks GUIflow andtop P/K/R/M plusS/E/Q/L. No0027phoneactionhasoccurred.
+  GPUfirmwareexecution/acceleration remainunfinished; actual0026GUIworks,
+  0027GUI/USB/clocktrial outcomes stillpending.
+
 
 ### 0026 USB2 low power / CX request trial / frame cadence
 
