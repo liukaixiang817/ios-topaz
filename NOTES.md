@@ -22,6 +22,24 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+###0034 full CI / exact-kernel validation ACTIVE
+
+- User explicitly approved **“允许推送并构建”** for public
+  liukaixiang817/ios-topaz, codex/polaris-preflight. Push succeeded.
+  Fixcommitf5a49a0; exactCIhead **b4c0c572fe0b9c385d31046f8cb160ac305ec4f1**.
+  **CI40141037084 in progress** (2026-10-24T23:01:57Z).
+- Privatepipeline **45440 ACTIVE**, continuation-0034/build-validate-prepare.py:
+  awaitCI, downloadCRC/SHA/profile-verifiedkernel, exactCPU1 standardclock
+  base120s/asyncnetwork90s/mode6wrongboard60s, expected78checks; preserve
+  originaltimerfailures. Thenprepareimage; independentfinal-prepared-check.py
+  stillrequired. Twelvehostscripts frozen in pipeline-input-check.json.
+-26native/3ARM64units/19patch27files/15displayrows/sourcechecks alreadyPASS;
+  allrecordedlocalinputhashes unchanged. Initialhostscriptsetupassertion
+  failedbeforefreeze/pipeline; fixedandfroze, no guest/device action then.
+- No0034phoneaction. Current0033Settingsworks, humanconfirmed, observerSTOPPED.
+  GPUPLLadmission+USBPIPEclockfixes needhardwarevalidation; noaccelerationclaim.
+  AsknewphysicalFASTBOOTonlyafterexactnewkernel/guest/imagechecksPASS.
+
 ###0034 push/build explicitly approved; full verification starting
 
 - Sourcecommit **f5a49a002096e5ff9f0f508965ddc98430181017** localonly.
