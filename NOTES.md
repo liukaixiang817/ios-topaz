@@ -45,9 +45,36 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   display cases/fullpanel/padding/alias/invalidbounds, original display,
   GPU read gates and existing USB parser/loss/CRC/PNG checks.
   Three actual CI-header ARM64 units compiled PASS: sweet_usb.c,
-  polaris_a630.c,SweetFramebuffer.cpp. Complete source build, import/chain
-  verification and new exact-kernel QEMU runs still required. No0025 image,
-  FASTBOOT request or physical boot yet. Phone remains0024,CPU1/RAMCOW512.
+  polaris_a630.c,SweetFramebuffer.cpp. All imports resolve against0024kernel
+  plus newobjects; seven ordered patches apply without fuzz/offset and all
+  14resultingfiles match the actual compiletree. Unified-diff context keeps
+  its required leading spaces before original tabs/blanklines; a separate
+  check of actual added source finds no trailing whitespace.
+- Source **98a0f7df09df5bd10492269e1c630911843a2ac1** committed/pushed;
+  CI **40087572192/job120853522828 SUCCESS**, Build4m41s
+  (10:51:56–10:56:37UTC), fullci-40087572192.log saved. Exact artifact
+  profile/ZIPCRC/SHA verified: kernel `xnu/out-polaris-0025/kernel.development.sweet`
+  SHA **626e8409e4f9a97c087ed1863e83e427f4554a6e7b2903e606a2cf6599e36dd2**.
+  Pipeline59948 exited0 at11:02:49.492221UTC. Three selected CPU1 standard-
+  clock modes base120s/asyncnetwork90s/noMMIO60s all FIRST PASS,45assertions,
+  all fourVMchildren finish in each. No new failures/retries. Prior sync
+  comparison and SMP failures remain unresolved, with original evidence kept.
+  No actual USB/GMU/SMMU hardware or accelerated drawing is emulated.
+- **0025 PREPARED/notbooted** image
+  `shim/out/polaris-xnu-readdebug-0025/polaris-xnu-readdebug-0025.img`,
+  47407104bytes SHA **fc735a2201a3aa350e5b15016c3fdf98bc07b5845315ebe225eaa626a02ab885**;
+  payload SHA **38efc594c798882466ec5ee25e099e81b9e2ef4772c0aa145ba6569db07ebd71**.
+  Final independent check PASS **11:03:41.363952UTC**: exact source/kernel/
+  all three run provenances, frozen native inputs, sevenpatches14files,
+  threeARM64objects/imports, originalfirmware, Cpayloadvalidator/rebuiltpayload,
+  embeddedimage/manifest/65DTBs verified. ADT byteidentical0024; args differ
+  ONLY sweetfb_hz5→10. CPU1/512MiBRAMCOW/ufsrw0 retained. Boot wrapper requires
+  this final check and a fresh readonly preflight; no0025 device action yet.
+- NEXT: request FASTBOOT for verified0025, then fresh RO full16GiBhash/182maps/
+  GPT/header/unmounted/temperature check and temporaryboot within600s.
+  Observe GUI continuity and stutter, hostUSBenumeration, savedS/E/Q,
+  CX/HW/M/X and Tmicroseconds. USB success and speed improvement unproven;
+  GPUexecution remains disabled. Current phone remains0024.
 
 ### 0024 USB startup isolation after0023 GUI regression
 

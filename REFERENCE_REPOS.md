@@ -30,6 +30,8 @@ Paths in this table are relative to the corresponding reference checkout.
 | SpringBoard and home screen | Framebuffer/IOSurface replacements in `xnu/files/iokit/Kernel/` | `userland/src/inject_sb.c`, `userland/mkjobs.py`, `userland/build.sh` |
 | USB logging and return path | `xnuloader/loader.c`, `xnu/files/osfmk/arm64/loader_return.c`, `uefi/` | Host tools in `tools/` |
 | Other hardware | `xnu/files/bsd/dev/redwood_{adreno,wifi,audio,battery,buttons}.c` | `userland/src/` media and rendering implementations |
+| GPU submission and shared surfaces | `xnu/files/iokit/Kernel/RedwoodGPU.cpp`, `redwood_adreno.c` | `tools/mesa/redwood-drm/redwood_drm.c`, `freedreno-darwin.patch` |
+| Metal resource/compiler bridge | `RedwoodGPU` user client above | `userland/src/redwoodmetal.m`, `tools/mesa/air/air_metal.{c,h}` |
 | Measurement and validation | `docs/checks.md`, `tools/latency.py` | `userland/rc.jobs.latency` |
 
 ## Current applicability to polaris
@@ -91,6 +93,24 @@ address map and current USB debug prerequisite. No accelerated rendering or
 SSH connection has yet been established on polaris.
 
 ## USB debug versus SSH
+
+The0024 physical snapshot reports USB S12/E5: EP0 setup failed after the
+interface/address and controller-reset stages. The original Polaris
+[DWC3 endpoint command path](https://github.com/MiCode/Xiaomi_Kernel_OpenSource/blob/c7cb50c18f812629b9620b2b8fa684bc40d82080/drivers/usb/dwc3/gadget.c#L330)
+temporarily clears GUSB2PHYCFG.SUSPHY and restores it on return. Our initial
+native gadget omitted that step.0025 implements the sequence with command
+serialization and a saved first-failure record; physical USB success remains
+unproven.
+
+The live Polaris DT's gpu_cx_gdsc points hw-ctrl-addr to0x5091540.
+The matching original
+[gdsc-regulator.c](https://github.com/MiCode/Xiaomi_Kernel_OpenSource/blob/c7cb50c18f812629b9620b2b8fa684bc40d82080/drivers/clk/qcom/gdsc-regulator.c#L105)
+selects that hardware status register for its POWER_ON poll. Our initial
+read-only probe incorrectly required POWER_ON in both request and status
+registers.0025 corrects that requirement while keeping the clock gates.
+The G303 physical snapshot reflects the old probe and does not establish
+physical CX power state. Raw saved values are exposed in the larger0025 bar;
+no GPU firmware execution or acceleration has yet been demonstrated.
 
 The reference's [xl host tool](https://github.com/oosexgang/hackios-xnu-kernel/blob/d82c64a3a31cd27a0a0afbf6e213e467e44b1b4c/xl)
 drives a resident UEFI loader's fastboot-protocol server in

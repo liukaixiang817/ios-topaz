@@ -32,8 +32,9 @@ the existing CDC-ECM code. It does not power up clocks or a PHY. After the
 actual0021 boot, the host observed neither its USB device nor its ECM NIC
 over one minute, and a later read-only check also found no interface.
 The0023 host observation also found noUSBdevice orECM over61.540seconds
-(21samples, last10:00:43UTC). **USB debugging and SSH are currently unavailable.** The exact refusal
-stage is not known without the saved D USB / D UCLK values. No SSH daemon is
+(21samples, last10:00:43UTC). **USB debugging and SSH are currently unavailable.**
+On0024, the saved progress identifies EP0 configuration failure (S12/E5);
+the exact failed endpoint command is not yet known. No SSH daemon is
 installed. The macOS receiver is `tools/polaris-usb-log.py`; its plan mode
 changes no network configuration. The debug profile disables repeated caller
 stack sampling; this has not demonstrated a speedup.
@@ -193,6 +194,36 @@ The host then observed no known-phone USB device or matching ECM NIC over
 restoration and S12/E5; the failed endpoint command is not yet identified.
 This retains the same
 phone ADT/arguments, one CPU,512MiB RAM COW and `ufsrw=0` as0023.
+
+The0025 candidate retains that asynchronous startup and adds endpoint-command
+SUSPHY handling, following the original SDM845 DWC3 driver. It serializes
+commands, temporarily clears PHY suspend, restores only that bit on success
+and failure, and preserves the first command's failure details. It has not
+yet demonstrated a physical USB connection.
+
+Its display copier gathers a clipped scanline in cacheable RAM before one
+contiguous copy to the existing panel mapping. It retains the original
+resampling endpoints, bounds and alias fallback, and reuses a permanent swap
+record. The proposed phone arguments change only the requested presentation
+limit from5Hz to10Hz. This is CPU rendering; actual FPS and speed improvement
+remain unmeasured. Larger status rows expose saved USB command information,
+raw CX/hardware/GMU-clock/CXO values, and T: last CPU copy time in microseconds.
+
+The old GPU probe required POWER_ON in both the CX request and hardware
+registers. The live Polaris DT selects0x5091540 as hw-ctrl-addr, and the
+original regulator driver polls that register instead.0025 corrects this
+test while retaining every clock gate. Thus the older G303 photograph alone
+does not prove CX was physically off. This correction performs no power
+write, firmware execution, SMMU operation or accelerated rendering.
+
+Full kernel [CI40087572192](https://github.com/liukaixiang817/ios-topaz/actions/runs/40087572192)
+passes. Thirteen native tests, three real-header ARM64 units, import resolution
+and the seven-patch/fourteen-file chain pass. The exact kernel passes all three
+selected standard-clock modes (120/90/60s,45assertions) on their first runs.
+Final independent source/payload/image checks pass at11:03:41UTC;0025 is ready
+for a temporary test and has not been booted. Prior SMP and synchronous timer
+failures remain unresolved. Hardware USB success, GPU execution and a speed
+improvement have not yet been demonstrated.
 
 ## Standalone boot diagnostic 0001
 
