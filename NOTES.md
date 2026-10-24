@@ -10,7 +10,7 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION —0015 touch image READY; waiting for physical FASTBOOT
+### CURRENT NEXT ACTION —0015 temporary boot SENT; observe actual touch/home
 
 - 0015 temporaryimagePREPARED,notbooted. Source35fe4d492b6a7a50e5c7115beaa7dfee514af9c4,
  CI40058661910/job120767328465 SUCCESS (build4m41s). Artifact12546850582/
@@ -39,15 +39,24 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 47304704bytes,SHAf1586d93492868a59c48dcc06a9be830e00407074cc6af07415b6431f3939e1e;
  payload7edf67f4e87cb7a409b5929031690eac34cb591858d5e5e56d1aae98534fb415.
  Privateprepared.json/verification.json/qemu-check.json saved.
-- CURRENTPHONE0014XNU lockscreen/noinput. ASYNCphysicalPower+VolumeDown
- FASTBOOTrequestNOWPENDING;noUSBrestart/logchannel. Onuserreplyrun
- python3 research/polaris/touch-0015/run-device-step.py preflight,then
- run-device-step.py boot-phone ONLYifPASS. Wrapperredactsdevice serial.
- Freshproofrequired:knownheader/GPT,unmountedRO1,noload,full16GiBSHA+
-182mapsbefore/after,temp<45,sameliverecoverybootID/age<600s;bootfreshmapagain.
- No repair/replay/staging/destructivewrite. PreflightandbootNOTexecutedyet.
- Physicaltouch/home/App NOTproven. Needactual0015screen andfinger/homegesture
- response;retainedD TOUCH/TREG/TRMI lines diagnoseanydriverstop.
+- CURRENTPHONE0015 temporarybootSENT exec79316exit0,FASTBOOT1.174s,
+2026-10-24T03:54:48.439539+00:00 (=14:54:48 Australia/Melbourne).
+ Exactimage/payload/kernel hashesabove matched;Ccopyplan/all3QEMUprovenances
+ andADT/cmdline rechecked. Freshreadonlypreflight exec42180PASS,32C:
+ full16GiBbaseSHA689a8cd1... MATCH in77.495s;182mapsbefore/after andbootfreshmap
+ unchanged,outer4KiBheaderunchanged7c19bb29...,GPTheadmatches,unmountedRO1.
+ PendingAndroidjournalleftunchanged;no replay/repair/staging/partitionwrite.
+ Bootscript verifiedsameliverecoverybootID/freshproof<600s andalladmissions,
+ thenadbbootloader+temporaryfastbootboot. Wrapperredactedserial fromoutput.
+ Privateboot.json/boot-phone-sanitized.log/boot.log/preflight.json/
+ full-image-readonly-verification.json/deployment-state.json retained.
+- Transportacceptance ONLY;actual0015screen/touch/home/App NOTyetobserved.
+ ASYNCquestionpending:waitlockscreen,swipefromphysicalbottomedge once,
+ reportnoresponse/home/stillbooting. DoNOTrebootforrepetitiveCOWlogs.
+ Ifnoinput,neednew0015photo/video withretainedD TOUCH/TREG/TRMI lines:
+ phase/result/done/frames/down andlastreg/data distinguishinitguard/report/
+ HIDpath. Phase7not itselfphysicaltouchproof. NoUSBcontrol/restartport.
+ Source/handoffcommits35fe4d4,a7d9e15,b98272a pushed;latestphonehandoff below.
 
 -0811source24d2bfbd6e10233b578bcaf3608f9e6b2eb24e93 pushed;initialCI
 40058349228/job120766219551 building. Beforehardwaretest added0812 retained
