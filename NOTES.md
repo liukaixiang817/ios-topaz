@@ -10,7 +10,42 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION —0017 no lockscreen; IRQ direction and early startup
+### CURRENT NEXT ACTION —0018 diagnostic image ready; request physical FASTBOOT
+
+- 0018 PREPARED, not phone-booted. Pipeline exec53912exit0,
+  validation-counted.log. Functional checks82PASS: original-clock bootstrap
+  120s13checks first-pass; original-clock gate200s29checks one identical retry;
+  counted-clock default200s30checks and nodiag90s10checks first-pass in that
+  separate mode. Clock shift5 explicitly verified; same exact kernel. Original
+  default-clock200s FAILED TWICE (16.102/16.665008ms timer IRQ), and original
+  gate first attempt FAILED17.974992ms. All three failures retained. Original
+  default timing is FAILED/UNRESOLVED, not repaired or waived; counted-clock
+  results prove control flow only, not physical CPU timing/performance. The
+  temporary phone image is for diagnosis; no0018 physical touch/GUI proof.
+- CI40065872971/job120788889616 SUCCESS, source173eda1e48dfe66e2eb2e446b39bc09e7f3130c3;
+  kernel SHA3667c43f6ae37bf31bfb65dc1492fce2cd6b1b24f02fbf5a37f439cd1ae2a096.
+  Actual C copy-plan validator PASS, actual new image/payload/kernel hashes
+  rechecked. Image shim/out/polaris-xnu-touch-0018/polaris-xnu-touch-0018.img,
+  47304704bytes, SHA
+  e12b261413d314affbd68c21f4551197d0d5ea8225bb2b336e641fcd6b4d5f9b;
+  payload a0e2bf910218e360c6c3e5324a48fa90b557f4b74a05439fbd1e5fc56e5769a3.
+  Phone ADT adds ONLY irq-input125 to0017; removing restores0017 exactly.
+  Factory identity/file manifest/bootargs unchanged, ufsrw0/RAM512 retained.
+- Private touch-0018/prepared.json/verification.json/qemu-check.json/
+  deployment-state.json explicitly retain mixed-clock scopes and failed timing
+  checks. Original failures qemu-{gate,default}-attempt*-failure.json and
+  corresponding full artifacts; all clock/provenance fields verified. No
+  kernel/source/profile changes after173eda1; host-only optional timing helper
+  commit2a9ea19 does not alter phone/kernel. Native15+hostABI1 checks PASS,
+  actual-header ARM64objects5PASS, all6patchfilesapplyMATCH.
+- NEXT: physical Power+VolumeDown FASTBOOT request needed; then fresh0018
+  run-device-step.py preflight (full16GiB/182maps/header/GPT/RO), only PASS
+  permits boot-phone. No journal replay/repair/staging/partition writes.
+  Current phone remains0017/no lockscreen. Need NEW0018 D BOOT/D P/PID1/K
+  and D TOUCH/TW/TG/TI/TIF/TRMI photos, GUI and real swipe response. Original
+ 0017 IRQ output-low/no-GUI facts below must not be reused as0018 observation.
+
+### 0017 hardware failure and 0018 implementation/validation history
 
 - NEW0017 photos B8114285... (two) and2226B4B6... (later) saved privately as
   touch-0017/hardware-no-lockscreen-{1..3}.jpg +hardware-no-lockscreen.json.
