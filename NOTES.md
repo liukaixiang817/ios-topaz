@@ -10,22 +10,44 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION —0015 built; new-kernel regression before touch test
+### CURRENT NEXT ACTION —0015 touch image READY; waiting for physical FASTBOOT
 
-- FINAL0015 source35fe4d492b6a7a50e5c7115beaa7dfee514af9c4 (0811+0812),
- CI40058661910/job120767328465 SUCCESS. Artifact12546850582/60363320bytes,
- exactpolaris profile/source,ZIPentryCRC andkernelSHA verified. Kernel
+- 0015 temporaryimagePREPARED,notbooted. Source35fe4d492b6a7a50e5c7115beaa7dfee514af9c4,
+ CI40058661910/job120767328465 SUCCESS (build4m41s). Artifact12546850582/
+60363320bytes,exactprofile/source+ZIPCRC+kernelSHA verified. Kernel
  xnu/out-polaris-0015/kernel.development.sweet,
  SHA8e3c3e3d9c0198fd43004f555b46975cfdfc7c86b94a6eb40b0d9cced862fb88.
- Fullgh log research/polaris/ci-40058661910.log. Initial0811-only CI40058349228
- wasCANCELLED bysuperseding sourcepush,not acompilefailure;neverdeploy it.
- SequentialnewkernelQEMU gate200s/default200s/nodiag90s RUNNING exec70365,
- touch-0015/validation-run.log. Testsuse0013callerfixture andsynthetic0014ADT
- WITHOUTtouchmarker;requirePID1/display/callerregression andnohardwarearmed.
- validate-and-prepare.py onlypackagesphoneafterall3PASS plusactualCvalidator.
- Phone0015preflight/boot scripts ready butNOTexecuted;requirefreshRO16GiB
- SHA/map/header/GPT/temp proof. Currentphone0014lockscreen/noinput remains
- running;noFASTBOOTrequestpending. Actual0015touch/home/App NOTproven.
+ Fullgh log research/polaris/ci-40058661910.log. Initial0811-only40058349228
+ CANCELLED bysupersedingpush,not acompilefailure;neverdeploy it.
+- Newkernel sequentialQEMU gate200s29checks/default200s29checks PASS.
+ nodiag90s FIRSTattemptFAILED rtclock_intr16.6ms >13.631488ms IRQhygiene
+ threshold afterPID1alive. Touchhardwarewasdisabled/exactADTmarkerabsent.
+ CauseNOTestablished;emulator/hostscheduling suspected,not proven. Failed
+ ring/screen/fullqemulog retainedtouch-0015/qemu-0015-nodiag-attempt1 plus
+ qemu-nodiag-attempt1-failure.json. OneUNCHANGEDkernel/args/ADT/fixture90s
+ retryPASS. No panicchecks weakened. Gate/defaultresults reusedsamekernel
+ andchecksreapplied;no gratuitousrerun. All3modes/67checks nowPASS exec37099
+(exit0),validation-retry.log;initialexec70365exit1 retained. Synthetictests
+ provePID1/display/callerrotationanddefault/missingADT/outerdiagnosticgates;
+ noactualI2C/powerretention/physicaltouch/GUIproof. VerificationJSON retains
+ firstfailure explicitly. LocalactualCI-header4ARM64objects+native4ASan/
+ UBSan+8ADT+3profiletestsPASS;0811all7/0812bothpatchfilesapplyMATCH.
+- ActualCpayloadcopyplanvalidatorPASS;phoneADTminusnewpolaris-touchnode
+ byte-identical0014ADT/sameverifiedfactoryidentity. CmdlineONLYadds touch1
+ andCPUdisplaycopy1->5Hz;visibleconsole,ufsrw0/RAM512/diagnostics unchanged.
+ Image shim/out/polaris-xnu-touch-0015/polaris-xnu-touch-0015.img,
+47304704bytes,SHAf1586d93492868a59c48dcc06a9be830e00407074cc6af07415b6431f3939e1e;
+ payload7edf67f4e87cb7a409b5929031690eac34cb591858d5e5e56d1aae98534fb415.
+ Privateprepared.json/verification.json/qemu-check.json saved.
+- CURRENTPHONE0014XNU lockscreen/noinput. ASYNCphysicalPower+VolumeDown
+ FASTBOOTrequestNOWPENDING;noUSBrestart/logchannel. Onuserreplyrun
+ python3 research/polaris/touch-0015/run-device-step.py preflight,then
+ run-device-step.py boot-phone ONLYifPASS. Wrapperredactsdevice serial.
+ Freshproofrequired:knownheader/GPT,unmountedRO1,noload,full16GiBSHA+
+182mapsbefore/after,temp<45,sameliverecoverybootID/age<600s;bootfreshmapagain.
+ No repair/replay/staging/destructivewrite. PreflightandbootNOTexecutedyet.
+ Physicaltouch/home/App NOTproven. Needactual0015screen andfinger/homegesture
+ response;retainedD TOUCH/TREG/TRMI lines diagnoseanydriverstop.
 
 -0811source24d2bfbd6e10233b578bcaf3608f9e6b2eb24e93 pushed;initialCI
 40058349228/job120766219551 building. Beforehardwaretest added0812 retained
