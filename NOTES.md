@@ -10,8 +10,22 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION — 0020 prepared and verified; await physical FASTBOOT
+### CURRENT NEXT ACTION — 0020 temporary boot sent; await GUI/App observation
 
+- User confirmed physical FASTBOOT. Readonly preflight session **32442 PASS**;
+  boot session **91613 exited 0**, Sending/Booting both OKAY, total 1.180s.
+  Temporary boot sent **2026-10-24T07:24:24.530289+00:00**, 18:24:24 Melbourne.
+  This proves transfer/command acceptance only; **0020 GUI, physical touch
+  and application stability await human observation**. Async question asks
+  real swipe into home → Settings → return home. Do not reboot for logs.
+- Fresh full 16GiB root hash at **2026-10-24T07:24:03.496744+00:00** matches
+  immutable base 689a8cd1df0fc0093706272241a9ac77d5eddd7a62df5d340913ec6abcd7ce2b.
+  All182 extents/fresh maps/GPT/outer header unchanged, block RO1 and
+  unmounted, 35°C; complete hash took **77.471s**. Pending outer ext4
+  journal preserved; no journal replay, repair, staging or partition writes.
+  Actual boot image/payload/kernel hashes match prepared final0020 exactly.
+  `preflight.json`, `full-image-readonly-verification.json`, `boot.json`,
+  `deployment-check.json` and sanitized logs retained privately.
 - Final source **9209e0c4ed2a8a4cef054c847bff01d6688e18e1**. CI
   **40072563674**, job **120808957838** SUCCESS; Build 4m44s
   (07:02:43–07:07:27 UTC). Artifact 12551767382, 60389792 bytes;
@@ -54,17 +68,13 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   succeeded. Not a kernel/test failure. Earlier candidate 943c011/CI40071727505
   was never phone-booted; partial tests/kernel/range cache remain archived in
   `candidate1-943c011/`. Never deploy that candidate.
-- Current phone remains **0019**, user-confirmed physical swipe into home,
-  followed by console-overdraw symptoms; exact App and App usability unknown.
-  No 0020 device action yet. Once user replies physical FASTBOOT, run:
-  `python3 research/polaris/interactive-0020/run-device-step.py preflight`.
-  Only on PASS run the same wrapper with `boot-phone`, within the fresh
-  proof's 600-second admission window. Headless recovery/full16GiB hash,
-  map/header/GPT/RO/unmounted/temperature checks are required. Never replay
-  the outer pending journal, repair/stage again, flash or alter partitions.
-  Then test a real swipe into home → Settings → return home, and ask whether
-  the GUI stays visible and touch continues responding. No claim that Apps,
-  GPU, Wi-Fi or other hardware are fixed before actual observation.
+- Current phone is the **0020 temporary boot attempt**, with actual GUI/App
+  status pending. Prior0019 physical swipe into home was user-confirmed;
+  a later tap led to console-overdraw symptoms, exact App unknown. Preserve
+  current phone for controlled Settings/return-home observation. Do not
+  claim Apps, GPU, Wi-Fi or continued touch are fixed before that observation.
+  For any future boot, fresh readonly admission is still required; never
+  replay the pending outer journal, repair/stage again, flash or alter partitions.
 
 - User CONFIRMS0019 realtouch/swipe reaches main home screen. Later icon/tap
   causes screen filled with log/noGUI; exact App unknown. Photos981671B7...
