@@ -10,9 +10,34 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION —0017 verified and prepared; request physical FASTBOOT
+### CURRENT PHONE —0017 temporary boot sent; await physical input report
 
-- 0017 ready, NOT phone-booted. All three sequential actual-kernel QEMU modes
+- User answered "已到 FASTBOOT". Fresh0017 readonly preflight exec14876
+  exit0 PASS, battery32C. Full16GiB base SHA689a8cd1... MATCH in77.449s; fresh182maps
+  before/after and boot's additional map all match. Outer4KiBheader remains
+  7c19bb29..., GPThead unchanged, userdata unmounted/RO1. Android pending
+  journal left unchanged; no replay/repair/staging/partition write.
+- 0017 temporary boot SENT exec37061exit0, FASTBOOT1.173s,
+  **2026-10-24T05:06:26.929975+00:00 =16:06:26 Australia/Melbourne**.
+  Exact prepared image/kernel/payload hashes below matched; C copy-plan,
+  all3QEMU provenances, explicit wake ADT delta and same cmdline verified.
+  Same live recovery boot ID/fresh proof<600s and remaining admissions all
+  passed before adb bootloader + fastboot boot. Transport success only;
+  actual0017 lockscreen/touch/home not observed yet. Physical FASTBOOT request
+  answered; bottom-edge swipe result question now pending. No further reboot
+  request. Private touch-0017/boot.json/boot-phone-sanitized.log/boot.log/
+  preflight.json/full-image-readonly-verification.json/deployment-state.json
+  saved. No USB restart/log/control path in current XNU.
+- NEXT: wait for user0017 lockscreen/swipe report. If no response, request
+  clear NEW0017 photo of D TOUCH/TW/TG/TIF/TRMI through ordinary chat (not
+  upload request in async tool). Decode using hardware-decoder.json; retained
+  wake failure snapshots may precede rollback. Actual contact/HID down-up and
+  matching UI response required for physical input proof. Do not reuse0016
+  phase4/result12/reset-low values as new0017 observations.
+
+### 0017 preparation and validation history
+
+- 0017 prepared before the temporary phone boot recorded above. All three actual-kernel QEMU modes
   gate200s/default200s/nodiag90s now PASS, 67checks; validation-retry exec93080
   exit0. Gate passed first attempt; default required ONE identical retry after
   timer IRQ panic below; nodiag passed first attempt. Exact default kernel,
@@ -31,12 +56,11 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   Private touch-0017/prepared.json/verification.json/qemu-check.json/
   deployment-state.json retain the full admissions. Source-derived new
   D TW/TG/phase9/result15 guide: touch-0017/hardware-decoder.json.
-- Physical Power+VolumeDown FASTBOOT request SENT, awaiting user reply. Then run
-  touch-0017/run-device-step.py preflight; only PASS permits boot-phone.
+- Physical Power+VolumeDown FASTBOOT request answered; readonly preflight and
+  temporary boot completed above using touch-0017/run-device-step.py.
   Require fresh full16GiB hash,182maps/knownheader/GPT/same recovery boot and
   readonly unmounted userdata, as before. No journal replay/repair/staging.
-  No new phone USB log/restart path; current phone remains0016 until user
-  performs the physical step. Need actual0017 lockscreen/swipe and retained
+  No new phone USB log/restart path. Need actual0017 lockscreen/swipe and retained
   D TW/TG/TIF/TRMI observations before claiming physical input/home success.
 - User-requested full local reference clones and index completed; commit
   3677a59 pushed. Failure handoff eb26321 also pushed. Future agents read
@@ -50,8 +74,8 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   60387285bytes; kernel SHA
   cd92119429903240ea29b45515d7b84a9d66c3e2f4653e6875e73b68213fa8dd.
   Sequential QEMU gate200/default200/nodiag90 and the prepared phone image
-  are now verified as recorded above. Physical FASTBOOT request is pending;
-  current phone was 0016 when that request was sent.
+  are now verified as recorded above. Physical FASTBOOT request was answered;
+  current phone was 0016 when that request was sent and0017 has now been sent.
 - New-kernel QEMU gate200s PASS (29checks). Default200s FIRST ATTEMPT FAILED:
   rtclock_intr took25.383008ms, threshold13.631488ms, after PID1 alive, before
   synthetic target sampling. Physical touch disabled/no board marker; no
@@ -60,8 +84,8 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   Full ring/screen/QEMU log/provenance retained under touch-0017/
   qemu-0017-default-attempt1 plus qemu-default-attempt1-failure.json and
   validation-attempt1.log. One identical default retry subsequently PASSED;
-  earlier passed gate retained. No timeout/panic checks weakened. Still no
-  physical reboot recorded.
+  earlier passed gate retained. No timeout/panic checks weakened. This failure
+  and retry preceded the physical0017 boot recorded above.
 - User supplied HackiOS references. Read and pinned kernel
   **d82c64a3a31cd27a0a0afbf6e213e467e44b1b4c** and userland
   **a79ff0772a3454fd1ef127e181e5b3bce6c9ce18**. Private source copies and blob
