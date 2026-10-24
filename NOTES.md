@@ -12,6 +12,24 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ### CURRENT NEXT ACTION — 0021 works but Settings45s; prepare A55 SMP, continue A630 port
 
+-0022source **4ae26812dee8064160a34be589877dca50996cf7** pushed;
+  CI **40078382913/job120826570076 SUCCESS**, Build4m04s
+  (08:31:58–08:36:02UTC), full `ci-40078382913.log` saved. Exactprofile,
+  ZIPCRC and SHA verified; newkernel `xnu/out-polaris-0022/kernel.development.sweet`
+  SHA **6e8024e146081fe120c4d1a53c65365d4f97a7e45af9a31dd8b05077baa28532**.
+  Orchestrator **2112RUNNING**, currentlynewkernel CPU1control120s, then
+  CPU2bootstrap90s andCPU2stress180s, allstandardclocksequentially.
+  On exactknownrtclockpanic retainoriginal +oneidenticalstandardretry;
+  no countedclock/thresholdwaiver. No0022phoneaction; waitfinalimageproof.
+- Newprivate `perf-0022/stress-test.raw` synthetic64MiBHFSX, SHA
+  **cf1ded21b9cdfbeffd2896b3a525845164cfea8f7afdf70a44f1aa6f49ea8a81**.
+  PID1forks4children; each256cycles mmap64KiB/touch+verifyall4pages/munmap,
+  parentwait4 verifiesallzeroexitthenkeepsalive. TestsVM/pagefault/process/
+  allocator/SMPcontrolflow; noAppleApps/realUFS/RAMCOWhardwareorperformance
+  proof. Privatemulticoreharness uses17vCPUsforMPIDR0/100 andEL2→EL1stub;
+  stockcommittedqemu-sweet.py unchanged. ActualphoneADTonlyCPU1addition;
+  noGPUfirmwarenodein0022. Readonlypreflight/boot scriptsstagedNOTEXECUTED.
+
 - IMPLEMENTED0022candidate: **0820RAM-I/O fast path** and explicit2A55ADT/
   `cpus=2` profile. The old strategy read UFSbefore EVERYRAMwrite/read,
   evenwholeblockoverwrites/fullCOWhits. New testedactualrequesthelper
