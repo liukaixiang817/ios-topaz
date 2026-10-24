@@ -112,6 +112,31 @@ only, with no remote command or shell service. Host non-enumeration does not
 identify whether power, clocks, controller role, halt state or a later gadget
 step failed. Collect the existing saved diagnostics before changing that path.
 
+## Polaris UEFI correspondence (2026-10-24)
+
+The user specifically asked about following the reference's UEFI boot and USB
+path. Its loader retains Boot Services, locates QCOM_USB_DEVICE_GUID and uses
+UsbDeviceDxe/UsbfnDwc3Dxe for its host protocol. Our current
+`shim/polaris/loader.c` accepts only an Android/Linux FDT+initrd and jumps to
+XNU; it has no EFI System Table or retained firmware-service context.
+
+The pinned [edk2-msm polaris platform](https://github.com/edk2-porting/edk2-msm/blob/e1952621f419f8db60ed28271264e1b5184c571d/Platform/Xiaomi/sdm845/polaris.dsc)
+includes the SDM845 platform. Its [DXE list](https://github.com/edk2-porting/edk2-msm/blob/e1952621f419f8db60ed28271264e1b5184c571d/Platform/Qualcomm/sdm845/dxe.fdf.inc)
+contains UsbDeviceDxe, UsbfnDwc3Dxe, UsbInitDxe, UsbConfigDxe, UsbPwrCtrlDxe
+and UFSDxe. Six source files were fetched through GitHub and their Git blob
+hashes match the previously pinned tree. This establishes a corresponding
+SDM845 source configuration, not the version or live protocol availability
+of the user's installed Mindows firmware.
+
+A Polaris resident-loader port first needs a read-only EFI protocol/memory-map
+probe, preserved firmware allocations outside XNU's usable RAM, a16KiB-page
+return path, CPU/cache/interrupt handoff, and explicit device ownership.
+The reference return trampoline only implements ARM_PGSHIFT12. Our XNU already
+owns the UFS controller for its immutable root; retained firmware must not
+access that same controller concurrently. Firmware USB service availability
+must be demonstrated before treating this as a working log/screenshot route.
+No EFI image, boot entry or partition has been changed by this investigation.
+
 ## Future refresh
 
 Check each reference checkout for local edits first. Fetching newer upstream

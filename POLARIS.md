@@ -2,7 +2,10 @@
 
 The requested target is **Android + Mindows Windows 11 + iOS 16**, preserving
 existing data. Temporary build **0023** was sent successfully at09:59:17UTC
-on2026-10-24; GUI/input/performance confirmation is pending. The last confirmed
+on2026-10-24; subsequent photos show a startup regression with logs and no GUI.
+USB admission passes (result7/read13), but no debug interface appears.
+Build0024 is prepared for a temporary test of deferred USB startup.
+The last confirmed
 working build **0021** runs real iOS 16.7.16 (20H392) on the MIX 2S, with
 physical swipe into the home screen, Settings content after a wait, and swipe
 back home. Its first Settings launch needs about45seconds by human estimate
@@ -111,7 +114,9 @@ and its exact artifact passed three selected single-CPU modes (120/60/90s,
 42assertions) with the standard QEMU clock. Its temporary image and payload
 integrity checks passed. A fresh full16GiB root hash,182file mappings, GPT and
 outer header all match; only the temporary boot was sent, with the outer
-journal unchanged. GUI/input/performance and USB results are still pending.
+journal unchanged. Subsequent physical photos show continuing touch polls
+but fixed I/O counters and no GUI. USB admission passed; the exact later
+blocking step is unknown. This has not established a hardware rendering fault.
 The intended hardware profile stays on one CPU while SMP failures are
 investigated, with the same512MiB RAM COW and `ufsrw=0`.
 
@@ -163,6 +168,24 @@ failure is not confined to0022's RAM fast path. Its cause is still unresolved.
 The0023 two-core diagnostic completed32callbacks, including16remote, then
 failed the processor-set scheduler ticket lock before PID1. That failure and
 its raw registers remain recorded; no two-core phone profile was admitted.
+
+Build0024 moves admitted USB gadget initialization to one separate kernel
+thread and records its phase/error before DMA allocation, network attachment,
+protocol/socket/address setup, controller reset, endpoints, VBUS and polling.
+BSD startup does not wait for that worker. Periodic RAM diagnostics also show
+the saved A630 state before any GUI frame. The compact strip adds S/E;
+C becomes a bitmask of observed active clock branches (7f means all7).
+Phase9 is network ready;10reset,11events,12EP0,13VBUS,14run,15poll,16initialized.
+Initialization success remains separate from host enumeration.
+
+Its full kernel [CI40085290660](https://github.com/liukaixiang817/ios-topaz/actions/runs/40085290660)
+passes, along with three selected standard-clock CPU1 modes/45assertions,
+including actual XNU network interface and IPv4 address creation on the worker.
+The separate synchronous comparison also creates its interface and runs PID1,
+then fails the timer threshold (17.989ms vs13.631ms); it remains failed and
+does not establish the physical stall's cause. The exact image/payload pass
+integrity checks; no0024 phone boot has occurred yet. This retains the same
+phone ADT/arguments, one CPU,512MiB RAM COW and `ufsrw=0` as0023.
 
 ## Standalone boot diagnostic 0001
 

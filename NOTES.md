@@ -41,10 +41,51 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   allundefinedsymbolsresolve against exact0023kernel. Private evidence,
   originalsources and9photo hashes undercontinuation-0024. No rawdevice
   evidence inGit, no partitionwrites, no changes to512MiBRAMCOW/ufsrw0.
-- NEXT: commit/push0824, fullActionsbuild, exactartifact/actualnetwork-only
-  and selectedCPU1bootchecks. Preserve synccomparisoneven ifblocked/failed;
-  do notlabelas provenhardwarecause. No0024image orFASTBOOTrequestuntil
-  finalverified. Keep oneCPU and noGPUexecution; priorSMPfailuresunresolved.
+- Source **70bb4b950e585c65328c36a90aeff41ed2c66cfe** committed/pushed;
+  CI **40085290660/job120846868058 SUCCESS**, Build4m48s
+  (10:17:22–10:22:10UTC), full `ci-40085290660.log` saved. Exactsource/profile,
+  ZIPCRC/SHAverified kernel `xnu/out-polaris-0024/kernel.development.sweet`
+  SHA **50188d2c2535a559e16a7cba355a8fb3776d45407b1a3947df47953ffcd74ca1**.
+  Pipeline43525 exited0 afterCPU1base120s, actualasyncnetwork90s, MMIOgate60s,
+  separateoldsynccontextcomparison60s; allstandardclock. Three selectedmodes
+  FIRST PASS,45assertions. Actualasyncnetworkifnet/protocol/IPv4socket/address
+  setupPASSerror0/phase9,all4VMchildrenPASS,PID1continues.
+  SeparateSYNCcomparison FAILED onlyno_panic: networksetupalsoPASSerror0,
+  all4VMchildren/PID1continued, then _rtclock_intr17.988992ms vs13.631488ms
+  atmachine_routines_common.c893. Rawlog/registers/provenance retained,
+  no retry/waiver for that diagnostic. It does NOT prove networkAPI causality.
+  No0024deviceactions.
+  Inherited private progress label saysStarting0023, but all paths/source/
+  buildidentity andactualkernel/provenance are0024. No input changed midrun.
+- User asks to follow reference UEFI boot/USB route. Confirmed reference
+  loader retainsBootServices and usesQCOM_USB_DEVICE_GUID; current LinuxImage
+  shim has noEFISystemTable/servicecontext. Pinnededk2-msmSDM845/polaris
+  dxe list includesUsbDeviceDxe/UsbfnDwc3Dxe/UsbInitDxe/UsbConfigDxe/UsbPwrCtrlDxe.
+  Sixpublicsources fetchedviaGitHubconnector, exactGitblobmatchesoldpinned
+  e1952621f419f8db60ed28271264e1b5184c571d tree. This doesNOT prove actual
+  installedMindowsfirmwareprotocolavailability. SeeREFERENCE_REPOS.md.
+  A realport needs EFIreadonlyprobe, preservedmemory,16KiBreturnpath,
+  CPU/cache/interrupt andUSB/UFSexclusiveownership. NoEFI/bootentry/partition
+  changed. Existingmindowsespbackup headercheckedreadonly,FAT32/4KiBsectors;
+  no bootloader/firmwareexecuted. Rawsource/evidence remainprivate.
+- **0024PREPARED/notbooted** image
+  `shim/out/polaris-xnu-readdebug-0024/polaris-xnu-readdebug-0024.img`,
+  47407104bytes SHA **3af3c61152f0d6ee89adbae00473fd86df42203de2a4741d0ca602f0a681333a**;
+  payload SHA **8cc44a96f55f1ea98ac5764c525d1c204daa3c92d5786f9371104caaedad4d37**.
+  Cpayloadvalidator/rebuiltpayload/embeddedimage/sourceprofile/integrity/
+  fourorderedpatches12files/twoARM64objects allfinalcheckPASS10:29:43UTC.
+  ADT andphonecmdline byteidentical0023, no nettestarg onphone. Status S is
+  startupstage1queued/2worker/3DMA/4netalloc/5attach/6plumb/7socket/8address/
+  9netready/10reset/11events/12EP0/13VBUS/14run/15poll/16ready; E iserror.
+  C nowcompactbitmask ofadmittedONclockreads (7f=all7), fullsavedregisters
+  remaininRAMlogs. G stillGPUprereqs only. Stagedbootwrapperuses3newselected
+  QEMUprovenances; readonlyhostwatch also includesotherknownphoneVIDs,
+  neverrecordsserials. No0024physicalrequest ordeviceactionyet.
+- NEXT: requestFASTBOOT forverified0024; freshROfull16GiBhash/182maps/GPT/
+  header/unmountedcheck, then temporarybootwithin600s. ConfirmGUIrestoration
+  andUSBhostenumeration; ifnoUSBcollect S/E plusD GPU/GMU fromsavedlogs/photos.
+  Keep oneCPU and noGPUexecution; priorSMPfailuresunresolved. UEFIGUID/memory
+  probe is nextresidentloaderfeasibilitystep; no bootchainorpartitionwrite.
 
 ### 0023 read-only USB snapshots / A630 prerequisites / cross-core diagnostics
 
