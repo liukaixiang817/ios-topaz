@@ -65,8 +65,8 @@ immediately. Never interrupt that window with another boot.**
   0028,CPU1/Hz20/mode4/512MiBRAMCOW/ufsrw0. NoGPUfirmware/acceleration.
 - Phone stays0028. Keep the byteidentical ADT and arguments from0028, mode4,
   CPU1/Hz20/512MiBRAMCOW/ufsrw0. USB sequence unchanged until its saved state
-  supports a specific fix. NEXT finishcurrent0028ten-minuteUSBwindow, then
-  requestphysicalFASTBOOT. Onlyafterhumanconfirmation use0029run-device-step.py
+  supports a specific fix. Current0028ten-minuteUSBwindow hascompleted and
+  physicalFASTBOOTrequested; awaitinghumanconfirmation. Onlythen use0029run-device-step.py
   preflight thenboot-phone: freshfull16GiBhash/182maps/GPT/header/RO/unmounted/
   temperaturecheck, temporaryboot only, no pendingouterjournal repair/replay.
   Watch0029USB for >=600s; ifECMappears collectRAMlog/panel. Human checksGUI
@@ -80,11 +80,13 @@ immediately. Never interrupt that window with another boot.**
   resets DBM; ordering alone is not equivalent initialization. No USB change
   in0029. Private usb-vbus-source-review.json retains source and limitations.
 - User nowrequires >=10min USB discovery.0029/watch-usb.py uses600s minimum
-  negative window/10s polling. A late0028 observation isrunning in36640 via
-  continuation-0028/watch-usb-long.py; outputusb-enumeration-long.json keeps
-  original61s evidence intact. No restart/network/partition changes. Waitfor
-  this window tofinish before requesting another boot. Clocktestpipeline
-  pipeline16653 andfinalimagechecks havecompletedPASS asabove.
+  negative window/10s polling; frozenpolicy/hash checked inusb-policy-check.json.
+  Late0028watch36640 exited0: **61samples/600.082s**, no known-phone USB VID
+  or matchingECM inANYsample, **13:00:20.045066–13:10:20.093080UTC**. Output
+  continuation-0028/usb-enumeration-long.json preserves original61s evidence.
+  This is a latewindow on the same0028boot, not coverage of all startup time.
+  No restart/network/partition changes, RAMlog or panel capture. Physical
+  FASTBOOT requested onlyafter this window completed.0029 notbootedyet.
 
 ### 0028 bounded clock acknowledgement / first-failure evidence
 

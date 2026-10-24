@@ -98,6 +98,10 @@ The user reports slow boots and requires at least10minutes for USB discovery.
 Use >=600s observation for a negative result; the historical61s observations
 are early samples only and cannot exclude later enumeration.0029's host
 watcher now follows this requirement; do not restart during the window.
+A late0028 window completed with61samples/600.082s through13:10:20UTC and
+no known-phone USB device or matchingECM in any sample; no reboot or network
+change. This later window supplements the early61s evidence, without claiming
+continuous observation of all startup time.
 
 The0024 physical snapshot reports USB S12/E5: EP0 setup failed after the
 interface/address and controller-reset stages. The original Polaris
@@ -164,7 +168,8 @@ two required GPUCC branches.0029 leaves AON read-only and removes that extra
 prerequisite while retaining strict required-clock/reset/restoration checks.
 Full CI40095790392 and allthree selected standard-clock modes pass51checks
 on the first attempt; independent source/payload/image validation also passes.
-0029 is prepared, unbooted; current0028's ten-minute USB observation continues.
+0029 is prepared, unbooted; current0028's ten-minute USB observation completed
+without enumeration, and physicalFASTBOOT was requested afterward.
 No hardware cause for AON readback0 is established. Actual GPU firmware
 execution and accelerated rendering remain unfinished.
 
