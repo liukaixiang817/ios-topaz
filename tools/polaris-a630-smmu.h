@@ -15,10 +15,14 @@
 #define A630_SMMU_POLLS 500000u
 #define A630_SMMU_STREAM 5u
 #define A630_SMMU_IMPLS 12u
+#define A630_SMMU_HALT_POLLS 30000u
+#define A630_SMMU_HALT_REQ 4u
+#define A630_SMMU_HALT_IDLE 8u
 enum a630_smmu_error {
     A630_SMMU_DISABLED, A630_SMMU_ARGUMENT, A630_SMMU_LEASE,
     A630_SMMU_IO, A630_SMMU_LAYOUT, A630_SMMU_OWNERSHIP,
-    A630_SMMU_ACK, A630_SMMU_TLB, A630_SMMU_READY, A630_SMMU_RESTORE
+    A630_SMMU_ACK, A630_SMMU_TLB, A630_SMMU_READY, A630_SMMU_RESTORE,
+    A630_SMMU_HALT
 };
 struct a630_smmu_io {
     bool (*stopped)(void *); /* live exclusive lease, GMU/3D halted */
@@ -37,6 +41,8 @@ struct a630_smmu_snapshot {
     uint32_t control[5], impl[A630_SMMU_IMPLS];
     uint64_t ttbr[2], root;
     uint32_t failed_offset, expected, actual, polls, restore_error;
+    uint32_t halt_before,halt_live,halt_after,halt_changed,halt_polls,impl_changed;
+    uint32_t restore_offset,restore_expected,restore_actual;
 };
 static const uint32_t a630_smmu_impl_offsets[A630_SMMU_IMPLS] = {
     0x6000,0x6060,0x678c,0x6794,0x6800,0x6900,
@@ -93,6 +99,33 @@ static inline bool a630_smmu_set64(const struct a630_smmu_io *io, void *ctx,
         s->expected = (uint32_t)value; s->actual = (uint32_t)actual; return false;
     }
     return true;
+}
+/* Original qsmmuv2_device_reset brackets implementation writes with a local
+ * micro-MMU halt. GMU/GX reset alone does not acknowledge this handshake.
+ * Never halt a foreign translation owner. IDLE is status, not a write ACK;
+ * resume does not wait for IDLE to clear when no client is sending traffic. */
+static inline bool a630_smmu_halt(const struct a630_smmu_io *io,void *ctx,
+    struct a630_smmu_snapshot *s,bool enter)
+{
+    uint32_t v;
+    if(s->foreign){s->error=A630_SMMU_OWNERSHIP;return false;}
+    if(!a630_smmu_rd(io,ctx,s,0x6000,&v))return false;
+    if(enter) {
+        if((v&A630_SMMU_HALT_REQ)&&!s->halt_changed){s->error=A630_SMMU_OWNERSHIP;return false;}
+        s->halt_changed=1; /* A posted request belongs to us even on failure. */
+        if(!a630_smmu_set(io,ctx,s,0x6000,v|A630_SMMU_HALT_REQ,A630_SMMU_HALT_REQ))return false;
+        for(unsigned n=0;n<A630_SMMU_HALT_POLLS;n++){
+            s->halt_polls++;
+            if(!a630_smmu_rd(io,ctx,s,0x6000,&s->halt_live))return false;
+            if(s->halt_live&A630_SMMU_HALT_IDLE)return true;
+            io->wait(ctx,1);
+        }
+        s->error=A630_SMMU_HALT;s->failed_offset=0x6000;
+        s->expected=A630_SMMU_HALT_IDLE;s->actual=s->halt_live;return false;
+    }
+    if(!s->halt_changed)return true;
+    if(!a630_smmu_set(io,ctx,s,0x6000,v&~A630_SMMU_HALT_REQ,A630_SMMU_HALT_REQ))return false;
+    return a630_smmu_rd(io,ctx,s,0x6000,&s->halt_after);
 }
 static inline bool a630_smmu_tlb(const struct a630_smmu_io *io, void *ctx,
     struct a630_smmu_snapshot *s)
@@ -189,13 +222,19 @@ a630_smmu_begin(bool exact_board, bool atos_disabled, struct a630_mmu *tables,
         !io->read64(ctx,s->context+0x28,&s->ttbr[1])) {s->error=A630_SMMU_IO;goto done;}
     for (unsigned n=0;n<A630_SMMU_IMPLS;n++)
         if (!a630_smmu_rd(io,ctx,s,a630_smmu_impl_offsets[n],&s->impl[n])) goto done;
+    s->halt_before=s->impl[0];
+    if(s->halt_before&A630_SMMU_HALT_REQ){
+        s->error=A630_SMMU_OWNERSHIP;goto done;
+    }
     /* Shared implementation registers may not be changed under another
      * stream. An existing translation owner must already have installed the
      * board values, and the global fault/enable policy must already match. */
     if (s->foreign) {
         if ((s->global&0x401)!=0x400) {s->error=A630_SMMU_OWNERSHIP;goto done;}
-        for (unsigned n=0;n<A630_SMMU_IMPLS;n++)
-            if (s->impl[n]!=a630_smmu_impl_values[n]) {s->error=A630_SMMU_OWNERSHIP;goto done;}
+        for (unsigned n=0;n<A630_SMMU_IMPLS;n++) {
+            uint32_t mask=n?UINT32_MAX:~(A630_SMMU_HALT_REQ|A630_SMMU_HALT_IDLE);
+            if ((s->impl[n]^a630_smmu_impl_values[n])&mask) {s->error=A630_SMMU_OWNERSHIP;goto done;}
+        }
     }
     if (!a630_smmu_lease(io,ctx,s)) goto done;
     if (!io->clean(ctx,tables->memory,(size_t)tables->used*4096) || !io->sync(ctx)) {
@@ -205,8 +244,17 @@ a630_smmu_begin(bool exact_board, bool atos_disabled, struct a630_mmu *tables,
     /* Make this stream fault while its new context is being programmed. */
     if (!a630_smmu_set(io,ctx,s,0xc00+4*s->slot,(s->s2cr&~0x30000u)|0x20000,0x30000) ||
         !a630_smmu_set(io,ctx,s,0x800+4*s->slot,s->smr&~(1u<<31),1u<<31)) goto done;
-    for (unsigned n=0;n<A630_SMMU_IMPLS;n++)
-        if (!s->foreign && !a630_smmu_set(io,ctx,s,a630_smmu_impl_offsets[n],a630_smmu_impl_values[n],UINT32_MAX)) goto done;
+    if(!s->foreign){
+        if(!a630_smmu_halt(io,ctx,s,true))goto done;
+        for(unsigned n=0;n<A630_SMMU_IMPLS;n++){
+            /* Keep our halt request asserted across the DT's control write. */
+            uint32_t value=a630_smmu_impl_values[n]|(n?0:A630_SMMU_HALT_REQ);
+            uint32_t mask=n?UINT32_MAX:~A630_SMMU_HALT_IDLE;
+            s->impl_changed|=1u<<n;
+            if(!a630_smmu_set(io,ctx,s,a630_smmu_impl_offsets[n],value,mask))goto done;
+        }
+        if(!a630_smmu_halt(io,ctx,s,false))goto done;
+    }
     s->stage=5;
     s->root=tables->physical|((uint64_t)s->bank<<48);
     if (!a630_smmu_set(io,ctx,s,s->context,0,1) ||
@@ -242,6 +290,9 @@ static inline bool a630_smmu_end(const struct a630_smmu_io *io, void *ctx,
     struct a630_smmu_snapshot r=*s;
     r.error=0;r.failed_offset=0;r.expected=0;r.actual=0;r.polls=0;
     if (!a630_smmu_lease(io,ctx,&r)) goto failed;
+    /* Failed implementation programming may have left our halt asserted.
+     * Release it before architectural TLB synchronization, as the vendor. */
+    if(r.halt_changed&&!a630_smmu_halt(io,ctx,&r,false))goto failed;
     /* No more stream requests may enter the context during teardown. */
     if (!a630_smmu_set(io,ctx,&r,0xc00+4*s->slot,
             (s->s2cr&~0x30000u)|0x20000,0x30000) ||
@@ -256,8 +307,15 @@ static inline bool a630_smmu_end(const struct a630_smmu_io *io, void *ctx,
         !a630_smmu_set(io,ctx,&r,s->page+0x800+4*s->bank,s->cba2r,1) ||
         !a630_smmu_set(io,ctx,&r,s->context,s->control[0],0xc011ff)) goto failed;
     if (!s->foreign) {
-        for (unsigned n=0;n<A630_SMMU_IMPLS;n++)
-            if (!a630_smmu_set(io,ctx,&r,a630_smmu_impl_offsets[n],s->impl[n],UINT32_MAX)) goto failed;
+        if(s->impl_changed){
+            if(!a630_smmu_halt(io,ctx,&r,true))goto failed;
+            for(int n=A630_SMMU_IMPLS-1;n>=0;n--)if(s->impl_changed&(1u<<n)){
+                uint32_t value=s->impl[n]|(n?0:A630_SMMU_HALT_REQ);
+                uint32_t mask=n?UINT32_MAX:~A630_SMMU_HALT_IDLE;
+                if(!a630_smmu_set(io,ctx,&r,a630_smmu_impl_offsets[n],value,mask))goto failed;
+            }
+            if(!a630_smmu_halt(io,ctx,&r,false))goto failed;
+        }
         uint32_t current;
         if (!a630_smmu_rd(io,ctx,&r,0,&current) ||
             !a630_smmu_set(io,ctx,&r,0,(current&~0x401u)|(s->global&0x401),0x401)) goto failed;
@@ -265,8 +323,11 @@ static inline bool a630_smmu_end(const struct a630_smmu_io *io, void *ctx,
     if (!a630_smmu_set(io,ctx,&r,0xc00+4*s->slot,s->s2cr,0x030303ff) ||
         !a630_smmu_set(io,ctx,&r,0x800+4*s->slot,s->smr,UINT32_MAX)) goto failed;
     if (!io->sync(ctx)) {r.error=A630_SMMU_IO;goto failed;}
-    s->restored=1;s->restore_error=0;return true;
+    s->halt_after=r.halt_after;s->halt_polls=r.halt_polls;
+    s->restored=1;s->restore_error=0;s->restore_offset=0;return true;
 failed:
+    s->halt_after=r.halt_after;s->halt_polls=r.halt_polls;
+    s->restore_offset=r.failed_offset;s->restore_expected=r.expected;s->restore_actual=r.actual;
     s->restored=0;s->restore_error=r.error?r.error:A630_SMMU_RESTORE;
     return false;
 }

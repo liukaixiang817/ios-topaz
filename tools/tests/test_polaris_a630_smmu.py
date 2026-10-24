@@ -17,8 +17,8 @@ class A630SMMUTests(unittest.TestCase):
 #include <string.h>
 struct model {
  uint32_t r[16384], original[16384];
- unsigned operations, fail, calls, writes, clean, sync, waits, wide;
- bool held, stuck, badack;
+ unsigned operations, fail, calls, writes, clean, sync, waits, wide, implwrites;
+ bool held, stuck, badack, halt_stuck, implbad;
 };
 static struct model m;
 static bool op(struct model *x) {x->operations++;return x->operations!=x->fail;}
@@ -32,13 +32,21 @@ static void allowed(uint32_t off, bool wide) {
 static bool stopped(void *ctx) {struct model *x=ctx;x->calls++;return x->held;}
 static bool rd(void *ctx,uint32_t off,uint32_t *v) {
  struct model *x=ctx;allowed(off,false);if(!op(x))return false;
- *v=x->r[off/4];if((off&0xfff)==0x7f4 && x->stuck)*v=1;return true;
+ *v=x->r[off/4];if((off&0xfff)==0x7f4 && x->stuck)*v=1;
+ if(off==0x6000){*v&=~8u;if((*v&4)&&!x->halt_stuck)*v|=8;}
+ return true;
 }
 static bool wr(void *ctx,uint32_t off,uint32_t v) {
  struct model *x=ctx;allowed(off,false);assert(x->held);x->writes++;
  /* A failed callback may still have posted the write. */
  bool ok=op(x);
- if (!x->badack) x->r[off/4]=v;
+ bool impl=false;for(unsigned n=1;n<12;n++)if(off==a630_smmu_impl_offsets[n])impl=true;
+ if(impl)x->implwrites++;
+ /* The real0034 last implementation register did not accept the value.
+  * Model hardware accepting these writes only after micro-MMU IDLE ACK. */
+ if(impl && (!(x->r[0x6000/4]&4)||x->halt_stuck))return ok;
+ if(off==0x6b68&&x->implbad)return ok;
+ if (!x->badack) x->r[off/4]=off==0x6000?v&~8u:v;
  return ok;
 }
 static bool rd64(void *ctx,uint32_t off,uint64_t *v) {
@@ -68,6 +76,7 @@ static void reset(void) {
  m.r[0x9038/4]=0xaabbccdd;m.r[0x903c/4]=0xeeff0011;
  for(unsigned n=0;n<16;n++)m.r[(0xc00+4*n)/4]=0x20402;
  for(unsigned n=0;n<12;n++)m.r[a630_smmu_impl_offsets[n]/4]=0x5a000000+n;
+ m.r[0x6b68/4]=0xa8000082;
  memcpy(m.original,m.r,sizeof(m.r));
 }
 static void restored(void) {
@@ -92,6 +101,8 @@ int main(void) {
  assert(m.r[0x9010/4]==0x38001 && m.r[0x9030/4]==0x803519);
  assert(m.r[0x9000/4]==0xc01127 && m.r[0x9038/4]==0xf404ff44);
  assert(m.r[0]==0x400 && m.wide==2 && m.clean==1 && !pt.dirty);
+ assert(s.halt_changed&&s.halt_polls==1&&s.impl_changed==0xfff);
+ assert(!(m.r[0x6000/4]&4)&&m.r[0x6b68/4]==0x9a82a382);
  assert(a630_smmu_end(&io,&m,&s)&&s.restored&&!s.restore_error);restored();
  /* Every start callback failure, including posted writes and final sync. */
  for(unsigned fail=1;fail<=count;fail++) {
@@ -111,6 +122,17 @@ int main(void) {
  assert(a630_smmu_end(&io,&m,&s));restored();
  reset();m.badack=true;assert(a630_smmu_begin(true,true,&pt,&io,&m,&s)==A630_SMMU_ACK);
  m.badack=false;assert(a630_smmu_end(&io,&m,&s));restored();
+ reset();m.halt_stuck=true;
+ assert(a630_smmu_begin(true,true,&pt,&io,&m,&s)==A630_SMMU_HALT);
+ assert(s.halt_polls==30000&&s.impl_changed==0&&s.failed_offset==0x6000);
+ assert(m.r[0x6b68/4]==0xa8000082);m.halt_stuck=false;
+ assert(a630_smmu_end(&io,&m,&s)&&!(m.r[0x6000/4]&4));restored();
+ reset();m.implbad=true; /* Halt is not permission to waive readback. */
+ assert(a630_smmu_begin(true,true,&pt,&io,&m,&s)==A630_SMMU_ACK);
+ assert(s.failed_offset==0x6b68&&s.expected==0x9a82a382&&s.actual==0xa8000082);
+ assert(a630_smmu_end(&io,&m,&s)&&!(m.r[0x6000/4]&4));restored();
+ reset();m.r[0x6000/4]|=4; /* Another halt request cannot be stolen. */
+ assert(a630_smmu_begin(true,true,&pt,&io,&m,&s)==A630_SMMU_OWNERSHIP&&!m.writes);
  reset();assert(a630_smmu_begin(true,true,&pt,&io,&m,&s)==A630_SMMU_READY);
  m.held=false;unsigned writes=m.writes;assert(!a630_smmu_end(&io,&m,&s));
  assert(m.writes==writes&&!s.restored&&s.restore_error==A630_SMMU_LEASE);
@@ -122,6 +144,12 @@ int main(void) {
  /* Foreign streams, including protected contexts, cannot be displaced. */
  reset();m.r[0x800/4]=0x80000002;m.r[0xc00/4]=7;
  assert(a630_smmu_begin(true,true,&pt,&io,&m,&s)==A630_SMMU_OWNERSHIP&&!m.writes);
+ reset();m.r[0x800/4]=0x80000002;m.r[0xc00/4]=7;m.r[0]=0x400;
+ for(unsigned n=0;n<12;n++)m.r[a630_smmu_impl_offsets[n]/4]=a630_smmu_impl_values[n];
+ memcpy(m.original,m.r,sizeof(m.r));
+ assert(a630_smmu_begin(true,true,&pt,&io,&m,&s)==A630_SMMU_READY);
+ assert(s.foreign&&s.slot==1&&s.bank==1&&!s.halt_changed&&!m.implwrites);
+ assert(a630_smmu_end(&io,&m,&s)&&!m.implwrites);restored();
  reset();for(unsigned n=0;n<16;n++)m.r[(0x800+4*n)/4]=0x80000020+n;
  assert(a630_smmu_begin(true,true,&pt,&io,&m,&s)==A630_SMMU_OWNERSHIP&&!m.writes);
  reset();for(unsigned n=1;n<5;n++)m.r[(0x8000+4096*n)/4]=1;

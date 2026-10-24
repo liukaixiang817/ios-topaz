@@ -22,6 +22,29 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+###0035 local fix verified; source-only public build next
+
+-0840 implements originalmicroMMUhalt6000bit2/IDLEbit3(30msbound), retains
+  HALTrequestacrossall12DTimplwrites, resumesbeforeTLBoperations; cleanup
+  restoresonlychangedimplregsunderhalt/resumes. Existingforeignstreamsnever
+  halted/reconfigured; preexistinghaltrefused. CriticalACKchecksretained,
+  includesregressionwhere6b68stillignoreswriteevenafterhalt(andmustfail).
+- USBrequestsCGCTL(QSCRATCH+28)bits3/4beforeHS/endpointsetup. Readback/owned
+  maskedrollback; busy/runningcontrollerretainsrequests. AddedURandSHrows,
+  17saveddisplayrows; noMMIOfromUI. Nohardware-success/accelerationclaim.
+- LocalPASS27ASan/UBSan,3actualCI-headerARM64units/allimports,20ordered
+  patches28files nofuzz/offset,15detailrows<=67chars,original48RSC/PDC+
+  12DTpairs+halt/CGCTLsourceorder. FullCI/image/phonepending.
+- Active**source-onlymanagedworktree**
+  /Users/lkx/.codex/worktrees/polaris-source-publish/ios-topaz
+  createdfrompublicb4c0c57. Onlyallowlisted6source/test/patchfileswillcopy;
+  **NOTES.md andprivatehandoffcommits mustnotenterpublicworktree/history**.
+  Commit/pushHEAD:refs/heads/codex/polaris-preflightfromthatdetachedworktree
+  fast-forwardonly. HumanapprovedGPU/USBsourcepush/build; noextraapproval
+  neededforunchangedscope. Currentrootbranchkeepsprivateoperationalnotes.
+- Phone0034GUIconfirmed; observer89914stopped54samples/541.099s/noECM.
+  No0035deviceaction. Build/checknewimagebeforenextphysicalFASTBOOTquestion.
+
 ### CURRENT ACTION —0034 GUI confirmed;0035 fixes source-identified omissions
 
 - Actualhuman “已进入系统”; observer89914STOPPED EXIT0, **54samples/541.099s**,

@@ -74,7 +74,7 @@ uint32_t polaris_a630_diagnostic_line(unsigned line, char *out, uint32_t size)
 {
     if (!out || !size) return 0;
     out[0] = 0;
-    if (line >= 8) return 0;
+    if (line >= 9) return 0;
     if (!__atomic_load_n(&a630_published, __ATOMIC_ACQUIRE))
         return (uint32_t)snprintf(out, size, "GPU snapshot pending");
     const struct a630_power_snapshot *p = &a630_power_saved;
@@ -100,8 +100,11 @@ uint32_t polaris_a630_diagnostic_line(unsigned line, char *out, uint32_t size)
         m->error&15,m->stage&15,m->bank&255,m->slot&255,m->failed_offset,m->expected,m->actual,m->restored&1,m->restore_error&15);
     if (line == 6) return (uint32_t)snprintf(out,size,"GE %x/%x fw%08x @%x:%x e%x a%x r%x/%x",
         e->error&15,e->stage&15,e->fw,e->failed_bank&15,e->failed_offset,e->expected,e->actual,e->stopped&1,e->restore_error&15);
-    return (uint32_t)snprintf(out,size,"GL u%08x o%08x src%04x v%08x/%08x r%x/%x",
+    if (line == 7) return (uint32_t)snprintf(out,size,"GL u%08x o%08x src%04x v%08x/%08x r%x/%x",
         b->pll[2],b->pll[3],b->source&65535,b->live[0],b->live[1],b->restored&1,b->restore_error&15);
+    return (uint32_t)snprintf(out,size,"SH b%08x l%08x a%08x p%x i%x r%x@%x",
+        m->halt_before,m->halt_live,m->halt_after,m->halt_polls,m->impl_changed,
+        m->restore_error&15,m->restore_offset);
 }
 
 static bool a630_property(DTEntry node, const char *name, const void **data, unsigned *size)
@@ -368,6 +371,9 @@ void polaris_a630_report(void)
     printf("D GPU SMMU: error=%u stage=%u ID=%x/%x/%x/%x cb=%u stream=%u slot=%u root=%llx fail=%x expected=%x actual=%x restored=%u/%u ATOS=disabled DMA=%u\n",
         m->error,m->stage,m->id[0],m->id[1],m->id[2],m->id[3],m->bank,A630_SMMU_STREAM,m->slot,
         (unsigned long long)m->root,m->failed_offset,m->expected,m->actual,m->restored,m->restore_error,a630_dma_ready);
+    printf("D GPU SMMU HALT: before=%x idle=%x after=%x owned=%u polls=%u impl_changed=%x restore=%u offset=%x expected=%x actual=%x\n",
+        m->halt_before,m->halt_live,m->halt_after,m->halt_changed,m->halt_polls,m->impl_changed,
+        m->restore_error,m->restore_offset,m->restore_expected,m->restore_actual);
     printf("D GPU EXEC: error=%u stage=%u FW_INIT=%x started=%u stopped=%u profile=%u fail=%u:%x expected=%x actual=%x polls=%u restored=%u/%u; HFI/GX/3D not started\n",
         e->error,e->stage,e->fw,e->started,e->stopped,e->changed,e->failed_bank,e->failed_offset,e->expected,e->actual,e->polls,e->restored,e->restore_error);
     printf("D GPU LOAD: result=%u stage=%u block_reset_retained=%u reset=%x/%x fw=%x hfi=%x counter=%x polls=%u\n",
