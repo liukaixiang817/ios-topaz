@@ -81,6 +81,40 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   passed bootstrap and re-applies its13checks, then reruns gate once. Source
   and expected phone/kernel/fixture inputs unchanged. CI build took3m39s;
   artifact12549700220/60386231bytes, exact profile/ZIP CRC/SHA verified.
+- Gate retry PASS29checks; qemu-gate-identical-retry.json confirms exact same
+  kernel/args/ADT/fixture/payload as failed attempt. Bootstrap13checks reused
+  and rechecked; default200s now running, nodiag90s still remaining. Original
+  gate failure retained; all-first-attempt success MUST NOT be claimed.
+- Exec38333 then stopped exit1 at default FIRST ATTEMPT: rtclock_intr16.102ms
+  >13.631488ms, during early kernel boot BEFORE PID1 alive/target sampling,
+  touch disabled. Separate first failure for default mode, all evidence under
+  qemu-0018-default-attempt1 +qemu-default-attempt1-failure.json; pipeline log
+  validation-attempt2.log. Host process snapshot and official QEMU timing docs
+  reviewed (qemu-timing-review.json); causal host contention NOT established.
+  No icount/clock/timeout/panic threshold change. One identical default retry
+  next; bootstrap and gate remain passed and will not rerun. Need default and
+  nodiag PASS then image. No new physical action requested.
+- Default identical retry exec22692 FAILED again: rtclock_intr16.665008ms,
+  now after PID1 alive but before first focused sample. First/second default
+  kernel/args/ADT/fixture/payload exactly identical; both original timing
+  failures retained in qemu-0018-default-attempt{1,2}/ and separate failure
+  JSON. Do not retry unchanged default again or call its timing test passed.
+- Investigating clock-domain effect with separate counted-clock FUNCTIONAL
+  runs for default/nodiag: explicit optional tools/qemu-sweet.py
+  --icount-shift5 ->TCG single,shift5/alignoff/sleepon/RTCvm. Original harness
+  snapshot qemu-original.py retained; no kernel/bootarg/panic threshold change.
+  QEMU official invocation docs explicitly say icount is NOT cycle accurate;
+  it cannot prove actual CPU timing or resolve the original failure's cause.
+  Retain original-clock bootstrap/gate passes separately. New artifacts use
+  qemu-0018-counted-{default,nodiag}; provenance records clock+host harness SHA.
+  validation-counted.log pipeline active; only functional checks may pass.
+  Standard default timing remains FAILED/unresolved in final verification.
+- Counted-clock default200s FUNCTIONAL PASS30checks, unchanged kernel/args/
+  ADT/fixture/payload compared to original default failures; only emulator
+  clock variant changed, actual icount_shift5 verified in result/provenance.
+  qemu-counted-default-control.json records comparison. Final nodiag90s
+  counted-clock functional run active in exec53912/validation-counted.log.
+  No claim original timing failure was fixed or host causality established.
 
 ### 0017 actual temporary boot history
 

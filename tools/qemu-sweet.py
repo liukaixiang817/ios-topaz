@@ -167,6 +167,8 @@ def main():
     ap.add_argument('--qemu', default='qemu-system-aarch64', help='QEMU executable')
     ap.add_argument('--nm', default='llvm-nm', help='Mach-O nm executable (LLVM or macOS)')
     ap.add_argument('--cpu', default='cortex-a76')	# ARMv8.2 like Kryo 470, same ID_AA64MMFR0
+    ap.add_argument('--icount-shift', type=int, choices=range(0, 11),
+                    help='opt-in TCG instruction clock (2^N ns/instruction); functional tests only, not CPU timing evidence')
     ap.add_argument('--kernel', help='matching unstripped kernel, for exact framebuffer text decoding (uses llvm-nm)')
     ap.add_argument('--fail-on-panic', action='store_true', help='exit 2 for a visible panic, 3 for incomplete/blank decoding; requires --kernel')
     a = ap.parse_args()
@@ -206,6 +208,11 @@ def main():
            '-d', 'int,guest_errors,unimp', '-D', f'{out}/qemu.log', '-no-reboot',
            '-device', f'loader,file={out}/stub.bin,addr={STUB_PA:#x},force-raw=on',
            '-device', f'loader,addr={STUB_PA:#x},cpu-num=0']
+    if a.icount_shift is not None:
+        # Keep the default unchanged. Counting virtual instructions separates
+        # control-flow checks from host scheduling; it is not cycle accurate.
+        cmd += ['-accel', 'tcg,thread=single', '-icount',
+                f'shift={a.icount_shift},align=off,sleep=on', '-rtc', 'clock=vm']
     if a.loader_image:
         open(f'{out}/payload.bin', 'wb').write(payload)
         cmd += ['-device', f'loader,file={os.path.abspath(a.loader_image)},addr=0x80080000,force-raw=on',
@@ -242,7 +249,8 @@ def main():
     for f in ('ram.bin', 'payload.bin'):
         if os.path.exists(f'{out}/{f}'):
             os.unlink(f'{out}/{f}')
-    result.update(actual_shim=bool(a.loader_image), platform=a.platform, framebuffer_base=hex(fb_base), framebuffer_height=fb_height)
+    result.update(actual_shim=bool(a.loader_image), platform=a.platform, framebuffer_base=hex(fb_base), framebuffer_height=fb_height,
+                  icount_shift=a.icount_shift, timing_scope='functional instruction clock; not CPU performance' if a.icount_shift is not None else 'default QEMU clock')
     open(f'{out}/result.json', 'w').write(json.dumps(result, indent=2) + '\n')
     print(json.dumps(result), file=sys.stderr)
     print(f'{out}/fb.png  {out}/regs.txt  {out}/qemu.log', file=sys.stderr)
