@@ -10,11 +10,43 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION —0013 sent; capture focused SpringBoard/lsd/MCM callers
+### CURRENT NEXT ACTION —0013 hardware decoded; supply verified factory Wi-Fi identity
+
+- NEW0013 HARDWARE OBSERVED: user photos hardware-focus-{1..4}.jpg and clearer
+ hardware-focus-later-{1,2}.jpg under research/polaris/launchservices-0013/.
+ hardware-focused-state.json + corrected hardware-focus-later-symbols.json
+ retain observations. Cache slide3c540000; samples20/21/22/23 rotate correctly.
+ Real SpringBoard3/3 selection now observed (QEMU fixture still1thread/task).
+ SpringBoard26/TID210 synchronous NSXPC -> _LSCopyServerStore+768; TID1141
+ waits CoreServices gSessionLock,addr21e2b24b8/value102,owner unestablished.
+ lsd108/TID399 sc=-36 semaphore_wait_trap -> libdispatch -> MobileGestalt
+ 19c57c430/644/084 ->19c5716e8 Wi-Fi MAC query. Clearer photo shows runtime
+ 1d8abc0f8,NOT early blurry c8f8 candidate; valid direct call at19c57c0f4.
+- Exact20H392 disassembly identifies native first path
+ IODeviceTree:/chosen/mac-address-wifi0 (CFData),then sdio/wlan/marconi-wifi
+ local-mac-address,then IONetworkController matched-notification fallback.
+ Fallback dispatches CFRunLoop worker with5s run duration and waits semaphore
+ FOREVER in caller. Current tree lacks address and WLAN/network service;
+ snapshot identifies a real missing identity path but does NOT prove deadlock
+ or explain every remaining blocker. lsd main waits kevent_id,another thread
+ dispatch_group_wait;5/8otherthreads unobserved. MCM64 first3/4threads ordinary
+ CFRunLoop/workq waits. Do not bypass MG,locks,errno or fabricate Wi-Fi driver.
+- Verified original persist.img backup SHA matches its manifest; readonly host
+ debugfs extracted /wlan_mac.bin (18byte wlan0= +12hex),valid6byte unicast
+ factory address. Backup hash unchanged;no mount/replay/device writes. Private
+ factory-wifi-identity.json/factory-wifi-mac.raw;never commit device address.
+ NEXT implement explicit ADT identity opt-in using these bytes through native
+ /chosen path,retaining absent WLAN node/no foreign driver. Same0013kernel;
+ validate serialization/default preservation/payload before nexttemporaryboot.
+ Keep currentphone XNU until concrete newimage verified;no USBrestart channel.
+- Actual FBmask284000238429178,swaps7/presents5/pixels10767600 static across
+ observed focused samples;contents unknown,NOhome/App proof. COW max21287/
+32768,dirty339580KiB,reserved512MiB,UFS-error0/refused0,NOTexhausted. No panic
+ visible in snapshots;not lifetime health. GUI/touch/USB/Apps/64GiB unfinished.
 
 - CURRENT PHONE STATE:0013 temporary boot SENT,exec64648exit0,FASTBOOT1.170s,
  2026-10-24T02:25:14.942595Z (=2026-10-24 Australia/Melbourne). Transport
- acceptance ONLY;actual0013kernel/screen/GUI not yet observed. Image/kernel/
+ acceptance then actual0013focused screen observed above;GUI unfinished. Image/kernel/
  payload hashes below unchanged,all5QEMU+Cpayloadprovenances rechecked.
  Keep this boot forNEWfocusedcaller evidence;no USBrestart/logchannel. First
  sample60s afterBSD,then15s pertarget,SpringBoard/lsd/containermanagerd rotate.
@@ -73,7 +105,7 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 -0013bootnowSENT as above;doNOTrerun initialpreflight.py fromXNU or waive
  pendingjournalchecks. Futurebootneedsfreshmap/fullimageproof asappropriate;
  neverrepair/stageagain orenableufsrw1. Actualfocusedhardwarecaller evidence
- stillpending;current0012photos doNOTconfirm0013boot orGUI.
+ nowdecoded above;current0013photos still doNOTconfirmGUI.
 -0810 explicitpolariswait1 focuses one service perpass,first60s,interval15s,
  36passes,max3threads/12frames. Six addresses per192byteboundedline,offseto,
  savedMachargs for allselectedMachwaits. Withoutfocus flag legacy2threads/
