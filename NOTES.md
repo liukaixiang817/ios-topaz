@@ -22,7 +22,51 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT NEXT ACTION — observe temporary0030 until human boot confirmation
+### CURRENT NEXT ACTION — 0031 precise USB/GPU saved diagnostics
+
+- User confirms **“已进入系统”** on0030 and requests priority USB/GPU fixes
+  with more diagnostic lines. Settings photo saves **U2 R7 S12 E5 C7f V0/1
+  Q0/2/402/2 L2400 B480800/0/520020**, **G303 P5 K6/0 F0/0 R80000000/0
+  T10384**. V0/1 means HS-session helper error0 and owned requests restored;
+  it does not mean USB connected. Resource-command2 still timesout with
+  CMDACT. Required-clock-under-reset stage remains successful. T is one
+ 10.384ms elapsedpresentation, not FPS/CPU. No GMU execution/acceleration.
+  Private hardware-0030-observation.json pins photo/hash and interpretation.
+- Observer20334 stopped cleanly via this boot's actual human-confirmation
+  marker, EXIT0 **13:59:23.613200UTC**. **40samples/396.872s**, no known-phone
+  USB or matchingECM in any sample, zero inspection errors. All40 rows match
+  the fsyncedNDJSON journal and private JSON snapshot. No RAMlog/panelcapture,
+  hostnetworkchange orreboot. This is the recordedwindow, not a600s/fullstartup
+  negative. Observer is **STOPPED** by userconfirmation; do not restart it.
+- IMPLEMENTED0836 diagnostic patch: retain firstthree USBcommand before/after
+  snapshots and firstlaterfailure after-only, including actual parameter
+  register readback, live command/status, GCTL/GSTS/USB2PHY/PIPE/DCFG/DCTL/
+  DSTS/DALEPENA and original HW/UCTL/FLADJ/event fields. Before-reset and
+  before-EP0 snapshots separately published. No new PHY/GPU region mapped,
+  no USB activation/clock/PHY write change. Normal commands beyondfirstthree
+  add no diagnostic MMIO; firstlaterfailure is captured honestly with
+  before_valid=0. Release/acquire immutable slots; no renderer MMIO.
+  Fixed8double-size rows: USB/GPU summaries +4USB +2GPU rawsnapshot rows,
+  confined to the panel. Physical firstfailure remainsunproven, not fixed.
+- Native19 tests PASS (includes new TCMtransfermodel), three actual CI-header
+  ARM64units compile/allimportsresolve against0030. Six new rows fromactual
+  formatterfunctions tested underASan/UBSan: maximum32bit values fit67characters,
+  pending/0..4command states, capacity1/null safe. Sixteen ordered patches
+  0821..0836 applywithoutfuzz/offset; all19filesmatchactualcompiletree.
+  FullCI/exactkernel/image checks pending. Phone remains0030; no0031 action.
+- GPU preparation: unlinked tools/polaris-a630-tcm.h converts original
+  GPU-relativewords toGMU-localbytes and copies/verifies the original32KiB
+  flat image only with exactboard/recordedhash/liveexclusivelease and CM3
+  SYSRESET=1 beforeeveryword. No resetwrite/release, firmwarestart or DMA/HFI
+  setup. Faults stop without running partialfirmware; caller must retain
+  reset. Native independent address/vector/unaligned/fault/lastword fixtures
+  PASS ASan/UBSan; actualCI-header ARM64 standalonecompile PASS13:58:50UTC.
+  **Not linked to0030 or0031.** PhysicalCM3/bus/reset admission remainsneeded.
+  Originaladreno.c Gitblob ae61bec1f0abfec000a207ae2f8fce3e8a922f5b,
+  kgsl_device.h7c3bff78ed1f2f728ffd131ded08e406e03bb42d andLinuxv6.12
+  a6xx_gmu.h94b6c5cab6f435c8965fea8ae5804451c6c3cf29 fetched/byteverified;
+  source records at0030/gmu-access-source-check.json. Do not mix original
+  GPU-relative and mainlineGMU-local register namespaces.
 
 - **0030 TEMPORARY BOOT SENT**, human confirmedFASTBOOT. Preflight28897 exited0
   **13:52:13.542315UTC**: freshfull16GiBhash/182maps/GPT/header unchanged,
@@ -32,9 +76,8 @@ early samples only. On0029 the human already confirmed boot complete and said
   Continuousreadonlywatch **session20334** starts **13:52:46.738UTC**,
   approximately9.562s afterboot; do not claim coverage of that initialgap.
   Initialsample no known-phoneUSB/ECM; no negative boot conclusion.
-  **KEEPWATCHRUNNING until human “已进入系统” or explicit cancellation.**
-  No600s/discovery exit. OnECM immediately attemptRAMlog/panel whilewatching.
-  HumanGUI/USB S/E/Q/L/B/V andGPU P/K/F/R confirmation pending. No restart.
+  HumanGUI/USB/GPU confirmation andobserverstop nowrecordedabove.
+  No600s/discovery exit wasused; stoppedonlyonhumanconfirmation. No restart.
 
 - Actual0029 Settings photo/user confirms bootcomplete: **G303 P5 K6/0 F0/0
   R80000000/0**, USB **R7 S12 E5 C7f Q0/2/402/2 L2400 B480800/0/520018**.
@@ -88,9 +131,8 @@ early samples only. On0029 the human already confirmed boot complete and said
   19files,original6firmwares,3exactkernelrunprovenances,Cpayloadvalidator/
   rebuild,image/manifest/65DTBs verified. PhoneADT ANDarguments byteidentical
   0029:CPU1/Hz20/mode4/512MiBRAMCOW/ufsrw0. No GPUfirmware/acceleration/SMP.
-  Freshpreflight andtemporaryboot nowcompleted asabove. Next: continuousUSB
-  observation untilhumanconfirmation; captureifECMappears. GPUacceleration
-  stillunproven; retain successful0029clockstage.
+  Freshpreflight/temporaryboot/humanconfirmation nowcompleted asabove.
+  GPUacceleration stillunproven; retain successful0029clockstage.
 - Host-only0030watcher updated after the user's clarification above; kernel,
   payload and image unchanged. `watch-usb.py` has no time/discovery exit,
   emits firstECM immediately for log/panel collection, atomically saves a
@@ -103,7 +145,7 @@ early samples only. On0029 the human already confirmed boot complete and said
   (some checks cover multiple properties). This is host-only validation,
   not evidence of a phone USB connection. Private usb-policy-check.json
   records the superseded watcher hash/new hash; all other pipeline inputs
-  remain frozen. Former0029observer staysstopped; new0030observer isactive.
+  remain frozen. Former0029observer andhuman-completed0030observer staystopped.
 - GMUnextstage review retainedprivately in0030/gmu-next-stage-source-review.json:
   originalgmu2gpu worddelta1a800, localAHB byteoffsets ITCM3000/DTCM7000/
   CM3SYSRESET14000/FWINIT14070/counter14220/HFIstatus14600. Do not assume

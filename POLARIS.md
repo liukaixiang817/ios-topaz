@@ -389,12 +389,24 @@ Temporary0030 is sent13:52:37UTC, Sending/BootingOKAY,total1.184s; no partition
 write or journalreplay. PhoneADT/arguments remain byteidentical0029.
 Its host-only observer starts13:52:46UTC, approximately9.562s afterboot;
 initial sample has no known-phoneUSB/ECM, with no boot-window negative claim.
-Observation continues until the human confirms “已进入系统” or cancels;
-do not reboot or stop at ten minutes/discovery. The observer
-persists each sample, and stops on a boot-bound human confirmation. Eight
-simulated observer checks pass. The running0029 observer remains stopped
-after the human's earlier explicit boot-complete/cancel instruction.
-Neither a working USB link nor GPU firmware execution is established.
+The human confirms “已进入系统”; observer20334 stops cleanly at13:59:23UTC:
+40samples/396.872s, zero inspectionerrors, no known-phoneUSB/ECM, all rows
+preserved inJSON/NDJSON. No reboot/networkchange/RAMlog/panelcapture. This
+is the recordedwindow, not a600s negative. Settings photo saves V0/1 and
+USB S12/E5 Q0/2/402/2 B480800/0/520020; HS-session setup/restoration passed,
+but resource-command2 stilltimesout. GPU P5 K6/0 F0/0 remains successful
+clock-only admission. No GPU firmware execution or acceleration is established.
+
+0031 adds fixed eight-line saved diagnostics: original reset/PHY/PIPE/HW
+configuration, firstcommands' parameters and actual register readbacks,
+and GPU power/clock/reset snapshots. RAM records retain fuller values.
+Normal USB traffic adds no snapshot reads beyond the firstthree commands;
+the firstlaterfailure gets an after-only record. The display reads saved
+immutable state only. No activation sequence or GPU reset/clock write changes.
+Nineteen native checks, three ARM64 compiles/import checks, ordered patch-chain
+and maximum-width formatter checks pass; full CI/image checks remain pending.
+The new guarded flat GMU transfer component is preparatory and unlinked;
+physical reset/bus/SMMU/HFI admission is still required before firmware start.
 
 ## Standalone boot diagnostic 0001
 

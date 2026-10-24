@@ -21,6 +21,7 @@ void polaris_a630_init(void);
 void polaris_a630_report(void);
 uint32_t polaris_a630_status(void);
 uint32_t polaris_a630_details(char *, uint32_t);
+uint32_t polaris_a630_diagnostic_line(unsigned, char *, uint32_t);
 static struct a630_probe a630_saved;
 static struct a630_power_snapshot a630_power_saved;
 static struct a630_clock_snapshot a630_clock_saved;
@@ -47,6 +48,22 @@ uint32_t polaris_a630_details(char *out, uint32_t capacity)
     return (uint32_t)snprintf(out, capacity, "G%x P%u CX%08x HW%08x M%08x X%08x",
         polaris_a630_status(), a630_power_saved.result, a630_saved.cx, a630_saved.cx_hw,
         a630_saved.clocks[1], a630_saved.clocks[2]);
+}
+
+uint32_t polaris_a630_diagnostic_line(unsigned line, char *out, uint32_t size)
+{
+    if (!out || !size) return 0;
+    out[0] = 0;
+    if (line >= 2) return 0;
+    if (!__atomic_load_n(&a630_published, __ATOMIC_ACQUIRE))
+        return (uint32_t)snprintf(out, size, "GPU snapshot pending");
+    const struct a630_power_snapshot *p = &a630_power_saved;
+    const struct a630_clock_snapshot *c = &a630_clock_saved;
+    if (!line) return (uint32_t)snprintf(out, size,
+        "GP rq%08x/%08x hw%08x/%08x/%08x",
+        p->before, p->after, p->before_hw, p->on_hw, p->after_hw);
+    return (uint32_t)snprintf(out, size, "GC rs%08x/%08x/%08x r%08x m%08x",
+        c->before[4], c->live[4], c->after[4], c->live[2], c->live[3]);
 }
 
 static bool a630_property(DTEntry node, const char *name, const void **data, unsigned *size)
