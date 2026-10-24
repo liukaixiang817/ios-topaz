@@ -1,10 +1,13 @@
 # MIX 2S (polaris): current bring-up and safety constraints
 
 The requested target is **Android + Mindows Windows 11 + iOS 16**, preserving
-existing data. The current temporary build **0020** runs real iOS 16.7.16
+existing data. The current temporary build **0021** runs real iOS 16.7.16
 (20H392) on the MIX 2S. The user confirms physical swipe into the home screen,
 Settings content after a wait, and swipe back home. Settings launch currently
-needs about 10–30 seconds by human estimate. Latency/FPS are not instrumented.
+needs about 45 seconds by human estimate (0020 was estimated at 10–30 seconds
+under different conditions). An immediate second open on the same0021 boot
+takes under3seconds. These are separate first/repeat measurements; latency/FPS
+are not instrumented.
 GPU acceleration, Wi-Fi, full App compatibility and a persistent UEFI iOS entry
 remain unfinished. Read `NOTES.md` for the current source, image and handoff.
 
@@ -18,19 +21,30 @@ pending Android ext4 journal as part of a boot check.
 
 USB debug build0021 uses a separate versioned board node and `polarisusb=2`.
 It checks the SDM845 USB power, clock and halted-device state before entering
-the existing CDC-ECM code. It does not power up clocks or a PHY. Enumeration,
-IP and RAM log reception still require an actual phone test; no SSH daemon is
+the existing CDC-ECM code. It does not power up clocks or a PHY. After the
+actual0021 boot, the host observed neither its USB device nor its ECM NIC
+over one minute, and a later read-only check also found no interface.
+**USB debugging and SSH are currently unavailable.** The exact refusal
+stage is not known without the saved D USB / D UCLK values. No SSH daemon is
 installed. The macOS receiver is `tools/polaris-usb-log.py`; its plan mode
 changes no network configuration. The debug profile disables repeated caller
-stack sampling; the effect on App launch time has not been measured.
+stack sampling; this has not demonstrated a speedup.
 
-Build0021 is now prepared and verified: full kernel CI40075056990 succeeded,
+Build0021 was verified and temporarily booted: full kernel CI40075056990 succeeded,
 five selected standard-clock QEMU modes pass99 functional checks, and exact
 payload/image integrity passes. Bootstrap and gate first attempts hit the
 known timer-handler threshold; unchanged standard-clock retries passed and
 both original failures are retained. This does not establish a timer fix or
-physical USB success. See the active handoff for hashes and the next readonly
-recovery/temporary-boot sequence.
+physical USB success. See the active handoff for hashes and actual boot results.
+
+The reference provides a different USB route: a resident UEFI loader serves
+fastboot commands for logs, screenshots, stopping the kernel and rebooting.
+Our LinuxImage shim has no retained UEFI Boot Services; its kernel also uses
+16KiB pages, while the reference return trampoline handles4KiB pages. The
+reference's separate OpenSSH scenario uses working Wi-Fi and userspace keys.
+See `REFERENCE_REPOS.md` for the pinned implementation links. Native ECM
+enumeration would still need IP configuration and a userspace SSH service
+before it could provide a remote shell; the current receiver only saves logs.
 
 The GPU port is based on this phone's live DT and Xiaomi's original
 [polaris GPU sources](https://github.com/MiCode/Xiaomi_Kernel_OpenSource/tree/c7cb50c18f812629b9620b2b8fa684bc40d82080/drivers/gpu/msm),
@@ -77,6 +91,15 @@ a speedup. The host observed no USB device/ECM NIC over one minute; no debug
 connection or SSH is established. Independent QEMU testing now establishes
 the existing kernel's two-core CPU_ON/SGI/EL1-idle path with MPIDRs0/0x100;
 this is not a phone SMP or performance result. Running0021 remains one CPU.
+
+The0022 candidate adds a second A55 and skips immutable-base UFS reads on
+complete RAM hits and full-block RAM overwrites. Its native request-model
+tests and full kernel CI40079170013 pass. The single-CPU control and two-CPU
+bootstrap guests pass, but both longer two-CPU stress runs panic: first in
+the timer threshold check, then on the scheduler's processor-set ticket lock.
+Both failures remain recorded and no0022 phone image has been prepared or
+booted. Resolve those failures before treating SMP as ready for the phone;
+neither CPU acceleration nor a launch-time improvement is established.
 
 ## Standalone boot diagnostic 0001
 

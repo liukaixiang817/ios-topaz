@@ -92,18 +92,25 @@ SSH connection has yet been established on polaris.
 
 ## USB debug versus SSH
 
-The reference's `xl` drives a resident UEFI loader's fastboot-protocol server
-in `xnuloader/loader.c:3411`. It supports logs, screenshots, stop and reboot.
+The reference's [xl host tool](https://github.com/oosexgang/hackios-xnu-kernel/blob/d82c64a3a31cd27a0a0afbf6e213e467e44b1b4c/xl)
+drives a resident UEFI loader's fastboot-protocol server in
+[xnuloader/loader.c](https://github.com/oosexgang/hackios-xnu-kernel/blob/d82c64a3a31cd27a0a0afbf6e213e467e44b1b4c/xnuloader/loader.c#L3411).
+It supports logs, screenshots, stop and reboot.
 `usb_start()` obtains Qualcomm USBDeviceProtocol through UEFI Boot Services.
 Its kernel return trampoline is additionally gated on ARM_PGSHIFT12; our
 kernel uses16KiB pages and the current LinuxImage shim does not retain UEFI
 Boot Services. It requires a real loader/CPU/memory/cache integration port.
 None of its foreign EFI prebuilts has been executed on polaris.
 
-The userland `rc.jobs.ssh` starts Procursus OpenSSH with public-key login over
+The userland [rc.jobs.ssh](https://github.com/oosexgang/hackios-xnu-userland/blob/a79ff0772a3454fd1ef127e181e5b3bce6c9ce18/userland/rc.jobs.ssh#L18)
+starts Procursus OpenSSH with public-key login over
 the reference's working Wi-Fi interface. It is a separate userspace/network
 path. Current polaris0021 did not enumerate its attempted native USB ECM
 interface; no RAM log connection or SSH is available yet.
+Our attempted native USB path currently provides ECM plus UDP RAM logging
+only, with no remote command or shell service. Host non-enumeration does not
+identify whether power, clocks, controller role, halt state or a later gadget
+step failed. Collect the existing saved diagnostics before changing that path.
 
 ## Future refresh
 

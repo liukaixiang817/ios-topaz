@@ -10,7 +10,44 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION — 0021 works but Settings45s; prepare A55 SMP, continue A630 port
+### CURRENT NEXT ACTION — keep working0021; diagnose0022 SMP validation failures and USB admission
+
+- **Current phone remains0021, unchanged.** Human confirms normal GUI/touch/
+  Settings/return. First Settings open about45seconds; immediate reopen on the
+  same boot **under3seconds**. These are human estimates, not controlled
+  instrumentation. Cold loading appears to dominate; GPU/I/O causality is
+  unproven. Private `netdebug-0021/hardware-settings.json` retains both times.
+- **0022 validation STOPPED; do not deploy or ask for FASTBOOT yet.** Source
+  **e04f48a140c8d134bba4ce5ffc58dd0ad71e5a0a**, CI
+  **40079170013/job120828922853 SUCCESS**, Build4m12s
+  (08:44:09–08:48:21UTC). Full `ci-40079170013.log` saved; exact profile,
+  ZIPCRC/SHA verified. Kernel `xnu/out-polaris-0022/kernel.development.sweet`
+  SHA **b2fc35ec80ec62fabbb2bd1b861302d7a464534da1670585315bde7e018fc876**.
+- Orchestrator **91813 exited1** after two failed CPU2stress180s standard-clock
+  runs. CPU1control120s/12checks and CPU2bootstrap90s/12checks FIRST PASS.
+  Stress attempt1 hit the rtclock interrupt threshold (91.25ms vs13.63ms) at
+  machine_routines_common.c:893. Its exact unchanged standard retry hit a
+  **ticket spinlock timeout atlock_ticket.c:386**. Both had completed all4 VM
+  children and kept PID1 alive before panic; both still remain FAILED.
+  No clock waiver/threshold change, no third retry, no image prepared or
+ 0022 device actions. All raw logs/provenance and `validation-stopped.json`
+  retained privately under `research/polaris/perf-0022/`.
+- The second lock is **_pset0+0x100 = scheduler processor-set sched_lock**.
+  Kernel nm address plus an actual-CI-header ARM64 static-assert object prove
+  that offset (`scheduler-lock-diagnosis.json` and compile log). This does
+  not establish why it timed out. Do not label it emulator jitter without
+  evidence or claim phone SMP stability. The stress fixture uses rd=md0;
+  physical UFS/RAM-COW hardware is not exercised in these guests.
+- Next technical work: diagnose SMP scheduling/interrupt timing with retained
+  evidence or validate a separately named single-CPU RAM-I/O candidate; do not
+  pass the failed two-core profile by weakening checks. USB0021 remains
+  unenumerated/no SSH; collect saved D USB/D UCLK admission values before
+  changing clocks or PHY. Continue genuine A630 GMU/SMMU/secure-firmware port;
+  the HFI helper and firmware transport are not accelerated rendering.
+- `perf-0022/final-prepared-check.py` and private preflight/boot wrappers are
+  staged only and have NOT run. No `prepared.json`, final image, preflight or
+  boot proof exists for0022. The checker derives its expected kernel digest
+  from the exact CI artifact; do not reuse superseded candidate1's hash.
 
 -0022reviewcorrection IMPLEMENTED beforeanyphoneaction: the RAMbypassmust
   honorlatched`polaris_io_failed` BEFORE anybounce/RAMcopy/allocation, because
@@ -57,15 +94,16 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   ActualCI-headerARM64UFSobjectPASS;0820bothfilesapplyMATCH. Firstlocalobject
   compilefailed nativehyphen vs shippedunderscoreCOWheaderpath; original
   logs/JSON retainedperf-0022/*.attempt1, conditionalinclude corrected, recompile
-  PASS. **No full0022CI/newkernel/regression/image yet; noFASTBOOTrequest.**
+  PASS. **Full corrected0022CI/kernel complete asabove; CPU2stress failed
+  twice, validation stopped, noimage/FASTBOOTrequest.**
 - `tools/polaris-smp.py` addsONLYCPU1/MPIDR0x100 toexactphysicalPolarisADT;
   uniquephandle/privateL2id1,stoppedstate, sameCPU0properties/timebase/L3,
   removalrestoresentire0021ADTbyteidentically. Rejectsothercounts/foreignRAM/
   bootCPU/GIC/QEMU/duplicatehandles. **5testsPASS**, actualprivate0022ADT
   generated. `tools/polaris-ios-smp.cmdline` differsfrom0021onlycpus1→2;
   display5Hz/root/input/USB gates unchanged. NoA75/frequency/voltage change.
-  Next fullCI thennewexactkernel CPU1control/CPU2SMP syntheticregressions,
-  payload/imageprovenance, thenphysicalFASTBOOTonlyafterprepared.
+  FullCI and CPU1control/CPU2bootstrap passed; CPU2stress failed twice asabove.
+  No payload/imagepreparation or physicalFASTBOOT request until resolved.
 - UseraskedUSBavailability/referenceimplementation. AnsweredexplicitlyNO:
   current0021hostECMabsent,noSSH. Reference`xl`/xnuloader has residentUEFI
   QualcommUSBDeviceProtocol fastbootserver forlog/screenshot/stop/reboot;
