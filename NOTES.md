@@ -31,7 +31,7 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   Private touch-0017/prepared.json/verification.json/qemu-check.json/
   deployment-state.json retain the full admissions. Source-derived new
   D TW/TG/phase9/result15 guide: touch-0017/hardware-decoder.json.
-- NEXT: ask physical Power+VolumeDown FASTBOOT, then run
+- Physical Power+VolumeDown FASTBOOT request SENT, awaiting user reply. Then run
   touch-0017/run-device-step.py preflight; only PASS permits boot-phone.
   Require fresh full16GiB hash,182maps/knownheader/GPT/same recovery boot and
   readonly unmounted userdata, as before. No journal replay/repair/staging.
@@ -49,9 +49,9 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   Exact-kernel download/profile/ZIP CRC/SHA verified: artifact12547524758,
   60387285bytes; kernel SHA
   cd92119429903240ea29b45515d7b84a9d66c3e2f4653e6875e73b68213fa8dd.
-  Sequential QEMU gate200/default200/nodiag90 and
-  prepared phone image still required. Keep the current 0016 boot; request
-  physical FASTBOOT only after the new image and checks are ready.
+  Sequential QEMU gate200/default200/nodiag90 and the prepared phone image
+  are now verified as recorded above. Physical FASTBOOT request is pending;
+  current phone was 0016 when that request was sent.
 - New-kernel QEMU gate200s PASS (29checks). Default200s FIRST ATTEMPT FAILED:
   rtclock_intr took25.383008ms, threshold13.631488ms, after PID1 alive, before
   synthetic target sampling. Physical touch disabled/no board marker; no
@@ -59,8 +59,9 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   Cause unestablished; emulator/host scheduling is a possibility, not a fact.
   Full ring/screen/QEMU log/provenance retained under touch-0017/
   qemu-0017-default-attempt1 plus qemu-default-attempt1-failure.json and
-  validation-attempt1.log. One identical default retry next; retain passed
-  gate result. No timeout/panic checks weakened. Still no physical reboot.
+  validation-attempt1.log. One identical default retry subsequently PASSED;
+  earlier passed gate retained. No timeout/panic checks weakened. Still no
+  physical reboot recorded.
 - User supplied HackiOS references. Read and pinned kernel
   **d82c64a3a31cd27a0a0afbf6e213e467e44b1b4c** and userland
   **a79ff0772a3454fd1ef127e181e5b3bce6c9ce18**. Private source copies and blob
