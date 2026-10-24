@@ -10,7 +10,66 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION — keep working0021; diagnose0022 SMP validation failures and USB admission
+### CURRENT NEXT ACTION — 0023 read-only USB snapshots / A630 prerequisites / cross-core diagnostics
+
+- User explicitly narrowed USB needs to **logs and screenshots; SSH is not
+  needed now**, and asked to continue multicore CPU/GPU adaptation using the
+  reference repos. Phone still runs0021. User confirms USB cable remains
+  connected; fresh sanitized host observation09:21:59UTC still has no matching
+  phone/debug USB device or ECM interface. No host network settings changed.
+- IMPLEMENTED0821: original A630 firmware consumer in kernel, six SHA256
+  checks using built-in LTC SHA256, shared bounded flatGMU/SQE/splitZAP parser,
+  hostHFI queue layout initialized in RAM. Mode1 is firmware/ABI only;
+  mode2 additionally probes original GCC/GPUCC/GMU registers, checking physical
+  Polaris GIC, cfgAHB and CX/clock gates before deeper regions. No MMIO writes,
+  SMMU changes, secure authentication, firmware execution or GPU service.
+  Firmware ADTversion2 adds exact register ranges. Actual original six-file
+  parser+hash check PASS; private newphoneADT93296bytes SHA
+  **4f4aa39dba756e2425d1bcda18c1a4278f323ea31a095108ead29201f29cd4b7**.
+- IMPLEMENTED0822: optional `polarisdebug=1` UDP5141 log/panel snapshot service
+  on the admitted USB ECM link, only accepts192.168.7.1, no commands/addresses/
+  storage writes. Capture tokens make retries idempotent; bounded1400-byte
+  chunks have CRC32. New macOS `tools/polaris-usb-debug.py` pipelines16reads,
+  retries missing/corrupt chunks, writes new0600 log/PNG, and only optionally
+  adds/removes its privateECM alias. Enumeration is STILLUNPROVEN; transport
+  implementation alone does not fix the missing USB connection.
+- Screenshot captures through display work-loop runAction, serialized with
+  actual present/fade writes (the older fLock does NOT cover present).
+  Optional16px status strip after the first GUI frame exposes saved USB
+  admission registers and GPU state without MMIO polling or covering the GUI
+  with console logs. Saved fields help diagnose USB even if enumeration fails.
+- IMPLEMENTED0823: `polarissmpcheck=1` records16CPUxcall callbacks per selected
+  core, observedMPIDR/CNTFRQ/CNTVCT and actualremote senders. Callbacks never
+  print/allocate/wait/access devices; records are static so late completion
+  cannot use a dead stack. Observer deadline500ms, no timer/lock threshold
+  changed. This is diagnostics, NOT a fix or phoneSMP stability proof.
+- Proposed `tools/polaris-ios-readdebug.cmdline` remainsCPU1, adds debug/GPU2/
+  crosscore diagnostic flags to0021, old automatic UDP logpush disabled;
+  sameRAM512MiB/UFSwrite0/display5Hz/input.
+  Failed0022two-core profile is not being passed by a clock waiver.
+- Local **11distinct tests PASS**: actual protocol/parser ASan/UBSan, malformed
+  bounds, independentCRC, hostloss/reorder/corruption recovery, PNG channels,
+  actual A630 gate/format parser and firmware provenance/ADT isolation.
+  Three patches apply in order with nofuzz/offset; all11resulting files
+  byte-match compiletree. Six affected TUs compiled with realCIARM64headers;
+  latestCPUobserver CPP compile also PASS. Initialdebug
+  thread_terminate declaration and CPU preemption declaration errors retained;
+  added their declaring headers. First image-parser test incorrectly expected
+  all whole-word SQE truncations to be format-invalid; corrected only that
+  test (SQE has no embedded length; SHA256 detects shortened actual files).
+- Separate diagnostic baseline: old0021kernel, exact0022two-core VM stress
+  fixture/ADT/defaultclock,180s, also FAILED rtclock threshold (16.426ms vs
+ 13.631ms); all4children finished first. Thus failure is not confined to the
+  newRAMfastpath; cause still unestablished. Private continuation-0023/qbase,
+  baseline0021-result/provenance. Initial QEMU launch failed on a too-long
+  Unix socket path before guest execution; retained, shortened output path.
+- NEXT: finish compile/integrity review, commit/push full0023CI, run exact new
+  kernel firmware-positive/negative and singleCPU stress checks, then prepare
+  payload/image. No0023image/preflight/boot yet; do not requestFASTBOOT until
+  useful image is verified. Continue SMP diagnosis without weakening checks.
+
+### 0022 stopped validation and current0021 evidence
+
 
 - **Current phone remains0021, unchanged.** Human confirms normal GUI/touch/
   Settings/return. First Settings open about45seconds; immediate reopen on the

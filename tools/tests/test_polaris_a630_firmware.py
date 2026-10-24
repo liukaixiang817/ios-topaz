@@ -125,7 +125,11 @@ class FirmwareTests(unittest.TestCase):
         parsed = board.adt.parse(after)[0]
         node = board.child(parsed, 'polaris-a630-firmware')
         props = board.props(node)
+        self.assertEqual(props['version'], struct.pack('<I', 2))
         self.assertEqual(props['chip-id'], struct.pack('<I', 0x06030001))
+        self.assertEqual(props['gpucc-reg'], struct.pack('<QQ', 0x5090000, 0x9000))
+        self.assertEqual(props['gmu-reg'], struct.pack('<QQ', 0x506a000, 0x30000))
+        self.assertEqual(props['smmu-reg'], struct.pack('<QQ', 0x5040000, 0x10000))
         self.assertEqual(props['gmu-bin'], fixture()['a630_gmu.bin'])
         self.assertEqual(props['gmu-bin-sha256'], hashlib.sha256(props['gmu-bin']).digest())
         parsed.children.remove(node)

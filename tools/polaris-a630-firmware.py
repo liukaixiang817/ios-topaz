@@ -124,9 +124,13 @@ def attach(original, images):
             'firmware node already exists')
     node = adt.Node()
     node.props = [('name', 0, b'polaris-a630-firmware\0'),
-                  ('version', 0, struct.pack('<I', 1)),
+                  ('version', 0, struct.pack('<I', 2)),
                   ('chip-id', 0, struct.pack('<I', 0x06030001)),
-                  ('sqe-code-offset', 0, struct.pack('<I', 4))]
+                  ('sqe-code-offset', 0, struct.pack('<I', 4)),
+                  ('gcc-reg', 0, struct.pack('<QQ', 0x100000, 0x90000)),
+                  ('gpucc-reg', 0, struct.pack('<QQ', 0x5090000, 0x9000)),
+                  ('gmu-reg', 0, struct.pack('<QQ', 0x506a000, 0x30000)),
+                  ('smmu-reg', 0, struct.pack('<QQ', 0x5040000, 0x10000))]
     for name, data in sorted(images.items()):
         key = name.removeprefix('a630_').replace('.', '-')
         node.props.extend([(key, 0, data), (key + '-sha256', 0, hashlib.sha256(data).digest())])

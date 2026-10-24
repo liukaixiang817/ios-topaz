@@ -1,0 +1,400 @@
+--- a/bsd/conf/files
++++ b/bsd/conf/files
+@@ -109,6 +109,7 @@
+ bsd/dev/sweet_keys.c			standard
+ bsd/dev/sweet_touch.c			standard
+ bsd/dev/polaris_touch.c			standard
++bsd/dev/polaris_a630.c			standard
+ bsd/dev/sweet_rpmh.c			standard
+ bsd/dev/sweet_spmi.c			standard
+ bsd/dev/sweet_usb.c			standard
+--- a/bsd/kern/bsd_init.c
++++ b/bsd/kern/bsd_init.c
+@@ -1053,6 +1053,8 @@
+     sweet_sample_start();
+     extern void polaris_touch_init(void);
+     polaris_touch_init();
++    extern void polaris_a630_init(void);
++    polaris_a630_init();
+     /* Network/protocol and BSD initialization are complete here. */
+     extern void polaris_usb_init(void);
+     polaris_usb_init();
+--- /dev/null
++++ b/bsd/dev/polaris_a630.c
+@@ -0,0 +1,130 @@
++/* Original Polaris A630 firmware consumer and read-only hardware admission.
++ * This stage does not start firmware, map SMMU streams, authenticate ZAP or
++ * register an accelerated service. Hardware writes are deliberately absent.
++ */
++#if defined(POLARIS_RAM_ONLY)
++#include <sys/param.h>
++#include <sys/systm.h>
++#include <mach/mach_types.h>
++#include <pexpert/pexpert.h>
++#include <pexpert/device_tree.h>
++#include <corecrypto/ccdigest.h>
++#include <corecrypto/ccsha2.h>
++#include "polaris_a630_probe.h"
++#include "polaris_a630_hfi.h"
++#include "polaris_a630_images.h"
++extern vm_offset_t ml_io_map(vm_offset_t, vm_size_t);
++void polaris_a630_init(void);
++void polaris_a630_report(void);
++uint32_t polaris_a630_status(void);
++static struct a630_probe a630_saved;
++static uint32_t a630_started, a630_published, a630_firmware_ok, a630_abi_ok;
++static uint8_t a630_host_hfi[A630_HFI_BYTES] __attribute__((aligned(16384)));
++
++uint32_t polaris_a630_status(void)
++{
++    if (!__atomic_load_n(&a630_published, __ATOMIC_ACQUIRE)) return 0;
++    return a630_saved.result | (a630_firmware_ok << 8) | (a630_abi_ok << 9);
++}
++
++static bool a630_property(DTEntry node, const char *name, const void **data, unsigned *size)
++{
++    return SecureDTGetProperty(node, name, data, size) == kSuccess;
++}
++static bool a630_u32(DTEntry node, const char *name, uint32_t expected)
++{
++    const void *p = NULL; unsigned n = 0; uint32_t value;
++    if (!a630_property(node, name, &p, &n) || n != sizeof(value)) return false;
++    memcpy(&value, p, sizeof(value)); return value == expected;
++}
++static bool a630_reg(DTEntry node, const char *name, uint64_t address, uint64_t length)
++{
++    const void *p = NULL; unsigned n = 0; uint64_t reg[2];
++    if (!a630_property(node, name, &p, &n) || n != sizeof(reg)) return false;
++    memcpy(reg, p, sizeof(reg)); return reg[0] == address && reg[1] == length;
++}
++static bool a630_image(DTEntry node, const char *key, unsigned minimum, unsigned maximum,
++    const uint8_t **out, unsigned *bytes)
++{
++    const void *p = NULL, *expected = NULL; unsigned n = 0, hn = 0;
++    char hashkey[32]; uint8_t digest[32];
++    snprintf(hashkey, sizeof(hashkey), "%s-sha256", key);
++    if (!a630_property(node, key, &p, &n) || n < minimum || n > maximum ||
++        !a630_property(node, hashkey, &expected, &hn) || hn != sizeof(digest)) return false;
++    /* Built-in LTC SHA256, independent of the unavailable external provider. */
++    ccdigest(&ccsha256_ltc_di, n, p, digest);
++    if (memcmp(digest, expected, sizeof(digest))) return false;
++    *out = p; *bytes = n; return true;
++}
++static bool a630_firmware(DTEntry node)
++{
++    const uint8_t *gmu, *sqe, *mdt, *b00, *b01, *b02;
++    unsigned gn, sn, mn, n0, n1, n2;
++    if (!a630_image(node, "gmu-bin", 32768, 32768, &gmu, &gn) ||
++        !a630_image(node, "sqe-fw", 8, 1024 * 1024, &sqe, &sn) ||
++        !a630_image(node, "zap-mdt", 148, 4 * 1024 * 1024, &mdt, &mn) ||
++        !a630_image(node, "zap-b00", 148, 148, &b00, &n0) ||
++        !a630_image(node, "zap-b01", 1, 4 * 1024 * 1024, &b01, &n1) ||
++        !a630_image(node, "zap-b02", 1, 4 * 1024 * 1024, &b02, &n2)) return false;
++    const struct a630_image images[6] = {{gmu, gn}, {sqe, sn}, {mdt, mn},
++        {b00, n0}, {b01, n1}, {b02, n2}};
++    if (!a630_images_valid(images)) return false;
++    printf("POLARIS A630: verified original GMU%u SQE%u version=%x ZAP%u; no firmware executed\n",
++        gn, sn, a630_image_word(sqe + 4), mn);
++    return true;
++}
++struct a630_io { vm_offset_t base[3]; };
++static bool a630_read_register(void *opaque, unsigned region, uint32_t off, uint32_t *value)
++{
++    static const uint64_t addresses[3] = {0x100000, 0x5090000, 0x506a000};
++    static const uint32_t sizes[3] = {0x90000, 0x9000, 0x30000};
++    struct a630_io *io = opaque;
++    if (region >= 3 || (off & 3) || off > sizes[region] - 4) return false;
++    if (!io->base[region]) io->base[region] = ml_io_map(addresses[region], sizes[region]);
++    if (!io->base[region]) return false;
++    *value = *(volatile uint32_t *)(io->base[region] + off);
++    __asm__ volatile("dsb sy" ::: "memory");
++    return true;
++}
++void polaris_a630_report(void)
++{
++    if (!__atomic_load_n(&a630_published, __ATOMIC_ACQUIRE)) return;
++    const struct a630_probe *s = &a630_saved;
++    printf("D GPU: fw=%u abi=%u result=%u reads=%u cfg=%x mem=%x snoc=%x\n",
++        a630_firmware_ok, a630_abi_ok, s->result, s->reads, s->gcc[0], s->gcc[1], s->gcc[2]);
++    printf("D GMU: cx=%x hw=%x gx=%x clocks=%x/%x/%x init=%x counter=%x:%x\n",
++        s->cx, s->cx_hw, s->gx, s->clocks[0], s->clocks[1], s->clocks[2],
++        s->fw_init, s->counter_high, s->counter_low);
++}
++void polaris_a630_init(void)
++{
++    unsigned mode = 0;
++    PE_parse_boot_argn("polarisgpu", &mode, sizeof(mode));
++    if ((mode != 1 && mode != 2) || __atomic_exchange_n(&a630_started, 1, __ATOMIC_ACQ_REL)) return;
++    DTEntry node;
++    bool board = SecureDTLookupEntry(NULL, "/polaris-a630-firmware", &node) == kSuccess &&
++        a630_u32(node, "version", 2) && a630_u32(node, "chip-id", 0x06030001) &&
++        a630_u32(node, "sqe-code-offset", 4) &&
++        a630_reg(node, "gcc-reg", 0x100000, 0x90000) &&
++        a630_reg(node, "gpucc-reg", 0x5090000, 0x9000) &&
++        a630_reg(node, "gmu-reg", 0x506a000, 0x30000) &&
++        a630_reg(node, "smmu-reg", 0x5040000, 0x10000);
++    a630_firmware_ok = board && a630_firmware(node);
++    if (a630_firmware_ok)
++        a630_abi_ok = a630_hfi_init(a630_host_hfi, sizeof(a630_host_hfi), 0x60000000);
++    DTEntry gic;
++    const void *reg = NULL; unsigned bytes = 0; uint64_t physical[4] = {0};
++    bool hardware = SecureDTLookupEntry(NULL, "/arm-io/gic", &gic) == kSuccess &&
++        a630_property(gic, "reg", &reg, &bytes) && bytes == sizeof(physical);
++    if (hardware) memcpy(physical, reg, sizeof(physical));
++    hardware = hardware && physical[0] == 0x16a00000 && physical[1] == 0x10000 &&
++        physical[2] == 0x16a60000 && physical[3] == 0x100000;
++    struct a630_io io = {{0, 0, 0}};
++    /* Mode1 checks firmware/host ABI only, including in a synthetic guest.
++     * Mode2 additionally admits bounded reads on the physical Polaris map. */
++    a630_probe(mode == 2 ? 1 : 0, board && hardware && a630_firmware_ok && a630_abi_ok,
++        a630_read_register, &io, &a630_saved);
++    __atomic_store_n(&a630_published, 1, __ATOMIC_RELEASE);
++    polaris_a630_report();
++}
++#endif
+--- /dev/null
++++ b/bsd/dev/polaris_a630_probe.h
+@@ -0,0 +1,52 @@
++/* Polaris SDM845/A630 read-only prerequisite probe. Register ranges from
++ * live DT; branch offsets from the pinned original gcc/gpucc-sdm845.c.
++ * A READY result means readable prerequisites, not a running/usable GPU.
++ */
++#ifndef POLARIS_A630_PROBE_H
++#define POLARIS_A630_PROBE_H
++#include <stdint.h>
++#include <stdbool.h>
++enum a630_probe_result { A630_DISABLED, A630_IO, A630_AHB_OFF, A630_CX_OFF,
++    A630_CLOCK_OFF, A630_PREREQUISITES };
++struct a630_probe {
++    uint32_t result, reads, gcc[3], cx, cx_hw, gx, clocks[3], rcgr[2];
++    uint32_t fw_init, counter_low, counter_high;
++};
++typedef bool (*a630_read)(void *, unsigned, uint32_t, uint32_t *);
++static inline enum a630_probe_result
++a630_probe(unsigned mode, bool exact_board, a630_read read, void *ctx, struct a630_probe *s)
++{
++    if (!s) return A630_DISABLED;
++    *s = (struct a630_probe){0};
++    if (mode != 1 || !exact_board || !read) return A630_DISABLED;
++#define A630_READ(region, off, value) do { \
++    s->reads++; \
++    if (!read(ctx, region, off, &(value))) { s->result = A630_IO; return A630_IO; } \
++} while (0)
++    A630_READ(0, 0x71004, s->gcc[0]); /* cfg AHB: GPUCC register access */
++    if (s->gcc[0] & (1u << 31)) { s->result = A630_AHB_OFF; return A630_AHB_OFF; }
++    A630_READ(0, 0x7100c, s->gcc[1]);
++    A630_READ(0, 0x71018, s->gcc[2]);
++    A630_READ(1, 0x106c, s->cx);
++    A630_READ(1, 0x1540, s->cx_hw);
++    A630_READ(1, 0x100c, s->gx);
++    A630_READ(1, 0x1004, s->clocks[0]);
++    A630_READ(1, 0x1098, s->clocks[1]);
++    A630_READ(1, 0x109c, s->clocks[2]);
++    A630_READ(1, 0x1120, s->rcgr[0]);
++    A630_READ(1, 0x1124, s->rcgr[1]);
++    if (!(s->cx & (1u << 31)) || !(s->cx_hw & (1u << 31))) {
++        s->result = A630_CX_OFF; return A630_CX_OFF;
++    }
++    if ((s->gcc[1] | s->gcc[2] | s->clocks[0] | s->clocks[1] | s->clocks[2]) & (1u << 31)) {
++        s->result = A630_CLOCK_OFF; return A630_CLOCK_OFF;
++    }
++    /* No GMU mapping/read until all upstream power/clock checks pass. */
++    A630_READ(2, 0x14070, s->fw_init);
++    A630_READ(2, 0x14220, s->counter_low);
++    A630_READ(2, 0x14224, s->counter_high);
++#undef A630_READ
++    s->result = A630_PREREQUISITES;
++    return A630_PREREQUISITES;
++}
++#endif
+--- /dev/null
++++ b/bsd/dev/polaris_a630_hfi.h
+@@ -0,0 +1,142 @@
++/* A630 GMU host/firmware ABI, independently implemented from the original
++ * MiCode polaris driver at c7cb50c18f812629b9620b2b8fa684bc40d82080:
++ * drivers/gpu/msm/kgsl_hfi.{c,h}. No MMIO, power control or GPU submission.
++ *
++ * Bring-up component: not yet linked into the polaris kernel. The hardware
++ * adapter must serialize host producers, perform DMA cache maintenance and
++ * ring the GMU doorbell AFTER publishing a command. CPU release/acquire
++ * alone does not make a noncoherent device see this memory.
++ */
++#ifndef POLARIS_A630_HFI_H
++#define POLARIS_A630_HFI_H
++#include <stdint.h>
++#include <stddef.h>
++#include <stdbool.h>
++
++#define A630_HFI_BYTES 16384u
++#define A630_HFI_QUEUES 3u
++#define A630_HFI_QUEUE_WORDS 1024u
++#define A630_HFI_GUARD_BYTES 16u
++#define A630_HFI_MAX_WORDS 255u
++struct a630_hfi_queue {
++    uint32_t status, start_addr, type, queue_size, msg_size, drop_count;
++    uint32_t rx_watermark, tx_watermark, rx_request, tx_request;
++    uint32_t read_index, write_index;
++};
++struct a630_hfi_table {
++    uint32_t version, size, header_offset, header_size, queues, active;
++    struct a630_hfi_queue q[A630_HFI_QUEUES];
++};
++enum a630_hfi_error {
++    A630_HFI_INVALID = -1, A630_HFI_FULL = -2,
++    A630_HFI_PACKET = -3, A630_HFI_OUTPUT = -4
++};
++
++static inline uint32_t a630_hfi_offset(unsigned queue)
++{
++    return (uint32_t)sizeof(struct a630_hfi_table) +
++        queue * (A630_HFI_QUEUE_WORDS * 4 + A630_HFI_GUARD_BYTES);
++}
++
++static inline bool a630_hfi_memory(const void *memory, size_t bytes, uint32_t iova)
++{
++    return memory && !((uintptr_t)memory & 3) && bytes == A630_HFI_BYTES &&
++        !(iova & (A630_HFI_BYTES - 1)) && iova >= 0x60000000u &&
++        (uint64_t)iova + bytes <= 0x80000000ull;
++}
++
++static inline bool a630_hfi_init(void *memory, size_t bytes, uint32_t iova)
++{
++    if (!a630_hfi_memory(memory, bytes, iova)) return false;
++    __builtin_memset(memory, 0, bytes);
++    struct a630_hfi_table *t = (struct a630_hfi_table *)memory;
++    t->size = (uint32_t)sizeof(*t) / 4;
++    t->header_offset = 6;
++    t->header_size = (uint32_t)sizeof(t->q[0]) / 4;
++    t->queues = t->active = A630_HFI_QUEUES;
++    for (unsigned i = 0; i < A630_HFI_QUEUES; i++) {
++        struct a630_hfi_queue *q = &t->q[i];
++        q->status = 1;
++        q->start_addr = iova + a630_hfi_offset(i);
++        /* Original firmware queue IDs0/4/5, priorities10/10/40. */
++        q->type = i == 0 ? 0x0a00 : i == 1 ? 0x0a04 : 0x2805;
++        q->queue_size = A630_HFI_QUEUE_WORDS;
++        q->rx_watermark = q->tx_watermark = q->rx_request = 1;
++    }
++    return true;
++}
++
++static inline struct a630_hfi_queue *
++a630_hfi_queue(void *memory, size_t bytes, uint32_t iova, unsigned queue)
++{
++    if (!a630_hfi_memory(memory, bytes, iova) || queue >= A630_HFI_QUEUES) return NULL;
++    struct a630_hfi_table *t = (struct a630_hfi_table *)memory;
++    if (t->version || t->size != 42 || t->header_offset != 6 ||
++        t->header_size != 12 || t->queues != 3 || t->active != 3) return NULL;
++    struct a630_hfi_queue *q = &t->q[queue];
++    uint32_t want_type = queue == 0 ? 0x0a00 : queue == 1 ? 0x0a04 : 0x2805;
++    if (q->status != 1 || q->start_addr != iova + a630_hfi_offset(queue) ||
++        q->type != want_type || q->queue_size != A630_HFI_QUEUE_WORDS || q->msg_size)
++        return NULL;
++    return q;
++}
++
++static inline bool a630_hfi_header(unsigned id, unsigned words, unsigned type,
++    unsigned sequence, uint32_t *out)
++{
++    if (!out || id > 255 || !words || words > A630_HFI_MAX_WORDS ||
++        type > 2 || sequence > 4095) return false;
++    *out = id | (words << 8) | (type << 16) | (sequence << 20);
++    return true;
++}
++
++/* Command ring only. One slot remains empty so full never resembles empty.
++ * A positive return means RAM enqueue only, not delivery/execution by GMU. */
++static inline int a630_hfi_push(void *memory, size_t bytes, uint32_t iova,
++    const uint32_t *message, unsigned words)
++{
++    struct a630_hfi_queue *q = a630_hfi_queue(memory, bytes, iova, 0);
++    if (!q) return A630_HFI_INVALID;
++    if (!message || !words || words > A630_HFI_MAX_WORDS ||
++        ((message[0] >> 8) & 255) != words || ((message[0] >> 16) & 15) > 1)
++        return A630_HFI_PACKET;
++    uint32_t read = __atomic_load_n(&q->read_index, __ATOMIC_ACQUIRE);
++    uint32_t write = __atomic_load_n(&q->write_index, __ATOMIC_RELAXED);
++    if (read >= A630_HFI_QUEUE_WORDS || write >= A630_HFI_QUEUE_WORDS) return A630_HFI_INVALID;
++    uint32_t free = (read + A630_HFI_QUEUE_WORDS - write - 1) % A630_HFI_QUEUE_WORDS;
++    if (words > free) return A630_HFI_FULL;
++    uint32_t *ring = (uint32_t *)((uint8_t *)memory + a630_hfi_offset(0));
++    for (unsigned i = 0; i < words; i++) {
++        ring[write] = message[i];
++        write = (write + 1) % A630_HFI_QUEUE_WORDS;
++    }
++    __atomic_store_n(&q->write_index, write, __ATOMIC_RELEASE);
++    return (int)words;
++}
++
++/* Firmware response/debug rings only. Malformed/truncated packets leave the
++ * read cursor unchanged; the adapter must stop and diagnose the channel. */
++static inline int a630_hfi_pop(void *memory, size_t bytes, uint32_t iova,
++    unsigned queue, uint32_t *out, unsigned capacity)
++{
++    if (queue != 1 && queue != 2) return A630_HFI_INVALID;
++    struct a630_hfi_queue *q = a630_hfi_queue(memory, bytes, iova, queue);
++    if (!q) return A630_HFI_INVALID;
++    uint32_t read = __atomic_load_n(&q->read_index, __ATOMIC_RELAXED);
++    uint32_t write = __atomic_load_n(&q->write_index, __ATOMIC_ACQUIRE);
++    if (read >= A630_HFI_QUEUE_WORDS || write >= A630_HFI_QUEUE_WORDS) return A630_HFI_INVALID;
++    if (read == write) return 0;
++    uint32_t *ring = (uint32_t *)((uint8_t *)memory + a630_hfi_offset(queue));
++    unsigned words = (ring[read] >> 8) & 255;
++    unsigned used = (write + A630_HFI_QUEUE_WORDS - read) % A630_HFI_QUEUE_WORDS;
++    if (!words || words > used || ((ring[read] >> 16) & 15) > 2)
++        return A630_HFI_PACKET;
++    if (!out || words > capacity) return A630_HFI_OUTPUT;
++    for (unsigned i = 0; i < words; i++) {
++        out[i] = ring[read];
++        read = (read + 1) % A630_HFI_QUEUE_WORDS;
++    }
++    __atomic_store_n(&q->read_index, read, __ATOMIC_RELEASE);
++    return (int)words;
++}
++#endif
+--- /dev/null
++++ b/bsd/dev/polaris_a630_images.h
+@@ -0,0 +1,43 @@
++/* Bounded original flat-GMU/SQE/three-part relocatable ZAP format.
++ * Format inspection does not authenticate or execute any firmware.
++ */
++#ifndef POLARIS_A630_IMAGES_H
++#define POLARIS_A630_IMAGES_H
++#include <stdint.h>
++#include <stdbool.h>
++#include <stddef.h>
++struct a630_image { const uint8_t *data; uint32_t bytes; };
++static inline uint32_t a630_image_word(const uint8_t *p)
++{
++    return (uint32_t)p[0] | (uint32_t)p[1] << 8 | (uint32_t)p[2] << 16 | (uint32_t)p[3] << 24;
++}
++static inline bool a630_images_valid(const struct a630_image f[6])
++{
++    if (!f) return false;
++    for (unsigned i = 0; i < 6; i++)
++        if (!f[i].data || !f[i].bytes || f[i].bytes > 4 * 1024 * 1024) return false;
++    const uint8_t *gmu = f[0].data, *sqe = f[1].data, *mdt = f[2].data;
++    if (f[0].bytes != 32768 || f[1].bytes < 8 || f[1].bytes > 1024 * 1024 ||
++        f[1].bytes % 4 || f[2].bytes < 148 || f[3].bytes != 148 ||
++        f[2].bytes != f[3].bytes + f[4].bytes) return false;
++    uint32_t sp = a630_image_word(gmu), reset = a630_image_word(gmu + 4);
++    if (sp < 0x40000 || sp > 0x44000 || sp % 8 || !(reset & 1) || reset >= f[0].bytes ||
++        a630_image_word(sqe) || __builtin_memcmp(mdt, "\177ELF\1\1\1", 7) ||
++        a630_image_word(mdt + 16) != 0x00a40002 || a630_image_word(mdt + 20) != 1 ||
++        a630_image_word(mdt + 28) != 52 || a630_image_word(mdt + 40) != 0x00200034 ||
++        (a630_image_word(mdt + 44) & 0xffff) != 3 ||
++        __builtin_memcmp(mdt, f[3].data, 148) ||
++        __builtin_memcmp(mdt + 148, f[4].data, f[4].bytes)) return false;
++    const uint8_t *p0 = mdt + 52, *p1 = p0 + 32, *p2 = p1 + 32;
++    if (a630_image_word(p0) || a630_image_word(p0 + 4) || a630_image_word(p0 + 16) != 148 ||
++        a630_image_word(p1) || a630_image_word(p1 + 16) != f[4].bytes ||
++        (a630_image_word(p1 + 24) & 0x07000000) != 0x02000000) return false;
++    uint32_t va = a630_image_word(p2 + 8), pa = a630_image_word(p2 + 12);
++    uint32_t size = a630_image_word(p2 + 16), memory = a630_image_word(p2 + 20);
++    uint32_t flags = a630_image_word(p2 + 24), align = a630_image_word(p2 + 28);
++    return a630_image_word(p2) == 1 && size == f[5].bytes && size <= memory &&
++        memory <= 4 * 1024 * 1024 && (uint64_t)va + memory <= 0x100000000ULL &&
++        (uint64_t)pa + memory <= 0x100000000ULL && (flags & 0x08000000) &&
++        (flags & 0x07000000) != 0x02000000 && align && !(align & (align - 1));
++}
++#endif

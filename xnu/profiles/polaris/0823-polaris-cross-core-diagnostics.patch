@@ -1,0 +1,78 @@
+--- a/iokit/Kernel/arm/SweetCPU.cpp
++++ b/iokit/Kernel/arm/SweetCPU.cpp
+@@ -23,6 +23,67 @@
+ #if defined(POLARIS_RAM_ONLY)
+ extern "C" void polaris_ufs_probe(void);
+ extern "C" bool polaris_ufs_probe_report(void);
++#endif
++
++#if defined(POLARIS_RAM_ONLY)
++#include <arm/machine_routines.h>
++#include <kern/cpu_data.h>
++/* One-shot, opt-in cross-core diagnostics. Static callback records stay
++ * valid even if a response arrives after the bounded observer has stopped.
++ * Callbacks never print, allocate, touch hardware or wait for another CPU. */
++struct polaris_smp_record {
++    uint64_t mpidr, frequency, counter;
++    uint32_t cpu, sender, done;
++};
++static struct polaris_smp_record polaris_smp_records[8][16];
++static void polaris_smp_callback(void *arg)
++{
++    struct polaris_smp_record *record = (struct polaris_smp_record *)arg;
++    record->cpu = (uint32_t)cpu_number();
++    record->mpidr = __builtin_arm_rsr64("MPIDR_EL1") & 0xffffff;
++    record->frequency = __builtin_arm_rsr64("CNTFRQ_EL0");
++    record->counter = __builtin_arm_rsr64("CNTVCT_EL0");
++    __atomic_store_n(&record->done, 1, __ATOMIC_RELEASE);
++}
++static void polaris_smp_check(void)
++{
++    unsigned enabled = 0;
++    PE_parse_boot_argn("polarissmpcheck", &enabled, sizeof(enabled));
++    if (enabled != 1) return;
++    const ml_topology_info_t *topology = ml_get_topology_info();
++    const uint64_t frequency = __builtin_arm_rsr64("CNTFRQ_EL0");
++    if (topology->num_cpus < 2 || topology->num_cpus > 8) {
++        IOLog("POLARIS SMP CHECK: skipped, selected=%u\n", topology->num_cpus);
++        return;
++    }
++    uint32_t completed = 0, remote = 0;
++    for (unsigned cpu = 0; cpu < topology->num_cpus; cpu++) {
++        for (unsigned round = 0; round < 16; round++) {
++            struct polaris_smp_record *record = &polaris_smp_records[cpu][round];
++            disable_preemption();
++            record->sender = (uint32_t)cpu_number();
++            kern_return_t kr = cpu_xcall((int)cpu, polaris_smp_callback, record);
++            enable_preemption();
++            uint64_t deadline;
++            nanoseconds_to_deadline(500 * NSEC_PER_MSEC, &deadline);
++            while (kr == KERN_SUCCESS && !__atomic_load_n(&record->done, __ATOMIC_ACQUIRE) &&
++                mach_absolute_time() < deadline) IOSleep(1);
++            if (kr != KERN_SUCCESS || !__atomic_load_n(&record->done, __ATOMIC_ACQUIRE) ||
++                record->cpu != cpu || record->mpidr != topology->cpus[cpu].phys_id ||
++                record->frequency != frequency || !record->counter) {
++                uint32_t done = __atomic_load_n(&record->done, __ATOMIC_ACQUIRE);
++                IOLog("POLARIS SMP CHECK: FAIL cpu=%u round=%u kr=%d done=%u observed=%u mpidr=%llx freq=%llu\n",
++                    cpu, round, kr, done, done ? record->cpu : 0,
++                    done ? record->mpidr : 0, done ? record->frequency : 0);
++                return;
++            }
++            completed++;
++            if (record->sender != record->cpu) remote++;
++        }
++    }
++    IOLog("POLARIS SMP CHECK: %s selected=%u callbacks=%u remote=%u frequency=%llu\n",
++        remote ? "PASS" : "NO_REMOTE_OBSERVED", topology->num_cpus, completed, remote, frequency);
++}
+ #endif
+ 
+ class SweetCPU;
+@@ -180,6 +241,7 @@
+ 	IOLog("SWEET CPU: %u/%u CPUs initialized, SGI1 verified\n",
+ 	    topology->num_cpus, topology->num_cpus);
+ #if defined(POLARIS_RAM_ONLY)
++    polaris_smp_check();
+ 	polaris_ufs_probe();
+ 	/* The explicit diagnostic mode keeps its result visible after BSD/init
+ 	 * logs wrap the console. Sleep in this completed CPU startup thread;

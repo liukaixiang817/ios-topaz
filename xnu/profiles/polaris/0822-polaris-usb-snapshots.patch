@@ -1,0 +1,406 @@
+--- a/bsd/conf/files
++++ b/bsd/conf/files
+@@ -113,6 +113,7 @@
+ bsd/dev/sweet_rpmh.c			standard
+ bsd/dev/sweet_spmi.c			standard
+ bsd/dev/sweet_usb.c			standard
++bsd/dev/polaris_debug.c			standard
+ bsd/dev/mem.c				standard
+ bsd/dev/munge.c 			optional config_requires_u32_munging
+ bsd/dev/unix_startup.c			standard
+--- a/bsd/dev/sweet_usb.c
++++ b/bsd/dev/sweet_usb.c
+@@ -486,7 +486,7 @@
+ static void
+ ud_configure(void)
+ {
+-	if (ud.configured) {
++	if (__atomic_load_n(&ud.configured, __ATOMIC_ACQUIRE)) {
+ 		return;
+ 	}
+ 	if (ud_epcmd(0, DEPCMD_DEPSTARTCFG | (2u << 16), 0, 0, 0) ||
+@@ -501,7 +501,7 @@
+ 		return;
+ 	}
+ 	dwc_wr(DALEPENA, dwc_rd(DALEPENA) | (1u << EP_RX) | (1u << EP_TX) | (1u << EP_INT));
+-	ud.configured = true;
++	__atomic_store_n(&ud.configured, true, __ATOMIC_RELEASE);
+ 	ud_rx_arm();
+ 	printf("SWEET USB: ECM endpoints configured\n");
+ }
+@@ -541,13 +541,13 @@
+ 		}
+ 		printf("SWEET USB: configured (%u)\n", value);
+ 	} else if (req == 8) {          /* GET_CONFIGURATION */
+-		data[0] = ud.configured ? 1 : 0; n = 1;
++		data[0] = __atomic_load_n(&ud.configured, __ATOMIC_ACQUIRE) ? 1 : 0; n = 1;
+ 	} else if (req == 0) {          /* GET_STATUS */
+ 		data[0] = 0; data[1] = 0; n = 2;
+ 	} else if (req == 11) {         /* SET_INTERFACE */
+ 		if (index == 1) {
+ 			ud.data_alt = (uint8_t)value;
+-			if (value == 1 && ud.configured) {
++			if (value == 1 && __atomic_load_n(&ud.configured, __ATOMIC_ACQUIRE)) {
+ 				ud_notify_connected();
+ 			}
+ 		}
+@@ -625,7 +625,7 @@
+ static void
+ ud_tx_kick_locked(void)
+ {
+-	while (!ud.tx_busy && ud.txq_count > 0 && ud.configured) {
++	while (!ud.tx_busy && ud.txq_count > 0 && __atomic_load_n(&ud.configured, __ATOMIC_ACQUIRE)) {
+ 		mbuf_t m = ud.txq[ud.txq_head];
+ 		ud.txq_head = (ud.txq_head + 1) % UD_TXQ;
+ 		ud.txq_count--;
+@@ -651,7 +651,7 @@
+ ud_if_output(ifnet_t ifp, mbuf_t m)
+ {
+ 	lck_mtx_lock(ud.lock);
+-	if (ud.txq_count == UD_TXQ || !ud.configured) {
++	if (ud.txq_count == UD_TXQ || !__atomic_load_n(&ud.configured, __ATOMIC_ACQUIRE)) {
+ 		lck_mtx_unlock(ud.lock);
+ 		mbuf_freem(m);
+ 		ifnet_stat_increment_out(ifp, 0, 0, 1);
+@@ -884,7 +884,7 @@
+ 	to.sin_addr.s_addr = htonl(0xc0a80701);         /* 192.168.7.1 */
+ 	for (;;) {
+ 		ud_sleep_ms(100);
+-		if (!ud.configured) {
++		if (!__atomic_load_n(&ud.configured, __ATOMIC_ACQUIRE)) {
+ 			continue;
+ 		}
+ 		if (so == NULL && sock_socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP, NULL, NULL, &so) != 0) {
+@@ -906,6 +906,28 @@
+ 	}
+ }
+ 
++#if defined(POLARIS_RAM_ONLY)
++uint32_t polaris_usb_status(char *, uint32_t);
++uint32_t
++polaris_usb_status(char *out, uint32_t size)
++{
++    if (!out || !size) return 0;
++    if (!__atomic_load_n(&polaris_usb_published, __ATOMIC_ACQUIRE))
++        return (uint32_t)snprintf(out, size, "USB pending");
++    const struct polaris_usb_snapshot *s = &polaris_usb_saved;
++    return (uint32_t)snprintf(out, size,
++        "U%u R%u N%u GD=%08x C=%08x/%08x/%08x/%08x/%08x/%08x/%08x",
++        polaris_usb_mode, s->result, s->reads, s->gdscr, s->clocks[0],
++        s->clocks[1], s->clocks[2], s->clocks[3], s->clocks[4], s->clocks[5], s->clocks[6]);
++}
++bool polaris_usb_connected(void);
++bool
++polaris_usb_connected(void)
++{
++    return polaris_usb_saved.result == POLARIS_USB_READY && __atomic_load_n(&ud.configured, __ATOMIC_ACQUIRE);
++}
++#endif
++
+ static void
+ sweet_usb_gadget_start(vm_offset_t dwc)
+ {
+@@ -986,6 +1008,10 @@
+ 	if (kernel_thread_start(ud_thread, NULL, &thread) == KERN_SUCCESS) {
+ 		thread_deallocate(thread);
+ 	}
++#if defined(POLARIS_RAM_ONLY)
++    extern void polaris_debug_start(void);
++    polaris_debug_start();
++#endif
+ 	int livelog = 1;
+ 	PE_parse_boot_argn("sweetusblog", &livelog, sizeof(livelog));
+ 	if (livelog && ud.ifp != NULL && kernel_thread_start(ud_log_thread, NULL, &thread) == KERN_SUCCESS) {
+--- a/iokit/Kernel/arm/SweetFramebuffer.cpp
++++ b/iokit/Kernel/arm/SweetFramebuffer.cpp
+@@ -106,6 +106,8 @@
+ public:
+ #if defined(POLARIS_RAM_ONLY)
+     uint32_t fPolarisColumns[1080]; /* persistent, no per-frame allocation */
++    bool fDebugStatus;
++    uint32_t debugCapture(void *, uint32_t);
+ #endif
+ 	uint64_t      fPhys;
+ 	uint32_t      fWidth, fHeight, fRowBytes;
+@@ -132,6 +134,53 @@
+ };
+ 
+ OSDefineMetaClassAndStructors(AppleCLCD, IOMobileFramebuffer);
++#if defined(POLARIS_RAM_ONLY)
++/* Retained once for this boot, published after all framebuffer setup. */
++static AppleCLCD *polaris_debug_fb;
++extern "C" unsigned char iso_font[256 * 16];
++extern "C" uint32_t polaris_usb_status(char *, uint32_t);
++extern "C" uint32_t polaris_a630_status(void);
++static IOReturn
++polaris_copy_panel(OSObject *owner, void *out, void *size, void *, void *)
++{
++    AppleCLCD *fb = (AppleCLCD *)owner;
++    if (!out || (uintptr_t)size < 4320u * 2160u) return kIOReturnBadArgument;
++    memcpy(out, (const void *)fb->fPixels, 4320u * 2160u);
++    return kIOReturnSuccess;
++}
++uint32_t
++AppleCLCD::debugCapture(void *out, uint32_t capacity)
++{
++    /* Actual present/fade writes occur outside fLock, on this work loop. */
++    return fWorkLoop->runAction(polaris_copy_panel, this, out,
++        (void *)(uintptr_t)capacity) == kIOReturnSuccess ? 4320u * 2160u : 0;
++}
++static void polaris_status_bar(AppleCLCD *fb)
++{
++    char text[136];
++    unsigned n = polaris_usb_status(text, sizeof(text));
++    if (n < sizeof(text)) snprintf(text + n, sizeof(text) - n, " G=%x", polaris_a630_status());
++    for (unsigned y = 0; y < 16; y++) {
++        uint32_t *row = (uint32_t *)(fb->fPixels + (uint64_t)y * fb->fRowBytes);
++        for (unsigned x = 0; x < fb->fWidth; x++) row[x] = 0xff000000;
++        for (unsigned c = 0; c < 135 && text[c]; c++) {
++            uint8_t bits = iso_font[(uint8_t)text[c] * 16 + y];
++            for (unsigned b = 0; b < 8; b++)
++                if (bits & (1u << b)) row[c * 8 + b] = 0xffffffff;
++        }
++    }
++}
++extern "C" uint32_t polaris_debug_frame(void *, uint32_t);
++extern "C" uint32_t
++polaris_debug_frame(void *out, uint32_t capacity)
++{
++    AppleCLCD *fb = __atomic_load_n(&polaris_debug_fb, __ATOMIC_ACQUIRE);
++    const uint32_t bytes = 4320u * 2160u;
++    if (!fb || !out || capacity < bytes || fb->fPhys != 0x9d400000ULL ||
++        fb->fWidth != 1080 || fb->fHeight != 2160 || fb->fRowBytes != 4320) return 0;
++    return fb->debugCapture(out, capacity);
++}
++#endif
+ 
+ class IOMobileFramebufferUserClient : public IOUserClient {
+ 	OSDeclareDefaultStructors(IOMobileFramebufferUserClient);
+@@ -233,6 +282,13 @@
+ 	fFlushTicks = (hz == 0 || hz >= 60) ? 1 : 60 / hz;
+ 	fVsync->setTimeoutUS(SWEET_FB_VSYNC_US);
+ 
++#if defined(POLARIS_RAM_ONLY)
++    unsigned debug = 0;
++    PE_parse_boot_argn("polarisdebug", &debug, sizeof(debug));
++    fDebugStatus = debug == 1;
++    this->retain();
++    __atomic_store_n(&polaris_debug_fb, this, __ATOMIC_RELEASE);
++#endif
+ 	setProperty(kIOUserClientClassKey, "IOMobileFramebufferUserClient");
+ 	setProperty("external", false);
+ 	setProperty("DisplayPipePlaneBaseAlignment", 64ULL, 32);
+@@ -292,6 +348,10 @@
+ 		fb->present(rec);
+ 		IOFreeData(rec, SWEET_FB_SWAP_REC_SIZE);
+ 	}
++#if defined(POLARIS_RAM_ONLY)
++    if (fb->fDebugStatus && fb->fConsolePaused && (count % fb->fFlushTicks) == 0)
++        polaris_status_bar(fb); /* saved RAM, under the display work-loop gate */
++#endif
+ 	sender->setTimeoutUS(SWEET_FB_VSYNC_US);
+ }
+ 
+--- /dev/null
++++ b/bsd/dev/polaris_debug.c
+@@ -0,0 +1,118 @@
++/* Polaris read-only log/panel snapshots over the admitted USB ECM link.
++ * One worker owns its snapshot. No command, address or storage API exists.
++ */
++#if defined(POLARIS_RAM_ONLY)
++#include <sys/param.h>
++#include <sys/systm.h>
++#include <sys/socket.h>
++#include <sys/kpi_socket.h>
++#include <sys/uio.h>
++#include <netinet/in.h>
++#include <mach/thread_act.h>
++#include <kern/clock.h>
++#include <kern/thread.h>
++#include <kern/sched_prim.h>
++#include <vm/vm_kern.h>
++#include <pexpert/pexpert.h>
++#include "polaris_debug_wire.h"
++
++extern uint32_t sweet_log_copy(uint64_t *, char *, uint32_t);
++extern uint64_t sweet_log_position(void);
++extern bool polaris_usb_connected(void);
++extern uint32_t polaris_debug_frame(void *, uint32_t);
++void polaris_debug_start(void);
++static uint32_t pdbg_started;
++static int pdbg_wait;
++
++static void pdbg_sleep(void)
++{
++    uint64_t deadline;
++    clock_interval_to_deadline(10, NSEC_PER_MSEC, &deadline);
++    (void)assert_wait_deadline(&pdbg_wait, THREAD_UNINT, deadline);
++    thread_block(THREAD_CONTINUE_NULL);
++}
++
++static void pdbg_worker(void *arg __unused, wait_result_t wr __unused)
++{
++    socket_t so = NULL;
++    struct sockaddr_in local;
++    struct pdbg_snapshot snapshot = {0};
++    vm_offset_t storage = 0;
++    uint8_t request[PDBG_REQUEST_BYTES + 1], reply[PDBG_REPLY_BYTES + PDBG_CHUNK];
++    bzero(&local, sizeof(local));
++    local.sin_len = sizeof(local); local.sin_family = AF_INET;
++    local.sin_port = htons(5141); local.sin_addr.s_addr = htonl(0xc0a80702);
++    if (sock_socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP, NULL, NULL, &so) ||
++        sock_bind(so, (struct sockaddr *)&local)) {
++        if (so) sock_close(so);
++        thread_terminate(current_thread());
++        return;
++    }
++    for (;;) {
++        if (!polaris_usb_connected()) { pdbg_sleep(); continue; }
++        struct sockaddr_in peer;
++        bzero(&peer, sizeof(peer));
++        struct iovec in = {.iov_base = request, .iov_len = sizeof(request)};
++        struct msghdr msg = {.msg_name = &peer, .msg_namelen = sizeof(peer),
++            .msg_iov = &in, .msg_iovlen = 1};
++        size_t received = 0;
++        errno_t error = sock_receive(so, &msg, MSG_DONTWAIT, &received);
++        if (error) { pdbg_sleep(); continue; }
++        struct pdbg_request r;
++        if (peer.sin_family != AF_INET || peer.sin_addr.s_addr != htonl(0xc0a80701) ||
++            msg.msg_flags & MSG_TRUNC || !pdbg_parse(request, received, &r)) continue;
++        unsigned status = PDBG_OK;
++        uint32_t bytes = 0;
++        if (r.op != PDBG_READ) {
++            if (snapshot.token == r.token) {
++                /* Retry the same capture token without changing its contents. */
++                if (snapshot.kind != r.op) status = PDBG_BAD;
++            } else {
++                snapshot = (struct pdbg_snapshot){0};
++                if (!storage && kmem_alloc(kernel_map, &storage, PDBG_FRAME_BYTES,
++                    KMA_DATA | KMA_ZERO | KMA_PERMANENT, VM_KERN_MEMORY_IOKIT) != KERN_SUCCESS)
++                    status = PDBG_NOMEM;
++                if (status == PDBG_OK) {
++                    if (r.op == PDBG_LOG) {
++                        uint64_t end = sweet_log_position();
++                        uint64_t pos = end > PDBG_LOG_LIMIT ? end - PDBG_LOG_LIMIT : 0;
++                        bytes = sweet_log_copy(&pos, (char *)storage, (uint32_t)(end - pos));
++                        snapshot = (struct pdbg_snapshot){.token = r.token,
++                            .bytes = bytes, .kind = PDBG_LOG};
++                    } else {
++                        bytes = polaris_debug_frame((void *)storage, PDBG_FRAME_BYTES);
++                        if (bytes != PDBG_FRAME_BYTES) status = PDBG_NOT_READY;
++                        else snapshot = (struct pdbg_snapshot){.token = r.token,
++                            .bytes = bytes, .kind = PDBG_FRAME, .width = 1080,
++                            .height = 2160, .stride = 4320};
++                    }
++                }
++            }
++            bytes = 0;
++        } else if (!pdbg_span(&snapshot, &r)) status = PDBG_STALE;
++        else {
++            bytes = r.length;
++            memcpy(reply + PDBG_REPLY_BYTES, (const uint8_t *)storage + r.offset, bytes);
++        }
++        if (!pdbg_reply(reply, &snapshot, &r, status, reply + PDBG_REPLY_BYTES, bytes)) continue;
++        struct iovec out = {.iov_base = reply, .iov_len = PDBG_REPLY_BYTES + bytes};
++        struct msghdr response = {.msg_name = &peer, .msg_namelen = sizeof(peer),
++            .msg_iov = &out, .msg_iovlen = 1};
++        size_t sent = 0;
++        (void)sock_send(so, &response, MSG_DONTWAIT, &sent);
++        /* No printf here: it would feed the log being transferred. */
++    }
++}
++
++void polaris_debug_start(void)
++{
++    unsigned enabled = 0;
++    PE_parse_boot_argn("polarisdebug", &enabled, sizeof(enabled));
++    if (enabled != 1 || __atomic_exchange_n(&pdbg_started, 1, __ATOMIC_ACQ_REL)) return;
++    thread_t thread;
++    if (kernel_thread_start(pdbg_worker, NULL, &thread) == KERN_SUCCESS) {
++        thread_deallocate(thread);
++        printf("POLARIS DEBUG: USB log/panel snapshots, UDP5141; no command service\n");
++    }
++}
++#endif
+--- /dev/null
++++ b/bsd/dev/polaris_debug_wire.h
+@@ -0,0 +1,79 @@
++/* Private USB-ECM diagnostics: snapshot logs or the panel, then read chunks.
++ * No addresses, writes, shell commands or storage operations on this wire.
++ * All fields are little endian; UDP payloads fit the existing 1500-byte MTU.
++ */
++#ifndef POLARIS_DEBUG_WIRE_H
++#define POLARIS_DEBUG_WIRE_H
++#include <stdint.h>
++#include <stddef.h>
++#include <stdbool.h>
++
++#define PDBG_REQUEST_BYTES 24u
++#define PDBG_REPLY_BYTES 40u
++#define PDBG_CHUNK 1400u
++#define PDBG_LOG_LIMIT (4u << 20)
++#define PDBG_FRAME_BYTES (4320u * 2160u)
++enum pdbg_op { PDBG_LOG = 1, PDBG_FRAME = 2, PDBG_READ = 3 };
++enum pdbg_status { PDBG_OK, PDBG_BAD, PDBG_NOT_READY, PDBG_NOMEM, PDBG_STALE };
++struct pdbg_request { uint64_t token; uint32_t offset, length; uint16_t op; };
++struct pdbg_snapshot { uint64_t token; uint32_t bytes, kind, width, height, stride; };
++
++static inline uint32_t pdbg_u32(const uint8_t *p)
++{
++    return (uint32_t)p[0] | (uint32_t)p[1] << 8 | (uint32_t)p[2] << 16 | (uint32_t)p[3] << 24;
++}
++static inline void pdbg_put32(uint8_t *p, uint32_t v)
++{
++    for (unsigned i = 0; i < 4; i++) p[i] = (uint8_t)(v >> (8 * i));
++}
++static inline bool pdbg_parse(const uint8_t *p, size_t bytes, struct pdbg_request *out)
++{
++    if (!p || !out || bytes != PDBG_REQUEST_BYTES || pdbg_u32(p) != 0x47424450 ||
++        p[4] != 1 || p[5] || p[7] || p[6] < PDBG_LOG || p[6] > PDBG_READ) return false;
++    struct pdbg_request r = {
++        .token = (uint64_t)pdbg_u32(p + 8) | (uint64_t)pdbg_u32(p + 12) << 32,
++        .offset = pdbg_u32(p + 16), .length = pdbg_u32(p + 20), .op = p[6]
++    };
++    if (!r.token || (r.op == PDBG_READ ? (!r.length || r.length > PDBG_CHUNK) :
++        (r.offset || r.length))) return false;
++    *out = r;
++    return true;
++}
++static inline bool pdbg_span(const struct pdbg_snapshot *s, const struct pdbg_request *r)
++{
++    return s && r && s->token && r->token == s->token && r->op == PDBG_READ &&
++        ((s->kind == PDBG_LOG && s->bytes <= PDBG_LOG_LIMIT && !s->width && !s->height && !s->stride) ||
++         (s->kind == PDBG_FRAME && s->bytes == PDBG_FRAME_BYTES && s->width == 1080 &&
++          s->height == 2160 && s->stride == 4320)) &&
++        r->length && r->length <= PDBG_CHUNK && r->offset <= s->bytes &&
++        r->length <= s->bytes - r->offset;
++}
++static inline uint32_t pdbg_crc(const uint8_t *p, size_t bytes)
++{
++    uint32_t c = UINT32_MAX;
++    for (size_t i = 0; i < bytes; i++) {
++        c ^= p[i];
++        for (unsigned b = 0; b < 8; b++) c = (c >> 1) ^ (0xedb88320u & (0u - (c & 1)));
++    }
++    return ~c;
++}
++/* Caller supplies PDBG_REPLY_BYTES of output. Errors never advertise data. */
++static inline bool pdbg_reply(uint8_t *p, const struct pdbg_snapshot *s,
++    const struct pdbg_request *r, unsigned status, const uint8_t *data, uint32_t bytes)
++{
++    if (!p || !s || !r || status > PDBG_STALE || bytes > PDBG_CHUNK ||
++        (bytes && (!data || status != PDBG_OK || !pdbg_span(s, r) || bytes != r->length))) return false;
++    __builtin_memset(p, 0, PDBG_REPLY_BYTES);
++    pdbg_put32(p, 0x52424450); p[4] = 1; p[6] = (uint8_t)status;
++    pdbg_put32(p + 8, (uint32_t)r->token); pdbg_put32(p + 12, (uint32_t)(r->token >> 32));
++    if (status == PDBG_OK) {
++        pdbg_put32(p + 16, s->kind); pdbg_put32(p + 20, r->op == PDBG_READ ? r->offset : 0);
++        pdbg_put32(p + 24, s->bytes); pdbg_put32(p + 28, bytes);
++        p[32] = (uint8_t)s->width; p[33] = (uint8_t)(s->width >> 8);
++        p[34] = (uint8_t)s->height; p[35] = (uint8_t)(s->height >> 8);
++        /* Frame geometry is fixed. Field36 is the payload CRC32. */
++        pdbg_put32(p + 36, pdbg_crc(data, bytes));
++    }
++    return true;
++}
++#endif
