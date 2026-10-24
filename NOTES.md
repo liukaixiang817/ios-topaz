@@ -10,46 +10,57 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION —0015 actual FIFO admission stop;0016 bounded GPIO fallback staged
+### CURRENT NEXT ACTION —0016 touch image READY;waiting for physical FASTBOOT
 
-- NEW0015fourphotos F16F697B.../7F7501AC... savedprivately as touch-0015/
- hardware-clock-stop-{1..4}.jpg +hardware-clock-stop.json. Actual0015lockscreen
- red4:10/camera renderswithconsoleoverdraw. Allsnapshots D TOUCH phase3,
- result11,done1,frames0/down0;TREGfw300/status0/irq0;TRMIreg0/n0/data0/0.
- SourceprovesAHB/S6gates+SEmap passed,protocol3I2C,engineidle,stopped BEFORE
- GCCcfgsnapshot andBEFORE RMIreads. Remaining0015guardcausesFIFOdisabled OR
- nonemptyTX/RX,valueswerenotretained;doNOTclaimwhichwithoutnewregisters.
- No decodedtouch/HIDcontacts/home. Logburstwasnotphysicaltouchproof.
-- 0016implementationstaged:0813-polaris-gpio-i2c-fallback.patch addsactual
- sharedtestedopen-drainGPIOtransport andretainsIF/TX/RX/path/lines/result.
- Exactboard/explicitflagunchanged;requiresprotocol3+M/Sidle;onlydisabled/
- inheritednonemptyFIFOschoosefallback,neverclearFIFO/reconfigureGSI/resetFW.
- Validateinheritedreset99high/IRQ125input,GPIO33/34muxGPIO0/qup14only,bus
- physicallyreleasedhigh BEFOREGPIOinputremux;outputlatchzero,OEonlysinks/
- releases,neverdriveshigh. SameRMIboundedfunctiondiscovery/normalF01state.
- Fixedslave20,TX<=2/RX<=80,repeatedSTART,ACK/NACK,clockstretch+arbitration,
- shared24msdelaybudget/finitebitloops;releaseonerror,no busclearclocktrain.
- MiCodepinctrl-v2exactpinregisterfactsverified;upstreami2c-algo-bitprimary
- reference savedprivatelytouch-0016/i2c-algo-bit.c,blob
- a8e89df665b904d77b86586853a3fb5f010f92e0. NoPMIC/reset/firmware/diskwrites.
-- Source d75b8a315894e84320eb0b7e0529bac213adbae0 committed+pushed;
- CI40061321613/job120775252245 SUCCESS,watchsession67689exit0,
- touch-0016/ci-watch.log. Preparednewkernel downloader/profile/SHAguards,
- sequentialgate200/default200/nodiag90QEMU,phoneprepare/Cvalidator and
- readonlypreflight/boot scripts syntacticallychecked. PhoneADTmustbe byte-
- identical0015,samecmdline;onlycompiledkernel changes. No0016imagepreparedyet.
-- FinalCIbuild4m58s;artifact12548065591/60375087bytes. Exactprofile/
- source+ZIPCRC+kernelSHA VERIFIED, xnu/out-polaris-0016/kernel.development.sweet,
+- 0016preparedNOTbooted;source d75b8a315894e84320eb0b7e0529bac213adbae0,
+0813-polaris-gpio-i2c-fallback.patch committed+pushed. CI40061321613 SUCCESS,
+ job120775252245,build4m58s;artifact12548065591/60375087bytes. Exactpolaris
+ profile/source+ZIPCRC+kernelSHA VERIFIED;fullghlog ci-40061321613.log.
+ Kernel xnu/out-polaris-0016/kernel.development.sweet,
  SHAe902583256841aed95d1d91af3d9ef6866ece894d56dc99a46b70376e937d13f.
- Fullghlogresearch/polaris/ci-40061321613.log. NewkernelQEMUgate200s PASS29checks;
- default200s nowrunning,thennodiag90s;touch-0016/validation-run.log,exec37105.
- NoactualGPIO/controllerdata/homeproof;phone0015unchanged.
-- Nativewire-levelmodel+ASan/UBSan testsPASS (write/read80/repeatedSTART,
- finalNACK/shortclockstretch/address+dataNACK/busybus/clocktimeout/arbitration/
- bounds/fixedaddress/admissionguard);exactshippedheadertestPASS. Patchboth
- filesapplyMATCH,actualCI-headerARM64objectsPASS. CI/fullkernelSUCCESS;newkerneldownload/QEMU pipelineexec37105RUNNING,notyetverified.
- NeedcompletekernelCI+newkernelQEMU+preparedimagebeforephysicalkeyrequest.
- Currentphone0015lockscreen/driverstopped;KEEPthisboot,noFASTBOOTrequestyet.
+- Nativewiremodel+ASan/UBSan test andexactshippedheader testPASS;3profiletests
+ PASS;actualCI-headerARM64objects4PASS;patchbothfilesapplyMATCH. Covers
+ repeatedSTART/read80/finalNACK/clockstretch/address+dataNACK/busybus/timeout/
+ arbitration/bounds/admission. SharedGPIOheader isactualshippedcode,notmock.
+ ActualnewkernelQEMUgate200s/default200s/nodiag90s ALLFIRSTATTEMPTPASS,
+67checks,exec37105exit0. PID1/display/callerrotation/completeRAMring/screen
+ no panic,0unknown glyphs;default/missingmarker/outerdiag gates. Synthetic
+ fixture+nohardwaretouchADT;noactualGPIO/controllerdata/physicaltouchproof.
+- ActualCpayloadcopyplanvalidatorPASS. PhoneADTBYTE-IDENTICAL0015,cmdline
+ unchanged;onlykernelchanges. Sameverifiedfactoryidentity andimmutablefile
+ manifest;ufsrw0/RAM512/cpus1/visibleconsole/copy5Hz retained. Image
+ shim/out/polaris-xnu-touch-0016/polaris-xnu-touch-0016.img,47304704bytes,
+ SHAd107ef9724b9f0ba70c44ba4cbc501dc2b74946bebef484af10e0c95310ac000;
+ payloadb259b20fc77e397e069ebf46efd56a4e58850e5c84ec115a1a454b81da031b59.
+ Allprivate touch-0016/prepared.json/verification.json/qemu-check.json/
+ deployment-state.json/native-gpio.log/profile-tests.log/object-compile.json.
+- CURRENTphone0015lockscreen/driverstopped;NEWphysicalPower+VolumeDown
+ FASTBOOTrequestPENDING. CurrentXNUhasnoUSBrestart/control/logport. Onreply:
+ python3 research/polaris/touch-0016/run-device-step.py preflight,then
+ run-device-step.py boot-phone ONLYifPASS. Redactsserial. Freshknownheader/
+ GPT/unmountedRO1/noload/full16GiBSHA/182mapsbefore+after/temp<45 required,
+ sameliverecoverybootID/proof<600s andanotherfreshmapbeforeboot. Neverrepair,
+ replay,stageorwritepartitions. No0016preflight/phonebootyet. Needactualnew
+ inputresult/newphotoD TOUCH/TREG/TIF/TRMI;hardware-decoder.json explainscodes.
+- EVIDENCE:four0015photos F16F697B.../7F7501AC... savedprivatelytouch-0015/
+ hardware-clock-stop-{1..4}.jpg +hardware-clock-stop.json. Actualred4:10lock
+ screen/camera amidconsoleoverdraw. D TOUCH phase3/result11/done1/frames0/
+ down0;fw300/status0/irq0;lastreg0/n0/data0/0. Clocks+SEmap passed,protocol3
+ I2C,idle,stoppedBEFORE GCCcfgsnapshot/RMI. RemainingguardcausesFIFOdisabled
+ OR nonemptyTX/RX,not distinguishablein0015. Noactualtouch/HIDevents/home.
+ Logsaftertouchwerenotphysicalinputproof. No needadditionalold0015samples.
+- IMPLEMENTATION:exactboard/flag gates unchanged. 0016requiresprotocol3+
+ M/Sidle,onlydisabled/nonemptyFIFO choosesGPIOfallback,neverdrainsinherited
+ FIFO/reconfiguresGSI/loadsFW. Validateinheritedreset99high/IRQ125input,
+ GPIO33/34muxGPIO0/qup14only,physicalSDA/SCLreleasedhigh before+after input
+ remux. Zerooutputlatch,OEonlysinks/releases,NEVERhighdrive. Fixedslave20,
+ TX<=2/RX<=80,repeatedSTART/ACK/NACK/clockstretch/arbitration,shared24msdelay
+ budget/finitebitloops;releaseonerror,nobusclearclocktrain. SameRMIfunction
+ discovery andnormalF01byte. NoPMIC/hardwarereset/firmware/diskwrites.
+ RetainsD TIF:rawIF/TX/RX/path/lines/lastbusresult evenifworkerstops. Physical
+ power/pullups/GPIOownership/ACK/data remainunknown untilactualtest. MiCode
+ pinctrl-v2exactfactsverified;primaryi2c-algo-bit reference private,blob
+ a8e89df665b904d77b86586853a3fb5f010f92e0. Handoffcommitf8cc613 also local.
 
 ### 0015 build, boot and user-report history
 
