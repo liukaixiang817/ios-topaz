@@ -21,7 +21,7 @@
      polaris_usb_init();
 --- /dev/null
 +++ b/bsd/dev/polaris_a630.c
-@@ -0,0 +1,130 @@
+@@ -0,0 +1,135 @@
 +/* Original Polaris A630 firmware consumer and read-only hardware admission.
 + * This stage does not start firmware, map SMMU streams, authenticate ZAP or
 + * register an accelerated service. Hardware writes are deliberately absent.
@@ -76,7 +76,12 @@
 +    if (!a630_property(node, key, &p, &n) || n < minimum || n > maximum ||
 +        !a630_property(node, hashkey, &expected, &hn) || hn != sizeof(digest)) return false;
 +    /* Built-in LTC SHA256, independent of the unavailable external provider. */
-+    ccdigest(&ccsha256_ltc_di, n, p, digest);
++    const struct ccdigest_info *di = &ccsha256_ltc_di;
++    ccdigest_di_decl(di, context);
++    ccdigest_init(di, context);
++    ccdigest_update(di, context, n, p);
++    ccdigest_final(di, context, digest);
++    ccdigest_di_clear(di, context);
 +    if (memcmp(digest, expected, sizeof(digest))) return false;
 +    *out = p; *bytes = n; return true;
 +}

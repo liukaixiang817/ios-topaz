@@ -63,7 +63,18 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   newRAMfastpath; cause still unestablished. Private continuation-0023/qbase,
   baseline0021-result/provenance. Initial QEMU launch failed on a too-long
   Unix socket path before guest execution; retained, shortened output path.
-- NEXT: finish compile/integrity review, commit/push full0023CI, run exact new
+- Initial0023source **07f39ce7425b8eae2d8c5009395a88f27b52aea3** committed/pushed;
+  CI **40082261092/job120838046878 FAILED**, Build6m22s
+  (09:31:30–09:37:52UTC). Full failed-step log saved
+  `ci-40082261092-failed.log`: final link lacked `_ccdigest` (single-shot
+  wrapper absent from this kernel). Corrected consumer to the existing LTC
+  digest init/update/final/clear sequence, recompiled PASS, and all undefined
+  symbols across6actualobjects resolve against priorcompletekernel+newobjects.
+  `object-import-check.json` PASS/missing0. Correctedsource/newCI next. Six affected ARM64 TUs PASS including final
+  CPUobserver; own GPU/debug/USB/frame symbols and crosscorecallback/records/
+  cpu_xcall import verified (static check helper was inlined, initial observer
+  assumption retained separately). No successful0023kernel artifact ordevice action yet.
+- NEXT: exact source/profile/CRC/SHA artifact download, run exact new
   kernel firmware-positive/negative and singleCPU stress checks, then prepare
   payload/image. No0023image/preflight/boot yet; do not requestFASTBOOT until
   useful image is verified. Continue SMP diagnosis without weakening checks.
