@@ -30,7 +30,11 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
  native-path-analysis.json,prepared.json,preflight.py,boot-phone.py retained.
  Preflight requires sameknownouterheader,RO1/noload,fresh182maps before/after
  full16GiB imageSHA,unchangedheader/GPT,unmount,temp<45C;no repair/replay/write.
- User physicalFASTBOOT needed next;currentphone0013XNU. GUIunfinished.
+ Source commit4798fe7 +hardware-recorda8b85f8 pushed to origin. Readonly
+ exactphoneUSB check:noFASTBOOT/noADB while0013XNU. PhysicalFASTBOOT request
+ nowpending;userasked toholdPower+VolumeDown and replywhenready. No0014
+ phonebootattemptyet. Afterreply run0014/preflight.py thenboot-phone.py
+ onlyonfreshPASS;do not reuse0013preflight. GUIunfinished.
 
 - NEW0013 HARDWARE OBSERVED: user photos hardware-focus-{1..4}.jpg and clearer
  hardware-focus-later-{1,2}.jpg under research/polaris/launchservices-0013/.
