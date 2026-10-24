@@ -10,7 +10,18 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION —0019 physical touch/home confirmed; prepare0020 clean GUI
+### CURRENT NEXT ACTION —0020 FINAL first-frame fix building; keep0019 running
+
+- FINAL0020source9209e0c4ed2a8a4cef054c847bff01d6688e18e1 pushed,
+  CI40072563674 in progress. Includes0817AKSlog budget/interactivequietprofile
+  AND0818 firstframe mute-before-diagnostic fix. Private scripts NOWpin9209e0c/
+  40072563674. Earlier943c011/CI40071727505 candidate was NEVERphonebooted;
+  bootstrap13PASS only, gate deliberatelyinterrupted50034exit143; allraw
+  kernel/rangecache/partialtests archived candidate1-943c011/ before newinputs.
+  Final newCI/exactkernel/sequentialregressions/Cpayload/hash stillneeded.
+  Do not ask physicalFASTBOOT until prepared. Currentphone remains0019 with
+  userconfirmedphysicalhome, laterconsoleoverdraw, App usabilityunknown.
+
 
 - User CONFIRMS0019 realtouch/swipe reaches main home screen. Later icon/tap
   causes screen filled with log/noGUI; exact App unknown. Photos981671B7...
@@ -85,7 +96,8 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   This testsordering, not actualrendering/phone. NewactualCI-headerARM64
   framebufferobject PASS;0817+0818all3filesapplyMATCH; profile3tests rechecked
   PASS. KeyStoreobject/header/native25proof unchanged. Need newCI/exactkernel
-  regressions/image; sourcepins must beupdatedafternewcommit. Currentphone0019.
+  regressions/image. Final source9209e0c/CI40072563674, allprivatepinsupdated;
+  actualframebufferobject PASS; newsourcepreparation tostart afterCI.
 -0019 FIX: RMI4 Ctrl0 CONFIGURED bit7 is a command whose readback is0;0018
   incorrectly requires (control&83)==80. Correct mode verifies normal sleep
   bits and Data0 UNCONFIGURED bit7clear, rejects flash/CRC/fatal/transport
