@@ -1,0 +1,435 @@
+From: ios-polaris bring-up
+Subject: [PATCH] Halt micro-MMU for implementation writes; request USB RAM clocks
+
+--- a/bsd/dev/polaris_a630_smmu.h
++++ b/bsd/dev/polaris_a630_smmu.h
+@@ -15,10 +15,14 @@
+ #define A630_SMMU_POLLS 500000u
+ #define A630_SMMU_STREAM 5u
+ #define A630_SMMU_IMPLS 12u
++#define A630_SMMU_HALT_POLLS 30000u
++#define A630_SMMU_HALT_REQ 4u
++#define A630_SMMU_HALT_IDLE 8u
+ enum a630_smmu_error {
+     A630_SMMU_DISABLED, A630_SMMU_ARGUMENT, A630_SMMU_LEASE,
+     A630_SMMU_IO, A630_SMMU_LAYOUT, A630_SMMU_OWNERSHIP,
+-    A630_SMMU_ACK, A630_SMMU_TLB, A630_SMMU_READY, A630_SMMU_RESTORE
++    A630_SMMU_ACK, A630_SMMU_TLB, A630_SMMU_READY, A630_SMMU_RESTORE,
++    A630_SMMU_HALT
+ };
+ struct a630_smmu_io {
+     bool (*stopped)(void *); /* live exclusive lease, GMU/3D halted */
+@@ -37,6 +41,8 @@
+     uint32_t control[5], impl[A630_SMMU_IMPLS];
+     uint64_t ttbr[2], root;
+     uint32_t failed_offset, expected, actual, polls, restore_error;
++    uint32_t halt_before,halt_live,halt_after,halt_changed,halt_polls,impl_changed;
++    uint32_t restore_offset,restore_expected,restore_actual;
+ };
+ static const uint32_t a630_smmu_impl_offsets[A630_SMMU_IMPLS] = {
+     0x6000,0x6060,0x678c,0x6794,0x6800,0x6900,
+@@ -93,6 +99,33 @@
+         s->expected = (uint32_t)value; s->actual = (uint32_t)actual; return false;
+     }
+     return true;
++}
++/* Original qsmmuv2_device_reset brackets implementation writes with a local
++ * micro-MMU halt. GMU/GX reset alone does not acknowledge this handshake.
++ * Never halt a foreign translation owner. IDLE is status, not a write ACK;
++ * resume does not wait for IDLE to clear when no client is sending traffic. */
++static inline bool a630_smmu_halt(const struct a630_smmu_io *io,void *ctx,
++    struct a630_smmu_snapshot *s,bool enter)
++{
++    uint32_t v;
++    if(s->foreign){s->error=A630_SMMU_OWNERSHIP;return false;}
++    if(!a630_smmu_rd(io,ctx,s,0x6000,&v))return false;
++    if(enter) {
++        if((v&A630_SMMU_HALT_REQ)&&!s->halt_changed){s->error=A630_SMMU_OWNERSHIP;return false;}
++        s->halt_changed=1; /* A posted request belongs to us even on failure. */
++        if(!a630_smmu_set(io,ctx,s,0x6000,v|A630_SMMU_HALT_REQ,A630_SMMU_HALT_REQ))return false;
++        for(unsigned n=0;n<A630_SMMU_HALT_POLLS;n++){
++            s->halt_polls++;
++            if(!a630_smmu_rd(io,ctx,s,0x6000,&s->halt_live))return false;
++            if(s->halt_live&A630_SMMU_HALT_IDLE)return true;
++            io->wait(ctx,1);
++        }
++        s->error=A630_SMMU_HALT;s->failed_offset=0x6000;
++        s->expected=A630_SMMU_HALT_IDLE;s->actual=s->halt_live;return false;
++    }
++    if(!s->halt_changed)return true;
++    if(!a630_smmu_set(io,ctx,s,0x6000,v&~A630_SMMU_HALT_REQ,A630_SMMU_HALT_REQ))return false;
++    return a630_smmu_rd(io,ctx,s,0x6000,&s->halt_after);
+ }
+ static inline bool a630_smmu_tlb(const struct a630_smmu_io *io, void *ctx,
+     struct a630_smmu_snapshot *s)
+@@ -189,13 +222,19 @@
+         !io->read64(ctx,s->context+0x28,&s->ttbr[1])) {s->error=A630_SMMU_IO;goto done;}
+     for (unsigned n=0;n<A630_SMMU_IMPLS;n++)
+         if (!a630_smmu_rd(io,ctx,s,a630_smmu_impl_offsets[n],&s->impl[n])) goto done;
++    s->halt_before=s->impl[0];
++    if(s->halt_before&A630_SMMU_HALT_REQ){
++        s->error=A630_SMMU_OWNERSHIP;goto done;
++    }
+     /* Shared implementation registers may not be changed under another
+      * stream. An existing translation owner must already have installed the
+      * board values, and the global fault/enable policy must already match. */
+     if (s->foreign) {
+         if ((s->global&0x401)!=0x400) {s->error=A630_SMMU_OWNERSHIP;goto done;}
+-        for (unsigned n=0;n<A630_SMMU_IMPLS;n++)
+-            if (s->impl[n]!=a630_smmu_impl_values[n]) {s->error=A630_SMMU_OWNERSHIP;goto done;}
++        for (unsigned n=0;n<A630_SMMU_IMPLS;n++) {
++            uint32_t mask=n?UINT32_MAX:~(A630_SMMU_HALT_REQ|A630_SMMU_HALT_IDLE);
++            if ((s->impl[n]^a630_smmu_impl_values[n])&mask) {s->error=A630_SMMU_OWNERSHIP;goto done;}
++        }
+     }
+     if (!a630_smmu_lease(io,ctx,s)) goto done;
+     if (!io->clean(ctx,tables->memory,(size_t)tables->used*4096) || !io->sync(ctx)) {
+@@ -205,8 +244,17 @@
+     /* Make this stream fault while its new context is being programmed. */
+     if (!a630_smmu_set(io,ctx,s,0xc00+4*s->slot,(s->s2cr&~0x30000u)|0x20000,0x30000) ||
+         !a630_smmu_set(io,ctx,s,0x800+4*s->slot,s->smr&~(1u<<31),1u<<31)) goto done;
+-    for (unsigned n=0;n<A630_SMMU_IMPLS;n++)
+-        if (!s->foreign && !a630_smmu_set(io,ctx,s,a630_smmu_impl_offsets[n],a630_smmu_impl_values[n],UINT32_MAX)) goto done;
++    if(!s->foreign){
++        if(!a630_smmu_halt(io,ctx,s,true))goto done;
++        for(unsigned n=0;n<A630_SMMU_IMPLS;n++){
++            /* Keep our halt request asserted across the DT's control write. */
++            uint32_t value=a630_smmu_impl_values[n]|(n?0:A630_SMMU_HALT_REQ);
++            uint32_t mask=n?UINT32_MAX:~A630_SMMU_HALT_IDLE;
++            s->impl_changed|=1u<<n;
++            if(!a630_smmu_set(io,ctx,s,a630_smmu_impl_offsets[n],value,mask))goto done;
++        }
++        if(!a630_smmu_halt(io,ctx,s,false))goto done;
++    }
+     s->stage=5;
+     s->root=tables->physical|((uint64_t)s->bank<<48);
+     if (!a630_smmu_set(io,ctx,s,s->context,0,1) ||
+@@ -242,6 +290,9 @@
+     struct a630_smmu_snapshot r=*s;
+     r.error=0;r.failed_offset=0;r.expected=0;r.actual=0;r.polls=0;
+     if (!a630_smmu_lease(io,ctx,&r)) goto failed;
++    /* Failed implementation programming may have left our halt asserted.
++     * Release it before architectural TLB synchronization, as the vendor. */
++    if(r.halt_changed&&!a630_smmu_halt(io,ctx,&r,false))goto failed;
+     /* No more stream requests may enter the context during teardown. */
+     if (!a630_smmu_set(io,ctx,&r,0xc00+4*s->slot,
+             (s->s2cr&~0x30000u)|0x20000,0x30000) ||
+@@ -256,8 +307,15 @@
+         !a630_smmu_set(io,ctx,&r,s->page+0x800+4*s->bank,s->cba2r,1) ||
+         !a630_smmu_set(io,ctx,&r,s->context,s->control[0],0xc011ff)) goto failed;
+     if (!s->foreign) {
+-        for (unsigned n=0;n<A630_SMMU_IMPLS;n++)
+-            if (!a630_smmu_set(io,ctx,&r,a630_smmu_impl_offsets[n],s->impl[n],UINT32_MAX)) goto failed;
++        if(s->impl_changed){
++            if(!a630_smmu_halt(io,ctx,&r,true))goto failed;
++            for(int n=A630_SMMU_IMPLS-1;n>=0;n--)if(s->impl_changed&(1u<<n)){
++                uint32_t value=s->impl[n]|(n?0:A630_SMMU_HALT_REQ);
++                uint32_t mask=n?UINT32_MAX:~A630_SMMU_HALT_IDLE;
++                if(!a630_smmu_set(io,ctx,&r,a630_smmu_impl_offsets[n],value,mask))goto failed;
++            }
++            if(!a630_smmu_halt(io,ctx,&r,false))goto failed;
++        }
+         uint32_t current;
+         if (!a630_smmu_rd(io,ctx,&r,0,&current) ||
+             !a630_smmu_set(io,ctx,&r,0,(current&~0x401u)|(s->global&0x401),0x401)) goto failed;
+@@ -265,8 +323,11 @@
+     if (!a630_smmu_set(io,ctx,&r,0xc00+4*s->slot,s->s2cr,0x030303ff) ||
+         !a630_smmu_set(io,ctx,&r,0x800+4*s->slot,s->smr,UINT32_MAX)) goto failed;
+     if (!io->sync(ctx)) {r.error=A630_SMMU_IO;goto failed;}
+-    s->restored=1;s->restore_error=0;return true;
++    s->halt_after=r.halt_after;s->halt_polls=r.halt_polls;
++    s->restored=1;s->restore_error=0;s->restore_offset=0;return true;
+ failed:
++    s->halt_after=r.halt_after;s->halt_polls=r.halt_polls;
++    s->restore_offset=r.failed_offset;s->restore_expected=r.expected;s->restore_actual=r.actual;
+     s->restored=0;s->restore_error=r.error?r.error:A630_SMMU_RESTORE;
+     return false;
+ }
+--- a/bsd/dev/polaris_a630.c
++++ b/bsd/dev/polaris_a630.c
+@@ -74,7 +74,7 @@
+ {
+     if (!out || !size) return 0;
+     out[0] = 0;
+-    if (line >= 8) return 0;
++    if (line >= 9) return 0;
+     if (!__atomic_load_n(&a630_published, __ATOMIC_ACQUIRE))
+         return (uint32_t)snprintf(out, size, "GPU snapshot pending");
+     const struct a630_power_snapshot *p = &a630_power_saved;
+@@ -100,8 +100,11 @@
+         m->error&15,m->stage&15,m->bank&255,m->slot&255,m->failed_offset,m->expected,m->actual,m->restored&1,m->restore_error&15);
+     if (line == 6) return (uint32_t)snprintf(out,size,"GE %x/%x fw%08x @%x:%x e%x a%x r%x/%x",
+         e->error&15,e->stage&15,e->fw,e->failed_bank&15,e->failed_offset,e->expected,e->actual,e->stopped&1,e->restore_error&15);
+-    return (uint32_t)snprintf(out,size,"GL u%08x o%08x src%04x v%08x/%08x r%x/%x",
++    if (line == 7) return (uint32_t)snprintf(out,size,"GL u%08x o%08x src%04x v%08x/%08x r%x/%x",
+         b->pll[2],b->pll[3],b->source&65535,b->live[0],b->live[1],b->restored&1,b->restore_error&15);
++    return (uint32_t)snprintf(out,size,"SH b%08x l%08x a%08x p%x i%x r%x@%x",
++        m->halt_before,m->halt_live,m->halt_after,m->halt_polls,m->impl_changed,
++        m->restore_error&15,m->restore_offset);
+ }
+ 
+ static bool a630_property(DTEntry node, const char *name, const void **data, unsigned *size)
+@@ -368,6 +371,9 @@
+     printf("D GPU SMMU: error=%u stage=%u ID=%x/%x/%x/%x cb=%u stream=%u slot=%u root=%llx fail=%x expected=%x actual=%x restored=%u/%u ATOS=disabled DMA=%u\n",
+         m->error,m->stage,m->id[0],m->id[1],m->id[2],m->id[3],m->bank,A630_SMMU_STREAM,m->slot,
+         (unsigned long long)m->root,m->failed_offset,m->expected,m->actual,m->restored,m->restore_error,a630_dma_ready);
++    printf("D GPU SMMU HALT: before=%x idle=%x after=%x owned=%u polls=%u impl_changed=%x restore=%u offset=%x expected=%x actual=%x\n",
++        m->halt_before,m->halt_live,m->halt_after,m->halt_changed,m->halt_polls,m->impl_changed,
++        m->restore_error,m->restore_offset,m->restore_expected,m->restore_actual);
+     printf("D GPU EXEC: error=%u stage=%u FW_INIT=%x started=%u stopped=%u profile=%u fail=%u:%x expected=%x actual=%x polls=%u restored=%u/%u; HFI/GX/3D not started\n",
+         e->error,e->stage,e->fw,e->started,e->stopped,e->changed,e->failed_bank,e->failed_offset,e->expected,e->actual,e->polls,e->restored,e->restore_error);
+     printf("D GPU LOAD: result=%u stage=%u block_reset_retained=%u reset=%x/%x fw=%x hfi=%x counter=%x polls=%u\n",
+--- a/bsd/dev/sweet_usb.c
++++ b/bsd/dev/sweet_usb.c
+@@ -210,6 +210,7 @@
+ #include "polaris_dwc3_session.h"
+ #include "polaris_dwc3_clock.h"
+ #include "polaris_dwc3_hs_clock.h"
++#include "polaris_dwc3_ram_clock.h"
+ static struct pdwc3_gate polaris_gate_begin_saved, polaris_gate_end_saved;
+ static uint32_t polaris_gate_begin_published, polaris_gate_end_published;
+ static const struct pdwc3_gate *polaris_gate_snapshot(void)
+@@ -244,6 +245,24 @@
+     } else {
+         polaris_hs_begin_saved = *s;
+         __atomic_store_n(&polaris_hs_begin_published, 1, __ATOMIC_RELEASE);
++    }
++}
++static struct pdwc3_ram_clock polaris_ram_begin_saved, polaris_ram_end_saved;
++static uint32_t polaris_ram_begin_published, polaris_ram_end_published;
++static const struct pdwc3_ram_clock *polaris_ram_snapshot(void)
++{
++    if (__atomic_load_n(&polaris_ram_end_published, __ATOMIC_ACQUIRE)) return &polaris_ram_end_saved;
++    if (__atomic_load_n(&polaris_ram_begin_published, __ATOMIC_ACQUIRE)) return &polaris_ram_begin_saved;
++    return NULL;
++}
++static void polaris_ram_publish(const struct pdwc3_ram_clock *s, bool final)
++{
++    if (final) {
++        polaris_ram_end_saved = *s;
++        __atomic_store_n(&polaris_ram_end_published, 1, __ATOMIC_RELEASE);
++    } else {
++        polaris_ram_begin_saved = *s;
++        __atomic_store_n(&polaris_ram_begin_published, 1, __ATOMIC_RELEASE);
+     }
+ }
+ static struct pdwc3_session polaris_session_begin_saved, polaris_session_end_saved;
+@@ -292,6 +311,10 @@
+     if (g) printf("D USB GATE: error=%u start_error=%u gctl=%x/%x/%x changed=%u restored=%u polls=%u/%u busy=%x/%x\n",
+         g->error, g->start_error, g->before, g->live, g->after, g->changed, g->restored,
+         g->polls, g->restore_polls, g->busy_ep, g->busy_command);
++    const struct pdwc3_ram_clock *ram = polaris_ram_snapshot();
++    if (ram) printf("D USB RAM CLOCK: error=%u start=%u stage=%u CGCTL=%x/%x/%x changed=%x restored=%u/%u polls=%u/%u writes=%u busy=%x/%x\n",
++        ram->error,ram->start_error,ram->stage,ram->before,ram->live,ram->after,ram->changed,
++        ram->restored,ram->restore_error,ram->polls,ram->restore_polls,ram->writes,ram->busy_ep,ram->busy_command);
+     const struct pdwc3_hs_clock *h = polaris_hs_snapshot();
+     if (h) printf("D USB HS CLOCK: error=%u start=%u stage=%u general=%x/%x/%x changed=%u restored=%u/%u polls=%u/%u writes=%u busy=%x/%x\n",
+         h->error,h->start_error,h->stage,h->before,h->live,h->after,h->changed,
+@@ -622,15 +645,16 @@
+ { return ud_epcmd(ep, command, p0, p1, p2); }
+ 
+ static uint32_t polaris_session_read(void *ctx, uint32_t off)
+-{ return (off == PDWC3_HS_PHY_CTRL || off == PDWC3_HS_GENERAL) ? usb_rd((vm_offset_t)ctx, off) : 0; }
++{ return (off == PDWC3_HS_PHY_CTRL || off == PDWC3_HS_GENERAL || off == PDWC3_RAM_CGCTL) ? usb_rd((vm_offset_t)ctx, off) : 0; }
+ static void polaris_session_write(void *ctx, uint32_t off, uint32_t value)
+ {
+-    if (off != PDWC3_HS_PHY_CTRL && off != PDWC3_HS_GENERAL) return;
++    if (off != PDWC3_HS_PHY_CTRL && off != PDWC3_HS_GENERAL && off != PDWC3_RAM_CGCTL) return;
+     *(volatile uint32_t *)((vm_offset_t)ctx + off) = value;
+     __asm__ volatile("dsb sy" ::: "memory");
+ }
+ static void polaris_session_abort(const struct pdwc3_io *io, struct pdwc3_session *s,
+-    const struct pdwc3_io *gate_io, struct pdwc3_gate *gate, struct pdwc3_hs_clock *hs)
++    const struct pdwc3_io *gate_io, struct pdwc3_gate *gate, struct pdwc3_hs_clock *hs,
++    struct pdwc3_ram_clock *ram)
+ {
+     /* Session rollback is permitted only after our controller is halted.
+      * No poll thread has started on any failure path that calls this. */
+@@ -644,6 +668,8 @@
+         (dwc_rd(DSTS) & DSTS_DEVCTRLHLT);
+     polaris_dwc3_hs_clock_restore(io, gate_io, hs);
+     polaris_hs_publish(hs, true);
++    polaris_dwc3_ram_clock_restore(io, gate_io, ram);
++    polaris_ram_publish(ram, true);
+     polaris_dwc3_session_restore(io, s, halted);
+     polaris_session_publish(s, true);
+     polaris_dwc3_clock_restore(gate_io, gate);
+@@ -1232,7 +1258,14 @@
+ {
+     if (!out || !size) return 0;
+     out[0] = 0;
+-    if (line >= 5) return 0;
++    if (line >= 6) return 0;
++    if (line == 5) {
++        const struct pdwc3_ram_clock *ram = polaris_ram_snapshot();
++        if (!ram) return (uint32_t)snprintf(out,size,"UR snapshot pending");
++        return (uint32_t)snprintf(out,size,"UR %x/%x c%08x/%08x/%08x r%x/%x b%x",
++            ram->error&15,ram->stage&15,ram->before,ram->live,ram->after,
++            ram->restored&1,ram->restore_error&15,ram->busy_command);
++    }
+     if (line == 4) {
+         const struct pdwc3_hs_clock *h = polaris_hs_snapshot();
+         if (!h) return (uint32_t)snprintf(out, size, "UM snapshot pending");
+@@ -1352,17 +1385,26 @@
+         polaris_session_write, polaris_command_wait};
+     struct pdwc3_session session;
+     struct pdwc3_hs_clock hs_clock = {0};
++    struct pdwc3_ram_clock ram_clock = {0};
+     if (polaris_dwc3_session_begin(&session_io, &session)) {
+         PU_PROGRESS(PU_VBUS, EIO);
+-        polaris_session_abort(&session_io, &session, &gate_io, &gate, &hs_clock); return;
++        polaris_session_abort(&session_io, &session, &gate_io, &gate, &hs_clock, &ram_clock); return;
+     }
+     polaris_session_publish(&session, false);
++    /* Original reset callback: master clocks for controller RAMs, before
++     * resource commands that need those RAMs. Only CGCTL bits3/4. */
++    if (polaris_dwc3_ram_clock_begin(&session_io, &gate_io, true, &ram_clock)) {
++        polaris_ram_publish(&ram_clock, false);
++        PU_PROGRESS(PU_VBUS, EIO);
++        polaris_session_abort(&session_io, &session, &gate_io, &gate, &hs_clock, &ram_clock); return;
++    }
++    polaris_ram_publish(&ram_clock, false);
+     /* Original HS post-reset clock mux sequence, before endpoint commands.
+      * Only QSCRATCH GENERAL bits0/3/8; do not reset PHYs or touch lanes. */
+     if (polaris_dwc3_hs_clock_begin(&session_io, &gate_io, true, &hs_clock)) {
+         polaris_hs_publish(&hs_clock, false);
+         PU_PROGRESS(PU_VBUS, EIO);
+-        polaris_session_abort(&session_io, &session, &gate_io, &gate, &hs_clock); return;
++        polaris_session_abort(&session_io, &session, &gate_io, &gate, &hs_clock, &ram_clock); return;
+     }
+     polaris_hs_publish(&hs_clock, false);
+ #endif
+@@ -1397,7 +1439,7 @@
+ 		printf("SWEET USB: endpoint 0 setup failed\n");
+ 		PU_PROGRESS(PU_EP0, EIO);
+ #if defined(POLARIS_RAM_ONLY)
+-        polaris_session_abort(&session_io, &session, &gate_io, &gate, &hs_clock);
++        polaris_session_abort(&session_io, &session, &gate_io, &gate, &hs_clock, &ram_clock);
+ #endif
+ 		return;
+ 	}
+@@ -1407,7 +1449,7 @@
+     /* STARTTRANSFER failure must not be reported as a ready gadget. */
+     if (__atomic_load_n(&polaris_ep_failure_published, __ATOMIC_ACQUIRE)) {
+         PU_PROGRESS(PU_EP0, EIO);
+-        polaris_session_abort(&session_io, &session, &gate_io, &gate, &hs_clock); return;
++        polaris_session_abort(&session_io, &session, &gate_io, &gate, &hs_clock, &ram_clock); return;
+     }
+ #endif
+ 
+@@ -1435,7 +1477,7 @@
+ 	if (dwc_rd(DSTS) & DSTS_DEVCTRLHLT) {
+         PU_PROGRESS(PU_RUN, ETIMEDOUT);
+ #if defined(POLARIS_RAM_ONLY)
+-        polaris_session_abort(&session_io, &session, &gate_io, &gate, &hs_clock);
++        polaris_session_abort(&session_io, &session, &gate_io, &gate, &hs_clock, &ram_clock);
+ #endif
+         return;
+     }
+@@ -1446,7 +1488,7 @@
+ #if defined(POLARIS_RAM_ONLY)
+     else {
+         PU_PROGRESS(PU_POLL, EIO);
+-        polaris_session_abort(&session_io, &session, &gate_io, &gate, &hs_clock); return;
++        polaris_session_abort(&session_io, &session, &gate_io, &gate, &hs_clock, &ram_clock); return;
+     }
+ #endif
+ #if defined(POLARIS_RAM_ONLY)
+--- a/iokit/Kernel/arm/SweetFramebuffer.cpp
++++ b/iokit/Kernel/arm/SweetFramebuffer.cpp
+@@ -168,18 +168,18 @@
+ extern "C" uint32_t polaris_a630_diagnostic_line(unsigned, char *, uint32_t);
+ static void polaris_status_bar(AppleCLCD *fb)
+ {
+-    char text[15][136];
++    char text[17][136];
+     polaris_usb_status(text[0], sizeof(text[0]));
+     unsigned n = polaris_a630_details(text[1], sizeof(text[1]));
+     if (n < sizeof(text[1])) snprintf(text[1] + n, sizeof(text[1]) - n,
+         " T%u", __atomic_load_n(&fb->fPolarisLastUS, __ATOMIC_RELAXED));
+-    for (unsigned i = 0; i < 5; i++)
++    for (unsigned i = 0; i < 6; i++)
+         polaris_usb_diagnostic_line(i, text[2 + i], sizeof(text[2 + i]));
+-    for (unsigned i = 0; i < 8; i++)
+-        polaris_a630_diagnostic_line(i, text[7 + i], sizeof(text[7 + i]));
++    for (unsigned i = 0; i < 9; i++)
++        polaris_a630_diagnostic_line(i, text[8 + i], sizeof(text[8 + i]));
+     /* Fixed double-size diagnostic rows, saved state only. Keep output
+      * inside the actual panel and never poll MMIO from the display loop. */
+-    unsigned lines = fb->fHeight / 32 < 15 ? fb->fHeight / 32 : 15;
++    unsigned lines = fb->fHeight / 32 < 17 ? fb->fHeight / 32 : 17;
+     for (unsigned line = 0; line < lines; line++) {
+         for (unsigned y = 0; y < 32; y++) {
+             uint32_t *row = (uint32_t *)(fb->fPixels + (uint64_t)(line * 32 + y) * fb->fRowBytes);
+--- /dev/null
++++ b/bsd/dev/polaris_dwc3_ram_clock.h
+@@ -0,0 +1,69 @@
++/* Original SDM845 dwc3_msm_qscratch_reg_init(), MiCode c7cb50c1:
++ * CGCTL(QSCRATCH+0x28) bits3/4 enable master clocks for controller RAMs.
++ * Keep only our newly asserted requests; never withdraw them under an
++ * outstanding endpoint command. No reset, PHY/lane or storage operation.
++ */
++#ifndef POLARIS_DWC3_RAM_CLOCK_H
++#define POLARIS_DWC3_RAM_CLOCK_H
++#ifndef POLARIS_DWC3_HS_CLOCK_H
++#error Include Polaris HS clock definitions first
++#endif
++#define PDWC3_RAM_CGCTL 0x28u
++#define PDWC3_RAM_MASK 0x18u
++enum pdwc3_ram_error { PDWC3_RAM_OK,PDWC3_RAM_ARGUMENT,PDWC3_RAM_UNSAFE,
++    PDWC3_RAM_ACK,PDWC3_RAM_BUSY };
++struct pdwc3_ram_clock {
++    uint32_t error,start_error,stage,before,live,after,attempted,changed,restored;
++    uint32_t polls,restore_polls,writes,restore_error,busy_ep,busy_command;
++};
++static inline bool pdwc3_ram_idle(const struct pdwc3_io *core,struct pdwc3_ram_clock *s)
++{
++    struct pdwc3_hs_clock check={0};
++    if(pdwc3_hs_idle(core,&check))return true;
++    s->error=check.error==PDWC3_HS_BUSY?PDWC3_RAM_BUSY:PDWC3_RAM_UNSAFE;
++    s->busy_ep=check.busy_ep;s->busy_command=check.busy_command;return false;
++}
++static inline bool pdwc3_ram_update(const struct pdwc3_io *qs,struct pdwc3_ram_clock *s,
++    uint32_t value,uint32_t mask,bool restoring)
++{
++    uint32_t current=qs->read(qs->ctx,PDWC3_RAM_CGCTL);
++    s->writes++;qs->write(qs->ctx,PDWC3_RAM_CGCTL,(current&~mask)|(value&mask));
++    for(unsigned n=0;n<PDWC3_COMMAND_POLLS;n++){
++        if(restoring)s->restore_polls++;else s->polls++;
++        s->after=qs->read(qs->ctx,PDWC3_RAM_CGCTL);
++        if(!((s->after^value)&mask))return true;
++        qs->wait_us(qs->ctx,1);
++    }
++    s->error=PDWC3_RAM_ACK;return false;
++}
++static inline enum pdwc3_ram_error polaris_dwc3_ram_clock_begin(
++    const struct pdwc3_io *qs,const struct pdwc3_io *core,bool admitted,
++    struct pdwc3_ram_clock *s)
++{
++    if(!s)return PDWC3_RAM_ARGUMENT;
++    *s=(struct pdwc3_ram_clock){.error=PDWC3_RAM_ARGUMENT,.busy_ep=UINT32_MAX};
++    if(!pdwc3_hs_io(qs)||!pdwc3_hs_io(core))goto done;
++    if(!admitted){s->error=PDWC3_RAM_UNSAFE;goto done;}
++    s->stage=1;if(!pdwc3_ram_idle(core,s))goto done;
++    s->attempted=1;s->before=qs->read(qs->ctx,PDWC3_RAM_CGCTL);s->after=s->before;
++    s->changed=~s->before&PDWC3_RAM_MASK;
++    s->stage=2;
++    if(s->changed&&!pdwc3_ram_update(qs,s,PDWC3_RAM_MASK,PDWC3_RAM_MASK,false))goto done;
++    s->stage=3;s->error=PDWC3_RAM_OK;
++done:
++    s->live=s->after;s->start_error=s->error;return (enum pdwc3_ram_error)s->error;
++}
++static inline bool polaris_dwc3_ram_clock_restore(const struct pdwc3_io *qs,
++    const struct pdwc3_io *core,struct pdwc3_ram_clock *s)
++{
++    if(!s)return false;
++    s->restored=s->restore_polls=s->restore_error=0;
++    if(!pdwc3_hs_io(qs)||!pdwc3_hs_io(core)){s->restore_error=PDWC3_RAM_ARGUMENT;return false;}
++    if(!s->attempted||!s->changed){s->restored=1;return true;}
++    if(!pdwc3_ram_idle(core,s))goto fail;
++    if(!pdwc3_ram_update(qs,s,s->before,s->changed,true))goto fail;
++    s->restored=1;s->error=s->start_error;return true;
++fail:
++    s->restore_error=s->error;return false;
++}
++#endif
