@@ -22,6 +22,26 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+###0034 initial preflight STOPPED; fresh clean-header read-only verification ACTIVE
+
+- HumanalreadyFASTBOOT; no repeatquestionneeded. Preflight83992 temporary
+  knownrecoveryboot sent, thenstopped EXIT1: outerext4headerdiffersfrom0013.
+  **Originalfailure/evidence preserved**, no repair/journalreplay/partitionwrite.
+- NewheaderSHA **32311c08288222efa453fe7563912667d215f59894307c547a2624246bd178b5**
+  vsold7c19bb29. Onlyfreecounters,mount/write times,count3→5,lifetimewrites,
+  andincompatRECOVER cleared10046→10042 differ; state1, geometry/identity,
+  orphan0 unchanged. CauseofpriorchangesUNPROVEN; do notcallthiscorruption.
+- Supplemental2scripts frozen in0034/supplemental-host-inputs.json. Original
+ 12frozenhostscripts unchanged. **Revalidation71830 ACTIVE**:
+  revalidate-clean-recovery.py admitsONLYthisexactcleanheader/whitelisted
+  mutablemetadata; sameunmountedROrecovery, full16GiB SHA/all182maps/GPT,
+  headerbefore/after identical required. Already182mapsmatch, hashingnow.
+  No repair/journalreplay/partitionwrite. No0034XNUbootyet.
+- IfPASS, boot-clean-verified-and-watch.py requiresfreshfullproof<600s,
+  samerecoverybootid/exactnewheader/unmountedRO, thenexecsoriginal0034
+  boot-and-watch.py. IfFAILstop. Do notrerunoriginalpreflightfromrecovery.
+  Newwatchonlyafter0034XNUbootsuccess; old0033observerstaysSTOPPED.
+
 ###0034 VERIFIED; human already FASTBOOT; preflight/temporary boot next
 
 - ExactCIhead **b4c0c572fe0b9c385d31046f8cb160ac305ec4f1**, fixf5a49a0.
