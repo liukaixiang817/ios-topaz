@@ -101,6 +101,64 @@ Both failures remain recorded and no0022 phone image has been prepared or
 booted. Resolve those failures before treating SMP as ready for the phone;
 neither CPU acceleration nor a launch-time improvement is established.
 
+The0023 source adds read-only USB snapshots and A630 prerequisites, plus
+optional cross-core diagnostics. Its complete kernel build passed
+[CI40082914361](https://github.com/liukaixiang817/ios-topaz/actions/runs/40082914361),
+and its exact artifact passed three selected single-CPU modes (120/60/90s,
+42assertions) with the standard QEMU clock. Its temporary image and payload
+integrity checks passed; it has not been booted on the phone.
+Current phone behavior is still0021 above.
+The intended hardware profile stays on one CPU while SMP failures are
+investigated, with the same512MiB RAM COW and `ufsrw=0`.
+
+`polarisgpu=1` checks all six original firmware hashes with the kernel's
+built-in SHA256 primitives, their supported binary formats and the host HFI
+layout (no resident DMA queue or GMU communication is established).
+`polarisgpu=2` additionally permits bounded original GCC/GPUCC/GMU
+reads after matching the physical Polaris map and upstream power/clock
+conditions. It makes no hardware writes and starts no firmware or GPU service.
+The firmware ADT node is now version2 with exact register ranges. The actual
+original collection passes the same format parser used by the new kernel.
+
+`polarisdebug=1` enables an on-demand UDP5141 service on the admitted USB ECM
+link. The only operations are capture RAM logs, capture the physical panel,
+and read a bounded chunk from that captured object. Tokens keep capture
+retries idempotent; chunks have CRC32 and the host retries dropped/reordered
+packets. A screenshot is serialized through the display work-loop gate with
+actual present/fade operations, then converted from1080×2160 BGRA to PNG.
+Log capture retains up to4MiB and is best effort while console writers run.
+No shell, arbitrary memory address or storage operation is exposed.
+
+After a successful USB connection and verified0023 boot, the macOS reader is:
+
+```sh
+python3 tools/polaris-usb-debug.py log --output /tmp/polaris.log --plan
+python3 tools/polaris-usb-debug.py screenshot --output /tmp/polaris.png
+```
+
+Plan mode changes no network configuration. If the private ECM address is
+missing, `--configure` requires root, adds only192.168.7.1/24 on the matching
+ECM NIC and removes its own alias on exit. Output must be new and is mode0600.
+This interface remains unproven on the phone because0021 has not enumerated.
+
+The same debug flag adds a16pixel-high status strip after the first GUI frame,
+using saved RAM state only. `U` is USB mode, `R` its result (0disabled,1read
+error,2power off,3clock off,4wrong ID,5wrong role,6busy,7admitted), `N` the
+number of reads, `GD` the power status, and `C` the seven recorded clock
+branches. Fields after an early refusal may not have been read. `G` is the
+GPU prerequisite result in its low byte, firmware-check flag atbit8 and host
+ABI flag atbit9; it never denotes accelerated rendering. This permits a
+physical observation even if the USB link still cannot be established.
+
+`polarissmpcheck=1` uses bounded observations of16CPU callbacks per selected
+core and records observed MPIDR, counter frequency and actual remote senders.
+It changes no timer/spinlock thresholds. An independent test of the old0021
+kernel also hit the timer threshold with the two-core stress fixture, so that
+failure is not confined to0022's RAM fast path. Its cause is still unresolved.
+The0023 two-core diagnostic completed32callbacks, including16remote, then
+failed the processor-set scheduler ticket lock before PID1. That failure and
+its raw registers remain recorded; no two-core phone profile was admitted.
+
 ## Standalone boot diagnostic 0001
 
 An isolated polaris probe now cross-compiles and passes QEMU checks. It reads

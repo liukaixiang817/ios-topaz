@@ -19,7 +19,9 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   phone/debug USB device or ECM interface. No host network settings changed.
 - IMPLEMENTED0821: original A630 firmware consumer in kernel, six SHA256
   checks using built-in LTC SHA256, shared bounded flatGMU/SQE/splitZAP parser,
-  hostHFI queue layout initialized in RAM. Mode1 is firmware/ABI only;
+  hostHFI layout/initialization helper checked (its unused storage is optimized
+  away; no resident DMA queue or GMU communication is established).
+  Mode1 is firmware/ABI only;
   mode2 additionally probes original GCC/GPUCC/GMU registers, checking physical
   Polaris GIC, cfgAHB and CX/clock gates before deeper regions. No MMIO writes,
   SMMU changes, secure authentication, firmware execution or GPU service.
@@ -70,14 +72,48 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   wrapper absent from this kernel). Corrected consumer to the existing LTC
   digest init/update/final/clear sequence, recompiled PASS, and all undefined
   symbols across6actualobjects resolve against priorcompletekernel+newobjects.
-  `object-import-check.json` PASS/missing0. Correctedsource/newCI next. Six affected ARM64 TUs PASS including final
+  `object-import-check.json` PASS/missing0. Six affected ARM64 TUs PASS including final
   CPUobserver; own GPU/debug/USB/frame symbols and crosscorecallback/records/
   cpu_xcall import verified (static check helper was inlined, initial observer
-  assumption retained separately). No successful0023kernel artifact ordevice action yet.
-- NEXT: exact source/profile/CRC/SHA artifact download, run exact new
-  kernel firmware-positive/negative and singleCPU stress checks, then prepare
-  payload/image. No0023image/preflight/boot yet; do not requestFASTBOOT until
-  useful image is verified. Continue SMP diagnosis without weakening checks.
+  assumption retained separately). No0023device action yet.
+- Correctedsource **6876a4af4b3077c3cfa0634023e9c7f06d1357cf** pushed;
+  CI **40082914361/job120839958079 SUCCESS**, Build4m09s
+  (09:41:16–09:45:25UTC). Full `ci-40082914361.log` saved; exactsource/profile,
+  ZIPCRC/SHA verified. Kernel `xnu/out-polaris-0023/kernel.development.sweet`
+  SHA **d3a261f24160c9404ad526ea9f9a742da1d844782b8a4d1848f09db5a016cc93**.
+  All private artifact/validation/boot scripts
+  repinned to this exact source/run. Initialscripts/CIstate/failedlogs retained
+  undercontinuation-0023/ci-attempt1-07f39ce. Pipeline65468 exited0 after
+  CPU1firmwarepositive120s/negative60s/MMIOgate90s and a separateCPU2
+  diagnostic scheduled for180s, allstandardclock. No waivers.
+  All three selectedCPU1modes FIRST PASS,42assertions total; all4VMchildren
+  completed in each. Realfirmwareaccepted, corruptedfirmwarerefused, GPU/USB
+  MMIOreads0 in syntheticguests.
+- CPU2diagnostic FAILED:32callbacks/16actualremote PASS at62500000Hz,
+  then ticketlock timeout atlock_ticket.c:386 BEFORE PID1/stress.
+  Current lock **0xfffffe0007be0880 = _pset0+0x100**, ownerCPU0,
+  waiterCPU1,852000ticks vs851968threshold. Same scheduler-set lock as0022;
+  cause still unestablished. Raw q-crosscpu console/registers/provenance and
+  failedcheck retained; `scheduler-lock-diagnosis.json` proves current symbol.
+  No CPU2phone admission, no threshold changes or retry to hide this failure.
+- **0023 CPU1 PREPARED, not booted.** Image
+  `shim/out/polaris-xnu-readdebug-0023/polaris-xnu-readdebug-0023.img`,
+  47407104bytes SHA
+  **72a12f36457a25f30347e195ffec0e61fe4b0fa0bbe88b3c7169fc715ec3949e**;
+  payload SHA **aabe3101727c131531a32bec7adddca66b3e470d3bec3a56acd04667409cb421**.
+  Cpayload validatorPASS; rebuiltpayload/embeddedimage/provenance/actualfirmware/
+  ADTisolation/11patchedfiles/6ARM64objects allfinalcheckPASS09:54:31UTC.
+  `final-prepared-check.json`, `deployment-state.json` saved privately under
+  continuation-0023. No0023device/preflight/boot action yet. Currentphone0021.
+- NEXT: requestphysicalFASTBOOT for the verified CPU1 diagnostic candidate;
+  run private `run-device-step.py preflight` (freshfull16GiBhash,182maps,
+  unchangedGPT/header,ro+noload/unmounted), then `boot-phone` within600seconds.
+  ActualGUI/input remain necessary checks. Run staged readonly `watch-usb.py`
+  afterboot; ifECM appears use the new log/screenshot reader. Ifnot, collect
+  the saved on-screen U/R/N/GD/C/G strip values before changing clock/power
+  code. ComparehumanSettingscold/warm times separately; no speedup claimed.
+  USBconnection/GPUacceleration/phoneSMPremainUNPROVEN. Continue genuine
+  A630GMU/SMMU/secure-firmware work and SMP diagnosis without weakening checks.
 
 ### 0022 stopped validation and current0021 evidence
 
