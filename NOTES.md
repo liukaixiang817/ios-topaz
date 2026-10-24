@@ -10,9 +10,9 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION —0016 touch image READY;waiting for physical FASTBOOT
+### CURRENT NEXT ACTION —0016 temporary boot SENT;observe actual input and home
 
-- 0016preparedNOTbooted;source d75b8a315894e84320eb0b7e0529bac213adbae0,
+- 0016preparedandSENT asbelow;source d75b8a315894e84320eb0b7e0529bac213adbae0,
 0813-polaris-gpio-i2c-fallback.patch committed+pushed. CI40061321613 SUCCESS,
  job120775252245,build4m58s;artifact12548065591/60375087bytes. Exactpolaris
  profile/source+ZIPCRC+kernelSHA VERIFIED;fullghlog ci-40061321613.log.
@@ -34,14 +34,23 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
  payloadb259b20fc77e397e069ebf46efd56a4e58850e5c84ec115a1a454b81da031b59.
  Allprivate touch-0016/prepared.json/verification.json/qemu-check.json/
  deployment-state.json/native-gpio.log/profile-tests.log/object-compile.json.
-- CURRENTphone0015lockscreen/driverstopped;NEWphysicalPower+VolumeDown
- FASTBOOTrequestPENDING. CurrentXNUhasnoUSBrestart/control/logport. Onreply:
- python3 research/polaris/touch-0016/run-device-step.py preflight,then
- run-device-step.py boot-phone ONLYifPASS. Redactsserial. Freshknownheader/
- GPT/unmountedRO1/noload/full16GiBSHA/182mapsbefore+after/temp<45 required,
- sameliverecoverybootID/proof<600s andanotherfreshmapbeforeboot. Neverrepair,
- replay,stageorwritepartitions. No0016preflight/phonebootyet. Needactualnew
- inputresult/newphotoD TOUCH/TREG/TIF/TRMI;hardware-decoder.json explainscodes.
+- CURRENTPHONE0016temporarybootSENT exec96008exit0,FASTBOOT1.177s,
+2026-10-24T04:28:54.087967+00:00 (=15:28:54 Australia/Melbourne). Exact
+ image/kernel/payload hashesabove rechecked plusCcopyplan/all3QEMUprovenances,
+ identical0015ADT/samecmdline. Freshreadonlypreflightexec85430PASS,33C:
+ full16GiBSHA689a8cd1... MATCH in77.820s;182mapsbefore/after andboot
+ freshmapagain;outer4KiBheaderunchanged7c19bb29...,GPTheadmatches,unmounted
+ RO1. PendingAndroidjournalleftunchanged. Noreplay/repair/staging/partition
+ write. SameliverecoverybootID/proof<600s andalladmissionspassedbeforeadb
+ bootloader+temporaryfastbootboot. Privateboot.json/boot-phone-sanitized.log/
+ boot.log/preflight.json/full-image-readonly-verification.json/
+ deployment-state.json saved. Source+handoffs d75b8a3/f8cc613/93f7519 pushed.
+- TRANSPORTacceptanceONLY;actual0016screen/touch/home/App NOTyetobserved.
+ ASYNCquestionpending:waitlockscreen,swipephysicalbottomedgeonce,report
+ noresponse/home/stillbooting. Keepthisboot;nonewrebootrequested. Neednew
+ photoD TOUCH/TREG/TIF/TRMI ifnoinput;hardware-decoder.json explainspath,
+ linebits/buserrors. NoUSBcontrol/restart/logport. HardwareGPIOownership/
+ power/pullups/ACK/data unknownuntilrealphoto;QEMUpassesnothardwareproof.
 - EVIDENCE:four0015photos F16F697B.../7F7501AC... savedprivatelytouch-0015/
  hardware-clock-stop-{1..4}.jpg +hardware-clock-stop.json. Actualred4:10lock
  screen/camera amidconsoleoverdraw. D TOUCH phase3/result11/done1/frames0/
