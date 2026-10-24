@@ -22,6 +22,22 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+###0035 source-only CI ACTIVE; local run records remain private
+
+- Publicsource **57e5706115a723d599e3009ba17f66113841c5e0**, parentpublicb4c0c57;
+  only6allowlistedcode/test/patchfiles, noNOTES/privatehistory. Fastforward
+  pushsucceeded. Privateequivalentfixcommit **ef3fb5a**. Rootxnu/tools match
+  publiccommitbyteforbyte. Sourceworktree remainsattachedforfuturecodeonlyCI.
+- **CI40143097727 ACTIVE**, privatepipeline **74571 ACTIVE**: fullCI/exact
+  kernelCRC+SHA/profile, base120s/asyncnet90s/mode6wrongboard60s expected
+  **84checks**; thenimage+independentfinal-prepared-check.py. Originalfailures
+  retainedifany, no timingwaiver. Native27/3ARM64units/imports/20patch28files/
+  17displayrows/sourcechecksPASS; observer8simulationsPASS;12hostscriptsfrozen.
+-0035hostpreflight nowuses0034newcleanheaderbaseline(32311c08), stillfull
+  16GiBhash/182maps/GPT/RO/unmounted/temp. Bootnowrequiresfreshfullrootproof
+  evenwhenouterFSalreadyclean. No0035phoneaction.0034GUIconfirmed,89914stopped.
+- AfterallchecksaskphysicalFASTBOOT fornewimage. NoHFI/GX/3D/accelerationclaim.
+
 ###0035 local fix verified; source-only public build next
 
 -0840 implements originalmicroMMUhalt6000bit2/IDLEbit3(30msbound), retains
