@@ -10,7 +10,22 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION —0014 lockscreen/no touch confirmed;port exact Synaptics input
+### CURRENT NEXT ACTION —0015 built; new-kernel regression before touch test
+
+- FINAL0015 source35fe4d492b6a7a50e5c7115beaa7dfee514af9c4 (0811+0812),
+ CI40058661910/job120767328465 SUCCESS. Artifact12546850582/60363320bytes,
+ exactpolaris profile/source,ZIPentryCRC andkernelSHA verified. Kernel
+ xnu/out-polaris-0015/kernel.development.sweet,
+ SHA8e3c3e3d9c0198fd43004f555b46975cfdfc7c86b94a6eb40b0d9cced862fb88.
+ Fullgh log research/polaris/ci-40058661910.log. Initial0811-only CI40058349228
+ wasCANCELLED bysuperseding sourcepush,not acompilefailure;neverdeploy it.
+ SequentialnewkernelQEMU gate200s/default200s/nodiag90s RUNNING exec70365,
+ touch-0015/validation-run.log. Testsuse0013callerfixture andsynthetic0014ADT
+ WITHOUTtouchmarker;requirePID1/display/callerregression andnohardwarearmed.
+ validate-and-prepare.py onlypackagesphoneafterall3PASS plusactualCvalidator.
+ Phone0015preflight/boot scripts ready butNOTexecuted;requirefreshRO16GiB
+ SHA/map/header/GPT/temp proof. Currentphone0014lockscreen/noinput remains
+ running;noFASTBOOTrequestpending. Actual0015touch/home/App NOTproven.
 
 -0811source24d2bfbd6e10233b578bcaf3608f9e6b2eb24e93 pushed;initialCI
 40058349228/job120766219551 building. Beforehardwaretest added0812 retained
