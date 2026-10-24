@@ -16,7 +16,8 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   repeateddiagnostics. Touchframes grow17400→33000 while base_calls3943,
   ram_reads3,ram_merges5,full_writes22,COWgroups50,dirty660KiB,written864KiB
   stayfixed; UFS-error0/refused0. This is a boot regression, not a measured
-  slowSettings launch. Currentphone remains0023 in this state; no newbootyet.
+  slowSettings launch. The phone has now received temporary0024; the host
+  still sees no USB interface, and its GUI result is pending below.
 - Photos exposeUSB **mode2/result7/reads13**,ID5533300a,GCTL112000,
   savedDCTL10f08000,DSTS d2cd2c,GDSCRf8222000,master4221,othersixclocks1.
   AdmissionPASSED; this does NOT prove gadget setup or enumeration. Prior
@@ -54,7 +55,7 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   all4VMchildren/PID1continued, then _rtclock_intr17.988992ms vs13.631488ms
   atmachine_routines_common.c893. Rawlog/registers/provenance retained,
   no retry/waiver for that diagnostic. It does NOT prove networkAPI causality.
-  No0024deviceactions.
+  Subsequent0024 device results are recorded below.
   Inherited private progress label saysStarting0023, but all paths/source/
   buildidentity andactualkernel/provenance are0024. No input changed midrun.
 - User asks to follow reference UEFI boot/USB route. Confirmed reference
@@ -68,7 +69,7 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   CPU/cache/interrupt andUSB/UFSexclusiveownership. NoEFI/bootentry/partition
   changed. Existingmindowsespbackup headercheckedreadonly,FAT32/4KiBsectors;
   no bootloader/firmwareexecuted. Rawsource/evidence remainprivate.
-- **0024PREPARED/notbooted** image
+- **0024 TEMPORARY BOOT SENT** image
   `shim/out/polaris-xnu-readdebug-0024/polaris-xnu-readdebug-0024.img`,
   47407104bytes SHA **3af3c61152f0d6ee89adbae00473fd86df42203de2a4741d0ca602f0a681333a**;
   payload SHA **8cc44a96f55f1ea98ac5764c525d1c204daa3c92d5786f9371104caaedad4d37**.
@@ -79,11 +80,25 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   9netready/10reset/11events/12EP0/13VBUS/14run/15poll/16ready; E iserror.
   C nowcompactbitmask ofadmittedONclockreads (7f=all7), fullsavedregisters
   remaininRAMlogs. G stillGPUprereqs only. Stagedbootwrapperuses3newselected
-  QEMUprovenances; readonlyhostwatch also includesotherknownphoneVIDs,
-  neverrecordsserials. No0024physicalrequest ordeviceactionyet.
-- NEXT: requestFASTBOOT forverified0024; freshROfull16GiBhash/182maps/GPT/
-  header/unmountedcheck, then temporarybootwithin600s. ConfirmGUIrestoration
-  andUSBhostenumeration; ifnoUSBcollect S/E plusD GPU/GMU fromsavedlogs/photos.
+  QEMUprovenances; readonlyhostwatch also includesotherknownphoneVIDs and
+  never records serial numbers.
+- User confirmed FASTBOOT. Fresh0024 readonly preflight passed at
+  **10:34:07.278758UTC**: full16GiB SHA256, all182maps, GPT and outer header
+  unchanged; userdata RO1/unmounted,35C. Pending outer journal was neither
+  replayed nor repaired. Boot wrapper37800 exited0: Sending/Booting OKAY,
+  total1.172s; temporary0024 sent **10:34:44.601879UTC**, proof age37.323s.
+  No partition write. Readonly USB host observation91957 exited0:21samples,
+  61.567s, no known-phone USB VID or matching ECM NIC, final10:35:55.659060UTC;
+  no host network settings changed. Physical lockscreen/GUI and USB S/E
+  requested, no result yet. No USB/debug connection,
+  performance improvement, GPU execution or phone SMP success is established.
+- Pinned SDM845 SetCPUFreqDxe source was also fetched and verified against
+  blobd5950805fbc3ad48c41c164820fc2aa9a1264176: it requests maximum CPU/L3
+  performance throughEFI_CLOCK_PROTOCOL. Source inspection only; no live
+  clock evidence, driver execution, frequency/voltage change or SMP fix.
+- NEXT: obtain physical GUI/S/E result.
+  ConfirmGUIrestoration andUSBhostenumeration; ifnoUSBcollect S/E plusD GPU/GMU
+  fromsavedlogs/photos.
   Keep oneCPU and noGPUexecution; priorSMPfailuresunresolved. UEFIGUID/memory
   probe is nextresidentloaderfeasibilitystep; no bootchainorpartitionwrite.
 

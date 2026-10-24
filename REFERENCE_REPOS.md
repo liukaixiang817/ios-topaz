@@ -137,6 +137,15 @@ access that same controller concurrently. Firmware USB service availability
 must be demonstrated before treating this as a working log/screenshot route.
 No EFI image, boot entry or partition has been changed by this investigation.
 
+The same pinned SDM845 firmware includes
+[SetCPUFreqDxe](https://github.com/edk2-porting/edk2-msm/blob/e1952621f419f8db60ed28271264e1b5184c571d/Platform/RenegadePkg/Drivers/SetCPUFreqDxe/SetCPUFreqDxe.c).
+Its code locates EFI_CLOCK_PROTOCOL and requests each of nine CPU/L3 clock
+domains' maximum performance level. The fetched source matches Git blob
+`d5950805fbc3ad48c41c164820fc2aa9a1264176`. This is a firmware clock-setting
+operation, not an XNU SMP driver or evidence of the phone's current clocks.
+The source has only been inspected; it has not been executed, and no CPU
+frequency or voltage setting has been changed during this investigation.
+
 ## Future refresh
 
 Check each reference checkout for local edits first. Fetching newer upstream
