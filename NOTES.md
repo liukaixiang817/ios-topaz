@@ -54,7 +54,7 @@ immediately. Never interrupt that window with another boot.**
   actualasyncnetwork90s FIRSTPASS19, mode4zeroMMIO60s FIRSTPASS16.
   **51selectedchecksPASS**, all4VMchildren ineach; networkphase9/error0.
   No newfailure/retry. PriorSMP/synctimerfailures remainunresolved; no waiver.
-- **0029 PREPARED, NOT BOOTED** image
+- **0029 TEMPORARY BOOT SENT** image
   `shim/out/polaris-xnu-readdebug-0029/polaris-xnu-readdebug-0029.img`,
   47407104bytes SHA **0b79064260ce72474e750608ec2fa3aa4fa535ad919f3eb5e4b6ca7f1b8d3236**;
   payload SHA **2156aebf965dfab732424da3d1b4589c7f38e98e7a617887dbb1e6305910d686**.
@@ -63,13 +63,15 @@ immediately. Never interrupt that window with another boot.**
   firmwares, all3exactkernelrunprovenances, Cpayloadvalidator/rebuild,
   embeddedimage/manifest/65DTBs verified. PhoneADT ANDarguments byteidentical
   0028,CPU1/Hz20/mode4/512MiBRAMCOW/ufsrw0. NoGPUfirmware/acceleration.
-- Phone stays0028. Keep the byteidentical ADT and arguments from0028, mode4,
+- Phone now0029boot-sent. Keep the byteidentical ADT and arguments from0028, mode4,
   CPU1/Hz20/512MiBRAMCOW/ufsrw0. USB sequence unchanged until its saved state
-  supports a specific fix. Current0028ten-minuteUSBwindow hascompleted and
-  physicalFASTBOOTrequested; awaitinghumanconfirmation. Onlythen use0029run-device-step.py
-  preflight thenboot-phone: freshfull16GiBhash/182maps/GPT/header/RO/unmounted/
-  temperaturecheck, temporaryboot only, no pendingouterjournal repair/replay.
-  Watch0029USB for >=600s; ifECMappears collectRAMlog/panel. Human checksGUI
+  supports a specific fix. HumanconfirmedFASTBOOT after0028longwindow.
+  Preflight9442 exited0 **13:13:03.102689UTC**: freshfull16GiBhash/182maps/GPT/
+  outerheader unchanged,userdataRO1/unmounted,34C; no journal repair/replay.
+  Bootwrapper47584 exited0: Sending/BootingOKAY,total1.184s;0029 sent
+  **13:13:23.688909UTC**, proofage20.586220s; no partitionwrite.
+  Readonlyhostwatch25047 running for >=600s. NEXT awaititscompletedwindow;
+  ifECMappears collectRAMlog/panel. Human asyncquestion checksGUI
   andtopP/K/F/R plusUSB S/E/Q/L/B. K6onlyprovesrequiredclocksunderreset and
   requestsrestored; GPUfirmware/SMMU/submission/acceleration remainunfinished.
 - Independent USB source review while CI runs: original dwc3-msm.c Gitblob
@@ -86,7 +88,8 @@ immediately. Never interrupt that window with another boot.**
   continuation-0028/usb-enumeration-long.json preserves original61s evidence.
   This is a latewindow on the same0028boot, not coverage of all startup time.
   No restart/network/partition changes, RAMlog or panel capture. Physical
-  FASTBOOT requested onlyafter this window completed.0029 notbootedyet.
+  FASTBOOT requested onlyafter this window completed; humanconfirmed and
+  temporary0029now sent asabove. Actual0029GUI/clockresult/USBsuccess pending.
 
 ### 0028 bounded clock acknowledgement / first-failure evidence
 

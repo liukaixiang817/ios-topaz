@@ -357,9 +357,11 @@ held reset and restoration remain strict. Native17 tests and two actual
 ARM64 compiles pass. Full [CI40095790392](https://github.com/liukaixiang817/ios-topaz/actions/runs/40095790392)
 succeeds in5m16s. Allthree exact-kernel standard-clock modes FIRST PASS51checks,
 with no new failures or retries. Independent source/payload/image checks pass
-13:05:40UTC.0029 is prepared and unbooted. The late0028 ten-minute USB window
-completed without enumeration; physicalFASTBOOT has now been requested.
-Phone0028 continues unchanged until the human confirms readiness; no GPU
+13:05:40UTC. After the late0028 ten-minute USB window, the human confirmed
+FASTBOOT. Another full16GiBhash/182maps/GPT/header/RO check passes13:13:03UTC
+(unmounted,34C). Temporary0029 is sent13:13:23UTC, Sending/BootingOKAY,total
+1.184s. No partition write or outer journal replay. Host USB observation now
+runs for >=600s; GUI/clock fields and enumeration remain pending. No GPU
 firmware execution or acceleration is established.
 
 ## Standalone boot diagnostic 0001

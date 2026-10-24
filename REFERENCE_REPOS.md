@@ -168,8 +168,10 @@ two required GPUCC branches.0029 leaves AON read-only and removes that extra
 prerequisite while retaining strict required-clock/reset/restoration checks.
 Full CI40095790392 and allthree selected standard-clock modes pass51checks
 on the first attempt; independent source/payload/image validation also passes.
-0029 is prepared, unbooted; current0028's ten-minute USB observation completed
-without enumeration, and physicalFASTBOOT was requested afterward.
+After0028's ten-minute USB observation completed without enumeration, human
+FASTBOOT confirmation and another full read-only check, temporary0029 was
+sent13:13:23UTC. Its own >=600s USB observation is running; physical GUI and
+clock results are pending.
 No hardware cause for AON readback0 is established. Actual GPU firmware
 execution and accelerated rendering remain unfinished.
 
