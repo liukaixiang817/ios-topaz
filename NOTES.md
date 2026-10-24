@@ -36,7 +36,10 @@ early samples only. On0029 the human already confirmed boot complete and said
   synctimerfailures unresolved. Firstd005eca manualinterruption preserved
   separately andnotcountedasPASS ortimerfailure. Native21ASan/UBSan,
   3actualCI-headerARM64units/imports,17patch22files,actualformatterfixtures,
-  continuousobserver8simulatedtests allPASS. Elevenhostscripts frozen.
+  continuousobserver8simulatedtests allPASS. Elevenhostscripts frozen; anadded
+  host-onlyboot-and-watch.py wrapper isalsofrozen toavoid theoldAPI-roundtrip
+  observerstartupgap. Syntax/importcheckPASS withnophoneaction; actualgap
+  willberecorded. Itrequiresfreshpreflight andexecsunchangedwatcheronbootOK.
 - Image **shim/out/polaris-xnu-readdebug-0032/polaris-xnu-readdebug-0032.img**,
   **47423488bytes**, SHA
   **17e47dff28a16b786ab8339fa8a2da42e83c84f196087d2e98c19cd1cc457457**;
@@ -50,8 +53,7 @@ early samples only. On0029 the human already confirmed boot complete and said
   check15:10:47UTC foundknownphoneNOTinFASTBOOT. Currentphone0031bootcomplete;
   its human-stoppedobserver staysstopped. NewphysicalFASTBOOTquestion sent.
   Afteractualhumanreply: run0032/run-device-step.py preflight (freshfull16GiB
-  hash/182extents/GPT/header/RO/unmounted/temp), thenboot-phone, immediately
-  start0032watch-usb.py andcontinueuntilsameboot's human“已进入系统”. OnECM
+  hash/182extents/GPT/header/RO/unmounted/temp), then0032boot-and-watch.py (execsfrozenwatcherimmediatelyafterboot) andcontinueuntilsameboot's human“已进入系统”. OnECM
   discoveryattemptRAMlog/panelwhilewatchcontinues. No fixedtimeout/reboot.
 
 - Latest user priority is actualGPU driver first, plus USB RAMlogs/panelcapture.
