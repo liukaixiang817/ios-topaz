@@ -22,6 +22,29 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT ACTION —0033 temporarily booted; USB observer52998 ACTIVE
+
+- Actualhumanconfirmed0033FASTBOOT. Freshpreflight4260 EXIT0
+  **2026-10-24T16:16:48.068474UTC**: full16GiBSHA/182maps/GPT/headerunchanged,
+  userdataRO1/unmounted,34C; pendingouterjournal untouched. Optionalvirtual
+  debugfs collectiontemporarilymountedunder/dev andimmediatelyunmounted;
+  **5600B originalcmd_db obtained**, SHA
+  861858b1296a3ba4ff9a421429affe58e11696e03a61079b03dee6bc673cf55a.
+  No physicalmemoryread orpartitionwrite. ExactoriginalGPUfrequenciescaptured:
+  710/675/596/520/414/342/257MHz. Privatecollectionrecord/source text saved.
+- **0033 temporaryboot SENT** Sending/BootingOKAY,total1.169s;
+  sent **2026-10-24T16:17:53.788689UTC**, freshproofage65.720215s. Wrapper
+  session**52998 ACTIVE** immediatelyexecsobserver. Firstsample
+  **16:17:53.858785UTC**, initialgap0.070096s, Android18d1:d00d bootloader
+  only, NOTnativeXNUUSBproof. Sample10.046s absent/noECM. No boot-window
+  negativeconclusion andnoactualGPUfirmware/renderingresultyet.
+- **Continuewatchuntilsameboot's actualhuman “已进入系统”/explicitcancel**.
+  No fixed600s deadline, no stopondiscovery, no rebootduringwatch. OnECM
+  discoveryattemptRAMlog/panelwhileobservercontinues. Userquestion asks
+  actualGUIbootcompleteandGB/GS/GE rawrows (especiallyGEfw), orlastbootlogline.
+  Do notstopbasedonelapsedtime/photoonly. Use0033stop-usb-observation.py only
+  afterrealhumanconfirmation. Original0032observerremainsstopped.
+
 ###0033 PREPARED/INDEPENDENTLY VERIFIED — needs new physical FASTBOOT
 
 - Source **ea800af95ab0dc1b299c5f284d782c810a309832**; CI **40109458219**,
