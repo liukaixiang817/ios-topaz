@@ -10,9 +10,18 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION —0018 diagnostic image ready; request physical FASTBOOT
+### CURRENT NEXT ACTION —0018 temporary boot sent; await NEW hardware evidence
 
-- 0018 PREPARED, not phone-booted. Pipeline exec53912exit0,
+- User confirmed FASTBOOT;0018 readonly preflight session31199 PASS, then
+  boot session89716 exit0, fastboot Sending/Booting OKAY (1.174s total), sent
+  2026-10-24T05:54:27.163896+00:00 =16:54:27 Melbourne. This confirms transfer
+  and boot command only;0018 GUI/input not yet observed.
+- Fresh0018 preflight at05:54:02UTC: complete16GiB hash equals immutable base
+  689a8cd1df0fc0093706272241a9ac77d5eddd7a62df5d340913ec6abcd7ce2b,
+  182extents/fresh map/GPT/header unchanged, blockRO1/unmounted,34C. No
+  journal replay, repair, staging or partition writes;ufsrw0/RAM512 retained.
+  preflight.json/boot.json and sanitized logs saved privately in touch-0018/.
+- 0018 PREPARED validation: pipeline exec53912exit0,
   validation-counted.log. Functional checks82PASS: original-clock bootstrap
   120s13checks first-pass; original-clock gate200s29checks one identical retry;
   counted-clock default200s30checks and nodiag90s10checks first-pass in that
@@ -38,12 +47,12 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   kernel/source/profile changes after173eda1; host-only optional timing helper
   commit2a9ea19 does not alter phone/kernel. Native15+hostABI1 checks PASS,
   actual-header ARM64objects5PASS, all6patchfilesapplyMATCH.
-- NEXT: physical Power+VolumeDown FASTBOOT request needed; then fresh0018
-  run-device-step.py preflight (full16GiB/182maps/header/GPT/RO), only PASS
-  permits boot-phone. No journal replay/repair/staging/partition writes.
-  Current phone remains0017/no lockscreen. Need NEW0018 D BOOT/D P/PID1/K
-  and D TOUCH/TW/TG/TI/TIF/TRMI photos, GUI and real swipe response. Original
- 0017 IRQ output-low/no-GUI facts below must not be reused as0018 observation.
+- NEXT: Keep0018 running; bottom-edge swipe/screen-status async question sent,
+  awaiting user reply. If no lockscreen, need NEW0018 D BOOT/D P/PID1/K and
+  D TOUCH/TW/TG/TI/TIF/TRMI photos. Request photos in ordinary chat, not async
+  text tool. Do not ask another reboot merely for logs. Original0017 IRQ
+  output-low/no-GUI facts below must not be reused as0018 observation. No
+  phone0018 startup/touch result is yet available; root/partitions preserved.
 
 ### 0017 hardware failure and 0018 implementation/validation history
 
