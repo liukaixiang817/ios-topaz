@@ -110,6 +110,19 @@ class ADTTests(unittest.TestCase):
         root.children = [n for n in root.children if polaris.props(n)['name'] != b'polaris-touch\0']
         self.assertEqual(polaris.adt.serialize(root), polaris.adt.serialize(base))
 
+    def test_touch_wake_is_separate_explicit_board_opt_in(self):
+        with patch.object(polaris.mkadt, 'd22ap_product', return_value=None):
+            base = polaris.build(seed=b'x' * 64, touch=True)
+            root = polaris.build(seed=b'x' * 64, touch=True, touch_wake=True)
+            for args in [{'touch_wake': True}, {'qemu': True, 'touch': True, 'touch_wake': True}]:
+                with self.assertRaises(ValueError):
+                    polaris.build(**args)
+        node = polaris.child(root, 'polaris-touch')
+        self.assertEqual(struct.unpack('<I', polaris.props(node)['wake-version']), (1,))
+        self.assertEqual(struct.unpack('<II', polaris.props(node)['wake-gpios']), (23, 99))
+        node.props = [prop for prop in node.props if prop[0] not in ('wake-version', 'wake-gpios')]
+        self.assertEqual(polaris.adt.serialize(root), polaris.adt.serialize(base))
+
 
 if __name__ == "__main__":
     unittest.main()

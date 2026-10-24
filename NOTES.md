@@ -10,7 +10,31 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION —0016 lockscreen/no touch reported;need NEW diagnostic photo
+### CURRENT NEXT ACTION —0016 stopped at assertedGPIO99;implement explicit board wake
+
+- NEWfour0016photos6BD07919... savedprivatelytouch-0016/hardware-reset-low-
+{1..4}.jpg +hardware-reset-low.json. D TOUCH phase4/result12/done1/frames0/
+ down0;fw300/status0/irq0;D TIFfifo1/tx0/rx0/path2/lines0/bus0;lastreg3963000,
+ n8/data201/0. ActualFIFOinterfaceDISABLED,emptyqueues,GPIOfallbackselected.
+ GPIO99NORTHcfg201=GPIO/output/2mA/pulldown,IO0=resetassertedLOW. Stopped
+ BEFOREGPIOlinechecks/I2C;lines0/bus0arenotmeasuredlowbus/ACKsuccess.
+ NoRMIframes/physicalinput/home. Photo4PosterBoard237SIGTRAP,userprocess
+ crash,notkernelpanicornamedtouchcause. COW24427/32768,dirty390636KiB,
+ UFS-error0/refused0,not exhausted. Keep0016boot;no newFASTBOOTrequestyet.
+- ExactliveDTtouchvdd-supply88 ->tp_vddio_vreg fixedactivehighGPIO23,
+ startup4ms/booton. GPIO23SOUTH@3d17000 verifiedpinctrl-v2;GPIO99NORTH@3963000
+ resetactive-low,active5ms/delay200ms. avddPM8998L28=3.1V,dispL14=1.8V,
+ LAB/IBBsharedpanel:doNOTreuseforeignRPMhdriver/changePMICwithoutfacts.
+ MiCodepolaris-o-oss Synapticscore enablesbus/power thenreset;sourceprivate
+ display-0009/synaptics_dsx_core.c lines4095-4145/4263-4304;blob99cd6034....
+- IMPLEMENTED0017explicitADTtouchwakeoptin;exactGPIOownership guards,
+ fixedGPIO23enableonlywhileownresetalreadyasserted,>=5mssettle/low then
+ GPIO99deassertonly(no pulseonrunningcontroller),200mssettle/readbacks;
+ requirephysicalSDA/SCLhighbeforedeassert,rollbackfailedwakeonlychangesowned
+ bynewhelper. NoPMIC/voltage/FW/diskwrite. Newrawenable/resetstates retained.
+ Nativeactualsharedsequence+exactheader2testsPASS withASan/UBSan;9ADT+3profiletestsPASS,patchbothfilesapplyMATCH,actualCI-header4ARM64objectsPASS. CI/newkernelQEMU+preparedimage still requiredbeforephysicalkeyrequest. 0017sourceimplementedas0814patch;new --touch-wake optionalADT version1/gpios23,99;defaultrequiresnoextraMMIO/writes. NewretainedD TW/TG showstep/error/changes/rollback/power+resetbefore/attempt.
+
+### 0016 build, boot and prior report history
 
 - 0016preparedandSENT asbelow;source d75b8a315894e84320eb0b7e0529bac213adbae0,
 0813-polaris-gpio-i2c-fallback.patch committed+pushed. CI40061321613 SUCCESS,

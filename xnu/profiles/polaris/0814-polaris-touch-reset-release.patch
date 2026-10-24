@@ -1,0 +1,249 @@
+--- a/bsd/dev/polaris_touch.c
++++ b/bsd/dev/polaris_touch.c
+@@ -1,5 +1,6 @@
+-/* MIX2S/S3330 input: explicit board gate, GENI FIFO, bounded RMI discovery.
+- * No firmware upload, hardware reset, PMIC, display-controller or disk writes.
++/* MIX2S/S3330 input: explicit board gate, bounded RMI/GENI/GPIO transport.
++ * Separate opt-in may wake fixed TP power and release an already held reset.
++ * No firmware upload, PMIC, display-controller or disk writes.
+  * Pin/clock facts: live polaris DT and MiCode polaris-o-oss sources.
+  */
+ #if defined(POLARIS_RAM_ONLY)
+@@ -13,6 +14,7 @@
+ #include <pexpert/device_tree.h>
+ #include "polaris_geni_i2c.h"
+ #include "polaris_gpio_i2c.h"
++#include "polaris_touch_wake.h"
+ #include "polaris_rmi.h"
+ 
+ extern vm_offset_t ml_io_map(vm_offset_t, vm_size_t);
+@@ -22,11 +24,12 @@
+ void polaris_touch_init(void);
+ 
+ static struct {
+-    vm_offset_t gcc, se, pin[4];
++    vm_offset_t gcc, se, pin[5];
+     struct polaris_geni bus;
+     struct polaris_gpio_i2c gpio;
+     uint32_t gpio_cfg[2];
+     bool use_gpio;
++    bool wake;
+     struct polaris_rmi_layout rmi;
+     uint32_t mode;
+     int page;
+@@ -38,7 +41,9 @@
+  * Reporter only reads saved RAM, never waits for I2C/storage locks. */
+ enum { PD_PHASE, PD_ERROR, PD_FW, PD_STATUS, PD_IRQ, PD_REG, PD_LEN,
+        PD_A, PD_B, PD_FRAMES, PD_DOWN, PD_DONE, PD_IF, PD_TX, PD_RX,
+-       PD_PATH, PD_LINES, PD_BUS, PD_COUNT };
++       PD_PATH, PD_LINES, PD_BUS, PD_WSTEP, PD_WERR, PD_WCHANGE, PD_WROLL,
++       PD_WLINES, PD_ENCFG, PD_ENIO, PD_RSTCFG, PD_RSTIO, PD_OLD_RSTCFG,
++       PD_OLD_RSTIO, PD_COUNT };
+ static uint32_t pt_diag[PD_COUNT];
+ static void pd(unsigned field, uint32_t value)
+ { __atomic_store_n(&pt_diag[field], value, __ATOMIC_RELAXED); }
+@@ -55,12 +60,20 @@
+         pget(PD_IF), pget(PD_TX), pget(PD_RX), pget(PD_PATH), pget(PD_LINES), pget(PD_BUS));
+     printf("D TRMI: reg=%x n=%u data=%x/%x\n",
+         pget(PD_REG), pget(PD_LEN), pget(PD_A), pget(PD_B));
++    if (pt.wake) {
++        printf("D TW: step=%u error=%u changed=%x rollback=%u lines=%x\n",
++            pget(PD_WSTEP),pget(PD_WERR),pget(PD_WCHANGE),pget(PD_WROLL),pget(PD_WLINES));
++        printf("D TG: en=%x/%x reset=%x/%x was=%x/%x\n",
++            pget(PD_ENCFG),pget(PD_ENIO),pget(PD_RSTCFG),pget(PD_RSTIO),
++            pget(PD_OLD_RSTCFG),pget(PD_OLD_RSTIO));
++    }
+ }
+ static int pt_wait_channel;
+ static const uint32_t pt_gpio_pa[] = {
+     0x03921000, 0x03922000, /* GPIO33/34 NORTH: qup14 mux2 */
+     0x03963000,            /* GPIO99 NORTH: reset, must already be high */
+-    0x0357d000             /* GPIO125 EAST: active-low IRQ */
++    0x0357d000,            /* GPIO125 EAST: active-low IRQ */
++    0x03d17000             /* GPIO23 SOUTH: exact DT fixed TP power enable */
+ };
+ 
+ static uint32_t pt_rd(vm_offset_t base, uint32_t off)
+@@ -118,6 +131,16 @@
+     memcpy(&ver, v, sizeof(ver));
+     if (SecureDTGetProperty(node, "address", &v, &n) != kSuccess || n != sizeof(address)) { return false; }
+     memcpy(&address, v, sizeof(address));
++    pt.wake = false;
++    if (SecureDTGetProperty(node,"wake-gpios",&v,&n)==kSuccess) {
++        uint32_t pins[2], wake_version;
++        if (n!=sizeof(pins)) { return false; }
++        memcpy(pins,v,sizeof(pins));
++        if (pins[0]!=23 || pins[1]!=99 ||
++            SecureDTGetProperty(node,"wake-version",&v,&n)!=kSuccess || n!=4) { return false; }
++        memcpy(&wake_version,v,4); if (wake_version!=1) { return false; }
++        pt.wake = true;
++    } else if (SecureDTGetProperty(node,"wake-version",&v,&n)==kSuccess) { return false; }
+     return reg[0] == 0xa98000 && reg[1] == 0x4000 && ver == 1 && address == 0x20;
+ }
+ 
+@@ -232,6 +255,50 @@
+     /* Output latch is permanently zero: OE=1 sinks, OE=0 releases. */
+     if (pin < 2) { pt_wr(pt.pin[pin], 0, pt.gpio_cfg[pin] | (low ? 0x200u : 0)); }
+ }
++static vm_offset_t pt_wake_pin(unsigned gpio)
++{ return gpio==23 ? pt.pin[4] : gpio==99 ? pt.pin[2] : gpio==125 ? pt.pin[3] : 0; }
++static uint32_t pt_wake_read(void *ctx, unsigned gpio, unsigned off)
++{
++    (void)ctx; vm_offset_t pin=pt_wake_pin(gpio);
++    return pin && (off==0 || off==4) ? pt_rd(pin,off) : 0;
++}
++static void pt_wake_write(void *ctx, unsigned gpio, unsigned off, uint32_t value)
++{
++    (void)ctx; vm_offset_t pin=pt_wake_pin(gpio);
++    if (pin && (gpio==23 || gpio==99) && (off==0 || off==4)) { pt_wr(pin,off,value); }
++}
++static void pt_wake_sleep(void *ctx, unsigned ms)
++{ (void)ctx; pt_wait(ms); }
++static bool pt_board_wake(void)
++{
++    uint32_t status=pt_rd(pt.se,PG_STATUS);pd(PD_STATUS,status);
++    if (status&0x1001u) { pd(PD_WSTEP,10);pd(PD_WERR,PW_OWNER);return false; }
++    for (unsigned i=0;i<2;i++) {
++        uint32_t cfg=pt_rd(pt.pin[i],0);unsigned mux=(cfg>>2)&15u;
++        if (mux!=0 && mux!=2) {
++            pd(PD_WSTEP,10);pd(PD_WERR,PW_OWNER);
++            pd(PD_REG,pt_gpio_pa[i]);pd(PD_LEN,8);pd(PD_A,cfg);pd(PD_B,pt_rd(pt.pin[i],4));
++            return false;
++        }
++    }
++    struct polaris_touch_wake w={.read=pt_wake_read,.write=pt_wake_write,
++        .sleep_ms=pt_wake_sleep,.lines=pt_gpio_levels};
++    int e=polaris_touch_wake(&w);
++    pd(PD_WSTEP,w.step);pd(PD_WERR,(uint32_t)e);pd(PD_WCHANGE,w.changed);
++    pd(PD_WROLL,w.rolled_back);pd(PD_WLINES,w.line_state);
++    pd(PD_ENCFG,w.enable_cfg);pd(PD_ENIO,w.enable_io);
++    pd(PD_RSTCFG,w.reset_cfg);pd(PD_RSTIO,w.reset_io);
++    pd(PD_OLD_RSTCFG,w.old_reset_cfg);pd(PD_OLD_RSTIO,w.old_reset_io);
++    printf("POLARIS TOUCH: wake step=%u error=%d changed=%x rollback=%u\n",
++        w.step,e,w.changed,w.rolled_back);
++    if (e) {
++        unsigned i=w.failed_pin==23 ? 4u : w.failed_pin==125 ? 3u : 2u;
++        if (e==PW_LINES) { i=(w.line_state&1u) ? 1u : 0u; }
++        pd(PD_REG,pt_gpio_pa[i]);pd(PD_LEN,8);
++        pd(PD_A,pt_rd(pt.pin[i],0));pd(PD_B,pt_rd(pt.pin[i],4));
++    }
++    return e==PW_OK;
++}
+ static bool pt_gpio_engine(void)
+ {
+     uint32_t status = pt_rd(pt.se, PG_STATUS);
+@@ -326,10 +393,15 @@
+     if (!polaris_hid_touch_ready()) { pd(PD_ERROR,10); printf("POLARIS TOUCH: HID not ready; stop\n"); goto done; }
+     pd(PD_PHASE,3);
+     pt.gcc = ml_io_map(0x100000, 0x60000);
+-    for (unsigned i = 0; i < 4; ++i) { pt.pin[i] = ml_io_map(pt_gpio_pa[i], 0x1000); }
+-    if (!pt.gcc || !pt.pin[0] || !pt.pin[1] || !pt.pin[2] || !pt.pin[3]) { goto done; }
++    for (unsigned i = 0; i < (pt.wake ? 5u : 4u); ++i) { pt.pin[i] = ml_io_map(pt_gpio_pa[i], 0x1000); }
++    if (!pt.gcc || !pt.pin[0] || !pt.pin[1] || !pt.pin[2] || !pt.pin[3] ||
++        (pt.wake && !pt.pin[4])) { goto done; }
+     unsigned level;
+     if (!pt_clocks(&level)) { pd(PD_ERROR,11); printf("POLARIS TOUCH: clock guard failed\n"); goto done; }
++    if (pt.wake) {
++        pd(PD_PHASE,9);
++        if (!pt_board_wake()) { pd(PD_ERROR,15); goto done; }
++    }
+     pd(PD_PHASE,4);
+     if (!(pt.use_gpio ? pt_gpio_engine() : pt_engine(level))) { pd(PD_ERROR,12); goto done; }
+     pt.bus.read = pt_bus_read; pt.bus.write = pt_bus_write; pt.bus.delay_us = pt_bus_delay;
+--- /dev/null
++++ b/bsd/dev/polaris_touch_wake.h
+@@ -0,0 +1,94 @@
++#ifndef POLARIS_TOUCH_WAKE_H
++#define POLARIS_TOUCH_WAKE_H
++
++#include <stdint.h>
++#include <stdbool.h>
++
++/* Explicit board opt-in only. Live polaris DT: fixed TP enableGPIO23,
++ * active-low resetGPIO99, IRQ125. Never pulse an already released reset.
++ * PMIC/voltage registers and panel resetGPIO6 are outside this interface. */
++enum { PW_OK, PW_ARGUMENT, PW_OWNER, PW_ENABLE, PW_LINES, PW_RESET };
++struct polaris_touch_wake {
++    void *ctx;
++    uint32_t (*read)(void *, unsigned, unsigned);
++    void (*write)(void *, unsigned, unsigned, uint32_t);
++    void (*sleep_ms)(void *, unsigned);
++    unsigned (*lines)(void *);
++    unsigned step, error, changed, failed_pin, line_state;
++    bool rolled_back;
++    uint32_t old_enable_cfg, old_enable_io, old_reset_cfg, old_reset_io;
++    uint32_t enable_cfg, enable_io, reset_cfg, reset_io;
++};
++
++static inline bool pw_gpio_output(uint32_t cfg)
++{ return !(cfg & 0x3cu) && (cfg & 0x200u); }
++static inline bool pw_pad_high(uint32_t cfg, uint32_t io)
++{ return pw_gpio_output(cfg) && (io & 3u) == 3u; }
++
++static inline int
++pw_failed(struct polaris_touch_wake *g, unsigned error, unsigned pin)
++{
++    g->error=error; g->failed_pin=pin;
++    /* Restore only changes made here. An inherited running controller is
++     * never asserted/reset. Keep failure snapshots instead of replacing
++     * them with the restored values. */
++    if (g->changed & 2u) {
++        g->write(g->ctx,99,4,g->old_reset_io & 2u);
++        g->write(g->ctx,99,0,g->old_reset_cfg);
++        g->sleep_ms(g->ctx,5);
++    }
++    if (g->changed & 1u) {
++        g->write(g->ctx,23,4,g->old_enable_io & 2u);
++        g->write(g->ctx,23,0,g->old_enable_cfg);
++    }
++    g->rolled_back=g->changed!=0;
++    return (int)error;
++}
++
++static inline int polaris_touch_wake(struct polaris_touch_wake *g)
++{
++    if (!g || !g->read || !g->write || !g->sleep_ms || !g->lines) { return PW_ARGUMENT; }
++    g->step=1;g->error=g->changed=g->failed_pin=g->line_state=0;g->rolled_back=false;
++    g->old_enable_cfg=g->enable_cfg=g->read(g->ctx,23,0);
++    g->old_enable_io=g->enable_io=g->read(g->ctx,23,4);
++    g->old_reset_cfg=g->reset_cfg=g->read(g->ctx,99,0);
++    g->old_reset_io=g->reset_io=g->read(g->ctx,99,4);
++    if (!pw_gpio_output(g->reset_cfg)) { return pw_failed(g,PW_OWNER,99); }
++    if (g->read(g->ctx,125,0)&0x23cu) { return pw_failed(g,PW_OWNER,125); }
++    if (g->reset_io & 2u) {
++        /* Preserve an already running controller; no power/reset writes. */
++        g->line_state=g->lines(g->ctx)&3u;g->step=8;return PW_OK;
++    }
++    g->step=2;
++    if (g->enable_cfg & 0x3cu) { return pw_failed(g,PW_OWNER,23); }
++    if (!pw_gpio_output(g->enable_cfg) || !(g->enable_io & 2u)) {
++        /* Reset is already asserted. Preload high while input, then enable
++         * this exact fixed-regulator GPIO; no voltage selection exists. */
++        g->changed|=1u;
++        g->write(g->ctx,23,4,2u);
++        g->write(g->ctx,23,0,(g->enable_cfg & ~0x3ffu)|0x200u);
++    }
++    /* Fixed regulator startup=4ms, board power delay=5ms: wait at least5. */
++    g->sleep_ms(g->ctx,5);g->step=3;
++    g->enable_cfg=g->read(g->ctx,23,0);g->enable_io=g->read(g->ctx,23,4);
++    if (!pw_pad_high(g->enable_cfg,g->enable_io)) { return pw_failed(g,PW_ENABLE,23); }
++    g->line_state=g->lines(g->ctx)&3u;g->step=4;
++    if (g->line_state!=3u) { return pw_failed(g,PW_LINES,0); }
++    /* Check a released bus repeatedly; no bus-clear pulses or PMIC writes. */
++    for (unsigned i=0;i<4;i++) {
++        g->line_state=g->lines(g->ctx)&3u;
++        if (g->line_state!=3u) { return pw_failed(g,PW_LINES,0); }
++    }
++    g->sleep_ms(g->ctx,5);g->step=5; /* reset remains low for >=5ms after power */
++    g->changed|=2u;
++    g->write(g->ctx,99,0,(g->old_reset_cfg & ~3u)|3u); /* active pull-up, same drive */
++    g->write(g->ctx,99,4,2u); /* deassert only; never pulse an inherited high */
++    g->sleep_ms(g->ctx,200);g->step=6;
++    g->reset_cfg=g->read(g->ctx,99,0);g->reset_io=g->read(g->ctx,99,4);
++    if (!pw_pad_high(g->reset_cfg,g->reset_io)) { return pw_failed(g,PW_RESET,99); }
++    g->line_state=g->lines(g->ctx)&3u;
++    if (g->line_state!=3u) { return pw_failed(g,PW_LINES,0); }
++    g->step=7;return PW_OK;
++}
++
++#endif
