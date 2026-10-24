@@ -22,7 +22,7 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT NEXT ACTION — 0031 precise USB/GPU saved diagnostics
+### CURRENT NEXT ACTION — verified0031, await humanFASTBOOT
 
 - User confirms **“已进入系统”** on0030 and requests priority USB/GPU fixes
   with more diagnostic lines. Settings photo saves **U2 R7 S12 E5 C7f V0/1
@@ -53,18 +53,36 @@ early samples only. On0029 the human already confirmed boot complete and said
   formatterfunctions tested underASan/UBSan: maximum32bit values fit67characters,
   pending/0..4command states, capacity1/null safe. Sixteen ordered patches
   0821..0836 applywithoutfuzz/offset; all19filesmatchactualcompiletree.
-  FullCI/exactkernel/image checks pending. Phone remains0030; no0031 action.
+  FullCI/exactkernel/image checks nowPASS below. Phone remains0030; no0031 action.
 - Source **6d0d5d5c05150b69f929c3255ba4ed4c0a6f3b93** committed/pushed;
-  CI **40101091548/job120893206891** building (Buildstarted14:07:46UTC).
-  Privatepipeline **session67813** waits for exactsourceCI, savesfullghlog,
-  verifiesdownloadprofile/CRC/SHA, then CPU1standardclock120sbase/90sactual
-  asyncnetwork/60smode4zeroMMIO, expected60checks. Two newchecks percase
+  CI **40101091548/job120893206891 SUCCESS**, Build4m15s
+  (14:07:46–14:12:01UTC).
+  Exactkernel xnu/out-polaris-0031/kernel.development.sweet SHA
+  **c90dd9e64961ff1d9d5f3f400ad157623fef42a06e652ad1233e994f6229c0a3**.
+  Fullghlog research/polaris/ci-40101091548.log saved; profile/CRC/SHA checked.
+  Privatepipeline **session67813 EXIT0 14:17:47.800146UTC**:
+  CPU1standardclock120sbase FIRSTPASS19,90sactualasyncnetwork FIRSTPASS22,
+  60smode4zeroMMIO FIRSTPASS19, **60checksPASS**, all4VMchildren ineach,
+  networkphase9/error0. No newfailure/retry; earlierSMP/synctimerfailures
+  remainunresolved. Two newchecks percase
   ensure no USB trace/registersnapshot MMIO on syntheticnon-boardguests.
   Frozen11hostscripts includecontinuousobserver andsameboothumanstophelper;
   observer8simulatedchecks PASS. Independentfinalchecker also requires exact
   native19inputs,3ARM64objects/imports,16patch19files andsavedformatterfixture.
   No physical0031 action before allchecks/image validation. Current0030's
   human-completedobserver staysstopped.
+- **0031 PREPARED, NOT BOOTED** image
+  `shim/out/polaris-xnu-readdebug-0031/polaris-xnu-readdebug-0031.img`,
+  47423488bytes SHA **e1746530122185419b9915aa23f42e051780d0b97086143eb21c13942944b6c9**;
+  payload SHA **627b1969582dcb7431c2c061791184e31fabf6d80098d3880c7a4ada13bc9b79**.
+  Independentfinalcheck **session61024 EXIT0 PASS14:18:09.142308UTC**:
+  source/profile/CIpatchapply,19nativeinputs,3actualARM64objects/imports,
+  16patches/19files, original6firmwares, actualsaved-state formatterfixture,
+  3exactkernelrunprovenances,Cpayloadvalidator/rebuild,image/manifest/65DTBs
+  allverified. PhoneADT ANDarguments byteidentical0030: CPU1/Hz20/mode4/
+  512MiBRAMCOW/ufsrw0. TCMhelper isunlinked; no newGPUCSR/firmware/SMMU action.
+  Next: askhumanFASTBOOT, freshread-onlyfullrootcheck, temporary0031boot,
+  continuousUSBwatch untilhuman“已进入系统”. No0031preflight/boot yet.
 - GPU preparation: unlinked tools/polaris-a630-tcm.h converts original
   GPU-relativewords toGMU-localbytes and copies/verifies the original32KiB
   flat image only with exactboard/recordedhash/liveexclusivelease and CM3
@@ -78,6 +96,12 @@ early samples only. On0029 the human already confirmed boot complete and said
   a6xx_gmu.h94b6c5cab6f435c8965fea8ae5804451c6c3cf29 fetched/byteverified;
   source records at0030/gmu-access-source-check.json. Do not mix original
   GPU-relative and mainlineGMU-local register namespaces.
+- Furtherpinned-source review: original DEFAULT_GMU_FREQ_IDX=1, DTlevel1 is
+  200MHz; gpucc-sdm845.c selects GPLL0_OUT_MAIN_DIV with pre_div1.5. This is
+  distinct fromthe19.2MHz parkedclock trial underheldreset. Actual working
+  frequency/voltage/RPMh/DDRvotes remainneeded beforeGMUstart; do not infer
+  firmwareadmission fromK6 or reprogramasharedGCCPLL. Source-onlyrecord at
+  0031/gmu-default-clock-review.json; no hardwarechange.
 
 - **0030 TEMPORARY BOOT SENT**, human confirmedFASTBOOT. Preflight28897 exited0
   **13:52:13.542315UTC**: freshfull16GiBhash/182maps/GPT/header unchanged,

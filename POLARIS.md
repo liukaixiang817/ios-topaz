@@ -404,9 +404,36 @@ Normal USB traffic adds no snapshot reads beyond the firstthree commands;
 the firstlaterfailure gets an after-only record. The display reads saved
 immutable state only. No activation sequence or GPU reset/clock write changes.
 Nineteen native checks, three ARM64 compiles/import checks, ordered patch-chain
-and maximum-width formatter checks pass; full CI/image checks remain pending.
+and maximum-width formatter checks pass. Full
+[CI40101091548](https://github.com/liukaixiang817/ios-topaz/actions/runs/40101091548)
+passes in4m15s. Allthree exact-kernel standard-clock modes FIRSTPASS60checks,
+with no new failure/retry; independent final source/payload/image checks pass
+14:18:09UTC.0031 is prepared, not booted, with byteidentical0030 phoneADT and
+arguments (CPU1/Hz20/mode4/512MiBRAMCOW/ufsrw0). Next is a freshread-onlycheck
+and temporaryboot afterhumanFASTBOOT, then continuousUSBwatch until their
+“已进入系统” confirmation. No USB connection or GPU execution is proven.
 The new guarded flat GMU transfer component is preparatory and unlinked;
 physical reset/bus/SMMU/HFI admission is still required before firmware start.
+
+The0031 photo strip uses these fixed saved-state rows:
+
+| Row | Meaning |
+| --- | --- |
+| USB summary | Admission/startup stage and firstfailure; `V` is HS-session error/restored, `Q` is endpoint/command/response/error |
+| GPU summary | Initial probe, CX trial and held-block-reset clock trial; these do not indicate GPU execution |
+| `UB` | Before controller softreset: GCTL, USB2PHYCFG, USB3PIPECTL, GHWPARAMS1/3 |
+| `US` | Before EP0 commands: GCTL, DCFG/DCTL/DSTS, enabled-endpoint mask |
+| `UP` | Last captured command's three requested parameters and their actual register readbacks |
+| `UC` | First/last captured command kind, completion response and poll count, then live command and GSTS |
+| `GP` | CX request before/after; hardware power status before/owned-on/after |
+| `GC` | GPUCC GMU_BCR before/held/after, then live GMU source and CX_GMU branch; distinct from CM3_SYSRESET |
+
+RAM `D USB REGS/HW/TRACE` records retain the fuller snapshots and unmasked
+commands. Only the firstthree commands have before/after snapshots; the
+firstlaterfailure is after-only (`before_valid=0`). Successful traffic after
+those firstcommands performs no additional diagnostic reads. Status text is
+bounded to67double-size characters per row; maximum-value native fixtures
+pass. This is diagnostic coverage, not an established repair of the timeout.
 
 ## Standalone boot diagnostic 0001
 
