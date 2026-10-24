@@ -10,7 +10,37 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-24 (Australia/Melbourne)
 
-### CURRENT NEXT ACTION —0017 built source; await CI and validate before reboot
+### CURRENT NEXT ACTION —0017 verified and prepared; request physical FASTBOOT
+
+- 0017 ready, NOT phone-booted. All three sequential actual-kernel QEMU modes
+  gate200s/default200s/nodiag90s now PASS, 67checks; validation-retry exec93080
+  exit0. Gate passed first attempt; default required ONE identical retry after
+  timer IRQ panic below; nodiag passed first attempt. Exact default kernel,
+  cmdline/ADT/fixture/payload provenance matches the failed attempt. Full
+  failure remains in verification.json and qemu-default-identical-retry.json;
+  do not describe this as all-first-attempt success. Synthetic fixtures only,
+  no hardware power/reset/I2C/touch/home proof.
+- Actual C payload copy-plan validator PASS. New ADT adds ONLY wake-version1
+  and wake-gpios23,99 relative0016; removing them restores0016 byte-for-byte,
+  removing the touch node restores0014. Factory identity, file manifest and
+  cmdline unchanged; ufsrw0/RAM512/cpus1/copy5Hz/visibleconsole retained.
+  Image shim/out/polaris-xnu-touch-0017/polaris-xnu-touch-0017.img,
+  47304704bytes, SHA
+  d0f67e1c3198edd53c8dfbef70b605e478daba5069aff44a94f213de44c59c2b;
+  payload642656c5e2d02b6e2edf0f64d3c7c485c29e1f0f83bd045eb7ffb149b3ab9470.
+  Private touch-0017/prepared.json/verification.json/qemu-check.json/
+  deployment-state.json retain the full admissions. Source-derived new
+  D TW/TG/phase9/result15 guide: touch-0017/hardware-decoder.json.
+- NEXT: ask physical Power+VolumeDown FASTBOOT, then run
+  touch-0017/run-device-step.py preflight; only PASS permits boot-phone.
+  Require fresh full16GiB hash,182maps/knownheader/GPT/same recovery boot and
+  readonly unmounted userdata, as before. No journal replay/repair/staging.
+  No new phone USB log/restart path; current phone remains0016 until user
+  performs the physical step. Need actual0017 lockscreen/swipe and retained
+  D TW/TG/TIF/TRMI observations before claiming physical input/home success.
+- User-requested full local reference clones and index completed; commit
+  3677a59 pushed. Failure handoff eb26321 also pushed. Future agents read
+  REFERENCE_REPOS.md and consult the ignored local kernel/userland clones.
 
 - 0017 source **3a5f1363e0e81671bc59385285c4d29ed018afad** committed and
   pushed. CI **40063497975**, job **120781795518**, SUCCESS, build4m21s.
