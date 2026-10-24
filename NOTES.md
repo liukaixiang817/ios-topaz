@@ -33,8 +33,20 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   retained. Identicalstandardretry running; no threshold/source/input change.
   Timer cause remains unknown. USBmissingboard correctly reports reads0.
   No0021deviceaction; noFASTBOOT until finalchecks/image are prepared.
+- A630 HFI port foundation is now implemented in
+  `tools/polaris-a630-hfi.h`, with originalqueue table ABI (168bytes, queues
+  0/4/5,4096bytes each,16byteguards), checkedmessagepacking andbounded
+  command/response rings. Handleswrap/full/invalidindices/corruptmetadata/
+  truncatedpackets withoutcursoradvance or out-of-bounds accesses. One
+  independentwirefixture+ASan/UBSan regression PASS; actualXNUCI-header
+  ARM64object compilePASS, expectedownsymbol verified. Evidence
+  `gpu-630-0001/hfi-native-check.json`, `hfi-object-compile.json`.
+  **Not linked into0021 or a GPUservice; nofirmware/MMIO/GPUexecution**.
+  Hardware adapter stillneeds DMAcachemaintenance/serialization/doorbell;
+  release/acquire atomics alone are not device-coherency proof. This is an
+  actual A630communications component for thenextdriver, not acceleration.
 - GPU primarysources: MiCode `polaris-o-oss` pinnedcommit
-  **c7cb50c18f812629b9620b2b8fa684bc40d82080**. Seven exactGitblobs verified,
+  **c7cb50c18f812629b9620b2b8fa684bc40d82080**. Eight exactGitblobs verified,
   private `gpu-630-0001/vendor/` and vendor-source-provenance.json. A630entry
   requires **a630_sqe.fw, a630_gmu.bin, a630_zap**. Original flatGMUimage is
   allocated into an SMMU code mapping; reference642Luses a660 blockfirmware.
@@ -147,7 +159,7 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
   was never phone-booted; partial tests/kernel/range cache remain archived in
   `candidate1-943c011/`. Never deploy that candidate.
 - Current phone runs **0020**, with real home/return gestures confirmed and
-  Settings content white. Prior0019 physical swipe into home was user-confirmed;
+  Settings eventually renders. Prior0019 physical swipe into home was user-confirmed;
   a later tap led to console-overdraw symptoms, exact App unknown. Preserve
   current phone for controlled Settings/return-home observation. Do not
   claim Apps, GPU, Wi-Fi or continued touch are fixed before that observation.

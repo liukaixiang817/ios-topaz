@@ -44,6 +44,14 @@ mapping, HFI, SMMU, secure zap loading, command completion and the Mesa bridge
 in that order, verifying each stage. An advertised GPU service by itself
 would not establish command execution or accelerated iOS rendering.
 
+The initial A630 HFI component is implemented in
+`tools/polaris-a630-hfi.h`: original queue table layout, command packing and
+bounded wraparound command/response rings. An independent wire fixture and
+ASan/UBSan check pass; the helper also compiles against actual XNU ARM64
+headers. It is not linked into build0021. Device cache maintenance, GMU
+startup, SMMU mappings, doorbells and GPU command execution remain to be
+connected and tested before the Metal/Mesa userland bridge can accelerate Apps.
+
 Original GPU firmware collection is staged for the next known headless
 recovery session. It reads only the GPT-pinned vendor partition through a
 read-only, noload mount, compares hashes, and unmounts without repair. Raw
