@@ -94,10 +94,13 @@ SSH connection has yet been established on polaris.
 
 ## USB debug versus SSH
 
-The user reports slow boots and requires at least10minutes for USB discovery.
-Use >=600s observation for a negative result; the historical61s observations
-are early samples only and cannot exclude later enumeration.0029's host
-watcher now follows this requirement; do not restart during the window.
+The user clarified the observation lifetime: after each temporary boot is
+sent, keep observing USB until they reply “已进入系统” or explicitly end it.
+Do not stop automatically at ten minutes or on successful enumeration;
+attempt logs/panel immediately on ECM discovery while monitoring continues.
+0030's host watcher persists every sample and accepts only a human stop marker
+bound to that boot. Historical61s observations are early samples only and
+cannot exclude later enumeration. Do not restart during observation.
 A late0028 window completed with61samples/600.082s through13:10:20UTC and
 no known-phone USB device or matchingECM in any sample; no reboot or network
 change. This later window supplements the early61s evidence, without claiming

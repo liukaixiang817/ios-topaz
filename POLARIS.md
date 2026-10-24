@@ -35,11 +35,14 @@ pending Android ext4 journal as part of a boot check.
 
 ## Current GPU and debug work
 
-Allow at least10minutes for boot and USB discovery, per the user's current
-timing requirement. Future negative host observations require >=600s without
-another boot. Historical ~61s observations below are early sampling only;
-they do not exclude later enumeration. Successful enumeration can be used
-immediately. A late0028 observation now completed:61samples/600.082s through
+The user's clarified rule is to start observing USB immediately after each
+temporary boot is sent and continue until they reply “已进入系统” or explicitly
+end observation. There is no ten-minute timeout or stop on USB discovery.
+Capture RAM logs/panel as soon as ECM appears while observation continues.
+Save samples incrementally and bind any human stop marker to that boot;
+neither elapsed time nor a photo establishes the human's stop instruction.
+Do not reboot during the observation. Historical ~61s observations below
+are early samples only. A late0028 observation completed:61samples/600.082s through
 13:10:20UTC, no known-phone USB device or matchingECM in any sample. There
 was no intervening reboot, network change, RAMlog or panel capture. It is
 a latewindow on the same0028boot, not continuous coverage of all startup.
@@ -376,8 +379,16 @@ rollback requires a confirmed halted controller. Do not write SS lane-present
 for an HS-only gadget. Immutable before/final snapshots expose V=error/restored
 and the raw RAM record. Failed setup STARTTRANSFER no longer proceeds to RUN
 or reports ready.18native tests, two actual ARM64 compiles/import checks and
-fifteen patches/nineteen files pass. Full CI and exact-kernel runs are pending;
-neither a working USB link nor GPU firmware execution is established.
+fifteen patches/nineteen files pass. Full
+[CI40098562979](https://github.com/liukaixiang817/ios-topaz/actions/runs/40098562979)
+succeeds in4m04s. Allthree exact-kernel standard-clock modes pass54checks
+on the first attempt, and independent final image validation passes
+13:43:45UTC.0030 is prepared, not booted; phoneADT/arguments remain byteidentical
+0029. Its host-only observer now continues past ten minutes and discovery,
+persists each sample, and stops on a boot-bound human confirmation. Eight
+simulated observer checks pass. The running0029 observer remains stopped
+after the human's earlier explicit boot-complete/cancel instruction.
+Neither a working USB link nor GPU firmware execution is established.
 
 ## Standalone boot diagnostic 0001
 

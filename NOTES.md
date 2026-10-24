@@ -10,13 +10,17 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-25 (Australia/Melbourne)
 
-**User timing requirement (2026-10-25 local): allow at least10minutes for
-boot/USB discovery. A negative USB observation requires a continuous >=600s
-window after temporary boot; earlier ~61s records are only early samples,
-not completed boot-window negatives. Positive enumeration may be collected
-immediately. Never interrupt that window with another boot. The user can
-explicitly cancel observation: on0029 they confirmed boot complete and said
-“无需观察”; watcher stopped at13:21:23UTC, with no full-window negative claim.**
+**Current USB observation rule, clarified by the user (2026-10-25 local):
+start host observation immediately after sending each temporary boot, and
+continue until the human replies “已进入系统” or explicitly ends observation.
+There is NO automatic ten-minute deadline and NO stop on USB discovery.
+On ECM discovery, attempt RAM log and panel capture while the observer
+continues. Do not infer boot completion from a screenshot or elapsed time,
+and do not interrupt observation with another boot. Save every sample as it
+arrives. End using a human-confirmation marker bound to that boot's sent_utc;
+stale confirmations must not stop a new boot. Historical ~61s records are
+early samples only. On0029 the human already confirmed boot complete and said
+“无需观察”; its observer remains stopped, without a full-window negative claim.**
 
 ### CURRENT NEXT ACTION — 0030 USB HS session before endpoint commands
 
@@ -52,7 +56,50 @@ explicitly cancel observation: on0029 they confirmed boot complete and said
   ignoredwrites, not-haltedrollbackrefusal andrestoretimeout. All18native
   testsPASS. TwoactualCI-headerARM64unitscompilePASS/allimportsresolve
   against0029. Fifteenorderedpatches0821..0835 applywithoutfuzz/offset;
-  all19filesmatchactualcompiletree. FullCI/exactkernel/imagechecks pending.
+  all19filesmatchactualcompiletree. FullCI/exactkernel/imagechecks nowPASS.
+- Source **5039a6028fa80289dc65dc5772d9b9370fcf07c7** committed/pushed;
+  CI **40098562979/job120885823341 SUCCESS**, Build4m04s
+  (13:32:36–13:36:40UTC). Fullghlog research/polaris/ci-40098562979.log saved.
+  Exactkernel xnu/out-polaris-0030/kernel.development.sweet SHA
+  **5bfeabc71aa499a203e70fe5b9538530e436a846ea44aed7ff64b59ed1fbced3**.
+  Privatepipeline44849 exited0 **13:42:44.858862UTC**: exactsource/profile/
+  artifact verified, CPU1 standardclock base120s FIRSTPASS17, actualasyncnetwork
+  90s FIRSTPASS20, mode4zeroMMIO60s FIRSTPASS17. **54checksPASS**, including
+  absenceofD USB SESSION onnon-boardguests, all4VMchildren ineachcase and
+  networkphase9/error0. No newfailure/retry; priorSMP/synctimerfailures remain.
+- **0030 PREPARED, NOT BOOTED** image
+  `shim/out/polaris-xnu-readdebug-0030/polaris-xnu-readdebug-0030.img`,
+  47407104bytes SHA **16fe50026026806c4650ac6d9aa2a8595a091e7254a6c632b60931b1613cfb37**;
+  payload SHA **7e869d21f33bca2075c6d7b78007cb786f8f97ef707ba0f1b3fd6f4360c6d43a**.
+  Independentfinalcheck17144 exited0 **PASS13:43:45.491534UTC**: source/profile/
+  CIpatchapply, frozen18nativeinputs,2actualARM64objects/imports,15patches/
+  19files,original6firmwares,3exactkernelrunprovenances,Cpayloadvalidator/
+  rebuild,image/manifest/65DTBs verified. PhoneADT ANDarguments byteidentical
+  0029:CPU1/Hz20/mode4/512MiBRAMCOW/ufsrw0. No GPUfirmware/acceleration/SMP.
+  No0030preflight orboot yet. Next: humanFASTBOOT, freshread-onlyfullrootcheck,
+  temporary0030boot, then continuousUSBwatch untilhumanconfirmation.
+- Host-only0030watcher updated after the user's clarification above; kernel,
+  payload and image unchanged. `watch-usb.py` has no time/discovery exit,
+  emits firstECM immediately for log/panel collection, atomically saves a
+  private snapshot and fsyncedNDJSON per sample, and preserves rows on
+  interruption. Inspection errors are distinct from absence. The private
+  `stop-usb-observation.py` requires the actual human message/reason and binds
+  it to this boot. **8 simulated observer checks PASS**: absent beyond1200s,
+  discovery beyond600s, live persistence, stale reply, inspection timeout,
+  interruption, failedboot refusal, existingrecord preservation and redaction
+  (some checks cover multiple properties). This is host-only validation,
+  not evidence of a phone USB connection. Private usb-policy-check.json
+  records the superseded watcher hash/new hash; all other pipeline inputs
+  remain frozen. Phone0029 remainsbootcomplete/P5K6; do not restart its watch.
+- GMUnextstage review retainedprivately in0030/gmu-next-stage-source-review.json:
+  originalgmu2gpu worddelta1a800, localAHB byteoffsets ITCM3000/DTCM7000/
+  CM3SYSRESET14000/FWINIT14070/counter14220/HFIstatus14600. Do not assume
+  flatfirmwareloads atGMUlocal0 or copyA660recordheaders. OriginalMAX_GMUFW_SIZE
+  0x2000 has a misleading "in bytes" comment; actualloop writes0x2000u32
+  words (32KiB), matchingcollectedfirmware and spanningthe DTCM-startoffset.
+  Do not callthis32KiB ofinstruction-onlyITCM. GPUCCblockreset andCM3SYSRESET
+  aredistinct. DefaultCM3state/BCRrelease+busaccesscontract stillneedsproper
+  admission;0030adds noGMU CSR/TCM writes or firmwareexecution.
 
 ### 0029 use the actual GMU consumer clocks
 
@@ -119,7 +166,8 @@ explicitly cancel observation: on0029 they confirmed boot complete and said
   PHY clock is only a hypothesis: original also resumes/notifies PHY and
   resets DBM; ordering alone is not equivalent initialization. No USB change
   in0029. Private usb-vbus-source-review.json retains source and limitations.
-- User nowrequires >=10min USB discovery.0029/watch-usb.py uses600s minimum
+- Historical timing policy, superseded by the current handoff above:
+  0029/watch-usb.py used600s minimum
   negative window/10s polling; frozenpolicy/hash checked inusb-policy-check.json.
   Late0028watch36640 exited0: **61samples/600.082s**, no known-phone USB VID
   or matchingECM inANYsample, **13:00:20.045066–13:10:20.093080UTC**. Output
