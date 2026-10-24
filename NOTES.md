@@ -10,6 +10,12 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-25 (Australia/Melbourne)
 
+**FASTBOOT workflow, clarified by the user: after a build/image is ready,
+first check the connected phone with a read-only FASTBOOT query. If the
+expected polaris is already present, continue the authorized preflight and
+temporary boot directly. Ask for physical keys only when actually needed;
+do not wait for a repeated FASTBOOT reply.**
+
 **Current USB observation rule, clarified by the user (2026-10-25 local):
 start host observation immediately after sending each temporary boot, and
 continue until the human replies “已进入系统” or explicitly ends observation.
@@ -22,8 +28,31 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT ACTION —0035 independently VERIFIED; needs new physical FASTBOOT
+### CURRENT ACTION —0035 temporary boot SENT; USB observer62255 ACTIVE
 
+- HumanclarifiedphonealreadyFASTBOOT; actualreadonlygetvarproduct=polaris
+  EXIT0. FuturebuildsfirstqueryFASTBOOTandcontinuewhenpresent; onlyrequest
+  physicalkeyswhenneeded. DoNOTwaitforredundanthumanFASTBOOTconfirmation.
+- Readonlypreflight **47197 EXIT0**, verified **23:55:27.129793UTC**:
+  all16GiBSHA689a8cd1/182maps/GPT/exactcleanheader32311c08unchanged,
+  userdataunmounted/RO1,31C. Hash77.539s. Norepair/journalreplay/partitionwrite.
+- **0035 temporarybootSENT** at **2026-10-24T23:55:45.485748+00:00**,
+  Sending/BootingOKAY,total1.175s. Firstsample23:55:45.563704UTC,
+  gap **0.077956s**. ImageSHA4bbd505c, exactpublicsource57e5706,
+  CI40143097727SUCCESS, fullindependentcheckpassedbeforedeviceactions.
+- **USBobserver62255 ACTIVE**. Initial18d1:d00disbootloaderidentityonly;
+  nonativeXNUUSB/ECMproofyet. No deadline/discoverystop. Awaitactualsameboot
+  human“已进入系统”/explicitcancel; donotrebootorstopbeforethen.
+  OnECMcollectRAMlog/panelwhilewatchcontinues. NewquestionasksGS/SH/GEfw/UR
+  plusactualGUIconfirmation. Noactual0035GPUFW/renderingresultyet.
+- Nootherprocess/testactive. Donotrerunbootwrapper/final-prepared-check.
+  0034observerremainsSTOPPED; historicalconfirmationdoesnotstop0035.
+
+###0035 independently VERIFIED; physical FASTBOOT subsequently detected above
+
+- HumanstatesphonealreadyFASTBOOT; actualgetvarproduct=polaris/EXIT0.
+  0035readonlypreflight **47197 ACTIVE**. No repeatedphysicalquestionneeded.
+  OnPASSdirectlyboot-and-watch.py; onsafetyfailurestopandinvestigateRO.
 - Actualhumanagainconfirmed0034 “已进入系统”. ItsobserverremainsSTOPPED;
   noobserverrestartedandno0035deviceaction. New0035physicalFASTBOOTquestion
   sent23:49–23:52UTC; awaitingactualnewreply. Thisconfirmationbelongs0034,
