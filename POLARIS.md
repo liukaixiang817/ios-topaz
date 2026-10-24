@@ -383,8 +383,14 @@ fifteen patches/nineteen files pass. Full
 [CI40098562979](https://github.com/liukaixiang817/ios-topaz/actions/runs/40098562979)
 succeeds in4m04s. Allthree exact-kernel standard-clock modes pass54checks
 on the first attempt, and independent final image validation passes
-13:43:45UTC.0030 is prepared, not booted; phoneADT/arguments remain byteidentical
-0029. Its host-only observer now continues past ten minutes and discovery,
+13:43:45UTC. Following humanFASTBOOTconfirmation, another fullread-onlycheck
+passes13:52:13UTC (35C,unmounted,full16GiBhash/182maps/GPT/header unchanged).
+Temporary0030 is sent13:52:37UTC, Sending/BootingOKAY,total1.184s; no partition
+write or journalreplay. PhoneADT/arguments remain byteidentical0029.
+Its host-only observer starts13:52:46UTC, approximately9.562s afterboot;
+initial sample has no known-phoneUSB/ECM, with no boot-window negative claim.
+Observation continues until the human confirms “已进入系统” or cancels;
+do not reboot or stop at ten minutes/discovery. The observer
 persists each sample, and stops on a boot-bound human confirmation. Eight
 simulated observer checks pass. The running0029 observer remains stopped
 after the human's earlier explicit boot-complete/cancel instruction.

@@ -22,7 +22,19 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT NEXT ACTION — 0030 USB HS session before endpoint commands
+### CURRENT NEXT ACTION — observe temporary0030 until human boot confirmation
+
+- **0030 TEMPORARY BOOT SENT**, human confirmedFASTBOOT. Preflight28897 exited0
+  **13:52:13.542315UTC**: freshfull16GiBhash/182maps/GPT/header unchanged,
+  userdataRO1/unmounted,35C; pendingouterjournal neitherreplayed norrepaired.
+  Bootwrapper95856 exited0: Sending/BootingOKAY,total1.184s; temporary0030
+  sent **13:52:37.176100UTC**, proofage23.633785s; no partitionwrite.
+  Continuousreadonlywatch **session20334** starts **13:52:46.738UTC**,
+  approximately9.562s afterboot; do not claim coverage of that initialgap.
+  Initialsample no known-phoneUSB/ECM; no negative boot conclusion.
+  **KEEPWATCHRUNNING until human “已进入系统” or explicit cancellation.**
+  No600s/discovery exit. OnECM immediately attemptRAMlog/panel whilewatching.
+  HumanGUI/USB S/E/Q/L/B/V andGPU P/K/F/R confirmation pending. No restart.
 
 - Actual0029 Settings photo/user confirms bootcomplete: **G303 P5 K6/0 F0/0
   R80000000/0**, USB **R7 S12 E5 C7f Q0/2/402/2 L2400 B480800/0/520018**.
@@ -67,7 +79,7 @@ early samples only. On0029 the human already confirmed boot complete and said
   90s FIRSTPASS20, mode4zeroMMIO60s FIRSTPASS17. **54checksPASS**, including
   absenceofD USB SESSION onnon-boardguests, all4VMchildren ineachcase and
   networkphase9/error0. No newfailure/retry; priorSMP/synctimerfailures remain.
-- **0030 PREPARED, NOT BOOTED** image
+- **0030 verified image, now temporarily booted**
   `shim/out/polaris-xnu-readdebug-0030/polaris-xnu-readdebug-0030.img`,
   47407104bytes SHA **16fe50026026806c4650ac6d9aa2a8595a091e7254a6c632b60931b1613cfb37**;
   payload SHA **7e869d21f33bca2075c6d7b78007cb786f8f97ef707ba0f1b3fd6f4360c6d43a**.
@@ -76,8 +88,9 @@ early samples only. On0029 the human already confirmed boot complete and said
   19files,original6firmwares,3exactkernelrunprovenances,Cpayloadvalidator/
   rebuild,image/manifest/65DTBs verified. PhoneADT ANDarguments byteidentical
   0029:CPU1/Hz20/mode4/512MiBRAMCOW/ufsrw0. No GPUfirmware/acceleration/SMP.
-  No0030preflight orboot yet. Next: humanFASTBOOT, freshread-onlyfullrootcheck,
-  temporary0030boot, then continuousUSBwatch untilhumanconfirmation.
+  Freshpreflight andtemporaryboot nowcompleted asabove. Next: continuousUSB
+  observation untilhumanconfirmation; captureifECMappears. GPUacceleration
+  stillunproven; retain successful0029clockstage.
 - Host-only0030watcher updated after the user's clarification above; kernel,
   payload and image unchanged. `watch-usb.py` has no time/discovery exit,
   emits firstECM immediately for log/panel collection, atomically saves a
@@ -90,7 +103,7 @@ early samples only. On0029 the human already confirmed boot complete and said
   (some checks cover multiple properties). This is host-only validation,
   not evidence of a phone USB connection. Private usb-policy-check.json
   records the superseded watcher hash/new hash; all other pipeline inputs
-  remain frozen. Phone0029 remainsbootcomplete/P5K6; do not restart its watch.
+  remain frozen. Former0029observer staysstopped; new0030observer isactive.
 - GMUnextstage review retainedprivately in0030/gmu-next-stage-source-review.json:
   originalgmu2gpu worddelta1a800, localAHB byteoffsets ITCM3000/DTCM7000/
   CM3SYSRESET14000/FWINIT14070/counter14220/HFIstatus14600. Do not assume
