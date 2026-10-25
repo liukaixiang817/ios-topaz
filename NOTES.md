@@ -34,6 +34,63 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0050 TEMPORARY BOOT SENT12:23:19UTC; await stable GUI and real desktop C/GLF
+
+- FIRSTautoquery12:21:03.777406UTC confirmed expectedpolaris alreadyFASTBOOT,
+  no duplicatekeys request. ROpreflight75447EXIT0,12:22:39.102294UTC: full
+  16GiBrootSHA689a8cd1,182maps/GPT/reviewedheader3e885886stable, blockRO1,
+  unmounted/33C. PendingAndroidjournal NOTclean/notreplayed/repaired;
+  NOpartitionwrites. All219frozeninputs stillmatch.
+- DIRECTboot-phone9473EXIT0: Sending/BootingOKAY,total1.539s;
+  **sent_utc2026-10-25T12:23:19.311151+00:00**. Imageb334df81a2b8cf1811914446f3276840688f22fd63d9e88eb80d422d6a31de5c,
+  kernel2396576ec884ad3efe400af4bb5f39798c885fcc78c9cdaac7d398b5b6eae6ab,
+  payload31ac8f5b8e4a8f8fb581247e3f638353f373a3377a0064ca4e14c805805585c8.
+  Sourceb2f84fe70c8325812b05f899be26a1654cd55434/CI40191830180SUCCESS.
+-71native/8actualunits/36patches51files/29rows/185CPU1defaultclockchecks
+  FIRSTPASS(all4modes,no0050guestfailure/retry), finalsource/ABI/sixsignatures/
+  linkedSMC/highPAcache/payload/rebuild/packedimagePASS. NoCPU2/IRQwaiver.
+  OriginalGPUfirmware/MMIO/clock/HFI/PAS/MMU/BO/cache/submit order unchanged.
+- Await ACTUAL0050stablelockscreen/desktop->Settings->scroll. GA C counts
+  completedREALdesktop submissions only; require it toincrease duringUI
+  whileO1/noGLF to establish ongoingdesktopGPU use. S includeschildtests;
+  T6/E0is64x64GLSL+sharedpixels selftest; L6justcontextcreated; requiredMff.
+- Only ONEGPUdesktopopen perboot. Ifitdies, wrapper readsAttempted registry
+  property and skipschildtest/injection, launchingCPU. CPUUIescape alone is
+  NOTGPUproof. LastL/M/C values persist after processdeath; do not call them
+  currentGPUuse ifO0 orCstatic. FirstfatalSIG4/5/6/10/11 cached acrossrestart
+  shownasGLF/GLPC+LR/GLADDR in3existingcompletedrows16..18. PCkind0raw,
+  1cachepreferredVA,2injectoroffset,3bridgeoffset,4Mesaoffset. SIGKILL/watchdog
+  notcapturable; noforcedDMAcleanup/reset. Actual0050fault/stabilityUNPROVEN.
+- USBobserverSTILLPAUSED; NOboot-and-watch/NOobserverstarted. Pausemarker
+  boundexactnewbootUTC, noUSBsuccess/nonenumerationclaim. Importantfirst
+  snapshots/faultsremain; successfulruntimeCB0scroll removed.
+- NEXT await human0050result; ifGLF captureSIG/PC/LR/address andresolveusing
+  actual20H392cache or exactnewdylib. Do notreplaceprovenhardwarepath or
+  startanotherboot merelybecause old0049photos showedlogs. NoMetal/FPSclaim.
+
+### 0050 FINAL IMAGE PASS; FASTBOOT already present; RO preflight75447 running
+
+- CI40191830180/sourceb2f84fe70c8325812b05f899be26a1654cd55434/
+  job121164254884 SUCCESS. Fullkernel and fresh4CPU1defaultclock modes all
+  FIRSTPASS185checks(no0050guestfailure/retry).71native,8actualunits/imports,
+  36orderedpatches51files/29rows, fullsource/ABI/sixsignatures/linkedSMC64/
+  highPAcache/rebuiltpayload/Cvalidator/packedimage PASS. Finalchecker
+  12:20:41.462577UTC. Physical0050GUI/GPUstability stillUNPROVEN.
+- Kernel2396576ec884ad3efe400af4bb5f39798c885fcc78c9cdaac7d398b5b6eae6ab;
+  payload31ac8f5b8e4a8f8fb581247e3f638353f373a3377a0064ca4e14c805805585c8;
+  image shim/out/polaris-xnu-readdebug-0050/polaris-xnu-readdebug-0050.img
+  SHAb334df81a2b8cf1811914446f3276840688f22fd63d9e88eb80d422d6a31de5c,
+  62914560bytes. graphics-v3 sixfilebundle15377872bytes,
+  SHAfbcc122beeef301ccfdef7a74ac2cc1c0c69212b66f1986d0cfa55ce9aa30697.
+- FIRSTautoFASTBOOTquery12:21:03.777406UTC confirmed expectedpolaris ALREADY
+  present; no duplicatekeys question. ROpreflight75447 nowrunning knownRO
+  recovery/full16GiB/maps/GPT/header/temp checks. AnyNEWheader changeSTOP,
+  neverreplay/repair journal. USBobserverPAUSED.
+- NEXT wait75447; ifPASSdirectrun-device-step.py boot-phone only. Noobserver/
+  boot-and-watch. KeepfirstfatalGLFifpresent. GA Mffrequired, C counts ONLY
+  genuine-desktop completedsubmissions; S includeschildtests. L6 alone not
+  desktopproof. A CPU fallback maypresentGUI but isNOTGPUacceleration.
+
 ### 0050 sourceb2f84fe / CI40191830180; frozen pipeline2218 running
 
 - Implementationcommitted7dc3e27;15source-onlyfiles publishedb2f84fe70c8325812b05f899be26a1654cd55434
