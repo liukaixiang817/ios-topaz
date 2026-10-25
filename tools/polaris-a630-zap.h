@@ -15,7 +15,7 @@ struct a630_zap_io {
 };
 enum a630_zap_error {A630_ZAP_DISABLED,A630_ZAP_ARGUMENT,A630_ZAP_LEASE,
     A630_ZAP_TRANSPORT,A630_ZAP_SECURE,A630_ZAP_IO,A630_ZAP_READY};
-struct a630_zap_snapshot {uint32_t error,stage,fn,transport,secure,calls,signature,region,authenticated,shutdown,restore_error,restore_transport,restore_secure;};
+struct a630_zap_snapshot {uint32_t error,stage,fn,transport,secure,calls,signature,region,authenticated,retained,shutdown,restore_error,restore_transport,restore_secure;};
 static inline bool a630_zap_call(const struct a630_zap_io *io,
     struct a630_zap_snapshot *s,uint32_t fn,uint32_t info,uint64_t a,uint64_t b,uint64_t c,uint64_t expected)
 {
@@ -40,7 +40,10 @@ static inline bool a630_zap_start(bool exact_board,const struct a630_zap_io *io,
     for(unsigned n=0;n<4;n++)
         if(!a630_zap_call(io,s,0xc2000601,1,functions[n],0,0,1))return false;
     s->stage=2;
-    if(!a630_zap_call(io,s,0x42000206,1,13,0,0,0))return false;
+    /* Native pil_boot cold path: INIT_IMAGE -> MEM_SETUP -> load -> AUTH.
+     * We do not own a previously authenticated image and must not issue a
+     * speculative PAS_SHUTDOWN.0043physicallyhung in that extra call.
+     * INIT_IMAGE rejection remains a failure, never proof of an old image. */
     s->stage=3;
     if(!io->owned(io->ctx)){s->error=A630_ZAP_LEASE;return false;}
     if(!io->publish(io->ctx)){s->error=A630_ZAP_IO;return false;}
@@ -53,7 +56,8 @@ static inline bool a630_zap_start(bool exact_board,const struct a630_zap_io *io,
     s->stage=6;
     if(!a630_zap_call(io,s,0x42000205,1,13,0,0,0))return false;
     s->authenticated=1;s->stage=7;s->error=A630_ZAP_READY;return true;
-}/* Native PAS_SHUTDOWN before relinquishing this diagnostic's resources.
+}/* Explicit owned teardown only, never part of cold boot or the boot probe.
+ * Native PAS_SHUTDOWN is required before relinquishing secure resources.
  * CP/rendering must already be idle/halted. Failure preserves its first
  * startup result and requires the entire execution environment to stay live. */
 static inline bool a630_zap_stop(const struct a630_zap_io *io,struct a630_zap_snapshot *s)
