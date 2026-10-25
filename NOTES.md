@@ -34,6 +34,27 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT ACTION —0042 FINAL corrected source147116f / CI40157657403 running
+
+- Local e2f61da; publicsource147116fc73632e74ccf2df4336963e7a0c52f1bd
+  (parent07aa596), source-onlythreefiles/NOTESexcluded. FreshCI40157657403
+  inprogress, wrapper59749. Bothsupersededruns40157085281/40157364678 now
+  COMPLETED/CANCELLED; terminalrecords ineachpre-...-reviewdirectory.
+- Final local44tests/29rows PASS, actualCIheaders4ARM64units+imports PASS,
+  exact27patches/35files PASS. local-scm-check.json proves16actualSMC opcodes
+  eachDSB-bracketed/fullwidthx3; native-post-vote-check.json compiles ORIGINAL
+  bitfields ->30000001/00000004. No0039highPA regression; no0042phoneaction.
+- Fresh14hostscripts frozenbeforeguestexecution againstsource147116f/run
+  40157657403. PhoneADT v4, GPU9, sameCPU1/20Hz/RO-root/RAMCOW; cache-high7,
+  async-net1,no-mmio9 standardclock60/90/60s, expected130checks. Finalchecker
+  additionallydisassembles LINKED _a630_scm_call, requiresrealSMC+DSBbefore/
+  after+fullwidthx3, andchecks localproof hashes. Noobserverstarted.
+- Next wait exactCI/download/130checks/prepared thenindependentfinalchecker;
+  FIRSTautoFASTBOOTquery viaquery-fastboot.py, thenROpreflight anddirect
+  run-device-step.py boot-phoneifexpectedpolarisready. Askphysicalkeysonlyif
+  actuallyabsent. USBobserverPAUSEDbyhuman, noimplicitrestart. Currentphone
+  still0041GUI/fullHFI5ACKs;0042CP/ZAP/imagehardwareproofPENDING,desktopCPU.
+
 ### CURRENT ACTION —0042 actual ARM64 SMC encoding fixed/proven; final corrected CI next
 
 - Critical pre-boot ISA review: actual XNU polaris_a630.o frompublic07aa596
