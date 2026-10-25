@@ -21,6 +21,7 @@ bool polaris_gpu_submit(const uint64_t *addresses, const uint32_t *words, uint32
 void polaris_gpu_cache(void *address, uint64_t size);
 void polaris_gpu_quarantine(void);
 uint32_t polaris_gpu_client_line(char *out,uint32_t capacity);
+uint32_t polaris_gpu_fault_line(unsigned line,char *out,uint32_t capacity);
 void PolarisGPUStart(void);
 #ifdef __cplusplus
 }

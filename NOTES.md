@@ -34,6 +34,35 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0047 full integration build PASS; bounded runtime fault snapshot added
+
+- CI40171081646/efaf4d6 completedSUCCESS, job121101860238,07:05:57UTC.
+  Runtime-only first-fault diagnostics added in0853 (seven fixedROreads within
+  existinglease/deadline; immutablecachedpanelrows; noreset/ack/free).
+- Final58native/ASan/UBSan,8actualCI-headerARM64units/imports,33patches/48files
+  nooffset/fuzz and29rowfixturePASS. Sixsignedgraphics-v4artifactsunchanged.
+- NEXTsource-onlypublish0853/newCI, freezehostpipelinebefore4CPU1standardclock
+  guestcases, bundlepayload/finalcheck, FIRSTautoFASTBOOTquery/ROpreflight/
+  directtempbootifpresent. USBobserverPAUSED. No0047deviceactionyet.
+
+### 0047 source published efaf4d6; CI40171081646 running
+
+- Localimplementationcommit e75d100;29source-onlyfilespublishedas
+  efaf4d690c648d1234d418fe6d45ca4152311d3d (parent9965798), pushconfirmed.
+  CI40171081646 started, no duplicate. Completebuildnotyetchecked.
+- Final57native/ASan/UBSan,8actualARM64units/imports,32patches/48files
+  nooffset/fuzz and29rowformatterPASS. Userlandgraphics-v4 bundle15375920B
+  boundtoitsbuilder/GLXML/Mesa/source/artifactmanifest. AllApple/SDK/firmware/
+  dumps/serialsexcludedfrompubliccommit. CorrectnativeincrementalSHAprovider.
+- HostpipelinebeingfrozenBEFOREguestexecution: threeunchangedCPU1standardclock
+  60/90/60s groups, plus60s explicitintegration-refusalcase withclient/gl
+  flags onsyntheticnon-phonehardware+non-file-root. NoCPU2admissionorIRQwaiver;
+  predeclareonlyoneidenticalretryforclassifiedtimerfault,preservefirstfailure.
+- No0047phoneimage/preflight/bootyet. USBobserverPAUSED, onlydirectboot-phone
+  whenready; no watcherfilescopiedto0047. FIRSTtargetedFASTBOOTqueryAFTERfinal
+  imagecheck. Currentphone0046nativeGPUdrawPASS, GUIstillCPU. NEXTfinishCI/
+  fixedclockmatrix/bundlepayloadfinalcheck, thenautoquery/ROpreflight/tempboot.
+
 ### 0047 source complete; full kernel CI next, no device action yet
 
 - Final57native/ASan/UBSan/realC++BOlifetime/rollback/parser/formattertestsPASS;

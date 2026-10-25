@@ -49,6 +49,11 @@ backboardd never compete for the exclusive connection.
 `O` is an open client, `S` completed submissions, `I` surface imports, `T` the
 acceptance phase(1connection/2context/3shader/4surface/5draw/6pixels), `E` the
 test error, `D` runtime quarantine and `R` backend readiness. `S`/`I` are hex.
+On runtime quarantine, three completed native rows show the first error and
+expected/actual values, CP/IRQ/protection status, and the exact64-bit fault
+address/syndrome. Capture is seven fixed read-only accesses within the existing
+deadline; an expired deadline is never renewed and the valid mask says which
+words were actually read. Rendering only formats the immutable snapshot.
 T6/E0 with increasing S during real interface use is distinct from the earlier
 native proof. Full original diagnostics remain in RAM.
 
