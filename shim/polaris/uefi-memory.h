@@ -20,15 +20,17 @@ static inline int polaris_efi_memory_check(const void *map,uint64_t bytes,
             const struct efi_memory *p=(const void*)((const uint8_t*)map+prev);
             if(m->physical<p->physical+p->pages*4096 && p->physical<end)return 0;
         }
-        if(m->type==7)result.conventional_pages+=m->pages;
+        int runtime=(m->attributes&UINT64_C(0x8000000000000000))!=0;
+        if(m->type==7 && !runtime)result.conventional_pages+=m->pages;
         uint64_t lo=m->physical>UINT64_C(0x180000000)?m->physical:UINT64_C(0x180000000);
         uint64_t hi=end<UINT64_C(0x27c8a0000)?end:UINT64_C(0x27c8a0000);
         if(hi>lo){
             uint64_t pages=(hi-lo)/4096;result.upper_mapped_pages+=pages;
-            if(m->type==7)result.upper_free_pages+=pages;
+            if(m->type==7 && !runtime)result.upper_free_pages+=pages;
             /* Only loader/boot-services allocations become reclaimable on
              * ExitBootServices. Runtime/reserved/MMIO are not ours to use. */
-            if(m->type<1 || m->type>4)if(m->type!=7)result.upper_live_pages+=pages;
+            if(runtime || ((m->type<1 || m->type>4) && m->type!=7))
+                result.upper_live_pages+=pages;
         }
     }
     *out=result;return 1;

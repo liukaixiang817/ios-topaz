@@ -35,12 +35,36 @@ explicit controller ownership; protocol presence is not a working transport.
 [UEFI boot services](https://uefi.org/specs/UEFI/2.10/07_Services_Boot_Services.html)
 distinguish loading an EFI image from starting it and ending boot services.
 
-The prior verified ESP backup contains95 files (13.724MB); its fallback
-`EFI/Boot/bootaa64.efi` matches Microsoft's Windows boot manager, not the
-TianoCore firmware body. Keep these binaries private. Actual installed
-UEFI location/version still needs fresh extraction and the normal Windows
-selection method. Current phone transport became unavailable before the
-extraction recovery was sent. No modified firmware has run on the phone.
+The configured Mindows firmware has now been extracted from the unlocked
+original Android, with matching phone-before/phone-after/host SHA256. Its
+appended DTB identifies Polaris P2 v2.1 / SDM845v2. The Android-v1 container
+contains BootShim plus a compressed firmware volume and SimpleInit; the
+Windows ESP is separate. The independent logfs configuration currently keeps
+`boot.default="continue"` and `boot.second="simple-init"`. Neither was edited.
+Fresh read-only backups of29 firmware candidates and the Windows ESP matched
+GPT and critical-partition checks. The ESP's95 files (13.724MB) remain intact;
+its fallback EFI file is Microsoft's Windows manager, not the UEFI body.
+
+`tools/polaris-uefi-firmware.py` only creates a private RAM compatibility
+image, never installs it. The original BootShim, DTB, ramdisk and all81 inner
+firmware files, including SimpleInit, are preserved byte for byte. One added
+boot-service DXE driver registers for ReadyToBoot, inventories memory and
+holds before an OS starts. It does not depend on a SimpleInit side-button
+shortcut and cannot fall through when a memory-map check fails. A damaged or
+unsupported container is rejected. The packager
+requires the same probe to pass both generic EL1 and EL2 emulator cases before
+packaging. These checks are not a full original-firmware or iOS boot test.
+The actual source and trial firmware stay in ignored research storage.
+
+The first actual-firmware offline packaging attempt refused its greater-than
+16MiB inner-volume section. Extended section encoding was added and checked
+at the format boundary; no candidate had been sent to the phone. Repackaging
+then passed independent container/FFS/FV checks. The hold app passed9 checks
+at each exception level; the final driver additionally tests LoadImage,
+StartImage and the actual ReadyToBoot callback under generic firmware.
+The actual UEFI-to-XNU loader and physical RAM proof remain pending. Before any new XNU boot, re-export the root-file extents and
+recheck its whole hash and outer metadata: the intervening normal Android
+boot can change filesystem state. Do not reuse the old extent map blindly.
 
 ## Historical bring-up
 

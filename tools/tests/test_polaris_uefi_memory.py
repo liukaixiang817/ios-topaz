@@ -30,6 +30,10 @@ int main(void){struct polaris_efi_memory out={0};
  struct efi_memory edge={7,0,0x17ffff000,0,2,0};
  assert(polaris_efi_memory_check(&edge,40,40,40,&out)&&out.upper_free_pages==1);
  edge.physical=0x27c89f000;assert(polaris_efi_memory_check(&edge,40,40,40,&out)&&out.upper_free_pages==1);
+ edge.attributes=UINT64_C(0x8000000000000000);
+ assert(polaris_efi_memory_check(&edge,40,40,40,&out)&&out.upper_free_pages==0&&out.upper_live_pages==1);
+ edge.type=2;
+ assert(polaris_efi_memory_check(&edge,40,40,40,&out)&&out.upper_live_pages==1);
  return 0;}
 '''
   with tempfile.TemporaryDirectory() as d:

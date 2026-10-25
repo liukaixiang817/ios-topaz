@@ -1,7 +1,11 @@
 /* Read-only UEFI inventory: returns to its caller, never exits Boot Services,
  * writes a filesystem/NVRAM, starts a USB driver or enters the XNU kernel. */
 #include "uefi-memory.h"
+#ifndef POLARIS_EFI_HOLD
+#define POLARIS_EFI_HOLD 0
+#endif
 static struct efi_output *output;
+static struct efi_boot *boot;
 static void text(const char *s)
 {
     uint16_t b[128];unsigned n=0;
@@ -24,13 +28,13 @@ static void protocol(struct efi_boot *bs,const char *name,const efi_guid *guid)
     void *p=0;efi_status s=bs->locate_protocol(guid,0,&p);
     hex(name,s); /* Presence does not prove that the device works. */
 }
-efi_status EfiMain(efi_handle image,struct efi_system *st)
+static efi_status probe(efi_handle image,struct efi_system *st)
 {
     if(!st || st->hdr.signature!=UINT64_C(0x5453595320494249) ||
         st->hdr.size<120 || !st->out || !st->out->string || !st->boot ||
         st->boot->hdr.signature!=UINT64_C(0x56524553544f4f42) ||
         st->boot->hdr.size<328)return EFI_ERROR|2;
-    output=st->out;text("POLARIS EFI PROBE: read-only begin\r\n");
+    output=st->out;boot=st->boot;text("POLARIS EFI PROBE: read-only begin\r\n");
     hex("UEFI_REV=",st->hdr.revision);hex("FIRMWARE_REV=",st->revision);
     uint64_t v;
     __asm__ volatile("mrs %0, CurrentEL":"=r"(v));hex("CURRENT_EL=",v);
@@ -59,6 +63,21 @@ efi_status EfiMain(efi_handle image,struct efi_system *st)
     hex("POLARIS_UPPER_FREE_PAGES=",memory.upper_free_pages);
     hex("POLARIS_UPPER_LIVE_PAGES=",memory.upper_live_pages);
     hex("POLARIS_UPPER_UNMAPPED_PAGES=",UINT64_C(0xfc8a0)-memory.upper_mapped_pages);
+    /* Exact retained ranges matter: the ABL loader currently hands all upper
+     * RAM to XNU. Never assume ExitBootServices makes runtime/reserved RAM free.
+     * Display these only after validating every descriptor and all bounds. */
+    if(valid && POLARIS_EFI_HOLD){
+        for(uint64_t at=0;at<bytes;at+=stride){
+            const struct efi_memory *m=(const void*)((const uint8_t*)map+at);
+            uint64_t end=m->physical+m->pages*4096;
+            int reclaimable=((m->type>=1 && m->type<=4) || m->type==7) &&
+                            !(m->attributes&UINT64_C(0x8000000000000000));
+            if(end<=UINT64_C(0x180000000) || m->physical>=UINT64_C(0x27c8a0000) ||
+               reclaimable)continue;
+            hex("RETAIN_TYPE=",m->type);hex("RETAIN_BASE=",m->physical);
+            hex("RETAIN_BYTES=",m->pages*4096);hex("RETAIN_ATTR=",m->attributes);
+        }
+    }
     st->boot->free_pool(map);
     if(!valid){text("MAP_REFUSED\r\n");return EFI_ERROR|2;}
     if(st->runtime && st->runtime->get_variable){
@@ -70,3 +89,48 @@ efi_status EfiMain(efi_handle image,struct efi_system *st)
     text("POLARIS EFI PROBE PASS: NO_DISK_WRITE NO_NVRAM_WRITE NO_XNU_JUMP\r\n");
     return 0;
 }
+static efi_status inspect(efi_handle image,struct efi_system *st)
+{
+    efi_status result=probe(image,st);
+    if(POLARIS_EFI_HOLD){
+        /* A RAM-only compatibility trial stops before an OS is started.
+         * It cannot fall through to Windows, even when the probe rejects a map.
+         * Hardware keys can exit the trial. */
+        if(output){
+            hex("PROBE_RESULT=",result);
+            if(boot && boot->watchdog)hex("WATCHDOG_DISABLE=",boot->watchdog(0,0,0,0));
+            text("POLARIS EFI HOLD: inventory only; no operating system started\r\n");
+        }
+        for(;;){
+            if(boot && boot->stall)boot->stall(1000000);
+            else __asm__ volatile("wfe");
+        }
+    }
+    return result;
+}
+#ifdef POLARIS_EFI_READY_TO_BOOT
+static efi_handle driver_image;
+static struct efi_system *driver_system;
+static void ready(void *event,void *context)
+{
+    (void)event;(void)context;
+    inspect(driver_image,driver_system);
+}
+efi_status EfiMain(efi_handle image,struct efi_system *st)
+{
+    static const efi_guid group={0x7ce88fb3,0x4bd7,0x4679,{0x87,0xa8,0xa8,0xd8,0xde,0xe5,0x0d,0x2b}};
+    if(!st || st->hdr.signature!=UINT64_C(0x5453595320494249) || !st->boot ||
+       st->boot->hdr.size<376 || !st->boot->create_event_ex){
+        for(;;)__asm__ volatile("wfe");
+    }
+    driver_image=image;driver_system=st;void *event=0;
+    efi_status s=st->boot->create_event_ex(0x200,8,ready,0,&group,&event);
+    if(s&EFI_ERROR)inspect(image,st); /* Hold even if registration fails. */
+    return s;
+}
+#else
+efi_status EfiMain(efi_handle image,struct efi_system *st)
+{
+    return inspect(image,st);
+}
+#endif
