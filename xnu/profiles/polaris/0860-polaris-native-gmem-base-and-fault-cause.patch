@@ -1,0 +1,58 @@
+--- a/iokit/Kernel/arm/PolarisGPU.cpp
++++ b/iokit/Kernel/arm/PolarisGPU.cpp
+@@ -383,7 +383,11 @@
+             switch(r.param.param) {
+                 case 1:r.param.value=630;break;case 2:r.param.value=0x100000;break;
+                 case 3:r.param.value=0x06030001;break;case 4:r.param.value=257000000;break;
+-                case 5:if(!polaris_gpu_timestamp(&r.param.value))goto done;break;case 6:r.param.value=0;break;
++                case 5:if(!polaris_gpu_timestamp(&r.param.value))goto done;break;
++                /* Own A630 UCHE_GMEM_RANGE_MIN/MAX are 0x100000/0x1fffff.
++                 * Mesa uses this VA in GMEM texture/resolve descriptors.
++                 * The reference A642L's zero base is not our configuration. */
++                case 6:r.param.value=0x100000;break;
+                 case 7:r.param.value=1;break;case 9:r.param.value=0;break;
+                 case 0x10:r.param.value=15;break;default:goto done;
+             }
+--- a/bsd/dev/polaris_a630_runtime.h
++++ b/bsd/dev/polaris_a630_runtime.h
+@@ -80,13 +80,33 @@
+     struct a630_core_snapshot *s=&a630_client_submit.live;
+     const struct a630_core_io io={a630_core_owned,a630_core_read,a630_core_write,
+         a630_gmu_sync,a630_delay_us,&a630_client_io};
+-    uint32_t halt,fsr,sctlr;uint64_t root;
+-    bool ok=a630_core_idle(&io,s) && a630_core_read(&a630_client_io,0x808,&halt) && halt==3 &&
+-        a630_smmu_read(&a630_client_io,0x8058,&fsr) && !(fsr&0xc00001feu) &&
+-        a630_smmu_read(&a630_client_io,0x8000,&sctlr) && (sctlr&0xc011ff)==0xc01127 &&
+-        a630_smmu_read64(&a630_client_io,0x8020,&root) && root==a630_core_tables.physical;
+-    if (!ok) polaris_gpu_quarantine();
+-    return ok;
++    uint32_t value;uint64_t root;
++    s->error=0;s->offset=0;s->expected=0;s->actual=0;
++    if(!a630_core_idle(&io,s))goto failed;
++    s->offset=0x808;s->expected=3;
++    if(!a630_core_read(&a630_client_io,s->offset,&value))goto io_failed;
++    s->actual=value;if(value!=s->expected)goto mismatch;
++    s->offset=0x8058;s->expected=0;
++    if(!a630_smmu_read(&a630_client_io,s->offset,&value))goto io_failed;
++    s->actual=value;
++    if(value&0xc00001feu){s->error=A630_CORE_FAULT;goto failed;}
++    s->offset=0x8000;s->expected=0xc01127;
++    if(!a630_smmu_read(&a630_client_io,s->offset,&value))goto io_failed;
++    s->actual=value;if((value&0xc011ff)!=s->expected)goto mismatch;
++    s->offset=0x8020;s->expected=(uint32_t)a630_core_tables.physical;
++    if(!a630_smmu_read64(&a630_client_io,s->offset,&root))goto io_failed;
++    s->actual=(uint32_t)root;if(root!=a630_core_tables.physical)goto mismatch;
++    s->offset=0;s->expected=0;s->actual=0;
++    return true;
++mismatch:
++    s->error=A630_CORE_DATA;goto failed;
++io_failed:
++    s->error=A630_CORE_IO;
++failed:
++    /* Preserve the first failing predicate; no FSR/IRQ acknowledgement or
++     * recovery. The saved panel can distinguish a translation fault from
++     * a halt, register-read or address-space ownership failure. */
++    polaris_gpu_quarantine();return false;
+ }
+ bool polaris_gpu_map(uint64_t address,uint64_t physical,bool read_only,bool cached)
+ {

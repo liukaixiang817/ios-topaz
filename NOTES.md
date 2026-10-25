@@ -34,6 +34,44 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0054 native GMEM fix + forced framebuffer-fetch acceptance implemented
+
+- CorrectsMSM_PARAM6 to100000 matchingownnative UCHE100000..1fffff.
+  Nativeprofile/MMU/PM4/BO/admission untouched. Quiescence samepredicate/
+  readorder nowassignsexactfirstfailure (FSR/halt/SCTLR/TTBR/readerror).
+  Noreset/FSRack/zero-VA mapping/recovery introduced.
+- Actualchild checksGMEMbase beforedraw andforcesGMEM onlychildprocess;
+  initialshader/all4096pixels PLUS EXTframebufferfetch fourcolourinversions,
+  eachpassALL4096CPU-aliaspixels. T6onlyafterallpass;180sbudgetunchanged.
+-81nativeASan/UBSan PASS,8actualARM64units/importsPASS,40orderedprofiles/
+  53files/nooffset-fuzz/29rows/sourceboundariesPASS. Initialnewtestfixture
+  lackedstdintinclude, corrected+retained; importcheckinitialbaselineobject
+  missing, copiedunchanged0053baseline thenPASS. No0054CI/deviceactionyet.
+- NEXTsource-onlycommit/push/fullCI/fresh185CPU1checks/finalimage; FIRST
+  autoFASTBOOTquery, ifpresentfreshROpreflight/directtemporaryboot.
+  USBobserverSTILLPAUSED;0053GPU18submissions thenquarantine, notstable.
+
+### 0053 HUMAN GPU18 desktop submissions then quarantine; 0054 GMEM fix in progress
+
+- Latesthuman Settingsscrollworksbutstutters. Photo163B339A: GA O1 S13 I5
+  T6 E0 D1 R0 L6 X0 Mff C12. Actual18desktopGPUsubmissions+shader4096pixels
+  PASSED, thenquarantine. O1 latchedretainedclient, NOTcurrenthealthyGPU.
+- GFAR FSR80000402/FAR0/FSYNR2/V7f, CP/IRQ/HW/protect0/WPTR=RPTR27f.
+  GXerror0 ismissingquiescence-causeinformation, NOTnohardwarefault.
+  GLF SIG11/CODE2/PID56 PC4:736c10/LR4:733f1c/address18. ExactrawMesa
+  98d69ebd disassembly mapsPC fd_bo_mark_for_dump +0 (NULLbo->reloc_flags),
+  LR ir3_shader_variant +600 / ir3_gallium.c upload_shader_variant.
+- CONFIRMEDsourcebug: PolarisGPU GET_PARAM GMEM_BASE(6) returns0, whileown
+  nativeA630profile UCHE_GMEM_MIN/MAX=100000/1fffff. Mesa25.0.7 usesreturned
+  base for GMEM framebufferfetch descriptors/2Dresolve. Reference642L reports
+  0 buthasdifferentGMEMconfiguration; mustnotcopyforeignparam. Thismatches
+  observedVA0 fault; causalproof needsnewphysicaltest. LikelysecondaryNULLBO
+  afterquarantine, NOTfixedjustbyNULLguard. Do notmapzero/clearfault/resume.
+- NEXT correctGMEMparameter andaddforcedGMEM/framebufferfetch/allpixels
+  acceptance, precisequiescencefirstfailure evidence. Keepnativefirmware/
+  HFI/SMMU/lifetimes/admission/HID unchanged. USBobserverstillPAUSED.
+- Evidence research/polaris/continuation-0054/0053-human-result.json.
+
 ### 0053 TEMPORARY BOOT SENT14:04:03UTC; await GLT/T/E/C and real desktop result
 
 - FIRSTautoquery14:01:02.955839UTC expectedpolaris alreadyFASTBOOT, no

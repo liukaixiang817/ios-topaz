@@ -202,3 +202,22 @@ may also submit its first fatal PC/LR through5b. Image2 then denotes its own
 executable offset; for a desktop fault image2 remains the injector offset.
 A fatal record takes priority over GLT on the panel. No DMA cleanup/reset or
 synthetic-success recovery is introduced.
+
+
+Polaris 0054 corrects `MSM_PARAM_GMEM_BASE` to `0x100000`, matching this
+phone's native UCHE window `0x100000..0x1fffff`. The reference A642L reports
+zero, which does not match this A630 setup. Mesa 25.0.7 uses that parameter
+for GMEM framebuffer-fetch textures and 2D resolves. The 0053 phone completed
+18 desktop submissions before an address-zero translation fault and a later
+NULL shader BO crash; stable acceleration was not established.
+
+The acceptance child now checks the reported base and requests GMEM rendering
+only in its own process. After the existing solid shader/shared-surface check,
+it requires `GL_EXT_shader_framebuffer_fetch`, executes four full-surface
+colour inversions in separate passes, and verifies every one of the 4096
+pixels after each pass. Stage T6 requires all checks to pass. This exercises
+GMEM restore, texture read and resolve, which the earlier small solid shader
+could miss. Host tests are not physical GPU evidence. Runtime quiescence keeps
+its original stop/fault/ownership predicates, and now records which predicate
+failed; faults still quarantine all DMA resources without acknowledging or
+resuming them. USB host observation remains paused by user request.

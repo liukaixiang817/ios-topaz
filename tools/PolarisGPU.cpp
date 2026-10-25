@@ -383,7 +383,11 @@ IOReturn PolarisGPUUserClient::externalMethod(uint32_t selector,IOExternalMethod
             switch(r.param.param) {
                 case 1:r.param.value=630;break;case 2:r.param.value=0x100000;break;
                 case 3:r.param.value=0x06030001;break;case 4:r.param.value=257000000;break;
-                case 5:if(!polaris_gpu_timestamp(&r.param.value))goto done;break;case 6:r.param.value=0;break;
+                case 5:if(!polaris_gpu_timestamp(&r.param.value))goto done;break;
+                /* Own A630 UCHE_GMEM_RANGE_MIN/MAX are 0x100000/0x1fffff.
+                 * Mesa uses this VA in GMEM texture/resolve descriptors.
+                 * The reference A642L's zero base is not our configuration. */
+                case 6:r.param.value=0x100000;break;
                 case 7:r.param.value=1;break;case 9:r.param.value=0;break;
                 case 0x10:r.param.value=15;break;default:goto done;
             }

@@ -80,13 +80,33 @@ bool polaris_gpu_quiescent(void)
     struct a630_core_snapshot *s=&a630_client_submit.live;
     const struct a630_core_io io={a630_core_owned,a630_core_read,a630_core_write,
         a630_gmu_sync,a630_delay_us,&a630_client_io};
-    uint32_t halt,fsr,sctlr;uint64_t root;
-    bool ok=a630_core_idle(&io,s) && a630_core_read(&a630_client_io,0x808,&halt) && halt==3 &&
-        a630_smmu_read(&a630_client_io,0x8058,&fsr) && !(fsr&0xc00001feu) &&
-        a630_smmu_read(&a630_client_io,0x8000,&sctlr) && (sctlr&0xc011ff)==0xc01127 &&
-        a630_smmu_read64(&a630_client_io,0x8020,&root) && root==a630_core_tables.physical;
-    if (!ok) polaris_gpu_quarantine();
-    return ok;
+    uint32_t value;uint64_t root;
+    s->error=0;s->offset=0;s->expected=0;s->actual=0;
+    if(!a630_core_idle(&io,s))goto failed;
+    s->offset=0x808;s->expected=3;
+    if(!a630_core_read(&a630_client_io,s->offset,&value))goto io_failed;
+    s->actual=value;if(value!=s->expected)goto mismatch;
+    s->offset=0x8058;s->expected=0;
+    if(!a630_smmu_read(&a630_client_io,s->offset,&value))goto io_failed;
+    s->actual=value;
+    if(value&0xc00001feu){s->error=A630_CORE_FAULT;goto failed;}
+    s->offset=0x8000;s->expected=0xc01127;
+    if(!a630_smmu_read(&a630_client_io,s->offset,&value))goto io_failed;
+    s->actual=value;if((value&0xc011ff)!=s->expected)goto mismatch;
+    s->offset=0x8020;s->expected=(uint32_t)a630_core_tables.physical;
+    if(!a630_smmu_read64(&a630_client_io,s->offset,&root))goto io_failed;
+    s->actual=(uint32_t)root;if(root!=a630_core_tables.physical)goto mismatch;
+    s->offset=0;s->expected=0;s->actual=0;
+    return true;
+mismatch:
+    s->error=A630_CORE_DATA;goto failed;
+io_failed:
+    s->error=A630_CORE_IO;
+failed:
+    /* Preserve the first failing predicate; no FSR/IRQ acknowledgement or
+     * recovery. The saved panel can distinguish a translation fault from
+     * a halt, register-read or address-space ownership failure. */
+    polaris_gpu_quarantine();return false;
 }
 bool polaris_gpu_map(uint64_t address,uint64_t physical,bool read_only,bool cached)
 {
