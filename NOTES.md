@@ -34,6 +34,70 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0049 TEMPORARY BOOT SENT11:45:56UTC; await actual GUI/GA loading and desktop use
+
+- FIRST automaticFASTBOOTquery11:43:11.423661UTC confirmed expectedpolaris;
+  no repeated keys request. ROpreflight11209EXIT0,11:44:47.648844UTC: fresh
+  full16GiBrootSHA689a8cd1,182maps/GPT/exactreviewedheader3e885886unchanged,
+  blockRO1/unmounted/32C. PendingAndroidjournal NOTclean/notreplayed/repaired;
+  NOpartition writes. All213frozeninputs stillmatch.
+- DIRECTboot-phone29632EXIT0: Sending/BootingOKAY,total1.541s;
+  **sent_utc2026-10-25T11:45:56.626423+00:00**. Image23ffa1efd2f6325b770271fbbed5fe67660f4fcbf096bdab472d4694153b8747,
+  kernel488ee48209529f556c2f619525a66eab431c33eeb7709f86826a596974346853,
+  payload719b50654ce3cad2c7f3fde220eed723dd557bc5fda0aa6bd9e72bb3cb46196d.
+  Source6c9b83333531cd62bc19828bf7472c41d1bda513/CI40189083903SUCCESS.
+-67native/8actualunits/35patches49files/29rows/185selectedCPU1checks/final
+  source+ABI+sixsignatures+payload+image PASS; onefirstasync-nettimerfailure
+  retained, same90sparametersretryPASSED. NoCPU2/IRQwaiver. UserlandrawMesa,
+  wrapper,test,PID1helper byte-identical0048; onlyGL/injectordylibs changed.
+- Await actual0049lockscreen/Settings/scroll and GA S/I/T/E/L/X/M. T6/E0 is
+  separateMesa/shader/ALL4096sharedpixelsselftest. L1policyanswered,2injector
+  connected,3loading,4all7methods(mask7f),5CAcontextrequested,6contextcreated.
+  X1env/2dlopen/3exports/4methods/5API-allocation/6Mesa-context; atL1errno.
+  NeitherL6norO1 aloneprovesdesktopGPU: need risingS/I beyondselftest duringUI.
+  IfnoGUIcapturelastlog/GLB; doNOTinfercompletionfromelapsedtime.
+- USB observerSTILLPAUSED; NOboot-and-watch/NOobserverstarted. Pause marker
+  bound to this exact sent_utc; noUSBsuccess/nonenumerationclaim. All new
+  loader reports cached, fixedexistingGArow; firstfault/fullRAMlogs retained.
+- NEXT await human actual0049result; do not send another boot or alter proven
+  GPU firmware/MMU/runtime before evidence. NoMetal/FPSclaim. New status
+  distinguishes loader/policy/EAGL/context failure from actual GPU completion.
+
+### 0049 FINAL IMAGE PASS; FASTBOOT confirmed; RO preflight11209 running
+
+- Final independentcheck11:42:51.068179UTC PASS:67native,8actualARM64units,
+  35orderedpatches49files/29rows,185selectedCPU1defaultclockchecks(all4modes),
+  fullsource/ABI/signatures/linkedSMC64bit/highPAcache/bundle/payload/rebuild/
+  packedimage. Firstasync-nettimerfailure retained; exactsameparametersretry
+  PASSED. NoCPU2/IRQwaiver. No0049physicalGPU/Desktop proof yet.
+- CI40189083903/source6c9b83333531cd62bc19828bf7472c41d1bda513 SUCCESS.
+  Kernel488ee48209529f556c2f619525a66eab431c33eeb7709f86826a596974346853;
+  payload719b50654ce3cad2c7f3fde220eed723dd557bc5fda0aa6bd9e72bb3cb46196d;
+  image shim/out/polaris-xnu-readdebug-0049/polaris-xnu-readdebug-0049.img
+  SHA23ffa1efd2f6325b770271fbbed5fe67660f4fcbf096bdab472d4694153b8747,
+  62914560bytes. Sixfilebundle d8a8fb79.../15376928bytes; all213frozeninputs match.
+- FIRST automaticquery11:43:11.423661UTC confirmed expectedpolaris FASTBOOT.
+  No duplicate keys request. Preflight11209 nowtemporarily boots knownRO
+  recovery ->fresh full16GiB/root182maps/GPT/exactreviewedheader/temp checks.
+  AnyNEWouterheader change STOP/review; pendingjournal NEVERreplay/repair.
+- NEXT wait11209; onlyonPASS run DIRECT run-device-step.py boot-phone, no
+  boot-and-watch/observer. USB observationPAUSED. Keep separate L/X/M loader
+  status and T/E selftest; actual desktop proof requires risingS/I duringUI.
+
+### 0049 first cache47PASS; async-network timer failure retained, exact retry running
+
+- Firstcache-high47checksPASS. Firstasync-net default-clockCPU1 panicked in
+  actual_rtclock_intr17.746ms over13.631488ms threshold, machine_routines_common.c893.
+  q-async-net-a1 plusfailureJSON/provenance retained, causeUNESTABLISHED.
+  Predeclared same90s/defaultclock/CPU1 parameters retry2 nowrunning in70193;
+  a second failure must STOP. No clock/IRQ/CPU2 waiver, no phone action.
+- Apple dyld1042.1 dyldMain.cpp698 independently confirms writing
+  config.process.progname to ProgramVars.__prognamePtr before initializers;
+  together with ProcessConfig executable_path rule this supports renamed
+  server gate repair. No0049hardware/Desktop result inferred from this.
+- Human alreadyFASTBOOTready; still wait finalimage/tests before query/boot.
+  USB observerPAUSED. Current0048photo provesMesa/selftest, notdesktopuse.
+
 ### 0049 full kernel SUCCESS; fresh CPU1 regressions running
 
 - CI40189083903/source6c9b83333531cd62bc19828bf7472c41d1bda513/
