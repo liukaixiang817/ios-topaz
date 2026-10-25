@@ -28,7 +28,33 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT ACTION —0035 temporary boot SENT; USB observer62255 ACTIVE
+### CURRENT ACTION —0035 GUI confirmed;0036 owned-context/PIPE fix in progress
+
+- Actualhumanconfirmed0035 “这次这样，已进入系统”, and “基本全程没有USB”.
+  PhotoD50D99C4: GS6/4still6b68 expected9a82a382 actuala8000082;
+  SH2378→237c→2378/2polls proveshalt/resume. GE0/0unattempted.
+  UR4/3CGCTL2→1a/retainedBUSY4,EP0cmd2still402/1000polls. NoGPUFW/rendering
+  orUSBconnectionproven. PhotoSHA/rawrowsprivatehardware-0035-observation.json.
+- Observer62255wasalreadyabsentbeforehumanreply. Only9fsyncedsamples,
+  0..80.567s through23:57:06.130238UTC/noECM/zeroinspectionerrors. Human
+  confirmationmarker00:01:24.213515UTC. **Hostcoveragegap, causenotestablished**;
+  donotclaimfullwindowabsence. observation-audit.jsonpreservesoriginalstate.
+  Donotrestartconfirmed0035observer.0036mustsurviveexec-session/turnlifetime.
+- Sourcecomparison: HackiOSspace_onconfiguresownedcontext, preservesglobal
+  implementationstate; originalpolarisqsmmuv2_device_resetisglobalprobe-time
+  reset(touchesallCBs), nottheper-contextattachcontract. Linuxv6.12
+  qcom_adreno_smmu_v2_impllikewisehasnoimplementationresetcallback.
+ 0036willprovideexplicitowned-contexthandoffpolicy, keeporiginalstrict
+  profile-writepath/readbackregressions; preserveall12implementationvalues,
+  retainarchitecturalCB/stream/TTBR/TLBSYNCACKs andHYP5..7exclusion.
+- Originaldwc3_phy_setupsetsPIPE.SUSPHYbit17aftercoreinitfor>1.94a;
+  actual3.30aPIPE3080002missesit.0036willrequestitunderhalt/idleandrestore
+  onlyownedbitswhenidle. NoPHYreset/SSlane/partitionwrite. Hardwarecause
+  remainsunproven. Root0035source57e5706/CI40143097727/image4bbd505c retained.
+- Phone0035Settingsworking. Build/validate0036beforedeviceaction; firstquery
+  FASTBOOTafterbuild, donotaskrepeatedconfirmationifalreadythere.
+
+###0035 temporary boot SENT; historical observer state (superseded above)
 
 - HumanclarifiedphonealreadyFASTBOOT; actualreadonlygetvarproduct=polaris
   EXIT0. FuturebuildsfirstqueryFASTBOOTandcontinuewhenpresent; onlyrequest
