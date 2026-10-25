@@ -34,6 +34,27 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT ACTION —0040 GUI and HFI INIT/FW_VER physically PROVEN; next native tables/finish
+
+- Actual human **“已完成启动”**, photo2AD63750. **GH8/7 NC2 C2 A2 V10070000**:
+  high-PA fix passed the actual phone; GMU fresh BABEFACE + original boot OOB/
+  SPTPRAC/HFIstatus and INIT/FW_VER ACKs PROVEN. FW1.7.0,zero command errors;
+  HQcmd7/7 rsp8/8, HA0012047e/00200001/0/10070000. No GPU rendering/CP yet.
+- **HRg1s1h1 z0 r0/5 @14648 expected40000000 actual8000**: slumber OOB ACK30
+  timed out. SPTP off poll passed before this; GXslumber not proven. Contained
+  CM3+BCR; mappings/permanentpages/bus/clocks/CX retained(K10/P8). GS8/7 setup
+  ready; SHrestore0 is NOT restoration success (SMMU_end never called).
+- USB observation remains PAUSED; no0040 watcher was started. Do not restart
+  it on this GUI confirmation. No new native USB connection claim.
+- Next complete native A630 legacy HFI PERF(43words),BW(160words),TEST(1word),
+  then safe slumber with real native perf/bus indices. Native vendor source
+  explicitly sends these before finishing HFI_USE_REG startup;0000 indices
+  and missing tables in current probe can explain slumber failure (hypothesis).
+  Derive votes from THIS phone's live DT and captured cmdDB, not642L constants.
+- Private0041 contains verified original msm_bus_rpmh files (same pinnedMiCode
+  c7cb50c1,Gitblob hashes checked) and live-source.dts. No0041 functional code,
+  CI/image/device action yet. Keep0040 as working HFI baseline/0038 fallback.
+
 ### CURRENT ACTION —0040 temporary boot SENT; USB observation remains PAUSED
 
 - **Preflight14222 EXIT0**,verified **02:09:57.991719UTC**: full16GiB689a8cd1/
