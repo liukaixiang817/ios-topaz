@@ -34,6 +34,28 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT ACTION —0042 actual ARM64 SMC encoding fixed/proven; final corrected CI next
+
+- Critical pre-boot ISA review: actual XNU polaris_a630.o frompublic07aa596
+  contained ZERO SMC instructions. Darwin treats semicolon asassemblycomment,
+  so "dsb sy; smc #0; dsb sy" emittedonlyfirstDSB. This explains why host mocked
+  protocoltests alone wereinsufficient. No0042image/phoneboot occurred.
+- Stoppedownwrapper6791 andrequestedcancelCI40157364678. Preservedold14host
+  scripts/source/native43records/badobject/ASM inpre-scm-encoding-review/.
+- Explicitnewlines now emitSMC. CallbacknoinlinepreservesnamedbodyforlinkedISA
+  check. Newregression extractsACTUAL a630_scm_call, crosscompilesDarwinARM64,
+  requiresSMC+DSBbefore/after and64bitx3(no w3truncation). ActualXNUheaders
+  object independently shows16SMCs, eachbracketed,64bitmetadata; nohardwareclaim.
+  NativeDCVSbitfielddefinitions independentlycompileto30000001/00000004.
+- Local44ASan/UBSan/actualSMCcodegen tests PASS,29rowformatter PASS;4actualCI
+  headerARM64units/imports PASS;27patches/35files/sourceproof PASS. Keep strict
+  PAS_SHUTDOWN frompriorreview. Historical draft integrate-core.py nowrefuses
+  rerun; finalcanonicalsourceiscommitted. DoNOTrerunoldinjector.
+- Nextsource-onlypublishthreechangedfiles, freshCI andfixed130selectedCPU1
+  checks; finalchecker MUST inspectactualLINKED SMC+DSB/fullwidthargs too.
+  FIRSTFASTBOOTqueryafterimagecheck, thenROpreflight/directtempbootifready.
+  USB host observer staysPAUSED. Stillno0042physicalCP/imageproof ordesktopGPU.
+
 ### CURRENT ACTION —0042 quality-review lifetime fix verified; fresh CI next
 
 - Source63ee8e1/public33c13c7 initiallytriggeredCI40157085281. Qualityreview
