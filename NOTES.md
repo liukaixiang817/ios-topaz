@@ -34,7 +34,31 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT ACTION —0044 native cold PAS fix source4564a8a / CI40161330702 running
+### CURRENT ACTION —0044 image verified; FASTBOOT auto-found; RO preflight running
+
+- FullCI40161330702/source4564a8a835c71980db54f0a47abb5dbd4e560705 SUCCESS.
+  Kernel f3d982220bd4b44ec3aba0fad39c1d4b2077662a6893074ef2d1187ff64c91c3;
+  payload cfced28d22834f733f8c5627dbeff08f224a9ee9b59a27eb7854390669d6f86c;
+  image 671c322714e1ffba833128db4d7144341397d71fcf5cbb5d5c94a025722a47b9
+  (47509504B). All133 standardclockCPU1 checks FIRSTPASS (45/44/44), no0044
+  guest failure/retry. Earlier0043 timer failures remain FAILED/unresolved.
+- Independentfinal-prepared-check PASS04:28:03.199409UTC:49localtests,
+  4actualARM64units,29patches35files,29rows, linkedSMC/DSB/fullwidthmetadata,
+  highPAcachefix, exactsource/profile/payload/image verified. Firstchecker
+  stopped on missing source-profile-check.json before device action; ran
+  original48register/12liveDTpair checker, PASS, then SAMEunchangedfinal
+  checkerPASS. No kernel/checker/guestthresholdchange; firststop preserved
+  inindependent-final-first-failure.json.
+- FIRSTautomaticFASTBOOTquery04:28:13.407729UTC foundexpectedpolaris; no keys
+  requested. FreshROpreflight session16169 now running, includingfull16GiB
+  root hash,182maps,GPT/header andnoloadRO checks. OnPASS directlyrun-device-step
+  boot-phone, NOTboot-and-watch. No0044phoneboot sentyet. USBobserverPAUSED.
+- ColdPAS fix below removes extra PRE-INIT shutdown that hung0043. Fresh
+  authenticatedresources retained for kernel lifetime; GZK1 notdrawingproof.
+  Actual0044 PAS201/202/205, CPfence/image andGUI results UNPROVEN. Desktop
+  rendering remainsCPU; noGPUuserclient/Mesa/Metal/IOSurfacebridgeimplemented.
+
+### 0044 native cold PAS fix source4564a8a / CI40161330702 preparation
 
 - Human0043 photo02856914 + “又停滞了” identifies lastvisibleboundary:
   SCM enter fn42000206 info1 argd/0/0, NOmatchingreturn. It is the extra
