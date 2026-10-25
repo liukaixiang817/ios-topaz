@@ -34,6 +34,33 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0054 FINAL PASS; FIRSTautoFASTBOOT present; ROpreflight41548 running
+
+- Finalchecker14:46:46.058981UTC PASS:81native/8actualunits/imports/
+  40orderedprofiles53files/29rows/185freshCPU1defaultclockchecks FIRSTPASS,
+  no0054guestfailure/retry;237frozeninputs/source+ABI/sixsignatures/
+  linkedSMC64/highPAcache/identicalpayload/Cvalidator/packedimagePASS.
+- CI40202831028 job121197434189/sourcea4a42cb0fce7535dec309d99a03eee589e259b2f
+  SUCCESS. Kernel7b4c6dd0be23f2b21a7c7fe5c74cbf0fc744c274da0efc0bfe8c16756dac241a;
+  payload19ce531c5b28a32ed089758ae32e8e7034b7354c4fe6e8b621d0e03f7e04dd0a;
+  image shim/out/polaris-xnu-readdebug-0054/polaris-xnu-readdebug-0054.img
+  62935040B SHAa4fa762f4a919e2f3c28742add9d0bfb6e581e1b7161946aadb15141d7159eb7.
+  Bundle15379808B SHAeb825fc99a38040837f1823c5d6ceb701a195f680ec193838e5c876b09a03353.
+- FIRSTautoquery14:47:11.632966UTC expectedpolaris alreadyFASTBOOT. Noask.
+  ROpreflight41548 running knownheadlessrecovery/full16GiB/maps/GPT/header/
+  temp. AnynewheaderchangeSTOP/read-onlyreview, nojournalreplay/repair.
+- NEXTwait41548 thenonlyPASS directboot-phone;USBobserverstillPAUSED.
+  NeedactualforcedGMEM+fetchallpixelsT6E0 THENstablegrowingdesktopC/R1/D0,
+  noGLF. Previous0053C18thenVA0fault, notstableGPU.
+
+### 0054 CI40202831028 SUCCESS; exact artifact/fresh regressions in progress
+
+- Fullbuild job121197434189 sourcea4a42cb0fce7535dec309d99a03eee589e259b2f
+  SUCCESS. Download boundtoexactpolarisprofile/CRC/SHA, thenfourfreshCPU1
+  defaultclockcases185checks.237frozeninputs unchanged. No0054phoneaction.
+- GMEMaddressmismatchconfirmedbysource, newphysicalproofstillPENDING.
+  FIRSTautoFASTBOOTqueryafterfinalcheck;USBobserverPAUSED.
+
 ### 0054 source a4a42cb / CI40202831028 running; inputs frozen
 
 - Root8a3da3d. Sixsource-onlyfiles published a4a42cb0fce7535dec309d99a03eee589e259b2f
