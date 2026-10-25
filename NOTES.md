@@ -37,7 +37,7 @@ early samples only. On0029 the human already confirmed boot complete and said
 ### CURRENT ACTION —0045 finalsourceafc1c7a / CI40163178453 running; currentphone0044GUI/CP80
 
 - Final local1af87bb; publicafc1c7a5ccec55a323993b7e20be11b579d6ed79 (parent
-  79fd790). CI40163178453, wrapper54963 active. Actualadapter nowverifiesALL8
+  79fd790). CI40163178453, wrapper3121 active. Actualadapter nowverifiesALL8
   capturedSMMUoffsets fromownoriginalarm-smmu.c; noreservedCB0+6c read. Last
   wordisdefinedglobalGFSYNR2+58. Actualadaptertest exercisesthe8ROreads on
   CPfailure andrejectsanythingelse; noack/reset/resume/ATOS. Same49/29/4/30/35
@@ -46,7 +46,12 @@ early samples only. On0029 the human already confirmed boot complete and said
   thenforce-canceltofreequeue); wrapper4554 EXIT1 oncancelledassert. No guest,
   image orphoneaction. Frozenold14scripts/proofs/publication/CIstate/log in
   0045/pre-register-review/. Final14scripts re-frozen BEFORE anyguestexecution.
-- NEXTwait54963 → independentfinal-prepared-check.py inclCP-source-check.
+- Wrapper54963 stopped after GitHubTLS handshake timeout, NOTkernel/CI failure:
+  followingstatequery stillIN_PROGRESS/no conclusion, noartifact/guest/device
+  action. Preserved CI-watch-TLS-timeout/; identicalfrozenwrapper restarted
+  session3121 againstSAMErun withHTTP2disabledfornetworkonly. No testcase/
+  kernel/source/clock change. NEXTwait3121 → final-prepared-check.py.
+- Independentfinalcheck includesCP-source-check.
   FIRSTautoFASTBOOTquery afterverifiedimage, ifready freshROpreflight then
   directboot-phone. USBobserver remainsPAUSED; noboot-and-watch. No0045image/
   deviceactionyet. Current0044GUI/PASauthknown; firstCPinitfailedCP80, rootcause
