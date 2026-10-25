@@ -34,7 +34,25 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT ACTION —0045 source79fd790 / CI40163016649 running; currentphone0044GUI/CP80
+### CURRENT ACTION —0045 finalsourceafc1c7a / CI40163178453 running; currentphone0044GUI/CP80
+
+- Final local1af87bb; publicafc1c7a5ccec55a323993b7e20be11b579d6ed79 (parent
+  79fd790). CI40163178453, wrapper54963 active. Actualadapter nowverifiesALL8
+  capturedSMMUoffsets fromownoriginalarm-smmu.c; noreservedCB0+6c read. Last
+  wordisdefinedglobalGFSYNR2+58. Actualadaptertest exercisesthe8ROreads on
+  CPfailure andrejectsanythingelse; noack/reset/resume/ATOS. Same49/29/4/30/35
+  tests/rows/units/patches/files, imports/SMC/independentboundaries allPASS.
+- Superseded79fd790/CI40163016649 COMPLETED/CANCELLED (ordinarycancellation
+  thenforce-canceltofreequeue); wrapper4554 EXIT1 oncancelledassert. No guest,
+  image orphoneaction. Frozenold14scripts/proofs/publication/CIstate/log in
+  0045/pre-register-review/. Final14scripts re-frozen BEFORE anyguestexecution.
+- NEXTwait54963 → independentfinal-prepared-check.py inclCP-source-check.
+  FIRSTautoFASTBOOTquery afterverifiedimage, ifready freshROpreflight then
+  directboot-phone. USBobserver remainsPAUSED; noboot-and-watch. No0045image/
+  deviceactionyet. Current0044GUI/PASauthknown; firstCPinitfailedCP80, rootcause
+  unproven; noGPUpixelproof/desktopbridge. Allimportant29screenrows retained.
+
+### 0045 initialsource79fd790 / CI40163016649 cancelled before device actions
 
 - Local sourcecommitd784d99; publicsource79fd79034d12821afcb15dc76a2275ba7a9716a4
   (parent4564a8a), only5source/test/0850patchfiles, NOTES/privatehistory excluded.
