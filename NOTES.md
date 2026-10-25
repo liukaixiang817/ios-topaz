@@ -34,6 +34,29 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT ACTION —0041 mode8 native HFI completion locally verified
+
+- New0846 completes PERF43/BW160/TEST1 after physical-proven INIT/FW_VER.
+  GX8/CX3 entries derive from own v2 clock/DT/cmdDB; bandwidth13/2 levels derive
+  from original bus graph: DDR MC0/SH0/ACV, CNOC SH2/SN15/SN3 (3cmds each).
+  Default native slumber indices1/4. Independent oracle203 dwords SHA
+  f605b4fefb5ba1c38bfd258146cf6e2bd9c462081e71e6092e802a3a7b64f47b.
+- Explicit port decisions: retain duplicate MX16 indices; wait masks5/7 index
+  COMMANDS (old pinned vendor BIT(i) bandwidth-index typo is documented).
+  Native bus formulas/units/clock corners verified; no borrowed642L CN0 table.
+- On all5 matching ACKs, original slumber + idle + RSCC sleep sequence runs;
+  observe before/after RSC status, wait for GX-off before teardown. Partial full
+  startup retains resources, including failures before HFI_CTRL_INIT. Initial
+  host fault test caught that missing early guard; fixed and failure retained
+  private0041/native-test-development-failure.txt. No hardware saw that draft.
+- Local31 ASan/UBSan tests,4 actual-header ARM64 units/imports,26 ordered patches/
+  31 actual files/24-row formatter/native source+DT/profiles PASS. Mode7 remains
+  the proven baseline; mode8 is selected for next phone test. No CP/SQE/ZAP/3D.
+- Preparing source-only commit/publication and full CI next; no0041 CI/image/
+  device action yet. Phone0040 GUI working/HFI1.7 proven; USB host observation
+  remains PAUSED and must not be restarted. After build/finalcheck FIRST query
+  FASTBOOT, then fresh RO preflight/direct temporary boot if expected phone ready.
+
 ### CURRENT ACTION —0040 GUI and HFI INIT/FW_VER physically PROVEN; next native tables/finish
 
 - Actual human **“已完成启动”**, photo2AD63750. **GH8/7 NC2 C2 A2 V10070000**:

@@ -1,6 +1,6 @@
 /* Original A630 HFI_USE_REG bootstrap, from MiCode c7cb50c1
- * adreno_a6xx.c and kgsl_hfi.{c,h}. This probes INIT/FW_VER only: no
- * performance/BW table, TEST, SQE, CP, 3D or rendering is admitted.
+ * adreno_a6xx.c and kgsl_hfi.{c,h}. Mode7 probes INIT/FW_VER.
+ * Mode8 completes original PERF/BW/TEST; no SQE/CP/3D/rendering is admitted.
  * Caller owns powered/clocks/bus/SMMU and a freshly booted BABEFACE GMU.
  * Shared HFI/dump memory MUST be Normal noncacheable on both processors;
  * cleaning a cached header that the GMU also updates is not sufficient.
@@ -8,6 +8,7 @@
 #ifndef POLARIS_A630_CHANNEL_H
 #define POLARIS_A630_CHANNEL_H
 #include "polaris-a630-hfi.h"
+#include "polaris-a630-tables.h"
 #define A630_CH_HFI_IOVA 0x60000000u
 #define A630_CH_DUMP_IOVA 0x60004000u
 #define A630_CH_INTR_SET 0x14650u
@@ -22,6 +23,10 @@
 #define A630_CH_POWER_STATE 0x143b0u
 #define A630_CH_HFI_INIT 0x14618u
 #define A630_CH_HFI_STATUS 0x14600u
+#define A630_CH_AO_BUSY 0x24c30u
+#define A630_CH_RSC_REQUEST 0x24c1cu
+#define A630_CH_RSC_STATUS 0x23010u
+#define A630_CH_RSC_BUSY 0x23404u
 #define A630_CH_FW_FAULTS 0x00ff0000u
 enum a630_channel_error {A630_CH_DISABLED,A630_CH_ARGUMENT,A630_CH_IO,
     A630_CH_LEASE,A630_CH_RUNNING,A630_CH_TIMEOUT,A630_CH_PROTOCOL,
@@ -37,6 +42,7 @@ struct a630_channel_snapshot {
     uint32_t restore_offset,restore_expected,restore_actual;
     uint32_t status,sp_status,power_state,commands,acks,version,last_id,async_messages;
     uint32_t response[4],cmd_read,cmd_write,rsp_read,rsp_write;
+    uint32_t full_requested,tables_done,slumber_stage,rsc_requested,rsc_before,rsc_status;
 };
 static inline bool a630_ch_owned(const struct a630_channel_io *io,
     struct a630_channel_snapshot *s)
@@ -149,11 +155,12 @@ static inline bool a630_ch_command(const struct a630_channel_io *io,
     }
     s->error=A630_CH_TIMEOUT;return false;
 }
-static inline bool a630_channel_probe(bool exact_board,bool normal_NC_ready,
+static inline bool a630_channel_probe_complete(bool exact_board,bool normal_NC_ready,bool full,
     const struct a630_channel_io *io,void *memory,struct a630_channel_snapshot *s)
 {
     if(!s)return false;*s=(struct a630_channel_snapshot){0};
     if(!exact_board)return false;
+    s->full_requested=full;
     if(!normal_NC_ready||!io||!io->owned||!io->read||!io->write||!io->sync||!io->wait||
        !a630_hfi_memory(memory,A630_HFI_BYTES,A630_CH_HFI_IOVA)){
         s->error=A630_CH_ARGUMENT;goto done;
@@ -190,10 +197,25 @@ static inline bool a630_channel_probe(bool exact_board,bool normal_NC_ready,
     s->stage=6;
     uint32_t version[2]={0,0x10010000};a630_hfi_header(1,2,0,2,&version[0]);
     if(!a630_ch_command(io,s,memory,version,2))goto done;
-    s->stage=7;s->error=A630_CH_READY;
+    if(full){
+        uint32_t perf[A630_PERF_WORDS],bw[A630_BW_WORDS],test[1];
+        if(!a630_hfi_tables(perf,bw,3,4)){s->error=A630_CH_ARGUMENT;goto done;}
+        s->stage=8;
+        if(!a630_ch_command(io,s,memory,perf,A630_PERF_WORDS))goto done;
+        s->tables_done|=1;s->stage=9;
+        if(!a630_ch_command(io,s,memory,bw,A630_BW_WORDS))goto done;
+        s->tables_done|=2;s->stage=10;
+        a630_hfi_header(5,1,0,5,&test[0]);
+        if(!a630_ch_command(io,s,memory,test,1))goto done;
+        s->tables_done|=4;s->stage=11;
+    }else s->stage=7;
+    s->error=A630_CH_READY;
 done:
     s->start_error=s->error;return s->error==A630_CH_READY;
 }
+static inline bool a630_channel_probe(bool exact_board,bool normal_NC_ready,
+    const struct a630_channel_io *io,void *memory,struct a630_channel_snapshot *s)
+{return a630_channel_probe_complete(exact_board,normal_NC_ready,false,io,memory,s);}
 /* Original register-mode slumber before containment. An uncertain GX state
  * MUST retain all mappings, clocks and power, even if CM3 is then reset. */
 static inline bool a630_channel_slumber(const struct a630_channel_io *io,
@@ -201,6 +223,10 @@ static inline bool a630_channel_slumber(const struct a630_channel_io *io,
 {
     if(!s->gx_requested)return true;
     struct a630_channel_snapshot r=*s;r.error=0;r.failed_offset=r.expected=r.actual=0;
+    if(s->full_requested && s->tables_done!=7){
+        r.error=A630_CH_PROTOCOL;goto failed;
+    }
+    s->slumber_stage=1;
     if(!a630_ch_write(io,&r,2,A630_CH_INTR_SET,1u<<30))goto failed;
     if(!a630_ch_write(io,&r,2,0x14100,0))goto failed;
     if(s->sptp_requested){
@@ -211,17 +237,35 @@ static inline bool a630_channel_slumber(const struct a630_channel_io *io,
            !a630_ch_write(io,&r,2,A630_CH_SPTP_CONTROL,0x778001)||
            !a630_ch_poll(io,&r,A630_CH_SPTP_STATUS,4,4,1000))goto failed;
     }
+    s->slumber_stage=2;
     if(!a630_ch_write(io,&r,2,A630_CH_BOOT_OPTION,1)||
-       !a630_ch_write(io,&r,2,A630_CH_GX_VOTE,0)||
-       !a630_ch_write(io,&r,2,A630_CH_MX_VOTE,0)||!a630_ch_oob(io,&r)||
+       !a630_ch_write(io,&r,2,A630_CH_GX_VOTE,s->tables_done==7?A630_NATIVE_PERF_INDEX:0)||
+       !a630_ch_write(io,&r,2,A630_CH_MX_VOTE,s->tables_done==7?A630_NATIVE_BUS_INDEX:0)||!a630_ch_oob(io,&r)||
        !a630_ch_write(io,&r,2,A630_CH_INTR_SET,1u<<30)||
        !a630_ch_read(io,&r,2,A630_CH_POWER_STATE,&s->power_state)||
        !a630_ch_read(io,&r,2,A630_CH_SPTP_STATUS,&s->sp_status)||
        !a630_ch_write(io,&r,2,0x24c40,0))goto failed;
-    if(s->power_state!=15||(s->sp_status&0xc0)!=0xc0){
+    if(s->power_state!=15){r.error=A630_CH_PROTOCOL;
+        r.failed_offset=A630_CH_POWER_STATE;r.expected=15;r.actual=s->power_state;goto failed;}
+    if(s->full_requested){
+        s->slumber_stage=3;
+        if(!a630_ch_poll(io,&r,A630_CH_AO_BUSY,0,1u<<30,1000))goto failed;
+        s->slumber_stage=4;
+        if(!a630_ch_poll(io,&r,A630_CH_RSC_BUSY,0,UINT32_MAX,10000)||
+           !a630_ch_read(io,&r,2,A630_CH_RSC_STATUS,&s->rsc_before))goto failed;
+        s->rsc_requested=1;
+        if(!a630_ch_write(io,&r,2,A630_CH_RSC_REQUEST,1)||
+           !a630_ch_poll(io,&r,A630_CH_RSC_STATUS,1u<<16,1u<<16,10000)||
+           !a630_ch_read(io,&r,2,A630_CH_RSC_STATUS,&s->rsc_status)||
+           !a630_ch_write(io,&r,2,A630_CH_RSC_REQUEST,0))goto failed;
+        s->slumber_stage=5;
+        if(!a630_ch_poll(io,&r,A630_CH_SPTP_STATUS,0xc0,0xc0,10000)||
+           !a630_ch_read(io,&r,2,A630_CH_SPTP_STATUS,&s->sp_status))goto failed;
+    }
+    if((s->sp_status&0xc0)!=0xc0){
         r.error=A630_CH_PROTOCOL;r.failed_offset=A630_CH_SPTP_STATUS;r.expected=0xc0;r.actual=s->sp_status;goto failed;
     }
-    s->slumber=1;return true;
+    s->slumber_stage=6;s->slumber=1;return true;
 failed:
     s->restore_error=r.error?r.error:A630_CH_IO;s->restore_offset=r.failed_offset;
     s->restore_expected=r.expected;s->restore_actual=r.actual;return false;
