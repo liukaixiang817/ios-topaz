@@ -4,10 +4,41 @@
 static struct a630_io a630_client_io;
 static struct a630_submit a630_client_submit;
 static uint32_t a630_client_ready, a630_client_dead;
+struct a630_client_fault {
+    uint32_t error,offset,expected,actual,cp,irq,hw,protect,wptr,rptr;
+    uint32_t far[2],fsr,syndrome,valid;
+};
+static struct a630_client_fault a630_client_first_fault;
+static uint32_t a630_client_fault_published;
+uint32_t polaris_gpu_fault_line(unsigned line,char *out,uint32_t capacity)
+{
+    if(!out || !capacity || line>2 || !__atomic_load_n(&a630_client_fault_published,__ATOMIC_ACQUIRE))return 0;
+    const struct a630_client_fault *s=&a630_client_first_fault;
+    if(!line)return (uint32_t)snprintf(out,capacity,"GX E%x @%x e%x a%x",s->error,s->offset,s->expected,s->actual);
+    if(line==1)return (uint32_t)snprintf(out,capacity,"GCP C%x I%x H%x P%x W%x/%x",s->cp,s->irq,s->hw,s->protect,s->wptr,s->rptr);
+    return (uint32_t)snprintf(out,capacity,"GFAR %08x:%08x S%x Y%x V%x",s->far[1],s->far[0],s->fsr,s->syndrome,s->valid);
+}
 void polaris_gpu_quarantine(void)
 {
-    if (!__atomic_exchange_n(&a630_client_dead,1,__ATOMIC_ACQ_REL))
-        printf("POLARIS GPU: runtime quarantined; DMA pages/power retained, no further submissions\n");
+    if (__atomic_exchange_n(&a630_client_dead,1,__ATOMIC_ACQ_REL))return;
+    const struct a630_core_snapshot *s=&a630_client_submit.live;
+    struct a630_client_fault *f=&a630_client_first_fault;
+    *f=(struct a630_client_fault){.error=s->error,.offset=s->offset,.expected=s->expected,.actual=s->actual,
+        .cp=s->cp_irq,.irq=s->irq,.hw=s->hw_fault,.protect=s->protect,.wptr=s->wptr,.rptr=s->rptr};
+    /* Best-effort fixed RO capture under the EXISTING runtime lease/deadline.
+     * Never renew that deadline, acknowledge an IRQ/FSR, resume, issue ATOS,
+     * reset or free memory. Render timers only format this immutable result. */
+    const uint32_t words[7]={0x823,0x821,0x824,0x8058,0x8060,0x8064,0x8068};
+    uint32_t *values[7]={&f->cp,&f->hw,&f->protect,&f->fsr,&f->far[0],&f->far[1],&f->syndrome};
+    for(unsigned n=0;n<7;n++) {
+        bool ok=n<3?a630_core_read(&a630_client_io,words[n],values[n]):
+            a630_smmu_read(&a630_client_io,words[n],values[n]);
+        if(ok)f->valid|=1u<<n;
+    }
+    __atomic_store_n(&a630_client_fault_published,1,__ATOMIC_RELEASE);
+    printf("POLARIS GPU: runtime quarantined E%x @%x e%x a%x CP%x IRQ%x HW%x P%x W%x/%x FAR%08x:%08x FSR%x SYN%x valid%x; retain all DMA pages/power\n",
+        f->error,f->offset,f->expected,f->actual,f->cp,f->irq,f->hw,f->protect,f->wptr,f->rptr,
+        f->far[1],f->far[0],f->fsr,f->syndrome,f->valid);
 }
 bool polaris_gpu_ready(void)
 {
@@ -77,7 +108,12 @@ bool polaris_gpu_commit(void)
         if (!ok || !(busy&1)) break;
         a630_delay_us(&a630_client_io,1);
     }
-    if (!ok || (busy&1)) {polaris_gpu_quarantine();return false;}
+    if (!ok || (busy&1)) {
+        a630_client_submit.live.error=A630_CORE_TIMEOUT;
+        a630_client_submit.live.offset=0x87f4;a630_client_submit.live.expected=0;
+        a630_client_submit.live.actual=busy;
+        polaris_gpu_quarantine();return false;
+    }
     a630_mmu_cleaned(&a630_core_tables);
     return true;
 }

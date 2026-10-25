@@ -18,6 +18,52 @@ def run(source):
 
 
 class A630SubmitTests(unittest.TestCase):
+    def test_first_runtime_fault_is_fixed_read_only_and_formatting_never_reads_hardware(self):
+        text = (ROOT / 'tools/polaris-a630-runtime.h').read_text()
+        def body(name):
+            start = text.index(name)
+            left = text.index('{', start)
+            at, depth = left + 1, 1
+            while depth:
+                depth += (text[at] == '{') - (text[at] == '}')
+                at += 1
+            return text[start:at] + '\n'
+        decl = text[text.index('struct a630_client_fault {'):text.index('static struct a630_client_fault a630_client_first_fault;')]
+        run(r'''
+#include "polaris-a630-core.h"
+#include <assert.h>
+#include <stdio.h>
+#include <string.h>
+''' + decl + r'''
+static unsigned a630_client_io,reads,expired;
+static uint32_t a630_client_dead,a630_client_fault_published;
+static struct a630_client_fault a630_client_first_fault;
+static struct {struct a630_core_snapshot live;}a630_client_submit;
+static bool a630_core_read(void*p,uint32_t reg,uint32_t*v){
+ assert(p==&a630_client_io);if(expired)return false;
+ const uint32_t regs[]={0x823,0x821,0x824};assert(reads<3&&reg==regs[reads]);
+ *v=0x8000+reads++;return true;}
+static bool a630_smmu_read(void*p,uint32_t reg,uint32_t*v){
+ assert(p==&a630_client_io);if(expired)return false;
+ const uint32_t regs[]={0x8058,0x8060,0x8064,0x8068};assert(reads>=3&&reads<7&&reg==regs[reads-3]);
+ *v=0x9000+reads++;return true;}
+/* No write/reset/free/deadline-renew callback exists in this compilation. */
+''' + body('uint32_t polaris_gpu_fault_line(') + body('void polaris_gpu_quarantine(void)') + r'''
+int main(void){char b[68];
+ a630_client_submit.live=(struct a630_core_snapshot){.error=6,.offset=0x823,.expected=0,.actual=0x80};
+ assert(!polaris_gpu_fault_line(0,b,sizeof(b)));
+ polaris_gpu_quarantine();assert(reads==7&&a630_client_dead&&a630_client_fault_published);
+ assert(a630_client_first_fault.valid==127&&a630_client_first_fault.cp==0x8000&&a630_client_first_fault.fsr==0x9003);
+ unsigned before=reads;polaris_gpu_quarantine();assert(reads==before);
+ memset(&a630_client_first_fault,0xff,sizeof(a630_client_first_fault));
+ for(unsigned n=0;n<3;n++){unsigned length=polaris_gpu_fault_line(n,b,sizeof(b));assert(length==strlen(b)&&length<=67);}
+ assert(reads==before);assert(!polaris_gpu_fault_line(3,b,sizeof(b)));
+ a630_client_dead=0;a630_client_fault_published=0;reads=0;expired=1;
+ polaris_gpu_quarantine();assert(!reads&&!a630_client_first_fault.valid);
+ assert(a630_client_fault_published&&a630_client_first_fault.error==6);
+ return 0;}
+''')
+
     def test_real_gpu_counter_rollover_and_read_failure(self):
         text = (ROOT / 'tools/polaris-a630-runtime.h').read_text()
         start = text.index('bool polaris_gpu_timestamp(uint64_t *value)')
