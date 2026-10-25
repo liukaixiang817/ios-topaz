@@ -34,6 +34,40 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0057 actual Mindows UEFI extracted and verified; original Android running
+
+- Transport recovered. Targeted expected-polaris FASTBOOT query succeeded;
+  known original headless recovery booted temporarily. Fresh read-only backup
+  of 29 firmware candidates + ESP passed source-before/source-after/host SHA
+  and six-LUN GPT head/tail checks. No partition writes or mounts. Artifacts:
+  research/polaris/uefi-integration-0057/original-current/manifest.json.
+- Original boot was verified and Android rebooted normally (no flash). Human
+  unlocked Android and authorized ADB; Magisk root works. Android journal/logs
+  may now change. MUST re-export iOS root extents and recheck full root SHA and
+  outer metadata before another XNU boot; old 182 extents/header acceptance
+  must not be reused blindly. Continuous USB observation remains PAUSED;
+  targeted ADB/FASTBOOT checks only.
+- Actual Mindows app is com.mindows.toolbox. Extracted configured image
+  /sdcard/Mindows助手/uefi.img (5,939,200 bytes) to private ignored
+  original-current/Mindows-configured-uefi.img. SHA256
+  8588a9a5218d407dd3169ec1f340097db689b3d046f3d38189514e09f3944336
+  matches phone before + phone after + host. Original file untouched. Initial
+  Magisk PTY byte translation was caught by hash mismatch and rejected; raw
+  transfer corrected it. No original firmware/Apple/device data enters git.
+- Android v1/page2048 container: gzip kernel expands to 6MiB BootShim/FV image,
+  plus 491,520-byte appended tail (DTBs, still to validate). Outer FV at0x8000,
+  header checksum valid; inner LZMA volume parsed, 84 FFS records inventoried.
+  Build paths identify edk2-sdm845 RELEASE_GCC5 built under /home/xiang;
+  exact source version not yet established. SimpleInitMain + BdsDxe present.
+  Keep existing vendor modules and Windows files; do not substitute newer
+  downloaded firmware. Fresh ESP matches backup, 95 Windows files, no menu
+  config there. Existing bootaa64.efi is Windows manager, not firmware body.
+- NEXT inspect actual SimpleInit configuration/source and board DT tail,
+  implement minimal EFI menu/loader with correct upper-RAM ownership,
+  EL1/EL2/cache/MMU/16KiB transition, emulate actual handoff, then physical RAM
+  trial. Generic probe PASS is NOT full XNU boot. No persistent install or
+  firmware-write boundary approved; prepare concrete plan after RAM success.
+
 ### 0057 human confirms Android Mindows switching; host still sees no device
 
 - Human answered normalWindowsroute=AndroidMindows/switchtool, andsaid
