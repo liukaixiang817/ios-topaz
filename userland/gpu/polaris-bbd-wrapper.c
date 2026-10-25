@@ -12,7 +12,60 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <time.h>
+#include <errno.h>
+#include "../../tools/polaris-gl-status.h"
 extern char **environ;
+extern int __mac_syscall(const char *,int,void *);
+static uint64_t test_milliseconds(void)
+{
+    struct timespec now={0};
+    if(clock_gettime(CLOCK_MONOTONIC,&now))return 0;
+    return (uint64_t)now.tv_sec*1000u+(uint64_t)now.tv_nsec/1000000u;
+}
+static void test_notice(unsigned event,unsigned value,uint64_t elapsed)
+{
+    struct pgpu_test_notice p={event,value,(uint32_t)(elapsed>600000?600000:elapsed),0};
+    (void)__mac_syscall("AMFI",0x5c,&p);
+}
+/* Wall-clock bound includes cold dyld/CF pages, shader compilation and the
+ * unchanged hardware/pixel check. Time passing never establishes success. */
+static int run_acceptance(void)
+{
+    uint64_t start=test_milliseconds();
+    test_notice(PGPU_TEST_BEGIN,0,0);
+    if(!start){test_notice(PGPU_TEST_WAIT_ERROR,EIO,0);return 0;}
+    pid_t child;char *const test[]={"/usr/libexec/polaris-gl-test",NULL};
+    int error=posix_spawn(&child,test[0],NULL,NULL,test,environ);
+    if(error){test_notice(PGPU_TEST_SPAWN_ERROR,(unsigned)error,test_milliseconds()-start);return 0;}
+    for(;;) {
+        int status=0;pid_t result=waitpid(child,&status,WNOHANG);
+        uint64_t now=test_milliseconds();
+        if(!now || now<start) {
+            kill(child,SIGKILL);while(waitpid(child,&status,0)<0 && errno==EINTR){}
+            test_notice(PGPU_TEST_WAIT_ERROR,EIO,0);return 0;
+        }
+        uint64_t elapsed=now-start;
+        if(result==child) {
+            if(WIFEXITED(status)) {
+                test_notice(PGPU_TEST_EXIT,(unsigned)WEXITSTATUS(status),elapsed);
+                return WEXITSTATUS(status)==0;
+            }
+            test_notice(PGPU_TEST_SIGNAL,(unsigned)WTERMSIG(status),elapsed);return 0;
+        }
+        if(result<0 && errno!=EINTR) {
+            unsigned reason=(unsigned)errno;
+            if(errno!=ECHILD){kill(child,SIGKILL);while(waitpid(child,&status,0)<0 && errno==EINTR){}}
+            test_notice(PGPU_TEST_WAIT_ERROR,reason,elapsed);return 0;
+        }
+        if(elapsed>=PGPU_ACCEPTANCE_TIMEOUT_MS) {
+            kill(child,SIGKILL);while(waitpid(child,&status,0)<0 && errno==EINTR){}
+            test_notice(PGPU_TEST_TIMEOUT,SIGKILL,PGPU_ACCEPTANCE_TIMEOUT_MS>elapsed?PGPU_ACCEPTANCE_TIMEOUT_MS:elapsed);
+            return 0;
+        }
+        usleep(100000);
+    }
+}
 int main(int argc,char **argv)
 {
     (void)argc;
@@ -35,18 +88,7 @@ int main(int argc,char **argv)
         /* A failed GPU server gets one CPU restart, without rerunning the
          * shader test or filling the volatile root with crash-loop files. */
         if(already)goto launch;
-        pid_t child;char *const test[]={"/usr/libexec/polaris-gl-test",NULL};
-        int error=posix_spawn(&child,test[0],NULL,NULL,test,environ);
-        if(!error) {
-            int status=0,done=0;
-            for(unsigned n=0;n<300;n++) {
-                pid_t result=waitpid(child,&status,WNOHANG);
-                if(result==child){done=1;good=WIFEXITED(status)&&WEXITSTATUS(status)==0;break;}
-                if(result<0){done=1;break;}
-                usleep(100000);
-            }
-            if(!done){kill(child,SIGKILL);waitpid(child,&status,0);}
-        }
+        good=run_acceptance();
     }
 launch:
     /* Only this process gets the bridge, after the actual GLSL+surface test.

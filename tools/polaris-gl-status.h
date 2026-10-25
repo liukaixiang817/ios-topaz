@@ -5,12 +5,28 @@
 #include <stdint.h>
 #define PGPU_EAGL_METHOD_COUNT 8u
 #define PGPU_EAGL_METHOD_MASK 0xffu
+#define PGPU_ACCEPTANCE_TIMEOUT_MS 180000u
+/* Diagnostic-only AMFI5c. Actor1 is the shader test, actor3 the activated
+ * wrapper; neither role gains dyld flags or another GPU writer from this. */
+enum {PGPU_TEST_BEGIN=1,PGPU_TEST_EXIT,PGPU_TEST_SIGNAL,PGPU_TEST_TIMEOUT,
+      PGPU_TEST_SPAWN_ERROR,PGPU_TEST_WAIT_ERROR,PGPU_TEST_STEP};
+struct pgpu_test_notice {uint32_t event,value,elapsed_ms,reserved;};
+static inline int pgpu_test_notice_valid(unsigned actor,const struct pgpu_test_notice *p)
+{
+    if(!p || p->reserved || p->elapsed_ms>600000u)return 0;
+    if(actor==1)return p->event==PGPU_TEST_STEP && p->value && p->value<=63;
+    if(actor!=3 || p->event<PGPU_TEST_BEGIN || p->event>PGPU_TEST_WAIT_ERROR)return 0;
+    if(p->event==PGPU_TEST_BEGIN)return !p->value && !p->elapsed_ms;
+    if(p->event==PGPU_TEST_SIGNAL)return p->value && p->value<64;
+    if(p->event==PGPU_TEST_TIMEOUT)return p->value==9 && p->elapsed_ms>=PGPU_ACCEPTANCE_TIMEOUT_MS;
+    return p->value<=255;
+}
 struct pgpu_crash {
     uint32_t signal,code;
     uint64_t pc,lr,address;
     uint32_t pc_image,lr_image;
 };
-/* image0 raw,1 shared-cache preferredVA,2 injector,3 bridge,4 Mesa offset. */
+/* image0 raw,1 cache preferredVA,2 reporting image (injector/test),3 bridge,4 Mesa offset. */
 struct pgpu_image {uint64_t base,bytes;uint32_t kind;};
 static inline int pgpu_desktop_allowed(uint32_t kind,uint32_t attempts)
 {return kind!=2 || attempts==0;}

@@ -37,6 +37,38 @@ static uint32_t gpuSubmissions, gpuSurfaces;
 static uint32_t gpuDesktopAttempts,gpuDesktopSubmissions;
 static struct pgpu_crash gpuFirstCrash;
 static uint32_t gpuCrashPublished,gpuCrashPID;
+/* Saved diagnostic state only: never modifies readiness, reportT/E, fences
+ * or admission. Freeze the first terminal result across launchd restarts. */
+static uint32_t gpuTestBegan,gpuTestEndPublished;
+static uint64_t gpuTestProgress; /* one atomic pair: checkpoint + elapsed */
+static struct pgpu_test_notice gpuTestEnd;
+extern "C" bool polaris_gpu_record_test(unsigned actor,const struct pgpu_test_notice *p)
+{
+    if(!pgpu_test_notice_valid(actor,p))return false;
+    if(__atomic_load_n(&gpuTestEndPublished,__ATOMIC_ACQUIRE))return true;
+    if(p->event==PGPU_TEST_STEP) {
+        __atomic_store_n(&gpuTestProgress,((uint64_t)p->elapsed_ms<<32)|p->value,__ATOMIC_RELEASE);
+    }else if(p->event==PGPU_TEST_BEGIN) {
+        __atomic_store_n(&gpuTestBegan,1,__ATOMIC_RELEASE);
+    }else {
+        uint32_t zero=0;
+        if(__atomic_compare_exchange_n(&gpuTestEndPublished,&zero,1,false,__ATOMIC_ACQ_REL,__ATOMIC_ACQUIRE)) {
+            gpuTestEnd=*p;__atomic_store_n(&gpuTestEndPublished,2,__ATOMIC_RELEASE);
+        }
+    }
+    return true;
+}
+static uint32_t polaris_gpu_test_line(char *out,uint32_t capacity)
+{
+    if(!out || !capacity)return 0;
+    uint32_t done=__atomic_load_n(&gpuTestEndPublished,__ATOMIC_ACQUIRE);
+    if(!__atomic_load_n(&gpuTestBegan,__ATOMIC_ACQUIRE) && done!=2)return 0;
+    uint64_t progress=__atomic_load_n(&gpuTestProgress,__ATOMIC_ACQUIRE);
+    unsigned event=PGPU_TEST_BEGIN,value=0,ms=(uint32_t)(progress>>32);
+    if(done==2){event=gpuTestEnd.event;value=gpuTestEnd.value;ms=gpuTestEnd.elapsed_ms;}
+    return (uint32_t)snprintf(out,capacity,"GLT R%u V%x P%u MS%u",event,value,
+        (uint32_t)progress,ms);
+}
 extern "C" bool polaris_gpu_record_crash(const struct pgpu_crash *p,uint32_t pid)
 {
     if(!pgpu_crash_valid(p))return false;
@@ -49,7 +81,9 @@ extern "C" bool polaris_gpu_record_crash(const struct pgpu_crash *p,uint32_t pid
 }
 extern "C" uint32_t polaris_gpu_crash_line(unsigned line,char *out,uint32_t capacity)
 {
-    if(!out || !capacity || line>2 || __atomic_load_n(&gpuCrashPublished,__ATOMIC_ACQUIRE)!=2)return 0;
+    if(!out || !capacity || line>2)return 0;
+    if(__atomic_load_n(&gpuCrashPublished,__ATOMIC_ACQUIRE)!=2)
+        return line==2?polaris_gpu_test_line(out,capacity):0;
     if(!line)return (uint32_t)snprintf(out,capacity,"GLF SIG%u CODE%x PID%u",gpuFirstCrash.signal,gpuFirstCrash.code,gpuCrashPID);
     if(line==1)return (uint32_t)snprintf(out,capacity,"GLPC %u:%llx LR%u:%llx",gpuFirstCrash.pc_image,
         gpuFirstCrash.pc,gpuFirstCrash.lr_image,gpuFirstCrash.lr);

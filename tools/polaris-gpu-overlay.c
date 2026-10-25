@@ -111,6 +111,24 @@ uint32_t polaris_gpu_caller_kind(void)
     }
     vnode_put(image);return ok?found:0;
 }
+/* PID1 activates this VERIFIED wrapper by renaming it to backboardd. This
+ * reporter-only identity is deliberately excluded from GPU caller_kind(). */
+bool polaris_gpu_wrapper_allowed(void)
+{
+    if(!polaris_gpu_overlay_ready() || !polaris_ram_overlay_allowed())return false;
+    vnode_t image=proc_getexecutablevnode(current_proc());
+    if(!image)return false;
+    struct vnode_attr attr;VATTR_INIT(&attr);VATTR_WANTED(&attr,va_uid);VATTR_WANTED(&attr,va_mode);
+    bool ok=vnode_isreg(image) && (vfs_flags(vnode_mount(image))&MNT_ROOTFS) &&
+        !vnode_getattr(image,&attr,vfs_context_kernel()) &&
+        VATTR_IS_SUPPORTED(&attr,va_uid) && VATTR_IS_SUPPORTED(&attr,va_mode) &&
+        attr.va_uid==0 && !(attr.va_mode&022);
+    vnode_t expected=NULLVP,original=NULLVP;
+    if(ok)ok=!vnode_lookup("/usr/libexec/backboardd",VNODE_LOOKUP_NOFOLLOW|VNODE_LOOKUP_NOCROSSMOUNT,&expected,vfs_context_kernel());
+    if(ok)ok=!vnode_lookup("/usr/libexec/polaris-bbd-real",VNODE_LOOKUP_NOFOLLOW|VNODE_LOOKUP_NOCROSSMOUNT,&original,vfs_context_kernel());
+    ok=ok && expected==image && original!=image;
+    if(expected)vnode_put(expected);if(original)vnode_put(original);vnode_put(image);return ok;
+}
 bool polaris_gpu_caller_allowed(void) {return polaris_gpu_caller_kind()!=0;}
 static int pgpu_write(unsigned kind,const struct pgpu_file *file)
 {

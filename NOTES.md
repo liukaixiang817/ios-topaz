@@ -34,6 +34,52 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0053 implementation/local validation PASS; fullbuild pending
+
+-0859 addsdiagnostic-only AMFI5c16-bytewrapper/child notice. Exactactivated
+  wrapperrootvnode(renamedbackboardd, originalseparate) mayonlypostBEGIN/
+  exit/signal/timeout/spawn/waitresults. Verifiedtestvnode onlypostsPstep.
+  GPUcaller_kind/newUserClient/method/map/BO/import/submit gates byteunchanged.
+  AMFI5a remainsreal-server-only, PID1/non-target ENOPOLICYbeforeVFSlookup.
+  AMFI5b nowalsoacceptsverifiedtestfirstfatalPC/LR; desktophandlerunchanged.
+- Wrapper uses180sactualmonotonicdeadline, nofakeT6. Realexit0+alltestchecks
+  stillrequired; kill+reap ontimeout; clocks/spawn/waitfailures stayCPU. GLT
+  R/V/P/MS ononeexistingcompletedrow, firstterminalrecordimmutable across
+  restarts, fatalGLFpriority. P/mstime atomicpair, lastcheckpointnotheartbeat.
+  Progresscoverscontract/context/renderer/eachshadercreate-source-compile-
+  status/link/surface/draw/readback. NoDMAreset/recovery/frees introduced.
+-78nativeASan/UBSan PASS;8actualARM64units/imports PASS;39orderedpatches/
+  53files/nooffset-fuzz/29rows/sourceboundaries PASS. Initialnewtestfixture
+  omittedstdbool.h; corrected, initiallogretained. Existingfullwrapperfixture
+  nowexecutesREALacceptancehelper; tests169slatePASS,180stimeout,errors/signals/
+  EINTR/clockfailure, reporteridentity/rolebounds, childfatalPC/firstretention.
+- graphics-v1sixsignedfiles built; onlyselftest/wrapperchangedfrom0052.
+  OriginalMesa/GL/injector/PID1 files unchanged. No0053CI/image/deviceactionyet.
+  USBobserverPAUSED; human0052swipe/SettingsscrollRECOVERED, desktopstillCPU.
+
+### 0052 HUMAN input confirmed RECOVERED; GPU stillCPU (Oct26local)
+
+- Human explicitly: "能滑动，就是GPU不工作的卡顿". Bottomswipe/Settings/
+  scrolling works. Settingsvisible andinputconfirmation nowestablished.
+  HardwareHID/S3330unchanged; do not chase a speculativetouchhardwarefault.
+- GA T2/E0/S0/M0/C0 meanssharedsurfacecontract+hardwareMesa rendererpassed,
+  nofinishedshaderdraw/no desktopinjection. Finish0053 exitreason/compiler
+  checkpointandcold-startbudget repair. USBobserverremainsPAUSED.
+
+### 0053 diagnosis in progress:0052 surface contract PASSED; selftest stopsT2
+
+- Human24F7A9BB Settingsphoto: GA O0/S0/I0/T2/E0/D0/R1/L1/X0/M0/C0,
+  noGLFvisible. NewrealIOSurfacewrap/bulk/alias/port/releasecontract PASSED
+  (beforeT2), Mesa630 renderer accepted. No completedGPUtest/desktopdraw.
+- T2is afterrenderercheck but beforeVS+FScompile/linkreportT3. Existingwrapper
+  killschild after300*100ms (~30s), withNOtimedout/signalled/exitedstatus inpanel.
+  Thus timeout is plausible (extra coldframeworkpages) but NOTproven overcrash.
+- NEXT addbounded180smonotonicacceptancewindow plus exactwrapperexit/signal/
+  timeoutreport, precisechildcompiler checkpoints and scopedchildfirstfatalPC.
+  PreserveGPUcompletion gates/nativehardware/BOpaths; nofakeT6. Askinputstatus
+  asyncpending; Settingsvisible alone nothumanconfirmationofswipe.
+  USBobservationstillPAUSED. No0053build/deviceaction yet.
+
 ### 0052 TEMPORARY BOOT SENT13:20:28UTC; await actual swipe/desktop GPU evidence
 
 - FIRSTautoFASTBOOTquery13:16:55.453027UTC confirmed expectedpolaris ready;

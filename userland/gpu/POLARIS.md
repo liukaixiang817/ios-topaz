@@ -173,3 +173,32 @@ pinned/read. The framework selftest deliberately wraps13x8 BGRA pixels with
 row64 and length500, plus an unaligned raw-memory range, so a check that
 incorrectly demands512 bytes is caught before desktop admission. The0051
 image passed its build/CPU tests but was superseded before any phone action.
+
+0053 keeps the hardware, surface fix and GPU completion gate unchanged.
+The0052 phone reachedT2/E0 with zero submissions and no method installation:
+the new surface contract and A630 renderer check passed, but the shader test
+ended before its compile/link checkpoint. The old wrapper had a30-second
+whole-process limit and did not retain its exit/signal/timeout reason, so a
+cold-load timeout is plausible, not established as the cause.
+
+The wrapper now uses a180-second monotonic wall-clock limit, still requiring
+normal exit0 after all pixel checks. A single saved GLT row replaces an already
+completed bootstrap row, without increasing panel height. R1 means begun,
+R2 exited (V is exit code), R3 signalled (V is signal), R4 timed out, R5 spawn
+error, R6 wait/clock error. MS is elapsed time at the last checkpoint or the
+terminal result; it is not a heartbeat. The first terminal result survives
+server restarts. Child progress P10/11 brackets the IOSurface checks, P20/21
+context/renderer, P22..25 vertex create/source/compile/status, P26..29 fragment,
+P31/32 shader return, P33/34 link, P35 surface setup, P40 drawing, P41 readback,
+P42 completed pixel check. Read T/E and C separately; GLT cannot establish
+hardware completion or permit another writer.
+
+Diagnostic AMFI5c admits only the actual root-owned activated wrapper vnode
+or the verified shader-test vnode, with disjoint event types. GPU caller_kind
+and all GPU methods/mappings retain their previous two-image gate. AMFI5a
+still allows dyld flags only for the genuine real window server; PID1 and
+other callers retain ENOPOLICY without executable lookup. The shader test
+may also submit its first fatal PC/LR through5b. Image2 then denotes its own
+executable offset; for a desktop fault image2 remains the injector offset.
+A fatal record takes priority over GLT on the panel. No DMA cleanup/reset or
+synthetic-success recovery is introduced.
