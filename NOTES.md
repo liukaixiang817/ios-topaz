@@ -34,6 +34,50 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0047 FINAL IMAGE VERIFIED; automatic FASTBOOT query absent, human keys requested
+
+- FinalindependentcheckPASS07:24:25.376606UTC:58native/8ARM64units/imports,
+  33orderedpatches48files/29rows,185selectedCPU1defaultclockguestchecks,
+  linkedSMCfullwidth/barriers/highPAcache, source/457EAGLslots/vtables/signed
+  sixfileRAMbundle/payloadCvalidator/rebuild/packedimageallPASS. Currentphysical
+  phone0046nativeGPU4096PASS/desktopCPU. 0047desktopGPUUNPROVENuntilselftest.
+- Source6cb946505bf9f9dfca0ea66a8814d5575676d9c7/CI40171921792/job121104364594
+  SUCCESS. kernelSHA dc9aabe7a90743379ac33f3d2b83a377fddb40ca2ec406d76291e945971dccf6;
+  payload a572a5ef15dc309fceea4e447c6751d2fc1f3025a888d6e92dc0a8996cc6eec1;
+  image shim/out/polaris-xnu-readdebug-0047/polaris-xnu-readdebug-0047.img
+  SHA f2f30151223397bcd549e911fcae2ec3c8f8b9e755eacc3495e6974fca5a0453,
+  bytes62914560. graphics-v4bundle15375920B/SHAa93b3ba45512b1a84a9013ff1a8b263bb25d05292c09a1e04eb8e76b7acaff7d.
+- FIRSTtargetedROFASTBOOTquery07:24:31.263373UTC AFTERfinalimagePASS found
+  expectedphoneABSENT. AsyncphysicalkeysquestionaskedONCE. No0047recovery/
+  preflight/boot sent. NEXTonreply immediatelytargetedquery→freshROpreflight
+  via run-device-step.py preflight→DIRECTboot-phoneonPASS. USBobserverPAUSED,
+  neverboot-and-watch. SameCPU1/20Hz/512MiBRAMCOW/ufsrw0; noUFS/GPT/basewrites.
+- Guestexecutionsallhealthy/noCPUtimerretry. Initialno-MMIOvalidatorFALSE due
+  oldlogliteral remainsfailedinvalidation-v1-evidence; exactsame3rawrunswere
+  revalidatedwithnewsource916literal. Firstintegration-refusalHOSTQMPsocket
+  bindfailedBEFOREguest; retainedhost-bind-failure.json, ranSAMEparamswithhost
+  permissionthenPASS46. NoIRQ/clockwaiver; old0043failuresstillunresolved.
+- Deviceacceptance: GA O(open)/S(hexcompleted)/I(hexsurfaceimports)/T1..6/
+  E(testerror)/D(quarantine)/R(ready). T6E0provesactualGLSL/sharedsurfaceALL4096
+  viaMesa; growingS duringUIprovesdesktopuse beyondselftest. GX/GCP/GFARreplace
+  3completednative rowsONLYonruntimefault; allRAMdetailsretained. NoMetalapp/
+  physicalFPS/USBsuccessclaim. Ifstaging/testfailsoriginalCPUbootstrapfallback.
+
+### 0047 validator correction retained; last integration-refusal case running
+
+- Firstno-MMIOguestwashealthy(allVMchildren,initAlive, noMMIO/panic) butold
+  checkexpected “immutable result available; desktop CPU”. Actualnewsource916
+  andrawconsolebothsay “immutable proof available; GPU service separate”.
+  Originalfalsecheck/frozenpipeline/driver/proofs preservedvalidation-v1-evidence.
+- RevisedEXACTliteral, nohardware/source/kernelchange. Revalidated SAMEraw
+  cache-high47/async-net46/no-MMIO46runswithoriginalprovenance; NOguestretry.
+  Newvalidatorrevisionboundandrefrozenbeforefirstintegration-refusalexecution.
+- Firstintegration-refusalhostattemptfailedQMPsocketbind(Operationnotpermitted)
+  BEFOREguestexecuted. Retainedq-integration-refusal-host-bind-failure/log/json.
+  Samecommand/source/clocknowrunningwithhostexecutionpermission,session96942.
+  ThisisnotGPU/timerfailureorwaiver; initialhostfailureandvalidatorfalsecheck
+  remainfailedrecords. No0047phoneimage/preflight/bootyet. USBobserverPAUSED.
+
 ### 0047 final full kernel SUCCESS; first guest case PASS
 
 - CI40171921792/6cb946505bf9f9dfca0ea66a8814d5575676d9c7/job121104364594
