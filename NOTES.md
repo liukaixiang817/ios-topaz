@@ -34,6 +34,29 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT ACTION —0041 final image verified; expected FASTBOOT auto-found; RO preflight running
+
+- Public source a6ecbe7dcc624dd4e600c8f51e9e497c4bd18335, CI40154740584/
+  job121053583108 SUCCESS (02:31:04–02:36:32UTC). Full kernel SHA
+  bf01b127d1422556c8889fa537d1021d175c5e2504b749175423ff0185d6120b.
+- All118 selected standardclock CPU1 checks FIRSTPASS: cache-high41 (actual
+  PA187648000>4GiB NC2/restored2), async-net40, no-mmioGPU8/37; all4VMchildren
+  eachcase, no new guestfailure/retry. Native31/ARM64units4/patches26/files31
+  PASS. Historical SMP/synchronous timer failures remain unresolved.
+- Independent finalcheck81532 EXIT0,02:41:46.057247UTC. Its firstattempt37099
+  failed ONLY because newtablesheader canonicalinclude hyphen/underscore was
+  compared bytewise; exactoneinclude normalization added as existingchannel.
+  Originalchecker/freeze/failure retained; kernel/payload/guestdriver unchanged.
+- Image shim/out/polaris-xnu-readdebug-0041/polaris-xnu-readdebug-0041.img,
+  47476736B SHA35ef8825d73ed4eac0a590ee53af60032d0b79170dec67207246c31b7c0fb4cc;
+  payload4ad0744620749ff31c2f426a37d1ba7a66c1bafb9bc641f774cd43720e4e5d38.
+- Per human workflow FIRST automaticread-onlyquery02:41:51.414692UTC found
+  expectedpolaris FASTBOOT. No repeatedkeysquestion. FreshROpreflight11744 now
+  running; directboot-phone next ONLY if passed. USB host observation remains
+  PAUSED, never callboot-and-watch. FullHFI0041/GXslumber stillunproven; noCP/3D.
+- Nextstage actualnative PM4 functions compiled and checked (next-pm4-native-
+  check.json); preparationonly. No additionalMMIO/SCM/CPexecution activated.
+
 ### CURRENT ACTION —0041 source-only published; full CI running
 
 - Local completed source fc88f47. Public source-only a6ecbe7dcc624dd4e600c8f51e9e497c4bd18335
