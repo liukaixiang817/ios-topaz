@@ -74,7 +74,7 @@ uint32_t polaris_a630_diagnostic_line(unsigned line, char *out, uint32_t size)
 {
     if (!out || !size) return 0;
     out[0] = 0;
-    if (line >= 9) return 0;
+    if (line >= 10) return 0;
     if (!__atomic_load_n(&a630_published, __ATOMIC_ACQUIRE))
         return (uint32_t)snprintf(out, size, "GPU snapshot pending");
     const struct a630_power_snapshot *p = &a630_power_saved;
@@ -102,6 +102,8 @@ uint32_t polaris_a630_diagnostic_line(unsigned line, char *out, uint32_t size)
         e->error&15,e->stage&15,e->fw,e->failed_bank&15,e->failed_offset,e->expected,e->actual,e->stopped&1,e->restore_error&15);
     if (line == 7) return (uint32_t)snprintf(out,size,"GL u%08x o%08x src%04x v%08x/%08x r%x/%x",
         b->pll[2],b->pll[3],b->source&65535,b->live[0],b->live[1],b->restored&1,b->restore_error&15);
+    if(line==9)return (uint32_t)snprintf(out,size,"SI h%x n%x ctl%08x cfg%08x ar%08x/%08x",
+        m->preserved_impl&1,m->impl_checks&255,m->impl[0],m->impl[11],m->actlr,m->actlr_live);
     return (uint32_t)snprintf(out,size,"SH b%08x l%08x a%08x p%x i%x r%x@%x",
         m->halt_before,m->halt_live,m->halt_after,m->halt_polls,m->impl_changed,
         m->restore_error&15,m->restore_offset);
@@ -313,7 +315,7 @@ static void a630_runtime_boot(struct a630_io *io)
     io->runtime_lease=true;io->can_stop=false;
     printf("POLARIS GMU: original200MHz/bus, owned stream5/HFI; fresh firmware boot trial\n");
     if(a630_bus_begin(true,&bus,&a630_bus_saved)!=A630_BUS_READY)goto cleanup;
-    if(a630_smmu_begin(true,true,&a630_tables,&smmu,io,&a630_smmu_saved)!=A630_SMMU_READY)goto cleanup;
+    if(a630_smmu_begin_handoff(true,true,&a630_tables,&smmu,io,&a630_smmu_saved)!=A630_SMMU_READY)goto cleanup;
     if(!a630_clean_owned(io,(void*)(a630_dma+0x20000),A630_HFI_BYTES))goto cleanup;
     bcr_attempted=true;
     if(!a630_boot_set(&boot,&a630_boot_saved,1,0x111c,0,1))goto cleanup;
@@ -374,6 +376,8 @@ void polaris_a630_report(void)
     printf("D GPU SMMU HALT: before=%x idle=%x after=%x owned=%u polls=%u impl_changed=%x restore=%u offset=%x expected=%x actual=%x\n",
         m->halt_before,m->halt_live,m->halt_after,m->halt_changed,m->halt_polls,m->impl_changed,
         m->restore_error,m->restore_offset,m->restore_expected,m->restore_actual);
+    printf("D GPU SMMU HANDOFF: preserve=%u checks=%u ctrl=%x impl6b68=%x ACTLR=%x/%x owned=%u\n",
+        m->preserved_impl,m->impl_checks,m->impl[0],m->impl[11],m->actlr,m->actlr_live,m->actlr_changed);
     printf("D GPU EXEC: error=%u stage=%u FW_INIT=%x started=%u stopped=%u profile=%u fail=%u:%x expected=%x actual=%x polls=%u restored=%u/%u; HFI/GX/3D not started\n",
         e->error,e->stage,e->fw,e->started,e->stopped,e->changed,e->failed_bank,e->failed_offset,e->expected,e->actual,e->polls,e->restored,e->restore_error);
     printf("D GPU LOAD: result=%u stage=%u block_reset_retained=%u reset=%x/%x fw=%x hfi=%x counter=%x polls=%u\n",
