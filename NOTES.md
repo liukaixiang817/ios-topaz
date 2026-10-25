@@ -34,6 +34,54 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0047 TEMPORARY BOOT SENT10:11:55UTC; await actual GUI/GPU acceptance
+
+- HumanFASTBOOTreply→targetedquery10:08:26UTC foundexpectedpolaris. Initial
+  preflight stoppedonchangedouterheader (recordretained); separateROreview
+  only6knownsuperblockbookkeepingfieldranges/+NEEDS_RECOVERY. Historical
+  baseline32311c08 NOTrewritten; current3e885886stablebefore/afterverification.
+- Reviewedpreflight39872 EXIT0,10:11:25.847547UTC: all16GiBrootSHA689a8cd1,
+  original182FIEMAPandGPTunchanged, sameRecoverybootID, unmounted/blockRO1,
+  27C. OuterjournalpendingNOTclean, NOreplay/repair/partitionwrites. Source
+  reviewed-preflight-inputs.json/script54f8d430 bound; originalpipelineintact.
+- Directboot-phone81847 EXIT0: Sending/BootingOKAY,total1.528s; sent_utc
+  **2026-10-25T10:11:55.770993+00:00**. Imagef2f30151223397bcd549e911fcae2ec3c8f8b9e755eacc3495e6974fca5a0453,
+  kerneldc9aabe7a90743379ac33f3d2b83a377fddb40ca2ec406d76291e945971dccf6,
+  payloada572a5ef15dc309fceea4e447c6751d2fc1f3025a888d6e92dc0a8996cc6eec1.
+  Source6cb946505bf9f9dfca0ea66a8814d5575676d9c7, CI40171921792SUCCESS.
+- USBobserverSTILLPAUSED. Directbootonly/NOboot-and-watch/NOobserverstarted;
+  USB-observation-paused.json boundexactnewbootsentUTC. NoUSBsuccessor
+  nonenumerationclaim. ImportantRAMlogs retained; panel29rows.
+- NEWpendingquestionasksactual0047lockscreen/desktop, Settings+scroll andGA
+  lineT/E/S (orlastlogifstuck). 0047GUI/native/service/shader/sharedpixels and
+  desktopGPUstillUNPROVEN. Prior0046native4096PASS isbaselineONLY. GA T6E0
+  provesMesaGLSL/sharedsurfaceALL4096selftest; risingS duringUIprovesusebeyond
+  selftest. GX/GCP/GFARcapturefirstfaultwithoutreset. CPUfallbackifnotready.
+- NEXTawaithumanactual0047result; donotsendanotherbootorinferentered-system
+  fromoldphoto/time. NoMetalapps/FPSclaim. Old0043timingfailuresunresolved;
+  noCPU2admission/IRQwaiver. Allcompletedsourcecommitted; thisturnhostROreview
+  anddeviceevidenceprivateonly, no additionalpublicsourcepushrequired.
+
+### 0047 FASTBOOT confirmed; outer-header stop retained; read-only deep verification running
+
+- HumanconfirmedFASTBOOT. Targetedquery10:08:26.906472UTC foundexpectedpolaris,
+  exact0047imagef2f30151 verified; frozeninputsunchanged. TemporaryknownRO
+  recoveryboot sent. Originalpreflight88426 STOPPEDbeforeiOSboot: outerext4
+  headerchangedfrom0034 baseline32311c08 tonow3e885886. preflight-stopped.json
+  retained; no repair/journalreplay/partitionwrites. No0047iOSbootsent.
+- Read-onlyreview: differencesONLYsuperblockfreeblocks,mount/write-times,
+  mountcount5→7,lifetimewritten,+NEEDS_RECOVERYbit4. UUID/geometry/layout/
+  remainingfeatures/orphans/bootcode unchanged. No claimAndroidFSisclean.
+  Headerchangeisconsistentwithinterveningmounts; actualcauseunproven.
+- Separatepreflight-reviewed-resume.py + reviewed-preflight-inputs.json frozen,
+  originalpreflight/frozenpipelineUNMODIFIED. AcceptONLYlisted6fieldranges,
+  currentheaderexactreviewedhash, originalGPT/182FIEMAP/full16GiBrootSHA,
+  sameRecoverybootID, blockRO1+unmountedbefore/after, stableheaderandtemp<45C.
+  NOjournalreplay/repair/rawpartitionwrite. Neverreplacehistoricalbaseline.
+- Session39872runningfull16GiBhashafterGPT/182mapmatch; followupmustPASSbefore
+  directrun-device-step.py boot-phone. Ifanyroot/hash/mapdiffSTOP. USBobserver
+  staysPAUSED. CurrentphysicalphoneknownROrecovery; iOS0047notyetbooted.
+
 ### 0047 FINAL IMAGE VERIFIED; automatic FASTBOOT query absent, human keys requested
 
 - FinalindependentcheckPASS07:24:25.376606UTC:58native/8ARM64units/imports,
