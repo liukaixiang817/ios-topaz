@@ -3427,6 +3427,22 @@ _Static_assert(EAGL_TABLE_SIZE <= SLOTS * 8, "the table has grown");
 
 /* ---- EAGLContext ---------------------------------------------------------------------------------- */
 
+static unsigned polaris_method_mask;
+static void (*polaris_observer)(unsigned,unsigned,unsigned);
+unsigned polaris_eagl_methods(void) {return polaris_method_mask;}
+void polaris_eagl_observe(void (*note)(unsigned,unsigned,unsigned))
+{
+	polaris_observer=note;
+	if(note)note(4,polaris_method_mask==0x7f?0:4,polaris_method_mask);
+}
+static void polaris_context_note(unsigned stage,unsigned error)
+{
+	/* Context creation only, never per-GL-call or per-frame logging. */
+	static unsigned requested,created;
+	if(error || (stage==5 && !requested++) || (stage==6 && !created++))
+		if(polaris_observer)polaris_observer(stage,error,polaris_method_mask);
+}
+
 static id
 my_initWithAPI(id self, SEL selector, unsigned long api, id properties)
 {
@@ -3435,13 +3451,16 @@ my_initWithAPI(id self, SEL selector, unsigned long api, id properties)
 
 	(void)selector;
 	(void)properties;
+	polaris_context_note(5,0);
 	for (place = 0; place < sizeof(contexts) / sizeof(contexts[0]) && contexts[place] != NULL; place++) {
 	}
 	if (api < 2 || api > 3 || place == sizeof(contexts) / sizeof(contexts[0]) || (e = calloc(1, sizeof(*e))) == NULL) {
+		polaris_context_note(5,5);
 		say("redwood-gl: no context of API %lu\n", api);
 		return nil;
 	}
 	if ((e->gl = redwood_gl_create((int)api)) == NULL || !redwood_gl_make_current(e->gl)) {
+		polaris_context_note(5,6);
 		say("redwood-gl: %s gives no OpenGL ES %lu context\n", redwood_gl_library(), api);
 		free(e);
 		return nil;
@@ -3452,6 +3471,7 @@ my_initWithAPI(id self, SEL selector, unsigned long api, id properties)
 	e->table[0] = e;
 	eagl_fill_table(e->table);
 	contexts[place] = e;
+	polaris_context_note(6,0);
 	say("redwood-gl: an OpenGL ES %lu context for CoreAnimation, by %s: %s; %s; shaders %s\n", api, redwood_gl_library(),
 	    (const char *)glGetString(GL_VERSION), (const char *)glGetString(GL_RENDERER),
 	    (const char *)glGetString(GL_SHADING_LANGUAGE_VERSION));
@@ -3644,8 +3664,7 @@ display_waits(void)
 	return waits;
 }
 
-__attribute__((constructor)) static void
-install(void)
+static unsigned polaris_install_methods(Class class)
 {
 	static const struct {
 		const char *name;
@@ -3659,8 +3678,33 @@ install(void)
 		{ "attachImage:toCoreSurface:invertedRender:", (IMP)my_attachImage },
 		{ "dealloc", (IMP)my_dealloc },
 	};
-	Class class = objc_getClass("EAGLContext");
-	unsigned replaced = 0;
+	Method found[7];IMP original[7];
+	if(class==Nil)return 0;
+	/* Check the complete interface before changing even dealloc. The actual
+	 *20H392 methods were independently verified from its cache. */
+	for(unsigned i=0;i<7;i++) {
+		found[i]=class_getInstanceMethod(class,sel_registerName(methods[i].name));
+		if(!found[i])return 0;
+		original[i]=method_getImplementation(found[i]);
+	}
+	unsigned mask=0;
+	for(unsigned i=0;i<7;i++) {
+		SEL selector=sel_registerName(methods[i].name);
+		if(found[i]==class_getInstanceMethod(class_getSuperclass(class),selector))
+			class_addMethod(class,selector,methods[i].ours,method_getTypeEncoding(found[i]));
+		else method_setImplementation(found[i],methods[i].ours);
+		if(method_getImplementation(class_getInstanceMethod(class,selector))==methods[i].ours)mask|=1u<<i;
+	}
+	if(mask!=0x7f) {
+		for(unsigned i=0;i<7;i++)if(mask&(1u<<i))
+			method_setImplementation(class_getInstanceMethod(class,sel_registerName(methods[i].name)),original[i]);
+		return 0;
+	}
+	return mask;
+}
+__attribute__((constructor)) static void
+install(void)
+{
 	char arguments[1024] = "";
 	size_t size = sizeof(arguments) - 1;
 	const char *argument;
@@ -3739,27 +3783,6 @@ install(void)
 		}
 	}
 
-	if (class == Nil) {
-		say("redwood-gl: this program has no EAGLContext: nothing to do\n");
-		return;
-	}
-	for (unsigned i = 0; i < sizeof(methods) / sizeof(methods[0]); i++) {
-		SEL selector = sel_registerName(methods[i].name);
-		Method method = class_getInstanceMethod(class, selector);
-
-		if (method == NULL) {
-			say("redwood-gl: EAGLContext has no -%s\n", methods[i].name);
-			continue;
-		}
-		say("redwood-gl: -[EAGLContext %s] (%s) replaced\n", methods[i].name, method_getTypeEncoding(method));
-		if (method == class_getInstanceMethod(class_getSuperclass(class), selector)) {
-			/* inherited: the class gets one of its own, the one it inherits is everybody's */
-			class_addMethod(class, selector, methods[i].ours, method_getTypeEncoding(method));
-		} else {
-			method_setImplementation(method, methods[i].ours);
-		}
-		replaced++;
-	}
-	say("redwood-gl: %u of %zu methods of EAGLContext are ours; OpenGL ES by %s\n", replaced,
-	    sizeof(methods) / sizeof(methods[0]), redwood_gl_library());
+	polaris_method_mask=polaris_install_methods(objc_getClass("EAGLContext"));
+	say("polaris-gl: EAGL method mask %#x (required0x7f); library %s\n",polaris_method_mask,redwood_gl_library());
 }

@@ -1,0 +1,162 @@
+--- a/bsd/dev/polaris_gpu.h
++++ b/bsd/dev/polaris_gpu.h
+@@ -13,6 +13,8 @@
+ bool polaris_gpu_boot_pending(void);
+ bool polaris_gpu_timestamp(uint64_t *value);
+ bool polaris_gpu_caller_allowed(void);
++uint32_t polaris_gpu_caller_kind(void);
++void polaris_gpu_loader_policy(int error);
+ bool polaris_gpu_quiescent(void);
+ bool polaris_gpu_map(uint64_t address, uint64_t physical, bool read_only, bool cached);
+ bool polaris_gpu_commit(void);
+--- a/bsd/kern/sweet_amfi.c
++++ b/bsd/kern/sweet_amfi.c
+@@ -355,52 +355,54 @@
+ };
+ 
+ static struct mac_policy_conf sweet_sandbox_mac_conf = {
+ 	.mpc_name = "Sandbox",
+ 	.mpc_fullname = "SWEET permissive sandbox stand-in",
+ 	.mpc_ops = &sweet_sandbox_mac_ops,
+ };
+ 
+ static mac_policy_handle_t sweet_sandbox_mac_handle;
+ 
+ static struct mac_policy_conf sweet_amfi_mac_conf = {
+ 	.mpc_name = "SWEET AMFI",
+ 	.mpc_fullname = "SWEET built-in Mobile File Integrity",
+ 	.mpc_ops = &sweet_amfi_mac_ops,
+ };
+ 
+ 
+ #if defined(POLARIS_RAM_ONLY)
+ extern bool polaris_gpu_overlay_ready(void);
+ extern uint32_t polaris_gpu_caller_kind(void);
++extern void polaris_gpu_loader_policy(int error);
+ static int polaris_gl_dyld_policy(struct proc *p, int call, user_addr_t arg)
+ {
+     /* Only the verified, opt-in RAM overlay's window-server executable may
+      * load its bridge. Other processes/policies keep their previous result. */
+     /* __mac_syscall returns ENOPOLICY when this named policy is absent.
+      * Preserve that exact baseline for every non-target (especially PID1);
+      * launchd must never enter executable-vnode lookup for a graphics hook. */
+     if (call!=0x5a || proc_isinitproc(p) || !polaris_gpu_overlay_ready() ||
+         polaris_gpu_caller_kind()!=2)return ENOPOLICY;
+     uint64_t request[2],allow=0xff;
+     int error=copyin(arg,request,sizeof(request));
+-    return error?error:copyout(&allow,(user_addr_t)request[1],sizeof(allow));
++    if(!error)error=copyout(&allow,(user_addr_t)request[1],sizeof(allow));
++    polaris_gpu_loader_policy(error);return error;
+ }
+ static const struct mac_policy_ops polaris_gl_amfi_ops={.mpo_policy_syscall=polaris_gl_dyld_policy};
+ static struct mac_policy_conf polaris_gl_amfi_conf={.mpc_name="AMFI",
+     .mpc_fullname="Polaris verified RAM GPU bridge dyld policy",.mpc_ops=&polaris_gl_amfi_ops};
+ static mac_policy_handle_t polaris_gl_amfi_handle;
+ #endif
+ static mac_policy_handle_t sweet_amfi_mac_handle;
+ 
+ /* Called from bsd_init once MAC policies can register, before any exec. */
+ void sweet_amfi_policy_register(void);
+ 
+ void
+ sweet_amfi_policy_register(void)
+ {
+ 	int error = mac_policy_register(&sweet_amfi_mac_conf, &sweet_amfi_mac_handle, NULL);
+ #if defined(POLARIS_RAM_ONLY)
+     unsigned gl=0;PE_parse_boot_argn("polarisgl",&gl,sizeof(gl));
+     if(gl==1) {
+         int e=mac_policy_register(&polaris_gl_amfi_conf,&polaris_gl_amfi_handle,NULL);
+         printf("POLARIS GL: scoped dyld policy registered %d\n",e);
+--- a/iokit/Kernel/arm/PolarisGPU.cpp
++++ b/iokit/Kernel/arm/PolarisGPU.cpp
+@@ -36,16 +36,38 @@
+ static uint32_t gpuSubmissions, gpuSurfaces;
+ static uint32_t gpuPublished,gpuOpenStatus,gpuFaultStatus;
+ static uint32_t gpuAppStage,gpuAppError;
++/* Loading evidence is independent of the shader/pixel acceptance result.
++ * These cached words never read GPU registers from the display timer. */
++static uint32_t gpuLoaderStage,gpuLoaderError,gpuLoaderMethods;
++extern "C" void polaris_gpu_loader_policy(int error)
++{
++    uint32_t expected=0;
++    if(__atomic_compare_exchange_n(&gpuLoaderStage,&expected,1,false,__ATOMIC_ACQ_REL,__ATOMIC_ACQUIRE))
++        __atomic_store_n(&gpuLoaderError,(uint32_t)error,__ATOMIC_RELEASE);
++}
++static bool polaris_gpu_loader_report(uint32_t kind,uint32_t stage,uint32_t error,uint32_t methods)
++{
++    if(kind!=2 || stage<2 || stage>6 || error>6 || (methods&~0x7fu))return false;
++    __atomic_store_n(&gpuLoaderError,error,__ATOMIC_RELEASE);
++    __atomic_store_n(&gpuLoaderMethods,methods,__ATOMIC_RELEASE);
++    __atomic_store_n(&gpuLoaderStage,stage,__ATOMIC_RELEASE);
++    IOLog("POLARIS GL: desktop loader L%u X%x M%x; submissions=%u imports=%u\n",
++        stage,error,methods,gpuSubmissions,gpuSurfaces);
++    return true;
++}
+ extern "C" uint32_t polaris_gpu_client_line(char *out,uint32_t capacity)
+ {
+     if(!out || !capacity || !__atomic_load_n(&gpuPublished,__ATOMIC_ACQUIRE))return 0;
+-    return (uint32_t)snprintf(out,capacity,"GA O%u S%x I%x T%u E%u D%u R%u",
++    return (uint32_t)snprintf(out,capacity,"GA O%u S%x I%x T%u E%u D%u R%u L%u X%x M%x",
+         __atomic_load_n(&gpuOpenStatus,__ATOMIC_ACQUIRE),
+         __atomic_load_n(&gpuSubmissions,__ATOMIC_ACQUIRE),
+         __atomic_load_n(&gpuSurfaces,__ATOMIC_ACQUIRE),
+         __atomic_load_n(&gpuAppStage,__ATOMIC_ACQUIRE),
+         __atomic_load_n(&gpuAppError,__ATOMIC_ACQUIRE),
+-        __atomic_load_n(&gpuFaultStatus,__ATOMIC_ACQUIRE),polaris_gpu_ready()?1:0);
++        __atomic_load_n(&gpuFaultStatus,__ATOMIC_ACQUIRE),polaris_gpu_ready()?1:0,
++        __atomic_load_n(&gpuLoaderStage,__ATOMIC_ACQUIRE),
++        __atomic_load_n(&gpuLoaderError,__ATOMIC_ACQUIRE),
++        __atomic_load_n(&gpuLoaderMethods,__ATOMIC_ACQUIRE));
+ }
+ struct PolarisBO {
+     IOMemoryDescriptor *memory;
+@@ -271,7 +293,8 @@
+     union {msm_param param;msm_gem_new make;msm_gem_info info;msm_gem_cpu_prep prep;
+         msm_gem_submit submit;msm_wait_fence wait;msm_gem_madvise madvise;
+         msm_submitqueue queue;msm_submitqueue_query query;drm_gem_close close;redwood_surface surface;
+-        struct {uint32_t stage,error;} report;} r;
++        struct {uint32_t stage,error;} report;
++        struct {uint32_t stage,error,methods;} loader;} r;
+     size_t size=0;
+     switch(selector) {
+         case 0x40:case 0x41:size=sizeof(r.param);break;
+@@ -282,6 +305,7 @@
+         case 0x4c:size=sizeof(r.query);break;case 0x09:size=sizeof(r.close);break;
+         case 0x7e:size=sizeof(r.surface);break;default:return kIOReturnUnsupported;
+         case 0x7c:size=sizeof(r.report);break;
++        case 0x7b:size=sizeof(r.loader);break;
+     }
+     if(!a || !a->structureInput || a->structureInputDescriptor || a->structureOutputDescriptor ||
+         a->scalarInputCount || a->scalarOutputCount || a->structureInputSize!=size ||
+@@ -289,7 +313,7 @@
+     bzero(&r,sizeof(r));memcpy(&r,a->structureInput,size);
+     IOLockLock(gpuLock);
+     IOReturn result=kIOReturnBadArgument;
+-    if(closed || (selector!=0x7c && !polaris_gpu_ready())) {result=kIOReturnNotReady;goto done;}
++    if(closed || (selector!=0x7c && selector!=0x7b && !polaris_gpu_ready())) {result=kIOReturnNotReady;goto done;}
+     switch(selector) {
+         case 0x40:
+             if(r.param.pipe!=0x10 || r.param.len || r.param.pad)break;
+@@ -342,6 +366,11 @@
+         }
+         case 0x09:if(!r.close.pad)result=drop(r.close.handle)?0:kIOReturnNotFound;break;
+         case 0x7e:result=surface(&r.surface);break;
++        case 0x7b:
++            /* Only the real server may report loading. This is diagnostic
++             * evidence, never GPU readiness or a successful submission. */
++            if(polaris_gpu_loader_report(polaris_gpu_caller_kind(),r.loader.stage,r.loader.error,r.loader.methods))result=0;
++            break;
+         case 0x7c:
+             if(r.report.stage>6 || r.report.error>255 ||
+                 (r.report.stage==6 && !r.report.error && (!gpuSubmissions || !gpuSurfaces)))break;
+--- a/iokit/Kernel/arm/polaris_gpu.h
++++ b/iokit/Kernel/arm/polaris_gpu.h
+@@ -13,6 +13,8 @@
+ bool polaris_gpu_boot_pending(void);
+ bool polaris_gpu_timestamp(uint64_t *value);
+ bool polaris_gpu_caller_allowed(void);
++uint32_t polaris_gpu_caller_kind(void);
++void polaris_gpu_loader_policy(int error);
+ bool polaris_gpu_quiescent(void);
+ bool polaris_gpu_map(uint64_t address, uint64_t physical, bool read_only, bool cached);
+ bool polaris_gpu_commit(void);

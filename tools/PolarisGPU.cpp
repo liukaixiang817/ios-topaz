@@ -36,16 +36,38 @@ static bool gpuOpened, gpuQuarantined;
 static uint32_t gpuSubmissions, gpuSurfaces;
 static uint32_t gpuPublished,gpuOpenStatus,gpuFaultStatus;
 static uint32_t gpuAppStage,gpuAppError;
+/* Loading evidence is independent of the shader/pixel acceptance result.
+ * These cached words never read GPU registers from the display timer. */
+static uint32_t gpuLoaderStage,gpuLoaderError,gpuLoaderMethods;
+extern "C" void polaris_gpu_loader_policy(int error)
+{
+    uint32_t expected=0;
+    if(__atomic_compare_exchange_n(&gpuLoaderStage,&expected,1,false,__ATOMIC_ACQ_REL,__ATOMIC_ACQUIRE))
+        __atomic_store_n(&gpuLoaderError,(uint32_t)error,__ATOMIC_RELEASE);
+}
+static bool polaris_gpu_loader_report(uint32_t kind,uint32_t stage,uint32_t error,uint32_t methods)
+{
+    if(kind!=2 || stage<2 || stage>6 || error>6 || (methods&~0x7fu))return false;
+    __atomic_store_n(&gpuLoaderError,error,__ATOMIC_RELEASE);
+    __atomic_store_n(&gpuLoaderMethods,methods,__ATOMIC_RELEASE);
+    __atomic_store_n(&gpuLoaderStage,stage,__ATOMIC_RELEASE);
+    IOLog("POLARIS GL: desktop loader L%u X%x M%x; submissions=%u imports=%u\n",
+        stage,error,methods,gpuSubmissions,gpuSurfaces);
+    return true;
+}
 extern "C" uint32_t polaris_gpu_client_line(char *out,uint32_t capacity)
 {
     if(!out || !capacity || !__atomic_load_n(&gpuPublished,__ATOMIC_ACQUIRE))return 0;
-    return (uint32_t)snprintf(out,capacity,"GA O%u S%x I%x T%u E%u D%u R%u",
+    return (uint32_t)snprintf(out,capacity,"GA O%u S%x I%x T%u E%u D%u R%u L%u X%x M%x",
         __atomic_load_n(&gpuOpenStatus,__ATOMIC_ACQUIRE),
         __atomic_load_n(&gpuSubmissions,__ATOMIC_ACQUIRE),
         __atomic_load_n(&gpuSurfaces,__ATOMIC_ACQUIRE),
         __atomic_load_n(&gpuAppStage,__ATOMIC_ACQUIRE),
         __atomic_load_n(&gpuAppError,__ATOMIC_ACQUIRE),
-        __atomic_load_n(&gpuFaultStatus,__ATOMIC_ACQUIRE),polaris_gpu_ready()?1:0);
+        __atomic_load_n(&gpuFaultStatus,__ATOMIC_ACQUIRE),polaris_gpu_ready()?1:0,
+        __atomic_load_n(&gpuLoaderStage,__ATOMIC_ACQUIRE),
+        __atomic_load_n(&gpuLoaderError,__ATOMIC_ACQUIRE),
+        __atomic_load_n(&gpuLoaderMethods,__ATOMIC_ACQUIRE));
 }
 struct PolarisBO {
     IOMemoryDescriptor *memory;
@@ -271,7 +293,8 @@ IOReturn PolarisGPUUserClient::externalMethod(uint32_t selector,IOExternalMethod
     union {msm_param param;msm_gem_new make;msm_gem_info info;msm_gem_cpu_prep prep;
         msm_gem_submit submit;msm_wait_fence wait;msm_gem_madvise madvise;
         msm_submitqueue queue;msm_submitqueue_query query;drm_gem_close close;redwood_surface surface;
-        struct {uint32_t stage,error;} report;} r;
+        struct {uint32_t stage,error;} report;
+        struct {uint32_t stage,error,methods;} loader;} r;
     size_t size=0;
     switch(selector) {
         case 0x40:case 0x41:size=sizeof(r.param);break;
@@ -282,6 +305,7 @@ IOReturn PolarisGPUUserClient::externalMethod(uint32_t selector,IOExternalMethod
         case 0x4c:size=sizeof(r.query);break;case 0x09:size=sizeof(r.close);break;
         case 0x7e:size=sizeof(r.surface);break;default:return kIOReturnUnsupported;
         case 0x7c:size=sizeof(r.report);break;
+        case 0x7b:size=sizeof(r.loader);break;
     }
     if(!a || !a->structureInput || a->structureInputDescriptor || a->structureOutputDescriptor ||
         a->scalarInputCount || a->scalarOutputCount || a->structureInputSize!=size ||
@@ -289,7 +313,7 @@ IOReturn PolarisGPUUserClient::externalMethod(uint32_t selector,IOExternalMethod
     bzero(&r,sizeof(r));memcpy(&r,a->structureInput,size);
     IOLockLock(gpuLock);
     IOReturn result=kIOReturnBadArgument;
-    if(closed || (selector!=0x7c && !polaris_gpu_ready())) {result=kIOReturnNotReady;goto done;}
+    if(closed || (selector!=0x7c && selector!=0x7b && !polaris_gpu_ready())) {result=kIOReturnNotReady;goto done;}
     switch(selector) {
         case 0x40:
             if(r.param.pipe!=0x10 || r.param.len || r.param.pad)break;
@@ -342,6 +366,11 @@ IOReturn PolarisGPUUserClient::externalMethod(uint32_t selector,IOExternalMethod
         }
         case 0x09:if(!r.close.pad)result=drop(r.close.handle)?0:kIOReturnNotFound;break;
         case 0x7e:result=surface(&r.surface);break;
+        case 0x7b:
+            /* Only the real server may report loading. This is diagnostic
+             * evidence, never GPU readiness or a successful submission. */
+            if(polaris_gpu_loader_report(polaris_gpu_caller_kind(),r.loader.stage,r.loader.error,r.loader.methods))result=0;
+            break;
         case 0x7c:
             if(r.report.stage>6 || r.report.error>255 ||
                 (r.report.stage==6 && !r.report.error && (!gpuSubmissions || !gpuSurfaces)))break;
