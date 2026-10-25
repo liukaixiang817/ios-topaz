@@ -28,6 +28,31 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT ACTION —0038 independently VERIFIED; FASTBOOT found; readonly preflight active
+
+- **CI40149445259/job121037672221 SUCCESS**,source0b4d101,fullghlog
+  research/polaris/ci-40149445259.log. Kernel xnu/out-polaris-0038/
+  kernel.development.sweet SHA **6e550461b2b44b5313acc4229995d43d345ba98091b0943f77cccd4ddde242d5**.
+- Pipeline54186EXIT0: FIRSTPASSbase120s33/asyncnet90s36/noMMIO60s33=
+  **102checks**,all4VMchildreneach,no newfailure/retry. PriorSMP/synctimer
+  failuresremainunresolved. Native27/3ARM64actualheaders/imports/23patch28files/
+  18detail20displayrows/8watchtestsPASS. PDCMSGIDonlynative-requestexperiment,
+  noPDC/FW/GPUrendering/USBconnectionproofyet.
+- Image **shim/out/polaris-xnu-readdebug-0038/polaris-xnu-readdebug-0038.img**,
+  47476736bytes SHA **1073c14673926c509f39ba43ad23124a434a51198e1f88efedb199fae6a1adf6**,
+  payload **d3e3886f18c8e1b5383c9d0b8abbe8e792e68700d62225bb26677b800e9a049e**.
+  Finalindependentchecker83368EXIT0 **01:19:15.127859UTC**,CI/source/profile/
+  nativeinputhashes/102guestproofs/14frozenhosts/originalPDCsource/identical
+  rebuiltpayload/image65DTBs/source-only4filepublicationPASS. CPU1/20Hz/RAMCOW512/
+  ufsrw0unchanged. No0038XNUdeviceactionyet.
+- AutomaticFASTBOOTquery **01:19:22.381987UTC expectedphonepresent/polarisverified**.
+  Directlyrunning0038preflight(full16GiB/maps/GPT/cleanheader/RO/unmounted).
+  OnPASS boot-and-watch.py; no repeatedhumanFASTBOOTquestionneeded.
+  DoNOTrerunfinalcheckerafterdeviceactions.0037observerSTOPPED36samples.
+- Needphysical0038GEfw/GR/SHrestoreexpected-actual. Newdetachedobservermust
+  startimmediatelyafterbootandcontinueuntilactualsamebootGUIconfirmation/
+  explicitcancel; attemptRAMlog/panelonECMwithoutstopping. NoHFI/GX/3Dyet.
+
 ### CURRENT ACTION —0038 PDC readback fix building;0037 GUI confirmed/observer stopped
 
 - Actualhuman0037“已进入系统”,photo97A53307. **GE3/2@4:855d4 expected10108
