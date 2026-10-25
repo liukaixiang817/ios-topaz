@@ -34,7 +34,24 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT ACTION —0044 GUI/authentication confirmed;0045 native CP ordering fix in validation
+### CURRENT ACTION —0045 source79fd790 / CI40163016649 running; currentphone0044GUI/CP80
+
+- Local sourcecommitd784d99; publicsource79fd79034d12821afcb15dc76a2275ba7a9716a4
+  (parent4564a8a), only5source/test/0850patchfiles, NOTES/privatehistory excluded.
+  CI40163016649 IN_PROGRESS, wrapper4554. Final49localtests/4actualARM64units/
+  31adapterimports/30orderedpatches35files/29rows/sourceboundaries/SMCISA PASS.
+- Frozen14pipeline scripts BEFOREguestexecution; exactsame0044CPU1standard
+  clock60/90/60matrix45+44+44=133; onlyonepredeclared identicalretry for
+  classifiedtimerfault, preserveallfailures. No0045image/deviceactionyet.
+  USBhostobserver PAUSED; nevercallboot-and-watch. CPU1/20Hz/v4ADT/images/
+  RAMCOW512MiB/ufsrw0 unchanged. No desktopGPUbridgeimplemented.
+- NEXTwait4554 → independentfinal-prepared-check.py inclnewCP-source-check;
+  FIRSTautomaticFASTBOOTquery afterimageverified. Ifexpectedpolarisready,
+  freshROpreflight/directtemporaryboot. Askphysicalkeysonlyifactuallyabsent.
+  ActualCP80rootcause and0045GPUexecution remainUNPROVEN; awaitnewhardware
+  GZ/GC0/GI/GF. Correctednativeordering is sourceevidence, notphysicalsuccess.
+
+### 0044 GUI/authentication confirmed;0045 native CP ordering fix validation
 
 - Human0044 photo8EDAC277 confirms entered Settings, GUIstillCPU. Visible
   GZ6/7 fn42000205 t0r0 S1M1A1K1 Q0/R0: freshPAS authentication succeeded;
@@ -63,8 +80,8 @@ early samples only. On0029 the human already confirmed boot complete and said
   no assertion/IRQclockthreshold waiver. ProductioncompilealwaysPASS.
 - Private0045directory, native extra snapshot.c pinnedMiCode c7cb50c1 Gitblob
   5572cd78cdeb5982fe1efc69b14f583b7e6c84b1; noforeigncodeexecuted. 30ordered
-  patches/35files PASS, original48register/12DTpair checkPASS. No0045CI/image/
-  deviceactionyet. NEXTcompletequalitychecks/sourceonlycommit-push/build,
+  patches/35files PASS, original48register/12DTpair checkPASS. No0045image/
+  deviceactionyet. Sourceonlycommit-push/build nowrunningabove;
   samefixedCPU1matrix, independentimagecheck thenFIRSTautoFASTBOOTquery.
 
 ### 0044 temporary boot SENT; later GUI confirmed above
