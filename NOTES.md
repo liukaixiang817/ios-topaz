@@ -28,6 +28,25 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT ACTION —0040 corrected kernel building; high-RAM regression prepared
+
+- Local source commit **d941b17**; public source-only **91b2bca2c53c5964532088f54a25ccf5fd872f81**,
+  parent784aa9f,only3 source/test/patch files. Private NOTES/history/artifacts
+  excluded. **CI40152678487** dispatched by push; pipeline **87654 ACTIVE**.
+- Frozen14 hosts now FIRST run a60s standard-clock high-RAM synthetic guest
+  with explicit polarisgpucachetest=1. It must execute real XNU cache attrs on
+  two owned16KiB pages above4GiB, verify first/last data, restore both attributes.
+  Then selected base120s/async-net90s/no-MMIO60s. Expected **151 checks**.
+  Full linked kernel must contain the corrected64bit PA instruction as well.
+- Local30 tests (prior expression fails, new8 boundaries pass),4 real-header
+  ARM64/imports,25 ordered patches30 files/native source/24-row formatter/8
+  observer-policy tests PASS. No0040 guest/image/device result yet.
+-0039 is confirmed panic, not loading/GUI. USB observer STOPPED by explicit
+  “本次暂停”; do not restart it. Phone is currently panic unless human changes
+  it. After0040 final image verification FIRST queryFASTBOOT; use expected phone
+  directly if present, otherwise ask physical keys because XNU USB is unavailable.
+  No full GPU rendering success may be inferred from this memory fix.
+
 ### CURRENT ACTION —0040 narrow high-PA fix locally verified; preparing full CI
 
 - 0039 USB observer34645 verified absent after explicit user pause; STOPPED,
