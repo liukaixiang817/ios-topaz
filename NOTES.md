@@ -34,7 +34,26 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### 0048 TEMPORARY BOOT SENT11:09:49UTC; await actual GLB/GUI/GA result
+### 0049 loading-path repair in progress; human already in FASTBOOT
+
+- New0048 Settings photo C25B51FA confirms GUI and `GA O0 S1 I1 T6 E0 D0 R1`.
+  Actual Mesa GLSL/shared-IOSurface/ALL4096-pixel acceptance PASSED. Native
+  GPU/runtime remains working. O0/S1 do NOT prove desktop GPU use; genuine
+  backboardd did not keep a GPU connection in this snapshot.
+- Identified a source-level loader refusal: injector requires getprogname()
+  `backboardd`, but original executable was renamed `polaris-bbd-real`.
+  Apple dyld1042.1 ProcessConfig derives progname from executable_path,
+  preferring that kernel apple parameter over argv[0]. Wrapper's argv[0]
+  rewrite therefore cannot satisfy that gate. Actual20H392 AMFI0x5a request
+  ABI independently disassembled and matches our existing16-byte request;
+  ALL7 actual EAGL methods exist. Do not change the proven hardware path.
+- Next: exact executable-path gate, atomic EAGL method preflight and compact
+  separate loading/context status (keep T6/E0 selftest untouched), rebuild
+  and verify. No0049 image/build/device action yet. Human replied FASTBOOT
+  ready twice; automatically query AFTER verified image, do not ask again
+  if expected phone is present. USB observation remains PAUSED.
+
+### 0048 TEMPORARY BOOT SENT11:09:49UTC; result superseded above
 
 - HumanFASTBOOTreply→targetedquery11:07:41.950808UTCconfirmedexpectedpolaris.
   All195frozeninputsunchanged. ROpreflight54245EXIT0,11:09:20.459487UTC:

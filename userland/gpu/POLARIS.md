@@ -1,10 +1,9 @@
 # Polaris20H392 GPU integration
 
-0046 has **physical native command/fence/4096-pixel/idle/halt proof**. Its
-desktop uses CoreAnimation's CPU renderer. This integration adds the missing
-resident submission and Mesa/EAGL path; application/desktop acceleration must
-still pass the new physical acceptance test. Metal application support is a
-separate layer and is not implemented here.
+0048 has **physical native command/fence/4096-pixel/idle/halt proof and a
+successful Mesa GLSL/shared-IOSurface/4096-pixel acceptance test**. Its photo
+shows `GA O0 S1 I1 T6 E0 D0 R1`: the desktop has not demonstrated GPU use.
+Metal application support is a separate layer and is not implemented here.
 
 The A630 hardware bootstrap follows this phone's DT, original MiCode sources
 and original firmware. `polarisgpu=9` retains that baseline. An additional
@@ -56,6 +55,30 @@ deadline; an expired deadline is never renewed and the valid mask says which
 words were actually read. Rendering only formats the immutable snapshot.
 T6/E0 with increasing S during real interface use is distinct from the earlier
 native proof. Full original diagnostics remain in RAM.
+
+0049 fixes the injector's program-name gate: the original executable is now
+`/usr/libexec/polaris-bbd-real`, while dyld derives the program name from the
+kernel's executable path, even when the wrapper rewrites argv[0]. The bridge
+checks `_NSGetExecutablePath` against that exact path and the successful-test
+environment; kernel admission still verifies the actual executable vnode.
+See Apple's [dyld1042.1 ProcessConfig](https://github.com/apple-oss-distributions/dyld/blob/dyld-1042.1/dyld/DyldProcessConfig.cpp).
+The existing AMFI request ABI and all7 required EAGL methods were independently
+checked against the actual20H392 cache. All7 methods are preflighted before
+any replacement; an installation failure restores the original implementations.
+
+The injector opens one task-owned GPU connection and passes that same port to
+Mesa through its existing `POLARIS_GPU_CONNECTION` adapter. It never borrows
+the child selftest's port. Opening the connection alone does not prove drawing.
+Cached fields appended to the existing GA row keep the selftest T/E intact:
+L1 means scoped dyld policy answered, L2 injector admitted, L3 bridge loading,
+L4 all methods installed, L5 CA requested a context, L6 context created.
+X is the loading error (1environment,2dlopen,3missing status exports,
+4method installation,5API/allocation,6Mesa context); at L1 it is policy errno.
+M is the7-bit method mask, required0x7f. The trusted-server-only12-byte selector
+0x7b changes diagnostics only, never native readiness/submission/import counts.
+Context reports happen on first request/success and failures, not every frame.
+Neither L6 nor O1 alone proves desktop acceleration: S and I must increase
+beyond the single selftest submission/import during real interface use.
 
 The0048 bootstrap keeps the0047 hardware/submission path intact. Bundle files
 are installed in at most128KiB synchronous VFS writes, with the volatile-root

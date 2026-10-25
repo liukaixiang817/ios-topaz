@@ -10,6 +10,7 @@
 #include <objc/runtime.h>
 #include <mach/mach.h>
 #include <stdint.h>
+#include <mach-o/dyld.h>
 extern const void *_dyld_get_shared_cache_range(size_t *);
 #define CACHE_BASE              0x180000000UL
 #define VT_GLES_CONTEXT         0x1d5b2f6e8UL   /* vtable for CA::OGL::GLESContext */
@@ -103,14 +104,45 @@ gl_hooks(void *lib)
 
 /* Where a crash happened, printed to stderr (the console): image + offset + symbol. */
 
+static io_connect_t desktop_connection;
+static void loader_note(unsigned stage,unsigned error,unsigned methods)
+{
+    uint32_t report[3]={stage,error,methods},reply[3];size_t bytes=sizeof(reply);
+    kern_return_t kr=IOConnectCallStructMethod(desktop_connection,0x7b,report,sizeof(report),reply,&bytes);
+    if(kr || bytes!=sizeof(reply))fprintf(stderr,"POLARIS GL: loader report failed %#x\n",kr);
+}
+static int real_window_server(void)
+{
+    char path[1024];uint32_t bytes=sizeof(path);
+    const char *tested=getenv("POLARIS_GL_TESTED");
+    /* dyld's program name follows executable_path, not our rewritten argv[0].
+     * Kernel admission still independently verifies the executable vnode. */
+    return tested && !strcmp(tested,"1") && !_NSGetExecutablePath(path,&bytes) &&
+        !strcmp(path,"/usr/libexec/polaris-bbd-real");
+}
 __attribute__((constructor)) static void polaris_gl_inject(void)
 {
-    if(strcmp(getprogname(),"backboardd") || !getenv("POLARIS_GL_TESTED"))return;
+    if(!real_window_server())return;
     io_service_t gpu=IOServiceGetMatchingService(0,IOServiceMatching("PolarisGPU"));
     if(!gpu)return;
+    kern_return_t kr=IOServiceOpen(gpu,mach_task_self(),0,&desktop_connection);
     IOObjectRelease(gpu);
+    if(kr){fprintf(stderr,"POLARIS GL: desktop connection failed %#x\n",kr);return;}
+    loader_note(2,0,0);
+    /* Mesa reuses this task's one exclusive connection. Never inherit a port
+     * from the child selftest and never compete with our own connection. */
+    char port[16];snprintf(port,sizeof(port),"%u",desktop_connection);
+    if(setenv("POLARIS_GPU_CONNECTION",port,1)) {loader_note(2,1,0);return;}
+    loader_note(3,0,0);
     void *gl=dlopen("/usr/lib/libPolarisGL.dylib",RTLD_NOW|RTLD_LOCAL);
-    if(!gl){fprintf(stderr,"POLARIS GL: bridge load failed: %s\n",dlerror());return;}
+    if(!gl){loader_note(3,2,0);fprintf(stderr,"POLARIS GL: bridge load failed: %s\n",dlerror());return;}
+    unsigned (*methods)(void)=(unsigned (*)(void))dlsym(gl,"polaris_eagl_methods");
+    void (*observe)(void (*)(unsigned,unsigned,unsigned))=
+        (void (*)(void (*)(unsigned,unsigned,unsigned)))dlsym(gl,"polaris_eagl_observe");
+    if(!methods || !observe){loader_note(4,3,0);return;}
+    unsigned mask=methods();
+    if(mask!=0x7f){loader_note(4,4,mask);return;}
+    observe(loader_note);
     gl_hooks(gl);
-    fprintf(stderr,"POLARIS GL: EAGL backend installed in backboardd; observe submission counters\n");
+    fprintf(stderr,"POLARIS GL: all7 EAGL methods installed; desktop submissions still require observation\n");
 }

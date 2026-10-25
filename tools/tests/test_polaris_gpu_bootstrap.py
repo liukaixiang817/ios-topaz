@@ -144,7 +144,7 @@ int main(void){char text[68];assert(!polaris_gpu_overlay_line(0,68)&&!polaris_gp
     def test_non_target_AMFI_preserves_absent_policy_result_and_PID1_never_looks_up_files(self):
         # Public patch contains the complete small policy callback; reconstruct
         # its resulting text from the staged patch rather than private XNU.
-        patch = (ROOT / 'xnu/profiles/polaris/0854-polaris-bounded-bootstrap-and-snapshot-reporting.patch').read_text()
+        patch = (ROOT / 'xnu/profiles/polaris/0855-polaris-window-server-loading-and-eagl-status.patch').read_text()
         lines = [l[1:] for l in patch.splitlines() if l.startswith((' ', '+')) and not l.startswith('+++')]
         actual = function('\n'.join(lines), 'static int polaris_gl_dyld_policy(')
         run(r'''
@@ -155,7 +155,9 @@ int main(void){char text[68];assert(!polaris_gpu_overlay_line(0,68)&&!polaris_gp
 typedef uintptr_t user_addr_t;
 #define ENOPOLICY 103
 struct proc{bool init;};
-static unsigned ready,kind,lookups,inputs,outputs,bad_in;
+static unsigned ready,kind,lookups,inputs,outputs,bad_in,policy_notes;
+static int policy_error;
+static void polaris_gpu_loader_policy(int e){policy_notes++;policy_error=e;}
 static bool proc_isinitproc(struct proc*p){return p->init;}
 static bool polaris_gpu_overlay_ready(void){return ready;}
 static unsigned polaris_gpu_caller_kind(void){lookups++;return kind;}
@@ -168,5 +170,6 @@ int main(void){struct proc p={true};ready=1;kind=2;
  ready=0;assert(polaris_gl_dyld_policy(&p,0x5a,1)==ENOPOLICY&&!lookups);
  ready=1;kind=1;assert(polaris_gl_dyld_policy(&p,0x5a,1)==ENOPOLICY&&lookups==1&&!inputs);
  kind=2;assert(!polaris_gl_dyld_policy(&p,0x5a,1)&&inputs==1&&outputs==1);
- bad_in=1;assert(polaris_gl_dyld_policy(&p,0x5a,1)==14&&outputs==1);return 0;}
+ bad_in=1;assert(polaris_gl_dyld_policy(&p,0x5a,1)==14&&outputs==1);
+ assert(policy_notes==2&&policy_error==14);return 0;}
 ''')
