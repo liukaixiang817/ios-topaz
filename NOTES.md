@@ -30,6 +30,25 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### CURRENT ACTION —0035 GUI confirmed;0036 owned-context/PIPE fix in progress
 
+-0036privatefix **62882f0**, source-onlypublic **efd7d81f9f1a67ec963544d59dec1b423b98de63**
+  (parent57e5706), 6source/test/patchfilesonly. Nooperationalnotes/privatehistory
+  published. **CI40145402159 ACTIVE** from00:06:33UTC. Local27ASan/UBSan,
+  3actualCI-headerARM64units/imports,21orderedpatches28files/nooffset/fuzz,
+  17detail/19displayrows<=67chars, nativeDT/ACTLR/PIPEsourcechecksPASS.
+-0841actualadapterusesexplicitowned-contexthandoff: noimplementationregister
+  writes/halt inthatpath, stableopaque12valueschecked3times; actualcontrol2378
+  required. Originalstrictprofilewritepathand6b68ACK-failureregressionremain.
+  OwnfreeCB1..4ACTLR70000000save/set/readback/restore; allCB/TTBR/SMR/TLBSYNC
+  ACKsandprotectedCB5..7exclusionretained. Handoff/sourcehypothesisnotphysical
+  success. Nativefaultinjecteveryhandoffstart/cleanupIOandopaque-state-drift.
+- USBcorePIPE.SUSPHY17requestedafterHSUTMImux,ownedbitonlyand1000pollACK.
+  Busycommandretainsmux/PIPE/RAMrequests. NewSI/UXsavedrows. Nohardware/3Dclaim.
+-0036host14scriptsfrozen; detachednew-sessionwatcherlifetimeprobe40samples
+  survivesparentexec,8observerpolicytestsPASS; actualturncontinuitystilltoverify.
+  OnECMdetachedhelperattemptsRAMlog/panel; missingrootaliaspermissionisrecorded,
+  requiresagentfollowupifencountered. NoECM/hostnetworkchangeyet. Donotclaim
+  old0035gapcovered. BuildpipelinewaitsCIthenexact90selectedCPU1checks/image;
+  finalindependentcheckerbeforeactualFASTBOOTquery/preflight/boot.
 - Actualhumanconfirmed0035 “这次这样，已进入系统”, and “基本全程没有USB”.
   PhotoD50D99C4: GS6/4still6b68 expected9a82a382 actuala8000082;
   SH2378→237c→2378/2polls proveshalt/resume. GE0/0unattempted.
