@@ -28,6 +28,36 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT ACTION —0038 PDC readback fix building;0037 GUI confirmed/observer stopped
+
+- Actualhuman0037“已进入系统”,photo97A53307. **GE3/2@4:855d4 expected10108
+  actual10100/fw0**; GRh7/attempted800003ffffff/hidden82204514,10,20. Native
+  hiddenrequestsadvanced; no cleared-address/FWexecutionproof. **GS8/7 READY**,
+  SIq1/f0provesisolatedFAULTfallbackused. CleanupstillACK6,SHoffsetappears1004
+  (softphotodigit), likelyCBAR; expected/actualnotin0037panel. DoNOTwaive.
+- Observer5970 **STOPPED_BY_HUMAN**,36samples/356.675s,last01:03:23.007757UTC,
+  confirmation01:03:26.366010,finished01:03:27.076927; processabsent,journalall
+  match,zeroinspectionerrors,noECM/nohostnetworkchange/RAMlog/frame. Private
+ 0037/observation-audit.json+hardware-0037-observation.json. DoNOTrestartwatch.
+- New0038 **0843** local **0c1aefa**, source-onlypublic
+  **0b4d101e6336a1bcb6cc2b9c20214c47b4d8c06b**,parentebc5c7e,4code/test/patch
+  filesonly. **CI40149445259 queued/active**,no0038kernel/image/deviceactionyet.
+- Pinnednativeqcom-rpmh-mailbox.c(blob00ebed9b)confirmsLEN8/RESPONSEbit8/
+  WRITEbit16. Difference10108→10100isLEN,NOTWRITE. OriginalMiCode/mainlineGPU
+  issue10108withoutretainedwordpoll. Newhelperissuesexactnativewritesat6
+  PDCMSGIDaddresses,admitsONLY10108orobserved10100,records6rawvalues+lengthmask;
+  otherfields/registers/IOremainfatal. NotcalledPDCexecutionproof; freshFW
+  markerstillmandatoryandHFI/GX/3Dremainoff. Thisisboundedbringupinference.
+- Native27ASan/UBSan(expandedallIOstart/stopandbadWRITE/RESP/otherLEN),3actual
+  CIheaderARM64units/imports,23orderedpatches28files,18detail/20displayrows
+  <=67chars,8observerpolicytestsPASS. SHhandoffrownowshowsrestoreoffset+
+  expected/actual; nofunctionalSMMUcleanuprelaxation. GRshowsPDCfirst3raws.
+-0038pipeline14hosts frozen,expects102selectedstandardCPU1checks. After
+  fullbuild/regression/image/finalindependentcheckFIRSTqueryFASTBOOT. If
+  expectedphonepresentdirectfreshfullROpreflight+tempboot,askkeysONLYifabsent.
+  On0038bootstartdetachedobserveruntilactualsamebootGUIconfirmation/cancel;
+  askGEfw/GR/SHexactvalues. Current0037humanconfirmationmustnotstopfuture0038.
+
 ### CURRENT ACTION —0037 temporary boot SENT; detached USB observation active
 
 - **Preflight81645EXIT0**,verified **00:56:35.757632UTC**: full16GiBSHA689a8cd1,
