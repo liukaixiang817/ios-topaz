@@ -140,7 +140,7 @@ int main(void){
 #include <stdbool.h>
 #include <stdio.h>
 #include <assert.h>
-static unsigned a630_mode=9,logs;static uint64_t a630_progress_access,a630_last_cb_access;
+static unsigned a630_mode=9,logs,a630_published;static uint64_t a630_progress_access,a630_last_cb_access;
 static int capture(const char*f,unsigned op,unsigned off){
  assert(f&&((a630_progress_access>>63)==1)&&((a630_progress_access>>56)&15)==op&&(unsigned)a630_progress_access==off);logs++;return 0;}
 #define printf capture

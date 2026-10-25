@@ -144,24 +144,27 @@ int main(void){char text[68];assert(!polaris_gpu_overlay_line(0,68)&&!polaris_gp
     def test_non_target_AMFI_preserves_absent_policy_result_and_PID1_never_looks_up_files(self):
         # Public patch contains the complete small policy callback; reconstruct
         # its resulting text from the staged patch rather than private XNU.
-        patch = (ROOT / 'xnu/profiles/polaris/0855-polaris-window-server-loading-and-eagl-status.patch').read_text()
+        patch = (ROOT / 'xnu/profiles/polaris/0856-polaris-eagl-crash-containment-and-quiet-runtime.patch').read_text()
         lines = [l[1:] for l in patch.splitlines() if l.startswith((' ', '+')) and not l.startswith('+++')]
         actual = function('\n'.join(lines), 'static int polaris_gl_dyld_policy(')
-        run(r'''
+        run('#include "'+str(ROOT/'tools/polaris-gl-status.h')+'"\n' + r'''
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <assert.h>
 typedef uintptr_t user_addr_t;
 #define ENOPOLICY 103
+#define EINVAL 22
 struct proc{bool init;};
-static unsigned ready,kind,lookups,inputs,outputs,bad_in,policy_notes;
+static unsigned ready,kind,lookups,inputs,outputs,bad_in,policy_notes,crash_notes;
+static unsigned proc_pid(struct proc*p){(void)p;return 42;}
+static bool polaris_gpu_record_crash(const struct pgpu_crash*p,unsigned pid){assert(pid==42);crash_notes++;return pgpu_crash_valid(p);}
 static int policy_error;
 static void polaris_gpu_loader_policy(int e){policy_notes++;policy_error=e;}
 static bool proc_isinitproc(struct proc*p){return p->init;}
 static bool polaris_gpu_overlay_ready(void){return ready;}
 static unsigned polaris_gpu_caller_kind(void){lookups++;return kind;}
-static int copyin(user_addr_t at,void*out,size_t bytes){assert(at==1&&bytes==16);inputs++;((uint64_t*)out)[1]=2;return bad_in?14:0;}
+static int copyin(user_addr_t at,void*out,size_t bytes){assert(at==1);inputs++;if(bytes==40){*(struct pgpu_crash*)out=(struct pgpu_crash){.signal=11,.pc=8};}else{assert(bytes==16);((uint64_t*)out)[1]=2;}return bad_in?14:0;}
 static int copyout(const void*in,user_addr_t at,size_t bytes){assert(*(const uint64_t*)in==255&&at==2&&bytes==8);outputs++;return 0;}
 ''' + actual + r'''
 int main(void){struct proc p={true};ready=1;kind=2;
@@ -171,5 +174,6 @@ int main(void){struct proc p={true};ready=1;kind=2;
  ready=1;kind=1;assert(polaris_gl_dyld_policy(&p,0x5a,1)==ENOPOLICY&&lookups==1&&!inputs);
  kind=2;assert(!polaris_gl_dyld_policy(&p,0x5a,1)&&inputs==1&&outputs==1);
  bad_in=1;assert(polaris_gl_dyld_policy(&p,0x5a,1)==14&&outputs==1);
- assert(policy_notes==2&&policy_error==14);return 0;}
+ assert(policy_notes==2&&policy_error==14);bad_in=0;
+ assert(!polaris_gl_dyld_policy(&p,0x5b,1)&&crash_notes==1&&policy_notes==2);return 0;}
 ''')

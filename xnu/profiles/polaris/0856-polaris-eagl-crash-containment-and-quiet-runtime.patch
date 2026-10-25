@@ -1,0 +1,310 @@
+--- a/bsd/dev/polaris_a630.c
++++ b/bsd/dev/polaris_a630.c
+@@ -92,7 +92,8 @@
+     __atomic_store_n(&a630_progress_access,key|(UINT64_C(1)<<63),__ATOMIC_RELEASE);
+     /* CB0 is new in mode9. Announce a changed access before it, never once
+      * per TLB poll. A hung single bus transaction cannot run a heartbeat. */
+-    if(bank==3 && offset>=0x8000 && offset<0x8800 && key!=a630_last_cb_access){
++    if(!__atomic_load_n(&a630_published,__ATOMIC_ACQUIRE) &&
++        bank==3 && offset>=0x8000 && offset<0x8800 && key!=a630_last_cb_access){
+         a630_last_cb_access=key;
+         printf("POLARIS GPU CB0: op=%u off=%x entering\n",op,offset);
+     }
+@@ -150,6 +151,7 @@
+     const struct a630_zap_snapshot *zap=&a630_zap_saved;
+     const struct a630_core_snapshot *core=&a630_core_saved;
+     if(line>=1 && line<=3){uint32_t n=polaris_gpu_fault_line(line-1,out,size);if(n)return n;}
++    if(line>=16 && line<=18){uint32_t n=polaris_gpu_crash_line(line-16,out,size);if(n)return n;}
+     if(line==19){uint32_t n=polaris_gpu_client_line(out,size);if(n)return n;}
+     if(line==0 && core->prepared)return (uint32_t)snprintf(out,size,
+         "GP SQE E%x B%x A%x D%x S%x/%x",
+--- a/iokit/Kernel/arm/PolarisGPU.cpp
++++ b/iokit/Kernel/arm/PolarisGPU.cpp
+@@ -34,6 +34,27 @@
+ static IOLock *gpuLock;
+ static bool gpuOpened, gpuQuarantined;
+ static uint32_t gpuSubmissions, gpuSurfaces;
++static uint32_t gpuDesktopAttempts,gpuDesktopSubmissions;
++static struct pgpu_crash gpuFirstCrash;
++static uint32_t gpuCrashPublished,gpuCrashPID;
++extern "C" bool polaris_gpu_record_crash(const struct pgpu_crash *p,uint32_t pid)
++{
++    if(!pgpu_crash_valid(p))return false;
++    uint32_t expected=0;
++    if(__atomic_compare_exchange_n(&gpuCrashPublished,&expected,1,false,__ATOMIC_ACQ_REL,__ATOMIC_ACQUIRE)) {
++        gpuFirstCrash=*p;gpuCrashPID=pid;
++        __atomic_store_n(&gpuCrashPublished,2,__ATOMIC_RELEASE);
++    }
++    return true; /* First fault survives subsequent launchd restarts. */
++}
++extern "C" uint32_t polaris_gpu_crash_line(unsigned line,char *out,uint32_t capacity)
++{
++    if(!out || !capacity || line>2 || __atomic_load_n(&gpuCrashPublished,__ATOMIC_ACQUIRE)!=2)return 0;
++    if(!line)return (uint32_t)snprintf(out,capacity,"GLF SIG%u CODE%x PID%u",gpuFirstCrash.signal,gpuFirstCrash.code,gpuCrashPID);
++    if(line==1)return (uint32_t)snprintf(out,capacity,"GLPC %u:%llx LR%u:%llx",gpuFirstCrash.pc_image,
++        gpuFirstCrash.pc,gpuFirstCrash.lr_image,gpuFirstCrash.lr);
++    return (uint32_t)snprintf(out,capacity,"GLADDR %llx",gpuFirstCrash.address);
++}
+ static uint32_t gpuPublished,gpuOpenStatus,gpuFaultStatus;
+ static uint32_t gpuAppStage,gpuAppError;
+ /* Loading evidence is independent of the shader/pixel acceptance result.
+@@ -47,7 +68,7 @@
+ }
+ static bool polaris_gpu_loader_report(uint32_t kind,uint32_t stage,uint32_t error,uint32_t methods)
+ {
+-    if(kind!=2 || stage<2 || stage>6 || error>6 || (methods&~0x7fu))return false;
++    if(kind!=2 || stage<2 || stage>6 || error>6 || (methods&~PGPU_EAGL_METHOD_MASK))return false;
+     __atomic_store_n(&gpuLoaderError,error,__ATOMIC_RELEASE);
+     __atomic_store_n(&gpuLoaderMethods,methods,__ATOMIC_RELEASE);
+     __atomic_store_n(&gpuLoaderStage,stage,__ATOMIC_RELEASE);
+@@ -58,7 +79,7 @@
+ extern "C" uint32_t polaris_gpu_client_line(char *out,uint32_t capacity)
+ {
+     if(!out || !capacity || !__atomic_load_n(&gpuPublished,__ATOMIC_ACQUIRE))return 0;
+-    return (uint32_t)snprintf(out,capacity,"GA O%u S%x I%x T%u E%u D%u R%u L%u X%x M%x",
++    return (uint32_t)snprintf(out,capacity,"GA O%u S%x I%x T%u E%u D%u R%u L%u X%x M%x C%x",
+         __atomic_load_n(&gpuOpenStatus,__ATOMIC_ACQUIRE),
+         __atomic_load_n(&gpuSubmissions,__ATOMIC_ACQUIRE),
+         __atomic_load_n(&gpuSurfaces,__ATOMIC_ACQUIRE),
+@@ -67,7 +88,8 @@
+         __atomic_load_n(&gpuFaultStatus,__ATOMIC_ACQUIRE),polaris_gpu_ready()?1:0,
+         __atomic_load_n(&gpuLoaderStage,__ATOMIC_ACQUIRE),
+         __atomic_load_n(&gpuLoaderError,__ATOMIC_ACQUIRE),
+-        __atomic_load_n(&gpuLoaderMethods,__ATOMIC_ACQUIRE));
++        __atomic_load_n(&gpuLoaderMethods,__ATOMIC_ACQUIRE),
++        __atomic_load_n(&gpuDesktopSubmissions,__ATOMIC_ACQUIRE));
+ }
+ struct PolarisBO {
+     IOMemoryDescriptor *memory;
+@@ -81,7 +103,7 @@
+     typedef IOUserClient super;
+     PolarisBO *buffers;
+     uint64_t bytes;
+-    uint32_t nextHandle, lastFence, queues;
++    uint32_t nextHandle, lastFence, queues, callerKind;
+     bool closed, quarantined;
+     task_t ownerTask;
+     PolarisBO *buffer(uint32_t h) {return h && h<=GPU_BUFFERS && buffers[h-1].memory ? &buffers[h-1] : NULL;}
+@@ -115,6 +137,7 @@
+ {
+     if (!super::initWithTask(task,security,type,props)) return false;
+     ownerTask=task;
++    callerKind=polaris_gpu_caller_kind();
+     buffers=IONewZero(PolarisBO,GPU_BUFFERS);
+     return buffers!=NULL;
+ }
+@@ -124,13 +147,18 @@
+     /* A shared address space cannot safely accept arbitrary app shaders.
+      * The genuine window server is mobile, so authenticate its executable
+      * vnode rather than root UID or a caller-provided process name. */
+-    if(task!=current_task() || !polaris_gpu_caller_allowed())return kIOReturnNotPrivileged;
++    if(task!=current_task())return kIOReturnNotPrivileged;
++    uint32_t kind=polaris_gpu_caller_kind();
++    if(!kind)return kIOReturnNotPrivileged;
+     IOLockLock(gpuLock);
+     IOReturn result=kIOReturnBusy;
+-    if (!gpuOpened && !gpuQuarantined && polaris_gpu_ready()) {
++    if(!pgpu_desktop_allowed(kind,gpuDesktopAttempts)) {
++        result=kIOReturnNotPermitted; /* One GPU trial per boot; later server uses CPU. */
++    } else if (!gpuOpened && !gpuQuarantined && polaris_gpu_ready()) {
+         PolarisGPUUserClient *c=new PolarisGPUUserClient;
+         if (c && c->initWithTask(task,security,type,props) && c->attach(this) && c->start(this)) {
+             gpuOpened=true;__atomic_store_n(&gpuOpenStatus,1,__ATOMIC_RELEASE);*out=c;result=kIOReturnSuccess;
++            if(kind==2){gpuDesktopAttempts++;setProperty("PolarisDesktopAttempted",kOSBooleanTrue);}
+         } else {if(c)c->release();result=kIOReturnNoMemory;}
+     }
+     IOLockUnlock(gpuLock);
+@@ -267,6 +295,7 @@
+             if(b->surface)__atomic_store_n(&b->surface->polarisGPUBusy,0,__ATOMIC_RELEASE);
+         }
+         __atomic_fetch_add(&gpuSubmissions,1,__ATOMIC_RELEASE);
++        if(callerKind==2)__atomic_fetch_add(&gpuDesktopSubmissions,1,__ATOMIC_RELEASE);
+         if(gpuSubmissions<=4 || !(gpuSubmissions%256))
+             IOLog("POLARIS GPU: completed submission %u, IBs=%u BOs=%u surfaces=%u; GPU fence+idle+halt\n",
+                 r->fence,count,r->nr_bos,gpuSurfaces);
+--- a/bsd/dev/polaris_gpu.h
++++ b/bsd/dev/polaris_gpu.h
+@@ -6,6 +6,7 @@
+ #define POLARIS_GPU_H
+ #include <stdint.h>
+ #include <stdbool.h>
++#include "polaris-gl-status.h"
+ #ifdef __cplusplus
+ extern "C" {
+ #endif
+@@ -15,6 +16,8 @@
+ bool polaris_gpu_caller_allowed(void);
+ uint32_t polaris_gpu_caller_kind(void);
+ void polaris_gpu_loader_policy(int error);
++bool polaris_gpu_record_crash(const struct pgpu_crash *,uint32_t pid);
++uint32_t polaris_gpu_crash_line(unsigned line,char *out,uint32_t capacity);
+ bool polaris_gpu_quiescent(void);
+ bool polaris_gpu_map(uint64_t address, uint64_t physical, bool read_only, bool cached);
+ bool polaris_gpu_commit(void);
+--- a/iokit/Kernel/arm/polaris_gpu.h
++++ b/iokit/Kernel/arm/polaris_gpu.h
+@@ -6,6 +6,7 @@
+ #define POLARIS_GPU_H
+ #include <stdint.h>
+ #include <stdbool.h>
++#include "polaris-gl-status.h"
+ #ifdef __cplusplus
+ extern "C" {
+ #endif
+@@ -15,6 +16,8 @@
+ bool polaris_gpu_caller_allowed(void);
+ uint32_t polaris_gpu_caller_kind(void);
+ void polaris_gpu_loader_policy(int error);
++bool polaris_gpu_record_crash(const struct pgpu_crash *,uint32_t pid);
++uint32_t polaris_gpu_crash_line(unsigned line,char *out,uint32_t capacity);
+ bool polaris_gpu_quiescent(void);
+ bool polaris_gpu_map(uint64_t address, uint64_t physical, bool read_only, bool cached);
+ bool polaris_gpu_commit(void);
+--- /dev/null
++++ b/bsd/dev/polaris-gl-status.h
+@@ -0,0 +1,36 @@
++/* Fixed diagnostic ABI shared by the verified window server and kernel.
++ * Reporting never establishes GPU completion or permits another writer. */
++#ifndef POLARIS_GL_STATUS_H
++#define POLARIS_GL_STATUS_H
++#include <stdint.h>
++#define PGPU_EAGL_METHOD_COUNT 8u
++#define PGPU_EAGL_METHOD_MASK 0xffu
++struct pgpu_crash {
++    uint32_t signal,code;
++    uint64_t pc,lr,address;
++    uint32_t pc_image,lr_image;
++};
++/* image0 raw,1 shared-cache preferredVA,2 injector,3 bridge,4 Mesa offset. */
++struct pgpu_image {uint64_t base,bytes;uint32_t kind;};
++static inline int pgpu_desktop_allowed(uint32_t kind,uint32_t attempts)
++{return kind!=2 || attempts==0;}
++static inline uint64_t pgpu_pc(uint64_t pc,const struct pgpu_image *images,unsigned count,uint32_t *kind)
++{
++    *kind=0;
++    for(unsigned i=0;i<count;i++)if(images[i].base && pc>=images[i].base && pc-images[i].base<images[i].bytes) {
++        *kind=images[i].kind;
++        return pc-images[i].base+(*kind==1?UINT64_C(0x180000000):0);
++    }
++    return pc;
++}
++static inline int pgpu_crash_valid(const struct pgpu_crash *p)
++{
++    return p && (p->signal==4 || p->signal==5 || p->signal==6 || p->signal==10 || p->signal==11) &&
++        p->pc && p->pc_image<=4 && p->lr_image<=4;
++}
++#ifdef __cplusplus
++static_assert(sizeof(struct pgpu_crash)==40,"crash ABI");
++#else
++_Static_assert(sizeof(struct pgpu_crash)==40,"crash ABI");
++#endif
++#endif
+--- /dev/null
++++ b/iokit/Kernel/arm/polaris-gl-status.h
+@@ -0,0 +1,36 @@
++/* Fixed diagnostic ABI shared by the verified window server and kernel.
++ * Reporting never establishes GPU completion or permits another writer. */
++#ifndef POLARIS_GL_STATUS_H
++#define POLARIS_GL_STATUS_H
++#include <stdint.h>
++#define PGPU_EAGL_METHOD_COUNT 8u
++#define PGPU_EAGL_METHOD_MASK 0xffu
++struct pgpu_crash {
++    uint32_t signal,code;
++    uint64_t pc,lr,address;
++    uint32_t pc_image,lr_image;
++};
++/* image0 raw,1 shared-cache preferredVA,2 injector,3 bridge,4 Mesa offset. */
++struct pgpu_image {uint64_t base,bytes;uint32_t kind;};
++static inline int pgpu_desktop_allowed(uint32_t kind,uint32_t attempts)
++{return kind!=2 || attempts==0;}
++static inline uint64_t pgpu_pc(uint64_t pc,const struct pgpu_image *images,unsigned count,uint32_t *kind)
++{
++    *kind=0;
++    for(unsigned i=0;i<count;i++)if(images[i].base && pc>=images[i].base && pc-images[i].base<images[i].bytes) {
++        *kind=images[i].kind;
++        return pc-images[i].base+(*kind==1?UINT64_C(0x180000000):0);
++    }
++    return pc;
++}
++static inline int pgpu_crash_valid(const struct pgpu_crash *p)
++{
++    return p && (p->signal==4 || p->signal==5 || p->signal==6 || p->signal==10 || p->signal==11) &&
++        p->pc && p->pc_image<=4 && p->lr_image<=4;
++}
++#ifdef __cplusplus
++static_assert(sizeof(struct pgpu_crash)==40,"crash ABI");
++#else
++_Static_assert(sizeof(struct pgpu_crash)==40,"crash ABI");
++#endif
++#endif
+--- a/bsd/kern/sweet_amfi.c
++++ b/bsd/kern/sweet_amfi.c
+@@ -351,59 +351,66 @@
+ 
+ static const struct mac_policy_ops sweet_sandbox_mac_ops = {
+ 	.mpo_policy_syscall = sweet_sandbox_syscall,
+ 	.mpo_priv_grant = sweet_sandbox_priv_grant,
+ };
+ 
+ static struct mac_policy_conf sweet_sandbox_mac_conf = {
+ 	.mpc_name = "Sandbox",
+ 	.mpc_fullname = "SWEET permissive sandbox stand-in",
+ 	.mpc_ops = &sweet_sandbox_mac_ops,
+ };
+ 
+ static mac_policy_handle_t sweet_sandbox_mac_handle;
+ 
+ static struct mac_policy_conf sweet_amfi_mac_conf = {
+ 	.mpc_name = "SWEET AMFI",
+ 	.mpc_fullname = "SWEET built-in Mobile File Integrity",
+ 	.mpc_ops = &sweet_amfi_mac_ops,
+ };
+ 
+ 
+ #if defined(POLARIS_RAM_ONLY)
+ extern bool polaris_gpu_overlay_ready(void);
+ extern uint32_t polaris_gpu_caller_kind(void);
+ extern void polaris_gpu_loader_policy(int error);
++#include <dev/polaris-gl-status.h>
++extern bool polaris_gpu_record_crash(const struct pgpu_crash *,uint32_t pid);
+ static int polaris_gl_dyld_policy(struct proc *p, int call, user_addr_t arg)
+ {
+     /* Only the verified, opt-in RAM overlay's window-server executable may
+      * load its bridge. Other processes/policies keep their previous result. */
+     /* __mac_syscall returns ENOPOLICY when this named policy is absent.
+      * Preserve that exact baseline for every non-target (especially PID1);
+      * launchd must never enter executable-vnode lookup for a graphics hook. */
+-    if (call!=0x5a || proc_isinitproc(p) || !polaris_gpu_overlay_ready() ||
++    if ((call!=0x5a && call!=0x5b) || proc_isinitproc(p) || !polaris_gpu_overlay_ready() ||
+         polaris_gpu_caller_kind()!=2)return ENOPOLICY;
++    if(call==0x5b) {
++        struct pgpu_crash fault;int error=copyin(arg,&fault,sizeof(fault));
++        if(error)return error;
++        return polaris_gpu_record_crash(&fault,(uint32_t)proc_pid(p))?0:EINVAL;
++    }
+     uint64_t request[2],allow=0xff;
+     int error=copyin(arg,request,sizeof(request));
+     if(!error)error=copyout(&allow,(user_addr_t)request[1],sizeof(allow));
+     polaris_gpu_loader_policy(error);return error;
+ }
+ static const struct mac_policy_ops polaris_gl_amfi_ops={.mpo_policy_syscall=polaris_gl_dyld_policy};
+ static struct mac_policy_conf polaris_gl_amfi_conf={.mpc_name="AMFI",
+     .mpc_fullname="Polaris verified RAM GPU bridge dyld policy",.mpc_ops=&polaris_gl_amfi_ops};
+ static mac_policy_handle_t polaris_gl_amfi_handle;
+ #endif
+ static mac_policy_handle_t sweet_amfi_mac_handle;
+ 
+ /* Called from bsd_init once MAC policies can register, before any exec. */
+ void sweet_amfi_policy_register(void);
+ 
+ void
+ sweet_amfi_policy_register(void)
+ {
+ 	int error = mac_policy_register(&sweet_amfi_mac_conf, &sweet_amfi_mac_handle, NULL);
+ #if defined(POLARIS_RAM_ONLY)
+     unsigned gl=0;PE_parse_boot_argn("polarisgl",&gl,sizeof(gl));
+     if(gl==1) {
+         int e=mac_policy_register(&polaris_gl_amfi_conf,&polaris_gl_amfi_handle,NULL);
+         printf("POLARIS GL: scoped dyld policy registered %d\n",e);
+     }
