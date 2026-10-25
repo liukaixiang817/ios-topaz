@@ -57,6 +57,20 @@ words were actually read. Rendering only formats the immutable snapshot.
 T6/E0 with increasing S during real interface use is distinct from the earlier
 native proof. Full original diagnostics remain in RAM.
 
+The0048 bootstrap keeps the0047 hardware/submission path intact. Bundle files
+are installed in at most128KiB synchronous VFS writes, with the volatile-root
+guard rechecked before each request. `GLB` records the last completed-byte
+count and the call being entered: S1native wait, S2bundle validation, S3open,
+S4write, S5size check, S6close, S7all staged, S8activation-helper exec,
+S9helper-exec failure. F is the file index0..5; B is done/total, E is errno,
+and ms is elapsed milliseconds at the last update. All GLB numbers are hex.
+An individual VFS call can still block; this is not an asynchronous timeout
+or proof that a stalled HFS call can be cancelled. Important first hardware
+snapshots and new faults stay in RAM; periodic diagnostics avoid reprinting
+unchanged full hardware snapshots and instead print compact GLB/GA progress.
+The optional AMFI hook returns the original absent-policy result ENOPOLICY
+for every non-target and refuses PID1 before any executable-vnode lookup.
+
 Sources and licensing:
 
 - Kernel/userland interfaces are informed by the local HackiOS references in

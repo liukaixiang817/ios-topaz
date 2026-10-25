@@ -34,6 +34,33 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0048 local bootstrap fix validated; source-only build next
+
+- Three0047photos B4D1/150C/D151 showSAMEbase_calls4140,ram_reads3,merges9,
+  fullwrites110,COW1043,dirty16440KiB/written17000KiB, UFSerror0/refused0.
+  Humanreportslogscontinuevery-slow/noGUI. Thisisrepeatdiagnosticactivity,
+  NOTprovenbootstrapprogress. Current0047nativeGPUactualfence600dc0de/
+  ALL4096/idle/halt/IRQ0/fault0 PASS. Service/Mesa/desktopstillUNPROVEN.
+- 0048changesONLYbootstrap/diagnostics/policycompatibility: atmost128KiB
+  IO_SYNCVFSwritesguardedbyRAMCOWbeforeeach; cachedGLBstage/file/bytes/errno/ms
+  withbounded4tryreader, marksopen/write/size/close/helper-exec. Noabilityto
+  cancelahungindividualVNOPclaimed. Native0047GPU/CP/MMU/firmwareunchanged.
+- RepeatedimmutableGPU/USBfullsnapshotsdeduped; firstfullsnapshots+newfaults
+  retainedinRAM. CompactGLB/GAandrootIOcountersremainperiodic. Noimportant
+  first-failurelogsremoved. Original29rowGUIpanelunchanged.
+- Confirmedcodecompatibilitybug: newAMFIpolicyreturnedENOSYSfornon-targets,
+  whereasactualXNU__mac_syscalldefaultsENOPOLICY. Restoreexactnon-target
+  baselineandPID1fastrefusalbeforeANYvnodeidentitylookup. ItisUNPROVENthat
+  thiscaused0047hang; nofalsephysicalrootcauseclaim. Verifiedwindowserver
+  alonekeeps0xffreply, noaddedpermissionsforPID1/apps.
+- Final62native/ASan/UBSan/actualVFSchunk/failure/COWloss/diagnosticdedup/
+  policy/formattertestsPASS;8actualARM64units/importsPASS;34orderedpatches/
+  49filesnofuzz/offset/29rowfixture/sourceboundariesPASS. Graphics-v4sixsigned
+  artifactsUNCHANGED. Hostfixture2initialcompileerrorsretainedandcorrected.
+- NEXTcommit/source-onlypublish0854/ghbuild, freezeCPU1defaultclock185matrix,
+  bundlepayloadfinalcheck. No0048image/CI/deviceactionyet. Currentphone0047
+  stalledlogs; donotrebootituntilnewimagevalidated. USBobserverPAUSED.
+
 ### 0047 TEMPORARY BOOT SENT10:11:55UTC; await actual GUI/GPU acceptance
 
 - HumanFASTBOOTreply→targetedquery10:08:26UTC foundexpectedpolaris. Initial
