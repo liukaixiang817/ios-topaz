@@ -48,7 +48,7 @@
 +    if(a630_core_saved.started && !a630_core_saved.image){
 +        /* Read only global/ownedCB0 syndrome before the lease is withdrawn.
 +         * Do not clear FSR, resume a fault or issue ATOS on this board. */
-+        const uint32_t words[]={0x48,0x50,0x54,0x8058,0x8060,0x8064,0x8068,0x806c};
++        const uint32_t words[]={0x48,0x50,0x54,0x8058,0x8060,0x8064,0x8068,0x58};
 +        for(unsigned n=0;n<8;n++)
 +            if(a630_read_register(io,3,words[n],&a630_core_fault_regs[n]))a630_core_fault_valid|=1u<<n;
      }
@@ -68,7 +68,7 @@
 +        a630_core_saved.sqe_valid,a630_core_saved.sqe_index_restored,a630_core_saved.sqe_state[0],a630_core_saved.sqe_state[1],
 +        a630_core_saved.sqe_state[2],a630_core_saved.sqe_state[3],a630_core_saved.sqe_state[4],a630_core_saved.sqe_state[5],
 +        a630_core_saved.sqe_state[6],a630_core_saved.sqe_state[7]);
-+    printf("D GPU CP SMMU: valid=%x global=%x/%x/%x CB0=%x FAR=%x:%x syndrome=%x/%x; read only, no ATOS\n",
++    printf("D GPU CP SMMU: valid=%x global=%x/%x/%x CB0=%x FAR=%x:%x FSYNR0=%x global2=%x; read only, no ATOS\n",
 +        a630_core_fault_valid,a630_core_fault_regs[0],a630_core_fault_regs[1],a630_core_fault_regs[2],
 +        a630_core_fault_regs[3],a630_core_fault_regs[5],a630_core_fault_regs[4],a630_core_fault_regs[6],a630_core_fault_regs[7]);
      printf("D GPU HFI STOP: GX=%u SPTP=%u HFI=%u slumber=%u restored=%u error=%u offset=%x expected=%x actual=%x; see CORE; desktop CPU\n",
