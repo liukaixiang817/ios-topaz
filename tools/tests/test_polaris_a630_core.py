@@ -83,9 +83,9 @@ static bool start_zap(bool yes,const struct a630_zap_io*io,const struct a630_ima
 static bool prepare_core(bool board,bool mappings,const struct a630_core_io*io,uint32_t*ring,volatile uint32_t*scratch,volatile uint32_t*target,struct a630_core_snapshot*s){
  assert(board&&mappings&&io->owned(io->ctx)&&++seq==1);prepares++;
  assert((uintptr_t)ring==a630_dma+0x30000&&(uintptr_t)scratch==a630_dma+0x38000&&(uintptr_t)target==a630_dma+0x3c000);
- if(mode==7){s->error=A630_CORE_IO;return false;}s->prepared=1;s->halted=1;s->stage=2;return true;}
+ if(mode==7){s->error=A630_CORE_IO;return false;}s->prepared=1;s->disabled=1;s->stage=2;return true;}
 static bool run_core(bool authenticated,const struct a630_core_io*io,uint32_t*ring,volatile uint32_t*scratch,volatile uint32_t*target,struct a630_core_snapshot*s){
- assert(authenticated&&s->prepared&&s->halted&&s->stage==2&&io->owned(io->ctx)&&++seq==3);assert((uintptr_t)ring==a630_dma+0x30000&&(uintptr_t)scratch==a630_dma+0x38000&&(uintptr_t)target==a630_dma+0x3c000);cores++;
+ assert(authenticated&&s->prepared&&s->disabled&&s->stage==2&&io->owned(io->ctx)&&++seq==3);assert((uintptr_t)ring==a630_dma+0x30000&&(uintptr_t)scratch==a630_dma+0x38000&&(uintptr_t)target==a630_dma+0x3c000);cores++;
  s->started=1;s->image=mode==0;s->keep_live=mode==1;s->halted=mode!=1;s->error=mode==0?A630_CORE_READY:mode==1?A630_CORE_TIMEOUT:A630_CORE_IO;return mode==0;}
 static bool __attribute__((unused)) stop_zap(const struct a630_zap_io*io,struct a630_zap_snapshot*z){
  (void)io;(void)z;stops++;assert(!"boot coordinator must not issue PAS_SHUTDOWN");return false;}
@@ -99,7 +99,7 @@ int main(void){a630_dma=(uintptr_t)aligned_alloc(16384,0x44000);assert(a630_dma)
  for(mode=0;mode<8;mode++){
   struct a630_io io={.can_stop=true};seq=starts=cores=stops=prepares=capture_reads=0;a630_core_fault_valid=0;memset(&a630_zap_saved,0,sizeof(a630_zap_saved));memset(&a630_core_saved,0,sizeof(a630_core_saved));
   a630_core_attempt(&io);assert(!io.core_lease&&prepares==1&&starts==(mode!=7));
-  assert(cores==(mode<=2));assert(capture_reads==((mode==1||mode==2)?8:0));assert(a630_core_fault_valid==((mode==1||mode==2)?255:0));assert(stops==0);assert(a630_zap_saved.retained==(mode<=2));assert(io.can_stop==(mode>2));
+  assert(cores==(mode<=2));assert(capture_reads==((mode!=0&&mode!=7)?8:0));assert(a630_core_fault_valid==((mode!=0&&mode!=7)?255:0));assert(stops==0);assert(a630_zap_saved.retained==(mode<=2));assert(io.can_stop==(mode>2));
   assert(a630_core_saved.keep_live==(mode==1||mode==4||mode==5)); /* deliberate retention is separate from uncertain execution */
   if(mode==2)assert(a630_core_saved.error==A630_CORE_IO&&a630_zap_saved.retained);
   if(mode==0)assert(!a630_zap_saved.shutdown&&a630_zap_saved.retained&&a630_core_saved.halted);
@@ -278,7 +278,7 @@ int main(void){struct a630_zap_snapshot s;
 #include <stdio.h>
 #include <string.h>
 static uint32_t regs[65536];static uint32_t *ring,*scratch,*target;
-static struct {unsigned op,fail,writes,sent,commands,blits;bool held,stuck,bad_fence,bad_event,bad_pixel,halt_stuck,bad_config;} m;
+static struct {unsigned op,fail,writes,sent,commands,blits,premature_enable;bool held,stuck,bad_fence,bad_event,bad_pixel,halt_stuck,bad_config;} m;
 static bool op(void){return ++m.op!=m.fail;}
 static bool own(void*x){assert(x==&m);return m.held;}
 static bool rd(void*x,uint32_t w,uint32_t*v){assert(x==&m&&m.held&&w<65536);if(!op())return false;*v=regs[w];return true;}
@@ -303,6 +303,7 @@ static void packets(unsigned end){
  }
 }
 static bool wr(void*x,uint32_t w,uint32_t v){assert(x==&m&&m.held&&w<65536);m.writes++;bool ok=op();
+ if(w==0x808&&(v&1)&&(!regs[0x830]||!regs[0x800]||regs[0x802]!=0x0800020c)){m.premature_enable++;regs[0x823]|=0x80;}
  if(w==0x808&&v==3&&m.halt_stuck)return ok;regs[w]=v;
  if(w==0x802&&m.bad_config)regs[w]^=1;
  if(w==0x807&&v&&!m.stuck){packets(v);regs[0x806]=v;}
@@ -317,15 +318,15 @@ int main(void){ring=aligned_alloc(16384,32768);scratch=aligned_alloc(16384,16384
  reset();assert(!a630_core_run(true,true,false,&io,ring,scratch,target,&s)&&s.error==A630_CORE_ARGUMENT&&!m.op);
  reset();m.held=false;assert(!a630_core_run(true,true,true,&io,ring,scratch,target,&s)&&s.error==A630_CORE_LEASE&&!m.writes);
  reset();assert(a630_core_run(true,true,true,&io,ring,scratch,target,&s));unsigned count=m.op;
- assert(s.init_done&&s.secure_done&&s.fence==0x600dc0de&&s.image&&s.pixels==4096&&s.halted&&!s.keep_live&&m.blits==3);
+ assert(s.init_done&&s.secure_done&&s.fence==0x600dc0de&&s.image&&s.pixels==4096&&s.halted&&!s.keep_live&&m.blits==3&&!m.premature_enable);
  for(unsigned f=1;f<=count;f++){reset();m.fail=f;assert(!a630_core_run(true,true,true,&io,ring,scratch,target,&s));if(s.error!=A630_CORE_IO&&s.halt_error!=A630_CORE_IO)fprintf(stderr,"fail=%u err=%u halt=%u stage=%u\n",f,s.error,s.halt_error,s.stage);assert(s.error==A630_CORE_IO||s.halt_error==A630_CORE_IO);}
  reset();m.stuck=true;assert(!a630_core_run(true,true,true,&io,ring,scratch,target,&s)&&s.error==A630_CORE_TIMEOUT&&s.keep_live&&!s.image);
- reset();assert(a630_core_prepare(true,true,&io,ring,scratch,target,&s)&&s.prepared&&s.stage==2&&s.halted&&!s.started&&!m.commands&&regs[0x808]==3);
+ reset();assert(a630_core_prepare(true,true,&io,ring,scratch,target,&s)&&s.prepared&&s.stage==2&&s.disabled&&!s.halted&&!s.started&&!m.commands&&regs[0x808]==0);
  unsigned writes=m.writes;assert(!a630_core_execute(false,&io,ring,scratch,target,&s)&&s.error==A630_CORE_ARGUMENT&&m.writes==writes&&!m.commands);
- reset();m.bad_config=true;assert(!a630_core_run(true,true,true,&io,ring,scratch,target,&s)&&s.error==A630_CORE_DATA&&s.offset==0x802&&!s.started&&!m.commands&&s.halted);
+ reset();m.bad_config=true;assert(!a630_core_run(true,true,true,&io,ring,scratch,target,&s)&&s.error==A630_CORE_DATA&&s.offset==0x802&&!s.started&&!m.commands&&s.disabled);
  reset();regs[0x823]=0x80;regs[0x908]=0x234;assert(!a630_core_run(true,true,true,&io,ring,scratch,target,&s));
- assert(!regs[0x201]&&s.error==A630_CORE_FAULT&&s.offset==0x823&&s.actual==0x80&&s.cp_before==0x80&&s.cp_auth==0x80);
- assert(s.cp_irq==0x80&&s.keep_live&&!s.image&&s.polls==1&&s.fault_valid==0x7f&&s.sqe_valid==0xff&&s.sqe_index_restored&&regs[0x908]==0x234);
+ assert(!regs[0x201]&&s.error==A630_CORE_FAULT&&s.offset==0x823&&s.actual==0x80&&s.cp_entry==0x80&&s.cp_before==0x80&&s.cp_auth==0x80&&!m.commands&&!m.premature_enable);
+ assert(s.actual==0x80&&!s.started&&s.disabled&&!s.keep_live&&!s.image&&s.polls==0&&s.fault_valid==0x7f&&s.sqe_valid==0xff&&s.sqe_index_restored&&regs[0x908]==0x234);
 
  reset();m.bad_fence=true;assert(!a630_core_run(true,true,true,&io,ring,scratch,target,&s)&&s.error==A630_CORE_DATA&&s.halted&&!s.image&&!m.blits);
  reset();m.bad_event=true;assert(!a630_core_run(true,true,true,&io,ring,scratch,target,&s)&&s.error==A630_CORE_DATA&&s.halted&&!s.image);

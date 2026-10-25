@@ -18,6 +18,7 @@
 #define A630_SMMU_HALT_POLLS 30000u
 #define A630_SMMU_HALT_REQ 4u
 #define A630_SMMU_HALT_IDLE 8u
+#define A630_SMMU_FSR_FAULT 0xc00001feu
 enum a630_smmu_error {
     A630_SMMU_DISABLED, A630_SMMU_ARGUMENT, A630_SMMU_LEASE,
     A630_SMMU_IO, A630_SMMU_LAYOUT, A630_SMMU_OWNERSHIP,
@@ -45,6 +46,7 @@ struct a630_smmu_snapshot {
     uint32_t restore_offset,restore_expected,restore_actual;
     uint32_t preserved_impl,impl_checks,actlr,actlr_live,actlr_changed;
     uint32_t fault_quirk,fault_canonical,fault_requested,fault_actual,fault_attempts;
+    uint32_t stale_fsr,clean_fsr,stale_far[2],stale_fsynr,stale_cleared;
 };
 static const uint32_t a630_smmu_impl_offsets[A630_SMMU_IMPLS] = {
     0x6000,0x6060,0x678c,0x6794,0x6800,0x6900,
@@ -224,6 +226,37 @@ static inline bool a630_smmu_impl_stable(const struct a630_smmu_io *io,void *ctx
     }
     s->impl_checks++;return true;
 }
+/* Native context-bank reset clears FSR after SCTLR=0. Confine this to
+ * our disabled CB0 and invalid SID0 match, with both masters stopped.
+ * Save the old syndrome first; never clear global/foreign faults or resume
+ * a stalled transaction. W1C history cannot and must not be replayed. */
+static inline bool a630_smmu_clear_core_fault(const struct a630_smmu_io *io,void *ctx,
+    struct a630_smmu_snapshot *s)
+{
+    uint32_t control,match;
+    if(!s->core||s->bank!=0||s->stream!=0){s->error=A630_SMMU_ARGUMENT;return false;}
+    if(!a630_smmu_rd(io,ctx,s,s->context,&control)||
+       !a630_smmu_rd(io,ctx,s,0x800+4*s->slot,&match))return false;
+    if((control&1)||(match&(1u<<31))){s->error=A630_SMMU_OWNERSHIP;return false;}
+    if(!a630_smmu_rd(io,ctx,s,s->context+0x58,&s->stale_fsr)||
+       !a630_smmu_rd(io,ctx,s,s->context+0x60,&s->stale_far[0])||
+       !a630_smmu_rd(io,ctx,s,s->context+0x64,&s->stale_far[1])||
+       !a630_smmu_rd(io,ctx,s,s->context+0x68,&s->stale_fsynr))return false;
+    s->clean_fsr=s->stale_fsr;
+    if(s->stale_fsr&(1u<<30)){s->error=A630_SMMU_OWNERSHIP;return false;}
+    uint32_t bits=s->stale_fsr&A630_SMMU_FSR_FAULT;
+    if(!bits)return true;
+    if(!a630_smmu_lease(io,ctx,s))return false;
+    if(!io->write(ctx,s->context+0x58,bits)||!io->sync(ctx)){
+        s->error=A630_SMMU_IO;s->failed_offset=s->context+0x58;return false;
+    }
+    if(!a630_smmu_rd(io,ctx,s,s->context+0x58,&s->clean_fsr))return false;
+    if(s->clean_fsr&A630_SMMU_FSR_FAULT){
+        s->error=A630_SMMU_ACK;s->failed_offset=s->context+0x58;
+        s->expected=0;s->actual=s->clean_fsr;return false;
+    }
+    s->stale_cleared=1;return true;
+}
 static inline enum a630_smmu_error
  a630_smmu_begin_stream(bool exact_board, bool atos_disabled, bool handoff, bool core, struct a630_mmu *tables,
     const struct a630_smmu_io *io, void *ctx, struct a630_smmu_snapshot *s)
@@ -335,8 +368,9 @@ static inline enum a630_smmu_error
         if(!a630_smmu_set(io,ctx,s,s->context+4,s->actlr_live,0x70000000u))goto done;
     }
     s->root=tables->physical|((uint64_t)s->bank<<48);
-    if (!a630_smmu_set(io,ctx,s,s->context,0,1) ||
-        !a630_smmu_set(io,ctx,s,s->page+0x800+4*s->bank,1,1) ||
+    if (!a630_smmu_set(io,ctx,s,s->context,0,1))goto done;
+    if(core && !a630_smmu_clear_core_fault(io,ctx,s))goto done;
+    if (!a630_smmu_set(io,ctx,s,s->page+0x800+4*s->bank,1,1) ||
         !a630_smmu_set(io,ctx,s,s->page+4*s->bank,0x1f300,0x3ffff) ||
         !a630_smmu_set64(io,ctx,s,s->context+0x20,s->root) ||
         !a630_smmu_set64(io,ctx,s,s->context+0x28,0) ||
