@@ -34,6 +34,27 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT ACTION —0042 quality-review lifetime fix verified; fresh CI next
+
+- Source63ee8e1/public33c13c7 initiallytriggeredCI40157085281. Qualityreview
+  foundpotentialstaleSMMU/globalownership ifauthenticatedZAPstillruns after
+  CPidle. STOPPEDownedwrapper93308 EXIT143/cancelrequestedoldCI; no0042guest/
+  image/phoneboot. Allold14scripts/records/sourceproof inpre-shutdown-review/.
+- Newstrict PAS_SHUTDOWN13 afterCP/renderidle+SQEhalt and BEFORE withdrawing
+  SMMU/clocks/CX. TransportANDsecureACKrequired. Failure keepsGMU/GPUresources
+  live; authenticatedflag ishistoricalproof, Q=shutdown acknowledgement.
+  Firststartupfailure staysseparatefromrestore_error/transport/securefields.
+- Addedtest compiles ACTUAL a630_core_attempt coordinator withcontrolled
+  outcomes, provingcallorder andnoPASshutdown duringuncertainGPUexecution,
+  noresourcerelease onshutdownfailure/uncertainINIT_IMAGEownership. Existing
+  PASmodelchecksnewshutdowntransport+securefailures.43ASan/UBSantests PASS,
+  29rowformatter PASS,4actualheaderARM64units/imports PASS,27patches/35files
+  andoriginalprofile/liveDT PASS. No newkernel/phoneverificationyet.
+- Nextsource-onlypublishfourchangedfiles plusfreshCI; regeneratehostpipeline
+  againstnewSHA/run whilepreservingoldfreeze. Same130selectedCPU1checks.
+  No0042bootuntilallpass+independentfinalcheck. FIRSTqueryFASTBOOTafterready.
+  USBhostobserverremainsPAUSED. DesktopstillCPUevenifoffscreenGPUproofpasses.
+
 ### CURRENT ACTION —0042 integrated GPU hardware path locally verified; full CI next
 
 - User explicitly requests quality/fewerboots. Addedmode9: originaldefault

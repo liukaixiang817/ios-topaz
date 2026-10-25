@@ -104,8 +104,8 @@ uint32_t polaris_a630_diagnostic_line(unsigned line, char *out, uint32_t size)
     if(line==15)return (uint32_t)snprintf(out,size,"GD %x/%x D%x G%x/%x ret%x @%x a%x",
         post->error&15,post->stage&15,post->dcvs_done&1,post->gpu_ready&1,post->gpu_released&1,
         post->dcvs_return,post->offset,post->actual);
-    if(line==16)return (uint32_t)snprintf(out,size,"GZ %x/%x fn%x t%x r%x S%x M%x A%x",
-        zap->error&15,zap->stage&15,zap->fn,zap->transport,zap->secure,zap->signature&1,zap->region&1,zap->authenticated&1);
+    if(line==16)return (uint32_t)snprintf(out,size,"GZ %x/%x fn%x t%x r%x S%x M%x A%x Q%x/R%x",
+        zap->error&15,zap->stage&15,zap->fn,zap->transport,zap->secure,zap->signature&1,zap->region&1,zap->authenticated&1,zap->shutdown&1,zap->restore_error&15);
     if(line==17)return (uint32_t)snprintf(out,size,"GC0 %x/%x C%x/%x I%x F%08x H%x L%x M%x/%x",
         core->error&15,core->stage&15,core->rptr,core->wptr,core->init_done&1,core->fence,
         core->halted&1,core->keep_live&1,a630_core_smmu.error&15,a630_core_smmu.stage&15);
@@ -466,6 +466,8 @@ static void a630_core_attempt(struct a630_io *io)
     if(a630_zap_start(true,&zap,a630_images,a630_dma_physical+0x40000,&a630_zap_saved))
         a630_core_run(true,a630_core_dma_ready,true,&core,(uint32_t*)(a630_dma+0x30000),
             (volatile uint32_t*)(a630_dma+0x38000),(volatile uint32_t*)(a630_dma+0x3c000),&a630_core_saved);
+    if(a630_zap_saved.authenticated && !a630_core_saved.keep_live &&
+       !a630_zap_stop(&zap,&a630_zap_saved))a630_core_saved.keep_live=1;
     /* After INIT_IMAGE, a failed secure call leaves ownership uncertain.
      * Never remove its powered execution environment or backing allocation. */
     if(!a630_zap_saved.authenticated && (a630_zap_saved.signature||a630_zap_saved.region||
@@ -644,9 +646,10 @@ void polaris_a630_report(void)
     printf("D GPU CORE POST: error=%u stage=%u DCVS=%u GPU=%u/%u return=%x offset=%x actual=%x\n",
         a630_post_saved.error,a630_post_saved.stage,a630_post_saved.dcvs_done,a630_post_saved.gpu_ready,
         a630_post_saved.gpu_released,a630_post_saved.dcvs_return,a630_post_saved.offset,a630_post_saved.actual);
-    printf("D GPU ZAP: error=%u stage=%u fn=%x transport=%x secure=%x signature=%u region=%u authenticated=%u\n",
+    printf("D GPU ZAP: error=%u stage=%u fn=%x transport=%x secure=%x signature=%u region=%u authenticated=%u shutdown=%u restore=%u/%x/%x\n",
         a630_zap_saved.error,a630_zap_saved.stage,a630_zap_saved.fn,a630_zap_saved.transport,
-        a630_zap_saved.secure,a630_zap_saved.signature,a630_zap_saved.region,a630_zap_saved.authenticated);
+        a630_zap_saved.secure,a630_zap_saved.signature,a630_zap_saved.region,a630_zap_saved.authenticated,
+        a630_zap_saved.shutdown,a630_zap_saved.restore_error,a630_zap_saved.restore_transport,a630_zap_saved.restore_secure);
     printf("D GPU CORE: error=%u stage=%u CB0=%u/%u init=%u secure=%u fence=%x image=%u pixels=%u halted=%u live=%u RPTR=%x/%x IRQ=%x fault=%x protect=%x fail=%x expected=%x actual=%x\n",
         a630_core_saved.error,a630_core_saved.stage,a630_core_smmu.error,a630_core_smmu.stage,
         a630_core_saved.init_done,a630_core_saved.secure_done,a630_core_saved.fence,
