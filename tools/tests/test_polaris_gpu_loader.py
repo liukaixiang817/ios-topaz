@@ -37,9 +37,10 @@ static void observe_(void(*note)(unsigned,unsigned,unsigned)){observed++;note(4,
 static void*dlsym(void*h,const char*n){assert(h==(void*)2);if(symbol_error)return 0;
  if(!strcmp(n,"polaris_eagl_methods"))return (void*)methods_;
  if(!strcmp(n,"glFinish"))return (void*)methods_;
- assert(!strcmp(n,"polaris_eagl_observe"));return (void*)observe_;}
+ if(!strcmp(n,"polaris_eagl_render_observe"))return 0;assert(!strcmp(n,"polaris_eagl_observe"));return (void*)observe_;}
 static void watch_for_faults(void){}
 static void crash_image(unsigned i,unsigned k,void*p){assert(i<4&&k<5&&p);}
+static void render_note(const struct pgpu_render_notice*p){(void)p;assert(0);}
 static void gl_hooks(void*h){assert(h==(void*)2);hooks++;}
 static void reset(void){stage=error=methods=opens=open_error=alias_set=env_error=load_error=symbol_error=observed=hooks=0;admitted=service=1;mask=255;}
 ''' + code + r'''

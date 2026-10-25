@@ -34,6 +34,50 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0055 image backing/cadence/renderer diagnostics implemented; local checks PASS
+
+- Confirmedactual20H392 IOSurfaceClientCreateChild107c serializesprops and
+  passesselector0; explicitlyhandlesIOSurfaceAddress1220. Owncreatepreviously
+  ignoredaddressandallocatedzerobuffer. Newlayoutretainsliteralcallerlength,
+  tightlastrowbound;backingpinsowningtaskVA,ROfallback,fulldestructorunwind,
+  same1536MiBcap. Rejectbad/overflow/short/scatteredranges. NoDMAimportof
+  externaldescriptor; existingGPUimportIOBuffer-onlyguardunchanged.
+- ChildnowusesACTUALEAGLsource/attachmethods viaffmethodtable; BGRA and
+  untypedABGR alphaimages fromCreateAddress, originalandliveupdatedpixels,
+  fourALL4096GPUreadbacks. PreviousGMEM/fetch/sharedsurface checksallremain;
+  T6onlyafterallpass;180sbudget. NewGLR/GLXcachedfirsterror/counters via
+  verified-desktop-only32Bselector7a, noGPUadmission/completioneffects.
+  Hardwarefirstfaulttakespriority; noextraheight/MMIOdisplayreads.
+-0055request60Hz onlywhileopen/ready/realdesktopC>0; CPUfallback20Hzandold
+  measured4xcopybudget. GPUcopybudget2x/max200ms, timeraccountsforworkand
+  yields>=1ms. Diagnosticrepaint5Hz. Actualpresentpixelcopyunchanged; noFPS
+  measurementclaim.0054nativeA630GMEM/firmware/MMU/PM4/BO/HID/storageunchanged.
+-86nativeASan/UBsan,8actualARM64units/imports,41orderedprofiles53files/
+  nofuzz-offset,29rows,sourceboundaries,sixsignedgraphicsPASS. Initialnew
+  renderfixturelackedstdbool;initialFBcompilemissedexternprototype; bothfixed,
+  originallogsretained. No0055CI/deviceactionyet. HosttestnotGPUproof.
+- NEXTsource-onlycommit/push/fullCI/fresh185CPU1checks/finalimage; FIRST
+  autoFASTBOOTquery,ifpresentROpreflight/directtemporaryboot. USBobserverPAUSED.
+  Needphysicaliconrecovery+stableC/R1/D0 andGLR/GLX, notjustGUIvisible.
+
+### 0054 HUMAN confirms sustained desktop GPU; 0055 icon/render/cadence repair in progress
+
+- Photos8BCB/DED4/1405 GA T6E0D0R1L6X0Mff withdesktopC2e3->645->67f
+  (739->1605->1663), S=C+5 forcedGMEMselftest submissions. GLT R2V0P48
+  MS36671: actualGMEMtexturefetch/restore/all4096pixelsx4 PASSED in36.671s.
+  Userexplicitcounts growwithswipe; GPUdesktopexecutionunderinteraction now
+  DEMONSTRATED, noquarantine/GLF inphotos. This doesNOTproveallrenderingcorrect.
+- Human: homeiconsALLmissing/persistent, Messagesredbadge/Search/docksurvive;
+  settingsiconsvisible, FPSimprovedbutstillstutter. Prior20Hzpresentcap remains.
+- Investigatingimagecontents/IOSurfaceCreate Address property vsalreadyfixed
+  selector6/7wrap; owncreatecurrentlyalwaysfreshzeroIOBuffer. Referencepins
+  callerpixelsforicons; actual20H392APIbeingcheckedbeforeport. Do notcall
+  thiscausalproofyet. Preserve0054A630GMEM/firmware/MMU/PM4/BO/admission/HID.
+- NEXTfocusediconpipelinepixeltest andactualcopiedtexture/errorfirstsnapshot,
+  pinexactcallerallocationwithfullunwindifCreateAddressconfirmed; raise
+  displaycapwithmeasuredcostguard, notblindGPUclockchange. USBobserverPAUSED.
+  Evidence research/polaris/continuation-0055/0054-human-result.json.
+
 ### 0054 TEMPORARY BOOT SENT14:49:27UTC; await actual GMEM/desktop result
 
 - FIRSTautomaticFASTBOOT14:47:11.632966UTC expectedpolaris alreadyready,

@@ -11,6 +11,7 @@
 extern "C" {
 #endif
 bool polaris_gpu_ready(void);
+bool polaris_gpu_desktop_active(void);
 bool polaris_gpu_boot_pending(void);
 bool polaris_gpu_timestamp(uint64_t *value);
 bool polaris_gpu_caller_allowed(void);
@@ -29,6 +30,7 @@ void polaris_gpu_cache(void *address, uint64_t size);
 void polaris_gpu_quarantine(void);
 uint32_t polaris_gpu_client_line(char *out,uint32_t capacity);
 uint32_t polaris_gpu_fault_line(unsigned line,char *out,uint32_t capacity);
+uint32_t polaris_gpu_render_line(unsigned line,char *out,uint32_t capacity);
 uint32_t polaris_gpu_overlay_line(char *out,uint32_t capacity);
 void polaris_gpu_overlay_exec(int error);
 void PolarisGPUStart(void);
