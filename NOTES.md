@@ -34,6 +34,22 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0049 full kernel SUCCESS; fresh CPU1 regressions running
+
+- CI40189083903/source6c9b83333531cd62bc19828bf7472c41d1bda513/
+  job121156029402 SUCCESS. Exactprofile/CRC/SHA verified kernel
+  488ee48209529f556c2f619525a66eab431c33eeb7709f86826a596974346853
+  at xnu/out-polaris-0049/kernel.development.sweet. Full CI log retained.
+- Wrapper70193 now running fresh4CPU1defaultclock modes, firstcache-high60s
+  attempt1. No0049guestfailure yet;213inputs remain frozen.67native tests,
+  8actualunits/imports,35patches49files/29rows/sourceboundaries and all6signed
+  userlandfiles PASS. OnlyGL/injectordylibs changed; other4files includingMesa
+  byte-identical to physically passed0048. No0049phoneimage/deviceaction yet.
+- Human already in FASTBOOT; AFTER finalpreparedcheck automatically query,
+  thenfresh ROroot/header/maps/GPT/temp preflight and DIRECTtemporaryboot.
+  Do not request duplicate FASTBOOT confirmation. USB host observation PAUSED.
+  Actual0049Mesa/desktop proof still pending; L6/O1 alone cannot prove drawing.
+
 ### 0049 source6c9b833 / CI40189083903; pipeline frozen, human FASTBOOT ready
 
 - Source fix committed locally71a6800;9source-only files published at
