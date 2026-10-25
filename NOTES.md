@@ -34,6 +34,26 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0052 last-row ABI correction BEFORE any0051phone action (Oct26local)
+
+-0051CI40194855125 SUCCESS/job121173393554, kernel47153ff0; all185CPU1
+  defaultclockchecks FIRSTPASS/no retry. Independentfinalchecker passed at
+  13:01:47UTC. Complete0051artifacts preserved; NOFASTBOOTquery/preflight/boot.
+  Marked superseded.json, not deployed; currentphone remains0050.
+- Finalactual20H392 ABIreview confirmed CA::Render::Image::retain_iosurface
+  at1883c4878 passesx4 via virtualslotb0: vptr1d5b34970+0xb0=1d5b34a20
+  ->18831bf40 CA::Render::Image::data_size. Actualflatimage formula:
+  row*(height-1)+width*bpe. Earlier0051requiredrow*height and would falsely
+  reject tightly declared lastrows. Catching this BEFOREphone avoidsoneboot.
+-0858 refinesbounds/pinning to exact declaredlastrow. Userlandselftest now
+  deliberatelywraps13x8BGRA,row64,length500 (not512), preservingmetadata,
+  lookup/releaseandlivealiaschecks. Other5signeduserlandfiles unchanged0050.
+  Actualkernelwrap/free/metadata methods unchanged0857; originalGPU/HIDpaths
+  unchanged. Host3surface tests PASS; fulllocalchecks/rebuild pending.
+- NEXT publishsource-onlycorrection/buildfresh0052; rerunfixed185checks and
+  independentimagevalidation, then FIRSTautoFASTBOOTquery. USBobservation
+  remainsPAUSED. PhysicalGUI/input/GPUproof UNPROVEN. Do not deploy0051.
+
 ### 0051 source638380a/CI40194855125; frozen pipeline ready
 
 - Implementationroot4488821; publicsource638380afa2df3c5f0c3f48c0b7b3c6bd500cd77d

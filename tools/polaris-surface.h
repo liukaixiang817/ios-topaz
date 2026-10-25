@@ -20,7 +20,7 @@ static inline int pgpu_surface_image_valid(const struct pgpu_surface_image *p)
         p->width && p->height && p->width<=16384 && p->height<=16384 &&
         p->element && p->element<=16 &&
         (uint64_t)p->width*p->element<=p->row &&
-        (uint64_t)p->row*p->height<=p->bytes;
+        (uint64_t)p->row*(p->height-1)+(uint64_t)p->width*p->element<=p->bytes;
 }
 /* Returns no partial update for an invalid field mask or short payload. */
 static inline int pgpu_surface_bulk_apply(uint8_t *out,const uint8_t *in,uint64_t size,uint64_t mask)

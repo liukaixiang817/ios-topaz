@@ -51,12 +51,12 @@ static int surface_contract(void)
     void *allocation=NULL;
     if(posix_memalign(&allocation,16384,32768))return 30;
     uint8_t *p=(uint8_t*)allocation;memset(p,0xa5,32768);
-    IOSurfaceRef image=IOSurfaceWrapClientImage(16,8,0x42475241,64,512,p+16384);
+    IOSurfaceRef image=IOSurfaceWrapClientImage(13,8,0x42475241,64,500,p+16384);
     if(!image)return 31;
     uint8_t bulk[0x70]={0};size_t bytes=sizeof(bulk);
     if(IOSurfaceGetBulkAttachments(image,bulk,&bytes) || bytes!=sizeof(bulk) ||
-        IOSurfaceGetWidth(image)!=16 || IOSurfaceGetHeight(image)!=8 ||
-        IOSurfaceGetBytesPerRow(image)!=64 || IOSurfaceGetAllocSize(image)!=512)return 32;
+        IOSurfaceGetWidth(image)!=13 || IOSurfaceGetHeight(image)!=8 ||
+        IOSurfaceGetBytesPerRow(image)!=64 || IOSurfaceGetAllocSize(image)!=500)return 32;
     for(unsigned n=0;n<32;n++)bulk[n]=(uint8_t)(n+1);
     if(IOSurfaceSetBulkAttachments(image,bulk,sizeof(bulk),1))return 33;
     uint8_t readback[0x70]={0};bytes=sizeof(readback);
