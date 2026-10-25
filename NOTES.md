@@ -34,6 +34,22 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT ACTION —0043 complete build SUCCESS; fixed startup regressions running
+
+- Finalsource7713ef3 / CI40159677917 / job121068417443 SUCCESS. Exactdownload
+  profile/CRC/SHA verified; kernel SHA256
+  0d19c1983fc5ace0304e32d918d7058309b01733ea6128f02d7d84097b4ae402.
+  Wrapper55460 now running cache-high45, thenasync-net44/no-mmio44(expected133)
+  atstandardclock60/90/60s. No0043image/deviceactionyet; currentphone0042stall.
+- Local48/actual4ARM64units/28patches35files/29rows PASS. Independently
+  inspectedactualARM64SMCadapter: x6resumedsession saved/reloaded aroundnew
+  budgetcallback; x1..x5 retained;4actualSMCs DSB-bracketed/fullwidthx3.
+  scm-resume-register-check.json recordsobject/assemblyhashes, nothardwareproof.
+- Next wait55460, run final-prepared-check.py, FIRSTautoFASTBOOTquery. Ifready
+  directROpreflight/tempboot; physicalkeyrequestonlyifactuallyabsent. USBhost
+  observer remainsPAUSED; doNOTuseboot-and-watch. Exact0042faultstillunproven;
+ 0043singleMMIO/SMC nonreturn stillcannotbesoftwarecancelled. NoGUIacceleration.
+
 ### CURRENT ACTION —0043 async GPU fix source7713ef3; full CI40159677917 running
 
 - Human0042 stillbootstalled afterminutes, photosA9FA9469/711EBCEE; root/TCM/
