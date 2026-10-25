@@ -71,6 +71,7 @@ struct a630_boot_snapshot {
     uint32_t failed_bank,failed_offset,expected,actual,polls;
     uint64_t attempted;
     uint32_t retained_hidden,hidden_before[3],hidden_after[3];
+    uint32_t pdc_len_zero,pdc_msgid_after[6];
     uint32_t restore_bank,restore_offset,restore_expected,restore_actual;
 };
 static inline bool a630_boot_read(const struct a630_boot_io *io,struct a630_boot_snapshot *s,
@@ -137,6 +138,36 @@ static inline bool a630_boot_hidden_request(const struct a630_boot_io *io,
     s->error=A630_BOOT_ACK;s->failed_bank=r->bank;s->failed_offset=r->offset;
     s->expected=0;s->actual=actual;return false;
 }
+/* MiCode and mainline write10108 to these six PDC MSGID slots, without a
+ * retained-word poll. The original RPMh mailbox defines8 as LEN, not WRITE.
+ * Polaris0037 returned10100. Issue the exact native request, require all
+ * other fields to match, and record only that precise zero-length readback
+ * alternative. This is not proof that a PDC sequence executed. CM3 stays
+ * held throughout configuration; fresh firmware readiness is still required.
+ * No HFI/GX/3D client is admitted by either readback form. */
+static inline bool a630_boot_pdc_msgid(const struct a630_boot_io *io,
+    struct a630_boot_snapshot *s,unsigned index)
+{
+    const struct a630_boot_register *r=&a630_boot_profile[index];
+    unsigned slot=6;
+    for(unsigned n=0;n<6;n++)
+        if(r->bank==4 && r->offset==(n<3?0x855d4u+16*n:0x85764u+16*(n-3)))slot=n;
+    if(slot>=6 || r->value!=0x10108u){s->error=A630_BOOT_IO;return false;}
+    if(!io->owned(io->ctx)){s->error=A630_BOOT_LEASE;return false;}
+    if(!io->write(io->ctx,r->bank,r->offset,r->value)){
+        s->error=A630_BOOT_IO;s->failed_bank=r->bank;s->failed_offset=r->offset;return false;
+    }
+    uint32_t actual=0;
+    for(unsigned n=0;n<500;n++){
+        if(!a630_boot_read(io,s,r->bank,r->offset,&actual))return false;
+        s->pdc_msgid_after[slot]=actual;
+        if(actual==r->value)return true;
+        if(actual==0x10100u){s->pdc_len_zero|=1u<<slot;return true;}
+        io->wait(io->ctx,1);
+    }
+    s->error=A630_BOOT_ACK;s->failed_bank=r->bank;s->failed_offset=r->offset;
+    s->expected=r->value;s->actual=actual;return false;
+}
 /* Set up sequencers while CM3 is held. These are the original A630 TCS
  * addresses/values, not SC7280's layout. This profile only configures them;
  * it does not issue a rail vote or trigger the sequencers. */
@@ -162,6 +193,8 @@ static inline bool a630_boot_configure(const struct a630_boot_io *io,struct a630
         s->attempted|=1ull<<n;
         if(r->bank==2 && (r->offset==0x23034 || r->offset==0x2303c || r->offset==0x23044)){
             if(!a630_boot_hidden_request(io,s,n))goto done;
+        }else if(r->bank==4 && r->value==0x10108u){
+            if(!a630_boot_pdc_msgid(io,s,n))goto done;
         }else if(!a630_boot_set(io,s,r->bank,r->offset,r->value,r->mask))goto done;
     }
     if(!io->sync(io->ctx)){s->error=A630_BOOT_IO;goto done;}
