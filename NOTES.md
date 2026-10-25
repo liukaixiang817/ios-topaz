@@ -34,6 +34,31 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT ACTION —0042 temporary boot SENT; actual GPU command/image result pending
+
+- Fresh read-only preflight4572 EXIT0,03:28:52.784917UTC: complete16GiB hash
+  689a8cd1..., all182 maps/GPT/header32311c08 unchanged, clean outer ext4,
+  unmounted/RO1/30C. No partition write, journal replay or repair.
+- Direct boot-phone10145 EXIT0; Sending and Booting OKAY, total1.182s,
+  **2026-10-25T03:29:08.782857UTC**, exact0042 image74ec113542756624190e198b3762bb4625ecb3d47c0ad7f1e989004d343c1d92.
+  Publicsource147116f/CI40157657403 SUCCESS. Source fixed native defaultDCVS,
+  owned SID0/CB0, signed original PAS13ZAP, SQE/CP and64x64 image proof;
+  no0042physical proof or desktop GPU service yet. Current desktop stillCPU.
+- USB host observation remains PAUSED by latest human request. Direct boot-phone
+  used, NOT boot-and-watch. Process inventory verified no active observer and
+  no sample file; usb-observation-paused.json bound to above sent_utc. No USB
+  connection/no-enumeration claim. Do not restart observation implicitly.
+- Pending human question requests actual new lockscreen/desktop confirmation and
+  GD/GZ/GC0/GI text (unclear allowed), last line if stuck. Require real CP fence
+  600dc0de and GI1/px1000 (all4096pixels), plus halt/secure shutdown ownership
+  before hardware success claim. If first fault GS0/GD/GZ, use saved stage and
+  transport/secure/readbacks; do not assume every blank row was attempted.
+- All44local tests/130 selected standard-clock startup checks/final image check
+  passed BEFORE phone boot. Linked actual8SMCs/DSB/fullwidthx3 verified; highPA
+  fix retained. No new guest failure/retry. Full prior failed records retained.
+  Next persistent worker/BO/IOSurface/Mesa bridge plan is source-only and must
+  follow real CP/image evidence. NoGUIacceleration claim from firmware alone.
+
 ### CURRENT ACTION —0042 final image verified; FASTBOOT auto-found; read-only preflight running
 
 - CI40157657403/source147116f SUCCESS, all130 selected CPU1 standard-clock
