@@ -1,0 +1,401 @@
+--- a/bsd/dev/polaris_gpu_overlay.c
++++ b/bsd/dev/polaris_gpu_overlay.c
+@@ -23,25 +23,62 @@
+ #include <corecrypto/ccdigest.h>
+ #include <corecrypto/ccsha2.h>
+ #include <arm/machine_routines.h>
+ #include "polaris_gpu_bundle.h"
+ #include "polaris_gpu.h"
+ 
+ extern bool polaris_ram_overlay_allowed(void);
+ bool polaris_gpu_overlay_stage(void);
+ bool polaris_gpu_overlay_ready(void);
+ bool polaris_gpu_caller_allowed(void);
+ uint32_t polaris_gpu_caller_kind(void);
+ static uint32_t pgpu_started,pgpu_ready;
++static uint64_t pgpu_begin;
++static uint32_t pgpu_progress_seq;
++static struct {uint32_t step,file,done,total,error,ms;} pgpu_progress;
+ static int pgpu_wait;
++uint32_t polaris_gpu_overlay_line(char *out,uint32_t capacity)
++{
++    if(!out || !capacity)return 0;
++    for(unsigned n=0;n<4;n++) {
++        uint32_t seq=__atomic_load_n(&pgpu_progress_seq,__ATOMIC_ACQUIRE);
++        if(seq&1)continue;
++        uint32_t step=__atomic_load_n(&pgpu_progress.step,__ATOMIC_RELAXED);
++        uint32_t file=__atomic_load_n(&pgpu_progress.file,__ATOMIC_RELAXED);
++        uint32_t done=__atomic_load_n(&pgpu_progress.done,__ATOMIC_RELAXED);
++        uint32_t total=__atomic_load_n(&pgpu_progress.total,__ATOMIC_RELAXED);
++        uint32_t error=__atomic_load_n(&pgpu_progress.error,__ATOMIC_RELAXED);
++        uint32_t ms=__atomic_load_n(&pgpu_progress.ms,__ATOMIC_RELAXED);
++        __atomic_thread_fence(__ATOMIC_ACQUIRE);
++        if(seq!=__atomic_load_n(&pgpu_progress_seq,__ATOMIC_ACQUIRE))continue;
++        if(!step)return 0;
++        return (uint32_t)snprintf(out,capacity,"GLB S%x F%x B%x/%x E%x ms%x",step,file,done,total,error,ms);
++    }
++    return 0; /* Never wait behind a writer from a diagnostic/display timer. */
++}
++static void pgpu_note(unsigned step,unsigned file,uint32_t done,uint32_t total,int error,bool print)
++{
++    uint64_t ns=0;absolutetime_to_nanoseconds(mach_absolute_time()-pgpu_begin,&ns);
++    __atomic_fetch_add(&pgpu_progress_seq,1,__ATOMIC_ACQ_REL);
++    __atomic_store_n(&pgpu_progress.step,step,__ATOMIC_RELAXED);
++    __atomic_store_n(&pgpu_progress.file,file,__ATOMIC_RELAXED);
++    __atomic_store_n(&pgpu_progress.done,done,__ATOMIC_RELAXED);
++    __atomic_store_n(&pgpu_progress.total,total,__ATOMIC_RELAXED);
++    __atomic_store_n(&pgpu_progress.error,(uint32_t)error,__ATOMIC_RELAXED);
++    __atomic_store_n(&pgpu_progress.ms,(uint32_t)MIN(ns/NSEC_PER_MSEC,UINT32_MAX),__ATOMIC_RELAXED);
++    __atomic_fetch_add(&pgpu_progress_seq,1,__ATOMIC_RELEASE);
++    if(print){char line[80];if(polaris_gpu_overlay_line(line,sizeof(line)))printf("D GL BOOT: %s\n",line);}
++}
++void polaris_gpu_overlay_exec(int error)
++{pgpu_note(error?9:8,PGPU_FILES,0,0,error,true);}
+ static const char *const pgpu_paths[PGPU_FILES]={
+     "/usr/lib/libPolarisMesa.dylib", "/usr/lib/libPolarisGL.dylib",
+     "/usr/lib/libPolarisInject.dylib", "/usr/libexec/polaris-bbd-wrapper",
+     "/usr/libexec/polaris-gl-test", "/usr/libexec/polaris-init"
+ };
+ static bool pgpu_digest(const void *data,size_t bytes,const uint8_t *expected)
+ {
+     /* Same built-in SHA256 provider as the proven firmware validator.
+      * The one-shot ccdigest() wrapper is not linked in this kernel. */
+     uint8_t hash[32];const struct ccdigest_info *di=&ccsha256_ltc_di;
+     ccdigest_di_decl(di,context);ccdigest_init(di,context);
+     ccdigest_update(di,context,bytes,data);ccdigest_final(di,context,hash);
+@@ -73,63 +110,80 @@
+         }
+     }
+     vnode_put(image);return ok?found:0;
+ }
+ bool polaris_gpu_caller_allowed(void) {return polaris_gpu_caller_kind()!=0;}
+ static int pgpu_write(unsigned kind,const struct pgpu_file *file)
+ {
+     /* Recheck at every VFS write; the block layer still refuses UFS WRITE,
+      * UNMAP and SYNC CDBs. O_EXCL prevents touching any existing file. */
+     if(kind>=PGPU_FILES || !polaris_ram_overlay_allowed())return EPERM;
+     vfs_context_t ctx=vfs_context_kernel();vnode_t vp=NULLVP;
+     int flags=FWRITE|O_CREAT|O_EXCL|O_NOFOLLOW;
++    pgpu_note(3,kind,0,file->bytes,0,true);
+     int error=vnode_open(pgpu_paths[kind],flags,kind<3?0644:0755,0,&vp,ctx);
+-    if(error)return error;
++    if(error){pgpu_note(3,kind,0,file->bytes,error,true);return error;}
+     if(!vnode_isreg(vp) || !(vfs_flags(vnode_mount(vp))&MNT_ROOTFS))error=EPERM;
+-    int resid=0;
+-    if(!error) error=vn_rdwr(UIO_WRITE,vp,(caddr_t)file->data,(int)file->bytes,0,UIO_SYSSPACE,
+-        IO_NODELOCKED,vfs_context_ucred(ctx),&resid,vfs_context_proc(ctx));
+-    if(!error && resid)error=EIO;
++    uint32_t done=0;
++    while(!error && done<file->bytes) {
++        if(!polaris_ram_overlay_allowed()){error=EPERM;break;}
++        /* Bound each request; synchronous writes avoid leaving a large
++         * delayed UBC cluster across PID1's first exec. All block writes
++         * still terminate in the verified volatile COW, never UFS CDBs. */
++        uint32_t bytes=MIN(file->bytes-done,128u<<10);int resid=0;
++        pgpu_note(4,kind,done,file->bytes,0,done==0);
++        error=vn_rdwr(UIO_WRITE,vp,(caddr_t)(file->data+done),(int)bytes,done,UIO_SYSSPACE,
++            IO_SYNC,vfs_context_ucred(ctx),&resid,vfs_context_proc(ctx));
++        if(!error && resid)error=EIO;
++        if(!error)done+=bytes;
++        pgpu_note(4,kind,done,file->bytes,error,error!=0);
++    }
++    pgpu_note(5,kind,done,file->bytes,error,true);
+     off_t length=0;
+     if(!error) error=vnode_size(vp,&length,ctx);
+     if(!error && length!=file->bytes)error=EIO;
++    pgpu_note(6,kind,done,file->bytes,error,true);
+     int closed=vnode_close(vp,FWRITE,ctx);
++    pgpu_note(6,kind,done,file->bytes,error?error:closed,true);
+     return error?error:closed;
+ }
+ bool polaris_gpu_overlay_stage(void)
+ {
+     unsigned enable=0;PE_parse_boot_argn("polarisgl",&enable,sizeof(enable));
+     if(enable!=1 || !polaris_ram_overlay_allowed())return false;
+     if(__atomic_exchange_n(&pgpu_started,1,__ATOMIC_ACQ_REL))return polaris_gpu_overlay_ready();
++    pgpu_begin=mach_absolute_time();pgpu_note(1,0,0,0,0,true);
+     /* On CPU1 let the proven native bootstrap finish before allocating and
+      * writing the overlay. Do not consume its10s hardware deadline with VFS
+      * work. A failed native proof goes straight to the original CPU boot. */
+     for(unsigned n=0;n<120 && !polaris_gpu_ready() && polaris_gpu_boot_pending();n++) {
+         uint64_t deadline;clock_interval_to_deadline(100,NSEC_PER_MSEC,&deadline);
+         (void)assert_wait_deadline(&pgpu_wait,THREAD_UNINT,deadline);thread_block(THREAD_CONTINUE_NULL);
+     }
+     if(!polaris_gpu_ready()){printf("POLARIS GL RAM overlay: native proof not ready; original CPU bootstrap\n");return false;}
++    pgpu_note(2,0,0,0,0,true);
+     DTEntry node;const void *reg,*sha,*version;unsigned rn,sn,vn;
+     if(SecureDTLookupEntry(NULL,"/polaris-gpu-userland",&node)!=kSuccess ||
+         SecureDTGetProperty(node,"reg",&reg,&rn)!=kSuccess || rn!=16 ||
+         SecureDTGetProperty(node,"sha256",&sha,&sn)!=kSuccess || sn!=32 ||
+         SecureDTGetProperty(node,"ios-build",&version,&vn)!=kSuccess || vn!=7 || memcmp(version,"20H392",7))return false;
+     uint64_t physical=pgpu_u64(reg),bytes=pgpu_u64((const uint8_t*)reg+8);
+     const boot_args *args=PE_state.bootArgs;
+     /* The blob must be a reserved, statically mapped kernel-data span, not
+      * MMIO or arbitrary RAM named by an ADT property. No ml_io_map on DRAM. */
+     if(!args || (physical&0x3fff) || bytes<PGPU_HEADER || bytes>PGPU_MAX ||
+         physical<args->physBase || physical>=args->topOfKernelData ||
+         bytes>args->topOfKernelData-physical || physical-args->physBase>args->memSize ||
+         bytes>args->memSize-(physical-args->physBase))return false;
+     const void *data=(const void*)ml_static_ptovirt((vm_offset_t)physical);
+     struct pgpu_file files[PGPU_FILES];
+     if(!pgpu_digest(data,(size_t)bytes,sha) || !pgpu_parse(data,(size_t)bytes,files,pgpu_digest))return false;
+     for(unsigned n=0;n<PGPU_FILES;n++) {
+         int error=pgpu_write(n,&files[n]);
+         if(error) {printf("POLARIS GL RAM overlay: stage%u failed %d; Apple bootstrap unchanged\n",n,error);return false;}
+     }
+     __atomic_store_n(&pgpu_ready,1,__ATOMIC_RELEASE);
++    pgpu_note(7,PGPU_FILES,(uint32_t)bytes,(uint32_t)bytes,0,true);
+     printf("POLARIS GL RAM overlay: six verified files staged, %llu bytes; UFS base READ ONLY\n",bytes);
+     return true;
+ }
+ #endif
+--- a/bsd/dev/polaris_gpu.h
++++ b/bsd/dev/polaris_gpu.h
+@@ -13,17 +13,19 @@
+ bool polaris_gpu_boot_pending(void);
+ bool polaris_gpu_timestamp(uint64_t *value);
+ bool polaris_gpu_caller_allowed(void);
+ bool polaris_gpu_quiescent(void);
+ bool polaris_gpu_map(uint64_t address, uint64_t physical, bool read_only, bool cached);
+ bool polaris_gpu_commit(void);
+ bool polaris_gpu_unmap(uint64_t address, uint64_t size);
+ bool polaris_gpu_submit(const uint64_t *addresses, const uint32_t *words, uint32_t count, uint32_t *fence);
+ void polaris_gpu_cache(void *address, uint64_t size);
+ void polaris_gpu_quarantine(void);
+ uint32_t polaris_gpu_client_line(char *out,uint32_t capacity);
+ uint32_t polaris_gpu_fault_line(unsigned line,char *out,uint32_t capacity);
++uint32_t polaris_gpu_overlay_line(char *out,uint32_t capacity);
++void polaris_gpu_overlay_exec(int error);
+ void PolarisGPUStart(void);
+ #ifdef __cplusplus
+ }
+ #endif
+ #endif
+--- a/iokit/Kernel/arm/polaris_gpu.h
++++ b/iokit/Kernel/arm/polaris_gpu.h
+@@ -13,17 +13,19 @@
+ bool polaris_gpu_boot_pending(void);
+ bool polaris_gpu_timestamp(uint64_t *value);
+ bool polaris_gpu_caller_allowed(void);
+ bool polaris_gpu_quiescent(void);
+ bool polaris_gpu_map(uint64_t address, uint64_t physical, bool read_only, bool cached);
+ bool polaris_gpu_commit(void);
+ bool polaris_gpu_unmap(uint64_t address, uint64_t size);
+ bool polaris_gpu_submit(const uint64_t *addresses, const uint32_t *words, uint32_t count, uint32_t *fence);
+ void polaris_gpu_cache(void *address, uint64_t size);
+ void polaris_gpu_quarantine(void);
+ uint32_t polaris_gpu_client_line(char *out,uint32_t capacity);
+ uint32_t polaris_gpu_fault_line(unsigned line,char *out,uint32_t capacity);
++uint32_t polaris_gpu_overlay_line(char *out,uint32_t capacity);
++void polaris_gpu_overlay_exec(int error);
+ void PolarisGPUStart(void);
+ #ifdef __cplusplus
+ }
+ #endif
+ #endif
+--- /dev/null
++++ b/bsd/dev/polaris_gpu_diagnostics.h
+@@ -0,0 +1,65 @@
++/* Included once after the verified RAM-COW diagnostic state. Saved snapshots
++ * only; no new hardware access, allocation, persistent logging or waits. */
++#ifndef POLARIS_GPU_DIAGNOSTICS_H
++#define POLARIS_GPU_DIAGNOSTICS_H
++static bool
++polaris_diag_report(void)
++{
++    if (!polaris_diag_enabled()) { return false; }
++    extern void polaris_touch_report(void);
++    polaris_touch_report();
++    /* Full hardware snapshots are immutable after publication. Repainting
++     * every unchanged row costs a screen scroll per line on CPU1, and also
++     * evicts the first useful bootstrap messages from the RAM log. */
++    extern void polaris_usb_report(void);
++    extern uint32_t polaris_usb_status(char *,uint32_t);
++    static bool usb_reported;
++    static char usb_previous[160];char usb_current[160]={0};
++    polaris_usb_status(usb_current,sizeof(usb_current));
++    if(!usb_reported || strcmp(usb_previous,usb_current)) {
++        polaris_usb_report();strlcpy(usb_previous,usb_current,sizeof(usb_previous));usb_reported=true;
++    }
++    extern void polaris_a630_report(void);
++    extern uint32_t polaris_a630_status(void);
++    extern uint32_t polaris_a630_details(char *,uint32_t);
++    extern uint32_t polaris_gpu_overlay_line(char *,uint32_t);
++    extern uint32_t polaris_gpu_client_line(char *,uint32_t);
++    static uint32_t gpu_previous=UINT32_MAX;
++    uint32_t gpu_current=polaris_a630_status();
++    if(gpu_previous!=gpu_current){polaris_a630_report();gpu_previous=gpu_current;}
++    else if(!gpu_current){char pending[80];if(polaris_a630_details(pending,sizeof(pending)))printf("D GPU PROGRESS: %s\n",pending);}
++    char progress[80];
++    if(polaris_gpu_overlay_line(progress,sizeof(progress)))printf("D GL BOOT: %s\n",progress);
++    if(polaris_gpu_client_line(progress,sizeof(progress)))printf("D GL APP: %s\n",progress);
++    char line[POLARIS_DIAG_BYTES];
++    printf("\nPOLARIS DIAG: first failures, RAM only\n");
++    static uint32_t emitted;
++    for (unsigned i = 0; i < POLARIS_DIAG_SLOTS; i++) {
++        if(emitted&(1u<<i))continue;
++        lck_spin_lock(&polaris_diag_lock);
++        memcpy(line, polaris_diag_lines[i], sizeof(line));
++        lck_spin_unlock(&polaris_diag_lock);
++        if (line[0]) { printf("%s\n", line);emitted|=1u<<i; }
++    }
++    /* A diagnostic must not wait behind a busy/stalled storage request. */
++    if (lck_mtx_try_lock(&sweet_ufs_lock)) {
++        unsigned used = polaris_root_cow.used, limit = polaris_root_cow.limit;
++        unsigned reserved = (unsigned)(polaris_root_arena.size >> 20);
++        uint64_t dirty = polaris_root_cow.dirty_blocks, written = polaris_root_cow.written_blocks;
++        uint64_t failures = polaris_cow_failures;
++        uint64_t base_calls = polaris_base_calls, ram_reads = polaris_ram_reads;
++        uint64_t ram_merges = polaris_ram_merges, full_writes = polaris_full_writes;
++        bool active = polaris_ram_cow_enabled, failed = polaris_io_failed;
++        lck_mtx_unlock(&sweet_ufs_lock);
++        printf("D COW: active=%u groups=%u/%u UFS-error=%u\n", active, used, limit, failed);
++        printf("D RAM: reserved=%uMiB dirty=%lluKiB written=%lluKiB refused=%llu\n",
++            reserved, dirty * 4, written * 4, failures);
++        printf("D IO: base_calls=%llu ram_reads=%llu ram_merges=%llu full_writes=%llu\n",
++            base_calls, ram_reads, ram_merges, full_writes);
++    } else {
++        printf("D COW: storage busy; reporting without waiting\n");
++    }
++    return true;
++}
++
++#endif
+--- a/bsd/dev/sweet_ufs.c
++++ b/bsd/dev/sweet_ufs.c
+@@ -180,62 +180,25 @@
+ polaris_diag_record(unsigned slot, const char *text)
+ {
+     if (!polaris_diag_enabled() || slot >= POLARIS_DIAG_SLOTS || !text) { return; }
+     lck_spin_lock(&polaris_diag_lock);
+     if (!polaris_diag_lines[slot][0]) {
+         snprintf(polaris_diag_lines[slot], POLARIS_DIAG_BYTES, "%s [cow=%u/%u]", text,
+             __atomic_load_n(&polaris_cow_used_snapshot, __ATOMIC_RELAXED),
+             __atomic_load_n(&polaris_cow_limit_snapshot, __ATOMIC_RELAXED));
+     }
+     lck_spin_unlock(&polaris_diag_lock);
+ }
+ 
+-static bool
+-polaris_diag_report(void)
+-{
+-    if (!polaris_diag_enabled()) { return false; }
+-    extern void polaris_touch_report(void);
+-    polaris_touch_report();
+-    extern void polaris_usb_report(void);
+-    polaris_usb_report(); /* saved RAM only; no bus access or waits */
+-    extern void polaris_a630_report(void);
+-    polaris_a630_report(); /* saved RAM only, even before a GUI frame */
+-    char line[POLARIS_DIAG_BYTES];
+-    printf("\nPOLARIS DIAG: first failures, RAM only\n");
+-    for (unsigned i = 0; i < POLARIS_DIAG_SLOTS; i++) {
+-        lck_spin_lock(&polaris_diag_lock);
+-        memcpy(line, polaris_diag_lines[i], sizeof(line));
+-        lck_spin_unlock(&polaris_diag_lock);
+-        if (line[0]) { printf("%s\n", line); }
+-    }
+-    /* A diagnostic must not wait behind a busy/stalled storage request. */
+-    if (lck_mtx_try_lock(&sweet_ufs_lock)) {
+-        unsigned used = polaris_root_cow.used, limit = polaris_root_cow.limit;
+-        unsigned reserved = (unsigned)(polaris_root_arena.size >> 20);
+-        uint64_t dirty = polaris_root_cow.dirty_blocks, written = polaris_root_cow.written_blocks;
+-        uint64_t failures = polaris_cow_failures;
+-        uint64_t base_calls = polaris_base_calls, ram_reads = polaris_ram_reads;
+-        uint64_t ram_merges = polaris_ram_merges, full_writes = polaris_full_writes;
+-        bool active = polaris_ram_cow_enabled, failed = polaris_io_failed;
+-        lck_mtx_unlock(&sweet_ufs_lock);
+-        printf("D COW: active=%u groups=%u/%u UFS-error=%u\n", active, used, limit, failed);
+-        printf("D RAM: reserved=%uMiB dirty=%lluKiB written=%lluKiB refused=%llu\n",
+-            reserved, dirty * 4, written * 4, failures);
+-        printf("D IO: base_calls=%llu ram_reads=%llu ram_merges=%llu full_writes=%llu\n",
+-            base_calls, ram_reads, ram_merges, full_writes);
+-    } else {
+-        printf("D COW: storage busy; reporting without waiting\n");
+-    }
+-    return true;
+-}
++#include "polaris_gpu_diagnostics.h"
+ #endif
+ 
+ static inline uint32_t
+ ufs_rd(uint32_t off)
+ {
+ 	return *(volatile uint32_t *)(su.regs + off);
+ }
+ 
+ static inline void
+ ufs_wr(uint32_t off, uint32_t v)
+ {
+ 	*(volatile uint32_t *)(su.regs + off) = v;
+--- a/bsd/kern/kern_exec.c
++++ b/bsd/kern/kern_exec.c
+@@ -6919,28 +6919,31 @@
+ 			error = load_init_program_at_path(p, (user_addr_t)scratch_addr, launchd_path);
+ 			if (!error) {
+ 				return;
+ 			} else if (error != ENOENT) {
+ 				printf("load_init_program: failed loading %s: errno %d\n", launchd_path, error);
+ 			}
+ 		}
+ 	}
+ #endif
+ 
+ #if defined(POLARIS_RAM_ONLY)
+     extern bool polaris_gpu_overlay_stage(void);
++    extern void polaris_gpu_overlay_exec(int);
+     if (polaris_gpu_overlay_stage()) {
+         printf("POLARIS GL: exec RAM-only activation helper before Apple launchd\n");
++        polaris_gpu_overlay_exec(0);
+         error = load_init_program_at_path(p, (user_addr_t)scratch_addr, "/usr/libexec/polaris-init");
+         if (!error) return;
++        polaris_gpu_overlay_exec(error);
+         printf("POLARIS GL: helper exec failed %d; original Apple bootstrap\n", error);
+     }
+ #endif
+ 	error = ENOENT;
+ 	for (i = 0; i < sizeof(init_programs) / sizeof(init_programs[0]); i++) {
+ 		printf("load_init_program: attempting to load %s\n", init_programs[i]);
+ 		error = load_init_program_at_path(p, (user_addr_t)scratch_addr, init_programs[i]);
+ 		if (!error) {
+ 			return;
+ 		} else if (error != ENOENT) {
+ 			printf("load_init_program: failed loading %s: errno %d\n", init_programs[i], error);
+ 		}
+--- a/bsd/kern/sweet_amfi.c
++++ b/bsd/kern/sweet_amfi.c
+@@ -363,29 +363,33 @@
+ static mac_policy_handle_t sweet_sandbox_mac_handle;
+ 
+ static struct mac_policy_conf sweet_amfi_mac_conf = {
+ 	.mpc_name = "SWEET AMFI",
+ 	.mpc_fullname = "SWEET built-in Mobile File Integrity",
+ 	.mpc_ops = &sweet_amfi_mac_ops,
+ };
+ 
+ 
+ #if defined(POLARIS_RAM_ONLY)
+ extern bool polaris_gpu_overlay_ready(void);
+ extern uint32_t polaris_gpu_caller_kind(void);
+-static int polaris_gl_dyld_policy(struct proc *p __unused, int call, user_addr_t arg)
++static int polaris_gl_dyld_policy(struct proc *p, int call, user_addr_t arg)
+ {
+     /* Only the verified, opt-in RAM overlay's window-server executable may
+      * load its bridge. Other processes/policies keep their previous result. */
+-    if (call!=0x5a || !polaris_gpu_overlay_ready() || polaris_gpu_caller_kind()!=2)return ENOSYS;
++    /* __mac_syscall returns ENOPOLICY when this named policy is absent.
++     * Preserve that exact baseline for every non-target (especially PID1);
++     * launchd must never enter executable-vnode lookup for a graphics hook. */
++    if (call!=0x5a || proc_isinitproc(p) || !polaris_gpu_overlay_ready() ||
++        polaris_gpu_caller_kind()!=2)return ENOPOLICY;
+     uint64_t request[2],allow=0xff;
+     int error=copyin(arg,request,sizeof(request));
+     return error?error:copyout(&allow,(user_addr_t)request[1],sizeof(allow));
+ }
+ static const struct mac_policy_ops polaris_gl_amfi_ops={.mpo_policy_syscall=polaris_gl_dyld_policy};
+ static struct mac_policy_conf polaris_gl_amfi_conf={.mpc_name="AMFI",
+     .mpc_fullname="Polaris verified RAM GPU bridge dyld policy",.mpc_ops=&polaris_gl_amfi_ops};
+ static mac_policy_handle_t polaris_gl_amfi_handle;
+ #endif
+ static mac_policy_handle_t sweet_amfi_mac_handle;
+ 
+ /* Called from bsd_init once MAC policies can register, before any exec. */
