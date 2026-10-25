@@ -18,7 +18,7 @@ class A630SMMUTests(unittest.TestCase):
 struct model {
  uint32_t r[16384], original[16384];
  unsigned operations, fail, calls, writes, clean, sync, waits, wide, implwrites;
- bool held, stuck, badack, halt_stuck, implbad, forbidimpl, badactlr, drift;
+ bool held, stuck, badack, halt_stuck, implbad, forbidimpl, badactlr, drift, s2quirk, ignored_fault;
 };
 static struct model m;
 static bool op(struct model *x) {x->operations++;return x->operations!=x->fail;}
@@ -40,6 +40,13 @@ static bool wr(void *ctx,uint32_t off,uint32_t v) {
  struct model *x=ctx;allowed(off,false);assert(x->held);x->writes++;
  /* A failed callback may still have posted the write. */
  bool ok=op(x);
+ if(off>=0xc00&&off<0xe00){
+  unsigned slot=(off-0xc00)/4,type=(v>>16)&3;
+  if(type==2&&(x->s2quirk||x->ignored_fault))return ok;
+  if(type==1){assert(!(x->r[(0x800+4*slot)/4]&(1u<<31)));
+   if(x->s2quirk)v=(v&~0x30000u)|0x20000u;
+  }
+ }
  bool impl=false;for(unsigned n=1;n<12;n++)if(off==a630_smmu_impl_offsets[n])impl=true;
  if(x->forbidimpl)assert(!impl && off!=0x6000);
  if(impl)x->implwrites++;
@@ -206,6 +213,33 @@ int main(void) {
  assert(a630_smmu_begin_handoff(true,true,&pt,&io,&m,&s)==A630_SMMU_READY);
  assert(s.slot==1&&s.foreign&&!s.impl_changed&&!s.halt_changed);
  assert(a630_smmu_end(&io,&m,&s));restored();
+
+ /* Actual0036 setup succeeded, then HYP ignored the teardown FAULT write.
+  * The alternative encoding must be isolated and read back as FAULT. */
+ reset();m.s2quirk=true;m.r[0x6000/4]=0x2378;m.forbidimpl=true;
+ memcpy(m.original,m.r,sizeof(m.r));
+ assert(a630_smmu_begin_handoff(true,true,&pt,&io,&m,&s)==A630_SMMU_READY);
+ assert(a630_smmu_end(&io,&m,&s)&&s.fault_quirk&&s.fault_canonical);
+ assert((m.r[0xc00/4]&0x300ff)==0x200ff && !m.r[0x800/4]);
+ m.original[0xc00/4]=(m.original[0xc00/4]&~255u)|255u;restored();
+ reset();m.s2quirk=true;m.r[0x6000/4]=0x2378;m.forbidimpl=true;
+ assert(a630_smmu_begin_handoff(true,true,&pt,&io,&m,&s)==A630_SMMU_READY);
+ m.operations=0;assert(a630_smmu_end(&io,&m,&s));unsigned quirk_cleanup=m.operations;
+ for(unsigned fail=1;fail<=quirk_cleanup;fail++) {
+  reset();m.s2quirk=true;m.r[0x6000/4]=0x2378;m.forbidimpl=true;
+  memcpy(m.original,m.r,sizeof(m.r));
+  assert(a630_smmu_begin_handoff(true,true,&pt,&io,&m,&s)==A630_SMMU_READY);
+  m.operations=0;m.fail=fail;assert(!a630_smmu_end(&io,&m,&s));m.fail=0;
+  assert(a630_smmu_end(&io,&m,&s));
+  m.original[0xc00/4]=(m.original[0xc00/4]&~255u)|255u;restored();
+ }
+ reset();m.ignored_fault=true;m.r[0x6000/4]=0x2378;m.forbidimpl=true;
+ assert(a630_smmu_begin_handoff(true,true,&pt,&io,&m,&s)==A630_SMMU_READY);
+ assert(!a630_smmu_end(&io,&m,&s)&&s.restore_error==A630_SMMU_ACK);
+ assert(!(m.r[0x800/4]&(1u<<31))); /* Unsupported BYPASS never becomes routable. */
+ reset();m.r[0x800/4]=0x80000005;s=(struct a630_smmu_snapshot){.slot=0};
+ unsigned before=m.writes;
+ assert(!a630_smmu_fault(&io,&m,&s,0x20000)&&s.error==A630_SMMU_OWNERSHIP&&m.writes==before);
  free(pool);return 0;
 }
 '''
