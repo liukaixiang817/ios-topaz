@@ -34,7 +34,28 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT ACTION —0046 complete build SUCCESS; fixed CPU1 regressions running
+### CURRENT ACTION —0046 final image verified; autoFASTBOOT found; RO preflight running
+
+- All133standardclockCPU1checks FIRSTPASS (cache45/network44/no-MMIO44),
+  no0046guestfailure/retry. Independentfinal-prepared-check PASS
+  05:31:54.078524UTC:49native/4ARM64units/imports/31patches35files/29rows,
+  source/coldPAS/SQE_ENABLE0/ownedCB0W1C+SSrefusal/linkedSMC/highPA/exactpayload.
+- CI40165297131/source9965798e014d484b0b76c80176b03eea61e99e49 SUCCESS;
+  kernelfd06129fcfcbe6ba162db1883b1b49691f89c835ad98267025f404feb0e9f475;
+  payload3c24f6bdb835e5c0a57ee2fd2a7e691ac6c970fb38533e6eb2551e714fcdcd98;
+  image86da57f949bce3576b9971b8c57cd90093f091ff2872a9448c9d2ef226a05ad9
+  (47509504B). FIRSTautoFASTBOOTquery05:32:09.741282UTC foundexpectedpolaris.
+  No repeatedkeyrequest; freshROpreflight49043 active. OnPASS DIRECTboot-phone
+  (NOTboot-and-watch), USBhostobserver remainsPAUSED. No0046phoneboot sentyet.
+- Currentphonewas0045GUI/freshPASauthCP80beforebases/auth+CB0FSR402, now
+  preflightrecovery. Actual0046CP/fence/pixels/GUI UNPROVEN. DesktopGPUbridge
+  NOTimplemented. NewGP SQEE/B/A/D +GFAR rows exposeearliestCPstate andexact
+  faultaddress; allRAMdetails and29rowpanelheight preserved.
+- NEXTwait49043→directboot-phone onPASS; thennewactual0046GUIorlastSTEP,
+  GP SQE/GFAR/GZ/GC0/GI/GF. Onlynewhumanresult canconfirm0046. Prior0043timer
+  failuresunresolved, CPU1only; noUSBsuccess/non-enumerationclaimwhilepaused.
+
+### 0046 complete build SUCCESS; fixed CPU1 regressions completed
 
 - CI40165297131/source9965798e014d484b0b76c80176b03eea61e99e49 SUCCESS,
   job121084991876. FullCIlog research/polaris/ci-40165297131.log. Download
