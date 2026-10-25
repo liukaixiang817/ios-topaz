@@ -28,6 +28,30 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT ACTION —0038 temporary boot SENT; detached USB observation active
+
+- **Preflight68431EXIT0**,verified **01:21:02.425344UTC**:full16GiBSHA689a8cd1,
+  182maps/GPT/exactcleanheader32311c08unchanged,RO1/unmounted/31C. No partition
+  writes/journalreplay/repair. **Boot73831EXIT0**,Sending/BootingOKAY,total1.180s,
+  **2026-10-25T01:21:27.267124UTC**,exactimage1073c146/source0b4d101,
+  CI40149445259SUCCESS. Fullbuildjob01:08:25–01:13:07UTC(4m42s).
+- **Detachedobserver PID18402 ACTIVE**,PPID1/PGID18402/Ssconfirmedafterwrapper
+  EXIT0. Firstsample **01:21:27.369964UTC**,gap0.102840s. FsynchronisedNDJSON+
+  usb-enumeration.json,processlogfile. NoECMearlyonly/nohostnetworkchange.
+  No timeout/discoverystop; onECMhelperattemptsRAMlog/panelwhilewatchcontinues.
+  Awaitactualsameboot“已进入系统”/explicitcancel. DoNOTrestartwatchorbootagain.
+  Stopwith0038stop-usb-observation.pyONLYforactualnewconfirmationthenverify
+  processgone/journal.0037actualconfirmationmustnotstopthisnew0038boot.
+- PendingquestionasksactualGUIconfirmation+**GEfw/SHwholeline**. NeedFWfresh
+  BABEFACE andSMMUrestoreexpected/actual; noactual0038FW/PDC/3D/USBresultyet.
+  NoHFI/GX/CP/Mesa/CoreAnimationrenderingyet. NewPDCMSGIDreadbackprocessingis
+  anative-requestbringup experiment, notproof powersequencerexecution.
+- FutureSMMUcleanupsourceplanprivate0038/next-SMMU-cleanup-source-plan.json:
+  originaldestroycontextdisablesSCTLRbeforefree,doesnotrestoreCBAR. Ourchosen
+  bank>=NUMS2CBisstg1-only;0037cleanupoffsetappears1004. Need0038rawSHexpected/
+  actualbeforefunctionalchange. PreserveallactiveTTBR/stream/TLBSYNCchecks;
+  neverwaiveunknownrestorationorclaimbyteidentityofcanonicalhardwarestate.
+
 ### CURRENT ACTION —0038 independently VERIFIED; FASTBOOT found; readonly preflight active
 
 - **CI40149445259/job121037672221 SUCCESS**,source0b4d101,fullghlog
