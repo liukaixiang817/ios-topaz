@@ -18,6 +18,8 @@
 #include <sys/ucontext.h>
 #include <mach-o/loader.h>
 #include <mach-o/dyld.h>
+#include <objc/runtime.h>
+#include <objc/message.h>
 #include "../../tools/polaris-gl-status.h"
 #include "../../tools/polaris-gpu-abi.h"
 #include <OpenGLES/ES3/gl.h>
@@ -46,7 +48,7 @@ static void test_step(unsigned n)
     struct pgpu_test_notice notice={PGPU_TEST_STEP,n,(uint32_t)(ms>600000?600000:ms),0};
     (void)__mac_syscall("AMFI",0x5c,&notice);
 }
-static struct pgpu_image test_images[3]; /* immutable before installing handlers */
+static struct pgpu_image test_images[4]; /* each slot immutable before use */
 static void test_image(unsigned slot,unsigned kind,void *symbol)
 {
     Dl_info info;if(!dladdr(symbol,&info)||!info.dli_fbase)return;
@@ -73,8 +75,8 @@ static void test_fatal(int sig,siginfo_t *info,void *opaque)
     struct pgpu_crash fault={.signal=(unsigned)sig,.code=info?(unsigned)info->si_code:0,
         .address=info?(uintptr_t)info->si_addr:0};
     if(context && context->uc_mcontext) {
-        fault.pc=pgpu_pc(context->uc_mcontext->__ss.__pc,test_images,3,&fault.pc_image);
-        fault.lr=pgpu_pc(context->uc_mcontext->__ss.__lr,test_images,3,&fault.lr_image);
+        fault.pc=pgpu_pc(context->uc_mcontext->__ss.__pc,test_images,4,&fault.pc_image);
+        fault.lr=pgpu_pc(context->uc_mcontext->__ss.__lr,test_images,4,&fault.lr_image);
     }
     (void)__mac_syscall("AMFI",0x5b,&fault);
     const char line[]="POLARIS GL: selftest fatal; first PC/LR saved\n";
@@ -189,6 +191,95 @@ static unsigned gmem_fetch_contract(GLuint vertex,IOSurfaceRef surface)
     fprintf(stderr,"POLARIS GL: PASS forced GMEM framebuffer fetch/restore ALL4096 pixels x4\n");
     return 0;
 }
+static IOSurfaceRef addressed_surface(void *pixels,uint32_t format)
+{
+    CFMutableDictionaryRef d=CFDictionaryCreateMutable(NULL,0,&kCFTypeDictionaryKeyCallBacks,&kCFTypeDictionaryValueCallBacks);
+    number(d,CFSTR("IOSurfaceWidth"),16);number(d,CFSTR("IOSurfaceHeight"),16);
+    number(d,CFSTR("IOSurfaceBytesPerRow"),64);number(d,CFSTR("IOSurfaceBytesPerElement"),4);
+    number(d,CFSTR("IOSurfaceAllocSize"),1024);number(d,CFSTR("IOSurfacePixelFormat"),(int)format);
+    int64_t address=(int64_t)(uintptr_t)pixels;
+    CFNumberRef n=CFNumberCreate(NULL,kCFNumberSInt64Type,&address);
+    CFDictionarySetValue(d,CFSTR("IOSurfaceAddress"),n);CFRelease(n);
+    IOSurfaceRef surface=IOSurfaceCreate(d);CFRelease(d);return surface;
+}
+/* Exercise the actual EAGL image methods used by the desktop, rather than
+ * importing only an empty render target directly through Mesa. Verify both
+ * colour and alpha, plus an update to the SAME caller-owned pixels. */
+static unsigned icon_texture_contract(void)
+{
+    test_step(49);
+    if(!dlopen("/System/Library/Frameworks/OpenGLES.framework/OpenGLES",RTLD_NOW|RTLD_LOCAL))return 49;
+    void *lib=dlopen("/usr/lib/libPolarisGL.dylib",RTLD_NOW|RTLD_LOCAL);if(!lib)return 50;
+    unsigned(*methods)(void)=(unsigned(*)(void))dlsym(lib,"polaris_eagl_methods");
+    if(!methods || methods()!=PGPU_EAGL_METHOD_MASK)return 51;
+    test_image(3,3,(void*)methods);
+    id object=((id(*)(id,SEL))objc_msgSend)((id)objc_getClass("EAGLContext"),sel_registerName("alloc"));
+    object=((id(*)(id,SEL,unsigned long,id))objc_msgSend)(object,sel_registerName("initWithAPI:properties:"),3,nil);
+    if(!object)return 52;
+    void **table=((void**(*)(id,SEL))objc_msgSend)(object,sel_registerName("getMacroContextPrivate"));
+    if(!table || !table[0])return 53;
+    void(*bind)(void*,GLenum,GLuint)=(void(*)(void*,GLenum,GLuint))table[0x30/8];
+    void(*use)(void*,GLuint)=(void(*)(void*,GLuint))table[0x12c8/8];
+    void(*draw)(void*,GLenum,GLint,GLsizei)=(void(*)(void*,GLenum,GLint,GLsizei))table[0x210/8];
+    void(*finish)(void*)=(void(*)(void*))table[0x2d0/8];
+    GLuint vertex=shader(GL_VERTEX_SHADER,"#version 300 es\nlayout(location=0) in vec2 p;out vec2 uv;void main(){uv=(p+1.0)*0.5;gl_Position=vec4(p,0,1);}");
+    GLuint fragment=shader(GL_FRAGMENT_SHADER,"#version 300 es\nprecision highp float;in vec2 uv;uniform sampler2D image;out vec4 c;void main(){c=texture(image,uv);}");
+    if(!vertex || !fragment)return 54;
+    GLuint program=glCreateProgram();glAttachShader(program,vertex);glAttachShader(program,fragment);glLinkProgram(program);
+    GLint linked=0;glGetProgramiv(program,GL_LINK_STATUS,&linked);if(!linked)return 55;
+    use(table[0],program);glUniform1i(glGetUniformLocation(program,"image"),0);
+    GLuint vao,positions,output,fb;glGenVertexArrays(1,&vao);glBindVertexArray(vao);
+    glGenBuffers(1,&positions);glBindBuffer(GL_ARRAY_BUFFER,positions);
+    const GLfloat points[]={-1,-1,3,-1,-1,3};glBufferData(GL_ARRAY_BUFFER,sizeof(points),points,GL_STATIC_DRAW);
+    glVertexAttribPointer(0,2,GL_FLOAT,GL_FALSE,0,0);glEnableVertexAttribArray(0);
+    glGenTextures(1,&output);glBindTexture(GL_TEXTURE_2D,output);
+    glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,64,64,0,GL_RGBA,GL_UNSIGNED_BYTE,NULL);
+    glGenFramebuffers(1,&fb);glBindFramebuffer(GL_FRAMEBUFFER,fb);
+    glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,output,0);
+    if(glCheckFramebufferStatus(GL_FRAMEBUFFER)!=GL_FRAMEBUFFER_COMPLETE)return 56;
+    glViewport(0,0,64,64);glDisable(GL_BLEND);glDisable(GL_SCISSOR_TEST);
+    uint8_t *allocation=NULL;if(posix_memalign((void**)&allocation,16384,32768))return 57;
+    uint8_t *pixels=allocation+37;uint8_t readback[64*64*4];
+    for(unsigned route=0;route<2;route++) {
+        /* Untyped wrapped pictures use the reference bridge's ABGR bytes;
+         * ordinary BGRA pictures use the texImageIOSurface source method. */
+        IOSurfaceRef surface=addressed_surface(pixels,route?0:0x42475241);
+        if(!surface || IOSurfaceGetAllocSize(surface)!=1024)return 58;
+        GLuint texture;glGenTextures(1,&texture);
+        for(unsigned round=0;round<2;round++) {
+            test_step(50+route*2+round);
+            for(unsigned y=0;y<16;y++)for(unsigned x=0;x<16;x++) {
+                uint8_t rgba[4]={(uint8_t)(round?80:24),(uint8_t)(x<8?48:96),
+                    (uint8_t)(y<8?16:64),(uint8_t)(x<8?128:255)};
+                uint8_t *p=pixels+(y*16+x)*4;
+                if(route){p[0]=rgba[3];p[1]=rgba[2];p[2]=rgba[1];p[3]=rgba[0];}
+                else{p[0]=rgba[2];p[1]=rgba[1];p[2]=rgba[0];p[3]=rgba[3];}
+            }
+            const uint8_t *alias=IOSurfaceGetBaseAddress(surface);
+            if(!alias || memcmp(alias,pixels,1024))return 59;
+            bind(table[0],GL_TEXTURE_2D,texture);
+            if(!round) {
+                BOOL ok=route?
+                    ((BOOL(*)(id,SEL,unsigned long,IOSurfaceRef,BOOL))objc_msgSend)(object,sel_registerName("attachImage:toCoreSurface:invertedRender:"),GL_TEXTURE_2D,surface,NO):
+                    ((BOOL(*)(id,SEL,IOSurfaceRef,unsigned long,unsigned long,GLsizei,GLsizei,unsigned long,unsigned long,uint32_t,BOOL))objc_msgSend)(object,sel_registerName("texImageIOSurface:target:internalFormat:width:height:format:type:plane:invert:"),surface,GL_TEXTURE_2D,GL_RGBA,16,16,GL_BGRA,GL_UNSIGNED_BYTE,0,NO);
+                if(!ok)return 60;
+                glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+                glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
+            }
+            draw(table[0],GL_TRIANGLES,0,3);finish(table[0]);
+            glReadPixels(0,0,64,64,GL_RGBA,GL_UNSIGNED_BYTE,readback);if(glGetError())return 61;
+            for(unsigned y=0;y<64;y++)for(unsigned x=0;x<64;x++) {
+                int expected[4]={round?80:24,x<32?48:96,y<32?16:64,x<32?128:255};
+                for(unsigned k=0;k<4;k++)if(abs((int)readback[(y*64+x)*4+k]-expected[k])>1)return 62;
+            }
+        }
+        /* The bridge retains each source until its context is released. */
+        CFRelease(surface);
+    }
+    ((void(*)(id,SEL))objc_msgSend)(object,sel_registerName("release"));free(allocation);
+    test_step(54);fprintf(stderr,"POLARIS GL: PASS EAGL icon BGRA/ABGR alpha + live caller pixels ALL4096 x4\n");
+    return 0;
+}
 int main(void)
 {
     test_started_ms=test_milliseconds();watch_test_faults();test_step(1);
@@ -251,5 +342,6 @@ int main(void)
     fprintf(stderr,"POLARIS GL: PASS GPU GLSL + shared IOSurface ALL%u pixels\n",passed);
     test_step(42);
     unsigned gmem_error=gmem_fetch_contract(v,s);if(gmem_error)return fail(gmem_error);
+    unsigned icon_error=icon_texture_contract();if(icon_error)return fail(icon_error);
     report(6,0);OSMesaDestroyContext(c);CFRelease(s);IOServiceClose(connection);return 0;
 }

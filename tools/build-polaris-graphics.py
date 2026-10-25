@@ -56,7 +56,7 @@ def build(args):
         ('libPolarisInject.dylib', ['-dynamiclib', '-Wl,-install_name,/usr/lib/libPolarisInject.dylib',
                                    str(SOURCES / 'polaris-inject.c'), *cf, *io, '-framework', 'OpenGLES', '-lobjc']),
         ('polaris-bbd-wrapper', [str(SOURCES / 'polaris-bbd-wrapper.c'), *cf, *io]),
-        ('polaris-gl-test', [str(SOURCES / 'polaris-gl-test.c'), str(mesa), *cf, *surface, *io]),
+        ('polaris-gl-test', [str(SOURCES / 'polaris-gl-test.c'), str(mesa), *cf, *surface, *io, '-lobjc']),
         ('polaris-init', [str(SOURCES / 'polaris-init.c')]),
     ]
     for name, options in jobs:

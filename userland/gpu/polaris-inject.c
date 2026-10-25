@@ -173,6 +173,11 @@ static void watch_for_faults(void)
 }
 
 static io_connect_t desktop_connection;
+static void render_note(const struct pgpu_render_notice *notice)
+{
+    struct pgpu_render_notice copy=*notice;size_t bytes=sizeof(copy);
+    (void)IOConnectCallStructMethod(desktop_connection,0x7a,&copy,sizeof(copy),&copy,&bytes);
+}
 static void loader_note(unsigned stage,unsigned error,unsigned methods)
 {
     uint32_t report[3]={stage,error,methods},reply[3];size_t bytes=sizeof(reply);
@@ -214,6 +219,9 @@ __attribute__((constructor)) static void polaris_gl_inject(void)
     crash_image(2,3,(void*)methods);
     crash_image(3,4,dlsym(gl,"glFinish"));
     observe(loader_note);
+    void (*render_observe)(void (*)(const struct pgpu_render_notice *))=
+        (void (*)(void (*)(const struct pgpu_render_notice *)))dlsym(gl,"polaris_eagl_render_observe");
+    if(render_observe)render_observe(render_note);
     gl_hooks(gl);
     fprintf(stderr,"POLARIS GL: all8 EAGL methods installed; desktop submissions still require observation\n");
 }

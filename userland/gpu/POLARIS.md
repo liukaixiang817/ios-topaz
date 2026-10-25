@@ -1,9 +1,11 @@
 # Polaris20H392 GPU integration
 
-0048 has **physical native command/fence/4096-pixel/idle/halt proof and a
-successful Mesa GLSL/shared-IOSurface/4096-pixel acceptance test**. Its photo
-shows `GA O0 S1 I1 T6 E0 D0 R1`: the desktop has not demonstrated GPU use.
-Metal application support is a separate layer and is not implemented here.
+0054 has **physical native command/fence/4096-pixel/idle/halt proof, forced
+GMEM framebuffer-fetch/restore/pixel acceptance, and sustained real desktop
+GPU submissions**. The human confirmed submission counts rise with scrolling;
+photos show desktop C739, C1605 and C1663 with T6/E0/D0/R1. Home-screen bitmap
+icons are still missing, so rendering correctness and measured FPS remain
+unfinished. Metal application support is a separate layer.
 
 The A630 hardware bootstrap follows this phone's DT, original MiCode sources
 and original firmware. `polarisgpu=9` retains that baseline. An additional
@@ -41,7 +43,7 @@ The wrapper launches a separate-task acceptance program before genuine
 backboardd. That program rejects a software renderer, compiles GLSL, imports a
 64x64 BGRA IOSurface, renders into it, waits, and compares all4096 pixels through
 the CPU mapping. Only an exit status0 enables the EAGL bridge. A failed test
-or30-second timeout retains the existing CPU interface. The test and normal
+or180-second timeout retains the existing CPU interface. The test and normal
 backboardd never compete for the exclusive connection.
 
 `GA` replaces one completed native status row without increasing panel height:
@@ -221,3 +223,35 @@ could miss. Host tests are not physical GPU evidence. Runtime quiescence keeps
 its original stop/fault/ownership predicates, and now records which predicate
 failed; faults still quarantine all DMA resources without acknowledging or
 resuming them. USB host observation remains paused by user request.
+
+
+0055 addresses a confirmed missing IOSurfaceCreate contract: an
+`IOSurfaceAddress` property describes existing pixels in the owning task.
+It must pin those exact bytes, not create a zero-filled replacement. The
+current20H392 `IOSurfaceClientCreateChild` serializes the dictionary to
+selector0 and explicitly handles that property; CoreAnimation also has a
+Create dictionary branch alongside its selector6 image wrapper. Flat images
+retain the tight final row bound. Invalid/overflowing addresses, short ranges,
+unsupported scattered ranges and wiring failures return errors; a failed pin
+never silently substitutes empty pixels. External task descriptors remain
+excluded from direct GPU import and use the existing EAGL upload route.
+
+The separate acceptance task additionally loads the actual EAGL bridge and
+checks coloured, partially transparent BGRA and untyped ABGR pictures from
+caller memory. It samples all4096 pixels after the original upload and a live
+update of the same pixels. T6 still requires every earlier shader, shared
+surface and GMEM test. Actual icon recovery awaits the physical run.
+
+The next display request is60Hz, admitted only while an open, ready desktop
+has completed genuine GPU work. CPU fallback retains its20Hz/legacy measured
+copy budget. GPU presentation leaves half the measured copy interval for
+other work, caps outlier backoff, accounts for work already spent in the
+vsync callback and always yields at least1ms. Diagnostic text is repainted
+at5Hz independently. This is a requested limit, not a measured60FPS claim.
+
+Diagnostic-only selector0x7a accepts a32-byte rendering notice from the
+verified desktop client only. Two existing rows, GLR and GLX, show frames,
+GL errors, shader/image failures, missing calls and the first failure's kind,
+argument and slot. Hardware first-fault rows take priority. Reports never
+establish DMA completion or modify GPU admission/readiness; all values are
+cached RAM and the display never reads hardware to show them.

@@ -6,6 +6,10 @@
 #define PGPU_EAGL_METHOD_COUNT 8u
 #define PGPU_EAGL_METHOD_MASK 0xffu
 #define PGPU_ACCEPTANCE_TIMEOUT_MS 180000u
+/* Diagnostic-only snapshot from the verified desktop, selector0x7a. */
+struct pgpu_render_notice {
+    uint32_t frames,errors,shaders,images,missing,kind,arg,slot;
+};
 /* Diagnostic-only AMFI5c. Actor1 is the shader test, actor3 the activated
  * wrapper; neither role gains dyld flags or another GPU writer from this. */
 enum {PGPU_TEST_BEGIN=1,PGPU_TEST_EXIT,PGPU_TEST_SIGNAL,PGPU_TEST_TIMEOUT,

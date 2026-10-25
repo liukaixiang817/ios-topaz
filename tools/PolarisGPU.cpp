@@ -35,6 +35,27 @@ static IOLock *gpuLock;
 static bool gpuOpened, gpuQuarantined;
 static uint32_t gpuSubmissions, gpuSurfaces;
 static uint32_t gpuDesktopAttempts,gpuDesktopSubmissions;
+static uint32_t gpuRender[8],gpuRenderPublished;
+static bool polaris_gpu_render_report(unsigned kind,const struct pgpu_render_notice *p)
+{
+    if(kind!=2 || !p || p->kind>6 || p->slot>=0x2200)return false;
+    uint32_t sequence=__atomic_load_n(&gpuRenderPublished,__ATOMIC_SEQ_CST);
+    __atomic_store_n(&gpuRenderPublished,sequence+1,__ATOMIC_SEQ_CST);
+    const uint32_t *v=(const uint32_t*)p;
+    for(unsigned n=0;n<8;n++)__atomic_store_n(&gpuRender[n],v[n],__ATOMIC_SEQ_CST);
+    __atomic_store_n(&gpuRenderPublished,sequence+2,__ATOMIC_SEQ_CST);
+    return true;
+}
+extern "C" uint32_t polaris_gpu_render_line(unsigned line,char *out,uint32_t capacity)
+{
+    if(!out || !capacity || line>1)return 0;
+    uint32_t sequence=__atomic_load_n(&gpuRenderPublished,__ATOMIC_SEQ_CST);
+    if(!sequence || (sequence&1))return 0;
+    uint32_t v[8];for(unsigned n=0;n<8;n++)v[n]=__atomic_load_n(&gpuRender[n],__ATOMIC_SEQ_CST);
+    if(__atomic_load_n(&gpuRenderPublished,__ATOMIC_SEQ_CST)!=sequence)return 0;
+    if(!line)return (uint32_t)snprintf(out,capacity,"GLR F%x E%x S%x I%x M%x",v[0],v[1],v[2],v[3],v[4]);
+    return (uint32_t)snprintf(out,capacity,"GLX K%x A%x @%x",v[5],v[6],v[7]);
+}
 static struct pgpu_crash gpuFirstCrash;
 static uint32_t gpuCrashPublished,gpuCrashPID;
 /* Saved diagnostic state only: never modifies readiness, reportT/E, fences
@@ -90,6 +111,12 @@ extern "C" uint32_t polaris_gpu_crash_line(unsigned line,char *out,uint32_t capa
     return (uint32_t)snprintf(out,capacity,"GLADDR %llx",gpuFirstCrash.address);
 }
 static uint32_t gpuPublished,gpuOpenStatus,gpuFaultStatus;
+extern "C" bool polaris_gpu_desktop_active(void)
+{
+    return __atomic_load_n(&gpuOpenStatus,__ATOMIC_ACQUIRE)!=0 &&
+        __atomic_load_n(&gpuDesktopSubmissions,__ATOMIC_ACQUIRE)!=0 && polaris_gpu_ready();
+}
+
 static uint32_t gpuAppStage,gpuAppError;
 /* Loading evidence is independent of the shader/pixel acceptance result.
  * These cached words never read GPU registers from the display timer. */
@@ -357,7 +384,8 @@ IOReturn PolarisGPUUserClient::externalMethod(uint32_t selector,IOExternalMethod
         msm_gem_submit submit;msm_wait_fence wait;msm_gem_madvise madvise;
         msm_submitqueue queue;msm_submitqueue_query query;drm_gem_close close;redwood_surface surface;
         struct {uint32_t stage,error;} report;
-        struct {uint32_t stage,error,methods;} loader;} r;
+        struct {uint32_t stage,error,methods;} loader;
+        struct pgpu_render_notice render;} r;
     size_t size=0;
     switch(selector) {
         case 0x40:case 0x41:size=sizeof(r.param);break;
@@ -369,6 +397,7 @@ IOReturn PolarisGPUUserClient::externalMethod(uint32_t selector,IOExternalMethod
         case 0x7e:size=sizeof(r.surface);break;default:return kIOReturnUnsupported;
         case 0x7c:size=sizeof(r.report);break;
         case 0x7b:size=sizeof(r.loader);break;
+        case 0x7a:size=sizeof(r.render);break;
     }
     if(!a || !a->structureInput || a->structureInputDescriptor || a->structureOutputDescriptor ||
         a->scalarInputCount || a->scalarOutputCount || a->structureInputSize!=size ||
@@ -437,6 +466,9 @@ IOReturn PolarisGPUUserClient::externalMethod(uint32_t selector,IOExternalMethod
             /* Only the real server may report loading. This is diagnostic
              * evidence, never GPU readiness or a successful submission. */
             if(polaris_gpu_loader_report(polaris_gpu_caller_kind(),r.loader.stage,r.loader.error,r.loader.methods))result=0;
+            break;
+        case 0x7a:
+            if(polaris_gpu_render_report(callerKind,&r.render))result=0;
             break;
         case 0x7c:
             if(r.report.stage>6 || r.report.error>255 ||

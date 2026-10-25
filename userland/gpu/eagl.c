@@ -375,6 +375,21 @@ static int fetch_offered = 1;
 static const char *eagl_slot_name(unsigned offset);
 static void census_report(void);
 static void clear_now(struct eagl *e);
+static struct pgpu_render_notice polaris_render;
+static void (*polaris_render_observer)(const struct pgpu_render_notice *);
+void polaris_eagl_render_observe(void (*note)(const struct pgpu_render_notice *))
+{polaris_render_observer=note;if(note)note(&polaris_render);}
+static void polaris_render_fault(unsigned kind,unsigned arg,unsigned slot)
+{
+    if(kind==1)polaris_render.errors++;
+    else if(kind==4 || kind==5)polaris_render.shaders++;
+    else if(kind==6)polaris_render.missing++;
+    else polaris_render.images++;
+    if(!polaris_render.kind) {
+        polaris_render.kind=kind;polaris_render.arg=arg;polaris_render.slot=slot;
+        if(polaris_render_observer)polaris_render_observer(&polaris_render);
+    }
+}
 
 static void
 eagl_enter(struct eagl *e, unsigned offset)
@@ -399,6 +414,7 @@ eagl_leave(struct eagl *e, unsigned offset)
 	GLenum error;
 
 	if (check_errors && offset != 0x338 && (error = glGetError()) != 0) {
+        polaris_render_fault(1,error,offset);
 		if (e->errors++ < 60) {
 			say("redwood-gl: %s: error %#x\n", eagl_slot_name(offset), error);
 		}
@@ -428,6 +444,7 @@ eagl_missing(void *context, unsigned offset)
 	struct eagl *e = context;
 
 	eagl_enter(e, offset);
+	polaris_render_fault(6,offset,offset);
 	if (slot_calls[offset / 8] == 1) {
 		say("redwood-gl: CALLED AND NOT THERE: entry %#x, %s\n", offset, eagl_slot_name(offset));
 	}
@@ -1028,6 +1045,9 @@ frame_end(struct eagl *e, bool finished)
 	after = now_us();
 	e->in_frame = false;
 	e->frames++;
+    polaris_render.frames=e->frames;
+    if(polaris_render_observer && (e->frames<=4 || !(e->frames%60)))
+        polaris_render_observer(&polaris_render);
 	if (latency_lines) {
 		/* "tl: g FRAME began US ended US DRAWS": microseconds of mach_absolute_time (tools/latency.py) */
 		say("tl: g %u began %llu ended %llu %u\n", e->frames, e->began, after, e->draws);
@@ -1766,6 +1786,7 @@ vblur_program(const char *vertex, const char *fragment, const char *what)
 	glGetShaderiv(shader, GL_COMPILE_STATUS, &good);
 	if (!good) {
 		glGetShaderInfoLog(shader, sizeof(said), NULL, said);
+        polaris_render_fault(4,shader,0x12a8);
 	}
 	glAttachShader(program, shader);
 	glBindAttribLocation(program, 0, "vertex_position");
@@ -3400,6 +3421,7 @@ my_glLinkProgram(void *context, GLuint program)
 	e->programs++;
 	if (!good) {
 		glGetProgramInfoLog(program, sizeof(said), NULL, said);
+        polaris_render_fault(5,program,0x12c0);
 		say("redwood-gl: A PROGRAM DOES NOT LINK (program %u): %s\n", program, said);
 	}
 	EAGL_LEAVE(e, 0x12c0);
@@ -3537,6 +3559,7 @@ my_texImageIOSurface(id self, SEL selector, IOSurfaceRef surface, unsigned long 
 	clear_now(e);
 	glGetIntegerv(GL_TEXTURE_BINDING_2D, &texture);
 	if (target != GL_TEXTURE_2D || texture == 0 || (image = image_new(e, (GLuint)texture, surface)) == NULL) {
+        polaris_render_fault(3,(unsigned)target,0x970);
 		say("redwood-gl: -texImageIOSurface: target %#lx, texture %d: not done\n", target, texture);
 		return NO;
 	}
@@ -3589,6 +3612,7 @@ my_attachImage(id self, SEL selector, unsigned long target, IOSurfaceRef surface
 	if (target != GL_TEXTURE_2D || texture == 0 || (pixels != 'BGRA' && pixels != 0) ||
 	    IOSurfaceGetBytesPerElement(surface) != 4 || IOSurfaceGetPlaneCount(surface) != 0 ||
 	    (image = image_new(e, (GLuint)texture, surface)) == NULL) {
+        polaris_render_fault(2,pixels,0x970);
 		say("redwood-gl: -attachImage: target %#lx, texture %d, an IOSurface of '%.4s': not done\n", target, texture,
 		    (const char *)&(uint32_t){ __builtin_bswap32(pixels) });
 		return NO;

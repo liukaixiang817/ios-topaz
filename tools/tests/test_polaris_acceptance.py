@@ -85,7 +85,7 @@ int main(void){reset(0);assert(run_acceptance()&&saved.event==PGPU_TEST_EXIT&&!s
 #define STDERR_FILENO 2
 struct regs{uint64_t __pc,__lr;};struct mc{struct regs __ss;};typedef struct{struct mc*uc_mcontext;}ucontext_t;
 typedef struct{int si_code;void*si_addr;}siginfo_t;
-static struct pgpu_image test_images[3]={{0x700000000,0x10000,1},{0x900000000,0x10000,2},{0xa00000000,0x10000,4}};
+static struct pgpu_image test_images[4]={{0x700000000,0x10000,1},{0x900000000,0x10000,2},{0xa00000000,0x10000,4}};
 static struct pgpu_crash captured;static unsigned writes,kills;
 static int __mac_syscall(const char*n,int cmd,void*p){assert(!strcmp(n,"AMFI")&&cmd==0x5b);captured=*(struct pgpu_crash*)p;return 0;}
 static int write(int fd,const void*p,size_t n){assert(fd==2&&p&&n);writes++;return (int)n;}
