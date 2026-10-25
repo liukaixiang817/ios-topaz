@@ -34,6 +34,35 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0057 human confirms Android Mindows switching; host still sees no device
+
+- Human answered normalWindowsroute=AndroidMindows/switchtool, andsaid
+  USBreconnected/FASTBOOTready. FIRSTfreshROquery20:02:09UTC foundNEITHER
+  expectedFASTBOOT norADB. Followuptargetedcheck20:07:21UTC stillabsent,
+  fastbootcommandexit0. No recovery/devicecandidate sent thisturn; no
+  partitionread/write. Do notassumehumanFASTBOOTscreenimplieshostlink.
+- One-shotIOUSBplane had no devices; IOUSBHostDevice query returnedEMPTY
+  stdout/status0, notparseableplist. This isNOTevidenceallUSBhardwareabsent.
+  Savedmetadataonly/noIDs. Asyncpending askswhetherdirecttoTHISMac/hub/
+  anothercomputer. Needactualtransportbeforefreshfirmwareextraction.
+- BoundedlocalsearchDownloads/Desktop/Documents excludingthisrepo found
+  noUEFIimagecandidate. LocaluserdataworkcopyAndroidsystempackagemetadata
+  unavailable/encrypted; no unrelatedcontentread. ExistingESPisWindows
+  manager, notTianoCorebody. AndroidMindowsroute mayuseitsconfiguredUEFI
+  file; exactfile/versionstillunknown. DonotdownloadrandomnewUEFI asbaseline.
+- PrimaryMindows https://mindows.com/faq_71.html explicitlyrequiresmatching
+  UEFI/Windowsdrivers, consistentwithpreservingactualcurrentimage. Official
+  apppage https://mindows.com/thread-6-1-1.html suppliesdownloadbutno exact
+  currentphoneimage. Thirdpartyfile-pathhints NOTtreatedasestablishedfacts.
+- Initialemptyoriginal-current archivedasoriginal-current-initial-empty;
+  extractionhostscript nowbindsfinalEL1+EL2validatedsourcehashes and30s
+  producthandshake. Onlyrunvia run-extract.py sanitizer. Criticalbackup/GPT/
+  source-double-hash protections retained; noexecuteofthisrevisedscriptyet.
+- NEXT obtainactualhostconnection, freshROquery->originalknownrecovery
+  extraction (notmodifiedUEFItest), locateconfiguredMindowsUEFI. Thennew
+  loader/emulator/fullXNUhandoff tests, RAMphoneproof, concretewriteplan.
+  USBcontinuousobservation staysPAUSED; targetedtransportchecks only.
+
 ### 0057 emulator inventory PASS; fresh extraction blocked by lost phone transport
 
 - New standalone read-only EFIprobe sources shim/polaris/uefi{,-memory}.h,
