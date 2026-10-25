@@ -15,7 +15,7 @@ class A630CoreTests(unittest.TestCase):
   text=(ROOT/'tools/polaris-a630.c').read_text()
   start=text.index('static int32_t __attribute__((noinline)) a630_scm_call(')
   body=text[start:text.index('\n}\n',start)+3].replace('static int32_t __attribute__((noinline)) a630_scm_call','__attribute__((used,noinline)) static int32_t a630_scm_call',1)
-  prefix='#include <stdint.h>\n#include <stdbool.h>\nextern bool a630_core_owned(void *);\nextern void a630_delay_us(void *,uint32_t);\n'
+  prefix='#include <stdint.h>\n#include <stdbool.h>\n#include <stdio.h>\nextern bool a630_core_owned(void *),a630_budget_ok(void *);\nextern void a630_delay_us(void *,uint32_t),a630_stage(uint32_t,const char*),a630_access_begin(unsigned,unsigned,uint32_t),a630_access_end(void);\n'
   with tempfile.TemporaryDirectory() as directory:
    p=Path(directory);(p/'scm.c').write_text(prefix+body)
    subprocess.run(['/usr/bin/clang','-target','arm64-apple-macos14.0','-std=c11','-O2','-c',str(p/'scm.c'),'-o',str(p/'scm.o')],check=True)
@@ -63,6 +63,7 @@ static uintptr_t a630_dma;static uint64_t a630_dma_physical=0x187640000;
 static bool a630_core_dma_ready=true;
 static struct a630_zap_snapshot a630_zap_saved;static struct a630_core_snapshot a630_core_saved;
 static bool a630_core_owned(void*x){return ((struct a630_io*)x)->core_lease;}
+static void a630_stage(uint32_t n,const char*s){(void)n;(void)s;}
 static int32_t a630_scm_call(void*x,uint32_t a,uint32_t b,uint64_t c,uint64_t d,uint64_t e,uint64_t*f){(void)x;(void)a;(void)b;(void)c;(void)d;(void)e;(void)f;return 0;}
 static bool a630_zap_publish(void*x){return a630_core_owned(x);}
 static bool a630_zap_segment(void*x,const uint8_t*d,uint32_t n){(void)d;(void)n;return a630_core_owned(x);}
