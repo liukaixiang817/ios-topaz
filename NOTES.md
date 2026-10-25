@@ -34,7 +34,35 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT ACTION —0046 final image verified; autoFASTBOOT found; RO preflight running
+### CURRENT ACTION —0046 temporary boot SENT; nativeGPU/GUI proof pending
+
+- FreshROpreflight49043 EXIT0 at05:33:43.303223UTC: all16GiB689a8cd1,
+  all182maps/GPT/header32311c08 unchanged; cleanouter/unmounted/RO1/32C.
+  Nojournalreplay/repair/partitionwrites. Directboot-phone68465 EXIT0:
+  Sending/Booting OKAY,total1.183s, **2026-10-25T05:34:02.033512UTC**.
+- Exact0046image86da57f949bce3576b9971b8c57cd90093f091ff2872a9448c9d2ef226a05ad9,
+  kernelfd06129fcfcbe6ba162db1883b1b49691f89c835ad98267025f404feb0e9f475,
+  source9965798e014d484b0b76c80176b03eea61e99e49, CI40165297131SUCCESS.
+  Final49native/4ARM64units/31patches35files/29rows,133standardclockCPU1
+  guestchecks FIRSTPASS, independentimage/source/linkedISA proofsPASS.
+- Native0046GPU/CP/fence/4096pixels UNPROVEN untilnewactualresult. Sourcefix
+  stopsourprematureENABLE1ininitialSQE3; usesENABLE0untilbases+freshAUTH.
+  OnlyowneddisabledCB0observedFSRbitsclearedwitholdsyndromehistorypreserved;
+  SS/failedACKrefused, partialcontextfailure retainsenvironment. Physical
+  rootcauseof0045TFaddress stillunknown; newGP SQE/GFARprovidesneededdata.
+  ExpectedrealproofF600dc0de+GI1px1000+H1; GZauth/FSRclear alone NOTGPUproof.
+- Newpendingquestion asksactual0046locksreen/desktop orlastGPUSTEP/SCM and
+  GP SQE/GFAR plusGZ/GC0/GI/GF. E=CPbeforefirstcontrolwrite,B=afterdisable,
+  A=postAUTH,D=disabledflag; GP S=oldFSR/cleanFSR,GFAR=postattemptfault orold
+  savedcontextfault ifsetupfailed. Old0045photo doesNOTconfirm0046.
+- USBhostobserver remainsPAUSED. Directboot-phone, NO boot-and-watch. Local
+  processinventory05:34:27UTC noobserver/samplefiles, pausemarkerboundnewUTC;
+  noUSBsuccess/non-enumerationclaim. AllRAMdetailsretained, panelheight29.
+  DesktopGPU IOUserClient/Mesa/Metal/IOSurfacebridge stillNOTimplemented,
+  GUIstillCPUevenifnativeproofpasses. NEXTawaitactual0046result; see0046/
+  next-userland-GPU-bridge-plan.json. Prior0043timerfailures unresolved,CPU1only.
+
+### 0046 final image verified; autoFASTBOOT found; RO preflight completed
 
 - All133standardclockCPU1checks FIRSTPASS (cache45/network44/no-MMIO44),
   no0046guestfailure/retry. Independentfinal-prepared-check PASS
