@@ -28,6 +28,32 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT ACTION —0039 temporary boot SENT; detached USB observer ACTIVE
+
+- Preflight79311 **EXIT0**,verified **01:52:39.410465UTC**: full16GiB SHA689a8cd1,
+  182maps/GPT/exactcleanheader32311c08 unchanged,RO1/unmounted/31C. No partition
+  writes, journal replay or repair. **Boot96984 EXIT0**,Sending/Booting OKAY,
+  total1.183s, **2026-10-25T01:53:07.657324UTC**; exact imagee536729a/source784aa9f/
+  CI40151478342 SUCCESS. Final checker passed before device actions.
+- **Detached observer PID34645 ACTIVE**,PPID1/PGID34645/Ss confirmed after wrapper
+  EXIT0. First sample **01:53:07.753749UTC**,gap0.096425s. Fsynced NDJSON and atomic
+  usb-enumeration.json; early noECM only, not a full-boot negative result. No
+  host network change/RAMlog/frame so far. No timeout or stop-on-discovery.
+- Pending question requests actual new GUI “已进入系统” and saved **GH/HR** values;
+  a voluntary photo of GH/HQ/HA/HR is useful. No actual0039 HFI/GX/3D result yet.
+  0038 fresh BABEFACE remains proven, but full GPU rendering remains absent.
+ 0039 is INIT/FW_VER plus original rail/SPTP/HFI probe and containment only.
+- Do NOT restart observer or boot again while this boot is loading. On ECM,
+  capture helper attempts RAM log/panel while observer continues. Stop only on
+  actual same-boot human GUI confirmation/explicit cancel, using0039
+  stop-usb-observation.py, then verify process gone/journal/summary. The earlier
+  “已到 FASTBOOT” or old0038 “已进入系统” must NOT stop this observer.
+- On actual GH/HA/HR, distinguish OOB timeout, HFI status, command queue consumption,
+  matching ACK/version and slumber cleanup. Future native PERF/BW/TEST, ZAP/SQE/CP
+  and actual rendered pixels/completed fence are still required. USB EP0/PHY
+  issue remains unresolved. Read private0039 next-GPU-source-plan.json and0037
+  next-USB-PHY-source-plan.json before any new functional step.
+
 ### CURRENT ACTION —0039 FASTBOOT found; readonly preflight ACTIVE
 
 - Follow-up automatic query **01:51:08.758001UTC** found expected polaris,
