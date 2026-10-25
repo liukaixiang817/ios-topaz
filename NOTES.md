@@ -34,6 +34,42 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT ACTION —0043 async GPU fix source7713ef3; full CI40159677917 running
+
+- Human0042 stillbootstalled afterminutes, photosA9FA9469/711EBCEE; root/TCM/
+  runtimeentryvisible, finalGPUreportabsent, noexplicitpanic. ExactCB0/post-HFI/
+  PAS/core/cleanupoperation is UNPROVEN. USBhostobservation staysPAUSED.
+- Local e23e954 + finalpublicationfix eb53ef2; publicsource
+  7713ef3ad38082f1ed67d5c186298ee06bbfddf1(parentfdccd0c). Final CI40159677917
+  RUNNING; wrapper55460. Earlierpublicfdccd0c/CI40159442567 COMPLETED/CANCELLED;
+  oldwrapper75500 explicitlyterminated, no0043deviceactions. Previous14scripts/
+  freeze/proofs and terminalrecord in0043/pre-publication-gate-review/.
+- 0848 adds mode9dedicatedworker soBSDinit returns beforehardwaretrial;50ms
+  cooperativeinitialsleep. Ten-second walltimebudget (afterownedDMAprep) is
+  checked by leases/MMIO/PASresume/resource-release predicate. Expiryretains
+  clocks/power/mappings/permanentpages; neverclaimsDMAidle. SinglehungMMIO/SMC
+  cannotbesoftwareinterrupted: thislimitation is explicit, no guaranteedboot.
+- Atomic pendingprogress W/S/O/B/@/!/T independentofmutableGPU snapshots;
+  finalsnapshots stillrelease-publishedonlyaftertrialreturns. Announcechanged
+  CB0access beforeexecution, noTLBpoll flood;PASentry/return+stagecheckpoints.
+  NativeGPUclock/register/SMCfunction/CPprotocolandownv4ADTunchanged.
+- Pre-bootreviewfixedpendingreport data-race: acquireworker_state (releasedafter
+  modeassignment), neverreadmode/startedduringpublication. Newtest compiles
+  actualreportfunction WITHOUTmode/started declarations. Final48ASan/UBSan/
+  actualSMCISA tests PASS;29rows PASS;4actual-headerARM64units PASS;28ordered
+  patches/35files exactnooffset/fuzz;imports31adapter/0missing. Actualobject
+  4SMCs eachDSB-bracketed/fullwidthx3. Allcurrentproofhashesupdated.
+- Private0043/prepare-pipeline.py regenerated14frozenhostscripts againstfinal
+  source/run BEFOREguestexecution. SameCPU1standardclock60/90/60cases,exact
+  v4phoneADT/GPU9;3extra no-mmio checks realworkerqueued/returned/noSMCexpiry,
+  expected133. Wrapper waitsCI/downloadCRC/SHA/profile,thenchecks/prepares.
+- NEXT: wait55460 -> independentfinal-prepared-check.py (48/133/28/35 andlinked
+  SMC/highPAchecks). FIRSTautomaticquery-fastboot.py ONLYafterfinalimagecheck.
+  Ifexpectedpolarisalreadyready, freshROpreflight/directrun-device-step.py
+  boot-phone (NOTboot-and-watch); askphysicalkeysonlyifactuallyabsent.
+  USBobserverPAUSED. ThennewhumanGUI orlastGPUSTEP/CB0/SCM line needed.
+  GPUdesktopservice stillunimplemented; cannotclaimacceleratedGUIfromtrial.
+
 ### CURRENT ACTION —0042 human reports persistent boot stall; exact GPU operation unproven
 
 - Human photosA9FA9469 and711EBCEE plus “过了几分钟依旧如此” show unchanged
