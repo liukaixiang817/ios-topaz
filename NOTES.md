@@ -34,6 +34,64 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0057 FIRST RAM trial reached PrePi only; codec fix ready, await FASTBOOT
+
+- Implementation commit8ca87e2 adds pre-OS ReadyToBoot DXE inventory driver,
+  real-driver EFI LoadImage/StartImage/event harness, and offline original-FV
+  repackager. No new XNU kernel or CI run. Source-only changes committed;
+  firmware/phone artifacts stay private in research/polaris/uefi-integration-0057.
+- Human explicitly approved LIMITED temporary RAM inventory after being told
+  QEMU cannot emulate SDM845 peripherals. Approval does not establish full
+  same-board simulation or authorize persistent writes. Do not ask again for
+  this same limited corrected trial. It must hold before any OS; no iOS entry
+  or persistent installation is implemented yet. USB continuous observer PAUSED.
+- Final inventory driver df15cca4eff1ac2e559347e0bb5e96ddd7983974fd5cc922a1fec8672f6b4d2d;
+  harness85857a38b92251e54eeb9eb5585042e3e7bf7b3c4b1f7890aa14815008735333.
+  QEMU EL1+EL2 9checks each PASS5.809/5.831s, actual driver callback holds;
+  not the actual Qualcomm firmware. Before codec fix7native tests passed;
+  after fix8tests pass (7container +1ASan/UBSan actualmap). Initial extended
+  section refusal and preliminary app-GUID approach retained but NOT used.
+  FINAL approach adds one DXE driver; all81 original inner FFS byte-identical,
+  plus original BootShim, ramdisk and Polaris DTB. SimpleInit unchanged.
+- FIRST phone trial20:48:55.593987UTC boot command OKAY, image129aa45d96c905d5f188dbe54c3eb276471f99fe47c34047255d64d440901aee.
+  Immediately before that, rooted originalAndroid identity+UEFI file+five
+  critical parts (boot/recovery/abl_a/abl_b/mindowsesp) and sixLUN GPT head/tail
+  all matched; then adb reboot bootloader and expectedproductpolaris verified.
+  No flash command or OS startup requested. User photo shows ONLY original
+  PrePi banner: firmwarev2.0rc2 built23:25:29 Nov22 2023. No probe output;
+  therefore physical compatibility test NOT passed. OriginalAndroid now stopped.
+- Diagnosed concrete packaging fault: original LZMA explicit size0x1a35688,
+  failed package0xffffffffffffffff. Hostliblzma streaming roundtrip missed it.
+  Unmodified tianocore/edk2 edk2-stable202308 GetInfo returns3 for failed trial,
+  original GetInfo+Decode return0. Fixed packaging writes exact size and keeps
+  original16MiB dictionary. New whole27,486,408-byte stream GetInfo+Decode0,
+  ASan/UBSan clean, exact host byte comparison; private edk2-codec/proof.json.
+  SDK source hashes verified, minimal host ABI headers; no altered decoder.
+  Primarysource MdeModulePkg/Library/LzmaCustomDecompressLib/LzmaDecompress.c.
+  Python Alone known-size+EOS mismatch handled through validated raw fallback;
+  native EDK2 decode is independently proven, not inferred from Python alone.
+- CORRECTED candidate original-uefi-probe-codec-fixed/polaris-original-uefi-probe.img
+  5,920,768bytes SHA85c2ddbb6b3331ae5cff514f887c5d60c90ba087ef2b1a487c39cefa8e8bd197.
+  Freeze final-codec-fixed-inputs.json includes exact source+image+nativeproof.
+  boot-uefi-probe-codec-fixed.py binds frozen inputs, nativeproof and bothQEMU
+  cases; sanitizes serial; only targeted query/reboot and fastboot boot.
+  Old boot-uefi-probe-final.py/image129aa45 are INVALID; NEVER resend them.
+- NEXT human FASTBOOT:20:58:10.462383UTC targeted ROquery expecteddeviceABSENT.
+  Async asks physicalpower+voldown (UEFI has no proven remote reset). Once
+  reply arrives FIRST fresh ROquery; ifready run corrected frozen runner
+  without another permission request. Then require actual probe screen result.
+  Inspect CURRENT_EL, upper retained/missing ranges, QCOM_USB_STATUS; presence
+  alone does not prove USB operation. No continuous observer or new XNU boot.
+- Original logfs/sda10 also ROcopied8MiB, source-before/after/host match
+  SHA9849c661ae50bba8aed51cf6d837ba791bf8c230c8c01d82ae5c469509e7a5ff.
+  FAT12 copies match; SimpleInit config147bytes defaultcontinue/secondsimple-init,
+  untouched. SimpleInit official reference clone3d66a6e78d519dd050fbebde4db6c5ac933f9aa4.
+  Reference BootManager shows side-key path only, so do NOT rely on replacing
+  SimpleInit to run automatically; ReadyToBoot hook was selected before phone.
+- Before ANY later XNU boot, fresh iOS root fullSHA/extent map/outermetadata
+  review still REQUIRED after originalAndroid normalboot; old182extents/header
+  acceptance cannot be reused blindly. No persistent write plan approved.
+
 ### 0057 actual Mindows UEFI extracted and verified; original Android running
 
 - Transport recovered. Targeted expected-polaris FASTBOOT query succeeded;

@@ -33,7 +33,7 @@ def fixture():
     other = make_file(other_guid, 7, fw.section(0x10, b'UNCHANGED DXE DRIVER'))
     init = make_file(fw.SIMPLE_INIT, 9, fw.section(0x10, b'ORIGINAL SIMPLEINIT EXECUTABLE'))
     inner = make_fv([(other_guid, other), (fw.SIMPLE_INIT, init)], 4096)
-    packed = lzma.compress(fw.section(0x17, inner), format=lzma.FORMAT_ALONE)
+    packed = fw.encode_edk2_lzma(fw.section(0x17, inner), 16 * 1024 * 1024)
     comp_guid = uuid.UUID('ad31426c-029d-4ba5-87ed-65224673167b')
     comp = make_file(comp_guid, 0xb, fw.section(2, fw.LZMA_GUID.bytes_le + struct.pack('<HH', 24, 1) + packed))
     outer = make_fv([(comp_guid, comp)], 65536)
@@ -57,7 +57,7 @@ class FirmwareTests(unittest.TestCase):
         self.assertEqual(od[:0x8000], nd[:0x8000]); self.assertEqual(ot, nt); self.assertEqual(oram, nram)
         self.assertEqual(report['unchanged_inner_files'], 2)
         _, _, fs = fw.files(nd[0x8000:]); section_data = list(fw.sections(fs[0][1][24:]))[0][2]
-        decoded = lzma.decompress(section_data[24:], format=lzma.FORMAT_ALONE)
+        decoded = fw.decode_edk2_lzma(section_data[24:])
         new_inner = list(fw.sections(decoded))[0][1]
         previous = dict(fw.files(inner)[2]); new = dict(fw.files(new_inner)[2])
         for guid, data in previous.items():
@@ -93,6 +93,15 @@ class FirmwareTests(unittest.TestCase):
         self.assertEqual(encoded[:4], b'\xff\xff\xff\x17')
         decoded = list(fw.sections(encoded))
         self.assertEqual(len(decoded), 1); self.assertEqual(decoded[0][1], data)
+
+    def test_EDK2_get_info_requires_explicit_bounded_length(self):
+        stream = lzma.compress(b'actual firmware bytes', format=lzma.FORMAT_ALONE)
+        self.assertEqual(struct.unpack_from('<Q', stream, 5)[0], 0xffffffffffffffff)
+        with self.assertRaisesRegex(ValueError, 'explicit'):fw.decode_edk2_lzma(stream)
+        fixed = fw.encode_edk2_lzma(b'actual firmware bytes', 16 * 1024 * 1024)
+        self.assertEqual(struct.unpack_from('<Q', fixed, 5)[0], 21)
+        bad = fixed[:5] + struct.pack('<Q', 22) + fixed[13:]
+        with self.assertRaises((ValueError, lzma.LZMAError)):fw.decode_edk2_lzma(bad)
 
 
 if __name__ == '__main__':unittest.main()

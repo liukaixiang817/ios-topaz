@@ -36,6 +36,40 @@ def sha(b):
     return hashlib.sha256(b).hexdigest()
 
 
+def decode_edk2_lzma(encoded):
+    require(len(encoded) >= 13, 'short EDK2 LZMA header')
+    declared = struct.unpack_from('<Q', encoded, 5)[0]
+    # EDK II GetInfo reads this field directly; FORMAT_ALONE's unknown-size
+    # sentinel is not accepted. A host streaming decoder alone misses this.
+    require(0 < declared <= LIMIT, 'EDK2 LZMA needs a bounded explicit decoded size')
+    z = lzma.LZMADecompressor(format=lzma.FORMAT_ALONE)
+    try:
+        decoded = z.decompress(encoded, max_length=LIMIT + 1)
+    except lzma.LZMAError:
+        # liblzma's Alone wrapper rejects a known-size stream with an end
+        # marker. The EDK2 SDK decoder accepts it; validate the raw stream
+        # and its end marker, then independently enforce the explicit size.
+        prop = encoded[0]
+        require(prop < 9 * 5 * 5, 'invalid LZMA properties')
+        filters = [dict(id=lzma.FILTER_LZMA1, dict_size=struct.unpack_from('<I', encoded, 1)[0],
+                        lc=prop % 9, lp=prop // 9 % 5, pb=prop // 45)]
+        z = lzma.LZMADecompressor(format=lzma.FORMAT_RAW, filters=filters)
+        decoded = z.decompress(encoded[13:], max_length=LIMIT + 1)
+    require(z.eof and not z.unused_data and len(decoded) == declared, 'invalid EDK2 LZMA data/size')
+    return decoded
+
+
+def encode_edk2_lzma(data, dictionary):
+    require(4096 <= dictionary <= LIMIT and dictionary & (dictionary - 1) == 0,
+            'unsupported original LZMA dictionary')
+    require(0 < len(data) <= LIMIT, 'inner FV exceeds decoded bound')
+    b = lzma.compress(data, format=lzma.FORMAT_ALONE,
+                      filters=[dict(id=lzma.FILTER_LZMA1, dict_size=dictionary)])
+    b = b[:5] + struct.pack('<Q', len(data)) + b[13:]
+    require(decode_edk2_lzma(b) == data, 'EDK2 LZMA round trip failed')
+    return b
+
+
 def sections(b):
     at = 0
     while at < len(b):
@@ -163,14 +197,15 @@ def package(original, app):
                     'unsupported FV compression')
             off, attrs = struct.unpack_from('<HH', data, 16)
             require(off == 24 and attrs == 1, 'unexpected GUID section encoding')
-            z = lzma.LZMADecompressor(format=lzma.FORMAT_ALONE)
-            inner_stream = z.decompress(whole[off:], max_length=LIMIT + 1)
-            require(z.eof and not z.unused_data and len(inner_stream) <= LIMIT, 'invalid inner LZMA')
+            encoded = whole[off:]
+            require(encoded[0] == 0x5d, 'unexpected original LZMA properties')
+            dictionary = struct.unpack_from('<I', encoded, 1)[0]
+            inner_stream = decode_edk2_lzma(encoded)
             nested = list(sections(inner_stream))
             require(len(nested) == 1 and nested[0][0] == 0x17, 'unexpected inner FV topology')
-            compressed.append((name, raw, nested[0][1]))
+            compressed.append((name, raw, nested[0][1], dictionary))
     require(len(compressed) == 1, 'expected one compressed inner FV')
-    name, old_compressed, inner = compressed[0]
+    name, old_compressed, inner, dictionary = compressed[0]
     _, _, inner_files = files(inner)
     selected = [raw for guid, raw in inner_files if guid == SIMPLE_INIT]
     require(len(selected) == 1 and all(guid != PROBE_DXE_GUID for guid, _ in inner_files),
@@ -189,8 +224,7 @@ def package(original, app):
     _, _, verified = files(changed_inner); checked = dict(verified)
     require(all(checked[g] == raw for g, raw in inner_files),
             'unrelated original firmware file changed')
-    encoded = lzma.compress(section(0x17, changed_inner), format=lzma.FORMAT_ALONE,
-                            filters=[dict(id=lzma.FILTER_LZMA1, dict_size=8 * 1024 * 1024)])
+    encoded = encode_edk2_lzma(section(0x17, changed_inner), dictionary)
     new_comp = ffs(name, section(2, LZMA_GUID.bytes_le + struct.pack('<HH', 24, 1) + encoded),
                    old_compressed)
     new_outer = volume(outer, [(g, new_comp if g == name else raw) for g, raw in outer_files], fixed=True)
@@ -215,6 +249,8 @@ def package(original, app):
                         holds_before_OS_start=True,
                         original_BootShim_preserved=True, board_DTB_sha256=sha(tail),
                         board_DTB_preserved=True, ramdisk_preserved=True,
+                        LZMA_dictionary_bytes=dictionary,
+                        LZMA_explicit_decoded_bytes=struct.unpack_from('<Q', encoded, 5)[0],
                         kernel_handoff=False, installer=False, phone_writes=False)
 
 

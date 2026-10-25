@@ -62,7 +62,18 @@ at the format boundary; no candidate had been sent to the phone. Repackaging
 then passed independent container/FFS/FV checks. The hold app passed9 checks
 at each exception level; the final driver additionally tests LoadImage,
 StartImage and the actual ReadyToBoot callback under generic firmware.
-The actual UEFI-to-XNU loader and physical RAM proof remain pending. Before any new XNU boot, re-export the root-file extents and
+The actual UEFI-to-XNU loader and physical compatibility proof remain pending.
+The first temporary firmware trial reached only the original PrePi version
+banner (`v2.0rc2`, built2023-11-22). Its compressed section used Python's
+unknown decoded-size sentinel. This passed the host streaming decoder but
+was independently rejected by the actual EDKII2023 `GetInfo` implementation.
+The packager now writes the exact decoded length, preserves the original16MiB
+LZMA dictionary, and rejects the unknown-size sentinel. The corrected entire
+27,486,408-byte inner stream passed the unmodified EDKII2023 decoder under
+ASan/UBSan, with exact byte comparison. Original firmware also passes that
+consumer test; the failed trial is rejected before allocation. This is an
+actual codec compatibility check, not a complete SDM845 firmware emulation.
+The corrected trial has not yet been physically confirmed. Before any new XNU boot, re-export the root-file extents and
 recheck its whole hash and outer metadata: the intervening normal Android
 boot can change filesystem state. Do not reuse the old extent map blindly.
 
