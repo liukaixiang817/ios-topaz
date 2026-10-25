@@ -28,6 +28,53 @@ int main(void){
  assert(a630_core_pkt7(0x48,8)==0x70c80008&&a630_core_pkt7(0x3d,3)==0x703d8003&&a630_core_pkt7(0x66,1)==0x70e60001);
  return 0;}
 ''')
+ def test_actual_adapter_secure_shutdown_lifetime(self):
+  text=(ROOT/'tools/polaris-a630.c').read_text()
+  start=text.index('static void a630_core_attempt(struct a630_io *io)')
+  body=text[start:text.index('\n}\n',start)+3]
+  run(r'''
+#include "polaris-a630-images.h"
+#include "polaris-a630-zap.h"
+#include "polaris-a630-core.h"
+#include <assert.h>
+#include <stdlib.h>
+#include <string.h>
+struct a630_io {bool core_lease;};
+static unsigned mode,seq,starts,cores,stops;
+static struct a630_image a630_images[6];
+static uintptr_t a630_dma;static uint64_t a630_dma_physical=0x187640000;
+static bool a630_core_dma_ready=true;
+static struct a630_zap_snapshot a630_zap_saved;static struct a630_core_snapshot a630_core_saved;
+static bool a630_core_owned(void*x){return ((struct a630_io*)x)->core_lease;}
+static int32_t a630_scm_call(void*x,uint32_t a,uint32_t b,uint64_t c,uint64_t d,uint64_t e,uint64_t*f){(void)x;(void)a;(void)b;(void)c;(void)d;(void)e;(void)f;return 0;}
+static bool a630_zap_publish(void*x){return a630_core_owned(x);}
+static bool a630_zap_segment(void*x,const uint8_t*d,uint32_t n){(void)d;(void)n;return a630_core_owned(x);}
+static bool a630_core_read(void*x,uint32_t w,uint32_t*v){(void)w;(void)v;return a630_core_owned(x);}
+static bool a630_core_write(void*x,uint32_t w,uint32_t v){(void)w;(void)v;return a630_core_owned(x);}
+static bool a630_gmu_sync(void*x){return a630_core_owned(x);}
+static void a630_delay_us(void*x,uint32_t n){(void)x;(void)n;}
+static bool start_zap(bool yes,const struct a630_zap_io*io,const struct a630_image*im,uint64_t pa,struct a630_zap_snapshot*z){
+ assert(yes&&io->owned(io->ctx)&&im==a630_images&&pa==0x187680000&&++seq==1);starts++;
+ if(mode<=2){z->authenticated=1;z->signature=1;z->region=1;z->stage=7;z->error=A630_ZAP_READY;return true;}
+ z->stage=mode==3?1:mode==4?4:3;z->signature=mode==4;z->error=mode==6?A630_ZAP_SECURE:A630_ZAP_TRANSPORT;return false;}
+static bool run_core(bool a,bool b,bool c,const struct a630_core_io*io,uint32_t*ring,volatile uint32_t*scratch,volatile uint32_t*target,struct a630_core_snapshot*s){
+ assert(a&&b&&c&&io->owned(io->ctx)&&++seq==2);assert((uintptr_t)ring==a630_dma+0x30000&&(uintptr_t)scratch==a630_dma+0x38000&&(uintptr_t)target==a630_dma+0x3c000);cores++;
+ s->keep_live=mode==1;s->halted=mode!=1;return mode!=1;}
+static bool stop_zap(const struct a630_zap_io*io,struct a630_zap_snapshot*z){
+ assert(io->owned(io->ctx)&&a630_core_saved.halted&&++seq==3);stops++;z->shutdown=mode!=2;return mode!=2;}
+#define a630_zap_start start_zap
+#define a630_core_run run_core
+#define a630_zap_stop stop_zap
+'''+body+r'''
+int main(void){a630_dma=(uintptr_t)aligned_alloc(16384,0x44000);assert(a630_dma);
+ for(mode=0;mode<7;mode++){
+  struct a630_io io={0};seq=starts=cores=stops=0;memset(&a630_zap_saved,0,sizeof(a630_zap_saved));memset(&a630_core_saved,0,sizeof(a630_core_saved));
+  a630_core_attempt(&io);assert(!io.core_lease&&starts==1);
+  assert(cores==(mode<=2));assert(stops==(mode==0||mode==2));
+  assert(a630_core_saved.keep_live==(mode==1||mode==2||mode==4||mode==5));
+  if(mode==0)assert(a630_zap_saved.shutdown&&a630_core_saved.halted);
+ }free((void*)a630_dma);return 0;}
+''')
  def test_actual_adapter_high_pa_dma_and_isolation(self):
   import re
   text=(ROOT/'tools/polaris-a630.c').read_text()
@@ -133,8 +180,8 @@ static struct {unsigned calls,bad,secure,published,segments;bool held,publish_fa
 static bool owned(void*x){assert(x==&m);return m.held;}
 static int32_t call(void*x,uint32_t fn,uint32_t info,uint64_t a,uint64_t b,uint64_t c,uint64_t*ret){
  assert(x==&m&&m.held);m.calls++;
- const uint32_t ids[]={0xc2000601,0xc2000601,0xc2000601,0xc2000601,0xc2000601,0x42000206,0x42000201,0x42000202,0x42000205};
- assert(m.calls<=9&&fn==ids[m.calls-1]);*ret=m.calls<=5?1:0;
+ const uint32_t ids[]={0xc2000601,0xc2000601,0xc2000601,0xc2000601,0xc2000601,0x42000206,0x42000201,0x42000202,0x42000205,0x42000206};
+ assert(m.calls<=10&&fn==ids[m.calls-1]);*ret=m.calls<=5?1:0;
  if(m.calls<=5)assert(info==1&&b==0&&c==0);
  else if(m.calls==7){assert(info==0x82&&a==13&&b==0x187640000&&c==0&&m.published==1);}
  else if(m.calls==8)assert(info==3&&a==13&&b==0x8c415000&&c==4096);
@@ -151,6 +198,11 @@ int main(void){struct a630_zap_snapshot s;
  reset();assert(!a630_zap_start(true,&io,images,0x187640001,&s)&&s.error==A630_ZAP_ARGUMENT&&!m.calls);
  reset();m.held=false;assert(!a630_zap_start(true,&io,images,0x187640000,&s)&&s.error==A630_ZAP_LEASE&&!m.calls);
  reset();assert(a630_zap_start(true,&io,images,0x187640000,&s)&&s.authenticated&&s.signature&&s.region&&m.calls==9);
+ assert(a630_zap_stop(&io,&s)&&s.shutdown&&m.calls==10&&s.authenticated);
+ reset();assert(a630_zap_start(true,&io,images,0x187640000,&s));m.bad=10;
+ assert(!a630_zap_stop(&io,&s)&&!s.shutdown&&s.restore_error==A630_ZAP_TRANSPORT&&s.authenticated&&s.error==A630_ZAP_READY);
+ reset();assert(a630_zap_start(true,&io,images,0x187640000,&s));m.secure=10;
+ assert(!a630_zap_stop(&io,&s)&&!s.shutdown&&s.restore_error==A630_ZAP_SECURE&&s.authenticated);
  for(unsigned i=1;i<=9;i++){
   reset();m.bad=i;assert(!a630_zap_start(true,&io,images,0x187640000,&s)&&!s.authenticated&&s.error==A630_ZAP_TRANSPORT&&m.calls==i);
   reset();m.secure=i;assert(!a630_zap_start(true,&io,images,0x187640000,&s)&&!s.authenticated&&s.error==A630_ZAP_SECURE&&m.calls==i);

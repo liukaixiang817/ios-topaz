@@ -15,7 +15,7 @@ struct a630_zap_io {
 };
 enum a630_zap_error {A630_ZAP_DISABLED,A630_ZAP_ARGUMENT,A630_ZAP_LEASE,
     A630_ZAP_TRANSPORT,A630_ZAP_SECURE,A630_ZAP_IO,A630_ZAP_READY};
-struct a630_zap_snapshot {uint32_t error,stage,fn,transport,secure,calls,signature,region,authenticated;};
+struct a630_zap_snapshot {uint32_t error,stage,fn,transport,secure,calls,signature,region,authenticated,shutdown,restore_error,restore_transport,restore_secure;};
 static inline bool a630_zap_call(const struct a630_zap_io *io,
     struct a630_zap_snapshot *s,uint32_t fn,uint32_t info,uint64_t a,uint64_t b,uint64_t c,uint64_t expected)
 {
@@ -53,5 +53,17 @@ static inline bool a630_zap_start(bool exact_board,const struct a630_zap_io *io,
     s->stage=6;
     if(!a630_zap_call(io,s,0x42000205,1,13,0,0,0))return false;
     s->authenticated=1;s->stage=7;s->error=A630_ZAP_READY;return true;
+}/* Native PAS_SHUTDOWN before relinquishing this diagnostic's resources.
+ * CP/rendering must already be idle/halted. Failure preserves its first
+ * startup result and requires the entire execution environment to stay live. */
+static inline bool a630_zap_stop(const struct a630_zap_io *io,struct a630_zap_snapshot *s)
+{
+    if(!io||!s||!io->owned||!io->call||!s->authenticated)return false;
+    struct a630_zap_snapshot r=*s;r.error=0;
+    bool ok=a630_zap_call(io,&r,0x42000206,1,13,0,0,0);
+    s->calls=r.calls;s->restore_transport=r.transport;s->restore_secure=r.secure;
+    if(!ok){s->restore_error=r.error?r.error:A630_ZAP_TRANSPORT;return false;}
+    s->shutdown=1;return true;
 }
+
 #endif

@@ -54,8 +54,8 @@
 +    if(line==15)return (uint32_t)snprintf(out,size,"GD %x/%x D%x G%x/%x ret%x @%x a%x",
 +        post->error&15,post->stage&15,post->dcvs_done&1,post->gpu_ready&1,post->gpu_released&1,
 +        post->dcvs_return,post->offset,post->actual);
-+    if(line==16)return (uint32_t)snprintf(out,size,"GZ %x/%x fn%x t%x r%x S%x M%x A%x",
-+        zap->error&15,zap->stage&15,zap->fn,zap->transport,zap->secure,zap->signature&1,zap->region&1,zap->authenticated&1);
++    if(line==16)return (uint32_t)snprintf(out,size,"GZ %x/%x fn%x t%x r%x S%x M%x A%x Q%x/R%x",
++        zap->error&15,zap->stage&15,zap->fn,zap->transport,zap->secure,zap->signature&1,zap->region&1,zap->authenticated&1,zap->shutdown&1,zap->restore_error&15);
 +    if(line==17)return (uint32_t)snprintf(out,size,"GC0 %x/%x C%x/%x I%x F%08x H%x L%x M%x/%x",
 +        core->error&15,core->stage&15,core->rptr,core->wptr,core->init_done&1,core->fence,
 +        core->halted&1,core->keep_live&1,a630_core_smmu.error&15,a630_core_smmu.stage&15);
@@ -133,7 +133,7 @@
      if(kmem_alloc_contig(kernel_map,&a630_dma,a630_dma_bytes,PAGE_MASK,0,0,
          KMA_DATA|KMA_ZERO|KMA_PERMANENT,VM_KERN_MEMORY_IOKIT)!=KERN_SUCCESS)return false;
      ppnum_t pn=pmap_find_phys(kernel_pmap,(addr64_t)a630_dma);
-@@ -334,23 +380,98 @@
+@@ -334,23 +380,100 @@
      if(physical>=A630_MMU_PA_LIMIT-a630_dma_bytes)return false;
      for(unsigned n=0;n<a630_dma_bytes;n+=PAGE_SIZE)
          if(ptoa_64(pmap_find_phys(kernel_pmap,(addr64_t)a630_dma+n))!=physical+n)return false;
@@ -227,6 +227,8 @@
 +    if(a630_zap_start(true,&zap,a630_images,a630_dma_physical+0x40000,&a630_zap_saved))
 +        a630_core_run(true,a630_core_dma_ready,true,&core,(uint32_t*)(a630_dma+0x30000),
 +            (volatile uint32_t*)(a630_dma+0x38000),(volatile uint32_t*)(a630_dma+0x3c000),&a630_core_saved);
++    if(a630_zap_saved.authenticated && !a630_core_saved.keep_live &&
++       !a630_zap_stop(&zap,&a630_zap_saved))a630_core_saved.keep_live=1;
 +    /* After INIT_IMAGE, a failed secure call leaves ownership uncertain.
 +     * Never remove its powered execution environment or backing allocation. */
 +    if(!a630_zap_saved.authenticated && (a630_zap_saved.signature||a630_zap_saved.region||
@@ -236,7 +238,7 @@
  }
  /* Synthetic-guest regression for the exact managed-page cache transition
   * used by HFI. No GPU/MMIO is involved, and phone arguments never enable it. */
-@@ -409,6 +530,7 @@
+@@ -409,6 +532,7 @@
      printf("POLARIS GMU: original200MHz/bus, owned stream5/HFI; fresh firmware boot trial\n");
      if(a630_bus_begin(true,&bus,&a630_bus_saved)!=A630_BUS_READY)goto cleanup;
      if(a630_smmu_begin_handoff(true,true,&a630_tables,&smmu,io,&a630_smmu_saved)!=A630_SMMU_READY)goto cleanup;
@@ -244,7 +246,7 @@
      if(!a630_clean_owned(io,(void*)(a630_dma+0x20000),A630_HFI_BYTES))goto cleanup;
      bcr_attempted=true;
      if(!a630_boot_set(&boot,&a630_boot_saved,1,0x111c,0,1))goto cleanup;
-@@ -420,10 +542,17 @@
+@@ -420,10 +544,17 @@
      if(a630_gmu_prepare(true,true,&a630_gmu_image,&tcm,a630_delay_us,io,&a630_gmu_saved)!=A630_GMU_LOADED)goto cleanup;
      if(a630_boot_start(&boot,&a630_boot_saved) && a630_mode>=7){
          channel_attempted=true;
@@ -263,7 +265,7 @@
      if(channel_attempted && !a630_channel_slumber(&channel,&a630_channel_saved)){
          /* Contain CM3, but keep the power sequencer, mappings and clocks
           * intact when GX slumber cannot be proven. No profile teardown. */
-@@ -434,6 +563,7 @@
+@@ -434,6 +565,7 @@
      }
      if(clean && bcr_attempted && !a630_boot_stop(&boot,&a630_boot_saved))clean=false;
      if(clean && channel_attempted && !a630_channel_restore(&channel,&a630_channel_saved))clean=false;
@@ -271,7 +273,7 @@
      if(clean && !a630_smmu_end(&smmu,io,&a630_smmu_saved))clean=false;
      if(clean && !a630_bus_end(&bus,&a630_bus_saved))clean=false;
      /* Uncertain containment retains CX/clocks/BCR and permanent DMA pages.
-@@ -492,7 +622,7 @@
+@@ -492,7 +624,7 @@
      printf("D GPU PDC MSGID: length_read_zero=%x actual=%x/%x/%x/%x/%x/%x; native requests issued, not PDC execution proof\n",
          e->pdc_len_zero,e->pdc_msgid_after[0],e->pdc_msgid_after[1],e->pdc_msgid_after[2],
          e->pdc_msgid_after[3],e->pdc_msgid_after[4],e->pdc_msgid_after[5]);
@@ -280,7 +282,7 @@
          e->error,e->stage,e->fw,e->started,e->stopped,e->changed,e->failed_bank,e->failed_offset,e->expected,e->actual,e->polls,e->restored,e->restore_error);
      printf("D GPU EXEC RESTORE: error=%u bank=%u offset=%x expected=%x actual=%x\n",
          e->restore_error,e->restore_bank,e->restore_offset,e->restore_expected,e->restore_actual);
-@@ -503,9 +633,27 @@
+@@ -503,9 +635,28 @@
      printf("D GPU HFI QUEUE: cmd=%x/%x rsp=%x/%x IRQ=%x SPTP=%x state=%x async=%u ACK=%x/%x/%x/%x\n",
          h->cmd_read,h->cmd_write,h->rsp_read,h->rsp_write,h->status,h->sp_status,
          h->power_state,h->async_messages,h->response[0],h->response[1],h->response[2],h->response[3]);
@@ -297,9 +299,10 @@
 +    printf("D GPU CORE POST: error=%u stage=%u DCVS=%u GPU=%u/%u return=%x offset=%x actual=%x\n",
 +        a630_post_saved.error,a630_post_saved.stage,a630_post_saved.dcvs_done,a630_post_saved.gpu_ready,
 +        a630_post_saved.gpu_released,a630_post_saved.dcvs_return,a630_post_saved.offset,a630_post_saved.actual);
-+    printf("D GPU ZAP: error=%u stage=%u fn=%x transport=%x secure=%x signature=%u region=%u authenticated=%u\n",
++    printf("D GPU ZAP: error=%u stage=%u fn=%x transport=%x secure=%x signature=%u region=%u authenticated=%u shutdown=%u restore=%u/%x/%x\n",
 +        a630_zap_saved.error,a630_zap_saved.stage,a630_zap_saved.fn,a630_zap_saved.transport,
-+        a630_zap_saved.secure,a630_zap_saved.signature,a630_zap_saved.region,a630_zap_saved.authenticated);
++        a630_zap_saved.secure,a630_zap_saved.signature,a630_zap_saved.region,a630_zap_saved.authenticated,
++        a630_zap_saved.shutdown,a630_zap_saved.restore_error,a630_zap_saved.restore_transport,a630_zap_saved.restore_secure);
 +    printf("D GPU CORE: error=%u stage=%u CB0=%u/%u init=%u secure=%u fence=%x image=%u pixels=%u halted=%u live=%u RPTR=%x/%x IRQ=%x fault=%x protect=%x fail=%x expected=%x actual=%x\n",
 +        a630_core_saved.error,a630_core_saved.stage,a630_core_smmu.error,a630_core_smmu.stage,
 +        a630_core_saved.init_done,a630_core_saved.secure_done,a630_core_saved.fence,
@@ -310,7 +313,7 @@
          h->gx_requested,h->sptp_requested,h->hfi_requested,h->slumber,h->restored,
          h->restore_error,h->restore_offset,h->restore_expected,h->restore_actual);
      printf("D GPU LOAD: result=%u stage=%u block_reset_retained=%u reset=%x/%x fw=%x hfi=%x counter=%x polls=%u\n",
-@@ -536,12 +684,12 @@
+@@ -536,12 +687,12 @@
  {
      unsigned mode = 0;
      PE_parse_boot_argn("polarisgpu", &mode, sizeof(mode));
@@ -325,7 +328,7 @@
          a630_u32(node, "chip-id", 0x06030001) &&
          a630_u32(node, "sqe-code-offset", 4) &&
          a630_reg(node, "gcc-reg", 0x100000, 0x90000) &&
-@@ -551,6 +699,9 @@
+@@ -551,6 +702,9 @@
      if(mode>=6)board=board && a630_reg(node,"pdc-reg",0xb200000,0x300000) &&
          a630_u32(node,"smmu-disable-atos",1) && a630_u32(node,"smmu-iommu-cells",1) &&
          a630_u32(node,"smmu-stream-id",5) && a630_u32(node,"gmu-hz",200000000);
@@ -335,7 +338,7 @@
      a630_firmware_ok = board && a630_firmware(node);
      if (a630_firmware_ok)
          a630_abi_ok = a630_hfi_init(a630_host_hfi, sizeof(a630_host_hfi), 0x60000000);
-@@ -569,7 +720,7 @@
+@@ -569,7 +723,7 @@
      if(mode>=6 && admitted)admitted=a630_prepare_dma();
      /* Mode1 checks firmware/host ABI only, including in a synthetic guest.
       * Modes2/3/4 first save the same read-only, initial hardware snapshot. */
@@ -518,7 +521,7 @@
 +#endif
 --- /dev/null
 +++ b/bsd/dev/polaris_a630_zap.h
-@@ -0,0 +1,57 @@
+@@ -0,0 +1,69 @@
 +/* Signed original A630 PAS13. Native subsys-pil-tz.c/scm.{c,h},
 + * MiCode c7cb50c1. Every transport and secure return must succeed.
 + * A rejected signature NEVER means that an older image is usable.
@@ -536,7 +539,7 @@
 +};
 +enum a630_zap_error {A630_ZAP_DISABLED,A630_ZAP_ARGUMENT,A630_ZAP_LEASE,
 +    A630_ZAP_TRANSPORT,A630_ZAP_SECURE,A630_ZAP_IO,A630_ZAP_READY};
-+struct a630_zap_snapshot {uint32_t error,stage,fn,transport,secure,calls,signature,region,authenticated;};
++struct a630_zap_snapshot {uint32_t error,stage,fn,transport,secure,calls,signature,region,authenticated,shutdown,restore_error,restore_transport,restore_secure;};
 +static inline bool a630_zap_call(const struct a630_zap_io *io,
 +    struct a630_zap_snapshot *s,uint32_t fn,uint32_t info,uint64_t a,uint64_t b,uint64_t c,uint64_t expected)
 +{
@@ -574,7 +577,19 @@
 +    s->stage=6;
 +    if(!a630_zap_call(io,s,0x42000205,1,13,0,0,0))return false;
 +    s->authenticated=1;s->stage=7;s->error=A630_ZAP_READY;return true;
++}/* Native PAS_SHUTDOWN before relinquishing this diagnostic's resources.
++ * CP/rendering must already be idle/halted. Failure preserves its first
++ * startup result and requires the entire execution environment to stay live. */
++static inline bool a630_zap_stop(const struct a630_zap_io *io,struct a630_zap_snapshot *s)
++{
++    if(!io||!s||!io->owned||!io->call||!s->authenticated)return false;
++    struct a630_zap_snapshot r=*s;r.error=0;
++    bool ok=a630_zap_call(io,&r,0x42000206,1,13,0,0,0);
++    s->calls=r.calls;s->restore_transport=r.transport;s->restore_secure=r.secure;
++    if(!ok){s->restore_error=r.error?r.error:A630_ZAP_TRANSPORT;return false;}
++    s->shutdown=1;return true;
 +}
++
 +#endif
 --- /dev/null
 +++ b/bsd/dev/polaris_a630_core.h
