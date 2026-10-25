@@ -34,6 +34,19 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0047 final full kernel SUCCESS; first guest case PASS
+
+- CI40171921792/6cb946505bf9f9dfca0ea66a8814d5575676d9c7/job121104364594
+  SUCCESS. FullCIlogresearch/polaris/ci-40171921792.log. Exactartifactprofile/
+  CRC/SHAcheckPASS; kerneldc9aabe7a90743379ac33f3d2b83a377fddb40ca2ec406d76291e945971dccf6.
+- Wrapper86192active: cache-highCPU1defaultclock60s FIRSTPASS47checks;
+  async-netCPU1defaultclock90s currentlyrunning; no0047failure/retrysofar.
+  Thenno-MMIO60s/integration-refusal60s;185checks expectedtotal. NoCPU2waiver.
+- Native58/8actualunits/33patches48files/29rows/sourceboundariesPASS;
+  graphics-v4signedsixfilebundlefixed. NO0047image/preflight/bootyet.
+  Finishmatrix→prepare→independentfinalcheck→FIRSTautoFASTBOOTquery→freshRO
+  preflight/directtempbootifpresent. USBobserverPAUSED, neverboot-and-watch.
+
 ### 0047 final source6cb9465 / CI40171921792 / pipeline frozen
 
 - Root311fc02 and source-only public6cb946505bf9f9dfca0ea66a8814d5575676d9c7
