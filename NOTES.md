@@ -34,7 +34,20 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT ACTION —0045 finalsourceafc1c7a / CI40163178453 running; currentphone0044GUI/CP80
+### CURRENT ACTION —0045 CI SUCCESS; fixed CPU1 regressions running; currentphone0044GUI/CP80
+
+- FullCI40163178453/sourceafc1c7a5ccec55a323993b7e20be11b579d6ed79 SUCCESS,
+  job121078915922. CompleteCIlog saved research/polaris/ci-40163178453.log.
+  Exacttarget/profile/CRC/SHA verified download:
+  kernel2fc80304aaeab0fd2228471e80eef71d33dd4653f94e4c8341898cc397a9af84.
+  Wrapper3121 nowrunning cache-high60/async-net90/no-mmio60 standardclock
+  CPU1/exactv4ADT/GPU9, expected133checks. No0045phoneimage/actionyet.
+- Next wait3121, preserveanyfailure andonlyonepredeclaredsameparameter retry
+  forclassifiedtimerfault. Independentfinalimagecheck thenFIRSTautoFASTBOOT
+  query; ifready freshROfullrootcheck/directtemporaryboot. USBobserverPAUSED.
+  NativeCPorder/sourceproof verified; actual0045CP/imageproof stillpending.
+
+### 0045 finalsourceafc1c7a / CI40163178453 preparation
 
 - Final local1af87bb; publicafc1c7a5ccec55a323993b7e20be11b579d6ed79 (parent
   79fd790). CI40163178453, wrapper3121 active. Actualadapter nowverifiesALL8
