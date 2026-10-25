@@ -14,6 +14,8 @@ bool polaris_gpu_ready(void);
 bool polaris_gpu_boot_pending(void);
 bool polaris_gpu_timestamp(uint64_t *value);
 bool polaris_gpu_caller_allowed(void);
+bool polaris_gpu_wrapper_allowed(void);
+bool polaris_gpu_record_test(unsigned actor,const struct pgpu_test_notice *);
 uint32_t polaris_gpu_caller_kind(void);
 void polaris_gpu_loader_policy(int error);
 bool polaris_gpu_record_crash(const struct pgpu_crash *,uint32_t pid);

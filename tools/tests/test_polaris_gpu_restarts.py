@@ -28,6 +28,7 @@ int main(void){assert(my_sharegroup((void*)(uintptr_t)1,0)==nil);assert(my_share
 #include <assert.h>
 static struct pgpu_crash gpuFirstCrash;
 static uint32_t gpuCrashPublished,gpuCrashPID;
+static uint32_t polaris_gpu_test_line(char*p,uint32_t n){(void)p;(void)n;return 0;}
 ''' + code + r'''
 int main(void){char line[68];struct pgpu_crash a={.signal=11,.code=1,.pc=0x1d3f51890,.lr=0x188400000,.address=8,.pc_image=1,.lr_image=1};
  assert(!polaris_gpu_crash_line(0,line,sizeof(line)));assert(!polaris_gpu_record_crash(0,42));
@@ -64,8 +65,9 @@ int main(void){a630_access_begin(1,3,0x8000);assert(messages==1&&(a630_progress_
 ''')
 
     def test_real_wrapper_skips_acceptance_and_injection_after_first_desktop_attempt(self):
-        code=function((ROOT/'userland/gpu/polaris-bbd-wrapper.c').read_text(),'int main(').replace('int main(','static int wrapper_main(')
-        run(r'''
+        text=(ROOT/'userland/gpu/polaris-bbd-wrapper.c').read_text()
+        code=''.join(function(text,n) for n in ['static uint64_t test_milliseconds(', 'static void test_notice(', 'static int run_acceptance('])+function(text,'int main(').replace('int main(','static int wrapper_main(')
+        run(HEADER+r'''
 #include <stdint.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -75,6 +77,8 @@ int main(void){a630_access_begin(1,3,0x8000);assert(messages==1&&(a630_progress_
 #include <signal.h>
 #include <fcntl.h>
 #include <sys/wait.h>
+#include <time.h>
+#include <errno.h>
 typedef int io_service_t;typedef void*CFTypeRef;
 #define CFSTR(s) (s)
 #define kCFAllocatorDefault 0
@@ -97,6 +101,9 @@ static pid_t wait_(pid_t p,int*s,int flags){assert(p==7&&(flags==WNOHANG||!flags
 #define waitpid wait_
 static int usleep(unsigned t){assert(t==100000);return 0;}
 static int execv(const char*p,char*const argv[]){assert(!strcmp(p,"/usr/libexec/polaris-bbd-real")&&!strcmp(argv[0],"backboardd"));executed++;return -1;}
+static int clock_(clockid_t c,struct timespec*t){assert(c==CLOCK_MONOTONIC);t->tv_sec=1;t->tv_nsec=0;return 0;}
+#define clock_gettime clock_
+int __mac_syscall(const char*n,int call,void*p){assert(!strcmp(n,"AMFI")&&call==0x5c&&p);return 0;}
 extern char **environ;
 ''' + code + r'''
 int main(void){char*argv[]={"wrapper",0};assert(wrapper_main(1,argv)==127&&spawned==1&&executed==1);

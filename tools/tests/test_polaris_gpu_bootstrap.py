@@ -144,7 +144,7 @@ int main(void){char text[68];assert(!polaris_gpu_overlay_line(0,68)&&!polaris_gp
     def test_non_target_AMFI_preserves_absent_policy_result_and_PID1_never_looks_up_files(self):
         # Public patch contains the complete small policy callback; reconstruct
         # its resulting text from the staged patch rather than private XNU.
-        patch = (ROOT / 'xnu/profiles/polaris/0856-polaris-eagl-crash-containment-and-quiet-runtime.patch').read_text()
+        patch = (ROOT / 'xnu/profiles/polaris/0859-polaris-bounded-cold-shader-acceptance-status.patch').read_text()
         lines = [l[1:] for l in patch.splitlines() if l.startswith((' ', '+')) and not l.startswith('+++')]
         actual = function('\n'.join(lines), 'static int polaris_gl_dyld_policy(')
         run('#include "'+str(ROOT/'tools/polaris-gl-status.h')+'"\n' + r'''
@@ -157,6 +157,10 @@ typedef uintptr_t user_addr_t;
 #define EINVAL 22
 struct proc{bool init;};
 static unsigned ready,kind,lookups,inputs,outputs,bad_in,policy_notes,crash_notes;
+static unsigned wrapper_ok,notice_mode,notice_notes;
+static struct pgpu_test_notice test_notice={PGPU_TEST_STEP,30,100,0};
+static bool polaris_gpu_wrapper_allowed(void){return wrapper_ok;}
+static bool polaris_gpu_record_test(unsigned actor,const struct pgpu_test_notice*p){notice_notes++;return pgpu_test_notice_valid(actor,p);}
 static unsigned proc_pid(struct proc*p){(void)p;return 42;}
 static bool polaris_gpu_record_crash(const struct pgpu_crash*p,unsigned pid){assert(pid==42);crash_notes++;return pgpu_crash_valid(p);}
 static int policy_error;
@@ -164,7 +168,7 @@ static void polaris_gpu_loader_policy(int e){policy_notes++;policy_error=e;}
 static bool proc_isinitproc(struct proc*p){return p->init;}
 static bool polaris_gpu_overlay_ready(void){return ready;}
 static unsigned polaris_gpu_caller_kind(void){lookups++;return kind;}
-static int copyin(user_addr_t at,void*out,size_t bytes){assert(at==1);inputs++;if(bytes==40){*(struct pgpu_crash*)out=(struct pgpu_crash){.signal=11,.pc=8};}else{assert(bytes==16);((uint64_t*)out)[1]=2;}return bad_in?14:0;}
+static int copyin(user_addr_t at,void*out,size_t bytes){assert(at==1);inputs++;if(bytes==40){*(struct pgpu_crash*)out=(struct pgpu_crash){.signal=11,.pc=8};}else{assert(bytes==16);if(notice_mode)*(struct pgpu_test_notice*)out=test_notice;else((uint64_t*)out)[1]=2;}return bad_in?14:0;}
 static int copyout(const void*in,user_addr_t at,size_t bytes){assert(*(const uint64_t*)in==255&&at==2&&bytes==8);outputs++;return 0;}
 ''' + actual + r'''
 int main(void){struct proc p={true};ready=1;kind=2;
@@ -175,5 +179,15 @@ int main(void){struct proc p={true};ready=1;kind=2;
  kind=2;assert(!polaris_gl_dyld_policy(&p,0x5a,1)&&inputs==1&&outputs==1);
  bad_in=1;assert(polaris_gl_dyld_policy(&p,0x5a,1)==14&&outputs==1);
  assert(policy_notes==2&&policy_error==14);bad_in=0;
- assert(!polaris_gl_dyld_policy(&p,0x5b,1)&&crash_notes==1&&policy_notes==2);return 0;}
+ assert(!polaris_gl_dyld_policy(&p,0x5b,1)&&crash_notes==1&&policy_notes==2);
+ kind=1;assert(!polaris_gl_dyld_policy(&p,0x5b,1)&&crash_notes==2);
+ unsigned prior=inputs;assert(polaris_gl_dyld_policy(&p,0x5a,1)==ENOPOLICY&&inputs==prior);
+ notice_mode=1;assert(!polaris_gl_dyld_policy(&p,0x5c,1)&&notice_notes==1);
+ test_notice.event=PGPU_TEST_EXIT;assert(polaris_gl_dyld_policy(&p,0x5c,1)==EINVAL);
+ kind=2;prior=inputs;assert(polaris_gl_dyld_policy(&p,0x5c,1)==ENOPOLICY&&inputs==prior);
+ kind=0;wrapper_ok=1;test_notice=(struct pgpu_test_notice){PGPU_TEST_BEGIN,0,0,0};
+ assert(!polaris_gl_dyld_policy(&p,0x5c,1));prior=inputs;
+ assert(polaris_gl_dyld_policy(&p,0x5a,1)==ENOPOLICY&&inputs==prior);
+ assert(polaris_gl_dyld_policy(&p,0x5b,1)==ENOPOLICY&&inputs==prior);
+ p.init=true;prior=lookups;assert(polaris_gl_dyld_policy(&p,0x5c,1)==ENOPOLICY&&lookups==prior);return 0;}
 ''')
