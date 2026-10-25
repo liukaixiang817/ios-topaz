@@ -34,6 +34,28 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT ACTION —0043 final image verified; FASTBOOT auto-found; RO preflight running
+
+- All133 SELECTEDCPU1standardclock checks PASS: cache-high45 attempt2,
+  async-net44 attempt2, no-mmio44 FIRSTPASS(realGPUworkerqueued+returned,
+  all4VMchildrenalive, noSMC/MMIO/expiry). Bothoriginaltimerfailures remain
+  FAILED/retained inq-cache-high-a1 andq-async-net-a1; exactsameparameters used
+  forsinglepredefinedretry. asyncfirst=rtclockhandler15065008ns vs13631488ns,
+  afterall4VMchildren andactualnetworkAPI PASS. CauseUNESTABLISHED; doNOTclaim
+  deterministictimingstability or erasefailures. NoCPU2phoneadmission.
+- CompleteCI40159677917/source7713ef3 SUCCESS. Independentfinal-prepared-check
+  PASS04:03:15.406783UTC: native48/4actualARM64units/28patches35files/29rows,
+  linkedSMC+DSB/fullwidthx3/cachehighPA, exactpayload/image/sourceallverified.
+  Kernel0d19c1983fc5, payload7284d1714bee, image
+  0779eec400a98b64f397239802c63e2c9ded504c368915f5ec241737bc952a14
+  (47509504B), samephonev4ADT/GPU9/CPU1/20Hz/ROroot/512MiBRAMCOW.
+- FIRSTautomaticFASTBOOTquery04:03:22.821383UTC foundexpectedpolaris. No keys
+  asked. FreshROpreflight session55831 running; onPASS directlyrun-device-step
+  boot-phone (NOTboot-and-watch). No0043phonebootyet. USBhostobserverPAUSED.
+- Hardware/coreGUI proof stillpending. Afternewboot askactualGUIconfirmation
+  orlastGPUSTEP/CB0/SCMline. 0042actualfaultunknown;0043worker/pollbudgetdoes
+  NOTsoftwarecancelasinglehungMMIO/SMC. DesktopGPUservice remainsunimplemented.
+
 ### CURRENT ACTION —0043 one standard-clock timer failure retained; exact retry running
 
 - Wrapper55460 cache-high attempt1 PANIC: interrupts disabled14124000ns vs
