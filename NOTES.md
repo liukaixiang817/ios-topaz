@@ -34,6 +34,39 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT ACTION —0042 integrated GPU hardware path locally verified; full CI next
+
+- User explicitly requests quality/fewerboots. Addedmode9: originaldefault
+  DCVS(0x30000001/bus4), GPU OOB16/ACK24, separate ownedSID0/CB0 tables, original
+  SQE, strictsignedPAS13ZAP, actualCP_MEM_WRITE600dc0de, then64x64 three-band
+  image withtwoGPUeventfences and ALL4096pixelcomparisons. DesktopstillCPU;
+  noGPUuserclient/Mesa/Metal/IOSurfacebridge is registered. No0042hardwareyet.
+- NewADTcontractv4 explicitlyoptsincore5000000/40000,ZAP8c415000/2000,SID0,
+  GMEM1MiB. Onlyfirmwarenodechanges; backingallocation272KiB,9NormalNCpages,
+  HFI2pagescountunchanged. GPUmaps ONLYSQE/ring/scratch/target; metadataandGMU
+  queuepagesnotmappedinGPUcontext, GPUbuffersnotmappedinGMUcontext.
+- Originalv2postDCVS/OOB and74nativecoreprofilevalues checked. Linuxv6.12A630
+  CP8word2finit intentionallyusesnonpreempting/noIFPC path; currentGMUprofile
+  alreadyGPU_HW_ACTIVE, noIFPC. Native11wordIFPCrestorelistnotrequiredhere.
+  MesaA6302CCU/64KiBdepth->CCU10000004; blitECO05100000 differsreference642L.
+  Nativeprotectedranges+fullDT0xc000MMUspan, noSECVID_TRUST_CNTL fallback.
+- StrictSMC64 only (metadataPAabove4GiB); nevertruncate32bit. Bothtransportand
+  securestatusmustsucceed. FailedsignatureisNOTpreviousloadedZAP. Uncertain
+  secureownership afterINIT_IMAGE, CPtimeout/idle/halt failure keepsGMU/power/
+  bothSMMUs/permanentpages LIVE; noCM3/BCRreset falselycalledGPUDMAcontainment.
+- Local42ASan/UBSan tests PASS, includingactualadapterhighPAallocation/cache/
+  tablewalkisolation, eachprotocolIOpostedfailure, signedPASrejects,CPpacket
+  independentparity,allpixelproof/tailpixelcorruption. Nativefaulttests caught
+  missingbarriersyncerror reporting (fixed); firstdraftWerrorindentation and
+  hostcheckerexpectedcount issues corrected beforeCI. Prior35/41testlogs and
+  original0039/0041failures remainprivate. No draftwasbooted.
+- 4actualCIheaderARM64units compile/imports PASS;27orderedpatches/35actualfiles
+  exact nofuzz/offset;29saved-statedisplayrows/67charmax PASS. Newcore-source-
+  check.json verifies74profile/4DCVS/11Mesaoffsets/ownliveDT. No0042CI/image yet.
+- Nextcommit/source-onlypublish/build; thenstandardCPU1guestchecks andindependent
+  imagecheck. FIRSTautoFASTBOOTquery; ifreadyROpreflight/directtemporaryboot.
+  USB host observation remainsPAUSED. Awaitnew0042GUI/GD/GZ/GC0/GI/GFresults.
+
 ### CURRENT ACTION —0041 all five HFI commands physically PROVEN; next integrated core path
 
 - Human confirmed “目前已进入系统”; photo8FBA67D0. GH8/b NC2 C5 A5 V10070000,

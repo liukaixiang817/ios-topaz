@@ -240,6 +240,27 @@ int main(void) {
  reset();m.r[0x800/4]=0x80000005;s=(struct a630_smmu_snapshot){.slot=0};
  unsigned before=m.writes;
  assert(!a630_smmu_fault(&io,&m,&s,0x20000)&&s.error==A630_SMMU_OWNERSHIP&&m.writes==before);
+
+ /* Independent GPUstream0 context while the already configured GMUstream5
+  * remains inCB1. No shared implementation write or live CB1 modification. */
+ reset();m.r[0]=0x400;m.r[0x6000/4]=0x2378;m.forbidimpl=true;
+ m.r[0x800/4]=0x80000005;m.r[0xc00/4]=0x301;m.r[0x9000/4]=0xc01127;
+ uint32_t gmu_control=m.r[0x9000/4];
+ assert(a630_smmu_begin_core(true,true,&pt,&io,&m,&s)==A630_SMMU_READY);
+ unsigned core_ops=m.operations;
+ assert(s.stream==0&&s.core&&s.bank==0&&s.slot==1&&s.context==0x8000);
+ assert(m.r[0x800/4]==0x80000005&&m.r[0xc00/4]==0x301&&m.r[0x9000/4]==gmu_control&&!m.implwrites);
+ assert(a630_smmu_end(&io,&m,&s)&&s.restored&&m.r[0x9000/4]==gmu_control);
+ for(unsigned f=1;f<=core_ops;f++){
+  reset();m.r[0]=0x400;m.r[0x6000/4]=0x2378;m.forbidimpl=true;
+  m.r[0x800/4]=0x80000005;m.r[0xc00/4]=0x301;m.r[0x9000/4]=0xc01127;m.fail=f;
+  assert(a630_smmu_begin_core(true,true,&pt,&io,&m,&s)!=A630_SMMU_READY);
+  assert(m.r[0x9000/4]==0xc01127&&!m.implwrites);
+ }
+ reset();m.r[0x6000/4]=0x2378;m.r[0x8000/4]=1;
+ assert(a630_smmu_begin_core(true,true,&pt,&io,&m,&s)==A630_SMMU_OWNERSHIP&&!m.writes);
+ reset();m.r[0x6000/4]=0x2378;m.r[0x24/4]|=1u<<16;
+ assert(a630_smmu_begin_core(true,true,&pt,&io,&m,&s)==A630_SMMU_OWNERSHIP&&!m.writes);
  free(pool);return 0;
 }
 '''

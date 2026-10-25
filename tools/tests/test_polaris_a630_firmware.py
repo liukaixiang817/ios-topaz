@@ -47,6 +47,22 @@ def manifest(images):
 
 
 class FirmwareTests(unittest.TestCase):
+    def test_core_contract_requires_explicit_opt_in(self):
+        with patch.object(board.mkadt, "d22ap_product", return_value=None):
+            original = board.adt.serialize(board.build(seed=b"x" * 64))
+        data = fw.attach(original, fixture(), execution=True, core=True)
+        root = fw.adt.parse(data)[0]
+        node = next(n for n in root.children if dict((k,v) for k,_,v in n.props).get('name') == b'polaris-a630-firmware\0')
+        props = {k:v for k,_,v in node.props}
+        self.assertEqual(props['version'], struct.pack('<I', 4))
+        self.assertEqual(props['core-reg'], struct.pack('<QQ', 0x5000000, 0x40000))
+        self.assertEqual(props['zap-reg'], struct.pack('<QQ', 0x8c415000, 0x2000))
+        self.assertEqual(props['core-smmu-stream-id'], bytes(4))
+        root.children.remove(node)
+        self.assertEqual(fw.adt.serialize(root), original)
+        with self.assertRaises(ValueError):
+            fw.attach(original, fixture(), core=True)
+
     def test_original_wire_layout(self):
         r = fw.inspect_images(fixture())
         self.assertEqual(r['gmu_bytes'], 32768)

@@ -1,0 +1,845 @@
+--- a/bsd/dev/polaris_a630.c
++++ b/bsd/dev/polaris_a630.c
+@@ -4,7 +4,8 @@
+  * retaining block reset. Mode6 builds owned SMMU mappings and attempts a
+  * fresh GMU firmware boot at the original200MHz, then contains and unwinds.
+  * Mode7 requests original low GX/MX votes and probes HFI INIT/FW_VER.
+- * No mode registers acceleration or submits CP/3D/rendering work yet.
++ * Mode8 completes native HFI tables. Mode9 attempts owned core/SQE/ZAP/CP
++ * and a checked64x64 offscreen image. No desktop acceleration service yet.
+  */
+ #if defined(POLARIS_RAM_ONLY)
+ #include <sys/param.h>
+@@ -29,6 +30,9 @@
+ #include "polaris_a630_smmu.h"
+ #include "polaris_a630_bus.h"
+ #include "polaris_a630_boot.h"
++#include "polaris_a630_post.h"
++#include "polaris_a630_zap.h"
++#include "polaris_a630_core.h"
+ extern vm_offset_t ml_io_map(vm_offset_t, vm_size_t);
+ extern ppnum_t pmap_find_phys(pmap_t, addr64_t);
+ /* XNU-private declarations in osfmk/vm/pmap.h are not exported to BSD. */
+@@ -47,7 +51,14 @@
+ static struct a630_bus_snapshot a630_bus_saved;
+ static struct a630_boot_snapshot a630_boot_saved;
+ static struct a630_channel_snapshot a630_channel_saved;
+-static struct a630_mmu a630_tables;
++static struct a630_mmu a630_tables,a630_core_tables;
++static struct a630_smmu_snapshot a630_core_smmu;
++static struct a630_post_snapshot a630_post_saved;
++static struct a630_zap_snapshot a630_zap_saved;
++static struct a630_core_snapshot a630_core_saved;
++static struct a630_image a630_images[6];
++static uint64_t a630_dma_physical;
++static uint32_t a630_core_dma_ready;
+ static vm_offset_t a630_dma;
+ static uint32_t a630_dma_ready, a630_dma_bytes, a630_nc_pages;
+ static struct a630_image a630_gmu_image;
+@@ -80,9 +91,32 @@
+ {
+     if (!out || !size) return 0;
+     out[0] = 0;
+-    if (line >= 15) return 0;
++    if (line >= 20) return 0;
+     if (!__atomic_load_n(&a630_published, __ATOMIC_ACQUIRE))
+         return (uint32_t)snprintf(out, size, "GPU snapshot pending");
++    const struct a630_post_snapshot *post=&a630_post_saved;
++    const struct a630_zap_snapshot *zap=&a630_zap_saved;
++    const struct a630_core_snapshot *core=&a630_core_saved;
++    if(line==15 && a630_core_smmu.error && a630_core_smmu.error!=A630_SMMU_READY)
++        return (uint32_t)snprintf(out,size,"GS0 %x/%x B%x S%x @%x e%x a%x",
++            a630_core_smmu.error&15,a630_core_smmu.stage&15,a630_core_smmu.bank&255,
++            a630_core_smmu.slot&255,a630_core_smmu.failed_offset,a630_core_smmu.expected,a630_core_smmu.actual);
++    if(line==15)return (uint32_t)snprintf(out,size,"GD %x/%x D%x G%x/%x ret%x @%x a%x",
++        post->error&15,post->stage&15,post->dcvs_done&1,post->gpu_ready&1,post->gpu_released&1,
++        post->dcvs_return,post->offset,post->actual);
++    if(line==16)return (uint32_t)snprintf(out,size,"GZ %x/%x fn%x t%x r%x S%x M%x A%x",
++        zap->error&15,zap->stage&15,zap->fn,zap->transport,zap->secure,zap->signature&1,zap->region&1,zap->authenticated&1);
++    if(line==17)return (uint32_t)snprintf(out,size,"GC0 %x/%x C%x/%x I%x F%08x H%x L%x M%x/%x",
++        core->error&15,core->stage&15,core->rptr,core->wptr,core->init_done&1,core->fence,
++        core->halted&1,core->keep_live&1,a630_core_smmu.error&15,a630_core_smmu.stage&15);
++    if(line==18)return (uint32_t)snprintf(out,size,"GI %x px%x @%x e%x a%x",
++        core->image&1,core->pixels,core->offset,core->expected,core->actual);
++    if(line==19 && a630_core_smmu.restore_error)
++        return (uint32_t)snprintf(out,size,"GS0 R%x @%x e%x a%x",
++            a630_core_smmu.restore_error&15,a630_core_smmu.restore_offset,
++            a630_core_smmu.restore_expected,a630_core_smmu.restore_actual);
++    if(line==19)return (uint32_t)snprintf(out,size,"GF IRQ%x HW%x P%x CP%x",
++        core->irq,core->hw_fault,core->protect,core->cp_irq);
+     const struct a630_power_snapshot *p = &a630_power_saved;
+     const struct a630_clock_snapshot *c = &a630_clock_saved;
+     const struct a630_channel_snapshot *h=&a630_channel_saved;
+@@ -184,12 +218,13 @@
+     const struct a630_image images[6] = {{gmu, gn}, {sqe, sn}, {mdt, mn},
+         {b00, n0}, {b01, n1}, {b02, n2}};
+     if (!a630_images_valid(images)) return false;
++    memcpy(a630_images,images,sizeof(images));
+     a630_gmu_image = images[0]; /* Immutable, hash-checked ADT storage. */
+     printf("POLARIS A630: verified original GMU%u SQE%u version=%x ZAP%u; no firmware executed\n",
+         gn, sn, a630_image_word(sqe + 4), mn);
+     return true;
+ }
+-struct a630_io { vm_offset_t base[5]; bool gmu_lease, runtime_lease, can_stop; };
++struct a630_io { vm_offset_t base[6]; bool gmu_lease, runtime_lease, core_lease, can_stop; };
+ static bool a630_pdc_offset(uint32_t off)
+ {
+     for (unsigned n=0;n<A630_BOOT_PROFILE;n++)
+@@ -213,10 +248,11 @@
+ }
+ static bool a630_read_register(void *opaque, unsigned region, uint32_t off, uint32_t *value)
+ {
+-    static const uint64_t addresses[5] = {0x100000, 0x5090000, 0x506a000,0x5040000,0xb200000};
+-    static const uint32_t sizes[5] = {0x90000, 0x9000, 0x30000,0x10000,0x300000};
++    static const uint64_t addresses[6] = {0x100000, 0x5090000, 0x506a000,0x5040000,0xb200000,0x5000000};
++    static const uint32_t sizes[6] = {0x90000, 0x9000, 0x30000,0x10000,0x300000,0x40000};
+     struct a630_io *io = opaque;
+-    if (region >= 5 || (off & 3) || off > sizes[region] - 4) return false;
++    if (region >= 6 || (off & 3) || off > sizes[region] - 4) return false;
++    if(region==5 && (!io->runtime_lease || !io->core_lease || a630_mode!=9))return false;
+     if ((region==3 && (!io->runtime_lease || !a630_smmu_offset(off,false))) ||
+         (region==4 && (!io->runtime_lease || !a630_pdc_offset(off)))) return false;
+     if (!io->base[region]) io->base[region] = ml_io_map(addresses[region], sizes[region]);
+@@ -228,6 +264,15 @@
+ static bool a630_write_register(void *opaque, unsigned region, uint32_t off, uint32_t value)
+ {
+     struct a630_io *io = opaque;
++    if(region==5 && io->runtime_lease && io->core_lease && a630_mode==9 && io->base[5]){
++        bool allowed=false;
++        const uint32_t words[]={0x800,0x801,0x802,0x804,0x805,0x807,0x808,0x830,0x831};
++        for(unsigned n=0;n<sizeof(words)/sizeof(words[0]);n++)if(off==4*words[n])allowed=true;
++        for(unsigned n=0;n<sizeof(a630_core_profile)/sizeof(a630_core_profile[0]);n++)
++            if(off==4*a630_core_profile[n].word)allowed=true;
++        if(!allowed)return false;
++        a630_store32(io->base[5]+off,value);__asm__ volatile("dsb sy":::"memory");return true;
++    }
+     if (io->runtime_lease && region<5 && io->base[region]) {
+         bool allowed = region==0 && (off==0x52000 || off==0x52004 || off==0x44038 || off==0x7100c || off==0x71018);
+         if (region==1 && (off==0x1124 || (a630_mode>=7 && off==0x100c))) allowed=true;
+@@ -239,6 +284,7 @@
+             for(unsigned n=0;n<sizeof(config)/sizeof(config[0]);n++)if(off==config[n])allowed=true;
+             for(unsigned n=0;n<A630_BOOT_PROFILE;n++)
+                 if(a630_boot_profile[n].bank==2&&a630_boot_profile[n].offset==off)allowed=true;
++            if(a630_mode>=9 && (off==A630_POST_ACK || off==A630_POST_PERF || off==A630_POST_BW))allowed=true;
+             if(a630_mode>=7){
+                 const uint32_t channel[]={A630_CH_INTR_SET,A630_CH_INTR_CLEAR,A630_CH_INTR_MASK,
+                     A630_CH_BOOT_OPTION,A630_CH_GX_VOTE,A630_CH_MX_VOTE,
+@@ -325,7 +371,7 @@
+ }
+ static bool a630_prepare_dma(void)
+ {
+-    a630_dma_bytes=a630_mode>=7?0x28000:0x24000;
++    a630_dma_bytes=a630_mode>=9?0x44000:a630_mode>=7?0x28000:0x24000;
+     if(kmem_alloc_contig(kernel_map,&a630_dma,a630_dma_bytes,PAGE_MASK,0,0,
+         KMA_DATA|KMA_ZERO|KMA_PERMANENT,VM_KERN_MEMORY_IOKIT)!=KERN_SUCCESS)return false;
+     ppnum_t pn=pmap_find_phys(kernel_pmap,(addr64_t)a630_dma);
+@@ -334,23 +380,98 @@
+     if(physical>=A630_MMU_PA_LIMIT-a630_dma_bytes)return false;
+     for(unsigned n=0;n<a630_dma_bytes;n+=PAGE_SIZE)
+         if(ptoa_64(pmap_find_phys(kernel_pmap,(addr64_t)a630_dma+n))!=physical+n)return false;
+-    if(!a630_mmu_init(&a630_tables,(void*)a630_dma,physical,32))return false;
++    a630_dma_physical=physical;
++    if(!a630_mmu_init(&a630_tables,(void*)a630_dma,physical,a630_mode>=9?16:32))return false;
+     if(a630_mode>=7){
+         /* Change every physical alias before the GMU is released. WCOMB on
+          * ARM64 is Normal noncacheable, not Device memory; legacy queues
+          * are dword-aligned and can be read/written by either processor. */
+         if(PAGE_SIZE!=A630_HFI_BYTES)return false;
+-        for(unsigned off=0x20000;off<0x28000;off+=PAGE_SIZE){
++        for(unsigned off=0x20000;off<a630_dma_bytes;off+=PAGE_SIZE){
+             ppnum_t page=pmap_find_phys(kernel_pmap,(addr64_t)a630_dma+off);
+             pmap_set_cache_attributes(page,VM_WIMG_WCOMB);
+             if((pmap_cache_attributes(page)&VM_WIMG_MASK)!=VM_WIMG_WCOMB)return false;
+-            a630_nc_pages++;
++            if(off<0x28000)a630_nc_pages++;
+         }
+     }
+-    for(unsigned n=0;n<a630_dma_bytes-0x20000;n+=4096)
++    for(unsigned n=0;n<(a630_mode>=7?0x8000:0x4000);n+=4096)
+         if(a630_mmu_map(&a630_tables,0x60000000+n,physical+0x20000+n,0)!=A630_MMU_OK)return false;
+     if(!a630_hfi_init((void*)(a630_dma+0x20000),A630_HFI_BYTES,0x60000000))return false;
++    if(a630_mode>=9){
++        if(a630_images[1].bytes>0x8004 || a630_images[2].bytes>PAGE_SIZE)return false;
++        memcpy((void*)(a630_dma+0x28000),a630_images[1].data+4,a630_images[1].bytes-4);
++        memcpy((void*)(a630_dma+0x40000),a630_images[2].data,a630_images[2].bytes);
++        if(!a630_mmu_init(&a630_core_tables,(void*)(a630_dma+0x10000),physical+0x10000,16))return false;
++        const uint32_t map[][4]={{A630_CORE_SQE,0x28000,0x8000,A630_MMU_USER|A630_MMU_READONLY|A630_MMU_EXEC},
++            {A630_CORE_RING,0x30000,0x8000,A630_MMU_USER|A630_MMU_READONLY},
++            {A630_CORE_SCRATCH,0x38000,0x4000,A630_MMU_USER},
++            {A630_CORE_TARGET,0x3c000,0x4000,A630_MMU_USER}};
++        for(unsigned k=0;k<4;k++)for(unsigned n=0;n<map[k][2];n+=4096)
++            if(a630_mmu_map(&a630_core_tables,map[k][0]+n,physical+map[k][1]+n,map[k][3])!=A630_MMU_OK)return false;
++        a630_core_dma_ready=1;
++    }
+     a630_dma_ready=1;return true;
++}
++static bool a630_core_owned(void *opaque)
++{
++    struct a630_io *io=opaque;
++    return a630_runtime_owned(io)&&io->core_lease&&a630_mode==9&&a630_core_dma_ready&&
++        a630_core_smmu.error==A630_SMMU_READY&&a630_post_saved.gpu_ready;
++}
++static bool a630_core_read(void *io,uint32_t word,uint32_t *v)
++{return a630_core_owned(io)&&word<0x10000&&a630_read_register(io,5,word*4,v);}
++static bool a630_core_write(void *io,uint32_t word,uint32_t v)
++{return a630_core_owned(io)&&word<0x10000&&a630_write_register(io,5,word*4,v);}
++static int32_t a630_scm_call(void *opaque,uint32_t fn,uint32_t info,
++    uint64_t a,uint64_t b,uint64_t c,uint64_t *answer)
++{
++    if(!a630_core_owned(opaque))return -1;
++    for(unsigned retry=0;retry<4;retry++){
++        register uint64_t x0 __asm__("x0")=fn,x1 __asm__("x1")=info;
++        register uint64_t x2 __asm__("x2")=a,x3 __asm__("x3")=b,x4 __asm__("x4")=c;
++        register uint64_t x5 __asm__("x5")=0,x6 __asm__("x6")=0;
++        unsigned resumes=0;
++        do{
++            __asm__ volatile("dsb sy; smc #0; dsb sy"
++                : "+r"(x0),"+r"(x1),"+r"(x2),"+r"(x3),"+r"(x4),"+r"(x5),"+r"(x6)
++                ::"x7","x8","x9","x10","x11","x12","x13","x14","x15","x16","x17","memory","cc");
++        }while(x0==1&&++resumes<1024);
++        *answer=x1;
++        if((int32_t)x0!=-12)return (int32_t)x0;
++        a630_delay_us(opaque,30000);
++    }
++    return -12;
++}
++static bool a630_zap_publish(void *opaque)
++{return a630_clean_owned(opaque,(void*)(a630_dma+0x40000),PAGE_SIZE);}
++static bool a630_zap_segment(void *opaque,const uint8_t *data,uint32_t bytes)
++{
++    if(!a630_core_owned(opaque)||!a630_zap_saved.region||!data||bytes!=1968)return false;
++    /* Exact own DT reserved8KiB; map alignment includes surrounding bytes,
++     * but writes/readbacks are confined to the owned first4KiB segment. */
++    vm_offset_t map=ml_io_map(0x8c414000,0x4000);
++    if(!map)return false;vm_offset_t at=map+0x1000;
++    for(unsigned n=0;n<4096;n+=4)
++        a630_store32(at+n,n<bytes?a630_image_word(data+n):0);
++    __asm__ volatile("dsb sy":::"memory");
++    for(unsigned n=0;n<4096;n+=4)
++        if(a630_load32(at+n)!=(n<bytes?a630_image_word(data+n):0))return false;
++    return true;
++}
++static void a630_core_attempt(struct a630_io *io)
++{
++    io->core_lease=true;
++    const struct a630_zap_io zap={a630_core_owned,a630_scm_call,a630_zap_publish,a630_zap_segment,io};
++    const struct a630_core_io core={a630_core_owned,a630_core_read,a630_core_write,a630_gmu_sync,a630_delay_us,io};
++    if(a630_zap_start(true,&zap,a630_images,a630_dma_physical+0x40000,&a630_zap_saved))
++        a630_core_run(true,a630_core_dma_ready,true,&core,(uint32_t*)(a630_dma+0x30000),
++            (volatile uint32_t*)(a630_dma+0x38000),(volatile uint32_t*)(a630_dma+0x3c000),&a630_core_saved);
++    /* After INIT_IMAGE, a failed secure call leaves ownership uncertain.
++     * Never remove its powered execution environment or backing allocation. */
++    if(!a630_zap_saved.authenticated && (a630_zap_saved.signature||a630_zap_saved.region||
++       (a630_zap_saved.error==A630_ZAP_TRANSPORT&&a630_zap_saved.stage>=3)))
++        a630_core_saved.keep_live=1;
++    io->core_lease=false;
+ }
+ /* Synthetic-guest regression for the exact managed-page cache transition
+  * used by HFI. No GPU/MMIO is involved, and phone arguments never enable it. */
+@@ -409,6 +530,7 @@
+     printf("POLARIS GMU: original200MHz/bus, owned stream5/HFI; fresh firmware boot trial\n");
+     if(a630_bus_begin(true,&bus,&a630_bus_saved)!=A630_BUS_READY)goto cleanup;
+     if(a630_smmu_begin_handoff(true,true,&a630_tables,&smmu,io,&a630_smmu_saved)!=A630_SMMU_READY)goto cleanup;
++    if(a630_mode>=9 && a630_smmu_begin_core(true,true,&a630_core_tables,&smmu,io,&a630_core_smmu)!=A630_SMMU_READY)goto cleanup;
+     if(!a630_clean_owned(io,(void*)(a630_dma+0x20000),A630_HFI_BYTES))goto cleanup;
+     bcr_attempted=true;
+     if(!a630_boot_set(&boot,&a630_boot_saved,1,0x111c,0,1))goto cleanup;
+@@ -420,10 +542,17 @@
+     if(a630_gmu_prepare(true,true,&a630_gmu_image,&tcm,a630_delay_us,io,&a630_gmu_saved)!=A630_GMU_LOADED)goto cleanup;
+     if(a630_boot_start(&boot,&a630_boot_saved) && a630_mode>=7){
+         channel_attempted=true;
+-        a630_channel_probe_complete(true,a630_nc_pages==2,a630_mode==8,&channel,
++        a630_channel_probe_complete(true,a630_nc_pages==2,a630_mode>=8,&channel,
+             (void*)(a630_dma+0x20000),&a630_channel_saved);
++        if(a630_mode>=9 && a630_post_begin(true,&channel,&a630_channel_saved,&a630_post_saved))
++            a630_core_attempt(io);
+     }
+ cleanup:
++    /* An uncertain CP/rendering engine keeps GMU, both translations and all
++     * backing pages LIVE. CM3/BCR reset is not a GPU DMA drain operation. */
++    if(a630_core_saved.keep_live){io->can_stop=false;return;}
++    if(a630_mode>=9 && (a630_post_saved.dcvs_requested||a630_post_saved.gpu_requested) &&
++       !a630_post_end(&channel,&a630_post_saved)){io->can_stop=false;return;}
+     if(channel_attempted && !a630_channel_slumber(&channel,&a630_channel_saved)){
+         /* Contain CM3, but keep the power sequencer, mappings and clocks
+          * intact when GX slumber cannot be proven. No profile teardown. */
+@@ -434,6 +563,7 @@
+     }
+     if(clean && bcr_attempted && !a630_boot_stop(&boot,&a630_boot_saved))clean=false;
+     if(clean && channel_attempted && !a630_channel_restore(&channel,&a630_channel_saved))clean=false;
++    if(clean && a630_mode>=9 && !a630_smmu_end(&smmu,io,&a630_core_smmu))clean=false;
+     if(clean && !a630_smmu_end(&smmu,io,&a630_smmu_saved))clean=false;
+     if(clean && !a630_bus_end(&bus,&a630_bus_saved))clean=false;
+     /* Uncertain containment retains CX/clocks/BCR and permanent DMA pages.
+@@ -492,7 +622,7 @@
+     printf("D GPU PDC MSGID: length_read_zero=%x actual=%x/%x/%x/%x/%x/%x; native requests issued, not PDC execution proof\n",
+         e->pdc_len_zero,e->pdc_msgid_after[0],e->pdc_msgid_after[1],e->pdc_msgid_after[2],
+         e->pdc_msgid_after[3],e->pdc_msgid_after[4],e->pdc_msgid_after[5]);
+-    printf("D GPU EXEC: error=%u stage=%u FW_INIT=%x started=%u stopped=%u profile=%u fail=%u:%x expected=%x actual=%x polls=%u restored=%u/%u; see HFI result; no CP/3D\n",
++    printf("D GPU EXEC: error=%u stage=%u FW_INIT=%x started=%u stopped=%u profile=%u fail=%u:%x expected=%x actual=%x polls=%u restored=%u/%u; see HFI result; see CORE; desktop CPU\n",
+         e->error,e->stage,e->fw,e->started,e->stopped,e->changed,e->failed_bank,e->failed_offset,e->expected,e->actual,e->polls,e->restored,e->restore_error);
+     printf("D GPU EXEC RESTORE: error=%u bank=%u offset=%x expected=%x actual=%x\n",
+         e->restore_error,e->restore_bank,e->restore_offset,e->restore_expected,e->restore_actual);
+@@ -503,9 +633,27 @@
+     printf("D GPU HFI QUEUE: cmd=%x/%x rsp=%x/%x IRQ=%x SPTP=%x state=%x async=%u ACK=%x/%x/%x/%x\n",
+         h->cmd_read,h->cmd_write,h->rsp_read,h->rsp_write,h->status,h->sp_status,
+         h->power_state,h->async_messages,h->response[0],h->response[1],h->response[2],h->response[3]);
+-    printf("D GPU HFI TABLES: full=%u done=%x slumber_stage=%u RSC=%u/%x/%x; no CP/3D\n",
++    printf("D GPU HFI TABLES: full=%u done=%x slumber_stage=%u RSC=%u/%x/%x; see CORE; desktop CPU\n",
+         h->full_requested,h->tables_done,h->slumber_stage,h->rsc_requested,h->rsc_before,h->rsc_status);
+-    printf("D GPU HFI STOP: GX=%u SPTP=%u HFI=%u slumber=%u restored=%u error=%u offset=%x expected=%x actual=%x; no CP/3D\n",
++    printf("D GPU CORE SMMU: error=%u stage=%u bank=%u slot=%u root=%llx offset=%x expected=%x actual=%x restored=%u/%u roffset=%x rexpected=%x ractual=%x\n",
++        a630_core_smmu.error,a630_core_smmu.stage,a630_core_smmu.bank,a630_core_smmu.slot,
++        (unsigned long long)a630_core_smmu.root,a630_core_smmu.failed_offset,
++        a630_core_smmu.expected,a630_core_smmu.actual,a630_core_smmu.restored,
++        a630_core_smmu.restore_error,a630_core_smmu.restore_offset,
++        a630_core_smmu.restore_expected,a630_core_smmu.restore_actual);
++    printf("D GPU CORE POST: error=%u stage=%u DCVS=%u GPU=%u/%u return=%x offset=%x actual=%x\n",
++        a630_post_saved.error,a630_post_saved.stage,a630_post_saved.dcvs_done,a630_post_saved.gpu_ready,
++        a630_post_saved.gpu_released,a630_post_saved.dcvs_return,a630_post_saved.offset,a630_post_saved.actual);
++    printf("D GPU ZAP: error=%u stage=%u fn=%x transport=%x secure=%x signature=%u region=%u authenticated=%u\n",
++        a630_zap_saved.error,a630_zap_saved.stage,a630_zap_saved.fn,a630_zap_saved.transport,
++        a630_zap_saved.secure,a630_zap_saved.signature,a630_zap_saved.region,a630_zap_saved.authenticated);
++    printf("D GPU CORE: error=%u stage=%u CB0=%u/%u init=%u secure=%u fence=%x image=%u pixels=%u halted=%u live=%u RPTR=%x/%x IRQ=%x fault=%x protect=%x fail=%x expected=%x actual=%x\n",
++        a630_core_saved.error,a630_core_saved.stage,a630_core_smmu.error,a630_core_smmu.stage,
++        a630_core_saved.init_done,a630_core_saved.secure_done,a630_core_saved.fence,
++        a630_core_saved.image,a630_core_saved.pixels,a630_core_saved.halted,a630_core_saved.keep_live,
++        a630_core_saved.rptr,a630_core_saved.wptr,a630_core_saved.irq,a630_core_saved.hw_fault,
++        a630_core_saved.protect,a630_core_saved.offset,a630_core_saved.expected,a630_core_saved.actual);
++    printf("D GPU HFI STOP: GX=%u SPTP=%u HFI=%u slumber=%u restored=%u error=%u offset=%x expected=%x actual=%x; see CORE; desktop CPU\n",
+         h->gx_requested,h->sptp_requested,h->hfi_requested,h->slumber,h->restored,
+         h->restore_error,h->restore_offset,h->restore_expected,h->restore_actual);
+     printf("D GPU LOAD: result=%u stage=%u block_reset_retained=%u reset=%x/%x fw=%x hfi=%x counter=%x polls=%u\n",
+@@ -536,12 +684,12 @@
+ {
+     unsigned mode = 0;
+     PE_parse_boot_argn("polarisgpu", &mode, sizeof(mode));
+-    if ((mode < 1 || mode > 8) ||
++    if ((mode < 1 || mode > 9) ||
+         __atomic_exchange_n(&a630_started, 1, __ATOMIC_ACQ_REL)) return;
+     a630_mode = mode;
+     DTEntry node;
+     bool board = SecureDTLookupEntry(NULL, "/polaris-a630-firmware", &node) == kSuccess &&
+-        (a630_u32(node,"version",3) || (mode<6 && a630_u32(node,"version",2))) &&
++        (a630_u32(node,"version",3) || a630_u32(node,"version",4) || (mode<6 && a630_u32(node,"version",2))) &&
+         a630_u32(node, "chip-id", 0x06030001) &&
+         a630_u32(node, "sqe-code-offset", 4) &&
+         a630_reg(node, "gcc-reg", 0x100000, 0x90000) &&
+@@ -551,6 +699,9 @@
+     if(mode>=6)board=board && a630_reg(node,"pdc-reg",0xb200000,0x300000) &&
+         a630_u32(node,"smmu-disable-atos",1) && a630_u32(node,"smmu-iommu-cells",1) &&
+         a630_u32(node,"smmu-stream-id",5) && a630_u32(node,"gmu-hz",200000000);
++    if(mode>=9)board=board && a630_u32(node,"version",4) &&
++        a630_reg(node,"core-reg",0x5000000,0x40000) && a630_reg(node,"zap-reg",0x8c415000,0x2000) &&
++        a630_u32(node,"core-smmu-stream-id",0) && a630_u32(node,"core-gmem-bytes",0x100000);
+     a630_firmware_ok = board && a630_firmware(node);
+     if (a630_firmware_ok)
+         a630_abi_ok = a630_hfi_init(a630_host_hfi, sizeof(a630_host_hfi), 0x60000000);
+@@ -569,7 +720,7 @@
+     if(mode>=6 && admitted)admitted=a630_prepare_dma();
+     /* Mode1 checks firmware/host ABI only, including in a synthetic guest.
+      * Modes2/3/4 first save the same read-only, initial hardware snapshot. */
+-    a630_probe((mode >= 2 && mode <= 8) ? 1 : 0, admitted,
++    a630_probe((mode >= 2 && mode <= 9) ? 1 : 0, admitted,
+         a630_read_register, &io, &a630_saved);
+     /* Nested exclusive lifetime: mode5 only loads under reset; mode6 may
+      * execute GMU firmware, then must contain it before removing mappings,
+--- a/bsd/dev/polaris_a630_smmu.h
++++ b/bsd/dev/polaris_a630_smmu.h
+@@ -37,7 +37,7 @@
+ struct a630_smmu_snapshot {
+     uint32_t error, start_error, stage, changed, restored;
+     uint32_t id[4], page, banks, stage2_banks, matches, half;
+-    uint32_t slot, bank, context, global, smr, s2cr, cbar, cba2r, foreign;
++    uint32_t stream, core, slot, bank, context, global, smr, s2cr, cbar, cba2r, foreign;
+     uint32_t control[5], impl[A630_SMMU_IMPLS];
+     uint64_t ttbr[2], root;
+     uint32_t failed_offset, expected, actual, polls, restore_error;
+@@ -225,11 +225,11 @@
+     s->impl_checks++;return true;
+ }
+ static inline enum a630_smmu_error
+- a630_smmu_begin_policy(bool exact_board, bool atos_disabled, bool handoff, struct a630_mmu *tables,
++ a630_smmu_begin_stream(bool exact_board, bool atos_disabled, bool handoff, bool core, struct a630_mmu *tables,
+     const struct a630_smmu_io *io, void *ctx, struct a630_smmu_snapshot *s)
+ {
+     if (!s) return A630_SMMU_ARGUMENT;
+-    *s=(struct a630_smmu_snapshot){.slot=UINT32_MAX,.bank=UINT32_MAX};
++    *s=(struct a630_smmu_snapshot){.stream=core?0:A630_SMMU_STREAM,.core=core,.slot=UINT32_MAX,.bank=UINT32_MAX};
+     if (!exact_board) return A630_SMMU_DISABLED;
+     if (!atos_disabled || !a630_smmu_callbacks(io) || !a630_mmu_valid(tables)) {
+         s->error=A630_SMMU_ARGUMENT; goto done;
+@@ -239,14 +239,14 @@
+         if (!a630_smmu_rd(io,ctx,s,n==3?0x3c:0x20+4*n,&s->id[n])) goto done;
+     if (!a630_smmu_geometry(s)) {s->error=A630_SMMU_LAYOUT;goto done;}
+     s->stage=2;
+-    uint32_t used=1, free_slot=UINT32_MAX;
++    uint32_t used=core?0:1, free_slot=UINT32_MAX;
+     for (unsigned n=0;n<s->matches;n++) {
+         uint32_t smr,s2cr;
+         if (!a630_smmu_rd(io,ctx,s,0x800+4*n,&smr) ||
+             !a630_smmu_rd(io,ctx,s,0xc00+4*n,&s2cr)) goto done;
+         if (!(smr&(1u<<31))) {if(free_slot==UINT32_MAX)free_slot=n;continue;}
+         unsigned mask=(smr>>16)&0x7fff, id=smr&0x7fff;
+-        if (!((A630_SMMU_STREAM^id)&~mask)) {
++        if (!((s->stream^id)&~mask)) {
+             /* An overlapping/wildcard match could affect another stream. */
+             if (mask || s->slot!=UINT32_MAX) {s->error=A630_SMMU_OWNERSHIP;goto done;}
+             s->slot=n; s->smr=smr; s->s2cr=s2cr;
+@@ -261,8 +261,13 @@
+         if (!a630_smmu_rd(io,ctx,s,0x800+4*s->slot,&s->smr) ||
+             !a630_smmu_rd(io,ctx,s,0xc00+4*s->slot,&s->s2cr)) goto done;
+     }
++    if(core && (s->s2cr&0x30000u)==0){
++        uint32_t bank=s->s2cr&255,control;
++        if(bank>=s->banks || !a630_smmu_rd(io,ctx,s,s->half+bank*s->page,&control))goto done;
++        if(control&1){s->error=A630_SMMU_OWNERSHIP;goto done;}
++    }
+     /* CB0 is reserved for the later 3D context;5..7 belong to HYP. */
+-    for (unsigned n=1;n<s->banks && n<5;n++) {
++    for (unsigned n=core?0:1;n<s->banks && n<(core?1:5);n++) {
+         uint32_t control;
+         if (n<s->stage2_banks || used&(1u<<n)) continue;
+         if (!a630_smmu_rd(io,ctx,s,s->half+n*s->page,&control)) goto done;
+@@ -345,7 +350,7 @@
+     if(handoff && !a630_smmu_impl_stable(io,ctx,s))goto done;
+     /* Reject unmatched streams, preserve every existing match. */
+     if (!a630_smmu_set(io,ctx,s,0,(s->global|0x400u)&~1u,0x401) ||
+-        !a630_smmu_set(io,ctx,s,0x800+4*s->slot,(1u<<31)|A630_SMMU_STREAM,UINT32_MAX) ||
++        !a630_smmu_set(io,ctx,s,0x800+4*s->slot,(1u<<31)|s->stream,UINT32_MAX) ||
+         !a630_smmu_set(io,ctx,s,0xc00+4*s->slot,
+             (s->s2cr&~0x030303ffu)|0x300|s->bank,0x030303ff)) goto done;
+     if (!io->sync(ctx)) {s->error=A630_SMMU_IO;goto done;}
+@@ -354,12 +359,15 @@
+ done:
+     s->start_error=s->error;return (enum a630_smmu_error)s->error;
+ }
++static inline enum a630_smmu_error a630_smmu_begin_core(bool exact_board,bool atos_disabled,
++    struct a630_mmu *tables,const struct a630_smmu_io *io,void *ctx,struct a630_smmu_snapshot *s)
++{return a630_smmu_begin_stream(exact_board,atos_disabled,true,true,tables,io,ctx,s);}
+ static inline enum a630_smmu_error a630_smmu_begin(bool exact_board,bool atos_disabled,
+     struct a630_mmu *tables,const struct a630_smmu_io *io,void *ctx,struct a630_smmu_snapshot *s)
+-{return a630_smmu_begin_policy(exact_board,atos_disabled,false,tables,io,ctx,s);}
++{return a630_smmu_begin_stream(exact_board,atos_disabled,false,false,tables,io,ctx,s);}
+ static inline enum a630_smmu_error a630_smmu_begin_handoff(bool exact_board,bool atos_disabled,
+     struct a630_mmu *tables,const struct a630_smmu_io *io,void *ctx,struct a630_smmu_snapshot *s)
+-{return a630_smmu_begin_policy(exact_board,atos_disabled,true,tables,io,ctx,s);}
++{return a630_smmu_begin_stream(exact_board,atos_disabled,true,false,tables,io,ctx,s);}
+ /* Only after all GMU/3D bus masters have stopped. If that cannot be
+  * established, leave the pages resident and the power/clock lease held.
+  * Cleanup has its own failure record and never erases the initial failure. */
+--- a/iokit/Kernel/arm/SweetFramebuffer.cpp
++++ b/iokit/Kernel/arm/SweetFramebuffer.cpp
+@@ -168,18 +168,18 @@
+ extern "C" uint32_t polaris_a630_diagnostic_line(unsigned, char *, uint32_t);
+ static void polaris_status_bar(AppleCLCD *fb)
+ {
+-    char text[24][136];
++    char text[29][136];
+     polaris_usb_status(text[0], sizeof(text[0]));
+     unsigned n = polaris_a630_details(text[1], sizeof(text[1]));
+     if (n < sizeof(text[1])) snprintf(text[1] + n, sizeof(text[1]) - n,
+         " T%u", __atomic_load_n(&fb->fPolarisLastUS, __ATOMIC_RELAXED));
+     for (unsigned i = 0; i < 7; i++)
+         polaris_usb_diagnostic_line(i, text[2 + i], sizeof(text[2 + i]));
+-    for (unsigned i = 0; i < 15; i++)
++    for (unsigned i = 0; i < 20; i++)
+         polaris_a630_diagnostic_line(i, text[9 + i], sizeof(text[9 + i]));
+     /* Fixed double-size diagnostic rows, saved state only. Keep output
+      * inside the actual panel and never poll MMIO from the display loop. */
+-    unsigned lines = fb->fHeight / 32 < 24 ? fb->fHeight / 32 : 24;
++    unsigned lines = fb->fHeight / 32 < 29 ? fb->fHeight / 32 : 29;
+     for (unsigned line = 0; line < lines; line++) {
+         for (unsigned y = 0; y < 32; y++) {
+             uint32_t *row = (uint32_t *)(fb->fPixels + (uint64_t)(line * 32 + y) * fb->fRowBytes);
+--- /dev/null
++++ b/bsd/dev/polaris_a630_post.h
+@@ -0,0 +1,61 @@
++/* Original SDM845 HFI_USE_REG post-start DCVS and GPU OOB lifetime.
++ * MiCode c7cb50c1 gmu_start/a6xx_gmu_dcvs_nohfi and kgsl_gmu.h.
++ * Requires all five cold HFI ACKs; default257MHz/perf1, DDRbus4.
++ */
++#ifndef POLARIS_A630_POST_H
++#define POLARIS_A630_POST_H
++#include "polaris_a630_channel.h"
++#define A630_POST_ACK 0x8ff0u
++#define A630_POST_PERF 0x8ff4u
++#define A630_POST_BW 0x8ff8u
++#define A630_POST_RETURN 0x8ffcu
++struct a630_post_snapshot {
++    uint32_t error,stage,offset,expected,actual,dcvs_requested,dcvs_done;
++    uint32_t gpu_requested,gpu_ready,gpu_released,dcvs_return,status,sp_status;
++};
++static inline bool a630_post_oob(const struct a630_channel_io *io,
++    struct a630_channel_snapshot *r,unsigned set,unsigned ack)
++{
++    uint32_t before;
++    if(!a630_ch_read(io,r,2,A630_CH_INTR_INFO,&before))return false;
++    if(before&(1u<<ack)){r->error=A630_CH_PROTOCOL;r->actual=before;return false;}
++    if(!a630_ch_write(io,r,2,A630_CH_INTR_SET,1u<<set)||
++       !a630_ch_poll(io,r,A630_CH_INTR_INFO,1u<<ack,1u<<ack,10000))return false;
++    return a630_ch_write(io,r,2,A630_CH_INTR_CLEAR,1u<<ack);
++}
++static inline bool a630_post_begin(bool enabled,const struct a630_channel_io *io,
++    const struct a630_channel_snapshot *h,struct a630_post_snapshot *s)
++{
++    if(!s)return false;*s=(struct a630_post_snapshot){0};if(!enabled)return false;
++    if(!io||!io->owned||!io->read||!io->write||!io->sync||!io->wait||!h||h->error!=A630_CH_READY||h->tables_done!=7||h->acks!=5){
++        s->error=A630_CH_ARGUMENT;return false;}
++    struct a630_channel_snapshot r={0};s->stage=1;
++    if(!a630_ch_write(io,&r,2,A630_POST_ACK,0)||
++       !a630_ch_write(io,&r,2,A630_POST_PERF,0x30000001)||
++       !a630_ch_write(io,&r,2,A630_POST_BW,4))goto failed;
++    s->dcvs_requested=1;
++    if(!a630_post_oob(io,&r,23,31)||
++       !a630_ch_read(io,&r,2,A630_POST_RETURN,&s->dcvs_return))goto failed;
++    if(s->dcvs_return){r.error=A630_CH_FW_ERROR;r.actual=s->dcvs_return;goto failed;}
++    if(!a630_ch_write(io,&r,2,A630_CH_INTR_SET,1u<<31))goto failed;
++    s->dcvs_done=1;s->stage=2;s->gpu_requested=1;
++    if(!a630_post_oob(io,&r,16,24)||
++       !a630_ch_read(io,&r,2,A630_CH_SPTP_STATUS,&s->sp_status))goto failed;
++    if(s->sp_status&0xc4){r.error=A630_CH_RUNNING;r.actual=s->sp_status;goto failed;}
++    s->gpu_ready=1;s->stage=3;s->error=A630_CH_READY;return true;
++failed:
++    s->error=r.error?r.error:A630_CH_IO;s->offset=r.failed_offset;
++    s->expected=r.expected;s->actual=r.actual;return false;
++}
++/* Only after CP and all rendering engines are proven idle/halted. Native
++ * clear is a write-only request; never call it proof of GX power-off. */
++static inline bool a630_post_end(const struct a630_channel_io *io,
++    struct a630_post_snapshot *s)
++{
++    if(!io||!s||!io->owned||!io->write||!io->sync)return false;
++    struct a630_channel_snapshot r={0};
++    if(s->gpu_requested&&!a630_ch_write(io,&r,2,A630_CH_INTR_SET,1u<<24))return false;
++    if(s->dcvs_requested&&!a630_ch_write(io,&r,2,A630_CH_INTR_SET,1u<<31))return false;
++    s->gpu_released=1;return true;
++}
++#endif
+--- /dev/null
++++ b/bsd/dev/polaris_a630_zap.h
+@@ -0,0 +1,57 @@
++/* Signed original A630 PAS13. Native subsys-pil-tz.c/scm.{c,h},
++ * MiCode c7cb50c1. Every transport and secure return must succeed.
++ * A rejected signature NEVER means that an older image is usable.
++ * Metadata remains resident, untouched after INIT_IMAGE, even on failure.
++ */
++#ifndef POLARIS_A630_ZAP_H
++#define POLARIS_A630_ZAP_H
++#include "polaris_a630_images.h"
++struct a630_zap_io {
++    bool (*owned)(void *);
++    int32_t (*call)(void *,uint32_t,uint32_t,uint64_t,uint64_t,uint64_t,uint64_t *);
++    bool (*publish)(void *);
++    bool (*segment)(void *,const uint8_t *,uint32_t);
++    void *ctx;
++};
++enum a630_zap_error {A630_ZAP_DISABLED,A630_ZAP_ARGUMENT,A630_ZAP_LEASE,
++    A630_ZAP_TRANSPORT,A630_ZAP_SECURE,A630_ZAP_IO,A630_ZAP_READY};
++struct a630_zap_snapshot {uint32_t error,stage,fn,transport,secure,calls,signature,region,authenticated;};
++static inline bool a630_zap_call(const struct a630_zap_io *io,
++    struct a630_zap_snapshot *s,uint32_t fn,uint32_t info,uint64_t a,uint64_t b,uint64_t c,uint64_t expected)
++{
++    if(!io->owned(io->ctx)){s->error=A630_ZAP_LEASE;return false;}
++    uint64_t result=UINT64_MAX;s->fn=fn;s->calls++;
++    int32_t status=io->call(io->ctx,fn,info,a,b,c,&result);
++    s->transport=(uint32_t)status;s->secure=(uint32_t)result;
++    if(status){s->error=A630_ZAP_TRANSPORT;return false;}
++    if(result!=expected){s->error=A630_ZAP_SECURE;return false;}return true;
++}
++static inline bool a630_zap_start(bool exact_board,const struct a630_zap_io *io,
++    const struct a630_image images[6],uint64_t metadata_pa,struct a630_zap_snapshot *s)
++{
++    if(!s)return false;*s=(struct a630_zap_snapshot){0};if(!exact_board)return false;
++    if(!io||!io->owned||!io->call||!io->publish||!io->segment||
++       !a630_images_valid(images)||!metadata_pa||(metadata_pa&0x3fff)||metadata_pa>=(UINT64_C(1)<<36)){
++        s->error=A630_ZAP_ARGUMENT;return false;}
++    s->stage=1;
++    /* Original SMC64 availability discovery, then each required PAS call. */
++    if(!a630_zap_call(io,s,0xc2000601,1,0x82000601,0,0,1))return false;
++    const uint32_t functions[]={0x02000206,0x02000201,0x02000202,0x02000205};
++    for(unsigned n=0;n<4;n++)
++        if(!a630_zap_call(io,s,0xc2000601,1,functions[n],0,0,1))return false;
++    s->stage=2;
++    if(!a630_zap_call(io,s,0x42000206,1,13,0,0,0))return false;
++    s->stage=3;
++    if(!io->owned(io->ctx)){s->error=A630_ZAP_LEASE;return false;}
++    if(!io->publish(io->ctx)){s->error=A630_ZAP_IO;return false;}
++    if(!a630_zap_call(io,s,0x42000201,0x82,13,metadata_pa,0,0))return false;
++    s->signature=1;s->stage=4;
++    if(!a630_zap_call(io,s,0x42000202,3,13,0x8c415000,4096,0))return false;
++    s->region=1;s->stage=5;
++    if(!io->owned(io->ctx)){s->error=A630_ZAP_LEASE;return false;}
++    if(!io->segment(io->ctx,images[5].data,images[5].bytes)){s->error=A630_ZAP_IO;return false;}
++    s->stage=6;
++    if(!a630_zap_call(io,s,0x42000205,1,13,0,0,0))return false;
++    s->authenticated=1;s->stage=7;s->error=A630_ZAP_READY;return true;
++}
++#endif
+--- /dev/null
++++ b/bsd/dev/polaris_a630_core.h
+@@ -0,0 +1,176 @@
++/* Original A630 command processor + bounded owned64x64 offscreen proof.
++ * Native c7cb50c1 register profile; Linuxv6.12 A630 non-preempting8word
++ * ME_INIT; Mesa25.0.7 PM4/a6xx.xml/fd6_blitter/A630 device properties.
++ * No user client/desktop rendering is registered by this diagnostic.
++ * Caller owns stream0, authenticated native ZAP, NC buffers and GPU OOB.
++ */
++#ifndef POLARIS_A630_CORE_H
++#define POLARIS_A630_CORE_H
++#include <stdint.h>
++#include <stdbool.h>
++#include <stddef.h>
++#include "polaris_a630_core_profile.h"
++#define A630_CORE_SQE 0x10000000u
++#define A630_CORE_RING 0x10010000u
++#define A630_CORE_SCRATCH 0x10020000u
++#define A630_CORE_TARGET 0x11000000u
++#define A630_CORE_WORDS 8192u
++enum a630_core_error {A630_CORE_DISABLED,A630_CORE_ARGUMENT,A630_CORE_LEASE,
++    A630_CORE_IO,A630_CORE_RUNNING,A630_CORE_TIMEOUT,A630_CORE_FAULT,
++    A630_CORE_DATA,A630_CORE_READY};
++struct a630_core_io {
++    bool (*owned)(void *);
++    bool (*read)(void *,uint32_t,uint32_t *); /* register WORD indices */
++    bool (*write)(void *,uint32_t,uint32_t);
++    bool (*sync)(void *);
++    void (*wait)(void *,uint32_t);
++    void *ctx;
++};
++struct a630_core_snapshot {
++    uint32_t error,stage,offset,expected,actual,started,halted,idle,keep_live;
++    uint32_t wptr,rptr,status,irq,hw_fault,protect,cp_irq,polls;
++    uint32_t init_done,secure_done,fence,image,pixels,halt_error;
++};
++static inline uint32_t a630_core_parity(uint32_t v)
++{v^=v>>16;v^=v>>8;v^=v>>4;return (0x9669u>>(v&15))&1;}
++static inline uint32_t a630_core_pkt7(uint32_t op,uint32_t n)
++{return 0x70000000u|n|(a630_core_parity(n)<<15)|(op<<16)|(a630_core_parity(op)<<23);}
++static inline uint32_t a630_core_pkt4(uint32_t reg,uint32_t n)
++{return 0x40000000u|n|(a630_core_parity(n)<<7)|(reg<<8)|(a630_core_parity(reg)<<27);}
++static inline bool a630_core_rd(const struct a630_core_io *io,struct a630_core_snapshot *s,uint32_t w,uint32_t *v)
++{
++    if(!io->owned(io->ctx)){s->error=A630_CORE_LEASE;return false;}
++    if(io->read(io->ctx,w,v))return true;s->error=A630_CORE_IO;s->offset=w;return false;
++}
++static inline bool a630_core_wr(const struct a630_core_io *io,struct a630_core_snapshot *s,uint32_t w,uint32_t v)
++{
++    if(!io->owned(io->ctx)){s->error=A630_CORE_LEASE;return false;}
++    if(io->write(io->ctx,w,v)&&io->sync(io->ctx))return true;
++    s->error=A630_CORE_IO;s->offset=w;return false;
++}
++static inline bool a630_core_idle(const struct a630_core_io *io,struct a630_core_snapshot *s)
++{
++    for(unsigned n=0;n<20000;n++){
++        s->polls++;
++        if(!a630_core_rd(io,s,0x806,&s->rptr)||!a630_core_rd(io,s,0x210,&s->status)||
++           !a630_core_rd(io,s,0x201,&s->irq))return false;
++        /* Native RBBM interrupt fault bits; completion interrupts are benign. */
++        if(s->irq&0x03c002c2u){s->error=A630_CORE_FAULT;goto fault;}
++        if(s->rptr==s->wptr&&!(s->status&0xfffffffeu)){s->idle=1;return true;}
++        io->wait(io->ctx,10);
++    }
++    s->error=A630_CORE_TIMEOUT;s->offset=0x806;s->expected=s->wptr;s->actual=s->rptr;
++fault:
++    /* Best-effort read-only first-fault detail. Never acknowledges a foreign IRQ. */
++    io->read(io->ctx,0x821,&s->hw_fault);io->read(io->ctx,0x824,&s->protect);
++    io->read(io->ctx,0x823,&s->cp_irq);return false;
++}
++static inline bool a630_core_sync(const struct a630_core_io *io,struct a630_core_snapshot *s)
++{
++    if(!io->owned(io->ctx)){s->error=A630_CORE_LEASE;return false;}
++    if(io->sync(io->ctx))return true;s->error=A630_CORE_IO;return false;
++}
++static inline bool a630_core_emit(uint32_t *ring,struct a630_core_snapshot *s,uint32_t v)
++{if(s->wptr>=A630_CORE_WORDS){s->error=A630_CORE_ARGUMENT;return false;}ring[s->wptr++]=v;return true;}
++static inline bool a630_core_reg(uint32_t *ring,struct a630_core_snapshot *s,uint32_t reg,uint32_t value)
++{return a630_core_emit(ring,s,a630_core_pkt4(reg,1))&&a630_core_emit(ring,s,value);}
++static inline bool a630_core_submit(const struct a630_core_io *io,struct a630_core_snapshot *s)
++{
++    s->idle=0;
++    if(!io->sync(io->ctx)){s->error=A630_CORE_IO;return false;}
++    return a630_core_wr(io,s,0x807,s->wptr)&&a630_core_idle(io,s);
++}
++static inline bool a630_core_halt(const struct a630_core_io *io,struct a630_core_snapshot *s)
++{
++    struct a630_core_snapshot r=*s;r.error=0;
++    /* Halting SQE alone does not drain a rendering engine. Idle first. */
++    if(s->started&&!a630_core_idle(io,&r))goto failed;
++    if(!a630_core_wr(io,&r,0x808,3))goto failed;
++    uint32_t value=0;
++    if(!a630_core_rd(io,&r,0x808,&value)||!(value&2))goto failed;
++    s->halted=1;s->idle=1;s->keep_live=0;return true;
++failed:
++    s->halt_error=r.error?r.error:A630_CORE_RUNNING;s->keep_live=1;return false;
++}
++static inline bool a630_core_run(bool exact_board,bool mappings_ready,bool authenticated,
++    const struct a630_core_io *io,uint32_t *ring,volatile uint32_t *scratch,
++    volatile uint32_t *target,struct a630_core_snapshot *s)
++{
++    if(!s)return false;*s=(struct a630_core_snapshot){0};if(!exact_board)return false;
++    if(!mappings_ready||!authenticated||!io||!io->owned||!io->read||!io->write||
++       !io->sync||!io->wait||!ring||!scratch||!target||
++       ((uintptr_t)ring&0x3fff)||((uintptr_t)scratch&0x3fff)||((uintptr_t)target&0x3fff)){
++        s->error=A630_CORE_ARGUMENT;return false;}
++    s->stage=1;s->keep_live=1;
++    if(!a630_core_rd(io,s,0x210,&s->status))return false;
++    if(s->status&0xfffffffeu){s->error=A630_CORE_RUNNING;return false;}
++    if(!a630_core_wr(io,s,0x808,3)||!a630_core_rd(io,s,0x808,&s->actual))return false;
++    if(!(s->actual&2)){s->error=A630_CORE_RUNNING;return false;}
++    s->halted=1;s->keep_live=0;
++    if(!a630_core_rd(io,s,0x806,&s->rptr))return false;
++    if(s->rptr){s->error=A630_CORE_RUNNING;return false;}
++    for(unsigned n=0;n<A630_CORE_WORDS;n++)ring[n]=0;
++    for(unsigned n=0;n<16;n++)scratch[n]=0;
++    for(unsigned n=0;n<4096;n++)target[n]=0xa5a5a5a5;
++    s->stage=2;
++    for(unsigned n=0;n<sizeof(a630_core_profile)/sizeof(a630_core_profile[0]);n++)
++        if(!a630_core_wr(io,s,a630_core_profile[n].word,a630_core_profile[n].value))return false;
++    if(!a630_core_wr(io,s,0x830,A630_CORE_SQE)||!a630_core_wr(io,s,0x831,0)||
++       !a630_core_wr(io,s,0x800,A630_CORE_RING)||!a630_core_wr(io,s,0x801,0)||
++       !a630_core_wr(io,s,0x802,0x0800020c)||!a630_core_wr(io,s,0x804,0)||
++       !a630_core_wr(io,s,0x805,0)||!a630_core_wr(io,s,0x807,0))return false;
++    s->stage=3;s->started=1;s->halted=0;s->idle=0;s->keep_live=1;
++    if(!a630_core_wr(io,s,0x808,1))goto done;
++    /* Linuxv6.12 A630 CP initialization: no preemption/IFPC restore list. */
++    const uint32_t init[]={0x2f,3,0x20000000,0,0,0,0,0};
++    if(!a630_core_emit(ring,s,a630_core_pkt7(0x48,8)))goto done;
++    for(unsigned n=0;n<8;n++)if(!a630_core_emit(ring,s,init[n]))goto done;
++    if(!a630_core_submit(io,s))goto done;
++    s->init_done=1;s->stage=4;
++    if(!a630_core_emit(ring,s,a630_core_pkt7(0x66,1))||!a630_core_emit(ring,s,0)||
++       !a630_core_submit(io,s))goto done;
++    s->secure_done=1;s->stage=5;
++    const uint32_t fence[]={A630_CORE_SCRATCH,0,0x600dc0de};
++    if(!a630_core_emit(ring,s,a630_core_pkt7(0x3d,3)))goto done;
++    for(unsigned n=0;n<3;n++)if(!a630_core_emit(ring,s,fence[n]))goto done;
++    if(!a630_core_emit(ring,s,a630_core_pkt7(0x26,0))||!a630_core_submit(io,s)||!a630_core_sync(io,s))goto done;
++    s->fence=scratch[0];if(s->fence!=0x600dc0de){s->error=A630_CORE_DATA;s->expected=0x600dc0de;s->actual=s->fence;goto done;}
++    s->stage=6;
++    /* A630 has2CCUs, each64KiB depthcache: coloroffset0x20000 ->10000004.
++     * Its blit ECO is05100000 (different from the reference642L's04100000). */
++    if(!a630_core_emit(ring,s,a630_core_pkt7(0x65,1))||!a630_core_emit(ring,s,12)||
++       !a630_core_reg(ring,s,0x8e07,0x10000004))goto done;
++    const uint32_t tops[]={0,20,44},bottoms[]={20,44,64};
++    const uint32_t colors[3][3]={{255,128,0},{255,255,255},{0,128,255}};
++    for(unsigned k=0;k<3;k++){
++        if(!a630_core_reg(ring,s,0x8405,tops[k]<<16)||
++           !a630_core_reg(ring,s,0x8406,63|((bottoms[k]-1)<<16)))goto done;
++        for(unsigned c=0;c<4;c++)if(!a630_core_reg(ring,s,0x8c2c+c,c==3?255:colors[k][c]))goto done;
++        if(!a630_core_reg(ring,s,0x8c00,0x10f03080)||!a630_core_reg(ring,s,0x8400,0x10f03080)||
++           !a630_core_reg(ring,s,0xacc0,0xf181)||!a630_core_reg(ring,s,0x8c01,0)||
++           !a630_core_reg(ring,s,0x8c17,0x430)||!a630_core_reg(ring,s,0x8c18,A630_CORE_TARGET)||
++           !a630_core_reg(ring,s,0x8c19,0)||!a630_core_reg(ring,s,0x8c1a,4)||
++           !a630_core_emit(ring,s,a630_core_pkt7(0x26,0))||
++           !a630_core_reg(ring,s,0x8e04,0x05100000)||
++           !a630_core_emit(ring,s,a630_core_pkt7(0x2c,1))||!a630_core_emit(ring,s,3)||
++           !a630_core_emit(ring,s,a630_core_pkt7(0x26,0))||!a630_core_reg(ring,s,0x8e04,0))goto done;
++    }
++    const uint32_t events[2][4]={{0x1d,A630_CORE_SCRATCH+32,0,0x0c0c0c0c},{4,A630_CORE_SCRATCH+16,0,0x0d0e0d0e}};
++    for(unsigned e=0;e<2;e++){
++        if(!a630_core_emit(ring,s,a630_core_pkt7(0x46,4)))goto done;
++        for(unsigned n=0;n<4;n++)if(!a630_core_emit(ring,s,events[e][n]))goto done;
++    }
++    if(!a630_core_emit(ring,s,a630_core_pkt7(0x26,0))||!a630_core_submit(io,s)||!a630_core_sync(io,s))goto done;
++    if(scratch[8]!=0x0c0c0c0c||scratch[4]!=0x0d0e0d0e){s->error=A630_CORE_DATA;s->actual=scratch[4];goto done;}
++    for(unsigned y=0;y<64;y++)for(unsigned x=0;x<64;x++){
++        unsigned k=y<20?0:y<44?1:2;
++        uint32_t want=0xff000000u|(colors[k][0]<<16)|(colors[k][1]<<8)|colors[k][2];
++        uint32_t actual=target[y*64+x];
++        if(actual!=want){s->error=A630_CORE_DATA;s->offset=y*64+x;s->expected=want;s->actual=actual;goto done;}
++        s->pixels++;
++    }
++    s->image=1;s->stage=7;s->error=A630_CORE_READY;
++done:
++    a630_core_halt(io,s);return s->error==A630_CORE_READY&&s->halted;
++}
++#endif
+--- /dev/null
++++ b/bsd/dev/polaris_a630_core_profile.h
+@@ -0,0 +1,85 @@
++/* Original A630v2 core profile: MiCode c7cb50c1 adreno_a6xx.c/a6xx_reg.h.
++ * Own DT GMEM1MiB/HBB15/MAL32/UBWC2. Polling bounded test: IRQmask0,
++ * clockgatingOFF, no preemption/IFPC restoration or expanded APRIV.
++ * No SECVID_TRUST_CNTL bypass. Values use native register WORD indices.
++ */
++#ifndef POLARIS_A630_CORE_PROFILE_H
++#define POLARIS_A630_CORE_PROFILE_H
++struct a630_core_register {uint32_t word,value;};
++static const struct a630_core_register a630_core_profile[]={
++    {0x38,0x00000000}, /* A6XX_RBBM_INT_0_MASK */
++    {0xae,0x00000000}, /* A6XX_RBBM_CLOCK_CNTL */
++    {0x842,0x00000001}, /* A6XX_CP_ADDR_MODE_CNTL */
++    {0xc01,0x00000001}, /* A6XX_VSC_ADDR_MODE_CNTL */
++    {0x8601,0x00000001}, /* A6XX_GRAS_ADDR_MODE_CNTL */
++    {0x8e05,0x00000001}, /* A6XX_RB_ADDR_MODE_CNTL */
++    {0x9e01,0x00000001}, /* A6XX_PC_ADDR_MODE_CNTL */
++    {0xbe05,0x00000001}, /* A6XX_HLSQ_ADDR_MODE_CNTL */
++    {0xa601,0x00000001}, /* A6XX_VFD_ADDR_MODE_CNTL */
++    {0x9601,0x00000001}, /* A6XX_VPC_ADDR_MODE_CNTL */
++    {0xe00,0x00000001}, /* A6XX_UCHE_ADDR_MODE_CNTL */
++    {0xae01,0x00000001}, /* A6XX_SP_ADDR_MODE_CNTL */
++    {0xb601,0x00000001}, /* A6XX_TPL1_ADDR_MODE_CNTL */
++    {0xf810,0x00000001}, /* A6XX_RBBM_SECVID_TSB_ADDR_MODE_CNTL */
++    {0x302a,0x00000009}, /* A6XX_VBIF_GATE_OFF_WRREQ_EN */
++    {0x10,0x00000003}, /* A6XX_RBBM_VBIF_CLIENT_QOS_CNTL */
++    {0x50b,0xffffffff}, /* A6XX_RBBM_PERFCTR_GPU_BUSY_MASKED */
++    {0xe05,0xffffffc0}, /* A6XX_UCHE_WRITE_RANGE_MAX_LO */
++    {0xe06,0x0001ffff}, /* A6XX_UCHE_WRITE_RANGE_MAX_HI */
++    {0xe09,0xfffff000}, /* A6XX_UCHE_TRAP_BASE_LO */
++    {0xe0a,0x0001ffff}, /* A6XX_UCHE_TRAP_BASE_HI */
++    {0xe07,0xfffff000}, /* A6XX_UCHE_WRITE_THRU_BASE_LO */
++    {0xe08,0x0001ffff}, /* A6XX_UCHE_WRITE_THRU_BASE_HI */
++    {0xe0b,0x00100000}, /* A6XX_UCHE_GMEM_RANGE_MIN_LO */
++    {0xe0c,0x00000000}, /* A6XX_UCHE_GMEM_RANGE_MIN_HI */
++    {0xe0d,0x001fffff}, /* A6XX_UCHE_GMEM_RANGE_MAX_LO */
++    {0xe0e,0x00000000}, /* A6XX_UCHE_GMEM_RANGE_MAX_HI */
++    {0xe18,0x00000804}, /* A6XX_UCHE_FILTER_CNTL */
++    {0xe17,0x00000004}, /* A6XX_UCHE_CACHE_WAYS */
++    {0x8c2,0x010000c0}, /* A6XX_CP_ROQ_THRESHOLDS_2 */
++    {0x8c1,0x8040362c}, /* A6XX_CP_ROQ_THRESHOLDS_1 */
++    {0x8c3,0x00000080}, /* A6XX_CP_MEM_POOL_SIZE */
++    {0x9e00,0x00180000}, /* A6XX_PC_DBG_ECO_CNTL */
++    {0x98d,0x00000001}, /* A6XX_CP_AHB_CNTL */
++    {0x500,0x00000001}, /* A6XX_RBBM_PERFCTR_CNTL */
++    {0x8e08,0x00000004}, /* A6XX_RB_NC_MODE_CNTL */
++    {0xb604,0x00000004}, /* A6XX_TPL1_NC_MODE_CNTL */
++    {0xae02,0x00000004}, /* A6XX_SP_NC_MODE_CNTL */
++    {0xe01,0x00400000}, /* A6XX_UCHE_MODE_CNTL */
++    {0x1f,0x401fffff}, /* A6XX_RBBM_INTERFACE_HANG_INT_CNTL */
++    {0xe19,0x00000001}, /* A6XX_UCHE_CLIENT_PF */
++    {0x84f,0x00000003}, /* A6XX_CP_PROTECT_CNTL */
++    {0x850,0x01440600}, /* A6XX_CP_PROTECT_REG+0 */
++    {0x851,0x8008ae50}, /* A6XX_CP_PROTECT_REG+1 */
++    {0x852,0x804c9624}, /* A6XX_CP_PROTECT_REG+2 */
++    {0x853,0x80208630}, /* A6XX_CP_PROTECT_REG+3 */
++    {0x854,0x80049e70}, /* A6XX_CP_PROTECT_REG+4 */
++    {0x855,0x861c9e78}, /* A6XX_CP_PROTECT_REG+5 */
++    {0x856,0xa040f000}, /* A6XX_CP_PROTECT_REG+6 */
++    {0x857,0x000cfc00}, /* A6XX_CP_PROTECT_REG+7 */
++    {0x858,0x8000050e}, /* A6XX_CP_PROTECT_REG+8 */
++    {0x859,0x0000050f}, /* A6XX_CP_PROTECT_REG+9 */
++    {0x85a,0x80000510}, /* A6XX_CP_PROTECT_REG+10 */
++    {0x85b,0x13e40000}, /* A6XX_CP_PROTECT_REG+11 */
++    {0x85c,0x00280501}, /* A6XX_CP_PROTECT_REG+12 */
++    {0x85d,0x01100511}, /* A6XX_CP_PROTECT_REG+13 */
++    {0x85e,0x80040e00}, /* A6XX_CP_PROTECT_REG+14 */
++    {0x85f,0x802c0e03}, /* A6XX_CP_PROTECT_REG+15 */
++    {0x860,0x80008e00}, /* A6XX_CP_PROTECT_REG+16 */
++    {0x861,0x803c8e50}, /* A6XX_CP_PROTECT_REG+17 */
++    {0x862,0x8000be02}, /* A6XX_CP_PROTECT_REG+18 */
++    {0x863,0xc7ccbe20}, /* A6XX_CP_PROTECT_REG+19 */
++    {0x864,0x82080800}, /* A6XX_CP_PROTECT_REG+20 */
++    {0x865,0x802008a0}, /* A6XX_CP_PROTECT_REG+21 */
++    {0x866,0x806408ab}, /* A6XX_CP_PROTECT_REG+22 */
++    {0x867,0x81340900}, /* A6XX_CP_PROTECT_REG+23 */
++    {0x868,0x81d8098d}, /* A6XX_CP_PROTECT_REG+24 */
++    {0x869,0x008c08d0}, /* A6XX_CP_PROTECT_REG+25 */
++    {0x86a,0x00100980}, /* A6XX_CP_PROTECT_REG+26 */
++    {0x86b,0x8000a630}, /* A6XX_CP_PROTECT_REG+27 */
++    {0x86c,0xfffd0000}, /* A6XX_CP_PROTECT_REG+28 */
++    {0x86d,0xbffd2000}, /* A6XX_CP_PROTECT_REG+29 */
++    {0x86e,0x00000000}, /* A6XX_CP_PROTECT_REG+30 */
++    {0x86f,0x00000000}, /* A6XX_CP_PROTECT_REG+31 */
++};
++#endif

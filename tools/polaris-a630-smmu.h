@@ -37,7 +37,7 @@ struct a630_smmu_io {
 struct a630_smmu_snapshot {
     uint32_t error, start_error, stage, changed, restored;
     uint32_t id[4], page, banks, stage2_banks, matches, half;
-    uint32_t slot, bank, context, global, smr, s2cr, cbar, cba2r, foreign;
+    uint32_t stream, core, slot, bank, context, global, smr, s2cr, cbar, cba2r, foreign;
     uint32_t control[5], impl[A630_SMMU_IMPLS];
     uint64_t ttbr[2], root;
     uint32_t failed_offset, expected, actual, polls, restore_error;
@@ -225,11 +225,11 @@ static inline bool a630_smmu_impl_stable(const struct a630_smmu_io *io,void *ctx
     s->impl_checks++;return true;
 }
 static inline enum a630_smmu_error
- a630_smmu_begin_policy(bool exact_board, bool atos_disabled, bool handoff, struct a630_mmu *tables,
+ a630_smmu_begin_stream(bool exact_board, bool atos_disabled, bool handoff, bool core, struct a630_mmu *tables,
     const struct a630_smmu_io *io, void *ctx, struct a630_smmu_snapshot *s)
 {
     if (!s) return A630_SMMU_ARGUMENT;
-    *s=(struct a630_smmu_snapshot){.slot=UINT32_MAX,.bank=UINT32_MAX};
+    *s=(struct a630_smmu_snapshot){.stream=core?0:A630_SMMU_STREAM,.core=core,.slot=UINT32_MAX,.bank=UINT32_MAX};
     if (!exact_board) return A630_SMMU_DISABLED;
     if (!atos_disabled || !a630_smmu_callbacks(io) || !a630_mmu_valid(tables)) {
         s->error=A630_SMMU_ARGUMENT; goto done;
@@ -239,14 +239,14 @@ static inline enum a630_smmu_error
         if (!a630_smmu_rd(io,ctx,s,n==3?0x3c:0x20+4*n,&s->id[n])) goto done;
     if (!a630_smmu_geometry(s)) {s->error=A630_SMMU_LAYOUT;goto done;}
     s->stage=2;
-    uint32_t used=1, free_slot=UINT32_MAX;
+    uint32_t used=core?0:1, free_slot=UINT32_MAX;
     for (unsigned n=0;n<s->matches;n++) {
         uint32_t smr,s2cr;
         if (!a630_smmu_rd(io,ctx,s,0x800+4*n,&smr) ||
             !a630_smmu_rd(io,ctx,s,0xc00+4*n,&s2cr)) goto done;
         if (!(smr&(1u<<31))) {if(free_slot==UINT32_MAX)free_slot=n;continue;}
         unsigned mask=(smr>>16)&0x7fff, id=smr&0x7fff;
-        if (!((A630_SMMU_STREAM^id)&~mask)) {
+        if (!((s->stream^id)&~mask)) {
             /* An overlapping/wildcard match could affect another stream. */
             if (mask || s->slot!=UINT32_MAX) {s->error=A630_SMMU_OWNERSHIP;goto done;}
             s->slot=n; s->smr=smr; s->s2cr=s2cr;
@@ -261,8 +261,13 @@ static inline enum a630_smmu_error
         if (!a630_smmu_rd(io,ctx,s,0x800+4*s->slot,&s->smr) ||
             !a630_smmu_rd(io,ctx,s,0xc00+4*s->slot,&s->s2cr)) goto done;
     }
+    if(core && (s->s2cr&0x30000u)==0){
+        uint32_t bank=s->s2cr&255,control;
+        if(bank>=s->banks || !a630_smmu_rd(io,ctx,s,s->half+bank*s->page,&control))goto done;
+        if(control&1){s->error=A630_SMMU_OWNERSHIP;goto done;}
+    }
     /* CB0 is reserved for the later 3D context;5..7 belong to HYP. */
-    for (unsigned n=1;n<s->banks && n<5;n++) {
+    for (unsigned n=core?0:1;n<s->banks && n<(core?1:5);n++) {
         uint32_t control;
         if (n<s->stage2_banks || used&(1u<<n)) continue;
         if (!a630_smmu_rd(io,ctx,s,s->half+n*s->page,&control)) goto done;
@@ -345,7 +350,7 @@ static inline enum a630_smmu_error
     if(handoff && !a630_smmu_impl_stable(io,ctx,s))goto done;
     /* Reject unmatched streams, preserve every existing match. */
     if (!a630_smmu_set(io,ctx,s,0,(s->global|0x400u)&~1u,0x401) ||
-        !a630_smmu_set(io,ctx,s,0x800+4*s->slot,(1u<<31)|A630_SMMU_STREAM,UINT32_MAX) ||
+        !a630_smmu_set(io,ctx,s,0x800+4*s->slot,(1u<<31)|s->stream,UINT32_MAX) ||
         !a630_smmu_set(io,ctx,s,0xc00+4*s->slot,
             (s->s2cr&~0x030303ffu)|0x300|s->bank,0x030303ff)) goto done;
     if (!io->sync(ctx)) {s->error=A630_SMMU_IO;goto done;}
@@ -354,12 +359,15 @@ static inline enum a630_smmu_error
 done:
     s->start_error=s->error;return (enum a630_smmu_error)s->error;
 }
+static inline enum a630_smmu_error a630_smmu_begin_core(bool exact_board,bool atos_disabled,
+    struct a630_mmu *tables,const struct a630_smmu_io *io,void *ctx,struct a630_smmu_snapshot *s)
+{return a630_smmu_begin_stream(exact_board,atos_disabled,true,true,tables,io,ctx,s);}
 static inline enum a630_smmu_error a630_smmu_begin(bool exact_board,bool atos_disabled,
     struct a630_mmu *tables,const struct a630_smmu_io *io,void *ctx,struct a630_smmu_snapshot *s)
-{return a630_smmu_begin_policy(exact_board,atos_disabled,false,tables,io,ctx,s);}
+{return a630_smmu_begin_stream(exact_board,atos_disabled,false,false,tables,io,ctx,s);}
 static inline enum a630_smmu_error a630_smmu_begin_handoff(bool exact_board,bool atos_disabled,
     struct a630_mmu *tables,const struct a630_smmu_io *io,void *ctx,struct a630_smmu_snapshot *s)
-{return a630_smmu_begin_policy(exact_board,atos_disabled,true,tables,io,ctx,s);}
+{return a630_smmu_begin_stream(exact_board,atos_disabled,true,false,tables,io,ctx,s);}
 /* Only after all GMU/3D bus masters have stopped. If that cannot be
  * established, leave the pages resident and the power/clock lease held.
  * Cleanup has its own failure record and never erases the initial failure. */

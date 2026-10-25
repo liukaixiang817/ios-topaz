@@ -108,9 +108,10 @@ def read_collection(directory, manifest):
     return images, inspect_images(images)
 
 
-def attach(original, images, *, execution=False):
+def attach(original, images, *, execution=False, core=False):
     """Add only a firmware node; it advertises no IOService or powered GPU."""
     inspect_images(images)
+    require(not core or execution, "core contract requires execution")
     root, _ = adt.parse(original)
     require(adt.serialize(root) == original, 'noncanonical input ADT')
     props = lambda n: {k: v for k, _, v in n.props}
@@ -124,7 +125,7 @@ def attach(original, images, *, execution=False):
             'firmware node already exists')
     node = adt.Node()
     node.props = [('name', 0, b'polaris-a630-firmware\0'),
-                  ('version', 0, struct.pack('<I', 3 if execution else 2)),
+                  ('version', 0, struct.pack('<I', 4 if core else 3 if execution else 2)),
                   ('chip-id', 0, struct.pack('<I', 0x06030001)),
                   ('sqe-code-offset', 0, struct.pack('<I', 4)),
                   ('gcc-reg', 0, struct.pack('<QQ', 0x100000, 0x90000)),
@@ -138,6 +139,13 @@ def attach(original, images, *, execution=False):
             ('smmu-iommu-cells', 0, struct.pack('<I', 1)),
             ('smmu-stream-id', 0, struct.pack('<I', 5)),
             ('gmu-hz', 0, struct.pack('<I', 200000000)),
+        ])
+    if core:
+        node.props.extend([
+            ('core-reg', 0, struct.pack('<QQ', 0x5000000, 0x40000)),
+            ('zap-reg', 0, struct.pack('<QQ', 0x8c415000, 0x2000)),
+            ('core-smmu-stream-id', 0, struct.pack('<I', 0)),
+            ('core-gmem-bytes', 0, struct.pack('<I', 0x100000)),
         ])
     for name, data in sorted(images.items()):
         key = name.removeprefix('a630_').replace('.', '-')
