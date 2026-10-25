@@ -34,7 +34,40 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT ACTION —0044 temporary boot SENT; actual GPU/GUI result pending
+### CURRENT ACTION —0044 GUI/authentication confirmed;0045 native CP ordering fix in validation
+
+- Human0044 photo8EDAC277 confirms entered Settings, GUIstillCPU. Visible
+  GZ6/7 fn42000205 t0r0 S1M1A1K1 Q0/R0: freshPAS authentication succeeded;
+  priorunreturnedPASshutdownstall bypassed. GH8/b C5A5 andGD8/3 D1G1 ret0.
+  FirstCPinitFAILS: GC0=5/3 C0/9 I0 F0 H0 L1 M8/7; GI0px0 @806e9a0;
+  GF IRQ0 HW0 P0 CP80. Vendorbit7=ILLEGAL_INSTR; underlyingcause UNPROVEN.
+  Noactualcommand/fence/pixelproof, no desktopacceleration. Fullmanualrecord
+  0044/hardware-0044-CP-init-failure.json binds0044sent_utc/image/source.
+- Human initiallyaskedcompactlogs then clarified “如果都是重要日志…留着…尽快实现GPU”.
+  KEEPimportantlogs/29rowpanel, noUIreduction work. USBobserverstillPAUSED.
+- Ownnative a6xx_rb_start programs RB/SQE before microcode_load/subsystem_get
+  (ZAP). Our0044didbothafterAUTH. New0850 separateshaltedpreparation from
+  authenticatedexecution, verifies7criticalregisterreadbacks, gatesAUTHon
+  successfulpreparation andgatesSQEreleaseonfreshAUTH. Doesnotclaimthisorder
+  discrepancy isprovenTZ/CP80rootcause. Samefirmware/v4ADT/CPU1/clocks/MMU.
+- IndependentCPstatus faults now detected withRBBMmask0; recordinitial/postAUTH/
+  firstfault states. Bounded8wordnativeSQEindexedstatus capture saves/restores
+  index; readonlyglobal/ownedCB0syndrome, noack/reset/resume/ATOS. Firstfailure
+  preserved; uncertainCP/PAS retainsallresidentresources, noautomaticshutdown.
+  Newtests inactualadapter verifyprepare→AUTH→execute andnoAUTHwhenpreparefails;
+  actualcommandmodel testsbadreadback, rejectedAUTHneverreleasesSQE, CP80with
+  RBBMIRQ0 andindexedrestoration. Final49ASan/UBSan tests PASS;29rowformatter
+  PASS,4actualCI-headerARM64units/importsPASS,4SMCsites/DSB/fullwidthmetadata.
+  Firsthostreportfixture missingnewglobals and firstformatterwidthfailure
+  retainedprivate; fixedfixture/native8bitCPdisplay (raw32bitRAMunchanged),
+  no assertion/IRQclockthreshold waiver. ProductioncompilealwaysPASS.
+- Private0045directory, native extra snapshot.c pinnedMiCode c7cb50c1 Gitblob
+  5572cd78cdeb5982fe1efc69b14f583b7e6c84b1; noforeigncodeexecuted. 30ordered
+  patches/35files PASS, original48register/12DTpair checkPASS. No0045CI/image/
+  deviceactionyet. NEXTcompletequalitychecks/sourceonlycommit-push/build,
+  samefixedCPU1matrix, independentimagecheck thenFIRSTautoFASTBOOTquery.
+
+### 0044 temporary boot SENT; later GUI confirmed above
 
 - FreshROpreflight16169 EXIT0 at04:29:49.909537UTC: all16GiB root689a8cd1,
   all182maps/GPT/header32311c08 unchanged; cleanouter,unmounted,blockRO1,

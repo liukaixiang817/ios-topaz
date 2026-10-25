@@ -59,6 +59,7 @@ static struct a630_smmu_snapshot a630_core_smmu;
 static struct a630_post_snapshot a630_post_saved;
 static struct a630_zap_snapshot a630_zap_saved;
 static struct a630_core_snapshot a630_core_saved;
+static uint32_t a630_core_fault_regs[8],a630_core_fault_valid;
 static struct a630_image a630_images[6];
 static uint64_t a630_dma_physical;
 static uint32_t a630_core_dma_ready;
@@ -157,8 +158,8 @@ uint32_t polaris_a630_diagnostic_line(unsigned line, char *out, uint32_t size)
         return (uint32_t)snprintf(out,size,"GS0 R%x @%x e%x a%x",
             a630_core_smmu.restore_error&15,a630_core_smmu.restore_offset,
             a630_core_smmu.restore_expected,a630_core_smmu.restore_actual);
-    if(line==19)return (uint32_t)snprintf(out,size,"GF IRQ%x HW%x P%x CP%x",
-        core->irq,core->hw_fault,core->protect,core->cp_irq);
+    if(line==19)return (uint32_t)snprintf(out,size,"GF IRQ%x HW%x P%x CP%x B%x A%x S%x",
+        core->irq,core->hw_fault,core->protect,core->cp_irq&255,core->cp_before&255,core->cp_auth&255,a630_core_fault_regs[3]);
     const struct a630_power_snapshot *p = &a630_power_saved;
     const struct a630_clock_snapshot *c = &a630_clock_saved;
     const struct a630_channel_snapshot *h=&a630_channel_saved;
@@ -322,7 +323,7 @@ static bool a630_write_register(void *opaque, unsigned region, uint32_t off, uin
     if(!a630_budget_ok(io))return false;
     if(region==5 && io->runtime_lease && io->core_lease && a630_mode==9 && io->base[5]){
         bool allowed=false;
-        const uint32_t words[]={0x800,0x801,0x802,0x804,0x805,0x807,0x808,0x830,0x831};
+        const uint32_t words[]={0x800,0x801,0x802,0x804,0x805,0x807,0x808,0x830,0x831,0x908};
         for(unsigned n=0;n<sizeof(words)/sizeof(words[0]);n++)if(off==4*words[n])allowed=true;
         for(unsigned n=0;n<sizeof(a630_core_profile)/sizeof(a630_core_profile[0]);n++)
             if(off==4*a630_core_profile[n].word)allowed=true;
@@ -533,11 +534,22 @@ static void a630_core_attempt(struct a630_io *io)
     io->core_lease=true;
     const struct a630_zap_io zap={a630_core_owned,a630_scm_call,a630_zap_publish,a630_zap_segment,io};
     const struct a630_core_io core={a630_core_owned,a630_core_read,a630_core_write,a630_gmu_sync,a630_delay_us,io};
-    a630_stage(12,"post-HFI ready; signed ZAP");
-    if(a630_zap_start(true,&zap,a630_images,a630_dma_physical+0x40000,&a630_zap_saved)){
+    a630_stage(12,"post-HFI ready; halted SQE/RB preparation");
+    /* Original a6xx_rb_start writes SQE/RB before microcode_load invokes
+     * PAS13. No SQE release or DMA command is allowed before fresh AUTH. */
+    bool prepared=a630_core_prepare(true,a630_core_dma_ready,&core,(uint32_t*)(a630_dma+0x30000),
+        (volatile uint32_t*)(a630_dma+0x38000),(volatile uint32_t*)(a630_dma+0x3c000),&a630_core_saved);
+    if(prepared && a630_zap_start(true,&zap,a630_images,a630_dma_physical+0x40000,&a630_zap_saved)){
         a630_stage(14,"authenticated; native CP and image");
-        a630_core_run(true,a630_core_dma_ready,true,&core,(uint32_t*)(a630_dma+0x30000),
+        a630_core_execute(true,&core,(uint32_t*)(a630_dma+0x30000),
             (volatile uint32_t*)(a630_dma+0x38000),(volatile uint32_t*)(a630_dma+0x3c000),&a630_core_saved);
+    }
+    if(a630_core_saved.started && !a630_core_saved.image){
+        /* Read only global/ownedCB0 syndrome before the lease is withdrawn.
+         * Do not clear FSR, resume a fault or issue ATOS on this board. */
+        const uint32_t words[]={0x48,0x50,0x54,0x8058,0x8060,0x8064,0x8068,0x806c};
+        for(unsigned n=0;n<8;n++)
+            if(a630_read_register(io,3,words[n],&a630_core_fault_regs[n]))a630_core_fault_valid|=1u<<n;
     }
     a630_stage(15,"core proof; preserve secure lifetime");
     printf("POLARIS GPU CORE RESULT: error=%u stage=%u fence=%x image=%u pixels=%u halted=%u live=%u\n",
@@ -750,6 +762,19 @@ void polaris_a630_report(void)
         a630_core_saved.image,a630_core_saved.pixels,a630_core_saved.halted,a630_core_saved.keep_live,
         a630_core_saved.rptr,a630_core_saved.wptr,a630_core_saved.irq,a630_core_saved.hw_fault,
         a630_core_saved.protect,a630_core_saved.offset,a630_core_saved.expected,a630_core_saved.actual);
+    printf("D GPU CP PREP: ready=%u before=%x auth=%x after=%x SQE=%x/%x RB=%x/%x ctrl=%x WPTR=%x halt=%x\n",
+        a630_core_saved.prepared,a630_core_saved.cp_before,a630_core_saved.cp_auth,a630_core_saved.cp_irq,
+        a630_core_saved.config[0],a630_core_saved.config[1],a630_core_saved.config[2],a630_core_saved.config[3],
+        a630_core_saved.config[4],a630_core_saved.config[5],a630_core_saved.config[6]);
+    printf("D GPU CP FIRST: valid=%x SQE=%x/%x RB=%x/%x ctrl=%x halt=%x status=%x index=%x restored=%u state=%x/%x/%x/%x/%x/%x/%x/%x\n",
+        a630_core_saved.fault_valid,a630_core_saved.live[0],a630_core_saved.live[1],a630_core_saved.live[2],
+        a630_core_saved.live[3],a630_core_saved.live[4],a630_core_saved.live[5],a630_core_saved.live[6],
+        a630_core_saved.sqe_valid,a630_core_saved.sqe_index_restored,a630_core_saved.sqe_state[0],a630_core_saved.sqe_state[1],
+        a630_core_saved.sqe_state[2],a630_core_saved.sqe_state[3],a630_core_saved.sqe_state[4],a630_core_saved.sqe_state[5],
+        a630_core_saved.sqe_state[6],a630_core_saved.sqe_state[7]);
+    printf("D GPU CP SMMU: valid=%x global=%x/%x/%x CB0=%x FAR=%x:%x syndrome=%x/%x; read only, no ATOS\n",
+        a630_core_fault_valid,a630_core_fault_regs[0],a630_core_fault_regs[1],a630_core_fault_regs[2],
+        a630_core_fault_regs[3],a630_core_fault_regs[5],a630_core_fault_regs[4],a630_core_fault_regs[6],a630_core_fault_regs[7]);
     printf("D GPU HFI STOP: GX=%u SPTP=%u HFI=%u slumber=%u restored=%u error=%u offset=%x expected=%x actual=%x; see CORE; desktop CPU\n",
         h->gx_requested,h->sptp_requested,h->hfi_requested,h->slumber,h->restored,
         h->restore_error,h->restore_offset,h->restore_expected,h->restore_actual);

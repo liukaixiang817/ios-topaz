@@ -93,6 +93,7 @@ static struct a630_channel_snapshot a630_channel_saved;
 static struct a630_post_snapshot a630_post_saved;
 static struct a630_zap_snapshot a630_zap_saved;
 static struct a630_core_snapshot a630_core_saved;
+static uint32_t a630_core_fault_regs[8],a630_core_fault_valid;
 static unsigned logs,formats;
 static uint32_t a630_pending_format(char*out,uint32_t n){assert(n>1);out[0]='X';out[1]=0;formats++;return 1;}
 static int capture(const char*f,...){assert(f);logs++;return 0;}
