@@ -34,6 +34,22 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT ACTION —0041 all five HFI commands physically PROVEN; next integrated core path
+
+- Human confirmed “目前已进入系统”; photo8FBA67D0. GH8/b NC2 C5 A5 V10070000,
+  cmd/rsp d3/d3 and14/14, finalTESTACK0042047e/00500005/error0/0e550e55.
+  NativePERF/BW/TEST accepted, full5commandstartup PROVEN. StillCPUrendering;
+  noCP/3D/SQE/ZAPauth yet. USB host observation staysPAUSED.
+- HRt7 p2 z0 r0/5 @14648 expected40000000 actual00800000 R0/0:
+  slumber OOB30 timeout stillpresent, RSCCnotreached. CM3/BCRcontained;
+  clocks/CX/SMMU/permanentpages retained(K10/P8). GSr0 isNOTcleanupsuccess.
+- User asks QUALITY and fewerboots becauseeachbootisslow. Next combine native
+  post-HFI DCVS/OOB-GPU, coreSMMU/SQE/ZAP/CPguardedpath as faraslocallyverified;
+  doNOTspendanotherbootonextra logs alone. Nativegmu_start explicitlyrequests
+  defaultDCVS after5commands; currentprobe omitsit. Hypothesisforcoreclock and
+  slumberfailure, notproven. MainlineA630 CPinit/sourcecross-check inprogress.
+- Preserve0041fullHFIbaseline. Newwork0042; no0042code/deviceactions yet.
+
 ### CURRENT ACTION —0041 temporary boot SENT; actual full HFI/RSCC result pending
 
 - FreshROpreflight11744 EXIT0, **02:43:32.286322UTC**: complete16GiB689a8cd1,
