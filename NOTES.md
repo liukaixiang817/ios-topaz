@@ -34,6 +34,22 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0052 sourcea3c667d/CI40195909879; frozen232inputs; awaiting complete build
+
+- Root171f0d8/publica3c667d7e5dbd450334d3e2ab04cbae971154877 source-only
+  correction pushed; CI40195909879 running. Previous0051 superseded before
+  ANYphone action, retains185FIRSTPASSchecks and independentfinalPASS.
+-74native/ASan/UBSan,8actualARM64units/imports,38orderedpatches53files/
+  nofuzz-offset/29rows/sourceboundary PASS. ActualGPUhardware/HIDpaths unchanged.
+  Onlynewuserlandselftest signedartifactchanged; other5identical0050.
+-232source/host/artifactinputs FROZENbefore ANY0052guestexecution. Pipeline
+  waitsCI->profile/CRC/SHAartifact->fresh4CPU1defaultclockcases(185checks)->
+  prepareonly. Samepredeclaredoneclassifiedidenticaltimerretry; retainall,
+  STOPsecondfailure, noCPU2/IRQ/clockwaiver. USBhostobserverPAUSED.
+- NEXT completepipeline/finalchecker, FIRSTautoFASTBOOTquery afterimage ready;
+  expectedphonepresent -> ROpreflight/directtemporaryboot, askkeysONLYifabsent.
+  Currentphone0050 clockupdates/swipeignored; physical0052GPU/UI/inputunknown.
+
 ### 0052 last-row ABI correction BEFORE any0051phone action (Oct26local)
 
 -0051CI40194855125 SUCCESS/job121173393554, kernel47153ff0; all185CPU1
