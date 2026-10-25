@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
+#include <mach/mach.h>
 #include <OpenGLES/ES3/gl.h>
 #include <OpenGLES/ES3/glext.h>
 typedef void *OSMesaContext;
@@ -16,6 +17,11 @@ extern OSMesaContext OSMesaCreateContextAttribs(const int *,OSMesaContext);
 extern int OSMesaMakeCurrent(OSMesaContext,void *,unsigned,int,int);
 extern void OSMesaDestroyContext(OSMesaContext);
 extern void (*OSMesaGetProcAddress(const char *))(void);
+/* Private exports/signatures and selector6/7/27 wires verified on20H392. */
+extern IOSurfaceRef IOSurfaceWrapClientImage(uint32_t,uint32_t,uint32_t,uint32_t,uint32_t,void *);
+extern IOSurfaceRef IOSurfaceWrapClientMemory(void *,size_t);
+extern kern_return_t IOSurfaceGetBulkAttachments(IOSurfaceRef,void *,size_t *);
+extern kern_return_t IOSurfaceSetBulkAttachments(IOSurfaceRef,const void *,size_t,uint32_t);
 static io_connect_t connection;
 static unsigned phase;
 static void report(unsigned stage,unsigned error)
@@ -37,6 +43,45 @@ static void number(CFMutableDictionaryRef d,CFStringRef key,int value)
 {
     CFNumberRef n=CFNumberCreate(NULL,kCFNumberIntType,&value);CFDictionarySetValue(d,key,n);CFRelease(n);
 }
+/* Exercise the exact shared-state getter that crashed the real desktop,
+ * around the original task's memory, before admitting any EAGL trial.
+ * Also check live aliasing, metadata, cached lookup and release lifetime. */
+static int surface_contract(void)
+{
+    void *allocation=NULL;
+    if(posix_memalign(&allocation,16384,32768))return 30;
+    uint8_t *p=(uint8_t*)allocation;memset(p,0xa5,32768);
+    IOSurfaceRef image=IOSurfaceWrapClientImage(16,8,0x42475241,64,512,p+16384);
+    if(!image)return 31;
+    uint8_t bulk[0x70]={0};size_t bytes=sizeof(bulk);
+    if(IOSurfaceGetBulkAttachments(image,bulk,&bytes) || bytes!=sizeof(bulk) ||
+        IOSurfaceGetWidth(image)!=16 || IOSurfaceGetHeight(image)!=8 ||
+        IOSurfaceGetBytesPerRow(image)!=64 || IOSurfaceGetAllocSize(image)!=512)return 32;
+    for(unsigned n=0;n<32;n++)bulk[n]=(uint8_t)(n+1);
+    if(IOSurfaceSetBulkAttachments(image,bulk,sizeof(bulk),1))return 33;
+    uint8_t readback[0x70]={0};bytes=sizeof(readback);
+    if(IOSurfaceGetBulkAttachments(image,readback,&bytes) || memcmp(readback,bulk,32))return 34;
+    p[16384+71]=0x6d;
+    const uint8_t *image_base=IOSurfaceGetBaseAddress(image);
+    if(!image_base || image_base[71]!=0x6d)return 35;
+    mach_port_t port=IOSurfaceCreateMachPort(image);
+    IOSurfaceRef lookup=port?IOSurfaceLookupFromMachPort(port):NULL;
+    if(!lookup || IOSurfaceGetID(lookup)!=IOSurfaceGetID(image))return 36;
+    CFRelease(lookup);mach_port_deallocate(mach_task_self(),port);
+    bytes=sizeof(readback);
+    if(IOSurfaceGetBulkAttachments(image,readback,&bytes) || memcmp(readback,bulk,32))return 37;
+    CFRelease(image);
+    IOSurfaceRef memory=IOSurfaceWrapClientMemory(p+37,1234);
+    if(!memory || IOSurfaceGetAllocSize(memory)!=1234 || !IOSurfaceGetID(memory))return 38;
+    bytes=sizeof(readback);
+    const uint8_t *memory_base=IOSurfaceGetBaseAddress(memory);
+    if(IOSurfaceGetBulkAttachments(memory,readback,&bytes) || !memory_base || memory_base[3]!=p[40])return 39;
+    p[40]=0x73;
+    if(memory_base[3]!=0x73)return 40;
+    CFRelease(memory);free(allocation);
+    fprintf(stderr,"POLARIS GL: PASS wrapped IOSurface state/alias/metadata/lookup/release\n");
+    return 0;
+}
 int main(void)
 {
     io_service_t service=IOServiceGetMatchingService(0,IOServiceMatching("PolarisGPU"));
@@ -45,6 +90,7 @@ int main(void)
     if(opened)return 21;
     char port[32];snprintf(port,sizeof(port),"%u",connection);setenv("POLARIS_GPU_CONNECTION",port,1);
     report(1,0);
+    unsigned contract=surface_contract();if(contract)return fail(contract);
     int attrs[]={0x22,GL_RGBA,0x33,0x38,0x36,3,0x37,0,0};
     uint8_t window[16*16*4];OSMesaContext c=OSMesaCreateContextAttribs(attrs,NULL);
     if(!c || !OSMesaMakeCurrent(c,window,GL_UNSIGNED_BYTE,16,16))return fail(10);
