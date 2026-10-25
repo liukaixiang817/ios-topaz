@@ -58,6 +58,53 @@ int main(void){
  a630_started=0;selected=9;fail_create=1;runs=0;polaris_a630_init();assert(created==2&&runs==0&&a630_worker_state==4&&queued==1);
  return 0;}
 ''')
+    def test_pending_report_acquires_worker_publication_without_reading_mode(self):
+        report=body('void polaris_a630_report(void)\n{')
+        run(r'''
+#include <stdint.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdarg.h>
+#include <assert.h>
+#include "polaris-a630-probe.h"
+#include "polaris-a630-power.h"
+#include "polaris-a630-clock.h"
+#include "polaris-a630-images.h"
+#include "polaris-a630-tcm.h"
+#include "polaris-a630-gmu.h"
+#include "polaris-a630-mmu.h"
+#include "polaris-a630-smmu.h"
+#include "polaris-a630-bus.h"
+#include "polaris-a630-boot.h"
+#include "polaris-a630-channel.h"
+#include "polaris-a630-post.h"
+#include "polaris-a630-zap.h"
+#include "polaris-a630-core.h"
+static uint32_t a630_published,a630_worker_state,a630_nc_pages,a630_dma_ready,a630_firmware_ok,a630_abi_ok;
+/* Deliberately no a630_mode/a630_started: they are not worker publications. */
+static struct a630_probe a630_saved;
+static struct a630_power_snapshot a630_power_saved;
+static struct a630_clock_snapshot a630_clock_saved;
+static struct a630_gmu_snapshot a630_gmu_saved;
+static struct a630_smmu_snapshot a630_smmu_saved,a630_core_smmu;
+static struct a630_bus_snapshot a630_bus_saved;
+static struct a630_boot_snapshot a630_boot_saved;
+static struct a630_channel_snapshot a630_channel_saved;
+static struct a630_post_snapshot a630_post_saved;
+static struct a630_zap_snapshot a630_zap_saved;
+static struct a630_core_snapshot a630_core_saved;
+static unsigned logs,formats;
+static uint32_t a630_pending_format(char*out,uint32_t n){assert(n>1);out[0]='X';out[1]=0;formats++;return 1;}
+static int capture(const char*f,...){assert(f);logs++;return 0;}
+#define printf capture
+'''+report+r'''
+int main(void){
+ polaris_a630_report();assert(logs==0&&formats==0);
+ __atomic_store_n(&a630_worker_state,1,__ATOMIC_RELEASE);
+ polaris_a630_report();assert(logs==1&&formats==1);
+ __atomic_store_n(&a630_worker_state,2,__ATOMIC_RELEASE);
+ polaris_a630_report();assert(logs==2&&formats==2);return 0;}
+''')
     def test_real_deadline_stops_polls_and_forbids_resource_release(self):
         budget=body('static bool a630_budget_ok(struct a630_io *io)')
         owned=body('static bool a630_runtime_owned(void *opaque)')
