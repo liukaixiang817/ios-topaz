@@ -34,6 +34,22 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0047 final source6cb9465 / CI40171921792 / pipeline frozen
+
+- Root311fc02 and source-only public6cb946505bf9f9dfca0ea66a8814d5575676d9c7
+  published6files (0853first-faultsnapshot). CI40171921792/job121104364594
+  running. EarlierfullintegrationCI40171081646/efaf4d6SUCCESS retained.
+- Final58native/8ARM64units/imports/33patches48files/29rows/sourceboundariesPASS.
+  Exact0046bootstraphelpers,profile/HFI/PAS/clocks/firmwareunchanged; runtime
+  CB0maps/tablecapacity/Surfacebusygateexplicitlychanged. UFSIO/CDBunchanged.
+- 188host/source/artifactinputs FROZENbeforeANY0047guestexecution. FourCPU1
+  defaultclockcases60/90/60/60s, expected185checks. OneidenticalretryONLY
+  classifiedexistingtimerthreshold, preservefailedattempt, secondfailureSTOP.
+  Finalbundle-awarecheckerwritten; graphics-v4signed6files/457EAGLslotsfixed.
+- Wrapper86192 waitsnewCI→strictkerneldownload→guestmatrix→prepareonly.
+  NO0047image/preflight/bootyet. USBobserverPAUSED. AfterfinalPASSFIRSTauto
+  FASTBOOTquery; ifpresentfreshROpreflight/directboot; askkeysONLYifabsent.
+
 ### 0047 full integration build PASS; bounded runtime fault snapshot added
 
 - CI40171081646/efaf4d6 completedSUCCESS, job121101860238,07:05:57UTC.
