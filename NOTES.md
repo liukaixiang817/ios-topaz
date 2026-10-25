@@ -34,6 +34,34 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT ACTION —0043 temporary boot SENT; fresh hardware result pending
+
+- FreshROpreflight55831 EXIT0 at04:05:00.490228UTC: complete16GiB689a8cd1,
+  all182maps/GPT/header32311c08 unchanged, cleanouter/unmounted/RO1/31C.
+  No partitionwrites, journal replay or metadata repair.
+- Directboot-phone23337 EXIT0: Sending/Booting OKAY,total1.185s,
+  **2026-10-25T04:05:24.292796UTC**, exact0043image0779eec400a98b64f397239802c63e2c9ded504c368915f5ec241737bc952a14,
+  source7713ef3/CI40159677917SUCCESS. IndependentfinalcheckPASS. Noactual0043
+  GUI/GPUresultyet. Mode9worker/10srepeatedpollbudget/pre-CB0/PASentry+return
+  trace; nativeGPUCP/imageproof retained, desktopGPUservice notimplemented.
+- USB host observer stays PAUSED bylatesthumanrequest. Directboot-phoneused,
+  NOTboot-and-watch. Noactiveobserver orsamplefile, pausemarkerboundnewUTC.
+  NoUSBconnection/no-enumerationclaim. DoNOTrestartobservationimplicitly.
+- Newpendingquestion explicitlyasks0043actuallockscreen/desktop orlastGPU
+  STEP/CB0/SCM/topGPUW-Sline (unclearallowed). Old0042pictures/replies doNOT
+  confirm0043. hardware-0043-pending.json recordsnewbootbinding.
+- Qualityresult:48localtests/4ARM64units/28patches35files/29rows PASS;
+  133SELECTEDstandardclockchecks PASS. Originalcache-high/asyncfirsttimer
+  failures remainFAILED/retained, exactsameparameter retriespass; no-mmio
+  actualGPUworker FIRSTPASS. Cause/stabilitynotestablished; noIRQthresholdor
+  virtualclockwaiver. PriorSMP/syncnetworkissuesunresolved, CPU1phoneonly.
+- LinkedSMCs2sites/DSB/fullwidthmetadata verified; actuallinkedx6resumedsession
+  retainedinx25 aroundbudgetcallback. HardwareSMC/CPstillunproven. Deadline
+  doesNOTabortasinglehungSMC/MMIO; exact0042stalloperation stillunknown.
+- NEXTwaitnewhuman0043result. Ifstuckentrytrace identifiesfirstoperation; ifGUI
+  requestGD/GZ/GC0/GI/GF. ActualGPUproofrequiresF600dc0de+GI1px1000 andsafe
+  halt/PASshutdownownership. DoNOTcallfirmware/HFI aloneaccelerateddesktop.
+
 ### CURRENT ACTION —0043 final image verified; FASTBOOT auto-found; RO preflight running
 
 - All133 SELECTEDCPU1standardclock checks PASS: cache-high45 attempt2,
