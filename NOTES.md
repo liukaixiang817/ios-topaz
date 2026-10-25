@@ -34,7 +34,27 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT ACTION —0045 CP80/FSR402 confirmed;0046 disable-before-bases fix in validation
+### CURRENT ACTION —0046 source9965798 / CI40165297131 running; currentphone0045GUI/CP80/FSR402
+
+- Local7f11147; sourceonlypublic9965798e014d484b0b76c80176b03eea61e99e49
+  (parentafc1c7a),6source/test/0851files, privateNOTES/historyexcluded.
+  CI40165297131 IN_PROGRESS; wrapper35518 (HTTP2disabled fornetworkonly).
+  Final49tests/29rows/4actualARM64units/imports/31patches35files/native-source-
+  boundaries/SMCISA PASS. No0046image ordeviceactionyet.
+- Frozen14hostscripts BEFOREguestexecution. SameCPU1standardclock60/90/60
+  cache-high45/async-net44/no-MMIO44matrix, expected133. Onlyonepredeclared
+  identicalretry forclassifiedtimerfault, preserveanyfailure. NoCPU2admission
+  orIRQ/clockwaiver. Samev4ADT/originalimages/CPU1/20Hz/ROroot/512MiBRAMCOW.
+- NEXTwait35518, independentfinal-prepared-check inclSQE_ENABLE0/ownedCB0FSR
+  proofs. FIRSTautoFASTBOOTquery afterverifiedimage; ifexpectedpolarisready,
+  freshROpreflight thenDIRECTboot-phone. Askphysicalkeysonlyifactuallyabsent.
+  USBhostobserver stillPAUSED; NEVERboot-and-watch. AllimportantRAMlogs stay;
+  panel29rows reusecompletedpower/TCMrowstoexposeCPE/B/A/disable+FAR/FSYNR.
+- Physical0046GPUwork/GUI andunderlying0045TFaddresscause remainUNPROVEN.
+  DesktopGPU IOUserClient/Mesa/Metal/IOSurfacebridge NOTimplemented. No claim
+  thatclearingoldfaults/firmwareauthentication alone meansGPUdrawingworks.
+
+### 0045 CP80/FSR402 confirmed;0046 disable-before-bases fix validation
 
 - NewhumanphotoC5D1400E showsSettingsGUI with GZ6/7t0r0S1M1A1K1, GC06/3
   C0/9I0F0H0L1M8/7, GI0px0@823e0a80, GFIRQ0HW0P0CP80 B80 A80 S402.
