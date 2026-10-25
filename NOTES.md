@@ -28,6 +28,23 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT ACTION —0039 full kernel CI building
+
+- Local source/handoff commit **2a34132**. Source-only public commit
+  **784aa9f50ea8c0eac08ed4e33d9a77c3b4f4ce10**, parent0b4d101; six reviewed
+  source/test/profile files only, NOTES/private history/device artifacts excluded.
+- **CI40151478342 in progress**, exact public SHA confirmed. Private0039 hosts
+  frozen (14 scripts); local28 tests/3 ARM64 units/imports/24 patches29 files/
+  22 detail24 display rows/source offset checks and8 observer tests pass.
+- Pipeline62632 waits for CI/logs, downloads exact kernel, runs selected standard
+  CPU1 base120s/async-net90s/no-MMIOmode7 60s (expected111 checks), then prepares
+  temporary image. No0039 device action. If the turn compacts, inspect its process
+  and saved logs before retrying; preserve all failed runs and timing evidence.
+- Independent final checker must pass before FIRST automatic FASTBOOT query,
+  full RO preflight and temporary boot. Actual0038 human confirmation is stale
+  for any future0039 observer. After0039 send, request actual GUI confirmation
+  and GH/HQ/HA/HR photo; keep observer until the actual new confirmation.
+
 ### CURRENT ACTION —0039 HFI INIT/FW_VER adapter locally checked
 
 - 0038 is physically proven at fresh GMU BABEFACE only; GUI works. Its USB
