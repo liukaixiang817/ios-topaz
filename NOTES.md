@@ -28,6 +28,35 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT ACTION —0037 source complete; CI40147833700 building
+
+- Local fix **a59b9ac**, source-only public **ebc5c7e14e9f2dc3ba48ebbff1763f1025d12476**
+  parentefd7d81, exactly6code/test/patchfiles; noNOTES/privatehistorypublished.
+-0842 follows native3hiddenTCSzero-requestsemantics withoutfalsecleared-address
+  proof; exactunchangedorzeroonly, unexpectedword/IOstillfatal. FreshBABEFACE
+  remainssoleFWreadyproof. Trackactualattemptedprofilewrites, containsbefore
+  cleanup, neverwriteunchangedopaquehiddenwords. NewGR/restorefailurelogs.
+- OwnedSMRinvalidbeforeFAULT; documentedQCOMHYPignoredFAULT→BYPASSencoding
+  fallbackonlyafterunchangedread, exactTYPEFAULTACKrequired. CanonicalCBff
+  recorded; nevercalledbyteidenticalrestore. Otherstreams/CB5..7untouched.
+- Local27ASan/UBSan,3actualCI-headerARM64units/imports,22orderedpatches28files,
+  18detail/20displayrows<=67chars,8observerpolicytestsPASS. NoactualFW/3Dclaim.
+- GitHubforkworkflowsdisabledduetocomputescale; repoenabled/workflowactiveAPI
+  misleading. workflowenableAPIaloneinsufficient; Chromeauthenticatedexisting
+  maintainerreenablebuttonconfirmedActionsEnabled. Screenshot/privateJSONsaved.
+  Manualdispatch **40147833700** nowstarted. No0037kernel/image/deviceactionyet.
+-0037pipeline14hostscriptsfrozen; exact3selectedCPU1modesexpected99checks,
+  standardclock/noheavyworkduringguests. AfterimagefinalcheckqueryFASTBOOT
+  automatically, freshfullreadonlypreflight/thentemporarybootifpresent.
+-0036humanGUIconfirmed/observerSTOPPED38samples remainscurrentdevicebaseline.
+  DoNOTrestartoldwatch. Newwatchmuststartimmediatelyafter0037bootandcontinue
+  untilactualsameboot“已进入系统”/cancel, attemptlog/panelonECMwithoutstopping.
+- USBnextpreciseprerequisite: nativeQUSB2PHYpower/PLL/initsequence. Original
+  pinnedv2driver/liveDTcapturedprivate0037; cfgAHB6a004alreadyrunning, refclock/
+  analogregulators/PHYresetownershipnotyetimplemented. DoNOTrawwritePHYwith
+  unknownrails. Endpointcmd2still402/1000. UEFInotmandatory; retainedUEFIroute
+  needsloader/memory/16KiBreturnintegration, noforeignEFIexecuted.
+
 ### CURRENT ACTION —0036 GUI confirmed; SMMU setup passed, GMU profile/cleanup blocked
 
 - Actualhuman “已进入系统”, photo668E274A. **GS8/7 READY**,SIh1/n3,
