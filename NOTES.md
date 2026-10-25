@@ -34,6 +34,64 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0048 TEMPORARY BOOT SENT11:09:49UTC; await actual GLB/GUI/GA result
+
+- HumanFASTBOOTreply→targetedquery11:07:41.950808UTCconfirmedexpectedpolaris.
+  All195frozeninputsunchanged. ROpreflight54245EXIT0,11:09:20.459487UTC:
+  complete16GiBrootSHA689a8cd1,182maps/GPTunchanged, acceptedouterheader
+  3e885886unchangedbefore/after, unmounted/blockRO1/32C. PendingAndroidjournal
+  NOTclean/notreplayed/repaired; NOpartitionwrites. Originalbaselinepreserved.
+- DIRECTboot-phone80249EXIT0: Sending/BootingOKAY,total1.532s;
+  **sent_utc2026-10-25T11:09:49.523097+00:00**. Exactimage9ea3280afa6332d1fbd8d8bfa444c4a117bd0887991174900491912088180f4e,
+  kernel6075fa6a7432328b508fcfef36e1d4170c02d1fe09340c748ea6ff5568bf184e,
+  payloadc655eb6252550c6e9c5eff193346e4d8762a1b06ab911a256bbaf82b48d897fc;
+  sourcefd28bb1ce3e21c2730f7afb935d1e5f10674e757/CI40186839751SUCCESS.
+- Newpendingquestionasksactual0048lockscreen/desktop→Settings/scrollandGA
+  T/E/S; ifstilllogs LAST“D GL BOOT: GLB…”S/F/B/E. GLBstateanderrno/bytes/ms
+  HEX, S3open/4write/5size/6close/7allstaged/8helper-exec/9exec-failed;
+  F0..5files,F6terminal. EachVFSoperationmaystillblock; noabortclaim.
+- Actual0048nativeGPU/service/staging/PID1helper/GUI/shader/sharedpixels and
+  desktopGPU UNPROVENuntilnewhumanresult. 0047photo provesnative4096/fence/
+  idle/haltONLY andstableIOcounters(stalledbootstrap). Physical0047hangcause
+  notproven. 0048preservesnativeGPU/runtime/firmware; chunksyncVFSandcorrect
+  non-targetENOPOLICY/PID1no-lookup plusdedupfullsnapshot/progress arechanges.
+- USBobserverstillPAUSED: NOboot-and-watch/NOobserverstarted; markerbound
+  newexactbootUTC. NoUSBsuccess/nonenumerationclaim. Importantfullfirst
+  snapshots/newfaultsretained; unchangedfullrepaintsremoved;29GUIrowsunchanged.
+- NEXTawaithumannew0048result; noanotherbootormutatingexperimentbeforeactual
+  GLB/GA. IfS8butnoGUI, inspectPID1helperexecution/Applelaunchd; existinghelper
+  canquietlysleepafterexecvfailureifstderrnotconnected, soadddirectconsole/
+  exacterrnoreportingifthatpathisevidenced. NoMetalapps/FPSclaim, noCPU2/
+  IRQwaiver. 62native+185guestFIRSTPASS,8actualunits,34patches49filesandfinal
+  imagePASS. Completedcodecommitted2b82a56; thishandoffcommitnext.
+
+### 0048 final image PASS; FASTBOOT confirmed; RO preflight54245 running
+
+- All185CPU1defaultclockguestchecksFIRSTPASS(no0048failure/retry),62native,
+  8actualARM64units/imports,34patches49files/29rows/sourceboundaries/fullsource/
+  linkedSMC/highPAcache/signedbundle/rebuiltpayload/Cvalidator/packedimagePASS.
+  Finalcheck11:06:39.490904UTC. Sourcefd28bb1ce3e21c2730f7afb935d1e5f10674e757,
+  CI40186839751/job121149326436SUCCESS. Actual0048hardware/desktopUNPROVEN.
+- Kernel6075fa6a7432328b508fcfef36e1d4170c02d1fe09340c748ea6ff5568bf184e;
+  payloadc655eb6252550c6e9c5eff193346e4d8762a1b06ab911a256bbaf82b48d897fc;
+  image shim/out/polaris-xnu-readdebug-0048/polaris-xnu-readdebug-0048.img
+  SHA9ea3280afa6332d1fbd8d8bfa444c4a117bd0887991174900491912088180f4e,
+  62914560bytes. graphics-v4bundlea93b3ba4UNCHANGED, userlandnotrebuilt.
+- FIRSTautoFASTBOOTquery11:07:02UTCabsent; askedkeysONCE. Humanrepliedready;
+  query11:07:41.950808UTCconfirmedexpectedpolaris. All195frozeninputsunchanged.
+  run-device-step.py preflightsession54245runningfreshROroot16GiB/maps/GPT/
+  header/temp. Headergatematchesexactindependentlyreviewed0047header3e885886;
+  anynewchangeSTOP. PendingAndroidjournalnotclean/notreplayed, noUFSwrites.
+- NEXTwait54245; onPASSdirectboot-phone, NOboot-and-watch/observer. Current
+  phonewas0047stalledlogs(nativefence4096PASS), nowROrecoverypreflight. No0048
+  iOSbootyet. USBobserverPAUSED. DoNOTinferdesktopGPUfromnativeprooforCI.
+- Deviceacceptance: GLB S1nativewait/2validate/3open/4write/5size/6close/
+  7staged/8helperexec/9execfailure; F0..5file,F6terminal; Bdone/total,Eerrno,
+  mslast-updateelapsedms. GLBnumbersHEX. GA T6E0andgrowingS duringactualUI
+  requiredforMesa/sharedpixels+desktopproof; ifnoGUIasklastGLBline. Important
+  firstfullsnapshots/newfaultsretained, unchangedfullrepaintsremoved. Individual
+  VFSoperationcancellationnotclaimed. NoGPUregister/SQE/MMU/firmwarechange.
+
 ### 0048 full kernel SUCCESS; first47guestchecks PASS, nextcase running
 
 - CI40186839751/fd28bb1ce3e21c2730f7afb935d1e5f10674e757/job121149326436
