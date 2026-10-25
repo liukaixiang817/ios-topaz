@@ -34,7 +34,23 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT ACTION —0046 source9965798 / CI40165297131 running; currentphone0045GUI/CP80/FSR402
+### CURRENT ACTION —0046 complete build SUCCESS; fixed CPU1 regressions running
+
+- CI40165297131/source9965798e014d484b0b76c80176b03eea61e99e49 SUCCESS,
+  job121084991876. FullCIlog research/polaris/ci-40165297131.log. Download
+  exacttarget/profile/CRC/SHA verified kernel
+  fd06129fcfcbe6ba162db1883b1b49691f89c835ad98267025f404feb0e9f475.
+  Wrapper35518 running cache-high60/async-net90/no-MMIO60 CPU1standardclock
+  matrix, expected133. No0046phoneimage orhardwareactionyet.
+- NEXTwait35518 → independentfinal-prepared-check.py (all49/31/35/29 source/
+  linkedSMC/highPAcache/payload/SQE_ENABLE0+ownedFSR proofs), FIRSTautoFASTBOOT
+  query, thenfreshROpreflight/directboot-phone ifready. USBobserverPAUSED;
+  neverboot-and-watch. Prior0043timerfailuresunresolved; CPU1only.
+- Currentphone0045GUI/freshPASauth withCP80 alreadyafterourinitial3 andbefore
+  bases/auth, CB0FSR402TF. Underlyingfaultaddress/0046GPUdrawing unproven.
+  DesktopGPUuserclientbridge stillunimplemented, noGUIaccelerationclaim.
+
+### 0046 source9965798 / CI40165297131 preparation
 
 - Local7f11147; sourceonlypublic9965798e014d484b0b76c80176b03eea61e99e49
   (parentafc1c7a),6source/test/0851files, privateNOTES/historyexcluded.
