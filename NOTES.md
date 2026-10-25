@@ -34,6 +34,52 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0056 FINAL PASS; FIRST automatic FASTBOOT present; RO preflight running
+
+- CI40210874806/job121221615850/source92abbbee438007ac5c0dc9d79251f2cfc9713383
+  SUCCESS; rootimplementationee2aa9a.90native/8actualunits+imports/
+  42profiles55files/6normal11fault-onlyrows/185freshCPU1defaultclockchecks
+  FIRSTPASS/no guestfailureorretry;247finalfrozeninputs allmatch.
+- Finalchecker2026-10-25T16:29:02.463186+00:00 PASS:source/ABI/sixsignatures/
+  linkedSMC64/highPAcache/identicalpayload/Cvalidator/packedimage.
+  Kernel54651c61d873607b3034f7601b4ad39452f5430aba9dd548459a8c7621f454d7;
+  payload70c775919261eadafac47ffc6bf0d45f4b58f9fe1fe85a2b8040edb8ae832163;
+  image6f310fb4252a55d35bb71a710b29fa1e096e05bfb499329d40367e9cd4574096 (63025152B),
+  shim/out/polaris-xnu-readdebug-0056/polaris-xnu-readdebug-0056.img.
+  Bundle42d5ec4c4f5527a5a4bca63513daba3952f1390441d727d39e0ad0e0b3a7e92d (15468896B).
+- FIRSTautomaticROquery2026-10-25T16:29:55.064943+00:00:expectedphoneFASTBOOT+polaris
+  alreadyready;no redundantkeyrequest. FreshROpreflight nowrunning; only
+  afterPASS directtemporaryboot. USBobserverremainsPAUSED.
+- Actual0056 performance/unlock/icons/physicalFPS NOTYETTESTED. Current0055
+  had794desktopC/T6/E0/D0/R1 and10.636mslastpanelcopy. NewFD/PF continuous
+  scroll snapshot needed toattributeCPU/render/upload/wait; noCPU2enabled.
+
+### 0056 CI40210874806 SUCCESS; host-template corrections before guests
+
+- Completekernel CI source92abbbee438007ac5c0dc9d79251f2cfc9713383 SUCCESS.
+  Initialhost-templateaudit caught boot kernelpathname still0055; stopped
+  waitingparent49846/gh49853 before ANYguest/deviceaction, corrected0056.
+  Originalpre-guestfreeze retained with correctionrecord.
+- Initialartifactextract then REJECTED zlib before writingkernel/starting
+  guests: cloneddownloader retained0055 range-cachepath. Mixedcache preserved
+  at kernel-range-parts-0055-contaminated-by-0056-host-template;failedscript/
+  logretained. New0056 cache bindsCI/source/artifact/ZIPentry. Prior0055
+  verifiedkernel/freeze record unchanged; priorartifactmetadata restored
+  separatelyfrom0055 CI. No acceptance bypass/phoneaction/reportedguestretry.
+-247correctedinputs re-frozen BEFOREguests; exactartifactdownload/fresh
+  185CPU1defaultclockchecks now running. USBhostobserver remainsPAUSED.
+
+### 0056 source92abbbe / CI40210874806;247inputs frozen
+
+- Rootimplementationee2aa9a;12source-onlyfiles public92abbbee438007ac5c0dc9d79251f2cfc9713383
+  pushedapprovedbranch. CI40210874806 running.247inputs frozen BEFORE
+  guests.90native/8actualARM64/imports/42profiles55files/compactpanel /
+  sixsignedgraphics PASS. No phone action yet. USBobserverPAUSED.
+- NEXT exactCIartifact/fresh185CPU1defaultclockchecks/independentfinalimage;
+  FIRSTautomaticFASTBOOTquery, freshROpreflight/directtemporarybootifready.
+  GPUalready794desktopC/T6/D0/R1 in0055; newperformancefields needphysical
+  continuousscroll toattributeCPU/presentation/rendering. NoSMPchange.
+
 ### 0056 implementation/local validation PASS; preparing full kernel build
 
 - Independent notification/copy deadlines remove one-tick quantization while
