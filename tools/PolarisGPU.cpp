@@ -36,6 +36,30 @@ static bool gpuOpened, gpuQuarantined;
 static uint32_t gpuSubmissions, gpuSurfaces;
 static uint32_t gpuDesktopAttempts,gpuDesktopSubmissions;
 static uint32_t gpuRender[8],gpuRenderPublished;
+static uint32_t gpuPerformance[10],gpuPerformancePublished;
+static bool polaris_gpu_performance_report(unsigned kind,const struct pgpu_perf_notice *p)
+{
+    if(kind!=2 || !p || !p->frames || p->window_us<1000000 ||
+        p->cpu_busy>10001 || p->cpus>8 || p->reserved)return false;
+    uint32_t sequence=__atomic_load_n(&gpuPerformancePublished,__ATOMIC_SEQ_CST);
+    __atomic_store_n(&gpuPerformancePublished,sequence+1,__ATOMIC_SEQ_CST);
+    const uint32_t *v=(const uint32_t*)p;
+    for(unsigned n=0;n<10;n++)__atomic_store_n(&gpuPerformance[n],v[n],__ATOMIC_SEQ_CST);
+    __atomic_store_n(&gpuPerformancePublished,sequence+2,__ATOMIC_SEQ_CST);
+    return true;
+}
+static uint32_t polaris_gpu_performance_line(char *out,uint32_t capacity)
+{
+    uint32_t sequence=__atomic_load_n(&gpuPerformancePublished,__ATOMIC_SEQ_CST);
+    if(!out || !capacity || !sequence || (sequence&1))return 0;
+    uint32_t v[10];for(unsigned n=0;n<10;n++)v[n]=__atomic_load_n(&gpuPerformance[n],__ATOMIC_SEQ_CST);
+    if(__atomic_load_n(&gpuPerformancePublished,__ATOMIC_SEQ_CST)!=sequence)return 0;
+    /* Decimal us; saturate only the displayed value. B10001/N0 = unknown.
+     * W includes CPU preemption and any final copy submission, not GPU busy. */
+    for(unsigned n=2;n<=6;n++)if(v[n]>999999)v[n]=999999;
+    return (uint32_t)snprintf(out,capacity,"PF F%u W%u R%u U%u H%u B%u N%u",
+        v[2],v[3],v[4],v[5],v[6],v[7],v[8]);
+}
 static bool polaris_gpu_render_report(unsigned kind,const struct pgpu_render_notice *p)
 {
     if(kind!=2 || !p || p->kind>6 || p->slot>=0x2200)return false;
@@ -54,6 +78,7 @@ extern "C" uint32_t polaris_gpu_render_line(unsigned line,char *out,uint32_t cap
     uint32_t v[8];for(unsigned n=0;n<8;n++)v[n]=__atomic_load_n(&gpuRender[n],__ATOMIC_SEQ_CST);
     if(__atomic_load_n(&gpuRenderPublished,__ATOMIC_SEQ_CST)!=sequence)return 0;
     if(!line)return (uint32_t)snprintf(out,capacity,"GLR F%x E%x S%x I%x M%x",v[0],v[1],v[2],v[3],v[4]);
+    if(!v[5]){uint32_t n=polaris_gpu_performance_line(out,capacity);if(n)return n;}
     return (uint32_t)snprintf(out,capacity,"GLX K%x A%x @%x",v[5],v[6],v[7]);
 }
 static struct pgpu_crash gpuFirstCrash;
@@ -385,7 +410,8 @@ IOReturn PolarisGPUUserClient::externalMethod(uint32_t selector,IOExternalMethod
         msm_submitqueue queue;msm_submitqueue_query query;drm_gem_close close;redwood_surface surface;
         struct {uint32_t stage,error;} report;
         struct {uint32_t stage,error,methods;} loader;
-        struct pgpu_render_notice render;} r;
+        struct pgpu_render_notice render;
+        struct pgpu_perf_notice performance;} r;
     size_t size=0;
     switch(selector) {
         case 0x40:case 0x41:size=sizeof(r.param);break;
@@ -398,6 +424,7 @@ IOReturn PolarisGPUUserClient::externalMethod(uint32_t selector,IOExternalMethod
         case 0x7c:size=sizeof(r.report);break;
         case 0x7b:size=sizeof(r.loader);break;
         case 0x7a:size=sizeof(r.render);break;
+        case 0x79:size=sizeof(r.performance);break;
     }
     if(!a || !a->structureInput || a->structureInputDescriptor || a->structureOutputDescriptor ||
         a->scalarInputCount || a->scalarOutputCount || a->structureInputSize!=size ||
@@ -469,6 +496,9 @@ IOReturn PolarisGPUUserClient::externalMethod(uint32_t selector,IOExternalMethod
             break;
         case 0x7a:
             if(polaris_gpu_render_report(callerKind,&r.render))result=0;
+            break;
+        case 0x79:
+            if(polaris_gpu_performance_report(callerKind,&r.performance))result=0;
             break;
         case 0x7c:
             if(r.report.stage>6 || r.report.error>255 ||

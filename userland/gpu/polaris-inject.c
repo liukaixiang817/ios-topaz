@@ -9,12 +9,14 @@
 #include <string.h>
 #include <objc/runtime.h>
 #include <mach/mach.h>
+#include <mach/host_info.h>
 #include <stdint.h>
 #include <mach-o/dyld.h>
 #include <mach-o/loader.h>
 #include <signal.h>
 #include <sys/ucontext.h>
 #include <unistd.h>
+#include <time.h>
 #include "../../tools/polaris-gl-status.h"
 extern const void *_dyld_get_shared_cache_range(size_t *);
 #define CACHE_BASE              0x180000000UL
@@ -173,6 +175,32 @@ static void watch_for_faults(void)
 }
 
 static io_connect_t desktop_connection;
+static void performance_note(const struct pgpu_perf_notice *notice)
+{
+    static mach_port_t host;
+    static uint32_t before[4];
+    static int have_before;
+    static uint64_t last_us;
+    struct timespec ts;
+    if(clock_gettime(CLOCK_MONOTONIC,&ts))return;
+    uint64_t now_us=(uint64_t)ts.tv_sec*1000000+(uint64_t)ts.tv_nsec/1000;
+    if(last_us && now_us-last_us<1000000)return;
+    last_us=now_us;
+    if(!host)host=mach_host_self();
+    struct pgpu_perf_notice copy=*notice;
+    host_cpu_load_info_data_t load;mach_msg_type_number_t count=HOST_CPU_LOAD_INFO_COUNT;
+    if(host_statistics(host,HOST_CPU_LOAD_INFO,(host_info_t)&load,&count)==KERN_SUCCESS &&
+        count==HOST_CPU_LOAD_INFO_COUNT) {
+        if(have_before)copy.cpu_busy=pgpu_perf_cpu(before,load.cpu_ticks);
+        memcpy(before,load.cpu_ticks,sizeof(before));have_before=1;
+    }else have_before=0;
+    host_basic_info_data_t basic;count=HOST_BASIC_INFO_COUNT;
+    if(host_info(host,HOST_BASIC_INFO,(host_info_t)&basic,&count)==KERN_SUCCESS &&
+        count==HOST_BASIC_INFO_COUNT && basic.avail_cpus>0 && basic.avail_cpus<=8)
+        copy.cpus=(uint32_t)basic.avail_cpus;
+    size_t bytes=sizeof(copy);
+    (void)IOConnectCallStructMethod(desktop_connection,0x79,&copy,sizeof(copy),&copy,&bytes);
+}
 static void render_note(const struct pgpu_render_notice *notice)
 {
     struct pgpu_render_notice copy=*notice;size_t bytes=sizeof(copy);
@@ -222,6 +250,9 @@ __attribute__((constructor)) static void polaris_gl_inject(void)
     void (*render_observe)(void (*)(const struct pgpu_render_notice *))=
         (void (*)(void (*)(const struct pgpu_render_notice *)))dlsym(gl,"polaris_eagl_render_observe");
     if(render_observe)render_observe(render_note);
+    void (*performance_observe)(void (*)(const struct pgpu_perf_notice *))=
+        (void (*)(void (*)(const struct pgpu_perf_notice *)))dlsym(gl,"polaris_eagl_performance_observe");
+    if(performance_observe)performance_observe(performance_note);
     gl_hooks(gl);
     fprintf(stderr,"POLARIS GL: all8 EAGL methods installed; desktop submissions still require observation\n");
 }

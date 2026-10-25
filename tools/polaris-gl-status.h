@@ -3,6 +3,7 @@
 #ifndef POLARIS_GL_STATUS_H
 #define POLARIS_GL_STATUS_H
 #include <stdint.h>
+#include "polaris-performance.h"
 #define PGPU_EAGL_METHOD_COUNT 8u
 #define PGPU_EAGL_METHOD_MASK 0xffu
 #define PGPU_ACCEPTANCE_TIMEOUT_MS 180000u
