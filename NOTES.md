@@ -47,6 +47,17 @@ early samples only. On0029 the human already confirmed boot complete and said
   testsownedSMMUcontexthandoff/GMUbootandUSBPIPE; noHFI/GX/3D/renderingclaim.
   PhoneGPUresultstillPENDING. Currentimage698c9bd8/exactsourceefd7d81,
   CI40145402159 SUCCESS,90FIRSTPASSchecks/finalindependentcheckPASS below.
+- ActualpostwrapperprocesscheckconfirmedPID83734/PPID1/PGID83734/Ss;
+  separateexec40.269s5samplesand100.675s11samplesstillactive/noECM,
+  noinspectionerrors. Nocoverageconclusionbeyondrecordedsamples.
+- NextGPUimagepathsourcecheckedwhileawaitingphone: private0036/
+  next-2D-source-plan.json. OfficialMesa25.0.7archiveSHAmatchesreference
+  mk-mesa.shpin592272df; selectedA6XXXML/blitter/emit/screensourcesextracted,
+  nobuild/setupscript/prebuiltexecuted.2Dregisteroffsets/CP_BLIT2cconfirmed
+  fromMesaXML; nativePM4headerGitblobverified. NeedoriginalA630HFI_USE_REG
+  GXvotes/SPTPRAC/HFIandnativeZAP8c415000/SQE/CPfirst. DoNOTcopyCCU10000004
+  unchecked; requiresA630cachelayout. ReferenceCAhookuses16.5fixedaddresses,
+  mustrediscover20H392vtable/symbolslots. NativeHFIplan0034stillapplicable.
 
 ###0036 build and validation (device actions subsequently completed above)
 
