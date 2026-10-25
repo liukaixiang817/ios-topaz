@@ -28,6 +28,28 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT ACTION —0038 FIRST PHYSICAL GMU BOOT ACK; next HFI/GX
+
+- Actualhuman“已进入系统”,photoF96E8DA6. **GE6/6 fwBABEFACE @0:0 e0 a0 r1/0**:
+  freshFWstartandcontainment/bootprofilecleanupPASS. ThisisfirstactualGMU
+  firmwareexecutionproof,NOTGPU3D/rendering/HFI/PDCsleep-wakeproof.
+  **GRh7/attemptedffffffffffff/m3f/10100×3**,all48profilewritesissued.
+- **GS8/7 READY**,**SHr6@1004 expected00000000 actual0001f300 q1/f0**:
+  ownedCB1CBARrestorationwrite0ignored. IsolatedFAULTfallbackworks;context
+  disabledandTLBsyncprecededcleanupfailure; resourcesretainedP8/K10.
+  Needexplicitowned-disabled-contextteardown/nativeS1-onlyCBARsemantics,
+  notactive-mapcheckwaiver. Nextsourceplan0038stillrelevant.
+- Observer18402 **STOPPED_BY_HUMAN**,37samples/367.765s;zeroinspectionerrors,
+  journalmatches/processabsent/noECM/nohostnetworkchange/RAMlog/frame.
+  Exacttimestampsprivate0038/observation-audit.json. DoNOTrestartoldwatch.
+  Hardwarephoto/rawrowsprivatehardware-0038-observation.json.
+- NextimplementoriginalA630HFI_USE_REG order: lowGX/MXARCvotes viaOOB22/ACK30,
+  SPTPRAC,thenHFI_CTRL_INIT/status andownedcache-synchronizedHFIINIT/FWVER
+  commands. Needownedmappeddumpbuffer,properOOB/slumber/containmentbefore
+  cleanup. ExistingHFIringhelperhasRAMqueueonly; noHFIhardwarecmdssentyet.
+- No0039source/deviceactionyet. Phone0038GUIcurrentlyworking. Build/check
+  concrete0039thenFIRSTqueryFASTBOOT; no repeatedhumanquestionifpresent.
+
 ### CURRENT ACTION —0038 temporary boot SENT; detached USB observation active
 
 - **Preflight68431EXIT0**,verified **01:21:02.425344UTC**:full16GiBSHA689a8cd1,
