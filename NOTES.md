@@ -34,7 +34,30 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT ACTION —0044 image verified; FASTBOOT auto-found; RO preflight running
+### CURRENT ACTION —0044 temporary boot SENT; actual GPU/GUI result pending
+
+- FreshROpreflight16169 EXIT0 at04:29:49.909537UTC: all16GiB root689a8cd1,
+  all182maps/GPT/header32311c08 unchanged; cleanouter,unmounted,blockRO1,
+  battery30C. No journal replay/repair or partitionwrites.
+- Directboot-phone18586 EXIT0: Sending/Booting OKAY,total1.181s,
+  **2026-10-25T04:30:05.109553UTC**. Exact0044image
+  671c322714e1ffba833128db4d7144341397d71fcf5cbb5d5c94a025722a47b9,
+  kernel f3d982220bd4/source4564a8a/CI40161330702 SUCCESS. Independentfinal
+  PASS;49localtests/133standardclockchecks FIRSTPASS. Actual0044GUI, PAS
+  authentication, CPfence and4096pixelproof all UNPROVEN until new human result.
+- USBobserver remainsPAUSED. Directboot-phoneused, NOTboot-and-watch. Local
+  processinventory04:30:28UTC confirms noactiveobserver orsamplefile. Pause
+  markerboundnew sent_utc; noUSBconnection/no-enumeration claim. DoNOTrestart
+  implicitly or treat old0043replies as new0044hardwareconfirmation.
+- Pendingtextquestion requests actual0044locksreen/desktop orlastGPUSTEP/SCM
+  enter-return; ifGUI requestGZ/GC0/GI. ColdPAS fix removed unownedpre-init
+  SHUTDOWN; freshauthenticatedPAS13+dependencies retained withGZK1. Expected
+  nativeproofF600dc0de/GI1px1000/H1; firmwareauth/HFI/K1 alone NOTdrawingproof.
+  DesktopGPUuserclient/Mesa/Metal/IOSurfacebridge stillunimplemented, GUI CPU.
+- NEXTawaitactual0044result. Nonreturning singleSMC/MMIO cannotbecancelled by
+  cooperative10sworkerbudget. Prior0043timingfailures unresolved; CPU1only.
+
+### 0044 image verified; FASTBOOT auto-found; RO preflight completed
 
 - FullCI40161330702/source4564a8a835c71980db54f0a47abb5dbd4e560705 SUCCESS.
   Kernel f3d982220bd4b44ec3aba0fad39c1d4b2077662a6893074ef2d1187ff64c91c3;
