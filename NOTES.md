@@ -53,8 +53,9 @@ early samples only. On0029 the human already confirmed boot complete and said
 - NextGPUimagepathsourcecheckedwhileawaitingphone: private0036/
   next-2D-source-plan.json. OfficialMesa25.0.7archiveSHAmatchesreference
   mk-mesa.shpin592272df; selectedA6XXXML/blitter/emit/screensourcesextracted,
-  nobuild/setupscript/prebuiltexecuted.2Dregisteroffsets/CP_BLIT2cconfirmed
-  fromMesaXML; nativePM4headerGitblobverified. NeedoriginalA630HFI_USE_REG
+  nobuild/setupscript/prebuiltexecuted. Most2Dregisteroffsets/CP_BLIT2cconfirmed
+  fromMesaXML; referencePIXEL_CNTL8c01alias/fieldsunresolvedandexplicitlynull
+  inplan; nativePM4headerGitblobverified. NeedoriginalA630HFI_USE_REG
   GXvotes/SPTPRAC/HFIandnativeZAP8c415000/SQE/CPfirst. DoNOTcopyCCU10000004
   unchecked; requiresA630cachelayout. ReferenceCAhookuses16.5fixedaddresses,
   mustrediscover20H392vtable/symbolslots. NativeHFIplan0034stillapplicable.
