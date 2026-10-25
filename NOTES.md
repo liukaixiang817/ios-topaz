@@ -34,6 +34,35 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0049 source6c9b833 / CI40189083903; pipeline frozen, human FASTBOOT ready
+
+- Source fix committed locally71a6800;9source-only files published at
+  6c9b83333531cd62bc19828bf7472c41d1bda513(parentfd28bb1). CI40189083903
+  running, no duplicate build. No private notes/SDK/Apple binaries/firmware/
+  dumps/serial published. CurrentphonehumanconfirmedFASTBOOTalready.
+-67native/ASan/UBSan including real constructor/path refusal, all7method
+  preflight/rollback and separate trusted loading reports PASS;8actualARM64
+  units/imports PASS;35orderedpatches49files(nooffset/fuzz)/29rows/source
+  boundaries PASS. First AMFI hostfixture failed because its extracted diff
+  omitted a comment, retained loader-tests-first.log; wider fullcallback
+  context fixes fixture. No physical0049result or desktop proof yet.
+- Original GPU firmware/clocks/HFI/PAS/MMU/PM4/runtime/BO/surface/storage paths
+  byte-identical to0048. Injector checks exact real path, opens one task-owned
+  client and Mesa reuses sameport. New cached GA L/X/M report policy/load/
+  all7methods/context creation separately; T/E selftest remains untouched.
+- Rebuilt6signed ARM64iOS16 files in continuation-0049/graphics-v1; bundle
+  15376928bytes/SHA d8a8fb79b19f9e273d87e93ac079b7202158d1a3a0cf7c6c6bc6e109a5f705d2.
+  RawMesa is the physically passed0048 input98d69ebd, not rebuilt/changed.
+-213source/host/signed-artifact inputs frozen BEFORE any0049guestexecution.
+  Wrapper70193 waitsCI->profile/CRC/SHAkernel->freshCPU1defaultclock4cases
+  60/90/60/60s(total185checks)->prepare only. Onepredeclared identical retry
+  ONLYclassifiedrtclockthreshold; retain failure/stopsecond. NoCPU2/IRQwaiver.
+- NEXT finishbuild/regressions/independentimagecheck; FIRST targetedFASTBOOT
+  query thenfresh ROroot16GiB/maps/GPT/header/temp preflight and DIRECTboot.
+  Do not ask again if expected phone present. USB observer remains PAUSED.
+  Physical desktop proof requires submissions/imports beyondselftest duringUI,
+  neither O1 nor L6 alone. 0048photo alreadyT6/E0 butO0/S1/I1.
+
 ### 0049 loading-path repair in progress; human already in FASTBOOT
 
 - New0048 Settings photo C25B51FA confirms GUI and `GA O0 S1 I1 T6 E0 D0 R1`.
