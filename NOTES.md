@@ -34,7 +34,26 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT ACTION —0045 CI SUCCESS; fixed CPU1 regressions running; currentphone0044GUI/CP80
+### CURRENT ACTION —0045 image verified; FASTBOOT auto-found; RO preflight running
+
+- All133standardclockCPU1checks FIRSTPASS (cache45/network44/no-MMIO44);
+  no0045guestfailures/retries. Prior0043timerfailures remainunresolved.
+  Independentfinal-prepared-check PASS04:58:50.740550UTC:49native tests,
+  4actualARM64units/imports,30patches35files,29rowformatter, nativeCPorder/
+  8offsetwhitelist/source/linkedSMC/highPAcache/exactpayload allverified.
+- Sourceafc1c7a5ccec55a323993b7e20be11b579d6ed79 / CI40163178453 SUCCESS;
+  kernel2fc80304aaeab0fd2228471e80eef71d33dd4653f94e4c8341898cc397a9af84;
+  payload e7fb3e2858b465865ce1657370077c81efdaf1b3a7cd6b43e93a9103bf5cc8d9;
+  image881c394ab31233310b472884e72666d2013fb676a9b3b32f0aa9f743cbb8d8f8
+  (47509504B). FIRSTautoFASTBOOTquery04:58:57.643275UTC foundexpectedpolaris.
+  No repeatedkeysrequested; freshROpreflight12961 active. OnPASS directly
+  boot-phone, NOTboot-and-watch. USBobserver remainsPAUSED. No0045boot sentyet.
+- Currentphonewas0044GUI/freshPASauthwithCP80 initfailure, nowinpreflight
+  recovery. Actual0045CPfence/pixels/GUI unknown, desktopGPUbridgeunimplemented.
+  Allimportantlogs retained afterhumanclarifiedpreference. Postbootrequest
+  actualGUI orlastGPUSTEP plusGZ/GC0/GI/GF (B=beforeCPstatus,A=postAUTH,S=CB0FSR).
+
+### 0045 CI SUCCESS; fixed CPU1 regressions completed
 
 - FullCI40163178453/sourceafc1c7a5ccec55a323993b7e20be11b579d6ed79 SUCCESS,
   job121078915922. CompleteCIlog saved research/polaris/ci-40163178453.log.
