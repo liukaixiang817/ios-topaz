@@ -34,7 +34,33 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT ACTION —0045 image verified; FASTBOOT auto-found; RO preflight running
+### CURRENT ACTION —0045 temporary boot SENT; actual CP/image/GUI result pending
+
+- FreshROpreflight12961 EXIT0 at05:00:34.218169UTC: all16GiB root689a8cd1,
+  all182maps/GPT/header32311c08 unchanged, cleanouter/unmounted/RO1/31C.
+  Nojournalreplay/repair/partitionwrites. Directboot-phone33020 EXIT0:
+  Sending/BootingOKAY,total1.180s, **2026-10-25T05:00:49.749984UTC**.
+- Exact0045image881c394ab31233310b472884e72666d2013fb676a9b3b32f0aa9f743cbb8d8f8,
+  kernel2fc80304aaeab0fd2228471e80eef71d33dd4653f94e4c8341898cc397a9af84,
+  publicsourceafc1c7a5ccec55a323993b7e20be11b579d6ed79, CI40163178453SUCCESS.
+  FinalindependentimagecheckPASS;49native/4ARM64units/30patches35files/29rows,
+  all133standardclockCPU1guestchecks FIRSTPASS, no0045guestfailure/retry.
+- Importantlogs/29rowpanel retained perlatesthumanclarification. Newnative
+  SQE/RBprepare→PAS→SQErelease flow andCP-firstfault boundaries source/test
+  verified, NOTyetphysicalsuccess. ExpectedF600dc0de/GI1px1000/H1 andGZA1K1;
+  GZauth alone notdrawingproof. Actual0045GUI/CP/fence/pixels unknown. Desktop
+  GPU IOUserClient/Mesa/Metal/IOSurfacebridge NOTimplemented, GUIstillCPU.
+- Newpendingtextquestion explicitlyasks0045actualGUI orlastGPUSTEP/SCM,
+  andGZ/GC0/GI/GF. GF B=initialCPstatus,A=postAUTH,S=ownedCB0FSR. Readraw32bit
+  details/8nativeSQEstate words andSMMUsyndromes retainedinRAM; panelCPfields
+  display8nativebits. Old0044GUI/photo cannotconfirm0045.
+- USBobserver staysPAUSED: directboot-phone, NO boot-and-watch. Localprocess
+  inventory05:01:34UTC noobserver/samplefiles; pausemarkerboundnew sent_utc.
+  No USBconnection/non-enumeration claim. DoNOTrestartimplicitly. Prior0043
+  timerfailures remainunresolved; CPU1only. NEXTawaitnew0045hardware result.
+  See0045/next-userland-GPU-bridge-plan.json forremainingdesktopadmission gates.
+
+### 0045 image verified; FASTBOOT auto-found; RO preflight completed
 
 - All133standardclockCPU1checks FIRSTPASS (cache45/network44/no-MMIO44);
   no0045guestfailures/retries. Prior0043timerfailures remainunresolved.
