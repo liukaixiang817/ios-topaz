@@ -8,7 +8,7 @@ and DO NOT authorize erasing this phone. On 2026-10-24 the user explicitly
 approved ONLY the proposed minimal userdata metadata repair, then continuing
 iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
-## Current handoff, 2026-10-25 (Australia/Melbourne)
+## Current handoff, 2026-10-26 (Australia/Melbourne)
 
 **FASTBOOT workflow, clarified by the user: after a build/image is ready,
 first check the connected phone with a read-only FASTBOOT query. If the
@@ -33,6 +33,66 @@ arrives. End using a human-confirmation marker bound to that boot's sent_utc;
 stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
+
+### 0052 TEMPORARY BOOT SENT13:20:28UTC; await actual swipe/desktop GPU evidence
+
+- FIRSTautoFASTBOOTquery13:16:55.453027UTC confirmed expectedpolaris ready;
+  NOduplicatekeysrequest. ROpreflight79377 EXIT0 at13:18:53.293198UTC:
+  freshfull16GiBrootSHA689a8cd1,182maps/GPT/reviewedheader3e885886stable,
+  blockRO1/unmounted/33C. PendingAndroidjournal NOTclean/notreplayed/repaired.
+  NOpartitionwrites. All232frozeninputs stillmatchafterboot.
+- Directboot-phone20657 EXIT0: Sending1.425s/Booting0.091s,total1.529s;
+  **sent_utc2026-10-25T13:20:28.428279+00:00**. Image80bef666f3bd03c423388e3306fffe6079d364c25413e8ba33e95e5defab346f,
+  kernel54f2505f26126b579c7a484786f7525eeab329f4f73330351d6ececcca62924b,
+  payload7a60ed566661bee9bd31828a45b949ab482a846706b866f9483278da9f9de3d6.
+  Publicsourcea3c667d/CI40195909879 SUCCESS; rootimplementation171f0d8
+  (0857implementation4488821). Complete0049/0050hardware/BO/HID paths preserved.
+-74native/8actualunits/38patches53files/29rows/185freshCPU1defaultclock
+  FIRSTPASSchecks, no0052guestfailure/retry; independentfinalcheckerPASS.
+  ActualiOS acceptance nowFIRST exercises WrapClientImage(13x8,row64,size500),
+  WrapClientMemory(unaligned), BulkAttachments, livealias, Machportcachedlookup/
+  release, thenGPUshader/all4096pixels. T6E0 requirescombinedtestpass.
+- Await HUMANactual0052lockscreen: bottomswipe->desktop->Settings->scroll
+  ->returnhome. NeedstableUI/input plus increasingGA C underO1/noGLF toprove
+  actualdesktopGPU. S includesselftest; cachedL/M alone notcurrentGPUevidence.
+  OneverifieddesktopGPUattempt/boot, laterfallback CPU. Physical0052GPU/input
+  stillUNPROVEN. Do notinterpretold0050SIG11photos asnew0052failure.
+- USBobserverSTILLPAUSED; NOobserver/boot-and-watchstarted. Pausemarkerbound
+  exact0052sentUTC; noUSBenumeration/successclaim. NoUEFI/storagechanges.
+- NEXT collectthisactualresult before anynewboot. IfGLFresolveexactnewPC/LR;
+  ifT1E31..40 selftestfailedbeforedesktop, respectCPUfallback, diagnosethatAPI.
+  IfT6E0butC0, inspectactualsurfaceformat/context before changingfirmware.
+
+### 0052 FINAL IMAGE PASS; expected FASTBOOT present; ROpreflight79377 running
+
+- Finalchecker13:16:32.872397UTC PASS:74native/8actualunits/imports,
+  38orderedpatches53files/29rows,185freshCPU1defaultclockchecks FIRSTPASS
+  (all4cases/no0052failure/retry),232frozeninputs, fullsource/ABI/sixsignatures/
+  linkedSMC/highPAcache/payloadrebuild/Cvalidator/packedimage PASS.
+- Kernel54f2505f26126b579c7a484786f7525eeab329f4f73330351d6ececcca62924b;
+  payload7a60ed566661bee9bd31828a45b949ab482a846706b866f9483278da9f9de3d6;
+  image shim/out/polaris-xnu-readdebug-0052/polaris-xnu-readdebug-0052.img
+  SHA80bef666f3bd03c423388e3306fffe6079d364c25413e8ba33e95e5defab346f,
+  62918656bytes. graphics-v1 bundle15378928bytes,
+  SHA8d92885f1681988abd9b639c2062ed8caf4d13be8d42eb986189af2c6d4ae8fc.
+- FIRSTautoFASTBOOTquery13:16:55.453027UTC confirms expectedpolaris already
+  present; no repeatedkeysrequest. ROpreflight79377 running knownheadless
+  recovery/full16GiB/map/GPT/reviewedheader/tempchecks. NewheaderchangeSTOP;
+  neverreplay/repairjournal. NOpartitionwrites. USBobserver remainsPAUSED.
+- NEXT wait79377; onlyonPASS run directrun-device-step.py boot-phone, NO
+  boot-and-watch/observer. Capture exactsentUTC andpausemarker. Physical
+  GPUdesktop/input stillUNPROVEN; requireT6E0 + growingC duringstableGUI,
+  noGLF, realbottomswipe->desktop->Settings->scroll. Selftestnowincludes
+  originalIOSurfacewrap/bulk/port/lifetime + padded-lastrowABI before GLSL.
+
+### 0052 full CI SUCCESS; fresh CPU1 regressions running; NOdevice action
+
+- CI40195909879/job121176571015 SUCCESS/sourcea3c667d7e5dbd450334d3e2ab04cbae971154877.
+  Exactprofile/CRC/SHAverifiedkernel downloaded:
+  54f2505f26126b579c7a484786f7525eeab329f4f73330351d6ececcca62924b.
+- Frozen232inputs stillbound; fixedfourCPU1defaultclock guestcases nowrunning.
+  Finish185checks + independentfinalimagechecker BEFORE FIRSTFASTBOOTquery.
+  No0052preflight/boot yet;0051superseded-before-phone. USBobserverPAUSED.
 
 ### 0052 sourcea3c667d/CI40195909879; frozen232inputs; awaiting complete build
 
