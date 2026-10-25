@@ -34,7 +34,40 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT ACTION —0045 temporary boot SENT; actual CP/image/GUI result pending
+### CURRENT ACTION —0045 CP80/FSR402 confirmed;0046 disable-before-bases fix in validation
+
+- NewhumanphotoC5D1400E showsSettingsGUI with GZ6/7t0r0S1M1A1K1, GC06/3
+  C0/9I0F0H0L1M8/7, GI0px0@823e0a80, GFIRQ0HW0P0CP80 B80 A80 S402.
+  Freshauthsuccess, CP80 alreadyexists AFTERourinitialSQE_CNTL3 butBEFORE
+  bases/freshAUTH. FSR402=TF2+syndromeformat400 (notPF8); FAR notvisibleyet.
+  CannotinferfaultpredatedCB0setup orbeforefirstSQEcontrolwrite. NativeGPU
+  pixels/desktopstillFAIL/unimplemented. Actualrecord0045/hardware-0045-stale-
+  CP-and-translation-fault.json. USBobserverPAUSED, importantlogskeep.
+- Sourcefinding: ourinitialSQE_CNTL3 includesENABLE1 beforevalidSQEbase!
+  OwnMiCode/Linux/referenceprogrambasesbeforefirstENABLE1. 0046preparewrites
+  SQE0, verifiesdisabled/readbacks, thenfreshAUTH, thenENABLE1 onlyoncevalid.
+  CaptureCPentry BEFOREfirstcontrolwrite vsafterdisable/auth. KnownpreAUTH
+  CPerror aborts WITHOUTSQErelease/submission. Finalhalt3 onlyafteridle proof.
+  Exactunderlyingphysicalcause remainsUNPROVEN; orderfix notGPUproof.
+- Native arm_smmu_context_bank_reset clearsFSRafterSCTLR0. Newhelper savesold
+  FSR/FAR/FSYNR, onlyW1Cobservedfaultbits inowneddisabledCB0 withSID0match
+  invalid andbothmastersheld. RejectoldstalledSS transaction/failedreadback;
+  noGLOBAL/foreignbankclear, noRESUME/ATOS/bypass orpermissionrelaxation.
+  W1Clatchhistory notrewrittenoncleanup. Doesnotdeclareold402newfault.
+- Currentpanel stays29rows: aftercoreattempt, oldpower/TCM rows canpresent
+  CPE/B/A/disable + exactFAR/FSR/syndrome; ALLdetailedbringup retainedinRAM.
+  Final49ASan/UBSan tests/29rowformatter,4actualARM64units/imports/SMCISA,
+  31orderedpatches35files/source-boundarychecks PASS. Includesprematureenablemodel, noAUTHrelease,
+  exact8ROcapture, stale402→400W1C,ignoredclear/stalledSSrefusal, liveGMU/
+  globalunchanged. Onehostfixturecaptureexpectationneededupdate,preservedin
+  taskhistory; nohardware/CIyet. Partialchangedcorecontextfailure nowretains
+  entireenvironmentthroughcleanup; noacknowledgedstopassumed. Private0046
+  exact0045baseline/0851generated.
+- NEXTcommit/source-onlypublish/ghbuild, fixedCPU1matrix. Afterimagefinalcheck FIRST
+  autoFASTBOOTquery thenROpreflight/directtemporaryboot ifalreadyready.
+  No0046image/actionyet. Neverboot-and-watch; pausedUSBobserver stayspaused.
+
+### 0045 temporary boot sent; hardware failure confirmed above
 
 - FreshROpreflight12961 EXIT0 at05:00:34.218169UTC: all16GiB root689a8cd1,
   all182maps/GPT/header32311c08 unchanged, cleanouter/unmounted/RO1/31C.

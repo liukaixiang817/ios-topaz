@@ -18,7 +18,7 @@ class A630SMMUTests(unittest.TestCase):
 struct model {
  uint32_t r[16384], original[16384];
  unsigned operations, fail, calls, writes, clean, sync, waits, wide, implwrites;
- bool held, stuck, badack, halt_stuck, implbad, forbidimpl, badactlr, drift, s2quirk, ignored_fault;
+ bool held, stuck, badack, halt_stuck, implbad, forbidimpl, badactlr, drift, s2quirk, ignored_fault, sticky_fault;
 };
 static struct model m;
 static bool op(struct model *x) {x->operations++;return x->operations!=x->fail;}
@@ -46,6 +46,10 @@ static bool wr(void *ctx,uint32_t off,uint32_t v) {
   if(type==1){assert(!(x->r[(0x800+4*slot)/4]&(1u<<31)));
    if(x->s2quirk)v=(v&~0x30000u)|0x20000u;
   }
+ }
+ if(off==0x8058){
+  assert(!x->r[0x8000/4]&&!(x->r[0x804/4]&(1u<<31))&&v==2);
+  if(!x->sticky_fault)x->r[off/4]&=~v;return ok;
  }
  bool impl=false;for(unsigned n=1;n<12;n++)if(off==a630_smmu_impl_offsets[n])impl=true;
  if(x->forbidimpl)assert(!impl && off!=0x6000);
@@ -257,6 +261,24 @@ int main(void) {
   assert(a630_smmu_begin_core(true,true,&pt,&io,&m,&s)!=A630_SMMU_READY);
   assert(m.r[0x9000/4]==0xc01127&&!m.implwrites);
  }
+ /* Own disabledCB0 old translation fault is snapshotted, W1C-cleared
+  * before enable, with format bits400 preserved; liveGMU/global remain untouched. */
+ reset();m.r[0]=0x400;m.r[0x6000/4]=0x2378;m.forbidimpl=true;
+ m.r[0x800/4]=0x80000005;m.r[0xc00/4]=0x301;m.r[0x9000/4]=0xc01127;
+ m.r[0x48/4]=0x123;m.r[0x8058/4]=0x402;m.r[0x8060/4]=0x10000000;m.r[0x8068/4]=1;
+ assert(a630_smmu_begin_core(true,true,&pt,&io,&m,&s)==A630_SMMU_READY);
+ assert(s.stale_fsr==0x402&&s.clean_fsr==0x400&&s.stale_cleared&&s.stale_far[0]==0x10000000&&s.stale_fsynr==1);
+ assert(m.r[0x8058/4]==0x400&&m.r[0x48/4]==0x123&&m.r[0x9000/4]==0xc01127&&!m.implwrites);
+ assert(a630_smmu_end(&io,&m,&s)&&m.r[0x8058/4]==0x400); /* never recreate the old fault */
+ reset();m.r[0]=0x400;m.r[0x6000/4]=0x2378;m.forbidimpl=true;
+ m.r[0x800/4]=0x80000005;m.r[0xc00/4]=0x301;m.r[0x9000/4]=0xc01127;
+ m.r[0x8058/4]=0x402;m.sticky_fault=true;
+ assert(a630_smmu_begin_core(true,true,&pt,&io,&m,&s)==A630_SMMU_ACK&&s.failed_offset==0x8058&&!s.stale_cleared);
+ assert(!(m.r[0x804/4]&(1u<<31))&&!m.r[0x8000/4]&&m.r[0x9000/4]==0xc01127);
+ reset();m.r[0]=0x400;m.r[0x6000/4]=0x2378;m.forbidimpl=true;
+ m.r[0x800/4]=0x80000005;m.r[0xc00/4]=0x301;m.r[0x9000/4]=0xc01127;
+ m.r[0x8058/4]=0x40000402;
+ assert(a630_smmu_begin_core(true,true,&pt,&io,&m,&s)==A630_SMMU_OWNERSHIP&&!s.stale_cleared&&m.r[0x8058/4]==0x40000402);
  reset();m.r[0x6000/4]=0x2378;m.r[0x8000/4]=1;
  assert(a630_smmu_begin_core(true,true,&pt,&io,&m,&s)==A630_SMMU_OWNERSHIP&&!m.writes);
  reset();m.r[0x6000/4]=0x2378;m.r[0x24/4]|=1u<<16;

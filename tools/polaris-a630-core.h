@@ -30,7 +30,7 @@ struct a630_core_snapshot {
     uint32_t error,stage,offset,expected,actual,started,halted,idle,keep_live;
     uint32_t wptr,rptr,status,irq,hw_fault,protect,cp_irq,polls;
     uint32_t init_done,secure_done,fence,image,pixels,halt_error;
-    uint32_t prepared,cp_before,cp_auth,config[7],live[7],fault_valid;
+    uint32_t prepared,disabled,cp_entry,cp_before,cp_auth,config[7],live[7],fault_valid;
     uint32_t sqe_state[8],sqe_valid,sqe_index_restored;
 };
 static inline uint32_t a630_core_parity(uint32_t v)
@@ -113,9 +113,9 @@ static inline bool a630_core_halt(const struct a630_core_io *io,struct a630_core
 failed:
     s->halt_error=r.error?r.error:A630_CORE_RUNNING;s->keep_live=1;return false;
 }
-/* Native a6xx_rb_start loads SQE/RB addresses BEFORE subsystem_get(zap).
- * Preparation cannot release SQE or submit any command. Authentication
- * remains mandatory at the separate execution boundary below. */
+/* Native a6xx_rb_start programs bases BEFORE the first SQE enable.
+ * Value3 has ENABLE set as well as HALT, so it is not a disabled initial
+ * state. Keep ENABLE=0 until valid bases and fresh authentication exist. */
 static inline bool a630_core_prepare(bool exact_board,bool mappings_ready,
     const struct a630_core_io *io,uint32_t *ring,volatile uint32_t *scratch,
     volatile uint32_t *target,struct a630_core_snapshot *s)
@@ -128,9 +128,10 @@ static inline bool a630_core_prepare(bool exact_board,bool mappings_ready,
     s->stage=1;s->keep_live=1;
     if(!a630_core_rd(io,s,0x210,&s->status))return false;
     if(s->status&0xfffffffeu){s->error=A630_CORE_RUNNING;return false;}
-    if(!a630_core_wr(io,s,0x808,3)||!a630_core_rd(io,s,0x808,&s->actual))return false;
-    if(!(s->actual&2)){s->error=A630_CORE_RUNNING;return false;}
-    s->halted=1;s->keep_live=0;
+    if(!a630_core_rd(io,s,0x823,&s->cp_entry))return false;
+    if(!a630_core_wr(io,s,0x808,0)||!a630_core_rd(io,s,0x808,&s->actual))return false;
+    if(s->actual){s->error=A630_CORE_RUNNING;return false;}
+    s->disabled=1;s->keep_live=0;
     if(!a630_core_rd(io,s,0x806,&s->rptr))return false;
     if(s->rptr){s->error=A630_CORE_RUNNING;return false;}
     if(!a630_core_rd(io,s,0x823,&s->cp_before))return false;
@@ -145,7 +146,7 @@ static inline bool a630_core_prepare(bool exact_board,bool mappings_ready,
        !a630_core_wr(io,s,0x802,0x0800020c)||!a630_core_wr(io,s,0x804,0)||
        !a630_core_wr(io,s,0x805,0)||!a630_core_wr(io,s,0x807,0))return false;
     const uint32_t words[]={0x830,0x831,0x800,0x801,0x802,0x807,0x808};
-    const uint32_t values[]={A630_CORE_SQE,0,A630_CORE_RING,0,0x0800020c,0,3};
+    const uint32_t values[]={A630_CORE_SQE,0,A630_CORE_RING,0,0x0800020c,0,0};
     for(unsigned n=0;n<7;n++){
         if(!a630_core_rd(io,s,words[n],&s->config[n]))return false;
         if(s->config[n]!=values[n]){
@@ -159,13 +160,17 @@ static inline bool a630_core_execute(bool authenticated,const struct a630_core_i
     uint32_t *ring,volatile uint32_t *scratch,volatile uint32_t *target,struct a630_core_snapshot *s)
 {
     if(!s)return false;
-    if(!authenticated||!s->prepared||s->stage!=2||!s->halted||s->started||!io||
+    if(!authenticated||!s->prepared||s->stage!=2||!s->disabled||s->started||!io||
        !io->owned||!io->read||!io->write||!io->sync||!io->wait||!ring||!scratch||!target||
        ((uintptr_t)ring&0x3fff)||((uintptr_t)scratch&0x3fff)||((uintptr_t)target&0x3fff)){
         s->error=A630_CORE_ARGUMENT;return false;
     }
     if(!a630_core_rd(io,s,0x823,&s->cp_auth))return false;
-    s->stage=3;s->started=1;s->halted=0;s->idle=0;s->keep_live=1;
+    if(s->cp_auth&0xf7u){
+        s->error=A630_CORE_FAULT;s->offset=0x823;s->actual=s->cp_auth;
+        a630_core_fault_snapshot(io,s);return false;
+    }
+    s->stage=3;s->started=1;s->disabled=0;s->halted=0;s->idle=0;s->keep_live=1;
     if(!a630_core_wr(io,s,0x808,1))goto done;
     /* Linuxv6.12 A630 CP initialization: no preemption/IFPC restore list. */
     const uint32_t init[]={0x2f,3,0x20000000,0,0,0,0,0};
