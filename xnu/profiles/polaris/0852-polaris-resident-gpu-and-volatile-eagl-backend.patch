@@ -1,0 +1,1317 @@
+--- a/bsd/conf/files
++++ b/bsd/conf/files
+@@ -651,3 +651,5 @@
+ bsd/skywalk/packet/pbufpool.c			optional skywalk
+ bsd/skywalk/packet/pbufpool_kern.c		optional skywalk
+ bsd/dev/cpu_copy_in_cksum_gen.c			optional skywalk
++
++bsd/dev/polaris_gpu_overlay.c standard
+--- a/bsd/dev/polaris_a630.c
++++ b/bsd/dev/polaris_a630.c
+@@ -5,7 +5,8 @@
+  * fresh GMU firmware boot at the original200MHz, then contains and unwinds.
+  * Mode7 requests original low GX/MX votes and probes HFI INIT/FW_VER.
+  * Mode8 completes native HFI tables. Mode9 attempts owned core/SQE/ZAP/CP
+- * and a checked64x64 offscreen image. No desktop acceleration service yet.
++ * and a checked64x64 offscreen image. Optional polarisgpuclient=1 exposes
++ * the resident service only after that full proof; Mesa/EAGL is separate.
+  */
+ #if defined(POLARIS_RAM_ONLY)
+ #include <sys/param.h>
+@@ -36,6 +37,8 @@
+ #include "polaris_a630_post.h"
+ #include "polaris_a630_zap.h"
+ #include "polaris_a630_core.h"
++#include "polaris_a630_submit.h"
++#include "polaris_gpu.h"
+ extern vm_offset_t ml_io_map(vm_offset_t, vm_size_t);
+ extern ppnum_t pmap_find_phys(pmap_t, addr64_t);
+ /* XNU-private declarations in osfmk/vm/pmap.h are not exported to BSD. */
+@@ -66,7 +69,8 @@
+ static vm_offset_t a630_dma;
+ static uint32_t a630_dma_ready, a630_dma_bytes, a630_nc_pages;
+ static struct a630_image a630_gmu_image;
+-static uint32_t a630_mode;
++static uint32_t a630_mode, a630_client_requested;
++static vm_offset_t a630_client_tables;
+ static uint32_t a630_started, a630_published, a630_firmware_ok, a630_abi_ok;
+ static uint8_t a630_host_hfi[A630_HFI_BYTES] __attribute__((aligned(16384)));
+ /* Only the dedicated mode9 worker mutates hardware snapshots. Before its
+@@ -113,6 +117,11 @@
+ {
+     if (!__atomic_load_n(&a630_published, __ATOMIC_ACQUIRE)) return 0;
+     return a630_saved.result | (a630_firmware_ok << 8) | (a630_abi_ok << 9);
++}
++bool polaris_gpu_boot_pending(void)
++{
++    uint32_t state=__atomic_load_n(&a630_worker_state,__ATOMIC_ACQUIRE);
++    return state==1 || state==2;
+ }
+ 
+ uint32_t polaris_a630_details(char *out, uint32_t capacity)
+@@ -140,6 +149,7 @@
+     const struct a630_post_snapshot *post=&a630_post_saved;
+     const struct a630_zap_snapshot *zap=&a630_zap_saved;
+     const struct a630_core_snapshot *core=&a630_core_saved;
++    if(line==19){uint32_t n=polaris_gpu_client_line(out,size);if(n)return n;}
+     if(line==0 && core->prepared)return (uint32_t)snprintf(out,size,
+         "GP SQE E%x B%x A%x D%x S%x/%x",
+         core->cp_entry&255,core->cp_before&255,core->cp_auth&255,core->disabled&1,
+@@ -409,6 +419,12 @@
+ static bool a630_clean_owned(void *opaque,const void *p,size_t bytes)
+ {
+     uintptr_t va=(uintptr_t)p;
++    if(a630_client_tables && va>=a630_client_tables && va-a630_client_tables<=0x200000 &&
++       bytes<=0x200000-(va-a630_client_tables) && a630_runtime_owned(opaque)){
++        for(uintptr_t at=va&~(uintptr_t)63;at<va+bytes;at+=64)
++            __asm__ volatile("dc civac, %0"::"r"(at):"memory");
++        __asm__ volatile("dsb sy":::"memory");return true;
++    }
+     if(!a630_runtime_owned(opaque)||!a630_dma_ready||va<a630_dma||
+         va-a630_dma>a630_dma_bytes||bytes>a630_dma_bytes-(va-a630_dma))return false;
+     for(uintptr_t at=va&~(uintptr_t)63;at<va+bytes;at+=64){
+@@ -471,7 +487,15 @@
+         if(a630_images[1].bytes>0x8004 || a630_images[2].bytes>PAGE_SIZE)return false;
+         memcpy((void*)(a630_dma+0x28000),a630_images[1].data+4,a630_images[1].bytes-4);
+         memcpy((void*)(a630_dma+0x40000),a630_images[2].data,a630_images[2].bytes);
+-        if(!a630_mmu_init(&a630_core_tables,(void*)(a630_dma+0x10000),physical+0x10000,16))return false;
++        if(a630_client_requested){
++            if(kmem_alloc_contig(kernel_map,&a630_client_tables,0x200000,PAGE_MASK,0,0,
++                KMA_DATA|KMA_ZERO|KMA_PERMANENT,VM_KERN_MEMORY_IOKIT)!=KERN_SUCCESS)return false;
++            uint64_t root=ptoa_64(pmap_find_phys(kernel_pmap,(addr64_t)a630_client_tables));
++            if(!root || root>=A630_MMU_PA_LIMIT-0x200000)return false;
++            for(unsigned n=0;n<0x200000;n+=PAGE_SIZE)
++                if(ptoa_64(pmap_find_phys(kernel_pmap,(addr64_t)a630_client_tables+n))!=root+n)return false;
++            if(!a630_mmu_init(&a630_core_tables,(void*)a630_client_tables,root,512))return false;
++        }else if(!a630_mmu_init(&a630_core_tables,(void*)(a630_dma+0x10000),physical+0x10000,16))return false;
+         const uint32_t map[][4]={{A630_CORE_SQE,0x28000,0x8000,A630_MMU_USER|A630_MMU_READONLY|A630_MMU_EXEC},
+             {A630_CORE_RING,0x30000,0x8000,A630_MMU_USER|A630_MMU_READONLY},
+             {A630_CORE_SCRATCH,0x38000,0x4000,A630_MMU_USER},
+@@ -818,6 +842,7 @@
+         s->cx, s->cx_hw, s->gx, s->clocks[0], s->clocks[1], s->clocks[2],
+         s->fw_init, s->counter_high, s->counter_low);
+ }
++#include "polaris_a630_runtime.h"
+ static void a630_run(unsigned mode)
+ {
+     a630_stage(2,"firmware and exact-board admission");
+@@ -877,6 +902,7 @@
+     a630_stage(17,"trial returned; publishing immutable result");
+     __atomic_store_n(&a630_published, 1, __ATOMIC_RELEASE);
+     polaris_a630_report();
++    if(mode==9)a630_client_adopt(&io);
+ }
+ static void a630_worker(void *arg __unused,wait_result_t wr __unused)
+ {
+@@ -886,7 +912,7 @@
+     __atomic_store_n(&a630_worker_state,2,__ATOMIC_RELEASE);
+     a630_run(a630_mode);
+     __atomic_store_n(&a630_worker_state,3,__ATOMIC_RELEASE);
+-    printf("POLARIS GPU WORKER: returned; immutable result available; desktop CPU\n");
++    printf("POLARIS GPU WORKER: returned; immutable proof available; GPU service separate\n");
+     thread_terminate(current_thread());
+ }
+ void polaris_a630_init(void)
+@@ -894,6 +920,8 @@
+     unsigned mode=0;PE_parse_boot_argn("polarisgpu",&mode,sizeof(mode));
+     if(mode<1||mode>9||__atomic_exchange_n(&a630_started,1,__ATOMIC_ACQ_REL))return;
+     a630_mode=mode;
++    PE_parse_boot_argn("polarisgpuclient",&a630_client_requested,sizeof(a630_client_requested));
++    a630_client_requested=(mode==9 && a630_client_requested==1);
+     if(mode==9){
+         __atomic_store_n(&a630_worker_state,1,__ATOMIC_RELEASE);
+         a630_stage(1,"dedicated worker queued; BSD init continues");
+--- a/bsd/dev/polaris_a630_mmu.h
++++ b/bsd/dev/polaris_a630_mmu.h
+@@ -12,7 +12,7 @@
+ 
+ #define A630_MMU_PAGE 4096u
+ #define A630_MMU_ENTRIES 512u
+-#define A630_MMU_MAX_TABLES 32u
++#define A630_MMU_MAX_TABLES 512u
+ #define A630_MMU_PA_LIMIT (UINT64_C(1) << 36)
+ #define A630_MMU_VA_LIMIT (UINT64_C(1) << 39)
+ #define A630_MMU_ADDRESS UINT64_C(0x0000000ffffff000)
+@@ -31,8 +31,19 @@
+ struct a630_mmu {
+     uint64_t *memory, physical;
+     uint32_t capacity, used, dirty;
++    uint32_t dirty_high[(A630_MMU_MAX_TABLES / 32) - 1];
+     uint8_t level[A630_MMU_MAX_TABLES];
+ };
++static inline void a630_mmu_dirty(struct a630_mmu *s, unsigned index)
++{
++    if (index < 32) s->dirty |= UINT32_C(1) << index;
++    else s->dirty_high[index / 32 - 1] |= UINT32_C(1) << (index % 32);
++}
++static inline void a630_mmu_cleaned(struct a630_mmu *s)
++{
++    s->dirty = 0;
++    __builtin_memset(s->dirty_high, 0, sizeof(s->dirty_high));
++}
+ static inline bool a630_mmu_init(struct a630_mmu *s, void *memory,
+                                 uint64_t physical, uint32_t tables)
+ {
+@@ -115,10 +126,28 @@
+         three = s->memory + index * A630_MMU_ENTRIES;
+         s->level[index] = 3;
+         *middle = (s->physical + (uint64_t)index * A630_MMU_PAGE) | 3;
+-        s->dirty |= 1u << ((uint64_t)(two - s->memory) / A630_MMU_ENTRIES);
++        a630_mmu_dirty(s, (unsigned)((two - s->memory) / A630_MMU_ENTRIES));
+     }
+     three[(iova >> 12) & 511] = value;
+-    s->dirty |= 1u << ((uint64_t)(three - s->memory) / A630_MMU_ENTRIES);
++    a630_mmu_dirty(s, (unsigned)((three - s->memory) / A630_MMU_ENTRIES));
++    return A630_MMU_OK;
++}
++/* Caller must have drained AND halted CP. Tables are retained, so an
++ * unmap never invalidates a table pointer still cached by this SMMU. */
++static inline enum a630_mmu_error a630_mmu_unmap(struct a630_mmu *s, uint64_t iova)
++{
++    if (!a630_mmu_valid(s) || iova >= A630_MMU_VA_LIMIT || (iova & 4095))
++        return A630_MMU_ARGUMENT;
++    uint64_t e = s->memory[(iova >> 30) & 511];
++    if (!e) return A630_MMU_OK;
++    uint64_t *two = a630_mmu_table(s, e, 2);
++    if (!two || two == s->memory) return A630_MMU_CORRUPT;
++    e = two[(iova >> 21) & 511];
++    if (!e) return A630_MMU_OK;
++    uint64_t *three = a630_mmu_table(s, e, 3);
++    if (!three || three == two || three == s->memory) return A630_MMU_CORRUPT;
++    three[(iova >> 12) & 511] = 0;
++    a630_mmu_dirty(s, (unsigned)((three - s->memory) / A630_MMU_ENTRIES));
+     return A630_MMU_OK;
+ }
+ /* Software table walk for validation; never silently substitute it for an
+--- /dev/null
++++ b/bsd/dev/polaris_a630_runtime.h
+@@ -0,0 +1,121 @@
++/* Included once by polaris_a630.c. Native 0046 bootstrap is immutable after
++ * publication. These separate runtime snapshots/MMIO leases live forever.
++ */
++static struct a630_io a630_client_io;
++static struct a630_submit a630_client_submit;
++static uint32_t a630_client_ready, a630_client_dead;
++void polaris_gpu_quarantine(void)
++{
++    if (!__atomic_exchange_n(&a630_client_dead,1,__ATOMIC_ACQ_REL))
++        printf("POLARIS GPU: runtime quarantined; DMA pages/power retained, no further submissions\n");
++}
++bool polaris_gpu_ready(void)
++{
++    return __atomic_load_n(&a630_client_ready,__ATOMIC_ACQUIRE) &&
++        !__atomic_load_n(&a630_client_dead,__ATOMIC_ACQUIRE);
++}
++void polaris_gpu_cache(void *address, uint64_t size)
++{
++    /* Wired kernel-owned memory only. CPU aliases of BOs/surfaces have the
++     * same attributes. No 32-bit truncation of the virtual address. */
++    uintptr_t at=(uintptr_t)address;
++    if (!address || !size || size>UINTPTR_MAX-at) return;
++    for (uintptr_t end=at+size, p=at&~(uintptr_t)63; p<end; p+=64)
++        __asm__ volatile("dc civac, %0"::"r"(p):"memory");
++    __asm__ volatile("dsb sy":::"memory");
++}
++static bool a630_client_begin(void)
++{
++    if (!polaris_gpu_ready()) return false;
++    clock_interval_to_deadline(500,NSEC_PER_MSEC,&a630_client_io.deadline);
++    return true;
++}
++bool polaris_gpu_timestamp(uint64_t *value)
++{
++    if(!value || !a630_client_begin())return false;
++    /* Native A6XX_CP_ALWAYS_ON_COUNTER_{HI,LO}, no host-clock substitute. */
++    for(unsigned n=0;n<4;n++) {
++        uint32_t hi,lo,again;
++        if(!a630_core_read(&a630_client_io,0x981,&hi) ||
++            !a630_core_read(&a630_client_io,0x980,&lo) ||
++            !a630_core_read(&a630_client_io,0x981,&again))return false;
++        if(hi==again){*value=((uint64_t)hi<<32)|lo;return true;}
++    }
++    return false;
++}
++bool polaris_gpu_quiescent(void)
++{
++    if (!a630_client_begin()) return false;
++    struct a630_core_snapshot *s=&a630_client_submit.live;
++    const struct a630_core_io io={a630_core_owned,a630_core_read,a630_core_write,
++        a630_gmu_sync,a630_delay_us,&a630_client_io};
++    uint32_t halt,fsr,sctlr;uint64_t root;
++    bool ok=a630_core_idle(&io,s) && a630_core_read(&a630_client_io,0x808,&halt) && halt==3 &&
++        a630_smmu_read(&a630_client_io,0x8058,&fsr) && !(fsr&0xc00001feu) &&
++        a630_smmu_read(&a630_client_io,0x8000,&sctlr) && (sctlr&0xc011ff)==0xc01127 &&
++        a630_smmu_read64(&a630_client_io,0x8020,&root) && root==a630_core_tables.physical;
++    if (!ok) polaris_gpu_quarantine();
++    return ok;
++}
++bool polaris_gpu_map(uint64_t address,uint64_t physical,bool read_only,bool cached)
++{
++    if (!polaris_gpu_ready() || address<A630_CLIENT_IOVA || address>=A630_CLIENT_END ||
++        (physical>=a630_dma_physical && physical-a630_dma_physical<a630_dma_bytes)) return false;
++    unsigned flags=A630_MMU_USER|A630_MMU_EXEC|
++        (read_only?A630_MMU_READONLY:0)|(cached?A630_MMU_CACHED:0);
++    return a630_mmu_map(&a630_core_tables,address,physical,flags)==A630_MMU_OK;
++}
++bool polaris_gpu_commit(void)
++{
++    if (!polaris_gpu_quiescent()) return false;
++    polaris_gpu_cache(a630_core_tables.memory,(uint64_t)a630_core_tables.used*4096);
++    bool ok=a630_smmu_write(&a630_client_io,0x8610,0) &&
++        a630_smmu_write(&a630_client_io,0x87f0,0) && a630_gmu_sync(&a630_client_io);
++    uint32_t busy=1;
++    for (unsigned n=0; ok && n<1000; n++) {
++        ok=a630_smmu_read(&a630_client_io,0x87f4,&busy);
++        if (!ok || !(busy&1)) break;
++        a630_delay_us(&a630_client_io,1);
++    }
++    if (!ok || (busy&1)) {polaris_gpu_quarantine();return false;}
++    a630_mmu_cleaned(&a630_core_tables);
++    return true;
++}
++bool polaris_gpu_unmap(uint64_t address,uint64_t size)
++{
++    if ((address&4095) || !size || (size&4095) || address<A630_CLIENT_IOVA ||
++        address>=A630_CLIENT_END || size>A630_CLIENT_END-address || !polaris_gpu_quiescent()) return false;
++    for (uint64_t n=0; n<size; n+=4096)
++        if (a630_mmu_unmap(&a630_core_tables,address+n)!=A630_MMU_OK) {
++            polaris_gpu_quarantine();return false;
++        }
++    return polaris_gpu_commit();
++}
++bool polaris_gpu_submit(const uint64_t *addresses,const uint32_t *words,uint32_t count,uint32_t *fence)
++{
++    if (!addresses || !words || !fence || !count || count>A630_SUBMIT_MAX || !a630_client_begin()) return false;
++    struct a630_ib ibs[A630_SUBMIT_MAX];
++    for (unsigned n=0; n<count; n++) ibs[n]=(struct a630_ib){addresses[n],words[n]};
++    const struct a630_core_io io={a630_core_owned,a630_core_read,a630_core_write,
++        a630_gmu_sync,a630_delay_us,&a630_client_io};
++    bool ok=a630_submit_run(&a630_client_submit,&io,(uint32_t*)(a630_dma+0x30000),
++        (volatile uint32_t*)(a630_dma+0x38000),ibs,count);
++    if (!ok || !polaris_gpu_quiescent()) {
++        printf("POLARIS GPU: runtime failed error=%u wptr=%x rptr=%x CP=%x IRQ=%x; retaining BOs\n",
++            a630_client_submit.error,a630_client_submit.live.wptr,a630_client_submit.live.rptr,
++            a630_client_submit.live.cp_irq,a630_client_submit.live.irq);
++        polaris_gpu_quarantine();return false;
++    }
++    *fence=a630_client_submit.completed;
++    return true;
++}
++static void a630_client_adopt(const struct a630_io *io)
++{
++    if (!a630_client_requested || !a630_zap_saved.authenticated || !a630_zap_saved.retained ||
++        !a630_submit_adopt(&a630_client_submit,&a630_core_saved)) return;
++    a630_client_io=*io; /* Copy mappings, never retain the boot worker's stack. */
++    a630_client_io.gmu_lease=true;a630_client_io.runtime_lease=true;
++    a630_client_io.core_lease=true;a630_client_io.can_stop=false;a630_client_io.deadline=0;
++    __atomic_store_n(&a630_client_ready,1,__ATOMIC_RELEASE);
++    if (polaris_gpu_quiescent()) PolarisGPUStart();
++}
+--- a/bsd/dev/polaris_a630_smmu.h
++++ b/bsd/dev/polaris_a630_smmu.h
+@@ -389,7 +389,7 @@
+             (s->s2cr&~0x030303ffu)|0x300|s->bank,0x030303ff)) goto done;
+     if (!io->sync(ctx)) {s->error=A630_SMMU_IO;goto done;}
+     if(handoff && !a630_smmu_impl_stable(io,ctx,s))goto done;
+-    tables->dirty=0; s->stage=7;s->error=A630_SMMU_READY;
++    a630_mmu_cleaned(tables); s->stage=7;s->error=A630_SMMU_READY;
+ done:
+     s->start_error=s->error;return (enum a630_smmu_error)s->error;
+ }
+--- /dev/null
++++ b/bsd/dev/polaris_a630_submit.h
+@@ -0,0 +1,85 @@
++/* A630 synchronous resident submission. No power/reset/SCM operation.
++ * PM4: native MiCode a6xx_submit + Mesa25.0.7 adreno_pm4.xml.
++ * The coordinator serializes a SINGLE trusted writer, pins every BO and
++ * owns SID0/CB0. Success requires flush fence, RPTR, idle and SQE halt.
++ * Any uncertain completion quarantines the whole address space.
++ */
++#ifndef POLARIS_A630_SUBMIT_H
++#define POLARIS_A630_SUBMIT_H
++#include "polaris_a630_core.h"
++#define A630_SUBMIT_MAX 128u
++#define A630_CLIENT_IOVA 0x20000000ull
++#define A630_CLIENT_END  0x40000000ull
++struct a630_ib { uint64_t address; uint32_t words; };
++struct a630_submit {
++    uint32_t wptr, fence, completed, poisoned, count, error;
++    struct a630_core_snapshot live;
++};
++static inline bool a630_submit_adopt(struct a630_submit *r, const struct a630_core_snapshot *p)
++{
++    if (!r || !p || p->error != A630_CORE_READY || p->stage != 7 ||
++        !p->init_done || !p->secure_done || !p->image || p->pixels != 4096 ||
++        p->fence != 0x600dc0de || !p->idle || !p->halted || p->keep_live ||
++        p->wptr >= A630_CORE_WORDS || p->rptr != p->wptr) return false;
++    *r = (struct a630_submit){.wptr=p->wptr, .live=*p};
++    return true;
++}
++static inline void a630_submit_word(uint32_t *ring, uint32_t *at, uint32_t value)
++{
++    ring[*at] = value;
++    *at = (*at + 1) % A630_CORE_WORDS;
++}
++static inline bool a630_submit_run(struct a630_submit *r, const struct a630_core_io *io,
++    uint32_t *ring, volatile uint32_t *scratch, const struct a630_ib *ibs, uint32_t count)
++{
++    if (!r || r->poisoned || !io || !io->owned || !io->read || !io->write ||
++        !io->sync || !io->wait || !ring || !scratch || !ibs || !count || count > A630_SUBMIT_MAX ||
++        r->wptr >= A630_CORE_WORDS) return false;
++    for (unsigned n=0; n<count; n++)
++        if ((ibs[n].address & 3) || !ibs[n].words || ibs[n].words > 0xfffff ||
++            ibs[n].address < A630_CLIENT_IOVA || ibs[n].address >= A630_CLIENT_END ||
++            (uint64_t)ibs[n].words * 4 > A630_CLIENT_END - ibs[n].address) return false;
++    /* Nothing is placed in the ring until the previous work is proven idle
++     * and stopped. No overwrite of unread commands, including at wrap. */
++    struct a630_core_snapshot *s = &r->live;
++    s->wptr = r->wptr; s->error = 0;
++    uint32_t control;
++    if (!a630_core_idle(io,s) || !a630_core_rd(io,s,0x808,&control) || control != 3) goto poison;
++    uint32_t at=r->wptr, fence=r->fence+1;
++    if (!fence) fence=1;
++    scratch[12]=0;
++    /* CCU depth/color plus A6xx UCHE CACHE_INVALIDATE: a newly mapped BO
++     * can reuse physical pages after a completed client's close. */
++    const uint32_t invalidate[3]={0x18,0x19,0x31};
++    for (unsigned n=0; n<3; n++) {
++        a630_submit_word(ring,&at,a630_core_pkt7(0x46,1));
++        a630_submit_word(ring,&at,invalidate[n]);
++    }
++    for (unsigned n=0; n<count; n++) {
++        a630_submit_word(ring,&at,a630_core_pkt7(0x3f,3));
++        a630_submit_word(ring,&at,(uint32_t)ibs[n].address);
++        a630_submit_word(ring,&at,(uint32_t)(ibs[n].address>>32));
++        a630_submit_word(ring,&at,ibs[n].words);
++    }
++    a630_submit_word(ring,&at,a630_core_pkt7(0x26,0));
++    a630_submit_word(ring,&at,a630_core_pkt7(0x46,4));
++    a630_submit_word(ring,&at,4); /* CACHE_FLUSH_TS, all render data visible */
++    a630_submit_word(ring,&at,A630_CORE_SCRATCH+48);
++    a630_submit_word(ring,&at,0);
++    a630_submit_word(ring,&at,fence);
++    a630_submit_word(ring,&at,a630_core_pkt7(0x26,0));
++    if (!a630_core_sync(io,s)) goto poison;
++    s->wptr=at; s->halted=0; s->idle=0; s->keep_live=1;
++    /* Ring and tables visible before either CP release or the new WPTR. */
++    if (!a630_core_wr(io,s,0x808,1) || !a630_core_wr(io,s,0x807,at) ||
++        !a630_core_idle(io,s) || !a630_core_sync(io,s)) goto poison;
++    if (scratch[12] != fence) {s->error=A630_CORE_DATA;goto poison;}
++    if (!a630_core_halt(io,s)) goto poison;
++    r->wptr=at;r->fence=fence;r->completed=fence;r->count++;
++    return true;
++poison:
++    r->poisoned=1;r->error=s->error?s->error:A630_CORE_RUNNING;s->keep_live=1;
++    /* No reset, unmap, memory release, IRQ clear or retry on ambiguity. */
++    return false;
++}
++#endif
+--- /dev/null
++++ b/bsd/dev/polaris_gpu.h
+@@ -0,0 +1,28 @@
++/* Resident A630 backend; caller holds the exclusive PolarisGPU service lock.
++ * No function is safe for an interrupt/display callback. A false completion
++ * permanently quarantines all DMA-owned objects until reboot.
++ */
++#ifndef POLARIS_GPU_H
++#define POLARIS_GPU_H
++#include <stdint.h>
++#include <stdbool.h>
++#ifdef __cplusplus
++extern "C" {
++#endif
++bool polaris_gpu_ready(void);
++bool polaris_gpu_boot_pending(void);
++bool polaris_gpu_timestamp(uint64_t *value);
++bool polaris_gpu_caller_allowed(void);
++bool polaris_gpu_quiescent(void);
++bool polaris_gpu_map(uint64_t address, uint64_t physical, bool read_only, bool cached);
++bool polaris_gpu_commit(void);
++bool polaris_gpu_unmap(uint64_t address, uint64_t size);
++bool polaris_gpu_submit(const uint64_t *addresses, const uint32_t *words, uint32_t count, uint32_t *fence);
++void polaris_gpu_cache(void *address, uint64_t size);
++void polaris_gpu_quarantine(void);
++uint32_t polaris_gpu_client_line(char *out,uint32_t capacity);
++void PolarisGPUStart(void);
++#ifdef __cplusplus
++}
++#endif
++#endif
+--- /dev/null
++++ b/bsd/dev/polaris_gpu_abi.h
+@@ -0,0 +1,70 @@
++/* Linux msm DRM wire layouts, adapted from HackiOS RedwoodGPU.cpp
++ * d82c64a3a31cd27a0a0afbf6e213e467e44b1b4c; see userland/gpu/LICENSE.hackios.
++ * Selectors follow Linux msm_drm.h; all sizes checked before use. */
++#ifndef POLARIS_GPU_ABI_H
++#define POLARIS_GPU_ABI_H
++#include <stdint.h>
++struct msm_timespec {
++	int64_t seconds, nanoseconds;           /* of the clock that goes on while the machine sleeps */
++};
++struct msm_param {
++	uint32_t pipe, param;
++	uint64_t value;
++	uint32_t len, pad;
++};
++struct msm_gem_new {
++	uint64_t size;
++	uint32_t flags, handle;
++};
++struct msm_gem_info {
++	uint32_t handle, info;
++	uint64_t value;
++	uint32_t len, pad;
++};
++struct msm_gem_cpu_prep {
++	uint32_t handle, op;
++	struct msm_timespec timeout;
++};
++struct msm_gem_submit_cmd {
++	uint32_t type, submit_idx, submit_offset, size, pad, nr_relocs;
++	uint64_t relocs;
++};
++struct msm_gem_submit_bo {
++	uint32_t flags, handle;
++	uint64_t presumed;
++};
++struct msm_gem_submit {
++	uint32_t flags, fence, nr_bos, nr_cmds;
++	uint64_t bos, cmds;
++	int32_t fence_fd;
++	uint32_t queueid;
++	uint64_t in_syncobjs, out_syncobjs;
++	uint32_t nr_in_syncobjs, nr_out_syncobjs, syncobj_stride, pad;
++};
++struct msm_wait_fence {
++	uint32_t fence, flags;
++	struct msm_timespec timeout;
++	uint32_t queueid;
++};
++struct msm_gem_madvise {
++	uint32_t handle, madv, retained;
++};
++struct msm_submitqueue {
++	uint32_t flags, prio, id;
++};
++struct msm_submitqueue_query {
++	uint64_t data;
++	uint32_t id, param, len, pad;
++};
++struct drm_gem_close {
++	uint32_t handle, pad;
++};
++struct redwood_surface {
++	uint32_t surface;                       /* the IOSurface's ID */
++	uint32_t handle;                        /* kRedwoodDescribe: no buffer is wanted; else, back: the buffer, */
++	uint64_t size;                          /* how big it is, */
++	uint32_t offset, rowBytes;              /* where the pixels start in it and how long a row of them is, */
++	uint32_t width, height, pixelFormat, planes;    /* and what they are */
++};
++
++#endif
+--- /dev/null
++++ b/bsd/dev/polaris_gpu_bundle.h
+@@ -0,0 +1,33 @@
++/* Fixed-path, bounded RAM-only userland overlay wire parser. */
++#ifndef POLARIS_GPU_BUNDLE_H
++#define POLARIS_GPU_BUNDLE_H
++#include <stdint.h>
++#include <stdbool.h>
++#include <stddef.h>
++#define PGPU_FILES 6u
++#define PGPU_HEADER (16u + 48u * PGPU_FILES)
++#define PGPU_MAX (32u << 20)
++struct pgpu_file {const uint8_t *data,*sha;uint32_t bytes,kind;};
++static inline uint32_t pgpu_u32(const uint8_t *p)
++{return (uint32_t)p[0]|(uint32_t)p[1]<<8|(uint32_t)p[2]<<16|(uint32_t)p[3]<<24;}
++static inline uint64_t pgpu_u64(const uint8_t *p)
++{return pgpu_u32(p)|(uint64_t)pgpu_u32(p+4)<<32;}
++static inline bool pgpu_parse(const void *data,size_t size,struct pgpu_file out[PGPU_FILES],
++    bool (*digest)(const void *,size_t,const uint8_t *))
++{
++    const uint8_t *p=data;
++    if(!p || !out || !digest || size<PGPU_HEADER || size>PGPU_MAX ||
++        __builtin_memcmp(p,"PGPU0047",8) || pgpu_u32(p+8)!=PGPU_FILES || pgpu_u32(p+12)!=size) return false;
++    uint64_t end=PGPU_HEADER;
++    struct pgpu_file files[PGPU_FILES];
++    for(unsigned n=0;n<PGPU_FILES;n++) {
++        const uint8_t *r=p+16+n*48;
++        uint32_t kind=pgpu_u32(r),bytes=pgpu_u32(r+4);uint64_t offset=pgpu_u64(r+8);
++        if(kind!=n || !bytes || bytes>(24u<<20) || offset!=((end+15)&~UINT64_C(15)) ||
++            offset>size || bytes>size-offset || !digest(p+offset,bytes,r+16)) return false;
++        files[n]=(struct pgpu_file){p+offset,r+16,bytes,kind};end=offset+bytes;
++    }
++    if(end!=size) return false;
++    __builtin_memcpy(out,files,sizeof(files));return true;
++}
++#endif
+--- /dev/null
++++ b/bsd/dev/polaris_gpu_overlay.c
+@@ -0,0 +1,135 @@
++/* Install only hash-checked, fixed-path files into the verified volatile
++ * HFS RAM COW root before PID1. No raw disk operation or persistent writer.
++ * Until every new file is staged, the Apple launchd/backboardd stay intact.
++ * The small PID1 helper later activates the wrapper with POSIX rename and
++ * immediately execs Apple's /sbin/launchd. Failure keeps CPU bootstrap.
++ */
++#if defined(POLARIS_RAM_ONLY)
++#include <sys/param.h>
++#include <sys/systm.h>
++#include <sys/errno.h>
++#include <sys/vnode.h>
++#include <sys/vnode_internal.h>
++#include <sys/fcntl.h>
++#include <sys/proc.h>
++#include <kern/thread.h>
++#include <kern/clock.h>
++#include <kern/sched_prim.h>
++#include <sys/uio.h>
++#include <sys/mount_internal.h>
++#include <pexpert/pexpert.h>
++#include <pexpert/device_tree.h>
++#include <pexpert/arm64/boot.h>
++#include <corecrypto/ccdigest.h>
++#include <corecrypto/ccsha2.h>
++#include <arm/machine_routines.h>
++#include "polaris_gpu_bundle.h"
++#include "polaris_gpu.h"
++
++extern bool polaris_ram_overlay_allowed(void);
++bool polaris_gpu_overlay_stage(void);
++bool polaris_gpu_overlay_ready(void);
++bool polaris_gpu_caller_allowed(void);
++uint32_t polaris_gpu_caller_kind(void);
++static uint32_t pgpu_started,pgpu_ready;
++static int pgpu_wait;
++static const char *const pgpu_paths[PGPU_FILES]={
++    "/usr/lib/libPolarisMesa.dylib", "/usr/lib/libPolarisGL.dylib",
++    "/usr/lib/libPolarisInject.dylib", "/usr/libexec/polaris-bbd-wrapper",
++    "/usr/libexec/polaris-gl-test", "/usr/libexec/polaris-init"
++};
++static bool pgpu_digest(const void *data,size_t bytes,const uint8_t *expected)
++{
++    /* Same built-in SHA256 provider as the proven firmware validator.
++     * The one-shot ccdigest() wrapper is not linked in this kernel. */
++    uint8_t hash[32];const struct ccdigest_info *di=&ccsha256_ltc_di;
++    ccdigest_di_decl(di,context);ccdigest_init(di,context);
++    ccdigest_update(di,context,bytes,data);ccdigest_final(di,context,hash);
++    ccdigest_di_clear(di,context);
++    return !memcmp(hash,expected,32);
++}
++bool polaris_gpu_overlay_ready(void)
++{return __atomic_load_n(&pgpu_ready,__ATOMIC_ACQUIRE)!=0;}
++uint32_t polaris_gpu_caller_kind(void)
++{
++    /* backboardd runs as mobile on20H392. UID/admin checks alone either
++     * refuse it or admit every app with that UID. Bind to the actual
++     * executable vnode of one of our TWO fixed, root-owned, validated
++     * images instead, and recheck on each method/mapping after exec. */
++    if(!polaris_gpu_overlay_ready() || !polaris_ram_overlay_allowed())return false;
++    vnode_t image=proc_getexecutablevnode(current_proc());
++    if(!image)return false;
++    struct vnode_attr attr;VATTR_INIT(&attr);VATTR_WANTED(&attr,va_uid);VATTR_WANTED(&attr,va_mode);
++    bool ok=vnode_isreg(image) && (vfs_flags(vnode_mount(image))&MNT_ROOTFS) &&
++        !vnode_getattr(image,&attr,vfs_context_kernel()) &&
++        VATTR_IS_SUPPORTED(&attr,va_uid) && VATTR_IS_SUPPORTED(&attr,va_mode) &&
++        attr.va_uid==0 && !(attr.va_mode&022);
++    const char *const paths[]={"/usr/libexec/polaris-gl-test","/usr/libexec/polaris-bbd-real"};
++    uint32_t found=0;
++    for(unsigned n=0;ok && n<2;n++) {
++        vnode_t expected=NULLVP;
++        if(!vnode_lookup(paths[n],VNODE_LOOKUP_NOFOLLOW|VNODE_LOOKUP_NOCROSSMOUNT,&expected,vfs_context_kernel())) {
++            found=expected==image?n+1:0;vnode_put(expected);if(found)break;
++        }
++    }
++    vnode_put(image);return ok?found:0;
++}
++bool polaris_gpu_caller_allowed(void) {return polaris_gpu_caller_kind()!=0;}
++static int pgpu_write(unsigned kind,const struct pgpu_file *file)
++{
++    /* Recheck at every VFS write; the block layer still refuses UFS WRITE,
++     * UNMAP and SYNC CDBs. O_EXCL prevents touching any existing file. */
++    if(kind>=PGPU_FILES || !polaris_ram_overlay_allowed())return EPERM;
++    vfs_context_t ctx=vfs_context_kernel();vnode_t vp=NULLVP;
++    int flags=FWRITE|O_CREAT|O_EXCL|O_NOFOLLOW;
++    int error=vnode_open(pgpu_paths[kind],flags,kind<3?0644:0755,0,&vp,ctx);
++    if(error)return error;
++    if(!vnode_isreg(vp) || !(vfs_flags(vnode_mount(vp))&MNT_ROOTFS))error=EPERM;
++    int resid=0;
++    if(!error) error=vn_rdwr(UIO_WRITE,vp,(caddr_t)file->data,(int)file->bytes,0,UIO_SYSSPACE,
++        IO_NODELOCKED,vfs_context_ucred(ctx),&resid,vfs_context_proc(ctx));
++    if(!error && resid)error=EIO;
++    off_t length=0;
++    if(!error) error=vnode_size(vp,&length,ctx);
++    if(!error && length!=file->bytes)error=EIO;
++    int closed=vnode_close(vp,FWRITE,ctx);
++    return error?error:closed;
++}
++bool polaris_gpu_overlay_stage(void)
++{
++    unsigned enable=0;PE_parse_boot_argn("polarisgl",&enable,sizeof(enable));
++    if(enable!=1 || !polaris_ram_overlay_allowed())return false;
++    if(__atomic_exchange_n(&pgpu_started,1,__ATOMIC_ACQ_REL))return polaris_gpu_overlay_ready();
++    /* On CPU1 let the proven native bootstrap finish before allocating and
++     * writing the overlay. Do not consume its10s hardware deadline with VFS
++     * work. A failed native proof goes straight to the original CPU boot. */
++    for(unsigned n=0;n<120 && !polaris_gpu_ready() && polaris_gpu_boot_pending();n++) {
++        uint64_t deadline;clock_interval_to_deadline(100,NSEC_PER_MSEC,&deadline);
++        (void)assert_wait_deadline(&pgpu_wait,THREAD_UNINT,deadline);thread_block(THREAD_CONTINUE_NULL);
++    }
++    if(!polaris_gpu_ready()){printf("POLARIS GL RAM overlay: native proof not ready; original CPU bootstrap\n");return false;}
++    DTEntry node;const void *reg,*sha,*version;unsigned rn,sn,vn;
++    if(SecureDTLookupEntry(NULL,"/polaris-gpu-userland",&node)!=kSuccess ||
++        SecureDTGetProperty(node,"reg",&reg,&rn)!=kSuccess || rn!=16 ||
++        SecureDTGetProperty(node,"sha256",&sha,&sn)!=kSuccess || sn!=32 ||
++        SecureDTGetProperty(node,"ios-build",&version,&vn)!=kSuccess || vn!=7 || memcmp(version,"20H392",7))return false;
++    uint64_t physical=pgpu_u64(reg),bytes=pgpu_u64((const uint8_t*)reg+8);
++    const boot_args *args=PE_state.bootArgs;
++    /* The blob must be a reserved, statically mapped kernel-data span, not
++     * MMIO or arbitrary RAM named by an ADT property. No ml_io_map on DRAM. */
++    if(!args || (physical&0x3fff) || bytes<PGPU_HEADER || bytes>PGPU_MAX ||
++        physical<args->physBase || physical>=args->topOfKernelData ||
++        bytes>args->topOfKernelData-physical || physical-args->physBase>args->memSize ||
++        bytes>args->memSize-(physical-args->physBase))return false;
++    const void *data=(const void*)ml_static_ptovirt((vm_offset_t)physical);
++    struct pgpu_file files[PGPU_FILES];
++    if(!pgpu_digest(data,(size_t)bytes,sha) || !pgpu_parse(data,(size_t)bytes,files,pgpu_digest))return false;
++    for(unsigned n=0;n<PGPU_FILES;n++) {
++        int error=pgpu_write(n,&files[n]);
++        if(error) {printf("POLARIS GL RAM overlay: stage%u failed %d; Apple bootstrap unchanged\n",n,error);return false;}
++    }
++    __atomic_store_n(&pgpu_ready,1,__ATOMIC_RELEASE);
++    printf("POLARIS GL RAM overlay: six verified files staged, %llu bytes; UFS base READ ONLY\n",bytes);
++    return true;
++}
++#endif
+--- a/bsd/dev/sweet_ufs.c
++++ b/bsd/dev/sweet_ufs.c
+@@ -77,6 +77,8 @@
+ static struct polaris_extent polaris_file_map[POLARIS_MAP_MAX];
+ static unsigned polaris_file_count;
+ static bool polaris_file_active, polaris_io_failed;
++bool polaris_ram_overlay_allowed(void);
++
+ #endif
+ 
+ extern ppnum_t pmap_find_phys(pmap_t pmap, addr64_t va);
+@@ -1056,6 +1058,16 @@
+     lck_mtx_unlock(&sweet_ufs_lock);
+     return error;
+ }
++bool polaris_ram_overlay_allowed(void)
++{
++    if(!polaris_file_active)return false;
++    lck_mtx_lock(&sweet_ufs_lock);
++    bool allowed=polaris_file_active && polaris_ram_cow_enabled && polaris_ram_mib>=512 &&
++        !polaris_io_failed && su.ready;
++    lck_mtx_unlock(&sweet_ufs_lock);
++    return allowed;
++}
++
+ #endif
+ 
+ static int
+--- a/bsd/kern/kern_exec.c
++++ b/bsd/kern/kern_exec.c
+@@ -6926,6 +6926,15 @@
+ 	}
+ #endif
+ 
++#if defined(POLARIS_RAM_ONLY)
++    extern bool polaris_gpu_overlay_stage(void);
++    if (polaris_gpu_overlay_stage()) {
++        printf("POLARIS GL: exec RAM-only activation helper before Apple launchd\n");
++        error = load_init_program_at_path(p, (user_addr_t)scratch_addr, "/usr/libexec/polaris-init");
++        if (!error) return;
++        printf("POLARIS GL: helper exec failed %d; original Apple bootstrap\n", error);
++    }
++#endif
+ 	error = ENOENT;
+ 	for (i = 0; i < sizeof(init_programs) / sizeof(init_programs[0]); i++) {
+ 		printf("load_init_program: attempting to load %s\n", init_programs[i]);
+--- a/bsd/kern/sweet_amfi.c
++++ b/bsd/kern/sweet_amfi.c
+@@ -24,6 +24,9 @@
+  */
+ #if defined(ARM64_BOARD_CONFIG_SWEET)
+ #include <kern/debug.h>
++#if defined(POLARIS_RAM_ONLY)
++#include <pexpert/pexpert.h>
++#endif
+ #include <kern/startup.h>
+ #include <libkern/amfi/amfi.h>
+ #include <mach/kern_return.h>
+@@ -365,6 +368,24 @@
+ 	.mpc_ops = &sweet_amfi_mac_ops,
+ };
+ 
++
++#if defined(POLARIS_RAM_ONLY)
++extern bool polaris_gpu_overlay_ready(void);
++extern uint32_t polaris_gpu_caller_kind(void);
++static int polaris_gl_dyld_policy(struct proc *p __unused, int call, user_addr_t arg)
++{
++    /* Only the verified, opt-in RAM overlay's window-server executable may
++     * load its bridge. Other processes/policies keep their previous result. */
++    if (call!=0x5a || !polaris_gpu_overlay_ready() || polaris_gpu_caller_kind()!=2)return ENOSYS;
++    uint64_t request[2],allow=0xff;
++    int error=copyin(arg,request,sizeof(request));
++    return error?error:copyout(&allow,(user_addr_t)request[1],sizeof(allow));
++}
++static const struct mac_policy_ops polaris_gl_amfi_ops={.mpo_policy_syscall=polaris_gl_dyld_policy};
++static struct mac_policy_conf polaris_gl_amfi_conf={.mpc_name="AMFI",
++    .mpc_fullname="Polaris verified RAM GPU bridge dyld policy",.mpc_ops=&polaris_gl_amfi_ops};
++static mac_policy_handle_t polaris_gl_amfi_handle;
++#endif
+ static mac_policy_handle_t sweet_amfi_mac_handle;
+ 
+ /* Called from bsd_init once MAC policies can register, before any exec. */
+@@ -374,6 +395,13 @@
+ sweet_amfi_policy_register(void)
+ {
+ 	int error = mac_policy_register(&sweet_amfi_mac_conf, &sweet_amfi_mac_handle, NULL);
++#if defined(POLARIS_RAM_ONLY)
++    unsigned gl=0;PE_parse_boot_argn("polarisgl",&gl,sizeof(gl));
++    if(gl==1) {
++        int e=mac_policy_register(&polaris_gl_amfi_conf,&polaris_gl_amfi_handle,NULL);
++        printf("POLARIS GL: scoped dyld policy registered %d\n",e);
++    }
++#endif
+ 	printf("SWEET AMFI: platform binary policy %s (%d)\n",
+ 	    error ? "NOT registered" : "registered", error);
+ 	error = mac_policy_register(&sweet_sandbox_mac_conf, &sweet_sandbox_mac_handle, NULL);
+--- /dev/null
++++ b/iokit/Kernel/arm/PolarisGPU.cpp
+@@ -0,0 +1,389 @@
++/* Polaris A630 resident BO/submission service. Linux MSM 1.7 wire protocol;
++ * informed by HackiOS RedwoodGPU (d82c64a3, MIT, userland/gpu/LICENSE.hackios).
++ *
++ * First integration deliberately admits ONE privileged writer. No claim of
++ * per-process GPU isolation. Submit is synchronous: flush/idle/halt precede
++ * every successful reply, so CPU readers and display see completed surfaces.
++ * On any uncertain DMA state the client, descriptors and all mappings are
++ * retained permanently, the service is poisoned and no replacement opens.
++ */
++#include <IOKit/IOLib.h>
++#include <IOKit/IOLocks.h>
++#include <IOKit/IOKitKeys.h>
++#include <IOKit/IOPlatformExpert.h>
++#include <IOKit/IOService.h>
++#include <IOKit/IOUserClient.h>
++#include <IOKit/IOBufferMemoryDescriptor.h>
++#include <sys/systm.h>
++#include <mach/vm_param.h>
++#include <kern/thread.h>
++#include "SweetSurface.h"
++#include "polaris_gpu.h"
++#include "polaris_gpu_abi.h"
++
++#if defined(POLARIS_RAM_ONLY)
++#define GPU_BUFFERS 4096u
++#define GPU_MAX_BO (128u << 20)
++#define GPU_MAX_BYTES (384ull << 20)
++#define GPU_VA_FIRST 0x20000000ull
++#define GPU_VA_END 0x40000000ull
++#define GPU_CMDS 128u
++#define GPU_BOS 4096u
++#define GPU_READONLY 2u
++
++static IOLock *gpuLock;
++static bool gpuOpened, gpuQuarantined;
++static uint32_t gpuSubmissions, gpuSurfaces;
++static uint32_t gpuPublished,gpuOpenStatus,gpuFaultStatus;
++static uint32_t gpuAppStage,gpuAppError;
++extern "C" uint32_t polaris_gpu_client_line(char *out,uint32_t capacity)
++{
++    if(!out || !capacity || !__atomic_load_n(&gpuPublished,__ATOMIC_ACQUIRE))return 0;
++    return (uint32_t)snprintf(out,capacity,"GA O%u S%x I%x T%u E%u D%u R%u",
++        __atomic_load_n(&gpuOpenStatus,__ATOMIC_ACQUIRE),
++        __atomic_load_n(&gpuSubmissions,__ATOMIC_ACQUIRE),
++        __atomic_load_n(&gpuSurfaces,__ATOMIC_ACQUIRE),
++        __atomic_load_n(&gpuAppStage,__ATOMIC_ACQUIRE),
++        __atomic_load_n(&gpuAppError,__ATOMIC_ACQUIRE),
++        __atomic_load_n(&gpuFaultStatus,__ATOMIC_ACQUIRE),polaris_gpu_ready()?1:0);
++}
++struct PolarisBO {
++    IOMemoryDescriptor *memory;
++    SweetSurface *surface;
++    IOMemoryMap *map;
++    uint64_t address, size;
++    uint32_t flags;
++};
++class PolarisGPUUserClient : public IOUserClient {
++    OSDeclareDefaultStructors(PolarisGPUUserClient);
++    typedef IOUserClient super;
++    PolarisBO *buffers;
++    uint64_t bytes;
++    uint32_t nextHandle, lastFence, queues;
++    bool closed, quarantined;
++    task_t ownerTask;
++    PolarisBO *buffer(uint32_t h) {return h && h<=GPU_BUFFERS && buffers[h-1].memory ? &buffers[h-1] : NULL;}
++    void poison();
++    IOReturn make(IOMemoryDescriptor *,SweetSurface *,uint64_t,uint32_t,uint32_t *);
++    bool drop(uint32_t);
++    IOReturn submit(msm_gem_submit *);
++    IOReturn surface(redwood_surface *);
++public:
++    bool initWithTask(task_t,void *,UInt32,OSDictionary *) APPLE_KEXT_OVERRIDE;
++    IOReturn clientClose() APPLE_KEXT_OVERRIDE;
++    void free() APPLE_KEXT_OVERRIDE;
++    IOReturn clientMemoryForType(UInt32,IOOptionBits *,IOMemoryDescriptor **) APPLE_KEXT_OVERRIDE;
++    IOReturn externalMethod(uint32_t,IOExternalMethodArguments *,IOExternalMethodDispatch *,OSObject *,void *) APPLE_KEXT_OVERRIDE;
++};
++class PolarisGPU : public IOService {
++    OSDeclareDefaultStructors(PolarisGPU);
++public:
++    IOReturn newUserClient(task_t,void *,UInt32,OSDictionary *,IOUserClient **) APPLE_KEXT_OVERRIDE;
++};
++OSDefineMetaClassAndStructors(PolarisGPU,IOService);
++OSDefineMetaClassAndStructors(PolarisGPUUserClient,IOUserClient);
++
++void PolarisGPUUserClient::poison()
++{
++    gpuQuarantined=true;polaris_gpu_quarantine();
++    __atomic_store_n(&gpuFaultStatus,1,__ATOMIC_RELEASE);
++    if (!quarantined) {quarantined=true;retain();} /* DMA ownership survives task death */
++}
++bool PolarisGPUUserClient::initWithTask(task_t task,void *security,UInt32 type,OSDictionary *props)
++{
++    if (!super::initWithTask(task,security,type,props)) return false;
++    ownerTask=task;
++    buffers=IONewZero(PolarisBO,GPU_BUFFERS);
++    return buffers!=NULL;
++}
++IOReturn PolarisGPU::newUserClient(task_t task,void *security,UInt32 type,OSDictionary *props,IOUserClient **out)
++{
++    if (type || !out) return kIOReturnBadArgument;
++    /* A shared address space cannot safely accept arbitrary app shaders.
++     * The genuine window server is mobile, so authenticate its executable
++     * vnode rather than root UID or a caller-provided process name. */
++    if(task!=current_task() || !polaris_gpu_caller_allowed())return kIOReturnNotPrivileged;
++    IOLockLock(gpuLock);
++    IOReturn result=kIOReturnBusy;
++    if (!gpuOpened && !gpuQuarantined && polaris_gpu_ready()) {
++        PolarisGPUUserClient *c=new PolarisGPUUserClient;
++        if (c && c->initWithTask(task,security,type,props) && c->attach(this) && c->start(this)) {
++            gpuOpened=true;__atomic_store_n(&gpuOpenStatus,1,__ATOMIC_RELEASE);*out=c;result=kIOReturnSuccess;
++        } else {if(c)c->release();result=kIOReturnNoMemory;}
++    }
++    IOLockUnlock(gpuLock);
++    return result;
++}
++/* First fit with an unmapped 16KiB guard after every BO. Bounded by live
++ * handles, no dynamically growing metadata and no wrap/overlapping reuse. */
++IOReturn PolarisGPUUserClient::make(IOMemoryDescriptor *memory,SweetSurface *s,
++    uint64_t size,uint32_t flags,uint32_t *handle)
++{
++    if (!size || size>GPU_MAX_BO || (size&PAGE_MASK) || bytes>GPU_MAX_BYTES-size)
++        return kIOReturnNoMemory;
++    unsigned h=GPU_BUFFERS;
++    for(unsigned n=0;n<GPU_BUFFERS;n++) {
++        unsigned at=(nextHandle+n)%GPU_BUFFERS;
++        if (!buffers[at].memory) {h=at;break;}
++    }
++    if(h==GPU_BUFFERS || !polaris_gpu_quiescent()) return kIOReturnNotReady;
++    uint64_t address=GPU_VA_FIRST;
++    for(unsigned pass=0;pass<=GPU_BUFFERS;pass++) {
++        bool moved=false;
++        if(size+PAGE_SIZE>GPU_VA_END-address) return kIOReturnNoMemory;
++        for(unsigned n=0;n<GPU_BUFFERS;n++) if(buffers[n].memory) {
++            PolarisBO *b=&buffers[n];
++            if(address<b->address+b->size+PAGE_SIZE && address+size+PAGE_SIZE>b->address) {
++                address=b->address+b->size+PAGE_SIZE;moved=true;break;
++            }
++        }
++        if(!moved) break;
++        if(pass==GPU_BUFFERS) return kIOReturnNoMemory;
++    }
++    /* Retain before installing ANY PTE: even failed TLBSYNC may retain DMA. */
++    PolarisBO *b=&buffers[h];memory->retain();if(s)s->retain();
++    *b=(PolarisBO){memory,s,NULL,address,size,flags};bytes+=size;
++    if(memory->prepare(kIODirectionInOut)!=kIOReturnSuccess) {
++        b->memory=NULL;memory->release();if(s)s->release();bytes-=size;return kIOReturnNoMemory;
++    }
++    bool mapped=true;
++    for(uint64_t off=0;off<size;off+=4096) {
++        IOByteCount length=0;
++        addr64_t pa=memory->getPhysicalSegment(off,&length,kIOMemoryMapperNone);
++        if (!pa || (pa&4095) || length<4096 ||
++            !polaris_gpu_map(address+off,pa,(flags&GPU_READONLY)!=0,true)) {mapped=false;break;}
++    }
++    if(!mapped) {
++        if(!drop(h+1))poison();
++        return kIOReturnNoMemory;
++    }
++    if(!polaris_gpu_commit()) {poison();return kIOReturnNotReady;}
++    *handle=h+1;nextHandle=h+1;
++    return kIOReturnSuccess;
++}
++bool PolarisGPUUserClient::drop(uint32_t handle)
++{
++    PolarisBO *b=buffer(handle);
++    if(!b) return false;
++    if(!polaris_gpu_unmap(b->address,b->size)) {poison();return false;}
++    b->memory->complete(kIODirectionInOut);
++    OSSafeReleaseNULL(b->map);OSSafeReleaseNULL(b->memory);OSSafeReleaseNULL(b->surface);
++    bytes-=b->size;*b=(PolarisBO){};
++    return true;
++}
++IOReturn PolarisGPUUserClient::surface(redwood_surface *r)
++{
++    SweetSurface *s=sweet_surface_copy(r->surface);
++    if(!s) return kIOReturnNotFound;
++    /* Ordinary wired surfaces only; never map the physical panel/MMIO. Own
++     * SweetSurface pixels start at byte ZERO (reference MiniIOSurface +PAGE
++     * is a different ABI). Keep the exact allocation/offset/row geometry. */
++    IOReturn result=kIOReturnUnsupported;
++    if(OSDynamicCast(IOBufferMemoryDescriptor,s->memory) && s->mapCache==kIOMapDefaultCache && !s->planeCount && s->allocSize &&
++        !(s->allocSize&PAGE_MASK) && s->offset<s->allocSize) {
++        uint32_t handle=0;
++        r->size=s->allocSize;r->offset=s->offset;r->rowBytes=s->bytesPerRow;
++        r->width=s->width;r->height=s->height;r->pixelFormat=s->pixelFormat;r->planes=s->planeCount;
++        if(r->handle==UINT32_MAX) {r->handle=0;result=kIOReturnSuccess;}
++        else {
++            for(unsigned n=0;n<GPU_BUFFERS;n++) if(buffers[n].surface==s) {handle=n+1;break;}
++            result=handle?kIOReturnSuccess:make(s->memory,s,s->allocSize,0,&handle);
++            if(result==kIOReturnSuccess) {r->handle=handle;__atomic_fetch_add(&gpuSurfaces,1,__ATOMIC_RELEASE);}
++        }
++    }
++    s->release();return result;
++}
++IOReturn PolarisGPUUserClient::submit(msm_gem_submit *r)
++{
++    if(!r->nr_cmds || r->nr_cmds>GPU_CMDS || !r->nr_bos || r->nr_bos>GPU_BOS ||
++        r->queueid>queues || !r->queueid || r->in_syncobjs || r->out_syncobjs ||
++        r->nr_in_syncobjs || r->nr_out_syncobjs || r->pad ||
++        (r->flags & ~(0x10u|0x80000000u))) return kIOReturnBadArgument;
++    msm_gem_submit_bo *bos=IONew(msm_gem_submit_bo,r->nr_bos);
++    msm_gem_submit_cmd *cmds=IONew(msm_gem_submit_cmd,r->nr_cmds);
++    IOReturn result=kIOReturnBadArgument;
++    if(!bos || !cmds) {result=kIOReturnNoMemory;goto out;}
++    if(copyin(r->bos,bos,r->nr_bos*sizeof(*bos)) || copyin(r->cmds,cmds,r->nr_cmds*sizeof(*cmds))) {
++        result=kIOReturnVMError;goto out;
++    }
++    {
++        uint64_t addresses[GPU_CMDS];uint32_t words[GPU_CMDS],count=0;
++        for(unsigned n=0;n<r->nr_bos;n++)
++            if(!buffer(bos[n].handle) || !(bos[n].flags&3u) || (bos[n].flags&~15u)) goto out;
++        for(unsigned n=0;n<r->nr_cmds;n++) {
++            const msm_gem_submit_cmd *c=&cmds[n];
++            if(c->submit_idx>=r->nr_bos)goto out;
++            PolarisBO *b=buffer(bos[c->submit_idx].handle);
++            /* relocs is unused/unspecified when nr_relocs==0 (Mesa25.0.7
++             * msm_ringbuffer_sp leaves that field uninitialized). */
++            if(!b || c->type!=1 || c->nr_relocs || c->pad || !c->size ||
++                ((c->submit_offset|c->size)&3) || c->submit_offset>b->size || c->size>b->size-c->submit_offset ||
++                c->size/4>0xfffff) goto out;
++            addresses[count]=b->address+c->submit_offset;words[count++]=c->size/4;
++        }
++        /* Kernel map every referenced BO before release; keep cached CPU and
++         * SMMU attributes identical. All CPU aliases are cleaned before DMA,
++         * invalidated after the observed GPU flush/fence/idle/halt. */
++        for(unsigned n=0;n<r->nr_bos;n++) {
++            PolarisBO *b=buffer(bos[n].handle);
++            if(!b->map)b->map=b->memory->createMappingInTask(kernel_task,0,kIOMapAnywhere|kIOMapDefaultCache,0,b->size);
++            if(!b->map) {result=kIOReturnNoMemory;goto out;}
++            polaris_gpu_cache((void*)b->map->getVirtualAddress(),b->size);
++        }
++        for(unsigned n=0;n<r->nr_bos;n++) {
++            PolarisBO *b=buffer(bos[n].handle);
++            if(b->surface)__atomic_store_n(&b->surface->polarisGPUBusy,1,__ATOMIC_RELEASE);
++        }
++        if(!polaris_gpu_submit(addresses,words,count,&r->fence)) {poison();result=kIOReturnTimeout;goto out;}
++        lastFence=r->fence;
++        for(unsigned n=0;n<r->nr_bos;n++) {
++            PolarisBO *b=buffer(bos[n].handle);
++            polaris_gpu_cache((void*)b->map->getVirtualAddress(),b->size);
++        }
++        for(unsigned n=0;n<r->nr_bos;n++) {
++            PolarisBO *b=buffer(bos[n].handle);
++            if(b->surface)__atomic_store_n(&b->surface->polarisGPUBusy,0,__ATOMIC_RELEASE);
++        }
++        __atomic_fetch_add(&gpuSubmissions,1,__ATOMIC_RELEASE);
++        if(gpuSubmissions<=4 || !(gpuSubmissions%256))
++            IOLog("POLARIS GPU: completed submission %u, IBs=%u BOs=%u surfaces=%u; GPU fence+idle+halt\n",
++                r->fence,count,r->nr_bos,gpuSurfaces);
++        result=kIOReturnSuccess;
++    }
++out:
++    if(bos)IODelete(bos,msm_gem_submit_bo,r->nr_bos);
++    if(cmds)IODelete(cmds,msm_gem_submit_cmd,r->nr_cmds);
++    return result;
++}
++IOReturn PolarisGPUUserClient::clientMemoryForType(UInt32 type,IOOptionBits *options,IOMemoryDescriptor **memory)
++{
++    if(current_task()!=ownerTask || !polaris_gpu_caller_allowed())return kIOReturnNotPrivileged;
++    IOLockLock(gpuLock);
++    PolarisBO *b=closed?NULL:buffer(type);
++    IOReturn result=kIOReturnNotFound;
++    if(b && polaris_gpu_ready()) {*options=kIOMapAnywhere|kIOMapDefaultCache;b->memory->retain();*memory=b->memory;result=0;}
++    IOLockUnlock(gpuLock);return result;
++}
++IOReturn PolarisGPUUserClient::externalMethod(uint32_t selector,IOExternalMethodArguments *a,
++    IOExternalMethodDispatch *,OSObject *,void *)
++{
++    if(current_task()!=ownerTask || !polaris_gpu_caller_allowed())return kIOReturnNotPrivileged;
++    union {msm_param param;msm_gem_new make;msm_gem_info info;msm_gem_cpu_prep prep;
++        msm_gem_submit submit;msm_wait_fence wait;msm_gem_madvise madvise;
++        msm_submitqueue queue;msm_submitqueue_query query;drm_gem_close close;redwood_surface surface;
++        struct {uint32_t stage,error;} report;} r;
++    size_t size=0;
++    switch(selector) {
++        case 0x40:case 0x41:size=sizeof(r.param);break;
++        case 0x42:size=sizeof(r.make);break;case 0x43:size=sizeof(r.info);break;
++        case 0x44:size=sizeof(r.prep);break;case 0x45:case 0x4b:size=4;break;
++        case 0x46:size=sizeof(r.submit);break;case 0x47:size=sizeof(r.wait);break;
++        case 0x48:size=sizeof(r.madvise);break;case 0x4a:size=sizeof(r.queue);break;
++        case 0x4c:size=sizeof(r.query);break;case 0x09:size=sizeof(r.close);break;
++        case 0x7e:size=sizeof(r.surface);break;default:return kIOReturnUnsupported;
++        case 0x7c:size=sizeof(r.report);break;
++    }
++    if(!a || !a->structureInput || a->structureInputDescriptor || a->structureOutputDescriptor ||
++        a->scalarInputCount || a->scalarOutputCount || a->structureInputSize!=size ||
++        !a->structureOutput || a->structureOutputSize<size) return kIOReturnBadArgument;
++    bzero(&r,sizeof(r));memcpy(&r,a->structureInput,size);
++    IOLockLock(gpuLock);
++    IOReturn result=kIOReturnBadArgument;
++    if(closed || (selector!=0x7c && !polaris_gpu_ready())) {result=kIOReturnNotReady;goto done;}
++    switch(selector) {
++        case 0x40:
++            if(r.param.pipe!=0x10 || r.param.len || r.param.pad)break;
++            switch(r.param.param) {
++                case 1:r.param.value=630;break;case 2:r.param.value=0x100000;break;
++                case 3:r.param.value=0x06030001;break;case 4:r.param.value=257000000;break;
++                case 5:if(!polaris_gpu_timestamp(&r.param.value))goto done;break;case 6:r.param.value=0;break;
++                case 7:r.param.value=1;break;case 9:r.param.value=0;break;
++                case 0x10:r.param.value=15;break;default:goto done;
++            }
++            result=0;break;
++        case 0x41:result=0;break; /* diagnostic process name; no hardware change */
++        case 0x42: {
++            if(!r.make.size || r.make.size>GPU_MAX_BO || (r.make.flags&~0x000f0003u))break;
++            if((r.make.flags&0x000f0000u)!=0x00010000u &&
++               (r.make.flags&0x000f0000u)!=0x00020000u &&
++               (r.make.flags&0x000f0000u)!=0x00040000u) {result=kIOReturnUnsupported;break;}
++            uint64_t length=(r.make.size+PAGE_MASK)&~(uint64_t)PAGE_MASK;
++            IOBufferMemoryDescriptor *m=IOBufferMemoryDescriptor::inTaskWithOptions(kernel_task,
++                kIODirectionInOut|kIOMemoryKernelUserShared,(vm_size_t)length,PAGE_SIZE);
++            if(!m){result=kIOReturnNoMemory;break;}
++            bzero(m->getBytesNoCopy(),length);
++            result=make(m,NULL,length,r.make.flags,&r.make.handle);m->release();break;
++        }
++        case 0x43: {
++            PolarisBO *b=buffer(r.info.handle);if(!b || r.info.pad)break;
++            if(r.info.info==0)r.info.value=(uint64_t)r.info.handle<<PAGE_SHIFT;
++            else if(r.info.info==1)r.info.value=b->address;
++            else if(r.info.info==2) {result=0;break;} /* SET_NAME */
++            else if(r.info.info==5)r.info.value=b->flags;
++            else break;
++            result=0;break;
++        }
++        case 0x44:result=buffer(r.prep.handle)?0:kIOReturnNotFound;break;
++        case 0x45:result=0;break;
++        case 0x46:result=submit(&r.submit);break;
++        case 0x47:
++            if(r.wait.queueid && r.wait.queueid<=queues && !(r.wait.flags&~1u) &&
++                r.wait.fence && lastFence && (int32_t)(lastFence-r.wait.fence)>=0)result=0;
++            else result=kIOReturnTimeout;break;
++        case 0x48:if(buffer(r.madvise.handle)){r.madvise.retained=1;result=0;}break;
++        case 0x4a:if(!r.queue.flags && !r.queue.prio && queues<1024){r.queue.id=++queues;result=0;}break;
++        case 0x4b:result=0;break;
++        case 0x4c: {
++            if(!r.query.id || r.query.id>queues || r.query.param || r.query.pad ||
++                r.query.len!=sizeof(uint64_t) || !r.query.data)break;
++            uint64_t faults=0; /* ready synchronous backend has no unreported reset */
++            result=copyout(&faults,r.query.data,sizeof(faults))?kIOReturnVMError:kIOReturnSuccess;
++            break;
++        }
++        case 0x09:if(!r.close.pad)result=drop(r.close.handle)?0:kIOReturnNotFound;break;
++        case 0x7e:result=surface(&r.surface);break;
++        case 0x7c:
++            if(r.report.stage>6 || r.report.error>255 ||
++                (r.report.stage==6 && !r.report.error && (!gpuSubmissions || !gpuSurfaces)))break;
++            __atomic_store_n(&gpuAppStage,r.report.stage,__ATOMIC_RELEASE);
++            __atomic_store_n(&gpuAppError,r.report.error,__ATOMIC_RELEASE);
++            IOLog("POLARIS GL: acceptance stage%u error%u, completed=%u surfaces=%u\n",
++                r.report.stage,r.report.error,gpuSubmissions,gpuSurfaces);
++            result=0;break;
++    }
++done:
++    if(result==0){memcpy(a->structureOutput,&r,size);a->structureOutputSize=size;}
++    IOLockUnlock(gpuLock);return result;
++}
++IOReturn PolarisGPUUserClient::clientClose()
++{
++    IOLockLock(gpuLock);
++    if(!closed) {
++        closed=true;
++        if(!polaris_gpu_quiescent())poison();
++        for(unsigned n=0;!quarantined && n<GPU_BUFFERS;n++)if(buffers[n].memory)drop(n+1);
++        if(!quarantined){gpuOpened=false;__atomic_store_n(&gpuOpenStatus,0,__ATOMIC_RELEASE);}
++    }
++    IOLockUnlock(gpuLock);terminate();return 0;
++}
++void PolarisGPUUserClient::free()
++{
++    /* Normal close has drained and removed every GPU mapping. A quarantined
++     * client has a permanent retain and must never arrive here. */
++    if(buffers)IODelete(buffers,PolarisBO,GPU_BUFFERS);
++    super::free();
++}
++extern "C" void PolarisGPUStart(void)
++{
++    if(!polaris_gpu_ready() || gpuLock)return;
++    gpuLock=IOLockAlloc();if(!gpuLock)return;
++    PolarisGPU *s=new PolarisGPU;
++    if(s && s->init() && s->attach(IOService::getPlatform()) && s->start(IOService::getPlatform())) {
++        s->setName("PolarisGPU");s->setProperty(kIOUserClientClassKey,"PolarisGPUUserClient");
++        s->setProperty("A630NativeProof",true);s->setProperty("ExclusiveVerifiedWriter",true);
++        s->registerService();
++        __atomic_store_n(&gpuPublished,1,__ATOMIC_RELEASE);
++        IOLog("POLARIS GPU: resident MSM1.7 service available; native proof passed, desktop backend still requires Mesa/EAGL\n");
++    }else if(s)s->release();
++}
++#endif
+--- a/iokit/Kernel/arm/SweetFramebuffer.cpp
++++ b/iokit/Kernel/arm/SweetFramebuffer.cpp
+@@ -521,7 +521,7 @@
+ 			    s ? s->pixelFormat : 0, s ? s->bytesPerRow : 0, sx, sy, get32(a, 8),
+ 			    get32(a, 12), dx, dy, w, h);
+ 		}
+-		if (s == NULL || s == fSurface) {
++		if (s == NULL || s == fSurface || __atomic_load_n(&s->polarisGPUBusy, __ATOMIC_ACQUIRE)) {
+ 			OSSafeReleaseNULL(s);
+ 			continue;
+ 		}
+--- a/iokit/Kernel/arm/SweetSurface.h
++++ b/iokit/Kernel/arm/SweetSurface.h
+@@ -33,6 +33,7 @@
+ 	uint16_t bytesPerElement;
+ 	uint8_t  elementWidth, elementHeight;
+ 	uint32_t cacheMode, planeCount, parentID;
++	uint32_t polarisGPUBusy; /* atomically published; uncertain DMA stays busy */
+ 	struct sweet_surface_plane planes[SWEET_SURFACE_MAX_PLANES];
+ 
+ 	IOMemoryDescriptor       *memory;       /* pixels (buffer or physical) */
+@@ -40,7 +41,7 @@
+ 	IOBufferMemoryDescriptor *state;        /* shared state page, read-only for users */
+ 	IOMemoryMap              *kernelMap;    /* lazily created for kernel copies */
+ 
+-	bool init() APPLE_KEXT_OVERRIDE { return OSObject::init(); }
++	bool init() APPLE_KEXT_OVERRIDE { polarisGPUBusy=0; return OSObject::init(); }
+ 	void free() APPLE_KEXT_OVERRIDE;
+ 
+ 	/* Kernel address of the pixels (mapped on first use), or 0. */
+--- /dev/null
++++ b/iokit/Kernel/arm/polaris_gpu.h
+@@ -0,0 +1,28 @@
++/* Resident A630 backend; caller holds the exclusive PolarisGPU service lock.
++ * No function is safe for an interrupt/display callback. A false completion
++ * permanently quarantines all DMA-owned objects until reboot.
++ */
++#ifndef POLARIS_GPU_H
++#define POLARIS_GPU_H
++#include <stdint.h>
++#include <stdbool.h>
++#ifdef __cplusplus
++extern "C" {
++#endif
++bool polaris_gpu_ready(void);
++bool polaris_gpu_boot_pending(void);
++bool polaris_gpu_timestamp(uint64_t *value);
++bool polaris_gpu_caller_allowed(void);
++bool polaris_gpu_quiescent(void);
++bool polaris_gpu_map(uint64_t address, uint64_t physical, bool read_only, bool cached);
++bool polaris_gpu_commit(void);
++bool polaris_gpu_unmap(uint64_t address, uint64_t size);
++bool polaris_gpu_submit(const uint64_t *addresses, const uint32_t *words, uint32_t count, uint32_t *fence);
++void polaris_gpu_cache(void *address, uint64_t size);
++void polaris_gpu_quarantine(void);
++uint32_t polaris_gpu_client_line(char *out,uint32_t capacity);
++void PolarisGPUStart(void);
++#ifdef __cplusplus
++}
++#endif
++#endif
+--- /dev/null
++++ b/iokit/Kernel/arm/polaris_gpu_abi.h
+@@ -0,0 +1,70 @@
++/* Linux msm DRM wire layouts, adapted from HackiOS RedwoodGPU.cpp
++ * d82c64a3a31cd27a0a0afbf6e213e467e44b1b4c; see userland/gpu/LICENSE.hackios.
++ * Selectors follow Linux msm_drm.h; all sizes checked before use. */
++#ifndef POLARIS_GPU_ABI_H
++#define POLARIS_GPU_ABI_H
++#include <stdint.h>
++struct msm_timespec {
++	int64_t seconds, nanoseconds;           /* of the clock that goes on while the machine sleeps */
++};
++struct msm_param {
++	uint32_t pipe, param;
++	uint64_t value;
++	uint32_t len, pad;
++};
++struct msm_gem_new {
++	uint64_t size;
++	uint32_t flags, handle;
++};
++struct msm_gem_info {
++	uint32_t handle, info;
++	uint64_t value;
++	uint32_t len, pad;
++};
++struct msm_gem_cpu_prep {
++	uint32_t handle, op;
++	struct msm_timespec timeout;
++};
++struct msm_gem_submit_cmd {
++	uint32_t type, submit_idx, submit_offset, size, pad, nr_relocs;
++	uint64_t relocs;
++};
++struct msm_gem_submit_bo {
++	uint32_t flags, handle;
++	uint64_t presumed;
++};
++struct msm_gem_submit {
++	uint32_t flags, fence, nr_bos, nr_cmds;
++	uint64_t bos, cmds;
++	int32_t fence_fd;
++	uint32_t queueid;
++	uint64_t in_syncobjs, out_syncobjs;
++	uint32_t nr_in_syncobjs, nr_out_syncobjs, syncobj_stride, pad;
++};
++struct msm_wait_fence {
++	uint32_t fence, flags;
++	struct msm_timespec timeout;
++	uint32_t queueid;
++};
++struct msm_gem_madvise {
++	uint32_t handle, madv, retained;
++};
++struct msm_submitqueue {
++	uint32_t flags, prio, id;
++};
++struct msm_submitqueue_query {
++	uint64_t data;
++	uint32_t id, param, len, pad;
++};
++struct drm_gem_close {
++	uint32_t handle, pad;
++};
++struct redwood_surface {
++	uint32_t surface;                       /* the IOSurface's ID */
++	uint32_t handle;                        /* kRedwoodDescribe: no buffer is wanted; else, back: the buffer, */
++	uint64_t size;                          /* how big it is, */
++	uint32_t offset, rowBytes;              /* where the pixels start in it and how long a row of them is, */
++	uint32_t width, height, pixelFormat, planes;    /* and what they are */
++};
++
++#endif
+--- a/iokit/conf/files.arm64
++++ b/iokit/conf/files.arm64
+@@ -20,3 +20,5 @@
+ iokit/Kernel/arm/hid/IOHIDEvent.cpp                              optional iokitcpp
+ iokit/Kernel/arm/hid/IOHIDEventServiceQueue.cpp                  optional iokitcpp
+ iokit/Kernel/arm/hid/IOHIDEventServiceUserClient.cpp             optional iokitcpp
++
++iokit/Kernel/arm/PolarisGPU.cpp standard

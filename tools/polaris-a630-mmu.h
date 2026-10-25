@@ -12,7 +12,7 @@
 
 #define A630_MMU_PAGE 4096u
 #define A630_MMU_ENTRIES 512u
-#define A630_MMU_MAX_TABLES 32u
+#define A630_MMU_MAX_TABLES 512u
 #define A630_MMU_PA_LIMIT (UINT64_C(1) << 36)
 #define A630_MMU_VA_LIMIT (UINT64_C(1) << 39)
 #define A630_MMU_ADDRESS UINT64_C(0x0000000ffffff000)
@@ -31,8 +31,19 @@ enum a630_mmu_error {
 struct a630_mmu {
     uint64_t *memory, physical;
     uint32_t capacity, used, dirty;
+    uint32_t dirty_high[(A630_MMU_MAX_TABLES / 32) - 1];
     uint8_t level[A630_MMU_MAX_TABLES];
 };
+static inline void a630_mmu_dirty(struct a630_mmu *s, unsigned index)
+{
+    if (index < 32) s->dirty |= UINT32_C(1) << index;
+    else s->dirty_high[index / 32 - 1] |= UINT32_C(1) << (index % 32);
+}
+static inline void a630_mmu_cleaned(struct a630_mmu *s)
+{
+    s->dirty = 0;
+    __builtin_memset(s->dirty_high, 0, sizeof(s->dirty_high));
+}
 static inline bool a630_mmu_init(struct a630_mmu *s, void *memory,
                                 uint64_t physical, uint32_t tables)
 {
@@ -115,10 +126,28 @@ a630_mmu_map(struct a630_mmu *s, uint64_t iova, uint64_t physical, unsigned flag
         three = s->memory + index * A630_MMU_ENTRIES;
         s->level[index] = 3;
         *middle = (s->physical + (uint64_t)index * A630_MMU_PAGE) | 3;
-        s->dirty |= 1u << ((uint64_t)(two - s->memory) / A630_MMU_ENTRIES);
+        a630_mmu_dirty(s, (unsigned)((two - s->memory) / A630_MMU_ENTRIES));
     }
     three[(iova >> 12) & 511] = value;
-    s->dirty |= 1u << ((uint64_t)(three - s->memory) / A630_MMU_ENTRIES);
+    a630_mmu_dirty(s, (unsigned)((three - s->memory) / A630_MMU_ENTRIES));
+    return A630_MMU_OK;
+}
+/* Caller must have drained AND halted CP. Tables are retained, so an
+ * unmap never invalidates a table pointer still cached by this SMMU. */
+static inline enum a630_mmu_error a630_mmu_unmap(struct a630_mmu *s, uint64_t iova)
+{
+    if (!a630_mmu_valid(s) || iova >= A630_MMU_VA_LIMIT || (iova & 4095))
+        return A630_MMU_ARGUMENT;
+    uint64_t e = s->memory[(iova >> 30) & 511];
+    if (!e) return A630_MMU_OK;
+    uint64_t *two = a630_mmu_table(s, e, 2);
+    if (!two || two == s->memory) return A630_MMU_CORRUPT;
+    e = two[(iova >> 21) & 511];
+    if (!e) return A630_MMU_OK;
+    uint64_t *three = a630_mmu_table(s, e, 3);
+    if (!three || three == two || three == s->memory) return A630_MMU_CORRUPT;
+    three[(iova >> 12) & 511] = 0;
+    a630_mmu_dirty(s, (unsigned)((three - s->memory) / A630_MMU_ENTRIES));
     return A630_MMU_OK;
 }
 /* Software table walk for validation; never silently substitute it for an

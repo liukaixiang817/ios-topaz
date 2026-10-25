@@ -31,11 +31,11 @@ class A630WorkerTests(unittest.TestCase):
 #define NSEC_PER_MSEC 1000000
 #define KERN_SUCCESS 0
 typedef int wait_result_t,kern_return_t,thread_t;
-static uint32_t a630_started,a630_mode,a630_worker_state;
+static uint32_t a630_started,a630_mode,a630_worker_state,a630_client_requested;
 static unsigned selected=9,queued,runs,created,dropped,slept,terminated,stages,fail_create;
 static int a630_worker_wait;
 static void(*job)(void*,wait_result_t);
-static void PE_parse_boot_argn(const char*k,unsigned*v,unsigned n){(void)k;assert(n==4);*v=selected;}
+static void PE_parse_boot_argn(const char*k,unsigned*v,unsigned n){assert(n==4);*v=__builtin_strcmp(k,"polarisgpuclient")?selected:0;}
 static void a630_stage(uint32_t n,const char*s){assert(n==1&&s);stages++;}
 static void clock_interval_to_deadline(unsigned n,unsigned scale,uint64_t*out){assert(n==50&&scale==NSEC_PER_MSEC);*out=50000000;}
 static int assert_wait_deadline(void*event,unsigned mode,uint64_t end){assert(event==&a630_worker_wait&&mode==THREAD_UNINT&&end==50000000);slept++;return 0;}
