@@ -34,6 +34,17 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0054 source a4a42cb / CI40202831028 running; inputs frozen
+
+- Root8a3da3d. Sixsource-onlyfiles published a4a42cb0fce7535dec309d99a03eee589e259b2f
+  toapprovedbranch, excludingprivateNOTES/evidence/SDK/Apple/firmware/dumps.
+  CI40202831028 running.237source/host/artifactinputs frozenBEFOREguests.
+- Sixsignedgraphicsfilescomplete;onlyselftestchanged0053. GMEMparameterfix
+  iskernel, existingMesa/GL/injector/wrapper/PID1byteunchanged.
+- NEXTfullCI/exactartifact->fresh185CPU1defaultclockchecks/finalimage,
+  thenFIRSTautoFASTBOOTquery/freshROpreflight/directtemporarybootifready.
+  No0054deviceactionyet;USBobserverPAUSED. NeedstableCgrowthwithoutD1/GLF.
+
 ### 0054 native GMEM fix + forced framebuffer-fetch acceptance implemented
 
 - CorrectsMSM_PARAM6 to100000 matchingownnative UCHE100000..1fffff.
