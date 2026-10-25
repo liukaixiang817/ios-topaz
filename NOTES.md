@@ -28,6 +28,55 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT ACTION —0037 temporary boot SENT; detached USB observation active
+
+- **Preflight81645EXIT0**,verified **00:56:35.757632UTC**: full16GiBSHA689a8cd1,
+  182maps/GPT/exactcleanheader32311c08unchanged,unmounted/RO1/31C. No partition
+  write/journalreplay/repair. OptionalnativeUSBcollectionEXIT0,debugfsRAMmount
+  removed; rail/clock/cmdDB/sourceversion+actualQUSB2drivercapturedprivate0037.
+- **Boot2680EXIT0**,Sending/BootingOKAY,total1.179s,
+  **2026-10-25T00:57:30.314512UTC**,exactimage5ad71f55/sourceebc5c7e,
+  CI40147833700SUCCESS. Buildjob00:44:01–00:48:41UTC(4m40s).
+- **Detachedobserver PID5970 ACTIVE**,PPID1/PGID5970/SsconfirmedafterwrapperEXIT0.
+  Firstsample **00:57:30.400121UTC**,gap0.085609s;10.055ssecond_samplepersisted,
+  noECMearlyonly. InitialAndroidbootloaderidentitynotXNUUSBproof. No host
+  networkchange/RAMlog/panelcaptureyet. Statsusb-enumeration.json+fsyncedNDJSON.
+  No timeout orstopondiscovery. DoNOTrestartobserverorbootagain; waitactual
+  sameboot“已进入系统”/cancel. Stopwith0037stop-usb-observation.py thenverify
+  processgone/journalcount/state.0036confirmationmustnotstop0037.
+- PendingquestionasksactualGUIconfirmation+**GEfw/GR**(lookforfreshBABEFACE).
+  Noactual0037firmwareexecution/GPU3D/rendering/USBlinkresultyet. Nativeboot
+  remainsprobeandcontainment, noHFI/GX/CP/Mesa/CAintegrationclaim.
+- NativeUSBrecoverykernel4.9.186-perf-gc4fc334;88e2000.qusb bindmsm-qusb-phy-v2.
+  ThreeQUSBrails880/1800/3088mVactiveinnativekernel,USBmaster133333333Hz,
+  UTMI19200000Hz,cfgAHB/primclkref/sleepenabled. TheseareBEFORELinuxImage
+  shutdown/jump,NOTXNUstate. PrecisefutureUSBPHYplanprivate0037/
+  next-USB-PHY-source-plan.json; nativeAHB2PHY88ee010expects11undergdsc/cfgclock.
+  AppsRSC179e0000/TCS179e0d00/DRV2; nativecmdDBldoa1=40900/12=41400/24=41f00.
+  DoNOTcopySWEETRSC1822...orwriteanalogPHYwithoutproperrails/refclockleases.
+
+### CURRENT ACTION —0037 independently verified; FASTBOOT found; readonly preflight active
+
+- **CI40147833700/job121032890468 SUCCESS** exactpublicsourceebc5c7e,
+  fullghlogresearch/polaris/ci-40147833700.log. KernelSHA
+  **08c4723720340d666ec5a6b1be05a8d439865ebe59bb99fae35f99310fc7f937**.
+- Pipeline52815EXIT0: FIRSTPASSbase120s32/asyncnet90s35/noMMIO60s32=**99checks**,
+  all4VMchildreneach; no newfailure/retry. PriorSMP/synctimerfailuresunresolved.
+- Image **shim/out/polaris-xnu-readdebug-0037/polaris-xnu-readdebug-0037.img**,
+  47476736bytes SHA **5ad71f558e9717985380d39e6b754ff80a21f38a9088ea949b2c081ce710a72e**,
+  payload **912da3ed3a14359d21791ba142101b21b4a906d939364c9360a77d256b74baf2**.
+  Finalindependentchecker57378EXIT0 **00:54:50.484826UTC**, exactsource/CI/profile/
+  22patches28files/native27/ARM64imports/14frozenhosts/provenance/image65DTBs/
+  identicallyrebuiltpayloadPASS. NoactualFWexecution/rendering/USBlinkclaim.
+- AutomaticFASTBOOTquery **00:55:00.547938UTC expectedphonepresent/polarisverified**.
+  Noredundantquestion. **Readonlypreflight81645 ACTIVE** usingknownrecovery,
+  full16GiB/map/GPT/cleanheader/RO/unmountedproof. No0037XNUbootsentyet.
+  OnPASS optionalcollect-native-usb-state.py(readnativeLinuxclock/raildebugfs,
+  RAMmountonly; evidenceNOTXNUhandoffstate),thenboot-and-watch.py.
+  DoNOTrerunfinalcheckerafterdeviceactions. Ifpreflightfailsstopwithoutrepair.
+- Onsuccessfulbootrequireimmediatedetachedwatch; waitactualsamebootGUIconfirmation,
+  GEfw/GR/SIresults. NoHFI/GX/CP3Dyet. Thisisnextfirmwarebootblockerfix.
+
 ### CURRENT ACTION —0037 source complete; CI40147833700 building
 
 - Local fix **a59b9ac**, source-only public **ebc5c7e14e9f2dc3ba48ebbff1763f1025d12476**
