@@ -34,6 +34,28 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0048 sourcefd28bb1 / CI40186839751 running; pipeline frozen
+
+- Local2b82a56, sixsource-onlyfilespublicfd28bb1ce3e21c2730f7afb935d1e5f10674e757
+  (parent6cb9465), pushconfirmed. CI40186839751running; no duplicate.
+- Final62native/8actualARM64units/imports/34patches49files/29rows andsource
+  boundariesPASS. 195host/source/artifactinputsFROZENbeforeANY0048guestexecution.
+  FreshnewkernelCPU1defaultclock60/90/60/60s fourcases185checks; no0047runreuse.
+  Onlyonepredeclaredidenticalretryforclassifiedtimerfault; keeporiginalfailure.
+- Wrapper23328 waitsCI→strictprofile/CRC/SHAkernel→freshmatrix→prepareonly.
+  Final0048independentcheckerready. graphics-v4unchangedsignedsixfilescopied
+  exactly; noApple/SDK/firmware/dumps/serialpublished. NewGLBprogressallhex.
+- NewpreflightheadergateusesEXACTindependentlyreviewed0047header3e885886/
+  preflightproof, notold32311c08; historicalbaselineNOTmodified. Stillfresh
+  full16GiBhash/maps/GPT/readonly/tempverificationbeforeboot. AnyNEWheader
+  deviationSTOP, nojournalreplay/repair. Acceptedpendingjournalnevercalledclean.
+- Currentphysicalphone0047periodiclogs+stableIOcounters/native4096GPUtestPASS;
+  noGUI/Mesa/desktopproof. No0048image/deviceactionyet. USBobserverPAUSED.
+  NEXTfinishCI/matrix/imagecheck; FIRSTautomaticFASTBOOTquerywhenready.
+  DoNOTrebootcurrentphonebeforefinal0048verification. Physicalhangcauseunknown;
+  confirmedAMFIerrorcodecompatbugfixed, VFSchunk/syncreducesdelayed-writepath,
+  cachedphase/bytesmarksopen/write/close/exec forasinglebootdiagnosis.
+
 ### 0048 local bootstrap fix validated; source-only build next
 
 - Three0047photos B4D1/150C/D151 showSAMEbase_calls4140,ram_reads3,merges9,
