@@ -7,6 +7,39 @@ photos show desktop C739, C1605 and C1663 with T6/E0/D0/R1. Home-screen bitmap
 icons are still missing, so rendering correctness and measured FPS remain
 unfinished. Metal application support is a separate layer.
 
+0055 additionally passes actual caller-memory EAGL BGRA/ABGR alpha and live
+pixel-update tests before T6. A later photo shows794 desktop submissions,
+T6/E0/D0/R1 and no renderer error; residual stutter remains. CPU1 still
+performs the final panel copy (one photographed copy10.636ms wall time).
+
+0056 separates60Hz notification deadlines from budgeted copy deadlines;
+copy cost still reserves half the interval for other CPU work, with a1ms
+minimum timer yield. Early copy wakes do not send extra VSYNC notifications.
+A synthetic10636us-copy timeline reproduces the old30copies/s quantization
+and permits46–48copies/s with independent deadlines. This is a scheduling
+regression test, **not a measurement of physical phone FPS**.
+
+The normal panel now has six necessary rows rather than29 boot snapshots:
+USB summary, GA, FD, GLR, PF(or first GLX error), and GLT. First runtime GPU
+fault and first process crash add their saved details only when present,
+at most eleven rows. Detailed hardware initialization stays in the RAM log.
+No display callback reads GPU registers or gathers host CPU statistics.
+
+`FD` uses decimal values: `P` is actual copied frames per second x10 over
+the latest elapsed>=1s window, `C` average panel-copy wall microseconds,
+`J` largest within-window interval between successful copied frames,
+`D` the previous diagnostic repaint's wall microseconds. Idle lowers P;
+measure while continuously scrolling. `PF` reports the latest renderer
+window's average wall microseconds: `F` from first draw through frame end,
+`W` final completion/copy-submission wait, `R` copying render targets back,
+`U` uploading IOSurface pixels, `H` checking wrapped-image contents.
+Stages can overlap; do not add them as a partition of F or treat W as GPU
+utilisation. CPU `B` is aggregate host busy in basis points(9900=99%),
+`N` online cores; B10001/N0 means unknown. CPU counters are sampled at
+most once a second outside the rendering timer. PF retains the last active
+window when idle. First renderer errors always override PF. Diagnostic
+reports never establish readiness/completion or allow another GPU writer.
+
 The A630 hardware bootstrap follows this phone's DT, original MiCode sources
 and original firmware. `polarisgpu=9` retains that baseline. An additional
 `polarisgpuclient=1` allocates resident CB0 page tables before bootstrap and

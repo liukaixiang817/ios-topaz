@@ -8,13 +8,13 @@ H='#include "'+str(ROOT/'tools/polaris-gl-status.h')+'"\n'
 class RenderStatusTests(unittest.TestCase):
  def test_actual_snapshot_is_desktop_only_bounded_and_read_only(self):
   t=(ROOT/'tools/PolarisGPU.cpp').read_text()
-  code=''.join(function(t,n).replace('extern "C" ','') for n in ['static bool polaris_gpu_render_report(', 'extern "C" uint32_t polaris_gpu_render_line('])
+  code=''.join(function(t,n).replace('extern "C" ','') for n in ['static uint32_t polaris_gpu_performance_line(', 'static bool polaris_gpu_render_report(', 'extern "C" uint32_t polaris_gpu_render_line('])
   run(H+r'''
 #include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
-static uint32_t gpuRender[8],gpuRenderPublished;
+static uint32_t gpuRender[8],gpuRenderPublished,gpuPerformance[10],gpuPerformancePublished;
 '''+code+r'''
 int main(void){char b[68];struct pgpu_render_notice p={100,2,3,4,5,2,0x41424752,0x970};
  _Static_assert(sizeof(p)==32,"render diagnostic ABI");

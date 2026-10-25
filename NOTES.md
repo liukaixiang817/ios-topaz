@@ -34,6 +34,49 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0056 implementation/local validation PASS; preparing full kernel build
+
+- Independent notification/copy deadlines remove one-tick quantization while
+  retainingGPU2x CPU-copy budget and>=1ms yield. A future copy wake is kept
+  even if the renderer has not markeddirty yet; a clean past deadline does
+  not poll. Missed VSYNCs skipped, never extra/catch-up notification bursts.
+  Synthetic10636us-cost timeline old30/new46-48copies/s; NOT phoneFPS.
+- New trusted-desktop-only selector79/40B diagnostic snapshot:>=1s renderer
+  averages(frame/finalwait/readback/upload/hash), host CPU busybasispoints and
+  actualonlinecount sampled<=1Hz outside display callback. Unknown10001/0.
+  PF iswalltiming/includesscheduling, NOTGPUutilization; firstGLXfailure wins.
+  FD actualcopiedFPSx10/averagecopy/largestwithinwindowgap/statuspaintus.
+- Human now explicitlyasks concise logs: normal6rows, maximum11 only with
+  BOTH hardware+rendererfault. Full saved initialization diagnostics stayin
+  RAM. Statusrefresh5Hz actualtime; noextraearly-wake painting/MMIO.
+-90nativeASan/UBSan tests PASS(includingactualcompactpanelbounds, deadline
+  timeline/notifications/idle/largecost, CPUtickwrap/unknown andreportguards).
+  8actualARM64kernelunits/imports,42orderedprofiles55files nofuzz/offset,
+  protectednativeGPU/BO/admission/IOSurface/presentpixels/HID/storage PASS.
+  Sixsignedgraphics built/verified; oldGMEM/EAGLpixeltest unchanged.
+- No0056CI/deviceactionyet. CPU1 retained; priorCPU2rtclock/schedulerlock
+  failures unresolved. USB observation remains PAUSED. AfterfullCI/fresh
+  guestchecks/finalimage FIRSTautoFASTBOOT query, no redundant keyrequest.
+
+### 0055 physical GPU PASS; 0056 residual stutter investigation
+
+- New human photo3C8913 GA C31a=794 REAL desktop submissions, S327=807,
+  T6/E0/D0/R1, GLR F78/errors0/shaders0/images0/missing0, GLX K0.
+  Child GLT exit0/checkpoint54/50.786s passes actual EAGL image contracts.
+  GPU rendering is DEMONSTRATED; user reports slight stutter. Home icon
+  recovery is not explicitly confirmed by the new Settings photo.
+- Last CPU panel-present copy T10636 = 10.636ms WALL, not frame interval
+  or GPU time. Current CPU1 command/ADT is one little core. Existing GPU
+  copy budget2x plus16.667ms-only timer can defer a21.272ms deadline to the
+  next tick (~33.334ms). This is source-derived scheduling behavior,
+  NOT measured phone FPS or proof of CPU saturation. Native GPU itself
+  has no recorded fault in this photo.
+- 0056: separate notification/presentation deadlines without adding VSYNCs,
+  retain2x copy CPU budget/min1ms yield; add observed presentation rate and
+  bounded CPU/EAGL phase timing. Compare own DT and reference first.
+  No new phone action yet. USB observation remains PAUSED. Prior CPU2
+  scheduler-lock/rtclock failures remain unresolved; no SMP enablement.
+
 ### 0055 TEMPORARY BOOT SENT15:45:16UTC; await icons/GLR/GLX/GA
 
 - FIRSTautoFASTBOOT15:40:37.094155UTC expectedpolaris alreadyready;noask.

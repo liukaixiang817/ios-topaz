@@ -1,0 +1,1186 @@
+--- a/bsd/dev/polaris-gl-status.h
++++ b/bsd/dev/polaris-gl-status.h
+@@ -1,56 +1,57 @@
+ /* Fixed diagnostic ABI shared by the verified window server and kernel.
+  * Reporting never establishes GPU completion or permits another writer. */
+ #ifndef POLARIS_GL_STATUS_H
+ #define POLARIS_GL_STATUS_H
+ #include <stdint.h>
++#include "polaris-performance.h"
+ #define PGPU_EAGL_METHOD_COUNT 8u
+ #define PGPU_EAGL_METHOD_MASK 0xffu
+ #define PGPU_ACCEPTANCE_TIMEOUT_MS 180000u
+ /* Diagnostic-only snapshot from the verified desktop, selector0x7a. */
+ struct pgpu_render_notice {
+     uint32_t frames,errors,shaders,images,missing,kind,arg,slot;
+ };
+ /* Diagnostic-only AMFI5c. Actor1 is the shader test, actor3 the activated
+  * wrapper; neither role gains dyld flags or another GPU writer from this. */
+ enum {PGPU_TEST_BEGIN=1,PGPU_TEST_EXIT,PGPU_TEST_SIGNAL,PGPU_TEST_TIMEOUT,
+       PGPU_TEST_SPAWN_ERROR,PGPU_TEST_WAIT_ERROR,PGPU_TEST_STEP};
+ struct pgpu_test_notice {uint32_t event,value,elapsed_ms,reserved;};
+ static inline int pgpu_test_notice_valid(unsigned actor,const struct pgpu_test_notice *p)
+ {
+     if(!p || p->reserved || p->elapsed_ms>600000u)return 0;
+     if(actor==1)return p->event==PGPU_TEST_STEP && p->value && p->value<=63;
+     if(actor!=3 || p->event<PGPU_TEST_BEGIN || p->event>PGPU_TEST_WAIT_ERROR)return 0;
+     if(p->event==PGPU_TEST_BEGIN)return !p->value && !p->elapsed_ms;
+     if(p->event==PGPU_TEST_SIGNAL)return p->value && p->value<64;
+     if(p->event==PGPU_TEST_TIMEOUT)return p->value==9 && p->elapsed_ms>=PGPU_ACCEPTANCE_TIMEOUT_MS;
+     return p->value<=255;
+ }
+ struct pgpu_crash {
+     uint32_t signal,code;
+     uint64_t pc,lr,address;
+     uint32_t pc_image,lr_image;
+ };
+ /* image0 raw,1 cache preferredVA,2 reporting image (injector/test),3 bridge,4 Mesa offset. */
+ struct pgpu_image {uint64_t base,bytes;uint32_t kind;};
+ static inline int pgpu_desktop_allowed(uint32_t kind,uint32_t attempts)
+ {return kind!=2 || attempts==0;}
+ static inline uint64_t pgpu_pc(uint64_t pc,const struct pgpu_image *images,unsigned count,uint32_t *kind)
+ {
+     *kind=0;
+     for(unsigned i=0;i<count;i++)if(images[i].base && pc>=images[i].base && pc-images[i].base<images[i].bytes) {
+         *kind=images[i].kind;
+         return pc-images[i].base+(*kind==1?UINT64_C(0x180000000):0);
+     }
+     return pc;
+ }
+ static inline int pgpu_crash_valid(const struct pgpu_crash *p)
+ {
+     return p && (p->signal==4 || p->signal==5 || p->signal==6 || p->signal==10 || p->signal==11) &&
+         p->pc && p->pc_image<=4 && p->lr_image<=4;
+ }
+ #ifdef __cplusplus
+ static_assert(sizeof(struct pgpu_crash)==40,"crash ABI");
+ #else
+ _Static_assert(sizeof(struct pgpu_crash)==40,"crash ABI");
+ #endif
+ #endif
+--- /dev/null
++++ b/bsd/dev/polaris-performance.h
+@@ -0,0 +1,44 @@
++/* Diagnostic wall times, not hardware GPU utilisation. Never admission. */
++#ifndef POLARIS_PERFORMANCE_H
++#define POLARIS_PERFORMANCE_H
++#include <stdint.h>
++struct pgpu_perf_notice {
++    uint32_t frames,window_us,frame_us,wait_us,readback_us,upload_us,hash_us;
++    uint32_t cpu_busy,cpus,reserved;
++};
++struct pgpu_perf_window {
++    uint64_t began,frames,frame_us,wait_us,readback_us,upload_us,hash_us;
++};
++static inline uint32_t pgpu_perf_u32(uint64_t n)
++{return n>UINT32_MAX?UINT32_MAX:(uint32_t)n;}
++static inline uint32_t pgpu_perf_cpu(const uint32_t before[4],const uint32_t after[4])
++{
++    uint64_t total=0,idle=(uint32_t)(after[2]-before[2]);
++    for(unsigned i=0;i<4;i++)total+=(uint32_t)(after[i]-before[i]);
++    return total?(uint32_t)((total-idle)*10000/total):10001;
++}
++static inline int pgpu_perf_add(struct pgpu_perf_window *w,uint64_t began,
++    uint64_t ended,uint64_t wait,uint64_t readback,uint64_t upload,uint64_t hash,
++    struct pgpu_perf_notice *out)
++{
++    if(ended<began)return 0;
++    if(!w->frames)w->began=began;
++    w->frames++;w->frame_us+=ended-began;w->wait_us+=wait;
++    w->readback_us+=readback;w->upload_us+=upload;w->hash_us+=hash;
++    uint64_t elapsed=ended-w->began;
++    if(elapsed<1000000)return 0;
++    out->frames=pgpu_perf_u32(w->frames);out->window_us=pgpu_perf_u32(elapsed);
++    out->frame_us=pgpu_perf_u32(w->frame_us/w->frames);
++    out->wait_us=pgpu_perf_u32(w->wait_us/w->frames);
++    out->readback_us=pgpu_perf_u32(w->readback_us/w->frames);
++    out->upload_us=pgpu_perf_u32(w->upload_us/w->frames);
++    out->hash_us=pgpu_perf_u32(w->hash_us/w->frames);
++    out->cpu_busy=10001;out->cpus=out->reserved=0;
++    *w=(struct pgpu_perf_window){0};return 1;
++}
++#ifdef __cplusplus
++static_assert(sizeof(struct pgpu_perf_notice)==40,"performance ABI");
++#else
++_Static_assert(sizeof(struct pgpu_perf_notice)==40,"performance ABI");
++#endif
++#endif
+--- a/iokit/Kernel/arm/PolarisGPU.cpp
++++ b/iokit/Kernel/arm/PolarisGPU.cpp
+@@ -1,126 +1,151 @@
+ /* Polaris A630 resident BO/submission service. Linux MSM 1.7 wire protocol;
+  * informed by HackiOS RedwoodGPU (d82c64a3, MIT, userland/gpu/LICENSE.hackios).
+  *
+  * First integration deliberately admits ONE privileged writer. No claim of
+  * per-process GPU isolation. Submit is synchronous: flush/idle/halt precede
+  * every successful reply, so CPU readers and display see completed surfaces.
+  * On any uncertain DMA state the client, descriptors and all mappings are
+  * retained permanently, the service is poisoned and no replacement opens.
+  */
+ #include <IOKit/IOLib.h>
+ #include <IOKit/IOLocks.h>
+ #include <IOKit/IOKitKeys.h>
+ #include <IOKit/IOPlatformExpert.h>
+ #include <IOKit/IOService.h>
+ #include <IOKit/IOUserClient.h>
+ #include <IOKit/IOBufferMemoryDescriptor.h>
+ #include <sys/systm.h>
+ #include <mach/vm_param.h>
+ #include <kern/thread.h>
+ #include "SweetSurface.h"
+ #include "polaris_gpu.h"
+ #include "polaris_gpu_abi.h"
+ 
+ #if defined(POLARIS_RAM_ONLY)
+ #define GPU_BUFFERS 4096u
+ #define GPU_MAX_BO (128u << 20)
+ #define GPU_MAX_BYTES (384ull << 20)
+ #define GPU_VA_FIRST 0x20000000ull
+ #define GPU_VA_END 0x40000000ull
+ #define GPU_CMDS 128u
+ #define GPU_BOS 4096u
+ #define GPU_READONLY 2u
+ 
+ static IOLock *gpuLock;
+ static bool gpuOpened, gpuQuarantined;
+ static uint32_t gpuSubmissions, gpuSurfaces;
+ static uint32_t gpuDesktopAttempts,gpuDesktopSubmissions;
+ static uint32_t gpuRender[8],gpuRenderPublished;
++static uint32_t gpuPerformance[10],gpuPerformancePublished;
++static bool polaris_gpu_performance_report(unsigned kind,const struct pgpu_perf_notice *p)
++{
++    if(kind!=2 || !p || !p->frames || p->window_us<1000000 ||
++        p->cpu_busy>10001 || p->cpus>8 || p->reserved)return false;
++    uint32_t sequence=__atomic_load_n(&gpuPerformancePublished,__ATOMIC_SEQ_CST);
++    __atomic_store_n(&gpuPerformancePublished,sequence+1,__ATOMIC_SEQ_CST);
++    const uint32_t *v=(const uint32_t*)p;
++    for(unsigned n=0;n<10;n++)__atomic_store_n(&gpuPerformance[n],v[n],__ATOMIC_SEQ_CST);
++    __atomic_store_n(&gpuPerformancePublished,sequence+2,__ATOMIC_SEQ_CST);
++    return true;
++}
++static uint32_t polaris_gpu_performance_line(char *out,uint32_t capacity)
++{
++    uint32_t sequence=__atomic_load_n(&gpuPerformancePublished,__ATOMIC_SEQ_CST);
++    if(!out || !capacity || !sequence || (sequence&1))return 0;
++    uint32_t v[10];for(unsigned n=0;n<10;n++)v[n]=__atomic_load_n(&gpuPerformance[n],__ATOMIC_SEQ_CST);
++    if(__atomic_load_n(&gpuPerformancePublished,__ATOMIC_SEQ_CST)!=sequence)return 0;
++    /* Decimal us; saturate only the displayed value. B10001/N0 = unknown.
++     * W includes CPU preemption and any final copy submission, not GPU busy. */
++    for(unsigned n=2;n<=6;n++)if(v[n]>999999)v[n]=999999;
++    return (uint32_t)snprintf(out,capacity,"PF F%u W%u R%u U%u H%u B%u N%u",
++        v[2],v[3],v[4],v[5],v[6],v[7],v[8]);
++}
+ static bool polaris_gpu_render_report(unsigned kind,const struct pgpu_render_notice *p)
+ {
+     if(kind!=2 || !p || p->kind>6 || p->slot>=0x2200)return false;
+     uint32_t sequence=__atomic_load_n(&gpuRenderPublished,__ATOMIC_SEQ_CST);
+     __atomic_store_n(&gpuRenderPublished,sequence+1,__ATOMIC_SEQ_CST);
+     const uint32_t *v=(const uint32_t*)p;
+     for(unsigned n=0;n<8;n++)__atomic_store_n(&gpuRender[n],v[n],__ATOMIC_SEQ_CST);
+     __atomic_store_n(&gpuRenderPublished,sequence+2,__ATOMIC_SEQ_CST);
+     return true;
+ }
+ extern "C" uint32_t polaris_gpu_render_line(unsigned line,char *out,uint32_t capacity)
+ {
+     if(!out || !capacity || line>1)return 0;
+     uint32_t sequence=__atomic_load_n(&gpuRenderPublished,__ATOMIC_SEQ_CST);
+     if(!sequence || (sequence&1))return 0;
+     uint32_t v[8];for(unsigned n=0;n<8;n++)v[n]=__atomic_load_n(&gpuRender[n],__ATOMIC_SEQ_CST);
+     if(__atomic_load_n(&gpuRenderPublished,__ATOMIC_SEQ_CST)!=sequence)return 0;
+     if(!line)return (uint32_t)snprintf(out,capacity,"GLR F%x E%x S%x I%x M%x",v[0],v[1],v[2],v[3],v[4]);
++    if(!v[5]){uint32_t n=polaris_gpu_performance_line(out,capacity);if(n)return n;}
+     return (uint32_t)snprintf(out,capacity,"GLX K%x A%x @%x",v[5],v[6],v[7]);
+ }
+ static struct pgpu_crash gpuFirstCrash;
+ static uint32_t gpuCrashPublished,gpuCrashPID;
+ /* Saved diagnostic state only: never modifies readiness, reportT/E, fences
+  * or admission. Freeze the first terminal result across launchd restarts. */
+ static uint32_t gpuTestBegan,gpuTestEndPublished;
+ static uint64_t gpuTestProgress; /* one atomic pair: checkpoint + elapsed */
+ static struct pgpu_test_notice gpuTestEnd;
+ extern "C" bool polaris_gpu_record_test(unsigned actor,const struct pgpu_test_notice *p)
+ {
+     if(!pgpu_test_notice_valid(actor,p))return false;
+     if(__atomic_load_n(&gpuTestEndPublished,__ATOMIC_ACQUIRE))return true;
+     if(p->event==PGPU_TEST_STEP) {
+         __atomic_store_n(&gpuTestProgress,((uint64_t)p->elapsed_ms<<32)|p->value,__ATOMIC_RELEASE);
+     }else if(p->event==PGPU_TEST_BEGIN) {
+         __atomic_store_n(&gpuTestBegan,1,__ATOMIC_RELEASE);
+     }else {
+         uint32_t zero=0;
+         if(__atomic_compare_exchange_n(&gpuTestEndPublished,&zero,1,false,__ATOMIC_ACQ_REL,__ATOMIC_ACQUIRE)) {
+             gpuTestEnd=*p;__atomic_store_n(&gpuTestEndPublished,2,__ATOMIC_RELEASE);
+         }
+     }
+     return true;
+ }
+ static uint32_t polaris_gpu_test_line(char *out,uint32_t capacity)
+ {
+     if(!out || !capacity)return 0;
+     uint32_t done=__atomic_load_n(&gpuTestEndPublished,__ATOMIC_ACQUIRE);
+     if(!__atomic_load_n(&gpuTestBegan,__ATOMIC_ACQUIRE) && done!=2)return 0;
+     uint64_t progress=__atomic_load_n(&gpuTestProgress,__ATOMIC_ACQUIRE);
+     unsigned event=PGPU_TEST_BEGIN,value=0,ms=(uint32_t)(progress>>32);
+     if(done==2){event=gpuTestEnd.event;value=gpuTestEnd.value;ms=gpuTestEnd.elapsed_ms;}
+     return (uint32_t)snprintf(out,capacity,"GLT R%u V%x P%u MS%u",event,value,
+         (uint32_t)progress,ms);
+ }
+ extern "C" bool polaris_gpu_record_crash(const struct pgpu_crash *p,uint32_t pid)
+ {
+     if(!pgpu_crash_valid(p))return false;
+     uint32_t expected=0;
+     if(__atomic_compare_exchange_n(&gpuCrashPublished,&expected,1,false,__ATOMIC_ACQ_REL,__ATOMIC_ACQUIRE)) {
+         gpuFirstCrash=*p;gpuCrashPID=pid;
+         __atomic_store_n(&gpuCrashPublished,2,__ATOMIC_RELEASE);
+     }
+     return true; /* First fault survives subsequent launchd restarts. */
+ }
+ extern "C" uint32_t polaris_gpu_crash_line(unsigned line,char *out,uint32_t capacity)
+ {
+     if(!out || !capacity || line>2)return 0;
+     if(__atomic_load_n(&gpuCrashPublished,__ATOMIC_ACQUIRE)!=2)
+         return line==2?polaris_gpu_test_line(out,capacity):0;
+     if(!line)return (uint32_t)snprintf(out,capacity,"GLF SIG%u CODE%x PID%u",gpuFirstCrash.signal,gpuFirstCrash.code,gpuCrashPID);
+     if(line==1)return (uint32_t)snprintf(out,capacity,"GLPC %u:%llx LR%u:%llx",gpuFirstCrash.pc_image,
+         gpuFirstCrash.pc,gpuFirstCrash.lr_image,gpuFirstCrash.lr);
+     return (uint32_t)snprintf(out,capacity,"GLADDR %llx",gpuFirstCrash.address);
+ }
+ static uint32_t gpuPublished,gpuOpenStatus,gpuFaultStatus;
+ extern "C" bool polaris_gpu_desktop_active(void)
+ {
+     return __atomic_load_n(&gpuOpenStatus,__ATOMIC_ACQUIRE)!=0 &&
+         __atomic_load_n(&gpuDesktopSubmissions,__ATOMIC_ACQUIRE)!=0 && polaris_gpu_ready();
+ }
+ 
+ static uint32_t gpuAppStage,gpuAppError;
+ /* Loading evidence is independent of the shader/pixel acceptance result.
+  * These cached words never read GPU registers from the display timer. */
+ static uint32_t gpuLoaderStage,gpuLoaderError,gpuLoaderMethods;
+ extern "C" void polaris_gpu_loader_policy(int error)
+ {
+     uint32_t expected=0;
+@@ -318,200 +343,205 @@
+         result=kIOReturnVMError;goto out;
+     }
+     {
+         uint64_t addresses[GPU_CMDS];uint32_t words[GPU_CMDS],count=0;
+         for(unsigned n=0;n<r->nr_bos;n++)
+             if(!buffer(bos[n].handle) || !(bos[n].flags&3u) || (bos[n].flags&~15u)) goto out;
+         for(unsigned n=0;n<r->nr_cmds;n++) {
+             const msm_gem_submit_cmd *c=&cmds[n];
+             if(c->submit_idx>=r->nr_bos)goto out;
+             PolarisBO *b=buffer(bos[c->submit_idx].handle);
+             /* relocs is unused/unspecified when nr_relocs==0 (Mesa25.0.7
+              * msm_ringbuffer_sp leaves that field uninitialized). */
+             if(!b || c->type!=1 || c->nr_relocs || c->pad || !c->size ||
+                 ((c->submit_offset|c->size)&3) || c->submit_offset>b->size || c->size>b->size-c->submit_offset ||
+                 c->size/4>0xfffff) goto out;
+             addresses[count]=b->address+c->submit_offset;words[count++]=c->size/4;
+         }
+         /* Kernel map every referenced BO before release; keep cached CPU and
+          * SMMU attributes identical. All CPU aliases are cleaned before DMA,
+          * invalidated after the observed GPU flush/fence/idle/halt. */
+         for(unsigned n=0;n<r->nr_bos;n++) {
+             PolarisBO *b=buffer(bos[n].handle);
+             if(!b->map)b->map=b->memory->createMappingInTask(kernel_task,0,kIOMapAnywhere|kIOMapDefaultCache,0,b->size);
+             if(!b->map) {result=kIOReturnNoMemory;goto out;}
+             polaris_gpu_cache((void*)b->map->getVirtualAddress(),b->size);
+         }
+         for(unsigned n=0;n<r->nr_bos;n++) {
+             PolarisBO *b=buffer(bos[n].handle);
+             if(b->surface)__atomic_store_n(&b->surface->polarisGPUBusy,1,__ATOMIC_RELEASE);
+         }
+         if(!polaris_gpu_submit(addresses,words,count,&r->fence)) {poison();result=kIOReturnTimeout;goto out;}
+         lastFence=r->fence;
+         for(unsigned n=0;n<r->nr_bos;n++) {
+             PolarisBO *b=buffer(bos[n].handle);
+             polaris_gpu_cache((void*)b->map->getVirtualAddress(),b->size);
+         }
+         for(unsigned n=0;n<r->nr_bos;n++) {
+             PolarisBO *b=buffer(bos[n].handle);
+             if(b->surface)__atomic_store_n(&b->surface->polarisGPUBusy,0,__ATOMIC_RELEASE);
+         }
+         __atomic_fetch_add(&gpuSubmissions,1,__ATOMIC_RELEASE);
+         if(callerKind==2)__atomic_fetch_add(&gpuDesktopSubmissions,1,__ATOMIC_RELEASE);
+         if(gpuSubmissions<=4 || !(gpuSubmissions%256))
+             IOLog("POLARIS GPU: completed submission %u, IBs=%u BOs=%u surfaces=%u; GPU fence+idle+halt\n",
+                 r->fence,count,r->nr_bos,gpuSurfaces);
+         result=kIOReturnSuccess;
+     }
+ out:
+     if(bos)IODelete(bos,msm_gem_submit_bo,r->nr_bos);
+     if(cmds)IODelete(cmds,msm_gem_submit_cmd,r->nr_cmds);
+     return result;
+ }
+ IOReturn PolarisGPUUserClient::clientMemoryForType(UInt32 type,IOOptionBits *options,IOMemoryDescriptor **memory)
+ {
+     if(current_task()!=ownerTask || !polaris_gpu_caller_allowed())return kIOReturnNotPrivileged;
+     IOLockLock(gpuLock);
+     PolarisBO *b=closed?NULL:buffer(type);
+     IOReturn result=kIOReturnNotFound;
+     if(b && polaris_gpu_ready()) {*options=kIOMapAnywhere|kIOMapDefaultCache;b->memory->retain();*memory=b->memory;result=0;}
+     IOLockUnlock(gpuLock);return result;
+ }
+ IOReturn PolarisGPUUserClient::externalMethod(uint32_t selector,IOExternalMethodArguments *a,
+     IOExternalMethodDispatch *,OSObject *,void *)
+ {
+     if(current_task()!=ownerTask || !polaris_gpu_caller_allowed())return kIOReturnNotPrivileged;
+     union {msm_param param;msm_gem_new make;msm_gem_info info;msm_gem_cpu_prep prep;
+         msm_gem_submit submit;msm_wait_fence wait;msm_gem_madvise madvise;
+         msm_submitqueue queue;msm_submitqueue_query query;drm_gem_close close;redwood_surface surface;
+         struct {uint32_t stage,error;} report;
+         struct {uint32_t stage,error,methods;} loader;
+-        struct pgpu_render_notice render;} r;
++        struct pgpu_render_notice render;
++        struct pgpu_perf_notice performance;} r;
+     size_t size=0;
+     switch(selector) {
+         case 0x40:case 0x41:size=sizeof(r.param);break;
+         case 0x42:size=sizeof(r.make);break;case 0x43:size=sizeof(r.info);break;
+         case 0x44:size=sizeof(r.prep);break;case 0x45:case 0x4b:size=4;break;
+         case 0x46:size=sizeof(r.submit);break;case 0x47:size=sizeof(r.wait);break;
+         case 0x48:size=sizeof(r.madvise);break;case 0x4a:size=sizeof(r.queue);break;
+         case 0x4c:size=sizeof(r.query);break;case 0x09:size=sizeof(r.close);break;
+         case 0x7e:size=sizeof(r.surface);break;default:return kIOReturnUnsupported;
+         case 0x7c:size=sizeof(r.report);break;
+         case 0x7b:size=sizeof(r.loader);break;
+         case 0x7a:size=sizeof(r.render);break;
++        case 0x79:size=sizeof(r.performance);break;
+     }
+     if(!a || !a->structureInput || a->structureInputDescriptor || a->structureOutputDescriptor ||
+         a->scalarInputCount || a->scalarOutputCount || a->structureInputSize!=size ||
+         !a->structureOutput || a->structureOutputSize<size) return kIOReturnBadArgument;
+     bzero(&r,sizeof(r));memcpy(&r,a->structureInput,size);
+     IOLockLock(gpuLock);
+     IOReturn result=kIOReturnBadArgument;
+     if(closed || (selector!=0x7c && selector!=0x7b && !polaris_gpu_ready())) {result=kIOReturnNotReady;goto done;}
+     switch(selector) {
+         case 0x40:
+             if(r.param.pipe!=0x10 || r.param.len || r.param.pad)break;
+             switch(r.param.param) {
+                 case 1:r.param.value=630;break;case 2:r.param.value=0x100000;break;
+                 case 3:r.param.value=0x06030001;break;case 4:r.param.value=257000000;break;
+                 case 5:if(!polaris_gpu_timestamp(&r.param.value))goto done;break;
+                 /* Own A630 UCHE_GMEM_RANGE_MIN/MAX are 0x100000/0x1fffff.
+                  * Mesa uses this VA in GMEM texture/resolve descriptors.
+                  * The reference A642L's zero base is not our configuration. */
+                 case 6:r.param.value=0x100000;break;
+                 case 7:r.param.value=1;break;case 9:r.param.value=0;break;
+                 case 0x10:r.param.value=15;break;default:goto done;
+             }
+             result=0;break;
+         case 0x41:result=0;break; /* diagnostic process name; no hardware change */
+         case 0x42: {
+             if(!r.make.size || r.make.size>GPU_MAX_BO || (r.make.flags&~0x000f0003u))break;
+             if((r.make.flags&0x000f0000u)!=0x00010000u &&
+                (r.make.flags&0x000f0000u)!=0x00020000u &&
+                (r.make.flags&0x000f0000u)!=0x00040000u) {result=kIOReturnUnsupported;break;}
+             uint64_t length=(r.make.size+PAGE_MASK)&~(uint64_t)PAGE_MASK;
+             IOBufferMemoryDescriptor *m=IOBufferMemoryDescriptor::inTaskWithOptions(kernel_task,
+                 kIODirectionInOut|kIOMemoryKernelUserShared,(vm_size_t)length,PAGE_SIZE);
+             if(!m){result=kIOReturnNoMemory;break;}
+             bzero(m->getBytesNoCopy(),length);
+             result=make(m,NULL,length,r.make.flags,&r.make.handle);m->release();break;
+         }
+         case 0x43: {
+             PolarisBO *b=buffer(r.info.handle);if(!b || r.info.pad)break;
+             if(r.info.info==0)r.info.value=(uint64_t)r.info.handle<<PAGE_SHIFT;
+             else if(r.info.info==1)r.info.value=b->address;
+             else if(r.info.info==2) {result=0;break;} /* SET_NAME */
+             else if(r.info.info==5)r.info.value=b->flags;
+             else break;
+             result=0;break;
+         }
+         case 0x44:result=buffer(r.prep.handle)?0:kIOReturnNotFound;break;
+         case 0x45:result=0;break;
+         case 0x46:result=submit(&r.submit);break;
+         case 0x47:
+             if(r.wait.queueid && r.wait.queueid<=queues && !(r.wait.flags&~1u) &&
+                 r.wait.fence && lastFence && (int32_t)(lastFence-r.wait.fence)>=0)result=0;
+             else result=kIOReturnTimeout;break;
+         case 0x48:if(buffer(r.madvise.handle)){r.madvise.retained=1;result=0;}break;
+         case 0x4a:if(!r.queue.flags && !r.queue.prio && queues<1024){r.queue.id=++queues;result=0;}break;
+         case 0x4b:result=0;break;
+         case 0x4c: {
+             if(!r.query.id || r.query.id>queues || r.query.param || r.query.pad ||
+                 r.query.len!=sizeof(uint64_t) || !r.query.data)break;
+             uint64_t faults=0; /* ready synchronous backend has no unreported reset */
+             result=copyout(&faults,r.query.data,sizeof(faults))?kIOReturnVMError:kIOReturnSuccess;
+             break;
+         }
+         case 0x09:if(!r.close.pad)result=drop(r.close.handle)?0:kIOReturnNotFound;break;
+         case 0x7e:result=surface(&r.surface);break;
+         case 0x7b:
+             /* Only the real server may report loading. This is diagnostic
+              * evidence, never GPU readiness or a successful submission. */
+             if(polaris_gpu_loader_report(polaris_gpu_caller_kind(),r.loader.stage,r.loader.error,r.loader.methods))result=0;
+             break;
+         case 0x7a:
+             if(polaris_gpu_render_report(callerKind,&r.render))result=0;
+             break;
++        case 0x79:
++            if(polaris_gpu_performance_report(callerKind,&r.performance))result=0;
++            break;
+         case 0x7c:
+             if(r.report.stage>6 || r.report.error>255 ||
+                 (r.report.stage==6 && !r.report.error && (!gpuSubmissions || !gpuSurfaces)))break;
+             __atomic_store_n(&gpuAppStage,r.report.stage,__ATOMIC_RELEASE);
+             __atomic_store_n(&gpuAppError,r.report.error,__ATOMIC_RELEASE);
+             IOLog("POLARIS GL: acceptance stage%u error%u, completed=%u surfaces=%u\n",
+                 r.report.stage,r.report.error,gpuSubmissions,gpuSurfaces);
+             result=0;break;
+     }
+ done:
+     if(result==0){memcpy(a->structureOutput,&r,size);a->structureOutputSize=size;}
+     IOLockUnlock(gpuLock);return result;
+ }
+ IOReturn PolarisGPUUserClient::clientClose()
+ {
+     IOLockLock(gpuLock);
+     if(!closed) {
+         closed=true;
+         if(!polaris_gpu_quiescent())poison();
+         for(unsigned n=0;!quarantined && n<GPU_BUFFERS;n++)if(buffers[n].memory)drop(n+1);
+         if(!quarantined){gpuOpened=false;__atomic_store_n(&gpuOpenStatus,0,__ATOMIC_RELEASE);}
+     }
+     IOLockUnlock(gpuLock);terminate();return 0;
+ }
+ void PolarisGPUUserClient::free()
+ {
+     /* Normal close has drained and removed every GPU mapping. A quarantined
+      * client has a permanent retain and must never arrive here. */
+     if(buffers)IODelete(buffers,PolarisBO,GPU_BUFFERS);
+     super::free();
+ }
+ extern "C" void PolarisGPUStart(void)
+ {
+     if(!polaris_gpu_ready() || gpuLock)return;
+     gpuLock=IOLockAlloc();if(!gpuLock)return;
+     PolarisGPU *s=new PolarisGPU;
+     if(s && s->init() && s->attach(IOService::getPlatform()) && s->start(IOService::getPlatform())) {
+         s->setName("PolarisGPU");s->setProperty(kIOUserClientClassKey,"PolarisGPUUserClient");
+         s->setProperty("A630NativeProof",true);s->setProperty("ExclusiveVerifiedWriter",true);
+         s->registerService();
+         __atomic_store_n(&gpuPublished,1,__ATOMIC_RELEASE);
+         IOLog("POLARIS GPU: resident MSM1.7 service available; native proof passed, desktop backend still requires Mesa/EAGL\n");
+     }else if(s)s->release();
+ }
+ #endif
+--- a/iokit/Kernel/arm/SweetFramebuffer.cpp
++++ b/iokit/Kernel/arm/SweetFramebuffer.cpp
+@@ -46,478 +46,535 @@
+ 
+ #if defined(SWEET)
+ #include <IOKit/IOService.h>
+ #include <IOKit/IOUserClient.h>
+ #include <IOKit/IOKitKeys.h>
+ #include <IOKit/IOLib.h>
+ #include <IOKit/IOLocks.h>
+ #include <IOKit/IOWorkLoop.h>
+ #include <IOKit/IOTimerEventSource.h>
+ #include <IOKit/system.h>
+ #include <pexpert/pexpert.h>
+ #include <kern/clock.h>
+ #include <sys/proc.h>
+ 
+ enum {
+ 	kSweetFBGetLayerDefaultSurface  = 3,
+ 	kSweetFBSwapBegin               = 4,
+ 	kSweetFBSwapEnd                 = 5,
+ 	kSweetFBSwapWait                = 6,
+ 	kSweetFBGetID                   = 7,
+ 	kSweetFBGetDisplaySize          = 8,
+ 	kSweetFBRequestPowerChange      = 12,
+ 	kSweetFBIsMainDisplay           = 18,
+ 	kSweetFBGetDotPitch             = 28,
+ 	kSweetFBNotifications           = 72,
+ };
+ 
+ #define SWEET_FB_SWAP_REC_SIZE          0x46c
+ #define SWEET_FB_LAYERS                 4
+ #define SWEET_FB_NOTIFY_TYPES           8
+ #define SWEET_FB_NOTIFY_VSYNC           5
+ #define SWEET_FB_VSYNC_US               16667
+ #define SWEET_FB_DOT_PITCH              458     /* ppi, as the iPhone X panel */
+ /*
+  * The iOS userland only has status bar / layout data for real iPhone
+  * screens (UIKit: "No status bar visual provider for screen", the red
+  * rdar://45025538 bar for 360x800 points). The display is therefore
+  * presented as the iPhone X panel, 1125x2436 (375x812 points @3x), and the
+  * centered 1080x2400 part of it is shown on the 1080x2400 panel.
+  * Boot-arg sweetfb_native=1 presents the real panel size instead.
+  */
+ #define SWEET_FB_LOGICAL_W              1125
+ #define SWEET_FB_LOGICAL_H              2436
+ #define SWEET_FB_FORMAT_BGRA            0x42475241
+ 
+ class IOMobileFramebuffer : public IOService {
+ 	OSDeclareDefaultStructors(IOMobileFramebuffer);
+ };
+ 
+ OSDefineMetaClassAndStructors(IOMobileFramebuffer, IOService);
+ 
+ class IOMobileFramebufferUserClient;
+ 
+ class AppleCLCD : public IOMobileFramebuffer {
+ 	OSDeclareDefaultStructors(AppleCLCD);
+ 
+ 	IOWorkLoop         *fWorkLoop;
+ 	IOTimerEventSource *fVsync;
+ 	uint64_t            fVsyncCount;
+ 
+ 	static void vsyncFired(OSObject *owner, IOTimerEventSource *sender);
+ 
+ public:
+ #if defined(POLARIS_RAM_ONLY)
+     uint32_t fPolarisColumns[1080]; /* persistent, no per-frame allocation */
+     uint32_t fPolarisRow[1080]; /* gather in cacheable RAM before panel writes */
+     uint8_t fPolarisPresent[SWEET_FB_SWAP_REC_SIZE];
+     uint32_t fPolarisLastUS, fPolarisMaxUS;
+     uint64_t fPolarisTotalNS;
+     uint64_t fPolarisNextPresent;
++    uint64_t fPolarisNextVsyncUS,fPolarisNextStatusUS;
++    uint64_t fPolarisMeterStartUS,fPolarisMeterFrames,fPolarisMeterCopyUS;
++    uint64_t fPolarisMeterLastUS,fPolarisMeterGapUS;
++    uint32_t fPolarisFPS10,fPolarisCopyMeanUS,fPolarisGapUS,fPolarisStatusPaintUS;
+     uint32_t fPolarisFrameHz;
+     bool fDebugStatus;
+     uint32_t debugCapture(void *, uint32_t);
+ #endif
+ 	uint64_t      fPhys;
+ 	uint32_t      fWidth, fHeight, fRowBytes;
+ 	uint32_t      fLogicalW, fLogicalH;     /* size reported to userland */
+ 	int32_t       fOffX, fOffY;             /* logical origin of the panel */
+ 	uintptr_t     fPixels;          /* kernel mapping of the panel memory */
+ 	IOMemoryMap  *fMap;
+ 	SweetSurface *fSurface;         /* the panel memory as an IOSurface */
+ 	IOLock       *fLock;            /* swaps and client list */
+ 	OSArray      *fClients;
+ 	uint32_t      fSwapID;
+ 	bool          fConsolePaused;
+ 	uint8_t       fPending[SWEET_FB_SWAP_REC_SIZE];     /* latest swap, not yet shown */
+ 	bool          fDirty;
+ 	uint32_t      fFlushTicks;    /* vsync ticks between panel copies */
+ 	bool          fPowerOff;      /* RequestPowerChange(0) */
+ 	uint32_t      fFadeStep;      /* fade-out steps done while off */
+ 
+ 	bool start(IOService *provider) APPLE_KEXT_OVERRIDE;
+ 	void addClient(IOMobileFramebufferUserClient *client);
+ 	void removeClient(IOMobileFramebufferUserClient *client);
+ 	void swap(const uint8_t *rec);
+ 	void present(const uint8_t *rec);
+ };
+ 
+ OSDefineMetaClassAndStructors(AppleCLCD, IOMobileFramebuffer);
+ #if defined(POLARIS_RAM_ONLY)
+ /* Retained once for this boot, published after all framebuffer setup. */
+ static AppleCLCD *polaris_debug_fb;
++static uint64_t polaris_fb_calls,polaris_fb_swaps,polaris_fb_presents,polaris_fb_pixels;
+ extern "C" unsigned char iso_font[256 * 16];
+ extern "C" uint32_t polaris_usb_status(char *, uint32_t);
+ extern "C" uint32_t polaris_a630_status(void);
+ static IOReturn
+ polaris_copy_panel(OSObject *owner, void *out, void *size, void *, void *)
+ {
+     AppleCLCD *fb = (AppleCLCD *)owner;
+     if (!out || (uintptr_t)size < 4320u * 2160u) return kIOReturnBadArgument;
+     memcpy(out, (const void *)fb->fPixels, 4320u * 2160u);
+     return kIOReturnSuccess;
+ }
+ uint32_t
+ AppleCLCD::debugCapture(void *out, uint32_t capacity)
+ {
+     /* Actual present/fade writes occur outside fLock, on this work loop. */
+     return fWorkLoop->runAction(polaris_copy_panel, this, out,
+         (void *)(uintptr_t)capacity) == kIOReturnSuccess ? 4320u * 2160u : 0;
+ }
+ extern "C" uint32_t polaris_a630_details(char *, uint32_t);
+ extern "C" bool polaris_gpu_desktop_active(void);
++extern "C" uint32_t polaris_gpu_client_line(char *,uint32_t);
++extern "C" uint32_t polaris_gpu_render_line(unsigned,char *,uint32_t);
++extern "C" uint32_t polaris_gpu_fault_line(unsigned,char *,uint32_t);
++extern "C" uint32_t polaris_gpu_crash_line(unsigned,char *,uint32_t);
+ extern "C" uint32_t polaris_usb_diagnostic_line(unsigned, char *, uint32_t);
+ extern "C" uint32_t polaris_a630_diagnostic_line(unsigned, char *, uint32_t);
+ static void polaris_status_bar(AppleCLCD *fb)
+ {
+-    char text[29][136];
+-    polaris_usb_status(text[0], sizeof(text[0]));
+-    unsigned n = polaris_a630_details(text[1], sizeof(text[1]));
+-    if (n < sizeof(text[1])) snprintf(text[1] + n, sizeof(text[1]) - n,
+-        " T%u", __atomic_load_n(&fb->fPolarisLastUS, __ATOMIC_RELAXED));
+-    for (unsigned i = 0; i < 7; i++)
+-        polaris_usb_diagnostic_line(i, text[2 + i], sizeof(text[2 + i]));
+-    for (unsigned i = 0; i < 20; i++)
+-        polaris_a630_diagnostic_line(i, text[9 + i], sizeof(text[9 + i]));
+-    /* Fixed double-size diagnostic rows, saved state only. Keep output
+-     * inside the actual panel and never poll MMIO from the display loop. */
+-    unsigned lines = fb->fHeight / 32 < 29 ? fb->fHeight / 32 : 29;
++    char text[12][136];unsigned lines=0;
++    polaris_usb_status(text[lines++],sizeof(text[0]));
++    polaris_gpu_client_line(text[lines++],sizeof(text[0]));
++    snprintf(text[lines++],sizeof(text[0]),"FD P%u C%u J%u D%u",
++        fb->fPolarisFPS10,fb->fPolarisCopyMeanUS,fb->fPolarisGapUS,fb->fPolarisStatusPaintUS);
++    for(unsigned i=0;i<2;i++)
++        if(polaris_gpu_render_line(i,text[lines],sizeof(text[0])))lines++;
++    /* Runtime first fault and first renderer crash keep priority over old
++     * boot snapshots. Full initialization detail remains in the RAM log. */
++    for(unsigned i=0;i<3;i++)
++        if(polaris_gpu_fault_line(i,text[lines],sizeof(text[0])))lines++;
++    for(unsigned i=0;i<3;i++)
++        if(polaris_gpu_crash_line(i,text[lines],sizeof(text[0])))lines++;
++    if(lines>fb->fHeight/32)lines=fb->fHeight/32;
++    /* Six rows normally, eleven only with BOTH hardware and process faults.
++     * Saved RAM only: never poll MMIO or sample CPU statistics here. */
+     for (unsigned line = 0; line < lines; line++) {
+         for (unsigned y = 0; y < 32; y++) {
+             uint32_t *row = (uint32_t *)(fb->fPixels + (uint64_t)(line * 32 + y) * fb->fRowBytes);
+             for (unsigned x = 0; x < fb->fWidth; x++) row[x] = 0xff000000;
+             for (unsigned c = 0; c < fb->fWidth / 16 && text[line][c]; c++) {
+                 uint8_t bits = iso_font[(uint8_t)text[line][c] * 16 + y / 2];
+                 for (unsigned b = 0; b < 8; b++) if (bits & (1u << b)) {
+                     row[c * 16 + b * 2] = 0xffffffff;
+                     row[c * 16 + b * 2 + 1] = 0xffffffff;
+                 }
+             }
+         }
+     }
+ }
+ extern "C" uint32_t polaris_debug_frame(void *, uint32_t);
+ extern "C" uint32_t
+ polaris_debug_frame(void *out, uint32_t capacity)
+ {
+     AppleCLCD *fb = __atomic_load_n(&polaris_debug_fb, __ATOMIC_ACQUIRE);
+     const uint32_t bytes = 4320u * 2160u;
+     if (!fb || !out || capacity < bytes || fb->fPhys != 0x9d400000ULL ||
+         fb->fWidth != 1080 || fb->fHeight != 2160 || fb->fRowBytes != 4320) return 0;
+     return fb->debugCapture(out, capacity);
+ }
+ #endif
+ 
+ class IOMobileFramebufferUserClient : public IOUserClient {
+ 	OSDeclareDefaultStructors(IOMobileFramebufferUserClient);
+ 
+ public:
+ 	AppleCLCD          *fFB;
+ 	task_t              fTask;
+ 	mach_port_t         fPort;
+ 	io_user_reference_t fFunc[SWEET_FB_NOTIFY_TYPES];
+ 	io_user_reference_t fRefcon[SWEET_FB_NOTIFY_TYPES];
+ 
+ 	bool initWithTask(task_t owningTask, void *securityID, UInt32 type) APPLE_KEXT_OVERRIDE;
+ 	bool start(IOService *provider) APPLE_KEXT_OVERRIDE;
+ 	IOReturn clientClose(void) APPLE_KEXT_OVERRIDE;
+ 	IOReturn registerNotificationPort(mach_port_t port, UInt32 type,
+ 	    io_user_reference_t refCon) APPLE_KEXT_OVERRIDE;
+ 	IOReturn externalMethod(uint32_t selector, IOExternalMethodArguments *args,
+ 	    IOExternalMethodDispatch *dispatch, OSObject *target,
+ 	    void *reference) APPLE_KEXT_OVERRIDE;
+ 	void notify(uint32_t type, const uint64_t *values, uint32_t count);
+ };
+ 
+ OSDefineMetaClassAndStructors(IOMobileFramebufferUserClient, IOUserClient);
+ 
+ bool
+ AppleCLCD::start(IOService *provider)
+ {
+ 	PE_Video video;
+ 
+ 	if (!IOService::start(provider)) {
+ 		return false;
+ 	}
+ #if defined(POLARIS_RAM_ONLY)
+     uint32_t enabled = 0, marker = 0;
+     OSData *property = OSDynamicCast(OSData, provider->getProperty("polaris,boot-framebuffer"));
+     if (property && property->getLength() == sizeof(marker)) {
+         memcpy(&marker, property->getBytesNoCopy(), sizeof(marker));
+     }
+     if (!PE_parse_boot_argn("polarisdisplay", &enabled, sizeof(enabled)) || enabled != 1 || marker != 1) {
+         IOLog("POLARIS DISPLAY: disabled; explicit ADT and boot argument required\n");
+         return false;
+     }
+     fPolarisLastUS = fPolarisMaxUS = 0;
+     fPolarisTotalNS = 0;
+     fPolarisNextPresent = 0;
++    fPolarisNextVsyncUS=fPolarisNextStatusUS=0;
++    fPolarisMeterStartUS=fPolarisMeterFrames=fPolarisMeterCopyUS=0;
++    fPolarisMeterLastUS=fPolarisMeterGapUS=0;
++    fPolarisFPS10=fPolarisCopyMeanUS=fPolarisGapUS=fPolarisStatusPaintUS=0;
+ #endif
+ 	PE_current_console(&video);
+ 	fPhys = video.v_baseAddr;
+ 	fWidth = (uint32_t)video.v_width;
+ 	fHeight = (uint32_t)video.v_height;
+ 	fRowBytes = (uint32_t)video.v_rowBytes;
+ 	if (fPhys == 0 || fWidth == 0 || fHeight == 0 || fRowBytes < fWidth * 4) {
+ 		IOLog("SWEET FB: no boot framebuffer\n");
+ 		return false;
+ 	}
+ #if defined(POLARIS_RAM_ONLY)
+     /* Only the verified ABL framebuffer. No display controller MMIO. */
+     if (fPhys != 0x9d400000ULL || fWidth != 1080 || fHeight != 2160 ||
+         fRowBytes != 4320 || (video.v_depth & 0xff) != 32) {
+         IOLog("POLARIS DISPLAY: REFUSED unexpected framebuffer geometry\n");
+         return false;
+     }
+ #endif
+ 	int native = 0;
+ 	PE_parse_boot_argn("sweetfb_native", &native, sizeof(native));
+ 	fLogicalW = fWidth;
+ 	fLogicalH = fHeight;
+ 	if (!native && fWidth <= SWEET_FB_LOGICAL_W && fHeight <= SWEET_FB_LOGICAL_H) {
+ 		fLogicalW = SWEET_FB_LOGICAL_W;
+ 		fLogicalH = SWEET_FB_LOGICAL_H;
+ 	}
+ #if defined(POLARIS_RAM_ONLY)
+     if (native) {
+         IOLog("POLARIS DISPLAY: REFUSED native canvas; use the fitted iPhone canvas\n");
+         return false;
+     }
+     struct polaris_fb_view view;
+     if (!polaris_fb_fit(fWidth, fHeight, fLogicalW, fLogicalH, &view)) { return false; }
+     IOLog("POLARIS DISPLAY: CPU fit %ux%u -> %ux%u at %u,%u on %ux%u\n",
+         fLogicalW, fLogicalH, view.width, view.height, view.x, view.y, fWidth, fHeight);
+ #endif
+ 	fOffX = (int32_t)(fLogicalW - fWidth) / 2;
+ 	fOffY = (int32_t)(fLogicalH - fHeight) / 2;
+ 	fLock = IOLockAlloc();
+ 	fClients = OSArray::withCapacity(4);
+ 	fSurface = sweet_surface_create_physical(fPhys, fWidth, fHeight, fRowBytes, SWEET_FB_FORMAT_BGRA);
+ 	fPixels = fSurface != NULL ? fSurface->kernelAddress() : 0;
+ 	fWorkLoop = IOWorkLoop::workLoop();
+ 	if (fLock == NULL || fClients == NULL || fPixels == 0 || fWorkLoop == NULL) {
+ 		IOLog("SWEET FB: setup failed\n");
+ 		OSSafeReleaseNULL(fSurface);    /* stays published: also held by the table */
+ 		OSSafeReleaseNULL(fWorkLoop);
+ 		return false;
+ 	}
+ 	fVsync = IOTimerEventSource::timerEventSource(this, &AppleCLCD::vsyncFired);
+ 	if (fVsync == NULL || fWorkLoop->addEventSource(fVsync) != kIOReturnSuccess) {
+ 		IOLog("SWEET FB: no vsync timer\n");
+ 		return false;
+ 	}
+ 	uint32_t hz = 10;
+ 	PE_parse_boot_argn("sweetfb_hz", &hz, sizeof(hz));
+ #if defined(POLARIS_RAM_ONLY)
+     if (!hz) hz = 10;
+     if (hz > 60) hz = 60;
+     fPolarisFrameHz = hz;
+ #endif
+ 	fFlushTicks = (hz == 0 || hz >= 60) ? 1 : 60 / hz;
+ 	fVsync->setTimeoutUS(SWEET_FB_VSYNC_US);
+ 
+ #if defined(POLARIS_RAM_ONLY)
+     unsigned debug = 0;
+     PE_parse_boot_argn("polarisdebug", &debug, sizeof(debug));
+     fDebugStatus = debug == 1;
+     this->retain();
+     __atomic_store_n(&polaris_debug_fb, this, __ATOMIC_RELEASE);
+ #endif
+ 	setProperty(kIOUserClientClassKey, "IOMobileFramebufferUserClient");
+ 	setProperty("external", false);
+ 	setProperty("DisplayPipePlaneBaseAlignment", 64ULL, 32);
+ 	registerService();
+ 	IOLog("SWEET FB: AppleCLCD %ux%u stride %u at 0x%llx, default surface %u, presented as %ux%u\n",
+ 	    fWidth, fHeight, fRowBytes, fPhys, fSurface->id, fLogicalW, fLogicalH);
+ 	return true;
+ }
+ 
+ void
+ AppleCLCD::vsyncFired(OSObject *owner, IOTimerEventSource *sender)
+ {
+ 	AppleCLCD *fb = (AppleCLCD *)owner;
+ 	uint64_t now = mach_absolute_time();
++#if defined(POLARIS_RAM_ONLY)
++    bool gpuActive=polaris_gpu_desktop_active();
++    uint64_t nowNS=0;absolutetime_to_nanoseconds(now,&nowNS);
++    uint64_t nowUS=nowNS/1000;
++    bool notifyDue=!gpuActive || !fb->fPolarisNextVsyncUS || nowUS>=fb->fPolarisNextVsyncUS;
++    if(gpuActive && notifyDue)fb->fPolarisNextVsyncUS=polaris_fb_next_vsync_us(nowUS,fb->fPolarisNextVsyncUS);
++    if(!gpuActive)fb->fPolarisNextVsyncUS=0;
++    uint64_t count=notifyDue?++fb->fVsyncCount:fb->fVsyncCount;
++#else
+ 	uint64_t count = ++fb->fVsyncCount;
++#endif
+ 	uint64_t values[6] = {
+ 		(uint32_t)count, (uint32_t)(count >> 32),
+ 		(uint32_t)now, (uint32_t)(now >> 32),
+ 		0, 0,
+ 	};
+ 
+ 	IOLockLock(fb->fLock);
++#if defined(POLARIS_RAM_ONLY)
++    if(notifyDue)
++#endif
+ 	for (unsigned int i = 0; i < fb->fClients->getCount(); i++) {
+ 		IOMobileFramebufferUserClient *client =
+ 		    (IOMobileFramebufferUserClient *)fb->fClients->getObject(i);
+ 		client->notify(SWEET_FB_NOTIFY_VSYNC, values, 6);
+ 	}
+ 	if (fb->fPowerOff) {
+ 		/* Fade out: halve every channel each vsync, then black, then idle. */
+ 		uint32_t step = fb->fFadeStep;
+ 		if (step <= 6) {
+ 			fb->fFadeStep = step + 1;
+ 		}
+ 		IOLockUnlock(fb->fLock);
+ 		if (step <= 6) {
+ 			for (uint32_t y = 0; y < fb->fHeight; y++) {
+ 				volatile uint32_t *row = (volatile uint32_t *)(fb->fPixels + (uint64_t)y * fb->fRowBytes);
+ 				for (uint32_t x = 0; x < fb->fWidth; x++) {
+ 					row[x] = step < 6 ? (row[x] >> 1) & 0x7f7f7f7f : 0;
+ 				}
+ 			}
+ 		}
+ 		sender->setTimeoutUS(SWEET_FB_VSYNC_US);
+ 		return;
+ 	}
+ #if defined(POLARIS_RAM_ONLY)
+-    bool gpuActive=polaris_gpu_desktop_active();
+     bool flush = fb->fDirty && now >= fb->fPolarisNextPresent;
+ #else
+ 	bool flush = fb->fDirty && (count % fb->fFlushTicks) == 0;
+ #endif
+ 	uint8_t *rec = NULL;
+ 	if (flush) {
+ #if defined(POLARIS_RAM_ONLY)
+         rec = fb->fPolarisPresent;
+ #else
+ 		rec = (uint8_t *)IOMallocData(SWEET_FB_SWAP_REC_SIZE);
+ #endif
+ 		if (rec != NULL) {
+ 			memcpy(rec, fb->fPending, SWEET_FB_SWAP_REC_SIZE);
+ 			fb->fDirty = false;
+ 		}
+ 	}
+ 	IOLockUnlock(fb->fLock);
+ 	if (rec != NULL) {
+ #if defined(POLARIS_RAM_ONLY)
++        uint64_t pixelsBefore=__atomic_load_n(&polaris_fb_pixels,__ATOMIC_RELAXED);
+         uint64_t started = mach_absolute_time(), elapsed = 0;
+ #endif
+ 		fb->present(rec);
+ #if defined(POLARIS_RAM_ONLY)
+         absolutetime_to_nanoseconds(mach_absolute_time() - started, &elapsed);
+         uint32_t us = elapsed / 1000 > UINT32_MAX ? UINT32_MAX : (uint32_t)(elapsed / 1000);
+         __atomic_store_n(&fb->fPolarisLastUS, us, __ATOMIC_RELAXED);
+         if (us > __atomic_load_n(&fb->fPolarisMaxUS, __ATOMIC_RELAXED))
+             __atomic_store_n(&fb->fPolarisMaxUS, us, __ATOMIC_RELAXED);
+         __atomic_fetch_add(&fb->fPolarisTotalNS, elapsed, __ATOMIC_RELAXED);
+         uint64_t interval = 0;
+         nanoseconds_to_absolutetime((uint64_t)(gpuActive?polaris_fb_gpu_interval_us(fb->fPolarisFrameHz,us):polaris_fb_interval_us(fb->fPolarisFrameHz>20?20:fb->fPolarisFrameHz,us)) * 1000, &interval);
+         fb->fPolarisNextPresent = started + interval;
++        if(__atomic_load_n(&polaris_fb_pixels,__ATOMIC_RELAXED)!=pixelsBefore) {
++            uint64_t endedNS=0;absolutetime_to_nanoseconds(mach_absolute_time(),&endedNS);
++            uint64_t endedUS=endedNS/1000;
++            fb->fPolarisMeterFrames++;fb->fPolarisMeterCopyUS+=us;
++            if(fb->fPolarisMeterLastUS && endedUS-fb->fPolarisMeterLastUS>fb->fPolarisMeterGapUS)
++                fb->fPolarisMeterGapUS=endedUS-fb->fPolarisMeterLastUS;
++            fb->fPolarisMeterLastUS=endedUS;
++        }
+ #else
+ 		IOFreeData(rec, SWEET_FB_SWAP_REC_SIZE);
+ #endif
+ 	}
+ #if defined(POLARIS_RAM_ONLY)
+-    if (fb->fDebugStatus && fb->fConsolePaused && (count % 12) == 0)
+-        polaris_status_bar(fb); /*5Hz saved RAM; independent of faster frames */
++    uint64_t meterNS=0;absolutetime_to_nanoseconds(mach_absolute_time(),&meterNS);
++    uint64_t meterUS=meterNS/1000;
++    if(!fb->fPolarisMeterStartUS)fb->fPolarisMeterStartUS=nowUS;
++    uint64_t span=meterUS-fb->fPolarisMeterStartUS;
++    if(span>=1000000) {
++        fb->fPolarisFPS10=(uint32_t)(fb->fPolarisMeterFrames*10000000/span);
++        fb->fPolarisCopyMeanUS=fb->fPolarisMeterFrames?
++            (uint32_t)(fb->fPolarisMeterCopyUS/fb->fPolarisMeterFrames):0;
++        fb->fPolarisGapUS=(uint32_t)(fb->fPolarisMeterGapUS>UINT32_MAX?UINT32_MAX:fb->fPolarisMeterGapUS);
++        fb->fPolarisMeterStartUS=meterUS;fb->fPolarisMeterFrames=fb->fPolarisMeterCopyUS=0;
++        fb->fPolarisMeterLastUS=fb->fPolarisMeterGapUS=0;
++    }
++    if (fb->fDebugStatus && fb->fConsolePaused && meterUS>=fb->fPolarisNextStatusUS) {
++        uint64_t statusStarted=mach_absolute_time(),statusNS=0;
++        polaris_status_bar(fb);
++        absolutetime_to_nanoseconds(mach_absolute_time()-statusStarted,&statusNS);
++        fb->fPolarisStatusPaintUS=(uint32_t)(statusNS/1000>UINT32_MAX?UINT32_MAX:statusNS/1000);
++        fb->fPolarisNextStatusUS=meterUS+200000; /* actual time, no extra-wake repaint */
++    }
+ #endif
+ #if defined(POLARIS_RAM_ONLY)
+     if(gpuActive) {
+-        uint64_t elapsed=0;absolutetime_to_nanoseconds(mach_absolute_time()-now,&elapsed);
+-        uint32_t us=elapsed/1000>UINT32_MAX?UINT32_MAX:(uint32_t)(elapsed/1000);
+-        sender->setTimeoutUS(polaris_fb_gpu_tick_us(us));
++        uint64_t endedNS=0,presentNS=0;
++        absolutetime_to_nanoseconds(mach_absolute_time(),&endedNS);
++        absolutetime_to_nanoseconds(fb->fPolarisNextPresent,&presentNS);
++        IOLockLock(fb->fLock);bool dirty=fb->fDirty;IOLockUnlock(fb->fLock);
++        sender->setTimeoutUS(polaris_fb_deadline_delay_us(endedNS/1000,
++            fb->fPolarisNextVsyncUS,presentNS/1000,dirty));
+     }else sender->setTimeoutUS(SWEET_FB_VSYNC_US);
+ #else
+     sender->setTimeoutUS(SWEET_FB_VSYNC_US);
+ #endif
+ }
+ 
+ void
+ AppleCLCD::addClient(IOMobileFramebufferUserClient *client)
+ {
+ 	IOLockLock(fLock);
+ 	fClients->setObject(client);
+ 	IOLockUnlock(fLock);
+ }
+ 
+ void
+ AppleCLCD::removeClient(IOMobileFramebufferUserClient *client)
+ {
+ 	IOLockLock(fLock);
+ 	unsigned int i = fClients->getNextIndexOfObject(client, 0);
+ 	if (i != (unsigned int)-1) {
+ 		fClients->removeObject(i);
+ 	}
+ 	IOLockUnlock(fLock);
+ }
+ 
+ static uint32_t
+ get32(const uint8_t *p, uint32_t off)
+ {
+ 	uint32_t v;
+ 	memcpy(&v, p + off, 4);
+ 	return v;
+ }
+ 
+ static uint32_t sweet_fb_swaps_logged;
+ static uint64_t sweet_fb_swap_count;
+ #if defined(POLARIS_RAM_ONLY)
+-static uint64_t polaris_fb_calls, polaris_fb_swaps, polaris_fb_presents, polaris_fb_pixels;
+ extern "C" void polaris_display_report(void);
+ extern "C" void
+ polaris_display_report(void)
+ {
+     IOLog("FB calls=%llx swaps=%llu present=%llu pixels=%llu\n",
+         __atomic_load_n(&polaris_fb_calls, __ATOMIC_RELAXED),
+         __atomic_load_n(&polaris_fb_swaps, __ATOMIC_RELAXED),
+         __atomic_load_n(&polaris_fb_presents, __ATOMIC_RELAXED),
+         __atomic_load_n(&polaris_fb_pixels, __ATOMIC_RELAXED));
+     AppleCLCD *fb = __atomic_load_n(&polaris_debug_fb, __ATOMIC_ACQUIRE);
+     if (fb) IOLog("D FB: copy_last_us=%u copy_max_us=%u copy_total_ns=%llu\n",
+         __atomic_load_n(&fb->fPolarisLastUS, __ATOMIC_RELAXED),
+         __atomic_load_n(&fb->fPolarisMaxUS, __ATOMIC_RELAXED),
+         __atomic_load_n(&fb->fPolarisTotalNS, __ATOMIC_RELAXED));
+ }
+ #endif
+ 
+ 
+ /* Copy each enabled layer's surface into the panel memory (no scaling). */
+ /*
+  * A swap only records the frame: copying 10 MB into the panel on every
+  * swap (backboardd presents at 60 Hz) took the whole CPU. The vsync timer
+  * shows the latest frame every fFlushTicks ticks (boot-arg sweetfb_hz,
+  * default 10 Hz).
+  */
+ void
+ AppleCLCD::swap(const uint8_t *rec)
+ {
+ #if defined(POLARIS_RAM_ONLY)
+     __atomic_fetch_add(&polaris_fb_swaps, 1, __ATOMIC_RELAXED);
+ #endif
+ 	IOLockLock(fLock);
+ 	memcpy(fPending, rec, SWEET_FB_SWAP_REC_SIZE);
+ 	fDirty = true;
+ 	IOLockUnlock(fLock);
+ 	if ((++sweet_fb_swap_count % 1000) == 0) {
+ 		IOLog("SWEET FB: %llu swaps\n", sweet_fb_swap_count);
+ 	}
+ }
+ 
+ void
+ AppleCLCD::present(const uint8_t *rec)
+ {
+ #if defined(POLARIS_RAM_ONLY)
+     __atomic_fetch_add(&polaris_fb_presents, 1, __ATOMIC_RELAXED);
+ #endif
+ 	uint32_t mask = get32(rec, 0x104);
+ 
+ 
+ #if !defined(POLARIS_RAM_ONLY)
+ 	if (!fConsolePaused) {
+ 		int quiet = 0;
+ 		fConsolePaused = true;
+ 		if (PE_parse_boot_argn("sweetfb_noconsole", &quiet, sizeof(quiet)) && quiet != 0) {
+ 			/* Not PE_initialize_console(kPEDisableScreen): its console switch
+ 			 * writes the read-only-late cons_ops_index and panics. */
+ 			sweet_console_muted = 1;
+ 		}
+ 	}
+ 
+ #endif
+ 	for (uint32_t layer = 0; layer < SWEET_FB_LAYERS; layer++) {
+ 		uint32_t id = get32(rec, 0x54 + 4 * layer);
+ 		const uint8_t *a = rec + 0x64 + 16 * layer;
+ 		const uint8_t *b = rec + 0xc4 + 16 * layer;
+ 		int32_t sx = (int32_t)get32(a, 0), sy = (int32_t)get32(a, 4);
+ 		int32_t dx = (int32_t)get32(b, 0), dy = (int32_t)get32(b, 4);
+ 		int32_t w = (int32_t)get32(b, 8), h = (int32_t)get32(b, 12);
+ 
+ 		if (!(mask & (1u << layer)) || id == 0) {
+--- a/iokit/Kernel/arm/polaris-gl-status.h
++++ b/iokit/Kernel/arm/polaris-gl-status.h
+@@ -1,56 +1,57 @@
+ /* Fixed diagnostic ABI shared by the verified window server and kernel.
+  * Reporting never establishes GPU completion or permits another writer. */
+ #ifndef POLARIS_GL_STATUS_H
+ #define POLARIS_GL_STATUS_H
+ #include <stdint.h>
++#include "polaris-performance.h"
+ #define PGPU_EAGL_METHOD_COUNT 8u
+ #define PGPU_EAGL_METHOD_MASK 0xffu
+ #define PGPU_ACCEPTANCE_TIMEOUT_MS 180000u
+ /* Diagnostic-only snapshot from the verified desktop, selector0x7a. */
+ struct pgpu_render_notice {
+     uint32_t frames,errors,shaders,images,missing,kind,arg,slot;
+ };
+ /* Diagnostic-only AMFI5c. Actor1 is the shader test, actor3 the activated
+  * wrapper; neither role gains dyld flags or another GPU writer from this. */
+ enum {PGPU_TEST_BEGIN=1,PGPU_TEST_EXIT,PGPU_TEST_SIGNAL,PGPU_TEST_TIMEOUT,
+       PGPU_TEST_SPAWN_ERROR,PGPU_TEST_WAIT_ERROR,PGPU_TEST_STEP};
+ struct pgpu_test_notice {uint32_t event,value,elapsed_ms,reserved;};
+ static inline int pgpu_test_notice_valid(unsigned actor,const struct pgpu_test_notice *p)
+ {
+     if(!p || p->reserved || p->elapsed_ms>600000u)return 0;
+     if(actor==1)return p->event==PGPU_TEST_STEP && p->value && p->value<=63;
+     if(actor!=3 || p->event<PGPU_TEST_BEGIN || p->event>PGPU_TEST_WAIT_ERROR)return 0;
+     if(p->event==PGPU_TEST_BEGIN)return !p->value && !p->elapsed_ms;
+     if(p->event==PGPU_TEST_SIGNAL)return p->value && p->value<64;
+     if(p->event==PGPU_TEST_TIMEOUT)return p->value==9 && p->elapsed_ms>=PGPU_ACCEPTANCE_TIMEOUT_MS;
+     return p->value<=255;
+ }
+ struct pgpu_crash {
+     uint32_t signal,code;
+     uint64_t pc,lr,address;
+     uint32_t pc_image,lr_image;
+ };
+ /* image0 raw,1 cache preferredVA,2 reporting image (injector/test),3 bridge,4 Mesa offset. */
+ struct pgpu_image {uint64_t base,bytes;uint32_t kind;};
+ static inline int pgpu_desktop_allowed(uint32_t kind,uint32_t attempts)
+ {return kind!=2 || attempts==0;}
+ static inline uint64_t pgpu_pc(uint64_t pc,const struct pgpu_image *images,unsigned count,uint32_t *kind)
+ {
+     *kind=0;
+     for(unsigned i=0;i<count;i++)if(images[i].base && pc>=images[i].base && pc-images[i].base<images[i].bytes) {
+         *kind=images[i].kind;
+         return pc-images[i].base+(*kind==1?UINT64_C(0x180000000):0);
+     }
+     return pc;
+ }
+ static inline int pgpu_crash_valid(const struct pgpu_crash *p)
+ {
+     return p && (p->signal==4 || p->signal==5 || p->signal==6 || p->signal==10 || p->signal==11) &&
+         p->pc && p->pc_image<=4 && p->lr_image<=4;
+ }
+ #ifdef __cplusplus
+ static_assert(sizeof(struct pgpu_crash)==40,"crash ABI");
+ #else
+ _Static_assert(sizeof(struct pgpu_crash)==40,"crash ABI");
+ #endif
+ #endif
+--- /dev/null
++++ b/iokit/Kernel/arm/polaris-performance.h
+@@ -0,0 +1,44 @@
++/* Diagnostic wall times, not hardware GPU utilisation. Never admission. */
++#ifndef POLARIS_PERFORMANCE_H
++#define POLARIS_PERFORMANCE_H
++#include <stdint.h>
++struct pgpu_perf_notice {
++    uint32_t frames,window_us,frame_us,wait_us,readback_us,upload_us,hash_us;
++    uint32_t cpu_busy,cpus,reserved;
++};
++struct pgpu_perf_window {
++    uint64_t began,frames,frame_us,wait_us,readback_us,upload_us,hash_us;
++};
++static inline uint32_t pgpu_perf_u32(uint64_t n)
++{return n>UINT32_MAX?UINT32_MAX:(uint32_t)n;}
++static inline uint32_t pgpu_perf_cpu(const uint32_t before[4],const uint32_t after[4])
++{
++    uint64_t total=0,idle=(uint32_t)(after[2]-before[2]);
++    for(unsigned i=0;i<4;i++)total+=(uint32_t)(after[i]-before[i]);
++    return total?(uint32_t)((total-idle)*10000/total):10001;
++}
++static inline int pgpu_perf_add(struct pgpu_perf_window *w,uint64_t began,
++    uint64_t ended,uint64_t wait,uint64_t readback,uint64_t upload,uint64_t hash,
++    struct pgpu_perf_notice *out)
++{
++    if(ended<began)return 0;
++    if(!w->frames)w->began=began;
++    w->frames++;w->frame_us+=ended-began;w->wait_us+=wait;
++    w->readback_us+=readback;w->upload_us+=upload;w->hash_us+=hash;
++    uint64_t elapsed=ended-w->began;
++    if(elapsed<1000000)return 0;
++    out->frames=pgpu_perf_u32(w->frames);out->window_us=pgpu_perf_u32(elapsed);
++    out->frame_us=pgpu_perf_u32(w->frame_us/w->frames);
++    out->wait_us=pgpu_perf_u32(w->wait_us/w->frames);
++    out->readback_us=pgpu_perf_u32(w->readback_us/w->frames);
++    out->upload_us=pgpu_perf_u32(w->upload_us/w->frames);
++    out->hash_us=pgpu_perf_u32(w->hash_us/w->frames);
++    out->cpu_busy=10001;out->cpus=out->reserved=0;
++    *w=(struct pgpu_perf_window){0};return 1;
++}
++#ifdef __cplusplus
++static_assert(sizeof(struct pgpu_perf_notice)==40,"performance ABI");
++#else
++_Static_assert(sizeof(struct pgpu_perf_notice)==40,"performance ABI");
++#endif
++#endif
+--- a/iokit/Kernel/arm/polaris_display_cadence.h
++++ b/iokit/Kernel/arm/polaris_display_cadence.h
+@@ -1,32 +1,51 @@
+ /* CPU presentation interval: requested limit plus a measured copy budget.
+  * Elapsed wall time can include preemption, so one outlier is capped at
+  * a 200ms interval; it must not freeze the UI for seconds after a pause.
+  */
+ #ifndef POLARIS_DISPLAY_CADENCE_H
+ #define POLARIS_DISPLAY_CADENCE_H
+ #include <stdint.h>
+ static inline uint32_t polaris_fb_interval_us(uint32_t hz, uint32_t elapsed_us)
+ {
+     if (!hz) hz = 10;
+     if (hz > 30) hz = 30;
+     uint32_t base = (1000000u + hz - 1) / hz;
+     uint64_t budget = (uint64_t)elapsed_us * 4;
+     if (budget > 200000) budget = 200000;
+     return budget > base ? (uint32_t)budget : base;
+ }
+ /* Only after completed desktop GPU work. Keep at least half the measured
+  * copy interval for other CPU work; one scheduling outlier cannot stall UI. */
+ static inline uint32_t polaris_fb_gpu_interval_us(uint32_t hz,uint32_t elapsed_us)
+ {
+     if(!hz)hz=10;
+     if(hz>60)hz=60;
+     uint32_t base=(1000000u+hz-1)/hz;
+     uint64_t budget=(uint64_t)elapsed_us*2;
+     if(budget>200000)budget=200000;
+     return budget>base?(uint32_t)budget:base;
+ }
+ /* The old timer added a complete tick AFTER spending time copying. Account
+  * for that work, and always yield at least1ms instead of a catch-up spin. */
+ static inline uint32_t polaris_fb_gpu_tick_us(uint32_t elapsed_us)
+ {return elapsed_us>=15667?1000:16667-elapsed_us;}
++/* Notifications and copying have different deadlines. A copy budget just
++ * over one tick must not wait an entire second tick. An early copy wake
++ * never sends an extra VSYNC. Late callbacks skip missed notifications. */
++static inline uint64_t polaris_fb_next_vsync_us(uint64_t now,uint64_t deadline)
++{
++    if(!deadline || now<deadline)return deadline?deadline:now+16667;
++    return deadline+((now-deadline)/16667+1)*16667;
++}
++static inline uint32_t polaris_fb_deadline_delay_us(uint64_t now,uint64_t vsync,
++    uint64_t present,int dirty)
++{
++    uint64_t next=vsync;
++    /* A renderer awakened by this VSYNC may publish after we unlock. Keep
++     * a future copy wake even if it has not marked the new frame dirty yet.
++     * A past clean deadline must not create an idle1ms polling loop. */
++    if(present && (dirty || present>now) && present<next)next=present;
++    if(next<=now || next-now<1000)return 1000;
++    return next-now>16667?16667:(uint32_t)(next-now);
++}
+ #endif

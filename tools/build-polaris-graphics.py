@@ -105,7 +105,7 @@ def build(args):
                         SOURCES / 'eagl.c', SOURCES / 'gl_osmesa.c', SOURCES / 'mkeagl.py',
                         SOURCES / 'eagl_slots_20H392.txt', *[SOURCES / n for n in
                             ('polaris-inject.c', 'polaris-bbd-wrapper.c', 'polaris-gl-test.c', 'polaris-init.c')],
-                        ROOT / 'tools/polaris-gl-status.h']},
+                        ROOT / 'tools/polaris-gl-status.h',ROOT / 'tools/polaris-performance.h']},
                     mesa_input_sha256=sha(args.mesa_library), gl_xml_sha256=sha(args.gl_xml),
                     builder_sha256=sha(Path(__file__).resolve()),
                     hardware_test_passed=False, desktop_GPU_proven=False, writes_phone=False)

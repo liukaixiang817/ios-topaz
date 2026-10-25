@@ -303,6 +303,8 @@ struct eagl {
 	/* a frame's worth */
 	unsigned calls, draws, triangles, uploads, clears, last_draws;
 	uint64_t upload_bytes, began, attaching, flushing;
+    uint64_t hashing,uploading;
+    struct pgpu_perf_window performance;
 	/* everything so far */
 	unsigned frames, shaders, programs, errors, shared, refused;
 	uint64_t all_calls, all_draws, all_triangles, readback_us, wait_us, attach_us, flush_us, frame_us;
@@ -377,6 +379,9 @@ static void census_report(void);
 static void clear_now(struct eagl *e);
 static struct pgpu_render_notice polaris_render;
 static void (*polaris_render_observer)(const struct pgpu_render_notice *);
+static void (*polaris_performance_observer)(const struct pgpu_perf_notice *);
+void polaris_eagl_performance_observe(void (*note)(const struct pgpu_perf_notice *))
+{polaris_performance_observer=note;}
 void polaris_eagl_render_observe(void (*note)(const struct pgpu_render_notice *))
 {polaris_render_observer=note;if(note)note(&polaris_render);}
 static void polaris_render_fault(unsigned kind,unsigned arg,unsigned slot)
@@ -707,11 +712,13 @@ surface_changed(struct eagl *e, struct image *image)
 		return false;
 	}
 	image->looked = e->frames + 1;
+    uint64_t hash_began=now_us();
 	for (size_t at = 0; at + 8 <= size; at += 8) {
 		memcpy(&word, base + at, 8);
 		sum = (sum ^ word) * 0x9e3779b97f4a7c15ull;
 		sum ^= sum >> 29;
 	}
+    e->hashing+=now_us()-hash_began;
 	if (sum == image->sum) {
 		image->quiet++;
 		return false;
@@ -725,6 +732,7 @@ surface_changed(struct eagl *e, struct image *image)
 static void
 surface_to_texture(struct eagl *e, struct image *image)
 {
+    uint64_t upload_began=now_us();
 	IOSurfaceRef surface = image->surface;
 	bool planar = IOSurfaceGetPlaneCount(surface) > 0;
 	size_t row = planar ? IOSurfaceGetBytesPerRowOfPlane(surface, image->plane) : IOSurfaceGetBytesPerRow(surface);
@@ -827,6 +835,7 @@ surface_to_texture(struct eagl *e, struct image *image)
 	}
 	IOSurfaceUnlock(surface, kIOSurfaceLockReadOnly, NULL);
 	free(flipped);
+    e->uploading+=now_us()-upload_began;
 	image->seed = IOSurfaceGetSeed(surface);
 	e->uploads++;
 	e->upload_bytes += row * (size_t)image->height;
@@ -1082,6 +1091,11 @@ frame_end(struct eagl *e, bool finished)
 	e->attach_us += e->attaching;
 	e->flush_us += e->flushing;
 	e->frame_us += after - e->began;
+    if(polaris_performance_observer) {
+        struct pgpu_perf_notice notice;
+        if(pgpu_perf_add(&e->performance,e->began,after,waited-before,after-waited,
+            e->uploading,e->hashing,&notice))polaris_performance_observer(&notice);
+    }
 	{
 		uint64_t cpu;
 		__asm__ volatile ("mrs %0, TPIDR_EL0" : "=r"(cpu));     /* the topaz kernel keeps the CPU number there */
@@ -1114,6 +1128,7 @@ frame_end(struct eagl *e, bool finished)
 	e->last_draws = e->draws;
 	e->calls = e->draws = e->triangles = e->uploads = e->clears = 0;
 	e->upload_bytes = e->attaching = e->flushing = 0;
+    e->hashing=e->uploading=0;
 }
 
 #ifndef GL_BLEND
