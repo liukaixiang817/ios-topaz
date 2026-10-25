@@ -34,6 +34,22 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT ACTION —0042 human reports persistent boot stall; exact GPU operation unproven
+
+- Human photosA9FA9469 and711EBCEE plus “过了几分钟依旧如此” show unchanged
+  boot log, noGUIconfirmation. Root mounted/RAMCOW/originalfirmware verified,
+  runtime_boot entry printed; Skywalk selftests PASS and partialifnet_attach
+  wait lastvisible. Noexplicitpanic; nofinalGPUreport/CPfence/pixelproof.
+  Recordhardware-0042-stall.json. This is NOTnormalbootcomplete/GPU success.
+- Source confirms polaris_a630_init runs synchronously in bsd_init after
+  bsd_utaskbootstrap and beforeUSBinit/pal_kernel_announce. New hardware call
+  not returning can block all these and all final GPU diagnostic publication.
+  Lastnetworklog is NOTproofnetworkcausedit. CB0/post-HFI/PAS/core/cleanup are
+  hypotheses; currentimage hasnoentry/returntrace to identifyexactoperation.
+- Investigating originalIOMMU/GPU startup order and boot failurecontainment.
+  Do not send another image merelyonassumednormaldelay. USBhostobserverremains
+  PAUSED. No0043source/build/image/deviceactionyet;0042 GUIunconfirmed.
+
 ### CURRENT ACTION —0042 temporary boot SENT; actual GPU command/image result pending
 
 - Fresh read-only preflight4572 EXIT0,03:28:52.784917UTC: complete16GiB hash
