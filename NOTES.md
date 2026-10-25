@@ -34,6 +34,30 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0057 corrected-codec RAM trial sent; await fresh physical probe result
+
+- Source codec fix committed7c568f7; inventory implementation8ca87e2.
+  Human confirmed FASTBOOT after the previous PrePi-only photo. Fresh runner
+  found the expected phone already in FASTBOOT, verified productpolaris,
+  frozen source/image/native-codec proof and both genericEFI test records.
+- Temporary boot command EXIT0/OKAY; sent_utc 2026-10-25T23:54:54.734310+00:00.
+  Image85c2ddbb6b3331ae5cff514f887c5d60c90ba087ef2b1a487c39cefa8e8bd197,
+  5,920,768bytes, original-uefi-probe-codec-fixed/polaris-original-uefi-probe.img.
+  Exact sanitized log RAM-trial-codec-fixed-fastboot-sanitized.log and result
+  RAM-trial-codec-fixed.json under research/polaris/uefi-integration-0057.
+  No flash command, no OS startup requested, no continuous USB observer.
+- This proves the host temporary-boot command succeeded, NOT that the driver
+  ran or the original firmware completed boot. Await fresh physical output
+  for THIS corrected trial: POLARIS EFI PROBE/HOLD, CURRENT_EL, upper retained
+  pages/ranges, QCOM_USB_STATUS. Async pending asks these. Do not reuse the
+  previous version-banner photo as the result of this corrected boot.
+- No new XNU/GUI test, persistent installation, menu entry, or firmware USB
+  transport exists yet. Keep USB observation PAUSED. After probe result,
+  resolve actual EFI RAM/EL/cache/16KiB handoff before iOS integration. Later
+  XNU boot still needs fresh root extent/hash/outer-metadata review after the
+  intervening originalAndroid normalboot. Per-step persistent-write approval
+  and successful complete iOS RAM boot remain required before installation.
+
 ### 0057 FIRST RAM trial reached PrePi only; codec fix ready, await FASTBOOT
 
 - Implementation commit8ca87e2 adds pre-OS ReadyToBoot DXE inventory driver,
