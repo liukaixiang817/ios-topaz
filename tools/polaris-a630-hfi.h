@@ -2,8 +2,8 @@
  * MiCode polaris driver at c7cb50c18f812629b9620b2b8fa684bc40d82080:
  * drivers/gpu/msm/kgsl_hfi.{c,h}. No MMIO, power control or GPU submission.
  *
- * Bring-up component: not yet linked into the polaris kernel. The hardware
- * adapter must serialize host producers, perform DMA cache maintenance and
+ * The gated polaris hardware adapter must serialize host producers, use
+ * compatible noncacheable shared pages (or safe DMA cache maintenance), and
  * ring the GMU doorbell AFTER publishing a command. CPU release/acquire
  * alone does not make a noncoherent device see this memory.
  */
