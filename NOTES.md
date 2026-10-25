@@ -34,6 +34,28 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT ACTION —0041 temporary boot SENT; actual full HFI/RSCC result pending
+
+- FreshROpreflight11744 EXIT0, **02:43:32.286322UTC**: complete16GiB689a8cd1,
+  exact182maps/GPT/header32311c08 unchanged,cleanouter/unmounted/RO1/31C. No
+  partitionwrites/journalreplay/repair. ExpectedFASTBOOT auto-found, no keysasked.
+- Direct boot-phone75775 EXIT0, Sending/BootingOKAY,total1.177s,
+  **2026-10-25T02:43:47.636836UTC**, exact0041image35ef8825/sourcea6ecbe7/
+  CI40154740584SUCCESS. GPUmode8attempts PERF/BW/TEST afterINIT/FW_VER andnative
+  slumber/idle/RSCCsleep. Noactual0041HWresultyet. NoSQE/ZAP/CP/3D/rendering.
+- **USB host observation remains PAUSED by latesthumaninstruction.** Direct
+  boot-phone used, notboot-and-watch. No0041observerprocess orsamplefile; host
+  processinventory verified, usb-observation-paused.json bound tothissent_utc.
+  DoNOTrestartimplicitly. NoUSBconnection/fullwindownegativeclaimfor0041.
+- Pendinguserquestion asks actualnewlockscreen/desktopconfirmation andGH/HR
+  text (lookunclearallowed). Currentlatesthuman“已完成启动” belongs0040, NOT0041.
+  ExpectedpositiveGH8/b NC2 C5 A5 V10070000; HRt7, thenoriginalslumber/RSCC
+  before/afterstates. NevercallGMU/HFIproof GPUaccelerateddesktop.
+- Afteractualresult continue prioritized nativeGPUCP/SQE/ZAP/fence/2D. Reviewed
+  next-native-CP-ZAP-plan.json and compilednativepacketcheck are sourceonly.
+  OriginalCP11wordinit requiresownedIFPCreglist; reference8wordnotblindcopied.
+  SMMUstrictCBARcleanup stillretainsresourcesonfailure; prior0040slumberfailed.
+
 ### CURRENT ACTION —0041 final image verified; expected FASTBOOT auto-found; RO preflight running
 
 - Public source a6ecbe7dcc624dd4e600c8f51e9e497c4bd18335, CI40154740584/
