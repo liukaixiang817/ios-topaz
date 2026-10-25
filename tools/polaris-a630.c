@@ -422,7 +422,7 @@ static bool a630_core_read(void *io,uint32_t word,uint32_t *v)
 {return a630_core_owned(io)&&word<0x10000&&a630_read_register(io,5,word*4,v);}
 static bool a630_core_write(void *io,uint32_t word,uint32_t v)
 {return a630_core_owned(io)&&word<0x10000&&a630_write_register(io,5,word*4,v);}
-static int32_t a630_scm_call(void *opaque,uint32_t fn,uint32_t info,
+static int32_t __attribute__((noinline)) a630_scm_call(void *opaque,uint32_t fn,uint32_t info,
     uint64_t a,uint64_t b,uint64_t c,uint64_t *answer)
 {
     if(!a630_core_owned(opaque))return -1;
@@ -432,7 +432,7 @@ static int32_t a630_scm_call(void *opaque,uint32_t fn,uint32_t info,
         register uint64_t x5 __asm__("x5")=0,x6 __asm__("x6")=0;
         unsigned resumes=0;
         do{
-            __asm__ volatile("dsb sy; smc #0; dsb sy"
+            __asm__ volatile("dsb sy\n\tsmc #0\n\tdsb sy"
                 : "+r"(x0),"+r"(x1),"+r"(x2),"+r"(x3),"+r"(x4),"+r"(x5),"+r"(x6)
                 ::"x7","x8","x9","x10","x11","x12","x13","x14","x15","x16","x17","memory","cc");
         }while(x0==1&&++resumes<1024);

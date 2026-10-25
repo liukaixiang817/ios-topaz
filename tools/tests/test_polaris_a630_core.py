@@ -10,6 +10,23 @@ def run(source):
   subprocess.run(['/usr/bin/clang','-std=c11','-O1','-g','-Wall','-Wextra','-Werror','-fsanitize=address,undefined','-I',str(ROOT/'tools'),str(p/'test.c'),'-o',str(p/'test')],check=True)
   subprocess.run([str(p/'test')],check=True)
 class A630CoreTests(unittest.TestCase):
+ def test_actual_smc_adapter_emits_arm64_instruction_and_full_width_args(self):
+  import re
+  text=(ROOT/'tools/polaris-a630.c').read_text()
+  start=text.index('static int32_t __attribute__((noinline)) a630_scm_call(')
+  body=text[start:text.index('\n}\n',start)+3].replace('static int32_t __attribute__((noinline)) a630_scm_call','__attribute__((used,noinline)) static int32_t a630_scm_call',1)
+  prefix='#include <stdint.h>\n#include <stdbool.h>\nextern bool a630_core_owned(void *);\nextern void a630_delay_us(void *,uint32_t);\n'
+  with tempfile.TemporaryDirectory() as directory:
+   p=Path(directory);(p/'scm.c').write_text(prefix+body)
+   subprocess.run(['/usr/bin/clang','-target','arm64-apple-macos14.0','-std=c11','-O2','-c',str(p/'scm.c'),'-o',str(p/'scm.o')],check=True)
+   assembly=subprocess.check_output(['xcrun','llvm-objdump','--macho','--section=__TEXT,__text','--disassemble','--dis-symname','_a630_scm_call',str(p/'scm.o')],text=True)
+  lines=assembly.splitlines();positions=[i for i,l in enumerate(lines) if re.search(r'\bsmc\s+#0\b',l)]
+  self.assertTrue(positions,'SMC must exist in actual ARM64 object; Darwin semicolon is a comment separator')
+  for i in positions:
+   self.assertRegex(lines[i-1],r'\bdsb\s+sy\b')
+   self.assertRegex(lines[i+1],r'\bdsb\s+sy\b')
+  self.assertRegex(assembly,r'\bmov\s+x3,')
+  self.assertNotRegex(assembly,r'\bmov\s+w3,')
  def test_pm4_wire_headers_with_independent_parity(self):
   run(r'''
 #include "polaris-a630-core.h"
