@@ -18,7 +18,7 @@ class A630SMMUTests(unittest.TestCase):
 struct model {
  uint32_t r[16384], original[16384];
  unsigned operations, fail, calls, writes, clean, sync, waits, wide, implwrites;
- bool held, stuck, badack, halt_stuck, implbad;
+ bool held, stuck, badack, halt_stuck, implbad, forbidimpl, badactlr, drift;
 };
 static struct model m;
 static bool op(struct model *x) {x->operations++;return x->operations!=x->fail;}
@@ -41,7 +41,10 @@ static bool wr(void *ctx,uint32_t off,uint32_t v) {
  /* A failed callback may still have posted the write. */
  bool ok=op(x);
  bool impl=false;for(unsigned n=1;n<12;n++)if(off==a630_smmu_impl_offsets[n])impl=true;
+ if(x->forbidimpl)assert(!impl && off!=0x6000);
  if(impl)x->implwrites++;
+ if(off==0x9004&&x->badactlr)return ok;
+ if(off==0x9000&&(v&1)&&x->drift)x->r[0x6b68/4]^=1;
  /* The real0034 last implementation register did not accept the value.
   * Model hardware accepting these writes only after micro-MMU IDLE ACK. */
  if(impl && (!(x->r[0x6000/4]&4)||x->halt_stuck))return ok;
@@ -156,6 +159,53 @@ int main(void) {
  assert(a630_smmu_begin(true,true,&pt,&io,&m,&s)==A630_SMMU_OWNERSHIP&&!m.writes);
  reset();m.r[0x24/4]|=0x80000000;
  assert(a630_smmu_begin(true,true,&pt,&io,&m,&s)==A630_SMMU_LAYOUT&&!m.writes);
+
+ /* Owned-context handoff: opaque implementation6b68 deliberately remains
+  * the real0035 readback. Not a masked/waived profile-write ACK. */
+ reset();m.r[0x6000/4]=0x2378;m.forbidimpl=true;
+ memcpy(m.original,m.r,sizeof(m.r));
+ assert(a630_smmu_begin_handoff(true,true,&pt,&io,&m,&s)==A630_SMMU_READY);
+ unsigned handoff_ops=m.operations;
+ assert(s.preserved_impl&&s.impl_checks==3&&!s.impl_changed&&!s.halt_changed&&!m.implwrites);
+ assert(s.actlr_changed&&m.r[0x9004/4]==0x70000000);
+ assert(m.r[0x6b68/4]==0xa8000082&&m.r[0x800/4]==0x80000005);
+ assert(a630_smmu_end(&io,&m,&s)&&s.impl_checks==4);restored();
+ for(unsigned fail=1;fail<=handoff_ops;fail++) {
+  reset();m.r[0x6000/4]=0x2378;m.forbidimpl=true;
+  memcpy(m.original,m.r,sizeof(m.r));m.fail=fail;
+  assert(a630_smmu_begin_handoff(true,true,&pt,&io,&m,&s)==A630_SMMU_IO);
+  m.fail=0;assert(a630_smmu_end(&io,&m,&s));restored();
+ }
+ reset();m.r[0x6000/4]=0x2378;m.forbidimpl=true;
+ memcpy(m.original,m.r,sizeof(m.r));
+ assert(a630_smmu_begin_handoff(true,true,&pt,&io,&m,&s)==A630_SMMU_READY);
+ m.operations=0;assert(a630_smmu_end(&io,&m,&s));unsigned handoff_cleanup=m.operations;
+ for(unsigned fail=1;fail<=handoff_cleanup;fail++) {
+  reset();m.r[0x6000/4]=0x2378;m.forbidimpl=true;
+  memcpy(m.original,m.r,sizeof(m.r));
+  assert(a630_smmu_begin_handoff(true,true,&pt,&io,&m,&s)==A630_SMMU_READY);
+  m.operations=0;m.fail=fail;assert(!a630_smmu_end(&io,&m,&s));m.fail=0;
+  assert(a630_smmu_end(&io,&m,&s));restored();
+ }
+ reset();m.forbidimpl=true; /* Unknown control cannot be silently borrowed. */
+ assert(a630_smmu_begin_handoff(true,true,&pt,&io,&m,&s)==A630_SMMU_OWNERSHIP&&!m.writes);
+ reset();m.r[0x6000/4]=0x237c;m.forbidimpl=true;
+ assert(a630_smmu_begin_handoff(true,true,&pt,&io,&m,&s)==A630_SMMU_OWNERSHIP&&!m.writes);
+ reset();m.r[0x6000/4]=0x2378;m.forbidimpl=true;m.badactlr=true;
+ memcpy(m.original,m.r,sizeof(m.r));
+ assert(a630_smmu_begin_handoff(true,true,&pt,&io,&m,&s)==A630_SMMU_ACK&&s.failed_offset==0x9004);
+ m.badactlr=false;assert(a630_smmu_end(&io,&m,&s));restored();
+ reset();m.r[0x6000/4]=0x2378;m.forbidimpl=true;m.drift=true;
+ assert(a630_smmu_begin_handoff(true,true,&pt,&io,&m,&s)==A630_SMMU_ACK&&s.failed_offset==0x6b68);
+ m.drift=false;assert(!a630_smmu_end(&io,&m,&s)&&s.restore_error==A630_SMMU_ACK);
+ assert(!m.implwrites); /* Never fix another owner's opaque state. */
+ /* Foreign stream survives the handoff path including its opaque tuning. */
+ reset();m.r[0x6000/4]=0x2378;m.forbidimpl=true;m.r[0]=0x400;
+ m.r[0x800/4]=0x80000002;m.r[0xc00/4]=7;
+ memcpy(m.original,m.r,sizeof(m.r));
+ assert(a630_smmu_begin_handoff(true,true,&pt,&io,&m,&s)==A630_SMMU_READY);
+ assert(s.slot==1&&s.foreign&&!s.impl_changed&&!s.halt_changed);
+ assert(a630_smmu_end(&io,&m,&s));restored();
  free(pool);return 0;
 }
 '''

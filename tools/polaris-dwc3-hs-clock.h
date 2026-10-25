@@ -10,6 +10,8 @@
 #endif
 #include <stdbool.h>
 #define PDWC3_HS_GENERAL 8u
+#define PDWC3_HS_PIPE 0xc2c0u
+#define PDWC3_HS_PIPE_SUSPHY (1u<<17)
 #define PDWC3_HS_SELECT 9u
 #define PDWC3_HS_DISABLE (1u << 8)
 #define PDWC3_HS_MASK (PDWC3_HS_SELECT | PDWC3_HS_DISABLE)
@@ -18,6 +20,7 @@ enum pdwc3_hs_error { PDWC3_HS_OK, PDWC3_HS_ARGUMENT, PDWC3_HS_UNSAFE,
 struct pdwc3_hs_clock {
     uint32_t error,start_error,stage,before,live,after,attempted,changed,restored;
     uint32_t polls,writes,restore_error,restore_polls,busy_ep,busy_command;
+    uint32_t pipe_before,pipe_live,pipe_after,pipe_changed,pipe_polls,pipe_restore_polls;
 };
 static inline bool pdwc3_hs_io(const struct pdwc3_io *io)
 {return io&&io->read&&io->write&&io->wait_us;}
@@ -48,6 +51,23 @@ static inline bool pdwc3_hs_update(const struct pdwc3_io *qs,struct pdwc3_hs_clo
     }
     s->error=PDWC3_HS_ACK;return false;
 }
+/* Original core.c dwc3_phy_setup: >1.94a must assert PIPE.SUSPHY
+ * after core initialization. Native polaris3.30a has no dis_u3_susphy
+ * quirk. This is the digital core interface, no PHY reset or lane write. */
+static inline bool pdwc3_hs_pipe_update(const struct pdwc3_io *core,
+    struct pdwc3_hs_clock *s,uint32_t value,bool restoring)
+{
+    uint32_t v=core->read(core->ctx,PDWC3_HS_PIPE);
+    core->write(core->ctx,PDWC3_HS_PIPE,
+        (v&~PDWC3_HS_PIPE_SUSPHY)|(value&PDWC3_HS_PIPE_SUSPHY));
+    for(unsigned n=0;n<PDWC3_COMMAND_POLLS;n++){
+        if(restoring)s->pipe_restore_polls++;else s->pipe_polls++;
+        s->pipe_after=core->read(core->ctx,PDWC3_HS_PIPE);
+        if(!((s->pipe_after^value)&PDWC3_HS_PIPE_SUSPHY))return true;
+        core->wait_us(core->ctx,1);
+    }
+    s->error=PDWC3_HS_ACK;return false;
+}
 static inline enum pdwc3_hs_error polaris_dwc3_hs_clock_begin(
     const struct pdwc3_io *qs,const struct pdwc3_io *core,bool admitted,
     struct pdwc3_hs_clock *s)
@@ -69,9 +89,12 @@ static inline enum pdwc3_hs_error polaris_dwc3_hs_clock_begin(
         s->stage=3;
         if(!pdwc3_hs_update(qs,s,0,PDWC3_HS_DISABLE,false))goto done;
     }
-    s->stage=4;s->error=PDWC3_HS_OK;
+    s->stage=4;s->pipe_before=core->read(core->ctx,PDWC3_HS_PIPE);
+    s->pipe_after=s->pipe_before;s->pipe_changed=!(s->pipe_before&PDWC3_HS_PIPE_SUSPHY);
+    if(s->pipe_changed && !pdwc3_hs_pipe_update(core,s,PDWC3_HS_PIPE_SUSPHY,false))goto done;
+    s->stage=5;s->error=PDWC3_HS_OK;
 done:
-    s->live=s->after;s->start_error=s->error;return (enum pdwc3_hs_error)s->error;
+    s->pipe_live=s->pipe_after;s->live=s->after;s->start_error=s->error;return (enum pdwc3_hs_error)s->error;
 }
 static inline bool polaris_dwc3_hs_clock_restore(const struct pdwc3_io *qs,
     const struct pdwc3_io *core,struct pdwc3_hs_clock *s)
@@ -79,13 +102,14 @@ static inline bool polaris_dwc3_hs_clock_restore(const struct pdwc3_io *qs,
     if(!s)return false;
     s->restored=s->restore_polls=s->restore_error=0;
     if(!pdwc3_hs_io(qs)||!pdwc3_hs_io(core)){s->restore_error=PDWC3_HS_ARGUMENT;return false;}
-    if(!s->attempted||!s->changed){s->restored=1;return true;}
+    if(!s->attempted||(!s->changed&&!s->pipe_changed)){s->restored=1;return true;}
     /* A timed-out command may still own the PIPE clock. Retain the source;
      * never switch or gate it underneath that command, even while halted. */
     if(!pdwc3_hs_idle(core,s))goto fail;
-    if(!pdwc3_hs_update(qs,s,PDWC3_HS_DISABLE,PDWC3_HS_DISABLE,true)||
+    if(s->changed && (!pdwc3_hs_update(qs,s,PDWC3_HS_DISABLE,PDWC3_HS_DISABLE,true)||
        !pdwc3_hs_update(qs,s,s->before,PDWC3_HS_SELECT,true)||
-       !pdwc3_hs_update(qs,s,s->before,PDWC3_HS_DISABLE,true))goto fail;
+       !pdwc3_hs_update(qs,s,s->before,PDWC3_HS_DISABLE,true)))goto fail;
+    if(s->pipe_changed && !pdwc3_hs_pipe_update(core,s,s->pipe_before,true))goto fail;
     s->restored=1;s->error=s->start_error;return true;
 fail:
     s->restore_error=s->error;return false;
