@@ -34,6 +34,43 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT ACTION —0042 final image verified; FASTBOOT auto-found; read-only preflight running
+
+- CI40157657403/source147116f SUCCESS, all130 selected CPU1 standard-clock
+  checks FIRST PASS (45cache-high/44async-net/41no-mmio); no new guest failure
+  or retry. Local44 tests,4 actual-header ARM64 units,27 patches/35 files,
+  29 diagnostic rows and exact native A630/own-DT checks PASS.
+- Independent final-prepared-check.py PASS at03:27:12UTC. Kernel698bc51301b6,
+  payload4518f917f29e, temporary image74ec113542756624190e198b3762bb4625ecb3d47c0ad7f1e989004d343c1d92
+  (47493120bytes). Linked8SMCs/DSB/fullwidthx3 and high-PA cache fix verified.
+  No physical0042 CP/image result yet; desktop remains CPU.
+- FIRST automatic targeted FASTBOOT query03:27:18UTC found expected polaris.
+  No physical-key question asked. Fresh run-device-step.py preflight session4572
+  now temporarily boots known headless recovery and verifies full16GiB/root
+  mappings/GPT/header read-only; no partition writes or journal replay/repair.
+- On preflight PASS, directly send boot-phone (NOT boot-and-watch). USB host
+  observer remains PAUSED by human. Then request actual new GUI andGD/GZ/GC0/
+  GI/GF result; positive requires CP fence600dc0de plus all4096 GPU pixels.
+
+### CURRENT ACTION —0042 full kernel build succeeded; final guest/image gates running
+
+- Final public source147116fc73632e74ccf2df4336963e7a0c52f1bd, CI40157657403/
+  job121062376129 SUCCESS (5m18s). Exact downloaded kernel SHA256
+  698bc51301b618868a8f56c66cf5286c3829d96d53124a8bf770240cd429a127,
+  build identity/CRC/SHA verified. Wrapper59749: cache-high45 and async-net44
+  PASS first attempt; no-mmio41 standard-clock case running. No0042phoneaction.
+- Linked secure callback independently proves8 real SMC instructions, DSB before
+  and after each, full-width x3 metadata argument. Mach-O default disassembler
+  displayed the valid opcode as .long0xd4000003; explicit Cortex-A55 decoding
+  resolves it. Only final checker adds --mcpu=cortex-a55; no assertion/test/source
+  changes. Original checker/freeze and amendment retained in continuation-0042/
+  post-build-disassembler-review. linked-scm-early-check.json PASS; independent
+  final-prepared-check.py still required after packaging.
+- Next final checker, FIRST targeted read-only FASTBOOT query, fresh read-only
+  full-root preflight and direct temporary boot if polaris already present.
+  USB host observer stays PAUSED. Actual CP fence/image proof still pending;
+  application/desktop rendering remains CPU. No additional boot for logs alone.
+
 ### CURRENT ACTION —0042 FINAL corrected source147116f / CI40157657403 running
 
 - Local e2f61da; publicsource147116fc73632e74ccf2df4336963e7a0c52f1bd
