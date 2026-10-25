@@ -28,7 +28,27 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT ACTION —0036 temporary boot SENT; detached USB observer83734 ACTIVE
+### CURRENT ACTION —0036 GUI confirmed; SMMU setup passed, GMU profile/cleanup blocked
+
+- Actualhuman “已进入系统”, photo668E274A. **GS8/7 READY**,SIh1/n3,
+  ownCB1ACTLR0→70000000, implementationstatepreserved. NoFWexecutionyet:
+  **GE3/2ACK** atbank2:23034, expected0/read82204514, containmentstopped1/0.
+  **SMMUcleanupACK6atc00**, resourcesretained(P8/K10). Bus/TCMstillproven.
+  Snapshotrawrows/photoSHAprivate0036/hardware-0036-observation.json.
+- USBPIPErequestproved03080002→030a0002(UX), RAMandmuxrequestsretainedunder
+  busyEP0cmd2=402/1000. StillnoECM. **Observer83734 STOPPED_BY_HUMAN**,
+  38samples/376.861s, firstgap0.096949s,lastsample00:26:06.377412UTC,
+  confirmation00:26:09.626598UTC,finished00:26:10.476450UTC/processabsent.
+  NDJSONmatchesallrows,zeroinspectionerrors. Newdetachedlifetimeworked
+  acrossfinalturn. No hostnetworkchange/RAMlog/framecapture. Donotrestart.
+- Investigate0037beforebuild: nativeRSC_HIDDEN_TCS_CMD0_ADDR isbank2:23034;
+  readbacksemantics/ownershipunknown, doNOTsimplywaiveACK. SMMUcleanupmay
+  matchdocumentedQCOMHYPFAULT-write-ignore/BYPASS→FAULTquirk; confirmation
+  neededusingownedinvalidslot/readback, neverprobeanotherstream/CB5..7.
+-0036stillrunningGUI; allpages/clocksretainedaftersafeGMUcontainment.
+  No newdeviceactionuntilvalidated0037. FirstqueryFASTBOOTafterbuild.
+
+###0036 temporary boot and observer (historical, completed above)
 
 - AutomaticallydetectedFASTBOOT/productpolarisafterfinalimagecheck; norepeated
   humanconfirmationneeded. **Preflight80239 EXIT0**,full16GiBhash/maps/GPT/header
