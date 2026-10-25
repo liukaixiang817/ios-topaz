@@ -94,6 +94,9 @@ uint32_t polaris_a630_diagnostic_line(unsigned line, char *out, uint32_t size)
         h->status,h->sp_status,h->power_state&255);
     if(line==13)return (uint32_t)snprintf(out,size,"HA %08x/%08x/%08x/%08x",
         h->response[0],h->response[1],h->response[2],h->response[3]);
+    if(line==14 && h->full_requested)return (uint32_t)snprintf(out,size,"HR t%x p%x z%x r%x/%x @%x e%x a%x R%x/%x",
+        h->tables_done&7,h->slumber_stage&15,h->slumber&1,h->restored&1,h->restore_error&15,
+        h->restore_offset,h->restore_expected,h->restore_actual,h->rsc_before,h->rsc_status);
     if(line==14)return (uint32_t)snprintf(out,size,"HR g%x s%x h%x z%x r%x/%x @%x e%x a%x",
         h->gx_requested&1,h->sptp_requested&1,h->hfi_requested&1,h->slumber&1,
         h->restored&1,h->restore_error&15,h->restore_offset,h->restore_expected,h->restore_actual);
@@ -227,7 +230,7 @@ static bool a630_write_register(void *opaque, unsigned region, uint32_t off, uin
     struct a630_io *io = opaque;
     if (io->runtime_lease && region<5 && io->base[region]) {
         bool allowed = region==0 && (off==0x52000 || off==0x52004 || off==0x44038 || off==0x7100c || off==0x71018);
-        if (region==1 && (off==0x1124 || (a630_mode==7 && off==0x100c))) allowed=true;
+        if (region==1 && (off==0x1124 || (a630_mode>=7 && off==0x100c))) allowed=true;
         if (region==3 && a630_smmu_offset(off,false)) allowed=true;
         if (region==4 && a630_pdc_offset(off)) allowed=true;
         if (region==2) {
@@ -236,10 +239,10 @@ static bool a630_write_register(void *opaque, unsigned region, uint32_t off, uin
             for(unsigned n=0;n<sizeof(config)/sizeof(config[0]);n++)if(off==config[n])allowed=true;
             for(unsigned n=0;n<A630_BOOT_PROFILE;n++)
                 if(a630_boot_profile[n].bank==2&&a630_boot_profile[n].offset==off)allowed=true;
-            if(a630_mode==7){
+            if(a630_mode>=7){
                 const uint32_t channel[]={A630_CH_INTR_SET,A630_CH_INTR_CLEAR,A630_CH_INTR_MASK,
                     A630_CH_BOOT_OPTION,A630_CH_GX_VOTE,A630_CH_MX_VOTE,
-                    A630_CH_SPTP_CONTROL,A630_CH_HFI_INIT,0x14100,0x24c40};
+                    A630_CH_SPTP_CONTROL,A630_CH_HFI_INIT,A630_CH_RSC_REQUEST,0x14100,0x24c40};
                 for(unsigned n=0;n<sizeof(channel)/sizeof(channel[0]);n++)
                     if(off==channel[n])allowed=true;
             }
@@ -322,7 +325,7 @@ static bool a630_smmu_write64(void *opaque,uint32_t off,uint64_t v)
 }
 static bool a630_prepare_dma(void)
 {
-    a630_dma_bytes=a630_mode==7?0x28000:0x24000;
+    a630_dma_bytes=a630_mode>=7?0x28000:0x24000;
     if(kmem_alloc_contig(kernel_map,&a630_dma,a630_dma_bytes,PAGE_MASK,0,0,
         KMA_DATA|KMA_ZERO|KMA_PERMANENT,VM_KERN_MEMORY_IOKIT)!=KERN_SUCCESS)return false;
     ppnum_t pn=pmap_find_phys(kernel_pmap,(addr64_t)a630_dma);
@@ -332,7 +335,7 @@ static bool a630_prepare_dma(void)
     for(unsigned n=0;n<a630_dma_bytes;n+=PAGE_SIZE)
         if(ptoa_64(pmap_find_phys(kernel_pmap,(addr64_t)a630_dma+n))!=physical+n)return false;
     if(!a630_mmu_init(&a630_tables,(void*)a630_dma,physical,32))return false;
-    if(a630_mode==7){
+    if(a630_mode>=7){
         /* Change every physical alias before the GMU is released. WCOMB on
          * ARM64 is Normal noncacheable, not Device memory; legacy queues
          * are dword-aligned and can be read/written by either processor. */
@@ -415,9 +418,9 @@ static void a630_runtime_boot(struct a630_io *io)
     if(!a630_boot_configure(&boot,&a630_boot_saved))goto cleanup;
     if(!a630_boot_set(&boot,&a630_boot_saved,2,0x14730,1,UINT32_MAX))goto cleanup;
     if(a630_gmu_prepare(true,true,&a630_gmu_image,&tcm,a630_delay_us,io,&a630_gmu_saved)!=A630_GMU_LOADED)goto cleanup;
-    if(a630_boot_start(&boot,&a630_boot_saved) && a630_mode==7){
+    if(a630_boot_start(&boot,&a630_boot_saved) && a630_mode>=7){
         channel_attempted=true;
-        a630_channel_probe(true,a630_nc_pages==2,&channel,
+        a630_channel_probe_complete(true,a630_nc_pages==2,a630_mode==8,&channel,
             (void*)(a630_dma+0x20000),&a630_channel_saved);
     }
 cleanup:
@@ -500,6 +503,8 @@ void polaris_a630_report(void)
     printf("D GPU HFI QUEUE: cmd=%x/%x rsp=%x/%x IRQ=%x SPTP=%x state=%x async=%u ACK=%x/%x/%x/%x\n",
         h->cmd_read,h->cmd_write,h->rsp_read,h->rsp_write,h->status,h->sp_status,
         h->power_state,h->async_messages,h->response[0],h->response[1],h->response[2],h->response[3]);
+    printf("D GPU HFI TABLES: full=%u done=%x slumber_stage=%u RSC=%u/%x/%x; no CP/3D\n",
+        h->full_requested,h->tables_done,h->slumber_stage,h->rsc_requested,h->rsc_before,h->rsc_status);
     printf("D GPU HFI STOP: GX=%u SPTP=%u HFI=%u slumber=%u restored=%u error=%u offset=%x expected=%x actual=%x; no CP/3D\n",
         h->gx_requested,h->sptp_requested,h->hfi_requested,h->slumber,h->restored,
         h->restore_error,h->restore_offset,h->restore_expected,h->restore_actual);
@@ -531,7 +536,7 @@ void polaris_a630_init(void)
 {
     unsigned mode = 0;
     PE_parse_boot_argn("polarisgpu", &mode, sizeof(mode));
-    if ((mode < 1 || mode > 7) ||
+    if ((mode < 1 || mode > 8) ||
         __atomic_exchange_n(&a630_started, 1, __ATOMIC_ACQ_REL)) return;
     a630_mode = mode;
     DTEntry node;
@@ -554,7 +559,7 @@ void polaris_a630_init(void)
     bool hardware = SecureDTLookupEntry(NULL, "/arm-io/gic", &gic) == kSuccess &&
         a630_property(gic, "reg", &reg, &bytes) && bytes == sizeof(physical);
     if (hardware) memcpy(physical, reg, sizeof(physical));
-    a630_cache_selftest(hardware && a630_firmware_ok && mode==7 &&
+    a630_cache_selftest(hardware && a630_firmware_ok && mode>=7 &&
         physical[0]==0x7000000 && physical[1]==0x10000 &&
         physical[2]==0x70a0000 && physical[3]==17*0x20000);
     hardware = hardware && physical[0] == 0x16a00000 && physical[1] == 0x10000 &&
@@ -564,7 +569,7 @@ void polaris_a630_init(void)
     if(mode>=6 && admitted)admitted=a630_prepare_dma();
     /* Mode1 checks firmware/host ABI only, including in a synthetic guest.
      * Modes2/3/4 first save the same read-only, initial hardware snapshot. */
-    a630_probe((mode >= 2 && mode <= 7) ? 1 : 0, admitted,
+    a630_probe((mode >= 2 && mode <= 8) ? 1 : 0, admitted,
         a630_read_register, &io, &a630_saved);
     /* Nested exclusive lifetime: mode5 only loads under reset; mode6 may
      * execute GMU firmware, then must contain it before removing mappings,

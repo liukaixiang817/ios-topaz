@@ -13,7 +13,7 @@ class A630ChannelTests(unittest.TestCase):
 #include <string.h>
 static uint32_t regs[0x30000/4];
 static void *memory;
-struct model {unsigned op,fail,writes,waits,doorbells;bool held,oob_stuck,sptp_stuck,hfi_stuck,queue_stuck,bad_seq,bad_id,async_msg;unsigned fw_error,bad_version;uint32_t gx,bcr;};
+struct model {unsigned op,fail,writes,waits,doorbells;bool held,oob_stuck,sptp_stuck,hfi_stuck,queue_stuck,bad_seq,bad_id,async_msg;bool full,rsc_stuck,gx_stuck;unsigned fw_error,bad_version,ack_error_id;uint32_t gx,bcr,version;};
 static struct model m;
 static bool op(void){return ++m.op!=m.fail;}
 static bool owned(void *x){assert(x==&m);return m.held;}
@@ -34,7 +34,15 @@ static bool wr(void *x,unsigned bank,uint32_t off,uint32_t v){assert(x==&m&&m.he
  if(off==A630_CH_INTR_SET&&v==(1u<<22)&&!m.oob_stuck){
   regs[A630_CH_INTR_INFO/4]|=1u<<30;
   if(regs[A630_CH_BOOT_OPTION/4]==0){assert(regs[A630_CH_GX_VOTE/4]==3&&regs[A630_CH_MX_VOTE/4]==3);m.gx|=1u<<31;}
-  else {assert(regs[A630_CH_GX_VOTE/4]==0&&regs[A630_CH_MX_VOTE/4]==0);m.gx&=~(1u<<31);regs[A630_CH_POWER_STATE/4]=15;regs[A630_CH_SPTP_STATUS/4]|=0xc0;}
+  else {unsigned complete=m.doorbells==5;
+   assert(regs[A630_CH_GX_VOTE/4]==(complete?1:0)&&regs[A630_CH_MX_VOTE/4]==(complete?4:0));
+   regs[A630_CH_POWER_STATE/4]=15;
+   if(!complete){m.gx&=~(1u<<31);regs[A630_CH_SPTP_STATUS/4]|=0xc0;}}
+ }
+ if(off==A630_CH_RSC_REQUEST&&v==1){
+  assert(m.doorbells==5&&regs[A630_CH_POWER_STATE/4]==15&&(regs[A630_CH_SPTP_STATUS/4]&4));
+  if(!m.rsc_stuck){regs[A630_CH_RSC_STATUS/4]|=1u<<16;
+   if(!m.gx_stuck){m.gx&=~(1u<<31);regs[A630_CH_SPTP_STATUS/4]|=0xc0;}}
  }
  if(off==A630_CH_SPTP_CONTROL&&!m.sptp_stuck)regs[A630_CH_SPTP_STATUS/4]=v==0x778000?8:4;
  if(off==A630_CH_HFI_INIT&&!m.hfi_stuck)regs[A630_CH_HFI_STATUS/4]=1;
@@ -42,19 +50,22 @@ static bool wr(void *x,unsigned bank,uint32_t off,uint32_t v){assert(x==&m&&m.he
   m.doorbells++;assert(regs[A630_CH_HFI_STATUS/4]==1);
   struct a630_hfi_table *t=memory;struct a630_hfi_queue *q=&t->q[0];
   uint32_t *r=(uint32_t*)((unsigned char*)memory+a630_hfi_offset(0));uint32_t h=r[q->read_index];unsigned id=h&255,size=(h>>8)&255;
-  assert(id==0||id==1);assert(size==(id==0?5:2));
+  const unsigned ids[5]={0,1,4,3,5},sizes[5]={5,2,43,160,1};
+  assert(m.doorbells<=5&&id==ids[m.doorbells-1]&&size==sizes[m.doorbells-1]);
   if(id==0){assert(r[(q->read_index+1)%1024]==0&&r[(q->read_index+2)%1024]==0x60004000&&r[(q->read_index+3)%1024]==16384&&r[(q->read_index+4)%1024]==1);}
-  else assert(r[(q->read_index+1)%1024]==0x10010000);
+  else if(id==1)assert(r[(q->read_index+1)%1024]==0x10010000);
+  else if(id==4)assert(r[(q->read_index+1)%1024]==8&&r[(q->read_index+2)%1024]==3);
+  else if(id==3)assert(r[(q->read_index+1)%1024]==13&&r[(q->read_index+2)%1024]==3&&r[(q->read_index+3)%1024]==3);
   if(!m.queue_stuck){q->read_index=q->write_index;if(m.async_msg&&id==0)response(h,101,2,0,0);
    if(m.bad_seq)h^=1u<<20;if(m.bad_id)h^=1;
-   response(h,126,id==0?3:4,m.fw_error,m.bad_version?0x20000000:0x10010005);regs[A630_CH_INTR_INFO/4]|=1;}
+   response(h,126,id==1?4:3,m.ack_error_id==id&&id?3:m.fw_error,m.bad_version?0x20000000:m.version);regs[A630_CH_INTR_INFO/4]|=1;}
  }
  return ok;
 }
 static bool sync_io(void *x){assert(x==&m);return op();}
 static void wait_io(void *x,uint32_t us){assert(x==&m&&(us==10||us==50));m.waits++;}
 static const struct a630_channel_io io={owned,rd,wr,sync_io,wait_io,&m};
-static void reset(void){memset(&m,0,sizeof(m));memset(regs,0,sizeof(regs));m.held=true;regs[0x14070/4]=0xbabeface;regs[A630_CH_SPTP_STATUS/4]=0xc4;m.gx=0x222001;assert(a630_hfi_init(memory,16384,0x60000000));}
+static void reset(void){memset(&m,0,sizeof(m));memset(regs,0,sizeof(regs));m.held=true;m.version=0x10010005;regs[0x14070/4]=0xbabeface;regs[A630_CH_SPTP_STATUS/4]=0xc4;m.gx=0x222001;assert(a630_hfi_init(memory,16384,0x60000000));}
 static bool finish(struct a630_channel_snapshot *s){bool a=a630_channel_slumber(&io,s);m.bcr=1;regs[0x14000/4]=1;return a&&a630_channel_restore(&io,s);}
 int main(void){memory=aligned_alloc(16384,16384);assert(memory);struct a630_channel_snapshot s;
  reset();assert(!a630_channel_probe(false,true,&io,memory,&s)&&!m.op&&!m.writes);
@@ -83,6 +94,37 @@ int main(void){memory=aligned_alloc(16384,16384);assert(memory);struct a630_chan
  reset();m.bad_version=1;assert(!a630_channel_probe(true,true,&io,memory,&s)&&s.error==A630_CH_PROTOCOL&&s.acks==1);
  reset();m.async_msg=true;assert(a630_channel_probe(true,true,&io,memory,&s)&&s.async_messages==1&&s.acks==2);assert(finish(&s));
  reset();assert(a630_channel_probe(true,true,&io,memory,&s));unsigned writes=m.writes;m.held=false;assert(!finish(&s)&&m.writes==writes&&!s.restored);
+ /* Complete legacy startup, then native RSC sleep before lease cleanup. */
+ reset();m.full=true;m.version=0x10070000;
+ assert(a630_channel_probe_complete(true,true,true,&io,memory,&s));unsigned full_startup=m.op;
+ assert(s.stage==11&&s.acks==5&&s.commands==5&&s.tables_done==7&&s.version==0x10070000);
+ assert(finish(&s)&&s.slumber&&s.slumber_stage==6&&s.rsc_requested&&s.rsc_status==(1u<<16)&&s.restored);
+ for(unsigned fail=1;fail<=full_startup;fail++){
+  reset();m.full=true;m.fail=fail;
+  assert(!a630_channel_probe_complete(true,true,true,&io,memory,&s)&&s.error==A630_CH_IO);
+  m.fail=0;unsigned first=s.error;bool clean=finish(&s);assert(s.error==first);
+  if(!clean)assert(s.restore_error&&!s.restored);
+ }
+ reset();m.full=true;assert(a630_channel_probe_complete(true,true,true,&io,memory,&s));m.op=0;
+ assert(finish(&s));unsigned full_cleanup=m.op;
+ for(unsigned fail=1;fail<=full_cleanup;fail++){
+  reset();m.full=true;assert(a630_channel_probe_complete(true,true,true,&io,memory,&s));m.op=0;m.fail=fail;
+  assert(!finish(&s)&&s.restore_error&&!s.restored&&s.error==A630_CH_READY);
+ }
+ const unsigned late_ids[3]={4,3,5};
+ for(unsigned i=0;i<3;i++){
+  reset();m.full=true;m.ack_error_id=late_ids[i];
+  assert(!a630_channel_probe_complete(true,true,true,&io,memory,&s)&&s.error==A630_CH_FW_ERROR&&s.acks==2+i);
+  unsigned writes=m.writes;assert(!finish(&s)&&s.restore_error==A630_CH_PROTOCOL&&m.writes==writes);
+ }
+ reset();m.full=true;assert(a630_channel_probe_complete(true,true,true,&io,memory,&s));
+ m.rsc_stuck=true;assert(!finish(&s)&&s.restore_error==A630_CH_TIMEOUT&&s.restore_offset==A630_CH_RSC_STATUS);
+ reset();m.full=true;assert(a630_channel_probe_complete(true,true,true,&io,memory,&s));
+ m.gx_stuck=true;assert(!finish(&s)&&s.restore_error==A630_CH_TIMEOUT&&s.restore_offset==A630_CH_SPTP_STATUS);
+ reset();m.full=true;assert(a630_channel_probe_complete(true,true,true,&io,memory,&s));
+ regs[A630_CH_AO_BUSY/4]=1u<<30;assert(!finish(&s)&&s.restore_error==A630_CH_TIMEOUT&&s.restore_offset==A630_CH_AO_BUSY&&!s.rsc_requested);
+ reset();m.full=true;assert(a630_channel_probe_complete(true,true,true,&io,memory,&s));
+ regs[A630_CH_RSC_BUSY/4]=1;assert(!finish(&s)&&s.restore_error==A630_CH_TIMEOUT&&s.restore_offset==A630_CH_RSC_BUSY&&!s.rsc_requested);
  free(memory);return 0;
 }
 '''
