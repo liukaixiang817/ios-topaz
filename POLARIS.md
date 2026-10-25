@@ -1,5 +1,49 @@
 # MIX 2S (polaris): current bring-up and safety constraints
 
+## Latest state:0056 GPU and0057 UEFI work
+
+0056 has physical desktop GPU submissions with T6/E0/D0/R1 and no recorded
+renderer errors. The user accepts its remaining stutter. The photo reports
+one online CPU at100% busy, a10.149ms average CPU panel copy, and substantial
+image-upload/final-wait wall time. The measured stages overlap; they are not
+GPU utilisation. The older numbered bring-up descriptions below are history;
+`NOTES.md` is the active handoff.
+
+The user now requests a persistent iOS entry in the existing Mindows
+TianoCore EDKII firmware. Required order: identify/extract the actual installed
+firmware, modify a copy, run emulator checks first, temporary RAM trial on the
+phone, then a concrete separately reviewed persistent-write plan. Existing
+Windows/Android/GPT/bootloaders/recovery and verified backups remain intact.
+No persistent change has been made. The base iOS file is already on UFS;
+its current512MiB write overlay and boot assets remain volatile.
+
+The new `shim/polaris/uefi-probe.c` is read-only inventory, not an iOS EFI
+loader. It validates memory-map sizes, overflow and overlap, reports loaded
+addresses, CPU exception level and protocol presence, and reads BootOrder.
+It never writes a filesystem/NVRAM or calls ExitBootServices/starts XNU.
+Build with `tools/build-polaris-uefi-probe.py`; the paired QEMU tool uses
+Cortex-A55/oneCPU/8GiB/GIC3 and tests EL1/EL2. GenericEDK2/QEMU `virt` cannot
+validate installed Mindows firmware or Qualcomm UFS/USB/RPMh/MMIO. These
+limits follow [QEMU's board documentation](https://www.qemu.org/docs/master/system/arm/virt).
+
+The probe found that generic firmware can load the EFI application in the
+upper RAM region XNU uses, and that firmware may run at EL2. An EFI-to-XNU
+port must handle relocation, reserved/runtime memory, cache/MMU and exception
+level, preserving the16KiB kernel contract. A menu entry alone does not
+supply those transitions. Future firmware USB requires retained services and
+explicit controller ownership; protocol presence is not a working transport.
+[UEFI boot services](https://uefi.org/specs/UEFI/2.10/07_Services_Boot_Services.html)
+distinguish loading an EFI image from starting it and ending boot services.
+
+The prior verified ESP backup contains95 files (13.724MB); its fallback
+`EFI/Boot/bootaa64.efi` matches Microsoft's Windows boot manager, not the
+TianoCore firmware body. Keep these binaries private. Actual installed
+UEFI location/version still needs fresh extraction and the normal Windows
+selection method. Current phone transport became unavailable before the
+extraction recovery was sent. No modified firmware has run on the phone.
+
+## Historical bring-up
+
 The requested target is **Android + Mindows Windows 11 + iOS 16**, preserving
 existing data. Temporary build **0023** was sent successfully at09:59:17UTC
 on2026-10-24; subsequent photos show a startup regression with logs and no GUI.

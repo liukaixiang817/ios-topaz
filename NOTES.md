@@ -34,6 +34,75 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0057 emulator inventory PASS; fresh extraction blocked by lost phone transport
+
+- New standalone read-only EFIprobe sources shim/polaris/uefi{,-memory}.h,
+  uefi-probe.c; build/qemu tools + actualmap ASan/UBSan unit test. Builds
+  realAArch64 EFIapplication. NoFSwrite/NVRAMwrite/XNUjump/ExitBootServices/
+  USBdriverstart. Memorymap rejectsbadbounds/stride/overflow/zero/overlap,
+  reportsreclaimable vsruntime/reserved upperbank. Nativehosttest PASS.
+- Finalprobe SHA bf24d1ad6698ae98b6895eb132867f52b6468d25d851a7f1250aa9fae3e7cc4c.
+  GenericEDK2/QEMU11.0.1,CortexA55,CPU1/8GiB/GIC3: EL1case5.806s/7checks
+  andEL2case5.764s/7checks PASS,16KiBcapabilityverified. Original preliminary
+  cases retained. ThisisPROBE/ABI/mapvalidation, NOTfullUEFI->XNU/GUI or
+  actualinstalledfirmware/QualcommUFS/USB test. AllnewXNUhandoff workremains.
+- Importantfounddifference:genericUEFIprogramloadedupperRAM0x23cb55000
+  (PEbase0, ZigUEFItargetignoredrequestedimagebase) andcanrunEL2. Mustnot
+  simplychainoldABLshim: relocateexecution/scratchbelowkernel, preserve
+  firmwarememoryandresolveEL1/cache/MMU/16KiB handoff first. Needactualphone
+  firmware/mapbeforedecidingresidentUSB vsExitBootServices/controllerownership.
+- ExistingbackupESP extractedoffline95files13.724MB/FATcopiesmatch,
+  bootaa64=Microsoftbootmgfw. ActualTianoCorebodyLOCATIONSTILLUNKNOWN.
+  Androidboot/recoverydecodedLinux+DTBs, noFVheaders. Userdataworkcopymedia
+  filenamesencrypted; no unrelated private file content read. Asyncpending:
+  normalWindowsselectionmethod (menu/Mindowsapp/manualUEFIimage).
+- FIRSTtargetedROhostquery foundpolarisFASTBOOT. Extraction attemptedONLY
+  knownoriginalROrecovery path aftergenericprobePASS, but getvarproduct
+  timedout10s BEFORE recoveryboot/partitionaccess. original-current isEMPTY.
+  OriginalrawexceptionlogprivatecontainsdeviceID; use sanitizedrunner only
+  (run-extract.py). Read-only30s recheck: FASTBOOTabsent,ADBabsent. NoUEFI
+  candidate/recovery sent, no partitionwrites, no persistentchanges.
+  extraction-stopped.json recordsphase; USBcontinuousobserver remainsPAUSED.
+- Asyncasks reconnectUSB/keepFASTBOOT. Onreply FIRST freshROquery. Needfix
+  extractionhostrun directory: original-current currentlyempty fromfailed
+  pre-query; archive emptyattemptdir before rerun, donotoverwrite originals.
+  ThenfreshGPT/criticalparts/ESP read-only+twosourcehashes, identityinstalled
+  UEFI and preserveeveryWindowsentry. Do notlabel Windowsmanager theUEFI.
+  No firmwarewriteplan or destructiveoperation approved yet; human requires
+  emulatorFIRST/RAMphysicalsuccessbeforeconcretepersistentinstall.
+
+### 0057 NEW PRIORITY: extract existing UEFI, emulator first, RAM proof before disk
+
+- Human accepts0056 usability despite residualstutter and now requests
+  persistentiOS +entry in EXISTING Windows TianoCore EDKII. Explicitorder:
+  extractexistingUEFI -> modifycopy -> emulatefirst -> temporaryRAMboot ->
+  onlyafterphysicalsuccess persistentwrite. ExistingAndroid/Windows/data/
+  bootloaders/recovery/backups preserved. Noexactwriteboundary approved;
+  noformat/resize/GPT/bootloaderoverwrite untilconcreteplan+perstepconfirmation.
+- Latesthumanclarification: allnew candidates mustfirst run in simulator;
+  no freshphonebootperformed0057 yet. TargetedROhostquery16:44UTC found
+  expectedpolarisFASTBOOTalreadyready,ADBabsent. USBcontinuousobserver
+  remainsPAUSED; noobserverstarted. Do not redundantlyaskkeys ifstillready.
+- Offline criticalbackup SHAcheckedboot/recovery/ABL/ESP. ESP FAT4096B/
+  cluster1/twoidenticalFATs,95files13.724MB. Extractedonlytoignoredresearch/
+  uefi-integration-0057/backup-esp-files; originalimageunchanged. Default
+  EFI/Boot/bootaa64.efi equals Microsoft/Boot/bootmgfw.efi (Windowsmanager,
+  NOTexistingTianoCorefirmware). NeedactualUEFIsource/location; asyncasks
+  howWindowsisnormallyselected. Userdata/media filenames encrypted; do not
+  trawl unrelated user files. Priorlocaluserdata-normal-check workcopy exists.
+- LocalQEMU11.0.1 hasEDK2AArch64code/vars; planread-onlyEFIprotocol/map
+  probe, thenpayload/16KiB/exit/cache/CPUhandoff tests withsyntheticstorage.
+  QEMUvirt is NOT SDM845UFS/USB/power/physicalboard equivalence. Markeach
+  emulationlimit, neverclaimstockphoneUEFIbootedjustbecausegenericEDK2does.
+  ExistingreferenceUSBneedsresidentBootServices+4Kreturn path; currentXNU
+ 16KiB ownsUFS, soUSBfutureportneedsrealmemory/ownership/trampolinework.
+-0056newphoto:GA T6/E0/D0/R1,C42d;CPU B10000/N1 confirms100%onecore.
+  FD C10149us/D664us;PF F259716/W25172/U60242/H995/R3us lastwindow.
+  CPUpressure+upload/present costs evidenced; W iswallnotGPUutilisation.
+  FD P49=4.9copiedfps overlastwindow, notprovencontinuousscrollFPS.
+- NEXT locate/extractactualinstalledUEFI withoutwriting, build/read-onlyprobe
+  andemulatortests, useownbackupDT/vendor vsreference. No0057phoneactionyet.
+
 ### 0056 TEMPORARY BOOT SENT16:33:05UTC; await FD/PF and human scroll
 
 - Firstautoquery16:29:55.064943UTC expectedpolarisFASTBOOTpresent;noask.
