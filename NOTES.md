@@ -28,8 +28,48 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT ACTION —0035 GUI confirmed;0036 owned-context/PIPE fix in progress
+### CURRENT ACTION —0036 temporary boot SENT; detached USB observer83734 ACTIVE
 
+- AutomaticallydetectedFASTBOOT/productpolarisafterfinalimagecheck; norepeated
+  humanconfirmationneeded. **Preflight80239 EXIT0**,full16GiBhash/maps/GPT/header
+  exact,clean/RO1/unmounted/31C,verified **00:19:38.182669UTC**.
+  No partitionwrites/journalreplay/repair. **Boot48192 EXIT0**,
+ 0036Sending/BootingOKAY,total1.178s,sent **2026-10-25T00:19:53.518349+00:00**.
+- **Detachedobserver PID83734 ACTIVE**, firstsample00:19:53.615298UTC,
+  gap **0.096949s**, separateprocesssession/filelogs confirmedafterbootwrapper
+  EXIT0. Watchstatsprivate0036/usb-enumeration.json+fsyncedNDJSON,
+  process0036/observer-process.json/stdoutobserver-detached.log.
+  InitialbootloaderidentityisnotnativeUSBproof. NoECMseeninearlysamplesyet.
+  No timeout/discoverystop. Awaitactualsameboot“已进入系统”/explicitcancel;
+  donotrebootorstopbasedonold0035confirmation. Stopusing0036stop-usb-observation.py,
+  thencheckPIDexited/state/journal. DoNOTrestartthisobserverorbootagain.
+- NewquestionpendingactualGUIconfirmationplusGEfw/SI/UXrawrows. Thisimage
+  testsownedSMMUcontexthandoff/GMUbootandUSBPIPE; noHFI/GX/3D/renderingclaim.
+  PhoneGPUresultstillPENDING. Currentimage698c9bd8/exactsourceefd7d81,
+  CI40145402159 SUCCESS,90FIRSTPASSchecks/finalindependentcheckPASS below.
+
+###0036 build and validation (device actions subsequently completed above)
+
+-0036pipeline56809 **EXIT0**: FIRSTPASSbase120s29/asyncnet90s32/mode6wrongboard60s29
+  =**90checks**, allfourVMchildreneach; nonewfailureretry. PriorSMP/synctimer
+  failuresremainunresolved. Image **shim/out/polaris-xnu-readdebug-0036/polaris-xnu-readdebug-0036.img**,
+  47460352bytes SHA **698c9bd8934f1b45913422611c991f2aa9b40db45b9ac27897d0a71b018c6902**;
+  payload **15d39eb72b637ba4f7dac3530133a677fbeb544b9d912505b0b890c274d50474**.
+  Independentfinalchecker85410EXIT0 **00:17:44.624239UTC**. Fullsource/profile/
+  SHA/CRC/CI/patch/provenance/payloadrebuild/imageembedding65DTBs/frozen14hosts
+  andsource-only6filepublicationchecked. Noaccelerationclaim.
+- Build **CI40145402159/job121025533766 SUCCESS**,00:06:37–00:11:53UTC(5m16s),
+  fullghlogresearch/polaris/ci-40145402159.log. AutomaticFASTBOOTcheck
+  **00:17:44.675673UTC expectedphonepresent/productpolarisverified**.
+  Directlyrunning0036readonlypreflight; noredundanthumanFASTBOOTquestion.
+  OnPASSboot-and-watch.py launchesdetachedobserver. Donotrerunfinalchecker
+  afterdeviceactions.0035confirmed/observerabsent, no restart.
+- **CI40145402159 SUCCESS**. ExactkerneldownloadCRC/SHA/profileverified:
+  xnu/out-polaris-0036/kernel.development.sweet SHA
+  **8057f55bddf13dff8995be2d4cc81906590672569fc60fc09779c53105946797**.
+  Pipeline **56809 ACTIVE**, base120sstandardclockfirstattemptcurrentlyrunning,
+  thenasyncnetwork90s/mode6wrongboard60s, expected90checks/image/finalcheck.
+  Noheavyhostworkduringtimedguests. No0036deviceactionyet.
 -0036privatefix **62882f0**, source-onlypublic **efd7d81f9f1a67ec963544d59dec1b423b98de63**
   (parent57e5706), 6source/test/patchfilesonly. Nooperationalnotes/privatehistory
   published. **CI40145402159 ACTIVE** from00:06:33UTC. Local27ASan/UBSan,
