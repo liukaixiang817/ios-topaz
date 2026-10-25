@@ -1,0 +1,272 @@
+--- a/bsd/dev/polaris_a630.c
++++ b/bsd/dev/polaris_a630.c
+@@ -74,7 +74,7 @@
+ {
+     if (!out || !size) return 0;
+     out[0] = 0;
+-    if (line >= 10) return 0;
++    if (line >= 11) return 0;
+     if (!__atomic_load_n(&a630_published, __ATOMIC_ACQUIRE))
+         return (uint32_t)snprintf(out, size, "GPU snapshot pending");
+     const struct a630_power_snapshot *p = &a630_power_saved;
+@@ -102,8 +102,12 @@
+         e->error&15,e->stage&15,e->fw,e->failed_bank&15,e->failed_offset,e->expected,e->actual,e->stopped&1,e->restore_error&15);
+     if (line == 7) return (uint32_t)snprintf(out,size,"GL u%08x o%08x src%04x v%08x/%08x r%x/%x",
+         b->pll[2],b->pll[3],b->source&65535,b->live[0],b->live[1],b->restored&1,b->restore_error&15);
+-    if(line==9)return (uint32_t)snprintf(out,size,"SI h%x n%x ctl%08x cfg%08x ar%08x/%08x",
+-        m->preserved_impl&1,m->impl_checks&255,m->impl[0],m->impl[11],m->actlr,m->actlr_live);
++    if(line==10)return (uint32_t)snprintf(out,size,"GR h%x a%llx v%08x/%08x/%08x r%x:%x",
++        e->retained_hidden&7,(unsigned long long)(e->attempted&0xffffffffffffull),
++        e->hidden_after[0],e->hidden_after[1],e->hidden_after[2],e->restore_bank&15,e->restore_offset);
++    if(line==9)return (uint32_t)snprintf(out,size,"SI h%x n%x ctl%08x cfg%08x ar%08x/%08x q%x f%x",
++        m->preserved_impl&1,m->impl_checks&255,m->impl[0],m->impl[11],m->actlr,m->actlr_live,
++        m->fault_quirk&1,m->fault_canonical&1);
+     return (uint32_t)snprintf(out,size,"SH b%08x l%08x a%08x p%x i%x r%x@%x",
+         m->halt_before,m->halt_live,m->halt_after,m->halt_polls,m->impl_changed,
+         m->restore_error&15,m->restore_offset);
+@@ -378,8 +382,15 @@
+         m->restore_error,m->restore_offset,m->restore_expected,m->restore_actual);
+     printf("D GPU SMMU HANDOFF: preserve=%u checks=%u ctrl=%x impl6b68=%x ACTLR=%x/%x owned=%u\n",
+         m->preserved_impl,m->impl_checks,m->impl[0],m->impl[11],m->actlr,m->actlr_live,m->actlr_changed);
++    printf("D GPU SMMU FAULT: quirk=%u canonical=%u requested=%x actual=%x attempts=%u\n",
++        m->fault_quirk,m->fault_canonical,m->fault_requested,m->fault_actual,m->fault_attempts);
++    printf("D GPU HIDDEN TCS: retained=%x before=%x/%x/%x after=%x/%x/%x attempted=%llx; issued request, not cleared-address proof\n",
++        e->retained_hidden,e->hidden_before[0],e->hidden_before[1],e->hidden_before[2],
++        e->hidden_after[0],e->hidden_after[1],e->hidden_after[2],(unsigned long long)e->attempted);
+     printf("D GPU EXEC: error=%u stage=%u FW_INIT=%x started=%u stopped=%u profile=%u fail=%u:%x expected=%x actual=%x polls=%u restored=%u/%u; HFI/GX/3D not started\n",
+         e->error,e->stage,e->fw,e->started,e->stopped,e->changed,e->failed_bank,e->failed_offset,e->expected,e->actual,e->polls,e->restored,e->restore_error);
++    printf("D GPU EXEC RESTORE: error=%u bank=%u offset=%x expected=%x actual=%x\n",
++        e->restore_error,e->restore_bank,e->restore_offset,e->restore_expected,e->restore_actual);
+     printf("D GPU LOAD: result=%u stage=%u block_reset_retained=%u reset=%x/%x fw=%x hfi=%x counter=%x polls=%u\n",
+         g->result, g->stage, g->retain_block_reset, g->reset_before, g->reset_held,
+         g->fw_init, g->hfi, g->counter, g->polls);
+--- a/bsd/dev/polaris_a630_boot.h
++++ b/bsd/dev/polaris_a630_boot.h
+@@ -69,6 +69,9 @@
+     uint32_t error,start_error,stage,changed,restored,restore_error,started,stopped;
+     uint32_t before[A630_BOOT_PROFILE],fw,bcr,reset,busy,gx,hfi;
+     uint32_t failed_bank,failed_offset,expected,actual,polls;
++    uint64_t attempted;
++    uint32_t retained_hidden,hidden_before[3],hidden_after[3];
++    uint32_t restore_bank,restore_offset,restore_expected,restore_actual;
+ };
+ static inline bool a630_boot_read(const struct a630_boot_io *io,struct a630_boot_snapshot *s,
+                                  unsigned bank,uint32_t off,uint32_t *v)
+@@ -106,6 +109,33 @@
+     }
+     s->error=A630_BOOT_TIMEOUT;s->failed_bank=bank;s->failed_offset=off;
+     s->expected=value;s->actual=actual;return false;
++}
++/* The stock MiCode and mainline sequences issue zero to these three hidden
++ * TCS address slots without treating them as ordinary retained-RAM words.
++ * Polaris0036 read82204514 after the first zero request. Keep that observable
++ * distinction: accept only the exact saved word remaining unchanged (or an
++ * acknowledged zero); never accept an unexpected new word or an IO failure.
++ * This establishes the issued request, NOT a cleared address. A fresh FW
++ * handshake remains mandatory, and no HFI/GX operation is enabled here. */
++static inline bool a630_boot_hidden_request(const struct a630_boot_io *io,
++    struct a630_boot_snapshot *s,unsigned index)
++{
++    const struct a630_boot_register *r=&a630_boot_profile[index];
++    unsigned slot=(r->offset-0x23034)/8;uint32_t actual;
++    if(r->bank!=2 || r->value || slot>=3 || r->offset!=0x23034+8*slot){
++        s->error=A630_BOOT_IO;return false;
++    }
++    s->hidden_before[slot]=s->before[index];
++    if(!io->owned(io->ctx)){s->error=A630_BOOT_LEASE;return false;}
++    if(!io->write(io->ctx,r->bank,r->offset,0)){
++        s->error=A630_BOOT_IO;s->failed_bank=r->bank;s->failed_offset=r->offset;return false;
++    }
++    if(!a630_boot_read(io,s,r->bank,r->offset,&actual))return false;
++    s->hidden_after[slot]=actual;
++    if(actual==0)return true;
++    if(actual==s->before[index]){s->retained_hidden|=1u<<slot;return true;}
++    s->error=A630_BOOT_ACK;s->failed_bank=r->bank;s->failed_offset=r->offset;
++    s->expected=0;s->actual=actual;return false;
+ }
+ /* Set up sequencers while CM3 is held. These are the original A630 TCS
+  * addresses/values, not SC7280's layout. This profile only configures them;
+@@ -125,10 +155,14 @@
+         if(!a630_boot_read(io,s,r->bank,r->offset,&s->before[n]))goto done;
+     }
+     s->stage=2;s->changed=A630_BOOT_PROFILE;
++    s->attempted|=1ull<<(A630_BOOT_PROFILE-1);
+     if(!a630_boot_set(io,s,4,0x84500,0,0x80000001))goto done;
+     for(unsigned n=0;n<A630_BOOT_PROFILE;n++){
+         const struct a630_boot_register *r=&a630_boot_profile[n];
+-        if(!a630_boot_set(io,s,r->bank,r->offset,r->value,r->mask))goto done;
++        s->attempted|=1ull<<n;
++        if(r->bank==2 && (r->offset==0x23034 || r->offset==0x2303c || r->offset==0x23044)){
++            if(!a630_boot_hidden_request(io,s,n))goto done;
++        }else if(!a630_boot_set(io,s,r->bank,r->offset,r->value,r->mask))goto done;
+     }
+     if(!io->sync(io->ctx)){s->error=A630_BOOT_IO;goto done;}
+     s->stage=3;return true;
+@@ -175,22 +209,35 @@
+  * Keep all allocations, power and clocks when containment is uncertain. */
+ static inline bool a630_boot_stop(const struct a630_boot_io *io,struct a630_boot_snapshot *s)
+ {
+-    struct a630_boot_snapshot r=*s;r.error=0;
++    struct a630_boot_snapshot r=*s;r.error=0;r.failed_bank=r.failed_offset=r.expected=r.actual=0;
+     if(!a630_boot_set(io,&r,2,0x14000,1,0xffffffff)||
+        !a630_boot_set(io,&r,1,0x111c,1,1)||
+        !a630_boot_poll(io,&r,1,0x111c,1,1,1000))goto failed;
+     io->wait(io->ctx,20);
+     if(!a630_boot_poll(io,&r,2,0x23404,0,0xffffffff,1000))goto failed;
+     s->stopped=1;
+-    if(s->changed&&!a630_boot_set(io,&r,4,0x84500,0,0x80000001))goto failed;
+-    for(unsigned n=s->changed?s->changed-1:0;n>0;n--){
+-        const struct a630_boot_register *p=&a630_boot_profile[n-1];
+-        if(!a630_boot_set(io,&r,p->bank,p->offset,s->before[n-1],p->mask))goto failed;
+-    }
+-    if(s->changed&&!a630_boot_set(io,&r,4,0x84500,s->before[A630_BOOT_PROFILE-1],0x80000001))goto failed;
++    if(s->attempted&&!a630_boot_set(io,&r,4,0x84500,0,0x80000001))goto failed;
++    for(int n=A630_BOOT_PROFILE-2;n>=0;n--){
++        const struct a630_boot_register *p=&a630_boot_profile[n];
++        if(!(s->attempted&(1ull<<n)))continue;
++        if(p->bank==2 && (p->offset==0x23034 || p->offset==0x2303c || p->offset==0x23044)){
++            uint32_t current;
++            if(!a630_boot_read(io,&r,p->bank,p->offset,&current))goto failed;
++            if(current==s->before[n])continue;
++            /* A callback may fail after a posted zero. Only a zero target
++             * permits restoring a known read/write slot. Unknown new words
++             * are never written back as opaque control commands. */
++            if(current!=0){r.error=A630_BOOT_ACK;r.failed_bank=p->bank;
++                r.failed_offset=p->offset;r.expected=s->before[n];r.actual=current;goto failed;}
++        }
++        if(!a630_boot_set(io,&r,p->bank,p->offset,s->before[n],p->mask))goto failed;
++    }
++    if(s->attempted&&!a630_boot_set(io,&r,4,0x84500,s->before[A630_BOOT_PROFILE-1],0x80000001))goto failed;
+     if(!io->sync(io->ctx)){r.error=A630_BOOT_IO;goto failed;}
+-    s->restored=1;s->restore_error=0;return true;
++    s->restored=1;s->restore_error=0;s->restore_bank=s->restore_offset=s->restore_expected=s->restore_actual=0;return true;
+ failed:
+-    s->restored=0;s->restore_error=r.error?r.error:A630_BOOT_IO;return false;
++    s->restored=0;s->restore_error=r.error?r.error:A630_BOOT_IO;
++    s->restore_bank=r.failed_bank;s->restore_offset=r.failed_offset;
++    s->restore_expected=r.expected;s->restore_actual=r.actual;return false;
+ }
+ #endif
+--- a/bsd/dev/polaris_a630_smmu.h
++++ b/bsd/dev/polaris_a630_smmu.h
+@@ -44,6 +44,7 @@
+     uint32_t halt_before,halt_live,halt_after,halt_changed,halt_polls,impl_changed;
+     uint32_t restore_offset,restore_expected,restore_actual;
+     uint32_t preserved_impl,impl_checks,actlr,actlr_live,actlr_changed;
++    uint32_t fault_quirk,fault_canonical,fault_requested,fault_actual,fault_attempts;
+ };
+ static const uint32_t a630_smmu_impl_offsets[A630_SMMU_IMPLS] = {
+     0x6000,0x6060,0x678c,0x6794,0x6800,0x6900,
+@@ -82,6 +83,42 @@
+         s->expected = value; s->actual = actual; return false;
+     }
+     return true;
++}
++/* Some Qualcomm HYP versions ignore FAULT writes and translate BYPASS
++ * requests into FAULT (Linux v6.12 arm-smmu-qcom.c). Only try that encoding
++ * after reading back an unchanged ignored FAULT request, and ONLY while
++ * our exact stream-match slot is invalid. Never expose a BYPASS mapping.
++ * FAULT has no context-bank selection: the canonical0xff is recorded,
++ * never called a byte-identical restoration of the original low byte. */
++static inline bool a630_smmu_fault(const struct a630_smmu_io *io,void *ctx,
++    struct a630_smmu_snapshot *s,uint32_t requested)
++{
++    uint32_t match,before,actual,off=0xc00+4*s->slot;
++    if((requested&0x30000u)!=0x20000u){s->error=A630_SMMU_ARGUMENT;return false;}
++    if(!a630_smmu_rd(io,ctx,s,0x800+4*s->slot,&match))return false;
++    if(match&(1u<<31)){s->error=A630_SMMU_OWNERSHIP;return false;}
++    if(!a630_smmu_rd(io,ctx,s,off,&before))return false;
++    s->fault_requested=requested;s->fault_attempts++;s->changed=1;
++    if(!a630_smmu_lease(io,ctx,s))return false;
++    if(!io->write(ctx,off,requested)){s->error=A630_SMMU_IO;s->failed_offset=off;return false;}
++    if(!a630_smmu_rd(io,ctx,s,off,&actual))return false;
++    s->fault_actual=actual;
++    if(!((actual^requested)&0x030303ffu))return true;
++    if(actual!=before)goto mismatch;
++    /* Still isolated: use the documented HYP encoding, not a real bypass. */
++    if(!a630_smmu_rd(io,ctx,s,0x800+4*s->slot,&match))return false;
++    if(match&(1u<<31)){s->error=A630_SMMU_OWNERSHIP;return false;}
++    s->fault_attempts++;
++    if(!a630_smmu_lease(io,ctx,s))return false;
++    uint32_t encoded=(requested&~0x300ffu)|0x100ffu;
++    if(!io->write(ctx,off,encoded)){s->error=A630_SMMU_IO;s->failed_offset=off;return false;}
++    if(!a630_smmu_rd(io,ctx,s,off,&actual))return false;
++    s->fault_actual=actual;
++    if((actual&0x30000u)==0x20000u && !((actual^requested)&0x03030300u)){
++        s->fault_quirk=1;s->fault_canonical|=(actual&255)!=(requested&255);return true;
++    }
++ mismatch:
++    s->error=A630_SMMU_ACK;s->failed_offset=off;s->expected=requested;s->actual=actual;return false;
+ }
+ static inline bool a630_smmu_set64(const struct a630_smmu_io *io, void *ctx,
+     struct a630_smmu_snapshot *s, uint32_t off, uint64_t value)
+@@ -272,8 +309,8 @@
+     }
+     s->stage=4;
+     /* Make this stream fault while its new context is being programmed. */
+-    if (!a630_smmu_set(io,ctx,s,0xc00+4*s->slot,(s->s2cr&~0x30000u)|0x20000,0x30000) ||
+-        !a630_smmu_set(io,ctx,s,0x800+4*s->slot,s->smr&~(1u<<31),1u<<31)) goto done;
++    if (!a630_smmu_set(io,ctx,s,0x800+4*s->slot,s->smr&~(1u<<31),1u<<31) ||
++        !a630_smmu_fault(io,ctx,s,(s->s2cr&~0x30000u)|0x20000)) goto done;
+     if(!s->foreign && !handoff){
+         if(!a630_smmu_halt(io,ctx,s,true))goto done;
+         for(unsigned n=0;n<A630_SMMU_IMPLS;n++){
+@@ -338,9 +375,8 @@
+      * Release it before architectural TLB synchronization, as the vendor. */
+     if(r.halt_changed&&!a630_smmu_halt(io,ctx,&r,false))goto failed;
+     /* No more stream requests may enter the context during teardown. */
+-    if (!a630_smmu_set(io,ctx,&r,0xc00+4*s->slot,
+-            (s->s2cr&~0x30000u)|0x20000,0x30000) ||
+-        !a630_smmu_set(io,ctx,&r,0x800+4*s->slot,s->smr&~(1u<<31),UINT32_MAX) ||
++    if (!a630_smmu_set(io,ctx,&r,0x800+4*s->slot,s->smr&~(1u<<31),UINT32_MAX) ||
++        !a630_smmu_fault(io,ctx,&r,(s->s2cr&~0x30000u)|0x20000) ||
+         !a630_smmu_set(io,ctx,&r,s->context,0,1) ||
+         !a630_smmu_tlb(io,ctx,&r)) goto failed;
+     if (!a630_smmu_set64(io,ctx,&r,s->context+0x20,s->ttbr[0]) ||
+@@ -365,14 +401,20 @@
+         if (!a630_smmu_rd(io,ctx,&r,0,&current) ||
+             !a630_smmu_set(io,ctx,&r,0,(current&~0x401u)|(s->global&0x401),0x401)) goto failed;
+     }
+-    if (!a630_smmu_set(io,ctx,&r,0xc00+4*s->slot,s->s2cr,0x030303ff) ||
+-        !a630_smmu_set(io,ctx,&r,0x800+4*s->slot,s->smr,UINT32_MAX)) goto failed;
++    if((s->s2cr&0x30000u)==0x20000u){
++        if(!a630_smmu_fault(io,ctx,&r,s->s2cr))goto failed;
++    }else if(!a630_smmu_set(io,ctx,&r,0xc00+4*s->slot,s->s2cr,0x030303ff))goto failed;
++    if(!a630_smmu_set(io,ctx,&r,0x800+4*s->slot,s->smr,UINT32_MAX))goto failed;
+     if (!io->sync(ctx)) {r.error=A630_SMMU_IO;goto failed;}
+     if(s->preserved_impl && !a630_smmu_impl_stable(io,ctx,&r))goto failed;
++    s->fault_quirk=r.fault_quirk;s->fault_canonical=r.fault_canonical;
++    s->fault_requested=r.fault_requested;s->fault_actual=r.fault_actual;s->fault_attempts=r.fault_attempts;
+     s->impl_checks=r.impl_checks;
+     s->halt_after=r.halt_after;s->halt_polls=r.halt_polls;
+     s->restored=1;s->restore_error=0;s->restore_offset=0;return true;
+ failed:
++    s->fault_quirk=r.fault_quirk;s->fault_canonical=r.fault_canonical;
++    s->fault_requested=r.fault_requested;s->fault_actual=r.fault_actual;s->fault_attempts=r.fault_attempts;
+     s->halt_after=r.halt_after;s->halt_polls=r.halt_polls;
+     s->restore_offset=r.failed_offset;s->restore_expected=r.expected;s->restore_actual=r.actual;
+     s->restored=0;s->restore_error=r.error?r.error:A630_SMMU_RESTORE;
+--- a/iokit/Kernel/arm/SweetFramebuffer.cpp
++++ b/iokit/Kernel/arm/SweetFramebuffer.cpp
+@@ -168,18 +168,18 @@
+ extern "C" uint32_t polaris_a630_diagnostic_line(unsigned, char *, uint32_t);
+ static void polaris_status_bar(AppleCLCD *fb)
+ {
+-    char text[19][136];
++    char text[20][136];
+     polaris_usb_status(text[0], sizeof(text[0]));
+     unsigned n = polaris_a630_details(text[1], sizeof(text[1]));
+     if (n < sizeof(text[1])) snprintf(text[1] + n, sizeof(text[1]) - n,
+         " T%u", __atomic_load_n(&fb->fPolarisLastUS, __ATOMIC_RELAXED));
+     for (unsigned i = 0; i < 7; i++)
+         polaris_usb_diagnostic_line(i, text[2 + i], sizeof(text[2 + i]));
+-    for (unsigned i = 0; i < 10; i++)
++    for (unsigned i = 0; i < 11; i++)
+         polaris_a630_diagnostic_line(i, text[9 + i], sizeof(text[9 + i]));
+     /* Fixed double-size diagnostic rows, saved state only. Keep output
+      * inside the actual panel and never poll MMIO from the display loop. */
+-    unsigned lines = fb->fHeight / 32 < 19 ? fb->fHeight / 32 : 19;
++    unsigned lines = fb->fHeight / 32 < 20 ? fb->fHeight / 32 : 20;
+     for (unsigned line = 0; line < lines; line++) {
+         for (unsigned y = 0; y < 32; y++) {
+             uint32_t *row = (uint32_t *)(fb->fPixels + (uint64_t)(line * 32 + y) * fb->fRowBytes);

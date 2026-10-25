@@ -44,6 +44,7 @@ struct a630_smmu_snapshot {
     uint32_t halt_before,halt_live,halt_after,halt_changed,halt_polls,impl_changed;
     uint32_t restore_offset,restore_expected,restore_actual;
     uint32_t preserved_impl,impl_checks,actlr,actlr_live,actlr_changed;
+    uint32_t fault_quirk,fault_canonical,fault_requested,fault_actual,fault_attempts;
 };
 static const uint32_t a630_smmu_impl_offsets[A630_SMMU_IMPLS] = {
     0x6000,0x6060,0x678c,0x6794,0x6800,0x6900,
@@ -82,6 +83,42 @@ static inline bool a630_smmu_set(const struct a630_smmu_io *io, void *ctx,
         s->expected = value; s->actual = actual; return false;
     }
     return true;
+}
+/* Some Qualcomm HYP versions ignore FAULT writes and translate BYPASS
+ * requests into FAULT (Linux v6.12 arm-smmu-qcom.c). Only try that encoding
+ * after reading back an unchanged ignored FAULT request, and ONLY while
+ * our exact stream-match slot is invalid. Never expose a BYPASS mapping.
+ * FAULT has no context-bank selection: the canonical0xff is recorded,
+ * never called a byte-identical restoration of the original low byte. */
+static inline bool a630_smmu_fault(const struct a630_smmu_io *io,void *ctx,
+    struct a630_smmu_snapshot *s,uint32_t requested)
+{
+    uint32_t match,before,actual,off=0xc00+4*s->slot;
+    if((requested&0x30000u)!=0x20000u){s->error=A630_SMMU_ARGUMENT;return false;}
+    if(!a630_smmu_rd(io,ctx,s,0x800+4*s->slot,&match))return false;
+    if(match&(1u<<31)){s->error=A630_SMMU_OWNERSHIP;return false;}
+    if(!a630_smmu_rd(io,ctx,s,off,&before))return false;
+    s->fault_requested=requested;s->fault_attempts++;s->changed=1;
+    if(!a630_smmu_lease(io,ctx,s))return false;
+    if(!io->write(ctx,off,requested)){s->error=A630_SMMU_IO;s->failed_offset=off;return false;}
+    if(!a630_smmu_rd(io,ctx,s,off,&actual))return false;
+    s->fault_actual=actual;
+    if(!((actual^requested)&0x030303ffu))return true;
+    if(actual!=before)goto mismatch;
+    /* Still isolated: use the documented HYP encoding, not a real bypass. */
+    if(!a630_smmu_rd(io,ctx,s,0x800+4*s->slot,&match))return false;
+    if(match&(1u<<31)){s->error=A630_SMMU_OWNERSHIP;return false;}
+    s->fault_attempts++;
+    if(!a630_smmu_lease(io,ctx,s))return false;
+    uint32_t encoded=(requested&~0x300ffu)|0x100ffu;
+    if(!io->write(ctx,off,encoded)){s->error=A630_SMMU_IO;s->failed_offset=off;return false;}
+    if(!a630_smmu_rd(io,ctx,s,off,&actual))return false;
+    s->fault_actual=actual;
+    if((actual&0x30000u)==0x20000u && !((actual^requested)&0x03030300u)){
+        s->fault_quirk=1;s->fault_canonical|=(actual&255)!=(requested&255);return true;
+    }
+ mismatch:
+    s->error=A630_SMMU_ACK;s->failed_offset=off;s->expected=requested;s->actual=actual;return false;
 }
 static inline bool a630_smmu_set64(const struct a630_smmu_io *io, void *ctx,
     struct a630_smmu_snapshot *s, uint32_t off, uint64_t value)
@@ -272,8 +309,8 @@ static inline enum a630_smmu_error
     }
     s->stage=4;
     /* Make this stream fault while its new context is being programmed. */
-    if (!a630_smmu_set(io,ctx,s,0xc00+4*s->slot,(s->s2cr&~0x30000u)|0x20000,0x30000) ||
-        !a630_smmu_set(io,ctx,s,0x800+4*s->slot,s->smr&~(1u<<31),1u<<31)) goto done;
+    if (!a630_smmu_set(io,ctx,s,0x800+4*s->slot,s->smr&~(1u<<31),1u<<31) ||
+        !a630_smmu_fault(io,ctx,s,(s->s2cr&~0x30000u)|0x20000)) goto done;
     if(!s->foreign && !handoff){
         if(!a630_smmu_halt(io,ctx,s,true))goto done;
         for(unsigned n=0;n<A630_SMMU_IMPLS;n++){
@@ -338,9 +375,8 @@ static inline bool a630_smmu_end(const struct a630_smmu_io *io, void *ctx,
      * Release it before architectural TLB synchronization, as the vendor. */
     if(r.halt_changed&&!a630_smmu_halt(io,ctx,&r,false))goto failed;
     /* No more stream requests may enter the context during teardown. */
-    if (!a630_smmu_set(io,ctx,&r,0xc00+4*s->slot,
-            (s->s2cr&~0x30000u)|0x20000,0x30000) ||
-        !a630_smmu_set(io,ctx,&r,0x800+4*s->slot,s->smr&~(1u<<31),UINT32_MAX) ||
+    if (!a630_smmu_set(io,ctx,&r,0x800+4*s->slot,s->smr&~(1u<<31),UINT32_MAX) ||
+        !a630_smmu_fault(io,ctx,&r,(s->s2cr&~0x30000u)|0x20000) ||
         !a630_smmu_set(io,ctx,&r,s->context,0,1) ||
         !a630_smmu_tlb(io,ctx,&r)) goto failed;
     if (!a630_smmu_set64(io,ctx,&r,s->context+0x20,s->ttbr[0]) ||
@@ -365,14 +401,20 @@ static inline bool a630_smmu_end(const struct a630_smmu_io *io, void *ctx,
         if (!a630_smmu_rd(io,ctx,&r,0,&current) ||
             !a630_smmu_set(io,ctx,&r,0,(current&~0x401u)|(s->global&0x401),0x401)) goto failed;
     }
-    if (!a630_smmu_set(io,ctx,&r,0xc00+4*s->slot,s->s2cr,0x030303ff) ||
-        !a630_smmu_set(io,ctx,&r,0x800+4*s->slot,s->smr,UINT32_MAX)) goto failed;
+    if((s->s2cr&0x30000u)==0x20000u){
+        if(!a630_smmu_fault(io,ctx,&r,s->s2cr))goto failed;
+    }else if(!a630_smmu_set(io,ctx,&r,0xc00+4*s->slot,s->s2cr,0x030303ff))goto failed;
+    if(!a630_smmu_set(io,ctx,&r,0x800+4*s->slot,s->smr,UINT32_MAX))goto failed;
     if (!io->sync(ctx)) {r.error=A630_SMMU_IO;goto failed;}
     if(s->preserved_impl && !a630_smmu_impl_stable(io,ctx,&r))goto failed;
+    s->fault_quirk=r.fault_quirk;s->fault_canonical=r.fault_canonical;
+    s->fault_requested=r.fault_requested;s->fault_actual=r.fault_actual;s->fault_attempts=r.fault_attempts;
     s->impl_checks=r.impl_checks;
     s->halt_after=r.halt_after;s->halt_polls=r.halt_polls;
     s->restored=1;s->restore_error=0;s->restore_offset=0;return true;
 failed:
+    s->fault_quirk=r.fault_quirk;s->fault_canonical=r.fault_canonical;
+    s->fault_requested=r.fault_requested;s->fault_actual=r.fault_actual;s->fault_attempts=r.fault_attempts;
     s->halt_after=r.halt_after;s->halt_polls=r.halt_polls;
     s->restore_offset=r.failed_offset;s->restore_expected=r.expected;s->restore_actual=r.actual;
     s->restored=0;s->restore_error=r.error?r.error:A630_SMMU_RESTORE;

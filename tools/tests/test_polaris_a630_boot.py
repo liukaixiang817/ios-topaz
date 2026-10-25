@@ -14,7 +14,7 @@ class A630BootTests(unittest.TestCase):
 #include <assert.h>
 #include <string.h>
 static uint32_t gmu[0x30000/4],pdc[0x300000/4],original[48];
-struct model {unsigned op,fail,writes,releases,waits;bool held,timeout;uint32_t bcr,gx;};
+struct model {unsigned op,fail,writes,releases,waits;bool held,timeout,retained_hidden,hidden_drift,ignore_other;uint32_t bcr,gx;};
 static struct model m;
 static bool owned(void *x){return ((struct model*)x)->held;}
 static bool op(struct model *x){return ++x->op!=x->fail;}
@@ -24,7 +24,11 @@ static uint32_t *reg(unsigned b,uint32_t o){
 }
 static bool rd(void *ctx,unsigned b,uint32_t o,uint32_t *v){if(!op(ctx))return false;*v=*reg(b,o);return true;}
 static bool wr(void *ctx,unsigned b,uint32_t o,uint32_t v){
- struct model *x=ctx;assert(x->held);x->writes++;*reg(b,o)=v;
+ struct model *x=ctx;assert(x->held);x->writes++;
+ bool hidden=b==2&&(o==0x23034||o==0x2303c||o==0x23044);
+ if(x->retained_hidden&&hidden){assert(v==0);if(x->hidden_drift)*reg(b,o)^=4;return op(x);}
+ if(x->ignore_other&&b==2&&o==0x2302c)return op(x);
+ *reg(b,o)=v;
  if(b==2&&o==0x14000&&!v){
   x->releases++;
   /* Literal original values: TCM boot2, original compressed chipid,
@@ -83,6 +87,37 @@ int main(void){struct a630_boot_snapshot s;
  assert(!s.fw&&m.releases==1);assert(a630_boot_stop(&io,&s));restored();
  reset();assert(a630_boot_configure(&io,&s));assert(a630_boot_start(&io,&s));
  m.held=false;unsigned writes=m.writes;assert(!a630_boot_stop(&io,&s)&&!s.stopped&&m.writes==writes);
+
+ /* A retained hidden-address word is recorded, not called a zero ACK or
+  * firmware success. Other registers retain strict expected-value ACKs. */
+ reset();m.retained_hidden=true;
+ for(unsigned n=0;n<48;n++)if(a630_boot_profile[n].bank==2&&
+   (a630_boot_profile[n].offset==0x23034||a630_boot_profile[n].offset==0x2303c||a630_boot_profile[n].offset==0x23044)){
+  original[n]=0x82204514+n;*reg(2,a630_boot_profile[n].offset)=original[n];
+ }
+ assert(a630_boot_configure(&io,&s)&&s.retained_hidden==7&&s.stage==3&&!m.releases);
+ unsigned retained_config=m.op;
+ assert(a630_boot_start(&io,&s)&&s.fw==0xbabeface&&s.started);
+ unsigned retained_all=m.op;
+ assert(a630_boot_stop(&io,&s)&&s.stopped&&s.restored);restored();
+ for(unsigned fail=1;fail<=retained_all;fail++){
+  reset();m.retained_hidden=true;m.fail=fail;
+  bool configured=a630_boot_configure(&io,&s);
+  if(configured)assert(!a630_boot_start(&io,&s));else assert(fail<=retained_config);
+  assert(s.error==A630_BOOT_IO);m.fail=0;
+  assert(a630_boot_stop(&io,&s));if(s.changed)restored();
+ }
+ reset();m.retained_hidden=true;m.timeout=true;
+ assert(a630_boot_configure(&io,&s));assert(!a630_boot_start(&io,&s));
+ assert(s.error==A630_BOOT_TIMEOUT&&!s.fw&&s.started);
+ assert(a630_boot_stop(&io,&s));restored();
+ reset();m.retained_hidden=true;m.hidden_drift=true;
+ assert(!a630_boot_configure(&io,&s)&&s.error==A630_BOOT_ACK&&s.failed_offset==0x23034);
+ reset();m.ignore_other=true;
+ assert(!a630_boot_configure(&io,&s)&&s.error==A630_BOOT_ACK&&s.failed_offset==0x2302c);
+ reset();m.retained_hidden=true;assert(a630_boot_configure(&io,&s));
+ m.retained_hidden=false;gmu[0x23034/4]^=4;
+ assert(!a630_boot_stop(&io,&s)&&s.restore_error==A630_BOOT_ACK);
  return 0;
 }
 '''

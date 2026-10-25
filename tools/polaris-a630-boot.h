@@ -69,6 +69,9 @@ struct a630_boot_snapshot {
     uint32_t error,start_error,stage,changed,restored,restore_error,started,stopped;
     uint32_t before[A630_BOOT_PROFILE],fw,bcr,reset,busy,gx,hfi;
     uint32_t failed_bank,failed_offset,expected,actual,polls;
+    uint64_t attempted;
+    uint32_t retained_hidden,hidden_before[3],hidden_after[3];
+    uint32_t restore_bank,restore_offset,restore_expected,restore_actual;
 };
 static inline bool a630_boot_read(const struct a630_boot_io *io,struct a630_boot_snapshot *s,
                                  unsigned bank,uint32_t off,uint32_t *v)
@@ -107,6 +110,33 @@ static inline bool a630_boot_poll(const struct a630_boot_io *io,struct a630_boot
     s->error=A630_BOOT_TIMEOUT;s->failed_bank=bank;s->failed_offset=off;
     s->expected=value;s->actual=actual;return false;
 }
+/* The stock MiCode and mainline sequences issue zero to these three hidden
+ * TCS address slots without treating them as ordinary retained-RAM words.
+ * Polaris0036 read82204514 after the first zero request. Keep that observable
+ * distinction: accept only the exact saved word remaining unchanged (or an
+ * acknowledged zero); never accept an unexpected new word or an IO failure.
+ * This establishes the issued request, NOT a cleared address. A fresh FW
+ * handshake remains mandatory, and no HFI/GX operation is enabled here. */
+static inline bool a630_boot_hidden_request(const struct a630_boot_io *io,
+    struct a630_boot_snapshot *s,unsigned index)
+{
+    const struct a630_boot_register *r=&a630_boot_profile[index];
+    unsigned slot=(r->offset-0x23034)/8;uint32_t actual;
+    if(r->bank!=2 || r->value || slot>=3 || r->offset!=0x23034+8*slot){
+        s->error=A630_BOOT_IO;return false;
+    }
+    s->hidden_before[slot]=s->before[index];
+    if(!io->owned(io->ctx)){s->error=A630_BOOT_LEASE;return false;}
+    if(!io->write(io->ctx,r->bank,r->offset,0)){
+        s->error=A630_BOOT_IO;s->failed_bank=r->bank;s->failed_offset=r->offset;return false;
+    }
+    if(!a630_boot_read(io,s,r->bank,r->offset,&actual))return false;
+    s->hidden_after[slot]=actual;
+    if(actual==0)return true;
+    if(actual==s->before[index]){s->retained_hidden|=1u<<slot;return true;}
+    s->error=A630_BOOT_ACK;s->failed_bank=r->bank;s->failed_offset=r->offset;
+    s->expected=0;s->actual=actual;return false;
+}
 /* Set up sequencers while CM3 is held. These are the original A630 TCS
  * addresses/values, not SC7280's layout. This profile only configures them;
  * it does not issue a rail vote or trigger the sequencers. */
@@ -125,10 +155,14 @@ static inline bool a630_boot_configure(const struct a630_boot_io *io,struct a630
         if(!a630_boot_read(io,s,r->bank,r->offset,&s->before[n]))goto done;
     }
     s->stage=2;s->changed=A630_BOOT_PROFILE;
+    s->attempted|=1ull<<(A630_BOOT_PROFILE-1);
     if(!a630_boot_set(io,s,4,0x84500,0,0x80000001))goto done;
     for(unsigned n=0;n<A630_BOOT_PROFILE;n++){
         const struct a630_boot_register *r=&a630_boot_profile[n];
-        if(!a630_boot_set(io,s,r->bank,r->offset,r->value,r->mask))goto done;
+        s->attempted|=1ull<<n;
+        if(r->bank==2 && (r->offset==0x23034 || r->offset==0x2303c || r->offset==0x23044)){
+            if(!a630_boot_hidden_request(io,s,n))goto done;
+        }else if(!a630_boot_set(io,s,r->bank,r->offset,r->value,r->mask))goto done;
     }
     if(!io->sync(io->ctx)){s->error=A630_BOOT_IO;goto done;}
     s->stage=3;return true;
@@ -175,22 +209,35 @@ done:
  * Keep all allocations, power and clocks when containment is uncertain. */
 static inline bool a630_boot_stop(const struct a630_boot_io *io,struct a630_boot_snapshot *s)
 {
-    struct a630_boot_snapshot r=*s;r.error=0;
+    struct a630_boot_snapshot r=*s;r.error=0;r.failed_bank=r.failed_offset=r.expected=r.actual=0;
     if(!a630_boot_set(io,&r,2,0x14000,1,0xffffffff)||
        !a630_boot_set(io,&r,1,0x111c,1,1)||
        !a630_boot_poll(io,&r,1,0x111c,1,1,1000))goto failed;
     io->wait(io->ctx,20);
     if(!a630_boot_poll(io,&r,2,0x23404,0,0xffffffff,1000))goto failed;
     s->stopped=1;
-    if(s->changed&&!a630_boot_set(io,&r,4,0x84500,0,0x80000001))goto failed;
-    for(unsigned n=s->changed?s->changed-1:0;n>0;n--){
-        const struct a630_boot_register *p=&a630_boot_profile[n-1];
-        if(!a630_boot_set(io,&r,p->bank,p->offset,s->before[n-1],p->mask))goto failed;
+    if(s->attempted&&!a630_boot_set(io,&r,4,0x84500,0,0x80000001))goto failed;
+    for(int n=A630_BOOT_PROFILE-2;n>=0;n--){
+        const struct a630_boot_register *p=&a630_boot_profile[n];
+        if(!(s->attempted&(1ull<<n)))continue;
+        if(p->bank==2 && (p->offset==0x23034 || p->offset==0x2303c || p->offset==0x23044)){
+            uint32_t current;
+            if(!a630_boot_read(io,&r,p->bank,p->offset,&current))goto failed;
+            if(current==s->before[n])continue;
+            /* A callback may fail after a posted zero. Only a zero target
+             * permits restoring a known read/write slot. Unknown new words
+             * are never written back as opaque control commands. */
+            if(current!=0){r.error=A630_BOOT_ACK;r.failed_bank=p->bank;
+                r.failed_offset=p->offset;r.expected=s->before[n];r.actual=current;goto failed;}
+        }
+        if(!a630_boot_set(io,&r,p->bank,p->offset,s->before[n],p->mask))goto failed;
     }
-    if(s->changed&&!a630_boot_set(io,&r,4,0x84500,s->before[A630_BOOT_PROFILE-1],0x80000001))goto failed;
+    if(s->attempted&&!a630_boot_set(io,&r,4,0x84500,s->before[A630_BOOT_PROFILE-1],0x80000001))goto failed;
     if(!io->sync(io->ctx)){r.error=A630_BOOT_IO;goto failed;}
-    s->restored=1;s->restore_error=0;return true;
+    s->restored=1;s->restore_error=0;s->restore_bank=s->restore_offset=s->restore_expected=s->restore_actual=0;return true;
 failed:
-    s->restored=0;s->restore_error=r.error?r.error:A630_BOOT_IO;return false;
+    s->restored=0;s->restore_error=r.error?r.error:A630_BOOT_IO;
+    s->restore_bank=r.failed_bank;s->restore_offset=r.failed_offset;
+    s->restore_expected=r.expected;s->restore_actual=r.actual;return false;
 }
 #endif
