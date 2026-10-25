@@ -44,6 +44,9 @@ early samples only. On0029 the human already confirmed boot complete and said
   No timeout orstopondiscovery. DoNOTrestartobserverorbootagain; waitactual
   sameboot“已进入系统”/cancel. Stopwith0037stop-usb-observation.py thenverify
   processgone/journalcount/state.0036confirmationmustnotstop0037.
+- Postwrapperliveaudit00:58:55.327877UTC: PID5970PPID1stillactive85s,
+  9samples/80.566s,last00:58:50.965707UTC,journalmatches,zeroinspectionerrors,
+  noECMearlyonly. Localobserver-live-check.json. Continuesuntilhumanconfirmation.
 - PendingquestionasksactualGUIconfirmation+**GEfw/GR**(lookforfreshBABEFACE).
   Noactual0037firmwareexecution/GPU3D/rendering/USBlinkresultyet. Nativeboot
   remainsprobeandcontainment, noHFI/GX/CP/Mesa/CAintegrationclaim.
