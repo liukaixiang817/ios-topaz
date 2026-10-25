@@ -34,6 +34,49 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT ACTION —0044 native cold PAS fix source4564a8a / CI40161330702 running
+
+- Human0043 photo02856914 + “又停滞了” identifies lastvisibleboundary:
+  SCM enter fn42000206 info1 argd/0/0, NOmatchingreturn. It is the extra
+  PRE-INIT PAS_SHUTDOWN13. All5availabilityqueries c2000601 returnedtransport0/
+  secure1. VisibleCB0configuration andSTEP12post-HFIready imply (viaexact
+  gates) ownedCB0setup,5HFIACKs,DCVSreturn0 andGPUOOBSPTPready. NoINIT_IMAGE,
+  MEM_SETUP,AUTH,CPfence/image/GUIproofyet. InternalTZcause notestablished.
+  Fullrecord0043/hardware-0043-PAS-shutdown-stall.json. USBobserverPAUSED.
+- OriginalMiCode c7cb50c1 peripheral-loader.c pil_boot coldpath is INIT_IMAGE,
+  MEM_SETUP,loadsegment,AUTH_RESET; shutdown is separate/errcleanup, NOT a
+  pre-initstep. Our extra initialshutdown followed reference642L warmhandoff,
+  which isnotnativepolaris coldboot. Removedthisunownedoperation; rejected
+  INIT/MEM/AUTH stillFAILS, neverreusea presumedpreviousZAP. SMCABI,firmware,
+  DT,reserved8c415000/2000,clock/MMU/CPprofiles unchanged.
+- New0044 policy: afterfreshAUTH, retain PAS13+GMU/GX/bothSMMUs/clocks/all
+  permanentpages for thiskernel's lifetime, includingafterhaltedCPproof or
+  CPfailure. NoautomaticPASshutdown/slumber/resourcewithdrawal onbootstrap.
+  SeparateZAPretainedflag (GZ K1) vsCOREuncertainkeep_live(L1); doNOTturn
+  CPfailureintosuccess. Explicitownedstophelper remainsseparatelytested;
+  noresourcesmaybewithdrawnwithoutshutdownACK. NoGUI GPUservice registered.
+- EmitPOLARIS GPU CORE RESULT beforeholdingresources. Expectednativeproof:
+  F600dc0de/GI1px1000/H1, GZA1K1Q0. Q0/HRslumber0 andP8/K10 areintentional
+  retainedlifetime, notshutdownsuccess/cleanupfailure. UnknownengineL1still
+  preservesfirstfaultandallresources. Donotclaimdesktopaccelerationfromit.
+- Local b647332; public4564a8a835c71980db54f0a47abb5dbd4e560705 (parent7713ef3),
+  source-only4files/NOTESexcluded. FreshCI40161330702 RUNNING; wrapper55858.
+  Final49ASan/UBSan/actual-adaptertests PASS,29rows PASS;4actualCI-headerARM64
+  units/importsPASS;29patches35files exactnooffset/fuzz;SMC4sites/DSB/fullx3.
+  Newactualcleanupfragment test provesretainedauth bypassesALL7teardowncalls;
+  protocoltestprovesnoPASshutdownbeforeauthentication andstrictallreturns.
+  Drafthostmissingstdio/oldmode2shutdownexpectation failures preservedprivate.
+- Private0044pipeline frozen14scripts BEFOREguestexecution, sameCPU1default
+  clock60/90/60matrix/exactv4ADT/GPU9, expected133. ExistingZAPno-SMCassertion
+  strengthened retained0/shutdown0. Onlyonepredeclared identicalretry for
+  classifiedtimerfailure; preserveallfailures, no IRQ/clockwaiver. Prior0043
+  cache/asyncfirsttimerfailuresremainFAILED/unresolved; noCPU2phoneadmission.
+- NEXTwait55858 -> independentfinal-prepared-check.py (49/133/29/35, linked
+  SMC/highPA/cold-PAS-source-check, retainedpolicyflag). FIRSTautoFASTBOOTquery
+  afterimageverified. Ifexpectedpolarisready, freshROpreflight/directtempboot;
+  askphysicalkeysonlyifabsent. USBobserverstaysPAUSED; NOTboot-and-watch.
+  No0044image/deviceactionyet. AwaitnewactualGUI orSCM201/202/205/core result.
+
 ### CURRENT ACTION —0043 temporary boot SENT; fresh hardware result pending
 
 - FreshROpreflight55831 EXIT0 at04:05:00.490228UTC: complete16GiB689a8cd1,
