@@ -28,6 +28,44 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT ACTION —0040 narrow high-PA fix locally verified; preparing full CI
+
+- 0039 USB observer34645 verified absent after explicit user pause; STOPPED,
+  12samples/115.886s/journalmatch/noECM/hostnetworkchange. Do not restart it.
+- Patch0845 fixes actual XNU pmap_sync_page_attributes_phys by widening ppnum
+  BEFORE shift with ptoa_64(pp). Linked0039 instruction was **lsl w0,w0,#14**;
+  new actual-header ARM64 object is **ubfiz x0,x0,#14,#32**. Exact original
+  function fails high-address boundary regression; shipped fix passes8 addresses.
+- Add explicit synthetic-only polarisgpucachetest=1: owned2 NormalNC16KiB
+  managed pages above4GiB; verify cache attrs, first/last sentinel writes and
+  restore original attrs. It cannot access GPU/MMIO and phone args omit it.
+  Needed because prior wrong-board regression skipped this RAM-only path.
+- Local30 ASan/UBSan tests,4 actual-header ARM64 units/imports,25 patches30
+  files/native source/liveDT/unchanged24-row formatter PASS. GPUmode7 remains
+  enabled, no fake success by skipping HFI. Full CI/high-RAM guest still pending.
+- Prepare source-only publication/build next; exclude private notes/history.
+ 0040 image/device actions not yet performed. User requested fix quickly and
+  paused THIS0039 observation; future temporary boots keep established watcher
+  rule unless user changes it. Preserve0038 rollback, reject0039 panic image.
+
+### CURRENT ACTION —0039 PANIC; USB observation explicitly paused; fixing high PA truncation
+
+- Human photo290AACB4 shows **kernel panic**,not GUI: `phystokv_range: illegal
+  PA0xa44a8000; physbase0x180000000,size0xfc8a0000 @arm_vm_init.c:406`.
+  Caller0xfffffe0007b312e4 resolves to phystokv_range.cold.1+68. HFI not reached.
+- Source root cause: pmap_sync_page_attributes_phys(ppnum_t pp) calls
+  flush_dcache((vm_offset_t)(pp<<PAGE_SHIFT),...). pp is32bit; cast occurs AFTER
+  shift, dropping PA high bits. 0039 pmap_set_cache_attributes on high RAM invokes
+  this path. Fix widens BEFORE shifting via ptoa_64(pp), not a bypass/low-RAM move.
+- User explicitly said **“尽快修复这个GPU，USB观察本次暂停”**. 0039 stop marker
+  human_cancelled recorded01:55:03.081315UTC. Observer summary STOPPED_BY_HUMAN,
+  12samples/115.886s,last01:54:58.545210UTC,journalmatches/noECM/hostnetworkchange.
+  Verify PID34645 absent; do NOT restart0039watch or infer GUI confirmation.
+- Preparing0040 narrow pmap fix plus synthetic owned-RAM cache-attribute test
+  using physical pages above4GiB, so this exact path is exercised before phone.
+  Existing GPUmode7 HFI path stays enabled; current0039 image is rejected.
+  No0040 commit/CI/image/device action yet. Preserve0038 rollback.
+
 ### CURRENT ACTION —0039 temporary boot SENT; detached USB observer ACTIVE
 
 - Preflight79311 **EXIT0**,verified **01:52:39.410465UTC**: full16GiB SHA689a8cd1,
