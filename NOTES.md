@@ -34,6 +34,46 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0050 sourceb2f84fe / CI40191830180; frozen pipeline2218 running
+
+- Implementationcommitted7dc3e27;15source-onlyfiles publishedb2f84fe70c8325812b05f899be26a1654cd55434
+  (parent6c9b833). CI40191830180 running. No private evidence/Apple/SDK/binary/
+  firmware/serialpublished. Currentphone0049 onlylogs/Apple, likelyserverloop;
+  no0050phoneaction yet. USBobserver remainsPAUSED.
+-71native/ASan/UBSan PASS including actual8methodpreflight/rollback, nil
+  sharegroup,noinvalidprivateivarread, lateobserver replay, firstfatalrecord/
+  bounds/first-onlyretention, runtimeCB0quiet+progress, and realwrapper CPU
+  restartskippingtest/injection.8actualARM64units/imports,36orderedpatches/
+  51files/nooffset-fuzz/29rows/sourceboundariesPASS. Initialnativefixtures
+  missednewpublication/STDERR declarations; initiallocalSDKcompilemissingCF
+  include andkernelheadersearchpath corrected. Allinitiallogs retained.
+- Actual20H392 sharegroup accessor1d3f5188c andCoreImagewrapEAGLContextCreate
+  sharegroup call194b32188 +nilbranch194b3218c verifiedfromowncache. Nil
+  skips optionaldictionaryentry; physical0050rendering remainsUNPROVEN.
+- Shared40bytefatalABI AMFI0x5b usesexactexistingverifiedreal-executable scope,
+  PID1/non-target refusal unchanged. First SIG4/5/6/10/11 PC/LR/address cached,
+  immutable acrossrestarts;3GLFrowsreplacecompletednative rows16..18 only.
+  image0raw/1cachepreferredVA/2injectoroffset/3bridgeoffset/4Mesaoffset.
+  Handlerusesfixedstack+thin__mac_syscall+write+kill, noalloc/stdio/dladdr/
+  unsafeFPwalk/GPUlocks; image ranges immutable afteratomicpublication.
+  SIGKILL/watchdog notcapturable. No unknownDMAcleanup/reset introduced.
+- KernelpermitsONEverifieddesktopGPUopen perboot; registrypropertymakes
+  wrapper skipsecondchildtest/injection andlaunchCPU. C counts completed
+  genuine-desktopsubmissions only; S stillallclients. Methodmask nowff;
+  lateattachedobserverreplaysactualcontextphase; T/Eselftest unchanged.
+  SuccessCB0loggingstopsafterbootstrappublication; allMMIO/poll/cache/order,
+  firmware/HFI/PAS/MMU/submission/BO/surface/storage paths preserved except
+  explicitdiagnosticcounter. Mesa,test,PID1helper byte-identical0049.
+- graphics-v3 all6signed/current source manifestPASS; newbuilderbindsshared
+  statusheadertoo.219source/host/artifactinputsFROZENbeforeANY0050guest.
+  Wrapper2218 waitsCI->exactprofile/CRC/SHAkernel->freshCPU1defaultclock
+  60/90/60/60s(total185checks)->prepareonly. Atmostoneidenticalretry per
+  classifiedrtclockcase; secondfailureSTOP, noCPU2/IRQ/clockwaiver.
+- NEXT finishbuild/regressions/finalimagechecker, THEN FIRSTtargetedFASTBOOT
+  query; ifexpectedphonepresent proceedfreshROrootpreflight/directtemporary
+  boot; askkeysONLYifabsent. Do notbootwithoutfinalcheck. Allnewhardware/
+  GUI/stability/GPUdesktopproof pending; preserve0049photosevidence.
+
 ### 0050 repair in progress:0049 noGUI/repeatingserver, not ordinary slow boot
 
 - Human sixphotos12B20699 and reply confirm ONLYlogs/Applelogo, no desktop.
