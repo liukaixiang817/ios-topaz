@@ -16,6 +16,12 @@ expected polaris is already present, continue the authorized preflight and
 temporary boot directly. Ask for physical keys only when actually needed;
 do not wait for a repeated FASTBOOT reply.**
 
+**LATEST USB PAUSE (2026-10-25 local):** Human said “USB观察本次暂停” during
+0039 panic repair. 0039 observer stopped. We explicitly keep host observation
+paused for immediate0040 GPU verification; no0040 observer was started. Do not
+restart it without an actual human request/clarification. This overrides the
+default observation rule below while paused.
+
 **Current USB observation rule, clarified by the user (2026-10-25 local):
 start host observation immediately after sending each temporary boot, and
 continue until the human replies “已进入系统” or explicitly ends observation.
@@ -27,6 +33,66 @@ arrives. End using a human-confirmation marker bound to that boot's sent_utc;
 stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
+
+### CURRENT ACTION —0040 temporary boot SENT; USB observation remains PAUSED
+
+- **Preflight14222 EXIT0**,verified **02:09:57.991719UTC**: full16GiB689a8cd1/
+  182maps/GPT/exactcleanheader32311c08 unchanged,RO1/unmounted/31C; no partition
+  writes, journal replay or repair. **Boot18163 EXIT0**,Sending/BootingOKAY,
+  total1.181s, **2026-10-25T02:10:16.916553UTC**,exact image04300dad/source91b2bca/
+  CI40152678487SUCCESS. 0040 fixes the confirmed high-PA cache-sync truncation.
+- **USB OBSERVATION PAUSED per latest user preference**. Direct boot-phone was
+  used, not boot-and-watch. No0040 watcher process or enumeration file; verified
+  host-only process inventory. Private0040/usb-observation-paused.json bound to
+  sent_utc. Do NOT start an observer implicitly. 0039 observer remains stopped.
+  No USB connection or full-window negative claim is possible for this new boot.
+- Pending question asks actual GUI/load/panic status and GH/HR text. A voluntary
+  photo including GH/HQ/HA/HR is useful. Do NOT infer successful boot from send
+  OKAY or a loader progress bar. No actual0040 HFI/GX/3D/rendering result yet.
+- Exact new full-kernel guest proof: CACHE TEST PASS on PA0x187644000 (above4GiB),
+  NC2/restored2 and sentineldata checked; all115 selected checks FIRSTPASS.
+  This addresses0039panic; does not prove GPU drawing. Preserve0038 rollback.
+- Next inspect actual GH/HQ/HA/HR before another functional GPU change. Original
+  mode7 OOB/SPTP/HFI INIT/FW_VER remains enabled. PERF/BW/TEST, safe GX lifetime,
+  ZAP/SQE/CP, completed image/fence and userland rendering bridge remain pending.
+  Current human pause must persist unless they request USB observation again.
+
+### CURRENT ACTION —0040 VERIFIED; FASTBOOT present; readonly preflight ACTIVE; USB observation PAUSED
+
+- **Latest user USB preference takes precedence:** “USB观察本次暂停”. 0039
+  observer34645 stopped/absent. Keep host observation paused through this
+  immediate0040 GPU repair/verification; user-facing update states this clearly.
+  Do NOT implicitly restart a watcher on0040. Run **run-device-step.py boot-phone**
+  after preflight PASS, NOT boot-and-watch.py. Record newboot as unobserved/paused;
+  no negative USB discovery claim is possible. Resume on actual human request.
+- **CI40152678487/job121047319035 SUCCESS**,source91b2bca. Kernel0040 SHA
+  **026db74eee3a74527122c190e7f00e17ea7d65cfd883df34a819abfc332c1b05**.
+  Pipeline87654 EXIT0: FIRSTPASS cache-high60s40 (real NC2/restored2 at
+  PA0x187644000),async-net90s39,no-MMIO60s36 = **115 checks**,all4VMchildren each,
+  no new failure/retry. Existing priorSMP/sync failures remain unresolved.
+- Image shim/out/polaris-xnu-readdebug-0040/polaris-xnu-readdebug-0040.img,
+  47476736B SHA **04300dad9d17f7e32c53a54a1fbcd37760163a5c3f5633e02fed09b6147036f4**;
+  payload **d0c349058a13495bae91194a746423ede3aead745246758be3cadc75b1ed6e56**.
+  Independent checker57502 EXIT0 **02:08:01.582824UTC**. Native30/4 actual-header
+  ARM64/imports/25patches30files/24-row formatter/linked64bit instruction/
+  high-RAM transition/source hashes/frozen14 hosts/exact65DTB payload PASS.
+- FIRST FASTBOOT query **02:08:27.398971UTC** found expected polaris/product,
+  immediately started authorized fullRO preflight **session14222 ACTIVE**.
+  No repeated physical-key question needed. Check session before retrying.
+- After PASS direct temporary0040 boot (observer stays PAUSED), ask actual GUI
+  status and GH/HQ/HA/HR. GPUmode7 retained, but no actual0040 firmware/HFI/GX/
+  CP/rendering result yet. This is the high-PA crash correction, not GPU success.
+
+### CURRENT ACTION —0040 pre-execution validation matrix narrowed to115 checks
+
+- Before any0040 guest execution or downloaded kernel, replace duplicate120s
+  mode1 base with cache-high60s: it runs the same36 baseline checks plus4 new
+  actual high-RAM cache-transition conditions. Keep async-net90s39 checks and
+  no-MMIOmode7 60s36 controls. Total **115**; all4 VM children required each.
+  This avoids repeating baseline coverage while prioritizing the actual panic.
+- Prior matrix/host files preserved as pre-guest-matrix-*; final/validation
+  drivers refrozen with explicit reason before execution. No failed test was
+  skipped, retried or reclassified. CI40152678487/pipeline87654 still building.
 
 ### CURRENT ACTION —0040 corrected kernel building; high-RAM regression prepared
 
