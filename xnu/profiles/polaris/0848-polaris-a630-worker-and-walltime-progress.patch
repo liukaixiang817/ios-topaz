@@ -301,7 +301,7 @@
  {
 -    if (!__atomic_load_n(&a630_published, __ATOMIC_ACQUIRE)) return;
 +    if (!__atomic_load_n(&a630_published, __ATOMIC_ACQUIRE)) {
-+        if(a630_mode==9 && __atomic_load_n(&a630_started,__ATOMIC_ACQUIRE)){
++        if(__atomic_load_n(&a630_worker_state,__ATOMIC_ACQUIRE)){
 +            char progress[80];a630_pending_format(progress,sizeof(progress));
 +            printf("D GPU PROGRESS: %s; hardware result pending\n",progress);
 +        }
