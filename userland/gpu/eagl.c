@@ -71,6 +71,7 @@
 #include <unistd.h>
 
 #include "redwood_gl.h"
+#include "../../tools/polaris-gl-status.h"
 
 /* ---- OpenGL ES: the types, the few names used here, the library's functions --------------------- */
 
@@ -3429,18 +3430,22 @@ _Static_assert(EAGL_TABLE_SIZE <= SLOTS * 8, "the table has grown");
 
 static unsigned polaris_method_mask;
 static void (*polaris_observer)(unsigned,unsigned,unsigned);
+static unsigned polaris_context_stage,polaris_context_error;
 unsigned polaris_eagl_methods(void) {return polaris_method_mask;}
 void polaris_eagl_observe(void (*note)(unsigned,unsigned,unsigned))
 {
 	polaris_observer=note;
-	if(note)note(4,polaris_method_mask==0x7f?0:4,polaris_method_mask);
+	if(note)note(polaris_context_stage?polaris_context_stage:4,
+	    polaris_method_mask==PGPU_EAGL_METHOD_MASK?polaris_context_error:4,polaris_method_mask);
 }
 static void polaris_context_note(unsigned stage,unsigned error)
 {
 	/* Context creation only, never per-GL-call or per-frame logging. */
 	static unsigned requested,created;
-	if(error || (stage==5 && !requested++) || (stage==6 && !created++))
+	if(error || (stage==5 && !requested++) || (stage==6 && !created++)) {
+		polaris_context_stage=stage;polaris_context_error=error;
 		if(polaris_observer)polaris_observer(stage,error,polaris_method_mask);
+	}
 }
 
 static id
@@ -3485,6 +3490,14 @@ my_API(id self, SEL selector)
 
 	(void)selector;
 	return e ? e->api : 0;
+}
+
+/* Our context state is external to Apple's object. Its private ivar remains
+ * NULL; the original20H392 sharegroup accessor dereferences that ivar+8.
+ * No contexts share resources here, so return nil without touching it. */
+static id my_sharegroup(id self,SEL selector)
+{
+	(void)self;(void)selector;return nil;
 }
 
 static unsigned long
@@ -3672,31 +3685,32 @@ static unsigned polaris_install_methods(Class class)
 	} methods[] = {
 		{ "initWithAPI:properties:", (IMP)my_initWithAPI },
 		{ "API", (IMP)my_API },
+		{ "sharegroup", (IMP)my_sharegroup },
 		{ "setParameter:to:", (IMP)my_setParameter },
 		{ "getMacroContextPrivate", (IMP)my_getMacroContextPrivate },
 		{ "texImageIOSurface:target:internalFormat:width:height:format:type:plane:invert:", (IMP)my_texImageIOSurface },
 		{ "attachImage:toCoreSurface:invertedRender:", (IMP)my_attachImage },
 		{ "dealloc", (IMP)my_dealloc },
 	};
-	Method found[7];IMP original[7];
+	Method found[PGPU_EAGL_METHOD_COUNT];IMP original[PGPU_EAGL_METHOD_COUNT];
 	if(class==Nil)return 0;
 	/* Check the complete interface before changing even dealloc. The actual
 	 *20H392 methods were independently verified from its cache. */
-	for(unsigned i=0;i<7;i++) {
+	for(unsigned i=0;i<PGPU_EAGL_METHOD_COUNT;i++) {
 		found[i]=class_getInstanceMethod(class,sel_registerName(methods[i].name));
 		if(!found[i])return 0;
 		original[i]=method_getImplementation(found[i]);
 	}
 	unsigned mask=0;
-	for(unsigned i=0;i<7;i++) {
+	for(unsigned i=0;i<PGPU_EAGL_METHOD_COUNT;i++) {
 		SEL selector=sel_registerName(methods[i].name);
 		if(found[i]==class_getInstanceMethod(class_getSuperclass(class),selector))
 			class_addMethod(class,selector,methods[i].ours,method_getTypeEncoding(found[i]));
 		else method_setImplementation(found[i],methods[i].ours);
 		if(method_getImplementation(class_getInstanceMethod(class,selector))==methods[i].ours)mask|=1u<<i;
 	}
-	if(mask!=0x7f) {
-		for(unsigned i=0;i<7;i++)if(mask&(1u<<i))
+	if(mask!=PGPU_EAGL_METHOD_MASK) {
+		for(unsigned i=0;i<PGPU_EAGL_METHOD_COUNT;i++)if(mask&(1u<<i))
 			method_setImplementation(class_getInstanceMethod(class,sel_registerName(methods[i].name)),original[i]);
 		return 0;
 	}
@@ -3784,5 +3798,5 @@ install(void)
 	}
 
 	polaris_method_mask=polaris_install_methods(objc_getClass("EAGLContext"));
-	say("polaris-gl: EAGL method mask %#x (required0x7f); library %s\n",polaris_method_mask,redwood_gl_library());
+	say("polaris-gl: EAGL method mask %#x (required0xff); library %s\n",polaris_method_mask,redwood_gl_library());
 }

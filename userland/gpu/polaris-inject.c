@@ -11,6 +11,11 @@
 #include <mach/mach.h>
 #include <stdint.h>
 #include <mach-o/dyld.h>
+#include <mach-o/loader.h>
+#include <signal.h>
+#include <sys/ucontext.h>
+#include <unistd.h>
+#include "../../tools/polaris-gl-status.h"
 extern const void *_dyld_get_shared_cache_range(size_t *);
 #define CACHE_BASE              0x180000000UL
 #define VT_GLES_CONTEXT         0x1d5b2f6e8UL   /* vtable for CA::OGL::GLESContext */
@@ -102,7 +107,70 @@ gl_hooks(void *lib)
 	    orig_function_supported ? "on" : "OFF", orig_function_uniform ? "on" : "OFF");
 }
 
-/* Where a crash happened, printed to stderr (the console): image + offset + symbol. */
+/* First fatal PC/LR survives launchd restarting this process. The handler
+ * uses only a fixed stack record and the thin syscall stub: no allocation,
+ * stdio, dladdr, frame-pointer dereference or GPU connection/driver locks. */
+extern int __mac_syscall(const char *,int,void *);
+static struct pgpu_image crash_images[4];
+static uint32_t crash_images_ready;
+static void
+polaris_gl_inject(void);
+static void crash_image(unsigned index,unsigned kind,void *symbol)
+{
+    Dl_info info;
+    if(!symbol || !dladdr(symbol,&info) || !info.dli_fbase)return;
+    const struct mach_header_64 *h=info.dli_fbase;
+    if(h->magic!=MH_MAGIC_64 || h->ncmds>4096 || h->sizeofcmds>1048576)return;
+    const char *p=(const char*)(h+1),*end=p+h->sizeofcmds;
+    uint64_t lo=UINT64_MAX,hi=0;
+    for(unsigned i=0;i<h->ncmds;i++) {
+        if((size_t)(end-p)<sizeof(struct load_command))return;
+        const struct load_command *lc=(const void*)p;
+        if(lc->cmdsize<sizeof(*lc) || lc->cmdsize>(size_t)(end-p))return;
+        if(lc->cmd==LC_SEGMENT_64 && lc->cmdsize>=sizeof(struct segment_command_64)) {
+            const struct segment_command_64 *s=(const void*)p;
+            if(s->vmsize && s->initprot && s->vmaddr<=UINT64_MAX-s->vmsize) {
+                if(s->vmaddr<lo)lo=s->vmaddr;
+                if(s->vmaddr+s->vmsize>hi)hi=s->vmaddr+s->vmsize;
+            }
+        }
+        p+=lc->cmdsize;
+    }
+    if(hi>lo) {
+        crash_images[index]=(struct pgpu_image){(uintptr_t)h,hi-lo,kind};
+        __atomic_fetch_or(&crash_images_ready,1u<<index,__ATOMIC_RELEASE);
+    }
+}
+static void fatal_signal(int sig,siginfo_t *info,void *opaque)
+{
+    ucontext_t *context=opaque;
+    struct pgpu_crash fault={.signal=(unsigned)sig,.code=info?(unsigned)info->si_code:0,
+        .address=info?(uintptr_t)info->si_addr:0};
+    if(context && context->uc_mcontext) {
+        struct pgpu_image images[4]={0};
+        uint32_t ready=__atomic_load_n(&crash_images_ready,__ATOMIC_ACQUIRE);
+        for(unsigned n=0;n<4;n++)if(ready&(1u<<n))images[n]=crash_images[n];
+        fault.pc=pgpu_pc(context->uc_mcontext->__ss.__pc,images,4,&fault.pc_image);
+        fault.lr=pgpu_pc(context->uc_mcontext->__ss.__lr,images,4,&fault.lr_image);
+    }
+    (void)__mac_syscall("AMFI",0x5b,&fault);
+    const char line[]="POLARIS GL: fatal signal; first PC/LR saved in GLF rows\n";
+    (void)write(STDERR_FILENO,line,sizeof(line)-1);
+    /* SA_RESETHAND already restored the default. Do not resume a faulting
+     * renderer or attempt to reset/tear down hardware from a signal. */
+    (void)kill(getpid(),sig);
+}
+static void watch_for_faults(void)
+{
+    size_t bytes=0;const void *base=_dyld_get_shared_cache_range(&bytes);
+    crash_images[0]=(struct pgpu_image){(uintptr_t)base,bytes,1};
+    __atomic_fetch_or(&crash_images_ready,1,__ATOMIC_RELEASE);
+    crash_image(1,2,(void*)polaris_gl_inject);
+    struct sigaction action={0};action.sa_sigaction=fatal_signal;
+    action.sa_flags=SA_SIGINFO|SA_RESETHAND;
+    const int signals[]={SIGSEGV,SIGBUS,SIGABRT,SIGILL,SIGTRAP};
+    for(unsigned n=0;n<sizeof(signals)/sizeof(signals[0]);n++)sigaction(signals[n],&action,NULL);
+}
 
 static io_connect_t desktop_connection;
 static void loader_note(unsigned stage,unsigned error,unsigned methods)
@@ -123,6 +191,7 @@ static int real_window_server(void)
 __attribute__((constructor)) static void polaris_gl_inject(void)
 {
     if(!real_window_server())return;
+    watch_for_faults();
     io_service_t gpu=IOServiceGetMatchingService(0,IOServiceMatching("PolarisGPU"));
     if(!gpu)return;
     kern_return_t kr=IOServiceOpen(gpu,mach_task_self(),0,&desktop_connection);
@@ -141,8 +210,10 @@ __attribute__((constructor)) static void polaris_gl_inject(void)
         (void (*)(void (*)(unsigned,unsigned,unsigned)))dlsym(gl,"polaris_eagl_observe");
     if(!methods || !observe){loader_note(4,3,0);return;}
     unsigned mask=methods();
-    if(mask!=0x7f){loader_note(4,4,mask);return;}
+    if(mask!=PGPU_EAGL_METHOD_MASK){loader_note(4,4,mask);return;}
+    crash_image(2,3,(void*)methods);
+    crash_image(3,4,dlsym(gl,"glFinish"));
     observe(loader_note);
     gl_hooks(gl);
-    fprintf(stderr,"POLARIS GL: all7 EAGL methods installed; desktop submissions still require observation\n");
+    fprintf(stderr,"POLARIS GL: all8 EAGL methods installed; desktop submissions still require observation\n");
 }

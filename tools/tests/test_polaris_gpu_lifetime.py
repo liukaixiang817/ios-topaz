@@ -31,7 +31,7 @@ class GPULifetimeTests(unittest.TestCase):
 #include <assert.h>
 static uint32_t gpuPublished,gpuOpenStatus=1,gpuSubmissions=0xffffffff,gpuSurfaces=0xffffffff;
 static uint32_t gpuAppStage=6,gpuAppError=255,gpuFaultStatus=1;
-static uint32_t gpuLoaderStage=6,gpuLoaderError=0xffffffff,gpuLoaderMethods=0x7f;
+static uint32_t gpuLoaderStage=6,gpuLoaderError=0xffffffff,gpuLoaderMethods=0xff,gpuDesktopSubmissions=0xffffffff;
 static bool ready;
 static bool polaris_gpu_ready(){return ready;}
 ''' + actual + r'''

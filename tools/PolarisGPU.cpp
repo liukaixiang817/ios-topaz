@@ -34,6 +34,27 @@
 static IOLock *gpuLock;
 static bool gpuOpened, gpuQuarantined;
 static uint32_t gpuSubmissions, gpuSurfaces;
+static uint32_t gpuDesktopAttempts,gpuDesktopSubmissions;
+static struct pgpu_crash gpuFirstCrash;
+static uint32_t gpuCrashPublished,gpuCrashPID;
+extern "C" bool polaris_gpu_record_crash(const struct pgpu_crash *p,uint32_t pid)
+{
+    if(!pgpu_crash_valid(p))return false;
+    uint32_t expected=0;
+    if(__atomic_compare_exchange_n(&gpuCrashPublished,&expected,1,false,__ATOMIC_ACQ_REL,__ATOMIC_ACQUIRE)) {
+        gpuFirstCrash=*p;gpuCrashPID=pid;
+        __atomic_store_n(&gpuCrashPublished,2,__ATOMIC_RELEASE);
+    }
+    return true; /* First fault survives subsequent launchd restarts. */
+}
+extern "C" uint32_t polaris_gpu_crash_line(unsigned line,char *out,uint32_t capacity)
+{
+    if(!out || !capacity || line>2 || __atomic_load_n(&gpuCrashPublished,__ATOMIC_ACQUIRE)!=2)return 0;
+    if(!line)return (uint32_t)snprintf(out,capacity,"GLF SIG%u CODE%x PID%u",gpuFirstCrash.signal,gpuFirstCrash.code,gpuCrashPID);
+    if(line==1)return (uint32_t)snprintf(out,capacity,"GLPC %u:%llx LR%u:%llx",gpuFirstCrash.pc_image,
+        gpuFirstCrash.pc,gpuFirstCrash.lr_image,gpuFirstCrash.lr);
+    return (uint32_t)snprintf(out,capacity,"GLADDR %llx",gpuFirstCrash.address);
+}
 static uint32_t gpuPublished,gpuOpenStatus,gpuFaultStatus;
 static uint32_t gpuAppStage,gpuAppError;
 /* Loading evidence is independent of the shader/pixel acceptance result.
@@ -47,7 +68,7 @@ extern "C" void polaris_gpu_loader_policy(int error)
 }
 static bool polaris_gpu_loader_report(uint32_t kind,uint32_t stage,uint32_t error,uint32_t methods)
 {
-    if(kind!=2 || stage<2 || stage>6 || error>6 || (methods&~0x7fu))return false;
+    if(kind!=2 || stage<2 || stage>6 || error>6 || (methods&~PGPU_EAGL_METHOD_MASK))return false;
     __atomic_store_n(&gpuLoaderError,error,__ATOMIC_RELEASE);
     __atomic_store_n(&gpuLoaderMethods,methods,__ATOMIC_RELEASE);
     __atomic_store_n(&gpuLoaderStage,stage,__ATOMIC_RELEASE);
@@ -58,7 +79,7 @@ static bool polaris_gpu_loader_report(uint32_t kind,uint32_t stage,uint32_t erro
 extern "C" uint32_t polaris_gpu_client_line(char *out,uint32_t capacity)
 {
     if(!out || !capacity || !__atomic_load_n(&gpuPublished,__ATOMIC_ACQUIRE))return 0;
-    return (uint32_t)snprintf(out,capacity,"GA O%u S%x I%x T%u E%u D%u R%u L%u X%x M%x",
+    return (uint32_t)snprintf(out,capacity,"GA O%u S%x I%x T%u E%u D%u R%u L%u X%x M%x C%x",
         __atomic_load_n(&gpuOpenStatus,__ATOMIC_ACQUIRE),
         __atomic_load_n(&gpuSubmissions,__ATOMIC_ACQUIRE),
         __atomic_load_n(&gpuSurfaces,__ATOMIC_ACQUIRE),
@@ -67,7 +88,8 @@ extern "C" uint32_t polaris_gpu_client_line(char *out,uint32_t capacity)
         __atomic_load_n(&gpuFaultStatus,__ATOMIC_ACQUIRE),polaris_gpu_ready()?1:0,
         __atomic_load_n(&gpuLoaderStage,__ATOMIC_ACQUIRE),
         __atomic_load_n(&gpuLoaderError,__ATOMIC_ACQUIRE),
-        __atomic_load_n(&gpuLoaderMethods,__ATOMIC_ACQUIRE));
+        __atomic_load_n(&gpuLoaderMethods,__ATOMIC_ACQUIRE),
+        __atomic_load_n(&gpuDesktopSubmissions,__ATOMIC_ACQUIRE));
 }
 struct PolarisBO {
     IOMemoryDescriptor *memory;
@@ -81,7 +103,7 @@ class PolarisGPUUserClient : public IOUserClient {
     typedef IOUserClient super;
     PolarisBO *buffers;
     uint64_t bytes;
-    uint32_t nextHandle, lastFence, queues;
+    uint32_t nextHandle, lastFence, queues, callerKind;
     bool closed, quarantined;
     task_t ownerTask;
     PolarisBO *buffer(uint32_t h) {return h && h<=GPU_BUFFERS && buffers[h-1].memory ? &buffers[h-1] : NULL;}
@@ -115,6 +137,7 @@ bool PolarisGPUUserClient::initWithTask(task_t task,void *security,UInt32 type,O
 {
     if (!super::initWithTask(task,security,type,props)) return false;
     ownerTask=task;
+    callerKind=polaris_gpu_caller_kind();
     buffers=IONewZero(PolarisBO,GPU_BUFFERS);
     return buffers!=NULL;
 }
@@ -124,13 +147,18 @@ IOReturn PolarisGPU::newUserClient(task_t task,void *security,UInt32 type,OSDict
     /* A shared address space cannot safely accept arbitrary app shaders.
      * The genuine window server is mobile, so authenticate its executable
      * vnode rather than root UID or a caller-provided process name. */
-    if(task!=current_task() || !polaris_gpu_caller_allowed())return kIOReturnNotPrivileged;
+    if(task!=current_task())return kIOReturnNotPrivileged;
+    uint32_t kind=polaris_gpu_caller_kind();
+    if(!kind)return kIOReturnNotPrivileged;
     IOLockLock(gpuLock);
     IOReturn result=kIOReturnBusy;
-    if (!gpuOpened && !gpuQuarantined && polaris_gpu_ready()) {
+    if(!pgpu_desktop_allowed(kind,gpuDesktopAttempts)) {
+        result=kIOReturnNotPermitted; /* One GPU trial per boot; later server uses CPU. */
+    } else if (!gpuOpened && !gpuQuarantined && polaris_gpu_ready()) {
         PolarisGPUUserClient *c=new PolarisGPUUserClient;
         if (c && c->initWithTask(task,security,type,props) && c->attach(this) && c->start(this)) {
             gpuOpened=true;__atomic_store_n(&gpuOpenStatus,1,__ATOMIC_RELEASE);*out=c;result=kIOReturnSuccess;
+            if(kind==2){gpuDesktopAttempts++;setProperty("PolarisDesktopAttempted",kOSBooleanTrue);}
         } else {if(c)c->release();result=kIOReturnNoMemory;}
     }
     IOLockUnlock(gpuLock);
@@ -267,6 +295,7 @@ IOReturn PolarisGPUUserClient::submit(msm_gem_submit *r)
             if(b->surface)__atomic_store_n(&b->surface->polarisGPUBusy,0,__ATOMIC_RELEASE);
         }
         __atomic_fetch_add(&gpuSubmissions,1,__ATOMIC_RELEASE);
+        if(callerKind==2)__atomic_fetch_add(&gpuDesktopSubmissions,1,__ATOMIC_RELEASE);
         if(gpuSubmissions<=4 || !(gpuSubmissions%256))
             IOLog("POLARIS GPU: completed submission %u, IBs=%u BOs=%u surfaces=%u; GPU fence+idle+halt\n",
                 r->fence,count,r->nr_bos,gpuSurfaces);

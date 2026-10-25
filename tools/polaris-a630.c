@@ -92,7 +92,8 @@ static void a630_access_begin(unsigned op,unsigned bank,uint32_t offset)
     __atomic_store_n(&a630_progress_access,key|(UINT64_C(1)<<63),__ATOMIC_RELEASE);
     /* CB0 is new in mode9. Announce a changed access before it, never once
      * per TLB poll. A hung single bus transaction cannot run a heartbeat. */
-    if(bank==3 && offset>=0x8000 && offset<0x8800 && key!=a630_last_cb_access){
+    if(!__atomic_load_n(&a630_published,__ATOMIC_ACQUIRE) &&
+        bank==3 && offset>=0x8000 && offset<0x8800 && key!=a630_last_cb_access){
         a630_last_cb_access=key;
         printf("POLARIS GPU CB0: op=%u off=%x entering\n",op,offset);
     }
@@ -150,6 +151,7 @@ uint32_t polaris_a630_diagnostic_line(unsigned line, char *out, uint32_t size)
     const struct a630_zap_snapshot *zap=&a630_zap_saved;
     const struct a630_core_snapshot *core=&a630_core_saved;
     if(line>=1 && line<=3){uint32_t n=polaris_gpu_fault_line(line-1,out,size);if(n)return n;}
+    if(line>=16 && line<=18){uint32_t n=polaris_gpu_crash_line(line-16,out,size);if(n)return n;}
     if(line==19){uint32_t n=polaris_gpu_client_line(out,size);if(n)return n;}
     if(line==0 && core->prepared)return (uint32_t)snprintf(out,size,
         "GP SQE E%x B%x A%x D%x S%x/%x",

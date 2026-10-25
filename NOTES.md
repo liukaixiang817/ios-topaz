@@ -34,6 +34,29 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0050 repair in progress:0049 noGUI/repeatingserver, not ordinary slow boot
+
+- Human sixphotos12B20699 and reply confirm ONLYlogs/Applelogo, no desktop.
+  ObjC PIDs370->380; GA O1 Sa->Sb I13->I15 T6 E0 D0 R1 L4 X0 M7f.
+  Kernel/native/runtime notquarantined; all7EAGLmethodsloaded. S includes
+  selftest per launch, so these increasing totals do NOT prove desktop use.
+  Actualdesktopcrash/backtrace notcaptured yet; repeatingserver is inference
+  supported by PID changes. RAMCOWdirty~400MiB/512MiB; avoid infinite retries.
+- Own0049 observer can attach after a context exists, then overwrite withL4:
+  fix cached latestcontextstage replay; L4doesnotprovecontextnevercreated.
+- ReferencecurrentEAGL has8th sharegroup hook absentours. Actual20H392
+  -[EAGLContext sharegroup]1d3f5188c dereferences[x0+8],then[x8+8]; ours
+  initializes onlyexternalcontext and leaves that AppleivarNULL. Confirmed
+  compatibility defect; actualcurrentcrashPC UNPROVEN. Port honestnilanswer,
+  preserve real8methodpreflight/rollback. Nofake sharing/foreignregisters.
+- Alsoconfirmed runtimeCB0access logs remainunbounded after nativepublication,
+  causing fullscreenscroll per access. Suppress ONLYsuccessfulruntimeaccess
+  announcements, retainbootstrap/faults. Add firstfatalPC/LR cached snapshot
+  and one desktopGPUtrial perboot with automaticCPUrestart fallback to avoid
+  endlessly repeating shader tests/filling512MiBCOW. USB observationPAUSED.
+- No0050build/image/deviceaction yet. Do not reboot current0049 until concrete
+  verifiedfix ready; first autoFASTBOOTquery then existingROpreflight.
+
 ### 0049 TEMPORARY BOOT SENT11:45:56UTC; await actual GUI/GA loading and desktop use
 
 - FIRST automaticFASTBOOTquery11:43:11.423661UTC confirmed expectedpolaris;

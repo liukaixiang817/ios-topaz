@@ -6,6 +6,7 @@
 #define POLARIS_GPU_H
 #include <stdint.h>
 #include <stdbool.h>
+#include "polaris-gl-status.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -15,6 +16,8 @@ bool polaris_gpu_timestamp(uint64_t *value);
 bool polaris_gpu_caller_allowed(void);
 uint32_t polaris_gpu_caller_kind(void);
 void polaris_gpu_loader_policy(int error);
+bool polaris_gpu_record_crash(const struct pgpu_crash *,uint32_t pid);
+uint32_t polaris_gpu_crash_line(unsigned line,char *out,uint32_t capacity);
 bool polaris_gpu_quiescent(void);
 bool polaris_gpu_map(uint64_t address, uint64_t physical, bool read_only, bool cached);
 bool polaris_gpu_commit(void);

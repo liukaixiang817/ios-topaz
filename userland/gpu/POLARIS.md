@@ -108,3 +108,38 @@ Sources and licensing:
   archive and iOS SDK. `tools/build-polaris-graphics.py` builds/signs the six
   artifacts and manifest in a new local output directory. These tools never
   change a phone or mounted root. Keep SDKs and built files outside Git.
+
+
+0050 follows the0049 physical failure: human reports only logs/Applelogo,
+ObjC PIDs370->380, and S a->b / I13->15. The wrapper reruns the shader test
+on each launch, so those totals are not desktop evidence. A new GA C counter
+counts only successful submissions by the genuine window-server client.
+
+The actual20H392 `-[EAGLContext sharegroup]` at0x1d3f5188c loads the private
+pointer at object+8, then pointer+8. Our custom context never initializes that
+Apple structure. The reference already guards this CoreImage access;0050
+adds the truthful nil answer (no resource sharing), after checking the actual
+CoreImage caller explicitly accepts nil. All8 methods now preflight/rollback
+as one transaction; required M is0xff. The observed0049 crash PC is unknown,
+so this is a confirmed compatibility defect, not a claimed physical cause.
+
+The context observer replays the latest cached stage when attached late;
+it no longer overwrites an already-created context with L4. Successful CB0
+access announcements stop after native publication; first-bootstrap records
+and actual failures remain. No MMIO, polling, cache or submission order changes.
+
+Only one desktop GPU opening is admitted per boot. After it, the registry's
+PolarisDesktopAttempted property makes the wrapper skip another child test and
+start the genuine server without injection. The kernel also enforces the
+one-attempt limit. This is a CPU escape after a failed trial, not GPU recovery;
+unknown DMA ownership still retains all resources until reboot.
+
+A fatal SIGSEGV/BUS/ABRT/ILL/TRAP submits one fixed40-byte record through the
+thin AMFI0x5b syscall, scoped to the same verified executable. The first record
+survives process restarts and replaces three completed diagnostic rows with
+GLF, GLPC/LR and GLADDR; panel height remains29rows. No allocation, stdio,
+loader lookup, stack walk or GPU lock runs in the signal handler. PC image
+0 means raw address,1 shared-cache preferred address,2 injector offset,
+3 bridge offset,4 Mesa offset. SIGKILL/external watchdog termination cannot
+be captured by a signal handler. Neither a fatal report nor fallback changes
+GPU completion/readiness proof. Full Metal applications remain unsupported.
