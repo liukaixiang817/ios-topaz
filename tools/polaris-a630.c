@@ -102,11 +102,14 @@ uint32_t polaris_a630_diagnostic_line(unsigned line, char *out, uint32_t size)
         e->error&15,e->stage&15,e->fw,e->failed_bank&15,e->failed_offset,e->expected,e->actual,e->stopped&1,e->restore_error&15);
     if (line == 7) return (uint32_t)snprintf(out,size,"GL u%08x o%08x src%04x v%08x/%08x r%x/%x",
         b->pll[2],b->pll[3],b->source&65535,b->live[0],b->live[1],b->restored&1,b->restore_error&15);
-    if(line==10)return (uint32_t)snprintf(out,size,"GR h%x a%llx v%08x/%08x/%08x r%x:%x",
+    if(line==10)return (uint32_t)snprintf(out,size,"GR h%x a%llx m%x v%05x/%05x/%05x",
         e->retained_hidden&7,(unsigned long long)(e->attempted&0xffffffffffffull),
-        e->hidden_after[0],e->hidden_after[1],e->hidden_after[2],e->restore_bank&15,e->restore_offset);
+        e->pdc_len_zero&63,e->pdc_msgid_after[0],e->pdc_msgid_after[1],e->pdc_msgid_after[2]);
     if(line==9)return (uint32_t)snprintf(out,size,"SI h%x n%x ctl%08x cfg%08x ar%08x/%08x q%x f%x",
         m->preserved_impl&1,m->impl_checks&255,m->impl[0],m->impl[11],m->actlr,m->actlr_live,
+        m->fault_quirk&1,m->fault_canonical&1);
+    if(m->preserved_impl)return (uint32_t)snprintf(out,size,"SH r%x@%x e%08x a%08x q%x f%x",
+        m->restore_error&15,m->restore_offset,m->restore_expected,m->restore_actual,
         m->fault_quirk&1,m->fault_canonical&1);
     return (uint32_t)snprintf(out,size,"SH b%08x l%08x a%08x p%x i%x r%x@%x",
         m->halt_before,m->halt_live,m->halt_after,m->halt_polls,m->impl_changed,
@@ -387,6 +390,9 @@ void polaris_a630_report(void)
     printf("D GPU HIDDEN TCS: retained=%x before=%x/%x/%x after=%x/%x/%x attempted=%llx; issued request, not cleared-address proof\n",
         e->retained_hidden,e->hidden_before[0],e->hidden_before[1],e->hidden_before[2],
         e->hidden_after[0],e->hidden_after[1],e->hidden_after[2],(unsigned long long)e->attempted);
+    printf("D GPU PDC MSGID: length_read_zero=%x actual=%x/%x/%x/%x/%x/%x; native requests issued, not PDC execution proof\n",
+        e->pdc_len_zero,e->pdc_msgid_after[0],e->pdc_msgid_after[1],e->pdc_msgid_after[2],
+        e->pdc_msgid_after[3],e->pdc_msgid_after[4],e->pdc_msgid_after[5]);
     printf("D GPU EXEC: error=%u stage=%u FW_INIT=%x started=%u stopped=%u profile=%u fail=%u:%x expected=%x actual=%x polls=%u restored=%u/%u; HFI/GX/3D not started\n",
         e->error,e->stage,e->fw,e->started,e->stopped,e->changed,e->failed_bank,e->failed_offset,e->expected,e->actual,e->polls,e->restored,e->restore_error);
     printf("D GPU EXEC RESTORE: error=%u bank=%u offset=%x expected=%x actual=%x\n",

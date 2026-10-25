@@ -14,7 +14,7 @@ class A630BootTests(unittest.TestCase):
 #include <assert.h>
 #include <string.h>
 static uint32_t gmu[0x30000/4],pdc[0x300000/4],original[48];
-struct model {unsigned op,fail,writes,releases,waits;bool held,timeout,retained_hidden,hidden_drift,ignore_other;uint32_t bcr,gx;};
+struct model {unsigned op,fail,writes,releases,waits;bool held,timeout,retained_hidden,hidden_drift,ignore_other,msgid_len_zero;unsigned bad_msgid;uint32_t bcr,gx;};
 static struct model m;
 static bool owned(void *x){return ((struct model*)x)->held;}
 static bool op(struct model *x){return ++x->op!=x->fail;}
@@ -28,6 +28,12 @@ static bool wr(void *ctx,unsigned b,uint32_t o,uint32_t v){
  bool hidden=b==2&&(o==0x23034||o==0x2303c||o==0x23044);
  if(x->retained_hidden&&hidden){assert(v==0);if(x->hidden_drift)*reg(b,o)^=4;return op(x);}
  if(x->ignore_other&&b==2&&o==0x2302c)return op(x);
+ bool msgid=b==4&&((o>=0x855d4&&o<=0x855f4&&(o-0x855d4)%16==0)||
+                          (o>=0x85764&&o<=0x85784&&(o-0x85764)%16==0));
+ if(msgid&&x->msgid_len_zero)v&=~8u;
+ if(msgid&&x->bad_msgid==1)v&=~(1u<<16); /* WRITE must remain set. */
+ if(msgid&&x->bad_msgid==2)v&=~(1u<<8);  /* RESPONSE must remain set. */
+ if(msgid&&x->bad_msgid==3)v=(v&~255u)|4;/* Other LEN is NOT admitted. */
  *reg(b,o)=v;
  if(b==2&&o==0x14000&&!v){
   x->releases++;
@@ -57,6 +63,12 @@ static void restored(void){
  assert(m.bcr==1&&gmu[0x14000/4]==1);
  for(unsigned n=0;n<48;n++){const struct a630_boot_register *r=&a630_boot_profile[n];
   assert(!((*reg(r->bank,r->offset)^original[n])&r->mask));
+ }
+}
+static void length_model(void){
+ reset();m.msgid_len_zero=true;
+ for(unsigned n=0;n<48;n++)if(a630_boot_profile[n].bank==4&&a630_boot_profile[n].value==0x10108){
+  original[n]&=~8u;*reg(4,a630_boot_profile[n].offset)=original[n];
  }
 }
 int main(void){struct a630_boot_snapshot s;
@@ -118,6 +130,31 @@ int main(void){struct a630_boot_snapshot s;
  reset();m.retained_hidden=true;assert(a630_boot_configure(&io,&s));
  m.retained_hidden=false;gmu[0x23034/4]^=4;
  assert(!a630_boot_stop(&io,&s)&&s.restore_error==A630_BOOT_ACK);
+ /* The exact observed MSGID10100 is an issued native request, not FW/PDC
+  * execution success. Other lengths, WRITE/RESPONSE changes still fail. */
+ length_model();assert(a630_boot_configure(&io,&s)&&s.stage==3&&!m.releases);
+ assert(s.pdc_len_zero==63);for(unsigned n=0;n<6;n++)assert(s.pdc_msgid_after[n]==0x10100);
+ unsigned len_config=m.op;assert(a630_boot_start(&io,&s)&&s.fw==0xbabeface);
+ unsigned len_all=m.op;assert(a630_boot_stop(&io,&s));restored();
+ for(unsigned fail=1;fail<=len_all;fail++){
+  length_model();m.fail=fail;bool configured=a630_boot_configure(&io,&s);
+  if(configured)assert(!a630_boot_start(&io,&s));else assert(fail<=len_config);
+  assert(s.error==A630_BOOT_IO);m.fail=0;assert(a630_boot_stop(&io,&s));if(s.changed)restored();
+ }
+ length_model();assert(a630_boot_configure(&io,&s));assert(a630_boot_start(&io,&s));
+ m.op=0;assert(a630_boot_stop(&io,&s));unsigned len_cleanup=m.op;
+ for(unsigned fail=1;fail<=len_cleanup;fail++){
+  length_model();assert(a630_boot_configure(&io,&s));assert(a630_boot_start(&io,&s));
+  m.op=0;m.fail=fail;assert(!a630_boot_stop(&io,&s)&&!s.restored&&s.restore_error);
+  m.fail=0;assert(a630_boot_stop(&io,&s));restored();
+ }
+ length_model();m.timeout=true;assert(a630_boot_configure(&io,&s));
+ assert(!a630_boot_start(&io,&s)&&s.error==A630_BOOT_TIMEOUT&&!s.fw);
+ assert(a630_boot_stop(&io,&s));restored();
+ for(unsigned kind=1;kind<=3;kind++){
+  length_model();m.bad_msgid=kind;assert(!a630_boot_configure(&io,&s));
+  assert(s.error==A630_BOOT_ACK&&s.failed_bank==4&&s.failed_offset==0x855d4&&!m.releases);
+ }
  return 0;
 }
 '''
