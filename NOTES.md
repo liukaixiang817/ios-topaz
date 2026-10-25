@@ -34,6 +34,35 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0056 TEMPORARY BOOT SENT16:33:05UTC; await FD/PF and human scroll
+
+- Firstautoquery16:29:55.064943UTC expectedpolarisFASTBOOTpresent;noask.
+  ROpreflight88267EXIT0 2026-10-25T16:31:58.126208+00:00:full16GiB SHA689a8cd1,
+  182maps/GPT/reviewedheader3e885886unchanged, blockRO1/unmounted30C.
+  PendingAndroidjournalNOTclean, NOTreplayed/repaired. NOpartitionwrites.
+- Boot99320EXIT0:send1.432s,boot.091s,total1.536s;
+  **sent_utc2026-10-25T16:33:05.225257+00:00**. Image6f310fb4252a55d35bb71a710b29fa1e096e05bfb499329d40367e9cd4574096,
+  kernel54651c61d873607b3034f7601b4ad39452f5430aba9dd548459a8c7621f454d7,
+  payload70c775919261eadafac47ffc6bf0d45f4b58f9fe1fe85a2b8040edb8ae832163. All247finalfrozeninputs stillmatchafterboot.
+  Source92abbbe/CI40210874806SUCCESS/rootimplementationee2aa9a;
+  90native/8actualunits/42profiles55files/185freshCPU1defaultclockchecks
+  FIRSTPASS; finalimagecheckPASS. Host-templateerrors retainedasabove;
+  no guestfailure/retry. USBobserverNOTstarted, pausedmarkerboundexactsentUTC.
+- Current0055photo alreadyprovedGPUdesktop794C/T6/E0/D0/R1/noGLerror;
+  singlelittleCPU1 and10.636mslastCPUcopy confirmed, physicalcauseofresidual
+  stutter NOTYETattributed. 0056 removesextra-copy-tick andshrinksnormalpanel
+ 29->6rows(11onlybothfaulttypes), retainsoriginalnativeGPU andallpixelchecks.
+- NEXT humanenterSettings/continuousscroll5-10s andFD/PF/GA snapshot. FD
+  P=actualcopies/sx10,C=averagecopywallus,J=maxwithinwindowgapus,D=last
+  statuspaintus. PF F/W/R/U/H=lastactivewindowframe/finalwait/readback/
+  upload/hashavgwallus;B=CPUbusybasispct(9900=99%),N=onlineCPUs,
+  B10001/N0=unknown. W includesCPUpreemption/copy submission, NOTGPUbusy;
+  stagevaluesoverlap, notsum. PF maybestalewhenidle. GLXfirsterrorwins.
+  IfCPUbusy~100%/N1 withsmallW, diagnoseCPU/upload/copy; ifWdominates,
+  inspectnativeGPUsubmission timing separately. NoSMP enablement yet;
+  priorCPU2schedulerlock/rtclock failuresunresolved. NoFPSimprovementclaim
+  untilphysicalfeedback. Homeicons stillnotexplicitlyconfirmedon0055.
+
 ### 0056 FINAL PASS; FIRST automatic FASTBOOT present; RO preflight running
 
 - CI40210874806/job121221615850/source92abbbee438007ac5c0dc9d79251f2cfc9713383
