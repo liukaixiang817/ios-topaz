@@ -34,6 +34,49 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0051 implementation/local checks complete; no phone action yet
+
+- New0857 implements actual20H392 selectors6/7 with original-task descriptor
+  pinning, separate mappedstate via existing0xa68result, exactunalignedrange,
+  read-onlyfallback, combined1536MiBwiredcap and destructorunwind. Selector27
+  boundedtransactional sharedmetadata; unknownfull-lockresult returnsUnsupported.
+  Existingtopaz0131/0132 confirm same userland defect, NOTportingitsMMIOprofile.
+- Physicalcause: confirmedNULLshared-state getterfault; selector6inference
+  additionally supported by actualCA::Render::Image::retain_iosurface caller
+  and actualWrapClientImage wire. Exactphysicalcallerselector notcaptured.
+- Added actualiOS APIselftest for image/memorywrap, bulkgetter/set, livealias,
+  duplicateportlookup/release before existingGPUshader4096pixeltest. Ordinary
+  GPUimport intentionallystillIOBufferonly; externaltextures useexistingupload.
+-74native/ASan/UBSan PASS (3newtests withgeometry/overflow, realnewwrap+actual
+  destructor unpin/failure/budget/ROfallback, realbulkentry ownership/shortinput).
+  8actualARM64units/imports PASS;37orderedpatches53files nofuzz/offset, previous
+  SweetSurface.cpp independentlyderived0046+0068 and matchedfrozen0050baseline.
+  Firstnewfixture missedhunkclosingcontext and oldbaselinepath; corrected,
+  initiallogs retained. No0051CI/build/fullguest/devicevalidation yet.
+- ProvenGPU/MMIO/firmware/HFI/MMU/PM4/BO/cache/runtime paths byteunchanged0050;
+  HID/S3330unchanged. Humanclockupdates/swipeignored remainsseparate pending
+  physicalevidence after rendererfix. USBobservationPAUSED.
+
+### 0051 diagnosis:0050 renderer crashed; lockscreen clock updates, swipe ignored
+
+- Human BA8B38CF photo: GLF SIG11/CODE2/PID56, PC1:1d1b01e70,
+  LR1:1a3983ffc, GLADDR30, GA O0/S1/I2/T6/E0/D0/R1/L6/X0/Mff/C0.
+  Actual20H392cache resolves memmove+176 / IOSurfaceClientGetBulkAttachments+68.
+  Getter loads client+0x70 then adds0x30; NULLshared-state source is confirmed.
+  NO genuine-desktop completed submission. Native GPU was not quarantined.
+- Actual20H392 WrapClientImage selector6 takes32-byte(address,width,height,
+  format,bpe,row,alloc), WrapClientMemory selector7 two64-bit scalars;
+  both require0xa68 validresult. Currentdefault fakesuccess+zeros yields
+  exactlyaNULLstate client. This compatibility defect is CONFIRMED; the
+  failingphysicalcaller's selector is inferred, not captured.
+- Human confirms lockscreen CLOCKUPDATES but swipeignored. UI notfullyfrozen;
+  touch delivery/reopenedHID-client status UNPROVEN. Do not changeS3330MMIO
+  without evidence. HIDopen/close/dispatchreview has no provennewfault yet.
+- NEXT implement bounded pinned-user-memory wrappers and bulkmetadata against
+  actualcache, extend actualiOS selftest to crash API before desktopadmission,
+  preserveprovenGPU/MMIO/BOpaths; freshbuildchecks before anynewboot.
+  USBobservation remainsPAUSED. No0051image/CI/deviceaction yet.
+
 ### 0050 TEMPORARY BOOT SENT12:23:19UTC; await stable GUI and real desktop C/GLF
 
 - FIRSTautoquery12:21:03.777406UTC confirmed expectedpolaris alreadyFASTBOOT,

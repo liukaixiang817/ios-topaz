@@ -143,3 +143,25 @@ loader lookup, stack walk or GPU lock runs in the signal handler. PC image
 3 bridge offset,4 Mesa offset. SIGKILL/external watchdog termination cannot
 be captured by a signal handler. Neither a fatal report nor fallback changes
 GPU completion/readiness proof. Full Metal applications remain unsupported.
+
+0051 addresses a captured IOSurface shared-state fault in the desktop trial.
+The real framework's WrapClientImage/WrapClientMemory methods (selectors6/7)
+consume a full mapped lock result. Returning success with zeros creates a
+client whose bulk-attachments getter dereferences a null state page. The
+Polaris surface profile now pins the caller's original memory, maps a separate
+read-only state page through the existing result path, preserves unaligned
+ranges and exact allocation size, and unwinds pins/charges on failure or final
+release. Read-only input gets a read-only mapping. Unknown methods asking for
+another full lock result return unsupported instead of fabricating a client.
+
+Selector27 updates the selected bulk metadata fields in that shared page,
+checking the caller's surface reference, input length, field bounds and mask
+before any write. The native GPU importer still accepts only its original
+wired buffer surfaces; external task memory uses the existing EAGL texture
+upload path. No DMA, MMU, firmware, clock or HID event changes are made here.
+
+The separate-task acceptance program now calls the actual iOS wrapper and
+bulk getter APIs, verifies live aliases, metadata, cached Mach-port lookup and
+release, before its GPU GLSL/all4096-pixel test. A passed test still does not
+prove actual desktop rendering: require growing genuine-desktop C counts,
+no new fatal record, stable UI and working input on the real phone.
