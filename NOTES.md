@@ -28,6 +28,20 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT ACTION —0039 FASTBOOT found; readonly preflight ACTIVE
+
+- Follow-up automatic query **01:51:08.758001UTC** found expected polaris,
+  product verified; human subsequently also replied “已到 FASTBOOT”. Direct
+  authorized preflight **session79311 ACTIVE**, no repeated confirmation needed.
+  It temporary-boots the known recovery, checks full immutable16GiB/maps/GPT/
+  clean unchanged outer header/RO/unmounted/temperature, with no partition write.
+- On preflight PASS run0039 boot-and-watch.py immediately. Final image checker
+  passed at01:50:00UTC, exact source784aa9f/CI40151478342/imagee536729a.
+  Check the running session and evidence before retrying any device action.
+- After boot, verify detached observer alive and first sample persisted. Ask
+  actual same-boot GUI confirmation plus GH/HQ/HA/HR; observation has no deadline
+  and must not stop on ECM or the old0038 confirmation.
+
 ### CURRENT ACTION —0039 VERIFIED; FASTBOOT currently absent; physical keys requested
 
 - **CI40151478342/job121043748325 SUCCESS**,01:39:19–01:43:59UTC(4m40s),
