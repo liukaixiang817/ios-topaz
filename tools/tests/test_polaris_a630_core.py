@@ -59,8 +59,10 @@ int main(void){
 #include <stdio.h>
 struct a630_io {bool core_lease,can_stop;};
 static unsigned mode,seq,starts,cores,stops,prepares;
-static uint32_t a630_core_fault_regs[8],a630_core_fault_valid;
-static bool a630_read_register(void*x,unsigned b,uint32_t o,uint32_t*v){(void)x;(void)b;(void)o;(void)v;return true;}
+static uint32_t a630_core_fault_regs[8],a630_core_fault_valid,capture_reads;
+static bool a630_read_register(void*x,unsigned b,uint32_t o,uint32_t*v){
+ const uint32_t allowed[]={0x48,0x50,0x54,0x8058,0x8060,0x8064,0x8068,0x58};
+ assert(x&&b==3&&capture_reads<8&&o==allowed[capture_reads]);capture_reads++;*v=o;return true;}
 static struct a630_image a630_images[6];
 static uintptr_t a630_dma;static uint64_t a630_dma_physical=0x187640000;
 static bool a630_core_dma_ready=true;
@@ -84,7 +86,7 @@ static bool prepare_core(bool board,bool mappings,const struct a630_core_io*io,u
  if(mode==7){s->error=A630_CORE_IO;return false;}s->prepared=1;s->halted=1;s->stage=2;return true;}
 static bool run_core(bool authenticated,const struct a630_core_io*io,uint32_t*ring,volatile uint32_t*scratch,volatile uint32_t*target,struct a630_core_snapshot*s){
  assert(authenticated&&s->prepared&&s->halted&&s->stage==2&&io->owned(io->ctx)&&++seq==3);assert((uintptr_t)ring==a630_dma+0x30000&&(uintptr_t)scratch==a630_dma+0x38000&&(uintptr_t)target==a630_dma+0x3c000);cores++;
- s->keep_live=mode==1;s->halted=mode!=1;s->error=mode==0?A630_CORE_READY:mode==1?A630_CORE_TIMEOUT:A630_CORE_IO;return mode==0;}
+ s->started=1;s->image=mode==0;s->keep_live=mode==1;s->halted=mode!=1;s->error=mode==0?A630_CORE_READY:mode==1?A630_CORE_TIMEOUT:A630_CORE_IO;return mode==0;}
 static bool __attribute__((unused)) stop_zap(const struct a630_zap_io*io,struct a630_zap_snapshot*z){
  (void)io;(void)z;stops++;assert(!"boot coordinator must not issue PAS_SHUTDOWN");return false;}
 
@@ -95,9 +97,9 @@ static bool __attribute__((unused)) stop_zap(const struct a630_zap_io*io,struct 
 '''+body+r'''
 int main(void){a630_dma=(uintptr_t)aligned_alloc(16384,0x44000);assert(a630_dma);
  for(mode=0;mode<8;mode++){
-  struct a630_io io={.can_stop=true};seq=starts=cores=stops=prepares=0;memset(&a630_zap_saved,0,sizeof(a630_zap_saved));memset(&a630_core_saved,0,sizeof(a630_core_saved));
+  struct a630_io io={.can_stop=true};seq=starts=cores=stops=prepares=capture_reads=0;a630_core_fault_valid=0;memset(&a630_zap_saved,0,sizeof(a630_zap_saved));memset(&a630_core_saved,0,sizeof(a630_core_saved));
   a630_core_attempt(&io);assert(!io.core_lease&&prepares==1&&starts==(mode!=7));
-  assert(cores==(mode<=2));assert(stops==0);assert(a630_zap_saved.retained==(mode<=2));assert(io.can_stop==(mode>2));
+  assert(cores==(mode<=2));assert(capture_reads==((mode==1||mode==2)?8:0));assert(a630_core_fault_valid==((mode==1||mode==2)?255:0));assert(stops==0);assert(a630_zap_saved.retained==(mode<=2));assert(io.can_stop==(mode>2));
   assert(a630_core_saved.keep_live==(mode==1||mode==4||mode==5)); /* deliberate retention is separate from uncertain execution */
   if(mode==2)assert(a630_core_saved.error==A630_CORE_IO&&a630_zap_saved.retained);
   if(mode==0)assert(!a630_zap_saved.shutdown&&a630_zap_saved.retained&&a630_core_saved.halted);
