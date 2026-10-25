@@ -34,6 +34,22 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT ACTION —0041 source-only published; full CI running
+
+- Local completed source fc88f47. Public source-only a6ecbe7dcc624dd4e600c8f51e9e497c4bd18335
+  (parent91b2bca), seven reviewed code/test/patch files only; NOTES/privatehistory/
+  firmware/dumps excluded. CI40154740584/job121053583108 in progress.
+- Private0041 freezes14 host scripts BEFORE guest execution; same three CPU1
+  standardclock modes as0040, no-mmio nowGPU8; extra HFI TABLES zero-MMIO check
+  eachcase, expected118. Cache-high stays7control. PhoneADT unchanged; USB host
+  observation remains PAUSED. No0041 image/preflight/boot yet.
+- While CI runs, original SCM/PIL files fetched at same pinnedMiCode and3Gitblobs
+  verified, private next-source-provenance.json. Native11wordME_INIT differs
+  from reference8words; ownchip6030001/GMEM1MiB/HBB15/UBWC2/ZAP8c415000/PAS13
+  parsed into next-native-CP-ZAP-plan.json. This is SOURCE ONLY, unresolved
+  nativeIFPCregisterlist/SCMbusvote/corecontext; noCP orSCM activated. Never treat
+  rejectedSCM as successful retainedZAP. PartialHFI baseline0040 stillGUIworks.
+
 ### CURRENT ACTION —0041 mode8 native HFI completion locally verified
 
 - New0846 completes PERF43/BW160/TEST1 after physical-proven INIT/FW_VER.
