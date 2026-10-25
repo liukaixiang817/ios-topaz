@@ -165,3 +165,11 @@ bulk getter APIs, verifies live aliases, metadata, cached Mach-port lookup and
 release, before its GPU GLSL/all4096-pixel test. A passed test still does not
 prove actual desktop rendering: require growing genuine-desktop C counts,
 no new fatal record, stable UI and working input on the real phone.
+
+0052 refines the image range using the actual CA::Render::Image vtable's
+`data_size` method: bytesPerRow*(height-1)+width*bytesPerElement. The final
+row's padding is outside that declared range and is neither required nor
+pinned/read. The framework selftest deliberately wraps13x8 BGRA pixels with
+row64 and length500, plus an unaligned raw-memory range, so a check that
+incorrectly demands512 bytes is caught before desktop admission. The0051
+image passed its build/CPU tests but was superseded before any phone action.

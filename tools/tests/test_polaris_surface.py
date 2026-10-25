@@ -24,6 +24,8 @@ int main(){
  static_assert(sizeof(pgpu_surface_image)==32,"20H392 wire");
  pgpu_surface_image p={0x12345025,16,8,0x42475241,4,64,512};
  assert(pgpu_surface_image_valid(&p));p.bytes=511;assert(!pgpu_surface_image_valid(&p));
+ p.width=13;p.bytes=500;assert(pgpu_surface_image_valid(&p));
+ p.bytes=499;assert(!pgpu_surface_image_valid(&p));p.width=16;
  p.bytes=512;p.row=63;assert(!pgpu_surface_image_valid(&p));p.row=64;
  p.address=UINT64_MAX-511;assert(!pgpu_surface_image_valid(&p));p.address=1;
  p.width=16385;assert(!pgpu_surface_image_valid(&p));p.width=16;
