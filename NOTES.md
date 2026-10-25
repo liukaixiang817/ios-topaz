@@ -34,6 +34,22 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0048 full kernel SUCCESS; first47guestchecks PASS, nextcase running
+
+- CI40186839751/fd28bb1ce3e21c2730f7afb935d1e5f10674e757/job121149326436
+  SUCCESS. FullCIlogresearch/polaris/ci-40186839751.log. Exactprofile/CRC/SHA
+  kernel6075fa6a7432328b508fcfef36e1d4170c02d1fe09340c748ea6ff5568bf184e.
+- Wrapper23328runningfreshCPU1defaultclockmatrix: cache-high60sFIRSTPASS47;
+  async-net90snowrunning, thenno-MMIO60/integration-refusal60.185totalchecks.
+  No0048guestfailure/retrysofar. NoCPU2orIRQ/clockwaiver; old0043issuesremain.
+- Final62native/8actualunits/imports/34patches49files/29rows/sourceboundaries
+  PASS. No0048image/deviceactionyet. Currentphone0047stalleddiagnostics;
+  doNOTinferstartupfromscrollingunchangedI/O. USBobserverstillPAUSED.
+- NEXTfinishmatrix/prepare/finalchecker, FIRSTautoFASTBOOTquery, ifabsent
+  askkeysONLYafterconcreteverifiedimage. Exactreviewed0047header3e885886
+  acceptedwithfreshfull16GiB/maps/GPT/readonly/tempcheck; pendingjournal
+  neverreplayed/calledclean. Noadditionalfilesystemwriteauthorizationneeded.
+
 ### 0048 sourcefd28bb1 / CI40186839751 running; pipeline frozen
 
 - Local2b82a56, sixsource-onlyfilespublicfd28bb1ce3e21c2730f7afb935d1e5f10674e757
