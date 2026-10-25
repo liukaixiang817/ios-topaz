@@ -349,6 +349,45 @@ static bool a630_prepare_dma(void)
     if(!a630_hfi_init((void*)(a630_dma+0x20000),A630_HFI_BYTES,0x60000000))return false;
     a630_dma_ready=1;return true;
 }
+/* Synthetic-guest regression for the exact managed-page cache transition
+ * used by HFI. No GPU/MMIO is involved, and phone arguments never enable it. */
+static void a630_cache_selftest(bool synthetic_guest)
+{
+    unsigned test=0;PE_parse_boot_argn("polarisgpucachetest",&test,sizeof(test));
+    if(!test)return;
+    unsigned stage=1,nc=0,restored=0;vm_offset_t memory=0;uint64_t physical=0;
+    if(test!=1||!synthetic_guest||PAGE_SIZE!=16384)goto failed;
+    if(kmem_alloc_contig(kernel_map,&memory,2*PAGE_SIZE,PAGE_MASK,0,0,
+        KMA_DATA|KMA_ZERO|KMA_PERMANENT,VM_KERN_MEMORY_IOKIT)!=KERN_SUCCESS)goto failed;
+    for(unsigned n=0;n<2;n++){
+        stage=2+n*3;
+        vm_offset_t va=memory+n*PAGE_SIZE;
+        ppnum_t pn=pmap_find_phys(kernel_pmap,(addr64_t)va);
+        uint64_t pa=ptoa_64(pn);if(!n)physical=pa;
+        if(!pn||pa<=UINT32_MAX)goto failed;
+        unsigned before=pmap_cache_attributes(pn)&VM_WIMG_MASK;
+        if(before!=VM_WIMG_DEFAULT)goto failed;
+        pmap_set_cache_attributes(pn,VM_WIMG_WCOMB);
+        if((pmap_cache_attributes(pn)&VM_WIMG_MASK)!=VM_WIMG_WCOMB)goto failed;
+        nc++;stage++;
+        volatile uint64_t *first=(volatile uint64_t*)va;
+        volatile uint64_t *last=(volatile uint64_t*)(va+PAGE_SIZE-8);
+        if(*first||*last)goto failed;
+        uint64_t marker=0x6300004000000000ull+n;
+        *first=marker;*last=~marker;__asm__ volatile("dsb sy":::"memory");
+        if(*first!=marker||*last!=~marker)goto failed;
+        stage++;
+        pmap_set_cache_attributes(pn,before);
+        if((pmap_cache_attributes(pn)&VM_WIMG_MASK)!=before||
+           *first!=marker||*last!=~marker)goto failed;
+        restored++;
+    }
+    printf("POLARIS A630 CACHE TEST: PASS physical=%llx high=1 NC=%u restored=%u; RAM only\n",
+        (unsigned long long)physical,nc,restored);return;
+failed:
+    printf("POLARIS A630 CACHE TEST: FAIL stage=%u physical=%llx NC=%u restored=%u; RAM only\n",
+        stage,(unsigned long long)physical,nc,restored);
+}
 static bool a630_resources_can_stop(void *opaque)
 {return ((struct a630_io*)opaque)->can_stop;}
 static void a630_runtime_boot(struct a630_io *io)
@@ -515,6 +554,9 @@ void polaris_a630_init(void)
     bool hardware = SecureDTLookupEntry(NULL, "/arm-io/gic", &gic) == kSuccess &&
         a630_property(gic, "reg", &reg, &bytes) && bytes == sizeof(physical);
     if (hardware) memcpy(physical, reg, sizeof(physical));
+    a630_cache_selftest(hardware && a630_firmware_ok && mode==7 &&
+        physical[0]==0x7000000 && physical[1]==0x10000 &&
+        physical[2]==0x70a0000 && physical[3]==17*0x20000);
     hardware = hardware && physical[0] == 0x16a00000 && physical[1] == 0x10000 &&
         physical[2] == 0x16a60000 && physical[3] == 0x100000;
     struct a630_io io = {.can_stop=true};
