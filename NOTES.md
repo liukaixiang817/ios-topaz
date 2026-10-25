@@ -34,6 +34,71 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0053 TEMPORARY BOOT SENT14:04:03UTC; await GLT/T/E/C and real desktop result
+
+- FIRSTautoquery14:01:02.955839UTC expectedpolaris alreadyFASTBOOT, no
+  duplicatekeysrequest. ROpreflight66479EXIT0 at14:02:49.626481UTC: full16GiB
+  rootSHA689a8cd1/182maps/GPT/reviewedheader3e885886unchanged, blockRO1,
+  unmounted/32C. PendingAndroidjournal NOTclean/notreplayed/repaired;
+  NOpartitionwrites. All235frozeninputs stillmatchafterboot.
+- Directboot-phone94679EXIT0: send1.424s/boot0.091s,total1.528s;
+  **sent_utc2026-10-25T14:04:03.085436+00:00**. Image378151eb58a94b520c30994b420ff8899777e1ad55fc71580d7375f55c4fa3ef,
+  kernel3b53c29b8834b353dfdbdbcbfdc4b5a6c1fb085d1bd5a78a2cbce4a856e0c023,
+  payloadfef392cd3c50d1e9919991f58d74de9cd5f54fdfce1e96c5b56a10554f952bf9.
+  Publicda31632/CI40199295353SUCCESS; root56ff8b0.78native/8actualunits/
+  39patches53files/29rows/185CPU1defaultclockFIRSTPASS/independentfinalPASS.
+  No0053guestfailure/retry. OriginalGPUhardware/BO/admission/HID unchanged.
+- Current0053physicalGPU/UI NOTYETCONFIRMED. Previous0052humanexplicitly
+  confirmswipe/Settingsscrollworks, stillCPU; T2E0/S0/M0/C0. Wrappedimage
+  contract+Mesa630rendererpassed beforeT2; shadercompile/link notcompleted.
+  Prior30sdeadlinevschildcrash cause stillUNKNOWN. New180sactualmonotonic
+  wholechildbudget doesNOTfakeT6; needschildexit0+existingshader/all4096pixels.
+- GLT R1begun,R2exit(Vcode),R3signal(Vsig),R4timeout,R5spawn,R6wait/clock;
+  P10/11contract,20/21context/renderer,22..25vertexcreate/source/compile/status,
+  26..29fragment,31/32shaderreturn,33/34link,35surface,40draw,41readback,
+  42passedpixels. MSlastcheckpoint/terminalelapsed, NOTheartbeat. Firstterminal
+  immutable acrossrestarts. GLFhaspriority; firstfatalnowcapturedinchildtoo.
+  image2 meanscurrentreportingimage offset (selftestforchild,injectorfordesktop).
+- NEXT waitactualstableGUI/Settingsscroll andGLT+GA T/E/C. RequireT6E0 and
+  increasingREALdesktopC underO1/Mff/noGLF toproveGPU. S includesselftest.
+  IfGLT R1stillrunning do NOTcallitfailed/reboot. R4providesexactcheckpoint;
+  R3/GLFresolvePC/LRusingexactnewselftest/Mesa/cache. Do notreplaceproven
+  firmware/clocks/MMU or touchdriver basedonlyonT2/noerror.
+- USBobserverSTILLPAUSED; noobserver/boot-and-watchstarted. Markerboundexact
+  sentUTC; noUSBsuccess/nonenumerationclaim. NoUEFI orpersistentstoragechanges.
+
+### 0053 FINAL IMAGE PASS; expected FASTBOOT present; ROpreflight66479 running
+
+- Finalchecker14:00:12.882091UTC PASS:78native/8actualARM64units/imports,
+  39orderedpatches53files/29rows,185freshCPU1defaultclockchecks FIRSTPASS
+  (all4modes/no0053guestfailure/retry),235frozeninputs, fullsource/ABI/six
+  signatures/linkedSMC/highPAcache/rebuiltpayload/Cvalidator/packedimagePASS.
+- CI40199295353/job121186831871/source da31632ff8e6d60211cff3377b9122a0de6f95b7
+  SUCCESS. Kernel3b53c29b8834b353dfdbdbcbfdc4b5a6c1fb085d1bd5a78a2cbce4a856e0c023;
+  payloadfef392cd3c50d1e9919991f58d74de9cd5f54fdfce1e96c5b56a10554f952bf9;
+  image shim/out/polaris-xnu-readdebug-0053/polaris-xnu-readdebug-0053.img
+  SHA378151eb58a94b520c30994b420ff8899777e1ad55fc71580d7375f55c4fa3ef,
+  62935040bytes. graphics-v1bundle15379536bytes,
+  SHAf71a6f113e474b7fb8a3659575d766f6818042530d772bbf7b0b91fa5803b324.
+- FIRSTautomaticFASTBOOTquery14:01:02.955839UTC confirms expectedpolaris
+  alreadyready; no repeatedkeysrequest. ROpreflight66479 nowrunning known
+  temporaryheadlessrecovery/full16GiB/map/GPT/header/temp checks. Anynew
+  headerchangeSTOP, neverjournalreplay/repair. USBobserverPAUSED.
+- NEXT wait66479, onlyPASS directrun-device-step.py boot-phone; NOobserver/
+  boot-and-watch. SaveexactsentUTC/pausemarker. RequireactualT/E+GLT R/V/P/MS
+  andstableGUI+growingdesktopC toproveGPU. Current0052inputworksbutCPU.
+
+### 0053 complete CI SUCCESS, fresh regressions running; no phone action
+
+- CI40199295353/source da31632ff8e6d60211cff3377b9122a0de6f95b7 SUCCESS.
+  Exactprofile/CRC/SHAverifiedkernel3b53c29b8834b353dfdbdbcbfdc4b5a6c1fb085d1bd5a78a2cbce4a856e0c023
+  downloaded.235frozeninputs; fourfreshCPU1defaultclockchecks nowrunning.
+- Currentphone0052inputworksCPUdesktop; T2E0/S0/M0/C0, noGLF. GLT/childPC
+  willseparate30sdeadlinehypothesisfromunhandledcompilerfault. Do notclaim
+  physical0053GPUstability/timeoutcause untilhumanresult.
+- Finish185checks/independentfinalimage THEN FIRSTautoFASTBOOTquery; present
+  expectedphone -> ROpreflight/directtemporaryboot. USBobserverPAUSED.
+
 ### 0053 source da31632 / CI40199295353; frozen235inputs; fullbuild running
 
 - Rootimplementation56ff8b0, publicsource da31632ff8e6d60211cff3377b9122a0de6f95b7
