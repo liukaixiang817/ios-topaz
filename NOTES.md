@@ -28,6 +28,37 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT ACTION —0039 VERIFIED; FASTBOOT currently absent; physical keys requested
+
+- **CI40151478342/job121043748325 SUCCESS**,01:39:19–01:43:59UTC(4m40s),
+  source784aa9f. Full log research/polaris/ci-40151478342.log. Kernel0039 SHA
+  **de4cd4aa41eca633628ddd3eb1c18ee57a9fb61bec4bd0a8d7519dba7d97571a**.
+- Pipeline62632 EXIT0, all selected standard CPU1 cases FIRSTPASS: base120s36,
+  async-net90s39, no-MMIOmode7 60s36 = **111 checks**; all4 VM children each;
+  no new failure/retry. Prior SMP/sync timer failures remain unresolved.
+- Image shim/out/polaris-xnu-readdebug-0039/polaris-xnu-readdebug-0039.img,
+  47476736B SHA **e536729a2a54bced0ac6f84c9ade7ea8b3feffd60ce9f300c3879aea80b0f361**;
+  payload **f2034af8df1a34c953a89010fb651ad852213683e6d1133707eb87c41dcac6e4**.
+  Independent final checker10225 EXIT0 at **01:50:00.194278UTC**. Local28/
+  3 actual-header ARM64/imports/24 patches29 files/22 detail24 display rows/
+  native source offsets/frozen14 hosts/exact payload/image65 DTBs PASS.
+  The only phone cmdline change from0034 is GPUmode6→7; CPU1/20Hz/RAMCOW512/
+  ufsrw0 unchanged. No0039 physical HFI/GX/3D/USB connection result yet.
+- FIRST automatic read-only FASTBOOT query **01:50:18.981810UTC** found no
+  expected phone. No0039 recovery/preflight/boot action. Async question asks
+  physical power+volume-down because XNU USB has no reboot path. Concrete0039
+  is ready; human reply/expected FASTBOOT detection required for next step.
+- On next input FIRST query FASTBOOT again. If expected polaris present, run
+  private0039 run-device-step.py preflight (full RO16GiB/map/GPT/cleanheader),
+  then boot-and-watch.py. Do not rerun final checker after device actions.
+  Start detached observer immediately; continue until actual0039 human
+  “已进入系统”/explicit stop. Old0038 confirmation must not stop future0039.
+  Request new **GH/HQ/HA/HR** photo (INIT/FW_VER/cleanup). GPU drawing still
+  requires PERF/BW/TEST, ZAP/SQE/CP and actual completed image/fence proof.
+- Private0039 next-GPU-source-plan.json records native table formats and safe
+  follow-up. Native USB QUSB2PHY prerequisites remain in0037 source plan;
+  no extra EFI is required for this native XNU driver path.
+
 ### CURRENT ACTION —0039 full kernel CI building
 
 - Local source/handoff commit **2a34132**. Source-only public commit
