@@ -389,7 +389,7 @@ static inline enum a630_smmu_error
             (s->s2cr&~0x030303ffu)|0x300|s->bank,0x030303ff)) goto done;
     if (!io->sync(ctx)) {s->error=A630_SMMU_IO;goto done;}
     if(handoff && !a630_smmu_impl_stable(io,ctx,s))goto done;
-    tables->dirty=0; s->stage=7;s->error=A630_SMMU_READY;
+    a630_mmu_cleaned(tables); s->stage=7;s->error=A630_SMMU_READY;
 done:
     s->start_error=s->error;return (enum a630_smmu_error)s->error;
 }

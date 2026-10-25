@@ -5,7 +5,8 @@
  * fresh GMU firmware boot at the original200MHz, then contains and unwinds.
  * Mode7 requests original low GX/MX votes and probes HFI INIT/FW_VER.
  * Mode8 completes native HFI tables. Mode9 attempts owned core/SQE/ZAP/CP
- * and a checked64x64 offscreen image. No desktop acceleration service yet.
+ * and a checked64x64 offscreen image. Optional polarisgpuclient=1 exposes
+ * the resident service only after that full proof; Mesa/EAGL is separate.
  */
 #if defined(POLARIS_RAM_ONLY)
 #include <sys/param.h>
@@ -36,6 +37,8 @@
 #include "polaris_a630_post.h"
 #include "polaris_a630_zap.h"
 #include "polaris_a630_core.h"
+#include "polaris_a630_submit.h"
+#include "polaris_gpu.h"
 extern vm_offset_t ml_io_map(vm_offset_t, vm_size_t);
 extern ppnum_t pmap_find_phys(pmap_t, addr64_t);
 /* XNU-private declarations in osfmk/vm/pmap.h are not exported to BSD. */
@@ -66,7 +69,8 @@ static uint32_t a630_core_dma_ready;
 static vm_offset_t a630_dma;
 static uint32_t a630_dma_ready, a630_dma_bytes, a630_nc_pages;
 static struct a630_image a630_gmu_image;
-static uint32_t a630_mode;
+static uint32_t a630_mode, a630_client_requested;
+static vm_offset_t a630_client_tables;
 static uint32_t a630_started, a630_published, a630_firmware_ok, a630_abi_ok;
 static uint8_t a630_host_hfi[A630_HFI_BYTES] __attribute__((aligned(16384)));
 /* Only the dedicated mode9 worker mutates hardware snapshots. Before its
@@ -114,6 +118,11 @@ uint32_t polaris_a630_status(void)
     if (!__atomic_load_n(&a630_published, __ATOMIC_ACQUIRE)) return 0;
     return a630_saved.result | (a630_firmware_ok << 8) | (a630_abi_ok << 9);
 }
+bool polaris_gpu_boot_pending(void)
+{
+    uint32_t state=__atomic_load_n(&a630_worker_state,__ATOMIC_ACQUIRE);
+    return state==1 || state==2;
+}
 
 uint32_t polaris_a630_details(char *out, uint32_t capacity)
 {
@@ -140,6 +149,7 @@ uint32_t polaris_a630_diagnostic_line(unsigned line, char *out, uint32_t size)
     const struct a630_post_snapshot *post=&a630_post_saved;
     const struct a630_zap_snapshot *zap=&a630_zap_saved;
     const struct a630_core_snapshot *core=&a630_core_saved;
+    if(line==19){uint32_t n=polaris_gpu_client_line(out,size);if(n)return n;}
     if(line==0 && core->prepared)return (uint32_t)snprintf(out,size,
         "GP SQE E%x B%x A%x D%x S%x/%x",
         core->cp_entry&255,core->cp_before&255,core->cp_auth&255,core->disabled&1,
@@ -409,6 +419,12 @@ static bool a630_runtime_held(void *opaque)
 static bool a630_clean_owned(void *opaque,const void *p,size_t bytes)
 {
     uintptr_t va=(uintptr_t)p;
+    if(a630_client_tables && va>=a630_client_tables && va-a630_client_tables<=0x200000 &&
+       bytes<=0x200000-(va-a630_client_tables) && a630_runtime_owned(opaque)){
+        for(uintptr_t at=va&~(uintptr_t)63;at<va+bytes;at+=64)
+            __asm__ volatile("dc civac, %0"::"r"(at):"memory");
+        __asm__ volatile("dsb sy":::"memory");return true;
+    }
     if(!a630_runtime_owned(opaque)||!a630_dma_ready||va<a630_dma||
         va-a630_dma>a630_dma_bytes||bytes>a630_dma_bytes-(va-a630_dma))return false;
     for(uintptr_t at=va&~(uintptr_t)63;at<va+bytes;at+=64){
@@ -471,7 +487,15 @@ static bool a630_prepare_dma(void)
         if(a630_images[1].bytes>0x8004 || a630_images[2].bytes>PAGE_SIZE)return false;
         memcpy((void*)(a630_dma+0x28000),a630_images[1].data+4,a630_images[1].bytes-4);
         memcpy((void*)(a630_dma+0x40000),a630_images[2].data,a630_images[2].bytes);
-        if(!a630_mmu_init(&a630_core_tables,(void*)(a630_dma+0x10000),physical+0x10000,16))return false;
+        if(a630_client_requested){
+            if(kmem_alloc_contig(kernel_map,&a630_client_tables,0x200000,PAGE_MASK,0,0,
+                KMA_DATA|KMA_ZERO|KMA_PERMANENT,VM_KERN_MEMORY_IOKIT)!=KERN_SUCCESS)return false;
+            uint64_t root=ptoa_64(pmap_find_phys(kernel_pmap,(addr64_t)a630_client_tables));
+            if(!root || root>=A630_MMU_PA_LIMIT-0x200000)return false;
+            for(unsigned n=0;n<0x200000;n+=PAGE_SIZE)
+                if(ptoa_64(pmap_find_phys(kernel_pmap,(addr64_t)a630_client_tables+n))!=root+n)return false;
+            if(!a630_mmu_init(&a630_core_tables,(void*)a630_client_tables,root,512))return false;
+        }else if(!a630_mmu_init(&a630_core_tables,(void*)(a630_dma+0x10000),physical+0x10000,16))return false;
         const uint32_t map[][4]={{A630_CORE_SQE,0x28000,0x8000,A630_MMU_USER|A630_MMU_READONLY|A630_MMU_EXEC},
             {A630_CORE_RING,0x30000,0x8000,A630_MMU_USER|A630_MMU_READONLY},
             {A630_CORE_SCRATCH,0x38000,0x4000,A630_MMU_USER},
@@ -818,6 +842,7 @@ void polaris_a630_report(void)
         s->cx, s->cx_hw, s->gx, s->clocks[0], s->clocks[1], s->clocks[2],
         s->fw_init, s->counter_high, s->counter_low);
 }
+#include "polaris_a630_runtime.h"
 static void a630_run(unsigned mode)
 {
     a630_stage(2,"firmware and exact-board admission");
@@ -877,6 +902,7 @@ static void a630_run(unsigned mode)
     a630_stage(17,"trial returned; publishing immutable result");
     __atomic_store_n(&a630_published, 1, __ATOMIC_RELEASE);
     polaris_a630_report();
+    if(mode==9)a630_client_adopt(&io);
 }
 static void a630_worker(void *arg __unused,wait_result_t wr __unused)
 {
@@ -886,7 +912,7 @@ static void a630_worker(void *arg __unused,wait_result_t wr __unused)
     __atomic_store_n(&a630_worker_state,2,__ATOMIC_RELEASE);
     a630_run(a630_mode);
     __atomic_store_n(&a630_worker_state,3,__ATOMIC_RELEASE);
-    printf("POLARIS GPU WORKER: returned; immutable result available; desktop CPU\n");
+    printf("POLARIS GPU WORKER: returned; immutable proof available; GPU service separate\n");
     thread_terminate(current_thread());
 }
 void polaris_a630_init(void)
@@ -894,6 +920,8 @@ void polaris_a630_init(void)
     unsigned mode=0;PE_parse_boot_argn("polarisgpu",&mode,sizeof(mode));
     if(mode<1||mode>9||__atomic_exchange_n(&a630_started,1,__ATOMIC_ACQ_REL))return;
     a630_mode=mode;
+    PE_parse_boot_argn("polarisgpuclient",&a630_client_requested,sizeof(a630_client_requested));
+    a630_client_requested=(mode==9 && a630_client_requested==1);
     if(mode==9){
         __atomic_store_n(&a630_worker_state,1,__ATOMIC_RELEASE);
         a630_stage(1,"dedicated worker queued; BSD init continues");

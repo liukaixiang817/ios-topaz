@@ -161,6 +161,7 @@ typedef uintptr_t vm_offset_t;typedef uintptr_t addr64_t;typedef uint64_t ppnum_
 static unsigned kernel_map,kernel_pmap,a630_mode=9,a630_dma_bytes,a630_dma_ready,a630_nc_pages,a630_core_dma_ready;
 static vm_offset_t a630_dma;static uint64_t a630_dma_physical;
 static struct a630_mmu a630_tables,a630_core_tables;static struct a630_image a630_images[6];
+static unsigned a630_client_requested;static vm_offset_t a630_client_tables;
 static unsigned attrs[32],alloc_fail,bad_phys;
 static int kmem_alloc_contig(unsigned map,vm_offset_t *out,size_t n,unsigned mask,unsigned a,unsigned b,unsigned flags,unsigned tag){
  (void)map;(void)a;(void)b;(void)tag;assert(mask==PAGE_MASK&&flags==7&&n==0x44000);

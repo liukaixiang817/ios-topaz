@@ -140,7 +140,7 @@ def adt_dram(adt_blob):
             struct.unpack('<Q', chosen.prop('dram-size'))[0])
 
 
-def build(kernel_path, adt_path, cmdline, ramdisk_path=None):
+def build(kernel_path, adt_path, cmdline, ramdisk_path=None, *, gpu_bundle_path=None):
     buf = bytearray(open(kernel_path, 'rb').read())
     m = parse_macho(buf)
     nfix = apply_chained_fixups(buf, m)
@@ -158,6 +158,27 @@ def build(kernel_path, adt_path, cmdline, ramdisk_path=None):
     PHYS_BASE, MEM_SIZE = adt_dram(adt_blob)
     pieces = [(s['vmaddr'], s['vmsize'], buf[s['fileoff']:s['fileoff'] + s['filesize']]) for s in segs]
     ramdisk = None
+    if gpu_bundle_path:
+        assert ramdisk_path is None, 'GPU bundle and root RAMDisk are separate boot profiles'
+        image = open(gpu_bundle_path, 'rb').read()
+        assert 304 <= len(image) <= 32 * 1024 * 1024 and image[:8] == b'PGPU0047'
+        rd_size = (len(image) + PAGE - 1) & ~(PAGE - 1)
+        rd_va = kernel_end
+        kernel_end += rd_size
+        rd_pa = rd_va - virt_base + PHYS_BASE
+        pieces.append((rd_va, rd_size, image))
+        root, consumed = adt.parse(adt_blob)
+        assert consumed == len(adt_blob) and adt.serialize(root) == adt_blob
+        assert b'xiaomi,polaris' in root.prop('compatible').split(b'\0')
+        assert not any(c.name == 'polaris-gpu-userland' for c in root.children)
+        import hashlib
+        node = adt.Node()
+        node.props = [('name', 0, b'polaris-gpu-userland\0'),
+                      ('ios-build', 0, b'20H392\0'),
+                      ('reg', 0, struct.pack('<QQ', rd_pa, len(image))),
+                      ('sha256', 0, hashlib.sha256(image).digest())]
+        root.children.append(node)
+        adt_blob = adt.serialize(root)
     if ramdisk_path:
         image = open(ramdisk_path, 'rb').read()
         rd_size = (len(image) + PAGE - 1) & ~(PAGE - 1)
@@ -189,6 +210,7 @@ def build(kernel_path, adt_path, cmdline, ramdisk_path=None):
         struct.pack_into('<4Q', out, SEG_TABLE + 32 * i, *t)
     info = dict(cputype=hex(m['cputype']), cpusub=m['cpusub'], fixups=nfix, virt_base=hex(virt_base),
                 entry=hex(m['entry']), kernel_end=hex(kernel_end), ramdisk=ramdisk, size=len(out),
+                gpu_bundle=bool(gpu_bundle_path),
                 segs=[(s['name'], hex(s['vmaddr']), hex(s['vmsize'])) for s in segs])
     return bytes(out), info
 
@@ -198,8 +220,9 @@ if __name__ == '__main__':
     ap.add_argument('kernel'); ap.add_argument('adt'); ap.add_argument('out')
     ap.add_argument('--cmdline', default='debug=0xc serial=3 cpus=1 keepsyms=1')
     ap.add_argument('--ramdisk', help='root image for md0 (boot with rd=md0)')
+    ap.add_argument('--gpu-bundle', help='Polaris volatile GPU userland bundle (file root remains unchanged)')
     a = ap.parse_args()
-    blob, info = build(a.kernel, a.adt, a.cmdline, a.ramdisk)
+    blob, info = build(a.kernel, a.adt, a.cmdline, a.ramdisk, gpu_bundle_path=a.gpu_bundle)
     open(a.out, 'wb').write(blob)
     for k, v in info.items():
         if k != 'segs':

@@ -31,7 +31,7 @@ int main(void) {
  assert(!a630_mmu_init(&s,(char*)pool+8,0x180000000,32));
  assert(!a630_mmu_init(&s,pool,0x180000001,32));
  assert(!a630_mmu_init(&s,pool,0xfffffff000,32));
- assert(!a630_mmu_init(&s,pool,0x180000000,33));
+ assert(!a630_mmu_init(&s,pool,0x180000000,A630_MMU_MAX_TABLES+1));
  assert(a630_mmu_init(&s,pool,0x180000000,32));
  assert(a630_mmu_lookup(&s,0x60000000,&pa,&entry)==A630_MMU_UNMAPPED);
  assert(a630_mmu_map(&s,0x60000001,0x190000000,0)==A630_MMU_ARGUMENT);

@@ -16,7 +16,9 @@
 
 #include "xf86drm.h"
 
+#ifndef REDWOOD_GPU_SERVICE
 #define REDWOOD_GPU_SERVICE     "RedwoodGPU"
+#endif
 #define REDWOOD_GPU_SURFACE     0x7e            /* the request that is not Linux's */
 #define REDWOOD_GPU_DESCRIBE    0xffffffffu     /* ... asked only what the buffer would be like */
 
@@ -35,6 +37,18 @@ drmOpenWithType(const char *name, const char *busid, int type)
 	}
 	if (connection_fd >= 0) {
 		return dup(connection_fd);
+	}
+	/* The Polaris acceptance program owns this task's connection so it can
+	 * report each actual shader/surface phase through the SAME user client.
+	 * Normal window-server use still opens its own connection below. */
+	const char *inherited = getenv("POLARIS_GPU_CONNECTION");
+	if (strcmp(REDWOOD_GPU_SERVICE, "PolarisGPU") == 0 && inherited != NULL) {
+		char *end = NULL;
+		unsigned long port = strtoul(inherited, &end, 10);
+		if (!port || port > UINT32_MAX || !end || *end) return -1;
+		connection = (io_connect_t)port;
+		connection_fd = open("/dev/null", O_RDWR);
+		return connection_fd < 0 ? -1 : dup(connection_fd);
 	}
 	service = IOServiceGetMatchingService(0, IOServiceMatching(REDWOOD_GPU_SERVICE));
 	if (service == 0) {

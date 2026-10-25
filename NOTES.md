@@ -34,7 +34,85 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT ACTION —0046 temporary boot SENT; nativeGPU/GUI proof pending
+### 0047 source complete; full kernel CI next, no device action yet
+
+- Final57native/ASan/UBSan/realC++BOlifetime/rollback/parser/formattertestsPASS;
+  8actualCI-headerARM64unitscompile,32orderedpatches/48filesreplaywithNOoffset
+  orfuzz, importsPASS. Onepre-existingclang21kern_exec __dso_handle import
+  independentlyreproducedinUNCHANGEDbaselineTU; notintroducedbythispatch.
+  One-shotccdigestwrapperwasNOTlinked: fixedtotheexistingnativeSHA256provider.
+- PublicMesa builder executedPASS (25.0.7 source592272df); latestgraphics-v4
+  sixsignediOSarm64artifacts+fixedpathbundle15375920B. Manifest bindsbuilder,
+  rawMESA,gl.xml,alluserlandsources/artifacts. All457OpenGLES20H392slotsand
+  twoQuartzCorevtabletargetsmatchactualcache. NOApple/SDK/binaries/serialsin
+  sourcepublication. Kernel0852stillnotCIorphysicalGUIproof.
+- Newper-taskprogressusesSAMEGPUconnectioninacceptanceprocess. GAstatusrow
+  showsO/open,S/completed(hex),I/imports(hex),T/phase1..6,E/testerror,
+  D/quarantine,R/ready. Nativebootrowsremain29high; alldetailedRAMlogsretained.
+  Writeradmissionboundtoactualroot-ownedexecutablevnode+ownertask,notUID:
+  genuinebackboarddismobile. ScopedAMFIdyldreplyonlyforactualrealbackboardd.
+- Overlaywaitsupto12sfornativeworkerwithoutcompetingforits10sdeadline;
+  ifnativeproofnotready, originalCPUbootwithoutstaging. SixfileO_EXCLstage
+  requiresverified512MiBvolatileCOW; allbundlehashescheckbeforeANYwrite.
+  PID1activation+rollbackthenApplelaunchd; separateGLSL/sharedsurface/all4096
+  checkhas30sboundandCPUfallback. NoUFS/GPT/baseimagewrites, noUSBobserver.
+- NEXTcommit/source-onlypublish/ghkernelbuild, same133CPU1standardclockchecks,
+  bundle-awarepayload/finalimagechecks; FIRSTautoFASTBOOTquerythenfreshRO
+  preflight/directbootifpresent. Neverboot-and-watch whileUSBpauseactive.
+  Currentphysicalphone0046nativePASS/CPUdesktop. No0047image/bootyet.
+
+### 0047 implementation milestone — resident service/Mesa/EAGL/RAM overlay, NOT hardware-proven
+
+- Keep0046 nativePASS asbaseline: newD63D80B3 photograph proves fence600dc0de,
+  idle/halt andALL4096pixels. CurrenthandsetGUI stillCPU; no0047boot yet.
+- Newopt-inpolarisgpuclient=1 retainsa copiedstaticMMIOlease (neverworkerstack),
+  expandsownedCB0tables BEFOREbootstrap, implementsboundedIB/fence/idle/halt
+  submission andquarantineonambiguity. OriginalHFI/PAS/SQEbootstrapunchanged.
+  Native52testspass;7actualCI-headerARM64unitscompile. Finalchecks/CIpending.
+- NewPolarisGPU MSM1.7service: oneverifiedwriter, wirelimits, residentBOs,
+  cachedaliases+explicitmaintenance, ownSweetSurfacebyteZEROoffset, synchronous
+  completion/busygate, noforeignMMU/reset. Found20H392backboarddisMOBILE, so
+  authenticateactualroot-ownedexecutablevnode forsmoketest/realbackboardd on
+  everyopen/method/map; UID/admin-onlywouldhavefailed. Thisrevisionnotyet
+  recompiled/tested. DMAuncertaintyretainsclient/pages/mappingsuntilreboot.
+- Mesa25.0.7 iOSarm64freedreno+softpipe buildPASS; originalarchive592272df,
+  twoownDarwin/ESpatches. All457OpenGLES20H392tableoffsetsandtwoQuartzCore
+  vtabletargetsindependentlyverifiedactualApplecache. Sixadhocsigneduserland
+  artifactsbuildPASS under0047/graphics-v1 (prelatestauth/kernelchanges).
+  Needexactrebuildwhenuserlandsourceschange; doNOTclaimphysicalshader/GUIpass.
+- Bundle fixed6enumIDs/noinputpaths/per-fileSHA/allhashesbeforewrites. New
+  kernelstageronlyallowsverifiedfile-root512MiBRAMCOW, createsnewfixedfiles
+  O_EXCL, neveroverwritesApplebootstrap. PID1helperactivateswrapperviaPOSIX
+  rename/rollbackthenexecsApplelaunchd. WrapperrunsseparatetaskGLSL+shared
+  IOSurfaceALL4096pixeltest,30sbound; onlyPASSenablesbackboarddEAGL. Failure
+  retainsCPUbootstrap. Entireoverlayvolatile; noUFS/GPT/baseimagewrites.
+- Next: finishactualclientlifetime/parser/overlay/payloadtests,stage0852and
+  commit/source-onlypublish/ghbuild,standardCPU1matrix, finalimagechecks.
+  FIRSTautoFASTBOOTquerythenfreshROpreflight/directbootifready. No0047image,
+  CI,devicestepyet. USBobserverstillPAUSED; importantRAMlogsremain.
+
+### CURRENT ACTION —0046 NATIVE GPU DRAW PROOF PASS; desktop GPU integration work begins
+
+- HumannewphotoD63D80B3 + entered-system reply: GP SQEE0B0A0D0S0/0,
+  GZ6/7 fn42000205t0r0 S1M1A1K1, GC08/7 C8b/8b I1 F600dc0de H1L0 M8/7,
+  GI1px1000e0a0, GFIRQ0HW0P0CP0B0A0S0. Thisisactualnativecommandcompletion,
+  fence600dc0de, ALL4096offscreenpixels andCPidle/halt proof, notjustauth/HFI.
+  Stage7 also gatedonsecure-exit/flush-eventfences. Source9965798/CI40165297131/
+  image86da57f9 boundexact0046boot05:34:02UTC. hardware-0046-native-GPU-PASS.json.
+- HumanGUIstillCPU iscorrect: noGPU IOUserClient/Mesa/EAGL/Metal/sharedsurface
+  bridge exists. Preserve0046nativeinitialization asprovenbaseline, nowadapt
+  persistentownedsubmission, residentBO/IOMMU, SweetSurfacefences andactual
+  iOS20H392windowservergraphicalbackend. DoNOTclaimdesktopaccelerationyet.
+- USBobserver staysPAUSED, importantlogs stay. New0047privateworkdircreated;
+  referencekernelRedwoodGPU/backend anduserlandMesa/EAGL examinedagainstown
+  SweetSurface/Framebuffer andnativepolarisDT/vendor. Referenceexplicitly
+  lackscomplete multi-clientcare: enforceownership/lifetimes, donotblindcopy.
+- No0047code/build/image/deviceactionyet. Needkernelservice ANDuserlandbridge,
+  testnativeMSM/Mesa draw beforeadmittingdesktopbackend. Preserveimmutable
+  root/backups; stageonlynewlocalartifacts/RAMoverlay, noUFS/GPTwrites. All
+  newimagefinalchecks thenFIRSTautoFASTBOOTquery, ROpreflight/directboot ifready.
+
+### 0046 temporary boot sent; actual GPU proof confirmed above
 
 - FreshROpreflight49043 EXIT0 at05:33:43.303223UTC: all16GiB689a8cd1,
   all182maps/GPT/header32311c08 unchanged; cleanouter/unmounted/RO1/32C.
