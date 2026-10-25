@@ -7,6 +7,7 @@
 #include <IOKit/IOKitLib.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
 #include <mach/mach.h>
@@ -18,6 +19,7 @@
 #include <mach-o/loader.h>
 #include <mach-o/dyld.h>
 #include "../../tools/polaris-gl-status.h"
+#include "../../tools/polaris-gpu-abi.h"
 #include <OpenGLES/ES3/gl.h>
 #include <OpenGLES/ES3/glext.h>
 typedef void *OSMesaContext;
@@ -149,6 +151,44 @@ static int surface_contract(void)
     fprintf(stderr,"POLARIS GL: PASS wrapped IOSurface state/alias/metadata/lookup/release\n");
     return 0;
 }
+/* Exercise the path missing from the original solid-colour test: UCHE
+ * texture reads of GMEM, including restoration of the previous render pass.
+ * Force GMEM only in this separate acceptance task, never in backboardd.
+ * Four full-surface inversions must all reach the original CPU alias. */
+static unsigned gmem_fetch_contract(GLuint vertex,IOSurfaceRef surface)
+{
+    GLint extensions=0;bool fetch=false;
+    glGetIntegerv(GL_NUM_EXTENSIONS,&extensions);
+    for(GLint n=0;n<extensions;n++) {
+        const char *name=(const char*)glGetStringi(GL_EXTENSIONS,(GLuint)n);
+        if(name && !strcmp(name,"GL_EXT_shader_framebuffer_fetch"))fetch=true;
+    }
+    if(!fetch)return 41;
+    test_step(43);
+    const char *source="#version 300 es\n#extension GL_EXT_shader_framebuffer_fetch : require\n"
+        "precision highp float;layout(location=0) inout vec4 c;"
+        "void main(){c=vec4(vec3(1.0)-c.rgb,1.0);}";
+    GLuint fragment=shader(GL_FRAGMENT_SHADER,source);if(!fragment)return 42;
+    GLuint program=glCreateProgram();glAttachShader(program,vertex);glAttachShader(program,fragment);
+    glLinkProgram(program);GLint linked=0;glGetProgramiv(program,GL_LINK_STATUS,&linked);
+    if(!linked)return 43;
+    for(unsigned round=0;round<4;round++) {
+        test_step(44+round);glUseProgram(program);glDrawArrays(GL_TRIANGLES,0,3);glFinish();
+        if(glGetError())return 44;
+        if(IOSurfaceLock(surface,kIOSurfaceLockReadOnly,NULL))return 45;
+        const uint8_t *pixels=IOSurfaceGetBaseAddress(surface);
+        const int original[4]={191,128,64,255};bool correct=pixels!=NULL;
+        for(unsigned n=0;correct && n<4096;n++)for(unsigned k=0;k<4;k++) {
+            int expected=(round&1)||k==3?original[k]:255-original[k];
+            if(abs((int)pixels[4*n+k]-expected)>1){correct=false;break;}
+        }
+        IOSurfaceUnlock(surface,kIOSurfaceLockReadOnly,NULL);
+        if(!correct)return 46;
+    }
+    glDeleteProgram(program);glDeleteShader(fragment);test_step(48);
+    fprintf(stderr,"POLARIS GL: PASS forced GMEM framebuffer fetch/restore ALL4096 pixels x4\n");
+    return 0;
+}
 int main(void)
 {
     test_started_ms=test_milliseconds();watch_test_faults();test_step(1);
@@ -158,6 +198,11 @@ int main(void)
     if(opened)return 21;
     char port[32];snprintf(port,sizeof(port),"%u",connection);setenv("POLARIS_GPU_CONNECTION",port,1);
     report(1,0);
+    /* Reject a mismatched native GMEM window before issuing any draw. */
+    struct msm_param gmem={.pipe=0x10,.param=6};size_t gmem_bytes=sizeof(gmem);
+    if(IOConnectCallStructMethod(connection,0x40,&gmem,sizeof(gmem),&gmem,&gmem_bytes) ||
+        gmem_bytes!=sizeof(gmem) || gmem.value!=0x100000)return fail(47);
+    if(setenv("FD_MESA_DEBUG","gmem",1))return fail(48);
     test_step(10);unsigned contract=surface_contract();if(contract)return fail(contract);test_step(11);
     int attrs[]={0x22,GL_RGBA,0x33,0x38,0x36,3,0x37,0,0};
     test_step(20);uint8_t window[16*16*4];OSMesaContext c=OSMesaCreateContextAttribs(attrs,NULL);
@@ -204,5 +249,7 @@ int main(void)
     }
     IOSurfaceUnlock(s,kIOSurfaceLockReadOnly,NULL);
     fprintf(stderr,"POLARIS GL: PASS GPU GLSL + shared IOSurface ALL%u pixels\n",passed);
-    test_step(42);report(6,0);OSMesaDestroyContext(c);CFRelease(s);IOServiceClose(connection);return 0;
+    test_step(42);
+    unsigned gmem_error=gmem_fetch_contract(v,s);if(gmem_error)return fail(gmem_error);
+    report(6,0);OSMesaDestroyContext(c);CFRelease(s);IOServiceClose(connection);return 0;
 }
