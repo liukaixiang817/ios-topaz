@@ -1,0 +1,199 @@
+--- a/bsd/dev/polaris_a630.c
++++ b/bsd/dev/polaris_a630.c
+@@ -59,6 +59,7 @@
+ static struct a630_post_snapshot a630_post_saved;
+ static struct a630_zap_snapshot a630_zap_saved;
+ static struct a630_core_snapshot a630_core_saved;
++static uint32_t a630_core_fault_regs[8],a630_core_fault_valid;
+ static struct a630_image a630_images[6];
+ static uint64_t a630_dma_physical;
+ static uint32_t a630_core_dma_ready;
+@@ -157,8 +158,8 @@
+         return (uint32_t)snprintf(out,size,"GS0 R%x @%x e%x a%x",
+             a630_core_smmu.restore_error&15,a630_core_smmu.restore_offset,
+             a630_core_smmu.restore_expected,a630_core_smmu.restore_actual);
+-    if(line==19)return (uint32_t)snprintf(out,size,"GF IRQ%x HW%x P%x CP%x",
+-        core->irq,core->hw_fault,core->protect,core->cp_irq);
++    if(line==19)return (uint32_t)snprintf(out,size,"GF IRQ%x HW%x P%x CP%x B%x A%x S%x",
++        core->irq,core->hw_fault,core->protect,core->cp_irq&255,core->cp_before&255,core->cp_auth&255,a630_core_fault_regs[3]);
+     const struct a630_power_snapshot *p = &a630_power_saved;
+     const struct a630_clock_snapshot *c = &a630_clock_saved;
+     const struct a630_channel_snapshot *h=&a630_channel_saved;
+@@ -322,7 +323,7 @@
+     if(!a630_budget_ok(io))return false;
+     if(region==5 && io->runtime_lease && io->core_lease && a630_mode==9 && io->base[5]){
+         bool allowed=false;
+-        const uint32_t words[]={0x800,0x801,0x802,0x804,0x805,0x807,0x808,0x830,0x831};
++        const uint32_t words[]={0x800,0x801,0x802,0x804,0x805,0x807,0x808,0x830,0x831,0x908};
+         for(unsigned n=0;n<sizeof(words)/sizeof(words[0]);n++)if(off==4*words[n])allowed=true;
+         for(unsigned n=0;n<sizeof(a630_core_profile)/sizeof(a630_core_profile[0]);n++)
+             if(off==4*a630_core_profile[n].word)allowed=true;
+@@ -533,11 +534,22 @@
+     io->core_lease=true;
+     const struct a630_zap_io zap={a630_core_owned,a630_scm_call,a630_zap_publish,a630_zap_segment,io};
+     const struct a630_core_io core={a630_core_owned,a630_core_read,a630_core_write,a630_gmu_sync,a630_delay_us,io};
+-    a630_stage(12,"post-HFI ready; signed ZAP");
+-    if(a630_zap_start(true,&zap,a630_images,a630_dma_physical+0x40000,&a630_zap_saved)){
++    a630_stage(12,"post-HFI ready; halted SQE/RB preparation");
++    /* Original a6xx_rb_start writes SQE/RB before microcode_load invokes
++     * PAS13. No SQE release or DMA command is allowed before fresh AUTH. */
++    bool prepared=a630_core_prepare(true,a630_core_dma_ready,&core,(uint32_t*)(a630_dma+0x30000),
++        (volatile uint32_t*)(a630_dma+0x38000),(volatile uint32_t*)(a630_dma+0x3c000),&a630_core_saved);
++    if(prepared && a630_zap_start(true,&zap,a630_images,a630_dma_physical+0x40000,&a630_zap_saved)){
+         a630_stage(14,"authenticated; native CP and image");
+-        a630_core_run(true,a630_core_dma_ready,true,&core,(uint32_t*)(a630_dma+0x30000),
++        a630_core_execute(true,&core,(uint32_t*)(a630_dma+0x30000),
+             (volatile uint32_t*)(a630_dma+0x38000),(volatile uint32_t*)(a630_dma+0x3c000),&a630_core_saved);
++    }
++    if(a630_core_saved.started && !a630_core_saved.image){
++        /* Read only global/ownedCB0 syndrome before the lease is withdrawn.
++         * Do not clear FSR, resume a fault or issue ATOS on this board. */
++        const uint32_t words[]={0x48,0x50,0x54,0x8058,0x8060,0x8064,0x8068,0x806c};
++        for(unsigned n=0;n<8;n++)
++            if(a630_read_register(io,3,words[n],&a630_core_fault_regs[n]))a630_core_fault_valid|=1u<<n;
+     }
+     a630_stage(15,"core proof; preserve secure lifetime");
+     printf("POLARIS GPU CORE RESULT: error=%u stage=%u fence=%x image=%u pixels=%u halted=%u live=%u\n",
+@@ -750,6 +762,19 @@
+         a630_core_saved.image,a630_core_saved.pixels,a630_core_saved.halted,a630_core_saved.keep_live,
+         a630_core_saved.rptr,a630_core_saved.wptr,a630_core_saved.irq,a630_core_saved.hw_fault,
+         a630_core_saved.protect,a630_core_saved.offset,a630_core_saved.expected,a630_core_saved.actual);
++    printf("D GPU CP PREP: ready=%u before=%x auth=%x after=%x SQE=%x/%x RB=%x/%x ctrl=%x WPTR=%x halt=%x\n",
++        a630_core_saved.prepared,a630_core_saved.cp_before,a630_core_saved.cp_auth,a630_core_saved.cp_irq,
++        a630_core_saved.config[0],a630_core_saved.config[1],a630_core_saved.config[2],a630_core_saved.config[3],
++        a630_core_saved.config[4],a630_core_saved.config[5],a630_core_saved.config[6]);
++    printf("D GPU CP FIRST: valid=%x SQE=%x/%x RB=%x/%x ctrl=%x halt=%x status=%x index=%x restored=%u state=%x/%x/%x/%x/%x/%x/%x/%x\n",
++        a630_core_saved.fault_valid,a630_core_saved.live[0],a630_core_saved.live[1],a630_core_saved.live[2],
++        a630_core_saved.live[3],a630_core_saved.live[4],a630_core_saved.live[5],a630_core_saved.live[6],
++        a630_core_saved.sqe_valid,a630_core_saved.sqe_index_restored,a630_core_saved.sqe_state[0],a630_core_saved.sqe_state[1],
++        a630_core_saved.sqe_state[2],a630_core_saved.sqe_state[3],a630_core_saved.sqe_state[4],a630_core_saved.sqe_state[5],
++        a630_core_saved.sqe_state[6],a630_core_saved.sqe_state[7]);
++    printf("D GPU CP SMMU: valid=%x global=%x/%x/%x CB0=%x FAR=%x:%x syndrome=%x/%x; read only, no ATOS\n",
++        a630_core_fault_valid,a630_core_fault_regs[0],a630_core_fault_regs[1],a630_core_fault_regs[2],
++        a630_core_fault_regs[3],a630_core_fault_regs[5],a630_core_fault_regs[4],a630_core_fault_regs[6],a630_core_fault_regs[7]);
+     printf("D GPU HFI STOP: GX=%u SPTP=%u HFI=%u slumber=%u restored=%u error=%u offset=%x expected=%x actual=%x; see CORE; desktop CPU\n",
+         h->gx_requested,h->sptp_requested,h->hfi_requested,h->slumber,h->restored,
+         h->restore_error,h->restore_offset,h->restore_expected,h->restore_actual);
+--- a/bsd/dev/polaris_a630_core.h
++++ b/bsd/dev/polaris_a630_core.h
+@@ -30,6 +30,8 @@
+     uint32_t error,stage,offset,expected,actual,started,halted,idle,keep_live;
+     uint32_t wptr,rptr,status,irq,hw_fault,protect,cp_irq,polls;
+     uint32_t init_done,secure_done,fence,image,pixels,halt_error;
++    uint32_t prepared,cp_before,cp_auth,config[7],live[7],fault_valid;
++    uint32_t sqe_state[8],sqe_valid,sqe_index_restored;
+ };
+ static inline uint32_t a630_core_parity(uint32_t v)
+ {v^=v>>16;v^=v>>8;v^=v>>4;return (0x9669u>>(v&15))&1;}
+@@ -53,9 +55,11 @@
+     for(unsigned n=0;n<20000;n++){
+         s->polls++;
+         if(!a630_core_rd(io,s,0x806,&s->rptr)||!a630_core_rd(io,s,0x210,&s->status)||
+-           !a630_core_rd(io,s,0x201,&s->irq))return false;
++           !a630_core_rd(io,s,0x201,&s->irq)||!a630_core_rd(io,s,0x823,&s->cp_irq))return false;
+         /* Native RBBM interrupt fault bits; completion interrupts are benign. */
+-        if(s->irq&0x03c002c2u){s->error=A630_CORE_FAULT;goto fault;}
++        if((s->irq&0x03c002c2u)||(s->cp_irq&0xf7u)){
++            s->error=A630_CORE_FAULT;s->offset=0x823;s->expected=0;s->actual=s->cp_irq;goto fault;
++        }
+         if(s->rptr==s->wptr&&!(s->status&0xfffffffeu)){s->idle=1;return true;}
+         io->wait(io->ctx,10);
+     }
+@@ -79,6 +83,23 @@
+     s->idle=0;
+     if(!io->sync(io->ctx)){s->error=A630_CORE_IO;return false;}
+     return a630_core_wr(io,s,0x807,s->wptr)&&a630_core_idle(io,s);
++}
++static inline void a630_core_fault_snapshot(const struct a630_core_io *io,struct a630_core_snapshot *s)
++{
++    /* Own first failure only. No interrupt acknowledgement, reset, TLB
++     * operation or ring submission. Native a6xx_snapshot uses these indexed
++     * SQE status registers; bound this capture to8words and restore its index. */
++    const uint32_t words[]={0x830,0x831,0x800,0x801,0x802,0x808,0x825};
++    for(unsigned n=0;n<7;n++)
++        if(io->owned(io->ctx)&&io->read(io->ctx,words[n],&s->live[n]))s->fault_valid|=1u<<n;
++    uint32_t index;
++    if(!io->owned(io->ctx)||!io->read(io->ctx,0x908,&index))return;
++    for(unsigned n=0;n<8;n++){
++        if(!io->owned(io->ctx)||!io->write(io->ctx,0x908,n)||!io->sync(io->ctx)||
++           !io->read(io->ctx,0x909,&s->sqe_state[n]))break;
++        s->sqe_valid|=1u<<n;
++    }
++    if(io->owned(io->ctx)&&io->write(io->ctx,0x908,index)&&io->sync(io->ctx))s->sqe_index_restored=1;
+ }
+ static inline bool a630_core_halt(const struct a630_core_io *io,struct a630_core_snapshot *s)
+ {
+@@ -92,12 +113,15 @@
+ failed:
+     s->halt_error=r.error?r.error:A630_CORE_RUNNING;s->keep_live=1;return false;
+ }
+-static inline bool a630_core_run(bool exact_board,bool mappings_ready,bool authenticated,
++/* Native a6xx_rb_start loads SQE/RB addresses BEFORE subsystem_get(zap).
++ * Preparation cannot release SQE or submit any command. Authentication
++ * remains mandatory at the separate execution boundary below. */
++static inline bool a630_core_prepare(bool exact_board,bool mappings_ready,
+     const struct a630_core_io *io,uint32_t *ring,volatile uint32_t *scratch,
+     volatile uint32_t *target,struct a630_core_snapshot *s)
+ {
+     if(!s)return false;*s=(struct a630_core_snapshot){0};if(!exact_board)return false;
+-    if(!mappings_ready||!authenticated||!io||!io->owned||!io->read||!io->write||
++    if(!mappings_ready||!io||!io->owned||!io->read||!io->write||
+        !io->sync||!io->wait||!ring||!scratch||!target||
+        ((uintptr_t)ring&0x3fff)||((uintptr_t)scratch&0x3fff)||((uintptr_t)target&0x3fff)){
+         s->error=A630_CORE_ARGUMENT;return false;}
+@@ -109,6 +133,7 @@
+     s->halted=1;s->keep_live=0;
+     if(!a630_core_rd(io,s,0x806,&s->rptr))return false;
+     if(s->rptr){s->error=A630_CORE_RUNNING;return false;}
++    if(!a630_core_rd(io,s,0x823,&s->cp_before))return false;
+     for(unsigned n=0;n<A630_CORE_WORDS;n++)ring[n]=0;
+     for(unsigned n=0;n<16;n++)scratch[n]=0;
+     for(unsigned n=0;n<4096;n++)target[n]=0xa5a5a5a5;
+@@ -119,6 +144,27 @@
+        !a630_core_wr(io,s,0x800,A630_CORE_RING)||!a630_core_wr(io,s,0x801,0)||
+        !a630_core_wr(io,s,0x802,0x0800020c)||!a630_core_wr(io,s,0x804,0)||
+        !a630_core_wr(io,s,0x805,0)||!a630_core_wr(io,s,0x807,0))return false;
++    const uint32_t words[]={0x830,0x831,0x800,0x801,0x802,0x807,0x808};
++    const uint32_t values[]={A630_CORE_SQE,0,A630_CORE_RING,0,0x0800020c,0,3};
++    for(unsigned n=0;n<7;n++){
++        if(!a630_core_rd(io,s,words[n],&s->config[n]))return false;
++        if(s->config[n]!=values[n]){
++            s->error=A630_CORE_DATA;s->offset=words[n];s->expected=values[n];s->actual=s->config[n];return false;
++        }
++    }
++    s->prepared=1;return true;
++}
++/* A failed/absent AUTH never reaches SQE release, even after preparation. */
++static inline bool a630_core_execute(bool authenticated,const struct a630_core_io *io,
++    uint32_t *ring,volatile uint32_t *scratch,volatile uint32_t *target,struct a630_core_snapshot *s)
++{
++    if(!s)return false;
++    if(!authenticated||!s->prepared||s->stage!=2||!s->halted||s->started||!io||
++       !io->owned||!io->read||!io->write||!io->sync||!io->wait||!ring||!scratch||!target||
++       ((uintptr_t)ring&0x3fff)||((uintptr_t)scratch&0x3fff)||((uintptr_t)target&0x3fff)){
++        s->error=A630_CORE_ARGUMENT;return false;
++    }
++    if(!a630_core_rd(io,s,0x823,&s->cp_auth))return false;
+     s->stage=3;s->started=1;s->halted=0;s->idle=0;s->keep_live=1;
+     if(!a630_core_wr(io,s,0x808,1))goto done;
+     /* Linuxv6.12 A630 CP initialization: no preemption/IFPC restore list. */
+@@ -171,6 +217,19 @@
+     }
+     s->image=1;s->stage=7;s->error=A630_CORE_READY;
+ done:
++    if(s->error!=A630_CORE_READY)a630_core_fault_snapshot(io,s);
+     a630_core_halt(io,s);return s->error==A630_CORE_READY&&s->halted;
+ }
++/* Protocol harness wrapper; the hardware coordinator performs preparation,
++ * then fresh PAS authentication, then execution using these same helpers. */
++static inline bool a630_core_run(bool exact_board,bool mappings_ready,bool authenticated,
++    const struct a630_core_io *io,uint32_t *ring,volatile uint32_t *scratch,
++    volatile uint32_t *target,struct a630_core_snapshot *s)
++{
++    if(!s)return false;
++    if(!exact_board){*s=(struct a630_core_snapshot){0};return false;}
++    if(!authenticated){*s=(struct a630_core_snapshot){.error=A630_CORE_ARGUMENT};return false;}
++    return a630_core_prepare(exact_board,mappings_ready,io,ring,scratch,target,s)&&
++        a630_core_execute(authenticated,io,ring,scratch,target,s);
++}
+ #endif
