@@ -28,6 +28,29 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT ACTION —0039 HFI INIT/FW_VER adapter locally checked
+
+- 0038 is physically proven at fresh GMU BABEFACE only; GUI works. Its USB
+  observer is stopped by the actual human confirmation. No HFI/GX/3D/USB link
+  success has been claimed. Keep 0038 as the rollback image.
+- New mode7/patch0844 adds two owned Normal noncacheable 16KiB pages for the
+  legacy HFI queue and dump, original OOB22/ACK30 low ARC votes3/3, SPTPRAC,
+  HFI_CTRL_INIT and serialized INIT/FW_VER with native5s response timeout.
+  Matching ID/12-bit sequence/error0 and compatible version are mandatory.
+  No PERF/BW tables, TEST, SQE/CP, GPU drawing or userland bridge is enabled.
+- Slumber precedes CM3 containment and teardown. An uncertain GX/slumber or
+  restoration keeps sequencer/mappings/pages/clocks/power. Existing strict
+  SMMU CBAR cleanup remains unchanged; 0038 saved0/read1f300 failure is not waived.
+- Local28 ASan/UBSan tests (including all startup/cleanup IO failures), three
+  actual-header ARM64 objects/imports, 24 ordered patches/29 actual files,
+  native source offsets/48 profile writes/live DT and22 detail/24 display rows
+  pass. Full CI, selected timed guest runs and image/device results are pending.
+- Source-only publication to the already authorized existing public branch
+  follows. Exclude this NOTES and private history. After final image verification,
+  FIRST query FASTBOOT; if expected polaris present, proceed with fresh full RO
+  preflight and temporary boot. Start detached USB observation immediately and
+  continue until actual same-boot human “已进入系统”/explicit stop. Ask GH/HQ/HA/HR.
+
 ### CURRENT ACTION —0038 FIRST PHYSICAL GMU BOOT ACK; next HFI/GX
 
 - Actualhuman“已进入系统”,photoF96E8DA6. **GE6/6 fwBABEFACE @0:0 e0 a0 r1/0**:
