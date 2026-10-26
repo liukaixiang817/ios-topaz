@@ -34,6 +34,35 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0057 physical original-UEFI inventory PASS; actual map permits upper-bank XNU
+
+- Human confirmed POLARIS EFI PROBE/HOLD and supplied complete screen photo
+  for corrected image85c2ddbb. physical-probe-result.json stores transcription
+  with exact image binding; original private photo stays out of git.
+- ACTUAL CURRENT_EL=4 (EL1), MPIDR=0x81000000 (currentCPU0), MIDR0x517f803c,
+  MMFR0=0x101122 (16KiB granule support). Driver loaded0x17a3cd000/0x3000,
+  below the XNU upper-bank boundary0x180000000. This is physical observation,
+  not a guarantee all future EFI allocations remain below the boundary.
+- Actual validated map54descriptors, upperFREE=0xfc8a0 pages=0xfc8a0000bytes,
+  upperLIVE=0, upperUNMAPPED=0. Entire current XNU window conventional/free;
+  must explicitly claim and revalidate it before copying kernel/ADT/args.
+  GOP_STATUS=0, FS_STATUS=0, QCOM_USB_STATUS=0: protocols found. USB enumeration,
+  log/screenshot transfers and resident16KiB firmware bridge NOT tested.
+- Actual PROBE_RESULT=0, WATCHDOG_DISABLE=0, BootOrder readsuccess/24bytes.
+  ProbePASS/HOLD confirms the codec correction and original firmware dispatch
+  worked. Still NO XNU or iOS-from-UEFI boot and NO persistent write. Driver
+  holds beforeOS; currentphone remains this inventory screen. ContinuousUSB
+  observation staysPAUSED. No new FASTBOOT request until next candidate ready.
+- NEXT build bounded EFI XNU handoff against actual map/EL1 and preserve all
+  original Windows entries. Review reference's QCOM USB API against original
+  SDM845 protocol before adapting a RAM-only log/screenshot/payload service;
+  protocol presence alone is not host communication. Root file extents/fullSHA/
+  outermetadata must be freshly reviewed before ANY XNU boot after Android.
+  Test real EFI loader/16KiB transition in emulator before new physical RAM
+  test; installation still waits for complete physical iOS success and concrete
+  per-step persistent-write approval. Sourcefix7c568f7, inventory8ca87e2;
+  sent-result handoffdf41e27; no new kernelCI in0057 yet.
+
 ### 0057 corrected-codec RAM trial sent; await fresh physical probe result
 
 - Source codec fix committed7c568f7; inventory implementation8ca87e2.
