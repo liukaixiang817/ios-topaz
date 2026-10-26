@@ -55,6 +55,7 @@ struct polaris_usb_control {
     int (*running)(void *);
     int (*touch)(void *,unsigned,unsigned,unsigned);
     int (*input_status)(void *,struct polaris_uefi_input_status *);
+    int (*boot_options)(void *,const uint8_t **,uint64_t *);
 };
 /* Command parsing is shared by the native host test and the real EFI driver. */
 int polaris_usb_command(struct polaris_usb_diag *,const uint8_t *,uint64_t);

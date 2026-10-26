@@ -12,6 +12,14 @@ class Wire:
     def read(self,n):return self.replies.pop(0)
 
 class KernelProtocolTests(unittest.TestCase):
+    def test_boot_backup_is_bounded_and_keeps_inventory_reader_whitelist(self):
+        wire=Wire([b'OKAYpolaris-uefi-diag',b'OKAY',b'DATA00000020',b'x'*32,b'OKAY'])
+        p=usb.KernelProtocol(wire);p.product();p.stage('boot-options');self.assertEqual(p.upload(),b'x'*32)
+        self.assertEqual(wire.commands,[b'getvar:product',b'oem boot-options',b'upload'])
+        wire=Wire([b'OKAYpolaris-uefi-diag']);p=usb.ReadOnlyProtocol(wire);p.product()
+        with self.assertRaises(ValueError):p.stage('boot-options')
+        self.assertEqual(wire.commands,[b'getvar:product'])
+
     def test_exact_manifest_ram_payload_then_explicit_boot(self):
         data=b'x'*70000
         m=dict(RAM_only_XNU_loader=True,storage_write_api=False,NVRAM_write_api=False,

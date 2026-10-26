@@ -3,6 +3,7 @@
  * kernel MMU/GIC work executes on the one declared, separately started core. */
 #include "uefi-xnu.h"
 #include "uefi-reset.h"
+#include "uefi-boot-options.h"
 #include "uefi-memory.h"
 #include "uefi-xnu-config.h" /* exact payload bytes/CRC, symbol offsets, board */
 struct video {uint64_t base,display,stride,width,height,depth;};
@@ -14,6 +15,7 @@ static efi_handle driver_image;
 static uint8_t log_buffer[32768];static uint64_t log_bytes;
 static struct {uint64_t magic,bytes,stride,version;uint8_t data[65536];} map_snapshot;
 static uint64_t map_bytes;
+static struct polaris_efi_boot_options boot_inventory;
 static struct polaris_gop *gop;
 #if !defined(POLARIS_EFI_TEST_QEMU)
 static struct polaris_efi_pon *reset_pon;
@@ -177,6 +179,11 @@ static void boot_kernel(void *context)
     report("KERNEL_PSCI_STATUS=",(uint64_t)cpu_status);
 }
 static int running(void *context){(void)context;return load_state>=4;}
+static int boot_options(void *context,const uint8_t **data,uint64_t *bytes)
+{
+    (void)context;if(boot_inventory.used<32||boot_inventory.used>sizeof(boot_inventory.data))return 0;
+    *data=boot_inventory.data;*bytes=boot_inventory.used;return 1;
+}
 static int input_status(void *context,struct polaris_uefi_input_status *out)
 {
     (void)context;if(!EFI_XNU_INPUT_AVAILABLE||load_state<4||cpu_status||!out)return 0;
@@ -273,6 +280,7 @@ static efi_status admission(void)
     __asm__ volatile("mov %0,sp":"=r"(sp));report("EFI_EL=",el);report("EFI_MPIDR=",mpidr);
     report("EFI_CODE_IDENTITY=",identity((uintptr_t)admission));report("EFI_STACK_IDENTITY=",identity(sp));
     if(el!=4||(mpidr&UINT64_C(0xffffff))!=0||!identity((uintptr_t)admission)||!identity(sp))return EFI_ERROR|3;
+    report("EFI_BOOT_OPTIONS_CAPTURE=",polaris_efi_boot_options_capture(system_table->runtime,&boot_inventory));
     struct efi_loaded *image=0;static const efi_guid loaded={0x5b1b31a1,0x9562,0x11d2,{0x8e,0x3f,0,0xa0,0xc9,0x69,0x72,0x3b}};
     efi_status s=system_table->boot->handle_protocol(driver_image,&loaded,(void**)&image);
     report("EFI_LOADED_IMAGE=",s);if(image){report("EFI_IMAGE_BASE=",(uintptr_t)image->base);report("EFI_IMAGE_BYTES=",image->bytes);}
@@ -315,7 +323,7 @@ static efi_status admission(void)
 }
 static struct polaris_usb_control controls={.begin=begin,.write=write_payload,.finish=finish,
     .prepare_boot=prepare_boot,.boot=boot_kernel,.prepare_reset=prepare_reset,.reset=reset,
-    .state=state,.logs=logs,.running=running,.touch=touch,.input_status=input_status};
+    .state=state,.logs=logs,.running=running,.touch=touch,.input_status=input_status,.boot_options=boot_options};
 #if defined(POLARIS_EFI_TEST_QEMU)
 struct file {
     uint64_t revision;

@@ -26,6 +26,7 @@ static int prepare_reset(void *c,unsigned mode){(void)c;assert(mode==1||mode==2)
 static void reset(void *c,unsigned mode){(void)c;assert(!strcmp(response,"OKAY"));reset_count++;reset_mode=mode;}
 static const char *state(void *c){(void)c;return "waiting-payload";}
 static unsigned touches;
+static int boot_data(void *c,const uint8_t **p,uint64_t *n){(void)c;static const uint8_t data[40]={0};*p=data;*n=40;return 1;}
 static int touch(void *c,unsigned down,unsigned x,unsigned y){(void)c;assert(down<=1&&x<1080&&y<2160);touches++;return permitted;}
 static int input(void *c,struct polaris_uefi_input_status *s){(void)c;*s=(struct polaris_uefi_input_status){1,2,2,0};return 1;}
 int main(void){
@@ -35,6 +36,10 @@ int main(void){
  for(unsigned i=0;i<sizeof(bad)/sizeof(bad[0]);i++){
   assert(polaris_usb_control_command(&d,&c,(const void*)bad[i],strlen(bad[i])));assert(!strncmp(response,"FAIL",4));
  }assert(!reset_count&&!boot_count&&!copied&&!staged&&!touches);
+ assert(polaris_usb_command(&d,(const void*)"oem boot-options",16));assert(!strncmp(response,"FAIL",4)&&!d.staged);
+ c.boot_options=boot_data;assert(polaris_usb_control_command(&d,&c,(const void*)"oem boot-options",16));
+ assert(!strcmp(response,"OKAY")&&d.staged&&d.staged_bytes==40);
+ c.boot_options=0;assert(polaris_usb_control_command(&d,&c,(const void*)"oem boot-options",16));assert(!strncmp(response,"FAIL",4)&&!d.staged);
  assert(polaris_usb_control_command(&d,&c,(const void*)"getvar:input",12));assert(!strcmp(response,"OKAY1/00000002/00000002/00000000"));
  assert(polaris_usb_control_command(&d,&c,(const void*)"oem touch:1:1079:2159",21));assert(!strcmp(response,"OKAY")&&touches==1);
  assert(polaris_usb_control_command(&d,&c,(const void*)"download:0000000c",17));assert(!strcmp(response,"OKAY")&&copied==12);

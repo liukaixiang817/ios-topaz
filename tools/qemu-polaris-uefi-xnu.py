@@ -94,7 +94,8 @@ def main():
     if a.legacy_core_refusal:
         checks['expected_legacy_guard']='invalid topology cpu=0 mpidr=0x1 count=1' in ring
     else:
-        checks.update(explicit_single_kernel_core='POLARIS UEFI: one kernel CPU, logical0 physical0x1; firmware CPU0 reserved' in ring,
+        checks.update(boot_variable_snapshot='EFI_BOOT_OPTIONS_CAPTURE=0x0000000000000001' in text,
+                      explicit_single_kernel_core='POLARIS UEFI: one kernel CPU, logical0 physical0x1; firmware CPU0 reserved' in ring,
                       four_process_VM_stress='SMP STRESS all4 PASS' in ring,
                       each_child_passed=ring.count('SMP STRESS child PASS')==4,
                       bounded_input_handshake='QEMU_INPUT_BRIDGE=1' in text and 'POLARIS UEFI INPUT: seq=2 down=0' in ring,

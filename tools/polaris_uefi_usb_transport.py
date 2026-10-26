@@ -239,7 +239,7 @@ class LibusbTransport:
 
 class KernelProtocol(ReadOnlyProtocol):
     """Explicit RAM-boot/reset client. ReadOnlyProtocol keeps its old whitelist."""
-    limits=dict(ReadOnlyProtocol.limits,logs=(4<<20)+32768+128)
+    limits=dict(ReadOnlyProtocol.limits,logs=(4<<20)+32768+128,**{'boot-options':65536})
 
     def _control(self,command):
         contact=re.fullmatch(rb'oem touch:[01]:[0-9]{1,4}:[0-9]{1,4}',command)

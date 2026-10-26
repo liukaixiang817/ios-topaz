@@ -34,7 +34,92 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0060 read-only original boot-variable inventory, in progress
+
+- PHYSICAL0060 inventory PASS: original-boot-options-0001 has1632bytes/15
+  variables, exact BootOrder0..11 (24bytes,attrs7), BootCurrent1(attrs6),
+  BootNext absent, all12Boot#### backed up with original attrs/body. All
+  entries are FV/vendor-controller paths; none directly names Windows ESP.
+  ESP-boot-path-check.json records no HD-GPT match: do not guess a prefix.
+  Need enumerate actual filesystem/device paths before constructing disk app.
+- 0060 RAM kernel command succeeded, now booting iOS on physical0x100 with
+  new reader/fixedPON code. phone-kernel-start-0001 binds current boot; targeted
+  live capture0001 in progress (session89717). Expected endpoint is synthetic
+  UEFI, NOT FASTBOOT while this kernel runs. Do not restart early. Next verify
+  lockscreen/basicUI then PON reset during liveXNU -> actualFASTBOOT result.
+  Old observer remainsPAUSED; these are explicitly authorized targeted reads.
+- Host-only GNU mtools4.0.49 source download underway (session40487), pinned
+  SHA10cd1111 from officialHomebrew recipe/GNU release. Intended for offline
+  FAT/GPT emulator fixtures only, prefix underresearch/host-tools; no global
+  package install or physical-disk invocation. Persistent selected-app code
+  not implemented yet; no phone filesystem/variable writes.
+
+- UPDATE: actual generic EDK2/XNU14checks PASS37.580s, including actual EFI
+  boot-variable snapshot, PID1/fourVMchildren/remoteDOWN-UP ACK. Physical
+  driver214edc34/390656bytes built, original81FFS image packaged; actualEDK2
+  final decode currently running (session65868). Read-only physical inventory
+  next; no0060 boot sent yet. Kernel payload/preflight reuse unchanged as below.
+
+- 0058 physical basicGUI/liveUSB/screen/contact proof PASS;0059 repaired PON
+  reset directly reached expected FASTBOOT without Android/ADB/human fallback.
+  Current phone FASTBOOT. No install/partition/NVRAM-variable write yet.
+- New boot-variable capture reads only BootOrder/BootCurrent/BootNext and
+  referenced Boot#### into bounded64KiB snapshot BEFORE kernel handoff. USB
+  returns frozen bytes; no live firmware filesystem/variable call from XNU.
+  Original read-only inventory whitelist retained; new opt-in controller adds
+  only oem boot-options. Host parser saves exact attrs/data/status/paths and
+  refuses incomplete backup for later changes. No SetVariable API implemented.
+- 12selected native/host checks PASS in1.741s, source-bound selected-tests.json
+  under uefi-ios-0060. Initial fixture failures (empty-loop warning and mutable
+  byte-buffer UUID parsing) corrected; all12 rerun passed. New generic actual
+  EFI/XNU14checks running qemu-release-run-0001, unified session53174.
+  Driverd76bc436,390144bytes. Physical0060 not built/sent yet.
+- Source changes are currently UNCOMMITTED for this inventory milestone.
+  Last pushedb1f90ac is working0059 PON reset; preserve that restore point.
+  New files uefi-boot-options.h, polaris_uefi_boot_options.py and test; modified
+  controller/header/builder/CLI/transport/QEMU harness/tests. Commit after proof.
+- Kernel remains successful macOS27 CI40379691170/source920cffdf, SHAa3ec72d6.
+  No new kernel CI needed for these EFI-only changes.0060 copies same proven
+  phone/qemu payload; preflight-reuse.json binds fresh0059 preflight because
+  only UEFI HOLD/directFASTBOOT occurred since, no Android/writable userdata.
+- NEXT finish14checkQEMU, physicaldriver -> original81FFS package -> actual
+  originalEDK2 decoder. TargetedFASTBOOT check then RAM0060 HOLD; download
+  boot-options snapshot BEFORE any persistent menu change. Can then start
+  RAM iOS and verify fixed PON reset while XNU is live, using boot time for
+  selected-app/disk-payload development. Keep all0058/0059 evidence intact.
+- Persistent design pending: selected EFI APPLICATION, fixed authenticated
+  payload file on existing ESP, close all firmware UFS/FS handles before
+  native kernel; USB init before automatic kernel handoff. Original Windows
+  bootaa64.efi, BootOrder order/default and all old files must remain. Need
+  actual variable/device-path inventory before choosing safe new entry. No
+  erase/GPT/resize allowed. Current512MiBRAMCOW is VOLATILE; do not call that
+  persistent iOS data. Full persistence semantics/clean shutdown still open.
+
 ### 0059 PM8998 FASTBOOT-mode repair; phone recovered automatically
+
+- NEW PHYSICAL RESULT:0059 UEFI HOLD -> reboot-fastboot -> expected polaris
+  FASTBOOT verifiedSUCCESS directly, no Android/ADB/human fallback. See
+  uefi-ios-0059/reset-fastboot-0001/verification.json (0.02s query after reset).
+  Driver57775e29; sourceb1f90ac pushed. Actual originalEDK2 decoded27804360bytes.
+  Generic realEFI/XNU13checks PASS37.558s with matching source manifest; no
+  new kernel rebuild required (same successful macOS27 CI40379691170).
+  Phone currentlyFASTBOOT. New physical reset tested inHOLD; this PON repair
+  during liveXNU still needs verification before claiming complete reset support.
+- Fresh0059 recovery preflight PASS: full rootSHA689a8cd1,182extents and critical
+  GPT/partitions match. Outer header differs only10Android accounting/time/
+  mount-history bytes plus RECOVER flag, independently reviewed; no replay/
+  repair, flag retained. No Android boot since this preflight. Image/payload
+  and proof paths all under0059, old0058 evidence preserved. No installation.
+- NEXT selected-app/disk-payload/boot-entry preparation. Original BootOrder
+  read24bytes in0057 but full Boot#### backups not captured yet. Standard EFI
+  entry could preserve original order/default by appending only an unused
+  option; must first back up all actual variables and match ESP device path.
+  Existing SimpleInit147byte config defaultcontinue/secondsimple-init is
+  untouched in logfs. Do not replace Windows bootaa64.efi or install the
+  ReadyToBoot always-hold driver. User conditional authorization requires
+  data-preserving persistent boot after real screenshot/input proof (now basic
+  workflow passed); persistent iOS write semantics remain unfinished because
+  root is immutable with512MiB volatileCOW. No GPT/erase/resize permitted.
 
 - 0058 basic RAM iOS/USB/screen/input workflow is physically proven (below).
   UEFI reboot-fastboot ACK actually rebooted to original Android, NOT FASTBOOT.

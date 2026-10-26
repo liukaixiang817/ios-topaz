@@ -27,6 +27,12 @@ int polaris_usb_control_command(struct polaris_usb_diag *d,struct polaris_usb_co
         while(s[i]&&i<60){b[4+i]=(uint8_t)s[i];i++;}return d->transmit(d->context,b,4+i);
     }
     if(same(p,n,"getvar:max-download-size"))return reply(d,"OKAY0x08000000");
+    if(same(p,n,"oem boot-options")){
+        const uint8_t *data=0;uint64_t bytes=0;d->staged=0;d->staged_bytes=0;
+        if(!c->boot_options||!c->boot_options(c->context,&data,&bytes)||!data||bytes<32||bytes>65536)
+            return reply(d,"FAILboot inventory unavailable");
+        d->staged=data;d->staged_bytes=bytes;return reply(d,"OKAY");
+    }
     if(same(p,n,"getvar:input")){
         struct polaris_uefi_input_status s={0};
         if(!c->input_status||!c->input_status(c->context,&s))return reply(d,"FAILinput unavailable");

@@ -33,7 +33,7 @@ def binding(boot, image, driver):
 
 def main():
     ap=argparse.ArgumentParser(description=__doc__)
-    ap.add_argument('action',choices=['state','capture','boot','tap','swipe','reboot-normal','reboot-fastboot'])
+    ap.add_argument('action',choices=['state','capture','boot-options','boot','tap','swipe','reboot-normal','reboot-fastboot'])
     ap.add_argument('--libusb',required=True,type=Path)
     ap.add_argument('--boot-record',required=True,type=Path)
     ap.add_argument('--image-manifest',required=True,type=Path)
@@ -89,6 +89,16 @@ def main():
             record['input_after']=protocol.input_status()
             record['kernel_consumed_contact_sequence']=True
             record['UI_response_verified']=False
+        elif a.action=='boot-options':
+            from polaris_uefi_boot_options import parse_snapshot
+            protocol.stage('boot-options');data=protocol.upload()
+            target=out/'boot-options.bin';target.write_bytes(data);target.chmod(0o600)
+            parsed=parse_snapshot(data);(out/'boot-options.json').write_text(json.dumps(parsed,indent=2)+'\n')
+            for row in parsed['records']:
+                if row['status']=='0x0000000000000000':
+                    start=row['data_offset'];p=out/(row['name']+'.bin');p.write_bytes(data[start:start+row['bytes']]);p.chmod(0o600)
+            record['boot_options_complete']=parsed['complete'];record['boot_options_sha256']=sha(target)
+            if not parsed['complete']:raise ValueError('boot-variable backup incomplete; no changes permitted')
         elif a.action=='capture':
             # Reuse only offline parsers; this reader never starts the old observer.
             spec=importlib.util.spec_from_file_location('capture_format',Path(__file__).with_name('polaris-uefi-usb-read.py'))
