@@ -61,8 +61,20 @@ def main():
     ap.add_argument('--image-manifest',required=True,type=Path)
     ap.add_argument('--output',required=True,type=Path)
     ap.add_argument('--wait-seconds',type=int,default=60)
+    ap.add_argument('--libusb',type=Path,help='Use direct libusb transport instead of fastboot discovery')
     a=ap.parse_args()
     if not 0<=a.wait_seconds<=600:ap.error('wait must be between zero and 600 seconds')
+    native=None
+    try:
+        if a.libusb:
+            from polaris_uefi_usb_transport import LibusbTransport
+            native=LibusbTransport(a.libusb)
+        return capture(a,native)
+    finally:
+        if native:native.close()
+
+
+def capture(a,native=None):
     boot=json.loads(a.boot_record.read_text());image=json.loads(a.image_manifest.read_text())
     if (boot.get('state')!='temporary_UEFI_probe_boot_command_succeeded' or
         boot.get('image_sha256')!=image.get('sha256') or not image.get('RAM_only_USB_diagnostics')):
@@ -72,9 +84,27 @@ def main():
     record=dict(started_utc=now(),sent_utc=boot['sent_utc'],image_sha256=image['sha256'],
                 targeted_capture=True,continuous_observer=False,phone_write_commands=False,
                 commands=[],captures={},errors=[])
+    record['transport']='libusb' if native else 'stock fastboot'
+    record['host_reader_sha256']=digest(Path(__file__))
+    if native:
+        from polaris_uefi_usb_transport import ReadOnlyProtocol
+        protocol=ReadOnlyProtocol(native)
+        record['libusb_library_sha256']=digest(native.library)
+        record['host_transport_sha256']=digest(Path(__file__).with_name('polaris_uefi_usb_transport.py'))
     def save():
         (out/'result.json').write_text(json.dumps(record,indent=2)+'\n')
     def command(args):
+        if native:
+            try:
+                if args==['getvar','product']:message='product: '+protocol.product()+'\n'
+                elif len(args)==2 and args[0]=='oem' and args[1] in protocol.limits:
+                    protocol.stage(args[1]);message='OKAY\n'
+                elif len(args)==2 and args[0]=='get_staged':
+                    data=protocol.upload();Path(args[1]).write_bytes(data);message=f'Uploaded {len(data)} bytes\n'
+                else:raise ValueError('command outside read-only host capture')
+            except Exception as error:
+                record['commands'].append(dict(args=args,exit=1,output=str(error)));save();raise
+            record['commands'].append(dict(args=args,exit=0,output=message));save();return message
         run=subprocess.run(base+args,capture_output=True,timeout=45)
         message=(run.stdout+run.stderr).decode(errors='replace')
         record['commands'].append(dict(args=args,exit=run.returncode,output=message[-2048:]))
@@ -83,8 +113,13 @@ def main():
         return message
     save();began=time.monotonic();present=False
     while True:
-        run=subprocess.run([str(a.fastboot.resolve()),'devices'],capture_output=True,timeout=8)
-        present=run.returncode==0 and sum(line.split()[:1]==[b'polaris-uefi'] for line in run.stdout.splitlines())==1
+        try:
+            if native:present=native.open_target()
+            else:
+                run=subprocess.run([str(a.fastboot.resolve()),'devices'],capture_output=True,timeout=8)
+                present=run.returncode==0 and sum(line.split()[:1]==[b'polaris-uefi'] for line in run.stdout.splitlines())==1
+        except Exception as error:
+            record['errors'].append('target admission: '+str(error));save();print(str(error));return 1
         if present or time.monotonic()-began>=a.wait_seconds:break
         time.sleep(1)
     record.update(target_discovered=present,discovery_seconds=time.monotonic()-began);save()

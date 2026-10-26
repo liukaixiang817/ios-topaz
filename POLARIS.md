@@ -62,7 +62,10 @@ at the format boundary; no candidate had been sent to the phone. Repackaging
 then passed independent container/FFS/FV checks. The hold app passed9 checks
 at each exception level; the final driver additionally tests LoadImage,
 StartImage and the actual ReadyToBoot callback under generic firmware.
-The actual UEFI-to-XNU loader and physical compatibility proof remain pending.
+The actual UEFI-to-XNU loader remains pending. The inventory-only driver has
+since passed on the original physical firmware: EL1,16KiB support, and the
+entire current upper-bank XNU window free at admission. That window must be
+explicitly allocated and the map revalidated before a future kernel handoff.
 The first temporary firmware trial reached only the original PrePi version
 banner (`v2.0rc2`, built2023-11-22). Its compressed section used Python's
 unknown decoded-size sentinel. This passed the host streaming decoder but
@@ -73,7 +76,20 @@ LZMA dictionary, and rejects the unknown-size sentinel. The corrected entire
 ASan/UBSan, with exact byte comparison. Original firmware also passes that
 consumer test; the failed trial is rejected before allocation. This is an
 actual codec compatibility check, not a complete SDM845 firmware emulation.
-The corrected trial has not yet been physically confirmed. Before any new XNU boot, re-export the root-file extents and
+The corrected trial is physically confirmed. A later RAM-only diagnostic
+driver using the original SDM845 UsbDeviceDxe protocol also passed actual USB
+product query, log download, binary memory-map download and1080x2160 screenshot
+capture. Stock fastboot's Mac discovery did not find its interface; direct
+libusb opened the same correctly configured ff/42/03 interface and completed
+all three captures without rebooting or modifying the phone image. Use
+`tools/polaris-uefi-usb-read.py --libusb /absolute/path/to/libusb.dylib` with
+the exact sent-image record and manifest; native framing and strict identity/
+size checks cover that path. This proves firmware-stage USB only. It does
+not establish a retained-services bridge while the16KiB XNU kernel runs.
+Continuous XNU USB observation remains paused. No partition/NVRAM writes or
+OS start were requested by the diagnostic server.
+
+Before any new XNU boot, re-export the root-file extents and
 recheck its whole hash and outer metadata: the intervening normal Android
 boot can change filesystem state. Do not reuse the old extent map blindly.
 

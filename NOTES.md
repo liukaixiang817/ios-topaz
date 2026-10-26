@@ -34,7 +34,43 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### 0057 original-UEFI USB diagnostic RAM candidate ready; physical test pending
+### 0057 physical UEFI USB log/map/screenshot PASS (current phone holds in UEFI)
+
+- Source39f9a07 was temporarily booted from the expected polaris FASTBOOT at
+  2026-10-26T14:33:47.399714Z. RAM-trial-usb-0002.json binds imagefe100ed5d,
+  5924864bytes. No flash/OS start; original81firmware files remain intact.
+- Human photo confirms PROBE_RESULT0, USB_START_EX0, USB_BUFFERS0, USB_STEP3.
+  Actual imagebase0x17a3b3000/0x1d000; map56descriptors; upperFREE0xfc8a0,
+  upperLIVE0, upperUNMAPPED0, consistent with downloaded binary map.
+- Stock fastboot37.0.1 found no diagnostic endpoint during60.999s targeted
+  capture. This was NOT a full-boot negative or continuous observer. Native
+  IOService snapshot subsequently confirmed activeconfig1, ff/42/03interface,
+  bulk81/01packet512 and synthetic serial. Initial IOUSB-plane child absence
+  did NOT prove interface-configuration failure; IOService and direct access
+  corrected that hypothesis. Stock client's discovery issue not yet root-caused.
+- Direct libusb opened/claimed the original USB interface and a real physical
+  getvar product returned21bytes: OKAYpolaris-uefi-diag. Added explicit-library
+  --libusb host transport without changing/rebooting the working phone image.
+  It checks exact synthetic identity, configuration/interface/endpoints and
+  product before diagnostic commands; no reset/detach/configuration changes.
+  Four new framing/bounds/identity tests plus existing4consumer tests PASS.
+- usb-capture-0002-direct/result.json: physical full capture PASS, zeroerrors:
+  logs1137bytes SHA9f7c03bc; map2720bytes SHAff1eb5f2; screenshot6998417bytes
+  SHA2aaf1890,1080x2160 RGB PPM plus exact lossless PNG. Visually inspected
+  screen.png against human photo. Source/module/library hashes recorded.
+  Saved files private; no firmware/dump/serial committed. Screenshot validates
+  GOP capture in UEFI, not iOS panel capture or GPU utilization.
+- Continuous XNU USB observer remainsPAUSED. Current phone stays in this
+  firmware's diagnostic HOLD; no physical keys/reboot needed for more reads.
+  UEFI USB transport now proven; USB while XNU/iOS runs is NOT yet proven.
+- NEXT implement bounded UEFI-to-XNU handoff/resident bridge with emulator
+  validation, explicit upper-window claim and preserved firmware allocations.
+  Fresh root wholeSHA/extents/outermetadata check still required after prior
+  Android boot before ANY XNU trial. Only after actual full iOS-from-UEFI boot
+  succeeds prepare a concrete persistent-entry/write plan for user approval.
+  No kernel changes or new GitHub Actions run in this UEFI phase.
+
+### 0057 original-UEFI USB diagnostic candidate validation
 
 - Original UsbDeviceDxe ABI checked against the phone's own extracted PE,
   SHA267f404d40a513b7d1730631832dd50365d2b9efc39160c4a04472484e14750f:
@@ -60,12 +96,8 @@ early samples only. On0029 the human already confirmed boot complete and said
   probe-usb-0006 driverSHAb98b524f; edk2-codec/usb-final-proof.json confirms
   unmodified actual EDK2 GetInfo/Decode success and27590856decoded bytes exact,
   ASan/UBSan clean. final-usb-inputs.json binds sources and all selected proofs.
-- User confirmed FASTBOOT; elevated read-only query found expected polaris.
-  NEXT run private boot-uefi-usb-diag-0002.py, then one targeted read-only
-  tools/polaris-uefi-usb-read.py capture. No physical USB proof yet; do not
-  confuse original inventory protocol-presence PASS with transport success.
-  Firmware still holds before OS; no XNU handoff, menu installation or persistent
-  write. Full physical iOS-from-UEFI success must precede installation approval.
+- Candidate sent and physical USB capture subsequently passed as recorded
+  above. The simulator validations alone never constituted transport proof.
 
 ### 0057 physical original-UEFI inventory PASS; actual map permits upper-bank XNU
 
