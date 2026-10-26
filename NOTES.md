@@ -36,6 +36,9 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### 0058 RAM-only iOS-from-UEFI work; fresh storage preflight PASS
 
+- Implementation committedc1afd39; actual final generic EFI prototype0006
+  passed8 diagnostic checks in7.159s, driver6d95b7da. Read-only targeted query
+  at16:44:29Z confirms expected polaris stillFASTBOOT. No new phone boot sent.
 - Latest implementation: explicit RAM download/validated kernel start, normal
   reset and FASTBOOT reset commands now implemented in a separate opt-in
   controller; old read-only inventory still rejects them. Native real-parser
