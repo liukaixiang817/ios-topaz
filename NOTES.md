@@ -36,6 +36,29 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### 0058 RAM-only iOS-from-UEFI work; fresh storage preflight PASS
 
+- Latest human steering: unattended work; first RAM-only UEFI/iOS boot with
+  live screen and simulated interaction. Only AFTER screenshots and actual
+  interaction show normal operation, user conditionally authorizes preserving
+  all existing data while adding persistent iOS and a volume-key entry in the
+  original Mindows UEFI. NO erase, GPT changes or Android/Windows deletion.
+  Do not install the current always-holding ReadyToBoot DXE as permanent
+  firmware: a menu-selected application variant is needed to preserve Windows.
+  Latest user confirms FASTBOOT connected after our actual target query timed
+  out; requery automatically when ready, no repeated confirmation required.
+- User explicitly requested updating build environment to macOS27. Actual
+  local sw_vers27.0.1/26A434, Xcode27.0/27A5218g. Original CI macos14 is in
+  GitHub's scheduled Oct26 14:00..Oct27 00:00UTC brownout, not a phone failure.
+  Workflow now targets standard xcode-27 (actual macOS27), pins selected Xcode
+  major27, and retains source-bound DriverKit286 generated interfaces from
+  successfulCI40210874806 instead of changing8796's IORPC ABI. New iig was
+  tested locally: --deployment-target13.5 still emits incompatible kernelContent.
+  Pinned baseline buildtreeSHAa8cfdb9a, cache manifestSHAd04b50c8; all1974
+  original header/IDL hashes checked; only explicit new private UEFI headers
+  admitted. All17definitions/34outputs replay byte-identically; changed IDL
+  and unknown preprocessing macros refused before any output. This is build
+  code generation reuse, not a mocked kernel or binary modification. Cache
+  retained as separate90day CI artifact, never checked into git. New full CI
+  on macOS27 still required; current workflow changes not yet pushed/run.
 - Implementation committedc1afd39; actual final generic EFI prototype0006
   passed8 diagnostic checks in7.159s, driver6d95b7da. Read-only targeted query
   at16:44:29Z confirms expected polaris stillFASTBOOT. No new phone boot sent.
