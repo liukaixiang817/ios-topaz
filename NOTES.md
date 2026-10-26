@@ -34,7 +34,37 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### 0057 physical UEFI USB log/map/screenshot PASS (current phone holds in UEFI)
+### 0058 RAM-only iOS-from-UEFI work; fresh storage preflight PASS
+
+- Human now explicitly requests using original UEFI to start iOS with screen
+  access while running, RAM only; NO device installation/writes this round.
+  Also explicitly authorized normal reboot and reboot-to-FASTBOOT commands
+  for unattended trials. Those commands not yet implemented/tested; do not
+  claim runtime support from the previous read-only0057 server.
+- User moved to FASTBOOT; expected polaris checked, known recoveryf9ad6529
+  temporarily booted. uefi-ios-0058/preflight.json now fresh-root PASS:
+  all6GPT head/tails and boot/recovery/abl_a/abl_b/ESP match original backups;
+  full16GiB root SHA689a8cd1 unchanged; fresh182extents match before/after.
+  Read-only block and ro,noload mount; unmounted; no journal replay/repair.
+  Check returned phone toFASTBOOT, not iOS or Android. Original copies intact.
+- First hash check falsely failed because ADBexec-out merged stderr progress
+  into stdout digest. Retained preflight-attempt1.json; explicit RAM stderr
+  redirection and repeat whole-image hashing proved correct digest. No root
+  corruption observed. Current ext4 headerSHAc1d52318 differs from0056 only
+  Android freecounts/mount-write history/lifetime and RECOVER-bit clearing.
+  Independent outer-header-review.json explains every changed byte. No repair.
+- Selected architecture: firmware USB on original core0, single XNU kernel
+  on physical0x100 (ownDT cpu@100), avoiding firmware calls through16KiB XNU
+  translations. QEMU virt second core affinity1 separately explicit. Need
+  actual EFI claim/cache/PSCI handoff tests and GIC/controller ownership proof.
+  Not a general XNU SMP enablement; no other kernels/cores admitted implicitly.
+- New0863 overlay gates nonzero boot affinity on explicit polarisuefi=1,
+  target1/0x100, one logicalCPU0 and matching actual MPIDR. Ordinary CPU0 path
+  retained. Actual SweetCPU.cpp crosscompile with CIheaders/options PASS;
+  native ASan/UBSan11admission cases PASS. FullCI/real EFI emulator checks
+  still required before physical kernel trial. No0058 iOS boot sent yet.
+
+### 0057 physical UEFI USB log/map/screenshot PASS (prior phone diagnostic hold)
 
 - Source39f9a07 was temporarily booted from the expected polaris FASTBOOT at
   2026-10-26T14:33:47.399714Z. RAM-trial-usb-0002.json binds imagefe100ed5d,

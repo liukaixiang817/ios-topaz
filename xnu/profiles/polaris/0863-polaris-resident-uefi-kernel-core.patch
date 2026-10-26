@@ -1,0 +1,70 @@
+--- a/iokit/Kernel/arm/SweetCPU.cpp
++++ b/iokit/Kernel/arm/SweetCPU.cpp
+@@ -17,6 +17,9 @@
+ #include <kern/thread.h>
+ #include <mach/mach_time.h>
+ #include <pexpert/pexpert.h>
++#if defined(POLARIS_RAM_ONLY)
++#include "polaris_uefi_cpu.h"
++#endif
+ 
+ extern "C" void sweet_secondary_entry(void);
+ extern "C" boolean_t sweet_cpu_signal_is_enabled(unsigned int cpu);
+@@ -138,8 +141,17 @@
+ 	if (*(const uint32_t *)reg->getBytesNoCopy() != cpu->phys_id) {
+ 		return false;
+ 	}
+-	/* MPIDR Aff1 = core: 0x000-0x500 A55, 0x600/0x700 A76 */
+-	if (cpu->phys_id > 0x700 || (cpu->phys_id & 0xff) != 0 ||
++	/* Preserve ordinary physical topology checks. A resident UEFI trial may
++	 * explicitly use one different boot core, leaving firmware on core0. */
++	bool resident_core = false;
++#if defined(POLARIS_RAM_ONLY)
++	uint32_t mode = 0, target = 0;
++	PE_parse_boot_argn("polarisuefi", &mode, sizeof(mode));
++	PE_parse_boot_argn("polarisbootcpu", &target, sizeof(target));
++	resident_core = polaris_uefi_cpu_allowed(mode, target, topology->num_cpus,
++	    cpu->cpu_id, cpu->phys_id, __builtin_arm_rsr64("MPIDR_EL1"));
++#endif
++	if ((!resident_core && (cpu->phys_id > 0x700 || (cpu->phys_id & 0xff) != 0)) ||
+ 	    topology->num_cpus > SWEET_SMP_MAX_CPUS) {
+ 		panic("SWEET CPU: invalid topology cpu=%u mpidr=0x%x count=%u",
+ 		    cpu->cpu_id, cpu->phys_id, topology->num_cpus);
+@@ -209,8 +221,18 @@
+ 		}
+ 		IOSleep(1);
+ 	}
+-	/* The supplied ADT has cpu0 as the boot CPU and ascending A55 nodes. */
+-	if (topology->boot_cpu->cpu_id != 0 || topology->boot_cpu->phys_id != 0) {
++	bool resident_core = false;
++#if defined(POLARIS_RAM_ONLY)
++	uint32_t mode = 0, target = 0;
++	PE_parse_boot_argn("polarisuefi", &mode, sizeof(mode));
++	PE_parse_boot_argn("polarisbootcpu", &target, sizeof(target));
++	resident_core = polaris_uefi_cpu_allowed(mode, target, topology->num_cpus,
++	    topology->boot_cpu->cpu_id, topology->boot_cpu->phys_id,
++	    __builtin_arm_rsr64("MPIDR_EL1"));
++	if (mode && !resident_core) panic("POLARIS UEFI: invalid resident core admission");
++	if (resident_core) IOLog("POLARIS UEFI: one kernel CPU, logical0 physical%#x; firmware CPU0 reserved\n", target);
++#endif
++	if (!resident_core && (topology->boot_cpu->cpu_id != 0 || topology->boot_cpu->phys_id != 0)) {
+ 		panic("SWEET CPU: expected boot MPIDR 0 and logical CPU 0");
+ 	}
+ 	for (unsigned int i = 0; i < topology->num_cpus; i++) {
+--- /dev/null
++++ b/iokit/Kernel/arm/polaris_uefi_cpu.h
+@@ -0,0 +1,14 @@
++/* Explicit single-kernel-core admission for a resident firmware USB server.
++ * 0x100 is the phone's own DT cpu@100; 1 is QEMU virt's second processor.
++ * Default ABL boots keep the original physical/logical CPU0 requirement. */
++#ifndef POLARIS_UEFI_CPU_H
++#define POLARIS_UEFI_CPU_H
++#include <stdint.h>
++static inline int polaris_uefi_cpu_allowed(uint32_t mode,uint32_t target,
++    uint32_t count,uint32_t logical,uint32_t physical,uint64_t actual)
++{
++    if(mode!=1 || (target!=0x100 && target!=1) || count!=1 || logical!=0)
++        return 0;
++    return physical==target && (actual&UINT64_C(0xffffff))==target;
++}
++#endif
