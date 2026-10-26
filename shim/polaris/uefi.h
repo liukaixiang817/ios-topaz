@@ -14,14 +14,20 @@ struct efi_output {void *reset;efi_status (*string)(struct efi_output *,const ui
 struct efi_memory {uint32_t type,pad;uint64_t physical,virtual_address,pages,attributes;};
 struct efi_boot {
     efi_header hdr;
-    void *raise_tpl,*restore_tpl,*allocate_pages,*free_pages;
+    uint64_t (*raise_tpl)(uint64_t);
+    void (*restore_tpl)(uint64_t);
+    efi_status (*allocate_pages)(uint32_t,uint32_t,uint64_t,uint64_t *);
+    efi_status (*free_pages)(uint64_t,uint64_t);
     efi_status (*get_map)(uint64_t *,void *,uint64_t *,uint64_t *,uint32_t *);
     efi_status (*allocate_pool)(uint32_t,uint64_t,void **);
     efi_status (*free_pool)(void *);
     efi_status (*create_event)(uint32_t,uint64_t,void *,void *,void **);
     void *set_timer,*wait_for_event;
     efi_status (*signal_event)(void *);
-    void *close_event,*check_event,*protocol_install[3];
+    efi_status (*close_event)(void *);
+    void *check_event;
+    efi_status (*install_protocol)(efi_handle *,const efi_guid *,uint32_t,void *);
+    void *reinstall_protocol,*uninstall_protocol;
     efi_status (*handle_protocol)(efi_handle,const efi_guid *,void **);
     void *reserved,*register_notify,*locate_handle,*locate_path,*install_table;
     efi_status (*load_image)(uint8_t,efi_handle,void *,const void *,uint64_t,efi_handle *);

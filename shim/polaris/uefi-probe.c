@@ -1,6 +1,12 @@
-/* Read-only UEFI inventory: returns to its caller, never exits Boot Services,
- * writes a filesystem/NVRAM, starts a USB driver or enters the XNU kernel. */
+/* UEFI inventory: never exits Boot Services, writes storage/NVRAM or enters
+ * XNU. Optional USB diagnostics expose only bounded RAM logs/map/GOP reads. */
 #include "uefi-memory.h"
+#ifdef POLARIS_EFI_USB_DIAG
+#include "uefi-usb.h"
+static uint8_t ram_log[32768];static uint64_t ram_log_bytes;
+static struct {uint64_t magic,bytes,stride,version;uint8_t data[65536];} saved_map;
+static uint64_t saved_map_bytes;
+#endif
 #ifndef POLARIS_EFI_HOLD
 #define POLARIS_EFI_HOLD 0
 #endif
@@ -8,6 +14,9 @@ static struct efi_output *output;
 static struct efi_boot *boot;
 static void text(const char *s)
 {
+#ifdef POLARIS_EFI_USB_DIAG
+    for(unsigned i=0;s[i] && ram_log_bytes<sizeof(ram_log);i++)ram_log[ram_log_bytes++]=(uint8_t)s[i];
+#endif
     uint16_t b[128];unsigned n=0;
     while(*s && n<127)b[n++]=(uint8_t)*s++;
     b[n]=0;output->string(output,b);
@@ -58,6 +67,14 @@ static efi_status probe(efi_handle image,struct efi_system *st)
     s=st->boot->get_map(&bytes,map,&key,&stride,&version);hex("MAP_STATUS=",s);
     struct polaris_efi_memory memory={0};
     int valid=!(s&EFI_ERROR) && polaris_efi_memory_check(map,bytes,capacity,stride,&memory);
+#ifdef POLARIS_EFI_USB_DIAG
+    if(valid && bytes<=sizeof(saved_map.data)){
+        saved_map.magic=UINT64_C(0x3150414d49464550);saved_map.bytes=bytes;
+        saved_map.stride=stride;saved_map.version=version;
+        for(uint64_t i=0;i<bytes;i++)saved_map.data[i]=((uint8_t*)map)[i];
+        saved_map_bytes=32+bytes;
+    }
+#endif
     hex("MAP_DESCRIPTORS=",memory.descriptors);
     hex("FREE_PAGES=",memory.conventional_pages);
     hex("POLARIS_UPPER_FREE_PAGES=",memory.upper_free_pages);
@@ -100,6 +117,10 @@ static efi_status inspect(efi_handle image,struct efi_system *st)
             hex("PROBE_RESULT=",result);
             if(boot && boot->watchdog)hex("WATCHDOG_DISABLE=",boot->watchdog(0,0,0,0));
             text("POLARIS EFI HOLD: inventory only; no operating system started\r\n");
+#ifdef POLARIS_EFI_USB_DIAG
+            if(!result)hex("USB_DIAG_RESULT=",polaris_efi_usb_serve(st,ram_log,&ram_log_bytes,
+                (const uint8_t*)&saved_map,saved_map_bytes,hex));
+#endif
         }
         for(;;){
             if(boot && boot->stall)boot->stall(1000000);

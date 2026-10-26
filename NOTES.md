@@ -8,7 +8,7 @@ and DO NOT authorize erasing this phone. On 2026-10-24 the user explicitly
 approved ONLY the proposed minimal userdata metadata repair, then continuing
 iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
-## Current handoff, 2026-10-26 (Australia/Melbourne)
+## Current handoff, 2026-10-26 (Asia/Shanghai)
 
 **FASTBOOT workflow, clarified by the user: after a build/image is ready,
 first check the connected phone with a read-only FASTBOOT query. If the
@@ -33,6 +33,39 @@ arrives. End using a human-confirmation marker bound to that boot's sent_utc;
 stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
+
+### 0057 original-UEFI USB diagnostic RAM candidate ready; physical test pending
+
+- Original UsbDeviceDxe ABI checked against the phone's own extracted PE,
+  SHA267f404d40a513b7d1730631832dd50365d2b9efc39160c4a04472484e14750f:
+  revision0x10000001, StartEx/transfer/event layout and UsbConfig init event.
+  New service uses this original protocol at TPL_APPLICATION, not copied
+  reference-board USB registers. Only getvar/log/map/screenshot/upload allowed;
+  no download, flash, erase, reboot, kernel run, filesystem or NVRAM writes.
+- New host reader targets synthetic polaris-uefi / polaris-uefi-diag only,
+  binds captures to the exact sent image, validates map/PPM bounds, and exports
+  lossless PNG. This is a targeted capture; continuous observation staysPAUSED.
+- 13 unique native/host tests passed, including ASan/UBSan actual C transport,
+  cancellation recovery, unsafe-command refusal and GOP BltOnly screenshots.
+  Actual stock fastboot client interop passed over host-loopback TCP only.
+  Four selected QEMU cases44checks passed: USB absent EL1/EL2 from0005 plus
+  positive mock EL1/EL2 from0006 (negative harness bytes identical). This tests
+  actual EFI/API flow, not SDM845 PHY or physical USB enumeration.
+- Earlier failures retained privately:0002 NOT_READY RX timeout;0003 BltOnly
+  screenshot;0005 positive final-marker truncation in emulator print harness.
+  Fixed and verified; do not describe all runs as first-pass success.
+- Final private candidate original-uefi-usb-diag-0002,5924864bytes,
+  SHAfe100ed5d32134f01b16502537e0496f5c486a9bf2af78be7bc2da9a010a3a7e.
+  Original81FFS, BootShim, boardDTB and ramdisk preserved byte-for-byte.
+  probe-usb-0006 driverSHAb98b524f; edk2-codec/usb-final-proof.json confirms
+  unmodified actual EDK2 GetInfo/Decode success and27590856decoded bytes exact,
+  ASan/UBSan clean. final-usb-inputs.json binds sources and all selected proofs.
+- User confirmed FASTBOOT; elevated read-only query found expected polaris.
+  NEXT run private boot-uefi-usb-diag-0002.py, then one targeted read-only
+  tools/polaris-uefi-usb-read.py capture. No physical USB proof yet; do not
+  confuse original inventory protocol-presence PASS with transport success.
+  Firmware still holds before OS; no XNU handoff, menu installation or persistent
+  write. Full physical iOS-from-UEFI success must precede installation approval.
 
 ### 0057 physical original-UEFI inventory PASS; actual map permits upper-bank XNU
 

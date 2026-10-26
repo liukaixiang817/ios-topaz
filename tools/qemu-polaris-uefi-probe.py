@@ -19,6 +19,8 @@ def main():
     ap.add_argument('--output',required=True,type=Path)
     ap.add_argument('--virtualization',choices=['on','off'],default='off')
     ap.add_argument('--expect-hold',action='store_true')
+    ap.add_argument('--expect-usb-unavailable',action='store_true',help='USB-enabled driver must safely hold when QCOM protocol is absent')
+    ap.add_argument('--usb-mock',action='store_true',help='test actual EFI driver through a fake QCOM protocol; no USB controller emulation')
     ap.add_argument('--qemu',default='/opt/homebrew/bin/qemu-system-aarch64')
     ap.add_argument('--code',type=Path,default=Path('/opt/homebrew/share/qemu/edk2-aarch64-code.fd'))
     ap.add_argument('--vars',type=Path,default=Path('/opt/homebrew/share/qemu/edk2-arm-vars.fd'))
@@ -42,8 +44,11 @@ def main():
                 text=serial.read_text(errors='replace') if serial.exists() else ''
                 marker=('POLARIS EFI HOLD: inventory only; no operating system started' if a.expect_hold else
                         'POLARIS EFI PROBE PASS: NO_DISK_WRITE NO_NVRAM_WRITE NO_XNU_JUMP')
+                if a.expect_usb_unavailable:marker='USB_DIAG_RESULT=0x800000000000000e'
+                if a.usb_mock:marker='USB_MOCK_PASS'
                 if marker in text:
                     seen=True;break
+                if 'USB_MOCK_FAIL' in text:break
                 if p.poll() is not None:break
                 time.sleep(.2)
         finally:
@@ -57,10 +62,15 @@ def main():
                 loaded_image=fields.get('LOADED_IMAGE_STATUS')==0,
                 filesystem=fields.get('FS_STATUS')==0,
                 memory_map=fields.get('MAP_STATUS')==0 and fields.get('MAP_DESCRIPTORS',0)>0,
-                QCOM_USB_absent_as_expected=fields.get('QCOM_USB_STATUS')==0x800000000000000e)
+                QCOM_USB_protocol_matches_case=fields.get('QCOM_USB_STATUS')==(0 if a.usb_mock else 0x800000000000000e))
     if a.expect_hold:
         checks['watchdog_disabled']=fields.get('WATCHDOG_DISABLE')==0
         checks['probe_completed_before_hold']=fields.get('PROBE_RESULT')==0
+    if a.expect_usb_unavailable:checks['USB_absence_held_safely']=fields.get('USB_DIAG_RESULT')==0x800000000000000e
+    if a.usb_mock:
+        checks['USB_mock_log_map_screenshot_uploads']=fields.get('USB_MOCK_UPLOADS')==3
+        checks['USB_mock_write_commands_rejected']=fields.get('USB_MOCK_WRITE_REJECTIONS')==2
+        checks['USB_mock_cancelled_transfer_recovered']=fields.get('USB_MOCK_CANCEL_RECOVERY')==1
     record=dict(passed=all(checks.values()),checks=checks,fields=fields,seconds=time.monotonic()-began,
                 image_sha256=digest(a.image),code_sha256=digest(a.code),initial_vars_sha256=digest(a.vars),
                 qemu_version=subprocess.check_output([a.qemu,'--version'],text=True).splitlines()[0],
@@ -68,6 +78,7 @@ def main():
                 board='QEMU virt; not SDM845',virtualization=a.virtualization,actual_phone_UEFI_tested=False,
                 phone_device_access=False,phone_storage_writes=False,
                 inventory_hold=a.expect_hold,kernel_handoff_tested=False,
+                QCOM_protocol_mock=a.usb_mock,actual_USB_transport_tested=False,
                 emulation_limits=['Qualcomm UFS','Qualcomm USB','RPMh/PMIC','phone physical memory map','Mindows firmware'],
                 command=cmd)
     (out/'result.json').write_text(json.dumps(record,indent=2)+'\n')

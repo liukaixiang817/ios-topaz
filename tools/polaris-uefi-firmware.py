@@ -212,6 +212,9 @@ def package(original, app):
             'missing SimpleInit or already modified firmware')
     old_init = selected[0]; require(old_init[18] == 9, 'SimpleInit is not an application')
     originals = dict(inner_files)
+    usb_modules = [data for guid, raw in inner_files
+                   if guid == uuid.UUID('3299a266-15f0-4346-8318-716336736d3e')
+                   for kind, data, _ in sections(raw[24:]) if kind == 0x10]
     new_files = inner_files.copy()
     body = section(0x10, app)
     body += b'\0' * (align(len(body), 4) - len(body))
@@ -251,6 +254,7 @@ def package(original, app):
                         board_DTB_preserved=True, ramdisk_preserved=True,
                         LZMA_dictionary_bytes=dictionary,
                         LZMA_explicit_decoded_bytes=struct.unpack_from('<Q', encoded, 5)[0],
+                        original_USB_device_DXE_sha256=sha(usb_modules[0]) if len(usb_modules)==1 else None,
                         kernel_handoff=False, installer=False, phone_writes=False)
 
 
@@ -261,6 +265,10 @@ def main():
     ap.add_argument('--probe-manifest', required=True, type=Path)
     ap.add_argument('--qemu-el1', required=True, type=Path)
     ap.add_argument('--qemu-el2', required=True, type=Path)
+    ap.add_argument('--usb-mock-el1', type=Path)
+    ap.add_argument('--usb-mock-el2', type=Path)
+    ap.add_argument('--fastboot-client-proof', type=Path)
+    ap.add_argument('--usb-abi-proof', type=Path)
     ap.add_argument('--output', required=True, type=Path)
     a = ap.parse_args()
     require(not a.output.exists(), 'refusing to overwrite output directory')
@@ -279,6 +287,29 @@ def main():
                 test.get('image_sha256') == m.get('harness_sha256') and test.get('virtualization') == mode and
                 test.get('checks', {}).get('probe_completed_before_hold') is True,
                 'same probe has not passed both generic EFI emulation cases')
+    usb_proofs = {}
+    if m.get('RAM_only_USB_diagnostics'):
+        for path, mode in [(a.usb_mock_el1, 'off'), (a.usb_mock_el2, 'on')]:
+            require(path is not None, 'USB driver requires both positive API mock cases')
+            test = json.loads(path.read_text())
+            require(test.get('passed') is True and test.get('QCOM_protocol_mock') is True and
+                    test.get('image_sha256') == m.get('USB_mock_harness_sha256') and
+                    test.get('virtualization') == mode and
+                    test.get('checks', {}).get('USB_mock_log_map_screenshot_uploads') is True and
+                    test.get('checks', {}).get('USB_mock_write_commands_rejected') is True and
+                    test.get('checks', {}).get('USB_mock_cancelled_transfer_recovered') is True,
+                    'USB API mock has not passed for this driver')
+            usb_proofs['mock_'+mode] = sha(path.read_bytes())
+        require(a.fastboot_client_proof is not None and a.usb_abi_proof is not None,
+                'USB driver requires actual-client and original ABI proofs')
+        client = json.loads(a.fastboot_client_proof.read_text())
+        source = Path(__file__).resolve().parents[1] / 'shim/polaris/uefi-usb-command.c'
+        header = source.with_name('uefi-usb.h')
+        require(client.get('passed') is True and client.get('real_fastboot_client') is True and
+                client.get('loopback_only') is True and client.get('command_source_sha256') == sha(source.read_bytes()) and
+                client.get('command_header_sha256') == sha(header.read_bytes()),
+                'real fastboot client proof is stale or absent')
+        usb_proofs['client'] = sha(a.fastboot_client_proof.read_bytes())
     pe = struct.unpack_from('<I', app, 60)[0] if len(app) >= 64 else 0
     require(pe >= 64 and pe + 94 <= len(app) and app[:2] == b'MZ' and
             app[pe:pe + 4] == b'PE\0\0' and struct.unpack_from('<H', app, pe + 4)[0] == 0xaa64 and
@@ -287,6 +318,14 @@ def main():
     require(harness.parent.resolve() == a.probe_manifest.parent.resolve() and harness.is_file() and
             sha(harness.read_bytes()) == m.get('harness_sha256'), 'emulated driver harness changed')
     result, record = package(original, app)
+    if m.get('RAM_only_USB_diagnostics'):
+        abi = json.loads(a.usb_abi_proof.read_text())
+        require(abi.get('source_sha256') == record['original_USB_device_DXE_sha256'] and
+                abi.get('revision') == '0x10000001' and abi.get('StartEx') is not None,
+                'USB ABI proof does not describe this original firmware')
+        usb_proofs['original_ABI'] = sha(a.usb_abi_proof.read_bytes())
+        record['RAM_only_USB_diagnostics'] = True
+        record['USB_proof_sha256'] = usb_proofs
     require(sha(a.original.read_bytes()) == a.expected_sha256, 'source changed during packaging')
     a.output.mkdir(parents=True)
     target = a.output / 'polaris-original-uefi-probe.img'; target.write_bytes(result)
