@@ -78,12 +78,18 @@ static int64_t psci(uint64_t function,uint64_t a,uint64_t b,uint64_t c)
 }
 static int token(const char *cmd,const char *expected)
 {
+    unsigned n=0,key=0,found=0;while(expected[n]){if(expected[n]=='=')key=n+1;n++;}
+    if(!key)return 0;
     for(unsigned i=0;i<608&&cmd[i];){
         unsigned j=0;while(i+j<608&&cmd[i+j]&&cmd[i+j]!=' ')j++;
-        unsigned n=0;while(expected[n])n++;
-        if(j==n){unsigned k=0;while(k<n&&cmd[i+k]==expected[k])k++;if(k==n)return 1;}
+        unsigned k=0;while(k<key&&k<j&&cmd[i+k]==expected[k])k++;
+        if(k==key){
+            if(j!=n)return 0;
+            while(k<n&&cmd[i+k]==expected[k])k++;
+            if(k!=n||++found!=1)return 0;
+        }
         i+=j;if(i<608&&cmd[i]==' ')i++;
-    }return 0;
+    }return found==1;
 }
 static int begin(void *context,uint64_t count)
 {
@@ -104,6 +110,7 @@ static int finish(void *context)
     const struct polaris_payload *p=(const void*)payload;
     const char *required[]={"cpus=1","ufsrw=0","sweetlog=0","polarisramcow=1","polarisusb=0","polarisdebug=0","polarisuefi=1",EFI_XNU_BOOT_CPU_TOKEN};
     for(unsigned i=0;i<sizeof(required)/sizeof(required[0]);i++)if(!token(p->cmdline,required[i]))return 0;
+    if(EFI_XNU_INPUT_AVAILABLE&&!token(p->cmdline,"polarisinput=1"))return 0;
     if(EFI_XNU_LOG_OFFSET>p->kernel_end-p->virt_base || EFI_XNU_LOG_SIZE>p->kernel_end-p->virt_base-EFI_XNU_LOG_OFFSET ||
        EFI_XNU_LOG_TOTAL_OFFSET>p->kernel_end-p->virt_base-8)return 0;
     load_state=2;report("RAM_PAYLOAD_VALID=",1);return 1;
@@ -159,6 +166,23 @@ static void boot_kernel(void *context)
     report("KERNEL_PSCI_STATUS=",(uint64_t)cpu_status);
 }
 static int running(void *context){(void)context;return load_state>=4;}
+static int input_status(void *context,struct polaris_uefi_input_status *out)
+{
+    (void)context;if(!EFI_XNU_INPUT_AVAILABLE||load_state<4||cpu_status||!out)return 0;
+    volatile struct polaris_uefi_input_slot *slot=(void*)(uintptr_t)(POLARIS_RAM_BASE+EFI_XNU_INPUT_OFFSET);
+    invalidate((uintptr_t)&slot->acknowledged,128);
+    *out=(struct polaris_uefi_input_status){slot->ready==POLARIS_INPUT_READY,
+        (uint32_t)slot->request,(uint32_t)slot->acknowledged,(uint32_t)slot->error};return 1;
+}
+static int touch(void *context,unsigned down,unsigned x,unsigned y)
+{
+    struct polaris_uefi_input_status s;
+    if(!polaris_uefi_input_valid(down,x,y)||!input_status(context,&s)||!s.ready||
+       s.request!=s.acknowledged||s.request==UINT32_MAX)return 0;
+    volatile struct polaris_uefi_input_slot *slot=(void*)(uintptr_t)(POLARIS_RAM_BASE+EFI_XNU_INPUT_OFFSET);
+    slot->x=x;slot->y=y;slot->down=down;clean((uintptr_t)slot,128);
+    slot->request=(uint64_t)s.request+1;clean((uintptr_t)slot,128);return 1;
+}
 static const char *state(void *context)
 {
     (void)context;if(load_state>=4){
@@ -256,7 +280,9 @@ static efi_status admission(void)
 #endif
     return 0;
 }
-static struct polaris_usb_control controls={0,0,begin,write_payload,finish,prepare_boot,boot_kernel,prepare_reset,reset,state,logs,running};
+static struct polaris_usb_control controls={.begin=begin,.write=write_payload,.finish=finish,
+    .prepare_boot=prepare_boot,.boot=boot_kernel,.prepare_reset=prepare_reset,.reset=reset,
+    .state=state,.logs=logs,.running=running,.touch=touch,.input_status=input_status};
 #if defined(POLARIS_EFI_TEST_QEMU)
 struct file {
     uint64_t revision;
@@ -283,7 +309,7 @@ static int test_file_payload(void)
 }
 static void test_monitor(void)
 {
-    uint64_t position=0,last=0;
+    uint64_t position=0,last=0;unsigned contact_phase=0;
     volatile uint32_t *uart=(void*)(uintptr_t)UINT64_C(0x9000000);
     for(;;){
         uint64_t now;__asm__ volatile("mrs %0,cntvct_el0":"=r"(now));
@@ -292,6 +318,16 @@ static void test_monitor(void)
         if(logs(0,&data,&bytes)&&bytes>position){
             for(uint64_t i=position;i<bytes;i++){while(uart[6]&(1u<<5))__asm__ volatile("yield");uart[0]=data[i];}
             position=bytes;
+        }
+        struct polaris_uefi_input_status s;
+        if(input_status(0,&s)&&s.ready&&!s.error){
+            if(contact_phase==0&&s.request==0&&s.acknowledged==0&&touch(0,1,540,1080))contact_phase=1;
+            else if(contact_phase==1&&s.request==1&&s.acknowledged==1&&touch(0,0,540,1080))contact_phase=2;
+            else if(contact_phase==2&&s.request==2&&s.acknowledged==2){
+                static const char marker[]="\nQEMU_INPUT_BRIDGE=1\n";
+                for(unsigned i=0;i<sizeof(marker)-1;i++){while(uart[6]&(1u<<5))__asm__ volatile("yield");uart[0]=marker[i];}
+                contact_phase=3;
+            }
         }
     }
 }

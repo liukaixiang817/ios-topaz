@@ -64,6 +64,8 @@ def main():
                   inputs={n:hashlib.sha256((root/n).read_bytes()).hexdigest() for n in
                           ['shim/polaris/uefi.h','shim/polaris/uefi-memory.h','shim/polaris/uefi-probe.c','tools/build-polaris-uefi-probe.py']})
     for n in extra_inputs:manifest['inputs'][n]=hashlib.sha256((root/n).read_bytes()).hexdigest()
+    if a.usb_diag:
+        n='tools/polaris-uefi-input.h';manifest['inputs'][n]=hashlib.sha256((root/n).read_bytes()).hexdigest()
     (out/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
     if a.ready_to_boot:
         manifest['holds_before_original_boot_manager']=False

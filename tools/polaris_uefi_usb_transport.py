@@ -10,6 +10,7 @@ import hashlib
 from pathlib import Path
 import re
 import struct
+import time
 
 
 class DeviceDescriptor(C.Structure):
@@ -241,7 +242,8 @@ class KernelProtocol(ReadOnlyProtocol):
     limits=dict(ReadOnlyProtocol.limits,logs=(4<<20)+32768+128)
 
     def _control(self,command):
-        if not self.verified or command not in [b'getvar:kernel-state',b'oem boot',b'reboot',b'reboot-bootloader']:
+        contact=re.fullmatch(rb'oem touch:[01]:[0-9]{1,4}:[0-9]{1,4}',command)
+        if not self.verified or (command not in [b'getvar:kernel-state',b'getvar:input',b'oem boot',b'reboot',b'reboot-bootloader'] and not contact):
             raise ValueError('unsupported or unverified control command')
         self.transport.write(command);reply=self.transport.read(64)
         if not reply.startswith(b'OKAY'):
@@ -275,3 +277,41 @@ class KernelProtocol(ReadOnlyProtocol):
     def reboot(self,bootloader=False):
         if self._control(b'reboot-bootloader' if bootloader else b'reboot'):
             raise ValueError('invalid reset acknowledgement')
+
+    def input_status(self):
+        raw=self._control(b'getvar:input')
+        if not re.fullmatch(rb'[01]/[0-9a-f]{8}/[0-9a-f]{8}/[0-9a-f]{8}',raw):raise ValueError('invalid input status')
+        ready,request,ack,error=raw.split(b'/')
+        return dict(ready=ready==b'1',request=int(request,16),acknowledged=int(ack,16),error=int(error,16))
+
+    def touch(self,down,x,y,timeout=3):
+        if (type(down) is not int or down not in [0,1] or type(x) is not int or type(y) is not int or
+            not 0<=x<1080 or not 0<=y<2160 or not 0<timeout<=10):raise ValueError('invalid contact')
+        before=self.input_status()
+        if not before['ready'] or before['request']!=before['acknowledged'] or before['request']==0xffffffff:
+            raise RuntimeError('input channel not ready or has an outstanding contact')
+        if self._control(f'oem touch:{down}:{x}:{y}'.encode()):raise ValueError('invalid contact acknowledgement')
+        wanted=before['request']+1;start=time.monotonic()
+        while True:
+            after=self.input_status()
+            if after['acknowledged']==wanted:
+                if after['error']:raise RuntimeError('kernel refused contact')
+                return wanted
+            if after['request']!=wanted or time.monotonic()-start>=timeout:raise RuntimeError('contact consumption not proven')
+            time.sleep(.01)
+
+    def tap(self,x,y):
+        self.touch(1,x,y)
+        try:time.sleep(.09)
+        finally:self.touch(0,x,y)
+
+    def swipe(self,x,y,to_x,to_y,duration_ms=400):
+        if any(type(v) is not int for v in [x,y,to_x,to_y,duration_ms]) or not 0<=to_x<1080 or not 0<=to_y<2160 or not 100<=duration_ms<=1500:
+            raise ValueError('invalid swipe')
+        current_x,current_y=x,y;self.touch(1,x,y)
+        try:
+            for step in range(1,17):
+                time.sleep(duration_ms/16000)
+                current_x=x+(to_x-x)*step//16;current_y=y+(to_y-y)*step//16
+                self.touch(1,current_x,current_y)
+        finally:self.touch(0,current_x,current_y)

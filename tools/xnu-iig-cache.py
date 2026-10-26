@@ -19,6 +19,10 @@ TARBALL_SHA='a8cfdb9aa97043e887233ac072f3676790a484b34786a4462eac467db89a5d1e'
 # Set from the deterministic manifest of the pinned successful source archive.
 MANIFEST_SHA='d04b50c8a13850c71d1679c2d180582b8f294b116da1a7534ce2c0c74adc7d65'
 EXTRA_PRIVATE_HEADERS={'iokit/Kernel/arm/polaris_uefi_cpu.h','bsd/dev/polaris_uefi_input.h'}
+# Stage scripts0019/0026 copy these host SDK files into private pthread/HFS
+# scratch directories. Neither directory is on the IIG include search path;
+# these two host-dependent copies do not define the DriverKit interfaces.
+HOST_SDK_COPIES={'bsd/pthread/sweet_libpthread/TargetConditionals.h','bsd/sweet_hfs/TargetConditionals.h'}
 
 
 def digest(b):return hashlib.sha256(b).hexdigest()
@@ -58,7 +62,8 @@ def verify_cache(cache):
     manifest=json.loads(raw)
     if manifest['baseline_archive_sha256']!=TARBALL_SHA:raise ValueError('baseline mismatch')
     for name,want in manifest['outputs'].items():
-        if len(safe(name).parts)!=1 or sha(cache/name)!=want:raise ValueError('generated file cache corruption')
+        safe(name)
+        if sha(cache/name)!=want:raise ValueError('generated file cache corruption')
     return manifest
 
 
@@ -80,8 +85,9 @@ def replay(cache,args):
     present={str(p.relative_to(root)):p for p in root.rglob('*') if p.is_file() and p.suffix in ['.h','.iig']}
     expected=manifest['source_inputs']
     if set(present)-set(expected)-EXTRA_PRIVATE_HEADERS:raise ValueError('unreviewed added source headers/IDL')
-    for name,want in expected.items():
-        if name not in present or sha(present[name])!=want:raise ValueError('source header/IDL changed: '+name)
+    changed=[name for name,want in expected.items() if name not in HOST_SDK_COPIES and
+             (name not in present or sha(present[name])!=want)]
+    if changed:raise ValueError('source header/IDL changed: '+', '.join(changed))
     relative=str(source.relative_to(root))
     if relative not in expected or not relative.endswith('.iig'):raise ValueError('definition absent from baseline')
     for option,suffix in [('--header','.h'),('--impl','.iig.cpp')]:

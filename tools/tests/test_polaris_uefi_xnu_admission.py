@@ -9,11 +9,11 @@ packer=importlib.util.module_from_spec(spec);spec.loader.exec_module(packer)
 
 class XnuAdmissionTests(unittest.TestCase):
     def fixtures(self):
-        driver=dict(RAM_only_XNU_loader=True,QEMU_variant=False,ready_to_boot_driver=True,
+        driver=dict(RAM_only_XNU_loader=True,QEMU_variant=False,ready_to_boot_driver=True,bounded_input=True,
                     kernel_CPU_affinity=256,storage_write_api=False,NVRAM_write_api=False,
                     kernel_sha256='a'*64,inputs={'one.c':'b'*64})
         qemu=dict(passed=True,release_handoff_admitted=True,diagnostic_legacy_only=False,
-                  checks={'PSCI_success':True,'four_process_VM_stress':True},
+                  checks={'PSCI_success':True,'four_process_VM_stress':True,'bounded_input_handshake':True},
                   kernel_sha256='a'*64,inputs=driver['inputs'])
         ci=dict(status='completed',conclusion='success',headSha='c'*40,databaseId=123)
         profile='target_platform=polaris\nmachine_config=SWEET\ncommit='+('c'*40)+'\n'

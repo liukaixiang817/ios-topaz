@@ -5,6 +5,7 @@
 #ifndef POLARIS_UEFI_USB_H
 #define POLARIS_UEFI_USB_H
 #include "uefi.h"
+#include "../../tools/polaris-uefi-input.h"
 union polaris_usb_event {
     uint32_t state;
     struct {uint32_t status;uint8_t endpoint;uint64_t bytes;void *buffer;} transfer;
@@ -52,6 +53,8 @@ struct polaris_usb_control {
     const char *(*state)(void *);
     int (*logs)(void *,const uint8_t **,uint64_t *);
     int (*running)(void *);
+    int (*touch)(void *,unsigned,unsigned,unsigned);
+    int (*input_status)(void *,struct polaris_uefi_input_status *);
 };
 /* Command parsing is shared by the native host test and the real EFI driver. */
 int polaris_usb_command(struct polaris_usb_diag *,const uint8_t *,uint64_t);

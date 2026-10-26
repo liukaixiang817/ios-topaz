@@ -36,11 +36,11 @@ def symbols(raw):
                 end=raw.find(b'\0',strings+name,strings+bytes_)
                 if end<0:raise ValueError('unterminated kernel symbol')
                 text=raw[strings+name:end]
-                if text in (b'_sweet_log_ring',b'_sweet_log_total'):
+                if text in (b'_sweet_log_ring',b'_sweet_log_total',b'_polaris_uefi_input'):
                     if text.decode() in wanted:raise ValueError('duplicate log symbol')
                     wanted[text.decode()]=value
         at+=size
-    if len(wanted)!=2:raise ValueError('kernel RAM console symbols absent')
+    if not {'_sweet_log_ring','_sweet_log_total'}<=set(wanted):raise ValueError('kernel RAM console symbols absent')
     return wanted
 
 
@@ -71,6 +71,9 @@ def main():
     syms=symbols(k);log=syms['_sweet_log_ring']-va;total=syms['_sweet_log_total']-va
     end=struct.unpack_from('<Q',raw,48)[0]-va
     if not 0<=log<=end-(4<<20) or not 0<=total<=end-8:raise ValueError('log symbols outside kernel ownership')
+    input_offset=syms.get('_polaris_uefi_input',va)-va;input_present='_polaris_uefi_input' in syms
+    if input_present and (input_offset%128 or not 0<=input_offset<=end-256):raise ValueError('invalid input mailbox address')
+    if not a.test_qemu and not input_present:raise ValueError('physical trial requires the bounded input kernel')
     # Run the exact C copy-plan admission function before emitting an EFI image.
     lib=out/'payload-validator.dylib';flags=['-DPOLARIS_EFI_TEST_QEMU=1'] if a.test_qemu else []
     subprocess.run(['/usr/bin/clang','-shared','-fPIC',*flags,str(r/'shim/polaris/payload.c'),'-o',str(lib)],check=True)
@@ -85,11 +88,13 @@ def main():
 #define EFI_XNU_LOG_OFFSET 0x{log:x}ULL
 #define EFI_XNU_LOG_TOTAL_OFFSET 0x{total:x}ULL
 #define EFI_XNU_LOG_SIZE (4u*1024u*1024u)
+#define EFI_XNU_INPUT_AVAILABLE {int(input_present)}
+#define EFI_XNU_INPUT_OFFSET 0x{input_offset:x}ULL
 #define EFI_XNU_CPU {1 if a.test_qemu else 256}u
 #define EFI_XNU_BOOT_CPU_TOKEN "polarisbootcpu={1 if a.test_qemu else 256}"
 ''')
     sources=['uefi-xnu.c','uefi-xnu-ap.S','uefi-xnu-crc.c','payload.c','uefi-usb.c','uefi-usb-command.c','uefi-usb-control.c']
-    inputs=['shim/polaris/'+n for n in sources]+['shim/polaris/uefi.h','shim/polaris/uefi-xnu.h','shim/polaris/uefi-usb.h','shim/polaris/uefi-memory.h','shim/polaris/payload.h','tools/build-polaris-uefi-xnu.py']
+    inputs=['shim/polaris/'+n for n in sources]+['shim/polaris/uefi.h','shim/polaris/uefi-xnu.h','shim/polaris/uefi-usb.h','shim/polaris/uefi-memory.h','shim/polaris/payload.h','tools/build-polaris-uefi-xnu.py','tools/polaris-uefi-input.h']
     objects=[]
     for source in sources:
         obj=out/(Path(source).stem+'.obj');objects.append(str(obj))
@@ -106,6 +111,7 @@ def main():
                   payload_crc32=zlib.crc32(raw),payload_C_admission=True,rebased_kernel_bytes_match=True,
                   RAM_only_XNU_loader=True,kernel_handoff=True,storage_write_api=False,NVRAM_write_api=False,
                   reset_commands=True,reset_commands_hardware_tested=False,ready_to_boot_driver=not a.test_qemu,
+                  bounded_input=input_present,input_offset=input_offset,
                   QEMU_variant=a.test_qemu,phone_compatible=not a.test_qemu,
                   kernel_CPU_affinity=1 if a.test_qemu else 256,
                   RAM_base=0x130000000 if a.test_qemu else 0x180000000,RAM_bytes=0xfc8a0000,

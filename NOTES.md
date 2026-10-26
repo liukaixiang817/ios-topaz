@@ -58,7 +58,24 @@ early samples only. On0029 the human already confirmed boot complete and said
   and unknown preprocessing macros refused before any output. This is build
   code generation reuse, not a mocked kernel or binary modification. Cache
   retained as separate90day CI artifact, never checked into git. New full CI
-  on macOS27 still required; current workflow changes not yet pushed/run.
+  on macOS27 still required. Environment commit5d21ba4 pushed; CI40373772678
+  immediately acquired macOS27/Xcode27 runner and passed dependencies/cache
+  verification. Failed installhdrs because two stage-script copies of the host
+  SDK TargetConditionals.h differ; they are private pthread/HFS scratch files,
+  outside the IIG include paths. Cache replay now exempts ONLY those two paths;
+  all other original header/IDL hashes and added-private-header gates retained.
+  Explicit host-SDK-copy fixture passed, changed IDL still refused. Partial
+  failed buildtree packaging also corrected to retain existing paths only.
+  Full real Xcode27 SweetCPU.cpp and IOUserServer.cpp object compiles PASS.
+- New0864 adds opt-in polarisuefi=1/polarisinput=1 single-contact test mailbox
+  consumed on an XNU worker through the existing HID dispatcher. Separate128B
+  producer/consumer cache lines, bounded1080x2160 coordinates, monotonic ACK,
+  automatic release after750ms without updates. EFI cannot request arbitrary
+  memory/keycode/shell operations. Existing physical touch path retained.
+  Actual polaris_touch.c object compile with Xcode27 PASS. Host tap/swipe waits
+  for kernel consumption; ACK is explicitly NOT UI proof. New real-QEMU path
+  must prove DOWN/UP handshake plus PID1/VM stress before physical image
+  packaging. API/parser negative checks pass; physical input not tested yet.
 - Implementation committedc1afd39; actual final generic EFI prototype0006
   passed8 diagnostic checks in7.159s, driver6d95b7da. Read-only targeted query
   at16:44:29Z confirms expected polaris stillFASTBOOT. No new phone boot sent.

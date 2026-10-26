@@ -67,7 +67,7 @@ def main():
             q('qmp_capabilities')
             while time.monotonic()-start<a.seconds:
                 text=(out/'serial.log').read_text(errors='replace') if (out/'serial.log').exists() else ''
-                if ('panic(cpu ' in text or 'SMP STRESS all4 PASS' in text or
+                if ('panic(cpu ' in text or ('SMP STRESS all4 PASS' in text and 'QEMU_INPUT_BRIDGE=1' in text) or
                     'XNU_ADMISSION=0x8' in text or p.poll() is not None):break
                 time.sleep(.2)
             q('stop')
@@ -97,6 +97,7 @@ def main():
         checks.update(explicit_single_kernel_core='POLARIS UEFI: one kernel CPU, logical0 physical0x1; firmware CPU0 reserved' in ring,
                       four_process_VM_stress='SMP STRESS all4 PASS' in ring,
                       each_child_passed=ring.count('SMP STRESS child PASS')==4,
+                      bounded_input_handshake='QEMU_INPUT_BRIDGE=1' in text and 'POLARIS UEFI INPUT: seq=2 down=0' in ring,
                       no_panic='panic(cpu ' not in ring and 'panic(cpu ' not in text,
                       no_stress_failure='SMP STRESS FAIL' not in ring)
     record=dict(passed=all(checks.values()) and error is None,checks=checks,error=error,

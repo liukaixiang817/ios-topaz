@@ -174,11 +174,17 @@ jobs:
           # source: enough to re-run any single compile command from the log locally.
           SDK=$(xcrun --sdk macosx --show-sdk-path)
           mkdir -p sdk-kernel-platform
-          cp -R "$SDK/System/Library/Frameworks/Kernel.framework/Versions/A/PrivateHeaders/platform" sdk-kernel-platform/ || true
+          if [ -d "$SDK/System/Library/Frameworks/Kernel.framework/Versions/A/PrivateHeaders/platform" ]; then
+            cp -R "$SDK/System/Library/Frameworks/Kernel.framework/Versions/A/PrivateHeaders/platform" sdk-kernel-platform/
+          fi
+          paths=(xnu)
+          for path in build/xnu.obj fakeroot/usr/local/include; do
+            if [ -e "dxb/$path" ]; then paths+=("$path"); fi
+          done
           tar czf buildtree.tgz \
             --exclude='*.o' --exclude='*.cpo' --exclude='*.a' --exclude='*.dSYM' --exclude='*.unstripped' \
             --exclude='kernel.development.*' --exclude='.git' \
-            -C dxb build/xnu.obj fakeroot/usr/local/include xnu \
+            -C dxb "${paths[@]}" \
             -C .. sdk-kernel-platform
           ls -la buildtree.tgz
 

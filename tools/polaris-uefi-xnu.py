@@ -33,7 +33,7 @@ def binding(boot, image, driver):
 
 def main():
     ap=argparse.ArgumentParser(description=__doc__)
-    ap.add_argument('action',choices=['state','capture','boot','reboot-normal','reboot-fastboot'])
+    ap.add_argument('action',choices=['state','capture','boot','tap','swipe','reboot-normal','reboot-fastboot'])
     ap.add_argument('--libusb',required=True,type=Path)
     ap.add_argument('--boot-record',required=True,type=Path)
     ap.add_argument('--image-manifest',required=True,type=Path)
@@ -41,9 +41,15 @@ def main():
     ap.add_argument('--payload',type=Path)
     ap.add_argument('--output',required=True,type=Path)
     ap.add_argument('--wait-seconds',type=int,default=0)
+    ap.add_argument('--x',type=int);ap.add_argument('--y',type=int)
+    ap.add_argument('--to-x',type=int);ap.add_argument('--to-y',type=int)
+    ap.add_argument('--duration-ms',type=int,default=400)
     a=ap.parse_args()
     if not 0<=a.wait_seconds<=600:ap.error('target discovery wait must be 0..600 seconds')
     if (a.action=='boot')!=(a.payload is not None):ap.error('--payload is required only for boot')
+    if a.action in ['tap','swipe']:
+        if a.x is None or a.y is None or not 0<=a.x<1080 or not 0<=a.y<2160:ap.error('contact coordinates required in panel bounds')
+        if a.action=='swipe' and (a.to_x is None or a.to_y is None or not 0<=a.to_x<1080 or not 0<=a.to_y<2160 or not 100<=a.duration_ms<=1500):ap.error('swipe destination/duration invalid')
     boot=json.loads(a.boot_record.read_text());image=json.loads(a.image_manifest.read_text())
     driver=json.loads(a.driver_manifest.read_text());binding(boot,image,driver)
     raw=a.payload.read_bytes() if a.payload else None
@@ -76,6 +82,13 @@ def main():
             protocol.reboot(a.action=='reboot-fastboot')
             record['reset_command_acknowledged']=True
             record['resulting_boot_mode_verified']=False
+        elif a.action in ['tap','swipe']:
+            record['input_before']=protocol.input_status();save()
+            if a.action=='tap':protocol.tap(a.x,a.y)
+            else:protocol.swipe(a.x,a.y,a.to_x,a.to_y,a.duration_ms)
+            record['input_after']=protocol.input_status()
+            record['kernel_consumed_contact_sequence']=True
+            record['UI_response_verified']=False
         elif a.action=='capture':
             # Reuse only offline parsers; this reader never starts the old observer.
             spec=importlib.util.spec_from_file_location('capture_format',Path(__file__).with_name('polaris-uefi-usb-read.py'))

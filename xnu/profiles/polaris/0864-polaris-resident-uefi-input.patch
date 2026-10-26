@@ -1,0 +1,104 @@
+--- a/bsd/dev/polaris_touch.c
++++ b/bsd/dev/polaris_touch.c
+@@ -17,6 +17,7 @@
+ #include "polaris_touch_wake.h"
+ #include "polaris_touch_mode.h"
+ #include "polaris_rmi.h"
++#include "polaris_uefi_input.h"
+ 
+ extern vm_offset_t ml_io_map(vm_offset_t, vm_size_t);
+ extern kern_return_t thread_terminate(thread_t);
+@@ -428,6 +429,63 @@
+     }
+     pt.down = 0; pd(PD_DOWN,0);
+ }
++
++/* Only the explicitly admitted resident-UEFI trial exposes this RAM channel.
++ * Remote contacts use slot9; physical contacts retain their existing path. */
++struct polaris_uefi_input_slot polaris_uefi_input;
++static void pi_cache(uint64_t address, bool clean)
++{
++    uint64_t ctr; __asm__ volatile("mrs %0,ctr_el0":"=r"(ctr));
++    uint64_t line=UINT64_C(4)<<((ctr>>16)&15);
++    for (uint64_t p=address; p<address+128; p+=line) {
++        if (clean) { __asm__ volatile("dc cvac,%0"::"r"(p):"memory"); }
++        else { __asm__ volatile("dc ivac,%0"::"r"(p):"memory"); }
++    }
++    __asm__ volatile("dsb sy":::"memory");
++}
++static void pi_thread(void *arg, wait_result_t result)
++{
++    (void)arg; (void)result;
++    while (!polaris_hid_touch_ready()) { pt_wait(10); }
++    struct polaris_uefi_input_slot *slot=&polaris_uefi_input;
++    slot->ready=POLARIS_INPUT_READY;
++    pi_cache((uintptr_t)&slot->acknowledged,true);
++    printf("POLARIS UEFI INPUT: ready; bounded single contact,750ms auto-release\n");
++    bool active=false; unsigned idle=0; int x=0,y=0;
++    for (;;) {
++        pi_cache((uintptr_t)slot,false);
++        uint64_t request=__atomic_load_n(&slot->request,__ATOMIC_ACQUIRE);
++        if (request!=slot->acknowledged) {
++            uint64_t dx=slot->x,dy=slot->y,down=slot->down;
++            if (request==slot->acknowledged+1 && request<=UINT32_MAX && polaris_uefi_input_valid(down,dx,dy)) {
++                sweet_hid_touch(9,(int)down,(int)dx,(int)dy);
++                if (active!=(down!=0)) {
++                    printf("POLARIS UEFI INPUT: seq=%llu down=%llu x=%llu y=%llu\n",request,down,dx,dy);
++                }
++                active=down!=0;x=(int)dx;y=(int)dy;idle=0;slot->error=0;++slot->events;
++            } else { slot->error=1; }
++            __atomic_store_n(&slot->acknowledged,request,__ATOMIC_RELEASE);
++            pi_cache((uintptr_t)&slot->acknowledged,true);
++        }
++        if (active && ++idle>=75) {
++            sweet_hid_touch(9,0,x,y);active=false;
++            printf("POLARIS UEFI INPUT: released expired remote contact\n");
++        }
++        pt_wait(10);
++    }
++}
++static void pi_start(void)
++{
++    uint32_t mode=0,input=0;
++    PE_parse_boot_argn("polarisuefi",&mode,sizeof(mode));
++    PE_parse_boot_argn("polarisinput",&input,sizeof(input));
++    if (mode!=1 || input!=1) { return; }
++    thread_t thread;
++    kern_return_t kr=kernel_thread_start(pi_thread,NULL,&thread);
++    if (kr==KERN_SUCCESS) { thread_deallocate(thread); }
++    else { printf("POLARIS UEFI INPUT: thread creation failed %d\n",kr); }
++}
++
+ static void pt_thread(void *arg, wait_result_t result)
+ {
+     (void)arg; (void)result;
+@@ -500,6 +558,7 @@
+ }
+ void polaris_touch_init(void)
+ {
++    pi_start();
+     thread_t t;
+     if (!PE_parse_boot_argn("polaristouch", &pt.mode, sizeof(pt.mode)) || !pt.mode) { return; }
+     if ((pt.mode != 1 && pt.mode != 2) || !pt_board_gate()) {
+--- /dev/null
++++ b/bsd/dev/polaris_uefi_input.h
+@@ -0,0 +1,19 @@
++/* Bounded single-contact test channel between resident EFI and XNU.
++ * Separate128-byte producer/consumer lines prevent cache-maintenance races.
++ * No address, keycode, shell command or arbitrary memory access is accepted. */
++#ifndef POLARIS_UEFI_INPUT_H
++#define POLARIS_UEFI_INPUT_H
++#include <stdint.h>
++#define POLARIS_INPUT_READY UINT64_C(0x504f4c4152495349)
++struct polaris_uefi_input_slot {
++    volatile uint64_t request,x,y,down;
++    uint8_t producer_padding[96];
++    volatile uint64_t acknowledged,ready,error,events;
++    uint8_t consumer_padding[96];
++} __attribute__((aligned(128)));
++struct polaris_uefi_input_status {uint32_t ready,request,acknowledged,error;};
++static inline int polaris_uefi_input_valid(uint64_t down,uint64_t x,uint64_t y)
++{return down<=1 && x<1080 && y<2160;}
++_Static_assert(sizeof(struct polaris_uefi_input_slot)==256,"input mailbox ABI");
++_Static_assert(__builtin_offsetof(struct polaris_uefi_input_slot,acknowledged)==128,"separate consumer cache lines");
++#endif

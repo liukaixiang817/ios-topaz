@@ -27,6 +27,27 @@ int polaris_usb_control_command(struct polaris_usb_diag *d,struct polaris_usb_co
         while(s[i]&&i<60){b[4+i]=(uint8_t)s[i];i++;}return d->transmit(d->context,b,4+i);
     }
     if(same(p,n,"getvar:max-download-size"))return reply(d,"OKAY0x08000000");
+    if(same(p,n,"getvar:input")){
+        struct polaris_uefi_input_status s={0};
+        if(!c->input_status||!c->input_status(c->context,&s))return reply(d,"FAILinput unavailable");
+        uint8_t b[32]={'O','K','A','Y'};unsigned at=4;b[at++]=s.ready?'1':'0';
+        uint32_t words[]={s.request,s.acknowledged,s.error};
+        for(unsigned i=0;i<3;i++){b[at++]='/';for(unsigned j=0;j<8;j++)b[at++]="0123456789abcdef"[(words[i]>>(28-j*4))&15];}
+        return d->transmit(d->context,b,at);
+    }
+    if(n>=15&&same(p,10,"oem touch:")){
+        unsigned values[3]={0},at=10;
+        for(unsigned i=0;i<3;i++){
+            unsigned digits=0;
+            while(at<n&&p[at]>='0'&&p[at]<='9'){
+                if(++digits>4)return reply(d,"FAILinvalid touch");values[i]=values[i]*10+p[at++]-'0';
+            }
+            if(!digits||(i<2&&(at>=n||p[at++]!=':')))return reply(d,"FAILinvalid touch");
+        }
+        if(at!=n||!polaris_uefi_input_valid(values[0],values[1],values[2])||!c->touch||
+           !c->touch(c->context,values[0],values[1],values[2]))return reply(d,"FAILtouch unavailable or busy");
+        return reply(d,"OKAY");
+    }
     if(n==17 && p[0]=='d'&&p[1]=='o'&&p[2]=='w'&&p[3]=='n'&&p[4]=='l'&&p[5]=='o'&&p[6]=='a'&&p[7]=='d'&&p[8]==':'){
         uint64_t count=0;
         if(!hexadecimal(p+9,&count)||!count||count>PAYLOAD_LIMIT||!c->begin||!c->write||!c->finish||!c->receive)

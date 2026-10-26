@@ -37,4 +37,18 @@ class KernelProtocolTests(unittest.TestCase):
         for command in [b'oem run',b'flash:boot',b'boot',b'reboot recovery']:
             with self.assertRaises(ValueError):p._control(command)
 
+    def test_touch_requires_bounded_contact_and_kernel_consumption(self):
+        wire=Wire([b'OKAYpolaris-uefi-diag',b'OKAY1/00000000/00000000/00000000',b'OKAY',
+                   b'OKAY1/00000001/00000001/00000000'])
+        p=usb.KernelProtocol(wire);p.product();self.assertEqual(p.touch(1,1079,2159),1)
+        self.assertIn(b'oem touch:1:1079:2159',wire.commands)
+        for contact in [(2,0,0),(1,1080,0),(1,0,2160),(1,-1,0),(1,0,0.5)]:
+            with self.assertRaises(ValueError):p.touch(*contact)
+
+    def test_not_ready_or_kernel_rejected_contact_does_not_prove_UI(self):
+        wire=Wire([b'OKAYpolaris-uefi-diag',b'OKAY0/00000000/00000000/00000000'])
+        p=usb.KernelProtocol(wire);p.product()
+        with self.assertRaises(RuntimeError):p.touch(1,100,100)
+        self.assertFalse(any(c.startswith(b'oem touch:') for c in wire.commands))
+
 if __name__=='__main__':unittest.main()
