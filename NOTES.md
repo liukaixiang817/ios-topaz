@@ -36,6 +36,13 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### 0058 RAM-only iOS-from-UEFI work; fresh storage preflight PASS
 
+- Latest kernel source920cffdf pushed; full macOS27 CI40379691170, job121772263577,
+  now passed Build and is packaging artifacts.0865 local full MIG script57headers
+  and32native checks PASS. Latest real generic EFI diagnostic group1-run-0001
+  passes8old-guard checks in7.270s, explicitly NOT release admission. Firmware
+  Group1 readback0 added; no phone0058 boot sent. Current human again confirms
+  FASTBOOT connected; check automatically when the fully verified candidate is ready.
+
 - Unattended heartbeat automation `uefi-ios` createdACTIVE for this same thread,
   every5min, explicit quiet-on-no-change prompt; stop it on complete. No other
   tasks messaged. Temporary idle-sleep inhibitor (no display/screen changes),
