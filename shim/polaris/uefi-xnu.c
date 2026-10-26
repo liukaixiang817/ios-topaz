@@ -2,6 +2,7 @@
  * The kernel receives only an explicitly owned bank. Firmware stays on CPU0;
  * kernel MMU/GIC work executes on the one declared, separately started core. */
 #include "uefi-xnu.h"
+#include "uefi-reset.h"
 #include "uefi-memory.h"
 #include "uefi-xnu-config.h" /* exact payload bytes/CRC, symbol offsets, board */
 struct video {uint64_t base,display,stride,width,height,depth;};
@@ -14,6 +15,9 @@ static uint8_t log_buffer[32768];static uint64_t log_bytes;
 static struct {uint64_t magic,bytes,stride,version;uint8_t data[65536];} map_snapshot;
 static uint64_t map_bytes;
 static struct polaris_gop *gop;
+#if !defined(POLARIS_EFI_TEST_QEMU)
+static struct polaris_efi_pon *reset_pon;
+#endif
 static struct polaris_plan plan;
 static uint8_t *payload,*log_snapshot;
 static uint64_t received,payload_count;
@@ -225,6 +229,12 @@ static int prepare_reset(void *context,unsigned mode)
      * msm-poweroff.c uses77665500 for bootloader,77665501 for normal reset.
      * This is a volatile reset marker, never a partition/NVRAM file write. */
     if(!identity(UINT64_C(0x146bf65c)))return 0;
+    static const efi_guid pon_guid={0x97044b58,0xfea4,0x4ad0,{0x9d,0x0b,0xe4,0x17,0xd6,0x0f,0x11,0xa1}};
+    reset_pon=0;
+    efi_status s=system_table->boot->locate_protocol(&pon_guid,0,(void**)&reset_pon);
+    if(s||!reset_pon||reset_pon->revision!=0x10001||!reset_pon->get||!reset_pon->set){
+        reset_pon=0;if(mode==2)return 0;
+    }
 #endif
     return 1;
 }
@@ -233,13 +243,29 @@ static void reset(void *context,unsigned mode)
     (void)context;
 #if !defined(POLARIS_EFI_TEST_QEMU)
     volatile uint32_t *reason=(void*)(uintptr_t)UINT64_C(0x146bf65c);
+    uint32_t before=*reason;
+    struct polaris_efi_reset_marker marker={0};
+    if(reset_pon){
+        int valid=polaris_efi_pon_marker(reset_pon,mode,&marker);
+        report("RESET_PON_STATUS=",marker.status);report("RESET_PON_BEFORE=",marker.before);
+        report("RESET_PON_AFTER=",marker.after);
+        if(!valid){report("RESET_PON_RESTORE=",marker.restore_status);return;}
+    }else if(mode==2)return;
     uint32_t value=mode==2?0x77665500u:0x77665501u;*reason=value;
-    __asm__ volatile("dsb sy":::"memory");if(*reason!=value){report("RESET_MARKER_FAILED=",*reason);return;}
+    __asm__ volatile("dsb sy":::"memory");if(*reason!=value){
+        report("RESET_MARKER_FAILED=",*reason);
+        if(reset_pon)report("RESET_PON_RESTORE=",reset_pon->set(0,3,marker.before,0xfe));
+        *reason=before;__asm__ volatile("dsb sy":::"memory");return;
+    }
 #else
     (void)mode;
 #endif
     report("RESET_REQUESTED=",mode);system_table->runtime->reset_system(0,0,0,0);
     report("RESET_RETURNED=",1);
+#if !defined(POLARIS_EFI_TEST_QEMU)
+    if(reset_pon)report("RESET_PON_RESTORE=",reset_pon->set(0,3,marker.before,0xfe));
+    *reason=before;__asm__ volatile("dsb sy":::"memory");
+#endif
 }
 static efi_status admission(void)
 {

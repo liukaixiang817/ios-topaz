@@ -242,6 +242,18 @@ frequency or voltage setting has been changed during this investigation.
 
 ## Future refresh
 
+Polaris0058 now physically retains original UEFI on CPU0 while a single XNU
+CPU runs on physical0x100 with16KiB pages. Actual USB RAM logs,1080x2160 panel
+captures and bounded remote unlock/Settings/scroll/home actions passed. The
+reference's ordinary ResetSystem call did reboot, but our IMEM-only FASTBOOT
+request landed in Android. Original Android ADB recovered FASTBOOT automatically.
+0059 compares the phone's actual PmicDxe PON vtable and its own vendor
+`msm-poweroff.c`/`qpnp-power-on.c` before adding the missing restart reason.
+The primary [Linuxv6.12 PON driver](https://github.com/torvalds/linux/blob/v6.12/drivers/power/reset/qcom-pon.c)
+confirms PM8998 uses Gen2 reason bits7:1. This is a bounded mode marker through
+the original protocol, not a port of another board's power controls. Physical
+FASTBOOT success still requires explicit post-reset target verification.
+
 Check each reference checkout for local edits first. Fetching newer upstream
 objects is read-only with respect to our phone and current project sources:
 

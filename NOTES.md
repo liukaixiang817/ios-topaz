@@ -34,7 +34,80 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0059 PM8998 FASTBOOT-mode repair; phone recovered automatically
+
+- 0058 basic RAM iOS/USB/screen/input workflow is physically proven (below).
+  UEFI reboot-fastboot ACK actually rebooted to original Android, NOT FASTBOOT.
+  Targeted Android product/ADB identity verified, ADB reboot bootloader returned
+  expected polaris FASTBOOT without human keys. Evidence under
+  uefi-ios-0058/reset-fastboot-0001/{verification,recovery}.json. Android may
+  update its filesystem: a fresh0059 read-only recovery preflight is running.
+- Missing native step under test: IMEM-only reset landed in Android; own vendor
+  msm-poweroff.c also stores the PMIC reason. Actual original PmicDxe SHA8b43bdf3
+  installs GUID97044b58/vtable0x2e520 revision10001 with Get/SetSpareReg at8/16,
+  no This. Disassembly binds GUID install, wrappers and register table88c..88f.
+  Own DT primaryPMIC=pm8998@0; native vendor reasonBOOTLOADER2; primary Linux
+  v6.12 qcom-pon.c independently confirms PM8998 Gen2 shift1, maskfe.
+- New restricted uefi-reset.h writes only primary SOFT_SPARE3, value04 for
+  FASTBOOT/44 normal, preserves bit0, requires readback, restores previous
+  masked reason on failure. No arbitrary power/voltage/register API added.
+  Unknown PON ABI refuses FASTBOOT; no misleading ordinary-reset fallback.
+  Two real native ASan/UBSan parser/marker checks PASS, including failed-write
+  rollback and ACK order. New EFI compile/QEMU, physical PON-reset trial still
+  pending. Need test this in UEFI HOLD before spending another full iOS boot.
+- NEXT finish0059 preflight/header review, generic actual EFI/XNU13checks,
+  build/package/actualEDK2-decode original81FFS-preserving image. First RAM
+  UEFI HOLD -> reboot-fastboot -> verify actual expected polaris. Only then
+  boot the same image and validated iOS payload again as needed. Persistent
+  installation/menu has NOT started; current immutable root has512MiB volatile
+  COW. Do not install the always-holding DXE. A selected app/disk-payload/menu
+  implementation preserving existing Android/Windows/default entries is needed.
+
 ### 0058 RAM-only iOS-from-UEFI work; fresh storage preflight PASS
+
+- Actual RAM iOS GUI/remoteUI now PASS: captures0005lockscreen,0006home icons,
+  0007Settings text,0008Settings scrolled,0009home icons after return, all
+  visually inspected. Four host actions consumed exactly56contact messages
+  through bounded mailbox; each ACK/error0 and corresponding visible outcome
+  confirmed. physical-UI-check-0001.json binds image/screens/actions. No panic
+  in captured logs; this proves basicSettings workflow, not all iOS features.
+  reboot-fastboot command ACKed viaUEFI; actual resulting mode verification
+  currently pending. Do not claim reset success from command ACK alone.
+  Persistent installation not started; root writes remain512MiB volatileCOW.
+
+- Physical targeted captures0002..0004 continue toPASS USB logs+screen while
+  immutable-root iOS progresses through Apple logo and SpringBoard startup.
+  Original root verified in-kernel;512MiBCOW active; realGPU GLSL/sharedIOSurface
+  acceptance ALL4096pixels PASS plus GMEM/icon alpha tests. This is GPU
+  self-test proof only; fullGUI/remoteUI/reset/persistent install still pending.
+  No panic observed in captured RAM logs. Keep this boot running, do not
+  infer failure from early logo or restart before meaningful observation.
+
+- Physical0058 UEFI RAM imagef28c2764 sent2026-10-26T19:04:17.539300Z,
+  original81FFS retained, final realEDK2 decoder27804360bytes PASS. USB bound
+  waiting-payload read succeeded, then32.7MB payload downloaded/validated and
+  started. phone-capture-0001 actually reads kernel log and1080x2160 screen
+  while XNU runs on physical0x100; explicitCPU init/SGI1 PASS. Screen visually
+  inspected: earlyBSD boot logs, NOT iOS lockscreen yet. This is first real
+  concurrent residentUSB/kernel log+panel proof, not UI/input/reset proof.
+  No partition/NVRAM writes. Original observer stillPAUSED; targeted reads only.
+
+- Latest actual new-kernel generic EDK2/QEMU qemu-release-run-0001 PASS13/13
+  in37.548s, including realPID1/fourVMchildren and DOWN/UP kernel ACK through
+  the bounded mailbox. release_handoff_admitted=true; not SDM845/GUI proof.
+  Final physical preflight-final-0001 alsoPASS: recoveryRAM only, full16GiB
+  SHA689a8cd1,182extents, sixGPT/fivecritical partitions unchanged, ro/noload;
+  outer header byte-identical to reviewed0058. Returned toFASTBOOT.
+  Phone payload32703280bytes/510bytecmdline; driver9a859cf4 built for physical
+  CPU0x100 with retained firmwareCPU0. Image packaging/final actualEDK2 codec
+  check still pending; no0058 physicalUEFI/iOS start sent yet.
+
+- Full macOS27 CI40379691170 SUCCESS, source920cffdf174a38697bcd6eb6f2e43b0eebe2bc91;
+  actual kernelSHAa3ec72d6bff05f32ec125f0fb7d83b9582cd5ee8458b61ebed766fa3d3ecb8cf,
+  selectively downloaded and digest/profile verified. New generic EFI driver
+  026c1935 passes ownership/PSCI and actually initializes logicalCPU0 on
+  physical1 under16KiB XNU while firmware staysCPU0. Full PID1/VM/input outcome
+  still pending in qemu-release-run-0001. No phone0058 boot sent.
 
 - Latest kernel source920cffdf pushed; full macOS27 CI40379691170, job121772263577,
   now passed Build and is packaging artifacts.0865 local full MIG script57headers
