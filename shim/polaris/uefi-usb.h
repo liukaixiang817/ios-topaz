@@ -38,11 +38,29 @@ struct polaris_usb_diag {
     int (*stage)(void *,unsigned,const uint8_t **,uint64_t *);
     const uint8_t *staged;uint64_t staged_bytes;
 };
+/* Explicit RAM-boot mode only. The inventory-only server passes no controls. */
+struct polaris_usb_control {
+    void *context;
+    int (*receive)(void *,uint8_t *,uint64_t,uint64_t *);
+    int (*begin)(void *,uint64_t);
+    int (*write)(void *,uint64_t,const uint8_t *,uint64_t);
+    int (*finish)(void *);
+    int (*prepare_boot)(void *);
+    void (*boot)(void *);
+    int (*prepare_reset)(void *,unsigned);
+    void (*reset)(void *,unsigned);
+    const char *(*state)(void *);
+    int (*logs)(void *,const uint8_t **,uint64_t *);
+    int (*running)(void *);
+};
 /* Command parsing is shared by the native host test and the real EFI driver. */
 int polaris_usb_command(struct polaris_usb_diag *,const uint8_t *,uint64_t);
+int polaris_usb_control_command(struct polaris_usb_diag *,struct polaris_usb_control *,const uint8_t *,uint64_t);
 int polaris_usb_ppm(const struct polaris_gop_mode *,uint8_t *,uint64_t,uint64_t *);
 efi_status polaris_efi_usb_serve(struct efi_system *,const uint8_t *,const uint64_t *,
                                 const uint8_t *,uint64_t,void (*)(const char *,uint64_t));
+efi_status polaris_efi_usb_serve_control(struct efi_system *,const uint8_t *,const uint64_t *,
+    const uint8_t *,uint64_t,void (*)(const char *,uint64_t),struct polaris_usb_control *);
 _Static_assert(sizeof(struct polaris_usb_protocol)==80,"QCOM USB method table");
 _Static_assert(offsetof(struct polaris_usb_protocol,start_ex)==72,"QCOM StartEx");
 _Static_assert(sizeof(struct polaris_usb_descriptors)==64,"QCOM descriptor set");

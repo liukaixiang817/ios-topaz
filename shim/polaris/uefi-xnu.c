@@ -1,0 +1,324 @@
+/* Resident RAM-only iOS loader. No block-I/O, file-write or NVRAM API.
+ * The kernel receives only an explicitly owned bank. Firmware stays on CPU0;
+ * kernel MMU/GIC work executes on the one declared, separately started core. */
+#include "uefi-xnu.h"
+#include "uefi-memory.h"
+#include "uefi-xnu-config.h" /* exact payload bytes/CRC, symbol offsets, board */
+struct video {uint64_t base,display,stride,width,height,depth;};
+struct args {uint16_t revision,version;uint64_t va,pa,size,top;struct video video;
+    uint32_t machine;uint64_t tree;uint32_t tree_bytes;char cmdline[608];uint64_t flags,actual;};
+_Static_assert(sizeof(struct args)==736,"XNU boot args ABI");
+static struct efi_system *system_table;
+static efi_handle driver_image;
+static uint8_t log_buffer[32768];static uint64_t log_bytes;
+static struct {uint64_t magic,bytes,stride,version;uint8_t data[65536];} map_snapshot;
+static uint64_t map_bytes;
+static struct polaris_gop *gop;
+static struct polaris_plan plan;
+static uint8_t *payload,*log_snapshot;
+static uint64_t received,payload_count;
+static uint32_t load_state;
+static int64_t cpu_status;
+static uint8_t ap_stack[131072] __attribute__((aligned(128)));
+struct polaris_efi_ap polaris_efi_ap_state __attribute__((aligned(128)));
+static void bytes_copy(void *dest,const void *source,uint64_t n)
+{uint8_t *d=dest;const uint8_t *s=source;for(uint64_t i=0;i<n;i++)d[i]=s[i];}
+static void bytes_zero(void *dest,uint64_t n)
+{uint8_t *d=dest;for(uint64_t i=0;i<n;i++)d[i]=0;}
+static void text(const char *s)
+{
+    uint16_t wide[128];unsigned at=0;
+    while(*s){
+        if(log_bytes<sizeof(log_buffer))log_buffer[log_bytes++]=(uint8_t)*s;
+        if(at<127)wide[at++]=(uint8_t)*s;s++;
+    }
+    wide[at]=0;
+    if(load_state<4 && system_table&&system_table->out)system_table->out->string(system_table->out,wide);
+}
+static void report(const char *name,uint64_t value)
+{
+    char buf[19]={'0','x'};for(unsigned i=0;i<16;i++)buf[2+i]="0123456789abcdef"[(value>>(60-i*4))&15];
+    buf[18]=0;text(name);text(buf);text("\r\n");
+}
+static int overlap(uint64_t a,uint64_t n,uint64_t b,uint64_t z)
+{return n&&z&&a<b+z&&b<a+n;}
+static int identity(uint64_t address)
+{
+    uint64_t par;__asm__ volatile("at s1e1r,%1; isb; mrs %0,par_el1":"=r"(par):"r"(address):"memory");
+    return !(par&1) && (par&UINT64_C(0x0000fffffffff000))==(address&~UINT64_C(4095));
+}
+static int identity_range(uint64_t address,uint64_t bytes)
+{
+    if(!bytes||address>UINT64_MAX-bytes)return 0;
+    uint64_t end=address+bytes;
+    for(uint64_t p=address&~UINT64_C(4095);p<end;p+=4096)if(!identity(p))return 0;
+    return 1;
+}
+static uint64_t cache_line(void)
+{uint64_t c;__asm__ volatile("mrs %0,ctr_el0":"=r"(c));return UINT64_C(4)<<((c>>16)&15);}
+static void clean(uint64_t address,uint64_t bytes)
+{
+    uint64_t line=cache_line();for(uint64_t p=address&~(line-1);p<address+bytes;p+=line)__asm__ volatile("dc cvac,%0"::"r"(p):"memory");
+    __asm__ volatile("dsb sy":::"memory");
+}
+static void invalidate(uint64_t address,uint64_t bytes)
+{
+    uint64_t line=cache_line();for(uint64_t p=address&~(line-1);p<address+bytes;p+=line)__asm__ volatile("dc ivac,%0"::"r"(p):"memory");
+    __asm__ volatile("dsb sy":::"memory");
+}
+static int64_t psci(uint64_t function,uint64_t a,uint64_t b,uint64_t c)
+{
+    register uint64_t x0 __asm__("x0")=function,x1 __asm__("x1")=a,x2 __asm__("x2")=b,x3 __asm__("x3")=c;
+#if defined(POLARIS_EFI_TEST_QEMU)
+    __asm__ volatile("hvc #0":"+r"(x0),"+r"(x1),"+r"(x2),"+r"(x3)::"x4","x5","x6","x7","x8","x9","x10","x11","x12","x13","x14","x15","x16","x17","cc","memory");
+#else
+    __asm__ volatile("smc #0":"+r"(x0),"+r"(x1),"+r"(x2),"+r"(x3)::"x4","x5","x6","x7","x8","x9","x10","x11","x12","x13","x14","x15","x16","x17","cc","memory");
+#endif
+    return (int64_t)x0;
+}
+static int token(const char *cmd,const char *expected)
+{
+    for(unsigned i=0;i<608&&cmd[i];){
+        unsigned j=0;while(i+j<608&&cmd[i+j]&&cmd[i+j]!=' ')j++;
+        unsigned n=0;while(expected[n])n++;
+        if(j==n){unsigned k=0;while(k<n&&cmd[i+k]==expected[k])k++;if(k==n)return 1;}
+        i+=j;if(i<608&&cmd[i]==' ')i++;
+    }return 0;
+}
+static int begin(void *context,uint64_t count)
+{
+    (void)context;if(load_state>=4||count!=EFI_XNU_PAYLOAD_BYTES||count>POLARIS_PAYLOAD_LIMIT)return 0;
+    received=0;payload_count=count;load_state=1;return 1;
+}
+static int write_payload(void *context,uint64_t offset,const uint8_t *data,uint64_t count)
+{
+    (void)context;if(load_state!=1||offset!=received||offset>payload_count||count>payload_count-offset)return 0;
+    bytes_copy(payload+offset,data,count);received+=count;return 1;
+}
+static int finish(void *context)
+{
+    (void)context;load_state=0;
+    if(received!=payload_count||polaris_efi_crc32(payload,payload_count)!=EFI_XNU_PAYLOAD_CRC32)return 0;
+    const char *error=polaris_payload_check(payload,payload_count,(uintptr_t)payload,&plan);
+    if(error){text(error);text("\r\n");return 0;}
+    const struct polaris_payload *p=(const void*)payload;
+    const char *required[]={"cpus=1","ufsrw=0","sweetlog=0","polarisramcow=1","polarisusb=0","polarisdebug=0","polarisuefi=1",EFI_XNU_BOOT_CPU_TOKEN};
+    for(unsigned i=0;i<sizeof(required)/sizeof(required[0]);i++)if(!token(p->cmdline,required[i]))return 0;
+    if(EFI_XNU_LOG_OFFSET>p->kernel_end-p->virt_base || EFI_XNU_LOG_SIZE>p->kernel_end-p->virt_base-EFI_XNU_LOG_OFFSET ||
+       EFI_XNU_LOG_TOTAL_OFFSET>p->kernel_end-p->virt_base-8)return 0;
+    load_state=2;report("RAM_PAYLOAD_VALID=",1);return 1;
+}
+static int prepare_boot(void *context)
+{
+    (void)context;if(load_state!=2)return 0;
+    int64_t affinity=psci(UINT64_C(0xc4000004),EFI_XNU_CPU,0,0);report("AP_AFFINITY=",(uint64_t)affinity);
+    if(affinity!=1)return 0; /* Never seize a core already owned by firmware. */
+    if(!identity((uintptr_t)polaris_efi_ap_entry)||!identity((uintptr_t)&polaris_efi_ap_state)||
+       !identity((uintptr_t)ap_stack+sizeof(ap_stack)-16))return 0;
+    const struct polaris_payload *p=(const void*)payload;
+    /* Admit every translation before the first destination write. The PE's
+     * own identity mapping does not imply that all upper-bank pages map 1:1. */
+    if(!identity_range((uintptr_t)payload,payload_count)||
+       !identity_range(plan.adt_pa,plan.top-plan.adt_pa))return 0;
+    for(uint32_t i=0;i<p->nsegs;i++){
+        const struct polaris_segment *s=&p->segs[i];
+        if(!identity_range(p->phys_base+s->vmaddr-p->virt_base,s->vmsize))return 0;
+    }
+    for(uint32_t i=0;i<p->nsegs;i++){
+        const struct polaris_segment *s=&p->segs[i];uint64_t dest=p->phys_base+s->vmaddr-p->virt_base;
+        bytes_copy((void*)(uintptr_t)dest,payload+s->file_off,s->file_size);
+        bytes_zero((void*)(uintptr_t)(dest+s->file_size),s->vmsize-s->file_size);clean(dest,s->vmsize);
+    }
+    bytes_copy((void*)(uintptr_t)plan.adt_pa,payload+p->adt_off,p->adt_size);
+    bytes_zero((void*)(uintptr_t)plan.args_pa,POLARIS_PAGE);struct args *a=(void*)(uintptr_t)plan.args_pa;
+    a->revision=2;a->version=2;a->va=p->virt_base;a->pa=p->phys_base;a->size=p->mem_size;a->top=plan.top;
+    if(gop&&gop->mode&&gop->mode->info){
+        struct polaris_gop_mode *m=gop->mode;struct polaris_gop_info *i=m->info;
+        a->video=(struct video){m->base,1,(uint64_t)i->stride*4,i->width,i->height,32};
+    }
+#if defined(POLARIS_EFI_TEST_QEMU)
+    a->video=(struct video){UINT64_C(0x9d400000),1,4320,1080,2160,32};
+#endif
+    a->tree=p->virt_base+plan.adt_pa-p->phys_base;a->tree_bytes=(uint32_t)p->adt_size;
+    bytes_copy(a->cmdline,p->cmdline,sizeof(a->cmdline));a->actual=p->mem_size;
+    clean(plan.adt_pa,plan.top-plan.adt_pa);
+    struct polaris_efi_ap *ap=&polaris_efi_ap_state;bytes_zero(ap,sizeof(*ap));
+    ap->entry=plan.entry_pa;ap->args=plan.args_pa;ap->stack=(uintptr_t)ap_stack+sizeof(ap_stack);
+    __asm__ volatile("mrs %0,sctlr_el1":"=r"(ap->sctlr));__asm__ volatile("mrs %0,cpacr_el1":"=r"(ap->cpacr));
+    clean((uintptr_t)ap,sizeof(*ap));clean((uintptr_t)ap_stack,sizeof(ap_stack));
+    clean((uintptr_t)polaris_efi_ap_entry,4096);load_state=3;report("KERNEL_PREPARED_ENTRY=",plan.entry_pa);return 1;
+}
+static void boot_kernel(void *context)
+{
+    (void)context;if(load_state!=3)return;
+    report("KERNEL_PSCI_TARGET=",EFI_XNU_CPU);load_state=4;
+    /* IRQ ownership moves to XNU. USB's controller API is polled; no firmware
+     * UFS/file operation or GOP BLT is allowed while the kernel owns devices. */
+    __asm__ volatile("msr daifset,#15; dsb sy; isb":::"memory");
+    cpu_status=psci(UINT64_C(0xc4000003),EFI_XNU_CPU,(uintptr_t)polaris_efi_ap_entry,(uintptr_t)&polaris_efi_ap_state);
+    report("KERNEL_PSCI_STATUS=",(uint64_t)cpu_status);
+}
+static int running(void *context){(void)context;return load_state>=4;}
+static const char *state(void *context)
+{
+    (void)context;if(load_state>=4){
+        invalidate((uintptr_t)&polaris_efi_ap_state,sizeof(polaris_efi_ap_state));
+        if(cpu_status)return "CPU_ON-refused";
+        if(polaris_efi_ap_state.stage==2)return "AP-early-fault";
+        if(polaris_efi_ap_state.stage==3)return "AP-wrong-EL";
+        return polaris_efi_ap_state.stage==1?"kernel-entered":"AP-start-pending";
+    }return load_state==3?"prepared":load_state==2?"validated":load_state==1?"receiving":"waiting-payload";
+}
+static int logs(void *context,const uint8_t **data,uint64_t *count)
+{
+    (void)context;uint64_t at=log_bytes;bytes_copy(log_snapshot,log_buffer,at);
+    if(load_state>=4 && !cpu_status){
+        uint64_t total_pa=POLARIS_RAM_BASE+EFI_XNU_LOG_TOTAL_OFFSET;
+        invalidate(total_pa,8);uint64_t total=*(const volatile uint64_t*)(uintptr_t)total_pa;
+        uint64_t bytes=total;if(bytes>EFI_XNU_LOG_SIZE)bytes=EFI_XNU_LOG_SIZE;
+        uint64_t begin=total-bytes,ring=POLARIS_RAM_BASE+EFI_XNU_LOG_OFFSET;
+        invalidate(ring,EFI_XNU_LOG_SIZE);
+        static const char label[]="\n--- live XNU RAM console (bounded snapshot) ---\n";
+        bytes_copy(log_snapshot+at,label,sizeof(label)-1);at+=sizeof(label)-1;
+        for(uint64_t i=0;i<bytes;i++)log_snapshot[at+i]=((const volatile uint8_t*)(uintptr_t)ring)[(begin+i)%EFI_XNU_LOG_SIZE];
+        at+=bytes;
+    }
+    *data=log_snapshot;*count=at;return at>0;
+}
+static int prepare_reset(void *context,unsigned mode)
+{
+    (void)context;if(mode!=1&&mode!=2)return 0;
+    if(!system_table->runtime||!system_table->runtime->reset_system)return 0;
+#if !defined(POLARIS_EFI_TEST_QEMU)
+    /* Own phone's live DT restart_reason@65c within imem@146bf000. Vendor
+     * msm-poweroff.c uses77665500 for bootloader,77665501 for normal reset.
+     * This is a volatile reset marker, never a partition/NVRAM file write. */
+    if(!identity(UINT64_C(0x146bf65c)))return 0;
+#endif
+    return 1;
+}
+static void reset(void *context,unsigned mode)
+{
+    (void)context;
+#if !defined(POLARIS_EFI_TEST_QEMU)
+    volatile uint32_t *reason=(void*)(uintptr_t)UINT64_C(0x146bf65c);
+    uint32_t value=mode==2?0x77665500u:0x77665501u;*reason=value;
+    __asm__ volatile("dsb sy":::"memory");if(*reason!=value){report("RESET_MARKER_FAILED=",*reason);return;}
+#else
+    (void)mode;
+#endif
+    report("RESET_REQUESTED=",mode);system_table->runtime->reset_system(0,0,0,0);
+    report("RESET_RETURNED=",1);
+}
+static efi_status admission(void)
+{
+    uint64_t el,mpidr,sp;__asm__ volatile("mrs %0,CurrentEL":"=r"(el));__asm__ volatile("mrs %0,mpidr_el1":"=r"(mpidr));
+    __asm__ volatile("mov %0,sp":"=r"(sp));report("EFI_EL=",el);report("EFI_MPIDR=",mpidr);
+    report("EFI_CODE_IDENTITY=",identity((uintptr_t)admission));report("EFI_STACK_IDENTITY=",identity(sp));
+    if(el!=4||(mpidr&UINT64_C(0xffffff))!=0||!identity((uintptr_t)admission)||!identity(sp))return EFI_ERROR|3;
+    struct efi_loaded *image=0;static const efi_guid loaded={0x5b1b31a1,0x9562,0x11d2,{0x8e,0x3f,0,0xa0,0xc9,0x69,0x72,0x3b}};
+    efi_status s=system_table->boot->handle_protocol(driver_image,&loaded,(void**)&image);
+    report("EFI_LOADED_IMAGE=",s);if(image){report("EFI_IMAGE_BASE=",(uintptr_t)image->base);report("EFI_IMAGE_BYTES=",image->bytes);}
+    if((s&EFI_ERROR)||!image||overlap((uintptr_t)image->base,image->bytes,POLARIS_RAM_BASE,POLARIS_RAM_SIZE)||
+       overlap(sp,16,POLARIS_RAM_BASE,POLARIS_RAM_SIZE))return EFI_ERROR|3;
+    uint64_t size=sizeof(map_snapshot.data),key=0,stride=0;uint32_t version=0;
+    s=system_table->boot->get_map(&size,map_snapshot.data,&key,&stride,&version);struct polaris_efi_memory check;
+    report("EFI_MAP_STATUS=",s);report("EFI_MAP_BYTES=",size);report("EFI_MAP_STRIDE=",stride);
+    if((s&EFI_ERROR)||!polaris_efi_memory_check(map_snapshot.data,size,sizeof(map_snapshot.data),stride,&check))return EFI_ERROR|3;
+    if(!polaris_efi_range_owned(map_snapshot.data,size,stride,POLARIS_RAM_BASE,POLARIS_RAM_SIZE,7))return EFI_ERROR|9;
+    map_snapshot.magic=UINT64_C(0x3150414d49464550);map_snapshot.bytes=size;map_snapshot.stride=stride;map_snapshot.version=version;map_bytes=32+size;
+    uint64_t address=POLARIS_RAM_BASE;s=system_table->boot->allocate_pages(2,2,POLARIS_RAM_SIZE/4096,&address);
+    if((s&EFI_ERROR)||address!=POLARIS_RAM_BASE)return EFI_ERROR|9;report("XNU_BANK_CLAIMED=",address);
+    /* Re-read the map after claiming: success alone is not an ownership map.
+     * Refuse gaps, runtime pages or a page still reported as free/firmware. */
+    size=sizeof(map_snapshot.data);
+    s=system_table->boot->get_map(&size,map_snapshot.data,&key,&stride,&version);
+    if((s&EFI_ERROR)||!polaris_efi_memory_check(map_snapshot.data,size,sizeof(map_snapshot.data),stride,&check))return EFI_ERROR|3;
+    if(!polaris_efi_range_owned(map_snapshot.data,size,stride,POLARIS_RAM_BASE,POLARIS_RAM_SIZE,2))return EFI_ERROR|9;
+    report("XNU_BANK_OWNERSHIP=",1);
+    map_snapshot.bytes=size;map_snapshot.stride=stride;map_snapshot.version=version;map_bytes=32+size;
+#if defined(POLARIS_EFI_TEST_QEMU)
+    /* virt has no physical panel reservation. Claim the synthetic panel RAM
+     * explicitly so subsequent firmware allocations cannot alias its pixels. */
+    address=UINT64_C(0x9d400000);s=system_table->boot->allocate_pages(2,2,0x2400000/4096,&address);
+    if((s&EFI_ERROR)||address!=UINT64_C(0x9d400000))return EFI_ERROR|9;
+#endif
+    address=POLARIS_RAM_BASE-1;s=system_table->boot->allocate_pages(1,2,(EFI_XNU_PAYLOAD_BYTES+4095)/4096,&address);
+    if((s&EFI_ERROR)||address<UINT64_C(0x80000000)||address+EFI_XNU_PAYLOAD_BYTES>POLARIS_RAM_BASE)return EFI_ERROR|9;
+    payload=(void*)(uintptr_t)address;
+    s=system_table->boot->allocate_pool(2,32768+128+EFI_XNU_LOG_SIZE,(void**)&log_snapshot);if(s&EFI_ERROR)return s;
+    static const efi_guid graphics={0x9042a9de,0x23dc,0x4a38,{0x96,0xfb,0x7a,0xde,0xd0,0x80,0x51,0x6a}};
+    s=system_table->boot->locate_protocol(&graphics,0,(void**)&gop);
+#if !defined(POLARIS_EFI_TEST_QEMU)
+    if((s&EFI_ERROR)||!gop||!gop->mode||!gop->mode->info)return EFI_ERROR|3;
+    struct polaris_gop_mode *m=gop->mode;struct polaris_gop_info *i=m->info;
+    if(m->base!=UINT64_C(0x9d400000)||i->width!=1080||i->height!=2160||i->stride!=1080||i->format>1||m->bytes<UINT64_C(9331200))return EFI_ERROR|3;
+#endif
+    return 0;
+}
+static struct polaris_usb_control controls={0,0,begin,write_payload,finish,prepare_boot,boot_kernel,prepare_reset,reset,state,logs,running};
+#if defined(POLARIS_EFI_TEST_QEMU)
+struct file {
+    uint64_t revision;
+    efi_status (*open)(struct file *,struct file **,const uint16_t *,uint64_t,uint64_t);
+    efi_status (*close)(struct file *);void *remove;
+    efi_status (*read)(struct file *,uint64_t *,void *);
+};
+struct fs {uint64_t revision;efi_status (*open)(struct fs *,struct file **);};
+static int test_file_payload(void)
+{
+    static const efi_guid loaded={0x5b1b31a1,0x9562,0x11d2,{0x8e,0x3f,0,0xa0,0xc9,0x69,0x72,0x3b}};
+    static const efi_guid filesystem={0x964e5b22,0x6459,0x11d2,{0x8e,0x39,0,0xa0,0xc9,0x69,0x72,0x3b}};
+    static const uint16_t name[]={'\\','P','A','Y','L','O','A','D','.','B','I','N',0};
+    struct efi_loaded *image=0;struct fs *volume=0;struct file *root=0,*file=0;
+    if(system_table->boot->handle_protocol(driver_image,&loaded,(void**)&image)&EFI_ERROR)return 0;
+    if(!image||system_table->boot->handle_protocol(image->device,&filesystem,(void**)&volume)&EFI_ERROR)return 0;
+    if(!volume||volume->open(volume,&root)&EFI_ERROR)return 0;
+    efi_status s=root->open(root,&file,name,1,0);root->close(root);if(s&EFI_ERROR)return 0;
+    uint64_t size=EFI_XNU_PAYLOAD_BYTES;if(!begin(0,size)){file->close(file);return 0;}
+    s=file->read(file,&size,payload);uint8_t byte;uint64_t extra=1;
+    efi_status tail=file->read(file,&extra,&byte);file->close(file);
+    if((s&EFI_ERROR)||(tail&EFI_ERROR)||size!=EFI_XNU_PAYLOAD_BYTES||extra)return 0;
+    received=size;return finish(0);
+}
+static void test_monitor(void)
+{
+    uint64_t position=0,last=0;
+    volatile uint32_t *uart=(void*)(uintptr_t)UINT64_C(0x9000000);
+    for(;;){
+        uint64_t now;__asm__ volatile("mrs %0,cntvct_el0":"=r"(now));
+        if(now-last<6250000){__asm__ volatile("yield");continue;}last=now;
+        const uint8_t *data;uint64_t bytes;
+        if(logs(0,&data,&bytes)&&bytes>position){
+            for(uint64_t i=position;i<bytes;i++){while(uart[6]&(1u<<5))__asm__ volatile("yield");uart[0]=data[i];}
+            position=bytes;
+        }
+    }
+}
+#endif
+static void ready(void *event,void *context)
+{
+    (void)event;(void)context;system_table->boot->restore_tpl(4);
+    text("POLARIS UEFI XNU: RAM-only resident bridge\r\n");system_table->boot->watchdog(0,0,0,0);
+    efi_status s=admission();report("XNU_ADMISSION=",s);
+#if defined(POLARIS_EFI_TEST_QEMU)
+    if(!(s&EFI_ERROR)){
+        int valid=test_file_payload();report("QEMU_PAYLOAD_VALID=",valid);
+        if(valid&&prepare_boot(0)){boot_kernel(0);test_monitor();}
+    }
+#else
+    if(!(s&EFI_ERROR))report("USB_BRIDGE_RESULT=",polaris_efi_usb_serve_control(system_table,log_buffer,&log_bytes,(void*)&map_snapshot,map_bytes,report,&controls));
+#endif
+    for(;;)system_table->boot->stall(1000000);
+}
+efi_status EfiMain(efi_handle image,struct efi_system *st)
+{
+    if(!st||st->hdr.signature!=UINT64_C(0x5453595320494249)||!st->boot||st->boot->hdr.size<376)return EFI_ERROR|2;
+    system_table=st;driver_image=image;void *event=0;
+#if defined(POLARIS_EFI_TEST_QEMU)
+    (void)event;(void)controls;ready(0,0);
+#endif
+    static const efi_guid group={0x7ce88fb3,0x4bd7,0x4679,{0x87,0xa8,0xa8,0xd8,0xde,0xe5,0x0d,0x2b}};
+    efi_status s=st->boot->create_event_ex(0x200,8,ready,0,&group,&event);
+    if(s&EFI_ERROR)ready(0,0);return s;
+}

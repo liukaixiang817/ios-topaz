@@ -100,7 +100,8 @@ int main(void){parser();ppm();transport();return 0;}
             subprocess.run(['/usr/bin/clang','-std=c11','-O1','-g','-Wall','-Wextra','-Werror',
                             '-fsanitize=address,undefined','-I',str(ROOT/'shim/polaris'),
                             str(p/'test.c'),str(ROOT/'shim/polaris/uefi-usb.c'),
-                            str(ROOT/'shim/polaris/uefi-usb-command.c'),'-o',str(p/'test')],check=True)
+                            str(ROOT/'shim/polaris/uefi-usb-command.c'),
+                            str(ROOT/'shim/polaris/uefi-usb-control.c'),'-o',str(p/'test')],check=True)
             subprocess.run([str(p/'test')],check=True,timeout=15)
 
 

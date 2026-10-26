@@ -35,4 +35,24 @@ static inline int polaris_efi_memory_check(const void *map,uint64_t bytes,
     }
     *out=result;return 1;
 }
+/* Call only after memory_check validated descriptor bounds and disjointness.
+ * The complete requested range must have one owner type, with no holes or
+ * runtime pages; descriptor order and merging are immaterial. */
+static inline int polaris_efi_range_owned(const void *map,uint64_t bytes,
+    uint64_t stride,uint64_t start,uint64_t count,uint32_t owner)
+{
+    if(!count||start>UINT64_MAX-count)return 0;
+    uint64_t cursor=start,end=start+count;
+    while(cursor<end){
+        uint64_t next=cursor;
+        for(uint64_t i=0;i<bytes;i+=stride){
+            const struct efi_memory *m=(const void*)((const uint8_t*)map+i);
+            uint64_t stop=m->physical+m->pages*4096;
+            if(m->physical<=cursor&&cursor<stop&&m->type==owner&&!(m->attributes>>63))
+                next=stop<end?stop:end;
+        }
+        if(next==cursor)return 0;cursor=next;
+    }
+    return 1;
+}
 #endif

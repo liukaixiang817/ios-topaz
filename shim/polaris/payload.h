@@ -2,7 +2,13 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#if defined(POLARIS_EFI_TEST_QEMU)
+/* virt's 8GiB starts at1GiB. Use a separately labelled test window below its
+ * resident firmware; physical Polaris always retains its observed6GiB base. */
+#define POLARIS_RAM_BASE UINT64_C(0x130000000)
+#else
 #define POLARIS_RAM_BASE UINT64_C(0x180000000)
+#endif
 #define POLARIS_RAM_SIZE UINT64_C(0xfc8a0000)
 #define POLARIS_PAGE UINT64_C(0x4000)
 #define POLARIS_PAYLOAD_LIMIT (128 * 1024 * 1024)

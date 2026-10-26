@@ -27,7 +27,23 @@ struct service {
     int connected;uint64_t failures;efi_status last_status;
     const uint8_t *log,*map;const uint64_t *log_bytes;uint64_t map_bytes;
     struct polaris_gop *gop;void (*report)(const char *,uint64_t);
+    struct polaris_usb_control *control;
 };
+static void pause_us(struct service *s,uint64_t us)
+{
+    if(!s->control||!s->control->running||!s->control->running(s->control->context)){
+        s->st->boot->stall(us);return;
+    }
+    /* XNU owns the GIC while its core runs. Do not depend on firmware timer
+     * interrupts or the firmware scheduler for the USB polling pause. */
+#if defined(__aarch64__)
+    uint64_t start,now,freq;__asm__ volatile("mrs %0,cntfrq_el0":"=r"(freq));
+    __asm__ volatile("mrs %0,cntvct_el0":"=r"(start));
+    do{__asm__ volatile("yield; mrs %0,cntvct_el0":"=r"(now));}while(now-start<freq*us/1000000);
+#else
+    s->st->boot->stall(us); /* Native transport fixture; never phone code. */
+#endif
+}
 static void notify(void *event,void *context){(void)event;(void)context;}
 static int poll(struct service *s,uint8_t endpoint,void *buffer,uint64_t limit,uint64_t *done)
 {
@@ -36,7 +52,7 @@ static int poll(struct service *s,uint8_t endpoint,void *buffer,uint64_t limit,u
     for(uint64_t tries=0;endpoint==1 || tries<100000;tries++){
         union polaris_usb_event data={0};uint32_t event=0;uint64_t size=sizeof(data);
         efi_status status=s->usb->event(&event,&size,&data);
-        if(status==(EFI_ERROR|6) && event==0){s->st->boot->stall(100);continue;}
+        if(status==(EFI_ERROR|6) && event==0){pause_us(s,100);continue;}
         if((status&EFI_ERROR) || size>sizeof(data)){s->last_status=status?status:EFI_ERROR|4;return 0;}
         if(event==1){s->connected=data.state==0;if(!s->connected){s->last_status=EFI_ERROR|12;return 0;}}
         if(event==2 && data.transfer.endpoint==endpoint){
@@ -45,7 +61,7 @@ static int poll(struct service *s,uint8_t endpoint,void *buffer,uint64_t limit,u
             }
             *done=data.transfer.bytes;return 1;
         }
-        if(event==0)s->st->boot->stall(100);
+        if(event==0)pause_us(s,100);
     }
     s->last_status=EFI_ERROR|18;s->usb->abort(endpoint);return 0;
 }
@@ -59,11 +75,16 @@ static int transmit(void *context,const uint8_t *data,uint64_t bytes)
 static int stage(void *context,unsigned what,const uint8_t **data,uint64_t *bytes)
 {
     struct service *s=context;
+    if(what==1 && s->control && s->control->logs)return s->control->logs(s->control->context,data,bytes);
     if(what==1){*data=s->log;*bytes=*s->log_bytes;return *bytes<=32768;}
     if(what==2){*data=s->map;*bytes=s->map_bytes;return *bytes<=65568;}
     if(what!=3 || !s->gop || !s->gop->mode)return 0;
-    if(!s->screen && (s->st->boot->allocate_pool(2,SCREEN_LIMIT,(void**)&s->screen)&EFI_ERROR))return 0;
+    if(!s->screen){
+        if(s->control&&s->control->running&&s->control->running(s->control->context))return 0;
+        if(s->st->boot->allocate_pool(2,SCREEN_LIMIT,(void**)&s->screen)&EFI_ERROR)return 0;
+    }
     if(!polaris_usb_ppm(s->gop->mode,s->screen,SCREEN_LIMIT,bytes)){
+        if(s->control&&s->control->running&&s->control->running(s->control->context))return 0;
         /* GOP is allowed to offer BLT-only video or bit masks instead of a
          * directly readable RGB framebuffer. Use the firmware's conversion. */
         struct polaris_gop_mode *mode=s->gop->mode;
@@ -87,8 +108,16 @@ static int stage(void *context,unsigned what,const uint8_t **data,uint64_t *byte
     }
     *data=s->screen;return 1;
 }
-efi_status polaris_efi_usb_serve(struct efi_system *st,const uint8_t *log,const uint64_t *log_bytes,
-    const uint8_t *map,uint64_t map_bytes,void (*report)(const char *,uint64_t))
+static int receive(void *context,uint8_t *destination,uint64_t limit,uint64_t *done)
+{
+    struct service *s=context;
+    if(!destination||!done||!limit||limit>CHUNK)return 0;
+    efi_status status=s->usb->send(1,limit,s->rx);uint64_t got=0;
+    if((status&EFI_ERROR)||!poll(s,1,s->rx,limit,&got))return 0;
+    for(uint64_t i=0;i<got;i++)destination[i]=s->rx[i];*done=got;return 1;
+}
+efi_status polaris_efi_usb_serve_control(struct efi_system *st,const uint8_t *log,const uint64_t *log_bytes,
+    const uint8_t *map,uint64_t map_bytes,void (*report)(const char *,uint64_t),struct polaris_usb_control *control)
 {
     if(!st || !st->boot || !st->boot->restore_tpl || !report || !log || !log_bytes)return EFI_ERROR|2;
     /* ReadyToBoot entered us at TPL_CALLBACK. This service never returns after
@@ -96,6 +125,7 @@ efi_status polaris_efi_usb_serve(struct efi_system *st,const uint8_t *log,const 
      * run normally. The BDS OS-start path remains parked in our callback. */
     st->boot->restore_tpl(4);
     struct service s={0};s.st=st;s.report=report;s.log=log;s.log_bytes=log_bytes;
+    s.control=control;if(control)control->receive=receive;
     s.map=map;s.map_bytes=map_bytes;void *event=0;report("USB_STEP=",1);
     efi_status status=st->boot->create_event_ex(0x200,8,notify,0,&init_guid,&event);
     if(!(status&EFI_ERROR)){st->boot->signal_event(event);st->boot->close_event(event);}
@@ -119,6 +149,12 @@ efi_status polaris_efi_usb_serve(struct efi_system *st,const uint8_t *log,const 
         if(s.rx)s.usb->free(s.rx);if(s.tx)s.usb->free(s.tx);
         s.usb->stop();return status?status:EFI_ERROR|9;
     }
+    /* Reserve capture memory while firmware still owns interrupts. Live
+     * captures use this RAM and direct panel reads, with no pool/BLT calls. */
+    if(control){
+        status=st->boot->allocate_pool(2,SCREEN_LIMIT,(void**)&s.screen);
+        if((status&EFI_ERROR)||!s.screen)return status?status:EFI_ERROR|9;
+    }
     struct polaris_usb_diag d={&s,transmit,stage,0,0};report("USB_STEP=",3);
     for(;;){
         union polaris_usb_event data={0};uint32_t event_type=0;uint64_t size=sizeof(data);
@@ -126,19 +162,25 @@ efi_status polaris_efi_usb_serve(struct efi_system *st,const uint8_t *log,const 
         /* No event is not a disconnected device. An already connected host
          * needs the next OUT request queued even when EventHandler is idle. */
         if(status==(EFI_ERROR|6) && event_type==0)status=0;
-        if(status&EFI_ERROR){s.connected=0;st->boot->stall(1000);continue;}
+        if(status&EFI_ERROR){s.connected=0;pause_us(&s,1000);continue;}
         if(event_type==1)s.connected=data.state==0;
-        if(!s.connected){st->boot->stall(1000);continue;}
+        if(!s.connected){pause_us(&s,1000);continue;}
         status=s.usb->send(1,512,s.rx);
         uint64_t got=0;
         if((status&EFI_ERROR)||!poll(&s,1,s.rx,512,&got)){
             s.usb->abort(1);s.failures++;
             if(s.failures<=4 || !(s.failures&(s.failures-1)))report("USB_RX_ERROR=",status?status:s.last_status);
-            st->boot->stall(1000);continue;
+            pause_us(&s,1000);continue;
         }
-        if(!polaris_usb_command(&d,s.rx,got)){
+        int ok=control?polaris_usb_control_command(&d,control,s.rx,got):polaris_usb_command(&d,s.rx,got);
+        if(!ok){
             s.usb->abort(0x81);s.failures++;
             if(s.failures<=4 || !(s.failures&(s.failures-1)))report("USB_TX_ERROR=",s.last_status);
         }
     }
+}
+efi_status polaris_efi_usb_serve(struct efi_system *st,const uint8_t *log,const uint64_t *log_bytes,
+    const uint8_t *map,uint64_t map_bytes,void (*report)(const char *,uint64_t))
+{
+    return polaris_efi_usb_serve_control(st,log,log_bytes,map,map_bytes,report,0);
 }

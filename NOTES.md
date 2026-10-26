@@ -8,7 +8,7 @@ and DO NOT authorize erasing this phone. On 2026-10-24 the user explicitly
 approved ONLY the proposed minimal userdata metadata repair, then continuing
 iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
-## Current handoff, 2026-10-26 (Asia/Shanghai)
+## Current handoff, 2026-10-27 (Asia/Shanghai)
 
 **FASTBOOT workflow, clarified by the user: after a build/image is ready,
 first check the connected phone with a read-only FASTBOOT query. If the
@@ -36,11 +36,66 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### 0058 RAM-only iOS-from-UEFI work; fresh storage preflight PASS
 
+- Latest implementation: explicit RAM download/validated kernel start, normal
+  reset and FASTBOOT reset commands now implemented in a separate opt-in
+  controller; old read-only inventory still rejects them. Native real-parser
+  ASan/UBSan checks prove exact lengths/copy, denial cases and ACK completion
+  before boot/reset callback. Host KernelProtocol checks manifest SHA and
+  refuses replacing an entered kernel. This is code/host-fixture validation;
+  neither physical reset target nor live USB during iOS is proven yet.
+- Resident driver claims the complete kernel bank and rechecks LoaderData
+  ownership, checks every copy destination's identity mapping before writing,
+  reserves live-log/screen buffers before handoff, disables native XNU USB,
+  and exposes only bounded RAM console plus direct GOP pixel snapshots while
+  XNU owns GIC/UFS. No filesystem, BlockIO or SetVariable calls in loader.
+  Reboot uses own DT IMEM restart_reason@146bf65c (77665500 bootloader,
+  77665501 normal) plus original runtime ResetSystem; actual target still
+  requires hardware verification. This remains one kernel CPU, not XNU SMP.
+- Real generic EDK2 EL1/QEMU prototype now reaches the actual0056 kernel's
+  expected old physical-CPU0 guard in ~7s, with kernel logs read and relayed
+  by firmware core0 while kernel runs on physical1 with16KiB pages. Source-
+  bound qemu-prototype-run-0005 passes8 diagnostic checks, explicitly
+  release_handoff_admitted=false: no complete PID1/iOS or SDM845 USB proof.
+  Earlier0001/0002 admission failures retained: QEMU loaded PE inside the
+  original test bank. Test-only bank moved to0x130000000, same0xfc8a0000size;
+  phone still0x180000000.0003/0004 reached expected legacy guard. Current
+  final source refresh uses driver/run0006, driverSHA6d95b7da,318464bytes;
+  see private result for exact hash/checks. This is not a phone image.
+- Thirty unique local checks pass across control, USB, host framing, memory
+  ownership, CPU guard, copy plan, firmware preservation and release admission.
+  Image packager explicitly rejects legacy diagnostic results, stale source,
+  unrelated/queued CI and changed root mappings. Original inventory CLI still
+  requires hold-only manifests. Final original EDK2 decoder check is mandatory
+  after eventual physical image packaging; no0058 phone candidate sent yet.
+- Kernel sourcef3eefad plus byte-identical remote-kernel merge48d93e6 pushed
+  normally (no force). Full kernelCI40351425177: attempt1 job121672204046 and
+  attempt2 job121685470947 cancelled before ANY compiler/step started, with
+  hosted-runner acquisition/capacity annotations. Exact-parameter attempt3
+  job121698980937 also cancelled at16:40:33Z with zero steps after15min queue.
+  ci-attempt3-current.json retains that outcome. All3 attempts therefore
+  failed before compilation, with no new kernel artifact. Current
+  prototype intentionally uses0056 only; do NOT binary-patch or admit it for
+  the real resident-kernel trial. Actual SweetCPU.cpp single-object compile
+  already passed; a complete new CI kernel is still required.
+- User asked build traffic while explicitly continuing task. Measured0056 ZIP:
+  actual requested compressed kernel6,683,265bytes; whole artifact60,847,644;
+  separate generated buildtree22,218,107. Reported ordinary incremental
+  selective download about10MB plus small git/log traffic; retries extra.
+  Cloud dependency/cache traffic is on GitHub;16GiB phone hash reads local USB.
+- NEXT: complete new kernel CI (current external runner capacity blocker),
+  make matching generic EFI/XNU run pass single-core PID1/four-process VM
+  stress, rebuild phone payload with fresh182extents and own GPU bundle,
+  package original81FFS-preserving image and actual EDK2-decode it. Read-only
+  query expected FASTBOOT and RAM boot directly if present. Then test live
+  iOS log/panel captures and reboot-to-FASTBOOT outcome; never equate ACK with
+  actual reset-mode success. Phone was returned toFASTBOOT after preflight;
+  no need for another user FASTBOOT confirmation unless actual query fails.
+
 - Human now explicitly requests using original UEFI to start iOS with screen
   access while running, RAM only; NO device installation/writes this round.
   Also explicitly authorized normal reboot and reboot-to-FASTBOOT commands
-  for unattended trials. Those commands not yet implemented/tested; do not
-  claim runtime support from the previous read-only0057 server.
+  for unattended trials. Implemented/native-tested as above, still not proven
+  on hardware; do not claim support from previous read-only0057 server.
 - User moved to FASTBOOT; expected polaris checked, known recoveryf9ad6529
   temporarily booted. uefi-ios-0058/preflight.json now fresh-root PASS:
   all6GPT head/tails and boot/recovery/abl_a/abl_b/ESP match original backups;

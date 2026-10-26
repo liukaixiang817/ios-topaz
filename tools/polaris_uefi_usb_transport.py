@@ -1,10 +1,12 @@
-"""Direct host transport for the read-only Polaris UEFI diagnostic service.
+"""Direct host transport for the synthetic Polaris UEFI service.
 
-Only the synthetic device is admitted. No configuration changes, detach,
-reset, download, flash, erase, reboot or arbitrary OEM commands are provided.
-libusb declarations follow its public libusb.h, using the caller's library.
+ReadOnlyProtocol admits diagnostic reads only. The separate KernelProtocol
+opts into manifest-bound RAM downloads, kernel start and two reboot targets.
+Neither client exposes flash, erase, arbitrary OEM commands, USB configuration
+changes or driver detachment. libusb follows the caller's public library ABI.
 """
 import ctypes as C
+import hashlib
 from pathlib import Path
 import re
 import struct
@@ -198,6 +200,14 @@ class LibusbTransport:
     def write(self, data):
         if not self.claimed or not data or len(data) > 64:
             raise ValueError('invalid diagnostic command transfer')
+        self._out(data)
+
+    def write_data(self,data):
+        if not self.claimed or not 0<len(data)<=65536:
+            raise ValueError('invalid RAM payload chunk')
+        self._out(data)
+
+    def _out(self,data):
         buf = (C.c_ubyte * len(data)).from_buffer_copy(data)
         done = C.c_int()
         self._check(self.usb.libusb_bulk_transfer(self.handle, 1, buf, len(data), C.byref(done), 10000), 'command transfer')
@@ -224,3 +234,44 @@ class LibusbTransport:
         if self.context:
             self.usb.libusb_exit(self.context)
             self.context = C.c_void_p()
+
+
+class KernelProtocol(ReadOnlyProtocol):
+    """Explicit RAM-boot/reset client. ReadOnlyProtocol keeps its old whitelist."""
+    limits=dict(ReadOnlyProtocol.limits,logs=(4<<20)+32768+128)
+
+    def _control(self,command):
+        if not self.verified or command not in [b'getvar:kernel-state',b'oem boot',b'reboot',b'reboot-bootloader']:
+            raise ValueError('unsupported or unverified control command')
+        self.transport.write(command);reply=self.transport.read(64)
+        if not reply.startswith(b'OKAY'):
+            raise RuntimeError('UEFI control refused: '+reply.decode('ascii',errors='replace'))
+        return reply[4:]
+
+    def state(self):
+        result=self._control(b'getvar:kernel-state')
+        if result not in [b'CPU_ON-refused',b'AP-early-fault',b'AP-wrong-EL',b'kernel-entered',
+                          b'AP-start-pending',b'prepared',b'validated',b'receiving',b'waiting-payload']:
+            raise ValueError('unknown kernel state')
+        return result.decode()
+
+    def stage_payload(self,data,manifest):
+        if self.state()!='waiting-payload':raise ValueError('RAM loader is not idle; reset before replacing a kernel')
+        if (not manifest.get('RAM_only_XNU_loader') or manifest.get('storage_write_api') is not False or
+            manifest.get('NVRAM_write_api') is not False or manifest.get('QEMU_variant') is not False or
+            manifest.get('payload_bytes')!=len(data) or not 0<len(data)<=128<<20 or
+            hashlib.sha256(data).hexdigest()!=manifest.get('payload_sha256')):
+            raise ValueError('RAM payload does not match the physical loader manifest')
+        command=f'download:{len(data):08x}'.encode();self.transport.write(command)
+        if self.transport.read(64)!=b'DATA'+command[9:]:raise ValueError('RAM download admission did not match size')
+        for at in range(0,len(data),65536):self.transport.write_data(data[at:at+65536])
+        if self.transport.read(64)!=b'OKAY':raise ValueError('device rejected RAM payload validation')
+        if self.state()!='validated':raise ValueError('device did not publish validated payload state')
+
+    def boot(self):
+        if self.state()!='validated':raise ValueError('no validated RAM kernel')
+        if self._control(b'oem boot'):raise ValueError('invalid RAM boot acknowledgement')
+
+    def reboot(self,bootloader=False):
+        if self._control(b'reboot-bootloader' if bootloader else b'reboot'):
+            raise ValueError('invalid reset acknowledgement')

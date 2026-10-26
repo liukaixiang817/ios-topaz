@@ -34,7 +34,7 @@ def main():
     if a.usb_diag:jobs[0].insert(-4,'-DPOLARIS_EFI_USB_DIAG=1')
     extra_inputs=[]
     if a.usb_diag:
-        extra_inputs=['shim/polaris/uefi-usb.h','shim/polaris/uefi-usb.c','shim/polaris/uefi-usb-command.c']
+        extra_inputs=['shim/polaris/uefi-usb.h','shim/polaris/uefi-usb.c','shim/polaris/uefi-usb-command.c','shim/polaris/uefi-usb-control.c']
         for n in extra_inputs[1:]:
             objfile=out/(Path(n).stem+'.obj');cmd=jobs[0].copy()
             cmd[cmd.index(str(root/'shim/polaris/uefi-probe.c'))]=str(root/n);cmd[-1]=str(objfile)

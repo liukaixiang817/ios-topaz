@@ -1,0 +1,56 @@
+/* User-authorized RAM payload and reset commands. No storage APIs linked.
+ * Ordinary read-only inventory retains its separate parser and restrictions. */
+#include "uefi-usb.h"
+#define PAYLOAD_LIMIT (128u*1024u*1024u)
+/* One firmware command loop; keep the transfer scratch out of the UEFI
+ * thread's small stack and within the admitted driver image allocation. */
+static uint8_t receive_buffer[65536];
+static int same(const uint8_t *p,uint64_t n,const char *s)
+{uint64_t i=0;while(i<n&&s[i]){if(p[i]!=(uint8_t)s[i])return 0;i++;}return i==n&&!s[i];}
+static int reply(struct polaris_usb_diag *d,const char *s)
+{uint64_t n=0;while(s[n])n++;return n<=64&&d->transmit(d->context,(const uint8_t*)s,n);}
+static int hexadecimal(const uint8_t *p,uint64_t *out)
+{
+    uint64_t n=0;
+    for(unsigned i=0;i<8;i++){
+        unsigned c=p[i],v=c>='0'&&c<='9'?c-'0':c>='a'&&c<='f'?c-'a'+10:c>='A'&&c<='F'?c-'A'+10:16;
+        if(v>15)return 0;n=n*16+v;
+    }*out=n;return 1;
+}
+int polaris_usb_control_command(struct polaris_usb_diag *d,struct polaris_usb_control *c,const uint8_t *p,uint64_t n)
+{
+    if(!d||!d->transmit||!c)return 0;
+    if(!p||!n||n>64)return reply(d,"FAILinvalid command length");
+    for(uint64_t i=0;i<n;i++)if(p[i]<32||p[i]>126)return reply(d,"FAILinvalid command bytes");
+    if(same(p,n,"getvar:kernel-state")){
+        const char *s=c->state?c->state(c->context):"unavailable";uint8_t b[64]={'O','K','A','Y'};uint64_t i=0;
+        while(s[i]&&i<60){b[4+i]=(uint8_t)s[i];i++;}return d->transmit(d->context,b,4+i);
+    }
+    if(same(p,n,"getvar:max-download-size"))return reply(d,"OKAY0x08000000");
+    if(n==17 && p[0]=='d'&&p[1]=='o'&&p[2]=='w'&&p[3]=='n'&&p[4]=='l'&&p[5]=='o'&&p[6]=='a'&&p[7]=='d'&&p[8]==':'){
+        uint64_t count=0;
+        if(!hexadecimal(p+9,&count)||!count||count>PAYLOAD_LIMIT||!c->begin||!c->write||!c->finish||!c->receive)
+            return reply(d,"FAILinvalid RAM payload");
+        if(!c->begin(c->context,count))return reply(d,"FAILRAM payload admission refused");
+        d->staged=0;d->staged_bytes=0;
+        uint8_t header[12]={'D','A','T','A'};for(unsigned i=0;i<8;i++)header[4+i]=p[9+i];
+        if(!d->transmit(d->context,header,12))return 0;
+        uint64_t at=0;
+        while(at<count){
+            uint64_t wanted=count-at;if(wanted>sizeof(receive_buffer))wanted=sizeof(receive_buffer);uint64_t got=0;
+            if(!c->receive(d->context,receive_buffer,wanted,&got)||!got||got>wanted)return 0;
+            if(!c->write(c->context,at,receive_buffer,got))return reply(d,"FAILRAM copy refused");at+=got;
+        }
+        return reply(d,c->finish(c->context)?"OKAY":"FAILRAM payload validation failed");
+    }
+    if(same(p,n,"oem boot")){
+        if(!c->prepare_boot||!c->boot||!c->prepare_boot(c->context))return reply(d,"FAILkernel admission refused");
+        if(!reply(d,"OKAY"))return 0;c->boot(c->context);return 1;
+    }
+    unsigned reset=same(p,n,"reboot")?1:same(p,n,"reboot-bootloader")?2:0;
+    if(reset){
+        if(!c->prepare_reset||!c->reset||!c->prepare_reset(c->context,reset))return reply(d,"FAILreset unavailable");
+        if(!reply(d,"OKAY"))return 0;c->reset(c->context,reset);return 1;
+    }
+    return polaris_usb_command(d,p,n);
+}

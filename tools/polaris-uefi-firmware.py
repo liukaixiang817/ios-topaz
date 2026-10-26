@@ -182,7 +182,9 @@ def unpack_android(b):
     return b[:pg], decoded, tail, ram
 
 
-def package(original, app):
+def package(original, app, *, label='Polaris RAM compatibility probe'):
+    require(label in ['Polaris RAM compatibility probe', 'Polaris RAM resident iOS loader'],
+            'unsupported added-driver label')
     header, decoded, tail, ram = unpack_android(original)
     require(decoded[56:60] == b'ARMd' and decoded[0x8028:0x802c] == b'_FVH',
             'unexpected original BootShim/FV layout')
@@ -220,7 +222,7 @@ def package(original, app):
     body += b'\0' * (align(len(body), 4) - len(body))
     body += section(0x13, b'\x06\x08')  # EFI_DEP_TRUE, EFI_DEP_END.
     body += b'\0' * (align(len(body), 4) - len(body))
-    body += section(0x15, 'Polaris RAM compatibility probe\0'.encode('utf-16le'))
+    body += section(0x15, (label+'\0').encode('utf-16le'))
     driver_template = bytearray(old_init[:24]); driver_template[18] = 7
     new_files.append((PROBE_DXE_GUID, ffs(PROBE_DXE_GUID, body, driver_template)))
     changed_inner = volume(inner, new_files, fixed=False)

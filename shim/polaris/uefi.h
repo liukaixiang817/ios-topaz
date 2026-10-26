@@ -44,6 +44,8 @@ struct efi_boot {
 struct efi_runtime {
     efi_header hdr;void *time[6];
     efi_status (*get_variable)(const uint16_t *,const efi_guid *,uint32_t *,uint64_t *,void *);
+    void *get_next_variable,*set_variable,*get_next_high_count;
+    void (*reset_system)(uint32_t,efi_status,uint64_t,const void *);
 };
 struct efi_system {
     efi_header hdr;uint16_t *vendor;uint32_t revision,pad;
@@ -69,5 +71,6 @@ _Static_assert(offsetof(struct efi_boot,create_event_ex)==368,"CreateEventEx");
 _Static_assert(offsetof(struct efi_boot,locate_protocol)==320,"LocateProtocol");
 _Static_assert(offsetof(struct efi_system,boot)==96,"BootServices");
 _Static_assert(offsetof(struct efi_runtime,get_variable)==72,"GetVariable");
+_Static_assert(offsetof(struct efi_runtime,reset_system)==104,"ResetSystem");
 _Static_assert(offsetof(struct efi_loaded,base)==64,"ImageBase");
 #endif
