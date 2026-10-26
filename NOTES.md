@@ -36,6 +36,36 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### 0058 RAM-only iOS-from-UEFI work; fresh storage preflight PASS
 
+- Unattended heartbeat automation `uefi-ios` createdACTIVE for this same thread,
+  every5min, explicit quiet-on-no-change prompt; stop it on complete. No other
+  tasks messaged. Temporary idle-sleep inhibitor (no display/screen changes),
+  PID and12hour limit recorded in uefi-ios-0058/unattended-host.json; stop only
+  this task-owned process when finished. USB direct connection must remain.
+- Latest source42a20f4 pushed, fullCI40376919561 ran on macOS27 and failed in Build at18:25:48Z; logs
+  saved in ci27-attempt2-failed.log. Diagnose before another dispatch. Previous
+  macOS27 CI40373772678 failure log retained; fixed source-cache checks exempt
+  only0019/0026 host SDK scratch TargetConditionals copies, no interface ABI
+  changed. Actual input object and all32local checks passed. New EFI/controller
+  source now has bounded contacts and kernel ACK, but full new-kernel QEMU and
+  physical live screen/input/reset remain required. Do not treat these as done.
+- CI40376919561 passed all source-bound IIG replay checks. Actual new failure
+  was Xcode27 exporting MACOSX/DRIVERKIT/iOS/tvOS/watchOS/xrOS deployment
+  targets simultaneously to libsyscall's header-only MIG step, making Clang
+  choose conflicting targets. New0865 clears those inherited variables only
+  within mach_install_mig.sh; preserves its required32-bit armv7 metadata mode
+  and every Mach .defs. Real local Xcode27 full script generated57headers,
+  EXIT0, starting with all platform variables set27.0; conflict reproduction
+  and fixed run retained under mig27 and mig27-full-install. No kernel ABI
+  or caller signature changed. New full CI still required.
+- Resident handoff now also disables firmware core0's ICC_IGRPEN1_EL1 after
+  verifying ICC_SRE_EL1, as in the pinned reference: masking DAIF alone could
+  be undone by a firmware USB helper restoring TPL. This is per-core and does
+  not disable XNU's separate core. EFI compile/link PASS with local Xcode27;
+  actual full-QEMU/new-kernel verification remains mandatory before the phone.
+- Legacy Topaz CI retains its previous runner/toolchain; only current Polaris
+  selects macOS27/source-bound interface replay. This avoids applying a
+  Polaris-private-header cache to another board profile.
+
 - Latest human steering: unattended work; first RAM-only UEFI/iOS boot with
   live screen and simulated interaction. Only AFTER screenshots and actual
   interaction show normal operation, user conditionally authorizes preserving

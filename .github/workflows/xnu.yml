@@ -58,12 +58,13 @@ jobs:
   build:
     # Explicit macOS27/Xcode27 host. Reuse source-bound DriverKit286 outputs
     # for8796; current iig generates an incompatible IORPC.kernelContent ABI.
-    runs-on: xcode-27
+    runs-on: ${{ (inputs.target_platform || (github.ref == 'refs/heads/codex/polaris-preflight' && 'polaris') || 'topaz') == 'polaris' && 'xcode-27' || 'macos-14' }}
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
 
       - name: Locate compatible interface cache
+        if: env.TARGET_PLATFORM == 'polaris'
         id: iig-cache
         env:
           GH_TOKEN: ${{ github.token }}
@@ -73,7 +74,7 @@ jobs:
           echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
 
       - name: Download retained compatible interface cache
-        if: steps.iig-cache.outputs.run_id != ''
+        if: env.TARGET_PLATFORM == 'polaris' && steps.iig-cache.outputs.run_id != ''
         uses: actions/download-artifact@v4
         with:
           name: xnu-iig-compat-v1
@@ -82,7 +83,7 @@ jobs:
           path: iig-compat
 
       - name: Download pinned bootstrap interface sources
-        if: steps.iig-cache.outputs.run_id == ''
+        if: env.TARGET_PLATFORM == 'polaris' && steps.iig-cache.outputs.run_id == ''
         uses: actions/download-artifact@v4
         with:
           name: xnu-buildtree
@@ -91,6 +92,7 @@ jobs:
           path: iig-bootstrap
 
       - name: Verify compatible interface sources
+        if: env.TARGET_PLATFORM == 'polaris'
         run: |
           if [ -d iig-bootstrap ]; then
             python3 tools/xnu-iig-cache.py prepare --archive iig-bootstrap/buildtree.tgz --output iig-compat
@@ -98,6 +100,7 @@ jobs:
           python3 tools/xnu-iig-cache.py verify --cache iig-compat
 
       - uses: actions/upload-artifact@v4
+        if: env.TARGET_PLATFORM == 'polaris'
         with:
           name: xnu-iig-compat-v1
           path: iig-compat/
@@ -132,20 +135,27 @@ jobs:
           fi
           sw_vers
           ls -d /Applications/Xcode*.app
-          XC=$(ls -d /Applications/Xcode_27*.app | sort -V | head -1)
+          if [ "$TARGET_PLATFORM" = polaris ]; then
+            XC=$(ls -d /Applications/Xcode_27*.app | sort -V | head -1)
+          else
+            XC=$(ls -d /Applications/Xcode_*.app | sort -V | head -1)
+          fi
           test -n "$XC"
           export DEVELOPER_DIR="$XC/Contents/Developer"
           echo "DEVELOPER_DIR=$DEVELOPER_DIR" >> "$GITHUB_ENV"
           xcodebuild -version
-          xcodebuild -version | head -1 | grep '^Xcode 27\.'
+          if [ "$TARGET_PLATFORM" = polaris ]; then xcodebuild -version | head -1 | grep '^Xcode 27\.'; fi
           xcrun --find iig
           mkdir -p "$CCACHE_WRAP"
           for t in clang clang++; do
             printf '#!/bin/sh\nexec ccache %s "$@"\n' "$(xcrun -find $t)" > "$CCACHE_WRAP/$t"
             chmod +x "$CCACHE_WRAP/$t"
           done
-          printf '#!/bin/sh\nexec python3 "%s/tools/xnu-iig-cache.py" replay "%s/iig-compat" "$@"\n' "$GITHUB_WORKSPACE" "$GITHUB_WORKSPACE" > "$CCACHE_WRAP/iig"
-          chmod +x "$CCACHE_WRAP/iig"
+          if [ "$TARGET_PLATFORM" = polaris ]; then
+            printf '#!/bin/sh\nexec python3 "%s/tools/xnu-iig-cache.py" replay "%s/iig-compat" "$@"\n' "$GITHUB_WORKSPACE" "$GITHUB_WORKSPACE" > "$CCACHE_WRAP/iig"
+            chmod +x "$CCACHE_WRAP/iig"
+            echo "IIG=$CCACHE_WRAP/iig" >> "$GITHUB_ENV"
+          fi
           cat "$CCACHE_WRAP/clang"
 
       - name: Restore ccache
@@ -159,7 +169,6 @@ jobs:
       - name: Build
         working-directory: dxb
         env:
-          IIG: ${{ github.workspace }}/ccache-bin/iig
           # keep going after errors so one run reports every compile failure
           MAKEFLAGS: ${{ inputs.keep_going == 'false' && '' || '-k' }}
         run: |

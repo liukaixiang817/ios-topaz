@@ -120,6 +120,8 @@ static int prepare_boot(void *context)
     (void)context;if(load_state!=2)return 0;
     int64_t affinity=psci(UINT64_C(0xc4000004),EFI_XNU_CPU,0,0);report("AP_AFFINITY=",(uint64_t)affinity);
     if(affinity!=1)return 0; /* Never seize a core already owned by firmware. */
+    uint64_t sre;__asm__ volatile("mrs %0,ICC_SRE_EL1":"=r"(sre));report("EFI_GIC_SRE=",sre);
+    if(!(sre&1))return 0;
     if(!identity((uintptr_t)polaris_efi_ap_entry)||!identity((uintptr_t)&polaris_efi_ap_state)||
        !identity((uintptr_t)ap_stack+sizeof(ap_stack)-16))return 0;
     const struct polaris_payload *p=(const void*)payload;
@@ -162,6 +164,10 @@ static void boot_kernel(void *context)
     /* IRQ ownership moves to XNU. USB's controller API is polled; no firmware
      * UFS/file operation or GOP BLT is allowed while the kernel owns devices. */
     __asm__ volatile("msr daifset,#15; dsb sy; isb":::"memory");
+    /* Firmware USB helpers may restore IRQ masks internally. Disable this
+     * firmware core's Group1 interface too; XNU's separate core is unaffected.
+     * Same architectural handoff as the pinned resident-loader reference. */
+    __asm__ volatile("msr ICC_IGRPEN1_EL1,%0; isb"::"r"(UINT64_C(0)):"memory");
     cpu_status=psci(UINT64_C(0xc4000003),EFI_XNU_CPU,(uintptr_t)polaris_efi_ap_entry,(uintptr_t)&polaris_efi_ap_state);
     report("KERNEL_PSCI_STATUS=",(uint64_t)cpu_status);
 }

@@ -1,0 +1,17 @@
+--- a/libsyscall/xcodescripts/mach_install_mig.sh
++++ b/libsyscall/xcodescripts/mach_install_mig.sh
+@@ -26,6 +26,14 @@
+ # 
+ # @APPLE_OSREFERENCE_LICENSE_HEADER_END@
+ #
++
++# Xcode27 exports deployment targets for several SDK families at once. This
++# header-only step intentionally preprocesses32-bit ARM metadata (below), so
++# inherited platform targets must not select conflicting Clang environments.
++# Keep MACHINE_ARCH and all Mach interface definitions unchanged.
++unset MACOSX_DEPLOYMENT_TARGET IPHONEOS_DEPLOYMENT_TARGET DRIVERKIT_DEPLOYMENT_TARGET
++unset TVOS_DEPLOYMENT_TARGET WATCHOS_DEPLOYMENT_TARGET XROS_DEPLOYMENT_TARGET
++unset ANDROID_DEPLOYMENT_TARGET
+ 
+ # build inside OBJROOT
+ cd $OBJROOT
