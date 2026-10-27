@@ -34,20 +34,28 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### 0067 startup worker experiment (CI/VM passed, physical native boot live)
+### 0067 native-enabled UI and shutdown (physical same-boot PASS)
 
 - USER REPORT CADENCE: human now requests progress every15minutes while work
   continues, including an honest brief waiting status. Existinguefi-ios heartbeat
-  updated to15minutes (same task, no duplicate). Latest report15:30UTC.
-- CURRENT LIVE:0067boot0001 native-enabled RAM trial sent15:24:56UTC,
-  kernel USB staging completed15:25:48UTC. Image7164592d/driver497b2d2b/new
-  ca115f kernel, native bridge+polarisquiesce1. capture0003 actual screen is
-  Apple logo; real USB log has SpringBoard/PosterBoard and graphics startup.
-  Native-status-before0001 reads fresh RUNNING/RAM_CONFIG cookie, no shutdown
-  requested yet. No GUI proof yet; keep this boot and use targeted captures.
-  After lock/home/settings/scroll/home actual screenshot+input proof, perform
-  native shutdown-fastboot and separately verify actual expected FASTBOOT.
-  Raw/lease rescue remains RAM-only if native drain fails; no Android boot.
+  updated to15minutes (same task, no duplicate). Latest report15:45UTC.
+- CURRENT MODE: actual expected Polaris FASTBOOT independently verified
+ 15:43:11UTC after completed0067boot0001 native-enabled UI+BSD shutdown.
+  NO active iOS trial remains. See physical-native-UI-drain-proof.json and
+  native-shutdown-0001/actual-fastboot-verification.json for all bound hashes.
+- PHYSICAL PASS in ONE native-enabled boot: image7164592d/driver497b2d2b/new
+  ca115f kernel withpolarisquiesce1 sent15:24:56UTC; USB staging15:25:48UTC.
+  Actual captures0004/5/6/7/8 visually show lock, unlocked home with icons,
+  Settings text/icons, scrolled Settings, and completed return home with icons.
+  All four bounded inputs have real increasing consumed request/ACK counters;
+  screenshots independently verify behavior. Widgets still Waiting/side logs.
+- Native shutdown-fastboot then actually calledreboot_kernel(0,NULL), killed
+  processes, synced and unmounted own iOSRoot HFSX, checked real mounts0/busy0,
+  sole-core IRQ-mask/park, matching fresh cookie/seq1/mode2/RAM_DRAINED80000003.
+  Complete kernel shutdown log saved BEFORE gated reset; actual expected
+  FASTBOOT independently queried. No raw fallback, physical keys or Android.
+  This proves native-enabled UI and drain together, NOT physical UFS persistent
+  cache flush, nor the precise cause of older startup variation.
 - Sourcecc83ea3 COMMITTED/PUSHED. macOS27/Xcode27 CI40526640822,
   job122267919643 SUCCESS10m13s. Downloaded kernelca115f6b230aae475ca92ad8bd2c90fb3dcb4aa20b252e885416470ed4909b44
   verified against artifact CRC/SHA and exact source build-profile, stored in
@@ -71,8 +79,8 @@ early samples only. On0029 the human already confirmed boot complete and said
   PID6 write/fsync plus unsynced write before native shutdown or stale-cookie
   refusal. Actual native reboot/unmount mounts0/busy0 and separate RAM_DRAINED,
   sticky stale rejection verified; HFS final RAM flush still ENOTTY0x19. Bound
-  dirty-writer-proof.json. Still requires physical native-enabled GUI+shutdown;
-  do not call this a proven startup fix or UFS durability proof.
+  dirty-writer-proof.json. Physical native-enabled GUI+shutdown now passed
+  above; physical UFS durability remains unproven.
 - Fresh0067 preflight-final-0001 again verified complete16GiB root SHA/all182
   extents/sixGPT/four critical partitions/approved102-file ESP7338692a, exact
   reviewed clean outer4096byte header and actual FASTBOOT after known RAM
@@ -80,7 +88,20 @@ early samples only. On0029 the human already confirmed boot complete and said
   and image0001 bound to ca115f kernel/sourcecc83ea3, native bridge enabled,
   RAMCOW/ufsrw0. All81 original firmware files preserved; actual original EDK2
   decoder/source hash rechecked and whole27876552byte inner stream matches.
-  Physical native-enabled UI/USB/shutdown test is now in progress as above.
+  Physical native-enabled UI/USB/shutdown test has now completed as above.
+- NEXT:0063 owned-file/native UFS integration, not another kernel startup loop.
+  Consulted local HackiOS loader retained-firmware block service (loader.c1452+)
+  but its dedicated darwin partition/GPT bounds do NOT apply to this phone's
+  ext4-owned independent file. Current native sweet_ufs.c uses single
+  sweet_ufs_lock/slot0/bounce; CDB admission before descriptor construction,
+  unknown-DMA timeout retains queue; strategy has only RAMCOW or base read;
+  DKIOCSYNCHRONIZE returns0 for RAM-only. Wire owned inode/CRC/extent packet,
+  complete disjoint base binding, strict bounded WRITE+SYNC and real completion/
+  exclusive/seal/finalSYNC under the SAME lock before physical allocation.
+  Meaningful faults and actual EFI/XNU tests first, then a NEW small pinned
+  owned file physical write/flush/FASTBOOT/readback; then fullruntime copy.
+  Do not remove RAMCOW or relax general UFS gate. Persistent reset requires
+  durable SAFE and must disable raw reset/lease; RAM_DRAINED is insufficient.
 - Previous task wake lock expired; bounded12h caffeinate renewed, own PTY
   session34667. Do not create duplicate wake locks or stop unrelated processes.
 
