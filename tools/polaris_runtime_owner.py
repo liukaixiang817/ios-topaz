@@ -50,8 +50,9 @@ def snapshot(read_block, partition_start, partition_blocks, inode, fiemap=None):
     if not (256 <= partition_start <= 0xffffffff and
             0 < partition_blocks <= 0x100000000-partition_start):
         raise ValueError('unsupported partition geometry')
+    filesystem_blocks = partition_blocks
     def read(block):
-        if not 0 <= block < partition_blocks:
+        if not 0 <= block < filesystem_blocks:
             raise ValueError('metadata address outside partition')
         data = read_block(block)
         if len(data) != BLOCK:
@@ -62,11 +63,13 @@ def snapshot(read_block, partition_start, partition_blocks, inode, fiemap=None):
     total = u32(sb, 4) | (u32(sb, 336) << 32 if incompat & 0x80 else 0)
     if (u16(sb, 56) != 0xef53 or u32(sb, 24) != 2 or u32(sb, 28) != 2 or
             u32(sb, 20) or u32(sb, 76) != 1 or
-            total != partition_blocks or u16(sb, 58) != 1 or u32(sb, 232) or
+            not 0 < total <= partition_blocks or partition_blocks-total not in (0, 4) or
+            u16(sb, 58) != 1 or u32(sb, 232) or
             incompat & ~INCOMPAT_SUPPORTED or not incompat & 0x40 or
             ro & RO_UNSUPPORTED or not ro & (0x400|0x10) or
             u16(sb, 88) != 256 or u32(sb, 72)):
         raise ValueError('requires clean supported 4KiB ext4, no pending journal/orphans')
+    filesystem_blocks = total  # Never own the observed 16KiB outside ext4.
     metadata_csum = bool(ro & 0x400)
     seed = u32(sb, 624) if incompat & 0x2000 else crc32c(0xffffffff, sb[104:120])
     if metadata_csum and (sb[373] != 1 or u32(sb, 1020) != crc32c(0xffffffff, sb[:1020])):
@@ -91,7 +94,7 @@ def snapshot(read_block, partition_start, partition_blocks, inode, fiemap=None):
     table = u32(desc, 8) | (u32(desc, 40) << 32 if desc_size == 64 else 0)
     inode_lba, inode_offset = divmod(index*256, BLOCK)
     inode_lba += table
-    if not table or table >= partition_blocks:
+    if not table or table >= filesystem_blocks:
         raise ValueError('invalid inode table')
     raw_inode = read(inode_lba)[inode_offset:inode_offset+256]
     file_bytes = u32(raw_inode, 4) | u32(raw_inode, 108) << 32
@@ -149,8 +152,8 @@ def snapshot(read_block, partition_start, partition_blocks, inode, fiemap=None):
                 count = u16(entry, 4)
                 physical = u16(entry, 6) << 32 | u32(entry, 8)
                 if (not 0 < count <= 32768 or count != end-logical or
-                        not 0 < physical < partition_blocks or
-                        count > partition_blocks-physical or len(extents) == MAX_EXTENTS):
+                        not 0 < physical < filesystem_blocks or
+                        count > filesystem_blocks-physical or len(extents) == MAX_EXTENTS):
                     raise ValueError('unwritten, sparse, oversized or outside extent')
                 extents.append((logical, physical, count))
     depth = u16(raw_inode, 46)

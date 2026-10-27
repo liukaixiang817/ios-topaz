@@ -1,0 +1,86 @@
+--- a/bsd/dev/sweet_ufs.c
++++ b/bsd/dev/sweet_ufs.c
+@@ -65,7 +65,7 @@
+     /* Caller-owned heap/static storage, never a small kernel stack. */
+     uint8_t buffers[7][4096];
+     struct polaris_owner_extent map[POLARIS_OWNER_MAPS];
+-    uint64_t partition_start,partition_blocks,file_blocks,seen,error_lba;
++    uint64_t partition_start,partition_blocks,filesystem_blocks,file_blocks,seen,error_lba;
+     unsigned map_count,map_used,node_count,error;
+     uint32_t checksum_seed,file_checksum_seed;
+     bool metadata_checksum,metadata_verified,admitted;
+@@ -116,7 +116,8 @@
+ static inline bool po_read(struct polaris_owner_work *w,polaris_owner_read read,
+     void *context,uint64_t relative,uint8_t *data)
+ {
+-    if(relative>=w->partition_blocks)return po_fail(w,2,relative);
++    uint64_t bound=w->filesystem_blocks?w->filesystem_blocks:w->partition_blocks;
++    if(relative>=bound)return po_fail(w,2,relative);
+     if(!read(context,w->partition_start+relative,data))return po_fail(w,3,relative);
+     return true;
+ }
+@@ -176,7 +177,7 @@
+     polaris_owner_read read,void *context,struct polaris_owner_work *w)
+ {
+     if(!w)return false;
+-    w->metadata_verified=false;w->admitted=false;w->error=0;w->error_lba=0;w->seen=0;w->map_used=0;
++    w->metadata_verified=false;w->admitted=false;w->error=0;w->error_lba=0;w->seen=0;w->map_used=0;w->filesystem_blocks=0;
+     if(!p||!read||bytes<POLARIS_OWNER_HEADER||!po_equal(p,(const uint8_t*)"PROWN001",8)||
+        po32(p+8)!=POLARIS_OWNER_HEADER)return po_fail(w,1,0);
+     unsigned nodes=po32(p+72),maps=po32(p+76);
+@@ -229,7 +230,12 @@
+     const uint8_t *sb=raw+1024;
+     uint32_t incompat=po32(sb+96),ro=po32(sb+100);
+     uint64_t total=po32(sb+4)|((incompat&0x80)?(uint64_t)po32(sb+336)<<32:0);
+-    if(po16(sb+56)!=0xef53||po32(sb+24)!=2||po32(sb+28)!=2||po32(sb+20)||po32(sb+76)!=1||total!=w->partition_blocks||
++    /* Original Polaris ext4 ends four4096B blocks before its exact GPT end.
++     * Keep GPT identity unchanged; admit only exact-fill or this observed16KiB
++     * tail and keep that tail OUTSIDE every metadata/data/protected-base bound.
++     */
++    if(po16(sb+56)!=0xef53||po32(sb+24)!=2||po32(sb+28)!=2||po32(sb+20)||po32(sb+76)!=1||
++       !total||total>w->partition_blocks||(total!=w->partition_blocks&&w->partition_blocks-total!=4)||
+        po16(sb+58)!=1||po32(sb+232)||incompat&~POLARIS_OWNER_INCOMPAT||!(incompat&0x40)||
+        ro&POLARIS_OWNER_RO_REFUSED||!(ro&(0x400|0x10))||po16(sb+88)!=256||po32(sb+72)||!po_equal(sb+104,p+88,16)||
+        po32(sb)!=po32(p+104)||po32(sb+40)<16||po32(sb+40)>32768||po32(sb+40)!=po32(p+108)||
+@@ -240,6 +246,11 @@
+     w->metadata_checksum=(ro&0x400)!=0;
+     w->checksum_seed=(incompat&0x2000)?po32(sb+624):po_crc32c(UINT32_MAX,sb+104,16);
+     if(w->metadata_checksum&&(sb[373]!=1||po32(sb+1020)!=po_crc32c(UINT32_MAX,sb,1020)))return po_fail(w,16,0);
++    w->filesystem_blocks=total;
++    for(unsigned i=0;i<w->map_count;i++){
++        uint64_t relative=w->map[i].physical-w->partition_start;
++        if(relative>=total||w->map[i].blocks>total-relative)return po_fail(w,4,relative);
++    }
+     unsigned inode=po32(p+40),ipg=po32(sb+40);
+     if(!inode||inode>po32(sb))return po_fail(w,4,0);
+     uint64_t group=(inode-1)/ipg,index=(inode-1)%ipg,desc_bytes=group*desc_size;
+@@ -291,8 +302,8 @@
+         const struct polaris_owner_extent *b=&base[i];
+         if(b->logical!=next||!b->blocks||next>=file_blocks||
+            b->blocks>file_blocks-next||b->physical<w->partition_start||
+-           b->physical-w->partition_start>=w->partition_blocks||
+-           b->blocks>w->partition_blocks-(b->physical-w->partition_start))return po_fail(w,15,b->physical);
++           b->physical-w->partition_start>=w->filesystem_blocks||
++           b->blocks>w->filesystem_blocks-(b->physical-w->partition_start))return po_fail(w,15,b->physical);
+         for(unsigned j=0;j<i;j++)if(b->physical<base[j].physical+base[j].blocks&&
+             base[j].physical<b->physical+b->blocks)return po_fail(w,15,b->physical);
+         for(unsigned j=0;j<w->map_count;j++)if(b->physical<w->map[j].physical+w->map[j].blocks&&
+@@ -315,6 +326,8 @@
+     uint64_t lba=(uint32_t)cdb[2]<<24|(uint32_t)cdb[3]<<16|(uint32_t)cdb[4]<<8|cdb[5];
+     unsigned blocks=(unsigned)cdb[7]<<8|cdb[8];
+     if(!blocks||blocks>256||bytes!=blocks*4096||blocks-1>UINT32_MAX-lba)return false;
++    if(lba<w->partition_start||lba-w->partition_start>=w->filesystem_blocks||
++       blocks>w->filesystem_blocks-(lba-w->partition_start))return false;
+     for(unsigned i=0;i<w->map_count;i++){
+         const struct polaris_owner_extent *e=&w->map[i];
+         if(lba>=e->physical&&lba-e->physical<e->blocks&&blocks<=e->blocks-(lba-e->physical))return true;
+@@ -962,6 +975,9 @@
+     printf("POLARIS OWNED: actual UFS metadata verified inode=%u generation=%u maps=%u nodes=%u; protected base disjoint\n",
+         po32((const uint8_t *)packet+40),po32((const uint8_t *)packet+44),
+         polaris_owned_work->map_count,polaris_owned_work->node_count);
++    printf("POLARIS OWNED BOUNDS: GPT=%llu ext4=%llu unowned_tail=%llu\n",
++        polaris_owned_work->partition_blocks,polaris_owned_work->filesystem_blocks,
++        polaris_owned_work->partition_blocks-polaris_owned_work->filesystem_blocks);
+     /* Real descriptor front-door rejection, not a policy-only counter model. */
+     const struct polaris_owner_extent *protected_map=(const void *)protected;
+     uint64_t address=protected_map[0].physical,submitted=polaris_ufs_submitted;

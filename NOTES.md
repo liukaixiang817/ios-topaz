@@ -34,6 +34,35 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0078 NEW8MiB marker EXISTS/pinned; ownership export refused original16KiB FS tail
+
+- create-marker-0002 succeededEXCLUSIVEnewfile undercorrect259:6/sysfsguard
+  withframedrealremoteexits. root0600singlelink8388608B inode1720322/gen2693650061/
+  flags0x80090, two4MiBextents, fullzero_readback/fsync/dirsync/syncfs verified.
+  Actualumount/blockRO+ro,noload independentFIEMAP andwhole8MiBzeros saved.
+  Original16GiBSHA and182map reverifiedUNCHANGED aftercreation. No nativeUFSwrite.
+- Then HOSTownerexport REFUSED: originalext4 total28116983 blocks vsunchanged
+  GPTuserdata28116987, FOUR4096B tailblocks unused. This predatesallocation
+  (bothbeforeaudits). Allothergeometry/state1/noorphan/features supported.
+  Old0077nativepolicy alsoexact-fill-only; DO NOTbootmarkeroldkernel or alter
+  GPT/resizeFS toworkaround. Phoneleftknownrecovery, realumount/blockROverified,
+  currentcreate-marker-0002/result.json retainedSTOPPED; NEVERrecreate/unpin/
+  deleteexistingmarker. Nextonlyreadonlyexport/auditofthisEXISTINGfile.
+- New0875nativepolicy keepsseparatefilesystem_blocks, admitsONLYexactfill or
+  observed4-blocktail, clampsallmetadata reads/data/protectedbase/CDB outside
+  tail, resetsboundonfreshverify. GPT/header384packet/shutdown256ABI unchanged.
+  Hostexportersamebound. Actualmke2fs legacyCRC16+CRC32C fixturesboth0and4tail,
+  nativeASan/UBSan5000mutations+5000truncations perfixture andtail-map corruption
+  refusal8testsPASS; runtime10testsPASS. NativeAppleclang27fullheaders2TUs
+  PASS; finalboundsdiagnosticprintf recompiling. Exact0875zerooffset/fuzz and
+  embeddedownerheaderverbatim PASS. NewkernelCI required; notyetphoneadmitted.
+- NEXTcommit/push0875/fullCI, readonlyexportexistingpinnedmarkerwithnewhost
+  parser, completepostcreationbase/GPT/ESP/headerreview+actualFASTBOOT. Then
+  newkernelactualEFI/XNU8normal/faultcasesPLUSactual4-tail owned backend,
+  guardedphysicalmarkerRAMadmission/nativeSAFE/readback. No blindretryold
+  namespace and no genericwrite/erase/format/GPT/resize. OriginalCPU/GPU/UI
+  remainsunchanged. Latestuserreport23:13UTC; continueevery15min.
+
 ### 0078 first allocation REFUSED before namespace; corrected identity/exit framing
 
 - create-marker-0001 STOPPED22:49UTC: helperstdoutempty, legacyADBexec host

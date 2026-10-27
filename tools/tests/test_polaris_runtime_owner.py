@@ -22,6 +22,7 @@ import polaris_runtime_owner as owner
 
 class RuntimeOwnership(unittest.TestCase):
     legacy_checksums = False
+    tail_blocks = 0
     @classmethod
     def setUpClass(cls):
         prefix = Path(os.environ.get('POLARIS_E2FSPROGS_BIN', '/opt/homebrew/opt/e2fsprogs/sbin'))
@@ -46,7 +47,7 @@ class RuntimeOwnership(unittest.TestCase):
                     'extent,64bit,metadata_csum,^orphan_file')
         subprocess.run([str(cls.mk), '-q', '-F', '-t', 'ext4', '-b', '4096', '-I', '256',
                         '-g', '1024', '-G', '1', '-N', '1024', '-O',
-                        features, '-d', str(source), str(cls.image)],
+                        features, '-d', str(source), str(cls.image), str(32768-cls.tail_blocks)],
                        check=True, capture_output=True)
         commands = cls.folder / 'debugfs.commands'
         lines = [
@@ -126,9 +127,13 @@ int main(int argc,char **argv){
  uint8_t cdb[10];cdb_at(cdb,2048,1);
  CHECK(!polaris_owned_data_cdb(w,cdb,10,4096,true,0));
  CHECK(polaris_owner_verify(p,n,2048,32768,read_,&d,w));
+ CHECK(w->filesystem_blocks==po32(initial+1024+4));
  CHECK(w->metadata_verified&&!w->admitted);
  CHECK(!polaris_owned_data_cdb(w,cdb,10,4096,true,0));
  CHECK(polaris_owner_exclude_base(w,&base,1,256)&&w->admitted);
+ /* Even a corrupted admitted map cannot grant the unowned filesystem tail. */
+ struct polaris_owner_extent saved=w->map[0];w->map[0].physical=2048+w->filesystem_blocks;
+ cdb_at(cdb,w->map[0].physical,1);CHECK(!polaris_owned_data_cdb(w,cdb,10,4096,true,0));w->map[0]=saved;
  for(unsigned i=0;i<w->map_count;i++){
   cdb_at(cdb,w->map[i].physical,1);CHECK(polaris_owned_data_cdb(w,cdb,10,4096,true,0));
   cdb_at(cdb,w->map[i].physical+w->map[i].blocks-1,1);CHECK(polaris_owned_data_cdb(w,cdb,10,4096,true,0));
@@ -251,6 +256,15 @@ int main(int argc,char **argv){
 class LegacyRuntimeOwnership(RuntimeOwnership):
     """32byte descriptors/GDT CRC16, matching the phone's checksum scheme."""
     legacy_checksums = True
+
+
+class TailLegacyRuntimeOwnership(LegacyRuntimeOwnership):
+    """Actual mkfs filesystem with the phone's four unowned tail blocks."""
+    tail_blocks = 4
+
+
+class TailMetadataRuntimeOwnership(RuntimeOwnership):
+    tail_blocks = 4
 
 
 if __name__ == '__main__':
