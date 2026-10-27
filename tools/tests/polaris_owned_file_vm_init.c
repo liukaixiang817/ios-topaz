@@ -43,7 +43,7 @@ int main(void)
     if(pseudo("proc","/proc","proc",0x9fa0)||pseudo("sysfs","/sys","sysfs",0x62656572)||
        pseudo("devtmpfs","/dev","devtmpfs",0x01021994)){perror("pseudo mounts");stop(0);}
     for(unsigned n=0;n<20&&access("/dev/vdb",F_OK);n++)sleep(1);
-    if(mount("/dev/vdb","/mnt","ext4",MS_NOATIME|MS_NODIRATIME|MS_NODEV|MS_NOSUID|MS_NOEXEC,NULL)){
+    if(mount("/dev/vdb","/mnt","ext4",MS_NOATIME|MS_NODIRATIME|MS_NODEV|MS_NOSUID|MS_NOEXEC,"noinit_itable,nodiscard")){
         perror("synthetic ext4 mount");
         FILE *p=fopen("/proc/filesystems","r");if(p){char s[160];while(fgets(s,sizeof(s),p))fputs(s,stdout);fclose(p);}
         stop(0);

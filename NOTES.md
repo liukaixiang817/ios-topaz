@@ -34,6 +34,50 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0078 next operation: exclusive small-file allocator prepared
+
+- Reviewedprivateoperation:0078/create-marker-0001/run.py. It will FIRSTverify
+  expectedFASTBOOT/knownrecovery/root/nootherblockmounts/GPT/critical/ESP and
+  freshheader/map, thenonlylegitimateLinuxext4RW+noinit_itable/nodiscard for
+  testedproductionhelper'sNEW8MiBroot0600/pinnedfile. No genericrawWRITE,
+  erase/repair/resize/delete/retry. Sameoptions rerunrealLinuxpositive11 and
+  symlink8 PASS (0078actual-Linux-exclusive-file-create-proof.json).
+- Readcreate-marker-0001/result.json BEFORE anyfurtherdeviceoperation if it
+  exists: onceattemptedDO NOTretry. Onerrortryrealumount/blockRO, NEVERreset
+  withfailedumount; leaveavailableknownrecoveryforreview. Successarchives
+  productionoutput/wholezeroes/FIEMAP/rawpages/packet/fulloldrootSHA andoriginal
+  GPT/critical/ESP; afterheaderreview+actualFASTBOOT remainsindependent.
+  No phonefilehasyetbeencreated atthissourcecommit; deviceoperationfollows.
+
+### 0078 separate small-marker admission/controller candidate; fresh audit COMPLETE
+
+- New offline polaris_marker_admission.py + polaris-uefi-marker-image.py
+  separatelyrequire explicitphysicaldurablemarker manifest, all8actualnative
+ 0077cases withspecificfailureconditions and rehashedfiles/frozenobserver,
+  samekernelCI/profile/artifact andsamephysicalreadonlyUI/drainproof, actual
+  newproductionhelperfilecreation + independentlyrawinode/CRC/FIEMAP packet,
+  completeoriginal182mapbytebinding/disjoint + freshbefore/afterbase/GPT/ESP
+  audits. OrdinaryRAMpackager/client unchanged andstillrejectmarker.
+  New polaris-uefi-marker-control.py exposesONLYstate/capture/oneboot/native
+  SAFE-fastboot; norawreset/storage/input API. ACKcannotproveactualmode/readback.
+  Sevennewadmissionmutation tests +sixmarkerhost/nineoldRAM tests22PASS;
+  actual267nativecaseevidence rehashed PASS. No newkernelchange/noCI.
+- Fresh0078/preflight-before-0001 full16GiB/182map/sixGPT/criticalparts/ESP/
+  clean4096header all match reviewedbaselines. ActualFASTBOOTafter independently
+  verified. Physicaluseridata incompat0x10042 includesencryptfeature, matching
+  successfulLinuxfixture; freshproductionhelper expectsENODATA policy on
+  plainnewfile. No allocation/pin/nativephonewrite yet.
+- NEXT finishreviewedrecovery allocator/audit, thenONLYNEW8MiBnamespace via
+  productionhelper. Sameoriginalroot/102ESPfiles/GPT retained. Capturefullzero
+  file, ro/noload FIEMAP andallrawmetadata pages toregenerateownerpacket; actual
+  before/afterfullrootSHA/map/GPT/ESP, reviewlegitimatejournal/allocatorSBcounter
+  changes ratherthanreusingold4096headerhash. Ownershipproofmustbephysical,
+  modelinventory cannotgrantimageadmission. Newtoolsnotyetusedforphoneboot.
+  Native4KiBtestpattern/SAFE/actualFASTBOOT/recoveryreadback follows, thenfull
+  newruntime/HFSstrategy/persistentUI/menu. All0077phone trialsended; don'trepeat.
+- Latestprogress22:43UTC; continue15minupdates. PhoneFASTBOOTready, nohuman
+  actionblocked. Noerase/format/GPT/resize/overwriteorrawgenericUFSpermission.
+
 ### 0077 physical native read/GUI/drain COMPLETE; no active phone trial
 
 - physical-native-readonly-UI-drain-proof.json COMPLETE: new0077kernel same
