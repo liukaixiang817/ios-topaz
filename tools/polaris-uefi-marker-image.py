@@ -9,7 +9,9 @@ import argparse
 import importlib.util
 import json
 from pathlib import Path
+import re
 import struct
+import subprocess
 
 from polaris_marker_admission import (admit_manifest, base_audit, evidence, file_ownership,
                                     load, model_suite, require, sha, tree_binding)
@@ -38,7 +40,12 @@ def main():
     profile = dict(line.split('=', 1) for line in (a.kernel.parent / 'build-profile.txt').read_text().splitlines() if '=' in line)
     require(ci.get('status') == 'completed' and ci.get('conclusion') == 'success' and
             profile.get('commit') == ci.get('headSha') and profile.get('target_platform') == 'polaris' and
-            profile.get('machine_config') == 'SWEET' and ci.get('databaseId'), 'successful full exact-source CI required')
+            profile.get('machine_config') == 'SWEET' and ci.get('databaseId') and
+            re.fullmatch('[0-9a-f]{40}', ci.get('headSha', '')), 'successful full exact-source CI required')
+    tail_patch = 'xnu/profiles/polaris/0875-polaris-owned-filesystem-tail-bound.patch'
+    require(subprocess.run(['git', 'show', ci['headSha'] + ':' + tail_patch], cwd=root,
+                capture_output=True, check=True).stdout == (root / tail_patch).read_bytes(),
+            'kernel CI source lacks exact reviewed physical filesystem tail bounds')
     suite = json.loads(a.model_suite.read_text())
     require(suite.get('CI') == ci['databaseId'] and suite.get('kernel_source') == ci['headSha'], 'model CI source changed')
     model_suite(root, suite, kernel_sha, driver['inputs'])
@@ -49,7 +56,11 @@ def main():
             physical.get('native_UFS_submitted') == physical.get('native_UFS_completed') and
             physical.get('native_UFS_completed', 0) > 0 and
             physical.get('actual_FASTBOOT', {}).get('expected_polaris') is True, 'same-kernel native physical readonly proof required')
-    physical_case = a.physical_readonly_proof.parent / 'phone-readonly-native-0077'
+    case_record = physical.get('case_directory')
+    require(isinstance(case_record, str) and not Path(case_record).is_absolute() and
+            '..' not in Path(case_record).parts, 'physical case directory required')
+    physical_case = root / case_record
+    require(physical_case.resolve().is_relative_to(root), 'physical case escaped checkout')
     ordinary = json.loads((physical_case / 'driver/manifest.json').read_text())
     old_image = json.loads((physical_case / 'image/manifest.json').read_text())
     old_boot = json.loads((physical_case / 'boot.json').read_text())
@@ -67,13 +78,21 @@ def main():
             sha(physical_case / 'native-shutdown-0001/result.json') == physical['shutdown_result_sha256'], 'physical drain proof changed')
     ownership = json.loads(a.ownership_proof.read_text())
     packet, before, after = file_ownership(root, ownership)
+    current = load(root, physical['preflight_record'])
+    base_audit(current)
+    require(current['updated_utc'] >= after['updated_utc'] and
+            current.get('outer_header_sha256') == after.get('outer_header_sha256') and
+            current.get('existing_marker_identity_and_zeros_unchanged') is True,
+            'same-kernel readonly trial requires the reviewed post-allocation baseline')
+    require(old_image.get('preflight_sha256') == physical['preflight_record']['sha256'],
+            'physical readonly image used a different preflight')
     ram = module(root / 'tools/polaris-uefi-xnu-image.py', 'original_ram_admission')
     control = next(row for row in suite['cases'] if row['case'] == 'dual-RAM-control')
-    qemu = json.loads((a.model_suite.parent / ('dual-RAM-control-run-' + control['run']) / 'result.json').read_text())
-    ram.admit(ordinary, qemu, ci, (a.kernel.parent / 'build-profile.txt').read_text(), before)
+    qemu = json.loads((root / suite['case_root'] / ('dual-RAM-control-run-' + control['run']) / 'result.json').read_text())
+    ram.admit(ordinary, qemu, ci, (a.kernel.parent / 'build-profile.txt').read_text(), current)
     base_map = load(root, ownership['base_fiemap'])
     payload = a.payload.read_bytes()
-    old_path = physical_case.parent / 'phone-readonly-native-0077-payload.bin'
+    old_path = evidence(root, physical['payload_record'])
     require(sha(old_path) == ordinary['payload_sha256'], 'physical readonly payload changed')
     old_payload = old_path.read_bytes()
     at, size = struct.unpack_from('<QQ', old_payload, 32)

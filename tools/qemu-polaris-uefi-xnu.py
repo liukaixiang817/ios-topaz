@@ -93,7 +93,7 @@ def main():
          '-drive','if=pflash,format=raw,file='+str(out/'vars.fd'),
          '-drive','if=none,id=esp,format=raw,readonly=on,file='+disk,
          '-device','virtio-blk-pci,drive=esp','-device','virtio-gpu-pci']
-    ufs_fixture=None;ufs_before=None;fault=None;test_socket_dir=None
+    ufs_fixture=None;ufs_before=None;fault=None;test_socket_dir=None;owned_variant=None
     if virtual_ufs:
         # Exclusively a newly created bounded file. No caller-supplied disk,
         # phone device, userdata, firmware file or writable backend is accepted.
@@ -106,6 +106,7 @@ def main():
             import polaris_owned_qemu_fixture as owned_fixture
             import polaris_uefi_cpu_tree as cpu_tree
             cpu_tree.validate(payload[at:at+n],7,True,2)
+            owned_variant=owned_fixture.variant(tree)
             owned_fixture.create(root,ufs_fixture,tree)
             with ufs_fixture.open('rb') as f:head=f.read(1<<20)
         else:
@@ -382,12 +383,14 @@ def main():
             checks['actual_native_UFS_sealed']='POLARIS UFS SEAL: owned idle native queue submitted=' in ring
     reopened=None
     if owned_ufs:
-        reopened=owned_fixture.reopen_check(root,ufs_fixture,not (a.fault_owned_write_delay or guard_omitted))
+        reopened=owned_fixture.reopen_check(root,ufs_fixture,not (a.fault_owned_write_delay or guard_omitted),owned_variant)
         (out/'backend-reopen-proof.json').write_text(json.dumps(reopened,indent=2)+'\n')
         checks.update(full_backend_reopened_and_matched=reopened['all_LUN_bytes_match_expected'],
                       protected_base_byte_identical=reopened['protected_base_unchanged'],
                       no_unexpected_LUN_block_changes=reopened['changed_blocks']==reopened['expected_changed_blocks'],
                       original_fixture_source_unchanged=reopened['original_source_unchanged'])
+        if owned_variant=='tail4' and not guard_omitted:
+            checks['exact_filesystem_tail_bound']='POLARIS OWNED BOUNDS: GPT=32768 ext4=32764 unowned_tail=4' in ring
         stats=json.loads((out/'actual-backend-stats.json').read_text()) if (out/'actual-backend-stats.json').exists() else []
         stats=[s for s in stats if s.get('node-name')=='isolated-lun0' or s.get('device')=='isolated-lun0' or
                s.get('qdev','').startswith('/machine/peripheral/isolated-native-lun0/')]
@@ -425,6 +428,7 @@ def main():
                 snapshot_while_guest_running=a.fault_owned_write_delay,
                 owned_backend_accounting_before_host_stop=bool(owned_ufs and (out/'actual-backend-stats.json').exists()),
                 actual_native_queue=queue if owned_ufs else None,runner_sha256=sha(Path(__file__)),
+                owned_fixture_helper_sha256=sha(root/'tools/polaris_owned_qemu_fixture.py') if owned_ufs else None,
                 UFS_hardware_fault=fault,
                 isolated_UFS_backend_sha256=sha(ufs_fixture) if ufs_fixture else None,
                 kernel_CPU_affinity=target,

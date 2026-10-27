@@ -34,6 +34,44 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0078 existing marker ownership + exact new-kernel model suite COMPLETE
+
+- New0875kernel source4156c358f631b7dfea4e37684dd5a49f8961a4ac COMMITTED/PUSHED.
+  FullmacOS27/Xcode27 CI40601993959/job122532138160 SUCCESS; out-polaris-0078
+  kernel e41482b459b322006374408f5ce55ddc0c2abb7e4cce129d9b7d3108f76e2e5d
+  exactsource/profile/artifactZIPCRC/SHA verified. No furthernativechange/CI.
+- Existing marker namespace MUST NOT be recreated/deleted/unpinned. Actual
+  inode1720322/gen2693650061/root0600/singlelink/flags0x80090/8MiB, two4MiB
+  extents remainallzero. existing-marker-export-0001/ownership-proof.json
+  completedrawSB/GDT/inode/CRC/UUID/fullmap independentlymatchesLinuxFIEMAP;
+  packet432B. IndependentnativeASan/UBSan consumer ofactualcapturedpages
+  PASS; itisNOTliveUFSproof. Exact4unusedtailblocks admitted/clamped by0875.
+- Postcreationheaderreview: onlyexpected2049blocks/twoinodes allocation,
+  mtime/wtime/mountcount/lifetimewrites ands_last_mounted=/mnt/polaris-owned-
+  create-0078. Original16GiBSHA/182map/all6GPT/critical/ESP7338692a unchanged.
+  Newpreflight-current-0001 repeatedfreshREADONLY ro,noload/blockRO audit,
+  wholeoriginalhash56.695s; existingzero marker/identity unchanged; header
+  matchesreviewed17016be3cfff30f93e8dea55b66fb69188461b386fae22f76ea5917d9def3ab1.
+  ActualexpectedFASTBOOT independentlyverified23:45:06UTC. No newLinuxRW/native
+  phonewrite thisaudit; allpreviousphoneiOStestsended, nohumanblocker.
+- actual-native-owned-UFS-tail-bound-proof.json: NINE actualEFI/XNUcases,
+  306checks. Success38, missingguard30, backendflushEIO36, actual120sWRITE/
+  5stimeout unknownDMA36, controlledSOFTWAREshort34, stale35, actualHCE35,
+  ordinarydualRAM23, realext4/GPT4tailWRITE/read/finalSYNC/SAFE39. Each~38s,
+  sources/currentobserver/curatedhelper/allfilesrehashed. OnlyRAMcontrol
+  releaseTRUE; allownedvirtualcases releaseFALSE. IsolatedsyntheticLUNs
+  reopenedwholebytes/protectedbase; noSDM845PHY/phonepersistenceclaim.
+- Separatephysicalmarkeradmission nowrequiresnewCI0875exactpatch,9models,
+  samekernelphysicalreadonly/drain and freshpostallocationbaseline boundto
+  originalphysicalRAMimage. OrdinaryRAMpackager stillREFUSES marker.26local
+  protocol/admission/framing testsPASS. No driver/kernelguardrelaxation.
+- NEXT quicksame0078physicalnativeoriginalrootREADONLY/drain (noGUIrepeat),
+  thenseparateadmittedmarkerRAMtrial: FIRST4096B pattern/READback/nativefinal
+  SYNC/actualSAFE1f/allcorespark/gatedFASTBOOT andwhole8MiBreadback+allbaselines.
+  Originalroot still512MiBvolatileRAMCOW; notcompletepersistentinstall.
+  Newfull16GiBruntime/HFSflush/crossrebootUI/physicalvolume-keymenu remain.
+  PreserveGPU42d5ec4c... andCPU700+600; noall8/FPSclaim. Latestreport23:40UTC.
+
 ### 0078 NEW8MiB marker EXISTS/pinned; ownership export refused original16KiB FS tail
 
 - create-marker-0002 succeededEXCLUSIVEnewfile undercorrect259:6/sysfsguard

@@ -116,8 +116,10 @@ class AdmissionTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             root = Path(d); (root / 'tools').mkdir(); observer = root / 'tools/qemu-polaris-uefi-xnu.py'
             observer.write_bytes(b'offline test observer'); inputs = {'example-source': 'a' * 64}
+            helper = root / 'tools/polaris_owned_qemu_fixture.py'; helper.write_bytes(b'offline curated helper')
             suite = dict(actual_EFI_XNU_native_owned_file_tests_passed=True, kernel_sha256='b' * 64,
-                actual_live_guard_required_before_PCI_MMIO=True, observer_sha256=m.sha(observer), cases=[])
+                actual_live_guard_required_before_PCI_MMIO=True, actual_four_block_unowned_tail_proven=True,
+                observer_sha256=m.sha(observer), cases=[])
             for case in m.CASES:
                 checks = set(m.COMMON_CHECKS + m.CASE_CHECKS[case])
                 if case != 'dual-RAM-control': checks.update(('raw_and_lease_disabled_before_reset_permission',
@@ -125,7 +127,8 @@ class AdmissionTests(unittest.TestCase):
                     'no_unexpected_LUN_block_changes', 'exact_owned_backend_stats_captured'))
                 if case in m.CASES[2:7]: checks.update(('firmware_refused_both_reset_modes', 'no_durable_SAFE'))
                 result = dict(passed=True, checks=dict.fromkeys(checks, True), kernel_sha256='b' * 64,
-                    inputs=inputs, release_handoff_admitted=case == 'dual-RAM-control', runner_sha256=m.sha(observer))
+                    inputs=inputs, release_handoff_admitted=case == 'dual-RAM-control', runner_sha256=m.sha(observer),
+                    owned_fixture_helper_sha256=m.sha(helper) if case != 'dual-RAM-control' else None)
                 path = root / 'research/polaris/uefi-ios-0077' / (case + '-run-test') / 'result.json'
                 path.parent.mkdir(parents=True); path.write_text(json.dumps(result))
                 suite['cases'].append(dict(case=case, run='test', passed=True, files={'result.json': m.sha(path)}))

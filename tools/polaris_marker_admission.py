@@ -7,6 +7,7 @@ generic UFS write command or substitute for physical persistence readback.
 import hashlib
 import json
 from pathlib import Path
+import re
 import struct
 
 import adt
@@ -18,7 +19,7 @@ ESP_SHA = '7338692a4e42db7f53fac8fe2ff3bb3bf55bd5dec4bdc6d5c4243d8d49794ef3'
 MARKER_PATH = 'polaris-owned-v0077-0001/marker.bin'
 CASES = ('owned-success', 'owned-missing-live-guard', 'owned-flush-EIO',
          'owned-write-unknown-DMA', 'owned-response-short', 'owned-stale-cookie',
-         'owned-HCE-loss', 'dual-RAM-control')
+         'owned-HCE-loss', 'dual-RAM-control', 'owned-tail-success')
 COMMON_CHECKS = ('both_kernel_CPUs_online', 'real_cross_core_callbacks', 'native_mailbox_captured',
                  'four_process_VM_stress', 'each_child_passed', 'bounded_input_handshake', 'no_panic')
 CASE_CHECKS = {
@@ -37,6 +38,7 @@ CASE_CHECKS = {
     'dual-RAM-control': ('native_reboot_sync_path', 'real_zero_mounts_and_buffers',
         'firmware_observed_RAM_drained', 'separate_RAM_result', 'native_peer_affinity_OFF'),
 }
+CASE_CHECKS['owned-tail-success'] = CASE_CHECKS['owned-success'] + ('exact_filesystem_tail_bound',)
 
 
 def require(ok, message):
@@ -85,14 +87,18 @@ def base_audit(audit, after=False):
 def model_suite(root, suite, kernel_sha, inputs):
     require(suite.get('actual_EFI_XNU_native_owned_file_tests_passed') is True and
             suite.get('kernel_sha256') == kernel_sha and
-            suite.get('actual_live_guard_required_before_PCI_MMIO') is True, 'native owned model suite absent')
+            suite.get('actual_live_guard_required_before_PCI_MMIO') is True and
+            suite.get('actual_four_block_unowned_tail_proven') is True, 'native owned model/tail suite absent')
     observer_sha = sha(root / 'tools/qemu-polaris-uefi-xnu.py')
     require(suite.get('observer_sha256') == observer_sha, 'native observer source changed')
     rows = suite.get('cases', [])
+    case_root = suite.get('case_root', 'research/polaris/uefi-ios-0077')
+    require(isinstance(case_root, str) and re.fullmatch(r'research/polaris/uefi-ios-[0-9]{4}', case_root),
+            'canonical model case directory required')
     require(len(rows) == len(CASES) and {r.get('case') for r in rows} == set(CASES), 'missing native failure case')
     for row in rows:
         require(row.get('run') and row.get('passed') is True, 'failed model selected')
-        folder = Path('research/polaris/uefi-ios-0077') / (row['case'] + '-run-' + row['run'])
+        folder = Path(case_root) / (row['case'] + '-run-' + row['run'])
         for name, digest in row.get('files', {}).items():
             evidence(root, dict(path=str(folder / name), sha256=digest))
         require('result.json' in row.get('files', {}), 'model result unbound')
@@ -103,6 +109,8 @@ def model_suite(root, suite, kernel_sha, inputs):
                 (row['case'] == 'dual-RAM-control'), 'model source, kernel or admission mismatch')
         checks = COMMON_CHECKS + CASE_CHECKS[row['case']]
         if row['case'] != 'dual-RAM-control':
+            require(result.get('owned_fixture_helper_sha256') == sha(root / 'tools/polaris_owned_qemu_fixture.py'),
+                    'curated synthetic fixture helper changed')
             checks += ('raw_and_lease_disabled_before_reset_permission', 'full_backend_reopened_and_matched',
                        'protected_base_byte_identical', 'original_fixture_source_unchanged',
                        'no_unexpected_LUN_block_changes', 'exact_owned_backend_stats_captured')
