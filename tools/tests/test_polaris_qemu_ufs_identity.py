@@ -27,7 +27,7 @@ int main(void) {
     assert(CHECK(7,62500000,1,7,2,0,0x130000000,0xfc8a0000));
     assert(CHECK(0x80000007,62500000,1,7,2,0,0x130000000,0xfc8a0000));
     for (unsigned cpu=0;cpu<0x1000;cpu++) {
-        assert(CHECK(cpu,62500000,1,7,2,0,0x130000000,0xfc8a0000)==(cpu==7));
+        assert(CHECK(cpu,62500000,1,7,2,0,0x130000000,0xfc8a0000)==(cpu==7||cpu==6));
         /* Physical Polaris MPIDR700/600 cannot pass, even with a VM node. */
         assert(!CHECK(cpu,19200000,1,1792,2,0,0x180000000,0xfc8a0000));
     }

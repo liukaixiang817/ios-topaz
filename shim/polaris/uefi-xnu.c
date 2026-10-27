@@ -487,6 +487,11 @@ static void test_ram_drain(int stress_done,unsigned contact_phase)
         finished=1;test_uart_text("\nQEMU_RAM_DRAINED=1\n");
     }else if(s.phase==POLARIS_Q_FAILED){
         finished=1;
+        if(s.cookie==cookie&&s.sequence==1&&s.mode==2&&s.error&&
+           s.capabilities==POLARIS_Q_RAM_CONFIG&&!shutdown_reset_ready(0,2)&&
+           !shutdown_reset_ready(0,1)&&!polaris_q_ram_drained(&s,cookie,1,2)){
+            test_uart_text("\nQEMU_RAM_RESET_REFUSED=1\n");
+        }
         if(EFI_XNU_RAM_DRAIN_TEST==3&&s.cookie==cookie&&s.sequence==1&&s.mode==2&&
            s.error&&s.capabilities==POLARIS_Q_RAM_CONFIG&&!shutdown_reset_ready(0,2)&&
            !shutdown_reset_ready(0,1)&&!polaris_q_ram_drained(&s,cookie,1,2)){

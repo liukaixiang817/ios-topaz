@@ -118,7 +118,7 @@
  		printf("POLARIS UFS: unexpected response flags/tag/residual\n");
  		return EIO;
  	}
-@@ -491,10 +555,153 @@
+@@ -491,10 +555,159 @@
  		printf("SWEET UFS: host did not take our request list\n");
  		return EIO;
  	}
@@ -139,7 +139,10 @@
 +    uint32_t mode, uint32_t core, uint32_t count, uint32_t rw,
 +    uint64_t base, uint64_t bytes, const uint64_t reg[2], const uint64_t ecam[2])
 +{
-+    return (actual & UINT64_C(0xffffff)) == 7 && timer == 62500000 &&
++    /* The native startup worker may migrate between the two admitted cores.
++     * Physical MPIDR600/700 still cannot pass this flat virtual identity. */
++    actual &= UINT64_C(0xffffff);
++    return (actual == 7 || actual == 6) && timer == 62500000 &&
 +        mode == 1 && core == 7 && count == 2 && rw == 0 &&
 +        base == UINT64_C(0x130000000) && bytes == UINT64_C(0xfc8a0000) &&
 +        reg[0] == UINT64_C(0x10100000) && reg[1] == 0x2000 &&
@@ -167,6 +170,8 @@
 +    PE_parse_boot_argn("ufsrw",&rw,sizeof(rw));
 +    PE_parse_boot_argn("polarisfileroot",&file,sizeof(file));
 +    PE_parse_boot_argn("polarisufsprobe",&probe,sizeof(probe));
++    const uint64_t actual_cpu=__builtin_arm_rsr64("MPIDR_EL1");
++    const uint64_t timer=__builtin_arm_rsr64("CNTFRQ_EL0");
 +    if (enabled != 1 || file || probe ||
 +        SecureDTLookupEntry(NULL,"/polaris-qemu-ufs",&node) != kSuccess ||
 +        SecureDTLookupEntry(NULL,"/chosen",&chosen) != kSuccess ||
@@ -179,11 +184,12 @@
 +        SecureDTGetProperty(node,"compatible",&property,&size) != kSuccess ||
 +        size != sizeof("qemu,isolated-readonly-ufs") ||
 +        memcmp(property,"qemu,isolated-readonly-ufs",size) ||
-+        !polaris_qemu_ufs_identity(__builtin_arm_rsr64("MPIDR_EL1"),
-+            __builtin_arm_rsr64("CNTFRQ_EL0"),mode,core,count,rw,base,bytes,reg,ecam)) {
-+        printf("POLARIS QEMU UFS: REFUSED identity before any PCI/MMIO access\n");
++        !polaris_qemu_ufs_identity(actual_cpu,timer,mode,core,count,rw,base,bytes,reg,ecam)) {
++        printf("POLARIS QEMU UFS: REFUSED identity before any PCI/MMIO access cpu=%llx timer=%llu mode=%u core=%u count=%u rw=%u ver=%u RAM=%llx/%llx reg=%llx/%llx ecam=%llx/%llx compatbytes=%u\n",
++            actual_cpu,timer,mode,core,count,rw,version,base,bytes,reg[0],reg[1],ecam[0],ecam[1],size);
 +        return;
 +    }
++    printf("POLARIS QEMU UFS: admitted actual worker MPIDR=%llx timer=%llu\n",actual_cpu,timer);
 +    lck_mtx_lock(&sweet_ufs_lock);
 +    int error = EINVAL;
 +    if (su.regs || su.dma || polaris_native_owner || polaris_ufs_sealed) goto out;
@@ -272,7 +278,7 @@
  /* Called once by the CPU startup thread, after timer/scheduler initialization.
   * No BSD disk registration, filesystem mount, persistent logging or input/USB
   * driver startup. The normal sweet_ufs_init remains disabled on this platform.
-@@ -519,6 +726,10 @@
+@@ -519,6 +732,10 @@
  void
  polaris_ufs_probe(void)
  {
@@ -283,7 +289,7 @@
  	uint32_t enabled = 0;
  	if (!PE_parse_boot_argn("polarisufsprobe", &enabled, sizeof(enabled)) || enabled != 1) {
  		return;
-@@ -598,6 +809,7 @@
+@@ -598,6 +815,7 @@
  		if (ufs_rd(REG_UTRLBA) == old_lo && ufs_rd(REG_UTRLBAU) == old_hi &&
  		    ufs_rd(REG_UTRLRSR) == old_rsr) {
  			ufs_wr(REG_IE, old_ie);
@@ -291,7 +297,7 @@
  			polaris_probe_queue_status = "restored";
  			printf("POLARIS UFS: idle queue restored; probe complete\n");
  		} else {
-@@ -659,6 +871,11 @@
+@@ -659,6 +877,11 @@
  	}
  
  	lck_mtx_lock(&sweet_ufs_lock);
@@ -303,7 +309,7 @@
  	for (uint32_t done = 0; done < count;) {
  		uint64_t pos = off + done;
  		uint64_t lba = pos / UFS_BLOCK;
-@@ -778,8 +995,11 @@
+@@ -778,8 +1001,11 @@
  	case DKIOCSYNCHRONIZE:
  	case DKIOCSYNCHRONIZECACHE: {
  #if defined(POLARIS_RAM_ONLY)

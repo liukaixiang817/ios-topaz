@@ -34,6 +34,25 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0073 isolated UFS probe refinement (actual0072 refusal retained)
+
+-0072 source9bafadc fullmacOS27 CI40564831819/job122403203100 SUCCESS,
+  kernel353b8103768c33847c9eb758a5721a23a0854f6590e1b6fb99679fe03931d604
+  exactsource/profile/artifactCRC/SHA verified. Actual EFI/XNU run failed UFS
+  identity BEFORE MMIO, so no nativeUFS proof. FullVMchildren/dualCPU/native
+  RAMdrain succeeded but combinedresult FAILED/releasefalse. Failure retained
+  in0072/actual-UFS-read-seal-run-0001, not reused as admission.
+- Code inspection shows startup worker is not CPU-bound and can migrate after
+  realSMPcallbacks. Refined gate admits ONLY the two declared flat virtual
+  MPIDR6/7 (physical600/700 still refused), keeping exacttimer/RAM/PCI/metadata
+  checks. Added complete first-refusal values and actualworker logging; prior
+  log lacked values, so migration is a supported explanation, NOT yet observed
+  cause proof. Actual newEFI/XNU retest still required, no phone test/writes.
+- Host fault test changes actual emulated HCE only after real native READ10,
+  expects kernel seal refusal and firmware both-reset-mode refusal; no kernel
+  counter mutation/PEcallback/hostACK surrogate. Native write/SYNC gates remain
+  unchanged. Actual finalUFS persistence still unimplemented.
+
 ### 0072 native UFS queue + isolated actual-controller candidate (in progress)
 
 - Native lifetime counters/exclusive owner/unknownDMA retain/seal now connected

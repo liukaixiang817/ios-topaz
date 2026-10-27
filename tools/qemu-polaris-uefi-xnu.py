@@ -11,9 +11,12 @@ import importlib.util
 import json
 from pathlib import Path
 import shutil
+import socket
 import struct
 import subprocess
+import tempfile
 import time
+import zlib
 
 
 def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
@@ -30,11 +33,19 @@ def main():
     ap.add_argument('--output',required=True,type=Path)
     ap.add_argument('--seconds',type=int,default=120)
     ap.add_argument('--legacy-core-refusal',action='store_true')
+    ap.add_argument('--fault-ufs-host-disable',action='store_true',
+                    help='disable the actual isolated UFS HCE after native READ10; require reset refusal')
     ap.add_argument('--mtools',type=Path,help='local mtools bin for an actual GPT/FAT disk-payload test')
     a=ap.parse_args();root=Path(__file__).resolve().parents[1]
     if not 15<=a.seconds<=600:ap.error('deadline must be 15..600 seconds')
     manifest=json.loads(a.driver_manifest.read_text());app=a.driver_manifest.parent/manifest['artifact']
     drain=manifest.get('RAM_native_drain_test')
+    virtual_ufs=manifest.get('isolated_QEMU_readonly_UFS_test',False)
+    if virtual_ufs and (drain!='success' or manifest.get('kernel_CPU_affinity')!=7 or
+                        manifest.get('kernel_CPU_count')!=2):
+        raise ValueError('native virtual UFS requires the two-core native drain fixture')
+    if a.fault_ufs_host_disable and not virtual_ufs:
+        raise ValueError('controller fault is confined to the isolated virtual UFS fixture')
     if drain not in (None,'success','stale-cookie','peer-refused') or (drain and a.legacy_core_refusal):
         raise ValueError('unsupported native RAM drain test configuration')
     target=manifest.get('kernel_CPU_affinity')
@@ -70,6 +81,27 @@ def main():
          '-drive','if=pflash,format=raw,file='+str(out/'vars.fd'),
          '-drive','if=none,id=esp,format=raw,readonly=on,file='+disk,
          '-device','virtio-blk-pci,drive=esp','-device','virtio-gpu-pci']
+    ufs_fixture=None;ufs_before=None;fault=None;test_socket_dir=None
+    if virtual_ufs:
+        # Exclusively a newly created bounded file. No caller-supplied disk,
+        # phone device, userdata, firmware file or writable backend is accepted.
+        head=bytes(range(256))*4096
+        import adt
+        payload=a.payload.read_bytes();at,n=struct.unpack_from('<QQ',payload,32)
+        tree,_=adt.parse(payload[at:at+n]);nodes=[x for x in tree.children if x.name=='polaris-qemu-ufs']
+        if len(nodes)!=1 or nodes[0].prop('head-crc32')!=struct.pack('<I',zlib.crc32(head)):
+            raise ValueError('native read fixture CRC does not match the bound tree')
+        ufs_fixture=out/'isolated-new-UFS-lun0.raw'
+        with ufs_fixture.open('xb') as f:f.write(head);f.truncate(64<<20)
+        ufs_before=sha(ufs_fixture)
+        cmd+=['-device','ufs,id=isolated-native-ufs','-drive',
+              'if=none,id=isolated-lun0,format=raw,readonly=on,file='+str(ufs_fixture),
+              '-device','ufs-lu,drive=isolated-lun0,lun=0']
+        if a.fault_ufs_host_disable:
+            test_socket_dir=tempfile.TemporaryDirectory(prefix='polaris-ufs-')
+            socket_path=str(Path(test_socket_dir.name)/'qtest.sock')
+            cmd+=['-qtest','unix:'+socket_path+',server=on,wait=off',
+                  '-qtest-log',str(out/'qtest-fault.log')]
     start=time.monotonic();error=None
     with (out/'qemu.log').open('wb') as err:
         p=subprocess.Popen(cmd,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=err)
@@ -87,6 +119,29 @@ def main():
             q('qmp_capabilities')
             while time.monotonic()-start<a.seconds:
                 text=(out/'serial.log').read_text(errors='replace') if (out/'serial.log').exists() else ''
+                if (a.fault_ufs_host_disable and fault is None and
+                        'POLARIS QEMU UFS: PASS native PCI/link/descriptor/completion/read' in text):
+                    # Actual emulated hardware state changes, not kernel counters
+                    # or an ACK substituted for a native completion result.
+                    with socket.socket(socket.AF_UNIX,socket.SOCK_STREAM) as sock:
+                        sock.settimeout(3);sock.connect(socket_path)
+                        stream=sock.makefile('rwb',buffering=0)
+                        def hardware(command):
+                            stream.write(command.encode()+b'\n')
+                            while True:
+                                line=stream.readline().decode().strip()
+                                if not line:raise RuntimeError('qtest hardware connection closed')
+                                if line.startswith('IRQ'):continue
+                                if not line.startswith('OK'):raise RuntimeError('qtest hardware request failed')
+                                return line
+                        before=hardware('readl 0x10100034')
+                        if int(before.split()[1],0)!=1:raise ValueError('actual UFS HCE was not enabled')
+                        ack=hardware('writel 0x10100034 0')
+                        after=hardware('readl 0x10100034')
+                        if int(after.split()[1],0)!=0:raise ValueError('actual HCE disable not observed')
+                        fault=dict(kind='actual_UFS_HCE_disable_after_native_read',before=before,
+                                   write_response=ack,after=after,seconds=time.monotonic()-start)
+                        (out/'hardware-fault.json').write_text(json.dumps(fault,indent=2)+'\n')
                 test_done=(('QEMU_RAM_DRAINED=1' in text or 'QEMU_RAM_DRAIN_STALE_REFUSED=1' in text or
                             'QEMU_RAM_DRAIN_FAILED=1' in text or 'QEMU_RAM_PEER_OFF_REFUSED=1' in text) if drain else
                            ('SMP STRESS all4 PASS' in text and 'QEMU_INPUT_BRIDGE=1' in text))
@@ -96,6 +151,8 @@ def main():
                     'XNU_ADMISSION=0x8' in text or p.poll() is not None):break
                 time.sleep(.2)
             q('stop')
+            if virtual_ufs:
+                (out/'actual-pci.json').write_text(json.dumps(q('query-pci'),indent=2)+'\n')
             (out/'registers.txt').write_text(q('human-monitor-command',{'command-line':'info registers -a'}))
             spec=importlib.util.spec_from_file_location('efi_build',root/'tools/build-polaris-uefi-xnu.py')
             builder=importlib.util.module_from_spec(spec);spec.loader.exec_module(builder)
@@ -109,6 +166,7 @@ def main():
         except Exception as e:error=str(e)
         finally:
             if p.poll() is None:p.kill();p.wait()
+            if test_socket_dir:test_socket_dir.cleanup()
     text=(out/'serial.log').read_text(errors='replace') if (out/'serial.log').exists() else ''
     ring=(out/'kernel-ring.bin').read_bytes().split(b'\0')[0].decode(errors='replace') if (out/'kernel-ring.bin').exists() else ''
     (out/'kernel-ring.txt').write_text(ring)
@@ -154,7 +212,17 @@ def main():
                          error=status[4],write_epoch=status[5],flushed_epoch=status[6],capabilities=status[7])
         checks['native_mailbox_captured']=mailbox is not None
         checks['native_request_after_VM_and_input']='QEMU_RAM_DRAIN_REQUESTED=1' in text
-        if drain=='success':
+        if drain=='success' and a.fault_ufs_host_disable:
+            checks.update(actual_hardware_fault_applied=fault is not None,
+                          native_shutdown_entered='POLARIS UEFI DRAIN: accepted seq=1 mode=2' in ring,
+                          real_zero_mounts_and_buffers='POLARIS UEFI DRAIN: actual VFS mounts=0 busy=0' in ring,
+                          native_controller_seal_refused='POLARIS UEFI DRAIN: native UFS seal refused' in ring,
+                          firmware_reset_both_modes_refused='QEMU_RAM_RESET_REFUSED=1' in text,
+                          no_drain_or_SAFE_granted=bool(mailbox and mailbox['cookie']==mailbox['request_cookie'] and
+                              mailbox['sequence']==mailbox['request_sequence']==1 and mailbox['mode']==2 and
+                              mailbox['phase']==6 and mailbox['error'] and mailbox['capabilities']==0x80000000),
+                          no_peer_stop_or_drained_claim='actual PSCI AFFINITY_OFF' not in ring and 'QEMU_RAM_DRAINED=1' not in text)
+        elif drain=='success':
             checks.update(native_reboot_sync_path='POLARIS UEFI DRAIN: accepted seq=1 mode=2; calling reboot_kernel sync path' in ring,
                           real_zero_mounts_and_buffers='POLARIS UEFI DRAIN: actual VFS mounts=0 busy=0; RAM only, no UFS durability proof' in ring,
                           firmware_observed_RAM_drained='QEMU_RAM_DRAINED=1' in text,
@@ -183,11 +251,20 @@ def main():
                               mailbox['cookie']!=mailbox['request_cookie'] and mailbox['phase']==6 and
                               mailbox['error'] and mailbox['sequence']==mailbox['mode']==0 and
                               mailbox['capabilities']==0x80000000))
+    if virtual_ufs:
+        checks.update(actual_native_UFS_read='POLARIS QEMU UFS: PASS native PCI/link/descriptor/completion/read; write gate unchanged' in ring,
+                      actual_fixture_CRC=f'CRC32={zlib.crc32(bytes(range(256))*4096):08x} expected={zlib.crc32(bytes(range(256))*4096):08x} MATCH' in ring,
+                      no_native_UFS_failure='POLARIS QEMU UFS: FAILED' not in ring,
+                      isolated_backend_unchanged=sha(ufs_fixture)==ufs_before)
+        if not a.fault_ufs_host_disable:
+            checks['actual_native_UFS_sealed']='POLARIS UFS SEAL: owned idle native queue submitted=' in ring
     record=dict(passed=all(checks.values()) and error is None,checks=checks,error=error,
-                diagnostic_legacy_only=a.legacy_core_refusal,release_handoff_admitted=not a.legacy_core_refusal and drain!='peer-refused' and all(checks.values()) and error is None,
+                diagnostic_legacy_only=a.legacy_core_refusal,release_handoff_admitted=not virtual_ufs and not a.legacy_core_refusal and drain!='peer-refused' and all(checks.values()) and error is None,
                 full_iOS_boot_proven=False,physical_USB_proven=False,SDM845_emulated=False,
                 RAM_native_drain_test=drain,native_shutdown_mailbox=mailbox,
                 persistent_root_or_UFS_durability_proven=False,
+                isolated_QEMU_readonly_UFS_test=virtual_ufs,UFS_hardware_fault=fault,
+                isolated_UFS_backend_sha256=sha(ufs_fixture) if ufs_fixture else None,
                 kernel_CPU_affinity=target,
                 kernel_CPU_count=count,
                 app_sha256=sha(app),payload_sha256=sha(a.payload),kernel_sha256=sha(a.kernel),
