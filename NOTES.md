@@ -34,13 +34,33 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### 0068 CPU performance/SMP adaptation (source pushed; full CI running)
+### 0069 resident secondary registration fix (local PASS; full CI next)
 
-- Sourcedee1ea3 COMMITTED/PUSHED. macOS27/Xcode27 full kernel CI40540493764
-  is in progress; watch log0068/ci-watch.log. No new kernel downloaded yet.
-  Actual phone remains FASTBOOT, no0068 boot or storage writes. Next download
-  and bind exact CI/source/kernel SHA, then real EFI/XNU CPU1 control/CPU7
-  single and CPU7+6 concurrent VM/SGI/xcall runs BEFORE physical RAM trials.
+-0068 full macOS27/Xcode27 CI40540493764/job122317247584 SUCCESS7m58s,
+  source dee1ea3107e36ab45d7e51daee764ad3b45558d4, kernel SHA
+ 64c90cec71535952a2b4e63fb1fc0db270058f5ae7eb0ba93e7df104132fd8ed.
+  Actual EFI/XNU single-core CPU1 and CPU7 tests PASS20/20 each37.676/37.900s,
+  including actual native RAM drain. These are generic CortexA55 functional
+  results, not phone speed comparisons.
+- Two-core CPU7+6 actual EFI/XNU0068 failed early with SweetCPU provider
+  registration panic cpu1/MPIDR6. Provider matching runs on bootCPU7, so the
+  old use of actual-boot-MPIDR admission for each provider incorrectly fell
+  through to phone-only Aff1 alignment. Full failed run retained in0068;
+  no timeout waiver, physical SMP boot or storage write occurred.
+- Profile0869 validates each provider's exact declared CPU pair here;
+  actual boot MPIDR remains checked separately in startAll and actual peer
+  initCPU/SGI/xcall checks remain required. Shared allowlist is unchanged.
+  Actual Apple clang27 full-header TU PASS,20 local checks PASS1.433s,
+  exact patch apply0offset/0fuzz PASS. QEMU harness now waits for completed
+ 32-callback remote SMP check before accepting the two-core stress run.
+  New full CI and actual two-core EFI/XNU checks still required BEFORE hardware.
+  Existing dual-core native-drain refusal remains until all-core quiescence
+  is implemented/proven. Do not claim two cores operational from CPU_ON ACK.
+- Phone remains last known actual FASTBOOT15:49:16UTC; no0068/69 phone boot.
+  Latest progress report16:30UTC; human requires every15min, next16:45UTC.
+
+### 0068 CPU performance/SMP adaptation (single-core VM PASS; SMP failure retained)
+
 - Latest human steering: suppliedMrMoxing/ios-alioth handoff, asks to apply its
   CPU/GPU performance approaches; then clarified priority CPU multicore and
   data-preserving disk installation/Mindows UEFI entry, retaining current GPU.

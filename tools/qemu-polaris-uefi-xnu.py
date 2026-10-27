@@ -90,6 +90,8 @@ def main():
                 test_done=(('QEMU_RAM_DRAINED=1' in text or 'QEMU_RAM_DRAIN_STALE_REFUSED=1' in text or
                             'QEMU_RAM_DRAIN_FAILED=1' in text) if drain else
                            ('SMP STRESS all4 PASS' in text and 'QEMU_INPUT_BRIDGE=1' in text))
+                if count==2:
+                    test_done=test_done and 'POLARIS SMP CHECK: PASS selected=2 callbacks=32 remote=' in text
                 if ('panic(cpu ' in text or test_done or
                     'XNU_ADMISSION=0x8' in text or p.poll() is not None):break
                 time.sleep(.2)
