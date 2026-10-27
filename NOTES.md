@@ -34,6 +34,50 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0077 actual model + real Linux allocation COMPLETE; physical readonly trial active
+
+- Kernel/source46edcfa7e7b93216810888c40f4d0f64ac263452 COMMITTED/PUSHED.
+  FullmacOS27/Xcode27 CI40588316818/job122485610127 SUCCESS; kernel
+  fadcf54e9c4be632bb0adb015b98aaf073ac81093464545aaca29f4781f3353b
+  inout-polaris-0077 exactsource/profile/ZIPCRC/SHA verified. No newkernel
+  change afterthis; do not rebuildCI for hosthelper/doc work.
+- actual-native-owned-UFS-live-guard-proof.json binds EIGHT actualEFI/XNU
+  cases267checks: success38/38, missingLIVEguard30/30, flushEIO36/36,
+  unknownDMA36/36, controlledSOFTWAREshort34/34, stale35/35, HCE35/35,
+  ordinarydualRAMcontrol23/23, ~37.68..38.26s each. All ownedcases releasefalse;
+  onlyRAMcontrol release true. MissingLIVEguard actualkernel refused BEFORE
+  PCI/MMIO, zero nativequeue submissions, noLUNbyte changes, nofalseSAFE/reset.
+  Newpositive actualkernel observedfirmware-generated50470002 beforeMMIO.
+  Preserves0076 realnativeUFS WRITE/read/finalSYNC/epoch/CPUpark/errorrefusals;
+  stillgenericvirtualUFS, NOT physicalphone durablewrite proof.
+- NEW tools/polaris-owned-file-create.c uses exactproduction geometry8:22/
+  115167178752B, ext4inode2/rootUID caller, newexclusive0700namespace and
+  root0600singlelink8MiBfile, fullzero allocation/fsync/close/reopen/gencheck,
+  immutable+noatime pin0x80090/fsyncdir+syncfs/readback; nooverwrite/unlink/
+  repair/rawdevicewrite API. VMvariant explicitlytestbuild only128MiB.
+  actual-Linux-exclusive-file-create-proof.json binds realLinux6.12.76/ext4
+  positive11checks + symlink8checks: productionbuild refusesgenericdisk
+  BEFOREmkdir, VMbuild writes8MiB, realunmount/blockRO+ro,noload remount,
+  actualFIEMAP matches independentlydecodedrawinode/CRC/extents. Readonly
+  e2fsck AND cleanjournal/state pass. Originalbaselineinode/allcontent and
+  readonlyLinuxrootdisk unchanged. InstalledLinuxkernel in isolatedQEMU,
+  oursmallPID1/root, noNIC/share/phone. Failures retained: initialkernel
+  ignoredinitrd, alreadymounteddevtmpfs, strictsigncompile, missingencrypt
+  featurefixture (refused); these are NOT phonefailures/positiveproof.
+- PhysicalRAM readonly trial phone-readonly-native-0077 SENT22:09:08UTC,
+  actualUEFIUSB statechecked; kernelstart ACK22:11:02UTC, capture0001 real
+  log/screen shows userlandbackboarddloading, notGUIproofyet. OriginalGPU
+  bundle42d5ec4c... byte-identical; actualbase182map and512MiBRAMCOW/ufsrw0
+  preserved. Purpose: physicalnativequeue/readpath validation since0071;
+  NO physicalownedmarker/newfile/pin/nativewrite. Must conclude with native
+  drain and independentlyverified actualFASTBOOT; rawRAMfallbackonlyifneeded.
+- Hostnewfile helper not uploaded/executedphone. Beforefirstphysicalowned
+  write stillneed strictseparate markerimage admission + realnewexclusivefile
+  creation/ROownership/export + freshbase/GPT/ESP proof. OrdinaryRAMpacker
+  explicitlyrejectsmarker. No bypass/strippingflag. PersistentiOSroot and
+  originalphysicalvolume-keymenu remain unfinished. Latestreport22:06UTC;
+  continue15minupdates. PreserveAndroid/Windows/allexistingdata.
+
 ### 0077 physical small-marker + live firmware durable guard candidate (not phone-admitted)
 
 - New0874 candidate adds a separate physical8MiB owned marker entry. It binds
