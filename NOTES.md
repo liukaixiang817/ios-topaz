@@ -34,6 +34,37 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0070 actual EFI/XNU two-core PASS; physical RAM trials next
+
+- Source85215c4bd51d3b060364705834f025e56548efa3 COMMITTED/PUSHED.
+  macOS27/Xcode27 CI40546116342/job122337077758 SUCCESS, kernel SHA
+ 8ff4808306f80a8b5c2b269a8aae9e5325faef6f970e3dd74355316f0a8683ae
+  verified exact source/profile/artifact CRC/SHA under xnu/out-polaris-0070.
+- REAL EFI/XNU two-core CPU7+6 PASS16/16 checks37.890s: actual2/2 initialized,
+  both SGI1,32cross-core callbacks(remote16), four actual concurrent user
+  processes VM stress PASS, bounded input consumed, no panic/stress error.
+  Both single-core controls CPU1/CPU7 also PASS20/20 each37.819/38.010s,
+  including real native RAM BSD drain. See0070/cpu-real-EFI-XNU-summary.json.
+  GenericQEMU is not SDM845 clock/performance/physical SMP proof.
+- Physical small-RAM diagnostics prepared from the same real64MiB dirty-root
+  fixture, ownDT/physicalRAM/GIC preserved, file-root/touch/USB/GPU nodes
+  removed, rd=md0/ufsrw0; no actual UFS root access. CPU1,CPU7 andCPU7+6 cases
+  independently require matching fullCI/QEMU/preflight/source/codec admission.
+  Two-core image already offline packaged; original81files preserved, actual
+  originalEDK2 decode whole stream matches. No physical CPU7/two-core test yet.
+  Next actual read-onlyFASTBOOT query then direct authorized RAM trial; no
+  repeated permission. Single-core native drain permitted, two-core bridge
+  still refused; RAM-only rescue reset then independent actualFASTBOOT check.
+- Review of own cpu_start confirms forced PoC cache clean of CPU data/reset
+  state/BootArgs/cpu_ttep/bootstrap tables already present. Reference's hard
+  stop-rest/give-up behavior does not meet our durable-reset contract. Private
+  native-multicore-drain-design.json proposes scheduler-driven processor_exit,
+  native quiesce and actualAFFINITY_OFF before sealing; NOT implemented/proven.
+-0070 reuses0069 fresh root preflight16:49UTC, only controlled FASTBOOT since;
+  all16GiB SHA/182map/GPT/critical/ESP and exactcleanheader passed, no writes.
+  Latest user progress17:07UTC, next17:22UTC. CPU multicore and reversible
+  persistence remain priorities; currentGPU retained, runtime still RAMCOW.
+
 ### 0070 generic PSCI conduit fix (local PASS; full CI next)
 
 -0069 source0c3caa516cb353a866ceec4472a7841a860a5b42 full CI40543615380/
