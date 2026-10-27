@@ -34,7 +34,52 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### 0062 selected disk-application chain, in progress (artifacts under0061)
+### 0062 disk EFI, recovery and menu (artifacts underuefi-ios-0062)
+
+- LATEST MENU INSTALLED, still TRIAL: only478byte /simpleinit.static.uefi.cfg
+  added after successful physical UI and original-menu emulator proofs. Full
+  ESP before/after backups and mtools readback prove all101 pre-existing files
+  unchanged, plus exact new sidecar. No original firmware/default/BootOrder or
+  userdata/GPT edits. menu-additive-physical-0001/result.json; new fullESP SHA
+ 7338692a4e42db7f53fac8fe2ff3bb3bf55bd5dec4bdc6d5c4243d8d49794ef3.
+  Do NOT rerun this append or use earlier ESP hashes for new preflight. Actual
+  original-phone menu/PM8998 key selection still untested; standalone child
+  application already physically proven via0062 RAM chain, not that menu.
+- Fresh preflight-final-0002 PASS: full16GiB SHA/all182 extents exact, six GPT
+  copies/four critical partitions unchanged, outer4096bytes EXACT previous
+  reviewed clean header; no repair/replay. Root remains volatile RAMCOW.
+- New optional tools/polaris-file-extents.c --identity physically tested on
+  ro,noload ext4 with block RO. Default output EXACTLY matches old182map JSON;
+  generation3111797640,flags524288(extents),one link; no immutable/noatime pin
+  currently. Identity is inventory, NOT write-ownership proof. Native f_bavail
+  gives74724356096bytes (~69.6GiB, excludes reserve); root df reports70.7GiB
+  including reserved space. Earlier rough7GiB guess was WRONG; space allows
+  separate full16GiB runtime file, preserve immutable base. No runtime file
+  allocated or root write gate enabled yet. Evidence identity-physical-0001.
+- Inspector C cross-compiled warnings-as-errors. Zig libc rebuild hung with
+  idle worker pool twice; stopped only owned processes, preserved sample.
+  Explicit link of new C object against previously reviewed same Zig musl
+  CRT/libc/libzigc/compiler_rt succeeded; actual physical execution PASS.
+- Phone returned actual expected FASTBOOT after read-only identity inspection,
+  verified in post-menu-final-fastboot-verification.json. No Android fallback.
+  Next: implement/test dedicated runtime-file ownership/extent write gate and
+  kernel flush/shutdown handshake before allocating/pinning new runtime root;
+  test real original menu/volume controls using a RAM-only recoverable harness.
+  Do not just remove RAMCOW, permit generic UFS writes, or flash holdingDXE.
+
+- LATEST PHYSICAL RECOVERY PASS: intentional no-host interval after0062boot0002
+  UI test ended with actual expected Polaris FASTBOOT at1807.085s after last
+  successful command. First probes at1755/1768/1781/1794s were negative; next
+  was positive. No UEFI command renewed the lease, no keys/Android/ADB fallback.
+  physical-idle-lease-observer-0001/result.json is authoritative. Phone NOW
+  FASTBOOT; this supersedes live0062boot0002 and pending-lease text below.
+  Recovery is RAM-only, not safe shutdown proof for future writable iOS.
+- New menu source98d535e COMMITTED/PUSHED (with prior84ff5b1 physical-UI notes).
+  Offline menu-additive-plan-0001 preserves101 ESP files, proposes ONE new
+  simpleinit.static.uefi.cfg using corrected native separators. Still not on
+  phone. Full host16GiB original-root SHA689a8cd1 also reverified11.385s, exact
+  match current phone immutable baseline. Fresh preflight-final-0002 prepared
+  for currentESP d26607f7, ro/noload/rootSHA/182map unchanged, no weakened gate.
 
 - LATEST MENU EMULATOR PASS: reusable tools/polaris_uefi_menu.py generates
   the additive static include; tools/qemu-polaris-original-menu.py runs the

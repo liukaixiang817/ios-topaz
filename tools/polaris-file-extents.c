@@ -13,6 +13,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/statfs.h>
@@ -24,16 +25,18 @@
 
 int main(int argc, char **argv)
 {
-    if (argc != 2) {
-        fprintf(stderr, "usage: polaris-file-extents FILE_ON_READONLY_EXT4\n");
+    int identity = argc == 3 && !strcmp(argv[1], "--identity");
+    if (argc != 2 && !identity) {
+        fprintf(stderr, "usage: polaris-file-extents [--identity] FILE_ON_READONLY_EXT4\n");
         return 2;
     }
-    int fd = open(argv[1], O_RDONLY | O_NOFOLLOW | O_CLOEXEC | O_NONBLOCK);
+    int fd = open(argv[identity ? 2 : 1], O_RDONLY | O_NOFOLLOW | O_CLOEXEC | O_NONBLOCK);
     if (fd < 0) { perror("open image"); return 1; }
     struct stat st, after;
     struct statfs fs;
     struct statvfs space;
     unsigned long flags = 0;
+    long generation = 0;
     if (fstat(fd, &st) || fstatfs(fd, &fs) || fstatvfs(fd, &space) ||
         ioctl(fd, FS_IOC_GETFLAGS, &flags)) {
         perror("image metadata"); close(fd); return 1;
@@ -45,6 +48,11 @@ int main(int argc, char **argv)
         (flags & (FS_ENCRYPT_FL | FS_COMPR_FL | FS_INLINE_DATA_FL))) {
         fprintf(stderr, "requires allocated 4KiB-aligned regular image on read-only ext4\n");
         close(fd); return 1;
+    }
+    /* Optional inventory for a future ownership gate, NOT write permission.
+     * Keep the original FIEMAP JSON exactly stable without this flag. */
+    if (identity && ioctl(fd, FS_IOC_GETVERSION, &generation)) {
+        perror("inode generation"); close(fd); return 1;
     }
     struct fscrypt_policy_v1 policy = {0};
     if (ioctl(fd, FS_IOC_GET_ENCRYPTION_POLICY, &policy) != -1 || errno != ENODATA) {
@@ -124,7 +132,26 @@ int main(int argc, char **argv)
                i ? "," : "", (uint64_t)e->fe_logical,
                (uint64_t)e->fe_physical, (uint64_t)e->fe_length);
     }
-    puts("]}");
+    printf("]");
+    if (identity) {
+        printf(",\"identity_inventory_only\":true,\"write_ownership_proven\":false,"
+               "\"identity\":{\"generation\":%" PRIu32 ",\"flags\":%lu,"
+               "\"links\":%" PRIu64 ",\"uid\":%u,\"gid\":%u,\"mode\":%u,"
+               "\"allocated_512byte_blocks\":%" PRIu64 ","
+               "\"ctime_seconds\":%" PRId64 ",\"ctime_nanoseconds\":%ld,"
+               "\"mtime_seconds\":%" PRId64 ",\"mtime_nanoseconds\":%ld,"
+               "\"device_major\":%u,\"device_minor\":%u,"
+               "\"filesystem_blocks\":%" PRIu64 ",\"free_blocks\":%" PRIu64 ","
+               "\"available_blocks\":%" PRIu64 ",\"fragment_bytes\":%" PRIu64 "}",
+               (uint32_t)generation, flags, (uint64_t)st.st_nlink,
+               st.st_uid, st.st_gid, st.st_mode, (uint64_t)st.st_blocks,
+               (int64_t)st.st_ctim.tv_sec, st.st_ctim.tv_nsec,
+               (int64_t)st.st_mtim.tv_sec, st.st_mtim.tv_nsec,
+               major(st.st_dev), minor(st.st_dev), (uint64_t)space.f_blocks,
+               (uint64_t)space.f_bfree, (uint64_t)space.f_bavail,
+               (uint64_t)space.f_frsize);
+    }
+    puts("}");
     error = 0;
 out:
     free(fm);
