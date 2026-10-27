@@ -239,11 +239,16 @@ class LibusbTransport:
 
 class KernelProtocol(ReadOnlyProtocol):
     """Explicit RAM-boot/reset client. ReadOnlyProtocol keeps its old whitelist."""
-    limits=dict(ReadOnlyProtocol.limits,logs=(4<<20)+32768+128,**{'boot-options':65536})
+    limits=dict(ReadOnlyProtocol.limits,logs=(4<<20)+32768+128,**{'boot-options':65536,'shutdown-state':128})
+
+    def __init__(self,transport):
+        super().__init__(transport)
+        self.shutdown_token=None
 
     def _control(self,command):
         contact=re.fullmatch(rb'oem touch:[01]:[0-9]{1,4}:[0-9]{1,4}',command)
-        if not self.verified or (command not in [b'getvar:kernel-state',b'getvar:input',b'oem boot',b'reboot',b'reboot-bootloader'] and not contact):
+        if not self.verified or (command not in [b'getvar:kernel-state',b'getvar:input',b'oem boot',b'reboot',b'reboot-bootloader',
+                b'oem shutdown:1',b'oem shutdown:2',b'oem drained-reboot:1',b'oem drained-reboot:2'] and not contact):
             raise ValueError('unsupported or unverified control command')
         self.transport.write(command);reply=self.transport.read(64)
         if not reply.startswith(b'OKAY'):
@@ -277,6 +282,35 @@ class KernelProtocol(ReadOnlyProtocol):
     def reboot(self,bootloader=False):
         if self._control(b'reboot-bootloader' if bootloader else b'reboot'):
             raise ValueError('invalid reset acknowledgement')
+
+    def shutdown_status(self):
+        self.stage('shutdown-state');raw=self.upload()
+        if len(raw)!=128 or any(raw[44:]):raise ValueError('invalid native shutdown status size/reserved bytes')
+        values=struct.unpack_from('<QIIIIQQI',raw)
+        status=dict(zip(['cookie','sequence','mode','phase','error','write_epoch','flushed_epoch','capabilities'],values))
+        if status['phase']>6 or status['mode']>2:raise ValueError('invalid native shutdown status')
+        return status
+
+    def request_shutdown(self,bootloader=True):
+        if type(bootloader) is not bool:raise ValueError('invalid shutdown target')
+        if self.shutdown_token is not None:raise RuntimeError('native shutdown already requested by this session')
+        before=self.shutdown_status();mode=2 if bootloader else 1
+        if (not before['cookie'] or before['phase']!=1 or before['sequence'] or before['mode'] or
+            before['error'] or before['write_epoch'] or before['flushed_epoch'] or before['capabilities']!=0x80000000):
+            raise RuntimeError('native RAM shutdown is not ready')
+        if self._control(f'oem shutdown:{mode}'.encode()):raise ValueError('invalid shutdown request acknowledgement')
+        self.shutdown_token=(before['cookie'],1,mode)
+        return self.shutdown_token
+
+    def reboot_drained(self):
+        if self.shutdown_token is None:raise RuntimeError('no session-bound native shutdown request')
+        status=self.shutdown_status();cookie,sequence,mode=self.shutdown_token
+        if (status['cookie']!=cookie or status['sequence']!=sequence or status['mode']!=mode or
+            status['phase']!=3 or status['error'] or status['write_epoch'] or status['flushed_epoch'] or
+            status['capabilities']!=0x80000003):
+            raise RuntimeError('native RAM drain not complete; reset refused')
+        if self._control(f'oem drained-reboot:{mode}'.encode()):raise ValueError('invalid drained reset acknowledgement')
+        return status  # Evidence only of RAM drain, never persistent UFS durability.
 
     def input_status(self):
         raw=self._control(b'getvar:input')

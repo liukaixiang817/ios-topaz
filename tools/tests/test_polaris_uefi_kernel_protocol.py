@@ -1,5 +1,6 @@
 import hashlib
 import importlib.util
+import struct
 from pathlib import Path
 import unittest
 
@@ -12,6 +13,34 @@ class Wire:
     def read(self,n):return self.replies.pop(0)
 
 class KernelProtocolTests(unittest.TestCase):
+    @staticmethod
+    def shutdown_reply(cookie=123,sequence=0,mode=0,phase=1,error=0,cap=0x80000000,epoch=0):
+        raw=struct.pack('<QIIIIQQI',cookie,sequence,mode,phase,error,epoch,epoch,cap)+bytes(84)
+        return [b'OKAY',b'DATA00000080',raw,b'OKAY']
+
+    def test_native_drain_request_ACK_does_not_grant_reset(self):
+        replies=[b'OKAYpolaris-uefi-diag',*self.shutdown_reply(),b'OKAY',
+                 *self.shutdown_reply(sequence=1,mode=2,phase=2),
+                 *self.shutdown_reply(sequence=1,mode=2,phase=3,cap=0x80000003),b'OKAY']
+        wire=Wire(replies);p=usb.KernelProtocol(wire);p.product();p.request_shutdown()
+        with self.assertRaises(RuntimeError):p.reboot_drained()
+        self.assertNotIn(b'oem drained-reboot:2',wire.commands)
+        status=p.reboot_drained();self.assertEqual(status['capabilities'],0x80000003)
+        self.assertEqual(wire.commands[-1],b'oem drained-reboot:2')
+
+    def test_stale_failed_busy_or_durable_status_is_not_RAM_drain(self):
+        for changed in [dict(cookie=124),dict(error=5),dict(phase=6),dict(epoch=1),
+                        dict(mode=1),dict(sequence=2),dict(phase=5,cap=0x1f)]:
+            with self.subTest(changed=changed):
+                final=dict(sequence=1,mode=2,phase=3,cap=0x80000003);final.update(changed)
+                wire=Wire([b'OKAYpolaris-uefi-diag',*self.shutdown_reply(),b'OKAY',*self.shutdown_reply(**final)])
+                p=usb.KernelProtocol(wire);p.product();p.request_shutdown()
+                with self.assertRaises(RuntimeError):p.reboot_drained()
+                self.assertNotIn(b'oem drained-reboot:2',wire.commands)
+        wire=Wire([b'OKAYpolaris-uefi-diag']);p=usb.ReadOnlyProtocol(wire);p.product()
+        with self.assertRaises(ValueError):p.stage('shutdown-state')
+        self.assertEqual(len(wire.commands),1)
+
     def test_boot_backup_is_bounded_and_keeps_inventory_reader_whitelist(self):
         wire=Wire([b'OKAYpolaris-uefi-diag',b'OKAY',b'DATA00000020',b'x'*32,b'OKAY'])
         p=usb.KernelProtocol(wire);p.product();p.stage('boot-options');self.assertEqual(p.upload(),b'x'*32)

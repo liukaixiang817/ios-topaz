@@ -33,6 +33,15 @@ def admit(driver,qemu,ci,profile,preflight):
     if driver.get('chain_app') and not all(qemu['checks'].get(k) is True for k in
          ['selected_disk_app_started','chain_file_handles_closed','chain_loaded_success','selected_app_did_not_return']):
         raise ValueError('chain trial requires actual selected EFI application handoff proof')
+    if driver.get('RAM_native_shutdown_bridge'):
+        status=qemu.get('native_shutdown_mailbox') or {}
+        if (qemu.get('RAM_native_drain_test')!='success' or not all(qemu['checks'].get(k) is True for k in
+                ['native_reboot_sync_path','real_zero_mounts_and_buffers','firmware_observed_RAM_drained','separate_RAM_result']) or
+            not status.get('cookie') or status.get('cookie')!=status.get('request_cookie') or
+            status.get('sequence')!=1 or status.get('mode')!=2 or status.get('phase')!=3 or
+            status.get('error')!=0 or status.get('write_epoch')!=0 or status.get('flushed_epoch')!=0 or
+            status.get('capabilities')!=0x80000003):
+            raise ValueError('native RAM shutdown bridge requires actual successful native EFI/XNU drain proof')
     fields=dict(line.split('=',1) for line in profile.splitlines() if '=' in line)
     if (ci.get('status')!='completed' or ci.get('conclusion')!='success' or
         fields.get('target_platform')!='polaris' or fields.get('machine_config')!='SWEET' or
@@ -85,6 +94,7 @@ def main():
                 RAM_only_XNU_loader=True,kernel_handoff=True,holds_before_OS_start=False,
                 holds_before_host_kernel_command=not driver.get('disk_payload_read_only',False),
                 disk_payload_read_only=driver.get('disk_payload_read_only',False),
+                RAM_native_shutdown_bridge=driver.get('RAM_native_shutdown_bridge',False),
                 phone_writes=False,storage_write_api=False,NVRAM_write_api=False,
                 original_sha256=sha(a.original),driver_sha256=sha(app),kernel_sha256=sha(a.kernel),
                 payload_sha256=sha(a.payload),CI_run=ci['databaseId'],CI_head=ci['headSha'],

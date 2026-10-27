@@ -34,6 +34,45 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0065 installation readiness and native RAM USB bridge
+
+- Human asks to check readiness and install if close enough. Rehashed ALL bound
+  physical0062 screenshots/logs/input results, checked ESP append proof and
+  current native UFS source. installation-readiness-audit.json confirms original
+  Mindows UEFI -> disk EFI app -> iOS/UI/USB IS PHYSICALLY PROVEN, but persistent
+  root is NOT ready: owned native UFS WRITE/final SYNC still absent and physical
+  volume-key menu remains untested. Existing root image and boot app/menu files
+  are on disk; current runtime writes still volatile512MiB. No install or extra
+  device boot/write performed. Expected FASTBOOT read-only verified13:52:48UTC.
+- Added explicit --ram-shutdown-bridge resident EFI/USB: bounded128byte native
+  status snapshot, asynchronous native shutdown request, then separately gated
+  drained reset. Request ACK never authorizes reset. Shared callback requires
+  matching cookie/sequence/mode and RAM_DRAINED, refuses wrong target/error.
+  Host session binds token and independently validates status before reset.
+  CLI shutdown-normal/shutdown-fastboot saves kernel shutdown log before reset;
+  its reset ACK is still NOT actual mode proof, must query real FASTBOOT after.
+- Existing raw reboot/1800s lease remain RAM-only recovery. Persistent mode is
+  still impossible to admit and MUST disable raw reset/lease before enabling
+  owned writes. This bridge does NOT supply durable SAFE or native UFS flush.
+- Actual shared sender/reset-readiness callback in EFI/XNU QEMU with live RAM
+  file writer passes20/20 checks37.605s; stale-cookie refusal20/20 checks37.686s.
+  New parser/host/admission tests15 PASS, ASan/UBSan C parser. Physical image
+  packager now requires matching successful native-drain proof when enabling
+  this bridge; ordinary VM boot or stale refusal cannot substitute.
+- Offline physical candidate phone-payload.bin/phone-driver-0001 built with
+  unchanged CI40511293017 kernel310b7679 and explicitpolarisquiesce=1. Phone
+  payload retains RAMCOW/ufsrw=0, own DT/base maps and graphics bundle. This
+  is NOT packaged/admitted/sent. Before physical RAM bridge test, fresh known
+  recovery ro/noload full rootSHA/182map/GPT/critical+latestESP baseline,
+  original EDK2 decoder validation and bound image proof are still required.
+- NEXT: physically prove native RAM drain + expected FASTBOOT with this bridge,
+  then integrate0063 ownership/strict CDB/quiesce into actual native UFS mutex,
+  descriptor completion/timeout/error tracking/exclusive ownership/final SYNC.
+  Only after verified durable handshake may a small new pinned owned file be
+  written/synced/reset/read back, then fullruntime copied preserving original.
+  No new kernel CI was spent for these EFI/host-only changes. Old USB observer
+  remains paused; targeted new bridge use is authorized. Keep all existing data.
+
 ### 0064 native RAM shutdown drain (in progress, NOT durable root)
 
 - LATEST: source1e605ca COMMITTED/PUSHED. macOS27/Xcode27 CI40511293017,

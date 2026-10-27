@@ -33,7 +33,8 @@ def binding(boot, image, driver):
 
 def main():
     ap=argparse.ArgumentParser(description=__doc__)
-    ap.add_argument('action',choices=['state','capture','boot-options','boot','tap','swipe','reboot-normal','reboot-fastboot'])
+    ap.add_argument('action',choices=['state','capture','boot-options','boot','tap','swipe','reboot-normal','reboot-fastboot',
+                                      'shutdown-normal','shutdown-fastboot'])
     ap.add_argument('--libusb',required=True,type=Path)
     ap.add_argument('--boot-record',required=True,type=Path)
     ap.add_argument('--image-manifest',required=True,type=Path)
@@ -41,17 +42,21 @@ def main():
     ap.add_argument('--payload',type=Path)
     ap.add_argument('--output',required=True,type=Path)
     ap.add_argument('--wait-seconds',type=int,default=0)
+    ap.add_argument('--shutdown-seconds',type=int,default=180)
     ap.add_argument('--x',type=int);ap.add_argument('--y',type=int)
     ap.add_argument('--to-x',type=int);ap.add_argument('--to-y',type=int)
     ap.add_argument('--duration-ms',type=int,default=400)
     a=ap.parse_args()
     if not 0<=a.wait_seconds<=600:ap.error('target discovery wait must be 0..600 seconds')
+    if not 1<=a.shutdown_seconds<=300:ap.error('native drain deadline must be 1..300 seconds')
     if (a.action=='boot')!=(a.payload is not None):ap.error('--payload is required only for boot')
     if a.action in ['tap','swipe']:
         if a.x is None or a.y is None or not 0<=a.x<1080 or not 0<=a.y<2160:ap.error('contact coordinates required in panel bounds')
         if a.action=='swipe' and (a.to_x is None or a.to_y is None or not 0<=a.to_x<1080 or not 0<=a.to_y<2160 or not 100<=a.duration_ms<=1500):ap.error('swipe destination/duration invalid')
     boot=json.loads(a.boot_record.read_text());image=json.loads(a.image_manifest.read_text())
     driver=json.loads(a.driver_manifest.read_text());binding(boot,image,driver)
+    if a.action.startswith('shutdown-') and driver.get('RAM_native_shutdown_bridge') is not True:
+        raise ValueError('native shutdown requires the explicitly built RAM-only bridge')
     raw=a.payload.read_bytes() if a.payload else None
     if raw is not None and (len(raw)!=driver.get('payload_bytes') or
                            hashlib.sha256(raw).hexdigest()!=driver.get('payload_sha256')):
@@ -82,6 +87,25 @@ def main():
             protocol.reboot(a.action=='reboot-fastboot')
             record['reset_command_acknowledged']=True
             record['resulting_boot_mode_verified']=False
+        elif a.action.startswith('shutdown-'):
+            token=protocol.request_shutdown(a.action=='shutdown-fastboot')
+            record['native_shutdown_token']=list(token);record['shutdown_samples']=[];save()
+            start=time.monotonic()
+            while True:
+                status=protocol.shutdown_status()
+                if not record['shutdown_samples'] or status!=record['shutdown_samples'][-1]['status']:
+                    record['shutdown_samples'].append(dict(utc=now(),status=status));save()
+                if status['error'] or status['phase']==6:raise RuntimeError('kernel refused native RAM shutdown; no reset sent')
+                if status['phase']==3:break
+                if time.monotonic()-start>=a.shutdown_seconds:raise RuntimeError('native RAM shutdown not completed; no reset sent')
+                time.sleep(.25)
+            # Preserve kernel evidence before the reset removes the RAM log.
+            protocol.stage('logs');data=protocol.upload();p=out/'shutdown-kernel.log';p.write_bytes(data);p.chmod(0o600)
+            record['native_shutdown_log_sha256']=sha(p);save()
+            record['native_RAM_drained_status']=protocol.reboot_drained()
+            record['persistent_UFS_durability_proven']=False
+            record['reset_command_acknowledged']=True
+            record['resulting_boot_mode_verified']=False # Must query real expected FASTBOOT separately.
         elif a.action in ['tap','swipe']:
             record['input_before']=protocol.input_status();save()
             if a.action=='tap':protocol.tap(a.x,a.y)

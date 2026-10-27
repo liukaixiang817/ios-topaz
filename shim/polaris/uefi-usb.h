@@ -56,6 +56,9 @@ struct polaris_usb_control {
     int (*touch)(void *,unsigned,unsigned,unsigned);
     int (*input_status)(void *,struct polaris_uefi_input_status *);
     int (*boot_options)(void *,const uint8_t **,uint64_t *);
+    int (*shutdown_status)(void *,const uint8_t **,uint64_t *);
+    int (*shutdown_begin)(void *,unsigned);
+    int (*shutdown_reset_ready)(void *,unsigned);
     void (*autoboot)(void *); /* Optional, after buffers/USB init; no host required. */
     void (*idle_guard)(void *); /* Bounded RAM-only recovery, also while OUT waits. */
     void (*host_activity)(void *);

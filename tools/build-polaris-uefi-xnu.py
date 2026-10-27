@@ -54,6 +54,8 @@ def main():
     ap.add_argument('--test-qemu',action='store_true')
     ap.add_argument('--test-ram-drain',choices=['success','stale-cookie'],
                     help='QEMU-only real BSD RAM drain experiment; never UFS durability proof')
+    ap.add_argument('--ram-shutdown-bridge',action='store_true',
+                    help='expose native RAM-only shutdown mailbox over resident USB')
     ap.add_argument('--efi-application',action='store_true',help='selected application, never ReadyToBoot interception')
     ap.add_argument('--disk-guid',type=uuid.UUID,help='exact GPT partition UUID for read-only disk payload')
     ap.add_argument('--disk-start-lba',type=int)
@@ -63,6 +65,8 @@ def main():
     a=ap.parse_args();r=Path(__file__).resolve().parents[1]
     if a.test_ram_drain and (not a.test_qemu or a.chain_app_manifest):
         ap.error('RAM drain experiment requires QEMU without a chain wrapper')
+    if a.ram_shutdown_bridge and a.chain_app_manifest:
+        ap.error('RAM shutdown bridge belongs to the selected loader, not its chain wrapper')
     if a.disk_guid is not None:
         if (a.disk_start_lba is None or a.disk_blocks is None or not 0<a.disk_start_lba<2**64 or
             not 0<a.disk_blocks<2**64-a.disk_start_lba):ap.error('disk identity requires valid start and block count')
@@ -94,7 +98,8 @@ def main():
     if input_present and (input_offset%128 or not 0<=input_offset<=end-256):raise ValueError('invalid input mailbox address')
     if not a.test_qemu and not input_present:raise ValueError('physical trial requires the bounded input kernel')
     shutdown_offset=syms.get('_polaris_uefi_shutdown',va)-va
-    if a.test_ram_drain:
+    shutdown_bridge=a.ram_shutdown_bridge or bool(a.test_ram_drain)
+    if shutdown_bridge:
         tokens=raw[0x48:0x2a8].split(b'\0',1)[0].split()
         if tokens.count(b'polarisquiesce=1')!=1 or any(
                 t.startswith(b'polarisquiesce=') and t!=b'polarisquiesce=1' for t in tokens):
@@ -122,10 +127,11 @@ def main():
 #define EFI_XNU_CPU {1 if a.test_qemu else 256}u
 #define EFI_XNU_BOOT_CPU_TOKEN "polarisbootcpu={1 if a.test_qemu else 256}"
 ''')
-    if a.test_ram_drain:
+    if shutdown_bridge:
         with config.open('a') as f:
-            f.write(f'#define EFI_XNU_RAM_DRAIN_TEST {1 if a.test_ram_drain=="success" else 2}\n')
+            f.write('#define EFI_XNU_SHUTDOWN_BRIDGE 1\n')
             f.write(f'#define EFI_XNU_SHUTDOWN_OFFSET 0x{shutdown_offset:x}ULL\n')
+            if a.test_ram_drain:f.write(f'#define EFI_XNU_RAM_DRAIN_TEST {1 if a.test_ram_drain=="success" else 2}\n')
     disk_path=None
     if a.disk_guid:
         disk_path='\\EFI\\Polaris\\'+a.disk_version+'\\PAYLOAD.BIN'
@@ -155,7 +161,7 @@ def main():
     if a.efi_application:flags.append('-DPOLARIS_EFI_APPLICATION=1')
     sources=['uefi-xnu.c','uefi-xnu-ap.S','uefi-xnu-crc.c','payload.c','uefi-usb.c','uefi-usb-command.c','uefi-usb-control.c']
     inputs=['shim/polaris/'+n for n in sources]+['shim/polaris/uefi.h','shim/polaris/uefi-xnu.h','shim/polaris/uefi-usb.h','shim/polaris/uefi-memory.h','shim/polaris/uefi-reset.h','shim/polaris/uefi-file.h','shim/polaris/uefi-boot-options.h','shim/polaris/uefi-ram-lease.h','shim/polaris/payload.h','tools/build-polaris-uefi-xnu.py','tools/polaris-uefi-input.h']
-    if a.test_ram_drain:inputs.append('shim/polaris/runtime-quiesce.h')
+    if shutdown_bridge:inputs.append('shim/polaris/runtime-quiesce.h')
     objects=[]
     for source in sources:
         obj=out/(Path(source).stem+'.obj');objects.append(str(obj))
@@ -179,7 +185,8 @@ def main():
                   disk_blocks=a.disk_blocks,disk_payload_path=disk_path,
                   chain_app=chain,
                   bounded_input=input_present,input_offset=input_offset,
-                  RAM_native_drain_test=a.test_ram_drain,shutdown_offset=shutdown_offset if a.test_ram_drain else None,
+                  RAM_native_drain_test=a.test_ram_drain,RAM_native_shutdown_bridge=shutdown_bridge,
+                  shutdown_offset=shutdown_offset if shutdown_bridge else None,
                   persistent_root_or_UFS_durability_proven=False,
                   QEMU_variant=a.test_qemu,phone_compatible=not a.test_qemu,
                   kernel_CPU_affinity=1 if a.test_qemu else 256,

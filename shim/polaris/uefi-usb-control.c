@@ -33,6 +33,26 @@ int polaris_usb_control_command(struct polaris_usb_diag *d,struct polaris_usb_co
             return reply(d,"FAILboot inventory unavailable");
         d->staged=data;d->staged_bytes=bytes;return reply(d,"OKAY");
     }
+    if(same(p,n,"oem shutdown-state")){
+        const uint8_t *data=0;uint64_t bytes=0;d->staged=0;d->staged_bytes=0;
+        if(!c->shutdown_status||!c->shutdown_status(c->context,&data,&bytes)||!data||bytes!=128)
+            return reply(d,"FAILshutdown state unavailable");
+        d->staged=data;d->staged_bytes=bytes;return reply(d,"OKAY");
+    }
+    unsigned shutdown=same(p,n,"oem shutdown:1")?1:same(p,n,"oem shutdown:2")?2:0;
+    if(shutdown){
+        if(!c->shutdown_begin||!c->shutdown_begin(c->context,shutdown))
+            return reply(d,"FAILnative shutdown unavailable or refused");
+        /* ACK means request sent only. No reset, and no safe/durable claim. */
+        return reply(d,"OKAY");
+    }
+    unsigned drained=same(p,n,"oem drained-reboot:1")?1:same(p,n,"oem drained-reboot:2")?2:0;
+    if(drained){
+        if(!c->shutdown_reset_ready||!c->shutdown_reset_ready(c->context,drained)||
+           !c->prepare_reset||!c->reset||!c->prepare_reset(c->context,drained))
+            return reply(d,"FAILnative shutdown not complete");
+        if(!reply(d,"OKAY"))return 0;c->reset(c->context,drained);return 1;
+    }
     if(same(p,n,"getvar:input")){
         struct polaris_uefi_input_status s={0};
         if(!c->input_status||!c->input_status(c->context,&s))return reply(d,"FAILinput unavailable");

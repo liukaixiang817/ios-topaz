@@ -12,6 +12,8 @@
 #if !defined(POLARIS_EFI_TEST_QEMU)
 #error "Native RAM drain experiment is emulator-only until independently verified"
 #endif
+#endif
+#if defined(EFI_XNU_SHUTDOWN_BRIDGE)
 #include "runtime-quiesce.h"
 #endif
 #if defined(EFI_XNU_DISK_GUID)
@@ -261,6 +263,46 @@ static int logs(void *context,const uint8_t **data,uint64_t *count)
     }
     *data=log_snapshot;*count=at;return at>0;
 }
+#if defined(EFI_XNU_SHUTDOWN_BRIDGE)
+static struct polaris_shutdown_status shutdown_snapshot;
+static int shutdown_status(void *context,const uint8_t **data,uint64_t *bytes)
+{
+    (void)context;if(load_state<4||cpu_status||!data||!bytes)return 0;
+    volatile struct polaris_shutdown_slot *slot=(void*)(uintptr_t)(POLARIS_RAM_BASE+EFI_XNU_SHUTDOWN_OFFSET);
+    invalidate((uintptr_t)&slot->kernel,sizeof(slot->kernel));
+    bytes_copy(&shutdown_snapshot,(const void*)&slot->kernel,sizeof(shutdown_snapshot));
+    *data=(const void*)&shutdown_snapshot;*bytes=sizeof(shutdown_snapshot);return 1;
+}
+static int shutdown_begin(void *context,unsigned mode)
+{
+    const uint8_t *data;uint64_t bytes;
+    if((mode!=1&&mode!=2)||!shutdown_status(context,&data,&bytes))return 0;
+    const struct polaris_shutdown_status *s=(const void*)data;
+    if(!s->cookie||s->error||s->write_epoch||s->flushed_epoch)return 0;
+    volatile struct polaris_shutdown_slot *slot=(void*)(uintptr_t)(POLARIS_RAM_BASE+EFI_XNU_SHUTDOWN_OFFSET);
+    if(slot->firmware.sequence){
+        return slot->firmware.sequence==1&&slot->firmware.cookie==s->cookie&&slot->firmware.mode==mode&&
+            s->phase>=POLARIS_Q_RUNNING&&s->phase<=POLARIS_Q_SEALED;
+    }
+    if(s->phase!=POLARIS_Q_RUNNING||s->sequence||s->mode||s->capabilities!=POLARIS_Q_RAM_CONFIG)return 0;
+    bytes_zero((void*)&slot->firmware,sizeof(slot->firmware));
+    slot->firmware.cookie=s->cookie;slot->firmware.mode=mode;
+    __atomic_store_n(&slot->firmware.sequence,1,__ATOMIC_RELEASE);
+    clean((uintptr_t)&slot->firmware,sizeof(slot->firmware));return 1;
+}
+static int shutdown_reset_ready(void *context,unsigned mode)
+{
+    const uint8_t *data;uint64_t bytes;
+    if((mode!=1&&mode!=2)||!shutdown_status(context,&data,&bytes))return 0;
+    volatile struct polaris_shutdown_slot *slot=(void*)(uintptr_t)(POLARIS_RAM_BASE+EFI_XNU_SHUTDOWN_OFFSET);
+    const struct polaris_shutdown_status *s=(const void*)data;
+    /* RAM-only approval. The loader still requires polarisramcow=1/ufsrw=0.
+     * A future persistent bridge needs actual durable SAFE and must disallow
+     * both raw reset commands and the separate RAM host-loss recovery. */
+    return polaris_q_ram_drained(s,slot->firmware.cookie,slot->firmware.sequence,mode)&&
+        slot->firmware.mode==mode&&!polaris_q_reset_ready(s,slot->firmware.cookie,slot->firmware.sequence,mode);
+}
+#endif
 static int prepare_reset(void *context,unsigned mode)
 {
     (void)context;if(mode!=1&&mode!=2)return 0;
@@ -380,6 +422,9 @@ static void idle_guard(void *context)
 static struct polaris_usb_control controls={.begin=begin,.write=write_payload,.finish=finish,
     .prepare_boot=prepare_boot,.boot=boot_kernel,.prepare_reset=prepare_reset,.reset=reset,
     .state=state,.logs=logs,.running=running,.touch=touch,.input_status=input_status,.boot_options=boot_options,
+#if defined(EFI_XNU_SHUTDOWN_BRIDGE)
+    .shutdown_status=shutdown_status,.shutdown_begin=shutdown_begin,.shutdown_reset_ready=shutdown_reset_ready,
+#endif
     .autoboot=disk_autoboot,.idle_guard=idle_guard,.host_activity=host_activity};
 #if defined(POLARIS_EFI_TEST_QEMU)
 struct file {
@@ -427,14 +472,18 @@ static void test_ram_drain(int stress_done,unsigned contact_phase)
         if(!s.cookie||s.phase!=POLARIS_Q_RUNNING||s.error||s.sequence||s.mode||
            s.write_epoch||s.flushed_epoch||s.capabilities!=POLARIS_Q_RAM_CONFIG)return;
         cookie=s.cookie;
-        bytes_zero((void*)&slot->firmware,sizeof(slot->firmware));
-        slot->firmware.cookie=cookie^(EFI_XNU_RAM_DRAIN_TEST==2?UINT64_C(2):0);
-        slot->firmware.mode=2;
-        __atomic_store_n(&slot->firmware.sequence,1,__ATOMIC_RELEASE);
-        clean((uintptr_t)&slot->firmware,sizeof(slot->firmware));
+        if(EFI_XNU_RAM_DRAIN_TEST==1){
+            if(!shutdown_begin(0,2))return;
+        }else{
+            /* Only this emulator fault injection bypasses the common sender. */
+            bytes_zero((void*)&slot->firmware,sizeof(slot->firmware));
+            slot->firmware.cookie=cookie^UINT64_C(2);slot->firmware.mode=2;
+            __atomic_store_n(&slot->firmware.sequence,1,__ATOMIC_RELEASE);
+            clean((uintptr_t)&slot->firmware,sizeof(slot->firmware));
+        }
         sent=1;test_uart_text("\nQEMU_RAM_DRAIN_REQUESTED=1\n");
     }else if(EFI_XNU_RAM_DRAIN_TEST==1&&polaris_q_ram_drained(&s,cookie,1,2)&&
-             !polaris_q_reset_ready(&s,cookie,1,2)){
+             !polaris_q_reset_ready(&s,cookie,1,2)&&shutdown_reset_ready(0,2)&&!shutdown_reset_ready(0,1)){
         finished=1;test_uart_text("\nQEMU_RAM_DRAINED=1\n");
     }else if(s.phase==POLARIS_Q_FAILED){
         finished=1;

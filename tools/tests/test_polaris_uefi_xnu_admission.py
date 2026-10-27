@@ -50,5 +50,19 @@ class XnuAdmissionTests(unittest.TestCase):
                 with self.assertRaises(ValueError):packer.admit(*f)
                 f[1]['checks'][key]=True
 
+    def test_native_RAM_bridge_requires_more_than_VM_boot_or_stale_refusal(self):
+        f=list(self.fixtures());f[0]['RAM_native_shutdown_bridge']=True
+        with self.assertRaises(ValueError):packer.admit(*f)
+        f[1]['RAM_native_drain_test']='success'
+        f[1]['checks'].update({k:True for k in ['native_reboot_sync_path','real_zero_mounts_and_buffers',
+            'firmware_observed_RAM_drained','separate_RAM_result']})
+        f[1]['native_shutdown_mailbox']=dict(cookie=123,request_cookie=123,sequence=1,mode=2,phase=3,
+                                           error=0,write_epoch=0,flushed_epoch=0,capabilities=0x80000003)
+        packer.admit(*f)
+        for key,value in [('phase',5),('capabilities',0x1f),('error',5),('cookie',124),('write_epoch',1)]:
+            before=f[1]['native_shutdown_mailbox'][key];f[1]['native_shutdown_mailbox'][key]=value
+            with self.subTest(key=key),self.assertRaises(ValueError):packer.admit(*f)
+            f[1]['native_shutdown_mailbox'][key]=before
+
 
 if __name__=='__main__':unittest.main()

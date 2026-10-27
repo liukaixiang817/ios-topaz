@@ -29,6 +29,10 @@ static unsigned touches;
 static int boot_data(void *c,const uint8_t **p,uint64_t *n){(void)c;static const uint8_t data[40]={0};*p=data;*n=40;return 1;}
 static int touch(void *c,unsigned down,unsigned x,unsigned y){(void)c;assert(down<=1&&x<1080&&y<2160);touches++;return permitted;}
 static int input(void *c,struct polaris_uefi_input_status *s){(void)c;*s=(struct polaris_uefi_input_status){1,2,2,0};return 1;}
+static unsigned shutdown_count,drained;
+static int shutdown_begin(void *c,unsigned mode){(void)c;assert(mode==1||mode==2);shutdown_count++;return permitted;}
+static int shutdown_ready(void *c,unsigned mode){(void)c;return drained&&mode==2;}
+static int shutdown_state(void *c,const uint8_t **p,uint64_t *n){(void)c;static uint8_t b[128];*p=b;*n=128;return permitted;}
 int main(void){
  struct polaris_usb_diag d={0,tx,stage,0,0};
  struct polaris_usb_control c={.receive=receive,.begin=begin,.write=write,.finish=finish,.prepare_boot=prepare_boot,.boot=boot,.prepare_reset=prepare_reset,.reset=reset,.state=state,.touch=touch,.input_status=input};
@@ -51,6 +55,17 @@ int main(void){
  permitted=1;txok=0;assert(!polaris_usb_control_command(&d,&c,(const void*)"reboot",6));assert(reset_count==2);
  assert(!polaris_usb_control_command(&d,&c,(const void*)"oem boot",8));assert(!boot_count);
  txok=1;assert(polaris_usb_control_command(&d,&c,(const void*)"oem boot",8));assert(boot_count==1);
+ assert(polaris_usb_command(&d,(const void*)"oem shutdown-state",18));assert(!strncmp(response,"FAIL",4));
+ c.shutdown_begin=shutdown_begin;c.shutdown_reset_ready=shutdown_ready;c.shutdown_status=shutdown_state;
+ assert(polaris_usb_control_command(&d,&c,(const void*)"oem shutdown-state",18));assert(d.staged_bytes==128);
+ permitted=0;assert(polaris_usb_control_command(&d,&c,(const void*)"oem shutdown-state",18));assert(!strncmp(response,"FAIL",4)&&!d.staged);
+ permitted=1;
+ assert(polaris_usb_control_command(&d,&c,(const void*)"oem shutdown:2",14));assert(!strcmp(response,"OKAY")&&shutdown_count==1&&reset_count==2);
+ assert(polaris_usb_control_command(&d,&c,(const void*)"oem drained-reboot:2",20));assert(!strncmp(response,"FAIL",4)&&reset_count==2);
+ drained=1;
+ assert(polaris_usb_control_command(&d,&c,(const void*)"oem drained-reboot:1",20));assert(!strncmp(response,"FAIL",4)&&reset_count==2);
+ txok=0;assert(!polaris_usb_control_command(&d,&c,(const void*)"oem drained-reboot:2",20));assert(reset_count==2);
+ txok=1;assert(polaris_usb_control_command(&d,&c,(const void*)"oem drained-reboot:2",20));assert(!strcmp(response,"OKAY")&&reset_count==3&&reset_mode==2);
  assert(polaris_efi_crc32((const void*)"123456789",9)==0xcbf43926u);
  assert(polaris_efi_crc32((const void*)"",0)==0);
  return 0;
