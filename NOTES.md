@@ -34,6 +34,45 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0077 physical small-marker + live firmware durable guard candidate (not phone-admitted)
+
+- New0874 candidate adds a separate physical8MiB owned marker entry. It binds
+  full actual original16GiB root map/size before owner metadata, requires own
+  MPIDR600/700 + observed19.2MHz + physicalDT/RAM/UFSreg + CPU7+6 + original
+ 512MiB RAMCOW/rootrw1/ufsrw0. QEMU/probe tokens conflict-refused beforeMMIO.
+  Shared owner/CDB/queue/finalSYNC from0076 retained; original root stillRAMCOW.
+- Added LIVE firmware guard: caller template cannot containpolarisdurableguard;
+  realfirmware first disables rawreset AND1800sRAMlease, then appends a domain
+  guard to final bootargs BEFORE CPU_ON. Newkernel owned/physical entry requires
+  the correct domain beforePCI/MMIO. An OLDloader cannot accidentally enable
+  owned writes merely by passingpolarisownedmarker=1. This is mismatch prevention,
+  NOT cryptographic attestation. Existing256B shutdownABI unchanged/noIDL changes.
+- Physical marker tree must match exact complete originalfile-root extents,
+  size, partition and own UFSreg; packetmap must be fully covered/disjoint.
+ 31localtests inclASan/UBSan identity bitmutations,182map everybytechanges,
+  generatedguard bounds/forgery/template-C rejection and physical/QEMU tree
+  cross-transplant refusal PASS. Exact0874 apply0fuzz/0offset/actualC whitespace/
+  verbatimshared runtime-marker.h PASS. Final native Appleclang27/fullheader
+ 2TUs PASS; QEMU and physical EFI compile-only PASS (not execution).
+- New ordinary RAM packager explicitly rejects physical marker mode. No bypass
+  or phone imageadmission yet: next needs SAMEnewkernel actualownedmodel suite,
+  separate fresh new-file creation/ownership proof admission and final original
+  EDK2 decoding. Compile-only physicalEFI used SYNTHETIC unexported packet and
+  OLD0076kernel; never execution/admission. First compile-only template too
+  long for generatedguard was refused; removing onlydefault-offpolarisdebug=0
+  made space (native defaultenabled0 independently read). GPU flags unchanged.
+- Added QEMU-only omitted-live-guard negative test; next actualrun must show
+  kernelidentity refusal BEFOREPCI/MMIO, zero native submissions/no filebyte
+  changes and firmware reset refusal. Normalowned run must observe generated
+ 50470002 guard in actualnative log. NormalRAMcontrol stays separate.
+- Phone expectedPolaris FASTBOOT independently rechecked21:13UTC, unchanged
+  since fresh0077 readonly audit21:03 (below). No activeiOS/no newownedfile/pin/
+  nativephonewrite. Newfile must be exclusive/root0600/pinned/fullallocated,
+  freshreadonlyFIEMAP and liveinode/CRC/extent validation; do not allocate until
+  code/model/nativeguard proof and strict separate admission are ready.
+- Last user report21:25UTC. Continueevery15min, no duplicateautomation. Source
+  to commit/build after finalcompile; no newCI before actualkernelpatch changes.
+
 ### 0076 COMPLETE actual native owned UFS WRITE/READ/final-SYNC/refusal; 0077 fresh physical audit
 
 - Kernel source5e48c69aa9d41388126564d19674d055d2f02e95 COMMITTED/PUSHED;

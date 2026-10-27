@@ -27,7 +27,7 @@ class XnuAdmissionTests(unittest.TestCase):
     def test_matching_full_proofs_admitted(self):packer.admit(*self.fixtures())
 
     def test_virtual_UFS_proof_never_admits_phone_even_if_other_fields_look_valid(self):
-        for field in ('isolated_QEMU_readonly_UFS_test','isolated_QEMU_owned_UFS_test'):
+        for field in ('isolated_QEMU_readonly_UFS_test','isolated_QEMU_owned_UFS_test','physical_owned_marker_test'):
             for index in (0, 1):
                 fixtures=list(self.fixtures())
                 fixtures[index][field]=True

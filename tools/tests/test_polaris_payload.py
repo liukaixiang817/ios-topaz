@@ -86,6 +86,13 @@ class PayloadTests(unittest.TestCase):
         blob[0x48:0x2a8] = b'x' * 608
         self.assertIn(b'unterminated', self.check(blob)[0])
 
+    def test_caller_cannot_supply_live_firmware_guard(self):
+        for token in (b'polarisdurableguard=0',b'polarisdurableguard=0x50470001',
+                      b'polarisdurableguard=0x50470002'):
+            blob=payload();line=b'cpus=1 '+token+b'\0'
+            blob[0x48:0x48+len(line)]=line
+            self.assertIn(b'live resident firmware',self.check(blob)[0])
+
 
 if __name__ == '__main__':
     unittest.main()

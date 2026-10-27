@@ -7,9 +7,19 @@
 #include "uefi-boot-options.h"
 #include "uefi-ram-lease.h"
 #include "uefi-memory.h"
+#include "runtime-marker.h"
 #include "uefi-xnu-config.h" /* exact payload bytes/CRC, symbol offsets, board */
 #if defined(EFI_XNU_OWNED_TEST) && (!defined(POLARIS_EFI_TEST_QEMU) || !defined(EFI_XNU_RAM_DRAIN_TEST) || !defined(EFI_XNU_SHUTDOWN_BRIDGE))
 #error "Owned-file durability test requires the isolated QEMU native shutdown bridge"
+#endif
+#if defined(EFI_XNU_PHYSICAL_MARKER) && (defined(POLARIS_EFI_TEST_QEMU) || !defined(EFI_XNU_SHUTDOWN_BRIDGE))
+#error "Physical marker requires its own native shutdown bridge and physical platform"
+#endif
+#if defined(EFI_XNU_OWNED_TEST) || defined(EFI_XNU_PHYSICAL_MARKER)
+#define EFI_XNU_DURABLE_GUARD 1
+#endif
+#if defined(EFI_XNU_TEST_OMIT_OWNED_GUARD) && (!defined(POLARIS_EFI_TEST_QEMU) || !defined(EFI_XNU_OWNED_TEST))
+#error "Guard omission is exclusively an isolated emulator refusal test"
 #endif
 #if defined(EFI_XNU_RAM_DRAIN_TEST)
 #if !defined(POLARIS_EFI_TEST_QEMU)
@@ -206,9 +216,20 @@ static void boot_kernel(void *context)
     report("KERNEL_PSCI_TARGET=",EFI_XNU_CPU);load_state=4;
     uint64_t now;__asm__ volatile("mrs %0,cntvct_el0":"=r"(now));
     ram_lease=(struct polaris_efi_ram_lease){.last=now,.active=1};
-#if defined(EFI_XNU_OWNED_TEST)
+#if defined(EFI_XNU_DURABLE_GUARD)
     /* Must precede CPU_ON: that CPU may submit an owned WRITE immediately. */
     ram_lease.active=0;
+    struct args *args=(void*)(uintptr_t)plan.args_pa;
+    bool physical=false;
+#if defined(EFI_XNU_PHYSICAL_MARKER)
+    physical=true;
+#endif
+#if !defined(EFI_XNU_TEST_OMIT_OWNED_GUARD)
+    if(!polaris_marker_append_guard(args->cmdline,sizeof(args->cmdline),physical)){
+        load_state=3;report("DURABLE_GUARD_REFUSED=",1);return;
+    }
+#endif
+    clean(plan.args_pa,sizeof(*args));report("DURABLE_RESET_GUARD_ARMED=",physical?1:2);
 #endif
     /* IRQ ownership moves to XNU. USB's controller API is polled; no firmware
      * UFS/file operation or GOP BLT is allowed while the kernel owns devices. */
@@ -286,7 +307,7 @@ static int shutdown_begin(void *context,unsigned mode)
     if((mode!=1&&mode!=2)||!shutdown_status(context,&data,&bytes))return 0;
     const struct polaris_shutdown_status *s=(const void*)data;
     if(!s->cookie||s->error)return 0;
-#if defined(EFI_XNU_OWNED_TEST)
+#if defined(EFI_XNU_DURABLE_GUARD)
     if(s->flushed_epoch>s->write_epoch)return 0;
 #else
     if(s->write_epoch||s->flushed_epoch)return 0;
@@ -297,7 +318,7 @@ static int shutdown_begin(void *context,unsigned mode)
             s->phase>=POLARIS_Q_RUNNING&&s->phase<=POLARIS_Q_SEALED;
     }
     if(s->phase!=POLARIS_Q_RUNNING||s->sequence||s->mode)return 0;
-#if defined(EFI_XNU_OWNED_TEST)
+#if defined(EFI_XNU_DURABLE_GUARD)
     if(s->capabilities)return 0;
 #else
     if(s->capabilities!=POLARIS_Q_RAM_CONFIG)return 0;
@@ -313,7 +334,7 @@ static int shutdown_reset_ready(void *context,unsigned mode)
     if((mode!=1&&mode!=2)||!shutdown_status(context,&data,&bytes))return 0;
     volatile struct polaris_shutdown_slot *slot=(void*)(uintptr_t)(POLARIS_RAM_BASE+EFI_XNU_SHUTDOWN_OFFSET);
     const struct polaris_shutdown_status *s=(const void*)data;
-#if defined(EFI_XNU_OWNED_TEST)
+#if defined(EFI_XNU_DURABLE_GUARD)
     return slot->firmware.mode==mode&&polaris_q_reset_ready(s,slot->firmware.cookie,
         slot->firmware.sequence,mode);
 #else
@@ -326,7 +347,7 @@ static int shutdown_reset_ready(void *context,unsigned mode)
 static int prepare_reset(void *context,unsigned mode)
 {
     (void)context;if(mode!=1&&mode!=2)return 0;
-#if defined(EFI_XNU_OWNED_TEST)
+#if defined(EFI_XNU_DURABLE_GUARD)
     if(load_state>=4&&!shutdown_reset_ready(context,mode))return 0;
 #endif
     if(!system_table->runtime||!system_table->runtime->reset_system)return 0;
@@ -430,7 +451,7 @@ static void disk_autoboot(void *context)
 }
 static void host_activity(void *context)
 {
-#if defined(EFI_XNU_OWNED_TEST)
+#if defined(EFI_XNU_DURABLE_GUARD)
     if(load_state>=4)return;
 #endif
     (void)context;uint64_t now;__asm__ volatile("mrs %0,cntvct_el0":"=r"(now));
@@ -438,7 +459,7 @@ static void host_activity(void *context)
 }
 static void idle_guard(void *context)
 {
-#if defined(EFI_XNU_OWNED_TEST)
+#if defined(EFI_XNU_DURABLE_GUARD)
     if(load_state>=4)return;
 #endif
     uint64_t now,frequency;__asm__ volatile("mrs %0,cntvct_el0":"=r"(now));
@@ -505,6 +526,12 @@ static void test_ram_drain(int stress_done,unsigned contact_phase)
         }
         protected=1;test_uart_text("\nQEMU_OWNED_RAW_AND_LEASE_DISABLED=1\n");
     }
+#if defined(EFI_XNU_TEST_OMIT_OWNED_GUARD)
+    if(!s.cookie&&s.phase==POLARIS_Q_OFF&&!s.write_epoch&&!s.flushed_epoch&&!s.capabilities){
+        finished=1;test_uart_text("\nQEMU_OWNED_GUARD_ABSENT_REFUSED=1\n");
+    }
+    return;
+#endif
     if(s.phase==POLARIS_Q_FAILED){
         if(s.cookie&&s.error&&!s.capabilities&&!ram_lease.active&&
            !shutdown_reset_ready(0,1)&&!shutdown_reset_ready(0,2)&&

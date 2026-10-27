@@ -23,6 +23,38 @@ def child(node, name):
     return matches[0]
 
 
+def owner_metadata(node, name):
+    p = props(node)
+    if (len(p) != len(node.props) or set(p) != {
+            'name', 'version', 'layout', 'protected-blocks', 'owner-packet', 'protected-map'} or
+            p['name'] != (name+'\0').encode() or p['version'] != struct.pack('<I', 1) or
+            len(p['layout']) != 24 or len(p['protected-blocks']) != 8):
+        raise ValueError('noncanonical owned-file fixture metadata')
+    packet = p['owner-packet']
+    if len(packet) < 384 or packet[:8] != b'PROWN001':
+        raise ValueError('truncated owned-file packet')
+    nodes, maps = struct.unpack_from('<II', packet, 72)
+    if (nodes > 64 or not 0 < maps <= 4096 or
+            struct.unpack_from('<II', packet, 8) != (384, len(packet)) or
+            len(packet) != 384 + nodes * 4104 + maps * 24 or
+            p['layout'] != packet[16:40]):
+        raise ValueError('owned-file packet/layout mismatch')
+    start, blocks, file_blocks = struct.unpack('<QQQ', p['layout'])
+    if not 256 <= start <= 0xffffffff or not 0 < blocks <= 2**32-start or not 0 < file_blocks <= blocks:
+        raise ValueError('owned-file partition bounds')
+    if not p['protected-map'] or len(p['protected-map']) % 24 or len(p['protected-map']) > 4096*24:
+        raise ValueError('protected base map required')
+    logical = 0
+    for at in range(0, len(p['protected-map']), 24):
+        offset, physical, length = struct.unpack_from('<QQQ', p['protected-map'], at)
+        if offset != logical or not start <= physical < start+blocks or not 0 < length <= start+blocks-physical:
+            raise ValueError('protected base must be a complete canonical bounded map')
+        logical += length
+    if struct.unpack('<Q', p['protected-blocks'])[0] != logical:
+        raise ValueError('protected base coverage mismatch')
+    return p
+
+
 def validate(raw, core=1, qemu=False, count=1):
     if (type(core) is not int or core not in (1, 7) or type(qemu) is not bool or
             type(count) is not int or count not in (1, 2) or count == 2 and core != 7):
@@ -56,34 +88,7 @@ def validate(raw, core=1, qemu=False, count=1):
     if owned:
         if not qemu or core != 7 or count != 2 or len(owned) != 1 or len(virtual_ufs) != 1:
             raise ValueError('owned virtual fixture must never reach a phone tree')
-        p = props(owned[0])
-        if (len(p) != len(owned[0].props) or set(p) != {
-                'name', 'version', 'layout', 'protected-blocks', 'owner-packet', 'protected-map'} or
-                p['name'] != b'polaris-qemu-owned-file\0' or p['version'] != struct.pack('<I', 1) or
-                len(p['layout']) != 24 or len(p['protected-blocks']) != 8):
-            raise ValueError('noncanonical owned-file fixture metadata')
-        packet = p['owner-packet']
-        if len(packet) < 384 or packet[:8] != b'PROWN001':
-            raise ValueError('truncated owned-file packet')
-        nodes, maps = struct.unpack_from('<II', packet, 72)
-        if (nodes > 64 or not 0 < maps <= 4096 or
-                struct.unpack_from('<II', packet, 8) != (384, len(packet)) or
-                len(packet) != 384 + nodes * 4104 + maps * 24 or
-                p['layout'] != packet[16:40]):
-            raise ValueError('owned-file packet/layout mismatch')
-        start, blocks, file_blocks = struct.unpack('<QQQ', p['layout'])
-        if not 256 <= start <= 0xffffffff or not 0 < blocks <= 2**32-start or not 0 < file_blocks <= blocks:
-            raise ValueError('owned-file partition bounds')
-        if not p['protected-map'] or len(p['protected-map']) % 24 or len(p['protected-map']) > 4096*24:
-            raise ValueError('protected base map required')
-        logical = 0
-        for at in range(0, len(p['protected-map']), 24):
-            offset, physical, length = struct.unpack_from('<QQQ', p['protected-map'], at)
-            if offset != logical or not start <= physical < start+blocks or not 0 < length <= start+blocks-physical:
-                raise ValueError('protected base must be a complete canonical bounded map')
-            logical += length
-        if struct.unpack('<Q', p['protected-blocks'])[0] != logical:
-            raise ValueError('protected base coverage mismatch')
+        owner_metadata(owned[0], 'polaris-qemu-owned-file')
     if virtual_ufs:
         if not qemu or core != 7 or count != 2 or len(virtual_ufs) != 1:
             raise ValueError('isolated virtual UFS must never reach a phone tree')
@@ -96,6 +101,34 @@ def validate(raw, core=1, qemu=False, count=1):
         if (len(p) != len(virtual_ufs[0].props) or set(p) != set(expected) | {'head-crc32'} or
                 any(p.get(k) != v for k, v in expected.items()) or len(p.get('head-crc32', b'')) != 4):
             raise ValueError('noncanonical isolated virtual UFS metadata')
+    marker = [n for n in tree.children if n.name == 'polaris-owned-marker']
+    if marker:
+        if qemu or core != 7 or count != 2 or len(marker) != 1 or owned or virtual_ufs:
+            raise ValueError('physical marker must never reach a virtual or foreign CPU tree')
+        p = owner_metadata(marker[0], 'polaris-owned-marker')
+        base_file = props(child(tree, 'polaris-file-root'))
+        layout = base_file.get('layout', b'')
+        if (len(layout) != 24 or base_file.get('reg') != struct.pack('<QQ', 0x1d84000, 0x2500) or
+                base_file.get('version') != struct.pack('<I', 1) or
+                p['layout'][:16] != layout[:16] or struct.unpack_from('<Q',p['layout'],16)[0] != 2048 or
+                p['protected-map'] != base_file.get('extents') or p['protected-blocks'] != layout[16:24] or
+                struct.unpack_from('<Q',layout,16)[0] != 4194304):
+            raise ValueError('physical marker must bind the complete actual original16GiB root map')
+        packet=p['owner-packet'];nodes,maps=struct.unpack_from('<II',packet,72)
+        start,blocks,file_blocks=struct.unpack('<QQQ',p['layout']);next_block=0;seen=[]
+        protected=[struct.unpack_from('<QQQ',p['protected-map'],at)
+                   for at in range(0,len(p['protected-map']),24)]
+        for n in range(maps):
+            logical,physical,length=struct.unpack_from('<QQQ',packet,384+nodes*4104+n*24)
+            if (logical!=next_block or not 0<length<=file_blocks-next_block or
+                    not 0<physical<blocks or length>blocks-physical):
+                raise ValueError('marker map must completely cover the new small file')
+            absolute=start+physical
+            if any(absolute<a+b and a<absolute+length for a,b in seen) or any(
+                    absolute<a+b and a<absolute+length for _,a,b in protected):
+                raise ValueError('marker aliases itself or the original root')
+            seen.append((absolute,length));next_block+=length
+        if next_block!=file_blocks:raise ValueError('marker map incomplete')
     return tree
 
 
@@ -186,6 +219,23 @@ def isolated_qemu_owned(raw, head_crc32, packet, protected_map, protected_blocks
     tree.children.append(node)
     result = adt.serialize(tree)
     validate(result, 7, True, 2)
+    return result
+
+
+def physical_marker(raw, packet):
+    """Add a small owned-file export while preserving the complete original root."""
+    tree = validate(raw, 7, False, 2)
+    if any(n.name == 'polaris-owned-marker' for n in tree.children):
+        raise ValueError('physical marker already present')
+    base = props(child(tree, 'polaris-file-root'))
+    node = adt.Node()
+    node.props = [(k, 0, v) for k,v in {
+        'name': b'polaris-owned-marker\0', 'version': struct.pack('<I',1),
+        'layout': packet[16:40], 'owner-packet': packet,
+        'protected-map': base['extents'], 'protected-blocks': base['layout'][16:24]}.items()]
+    tree.children.append(node)
+    result = adt.serialize(tree)
+    validate(result,7,False,2)
     return result
 
 

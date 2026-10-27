@@ -138,5 +138,30 @@ class ResidentCoreTree(unittest.TestCase):
 
 
 
+    def test_physical_marker_binds_entire_original_root_and_never_virtual(self):
+        tree=cpu.validate(cpu.select(self.tree(),7,False,2),7,False,2)
+        node=adt.Node()
+        node.props=[(k,0,v) for k,v in {
+            'name':b'polaris-file-root\0','version':struct.pack('<I',1),
+            'reg':struct.pack('<QQ',0x1d84000,0x2500),
+            'layout':struct.pack('<QQQ',2048,8388608,4194304),
+            'extents':struct.pack('<QQQ',0,4096,4194304)}.items()]
+        tree.children.append(node)
+        packet=bytearray(408);packet[:8]=b'PROWN001'
+        struct.pack_into('<IIQQQ',packet,8,384,len(packet),2048,8388608,2048)
+        struct.pack_into('<II',packet,72,0,1)
+        struct.pack_into('<QQQ',packet,384,0,5000000,2048)
+        raw=cpu.physical_marker(adt.serialize(tree),bytes(packet))
+        cpu.validate(raw,7,False,2)
+        with self.assertRaises(ValueError):cpu.validate(raw,7,True,2)
+        for key,value in [('protected-blocks',struct.pack('<Q',4194303)),
+                          ('protected-map',struct.pack('<QQQ',0,4097,4194304))]:
+            changed,_=adt.parse(raw);builder.setprop(cpu.child(changed,'polaris-owned-marker'),key,value)
+            with self.subTest(key=key),self.assertRaises(ValueError):cpu.validate(adt.serialize(changed),7,False,2)
+        for offset,value in [(32,2049),(392,4096-2048),(384,1),(400,2047)]:
+            bad=bytearray(packet);struct.pack_into('<Q',bad,offset,value)
+            with self.subTest(offset=offset),self.assertRaises(ValueError):cpu.physical_marker(adt.serialize(tree),bytes(bad))
+
+
 if __name__ == '__main__':
     unittest.main()

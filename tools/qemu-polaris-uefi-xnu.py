@@ -45,12 +45,13 @@ def main():
     owned_ufs=manifest.get('isolated_QEMU_owned_UFS_test',False)
     virtual_ufs=manifest.get('isolated_QEMU_readonly_UFS_test',False) or owned_ufs
     response_short=manifest.get('controlled_owned_response_short_injection',False)
+    guard_omitted=manifest.get('controlled_durable_guard_omitted',False)
     if virtual_ufs and (drain not in (('success','stale-cookie') if owned_ufs else ('success',)) or manifest.get('kernel_CPU_affinity')!=7 or
                         manifest.get('kernel_CPU_count')!=2):
         raise ValueError('native virtual UFS requires the two-core native drain fixture')
-    if (a.fault_owned_sync or a.fault_owned_write_delay or response_short) and not owned_ufs:
+    if (a.fault_owned_sync or a.fault_owned_write_delay or response_short or guard_omitted) and not owned_ufs:
         raise ValueError('owned I/O faults require isolated writable synthetic fixture')
-    if sum(map(bool,(a.fault_owned_sync,a.fault_owned_write_delay,response_short,a.fault_ufs_host_disable,drain=='stale-cookie')))>1:
+    if sum(map(bool,(a.fault_owned_sync,a.fault_owned_write_delay,response_short,a.fault_ufs_host_disable,drain=='stale-cookie',guard_omitted)))>1:
         raise ValueError('one independently attributable fault per run')
     if owned_ufs and (manifest.get('RAM_host_idle_recovery_seconds') is not None or
                       manifest.get('raw_reset_requires_durable_SAFE') is not True):
@@ -180,7 +181,7 @@ def main():
                                    write_response=ack,after=after,seconds=time.monotonic()-start)
                         (out/'hardware-fault.json').write_text(json.dumps(fault,indent=2)+'\n')
                 test_done=(('QEMU_OWNED_DURABLE_SAFE=1' in text or 'QEMU_OWNED_REFUSED=1' in text or
-                            'QEMU_OWNED_RESET_PROTECTION_FAILED=1' in text) if owned_ufs else
+                            'QEMU_OWNED_RESET_PROTECTION_FAILED=1' in text or 'QEMU_OWNED_GUARD_ABSENT_REFUSED=1' in text) if owned_ufs else
                            ('QEMU_RAM_DRAINED=1' in text or 'QEMU_RAM_DRAIN_STALE_REFUSED=1' in text or
                             'QEMU_RAM_DRAIN_FAILED=1' in text or 'QEMU_RAM_PEER_OFF_REFUSED=1' in text) if drain else
                            ('SMP STRESS all4 PASS' in text and 'QEMU_INPUT_BRIDGE=1' in text))
@@ -290,16 +291,24 @@ def main():
         checks['native_mailbox_captured']=mailbox is not None
         checks['native_request_after_VM_and_input']=('QEMU_OWNED_DRAIN_REQUESTED=1' if owned_ufs else 'QEMU_RAM_DRAIN_REQUESTED=1') in text
         if owned_ufs:
-            refused=a.fault_ufs_host_disable or a.fault_owned_sync or a.fault_owned_write_delay or response_short or drain=='stale-cookie'
-            if response_short or a.fault_owned_write_delay:
+            refused=a.fault_ufs_host_disable or a.fault_owned_sync or a.fault_owned_write_delay or response_short or drain=='stale-cookie' or guard_omitted
+            if response_short or a.fault_owned_write_delay or guard_omitted:
                 checks.pop('native_request_after_VM_and_input') # Failed during WRITE before a shutdown request.
             checks.update(raw_and_lease_disabled_before_reset_permission='QEMU_OWNED_RAW_AND_LEASE_DISABLED=1' in text,
+                          live_firmware_guard_observed_by_kernel='POLARIS OWNED GUARD: runtime generated=50470002 observed before PCI/MMIO' in ring,
                           owner_verified_through_native_UFS='POLARIS OWNED: actual UFS metadata verified inode=13 generation=305419896' in ring,
                           protected_base_descriptor_refused='POLARIS OWNED: protected-base WRITE refused before descriptor; submissions unchanged' in ring,
                           actual_owned_WRITE_submitted='POLARIS OWNED NATIVE: doorbell op=2a bytes=4096' in ring,
                           no_false_RAM_drained='QEMU_RAM_DRAINED=1' not in text,
                           no_reset_protection_failure='QEMU_OWNED_RESET_PROTECTION_FAILED=1' not in text)
-            if refused:
+            if guard_omitted:
+                for key in ('owner_verified_through_native_UFS','protected_base_descriptor_refused','actual_owned_WRITE_submitted','live_firmware_guard_observed_by_kernel'):
+                    checks.pop(key)
+                checks.update(native_refused_before_PCI_MMIO='POLARIS QEMU UFS: REFUSED identity before any PCI/MMIO access' in ring,
+                              no_PCI_or_owned_data_claim='POLARIS QEMU UFS: actual PCI' not in ring and 'POLARIS OWNED NATIVE: doorbell' not in ring,
+                              firmware_no_guard_reset_refused='QEMU_OWNED_GUARD_ABSENT_REFUSED=1' in text,
+                              no_write_or_SAFE_cookie=bool(mailbox and mailbox['cookie']==mailbox['phase']==mailbox['write_epoch']==mailbox['flushed_epoch']==mailbox['capabilities']==0))
+            elif refused:
                 checks.update(firmware_refused_both_reset_modes='QEMU_OWNED_REFUSED=1' in text,
                               no_durable_SAFE='QEMU_OWNED_DURABLE_SAFE=1' not in text and bool(mailbox and mailbox['phase']==6 and mailbox['error'] and mailbox['capabilities']==0 and mailbox['flushed_epoch']==0),
                               no_peer_OFF_claim='actual PSCI AFFINITY_OFF' not in ring)
@@ -373,7 +382,7 @@ def main():
             checks['actual_native_UFS_sealed']='POLARIS UFS SEAL: owned idle native queue submitted=' in ring
     reopened=None
     if owned_ufs:
-        reopened=owned_fixture.reopen_check(root,ufs_fixture,not a.fault_owned_write_delay)
+        reopened=owned_fixture.reopen_check(root,ufs_fixture,not (a.fault_owned_write_delay or guard_omitted))
         (out/'backend-reopen-proof.json').write_text(json.dumps(reopened,indent=2)+'\n')
         checks.update(full_backend_reopened_and_matched=reopened['all_LUN_bytes_match_expected'],
                       protected_base_byte_identical=reopened['protected_base_unchanged'],
@@ -384,7 +393,10 @@ def main():
                s.get('qdev','').startswith('/machine/peripheral/isolated-native-lun0/')]
         checks['exact_owned_backend_stats_captured']=len(stats)==1
         queue=json.loads((out/'actual-native-UFS-queue.json').read_text()) if (out/'actual-native-UFS-queue.json').exists() else {}
-        if a.fault_owned_write_delay:
+        if guard_omitted:
+            checks['actual_native_queue_never_submitted']=bool(queue and queue['polaris_ufs_inflight']==0 and
+                queue['polaris_ufs_submitted']==queue['polaris_ufs_completed']==0 and not queue['polaris_owned_active'])
+        elif a.fault_owned_write_delay:
             checks['native_unknown_DMA_retained']=bool(queue and queue['polaris_ufs_inflight']==1 and
                 queue['polaris_owned_failed']==1 and queue['polaris_ufs_submitted']==queue['polaris_ufs_completed']+1)
         else:
@@ -398,7 +410,7 @@ def main():
                 for child in value:yield from stat_values(child,key)
         if a.fault_owned_sync:
             checks['actual_backend_failed_flush_recorded']=any(v>0 for v in stat_values(stats,'failed_flush_operations'))
-        elif not (a.fault_ufs_host_disable or a.fault_owned_write_delay or response_short or drain=='stale-cookie'):
+        elif not (a.fault_ufs_host_disable or a.fault_owned_write_delay or response_short or drain=='stale-cookie' or guard_omitted):
             checks['actual_backend_flush_completed']=any(v>0 for v in stat_values(stats,'flush_operations'))
     record=dict(passed=all(checks.values()) and error is None,checks=checks,error=error,
                 diagnostic_legacy_only=a.legacy_core_refusal,release_handoff_admitted=not virtual_ufs and not a.legacy_core_refusal and drain!='peer-refused' and all(checks.values()) and error is None,
@@ -408,6 +420,7 @@ def main():
                 isolated_QEMU_readonly_UFS_test=virtual_ufs and not owned_ufs,
                 isolated_QEMU_owned_UFS_test=owned_ufs,owned_backend_reopen=reopened,
                 controlled_response_short_injection=response_short,
+                controlled_durable_guard_omitted=guard_omitted,
                 actual_backend_SYNC_EIO=a.fault_owned_sync,actual_backend_WRITE_delay=a.fault_owned_write_delay,
                 snapshot_while_guest_running=a.fault_owned_write_delay,
                 owned_backend_accounting_before_host_stop=bool(owned_ufs and (out/'actual-backend-stats.json').exists()),

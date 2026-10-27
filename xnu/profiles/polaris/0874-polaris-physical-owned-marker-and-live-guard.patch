@@ -1,0 +1,221 @@
+--- a/bsd/dev/sweet_ufs.c
++++ b/bsd/dev/sweet_ufs.c
+@@ -331,6 +331,72 @@
+ #endif
+ 
+ /* END verbatim shared runtime-owner.h policy. */
++/* BEGIN verbatim physical runtime-marker.h admission. */
++/* Physical small-file trial admission. No MMIO, writes or frequency changes.
++ * Geometry/frequency are this phone's DT and actual0071 two-core observations.
++ * This does not admit a persistent iOS root or prove physical UFS persistence.
++ */
++#ifndef POLARIS_RUNTIME_MARKER_H
++#define POLARIS_RUNTIME_MARKER_H
++#include <stdbool.h>
++#include <stddef.h>
++#include <stdint.h>
++#define POLARIS_MARKER_BLOCKS 2048u
++#define POLARIS_DURABLE_MARKER_GUARD 0x50470001u
++#define POLARIS_DURABLE_QEMU_GUARD 0x50470002u
++/* The incoming template must NEVER supply this token. The resident firmware
++ * inserts it into the final boot args only after disabling raw reset/lease,
++ * before CPU_ON. Older loaders therefore cannot accidentally enable writes.
++ * This is an accidental-mismatch guard, not cryptographic attestation. */
++static inline bool polaris_marker_template(const char *s,size_t bytes)
++{
++    static const char key[]="polarisdurableguard=";
++    if(!s)return false;
++    size_t used=0;while(used<bytes&&s[used])used++;
++    if(used==bytes)return false;
++    for(size_t at=0;at<used;at++){
++        size_t n=0;while(n<sizeof(key)-1&&n<used-at&&s[at+n]==key[n])n++;
++        if(n==sizeof(key)-1)return false;
++    }
++    return true;
++}
++static inline bool polaris_marker_append_guard(char *s,size_t bytes,bool physical)
++{
++    const char *suffix=physical?" polarisdurableguard=0x50470001":" polarisdurableguard=0x50470002";
++    if(!polaris_marker_template(s,bytes))return false;
++    size_t used=0,n=0;while(s[used])used++;while(suffix[n])n++;
++    if(n>=bytes-used)return false;
++    for(size_t i=0;i<=n;i++)s[used+i]=suffix[i];
++    return true;
++}
++struct polaris_marker_identity {
++    uint64_t actual_cpu,timer,base,bytes,reg[2];
++    uint32_t mode,core,count,file_root,rootrw,cow,ram_mib,rw;
++    uint32_t probe_present,virtual_present,marker,guard;
++};
++static inline bool polaris_marker_allowed(const struct polaris_marker_identity *i)
++{
++    if(!i)return false;
++    uint64_t cpu=i->actual_cpu&~(UINT64_C(1)<<31|UINT64_C(1)<<24);
++    return (cpu==0x700||cpu==0x600)&&i->timer==19200000&&
++        i->base==UINT64_C(0x180000000)&&i->bytes==UINT64_C(0xfc8a0000)&&
++        i->reg[0]==0x1d84000&&i->reg[1]==0x2500&&i->mode==1&&
++        i->core==0x700&&i->count==2&&i->file_root==1&&i->rootrw==1&&
++        i->cow==1&&i->ram_mib==512&&!i->rw&&!i->probe_present&&
++        !i->virtual_present&&i->marker==1&&i->guard==POLARIS_DURABLE_MARKER_GUARD;
++}
++static inline bool polaris_marker_base_matches(const void *provided,uint32_t bytes,uint64_t blocks,
++    const void *expected,uint32_t expected_bytes,uint64_t expected_blocks,uint64_t marker_blocks)
++{
++    if(!provided||!expected||!bytes||bytes%24||bytes>4096u*24u||bytes!=expected_bytes||
++       blocks!=expected_blocks||expected_blocks!=4194304||marker_blocks!=POLARIS_MARKER_BLOCKS)return false;
++    const uint8_t *a=provided,*b=expected;
++    for(uint32_t at=0;at<bytes;at++)if(a[at]!=b[at])return false;
++    return true;
++}
++#endif
++
++/* END verbatim physical runtime-marker.h admission. */
+ #include "polaris_runtime_quiesce.h"
+ static struct polaris_owner_work *polaris_owned_work;
+ static struct polaris_q polaris_owned_q;
+@@ -851,7 +917,8 @@
+     printf("POLARIS OWNED CDB: op=%02x LBA=%llx blocks=1 epoch=%llu\n",cdb[0],physical,polaris_owned_q.write_epoch);
+     return ufs_scsi(cdb,sizeof(cdb),4096,write);
+ }
+-static int polaris_owned_fixture(DTEntry node,const uint8_t *head)
++static int polaris_owned_fixture(DTEntry node,const uint8_t *head,
++    const void *expected_base,unsigned expected_bytes,uint64_t expected_blocks)
+ {
+     uint64_t layout[3]={0},base_blocks=0;uint32_t version=0;
+     const void *packet=NULL,*base=NULL;unsigned packet_bytes=0,base_bytes=0;
+@@ -865,6 +932,11 @@
+         !base_bytes || base_bytes%sizeof(struct polaris_owner_extent) ||
+         base_bytes>POLARIS_OWNER_MAPS*sizeof(struct polaris_owner_extent) ||
+         !polaris_userdata_bounds(head,layout[0],layout[1])) return EINVAL;
++    if (expected_base && !polaris_marker_base_matches(base,base_bytes,base_blocks,
++        expected_base,expected_bytes,expected_blocks,layout[2])) {
++        printf("POLARIS OWNED: physical marker/base binding refused before metadata I/O\n");
++        return EINVAL;
++    }
+     vm_offset_t work=0,protected=0;
+     if (kmem_alloc(kernel_map,&work,round_page(sizeof(struct polaris_owner_work)),
+         KMA_DATA|KMA_ZERO|KMA_PERMANENT,VM_KERN_MEMORY_IOKIT)!=KERN_SUCCESS ||
+@@ -1088,7 +1160,7 @@
+ }
+ static void polaris_qemu_ufs_probe(uint32_t enabled)
+ {
+-    uint32_t mode=0,core=0,count=0,rw=0,file=0,probe=0,version=0,crc=0,owned=0,fault=0;
++    uint32_t mode=0,core=0,count=0,rw=0,file=0,probe=0,version=0,crc=0,owned=0,fault=0,guard=0,marker=0;
+     uint64_t base=0,bytes=0,reg[2]={0},ecam[2]={0};
+     DTEntry node,chosen; unsigned size=0; const void *property=NULL;
+     PE_parse_boot_argn("polarisuefi",&mode,sizeof(mode));
+@@ -1099,10 +1171,13 @@
+     PE_parse_boot_argn("polarisufsprobe",&probe,sizeof(probe));
+     PE_parse_boot_argn("polarisqemuowned",&owned,sizeof(owned));
+     PE_parse_boot_argn("polarisownedfault",&fault,sizeof(fault));
++    PE_parse_boot_argn("polarisdurableguard",&guard,sizeof(guard));
++    bool marker_present=PE_parse_boot_argn("polarisownedmarker",&marker,sizeof(marker));
+     const char *compat=owned?"qemu,isolated-owned-ufs":"qemu,isolated-readonly-ufs";
+     const uint64_t actual_cpu=__builtin_arm_rsr64("MPIDR_EL1");
+     const uint64_t timer=__builtin_arm_rsr64("CNTFRQ_EL0");
+-    if (enabled != 1 || file || probe || owned>1 || fault>1 || (!owned&&fault) ||
++    if (enabled != 1 || file || probe || marker_present || owned>1 || fault>1 || (!owned&&fault) ||
++        (owned && guard!=POLARIS_DURABLE_QEMU_GUARD) ||
+         SecureDTLookupEntry(NULL,"/polaris-qemu-ufs",&node) != kSuccess ||
+         SecureDTLookupEntry(NULL,"/chosen",&chosen) != kSuccess ||
+         !polaris_dt_copy(chosen,"dram-base",&base,sizeof(base)) ||
+@@ -1119,6 +1194,7 @@
+         return;
+     }
+     printf("POLARIS QEMU UFS: admitted actual worker MPIDR=%llx timer=%llu\n",actual_cpu,timer);
++    if (owned) printf("POLARIS OWNED GUARD: runtime generated=%x observed before PCI/MMIO\n",guard);
+     lck_mtx_lock(&sweet_ufs_lock);
+     int error = EINVAL; unsigned stage = 1;
+     if (owned) { polaris_owned_requested=true;polaris_owned_boot_cookie=mach_absolute_time()|UINT64_C(1); }
+@@ -1209,7 +1285,7 @@
+             stage=12;DTEntry owner;
+             polaris_owned_fault=fault;
+             if (SecureDTLookupEntry(NULL,"/polaris-qemu-owned-file",&owner)!=kSuccess) error=EINVAL;
+-            else error=polaris_owned_fixture(owner,(const void *)(su.dma+DMA_BOUNCE));
++            else error=polaris_owned_fixture(owner,(const void *)(su.dma+DMA_BOUNCE),NULL,0,0);
+         }
+     }
+ out:
+@@ -1633,6 +1709,8 @@
+     PE_parse_boot_argn("rootrw", &rootrw, sizeof(rootrw));
+     PE_parse_boot_argn("polarisramcow", &cow, sizeof(cow));
+     PE_parse_boot_argn("polarisrammb", &ram_mib, sizeof(ram_mib));
++    uint32_t marker=0;PE_parse_boot_argn("polarisownedmarker",&marker,sizeof(marker));
++    if (marker>1) return EINVAL;
+     if (enabled != 1 || probe || rw || cow > 1 || rootrw > 1 || rootrw != cow || ram_mib < 16 || ram_mib > 512) {
+         printf("POLARIS FILE ROOT: disabled or conflicting boot arguments\n");
+         return ENXIO;
+@@ -1652,6 +1730,28 @@
+         !size || size % sizeof(struct polaris_extent) || size > sizeof(polaris_file_map)) {
+         printf("POLARIS FILE ROOT: REFUSED metadata; no MMIO\n");
+         return EINVAL;
++    }
++    if (marker) {
++        struct polaris_marker_identity identity={.actual_cpu=__builtin_arm_rsr64("MPIDR_EL1"),
++            .timer=__builtin_arm_rsr64("CNTFRQ_EL0"),.reg={reg[0],reg[1]},
++            .file_root=enabled,.rootrw=rootrw,.cow=cow,.ram_mib=ram_mib,.rw=rw,.marker=marker};
++        uint32_t value=0;DTEntry chosen;
++        PE_parse_boot_argn("polarisuefi",&identity.mode,sizeof(identity.mode));
++        PE_parse_boot_argn("polarisbootcpu",&identity.core,sizeof(identity.core));
++        PE_parse_boot_argn("cpus",&identity.count,sizeof(identity.count));
++        PE_parse_boot_argn("polarisdurableguard",&identity.guard,sizeof(identity.guard));
++        identity.probe_present=PE_parse_boot_argn("polarisufsprobe",&value,sizeof(value));
++        identity.virtual_present=PE_parse_boot_argn("polarisqemuufs",&value,sizeof(value)) ||
++            PE_parse_boot_argn("polarisqemuowned",&value,sizeof(value)) ||
++            PE_parse_boot_argn("polarisownedfault",&value,sizeof(value));
++        if (SecureDTLookupEntry(NULL,"/chosen",&chosen)!=kSuccess ||
++            !polaris_dt_copy(chosen,"dram-base",&identity.base,sizeof(identity.base)) ||
++            !polaris_dt_copy(chosen,"dram-size",&identity.bytes,sizeof(identity.bytes)) ||
++            !polaris_marker_allowed(&identity)) {
++            printf("POLARIS OWNED: physical identity refused BEFORE MMIO\n");return EINVAL;
++        }
++        printf("POLARIS OWNED GUARD: runtime generated=%x physical CPU=%llx timer=%llu BEFORE MMIO\n",
++            identity.guard,identity.actual_cpu,identity.timer);
+     }
+     polaris_file_count = size / sizeof(struct polaris_extent);
+     memcpy(polaris_file_map, extents, size);
+@@ -1734,6 +1834,23 @@
+             }
+         }
+     }
++    if (marker) {
++        DTEntry owner;
++        error=ufs_read_blocks(0,256);
++        if (error || polaris_probe_crc32((const uint8_t *)(su.dma+DMA_BOUNCE),BOUNCE_SIZE)!=crc[0] ||
++            SecureDTLookupEntry(NULL,"/polaris-owned-marker",&owner)!=kSuccess) {
++            if (!error) error=EINVAL;
++            goto out;
++        }
++        error=polaris_owned_fixture(owner,(const void *)(su.dma+DMA_BOUNCE),
++            polaris_file_map,polaris_file_count*sizeof(struct polaris_extent),layout[2]);
++        if (error) {
++            polaris_owned_failed=true;polaris_io_failed=true;
++            printf("POLARIS OWNED: physical marker FAILED %d; no reset permission\n",error);
++            goto out;
++        }
++        printf("POLARIS OWNED: physical marker WRITE/read complete; ORIGINAL ROOT remains RAM COW\n");
++    }
+     /* The only writable logical root is backed by bounded volatile RAM.
+      * The UFS CDB gate still rejects every WRITE/UNMAP/SYNC command. */
+     polaris_ram_cow_enabled = cow == 1;
+--- a/bsd/dev/polaris_touch.c
++++ b/bsd/dev/polaris_touch.c
+@@ -599,14 +599,15 @@
+ }
+ static void ps_start(void)
+ {
+-    uint32_t enabled=0,ram=0,rw=0,cpus=0,owned=0;
++    uint32_t enabled=0,ram=0,rw=0,cpus=0,owned=0,marker=0;
+     PE_parse_boot_argn("polarisquiesce",&enabled,sizeof(enabled));
+     PE_parse_boot_argn("polarisramcow",&ram,sizeof(ram));
+     PE_parse_boot_argn("ufsrw",&rw,sizeof(rw));
+     PE_parse_boot_argn("cpus",&cpus,sizeof(cpus));
+     PE_parse_boot_argn("polarisqemuowned",&owned,sizeof(owned));
+-    if (owned>1) return;
+-    ps_owned=owned==1;
++    PE_parse_boot_argn("polarisownedmarker",&marker,sizeof(marker));
++    if (owned>1 || marker>1 || (owned&&marker)) return;
++    ps_owned=owned==1 || marker==1;
+     if (enabled!=1 || ram!=1 || rw || (cpus!=1 && cpus!=2)) { return; }
+     ps_enabled=true; /* The existing resident input loop performs bounded polling. */
+ }

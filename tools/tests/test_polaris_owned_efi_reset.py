@@ -22,6 +22,7 @@ class OwnedEfiReset(unittest.TestCase):
 #include <string.h>
 #include "runtime-quiesce.h"
 #define EFI_XNU_OWNED_TEST 1
+#define EFI_XNU_DURABLE_GUARD 1
 #define POLARIS_EFI_TEST_QEMU 1
 #define EFI_XNU_SHUTDOWN_OFFSET 0
 static struct polaris_shutdown_slot box;
