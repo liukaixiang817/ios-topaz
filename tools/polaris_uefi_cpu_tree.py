@@ -34,7 +34,7 @@ def validate(raw, core=1, qemu=False, count=1):
         raise ValueError('not the Polaris compatibility tree')
     chosen = props(child(tree, 'chosen'))
     base = 0x130000000 if qemu else 0x180000000
-    gic = (0x7000000, 0x10000, 0x70a0000, 0x40000) if qemu else (
+    gic = (0x7000000, 0x10000, 0x70a0000, 0x100000 if core == 7 else 0x40000) if qemu else (
         0x16a00000, 0x10000, 0x16a60000, 0x100000)
     if (chosen.get('dram-base') != struct.pack('<Q', base) or
             chosen.get('dram-size') != struct.pack('<Q', 0xfc8a0000) or
@@ -66,6 +66,14 @@ def select(raw, core=1, qemu=False, count=1):
     target = core if qemu else core << 8
     cpu.props = [(key, flags, struct.pack('<I', target) if key == 'reg' else value)
                  for key, flags, value in cpu.props]
+    gic_node = child(child(tree, 'arm-io'), 'gic')
+    old_gic = props(gic_node)['reg']
+    if qemu:
+        # Eight emulated affinities need all eight redistributors mapped.
+        # Physical Polaris already maps its complete one-MiB GICR region.
+        expanded = struct.pack('<4Q', 0x7000000, 0x10000, 0x70a0000, 0x100000)
+        gic_node.props = [(key, flags, expanded if key == 'reg' else value)
+                          for key, flags, value in gic_node.props]
     peer = None
     if count == 2:
         def walk(node):
@@ -87,6 +95,8 @@ def select(raw, core=1, qemu=False, count=1):
     validate(result, core, qemu, count)
     if peer is not None:
         child(tree, 'cpus').children.remove(peer)
+    gic_node.props = [(key, flags, old_gic if key == 'reg' else value)
+                      for key, flags, value in gic_node.props]
     cpu.props = [(key, flags, struct.pack('<I', old) if key == 'reg' else value)
                  for key, flags, value in cpu.props]
     if adt.serialize(tree) != raw:

@@ -42,6 +42,9 @@ class ResidentCoreTree(unittest.TestCase):
             node = cpu.child(root, 'cpus').children[0]
             self.assertEqual(cpu.props(node)['reg'], struct.pack('<I', 7 if qemu else 0x700))
             builder.setprop(node, 'reg', struct.pack('<I', 1 if qemu else 0x100))
+            if qemu:
+                builder.setprop(cpu.child(cpu.child(root, 'arm-io'), 'gic'), 'reg',
+                                struct.pack('<4Q', 0x7000000, 0x10000, 0x70a0000, 0x40000))
             self.assertEqual(adt.serialize(root), raw)
 
     def test_foreign_RAM_GIC_core_and_multiCPU_refused(self):
@@ -74,6 +77,9 @@ class ResidentCoreTree(unittest.TestCase):
             self.assertEqual(cpu.props(cpus.children[1])['state'], b'stopped\0')
             cpus.children.pop()
             builder.setprop(cpus.children[0], 'reg', struct.pack('<I', 1 if qemu else 0x100))
+            if qemu:
+                builder.setprop(cpu.child(cpu.child(root, 'arm-io'), 'gic'), 'reg',
+                                struct.pack('<4Q', 0x7000000, 0x10000, 0x70a0000, 0x40000))
             self.assertEqual(adt.serialize(root), raw)
             for bad in (0, 7 if qemu else 0x700, 1 if qemu else 0x100):
                 root, _ = adt.parse(changed)

@@ -34,8 +34,13 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### 0068 CPU performance/SMP adaptation (source prepared; full CI pending)
+### 0068 CPU performance/SMP adaptation (source pushed; full CI running)
 
+- Sourcedee1ea3 COMMITTED/PUSHED. macOS27/Xcode27 full kernel CI40540493764
+  is in progress; watch log0068/ci-watch.log. No new kernel downloaded yet.
+  Actual phone remains FASTBOOT, no0068 boot or storage writes. Next download
+  and bind exact CI/source/kernel SHA, then real EFI/XNU CPU1 control/CPU7
+  single and CPU7+6 concurrent VM/SGI/xcall runs BEFORE physical RAM trials.
 - Latest human steering: suppliedMrMoxing/ios-alioth handoff, asks to apply its
   CPU/GPU performance approaches; then clarified priority CPU multicore and
   data-preserving disk installation/Mindows UEFI entry, retaining current GPU.
@@ -67,6 +72,12 @@ early samples only. On0029 the human already confirmed boot complete and said
   native UFS/touch byte-identical to0067. Needs full CI and EFI/XNU single/two-core
   VM+SGI/xcall checks before hardware. Two-core native drain is explicitly
   refused; RAM rescue reset only until all-core shutdown is implemented/proven.
+- QEMU geometry review corrected the CPU7 fixture:8 emulated affinities need
+  all8 redistributors mapped (1MiB), rather than old CPU1 fixture256KiB. This
+  is QEMU-only; physical GIC region was already1MiB and is unchanged. Final
+ 20tests PASS1.359s; real-tree CPU1/7/7+6 fixtures generated/validated, all
+  exclude firmwareCPU0 and retain unrelated root/peripheral metadata. Generic
+  QEMU CortexA55 does NOT emulate physical A75 performance or SDM845 clocks.
 - Original0068 native-UFS queue-seal candidate compiled both actualTUs but its
   fault tests/CI were unfinished when human reprioritizedCPU. Preserved privately
   as0068/native-ufs-seal-deferred.patch plus before/candidate files; REMOVED from
