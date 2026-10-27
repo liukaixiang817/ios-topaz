@@ -18,9 +18,16 @@ def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
 
 def admit(driver,qemu,ci,profile,preflight):
     if (driver.get('RAM_only_XNU_loader') is not True or driver.get('QEMU_variant') is not False or
-        driver.get('ready_to_boot_driver') is not True or driver.get('bounded_input') is not True or driver.get('kernel_CPU_affinity')!=256 or
+        driver.get('ready_to_boot_driver') is not True or driver.get('bounded_input') is not True or driver.get('kernel_CPU_affinity') not in (256,1792) or
         driver.get('storage_write_api') is not False or driver.get('NVRAM_write_api') is not False):
         raise ValueError('physical RAM-only loader required')
+    if driver.get('kernel_CPU_affinity')==1792 and qemu.get('kernel_CPU_affinity')!=7:
+        raise ValueError('big-core physical trial requires matching actual QEMU CPU7 execution')
+    count=driver.get('kernel_CPU_count',1)
+    if count not in (1,2) or (count==2 and (driver.get('kernel_CPU_affinity')!=1792 or
+        qemu.get('kernel_CPU_count')!=2 or driver.get('RAM_native_shutdown_bridge') or
+        not all(qemu.get('checks',{}).get(k) is True for k in ['both_kernel_CPUs_online','real_cross_core_callbacks']))):
+        raise ValueError('two-core RAM trial requires actual matching online/xcall proof; native drain not admitted')
     if (qemu.get('passed') is not True or qemu.get('release_handoff_admitted') is not True or
         qemu.get('diagnostic_legacy_only') is not False or not qemu.get('checks') or
         not all(v is True for v in qemu['checks'].values()) or qemu['checks'].get('bounded_input_handshake') is not True or

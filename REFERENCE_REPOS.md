@@ -10,6 +10,38 @@ their build/setup scripts or prebuilts has been executed.
 | --- | --- | --- |
 | [HackiOS kernel](https://github.com/oosexgang/hackios-xnu-kernel) | `research/reference-repos/hackios-xnu-kernel` | `d82c64a3a31cd27a0a0afbf6e213e467e44b1b4c` |
 | [HackiOS userland](https://github.com/oosexgang/hackios-xnu-userland) | `research/reference-repos/hackios-xnu-userland` | `a79ff0772a3454fd1ef127e181e5b3bce6c9ce18` |
+| [User-supplied alioth port](https://github.com/MrMoxing/ios-alioth) | `research/reference-repos/ios-alioth` (shallow source reference) | `2f9207ca27f9b0fad480702e587b88dcc7271ec9` |
+
+## Alioth CPU/GPU comparison (2026-10-28 local)
+
+The human requested this port as a performance reference. Read its pinned
+`docs/SESSION-HANDOFF.md`, `README.md`, `src/hackios-xnu-kernel-main/xnu/files/bsd/dev/redwood_cpufreq.c`
+and `xnu/files/osfmk/arm64/psci_smp.c`. No reference scripts or prebuilts ran.
+Its own README explicitly says GPU drawing is still blocked at A650 CP start;
+it reports four online large cores and hardware EPSS frequency scaling. That
+does not establish working GPU rendering on alioth or comparable frame rates.
+
+Our own backed-up Polaris live DT was independently read with the existing
+bounded C FDT parser: cpu@100 has efficiency0x400/L2 128KiB; cpu@600/700 have
+efficiency0x6cc/L2 256KiB. Current resident UEFI keeps firmware CPU0 and runs
+XNU on cpu@100. This identifies a useful CPU comparison without assuming that
+GPU initialization success means every application frame uses the GPU.
+
+Do not copy K40 EPSS addresses (0x18591000, row request0x320) into Polaris.
+Our live DT names `qcom,clk-cpu-osm-v2` with L3/power/performance regions
+0x17d41000/0x17d43000/0x17d45800. Pinned Xiaomi source
+`drivers/clk/qcom/clk-cpu-osm.c` at `c7cb50c18f812629b9620b2b8fa684bc40d82080`
+(Git blob `b6204cb5a72ecdd03acd4f394410c1647feb1462`) was retrieved and verified;
+its v2 performance-request offset is0x920, not EPSS0x320. No CPU clock/voltage
+registers have been changed. Private correspondence evidence is in0068.
+
+Our independent first adaptation preserves firmware CPU0, adds explicit
+single CPU7 and CPU7+CPU6 RAM trial configurations, and checks exact declared
+MPIDRs/CPU count before firmware PSCI startup. Single-core throughput sampling
+is bounded and does not touch clock controls. Real two-core VM/SGI/xcall
+validation and physical evidence are required; this is not yet an SMP success
+or a persistence claim. The existing native single-core shutdown bridge is
+explicitly refused for two-core candidates until all-core quiescence is proven.
 
 These directories are inside `/Users/lkx/Documents/GitHub/ios-topaz` on this
 machine. The clones occupy approximately 50 MiB and 10 MiB. Keep them as

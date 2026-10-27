@@ -128,7 +128,7 @@ static int finish(void *context)
     const char *error=polaris_payload_check(payload,payload_count,(uintptr_t)payload,&plan);
     if(error){text(error);text("\r\n");return 0;}
     const struct polaris_payload *p=(const void*)payload;
-    const char *required[]={"cpus=1","ufsrw=0","sweetlog=0","polarisramcow=1","polarisusb=0","polarisdebug=0","polarisuefi=1",EFI_XNU_BOOT_CPU_TOKEN};
+    const char *required[]={EFI_XNU_CPUS_TOKEN,"ufsrw=0","sweetlog=0","polarisramcow=1","polarisusb=0","polarisdebug=0","polarisuefi=1",EFI_XNU_BOOT_CPU_TOKEN};
     for(unsigned i=0;i<sizeof(required)/sizeof(required[0]);i++)if(!token(p->cmdline,required[i]))return 0;
     if(EFI_XNU_INPUT_AVAILABLE&&!token(p->cmdline,"polarisinput=1"))return 0;
     if(EFI_XNU_LOG_OFFSET>p->kernel_end-p->virt_base || EFI_XNU_LOG_SIZE>p->kernel_end-p->virt_base-EFI_XNU_LOG_OFFSET ||

@@ -26,6 +26,24 @@ class XnuAdmissionTests(unittest.TestCase):
 
     def test_matching_full_proofs_admitted(self):packer.admit(*self.fixtures())
 
+    def test_big_core_requires_actual_matching_generic_core_execution(self):
+        f=list(self.fixtures());f[0]['kernel_CPU_affinity']=1792
+        with self.assertRaises(ValueError):packer.admit(*f)
+        f[1]['kernel_CPU_affinity']=1
+        with self.assertRaises(ValueError):packer.admit(*f)
+        f[1]['kernel_CPU_affinity']=7;packer.admit(*f)
+        f[0]['kernel_CPU_affinity']=0
+        with self.assertRaises(ValueError):packer.admit(*f)
+
+    def test_two_core_requires_online_and_xcall_proof_and_refuses_native_drain(self):
+        f=list(self.fixtures());f[0].update(kernel_CPU_affinity=1792,kernel_CPU_count=2)
+        f[1].update(kernel_CPU_affinity=7,kernel_CPU_count=2)
+        with self.assertRaises(ValueError):packer.admit(*f)
+        f[1]['checks'].update(both_kernel_CPUs_online=True,real_cross_core_callbacks=True)
+        packer.admit(*f)
+        f[0]['RAM_native_shutdown_bridge']=True
+        with self.assertRaises(ValueError):packer.admit(*f)
+
     def test_prototype_stale_source_queued_CI_and_root_change_refused(self):
         changes=[(1,'diagnostic_legacy_only',True),(1,'release_handoff_admitted',False),
                  (1,'kernel_sha256','e'*64),(1,'checks',{}),(1,'inputs',{}),

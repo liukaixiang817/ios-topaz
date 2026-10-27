@@ -13,6 +13,20 @@ class UEFICoreAdmission(unittest.TestCase):
 int main(void) {
  assert(polaris_uefi_cpu_allowed(1,0x100,1,0,0x100,0x81000100));
  assert(polaris_uefi_cpu_allowed(1,1,1,0,1,0x80000001));
+ assert(polaris_uefi_cpu_allowed(1,0x700,1,0,0x700,0x81000700));
+ assert(polaris_uefi_cpu_allowed(1,7,1,0,7,0x80000007));
+ assert(!polaris_uefi_cpu_allowed(1,0x700,1,0,0x100,0x81000700));
+ assert(!polaris_uefi_cpu_allowed(1,0x700,1,0,0x700,0x81000100));
+ assert(polaris_uefi_cpu_allowed(1,0x700,2,0,0x700,0x81000700));
+ assert(polaris_uefi_cpu_declared(1,0x700,2,1,0x600));
+ assert(polaris_uefi_cpu_declared(1,7,2,1,6));
+ assert(!polaris_uefi_cpu_declared(1,0x700,2,1,0));
+ assert(!polaris_uefi_cpu_declared(1,0x700,2,1,0x100));
+ assert(!polaris_uefi_cpu_declared(1,0x700,2,1,0x700));
+ assert(!polaris_uefi_cpu_declared(1,0x100,2,1,0x200));
+ assert(!polaris_uefi_cpu_allowed(1,0x700,2,1,0x600,0x81000600));
+ assert(!polaris_uefi_cpu_allowed(1,0x700,3,0,0x700,0x81000700));
+ assert(!polaris_uefi_cpu_allowed(1,7,1,0,0x700,0x81000700));
  assert(!polaris_uefi_cpu_allowed(0,0x100,1,0,0x100,0x81000100));
  assert(!polaris_uefi_cpu_allowed(2,0x100,1,0,0x100,0x81000100));
  assert(!polaris_uefi_cpu_allowed(1,0,1,0,0,0x81000000));

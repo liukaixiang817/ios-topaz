@@ -37,7 +37,10 @@ def main():
     drain=manifest.get('RAM_native_drain_test')
     if drain not in (None,'success','stale-cookie') or (drain and a.legacy_core_refusal):
         raise ValueError('unsupported native RAM drain test configuration')
-    if (not manifest.get('QEMU_variant') or manifest.get('kernel_CPU_affinity')!=1 or
+    target=manifest.get('kernel_CPU_affinity')
+    count=manifest.get('kernel_CPU_count',1)
+    if (not manifest.get('QEMU_variant') or target not in (1,7) or count not in (1,2) or
+        (count==2 and (target!=7 or drain)) or
         manifest.get('sha256')!=sha(app) or manifest.get('payload_sha256')!=sha(a.payload) or
         manifest.get('kernel_sha256')!=sha(a.kernel)):
         raise ValueError('QEMU inputs do not match the built test driver')
@@ -61,7 +64,7 @@ def main():
             manifest['disk_payload_path'],a.mtools,child)
         disk=str(out/'fixture.raw')
     cmd=[str(a.qemu.resolve()),'-M','virt,gic-version=3,virtualization=off','-cpu','cortex-a55',
-         '-smp','2','-m','8G','-display','none','-monitor','none','-nic','none',
+         '-smp',str(target+1),'-m','8G','-display','none','-monitor','none','-nic','none',
          '-serial','file:'+str(out/'serial.log'),'-qmp','stdio','-no-reboot',
          '-drive','if=pflash,format=raw,readonly=on,file='+str(a.code.resolve()),
          '-drive','if=pflash,format=raw,file='+str(out/'vars.fd'),
@@ -111,19 +114,23 @@ def main():
                 firmware_CPU0='EFI_MPIDR=0x0000000080000000' in text,
                 bank_owned='XNU_BANK_OWNERSHIP=0x0000000000000001' in text,
                 payload_valid='QEMU_PAYLOAD_VALID=0x0000000000000001' in text,
-                PSCI_target1='KERNEL_PSCI_TARGET=0x0000000000000001' in text,
+                PSCI_target_matches=f'KERNEL_PSCI_TARGET=0x{target:016x}' in text,
                 PSCI_success='KERNEL_PSCI_STATUS=0x0000000000000000' in text,
                 live_RAM_log='SWEET: starting device-tree platform expert' in ring and 'SWEET: starting device-tree platform expert' in text)
     if a.legacy_core_refusal:
         checks['expected_legacy_guard']='invalid topology cpu=0 mpidr=0x1 count=1' in ring
     else:
         checks.update(boot_variable_snapshot='EFI_BOOT_OPTIONS_CAPTURE=0x0000000000000001' in text,
-                      explicit_single_kernel_core='POLARIS UEFI: one kernel CPU, logical0 physical0x1; firmware CPU0 reserved' in ring,
+                      explicit_kernel_core_count=(f'POLARIS UEFI: one kernel CPU, logical0 physical{target:#x}; firmware CPU0 reserved' in ring if count==1 else
+                          f'POLARIS UEFI: resident kernel CPUs=2 boot logical0 physical{target:#x}; firmware CPU0 reserved' in ring),
                       four_process_VM_stress='SMP STRESS all4 PASS' in ring,
                       each_child_passed=ring.count('SMP STRESS child PASS')==4,
                       bounded_input_handshake='QEMU_INPUT_BRIDGE=1' in text and 'POLARIS UEFI INPUT: seq=2 down=0' in ring,
                       no_panic='panic(cpu ' not in ring and 'panic(cpu ' not in text,
                       no_stress_failure='SMP STRESS FAIL' not in ring)
+        if count==2:
+            checks.update(both_kernel_CPUs_online='SWEET CPU: 2/2 CPUs initialized, SGI1 verified' in ring,
+                          real_cross_core_callbacks='POLARIS SMP CHECK: PASS selected=2 callbacks=32 remote=' in ring)
     if manifest.get('disk_payload_read_only'):
         checks.update(unique_GPT_filesystem='DISK_ESP_MATCHES=0x0000000000000001' in text,
                       disk_payload_exact_read=f'DISK_READ_BYTES=0x{manifest["payload_bytes"]:016x}' in text,
@@ -167,6 +174,8 @@ def main():
                 full_iOS_boot_proven=False,physical_USB_proven=False,SDM845_emulated=False,
                 RAM_native_drain_test=drain,native_shutdown_mailbox=mailbox,
                 persistent_root_or_UFS_durability_proven=False,
+                kernel_CPU_affinity=target,
+                kernel_CPU_count=count,
                 app_sha256=sha(app),payload_sha256=sha(a.payload),kernel_sha256=sha(a.kernel),
                 inputs=manifest['inputs'],seconds=time.monotonic()-start,command=cmd,
                 code_sha256=sha(a.code),vars_template_sha256=sha(a.vars))

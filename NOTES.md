@@ -34,6 +34,46 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0068 CPU performance/SMP adaptation (source prepared; full CI pending)
+
+- Latest human steering: suppliedMrMoxing/ios-alioth handoff, asks to apply its
+  CPU/GPU performance approaches; then clarified priority CPU multicore and
+  data-preserving disk installation/Mindows UEFI entry, retaining current GPU.
+  These remain the same task, not permission to erase or skip durable-write gates.
+- Expected actual Polaris FASTBOOT read-only verified15:49:16UTC. No new phone
+  boot, pin, file allocation or storage write during0068 preparation. Existing
+ 0067 same-boot UI/native drain proof remains the physical baseline.
+- Alioth clone pinned2f9207ca27f9b0fad480702e587b88dcc7271ec9 under ignored
+  research/reference-repos/ios-alioth. README/handoff explicitly say GPU drawing
+  NOT yet working (A650 CP start reset), CPU four large cores online/EPSS
+  frequency boost. No foreign scripts/prebuilts ran. SeeREFERENCE_REPOS.md.
+- Own backed-up live DT parsed using actual existing bounded C FDT reader:
+  currentCPU1 efficiency0x400/L2 128KiB, CPU6/7 efficiency0x6cc/L2 256KiB.
+  Own OSM-v2 is different from alioth EPSS; pinned Xiaomi vendorCPU source Git
+  blob verified. No clock/voltage register writes or frequency-speedup claims.
+- Implemented explicit CPU7 single-core control and CPU7+CPU6 two-core RAM
+  candidates while firmware retainsCPU0. Host/kernel declarations bind exact
+  MPIDR, logical IDs/count, tree RAM/GIC/board and unique command-line tokens;
+  secondary phandle/L2 IDs are distinct, other tree properties unchanged.
+  Bounded opt-inpolarisperf reports actualMPIDR/MIDR/loop throughput, not clocks.
+- Actual Apple clang27 full-headerSweetCPU.cpp compile PASS; CPU policy/tree/
+  admission10tests PASS; bridge/control/protocol regression20tests PASS1.125s.
+  Actual default-core EFI/XNU dirty-writer native-drain compatibility20/20
+  PASS37.682s using unchanged0067kernel and new firmware/tools. This proves
+  default compatibility, NOT the new kernel or two-core execution.
+  First test edit accidentally included single-core
+  assertions in the two-core test; retainedattempt1 log, corrected test placement.
+  Final0868 exact-apply and host/kernel admission-header identity PASS;
+  native UFS/touch byte-identical to0067. Needs full CI and EFI/XNU single/two-core
+  VM+SGI/xcall checks before hardware. Two-core native drain is explicitly
+  refused; RAM rescue reset only until all-core shutdown is implemented/proven.
+- Original0068 native-UFS queue-seal candidate compiled both actualTUs but its
+  fault tests/CI were unfinished when human reprioritizedCPU. Preserved privately
+  as0068/native-ufs-seal-deferred.patch plus before/candidate files; REMOVED from
+  active profiles, restored proven0067 UFS/touch sources. Do not claim it shipped
+  or reapply silently to the CPU comparison. Persistent UFS integration still
+  required after CPU work; no write-protection change has been made.
+
 ### 0067 native-enabled UI and shutdown (physical same-boot PASS)
 
 - USER REPORT CADENCE: human now requests progress every15minutes while work

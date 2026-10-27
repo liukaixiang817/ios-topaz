@@ -52,6 +52,10 @@ def main():
     ap.add_argument('--payload',required=True,type=Path)
     ap.add_argument('--output',required=True,type=Path)
     ap.add_argument('--test-qemu',action='store_true')
+    ap.add_argument('--kernel-core',type=int,choices=(1,7),default=1,
+                    help='one XNU core: existing small CPU1 or opt-in big CPU7; firmware retains CPU0')
+    ap.add_argument('--kernel-cpus',type=int,choices=(1,2),default=1,
+                    help='one kernel core or opt-in CPU7+CPU6 pair; firmware CPU0 stays reserved')
     ap.add_argument('--test-ram-drain',choices=['success','stale-cookie'],
                     help='QEMU-only real BSD RAM drain experiment; never UFS durability proof')
     ap.add_argument('--ram-shutdown-bridge',action='store_true',
@@ -63,6 +67,10 @@ def main():
     ap.add_argument('--disk-version',default='V0061')
     ap.add_argument('--chain-app-manifest',type=Path,help='RAM test wrapper for the exact already-built selected disk app')
     a=ap.parse_args();r=Path(__file__).resolve().parents[1]
+    target=a.kernel_core if a.test_qemu else a.kernel_core<<8
+    if a.kernel_cpus==2 and a.kernel_core!=7:ap.error('two-core trial requires the CPU7+CPU6 pair')
+    if a.kernel_cpus!=1 and (a.ram_shutdown_bridge or a.test_ram_drain):
+        ap.error('native RAM drain is single-core only until cross-core quiescence is proven')
     if a.test_ram_drain and (not a.test_qemu or a.chain_app_manifest):
         ap.error('RAM drain experiment requires QEMU without a chain wrapper')
     if a.ram_shutdown_bridge and a.chain_app_manifest:
@@ -78,6 +86,19 @@ def main():
     out=a.output.resolve();out.mkdir(parents=True,exist_ok=False)
     raw=a.payload.read_bytes();k=a.kernel.read_bytes()
     sys.path.insert(0,str(r/'tools'));import mkpayload
+    tokens=raw[0x48:0x2a8].split(b'\0',1)[0].split()
+    cpu_tokens=[t for t in tokens if t.startswith(b'polarisbootcpu=')]
+    if cpu_tokens!=[f'polarisbootcpu={target}'.encode()]:
+        raise ValueError('payload must uniquely declare the exact selected kernel core')
+    if [t for t in tokens if t.startswith(b'cpus=')]!=[f'cpus={a.kernel_cpus}'.encode()]:
+        raise ValueError('payload must uniquely declare the selected kernel CPU count')
+    # Bind firmware PSCI target to the kernel's actual tree, not just a token.
+    import polaris_uefi_cpu_tree
+    if len(raw)<72:raise ValueError('payload header truncated')
+    tree_at,tree_bytes=struct.unpack_from('<QQ',raw,32)
+    if tree_at>len(raw) or not 8<=tree_bytes<=len(raw)-tree_at:
+        raise ValueError('CPU tree source outside payload')
+    polaris_uefi_cpu_tree.validate(raw[tree_at:tree_at+tree_bytes],a.kernel_core,a.test_qemu,a.kernel_cpus)
     kernel=bytearray(k);m=mkpayload.parse_macho(kernel);mkpayload.apply_chained_fixups(kernel,m)
     va=struct.unpack_from('<Q',raw,16)[0]
     if va!=m['segs'][0]['vmaddr']&~0x1ffffff:raise ValueError('payload virtual base mismatch')
@@ -124,8 +145,9 @@ def main():
 #define EFI_XNU_LOG_SIZE (4u*1024u*1024u)
 #define EFI_XNU_INPUT_AVAILABLE {int(input_present)}
 #define EFI_XNU_INPUT_OFFSET 0x{input_offset:x}ULL
-#define EFI_XNU_CPU {1 if a.test_qemu else 256}u
-#define EFI_XNU_BOOT_CPU_TOKEN "polarisbootcpu={1 if a.test_qemu else 256}"
+#define EFI_XNU_CPU {target}u
+#define EFI_XNU_BOOT_CPU_TOKEN "polarisbootcpu={target}"
+#define EFI_XNU_CPUS_TOKEN "cpus={a.kernel_cpus}"
 ''')
     if shutdown_bridge:
         with config.open('a') as f:
@@ -145,6 +167,7 @@ def main():
         if (child.get('selected_application') is not True or child.get('QEMU_variant')!=a.test_qemu or
             child.get('disk_guid')!=str(a.disk_guid) or child.get('disk_start_lba')!=a.disk_start_lba or
             child.get('disk_blocks')!=a.disk_blocks or child.get('disk_payload_path')!=disk_path or
+            child.get('kernel_CPU_affinity')!=target or child.get('kernel_CPU_count',1)!=a.kernel_cpus or
             child.get('kernel_sha256')!=sha(a.kernel) or child.get('payload_sha256')!=sha(a.payload) or
             child.get('sha256')!=sha(child_file) or not 0<child_file.stat().st_size<2<<20):
             raise ValueError('chain requires matching selected application and exact disk/payload/kernel')
@@ -161,6 +184,7 @@ def main():
     if a.efi_application:flags.append('-DPOLARIS_EFI_APPLICATION=1')
     sources=['uefi-xnu.c','uefi-xnu-ap.S','uefi-xnu-crc.c','payload.c','uefi-usb.c','uefi-usb-command.c','uefi-usb-control.c']
     inputs=['shim/polaris/'+n for n in sources]+['shim/polaris/uefi.h','shim/polaris/uefi-xnu.h','shim/polaris/uefi-usb.h','shim/polaris/uefi-memory.h','shim/polaris/uefi-reset.h','shim/polaris/uefi-file.h','shim/polaris/uefi-boot-options.h','shim/polaris/uefi-ram-lease.h','shim/polaris/payload.h','tools/build-polaris-uefi-xnu.py','tools/polaris-uefi-input.h']
+    inputs+=['tools/polaris_uefi_cpu_tree.py','tools/adt.py']
     if shutdown_bridge:inputs.append('shim/polaris/runtime-quiesce.h')
     objects=[]
     for source in sources:
@@ -189,7 +213,8 @@ def main():
                   shutdown_offset=shutdown_offset if shutdown_bridge else None,
                   persistent_root_or_UFS_durability_proven=False,
                   QEMU_variant=a.test_qemu,phone_compatible=not a.test_qemu,
-                  kernel_CPU_affinity=1 if a.test_qemu else 256,
+                  kernel_CPU_affinity=target,
+                  kernel_CPU_count=a.kernel_cpus,
                   RAM_base=0x130000000 if a.test_qemu else 0x180000000,RAM_bytes=0xfc8a0000,
                   firmware_core_reserved=0,firmware_services_exited=False,
                   device_execution_tested=False,inputs={p:sha(r/p) for p in inputs})
