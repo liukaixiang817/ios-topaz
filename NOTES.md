@@ -34,6 +34,79 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0076 COMPLETE actual native owned UFS WRITE/READ/final-SYNC/refusal; 0077 fresh physical audit
+
+- Kernel source5e48c69aa9d41388126564d19674d055d2f02e95 COMMITTED/PUSHED;
+  fullmacOS27/Xcode27 CI40578514614/job122451332142 SUCCESS, kernel
+ 0ec29086981a9be3ce5f1f7d56e73948d208828bd7e24d74632fa60c18b19db1
+  inout-polaris-0076 verified exactsource/profile/ZIPCRC/SHA. No new kernel
+  source since; do NOT rebuildCI for host-observer/doc changes.
+- actual-native-owned-UFS-write-sync-proof.json binds SEVEN real EFI/XNU
+  cases, all with actualPID1/fourVMchildren/dirtywriter/input/dualSGI32xcall:
+  success37/37(38.198s), actualbackendSYNC-EIO35/35(38.271s), actualdelayed
+  WRITE unknownDMA35/35(38.142s), controlledSOFTWARE shortUPIU after real
+  completedWRITE33/33(38.166s), stale-cookie34/34(38.200s), actualhardware
+  HCE1->0 afterWRITE/READ34/34(38.236s), ordinarydualRAMcontrol23/23(37.750s).
+  Selected success/flush runs0006; unknown/short/stale0004; HCE0005; control0006.
+  All ownedvirtualcases releasefalse; onlygenericRAMcontrol releasetrue.
+- Native actualUFS reread pinnedext4 inode13/gen305419896/UUID/CRC/indexed
+ 11extents/oneindexnode, protectedcompletebase-disjoint, protectedbaseWRITE
+  refused BEFORE descriptor. NativeWRITE10+READ10 4096B MATCH; actualVFS0/
+  busy0 then sealednativeSYNCHRONIZE CACHE10, epoch1=flushed1, peer6actual
+  PSCI_OFF, coordinatorIRQ mask/PoC publication and exactSAFE1f observed by
+  firmware sender/reset gate. Host backend accounting captured BEFORE host
+  QMPstop can add flush; after QEMUexit/reopen every LUNbyte matches, only
+  expectedblock2571 changed, originalsource/protectedbase byte-identical.
+- ActualflushEIO leavesFAILED/error5/epoch1/flushed0/cap0; firmware refuses
+  BOTHresetmodes. UnknownDMA holds realbackendWRITE120s, native5s timeout,
+  realHCI doorbell still1 and actualkernel symbols inflight1/submitted8/
+  completed7/failed1 observed; no backendbyte changed, noSAFE/raw/lease reset.
+  Its terminalFAILED state is read LIVE before killing only the synthetic
+  model; QMPstop would drain/complete the pending request and invalidate the
+  observation. Failedold unknownrun0003 retained (127s, hostobserver flushed
+  request); not positive evidence. Firstsuccess0001 lacked backendaccounting,
+  and HCE0004 socketbind was sandboxdenied; retained, replaced by testedfixes.
+- Source-bound archived hostobserver revisions and allkernel/mailbox/queue/
+  register/serial/byteproof hashes are in actual-native-owned-UFS-write-sync-
+  proof.json. Actualnativequeue values come from stopped/liveguest memory via
+  realMachO symbols, not hostmodel counters. Response-short is explicitly
+  SOFTWAREresponse injection, not realdevice shorttransfer. GenericUFS model
+  is NOT SDM845PHY or phoneownedwrite proof. MemoryrootHFS flushENOTTY remains
+  NOT a realpersistentHFS-root proof. Root stillRAMCOW; fulliOS notinstalled.
+- Source0873 exactpatch0fuzz/0offset, ownerheaderverbatim, fullnative2TUs,
+ 22ASan/UBSan/metadata/tree/admission tests PASS. Officialpinned blkdebug
+  source+actualinstalledQAPI delay field and actualrawbackend control/EIO/
+  delay pretests checked. Initial format-specific fault events did NOT fire
+  inrawgraph; final NONE+iotype rules actuallytested, failedpretests retained.
+- NEW0077 physical READONLY preflight-final-0001 COMPLETE21:03UTC: known
+  recoveryRAM only, root/blockRO+ro,noload, full16GiB SHA689a8cd1.../182map/
+  allsixGPTs/criticalpartitions/ESP7338692a/clean4096header allunchanged,
+  hash57.994s,temp33C; nojournalrepair/OSboot/partitionwrite. Independentreal
+  expectedPolaris FASTBOOT verified afterADBbootloader request (actual-
+  fastboot-after-preflight.json). No activephoneiOS. NO phoneownedfile/pin/
+  nativewrite yet. Do not repeat completedCPU/GUI/model trials.
+- NEXT0077: add PHYSICAL SMALL MARKER mode and firmwaredurableguard, reusing
+  testednativeowner/queue/SYNC under same mutex, NOT fullrootwrite yet. Existing
+  physical file-root must first validate originalGPT/head/edges; protectedmap
+  must equal complete actualbase182map, not arbitrary caller map. Separate
+  ownedmarker opt-in must require ownphysicalDT/MPIDR/clock and conflict-refuse
+  QEMU/ufsprobe/genericrw. Firmware disables rawreset AND RAM1800slease BEFORE
+  CPU_ON, exactSAFE required. Current EFI_XNU_OWNED_TEST is QEMUONLY and current
+  kernel entry is QEMUONLY: cannot merely enable token onphone. Add real
+  marker bridge, native2TU/localnegative tests/fullCI and normalcontrol proof
+  BEFORE actualnativephonewrites. Need newroot-owned0600/singlelink/pinned
+  immutable+noatime independent smallfile (O_EXCL, nofollow, fullallocation,
+  fsync+directoryfsync, flagsverification), freshreadonlyFIEMAP/packet export,
+  originalroot/ESP/criticalbaseline preservation and directFASTBOOT recovery.
+  Allocate onlynewnamespace, neveroverwrite/erase/resize/default/NVRAM. First
+  actualsmallfile WRITE/read/finalSYNC/nativeFASTBOOT/recoverywholefile readback
+  must pass before complete16GiBruntimecopy/realHFSflush/crossrebootUI state.
+- CPU physical700+600/USBGUI/nativeallcorestop0071 and MindowsdiskEFIapp->iOS
+ 0062 alreadycomplete. Originalvolume-keymenu stillrequires recoverableRAM
+  harness (no oldReadKeyStroke pointer hook/fixedUPcount), no permanentholdDXE.
+  KeepGPUbundle42d5ec4c... unchanged. Preserveexisting102ESP files, Android/
+  Windows/allexistingdata. Latestprogress21:03UTC; reporteach15min.
+
 ### 0076 native owned-file WRITE/final-SYNC candidate (not yet executed)
 
 - New0873 patch connects verbatim0063 owner verifier to actual sweet_ufs_lock,

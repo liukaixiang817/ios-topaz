@@ -116,7 +116,10 @@ def main():
         if a.fault_owned_sync or a.fault_owned_write_delay:
             # Never present an arbitrary caller-supplied file/device as writable.
             # Installed QAPI validates these options before any guest starts.
-            rule={'event':'flush_to_disk' if a.fault_owned_sync else 'write_aio',
+            # NONE activates at blkdebug open. WRITE_AIO/FLUSH_TO_DISK events
+            # belong to upper format drivers and did not fire in a raw graph.
+            # iotype confines this active rule to the intended actual request.
+            rule={'event':'none',
                   'iotype':'flush' if a.fault_owned_sync else 'write',
                   'errno':5 if a.fault_owned_sync else 0,'once':True,'immediately':False}
             if a.fault_owned_write_delay:rule['delay-ns']=120_000_000_000
@@ -124,9 +127,12 @@ def main():
                 'driver':'raw','file':{'driver':'file','filename':str(ufs_fixture)}},'inject-error':[rule]}
             (out/'backend-fault-config.json').write_text(json.dumps(backend,indent=2)+'\n')
             cmd+=['-blockdev',json.dumps(backend)]
+        elif owned_ufs:
+            cmd+=['-blockdev',json.dumps({'driver':'raw','node-name':'isolated-lun0',
+                'file':{'driver':'file','filename':str(ufs_fixture)}})]
         else:
             cmd+=['-drive','if=none,id=isolated-lun0,format=raw,readonly='+('off' if owned_ufs else 'on')+',file='+str(ufs_fixture)]
-        cmd+=['-device','ufs-lu,drive=isolated-lun0,lun=0']
+        cmd+=['-device','ufs-lu,id=isolated-native-lun0,drive=isolated-lun0,lun=0']
         if a.fault_ufs_host_disable:
             test_socket_dir=tempfile.TemporaryDirectory(prefix='polaris-ufs-')
             socket_path=str(Path(test_socket_dir.name)/'qtest.sock')
@@ -183,9 +189,22 @@ def main():
                 if ('panic(cpu ' in text or test_done or
                     'XNU_ADMISSION=0x8' in text or p.poll() is not None):break
                 time.sleep(.2)
-            q('stop')
+            if owned_ufs:
+                # Record guest-caused accounting BEFORE host stop can add its
+                # own flush. An observer flush must never prove guest durability.
+                (out/'actual-blockstats.json').write_text(json.dumps(q('query-blockstats',{'query-nodes':True}),indent=2)+'\n')
+                (out/'actual-backend-stats.json').write_text(json.dumps(q('query-blockstats'),indent=2)+'\n')
+            if not a.fault_owned_write_delay:
+                q('stop')
+            # QMP stop itself flushes/drains block backends. In the unknown-DMA
+            # experiment it would wait for (and complete) the deliberately held
+            # request, destroying the pending-hardware observation. After sticky
+            # FAILED, read the live immutable queue/status instead, then kill
+            # only this synthetic model. No guest reset permission is granted.
             if virtual_ufs:
-                (out/'actual-blockstats.json').write_text(json.dumps(q('query-blockstats'),indent=2)+'\n')
+                if not owned_ufs:
+                    (out/'actual-blockstats.json').write_text(json.dumps(q('query-blockstats',{'query-nodes':True}),indent=2)+'\n')
+                    (out/'actual-backend-stats.json').write_text(json.dumps(q('query-blockstats'),indent=2)+'\n')
                 (out/'actual-pci.json').write_text(json.dumps(q('query-pci'),indent=2)+'\n')
                 (out/'actual-UFS-registers.txt').write_text(q('human-monitor-command',
                     {'command-line':'xp/40wx 0x10100000'}))
@@ -198,6 +217,23 @@ def main():
             if drain:
                 q('pmemsave',{'val':base+syms['_polaris_uefi_shutdown']-va,'size':256,
                               'filename':str(out/'native-shutdown-mailbox.bin')})
+            if owned_ufs:
+                # Read actual stopped-guest native queue storage. These are
+                # kernel Mach-O symbols, never supplied/modelled host counters.
+                listing=subprocess.check_output(['/usr/bin/nm','-a',str(a.kernel)],text=True)
+                addresses={line.split()[2]:int(line.split()[0],16) for line in listing.splitlines()
+                           if len(line.split())==3 and line.split()[0]!='U'}
+                queue={}
+                for name,size in [('polaris_ufs_inflight',1),('polaris_ufs_sealed',1),
+                                  ('polaris_ufs_submitted',8),('polaris_ufs_completed',8),
+                                  ('polaris_owned_failed',1),('polaris_owned_active',1),
+                                  ('polaris_owned_final_sync',1)]:
+                    address=addresses['_'+name]-va
+                    if not 0<=address<=manifest['RAM_bytes']-size:raise ValueError('native queue symbol outside owned RAM')
+                    saved=out/(name+'.bin')
+                    q('pmemsave',{'val':base+address,'size':size,'filename':str(saved)})
+                    queue[name]=int.from_bytes(saved.read_bytes(),'little')
+                (out/'actual-native-UFS-queue.json').write_text(json.dumps(queue,indent=2)+'\n')
             if a.fault_owned_write_delay:
                 # Intentional teardown of a refused MODEL with unknown DMA.
                 # This is not a guest shutdown/reset or a physical recovery.
@@ -343,6 +379,27 @@ def main():
                       protected_base_byte_identical=reopened['protected_base_unchanged'],
                       no_unexpected_LUN_block_changes=reopened['changed_blocks']==reopened['expected_changed_blocks'],
                       original_fixture_source_unchanged=reopened['original_source_unchanged'])
+        stats=json.loads((out/'actual-backend-stats.json').read_text()) if (out/'actual-backend-stats.json').exists() else []
+        stats=[s for s in stats if s.get('node-name')=='isolated-lun0' or s.get('device')=='isolated-lun0' or
+               s.get('qdev','').startswith('/machine/peripheral/isolated-native-lun0/')]
+        checks['exact_owned_backend_stats_captured']=len(stats)==1
+        queue=json.loads((out/'actual-native-UFS-queue.json').read_text()) if (out/'actual-native-UFS-queue.json').exists() else {}
+        if a.fault_owned_write_delay:
+            checks['native_unknown_DMA_retained']=bool(queue and queue['polaris_ufs_inflight']==1 and
+                queue['polaris_owned_failed']==1 and queue['polaris_ufs_submitted']==queue['polaris_ufs_completed']+1)
+        else:
+            checks['native_queue_actual_completions_balanced']=bool(queue and queue['polaris_ufs_inflight']==0 and
+                queue['polaris_ufs_submitted']==queue['polaris_ufs_completed'] and queue['polaris_ufs_completed']>0)
+        def stat_values(value,key):
+            if isinstance(value,dict):
+                if key in value:yield value[key]
+                for child in value.values():yield from stat_values(child,key)
+            elif isinstance(value,list):
+                for child in value:yield from stat_values(child,key)
+        if a.fault_owned_sync:
+            checks['actual_backend_failed_flush_recorded']=any(v>0 for v in stat_values(stats,'failed_flush_operations'))
+        elif not (a.fault_ufs_host_disable or a.fault_owned_write_delay or response_short or drain=='stale-cookie'):
+            checks['actual_backend_flush_completed']=any(v>0 for v in stat_values(stats,'flush_operations'))
     record=dict(passed=all(checks.values()) and error is None,checks=checks,error=error,
                 diagnostic_legacy_only=a.legacy_core_refusal,release_handoff_admitted=not virtual_ufs and not a.legacy_core_refusal and drain!='peer-refused' and all(checks.values()) and error is None,
                 full_iOS_boot_proven=False,physical_USB_proven=False,SDM845_emulated=False,
@@ -352,6 +409,9 @@ def main():
                 isolated_QEMU_owned_UFS_test=owned_ufs,owned_backend_reopen=reopened,
                 controlled_response_short_injection=response_short,
                 actual_backend_SYNC_EIO=a.fault_owned_sync,actual_backend_WRITE_delay=a.fault_owned_write_delay,
+                snapshot_while_guest_running=a.fault_owned_write_delay,
+                owned_backend_accounting_before_host_stop=bool(owned_ufs and (out/'actual-backend-stats.json').exists()),
+                actual_native_queue=queue if owned_ufs else None,runner_sha256=sha(Path(__file__)),
                 UFS_hardware_fault=fault,
                 isolated_UFS_backend_sha256=sha(ufs_fixture) if ufs_fixture else None,
                 kernel_CPU_affinity=target,

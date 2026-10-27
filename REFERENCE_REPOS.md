@@ -39,9 +39,13 @@ Our independent first adaptation preserves firmware CPU0, adds explicit
 single CPU7 and CPU7+CPU6 RAM trial configurations, and checks exact declared
 MPIDRs/CPU count before firmware PSCI startup. Single-core throughput sampling
 is bounded and does not touch clock controls. Real two-core VM/SGI/xcall
-validation and physical evidence are required; this is not yet an SMP success
-or a persistence claim. The existing native single-core shutdown bridge is
-explicitly refused for two-core candidates until all-core quiescence is proven.
+validation subsequently passed in0071, followed by one physical Polaris boot
+with CPU700+600, SGI and32 cross-core callbacks, USB screenshots/input through
+lock/home/Settings/scroll/home, native BSD shutdown, actual peer600 PSCI_OFF
+and independently verified FASTBOOT. See NOTES.md0071 and its private
+physical-dual-CPU-UI-native-drain-proof.json. This does not establish all eight
+cores, higher physical frame rates or CPU frequency scaling. The current GPU
+bundle was preserved byte for byte. Persistent writable iOS remains separate.
 
 These directories are inside `/Users/lkx/Documents/GitHub/ios-topaz` on this
 machine. The clones occupy approximately 50 MiB and 10 MiB. Keep them as
