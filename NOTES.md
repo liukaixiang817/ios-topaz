@@ -34,6 +34,26 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0074 exact virtual PCI programming-interface repair (no phone changes)
+
+-0073 source6ea81538b253b23584363937d5244cc5a4f7501c fullmacOS27
+  CI40566731301 SUCCESS, kernel0e584971503e33816dcc21cf7114101f4c5618d69d345bc79eec0bf5be61167e
+  exactsource/profile/artifactCRC/SHA verified. Actual VM logged workerMPIDR7
+  admitted, then actualPCI00131b36/class01090100/cmd0/BAR10000000. My gate
+  incorrectly expected programminginterface0; actualprimaryufs_init_pci line1750
+  explicitlysets1. Corrected to exact010901, with exhaustive actualC PCI gate
+  tests. No PCI/MMIO writes before that refusal. This IS now an observed cause.
+- Failed0073 result retained actual-UFS-read-seal-run-0001. Real nativeVFS0busy0
+  then queue seal refused (iofailed), nativeFAILED and actual firmware both
+  reset modes refused marker. It proves a fail-closed path, NOT successfulUFS
+  read or intended injectedHCE fault; combinedresultFAILED/releasefalse.
+- Existing 0073 gate permits flat6/7 only; physical600/700 still refused. Prior
+ 0072 migration cause remains unobserved in its old log, don't state as fact.
+- No phone boot/writes/newruntime/pin. New actualext4/GPT owned-file fixture in
+ 0073/owned-virtual-fixture is offline newhostfiles only; e2fsckpassed, indexed
+ 11extents/oneextentnode, runtime32MiB flags80090/generation12345678, independent
+  base1MiB, exportedowner packet. NOT kernel/UFS/write/durability evidence.
+
 ### 0073 isolated UFS probe refinement (actual0072 refusal retained)
 
 -0072 source9bafadc fullmacOS27 CI40564831819/job122403203100 SUCCESS,

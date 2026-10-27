@@ -118,7 +118,7 @@
  		printf("POLARIS UFS: unexpected response flags/tag/residual\n");
  		return EIO;
  	}
-@@ -491,10 +555,159 @@
+@@ -491,10 +555,164 @@
  		printf("SWEET UFS: host did not take our request list\n");
  		return EIO;
  	}
@@ -147,6 +147,11 @@
 +        base == UINT64_C(0x130000000) && bytes == UINT64_C(0xfc8a0000) &&
 +        reg[0] == UINT64_C(0x10100000) && reg[1] == 0x2000 &&
 +        ecam[0] == UINT64_C(0x4010000000) && ecam[1] == 0x100000;
++}
++/* qemu v11.0.1 ufs_init_pci sets programming interface1 explicitly. */
++static bool polaris_qemu_ufs_pci_allowed(uint32_t identity,uint32_t classrev,uint16_t command)
++{
++    return identity == 0x00131b36 && (classrev >> 8) == 0x010901 && !(command & 6);
 +}
 +#ifndef POLARIS_UFS_POLICY_TEST
 +static bool polaris_dt_copy(DTEntry, const char *, void *, unsigned);
@@ -200,7 +205,7 @@
 +    volatile uint16_t *command=(volatile uint16_t *)((uintptr_t)config+4);
 +    printf("POLARIS QEMU UFS: actual PCI id=%08x class=%08x command=%x BAR0=%08x\n",
 +        identity,classrev,*command,config[4]);
-+    if (identity != 0x00131b36 || (classrev >> 8) != 0x010900 || (*command & 6)) goto out;
++    if (!polaris_qemu_ufs_pci_allowed(identity,classrev,*command)) goto out;
 +    /* Exact isolated virt fixture: only bridge, virtio block/GPU, UFS on bus0.
 +     * No BAR is changed while memory or bus mastering is enabled. Reject a
 +     * conflicting BAR in the reserved test aperture, including 64-bit BARs. */
@@ -278,7 +283,7 @@
  /* Called once by the CPU startup thread, after timer/scheduler initialization.
   * No BSD disk registration, filesystem mount, persistent logging or input/USB
   * driver startup. The normal sweet_ufs_init remains disabled on this platform.
-@@ -519,6 +732,10 @@
+@@ -519,6 +737,10 @@
  void
  polaris_ufs_probe(void)
  {
@@ -289,7 +294,7 @@
  	uint32_t enabled = 0;
  	if (!PE_parse_boot_argn("polarisufsprobe", &enabled, sizeof(enabled)) || enabled != 1) {
  		return;
-@@ -598,6 +815,7 @@
+@@ -598,6 +820,7 @@
  		if (ufs_rd(REG_UTRLBA) == old_lo && ufs_rd(REG_UTRLBAU) == old_hi &&
  		    ufs_rd(REG_UTRLRSR) == old_rsr) {
  			ufs_wr(REG_IE, old_ie);
@@ -297,7 +302,7 @@
  			polaris_probe_queue_status = "restored";
  			printf("POLARIS UFS: idle queue restored; probe complete\n");
  		} else {
-@@ -659,6 +877,11 @@
+@@ -659,6 +882,11 @@
  	}
  
  	lck_mtx_lock(&sweet_ufs_lock);
@@ -309,7 +314,7 @@
  	for (uint32_t done = 0; done < count;) {
  		uint64_t pos = off + done;
  		uint64_t lba = pos / UFS_BLOCK;
-@@ -778,8 +1001,11 @@
+@@ -778,8 +1006,11 @@
  	case DKIOCSYNCHRONIZE:
  	case DKIOCSYNCHRONIZECACHE: {
  #if defined(POLARIS_RAM_ONLY)

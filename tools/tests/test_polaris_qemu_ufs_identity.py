@@ -51,6 +51,15 @@ int main(void) {
         assert(!CHECK(7,62500000,1,7,2^flip,0,0x130000000,0xfc8a0000));
         assert(!CHECK(7,62500000,1,7,2,flip,0x130000000,0xfc8a0000));
     }
+    assert(polaris_qemu_ufs_pci_allowed(0x00131b36,0x01090100,0));
+    assert(!polaris_qemu_ufs_pci_allowed(0x00131b36,0x01090000,0));
+    for (unsigned bit=0;bit<32;bit++) {
+        uint32_t flip=1u<<bit;
+        assert(!polaris_qemu_ufs_pci_allowed(0x00131b36^flip,0x01090100,0));
+        assert(polaris_qemu_ufs_pci_allowed(0x00131b36,0x01090100^flip,0)==(bit<8));
+    }
+    for (unsigned command=0;command<65536;command++)
+        assert(polaris_qemu_ufs_pci_allowed(0x00131b36,0x01090100,(uint16_t)command)==!(command&6));
     return 0;
 }
 ''')
