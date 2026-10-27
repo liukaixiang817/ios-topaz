@@ -34,8 +34,20 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### 0067 startup worker experiment (CI and native VM passed, phone pending)
+### 0067 startup worker experiment (CI/VM passed, physical native boot live)
 
+- USER REPORT CADENCE: human now requests progress every15minutes while work
+  continues, including an honest brief waiting status. Existinguefi-ios heartbeat
+  updated to15minutes (same task, no duplicate). Latest report15:30UTC.
+- CURRENT LIVE:0067boot0001 native-enabled RAM trial sent15:24:56UTC,
+  kernel USB staging completed15:25:48UTC. Image7164592d/driver497b2d2b/new
+  ca115f kernel, native bridge+polarisquiesce1. capture0003 actual screen is
+  Apple logo; real USB log has SpringBoard/PosterBoard and graphics startup.
+  Native-status-before0001 reads fresh RUNNING/RAM_CONFIG cookie, no shutdown
+  requested yet. No GUI proof yet; keep this boot and use targeted captures.
+  After lock/home/settings/scroll/home actual screenshot+input proof, perform
+  native shutdown-fastboot and separately verify actual expected FASTBOOT.
+  Raw/lease rescue remains RAM-only if native drain fails; no Android boot.
 - Sourcecc83ea3 COMMITTED/PUSHED. macOS27/Xcode27 CI40526640822,
   job122267919643 SUCCESS10m13s. Downloaded kernelca115f6b230aae475ca92ad8bd2c90fb3dcb4aa20b252e885416470ed4909b44
   verified against artifact CRC/SHA and exact source build-profile, stored in
@@ -68,7 +80,7 @@ early samples only. On0029 the human already confirmed boot complete and said
   and image0001 bound to ca115f kernel/sourcecc83ea3, native bridge enabled,
   RAMCOW/ufsrw0. All81 original firmware files preserved; actual original EDK2
   decoder/source hash rechecked and whole27876552byte inner stream matches.
-  Physical native-enabled UI/USB/shutdown test is next, not yet sent.
+  Physical native-enabled UI/USB/shutdown test is now in progress as above.
 - Previous task wake lock expired; bounded12h caffeinate renewed, own PTY
   session34667. Do not create duplicate wake locks or stop unrelated processes.
 
