@@ -34,6 +34,30 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0075 actual UIC layout correction + independent primary-source audit
+
+-0074 source90ff6b36c0e8d6ff88f3be9ed59ed919704a8a3a fullmacOS27
+  CI40568797036/job122417119017 SUCCESS, exact artifactkernel
+ 6d1acb7d1ab77fb808b50be39444f076301624f641ca48a6e071f8f89beca09d.
+  Actual native PCI BAR successfully mapped10100000, but link setup failed;
+  both failed runs retained, no UFS CDB success/persistentwrite/admission.
+- Same-kernel diagnosticrun0002 saved real QMP hardware register dump: HCE1,
+  HCS8(UCRDY only), IS400(UCCS), no lists/DMA/noDP. Independent pinned UfsReg
+  layout shows my new virtual startup mistakenly used80 asUICCMD;80 is task
+  management run/stop. Correct UICCMD90, ARG1/2/3=94/98/9c. Fixed all commands,
+  actualresultread and namedtaskregs, added UCRDY to nativequeueownership and
+  preciseper-step/HCE/HCS/IS/UIC/ARG2/DBR firstfailure logs. No physical trial.
+- New tools/polaris_ufs_register_audit.py independently computes16offsets from
+  pinnedprimaryQEMUheaderSHA6f91fa2a... and checks nativecommand use/opcode/bit;
+ 20sourceaudits incl19negative mutations PASS (sourceaudit, NOT nativeI/O).
+  Actualfullheaders nativeTUs +17localtests pass; source/CI/result must be
+  updated after new completebuild and actualVM success/fault/control tests.
+- Latest actual expectedFASTBOOT read-only confirmed19:29UTC. Phone unchanged,
+  no active phone trial/newruntime/pin/write. CPU+GUI+dualnativedrain0071 below
+  complete and NOT repeated. Persistent mode/nativeownedWRITE/finalSYNC/menu
+  physicalvalidation still outstanding. See0074/owned-native-integration-design.json
+  for concrete same-mutex sequencing and noSAFE-before-peerOFF/publication.
+
 ### 0074 exact virtual PCI programming-interface repair (no phone changes)
 
 -0073 source6ea81538b253b23584363937d5244cc5a4f7501c fullmacOS27

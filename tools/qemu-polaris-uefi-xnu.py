@@ -153,6 +153,8 @@ def main():
             q('stop')
             if virtual_ufs:
                 (out/'actual-pci.json').write_text(json.dumps(q('query-pci'),indent=2)+'\n')
+                (out/'actual-UFS-registers.txt').write_text(q('human-monitor-command',
+                    {'command-line':'xp/40wx 0x10100000'}))
             (out/'registers.txt').write_text(q('human-monitor-command',{'command-line':'info registers -a'}))
             spec=importlib.util.spec_from_file_location('efi_build',root/'tools/build-polaris-uefi-xnu.py')
             builder=importlib.util.module_from_spec(spec);spec.loader.exec_module(builder)

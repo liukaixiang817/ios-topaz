@@ -13,7 +13,25 @@
  bool polaris_ram_overlay_allowed(void);
  
  #endif
-@@ -216,6 +222,40 @@
+@@ -105,9 +111,17 @@
+ #define REG_UTRLDBR     0x58
+ #define REG_UTRLCLR     0x5c
+ #define REG_UTRLRSR     0x60
++#define REG_UTMRLDBR    0x78
++#define REG_UTMRLRSR    0x80
++#define REG_UICCMD      0x90
++#define REG_UCMDARG1    0x94
++#define REG_UCMDARG2    0x98
++#define REG_UCMDARG3    0x9c
++#define UIC_DME_LINK_STARTUP 0x16
+ 
+ #define HCS_DP          (1u << 0)
+ #define HCS_UTRLRDY     (1u << 1)
++#define HCS_UCRDY       (1u << 3)
+ #define CAP_64AS        (1u << 24)              /* 64-bit DMA addressing */
+ 
+ #define UFS_BLOCK       4096u
+@@ -216,6 +230,41 @@
  	clean_dcache64((addr64_t)(su.dma_pa + off), len, TRUE);
  }
  
@@ -23,10 +41,11 @@
 +    const uint64_t list = su.dma_pa + DMA_UTRL;
 +    return polaris_native_owner && su.regs && su.dma && su.lun == 0 &&
 +        (ufs_rd(REG_HCE) & 1) &&
-+        (ufs_rd(REG_HCS) & (HCS_DP | HCS_UTRLRDY)) == (HCS_DP | HCS_UTRLRDY) &&
++        (ufs_rd(REG_HCS) & (HCS_DP | HCS_UTRLRDY | HCS_UCRDY)) ==
++        (HCS_DP | HCS_UTRLRDY | HCS_UCRDY) &&
 +        (ufs_rd(REG_UTRLRSR) & 1) && ufs_rd(REG_UTRLBA) == (uint32_t)list &&
 +        ufs_rd(REG_UTRLBAU) == (uint32_t)(list >> 32) &&
-+        !ufs_rd(0x78) && !ufs_rd(0x80);
++        !ufs_rd(REG_UTMRLDBR) && !ufs_rd(REG_UTMRLRSR);
 +}
 +int polaris_ufs_ram_seal(void)
 +{
@@ -54,7 +73,7 @@
  /*
   * One SCSI command in slot 0, data (if any) to/from the bounce buffer
   * (to the device when write is set). Returns 0 or an errno.
-@@ -227,11 +267,18 @@
+@@ -227,11 +276,18 @@
  	/* Gate before descriptor construction or ANY doorbell write. Even a
  	 * caller with ufsrw=1 cannot issue WRITE, UNMAP or SYNCHRONIZE CACHE. */
  	if (polaris_io_failed) { return ETIMEDOUT; }
@@ -73,7 +92,7 @@
  #endif
  	struct utrd *utrd = (struct utrd *)(su.dma + DMA_UTRL);
  	struct ucd *ucd = (struct ucd *)(su.dma + DMA_UCD);
-@@ -289,6 +336,10 @@
+@@ -289,6 +345,10 @@
  	}
  	__builtin_arm_dsb(0xf);
  
@@ -84,7 +103,7 @@
  	ufs_wr(REG_UTRLDBR, 1);
  	uint64_t deadline;
  	nanoseconds_to_absolutetime(CMD_TIMEOUT_NS, &deadline);
-@@ -324,6 +375,14 @@
+@@ -324,6 +384,14 @@
  		}
  	}
  	__builtin_arm_dsb(0xf);
@@ -99,7 +118,7 @@
  	ufs_wr(REG_IS, ufs_rd(REG_IS));         /* acknowledge completion status */
  
  	dma_sync(DMA_UTRL, sizeof(*utrd));
-@@ -338,6 +397,10 @@
+@@ -338,6 +406,10 @@
  
  	uint32_t ocs = utrd->dw2 & 0xff;
  	if (ocs || ucd->resp[0] != 0x21 || ucd->resp[6] || ucd->resp[7]) {
@@ -110,7 +129,7 @@
  		printf("SWEET UFS: command 0x%02x failed: ocs 0x%x upiu 0x%x response 0x%x status 0x%x\n",
  		    cdb[0], ocs, ucd->resp[0], ucd->resp[6], ucd->resp[7]);
  		return EIO;
-@@ -346,6 +409,7 @@
+@@ -346,6 +418,7 @@
  	/* Never call a short/stale read a successful integrity check. */
  	if (ucd->resp[1] || ucd->resp[2] != su.lun || ucd->resp[3] != su.tag ||
  	    ucd->resp[12] || ucd->resp[13] || ucd->resp[14] || ucd->resp[15]) {
@@ -118,7 +137,7 @@
  		printf("POLARIS UFS: unexpected response flags/tag/residual\n");
  		return EIO;
  	}
-@@ -491,10 +555,164 @@
+@@ -491,10 +564,178 @@
  		printf("SWEET UFS: host did not take our request list\n");
  		return EIO;
  	}
@@ -196,7 +215,7 @@
 +    }
 +    printf("POLARIS QEMU UFS: admitted actual worker MPIDR=%llx timer=%llu\n",actual_cpu,timer);
 +    lck_mtx_lock(&sweet_ufs_lock);
-+    int error = EINVAL;
++    int error = EINVAL; unsigned stage = 1;
 +    if (su.regs || su.dma || polaris_native_owner || polaris_ufs_sealed) goto out;
 +    vm_offset_t pci=ml_io_map(ecam[0],ecam[1]);
 +    if (!pci) goto out;
@@ -209,6 +228,7 @@
 +    /* Exact isolated virt fixture: only bridge, virtio block/GPU, UFS on bus0.
 +     * No BAR is changed while memory or bus mastering is enabled. Reject a
 +     * conflicting BAR in the reserved test aperture, including 64-bit BARs. */
++    stage = 2;
 +    for (unsigned slot=0;slot<32;slot++) {
 +        volatile uint32_t *other=(volatile uint32_t *)(pci+(slot<<15));
 +        uint32_t id=other[0];
@@ -227,6 +247,7 @@
 +            if (address && address < reg[0]+reg[1] && address+0x10000 > reg[0]) goto out;
 +        }
 +    }
++    stage = 3;
 +    const uint32_t oldbar=config[4];
 +    config[4]=UINT32_MAX; __builtin_arm_dsb(0xf);
 +    const uint32_t mask=config[4]; config[4]=oldbar; __builtin_arm_dsb(0xf);
@@ -234,18 +255,22 @@
 +    config[4]=(uint32_t)reg[0]; __builtin_arm_dsb(0xf);
 +    *command |= 6; __builtin_arm_dsb(0xf);
 +    if (config[4] != reg[0] || (*command & 6) != 6) goto out;
++    stage = 4;
 +    su.regs=ml_io_map(reg[0],reg[1]);
 +    if (!su.regs || ufs_rd(0x08)!=0x400 || ufs_rd(REG_HCE) ||
-+        ufs_rd(REG_UTRLDBR) || ufs_rd(0x78)) goto out;
++        ufs_rd(REG_UTRLDBR) || ufs_rd(REG_UTMRLDBR)) goto out;
 +    /* Primary qemu v11.0.1 qtest sequence: HCE, real UCRDY, LinkStartup,
 +     * actual UCCS/ARG2/DP/UTRLRDY before the native list is installed. */
-+    ufs_wr(REG_HCE,1);
-+    if (!polaris_qemu_ufs_wait(REG_HCE,1,1) || !(ufs_rd(REG_HCS)&8)) goto out;
++    stage = 5;ufs_wr(REG_HCE,1);
++    if (!polaris_qemu_ufs_wait(REG_HCE,1,1) || !(ufs_rd(REG_HCS)&HCS_UCRDY)) goto out;
 +    ufs_wr(REG_IE,0);ufs_wr(REG_IS,ufs_rd(REG_IS));
-+    ufs_wr(0x90,0);ufs_wr(0x94,0);ufs_wr(0x98,0);ufs_wr(0x80,0x16);
-+    if (!polaris_qemu_ufs_wait(REG_IS,1u<<10,1u<<10) || ufs_rd(0x94) ||
++    stage = 6;
++    ufs_wr(REG_UCMDARG1,0);ufs_wr(REG_UCMDARG2,0);ufs_wr(REG_UCMDARG3,0);
++    ufs_wr(REG_UICCMD,UIC_DME_LINK_STARTUP);
++    if (!polaris_qemu_ufs_wait(REG_IS,1u<<10,1u<<10) || ufs_rd(REG_UCMDARG2) ||
 +        (ufs_rd(REG_HCS)&3)!=3) goto out;
 +    ufs_wr(REG_IS,1u<<10);
++    stage = 7;
 +    if (kmem_alloc_contig(kernel_map,&su.dma,DMA_SIZE,PAGE_MASK,0,0,
 +        KMA_DATA|KMA_ZERO|KMA_PERMANENT,VM_KERN_MEMORY_IOKIT)!=KERN_SUCCESS) {
 +        error=ENOMEM;goto out;
@@ -254,16 +279,18 @@
 +    if (!pn) { error=ENOMEM;goto out; }
 +    su.dma_pa=ptoa_64(pn);su.lun=0;
 +    su.cache=su.wait=su.writable=su.ready=false;
-+    error=ufs_take_over_host();
++    stage = 8;error=ufs_take_over_host();
 +    if (!error) {
++        stage = 9;
 +        static const uint8_t tur[6]={0};
 +        for (unsigned i=0;i<3;i++) {
 +            error=ufs_scsi(tur,sizeof(tur),0,false);
 +            if (!error || error==ETIMEDOUT) break;
 +        }
 +    }
-+    if (!error) error=ufs_read_blocks(0,256);
++    if (!error) { stage = 10;error=ufs_read_blocks(0,256); }
 +    if (!error) {
++        stage = 11;
 +        uint32_t actual=polaris_probe_crc32((const uint8_t *)(su.dma+DMA_BOUNCE),BOUNCE_SIZE);
 +        if (actual!=crc) error=EIO;
 +        printf("POLARIS QEMU UFS: actual native READ10 CRC32=%08x expected=%08x %s submitted=%llu completed=%llu\n",
@@ -274,7 +301,13 @@
 +        printf("POLARIS QEMU UFS: PASS native PCI/link/descriptor/completion/read; write gate unchanged\n");
 +    }
 +out:
-+    if (error) { polaris_io_failed=true;printf("POLARIS QEMU UFS: FAILED error=%d; DMA retained, no reset grant\n",error); }
++    if (error) {
++        polaris_io_failed=true;
++        printf("POLARIS QEMU UFS: FAILED stage=%u error=%d; DMA retained, no reset grant\n",stage,error);
++        if (su.regs) printf("POLARIS QEMU UFS STATE: HCE=%x HCS=%x IS=%x UIC=%x ARG2=%x DBR=%x\n",
++            ufs_rd(REG_HCE),ufs_rd(REG_HCS),ufs_rd(REG_IS),ufs_rd(REG_UICCMD),
++            ufs_rd(REG_UCMDARG2),ufs_rd(REG_UTRLDBR));
++    }
 +    lck_mtx_unlock(&sweet_ufs_lock);
 +}
 +#endif
@@ -283,7 +316,7 @@
  /* Called once by the CPU startup thread, after timer/scheduler initialization.
   * No BSD disk registration, filesystem mount, persistent logging or input/USB
   * driver startup. The normal sweet_ufs_init remains disabled on this platform.
-@@ -519,6 +737,10 @@
+@@ -519,6 +760,10 @@
  void
  polaris_ufs_probe(void)
  {
@@ -294,7 +327,25 @@
  	uint32_t enabled = 0;
  	if (!PE_parse_boot_argn("polarisufsprobe", &enabled, sizeof(enabled)) || enabled != 1) {
  		return;
-@@ -598,6 +820,7 @@
+@@ -545,7 +790,7 @@
+ 	/* Only the observed enabled, idle UFSHCI 2.1 handoff is supported. */
+ 	if (ufs_rd(0x08) != 0x210 || !(ufs_rd(REG_HCE) & 1) ||
+ 	    (ufs_rd(REG_HCS) & (HCS_DP | HCS_UTRLRDY)) != (HCS_DP | HCS_UTRLRDY) ||
+-	    ufs_rd(REG_UTRLDBR) || ufs_rd(0x78) || ufs_rd(0x80)) {
++	    ufs_rd(REG_UTRLDBR) || ufs_rd(REG_UTMRLDBR) || ufs_rd(REG_UTMRLRSR)) {
+ 		strlcpy(polaris_probe_status, "REFUSED: host/link/queue state", sizeof(polaris_probe_status));
+ 		printf("POLARIS UFS: probe refused, host/link/queues not in expected state\n");
+ 		goto out;
+@@ -589,7 +834,7 @@
+ 	/* On timeout leave the queue and its permanent DMA allocation alone.
+ 	 * No controller reset/abort: an outstanding DMA must never use freed RAM.
+ 	 */
+-	if (error != ETIMEDOUT && !ufs_rd(REG_UTRLDBR) && !ufs_rd(0x78)) {
++	if (error != ETIMEDOUT && !ufs_rd(REG_UTRLDBR) && !ufs_rd(REG_UTMRLDBR)) {
+ 		ufs_wr(REG_UTRLRSR, 0);
+ 		ufs_wr(REG_UTRLBA, old_lo);
+ 		ufs_wr(REG_UTRLBAU, old_hi);
+@@ -598,6 +843,7 @@
  		if (ufs_rd(REG_UTRLBA) == old_lo && ufs_rd(REG_UTRLBAU) == old_hi &&
  		    ufs_rd(REG_UTRLRSR) == old_rsr) {
  			ufs_wr(REG_IE, old_ie);
@@ -302,7 +353,7 @@
  			polaris_probe_queue_status = "restored";
  			printf("POLARIS UFS: idle queue restored; probe complete\n");
  		} else {
-@@ -659,6 +882,11 @@
+@@ -659,6 +905,11 @@
  	}
  
  	lck_mtx_lock(&sweet_ufs_lock);
@@ -314,7 +365,7 @@
  	for (uint32_t done = 0; done < count;) {
  		uint64_t pos = off + done;
  		uint64_t lba = pos / UFS_BLOCK;
-@@ -778,8 +1006,11 @@
+@@ -778,8 +1029,11 @@
  	case DKIOCSYNCHRONIZE:
  	case DKIOCSYNCHRONIZECACHE: {
  #if defined(POLARIS_RAM_ONLY)
@@ -328,6 +379,15 @@
  #endif
  		if (!su.writable) {
  			return 0;
+@@ -928,7 +1182,7 @@
+     if (!su.regs) { goto out; }
+     if (ufs_rd(0x08) != 0x210 || !(ufs_rd(REG_HCE) & 1) ||
+         (ufs_rd(REG_HCS) & (HCS_DP | HCS_UTRLRDY)) != (HCS_DP | HCS_UTRLRDY) ||
+-        ufs_rd(REG_UTRLDBR) || ufs_rd(0x78) || ufs_rd(0x80)) {
++        ufs_rd(REG_UTRLDBR) || ufs_rd(REG_UTMRLDBR) || ufs_rd(REG_UTMRLRSR)) {
+         printf("POLARIS FILE ROOT: REFUSED host/link/queue state\n");
+         goto out;
+     }
 --- a/bsd/dev/polaris_touch.c
 +++ b/bsd/dev/polaris_touch.c
 @@ -28,6 +28,7 @@
