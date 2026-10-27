@@ -34,9 +34,56 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### 0066 physical native RAM shutdown trial (LIVE)
+### 0067 startup worker experiment (kernel CI pending)
 
-- Phone NOW running0066boot0001 RAM iOS, not FASTBOOT. Original81 firmware
+- Paired0066control with same310b kernel/DT/base andquiesce=0 HAS reached lock
+  and actual home with icons after bounded USB unlock (control-capture0003/0004).
+  Native-enabled0001 had stalled at xpcroleaccountd >10min. Control also omits
+  optional firmware callbacks, so this is useful localization, NOT proof of the
+  exact cause. Settings tap sent at observed icon position; screenshot pending.
+- Profile0867 removes separate early BSD shutdown polling thread. Existing
+  resident input loop handles canonical request/status and invokes real shutdown;
+  polling also runs before HID-ready so rescue does not require GUI/HID. Same
+  cookie/seq/mode/reserved validation, real VFS count/buffer checks and distinct
+  RAM_DRAINED remain; an active remote contact is released before shutdown.
+  Return/error leaves FAILED without authorizing reset. No UFS gate changed.
+- Actual Apple clang27 TU compiles, exact patch applies without offset/fuzz.
+  Shared mailbox header is unchanged, no IIG cache exception needed. Needs full
+  CI then actual native EFI/XNU success+stale fault tests BEFORE a physical
+  native-enabled GUI+shutdown verification. Do not call this a proven startup fix.
+- Previous task wake lock expired; bounded12h caffeinate renewed, own PTY
+  session34667. Do not create duplicate wake locks or stop unrelated processes.
+
+### 0066 physical native RAM shutdown and startup control
+
+- CURRENT LIVE:0066boot0002 CONTROL has been temporarily booted from verified
+  actual FASTBOOT, with same310b kernel/own DT/immutable base but
+  polarisquiesce=0 and optional firmware shutdown bridge omitted. Image/app/
+  payload bindings use phone-control-* files and phone-boot-0002.json, not0001.
+  Generic actual EFI/XNU control passes14/14 checks37.603s, original EDK2
+  decoder control consumer verifies27874504bytes. Fresh preflight reuse is
+  explicitly bound to fully observed RAM-only0001/native proof; no Android,
+  uncontrolled interval or persistent writes intervened. No storage gate relaxed.
+  See control-kernel-start-0001 for actual kernel staging result before assuming
+  it entered XNU. DO NOT restart or repeat the finished native drain test; use
+  targeted bound control captures and compare GUI progress. Ordinary raw
+  reboot-fastboot is the allowed RAM-only return path for this control; its
+  native shutdown bridge is intentionally absent. Verify actual FASTBOOT after.
+- LATEST:0066boot0001 native drain PHYSICALLY PASSED, then expected Polaris
+  FASTBOOT independently verified after gated reset14:31UTC. Real own iOSRoot
+  HFSX unmount, native reboot_kernel process/sync passes, actual mounts0/busy0,
+  matched cookie4970411911/seq1/mode2/RAM_DRAINED80000003 and saved kernel log.
+  physical-native-drain-proof.json binds all evidence. No raw fallback/keys or
+  Android needed; root still RAMCOW, NOT UFS persistent flush proof.
+- NEW LIMIT: this310b kernel/native opt-in trial did NOT reach GUI after >10min;
+  launchd stayed at xpcroleaccountd while touch/log threads ran to27000frames.
+  No panic or UFS error observed; cause not yet known. Prior0062/a3ec72 kernel
+  disk-app GUI proof remains valid, not superseded by a claim of new GUI success.
+  Preparing paired control with same310b kernel/DT/base andpolarisquiesce=0,
+  optional firmware bridge omitted too; QEMU control must pass before physical
+  boot. No new kernel CI or runtime allocation/writes. Need resolve startup
+  difference before full persistent installation; do not guess root corruption.
+- Earlier during0066boot0001 RAM iOS (now ended in proven FASTBOOT):81 firmware
   files preserved in temporary original-UEFI image d8660e64. Fresh read-only
   preflight-final-0001 passed full16GiB SHA/all182map/sixGPT/four critical
   partitions/latest102-file ESP7338692a; outer4096bytes EXACT reviewed0062

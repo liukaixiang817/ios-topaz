@@ -1,0 +1,118 @@
+--- a/bsd/dev/polaris_touch.c
++++ b/bsd/dev/polaris_touch.c
+@@ -448,10 +448,15 @@
+     }
+     __asm__ volatile("dsb sy":::"memory");
+ }
++static bool ps_poll(void);
++static void ps_execute(void);
+ static void pi_thread(void *arg, wait_result_t result)
+ {
+     (void)arg; (void)result;
+-    while (!polaris_hid_touch_ready()) { pt_wait(10); }
++    while (!polaris_hid_touch_ready()) {
++        if (ps_poll()) { ps_execute(); } /* Native shutdown must not require a working GUI/HID server. */
++        pt_wait(10);
++    }
+     struct polaris_uefi_input_slot *slot=&polaris_uefi_input;
+     slot->ready=POLARIS_INPUT_READY;
+     pi_cache((uintptr_t)&slot->acknowledged,true);
+@@ -476,6 +481,12 @@
+             sweet_hid_touch(9,0,x,y);active=false;
+             printf("POLARIS UEFI INPUT: released expired remote contact\n");
+         }
++        /* Reuse this already-required resident thread. Do not add another
++         * polling worker during PID1's sensitive early bootstrap. */
++        if (ps_poll()) {
++            if (active) { sweet_hid_touch(9,0,x,y);active=false; }
++            ps_execute();
++        }
+         pt_wait(10);
+     }
+ }
+@@ -513,39 +524,41 @@
+     ps_publish(POLARIS_Q_SEALED,0);
+     for (;;) { __asm__ volatile("wfe":::"memory"); }
+ }
+-static void ps_thread(void *arg,wait_result_t result)
+-{
+-    (void)arg;(void)result;
+-    while (!__atomic_load_n(&ps_bsd_ready,__ATOMIC_ACQUIRE)) { pt_wait(10); }
++static bool ps_poll(void)
++{
++    if (!ps_enabled || !__atomic_load_n(&ps_bsd_ready,__ATOMIC_ACQUIRE)) { return false; }
+     struct polaris_shutdown_slot *slot=&polaris_uefi_shutdown;
+-    slot->kernel.cookie=mach_absolute_time()|UINT64_C(1);
+-    slot->kernel.capabilities=POLARIS_Q_RAM_CONFIG;
+-    ps_publish(POLARIS_Q_RUNNING,0);
+-    printf("POLARIS UEFI DRAIN: RAM-only mailbox ready after BSD initialization\n");
+-    for (;;) {
+-        pi_cache((uintptr_t)&slot->firmware,false);
+-        uint32_t sequence=__atomic_load_n(&slot->firmware.sequence,__ATOMIC_ACQUIRE);
+-        if (sequence) {
+-            unsigned mode=slot->firmware.mode;
+-            bool canonical=true;
+-            for (unsigned i=0;i<sizeof(slot->firmware.reserved);i++) {
+-                if (slot->firmware.reserved[i]) { canonical=false; }
+-            }
+-            if (!canonical || slot->firmware.cookie!=slot->kernel.cookie || sequence!=1 || (mode!=1&&mode!=2)) {
+-                printf("POLARIS UEFI DRAIN: refused noncanonical/replayed request\n");
+-                ps_publish(POLARIS_Q_FAILED,EINVAL);break;
+-            }
+-            slot->kernel.sequence=sequence;slot->kernel.mode=mode;
+-            ps_publish(POLARIS_Q_REQUESTED,0);
+-            printf("POLARIS UEFI DRAIN: accepted seq=%u mode=%u; calling reboot_kernel sync path\n",sequence,mode);
+-            int error=reboot_kernel(0,NULL);
+-            /* The successful terminal hook parks the only XNU core forever.
+-             * Return/error never grants durable or RAM-drained permission. */
+-            ps_publish(POLARIS_Q_FAILED,error?error:EIO);break;
+-        }
+-        pt_wait(10);
+-    }
+-    (void)thread_terminate(current_thread());thread_block(THREAD_CONTINUE_NULL);
++    unsigned phase=__atomic_load_n(&slot->kernel.phase,__ATOMIC_ACQUIRE);
++    if (phase==POLARIS_Q_OFF) {
++        slot->kernel.cookie=mach_absolute_time()|UINT64_C(1);
++        slot->kernel.capabilities=POLARIS_Q_RAM_CONFIG;
++        ps_publish(POLARIS_Q_RUNNING,0);
++        printf("POLARIS UEFI DRAIN: RAM-only mailbox ready after BSD initialization\n");
++    } else if (phase!=POLARIS_Q_RUNNING) { return false; }
++    pi_cache((uintptr_t)&slot->firmware,false);
++    uint32_t sequence=__atomic_load_n(&slot->firmware.sequence,__ATOMIC_ACQUIRE);
++    if (!sequence) { return false; }
++    unsigned mode=slot->firmware.mode;
++    bool canonical=true;
++    for (unsigned i=0;i<sizeof(slot->firmware.reserved);i++) {
++        if (slot->firmware.reserved[i]) { canonical=false; }
++    }
++    if (!canonical || slot->firmware.cookie!=slot->kernel.cookie || sequence!=1 || (mode!=1&&mode!=2)) {
++        printf("POLARIS UEFI DRAIN: refused noncanonical/replayed request\n");
++        ps_publish(POLARIS_Q_FAILED,EINVAL);return false;
++    }
++    slot->kernel.sequence=sequence;slot->kernel.mode=mode;
++    ps_publish(POLARIS_Q_REQUESTED,0);return true;
++}
++static void ps_execute(void)
++{
++    struct polaris_shutdown_slot *slot=&polaris_uefi_shutdown;
++    if (!polaris_uefi_shutdown_pending()) { return; }
++    printf("POLARIS UEFI DRAIN: accepted seq=%u mode=%u; calling reboot_kernel sync path\n",
++        slot->kernel.sequence,slot->kernel.mode);
++    int error=reboot_kernel(0,NULL);
++    /* Successful terminal hook never returns. Return/error grants no permission. */
++    ps_publish(POLARIS_Q_FAILED,error?error:EIO);
+ }
+ static void ps_start(void)
+ {
+@@ -555,10 +568,7 @@
+     PE_parse_boot_argn("ufsrw",&rw,sizeof(rw));
+     PE_parse_boot_argn("cpus",&cpus,sizeof(cpus));
+     if (enabled!=1 || ram!=1 || rw || cpus!=1) { return; }
+-    ps_enabled=true;thread_t thread;
+-    kern_return_t kr=kernel_thread_start(ps_thread,NULL,&thread);
+-    if (kr==KERN_SUCCESS) { thread_deallocate(thread); }
+-    else { ps_enabled=false;printf("POLARIS UEFI DRAIN: thread failed %d\n",kr); }
++    ps_enabled=true; /* The existing resident input loop performs bounded polling. */
+ }
+ static void pi_start(void)
+ {
