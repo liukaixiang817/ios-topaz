@@ -36,6 +36,31 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### 0070 actual EFI/XNU two-core PASS; physical RAM trials next
 
+- PHYSICAL CPU7+CPU6 CONCURRENT PASS:0070/phone-core7-cpus2 actual kernel
+  log shows2/2initialized andSGI1 for700/600,32cross-core callbacks(remote16),
+  all four realVM children PASS, realRAMfile write/fsync, livePID1, bounded
+  USBtap consumed, actualUSBscreen visually inspected. UEFI RAM-only rawreset
+  then independently actualFASTBOOT verified; seephysical-CPU-proof.json and
+  physical-CPU-comparison-proof.json. NO ACTIVE PHONE TEST remains. All three
+  CPU diagnostic trials ENDED, no keys/Android/storage writes. This proves
+  two physical XNU cores, NOT fullGUI speedup or multi-core native drain.
+- CPU1 andCPU7 SINGLE controls also physically passed all4VM children,
+  boundedUSBtap, nativeBSDdrain/VFS0busy0/RAM_DRAINED and actualFASTBOOT.
+  ActualMIDRs517f803c/516f802d, single200kvolatile loop561250ns/1453541ns.
+  Single dependent-loop sample is NOT FPS or measured clock, and does not
+  show a big-core speedup. Do not ship a performance policy on this metric.
+- CPU7single firstUSB download failed LIBUSB_IO while receiving, no kernel
+  started. State-only read verifiedreceiving, UEFI rawRAM rescue returned
+  actualFASTBOOT17:20:11UTC without keys/Android. Preservedattempt-0001;
+  controlled fresh same-image retry succeeded. Never overwrite partial data.
+- NEXT: implement scheduler-driven multi-core native shutdown/quiesce and
+  actualPSCI AFFINITY_OFF (current tools deliberately refuse native two-core
+  bridge), meaningfulfailure injection and realEFI/XNU test, then physical
+  two-core native drain and fullGUI. Afterward integrate owned-file/nativeUFS
+  completion/seal/finalSYNC, new independentpinned smallfile durable test, full
+  runtime copy and originalphysical volume-key menu. Still512MiBRAMCOW,
+  not a complete persistent installation. Latest report17:27UTC.
+
 - Source85215c4bd51d3b060364705834f025e56548efa3 COMMITTED/PUSHED.
   macOS27/Xcode27 CI40546116342/job122337077758 SUCCESS, kernel SHA
  8ff4808306f80a8b5c2b269a8aae9e5325faef6f970e3dd74355316f0a8683ae
