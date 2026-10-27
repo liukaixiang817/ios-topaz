@@ -51,13 +51,45 @@ def validate(raw, core=1, qemu=False, count=1):
                 p.get('cpu-id') != struct.pack('<I', logical) or
                 p.get('state') != (b'running\0' if logical == 0 else b'stopped\0')):
             raise ValueError('logical CPU does not match the selected physical core/state')
+    owned = [n for n in tree.children if n.name == 'polaris-qemu-owned-file']
     virtual_ufs = [n for n in tree.children if n.name == 'polaris-qemu-ufs']
+    if owned:
+        if not qemu or core != 7 or count != 2 or len(owned) != 1 or len(virtual_ufs) != 1:
+            raise ValueError('owned virtual fixture must never reach a phone tree')
+        p = props(owned[0])
+        if (len(p) != len(owned[0].props) or set(p) != {
+                'name', 'version', 'layout', 'protected-blocks', 'owner-packet', 'protected-map'} or
+                p['name'] != b'polaris-qemu-owned-file\0' or p['version'] != struct.pack('<I', 1) or
+                len(p['layout']) != 24 or len(p['protected-blocks']) != 8):
+            raise ValueError('noncanonical owned-file fixture metadata')
+        packet = p['owner-packet']
+        if len(packet) < 384 or packet[:8] != b'PROWN001':
+            raise ValueError('truncated owned-file packet')
+        nodes, maps = struct.unpack_from('<II', packet, 72)
+        if (nodes > 64 or not 0 < maps <= 4096 or
+                struct.unpack_from('<II', packet, 8) != (384, len(packet)) or
+                len(packet) != 384 + nodes * 4104 + maps * 24 or
+                p['layout'] != packet[16:40]):
+            raise ValueError('owned-file packet/layout mismatch')
+        start, blocks, file_blocks = struct.unpack('<QQQ', p['layout'])
+        if not 256 <= start <= 0xffffffff or not 0 < blocks <= 2**32-start or not 0 < file_blocks <= blocks:
+            raise ValueError('owned-file partition bounds')
+        if not p['protected-map'] or len(p['protected-map']) % 24 or len(p['protected-map']) > 4096*24:
+            raise ValueError('protected base map required')
+        logical = 0
+        for at in range(0, len(p['protected-map']), 24):
+            offset, physical, length = struct.unpack_from('<QQQ', p['protected-map'], at)
+            if offset != logical or not start <= physical < start+blocks or not 0 < length <= start+blocks-physical:
+                raise ValueError('protected base must be a complete canonical bounded map')
+            logical += length
+        if struct.unpack('<Q', p['protected-blocks'])[0] != logical:
+            raise ValueError('protected base coverage mismatch')
     if virtual_ufs:
         if not qemu or core != 7 or count != 2 or len(virtual_ufs) != 1:
             raise ValueError('isolated virtual UFS must never reach a phone tree')
         p = props(virtual_ufs[0])
         expected = {'name': b'polaris-qemu-ufs\0',
-                    'compatible': b'qemu,isolated-readonly-ufs\0',
+                    'compatible': b'qemu,isolated-owned-ufs\0' if owned else b'qemu,isolated-readonly-ufs\0',
                     'version': struct.pack('<I', 1),
                     'reg': struct.pack('<QQ', 0x10100000, 0x2000),
                     'ecam': struct.pack('<QQ', 0x4010000000, 0x100000)}
@@ -136,6 +168,23 @@ def isolated_qemu_ufs(raw, head_crc32):
         'head-crc32': struct.pack('<I', head_crc32)}.items()]
     root.children.append(node)
     result = adt.serialize(root)
+    validate(result, 7, True, 2)
+    return result
+
+
+def isolated_qemu_owned(raw, head_crc32, packet, protected_map, protected_blocks):
+    """Bind a synthetic owner export; the native driver must reread all metadata."""
+    tree, _ = adt.parse(isolated_qemu_ufs(raw, head_crc32))
+    controller = child(tree, 'polaris-qemu-ufs')
+    controller.props = [(k, f, b'qemu,isolated-owned-ufs\0' if k == 'compatible' else v)
+                        for k, f, v in controller.props]
+    node = adt.Node()
+    node.props = [(k, 0, v) for k, v in {
+        'name': b'polaris-qemu-owned-file\0', 'version': struct.pack('<I', 1),
+        'layout': packet[16:40], 'owner-packet': packet, 'protected-map': protected_map,
+        'protected-blocks': struct.pack('<Q', protected_blocks)}.items()]
+    tree.children.append(node)
+    result = adt.serialize(tree)
     validate(result, 7, True, 2)
     return result
 

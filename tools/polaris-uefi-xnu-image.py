@@ -17,7 +17,8 @@ def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
 
 
 def admit(driver,qemu,ci,profile,preflight):
-    if driver.get('isolated_QEMU_readonly_UFS_test') or qemu.get('isolated_QEMU_readonly_UFS_test'):
+    if (driver.get('isolated_QEMU_readonly_UFS_test') or qemu.get('isolated_QEMU_readonly_UFS_test') or
+            driver.get('isolated_QEMU_owned_UFS_test') or qemu.get('isolated_QEMU_owned_UFS_test')):
         raise ValueError('isolated virtual UFS is not physical phone admission evidence')
     if (driver.get('RAM_only_XNU_loader') is not True or driver.get('QEMU_variant') is not False or
         driver.get('ready_to_boot_driver') is not True or driver.get('bounded_input') is not True or driver.get('kernel_CPU_affinity') not in (256,1792) or

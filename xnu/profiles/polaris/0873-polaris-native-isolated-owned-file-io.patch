@@ -1,0 +1,731 @@
+--- a/bsd/dev/sweet_ufs.c
++++ b/bsd/dev/sweet_ufs.c
+@@ -41,6 +41,323 @@
+ #include <machine/atomic.h>
+ #if defined(POLARIS_RAM_ONLY)
+ #include "polaris_ufs_probe_policy.h"
++/* BEGIN verbatim shared runtime-owner.h policy; phone write entry absent. */
++/* Bounded ext4 ownership admission for a NEW pinned runtime file.
++ * This header performs reads only. It is not connected to the phone's UFS
++ * write path. Integration additionally requires exclusive controller ownership
++ * and kernel filesystem quiesce/flush/shutdown proof before reset.
++ * Packet metadata must come from a fresh read-only export of the owned file.
++ */
++#ifndef POLARIS_RUNTIME_OWNER_H
++#define POLARIS_RUNTIME_OWNER_H
++#include <stdbool.h>
++#include <stddef.h>
++#include <stdint.h>
++#define POLARIS_OWNER_NODES 64u
++#define POLARIS_OWNER_MAPS 4096u
++#define POLARIS_OWNER_HEADER 384u
++#define POLARIS_OWNER_BLOCK 4096u
++#define POLARIS_OWNER_FLAGS 0x80090u
++#define POLARIS_OWNER_INCOMPAT (0x10042u|0x80u|0x200u|0x2000u)
++#define POLARIS_OWNER_RO_REFUSED (0x200u|0x1000u|0x4000u|0x10000u)
++struct polaris_owner_extent {uint64_t logical,physical,blocks;};
++struct polaris_owner_work {
++    /* Caller-owned heap/static storage, never a small kernel stack. */
++    uint8_t buffers[7][4096];
++    struct polaris_owner_extent map[POLARIS_OWNER_MAPS];
++    uint64_t partition_start,partition_blocks,file_blocks,seen,error_lba;
++    unsigned map_count,map_used,node_count,error;
++    uint32_t checksum_seed,file_checksum_seed;
++    bool metadata_checksum,metadata_verified,admitted;
++};
++typedef bool (*polaris_owner_read)(void *,uint64_t,uint8_t *);
++static inline uint16_t po16(const uint8_t *p)
++{return (uint16_t)p[0]|(uint16_t)p[1]<<8;}
++static inline uint32_t po32(const uint8_t *p)
++{return (uint32_t)p[0]|(uint32_t)p[1]<<8|(uint32_t)p[2]<<16|(uint32_t)p[3]<<24;}
++static inline uint64_t po64(const uint8_t *p)
++{return (uint64_t)po32(p)|(uint64_t)po32(p+4)<<32;}
++/* Independent bitwise implementations; ext4 checksum layouts checked against
++ * e2fsprogs1.47.4 lib/ext2fs/csum.c. No table/source code copied from it. */
++static inline uint32_t po_crc32c(uint32_t seed,const uint8_t *p,unsigned bytes)
++{
++    for(unsigned i=0;i<bytes;i++){
++        seed^=p[i];for(unsigned bit=0;bit<8;bit++)seed=(seed>>1)^((seed&1)?0x82f63b78u:0);
++    }return seed;
++}
++static inline uint16_t po_crc16(uint16_t seed,const uint8_t *p,unsigned bytes)
++{
++    for(unsigned i=0;i<bytes;i++){
++        seed^=p[i];for(unsigned bit=0;bit<8;bit++)seed=(uint16_t)((seed>>1)^((seed&1)?0xa001u:0));
++    }return seed;
++}
++static inline uint32_t po_number_crc(uint32_t seed,uint32_t number)
++{uint8_t b[4];for(unsigned i=0;i<4;i++)b[i]=(uint8_t)(number>>(i*8));return po_crc32c(seed,b,4);}
++static inline uint16_t po_group_checksum(const uint8_t *desc,unsigned bytes,unsigned group,
++    const uint8_t *uuid,bool metadata,uint32_t seed)
++{
++    uint8_t number[4];for(unsigned i=0;i<4;i++)number[i]=(uint8_t)(group>>(i*8));
++    if(metadata){
++        uint32_t crc=po_crc32c(seed,number,4);
++        for(unsigned i=0;i<bytes;i++){uint8_t b=(i==30||i==31)?0:desc[i];crc=po_crc32c(crc,&b,1);}
++        return (uint16_t)crc;
++    }
++    uint16_t crc=po_crc16(po_crc16(UINT16_MAX,uuid,16),number,4);
++    crc=po_crc16(crc,desc,30);return po_crc16(crc,desc+32,bytes-32);
++}
++static inline bool po_equal(const uint8_t *a,const uint8_t *b,unsigned n)
++{for(unsigned i=0;i<n;i++)if(a[i]!=b[i])return false;return true;}
++static inline bool po_fail(struct polaris_owner_work *w,unsigned error,uint64_t lba)
++{w->admitted=false;w->error=error;w->error_lba=lba;return false;}
++static inline const uint8_t *po_node(const uint8_t *packet,unsigned index)
++{return packet+POLARIS_OWNER_HEADER+(uint64_t)index*(4096+8);}
++static inline const uint8_t *po_map(const uint8_t *packet,unsigned nodes,unsigned index)
++{return po_node(packet,nodes)+(uint64_t)index*24;}
++static inline bool po_read(struct polaris_owner_work *w,polaris_owner_read read,
++    void *context,uint64_t relative,uint8_t *data)
++{
++    if(relative>=w->partition_blocks)return po_fail(w,2,relative);
++    if(!read(context,w->partition_start+relative,data))return po_fail(w,3,relative);
++    return true;
++}
++static inline bool po_metadata(const uint8_t *p,unsigned nodes,uint64_t block)
++{
++    if(!block||block==po64(p+48)||block==po64(p+56))return true;
++    for(unsigned i=0;i<nodes;i++)if(block==po64(po_node(p,i)))return true;
++    return false;
++}
++static inline bool po_tree(struct polaris_owner_work *w,const uint8_t *packet,
++    const uint8_t *data,unsigned bytes,unsigned depth,unsigned level,
++    uint64_t low,uint64_t high,polaris_owner_read read,void *context)
++{
++    unsigned count=po16(data+2),maximum=po16(data+4);
++    if(po16(data)!=0xf30a||po16(data+6)!=depth||!count||count>maximum||
++       maximum>(bytes-12)/12||level>5)return po_fail(w,8,low);
++    for(unsigned i=0;i<count;i++){
++        const uint8_t *entry=data+12+i*12;
++        uint64_t logical=po32(entry),end=i+1<count?po32(entry+12):high;
++        if(logical<low||logical>=high||(!i&&logical!=low)||end<=logical||end>high)
++            return po_fail(w,9,logical);
++        if(depth){
++            uint64_t lba=(uint64_t)po32(entry+4)|(uint64_t)po16(entry+8)<<32;
++            unsigned index=0;
++            while(index<w->node_count&&po64(po_node(packet,index))!=lba)index++;
++            if(po16(entry+10)||index==w->node_count||w->seen&(UINT64_C(1)<<index))
++                return po_fail(w,10,lba);
++            w->seen|=UINT64_C(1)<<index;
++            uint8_t *raw=w->buffers[level+1];
++            if(!po_read(w,read,context,lba,raw))return false;
++            if(!po_equal(raw,po_node(packet,index)+8,4096))return po_fail(w,11,lba);
++            if(w->metadata_checksum){
++                unsigned tail=12+po16(raw+4)*12;
++                if(tail>4092||po32(raw+tail)!=po_crc32c(w->file_checksum_seed,raw,tail))return po_fail(w,16,lba);
++            }
++            if(!po_tree(w,packet,raw,4096,depth-1,level+1,logical,end,read,context))return false;
++        }else{
++            uint64_t physical=(uint64_t)po16(entry+6)<<32|po32(entry+8);
++            unsigned blocks=po16(entry+4);
++            if(!blocks||blocks>32768||blocks!=end-logical||w->map_used>=w->map_count)
++                return po_fail(w,12,logical);
++            const uint8_t *expected=po_map(packet,w->node_count,w->map_used++);
++            if(po64(expected)!=logical||po64(expected+8)!=physical||po64(expected+16)!=blocks)
++                return po_fail(w,13,logical);
++        }
++    }
++    return true;
++}
++
++/* Absolute device reads are bounded to this GPT-verified partition by caller.
++ * Only the inode's256bytes are compared, so activity on neighboring inodes
++ * does not falsely invalidate a pinned file. Dedicated extent blocks compare
++ * in full; group descriptor counters and superblock mount times may change.
++ */
++static inline bool polaris_owner_verify(const uint8_t *p,size_t bytes,
++    uint64_t expected_start,uint64_t expected_blocks,
++    polaris_owner_read read,void *context,struct polaris_owner_work *w)
++{
++    if(!w)return false;
++    w->metadata_verified=false;w->admitted=false;w->error=0;w->error_lba=0;w->seen=0;w->map_used=0;
++    if(!p||!read||bytes<POLARIS_OWNER_HEADER||!po_equal(p,(const uint8_t*)"PROWN001",8)||
++       po32(p+8)!=POLARIS_OWNER_HEADER)return po_fail(w,1,0);
++    unsigned nodes=po32(p+72),maps=po32(p+76);
++    if(nodes>POLARIS_OWNER_NODES||!maps||maps>POLARIS_OWNER_MAPS||
++       bytes!=POLARIS_OWNER_HEADER+(uint64_t)nodes*4104+(uint64_t)maps*24||po32(p+12)!=bytes)
++        return po_fail(w,1,0);
++    w->partition_start=po64(p+16);w->partition_blocks=po64(p+24);w->file_blocks=po64(p+32);
++    w->node_count=nodes;w->map_count=maps;
++    if(w->partition_start!=expected_start||w->partition_blocks!=expected_blocks||
++       w->partition_start<256||w->partition_start>UINT32_MAX||!w->partition_blocks||
++       w->partition_blocks>UINT64_C(0x100000000)-w->partition_start||
++       !w->file_blocks||w->file_blocks>(UINT64_C(64)<<18))return po_fail(w,1,0);
++    uint64_t inode_lba=po64(p+48),descriptor_lba=po64(p+56),table=po64(p+80);
++    unsigned descriptor_offset=po32(p+64),inode_offset=po32(p+68),desc_size=po32(p+116);
++    bool uuid_present=false;for(unsigned i=88;i<104;i++)if(p[i])uuid_present=true;
++    if(!inode_lba||inode_lba>=w->partition_blocks||!descriptor_lba||
++       descriptor_lba>=w->partition_blocks||inode_lba==descriptor_lba||
++       !table||table>=w->partition_blocks||(desc_size!=32&&desc_size!=64)||
++       descriptor_offset>4096-desc_size||descriptor_offset%desc_size||
++       inode_offset>3840||inode_offset%256||!uuid_present)return po_fail(w,1,0);
++    for(unsigned i=0;i<nodes;i++){
++        uint64_t block=po64(po_node(p,i));
++        if(!block||block>=w->partition_blocks||block==inode_lba||block==descriptor_lba)
++            return po_fail(w,1,block);
++        for(unsigned j=0;j<i;j++)if(block==po64(po_node(p,j)))return po_fail(w,1,block);
++    }
++    uint64_t next=0;
++    for(unsigned i=0;i<maps;i++){
++        const uint8_t *e=po_map(p,nodes,i);
++        uint64_t logical=po64(e),physical=po64(e+8),blocks=po64(e+16);
++        if(logical!=next||next>=w->file_blocks||!blocks||blocks>w->file_blocks-next||
++           !physical||physical>=w->partition_blocks||blocks>w->partition_blocks-physical)
++            return po_fail(w,1,physical);
++        for(unsigned j=0;j<i;j++){
++            struct polaris_owner_extent *a=&w->map[j];
++            uint64_t absolute=physical+w->partition_start;
++            if(absolute<a->physical+a->blocks&&a->physical<absolute+blocks)
++                return po_fail(w,1,physical);
++        }
++        for(uint64_t block=0;block<3+nodes;block++){
++            uint64_t meta=block==0?0:block==1?inode_lba:block==2?descriptor_lba:po64(po_node(p,(unsigned)block-3));
++            if(meta>=physical&&meta-physical<blocks)return po_fail(w,1,physical);
++        }
++        w->map[i]=(struct polaris_owner_extent){logical,w->partition_start+physical,blocks};
++        next+=blocks;
++    }
++    if(next!=w->file_blocks)return po_fail(w,1,next);
++    uint8_t *raw=w->buffers[0];
++    if(!po_read(w,read,context,0,raw))return false;
++    const uint8_t *sb=raw+1024;
++    uint32_t incompat=po32(sb+96),ro=po32(sb+100);
++    uint64_t total=po32(sb+4)|((incompat&0x80)?(uint64_t)po32(sb+336)<<32:0);
++    if(po16(sb+56)!=0xef53||po32(sb+24)!=2||po32(sb+28)!=2||po32(sb+20)||po32(sb+76)!=1||total!=w->partition_blocks||
++       po16(sb+58)!=1||po32(sb+232)||incompat&~POLARIS_OWNER_INCOMPAT||!(incompat&0x40)||
++       ro&POLARIS_OWNER_RO_REFUSED||!(ro&(0x400|0x10))||po16(sb+88)!=256||po32(sb+72)||!po_equal(sb+104,p+88,16)||
++       po32(sb)!=po32(p+104)||po32(sb+40)<16||po32(sb+40)>32768||po32(sb+40)!=po32(p+108)||
++       po32(sb+32)<1024||po32(sb+32)>32768||(po32(sb+32)&(po32(sb+32)-1))||
++       po32(sb+32)!=po32(p+112)||po32(sb+36)!=po32(sb+32)||
++       ((incompat&0x80)?po16(sb+254):32)!=desc_size||
++       incompat!=po32(p+120)||ro!=po32(p+124))return po_fail(w,4,0);
++    w->metadata_checksum=(ro&0x400)!=0;
++    w->checksum_seed=(incompat&0x2000)?po32(sb+624):po_crc32c(UINT32_MAX,sb+104,16);
++    if(w->metadata_checksum&&(sb[373]!=1||po32(sb+1020)!=po_crc32c(UINT32_MAX,sb,1020)))return po_fail(w,16,0);
++    unsigned inode=po32(p+40),ipg=po32(sb+40);
++    if(!inode||inode>po32(sb))return po_fail(w,4,0);
++    uint64_t group=(inode-1)/ipg,index=(inode-1)%ipg,desc_bytes=group*desc_size;
++    if(descriptor_lba!=1+desc_bytes/4096||descriptor_offset!=desc_bytes%4096||
++       inode_lba!=table+index*256/4096||inode_offset!=index*256%4096)
++        return po_fail(w,5,descriptor_lba);
++    if(!po_read(w,read,context,descriptor_lba,raw))return false;
++    const uint8_t *desc=raw+descriptor_offset;
++    if(((uint64_t)po32(desc+8)|(desc_size==64?(uint64_t)po32(desc+40)<<32:0))!=table||
++       po16(desc+30)!=po_group_checksum(desc,desc_size,(unsigned)group,p+88,w->metadata_checksum,w->checksum_seed))
++        return po_fail(w,5,descriptor_lba);
++    if(!po_read(w,read,context,inode_lba,raw))return false;
++    const uint8_t *ino=raw+inode_offset,*expected=p+128;
++    if(!po_equal(ino,expected,256))return po_fail(w,6,inode_lba);
++    uint64_t size=(uint64_t)po32(ino+4)|(uint64_t)po32(ino+108)<<32;
++    uint64_t allocated=(uint64_t)po32(ino+28)|(uint64_t)po16(ino+116)<<32;
++    if(po16(ino)!=0x8180||po16(ino+2)||po16(ino+24)||po16(ino+120)||po16(ino+122)||
++       po16(ino+26)!=1||po32(ino+20)||po32(ino+32)!=POLARIS_OWNER_FLAGS||
++       po32(ino+104)||po16(ino+118)||size!=w->file_blocks*4096||allocated<size/512||
++       po32(ino+100)!=po32(p+44)||po16(ino+46)>5||po16(ino+128)>128||po16(ino+128)%4)return po_fail(w,7,inode_lba);
++    w->file_checksum_seed=po_number_crc(po_number_crc(w->checksum_seed,inode),po32(ino+100));
++    if(w->metadata_checksum){
++        bool high=po16(ino+128)>=4;uint32_t provided=po16(ino+124),crc=w->file_checksum_seed;
++        if(high)provided|=(uint32_t)po16(ino+130)<<16;
++        for(unsigned i=0;i<256;i++){
++            uint8_t b=(i==124||i==125||(high&&(i==130||i==131)))?0:ino[i];crc=po_crc32c(crc,&b,1);
++        }
++        if(provided!=(high?crc:crc&0xffff))return po_fail(w,16,inode_lba);
++    }
++    if(!po_tree(w,p,expected+40,60,po16(expected+46),0,0,w->file_blocks,read,context))return false;
++    uint64_t all=nodes==64?UINT64_MAX:(UINT64_C(1)<<nodes)-1;
++    if(w->seen!=all||w->map_used!=maps)return po_fail(w,14,0);
++    w->metadata_verified=true;return true;
++}
++
++/* Require an independently bound preserved-base map. Metadata validation alone
++ * never admits data writes, and the runtime may not reuse even one base block.
++ * The integration must bind this protected map to the immutable-root baseline,
++ * not accept a different map from an untrusted command or a mutable caller.
++ */
++static inline bool polaris_owner_exclude_base(struct polaris_owner_work *w,
++    const struct polaris_owner_extent *base,unsigned count,uint64_t file_blocks)
++{
++    if(!w)return false;w->admitted=false;
++    if(!w->metadata_verified||!base||!count||count>POLARIS_OWNER_MAPS||
++       !file_blocks||file_blocks>(UINT64_C(64)<<18))return po_fail(w,15,0);
++    uint64_t next=0;
++    for(unsigned i=0;i<count;i++){
++        const struct polaris_owner_extent *b=&base[i];
++        if(b->logical!=next||!b->blocks||next>=file_blocks||
++           b->blocks>file_blocks-next||b->physical<w->partition_start||
++           b->physical-w->partition_start>=w->partition_blocks||
++           b->blocks>w->partition_blocks-(b->physical-w->partition_start))return po_fail(w,15,b->physical);
++        for(unsigned j=0;j<i;j++)if(b->physical<base[j].physical+base[j].blocks&&
++            base[j].physical<b->physical+b->blocks)return po_fail(w,15,b->physical);
++        for(unsigned j=0;j<w->map_count;j++)if(b->physical<w->map[j].physical+w->map[j].blocks&&
++            w->map[j].physical<b->physical+b->blocks)return po_fail(w,15,b->physical);
++        next+=b->blocks;
++    }
++    if(next!=file_blocks)return po_fail(w,15,next);
++    w->admitted=true;return true;
++}
++
++/* This is an OFFLINE policy predicate until explicitly integrated/tested with
++ * the native driver. It does not construct a descriptor or ring a doorbell.
++ * Generic partition access must remain refused independently of this predicate.
++ */
++static inline bool polaris_owned_data_cdb(const struct polaris_owner_work *w,
++    const uint8_t *cdb,unsigned size,uint32_t bytes,bool write,unsigned lun)
++{
++    if(!w||!w->admitted||!cdb||lun||size!=10||
++       cdb[0]!=(write?0x2a:0x28)||cdb[1]||cdb[6]||cdb[9])return false;
++    uint64_t lba=(uint32_t)cdb[2]<<24|(uint32_t)cdb[3]<<16|(uint32_t)cdb[4]<<8|cdb[5];
++    unsigned blocks=(unsigned)cdb[7]<<8|cdb[8];
++    if(!blocks||blocks>256||bytes!=blocks*4096||blocks-1>UINT32_MAX-lba)return false;
++    for(unsigned i=0;i<w->map_count;i++){
++        const struct polaris_owner_extent *e=&w->map[i];
++        if(lba>=e->physical&&lba-e->physical<e->blocks&&blocks<=e->blocks-(lba-e->physical))return true;
++    }
++    return false;
++}
++static inline bool polaris_owned_sync_cdb(const struct polaris_owner_work *w,
++    const uint8_t *cdb,unsigned size,uint32_t bytes,bool write,unsigned lun)
++{
++    if(!w||!w->admitted||!cdb||size!=10||cdb[0]!=0x35||bytes||write||lun)return false;
++    for(unsigned i=1;i<10;i++)if(cdb[i])return false;
++    return true;
++}
++#endif
++
++/* END verbatim shared runtime-owner.h policy. */
++#include "polaris_runtime_quiesce.h"
++static struct polaris_owner_work *polaris_owned_work;
++static struct polaris_q polaris_owned_q;
++static const uint8_t *polaris_owned_packet;
++static size_t polaris_owned_packet_bytes;
++static uint64_t polaris_owned_partition, polaris_owned_partition_blocks, polaris_owned_boot_cookie;
++static bool polaris_owned_requested, polaris_owned_active, polaris_owned_verifying;
++static bool polaris_owned_failed, polaris_owned_final_sync;
++static uint32_t polaris_owned_fault;
++static bool polaris_owned_metadata_cdb(const uint8_t *cdb,unsigned n,uint32_t bytes,bool write)
++{
++    const uint8_t *p=polaris_owned_packet;
++    if (!polaris_owned_verifying || !p || polaris_owned_packet_bytes<POLARIS_OWNER_HEADER ||
++        !cdb || n!=10 || write || bytes!=4096 || cdb[0]!=0x28 || cdb[1] || cdb[6] ||
++        cdb[7] || cdb[8]!=1 || cdb[9]) return false;
++    uint64_t lba=(uint32_t)cdb[2]<<24|(uint32_t)cdb[3]<<16|(uint32_t)cdb[4]<<8|cdb[5];
++    if (lba<polaris_owned_partition || lba-polaris_owned_partition>=polaris_owned_partition_blocks) return false;
++    uint64_t relative=lba-polaris_owned_partition;unsigned nodes=po32(p+72),maps=po32(p+76);
++    if (nodes>POLARIS_OWNER_NODES || !maps || maps>POLARIS_OWNER_MAPS ||
++        polaris_owned_packet_bytes!=POLARIS_OWNER_HEADER+(uint64_t)nodes*4104+(uint64_t)maps*24) return false;
++    if (!relative || relative==po64(p+48) || relative==po64(p+56)) return true;
++    for (unsigned i=0;i<nodes;i++) if (relative==po64(po_node(p,i))) return true;
++    return false;
++}
++int polaris_ufs_owned_status(struct polaris_shutdown_status *);
++int polaris_ufs_owned_finish(const struct polaris_shutdown_request *,unsigned,unsigned,struct polaris_shutdown_status *);
++
+ #include "polaris_filemap.h"
+ #include "polaris_ram_cow.h"
+ #include "polaris_ram_io.h"
+@@ -246,6 +563,7 @@
+ {
+     if (!lck_mtx_try_lock(&sweet_ufs_lock)) return EBUSY;
+     int error = EBUSY;
++    if (polaris_owned_requested || polaris_owned_active || polaris_owned_q.cookie) goto out;
+     if (polaris_ufs_sealed || polaris_io_failed || polaris_ufs_inflight ||
+         polaris_ufs_submitted != polaris_ufs_completed) goto out;
+     if (!su.regs && !su.dma && !su.ready && !polaris_native_owner && !polaris_file_active) {
+@@ -273,20 +591,31 @@
+ ufs_scsi(const uint8_t *cdb, unsigned cdb_len, uint32_t len, bool write)
+ {
+ #if defined(POLARIS_RAM_ONLY)
+-	/* Gate before descriptor construction or ANY doorbell write. Even a
+-	 * caller with ufsrw=1 cannot issue WRITE, UNMAP or SYNCHRONIZE CACHE. */
++    /* Gate before descriptors/doorbell: generic ufsrw never grants writes.
++     * The separately verified owner path is currently QEMU fixture ONLY. */
++    const bool owned_data=polaris_owned_active && polaris_owned_work &&
++        polaris_owned_data_cdb(polaris_owned_work,cdb,cdb_len,len,write,su.lun);
++    const bool owned_sync=polaris_owned_active && polaris_owned_final_sync &&
++        polaris_owned_q.phase==POLARIS_Q_FLUSHING && polaris_owned_work &&
++        polaris_owned_sync_cdb(polaris_owned_work,cdb,cdb_len,len,write,su.lun);
+ 	if (polaris_io_failed) { return ETIMEDOUT; }
+-    if (polaris_ufs_sealed || polaris_ufs_inflight || polaris_ufs_submitted == UINT64_MAX) return EBUSY;
++    if ((polaris_ufs_sealed && !owned_sync) || polaris_ufs_inflight ||
++        polaris_ufs_submitted == UINT64_MAX) return EBUSY;
+ 	if (!polaris_probe_cdb_allowed(cdb, cdb_len, len, write, su.lun) &&
+ 	    !(polaris_file_active && polaris_map_cdb_allowed(polaris_file_map,
+-	    polaris_file_count, cdb, cdb_len, len, write, su.lun))) {
++	    polaris_file_count, cdb, cdb_len, len, write, su.lun)) &&
++        !polaris_owned_metadata_cdb(cdb,cdb_len,len,write) && !owned_data && !owned_sync) {
+ 		return EPERM;
+ 	}
+ #endif
+ #if defined(POLARIS_RAM_ONLY)
+     if (!polaris_ufs_queue_owned() || ufs_rd(REG_UTRLDBR)) {
+         polaris_io_failed = true; /* No descriptor/bounce mutation on ownership loss. */
++        if (polaris_owned_active) { polaris_owned_failed=true;polaris_q_fail(&polaris_owned_q,POLARIS_Q_IO_ERROR); }
+         return EBUSY;
++    }
++    if (owned_data && !polaris_q_begin(&polaris_owned_q,len,write)) {
++        polaris_io_failed=polaris_owned_failed=true;return EIO;
+     }
+ #endif
+ 	struct utrd *utrd = (struct utrd *)(su.dma + DMA_UTRL);
+@@ -348,6 +677,8 @@
+ #if defined(POLARIS_RAM_ONLY)
+     polaris_ufs_inflight = true;
+     polaris_ufs_submitted++;
++    if (owned_data || owned_sync) printf("POLARIS OWNED NATIVE: doorbell op=%02x bytes=%u tag=%u submitted=%llu epoch=%llu\n",
++        cdb[0],len,su.tag,polaris_ufs_submitted,polaris_owned_q.write_epoch);
+ #endif
+ 	ufs_wr(REG_UTRLDBR, 1);
+ 	uint64_t deadline;
+@@ -367,7 +698,8 @@
+ #if !defined(POLARIS_RAM_ONLY)
+ 			ufs_wr(REG_UTRLCLR, ~1u);
+ #else
+-			polaris_io_failed = true; /* Never reuse outstanding descriptors. */
++            polaris_io_failed = true; /* Never reuse outstanding descriptors. */
++            if (owned_data) { (void)polaris_q_complete(&polaris_owned_q,false,false,0);polaris_owned_failed=true; }
+ #endif
+ 			printf("SWEET UFS: command 0x%02x timed out\n", cdb[0]);
+ 			return ETIMEDOUT;
+@@ -387,6 +719,7 @@
+ #if defined(POLARIS_RAM_ONLY)
+     if (!polaris_ufs_queue_owned()) {
+         polaris_io_failed = true;
++        if (owned_data) { (void)polaris_q_complete(&polaris_owned_q,false,false,0);polaris_owned_failed=true; }
+         return EIO; /* Completion/ownership unknown: retain queue and inflight. */
+     }
+     polaris_ufs_inflight = false;
+@@ -404,11 +737,20 @@
+ 		dma_sync(DMA_BOUNCE, len);
+ 	}
+ 
++#if defined(POLARIS_RAM_ONLY)
++    if (owned_data && write && polaris_owned_fault==1) {
++        /* Explicit QEMU-only software fault in the REAL completed response.
++         * This is NOT a claim that a real device returned a short transfer. */
++        ucd->resp[1]|=0x20;ucd->resp[12]=0;ucd->resp[13]=0;ucd->resp[14]=0x10;ucd->resp[15]=0;
++        printf("POLARIS OWNED FAULT: injected short UPIU after actual WRITE completion\n");
++    }
++#endif
+ 	uint32_t ocs = utrd->dw2 & 0xff;
+ 	if (ocs || ucd->resp[0] != 0x21 || ucd->resp[6] || ucd->resp[7]) {
+ #if defined(POLARIS_RAM_ONLY)
+         /* Only initialization TUR may consume a bounded unit-attention retry. */
+-        if (polaris_file_active || cdb[0] != 0) polaris_io_failed = true;
++        if (polaris_owned_active || polaris_file_active || cdb[0] != 0) polaris_io_failed = true;
++        if (owned_data) { (void)polaris_q_complete(&polaris_owned_q,true,false,0);polaris_owned_failed=true; }
+ #endif
+ 		printf("SWEET UFS: command 0x%02x failed: ocs 0x%x upiu 0x%x response 0x%x status 0x%x\n",
+ 		    cdb[0], ocs, ucd->resp[0], ucd->resp[6], ucd->resp[7]);
+@@ -419,9 +761,13 @@
+ 	if (ucd->resp[1] || ucd->resp[2] != su.lun || ucd->resp[3] != su.tag ||
+ 	    ucd->resp[12] || ucd->resp[13] || ucd->resp[14] || ucd->resp[15]) {
+         polaris_io_failed = true;
++        if (owned_data) { (void)polaris_q_complete(&polaris_owned_q,true,false,0);polaris_owned_failed=true; }
+ 		printf("POLARIS UFS: unexpected response flags/tag/residual\n");
+ 		return EIO;
+ 	}
++    if (owned_data && !polaris_q_complete(&polaris_owned_q,true,true,len)) {
++        polaris_io_failed=polaris_owned_failed=true;return EIO;
++    }
+ #endif
+ 	return 0;
+ }
+@@ -478,6 +824,140 @@
+ 	static const uint8_t cdb[10] = { 0x35 };       /* SYNCHRONIZE CACHE(10), whole LUN */
+ 	return ufs_scsi(cdb, sizeof(cdb), 0, false);
+ }
++
++#if defined(POLARIS_RAM_ONLY)
++static bool polaris_dt_copy(DTEntry, const char *, void *, unsigned);
++static bool polaris_owned_metadata_read(void *context,uint64_t lba,uint8_t *output)
++{
++    (void)context;
++    int error=ufs_read_blocks(lba,1);
++    if (error) return false;
++    memcpy(output,(const void *)(su.dma+DMA_BOUNCE),4096);
++    return true;
++}
++static int polaris_owned_transfer(uint64_t logical,bool write)
++{
++    if (!polaris_owned_active || !polaris_owned_work || !polaris_owned_work->admitted) return EPERM;
++    uint64_t physical=UINT64_MAX;
++    for (unsigned i=0;i<polaris_owned_work->map_count;i++) {
++        const struct polaris_owner_extent *e=&polaris_owned_work->map[i];
++        if (logical>=e->logical && logical-e->logical<e->blocks) {
++            physical=e->physical+logical-e->logical;break;
++        }
++    }
++    if (physical>UINT32_MAX) return EINVAL;
++    uint8_t cdb[10]={write?0x2a:0x28,0,(uint8_t)(physical>>24),(uint8_t)(physical>>16),
++        (uint8_t)(physical>>8),(uint8_t)physical,0,0,1,0};
++    printf("POLARIS OWNED CDB: op=%02x LBA=%llx blocks=1 epoch=%llu\n",cdb[0],physical,polaris_owned_q.write_epoch);
++    return ufs_scsi(cdb,sizeof(cdb),4096,write);
++}
++static int polaris_owned_fixture(DTEntry node,const uint8_t *head)
++{
++    uint64_t layout[3]={0},base_blocks=0;uint32_t version=0;
++    const void *packet=NULL,*base=NULL;unsigned packet_bytes=0,base_bytes=0;
++    polaris_owned_requested=true;polaris_owned_boot_cookie=mach_absolute_time()|UINT64_C(1);
++    if (!polaris_dt_copy(node,"version",&version,sizeof(version)) || version!=1 ||
++        !polaris_dt_copy(node,"layout",layout,sizeof(layout)) ||
++        !polaris_dt_copy(node,"protected-blocks",&base_blocks,sizeof(base_blocks)) ||
++        SecureDTGetProperty(node,"owner-packet",&packet,&packet_bytes)!=kSuccess ||
++        packet_bytes<POLARIS_OWNER_HEADER || packet_bytes>POLARIS_OWNER_HEADER+POLARIS_OWNER_NODES*4104+POLARIS_OWNER_MAPS*24 ||
++        SecureDTGetProperty(node,"protected-map",&base,&base_bytes)!=kSuccess ||
++        !base_bytes || base_bytes%sizeof(struct polaris_owner_extent) ||
++        base_bytes>POLARIS_OWNER_MAPS*sizeof(struct polaris_owner_extent) ||
++        !polaris_userdata_bounds(head,layout[0],layout[1])) return EINVAL;
++    vm_offset_t work=0,protected=0;
++    if (kmem_alloc(kernel_map,&work,round_page(sizeof(struct polaris_owner_work)),
++        KMA_DATA|KMA_ZERO|KMA_PERMANENT,VM_KERN_MEMORY_IOKIT)!=KERN_SUCCESS ||
++        kmem_alloc(kernel_map,&protected,round_page(base_bytes),
++        KMA_DATA|KMA_ZERO|KMA_PERMANENT,VM_KERN_MEMORY_IOKIT)!=KERN_SUCCESS) return ENOMEM;
++    polaris_owned_work=(void *)work;
++    memcpy((void *)protected,base,base_bytes); /* DT values are only four-byte aligned. */
++    polaris_owned_packet=packet;polaris_owned_packet_bytes=packet_bytes;
++    polaris_owned_partition=layout[0];polaris_owned_partition_blocks=layout[1];
++    polaris_owned_verifying=true;
++    bool valid=polaris_owner_verify(packet,packet_bytes,layout[0],layout[1],
++        polaris_owned_metadata_read,NULL,polaris_owned_work);
++    polaris_owned_verifying=false;
++    if (!valid || polaris_owned_work->file_blocks!=layout[2] ||
++        !polaris_owner_exclude_base(polaris_owned_work,(const void *)protected,
++            base_bytes/sizeof(struct polaris_owner_extent),base_blocks)) {
++        printf("POLARIS OWNED: metadata/base REFUSED error=%u relative=%llx; no writes admitted\n",
++            polaris_owned_work->error,polaris_owned_work->error_lba);
++        return EINVAL;
++    }
++    if (!polaris_q_init(&polaris_owned_q,polaris_owned_boot_cookie,polaris_owned_work->admitted)) return EINVAL;
++    polaris_owned_active=true;
++    printf("POLARIS OWNED: actual UFS metadata verified inode=%u generation=%u maps=%u nodes=%u; protected base disjoint\n",
++        po32((const uint8_t *)packet+40),po32((const uint8_t *)packet+44),
++        polaris_owned_work->map_count,polaris_owned_work->node_count);
++    /* Real descriptor front-door rejection, not a policy-only counter model. */
++    const struct polaris_owner_extent *protected_map=(const void *)protected;
++    uint64_t address=protected_map[0].physical,submitted=polaris_ufs_submitted;
++    uint8_t forbidden[10]={0x2a,0,(uint8_t)(address>>24),(uint8_t)(address>>16),
++        (uint8_t)(address>>8),(uint8_t)address,0,0,1,0};
++    int error=ufs_scsi(forbidden,sizeof(forbidden),4096,true);
++    if (error!=EPERM || submitted!=polaris_ufs_submitted || polaris_owned_q.write_epoch) return EIO;
++    printf("POLARIS OWNED: protected-base WRITE refused before descriptor; submissions unchanged\n");
++    uint8_t *bounce=(void *)(su.dma+DMA_BOUNCE);
++    for (unsigned i=0;i<4096;i++) bounce[i]=(uint8_t)(i*37u+0x76u);
++    error=polaris_owned_transfer(0,true);
++    if (!error) error=polaris_owned_transfer(0,false);
++    if (error) return error;
++    for (unsigned i=0;i<4096;i++) if (bounce[i]!=(uint8_t)(i*37u+0x76u)) return EIO;
++    printf("POLARIS OWNED TEST: actual WRITE10 and READ10 MATCH epoch=%llu; final SYNC deferred to native shutdown\n",
++        polaris_owned_q.write_epoch);
++    return 0;
++}
++int polaris_ufs_owned_status(struct polaris_shutdown_status *out)
++{
++    if (!out) return EINVAL;
++    lck_mtx_lock(&sweet_ufs_lock);
++    int error=EAGAIN;
++    if (polaris_owned_requested && (polaris_owned_q.cookie || polaris_owned_failed)) {
++        *out=polaris_q_status(&polaris_owned_q);
++        if (!out->cookie) out->cookie=polaris_owned_boot_cookie;
++        if (polaris_owned_failed) { out->phase=POLARIS_Q_FAILED;out->error=EIO;out->capabilities=0; }
++        /* This nonterminal snapshot NEVER publishes SAFE before peer OFF. */
++        if (out->phase==POLARIS_Q_SAFE) { out->phase=POLARIS_Q_REQUESTED;out->capabilities=0; }
++        error=0;
++    }
++    lck_mtx_unlock(&sweet_ufs_lock);return error;
++}
++int polaris_ufs_owned_finish(const struct polaris_shutdown_request *request,
++    unsigned mounts,unsigned busy,struct polaris_shutdown_status *status)
++{
++    if (!request || !status || mounts || busy || !lck_mtx_try_lock(&sweet_ufs_lock)) return EBUSY;
++    int error=EBUSY;
++    if (!polaris_owned_active || polaris_owned_failed || !polaris_owned_work ||
++        !polaris_owned_work->admitted || polaris_io_failed || polaris_ufs_sealed ||
++        polaris_ufs_inflight || polaris_ufs_submitted!=polaris_ufs_completed ||
++        !polaris_ufs_queue_owned() || ufs_rd(REG_UTRLDBR) ||
++        !polaris_q_request(&polaris_owned_q,request->cookie,request->sequence,request->mode) ||
++        !polaris_q_seal(&polaris_owned_q,mounts,busy)) goto out;
++    polaris_ufs_sealed=true;
++    if (!polaris_q_flush_begin(&polaris_owned_q)) goto out;
++    polaris_owned_final_sync=true;
++    printf("POLARIS OWNED SYNC: native sealed final SYNCHRONIZE CACHE10 begin epoch=%llu\n",polaris_owned_q.write_epoch);
++    error=ufs_sync_cache();
++    polaris_owned_final_sync=false;
++    bool complete=!polaris_ufs_inflight && polaris_ufs_submitted==polaris_ufs_completed;
++    if (!polaris_q_flush_complete(&polaris_owned_q,complete,error==0)) { if (!error) error=EIO;goto out; }
++    *status=polaris_q_status(&polaris_owned_q);
++    if (!polaris_q_reset_ready(status,request->cookie,request->sequence,request->mode)) { error=EIO;goto out; }
++    printf("POLARIS OWNED SYNC: actual completion epoch=%llu flushed=%llu; public SAFE still withheld until CPU OFF\n",
++        status->write_epoch,status->flushed_epoch);
++    error=0;
++out:
++    if (error) {
++        polaris_owned_failed=true;
++        if (polaris_owned_q.cookie && polaris_owned_q.phase!=POLARIS_Q_FAILED)
++            polaris_q_fail(&polaris_owned_q,POLARIS_Q_IO_ERROR);
++        printf("POLARIS OWNED SYNC: REFUSED error=%d inflight=%u submitted=%llu completed=%llu; no reset permission\n",
++            error,polaris_ufs_inflight,polaris_ufs_submitted,polaris_ufs_completed);
++    }
++    lck_mtx_unlock(&sweet_ufs_lock);return error;
++}
++#endif
+ 
+ static int
+ ufs_find_partition(const char *want)
+@@ -608,7 +1088,7 @@
+ }
+ static void polaris_qemu_ufs_probe(uint32_t enabled)
+ {
+-    uint32_t mode=0,core=0,count=0,rw=0,file=0,probe=0,version=0,crc=0;
++    uint32_t mode=0,core=0,count=0,rw=0,file=0,probe=0,version=0,crc=0,owned=0,fault=0;
+     uint64_t base=0,bytes=0,reg[2]={0},ecam[2]={0};
+     DTEntry node,chosen; unsigned size=0; const void *property=NULL;
+     PE_parse_boot_argn("polarisuefi",&mode,sizeof(mode));
+@@ -617,9 +1097,12 @@
+     PE_parse_boot_argn("ufsrw",&rw,sizeof(rw));
+     PE_parse_boot_argn("polarisfileroot",&file,sizeof(file));
+     PE_parse_boot_argn("polarisufsprobe",&probe,sizeof(probe));
++    PE_parse_boot_argn("polarisqemuowned",&owned,sizeof(owned));
++    PE_parse_boot_argn("polarisownedfault",&fault,sizeof(fault));
++    const char *compat=owned?"qemu,isolated-owned-ufs":"qemu,isolated-readonly-ufs";
+     const uint64_t actual_cpu=__builtin_arm_rsr64("MPIDR_EL1");
+     const uint64_t timer=__builtin_arm_rsr64("CNTFRQ_EL0");
+-    if (enabled != 1 || file || probe ||
++    if (enabled != 1 || file || probe || owned>1 || fault>1 || (!owned&&fault) ||
+         SecureDTLookupEntry(NULL,"/polaris-qemu-ufs",&node) != kSuccess ||
+         SecureDTLookupEntry(NULL,"/chosen",&chosen) != kSuccess ||
+         !polaris_dt_copy(chosen,"dram-base",&base,sizeof(base)) ||
+@@ -629,8 +1112,7 @@
+         !polaris_dt_copy(node,"ecam",ecam,sizeof(ecam)) ||
+         !polaris_dt_copy(node,"head-crc32",&crc,sizeof(crc)) ||
+         SecureDTGetProperty(node,"compatible",&property,&size) != kSuccess ||
+-        size != sizeof("qemu,isolated-readonly-ufs") ||
+-        memcmp(property,"qemu,isolated-readonly-ufs",size) ||
++        size != strlen(compat)+1 || memcmp(property,compat,size) ||
+         !polaris_qemu_ufs_identity(actual_cpu,timer,mode,core,count,rw,base,bytes,reg,ecam)) {
+         printf("POLARIS QEMU UFS: REFUSED identity before any PCI/MMIO access cpu=%llx timer=%llu mode=%u core=%u count=%u rw=%u ver=%u RAM=%llx/%llx reg=%llx/%llx ecam=%llx/%llx compatbytes=%u\n",
+             actual_cpu,timer,mode,core,count,rw,version,base,bytes,reg[0],reg[1],ecam[0],ecam[1],size);
+@@ -639,6 +1121,7 @@
+     printf("POLARIS QEMU UFS: admitted actual worker MPIDR=%llx timer=%llu\n",actual_cpu,timer);
+     lck_mtx_lock(&sweet_ufs_lock);
+     int error = EINVAL; unsigned stage = 1;
++    if (owned) { polaris_owned_requested=true;polaris_owned_boot_cookie=mach_absolute_time()|UINT64_C(1); }
+     if (su.regs || su.dma || polaris_native_owner || polaris_ufs_sealed) goto out;
+     vm_offset_t pci=ml_io_map(ecam[0],ecam[1]);
+     if (!pci) goto out;
+@@ -721,11 +1204,18 @@
+     }
+     if (!error) {
+         polaris_qemu_ufs=true;
+-        printf("POLARIS QEMU UFS: PASS native PCI/link/descriptor/completion/read; write gate unchanged\n");
++        printf("POLARIS QEMU UFS: PASS native PCI/link/descriptor/completion/read%s\n",owned?"; separate owned fixture requested":"; write gate unchanged");
++        if (owned) {
++            stage=12;DTEntry owner;
++            polaris_owned_fault=fault;
++            if (SecureDTLookupEntry(NULL,"/polaris-qemu-owned-file",&owner)!=kSuccess) error=EINVAL;
++            else error=polaris_owned_fixture(owner,(const void *)(su.dma+DMA_BOUNCE));
++        }
+     }
+ out:
+     if (error) {
+         polaris_io_failed=true;
++        if (owned) polaris_owned_failed=true;
+         printf("POLARIS QEMU UFS: FAILED stage=%u error=%d; DMA retained, no reset grant\n",stage,error);
+         if (su.regs) printf("POLARIS QEMU UFS STATE: HCE=%x HCS=%x IS=%x UIC=%x ARG2=%x DBR=%x\n",
+             ufs_rd(REG_HCE),ufs_rd(REG_HCS),ufs_rd(REG_IS),ufs_rd(REG_UICCMD),
+--- a/bsd/dev/polaris_touch.c
++++ b/bsd/dev/polaris_touch.c
+@@ -29,6 +29,8 @@
+ void polaris_uefi_shutdown_ready(void);
+ int polaris_uefi_shutdown_pending(void);
+ int polaris_ufs_ram_seal(void);
++int polaris_ufs_owned_status(struct polaris_shutdown_status *);
++int polaris_ufs_owned_finish(const struct polaris_shutdown_request *,unsigned,unsigned,struct polaris_shutdown_status *);
+ int polaris_uefi_shutdown_finish(int, unsigned, unsigned);
+ extern int polaris_uefi_stop_secondaries(void);
+ 
+@@ -496,7 +498,7 @@
+  * runtime permission. No UFS write gate is changed or cache-sync success
+  * fabricated. Only firmware/kernel-owned RAM is exposed. */
+ struct polaris_shutdown_slot polaris_uefi_shutdown;
+-static bool ps_enabled, ps_bsd_ready;
++static bool ps_enabled, ps_bsd_ready, ps_owned;
+ void polaris_uefi_shutdown_ready(void)
+ {
+     __atomic_store_n(&ps_bsd_ready,true,__ATOMIC_RELEASE);
+@@ -518,8 +520,12 @@
+         printf("POLARIS UEFI DRAIN: refused howto=%x mounts=%u busy=%u\n",howto,mounts,busy);
+         ps_publish(POLARIS_Q_FAILED,EBUSY);return EBUSY;
+     }
+-    printf("POLARIS UEFI DRAIN: actual VFS mounts=0 busy=0; RAM only, no UFS durability proof\n");
+-    int storage_error = polaris_ufs_ram_seal();
++    struct polaris_shutdown_status owned={0};
++    printf("POLARIS UEFI DRAIN: actual VFS mounts=0 busy=0; %s\n",
++        ps_owned?"owned file final UFS synchronization required":"RAM only, no UFS durability proof");
++    struct polaris_shutdown_request request={.cookie=polaris_uefi_shutdown.kernel.cookie,
++        .sequence=polaris_uefi_shutdown.kernel.sequence,.mode=polaris_uefi_shutdown.kernel.mode};
++    int storage_error = ps_owned?polaris_ufs_owned_finish(&request,mounts,busy,&owned):polaris_ufs_ram_seal();
+     if (storage_error) {
+         printf("POLARIS UEFI DRAIN: native UFS seal refused %d; no reset permission\n", storage_error);
+         ps_publish(POLARIS_Q_FAILED,storage_error);return storage_error;
+@@ -532,8 +538,16 @@
+     /* All selected secondary cores are scheduler-offline and actual PSCI OFF.
+      * The remaining boot core parks; firmware independently lives on CPU0. */
+     __asm__ volatile("msr daifset,#15; dsb sy; isb":::"memory");
+-    polaris_uefi_shutdown.kernel.capabilities=POLARIS_Q_RAM_DRAINED;
+-    ps_publish(POLARIS_Q_SEALED,0);
++    if (ps_owned) {
++        /* Never expose SAFE during a multiword copy. Phase is the final
++         * release publication AFTER actual peer OFF and IRQ masking. */
++        owned.phase=POLARIS_Q_REQUESTED;
++        memcpy(&polaris_uefi_shutdown.kernel,&owned,sizeof(owned));
++        ps_publish(POLARIS_Q_SAFE,0);
++    } else {
++        polaris_uefi_shutdown.kernel.capabilities=POLARIS_Q_RAM_DRAINED;
++        ps_publish(POLARIS_Q_SEALED,0);
++    }
+     for (;;) { __asm__ volatile("wfe":::"memory"); }
+ }
+ static bool ps_poll(void)
+@@ -542,10 +556,21 @@
+     struct polaris_shutdown_slot *slot=&polaris_uefi_shutdown;
+     unsigned phase=__atomic_load_n(&slot->kernel.phase,__ATOMIC_ACQUIRE);
+     if (phase==POLARIS_Q_OFF) {
+-        slot->kernel.cookie=mach_absolute_time()|UINT64_C(1);
+-        slot->kernel.capabilities=POLARIS_Q_RAM_CONFIG;
+-        ps_publish(POLARIS_Q_RUNNING,0);
+-        printf("POLARIS UEFI DRAIN: RAM-only mailbox ready after BSD initialization\n");
++        if (ps_owned) {
++            struct polaris_shutdown_status owned={0};
++            if (polaris_ufs_owned_status(&owned)) return false;
++            unsigned ready_phase=owned.phase,ready_error=owned.error;
++            owned.phase=POLARIS_Q_OFF;memcpy(&slot->kernel,&owned,sizeof(owned));
++            ps_publish(ready_phase,ready_error);
++            printf("POLARIS UEFI DRAIN: owned-file mailbox ready after BSD initialization epoch=%llu phase=%u\n",
++                slot->kernel.write_epoch,ready_phase);
++            if (ready_phase!=POLARIS_Q_RUNNING || ready_error) return false;
++        } else {
++            slot->kernel.cookie=mach_absolute_time()|UINT64_C(1);
++            slot->kernel.capabilities=POLARIS_Q_RAM_CONFIG;
++            ps_publish(POLARIS_Q_RUNNING,0);
++            printf("POLARIS UEFI DRAIN: RAM-only mailbox ready after BSD initialization\n");
++        }
+     } else if (phase!=POLARIS_Q_RUNNING) { return false; }
+     pi_cache((uintptr_t)&slot->firmware,false);
+     uint32_t sequence=__atomic_load_n(&slot->firmware.sequence,__ATOMIC_ACQUIRE);
+@@ -574,11 +599,14 @@
+ }
+ static void ps_start(void)
+ {
+-    uint32_t enabled=0,ram=0,rw=0,cpus=0;
++    uint32_t enabled=0,ram=0,rw=0,cpus=0,owned=0;
+     PE_parse_boot_argn("polarisquiesce",&enabled,sizeof(enabled));
+     PE_parse_boot_argn("polarisramcow",&ram,sizeof(ram));
+     PE_parse_boot_argn("ufsrw",&rw,sizeof(rw));
+     PE_parse_boot_argn("cpus",&cpus,sizeof(cpus));
++    PE_parse_boot_argn("polarisqemuowned",&owned,sizeof(owned));
++    if (owned>1) return;
++    ps_owned=owned==1;
+     if (enabled!=1 || ram!=1 || rw || (cpus!=1 && cpus!=2)) { return; }
+     ps_enabled=true; /* The existing resident input loop performs bounded polling. */
+ }

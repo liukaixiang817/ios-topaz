@@ -98,6 +98,7 @@ class ResidentCoreTree(unittest.TestCase):
         phone = cpu.validate(cpu.select(self.tree(), 7, False, 2), 7, False, 2)
         phone.children.append(cpu.child(root, 'polaris-qemu-ufs'))
         with self.assertRaises(ValueError):cpu.validate(adt.serialize(phone), 7, False, 2)
+
         for key in ('version', 'reg', 'ecam', 'compatible', 'head-crc32'):
             changed, _ = adt.parse(virtual)
             node = cpu.child(changed, 'polaris-qemu-ufs')
@@ -110,6 +111,31 @@ class ResidentCoreTree(unittest.TestCase):
         with self.assertRaises(ValueError):cpu.isolated_qemu_ufs(virtual, 1)
         for bad in (-1, 1 << 32, True, '1'):
             with self.assertRaises(ValueError):cpu.isolated_qemu_ufs(raw, bad)
+
+    def test_owned_fixture_cannot_reach_phone_or_unbind_packet_and_base(self):
+        raw = cpu.select(self.tree(True), 7, True, 2)
+        packet = bytearray(384 + 24)
+        packet[:8] = b'PROWN001'
+        struct.pack_into('<IIQQQ', packet, 8, 384, len(packet), 2048, 32768, 8192)
+        struct.pack_into('<II', packet, 72, 0, 1)
+        protected = struct.pack('<QQQ', 0, 2315, 256)
+        owned = cpu.isolated_qemu_owned(raw, 0x12345678, bytes(packet), protected, 256)
+        tree = cpu.validate(owned, 7, True, 2)
+        with self.assertRaises(ValueError):cpu.validate(owned, 7, False, 2)
+        phone = cpu.validate(cpu.select(self.tree(), 7, False, 2), 7, False, 2)
+        phone.children += [cpu.child(tree, n) for n in ('polaris-qemu-ufs', 'polaris-qemu-owned-file')]
+        with self.assertRaises(ValueError):cpu.validate(adt.serialize(phone), 7, False, 2)
+        changes = [('layout', struct.pack('<QQQ', 2049, 32768, 8192)),
+                   ('protected-blocks', struct.pack('<Q', 257)),
+                   ('protected-map', struct.pack('<QQQ', 1, 2315, 256)),
+                   ('protected-map', struct.pack('<QQQ', 0, 2047, 256)),
+                   ('owner-packet', bytes(packet[:-1]))]
+        for key, value in changes:
+            mutated, _ = adt.parse(owned)
+            builder.setprop(cpu.child(mutated, 'polaris-qemu-owned-file'), key, value)
+            with self.subTest(key=key), self.assertRaises(ValueError):
+                cpu.validate(adt.serialize(mutated), 7, True, 2)
+
 
 
 if __name__ == '__main__':

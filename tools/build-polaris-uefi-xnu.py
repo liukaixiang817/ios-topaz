@@ -54,6 +54,10 @@ def main():
     ap.add_argument('--test-qemu',action='store_true')
     ap.add_argument('--test-qemu-ufs',action='store_true',
                     help='isolated read-only native virtual UFS; never a physical admission proof')
+    ap.add_argument('--test-qemu-owned',action='store_true',
+                    help='write only a newly copied synthetic owned-file UFS fixture; never phone admission')
+    ap.add_argument('--test-owned-response-short',action='store_true',
+                    help='QEMU-only software response-residual injection after real WRITE completion')
     ap.add_argument('--kernel-core',type=int,choices=(1,7),default=1,
                     help='boot XNU core: existing small CPU1 or opt-in big CPU7; firmware retains CPU0')
     ap.add_argument('--kernel-cpus',type=int,choices=(1,2),default=1,
@@ -72,6 +76,11 @@ def main():
     target=a.kernel_core if a.test_qemu else a.kernel_core<<8
     if a.test_qemu_ufs and (not a.test_qemu or a.kernel_core!=7 or a.kernel_cpus!=2):
         ap.error('isolated virtual UFS requires explicit QEMU CPU7+6')
+    if a.test_qemu_owned and (not a.test_qemu_ufs or a.test_ram_drain not in ('success','stale-cookie') or
+                              a.disk_guid or a.chain_app_manifest or a.efi_application):
+        ap.error('owned virtual fixture requires isolated QEMU UFS and native drain without disk/chain mode')
+    if a.test_owned_response_short and not a.test_qemu_owned:
+        ap.error('controlled response injection requires isolated owned-file mode')
     if a.kernel_cpus==2 and a.kernel_core!=7:ap.error('two-core trial requires the CPU7+CPU6 pair')
     if a.test_ram_drain=='peer-refused' and a.kernel_cpus!=2:
         ap.error('peer refusal injection requires the explicit two-core QEMU test')
@@ -94,6 +103,9 @@ def main():
     ufs_tokens=[t for t in tokens if t.startswith(b'polarisqemuufs=')]
     if ufs_tokens!=([b'polarisqemuufs=1'] if a.test_qemu_ufs else []):
         raise ValueError('virtual UFS must be explicitly and uniquely bound to a QEMU-only test')
+    for key,enabled in [('polarisqemuowned',a.test_qemu_owned),('polarisownedfault',a.test_owned_response_short)]:
+        if [t for t in tokens if t.startswith((key+'=').encode())]!=([(key+'=1').encode()] if enabled else []):
+            raise ValueError('owned-file opt-in/injection must be uniquely bound to its isolated QEMU test')
     off_tokens=[t for t in tokens if t.startswith(b'polarisofftest=')]
     if off_tokens!=([b'polarisofftest=1'] if a.test_ram_drain=='peer-refused' else []):
         raise ValueError('peer refusal injection must be uniquely bound to its QEMU-only test')
@@ -111,6 +123,8 @@ def main():
     tree=polaris_uefi_cpu_tree.validate(raw[tree_at:tree_at+tree_bytes],a.kernel_core,a.test_qemu,a.kernel_cpus)
     if any(n.name=='polaris-qemu-ufs' for n in tree.children)!=a.test_qemu_ufs:
         raise ValueError('virtual UFS opt-in does not match the actual tree')
+    if any(n.name=='polaris-qemu-owned-file' for n in tree.children)!=a.test_qemu_owned:
+        raise ValueError('owned-file opt-in does not match the actual tree')
     kernel=bytearray(k);m=mkpayload.parse_macho(kernel);mkpayload.apply_chained_fixups(kernel,m)
     va=struct.unpack_from('<Q',raw,16)[0]
     if va!=m['segs'][0]['vmaddr']&~0x1ffffff:raise ValueError('payload virtual base mismatch')
@@ -168,6 +182,7 @@ def main():
             if a.test_ram_drain:
                 mode={'success':1,'stale-cookie':2,'peer-refused':3}[a.test_ram_drain]
                 f.write(f'#define EFI_XNU_RAM_DRAIN_TEST {mode}\n')
+            if a.test_qemu_owned:f.write('#define EFI_XNU_OWNED_TEST 1\n')
     disk_path=None
     if a.disk_guid:
         disk_path='\\EFI\\Polaris\\'+a.disk_version+'\\PAYLOAD.BIN'
@@ -217,7 +232,7 @@ def main():
                   payload_crc32=zlib.crc32(raw),payload_C_admission=True,rebased_kernel_bytes_match=True,
                   RAM_only_XNU_loader=True,kernel_handoff=True,storage_write_api=False,NVRAM_write_api=False,
                   reset_commands=True,reset_commands_hardware_tested=False,ready_to_boot_driver=not application,
-                  RAM_host_idle_recovery_seconds=1800,
+                  RAM_host_idle_recovery_seconds=None if a.test_qemu_owned else 1800,
                   selected_application=a.efi_application,disk_payload_read_only=bool(a.disk_guid),
                   disk_guid=str(a.disk_guid) if a.disk_guid else None,disk_start_lba=a.disk_start_lba,
                   disk_blocks=a.disk_blocks,disk_payload_path=disk_path,
@@ -227,7 +242,10 @@ def main():
                   shutdown_offset=shutdown_offset if shutdown_bridge else None,
                   persistent_root_or_UFS_durability_proven=False,
                   QEMU_variant=a.test_qemu,phone_compatible=not a.test_qemu,
-                  isolated_QEMU_readonly_UFS_test=a.test_qemu_ufs,
+                  isolated_QEMU_readonly_UFS_test=a.test_qemu_ufs and not a.test_qemu_owned,
+                  isolated_QEMU_owned_UFS_test=a.test_qemu_owned,
+                  controlled_owned_response_short_injection=a.test_owned_response_short,
+                  raw_reset_requires_durable_SAFE=a.test_qemu_owned,
                   kernel_CPU_affinity=target,
                   kernel_CPU_count=a.kernel_cpus,
                   RAM_base=0x130000000 if a.test_qemu else 0x180000000,RAM_bytes=0xfc8a0000,

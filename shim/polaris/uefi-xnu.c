@@ -8,6 +8,9 @@
 #include "uefi-ram-lease.h"
 #include "uefi-memory.h"
 #include "uefi-xnu-config.h" /* exact payload bytes/CRC, symbol offsets, board */
+#if defined(EFI_XNU_OWNED_TEST) && (!defined(POLARIS_EFI_TEST_QEMU) || !defined(EFI_XNU_RAM_DRAIN_TEST) || !defined(EFI_XNU_SHUTDOWN_BRIDGE))
+#error "Owned-file durability test requires the isolated QEMU native shutdown bridge"
+#endif
 #if defined(EFI_XNU_RAM_DRAIN_TEST)
 #if !defined(POLARIS_EFI_TEST_QEMU)
 #error "Native RAM drain experiment is emulator-only until independently verified"
@@ -203,6 +206,10 @@ static void boot_kernel(void *context)
     report("KERNEL_PSCI_TARGET=",EFI_XNU_CPU);load_state=4;
     uint64_t now;__asm__ volatile("mrs %0,cntvct_el0":"=r"(now));
     ram_lease=(struct polaris_efi_ram_lease){.last=now,.active=1};
+#if defined(EFI_XNU_OWNED_TEST)
+    /* Must precede CPU_ON: that CPU may submit an owned WRITE immediately. */
+    ram_lease.active=0;
+#endif
     /* IRQ ownership moves to XNU. USB's controller API is polled; no firmware
      * UFS/file operation or GOP BLT is allowed while the kernel owns devices. */
     __asm__ volatile("msr daifset,#15; dsb sy; isb":::"memory");
@@ -278,13 +285,23 @@ static int shutdown_begin(void *context,unsigned mode)
     const uint8_t *data;uint64_t bytes;
     if((mode!=1&&mode!=2)||!shutdown_status(context,&data,&bytes))return 0;
     const struct polaris_shutdown_status *s=(const void*)data;
-    if(!s->cookie||s->error||s->write_epoch||s->flushed_epoch)return 0;
+    if(!s->cookie||s->error)return 0;
+#if defined(EFI_XNU_OWNED_TEST)
+    if(s->flushed_epoch>s->write_epoch)return 0;
+#else
+    if(s->write_epoch||s->flushed_epoch)return 0;
+#endif
     volatile struct polaris_shutdown_slot *slot=(void*)(uintptr_t)(POLARIS_RAM_BASE+EFI_XNU_SHUTDOWN_OFFSET);
     if(slot->firmware.sequence){
         return slot->firmware.sequence==1&&slot->firmware.cookie==s->cookie&&slot->firmware.mode==mode&&
             s->phase>=POLARIS_Q_RUNNING&&s->phase<=POLARIS_Q_SEALED;
     }
-    if(s->phase!=POLARIS_Q_RUNNING||s->sequence||s->mode||s->capabilities!=POLARIS_Q_RAM_CONFIG)return 0;
+    if(s->phase!=POLARIS_Q_RUNNING||s->sequence||s->mode)return 0;
+#if defined(EFI_XNU_OWNED_TEST)
+    if(s->capabilities)return 0;
+#else
+    if(s->capabilities!=POLARIS_Q_RAM_CONFIG)return 0;
+#endif
     bytes_zero((void*)&slot->firmware,sizeof(slot->firmware));
     slot->firmware.cookie=s->cookie;slot->firmware.mode=mode;
     __atomic_store_n(&slot->firmware.sequence,1,__ATOMIC_RELEASE);
@@ -296,16 +313,22 @@ static int shutdown_reset_ready(void *context,unsigned mode)
     if((mode!=1&&mode!=2)||!shutdown_status(context,&data,&bytes))return 0;
     volatile struct polaris_shutdown_slot *slot=(void*)(uintptr_t)(POLARIS_RAM_BASE+EFI_XNU_SHUTDOWN_OFFSET);
     const struct polaris_shutdown_status *s=(const void*)data;
-    /* RAM-only approval. The loader still requires polarisramcow=1/ufsrw=0.
-     * A future persistent bridge needs actual durable SAFE and must disallow
-     * both raw reset commands and the separate RAM host-loss recovery. */
+#if defined(EFI_XNU_OWNED_TEST)
+    return slot->firmware.mode==mode&&polaris_q_reset_ready(s,slot->firmware.cookie,
+        slot->firmware.sequence,mode);
+#else
+    /* RAM-only approval is deliberately distinct from durable SAFE. */
     return polaris_q_ram_drained(s,slot->firmware.cookie,slot->firmware.sequence,mode)&&
         slot->firmware.mode==mode&&!polaris_q_reset_ready(s,slot->firmware.cookie,slot->firmware.sequence,mode);
+#endif
 }
 #endif
 static int prepare_reset(void *context,unsigned mode)
 {
     (void)context;if(mode!=1&&mode!=2)return 0;
+#if defined(EFI_XNU_OWNED_TEST)
+    if(load_state>=4&&!shutdown_reset_ready(context,mode))return 0;
+#endif
     if(!system_table->runtime||!system_table->runtime->reset_system)return 0;
 #if !defined(POLARIS_EFI_TEST_QEMU)
     /* Own phone's live DT restart_reason@65c within imem@146bf000. Vendor
@@ -407,11 +430,17 @@ static void disk_autoboot(void *context)
 }
 static void host_activity(void *context)
 {
+#if defined(EFI_XNU_OWNED_TEST)
+    if(load_state>=4)return;
+#endif
     (void)context;uint64_t now;__asm__ volatile("mrs %0,cntvct_el0":"=r"(now));
     polaris_efi_ram_lease_activity(&ram_lease,now);
 }
 static void idle_guard(void *context)
 {
+#if defined(EFI_XNU_OWNED_TEST)
+    if(load_state>=4)return;
+#endif
     uint64_t now,frequency;__asm__ volatile("mrs %0,cntvct_el0":"=r"(now));
     __asm__ volatile("mrs %0,cntfrq_el0":"=r"(frequency));
     if(polaris_efi_ram_lease_expired(&ram_lease,now,frequency)){
@@ -468,6 +497,39 @@ static void test_ram_drain(int stress_done,unsigned contact_phase)
     struct polaris_shutdown_status s;
     invalidate((uintptr_t)&slot->kernel,sizeof(slot->kernel));
     bytes_copy(&s,(const void*)&slot->kernel,sizeof(s));
+#if defined(EFI_XNU_OWNED_TEST)
+    static unsigned protected;
+    if(!protected){
+        if(ram_lease.active||prepare_reset(0,1)||prepare_reset(0,2)){
+            finished=1;test_uart_text("\nQEMU_OWNED_RESET_PROTECTION_FAILED=1\n");return;
+        }
+        protected=1;test_uart_text("\nQEMU_OWNED_RAW_AND_LEASE_DISABLED=1\n");
+    }
+    if(s.phase==POLARIS_Q_FAILED){
+        if(s.cookie&&s.error&&!s.capabilities&&!ram_lease.active&&
+           !shutdown_reset_ready(0,1)&&!shutdown_reset_ready(0,2)&&
+           !prepare_reset(0,1)&&!prepare_reset(0,2)){
+            finished=1;test_uart_text("\nQEMU_OWNED_REFUSED=1\n");
+        }
+        return;
+    }
+    if(!sent){
+        if(!s.cookie||s.phase!=POLARIS_Q_RUNNING||s.error||s.sequence||s.mode||
+           s.flushed_epoch||s.write_epoch!=1||s.capabilities)return;
+        cookie=s.cookie;
+        if(EFI_XNU_RAM_DRAIN_TEST==2){
+            bytes_zero((void*)&slot->firmware,sizeof(slot->firmware));
+            slot->firmware.cookie=cookie^UINT64_C(2);slot->firmware.mode=2;
+            __atomic_store_n(&slot->firmware.sequence,1,__ATOMIC_RELEASE);
+            clean((uintptr_t)&slot->firmware,sizeof(slot->firmware));
+        }else if(!shutdown_begin(0,2))return;
+        sent=1;test_uart_text("\nQEMU_OWNED_DRAIN_REQUESTED=1\n");
+    }else if(s.cookie==cookie&&s.write_epoch==1&&s.flushed_epoch==1&&
+             polaris_q_reset_ready(&s,cookie,1,2)&&shutdown_reset_ready(0,2)&&
+             !shutdown_reset_ready(0,1)&&prepare_reset(0,2)&&!prepare_reset(0,1)&&!ram_lease.active){
+        finished=1;test_uart_text("\nQEMU_OWNED_DURABLE_SAFE=1\n");
+    }
+#else
     if(!sent){
         if(!s.cookie||s.phase!=POLARIS_Q_RUNNING||s.error||s.sequence||s.mode||
            s.write_epoch||s.flushed_epoch||s.capabilities!=POLARIS_Q_RAM_CONFIG)return;
@@ -501,6 +563,7 @@ static void test_ram_drain(int stress_done,unsigned contact_phase)
             s.capabilities==POLARIS_Q_RAM_CONFIG?"\nQEMU_RAM_DRAIN_STALE_REFUSED=1\n":
             "\nQEMU_RAM_DRAIN_FAILED=1\n");
     }
+#endif
 }
 #endif
 static void test_monitor(void)

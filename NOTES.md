@@ -34,6 +34,37 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0076 native owned-file WRITE/final-SYNC candidate (not yet executed)
+
+- New0873 patch connects verbatim0063 owner verifier to actual sweet_ufs_lock,
+  descriptor/completion/unknownDMA lifetime and private epoch state. Native
+  UFS rereads GPT-bounded inode/generation/UUID/CRC/indexed extents, excludes
+  the complete protected base, then permits only canonical owned READ/WRITE.
+  Only isolated QEMU flat6/7 identity can reach this new entry; phone writes
+  remain unavailable. Genericufsrw still grants no writes.
+- True BSD VFS0/busy0 shutdown seals new submissions before actual final
+  SYNCHRONIZE CACHE10. Private flush success is withheld from public SAFE
+  until actual peer OFF, coordinator IRQ masking and status PoC publication.
+  EFI owned-test mode disables raw resets and RAM1800s lease BEFORE CPU_ON;
+  reset requires exact cookie/seq/mode durable SAFE1f, never RAM_DRAINED.
+- Only new exclusive copies of the curated synthetic ext4/GPT fixture may
+  be writable QEMU backends. Runner compares every LUN byte and protected
+  base after emulator exit. Planned actual backend flushEIO/delayedWRITE and
+  HCE-loss tests, plus explicitly labeled SOFTWARE response-short injection.
+  No native/UFS/persistence execution result yet; do NOT use candidate as
+  phone admission. Existing0075 READ/seal proof below remains valid.
+- Actual Appleclang27/fullCIheaders UFS+touch TUs PASS; exact0873 apply0fuzz/
+ 0offset and actualC whitespace PASS; embedded owner header exact. New EFI
+  compile-only with OLD0075 kernel PASS (not an execution test). New sender/
+  reset ASan/UBSan and tree/owner/quiesce tests12/12 PASS. Full0076CI and
+  actual native owned WRITE/READ/finalSYNC/fault/backendreopen still next.
+- Current phone no active trial/newruntime/pin/write. Directed read-only
+  expectedPolaris FASTBOOT verified20:01:10UTC. Next phonewrite requires new
+  complete readonly root/map/GPT/ESP audit, unchanged base/ESP below. CPU
+  dualcore+GUI done0071; no need to repeat. Physical volume menu and writable
+  iOS root/realHFSflush/crossreboot state still unfinished.
+- Progress reported20:26UTC; continue every15min. No repeat automation.
+
 ### 0075 actual native UFS READ/seal/hardware-loss refusal COMPLETE; owned WRITE next
 
 - Sourceb4dcfe981682b2c514c75a449969bee2276fb577 COMMITTED/PUSHED,
