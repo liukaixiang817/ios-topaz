@@ -34,7 +34,56 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### 0075 actual UIC layout correction + independent primary-source audit
+### 0075 actual native UFS READ/seal/hardware-loss refusal COMPLETE; owned WRITE next
+
+- Sourceb4dcfe981682b2c514c75a449969bee2276fb577 COMMITTED/PUSHED,
+  fullmacOS27/Xcode27 CI40571495476/job122426583165 SUCCESS. Kernel6932f35191991e3440f38757446a279abe8870abab67090fbec324a1fb702464
+  inout-polaris-0075 verified against exactsource/profile/artifactCRC/SHA.
+  No new kernel changes since; do NOT spend anotherCI without source changes.
+- Actual EFI/XNU/UFS success28/28 PASS37.798s: nativePCI BAR enable/setup,
+  realHCE/LinkStartup, firstTUR unitattention thenTURsuccess, actualREAD10 of
+  new64MiB readonly backend first1MiB CRC04d0e435 MATCH; native3submitted/
+ 3completed under sweet_ufs_lock, actualVFS0busy0 then ownedidlequeue seal,
+  nativepeer6 actualPSCI_OFF, separateRAM_DRAINED. ActualworkerMPIDR6 observed
+  this time, demonstrating startupworker migration; physical600/700 still
+  cannot passvirtualgate. This is standardUFS model, NOT SDM845 PHY testing.
+- ActualHCE-loss fault29/29 PASS37.822s: firstsame nativeREAD/CRC success,
+  then realqtesthardwareHCE1->0 (hardware-fault.json/qtest-fault.log), actual
+  nativeVFS0busy0, nativequeue sealREFUSED16, nativeFAILED/error16 and firmware
+  independently refuses BOTH reset modes. No hostACK/PEcallback/kernelcounter
+  surrogate. Fault is after completedREAD, NOT unfinishedDMA/shortwrite test.
+- Native two-core no-controller dirtyRAMroot control23/23 PASS37.730s. All
+  three ran actualPID1/fourVMchildren+dirtywriter and boundedinput. Firsttwo
+  isolatedvirtualUFS proofs deliberately release_handoff_admitted=false; only
+  genericRAMcontrol can admit a future phoneRAM trial. Same-sha kernel proof
+  actual-native-UFS-read-seal-proof.json binds all logs/mailboxes/PCI/registers/
+  hardwarefault snapshots. No phone boot or storagewrite in this stage.
+- ExactnativeC whitespace checks (including detection of intentionalbadcase)
+  and exactpatch0offset/0fuzz PASS; unifiedpatch context whitespace is not native
+  C whitespace. Actualfullheaders twoTUs PASS,17localtests PASS; independent
+  source16register/opcode/bit/call audit+19negative cases PASS. No new private
+  IDL/header/cacheexception. All0072/73/74 failedVMrecords retained; never use
+  as positive UFS admission. This fixes previousnewvirtualinit constants.
+- NEXT0076: wire0063 actualowner verification into same nativeUFS path, first
+  isolatedrealext4/GPT fixture in0073/owned-virtual-fixture (offlineonlysofar),
+  metadataREADboundedwhileVERIFYING, trueinode/gen/UUID/CRC/indexedextent+
+  fullprotectedbase-disjoint; canonicalownedWRITE/READ and realfinalSYNC,
+  unknownDMA/shorttransfer/backenderror refusal and backendreopen byteproof.
+  See0074/owned-native-integration-design.json for exactsequence. Publish no
+  publicdurableSAFE before finalactualSYNC AND peeractualOFF/IRQpark/cacheclean.
+  Rawreset/1800sRAMlease must be disabled before any ownedwrites can start;
+  RAM_DRAINED cannot admitdurable. Still NO new phoneownedfile/runtime/pin or
+  physicalUFSwrites, write/SYNC frontgate remains readonly/RAMCOW.
+- CPU task achieved TWOphysicalcores with samebootGUI/native drain0071 (below),
+  don't repeatbringup. Currentphone no active trial, expectedFASTBOOT independently
+  queried19:29UTC; nextphysical trial needs freshfullro/noload16GiB/map/GPT/
+  ESP7338692a/cleanheader audit after this longinterval. Preserve102existingESP
+  files, originalMindows/default/BootOrder/Android/Windows/data; no duplicate
+ 0061/62 appends, no permanentinterceptDXE. Physicalvolume menu still untested.
+- Last progress19:55UTC; reportevery15min. Update sameuefi-ios automation to
+  thisstate. Next milestone is nativeownedWRITE/SYNC, not fullGUI or CPU tests.
+
+### 0075 historical actual UIC layout correction + independent primary-source audit
 
 -0074 source90ff6b36c0e8d6ff88f3be9ed59ed919704a8a3a fullmacOS27
   CI40568797036/job122417119017 SUCCESS, exact artifactkernel
