@@ -36,6 +36,37 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### 0064 native RAM shutdown drain (in progress, NOT durable root)
 
+- LATEST: source1e605ca COMMITTED/PUSHED. macOS27/Xcode27 CI40511293017,
+  job122213582377 SUCCESS; kernel310b76796ccb648011ec2736b515664d974cb68db8bae009461f41b147452c00
+  verified by artifact SHA/build profile, storedxnu/out-polaris-0064.
+  Replaces earlier pending/failed CI below; not yet phone-tested.
+- ACTUAL EFI/XNU QEMU PASS: native RAM drain20/20 checks38.011s; stale-cookie
+  refusal20/20 checks37.788s. Captures include actual kernel mailbox and logs,
+  normal reboot_kernel process shutdown, sync/unmount passes, real locked VFS
+  count0 and busy buffers0, then IRQ-masked sole XNU core and firmware-observed
+  RAM_DRAINED. Neither host ACK, terminal PE stub nor model counts supplies proof.
+  Artifactsdrain-{success,stale-cookie}-qemu-0001. Generic virt != SDM845.
+- STRONGER native dirty-root cases also PASS20/20 each37.707s/37.623s.
+  Private static PID1 fixture runs original4 VM children, then fifth live child
+  PID6 does real open/write/fsync, another unsynced write, remains writing; only
+  after checked syscalls does it emit all4PASS/readiness. PID1 masks SIGTERM,
+  child unmasks it; real kernel proc_shutdown handles it. Both logs prove writer
+  readiness BEFORE success/refusal. Bounddirty-writer-proof.json links kernel,
+  source, private fixture, logs and captured mailbox.
+- LIMIT OBSERVED: memory-disk HFS unmount reports final cache-flush ENOTTY0x19
+  even after POSIX fsync succeeded. RAM_DRAINED intentionally never grants
+  durable SAFE. This reinforces need for actual native UFS completion/error
+  tracking, exclusivity and final SYNCHRONIZE CACHE; none is wired yet.
+  No runtime file allocated/pinned, no device writes or device boot this turn.
+  Expected physical FASTBOOT reverified13:23:28UTC(connection-0002.json).
+- NEXT: integrate reviewed ownership/CDB/quiesce policy with actual serialized
+  native UFS descriptor/completion/timeout paths and exclusive firmware/kernel
+  ownership. Extend native EFI bridge with fail-closed persistent shutdown,
+  then meaningful fault injection/actual EFI-XNU checks. Physical RAM drain
+  bridge remains untested, and persistent mode MUST disable raw1800s lease
+  reset until durable handshake. Only after these gates may a small new owned
+  file be allocated/pinned and physically written/synced/reset/read back.
+  Full runtime copy and real phone volume-menu choice still unfinished.
 - Expected Polaris FASTBOOT reverified12:50:26UTC; evidence
   uefi-ios-0064/connection-0001.json. No phone boot or write in this continuation.
 - Profile0866 adds an explicit polarisquiesce=1 RAM-only kernel mailbox. It is
@@ -44,7 +75,8 @@ early samples only. On0029 the human already confirmed boot complete and said
   process shutdown, VFS sync/unmount and busy-buffer drain. A new locked actual
   mount-list accessor gates the terminal hook; shutdown-attempt flag is NOT
   used. Absent PM root domain notifications are skipped safely, while BSD/VFS
-  shutdown remains native. Default boot and panic/quick paths stay unchanged.
+  shutdown remains native. Default boot is unchanged; nonzero howto refuses
+  RAM-drain permission without taking new VFS locks.
 - Only after actual mount count0/busy0 does the sole XNU core mask interrupts,
   publish separate RAM_DRAINED capability and park. This is explicitly distinct
   from durable SAFE and cannot authorize a persistent root reset or prove UFS
