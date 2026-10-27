@@ -8,17 +8,20 @@ import uuid
 import zlib
 
 
-def create(path, app, payload, guid, start, blocks, payload_path, mtools, chain_app=None):
+def create(path, app, payload, guid, start, blocks, payload_path, mtools, chain_app=None,
+           partition_name='Polaris offline fixture'):
     path=Path(path)
     if path.exists() or path.suffix!='.raw':raise ValueError('new regular .raw fixture required')
     if start!=2048 or blocks!=258048:raise ValueError('fixed emulator geometry required')
     if not re.fullmatch(r'\\EFI\\Polaris\\V[0-9]{4}\\PAYLOAD\.BIN',payload_path):raise ValueError('unexpected fixture payload path')
+    if partition_name not in ('Polaris offline fixture','esp'):
+        raise ValueError('fixed emulator partition labels required')
     version=payload_path.split('\\')[3];folder='::/EFI/Polaris/'+version
     total=262144
     entries=bytearray(16384)
     struct.pack_into('<16s16sQQQ',entries,0,uuid.UUID('c12a7328-f81f-11d2-ba4b-00a0c93ec93b').bytes_le,
                      uuid.UUID(str(guid)).bytes_le,start,start+blocks-1,0)
-    name='Polaris offline fixture'.encode('utf-16le');entries[56:56+len(name)]=name
+    name=partition_name.encode('utf-16le');entries[56:56+len(name)]=name
     disk=uuid.uuid4().bytes_le
     def header(current,backup,array):
         b=bytearray(512)

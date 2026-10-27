@@ -36,6 +36,22 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### 0062 selected disk-application chain, in progress (artifacts under0061)
 
+- LATEST MENU EMULATOR PASS: reusable tools/polaris_uefi_menu.py generates
+  the additive static include; tools/qemu-polaris-original-menu.py runs the
+  actual inventoried original SimpleInit PE, not a mock menu. Default case
+ 7/7 PASS17.304s, selected case16/16 PASS41.651s. Selected path reaches real
+  EFI StartImage, unique GPT payload read/closed handles, XNU/PID1/four VM
+  children and bounded input ACK. Both configs retain default Continue Boot.
+  Earlier private0003 run caught native by_file requiring EFI backslashes;
+  corrected0004 and reusable source runs pass. Old failed evidence retained.
+  menu-sidecar-plan-0002 is corrected phone proposal, SHA24020068. Not installed.
+- Hardware RAM idle lease trial now deliberately running WITHOUT UEFI
+  commands since capture0006 completed11:15:05.665701UTC. Private observer
+  physical-idle-lease-observer-0001 uses expected FASTBOOT queries only near
+  the1800s deadline; inspect its result before issuing new UEFI commands.
+  Live phone may auto-returnFASTBOOT around11:45UTC. Do not renew its lease
+  during this deliberate test; no raw writes or Android reboot are involved.
+
 - LATEST PHYSICAL UI PASS:0062boot0002 selected DISK EFI application reached
   iOS. Bound USB screenshots0003/0004/0005/0006 visually confirm unlock to home
   with icons, open Settings, scroll to a different list, return home with icons.
