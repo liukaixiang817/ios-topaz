@@ -34,6 +34,32 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0078 same-kernel physical readonly/drain COMPLETE; marker trial prepared
+
+- New0078phone-readonly-native-0078 ended23:52:36UTC viarealnativeRAMdrain;
+  actualexpectedFASTBOOT separatelyverified23:53UTC. Captured/inspectedactual
+  bootconsole, originalGPT/HFSX16384MiB182mapbaseREADONLY, Applelaunchdstarted;
+  deliberatelydidNOTwaitforGUIrepeat. Nativequeue16674submitted=16674completed,
+  sealedaftertrueVFS0busy0, peer600actualOFF/coordinator700, matchednative
+  cookie/seq1/mode2/RAM_DRAINED80000003; savedlogthenonlygatedreset. No raw
+  fallback/keys/Android/devicewrites. physical-native-readonly-drain-proof.json
+  bindsallfiles/currentpostallocationpreflight; thisisnotdurableSAFEproof.
+- Markerimageofflineadmission nowpassed9models306checks/samekernelphysical
+  readonlyproof/existingpinnednewfile432Bpacket/freshreviewedpostallocation
+  baseline. OriginalpackagerfirstREFUSEDnewwhitelistedlabel; no image emitted.
+  AddedONLYexactmarkerlabel toofflineFVwriter (no device/installationAPI),
+  preservation/unknownlabeltest8PASS. No kernelchange/noCI. ImageSHA74073101...
+  preserves81oldfirmwarefiles/BootShim/boardDTB/SimpleInit/default. Actual
+  originalEDK2GetInfo/Decode0/whole27876616B comparisonPASS; firsthostscript
+  thenhitundefinednameONLYinfinalprint; proofanddecoderoutputpreserved,
+  correctedindependentfinalverificationinprogress. No phoneownedWRITEyet.
+- NEXT separatemarkerRAMboot/controller: onlyFIRST4KiBofnew8MiBpinnedfile,
+  nooriginalroot/genericwrites; durableguarddisablesrawreset/RAMlease BEFORE
+  CPU_ON. Captureliveowner/WRITE+READMATCH/epoch1; trueBSDdrain/nativefinalSYNC,
+  peerOFF/SAFE1f thenactualFASTBOOT; recoveryROwhole8MiBexpectedpatternandall
+  originalbase/GPT/ESP mustmatchbeforeclaimingphysicalpersistence. New16GiB
+  runtime/HFSflush/fullUIpersist/menu remainafterthat. Latestreport23:53UTC.
+
 ### 0078 existing marker ownership + exact new-kernel model suite COMPLETE
 
 - New0875kernel source4156c358f631b7dfea4e37684dd5a49f8961a4ac COMMITTED/PUSHED.

@@ -183,7 +183,8 @@ def unpack_android(b):
 
 
 def package(original, app, *, label='Polaris RAM compatibility probe'):
-    require(label in ['Polaris RAM compatibility probe', 'Polaris RAM resident iOS loader'],
+    require(label in ['Polaris RAM compatibility probe', 'Polaris RAM resident iOS loader',
+                      'Polaris RAM small owned marker trial'],
             'unsupported added-driver label')
     header, decoded, tail, ram = unpack_android(original)
     require(decoded[56:60] == b'ARMd' and decoded[0x8028:0x802c] == b'_FVH',

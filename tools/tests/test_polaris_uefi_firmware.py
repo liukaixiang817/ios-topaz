@@ -49,6 +49,15 @@ def fixture():
 
 
 class FirmwareTests(unittest.TestCase):
+    def test_small_marker_label_is_explicit_and_does_not_admit_storage(self):
+        original, _, _ = fixture()
+        _, report = fw.package(original, b'MARKER APP', label='Polaris RAM small owned marker trial')
+        self.assertEqual(report['unchanged_inner_files'], report['original_inner_files'])
+        self.assertFalse(report['installer'])
+        self.assertFalse(report['phone_writes'])
+        with self.assertRaisesRegex(ValueError, 'unsupported added-driver label'):
+            fw.package(original, b'APP', label='arbitrary storage installer')
+
     def test_preserves_shim_dtb_ramdisk_and_all_original_code(self):
         original, inner, _ = fixture()
         result, report = fw.package(original, b'NEW INVENTORY APP')
