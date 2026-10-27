@@ -34,7 +34,75 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### 0071 native two-core shutdown (fullCI and actualEFI/XNU PASS; physical next)
+### 0072 next: native owned-file UFS integration (CPU/UI/native shutdown COMPLETE)
+
+- CURRENT PHONE: actual expectedPolaris FASTBOOT independently verified
+ 18:35:47UTC after0071 FULL GUI two-core native shutdown. NO ACTIVE PHONE
+  TRIAL remains. DO NOT repeat CPU startup/control/native or wait on old GUI.
+-0071 physical-dual-CPU-UI-native-drain-proof.json binds one physical boot:
+  originalMindows UEFI RAMloader, CPU700+600 bothonline/SGI/32crosscorecallbacks,
+  lockcapture0002, stablehomewithicons0004, Settings text/icons0005, actual
+  scrolledSettings0006, returnedstablehome0008; realUSB input ACKs to74.
+  Firsthome gesture started2110 (<edge threshold >2111), so it only scrolled
+  (capture0007); corrected physicaly2155 gesture succeeded. Preserve both
+  attempts, use2155 for future home swipes. All images actually inspected.
+- Same-boot native shutdown actually killed/synced/unmounted own iOSRootHFSX,
+  actualVFS0busy0, native scheduleroffline and PSCI AFFINITY_OFF for600 with
+  coordinator700, matchingfreshcookie/seq1/mode2/RAM_DRAINED80000003; saved
+  full log BEFORE gated reset, actualFASTBOOT independently checked. No
+  rawfallback/keys/Android/partitionwrite. WidgetsWaiting and side console
+  remain. PhysicalFPS speedup and complete app/network support NOT proven.
+- Source7ae4ffb2474cc6d5d071ad16455ee2fe94bf67c6 fullmacOS27/Xcode27
+  CI40552906081/job122361113948 SUCCESS. Kernel8adc6952e994418d9ae982de8642dea991232a542266b82485f4c8e967ea2fb7
+  inout-polaris-0071; exactsource/profile/artifactCRC/SHA verified. Actual
+  EFI/XNU dualnative success23/23, peer-refusal25/25(actualON/refusedreset),
+  stale22/22 andsinglecontrol20/20 allPASS. PhysicalRAMfixture dualnative also
+  passed18:03:35UTC. No kernel change since; do NOT waste a CI rebuild.
+- FullGUI uses byte-identical proven graphics bundle42d5ec4c4f5527a5a4bca63513daba3952f1390441d727d39e0ad0e0b3a7e92d,
+  base16GiB image and182map unchanged. Runtime still512MiB volatileRAMCOW,
+  ufsrw0. CPU task now achieved for TWO real cores; not all8 and not an OSM
+  frequency/FPS claim. Current GPU path retained. Do not repeat this bring-up.
+- PERSISTENCE STILL NOT READY:0063 owner inode/generation/UUID/CRC/extent+
+  preserved-base-disjoint CDB policy remains offline. UFS native gate remains
+  readonly/RAMCOW; no newruntime allocated/pinned and no realUFSwrites/final
+  SYNCHRONIZECACHEproof. Need same-mutex exclusive/completion/unknownDMA/
+  seal/finalSYNC integration. RAM_DRAINED cannot grantdurableSAFE. Preserve
+  Android/Windows/all data; never removegenericUFSwriteprotection or RAMCOW
+  as substitute. Persistent mode must disallow rawreset/1800sRAMlease until
+  genuineSAFE. Freshnew smallownedfile write/flush/nativeFASTBOOT/readback
+  before full16GiBruntime copy and originalvolume menu install.
+- Next test setup: QEMU11.0.1 actual UFS/UFS-LU models are available. Private
+  UFS-PCI-probe-0001 enumerated vendor1b36/device0013/bar0size8192 but mapped
+  address=-1; it FAILED before nativeUFS/register testing. Do not call this
+  nativeUFSproof. Actual kernelRAMdrain completed but proof deliberately not
+  releaseadmitted; failedprobe retained. Needs PCI BAR mapping/enable first.
+  Primary qemu/qemu v11.0.1 pinned6e9a825c1d4e7b62d072e99a89ecd1a74c7f0d55,
+  four source Gitblob hashes verified under0071/QEMU-UFS-reference. qtest's
+  ufs_init explicitly qpci_iomap+qpci_device_enable BEFORE HCE/LinkStartup.
+  Review these exact standard sequences and native sweet_ufs.c; don't guess
+  PHY/clock/FDT constants or claimgenericQEMU simulatesSDM845. No source from
+  these files executed/copied. SeeREFERENCE_REPOS.md and next-test-plan.json.
+- Suggested concrete next: strictQEMU-only nativePCI/UFS initialization test
+  node (exactvirtualRAM/GIC/MPIDR, ownemulatedvendor/device/BAR) plus canonical
+  read-only nativeSCSI completion on isolatednewhostfile; physical gate must
+  refuse allvirtualtestnodes/flags. Connect0063owner/CDB and nativequeue state
+  under sweet_ufs_lock; actual emulator finalSYNC/error/fault/reopenreadback,
+  then phone smallownedfile. Deferred0068 native-ufs-seal patch is PRIVATE,
+  conflicts with newtouch shutdown; rebase deliberately, do not apply blindly.
+- Latest fullreadonly preflight0071: ro/noload/blockRO all16GiB SHA689a8cd1.../
+ 182map/sixGPT/critical/ESP7338692a/exact reviewedclean4096Bheader passed,
+ 17:57actualFASTBOOT; afterward only controlledRAM trials above. Longunknown
+  mode orAndroid activity requires freshfullcheck. ExistingESP102files and
+ 478Btaskmenu sidecar already installed; original101 unchanged; DON'T reappend.
+  Originalfirmware/default/BootOrder/GPT/Android/Windows unchanged. Never
+  permanentlyinstall the interceptingdiagnosticDXE; selectedEFIapp/menu only.
+  Physicaloriginalvolume menu still needsRAMharness proof, nofixedUPcount.
+- Latest progress18:34UTC; userrequires every15min while work continues.
+  Update sameuefi-ios automation, no duplicate. Only contact human for truly
+  unrecoverablephysical action or unauthorized destructive steps. No such
+  blocker now; phone healthyFASTBOOT. Old continuousUSBobserver remainspaused.
+
+### 0071 native two-core shutdown (historical completed CPU milestone)
 
 - Source7ae4ffb2474cc6d5d071ad16455ee2fe94bf67c6 COMMITTED/PUSHED,
   macOS27/Xcode27 CI40552906081/job122361113948 SUCCESS. Exact source/profile/
@@ -54,8 +122,8 @@ early samples only. On0029 the human already confirmed boot complete and said
   journal replay, repair, pin, allocation, Android/Windows boot or disk write.
 - Same-source physical dual-core native RAM small-root payload/driver/image
   prepared, exact QEMU-success admission and originalEDK2 decode PASS, original
- 81firmware files preserved. NOT sent yet; next read-only actualFASTBOOT query
-  then authorized RAM boot. All0070 trials ENDED. On physical native failure,
+ 81firmware files preserved. Subsequent physical tests are complete above.
+  All0070/71 trials ENDED. On physical native failure,
   RAM-only rawFASTBOOT rescue is allowed, but cannot be called native success.
 - Actual installedQEMU11.0.1 provides UFS/UFS-LU models (CLIverified), useful
   next for actual native descriptor/completion/finalSYNC testing in isolated
@@ -83,7 +151,7 @@ early samples only. On0029 the human already confirmed boot complete and said
 - Actual Appleclang27 full-header TU compiles PASS SweetCPU/cpu_common/touch;
  21 local policy/control/admission tests PASS1.439s;0offset/0fuzz exactapply.
   Actual Zig EFI success/refused-mode compile-only uses OLD0070kernel and is
-  explicitly NOT an execution/admission proof. No0071kernel built/booted yet.
+  explicitly NOT an execution/admission proof. Later fullCI/VM/physical results above supersede this local checkpoint.
   Earlier local compiles caught nonexported machine-private CPU header and
   thread_bind API; fixed by nativeOSFMK wrappers, publicgetMachProcessor and
   exact native headers. No IIG header/cache exception or layout stub added.

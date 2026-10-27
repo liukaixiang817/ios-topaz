@@ -298,3 +298,17 @@ Review changes against the pinned commits above before advancing the
 checkouts. Record the new reviewed commits here and in `NOTES.md` when a
 future adaptation depends on them. Fetching or consulting these sources does
 not require running their setup/build/firmware-download scripts.
+
+## Native UFS test-controller reference (2026-10-28 local)
+
+The installed QEMU11.0.1 exposes a standard UFS PCI controller and UFS-LU.
+Read-only source references were fetched at official qemu/qemu commit
+`6e9a825c1d4e7b62d072e99a89ecd1a74c7f0d55` (v11.0.1), with Git blob hashes
+verified for `tests/qtest/ufs-test.c`, `hw/ufs/ufs.c`, `hw/ufs/lu.c` and
+`include/block/ufs.h`. They are stored privately under0071/QEMU-UFS-reference;
+none executed or copied into this project. The qtest initializes PCI BAR mapping
+and device enable before controller HCE and DME_LINK_STARTUP. Our first isolated
+PCI probe enumerated the UFS device but BAR0 was unmapped, so it is NOT native
+UFS I/O or durability evidence. This standard controller can help validate our
+native UTP descriptor/completion/sync logic; Qualcomm clock/PHY/ownership must
+still be derived and tested separately on Polaris.
