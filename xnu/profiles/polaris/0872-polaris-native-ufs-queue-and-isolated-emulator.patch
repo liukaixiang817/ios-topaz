@@ -1,0 +1,341 @@
+--- a/bsd/dev/sweet_ufs.c
++++ b/bsd/dev/sweet_ufs.c
+@@ -77,6 +77,12 @@
+ static struct polaris_extent polaris_file_map[POLARIS_MAP_MAX];
+ static unsigned polaris_file_count;
+ static bool polaris_file_active, polaris_io_failed;
++/* Native queue lifetime is serialized by the same mutex as descriptors and
++ * strategy/IOCTL. Unknown DMA retains its permanent descriptor and bounce. */
++static bool polaris_ufs_inflight, polaris_ufs_sealed, polaris_native_owner;
++static bool polaris_qemu_ufs;
++static uint64_t polaris_ufs_submitted, polaris_ufs_completed;
++int polaris_ufs_ram_seal(void);
+ bool polaris_ram_overlay_allowed(void);
+ 
+ #endif
+@@ -216,6 +222,40 @@
+ 	clean_dcache64((addr64_t)(su.dma_pa + off), len, TRUE);
+ }
+ 
++#if defined(POLARIS_RAM_ONLY)
++static bool polaris_ufs_queue_owned(void)
++{
++    const uint64_t list = su.dma_pa + DMA_UTRL;
++    return polaris_native_owner && su.regs && su.dma && su.lun == 0 &&
++        (ufs_rd(REG_HCE) & 1) &&
++        (ufs_rd(REG_HCS) & (HCS_DP | HCS_UTRLRDY)) == (HCS_DP | HCS_UTRLRDY) &&
++        (ufs_rd(REG_UTRLRSR) & 1) && ufs_rd(REG_UTRLBA) == (uint32_t)list &&
++        ufs_rd(REG_UTRLBAU) == (uint32_t)(list >> 32) &&
++        !ufs_rd(0x78) && !ufs_rd(0x80);
++}
++int polaris_ufs_ram_seal(void)
++{
++    if (!lck_mtx_try_lock(&sweet_ufs_lock)) return EBUSY;
++    int error = EBUSY;
++    if (polaris_ufs_sealed || polaris_io_failed || polaris_ufs_inflight ||
++        polaris_ufs_submitted != polaris_ufs_completed) goto out;
++    if (!su.regs && !su.dma && !su.ready && !polaris_native_owner && !polaris_file_active) {
++        polaris_ufs_sealed = true;
++        printf("POLARIS UFS SEAL: no native controller; submissions=0\n");
++        error = 0; goto out;
++    }
++    if ((!polaris_qemu_ufs && (!su.ready || !polaris_file_active)) ||
++        !polaris_ufs_queue_owned() || ufs_rd(REG_UTRLDBR)) goto out;
++    polaris_ufs_sealed = true; /* Later RAM strategy, IOCTL and CDBs also refuse. */
++    printf("POLARIS UFS SEAL: owned idle native queue submitted=%llu completed=%llu; RAM only, no device flush\n",
++        polaris_ufs_submitted, polaris_ufs_completed);
++    error = 0;
++out:
++    lck_mtx_unlock(&sweet_ufs_lock);
++    return error;
++}
++#endif
++
+ /*
+  * One SCSI command in slot 0, data (if any) to/from the bounce buffer
+  * (to the device when write is set). Returns 0 or an errno.
+@@ -227,11 +267,18 @@
+ 	/* Gate before descriptor construction or ANY doorbell write. Even a
+ 	 * caller with ufsrw=1 cannot issue WRITE, UNMAP or SYNCHRONIZE CACHE. */
+ 	if (polaris_io_failed) { return ETIMEDOUT; }
++    if (polaris_ufs_sealed || polaris_ufs_inflight || polaris_ufs_submitted == UINT64_MAX) return EBUSY;
+ 	if (!polaris_probe_cdb_allowed(cdb, cdb_len, len, write, su.lun) &&
+ 	    !(polaris_file_active && polaris_map_cdb_allowed(polaris_file_map,
+ 	    polaris_file_count, cdb, cdb_len, len, write, su.lun))) {
+ 		return EPERM;
+ 	}
++#endif
++#if defined(POLARIS_RAM_ONLY)
++    if (!polaris_ufs_queue_owned() || ufs_rd(REG_UTRLDBR)) {
++        polaris_io_failed = true; /* No descriptor/bounce mutation on ownership loss. */
++        return EBUSY;
++    }
+ #endif
+ 	struct utrd *utrd = (struct utrd *)(su.dma + DMA_UTRL);
+ 	struct ucd *ucd = (struct ucd *)(su.dma + DMA_UCD);
+@@ -289,6 +336,10 @@
+ 	}
+ 	__builtin_arm_dsb(0xf);
+ 
++#if defined(POLARIS_RAM_ONLY)
++    polaris_ufs_inflight = true;
++    polaris_ufs_submitted++;
++#endif
+ 	ufs_wr(REG_UTRLDBR, 1);
+ 	uint64_t deadline;
+ 	nanoseconds_to_absolutetime(CMD_TIMEOUT_NS, &deadline);
+@@ -324,6 +375,14 @@
+ 		}
+ 	}
+ 	__builtin_arm_dsb(0xf);
++#if defined(POLARIS_RAM_ONLY)
++    if (!polaris_ufs_queue_owned()) {
++        polaris_io_failed = true;
++        return EIO; /* Completion/ownership unknown: retain queue and inflight. */
++    }
++    polaris_ufs_inflight = false;
++    polaris_ufs_completed++;
++#endif
+ 	ufs_wr(REG_IS, ufs_rd(REG_IS));         /* acknowledge completion status */
+ 
+ 	dma_sync(DMA_UTRL, sizeof(*utrd));
+@@ -338,6 +397,10 @@
+ 
+ 	uint32_t ocs = utrd->dw2 & 0xff;
+ 	if (ocs || ucd->resp[0] != 0x21 || ucd->resp[6] || ucd->resp[7]) {
++#if defined(POLARIS_RAM_ONLY)
++        /* Only initialization TUR may consume a bounded unit-attention retry. */
++        if (polaris_file_active || cdb[0] != 0) polaris_io_failed = true;
++#endif
+ 		printf("SWEET UFS: command 0x%02x failed: ocs 0x%x upiu 0x%x response 0x%x status 0x%x\n",
+ 		    cdb[0], ocs, ucd->resp[0], ucd->resp[6], ucd->resp[7]);
+ 		return EIO;
+@@ -346,6 +409,7 @@
+ 	/* Never call a short/stale read a successful integrity check. */
+ 	if (ucd->resp[1] || ucd->resp[2] != su.lun || ucd->resp[3] != su.tag ||
+ 	    ucd->resp[12] || ucd->resp[13] || ucd->resp[14] || ucd->resp[15]) {
++        polaris_io_failed = true;
+ 		printf("POLARIS UFS: unexpected response flags/tag/residual\n");
+ 		return EIO;
+ 	}
+@@ -491,10 +555,153 @@
+ 		printf("SWEET UFS: host did not take our request list\n");
+ 		return EIO;
+ 	}
++#if defined(POLARIS_RAM_ONLY)
++    polaris_native_owner = true;
++#endif
+ 	return 0;
+ }
+ 
+ #if defined(POLARIS_RAM_ONLY)
++/* Actual native UFSHCI test on QEMU's isolated PCI UFS-LU. Never phone MMIO.
++ * The storage allowlist remains read-only. This is not Qualcomm PHY emulation
++ * or device durability proof. PCI/host setup is done by this native kernel.
++ */
++#ifndef POLARIS_QEMU_UFS_H
++#define POLARIS_QEMU_UFS_H
++static bool polaris_qemu_ufs_identity(uint64_t actual, uint64_t timer,
++    uint32_t mode, uint32_t core, uint32_t count, uint32_t rw,
++    uint64_t base, uint64_t bytes, const uint64_t reg[2], const uint64_t ecam[2])
++{
++    return (actual & UINT64_C(0xffffff)) == 7 && timer == 62500000 &&
++        mode == 1 && core == 7 && count == 2 && rw == 0 &&
++        base == UINT64_C(0x130000000) && bytes == UINT64_C(0xfc8a0000) &&
++        reg[0] == UINT64_C(0x10100000) && reg[1] == 0x2000 &&
++        ecam[0] == UINT64_C(0x4010000000) && ecam[1] == 0x100000;
++}
++#ifndef POLARIS_UFS_POLICY_TEST
++static bool polaris_dt_copy(DTEntry, const char *, void *, unsigned);
++static bool polaris_qemu_ufs_wait(uint32_t offset, uint32_t mask, uint32_t expected)
++{
++    uint64_t deadline; nanoseconds_to_deadline(100 * NSEC_PER_MSEC, &deadline);
++    do {
++        if ((ufs_rd(offset) & mask) == expected) return true;
++        delay(1);
++    } while (mach_absolute_time() < deadline);
++    return false;
++}
++static void polaris_qemu_ufs_probe(uint32_t enabled)
++{
++    uint32_t mode=0,core=0,count=0,rw=0,file=0,probe=0,version=0,crc=0;
++    uint64_t base=0,bytes=0,reg[2]={0},ecam[2]={0};
++    DTEntry node,chosen; unsigned size=0; const void *property=NULL;
++    PE_parse_boot_argn("polarisuefi",&mode,sizeof(mode));
++    PE_parse_boot_argn("polarisbootcpu",&core,sizeof(core));
++    PE_parse_boot_argn("cpus",&count,sizeof(count));
++    PE_parse_boot_argn("ufsrw",&rw,sizeof(rw));
++    PE_parse_boot_argn("polarisfileroot",&file,sizeof(file));
++    PE_parse_boot_argn("polarisufsprobe",&probe,sizeof(probe));
++    if (enabled != 1 || file || probe ||
++        SecureDTLookupEntry(NULL,"/polaris-qemu-ufs",&node) != kSuccess ||
++        SecureDTLookupEntry(NULL,"/chosen",&chosen) != kSuccess ||
++        !polaris_dt_copy(chosen,"dram-base",&base,sizeof(base)) ||
++        !polaris_dt_copy(chosen,"dram-size",&bytes,sizeof(bytes)) ||
++        !polaris_dt_copy(node,"version",&version,sizeof(version)) || version != 1 ||
++        !polaris_dt_copy(node,"reg",reg,sizeof(reg)) ||
++        !polaris_dt_copy(node,"ecam",ecam,sizeof(ecam)) ||
++        !polaris_dt_copy(node,"head-crc32",&crc,sizeof(crc)) ||
++        SecureDTGetProperty(node,"compatible",&property,&size) != kSuccess ||
++        size != sizeof("qemu,isolated-readonly-ufs") ||
++        memcmp(property,"qemu,isolated-readonly-ufs",size) ||
++        !polaris_qemu_ufs_identity(__builtin_arm_rsr64("MPIDR_EL1"),
++            __builtin_arm_rsr64("CNTFRQ_EL0"),mode,core,count,rw,base,bytes,reg,ecam)) {
++        printf("POLARIS QEMU UFS: REFUSED identity before any PCI/MMIO access\n");
++        return;
++    }
++    lck_mtx_lock(&sweet_ufs_lock);
++    int error = EINVAL;
++    if (su.regs || su.dma || polaris_native_owner || polaris_ufs_sealed) goto out;
++    vm_offset_t pci=ml_io_map(ecam[0],ecam[1]);
++    if (!pci) goto out;
++    volatile uint32_t *config=(volatile uint32_t *)(pci+(3u<<15));
++    uint32_t identity=config[0],classrev=config[2];
++    volatile uint16_t *command=(volatile uint16_t *)((uintptr_t)config+4);
++    printf("POLARIS QEMU UFS: actual PCI id=%08x class=%08x command=%x BAR0=%08x\n",
++        identity,classrev,*command,config[4]);
++    if (identity != 0x00131b36 || (classrev >> 8) != 0x010900 || (*command & 6)) goto out;
++    /* Exact isolated virt fixture: only bridge, virtio block/GPU, UFS on bus0.
++     * No BAR is changed while memory or bus mastering is enabled. Reject a
++     * conflicting BAR in the reserved test aperture, including 64-bit BARs. */
++    for (unsigned slot=0;slot<32;slot++) {
++        volatile uint32_t *other=(volatile uint32_t *)(pci+(slot<<15));
++        uint32_t id=other[0];
++        if (slot>3 && id != UINT32_MAX) goto out;
++        if (slot==0 && id != 0x00081b36) goto out;
++        if (slot==1 && id != 0x10011af4) goto out;
++        if (slot==2 && id != 0x10501af4) goto out;
++        if (!slot || slot>=3) continue;
++        for (unsigned bar=4;bar<10;bar++) {
++            uint32_t low=other[bar]; if (!low || (low & 1)) continue;
++            uint64_t address=low & ~UINT64_C(15);
++            if ((low & 6)==4) {
++                if (bar==9) goto out;
++                address |= (uint64_t)other[++bar]<<32;
++            }
++            if (address && address < reg[0]+reg[1] && address+0x10000 > reg[0]) goto out;
++        }
++    }
++    const uint32_t oldbar=config[4];
++    config[4]=UINT32_MAX; __builtin_arm_dsb(0xf);
++    const uint32_t mask=config[4]; config[4]=oldbar; __builtin_arm_dsb(0xf);
++    if (mask != 0xffffe000) goto out;
++    config[4]=(uint32_t)reg[0]; __builtin_arm_dsb(0xf);
++    *command |= 6; __builtin_arm_dsb(0xf);
++    if (config[4] != reg[0] || (*command & 6) != 6) goto out;
++    su.regs=ml_io_map(reg[0],reg[1]);
++    if (!su.regs || ufs_rd(0x08)!=0x400 || ufs_rd(REG_HCE) ||
++        ufs_rd(REG_UTRLDBR) || ufs_rd(0x78)) goto out;
++    /* Primary qemu v11.0.1 qtest sequence: HCE, real UCRDY, LinkStartup,
++     * actual UCCS/ARG2/DP/UTRLRDY before the native list is installed. */
++    ufs_wr(REG_HCE,1);
++    if (!polaris_qemu_ufs_wait(REG_HCE,1,1) || !(ufs_rd(REG_HCS)&8)) goto out;
++    ufs_wr(REG_IE,0);ufs_wr(REG_IS,ufs_rd(REG_IS));
++    ufs_wr(0x90,0);ufs_wr(0x94,0);ufs_wr(0x98,0);ufs_wr(0x80,0x16);
++    if (!polaris_qemu_ufs_wait(REG_IS,1u<<10,1u<<10) || ufs_rd(0x94) ||
++        (ufs_rd(REG_HCS)&3)!=3) goto out;
++    ufs_wr(REG_IS,1u<<10);
++    if (kmem_alloc_contig(kernel_map,&su.dma,DMA_SIZE,PAGE_MASK,0,0,
++        KMA_DATA|KMA_ZERO|KMA_PERMANENT,VM_KERN_MEMORY_IOKIT)!=KERN_SUCCESS) {
++        error=ENOMEM;goto out;
++    }
++    ppnum_t pn=pmap_find_phys(kernel_pmap,(addr64_t)su.dma);
++    if (!pn) { error=ENOMEM;goto out; }
++    su.dma_pa=ptoa_64(pn);su.lun=0;
++    su.cache=su.wait=su.writable=su.ready=false;
++    error=ufs_take_over_host();
++    if (!error) {
++        static const uint8_t tur[6]={0};
++        for (unsigned i=0;i<3;i++) {
++            error=ufs_scsi(tur,sizeof(tur),0,false);
++            if (!error || error==ETIMEDOUT) break;
++        }
++    }
++    if (!error) error=ufs_read_blocks(0,256);
++    if (!error) {
++        uint32_t actual=polaris_probe_crc32((const uint8_t *)(su.dma+DMA_BOUNCE),BOUNCE_SIZE);
++        if (actual!=crc) error=EIO;
++        printf("POLARIS QEMU UFS: actual native READ10 CRC32=%08x expected=%08x %s submitted=%llu completed=%llu\n",
++            actual,crc,error?"MISMATCH":"MATCH",polaris_ufs_submitted,polaris_ufs_completed);
++    }
++    if (!error) {
++        polaris_qemu_ufs=true;
++        printf("POLARIS QEMU UFS: PASS native PCI/link/descriptor/completion/read; write gate unchanged\n");
++    }
++out:
++    if (error) { polaris_io_failed=true;printf("POLARIS QEMU UFS: FAILED error=%d; DMA retained, no reset grant\n",error); }
++    lck_mtx_unlock(&sweet_ufs_lock);
++}
++#endif
++#endif
++
+ /* Called once by the CPU startup thread, after timer/scheduler initialization.
+  * No BSD disk registration, filesystem mount, persistent logging or input/USB
+  * driver startup. The normal sweet_ufs_init remains disabled on this platform.
+@@ -519,6 +726,10 @@
+ void
+ polaris_ufs_probe(void)
+ {
++    uint32_t virtual_enabled = 0;
++    if (PE_parse_boot_argn("polarisqemuufs", &virtual_enabled, sizeof(virtual_enabled))) {
++        polaris_qemu_ufs_probe(virtual_enabled); return;
++    }
+ 	uint32_t enabled = 0;
+ 	if (!PE_parse_boot_argn("polarisufsprobe", &enabled, sizeof(enabled)) || enabled != 1) {
+ 		return;
+@@ -598,6 +809,7 @@
+ 		if (ufs_rd(REG_UTRLBA) == old_lo && ufs_rd(REG_UTRLBAU) == old_hi &&
+ 		    ufs_rd(REG_UTRLRSR) == old_rsr) {
+ 			ufs_wr(REG_IE, old_ie);
++            polaris_native_owner = false;
+ 			polaris_probe_queue_status = "restored";
+ 			printf("POLARIS UFS: idle queue restored; probe complete\n");
+ 		} else {
+@@ -659,6 +871,11 @@
+ 	}
+ 
+ 	lck_mtx_lock(&sweet_ufs_lock);
++#if defined(POLARIS_RAM_ONLY)
++    if (polaris_ufs_sealed) {
++        lck_mtx_unlock(&sweet_ufs_lock); buf_unmap(bp); error = EBUSY; goto done;
++    }
++#endif
+ 	for (uint32_t done = 0; done < count;) {
+ 		uint64_t pos = off + done;
+ 		uint64_t lba = pos / UFS_BLOCK;
+@@ -778,8 +995,11 @@
+ 	case DKIOCSYNCHRONIZE:
+ 	case DKIOCSYNCHRONIZECACHE: {
+ #if defined(POLARIS_RAM_ONLY)
+-		/* Serialized RAM writes are already coherent; no device flush exists. */
+-		return 0;
++        /* RAM-only synchronization is never device-durability proof. */
++        lck_mtx_lock(&sweet_ufs_lock);
++        int ram_error = (polaris_ufs_sealed || polaris_io_failed || polaris_ufs_inflight) ? EBUSY : 0;
++        lck_mtx_unlock(&sweet_ufs_lock);
++        return ram_error;
+ #endif
+ 		if (!su.writable) {
+ 			return 0;
+--- a/bsd/dev/polaris_touch.c
++++ b/bsd/dev/polaris_touch.c
+@@ -28,6 +28,7 @@
+ void polaris_touch_init(void);
+ void polaris_uefi_shutdown_ready(void);
+ int polaris_uefi_shutdown_pending(void);
++int polaris_ufs_ram_seal(void);
+ int polaris_uefi_shutdown_finish(int, unsigned, unsigned);
+ extern int polaris_uefi_stop_secondaries(void);
+ 
+@@ -518,6 +519,11 @@
+         ps_publish(POLARIS_Q_FAILED,EBUSY);return EBUSY;
+     }
+     printf("POLARIS UEFI DRAIN: actual VFS mounts=0 busy=0; RAM only, no UFS durability proof\n");
++    int storage_error = polaris_ufs_ram_seal();
++    if (storage_error) {
++        printf("POLARIS UEFI DRAIN: native UFS seal refused %d; no reset permission\n", storage_error);
++        ps_publish(POLARIS_Q_FAILED,storage_error);return storage_error;
++    }
+     int cpu_error = polaris_uefi_stop_secondaries();
+     if (cpu_error) {
+         printf("POLARIS UEFI DRAIN: selected CPU quiesce refused %d; no reset permission\n",cpu_error);

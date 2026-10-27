@@ -51,6 +51,19 @@ def validate(raw, core=1, qemu=False, count=1):
                 p.get('cpu-id') != struct.pack('<I', logical) or
                 p.get('state') != (b'running\0' if logical == 0 else b'stopped\0')):
             raise ValueError('logical CPU does not match the selected physical core/state')
+    virtual_ufs = [n for n in tree.children if n.name == 'polaris-qemu-ufs']
+    if virtual_ufs:
+        if not qemu or core != 7 or count != 2 or len(virtual_ufs) != 1:
+            raise ValueError('isolated virtual UFS must never reach a phone tree')
+        p = props(virtual_ufs[0])
+        expected = {'name': b'polaris-qemu-ufs\0',
+                    'compatible': b'qemu,isolated-readonly-ufs\0',
+                    'version': struct.pack('<I', 1),
+                    'reg': struct.pack('<QQ', 0x10100000, 0x2000),
+                    'ecam': struct.pack('<QQ', 0x4010000000, 0x100000)}
+        if (len(p) != len(virtual_ufs[0].props) or set(p) != set(expected) | {'head-crc32'} or
+                any(p.get(k) != v for k, v in expected.items()) or len(p.get('head-crc32', b'')) != 4):
+            raise ValueError('noncanonical isolated virtual UFS metadata')
     return tree
 
 
@@ -101,6 +114,29 @@ def select(raw, core=1, qemu=False, count=1):
                  for key, flags, value in cpu.props]
     if adt.serialize(tree) != raw:
         raise ValueError('unrelated tree mutation')
+    return result
+
+
+def isolated_qemu_ufs(raw, head_crc32):
+    """Add a read-only native-controller fixture to an already validated VM.
+
+    The ECAM/window are from the actual virt FDT and the isolated UFS device
+    is bus0/slot3. The kernel also checks actual MPIDR and CNTFRQ before MMIO.
+    """
+    if type(head_crc32) is not int or not 0 <= head_crc32 <= 0xffffffff:
+        raise ValueError('exact CRC32 required')
+    root = validate(raw, 7, True, 2)
+    if any(n.name == 'polaris-qemu-ufs' for n in root.children):
+        raise ValueError('virtual UFS is already present')
+    node = adt.Node()
+    node.props = [(k, 0, v) for k, v in {
+        'name': b'polaris-qemu-ufs\0', 'compatible': b'qemu,isolated-readonly-ufs\0',
+        'version': struct.pack('<I', 1), 'reg': struct.pack('<QQ', 0x10100000, 0x2000),
+        'ecam': struct.pack('<QQ', 0x4010000000, 0x100000),
+        'head-crc32': struct.pack('<I', head_crc32)}.items()]
+    root.children.append(node)
+    result = adt.serialize(root)
+    validate(result, 7, True, 2)
     return result
 
 

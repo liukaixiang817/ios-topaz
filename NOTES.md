@@ -34,6 +34,24 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0072 native UFS queue + isolated actual-controller candidate (in progress)
+
+- Native lifetime counters/exclusive owner/unknownDMA retain/seal now connected
+  to sweet_ufs_lock, descriptor submission/completion and terminal BSD hook.
+  Physical root remains READ ONLY+RAMCOW, WRITE/SYNC gates unchanged. Candidate
+  not yet booted on phone or admitted; no runtime allocated/pinned/written.
+- New strict QEMU-only native PCI/UFS read probe performs actual PCI BAR setup,
+  UFSHCI HCE/LinkStartup, native TUR/READ10 and full1MiB fixture CRC under same
+  mutex. Actual MPIDR7/CNTFRQ62500000/virtualRAM and exact metadata gates before
+  anyMMIO; physical tree/build/admission explicitly rejects virtual nodes/token.
+  This tests isolated emulatedUFS, not SDM845 PHY or physical durability.
+- New code kept in BSD C source, no private header/IDL cache exceptions. Actual
+  Appleclang27/fullnativeheaders twoTUs compile PASS; exactpatch0fuzz/0offset.
+ 17 local tests including ASan/UBSan exactidentity/physicalrefusal pass. FullCI
+  and actualEFI/XNU nativeUFS execution/fault-injection still REQUIRED next.
+- Phone remains expectedFASTBOOT independently read-only verified18:48UTC;
+  no active phone trial. CPU/UI/native dualshutdown achievement below complete.
+
 ### 0072 next: native owned-file UFS integration (CPU/UI/native shutdown COMPLETE)
 
 - CURRENT PHONE: actual expectedPolaris FASTBOOT independently verified

@@ -26,6 +26,12 @@ class XnuAdmissionTests(unittest.TestCase):
 
     def test_matching_full_proofs_admitted(self):packer.admit(*self.fixtures())
 
+    def test_virtual_UFS_proof_never_admits_phone_even_if_other_fields_look_valid(self):
+        for index in (0, 1):
+            fixtures=list(self.fixtures())
+            fixtures[index]['isolated_QEMU_readonly_UFS_test']=True
+            with self.assertRaises(ValueError):packer.admit(*fixtures)
+
     def test_big_core_requires_actual_matching_generic_core_execution(self):
         f=list(self.fixtures());f[0]['kernel_CPU_affinity']=1792
         with self.assertRaises(ValueError):packer.admit(*f)

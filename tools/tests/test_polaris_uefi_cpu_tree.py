@@ -87,6 +87,30 @@ class ResidentCoreTree(unittest.TestCase):
                 with self.assertRaises(ValueError):cpu.validate(adt.serialize(root), 7, qemu, 2)
             with self.assertRaises(ValueError):cpu.select(raw, 1, qemu, 2)
 
+    def test_isolated_UFS_cannot_reach_phone_or_unbound_virtual_hardware(self):
+        raw = cpu.select(self.tree(True), 7, True, 2)
+        virtual = cpu.isolated_qemu_ufs(raw, 0x12345678)
+        root = cpu.validate(virtual, 7, True, 2)
+        self.assertEqual(cpu.props(cpu.child(root, 'polaris-qemu-ufs'))['head-crc32'],
+                         struct.pack('<I', 0x12345678))
+        with self.assertRaises(ValueError):cpu.validate(virtual, 7, False, 2)
+        # Even transplanting the node into an otherwise valid phone tree fails.
+        phone = cpu.validate(cpu.select(self.tree(), 7, False, 2), 7, False, 2)
+        phone.children.append(cpu.child(root, 'polaris-qemu-ufs'))
+        with self.assertRaises(ValueError):cpu.validate(adt.serialize(phone), 7, False, 2)
+        for key in ('version', 'reg', 'ecam', 'compatible', 'head-crc32'):
+            changed, _ = adt.parse(virtual)
+            node = cpu.child(changed, 'polaris-qemu-ufs')
+            builder.setprop(node, key, b'wrong')
+            with self.subTest(key=key), self.assertRaises(ValueError):
+                cpu.validate(adt.serialize(changed), 7, True, 2)
+        node = cpu.child(root, 'polaris-qemu-ufs')
+        node.props.append(node.props[-1])
+        with self.assertRaises(ValueError):cpu.validate(adt.serialize(root), 7, True, 2)
+        with self.assertRaises(ValueError):cpu.isolated_qemu_ufs(virtual, 1)
+        for bad in (-1, 1 << 32, True, '1'):
+            with self.assertRaises(ValueError):cpu.isolated_qemu_ufs(raw, bad)
+
 
 if __name__ == '__main__':
     unittest.main()
