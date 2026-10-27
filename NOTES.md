@@ -34,7 +34,34 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### 0071 native two-core shutdown candidate (local PASS; full CI next)
+### 0071 native two-core shutdown (fullCI and actualEFI/XNU PASS; physical next)
+
+- Source7ae4ffb2474cc6d5d071ad16455ee2fe94bf67c6 COMMITTED/PUSHED,
+  macOS27/Xcode27 CI40552906081/job122361113948 SUCCESS. Exact source/profile/
+  artifactCRC/SHA verified kernel8adc6952e994418d9ae982de8642dea991232a542266b82485f4c8e967ea2fb7
+  in xnu/out-polaris-0071. No new CI needed without new kernel source.
+- Actual EFI/XNU dirtyRAMroot native two-core success23/23 PASS37.766s;
+  realVFS0busy0, scheduler-offline peer, actualPSCI AFFINITY_OFF and separate
+  RAM_DRAINED observed by firmware. Injected peer-refusal25/25 PASS37.896s:
+  actualAFFINITY_ON0, nativeFAILED and firmware both-mode reset refusal;
+  never a release/admission proof. Oldcookie22/22 PASS37.737s, single-core
+  nativecontrol20/20 PASS37.680s. All four ran realPID1/fourVMchildren plus
+  live dirty writer open/write/fsync+unsyncedwrite, not a terminalPE callback.
+  RAMHFS finalflush ENOTTY0x19 remains; NOT UFSpersistent flush evidence.
+- New0071 full fresh ro/noload/blockRO16GiB rootSHA/182extent/sixGPT/critical
+  partitions/ESP7338692a/exact reviewedclean4096Bheader PASS; actual expected
+  FASTBOOT after known RAM recovery independently verified17:57UTC. No
+  journal replay, repair, pin, allocation, Android/Windows boot or disk write.
+- Same-source physical dual-core native RAM small-root payload/driver/image
+  prepared, exact QEMU-success admission and originalEDK2 decode PASS, original
+ 81firmware files preserved. NOT sent yet; next read-only actualFASTBOOT query
+  then authorized RAM boot. All0070 trials ENDED. On physical native failure,
+  RAM-only rawFASTBOOT rescue is allowed, but cannot be called native success.
+- Actual installedQEMU11.0.1 provides UFS/UFS-LU models (CLIverified), useful
+  next for actual native descriptor/completion/finalSYNC testing in isolated
+  host-file fixtures; native driver NOT connected yet, notSDM845 simulation.
+  See0071/native-UFS-next-test-plan.json. No storage gate has been relaxed.
+  Latest progress17:55UTC, continue15min reports.
 
 -0070 all physicalCPU diagnostics ENDED. Actual expectedPolaris FASTBOOT
   verified17:28:02UTC after CPU7+6 RAM-only rescue reset. Physical2/2 SGI,
