@@ -82,5 +82,22 @@ class XnuAdmissionTests(unittest.TestCase):
             with self.subTest(key=key),self.assertRaises(ValueError):packer.admit(*f)
             f[1]['native_shutdown_mailbox'][key]=before
 
+    def test_two_core_native_bridge_requires_actual_peer_OFF_and_successful_drain(self):
+        f=list(self.fixtures())
+        f[0].update(kernel_CPU_affinity=1792,kernel_CPU_count=2,RAM_native_shutdown_bridge=True)
+        f[1].update(kernel_CPU_affinity=7,kernel_CPU_count=2,RAM_native_drain_test='success')
+        f[1]['checks'].update({k:True for k in ['both_kernel_CPUs_online','real_cross_core_callbacks',
+            'native_reboot_sync_path','real_zero_mounts_and_buffers','firmware_observed_RAM_drained','separate_RAM_result']})
+        f[1]['native_shutdown_mailbox']=dict(cookie=123,request_cookie=123,sequence=1,mode=2,phase=3,
+                                           error=0,write_epoch=0,flushed_epoch=0,capabilities=0x80000003)
+        with self.assertRaises(ValueError):packer.admit(*f)
+        f[1]['checks']['native_peer_affinity_OFF']=True;packer.admit(*f)
+        for key,value in [('RAM_native_drain_test','peer-refused'),('release_handoff_admitted',False)]:
+            before=f[1][key];f[1][key]=value
+            with self.subTest(key=key),self.assertRaises(ValueError):packer.admit(*f)
+            f[1][key]=before
+        f[1]['checks']['native_peer_affinity_OFF']=False
+        with self.assertRaises(ValueError):packer.admit(*f)
+
 
 if __name__=='__main__':unittest.main()

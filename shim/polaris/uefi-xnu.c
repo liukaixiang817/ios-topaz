@@ -472,7 +472,7 @@ static void test_ram_drain(int stress_done,unsigned contact_phase)
         if(!s.cookie||s.phase!=POLARIS_Q_RUNNING||s.error||s.sequence||s.mode||
            s.write_epoch||s.flushed_epoch||s.capabilities!=POLARIS_Q_RAM_CONFIG)return;
         cookie=s.cookie;
-        if(EFI_XNU_RAM_DRAIN_TEST==1){
+        if(EFI_XNU_RAM_DRAIN_TEST!=2){
             if(!shutdown_begin(0,2))return;
         }else{
             /* Only this emulator fault injection bypasses the common sender. */
@@ -487,6 +487,11 @@ static void test_ram_drain(int stress_done,unsigned contact_phase)
         finished=1;test_uart_text("\nQEMU_RAM_DRAINED=1\n");
     }else if(s.phase==POLARIS_Q_FAILED){
         finished=1;
+        if(EFI_XNU_RAM_DRAIN_TEST==3&&s.cookie==cookie&&s.sequence==1&&s.mode==2&&
+           s.error&&s.capabilities==POLARIS_Q_RAM_CONFIG&&!shutdown_reset_ready(0,2)&&
+           !shutdown_reset_ready(0,1)&&!polaris_q_ram_drained(&s,cookie,1,2)){
+            test_uart_text("\nQEMU_RAM_PEER_OFF_REFUSED=1\n");return;
+        }
         test_uart_text(EFI_XNU_RAM_DRAIN_TEST==2&&s.cookie==cookie&&s.error&&
             s.capabilities==POLARIS_Q_RAM_CONFIG?"\nQEMU_RAM_DRAIN_STALE_REFUSED=1\n":
             "\nQEMU_RAM_DRAIN_FAILED=1\n");

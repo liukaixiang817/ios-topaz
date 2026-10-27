@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Run the real resident EFI handoff and one XNU core in generic ARM64 QEMU.
+"""Run real resident EFI/XNU with one or two kernel cores in generic ARM64 QEMU.
 
-Two emulated physical CPUs: firmware on0, one kernel CPU on1. This validates
-memory/PSCI/16KiB handoff and RAM log access, not SDM845 peripherals or iOS GUI.
+Firmware retains CPU0; explicit kernel CPU1, CPU7, or CPU7+6 trials validate
+memory/PSCI/SGI/16KiB handoff and RAM logs, not SDM845 peripherals or iOS GUI.
 An old-kernel refusal run is a diagnostic and can never admit a phone image.
 """
 import argparse
@@ -35,12 +35,12 @@ def main():
     if not 15<=a.seconds<=600:ap.error('deadline must be 15..600 seconds')
     manifest=json.loads(a.driver_manifest.read_text());app=a.driver_manifest.parent/manifest['artifact']
     drain=manifest.get('RAM_native_drain_test')
-    if drain not in (None,'success','stale-cookie') or (drain and a.legacy_core_refusal):
+    if drain not in (None,'success','stale-cookie','peer-refused') or (drain and a.legacy_core_refusal):
         raise ValueError('unsupported native RAM drain test configuration')
     target=manifest.get('kernel_CPU_affinity')
     count=manifest.get('kernel_CPU_count',1)
     if (not manifest.get('QEMU_variant') or target not in (1,7) or count not in (1,2) or
-        (count==2 and (target!=7 or drain)) or
+        (count==2 and target!=7) or (drain=='peer-refused' and count!=2) or
         manifest.get('sha256')!=sha(app) or manifest.get('payload_sha256')!=sha(a.payload) or
         manifest.get('kernel_sha256')!=sha(a.kernel)):
         raise ValueError('QEMU inputs do not match the built test driver')
@@ -88,7 +88,7 @@ def main():
             while time.monotonic()-start<a.seconds:
                 text=(out/'serial.log').read_text(errors='replace') if (out/'serial.log').exists() else ''
                 test_done=(('QEMU_RAM_DRAINED=1' in text or 'QEMU_RAM_DRAIN_STALE_REFUSED=1' in text or
-                            'QEMU_RAM_DRAIN_FAILED=1' in text) if drain else
+                            'QEMU_RAM_DRAIN_FAILED=1' in text or 'QEMU_RAM_PEER_OFF_REFUSED=1' in text) if drain else
                            ('SMP STRESS all4 PASS' in text and 'QEMU_INPUT_BRIDGE=1' in text))
                 if count==2:
                     test_done=test_done and 'POLARIS SMP CHECK: PASS selected=2 callbacks=32 remote=' in text
@@ -163,6 +163,18 @@ def main():
                               mailbox['mode']==mailbox['request_mode']==2 and mailbox['phase']==3 and
                               mailbox['error']==mailbox['write_epoch']==mailbox['flushed_epoch']==0 and
                               mailbox['capabilities']==0x80000003))
+            if count==2:
+                checks['native_peer_affinity_OFF']='POLARIS UEFI CPU DRAIN: logical1 physical0x6 actual PSCI AFFINITY_OFF; coordinator logical0 physical0x7' in ring
+        elif drain=='peer-refused':
+            checks.update(native_shutdown_entered='POLARIS UEFI DRAIN: accepted seq=1 mode=2' in ring,
+                          real_zero_mounts_and_buffers='POLARIS UEFI DRAIN: actual VFS mounts=0 busy=0' in ring,
+                          native_peer_OFF_refused='POLARIS UEFI DRAIN: selected CPU quiesce refused' in ring,
+                          actual_peer_still_ON='POLARIS UEFI CPU DRAIN: CPU_OFF returned/refused, actual affinity=0; no reset permission' in ring,
+                          firmware_reset_refused='QEMU_RAM_PEER_OFF_REFUSED=1' in text,
+                          no_safe_permission=bool(mailbox and mailbox['cookie']==mailbox['request_cookie'] and
+                              mailbox['sequence']==mailbox['request_sequence']==1 and mailbox['mode']==2 and
+                              mailbox['phase']==6 and mailbox['error'] and mailbox['capabilities']==0x80000000),
+                          no_OFF_or_drained_claim='actual PSCI AFFINITY_OFF' not in ring and 'QEMU_RAM_DRAINED=1' not in text)
         else:
             checks.update(native_stale_request_rejected='POLARIS UEFI DRAIN: refused noncanonical/replayed request' in ring,
                           no_shutdown_entered='POLARIS UEFI DRAIN: accepted' not in ring,
@@ -172,7 +184,7 @@ def main():
                               mailbox['error'] and mailbox['sequence']==mailbox['mode']==0 and
                               mailbox['capabilities']==0x80000000))
     record=dict(passed=all(checks.values()) and error is None,checks=checks,error=error,
-                diagnostic_legacy_only=a.legacy_core_refusal,release_handoff_admitted=not a.legacy_core_refusal and all(checks.values()) and error is None,
+                diagnostic_legacy_only=a.legacy_core_refusal,release_handoff_admitted=not a.legacy_core_refusal and drain!='peer-refused' and all(checks.values()) and error is None,
                 full_iOS_boot_proven=False,physical_USB_proven=False,SDM845_emulated=False,
                 RAM_native_drain_test=drain,native_shutdown_mailbox=mailbox,
                 persistent_root_or_UFS_durability_proven=False,

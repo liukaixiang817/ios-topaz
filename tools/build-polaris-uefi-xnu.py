@@ -53,10 +53,10 @@ def main():
     ap.add_argument('--output',required=True,type=Path)
     ap.add_argument('--test-qemu',action='store_true')
     ap.add_argument('--kernel-core',type=int,choices=(1,7),default=1,
-                    help='one XNU core: existing small CPU1 or opt-in big CPU7; firmware retains CPU0')
+                    help='boot XNU core: existing small CPU1 or opt-in big CPU7; firmware retains CPU0')
     ap.add_argument('--kernel-cpus',type=int,choices=(1,2),default=1,
                     help='one kernel core or opt-in CPU7+CPU6 pair; firmware CPU0 stays reserved')
-    ap.add_argument('--test-ram-drain',choices=['success','stale-cookie'],
+    ap.add_argument('--test-ram-drain',choices=['success','stale-cookie','peer-refused'],
                     help='QEMU-only real BSD RAM drain experiment; never UFS durability proof')
     ap.add_argument('--ram-shutdown-bridge',action='store_true',
                     help='expose native RAM-only shutdown mailbox over resident USB')
@@ -69,8 +69,8 @@ def main():
     a=ap.parse_args();r=Path(__file__).resolve().parents[1]
     target=a.kernel_core if a.test_qemu else a.kernel_core<<8
     if a.kernel_cpus==2 and a.kernel_core!=7:ap.error('two-core trial requires the CPU7+CPU6 pair')
-    if a.kernel_cpus!=1 and (a.ram_shutdown_bridge or a.test_ram_drain):
-        ap.error('native RAM drain is single-core only until cross-core quiescence is proven')
+    if a.test_ram_drain=='peer-refused' and a.kernel_cpus!=2:
+        ap.error('peer refusal injection requires the explicit two-core QEMU test')
     if a.test_ram_drain and (not a.test_qemu or a.chain_app_manifest):
         ap.error('RAM drain experiment requires QEMU without a chain wrapper')
     if a.ram_shutdown_bridge and a.chain_app_manifest:
@@ -87,6 +87,9 @@ def main():
     raw=a.payload.read_bytes();k=a.kernel.read_bytes()
     sys.path.insert(0,str(r/'tools'));import mkpayload
     tokens=raw[0x48:0x2a8].split(b'\0',1)[0].split()
+    off_tokens=[t for t in tokens if t.startswith(b'polarisofftest=')]
+    if off_tokens!=([b'polarisofftest=1'] if a.test_ram_drain=='peer-refused' else []):
+        raise ValueError('peer refusal injection must be uniquely bound to its QEMU-only test')
     cpu_tokens=[t for t in tokens if t.startswith(b'polarisbootcpu=')]
     if cpu_tokens!=[f'polarisbootcpu={target}'.encode()]:
         raise ValueError('payload must uniquely declare the exact selected kernel core')
@@ -153,7 +156,9 @@ def main():
         with config.open('a') as f:
             f.write('#define EFI_XNU_SHUTDOWN_BRIDGE 1\n')
             f.write(f'#define EFI_XNU_SHUTDOWN_OFFSET 0x{shutdown_offset:x}ULL\n')
-            if a.test_ram_drain:f.write(f'#define EFI_XNU_RAM_DRAIN_TEST {1 if a.test_ram_drain=="success" else 2}\n')
+            if a.test_ram_drain:
+                mode={'success':1,'stale-cookie':2,'peer-refused':3}[a.test_ram_drain]
+                f.write(f'#define EFI_XNU_RAM_DRAIN_TEST {mode}\n')
     disk_path=None
     if a.disk_guid:
         disk_path='\\EFI\\Polaris\\'+a.disk_version+'\\PAYLOAD.BIN'

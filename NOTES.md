@@ -34,6 +34,40 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0071 native two-core shutdown candidate (local PASS; full CI next)
+
+-0070 all physicalCPU diagnostics ENDED. Actual expectedPolaris FASTBOOT
+  verified17:28:02UTC after CPU7+6 RAM-only rescue reset. Physical2/2 SGI,
+ 32cross-core callbacks(remote16), four actualVM children, USBtap consumption
+  and live logs/screens PASS; physical-CPU-comparison-proof.json binds all
+  three small-root controls. Commit2ff1d43 pushed. No active phone trial.
+- New0871 candidate uses native processor_exit through scheduler's idle/offline
+  path to remove logical1, binds coordinator to native masterprocessor0,
+  moves timers/drops pset locks through stock path. Only canonical pending
+  resident shutdown can arm this exit; arbitrary runtime/user hotplug remains
+  refused. Native idle quiesce masksIRQ/timer/GICCPUinterface, publishes native
+  sleep token and callsPSCI CPU_OFF. Coordinator REQUIRES actualAFFINITY_OFF;
+  a returned/refused call, unknown state or timeout fails without reset grant.
+  Sleep token alone is not OFF evidence. FirmwareCPU0 stays independently live.
+- Peer-refused QEMU injection explicitly leaves peerON/parked after scheduler
+  offline, actualAFFINITY_INFO is read and permission must remain refused.
+  Physical payload cannot opt into this fault; real success and wrong-cookie
+  tests remain separate. RAM_DRAINED still NOT UFSdurableSAFE. UFS gate unchanged.
+- Actual Appleclang27 full-header TU compiles PASS SweetCPU/cpu_common/touch;
+ 21 local policy/control/admission tests PASS1.439s;0offset/0fuzz exactapply.
+  Actual Zig EFI success/refused-mode compile-only uses OLD0070kernel and is
+  explicitly NOT an execution/admission proof. No0071kernel built/booted yet.
+  Earlier local compiles caught nonexported machine-private CPU header and
+  thread_bind API; fixed by nativeOSFMK wrappers, publicgetMachProcessor and
+  exact native headers. No IIG header/cache exception or layout stub added.
+- Host physical admission allows native two-core bridge ONLY with actual same
+  source/kernel QEMU online/xcall plus nativepeerAFFINITY_OFF and successful
+  native BSD drain proof. Negative peer-refusal can NEVER admit a phone image.
+  Next fullCI, actual dirtyRAMroot dual success/stale/refused and singlecontrol,
+  then physically native two-core drain and actualFASTBOOT; fullGUI and owned
+  nativeUFS/finalSYNC still pending. No persistent file allocated/pinned/written.
+  Latest progress17:36UTC. Update with CI/result/source before next handoff.
+
 ### 0070 actual EFI/XNU two-core PASS; physical RAM trials next
 
 - PHYSICAL CPU7+CPU6 CONCURRENT PASS:0070/phone-core7-cpus2 actual kernel

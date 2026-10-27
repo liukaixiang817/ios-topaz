@@ -1,0 +1,204 @@
+--- a/iokit/Kernel/arm/SweetCPU.cpp
++++ b/iokit/Kernel/arm/SweetCPU.cpp
+@@ -19,6 +19,7 @@
+ #include <pexpert/pexpert.h>
+ #if defined(POLARIS_RAM_ONLY)
+ #include "polaris_uefi_cpu.h"
++#include <sys/errno.h>
+ #endif
+ 
+ extern "C" void sweet_secondary_entry(void);
+@@ -387,10 +388,103 @@
+ 	return KERN_SUCCESS;
+ }
+ 
++#if defined(POLARIS_RAM_ONLY)
++extern "C" int polaris_uefi_shutdown_pending(void);
++extern "C" void polaris_uefi_publish_sleep_token(void);
++extern "C" void polaris_uefi_bind_boot(processor_t);
++static uint32_t polaris_stop_armed, polaris_stop_returned, polaris_stop_fault;
++static int polaris_stop_conduit = -1;
++/* Terminal shutdown only: scheduler removes logical1 and hands it to its idle
++ * thread before this board callback can power it off. No hard-stop IPI that
++ * could abandon a thread holding a mutex is used. */
++extern "C" int polaris_uefi_cpu_exit_allowed(int logical)
++{
++    return logical == 1 && __atomic_load_n(&polaris_stop_armed, __ATOMIC_ACQUIRE) == 1 &&
++        polaris_uefi_shutdown_pending();
++}
++static int64_t polaris_stop_psci(uint64_t function, uint64_t target)
++{
++    register uint64_t x0 __asm__("x0") = function;
++    register uint64_t x1 __asm__("x1") = target;
++    register uint64_t x2 __asm__("x2") = 0;
++    register uint64_t x3 __asm__("x3") = 0;
++    if (polaris_stop_conduit == 1) {
++        __asm__ volatile("hvc #0" : "+r"(x0), "+r"(x1), "+r"(x2), "+r"(x3) : :
++            "x4", "x5", "x6", "x7", "x8", "x9", "x10", "x11", "x12", "x13",
++            "x14", "x15", "x16", "x17", "cc", "memory");
++    } else {
++        __asm__ volatile("smc #0" : "+r"(x0), "+r"(x1), "+r"(x2), "+r"(x3) : :
++            "x4", "x5", "x6", "x7", "x8", "x9", "x10", "x11", "x12", "x13",
++            "x14", "x15", "x16", "x17", "cc", "memory");
++    }
++    return (int64_t)x0;
++}
++extern "C" int polaris_uefi_stop_secondaries(void)
++{
++    const ml_topology_info_t *topology = ml_get_topology_info();
++    uint32_t mode = 0, target = 0;
++    PE_parse_boot_argn("polarisuefi", &mode, sizeof(mode));
++    PE_parse_boot_argn("polarisbootcpu", &target, sizeof(target));
++    if (!polaris_uefi_shutdown_pending() || mode != 1 ||
++        (topology->num_cpus != 1 && topology->num_cpus != 2)) return ENOTSUP;
++    for (unsigned i = 0; i < topology->num_cpus; i++) {
++        if (!polaris_uefi_cpu_declared(mode, target, topology->num_cpus,
++            i, topology->cpus[i].phys_id) || !sweet_cpus[i]) return EINVAL;
++    }
++    if (topology->num_cpus == 1) return cpu_number() == 0 ? 0 : EINVAL;
++    /* A terminal coordinator remains bound to the boot processor. The native
++     * processor_exit path migrates to its target then resumes on this CPU. */
++    polaris_uefi_bind_boot(sweet_cpus[0]->getMachProcessor());
++    if (cpu_number() != 0) return EINVAL;
++    polaris_stop_conduit = polaris_uefi_psci_conduit(mode, target, 2,
++        __builtin_arm_rsr64("MPIDR_EL1"));
++    if (polaris_stop_conduit < 0) return EINVAL;
++    PE_parse_boot_argn("polarisofftest", &polaris_stop_fault, sizeof(polaris_stop_fault));
++    if (polaris_stop_fault && (polaris_stop_fault != 1 || polaris_stop_conduit != 1)) return EINVAL;
++    __atomic_store_n(&polaris_stop_armed, 1, __ATOMIC_RELEASE);
++    kern_return_t kr = processor_exit(sweet_cpus[1]->getMachProcessor());
++    if (kr != KERN_SUCCESS || cpu_number() != 0) return EIO;
++    uint64_t deadline;
++    nanoseconds_to_deadline(NSEC_PER_SEC, &deadline);
++    const uint32_t physical = topology->cpus[1].phys_id;
++    do {
++        int64_t state = polaris_stop_psci(0xc4000004, physical); /* AFFINITY_INFO, level0 */
++        if (__atomic_load_n(&polaris_stop_returned, __ATOMIC_ACQUIRE)) {
++            IOLog("POLARIS UEFI CPU DRAIN: CPU_OFF returned/refused, actual affinity=%lld; no reset permission\n", state);
++            return EIO;
++        }
++        if (state == 1) {
++            IOLog("POLARIS UEFI CPU DRAIN: logical1 physical%#x actual PSCI AFFINITY_OFF; coordinator logical0 physical%#x\n", physical, target);
++            return 0;
++        }
++        if (state != 0 && state != 2) return EIO;
++        __builtin_arm_dsb(DSB_SY);
++    } while (mach_absolute_time() < deadline);
++    return ETIMEDOUT; /* No OFF proof, no permission to reset. */
++}
++#endif
++
+ void
+ SweetCPU::quiesceCPU(void)
+ {
+-	panic("SWEET CPU: CPU quiesce is not implemented");
++#if defined(POLARIS_RAM_ONLY)
++    if (polaris_uefi_cpu_exit_allowed((int)getCPUNumber()) && cpu_number() == 1 &&
++        (polaris_stop_conduit == 0 || polaris_stop_conduit == 1)) {
++        /* Scheduler already disabled dispatch, moved timers, dropped pset
++         * locks and entered the native idle-thread shutdown context. */
++        __asm__ volatile("msr daifset,#15; dsb sy; isb":::"memory");
++        __builtin_arm_wsr64("CNTV_CTL_EL0", 2);
++        __builtin_arm_wsr64("ICC_IGRPEN1_EL1", 0);
++        polaris_uefi_publish_sleep_token();
++        __builtin_arm_dsb(DSB_SY);
++        if (!polaris_stop_fault) (void)polaris_stop_psci(0x84000002, 0);
++        /* CPU_OFF is nonreturning on success. A returned/denied call parks
++         * without resuming work; coordinator must see actual OFF separately. */
++        __atomic_store_n(&polaris_stop_returned, 1, __ATOMIC_RELEASE);
++        for (;;) __asm__ volatile("wfe":::"memory");
++    }
++#endif
++    panic("SWEET CPU: unsupported CPU quiesce");
+ }
+ 
+ void
+--- a/osfmk/arm/cpu_common.c
++++ b/osfmk/arm/cpu_common.c
+@@ -34,6 +34,8 @@
+ #include <kern/machine.h>
+ #include <kern/cpu_number.h>
+ #include <kern/thread.h>
++#include <kern/processor.h>
++#include <kern/sched_prim.h>
+ #include <kern/percpu.h>
+ #include <kern/timer_queue.h>
+ #include <kern/locks.h>
+@@ -634,6 +636,29 @@
+ 	}
+ }
+ 
++#if defined(POLARIS_RAM_ONLY)
++/* Keep machine-private cpu_data layout in its native component. Called only
++ * from the scheduler's already-offline idle context, with IRQs masked. The
++ * token releases native cpu_exit_wait; it does NOT prove physical power OFF. */
++void polaris_uefi_bind_boot(processor_t processor)
++{
++    assert(processor == master_processor);
++    (void)thread_bind(processor);
++    thread_block(THREAD_CONTINUE_NULL);
++    assert(current_processor() == master_processor);
++}
++void polaris_uefi_publish_sleep_token(void)
++{
++    extern int polaris_uefi_cpu_exit_allowed(int);
++    assert(cpu_number() == 1 && polaris_uefi_cpu_exit_allowed(1));
++    assert(!ml_get_interrupts_enabled());
++    cpu_data_t *data = getCpuDatap();
++    data->cpu_sleep_token = ARM_CPU_ON_SLEEP_PATH;
++    CleanPoC_DcacheRegion_Force((vm_offset_t)data, sizeof(*data));
++    __builtin_arm_dsb(DSB_SY);
++}
++#endif
++
+ void
+ cpu_exit_wait(int cpu_id)
+ {
+@@ -846,6 +871,12 @@
+ bool
+ ml_cpu_can_exit(__unused int cpu_id, processor_reason_t reason)
+ {
++#if defined(POLARIS_RAM_ONLY)
++    /* No runtime/user hotplug: only the armed canonical terminal drain may
++     * offline the explicitly declared nonboot resident kernel processor. */
++    extern int polaris_uefi_cpu_exit_allowed(int);
++    if (polaris_uefi_cpu_exit_allowed(cpu_id)) return true;
++#endif
+ 	/* processor_exit() is always allowed on the S2R path */
+ 	if (ml_is_quiescing()) {
+ 		return true;
+--- a/bsd/dev/polaris_touch.c
++++ b/bsd/dev/polaris_touch.c
+@@ -29,6 +29,7 @@
+ void polaris_uefi_shutdown_ready(void);
+ int polaris_uefi_shutdown_pending(void);
+ int polaris_uefi_shutdown_finish(int, unsigned, unsigned);
++extern int polaris_uefi_stop_secondaries(void);
+ 
+ static struct {
+     vm_offset_t gcc, se, pin[5];
+@@ -517,8 +518,13 @@
+         ps_publish(POLARIS_Q_FAILED,EBUSY);return EBUSY;
+     }
+     printf("POLARIS UEFI DRAIN: actual VFS mounts=0 busy=0; RAM only, no UFS durability proof\n");
+-    /* One logical XNU core only. No further kernel thread/interrupt can issue
+-     * I/O after publication. Firmware remains independently alive on CPU0. */
++    int cpu_error = polaris_uefi_stop_secondaries();
++    if (cpu_error) {
++        printf("POLARIS UEFI DRAIN: selected CPU quiesce refused %d; no reset permission\n",cpu_error);
++        ps_publish(POLARIS_Q_FAILED,cpu_error);return cpu_error;
++    }
++    /* All selected secondary cores are scheduler-offline and actual PSCI OFF.
++     * The remaining boot core parks; firmware independently lives on CPU0. */
+     __asm__ volatile("msr daifset,#15; dsb sy; isb":::"memory");
+     polaris_uefi_shutdown.kernel.capabilities=POLARIS_Q_RAM_DRAINED;
+     ps_publish(POLARIS_Q_SEALED,0);
+@@ -567,7 +573,7 @@
+     PE_parse_boot_argn("polarisramcow",&ram,sizeof(ram));
+     PE_parse_boot_argn("ufsrw",&rw,sizeof(rw));
+     PE_parse_boot_argn("cpus",&cpus,sizeof(cpus));
+-    if (enabled!=1 || ram!=1 || rw || cpus!=1) { return; }
++    if (enabled!=1 || ram!=1 || rw || (cpus!=1 && cpus!=2)) { return; }
+     ps_enabled=true; /* The existing resident input loop performs bounded polling. */
+ }
+ static void pi_start(void)

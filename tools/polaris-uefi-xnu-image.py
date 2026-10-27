@@ -25,9 +25,9 @@ def admit(driver,qemu,ci,profile,preflight):
         raise ValueError('big-core physical trial requires matching actual QEMU CPU7 execution')
     count=driver.get('kernel_CPU_count',1)
     if count not in (1,2) or (count==2 and (driver.get('kernel_CPU_affinity')!=1792 or
-        qemu.get('kernel_CPU_count')!=2 or driver.get('RAM_native_shutdown_bridge') or
+        qemu.get('kernel_CPU_count')!=2 or
         not all(qemu.get('checks',{}).get(k) is True for k in ['both_kernel_CPUs_online','real_cross_core_callbacks']))):
-        raise ValueError('two-core RAM trial requires actual matching online/xcall proof; native drain not admitted')
+        raise ValueError('two-core RAM trial requires actual matching online/xcall proof')
     if (qemu.get('passed') is not True or qemu.get('release_handoff_admitted') is not True or
         qemu.get('diagnostic_legacy_only') is not False or not qemu.get('checks') or
         not all(v is True for v in qemu['checks'].values()) or qemu['checks'].get('bounded_input_handshake') is not True or
@@ -41,6 +41,8 @@ def admit(driver,qemu,ci,profile,preflight):
          ['selected_disk_app_started','chain_file_handles_closed','chain_loaded_success','selected_app_did_not_return']):
         raise ValueError('chain trial requires actual selected EFI application handoff proof')
     if driver.get('RAM_native_shutdown_bridge'):
+        if count==2 and qemu.get('checks',{}).get('native_peer_affinity_OFF') is not True:
+            raise ValueError('two-core native bridge requires actual scheduler shutdown and peer AFFINITY_OFF proof')
         status=qemu.get('native_shutdown_mailbox') or {}
         if (qemu.get('RAM_native_drain_test')!='success' or not all(qemu['checks'].get(k) is True for k in
                 ['native_reboot_sync_path','real_zero_mounts_and_buffers','firmware_observed_RAM_drained','separate_RAM_result']) or
