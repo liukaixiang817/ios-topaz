@@ -34,31 +34,61 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### 0061 selected EFI application and read-only disk payload, in progress
+### 0062 selected disk-application chain, in progress (artifacts under0061)
 
-- Original UEFI/liveiOS USB logs/screens/contact and directFASTBOOT reset are
-  physically proven in0058/0059/0060. Phone read-only product query confirms
-  expected polaris FASTBOOT again in0061. No installation writes yet.
-- New selected EFI APPLICATION variant runs only when selected, preserving
-  normal original BDS behavior. Paired RAM-DXE trial can read the same fixed
-  versioned payload file, and waits for host download when that file is absent.
-- Disk reader matches one exact HD-GPT GUID/start/size, refuses duplicates,
-  reads only fixed path in<=64KiB chunks, checks EOF and closes both file/root
-  before kernel. Existing CRC/copy-plan checks retained. No write APIs.
-  Original ESP GUID4eaa7858/start1703936/76801blocks rechecked against backup
-  GPT. Its actual EFI device path is still unproven; next RAM trial reads it.
-- Generic actual EDK2/QEMU GPT/FAT disk run0001 PASS18/18 in37.743s: selected
-  EFI app read payload from a new local regular-file disk, closed handles,
-  started XNU/PID1/fourVMchildren and inputACK. SDM845 not emulated.
-  Local mtools used only new offline fixture; no host physical disks.
-- Initial new-driver link failed__chkstk from4KiB stack inventory; changed
-  inventory to bounded static storage, rebuilt qemu-driver0002 successfully.
-  Native reader ASan/UBSan tests cover wrongGUID/geometry/duplicateFS, partial
-  reads/EOF/error and handle cleanup. All20 selected native/host tests PASS2.716s.
-- Phone driver22a7d7e3 (398336bytes) compiled; selected app4c95451c compiled (398336bytes).
-  Packager and actual originalEDK2 consumer check precede physical RAM trial.
-  Same proven kernelCI40379691170/source920cffdf reused. Root remains immutable
-  plus512MiB volatileCOW: full persistent iOS data is still NOT implemented.
+- Latest human says returnedFASTBOOT and asks to avoid loss of unattended
+  control. Host first read-only product check0002 was negative; bounded
+  rediscovery0003 running. Do NOT send a boot until actual expected product
+  is verified. No new physical trial after0061boot0002 has been sent.
+- During the long host turn interruption (01:14heartbeat resumed~07:35UTC),
+  synthetic UEFI endpoint disappeared. USB descriptor read confirms own
+  expected serial,05c6:f000,interface08/06/50 (mass storage), NOTFASTBOOT or
+  our service. ADB list empty. No guessed vendor commands, disk access,
+  eject, USB reset or interface detach performed. Cause not established.
+  Human photograph shows MIX/PoweredByAndroid splash; cannot identify exact
+  running environment from that alone. New physical boot requires fresh root
+  preflight because the unobserved interval cannot exclude Android activity.
+- New RAM-only chain wrapper reads exact installedPolarisIos.efi, validates
+  bytes/CRC, closes handles,LoadImage and verifies childimage stays outside
+  the still-free XNU bank beforeStartImage. On refusal it offers restricted
+  USB logs/screen/reboot rescue, not a normal-Windows fallback. NoNVRAM/API
+  install or default change. NativeEFI application itself remains4c95451c.
+- Actual EDK2/QEMU chain run0001 PASS22/22 in37.843s, including realStartImage
+  into selected disk application, its own GPT payload read, closed handles,
+  XNU/PID1/fourVMchildren/inputACK. This does not emulateSDM845/physicalmenu.
+  All21native/host checks PASS3.239s; phone-chain-driver0001 compiled
+  SHA3249bfc2/198656bytes. No phonechain image packaged or sent yet.
+- Next finish source commit, recover actualFASTBOOT via human/available safe
+  channel, fresh ro/noload whole-root check. ESP critical baseline MUST be
+  post-addition0061ESP with all95 original file hashes preserved; do not run
+  old preflight unchanged (it expects entireESP equal original). Then package
+  chain trial with matching22checkproof and actualoriginalEDK2 decode before
+  RAM trial. Independent fail-safe/controller-liveness hardening still open.
+
+### 0061 read-only disk payload (physical lockscreen PASS)
+
+- Sourcee37ff7d COMMITTED/PUSHED. Generic actualGPT/FAT18checks37.743s and
+ 20nativechecks2.716s passed; originalEDK2 decoded27880136bytes. Physical
+ driver22a7d7e3 and selectedapplication4c95451c, both398336bytes.
+- Physical unique ESP SFS path read successfully:6filesystems/1match,
+ GPT GUID4eaa7858-4878-4394-834c-42c0e33251d3/start1703936/76801blocks.
+ Exact actual device path saved inphysical-filesystem-path.json, not guessed.
+- After originalUEFI resetFASTBOOT, knownRAMrecovery verified sixGPT copies,
+ fourcritical partitions and originalESP fullSHA. Added ONLY new
+ EFI/Polaris/V0061/{PolarisIos.efi,PAYLOAD.BIN,BUILD.JSON} throughvfat/noatime.
+ Full before/afterESP captured; all95 original files byte-identical and3new
+ hashes verified. No existing file, firmware, BootOrder/variable changed.
+ userdata never mounted, blockRO/header unchanged during addition.
+ esp-additive-physical-0001/result.json records exact physical result.
+- RAMboot0002 sent2026-10-27T00:53:48Z, actual originalUEFI read all32703280
+ payload bytes fromESP, CRC/copyplan validated, bothfile/root closed, USB
+ initialized BEFORE automaticXNU start onphysical0x100. No hostpayloaddownload.
+ disk-boot-capture0001 showsnativeXNU/iOSRoot/SpringBoard;0002 actual iOS
+ lockscreen visually inspected. USB logs/screen bothPASS. New unlock attempt
+ after host interruption failed discovery; no contact was sent then.
+- This is additive boot-file staging and physical disk-read boot, NOT fully
+ persistent iOS installation. Root writes are still512MiBvolatileRAMCOW;
+ no menu entry installed. Original Windows bootaa64/default remain unchanged.
 
 ### 0060 read-only original boot-variable inventory (completed)
 

@@ -30,6 +30,9 @@ def admit(driver,qemu,ci,profile,preflight):
         not all(qemu['checks'].get(k) is True for k in ['unique_GPT_filesystem','disk_payload_exact_read',
                      'disk_files_closed_before_kernel','disk_read_success'])):
         raise ValueError('disk payload requires the actual GPT/FAT read and closed-handles proof')
+    if driver.get('chain_app') and not all(qemu['checks'].get(k) is True for k in
+         ['selected_disk_app_started','chain_file_handles_closed','chain_loaded_success','selected_app_did_not_return']):
+        raise ValueError('chain trial requires actual selected EFI application handoff proof')
     fields=dict(line.split('=',1) for line in profile.splitlines() if '=' in line)
     if (ci.get('status')!='completed' or ci.get('conclusion')!='success' or
         fields.get('target_platform')!='polaris' or fields.get('machine_config')!='SWEET' or

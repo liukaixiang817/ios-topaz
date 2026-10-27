@@ -36,6 +36,19 @@ static unsigned polaris_efi_disk_path(const uint8_t *p,const uint8_t guid[16],ui
         at+=n;
     }return 0;
 }
+static inline unsigned polaris_efi_file_path(const struct polaris_efi_disk_result *r,const uint16_t *name,
+                                     uint8_t *out,unsigned capacity)
+{
+    if(!r||r->matches!=1||r->path_bytes<4||r->path_bytes>sizeof(r->path)||!name||!out)return 0;
+    unsigned n=0;while(n<128&&name[n]){if(name[n]<32||name[n]>126)return 0;n++;}
+    if(!n||n==128||name[0]!='\\')return 0;
+    unsigned base=(unsigned)r->path_bytes-4,node=4+2*(n+1),total=base+node+4;
+    if(total>capacity||r->path[base]!=0x7f||r->path[base+1]!=0xff||r->path[base+2]!=4||r->path[base+3])return 0;
+    for(unsigned i=0;i<base;i++)out[i]=r->path[i];
+    out[base]=4;out[base+1]=4;out[base+2]=(uint8_t)node;out[base+3]=(uint8_t)(node>>8);
+    for(unsigned i=0;i<=n;i++){out[base+4+2*i]=(uint8_t)name[i];out[base+5+2*i]=(uint8_t)(name[i]>>8);}
+    out[total-4]=0x7f;out[total-3]=0xff;out[total-2]=4;out[total-1]=0;return total;
+}
 static int polaris_efi_read_disk(struct efi_boot *bs,const uint8_t guid[16],uint64_t start,uint64_t blocks,
     const uint16_t *name,uint8_t *dest,uint64_t bytes,struct polaris_efi_disk_result *r)
 {

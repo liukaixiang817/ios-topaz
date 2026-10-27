@@ -253,7 +253,7 @@ class KernelProtocol(ReadOnlyProtocol):
     def state(self):
         result=self._control(b'getvar:kernel-state')
         if result not in [b'CPU_ON-refused',b'AP-early-fault',b'AP-wrong-EL',b'kernel-entered',
-                          b'AP-start-pending',b'prepared',b'validated',b'receiving',b'waiting-payload']:
+                          b'AP-start-pending',b'prepared',b'validated',b'receiving',b'waiting-payload',b'admission-refused']:
             raise ValueError('unknown kernel state')
         return result.decode()
 

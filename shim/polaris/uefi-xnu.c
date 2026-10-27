@@ -1,4 +1,5 @@
-/* Resident RAM-only iOS loader. No block-I/O, file-write or NVRAM API.
+/* Resident iOS loader with volatile kernel writes. No block-I/O write,
+ * file-write or NVRAM API. Fixed disk payloads are read before handoff.
  * The kernel receives only an explicitly owned bank. Firmware stays on CPU0;
  * kernel MMU/GIC work executes on the one declared, separately started core. */
 #include "uefi-xnu.h"
@@ -409,10 +410,52 @@ static void test_monitor(void)
     }
 }
 #endif
+/* The RAM chain wrapper exercises the actual installed EFI application. It
+ * never claims the kernel bank; the selected application owns admission.
+ * Refuse a PE allocation overlapping that bank before calling StartImage. */
+#if defined(POLARIS_EFI_CHAIN_APP)
+static efi_status chain_disk_application(void)
+{
+    static const uint8_t guid[16]=EFI_XNU_DISK_GUID;
+    static const uint16_t name[]=EFI_XNU_CHAIN_PATH;
+    static struct polaris_efi_disk_result result;static uint8_t path[4352];
+    uint8_t *source=0;efi_handle child=0;struct efi_boot *bs=system_table->boot;
+    efi_status s=bs->allocate_pool(2,EFI_XNU_CHAIN_BYTES,(void**)&source);if(s||!source)return s?s:EFI_ERROR|9;
+    int ok=polaris_efi_read_disk(bs,guid,EFI_XNU_DISK_START,EFI_XNU_DISK_BLOCKS,name,
+                                source,EFI_XNU_CHAIN_BYTES,&result);
+    report("CHAIN_READ_STATUS=",result.status);report("CHAIN_FILES_CLOSED=",result.closed);
+    if(!ok||polaris_efi_crc32(source,EFI_XNU_CHAIN_BYTES)!=EFI_XNU_CHAIN_CRC32||
+       !polaris_efi_file_path(&result,name,path,sizeof(path))){bs->free_pool(source);return EFI_ERROR|3;}
+    s=bs->load_image(0,driver_image,path,source,EFI_XNU_CHAIN_BYTES,&child);
+    efi_status closed=bs->free_pool(source);report("CHAIN_LOAD_IMAGE=",s);if(s||closed||!child)return s?s:closed?closed:EFI_ERROR|3;
+    static const efi_guid loaded={0x5b1b31a1,0x9562,0x11d2,{0x8e,0x3f,0,0xa0,0xc9,0x69,0x72,0x3b}};
+    struct efi_loaded *image=0;s=bs->handle_protocol(child,&loaded,(void**)&image);
+    if(s||!image||image->code_type!=1||overlap((uintptr_t)image->base,image->bytes,POLARIS_RAM_BASE,POLARIS_RAM_SIZE))return EFI_ERROR|3;
+    report("CHAIN_IMAGE_BASE=",(uintptr_t)image->base);
+    uint64_t size=sizeof(map_snapshot.data),key=0,stride=0;uint32_t version=0;struct polaris_efi_memory check;
+    s=bs->get_map(&size,map_snapshot.data,&key,&stride,&version);
+    if(s||!polaris_efi_memory_check(map_snapshot.data,size,sizeof(map_snapshot.data),stride,&check)||
+       !polaris_efi_range_owned(map_snapshot.data,size,stride,POLARIS_RAM_BASE,POLARIS_RAM_SIZE,7))return EFI_ERROR|9;
+    report("CHAIN_APP_START=",1);return bs->start_image(child,0,0);
+}
+static const char *rescue_state(void *context){(void)context;return "admission-refused";}
+static int rescue_logs(void *context,const uint8_t **data,uint64_t *bytes)
+{(void)context;*data=log_buffer;*bytes=log_bytes;return log_bytes>0;}
+#endif
 static void ready(void *event,void *context)
 {
     (void)event;(void)context;system_table->boot->restore_tpl(4);
     text("POLARIS UEFI XNU: RAM-only resident bridge\r\n");system_table->boot->watchdog(0,0,0,0);
+#if defined(POLARIS_EFI_CHAIN_APP)
+    efi_status chain=chain_disk_application();report("CHAIN_APP_RETURN=",chain);
+#if !defined(POLARIS_EFI_TEST_QEMU)
+    struct polaris_usb_control rescue={.prepare_reset=prepare_reset,.reset=reset,.state=rescue_state,.logs=rescue_logs};
+    report("CHAIN_RESCUE_USB=",polaris_efi_usb_serve_control(system_table,log_buffer,&log_bytes,0,0,report,&rescue));
+#else
+    (void)rescue_state;(void)rescue_logs;
+#endif
+    for(;;)system_table->boot->stall(1000000);
+#endif
     efi_status s=admission();report("XNU_ADMISSION=",s);
 #if defined(POLARIS_EFI_TEST_QEMU)
     if(!(s&EFI_ERROR)){

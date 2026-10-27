@@ -7,7 +7,7 @@ import uuid
 import zlib
 
 
-def create(path, app, payload, guid, start, blocks, payload_path, mtools):
+def create(path, app, payload, guid, start, blocks, payload_path, mtools, chain_app=None):
     path=Path(path)
     if path.exists() or path.suffix!='.raw':raise ValueError('new regular .raw fixture required')
     if start!=2048 or blocks!=258048:raise ValueError('fixed emulator geometry required')
@@ -36,10 +36,14 @@ def create(path, app, payload, guid, start, blocks, payload_path, mtools):
         call('mmd','-i',target,folder)
     call('mcopy','-i',target,str(Path(app).resolve()),'::/EFI/BOOT/BOOTAA64.EFI')
     call('mcopy','-i',target,str(Path(payload).resolve()),'::/EFI/Polaris/V0061/PAYLOAD.BIN')
+    if chain_app:call('mcopy','-i',target,str(Path(chain_app).resolve()),'::/EFI/Polaris/V0061/PolarisIos.efi')
     # Readback through the FAT consumer, not just trusting mcopy exit status.
     for source,name in [(app,'::/EFI/BOOT/BOOTAA64.EFI'),(payload,'::/EFI/Polaris/V0061/PAYLOAD.BIN')]:
         got=subprocess.run([str(Path(mtools)/'mtype'),'-i',target,name],check=True,capture_output=True).stdout
         if hashlib.sha256(got).digest()!=hashlib.sha256(Path(source).read_bytes()).digest():raise ValueError('FAT readback mismatch')
+    if chain_app:
+        got=subprocess.run([str(Path(mtools)/'mtype'),'-i',target,'::/EFI/Polaris/V0061/PolarisIos.efi'],check=True,capture_output=True).stdout
+        if hashlib.sha256(got).digest()!=hashlib.sha256(Path(chain_app).read_bytes()).digest():raise ValueError('chain app readback mismatch')
     return dict(regular_file_only=True,sector_bytes=512,start_lba=start,blocks=blocks,
                 partition_guid=str(guid),fat_readback_matches=True,
                 sha256=hashlib.sha256(path.read_bytes()).hexdigest())

@@ -49,9 +49,13 @@ def main():
     if manifest.get('disk_payload_read_only'):
         if not a.mtools:ap.error('disk payload requires the actual GPT/FAT fixture')
         import polaris_efi_disk_fixture
+        chain=manifest.get('chain_app');child=None
+        if chain:
+            child=Path(chain['artifact_path'])
+            if sha(child)!=chain['sha256']:raise ValueError('selected chain app changed')
         disk_fixture=polaris_efi_disk_fixture.create(out/'fixture.raw',app,a.payload,
             manifest['disk_guid'],manifest['disk_start_lba'],manifest['disk_blocks'],
-            manifest['disk_payload_path'],a.mtools)
+            manifest['disk_payload_path'],a.mtools,child)
         disk=str(out/'fixture.raw')
     cmd=[str(a.qemu.resolve()),'-M','virt,gic-version=3,virtualization=off','-cpu','cortex-a55',
          '-smp','2','-m','8G','-display','none','-monitor','none','-nic','none',
@@ -116,6 +120,11 @@ def main():
                       disk_payload_exact_read=f'DISK_READ_BYTES=0x{manifest["payload_bytes"]:016x}' in text,
                       disk_files_closed_before_kernel='DISK_FILES_CLOSED=0x0000000000000002' in text,
                       disk_read_success='DISK_READ_STATUS=0x0000000000000000' in text)
+    if manifest.get('chain_app'):
+        checks.update(selected_disk_app_started='CHAIN_APP_START=0x0000000000000001' in text,
+                      chain_file_handles_closed='CHAIN_FILES_CLOSED=0x0000000000000002' in text,
+                      chain_loaded_success='CHAIN_LOAD_IMAGE=0x0000000000000000' in text,
+                      selected_app_did_not_return='CHAIN_APP_RETURN=' not in text)
     record=dict(passed=all(checks.values()) and error is None,checks=checks,error=error,
                 diagnostic_legacy_only=a.legacy_core_refusal,release_handoff_admitted=not a.legacy_core_refusal and all(checks.values()) and error is None,
                 full_iOS_boot_proven=False,physical_USB_proven=False,SDM845_emulated=False,

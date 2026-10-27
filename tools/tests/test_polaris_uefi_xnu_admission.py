@@ -37,5 +37,18 @@ class XnuAdmissionTests(unittest.TestCase):
                 fixtures=list(self.fixtures());fixtures[index][key]=value
                 with self.assertRaises(ValueError):packer.admit(*fixtures)
 
+    def test_chain_requires_actual_selected_application_execution(self):
+        f=list(self.fixtures());f[0].update(chain_app={'sha256':'e'*64},disk_payload_read_only=True)
+        f[1]['disk_fixture']={'regular_file_only':True}
+        needed=['unique_GPT_filesystem','disk_payload_exact_read','disk_files_closed_before_kernel',
+                'disk_read_success','selected_disk_app_started','chain_file_handles_closed',
+                'chain_loaded_success','selected_app_did_not_return']
+        f[1]['checks'].update({k:True for k in needed});packer.admit(*f)
+        for key in needed:
+            with self.subTest(key=key):
+                f[1]['checks'][key]=False
+                with self.assertRaises(ValueError):packer.admit(*f)
+                f[1]['checks'][key]=True
+
 
 if __name__=='__main__':unittest.main()

@@ -55,6 +55,12 @@ static int run(void){static const uint16_t name[]={'\\','P',0};
 int main(void){
  reset();assert(run());assert(pos==sizeof(dest)&&reads>4&&freed==1&&roots==1&&files==1);
  assert(result.matches==1&&result.closed==2&&!memcmp(data,dest,sizeof(dest)));
+ uint8_t appended[512];static const uint16_t app[]={'\\','E','F','I','\\','P','.','e','f','i',0};
+ unsigned n=polaris_efi_file_path(&result,app,appended,sizeof(appended));
+ assert(n==42+4+sizeof(app)+4&&!memcmp(appended,path,42));
+ assert(appended[42]==4&&appended[43]==4&&appended[n-4]==0x7f);
+ assert(!polaris_efi_file_path(&result,app,appended,12));
+ result.matches=2;assert(!polaris_efi_file_path(&result,app,appended,sizeof(appended)));
  reset();path[24]^=1;assert(!run()&&!opens&&freed==1);
  reset();path[8]^=1;assert(!run()&&!opens);
  reset();path[16]^=1;assert(!run()&&!opens);
