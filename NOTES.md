@@ -34,13 +34,19 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### 0067 startup worker experiment (kernel CI pending)
+### 0067 startup worker experiment (CI and native VM passed, phone pending)
 
-- Paired0066control with same310b kernel/DT/base andquiesce=0 HAS reached lock
+- Sourcecc83ea3 COMMITTED/PUSHED. macOS27/Xcode27 CI40526640822,
+  job122267919643 SUCCESS10m13s. Downloaded kernelca115f6b230aae475ca92ad8bd2c90fb3dcb4aa20b252e885416470ed4909b44
+  verified against artifact CRC/SHA and exact source build-profile, stored in
+  xnu/out-polaris-0067. Actual FASTBOOT read-only reverified15:14:25UTC.
+- Paired0066control with same310b kernel/DT/base andquiesce=0 reached lock
   and actual home with icons after bounded USB unlock (control-capture0003/0004).
   Native-enabled0001 had stalled at xpcroleaccountd >10min. Control also omits
   optional firmware callbacks, so this is useful localization, NOT proof of the
-  exact cause. Settings tap sent at observed icon position; screenshot pending.
+  exact cause. Settings text/icons, scrolling, and completed return home with
+  icons visually inspected in control-capture0005/0006/0008 with bound consumed
+  USB input results. capture0007 is an intermediate animation, not final home.
 - Profile0867 removes separate early BSD shutdown polling thread. Existing
   resident input loop handles canonical request/status and invokes real shutdown;
   polling also runs before HID-ready so rescue does not require GUI/HID. Same
@@ -48,15 +54,32 @@ early samples only. On0029 the human already confirmed boot complete and said
   RAM_DRAINED remain; an active remote contact is released before shutdown.
   Return/error leaves FAILED without authorizing reset. No UFS gate changed.
 - Actual Apple clang27 TU compiles, exact patch applies without offset/fuzz.
-  Shared mailbox header is unchanged, no IIG cache exception needed. Needs full
-  CI then actual native EFI/XNU success+stale fault tests BEFORE a physical
-  native-enabled GUI+shutdown verification. Do not call this a proven startup fix.
+  Shared mailbox header is unchanged, no IIG cache exception needed. Actual
+  EFI/XNU dirty-writer cases passed20/20 each37.726s/37.554s, including real
+  PID6 write/fsync plus unsynced write before native shutdown or stale-cookie
+  refusal. Actual native reboot/unmount mounts0/busy0 and separate RAM_DRAINED,
+  sticky stale rejection verified; HFS final RAM flush still ENOTTY0x19. Bound
+  dirty-writer-proof.json. Still requires physical native-enabled GUI+shutdown;
+  do not call this a proven startup fix or UFS durability proof.
+- Fresh0067 preflight-final-0001 again verified complete16GiB root SHA/all182
+  extents/sixGPT/four critical partitions/approved102-file ESP7338692a, exact
+  reviewed clean outer4096byte header and actual FASTBOOT after known RAM
+  recovery; ro/noload+blockRO, no metadata replay/repair. New phone-driver0001
+  and image0001 bound to ca115f kernel/sourcecc83ea3, native bridge enabled,
+  RAMCOW/ufsrw0. All81 original firmware files preserved; actual original EDK2
+  decoder/source hash rechecked and whole27876552byte inner stream matches.
+  Physical native-enabled UI/USB/shutdown test is next, not yet sent.
 - Previous task wake lock expired; bounded12h caffeinate renewed, own PTY
   session34667. Do not create duplicate wake locks or stop unrelated processes.
 
 ### 0066 physical native RAM shutdown and startup control
 
-- CURRENT LIVE:0066boot0002 CONTROL has been temporarily booted from verified
+- CURRENT MODE: expected actual Polaris FASTBOOT verified15:09:48UTC after
+  completed0066boot0002 CONTROL UI test and RAM raw reset. See
+  control-reset-fastboot-0001/actual-fastboot-verification.json. ACK alone was
+  not used as mode evidence. physical-control-UI-proof.json binds images,
+  real input consumption and actual final mode. No new device writes.
+- Completed0066boot0002 CONTROL was temporarily booted from verified
   actual FASTBOOT, with same310b kernel/own DT/immutable base but
   polarisquiesce=0 and optional firmware shutdown bridge omitted. Image/app/
   payload bindings use phone-control-* files and phone-boot-0002.json, not0001.
@@ -64,11 +87,10 @@ early samples only. On0029 the human already confirmed boot complete and said
   decoder control consumer verifies27874504bytes. Fresh preflight reuse is
   explicitly bound to fully observed RAM-only0001/native proof; no Android,
   uncontrolled interval or persistent writes intervened. No storage gate relaxed.
-  See control-kernel-start-0001 for actual kernel staging result before assuming
-  it entered XNU. DO NOT restart or repeat the finished native drain test; use
-  targeted bound control captures and compare GUI progress. Ordinary raw
-  reboot-fastboot is the allowed RAM-only return path for this control; its
-  native shutdown bridge is intentionally absent. Verify actual FASTBOOT after.
+  control-kernel-start-0001 completed14:44:27UTC. Actual lock/home/settings/
+  scroll/return home verified as above. Both0001 native drain and0002 control
+  have ended; DO NOT repeat them or wait for their GUI. Native bridge was
+  intentionally absent from control. New0067 opt-in GUI+drain still required.
 - LATEST:0066boot0001 native drain PHYSICALLY PASSED, then expected Polaris
   FASTBOOT independently verified after gated reset14:31UTC. Real own iOSRoot
   HFSX unmount, native reboot_kernel process/sync passes, actual mounts0/busy0,
@@ -79,9 +101,9 @@ early samples only. On0029 the human already confirmed boot complete and said
   launchd stayed at xpcroleaccountd while touch/log threads ran to27000frames.
   No panic or UFS error observed; cause not yet known. Prior0062/a3ec72 kernel
   disk-app GUI proof remains valid, not superseded by a claim of new GUI success.
-  Preparing paired control with same310b kernel/DT/base andpolarisquiesce=0,
-  optional firmware bridge omitted too; QEMU control must pass before physical
-  boot. No new kernel CI or runtime allocation/writes. Need resolve startup
+  Paired control with same310b kernel/DT/base andpolarisquiesce=0 passed actual
+  GUI, optional firmware bridge omitted too. New0867 worker experiment now has
+  full CI as above; no runtime allocation/writes. Need resolve startup
   difference before full persistent installation; do not guess root corruption.
 - Earlier during0066boot0001 RAM iOS (now ended in proven FASTBOOT):81 firmware
   files preserved in temporary original-UEFI image d8660e64. Fresh read-only
