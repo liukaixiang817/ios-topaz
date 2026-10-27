@@ -32,6 +32,8 @@ _Static_assert(sizeof(struct polaris_shutdown_status)==128,"kernel cacheline own
 _Static_assert(offsetof(struct polaris_shutdown_slot,kernel)==128,"separate producer cachelines");
 _Static_assert(sizeof(struct polaris_shutdown_slot)==256,"bounded shutdown mailbox");
 #define POLARIS_Q_SAFE_CAPABILITIES 0x1fu
+#define POLARIS_Q_RAM_CONFIG 0x80000000u
+#define POLARIS_Q_RAM_DRAINED 0x80000003u
 static inline bool polaris_q_init(struct polaris_q *q,uint64_t cookie,bool owner_admitted)
 {
     /* Fresh zeroed boot storage only; never clear sticky errors to retry. */
@@ -114,5 +116,15 @@ static inline bool polaris_q_reset_ready(const struct polaris_shutdown_status *s
         status->sequence==sequence&&status->mode==mode&&status->phase==POLARIS_Q_SAFE&&
         !status->error&&status->write_epoch==status->flushed_epoch&&
         status->capabilities==POLARIS_Q_SAFE_CAPABILITIES;
+}
+/* Experimental RAM-only native drain is deliberately a DIFFERENT result.
+ * It proves real VFS quiescence only; it must never satisfy durable reset. */
+static inline bool polaris_q_ram_drained(const struct polaris_shutdown_status *status,
+    uint64_t cookie,uint32_t sequence,unsigned mode)
+{
+    return status&&cookie&&sequence&&(mode==1||mode==2)&&status->cookie==cookie&&
+        status->sequence==sequence&&status->mode==mode&&status->phase==POLARIS_Q_SEALED&&
+        !status->error&&!status->write_epoch&&!status->flushed_epoch&&
+        status->capabilities==POLARIS_Q_RAM_DRAINED;
 }
 #endif

@@ -54,6 +54,22 @@ int main(void){
  bad=status;bad.write_epoch++;CHECK(!polaris_q_reset_ready(&bad,cookie,1,2));
  bad=status;bad.error=1;CHECK(!polaris_q_reset_ready(&bad,cookie,1,2));
  bad=status;bad.phase=POLARIS_Q_REQUESTED;CHECK(!polaris_q_reset_ready(&bad,cookie,1,2));
+ /* Native RAM drain is a separate opt-in experiment. It cannot claim final
+  * device SYNC/durability, even with matching tokens and zero write epochs. */
+ CHECK(!polaris_q_ram_drained(&status,cookie,1,2));
+ struct polaris_shutdown_status ram={.cookie=cookie,.sequence=1,.mode=2,
+  .phase=POLARIS_Q_SEALED,.capabilities=POLARIS_Q_RAM_DRAINED};
+ CHECK(polaris_q_ram_drained(&ram,cookie,1,2));
+ CHECK(!polaris_q_reset_ready(&ram,cookie,1,2));
+ CHECK(!polaris_q_ram_drained(&ram,cookie+1,1,2));
+ CHECK(!polaris_q_ram_drained(&ram,cookie,2,2));
+ CHECK(!polaris_q_ram_drained(&ram,cookie,1,1));
+ bad=ram;bad.phase=POLARIS_Q_SAFE;CHECK(!polaris_q_ram_drained(&bad,cookie,1,2));
+ CHECK(!polaris_q_reset_ready(&bad,cookie,1,2));
+ bad=ram;bad.capabilities=POLARIS_Q_RAM_CONFIG;CHECK(!polaris_q_ram_drained(&bad,cookie,1,2));
+ bad=ram;bad.capabilities=POLARIS_Q_SAFE_CAPABILITIES;CHECK(!polaris_q_ram_drained(&bad,cookie,1,2));
+ bad=ram;bad.error=1;CHECK(!polaris_q_ram_drained(&bad,cookie,1,2));
+ bad=ram;bad.write_epoch=bad.flushed_epoch=1;CHECK(!polaris_q_ram_drained(&bad,cookie,1,2));
  /* A known short write, failed completion or unknown DMA never permits reset,
   * even after repeated requests or an attempted successful flush/re-init. */
  for(unsigned fault=0;fault<4;fault++){

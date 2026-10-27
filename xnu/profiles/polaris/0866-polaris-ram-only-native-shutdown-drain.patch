@@ -1,0 +1,353 @@
+--- a/bsd/dev/polaris_touch.c
++++ b/bsd/dev/polaris_touch.c
+@@ -6,6 +6,7 @@
+ #if defined(POLARIS_RAM_ONLY)
+ #include <sys/param.h>
+ #include <sys/systm.h>
++#include <sys/reboot.h>
+ #include <kern/clock.h>
+ #include <kern/thread.h>
+ #include <kern/sched_prim.h>
+@@ -18,12 +19,16 @@
+ #include "polaris_touch_mode.h"
+ #include "polaris_rmi.h"
+ #include "polaris_uefi_input.h"
++#include "polaris_runtime_quiesce.h"
+ 
+ extern vm_offset_t ml_io_map(vm_offset_t, vm_size_t);
+ extern kern_return_t thread_terminate(thread_t);
+ extern int polaris_hid_touch_ready(void);
+ extern void sweet_hid_touch(int, int, int, int);
+ void polaris_touch_init(void);
++void polaris_uefi_shutdown_ready(void);
++int polaris_uefi_shutdown_pending(void);
++int polaris_uefi_shutdown_finish(int, unsigned, unsigned);
+ 
+ static struct {
+     vm_offset_t gcc, se, pin[5];
+@@ -474,12 +479,94 @@
+         pt_wait(10);
+     }
+ }
++/* Opt-in RAM-only experiment in real BSD shutdown, separate from durable
++ * runtime permission. No UFS write gate is changed or cache-sync success
++ * fabricated. Only firmware/kernel-owned RAM is exposed. */
++struct polaris_shutdown_slot polaris_uefi_shutdown;
++static bool ps_enabled, ps_bsd_ready;
++void polaris_uefi_shutdown_ready(void)
++{
++    __atomic_store_n(&ps_bsd_ready,true,__ATOMIC_RELEASE);
++}
++static void ps_publish(unsigned phase,unsigned error)
++{
++    polaris_uefi_shutdown.kernel.error=error;
++    __atomic_store_n(&polaris_uefi_shutdown.kernel.phase,phase,__ATOMIC_RELEASE);
++    pi_cache((uintptr_t)&polaris_uefi_shutdown.kernel,true);
++}
++int polaris_uefi_shutdown_pending(void)
++{
++    return ps_enabled && __atomic_load_n(&polaris_uefi_shutdown.kernel.phase,__ATOMIC_ACQUIRE)==POLARIS_Q_REQUESTED;
++}
++int polaris_uefi_shutdown_finish(int howto,unsigned mounts,unsigned busy)
++{
++    if (!polaris_uefi_shutdown_pending()) { return ENOTSUP; }
++    if (howto || mounts || busy) {
++        printf("POLARIS UEFI DRAIN: refused howto=%x mounts=%u busy=%u\n",howto,mounts,busy);
++        ps_publish(POLARIS_Q_FAILED,EBUSY);return EBUSY;
++    }
++    printf("POLARIS UEFI DRAIN: actual VFS mounts=0 busy=0; RAM only, no UFS durability proof\n");
++    /* One logical XNU core only. No further kernel thread/interrupt can issue
++     * I/O after publication. Firmware remains independently alive on CPU0. */
++    __asm__ volatile("msr daifset,#15; dsb sy; isb":::"memory");
++    polaris_uefi_shutdown.kernel.capabilities=POLARIS_Q_RAM_DRAINED;
++    ps_publish(POLARIS_Q_SEALED,0);
++    for (;;) { __asm__ volatile("wfe":::"memory"); }
++}
++static void ps_thread(void *arg,wait_result_t result)
++{
++    (void)arg;(void)result;
++    while (!__atomic_load_n(&ps_bsd_ready,__ATOMIC_ACQUIRE)) { pt_wait(10); }
++    struct polaris_shutdown_slot *slot=&polaris_uefi_shutdown;
++    slot->kernel.cookie=mach_absolute_time()|UINT64_C(1);
++    slot->kernel.capabilities=POLARIS_Q_RAM_CONFIG;
++    ps_publish(POLARIS_Q_RUNNING,0);
++    printf("POLARIS UEFI DRAIN: RAM-only mailbox ready after BSD initialization\n");
++    for (;;) {
++        pi_cache((uintptr_t)&slot->firmware,false);
++        uint32_t sequence=__atomic_load_n(&slot->firmware.sequence,__ATOMIC_ACQUIRE);
++        if (sequence) {
++            unsigned mode=slot->firmware.mode;
++            bool canonical=true;
++            for (unsigned i=0;i<sizeof(slot->firmware.reserved);i++) {
++                if (slot->firmware.reserved[i]) { canonical=false; }
++            }
++            if (!canonical || slot->firmware.cookie!=slot->kernel.cookie || sequence!=1 || (mode!=1&&mode!=2)) {
++                printf("POLARIS UEFI DRAIN: refused noncanonical/replayed request\n");
++                ps_publish(POLARIS_Q_FAILED,EINVAL);break;
++            }
++            slot->kernel.sequence=sequence;slot->kernel.mode=mode;
++            ps_publish(POLARIS_Q_REQUESTED,0);
++            printf("POLARIS UEFI DRAIN: accepted seq=%u mode=%u; calling reboot_kernel sync path\n",sequence,mode);
++            int error=reboot_kernel(0,NULL);
++            /* The successful terminal hook parks the only XNU core forever.
++             * Return/error never grants durable or RAM-drained permission. */
++            ps_publish(POLARIS_Q_FAILED,error?error:EIO);break;
++        }
++        pt_wait(10);
++    }
++    (void)thread_terminate(current_thread());thread_block(THREAD_CONTINUE_NULL);
++}
++static void ps_start(void)
++{
++    uint32_t enabled=0,ram=0,rw=0,cpus=0;
++    PE_parse_boot_argn("polarisquiesce",&enabled,sizeof(enabled));
++    PE_parse_boot_argn("polarisramcow",&ram,sizeof(ram));
++    PE_parse_boot_argn("ufsrw",&rw,sizeof(rw));
++    PE_parse_boot_argn("cpus",&cpus,sizeof(cpus));
++    if (enabled!=1 || ram!=1 || rw || cpus!=1) { return; }
++    ps_enabled=true;thread_t thread;
++    kern_return_t kr=kernel_thread_start(ps_thread,NULL,&thread);
++    if (kr==KERN_SUCCESS) { thread_deallocate(thread); }
++    else { ps_enabled=false;printf("POLARIS UEFI DRAIN: thread failed %d\n",kr); }
++}
+ static void pi_start(void)
+ {
+     uint32_t mode=0,input=0;
+     PE_parse_boot_argn("polarisuefi",&mode,sizeof(mode));
+     PE_parse_boot_argn("polarisinput",&input,sizeof(input));
+     if (mode!=1 || input!=1) { return; }
++    ps_start();
+     thread_t thread;
+     kern_return_t kr=kernel_thread_start(pi_thread,NULL,&thread);
+     if (kr==KERN_SUCCESS) { thread_deallocate(thread); }
+--- a/bsd/kern/bsd_init.c
++++ b/bsd/kern/bsd_init.c
+@@ -1088,6 +1088,7 @@
+ 
+ #if defined(POLARIS_RAM_ONLY)
+ extern void polaris_boot_record(unsigned, int);
++extern void polaris_uefi_shutdown_ready(void);
+ #endif
+ void
+ bsdinit_task(void)
+@@ -1124,6 +1125,9 @@
+ 
+ 	bsd_init_kprintf("bsd_do_post - done");
+ 
++#if defined(POLARIS_RAM_ONLY)
++    polaris_uefi_shutdown_ready();
++#endif
+ 	load_init_program(p);
+ #if defined(POLARIS_RAM_ONLY)
+     polaris_boot_record(5,0);
+--- a/bsd/kern/kern_shutdown.c
++++ b/bsd/kern/kern_shutdown.c
+@@ -87,6 +87,10 @@
+ static void proc_shutdown(int only_non_dext);
+ static void zprint_panic_info(void);
+ extern void halt_log_enter(const char * what, const void * pc, uint64_t time);
++#if defined(POLARIS_RAM_ONLY)
++extern int polaris_uefi_shutdown_pending(void);
++extern int polaris_uefi_shutdown_finish(int, unsigned, unsigned);
++#endif
+ 
+ #if DEVELOPMENT || DEBUG
+ extern boolean_t kdp_has_polled_corefile(void);
+@@ -320,6 +324,17 @@
+ 
+ force_reboot:
+ 
++#if defined(POLARIS_RAM_ONLY)
++	/* Opt-in resident-UEFI RAM drain only. The default/panic path does not
++	 * acquire new VFS locks. Never infer drain from vfs_shutdown_finished():
++	 * the normal code can reach here after giving up on busy/unmount errors. */
++	if (polaris_uefi_shutdown_pending()) {
++		if (howto) {
++			return polaris_uefi_shutdown_finish(howto, 1, 1);
++		}
++		return polaris_uefi_shutdown_finish(0, polaris_vfs_mount_count(), count_busy_buffers());
++	}
++#endif
+ 	if (howto & RB_PANIC) {
+ 		panic_kernel(howto, message);
+ 	}
+--- a/bsd/sys/mount_internal.h
++++ b/bsd/sys/mount_internal.h
+@@ -454,6 +454,9 @@
+ 
+ int     vfs_mountroot(void);
+ void    vfs_unmountall(int only_non_system);
++#if defined(POLARIS_RAM_ONLY)
++unsigned polaris_vfs_mount_count(void);
++#endif
+ int     safedounmount(struct mount *, int, vfs_context_t);
+ int     dounmount(struct mount *, int, int, vfs_context_t);
+ void    dounmount_submounts(struct mount *, int, vfs_context_t);
+--- a/bsd/vfs/vfs_subr.c
++++ b/bsd/vfs/vfs_subr.c
+@@ -4548,6 +4548,15 @@
+ }
+ 
+ 
++#if defined(POLARIS_RAM_ONLY)
++/* Real locked mount-list count, not the shutdown-attempt completion flag. */
++unsigned
++polaris_vfs_mount_count(void)
++{
++	return (unsigned)mount_getvfscnt();
++}
++#endif
++
+ static int
+ mount_getvfscnt(void)
+ {
+--- a/iokit/Kernel/IOPMrootDomain.cpp
++++ b/iokit/Kernel/IOPMrootDomain.cpp
+@@ -972,6 +972,14 @@
+ extern "C" void
+ IOSystemShutdownNotification(int howto, int stage)
+ {
++#if defined(POLARIS_RAM_ONLY)
++	/* These boards can boot without a PM root domain. Skip absent power
++	 * notifications only; reboot_kernel still exits processes and drains VFS. */
++	if (!gRootDomain || !gHaltLogLock) {
++		printf("POLARIS SHUTDOWN: no PM root domain; stage=%d\n", stage);
++		return;
++	}
++#endif
+ 	uint64_t startTime;
+ 
+ 	if (kIOSystemShutdownNotificationStageRootUnmount == stage) {
+--- /dev/null
++++ b/bsd/dev/polaris_runtime_quiesce.h
+@@ -0,0 +1,130 @@
++/* Serialized runtime I/O/shutdown policy, not wired to the native driver yet.
++ * A caller must supply REAL VFS mount/buffer counts and actual UFS completion
++ * results. Unit tests of this policy do not prove kernel shutdown or durability.
++ * No timer, host ACK, panic path or retry can manufacture a safe-reset state.
++ */
++#ifndef POLARIS_RUNTIME_QUIESCE_H
++#define POLARIS_RUNTIME_QUIESCE_H
++#include <stdbool.h>
++#include <stddef.h>
++#include <stdint.h>
++enum polaris_q_phase {POLARIS_Q_OFF,POLARIS_Q_RUNNING,POLARIS_Q_REQUESTED,
++    POLARIS_Q_SEALED,POLARIS_Q_FLUSHING,POLARIS_Q_SAFE,POLARIS_Q_FAILED};
++enum polaris_q_error {POLARIS_Q_NO_ERROR,POLARIS_Q_IO_ERROR,POLARIS_Q_COUNTER_ERROR};
++struct polaris_q {
++    uint64_t cookie,write_epoch,flushed_epoch;
++    uint32_t sequence,mode,phase,error,pending_bytes;
++    bool inflight,pending_write;
++};
++struct polaris_shutdown_request {
++    uint64_t cookie;uint32_t sequence,mode;uint8_t reserved[112];
++} __attribute__((aligned(128)));
++struct polaris_shutdown_status {
++    uint64_t cookie;uint32_t sequence,mode,phase,error;
++    uint64_t write_epoch,flushed_epoch;uint32_t capabilities;uint8_t reserved[84];
++} __attribute__((aligned(128)));
++struct polaris_shutdown_slot {
++    struct polaris_shutdown_request firmware;
++    struct polaris_shutdown_status kernel;
++} __attribute__((aligned(128)));
++_Static_assert(sizeof(struct polaris_shutdown_request)==128,"firmware cacheline ownership");
++_Static_assert(sizeof(struct polaris_shutdown_status)==128,"kernel cacheline ownership");
++_Static_assert(offsetof(struct polaris_shutdown_slot,kernel)==128,"separate producer cachelines");
++_Static_assert(sizeof(struct polaris_shutdown_slot)==256,"bounded shutdown mailbox");
++#define POLARIS_Q_SAFE_CAPABILITIES 0x1fu
++#define POLARIS_Q_RAM_CONFIG 0x80000000u
++#define POLARIS_Q_RAM_DRAINED 0x80000003u
++static inline bool polaris_q_init(struct polaris_q *q,uint64_t cookie,bool owner_admitted)
++{
++    /* Fresh zeroed boot storage only; never clear sticky errors to retry. */
++    if(!q||q->phase||q->cookie||q->write_epoch||q->flushed_epoch||q->sequence||
++       q->mode||q->error||q->pending_bytes||q->inflight||q->pending_write||
++       !cookie||!owner_admitted)return false;
++    q->cookie=cookie;q->phase=POLARIS_Q_RUNNING;return true;
++}
++static inline bool polaris_q_fail(struct polaris_q *q,unsigned error)
++{q->phase=POLARIS_Q_FAILED;q->error=error;return false;}
++/* Call under the same native mutex as descriptor construction/completion. */
++static inline bool polaris_q_begin(struct polaris_q *q,uint32_t bytes,bool write)
++{
++    if(!q||(q->phase!=POLARIS_Q_RUNNING&&q->phase!=POLARIS_Q_REQUESTED)||q->error||
++       q->inflight||!bytes||bytes>1u<<20||bytes%4096)return false;
++    if(write){
++        if(q->write_epoch==UINT64_MAX)return polaris_q_fail(q,POLARIS_Q_COUNTER_ERROR);
++        q->write_epoch++;
++    }
++    q->inflight=true;q->pending_write=write;q->pending_bytes=bytes;return true;
++}
++static inline bool polaris_q_complete(struct polaris_q *q,bool command_completed,
++    bool success,uint32_t transferred)
++{
++    if(!q||!q->inflight||(q->phase!=POLARIS_Q_RUNNING&&q->phase!=POLARIS_Q_REQUESTED))return false;
++    if(!command_completed)return polaris_q_fail(q,POLARIS_Q_IO_ERROR); /* Retain unknown DMA. */
++    q->inflight=false;
++    if(!success||transferred!=q->pending_bytes)return polaris_q_fail(q,POLARIS_Q_IO_ERROR);
++    q->pending_bytes=0;q->pending_write=false;return true;
++}
++static inline bool polaris_q_request(struct polaris_q *q,uint64_t cookie,
++    uint32_t sequence,unsigned mode)
++{
++    if(!q||!cookie||cookie!=q->cookie||!sequence||(mode!=1&&mode!=2)||q->error)return false;
++    if(q->phase>=POLARIS_Q_REQUESTED&&q->phase<=POLARIS_Q_SAFE)
++        return sequence==q->sequence&&mode==q->mode; /* Exact idempotent retry only. */
++    if(q->phase!=POLARIS_Q_RUNNING||sequence<=q->sequence)return false;
++    q->sequence=sequence;q->mode=mode;q->phase=POLARIS_Q_REQUESTED;return true;
++}
++/* Only AFTER real reboot_kernel() process exit, complete VFS unmount and zero
++ * busy buffers. The native mutex must also exclude strategy/IOCTL submissions.
++ * An unfinished mount, busy buffer or transfer leaves reset unavailable. */
++static inline bool polaris_q_seal(struct polaris_q *q,unsigned mounts,unsigned busy)
++{
++    if(!q||q->phase!=POLARIS_Q_REQUESTED||q->inflight||q->error||mounts||busy)return false;
++    q->phase=POLARIS_Q_SEALED;return true;
++}
++static inline bool polaris_q_flush_begin(struct polaris_q *q)
++{
++    if(!q||q->phase!=POLARIS_Q_SEALED||q->inflight||q->error)return false;
++    q->inflight=true;q->phase=POLARIS_Q_FLUSHING;return true;
++}
++static inline bool polaris_q_flush_complete(struct polaris_q *q,bool command_completed,bool success)
++{
++    if(!q||q->phase!=POLARIS_Q_FLUSHING||!q->inflight)return false;
++    if(!command_completed)return polaris_q_fail(q,POLARIS_Q_IO_ERROR);
++    q->inflight=false;
++    if(!success)return polaris_q_fail(q,POLARIS_Q_IO_ERROR);
++    q->flushed_epoch=q->write_epoch;q->phase=POLARIS_Q_SAFE;return true;
++}
++static inline struct polaris_shutdown_status polaris_q_status(const struct polaris_q *q)
++{
++    struct polaris_shutdown_status out={0};
++    if(!q)return out;
++    out.cookie=q->cookie;out.sequence=q->sequence;out.mode=q->mode;
++    out.phase=q->phase;out.error=q->error;out.write_epoch=q->write_epoch;out.flushed_epoch=q->flushed_epoch;
++    if(q->phase==POLARIS_Q_SAFE&&!q->error&&!q->inflight&&q->flushed_epoch==q->write_epoch)
++        out.capabilities=POLARIS_Q_SAFE_CAPABILITIES;
++    return out;
++}
++/* Firmware must invalidate its kernel-owned128byte line before copying it.
++ * Kernel publishes only after final cache sync, IO sealing and IRQ masking,
++ * cleans its own line to PoC, then parks. Neither side writes the other's line.
++ * These cache/IRQ operations are integration work, not performed by this model.
++ */
++static inline bool polaris_q_reset_ready(const struct polaris_shutdown_status *status,
++    uint64_t cookie,uint32_t sequence,unsigned mode)
++{
++    return status&&cookie&&sequence&&(mode==1||mode==2)&&status->cookie==cookie&&
++        status->sequence==sequence&&status->mode==mode&&status->phase==POLARIS_Q_SAFE&&
++        !status->error&&status->write_epoch==status->flushed_epoch&&
++        status->capabilities==POLARIS_Q_SAFE_CAPABILITIES;
++}
++/* Experimental RAM-only native drain is deliberately a DIFFERENT result.
++ * It proves real VFS quiescence only; it must never satisfy durable reset. */
++static inline bool polaris_q_ram_drained(const struct polaris_shutdown_status *status,
++    uint64_t cookie,uint32_t sequence,unsigned mode)
++{
++    return status&&cookie&&sequence&&(mode==1||mode==2)&&status->cookie==cookie&&
++        status->sequence==sequence&&status->mode==mode&&status->phase==POLARIS_Q_SEALED&&
++        !status->error&&!status->write_epoch&&!status->flushed_epoch&&
++        status->capabilities==POLARIS_Q_RAM_DRAINED;
++}
++#endif

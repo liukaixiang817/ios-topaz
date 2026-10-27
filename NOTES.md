@@ -34,6 +34,27 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0064 native RAM shutdown drain (in progress, NOT durable root)
+
+- Expected Polaris FASTBOOT reverified12:50:26UTC; evidence
+  uefi-ios-0064/connection-0001.json. No phone boot or write in this continuation.
+- Profile0866 adds an explicit polarisquiesce=1 RAM-only kernel mailbox. It is
+  gated by existing resident/input, cpus=1, polarisramcow=1 and ufsrw=0.
+  Fresh cookie/sequence/mode checks lead into actual reboot_kernel(0,NULL),
+  process shutdown, VFS sync/unmount and busy-buffer drain. A new locked actual
+  mount-list accessor gates the terminal hook; shutdown-attempt flag is NOT
+  used. Absent PM root domain notifications are skipped safely, while BSD/VFS
+  shutdown remains native. Default boot and panic/quick paths stay unchanged.
+- Only after actual mount count0/busy0 does the sole XNU core mask interrupts,
+  publish separate RAM_DRAINED capability and park. This is explicitly distinct
+  from durable SAFE and cannot authorize a persistent root reset or prove UFS
+  flush. Native exclusive UFS/owned-write integration is still unfinished.
+- Five changed translation units compile with actual Apple clang27 and full CI
+  headers/options, no stubs. Profile exact-apply check passes all7 changed/new
+  files, no offset/fuzz. Shared mailbox test rejects RAM-as-durable and stale
+  tokens. Full CI and real EFI/XNU emulator drain still pending; no physical
+  runtime file may be allocated/pinned or enabled writable on these results.
+
 ### 0063 runtime ownership/shutdown policies (offline only)
 
 - Source813c110 from0062 is COMMITTED/PUSHED. Phone's expected Polaris
