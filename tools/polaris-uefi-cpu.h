@@ -21,4 +21,13 @@ static inline int polaris_uefi_cpu_allowed(uint32_t mode,uint32_t target,
         return 0;
     return physical==target && (actual&UINT64_C(0xffffff))==target;
 }
+/* The generic virt board declares PSCI HVC; the phone uses secure SMC.
+ * Select only after the executing boot core matches its explicit trial.
+ * Return -1 for an unbound caller, never probe the other conduit on failure. */
+static inline int polaris_uefi_psci_conduit(uint32_t mode,uint32_t target,
+    uint32_t count,uint64_t actual)
+{
+    if(!polaris_uefi_cpu_allowed(mode,target,count,0,target,actual)) return -1;
+    return target==1 || target==7;
+}
 #endif

@@ -1,0 +1,50 @@
+--- a/iokit/Kernel/arm/polaris_uefi_cpu.h
++++ b/iokit/Kernel/arm/polaris_uefi_cpu.h
+@@ -21,4 +21,13 @@
+         return 0;
+     return physical==target && (actual&UINT64_C(0xffffff))==target;
+ }
++/* The generic virt board declares PSCI HVC; the phone uses secure SMC.
++ * Select only after the executing boot core matches its explicit trial.
++ * Return -1 for an unbound caller, never probe the other conduit on failure. */
++static inline int polaris_uefi_psci_conduit(uint32_t mode,uint32_t target,
++    uint32_t count,uint64_t actual)
++{
++    if(!polaris_uefi_cpu_allowed(mode,target,count,0,target,actual)) return -1;
++    return target==1 || target==7;
++}
+ #endif
+--- a/iokit/Kernel/arm/SweetCPU.cpp
++++ b/iokit/Kernel/arm/SweetCPU.cpp
+@@ -97,13 +97,31 @@
+ static int32_t
+ sweet_psci_cpu_on(uint64_t target, uint64_t entry, uint64_t context)
+ {
++    int conduit = 0;
++#if defined(POLARIS_RAM_ONLY)
++    uint32_t mode = 0, boot = 0, count = 0;
++    PE_parse_boot_argn("polarisuefi", &mode, sizeof(mode));
++    if (mode == 1) {
++        PE_parse_boot_argn("polarisbootcpu", &boot, sizeof(boot));
++        PE_parse_boot_argn("cpus", &count, sizeof(count));
++        conduit = polaris_uefi_psci_conduit(mode, boot, count,
++            __builtin_arm_rsr64("MPIDR_EL1"));
++        if (conduit < 0) panic("POLARIS UEFI: unbound PSCI conduit");
++    }
++#endif
+ 	register uint64_t x0 __asm__("x0") = 0xC4000003ULL;
+ 	register uint64_t x1 __asm__("x1") = target;
+ 	register uint64_t x2 __asm__("x2") = entry;
+ 	register uint64_t x3 __asm__("x3") = context;
++    if (conduit == 1) {
++        __asm__ volatile("hvc #0" : "+r"(x0), "+r"(x1), "+r"(x2), "+r"(x3) : :
++            "x4", "x5", "x6", "x7", "x8", "x9", "x10", "x11", "x12", "x13",
++            "x14", "x15", "x16", "x17", "cc", "memory");
++    } else {
+ 	__asm__ volatile("smc #0" : "+r"(x0), "+r"(x1), "+r"(x2), "+r"(x3) : :
+ 	    "x4", "x5", "x6", "x7", "x8", "x9", "x10", "x11", "x12", "x13",
+ 	    "x14", "x15", "x16", "x17", "cc", "memory");
++    }
+ 	return (int32_t)x0;
+ }
+ 

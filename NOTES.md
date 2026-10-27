@@ -34,6 +34,29 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0070 generic PSCI conduit fix (local PASS; full CI next)
+
+-0069 source0c3caa516cb353a866ceec4472a7841a860a5b42 full CI40543615380/
+  job122328227729 SUCCESS9m21s. Kernel760e690c297df5c6cf6601aa5f2c1a1a9b20a770d37cc7494066ae60583d9842
+  artifact CRC/SHA/profile bound. Two-core real EFI/XNU passed provider
+  registration then trapped on SMC while starting physical QEMU CPU6.
+  Actual QEMU DTB/psci method independently read with bounded C parser isHVC;
+  firmware already usesHVC for QEMU while the old native kernel helper usedSMC.
+  This is a generic VM-conduit mismatch, not a physical-phone failure.
+- New0870 binds conduit to explicit resident mode/count/actual executing boot
+  MPIDR through the shared admission header: QEMU1/7=>HVC, phone100/700=>SMC,
+  mismatched/unbound input refuses without probing the alternate conduit.
+  Ordinary ABL retainsSMC. Actual Apple clang27 full-header TU PASS,20 local
+  sanitizer/control/admission checks PASS1.313s, exact patch/header identity
+  PASS0offset/0fuzz. Full CI and actual two-core XNU tests still required.
+  CPU_ON ACK never suffices; actual2/2 SGI plus32remote callbacks and four
+  VM children/input must pass before physical SMP RAM trials.
+-0069 fresh ro/noload+blockRO full16GiB root SHA/all182extents/sixGPT/critical
+  partitions/ESP7338692a and exact reviewed clean4096B header PASS. Actual
+  expected FASTBOOT after recovery independently verified16:49UTC. No metadata
+  replay/repair, original system start, runtime allocation or partition write.
+  No0068/69 XNU physical boot. Last progress16:55UTC. Preserve failed0068/69 logs.
+
 ### 0069 resident secondary registration fix (local PASS; full CI next)
 
 -0068 full macOS27/Xcode27 CI40540493764/job122317247584 SUCCESS7m58s,

@@ -36,6 +36,15 @@ int main(void) {
  assert(!polaris_uefi_cpu_allowed(1,0x100,1,0,0,0x81000100));
  assert(!polaris_uefi_cpu_allowed(1,0x100,1,0,0x100,0x81000000));
  assert(!polaris_uefi_cpu_allowed(1,0x100,1,0,0x100,0x81010100));
+ assert(polaris_uefi_psci_conduit(1,7,2,0x80000007)==1);
+ assert(polaris_uefi_psci_conduit(1,1,1,0x80000001)==1);
+ assert(polaris_uefi_psci_conduit(1,0x700,2,0x81000700)==0);
+ assert(polaris_uefi_psci_conduit(1,0x100,1,0x81000100)==0);
+ assert(polaris_uefi_psci_conduit(1,7,2,0x80000006)==-1);
+ assert(polaris_uefi_psci_conduit(1,7,2,0x81000700)==-1);
+ assert(polaris_uefi_psci_conduit(1,0x700,2,0x80000007)==-1);
+ assert(polaris_uefi_psci_conduit(1,0x700,3,0x81000700)==-1);
+ assert(polaris_uefi_psci_conduit(0,7,2,0x80000007)==-1);
  return 0;
 }
 '''
