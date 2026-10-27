@@ -50,10 +50,22 @@ early samples only. On0029 the human already confirmed boot complete and said
   from durable SAFE and cannot authorize a persistent root reset or prove UFS
   flush. Native exclusive UFS/owned-write integration is still unfinished.
 - Five changed translation units compile with actual Apple clang27 and full CI
-  headers/options, no stubs. Profile exact-apply check passes all7 changed/new
-  files, no offset/fuzz. Shared mailbox test rejects RAM-as-durable and stale
-  tokens. Full CI and real EFI/XNU emulator drain still pending; no physical
+  headers/options, no stubs. Profile exact-apply check passes6 changed/new files
+  and preserves mount_internal.h unchanged, no offset/fuzz. Shared mailbox test
+  rejects RAM-as-durable and stale tokens. Full CI and real EFI/XNU emulator
+  drain still pending; no physical
   runtime file may be allocated/pinned or enabled writable on these results.
+- c790c3d COMMITTED/PUSHED. CI40509858673 failed at header generation because
+  the compatibility cache correctly rejected the added private mailbox header,
+  before kernel compilation. Repaired with an exact reviewed private-header
+  SHA binding; all original headers/IDL checks preserved. Actual local full-tree
+  IIG286 replay passes and a changed mailbox header is refused. Restored original
+  mount_internal.h; the internal count accessor has local declarations instead.
+- Added QEMU-only success/stale-cookie native-drain harness and source-bound
+  mailbox capture. Default resident EFI with unchanged successful kernel passes
+  real14check QEMU boot/four-process/input test37.625s. This is backward
+  compatibility proof, NOT new native-drain proof. New positive/fault tests await
+  rebuilt kernel. Policy regression5tests2.728s PASS, ASan/UBSan.
 
 ### 0063 runtime ownership/shutdown policies (offline only)
 

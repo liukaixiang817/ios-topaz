@@ -8,6 +8,12 @@
 #include "uefi-ram-lease.h"
 #include "uefi-memory.h"
 #include "uefi-xnu-config.h" /* exact payload bytes/CRC, symbol offsets, board */
+#if defined(EFI_XNU_RAM_DRAIN_TEST)
+#if !defined(POLARIS_EFI_TEST_QEMU)
+#error "Native RAM drain experiment is emulator-only until independently verified"
+#endif
+#include "runtime-quiesce.h"
+#endif
 #if defined(EFI_XNU_DISK_GUID)
 #include "uefi-file.h"
 #endif
@@ -403,9 +409,47 @@ static int test_file_payload(void)
     received=size;return finish(0);
 #endif
 }
+static void test_uart_text(const char *message)
+{
+    volatile uint32_t *uart=(void*)(uintptr_t)UINT64_C(0x9000000);
+    while(*message){while(uart[6]&(1u<<5))__asm__ volatile("yield");uart[0]=(uint8_t)*message++;}
+}
+#if defined(EFI_XNU_RAM_DRAIN_TEST)
+static void test_ram_drain(int stress_done,unsigned contact_phase)
+{
+    static uint64_t cookie;static unsigned sent,finished;
+    if(finished||!stress_done||contact_phase!=3)return;
+    volatile struct polaris_shutdown_slot *slot=(void*)(uintptr_t)(POLARIS_RAM_BASE+EFI_XNU_SHUTDOWN_OFFSET);
+    struct polaris_shutdown_status s;
+    invalidate((uintptr_t)&slot->kernel,sizeof(slot->kernel));
+    bytes_copy(&s,(const void*)&slot->kernel,sizeof(s));
+    if(!sent){
+        if(!s.cookie||s.phase!=POLARIS_Q_RUNNING||s.error||s.sequence||s.mode||
+           s.write_epoch||s.flushed_epoch||s.capabilities!=POLARIS_Q_RAM_CONFIG)return;
+        cookie=s.cookie;
+        bytes_zero((void*)&slot->firmware,sizeof(slot->firmware));
+        slot->firmware.cookie=cookie^(EFI_XNU_RAM_DRAIN_TEST==2?UINT64_C(2):0);
+        slot->firmware.mode=2;
+        __atomic_store_n(&slot->firmware.sequence,1,__ATOMIC_RELEASE);
+        clean((uintptr_t)&slot->firmware,sizeof(slot->firmware));
+        sent=1;test_uart_text("\nQEMU_RAM_DRAIN_REQUESTED=1\n");
+    }else if(EFI_XNU_RAM_DRAIN_TEST==1&&polaris_q_ram_drained(&s,cookie,1,2)&&
+             !polaris_q_reset_ready(&s,cookie,1,2)){
+        finished=1;test_uart_text("\nQEMU_RAM_DRAINED=1\n");
+    }else if(s.phase==POLARIS_Q_FAILED){
+        finished=1;
+        test_uart_text(EFI_XNU_RAM_DRAIN_TEST==2&&s.cookie==cookie&&s.error&&
+            s.capabilities==POLARIS_Q_RAM_CONFIG?"\nQEMU_RAM_DRAIN_STALE_REFUSED=1\n":
+            "\nQEMU_RAM_DRAIN_FAILED=1\n");
+    }
+}
+#endif
 static void test_monitor(void)
 {
     uint64_t position=0,last=0;unsigned contact_phase=0;
+#if defined(EFI_XNU_RAM_DRAIN_TEST)
+    int stress_done=0;
+#endif
     volatile uint32_t *uart=(void*)(uintptr_t)UINT64_C(0x9000000);
     for(;;){
         uint64_t now;__asm__ volatile("mrs %0,cntvct_el0":"=r"(now));
@@ -413,6 +457,13 @@ static void test_monitor(void)
         const uint8_t *data;uint64_t bytes;
         if(logs(0,&data,&bytes)&&bytes>position){
             for(uint64_t i=position;i<bytes;i++){while(uart[6]&(1u<<5))__asm__ volatile("yield");uart[0]=data[i];}
+#if defined(EFI_XNU_RAM_DRAIN_TEST)
+            static const char marker[]="SMP STRESS all4 PASS";
+            for(uint64_t i=0;i+sizeof(marker)-1<=bytes&&!stress_done;i++){
+                unsigned j=0;while(j<sizeof(marker)-1&&data[i+j]==(uint8_t)marker[j])j++;
+                if(j==sizeof(marker)-1)stress_done=1;
+            }
+#endif
             position=bytes;
         }
         struct polaris_uefi_input_status s;
@@ -420,11 +471,13 @@ static void test_monitor(void)
             if(contact_phase==0&&s.request==0&&s.acknowledged==0&&touch(0,1,540,1080))contact_phase=1;
             else if(contact_phase==1&&s.request==1&&s.acknowledged==1&&touch(0,0,540,1080))contact_phase=2;
             else if(contact_phase==2&&s.request==2&&s.acknowledged==2){
-                static const char marker[]="\nQEMU_INPUT_BRIDGE=1\n";
-                for(unsigned i=0;i<sizeof(marker)-1;i++){while(uart[6]&(1u<<5))__asm__ volatile("yield");uart[0]=marker[i];}
+                test_uart_text("\nQEMU_INPUT_BRIDGE=1\n");
                 contact_phase=3;
             }
         }
+#if defined(EFI_XNU_RAM_DRAIN_TEST)
+        test_ram_drain(stress_done,contact_phase);
+#endif
     }
 }
 #endif

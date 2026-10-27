@@ -37,7 +37,7 @@ def symbols(raw):
                 end=raw.find(b'\0',strings+name,strings+bytes_)
                 if end<0:raise ValueError('unterminated kernel symbol')
                 text=raw[strings+name:end]
-                if text in (b'_sweet_log_ring',b'_sweet_log_total',b'_polaris_uefi_input'):
+                if text in (b'_sweet_log_ring',b'_sweet_log_total',b'_polaris_uefi_input',b'_polaris_uefi_shutdown'):
                     if text.decode() in wanted:raise ValueError('duplicate log symbol')
                     wanted[text.decode()]=value
         at+=size
@@ -52,6 +52,8 @@ def main():
     ap.add_argument('--payload',required=True,type=Path)
     ap.add_argument('--output',required=True,type=Path)
     ap.add_argument('--test-qemu',action='store_true')
+    ap.add_argument('--test-ram-drain',choices=['success','stale-cookie'],
+                    help='QEMU-only real BSD RAM drain experiment; never UFS durability proof')
     ap.add_argument('--efi-application',action='store_true',help='selected application, never ReadyToBoot interception')
     ap.add_argument('--disk-guid',type=uuid.UUID,help='exact GPT partition UUID for read-only disk payload')
     ap.add_argument('--disk-start-lba',type=int)
@@ -59,6 +61,8 @@ def main():
     ap.add_argument('--disk-version',default='V0061')
     ap.add_argument('--chain-app-manifest',type=Path,help='RAM test wrapper for the exact already-built selected disk app')
     a=ap.parse_args();r=Path(__file__).resolve().parents[1]
+    if a.test_ram_drain and (not a.test_qemu or a.chain_app_manifest):
+        ap.error('RAM drain experiment requires QEMU without a chain wrapper')
     if a.disk_guid is not None:
         if (a.disk_start_lba is None or a.disk_blocks is None or not 0<a.disk_start_lba<2**64 or
             not 0<a.disk_blocks<2**64-a.disk_start_lba):ap.error('disk identity requires valid start and block count')
@@ -89,6 +93,16 @@ def main():
     input_offset=syms.get('_polaris_uefi_input',va)-va;input_present='_polaris_uefi_input' in syms
     if input_present and (input_offset%128 or not 0<=input_offset<=end-256):raise ValueError('invalid input mailbox address')
     if not a.test_qemu and not input_present:raise ValueError('physical trial requires the bounded input kernel')
+    shutdown_offset=syms.get('_polaris_uefi_shutdown',va)-va
+    if a.test_ram_drain:
+        tokens=raw[0x48:0x2a8].split(b'\0',1)[0].split()
+        if tokens.count(b'polarisquiesce=1')!=1 or any(
+                t.startswith(b'polarisquiesce=') and t!=b'polarisquiesce=1' for t in tokens):
+            raise ValueError('RAM drain experiment requires explicit unique kernel opt-in')
+        if ('_polaris_uefi_shutdown' not in syms or shutdown_offset%128 or
+                not 0<=shutdown_offset<=end-256 or not input_present or
+                abs(shutdown_offset-input_offset)<256):
+            raise ValueError('invalid independent shutdown mailbox symbol')
     # Run the exact C copy-plan admission function before emitting an EFI image.
     lib=out/'payload-validator.dylib';flags=['-DPOLARIS_EFI_TEST_QEMU=1'] if a.test_qemu else []
     subprocess.run(['/usr/bin/clang','-shared','-fPIC',*flags,str(r/'shim/polaris/payload.c'),'-o',str(lib)],check=True)
@@ -108,6 +122,10 @@ def main():
 #define EFI_XNU_CPU {1 if a.test_qemu else 256}u
 #define EFI_XNU_BOOT_CPU_TOKEN "polarisbootcpu={1 if a.test_qemu else 256}"
 ''')
+    if a.test_ram_drain:
+        with config.open('a') as f:
+            f.write(f'#define EFI_XNU_RAM_DRAIN_TEST {1 if a.test_ram_drain=="success" else 2}\n')
+            f.write(f'#define EFI_XNU_SHUTDOWN_OFFSET 0x{shutdown_offset:x}ULL\n')
     disk_path=None
     if a.disk_guid:
         disk_path='\\EFI\\Polaris\\'+a.disk_version+'\\PAYLOAD.BIN'
@@ -137,6 +155,7 @@ def main():
     if a.efi_application:flags.append('-DPOLARIS_EFI_APPLICATION=1')
     sources=['uefi-xnu.c','uefi-xnu-ap.S','uefi-xnu-crc.c','payload.c','uefi-usb.c','uefi-usb-command.c','uefi-usb-control.c']
     inputs=['shim/polaris/'+n for n in sources]+['shim/polaris/uefi.h','shim/polaris/uefi-xnu.h','shim/polaris/uefi-usb.h','shim/polaris/uefi-memory.h','shim/polaris/uefi-reset.h','shim/polaris/uefi-file.h','shim/polaris/uefi-boot-options.h','shim/polaris/uefi-ram-lease.h','shim/polaris/payload.h','tools/build-polaris-uefi-xnu.py','tools/polaris-uefi-input.h']
+    if a.test_ram_drain:inputs.append('shim/polaris/runtime-quiesce.h')
     objects=[]
     for source in sources:
         obj=out/(Path(source).stem+'.obj');objects.append(str(obj))
@@ -160,6 +179,8 @@ def main():
                   disk_blocks=a.disk_blocks,disk_payload_path=disk_path,
                   chain_app=chain,
                   bounded_input=input_present,input_offset=input_offset,
+                  RAM_native_drain_test=a.test_ram_drain,shutdown_offset=shutdown_offset if a.test_ram_drain else None,
+                  persistent_root_or_UFS_durability_proven=False,
                   QEMU_variant=a.test_qemu,phone_compatible=not a.test_qemu,
                   kernel_CPU_affinity=1 if a.test_qemu else 256,
                   RAM_base=0x130000000 if a.test_qemu else 0x180000000,RAM_bytes=0xfc8a0000,

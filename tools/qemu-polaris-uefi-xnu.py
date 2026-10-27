@@ -34,6 +34,9 @@ def main():
     a=ap.parse_args();root=Path(__file__).resolve().parents[1]
     if not 15<=a.seconds<=600:ap.error('deadline must be 15..600 seconds')
     manifest=json.loads(a.driver_manifest.read_text());app=a.driver_manifest.parent/manifest['artifact']
+    drain=manifest.get('RAM_native_drain_test')
+    if drain not in (None,'success','stale-cookie') or (drain and a.legacy_core_refusal):
+        raise ValueError('unsupported native RAM drain test configuration')
     if (not manifest.get('QEMU_variant') or manifest.get('kernel_CPU_affinity')!=1 or
         manifest.get('sha256')!=sha(app) or manifest.get('payload_sha256')!=sha(a.payload) or
         manifest.get('kernel_sha256')!=sha(a.kernel)):
@@ -81,7 +84,10 @@ def main():
             q('qmp_capabilities')
             while time.monotonic()-start<a.seconds:
                 text=(out/'serial.log').read_text(errors='replace') if (out/'serial.log').exists() else ''
-                if ('panic(cpu ' in text or ('SMP STRESS all4 PASS' in text and 'QEMU_INPUT_BRIDGE=1' in text) or
+                test_done=(('QEMU_RAM_DRAINED=1' in text or 'QEMU_RAM_DRAIN_STALE_REFUSED=1' in text or
+                            'QEMU_RAM_DRAIN_FAILED=1' in text) if drain else
+                           ('SMP STRESS all4 PASS' in text and 'QEMU_INPUT_BRIDGE=1' in text))
+                if ('panic(cpu ' in text or test_done or
                     'XNU_ADMISSION=0x8' in text or p.poll() is not None):break
                 time.sleep(.2)
             q('stop')
@@ -91,6 +97,9 @@ def main():
             raw=a.payload.read_bytes();va=struct.unpack_from('<Q',raw,16)[0];base=struct.unpack_from('<Q',raw,56)[0]
             syms=builder.symbols(a.kernel.read_bytes())
             q('pmemsave',{'val':base+syms['_sweet_log_ring']-va,'size':4<<20,'filename':str(out/'kernel-ring.bin')})
+            if drain:
+                q('pmemsave',{'val':base+syms['_polaris_uefi_shutdown']-va,'size':256,
+                              'filename':str(out/'native-shutdown-mailbox.bin')})
             q('quit');p.wait(timeout=5)
         except Exception as e:error=str(e)
         finally:
@@ -125,9 +134,39 @@ def main():
                       chain_file_handles_closed='CHAIN_FILES_CLOSED=0x0000000000000002' in text,
                       chain_loaded_success='CHAIN_LOAD_IMAGE=0x0000000000000000' in text,
                       selected_app_did_not_return='CHAIN_APP_RETURN=' not in text)
+    mailbox=None
+    if drain:
+        saved=out/'native-shutdown-mailbox.bin';box=saved.read_bytes() if saved.exists() else b''
+        if len(box)==256:
+            request=struct.unpack_from('<QII',box)
+            status=struct.unpack_from('<QIIIIQQI',box,128)
+            mailbox=dict(request_cookie=request[0],request_sequence=request[1],request_mode=request[2],
+                         cookie=status[0],sequence=status[1],mode=status[2],phase=status[3],
+                         error=status[4],write_epoch=status[5],flushed_epoch=status[6],capabilities=status[7])
+        checks['native_mailbox_captured']=mailbox is not None
+        checks['native_request_after_VM_and_input']='QEMU_RAM_DRAIN_REQUESTED=1' in text
+        if drain=='success':
+            checks.update(native_reboot_sync_path='POLARIS UEFI DRAIN: accepted seq=1 mode=2; calling reboot_kernel sync path' in ring,
+                          real_zero_mounts_and_buffers='POLARIS UEFI DRAIN: actual VFS mounts=0 busy=0; RAM only, no UFS durability proof' in ring,
+                          firmware_observed_RAM_drained='QEMU_RAM_DRAINED=1' in text,
+                          separate_RAM_result=bool(mailbox and mailbox['cookie']==mailbox['request_cookie'] and
+                              mailbox['cookie'] and mailbox['sequence']==mailbox['request_sequence']==1 and
+                              mailbox['mode']==mailbox['request_mode']==2 and mailbox['phase']==3 and
+                              mailbox['error']==mailbox['write_epoch']==mailbox['flushed_epoch']==0 and
+                              mailbox['capabilities']==0x80000003))
+        else:
+            checks.update(native_stale_request_rejected='POLARIS UEFI DRAIN: refused noncanonical/replayed request' in ring,
+                          no_shutdown_entered='POLARIS UEFI DRAIN: accepted' not in ring,
+                          firmware_observed_sticky_refusal='QEMU_RAM_DRAIN_STALE_REFUSED=1' in text,
+                          no_drain_or_durable_permission=bool(mailbox and mailbox['cookie'] and
+                              mailbox['cookie']!=mailbox['request_cookie'] and mailbox['phase']==6 and
+                              mailbox['error'] and mailbox['sequence']==mailbox['mode']==0 and
+                              mailbox['capabilities']==0x80000000))
     record=dict(passed=all(checks.values()) and error is None,checks=checks,error=error,
                 diagnostic_legacy_only=a.legacy_core_refusal,release_handoff_admitted=not a.legacy_core_refusal and all(checks.values()) and error is None,
                 full_iOS_boot_proven=False,physical_USB_proven=False,SDM845_emulated=False,
+                RAM_native_drain_test=drain,native_shutdown_mailbox=mailbox,
+                persistent_root_or_UFS_durability_proven=False,
                 app_sha256=sha(app),payload_sha256=sha(a.payload),kernel_sha256=sha(a.kernel),
                 inputs=manifest['inputs'],seconds=time.monotonic()-start,command=cmd,
                 code_sha256=sha(a.code),vars_template_sha256=sha(a.vars))

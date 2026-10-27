@@ -142,18 +142,19 @@
      polaris_boot_record(5,0);
 --- a/bsd/kern/kern_shutdown.c
 +++ b/bsd/kern/kern_shutdown.c
-@@ -87,6 +87,10 @@
+@@ -87,6 +87,11 @@
  static void proc_shutdown(int only_non_dext);
  static void zprint_panic_info(void);
  extern void halt_log_enter(const char * what, const void * pc, uint64_t time);
 +#if defined(POLARIS_RAM_ONLY)
++extern unsigned polaris_vfs_mount_count(void);
 +extern int polaris_uefi_shutdown_pending(void);
 +extern int polaris_uefi_shutdown_finish(int, unsigned, unsigned);
 +#endif
  
  #if DEVELOPMENT || DEBUG
  extern boolean_t kdp_has_polled_corefile(void);
-@@ -320,6 +324,17 @@
+@@ -320,6 +325,17 @@
  
  force_reboot:
  
@@ -171,26 +172,15 @@
  	if (howto & RB_PANIC) {
  		panic_kernel(howto, message);
  	}
---- a/bsd/sys/mount_internal.h
-+++ b/bsd/sys/mount_internal.h
-@@ -454,6 +454,9 @@
- 
- int     vfs_mountroot(void);
- void    vfs_unmountall(int only_non_system);
-+#if defined(POLARIS_RAM_ONLY)
-+unsigned polaris_vfs_mount_count(void);
-+#endif
- int     safedounmount(struct mount *, int, vfs_context_t);
- int     dounmount(struct mount *, int, int, vfs_context_t);
- void    dounmount_submounts(struct mount *, int, vfs_context_t);
 --- a/bsd/vfs/vfs_subr.c
 +++ b/bsd/vfs/vfs_subr.c
-@@ -4548,6 +4548,15 @@
+@@ -4548,6 +4548,16 @@
  }
  
  
 +#if defined(POLARIS_RAM_ONLY)
 +/* Real locked mount-list count, not the shutdown-attempt completion flag. */
++unsigned polaris_vfs_mount_count(void);
 +unsigned
 +polaris_vfs_mount_count(void)
 +{
