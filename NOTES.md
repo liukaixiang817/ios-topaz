@@ -34,6 +34,46 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0077 physical native read/GUI/drain COMPLETE; no active phone trial
+
+- physical-native-readonly-UI-drain-proof.json COMPLETE: new0077kernel same
+  physicalboot, realUSB captures0003lock/0004homeicons/0005Settingsicons+text/
+ 0006scrolledSettings/0007returnedhome all inspected; fouractualinputseqACKs
+  increased and matched. Original16GiB/182map GPT+HFSX validatedREADONLY,
+  actualnativequeue26833submitted=26833completed sealedaftertrueVFS0busy0.
+  OwnHFSXunmounted, peer600actualPSCI_OFF/coordinator700, matchingnative
+  RAM_DRAINED80000003/cookie/seq1/mode2. Savednative log then gatedreset;
+  INDEPENDENTactualexpectedPolarisFASTBOOT VERIFIED22:24:37UTC. No rawfallback,
+  keys/Android/partitionwrite; this remainsRAMonly/NOUFSfinalflush proof.
+- Allphone trials ended. Do not repeat CPU/GUI/model tests or waitonoldboot.
+  Source46edcfa/CI40588316818/kernel fadcf54e... unchanged. Hosthelperd9c8270
+  committed/pushed. Newmarker-specifichostprotocol andsixwiretests completed,
+  exactmanifest/payloadbinding andunsafe resetrefusal, noalterationordinary
+  RAMclient; hosttests notphysicalwriteproof. WidgetsWaiting/sideconsole still
+  present; noall8CPU/FPS improvementclaim. GPUbundleunchanged42d5ec4c...
+- NEXT: finish STRICT separate physicalmarker imageadmission/packager and
+  boundedhost controller usingOwnedMarkerProtocol. OrdinaryRAM packager and
+  RAMclient intentionally REFUSE marker; do not stripflags or calloldRAM
+  shutdown/drained fallback. Bind0077actualowned8cases267checks plusphysical
+  readonlyproof and actualfreshnewfile/ROFIEMAP/rawinode/CRC/complete182base
+  nonoverlap audit. Then recoveryRAM legitimateext4append ONLYNEW8MiB
+  root0600/singlelink/pinned namespace using testedproductioncreator; current
+  phone NO newownedfile/pin/write. Freshfullbase/map/GPT/ESP beforeallocation
+  and afterclose/unmount; preservebaseline16GiB and102ESPfiles. Creator uses
+  O_EXCL/NOFOLLOW, nooverwrite/unlink/repair/rawAPI. Re-readactualmetadata and
+  fullnewfilezeroes readonly beforeadmission. 4KiB testpattern is byte(i*37+
+  0x76) in FIRSTlogical4096B, remaining8MiB zero; verifywholefileafterSAFE/
+  actualFASTBOOT/recovery. Native mustre-readliveownership beforewrite.
+- Firmwaremarker guard disablesrawreset AND RAMlease beforeCPU_ON; only
+  exactdurableSAFE1f/epoch1=flushed1 canreset. NativeunknownDMA/error must
+  remainFAILED/noreset. Hostnewprotocol implementsdistinctSAFE path; do NOT
+  treatRAM_DRAINEDasdurable or enablegenericufsrw/rootwrites. Afterphysical
+  smallfilepersistence proof: completeNEW16GiBruntimecopy retainingoriginal,
+  boundedBSDstrategy/HFSflush andacrossrebootUI persistence, originalphysical
+  volume-keymenuviarecoverableRAMharness stillpending. Noerase/format/GPT/
+  resize/overwriteoriginals. No useractioncurrentlyrequired. Latestreport
+ 22:21UTC; continueevery15min andupdateactiveautomation/no duplicate.
+
 ### 0077 actual model + real Linux allocation COMPLETE; physical readonly trial active
 
 - Kernel/source46edcfa7e7b93216810888c40f4d0f64ac263452 COMMITTED/PUSHED.
@@ -71,6 +111,13 @@ early samples only. On0029 the human already confirmed boot complete and said
   preserved. Purpose: physicalnativequeue/readpath validation since0071;
   NO physicalownedmarker/newfile/pin/nativewrite. Must conclude with native
   drain and independentlyverified actualFASTBOOT; rawRAMfallbackonlyifneeded.
+- Newhost-only tools/polaris_owned_marker_protocol.py binds explicitphysical
+  guardedmarker manifest, cannotuse rawreboot/RAM_DRAINED fallback, requires
+  actualnativeepoch1/cookie/seq/mode/SAFE1f before transmittingdrainedreset.
+  Exactpayload andone-kernel binding retained. Sixwire/parsernegative tests
+  plusnineexistingRAMprotocoltests PASS. These are hosttests, NOTphysical
+  durablewriteproof. OrdinaryRAMclient/whitelist unchanged; separatephysical
+  markerimagepackager/admission stillneeded, do notusemanifestalone toboot.
 - Hostnewfile helper not uploaded/executedphone. Beforefirstphysicalowned
   write stillneed strictseparate markerimage admission + realnewexclusivefile
   creation/ROownership/export + freshbase/GPT/ESP proof. OrdinaryRAMpacker
