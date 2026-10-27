@@ -34,6 +34,40 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0078 first allocation REFUSED before namespace; corrected identity/exit framing
+
+- create-marker-0001 STOPPED22:49UTC: helperstdoutempty, legacyADBexec host
+  returned0 despite remoteprogramfailure; noJSON. Do notcallthissuccess.
+  Independentreadonlynamespacecheck confirmsNO directoryorfile, freeblocks/
+  inodes unchanged. Realunmount/blockRO verified withmounttable; phonecurrently
+  controllableknownrecovery, noactiveXNU/noownedwrite. Initialoutput/failure/
+  allsource retained. Noformat/erase/repair/deletion attempted.
+- Actualmounteduserdata dev_t is259:6 (extendedLinuxpartition), NOT8:22;
+  sysfsDEVNAME=sda22/PARTNAME=userdata/PARTN22, backing115167178752B independently
+  read. Oldexact8:22guard therefore refused beforemkdir. Correctedproduction
+  helper retainsEXACT259:6 PLUS literalsysfspartitionname/size/rootinode checks;
+  no broadallowlist. Separatecompile-timeINSPECT_ONLY excludesallcreationcode,
+  requiresRO and passedREALphysical259:6/sysfsguard inpreflight-before-0002.
+- Newpolaris_adb_exec.py usesnonceboundparent/subshell exitframing, notADB
+  hostexit0. Actualhostshell testscoverexit17/binaryNUL/embeddedfalseframe/
+  missing/truncatedframe. Newguard/source positive11+symlink8 realLinuxVM
+  noinit_itable/nodiscard casesPASS, productionwronggeometryrefused. 26local
+  host/admission/protocoltestsPASS. No kernelchange/CIneeded.
+- Newreadonlypreflight-before-0002'sSHA assertionfailed becausehashprogress
+  stderrmergedintobinaryrawexecstdout (unredirectedcaller), NOTyetashamismatch
+  proof; preservefailure. before-0003 currentlyrepeatsRO auditwithprogress
+  redirectedtoRAMandstrictsingleSHA. It alsoexecutescreation-freeROhelper.
+  Readitsresultbeforefurtheraction. ObservedSBdeltaaftertheRWmountonly6bytes:
+  absolute1068/1069(mtime),1072/1073(wtime),1076(mountcount),1400(lifetimewrites).
+  Filesystemidentity/features/state1/clean/freecounts unchanged; originaldata
+  fullSHA/map/GPT/ESP stillmustfinishverify. No namespace exists tooverwrite.
+- OnlyAFTER actualfreshwholebaseline +correctedguard/model/sourcechecks,
+  prepareNEWcreate-marker-0002 withnonceframing/hashstderrredirection/newtested
+  creator. This isreviewednewattempt afterconfirmedzerocreation, neverblind
+  retryoldscript ordeleteexistingnamespace. Continueindependentafteraudit/
+  exactownedpacket/nativeSAFE/actualFASTBOOT/wholefilepersistencereadback.
+  Latestuserreport22:56UTC; nohumanoperationneeded.
+
 ### 0078 next operation: exclusive small-file allocator prepared
 
 - Reviewedprivateoperation:0078/create-marker-0001/run.py. It will FIRSTverify

@@ -137,8 +137,8 @@ def file_ownership(root, proof):
     require(before['updated_utc'] < proof['created_utc'] < after['updated_utc'], 'stale or reordered ownership audit')
     fiemap = load(root, proof['fiemap'])
     require(fiemap.get('backing_device_bytes') == 115167178752 and
-            fiemap.get('identity_inventory_only') is True and fiemap.get('identity', {}).get('device_major') == 8 and
-            fiemap['identity'].get('device_minor') == 22 and
+            fiemap.get('identity_inventory_only') is True and fiemap.get('identity', {}).get('device_major') == 259 and
+            fiemap['identity'].get('device_minor') == 6 and
             fiemap['identity'].get('generation') == creation.get('generation') and
             fiemap['identity'].get('flags') == 0x80090 and fiemap['identity'].get('links') == 1 and
             fiemap['identity'].get('uid') == fiemap['identity'].get('gid') == 0 and
