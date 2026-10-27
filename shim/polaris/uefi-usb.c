@@ -50,6 +50,7 @@ static int poll(struct service *s,uint8_t endpoint,void *buffer,uint64_t limit,u
     /* Waiting for the next host command is ordinary idle, with no deadline.
      * Only an in-flight IN transfer has a bounded wait for a vanished host. */
     for(uint64_t tries=0;endpoint==1 || tries<100000;tries++){
+        if(s->control&&s->control->idle_guard)s->control->idle_guard(s->control->context);
         union polaris_usb_event data={0};uint32_t event=0;uint64_t size=sizeof(data);
         efi_status status=s->usb->event(&event,&size,&data);
         if(status==(EFI_ERROR|6) && event==0){pause_us(s,100);continue;}
@@ -158,6 +159,7 @@ efi_status polaris_efi_usb_serve_control(struct efi_system *st,const uint8_t *lo
     struct polaris_usb_diag d={&s,transmit,stage,0,0};report("USB_STEP=",3);
     if(control&&control->autoboot)control->autoboot(control->context);
     for(;;){
+        if(control&&control->idle_guard)control->idle_guard(control->context);
         union polaris_usb_event data={0};uint32_t event_type=0;uint64_t size=sizeof(data);
         status=s.usb->event(&event_type,&size,&data);
         /* No event is not a disconnected device. An already connected host
@@ -174,6 +176,7 @@ efi_status polaris_efi_usb_serve_control(struct efi_system *st,const uint8_t *lo
             pause_us(&s,1000);continue;
         }
         int ok=control?polaris_usb_control_command(&d,control,s.rx,got):polaris_usb_command(&d,s.rx,got);
+        if(ok&&control&&control->host_activity)control->host_activity(control->context);
         if(!ok){
             s.usb->abort(0x81);s.failures++;
             if(s.failures<=4 || !(s.failures&(s.failures-1)))report("USB_TX_ERROR=",s.last_status);

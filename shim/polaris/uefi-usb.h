@@ -57,6 +57,8 @@ struct polaris_usb_control {
     int (*input_status)(void *,struct polaris_uefi_input_status *);
     int (*boot_options)(void *,const uint8_t **,uint64_t *);
     void (*autoboot)(void *); /* Optional, after buffers/USB init; no host required. */
+    void (*idle_guard)(void *); /* Bounded RAM-only recovery, also while OUT waits. */
+    void (*host_activity)(void *);
 };
 /* Command parsing is shared by the native host test and the real EFI driver. */
 int polaris_usb_command(struct polaris_usb_diag *,const uint8_t *,uint64_t);

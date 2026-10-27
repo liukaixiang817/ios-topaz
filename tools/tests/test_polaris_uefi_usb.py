@@ -52,6 +52,7 @@ static void ppm(void){
  m.base=UINT64_MAX-3;m.bytes=24;assert(!polaris_usb_ppm(&m,out,sizeof(out),&n));
 }
 static int cancelled;static jmp_buf finish;static int restored,initialized,started,allocations,connected,script,rx_pending,tx_pending,idle;
+static unsigned guard_calls,activity_calls;
 static void *pool_buffers[2];static unsigned pool_count;
 static void *buffers[2];static uint64_t sent_bytes;static void *sent_buffer;static unsigned char transfers[1024];static size_t transfers_bytes;
 static efi_status event_create(uint32_t flags,uint64_t tpl,void(*fn)(void*,void*),void*c,const efi_guid*g,void**out){(void)fn;(void)c;assert(flags==0x200&&tpl==8&&g->a==0x1c0cffce);*out=(void*)1;return 0;}
@@ -78,13 +79,17 @@ static struct polaris_gop_info gi={0,2,2,3,{0},2};static struct polaris_gop_mode
 static efi_status pool_alloc(uint32_t type,uint64_t n,void**p){assert(type==2&&n<=16*1024*1024&&pool_count<2);*p=pool_buffers[pool_count++]=malloc(n);assert(*p);return 0;}
 static efi_status locate(const efi_guid*g,void*c,void**p){(void)c;if(g->a==0xd9d9ce48){*p=&usb;return 0;}if(g->a==0x9042a9de){*p=&gop;return 0;}*p=0;return EFI_ERROR|14;}
 static void report(const char*s,uint64_t v){assert(s&&strlen(s)<64);(void)v;}
+static void guard(void*c){(void)c;assert(started&&allocations==2&&pool_count>=1);guard_calls++;}
+static void activity(void*c){(void)c;activity_calls++;}
 static void transport(void){
  struct efi_boot bs={0};bs.restore_tpl=restore;bs.create_event_ex=event_create;bs.signal_event=signal_evt;bs.close_event=close_event;bs.locate_protocol=locate;bs.stall=pause_us;bs.allocate_pool=pool_alloc;
  struct efi_system st={0};st.boot=&bs;const uint8_t log[]="report text";uint64_t log_bytes=11;
  usb.revision=0x10000;assert(polaris_efi_usb_serve(&st,log,&log_bytes,0,0,report)==(EFI_ERROR|3));assert(!started&&!allocations);
  usb.revision=0x10000001;
- if(!setjmp(finish)){polaris_efi_usb_serve(&st,log,&log_bytes,0,0,report);assert(0);}
+ struct polaris_usb_control ctl={.idle_guard=guard,.host_activity=activity};
+ if(!setjmp(finish)){polaris_efi_usb_serve_control(&st,log,&log_bytes,0,0,report,&ctl);assert(0);}
  assert(started&&allocations==2&&script==5&&restored&&initialized&&cancelled);
+ assert(guard_calls>5&&activity_calls==5);
  const char expected[]="OKAYpolaris-uefi-diagOKAYDATA0000000breport textOKAYOKAYDATA00000017";
  assert(!memcmp(transfers,expected,sizeof(expected)-1));
  const uint8_t ppm_expected[]={'P','6',10,'2',32,'2',10,'2','5','5',10,0x33,0x22,0x11,0x66,0x55,0x44,0x99,0x88,0x77,0xcc,0xbb,0xaa};

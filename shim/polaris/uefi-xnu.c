@@ -5,6 +5,7 @@
 #include "uefi-xnu.h"
 #include "uefi-reset.h"
 #include "uefi-boot-options.h"
+#include "uefi-ram-lease.h"
 #include "uefi-memory.h"
 #include "uefi-xnu-config.h" /* exact payload bytes/CRC, symbol offsets, board */
 #if defined(EFI_XNU_DISK_GUID)
@@ -28,6 +29,7 @@ static struct polaris_plan plan;
 static uint8_t *payload,*log_snapshot;
 static uint64_t received,payload_count;
 static uint32_t load_state;
+static struct polaris_efi_ram_lease ram_lease;
 static int64_t cpu_status;
 static uint8_t ap_stack[131072] __attribute__((aligned(128)));
 struct polaris_efi_ap polaris_efi_ap_state __attribute__((aligned(128)));
@@ -191,6 +193,8 @@ static void boot_kernel(void *context)
 {
     (void)context;if(load_state!=3)return;
     report("KERNEL_PSCI_TARGET=",EFI_XNU_CPU);load_state=4;
+    uint64_t now;__asm__ volatile("mrs %0,cntvct_el0":"=r"(now));
+    ram_lease=(struct polaris_efi_ram_lease){.last=now,.active=1};
     /* IRQ ownership moves to XNU. USB's controller API is polled; no firmware
      * UFS/file operation or GOP BLT is allowed while the kernel owns devices. */
     __asm__ volatile("msr daifset,#15; dsb sy; isb":::"memory");
@@ -353,10 +357,24 @@ static void disk_autoboot(void *context)
     (void)context;
 #endif
 }
+static void host_activity(void *context)
+{
+    (void)context;uint64_t now;__asm__ volatile("mrs %0,cntvct_el0":"=r"(now));
+    polaris_efi_ram_lease_activity(&ram_lease,now);
+}
+static void idle_guard(void *context)
+{
+    uint64_t now,frequency;__asm__ volatile("mrs %0,cntvct_el0":"=r"(now));
+    __asm__ volatile("mrs %0,cntfrq_el0":"=r"(frequency));
+    if(polaris_efi_ram_lease_expired(&ram_lease,now,frequency)){
+        report("RAM_HOST_LEASE_EXPIRED=",POLARIS_RAM_LEASE_SECONDS);
+        if(prepare_reset(context,2))reset(context,2);
+    }
+}
 static struct polaris_usb_control controls={.begin=begin,.write=write_payload,.finish=finish,
     .prepare_boot=prepare_boot,.boot=boot_kernel,.prepare_reset=prepare_reset,.reset=reset,
     .state=state,.logs=logs,.running=running,.touch=touch,.input_status=input_status,.boot_options=boot_options,
-    .autoboot=disk_autoboot};
+    .autoboot=disk_autoboot,.idle_guard=idle_guard,.host_activity=host_activity};
 #if defined(POLARIS_EFI_TEST_QEMU)
 struct file {
     uint64_t revision;
@@ -438,9 +456,19 @@ static efi_status chain_disk_application(void)
        !polaris_efi_range_owned(map_snapshot.data,size,stride,POLARIS_RAM_BASE,POLARIS_RAM_SIZE,7))return EFI_ERROR|9;
     report("CHAIN_APP_START=",1);return bs->start_image(child,0,0);
 }
+#endif
+#if !defined(POLARIS_EFI_TEST_QEMU)
 static const char *rescue_state(void *context){(void)context;return "admission-refused";}
 static int rescue_logs(void *context,const uint8_t **data,uint64_t *bytes)
 {(void)context;*data=log_buffer;*bytes=log_bytes;return log_bytes>0;}
+static void rescue_service(void)
+{
+    struct polaris_usb_control rescue={.prepare_reset=prepare_reset,.reset=reset,.state=rescue_state,.logs=rescue_logs};
+    report("RESCUE_USB_RESULT=",polaris_efi_usb_serve_control(system_table,log_buffer,&log_bytes,0,0,report,&rescue));
+    /* A refused admission never starts the kernel. If even the USB protocol
+     * cannot initialize, use the already-proven PON FASTBOOT reset directly. */
+    if(prepare_reset(0,2))reset(0,2);
+}
 #endif
 static void ready(void *event,void *context)
 {
@@ -449,10 +477,7 @@ static void ready(void *event,void *context)
 #if defined(POLARIS_EFI_CHAIN_APP)
     efi_status chain=chain_disk_application();report("CHAIN_APP_RETURN=",chain);
 #if !defined(POLARIS_EFI_TEST_QEMU)
-    struct polaris_usb_control rescue={.prepare_reset=prepare_reset,.reset=reset,.state=rescue_state,.logs=rescue_logs};
-    report("CHAIN_RESCUE_USB=",polaris_efi_usb_serve_control(system_table,log_buffer,&log_bytes,0,0,report,&rescue));
-#else
-    (void)rescue_state;(void)rescue_logs;
+    rescue_service();
 #endif
     for(;;)system_table->boot->stall(1000000);
 #endif
@@ -468,7 +493,8 @@ static void ready(void *event,void *context)
         report("DISK_PAYLOAD_VALID=",disk_payload());
 #endif
         report("USB_BRIDGE_RESULT=",polaris_efi_usb_serve_control(system_table,log_buffer,&log_bytes,(void*)&map_snapshot,map_bytes,report,&controls));
-    }
+        if(prepare_reset(0,2))reset(0,2);
+    }else rescue_service();
 #endif
     for(;;)system_table->boot->stall(1000000);
 }

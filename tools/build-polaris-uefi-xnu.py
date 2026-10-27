@@ -136,7 +136,7 @@ def main():
         flags.append('-DPOLARIS_EFI_CHAIN_APP=1')
     if a.efi_application:flags.append('-DPOLARIS_EFI_APPLICATION=1')
     sources=['uefi-xnu.c','uefi-xnu-ap.S','uefi-xnu-crc.c','payload.c','uefi-usb.c','uefi-usb-command.c','uefi-usb-control.c']
-    inputs=['shim/polaris/'+n for n in sources]+['shim/polaris/uefi.h','shim/polaris/uefi-xnu.h','shim/polaris/uefi-usb.h','shim/polaris/uefi-memory.h','shim/polaris/uefi-reset.h','shim/polaris/uefi-file.h','shim/polaris/uefi-boot-options.h','shim/polaris/payload.h','tools/build-polaris-uefi-xnu.py','tools/polaris-uefi-input.h']
+    inputs=['shim/polaris/'+n for n in sources]+['shim/polaris/uefi.h','shim/polaris/uefi-xnu.h','shim/polaris/uefi-usb.h','shim/polaris/uefi-memory.h','shim/polaris/uefi-reset.h','shim/polaris/uefi-file.h','shim/polaris/uefi-boot-options.h','shim/polaris/uefi-ram-lease.h','shim/polaris/payload.h','tools/build-polaris-uefi-xnu.py','tools/polaris-uefi-input.h']
     objects=[]
     for source in sources:
         obj=out/(Path(source).stem+'.obj');objects.append(str(obj))
@@ -154,6 +154,7 @@ def main():
                   payload_crc32=zlib.crc32(raw),payload_C_admission=True,rebased_kernel_bytes_match=True,
                   RAM_only_XNU_loader=True,kernel_handoff=True,storage_write_api=False,NVRAM_write_api=False,
                   reset_commands=True,reset_commands_hardware_tested=False,ready_to_boot_driver=not application,
+                  RAM_host_idle_recovery_seconds=1800,
                   selected_application=a.efi_application,disk_payload_read_only=bool(a.disk_guid),
                   disk_guid=str(a.disk_guid) if a.disk_guid else None,disk_start_lba=a.disk_start_lba,
                   disk_blocks=a.disk_blocks,disk_payload_path=disk_path,

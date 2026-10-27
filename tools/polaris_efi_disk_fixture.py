@@ -1,6 +1,7 @@
 """Create a task-owned GPT/FAT emulator image. Never accept a device path."""
 from pathlib import Path
 import hashlib
+import re
 import struct
 import subprocess
 import uuid
@@ -11,7 +12,8 @@ def create(path, app, payload, guid, start, blocks, payload_path, mtools, chain_
     path=Path(path)
     if path.exists() or path.suffix!='.raw':raise ValueError('new regular .raw fixture required')
     if start!=2048 or blocks!=258048:raise ValueError('fixed emulator geometry required')
-    if payload_path!='\\EFI\\Polaris\\V0061\\PAYLOAD.BIN':raise ValueError('unexpected fixture payload path')
+    if not re.fullmatch(r'\\EFI\\Polaris\\V[0-9]{4}\\PAYLOAD\.BIN',payload_path):raise ValueError('unexpected fixture payload path')
+    version=payload_path.split('\\')[3];folder='::/EFI/Polaris/'+version
     total=262144
     entries=bytearray(16384)
     struct.pack_into('<16s16sQQQ',entries,0,uuid.UUID('c12a7328-f81f-11d2-ba4b-00a0c93ec93b').bytes_le,
@@ -32,17 +34,17 @@ def create(path, app, payload, guid, start, blocks, payload_path, mtools, chain_
     target=str(path.resolve())+'@@'+str(start*512)
     def call(tool,*args):subprocess.run([str(Path(mtools)/tool),*args],check=True,capture_output=True)
     call('mformat','-i',target,'-T',str(blocks),'-H',str(start),'-F','-v','POLARIS', '::')
-    for folder in ['::/EFI','::/EFI/BOOT','::/EFI/Polaris','::/EFI/Polaris/V0061']:
-        call('mmd','-i',target,folder)
+    for directory in ['::/EFI','::/EFI/BOOT','::/EFI/Polaris',folder]:
+        call('mmd','-i',target,directory)
     call('mcopy','-i',target,str(Path(app).resolve()),'::/EFI/BOOT/BOOTAA64.EFI')
-    call('mcopy','-i',target,str(Path(payload).resolve()),'::/EFI/Polaris/V0061/PAYLOAD.BIN')
-    if chain_app:call('mcopy','-i',target,str(Path(chain_app).resolve()),'::/EFI/Polaris/V0061/PolarisIos.efi')
+    call('mcopy','-i',target,str(Path(payload).resolve()),folder+'/PAYLOAD.BIN')
+    if chain_app:call('mcopy','-i',target,str(Path(chain_app).resolve()),folder+'/PolarisIos.efi')
     # Readback through the FAT consumer, not just trusting mcopy exit status.
-    for source,name in [(app,'::/EFI/BOOT/BOOTAA64.EFI'),(payload,'::/EFI/Polaris/V0061/PAYLOAD.BIN')]:
+    for source,name in [(app,'::/EFI/BOOT/BOOTAA64.EFI'),(payload,folder+'/PAYLOAD.BIN')]:
         got=subprocess.run([str(Path(mtools)/'mtype'),'-i',target,name],check=True,capture_output=True).stdout
         if hashlib.sha256(got).digest()!=hashlib.sha256(Path(source).read_bytes()).digest():raise ValueError('FAT readback mismatch')
     if chain_app:
-        got=subprocess.run([str(Path(mtools)/'mtype'),'-i',target,'::/EFI/Polaris/V0061/PolarisIos.efi'],check=True,capture_output=True).stdout
+        got=subprocess.run([str(Path(mtools)/'mtype'),'-i',target,folder+'/PolarisIos.efi'],check=True,capture_output=True).stdout
         if hashlib.sha256(got).digest()!=hashlib.sha256(Path(chain_app).read_bytes()).digest():raise ValueError('chain app readback mismatch')
     return dict(regular_file_only=True,sector_bytes=512,start_lba=start,blocks=blocks,
                 partition_guid=str(guid),fat_readback_matches=True,

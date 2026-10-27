@@ -36,6 +36,54 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### 0062 selected disk-application chain, in progress (artifacts under0061)
 
+- LATEST candidate underuefi-ios-0062:30minRAMhost lease/admission-rescue
+  implemented and compiled. qemu-app1998be58, qemu-chain86e38347, physical
+  appcb6a5ef5 and chainb2599d58. Actual EDK2/GPT/FAT chain22checks PASS37.704s;
+  all22nativechecks PASS3.495s. Hardware lease expiry and injected failure
+  recovery still NOT tested. No0062 physical image has been sent.
+- Mac currently enumerates NO phoneUSB and FASTBOOT list empty. Human says
+  FASTBOOT rabbit screen; requested one Mac-end cable reconnect and accessory
+  access check via async question, pending. No actual USB reset was performed
+  (old matching handle already absent), no vendor control guessing.
+- Offline menu-sidecar-plan-0001 now offers safer originalSimpleInit static
+  include file onESP: /simpleinit.static.uefi.cfg, newnamespaceonly. Actual
+  original7.9MB SimpleInitMain SHA39d387b7 contains exactstaticprefix/efi_file/
+  by_gpt_guid strings; pinned reference confd_init scans allvolumes first for
+  this staticinclude before currentconfig. Keeps existinglogfsconfig/default/
+  BootOrder unchanged and labels currentRAMwrites as trial. NOT installed,
+  physicalmenu/volumecontrol not proven; requires selectedapp realhandoff and
+  freshbackup/default review before adding this one newsidecar.
+
+- User physically confirms FASTBOOT rabbit screen, but host queries0002/0003
+  still negative. A later USB read now shows NO phone at all. Requested one
+  Mac-end cable reconnection/accessory permission check (async pending), not
+  another power-key boot. New target discovery follows any reply automatically.
+- StandardUSB descriptor earlier proved own05c6:f000 interface08/06/50, noADB.
+  diskutil confirms0external physical disks. A proposed USB reenumeration
+  attempt performed NO reset because no matching old handle remained; record
+  USB-reenumeration-0001.json explicitly shows refusal before mutation.
+  IOService class query returned empty output; no storage-mounted claim based
+  on that failed query. Physical6h mode change cause remains UNKNOWN.
+- New0062 candidate code adds RAM-only30minute host-idle lease (starts only
+  after kernel starts, successful host commands renew it), tested boundary/
+  one-shot/clock-overflow/counter-wrap policy underASan/UBSan. Guard is called
+  even while waiting for OUT commands; native fullUSBfixture checks guard and
+  commandactivity callbacks. It does not intercept a whole-board panic reset.
+  Writable persistence MUST have a shutdown/flush handshake before this policy.
+- Admission refusal now exposes log/screen/reset-only USB rescue. If firmware
+  USB init itself fails, proven PON reset is attempted directly. This behavior
+  is newly implemented, NOT physically fault-injection verified yet.
+-0062 actual EDK2 chain22/22 PASS37.704s with V0062GPT/FAT path; all22selected
+  nativechecks PASS3.495s. Physicalselectedappcb6a5ef5/398336bytes compiled;
+  phonechain-driver compile running. Original kernelCI40379691170 unchanged.
+- Prepared0062preflight-final-0001/run.py but NOT executed: exact0059ro/noload
+  fullrootSHA/182extent checks retained, oldESP checksum replaced ONLY with
+  known0061post-addition fullESP hash backed by all95 original file comparisons.
+  No weakened genericroot/critical admission. New fresh proof/header review
+  required before another physicalXNU handoff after unobserved mode change.
+- Existing task-owned caffeinatePID21577 still matches its expected12h command;
+  not duplicated/killed. Renewal audit in0062unattended-host-renewal.json.
+
 - Latest human says returnedFASTBOOT and asks to avoid loss of unattended
   control. Host first read-only product check0002 was negative; bounded
   rediscovery0003 running. Do NOT send a boot until actual expected product
