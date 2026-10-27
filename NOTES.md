@@ -34,6 +34,30 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0066 physical native RAM shutdown trial (LIVE)
+
+- Phone NOW running0066boot0001 RAM iOS, not FASTBOOT. Original81 firmware
+  files preserved in temporary original-UEFI image d8660e64. Fresh read-only
+  preflight-final-0001 passed full16GiB SHA/all182map/sixGPT/four critical
+  partitions/latest102-file ESP7338692a; outer4096bytes EXACT reviewed0062
+  clean header, no replay/repair. Recovery returned actual expected FASTBOOT.
+- Full CI40511293017 kernel310b7679/source1e605ca,0065 native bridge113e3ebe
+  source9b09e21 and successful native EFI/XNU QEMU proof admitted image. Actual
+  unchanged upstream EDK2 GetInfo/decode ASan/UBSan verifies27876552bytes and
+  original decoder executable hash matches prior proof. RAM fastboot boot sent
+ 14:17:29UTC; USB explicit payload stage/start succeeded14:18:32UTC. No flash,
+  partition writes, ESP append, NVRAM edits or Android boot.
+- capture-0001 physically shows launchd boot tasks, root/userland progressing,
+  kernel-entered and working actual USB screenshot/log reads. Still starting;
+  do not restart or treat ACK as GUI/native shutdown proof. Use bound0066
+  boot/image records with0065phone-driver and phone-payload. Wait for GUI via
+  targeted captures, inspect image, then real native shutdown-state/request and
+  drained reset; MUST query actual expected FASTBOOT afterward. Standard raw
+  reset/1800s host-loss fallback are permitted RAM-only rescue if drain fails.
+- Root writes still volatile512MiB RAMCOW, not persistent installation. Do not
+  allocate/pin runtime or enable UFS writes. Native UFS ownership/write/SYNC
+  integration and physical volume-menu selection still unfinished.
+
 ### 0065 installation readiness and native RAM USB bridge
 
 - Human asks to check readiness and install if close enough. Rehashed ALL bound
