@@ -13,6 +13,7 @@ from pathlib import Path
 import struct
 import subprocess
 import sys
+import uuid
 import zlib
 
 
@@ -51,7 +52,19 @@ def main():
     ap.add_argument('--payload',required=True,type=Path)
     ap.add_argument('--output',required=True,type=Path)
     ap.add_argument('--test-qemu',action='store_true')
+    ap.add_argument('--efi-application',action='store_true',help='selected application, never ReadyToBoot interception')
+    ap.add_argument('--disk-guid',type=uuid.UUID,help='exact GPT partition UUID for read-only disk payload')
+    ap.add_argument('--disk-start-lba',type=int)
+    ap.add_argument('--disk-blocks',type=int)
+    ap.add_argument('--disk-version',default='V0061')
     a=ap.parse_args();r=Path(__file__).resolve().parents[1]
+    if a.disk_guid is not None:
+        if (a.disk_start_lba is None or a.disk_blocks is None or not 0<a.disk_start_lba<2**64 or
+            not 0<a.disk_blocks<2**64-a.disk_start_lba):ap.error('disk identity requires valid start and block count')
+        if len(a.disk_version)!=5 or a.disk_version[0]!='V' or not a.disk_version[1:].isascii() or not a.disk_version[1:].isdigit():
+            ap.error('disk version must be V plus four ASCII digits')
+    elif a.efi_application or a.disk_start_lba is not None or a.disk_blocks is not None:
+        ap.error('selected application requires a complete disk identity')
     out=a.output.resolve();out.mkdir(parents=True,exist_ok=False)
     raw=a.payload.read_bytes();k=a.kernel.read_bytes()
     sys.path.insert(0,str(r/'tools'));import mkpayload
@@ -93,24 +106,36 @@ def main():
 #define EFI_XNU_CPU {1 if a.test_qemu else 256}u
 #define EFI_XNU_BOOT_CPU_TOKEN "polarisbootcpu={1 if a.test_qemu else 256}"
 ''')
+    disk_path=None
+    if a.disk_guid:
+        disk_path='\\EFI\\Polaris\\'+a.disk_version+'\\PAYLOAD.BIN'
+        with config.open('a') as f:
+            f.write('#define EFI_XNU_DISK_GUID {'+','.join(str(b) for b in a.disk_guid.bytes_le)+'}\n')
+            f.write(f'#define EFI_XNU_DISK_START {a.disk_start_lba}ULL\n#define EFI_XNU_DISK_BLOCKS {a.disk_blocks}ULL\n')
+            f.write('#define EFI_XNU_DISK_PATH {'+','.join(str(ord(c)) for c in disk_path)+',0}\n')
+    if a.efi_application:flags.append('-DPOLARIS_EFI_APPLICATION=1')
     sources=['uefi-xnu.c','uefi-xnu-ap.S','uefi-xnu-crc.c','payload.c','uefi-usb.c','uefi-usb-command.c','uefi-usb-control.c']
-    inputs=['shim/polaris/'+n for n in sources]+['shim/polaris/uefi.h','shim/polaris/uefi-xnu.h','shim/polaris/uefi-usb.h','shim/polaris/uefi-memory.h','shim/polaris/uefi-reset.h','shim/polaris/uefi-boot-options.h','shim/polaris/payload.h','tools/build-polaris-uefi-xnu.py','tools/polaris-uefi-input.h']
+    inputs=['shim/polaris/'+n for n in sources]+['shim/polaris/uefi.h','shim/polaris/uefi-xnu.h','shim/polaris/uefi-usb.h','shim/polaris/uefi-memory.h','shim/polaris/uefi-reset.h','shim/polaris/uefi-file.h','shim/polaris/uefi-boot-options.h','shim/polaris/payload.h','tools/build-polaris-uefi-xnu.py','tools/polaris-uefi-input.h']
     objects=[]
     for source in sources:
         obj=out/(Path(source).stem+'.obj');objects.append(str(obj))
         cmd=['/usr/bin/clang','--target=aarch64-unknown-windows','-ffreestanding','-fno-builtin','-fno-stack-protector','-fshort-wchar','-mgeneral-regs-only','-O2','-Wall','-Wextra','-Werror',*flags,'-I'+str(out),'-c',str(r/'shim/polaris'/source),'-o',str(obj)]
         p=subprocess.run(cmd,capture_output=True);(out/(source+'.log')).write_bytes(p.stdout+p.stderr)
         if p.returncode:raise RuntimeError('EFI module compile failed: '+source)
-    image=out/('PolarisXnuTest.efi' if a.test_qemu else 'PolarisXnuDxe.efi')
+    application=a.test_qemu or a.efi_application
+    image=out/('PolarisXnuTest.efi' if a.test_qemu else 'PolarisIos.efi' if application else 'PolarisXnuDxe.efi')
     env=dict(os.environ,ZIG_GLOBAL_CACHE_DIR=str(out/'zig-global'),ZIG_LOCAL_CACHE_DIR=str(out/'zig-local'))
-    p=subprocess.run([str(a.zig.resolve()),'build-exe',*objects,'-target','aarch64-uefi','--subsystem','efi_application' if a.test_qemu else 'efi_boot_service_driver','-O','ReleaseSmall','-femit-bin='+str(image)],env=env,capture_output=True)
+    p=subprocess.run([str(a.zig.resolve()),'build-exe',*objects,'-target','aarch64-uefi','--subsystem','efi_application' if application else 'efi_boot_service_driver','-O','ReleaseSmall','-femit-bin='+str(image)],env=env,capture_output=True)
     (out/'link.log').write_bytes(p.stdout+p.stderr)
     if p.returncode:raise RuntimeError('EFI link failed')
     manifest=dict(artifact=image.name,sha256=sha(image),bytes=image.stat().st_size,
                   kernel_sha256=sha(a.kernel),payload_sha256=sha(a.payload),payload_bytes=len(raw),
                   payload_crc32=zlib.crc32(raw),payload_C_admission=True,rebased_kernel_bytes_match=True,
                   RAM_only_XNU_loader=True,kernel_handoff=True,storage_write_api=False,NVRAM_write_api=False,
-                  reset_commands=True,reset_commands_hardware_tested=False,ready_to_boot_driver=not a.test_qemu,
+                  reset_commands=True,reset_commands_hardware_tested=False,ready_to_boot_driver=not application,
+                  selected_application=a.efi_application,disk_payload_read_only=bool(a.disk_guid),
+                  disk_guid=str(a.disk_guid) if a.disk_guid else None,disk_start_lba=a.disk_start_lba,
+                  disk_blocks=a.disk_blocks,disk_payload_path=disk_path,
                   bounded_input=input_present,input_offset=input_offset,
                   QEMU_variant=a.test_qemu,phone_compatible=not a.test_qemu,
                   kernel_CPU_affinity=1 if a.test_qemu else 256,

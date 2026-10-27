@@ -26,6 +26,10 @@ def admit(driver,qemu,ci,profile,preflight):
         not all(v is True for v in qemu['checks'].values()) or qemu['checks'].get('bounded_input_handshake') is not True or
         qemu.get('kernel_sha256')!=driver.get('kernel_sha256') or qemu.get('inputs')!=driver.get('inputs')):
         raise ValueError('matching actual EFI/XNU handoff proof required; legacy refusal is insufficient')
+    if driver.get('disk_payload_read_only') and (not qemu.get('disk_fixture') or
+        not all(qemu['checks'].get(k) is True for k in ['unique_GPT_filesystem','disk_payload_exact_read',
+                     'disk_files_closed_before_kernel','disk_read_success'])):
+        raise ValueError('disk payload requires the actual GPT/FAT read and closed-handles proof')
     fields=dict(line.split('=',1) for line in profile.splitlines() if '=' in line)
     if (ci.get('status')!='completed' or ci.get('conclusion')!='success' or
         fields.get('target_platform')!='polaris' or fields.get('machine_config')!='SWEET' or
@@ -76,7 +80,9 @@ def main():
     path=out/'polaris-original-uefi-xnu.img';path.write_bytes(image)
     record=dict(checks,artifact=path.name,sha256=sha(path),bytes=len(image),
                 RAM_only_XNU_loader=True,kernel_handoff=True,holds_before_OS_start=False,
-                holds_before_host_kernel_command=True,phone_writes=False,storage_write_api=False,NVRAM_write_api=False,
+                holds_before_host_kernel_command=not driver.get('disk_payload_read_only',False),
+                disk_payload_read_only=driver.get('disk_payload_read_only',False),
+                phone_writes=False,storage_write_api=False,NVRAM_write_api=False,
                 original_sha256=sha(a.original),driver_sha256=sha(app),kernel_sha256=sha(a.kernel),
                 payload_sha256=sha(a.payload),CI_run=ci['databaseId'],CI_head=ci['headSha'],
                 qemu_proof_sha256=sha(a.qemu_proof),preflight_sha256=sha(a.preflight),

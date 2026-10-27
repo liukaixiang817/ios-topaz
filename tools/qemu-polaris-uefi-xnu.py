@@ -30,6 +30,7 @@ def main():
     ap.add_argument('--output',required=True,type=Path)
     ap.add_argument('--seconds',type=int,default=120)
     ap.add_argument('--legacy-core-refusal',action='store_true')
+    ap.add_argument('--mtools',type=Path,help='local mtools bin for an actual GPT/FAT disk-payload test')
     a=ap.parse_args();root=Path(__file__).resolve().parents[1]
     if not 15<=a.seconds<=600:ap.error('deadline must be 15..600 seconds')
     manifest=json.loads(a.driver_manifest.read_text());app=a.driver_manifest.parent/manifest['artifact']
@@ -43,12 +44,21 @@ def main():
     esp=out/'esp/EFI/BOOT';esp.mkdir(parents=True)
     shutil.copyfile(app,esp/'BOOTAA64.EFI');shutil.copyfile(a.payload,out/'esp/PAYLOAD.BIN')
     shutil.copyfile(a.vars,out/'vars.fd')
+    disk_fixture=None
+    disk='fat:ro:'+str(out/'esp')
+    if manifest.get('disk_payload_read_only'):
+        if not a.mtools:ap.error('disk payload requires the actual GPT/FAT fixture')
+        import polaris_efi_disk_fixture
+        disk_fixture=polaris_efi_disk_fixture.create(out/'fixture.raw',app,a.payload,
+            manifest['disk_guid'],manifest['disk_start_lba'],manifest['disk_blocks'],
+            manifest['disk_payload_path'],a.mtools)
+        disk=str(out/'fixture.raw')
     cmd=[str(a.qemu.resolve()),'-M','virt,gic-version=3,virtualization=off','-cpu','cortex-a55',
          '-smp','2','-m','8G','-display','none','-monitor','none','-nic','none',
          '-serial','file:'+str(out/'serial.log'),'-qmp','stdio','-no-reboot',
          '-drive','if=pflash,format=raw,readonly=on,file='+str(a.code.resolve()),
          '-drive','if=pflash,format=raw,file='+str(out/'vars.fd'),
-         '-drive','if=none,id=esp,format=raw,readonly=on,file=fat:ro:'+str(out/'esp'),
+         '-drive','if=none,id=esp,format=raw,readonly=on,file='+disk,
          '-device','virtio-blk-pci,drive=esp','-device','virtio-gpu-pci']
     start=time.monotonic();error=None
     with (out/'qemu.log').open('wb') as err:
@@ -101,12 +111,18 @@ def main():
                       bounded_input_handshake='QEMU_INPUT_BRIDGE=1' in text and 'POLARIS UEFI INPUT: seq=2 down=0' in ring,
                       no_panic='panic(cpu ' not in ring and 'panic(cpu ' not in text,
                       no_stress_failure='SMP STRESS FAIL' not in ring)
+    if manifest.get('disk_payload_read_only'):
+        checks.update(unique_GPT_filesystem='DISK_ESP_MATCHES=0x0000000000000001' in text,
+                      disk_payload_exact_read=f'DISK_READ_BYTES=0x{manifest["payload_bytes"]:016x}' in text,
+                      disk_files_closed_before_kernel='DISK_FILES_CLOSED=0x0000000000000002' in text,
+                      disk_read_success='DISK_READ_STATUS=0x0000000000000000' in text)
     record=dict(passed=all(checks.values()) and error is None,checks=checks,error=error,
                 diagnostic_legacy_only=a.legacy_core_refusal,release_handoff_admitted=not a.legacy_core_refusal and all(checks.values()) and error is None,
                 full_iOS_boot_proven=False,physical_USB_proven=False,SDM845_emulated=False,
                 app_sha256=sha(app),payload_sha256=sha(a.payload),kernel_sha256=sha(a.kernel),
                 inputs=manifest['inputs'],seconds=time.monotonic()-start,command=cmd,
                 code_sha256=sha(a.code),vars_template_sha256=sha(a.vars))
+    record['disk_fixture']=disk_fixture
     (out/'result.json').write_text(json.dumps(record,indent=2)+'\n')
     print(json.dumps({k:record[k] for k in ['passed','checks','diagnostic_legacy_only','seconds','error']},indent=2))
     return 0 if record['passed'] else 1

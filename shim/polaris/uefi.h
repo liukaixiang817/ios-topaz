@@ -36,7 +36,8 @@ struct efi_boot {
     efi_status (*stall)(uint64_t);
     efi_status (*watchdog)(uint64_t,uint64_t,uint64_t,const uint16_t *);
     void *connect,*disconnect;
-    void *open_protocol,*close_protocol,*open_information,*protocols,*locate_buffer;
+    void *open_protocol,*close_protocol,*open_information,*protocols;
+    efi_status (*locate_buffer)(uint32_t,const efi_guid *,void *,uint64_t *,efi_handle **);
     efi_status (*locate_protocol)(const efi_guid *,void *,void **);
     void *install_multiple,*uninstall_multiple,*crc32,*copy_mem,*set_mem;
     efi_status (*create_event_ex)(uint32_t,uint64_t,void (*)(void *,void *),void *,const efi_guid *,void **);
@@ -69,6 +70,7 @@ _Static_assert(offsetof(struct efi_boot,watchdog)==256,"SetWatchdogTimer");
 _Static_assert(offsetof(struct efi_boot,load_image)==200,"LoadImage");
 _Static_assert(offsetof(struct efi_boot,create_event_ex)==368,"CreateEventEx");
 _Static_assert(offsetof(struct efi_boot,locate_protocol)==320,"LocateProtocol");
+_Static_assert(offsetof(struct efi_boot,locate_buffer)==312,"LocateHandleBuffer");
 _Static_assert(offsetof(struct efi_system,boot)==96,"BootServices");
 _Static_assert(offsetof(struct efi_runtime,get_variable)==72,"GetVariable");
 _Static_assert(offsetof(struct efi_runtime,reset_system)==104,"ResetSystem");

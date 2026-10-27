@@ -34,7 +34,47 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### 0060 read-only original boot-variable inventory, in progress
+### 0061 selected EFI application and read-only disk payload, in progress
+
+- Original UEFI/liveiOS USB logs/screens/contact and directFASTBOOT reset are
+  physically proven in0058/0059/0060. Phone read-only product query confirms
+  expected polaris FASTBOOT again in0061. No installation writes yet.
+- New selected EFI APPLICATION variant runs only when selected, preserving
+  normal original BDS behavior. Paired RAM-DXE trial can read the same fixed
+  versioned payload file, and waits for host download when that file is absent.
+- Disk reader matches one exact HD-GPT GUID/start/size, refuses duplicates,
+  reads only fixed path in<=64KiB chunks, checks EOF and closes both file/root
+  before kernel. Existing CRC/copy-plan checks retained. No write APIs.
+  Original ESP GUID4eaa7858/start1703936/76801blocks rechecked against backup
+  GPT. Its actual EFI device path is still unproven; next RAM trial reads it.
+- Generic actual EDK2/QEMU GPT/FAT disk run0001 PASS18/18 in37.743s: selected
+  EFI app read payload from a new local regular-file disk, closed handles,
+  started XNU/PID1/fourVMchildren and inputACK. SDM845 not emulated.
+  Local mtools used only new offline fixture; no host physical disks.
+- Initial new-driver link failed__chkstk from4KiB stack inventory; changed
+  inventory to bounded static storage, rebuilt qemu-driver0002 successfully.
+  Native reader ASan/UBSan tests cover wrongGUID/geometry/duplicateFS, partial
+  reads/EOF/error and handle cleanup. All20 selected native/host tests PASS2.716s.
+- Phone driver22a7d7e3 (398336bytes) compiled; selected app4c95451c compiled (398336bytes).
+  Packager and actual originalEDK2 consumer check precede physical RAM trial.
+  Same proven kernelCI40379691170/source920cffdf reused. Root remains immutable
+  plus512MiB volatileCOW: full persistent iOS data is still NOT implemented.
+
+### 0060 read-only original boot-variable inventory (completed)
+
+- UPDATE sourceb409738 COMMITTED/PUSHED. Physical0060 reached lockscreen,
+  remote swipe reached home with all app icons; captures0001/0002 visually
+  inspected. Then repaired PON reset from LIVE iOS directly reached expected
+  polaris FASTBOOT, no Android/ADB/human fallback. Exact proof in
+  reset-fastboot-live-0001/verification.json. Phone currentlyFASTBOOT. This
+  completes basic RAM iOS + liveUSB/log/screen/contact + autonomous reset
+  loop. No disk/UEFI-variable installation has started.
+- Host-only mtools4.0.49 built successfully inresearch/host-tools localprefix,
+  version checked; mtools-build-proof.json. No system package install, no
+  physical disk use. Existing immutable16GiBHFSX is already JOURNALLED
+  (attrs80002100,journalInfoBlock129), fromverifiedroot-first.bin. Persistent
+  writable runtime would still need dedicated file/extent ownership guard
+  plus actual sync/flush tests, not simply removingRAMCOW or enablingrawUFS.
 
 - PHYSICAL0060 inventory PASS: original-boot-options-0001 has1632bytes/15
   variables, exact BootOrder0..11 (24bytes,attrs7), BootCurrent1(attrs6),

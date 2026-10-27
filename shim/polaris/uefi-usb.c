@@ -156,6 +156,7 @@ efi_status polaris_efi_usb_serve_control(struct efi_system *st,const uint8_t *lo
         if((status&EFI_ERROR)||!s.screen)return status?status:EFI_ERROR|9;
     }
     struct polaris_usb_diag d={&s,transmit,stage,0,0};report("USB_STEP=",3);
+    if(control&&control->autoboot)control->autoboot(control->context);
     for(;;){
         union polaris_usb_event data={0};uint32_t event_type=0;uint64_t size=sizeof(data);
         status=s.usb->event(&event_type,&size,&data);

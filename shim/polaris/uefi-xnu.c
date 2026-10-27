@@ -6,6 +6,9 @@
 #include "uefi-boot-options.h"
 #include "uefi-memory.h"
 #include "uefi-xnu-config.h" /* exact payload bytes/CRC, symbol offsets, board */
+#if defined(EFI_XNU_DISK_GUID)
+#include "uefi-file.h"
+#endif
 struct video {uint64_t base,display,stride,width,height,depth;};
 struct args {uint16_t revision,version;uint64_t va,pa,size,top;struct video video;
     uint32_t machine;uint64_t tree;uint32_t tree_bytes;char cmdline[608];uint64_t flags,actual;};
@@ -121,6 +124,26 @@ static int finish(void *context)
        EFI_XNU_LOG_TOTAL_OFFSET>p->kernel_end-p->virt_base-8)return 0;
     load_state=2;report("RAM_PAYLOAD_VALID=",1);return 1;
 }
+#if defined(EFI_XNU_DISK_GUID)
+static int disk_payload(void)
+{
+    static const uint8_t guid[16]=EFI_XNU_DISK_GUID;
+    static const uint16_t name[]=EFI_XNU_DISK_PATH;
+    static struct polaris_efi_disk_result r;
+    int ok=polaris_efi_read_disk(system_table->boot,guid,EFI_XNU_DISK_START,EFI_XNU_DISK_BLOCKS,
+                               name,payload,EFI_XNU_PAYLOAD_BYTES,&r);
+    report("DISK_FS_COUNT=",r.filesystems);report("DISK_ESP_MATCHES=",r.matches);
+    report("DISK_READ_STATUS=",r.status);report("DISK_READ_BYTES=",r.bytes);report("DISK_FILES_CLOSED=",r.closed);
+    if(r.matches==1&&r.path_bytes){
+        text("DISK_ESP_PATH=");
+        for(uint64_t i=0;i<r.path_bytes;i++){
+            char b[3]={"0123456789abcdef"[r.path[i]>>4],"0123456789abcdef"[r.path[i]&15],0};text(b);
+        }text("\r\n");
+    }
+    if(!ok||!begin(0,EFI_XNU_PAYLOAD_BYTES))return 0;
+    received=EFI_XNU_PAYLOAD_BYTES;return finish(0);
+}
+#endif
 static int prepare_boot(void *context)
 {
     (void)context;if(load_state!=2)return 0;
@@ -321,9 +344,18 @@ static efi_status admission(void)
 #endif
     return 0;
 }
+static void disk_autoboot(void *context)
+{
+#if defined(EFI_XNU_DISK_GUID)
+    if(load_state==2&&prepare_boot(context))boot_kernel(context);
+#else
+    (void)context;
+#endif
+}
 static struct polaris_usb_control controls={.begin=begin,.write=write_payload,.finish=finish,
     .prepare_boot=prepare_boot,.boot=boot_kernel,.prepare_reset=prepare_reset,.reset=reset,
-    .state=state,.logs=logs,.running=running,.touch=touch,.input_status=input_status,.boot_options=boot_options};
+    .state=state,.logs=logs,.running=running,.touch=touch,.input_status=input_status,.boot_options=boot_options,
+    .autoboot=disk_autoboot};
 #if defined(POLARIS_EFI_TEST_QEMU)
 struct file {
     uint64_t revision;
@@ -334,6 +366,9 @@ struct file {
 struct fs {uint64_t revision;efi_status (*open)(struct fs *,struct file **);};
 static int test_file_payload(void)
 {
+#if defined(EFI_XNU_DISK_GUID)
+    return disk_payload();
+#else
     static const efi_guid loaded={0x5b1b31a1,0x9562,0x11d2,{0x8e,0x3f,0,0xa0,0xc9,0x69,0x72,0x3b}};
     static const efi_guid filesystem={0x964e5b22,0x6459,0x11d2,{0x8e,0x39,0,0xa0,0xc9,0x69,0x72,0x3b}};
     static const uint16_t name[]={'\\','P','A','Y','L','O','A','D','.','B','I','N',0};
@@ -347,6 +382,7 @@ static int test_file_payload(void)
     efi_status tail=file->read(file,&extra,&byte);file->close(file);
     if((s&EFI_ERROR)||(tail&EFI_ERROR)||size!=EFI_XNU_PAYLOAD_BYTES||extra)return 0;
     received=size;return finish(0);
+#endif
 }
 static void test_monitor(void)
 {
@@ -384,7 +420,12 @@ static void ready(void *event,void *context)
         if(valid&&prepare_boot(0)){boot_kernel(0);test_monitor();}
     }
 #else
-    if(!(s&EFI_ERROR))report("USB_BRIDGE_RESULT=",polaris_efi_usb_serve_control(system_table,log_buffer,&log_bytes,(void*)&map_snapshot,map_bytes,report,&controls));
+    if(!(s&EFI_ERROR)){
+#if defined(EFI_XNU_DISK_GUID)
+        report("DISK_PAYLOAD_VALID=",disk_payload());
+#endif
+        report("USB_BRIDGE_RESULT=",polaris_efi_usb_serve_control(system_table,log_buffer,&log_bytes,(void*)&map_snapshot,map_bytes,report,&controls));
+    }
 #endif
     for(;;)system_table->boot->stall(1000000);
 }
@@ -392,7 +433,7 @@ efi_status EfiMain(efi_handle image,struct efi_system *st)
 {
     if(!st||st->hdr.signature!=UINT64_C(0x5453595320494249)||!st->boot||st->boot->hdr.size<376)return EFI_ERROR|2;
     system_table=st;driver_image=image;void *event=0;
-#if defined(POLARIS_EFI_TEST_QEMU)
+#if defined(POLARIS_EFI_TEST_QEMU) || defined(POLARIS_EFI_APPLICATION)
     (void)event;(void)controls;ready(0,0);
 #endif
     static const efi_guid group={0x7ce88fb3,0x4bd7,0x4679,{0x87,0xa8,0xa8,0xd8,0xde,0xe5,0x0d,0x2b}};
