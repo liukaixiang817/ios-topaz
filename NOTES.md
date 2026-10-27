@@ -34,6 +34,59 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0063 runtime ownership/shutdown policies (offline only)
+
+- Source813c110 from0062 is COMMITTED/PUSHED. Phone's expected Polaris
+  FASTBOOT was reverified12:02:12UTC, recorduefi-ios-0063/connection-0001.json.
+  This continuation performed no phone boot, allocation, pin or partition write.
+  KernelCI40379691170/a3ec72d6 and0062 images remain the live-tested baseline.
+- Added tools/polaris_runtime_owner.py and shim/polaris/runtime-owner.h:
+  independently parse a pinned root-owned0600 one-link ext4 inode, generation,
+  UUID, clean journal/orphan state, exact indexed extent nodes and complete
+  map; reject holes/unwritten/duplicate/metadata aliases/outside partition.
+  Bind partition start/count externally to verified GPT; require a COMPLETE
+  disjoint preserved-base map before offline WRITE/SYNC policy admits anything.
+  Readback compares only owned inode256bytes (neighbors may change), full
+  dedicated extent nodes, and stable group-table pointers. CRC16 descriptor
+  and CRC32C metadata layouts independently checked against e2fsprogs1.47.4.
+  Consumer validates applicable superblock/group/inode/extent checksums too.
+- Added runtime-quiesce.h model: canonical single in-flight I/O, sticky errors
+  on failed/short/unknown completion, no DMA-release assumption on timeout,
+  real-VFS-count prerequisite, stop new I/O before final cache sync, match
+  boot-cookie/sequence/mode before reset permission. Cannot reinitialize an
+  active/failed object or use a timeout/ACK to fabricate safe shutdown.
+  Producer/consumer mailbox fields occupy separate128byte lines.
+- FINAL CHECKS PASS:5 native tests3.893s (wall3.952s), ASan+UBSan. Actual new
+  ordinary128MiB ext4 fixtures contain fragmented32MiB runtime plus preserved
+ 1MiB base; independent e2fsck -fn passes BEFORE tests. Both32byte/GDT CRC16
+  (phone scheme) and64byte/metadata CRC32C layouts exercised,5000 snapshot
+  mutations plus5000truncations perfixture, byte/length/direction/opcode/write
+  boundaries, protected-base overlap, read errors, partial writes, busy mounts,
+  flush failures and stale shutdown tokens. Native tests never write fixtures.
+  AArch64 freestanding owner/quiesce smoke objects also compile Werror.
+  Evidenceuefi-ios-0063/policy-final-checks-0001/{result.json,tests.log}.
+- FIRST privatefixture0001 was invalid after debugfs changed i_generation
+  without updating extent checksum seed (e2fsck -fn exit4). Preserved in
+  owner-fixture-0001/superseded.json. Corrected formal CRC32C fixture retains
+  allocator generation; CRC16 fixture tests nonzero generation. New checksum
+  admission catches this mistake. Do not use old private smoke as release proof.
+- IMPORTANT LIMIT: these are offline policy components, NOT wired to native
+  UFS/kernel/EFI yet. No persistent root exists and real XNU shutdown/UFS
+  durability are NOT proven. Do not allocate/pin runtime or enable writes yet.
+  Next implement native kernel/EFI mailbox, exclusive driver admission and
+  standard reboot_kernel() drain, then actual EFI/XNU emulator tests BEFORE
+  a small owned-file physical write/flush/reboot trial and full runtime copy.
+  Source audit: reboot_kernel() may proceed after busy/unmount failures;
+  vfs_shutdown_finished() means attempt completed, not zero remaining mounts.
+  Must check mount_getvfscnt()==0/count_busy_buffers()==0 and real final device
+  sync; never simply ACK terminalPE hook or call host_reboot on missing PM root.
+  Existing RAM-only direct PON reset/1800s lease must remain RAM-only.
+- Alternative independent next work: original-phone menu control via recoverable
+  RAM keyboard/USB harness. Do not guess fixed UP counts (prober entries can
+  differ) or boot original menu without a verified autonomous recovery path.
+  Separate installed EFI input protocol is safer than changing an existing
+  ReadKeyStroke pointer: original SimpleInit disables keyboards if it changes.
+
 ### 0062 disk EFI, recovery and menu (artifacts underuefi-ios-0062)
 
 - LATEST MENU INSTALLED, still TRIAL: only478byte /simpleinit.static.uefi.cfg
