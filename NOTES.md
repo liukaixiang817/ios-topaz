@@ -36,6 +36,63 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### 0062 selected disk-application chain, in progress (artifacts under0061)
 
+- LATEST PHYSICAL UI PASS:0062boot0002 selected DISK EFI application reached
+  iOS. Bound USB screenshots0003/0004/0005/0006 visually confirm unlock to home
+  with icons, open Settings, scroll to a different list, return home with icons.
+  All four contact sequences consumed/ACKed without errors; image evidence is
+  separate from ACK. physical-selected-app-UI-proof.json binds captures/actions.
+  Screenshot0002 black was explicit display-off; bottom swipe woke it normally.
+  Phone remains live0062boot0002, use bound UEFI CLI; do not restart prematurely.
+  Current writes remain512MiB VOLATILE RAMCOW, NOT full persistent installation.
+- Original7.9MiB SimpleInitMain itself runs under generic EDK2/QEMU. In0002 its
+  unchanged Continue Boot default executed normally. In0003 the new static
+  sidecar iOS16(trial) entry renders and keyboard selects it; fixture ONLY sets
+  timeout=-1 to inspect it. Enter selects entry then focuses Boot; second Enter
+  now sent to launch. Inspect serial/result, do not infer success from key ACK.
+  Physical sidecar/volume menu and30min lease expiry still unproven. No sidecar
+  installed on phone. This emulates common EFI/menu logic, not SDM845 PMIC keys.
+  Heartbeat updated to recognize active0062 UEFI boot before FASTBOOT discovery.
+
+- CURRENT PHONE RUNNING0062boot0002, notFASTBOOT: selectedapplication actually
+  reaches kernel-entered; capture0001 logshows ownapplicationXNUadmission0,
+  uniqueESP/32703280payloadbytes/closed2handles, PSCItarget0x100/status0,
+  iOSRoot mounted. LiveUSBlogs/screenPASS. ParentCHAINlog is not part ofchild
+  logring; childimageboot and source-bound chain proveactualStartImage reached
+  it. BasicGUI/remoteUI for this selected-app boot still pending. Keep it
+  running, use BOUNDUEFI captures while booting (not FASTBOOT-only discovery).
+  CurrentRAMhostlease1800seconds renews onsuccessfulhostcommands; periodic
+  targeted reads duringactivework are allowed, oldcontinuousobserverpaused.
+
+- PHYSICAL RESCUE PASS:0062boot0001 intentionally missingV0062app produced
+  admission-refused, logs/screen bothread, imagevisuallyinspected; PONcommand
+  directly returnedactualexpectedFASTBOOT (0.017s query), noAndroid/ADB/keys.
+  physical-rescue-proof.json binds capture/reset. This proves missing-app
+  recovery, not the30minlease or arbitraryhardware/panic recovery.
+- Then knownRAMrecovery appended ONLYV0062/{PolarisIos.efi,PAYLOAD.BIN,BUILD.JSON}.
+  FullESP before/aftercaptured; all98previousfiles and3new hashesverified.
+  userdataunmounted/blockRO/headerexactfresh0062; GPT unchanged. Evidence
+  esp-additive-physical-0001/result.json. ExistingV0061 and95originalWindows
+  files remain. No menu/default/firmware/variable changes.
+-0062boot0002 sent afterrecheckingactualFASTBOOT: realdisk-selectedapplication
+  chain -> USB -> XNU is nowunder test. selected-app-capture-0001 running;
+  inspect actualstate/log/screen before assuminghandoff. Do not restart early.
+  preflight-reuse-after-staging.json explicitly binds currentfreshrootproof;
+  noAndroidoruserdatawrite since it. Kernel root remainsvolatile512MiBCOW.
+
+- NEW PHYSICAL PROGRESS: user re-enteredFASTBOOT; own product/USB serial
+  verified2026-10-27T10:26:04Z. Fresh0062RAMrecovery preflight complete:
+  full16GiBSHA689a8cd1 and all182extent metadata EXACTLY match payload baseline;
+  sixGPT/fourcritical original partitions match, ESP exact0061post-addition
+  SHA356764ac. Ext4header only free-block/inode accounting,mount/write history,
+  lifetime writes changed; RECOVER cleared,state clean. IndependentreviewJSON
+  passes, no replay/repair. ReturnedFASTBOOT automatically.
+- Matching physicalchain image packaged retaining81FFS; actual originalEDK2
+  decoded27680456bytes PASS. RAMboot0001 sent after recheckingFASTBOOT, deliberately
+  targets absentV0062selectedapp to verify failureUSBrescue (no iOS start intended).
+  rescue-capture-0001 targeted logs/screen currently running. Next inspect
+  actualadmission-refused/logs, commandFASTBOOT and VERIFYactualproduct before
+  adding anyV0062files. Do not infer reset fromACK. Oldobserver remainspaused.
+
 - LATEST candidate underuefi-ios-0062:30minRAMhost lease/admission-rescue
   implemented and compiled. qemu-app1998be58, qemu-chain86e38347, physical
   appcb6a5ef5 and chainb2599d58. Actual EDK2/GPT/FAT chain22checks PASS37.704s;
