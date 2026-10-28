@@ -34,6 +34,78 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0083 actual GPU+panel-copy bottleneck PROVEN; cached control LEFT RUNNING
+
+- physical-cached-surface-GPU-panel-proof.json binds actual viewed lock/home
+  (all3 app/3dock icons)/Settings/scroll images, ALL4096 GPU/GMEM/icon pixels,
+  SMP2/32callbacks/remote16 and20real consumed gestures. No runtimefault or
+  quarantine. Current0083/phone-gpu-wc-0083-control-0001 remains in Settings;
+  control0083/control-gpu-phone-control.py, unique outputnames, last command
+  around03:22UTC. No active CI/model, all workers finished. No disk writes.
+- Actual25 new sparse EAGL frames median45.493ms (33.620..62.963), glFlush
+  24.853ms, frame_end12.434ms. Prior old cache baseline165.844ms;0081GEMfix
+  47.319ms. Frame timings not rolling or hardware scanout FPS.
+- NEW actual panel meter during same20 gestures:31 windows,505 completed
+  copies/31.300385s =16.134 copies/s. Per-window mean CPU copy median15.000ms
+  (14.836..15.193), current applied cadence median29.650ms. This is actual
+  completed writes into panel memory, NOT hardware VSYNC/unique scanout FPS.
+  It confirms remaining CPU scaled gather and2xcopy cadence costs in addition
+  to45ms rendering/synchronous submissions. Two cores working !=60FPS.
+- SurfaceWC1 experiment is REJECTED; actual startup panel-copy walltimes
+  592.969..609.524ms despite valid pixels. Safely ended via real native drain
+  and independently checked FASTBOOT. Cached-control restored SAME kernel/
+  bundle/CPU/ADT with surfaceWC0/GEMWC1. Do not retry WC surfaces as a speedup.
+- NEXT offline analyze/optimize cached-source CPU gather (actual15ms), then
+  synchronous render submissions. Preserve every barrier/unknownDMA rule;
+  no arbitrary frequency writes. Native canvas is explicitly refused by
+  current Polaris framebuffer; do not bypass via bootarg without new design.
+  Mesa sysmem has a real path, but acceptance child forcesGMEM; a desktop
+  sysmem trial would need separate actual sysmem pixel evidence, not reuse
+  a GMEM PASS as sysmem proof. Avoid tiny unvalidated physical reboot trials.
+
+### 0083 owned-surface WC REJECTED; cached-surface control ACTIVE
+
+- Physical0083 mode1 passed actual WC SURFACE imports (16KiB acceptance and
+  11239424B real desktop surfaces), ALL4096 GPU/shared/GMEM/icon/livecaller
+  pixels and acceptance6error0. But new actual PANEL meter caught startup
+  copies592.969..609.524ms each. physical-surface-WC-regression-proof.json
+  preserves these3 walltime samples; preemption included, not a controlled
+  causal isolation yet. Never accept mode1 based on faster GPU time alone.
+- Bad mode ENDED through actual native shutdown/RAM_DRAINED, independently
+  verified true Polaris FASTBOOT. No rawfallback/Android/physical keys/writes.
+- CURRENT ACTIVE PHONE0083/phone-gpu-wc-0083-control-0001. Original UEFI RAM
+  sent around03:12UTC, kernel-start-0001 completed. Do NOT resend boot.
+  Use0083/control-gpu-phone-control.py (NOT non-control helper/old0081).
+  SAME970aa5e kernel/graphics/tree/CPU topology; GEM WC1, surfaceWC0, retains
+  the proven0081 improvement and adds actual panel-copy telemetry only.
+- NEXT actual capture until lock/home, then same20 Settings gestures. Read
+  both EAGL and new real PANEL PERF after initial capture. No new CI needed.
+  Need quantify cached-surface presentation before choosing next change.
+  Per-pixel reads of NC source are suspected; do not retry surfaceWC1 without
+  a bounded source-read fix and evidence. Fresh native BGRA trial stays OFF.
+
+### 0083 physical owned-surface WC trial ENDED; complete result above
+
+- New source970aa5eb1e585fa6f786f8fad43b743c9719ab45 fullCI40623276592
+  PASSED. Exact artifact/profile/CRC/SHA verified kernel
+  9cdfb2c8511c14a46107d4fe27b0f5367ae6ac533d9267224df5e9fd62d5e615.
+  Actual native cached/WC/bulkzero/twoalias/dualCPU dirtyRAMroot and native
+  drain23/23 passed37.686s. 0082same proof also passed23/23 in37.724s; its
+  unmeasured physical candidate was deliberately NOT booted.
+- 0081 improved47ms trial ENDED through real native shutdown/RAM_DRAINED,
+  then independently verified actual expected Polaris FASTBOOT. No rawfallback,
+  physical keys, Android, storage/NVRAM writes. Preserve all20gesture evidence.
+- CURRENT ACTIVE PHONE0083/phone-gpu-wc-0083-0001, original Mindows UEFI RAM
+  image sent around03:03UTC, kernel-start-0001 in progress. Do NOT resendboot
+  or use old0081/0082 control. Use0083/control-gpu-phone.py and unique outputs.
+  Both WC flags1, original graphics bundle/physicalADT/twoCPU/read-only base
+  preserved, same512MiB RAMCOW. Original EDK2 decoder and81FW verified.
+- NEXT real capture until actual lock/home. Require actual WC SURFACE import,
+  GPU/sharedpixel/GMEM/icon PASS; then viewed home+Settings and same20gesture.
+  Analyze new EAGL samples AND real PANEL PERF copy meter after initialcapture.
+  WC may slow the existing CPU per-pixel gather: not yet physically measured.
+  Must not call lower GPU time physical60FPS, nor leave a worse display mode.
+
 ### 0083 panel-copy observability before next physical WC trial
 
 - 0082source89dd987eb7459617f14c0f6e99a8e22f90cef833 pushed; full CI

@@ -76,6 +76,15 @@ call a WC trial successful without nonzero real WC telemetry, GPU pixel
 correctness and actual desktop/UI evidence. Private primary-source SHA binding
 and the preserved failed regression are under0081.
 
+Actual0081/0083 GPU drawing with the correct GEM WC selector passed pixels and
+reduced sparse rendering-frame medians from165.844ms to47.319/45.493ms. The
+physical panel still uses CPU scaled copying: actual0083 controlled scrolling
+completed505 copies in31.300385s, about16.13 copies/s, with15ms mean-copy
+window median. These are not hardware scanout FPS. A separate owned-BGRA WC
+surface trial passed pixels but made startup CPU copies about600ms; it was
+rejected and safely restored to cached surfaces. Do not generalize private-GEM
+WC to CPU-read display surfaces or call GPU initialization60FPS.
+
 ## Where to look
 
 Paths in this table are relative to the corresponding reference checkout.
