@@ -34,6 +34,43 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0092 diagnostic source READY: bounded complete records + owned live GPUCC reads
+
+- PHONEstillactualPolaris FASTBOOT, readonlyconfirmed08:37UTC. No newphysical
+  boot/write. All0091/90/89 trialsended; noactiveUSB/model. CPU/GPU default
+  behaviorUNCHANGED. Nextcandidate willmeasure liveGMUrequests/PLL/RCGbefore
+  consideringGPUstockDVFS; no GPUclock/bandwidth writes added.
+- Profile0887 splitsSTAGEintoPERF/WORK/EXEC/DONE/BYTES andMETHODintoPERF/AUTH/
+  WORK, allmaximal64-bit formattedrecords<=255B(includingnewline), avoiding
+  actualnativeconsole truncation. Hostjoin strictlysameend_us/kind, every
+  partonce; missing/duplicate/orphan/mixed/overlappingfields REFUSED. Legacy
+  completeprotocol retained. 9parsertests includingallpartdrop/duplicatepass.
+- Existingpolarisperf1+desktopkind2, existinggpuLock successful2sflush ONLY:
+  fixedROsnapshot18registerreads: ownGMU ACK/PERF/BW/RETURN, thenTWO sevenword
+  ownGPUCC snapshotsRCG101c/1020,PLL0 MODE0/L4/FRAC38/USERc/OP2c. Guardrequires
+  existingready/completed+idle/halted/!keep_live andsame500mslease. No caller
+  offsets, newMMIOmap, HWwrite, counterprogramming, IRQack, cache/fence/readiness
+  change. Partialreadmaskexplicit, notclockproof. Outputs3shortsameendrecords.
+  This is register-derivedconfiguredrate, not instantGPUbusy/oscilloscopeHz.
+- FixedoriginalMiCode c7cb50c1 clockalpha/RCG sources re-fetched viaGitHubAPI,
+  GitblobSHA andlocalfullbytes matched; evidence0092/primary-clock-source-check.
+  OwnGPUCCCRCdivparentmap fromsamepinnedvendor alreadyreviewed. Unknownparent/
+  changedtwo-passsnapshot/unlockedPLL/updateinflight mustreject rate inference.
+- Appleclang27/fullrealCIheaders5TUsPASS. Exact2-filepatch0offset0fuzz/mirrors
+  PASS. Runtimeprivateheaderreplacement exactSHAupdated, noIDL/headerinterface
+  changes, original17IDL/publicchecks retained. 20localASan/UBSan/native-meter/
+  fixedreadcallbacks/cache/RO/parser/IIGchecksPASS3.361s. Initialhostmeter
+  extraction lacked declarationofnewROreader andfailed; correctedfixture
+  explicitlyreturnsfalse andassertsok0, separateactualreaderfunctionmock
+  tests18fixedreads/all18partialfailures/invalidreadystate/nooverwrite. This
+  isNOTphysicalclockevidence. FullCI/model/physical stillpending.
+- NEXTcommit/push once(nativechangejustifiesCI), verifyfullCI/source/profile/
+  artifactCRC/SHA, actualnative4models, read-onlyownclockdecoderwithstrict
+  sourcebinding/negativefixtures, thennewRAMdiagnosticwithCPUstockpolicyheld
+  equalto0091+sameGPU/ADT4big/WC. Don'tbootuntilallready. NoGPUOPPchangebefore
+  actualROproof. Bundlecompletephase/counterdiagnosis inthisoneboot; donot
+  repeatstandaloneCPU/GUI/marker tests beyondautomaticacceptance+neededscroll.
+
 ### 0091 physical stock CPU A/B + native restore COMPLETE; next GPU execution/bandwidth
 
 - CURRENT PHONE: independentactualexpectedPolaris FASTBOOT verified08:29UTC

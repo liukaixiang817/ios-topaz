@@ -1,0 +1,89 @@
+--- a/iokit/Kernel/arm/PolarisGPU.cpp
++++ b/iokit/Kernel/arm/PolarisGPU.cpp
+@@ -30,6 +30,7 @@
+ #if defined(POLARIS_RAM_ONLY)
+ extern "C" void polaris_cpu_performance_activity(void);
+ extern "C" bool polaris_gpu_last_submit_us(uint32_t,uint64_t *);
++extern "C" bool polaris_gpu_clock_snapshot(uint32_t *,uint32_t);
+ #define GPU_BUFFERS 4096u
+ #define GPU_MAX_BO (128u << 20)
+ #define GPU_MAX_BYTES (384ull << 20)
+@@ -295,10 +296,25 @@
+ {
+     PolarisStageMeter *m=&gpuStageMeter;if(!m->calls)return;
+     uint64_t ns;absolutetime_to_nanoseconds(ended,&ns);
+-    IOLog("POLARIS GPU STAGE PERF: end_us=%llu window_us=%llu submits=%llu rejected=%llu core_missing=%llu validation_us=%llu cache_pre_us=%llu submit_us=%llu cache_post_us=%llu prior_us=%llu ring_us=%llu execute_idle_us=%llu visibility_us=%llu halt_us=%llu postcheck_us=%llu prebytes=%llu postbytes=%llu WCpre=%llu WCpost=%llu\n",
+-        ns/1000,polaris_gpu_elapsed_us(m->began,ended),m->calls,m->rejected,m->core_missing,
+-        m->validation,m->pre,m->submit,m->post,m->core[0],m->core[1],m->core[2],
+-        m->core[3],m->core[4],m->core[5],m->prebytes,m->postbytes,m->wcpre,m->wcpost);
++    /* The real console truncates a record at255B. Keep every part shorter
++     * even with UINT64_MAX fields; the host requires all matching end IDs. */
++    IOLog("POLARIS GPU STAGE PERF: end_us=%llu window_us=%llu submits=%llu rejected=%llu core_missing=%llu\n",
++        ns/1000,polaris_gpu_elapsed_us(m->began,ended),m->calls,m->rejected,m->core_missing);
++    IOLog("POLARIS GPU STAGE WORK: end_us=%llu validation_us=%llu cache_pre_us=%llu submit_us=%llu cache_post_us=%llu\n",
++        ns/1000,m->validation,m->pre,m->submit,m->post);
++    IOLog("POLARIS GPU STAGE EXEC: end_us=%llu prior_us=%llu ring_us=%llu execute_idle_us=%llu\n",
++        ns/1000,m->core[0],m->core[1],m->core[2]);
++    IOLog("POLARIS GPU STAGE DONE: end_us=%llu visibility_us=%llu halt_us=%llu postcheck_us=%llu\n",
++        ns/1000,m->core[3],m->core[4],m->core[5]);
++    IOLog("POLARIS GPU STAGE BYTES: end_us=%llu prebytes=%llu postbytes=%llu WCpre=%llu WCpost=%llu\n",
++        ns/1000,m->prebytes,m->postbytes,m->wcpre,m->wcpost);
++    uint32_t values[19]={0};bool observed=polaris_gpu_clock_snapshot(values,19);
++    IOLog("POLARIS GPU CLOCK RO: end_us=%llu ok=%u valid=%x ACK=%x PERF=%x BW=%x RETURN=%x\n",
++        ns/1000,observed,values[0],values[1],values[2],values[3],values[4]);
++    IOLog("POLARIS GPU CLOCK A: end_us=%llu CMD=%x CFG=%x MODE=%x L=%x FRAC=%x USER=%x OP=%x\n",
++        ns/1000,values[5],values[6],values[7],values[8],values[9],values[10],values[11]);
++    IOLog("POLARIS GPU CLOCK B: end_us=%llu CMD=%x CFG=%x MODE=%x L=%x FRAC=%x USER=%x OP=%x\n",
++        ns/1000,values[12],values[13],values[14],values[15],values[16],values[17],values[18]);
+     *m=(PolarisStageMeter){};
+ }
+ 
+@@ -336,9 +352,12 @@
+     uint64_t ns;absolutetime_to_nanoseconds(ended,&ns);
+     for(unsigned n=0;n<9;n++) {
+         const PolarisMethodBin *b=&m->bins[n];if(!b->calls)continue;
+-        IOLog("POLARIS GPU METHOD PERF: end_us=%llu window_us=%llu kind=%s calls=%llu errors=%llu auth_us=%llu dispatch_us=%llu lock_us=%llu body_us=%llu total_us=%llu max_us=%llu\n",
+-            ns/1000,polaris_gpu_elapsed_us(m->began,ended),names[n],b->calls,b->errors,
+-            b->auth,b->dispatch,b->lock,b->body,b->total,b->maximum);
++        IOLog("POLARIS GPU METHOD PERF: end_us=%llu window_us=%llu kind=%s calls=%llu errors=%llu\n",
++            ns/1000,polaris_gpu_elapsed_us(m->began,ended),names[n],b->calls,b->errors);
++        IOLog("POLARIS GPU METHOD AUTH: end_us=%llu kind=%s auth_us=%llu dispatch_us=%llu lock_us=%llu\n",
++            ns/1000,names[n],b->auth,b->dispatch,b->lock);
++        IOLog("POLARIS GPU METHOD WORK: end_us=%llu kind=%s body_us=%llu total_us=%llu max_us=%llu\n",
++            ns/1000,names[n],b->body,b->total,b->maximum);
+     }
+     polaris_gpu_stage_flush(ended);
+     *m=(PolarisMethodMeter){};
+--- a/bsd/dev/polaris_a630_runtime.h
++++ b/bsd/dev/polaris_a630_runtime.h
+@@ -167,6 +167,30 @@
+     for(unsigned n=0;n<5;n++)stages[n]=a630_submit_us(a630_client_submit.timing[n]);
+     stages[5]=a630_submit_us(a630_client_postcheck_ticks);return true;
+ }
++/* Read-only fixed diagnostic after a completed idle/halted submission. The
++ * caller already holds gpuLock. No app address/offset, clock request, counter
++ * programming, reset, IRQ acknowledgement or readiness mutation is accepted.
++ * Two GPUCC snapshots expose concurrent PLL/RCG transitions instead of
++ * inferring a frequency from the HFI request alone. */
++bool polaris_gpu_clock_snapshot(uint32_t *values,uint32_t capacity)
++{
++    if(!values || capacity!=19 || !polaris_gpu_ready() ||
++        !a630_client_submit.completed || !a630_client_submit.live.idle ||
++        !a630_client_submit.live.halted || a630_client_submit.live.keep_live ||
++        !a630_client_begin())return false;
++    const uint32_t gmu[4]={A630_POST_ACK,A630_POST_PERF,A630_POST_BW,A630_POST_RETURN};
++    /* Pinned MiCode gpucc-sdm845 + clk-alpha-pll + clk-rcg2: graphics RCG,
++     * Fabia PLL0 and its even post-divider. These are READ offsets only. */
++    const uint32_t clock[7]={0x101c,0x1020,0,0x4,0x38,0xc,0x2c};
++    uint32_t valid=0;
++    for(unsigned n=0;n<4;n++)
++        if(a630_read_register(&a630_client_io,2,gmu[n],&values[1+n]))valid|=1u<<n;
++    for(unsigned pass=0;pass<2;pass++)for(unsigned n=0;n<7;n++) {
++        unsigned index=4+pass*7+n;
++        if(a630_read_register(&a630_client_io,1,clock[n],&values[1+index]))valid|=1u<<index;
++    }
++    values[0]=valid;return valid==0x3ffffu;
++}
+ bool polaris_gpu_submit(const uint64_t *addresses,const uint32_t *words,uint32_t count,uint32_t *fence)
+ {
+     if (!addresses || !words || !fence || !count || count>A630_SUBMIT_MAX || !a630_client_begin()) return false;

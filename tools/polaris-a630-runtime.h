@@ -167,6 +167,30 @@ bool polaris_gpu_last_submit_us(uint32_t fence,uint64_t *stages)
     for(unsigned n=0;n<5;n++)stages[n]=a630_submit_us(a630_client_submit.timing[n]);
     stages[5]=a630_submit_us(a630_client_postcheck_ticks);return true;
 }
+/* Read-only fixed diagnostic after a completed idle/halted submission. The
+ * caller already holds gpuLock. No app address/offset, clock request, counter
+ * programming, reset, IRQ acknowledgement or readiness mutation is accepted.
+ * Two GPUCC snapshots expose concurrent PLL/RCG transitions instead of
+ * inferring a frequency from the HFI request alone. */
+bool polaris_gpu_clock_snapshot(uint32_t *values,uint32_t capacity)
+{
+    if(!values || capacity!=19 || !polaris_gpu_ready() ||
+        !a630_client_submit.completed || !a630_client_submit.live.idle ||
+        !a630_client_submit.live.halted || a630_client_submit.live.keep_live ||
+        !a630_client_begin())return false;
+    const uint32_t gmu[4]={A630_POST_ACK,A630_POST_PERF,A630_POST_BW,A630_POST_RETURN};
+    /* Pinned MiCode gpucc-sdm845 + clk-alpha-pll + clk-rcg2: graphics RCG,
+     * Fabia PLL0 and its even post-divider. These are READ offsets only. */
+    const uint32_t clock[7]={0x101c,0x1020,0,0x4,0x38,0xc,0x2c};
+    uint32_t valid=0;
+    for(unsigned n=0;n<4;n++)
+        if(a630_read_register(&a630_client_io,2,gmu[n],&values[1+n]))valid|=1u<<n;
+    for(unsigned pass=0;pass<2;pass++)for(unsigned n=0;n<7;n++) {
+        unsigned index=4+pass*7+n;
+        if(a630_read_register(&a630_client_io,1,clock[n],&values[1+index]))valid|=1u<<index;
+    }
+    values[0]=valid;return valid==0x3ffffu;
+}
 bool polaris_gpu_submit(const uint64_t *addresses,const uint32_t *words,uint32_t count,uint32_t *fence)
 {
     if (!addresses || !words || !fence || !count || count>A630_SUBMIT_MAX || !a630_client_begin()) return false;

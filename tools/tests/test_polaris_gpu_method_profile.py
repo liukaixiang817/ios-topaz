@@ -27,6 +27,9 @@ class MethodProfileTests(unittest.TestCase):
 #include <assert.h>
 static char logs[8192];static size_t used;
 static void absolutetime_to_nanoseconds(uint64_t ticks,uint64_t*out){*out=ticks;}
+/* No hardware in this accumulator fixture. The real fixed read function is
+ * tested separately; zero/missing diagnostics cannot become clock proof. */
+static bool polaris_gpu_clock_snapshot(uint32_t*,uint32_t){return false;}
 static void IOLog(const char*format,...){
  va_list ap;va_start(ap,format);int n=vsnprintf(logs+used,sizeof(logs)-used,format,ap);va_end(ap);
  assert(n>=0&&(size_t)n<sizeof(logs)-used);used+=(size_t)n;
@@ -70,6 +73,7 @@ int main(){PolarisMethodMeter m={},old;
  assert(polaris_gpu_stage_record(&stages,tick,nullptr,false,&bytes)&&stages.core_missing==2);
  gpuStageMeter=stages;polaris_gpu_stage_flush(2000000);assert(!gpuStageMeter.calls);
  assert(strstr(logs,"POLARIS GPU STAGE PERF:")&&strstr(logs,"core_missing=2"));
+ assert(strstr(logs,"POLARIS GPU CLOCK RO:")&&strstr(logs,"ok=0 valid=0"));
  stages={};core[2]=5;
  for(unsigned n=0;n<5000;n++){
   uint64_t start=100000+n*20000ull,stamp[5]={start,start+1000,start+4000,start+16000,start+19000};

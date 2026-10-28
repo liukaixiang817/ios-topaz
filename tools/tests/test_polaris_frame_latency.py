@@ -36,4 +36,28 @@ class FullFrameTrace(unittest.TestCase):
    m.analyze(self.trace()+short,1000000,5000000)
   with self.assertRaisesRegex(ValueError,'duplicate field'):
    m.analyze(self.trace()+short+'POLARIS OSM LOAD RO: end_us=3000010',1000000,5000000)
+ def test_split_console_records_require_every_identity_matching_part(self):
+  method=self.trace().split('POLARIS GPU METHOD PERF: ')[1]
+  f=m.fields(method);end=f['end_us']
+  def record(prefix,row):return prefix+': '+' '.join(str(k)+'='+str(v) for k,v in row.items())
+  def subset(keys):return {k:f[k] for k in keys.split()}
+  top=record('POLARIS GPU METHOD PERF',subset('end_us window_us kind calls errors'))
+  auth=record('POLARIS GPU METHOD AUTH',subset('end_us kind auth_us dispatch_us lock_us'))
+  work=record('POLARIS GPU METHOD WORK',subset('end_us kind body_us total_us max_us'))
+  base=self.trace().split('POLARIS GPU METHOD PERF:')[0]+top+'\n'+auth+'\n'+work
+  phase=[
+   'POLARIS GPU STAGE PERF: end_us=3000000 window_us=2000000 submits=100 rejected=0 core_missing=0',
+   'POLARIS GPU STAGE WORK: end_us=3000000 validation_us=50000 cache_pre_us=100000 submit_us=200000 cache_post_us=50000',
+   'POLARIS GPU STAGE EXEC: end_us=3000000 prior_us=5000 ring_us=5000 execute_idle_us=150000',
+   'POLARIS GPU STAGE DONE: end_us=3000000 visibility_us=5000 halt_us=5000 postcheck_us=5000',
+   'POLARIS GPU STAGE BYTES: end_us=3000000 prebytes=1000000 postbytes=1000000 WCpre=500000 WCpost=500000']
+  full=base+'\n'+'\n'.join(phase);r=m.analyze(full,1000000,5000000)
+  self.assertEqual(r['all_submit_phase_totals']['submits'],100)
+  self.assertEqual(r['complete_native_method_windows']['submit']['mean_body_us'],4000)
+  for line in [*phase,auth,work,top]:
+   with self.assertRaises(ValueError):m.analyze(full.replace(line,''),1000000,5000000)
+  for line in [*phase,auth,work,top]:
+   with self.assertRaises(ValueError):m.analyze(full+'\n'+line,1000000,5000000)
+  with self.assertRaises(ValueError):m.analyze(full.replace(auth,auth.replace('3000000','3000001')),1000000,5000000)
+  with self.assertRaises(ValueError):m.analyze(full.replace(auth,auth.replace('kind=submit','kind=close')),1000000,5000000)
 if __name__=='__main__':unittest.main()

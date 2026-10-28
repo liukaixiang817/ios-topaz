@@ -9,6 +9,8 @@ FRAME=re.compile(r'tl: g (\d+) began (\d+) ended (\d+) (\d+)')
 PANEL=re.compile(r'POLARIS PANEL PERF: (.*)')
 METHOD=re.compile(r'POLARIS GPU METHOD PERF: (.*)')
 PHASE=re.compile(r'POLARIS GPU STAGE PERF: (.*)')
+PHASE_PART=re.compile(r'POLARIS GPU STAGE (WORK|EXEC|DONE|BYTES): (.*)')
+METHOD_PART=re.compile(r'POLARIS GPU METHOD (AUTH|WORK): (.*)')
 DETAIL=re.compile(r'redwood-gl: frame (\d+): .*; (\d+) us \((\d+) handing on, (\d+) waiting, (\d+) copying out\), (\d+) before it')
 def fields(text):
  result={}
@@ -20,6 +22,44 @@ def stats(values):
  if not values:return None
  order=sorted(values)
  return dict(count=len(order),min=order[0],median=statistics.median(order),p95=order[min(len(order)-1,(95*len(order)+99)//100-1)],max=order[-1],mean=statistics.mean(order))
+def join_records(parents,parts,identity,expected,required,start,end):
+ """Require every short console part with its original timestamp/identity.
+ Legacy complete records remain supported. Never infer a missing value as0.
+ """
+ def key(row):
+  if any(k not in row for k in identity):raise ValueError('diagnostic identity missing')
+  return tuple(row[k] for k in identity)
+ known={key(p) for p in parents};group={}
+ for tag,row in parts:
+  if not isinstance(row.get('end_us'),int):raise ValueError('invalid diagnostic part timestamp')
+  k=key(row);group.setdefault(k,{}).setdefault(tag,[]).append(row)
+  if k not in known and start<=row['end_us']<=end:
+   raise ValueError('orphan diagnostic part without timestamp-matching parent')
+ result=[];seen=set()
+ for parent in parents:
+  last=parent.get('end_us');span=parent.get('window_us')
+  if not isinstance(last,int) or not isinstance(span,int) or span<=0:
+   raise ValueError('invalid native diagnostic window')
+  if last-span<start or last>end:continue
+  k=key(parent);extra=group.get(k,{})
+  if k in seen:raise ValueError('duplicate diagnostic parent')
+  seen.add(k)
+  if all(isinstance(parent.get(n),int) for n in required):
+   if extra:raise ValueError('mixed complete and split diagnostic records')
+   result.append(parent);continue
+  if not extra:raise ValueError('truncated or malformed native stage record; no complete decomposition claim')
+  merged=dict(parent)
+  for tag in expected:
+   rows=extra.get(tag,[])
+   if len(rows)!=1:raise ValueError('missing or duplicate diagnostic part: '+tag)
+   for name,value in rows[0].items():
+    if name in identity:continue
+    if name in merged:raise ValueError('overlapping diagnostic part field: '+name)
+    merged[name]=value
+  if any(not isinstance(merged.get(n),int) for n in required):
+   raise ValueError('truncated or malformed native stage record; no complete decomposition claim')
+  result.append(merged)
+ return result
 def contact_bounds(text,first,last):
  if not 0<first<last:raise ValueError('ordered actual input sequences required')
  lines=text.splitlines()
@@ -41,7 +81,7 @@ def contact_bounds(text,first,last):
   boundary='actual native input log ordering, not stale pre-capture or host UTC')
 def analyze(text,start,end):
  if not 0<=start<end:raise ValueError('a bounded monotonic window is required')
- frames=[];panels=[];methods=[];details=[];phases=[]
+ frames=[];panels=[];methods=[];details=[];phases=[];method_parts=[];phase_parts=[]
  for line in text.splitlines():
   m=DETAIL.search(line)
   if m:details.append(tuple(map(int,m.groups())))
@@ -50,11 +90,19 @@ def analyze(text,start,end):
    seq,began,ended,draws=map(int,m.groups())
    if ended<began:raise ValueError('negative EAGL duration')
    if began>=start and ended<=end:frames.append(dict(frame=seq,began_us=began,ended_us=ended,draws=draws))
+  for regex,result in [(METHOD_PART,method_parts),(PHASE_PART,phase_parts)]:
+   m=regex.search(line)
+   if m:result.append((m[1],fields(m[2])))
   for regex,result,key in [(PANEL,panels,'span_us'),(METHOD,methods,'window_us'),(PHASE,phases,'window_us')]:
    m=regex.search(line)
    if m:
     item=fields(m.group(1));last=item.get('end_us');span=item.get(key)
-    if isinstance(last,int) and isinstance(span,int) and span>0 and last-span>=start and last<=end:result.append(item)
+    if regex!=PANEL or (isinstance(last,int) and isinstance(span,int) and span>0 and last-span>=start and last<=end):result.append(item)
+ methods=join_records(methods,method_parts,('end_us','kind'),('AUTH','WORK'),
+  ('calls','errors','auth_us','dispatch_us','lock_us','body_us','total_us','max_us'),start,end)
+ phases=join_records(phases,phase_parts,('end_us',),('WORK','EXEC','DONE','BYTES'),
+  ('submits','rejected','core_missing','validation_us','cache_pre_us','submit_us','cache_post_us',
+   'prior_us','ring_us','execute_idle_us','visibility_us','halt_us','postcheck_us','prebytes','postbytes','WCpre','WCpost'),start,end)
  if len(frames)<3:raise ValueError('at least3 actual full-frame timestamp records are required')
  gaps=[];periods=[]
  for a,b in zip(frames,frames[1:]):

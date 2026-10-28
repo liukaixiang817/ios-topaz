@@ -30,6 +30,7 @@ extern "C" {
 #if defined(POLARIS_RAM_ONLY)
 extern "C" void polaris_cpu_performance_activity(void);
 extern "C" bool polaris_gpu_last_submit_us(uint32_t,uint64_t *);
+extern "C" bool polaris_gpu_clock_snapshot(uint32_t *,uint32_t);
 #define GPU_BUFFERS 4096u
 #define GPU_MAX_BO (128u << 20)
 #define GPU_MAX_BYTES (384ull << 20)
@@ -295,10 +296,25 @@ static void polaris_gpu_stage_flush(uint64_t ended)
 {
     PolarisStageMeter *m=&gpuStageMeter;if(!m->calls)return;
     uint64_t ns;absolutetime_to_nanoseconds(ended,&ns);
-    IOLog("POLARIS GPU STAGE PERF: end_us=%llu window_us=%llu submits=%llu rejected=%llu core_missing=%llu validation_us=%llu cache_pre_us=%llu submit_us=%llu cache_post_us=%llu prior_us=%llu ring_us=%llu execute_idle_us=%llu visibility_us=%llu halt_us=%llu postcheck_us=%llu prebytes=%llu postbytes=%llu WCpre=%llu WCpost=%llu\n",
-        ns/1000,polaris_gpu_elapsed_us(m->began,ended),m->calls,m->rejected,m->core_missing,
-        m->validation,m->pre,m->submit,m->post,m->core[0],m->core[1],m->core[2],
-        m->core[3],m->core[4],m->core[5],m->prebytes,m->postbytes,m->wcpre,m->wcpost);
+    /* The real console truncates a record at255B. Keep every part shorter
+     * even with UINT64_MAX fields; the host requires all matching end IDs. */
+    IOLog("POLARIS GPU STAGE PERF: end_us=%llu window_us=%llu submits=%llu rejected=%llu core_missing=%llu\n",
+        ns/1000,polaris_gpu_elapsed_us(m->began,ended),m->calls,m->rejected,m->core_missing);
+    IOLog("POLARIS GPU STAGE WORK: end_us=%llu validation_us=%llu cache_pre_us=%llu submit_us=%llu cache_post_us=%llu\n",
+        ns/1000,m->validation,m->pre,m->submit,m->post);
+    IOLog("POLARIS GPU STAGE EXEC: end_us=%llu prior_us=%llu ring_us=%llu execute_idle_us=%llu\n",
+        ns/1000,m->core[0],m->core[1],m->core[2]);
+    IOLog("POLARIS GPU STAGE DONE: end_us=%llu visibility_us=%llu halt_us=%llu postcheck_us=%llu\n",
+        ns/1000,m->core[3],m->core[4],m->core[5]);
+    IOLog("POLARIS GPU STAGE BYTES: end_us=%llu prebytes=%llu postbytes=%llu WCpre=%llu WCpost=%llu\n",
+        ns/1000,m->prebytes,m->postbytes,m->wcpre,m->wcpost);
+    uint32_t values[19]={0};bool observed=polaris_gpu_clock_snapshot(values,19);
+    IOLog("POLARIS GPU CLOCK RO: end_us=%llu ok=%u valid=%x ACK=%x PERF=%x BW=%x RETURN=%x\n",
+        ns/1000,observed,values[0],values[1],values[2],values[3],values[4]);
+    IOLog("POLARIS GPU CLOCK A: end_us=%llu CMD=%x CFG=%x MODE=%x L=%x FRAC=%x USER=%x OP=%x\n",
+        ns/1000,values[5],values[6],values[7],values[8],values[9],values[10],values[11]);
+    IOLog("POLARIS GPU CLOCK B: end_us=%llu CMD=%x CFG=%x MODE=%x L=%x FRAC=%x USER=%x OP=%x\n",
+        ns/1000,values[12],values[13],values[14],values[15],values[16],values[17],values[18]);
     *m=(PolarisStageMeter){};
 }
 
@@ -336,9 +352,12 @@ static void polaris_gpu_method_flush(PolarisMethodMeter *m,uint64_t ended)
     uint64_t ns;absolutetime_to_nanoseconds(ended,&ns);
     for(unsigned n=0;n<9;n++) {
         const PolarisMethodBin *b=&m->bins[n];if(!b->calls)continue;
-        IOLog("POLARIS GPU METHOD PERF: end_us=%llu window_us=%llu kind=%s calls=%llu errors=%llu auth_us=%llu dispatch_us=%llu lock_us=%llu body_us=%llu total_us=%llu max_us=%llu\n",
-            ns/1000,polaris_gpu_elapsed_us(m->began,ended),names[n],b->calls,b->errors,
-            b->auth,b->dispatch,b->lock,b->body,b->total,b->maximum);
+        IOLog("POLARIS GPU METHOD PERF: end_us=%llu window_us=%llu kind=%s calls=%llu errors=%llu\n",
+            ns/1000,polaris_gpu_elapsed_us(m->began,ended),names[n],b->calls,b->errors);
+        IOLog("POLARIS GPU METHOD AUTH: end_us=%llu kind=%s auth_us=%llu dispatch_us=%llu lock_us=%llu\n",
+            ns/1000,names[n],b->auth,b->dispatch,b->lock);
+        IOLog("POLARIS GPU METHOD WORK: end_us=%llu kind=%s body_us=%llu total_us=%llu max_us=%llu\n",
+            ns/1000,names[n],b->body,b->total,b->maximum);
     }
     polaris_gpu_stage_flush(ended);
     *m=(PolarisMethodMeter){};
