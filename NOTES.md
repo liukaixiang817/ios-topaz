@@ -34,6 +34,48 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0093 exact GPU9 regressions PASS; bandwidth-only RAM trial STARTING
+
+- Actual six selected EFI/XNU regressions154checks PASS: GPU9 success modes1/2/3
+ all26checks37.695/37.732/37.714s; peer refusal28/37.694s, stale25/37.761s,
+ pair23/37.763s. actual-native-four-core-proof.json source827/CI40668630383/
+ kernelcd8906d1 fully bound. ExactGPU9 modes refuse virtualplatform before
+ anyGPU MMIO; original genericGPU0 preliminary runs separately preserved and
+ NOT used as exact-mode phone admission. These are native CPU/VM/drain safety
+ checks, NOT SDM845 GPU performance simulation.
+- phone-stock-GPU-0093-1-0001 only BANDWIDTH1/PERF1 targetBW8.606bytepayload;
+ GPUbundle/ADT byte-identical0092. Only command-line difference polarisdiag0
+ replacedpolarisgpup1(defaultdiag0 absence equivalent). SameCPUstock2/4big/WC.
+ CI/source/proof/inventory/81originalFW/actualoriginalEDK2fullDecode passed.
+- CURRENT about to run0093/boot-phone.py7 4 1 after its independentreadonly
+ expectedPolaris query. First inspect case boot.json before any repeat command.
+ OriginalUEFI holds waiting-payload, then control-phone.py7 4 1 state NEWDIR;
+ onlywhenwaiting-payload send ONCE boot --payloadphone-stock-GPU-0093-1-0001-
+ payload.bin. Latercapturelock/home/Settings then SAME40scroll warm/measured
+ via run-scroll-comparison.py1 warmup|measured. No storagewrites/Android/raw
+ reset intended; old0092trial alreadyended. IfGPUrequesterror stop and record,
+ don'tinferrequestreturn0asactualMHz/FPS. NativeGPU1/4restorethenCPU0/allpeer
+ OFF and independentactualFASTBOOT required at end. Bandwidth gain unproven.
+
+### 0093 full CI PASSED; actual EFI/XNU regressions RUNNING
+
+- Native827eacf2b45ee7caa050856a7ca4845e6d973213 pushed. Full macOS27/Xcode27
+ CI40668630383/job122749471496 SUCCESS; out-polaris-0093 kernel SHA
+ cd8906d19a85acaaf18beece5852cf501779ae97d9b0926f9b7b0d652de74ce5 verified
+ exact source/profile/artifact ZIPCRC/SHA. No native source change afterwards.
+-51 local sanitizer/parser/admission/lifetime/old-interface tests passed9.355s,
+ five real Appleclang27/fullCIheaders TUs pass, exact0888overlay0offset0fuzz.
+- CURRENT actual EFI/XNU six-case run0093/run-four-core-regression.py in progress:
+ four-success(mode1),peer-refused(mode1),pair(defaultOFF),stale(mode1),
+ four-core-only(mode2),four-combined(mode3). Inspect result directories before
+ rerunning; never overwrite an existing run. These prove native platform
+ refusal/CPU/VM/shutdown regressions, NOT SDM845 GPU frequency/performance.
+- PHONE still real expectedPolaris FASTBOOT10:08UTC, no new physicalboot/write.
+ 0093 private payload/prepare/boot/control/scroll scripts prepared for mode1/2/3,
+ namesphone-stock-GPU-0093-MODE-0001, not yet executed. Run actual proof
+ aggregation after all six pass, then prepare mode1 bandwidth-only first.
+ No newCI for host changes; do not claim speedup before real matched scroll.
+
 ### 0093 bounded original GPU/bandwidth source READY; full CI pending
 
 - PHONE remains actual FASTBOOT after0092, no new phone boot or storage write.
