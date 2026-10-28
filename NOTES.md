@@ -34,6 +34,70 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0104 actual settledSettings; ONE continuous500scroll worker48778 ACTIVE
+
+- capture0002 actual lock,0003 actualhome3app3dock,0004 actualfullsettledSettings
+  text/icons viewed. No startuptransitions used asstableproof. Fourbigactual
+  callbacks64 remote64 inthisrun (not old48), GLSL/GMEM/icon ALL4096 eachPASS.
+- ActualunlockACK0..18 +Settingstap18..20 consumed. stable-settings-viewed.json
+  hashesfullimage/result. ONE0104/run-thermal-scroll.py worker48778 started
+  about23:15UTC, 25groups/500boundedscrolls savefullkernel/screens/actualACK.
+  No split400+100/interphasehostpause. Whileactive DO NOTsendotherUSBstate/
+  capture/keys/start orduplicaterunner; workerkeepsplainRAMlease alive.
+- NEXT waitworker complete thenauditall25images/rawpairedrepairs+failures/
+  temperature/hardbudget/frames/panel andexactCPUrequestbrackets. FullCI242/
+  freshROreviewalreadycomplete; no neednewCI. Not60FPS/physical600successyet.
+- Hostobserver refinement duringONEworker: initialpartial parser correctly
+  refused olduntimedOSM inventory sharingprefix, thenmissingstartuptransition
+  outside selectedcontactwindow. Bothfailedpartialrecords retained. Strict
+  separateinventorygrammar andboundedimmediatebefore/afterrequestbrackets now
+  ignoreONLYunrelatedstartupinterval; missingtransitionINSIDEwindow still
+  refuses. Gap/period associations requireconsecutiveframes SAMEunchanged
+  requestinterval; noextrapolationpastlast. Sevenparsernegative/bounds tests
+  PASS0.001s observer-tests-0004.log. No native/CIchange.
+- Partialmeasuredactual911frames median14.629ms/p9516.755, gapmedian2.460ms.
+ 909frames bracketedCPUrequest22, TWOtransition/unknown excluded;903sameinterval
+  gapsmedian2.460ms. Thusnormal-high-requestframes stillhavegap, not proof
+  actualHz/CPUbusy orisolatedCPU/GPUcausation. Fulllongrunpending.
+
+### CURRENT0104 CI242 + fresh readonly review COMPLETE; ONE phone RAM boot RUNNING
+
+- Sourceee688eb74d7c1ffbc6baa49640bf1b9f35152e57 pushed. FullmacOS27/Xcode27
+  CI40782623053/job123147840966 SUCCESS22:54:39UTC; kernelout-polaris-0104
+  b7fa37ac290781e02f96dbb1a14e92ef07138d430c1318bc0b8a999193ac31d3.
+  Exactsource/profile/ZIPCRC/SHA checked. SERIAL actualEFI/XNU sixcases
+  42/40/39/36/41/44=242checks PASS38.14..38.65s, actual-native-TSENS-pair-
+  witness-proof.json binds allresults/native logs. RealPID1/children/writer/
+  workloop/SMP/drain/refusal, but synthetic temperaturewords andgenericMMIO
+  refusal areNOT physicalwitness/600s/60FPS proof. AllCI/models ENDED.
+- Freshreadonlyaudit initial0104/fresh-preflight-0001 REFUSED markeridentity:
+  ONLY runtime device_minor6->7, no persistentinode/mode/gen/flags/extents
+  changes. Retainedfailedrecord, never widenedwriteadmission. Explicit
+  fresh-preflight-devt-review-0001 proves259:7->sda22/userdata115167178752B,
+  onlyblockRO/ro,noload, then whole16GiBbaseSHA689a8cd1...55.963s/182map/
+  whole8MiBpattern/rawownermetadata/6GPT/critical/ESP7338692a... unchanged.
+  Header17016be3... unchanged, actualunmount andindependentactualFASTBOOT
+  22:57:17UTC. preflight-reviewed.json explicitly persistentidentitytrue,
+  runtimedevtunchangedfalse; archivedoriginalpreflight.json notrewritten.
+  ReviewONLYreadinventory, NOT rawwriteownership/productiondevtpermission.
+- CURRENT phone0104/phone-tsens-witness-0104-0001; ONLY0104/control-phone.py
+  ACTION NEWDIR. ONEoriginalUEFI RAMboot23:02/ONEkernel-start0001 PASS; do
+  NOT resendboot/start/useold0103controllers. capture0001 actualbootconsole,
+  capture0002GUIwait completedbutnotyetviewed at23:09UTC. NoactiveUSBworker
+  now. PlainRAM30minnohostlease; directedstate/capture keepalive allowed.
+  Newargs604B keepTSENS3/600s/4big/GPUbundle/WC/cachedsurface/wake/keys/full
+  touch_lat1/RAMCOW512/ufsrw0. RemoveONLYinertpolarisstack0, appendpolarispts1.
+  Allstrictadmission/81originalFW/actualupstreamEDK2wholedecode PASS. No
+  Android/rawfallback/PMIC/storage/NVRAMwrites. Physicalsuccessnotyetclaimed.
+- Newstrict hostwitness+CPUrequestobservers and4tests PASS0.001s (uncommitted
+  at23:09UTC). Rawwitness authenticselectedpair/hottest/READbounds/wholefail
+  retained; CPUexactmachtime brackets excludechanging/unknownframes, NOT Hz
+  orisolatedcausation. NEXT viewcapture, boundedunlock/Settings/settle, ONE
+  continuous500scroll withoutinterphasehostidle, auditrawrepairs/errors/hot
+  preservation/realhardexpiry/frames/panel/CPUrequest association. If objective
+  remainsfailed reportit; no longerhardbudget/maxvotes. Nativeclosure+actual
+  FASTBOOT aftertest. No newnativechange soDONOTrebuildCI.
+
 ### 0104 conservative pair witness native source PREPARED; phone FASTBOOT
 
 - Phone onlyreadonlyexpectedPolaris FASTBOOT checked22:29UTC PASS; all0103
