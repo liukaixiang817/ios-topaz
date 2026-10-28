@@ -34,6 +34,81 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0103 physical long-duration OUTCOME COMPLETE; actual phone FASTBOOT
+
+- ALL0103 trials ENDED. Final native end completed22:21UTC, independentactual
+  expectedPolaris FASTBOOT queried22:21:57.097636UTC. NoactiveiOS/recovery/
+  USBworker/CI/model/collector; do NOT reuse0103controllers, replay boot/start/
+  scroll or waitforoldworkers19990/33924. NoAndroid/keys/rawfallback/storage/
+  PMIC/NVRAMwrites. Nextcandidate fullyready then readonlyactualexpectedFB
+  query andalready-authorizedONE RAMboot, no repeatedpermissionrequest.
+- Sourceaaf46ac3254766bb1cafb795afedf1e3da12e656, fullmacOS27/Xcode27
+  CI40773604623/job123116997419 SUCCESS; kernel15621fca5ac7fa8a2b9919d6b073e98369ef6f375ffb425d0d61168e0bbaf000.
+  Exactsource/profile/ZIPCRC/SHA,33local ASan/native/IIG, realAppleclang27two
+  TUs andSERIALactualEFI/XNU196checks40/39/36/39/42 allpassed. No newnative
+  changes since, don'trebuildCI for this documentation/analysis.
+- ONEoriginalUEFIRAMboot+ONEkernelstart, actual4big64callbacks48remote and
+  GLSL/GMEM/icon4096pixels allPASS, hardwareFD630 preserved. Exact606Bargs
+  onlypolaristsens2->3; GPU4/8/CPUold30s10s/WC/cachedsurface/wake/keys/full
+  trace/RAMCOW512/ufsrw0/81FW unchanged. Capture0001bootconsole,0002GUIwait
+  truelockscreen. Earlyhome0002 andSettings0003 areanimations, NOT stableUI;
+  capture0004 actuallysettledfullSettings andhash-bound beforeworkload.
+-400boundedscrolls+100boundedtail=500actualscrolls, unlock/tap included502
+  contacts/ACK0..9020, homegesturethen9038. EACH25groupendfullSettings text/
+  icons actuallyviewed (QA contact sheets hashbind originals), finalhome
+  3app+3dockicons actuallyviewed. WidgetsWaiting/sideconsole stillpresent,
+  not allrenderingissuesfixed. CLI wait-seconds is endpointdiscoverytimeout,
+  NOT UI delay. Kept all earlieranimationcaptures and all slow/failed samples.
+- Newphysical-extended-GPU-duration-and-latency-proof.json: analysis_passed
+  true but passed FALSE/hardware_600second_test_passed FALSE deliberately.
+ 21681complete actualEAGLframes median15.333ms/p9518.808/max45.253; measured
+ 868median15.0565/p9519.507 vsold0102 921median14.710/p9516.601, NOT a broad
+  performanceimprovement. Oldhard120slowextended2 p9536.167->new16.692 but
+  newothergroups stillslow. Typicalgroupperiod18.4..19.4ms/gap2.5..2.7ms,
+  finalCPUcopy~7.4ms vsinitial5.7, allratios/context retained; not physical
+  scanoutHz or steady60. Singlecrossboot comparison notrepeatedstability.
+-724actualcontact6sensorobservations maxCPU74.1C/GPU57.2C, within experiment
+  hot thresholds but close; not wholeOEM thermal/battery/skin proof. TWOreal
+  TSENS error7 (PTS_CHANGED_TOO_FAST, paired values differ>2000mC) at
+ 815867628us offsetc4 raw2092ca and1250485142us offsetc8 raw20a2c4. Rejected
+  wholeobservation then trueGPUlowreason3/fault0, not HFI/GPUdrawingfailure.
+  Firstrawpair isn't retained onerror, don'tinvent difference/sign or call
+  this provedfalsealarm. CurrentVALIDretry doesn't address pair-disagreement.
+-These sensor-triggered10sLOWs restartthehardcycle. First400 endedbefore600
+  unbrokeneligiblecycle; beforeadditional100 therewas23.575546sHOSTUTCidle
+  (alsoexpectedidleLOW/cyclereset), recordedexplicitly, not native-timeproof.
+  NO600s hardexpiry was actuallyobserved. Prover saysobjectiveFALSE, native
+  synthetic600probePASS cannotreplace it. Do NOTextenddurationagain or erase
+  errors/hostgap to call600physicalPASS. Original400+tail100records immutable;
+  combinedrecord hashes both, all25boundedlogs independentlyreparsed; final
+  ringwrap handled with timestamp-consistentdedup. Initialobserver wrongglobal
+  EAGLseq uniquenessassert failed; counters arepercontext, correctedidentity
+  (seq,began_us), percontact analyzer still enforces contiguousnonoverlap.
+  Failedphysical-proof0001 preserved. This is hostobserverfix notnativefix.
+-physical-long-duration-outcome-and-native-restore-proof.json separately
+  bindsanalysis/models/UI/returnhome9038/fullnativeclosure. True reboot_kernel
+  ownHFSXunmount/VFS0busy0 thenGPU1BW4 restore beforeCPUrequest0restore,
+ 600500400actualPSCI_OFF/coordinator700park/cookie3200913963seq1mode2phase3
+  RAM_DRAINED80000003/error0. Fullshutdownlog saved then gatedreset, followed
+  independentactualFASTBOOT. RAM_DRAINED isNOT UFSdurability,rootstillRAMCOW.
+- NEXT prioritize the newly observed pair-disagreement andremaining~2.6ms gap,
+  not longer/maximal performancevotes. Read originalTSENS/status rules and
+  actualfailurecode; add bounded pair-first/current/timing diagnostics or a
+  separatelyproved conservative bounded re-observation that NEVER admits
+  critical/range/read/time failures or drops hottestseen validwords. No blindly
+  dropping2000mC bound/10s recovery/freshness constraints. Keep max75/60 and
+  firmware/ownership/cache/HFI/idle/native restore. Independently instrument
+  CPUrequest exactmachtime (currentOSM SAMPLE lacks timestamp; elapsed counter
+  isnotabsoluteclock and32bit wraps) plus actualframe/compositor boundaries
+  before blamingCPU/display. Need meaningfulfaulttests/TUs/CI/SERIALnative
+  then onephysicalcandidate; no samecodeCI or repeated500testwithoutchange.
+  Moreoptimistic GPUtable/realnativecanvas are only designchoices, not ready:
+  currentPERF4/BW8 stillnominal520MHzrequest, tablePERF5nominal596 notmeasured;
+  don'tblindlyusemax. SweetFB explicitlyREFUSES sweetfb_native1; needwhole
+  UIKit/ADT/touch/pixelvalidation ifeverchangingcanvas, no bootargbypass.
+- Humanpriority unchanged sustained60 first, features/persistentroot/menu/
+  fuller16.5 later. This600trial is defaultOFF anddidnotproveproduction60.
+
 ### CURRENT0103 actual settledSettings;400scrollworker19990 IN PROGRESS
 
 - ONLY0103/phone-gpu-extended-0103-0001/control-phone.py. Newkernel boot

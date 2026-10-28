@@ -699,3 +699,18 @@ from120 to600 seconds, preserving the same factory4/8 request. It does not
 copy the reference Redwood EPSS top-row policy or raise voltage/PLL/trips.
 A selected duration cannot be changed or renewed within a native session.
 Actual thermal and frame behavior still requires a new validated phone trial.
+
+## Bounded duration trial outcome (2026-10-29 local)
+
+0103 retains the actual Polaris factory PERF4/BW8 request and changes only a
+separately admitted experiment limit120s to600s. Full new macOS27 kernel CI,
+196 actual EFI/XNU checks and a physical500-scroll test completed. The physical
+600s expiry objective was **not observed**: two whole temperature observations
+were rejected for paired readings differing by more than2000mC, and a23.58s
+host pause between the400+100 phases also caused expected idle restoration.
+All these resets remain in the evidence. Synthetic-time native600s checks are
+not a substitute. Actual drawing median15.333ms and recurring2.5..2.7ms gaps
+still do not prove sustained60FPS. Retain conservative thermal/error handling;
+do not copy an unbounded reference clock policy or interpret a valid table
+request as measured frequency. Next work must address the observed failures
+and exact remaining timing boundaries rather than lengthening the limit again.
