@@ -113,7 +113,7 @@ bool polaris_gpu_map(uint64_t address,uint64_t physical,bool read_only,bool cach
     if (!polaris_gpu_ready() || address<A630_CLIENT_IOVA || address>=A630_CLIENT_END ||
         (physical>=a630_dma_physical && physical-a630_dma_physical<a630_dma_bytes)) return false;
     unsigned flags=A630_MMU_USER|A630_MMU_EXEC|
-        (read_only?A630_MMU_READONLY:0)|(cached?A630_MMU_CACHED:0);
+        (read_only?A630_MMU_READONLY:0)|(cached?A630_MMU_CACHED:A630_MMU_NONSHARED);
     return a630_mmu_map(&a630_core_tables,address,physical,flags)==A630_MMU_OK;
 }
 bool polaris_gpu_commit(void)

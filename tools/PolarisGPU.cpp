@@ -14,10 +14,15 @@
 #include <IOKit/IOService.h>
 #include <IOKit/IOUserClient.h>
 #include <IOKit/IOBufferMemoryDescriptor.h>
+#include <IOKit/IOKitServer.h>
 #include <sys/systm.h>
 #include <mach/vm_param.h>
 #include <kern/thread.h>
 #include <kern/clock.h>
+extern "C" {
+#include <vm/memory_types.h>
+#include <pexpert/pexpert.h>
+}
 #include "SweetSurface.h"
 #include "polaris_gpu.h"
 #include "polaris_gpu_abi.h"
@@ -34,6 +39,7 @@
 
 static IOLock *gpuLock;
 static bool gpuOpened, gpuQuarantined;
+static bool gpuWriteCombined; /* explicit RAM-trial boot opt-in; imported surfaces stay cached */
 static uint32_t gpuSubmissions, gpuSurfaces;
 static uint32_t gpuDesktopAttempts,gpuDesktopSubmissions;
 static uint32_t gpuRender[8],gpuRenderPublished;
@@ -184,8 +190,60 @@ struct PolarisBO {
     IOMemoryMap *map;
     uint64_t address, size;
     uint32_t flags;
+    bool writeCombined;
 };
-struct PolarisCacheTally {uint64_t before,after,readonlySkipped;};
+struct PolarisCacheTally {uint64_t before,after,readonlySkipped,wcBefore,wcAfter;};
+static bool polaris_gpu_cpu_wc(uint64_t physical)
+{
+    /* Native IODefaultCacheBits queries pmap_cache_attributes for this PA. */
+    return (IODefaultCacheBits(physical)&VM_WIMG_MASK)==VM_WIMG_WCOMB;
+}
+static bool polaris_gpu_use_wc(uint32_t flags)
+{
+    return gpuWriteCombined && (flags&0x000f0000u)==0x00010000u; /* MSM_BO_WC */
+}
+static void polaris_gpu_memory_order(void)
+{
+    /* Drain normal noncacheable buffered stores too; skipping a cache sweep
+     * for WC memory must never skip producer/consumer ordering. */
+    __asm__ volatile("dsb sy":::"memory");
+}
+/* Optional data-only native VM probe. Generic EFI/XNU can exercise the actual
+ * IOBufferMemoryDescriptor and pmap path without a pretend Adreno device. */
+extern "C" int PolarisGPUCacheProbe(void)
+{
+    int error=0;unsigned checked=0;
+    for(unsigned wc=0;wc<2 && !error;wc++) {
+        IOBufferMemoryDescriptor *m=IOBufferMemoryDescriptor::inTaskWithOptions(kernel_task,
+            kIODirectionInOut|kIOMemoryKernelUserShared|(wc?kIOMapWriteCombineCache:0),PAGE_SIZE,PAGE_SIZE);
+        if(!m){error=1;break;}
+        bool prepared=m->prepare(kIODirectionInOut)==kIOReturnSuccess;
+        IOMemoryMap *map=prepared?m->createMappingInTask(kernel_task,0,kIOMapAnywhere|
+            (wc?kIOMapWriteCombineCache:kIOMapDefaultCache),0,PAGE_SIZE):NULL;
+        if(!map)error=2;
+        for(uint64_t off=0;!error && off<PAGE_SIZE;off+=4096) {
+            IOByteCount length=0;addr64_t pa=m->getPhysicalSegment(off,&length,kIOMemoryMapperNone);
+            if(!pa || (pa&4095) || length<4096 ||
+                (IODefaultCacheBits(pa)&VM_WIMG_MASK)!=(wc?VM_WIMG_WCOMB:VM_WIMG_COPYBACK))error=3;
+            else checked++;
+        }
+        if(!error) {
+            volatile uint8_t *one=(volatile uint8_t*)m->getBytesNoCopy();
+            volatile uint8_t *two=(volatile uint8_t*)map->getVirtualAddress();
+            for(unsigned n=0;n<PAGE_SIZE;n++)one[n]=(uint8_t)(n*37+0x80);
+            polaris_gpu_memory_order();
+            for(unsigned n=0;n<PAGE_SIZE;n++)if(two[n]!=(uint8_t)(n*37+0x80)){error=4;break;}
+            for(unsigned n=0;n<PAGE_SIZE;n++)two[n]=(uint8_t)(n*13+0x63);
+            polaris_gpu_memory_order();
+            for(unsigned n=0;n<PAGE_SIZE;n++)if(one[n]!=(uint8_t)(n*13+0x63)){error=5;break;}
+        }
+        if(prepared)m->complete(kIODirectionInOut);
+        if(map)map->release();m->release();
+    }
+    IOLog("POLARIS GPU WC VM: %s modes=2 bytes=%u pagechecks=%u aliases=2 error=%d; actual IOBuffer/pmap, no GPU device\n",
+        error?"FAIL":"PASS",2u*(unsigned)PAGE_SIZE,checked,error);
+    return error;
+}
 static uint64_t polaris_gpu_elapsed_us(uint64_t before,uint64_t after)
 {
     if(after<before)return UINT64_MAX;
@@ -201,7 +259,7 @@ class PolarisGPUUserClient : public IOUserClient {
     task_t ownerTask;
     PolarisBO *buffer(uint32_t h) {return h && h<=GPU_BUFFERS && buffers[h-1].memory ? &buffers[h-1] : NULL;}
     void poison();
-    IOReturn make(IOMemoryDescriptor *,SweetSurface *,uint64_t,uint32_t,uint32_t *);
+    IOReturn make(IOMemoryDescriptor *,SweetSurface *,uint64_t,uint32_t,uint32_t *,bool=false);
     bool drop(uint32_t);
     bool cacheBefore(const msm_gem_submit_bo *,uint32_t,PolarisCacheTally *);
     void cacheAfter(const msm_gem_submit_bo *,uint32_t,PolarisCacheTally *);
@@ -262,8 +320,9 @@ IOReturn PolarisGPU::newUserClient(task_t task,void *security,UInt32 type,OSDict
 /* First fit with an unmapped 16KiB guard after every BO. Bounded by live
  * handles, no dynamically growing metadata and no wrap/overlapping reuse. */
 IOReturn PolarisGPUUserClient::make(IOMemoryDescriptor *memory,SweetSurface *s,
-    uint64_t size,uint32_t flags,uint32_t *handle)
+    uint64_t size,uint32_t flags,uint32_t *handle,bool writeCombined)
 {
+    if(writeCombined && s)return kIOReturnBadArgument;
     if (!size || size>GPU_MAX_BO || (size&PAGE_MASK) || bytes>GPU_MAX_BYTES-size)
         return kIOReturnNoMemory;
     unsigned h=GPU_BUFFERS;
@@ -287,16 +346,35 @@ IOReturn PolarisGPUUserClient::make(IOMemoryDescriptor *memory,SweetSurface *s,
     }
     /* Retain before installing ANY PTE: even failed TLBSYNC may retain DMA. */
     PolarisBO *b=&buffers[h];memory->retain();if(s)s->retain();
-    *b=(PolarisBO){memory,s,NULL,address,size,flags};bytes+=size;
+    *b=(PolarisBO){memory,s,NULL,address,size,flags,writeCombined};bytes+=size;
     if(memory->prepare(kIODirectionInOut)!=kIOReturnSuccess) {
         b->memory=NULL;memory->release();if(s)s->release();bytes-=size;return kIOReturnNoMemory;
+    }
+    if(writeCombined) {
+        /* IOBufferMemoryDescriptor owns these pages. Establish WC through the
+         * native VM memory entry BEFORE any SMMU PTE, then independently check
+         * every physical page's actual pmap WIMG. No mixed cached CPU alias
+         * or flag-only assumption may bypass cache maintenance. */
+        b->map=memory->createMappingInTask(kernel_task,0,kIOMapAnywhere|kIOMapWriteCombineCache,0,size);
+        bool verified=b->map!=NULL;
+        for(uint64_t off=0;verified && off<size;off+=4096) {
+            IOByteCount length=0;addr64_t pa=memory->getPhysicalSegment(off,&length,kIOMemoryMapperNone);
+            verified=pa && !(pa&4095) && length>=4096 && polaris_gpu_cpu_wc(pa);
+        }
+        if(!verified) {
+            /* No GPU mapping exists yet; native completion/unpin is safe. */
+            memory->complete(kIODirectionInOut);OSSafeReleaseNULL(b->map);
+            memory->release();bytes-=size;*b=(PolarisBO){};
+            IOLog("POLARIS GPU WC: actual CPU page attributes refused before GPU mapping\n");
+            return kIOReturnUnsupported;
+        }
     }
     bool mapped=true;
     for(uint64_t off=0;off<size;off+=4096) {
         IOByteCount length=0;
         addr64_t pa=memory->getPhysicalSegment(off,&length,kIOMemoryMapperNone);
         if (!pa || (pa&4095) || length<4096 ||
-            !polaris_gpu_map(address+off,pa,(flags&GPU_READONLY)!=0,true)) {mapped=false;break;}
+            !polaris_gpu_map(address+off,pa,(flags&GPU_READONLY)!=0,!writeCombined)) {mapped=false;break;}
     }
     if(!mapped) {
         if(!drop(h+1))poison();
@@ -342,19 +420,23 @@ bool PolarisGPUUserClient::cacheBefore(const msm_gem_submit_bo *bos,uint32_t cou
 {
     for(unsigned n=0;n<count;n++) {
         PolarisBO *b=buffer(bos[n].handle);
-        if(!b->map)b->map=b->memory->createMappingInTask(kernel_task,0,kIOMapAnywhere|kIOMapDefaultCache,0,b->size);
+        if(!b->map)b->map=b->memory->createMappingInTask(kernel_task,0,kIOMapAnywhere|
+            (b->writeCombined?kIOMapWriteCombineCache:kIOMapDefaultCache),0,b->size);
         if(!b->map)return false;
+        if(b->writeCombined) {tally->wcBefore+=b->size;continue;}
         /* CPU writers may change even GPU-read-only command/constant BOs.
          * Keep the full pre-submit clean+invalidate on EVERY reference. */
         polaris_gpu_cache((void*)b->map->getVirtualAddress(),b->size);
         tally->before+=b->size;
     }
+    polaris_gpu_memory_order();
     return true;
 }
 void PolarisGPUUserClient::cacheAfter(const msm_gem_submit_bo *bos,uint32_t count,PolarisCacheTally *tally)
 {
     for(unsigned n=0;n<count;n++) {
         PolarisBO *b=buffer(bos[n].handle);
+        if(b->writeCombined) {tally->wcAfter+=b->size;continue;}
         /* make() installed READONLY in every SMMU PTE for this allocation.
          * A successful fence/idle/halt cannot have changed such memory. Do
          * not trust submit READ flags to skip writable textures/surfaces. */
@@ -362,6 +444,7 @@ void PolarisGPUUserClient::cacheAfter(const msm_gem_submit_bo *bos,uint32_t coun
         polaris_gpu_cache((void*)b->map->getVirtualAddress(),b->size);
         tally->after+=b->size;
     }
+    polaris_gpu_memory_order();
 }
 IOReturn PolarisGPUUserClient::submit(msm_gem_submit *r)
 {
@@ -394,7 +477,7 @@ IOReturn PolarisGPUUserClient::submit(msm_gem_submit *r)
         /* Kernel map every referenced BO before release; keep cached CPU and
          * SMMU attributes identical. All CPU aliases are cleaned before DMA,
          * invalidated after the observed GPU flush/fence/idle/halt. */
-        PolarisCacheTally tally={0,0,0};uint64_t before,prepared,submitted,completed;
+        PolarisCacheTally tally={0,0,0,0,0};uint64_t before,prepared,submitted,completed;
         clock_get_uptime(&before);
         if(!cacheBefore(bos,r->nr_bos,&tally)) {result=kIOReturnNoMemory;goto out;}
         clock_get_uptime(&prepared);
@@ -417,10 +500,10 @@ IOReturn PolarisGPUUserClient::submit(msm_gem_submit *r)
             IOLog("POLARIS GPU: completed submission %u, IBs=%u BOs=%u surfaces=%u; GPU fence+idle+halt\n",
                 r->fence,count,r->nr_bos,gpuSurfaces);
         if(r->fence<=4 || !(r->fence%64))
-            IOLog("POLARIS GPU BO PERF: fence=%u actor=%u BOs=%u prebytes=%llu postbytes=%llu ROskip=%llu pre=%llu submit=%llu post=%llu us\n",
+            IOLog("POLARIS GPU BO PERF: fence=%u actor=%u BOs=%u prebytes=%llu postbytes=%llu ROskip=%llu pre=%llu submit=%llu post=%llu us WCpre=%llu WCpost=%llu\n",
                 r->fence,callerKind,r->nr_bos,tally.before,tally.after,tally.readonlySkipped,
                 polaris_gpu_elapsed_us(before,prepared),polaris_gpu_elapsed_us(prepared,submitted),
-                polaris_gpu_elapsed_us(submitted,completed));
+                polaris_gpu_elapsed_us(submitted,completed),tally.wcBefore,tally.wcAfter);
         result=kIOReturnSuccess;
     }
 out:
@@ -434,7 +517,10 @@ IOReturn PolarisGPUUserClient::clientMemoryForType(UInt32 type,IOOptionBits *opt
     IOLockLock(gpuLock);
     PolarisBO *b=closed?NULL:buffer(type);
     IOReturn result=kIOReturnNotFound;
-    if(b && polaris_gpu_ready()) {*options=kIOMapAnywhere|kIOMapDefaultCache;b->memory->retain();*memory=b->memory;result=0;}
+    if(b && polaris_gpu_ready()) {
+        *options=kIOMapAnywhere|(b->writeCombined?kIOMapWriteCombineCache:kIOMapDefaultCache);
+        b->memory->retain();*memory=b->memory;result=0;
+    }
     IOLockUnlock(gpuLock);return result;
 }
 IOReturn PolarisGPUUserClient::externalMethod(uint32_t selector,IOExternalMethodArguments *a,
@@ -491,11 +577,12 @@ IOReturn PolarisGPUUserClient::externalMethod(uint32_t selector,IOExternalMethod
                (r.make.flags&0x000f0000u)!=0x00020000u &&
                (r.make.flags&0x000f0000u)!=0x00040000u) {result=kIOReturnUnsupported;break;}
             uint64_t length=(r.make.size+PAGE_MASK)&~(uint64_t)PAGE_MASK;
+            bool wc=polaris_gpu_use_wc(r.make.flags);
             IOBufferMemoryDescriptor *m=IOBufferMemoryDescriptor::inTaskWithOptions(kernel_task,
-                kIODirectionInOut|kIOMemoryKernelUserShared,(vm_size_t)length,PAGE_SIZE);
+                kIODirectionInOut|kIOMemoryKernelUserShared|(wc?kIOMapWriteCombineCache:0),(vm_size_t)length,PAGE_SIZE);
             if(!m){result=kIOReturnNoMemory;break;}
             bzero(m->getBytesNoCopy(),length);
-            result=make(m,NULL,length,r.make.flags,&r.make.handle);m->release();break;
+            result=make(m,NULL,length,r.make.flags,&r.make.handle,wc);m->release();break;
         }
         case 0x43: {
             PolarisBO *b=buffer(r.info.handle);if(!b || r.info.pad)break;
@@ -571,6 +658,8 @@ extern "C" void PolarisGPUStart(void)
 {
     if(!polaris_gpu_ready() || gpuLock)return;
     gpuLock=IOLockAlloc();if(!gpuLock)return;
+    uint32_t wc=0;PE_parse_boot_argn("polarisgpuwc",&wc,sizeof(wc));gpuWriteCombined=wc==1;
+    IOLog("POLARIS GPU WC: owned GEM trial=%u; imported IOSurfaces remain cached\n",(unsigned)gpuWriteCombined);
     PolarisGPU *s=new PolarisGPU;
     if(s && s->init() && s->attach(IOService::getPlatform()) && s->start(IOService::getPlatform())) {
         s->setName("PolarisGPU");s->setProperty(kIOUserClientClassKey,"PolarisGPUUserClient");

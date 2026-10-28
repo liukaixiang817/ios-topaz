@@ -53,6 +53,7 @@ int main(){char b[68];memset(b,0xa5,sizeof(b));
     def test_actual_bo_release_partial_map_and_unknown_dma_retention(self):
         code = (ROOT / 'tools/PolarisGPU.cpp').read_text()
         actual = ''.join(function(code, name) for name in [
+            'static bool polaris_gpu_cpu_wc(',
             'void PolarisGPUUserClient::poison()',
             'IOReturn PolarisGPUUserClient::make(',
             'bool PolarisGPUUserClient::drop('])
@@ -66,6 +67,16 @@ typedef int IOReturn;typedef uint64_t IOByteCount,addr64_t;
 #define kIOReturnNoMemory 1
 #define kIOReturnNotReady 2
 #define kIOReturnSuccess 0
+#define kIOReturnUnsupported 3
+#define kIOReturnBadArgument 4
+#define kIOMapAnywhere 1
+#define kIOMapWriteCombineCache 4
+#define IOLog(...) ((void)0)
+#define PAGE_SHIFT 14
+#define VM_WIMG_MASK 255
+#define VM_WIMG_WCOMB 6
+static unsigned cpu_wimg=6,cpu_map_failure;static uint64_t cpu_bad_at;static void *kernel_task;
+static unsigned IODefaultCacheBits(uint64_t p){assert(p>=0x180000000ull);return p==cpu_bad_at?0:cpu_wimg;}
 #define kIODirectionInOut 3
 #define kIOMemoryMapperNone 0
 #define PAGE_SIZE 16384u
@@ -79,9 +90,10 @@ typedef int IOReturn;typedef uint64_t IOByteCount,addr64_t;
 #define OSSafeReleaseNULL(p) do{if(p){(p)->release();(p)=nullptr;}}while(0)
 static unsigned maps,unmaps,commits,fail_map,failed_commit,dead,completes,releases;
 static bool gpuQuarantined;static uint32_t gpuFaultStatus;
+static bool expected_wc;
 static bool polaris_gpu_quiescent(){return !dead;}
 static bool polaris_gpu_map(uint64_t va,uint64_t pa,bool ro,bool cached){
- assert(va>=0x20000000&&pa>=0x180000000ull&&cached);(void)ro;
+ assert(va>=0x20000000&&pa>=0x180000000ull&&cached==!expected_wc);(void)ro;
  maps++;return !fail_map||maps!=fail_map;}
 static bool polaris_gpu_commit(){commits++;if(failed_commit){dead=1;return false;}return true;}
 static bool polaris_gpu_unmap(uint64_t a,uint64_t s){assert(a>=0x20000000&&s&&!(s&16383));
@@ -95,14 +107,15 @@ struct IOMemoryDescriptor {
  void retain(){refs++;}void release(){assert(refs);refs--;releases++;}
  int prepare(int){assert(!prepared);prepared=1;return 0;}
  void complete(int){assert(!dead&&prepared&&!done);done=1;completes++;}
+ IOMemoryMap *createMappingInTask(void*,int,int opts,int,uint64_t){assert(opts==(kIOMapAnywhere|kIOMapWriteCombineCache));static IOMemoryMap m;return cpu_map_failure?nullptr:&m;}
  addr64_t getPhysicalSegment(uint64_t off,IOByteCount*len,int){assert(off<size);*len=size-off;return 0x180000000ull+off;}
 };
-struct PolarisBO {IOMemoryDescriptor*memory;SweetSurface*surface;IOMemoryMap*map;uint64_t address,size;uint32_t flags;};
+struct PolarisBO {IOMemoryDescriptor*memory;SweetSurface*surface;IOMemoryMap*map;uint64_t address,size;uint32_t flags;bool writeCombined;};
 class PolarisGPUUserClient {public:
  PolarisBO buffers[GPU_BUFFERS]={};uint64_t bytes=0;uint32_t nextHandle=0;bool quarantined=false;unsigned retained=0;
  void retain(){retained++;}void poison();
  PolarisBO*buffer(uint32_t h){return h&&h<=GPU_BUFFERS&&buffers[h-1].memory?&buffers[h-1]:nullptr;}
- IOReturn make(IOMemoryDescriptor*,SweetSurface*,uint64_t,uint32_t,uint32_t*);bool drop(uint32_t);
+ IOReturn make(IOMemoryDescriptor*,SweetSurface*,uint64_t,uint32_t,uint32_t*,bool=false);bool drop(uint32_t);
 };
 ''' + actual + r'''
 int main(){
@@ -117,6 +130,22 @@ int main(){
  IOMemoryDescriptor partial(32768);maps=0;fail_map=3;
  assert(c.make(&partial,nullptr,32768,0,&a)==kIOReturnNoMemory);
  assert(partial.done&&partial.refs==1&&unmaps==3&&!c.quarantined&&!c.bytes);
+ /* WC on an imported surface is rejected, and a lying CPU mapping is
+  * refused before the very first SMMU page, without quarantining DMA. */
+ fail_map=0;IOMemoryDescriptor imported(16384),wrong_attr(16384),wc(16384),later_bad(32768),failed_cpu_map(16384);
+ assert(c.make(&imported,&surface,16384,0,&a,true)==kIOReturnBadArgument&&!imported.prepared);
+ unsigned oldmaps=maps;cpu_wimg=0;
+ assert(c.make(&wrong_attr,nullptr,16384,0,&a,true)==kIOReturnUnsupported);
+ assert(maps==oldmaps&&wrong_attr.done&&wrong_attr.refs==1&&!c.bytes&&!c.quarantined);
+ cpu_wimg=6;cpu_bad_at=0x180004000ull;
+ assert(c.make(&later_bad,nullptr,32768,0,&a,true)==kIOReturnUnsupported);
+ assert(maps==oldmaps&&later_bad.done&&later_bad.refs==1&&!c.bytes&&!c.quarantined);cpu_bad_at=0;
+ cpu_map_failure=1;
+ assert(c.make(&failed_cpu_map,nullptr,16384,0,&a,true)==kIOReturnUnsupported);
+ assert(maps==oldmaps&&failed_cpu_map.done&&failed_cpu_map.refs==1&&!c.bytes&&!c.quarantined);
+ cpu_map_failure=0;expected_wc=true;
+ assert(c.make(&wc,nullptr,16384,0,&a,true)==0&&c.buffer(a)->writeCombined);
+ assert(maps==oldmaps+4&&c.drop(a)&&wc.done&&wc.refs==1&&!c.bytes);expected_wc=false;
  /* A failed TLBSYNC is NOT successful DMA containment, even if CP was
   * halted beforehand. Descriptors + client stay retained without complete. */
  fail_map=0;failed_commit=1;IOMemoryDescriptor unknown(16384);

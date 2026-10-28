@@ -22,7 +22,7 @@
 #define A630_MMU_OUTER_SHARED (UINT64_C(2) << 8)
 enum a630_mmu_flags {
     A630_MMU_CACHED = 1, A630_MMU_USER = 2, A630_MMU_READONLY = 4,
-    A630_MMU_EXEC = 8
+    A630_MMU_EXEC = 8, A630_MMU_NONSHARED = 16
 };
 enum a630_mmu_error {
     A630_MMU_OK, A630_MMU_ARGUMENT, A630_MMU_FULL,
@@ -81,7 +81,7 @@ static inline uint64_t *a630_mmu_table(struct a630_mmu *s, uint64_t entry, unsig
 static inline uint64_t a630_mmu_leaf(uint64_t physical, unsigned flags)
 {
     return physical | ((flags & A630_MMU_EXEC) ? 0 : A630_MMU_XN) | A630_MMU_AF | A630_MMU_NG |
-        A630_MMU_OUTER_SHARED | UINT64_C(3) |
+        ((flags & A630_MMU_NONSHARED) ? 0 : A630_MMU_OUTER_SHARED) | UINT64_C(3) |
         ((flags & A630_MMU_CACHED) ? UINT64_C(1) << 2 : 0) |
         ((flags & A630_MMU_USER) ? UINT64_C(1) << 6 : 0) |
         ((flags & A630_MMU_READONLY) ? UINT64_C(1) << 7 : 0);
@@ -93,7 +93,7 @@ a630_mmu_map(struct a630_mmu *s, uint64_t iova, uint64_t physical, unsigned flag
 {
     if (!a630_mmu_valid(s) || iova >= A630_MMU_VA_LIMIT ||
         physical >= A630_MMU_PA_LIMIT || ((iova | physical) & (A630_MMU_PAGE - 1)) ||
-        flags & ~15u) return A630_MMU_ARGUMENT;
+        flags & ~31u || ((flags&A630_MMU_NONSHARED) && (flags&A630_MMU_CACHED))) return A630_MMU_ARGUMENT;
     /* The device must never gain write access to its own translation tables. */
     if (physical >= s->physical && physical - s->physical < (uint64_t)s->capacity * A630_MMU_PAGE)
         return A630_MMU_ARGUMENT;

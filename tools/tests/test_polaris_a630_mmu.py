@@ -39,7 +39,8 @@ int main(void) {
  assert(a630_mmu_map(&s,1ull<<39,0x190000000,0)==A630_MMU_ARGUMENT);
  assert(a630_mmu_map(&s,0x60000000,1ull<<36,0)==A630_MMU_ARGUMENT);
  assert(a630_mmu_map(&s,0x60000000,0x180000000,0)==A630_MMU_ARGUMENT);
- assert(a630_mmu_map(&s,0x60000000,0x190000000,16)==A630_MMU_ARGUMENT);
+ assert(a630_mmu_map(&s,0x60000000,0x190000000,32)==A630_MMU_ARGUMENT);
+ assert(a630_mmu_map(&s,0x60000000,0x190000000,A630_MMU_CACHED|A630_MMU_NONSHARED)==A630_MMU_ARGUMENT);
  assert(s.used==1&&s.dirty==1&&!pool[1]);
  /* HFI16KiB: four 4KiB pages in a 16KiB CPU allocation. */
  for(unsigned n=0;n<4;n++)assert(!a630_mmu_map(&s,0x60000000+4096*n,0x190000000ull+4096*n,0));
@@ -61,6 +62,13 @@ int main(void) {
   inspect(pool,0x180000000,va[n],physical,0xec7);
   assert(!a630_mmu_lookup(&s,va[n]+4095,&pa,&entry)&&pa==physical+4095);
  }
+ /* New owned WC pages match XNU WIMG_WCOMB: normal NC attribute index0
+  * (MAIR0=0x44), nonshareable. Legacy HFI and cached mappings above retain
+  * their exact original descriptors. RO and execute bits remain independent. */
+ assert(!a630_mmu_map(&s,0x30000000,0x200100000,A630_MMU_NONSHARED|A630_MMU_USER|A630_MMU_EXEC));
+ inspect(pool,0x180000000,0x30000000,0x200100000,0xc43);
+ assert(!a630_mmu_map(&s,0x30001000,0x200101000,A630_MMU_NONSHARED|A630_MMU_USER|A630_MMU_READONLY));
+ inspect(pool,0x180000000,0x30001000,0x200101000,0x60000000000cc3ull);
  /* Full pool never leaves half a newly linked hierarchy. */
  assert(a630_mmu_init(&s,pool,0x180000000,2));memcpy(saved,pool,sizeof(saved));
  assert(a630_mmu_map(&s,0x60000000,0x190000000,0)==A630_MMU_FULL);

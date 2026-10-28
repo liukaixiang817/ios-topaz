@@ -34,6 +34,44 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0080 owned-GEM write-combine candidate: native compile/local checks complete, no phone trial
+
+- ACTIVE PHONE remains0079/phone-gpu-latency-0079-0002 in Settings. Directed
+  keepalive succeeded01:42UTC (directory label0144). No0080 phone boot or disk
+  write. GPU latency is still priority; first0079 optimization was insufficient.
+- New profile0877 adds explicit default-OFF polarisgpuwc=1 owned-GEM trial.
+  ONLY freshly allocated private MSM_BO_WC requests get native IOBMD WC cache
+  mode. Every existing/imported IOSurface stays cached with original full pre/
+  post sync. Task/kernel mappings use WC consistently. Before ANY GPU PTE is
+  installed, native IODefaultCacheBits queries actual pmap WIMG for EVERY page;
+  wrong attributes or mapping failure unpin/release without touching GPU maps.
+- SMMU client WC mappings use MAIR0 normalNC0x44/nonshareable to match native
+  XNU WIMG_WCOMB, not device memory. Existing HFI/GMU and cached PTE descriptors
+  are unchanged; cached+nonshared combinations refuse. Full DSB ordering, GPU
+  flush/fence/idle/halt, quarantine and surface busy lifetime are retained.
+  Only verified WC memory skips per-line sweeps, not a flag-only assumption.
+- Reference RedwoodGPU uses IOBMD kIOMapWriteCombineCache; independently read
+  our actual XNU IOBMD/IOMD/IOKitServer->pmap query/global pmap alias update and
+  MAIR sources (native-cache-attribute-reference.json). Never write pmap attrs
+  directly. New optional data-only polarisgpuwctest=1 calls actual native IOBMD
+  creation, both cached/WC pmap queries, bidirectional two-alias byte patterns
+  from bsd_autoconf after IOKitBSDInit. Intended for actual EFI/XNU QEMU; no
+  fake GPU device or claimed physical GPU proof. Need full CI/model PASS yet.
+- Fifteen ASan/UBSan GPU/MMU/lifetime/PM4/GMEM tests passed9.118s, including
+  wrong/later-page WC attributes and failed mapping before first GPU PTE,
+  imported-surface refusal, old partial-map/unknown-DMA retention, explicit
+  boot opt-in and genuine WC request gating. Two IIG policy negative tests
+  passed; actual17 cache replays keep all34 output files identical. All3 real
+  Appleclang27 full-header TUs pass: PolarisGPU.cpp, polaris_a630.c, bsd_init.c.
+  Exact profile0877 applies0fuzz/0offset to4 source files. candidate-checks.json.
+  Local first direct pmap query was unavailable to IOKit TU; corrected to the
+  native IODefaultCacheBits wrapper (actual implementation calls same pmap).
+- NEXT commit/push full CI once, actual dualCPU dirtyRAMroot/drain regression
+  WITH polarisgpuwctest=1 and independently assert actual VM probe PASS; only
+  then construct fresh RAM physical payload with polarisgpuwc=1 and preserve
+  GPU bundle/root/tree. Do not reuse0079 CI/kernel or silently enable default.
+  Native GPU pixel proof, shared surfaces and same20 scrolls must pass on phone.
+
 ### 0079 physical GPU bottleneck measured: caches dominate, first optimization insufficient
 
 - New0079 phone trial has reached real lock/home/Settings and completed the
