@@ -222,6 +222,22 @@ are available privately for the next transport work. Own DT SMEM is86000000,
 performed by this codec. Actual raw source identities and test artifacts are
 under0095/own-vendor and0096/wifi-codec-primary, outside Git.
 
+The same pinned tree contains two SMEM APIs. Its original GLINK transport
+includes `soc/qcom/smem.h` and calls `smem_alloc` / `smem_get_entry`, supplied
+by `CONFIG_MSM_SMEM` -> `msm_smem.c` (blob
+`1bbd7514188f82a7b4404c51ee7da7f83fbd82c5`). The separate `CONFIG_QCOM_SMEM`
+uses `smem.c` and `qcom_smem_get`. Compare the former and the original
+`SmemDxe` before implementing the transport. Do not infer the active binary
+configuration from a filename: the guessed `polaris_defconfig` path was absent.
+
+A known RAM recovery read68 original WLAN/audio files without writes; whole
+vendor/modem partition hashes matched before and after, vendor also matched
+its original4GiB backup, with all GPT/critical/ESP baselines unchanged. The
+actual `wlanmdsp.mbn`, board variants, ADSP segments, TAS firmware and left/right
+configuration plus ACDB are private under0096. The TAS2559 image header and
+size match the pinned original parser. This is source/format correspondence,
+not execution, association, speaker playback or a live radio chip ID.
+
 ## Where to look
 
 Paths in this table are relative to the corresponding reference checkout.

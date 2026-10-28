@@ -34,6 +34,98 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT PHONE0096-0002 LOCK SCREEN ready; awaiting human power-animation A/B
+
+- ActualnewcaseoriginalUEFIRAMboot andunique kernel-start completed. capture
+0001 at16:24 bootservices; capture0002 at16:26:58 actualviewedlockscreen,
+ nohardware/keyfault/panic/GPUstockfailure. PRESTART_PASS1/HIDready/SMP4
+ selected4 callbacks64 remote48/timer19.2MHz, GPUstockarmed1 target4/8.
+ Newkernel403dfd41.../CI40719813589 source704499e, originalgraphics/FWkept.
+- Askedhumannewphysical shortpoweroff,2s,shorton andcomparewitholdjank.
+ Pendingreply; do NOT claimfirstframebenefitfromcompilation/model/lockscreen.
+ KeepRUNNINGforhuman, no furtherboots/touches/shutdown/writes. Only0096
+ control-phone-0002.py stateNEWdir directedkeepalivebefore30minRAMlease.
+ Old0095allcasesENDED; do notqueryoldcontrollers/duplicatekernelstart.
+- WiFi/audio foundations still incomplete, notworkingnetworkorplayback.
+ readonlyrecoveryactuallyread68files20.269MB; wholevendor4GiB SHAaf8db49c
+ matchesoriginalbackupandbefore/after, modemwholeSHAunchanged, sixGPT/
+ critical/ESPunchanged, ro/noload+blockRO, actualunmount andFASTBOOT before
+ newRAMboot. Actualwlanmdsp.mbn is3,645,892B ELF32LE; actualTASuCDSP header
+ 5552/96,514B matcheswholefile/driver401/family0/device4 (noDSPexecution).
+ OriginalTAScore/regmap/headers Gitblobsverifiedprivately, actualleft/right
+ .ftcfg andACDB retained, noamplifier/I2C/rail/calibrationwrite.
+- IMPORTANT WiFi transportcorrespondence: pinnedglink_smem_native_xprt.c
+ includes<soc/qcom/smem.h> andcallssmem_get_entry/smem_alloc. That is
+ CONFIG_MSM_SMEM→msm_smem.c(blob1bbd7514...), NOT otherCONFIG_QCOM_SMEM→
+ smem.c(qcom_smem_get). OwnMakefile/Kconfig andactuallegacyheader verified.
+ msm_smem.c handlescommonpartition/versionaswell; donotblindlyportRedwood
+ host13/IPCC or assumeothergenericdriver'shostcount/format. polaris_defconfig
+ pathabsent; do notclaimactualAndroidbuildconfigverified. NEXToffline read
+ msm_smem.c/smem_private.h andoriginalSmemDxeboundedgetterABI/memorymap,
+ designread-onlymetadata inventory beforeanyGLINK/PILwrites. Existingcodec
+ service45/v1/inst0 andmessage24 passed96actualoriginalencodercomparisons,
+ but radiochip/FWidentitynotqueried, fixturechip3990 isNOTactualidentity.
+ AudioNEXToriginalADSP/APR/quaternaryMI2S→TAS2559routeinit, safeownedPCM/
+ flush/shutdown, notUIvolumeHUDassuccess. No extranativechanges orCIneeded
+ merelyforreading/hostofflinework; preservecurrentlyrunningphoneforhuman.
+
+### CURRENT PHONE0096-0002 RAM boot ACTIVE; unique kernel-start in progress
+
+- Recoveryreadonlyextraction successfullyENDED; originalvendor/modem whole
+ SHA before/after identical, all6GPT/critical/ESP unchanged, bothro+blockRO,
+ actualumount+independentFASTBOOTverified. Read68originalWLAN/audiofiles
+20269293B underignoredvendor-firmware-readonly-0001. Includeswlanmdsp.mbn,
+ actualbdwlanvariants/adsp.mdt+b00..14/TASuCDSP+left/rightftcfg+ACDB; not
+ firmwareexecution/association/playback proof. NoAndroid/partitionwrites.
+- Newcase0096/phone-keys-0096-0002 actualexpectedPolaris checked then original
+ UEFIRAMboot sent. state-before-kernel0001 waiting-payloadPASS; ONEunique
+ kernel-start0001 currentlysent(session37179). Inspectresult first; no repeat
+ boot/start, noold0095controller. Newnative403dfd41 kernelCI40719813589,
+ exactoriginal81FW/EDK2/admission/same601Bargs/GPU/ADT/samplingFW preserved.
+- NEXT actualcapture/log toverifyprestart/HID/SMP andrealUI, inspectKEYTIMING/
+ stockrequest BEFOREfirstframe. Needhumanphysicalpress forrealpoweranimation
+ A/B; cannotcallunit/QEMU60FPSproof. Afterreadyleaveforhuman/directedstate
+ keepalive(newcontrollerONLY) whilecontinuingofflineWiFi/audio. Nohostkey
+ injection exists. All0095oldphysicalcasesENDED, nativeFASTBOOT16:17already
+ independentlyverified. 0096localprepare0001 failedwrongpreflightpathbefore
+ image/deviceaccess; final0002 correctactual0095freshpreflight13:52. Noempty
+ fabricatednewpreflight. ThenonlycontrolledRAM/readonlyrecovery, noAndroid.
+
+### CURRENT PHONE0096 known recovery READONLY vendor extraction ACTIVE
+
+- 0095phone-keys-0095-0003 ENDED. ActualnativeHFSXunmount/VFS0busy0,
+ GPU1/BW4restore AFTERVFS0, CPUrequest0restore, all600500400 actualPSCI_OFF,
+ coordinator700park, cookie28050206951/seq1/mode2/RAM_DRAINED80000003,
+ fullshutdownlog saved then gatedreset16:17:33UTC. Independentexpected
+ PolarisFASTBOOT verified actual-fastboot-after-key-function.json. No raw
+ fallback/physicalkeys/Android/partitionwrites. Do NOT queryold0003controller.
+-0096/vendor-readonly.py now ACTIVE(session76044; inspect log/result first),
+ outputvendor-firmware-readonly-0001. KnownrecoveryRAM only, notAndroid;
+ root identity/noexistingblockmounts/6GPT+critical baselines, exactvendor
+ sde47/4GiB andmodemsde46/192MiB, blockRO; mounts ext4ro,noload andvfatRO,
+ copies onlyboundedWLAN/ADSP/TAS/ACDBfilestoignoredhostdir, before/afterwhole
+ partitionSHA+criticalaudit/unmount/independentFASTBOOT. No newrootallocation,
+ journalreplay/repair orwrites. Do not restart recovery/extraction or run
+ physicalcandidateuntil this operation ends and realFASTBOOTisverified.
+-0096currentnative models SERIAL allPASS115: keysON29/38.145s, keysOFF27/
+37.905s, stale28/38.086s, peerrefused31/38.085s. EachactualrealPID1/4children/
+ dirtyRAMwriter/input/SMP4/SGI/nativeVFS0/realpeerOFForrefusal, validkeytiming
+6records. actual-native-three-key-early-demand-proof.json bindsallcurrent
+ source/artifacts/CI; nophysicalboostbenefitorQualcommMMIOsimulationclaim.
+ 4parallel0001IRQwatchdogfailuresretained; serialsuccessdoesnotproveall
+ failures'rootcause. No watchdog/timer threshold relaxed.
+- Newphysicalcandidatephone-keys-0096-0002 packaged original81FW/wholeEDK2/
+ admissionPASS, same601Bbootargs/GPUbundle/ADT andsameFW as0003, newnative
+ kernel403dfd41...CI40719813589/source704499e. No0096physicalbootyet.
+ Initiallocalprepare0001wrongpreflightpathrefused beforeimage/deviceaccess;
+ keptfailedcase; corrected0002 referencesactual0095freshpreflight13:52UTC.
+ Do not fabricate a newpreflight or reuse oldkernel/source proof.
+- NEXT after readonlyrecovery actuallyends: expectedPolaris readonly+unique
+ authorizedRAM usingboot-phone-0002.py/control-phone-0002.py in0096 only,
+ unique kernelstart, realcaptureandkeytiming/performancecheck. Latesthuman
+ asksfixslowextinctionafterfunctionalkeys, so necessarynewRAMtrialauthorized;
+ no repeatpermissionrequest. WiFi/audio actualinitializationstillincomplete.
+
 ### 0096 fullCI PASS; actual models rerunning serially, phone0095 still ACTIVE
 
 - Native source704499e7f1869c70e520f8ad38ab7b4d26b3aba9 committed/pushed;
