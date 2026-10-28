@@ -13,8 +13,9 @@ class ClockDecode(unittest.TestCase):
  def test_all_original_factory_rates_and_request_not_execution_proof(self):
   for index,hz in enumerate(m.FACTORY_HZ):
    rows=self.fixture(hz,requested=max(index,1));out=m.decode(*rows)
-   self.assertTrue(out['admitted']);self.assertLessEqual(abs(out['register_configured_clock_Hz']-hz),500)
-   self.assertEqual(out['nearest_factory_clock_Hz'],hz);self.assertFalse(out['instantaneous_frequency_proven'])
+   self.assertTrue(out['admitted']);self.assertLessEqual(abs(out['reference_graph_rate_Hz']-hz),500)
+   self.assertEqual(out['nearest_reference_factory_clock_Hz'],hz);self.assertFalse(out['instantaneous_frequency_proven'])
+   self.assertFalse(out['physical_clock_graph_verified']);self.assertIsNone(out['physical_configured_clock_Hz'])
    self.assertFalse(out['GPU_busy_or_scanout_FPS_proven']);self.assertEqual(m.analyze(self.wire(rows))[0],dict(out,raw=dict(zip(('RO','A','B'),rows))))
   out=m.decode(*self.fixture(257000000,requested=4));self.assertFalse(out['request_floor_met_by_register_configuration']);self.assertEqual(out['requested_floor_Hz'],520000000)
  def test_unknown_unstable_or_partial_never_proves_frequency(self):

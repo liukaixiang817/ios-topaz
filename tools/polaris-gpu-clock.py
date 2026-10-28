@@ -2,8 +2,10 @@
 """Decode fixed RO A630/SDM845v2 GPUCC snapshots from native diagnostics.
 
 Formula follows pinned MiCode c7cb50c1 gpucc-sdm845.c, clk-alpha-pll.c and
-clk-rcg2.c. A stable register-derived configured rate is NOT instantaneous
-hardware frequency, utilization, a benchmark, or proof a vote was executed.
+clk-rcg2.c. It is a REFERENCE clock graph, not a validated GMU firmware clock
+graph. Even an admitted reference estimate is NOT physical configured or
+instantaneous frequency, utilization, or proof a vote was executed. Do not fit
+an unexplained divider to make a physical snapshot match its requested rate.
 """
 import argparse,hashlib,json,re
 from pathlib import Path
@@ -46,10 +48,11 @@ def decode(ro,first,second):
  if abs(nearest-rate)>500:raise ValueError('configured rate is outside original factory table tolerance')
  return dict(admitted=True,end_us=ro['end_us'],requested_index=ro['PERF']&255,
   requested_floor_Hz=FACTORY_HZ[ro['PERF']&255],bandwidth_index=ro['BW'],
-  register_configured_clock_Hz=rate,nearest_factory_clock_Hz=nearest,
+  reference_graph_rate_Hz=rate,nearest_reference_factory_clock_Hz=nearest,
   request_floor_met_by_register_configuration=rate+500>=FACTORY_HZ[ro['PERF']&255],
   parent='GPU_PLL0_even / CRC_div1',PLL_Hz=pll,PLL_post_divider=divider,
   RCG_HID=hid,primary_commit=PINNED_COMMIT,
+  physical_clock_graph_verified=False,physical_configured_clock_Hz=None,
   instantaneous_frequency_proven=False,GPU_busy_or_scanout_FPS_proven=False)
 
 def analyze(text):
@@ -76,7 +79,9 @@ def main():
  result=dict(source=str(a.log),source_sha256=hashlib.sha256(raw).hexdigest(),
   algorithm_source_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
   records=records,admitted_count=sum(r['admitted'] for r in records),
-  rejected_count=sum(not r['admitted'] for r in records),instantaneous_frequency_proven=False)
+  rejected_count=sum(not r['admitted'] for r in records),reference_graph_only=True,
+  physical_clock_graph_verified=False,physical_configured_clock_Hz=None,
+  instantaneous_frequency_proven=False)
  with a.output.open('x') as f:json.dump(result,f,indent=2);f.write('\n')
  print(json.dumps({k:result[k] for k in ('admitted_count','rejected_count','instantaneous_frequency_proven')}))
 if __name__=='__main__':main()

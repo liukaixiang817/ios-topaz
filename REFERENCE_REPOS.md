@@ -426,3 +426,16 @@ PCI probe enumerated the UFS device but BAR0 was unmapped, so it is NOT native
 UFS I/O or durability evidence. This standard controller can help validate our
 native UTP descriptor/completion/sync logic; Qualcomm clock/PHY/ownership must
 still be derived and tested separately on Polaris.
+
+## Complete physical submission phases (0092)
+
+Short timestamp-bound records now give complete native decomposition. Of
+15.847ms submit wall time per completion,15.418ms is execute/idle polling;
+prior/ring/visibility/halt/postcheck together are about0.4ms. This is not a
+hardware busy counter. Cached output surface sweeps still cost3.228+3.174ms
+and final CPU scaling about14.221ms per copy window. Firmware mailbox
+request1/bus4/return0 was actually read, but the downstream clock graph
+formula rejects all53 live snapshots. The host decoder exposes only a
+reference-graph rate and explicitly leaves physical clock frequency unknown.
+Do not invent a divide-by-two adjustment to fit the request. A bounded
+original-device HFI request A/B is the next candidate, not an achieved gain.

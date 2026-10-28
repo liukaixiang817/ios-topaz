@@ -34,6 +34,69 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0092 physical complete GPU-submit phase diagnosis + native restore COMPLETE
+
+- CURRENT PHONE: independent actual expected Polaris FASTBOOT verified09:38UTC.
+ 0092 RAM trial ended with native shutdown, no active iOS/USB/model/CI. Do NOT
+ reuse old case/control or repeat boot. No storage writes/Android/raw fallback.
+- physical-complete-submit-phase-proof.json binds5 viewed screenshots/40 real
+ consumed inputs, exact native972b065/fullCI40660265209/kernel69844bca source,
+ complete strict 5-part STAGE/3-part METHOD parsing and native restoration.
+ SAME4big/GPU/ADT/WC/CPUstock2; NO GPU frequency/bandwidth write added.
+- Last20 gestures381..740:594 continuous frames, median34.526ms, mean34.584,
+ p9539.451, all>16.667ms.13 complete native windows/532 EAGL completions:
+ validation0.113ms/cachepre3.228ms/submit15.847ms/cachepost3.174ms per completion;
+ SUBSET execute_idle15.418ms, prior0.111/ring0.017/visibility0.016/halt0.101/
+ postcheck0.129ms.7.030batches/frame, pre/post each11,260,551bytes/frame. Thus
+ halt/check removal cannot eliminate the main15ms; execute_idle includes
+ polling/preemption, not a pure hardware busy counter. Panel mean-window median
+ 14.221ms; USB-pacedlogical20.268/panel20.306/s NOT throughput/scanout FPS.
+ Fixed first1s after final UP740, excluding first completion:23 full frames,
+ median36.693ms. Warm20 median34.288ms, same full-stage decomposition.
+- All53 actual fixed RO snapshots succeeded(full mask3ffff), live GMU request
+ PERF30000001/BW4/ACK0/RETURN0 and stable A/B GPUCC. Original downstream clock
+ graph formula rejected ALL53: raw reference graph rate is outside original
+ table. DO NOT call it physical514MHz or divide by2 to fit257MHz. Current
+ upstream v6.12 GPUCC doesn't expose PLL0/graphics clock, consistent with GMU
+ ownership but not proof of an alternate divider. Host decoder now explicitly
+ reference_graph_only, physical_clock_graph_verifiedfalse/physicalHznull.
+ Request1/4+return0 proves observed request protocol, NOT actual frequency.
+- Native end09:35:53UTC RAM_DRAINED80000003 cookie55054507647/seq1/mode2,
+ actualVFS0busy0, CPU request0 restored BEFORE actual600/500/400PSCI_OFF;
+ full log saved then gated reset. Actual FASTBOOT09:38UTC independently queried.
+- NEXT targeted bounded original-table GPU/bus request A/B, defaultOFF and
+ quiescent same-lock transitions/readback/restore before native peerOFF;
+ distinguish core-only/bus-only, no blind max/PLL/voltage/thermal writes, no
+ barrier/lifetime removal. No GPU DVFS candidate implemented yet. Keep existing
+ graphics byte-identical; CPUcopy14ms/cache6.4ms remain separate bottlenecks.
+ No nativechanges after972b065: no newCI for host decoder/docs. Persistent
+ root/menu remain deferred, baseRO+RAMCOW; no installation claim.
+
+### 0092 candidate fully admitted; RAM boot starting (NO GPU frequency writes)
+
+- Native972b065/fullCI40660265209/job122721246081 PASSED; kernel0092 SHA
+ 69844bcae54e8fcb734784ef7d4738f8002717a3c49bcdf9febbca3c1bfdcf07
+  exactsource/profile/ZIPCRC/SHA verified. FouractualnativeEFI/XNU regressions
+ 99checksPASS25/27/23/24 in37.599/37.680/37.731/37.691s, source-bound final
+  actual-native-four-core-proof.json; sameWM cached/WC/dirtyRAMroot/native
+  peerOFF, virtualstock request refuses beforeMMIO, NOTSD845/GPUemulation.
+- phone-live-GPU-clock-0092-0001 payload606B exact, SAMEGPU/ADT4big/WC and
+  CPUstock2 as0091, newcompleteboundedphase+fixedROclockobserver ONLY. Original
+ 81FW/fullactualEDK2GetInfoDecode wholematchPASS. NoGPUOPP/buschange added.
+- CURRENTboot-phone.py sendingafterindependentactualgetvarpolaris. Firstread
+  actualboot.json/state; do NOT blindlysendbootagain. Oncewaiting-payload use
+ 0092/control-phone.py7 4 boot --payload... ONLYONCE, thenactualcapture. Use
+  exact0092case controls,newoutputdirs; old0091/90/89 allended.30minRAMlease.
+  No storagewrites/rawfallback/Android. Candidate nativeOSMrestore before
+  peerOFF staysrequired. CPUstock2 bounded30s/10s/250ms, no instantaneousHzclaim.
+- Host2b2004c pushed: decoder +nativeformatter actualbinary->hostparser
+  roundtrip verified,23localchecks3.427s. No nativechangesafter972, no CIrerun.
+- NEXTactualclockRO3lines perend, analyze tools/polaris-gpu-clock.py, reject
+  missing/changed/unknownparent/unlocked reads, thensamecontrolledwarm+measured
+  scroll withfull5partSTAGE and3partMETHOD. HardwareROactualnotyetknown.
+  Cannot infer257MHz fromconfiguredHFIconstant, no blindmaxGPUpstate. Ready
+  control/measure scripts0092 alreadyboundtoexactboot; preserveallrawproof.
+
 ### 0092 full CI PASSED; clock decoder/native-format roundtrip verified
 
 - Native972b065983898eefee55f2a7d2fafc2dc0e8fc78 pushed; fullmacOS27/Xcode27
