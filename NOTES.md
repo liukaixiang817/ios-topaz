@@ -57,6 +57,15 @@ early samples only. On0029 the human already confirmed boot complete and said
   zero fuzz/offset and produces byte-identical native sources. Private evidence:
   0079/gpu-latency-candidate/candidate-checks.json. Full CI and physical before/
   after measurements are still pending. Do not claim improved phone frame rate.
+- Source91ccb8b was pushed. Full CI40611747066/job122564665824 failed before
+  kernel compilation because the strict IIG cache rejected the two changed
+  implementation-only GPU headers. Failure log is preserved in0079. These
+  headers are included only by polaris_a630.c; no header/IDL references them.
+  The correction binds both pinned OLD and reviewed NEW SHA256s for exactly
+  those two files, retaining every other header/IDL check. Two negative policy
+  tests passed; actual pinned-cache replay of all17 original interfaces and
+  all34 generated outputs remains byte-identical (IIG-replay-proof.json).
+  This is a build-admission correction, not a hardware or latency result.
 
 ### LIVE performance inspection: GPU hardware active; synchronous pipeline slow
 

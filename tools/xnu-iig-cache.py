@@ -24,6 +24,17 @@ EXTRA_PRIVATE_HEADERS={'iokit/Kernel/arm/polaris_uefi_cpu.h','bsd/dev/polaris_ue
 # must not weaken the original IDL/header checks or admit arbitrary headers.
 EXTRA_PRIVATE_HEADER_SHA={'bsd/dev/polaris_runtime_quiesce.h':
     '184aa7ad4d296c407e061082fa1f83d46278489e0252ed142136c3718d778757'}
+# These two existing headers are implementation includes of polaris_a630.c
+# only; no header/IDL includes them. Profile0876 adds internal timing state,
+# not an IIG type or interface. Bind BOTH the pinned original and replacement
+# bytes. Every other original header and all 17 IDLs still require identity.
+PRIVATE_IMPLEMENTATION_REPLACEMENTS={
+    'bsd/dev/polaris_a630_runtime.h':(
+        'ac96ec731d4a49a5a1de5edf734f3382a971e881d1d5878167d55701d94b36aa',
+        '3362ec83ed91e6760ada654c51c81c9f29601d753bb436574dc709452cab015d'),
+    'bsd/dev/polaris_a630_submit.h':(
+        'c91f3ff1adafe9e13370a30305b2bdd7e44b4f0f5fd3ceffab77d4d800b8f835',
+        'f8219e19f05246531b49a8bfdfa42c4eff2e58d46b71f21c9a035608f0951151')}
 # Stage scripts0019/0026 copy these host SDK files into private pthread/HFS
 # scratch directories. Neither directory is on the IIG include search path;
 # these two host-dependent copies do not define the DriverKit interfaces.
@@ -32,6 +43,9 @@ HOST_SDK_COPIES={'bsd/pthread/sweet_libpthread/TargetConditionals.h','bsd/sweet_
 
 def digest(b):return hashlib.sha256(b).hexdigest()
 def sha(p):return digest(p.read_bytes())
+def header_matches(name,want,path):
+    got=sha(path)
+    return got==want or PRIVATE_IMPLEMENTATION_REPLACEMENTS.get(name)==(want,got)
 def safe(name):
     p=PurePosixPath(name)
     if p.is_absolute() or '..' in p.parts:raise ValueError('unsafe cache member')
@@ -95,7 +109,7 @@ def replay(cache,args):
         if name in present and sha(present[name])!=want:
             raise ValueError('reviewed private header changed: '+name)
     changed=[name for name,want in expected.items() if name not in HOST_SDK_COPIES and
-             (name not in present or sha(present[name])!=want)]
+             (name not in present or not header_matches(name,want,present[name]))]
     if changed:raise ValueError('source header/IDL changed: '+', '.join(changed))
     relative=str(source.relative_to(root))
     if relative not in expected or not relative.endswith('.iig'):raise ValueError('definition absent from baseline')
