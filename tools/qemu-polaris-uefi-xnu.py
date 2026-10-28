@@ -69,6 +69,16 @@ def main():
         raise ValueError('QEMU inputs do not match the built test driver')
     for name,digest in manifest['inputs'].items():
         if sha(root/name)!=digest:raise ValueError('QEMU driver source changed: '+name)
+    # Validate the explicit new estimator before VM/file creation. An old
+    # generic success or a latent payload token cannot stand in for this mode.
+    spec=importlib.util.spec_from_file_location('pair_intent',root/'tools/build-polaris-uefi-xnu.py')
+    intent=importlib.util.module_from_spec(spec);spec.loader.exec_module(intent)
+    pair_tokens=a.payload.read_bytes()[0x48:0x2a8].split(b'\0',1)[0].split()
+    pair_policy=intent.tsens_pair_witness_intent(pair_tokens,
+        manifest.get('TSENS_pair_witness_trial',False),manifest.get('TSENS_readonly_inventory',False),
+        manifest.get('GPU_thermal_lease_trial',False),manifest.get('GPU_thermal_extended_trial',False))
+    if json.dumps(manifest.get('TSENS_pair_policy'),sort_keys=True)!=json.dumps(pair_policy,sort_keys=True):
+        raise ValueError('TSENS pair policy does not match exact bounded intent')
     out=a.output.resolve();out.mkdir(parents=True,exist_ok=False)
     esp=out/'esp/EFI/BOOT';esp.mkdir(parents=True)
     shutil.copyfile(app,esp/'BOOTAA64.EFI');shutil.copyfile(a.payload,out/'esp/PAYLOAD.BIN')
@@ -289,6 +299,9 @@ def main():
         checks['native_thermal_refused_before_virtual_requests']=('POLARIS THERMAL GATE: armed experiment' not in ring and 'POLARIS GPU THERMAL: armed' not in ring and 'POLARIS GPU STOCK SAMPLE:' not in ring)
     if manifest.get('GPU_thermal_extended_trial'):
         checks['native_thermal_extended_budget']=('POLARIS GPU EXTENDED BUDGET VM: PASS; native600s/confirmed-low10s/mode-switch refusal, synthetic time only' in ring)
+    if manifest.get('TSENS_pair_witness_trial'):
+        checks['native_TSENS_pair_witness_core']=('POLARIS TSENS PAIR VM: PASS; native12/13/72 reads, hottest witness and hot gate, unpaired/critical/IO refuse; synthetic words only' in ring)
+        checks['explicit_TSENS_pair_payload']=([t for t in pair_tokens if t.startswith(b'polarispts=')]==[b'polarispts=1'])
     if manifest.get('GPU_stock_request'):
         checks['native_GPU_stock_refused_before_virtual_MMIO']='POLARIS GPU STOCK: REFUSED platform/mode before GPU MMIO' in ring and 'POLARIS GPU STOCK: armed=' not in ring and 'POLARIS GPU STOCK SAMPLE:' not in ring
     if b'polarisgpuwctest=1' in a.payload.read_bytes()[0x48:0x2a8].split(b'\0',1)[0].split():
@@ -462,6 +475,8 @@ def main():
                 TSENS_readonly_inventory=manifest.get('TSENS_readonly_inventory',False),
                 GPU_thermal_lease_trial=manifest.get('GPU_thermal_lease_trial',False),
                 GPU_thermal_extended_trial=manifest.get('GPU_thermal_extended_trial',False),
+                TSENS_pair_witness_trial=manifest.get('TSENS_pair_witness_trial',False),
+                TSENS_pair_policy=manifest.get('TSENS_pair_policy'),
                 GPU_thermal_policy=manifest.get('GPU_thermal_policy'),
                 persistent_root_or_UFS_durability_proven=False,
                 isolated_QEMU_readonly_UFS_test=virtual_ufs and not owned_ufs,

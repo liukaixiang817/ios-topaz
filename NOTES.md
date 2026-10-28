@@ -34,6 +34,48 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0104 conservative pair witness native source PREPARED; phone FASTBOOT
+
+- Phone onlyreadonlyexpectedPolaris FASTBOOT checked22:29UTC PASS; all0103
+  trials ended, no0104phoneimage/boot ordevicewrites. Latestnativecode notyet
+  CI/actualVM/phoneproven. No currentUSBworker/model/collector.
+- OriginalownMiCode c7cb50c1 TSENS/status blobs rechecked against0099proof:
+  accepts firstVALID word/threeVALIDretries, hasinvalidmajorityfallback that
+  weDONOTcopy. Originaldoesn't justify discarding higherVALIDword; two-pass
+  2C consistency is ourconservativeguard, actualerror7 doesnotprovebadADC.
+- NewdefaultOFF --tsens-pair-witness/exactpolarispts1 REQUIRESsameextended
+  TSENS3/lease/fourbig/RAMCOW/ufsrw0/nativebridge/stockCPU/GPU3. Oldmode3
+  control sampler untouched. Newpurecanonicalheader +profile0897 modifies
+  ONLYSweetCPU.cpp, no newprivateheader/runtime/IIGallowance/MMIOwriters.
+  First6+second6samecontrol; ONLY>2000mC VALIDpairdisagreement allowsTWO
+  furtherREADS ofSAMEstatus. MustchooseTWOactual observedwords within2C
+  INCLUDINGhottestVALIDword seen; noaverage/majority/coolwordfallback. A hot
+  corroboratedpeak still reachesrealPTEhot; uncorroboratedhot rejectswhole.
+  CriticalevenVALIDclear/read/range/invalid-exhaust/time immediatelyrefuse.
+  Wholeobservation1ms, max24logical/72physical, no crosspollretry/delay.
+  Acceptedrawsaretwoauthenticselectedwords, originalnormalresultbyteidentical.
+  Failureaudit intentionallydiagnostic butsampleoutputunchanged; no partial
+  permission. 10srecovery/age/temperature/frozen/600hard/idle/HFI/cache/DMA/
+  CPUguard/native restore unchanged, notproductionthermalmanagement.
+- Newnativeaudit logs originalfirst/current/extra/selectedraws andbegin/end/
+  count/reason onfailureorrepair, below255B each. Newopt-inOSM REQUEST log
+  brackets serializedpolicytick/readback usingactualmachtime, not32bitcycle
+  inferenceorinstantHz. Nativegenericprobe exercises12/13/72READS/hottest
+  hotgate/unpaired/critical/IOrefusal onexplicitSYNTHETICwords beforevirtual
+  platformrefusal, never QualcommMMIO. Still needsactualEFIXNUexecution.
+-40localASan/UBSan/20000randompeakoracle/72positionsIOcriticalrangefaults/
+  allinvalid/time/atomicoutputs/hostboolpolicytamper/nativebinding/IIGtests
+  PASS7.440s; actualAppleclang27SweetCPU andA630 TUs PASS. AArch64freestanding
+  stack496B, exactsingle-sourcepatch fuzz0/offset0 wholeactualsource match.
+  Existingprivate runtimehash8113b553... unchanged. No newIDL/cachescope.
+- Futurephoneargs needspace: remove ONLYdefault-OFF polarisstack0 (actual
+  native stacks requirespresent1 ANDcpus1; currentcpus4 alreadyfalse), append
+  polarispts1, preservetouch_lat1 andallrequiredguards/GPUbundle. Do not change
+  anactive0103manifest orpretendactual600 passed. Need fullnewCI/exactartifact,
+  sequentialactualnativepairON/controlOFF/stale/peerrefused, parseraudit and
+  physicalstrictadmission beforeONEnewphoneRAM. NEXT sourcecommit/pushONECI,
+  preparefreshcompleteROpreflightwhileCI, no repeatunmodifiedkernelCI.
+
 ### 0103 physical long-duration OUTCOME COMPLETE; actual phone FASTBOOT
 
 - ALL0103 trials ENDED. Final native end completed22:21UTC, independentactual

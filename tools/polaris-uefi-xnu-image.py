@@ -48,6 +48,24 @@ def admit_thermal_policy(driver,qemu,thermal,gpu_mode):
         raise ValueError('GPU extended duration requires actual native600s/mode-switch and VALID retry proof')
     if not lease and (driver.get('GPU_thermal_policy') is not None or qemu.get('GPU_thermal_policy') is not None):
         raise ValueError('inactive GPU thermal lease must not carry a policy')
+    admit_pair_witness_policy(driver,qemu,thermal,extended)
+
+
+def admit_pair_witness_policy(driver,qemu,thermal,extended):
+    pair=driver.get('TSENS_pair_witness_trial',False)
+    actual=qemu.get('TSENS_pair_witness_trial',False)
+    if type(pair) is not bool or type(actual) is not bool or pair!=actual:
+        raise ValueError('TSENS pair witness needs matching separate intent')
+    policy={'max_physical_reads':72,'max_words_per_sensor':4,'max_span_us':1000,
+            'max_pair_delta_mC':2000,'hottest_word_required':1,'actual_words_only':1}
+    if pair and (not thermal or not extended or
+        not exact_policy(driver.get('TSENS_pair_policy'),policy) or
+        not exact_policy(qemu.get('TSENS_pair_policy'),policy) or
+        qemu.get('checks',{}).get('native_TSENS_pair_witness_core') is not True or
+        qemu.get('checks',{}).get('explicit_TSENS_pair_payload') is not True):
+        raise ValueError('TSENS pair witness needs actual native hottest-word/failure proof and exact bounds')
+    if not pair and (driver.get('TSENS_pair_policy') is not None or qemu.get('TSENS_pair_policy') is not None):
+        raise ValueError('inactive TSENS pair witness must not carry a policy')
 
 
 def admit(driver,qemu,ci,profile,preflight):

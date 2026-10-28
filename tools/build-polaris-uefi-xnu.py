@@ -114,6 +114,21 @@ def tsens_readonly_intent(tokens,enabled,core,count,qemu,drain,bridge,ufs,marker
     return enabled
 
 
+def tsens_pair_witness_intent(tokens,enabled,readonly,lease,extended):
+    actual=[t for t in tokens if t.startswith(b'polarispts=')]
+    if type(enabled) is not bool or actual!=([b'polarispts=1'] if enabled else []):
+        raise ValueError('TSENS pair witness requires one separate explicit intent')
+    if enabled:
+        if any(type(v) is not bool or not v for v in (readonly,lease,extended)):
+            raise ValueError('TSENS pair witness requires the extended thermal experiment')
+        for token in (b'polaristsens=3',b'polarisramcow=1',b'ufsrw=0',b'polarisquiesce=1'):
+            if [t for t in tokens if t.startswith(token.split(b'=')[0]+b'=')]!=[token]:
+                raise ValueError('TSENS pair witness must preserve native RAM/thermal guards')
+    return ({'max_physical_reads':72,'max_words_per_sensor':4,'max_span_us':1000,
+             'max_pair_delta_mC':2000,'hottest_word_required':1,'actual_words_only':1}
+            if enabled else None)
+
+
 def main():
     ap=argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--zig',required=True,type=Path)
@@ -139,6 +154,7 @@ def main():
     ap.add_argument('--tsens-readonly',action='store_true',help='original six CPU/GPU thermal status registers only')
     ap.add_argument('--gpu-thermal-lease',action='store_true',help='explicit default-OFF bounded GPU-only thermal experiment; requires readonly TSENS and stock mode3')
     ap.add_argument('--gpu-thermal-extended',action='store_true',help='separate default-OFF 600s GPU duration experiment; all thermal/idle/10s low guards retained')
+    ap.add_argument('--tsens-pair-witness',action='store_true',help='separate default-OFF bounded VALID-word witness, retaining hottest observed temperature')
     ap.add_argument('--wled-inventory-only',action='store_true',help='short original WLED observer inventory then hold; CPU_ON compiled out, no PMIC writes')
     ap.add_argument('--test-wled-read-failure',action='store_true',help='QEMU-only explicit observer refusal in the inventory hold')
     ap.add_argument('--cpu-stock-inventory',type=Path,help='required physical read-only OSM evidence for the first performance trial')
@@ -160,6 +176,8 @@ def main():
     ap.add_argument('--chain-app-manifest',type=Path,help='RAM test wrapper for the exact already-built selected disk app')
     a=ap.parse_args();r=Path(__file__).resolve().parents[1]
     target=a.kernel_core if a.test_qemu else a.kernel_core<<8
+    if a.tsens_pair_witness and not a.gpu_thermal_extended:
+        ap.error('TSENS pair witness requires the explicit extended thermal experiment')
     if a.gpu_thermal_extended and not a.gpu_thermal_lease:
         ap.error('TSENS extended duration requires explicit thermal lease')
     if a.gpu_thermal_lease and (not a.tsens_readonly or not a.cpu_osm_stock_performance or a.gpu_stock_request!=3):
@@ -236,6 +254,8 @@ def main():
         a.test_qemu,a.test_ram_drain,a.ram_shutdown_bridge,a.test_qemu_ufs,
         a.physical_owned_marker,a.cpu_osm_readonly or a.cpu_osm_stock_performance,
         a.gpu_thermal_lease,a.gpu_stock_request,a.cpu_osm_stock_performance,a.gpu_thermal_extended)
+    pair_policy=tsens_pair_witness_intent(tokens,a.tsens_pair_witness,a.tsens_readonly,
+        a.gpu_thermal_lease,a.gpu_thermal_extended)
     gpu_inventory=None
     if a.gpu_stock_request and not a.test_qemu:
         if not a.gpu_stock_inventory:raise ValueError('GPU stock request requires actual physical read-only baseline')
@@ -426,6 +446,7 @@ def main():
                   TSENS_readonly_inventory=a.tsens_readonly,thermal_configuration_write_api=False,
                   GPU_thermal_lease_trial=a.gpu_thermal_lease,
                   GPU_thermal_extended_trial=a.gpu_thermal_extended,
+                  TSENS_pair_witness_trial=a.tsens_pair_witness,TSENS_pair_policy=pair_policy,
                   GPU_thermal_policy=({'experimental_limits_mC':[75000,70000,60000,55000],
                     'max_observation_age_us':500000,'hard_high_ns':600000000000 if a.gpu_thermal_extended else 120000000000,
                     'confirmed_low_ns':10000000000,'idle_ns':250000000} if a.gpu_thermal_lease else None),

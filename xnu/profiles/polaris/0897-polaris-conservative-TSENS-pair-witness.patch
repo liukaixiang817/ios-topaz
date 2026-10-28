@@ -1,0 +1,266 @@
+--- a/iokit/Kernel/arm/SweetCPU.cpp
++++ b/iokit/Kernel/arm/SweetCPU.cpp
+@@ -188,6 +188,118 @@
+ }
+ 
+ /* END OWN TSENS VALID RETRY. */
++/* BEGIN CONSERVATIVE TSENS PAIR WITNESS: exact tested core. */
++/* Default-OFF experiment for inconsistent, but individually VALID, TSENS
++ * words. This is an independent conservative estimator, not an OEM algorithm
++ * or a sensor-freshness proof. Never majority-vote away a hotter observation.
++ *
++ * Keep the ordinary two-pass result byte-identical when it agrees. Only a
++ * >2000mC disagreement permits up to TWO extra reads of that SAME status.
++ * Accept two actual observed words within2000mC only when they include the
++ * hottest VALID word seen for that sensor. Critical/range/read/clock failures
++ * refuse immediately. The complete observation must still fit1000us.
++ * At most24 logical status reads /72 physical reads; no writes or delays.
++ * Sample output commits only on complete success. Audit is diagnostic-only
++ * on both success and failure and MUST NOT authorize a performance request.
++ */
++struct polaris_tsens_pair_audit {
++    uint64_t began_us,ended_us;
++    uint32_t raw[6][4],count[6],selected[6][2];
++    uint32_t physical_reads,logical_reads,retry_mask,disagreement_mask,repaired_mask;
++    uint32_t failed_offset,last_raw,error;
++};
++static inline unsigned polaris_tsens_pair_failure(const struct polaris_tsens_io *io,
++    struct polaris_tsens_pair_audit *audit,unsigned error,
++    struct polaris_tsens_pair_audit *out)
++{
++    audit->ended_us=io->now_us(io->context);
++    audit->error=error;*out=*audit;return error;
++}
++static inline unsigned polaris_tsens_pair_read(const struct polaris_tsens_io *io,
++    struct polaris_tsens_pair_audit *audit,unsigned sensor,uint32_t *raw)
++{
++    if(sensor>=6 || audit->logical_reads>=24 || audit->physical_reads>=72)
++        return PTS_ARGUMENT;
++    uint32_t slot=audit->logical_reads++,offset=0xbc+4*sensor;
++    audit->failed_offset=offset;
++    for(unsigned attempt=0;attempt<3;attempt++) {
++        uint32_t word=0;int32_t value=0;
++        audit->physical_reads++;
++        if(!io->read(io->context,offset,&word))return PTS_READ;
++        audit->last_raw=word;
++        if(word&(1u<<19))return PTS_CRITICAL; /* even when VALID is clear */
++        unsigned error=polaris_tsens_decode(word,&value);
++        if(!error){*raw=word;return PTS_OK;}
++        if(error!=PTS_VALID)return error;
++        audit->retry_mask|=1u<<slot;
++    }
++    return PTS_VALID;
++}
++static inline bool polaris_tsens_pair_choose(const uint32_t *raw,unsigned count,
++    uint32_t *first,uint32_t *second,int32_t *maximum)
++{
++    if(!raw || count<2 || count>4 || !first || !second || !maximum)return false;
++    int32_t value[4]={0};unsigned peak=0;
++    for(unsigned i=0;i<count;i++) {
++        if(polaris_tsens_decode(raw[i],&value[i]))return false;
++        if(value[i]>value[peak])peak=i;
++    }
++    /* Prefer the latest corroborating word; preserve actual read order. */
++    for(unsigned i=count;i-->0;)if(i!=peak && value[peak]-value[i]<=2000) {
++        *first=peak<i?peak:i;*second=peak<i?i:peak;
++        *maximum=value[peak];return true;
++    }
++    return false;
++}
++static inline unsigned polaris_tsens_observe_pair_witness(
++    const struct polaris_tsens_io *io,struct polaris_tsens_sample *out,
++    struct polaris_tsens_pair_audit *evidence)
++{
++    if(!io || !io->read || !io->now_us || !out || !evidence)return PTS_ARGUMENT;
++    struct polaris_tsens_sample sample={0};
++    struct polaris_tsens_pair_audit audit={0};
++    audit.began_us=io->now_us(io->context);sample.began_us=audit.began_us;
++    if(!audit.began_us){audit.error=PTS_TIME;*evidence=audit;return PTS_TIME;}
++    for(unsigned n=0;n<6;n++) {
++        unsigned error=polaris_tsens_pair_read(io,&audit,n,&audit.raw[n][0]);
++        if(error)return polaris_tsens_pair_failure(io,&audit,error,evidence);
++        audit.count[n]=1;
++    }
++    for(unsigned n=0;n<6;n++) {
++        unsigned error=polaris_tsens_pair_read(io,&audit,n,&audit.raw[n][1]);
++        if(error)return polaris_tsens_pair_failure(io,&audit,error,evidence);
++        audit.count[n]=2;
++        uint32_t a=0,b=0;int32_t maximum=0;
++        bool matched=polaris_tsens_pair_choose(audit.raw[n],2,&a,&b,&maximum);
++        if(!matched) {
++            audit.disagreement_mask|=1u<<n;
++            for(unsigned extra=0;extra<2 && !matched;extra++) {
++                unsigned slot=audit.count[n];
++                error=polaris_tsens_pair_read(io,&audit,n,&audit.raw[n][slot]);
++                if(error)return polaris_tsens_pair_failure(io,&audit,error,evidence);
++                audit.count[n]++;
++                matched=polaris_tsens_pair_choose(audit.raw[n],audit.count[n],&a,&b,&maximum);
++            }
++            if(!matched)return polaris_tsens_pair_failure(io,&audit,PTS_CHANGED_TOO_FAST,evidence);
++            audit.repaired_mask|=1u<<n;
++        }
++        audit.selected[n][0]=a;audit.selected[n][1]=b;
++        sample.raw[0][n]=audit.raw[n][a];sample.raw[1][n]=audit.raw[n][b];
++        sample.temperature_mC[n]=maximum;
++    }
++    audit.ended_us=io->now_us(io->context);sample.ended_us=audit.ended_us;
++    if(audit.ended_us<audit.began_us || audit.ended_us-audit.began_us>1000) {
++        audit.error=PTS_TIME;*evidence=audit;return PTS_TIME;
++    }
++    sample.max_gold_mC=sample.temperature_mC[0];
++    sample.max_gpu_mC=sample.temperature_mC[4];
++    for(unsigned n=1;n<4;n++)if(sample.temperature_mC[n]>sample.max_gold_mC)
++        sample.max_gold_mC=sample.temperature_mC[n];
++    if(sample.temperature_mC[5]>sample.max_gpu_mC)sample.max_gpu_mC=sample.temperature_mC[5];
++    *out=sample;*evidence=audit;return PTS_OK;
++}
++
++/* END CONSERVATIVE TSENS PAIR WITNESS. */
+ /* BEGIN THERMAL ELIGIBILITY CORE: exact tested pure implementation. */
+ /* Default-OFF experimental eligibility, not a clock controller or admission.
+  * Consume complete own-TSENS observations, never host supplied temperatures.
+@@ -282,6 +394,7 @@
+ static IOMemoryMap *polaris_tsens_mapping;
+ static const volatile uint32_t *polaris_tsens_regs;
+ static uint32_t polaris_tsens_ready,polaris_tsens_last_offset,polaris_tsens_last_raw;
++static uint32_t polaris_tsens_pair_enabled;
+ static uint64_t polaris_tsens_next_us,polaris_tsens_report_us;
+ static IOLock *polaris_thermal_lock;
+ static struct polaris_thermal_eligibility polaris_thermal_state;
+@@ -330,7 +443,10 @@
+     const struct polaris_tsens_io io={NULL,polaris_tsens_read,polaris_tsens_now};
+     struct polaris_tsens_sample sample={};
+     struct polaris_tsens_retry_evidence retry={};
+-    unsigned error=polaris_tsens_observe_retry(&io,&sample,&retry);
++    struct polaris_tsens_pair_audit pair={};
++    bool witness=__atomic_load_n(&polaris_tsens_pair_enabled,__ATOMIC_ACQUIRE)!=0;
++    unsigned error=witness?polaris_tsens_observe_pair_witness(&io,&sample,&pair):
++        polaris_tsens_observe_retry(&io,&sample,&retry);
+     /* EVERY observation/failure updates permission before diagnostic thinning. */
+     if(polaris_gpu_thermal_ready() && polaris_thermal_lock) {
+         IOLockLock(polaris_thermal_lock);
+@@ -342,7 +458,24 @@
+      * Permission was already revoked above; no retry continues across polls. */
+     if(error) {
+         IOLog("POLARIS TSENS RO: us=%llu error=%u last_offset=%x raw=%x; no temperature or policy admission\n",
+-            now,error,polaris_tsens_last_offset,polaris_tsens_last_raw);return;
++            now,error,polaris_tsens_last_offset,polaris_tsens_last_raw);
++        if(witness) {
++            unsigned n=pair.failed_offset>=0xbc && pair.failed_offset<=0xd0?
++                (pair.failed_offset-0xbc)/4:0;
++            IOLog("POLARIS TSENS PAIR FAIL: us=%llu begin=%llu end=%llu error=%u id=%u count=%u reads=%u raw=%x/%x/%x/%x last=%x; no partial admission\n",
++                now,pair.began_us,pair.ended_us,error,n+7,pair.count[n],pair.physical_reads,
++                pair.raw[n][0],pair.raw[n][1],pair.raw[n][2],pair.raw[n][3],pair.last_raw);
++        }
++        return;
++    }
++    if(witness && (pair.repaired_mask || pair.retry_mask)) {
++        IOLog("POLARIS TSENS PAIR IO: us=%llu begin=%llu end=%llu reads=%u logical=%u valid_retry=%x disagree=%x repaired=%x; bounded72 physical reads\n",
++            sample.ended_us,pair.began_us,pair.ended_us,pair.physical_reads,pair.logical_reads,
++            pair.retry_mask,pair.disagreement_mask,pair.repaired_mask);
++        for(unsigned n=0;n<6;n++)if(pair.repaired_mask&(1u<<n))
++            IOLog("POLARIS TSENS WITNESS: us=%llu id=%u count=%u selected=%u/%u values=%x/%x/%x/%x; hottest observed VALID word retained\n",
++                sample.ended_us,n+7,pair.count[n],pair.selected[n][0],pair.selected[n][1],
++                pair.raw[n][0],pair.raw[n][1],pair.raw[n][2],pair.raw[n][3]);
+     }
+     if(retry.retry_mask)
+         IOLog("POLARIS TSENS RETRY: us=%llu reads=%u mask=%x; all accepted words VALID, bounded36 reads\n",
+@@ -414,6 +547,57 @@
+     return ok;
+ }
+ 
++
++struct polaris_pair_vm {int value[6][4];unsigned cursor[6],attempt[6],invalid,reads,clocks,fail,critical;};
++static bool polaris_pair_vm_read(void *v,uint32_t offset,uint32_t *out)
++{
++    struct polaris_pair_vm *s=(struct polaris_pair_vm *)v;
++    if(offset<0xbc || offset>0xd0 || (offset&3))return false;
++    unsigned n=(offset-0xbc)/4;if(s->cursor[n]>=4 || s->reads>=72)return false;
++    s->reads++;if(s->fail==s->reads)return false;
++    *out=(1u<<21)|((uint32_t)s->value[n][s->cursor[n]]&0xfff);
++    if(s->critical==s->reads){*out=1u<<19;return true;}
++    if(s->attempt[n]++<s->invalid){*out&=~(1u<<21);return true;}
++    s->attempt[n]=0;s->cursor[n]++;return true;
++}
++static uint64_t polaris_pair_vm_now(void *v)
++{return 100+10*((struct polaris_pair_vm *)v)->clocks++;}
++static struct polaris_pair_vm polaris_pair_vm_fixture(void)
++{
++    struct polaris_pair_vm s={};
++    for(unsigned n=0;n<6;n++)for(unsigned k=0;k<4;k++)s.value[n][k]=400+(int)n*10;
++    return s;
++}
++static bool polaris_tsens_pair_vm_probe(void)
++{
++    bool ok=true;struct polaris_tsens_sample out,before;
++    struct polaris_tsens_pair_audit audit;
++    for(unsigned mode=0;mode<6;mode++) {
++        struct polaris_pair_vm s=polaris_pair_vm_fixture();
++        if(mode==1){s.value[0][0]=800;s.value[0][1]=400;s.value[0][2]=800;}
++        if(mode==2){s.invalid=2;for(unsigned n=0;n<6;n++) {
++            s.value[n][0]=400;s.value[n][1]=600;s.value[n][2]=800;s.value[n][3]=800;}}
++        if(mode==3){s.value[0][0]=800;s.value[0][1]=s.value[0][2]=s.value[0][3]=400;}
++        if(mode==4)s.fail=5;
++        if(mode==5)s.critical=5;
++        const struct polaris_tsens_io io={&s,polaris_pair_vm_read,polaris_pair_vm_now};
++        memset(&out,0xa5,sizeof(out));before=out;
++        unsigned error=polaris_tsens_observe_pair_witness(&io,&out,&audit);
++        if(mode<3) {
++            ok=ok && !error && pte_sample_valid(&out,out.ended_us) &&
++                s.reads==(mode==2?72u:mode==1?13u:12u);
++            if(mode) {
++                struct polaris_thermal_eligibility gate={};
++                ok=ok && pte_observe(&gate,&out,0,out.ended_us) && gate.hot &&
++                    out.max_gold_mC==80000 && audit.repaired_mask==(mode==2?63u:1u);
++            }
++        }else ok=ok && error==(mode==3?PTS_CHANGED_TOO_FAST:mode==4?PTS_READ:PTS_CRITICAL) &&
++            !memcmp(&out,&before,sizeof(out)) && audit.error==error;
++    }
++    IOLog("POLARIS TSENS PAIR VM: %s; native12/13/72 reads, hottest witness and hot gate, unpaired/critical/IO refuse; synthetic words only\n",ok?"PASS":"FAIL");
++    return ok;
++}
++
+ static bool polaris_tsens_vm_probe(void)
+ {
+     struct polaris_tsens_vm state={};
+@@ -457,9 +641,13 @@
+ static void polaris_tsens_prepare(bool physical)
+ {
+     uint32_t flag=0;PE_parse_boot_argn("polaristsens",&flag,sizeof(flag));
++    uint32_t pair=0;bool has_pair=PE_parse_boot_argn("polarispts",&pair,sizeof(pair));
++    if(has_pair && (pair!=1 || flag!=3)) {
++        IOLog("POLARIS TSENS PAIR: REFUSED explicit extended mode; no MMIO\n");return;
++    }
+     if(!flag)return;
+     uint32_t test=0;PE_parse_boot_argn("polarisgpuwctest",&test,sizeof(test));
+-    if(test==1 && (!polaris_tsens_vm_probe() || !polaris_tsens_retry_vm_probe() ||
++    if(test==1 && (!polaris_tsens_vm_probe() || !polaris_tsens_retry_vm_probe() || (pair && !polaris_tsens_pair_vm_probe()) ||
+         ((flag==2 || flag==3) && !polaris_thermal_vm_probe())))return;
+     uint32_t cow=0,rw=0,owned=0,quiesce=0;
+     PE_parse_boot_argn("polarisramcow",&cow,sizeof(cow));
+@@ -488,6 +676,8 @@
+         __atomic_store_n(&polaris_thermal_enabled,flag,__ATOMIC_RELEASE);
+         IOLog("POLARIS THERMAL GATE: armed experiment; CPU75/70 GPU60/55C, observation500ms, change5s; no threshold writes\n");
+     }
++    __atomic_store_n(&polaris_tsens_pair_enabled,pair,__ATOMIC_RELEASE);
++    if(pair)IOLog("POLARIS TSENS PAIR: armed bounded72, hottest actual-word witness; same1ms/2C/thermal guards, no writes\n");
+     __atomic_store_n(&polaris_tsens_ready,1,__ATOMIC_RELEASE);
+     if(flag==1)IOLog("POLARIS TSENS RO: armed TMc263000 gold7..10 GPU11..12; READONLY, stock guard unchanged\n");
+     else IOLog("POLARIS TSENS RO: armed TMc263000 gold7..10 GPU11..12; READONLY, GPU thermal experiment\n");
+@@ -586,9 +776,14 @@
+     bool ok=polaris_cpu_perf_tick(&polaris_perf_state,&polaris_perf_io,now,activity);
+     if(!ok || previous!=polaris_perf_state.transitions || now-polaris_perf_last_ns>=5*NSEC_PER_SEC) {
+         uint32_t cycle=polaris_perf_regs[0x9c0/4];
++        uint32_t request=polaris_perf_regs[0x920/4];
++        uint64_t request_end_us=polaris_perf_now()/1000;
++        if(__atomic_load_n(&polaris_tsens_pair_enabled,__ATOMIC_ACQUIRE))
++            IOLog("POLARIS OSM REQUEST: begin_us=%llu end_us=%llu index=%u transitions=%llu error=%u; request not measured Hz\n",
++                now/1000,request_end_us,request,polaris_perf_state.transitions,polaris_perf_state.fault);
+         IOLog("POLARIS OSM PERF SAMPLE: mpidr=%#llx requested_index=%u requested_Hz=%llu raw_cycles=%u elapsed_ns=%llu transitions=%llu error=%u; request not measured Hz\n",
+-            __builtin_arm_rsr64("MPIDR_EL1")&0xffffffULL,polaris_perf_regs[0x920/4],
+-            polaris_osm_requested_hz(polaris_perf_state.lut,27,polaris_perf_regs[0x920/4]),
++            __builtin_arm_rsr64("MPIDR_EL1")&0xffffffULL,request,
++            polaris_osm_requested_hz(polaris_perf_state.lut,27,request),
+             (uint32_t)(cycle-polaris_perf_last_cycle),now-polaris_perf_last_ns,
+             polaris_perf_state.transitions,polaris_perf_state.fault);
+         polaris_perf_last_ns=now;polaris_perf_last_cycle=cycle;
