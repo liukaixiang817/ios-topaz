@@ -34,8 +34,70 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### 0079 GPU latency priority: first bounded optimization ready for full build
+### 0079 physical GPU bottleneck measured: caches dominate, first optimization insufficient
 
+- New0079 phone trial has reached real lock/home/Settings and completed the
+  SAME20 controlled gestures, all actual kernel contact-consumption checked.
+  Viewed capture0003/0004/candidate-top0001/candidate-after-scroll0001 show
+  real lock, home including app/dock icons, Settings text/icons and scrolling.
+  Widgets Waiting and side residual console remain. Phone LEFT RUNNING in
+  Settings; keep alive using0079/control-gpu-phone.py, not old0078 binding.
+- physical-GPU-cache-bottleneck-proof.json binds actual images/logs/inputs.
+  Baseline7 sparse samples median165.844ms; candidate8 median165.407ms:
+  NO meaningful improvement established. Do NOT call this latency fixed.
+  Workload/sample differences mean this is not rolling FPS or precise speedup.
+- Critical REAL new evidence:24 paired actor2 BO/CORE samples, cachepre median
+  8.151ms, cachepost6.2045ms, native submit1.5065ms, actual execute/idle1.339ms,
+  halt15us, prior21.5us, postcheck22us. Median cache share of measured submission
+  wall time dominates (see bound proof). Referenced allocations about25MiB
+  pre/21MiB post each batch. No runtime failure/quarantine in captured logs.
+  Repeated CPU cache sweeps, not GPU absent or SQE halt, are the main measured
+  issue in this workload. Keep all correct barriers and imported IOSurfaces.
+- NEXT0080: review reference RedwoodGPU's write-combined GEM allocations and
+  XNU IOBufferMemoryDescriptor/pmap implementation before a separately opt-in
+  owned-GEM WC mode. Shared IOSurfaces MUST remain cached with full maintenance;
+  every CPU alias and SMMU attribute must match and be verified, not just flags.
+  Preserve fence/idle/halt/failure containment. Need actual C++/pmap admission
+  checks, fault tests, complete CI and new real GPU pixel proof + same scroll.
+
+### 0079 GPU latency priority: first bounded optimization built and tested above
+
+- ACTIVE PHONE NOW: phone-gpu-latency-0079-0002, original Mindows UEFI RAM
+  image sent 01:17:07 UTC, new kernel start via kernel-start-0002. Inspect its
+  actual boot/state/captures BEFORE any action; do NOT send another boot or
+  use the old0078 inspection binding. New control helper0079/control-gpu-phone.py.
+  Previous0078 inspection ended through real native shutdown/VFS drain/peer
+  park/RAM_DRAINED, followed by independent real expected FASTBOOT. No raw
+  fallback, Android boot or storage writes. Device is now in the GPU trial.
+- Full CI40612875724/job122568405667 passed, verified new kernel SHA
+  35b6ae6bb0c16bd9c41ff984c2b84a0645e3239e78d24e2fd6d209f4d88b8e05.
+  Actual EFI/XNU dualCPU/dirtyRAMroot/native drain passed23/23 in37.837s;
+  this is not a GPU hardware emulator. Original EDK2 decoder verified the RAM
+  image; all81 old firmware files/SimpleInit/BootShim/DTB preserved. Graphics
+  bundle/physical tree/boot args byte-identical to baseline; new kernel only.
+  Candidate0001 offline wrong-QEMU-platform check was refused before payload
+  creation; its evidence is kept. Candidate0002 is corrected. First boot CLI
+  omitted required payload and was refused before device access; start0002
+  supplies the bound payload. Do not mistake these refusals for phone boots.
+- NEXT actual capture to confirm lock/home, then bounded unlock/Settings and
+  same20 alternating gestures with0079/run-scroll-comparison.py candidate.
+  Need a settled candidate-top-0002 capture first. Analyze new sparse BO/CORE
+  timing pairs and actual frame samples; baseline-scroll-analysis.json has
+  seven sampled frame durations, median165.844ms. No improved FPS claim yet.
+- Latest human priority-fix request is being carried through bounded same-page
+  scrolling and a subsequent RAM-only candidate trial, as announced. This
+  supersedes the earlier inspection-only hold for this performance repair;
+  no persistence/installation test is part of this GPU comparison.
+- Corrected sourceae7fb3cc51315169c7973c1aecd03b66c688d2e2 was pushed. Full
+  macOS27/Xcode27 CI40612875724 has now succeeded; artifact verification and
+  actual EFI/XNU dual-core native-drain regression are running. No candidate
+  was sent to the phone yet. Initial failed CI40611747066 remains preserved.
+- Current old-kernel Settings baseline: actual screenshots reviewed and 20
+  fixed alternating vertical gestures consumed by the real input kernel,
+  baseline-controlled-scroll.json. Seven new sparse frame samples have median
+  165.844ms (142.231..177.996ms), handoff111.376ms, frame_end43.122ms. These
+  are sampled durations, not rolling FPS. Final Settings image has real text
+  and icons. Device remains original0078 RAM iOS until candidate is ready.
 - Human's latest request is to prioritize the measured frame latency. Persistent
   root work is deferred while this is addressed. Current inspection iOS remains
   running; directed state keepalive succeeded at 00:54 UTC. No phone reboot,
