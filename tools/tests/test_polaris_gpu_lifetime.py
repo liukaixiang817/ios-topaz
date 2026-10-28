@@ -71,6 +71,7 @@ typedef int IOReturn;typedef uint64_t IOByteCount,addr64_t;
 #define kIOReturnBadArgument 4
 #define kIOMapAnywhere 1
 #define kIOMapWriteCombineCache 4
+#define OSDynamicCast(type,p) ((p)->native_owned?(p):nullptr)
 #define IOLog(...) ((void)0)
 #define PAGE_SHIFT 14
 #define VM_WIMG_MASK 255
@@ -100,9 +101,10 @@ static bool polaris_gpu_unmap(uint64_t a,uint64_t s){assert(a>=0x20000000&&s&&!(
  assert(!dead);unmaps++;return true;}
 static void polaris_gpu_quarantine(){dead=1;}
 struct IOMemoryMap {void release(){releases++;}};
-struct SweetSurface {unsigned refs=1;void retain(){refs++;}void release(){assert(refs);refs--;}};
+struct IOMemoryDescriptor;
+struct SweetSurface {IOMemoryDescriptor *memory=nullptr;unsigned mapCache=0,refs=1;void retain(){refs++;}void release(){assert(refs);refs--;}};
 struct IOMemoryDescriptor {
- unsigned refs=1,prepared=0,done=0;uint64_t size;
+ unsigned refs=1,prepared=0,done=0;uint64_t size;bool native_owned=false;
  explicit IOMemoryDescriptor(uint64_t s):size(s){}
  void retain(){refs++;}void release(){assert(refs);refs--;releases++;}
  int prepare(int){assert(!prepared);prepared=1;return 0;}
@@ -130,10 +132,16 @@ int main(){
  IOMemoryDescriptor partial(32768);maps=0;fail_map=3;
  assert(c.make(&partial,nullptr,32768,0,&a)==kIOReturnNoMemory);
  assert(partial.done&&partial.refs==1&&unmaps==3&&!c.quarantined&&!c.bytes);
- /* WC on an imported surface is rejected, and a lying CPU mapping is
+ /* WC on imported task memory or a cached surface is rejected, and a lying CPU mapping is
   * refused before the very first SMMU page, without quarantining DMA. */
  fail_map=0;IOMemoryDescriptor imported(16384),wrong_attr(16384),wc(16384),later_bad(32768),failed_cpu_map(16384);
  assert(c.make(&imported,&surface,16384,0,&a,true)==kIOReturnBadArgument&&!imported.prepared);
+ surface.memory=&imported;surface.mapCache=kIOMapWriteCombineCache;
+ assert(c.make(&imported,&surface,16384,0,&a,true)==kIOReturnBadArgument&&!imported.prepared);
+ imported.native_owned=true;expected_wc=true;
+ assert(c.make(&imported,&surface,16384,0,&a,true)==0&&c.buffer(a)->writeCombined);
+ assert(c.drop(a)&&imported.done&&imported.refs==1&&surface.refs==1&&!c.bytes);
+ expected_wc=false;surface.memory=nullptr;surface.mapCache=0;
  unsigned oldmaps=maps;cpu_wimg=0;
  assert(c.make(&wrong_attr,nullptr,16384,0,&a,true)==kIOReturnUnsupported);
  assert(maps==oldmaps&&wrong_attr.done&&wrong_attr.refs==1&&!c.bytes&&!c.quarantined);

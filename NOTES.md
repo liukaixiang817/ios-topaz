@@ -34,6 +34,28 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0082 next bounded BGRA surface WC trial: source ready, NOT physically proven
+
+- Current phone remains0081 Settings, improved47.319ms median sparse frames,
+  not FASTBOOT. New state keepalive around02:39UTC passed. No0082 phone boot.
+- New default-OFF polarisgpusurfacewc=1 affects ONLY new kernel-owned BGRA/
+  4byte/single-plane pixel buffers. IOSurfaceAddress/wrapped task memory,
+  physical panel, other formats/planes and shared state retain old modes.
+  Native WC kernel mapping must succeed before publication; all client aliases
+  explicitly use same mode. GPU import requires actual IOBuffer identity and
+  native mapCache, then verifies every actual physical page WIMG before PTEs.
+  No caller BO flag or surface seed bypass, no DMA/completion barrier removed.
+- Profile0879/actual two native C++TUs pass;16 ASan/UBSan allocation/dispatch/
+  mapping-failure/ownership/MMU/lifetime/PM4 tests pass8.891s. Exact patch
+  0fuzz/0offset against0878; original/wrapped memory stays cached in tests.
+  Native VM probe additionally fills0xa5, runs actual kernel bzero on cached
+  and WC aliases, checks complete zeroes then both-direction patterns. This
+  still needs complete CI/actual EFI-XNU probe, not a stub pmap claim.
+- NEXT commit/full CI once, actual native VM bulkzero+dualCPU dirtyRAMroot/
+  native drain before packaging. Only then native shutdown of0081 and fresh
+  RAM candidate with both WC flags. Require actual WC SURFACE import AND real
+  GPU pixel/icon/GMEM proof, UI and same20 scroll comparison. Not yet60FPS.
+
 ### 0081 actual WC GPU latency improvement PROVEN;60FPS still not reached
 
 - physical-WC-GPU-latency-proof.json binds real lock/home/Settings images,

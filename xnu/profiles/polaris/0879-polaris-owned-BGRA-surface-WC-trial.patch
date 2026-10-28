@@ -1,0 +1,719 @@
+--- a/iokit/Kernel/arm/PolarisGPU.cpp
++++ b/iokit/Kernel/arm/PolarisGPU.cpp
+@@ -155,342 +155,359 @@
+ static uint32_t gpuLoaderStage,gpuLoaderError,gpuLoaderMethods;
+ extern "C" void polaris_gpu_loader_policy(int error)
+ {
+     uint32_t expected=0;
+     if(__atomic_compare_exchange_n(&gpuLoaderStage,&expected,1,false,__ATOMIC_ACQ_REL,__ATOMIC_ACQUIRE))
+         __atomic_store_n(&gpuLoaderError,(uint32_t)error,__ATOMIC_RELEASE);
+ }
+ static bool polaris_gpu_loader_report(uint32_t kind,uint32_t stage,uint32_t error,uint32_t methods)
+ {
+     if(kind!=2 || stage<2 || stage>6 || error>6 || (methods&~PGPU_EAGL_METHOD_MASK))return false;
+     __atomic_store_n(&gpuLoaderError,error,__ATOMIC_RELEASE);
+     __atomic_store_n(&gpuLoaderMethods,methods,__ATOMIC_RELEASE);
+     __atomic_store_n(&gpuLoaderStage,stage,__ATOMIC_RELEASE);
+     IOLog("POLARIS GL: desktop loader L%u X%x M%x; submissions=%u imports=%u\n",
+         stage,error,methods,gpuSubmissions,gpuSurfaces);
+     return true;
+ }
+ extern "C" uint32_t polaris_gpu_client_line(char *out,uint32_t capacity)
+ {
+     if(!out || !capacity || !__atomic_load_n(&gpuPublished,__ATOMIC_ACQUIRE))return 0;
+     return (uint32_t)snprintf(out,capacity,"GA O%u S%x I%x T%u E%u D%u R%u L%u X%x M%x C%x",
+         __atomic_load_n(&gpuOpenStatus,__ATOMIC_ACQUIRE),
+         __atomic_load_n(&gpuSubmissions,__ATOMIC_ACQUIRE),
+         __atomic_load_n(&gpuSurfaces,__ATOMIC_ACQUIRE),
+         __atomic_load_n(&gpuAppStage,__ATOMIC_ACQUIRE),
+         __atomic_load_n(&gpuAppError,__ATOMIC_ACQUIRE),
+         __atomic_load_n(&gpuFaultStatus,__ATOMIC_ACQUIRE),polaris_gpu_ready()?1:0,
+         __atomic_load_n(&gpuLoaderStage,__ATOMIC_ACQUIRE),
+         __atomic_load_n(&gpuLoaderError,__ATOMIC_ACQUIRE),
+         __atomic_load_n(&gpuLoaderMethods,__ATOMIC_ACQUIRE),
+         __atomic_load_n(&gpuDesktopSubmissions,__ATOMIC_ACQUIRE));
+ }
+ struct PolarisBO {
+     IOMemoryDescriptor *memory;
+     SweetSurface *surface;
+     IOMemoryMap *map;
+     uint64_t address, size;
+     uint32_t flags;
+     bool writeCombined;
+ };
+ struct PolarisCacheTally {uint64_t before,after,readonlySkipped,wcBefore,wcAfter;};
+ static bool polaris_gpu_cpu_wc(uint64_t physical)
+ {
+     /* Native IODefaultCacheBits queries pmap_cache_attributes for this PA. */
+     return (IODefaultCacheBits(physical)&VM_WIMG_MASK)==VM_WIMG_WCOMB;
+ }
+ static bool polaris_gpu_use_wc(uint32_t flags)
+ {
+     /* Mesa25.0.7 drm-uapi/msm_drm.h: CACHED=0x10000, WC=0x20000.
+      * Preserve explicit cached requests even in the WC trial. */
+     return gpuWriteCombined && (flags&0x000f0000u)==0x00020000u;
+ }
+ static void polaris_gpu_memory_order(void)
+ {
+     /* Drain normal noncacheable buffered stores too; skipping a cache sweep
+      * for WC memory must never skip producer/consumer ordering. */
+     __asm__ volatile("dsb sy":::"memory");
+ }
+ /* Optional data-only native VM probe. Generic EFI/XNU can exercise the actual
+  * IOBufferMemoryDescriptor and pmap path without a pretend Adreno device. */
+ extern "C" int PolarisGPUCacheProbe(void)
+ {
+     int error=0;unsigned checked=0;
+     for(unsigned wc=0;wc<2 && !error;wc++) {
+         IOBufferMemoryDescriptor *m=IOBufferMemoryDescriptor::inTaskWithOptions(kernel_task,
+             kIODirectionInOut|kIOMemoryKernelUserShared|(wc?kIOMapWriteCombineCache:0),PAGE_SIZE,PAGE_SIZE);
+         if(!m){error=1;break;}
+         bool prepared=m->prepare(kIODirectionInOut)==kIOReturnSuccess;
+         IOMemoryMap *map=prepared?m->createMappingInTask(kernel_task,0,kIOMapAnywhere|
+             (wc?kIOMapWriteCombineCache:kIOMapDefaultCache),0,PAGE_SIZE):NULL;
+         if(!map)error=2;
+         for(uint64_t off=0;!error && off<PAGE_SIZE;off+=4096) {
+             IOByteCount length=0;addr64_t pa=m->getPhysicalSegment(off,&length,kIOMemoryMapperNone);
+             if(!pa || (pa&4095) || length<4096 ||
+                 (IODefaultCacheBits(pa)&VM_WIMG_MASK)!=(wc?VM_WIMG_WCOMB:VM_WIMG_COPYBACK))error=3;
+             else checked++;
+         }
+         if(!error) {
+             volatile uint8_t *one=(volatile uint8_t*)m->getBytesNoCopy();
+             volatile uint8_t *two=(volatile uint8_t*)map->getVirtualAddress();
++            /* Exercise the real kernel bulk-zero path on WC memory too,
++             * as fresh native IOSurface pixel allocations do. */
++            for(unsigned n=0;n<PAGE_SIZE;n++)one[n]=0xa5;
++            polaris_gpu_memory_order();
++            bzero((void*)one,PAGE_SIZE);
++            polaris_gpu_memory_order();
++            for(unsigned n=0;n<PAGE_SIZE;n++)if(two[n]){error=6;break;}
+             for(unsigned n=0;n<PAGE_SIZE;n++)one[n]=(uint8_t)(n*37+0x80);
+             polaris_gpu_memory_order();
+             for(unsigned n=0;n<PAGE_SIZE;n++)if(two[n]!=(uint8_t)(n*37+0x80)){error=4;break;}
+             for(unsigned n=0;n<PAGE_SIZE;n++)two[n]=(uint8_t)(n*13+0x63);
+             polaris_gpu_memory_order();
+             for(unsigned n=0;n<PAGE_SIZE;n++)if(one[n]!=(uint8_t)(n*13+0x63)){error=5;break;}
+         }
+         if(prepared)m->complete(kIODirectionInOut);
+         if(map)map->release();m->release();
+     }
+-    IOLog("POLARIS GPU WC VM: %s modes=2 bytes=%u pagechecks=%u aliases=2 error=%d; actual IOBuffer/pmap, no GPU device\n",
++    IOLog("POLARIS GPU WC VM: %s modes=2 bytes=%u pagechecks=%u aliases=2 error=%d; actual IOBuffer/pmap, no GPU device; bulk-zero=2\n",
+         error?"FAIL":"PASS",2u*(unsigned)PAGE_SIZE,checked,error);
+     return error;
+ }
+ static uint64_t polaris_gpu_elapsed_us(uint64_t before,uint64_t after)
+ {
+     if(after<before)return UINT64_MAX;
+     uint64_t ns;absolutetime_to_nanoseconds(after-before,&ns);return ns/1000;
+ }
+ class PolarisGPUUserClient : public IOUserClient {
+     OSDeclareDefaultStructors(PolarisGPUUserClient);
+     typedef IOUserClient super;
+     PolarisBO *buffers;
+     uint64_t bytes;
+     uint32_t nextHandle, lastFence, queues, callerKind;
+     bool closed, quarantined;
+     task_t ownerTask;
+     PolarisBO *buffer(uint32_t h) {return h && h<=GPU_BUFFERS && buffers[h-1].memory ? &buffers[h-1] : NULL;}
+     void poison();
+     IOReturn make(IOMemoryDescriptor *,SweetSurface *,uint64_t,uint32_t,uint32_t *,bool=false);
+     bool drop(uint32_t);
+     bool cacheBefore(const msm_gem_submit_bo *,uint32_t,PolarisCacheTally *);
+     void cacheAfter(const msm_gem_submit_bo *,uint32_t,PolarisCacheTally *);
+     IOReturn submit(msm_gem_submit *);
+     IOReturn surface(redwood_surface *);
+ public:
+     bool initWithTask(task_t,void *,UInt32,OSDictionary *) APPLE_KEXT_OVERRIDE;
+     IOReturn clientClose() APPLE_KEXT_OVERRIDE;
+     void free() APPLE_KEXT_OVERRIDE;
+     IOReturn clientMemoryForType(UInt32,IOOptionBits *,IOMemoryDescriptor **) APPLE_KEXT_OVERRIDE;
+     IOReturn externalMethod(uint32_t,IOExternalMethodArguments *,IOExternalMethodDispatch *,OSObject *,void *) APPLE_KEXT_OVERRIDE;
+ };
+ class PolarisGPU : public IOService {
+     OSDeclareDefaultStructors(PolarisGPU);
+ public:
+     IOReturn newUserClient(task_t,void *,UInt32,OSDictionary *,IOUserClient **) APPLE_KEXT_OVERRIDE;
+ };
+ OSDefineMetaClassAndStructors(PolarisGPU,IOService);
+ OSDefineMetaClassAndStructors(PolarisGPUUserClient,IOUserClient);
+ 
+ void PolarisGPUUserClient::poison()
+ {
+     gpuQuarantined=true;polaris_gpu_quarantine();
+     __atomic_store_n(&gpuFaultStatus,1,__ATOMIC_RELEASE);
+     if (!quarantined) {quarantined=true;retain();} /* DMA ownership survives task death */
+ }
+ bool PolarisGPUUserClient::initWithTask(task_t task,void *security,UInt32 type,OSDictionary *props)
+ {
+     if (!super::initWithTask(task,security,type,props)) return false;
+     ownerTask=task;
+     callerKind=polaris_gpu_caller_kind();
+     buffers=IONewZero(PolarisBO,GPU_BUFFERS);
+     return buffers!=NULL;
+ }
+ IOReturn PolarisGPU::newUserClient(task_t task,void *security,UInt32 type,OSDictionary *props,IOUserClient **out)
+ {
+     if (type || !out) return kIOReturnBadArgument;
+     /* A shared address space cannot safely accept arbitrary app shaders.
+      * The genuine window server is mobile, so authenticate its executable
+      * vnode rather than root UID or a caller-provided process name. */
+     if(task!=current_task())return kIOReturnNotPrivileged;
+     uint32_t kind=polaris_gpu_caller_kind();
+     if(!kind)return kIOReturnNotPrivileged;
+     IOLockLock(gpuLock);
+     IOReturn result=kIOReturnBusy;
+     if(!pgpu_desktop_allowed(kind,gpuDesktopAttempts)) {
+         result=kIOReturnNotPermitted; /* One GPU trial per boot; later server uses CPU. */
+     } else if (!gpuOpened && !gpuQuarantined && polaris_gpu_ready()) {
+         PolarisGPUUserClient *c=new PolarisGPUUserClient;
+         if (c && c->initWithTask(task,security,type,props) && c->attach(this) && c->start(this)) {
+             gpuOpened=true;__atomic_store_n(&gpuOpenStatus,1,__ATOMIC_RELEASE);*out=c;result=kIOReturnSuccess;
+             if(kind==2){gpuDesktopAttempts++;setProperty("PolarisDesktopAttempted",kOSBooleanTrue);}
+         } else {if(c)c->release();result=kIOReturnNoMemory;}
+     }
+     IOLockUnlock(gpuLock);
+     return result;
+ }
+ /* First fit with an unmapped 16KiB guard after every BO. Bounded by live
+  * handles, no dynamically growing metadata and no wrap/overlapping reuse. */
+ IOReturn PolarisGPUUserClient::make(IOMemoryDescriptor *memory,SweetSurface *s,
+     uint64_t size,uint32_t flags,uint32_t *handle,bool writeCombined)
+ {
+-    if(writeCombined && s)return kIOReturnBadArgument;
++    /* WC surfaces must be fresh native IOBuffer allocations with the native
++     * WC mapping established at creation. Never convert imported task memory
++     * or trust a caller's BO flag. Every physical page is checked below. */
++    if(writeCombined && s && (s->memory!=memory || s->mapCache!=kIOMapWriteCombineCache ||
++        !OSDynamicCast(IOBufferMemoryDescriptor,memory)))return kIOReturnBadArgument;
+     if (!size || size>GPU_MAX_BO || (size&PAGE_MASK) || bytes>GPU_MAX_BYTES-size)
+         return kIOReturnNoMemory;
+     unsigned h=GPU_BUFFERS;
+     for(unsigned n=0;n<GPU_BUFFERS;n++) {
+         unsigned at=(nextHandle+n)%GPU_BUFFERS;
+         if (!buffers[at].memory) {h=at;break;}
+     }
+     if(h==GPU_BUFFERS || !polaris_gpu_quiescent()) return kIOReturnNotReady;
+     uint64_t address=GPU_VA_FIRST;
+     for(unsigned pass=0;pass<=GPU_BUFFERS;pass++) {
+         bool moved=false;
+         if(size+PAGE_SIZE>GPU_VA_END-address) return kIOReturnNoMemory;
+         for(unsigned n=0;n<GPU_BUFFERS;n++) if(buffers[n].memory) {
+             PolarisBO *b=&buffers[n];
+             if(address<b->address+b->size+PAGE_SIZE && address+size+PAGE_SIZE>b->address) {
+                 address=b->address+b->size+PAGE_SIZE;moved=true;break;
+             }
+         }
+         if(!moved) break;
+         if(pass==GPU_BUFFERS) return kIOReturnNoMemory;
+     }
+     /* Retain before installing ANY PTE: even failed TLBSYNC may retain DMA. */
+     PolarisBO *b=&buffers[h];memory->retain();if(s)s->retain();
+     *b=(PolarisBO){memory,s,NULL,address,size,flags,writeCombined};bytes+=size;
+     if(memory->prepare(kIODirectionInOut)!=kIOReturnSuccess) {
+         b->memory=NULL;memory->release();if(s)s->release();bytes-=size;return kIOReturnNoMemory;
+     }
+     if(writeCombined) {
+         /* IOBufferMemoryDescriptor owns these pages. Establish WC through the
+          * native VM memory entry BEFORE any SMMU PTE, then independently check
+          * every physical page's actual pmap WIMG. No mixed cached CPU alias
+          * or flag-only assumption may bypass cache maintenance. */
+         b->map=memory->createMappingInTask(kernel_task,0,kIOMapAnywhere|kIOMapWriteCombineCache,0,size);
+         bool verified=b->map!=NULL;
+         for(uint64_t off=0;verified && off<size;off+=4096) {
+             IOByteCount length=0;addr64_t pa=memory->getPhysicalSegment(off,&length,kIOMemoryMapperNone);
+             verified=pa && !(pa&4095) && length>=4096 && polaris_gpu_cpu_wc(pa);
+         }
+         if(!verified) {
+             /* No GPU mapping exists yet; native completion/unpin is safe. */
+             memory->complete(kIODirectionInOut);OSSafeReleaseNULL(b->map);
+             memory->release();bytes-=size;*b=(PolarisBO){};
+             IOLog("POLARIS GPU WC: actual CPU page attributes refused before GPU mapping\n");
+             return kIOReturnUnsupported;
+         }
+     }
+     bool mapped=true;
+     for(uint64_t off=0;off<size;off+=4096) {
+         IOByteCount length=0;
+         addr64_t pa=memory->getPhysicalSegment(off,&length,kIOMemoryMapperNone);
+         if (!pa || (pa&4095) || length<4096 ||
+             !polaris_gpu_map(address+off,pa,(flags&GPU_READONLY)!=0,!writeCombined)) {mapped=false;break;}
+     }
+     if(!mapped) {
+         if(!drop(h+1))poison();
+         return kIOReturnNoMemory;
+     }
+     if(!polaris_gpu_commit()) {poison();return kIOReturnNotReady;}
+     *handle=h+1;nextHandle=h+1;
+     return kIOReturnSuccess;
+ }
+ bool PolarisGPUUserClient::drop(uint32_t handle)
+ {
+     PolarisBO *b=buffer(handle);
+     if(!b) return false;
+     if(!polaris_gpu_unmap(b->address,b->size)) {poison();return false;}
+     b->memory->complete(kIODirectionInOut);
+     OSSafeReleaseNULL(b->map);OSSafeReleaseNULL(b->memory);OSSafeReleaseNULL(b->surface);
+     bytes-=b->size;*b=(PolarisBO){};
+     return true;
+ }
+ IOReturn PolarisGPUUserClient::surface(redwood_surface *r)
+ {
+     SweetSurface *s=sweet_surface_copy(r->surface);
+     if(!s) return kIOReturnNotFound;
+     /* Ordinary wired surfaces only; never map the physical panel/MMIO. Own
+      * SweetSurface pixels start at byte ZERO (reference MiniIOSurface +PAGE
+      * is a different ABI). Keep the exact allocation/offset/row geometry. */
+     IOReturn result=kIOReturnUnsupported;
+-    if(OSDynamicCast(IOBufferMemoryDescriptor,s->memory) && s->mapCache==kIOMapDefaultCache && !s->planeCount && s->allocSize &&
++    if(OSDynamicCast(IOBufferMemoryDescriptor,s->memory) &&
++        (s->mapCache==kIOMapDefaultCache || s->mapCache==kIOMapWriteCombineCache) && !s->planeCount && s->allocSize &&
+         !(s->allocSize&PAGE_MASK) && s->offset<s->allocSize) {
+         uint32_t handle=0;
+         r->size=s->allocSize;r->offset=s->offset;r->rowBytes=s->bytesPerRow;
+         r->width=s->width;r->height=s->height;r->pixelFormat=s->pixelFormat;r->planes=s->planeCount;
+         if(r->handle==UINT32_MAX) {r->handle=0;result=kIOReturnSuccess;}
+         else {
+             for(unsigned n=0;n<GPU_BUFFERS;n++) if(buffers[n].surface==s) {handle=n+1;break;}
+-            result=handle?kIOReturnSuccess:make(s->memory,s,s->allocSize,0,&handle);
+-            if(result==kIOReturnSuccess) {r->handle=handle;__atomic_fetch_add(&gpuSurfaces,1,__ATOMIC_RELEASE);}
++            bool wc=s->mapCache==kIOMapWriteCombineCache;
++            result=handle?kIOReturnSuccess:make(s->memory,s,s->allocSize,0,&handle,wc);
++            if(result==kIOReturnSuccess) {
++                r->handle=handle;__atomic_fetch_add(&gpuSurfaces,1,__ATOMIC_RELEASE);
++                if(wc && gpuSurfaces<=4)IOLog("POLARIS GPU WC SURFACE: id=%u bytes=%llu; native owned mapping and every CPU page verified\n",
++                    r->surface,s->allocSize*1ull);
++            }
+         }
+     }
+     s->release();return result;
+ }
+ bool PolarisGPUUserClient::cacheBefore(const msm_gem_submit_bo *bos,uint32_t count,PolarisCacheTally *tally)
+ {
+     for(unsigned n=0;n<count;n++) {
+         PolarisBO *b=buffer(bos[n].handle);
+         if(!b->map)b->map=b->memory->createMappingInTask(kernel_task,0,kIOMapAnywhere|
+             (b->writeCombined?kIOMapWriteCombineCache:kIOMapDefaultCache),0,b->size);
+         if(!b->map)return false;
+         if(b->writeCombined) {tally->wcBefore+=b->size;continue;}
+         /* CPU writers may change even GPU-read-only command/constant BOs.
+          * Keep the full pre-submit clean+invalidate on EVERY reference. */
+         polaris_gpu_cache((void*)b->map->getVirtualAddress(),b->size);
+         tally->before+=b->size;
+     }
+     polaris_gpu_memory_order();
+     return true;
+ }
+ void PolarisGPUUserClient::cacheAfter(const msm_gem_submit_bo *bos,uint32_t count,PolarisCacheTally *tally)
+ {
+     for(unsigned n=0;n<count;n++) {
+         PolarisBO *b=buffer(bos[n].handle);
+         if(b->writeCombined) {tally->wcAfter+=b->size;continue;}
+         /* make() installed READONLY in every SMMU PTE for this allocation.
+          * A successful fence/idle/halt cannot have changed such memory. Do
+          * not trust submit READ flags to skip writable textures/surfaces. */
+         if(b->flags&GPU_READONLY) {tally->readonlySkipped+=b->size;continue;}
+         polaris_gpu_cache((void*)b->map->getVirtualAddress(),b->size);
+         tally->after+=b->size;
+     }
+     polaris_gpu_memory_order();
+ }
+ IOReturn PolarisGPUUserClient::submit(msm_gem_submit *r)
+ {
+     if(!r->nr_cmds || r->nr_cmds>GPU_CMDS || !r->nr_bos || r->nr_bos>GPU_BOS ||
+         r->queueid>queues || !r->queueid || r->in_syncobjs || r->out_syncobjs ||
+         r->nr_in_syncobjs || r->nr_out_syncobjs || r->pad ||
+         (r->flags & ~(0x10u|0x80000000u))) return kIOReturnBadArgument;
+     msm_gem_submit_bo *bos=IONew(msm_gem_submit_bo,r->nr_bos);
+     msm_gem_submit_cmd *cmds=IONew(msm_gem_submit_cmd,r->nr_cmds);
+     IOReturn result=kIOReturnBadArgument;
+     if(!bos || !cmds) {result=kIOReturnNoMemory;goto out;}
+     if(copyin(r->bos,bos,r->nr_bos*sizeof(*bos)) || copyin(r->cmds,cmds,r->nr_cmds*sizeof(*cmds))) {
+         result=kIOReturnVMError;goto out;
+     }
+     {
+         uint64_t addresses[GPU_CMDS];uint32_t words[GPU_CMDS],count=0;
+         for(unsigned n=0;n<r->nr_bos;n++)
+             if(!buffer(bos[n].handle) || !(bos[n].flags&3u) || (bos[n].flags&~15u)) goto out;
+         for(unsigned n=0;n<r->nr_cmds;n++) {
+             const msm_gem_submit_cmd *c=&cmds[n];
+             if(c->submit_idx>=r->nr_bos)goto out;
+             PolarisBO *b=buffer(bos[c->submit_idx].handle);
+             /* relocs is unused/unspecified when nr_relocs==0 (Mesa25.0.7
+              * msm_ringbuffer_sp leaves that field uninitialized). */
+             if(!b || c->type!=1 || c->nr_relocs || c->pad || !c->size ||
+                 ((c->submit_offset|c->size)&3) || c->submit_offset>b->size || c->size>b->size-c->submit_offset ||
+                 c->size/4>0xfffff) goto out;
+             addresses[count]=b->address+c->submit_offset;words[count++]=c->size/4;
+         }
+         /* Kernel map every referenced BO before release; keep cached CPU and
+          * SMMU attributes identical. All CPU aliases are cleaned before DMA,
+          * invalidated after the observed GPU flush/fence/idle/halt. */
+         PolarisCacheTally tally={0,0,0,0,0};uint64_t before,prepared,submitted,completed;
+         clock_get_uptime(&before);
+         if(!cacheBefore(bos,r->nr_bos,&tally)) {result=kIOReturnNoMemory;goto out;}
+         clock_get_uptime(&prepared);
+         for(unsigned n=0;n<r->nr_bos;n++) {
+             PolarisBO *b=buffer(bos[n].handle);
+             if(b->surface)__atomic_store_n(&b->surface->polarisGPUBusy,1,__ATOMIC_RELEASE);
+         }
+         if(!polaris_gpu_submit(addresses,words,count,&r->fence)) {poison();result=kIOReturnTimeout;goto out;}
+         clock_get_uptime(&submitted);
+         lastFence=r->fence;
+         cacheAfter(bos,r->nr_bos,&tally);
+         clock_get_uptime(&completed);
+         for(unsigned n=0;n<r->nr_bos;n++) {
+             PolarisBO *b=buffer(bos[n].handle);
+--- a/iokit/Kernel/arm/SweetSurface.cpp
++++ b/iokit/Kernel/arm/SweetSurface.cpp
+@@ -1,123 +1,124 @@
+ /*
+  * Built-in IOSurface for SWEET.
+  *
+  * Apple's IOSurface kext is closed. IOSurface.framework (iOS 16.7) finds
+  * IOServiceNameMatching("IOCoreSurfaceRoot"), opens it with type 0 and
+  * talks to the user client below:
+  *
+  *   sel 13  limits: struct out 0x18, u16 at +0x16 must be 1 (ABI version),
+  *           +0 offset alignment mask, +4 bytes-per-row alignment mask
+  *   sel 0   create: scalar [parent id], struct in = serialized property
+  *           dictionary (binary or XML), struct out = lock result (0xa68)
+  *   sel 4   lookup by id: scalar [id], struct out = lock result
+  *   sel 34  lookup by mach port: scalar [port name], struct out = lock result
+  *   sel 35  create mach port: scalars [id, options], scalar out [port name]
+  *   traps   0/1 use count +/- (id, category), 2 lock / 3 unlock
+  *           (id, options, &seed), 4/5 release (id)
+  *
+  * The lock result tells the library where the surface lives in the
+  * caller's address space: +0 pixels, +8 shared state page (registry id,
+  * seed at +0xc), +0x10 timestamps, then id, sizes and geometry (layout in
+  * sweet_surface_fill_result). Every surface is wired kernel memory mapped
+  * into each task that creates or looks it up; mappings are counted per
+  * client and dropped on release or close.
+  *
+  * Selectors6/7 wrap existing task memory, selector27 updates shared metadata.
+  * Values, notifications, accelerators and shared events are accepted and
+  * ignored (logged once per selector).
+  */
+ #include "SweetSurface.h"
+ #include "polaris-surface.h"
+ 
+ #if defined(SWEET)
+ #include <IOKit/IOService.h>
+ #include <IOKit/IOUserClient.h>
+ #include <IOKit/IOKitKeys.h>
+ #include <IOKit/IOLib.h>
+ #include <IOKit/IOLocks.h>
+ #include <IOKit/system.h>
+ #include <libkern/c++/OSArray.h>
+ #include <libkern/c++/OSDictionary.h>
+ #include <libkern/c++/OSNumber.h>
+ #include <libkern/c++/OSUnserialize.h>
+ #include <sys/proc.h>
++#include <pexpert/pexpert.h>
+ 
+ enum {
+ 	kSweetSurfaceCreate             = 0,
+ 	kSweetSurfaceLookup             = 4,
+ 	kSweetSurfaceWrapImage          = 6,
+ 	kSweetSurfaceWrapMemory         = 7,
+ 	kSweetSurfaceLimits             = 13,
+ 	kSweetSurfaceSetBulk            = 27,
+ 	kSweetSurfaceLookupFromPort     = 34,
+ 	kSweetSurfaceCreatePort         = 35,
+ };
+ 
+ enum {
+ 	kSweetSurfaceTrapIncrementUse   = 0,
+ 	kSweetSurfaceTrapDecrementUse   = 1,
+ 	kSweetSurfaceTrapLock           = 2,
+ 	kSweetSurfaceTrapUnlock         = 3,
+ 	kSweetSurfaceTrapRelease        = 4,
+ 	kSweetSurfaceTrapReleaseFailed  = 5,
+ };
+ 
+ #define SWEET_SURFACE_RESULT_SIZE       0xa68
+ #define SWEET_SURFACE_MAX_ID            4096
+ #define SWEET_SURFACE_MAX_DIM           16384
+ #define SWEET_SURFACE_MAX_ALLOC         (256u << 20)
+ #define SWEET_SURFACE_MAX_PROPS         (64u << 10)
+ #define SWEET_SURFACE_ROW_ALIGN         64
+ #define SWEET_SURFACE_TIMESTAMPS        0x800   /* offset in the state page */
+ #define SWEET_SURFACE_STATE_SEED        0xc     /* u32 in the state page */
+ #define kIOSurfaceLockReadOnly          0x1
+ 
+ static IOLock       *sweet_surface_lock;
+ static SweetSurface *sweet_surface_table[SWEET_SURFACE_MAX_ID];
+ static uint32_t      sweet_surface_users[SWEET_SURFACE_MAX_ID];
+ static uint32_t      sweet_surface_next_id = 1;
+ static uint32_t      sweet_surface_creates_logged;
+ static uint64_t      sweet_surface_wired;       /* bytes of buffer surfaces */
+ #define SWEET_SURFACE_WIRED_MAX         (1536ull << 20)
+ 
+ OSDefineMetaClassAndStructors(SweetSurface, OSObject);
+ 
+ void
+ SweetSurface::free()
+ {
+ 	OSSafeReleaseNULL(kernelMap);
+ 	if (externalPrepared && memory != NULL) { memory->complete(); }
+ 	OSSafeReleaseNULL(memory);
+ 	OSSafeReleaseNULL(state);
+ 	if (wiredAccounted) {
+ 		OSAddAtomic64(-(SInt64)allocSize, (volatile SInt64 *)&sweet_surface_wired);
+ 	}
+ 	OSObject::free();
+ }
+ 
+ uintptr_t
+ SweetSurface::kernelAddress()
+ {
+ 	IOBufferMemoryDescriptor *buffer = OSDynamicCast(IOBufferMemoryDescriptor, memory);
+ 	if (buffer != NULL) {
+ 		return (uintptr_t)buffer->getBytesNoCopy();
+ 	}
+ 	IOLockLock(sweet_surface_lock);
+ 	if (kernelMap == NULL && memory != NULL) {
+ 		kernelMap = memory->map(mapCache);
+ 	}
+ 	IOLockUnlock(sweet_surface_lock);
+ 	return kernelMap != NULL ? (uintptr_t)kernelMap->getVirtualAddress() : 0;
+ }
+ 
+ static uint32_t *
+ sweet_surface_seed(SweetSurface *s)
+ {
+ 	return (uint32_t *)((uint8_t *)s->state->getBytesNoCopy() + SWEET_SURFACE_STATE_SEED);
+ }
+ 
+ /*
+  * Give the surface an id and a table slot; the table holds one retain and a
+  * user count (creators, client mappings, kernel holders). Lock held.
+  */
+ static bool
+@@ -290,191 +291,219 @@
+ 
+ 	s->width = sweet_dict_u32(props, "IOSurfaceWidth", 0);
+ 	s->height = sweet_dict_u32(props, "IOSurfaceHeight", 0);
+ 	s->bytesPerElement = (uint16_t)sweet_dict_u32(props, "IOSurfaceBytesPerElement", 4);
+ 	s->elementWidth = (uint8_t)sweet_dict_u32(props, "IOSurfaceElementWidth", 1);
+ 	s->elementHeight = (uint8_t)sweet_dict_u32(props, "IOSurfaceElementHeight", 1);
+ 	s->pixelFormat = sweet_dict_u32(props, "IOSurfacePixelFormat", 0);
+ 	s->cacheMode = sweet_dict_u32(props, "IOSurfaceCacheMode", 0);
+ 	s->offset = sweet_dict_u32(props, "IOSurfaceOffset", 0);
+ 	if (s->width > SWEET_SURFACE_MAX_DIM || s->height > SWEET_SURFACE_MAX_DIM ||
+ 	    s->bytesPerElement > 64 || s->elementWidth == 0 || s->elementHeight == 0) {
+ 		return kIOReturnBadArgument;
+ 	}
+ 	s->bytesPerRow = sweet_dict_u32(props, "IOSurfaceBytesPerRow",
+ 	    sweet_row_bytes(s->width, s->elementWidth, s->bytesPerElement));
+ 	if (s->bytesPerRow < (uint64_t)sweet_div_up(s->width, s->elementWidth) * s->bytesPerElement) {
+ 		return kIOReturnBadArgument;
+ 	}
+ 	end = (uint64_t)s->offset + (uint64_t)s->bytesPerRow * sweet_div_up(s->height, s->elementHeight);
+ 
+ 	OSArray *planes = OSDynamicCast(OSArray, props->getObject("IOSurfacePlaneInfo"));
+ 	s->planeCount = 0;
+ 	if (planes != NULL) {
+ 		uint64_t next = s->offset;
+ 		if (planes->getCount() > SWEET_SURFACE_MAX_PLANES) {
+ 			return kIOReturnBadArgument;
+ 		}
+ 		for (unsigned int i = 0; i < planes->getCount(); i++) {
+ 			OSDictionary *pd = OSDynamicCast(OSDictionary, planes->getObject(i));
+ 			struct sweet_surface_plane *p = &s->planes[i];
+ 			if (pd == NULL) {
+ 				return kIOReturnBadArgument;
+ 			}
+ 			p->width = sweet_dict_u32(pd, "IOSurfacePlaneWidth", s->width);
+ 			p->height = sweet_dict_u32(pd, "IOSurfacePlaneHeight", s->height);
+ 			p->bytesPerElement = (uint16_t)sweet_dict_u32(pd, "IOSurfacePlaneBytesPerElement", 1);
+ 			p->elementWidth = (uint8_t)sweet_dict_u32(pd, "IOSurfacePlaneElementWidth", 1);
+ 			p->elementHeight = (uint8_t)sweet_dict_u32(pd, "IOSurfacePlaneElementHeight", 1);
+ 			if (p->width > SWEET_SURFACE_MAX_DIM || p->height > SWEET_SURFACE_MAX_DIM ||
+ 			    p->bytesPerElement > 64 || p->elementWidth == 0 || p->elementHeight == 0) {
+ 				return kIOReturnBadArgument;
+ 			}
+ 			p->bytesPerRow = sweet_dict_u32(pd, "IOSurfacePlaneBytesPerRow",
+ 			    sweet_row_bytes(p->width, p->elementWidth, p->bytesPerElement));
+ 			p->offset = sweet_dict_u32(pd, "IOSurfacePlaneOffset", (uint32_t)next);
+ 			p->size = sweet_dict_u32(pd, "IOSurfacePlaneSize",
+ 			    p->bytesPerRow * sweet_div_up(p->height, p->elementHeight));
+ 			next = round_page((uint64_t)p->offset + p->size);
+ 			if ((uint64_t)p->offset + p->size > end) {
+ 				end = (uint64_t)p->offset + p->size;
+ 			}
+ 		}
+ 		s->planeCount = planes->getCount();
+ 	}
+ 
+ 	bool wrapped=props->getObject("IOSurfaceAddress")!=NULL;
+     /* CA::Render::Image::data_size excludes padding after the final row. */
+     if(wrapped && !s->planeCount && s->height) {
+         uint64_t rows=sweet_div_up(s->height,s->elementHeight);
+         end=(uint64_t)s->offset+(uint64_t)s->bytesPerRow*(rows-1)+
+             (uint64_t)sweet_div_up(s->width,s->elementWidth)*s->bytesPerElement;
+     }
+     if(props->getObject("IOSurfaceAddressRanges"))return kIOReturnUnsupported;
+     OSNumber *address=OSDynamicCast(OSNumber,props->getObject("IOSurfaceAddress"));
+     OSNumber *declared=OSDynamicCast(OSNumber,props->getObject("IOSurfaceAllocSize"));
+     if(wrapped && (!address || !declared ||
+         !pgpu_surface_range(address->unsigned64BitValue(),declared->unsigned64BitValue()) ||
+         declared->unsigned64BitValue()<end))return kIOReturnBadArgument;
+     uint64_t alloc = wrapped?declared->unsigned64BitValue():sweet_dict_u32(props, "IOSurfaceAllocSize", 0);
+ 	if (alloc < end) {
+ 		alloc = end;
+ 	}
+ 	if(!wrapped)alloc = round_page(alloc);
+ 	if (alloc == 0 || alloc > SWEET_SURFACE_MAX_ALLOC) {
+ 		return kIOReturnNoMemory;
+ 	}
+ 	s->allocSize = (uint32_t)alloc;
+ 	return kIOReturnSuccess;
+ }
+ 
++/* Default OFF. Only fresh, native BGRA pixel allocations use WC. Existing
++ * task memory, physical panel mappings, planar/other formats and shared state
++ * pages retain their original modes. Native VM updates all CPU aliases; the
++ * GPU import path independently verifies actual WIMG on EVERY physical page. */
++static bool
++sweet_surface_wc_requested(const SweetSurface *s)
++{
++#if defined(POLARIS_RAM_ONLY)
++    uint32_t enabled=0;
++    return PE_parse_boot_argn("polarisgpusurfacewc",&enabled,sizeof(enabled)) && enabled==1 &&
++        s->pixelFormat==0x42475241 && !s->planeCount && s->bytesPerElement==4;
++#else
++    (void)s;return false;
++#endif
++}
++
++static IOReturn
++sweet_surface_owned_backing(SweetSurface *s,bool wc)
++{
++    IOBufferMemoryDescriptor *mem=IOBufferMemoryDescriptor::inTaskWithOptions(kernel_task,
++        kIODirectionInOut|kIOMemoryKernelUserShared|(wc?kIOMapWriteCombineCache:0),s->allocSize,page_size);
++    if(!mem)return kIOReturnNoMemory;
++    s->memory=mem;
++    if(wc) {
++        s->kernelMap=mem->createMappingInTask(kernel_task,0,kIOMapAnywhere|kIOMapWriteCombineCache,0,s->allocSize);
++        if(!s->kernelMap)return kIOReturnUnsupported;
++        s->mapCache=kIOMapWriteCombineCache;
++    }
++    bzero(mem->getBytesNoCopy(),s->allocSize);
++    return kIOReturnSuccess;
++}
++
+ /* IOSurfaceCreate's IOSurfaceAddress is a caller VA, never a physical
+  * address. Keep that exact descriptor/length alive, as selectors6/7 do.
+  * A failed pin is an error; never replace existing pixels with a zero BO. */
+ static IOReturn
+ sweet_surface_backing(SweetSurface *s,OSDictionary *props,task_t task)
+ {
+     OSObject *entry=props->getObject("IOSurfaceAddress");
+     OSNumber *address=OSDynamicCast(OSNumber,entry);
+     if(entry && (!address || !pgpu_surface_range(address->unsigned64BitValue(),s->allocSize)))
+         return kIOReturnBadArgument;
+     uint64_t before=(uint64_t)OSAddAtomic64(s->allocSize,(volatile SInt64 *)&sweet_surface_wired);
+     s->wiredAccounted=true;s->mapCache=kIOMapDefaultCache;
+     if(before+s->allocSize>SWEET_SURFACE_WIRED_MAX)return kIOReturnNoMemory;
+     if(address) {
+         for(unsigned attempt=0;attempt<2;attempt++) {
+             s->memory=IOMemoryDescriptor::withAddressRange(address->unsigned64BitValue(),s->allocSize,
+                 attempt?kIODirectionOut:kIODirectionInOut,task);
+             if(s->memory && s->memory->prepare()==kIOReturnSuccess) {
+                 s->externalPrepared=true;
+                 if(attempt)s->mapCache|=kIOMapReadOnly;
+                 return kIOReturnSuccess;
+             }
+             OSSafeReleaseNULL(s->memory);
+         }
+         return kIOReturnVMError;
+     }
+-    IOBufferMemoryDescriptor *mem=IOBufferMemoryDescriptor::inTaskWithOptions(kernel_task,
+-        kIODirectionInOut|kIOMemoryKernelUserShared,s->allocSize,page_size);
+-    if(!mem)return kIOReturnNoMemory;
+-    bzero(mem->getBytesNoCopy(),s->allocSize);s->memory=mem;
+-    return kIOReturnSuccess;
++    return sweet_surface_owned_backing(s,sweet_surface_wc_requested(s));
+ }
+ 
+ /* Per-client mapping of one surface. */
+ class SweetSurfaceRef : public OSObject {
+ 	OSDeclareDefaultStructors(SweetSurfaceRef);
+ 
+ public:
+ 	SweetSurface *surface;
+ 	IOMemoryMap  *data;
+ 	IOMemoryMap  *state;
+ 	uint32_t      count;
+ 
+ 	bool init() APPLE_KEXT_OVERRIDE { return OSObject::init(); }
+ 	void free() APPLE_KEXT_OVERRIDE;
+ };
+ 
+ OSDefineMetaClassAndStructors(SweetSurfaceRef, OSObject);
+ 
+ void
+ SweetSurfaceRef::free()
+ {
+ 	OSSafeReleaseNULL(data);
+ 	OSSafeReleaseNULL(state);
+ 	if (surface != NULL) {
+ 		sweet_surface_put(surface);
+ 		surface->release();
+ 		surface = NULL;
+ 	}
+ 	OSObject::free();
+ }
+ 
+ class IOCoreSurfaceRoot : public IOService {
+ 	OSDeclareDefaultStructors(IOCoreSurfaceRoot);
+ 
+ public:
+ 	bool start(IOService *provider) APPLE_KEXT_OVERRIDE;
+ };
+ 
+ OSDefineMetaClassAndStructors(IOCoreSurfaceRoot, IOService);
+ 
+ bool
+ IOCoreSurfaceRoot::start(IOService *provider)
+ {
+ 	if (!IOService::start(provider)) {
+ 		return false;
+ 	}
+ 	sweet_surface_init_lock();
+ 	setProperty(kIOUserClientClassKey, "IOSurfaceRootUserClient");
+ 	registerService();
+ 	IOLog("SWEET SURF: IOCoreSurfaceRoot registered\n");
+ 	return true;
+ }
+ 
+ class IOSurfaceRootUserClient : public IOUserClient {
+ 	OSDeclareDefaultStructors(IOSurfaceRootUserClient);
+ 
+ 	task_t   fTask;
+ 	IOLock  *fLock;
+ 	OSArray *fRefs;
+ 
+ 	SweetSurfaceRef *findRef(uint32_t id, unsigned int *index);
+ 	IOReturn addRef(SweetSurface *s, SweetSurfaceRef **refOut, bool *existing);
+ 	IOReturn returnSurface(SweetSurface *s, IOExternalMethodArguments *args);
+ 	IOReturn create(IOExternalMethodArguments *args);
+ 	IOReturn wrap(uint32_t selector, IOExternalMethodArguments *args);
+ 	IOReturn setBulk(IOExternalMethodArguments *args);
+ 
+ public:
+ 	bool initWithTask(task_t owningTask, void *securityID, UInt32 type) APPLE_KEXT_OVERRIDE;
+ 	void free() APPLE_KEXT_OVERRIDE;
+ 	IOReturn clientClose(void) APPLE_KEXT_OVERRIDE;
+ 	IOReturn externalMethod(uint32_t selector, IOExternalMethodArguments *args,
+ 	    IOExternalMethodDispatch *dispatch, OSObject *target,
+ 	    void *reference) APPLE_KEXT_OVERRIDE;
+ 	IOExternalTrap *getTargetAndTrapForIndex(IOService **targetP, UInt32 index) APPLE_KEXT_OVERRIDE;
+ 
+ 	IOReturn trapUseCount(void *id, void *category, void *, void *, void *, void *);
+ 	IOReturn trapLock(void *id, void *options, void *seedOut, void *, void *, void *);
+ 	IOReturn trapUnlock(void *id, void *options, void *seedOut, void *, void *, void *);
+ 	IOReturn trapRelease(void *id, void *, void *, void *, void *, void *);

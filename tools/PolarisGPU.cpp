@@ -232,6 +232,13 @@ extern "C" int PolarisGPUCacheProbe(void)
         if(!error) {
             volatile uint8_t *one=(volatile uint8_t*)m->getBytesNoCopy();
             volatile uint8_t *two=(volatile uint8_t*)map->getVirtualAddress();
+            /* Exercise the real kernel bulk-zero path on WC memory too,
+             * as fresh native IOSurface pixel allocations do. */
+            for(unsigned n=0;n<PAGE_SIZE;n++)one[n]=0xa5;
+            polaris_gpu_memory_order();
+            bzero((void*)one,PAGE_SIZE);
+            polaris_gpu_memory_order();
+            for(unsigned n=0;n<PAGE_SIZE;n++)if(two[n]){error=6;break;}
             for(unsigned n=0;n<PAGE_SIZE;n++)one[n]=(uint8_t)(n*37+0x80);
             polaris_gpu_memory_order();
             for(unsigned n=0;n<PAGE_SIZE;n++)if(two[n]!=(uint8_t)(n*37+0x80)){error=4;break;}
@@ -242,7 +249,7 @@ extern "C" int PolarisGPUCacheProbe(void)
         if(prepared)m->complete(kIODirectionInOut);
         if(map)map->release();m->release();
     }
-    IOLog("POLARIS GPU WC VM: %s modes=2 bytes=%u pagechecks=%u aliases=2 error=%d; actual IOBuffer/pmap, no GPU device\n",
+    IOLog("POLARIS GPU WC VM: %s modes=2 bytes=%u pagechecks=%u aliases=2 error=%d; actual IOBuffer/pmap, no GPU device; bulk-zero=2\n",
         error?"FAIL":"PASS",2u*(unsigned)PAGE_SIZE,checked,error);
     return error;
 }
@@ -324,7 +331,11 @@ IOReturn PolarisGPU::newUserClient(task_t task,void *security,UInt32 type,OSDict
 IOReturn PolarisGPUUserClient::make(IOMemoryDescriptor *memory,SweetSurface *s,
     uint64_t size,uint32_t flags,uint32_t *handle,bool writeCombined)
 {
-    if(writeCombined && s)return kIOReturnBadArgument;
+    /* WC surfaces must be fresh native IOBuffer allocations with the native
+     * WC mapping established at creation. Never convert imported task memory
+     * or trust a caller's BO flag. Every physical page is checked below. */
+    if(writeCombined && s && (s->memory!=memory || s->mapCache!=kIOMapWriteCombineCache ||
+        !OSDynamicCast(IOBufferMemoryDescriptor,memory)))return kIOReturnBadArgument;
     if (!size || size>GPU_MAX_BO || (size&PAGE_MASK) || bytes>GPU_MAX_BYTES-size)
         return kIOReturnNoMemory;
     unsigned h=GPU_BUFFERS;
@@ -404,7 +415,8 @@ IOReturn PolarisGPUUserClient::surface(redwood_surface *r)
      * SweetSurface pixels start at byte ZERO (reference MiniIOSurface +PAGE
      * is a different ABI). Keep the exact allocation/offset/row geometry. */
     IOReturn result=kIOReturnUnsupported;
-    if(OSDynamicCast(IOBufferMemoryDescriptor,s->memory) && s->mapCache==kIOMapDefaultCache && !s->planeCount && s->allocSize &&
+    if(OSDynamicCast(IOBufferMemoryDescriptor,s->memory) &&
+        (s->mapCache==kIOMapDefaultCache || s->mapCache==kIOMapWriteCombineCache) && !s->planeCount && s->allocSize &&
         !(s->allocSize&PAGE_MASK) && s->offset<s->allocSize) {
         uint32_t handle=0;
         r->size=s->allocSize;r->offset=s->offset;r->rowBytes=s->bytesPerRow;
@@ -412,8 +424,13 @@ IOReturn PolarisGPUUserClient::surface(redwood_surface *r)
         if(r->handle==UINT32_MAX) {r->handle=0;result=kIOReturnSuccess;}
         else {
             for(unsigned n=0;n<GPU_BUFFERS;n++) if(buffers[n].surface==s) {handle=n+1;break;}
-            result=handle?kIOReturnSuccess:make(s->memory,s,s->allocSize,0,&handle);
-            if(result==kIOReturnSuccess) {r->handle=handle;__atomic_fetch_add(&gpuSurfaces,1,__ATOMIC_RELEASE);}
+            bool wc=s->mapCache==kIOMapWriteCombineCache;
+            result=handle?kIOReturnSuccess:make(s->memory,s,s->allocSize,0,&handle,wc);
+            if(result==kIOReturnSuccess) {
+                r->handle=handle;__atomic_fetch_add(&gpuSurfaces,1,__ATOMIC_RELEASE);
+                if(wc && gpuSurfaces<=4)IOLog("POLARIS GPU WC SURFACE: id=%u bytes=%llu; native owned mapping and every CPU page verified\n",
+                    r->surface,s->allocSize*1ull);
+            }
         }
     }
     s->release();return result;
