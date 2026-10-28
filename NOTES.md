@@ -34,6 +34,29 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0103 actual settledSettings;400scrollworker19990 IN PROGRESS
+
+- ONLY0103/phone-gpu-extended-0103-0001/control-phone.py. Newkernel boot
+  actuallyPASS; capture0001extendedstartup isbootconsole, capture0002GUIwait
+  actuallockscreen. GPU GLSL/GMEM/icon ALL4096each PASS, fourbig64callbacks48
+  remote; nativearmedhard600s. Capture0002home and0003Settings are transitions
+  retained as such; capture0004-settings-settled ACTUALLYVIEWED fullSettings
+  text/icons beforeworker, stable-settings-viewed.json hashbinds. Important:
+  CLI --wait-seconds means USBdiscoverytimeout, NOT a UIsettling delay.
+- UnlockactualACK0..18 +Settingstap18..20 consumed. New bounded400scroll
+  worker19990 STARTED22:01UTC; saves20groups/fullkernel/screens/actualACK.
+  DO NOT sendotherstate/capture concurrently or duplicateworker. OrdinaryRAM
+  lease keptalive by thisworker. Allold0102 endednatively, previousclosure
+  proof rehashverified. Current0103 neitherendednorphysical600proofyet.
+- WholeCI40773604623/newkernel15621fca... andSERIAL196nativechecks/original
+  81FW/actualEDK2wholedecode/strictadmission allPASS beforeboot. NoactiveCI/
+  model/collector. Onlyactual400workerUSBactive; don'trebuildunmodifiedcode.
+  NEXT waitworker19990 complete, vieweverygroupend, independently reparse
+  all20boundedframe/native/panel/thermal groups andrequesttransitions; final
+  logringcanwrap, use consistentdeduplicatedlogs notfinalfileonly. Thennative
+  restore/fullBSDdrain/allpeersOFF/gatedreset+independentactualFASTBOOT.
+  Not sustained60 ordevicephysicalscanout proof. No storage/Androidwrites.
+
 ### CURRENT0103 originalUEFI RAM sent; unique kernel-start0001 IN PROGRESS
 
 - Newsourceaaf46ac3254766bb1cafb795afedf1e3da12e656 fullmacOS27/Xcode27
