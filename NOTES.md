@@ -37,7 +37,8 @@ early samples only. On0029 the human already confirmed boot complete and said
 ### 0094 publication timing/coalesced wake source READY; no physical trial
 
 - Latest0093 physical trials remain ENDED, independently verified actualFASTBOOT
- 11:21UTC; no active phone iOS/recovery or USB transaction. No new boot/write.
+ 11:21UTC and freshly read-only11:55:19.570224UTC; no active phone iOS/recovery
+ or USB transaction. No new boot/write.
  User priority remains measured stable60; do not rerun old0093 controllers.
 - Profile0889 adds native lock-protected publication sequence/ready timestamp,
  actual copy begin/end, callback/notify deadline/source and actual panel-write
@@ -61,8 +62,12 @@ early samples only. On0029 the human already confirmed boot complete and said
  payload, same CPU/native shutdown proof; old/default-OFF admission preserved.
 - Actual Appleclang27/fullCIheaders SweetFramebuffer and PolarisGPU TUs compile,
  exact0889 overlay0offset0fuzz matches compiled source.20 first local queue/
- cadence/performance/IIG/profile tests passed5.641s; additional admission/cache
- tests in progress. Source commit/fullCI pending. New private implementation
+ cadence/performance/IIG/profile tests passed5.641s. Final32 queue/cadence/performance/admission/IIG/profile tests
+ passed9.259s after correcting the new test to compare actual patch-shipped
+ header bytes (native GPU include is renamed; quiesce has no tools copy).
+ Initial failed test record retained; no native header/hash was relaxed.
+ Source6fff007c99250ce4060be2a407bc879522683221 pushed; full macOS27/Xcode27
+ CI40683219882 currently in progress. No physical candidate has been booted. New private implementation
  header exact SHA bound, all original IDL/public-header checks retained.
 - Next complete local checks, commit source/fullCI, then actual EFI/XNU native
  workloop/native shutdown success/stale/peer refusal/default-OFF controls.
