@@ -34,8 +34,48 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### 0080 owned-GEM write-combine candidate: native compile/local checks complete, no phone trial
+### 0081 WC wire-type correction: 0080 missed actual BOs, latency NOT fixed
 
+- Human reports continued stutter and under10FPS; goal remains actual smooth
+  drawing, not a refresh-scheduler change. We acknowledged sampled165ms versus
+  16.7ms budget for60FPS. GPU is really drawing, but measured repeated CPU
+  cache maintenance dominates. Do not claim smoothness or GPU absence.
+- 0080 actual boot logged trial1, GPU4096 pixel/GMEM/icon acceptance PASS,
+  but WCpre=0/WCpost=0 on actual actor1 submissions. This disproves activation
+  of the intended WC path, NOT proves WC GPU coherence. The wrong selector
+ 0x10000 is MSM_BO_CACHED; pinned Mesa25.0.7 UAPI defines WC=0x20000 and actual
+  msm_bo.c uses it. Private0081/wire-primary-source.json binds both sources.
+  This was our implementation error, not hardware refusal. Preserve0080 data.
+- Profile0878 corrects ONLY the native selector/comment to actualWC0x20000,
+  preserving explicit cached requests. Independent wire-value regression was
+  corrected FIRST and failed against old helper (wire-regression-before.log).
+  Fifteen GPU/MMU/lifetime/PM4 tests then PASS after correction; real C++ TU
+  compiled. Native WC/pmap/barrier/SMMU/IOBMD design and headers unchanged.
+- Phone remains0080/phone-gpu-wc-0080-0001, not FASTBOOT. No new0081 boot.
+  NEXT exact patch check/commit/full CI, same actual native WC VM probe and
+  dualCPU/drain, then fresh0081 RAM candidate. Real GPU pixel pass AND nonzero
+  WCpre/WCpost must precede any WC success claim. Then same20 actual gestures.
+
+### 0080 RAM candidate active; real VM probe passed, WC workload activation failed above
+
+- NEWEST ACTIVE PHONE is0080/phone-gpu-wc-0080-0001. Original UEFI RAM image
+  was sent and kernel-start-0001 began around01:58UTC. Do NOT resend boot;
+  inspect its current boot/state/captures first. Control0080/control-gpu-phone.py.
+  Old0079 trial ENDED through real native drain/RAM_DRAINED and independently
+  verified expected FASTBOOT, no rawfallback/Android/storage writes. Older
+  paragraphs'0079-active label is superseded by this actual new state.
+- Full macOS27/Xcode27 CI40616969099/job122581616854 PASSED, sourcefc82aeb018b2110c6afb0d32683001e8c3ea3039
+  pushed, verified0080 kernel SHA bc951565f6396e7feb2e240a82952449d3e10ce677e0d28c528b05a1484f8d93.
+  Actual EFI/XNU dirtyRAMroot/twoCPUs/native drain23/23 passed38.087s WITH
+  polarisgpuwctest=1. Actual kernel VM log PASS modes2/bytes32768/pagechecks8/
+  aliases2/error0: native IOBMD cached and WC pmap attributes, full16KiB byte
+  patterns through BOTH aliases in BOTH directions. actual-native-WC-VM-proof
+  binds native log and actual model result to exact kernel/CI, not a mock GPU.
+- Physical candidate admission additionally rehashes/binds that real VM proof,
+  exact unique polarisgpuwc=1 and absence of VMtest/owned-storage tokens.
+  Original EDK2 decoder verifies81 unchanged firmware entries; physical ADT,
+  graphics bundle and read-only base binding preserved. Physical GPU pixel
+  correctness and performance improvement STILL UNPROVEN until actual captures.
 - ACTIVE PHONE remains0079/phone-gpu-latency-0079-0002 in Settings. Directed
   keepalive succeeded01:42UTC (directory label0144). No0080 phone boot or disk
   write. GPU latency is still priority; first0079 optimization was insufficient.

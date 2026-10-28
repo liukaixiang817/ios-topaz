@@ -13,12 +13,14 @@ class CacheProfile(unittest.TestCase):
         text=(ROOT/'tools/PolarisGPU.cpp').read_text()
         actual=function(text,'static bool polaris_gpu_use_wc(')
         source='#include <stdint.h>\n#include <assert.h>\nstatic bool gpuWriteCombined;\n'+actual+r'''
+/* Independent wire values: Mesa25.0.7 include/drm-uapi/msm_drm.h lines118-120.
+ * 0x10000 is CACHED; WC is 0x20000. Not inferred from the driver helper. */
 int main(){
  for(unsigned flag=0;flag<0x50000;flag+=0x10000){
   gpuWriteCombined=false;assert(!polaris_gpu_use_wc(flag));
-  gpuWriteCombined=true;assert(polaris_gpu_use_wc(flag)==(flag==0x10000));
+  gpuWriteCombined=true;assert(polaris_gpu_use_wc(flag)==(flag==0x20000));
  }
- assert(polaris_gpu_use_wc(0x10002));return 0;
+ assert(polaris_gpu_use_wc(0x20002));return 0;
 }
 '''
         with tempfile.TemporaryDirectory() as d:

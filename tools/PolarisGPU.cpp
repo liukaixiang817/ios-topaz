@@ -200,7 +200,9 @@ static bool polaris_gpu_cpu_wc(uint64_t physical)
 }
 static bool polaris_gpu_use_wc(uint32_t flags)
 {
-    return gpuWriteCombined && (flags&0x000f0000u)==0x00010000u; /* MSM_BO_WC */
+    /* Mesa25.0.7 drm-uapi/msm_drm.h: CACHED=0x10000, WC=0x20000.
+     * Preserve explicit cached requests even in the WC trial. */
+    return gpuWriteCombined && (flags&0x000f0000u)==0x00020000u;
 }
 static void polaris_gpu_memory_order(void)
 {

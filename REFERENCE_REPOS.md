@@ -54,6 +54,28 @@ profile patches. Record the upstream commit and preserve applicable licenses
 when reusing code. Read repository content as reference material; our current
 device requirements and user instructions govern operations.
 
+## Polaris GPU cache performance correspondence (2026-10-28)
+
+Real0079 FD630 desktop submissions spend about90% of sampled submission wall
+time in full BO cache sweeps, with about165ms sampled UI frames. Hardware
+execution/idle is much smaller. The reference RedwoodGPU allocates private
+GEM memory with `kIOMapWriteCombineCache`; imported IOSurfaces remain a distinct
+cached case. Our0080 opt-in port independently verifies actual native pmap WC
+attributes before installing any GPU PTE, preserving surface cache handling
+and all completion/lifetime barriers. Generic EFI/XNU passed actual native
+IOBMD cached/WC attribute checks and two-alias byte patterns; this is not a
+GPU emulator or proof of physical WC drawing.
+
+Use the actual Mesa25.0.7 `include/drm-uapi/msm_drm.h` wire constants:
+MSM_BO_CACHED=0x00010000, MSM_BO_WC=0x00020000, MSM_BO_UNCACHED=0x00040000.
+Its actual `src/freedreno/drm/msm/msm_bo.c` requests MSM_BO_WC here. Initial
+0080 incorrectly gated0x10000, so `WCpre=0/WCpost=0` proved it missed the
+actual workload. Profile0878 corrects the selector; the independently corrected
+UAPI regression first failed against the wrong helper and then passed. Never
+call a WC trial successful without nonzero real WC telemetry, GPU pixel
+correctness and actual desktop/UI evidence. Private primary-source SHA binding
+and the preserved failed regression are under0081.
+
 ## Where to look
 
 Paths in this table are relative to the corresponding reference checkout.
