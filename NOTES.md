@@ -36,6 +36,22 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### 0100 native readonly thermal + future deadline source candidate; no new phone boot
 
+- Native source604fc843cfac41956b43d112aa45e3eaf028a0b7 committed/pushed;
+  fullmacOS27/Xcode27 CI40748174962/job123027418059 in progress. Build step
+  completed and artifact upload in progress at18:56UTC; NOT yet fullCI success
+  or an admitted artifact. One collector watches exactrun/source and will
+  bind profile/ZIPCRC/SHA, no duplicate rebuild. Existingphone0099 retained.
+- Additional strict thermal log consumer pairs both raw passes by exactend_us,
+  checks VALID/critical/signedwire/temperature equality/clock/span and rejects
+  partial/duplicate/interleaved/orphan records. It explicitly never grants
+  sensor freshness or continuous policy. Eight parser/native/scope/decoder
+  checks PASS1.471s. Earlier19check success elapsed3.858s (corrected only the
+  mistaken handwritten duration4.355s; actual logs unchanged).
+- New phone payload PLAN only606bytes: restore touch_lat1 and omit ONLY
+  -noprogress plus polariswait0 (sampler default0 and sampler disabled), add
+  polaristsens1. Do not prepare/admit/boot before fullCI and SERIAL actual
+  native new-kernel models succeed. Four models should include thermalON,
+  defaultOFF control, stalecookie, peerrefused, all currentGPU/keys/SMP/drain.
 - Current phone remains0099 RUNNING HOME; keepalive1832 PASS. No new boot,
   shutdown, input, PMIC/storage write or change to stock30s/10s guard.
 - New profile0893 embeds exact tested TSENS readonly core into SweetCPU.cpp,
@@ -55,7 +71,7 @@ early samples only. On0029 the human already confirmed boot complete and said
   SweetFramebuffer.cpp PASS. Exact overlay fuzz0/offset0 and byte-match to
   compiled files PASS. First local19-test run failed ONLY a fixture's trailing
   newline comparison of the verbatim header; failure retained, test corrected
-  to exact newline-preserving equality. New local0002 all19 tests PASS4.355s (read exact log for final elapsed).
+  to exact newline-preserving equality. New local0002 all19 tests PASS3.858s.
 - Host builder/proof/image admission explicitly bind TSENSreadonly to token,
   RAM/fourbig/platform modes and actual native wire/virtual-MMIO-refusal and
   future-deadline checks. No new IIG/private-header exception; no hardware

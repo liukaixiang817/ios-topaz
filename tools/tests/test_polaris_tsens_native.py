@@ -10,6 +10,23 @@ spec=importlib.util.spec_from_file_location('tsens_builder',ROOT/'tools/build-po
 builder=importlib.util.module_from_spec(spec);spec.loader.exec_module(builder)
 
 class TsensNative(unittest.TestCase):
+    def test_invalid_build_scope_refuses_before_payload_or_output_access(self):
+        base=['python3',str(ROOT/'tools/build-polaris-uefi-xnu.py'),'--zig','/nonexistent/zig',
+              '--kernel','/nonexistent/kernel','--payload','/nonexistent/payload']
+        flags=['--tsens-readonly','--kernel-core','7','--kernel-cpus','4',
+               '--cpu-osm-stock-performance','--ram-shutdown-bridge']
+        bad=[['--tsens-readonly'],flags+['--kernel-cpus','2'],
+             [x for x in flags if x!='--ram-shutdown-bridge'],
+             [x for x in flags if x!='--cpu-osm-stock-performance'],
+             flags+['--test-qemu-ufs'],flags+['--physical-owned-marker'],
+             flags+['--efi-application'],flags+['--chain-app-manifest','/nonexistent/app']]
+        with tempfile.TemporaryDirectory() as temp:
+            for n,args in enumerate(bad):
+                out=Path(temp)/str(n)
+                p=subprocess.run(base+args+['--output',str(out)],capture_output=True,text=True)
+                self.assertEqual(p.returncode,2,p.stderr);self.assertIn('TSENS',p.stderr)
+                self.assertFalse(out.exists())
+
     def test_exact_wire_core_and_pre_mapping_platform_refusal(self):
         header=(ROOT/'tools/polaris-tsens-readonly.h').read_text()
         header=header.replace('#ifndef POLARIS_TSENS_READONLY_H\n#define POLARIS_TSENS_READONLY_H\n','').replace('#include <stdint.h>\n','').replace('#include <stdbool.h>\n','')[:-7]
