@@ -34,6 +34,38 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### LIVE performance inspection: GPU hardware active; synchronous pipeline slow
+
+- HumanreportedstutterandaskedwhetherGPUstillunavailable. KeptCURRENT
+  phone-inspection-0078-0001 running, NO reboot/storagewrite/inputinjection.
+  AskedhumantoscrollSettings10s; humanconfirmed“已滑动”. TwoREALtargeted
+  USBcaptures performance-0001(00:30:42UTC)/0002(00:31:48UTC), sourcesandlogs
+  SHA-boundin0079/live-GPU-scroll-latency-inspection.json.
+- DesktopactualGLcontextrendererFD630 (notsoftpipe/llvmpipe), GPUcompleted
+  fencecounter256->768, desktopframes80->140. SharedIOSurfaceGPUrendering
+  acceptancewasreal4096pixelproofearlier; desktopnowcontinuessubmissions.
+  Noobservedruntimefailed/quarantine. OSMesaHEREusesthepatchedFreedreno
+  hardwarepath: doNOTtreatthelibrarylabel“off-screen(OSMesa)”asCPUfallback.
+- AfterhumanconfirmationnewLOGGEDsamplesframes100/120/140: frame149.901/
+  158.888/163.154ms (median158.888); glFlushhandoff92.169..112.719ms;
+  frame_end/glFinishregion41.752..46.360ms; CPUreadback6..7MICROseconds,
+  zero textureuploadinthese3samples. Framesaresampledfirst40/every20,
+  notthewholemanualinterval; DON'TclaimrollingFPSfromtheserecords.
+- ActualSMPPASS selected2/callbacks32/remote16.19200000isCOUNTERfrequency,
+  NOTCPUclock. Singlecoreabsenceisnotthisobservedconfiguration; actual
+  CPU/GPUfrequency/loadandhardwareinternalstagetimehavenotbeenmeasured.
+- Sourcereview: synchronousPolarisGPU::submit cleancivacALLreferencedBOs
+  beforeANDaftereachsubmission; nativea630_submit_run waitsforfence/idle/
+  SQEhaltperbatch; frame_end callsrealglFinish in glwait1. Thisexplainswhy
+  glFlushregionisnotpureGPUexecutionandisakeyoptimizationtarget, but
+  cachevsGPUexecutionvsfence/idle/halt sharesareNOTyetseparatelymeasured.
+  GPU“working”doesnotmeanthisserialdriverispastperformancetuning.
+- NEXTread-only/nextbuildprofilingofCPUcachepre/native-submit/cachepost/
+  fence/idle/halt and BOtotalbytes, thenboundedoptimizationswithcorrect
+  surfacevisibility/lifetimebarriers. KeepcurrentphoneONforhumaninspection,
+  noautomaticreboot/input/physicaltests; oldUSBcontinuousobserverpaused.
+  Latestcapture00:31:48UTCkeepsRAMleasealive, nextheartbeatoneboundstate.
+
 ### HUMAN INSPECTION ACTIVE: iOS lock screen confirmed; no automatic device tests
 
 - Humanrequested00:20UTC“请你启动iOS供我检查”. ThisOVERRIDES subsequent
