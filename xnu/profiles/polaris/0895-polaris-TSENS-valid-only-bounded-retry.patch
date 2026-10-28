@@ -1,0 +1,162 @@
+--- a/iokit/Kernel/arm/SweetCPU.cpp
++++ b/iokit/Kernel/arm/SweetCPU.cpp
+@@ -127,6 +127,67 @@
+ }
+ 
+ /* END OWN TSENS READONLY CORE. */
++/* BEGIN OWN TSENS VALID RETRY: exact bounded adapter, no invalid fallback. */
++/* Own tsens2xxx_get_temp re-reads a status register up to three times when
++ * VALID is clear. Keep that bounded read sequence, but never use its final
++ * invalid-code/majority fallback for performance admission. Every accepted
++ * word must be VALID; all original two-pass/delta/time checks still apply.
++ * This pure adapter adds no mapping, register writes, delay or policy change.
++ */
++struct polaris_tsens_retry_evidence { uint32_t reads,retry_mask; };
++struct polaris_tsens_retry_context {
++    const struct polaris_tsens_io *source;
++    struct polaris_tsens_retry_evidence evidence;
++    uint32_t logical_reads,error;
++};
++static inline bool polaris_tsens_retry_read(void *context,uint32_t offset,
++    uint32_t *out)
++{
++    struct polaris_tsens_retry_context *s=(struct polaris_tsens_retry_context *)context;
++    if(!s || !out || s->logical_reads>=12 ||
++       offset!=0xbc+(s->logical_reads%6)*4) {
++        if(s)s->error=PTS_ARGUMENT;
++        return false;
++    }
++    unsigned slot=s->logical_reads++;
++    for(unsigned attempt=0;attempt<3;attempt++) {
++        uint32_t raw=0;int32_t value=0;
++        s->evidence.reads++;
++        if(!s->source->read(s->source->context,offset,&raw)) {
++            s->error=PTS_READ;return false;
++        }
++        /* A critical indication is never hidden by retries, even if VALID
++         * is simultaneously clear. Never synthesize a valid temperature. */
++        if(raw&(1u<<19)){s->error=PTS_CRITICAL;return false;}
++        unsigned error=polaris_tsens_decode(raw,&value);
++        if(!error){*out=raw;return true;}
++        if(error!=PTS_VALID){s->error=error;return false;}
++        s->evidence.retry_mask|=1u<<slot;
++    }
++    s->error=PTS_VALID;return false;
++}
++static inline uint64_t polaris_tsens_retry_now(void *context)
++{
++    struct polaris_tsens_retry_context *s=(struct polaris_tsens_retry_context *)context;
++    return s->source->now_us(s->source->context);
++}
++static inline unsigned polaris_tsens_observe_retry(
++    const struct polaris_tsens_io *io,struct polaris_tsens_sample *out,
++    struct polaris_tsens_retry_evidence *evidence)
++{
++    if(!io || !io->read || !io->now_us || !out || !evidence)return PTS_ARGUMENT;
++    struct polaris_tsens_retry_context state={0};state.source=io;
++    const struct polaris_tsens_io bounded={&state,polaris_tsens_retry_read,
++        polaris_tsens_retry_now};
++    struct polaris_tsens_sample sample={0};
++    unsigned error=polaris_tsens_observe(&bounded,&sample);
++    if(error)return state.error?state.error:error;
++    if(state.logical_reads!=12 || state.evidence.reads<12 ||
++       state.evidence.reads>36)return PTS_ARGUMENT;
++    *out=sample;*evidence=state.evidence;return PTS_OK;
++}
++
++/* END OWN TSENS VALID RETRY. */
+ /* BEGIN THERMAL ELIGIBILITY CORE: exact tested pure implementation. */
+ /* Default-OFF experimental eligibility, not a clock controller or admission.
+  * Consume complete own-TSENS observations, never host supplied temperatures.
+@@ -265,7 +326,8 @@
+     polaris_tsens_next_us=now+250000;
+     const struct polaris_tsens_io io={NULL,polaris_tsens_read,polaris_tsens_now};
+     struct polaris_tsens_sample sample={};
+-    unsigned error=polaris_tsens_observe(&io,&sample);
++    struct polaris_tsens_retry_evidence retry={};
++    unsigned error=polaris_tsens_observe_retry(&io,&sample,&retry);
+     /* EVERY observation/failure updates permission before diagnostic thinning. */
+     if(polaris_gpu_thermal_ready() && polaris_thermal_lock) {
+         IOLockLock(polaris_thermal_lock);
+@@ -273,12 +335,17 @@
+             pte_observe(&polaris_thermal_state,&sample,error,polaris_perf_now()/1000);
+         IOLockUnlock(polaris_thermal_lock);
+     }
+-    if(now<polaris_tsens_report_us)return;
+-    polaris_tsens_report_us=now+1000000;
++    /* Failure evidence is never hidden by the one-second success log filter.
++     * Permission was already revoked above; no retry continues across polls. */
+     if(error) {
+         IOLog("POLARIS TSENS RO: us=%llu error=%u last_offset=%x raw=%x; no temperature or policy admission\n",
+             now,error,polaris_tsens_last_offset,polaris_tsens_last_raw);return;
+     }
++    if(retry.retry_mask)
++        IOLog("POLARIS TSENS RETRY: us=%llu reads=%u mask=%x; all accepted words VALID, bounded36 reads\n",
++            sample.ended_us,retry.reads,retry.retry_mask);
++    if(now<polaris_tsens_report_us)return;
++    polaris_tsens_report_us=now+1000000;
+     IOLog("POLARIS TSENS RO: us=%llu begin=%llu span=%llu gold=%d/%d/%d/%d gpu=%d/%d; mC observations, not sensor freshness\n",
+         sample.ended_us,sample.began_us,sample.ended_us-sample.began_us,
+         sample.temperature_mC[0],sample.temperature_mC[1],sample.temperature_mC[2],
+@@ -299,6 +366,51 @@
+ }
+ static uint64_t polaris_tsens_vm_now(void *v)
+ {return 100+10*((struct polaris_tsens_vm *)v)->clocks++;}
++
++struct polaris_tsens_retry_vm {unsigned reads,slot,attempt,invalid,clocks,fail,critical;};
++static bool polaris_tsens_retry_vm_read(void *v,uint32_t offset,uint32_t *out)
++{
++    struct polaris_tsens_retry_vm *s=(struct polaris_tsens_retry_vm *)v;
++    if(s->slot>=12 || offset!=0xbc+(s->slot%6)*4)return false;
++    ++s->reads;if(s->fail==s->reads)return false;
++    *out=400+(s->slot%6)*10;
++    if(s->critical){*out|=1u<<19;return true;}
++    if(s->attempt++<s->invalid)return true;
++    *out|=1u<<21;s->slot++;s->attempt=0;return true;
++}
++static uint64_t polaris_tsens_retry_vm_now(void *v)
++{return 100+10*((struct polaris_tsens_retry_vm *)v)->clocks++;}
++static bool polaris_tsens_retry_vm_probe(void)
++{
++    bool ok=true;
++    for(unsigned invalid=0;invalid<=3;invalid++) {
++        struct polaris_tsens_retry_vm s={};s.invalid=invalid;
++        const struct polaris_tsens_io io={&s,polaris_tsens_retry_vm_read,polaris_tsens_retry_vm_now};
++        struct polaris_tsens_sample out,before;
++        struct polaris_tsens_retry_evidence proof,old;
++        memset(&out,0xa5,sizeof(out));before=out;
++        memset(&proof,0xa5,sizeof(proof));old=proof;
++        unsigned error=polaris_tsens_observe_retry(&io,&out,&proof);
++        if(invalid<3)ok=ok && !error && s.reads==12*(invalid+1) && s.slot==12 &&
++            proof.reads==s.reads && proof.retry_mask==(invalid?0xfffu:0) &&
++            out.max_gold_mC==43000 && out.max_gpu_mC==45000;
++        else ok=ok && error==PTS_VALID && s.reads==3 && !s.slot &&
++            !memcmp(&out,&before,sizeof(out)) && !memcmp(&proof,&old,sizeof(old));
++    }
++    for(unsigned mode=0;mode<2;mode++) {
++        struct polaris_tsens_retry_vm s={};s.invalid=1;
++        if(mode)s.critical=1;else s.fail=5;
++        const struct polaris_tsens_io io={&s,polaris_tsens_retry_vm_read,polaris_tsens_retry_vm_now};
++        struct polaris_tsens_sample out,before;struct polaris_tsens_retry_evidence proof,old;
++        memset(&out,0xa5,sizeof(out));before=out;
++        memset(&proof,0xa5,sizeof(proof));old=proof;
++        ok=ok && polaris_tsens_observe_retry(&io,&out,&proof)==(mode?PTS_CRITICAL:PTS_READ) &&
++            s.reads==(mode?1u:5u) && !memcmp(&out,&before,sizeof(out)) && !memcmp(&proof,&old,sizeof(old));
++    }
++    IOLog("POLARIS TSENS VALID RETRY VM: %s; native12/24/36 reads, all-invalid/critical/read-failure refuse, synthetic words only\n",ok?"PASS":"FAIL");
++    return ok;
++}
++
+ static bool polaris_tsens_vm_probe(void)
+ {
+     struct polaris_tsens_vm state={};
+@@ -342,7 +454,8 @@
+     uint32_t flag=0;PE_parse_boot_argn("polaristsens",&flag,sizeof(flag));
+     if(!flag)return;
+     uint32_t test=0;PE_parse_boot_argn("polarisgpuwctest",&test,sizeof(test));
+-    if(test==1 && (!polaris_tsens_vm_probe() || (flag==2 && !polaris_thermal_vm_probe())))return;
++    if(test==1 && (!polaris_tsens_vm_probe() || !polaris_tsens_retry_vm_probe() ||
++        (flag==2 && !polaris_thermal_vm_probe())))return;
+     uint32_t cow=0,rw=0,owned=0,quiesce=0;
+     PE_parse_boot_argn("polarisramcow",&cow,sizeof(cow));
+     bool has_rw=PE_parse_boot_argn("ufsrw",&rw,sizeof(rw));

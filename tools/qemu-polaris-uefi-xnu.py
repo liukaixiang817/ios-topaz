@@ -279,6 +279,7 @@ def main():
     if manifest.get('TSENS_readonly_inventory'):
         checks['native_TSENS_refused_before_virtual_MMIO']=('POLARIS TSENS RO: REFUSED platform/mode; no MMIO' in ring and 'POLARIS TSENS RO: armed' not in ring and 'POLARIS TSENS RAW:' not in ring)
         checks['native_TSENS_wire_core']=('POLARIS TSENS WIRE VM: PASS; actual native bounded core, synthetic reads only' in ring)
+        checks['native_TSENS_valid_retry_core']=('POLARIS TSENS VALID RETRY VM: PASS; native12/24/36 reads, all-invalid/critical/read-failure refuse, synthetic words only' in ring)
         flag=b'polaristsens=2' if manifest.get('GPU_thermal_lease_trial') else b'polaristsens=1'
         checks['explicit_TSENS_readonly_payload']=([t for t in a.payload.read_bytes()[0x48:0x2a8].split(b'\0',1)[0].split() if t.startswith(b'polaristsens=')]==[flag])
         checks['native_future_display_deadline_probe']=('POLARIS PFB PRECISION VM: PASS; actual native callback, future deadlines only' in ring)

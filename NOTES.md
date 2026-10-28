@@ -34,6 +34,59 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0101 physical long-scroll diagnosis COMPLETE; 0102 bounded retry source ready
+
+- CURRENT PHONE0101/phone-gpu-thermal-0101-0001 RUNNING Settings. ONLY0101/
+  control-phone.py ACTION NEWDIR; latest keepalive-2048 PASS. No active USB/
+  model/CI/scrollworker. One originalUEFI RAMboot/one actual kernel-start0002
+  already done; do NOT repeat or use0100controllers. No Android/rawfallback/
+  PMIC/storage/NVRAM writes. Keep directed state alive while nextsource builds.
+- continuous-one-hundred-scroll-0001.json completed20:40:51UTC:100 actual
+  bounded scrolls in five groups20, ACK20..1820, plus real unlock/tap ACK0..20.
+  Eight actual screenshots viewed (lock/home3app3dock/Settings/five groupends).
+  physical-thermal-long-scroll-and-invalid-cooldown-proof.json independently
+  rehashes every102 inputresult/8screens and reparses five contact-bounded
+  frame/native/panel/temp sets:4078 complete frames,143 contact-window actual
+  6sensor observations, maximumCPU71.4C/GPU53.5C. Not distinct scanout60Hz.
+- Warm824frames median14.3305ms/p9516.234; measured804 median14.728/p9533.852;
+  extended1 744 median15.826/p9535.843; extended2 900 median14.583/p9516.600;
+  extended3 806 median14.951/p9535.728. Request/pause cadence is host paced,
+  NOT throughput ceiling. No loggedhot or hard120s expiry; briefidle and
+  error10s lows prevented an uninterrupted120s cycle: not actual hardbudget
+  expiration proof. CPU original30s/10s guard unchanged, so not isolatedHz.
+- New precise failure cause: native TSENS INVALID raw a267 offsetc8 at
+ 1086059989us and c20e offsetd0 at1153528026us. Actual GPUreason3/sensor LOW
+  follows182/157us later; next confirmedHIGH after10006120/10001074us. Fixed
+  preceding1s frame medians14.504/14.829ms, following1s34.098/34.1305ms. Old
+  first-read failure causes fail-closed cooldown. Pinned OWN MiCode
+  tsens2xxx.c blob50c847febf73d9dbded5830b1f0440f4f4aab161 explicitly retries
+  VALID three reads. This is actual observed invalid/cooldown association;
+  recovery by re-reading has NOT yet been shown on this phone.
+- New0102 source ONLY bounded VALID re-read adapter and precise failure logs,
+  plus actual-native retry probe. Up to3 same-status reads/36 total, accepted
+  words allVALID; critical/read/range/3invalid/clock/delta immediately refuse,
+  no majority-invalid fallback or cross-poll cached temperature. Original
+  2pass/1ms/all-or-none sample, eligibility/75/60C limits,120s/10s/250ms and
+  CPUfixedguard/ownership/cache/HFI/unknownDMA/native shutdown unchanged.
+  Failure evidence now precedes1s success-log thinning; successful retry read
+  counts/mask logged. No newnative header/IIGexception/MMIOwrite.
+- Local actualAppleclang27 SweetCPU+polaris_a630 TUs PASS, exactpatch0895
+  fuzz0/offset0 matches whole source.27 ASan/UBSan/policy/native/parser/lifetime
+  checks4.636s PASS incl10000 randomized complete retry schedules, every
+  persistentinvalid/failure/critical boundary. First test source-check searched
+  addedlines for unchanged if(error) and failed; fixed harness to full applied
+  context, product unchanged, failure retained. New completeCI/model/phone
+  NOT yet run. Native QEMU harness now requires actual retryVM PASS; generic
+  mock is not SD845 sensor proof. No newphysical candidate yet.
+- Early private analysis0001/0002 KeyError on an armed(non-numeric) gate
+  header retained; corrected0003 uses exact full numeric records only and
+  independent reprover. All raw errors/screens and slower groups retained.
+- NEXT commit/push0102, fullmacOS27CI + exactartifact + SERIAL realEFI/XNU
+  thermalON/control/stale/peerrefused with retry-native proof, then original
+  firmware/physicaladmission. Only fully ready then native-end0101/save full
+  log/gatedreset/independentactualFASTBOOT and ONEnewRAM trial. Do not claim
+  persistent60 or bypass protection. Other goals still deferred.
+
 ### CURRENT PHONE0101 RUNNING; full CI +150actual native checks PASS
 
 - CURRENT0101/phone-gpu-thermal-0101-0001, ONLY0101/control-phone.py ACTION
