@@ -95,11 +95,13 @@ def physical_buttons_intent(tokens,enabled,core,count,qemu,drain,bridge,ufs,mark
     return enabled
 
 def tsens_readonly_intent(tokens,enabled,core,count,qemu,drain,bridge,ufs,marker,osm,
-                          lease=False,gpu_mode=0,osm_stock=False):
+                          lease=False,gpu_mode=0,osm_stock=False,extended=False):
     actual=[t for t in tokens if t.startswith(b'polaristsens=')]
+    if type(extended) is not bool or (extended and not lease):
+        raise ValueError('TSENS extended duration requires explicit thermal lease')
     if type(lease) is not bool or (lease and (not enabled or gpu_mode!=3 or not osm_stock)):
         raise ValueError('TSENS thermal lease requires explicit readonly/stock CPU and GPU mode3')
-    expected=b'polaristsens=2' if lease else b'polaristsens=1'
+    expected=b'polaristsens=3' if extended else b'polaristsens=2' if lease else b'polaristsens=1'
     if type(enabled) is not bool or actual!=([expected] if enabled else []):
         raise ValueError('TSENS readonly intent must match one explicit token')
     if enabled:
@@ -136,6 +138,7 @@ def main():
     ap.add_argument('--physical-buttons',action='store_true',help='three original PM8998 keys on firmware CPU0; QEMU tests only the native consumer without Qualcomm MMIO')
     ap.add_argument('--tsens-readonly',action='store_true',help='original six CPU/GPU thermal status registers only')
     ap.add_argument('--gpu-thermal-lease',action='store_true',help='explicit default-OFF bounded GPU-only thermal experiment; requires readonly TSENS and stock mode3')
+    ap.add_argument('--gpu-thermal-extended',action='store_true',help='separate default-OFF 600s GPU duration experiment; all thermal/idle/10s low guards retained')
     ap.add_argument('--wled-inventory-only',action='store_true',help='short original WLED observer inventory then hold; CPU_ON compiled out, no PMIC writes')
     ap.add_argument('--test-wled-read-failure',action='store_true',help='QEMU-only explicit observer refusal in the inventory hold')
     ap.add_argument('--cpu-stock-inventory',type=Path,help='required physical read-only OSM evidence for the first performance trial')
@@ -157,6 +160,8 @@ def main():
     ap.add_argument('--chain-app-manifest',type=Path,help='RAM test wrapper for the exact already-built selected disk app')
     a=ap.parse_args();r=Path(__file__).resolve().parents[1]
     target=a.kernel_core if a.test_qemu else a.kernel_core<<8
+    if a.gpu_thermal_extended and not a.gpu_thermal_lease:
+        ap.error('TSENS extended duration requires explicit thermal lease')
     if a.gpu_thermal_lease and (not a.tsens_readonly or not a.cpu_osm_stock_performance or a.gpu_stock_request!=3):
         ap.error('TSENS thermal lease requires readonly TSENS, stock CPU and GPU request3')
     if a.tsens_readonly and (a.kernel_core!=7 or a.kernel_cpus!=4 or
@@ -230,7 +235,7 @@ def main():
     tsens_readonly_intent(tokens,a.tsens_readonly,a.kernel_core,a.kernel_cpus,
         a.test_qemu,a.test_ram_drain,a.ram_shutdown_bridge,a.test_qemu_ufs,
         a.physical_owned_marker,a.cpu_osm_readonly or a.cpu_osm_stock_performance,
-        a.gpu_thermal_lease,a.gpu_stock_request,a.cpu_osm_stock_performance)
+        a.gpu_thermal_lease,a.gpu_stock_request,a.cpu_osm_stock_performance,a.gpu_thermal_extended)
     gpu_inventory=None
     if a.gpu_stock_request and not a.test_qemu:
         if not a.gpu_stock_inventory:raise ValueError('GPU stock request requires actual physical read-only baseline')
@@ -420,8 +425,9 @@ def main():
                   physical_buttons=a.physical_buttons,buttons_offset=buttons_offset if a.physical_buttons else None,
                   TSENS_readonly_inventory=a.tsens_readonly,thermal_configuration_write_api=False,
                   GPU_thermal_lease_trial=a.gpu_thermal_lease,
+                  GPU_thermal_extended_trial=a.gpu_thermal_extended,
                   GPU_thermal_policy=({'experimental_limits_mC':[75000,70000,60000,55000],
-                    'max_observation_age_us':500000,'hard_high_ns':120000000000,
+                    'max_observation_age_us':500000,'hard_high_ns':600000000000 if a.gpu_thermal_extended else 120000000000,
                     'confirmed_low_ns':10000000000,'idle_ns':250000000} if a.gpu_thermal_lease else None),
                   RAM_native_drain_test=a.test_ram_drain,RAM_native_shutdown_bridge=shutdown_bridge,
                   shutdown_offset=shutdown_offset if shutdown_bridge else None,

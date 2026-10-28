@@ -28,10 +28,14 @@ def exact_policy(value,expected):
 
 def admit_thermal_policy(driver,qemu,thermal,gpu_mode):
     lease=driver.get('GPU_thermal_lease_trial',False)
+    extended=driver.get('GPU_thermal_extended_trial',False)
+    if (type(extended) is not bool or type(qemu.get('GPU_thermal_extended_trial',False)) is not bool or
+        extended!=qemu.get('GPU_thermal_extended_trial',False) or (extended and not lease)):
+        raise ValueError('GPU extended duration needs matching explicit thermal lease intent')
     if type(lease) is not bool or type(qemu.get('GPU_thermal_lease_trial',False)) is not bool or lease!=qemu.get('GPU_thermal_lease_trial',False):
         raise ValueError('physical and actual virtual GPU thermal lease intent must match')
     policy={'experimental_limits_mC':[75000,70000,60000,55000],
-            'max_observation_age_us':500000,'hard_high_ns':120000000000,
+            'max_observation_age_us':500000,'hard_high_ns':600000000000 if extended else 120000000000,
             'confirmed_low_ns':10000000000,'idle_ns':250000000}
     if lease and (not thermal or gpu_mode!=3 or driver.get('CPU_OSM_stock_performance') is not True or
         not exact_policy(driver.get('GPU_thermal_policy'),policy) or not exact_policy(qemu.get('GPU_thermal_policy'),policy) or
@@ -39,6 +43,9 @@ def admit_thermal_policy(driver,qemu,thermal,gpu_mode):
           ['native_thermal_eligibility_and_budget','native_thermal_hard_budget',
            'native_thermal_refused_before_virtual_requests'])):
         raise ValueError('GPU thermal lease needs actual native eligibility, hard budget and virtual refusal proof')
+    if extended and (qemu.get('checks',{}).get('native_thermal_extended_budget') is not True or
+                     qemu.get('checks',{}).get('native_TSENS_valid_retry_core') is not True):
+        raise ValueError('GPU extended duration requires actual native600s/mode-switch and VALID retry proof')
     if not lease and (driver.get('GPU_thermal_policy') is not None or qemu.get('GPU_thermal_policy') is not None):
         raise ValueError('inactive GPU thermal lease must not carry a policy')
 

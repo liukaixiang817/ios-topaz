@@ -7,21 +7,24 @@
  * TSENS observations separately. Neither a plan nor a host ACK is an actual
  * request-state confirmation. Caller confirms only after the original HFI
  * ownership/quiescence/ACK/return/readback transaction has succeeded.
- * A thermal renewal cannot restart the120s hard budget. Only10s in a known
- * low request state opens a new budget. Original stock target and idle remain.
+ * A thermal renewal cannot restart the selected hard budget. The default120s
+ * control and explicit600s duration trial have identical targets and guards.
+ * Only10s in a known low request opens a new budget; its limit cannot change
+ * within a session. These are bounded experiments, not a steady-state governor.
  */
 #define A630_THERMAL_HIGH_NS UINT64_C(120000000000)
+#define A630_THERMAL_LONG_NS UINT64_C(600000000000)
 #define A630_THERMAL_COOL_NS UINT64_C(10000000000)
 #define A630_THERMAL_IDLE_NS UINT64_C(250000000)
 enum { AT_REQUEST=0,AT_UNCONFIRMED,AT_IDLE,AT_SENSOR,AT_HARD_LIMIT,AT_COOLING };
 struct a630_thermal_state {
-    uint64_t last_ns,cycle_since_ns,low_since_ns;
+    uint64_t last_ns,cycle_since_ns,low_since_ns,limit_ns;
     uint32_t confirmed,high,cooling,reason,fault;
 };
 static inline bool a630_thermal_clock(struct a630_thermal_state *s,uint64_t now)
 {
     if(!s || s->fault || !now || now<s->last_ns ||
-       now>UINT64_MAX-A630_THERMAL_HIGH_NS) {
+       now>UINT64_MAX-A630_THERMAL_LONG_NS) {
         if(s)s->fault=1;
         return false;
     }
@@ -42,10 +45,13 @@ static inline bool a630_thermal_confirm(struct a630_thermal_state *s,uint64_t no
     } else if(!s->confirmed || s->high)s->low_since_ns=now;
     s->confirmed=1;s->high=high;return true;
 }
-static inline bool a630_thermal_plan(struct a630_thermal_state *s,uint64_t now,
-    uint64_t activity,bool eligible,uint32_t *perf,uint32_t *bus)
+static inline bool a630_thermal_plan_bounded(struct a630_thermal_state *s,uint64_t now,
+    uint64_t activity,bool eligible,uint32_t *perf,uint32_t *bus,uint64_t limit_ns)
 {
     if(!perf || !bus || !a630_thermal_clock(s,now))return false;
+    if((limit_ns!=A630_THERMAL_HIGH_NS && limit_ns!=A630_THERMAL_LONG_NS) ||
+       (s->limit_ns && s->limit_ns!=limit_ns)){s->fault=1;return false;}
+    s->limit_ns=limit_ns;
     if(activity>now){s->fault=1;return false;}
     *perf=1;*bus=4;
     if(!s->confirmed){s->reason=AT_UNCONFIRMED;return true;}
@@ -54,7 +60,7 @@ static inline bool a630_thermal_plan(struct a630_thermal_state *s,uint64_t now,
     if(!s->high && s->low_since_ns && now-s->low_since_ns>=A630_THERMAL_COOL_NS) {
         s->cooling=0;s->cycle_since_ns=0;
     }
-    if(s->cycle_since_ns && now-s->cycle_since_ns>=A630_THERMAL_HIGH_NS) {
+    if(s->cycle_since_ns && now-s->cycle_since_ns>=s->limit_ns) {
         s->cooling=1;s->reason=AT_HARD_LIMIT;
     }
     if(s->cooling){s->reason=AT_COOLING;return true;}
@@ -62,6 +68,12 @@ static inline bool a630_thermal_plan(struct a630_thermal_state *s,uint64_t now,
     if(!activity || now-activity>A630_THERMAL_IDLE_NS){s->reason=AT_IDLE;return true;}
     *perf=4;*bus=8;s->reason=AT_REQUEST;return true;
 }
+static inline bool a630_thermal_plan(struct a630_thermal_state *s,uint64_t now,
+    uint64_t activity,bool eligible,uint32_t *perf,uint32_t *bus)
+{return a630_thermal_plan_bounded(s,now,activity,eligible,perf,bus,A630_THERMAL_HIGH_NS);}
+static inline bool a630_thermal_plan_extended(struct a630_thermal_state *s,uint64_t now,
+    uint64_t activity,bool eligible,uint32_t *perf,uint32_t *bus)
+{return a630_thermal_plan_bounded(s,now,activity,eligible,perf,bus,A630_THERMAL_LONG_NS);}
 
 /* END BOUNDED THERMAL PLANNER. */
 static struct a630_io a630_client_io;
@@ -288,8 +300,9 @@ bool polaris_gpu_submit(const uint64_t *addresses,const uint32_t *words,uint32_t
  * Default OFF. Request success is not an instantaneous-frequency claim. */
 static struct a630_perf_state a630_client_perf;
 static struct a630_thermal_state a630_client_thermal;
-static bool a630_client_thermal_enabled;
+static bool a630_client_thermal_enabled,a630_client_thermal_extended;
 extern bool polaris_gpu_thermal_ready(void);
+extern unsigned polaris_gpu_thermal_mode(void);
 extern unsigned polaris_gpu_thermal_verdict(void);
 static uint64_t a630_perf_now_ns(void)
 {
@@ -320,6 +333,30 @@ static struct a630_channel_io a630_client_perf_io(void)
     return (struct a630_channel_io){a630_core_owned,a630_read_register,
         a630_write_register,a630_gmu_sync,a630_delay_us,&a630_client_io};
 }
+
+/* New600s duration mode is separately opted in; no synthetic clock/control
+ * operation is used as physical elapsed-budget or temperature evidence. */
+bool polaris_gpu_thermal_extended_vm_probe(void)
+{
+    struct a630_thermal_state s={0};uint32_t p=0,b=0;
+    bool ok=a630_thermal_plan_extended(&s,100,100,true,&p,&b) && p==1 && b==4 &&
+        a630_thermal_confirm(&s,100,1,4) &&
+        a630_thermal_plan_extended(&s,101,101,true,&p,&b) && p==4 && b==8 &&
+        a630_thermal_confirm(&s,101,4,8);
+    ok=ok && a630_thermal_plan_extended(&s,120000000101ULL,120000000101ULL,true,&p,&b) && p==4 &&
+        s.cycle_since_ns==101 && s.limit_ns==A630_THERMAL_LONG_NS &&
+        a630_thermal_plan_extended(&s,600000000101ULL,600000000101ULL,true,&p,&b) && p==1 &&
+        a630_thermal_plan_extended(&s,610000000101ULL,610000000101ULL,true,&p,&b) && p==1 &&
+        !s.low_since_ns && a630_thermal_confirm(&s,610000000101ULL,1,4) &&
+        a630_thermal_plan_extended(&s,620000000100ULL,620000000100ULL,true,&p,&b) && p==1 &&
+        a630_thermal_plan_extended(&s,620000000101ULL,620000000101ULL,true,&p,&b) && p==4;
+    struct a630_thermal_state wrong={0};
+    ok=ok && a630_thermal_plan(&wrong,100,100,true,&p,&b) &&
+        !a630_thermal_plan_extended(&wrong,101,101,true,&p,&b) && wrong.fault;
+    printf("POLARIS GPU EXTENDED BUDGET VM: %s; native600s/confirmed-low10s/mode-switch refusal, synthetic time only\n",ok?"PASS":"FAIL");
+    return ok;
+}
+
 bool polaris_gpu_performance_configure(void)
 {
     uint32_t mode=0,cow=0,rw=0,marker=0,quiesce=0;
@@ -338,16 +375,18 @@ bool polaris_gpu_performance_configure(void)
         __builtin_arm_rsr64("CNTFRQ_EL0"),board);
     if(!admitted){printf("POLARIS GPU STOCK: REFUSED platform/mode; no request write\n");return false;}
     uint32_t thermal=0;PE_parse_boot_argn("polaristsens",&thermal,sizeof(thermal));
-    if(thermal>2 || (thermal==2 && (mode!=3 || !polaris_gpu_thermal_ready()))) {
+    if(thermal>3 || (thermal>=2 && (mode!=3 || !polaris_gpu_thermal_ready() || polaris_gpu_thermal_mode()!=thermal))) {
         printf("POLARIS GPU THERMAL: REFUSED observer/platform/mode; no request write\n");return false;
     }
-    a630_client_thermal_enabled=thermal==2;
+    a630_client_thermal_enabled=thermal>=2;
+    a630_client_thermal_extended=thermal==3;
     struct a630_channel_io io=a630_client_perf_io();
     bool ok=polaris_gpu_quiescent() && a630_perf_init(&a630_client_perf,mode,true,&io);
     printf("POLARIS GPU STOCK: armed=%u mode=%u saved=1/4 target=%u/%u error=%u; original table requests, not measured Hz\n",
         ok,mode,a630_client_perf.target_perf,a630_client_perf.target_bus,a630_client_perf.fault);
     if(ok && a630_client_thermal_enabled)
-        printf("POLARIS GPU THERMAL: armed hard120s confirmed-low10s idle250ms; CPU fixed guard unchanged\n");
+        printf("POLARIS GPU THERMAL: armed hard%us confirmed-low10s idle250ms; CPU fixed guard unchanged\n",
+            a630_client_thermal_extended?600u:120u);
     return ok;
 }
 bool polaris_gpu_performance_tick(uint64_t now_ns,uint64_t activity_ns)
@@ -355,8 +394,10 @@ bool polaris_gpu_performance_tick(uint64_t now_ns,uint64_t activity_ns)
     struct a630_perf_state *s=&a630_client_perf;
     if(!s->armed || s->stopped)return !s->fault;
     uint32_t perf=0,bus=0;
-    bool ok=a630_client_thermal_enabled ? a630_thermal_plan(&a630_client_thermal,now_ns,activity_ns,
-        polaris_gpu_thermal_verdict()==0,&perf,&bus):a630_perf_desired(s,now_ns,activity_ns,&perf,&bus);
+    bool ok=a630_client_thermal_enabled ? a630_thermal_plan_bounded(&a630_client_thermal,now_ns,activity_ns,
+        polaris_gpu_thermal_verdict()==0,&perf,&bus,
+        a630_client_thermal_extended?A630_THERMAL_LONG_NS:A630_THERMAL_HIGH_NS):
+        a630_perf_desired(s,now_ns,activity_ns,&perf,&bus);
     if(!ok && a630_client_thermal_enabled) {
         struct a630_channel_snapshot fault={.error=A630_CH_ARGUMENT};a630_perf_fail(s,&fault);
     }

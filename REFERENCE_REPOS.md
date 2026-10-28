@@ -686,3 +686,16 @@ two-pass disagreement and time-limit errors still reject the whole sample.
 No thresholds, performance limits, register mappings or writers change.
 The0102 native retry probe uses explicit synthetic words, not actual sensors;
 physical retry recovery and sustained panel60 still require new evidence.
+
+## Own thermal interface and extended-duration experiment (0103)
+
+The original live Polaris DT's gold7..10 and GPU11..12 user-space zones
+carry125C passive event trips. That is neither a safe operating target nor
+a substitute for Android's userspace/skin/battery thermal management, which
+has not been ported. Our separate default-OFF duration experiment retains
+the conservative75/70C CPU and60/55C GPU limits, all valid/read/age failures,
+idle and confirmed-low restoration. It changes only a bounded GPU cycle
+from120 to600 seconds, preserving the same factory4/8 request. It does not
+copy the reference Redwood EPSS top-row policy or raise voltage/PLL/trips.
+A selected duration cannot be changed or renewed within a native session.
+Actual thermal and frame behavior still requires a new validated phone trial.

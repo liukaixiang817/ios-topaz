@@ -34,6 +34,54 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0103 bounded600s GPU duration source PREPARED; currentphone0102 untouched
+
+- CURRENT0102 still RUNNING Settings; ONLY0102/control-phone.py state NEWDIR
+  keepalive. No active USB/CI/model; no0103phonecandidate/start. Do not repeat
+  old0102scroll orboot. Lastphysical complete0102proof remains valid; source
+  changes are offline only until fullCI/newnativeproof/strictadmission pass.
+- OwnoriginalDT readableecfdb435... rechecked: gold7..10/GPU11..12 nodes use
+  user_space governor and125C passive event trip. This is NOT a safe operating
+  limit/OEM thermaldaemon emulation or justification to raise our temperatures.
+  New experiment retains unchanged75/70C CPU,60/55C GPU and500ms valid-age,
+  5s value-change/critical/read/time failure refusal. Androidskin/battery/full
+  OEM thermaldaemon still absent; no threshold/voltage/PLL writes. Local
+  HackiOS CPU source uses another-board EPSS; not transplanted to ourOSMv2.
+- NewdefaultOFF --gpu-thermal-extended also REQUIRES --gpu-thermal-lease,
+  exactuniquepolaristsens3, fourbig/RAMCOW/ufsrw0/nativebridge/OSM2/GPU3.
+  ONLY GPU hardcycle120s->600s; target4/8 and idle250ms,10s confirmedlow,
+  thermal eligibility/hot/error/refusal/ownership/HFI/DMA/native restore all
+  kept. CPU original30s/10s unchanged for isolation. Selected budget bound
+  immutable to native session,120<->600 switching isstickyfault even after
+  cooldown; budget cannotrenew through samples or briefidle. Absolute600s
+  cap is a bounded duration trial, not indefinite production or60FPS claim.
+- Native profile0896 modifies ONLY SweetCPU.cpp and existingprivate runtime.
+  Actual acceptedobserver mode2/3 is exported; GPU independently requires
+  exactsame mode. Existing canonical planner now has exact120/600 wrappers
+  and explicit selectedlimit; default2 remains120. NewactualVM probe checks
+  synthetic600s expiry, delayed low ACK and mode-switch refusal. Host manifest/
+  actualQEMU policy strictly bindbool extended plus600s budget; absentnative
+  extended/retry proofs, bool/float policy tamper and latent intent refuse.
+- ActualAppleclang27 realheaders SweetCPU+polaris_a630 TUs PASS. Exactpatch
+  fuzz0/offset0 two whole sources andcanonical runtime match. Strict actual
+  original17IDL/34generated outputs replay PASS with baselineac96ec... retained
+  and only reviewed replacement8113b553ebbbccfdd6d89f87d6214e41d91950da336d93e86bb83cac0089fbd8;
+  no newheader/IDL or broad cache allowance. Historical0894 planner snapshot
+  retains SHAba310dae..., current0896 separately exactcanonical-tested.
+- First privateeditor stopped on wrong function-name anchor after modifying
+  only scratchSweetCPU; failure script retained, restored ownbaseline before
+  correctedcomplete run. First randomized purebudget assertion used the PRE
+  plan origin after a valid10s low reopened cycle; harness corrected to POST
+  plan origin while still separately asserting activehigh origin immutable.
+  Productplanner unchanged; failinglog retained, not positiveproof.
+- Expanded33local ASan/UBSan policy/fault/native/parser/IIG/lifetime tests
+  PASS5.562s (local-extended-tests0002.log). NEXT commit/pushONEnewfullCI,
+  exactartifact, sequentialactualnative extended/control/stale/peerrefused.
+  No oldkernel model substitute or duplicateCI. Physicaltrial only when fully
+  ready, then native-end0102/log+restore/independentactualFASTBOOT/ONEnewRAM.
+  Need actualsame100scroll plus longduration beyond600s/alltemps/error/slow
+  windows retained/nativeend. Not phoneadmitted/600physical/stable60 yet.
+
 ### 0102 physical VALID-retry + real hard-budget COMPLETE; phone RUNNING Settings
 
 - CURRENT0102/phone-gpu-thermal-0102-0001 LEFT RUNNING Settings. ONLY0102/
