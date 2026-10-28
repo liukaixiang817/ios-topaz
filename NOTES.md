@@ -34,6 +34,60 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0091 physical stock CPU A/B + native restore COMPLETE; next GPU execution/bandwidth
+
+- CURRENT PHONE: independentactualexpectedPolaris FASTBOOT verified08:29UTC
+  after0091nativeend. NO activeiOS/USBtransaction/model/CI. Do NOT use0091/0090/
+ 0089oldcontrol orrepeatboot. Nextfullyreadycandidate firstreadonly actual
+  getvarpolaris, thenauthorizedRAM. No keys/Android/storagewrites inthese runs.
+- 0091/physical-stock-CPU-latency-and-restore-proof.json binds5viewedscreens/
+ 40realconsumedinputs/samekernel+ADT+GPU+4core. ONLY payload OSM1->2, source
+ 700f35f/CI40649721686/kernel7a186d00 unchanged. ExtraactualEFI/XNU stockintent
+ 25checks38.003sPASS; realplatformguard/81FW/EDK2 decode andexact606bytewire.
+  CLIkernel-start0001 wasinvalidactionrejectedbeforeUSB; actualboot0002only.
+- Realactive policy requestedfactorynormal4row22/2649.6MHz, idle/cooldown
+  restored0/825.6MHz. Request isNOT measuredinstantHz. Allsampleserror0.
+  Same20warm+20measured:585completeframes, median34.639ms vs0090 37.2235ms,
+ 6.943%lower; ALLstill>16.667. Mean34.722ms,p9539.403ms. actuallogical19.924/
+  panelcopies19.926persec underUSBpacedinput; NOThardware/throughputFPS.
+  Fixedfirst1s afterUP740(noinput)26completeframes, median34.382ms vsbaseline
+ 23frames/38.136ms. Wholegesturetestmayincludeboundedidle/cooldown transitions,
+  not a purefixedhigh frequency benchmark; allrawsamples retained.
+- Panelmeanwindowmedian14.114ms vs15.745ms(~10.4%lower). Same13wholeMETHOD/
+  intactSTAGEprefixes518EAGLcompletions:7.463batches/frame, validation0.110ms,
+  cachepre3.264ms, submit16.116ms, cachepost3.169ms; execute_idle15.682ms
+  SUBSET ofsubmit, noGPUbusy claim. Baseline12windows479completions submit
+ 16.127ms/execute_idle15.651ms. ThusCPUrequestaloneisNOTmainremainingfix:
+  renderingstill34ms, synchronousGPUtime/cachecostnearlyunchanged. Don't
+  claimallCPUworkremovedorall7coresneeded. OnecrossbootA/B,notrepeatability.
+- Firstphysicalclockrestoreverified: realreboot_kernel/VFS0busy0,
+  `OSM PERF RESTORE restored=1 request=0 saved=0 error=0` BEFORE all600/500/400
+  actualPSCI_OFF, coordinator700parked, RAM_DRAINED cookie4744667723/seq1/mode2,
+  gatedreset08:28:30UTC then independentactualFASTBOOT. No rawfallback/keys.
+  Fullshutdownlog/hash in0091/native-end-stock-restore-0001. No durablewrites.
+- Nativeconsole serial_protos.h SERIAL_CONS_BUF_SIZE256 +serial_general.c
+  console_printbuf_putc explicitlytruncates at255 when!SYNCDRAIN; physical
+  STAGErecordprefix exactly255bytes. This explainsthe missingpostcheck/bytes,
+  notGPUfault. Parserdd8c989 nowexplicitlyrejects incomplete/duplicatefields,
+  8latencytestsPASS;3stockpolicy testsPASS. No completecoredecompositionclaim.
+- NEXTkeepdiagnosisfirst: GPUdefaultrequestisCODE-CONFIGURED perf1=257MHz
+  andbus4=1200000KB/s, seepolaris-a630-post.h/tables.h +pinnedownMiCode
+  adreno_a6xx.c1896/kgsl_gmu.c435. This isNOTliveGPUfrequencymeasurement.
+  Total~16ms syncchain is realbottleneck; checkownedGMUactualrequest/return,
+  native execution/bandwidth and7.4batch/frame causes beforeappropriate
+  boundedfactoryGPU/bus A/B. No blindmaxvote/voltage/PLL/thermalwrite, no
+  deletingcache/DSB/fence/idle/halt/lifetime/auth. Compactphaseoutput to<255B
+  recordswithsameendidentifier, hostjoinmissingrefusal; standalonelogging
+  kernelbootunnecessary, bundlewithnextmeaningfulnativechange/fullCI.
+- CPUcopy14ms itselfalmost60FPSbudget; panelinterval2*copy isstart-to-start
+  (`fPolarisNextPresent=started+interval`), NOTend+interval. LockreleasedBEFORE
+  copy; do not inventanextra14ms schedulingbug. Thisbecomesceilingasrender
+  improves. OwncachedBGRA->WCpanel; rejectedBGRAWC600ms cannotbereenabled.
+- Persistentroot/menu deferrednotcanceled. Existingbase/Windows/Android/GPT/
+  ESPunchanged. Only4bigXNU; firmware0littlereserved,3otherlittleOFF. Original
+  GPU42d5ec4c bundleunchanged. All0091trialsended,safeFASTBOOTready,nextwork
+  autonomouswithalreadyauthorizedRAM/limitedtouch/nativegatedreboots.
+
 ### 0091 stock-request A/B STARTING; 0090 readonly diagnosis COMPLETE
 
 - CURRENT0091/phone-stock-latency-0091-0001 originalUEFI RAMboot and unique

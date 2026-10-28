@@ -108,6 +108,41 @@ thermal configuration, little-cluster/firmware core and storage are untouched.
 This bounded policy does not establish temperature protection, actual higher
 frequency or60FPS until physical measurements pass.
 
+## Full-frame and stock CPU comparison (2026-10-28)
+
+Physical0090 steady Settings scrolling completed552 consecutive full EAGL
+frames, median37.2235ms, all over16.667ms. Twelve matched native windows
+with479 frame completions show7.405 submissions/completion and aggregate
+window ratios of3.163ms pre-cache,16.127ms submission,3.154ms post-cache.
+Execute/idle15.651ms is a subset of submission wall time, including polling
+and preemption, not a hardware busy counter. All27 CPU-request observations
+under this actual workload remained index0 (nominal825.6MHz).
+
+The same kernel/GPU/ADT/four-core RAM A/B with the bounded original-table CPU
+request policy completed585 frames at34.639ms median, a6.943% reduction;
+panel-copy mean-window median fell15.745->14.114ms. Submission remained
+16.116ms. This excludes CPU clock requests as a sufficient fix for60FPS.
+Actual native shutdown restored saved request0 before all three peers really
+powered off; actual Polaris FASTBOOT was independently verified. It does not
+establish all-seven-core performance, instantaneous CPU frequency, repeated
+benchmark stability or60FPS. Raw cooldown/idle transitions were retained.
+
+The current A630 native post-start path still requests performance index1
+(257MHz in our original-device HFI table) and bandwidth index4
+(1200000KB/s). Compare `tools/polaris-a630-post.h` and `tables.h` against the
+pinned original `adreno_a6xx.c:a6xx_gmu_dcvs_nohfi` and `kgsl_gmu.c:gmu_dcvs_set`
+before a bounded factory-table GPU/bus trial. Those constants are configured
+requests, not a live frequency measurement. Do not copy a newer reference
+GMU/EPSS protocol, remove completion barriers, or assume maximum votes fix
+all14ms of final CPU scaled copying.
+
+The native serial console truncates single records at255 bytes without
+synchronous drain. The long full-stage record therefore lost postcheck/byte
+fields. Intact prefixes and METHOD counts were independently matched, but
+full core decomposition is explicitly unproven. The host parser now rejects
+missing or duplicate fields. Split future stage records below that bound
+rather than treating missing timing as zero.
+
 ## Where to look
 
 Paths in this table are relative to the corresponding reference checkout.
