@@ -78,6 +78,9 @@ class XnuAdmissionTests(unittest.TestCase):
             q['checks'][key]=False
             with self.subTest(key=key),self.assertRaises(ValueError):packer.admit(*f)
             q['checks'][key]=True
+        d['CPU_OSM_readonly_inventory']=False
+        with self.assertRaises(ValueError):packer.admit(*f)
+        d['CPU_OSM_readonly_inventory']=True
         d['RAM_native_shutdown_bridge']=False
         with self.assertRaises(ValueError):packer.admit(*f)
 

@@ -45,6 +45,15 @@ def symbols(raw):
     return wanted
 
 
+def readonly_osm_intent(tokens,expected,core,count,qemu,drain,bridge,ufs,marker):
+    actual=[t for t in tokens if t.startswith(b'polarisosm=')]
+    if actual!=([b'polarisosm=1'] if expected else []) or (expected and
+        (core!=7 or count!=4 or ufs or marker or
+         not (drain in ('success','stale-cookie','peer-refused') if qemu else bridge))):
+        raise ValueError('OSM read-only inventory requires the explicit four-big RAM native-drain trial and intact token')
+    return expected
+
+
 def main():
     ap=argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--zig',required=True,type=Path)
@@ -62,10 +71,12 @@ def main():
                     help='separately admitted physical8MiB marker; original root stays RAM COW')
     ap.add_argument('--test-omit-durable-guard',action='store_true',
                     help='QEMU-only old-loader mismatch: native owned writes must be refused before MMIO')
+    ap.add_argument('--cpu-osm-readonly',action='store_true',
+                    help='explicit four-big-core stock OSM read-only inventory intent')
     ap.add_argument('--kernel-core',type=int,choices=(1,7),default=1,
                     help='boot XNU core: existing small CPU1 or opt-in big CPU7; firmware retains CPU0')
     ap.add_argument('--kernel-cpus',type=int,choices=(1,2,4),default=1,
-                    help='one kernel core or opt-in CPU7+CPU6 pair; firmware CPU0 stays reserved')
+                    help='one core, CPU7+CPU6 pair, or CPU7..CPU4 group; firmware CPU0 stays reserved')
     ap.add_argument('--test-ram-drain',choices=['success','stale-cookie','peer-refused'],
                     help='QEMU-only real BSD RAM drain experiment; never UFS durability proof')
     ap.add_argument('--ram-shutdown-bridge',action='store_true',
@@ -128,11 +139,8 @@ def main():
     off_tokens=[t for t in tokens if t.startswith(b'polarisofftest=')]
     if off_tokens!=([b'polarisofftest=1'] if a.test_ram_drain=='peer-refused' else []):
         raise ValueError('peer refusal injection must be uniquely bound to its QEMU-only test')
-    osm_tokens=[t for t in tokens if t.startswith(b'polarisosm=')]
-    if osm_tokens not in ([],[b'polarisosm=1']) or (osm_tokens and
-        (a.kernel_core!=7 or a.kernel_cpus!=4 or a.test_qemu_ufs or a.physical_owned_marker or
-         not (a.test_ram_drain if a.test_qemu else a.ram_shutdown_bridge))):
-        raise ValueError('OSM read-only inventory requires the explicit four-big RAM native-drain trial')
+    readonly_osm_intent(tokens,a.cpu_osm_readonly,a.kernel_core,a.kernel_cpus,
+        a.test_qemu,a.test_ram_drain,a.ram_shutdown_bridge,a.test_qemu_ufs,a.physical_owned_marker)
     cpu_tokens=[t for t in tokens if t.startswith(b'polarisbootcpu=')]
     if cpu_tokens!=[f'polarisbootcpu={target}'.encode()]:
         raise ValueError('payload must uniquely declare the exact selected kernel core')
@@ -241,7 +249,7 @@ def main():
     if a.efi_application:flags.append('-DPOLARIS_EFI_APPLICATION=1')
     sources=['uefi-xnu.c','uefi-xnu-ap.S','uefi-xnu-crc.c','payload.c','uefi-usb.c','uefi-usb-command.c','uefi-usb-control.c']
     inputs=['shim/polaris/'+n for n in sources]+['shim/polaris/uefi.h','shim/polaris/uefi-xnu.h','shim/polaris/uefi-usb.h','shim/polaris/uefi-memory.h','shim/polaris/uefi-reset.h','shim/polaris/uefi-file.h','shim/polaris/uefi-boot-options.h','shim/polaris/uefi-ram-lease.h','shim/polaris/payload.h','tools/build-polaris-uefi-xnu.py','tools/polaris-uefi-input.h']
-    inputs+=['tools/polaris_uefi_cpu_tree.py','tools/adt.py']
+    inputs+=['tools/polaris_uefi_cpu_tree.py','tools/adt.py','tools/mkpayload.py']
     inputs.append('shim/polaris/runtime-marker.h')
     if shutdown_bridge:inputs.append('shim/polaris/runtime-quiesce.h')
     objects=[]
@@ -281,7 +289,7 @@ def main():
                   durable_guard_generated_after_reset_disabled=a.test_qemu_owned or a.physical_owned_marker,
                   kernel_CPU_affinity=target,
                   kernel_CPU_count=a.kernel_cpus,
-                  CPU_OSM_readonly_inventory=bool(osm_tokens),
+                  CPU_OSM_readonly_inventory=a.cpu_osm_readonly,
                   RAM_base=0x130000000 if a.test_qemu else 0x180000000,RAM_bytes=0xfc8a0000,
                   firmware_core_reserved=0,firmware_services_exited=False,
                   device_execution_tested=False,inputs={p:sha(r/p) for p in inputs})

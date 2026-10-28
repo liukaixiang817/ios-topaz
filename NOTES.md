@@ -34,6 +34,46 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0087 current phone four-core NORMAL RAM boot, OSM flag lost; HOST FIX pending new model/boot
+
+- CURRENT PHONE0087/phone-four-big-0087-0001 kernel-entered, normal4big iOS,
+  use0087/control-phone.py 7 4 only. No OSM register access/data: actual driver
+  CPU_OSM_readonly_inventory=False and actual log contains no OSM lines.
+  First payload metadata line610bytes silently truncated by mkpayload to607,
+  losing tail m=1 frompolarisosm1. Actual wire endsbarepolarisos. This was our
+  missed physical-wire intent check, NOT a hardware OSMfailure. Preserveall
+  firstcase/payload/image/clockcapture and 610bytefullvs607wire evidence.
+- Full native CI40637578142/job122647980430 source58a1db504265a71ed8442302442a62803707efb8
+  PASSED; kernel6f7e1b0e344054098fa924c33992ba151b59a4880c7fcf1ae516f4cd36563839
+  exactprofile/source/ZIPCRC/SHA verified. Four actual native models passed99
+  checks (25/27/23/24); QEMUlines were shorter and correctly hadpolarisosm1,
+  actual virtual guard refused BEFORE MMIO. No new native code afterthisCI.
+-0086 completed ACTUAL four-core native shutdown: VFS0busy0, actual peers600/
+ 500/400 PSCI_OFF and coordinator700 parked, matchingcookie4775657227/seq1/
+ mode2/RAM_DRAINED80000003; then separate actualgetvarproductpolaris in0087
+  boot script beforeimageboot. physical-four-core-native-drain-proof.json
+  binds actualnative/status/newboot evidence; rawgetvarstdoutnotretained,
+  script's independently executed/checked query is recorded as such. No raw
+  fallback/keys/Android/storagewrite. Old0086 boot ended; do NOT controlit.
+- HOST FIX: mkpayload nowrejects >=608encodedbytes orNUL BEFORE file I/O,
+  never silentlytruncates. Newregression firstFAILED oldbuilder (saved), then
+  boundary/UTF8/embeddedNUL and CPUintent/parser/model/admission testsPASS.
+  Explicit --cpu-osm-readonly nowrequires intactunique polarisosm1. Physical
+  andQEMU intent mustmatch exactly; mkpayloadsource addedto driverinputhashes.
+  No kernelrebuild needed: native0884/source58 unchanged; host-onlyfix.
+- NEXT recompile/re-run actual4model proofs withnewhostinputhashes inselected
+  run0002, preserveoldrun0001proof. PrepareNEW phone-four-big-0087-0002, remove
+  ONLY verifieddefaultOFF polarissample0 (sweet_sample.c requires==1), retain
+  polarisdebug0/allmandatorytokens; exactfullrecordline ==payloadwire and<608,
+  driverflagTrue andmodelintentTrue mustbeassertedbeforeboot. Neveroverwrite
+  firstcase norpretenditreadOSM. New imageoriginal81FW/EDK2decode required.
+  Then nativeclosecurrent0087-0001/realFASTBOOT/newRAMboot0002, no repeatask.
+- OSMsnapshot intentionally occurs BEFORE peerCPU_ON tobindactualboot700;
+  other3off-core requests are NOT UI-under-load state. LogrequestsNOT measured
+  Hz andrawcyclecounter; nofrequency/voltagewrite. Further governor needs
+  validstockLUT andpost-online/underload evidence, notguessedtimer frequency.
+  Goal60FPS persists; current4CPU improvement documentedbelow, notcomplete.
+
 ### 0086 physical four-big-core UI/performance COMPLETE; 0087 RO clock inventory SOURCE READY
 
 - CURRENT PHONE0086/phone-four-big-0086-0001 LEFT RUNNING on settled HOME.

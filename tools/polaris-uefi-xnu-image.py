@@ -35,6 +35,8 @@ def admit(driver,qemu,ci,profile,preflight):
         raise ValueError('multi-core RAM trial requires actual matching online/xcall proof')
     if count==4 and (driver.get('RAM_native_shutdown_bridge') is not True or qemu.get('checks',{}).get('four_core_affinities_and_xcalls') is not True):
         raise ValueError('four-core phone trial requires native shutdown bridge and four-core actual online/xcall proof')
+    if bool(driver.get('CPU_OSM_readonly_inventory'))!=bool(qemu.get('CPU_OSM_readonly_inventory')):
+        raise ValueError('physical and actual virtual OSM inventory intent must match exactly')
     if driver.get('CPU_OSM_readonly_inventory') and (count!=4 or
         qemu.get('CPU_OSM_readonly_inventory') is not True or
         qemu.get('checks',{}).get('native_OSM_probe_refused_before_virtual_MMIO') is not True):

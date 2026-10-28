@@ -140,7 +140,15 @@ def adt_dram(adt_blob):
             struct.unpack('<Q', chosen.prop('dram-size'))[0])
 
 
+def command_line_bytes(cmdline):
+    encoded = cmdline.encode()
+    if b'\0' in encoded or len(encoded) >= BOOT_LINE_LENGTH:
+        raise ValueError(f'command line must be NUL-free and at most {BOOT_LINE_LENGTH-1} encoded bytes; got {len(encoded)}')
+    return encoded
+
+
 def build(kernel_path, adt_path, cmdline, ramdisk_path=None, *, gpu_bundle_path=None):
+    cl = command_line_bytes(cmdline)  # Validate before any file I/O; never truncate flags.
     buf = bytearray(open(kernel_path, 'rb').read())
     m = parse_macho(buf)
     nfix = apply_chained_fixups(buf, m)
@@ -204,7 +212,6 @@ def build(kernel_path, adt_path, cmdline, ramdisk_path=None, *, gpu_bundle_path=
     struct.pack_into('<8sII', out, 0, b'SWEETXNU', 1, len(pieces))
     struct.pack_into('<7Q', out, 0x10, virt_base, m['entry'], adt_off, len(adt_blob), kernel_end,
                      PHYS_BASE, MEM_SIZE)
-    cl = cmdline.encode()[:BOOT_LINE_LENGTH - 1]
     out[CMDLINE:CMDLINE + len(cl)] = cl
     for i, t in enumerate(seg_table):
         struct.pack_into('<4Q', out, SEG_TABLE + 32 * i, *t)
