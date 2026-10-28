@@ -34,6 +34,35 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0103 originalUEFI RAM sent; unique kernel-start0001 IN PROGRESS
+
+- Newsourceaaf46ac3254766bb1cafb795afedf1e3da12e656 fullmacOS27/Xcode27
+  CI40773604623/job123116997419 SUCCESS. Exactsource/profile/ZIPCRC/SHA
+  verified newkernel15621fca5ac7fa8a2b9919d6b073e98369ef6f375ffb425d0d61168e0bbaf000.
+  Five SERIAL actualEFI/XNU cases40/39/36/39/42=196checks ALLPASS,
+  38.080/38.130/38.196/38.220/38.120s. Explicit600s model uses synthetic
+  timestamps, not a physical elapsed/temp/panel claim. Mode2control120s,
+  fixedcontrol, stale-cookie andactualpeerrefusal preserved. Fullnewproof
+  actual-native-GPU-extended-duration-proof.json binds logs+results+CI/kernel.
+- Payload remains exact606B/sameGPUbundle/ADT4big/WC/cachedsurface/wake1/
+  keys/fulltrace/RAMCOW512/ufsrw0, ONLYpolaristsens2->3. New600s bounded
+  experiment stillsame4/8, oldCPU30s/10s, temperature/VALID/idle/LOWack/
+  lifetime/cache/HFI/native restore unchanged. Original81firmwarefiles and
+  wholeupstreamEDK2GetInfo/decode verified, finalofflineadmission PASS.
+- Old0102 ENDED genuinely native21:51:42UTC: VFS0busy0/GPU1BW4+CPU0restore/
+  actual600500400 OFF/coordinator700park/RAM_DRAINED cookie3632208543 seq1
+  mode2 phase3/error0. Fullnative log saved then gatedreset; no rawfallback,
+  Android/keys/PMIC/storagewrites. Independent actualexpectedPolarisFASTBOOT
+  query2026-10-28T21:52:33.024074+00:00 precededONEnewUEFI RAMboot.
+- CURRENT0103/phone-gpu-extended-0103-0001, ONLY0103/control-phone.py ACTION
+  NEWDIR. Actual state-before-kernel0001 waiting-payload PASS; ONE kernel-start
+  0001 is in progress, do not duplicate/sendconcurrentUSB. NoactiveCI/model/
+  collector; old0102trial mustnot be reused. Afterboot result captureactual
+  lock/UI then settledSettings. New400scrollworker NOTSTARTED: must view
+  actual settledSettings+recordhash before unlocking worker. Each20savefull
+  log/screen, first100samecomparison thenlongdurationbeyond600s, alltemps/
+  hot/errors/slowwindows preserved. Notphysical600s/sustained60proofyet.
+
 ### 0103 bounded600s GPU duration source PREPARED; currentphone0102 untouched
 
 - CURRENT0102 still RUNNING Settings; ONLY0102/control-phone.py state NEWDIR
