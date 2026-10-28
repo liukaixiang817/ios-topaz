@@ -39,7 +39,7 @@ def stats(values):
 def analyze(text,start,end):
     if not 0<=start<end:raise ValueError('bounded monotonic window required')
     if 'POLARIS PFB ERROR:' in text:raise ValueError('native publication identity failed')
-    records=[];panels=[];previous=None
+    records=[];all_records=[];panels=[];previous=None
     for line in text.splitlines():
         if 'POLARIS PFB: q=' in line:
             row=fields(line.split('POLARIS PFB: ',1)[1],FIELDS)
@@ -55,6 +55,7 @@ def analyze(text,start,end):
                              row['b']<previous['e']):
                 raise ValueError('repeated/out-of-order publication or overlapping panel copies')
             previous=row
+            all_records.append(row)
             if start<=row['r'] and row['e']<=end:records.append(row)
         if 'POLARIS PANEL PERF:' in line:
             row=fields(line.split('POLARIS PANEL PERF:',1)[1],
@@ -68,7 +69,7 @@ def analyze(text,start,end):
         lo=p['end_us']-p['span_us'];hi=p['end_us']
         # A publication can predate a window and still be copied inside it.
         # Only claim a complete window when its native count matches records.
-        copies=[r for r in records if r['c'] and lo<=r['e']<=hi]
+        copies=[r for r in all_records if r['c'] and lo<=r['e']<=hi]
         if len(copies)!=p['copies']:
             raise ValueError('panel count differs from complete native publication records')
         windows.append(dict(start_us=lo,end_us=hi,copies=len(copies)))

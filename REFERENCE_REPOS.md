@@ -472,3 +472,26 @@ first1s after six extra swipes had no request transition,53 full frames with
 60FPS or hardware scanout proof. Next work must measure ready-to-copy queue
 latency and design a justified continuous policy, rather than discard barriers
 or disable the experiment's guard without original-device evidence.
+
+## Presentation wake and original thermal correspondence (0094)
+
+Original XNU8796 IOInterruptEventSource explicitly supports a providerless
+source as a software workloop poke. Profile0889 uses that existing mechanism
+only behind an explicit opt-in, preserves the independent VSYNC/copy deadlines
+and records native publication/copy times. Four actual EFI/XNU tests execute
+native workloop delivery/coalescing/re-publication and genuine native shutdown;
+this does not emulate the phone panel/GPU or establish a performance gain.
+The current reference userland eagl.c frame_end() still waits for drawing;
+no completion, cache, auth or lifetime guard was removed to reduce the timing.
+
+The phone's own live DT maps gpu0/gpu1 to TSENS0 sensors11/12 at TM0xc263000.
+The other board's reference adreno_minute() instead reads TSENS1 sensors1/2
+at0xc265000. Do not transplant those sensor addresses/IDs. Original pinned
+[tsens2xxx.c](https://github.com/MiCode/Xiaomi_Kernel_OpenSource/blob/c7cb50c18f812629b9620b2b8fa684bc40d82080/drivers/thermal/tsens2xxx.c)
+and [tsens.h](https://github.com/MiCode/Xiaomi_Kernel_OpenSource/blob/c7cb50c18f812629b9620b2b8fa684bc40d82080/drivers/thermal/tsens.h)
+were fetched read-only and verified against Git blobs50c847febf73d9dbded5830b1f0440f4f4aab161
+and ae4741ddc1a573b2bf34b8b1da490f769eed89b2. They describe status0xa0+4*ID,
+valid bit21 and a signed12-bit temperature in100millidegreesC units. Source/DT
+correspondence is not a live temperature, enabled sensor or continuous-policy
+proof. No native thermal mapping, threshold write or removal of the experimental
+30s/10s backoff has been performed in0094.

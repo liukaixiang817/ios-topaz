@@ -94,6 +94,12 @@ int main(void){char b[512];int n=snprintf(b,sizeof(b),
         self.assertEqual(r['wake_callback_copies'],1)
         self.assertFalse(r['hardware_scanout_FPS_proven'])
 
+    def test_panel_window_keeps_copy_published_before_analysis_boundary(self):
+        text=self.sample().replace('span_us=15500','span_us=14500')
+        r=module.analyze(text,1100,20000)
+        self.assertEqual(r['native_records'],1)
+        self.assertEqual(r['complete_panel_windows'][0]['copies'],2)
+
     def test_malformed_or_partial_or_duplicate_records_and_early_notify_rejected(self):
         s=self.sample()
         invalid=[s.replace(' r=1000',''),s.replace('q=1','q=1 q=1'),s.replace('c=1','c=2'),

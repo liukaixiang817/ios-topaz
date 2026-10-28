@@ -34,6 +34,130 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0095 HUMAN PRIORITY: physical keys, Wi-Fi and audio BEFORE more FPS work
+
+**Human2026-10-28 12:23UTC explicitly requested: finish normal lock/power and
+volume buttons, Wi-Fi and sound FIRST, then resume display jank/60FPS. This
+OVERRIDES the old performance-first automation and active0094 baseline.**
+
+- CURRENT PHONE:0094 baseline trial ENDED using actual native drain/restore,
+ not an active inspection. actual-fastboot-after-priority-change.json proves
+ GPU1/BW4 AFTERVFS0busy0 BEFORECPUrequest0, all600/500/400 actualPSCI_OFF,
+ matchingRAM_DRAINED and gatedreset; independent expectedPolaris FASTBOOT
+ at2026-10-28T12:26:17.191713+00:00. No rawfallback/keys/Android/storagewrites.
+ No active iOS/recovery/USB transaction/CI/model. Do NOT use0094controllers,
+ repeat oldboot, run more warm/measured swipes or bootwake1 now.
+-0094 full native source6fff007/full macOS27-Xcode27 CI40683219882/job122798942827
+ SUCCESS/kernel d59a0bd25ec024233629d03bf6347a73a7bccb77441ed985afa7864e9f381579,
+32local+115actualEFI/XNUworkloop/4CPU/dirtywriter/input/native-drain checks passed.
+ Additional host parser-boundary7tests passed1.842s; no native code changes or
+ newCI required. wake0 physical boot12:12 / kernel12:14 had actual newPFB mode0,
+ GPUstock3/actualpixelsALL4096+GMEM+iconPASS/SMP4/64SGI48remote. Viewedbootconsole
+ thenAppLibrary capture with discontinuous tiles; no controlled host UI inputs
+ or40motions performed because priority changed. Do NOT label it a performance
+ A/B pass, stableGUI test or assert capture-only vs render fault without proof.
+ wake1 prepared+original81FW/actualEDK2wholedecode but NEVERbooted. Files retained
+ for later display work; 30s/10s experimental policy unchanged.
+-0095 original-hardware-readiness.json is an OFFLINE original-DT/source audit,
+ not working hardware: existing nativeSweetHID.cpp sweet_hid_key already
+ maps power/volup/voldown to consumer events and registers; physical backend
+ is missing. OwnPM8998 SID0 PON0x800 forpower+voldown, ownvolumeup DT gpio
+ controller0x4c index6 = PM8998GPIO7 peripheral0xc600, active-low, not the
+ reference PMK8350PON0x1300/PM7325GPIO6. OriginalSPMIarb DT core0xc440000,
+ observer0xe600000,config0xc40a000,EE0. Need own vendor version/APID/RT and
+ inputmode/type checks plus exclusive owner before any read-command writes.
+- Prefer single residentUEFI core0 hardware ownership + dedicated bounded
+ physical-button state mailbox -> existing native input worker -> sweet_hid_key.
+ Do not take shared firmware/XNU SPMI ownership casually. Existing PMIC PON
+ protocol ONLY exposes spare/reset reason functions, not live button state;
+ neither GetPonReason nor spare bytes are a live keypress. Source header
+0058/EFIPmicPon.h and originalPmicDxe binaryABI already matched. Initial
+ Project-Silicium include inventory0095 returns onlyPon/Version, no GPIO or
+ live-key protocol. Need inspect originalPmicDxe/other protocols or exact own
+ spmi-pmic-arb + qpnp-power-on + pinctrl-spmi-gpio driver before choosing backend.
+ Existing firmware IRQs/Group1 disabled and sole core0 can serialize such
+ bounded observer reads between USB polls if proven; do not invent a vtable.
+ GPIO key phandle0x371 pinctrl must be resolved exactly (source label may be
+ inheritedcamera/home); rawhold-at-boot must never become stuckVolumeDown.
+- Wi-Fi ownDT qcom,icnss at0x18800000/8MiB, SMMU stream0x40,12CEinterrupts,
+ WCN3990 family expected from ownBT node; actual WLAN firmware/chip identity
+ still to verify. Not reference WCN6750/WPSS/ath11k. Need originalICNSS/QMI/
+ QRTR/SMEM/GLINK/SNOC firmware/calibration and reset/ownership path, then real
+ scan/join/data and UI proof. Do not transplant reference rails/stream IDs.
+- Audio ownDT qcom,sdm845-asoc-snd-tavil with tavil SLIM codec, NGD0x171c0000;
+ speakeramps TAS2559@0x4c plusTAS2560@0x4d onGENI I2C0x894000. Must preserve
+ originalcodec/amp calibration/firmware/routing, use original board source,
+ modelboundedcommands/DMA/shutdown before lowlevelphonebringup. A PCMbuffer
+ or UIvolume icon is not actual speaker playback. No audio hardware init yet.
+- NEXT startbuttons with original vendor driver/protocol/PE correspondence,
+ strict3key/debounce/seen-release-first/mailbox/input tests and actualnative
+ integration. WiFi/audio hardware/firmware audits can proceed independently;
+ no new kernelCI until meaningful native code ready. Every ready candidate
+ readonlyexpectedPolaris then existing-authorizedRAM; no repeatedconfirmation.
+ Keep GPU/WC/fourbig/UEFIUSB/nativeFASTBOOT and storage protections intact.
+- User still requests15min Chinese actualprogress. Full persistent root and
+ physicalMindowsvolume menu remain deferred, not canceled. Preserve Android,
+ Windows/all data; no erase/GPT/resize/format/delete or genericUFSrw. Do not
+ confuse source/model/hostACK with physical button/association/audio success.
+
+### CURRENT PHONE0094 baseline ACTIVE: RAM kernel start sent once
+
+- Exactcase0094/phone-display-wake-0094-0-0001; temporary originalUEFI boot
+ command succeeded12:12:18.178873UTC after actualreadonly expectedPolaris.
+ Actualstate-before-kernel-0001 waiting-payload passed12:12:52UTC. Unique
+ control-phone.py7 4 0 boot kernel-start-0001 sent; inspect that result before
+ ANY further boot command. Never repeat old0093/0094boot or use wake1control.
+ No physicalwrites/Android/rawfallback. Currentkernel stockGPU3/CPUstock2/
+ fourbig/WC1/surfaceWC0, wakeOFF baseline, new native publication timing.
+- Next capture actualprogress with0094/control-phone.py7 4 0 capture NEWDIR,
+ verifyGPU acceptance/armed request/baseline arrival_wake0, then actual lock.
+ Capture cannot be assumed stable from --wait-seconds (USB discovery only).
+ Lock->home18actualACK andstableicons, Settings20ACK+actualtext; SAME20warm
+ and20measured700ms scrolling5401500<->540700. New PFB parser must compare
+ ready->copy and actual complete panel-window counts. No timing benefit claim
+ before matching truecases. NativeGPU1/4+CPU0 restore/allpeerOFF+independent
+ actualFASTBOOT required before newwake1RAMtest. Bothphysicalimages+original
+ codec proof prepared, but wake1 has NEVER booted.
+- FullCI/nativeworkloop115 checks and32local passed; all modeltrials ENDED.
+ Continuous30s/10s requestbackoff remains; thermal originalDT/source mapping
+ only reviewedoffline, not native temperature/productionpolicy proof.
+
+### 0094 full CI/native-workloop COMPLETE; physical baseline ABOUT TO START
+
+- Exact native6fff007c99250ce4060be2a407bc879522683221/full macOS27-Xcode27
+ CI40683219882/job122798942827 SUCCESS11:58:40UTC. out-polaris-0094 kernel
+ d59a0bd25ec024233629d03bf6347a73a7bccb77441ed985afa7864e9f381579 verified
+ source/profile/artifactCRC/SHA.32 final local tests passed9.259s; initial added
+ header-test failure retained/fixed without changing or weakening native hashes.
+ Host/test-only follow-upb5a857e pushed, no second native CI needed.
+- Actual EFI/XNU four-case native-workloop/four-core/dirtywriter/input/drain
+115 checks PASS: wake-on-success29/37.731s, wake-off-success27/37.717s,
+ wake-on-stale28/37.733s, wake-on-peer-refused31/37.722s. New real IOKit
+ callback4/taken3/empty1/pokes3/latest201 tests gate-held coalescing and arrival
+ during callback, plus genuine WC/pmap aliases/SGI64remote48/nativeVFS0busy0/
+ allpeerOFF. Actual-native-workloop-proof.json rehashes every selected case.
+ Not SD845 GPU/panel/clock/FPS simulation. All VM trials ENDED.
+- New physical pair prepared using original81 firmware + full actualEDK2
+ decode: phone-display-wake-0094-0-0001 (baseline) and ...-1-0001 (wake).
+ Same newkernel/GPUbundle/ADT/fourbig/CPUstock2/GPUstock3/WC; only extra
+ polarisfbwake1 token differs584 vs600bytes. Both omit only default-off
+ surfaceWC0 in addition to already removed sample0/diag0, preserve debug0,
+ RAMCOW512/ufsrw0/quiesce1. No native/firmware source changes after CI.
+- CURRENT physical baseline is ABOUT TO RUN boot-phone.py7 4 0, following
+ independent actual expectedPolaris query (latest readonly11:55 verified).
+ First inspect case boot.json before any repeat; no command sent until that
+ script. Controller control-phone.py7 4 WAKE ACTION NEWDIR ONLY, WAKE0 first.
+ If temporaryUEFI waiting-payload, send exactly ONE boot --payload matching
+ phone-display-wake-0094-0-0001-payload.bin, then actualscreens/UI/40inputs and
+ strict new PFB queue-to-copy metrics vs panel counts. No repeatedold0093.
+ Later native restoreGPU1/4+CPU0/allpeerOFF/actualFASTBOOT BEFORE wake1boot.
+ A source fix is not a physical performance result; benefit unproven.
+- Original ownDT/primary thermal source correspondence independently verified
+ offline: own GPU sensors11/12 inTSENS0 TM0xc263000, NOT reference-board1/2
+ at0xc265000. Vendor c7cb50c1 tsens2xxx.c/tsens.h/msm-tsens.c Gitblobs checked;
+ validbit21/signed12bit/100millidegreesC. No native map/read/temp/policy yet,
+ no thermal writes. Do not remove30s-high/10s-backoff from correspondence alone.
+
 ### 0094 publication timing/coalesced wake source READY; no physical trial
 
 - Latest0093 physical trials remain ENDED, independently verified actualFASTBOOT
