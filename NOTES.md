@@ -34,6 +34,56 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0095 physical three keys PASS; 0096 cold-input/first-submit demand candidate
+
+- Human actual shortpress test reports powercanextinguish and volumeHUD,
+ but extinctionanimation veryjanky. Actual0003 log firmware26 physicaledges
+ exactly match26 nativeHIDedges inmonotonicrequestorder, all3 DOWN/UP, no
+ key/hardwarefault/panic. physical-three-key-user-and-native-proof.json binds
+ screenshots/source/fullnative logs/humanreport. Actualpostpresscapture0003
+ blackpanel; do not equate blackpixels with backlight-railshutdown. AudioHUD
+ is not real speakerplayback. No USB key injection/hosttouch occurred.
+- Current0003 remains RUNNING forhuman; onlyboundreadonlystate/capture keepalive,
+ no reboot/gesture/write whilehumanchecks. Laststatekeepalive-1550 passed.
+- Actual firstobservedframeafterpower releases included95.353/110.283ms
+ (not keylatency measurement, not allpoweranimationsslow); laterlastpress
+ frames10..11ms. Existing code publishes performance demand only AFTER a
+ successful desktopsubmission, so cold firstwork may runbeforeboost.
+- NEW0096 source candidate: validphysicaledge atomically hints existingadmitted
+ CPU/GPU stockpolicies BEFOREHID, noMMIO in callback/nohintonfault/shutdown.
+ Firstfullyvalidated desktopbatch requests existingstockstate undergpuLock
+ BEFOREcache/DMA, retainingquiescence/ownership/30s10s250ms/poisonfailure.
+ InputhintsdoNOTinflateGPUsubmissioncounter. Pollsnapshot readsactivitybefore
+ clocktoavoidconcurrentfuturetimestamp. NativeKEYTIMING nowrecordsreceive/
+ dispatch onmachtimebase; noinventedsample-toUIlatency claim.
+- ActualAppleclang27/fullCIheaders all3TUs compiledPASS; exact0fuzz0offset
+ profile reconstruction inactualnativeinputtest;14ASan/UBSan/stockpolicy/
+ fault/expiry/refusal testsPASS5.047s. Newnativechanges requirefullmacOS27CI,
+ actualEFI/XNU suite, newcandidateadmissionbeforephysical. No0096imageboot
+ orperformancebenefitprovedyet. WiFi/audio still incomplete; ownpinned
+ smem/glink/qmiencdec primarysources newlyverifiedprivately, noforeignMMIO.
+
+### CURRENT PHONE0095-0003 ACTIVE stable lock screen; awaiting physical key test
+
+- Case0095/phone-keys-0095-0003 actually RAMboot15:23:09UTC after independent
+ expectedPolaris check. Initial restricted query timed out before boot; saved
+ boot-readonly-query-restricted-0001.json, no boot sent. Same exact query with
+ device access proved actualFASTBOOT; single RAMboot then one kernel-start.
+ Do not repeat boot/start or use old0001/0002 controllers. Newcase controller
+ control-phone-0003.py only. Ordinary30min RAMlease requires directedstate
+ keepalive while human tests; no touch/reboot/write during pending key test.
+- Source b798ce7 committed/pushed cooperative capture/log polling. Actual
+ capture0001 15:25 boot services then capture0002 15:27:29 viewed lockscreen.
+ Both real logs PRESTART_PASS1/RT1/nativeKEYSready, no kernelSTOP/hardwareSTOP/
+ pollgap>=100ms/panic. No physical presses or keyfunctionality proven yet.
+ Actual image46e83761.../driver965dbcf1... bound original81FW, sameCIkernel.
+- Asked human shortpresspower, wait2s, shortpresspower, then volumeup/down2s
+ apart, NO long/combo press. Await result while continuing offlineWiFi/audio.
+ Need directed postpresslogs showing actualSPMI edges/native HID plus UI
+ feedback, not USBACK as physical success. Screenshots/logs currently stable
+ across122s; do not claim old0002 root cause definitively beyond successful
+ cooperative mitigation. WiFi/audio incomplete, FPS deferred by latesthuman.
+
 ### 0095 cooperative capture/log polling validated; 0003 ready, not yet booted
 
 - Current phone still actual expectedPolaris FASTBOOT15:01UTC from ended0002.

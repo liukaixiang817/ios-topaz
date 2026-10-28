@@ -56,13 +56,33 @@ static uint64_t polaris_gpu_stock_now(void)
 {
     uint64_t ns=0;absolutetime_to_nanoseconds(mach_absolute_time(),&ns);return ns;
 }
+extern "C" void polaris_gpu_input_activity(void)
+{
+    /* Atomic demand only; MMIO remains under gpuLock and quiescence checks. */
+    if(__atomic_load_n(&gpuStockEnabled,__ATOMIC_ACQUIRE))
+        __atomic_store_n(&gpuStockActivity,polaris_gpu_stock_now(),__ATOMIC_RELEASE);
+}
+static bool polaris_gpu_desktop_demand(unsigned kind)
+{
+    if(kind!=2 || !__atomic_load_n(&gpuStockEnabled,__ATOMIC_ACQUIRE))return true;
+    uint64_t now=polaris_gpu_stock_now();
+    __atomic_store_n(&gpuStockActivity,now,__ATOMIC_RELEASE);
+    /* Called only after complete command/BO bounds validation, under gpuLock.
+     * The first idle frame must not wait for its own completion to request the
+     * admitted stock state. Keep the original 30s/10s/250ms bounds and checks. */
+    if(!polaris_gpu_performance_tick(now,now)) {
+        __atomic_store_n(&gpuStockEnabled,false,__ATOMIC_RELEASE);return false;
+    }
+    return true;
+}
 extern "C" void polaris_gpu_performance_poll(void)
 {
     if(!gpuLock || !__atomic_load_n(&gpuStockEnabled,__ATOMIC_ACQUIRE))return;
     IOLockLock(gpuLock);
+    uint64_t activity=__atomic_load_n(&gpuStockActivity,__ATOMIC_ACQUIRE);
+    uint64_t now=polaris_gpu_stock_now();
     if(__atomic_load_n(&gpuStockEnabled,__ATOMIC_ACQUIRE) &&
-        !polaris_gpu_performance_tick(polaris_gpu_stock_now(),
-            __atomic_load_n(&gpuStockActivity,__ATOMIC_ACQUIRE)))
+        !polaris_gpu_performance_tick(now,activity))
         __atomic_store_n(&gpuStockEnabled,false,__ATOMIC_RELEASE);
     IOLockUnlock(gpuLock);
 }
@@ -630,6 +650,7 @@ IOReturn PolarisGPUUserClient::submit(msm_gem_submit *r)
          * SMMU attributes identical. All CPU aliases are cleaned before DMA,
          * invalidated after the observed GPU flush/fence/idle/halt. */
         PolarisCacheTally tally={0,0,0,0,0};uint64_t before,prepared,submitted,completed;
+        if(!polaris_gpu_desktop_demand(callerKind)) {poison();result=kIOReturnNotReady;goto out;}
         clock_get_uptime(&before);
         if(!cacheBefore(bos,r->nr_bos,&tally)) {result=kIOReturnNoMemory;goto out;}
         clock_get_uptime(&prepared);

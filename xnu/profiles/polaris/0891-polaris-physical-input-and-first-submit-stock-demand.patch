@@ -1,0 +1,106 @@
+--- a/bsd/dev/polaris_touch.c
++++ b/bsd/dev/polaris_touch.c
+@@ -32,6 +32,8 @@
+ void polaris_uefi_shutdown_ready(void);
+ void polaris_cpu_performance_poll(void);
+ void polaris_gpu_performance_poll(void);
++void polaris_cpu_input_activity(void);
++void polaris_gpu_input_activity(void);
+ int polaris_uefi_shutdown_pending(void);
+ int polaris_ufs_ram_seal(void);
+ int polaris_ufs_owned_status(struct polaris_shutdown_status *);
+@@ -494,8 +496,18 @@
+             __atomic_store_n(&slot->acknowledged,request,__ATOMIC_RELEASE);
+         } else { ok=polaris_button_wire_expire(&pk_consumer,ns/1000,&d); }
+     }
++    /* Only an actual validated physical edge creates demand. Fail/expiry and
++     * shutdown releases never request performance. No MMIO in this callback. */
++    if (ok && d.changed) {
++        polaris_cpu_input_activity();polaris_gpu_input_activity();
++    }
+     pk_deliver(&d);
+     if (d.changed) {
++        uint64_t delivered=0;
++        absolutetime_to_nanoseconds(mach_absolute_time(),&delivered);
++        printf("POLARIS KEY TIMING: seq=%llu received_us=%llu dispatched_us=%llu valid=%u\n",
++            pk_consumer.sequence,ns/1000,delivered/1000,ok);
++
+         slot->events++;
+         printf("POLARIS KEYS: seq=%llu changed=%x pressed=%x\n",
+             pk_consumer.sequence,d.changed,d.pressed);
+--- a/iokit/Kernel/arm/SweetCPU.cpp
++++ b/iokit/Kernel/arm/SweetCPU.cpp
+@@ -131,6 +131,13 @@
+         __atomic_fetch_add(&polaris_observe_submissions,1,__ATOMIC_RELEASE);
+     }
+ }
++/* Input demand shares the existing admitted stock policy, but must not be
++ * counted as GPU submissions by the read-only load diagnostics. */
++extern "C" void polaris_cpu_input_activity(void)
++{
++    if(__atomic_load_n(&polaris_perf_ready,__ATOMIC_ACQUIRE))
++        __atomic_store_n(&polaris_perf_activity_ns,polaris_perf_now(),__ATOMIC_RELEASE);
++}
+ extern "C" bool polaris_gpu_performance_shutdown(void);
+ extern "C" void polaris_cpu_performance_poll(void)
+ {
+@@ -138,9 +145,11 @@
+     if(!__atomic_load_n(&polaris_perf_ready,__ATOMIC_ACQUIRE))return;
+     IOLockLock(polaris_perf_lock);
+     if(!__atomic_load_n(&polaris_perf_ready,__ATOMIC_ACQUIRE)){IOLockUnlock(polaris_perf_lock);return;}
++    /* Capture publication before the clock: a concurrent newer submission
++     * must not look like an impossible future activity timestamp. */
++    uint64_t activity=__atomic_load_n(&polaris_perf_activity_ns,__ATOMIC_ACQUIRE);
+     uint64_t now=polaris_perf_now(),previous=polaris_perf_state.transitions;
+-    bool ok=polaris_cpu_perf_tick(&polaris_perf_state,&polaris_perf_io,now,
+-        __atomic_load_n(&polaris_perf_activity_ns,__ATOMIC_ACQUIRE));
++    bool ok=polaris_cpu_perf_tick(&polaris_perf_state,&polaris_perf_io,now,activity);
+     if(!ok || previous!=polaris_perf_state.transitions || now-polaris_perf_last_ns>=5*NSEC_PER_SEC) {
+         uint32_t cycle=polaris_perf_regs[0x9c0/4];
+         IOLog("POLARIS OSM PERF SAMPLE: mpidr=%#llx requested_index=%u requested_Hz=%llu raw_cycles=%u elapsed_ns=%llu transitions=%llu error=%u; request not measured Hz\n",
+--- a/iokit/Kernel/arm/PolarisGPU.cpp
++++ b/iokit/Kernel/arm/PolarisGPU.cpp
+@@ -56,13 +56,33 @@
+ {
+     uint64_t ns=0;absolutetime_to_nanoseconds(mach_absolute_time(),&ns);return ns;
+ }
++extern "C" void polaris_gpu_input_activity(void)
++{
++    /* Atomic demand only; MMIO remains under gpuLock and quiescence checks. */
++    if(__atomic_load_n(&gpuStockEnabled,__ATOMIC_ACQUIRE))
++        __atomic_store_n(&gpuStockActivity,polaris_gpu_stock_now(),__ATOMIC_RELEASE);
++}
++static bool polaris_gpu_desktop_demand(unsigned kind)
++{
++    if(kind!=2 || !__atomic_load_n(&gpuStockEnabled,__ATOMIC_ACQUIRE))return true;
++    uint64_t now=polaris_gpu_stock_now();
++    __atomic_store_n(&gpuStockActivity,now,__ATOMIC_RELEASE);
++    /* Called only after complete command/BO bounds validation, under gpuLock.
++     * The first idle frame must not wait for its own completion to request the
++     * admitted stock state. Keep the original 30s/10s/250ms bounds and checks. */
++    if(!polaris_gpu_performance_tick(now,now)) {
++        __atomic_store_n(&gpuStockEnabled,false,__ATOMIC_RELEASE);return false;
++    }
++    return true;
++}
+ extern "C" void polaris_gpu_performance_poll(void)
+ {
+     if(!gpuLock || !__atomic_load_n(&gpuStockEnabled,__ATOMIC_ACQUIRE))return;
+     IOLockLock(gpuLock);
++    uint64_t activity=__atomic_load_n(&gpuStockActivity,__ATOMIC_ACQUIRE);
++    uint64_t now=polaris_gpu_stock_now();
+     if(__atomic_load_n(&gpuStockEnabled,__ATOMIC_ACQUIRE) &&
+-        !polaris_gpu_performance_tick(polaris_gpu_stock_now(),
+-            __atomic_load_n(&gpuStockActivity,__ATOMIC_ACQUIRE)))
++        !polaris_gpu_performance_tick(now,activity))
+         __atomic_store_n(&gpuStockEnabled,false,__ATOMIC_RELEASE);
+     IOLockUnlock(gpuLock);
+ }
+@@ -630,6 +650,7 @@
+          * SMMU attributes identical. All CPU aliases are cleaned before DMA,
+          * invalidated after the observed GPU flush/fence/idle/halt. */
+         PolarisCacheTally tally={0,0,0,0,0};uint64_t before,prepared,submitted,completed;
++        if(!polaris_gpu_desktop_demand(callerKind)) {poison();result=kIOReturnNotReady;goto out;}
+         clock_get_uptime(&before);
+         if(!cacheBefore(bos,r->nr_bos,&tally)) {result=kIOReturnNoMemory;goto out;}
+         clock_get_uptime(&prepared);
