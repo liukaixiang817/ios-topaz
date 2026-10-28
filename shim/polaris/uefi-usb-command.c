@@ -51,7 +51,8 @@ static unsigned decimal(uint8_t *p,uint32_t value)
     uint8_t tmp[10];unsigned n=0;do{tmp[n++]=(uint8_t)('0'+value%10);value/=10;}while(value);
     for(unsigned i=0;i<n;i++)p[i]=tmp[n-1-i];return n;
 }
-int polaris_usb_ppm(const struct polaris_gop_mode *m,uint8_t *out,uint64_t capacity,uint64_t *written)
+int polaris_usb_ppm_service(const struct polaris_gop_mode *m,uint8_t *out,uint64_t capacity,
+    uint64_t *written,void (*service)(void *),void *context)
 {
     if(!m || !m->info || m->info_bytes<sizeof(*m->info) || !out || !written)return 0;
     const struct polaris_gop_info *i=m->info;
@@ -63,10 +64,18 @@ int polaris_usb_ppm(const struct polaris_gop_mode *m,uint8_t *out,uint64_t capac
     unsigned n=0;out[n++]='P';out[n++]='6';out[n++]='\n';n+=decimal(out+n,i->width);
     out[n++]=' ';n+=decimal(out+n,i->height);out[n++]='\n';out[n++]='2';out[n++]='5';out[n++]='5';out[n++]='\n';
     const volatile uint32_t *fb=(const volatile uint32_t*)(uintptr_t)m->base;
-    for(uint32_t y=0;y<i->height;y++)for(uint32_t x=0;x<i->width;x++){
+    for(uint32_t y=0;y<i->height;y++){
+        /* Bounded row groups keep resident physical input alive during slow
+         * uncached panel reads. No USB reentry or pool/BLT calls here. */
+        if(service&&!(y&7))service(context);
+        for(uint32_t x=0;x<i->width;x++){
         uint32_t pixel=fb[(uint64_t)y*i->stride+x];
         out[n++]=(uint8_t)(pixel>>(i->format==0?0:16));out[n++]=(uint8_t)(pixel>>8);
         out[n++]=(uint8_t)(pixel>>(i->format==0?16:0));
+        }
     }
+    if(service)service(context);
     *written=n;return 1;
 }
+int polaris_usb_ppm(const struct polaris_gop_mode *m,uint8_t *out,uint64_t capacity,uint64_t *written)
+{return polaris_usb_ppm_service(m,out,capacity,written,0,0);}

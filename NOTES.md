@@ -34,6 +34,77 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0095 cooperative capture/log polling validated; 0003 ready, not yet booted
+
+- Current phone still actual expectedPolaris FASTBOOT15:01UTC from ended0002.
+ New firmware-only cooperative PPM every8rows and log16KiB/4KiB chunk polling
+ retains750ms native heartbeat expiry. Exact PPM bytes/bounds and synthetic
+ lost-service rejection passed ASan/UBSan;8tests6.073s. No new native code/CI.
+- Actual current-source EFI/XNU success0006 PASS29/38.332s and stale0003
+ PASS28/38.142s;57 checks with real IOHID edges, native4CPU/VM/workloop/cache
+ probes and native shutdown/refusal. Not physical buttons/MMIO/timing proof.
+ actual-native-three-key-cooperative-proof.json binds inputs+results+old115.
+- phone-keys-0095-0003 independently packaged/actual physicalEFI -Werror,
+ original81FW preserved and actualEDK2 whole decode/admission PASS. Payload
+ byte-identical0002, existingCI40695409352 kernel f68c9f20... unchanged.
+ No0003 boot sent yet. Next expectedPolaris read-only check then authorizedRAM,
+ one kernel-start, two real screenshots/log windows and timed poll-gap review.
+ Do not claim key success before actual sustained sampling and physical press.
+ WiFi/audio remain incomplete; display performance remains deferred by human.
+
+### 0095-0002 prestart PASS but heartbeat EXPIRED; ENDED actualFASTBOOT15:01
+
+- CURRENT PHONE independently expectedPolaris FASTBOOT15:01:34.716580UTC,
+ actual-fastboot-after-heartbeat-expiry.json. All0001/0002 physical trials
+ ENDED; no active iOS/recovery/USB/CI/model. Do not useoldcontrollers/reboot.
+-0002 actual prestart succeeded: arb50000000, APIDac/be, PON0104/GPIO1010,
+ GPIO mode0/pull0/EN80, PRESTART_RT0001(allreleased), PRESTART_PASS1. Real
+ nativeKEYSready and initialRT1, SMP4/64SGI48remote. No PMIC/pinconfig writes.
+ capture0001 first showedboot services; capture0002 at14:52:40..42 actual
+ viewedhome3app3dock, but nativeKEYSerror3/stopped andfirmwareSTOP3. No host
+ touches or physical presses requested; do not claim key functionality.
+- physical-key-prestart-and-heartbeat-expiry-proof.json binds actual config/
+ RT success separately from runtime750ms heartbeat expiration. Logs/capture
+ blocking firmware CPU0 is a HYPOTHESIS, not yet physically timed. No error
+ was in first log snapshot; later log hasstop3. Root cause duration still to
+ measure. Preserve source/failed0002 artifact and all logs/screens.
+- Then actual nativeHFSXunmount/VFS0busy0/GPU1BW4 afterVFS0/CPU0restore/
+ all600500400 actualPSCI_OFF/coordinator700park, matching cookie22084850311
+ seq1mode2 RAM_DRAINED80000003, savedfull log+gatedreset. Independent query
+ confirmedFASTBOOT15:01, not ACK. No rawfallback/keys/Android/partitionwrites.
+- NEW UNCOMMITTED firmware-only cooperative collection code: PPM rowgroups8
+ call resident service; live4MiB log invalidation16KiB+copy4KiB chunks poll
+ physicalkeys. Original pixel bytes/bounds/oldwrapper preserved. Native750ms
+ expiry and sticky failure unchanged. Firmware saves/reportspollgaps>=100ms
+ and req/ACK atfailure to locate any residual blocking. No native source/CI
+ change; existingkernel f68c9f20... retained. Current local tests result must
+ inspect cooperative-capture-tests-0001, then actualEFI compile/models needed.
+ No0003 image or boot exists yet. Next finishvalidation/newcandidate/source
+ commit then current expectedPolaris and authorizedRAM. Do not ask human to
+ press keys while samplerfaulted; only actual stable metadata/RT +runtime/UI
+ warrants physical shortpress test. WiFi/audio still incomplete, FPS deferred.
+
+### CURRENT PHONE0095-0002 corrected-key RAM boot ACTIVE; inspect unique start
+
+- Exactcase0095/phone-keys-0095-0002 (NOT0001), actual expectedFASTBOOT
+14:44:11.678125UTC rechecked then one temporary originalUEFI RAMboot sent
+14:44:11.731056UTC. Actual USB state-before-kernel-0001 waiting-payload PASS.
+ UNIQUE control-phone-0002.py boot kernel-start-0001 sent; inspect its result
+ before further commands. Do NOT duplicateboot/useold0001or0094controller.
+- Newkernel is byte-identical CI40695409352/1e4ed5d/f68c9f20..., preservedGPU
+ and fourbig stock policies. Firmware source337843f adds actualPON0104 and
+ pre-CPU_ON metadata/config/RT check;32local6.732s +57current-source actual
+ native key success/stalechecks PASS. Full original81FW and actualEDK2
+ wholedecode/admission PASS; payload byte-identical old0001.
+- NEXT once boot command completes, directed capture/log to inspect
+ BUTTONS_PRESTART_PASS/RT/config and actualUI. If prestartrefused, load_state3
+ prepared means NOCPU_ON/NOiOS; diagnose logs and ordinaryRAMFASTBOOT recovery
+ allowed without native handshake (kernel never ran). Do NOT loop boot or
+ claim key functionality from USBACK. Once native running use native drain
+ and independentFASTBOOT for future tests. Need real metadata/RT +native
+ ready before requesting actual human shortpress lock/volume. Current no
+ physical presses requested. WiFi/audio still incomplete.
+
 ### 0095 PON01/04 + BEFORE-CPU_ON precheck models57 checks PASS; packaging0002
 
 - PHONE remains independently verified expectedPolaris FASTBOOT14:28:50UTC;
@@ -46,7 +117,7 @@ early samples only. On0029 the human already confirmed boot complete and said
  publish keys until native HIDready. A failure leaves controlled prepared3
  USB state and RAM reset available, no XNU start, avoiding a long failed boot.
  No PMIC/pin/pull/reset/IRQ writes added; still ONLY observer READ commands.
-- Final32local tests PASS8.056s (read actual log for exactduration); preliminary
+- Final32local tests PASS6.732s (prestart-final-local-0001.log); preliminary
 8ASan/UBSan actual-policy/native-loader-controlflow tests PASS3.673s:
  extracted actual boot_kernel refuses CPU_ON after precheckfalse and starts
  once only when true (architecturalregisters explicitly stubbed, not physical

@@ -6,6 +6,7 @@
 #include "../../tools/polaris-uefi-buttons.h"
 #include "uefi-buttons-spmi.h"
 static uint64_t buttons_last_poll,buttons_last_publish;
+static uint64_t buttons_max_poll_gap;
 static unsigned buttons_started,buttons_terminal;
 #if defined(POLARIS_EFI_TEST_QEMU)
 static unsigned buttons_qemu_passed;
@@ -96,11 +97,23 @@ static void buttons_poll(void)
     if(!EFI_XNU_BUTTONS_AVAILABLE||load_state!=4||cpu_status||buttons_terminal)return;
     uint64_t now=buttons_us(0);
     if(!now||now<buttons_last_poll){buttons_terminal=1;return;}
+    uint64_t gap=buttons_last_poll?now-buttons_last_poll:0;
+    if(gap>buttons_max_poll_gap){
+        buttons_max_poll_gap=gap;
+#if !defined(POLARIS_EFI_TEST_QEMU)
+        if(gap>=100000)report("BUTTONS_POLL_GAP_US=",gap);
+#endif
+    }
     if(now-buttons_last_poll<10000)return;
     buttons_last_poll=now;
     volatile struct polaris_uefi_button_slot *slot=buttons_slot();
     invalidate((uintptr_t)&slot->acknowledged,128);
-    if(slot->error){report("BUTTONS_KERNEL_STOP=",slot->error);buttons_terminal=1;return;}
+    if(slot->error){
+        report("BUTTONS_KERNEL_STOP=",slot->error);
+        report("BUTTONS_STOP_REQ_ACK=",(slot->request<<32)|(uint32_t)slot->acknowledged);
+        report("BUTTONS_MAX_POLL_GAP_US=",buttons_max_poll_gap);
+        buttons_terminal=1;return;
+    }
     if(slot->ready!=POLARIS_BUTTONS_READY)return;
 #if defined(POLARIS_EFI_TEST_QEMU)
     /* Actual native consumer fixture only, NEVER Qualcomm MMIO. */

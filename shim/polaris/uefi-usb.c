@@ -73,6 +73,11 @@ static int transmit(void *context,const uint8_t *data,uint64_t bytes)
     if(s->usb->send(0x81,bytes,s->tx)&EFI_ERROR)return 0;
     uint64_t done=0;return poll(s,0x81,s->tx,bytes,&done) && done==bytes;
 }
+static void capture_service(void *context)
+{
+    struct service *s=context;
+    if(s->control&&s->control->idle_guard)s->control->idle_guard(s->control->context);
+}
 static int stage(void *context,unsigned what,const uint8_t **data,uint64_t *bytes)
 {
     struct service *s=context;
@@ -84,7 +89,7 @@ static int stage(void *context,unsigned what,const uint8_t **data,uint64_t *byte
         if(s->control&&s->control->running&&s->control->running(s->control->context))return 0;
         if(s->st->boot->allocate_pool(2,SCREEN_LIMIT,(void**)&s->screen)&EFI_ERROR)return 0;
     }
-    if(!polaris_usb_ppm(s->gop->mode,s->screen,SCREEN_LIMIT,bytes)){
+    if(!polaris_usb_ppm_service(s->gop->mode,s->screen,SCREEN_LIMIT,bytes,capture_service,s)){
         if(s->control&&s->control->running&&s->control->running(s->control->context))return 0;
         /* GOP is allowed to offer BLT-only video or bit masks instead of a
          * directly readable RGB framebuffer. Use the firmware's conversion. */
@@ -105,7 +110,7 @@ static int stage(void *context,unsigned what,const uint8_t **data,uint64_t *byte
         info.format=1;info.stride=info.width;
         struct polaris_gop_mode flat=*mode;flat.info=&info;flat.info_bytes=sizeof(info);
         flat.base=(uintptr_t)s->blt_pixels;flat.bytes=pixels*4;
-        if(!polaris_usb_ppm(&flat,s->screen,SCREEN_LIMIT,bytes))return 0;
+        if(!polaris_usb_ppm_service(&flat,s->screen,SCREEN_LIMIT,bytes,capture_service,s))return 0;
     }
     *data=s->screen;return 1;
 }

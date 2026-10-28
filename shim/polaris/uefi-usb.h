@@ -67,6 +67,7 @@ struct polaris_usb_control {
 int polaris_usb_command(struct polaris_usb_diag *,const uint8_t *,uint64_t);
 int polaris_usb_control_command(struct polaris_usb_diag *,struct polaris_usb_control *,const uint8_t *,uint64_t);
 int polaris_usb_ppm(const struct polaris_gop_mode *,uint8_t *,uint64_t,uint64_t *);
+int polaris_usb_ppm_service(const struct polaris_gop_mode *,uint8_t *,uint64_t,uint64_t *,void (*)(void *),void *);
 efi_status polaris_efi_usb_serve(struct efi_system *,const uint8_t *,const uint64_t *,
                                 const uint8_t *,uint64_t,void (*)(const char *,uint64_t));
 efi_status polaris_efi_usb_serve_control(struct efi_system *,const uint8_t *,const uint64_t *,

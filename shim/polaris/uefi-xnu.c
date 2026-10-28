@@ -293,10 +293,21 @@ static int logs(void *context,const uint8_t **data,uint64_t *count)
         invalidate(total_pa,8);uint64_t total=*(const volatile uint64_t*)(uintptr_t)total_pa;
         uint64_t bytes=total;if(bytes>EFI_XNU_LOG_SIZE)bytes=EFI_XNU_LOG_SIZE;
         uint64_t begin=total-bytes,ring=POLARIS_RAM_BASE+EFI_XNU_LOG_OFFSET;
+#if EFI_XNU_BUTTONS_AVAILABLE
+        for(uint64_t offset=0;offset<EFI_XNU_LOG_SIZE;offset+=16384){
+            buttons_poll();invalidate(ring+offset,16384);
+        }
+#else
         invalidate(ring,EFI_XNU_LOG_SIZE);
+#endif
         static const char label[]="\n--- live XNU RAM console (bounded snapshot) ---\n";
         bytes_copy(log_snapshot+at,label,sizeof(label)-1);at+=sizeof(label)-1;
-        for(uint64_t i=0;i<bytes;i++)log_snapshot[at+i]=((const volatile uint8_t*)(uintptr_t)ring)[(begin+i)%EFI_XNU_LOG_SIZE];
+        for(uint64_t i=0;i<bytes;i++){
+#if EFI_XNU_BUTTONS_AVAILABLE
+            if(!(i&4095))buttons_poll();
+#endif
+            log_snapshot[at+i]=((const volatile uint8_t*)(uintptr_t)ring)[(begin+i)%EFI_XNU_LOG_SIZE];
+        }
         at+=bytes;
     }
     *data=log_snapshot;*count=at;return at>0;
