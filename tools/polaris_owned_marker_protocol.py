@@ -61,6 +61,18 @@ class OwnedMarkerProtocol(KernelProtocol):
     def reboot(self, bootloader=False):
         raise RuntimeError('raw reset is unavailable; native durable SAFE is required')
 
+    def recover_unstarted_fastboot(self):
+        """Recover a rejected download before any kernel was prepared/started.
+
+        The firmware independently checks load_state again in prepare_reset;
+        after CPU_ON it still requires durable SAFE. A host state string alone
+        never grants reset permission for a running marker kernel.
+        """
+        if self.shutdown_token is not None or self.state() != 'waiting-payload':
+            raise RuntimeError('unstarted recovery requires a rejected, unprepared payload')
+        if KernelProtocol._control(self, b'reboot-bootloader'):
+            raise ValueError('invalid unstarted recovery acknowledgement')
+
     def request_shutdown(self, bootloader=True):
         if type(bootloader) is not bool or self.shutdown_token is not None:
             raise ValueError('one explicit native shutdown target per marker session')

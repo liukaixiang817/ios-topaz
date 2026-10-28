@@ -65,6 +65,21 @@ class MarkerTests(unittest.TestCase):
         self.assertEqual(p.reboot_safe()['capabilities'], 0x1f)
         self.assertEqual(wire.commands[-1], b'oem drained-reboot:2')
 
+    def test_rejected_download_recovery_requires_unstarted_state(self):
+        for state in ('validated', 'prepared', 'AP-start-pending', 'kernel-entered',
+                      'receiving', 'AP-early-fault', 'unknown'):
+            wire = Wire([b'OKAYpolaris-uefi-diag', b'OKAY' + state.encode()])
+            p = OwnedMarkerProtocol(wire, manifest()); p.product()
+            with self.subTest(state=state), self.assertRaises((RuntimeError, ValueError)):
+                p.recover_unstarted_fastboot()
+            self.assertNotIn(b'reboot-bootloader', wire.commands)
+        wire = Wire([b'OKAYpolaris-uefi-diag', b'OKAYwaiting-payload', b'FAILreset unavailable'])
+        p = OwnedMarkerProtocol(wire, manifest()); p.product()
+        with self.assertRaises(RuntimeError): p.recover_unstarted_fastboot()
+        wire = Wire([b'OKAYpolaris-uefi-diag', b'OKAYwaiting-payload', b'OKAY'])
+        p = OwnedMarkerProtocol(wire, manifest()); p.product(); p.recover_unstarted_fastboot()
+        self.assertEqual(wire.commands[-1], b'reboot-bootloader')
+
     def test_every_non_safe_field_refuses_reset(self):
         for change in [dict(cookie=124), dict(sequence=2), dict(mode=1), dict(phase=6),
                        dict(error=5), dict(write_epoch=0), dict(write_epoch=2),

@@ -34,6 +34,30 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0078 first marker payload rejected BEFORE CPU; autonomous recovery COMPLETE
+
+- phone-marker-native-0078 initialRAMfirmware sent23:57UTC but payloadfinish
+  REFUSED: hostremovedmandatorypolarisdebug=0 toreserveguardspace. Livefirmware
+  correctlyrequiresit; actualUSB statewaiting-payload/log hasNOprepare/CPU_ON/
+  kernelstart/nativewrite. Capture+oldpayload/image retained; NOTwriteproof.
+- Existingfirmwareprepare_reset independentlypermitsbeforeCPUload_state<4,
+  stillrequiresdurableSAFE afterCPU_ON. Newnarrowhostrecover_unstarted_fastboot
+  permitsONLYwaiting-payload+no shutdowntoken, normalrawreboot remainsblocked.
+  Negativecasesvalidated/prepared/receiving/running/unknown andfirmwarerefusal
+  checked; actualprekernelrecoveryACK thenINDEPENDENTexpectedFASTBOOT verified
+  2026-10-28T00:02:52UTC. No human, Android, ownedWRITEorrawrunningreset.
+- Separatehostadmissionnowchecksall10livefinish/markerrequiredtokens unique,
+  noforgedguard andspace. Correctedcandidate0002 KEEPS polarisdebug=0 and
+  removesONLYpolarissample=0 (native0808defaultoffunlessexact1); samekernel/
+  tree/GPU/ownermap. Itsstrictadmission9models306checks+physicalreadonlyproof
+  andoriginalEDK2wholedecodePASS. No nativefirmware/kernelchange/noCI.37local
+  testsPASS. Newimagephone-marker-native-0078-0002 ready, NOTyetbooted.
+- NEXTstartcorrectedonce, captureactualmetadata/WRITEread/epoch1; nativefinal
+  SYNC/realVFS0busy0/coresOFF/SAFE1f thenactualFASTBOOT andfullROreadback.
+  Runningownederror/unknownDMA STILLdeniesreset; unstartedexceptioncannot
+  beusedforrunningkernel. Existingmarker MUSTNOTberecreated/unpinned/deleted.
+  Latestprogress23:53UTC; keep15minreports; phoneFBready/nohumanblocker.
+
 ### 0078 same-kernel physical readonly/drain COMPLETE; marker trial prepared
 
 - New0078phone-readonly-native-0078 ended23:52:36UTC viarealnativeRAMdrain;

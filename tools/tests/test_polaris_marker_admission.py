@@ -42,8 +42,12 @@ def tree_fixture(overlap=False):
     return old, old_bytes, bytes(packet), mapping, start, blocks
 
 
-def payload(tree):
+LINE = b'cpus=2 ufsrw=0 sweetlog=0 polarisramcow=1 polarisusb=0 polarisdebug=0 polarisuefi=1 polarisbootcpu=1792 polarisinput=1 polarisownedmarker=1'
+
+
+def payload(tree, line=LINE):
     raw = bytearray(720); raw[:8] = b'SWEETXNU'; blob = adt.serialize(tree)
+    raw[0x48:0x48 + len(line)] = line
     struct.pack_into('<QQ', raw, 32, len(raw), len(blob)); raw.extend(blob); return bytes(raw)
 
 
@@ -62,6 +66,16 @@ def audit(after=False):
 
 
 class AdmissionTests(unittest.TestCase):
+    def test_live_firmware_required_tokens_cannot_be_removed_for_guard_space(self):
+        tree, *_ = tree_fixture()
+        m.resident_cmdline(payload(tree))
+        for token in LINE.split():
+            with self.subTest(missing=token), self.assertRaises(ValueError):
+                m.resident_cmdline(payload(tree, b' '.join(t for t in LINE.split() if t != token)))
+        for line in (LINE + b' polarisdebug=0', LINE + b' polarisdebug=1',
+                     LINE + b' polarisdurableguard=0x50470001', LINE + b' x=' + b'x' * 450):
+            with self.assertRaises(ValueError): m.resident_cmdline(payload(tree, line))
+
     def test_complete_original_map_and_exact_marker_positive(self):
         tree, old, packet, mapping, start, blocks = tree_fixture()
         self.assertTrue(m.tree_binding(payload(tree), old, packet, mapping, start, blocks))

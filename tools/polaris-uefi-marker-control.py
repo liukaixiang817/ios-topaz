@@ -22,7 +22,8 @@ def now(): return datetime.datetime.now(datetime.timezone.utc).isoformat()
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument('action', choices=('state', 'capture', 'boot', 'shutdown-fastboot'))
+    ap.add_argument('action', choices=('state', 'capture', 'boot', 'shutdown-fastboot',
+                                      'recover-unstarted-fastboot'))
     for name in ('libusb', 'boot-record', 'image-manifest', 'driver-manifest', 'output'):
         ap.add_argument('--' + name, type=Path, required=True)
     ap.add_argument('--payload', type=Path)
@@ -67,7 +68,11 @@ def main():
             time.sleep(1)
         protocol = OwnedMarkerProtocol(native, driver); result['product'] = protocol.product()
         result['state_before'] = protocol.state(); save()
-        if a.action == 'boot':
+        if a.action == 'recover-unstarted-fastboot':
+            protocol.recover_unstarted_fastboot()
+            result['unstarted_recovery_acknowledged'] = True
+            result['actual_FASTBOOT_verified'] = False
+        elif a.action == 'boot':
             protocol.stage_payload(raw, driver); protocol.boot()
             result['kernel_command_acknowledged'] = True
             result['kernel_or_write_success_proven'] = False
@@ -76,7 +81,11 @@ def main():
             for stage, name in [('logs', 'kernel.log'), ('screenshot', 'screen.ppm')]:
                 protocol.stage(stage); data = protocol.upload(); p = out / name
                 p.write_bytes(data); p.chmod(0o600); result['files'][name] = dict(bytes=len(data), sha256=sha(p)); save()
-            result['native_status'] = protocol.shutdown_status()
+            if result['state_before'] == 'waiting-payload':
+                result['native_status'] = None
+                result['kernel_not_prepared_or_started'] = True
+            else:
+                result['native_status'] = protocol.shutdown_status()
         elif a.action == 'shutdown-fastboot':
             result['native_shutdown_token'] = list(protocol.request_shutdown(True)); save()
             began = time.monotonic(); result['samples'] = []
@@ -94,7 +103,11 @@ def main():
             result['reset_acknowledged'] = True; result['actual_FASTBOOT_verified'] = False
             result['physical_persistence_readback_proven'] = False
         else:
-            result['native_status'] = protocol.shutdown_status()
+            if result['state_before'] == 'waiting-payload':
+                result['native_status'] = None
+                result['kernel_not_prepared_or_started'] = True
+            else:
+                result['native_status'] = protocol.shutdown_status()
         result['passed'] = True
     except Exception as error:
         result['passed'] = False; result['errors'].append(str(error))
