@@ -34,6 +34,27 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0101 repaired source18c88ea building CI40760345978; phone remains0100
+
+- Repaired source18c88ea696dec31ef7d976df9617b23cad66eab5 committed/pushed.
+  Automatic fullmacOS27/Xcode27 CI40760345978 IN PROGRESS, not yet success or
+  artifact admission. One collector session86553 watches exactrun/source,
+  downloads/profile+CRC+SHA verifies only on success, then executes SERIAL
+  run-native-regression.py four cases thermalON/control/stale/peerrefused.
+  DO NOT start duplicate CI/collector/models. Actual model files do not yet
+  exist. When collector ends, explicitly run prove-native-regression.py;
+  the appended proof call was added after process launch and is NOT assumed
+  loaded. collect-CI-running-40760345978.py archives actual running version.
+- New prepare-phone-payload.py and phone-payload-plan.json are OFFLINE CODE/
+  PLAN only, not executed/admitted. Exact606Bargs ONLY polaristsens1->2 from
+ 0100, same fullEAGLtrace/GPUbundle/4big/ADT/WC/cachedsurface/RAMCOW/keys.
+  Requires actual fresh new-kernel four-case aggregate and fullCI before
+  creating payload. Do not use old0100 actualproof to bypass new guard tests.
+- Current phone0100 remains RUNNING Settings, keepalive2004 PASS; no newboot/
+  kernelstart/input/PMIC/UFS write. Only0100/control-phone.py state NEWDIR
+  during build; lease30min. Fully ready candidate only then native-end0100,
+  save full log/RAM_DRAINED, verify actualFASTBOOT and one newRAMboot.
+
 ### 0101 first full CI failed safely; exact implementation binding repaired
 
 - Source584cb08e47df7016b8c2a9ad8ea355f8c66a19f8 was pushed; fullmacOS27/
