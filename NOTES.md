@@ -77,8 +77,9 @@ early samples only. On0029 the human already confirmed boot complete and said
  GLINK+QMI) andaudio(ownADSP/APR/quaternaryMI2S/TAS2559cal), then sustained
 60FPSwithstage/hardwaretiming. Oldpersistentroot/menu remainsdeferred.
  Progressreport17:28UTC; every15minactualreport andcaseboundstatekeepalive
- before30minRAMlease. NoactiveCI/model/USBtransaction. Needupdateheartbeat
- promptwiththisnewhandoff; donotwaitoldhumanquestionorstartoldbootcases.
+ before30minRAMlease. NoactiveCI/model/USBtransaction. Existinguefi-ios
+ heartbeatprompt updatedwiththishandoff/answeredhumanfeedback/UniXNUreference;
+ do notwaitoldhumanquestionorstartoldbootcases. Latestphonekeepalive1730PASS.
 
 ### 0097 store-only LCD black candidate local PASS; backlight still separate
 
