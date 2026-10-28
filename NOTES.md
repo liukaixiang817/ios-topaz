@@ -34,7 +34,7 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### 0095 three-key native/firmware source READY; physical keys not yet tested
+### 0095 three-key source compile PASS; CI private-header admission FIXED
 
 - Human priority remains physical lock/power + volume, Wi-Fi and sound FIRST,
  then return to display jank/60FPS. Persistent root/menu remain deferred.
@@ -42,6 +42,16 @@ early samples only. On0029 the human already confirmed boot complete and said
  at2026-10-28T13:05:18.498209UTC, actual-fastboot-readonly-0001.json. No new
  physical boot, writes, Android activity, pending USB transaction or user action.
 0094 wake0 ended natively; wake1 never booted. Do not revive old controllers.
+- Source25f513b8f8c2145b293b558825e4838e91ce55c8 pushed; first full macOS27/
+ Xcode27 CI40693587461/job122834364548 FAILED during strict interface-cache
+ admission: the new BSD-private three-key header had not been source-hash
+ bound. ActualTUs themselves had compiled locally. Failure log retained.
+ Corrected by binding ONLY exact0890 private-header SHA06bab9e8a1de3057de220d
+952da56ccb20c5c35e9db130e00308868ccd71fe8d. Full actual source audit PASS:
+1974 original headers/17IDLs still checked, no changed interface/unreviewed
+ header,3 cache-policy tests PASS. No native/header byte changed, no original
+ interface check loosened. One corrected complete CI still REQUIRED; don't
+ download/use the failed run's artifact or call this a kernel build success.
 - New0890 native opt-in polarisbuttons1 consumes a separate aligned256B key
  mailbox in the EXISTING resident input thread, dispatches only power/volup/
  voldown to actual SweetHIDButtons, releases only delivered keys on invalid,

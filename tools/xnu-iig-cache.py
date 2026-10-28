@@ -22,7 +22,9 @@ EXTRA_PRIVATE_HEADERS={'iokit/Kernel/arm/polaris_uefi_cpu.h','bsd/dev/polaris_ue
 # Private shutdown, GPU policy and display-queue implementation headers are
 # outside DriverKit's interface include graph. Bind their reviewed bytes; adding them
 # must not weaken the original IDL/header checks or admit arbitrary headers.
-EXTRA_PRIVATE_HEADER_SHA={'iokit/Kernel/arm/polaris_display_queue.h':
+EXTRA_PRIVATE_HEADER_SHA={'bsd/dev/polaris_uefi_buttons.h':
+    '06bab9e8a1de3057de220d952da56ccb20c5c35e9db130e00308868ccd71fe8d',
+    'iokit/Kernel/arm/polaris_display_queue.h':
     '8f58213606c7dad756a492ec8858170b5aecded769f5f730dc34c3d344043a39',
     'bsd/dev/polaris_a630_performance.h':
     'c38f2397d7d5d179d8701707104d0b6af411d76aecd8325401d3fc6742c75d6a',

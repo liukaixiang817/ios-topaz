@@ -20,6 +20,7 @@ struct polaris_button_bus {
     void (*read_command)(void *,uint32_t,uint32_t);
     uint64_t (*now_us)(void *);
     uint32_t version, map[2], owner[2], apid[2], fault, reads;
+    uint32_t last_key,last_reg,last_status,last_polls;
     bool initialized, active;
     uint8_t pon_id[2],gpio_id[2],gpio_config[7],gpio_source;
 };
@@ -56,6 +57,7 @@ static inline bool pb_read(struct polaris_button_bus *b,unsigned key,uint8_t reg
 {
     if(!b||b->fault)return false;
     if(key>1||!out||count<1||count>8||count>256u-reg)return pb_error(b,PB_E_ARGUMENT);
+    b->last_key=key;b->last_reg=reg;b->last_status=0;b->last_polls=0;
     if(!pb_map(b))return false; /* refuse reassignment before every command */
     uint32_t offset=0x80*b->apid[key]; /* EE0 observer only */
     uint64_t start=b->now_us(b->context),previous=start;
@@ -64,6 +66,7 @@ static inline bool pb_read(struct polaris_button_bus *b,unsigned key,uint8_t reg
     uint32_t status=0;
     for(unsigned n=0;n<4096;n++) {
         status=b->read(b->context,PB_OBSERVER,offset+8);
+        b->last_status=status;b->last_polls=n+1;
         uint64_t now=b->now_us(b->context);
         if(now<previous)return pb_error(b,PB_E_TIME);
         previous=now;

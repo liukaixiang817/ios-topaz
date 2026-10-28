@@ -101,7 +101,10 @@ static void buttons_poll(void)
          * Until then its independent heartbeat deadline releases held keys. */
         unsigned error=buttons_bus.fault?buttons_bus.fault:PB_E_TIME;
         if(buttons_publish(0,now,error)) {
-            report("BUTTONS_HARDWARE_STOP=",error);buttons_terminal=1;
+            report("BUTTONS_HARDWARE_STOP=",error);
+            report("BUTTONS_FAILED_KEY_REG=",((uint64_t)buttons_bus.last_key<<32)|buttons_bus.last_reg);
+            report("BUTTONS_FAILED_STATUS_POLLS=",((uint64_t)buttons_bus.last_status<<32)|buttons_bus.last_polls);
+            buttons_terminal=1;
         }
         return;
     }
