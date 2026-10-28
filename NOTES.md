@@ -34,6 +34,59 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0078 physical native small-file persistence COMPLETE; phone FASTBOOT, no active trial
+
+- physical-native-owned-marker-persistence-proof.json PASSED: correctedcase
+  phone-marker-native-0078-0002 actuallyran0078kernel viaoriginalMindowsUEFI.
+  RealUSB logobserved firmwareguard50470001 BEFORECPU/MMIO, liveUFS reread
+  inode1720322/gen2693650061/2maps/0indexnodes, GPT28116987/ext4 28116983/tail4,
+  completeoriginal182map disjoint. Protected-baseWRITE rejectedBEFOREdescriptor.
+  EXACTONE actualWRITE10 4096B atLBA0x1fa7400 +actualREAD10 MATCH epoch1;
+  original16GiBroot stayedREADONLY/512MiBvolatileRAMCOW. Capturedactualscreen
+  bootconsole viewed; nofullGUIretestclaim andnoGPU/FPSchange.
+- NativeSAFEshutdown realreboot_kernel/sync/iOSRootHFSXunmount/VFS0busy0,
+  actualfinalSYNCHRONIZECACHE10 op35 submitted17804, actualcompletion epoch1=
+  flushed1 whilepublicSAFEwithheld, peer600actualPSCI_OFF/coordinator700,
+  thenmatchedcookie5077039529/seq1/mode2/phase5/error0/SAFE1f. Savedfullnative
+  logthenfirmwaregatedreset00:08:10UTC; no rawfallback/humankeys/Android.
+- marker-readback-0001 FIRSTindependentlyverifiedactualexpectedFASTBOOT then
+  knownrecoveryRAM/strictRO+noload/blockRO. Entire8MiB afterREALreboot EXACT
+  first4096B byte(i*37+0x76), remaining8384512Bzero. RawSB/GDT/inodepages and
+  independentFIEMAP/pin/gen/UUID/flags unchanged. Fulloriginal16GiBSHA689a8cd1...
+  56.390s/182map/all6GPT/boot/recovery/abl_a/abl_b/ESP7338692a unchanged;
+  userdataheader remainsreviewed17016be3... cleanno recovery/replay/repair.
+  Actualunmount+blockRO thenindependentactualFASTBOOT VERIFIED00:11UTC;
+  prove-physical-marker.py rehashedallboundevidence+independentFASTBOOTagain.
+- ALL phone0078trials ENDED. No activeiOS/recovery, phoneexpectedFASTBOOT/no
+  humanblocker. DO NOTrestartmarkertrial orrecreate/unpin/deleteexistingfile.
+  Existing8MiBmarker NOWcontainsonepersistent4KiBpattern (NOTallzero). Keep
+  oldinitialzero/ownershiprecords asdatedbefore-writeevidence, never rewrite
+  them tograntnewactions. Preservedfirstpayloadrejection/unstartedrescue and
+  hostcodecfinalprintNameErrorafterdecoderPASS; correctedfinalcodec passed.
+- Kernel4156c35/CI40601993959/kernel e41482b459b322006374408f5ce55ddc0c2abb7e4cce129d9b7d3108f76e2e5d
+  unchanged. Host262adff/11612fa/858c8db committedANDPUSHED;37localtestsPASS.
+  9actualEFI/XNUcases306checks alreadycomplete; no repeat/no newCI without
+  nativechanges. ActualphoneUFS smallfilepersistence is nowPROVEN, butNOTa
+  persistentHFS/iOSroot orall-devicepowerfailureproof.
+- NEXT0079: implementseparateownedRUNTIME root mode/strictfirmwareguard,
+  NOTturnmarkerintogenericWRITEorcancelRAMCOW. Samecanonicalverifiedowner
+  maps/completeoriginalbaseprotection/nativeUFSmutex/completion/stickyunknown
+  DMA. BSDstrategy needsboundedREAD/WRITE+partialblockRMW, realHFS ioctl
+  cacheflush DURINGrunningphase (mustNOTgrantSAFE), andalwaysanotherfinal
+  realSYNC afterVFS0busy0/seal/coresOFF. Runtimefirmwaredisableanyrawreset/
+  RAMlease BEFOREfirstpossiblewrite, newmode/hostprotocol/multiepoch-safe.
+  FirstactualEFI/XNUownedHFSroot fixture withrealopen/write/fsync/unmount/
+  backendflush/reopenpersistence/faults; thenonlyNEWexclusivefull16GiB runtime
+  file copiedfromoriginal/pinned/exported/disjoint andfullSHA retainingbase,
+  thenphysicalHFSflush/crossrebootUIstate. Do notallocate16GiBbeforedriver/
+  guard/actualmodelproof ready. Currentroot STILL512MiBRAMCOW; notcomplete
+  persistentinstall. Originalphysicalvolume-keymenuRAMharness remainsafter.
+- Freshbaseline fornextauthorizedphysicalwork: marker-readback-0001/preflight
+  00:11UTC (fullbase/GPT/ESP/header), markerpatternabove. Longunknown/Android
+  requiresfreshfullROaudit. KeepGPUbundle42d5ec4c.../CPU700+600/UIpreserved.
+  No erase/format/GPT/resize/originaloverwrite. Latestuserreport00:08UTC;
+  continue15minreports andupdatetheexistinguefi-ios automation, no duplicate.
+
 ### 0078 first marker payload rejected BEFORE CPU; autonomous recovery COMPLETE
 
 - phone-marker-native-0078 initialRAMfirmware sent23:57UTC but payloadfinish
