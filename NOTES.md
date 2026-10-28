@@ -34,6 +34,49 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT PHONE0099 wake1 RAM kernel sent once; performance priority
+
+- phone-display-wake-0099-0001 boot.json confirms actual expectedPolaris
+  FASTBOOT and temporary originalUEFI RAM boot. state-before-kernel-0001
+  was waiting-payload; matching kernel-start-0001 sent ONCE. Inspect that
+  result before ANY new boot. Only0099/control-phone.py ACTION NEWDIR.
+  Old0096 is ended; never use its controller or start old0094 cases.
+- No new partition, PMIC, NVRAM or firmware write. Expected stock3, four-big,
+  keys1, coalesced display wake1, RAMCOW512 and original graphics unchanged.
+  New candidate full CI/native regressions/codec ready; actual GUI and timing
+  not yet verified. Next directed capture actual progress/lockscreen, then
+  limited unlock/Settings/controlled scrolling and paired PFB/EAGL metrics.
+- Latest human explicitly says sustained60 FIRST, remaining functionality
+  next, fuller iOS16.5 last. WLED hardware probe deferred, no real backlight
+  control success. Save results and continue thermal-aware sustained policy
+  without dropping existing30s/10s bounds merely to claim60.
+
+### 0099 display-arrival wake candidate READY; old 0096 ended natively
+
+- Latest human priority is sustained60 FIRST, other functions NEXT, fuller
+  matching iOS16.5 LAST. The WLED readonly phone probe is deferred.
+- 0099 uses exact full-CI0097 kernel299be2d0... with existing coalesced
+  display-arrival wake enabled. SAME GPU bundle/tree/four-big/stock3/keys/
+  GEM-WC/cached-surface/RAMCOW/ufsrw0. Added polarisfbwake=1, omitted only
+  touch_lat=1 instrumentation to fit605-byte boot arguments. No new native
+  source/CI required. Original81 firmware preserved and actual original EDK2
+  GetInfo/whole-stream decoder passed.
+- SERIAL actual EFI/XNU wake+keys success/stale-cookie/peer-refused all94
+  checks PASS (31/30/33); actual native workloop, keys, four-core/SGI, dirty
+  writer/BSD drain and peer OFF or refusal. Twenty host/policy/admission
+  tests PASS3.249s. These are not SD845 display/60FPS proof.
+- Old0096-0002 ENDED18:07:19UTC via actual reboot_kernel/ownHFSX unmount/
+  VFS0busy0/GPU1BW4+CPUrequest0 restore/all600500400 actualPSCI_OFF,
+  cookie3470760457/seq1/mode2/phase3/error0/RAM_DRAINED80000003. Fullnative
+  log saved then gatedreset; no rawfallback/keys/Android/storagewrites.
+- A single new0099/boot-phone.py is now being sent. FIRST inspect its
+  phone-display-wake-0099-0001/boot.json result; do not resend boot or use
+  old0096 controller. Candidate controller ONLY0099/control-phone.py. New
+  USB waiting-payload requires ONE matching boot payload, then actualscreens.
+  No actual GUI/physical timing result yet. Next measure publication-ready
+  ->copy begin/end, panel completed copies and EAGL vs request transitions.
+  Preserve30s/10s policy until native thermal evidence supports replacement.
+
 ### 0098 HUMAN PRIORITY: sustained 60 FPS first; readonly WLED hold checked offline
 
 - Human latest instruction overrides the earlier functionality-first order:
