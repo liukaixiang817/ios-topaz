@@ -53,6 +53,18 @@ def readonly_osm_intent(tokens,expected,core,count,qemu,drain,bridge,ufs,marker,
         raise ValueError('OSM mode requires the explicit four-big RAM native-drain trial and intact unique token')
     return expected
 
+def gpu_stock_intent(tokens,mode,core,count,qemu,drain,bridge,ufs,marker):
+    actual=[t for t in tokens if t.startswith(b'polarisgpup=')]
+    if type(mode) is not int or mode not in (0,1,2,3) or actual!=([f'polarisgpup={mode}'.encode()] if mode else []):
+        raise ValueError('GPU stock request needs its exact explicit unique experiment mode')
+    if mode:
+        if core!=7 or count!=4 or ufs or marker or not (drain in ('success','stale-cookie','peer-refused') if qemu else bridge):
+            raise ValueError('GPU stock experiment requires four-big RAM-only native drain')
+        for key,value in [('polarisramcow','1'),('ufsrw','0'),('polarisquiesce','1')]:
+            if [t for t in tokens if t.startswith((key+'=').encode())]!=[(key+'='+value).encode()]:
+                raise ValueError('GPU stock experiment must preserve RAM COW, write protection and native drain')
+    return mode
+
 
 def main():
     ap=argparse.ArgumentParser(description=__doc__)
@@ -72,6 +84,8 @@ def main():
     ap.add_argument('--test-omit-durable-guard',action='store_true',
                     help='QEMU-only old-loader mismatch: native owned writes must be refused before MMIO')
     ap.add_argument('--cpu-osm-stock-performance',action='store_true',help='bounded stock4-core OSM request; not overclocking or all7-core admission')
+    ap.add_argument('--gpu-stock-request',type=int,choices=(1,2,3),default=0,help='bounded original HFI request:1 bandwidth only,2 core only,3 both; no physical MHz claim')
+    ap.add_argument('--gpu-stock-inventory',type=Path,help='actual original-device read-only request baseline before this experiment')
     ap.add_argument('--cpu-stock-inventory',type=Path,help='required physical read-only OSM evidence for the first performance trial')
     ap.add_argument('--cpu-osm-readonly',action='store_true',
                     help='explicit four-big-core stock OSM read-only inventory intent')
@@ -143,6 +157,21 @@ def main():
         raise ValueError('peer refusal injection must be uniquely bound to its QEMU-only test')
     readonly_osm_intent(tokens,a.cpu_osm_readonly,a.kernel_core,a.kernel_cpus,
         a.test_qemu,a.test_ram_drain,a.ram_shutdown_bridge,a.test_qemu_ufs,a.physical_owned_marker,a.cpu_osm_stock_performance)
+    gpu_stock_intent(tokens,a.gpu_stock_request,a.kernel_core,a.kernel_cpus,
+        a.test_qemu,a.test_ram_drain,a.ram_shutdown_bridge,a.test_qemu_ufs,a.physical_owned_marker)
+    gpu_inventory=None
+    if a.gpu_stock_request and not a.test_qemu:
+        if not a.gpu_stock_inventory:raise ValueError('GPU stock request requires actual physical read-only baseline')
+        evidence=json.loads(a.gpu_stock_inventory.read_text())
+        log=(r/evidence['actual_log']).resolve(strict=True)
+        if r not in log.parents:raise ValueError('GPU baseline log must belong to this workspace')
+        if (evidence.get('passed') is not True or evidence.get('phone_trial_ended') is not True or
+            evidence.get('actual_RO_clock_count')!=53 or evidence.get('GMU_request')!=dict(performance_index=1,bandwidth_index=4,return_code=0) or
+            evidence.get('GPU_frequency_or_bandwidth_writes_added') is not False or evidence.get('storage_writes') is not False or
+            sha(log)!=evidence.get('actual_log_sha256')):
+            raise ValueError('original-device GPU request baseline/hash mismatch')
+        gpu_inventory=dict(passed=True,sha256=sha(a.gpu_stock_inventory),actual_log_sha256=sha(log),baseline_PERF=1,baseline_BW=4)
+    elif a.gpu_stock_inventory:raise ValueError('GPU baseline belongs only to its physical experiment')
     stock_inventory=None
     if a.cpu_osm_stock_performance and not a.test_qemu:
         if not a.cpu_stock_inventory:raise ValueError('stock performance requires actual physical read-only inventory')
@@ -311,6 +340,7 @@ def main():
                   kernel_CPU_count=a.kernel_cpus,
                   CPU_OSM_readonly_inventory=a.cpu_osm_readonly,
                   CPU_OSM_stock_performance=a.cpu_osm_stock_performance,CPU_OSM_stock_inventory=stock_inventory,
+                  GPU_stock_request=a.gpu_stock_request,GPU_stock_inventory=gpu_inventory,
                   RAM_base=0x130000000 if a.test_qemu else 0x180000000,RAM_bytes=0xfc8a0000,
                   firmware_core_reserved=0,firmware_services_exited=False,
                   device_execution_tested=False,inputs={p:sha(r/p) for p in inputs})

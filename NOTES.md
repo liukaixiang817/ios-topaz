@@ -34,6 +34,36 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0093 bounded original GPU/bandwidth source READY; full CI pending
+
+- PHONE remains actual FASTBOOT after0092, no new phone boot or storage write.
+ 0092 full physical phase proof and actual native restore committed88148c5.
+- Profile0888 introduces DEFAULT-OFF polarisgpup1(bandwidthonly perf1/bus8),
+ 2(coreonly perf4/bus4),3(both4/8), ORIGINAL own HFI tables and register OOB
+ 23/31. No PLL/voltage/thermal write, no max vote or instantaneousHz claim.
+ Early pure guard refuses virtual/foreign CPU/mode BEFORE GPU MMIO; original
+ DT/firmware/SMMU/auth/completed GPU proof still required before configuration.
+ Physical builder binds actual0092 RO request1/4 baseline; manifest explicit
+ mode must match actual virtual guard-refusal test before phone admission.
+- Same resident gpuLock serializes every request with actual idle/halt proof,
+ exact expected ownership/readback, ACK0/PERF/BW/RETURN0, original OOB, posted
+ barriers. Only privileged desktop success publishes activity. Existing input
+ worker polls; no new thread. High<=30s, cooldown10s, idle250ms restore1/4.
+ Desktop close and native shutdown restore1/4; failure sticky/quarantine,
+ retain DMA and refuse native gate. GPU restore precedes CPU restore/peerOFF.
+ No cache/DSB/fence/idle/halt/auth/lifetime or display pacing changes.
+- Actual Appleclang27/fullCIheaders five TUs passed; ASan/UBSan tests exercise
+ actual transactions/all IO failures, stale ack/foreign owner/firmware error/
+ unknown completion/readback mismatch/failed restore/policy timing, explicit
+ firmware mode admission and native hook lock order. Exact overlay patch
+ 0offset/0fuzz verified. New implementation header and changed runtime exact
+ privateSHA bound; original17IDL/public interface checks retained.
+- NEXT fullCI only ONCE after this native source commit, source/profile/ZIPCRC/
+ SHA verify, actual EFI/XNU mode1/2/3 virtual guard-refusal+fourpeer/stale/pair
+ regressions, then separately admitted sameGPU/ADT4big/OSM2 RAM A/B. No
+ physicalGPU OPP/bandwidth result or FPS gain yet. Keep all failed evidence.
+ No repeating already-complete0092 diagnosis or marker/CPU tests separately.
+
 ### 0092 physical complete GPU-submit phase diagnosis + native restore COMPLETE
 
 - CURRENT PHONE: independent actual expected Polaris FASTBOOT verified09:38UTC.

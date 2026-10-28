@@ -22,18 +22,21 @@ EXTRA_PRIVATE_HEADERS={'iokit/Kernel/arm/polaris_uefi_cpu.h','bsd/dev/polaris_ue
 # RAM shutdown mailbox is included only by bsd/dev/polaris_touch.c, outside
 # DriverKit's interface include graph. Bind its reviewed bytes too; adding it
 # must not weaken the original IDL/header checks or admit arbitrary headers.
-EXTRA_PRIVATE_HEADER_SHA={'bsd/dev/polaris_runtime_quiesce.h':
+EXTRA_PRIVATE_HEADER_SHA={'bsd/dev/polaris_a630_performance.h':
+    'c38f2397d7d5d179d8701707104d0b6af411d76aecd8325401d3fc6742c75d6a',
+    'bsd/dev/polaris_runtime_quiesce.h':
     '184aa7ad4d296c407e061082fa1f83d46278489e0252ed142136c3718d778757'}
 # These existing headers are implementation includes of polaris_a630.c
 # only; no header/IDL includes them. Profiles0876/0877 change internal timing
 # and page attributes;0886 adds saved timings;0887 adds fixed read-only clock
-# observations under the existing successful-submission lock. These are not
+# observations under the existing successful-submission lock;0888 adds the
+# default-OFF original HFI request experiment under that same lock. These are not
 # IIG types/interfaces. Bind original and replacement
 # bytes. Every other original header and all 17 IDLs still require identity.
 PRIVATE_IMPLEMENTATION_REPLACEMENTS={
     'bsd/dev/polaris_a630_runtime.h':(
         'ac96ec731d4a49a5a1de5edf734f3382a971e881d1d5878167d55701d94b36aa',
-        '9aae6a719666e53744807f761773ee62d3ba615a29473e98e28231d00cf4cbf1'),
+        'f274feae12ced272fdd48224ba2e74a8f63ad16416f215ddbaabe472b159b9a9'),
     'bsd/dev/polaris_a630_mmu.h':(
         '427145f067d7ddff349eff15f0bfca95566b802fbcfd249cfa9ec118f520b3b3',
         'a1513183cfe4647f3f31a59754b85bb7bbb2e9362e38f6451b8bb4405407c388'),

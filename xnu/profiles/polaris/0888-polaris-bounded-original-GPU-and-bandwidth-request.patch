@@ -1,0 +1,327 @@
+--- a/bsd/dev/polaris_a630.c
++++ b/bsd/dev/polaris_a630.c
+@@ -922,6 +922,22 @@
+ void polaris_a630_init(void)
+ {
+     unsigned mode=0;PE_parse_boot_argn("polarisgpu",&mode,sizeof(mode));
++    unsigned stock=0;PE_parse_boot_argn("polarisgpup",&stock,sizeof(stock));
++    if(stock) {
++        uint32_t cow=0,rw=0,marker=0,quiesce=0;
++        PE_parse_boot_argn("polarisramcow",&cow,sizeof(cow));
++        bool has_rw=PE_parse_boot_argn("ufsrw",&rw,sizeof(rw));
++        PE_parse_boot_argn("polarisownedmarker",&marker,sizeof(marker));
++        PE_parse_boot_argn("polarisquiesce",&quiesce,sizeof(quiesce));
++        /* Reject virtual/foreign cores and conflicting write modes BEFORE
++         * even queuing the original GPU worker or accessing its hardware.
++         * The worker still independently validates original DT/firmware. */
++        if(!a630_perf_intent(stock,mode,cow,has_rw,rw,marker,quiesce,
++            __builtin_arm_rsr64("MIDR_EL1"),__builtin_arm_rsr64("MPIDR_EL1")&0xffffffULL,
++            __builtin_arm_rsr64("CNTFRQ_EL0"),true)) {
++            printf("POLARIS GPU STOCK: REFUSED platform/mode before GPU MMIO\n");return;
++        }
++    }
+     if(mode<1||mode>9||__atomic_exchange_n(&a630_started,1,__ATOMIC_ACQ_REL))return;
+     a630_mode=mode;
+     PE_parse_boot_argn("polarisgpuclient",&a630_client_requested,sizeof(a630_client_requested));
+--- a/bsd/dev/polaris_a630_runtime.h
++++ b/bsd/dev/polaris_a630_runtime.h
+@@ -1,6 +1,7 @@
+ /* Included once by polaris_a630.c. Native 0046 bootstrap is immutable after
+  * publication. These separate runtime snapshots/MMIO leases live forever.
+  */
++#include "polaris_a630_performance.h"
+ static struct a630_io a630_client_io;
+ static struct a630_submit a630_client_submit;
+ static uint64_t a630_client_postcheck_ticks;
+@@ -220,6 +221,62 @@
+     }
+     return true;
+ }
++/* Only called with the resident service's gpuLock held. No new MMIO mapping
++ * or caller-selected registers: original-board admission + native proof first.
++ * Default OFF. Request success is not an instantaneous-frequency claim. */
++static struct a630_perf_state a630_client_perf;
++static struct a630_channel_io a630_client_perf_io(void)
++{
++    return (struct a630_channel_io){a630_core_owned,a630_read_register,
++        a630_write_register,a630_gmu_sync,a630_delay_us,&a630_client_io};
++}
++bool polaris_gpu_performance_configure(void)
++{
++    uint32_t mode=0,cow=0,rw=0,marker=0,quiesce=0;
++    PE_parse_boot_argn("polarisgpup",&mode,sizeof(mode));if(!mode)return true;
++    PE_parse_boot_argn("polarisramcow",&cow,sizeof(cow));
++    bool has_rw=PE_parse_boot_argn("ufsrw",&rw,sizeof(rw));
++    PE_parse_boot_argn("polarisownedmarker",&marker,sizeof(marker));
++    PE_parse_boot_argn("polarisquiesce",&quiesce,sizeof(quiesce));
++    bool board=a630_firmware_ok && a630_abi_ok && a630_client_requested &&
++        a630_zap_saved.authenticated && a630_zap_saved.retained &&
++        a630_channel_saved.error==A630_CH_READY && a630_channel_saved.acks==5 &&
++        a630_channel_saved.tables_done==7 && a630_channel_saved.version==0x10070000 &&
++        a630_post_saved.dcvs_done && a630_post_saved.gpu_ready;
++    bool admitted=a630_perf_intent(mode,a630_mode,cow,has_rw,rw,marker,quiesce,
++        __builtin_arm_rsr64("MIDR_EL1"),__builtin_arm_rsr64("MPIDR_EL1")&0xffffffULL,
++        __builtin_arm_rsr64("CNTFRQ_EL0"),board);
++    if(!admitted){printf("POLARIS GPU STOCK: REFUSED platform/mode; no request write\n");return false;}
++    struct a630_channel_io io=a630_client_perf_io();
++    bool ok=polaris_gpu_quiescent() && a630_perf_init(&a630_client_perf,mode,true,&io);
++    printf("POLARIS GPU STOCK: armed=%u mode=%u saved=1/4 target=%u/%u error=%u; original table requests, not measured Hz\n",
++        ok,mode,a630_client_perf.target_perf,a630_client_perf.target_bus,a630_client_perf.fault);
++    return ok;
++}
++bool polaris_gpu_performance_tick(uint64_t now_ns,uint64_t activity_ns)
++{
++    struct a630_perf_state *s=&a630_client_perf;
++    if(!s->armed || s->stopped)return !s->fault;
++    uint32_t perf=0,bus=0;bool ok=a630_perf_desired(s,now_ns,activity_ns,&perf,&bus);
++    if(ok && (s->perf!=perf || s->bus!=bus)) {
++        struct a630_channel_io io=a630_client_perf_io();
++        ok=a630_perf_change(s,&io,perf,bus,polaris_gpu_quiescent());
++        printf("POLARIS GPU STOCK SAMPLE: end_us=%llu mode=%u PERF=%u BW=%u transitions=%llu error=%u return=%u; request not measured Hz\n",
++            now_ns/1000,s->mode,s->perf,s->bus,s->transitions,s->fault,s->returned);
++    }
++    if(!ok){printf("POLARIS GPU STOCK: FAILED error=%u offset=%x expected=%x actual=%x; retain DMA, refuse native reset\n",
++        s->fault,s->offset,s->expected,s->actual);polaris_gpu_quarantine();}
++    return ok;
++}
++bool polaris_gpu_performance_restore(void)
++{
++    struct a630_perf_state *s=&a630_client_perf;
++    if(!s->armed)return !s->fault;
++    struct a630_channel_io io=a630_client_perf_io();
++    bool ok=a630_perf_stop(s,&io,polaris_gpu_quiescent());
++    printf("POLARIS GPU STOCK RESTORE: restored=%u PERF=%u BW=%u error=%u; before peer OFF\n",ok,s->perf,s->bus,s->fault);
++    if(!ok)polaris_gpu_quarantine();return ok;
++}
+ static void a630_client_adopt(const struct a630_io *io)
+ {
+     if (!a630_client_requested || !a630_zap_saved.authenticated || !a630_zap_saved.retained ||
+--- a/iokit/Kernel/arm/PolarisGPU.cpp
++++ b/iokit/Kernel/arm/PolarisGPU.cpp
+@@ -31,6 +31,9 @@
+ extern "C" void polaris_cpu_performance_activity(void);
+ extern "C" bool polaris_gpu_last_submit_us(uint32_t,uint64_t *);
+ extern "C" bool polaris_gpu_clock_snapshot(uint32_t *,uint32_t);
++extern "C" bool polaris_gpu_performance_configure(void);
++extern "C" bool polaris_gpu_performance_tick(uint64_t,uint64_t);
++extern "C" bool polaris_gpu_performance_restore(void);
+ #define GPU_BUFFERS 4096u
+ #define GPU_MAX_BO (128u << 20)
+ #define GPU_MAX_BYTES (384ull << 20)
+@@ -47,6 +50,30 @@
+ static uint32_t gpuSubmissions, gpuSurfaces;
+ static uint32_t gpuDesktopAttempts,gpuDesktopSubmissions;
+ static uint32_t gpuRender[8],gpuRenderPublished;
++static uint64_t gpuStockActivity;
++static bool gpuStockEnabled;
++static uint64_t polaris_gpu_stock_now(void)
++{
++    uint64_t ns=0;absolutetime_to_nanoseconds(mach_absolute_time(),&ns);return ns;
++}
++extern "C" void polaris_gpu_performance_poll(void)
++{
++    if(!gpuLock || !__atomic_load_n(&gpuStockEnabled,__ATOMIC_ACQUIRE))return;
++    IOLockLock(gpuLock);
++    if(__atomic_load_n(&gpuStockEnabled,__ATOMIC_ACQUIRE) &&
++        !polaris_gpu_performance_tick(polaris_gpu_stock_now(),
++            __atomic_load_n(&gpuStockActivity,__ATOMIC_ACQUIRE)))
++        __atomic_store_n(&gpuStockEnabled,false,__ATOMIC_RELEASE);
++    IOLockUnlock(gpuLock);
++}
++extern "C" bool polaris_gpu_performance_shutdown(void)
++{
++    if(!gpuLock)return true;
++    IOLockLock(gpuLock);
++    __atomic_store_n(&gpuStockEnabled,false,__ATOMIC_RELEASE);
++    bool ok=polaris_gpu_performance_restore();
++    IOLockUnlock(gpuLock);return ok;
++}
+ static uint32_t gpuPerformance[10],gpuPerformancePublished;
+ static bool polaris_gpu_performance_report(unsigned kind,const struct pgpu_perf_notice *p)
+ {
+@@ -780,6 +807,9 @@
+     }
+ done:
+     if(selector==0x46 && result==0)polaris_cpu_performance_activity();
++    if(selector==0x46 && result==0 && callerKind==2 &&
++        __atomic_load_n(&gpuStockEnabled,__ATOMIC_ACQUIRE))
++        __atomic_store_n(&gpuStockActivity,polaris_gpu_stock_now(),__ATOMIC_RELEASE);
+     if(result==0){memcpy(a->structureOutput,&r,size);a->structureOutputSize=size;}
+     if(profile) {
+         clock_get_uptime(&ended);
+@@ -793,6 +823,10 @@
+     IOLockLock(gpuLock);
+     if(!closed) {
+         closed=true;
++        if(callerKind==2) {
++            __atomic_store_n(&gpuStockEnabled,false,__ATOMIC_RELEASE);
++            if(!polaris_gpu_performance_restore())poison();
++        }
+         if(!polaris_gpu_quiescent())poison();
+         for(unsigned n=0;!quarantined && n<GPU_BUFFERS;n++)if(buffers[n].memory)drop(n+1);
+         if(!quarantined){gpuOpened=false;__atomic_store_n(&gpuOpenStatus,0,__ATOMIC_RELEASE);}
+@@ -810,6 +844,9 @@
+ {
+     if(!polaris_gpu_ready() || gpuLock)return;
+     gpuLock=IOLockAlloc();if(!gpuLock)return;
++    uint32_t stock=0;PE_parse_boot_argn("polarisgpup",&stock,sizeof(stock));
++    if(stock && polaris_gpu_performance_configure())
++        __atomic_store_n(&gpuStockEnabled,true,__ATOMIC_RELEASE);
+     uint32_t wc=0;PE_parse_boot_argn("polarisgpuwc",&wc,sizeof(wc));gpuWriteCombined=wc==1;
+     uint32_t perf=0;PE_parse_boot_argn("polarisperf",&perf,sizeof(perf));gpuMethodPerformance=perf==1;
+     IOLog("POLARIS GPU WC: owned GEM trial=%u; imported IOSurfaces remain cached\n",(unsigned)gpuWriteCombined);
+--- a/iokit/Kernel/arm/SweetCPU.cpp
++++ b/iokit/Kernel/arm/SweetCPU.cpp
+@@ -131,6 +131,7 @@
+         __atomic_fetch_add(&polaris_observe_submissions,1,__ATOMIC_RELEASE);
+     }
+ }
++extern "C" bool polaris_gpu_performance_shutdown(void);
+ extern "C" void polaris_cpu_performance_poll(void)
+ {
+     polaris_osm_observe_poll();
+@@ -658,6 +659,7 @@
+     if (polaris_stop_conduit < 0) return EINVAL;
+     PE_parse_boot_argn("polarisofftest", &polaris_stop_fault, sizeof(polaris_stop_fault));
+     if (polaris_stop_fault && (polaris_stop_fault != 1 || polaris_stop_conduit != 1)) return EINVAL;
++    if(!polaris_gpu_performance_shutdown())return EIO;
+     if(polaris_perf_shutdown()!=0)return EIO;
+     for (unsigned logical = 1; logical < topology->num_cpus; logical++) {
+         __atomic_store_n(&polaris_stop_armed, logical, __ATOMIC_RELEASE);
+--- a/bsd/dev/polaris_touch.c
++++ b/bsd/dev/polaris_touch.c
+@@ -28,6 +28,7 @@
+ void polaris_touch_init(void);
+ void polaris_uefi_shutdown_ready(void);
+ void polaris_cpu_performance_poll(void);
++void polaris_gpu_performance_poll(void);
+ int polaris_uefi_shutdown_pending(void);
+ int polaris_ufs_ram_seal(void);
+ int polaris_ufs_owned_status(struct polaris_shutdown_status *);
+@@ -460,6 +461,7 @@
+     (void)arg; (void)result;
+     while (!polaris_hid_touch_ready()) {
+         polaris_cpu_performance_poll();
++        polaris_gpu_performance_poll();
+         if (ps_poll()) { ps_execute(); } /* Native shutdown must not require a working GUI/HID server. */
+         pt_wait(10);
+     }
+@@ -470,6 +472,7 @@
+     bool active=false; unsigned idle=0; int x=0,y=0;
+     for (;;) {
+         polaris_cpu_performance_poll();
++        polaris_gpu_performance_poll();
+         pi_cache((uintptr_t)slot,false);
+         uint64_t request=__atomic_load_n(&slot->request,__ATOMIC_ACQUIRE);
+         if (request!=slot->acknowledged) {
+--- /dev/null
++++ b/bsd/dev/polaris_a630_performance.h
+@@ -0,0 +1,108 @@
++/* Default-OFF RAM experiment using the ORIGINAL Polaris HFI_USE_REG table.
++ * MiCode c7cb50c1 adreno_a6xx.c:a6xx_gmu_dcvs_nohfi; no PLL/rail/MMIO map.
++ * Caller serializes with submissions and proves idle/halted before transitions.
++ * An ambiguous transaction is sticky failure: no retry/resume/reset permission.
++ * Request/return success is NOT a measurement of GPU frequency or temperature.
++ */
++#ifndef POLARIS_A630_PERFORMANCE_H
++#define POLARIS_A630_PERFORMANCE_H
++#include "polaris_a630_post.h"
++#define A630_PERF_IDLE_NS UINT64_C(250000000)
++#define A630_PERF_HIGH_NS UINT64_C(30000000000)
++#define A630_PERF_COOL_NS UINT64_C(10000000000)
++struct a630_perf_state {
++    uint32_t mode,perf,bus,target_perf,target_bus,fault,stopped,armed;
++    uint32_t offset,expected,actual,returned,polls;
++    uint64_t high_since,cool_until,last_ns,transitions;
++};
++static inline bool a630_perf_intent(uint32_t mode,uint32_t gpu,uint32_t cow,
++    bool has_rw,uint32_t rw,uint32_t marker,uint32_t quiesce,uint64_t midr,
++    uint64_t mpidr,uint64_t timer,bool original_board)
++{
++    return mode>=1 && mode<=3 && gpu==9 && cow==1 && has_rw && !rw &&
++        !marker && quiesce==1 && original_board &&
++        ((midr>>24)&255)==0x51 && ((midr>>4)&0xfff)==0x802 &&
++        (mpidr&~UINT64_C(0x300))==UINT64_C(0x400) && timer==19200000;
++}
++static inline bool a630_perf_io_valid(const struct a630_channel_io *io)
++{
++    return io && io->owned && io->read && io->write && io->sync && io->wait;
++}
++static inline bool a630_perf_read_state(const struct a630_channel_io *io,
++    struct a630_channel_snapshot *r,uint32_t perf,uint32_t bus)
++{
++    const uint32_t off[]={A630_POST_ACK,A630_POST_PERF,A630_POST_BW,A630_POST_RETURN};
++    const uint32_t expected[]={0,0x30000000u|perf,bus,0};
++    uint32_t v;
++    for(unsigned n=0;n<4;n++) {
++        if(!a630_ch_read(io,r,2,off[n],&v))return false;
++        if(v!=expected[n]){r->error=A630_CH_PROTOCOL;r->failed_offset=off[n];
++            r->expected=expected[n];r->actual=v;return false;}
++    }
++    if(!a630_ch_read(io,r,2,A630_CH_INTR_INFO,&v))return false;
++    if(v&((1u<<31)|A630_CH_FW_FAULTS)) {
++        r->error=A630_CH_PROTOCOL;r->failed_offset=A630_CH_INTR_INFO;r->actual=v;return false;
++    }
++    return true;
++}
++static inline bool a630_perf_fail(struct a630_perf_state *s,
++    const struct a630_channel_snapshot *r)
++{
++    if(!s->fault){s->fault=r->error?r->error:A630_CH_IO;s->offset=r->failed_offset;
++        s->expected=r->expected;s->actual=r->actual;s->polls=r->polls;}
++    return false;
++}
++static inline bool a630_perf_init(struct a630_perf_state *s,unsigned mode,
++    bool admitted,const struct a630_channel_io *io)
++{
++    if(!s)return false;*s=(struct a630_perf_state){0};
++    if(!admitted || mode<1 || mode>3 || !a630_perf_io_valid(io))return false;
++    struct a630_channel_snapshot r={0};
++    if(!a630_perf_read_state(io,&r,1,4))return a630_perf_fail(s,&r);
++    s->mode=mode;s->perf=1;s->bus=4;
++    s->target_perf=mode==1?1:4;s->target_bus=mode==2?4:8;s->armed=1;return true;
++}
++static inline bool a630_perf_change(struct a630_perf_state *s,
++    const struct a630_channel_io *io,uint32_t perf,uint32_t bus,bool quiescent)
++{
++    if(!s || !s->armed || s->fault || !a630_perf_io_valid(io))return false;
++    if(!quiescent){struct a630_channel_snapshot r={.error=A630_CH_RUNNING};return a630_perf_fail(s,&r);}
++    if(!((perf==1 && bus==4) || (perf==s->target_perf && bus==s->target_bus)))return false;
++    struct a630_channel_snapshot r={0};
++    if(!a630_perf_read_state(io,&r,s->perf,s->bus))return a630_perf_fail(s,&r);
++    if(perf==s->perf && bus==s->bus)return true;
++    if(!a630_ch_write(io,&r,2,A630_POST_ACK,0) ||
++       !a630_ch_write(io,&r,2,A630_POST_PERF,0x30000000u|perf) ||
++       !a630_ch_write(io,&r,2,A630_POST_BW,bus) ||
++       !a630_post_oob(io,&r,23,31) ||
++       !a630_ch_read(io,&r,2,A630_POST_RETURN,&s->returned))return a630_perf_fail(s,&r);
++    if(s->returned){r.error=A630_CH_FW_ERROR;r.failed_offset=A630_POST_RETURN;
++        r.actual=s->returned;return a630_perf_fail(s,&r);}
++    if(!a630_ch_write(io,&r,2,A630_CH_INTR_SET,1u<<31) ||
++       !a630_perf_read_state(io,&r,perf,bus))return a630_perf_fail(s,&r);
++    s->perf=perf;s->bus=bus;s->polls=r.polls;s->transitions++;return true;
++}
++static inline bool a630_perf_desired(struct a630_perf_state *s,uint64_t now,
++    uint64_t activity,uint32_t *perf,uint32_t *bus)
++{
++    if(!s || !s->armed || s->stopped || s->fault || !perf || !bus)return false;
++    if(!now || now<s->last_ns || activity>now || now>UINT64_MAX-A630_PERF_COOL_NS) {
++        struct a630_channel_snapshot r={.error=A630_CH_ARGUMENT};return a630_perf_fail(s,&r);
++    }
++    s->last_ns=now;
++    bool high=activity && now-activity<=A630_PERF_IDLE_NS && now>=s->cool_until;
++    if(s->high_since && now-s->high_since>=A630_PERF_HIGH_NS) {
++        high=false;s->cool_until=now+A630_PERF_COOL_NS;
++    }
++    if(high){if(!s->high_since)s->high_since=now;}else s->high_since=0;
++    *perf=high?s->target_perf:1;*bus=high?s->target_bus:4;return true;
++}
++static inline bool a630_perf_stop(struct a630_perf_state *s,
++    const struct a630_channel_io *io,bool quiescent)
++{
++    if(!s)return false;
++    if(!s->armed)return !s->fault;
++    s->stopped=1;
++    return a630_perf_change(s,io,1,4,quiescent);
++}
++#endif

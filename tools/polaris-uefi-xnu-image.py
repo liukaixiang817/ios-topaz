@@ -50,6 +50,16 @@ def admit(driver,qemu,ci,profile,preflight):
             inventory.get('passed') is not True or inventory.get('target_index')!=22 or
             inventory.get('target_requested_Hz')!=2649600000 or not inventory.get('actual_native_log_sha256')):
             raise ValueError('stock performance needs physical inventory and actual virtual guard refusal')
+    gpu_mode=driver.get('GPU_stock_request',0)
+    if gpu_mode!=qemu.get('GPU_stock_request',0):
+        raise ValueError('physical and virtual GPU stock request intent must match')
+    if gpu_mode:
+        inventory=driver.get('GPU_stock_inventory') or {}
+        if (type(gpu_mode) is not int or gpu_mode not in (1,2,3) or count!=4 or
+            qemu.get('checks',{}).get('native_GPU_stock_refused_before_virtual_MMIO') is not True or
+            inventory.get('passed') is not True or inventory.get('baseline_PERF')!=1 or inventory.get('baseline_BW')!=4 or
+            not inventory.get('actual_log_sha256')):
+            raise ValueError('GPU stock request requires physical baseline and actual virtual guard refusal')
     if (qemu.get('passed') is not True or qemu.get('release_handoff_admitted') is not True or
         qemu.get('diagnostic_legacy_only') is not False or not qemu.get('checks') or
         not all(v is True for v in qemu['checks'].values()) or qemu['checks'].get('bounded_input_handshake') is not True or

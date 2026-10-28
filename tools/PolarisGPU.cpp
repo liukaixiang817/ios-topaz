@@ -31,6 +31,9 @@ extern "C" {
 extern "C" void polaris_cpu_performance_activity(void);
 extern "C" bool polaris_gpu_last_submit_us(uint32_t,uint64_t *);
 extern "C" bool polaris_gpu_clock_snapshot(uint32_t *,uint32_t);
+extern "C" bool polaris_gpu_performance_configure(void);
+extern "C" bool polaris_gpu_performance_tick(uint64_t,uint64_t);
+extern "C" bool polaris_gpu_performance_restore(void);
 #define GPU_BUFFERS 4096u
 #define GPU_MAX_BO (128u << 20)
 #define GPU_MAX_BYTES (384ull << 20)
@@ -47,6 +50,30 @@ static bool gpuMethodPerformance; /* existing explicit polarisperf=1 only */
 static uint32_t gpuSubmissions, gpuSurfaces;
 static uint32_t gpuDesktopAttempts,gpuDesktopSubmissions;
 static uint32_t gpuRender[8],gpuRenderPublished;
+static uint64_t gpuStockActivity;
+static bool gpuStockEnabled;
+static uint64_t polaris_gpu_stock_now(void)
+{
+    uint64_t ns=0;absolutetime_to_nanoseconds(mach_absolute_time(),&ns);return ns;
+}
+extern "C" void polaris_gpu_performance_poll(void)
+{
+    if(!gpuLock || !__atomic_load_n(&gpuStockEnabled,__ATOMIC_ACQUIRE))return;
+    IOLockLock(gpuLock);
+    if(__atomic_load_n(&gpuStockEnabled,__ATOMIC_ACQUIRE) &&
+        !polaris_gpu_performance_tick(polaris_gpu_stock_now(),
+            __atomic_load_n(&gpuStockActivity,__ATOMIC_ACQUIRE)))
+        __atomic_store_n(&gpuStockEnabled,false,__ATOMIC_RELEASE);
+    IOLockUnlock(gpuLock);
+}
+extern "C" bool polaris_gpu_performance_shutdown(void)
+{
+    if(!gpuLock)return true;
+    IOLockLock(gpuLock);
+    __atomic_store_n(&gpuStockEnabled,false,__ATOMIC_RELEASE);
+    bool ok=polaris_gpu_performance_restore();
+    IOLockUnlock(gpuLock);return ok;
+}
 static uint32_t gpuPerformance[10],gpuPerformancePublished;
 static bool polaris_gpu_performance_report(unsigned kind,const struct pgpu_perf_notice *p)
 {
@@ -780,6 +807,9 @@ IOReturn PolarisGPUUserClient::externalMethod(uint32_t selector,IOExternalMethod
     }
 done:
     if(selector==0x46 && result==0)polaris_cpu_performance_activity();
+    if(selector==0x46 && result==0 && callerKind==2 &&
+        __atomic_load_n(&gpuStockEnabled,__ATOMIC_ACQUIRE))
+        __atomic_store_n(&gpuStockActivity,polaris_gpu_stock_now(),__ATOMIC_RELEASE);
     if(result==0){memcpy(a->structureOutput,&r,size);a->structureOutputSize=size;}
     if(profile) {
         clock_get_uptime(&ended);
@@ -793,6 +823,10 @@ IOReturn PolarisGPUUserClient::clientClose()
     IOLockLock(gpuLock);
     if(!closed) {
         closed=true;
+        if(callerKind==2) {
+            __atomic_store_n(&gpuStockEnabled,false,__ATOMIC_RELEASE);
+            if(!polaris_gpu_performance_restore())poison();
+        }
         if(!polaris_gpu_quiescent())poison();
         for(unsigned n=0;!quarantined && n<GPU_BUFFERS;n++)if(buffers[n].memory)drop(n+1);
         if(!quarantined){gpuOpened=false;__atomic_store_n(&gpuOpenStatus,0,__ATOMIC_RELEASE);}
@@ -810,6 +844,9 @@ extern "C" void PolarisGPUStart(void)
 {
     if(!polaris_gpu_ready() || gpuLock)return;
     gpuLock=IOLockAlloc();if(!gpuLock)return;
+    uint32_t stock=0;PE_parse_boot_argn("polarisgpup",&stock,sizeof(stock));
+    if(stock && polaris_gpu_performance_configure())
+        __atomic_store_n(&gpuStockEnabled,true,__ATOMIC_RELEASE);
     uint32_t wc=0;PE_parse_boot_argn("polarisgpuwc",&wc,sizeof(wc));gpuWriteCombined=wc==1;
     uint32_t perf=0;PE_parse_boot_argn("polarisperf",&perf,sizeof(perf));gpuMethodPerformance=perf==1;
     IOLog("POLARIS GPU WC: owned GEM trial=%u; imported IOSurfaces remain cached\n",(unsigned)gpuWriteCombined);

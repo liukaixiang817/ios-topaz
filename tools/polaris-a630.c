@@ -922,6 +922,22 @@ static void a630_worker(void *arg __unused,wait_result_t wr __unused)
 void polaris_a630_init(void)
 {
     unsigned mode=0;PE_parse_boot_argn("polarisgpu",&mode,sizeof(mode));
+    unsigned stock=0;PE_parse_boot_argn("polarisgpup",&stock,sizeof(stock));
+    if(stock) {
+        uint32_t cow=0,rw=0,marker=0,quiesce=0;
+        PE_parse_boot_argn("polarisramcow",&cow,sizeof(cow));
+        bool has_rw=PE_parse_boot_argn("ufsrw",&rw,sizeof(rw));
+        PE_parse_boot_argn("polarisownedmarker",&marker,sizeof(marker));
+        PE_parse_boot_argn("polarisquiesce",&quiesce,sizeof(quiesce));
+        /* Reject virtual/foreign cores and conflicting write modes BEFORE
+         * even queuing the original GPU worker or accessing its hardware.
+         * The worker still independently validates original DT/firmware. */
+        if(!a630_perf_intent(stock,mode,cow,has_rw,rw,marker,quiesce,
+            __builtin_arm_rsr64("MIDR_EL1"),__builtin_arm_rsr64("MPIDR_EL1")&0xffffffULL,
+            __builtin_arm_rsr64("CNTFRQ_EL0"),true)) {
+            printf("POLARIS GPU STOCK: REFUSED platform/mode before GPU MMIO\n");return;
+        }
+    }
     if(mode<1||mode>9||__atomic_exchange_n(&a630_started,1,__ATOMIC_ACQ_REL))return;
     a630_mode=mode;
     PE_parse_boot_argn("polarisgpuclient",&a630_client_requested,sizeof(a630_client_requested));
