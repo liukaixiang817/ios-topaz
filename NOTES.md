@@ -34,6 +34,163 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0102 physical VALID-retry + real hard-budget COMPLETE; phone RUNNING Settings
+
+- CURRENT0102/phone-gpu-thermal-0102-0001 LEFT RUNNING Settings. ONLY0102/
+  control-phone.py ACTION NEWDIR; lateststate keepalive2122 actualPASS kernel-entered. 100scrollworker69054 ENDED21:16:55, ALL100passedACK20..1820 plus
+  unlock/tap0..20, no activeUSB/CI/model/collector. Allold0101/0100 casesENDED.
+  Do not repeatboot/start/inputworker or useoldcontroller. OrdinaryRAM30min
+  lease: targetedstate keepalive; fullyreadycandidate only then nativeend.
+- physical-VALID-retry-and-real-hard-budget-proof.json rehashes102consumed
+  inputs/9actuallyviewedimages/five rawlog+frame/native/panel/temperature sets,
+  wholeCI/newkernel/model154/previousnativeclosure. Fourbig64callbacks64remote,
+  GPUactualGLSL/GMEM/icon ALL4096PASS. Initialhome0002 andSettings0003 are
+  animations despite labels; retained, NOT stableUI proof. Fivegroupends full
+  Settings text/icons actuallyviewed, warmup includespossibleSettingsentry.
+- ActualSEVEN successful13READ/mask2,4,2,4,1,80,20 recoveries logged at
+ 331570058/376946869/484848483/628282921/645946488/675321184/714382911us.
+  ALL acceptedwordsVALID, ZERO retainedTSENSerror lines and ZERO sensorLOW
+  reason3 during controlledcontact span. Not merely syntheticVM/hostACK.
+  Earlier startup/idleGATEfrozen records retained, not erased/ignored.
+- 4291completeframes,144actual6sensor contactobservations; maxCPU71.7C/GPU53.5C, no loggedhot in
+  controlledwindow. Same20warm/20measured and60extension as0101, one run each
+  NOT repeated stability. Measured921frames median14.710ms/p9516.601 vsold
+ 804frames14.728/33.852; over16.66743/921 vs154/804. periodmedian17.502/gap
+ 2.4055ms; copymedian6.312ms/readywait33us. Not hardwareVSYNC/FPS ceiling.
+  Native13completewindows ratio validation.063/cachepre1.044/submit6.410/
+  cachepost1.054ms; execute_idle6.218SUBSET ofsubmit includespoll/preemption.
+- Fivegroupframe medians14.452/14.710/14.948/15.144/14.936ms, p9516.467/
+ 16.601/18.958/36.167/19.098ms. Crucial remaining slowextended2 is actual
+  hardGPUbudget: firstconfirmedcycle541043080us, low661044355us=120001275us,
+  cooling1/reason5/fault0; nextconfirmedHIGH671044627us after10000272usLOW.
+  Includesbriefidle lowrequests, NOT uninterrupted120s high residency.
+  Fixedprior1s framesmedian14.7705ms vsfollowing32.818ms. EveryactualGATEin
+  groupwindowALLOW, so this one is boundedexperimental expiry, not sensorfault
+  or high-temperature evidence. This REALhardwareelapsedbudget/cooldown now
+  proved; old0101 neverreached120s remains truehistorically.
+- Source17b0ab5d1495a2f897b178e14eb4ff204a7ea42a/CI40767220352/job123094489435
+  kernel44c86834eefcaf95fef27282b3fa81b4749a723befe1609bbd7f98d652a91828 all
+  exactsource/profile/artifactCRC/SHA; full154actualnativechecks39/36/38/41
+  PASS; no nativecode change since, DO NOT rebuildCI for docs/analysis.
+- RemainingNOT60: fixed120s/10s experimental cap, unchangedCPU30s/10s and
+  ~2.4ms gap after14.7ms rendering. ControlledUSBpause rates aren't throughput
+  or scanoutHz. NEXT separate defaultOFF thermal-valid bounded longer-GPU
+  trial DESIGN first (retain absolute hardcap/confirmedlow/idle/hot/failure
+  fallback/ownership/native restore; do not justremove guards). Keep original
+  CPUguard initially for isolation; source review meaningfulfaulttests+TUs/CI/
+  actualnative then physicallongAB. In parallel inspect known gap timestamps,
+  no invented nextPresent=end+interval bug or unsupportedDMA shortcuts.
+  No newlonger-policy code/candidate/CI currently exists; don't claimready.
+- Phone remains original16GiBbaseRO+512MiBRAMCOW, no Android/storage/PMIC/
+  NVRAMwrites or rawfallback. Old0101 genuine nativeend andactualFASTBOOT
+  proof bound; new0102 is active, not shut down. Othergoals stilldeferred.
+
+### CURRENT0102 RUNNING Settings;100scrollworker69054 IN PROGRESS
+
+- CurrentONLY0102/control-phone.py. UnlockACK0..18 and Settingstap18..20
+  actuallyconsumed. capture0002-home-stable and0003-settings-stable labels
+  are inaccurate: BOTH captured animation/partialcard/icontransition, retained
+  unchanged, NOT stableUI proof. Warmup groupend then measured groupend
+  actually viewed fullSettings text/icons; compare MEASURED afterwarmup, not
+  claim initial transition is rendering regression or fullcorrectness.
+- Single100scrollworker69054 actual67/100 at21:15:58, warmup/measured/extended1
+  groupends passed, extended2active. Do NOT send concurrentUSB/state/capture
+  or duplicateinputworker. Allgroups100 mustfinish before independentanalysis.
+  Real retry evidence already THREE successful bounded13READ/mask2,4,2 at
+ 331570058/376946869/484848483us (prior logs cumulative). AllacceptedwordsVALID,
+  not device syntheticVM. Not yet whole-run cooldown/frame/sustained60 proof.
+- Old0101 ended natively/actualFASTBOOT, newCI/kernel/models154 fullypassed.
+  No storage/Android/rawfallback/PMICwrites. Leave current running, no reboot
+  until completedtest and decision. PTE5s value-change refusal/CPUfixedguard/
+  hard120s may still limit performance: must measure, not assume fixed60.
+
+### CURRENT0102 actualLOCKSCREEN; unlock/home capture IN PROGRESS
+
+- Capture0002-GUI-wait actually viewedLOCKSCREEN21:11:39UTC; GPUactualGLSL/
+  GMEM/icon ALL4096 three checksPASS, no panic/quarantine. Fourbigcallbacks64
+  remote64. No retryrecords yet (not a recovery proof). Bootconsolecapture0001
+  retained as early stage, not failedboot. ONLY0102/control-phone.py.
+- unlock0001 limited700ms swipe5402155->540800 then capture0002-home-stable
+  JUSTSENT, one sequentialUSBworker; wait/inspect actualconsumedACK+screen
+  beforeSettings tap655775. Then Settingscapture0003 and run100scroll, no
+  concurrentstate/capture. Allold0101trial already native-ended. Samekernel
+  CI154checks and newboot proven, no file/storage/PMIC writes.
+
+### CURRENT0102 RUNNING bootconsole; awaiting actual lockscreen, no duplicateboot
+
+- Newkernel-start0001 actualBOOT command21:07:00.229787->21:07:30.207305UTC
+  succeeded fromwaiting-payload toAP-start-pending. Capture0001-retry-startup
+  actualviewed21:09 bootsystemservices/TSENS, NOT lockscreen. Real native4big
+  callbacks64 remote64 (thisrun64, not old48), TSENS/GPUthermalarmed/error0;
+  no panic/runtimequarantine. No physicalretryrecord yet, not success claim.
+- CURRENT0102/phone-gpu-thermal-0102-0001, ONLY0102/control-phone.py ACTION
+  NEWDIR. Capture0002-GUI-wait25s justsent, activeUSBtransaction, do NOT send
+  anothercommandconcurrently. Kernel/boot eachsentonce; all0101/0100trials
+  ENDED. OrdinaryRAM30minlease; directed state/captures keepalive. Wait for
+  actual lockscreen (boot can be slow), do not mistake bootconsole for panic.
+- previous0101-native-end-and-actualFASTBOOT-proof.json independently binds
+  genuineVFS0busy0/requestrestore/peersOFF/RAM_DRAINED6275025405seq1mode2 and
+  newactualFASTBOOT21:05:37/ONEnewUEFIRAM/ONEnewkernelstart. FullCI40767220352
+  source17b0ab5/kernel44c86834...+154actualnativechecks/original81FW/wholeEDK2
+  decode allpassed. No rawfallback/keys/Android/PMIC/storage/NVRAM writes.
+- NEXT viewnewcapture and actualpixel/GUI evidence, then bounded unlock/tap/
+  100scrollscript withrealACK and all5group captures; noother concurrentUSB.
+  Same exact606Bcmdline/GPUbundle/ADT/4big/WC/RAMCOW as0101, only kernel retry
+  changes. Actualsensorretry/frame/panel/temperature/restore evidence needed;
+  no claim sustained60/physical120s fromsyntheticmodel.
+
+### CURRENT0102 originalUEFI RAMboot sent; unique kernel-start0001 IN PROGRESS
+
+-0101 ENDED truly native21:04:53UTC: token6275025405/seq1/mode2/phase3/error0/
+  RAM_DRAINED80000003, actualVFS0busy0, GPU1/BW4 restorederror0 then CPUrequest0
+  restored1/saved0/error0, physical600/500/400 actualPSCI_OFF/coordinator700.
+  Fullshutdown-kernel.log SHA matches result; no rawfallback/Android/keys/writes.
+-0102 boot-phone.py independentlyactualexpectedPolaris FASTBOOT query
+  21:05:37.749264UTC then ONE originalUEFI RAMboot21:05:37.804708. New
+  state-before-kernel0001 PASS waiting-payload. Unique0102/control-phone.py
+  boot kernel-start0001 --payload justsent21:06UTC, activeUSBtransaction.
+  Do not duplicateboot/start or sendstate/capture concurrently. ONLY0102
+  controller aftertransaction ends; all0101/0100 oldcases ended.
+- Newsource17b0ab5/fullCI40767220352/kernel44c86834.../154actualnativechecks/
+  strictadmission/original81FW/realEDK2wholedecode allPASS. Same606Bargs and
+  originalGPU/ADT/4big/WC/rootRO512MiBRAMCOW; only VALID retrykernel change.
+  NEXT actualkernel result then screenshots/realretry+temps/frame/input and
+  longscroll; native model not physicalretry or sustained60 proof.
+
+### 0102 fully admitted RAM candidate READY; old0101 native-end IN PROGRESS
+
+- All newkernel four actualSERIAL EFI/XNU tests ENDED/PASS154checks:39/
+  38.272785s,36/38.189945s,38/38.175156s,41/38.266277s. New native retry VM
+  executed12/24/36READ accepted and all-invalid/critical/read-failure refused;
+  explicit synthetic words, not physical sensor recovery. Aggregate newproof
+  actual-native-GPU-thermal-and-valid-retry-proof.json binds completeCI40767220352
+  source17b0ab5/kernel44c86834eefcaf95fef27282b3fa81b4749a723befe1609bbd7f98d652a91828.
+- 0102/phone-gpu-thermal-0102-0001 prepared offline, exact606Bargs unchanged
+  from0101, oldGPUbundle/ADT/4big/WC/cache/rootRO512MiBRAMCOW/ufsrw0 preserved.
+  Strict admission and original81FW/actualoriginal EDK2 wholedecode passed.
+  boot-phone --offline-check PASS21:04UTC; NOnew boot or kernelstart yet.
+- CURRENT0101 native-end-for-0102-0001 shutdown-fastboot JUSTSENT, ongoingUSB
+  transaction. Do not send state/capture/reset/duplicate shutdown concurrently.
+  Read actualresult/fullnative log, verify VFS0busy0/requestrestore/allpeersOFF/
+  matchingRAM_DRAINED then independentlyquery realexpectedPolaris FASTBOOT.
+  Only then ONEnew0102 boot-phone.py and state then boot --payload. No raw
+  fallback/Android/physicalkeys/storagewrites permitted by this plannedtest.
+
+### 0102 fullCI SUCCESS; sequential actual retry-native regressions RUNNING
+
+- Exactsource17b0ab5d1495a2f897b178e14eb4ff204a7ea42a fullmacOS27/Xcode27
+  CI40767220352/job123094489435 SUCCESS20:59:18UTC. New out-polaris-0102
+  kernelSHA44c86834eefcaf95fef27282b3fa81b4749a723befe1609bbd7f98d652a91828
+  exactsource/profile/artifactCRC/SHA verified. Singlecollector4044 now runs
+  SERIAL realEFI/XNU fourcases; firstthermalON39/38.272785s and control36/
+  38.189945s passed, stale/peer refusal pending. All require newnative VALID
+  retry probe; no physical sensors/clockMMIO in genericVM. Do not duplicate.
+- Physical preparation scripts/payloadcode present OFFLINE only, not executed.
+  Require complete new aggregate/CI/wholekernel before newpayload/image. Same
+  exact606Bargs as0101, sameGPUbundle/ADT/WC/cachedsurface/RAMCOW; only kernel
+  retry core changes. No newphonecase/start. CURRENT0101 Settings stillrunning,
+  latestkeepalive2100PASS. Use ONLY0101 state until ready to safely finish.
+
 ### 0102 source17b0ab5 fullCI40767220352 IN PROGRESS; phone still0101
 
 - Source17b0ab5d1495a2f897b178e14eb4ff204a7ea42a committed/pushed. One full
