@@ -34,6 +34,57 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### HUMAN INSPECTION ACTIVE: iOS lock screen confirmed; no automatic device tests
+
+- Humanrequested00:20UTC“请你启动iOS供我检查”. ThisOVERRIDES subsequent
+  physicaltesting: leavephoneON, noautomaticshutdown/reboot/input/storage
+  trial untilhumanindicatesinspectionfinished. Offline0079workmaycontinue.
+- phone-inspection-0078-0001 ordinaryproven0078dualCPU/RAMCOWpayload is
+  byte-identicalto priorreadonlypayload. No marker/nativewrite mode. Fresh
+  expectedFASTBOOT +marker-readback-0001 wholebaseline used; originalUEFI
+  RAMimage81oldfirmware files preserved andactualoriginalEDK2decodedverified.
+  RAMboot00:23:17UTC, hostkernelACK+USBnormal. capture-0001 actualservices;
+  capture-0002 REAL lockscreenviewed00:26:48UTC(time/battery/homebar), nopanic.
+  human-inspection-state.json SHA-bindsrealimage/log/record. Noinjection,
+  nohumaninputclaim/noautomaticunlock. Humannotifiedready00:27UTC.
+- Currentphone is RUNNINGiOS, NOTFASTBOOT. DO NOTrepeatboot/readback/marker/
+  CPUtrial orshutdownonoldhandoff. Keepsessionalive: onheartbeatdoONEbound
+  directedstate query via control-readonly-phone-inspection.py withNEWoutput
+  directory; latesthostcommand00:26:48UTC. OrdinaryRAMlease returnsFASTBOOT
+  after1800swithoutcommands; keepaliveevery15minpreventsinterruptinghuman.
+  No oldcontinuousUSBobserverrestart. DonotparallelUSBtransactions.
+- Afterhumanfinishesinspection, nativeRAMshutdownandindependentactualFB
+  beforefurtherphysicalwork; latestfullROroot/map/GPT/ESP/header baseline
+  marker-readback-0001 00:11UTC remainsvalidwhilecontrolledRAMonly, ifunknown/
+  AndroidthenrepeatROaudit. No fullpersistentroot claim.
+
+### 0079 bounded runtime-file adapter offline component COMPLETE, not integrated
+
+- Newshim/polaris/runtime-file.h consumesALREADYliveverified/disjointcanonical
+  owner, clampssingleextent/fs/LBA32/bouncebounds, partial4KiB READ/MERGE/WRITE,
+  reportsactualprefixresidual andstopsread/writefailure. NativecallerMUSThold
+  sameUFSmutex andcallbackMUSTindependentlygateCDB/reportrealcompletion.
+  Doesnotopenadevice, registerBSDroot orgrantgenericwrites/resetpermission.
+- Nonterminalrunning/requested cacheflush capturescookie/phase/writeepoch,
+  excludesnewdataIO, advancesflushedepochONLYafterreportedactualcompletion,
+  neverentersSAFE; laterwritesdirtyagain. Unknowncompletionkeepsinflight
+  andstickyFAILED; error/stalecookie/changedepoch/phase/pendingdata refuse.
+  Finalpost-unmountsealedflush/CPUparkingstillmandatoryindependently.
+- ASan/UBSanactualCoffline testsPASS:2000randomfragmentedRMWrequests against
+  independentbyte-reference andWHOLEsyntheticmemory-LUNcomparisons, extent
+  boundaries, fullblockno-read, partialRMW/readfail/writefail/prefixresidual,
+  owner/bounds/overflow/haltrefusals;20write/syncepochs neverSAFE, requested
+  syncandfinalflushseparate,7completionfaultcasesstickyrefuse. Combinednew+
+  existingquiesce/markerprotocol9testsPASS2.028s. Appleclang27AArch64baremetal
+  freestandingobjectcompiledWall/Wextra/Werror. offline-runtime-file-checks.json
+  bindssources/object; thisisNOTnativeUFS/HFS/phonepersistenceevidence.
+- No kernel/profile/firmwaremodified, noCIneeded. NEXTintegrateexplicitNEW
+  runtime root mode/guard/hostprotocol andactualownedHFS-root fixture after
+  reviewingnativeUFS. ReferenceHackiOS usesdedicateddarwinGPT+EFIblockservice;
+  cannotcopyitsGPTwritebounds/EFIownership tothisnativeext4-ownedfile. Its
+  flushreturnisnotchecked; oursrequiresactualsuccessfulnativeSYNCcompletion.
+  No16GiBfileallocationornewphonewrites. Physicalworkholdforhumaninspection.
+
 ### 0078 physical native small-file persistence COMPLETE; phone FASTBOOT, no active trial
 
 - physical-native-owned-marker-persistence-proof.json PASSED: correctedcase
