@@ -94,6 +94,16 @@ int main(){PolarisMethodMeter m={},old;
   assert(b.auth+b.dispatch+b.lock+b.body==b.total&&b.maximum<=10);
  }
  assert(m.calls==5000&&calls==5000&&total==50000);
+ /* Emit the actual native formatter, then consume it with the host parser.
+  * Diagnostic numbers are synthetic callback inputs, never GPU proof. */
+ used=0;logs[0]=0;gpuStageMeter={};PolarisMethodMeter roundtrip={};
+ for(unsigned n=1;n<=100;n++){
+  uint64_t start=1000000000ull+n*10000000ull;
+  uint64_t stamp[5]={start,start+1000,start+4000,start+16000,start+19000};
+  assert(polaris_gpu_stage_record(&gpuStageMeter,stamp,core,true,&bytes));
+  (void)polaris_gpu_method_record(&roundtrip,0x46,0,start,start,start,start,stamp[4]);
+ }
+ polaris_gpu_method_flush(&roundtrip,3000000000ull);puts(logs);
  return 0;
 }
 '''
@@ -101,7 +111,17 @@ int main(){PolarisMethodMeter m={},old;
             p = Path(directory); (p/'test.cpp').write_text(source)
             subprocess.run(['/usr/bin/clang++', '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror',
                             '-fsanitize=address,undefined', str(p/'test.cpp'), '-o', str(p/'test')], check=True)
-            subprocess.run([str(p/'test')], check=True)
+            run=subprocess.run([str(p/'test')], check=True,capture_output=True,text=True)
+            import importlib.util
+            spec=importlib.util.spec_from_file_location('latency_roundtrip',ROOT/'tools/polaris-frame-latency.py')
+            parser=importlib.util.module_from_spec(spec);spec.loader.exec_module(parser)
+            frames='\n'.join(f'tl: g {n} began {n*50000} ended {n*50000+40000} 1' for n in range(1,61))
+            result=parser.analyze(run.stdout+'\n'+frames,0,4000000)
+            self.assertEqual(result['complete_all_submit_phase_windows'],1)
+            self.assertEqual(result['all_submit_phase_totals']['submits'],100)
+            self.assertEqual(result['all_submit_phase_totals']['core_missing'],0)
+            self.assertFalse(result['hardware_scanout_FPS_proven'])
+            for line in run.stdout.splitlines():self.assertLessEqual(len(line.encode())+1,255)
 
     def test_permission_and_completion_checks_still_precede_observation(self):
         text = (ROOT/'tools/PolarisGPU.cpp').read_text()

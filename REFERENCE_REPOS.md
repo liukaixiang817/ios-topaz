@@ -143,6 +143,27 @@ full core decomposition is explicitly unproven. The host parser now rejects
 missing or duplicate fields. Split future stage records below that bound
 rather than treating missing timing as zero.
 
+## Live GPU clock diagnostics (profile0887)
+
+The native observer runs only after successful completed desktop submissions,
+under the same existing GPU lock and explicit performance diagnostics. It
+reads the original GMU request/return mailboxes and two fixed GPUCC snapshots;
+no arbitrary offsets, writes, clock changes or counter programming are exposed.
+The host requires full read masks, matching timestamp groups, stable PLL/RCG
+state, a known original parent and a locked/running Fabia PLL. It follows the
+pinned MiCode16-bit fraction, post-divider and RCG HID integer rounding order.
+A configured clock inferred from these registers is still not instantaneous
+frequency, utilization or proof a request has been executed. A configured rate
+below its requested floor remains explicitly distinguishable.
+
+All native diagnostic records now fit255 bytes including newline, even with
+maximum-width integer fields; split parts require matching identifiers and
+no omissions/duplicates. The actual native C++ formatter has been compiled
+under sanitizers and its output consumed by the host phase analyzer. These
+synthetic callback inputs validate the protocol, not physical GPU performance.
+Kernel source972b065/full CI40660265209 adds this observer; physical results
+must be checked in NOTES.md before claiming a live GPU frequency.
+
 ## Where to look
 
 Paths in this table are relative to the corresponding reference checkout.

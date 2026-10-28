@@ -34,6 +34,32 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0092 full CI PASSED; clock decoder/native-format roundtrip verified
+
+- Native972b065983898eefee55f2a7d2fafc2dc0e8fc78 pushed; fullmacOS27/Xcode27
+  CI40660265209/job122721246081 SUCCESS. Kernelartifact download/hashverify
+  pending/inprogress; do notinferbootreadyuntilactualmodels/source/profile/
+  CRC/SHA/EDK2 allcomplete. PHONEstillFASTBOOT,no0092physicalbootyet.
+- tools/polaris-gpu-clock.py standaloneROlogdecoder nowvalidated3tests:
+  all8factoryrates, integerFabia16bitfraction/postdivide/RCGHID order,
+  unknownparent/mode/L/fraction/divider/update/unlocked/unstable/partial/
+  duplicate/missing/overflow rejection. SameendRO+A+B required, no inferred
+  zero. Configuredrate belowrequestedfloor explicitlyreported(notfake
+  success); instantaneousHz/GPUbusy/scanoutneverproven. No nativechangefrom
+  thishosttool. PinnedownGPUCC/alphaPLL/RCGsourceGitblob/localSHA reverified.
+- NativeformatteractualASanC++fixture nowroundtripsitsrealIOLog output
+  throughhostfullphaseparser:100syntheticnativecalls/completeparts/counts
+  verified, noHWclockproof(mockexplicitlyok0).23combinedASan/UBSan/decoder/
+  nativeIO/meter/phase/cache/RO/IIGchecksPASS3.427s. Firstlegacyfixturecompile
+  failurefixedbydeclaredno-HWobserver; never countedthatfailurepositive.
+- NEXT0092 download-kernel.py(actualsuccessfulCIonly), then
+  run-four-core-regression.py fourstock-success/peer-refused/pair/stale and
+  prove-four-core.py. Allsource972/CI40660265209, k92. Physicalpayload from
+  same0091CPUstock2/606B+same4big/GPU/WC; nowaddsONLY completeboundedphase
+  andfixedROGMU/GPUCCobserver. prepare-phone/boot/control/run-scroll scripts
+  offlinepreparedforphone-live-GPU-clock-0092-0001. Do notbootuntilready;
+  actualOSMstockrestore/shutdownstillrequired. NoGPUDVFSchangeimplemented.
+
 ### 0092 diagnostic source READY: bounded complete records + owned live GPUCC reads
 
 - PHONEstillactualPolaris FASTBOOT, readonlyconfirmed08:37UTC. No newphysical
