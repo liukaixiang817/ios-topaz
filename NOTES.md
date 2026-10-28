@@ -34,6 +34,52 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0097 full CI + actual native LCD blank regression PASS; UniXNU reference reviewed
+
+- Native source41e774c609990d6834980f891d967c753e45faed pushed. FullmacOS27/
+ Xcode27 CI40733699293/job122976474380 SUCCESS. Kernel out-polaris-0097 SHA
+299be2d048b7583812f10ac97f29b20afe742bea0b04b2a1c6b92372bab1a6c8 verified
+ exactsource/profile/artifactZIPCRC/SHA. NOnewnativechangessince, no furtherCI.
+- ActualEFI/XNU SERIAL4cases all115checksPASS: keysON29/38.272s, keysOFF27/
+37.756s, stale28/38.075s, peerrefused31/38.342s. SAMEactualnativeworkloop now
+ alsoexecutes newstore-onlyLCDblackhelper, fullcanaries andinvalidrange check
+ ineachcallbackbefore queueexercise; all4native LCD BLANK VM PASS. RealPID1/
+4children/dirtyRAMwriter/input/SMP4/SGI/BSDdrain/VFS0/actualpeerOFForrefusal
+ preserved. actual-native-LCD-black-proof.json bindsallresult/log/manifestSHAs.
+ NoQualcommdisplay/backlightMMIOorphysicalblank-timeprooffromgenericVM.
+- CurrentPHONE0096-0002stillRUNNING, NOTnew0097. keepalive-1730 actualPASS.
+ NOnewphoneboot/shutdown/touch/writes. Humanreportedscanningfade+backlightON,
+ notpendingfeedback. New0097removes expensivepixelsREAD/SIXhalvesONLY; real
+ backlightoff remainsunimplemented. Do notbootanotherpartialtrial justto
+ claimitfixedpower. Next actualWLEDreadonlyidentity/map/configbefore any
+ exactsaved-enablemaskcontrol. See lcd-backlight-integration-design.json:
+ observerEE0 uses80*APID at e600000, WRITEchannel uses10000*APID at c600000,
+ nottheobserverstride; actualownDT/driverbound. Moduleenable d846bit7, saved
+ brightness/config, >=10mssoftstart/OVP/optionalPSM, native/FWmatchedrequests
+ andactualwake/restorechecksstillneeded. NoPMICwritecodeadmittedorperformed.
+- Latesthuman: stillnot60Hz, continueperformanceafterthefunctionalwork;
+ referenceUniXNU/UniXNU, allowsconsideringmorecompleteiOSbootimage. Noorder
+ todiscardexistingroot/data orskipverifieddriverABI. Readonlysourceaudit of
+ main40d21cc65171c3a24faa130a2a8e899f85790485 (1147entrycomplete tree), docs,
+ originalcomponents andactualGopFramebuffer submodule33e941a878dcf01b98dbd9160d798bd56e7551ea
+ sourceNativeGOPPresenter/NativeLegacyDisplay/Wire underignoredunixnu-audit.
+ Noexternalcode/scripts/prebuilts executed. Actualsource explicitlylogical
+ GOPpoweronly, nohardwarepower; shengbacklightKTZ8866/GENII2C differsfromown
+ PMI8998WLED/SPMI. NativeGOPGPUoffer/sequencecomplete/retainedIOSurface and
+ timingqueriesareusefulfutureperformancepatterns. DonotcopyA740PM4/HFI,
+ SM8550DPUaddresses/scanoutSMMU orremoveourfence/idle/auth/unknownDMArules.
+- UniXNUmainOSprofile is iPadOS17.7.11/21H461/XNU10063.141.1, versusour
+ iOS16/XNU8796 ABI. Morecompleteuserland meritsofflineauditofmatching16.x
+ components first; notdrop-innewOSorproofWLAN/audiohardwareworks. NoIPSW
+ downloadorrootreplacementyet. Theiruserdataimageflashinginstructions doNOT
+ authorizeoverwritingours. PreserveAndroid/Windows/alloriginalfiles andbase.
+- NEXT prioritytrueLCDoff/on+physicalwake, WiFi(originalICNSS/SNOC/legacySMEM
+ GLINK+QMI) andaudio(ownADSP/APR/quaternaryMI2S/TAS2559cal), then sustained
+60FPSwithstage/hardwaretiming. Oldpersistentroot/menu remainsdeferred.
+ Progressreport17:28UTC; every15minactualreport andcaseboundstatekeepalive
+ before30minRAMlease. NoactiveCI/model/USBtransaction. Needupdateheartbeat
+ promptwiththisnewhandoff; donotwaitoldhumanquestionorstartoldbootcases.
+
 ### 0097 store-only LCD black candidate local PASS; backlight still separate
 
 - Added profile0892 replacing ONLYPolaris's six volatilepixelread/halvepasses

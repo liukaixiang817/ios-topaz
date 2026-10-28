@@ -11,6 +11,7 @@ their build/setup scripts or prebuilts has been executed.
 | [HackiOS kernel](https://github.com/oosexgang/hackios-xnu-kernel) | `research/reference-repos/hackios-xnu-kernel` | `d82c64a3a31cd27a0a0afbf6e213e467e44b1b4c` |
 | [HackiOS userland](https://github.com/oosexgang/hackios-xnu-userland) | `research/reference-repos/hackios-xnu-userland` | `a79ff0772a3454fd1ef127e181e5b3bce6c9ce18` |
 | [User-supplied alioth port](https://github.com/MrMoxing/ios-alioth) | `research/reference-repos/ios-alioth` (shallow source reference) | `2f9207ca27f9b0fad480702e587b88dcc7271ec9` |
+| [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 
 ## Alioth CPU/GPU comparison (2026-10-28 local)
 
@@ -593,3 +594,39 @@ isolation cases pass. This is not an atomic remote snapshot, lock, SMEM item
 reader/allocator, GLINK/QMI transport, radio startup or working Wi-Fi/audio.
 The phone's original SmemDxe getter ABI and safe mapping still need binding
 before physical read-only diagnostics; no such access is claimed here.
+
+
+## UniXNU display, backlight and OS correspondence (2026-10-29 local)
+
+The user supplied UniXNU as a further60FPS reference and permitted considering
+a more complete iOS boot image. The read-only audit pins main40d21cc65171c3a24faa130a2a8e899f85790485,
+its complete1147-entry tree, selected docs/profiles/catalog and actual
+GopFramebuffer submodule33e941a878dcf01b98dbd9160d798bd56e7551ea. Sources are
+Gitblob-verified under the ignored audit directory; no scripts or binaries ran.
+
+The actual NativeGOPPresenter offers one retained frame, hands its mapped
+buffer to the GPU client and matches sequence-tagged completions. Its client
+loss path abandons the outstanding swap. NativeLegacyDisplay discusses
+pipelining retirement separately from GPU transfer completion. These are useful
+references for our remaining serialized render/copy and frame-gap investigation;
+retirement must not release or reuse our source BO before actual DMA completion.
+Do not transplant A740 PM4/HFI, SM8550 DPU/SMMU addresses or its policy requests
+to this A630/SD845 phone. The reference distinguishes requested timer rate from
+actual display counters; its generic GOP power states explicitly make no
+physical panel/backlight power claim.
+
+Sheng's actual brightness implementation targets KTZ8866 over GENI I2C.
+Our selected original Polaris JDI NT35596S video LCD instead uses PMI8998 WLED
+via SPMI (SID3, ctrl d800/sink d900). Own pinned leds-qpnp-wled.c blob
+dcb3ec986243e17fc81505e602bdfa82a1c39a00 changes module-enable bit7 at ctrl+46
+for zero brightness and retains the level registers, with soft-start and IRQ/
+optional-PSM sequencing. The reference OS-facing backlight interface is useful;
+its hardware transport and register encoding are not this phone's.
+
+The audited UniXNU OS profile is iPadOS17.7.11/21H461 with XNU10063.141.1 and
+new MobileGraphics/IOSurface/IOHID ABI integration. Our current iOS16/XNU8796
+kernel and graphics bundle cannot simply consume that profile or root image.
+First audit a fuller matching16.x userland and preserve verified RAM boot,
+USB and native shutdown. Image completeness alone does not implement the
+ICNSS, DSP or amplifier hardware paths. No Apple image was downloaded, no
+reference code executed and no existing root or partition changed in this audit.
