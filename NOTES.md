@@ -34,6 +34,45 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0095 three-key native/firmware source READY; physical keys not yet tested
+
+- Human priority remains physical lock/power + volume, Wi-Fi and sound FIRST,
+ then return to display jank/60FPS. Persistent root/menu remain deferred.
+- CURRENT PHONE actual expectedPolaris FASTBOOT independently rechecked
+ at2026-10-28T13:05:18.498209UTC, actual-fastboot-readonly-0001.json. No new
+ physical boot, writes, Android activity, pending USB transaction or user action.
+0094 wake0 ended natively; wake1 never booted. Do not revive old controllers.
+- New0890 native opt-in polarisbuttons1 consumes a separate aligned256B key
+ mailbox in the EXISTING resident input thread, dispatches only power/volup/
+ voldown to actual SweetHIDButtons, releases only delivered keys on invalid,
+ stale750ms or native-shutdown input, and never permits arbitrary keycodes.
+ Dedicated firmware CPU0 polls original PM8998 PON0800 and physicalGPIO6c500
+ via v5 EE0 observer READ commands only; no PMIC/pin/reset/pull/IRQ writes.
+ Exact original mapping/version/type/input/enable/pull guards, later-own-EE
+ APID precedence and sticky timeout/denial/mapping failures preserve refusal.
+15ms independent debounce requires each key seen stably released first.
+ Firmware queues16 edges; native ACK +20ms heartbeat prevents held-key stalls.
+ MMIO is defaultOFF and only attempted under masked firmwareCPU0 after the
+ native key service is ready. QEMU uses explicit synthetic3key snapshots,
+ NEVER Qualcomm MMIO, and cannot prove physical switches or user-space lock.
+- Local final28 ASan/UBSan/policy/native-consumer/builder/admission/profile
+ tests PASS6.636s (local-final-0001.log). Real Appleclang27/complete CIheaders
+ compiled polaris_touch.c and SweetHID.cpp successfully. Original0890 overlay
+ reconstructs both exact compiledTUs and private header with0offset/0fuzz.
+ Both real physical/QEMU AArch64 EFI translation units compile -Werror;
+ firmware-compile-only uses a deliberately fake mailbox offset and is NOT an
+ executable/admitted phone artifact. First button-policy test had misleading
+ indentation in the test C source; fixed without relaxing warnings, failed
+ log0001 retained, final policy0002 PASS4/4. Other SPMI/wire/native logs retained.
+- New firmware/builder/packager requires matching explicit three-key intent,
+ independent kernel symbol and actual native consumer edge/ACK/release proof.
+ Full native CI and actual EFI/XNU key-consumer/drain runs still REQUIRED;
+ no new kernel artifact/physical buttons success exists yet. No CI redo unless
+ native source changes; this new0890 DOES need one full kernel CI.
+- Wi-Fi and audio remain original-DT/source correspondence only, not working
+ hardware. Continue original ICNSS/QMI/SLIM/Tavil/TAS routes after keys; do not
+ claim a WiFi switch/PCM buffer or synthetic key snapshots are hardware proof.
+
 ### 0095 HUMAN PRIORITY: physical keys, Wi-Fi and audio BEFORE more FPS work
 
 **Human2026-10-28 12:23UTC explicitly requested: finish normal lock/power and
@@ -62,7 +101,7 @@ OVERRIDES the old performance-first automation and active0094 baseline.**
  not working hardware: existing nativeSweetHID.cpp sweet_hid_key already
  maps power/volup/voldown to consumer events and registers; physical backend
  is missing. OwnPM8998 SID0 PON0x800 forpower+voldown, ownvolumeup DT gpio
- controller0x4c index6 = PM8998GPIO7 peripheral0xc600, active-low, not the
+ controller0x4c specifier6 = PM8998GPIO6 peripheral0xc500, active-low, not the
  reference PMK8350PON0x1300/PM7325GPIO6. OriginalSPMIarb DT core0xc440000,
  observer0xe600000,config0xc40a000,EE0. Need own vendor version/APID/RT and
  inputmode/type checks plus exclusive owner before any read-command writes.
@@ -77,8 +116,11 @@ OVERRIDES the old performance-first automation and active0094 baseline.**
  spmi-pmic-arb + qpnp-power-on + pinctrl-spmi-gpio driver before choosing backend.
  Existing firmware IRQs/Group1 disabled and sole core0 can serialize such
  bounded observer reads between USB polls if proven; do not invent a vtable.
- GPIO key phandle0x371 pinctrl must be resolved exactly (source label may be
- inheritedcamera/home); rawhold-at-boot must never become stuckVolumeDown.
+ GPIO key phandle0x371 pinctrl explicitly namesgpio6. Originalvendor
+ pmic_gpio_of_xlate compares args[0] to pad->gpio_idx=i+1 (one-based hardware
+ IDs, disallowed holes preserved). Initial GPIO7/zero-based interpretation was
+ WRONG and corrected before any hardware access; proof records the rejection.
+ rawhold-at-boot must never become stuckVolumeDown.
 - Wi-Fi ownDT qcom,icnss at0x18800000/8MiB, SMMU stream0x40,12CEinterrupts,
  WCN3990 family expected from ownBT node; actual WLAN firmware/chip identity
  still to verify. Not reference WCN6750/WPSS/ath11k. Need originalICNSS/QMI/

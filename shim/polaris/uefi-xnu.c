@@ -99,6 +99,9 @@ static void invalidate(uint64_t address,uint64_t bytes)
     uint64_t line=cache_line();for(uint64_t p=address&~(line-1);p<address+bytes;p+=line)__asm__ volatile("dc ivac,%0"::"r"(p):"memory");
     __asm__ volatile("dsb sy":::"memory");
 }
+#if EFI_XNU_BUTTONS_AVAILABLE
+#include "uefi-buttons.h"
+#endif
 static int64_t psci(uint64_t function,uint64_t a,uint64_t b,uint64_t c)
 {
     register uint64_t x0 __asm__("x0")=function,x1 __asm__("x1")=a,x2 __asm__("x2")=b,x3 __asm__("x3")=c;
@@ -459,6 +462,9 @@ static void host_activity(void *context)
 }
 static void idle_guard(void *context)
 {
+#if EFI_XNU_BUTTONS_AVAILABLE
+    buttons_poll();
+#endif
 #if defined(EFI_XNU_DURABLE_GUARD)
     if(load_state>=4)return;
 #endif
@@ -596,13 +602,24 @@ static void test_ram_drain(int stress_done,unsigned contact_phase)
 static void test_monitor(void)
 {
     uint64_t position=0,last=0;unsigned contact_phase=0;
+#if EFI_XNU_BUTTONS_AVAILABLE
+    unsigned keys_reported=0;
+#endif
 #if defined(EFI_XNU_RAM_DRAIN_TEST)
     int stress_done=0;
 #endif
     volatile uint32_t *uart=(void*)(uintptr_t)UINT64_C(0x9000000);
     for(;;){
         uint64_t now;__asm__ volatile("mrs %0,cntvct_el0":"=r"(now));
+#if EFI_XNU_BUTTONS_AVAILABLE
+        buttons_poll();
+#endif
         if(now-last<6250000){__asm__ volatile("yield");continue;}last=now;
+#if EFI_XNU_BUTTONS_AVAILABLE
+        if(buttons_qemu_passed&&!keys_reported){
+            test_uart_text("\nQEMU_PHYSICAL_KEY_CONSUMER=1\n");keys_reported=1;
+        }
+#endif
         const uint8_t *data;uint64_t bytes;
         if(logs(0,&data,&bytes)&&bytes>position){
             for(uint64_t i=position;i<bytes;i++){while(uart[6]&(1u<<5))__asm__ volatile("yield");uart[0]=data[i];}

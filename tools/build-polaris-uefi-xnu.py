@@ -37,7 +37,7 @@ def symbols(raw):
                 end=raw.find(b'\0',strings+name,strings+bytes_)
                 if end<0:raise ValueError('unterminated kernel symbol')
                 text=raw[strings+name:end]
-                if text in (b'_sweet_log_ring',b'_sweet_log_total',b'_polaris_uefi_input',b'_polaris_uefi_shutdown'):
+                if text in (b'_sweet_log_ring',b'_sweet_log_total',b'_polaris_uefi_input',b'_polaris_uefi_shutdown',b'_polaris_uefi_buttons'):
                     if text.decode() in wanted:raise ValueError('duplicate log symbol')
                     wanted[text.decode()]=value
         at+=size
@@ -80,6 +80,21 @@ def framebuffer_wake_intent(tokens,enabled,core,count,qemu,drain,bridge,ufs,mark
     return enabled
 
 
+def physical_buttons_intent(tokens,enabled,core,count,qemu,drain,bridge,ufs,marker):
+    actual=[t for t in tokens if t.startswith(b'polarisbuttons=')]
+    if type(enabled) is not bool or actual!=([b'polarisbuttons=1'] if enabled else []):
+        raise ValueError('physical keys require their unique explicit three-key intent')
+    if enabled and (core!=7 or count not in (2,4) or ufs or marker or
+                    not (drain in ('success','stale-cookie','peer-refused') if qemu else bridge)):
+        raise ValueError('physical keys require the native multi-core RAM shutdown bridge')
+    if enabled:
+        for expected in (b'polarisinput=1',b'polarisramcow=1',b'ufsrw=0',b'polarisquiesce=1'):
+            key=expected.split(b'=',1)[0]+b'='
+            if [t for t in tokens if t.startswith(key)]!=[expected]:
+                raise ValueError('physical keys must preserve touch, RAM COW and native shutdown')
+    return enabled
+
+
 def main():
     ap=argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--zig',required=True,type=Path)
@@ -101,6 +116,7 @@ def main():
     ap.add_argument('--gpu-stock-request',type=int,choices=(1,2,3),default=0,help='bounded original HFI request:1 bandwidth only,2 core only,3 both; no physical MHz claim')
     ap.add_argument('--gpu-stock-inventory',type=Path,help='actual original-device read-only request baseline before this experiment')
     ap.add_argument('--framebuffer-arrival-wake',action='store_true',help='explicit coalesced display workloop wake; native probe required before phone admission')
+    ap.add_argument('--physical-buttons',action='store_true',help='three original PM8998 keys on firmware CPU0; QEMU tests only the native consumer without Qualcomm MMIO')
     ap.add_argument('--cpu-stock-inventory',type=Path,help='required physical read-only OSM evidence for the first performance trial')
     ap.add_argument('--cpu-osm-readonly',action='store_true',
                     help='explicit four-big-core stock OSM read-only inventory intent')
@@ -246,6 +262,15 @@ def main():
     if not a.test_qemu and not input_present:raise ValueError('physical trial requires the bounded input kernel')
     shutdown_offset=syms.get('_polaris_uefi_shutdown',va)-va
     shutdown_bridge=a.ram_shutdown_bridge or bool(a.test_ram_drain)
+    physical_buttons_intent(raw[0x48:0x2a8].split(b'\0',1)[0].split(),a.physical_buttons,
+                            a.kernel_core,a.kernel_cpus,a.test_qemu,a.test_ram_drain,
+                            a.ram_shutdown_bridge,a.test_qemu_ufs,a.physical_owned_marker)
+    buttons_offset=syms.get('_polaris_uefi_buttons',va)-va
+    if a.physical_buttons:
+        if ('_polaris_uefi_buttons' not in syms or buttons_offset%128 or
+            not 0<=buttons_offset<=end-256 or not input_present or
+            abs(buttons_offset-input_offset)<256 or abs(buttons_offset-shutdown_offset)<256):
+            raise ValueError('physical key mailbox must be independent, aligned and kernel-owned')
     if shutdown_bridge:
         tokens=raw[0x48:0x2a8].split(b'\0',1)[0].split()
         if tokens.count(b'polarisquiesce=1')!=1 or any(
@@ -271,6 +296,8 @@ def main():
 #define EFI_XNU_LOG_SIZE (4u*1024u*1024u)
 #define EFI_XNU_INPUT_AVAILABLE {int(input_present)}
 #define EFI_XNU_INPUT_OFFSET 0x{input_offset:x}ULL
+#define EFI_XNU_BUTTONS_AVAILABLE {int(a.physical_buttons)}
+#define EFI_XNU_BUTTONS_OFFSET 0x{buttons_offset:x}ULL
 #define EFI_XNU_CPU {target}u
 #define EFI_XNU_BOOT_CPU_TOKEN "polarisbootcpu={target}"
 #define EFI_XNU_CPUS_TOKEN "cpus={a.kernel_cpus}"
@@ -317,6 +344,9 @@ def main():
     inputs=['shim/polaris/'+n for n in sources]+['shim/polaris/uefi.h','shim/polaris/uefi-xnu.h','shim/polaris/uefi-usb.h','shim/polaris/uefi-memory.h','shim/polaris/uefi-reset.h','shim/polaris/uefi-file.h','shim/polaris/uefi-boot-options.h','shim/polaris/uefi-ram-lease.h','shim/polaris/payload.h','tools/build-polaris-uefi-xnu.py','tools/polaris-uefi-input.h']
     inputs+=['tools/polaris_uefi_cpu_tree.py','tools/adt.py','tools/mkpayload.py']
     inputs.append('shim/polaris/runtime-marker.h')
+    if a.physical_buttons:
+        inputs+=['shim/polaris/uefi-buttons.h','shim/polaris/uefi-buttons-spmi.h',
+                 'tools/polaris-buttons.h','tools/polaris-uefi-buttons.h']
     if shutdown_bridge:inputs.append('shim/polaris/runtime-quiesce.h')
     objects=[]
     for source in sources:
@@ -342,6 +372,7 @@ def main():
                   disk_blocks=a.disk_blocks,disk_payload_path=disk_path,
                   chain_app=chain,
                   bounded_input=input_present,input_offset=input_offset,
+                  physical_buttons=a.physical_buttons,buttons_offset=buttons_offset if a.physical_buttons else None,
                   RAM_native_drain_test=a.test_ram_drain,RAM_native_shutdown_bridge=shutdown_bridge,
                   shutdown_offset=shutdown_offset if shutdown_bridge else None,
                   persistent_root_or_UFS_durability_proven=False,

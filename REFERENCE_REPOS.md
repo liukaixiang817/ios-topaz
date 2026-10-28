@@ -164,6 +164,31 @@ synthetic callback inputs validate the protocol, not physical GPU performance.
 Kernel source972b065/full CI40660265209 adds this observer; physical results
 must be checked in NOTES.md before claiming a live GPU frequency.
 
+## Original Polaris buttons, Wi-Fi and audio correspondence (2026-10-28)
+
+For physical keys consult the reference redwood_buttons.c only for the input
+architecture. Own saved DT and MiCode c7cb50c18f812629b9620b2b8fa684bc40d82080
+drivers/spmi/spmi-pmic-arb.c (blob15fb561ca224d11fce6f65929724a83870708324),
+drivers/pinctrl/qcom/pinctrl-spmi-gpio.c (blob164ed1aa96e18ed0ff22fcf4770fe6b1b7d573e9)
+and original qpnp-power-on.c govern the actual addresses and status bits.
+PM8998 SID0 PON0800 RT bits0/1 are power/volume-down; volume-up DT specifier6
+is ONE-based physical GPIO6 atc500, active-low, confirmed by its pinctrl
+node's literal gpio6 and original of_xlate/gpio_idx implementation. The first
+zero-based GPIO7 interpretation was rejected before hardware access. Redwood's
+PON1300/PMK8350 and SID1/PM7325 mapping is incompatible. Derive512 v5 APIDs
+from our1100-byte core resource; do not copy a reference FEATURES assumption.
+New observer-read transport/policies are only source/model tested so far;
+no physical key press has been observed or dispatched by this candidate.
+
+Own Wi-Fi is ICNSS18800000/SNOC/stream40 with12CE interrupts, not Redwood's
+WCN6750/WPSS/ath11k. Original drivers/soc/qcom/icnss.c blob
+649d0ff9a41d8b250f0951eba75a25f0a1c04e74 is saved/verified privately. Actual
+WLAN firmware identity, original QMI/SMEM/GLINK/calibration and association
+remain to implement. Own audio is SDM845 Tavil SLIM/NGD171c0000 plus TAS2559
+I2C4c and TAS2560I2C4d onGENI894000; reference PCM wrappers do not initialize
+these devices. Preserve original firmware/calibration/routing; neither
+audio playback nor Wi-Fi scan/join has passed a physical test yet.
+
 ## Where to look
 
 Paths in this table are relative to the corresponding reference checkout.

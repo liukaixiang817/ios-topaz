@@ -51,6 +51,14 @@ def admit(driver,qemu,ci,profile,preflight):
             inventory.get('target_requested_Hz')!=2649600000 or not inventory.get('actual_native_log_sha256')):
             raise ValueError('stock performance needs physical inventory and actual virtual guard refusal')
     gpu_mode=driver.get('GPU_stock_request',0)
+    keys=driver.get('physical_buttons',False)
+    if (type(keys) is not bool or type(qemu.get('physical_buttons',False)) is not bool or
+        keys!=qemu.get('physical_buttons',False)):
+        raise ValueError('physical and actual virtual three-key intent must match')
+    if keys and (count not in (2,4) or driver.get('RAM_native_shutdown_bridge') is not True or
+                 qemu.get('checks',{}).get('native_three_key_consumer') is not True or
+                 qemu.get('checks',{}).get('explicit_three_key_payload') is not True):
+        raise ValueError('physical keys require the actual native three-key and release consumer proof')
     wake=driver.get('framebuffer_arrival_wake',False)
     if (type(wake) is not bool or type(qemu.get('framebuffer_arrival_wake',False)) is not bool or
         wake!=qemu.get('framebuffer_arrival_wake',False)):
