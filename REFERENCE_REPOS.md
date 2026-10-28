@@ -569,3 +569,27 @@ valid bit21 and a signed12-bit temperature in100millidegreesC units. Source/DT
 correspondence is not a live temperature, enabled sensor or continuous-policy
 proof. No native thermal mapping, threshold write or removal of the experimental
 30s/10s backoff has been performed in0094.
+
+
+## Original Polaris legacy SMEM metadata correspondence (2026-10-29 local)
+
+The pinned own GLINK driver uses CONFIG_MSM_SMEM's `msm_smem.c` and legacy
+`smem_get_entry`/`smem_alloc`, rather than the separate `qcom_smem_get` driver.
+Own commit c7cb50c18f812629b9620b2b8fa684bc40d82080, msm_smem.c blob
+1bbd7514188f82a7b4404c51ee7da7f83fbd82c5, supports master versions0xb and0xc;
+0xc uses the common partition. Its security TOC has32-byte header,48-byte
+entries with four exclusion sizes; partition headers are32 bytes. The legacy
+fixed header plus512 allocation entries occupies8400 bytes. Original host
+numbers are APPS0/Q62/WCNSS4, with ten known hosts; the common pair is0xfffe.
+Redwood's common/APPS partition approach is useful, but its physical addresses
+and Wi-Fi host must not be transplanted.
+
+The independent `tools/polaris-smem-inventory.h` only inventories bounded
+metadata via a caller-supplied read function. Private0096 checks compile the
+verbatim own original wire declarations and verify15 layout/host assertions;
+actual AArch64 freestanding compilation uses192 bytes of wrapper stack.
+ASan/UBSan mutation, read-failure, observed metadata-change and foreign-header
+isolation cases pass. This is not an atomic remote snapshot, lock, SMEM item
+reader/allocator, GLINK/QMI transport, radio startup or working Wi-Fi/audio.
+The phone's original SmemDxe getter ABI and safe mapping still need binding
+before physical read-only diagnostics; no such access is claimed here.

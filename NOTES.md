@@ -34,6 +34,64 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT PHONE0096 human reports scanning black fade and backlight still lit
+
+- Human answered newpowerA/B: top-to-bottom scanning fade, then black pixels
+ with backlight still on. This supersedes all pending-human-0096 headings.
+ Keep phone0096-0002 RUNNING; no reboot/shutdown/touch/newcandidate while
+ investigating. One new directed readonlycapture power-feedback-capture-0001
+ passed16:53:51UTC, actual viewed image whollyblack, endpointkernel-entered.
+ Screenshot cannot prove physical backlight state; that observation is human.
+- Actual native SweetFramebuffer RequestPowerChange onlytoggles fPowerOff;
+ displayFired reads/writes EVERY volatilepanelpixel SIXtimes tohalvecolor,
+ then onezero pass. No panel/backlightpowercall exists. Originalcomment assumes
+ AMOLEDblackmeansoff, inappropriatefor actualPolaris JDI NT35596S LCD/WLED.
+ ExactownDT chosenprimary selected JDIvideo panel has bl_ctrl_wled, max4095;
+ PMIC WLEDctrl/sink d800/d900 underSID3. Do NOT guess PMIC writes or disable
+ unrelatedrails. SlowWCpanelreads are a code-supported explanation forscan
+ effect, not yet timedper-passmeasurement. EarlyGPU/CPUdemandalonecannot
+ implementmissingbacklightpowercontrol. physical-power-feedback-diagnosis.json
+ bindsactualblackcapture/log+native-sourceSHA, distinguishesobservationfrom
+ hypothesis; no fixsuccessortruepaneloffclaim.
+- NEXT prioritize actualbacklightpath plus bounded fastblack/fadewithout
+ readinguncachedpanelmemory. Check own WLED and originalUEFI protocol/ACPI
+ implementation, savedbrightnessandactualon/offreadback, matchingnative/FW
+ powerrequesthandshake; preserveUSB/physical-keywake andstrictownedPMICscope.
+ OfflineSMEMcomponentbelow is complete butnottransport; WiFi/audio still
+ incomplete. New humanfeedback shouldnottrigger repeatedquestion. Existing
+ phonecontroller0096control-phone-0002.py only; directedcapturekeptleasealive.
+
+### 0096 offline legacy SMEM inventory checked; human animation A/B still pending
+
+- Phone0096/phone-keys-0096-0002 remains RUNNING for human inspection. Last
+ directed state keepalive-1638 passed; no new boot, shutdown, input injection,
+ recovery, allocation or device write this continuation. Use ONLY0096
+ control-phone-0002.py state with a fresh output directory. Human has not yet
+ answered the new short-power animation comparison; do not infer improvement.
+- New tools/polaris-smem-inventory.h is an independent READ-ONLY metadata
+ parser, not a transport or allocator. Own legacy versions0xb/0xc, initialized
+ header, 512-entry legacy metadata exclusion, last4KiB security TOC, bounded
+ nonoverlapping partitions and own10-host limit; only APPS/common headers
+ are inspected. Foreign-host-only headers are not read. Double metadata and
+ final partition-header comparisons reject observed races/read failures;
+ this optimistic check is NOT an atomic snapshot, remote lock, permission
+ grant or evidence of an operational DSP. No item payload access/MMIO/writes.
+- Caller-owned workspace avoids kernel-stack arrays. Actual Appleclang27
+ AArch64 freestanding compile passes15 static checks against VERBATIM pinned
+ original msm_smem.c/smem_private.h/smem.h declarations (Gitblob+SHA checked),
+ maximum wrapper stack192B. Private proof smem-inventory-primary-0002/proof.json.
+ ASan/UBSan10k mutations, every observed callback failure, late-header race,
+ corrupt bounds/host/overlap/cacheline cases preserve output on rejection;
+ combined SMEM/WLFW tests2/2 in1.360s, smem-wlfw-final-0001.log. Initial harness
+ compile warning and original-source metadata filename failure are retained;
+ corrected checks do not change original sources. No new native kernel code
+ or CI run, and no physical SMEM read has been performed.
+- NEXT offline bind actual SmemDxe getter ABI/mapping and original GLINK/SMP2P
+ transport to the phone's DT. Do not guess function pointers, copy Redwood
+ host13/IPCC, start radio/audio or disturb the human's running trial. WiFi
+ scan/join and actual audio playback remain incomplete. Progress report about
+16:51UTC; continue15min reporting and directed keepalive before RAM lease.
+
 ### CURRENT PHONE0096-0002 LOCK SCREEN ready; awaiting human power-animation A/B
 
 - ActualnewcaseoriginalUEFIRAMboot andunique kernel-start completed. capture
