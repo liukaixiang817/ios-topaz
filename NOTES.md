@@ -34,6 +34,54 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT PHONE0101 RUNNING; full CI +150actual native checks PASS
+
+- CURRENT0101/phone-gpu-thermal-0101-0001, ONLY0101/control-phone.py ACTION
+  NEWDIR. One originalUEFI RAMboot20:23 after independent actualexpected
+  Polaris FASTBOOT query; prior0100 ENDED truly natively20:21:10UTC, actual
+  VFS0busy0/GPU1BW4+CPU0restore/all600500400OFF/coordinator700/cookie
+ 4004162817seq1mode2/RAM_DRAINED80000003/fullsavedlog/gatedreset. Closure
+  previous0100-native-end-and-actualFASTBOOT-proof.json binds both. No raw
+  fallback/physicalkeys/Android/PMIC/storage/NVRAM writes. No active0100trial.
+- The attempted host action'kernel' was invalid and rejected by argparse
+  BEFORE any device access/outputdirectory; kernel-start-0001.log retained.
+  Correct action is boot with --payload. ONLY kernel-start-0002/result.json
+  actually staged and started newkernel ONCE20:26:04.666879UTC, waiting-payload
+  ->AP-start-pending. Do NOT retry boot/start or use old0100controllers.
+- FullmacOS27/Xcode27 CI40760345978/job123070261385 SUCCESS, source
+ 18c88ea696dec31ef7d976df9617b23cad66eab5, out-polaris-0101 kernelSHA
+003b9860c06ee2fbfc6420ec702baad05d21d772df9c71fae965c7c6cc802953 exact
+  source/profile/artifactCRC/SHA verified. FirstCI40758781264FAILED retained,
+  superseded only by repairedfullsuccess; no false firstCI pass.
+- Actual SERIAL EFI/XNU newkernel fourcases150checks PASS: thermalON38/
+ 38.294793s, fixed-control35/38.121258s, stalecookie37/38.414317s,
+  peerrefused40/38.504980s. Aggregate actual-native-GPU-thermal-and-hard-budget-
+  proof.json binds source/kernel/actualrings and noMMIO in genericplatform.
+  Native gate/planner probes use explicit synthetic temperatures/times; not
+  SD845PHY or realelapsed120s/highfrequency proof. Allmodels/collector ended.
+- Physical606Bargs ONLYpolaristsens1->2 versus0100, same originalGPUbundle/
+  ADT4big/GEMWC/cachedsurface/fulltrace/wake1/keys/RAMCOW/ufsrw0. New clean
+  manifest has no obsolete removed-touch annotation. Strictofflinephysical
+  admission and original81firmware/actualEDK2 wholedecode passed beforeoldend.
+  No newnativechange aftersource18c, noCI needed for docs/analysis.
+- capture-0001-thermal-startup actually viewedLOCK SCREEN, actual native4big
+ 64callbacks48remote and GPU4096GLSL/GMEM/icon PASS, TSENS+GPUthermalarmed.
+ 116nativegate samples include81allow/27cooldown/4warmup/3rejected/1frozen,
+  no GPUquarantine/runtimefailure/panic. Some transient observer errors were
+  hidden by1sTSENSlogthinning but gate correctly saw each250ms sample; do not
+  infer exact error type from missing diagnostics. Newtarget took effect with
+  fault0. capture-0002-home-stable actually viewed3apps+3dockicons after real
+  unlockACK0..18. Settings tap20:35 justsent, capture/longscroll still pending.
+- NEXT read tapresult then capture0003Settings stable, view beforelonginput.
+  run-thermal-scroll.py OFFLINE ready, not yet executed:100bounded700ms
+  alternating scrolls,5groups20warm/measured/extended1/2/3,300ms pauses and
+  actualcapture eachgroup, expected ACK20..1820. Single worker, no concurrent
+  USB/state/capture. It only asserts contacts/captures, not thermal/FPS success.
+  Analyze actualrequest/temperature/fullframe/publication beyond30s+120s,
+  including hot/error/idle/hardcooldown; never select only fastestintervals.
+  Then actual nativeend/restore+FASTBOOT if finishingtrial. Persist/menu/WiFi/
+  audio/backlight/fulleriOS remain deferred underhuman60FPS-first priority.
+
 ### 0101 repaired source18c88ea building CI40760345978; phone remains0100
 
 - Repaired source18c88ea696dec31ef7d976df9617b23cad66eab5 committed/pushed.
