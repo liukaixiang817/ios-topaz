@@ -62,6 +62,18 @@ early samples only. On0029 the human already confirmed boot complete and said
   Mesa sysmem has a real path, but acceptance child forcesGMEM; a desktop
   sysmem trial would need separate actual sysmem pixel evidence, not reuse
   a GMEM PASS as sysmem proof. Avoid tiny unvalidated physical reboot trials.
+- 0084 OFFLINE prototype only: private candidate.h unrolls4 source samples
+  before row stores, preserving memcpy support for unaligned offsets. Existing
+  full-byte oracle/1500 random clipping/bounds/alias cases ASan/UBSan PASS.
+  ARM64 host-only alternating cached-array benchmark medians763us->696us
+  (~9% reduction); NOT phone/uncached-panel proof. No production source edit,
+  no CI, no physical candidate: this alone does not justify another slow boot.
+  Do not claim a physical gain or automatically promote this small prototype.
+- Better next measurement: total native externalMethod/lockwait/validation
+  versus existing cache/core timer, and frame batch counts; retained serial
+  submission/final completion consumes much of remaining45ms. Keep all known
+  completion/lifetime barriers. Investigate CPU clock only with primary DT/
+  vendor-backed read-only evidence, not timer frequency or blind register writes.
 
 ### 0083 owned-surface WC REJECTED; cached-surface control ACTIVE
 
