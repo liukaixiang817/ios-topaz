@@ -34,6 +34,72 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0093 bandwidth-only physical COMPLETE; GPU-core comparison READY
+
+- physical-bandwidth-latency-and-restore-proof.json PASS binds source827/fullCI
+ 40668630383/kernelcd8906d1, six stable viewed screens/40 consumed gestures,
+ actual52 error0/return0 request transitions1/4<->1/8, complete845frame/13window
+ timing, matched773 completions. Median34.526->17.971ms(-47.949%); GPUexecute/
+ idle15.418->9.032ms, pre3.228->1.077/post3.174->1.070ms, panelcopy14.221->
+ 5.718ms andscheduler requestedcadence16.667ms. Fixedfirst1s afterUP74043frames
+ median18.412ms. StillNOT60FPS/scanout/instantHz/repeatedstability proof.
+- Actual native shutdown10:40:57UTC restoredGPU1/BW4 AFTER VFS0busy0 and
+ BEFORECPUrequest0 andall600/500/400actualPSCI_OFF. RAM_DRAINED80000003
+ cookie55449687845/seq1/mode2, savedfullkernel log, then gatedreset. Independent
+ actualexpectedPolaris FASTBOOT confirmed10:41UTC. No rawfallback/keys/Android/
+ storagewrites. Mode1trialENDED; do NOT useitscontroller orrepeatboot.
+- NEXT mode3 physicalphone-stock-GPU-0093-3-0001 fullyprepared+EDK2verified;
+ samekernel/GPU/ADT/CPUstock2, onlygpup1->3, activeBW8 held same andPERF1->4.
+ Abouttoinvokeitsboot-phone.py7 4 3, whichindependentlyrechecksactualFASTBOOT.
+ Inspectnewbootrecordfirst toavoidrepeat. Usecontrol-phone.py7 4 3 only,
+ waiting-payload thenUNIQUEboot --payload...3-0001-payload.bin, actualscreens
+ andsame40motions. No needmode2lowBWboot ornewCI. Mode3gainunproven.
+
+### 0093 physical bandwidth-only measured: major gain; native end PENDING
+
+- ACTIVE PHONE still0093/phone-stock-GPU-0093-1-0001, mode1 PERF1/BW8;
+ warm20+measured20 actual gestures all consumed, request sequences21..740.
+ First lock and stablehome3apps+3dock/Settings text+icons/warm+measured image
+ actually viewed. First immediate home/settings captures caught transition
+ shapes; later stable captures correct, originals retained, NOT silently
+ discarded/claimed fixed. --wait-seconds is USB DISCOVERY wait, not app delay.
+- 845 actual measured consecutive frames median17.971ms vs0092 34.526ms,
+ 47.949% lower; mean17.293/p9519.518,752/845 over16.667.13 complete native
+ windows/773 actual EAGL completions matched by timestamp/count.
+ validation0.051/cachepre1.077/submit9.235/cachepost1.070ms; SUBSET execute_idle
+ 9.032ms. Panel mean-window median5.718ms vs14.221, cadence16.667ms. Fixed
+ first1s afterUP74043 full frames median18.412ms. USBpaced29.053EAGL/28.583
+ copies persecond NOT throughput/VSYNC FPS or60FPS proof. Warm859frames
+ median17.947ms, similarstage/panel results. Every52 actual policy samples
+ error0/return0; actualBW8 andidle/cooldown4 observed, noquarantine/panic.
+- mode1-measured-full-phase-0001.json/mode1-fixed-post-UP-first1s.json retain
+ strict complete records. This onecrossbootA/B shows originalDDRvote1.2GB/s
+ request was a major bottleneck; no instantaneousmemory/GPUHz or purebusy proof.
+- Returnhome input741..758 just sent, capture-0005-return-home inprogress.
+ NEXTviewhome thencontrol7 4 1 shutdown-fastboot NEWDIR; verifyactualGPU1/4
+ restore+CPU0 BEFORE all600/500/400actualOFF, matchingRAM_DRAINED, thenreadonly
+ actualFASTBOOT. Do NOT bootnextwhilethiscaseactive or callenddone yet.
+- Nextmode3 phone-stock-GPU-0093-3-0001 hasalreadyfullprepared/EDK2verified,
+ samekernel/GPU/ADT and ONLYpolarisgpup1->3, so activeBW8 held equal and only
+ GPUperf1->4 changed vsfirstcase. This is nowthe meaningful core-only-effect
+ comparison; do NOT waste mode2(perf4/bus4) boot. Aftercurrentnativeend+
+ actualFASTBOOT, directalready-authorizedmode3RAMboot, no extraCI/nativechange.
+ No persistentwrites, originalbase/Windows/Android preserved.
+
+### 0093 CURRENT PHONE ACTIVE: bandwidth-only RAM kernel sent10:23UTC
+
+- EXACT case0093/phone-stock-GPU-0093-1-0001; boot sent10:21:30UTC,
+ independentlyobservedwaiting-payload, UNIQUE kernel-start-0001 succeeded
+ 10:23:29UTC stateAP-start-pending. Do NOT send boot again or reuse oldcase.
+ No storagewrites/Android/flash. Use0093/control-phone.py7 4 1 ACTION NEWDIR;
+ endpointtransactions sequential only. Currentcapture-0001-progress pending.
+- Candidate mode1 onlyBW8/PERF1, same4big/OSM2/GPUbundle/ADT/GEMWC1/surfaceWC0,
+ actual selected154EFI/XNUchecks/fullCI+kernel SHA/51local/EDK2 all passed.
+ NEXTview capture/log forarmed1 and request-return-error; await actuallock
+ beforetouch. Thenunlock/homeicons/Settings text andsame40gestures. Stop on
+ GPUrequestfailure; do not callmode1 faster without frame/panel measurements.
+ NativeGPUrestore1/4 andCPU0 BEFORE allpeersOFF plusactualFASTBOOT at end.
+
 ### 0093 exact GPU9 regressions PASS; bandwidth-only RAM trial STARTING
 
 - Actual six selected EFI/XNU regressions154checks PASS: GPU9 success modes1/2/3
