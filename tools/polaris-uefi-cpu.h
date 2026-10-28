@@ -30,4 +30,18 @@ static inline int polaris_uefi_psci_conduit(uint32_t mode,uint32_t target,
     if(!polaris_uefi_cpu_allowed(mode,target,count,0,target,actual)) return -1;
     return target==1 || target==7;
 }
+/* CPU_ON is a scheduler-thread operation: after the first peer comes online
+ * the initiating thread may run on any declared XNU core. Accept only the
+ * actual MPIDR of that bounded set; firmware CPU0 and foreign cores stay out.
+ * Bootstrap/coordinator admission above remains strictly boot-core-only. */
+static inline int polaris_uefi_psci_running_conduit(uint32_t mode,uint32_t target,
+    uint32_t count,uint64_t actual)
+{
+    uint32_t physical=(uint32_t)(actual&UINT64_C(0xffffff));
+    for(uint32_t logical=0;logical<4;logical++) {
+        if(polaris_uefi_cpu_declared(mode,target,count,logical,physical))
+            return target==1 || target==7;
+    }
+    return -1;
+}
 #endif

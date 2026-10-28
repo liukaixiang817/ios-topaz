@@ -1,0 +1,32 @@
+--- a/iokit/Kernel/arm/polaris_uefi_cpu.h
++++ b/iokit/Kernel/arm/polaris_uefi_cpu.h
+@@ -30,4 +30,18 @@
+     if(!polaris_uefi_cpu_allowed(mode,target,count,0,target,actual)) return -1;
+     return target==1 || target==7;
+ }
++/* CPU_ON is a scheduler-thread operation: after the first peer comes online
++ * the initiating thread may run on any declared XNU core. Accept only the
++ * actual MPIDR of that bounded set; firmware CPU0 and foreign cores stay out.
++ * Bootstrap/coordinator admission above remains strictly boot-core-only. */
++static inline int polaris_uefi_psci_running_conduit(uint32_t mode,uint32_t target,
++    uint32_t count,uint64_t actual)
++{
++    uint32_t physical=(uint32_t)(actual&UINT64_C(0xffffff));
++    for(uint32_t logical=0;logical<4;logical++) {
++        if(polaris_uefi_cpu_declared(mode,target,count,logical,physical))
++            return target==1 || target==7;
++    }
++    return -1;
++}
+ #endif
+--- a/iokit/Kernel/arm/SweetCPU.cpp
++++ b/iokit/Kernel/arm/SweetCPU.cpp
+@@ -105,7 +105,7 @@
+     if (mode == 1) {
+         PE_parse_boot_argn("polarisbootcpu", &boot, sizeof(boot));
+         PE_parse_boot_argn("cpus", &count, sizeof(count));
+-        conduit = polaris_uefi_psci_conduit(mode, boot, count,
++        conduit = polaris_uefi_psci_running_conduit(mode, boot, count,
+             __builtin_arm_rsr64("MPIDR_EL1"));
+         if (conduit < 0) panic("POLARIS UEFI: unbound PSCI conduit");
+     }

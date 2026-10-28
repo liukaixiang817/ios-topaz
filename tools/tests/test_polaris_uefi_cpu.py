@@ -58,6 +58,20 @@ int main(void) {
  assert(polaris_uefi_psci_conduit(1,0x700,4,0x81000700)==0);
  for(unsigned n=0;n<=8;n++) if(n!=1 && n!=2 && n!=4)
   assert(!polaris_uefi_cpu_declared(1,7,n,0,7));
+ for(unsigned i=0;i<4;i++) {
+  assert(polaris_uefi_psci_running_conduit(1,7,4,0x80000007-i)==1);
+  assert(polaris_uefi_psci_running_conduit(1,0x700,4,0x81000700-i*0x100)==0);
+ }
+ assert(polaris_uefi_psci_running_conduit(1,7,2,0x80000006)==1);
+ assert(polaris_uefi_psci_running_conduit(1,7,2,0x80000005)==-1);
+ assert(polaris_uefi_psci_running_conduit(1,7,4,0x80000003)==-1);
+ assert(polaris_uefi_psci_running_conduit(1,7,4,0x80000000)==-1);
+ assert(polaris_uefi_psci_running_conduit(1,0x700,4,0x81000000)==-1);
+ assert(polaris_uefi_psci_running_conduit(1,0x700,4,0x81000300)==-1);
+ assert(polaris_uefi_psci_running_conduit(1,0x700,4,0x80000007)==-1);
+ assert(polaris_uefi_psci_running_conduit(1,7,3,0x80000007)==-1);
+ assert(polaris_uefi_psci_running_conduit(0,7,4,0x80000007)==-1);
+ assert(polaris_uefi_psci_conduit(1,7,4,0x80000006)==-1);
  return 0;
 }
 '''

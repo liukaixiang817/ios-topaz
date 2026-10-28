@@ -34,6 +34,24 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0085 actual four-core model caught migrating CPU_ON caller; phone unchanged
+
+- FullCI40630693931/job122626108047 sourceb4cd05c8585bb728fdfe12ed9416afd7bd5d7d22
+  PASSED; exact artifact/profile/CRC/SHA kernelc726b22f407680c580d03f38edc5a8d0008f201e2d177892ec6e426ade9818c4.
+  Actual EFI/XNU four-core run0001 FAILED7.159s at CPU_ON for physical5:
+  after logical1/physical6 came online, the startup thread migrated onto it;
+  strict boot-only PSCI caller guard panicked. Preserve first-four-core-failure
+  and actual log/result; NOT positive proof or phone admission. No phone boot.
+-0883 separately permits CPU_ON from actual MPIDR of explicitly declared XNU
+  peers only; firmware0/foreign cores remain refused. Original strict boot
+  and shutdown-coordinator admission unchanged. No conduit probing/fallback.
+  Native4TU/21localtests and five-file exact patch replay again passed; full
+  corrected CI and all actual four-core success/refusal/pair tests pending.
+- User explicitly allows one small core reserved for UEFI. Remaining three
+  small cores are not added in this homogeneous-four-big trial. No frequency
+  or voltage writes; own OSMv2 differs from alioth EPSS. Current0083 Settings
+  still running, keepalive0416 passed. Continue directed state keepalive.
+
 ### 0085 four-big-core lifecycle and GPU callback timing: SOURCE READY, unproven on phone
 
 - Human now prioritizes actual60FPS and SD845 CPU performance; explicitly allows
