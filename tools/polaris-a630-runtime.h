@@ -147,6 +147,14 @@ bool polaris_gpu_unmap(uint64_t address,uint64_t size)
         }
     return polaris_gpu_commit();
 }
+static uint64_t a630_submit_now(void *unused)
+{
+    (void)unused;uint64_t now;clock_get_uptime(&now);return now;
+}
+static uint64_t a630_submit_us(uint64_t ticks)
+{
+    uint64_t ns;absolutetime_to_nanoseconds(ticks,&ns);return ns/1000;
+}
 bool polaris_gpu_submit(const uint64_t *addresses,const uint32_t *words,uint32_t count,uint32_t *fence)
 {
     if (!addresses || !words || !fence || !count || count>A630_SUBMIT_MAX || !a630_client_begin()) return false;
@@ -154,15 +162,25 @@ bool polaris_gpu_submit(const uint64_t *addresses,const uint32_t *words,uint32_t
     for (unsigned n=0; n<count; n++) ibs[n]=(struct a630_ib){addresses[n],words[n]};
     const struct a630_core_io io={a630_core_owned,a630_core_read,a630_core_write,
         a630_gmu_sync,a630_delay_us,&a630_client_io};
-    bool ok=a630_submit_run(&a630_client_submit,&io,(uint32_t*)(a630_dma+0x30000),
-        (volatile uint32_t*)(a630_dma+0x38000),ibs,count);
-    if (!ok || !polaris_gpu_quiescent()) {
+    bool ok=a630_submit_profiled(&a630_client_submit,&io,(uint32_t*)(a630_dma+0x30000),
+        (volatile uint32_t*)(a630_dma+0x38000),ibs,count,a630_submit_now,NULL);
+    uint64_t before=a630_submit_now(NULL);
+    bool quiescent=ok&&polaris_gpu_quiescent();
+    uint64_t after=a630_submit_now(NULL);
+    if (!ok || !quiescent) {
         printf("POLARIS GPU: runtime failed error=%u wptr=%x rptr=%x CP=%x IRQ=%x; retaining BOs\n",
             a630_client_submit.error,a630_client_submit.live.wptr,a630_client_submit.live.rptr,
             a630_client_submit.live.cp_irq,a630_client_submit.live.irq);
         polaris_gpu_quarantine();return false;
     }
     *fence=a630_client_submit.completed;
+    if (*fence<=4 || !(*fence%64)) {
+        const struct a630_submit *p=&a630_client_submit;
+        printf("POLARIS GPU CORE PERF: fence=%u valid=%x prior=%llu ring=%llu execute_idle=%llu visibility=%llu halt=%llu postcheck=%llu us polls=%u\n",
+            *fence,p->timing_mask,a630_submit_us(p->timing[0]),a630_submit_us(p->timing[1]),
+            a630_submit_us(p->timing[2]),a630_submit_us(p->timing[3]),a630_submit_us(p->timing[4]),
+            after>=before?a630_submit_us(after-before):UINT64_MAX,p->timing_polls);
+    }
     return true;
 }
 static void a630_client_adopt(const struct a630_io *io)

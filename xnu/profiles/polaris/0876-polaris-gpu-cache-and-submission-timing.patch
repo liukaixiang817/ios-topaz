@@ -1,0 +1,229 @@
+--- a/iokit/Kernel/arm/PolarisGPU.cpp
++++ b/iokit/Kernel/arm/PolarisGPU.cpp
+@@ -17,6 +17,7 @@
+ #include <sys/systm.h>
+ #include <mach/vm_param.h>
+ #include <kern/thread.h>
++#include <kern/clock.h>
+ #include "SweetSurface.h"
+ #include "polaris_gpu.h"
+ #include "polaris_gpu_abi.h"
+@@ -184,6 +185,12 @@
+     uint64_t address, size;
+     uint32_t flags;
+ };
++struct PolarisCacheTally {uint64_t before,after,readonlySkipped;};
++static uint64_t polaris_gpu_elapsed_us(uint64_t before,uint64_t after)
++{
++    if(after<before)return UINT64_MAX;
++    uint64_t ns;absolutetime_to_nanoseconds(after-before,&ns);return ns/1000;
++}
+ class PolarisGPUUserClient : public IOUserClient {
+     OSDeclareDefaultStructors(PolarisGPUUserClient);
+     typedef IOUserClient super;
+@@ -196,6 +203,8 @@
+     void poison();
+     IOReturn make(IOMemoryDescriptor *,SweetSurface *,uint64_t,uint32_t,uint32_t *);
+     bool drop(uint32_t);
++    bool cacheBefore(const msm_gem_submit_bo *,uint32_t,PolarisCacheTally *);
++    void cacheAfter(const msm_gem_submit_bo *,uint32_t,PolarisCacheTally *);
+     IOReturn submit(msm_gem_submit *);
+     IOReturn surface(redwood_surface *);
+ public:
+@@ -329,6 +338,31 @@
+     }
+     s->release();return result;
+ }
++bool PolarisGPUUserClient::cacheBefore(const msm_gem_submit_bo *bos,uint32_t count,PolarisCacheTally *tally)
++{
++    for(unsigned n=0;n<count;n++) {
++        PolarisBO *b=buffer(bos[n].handle);
++        if(!b->map)b->map=b->memory->createMappingInTask(kernel_task,0,kIOMapAnywhere|kIOMapDefaultCache,0,b->size);
++        if(!b->map)return false;
++        /* CPU writers may change even GPU-read-only command/constant BOs.
++         * Keep the full pre-submit clean+invalidate on EVERY reference. */
++        polaris_gpu_cache((void*)b->map->getVirtualAddress(),b->size);
++        tally->before+=b->size;
++    }
++    return true;
++}
++void PolarisGPUUserClient::cacheAfter(const msm_gem_submit_bo *bos,uint32_t count,PolarisCacheTally *tally)
++{
++    for(unsigned n=0;n<count;n++) {
++        PolarisBO *b=buffer(bos[n].handle);
++        /* make() installed READONLY in every SMMU PTE for this allocation.
++         * A successful fence/idle/halt cannot have changed such memory. Do
++         * not trust submit READ flags to skip writable textures/surfaces. */
++        if(b->flags&GPU_READONLY) {tally->readonlySkipped+=b->size;continue;}
++        polaris_gpu_cache((void*)b->map->getVirtualAddress(),b->size);
++        tally->after+=b->size;
++    }
++}
+ IOReturn PolarisGPUUserClient::submit(msm_gem_submit *r)
+ {
+     if(!r->nr_cmds || r->nr_cmds>GPU_CMDS || !r->nr_bos || r->nr_bos>GPU_BOS ||
+@@ -360,22 +394,19 @@
+         /* Kernel map every referenced BO before release; keep cached CPU and
+          * SMMU attributes identical. All CPU aliases are cleaned before DMA,
+          * invalidated after the observed GPU flush/fence/idle/halt. */
+-        for(unsigned n=0;n<r->nr_bos;n++) {
+-            PolarisBO *b=buffer(bos[n].handle);
+-            if(!b->map)b->map=b->memory->createMappingInTask(kernel_task,0,kIOMapAnywhere|kIOMapDefaultCache,0,b->size);
+-            if(!b->map) {result=kIOReturnNoMemory;goto out;}
+-            polaris_gpu_cache((void*)b->map->getVirtualAddress(),b->size);
+-        }
++        PolarisCacheTally tally={0,0,0};uint64_t before,prepared,submitted,completed;
++        clock_get_uptime(&before);
++        if(!cacheBefore(bos,r->nr_bos,&tally)) {result=kIOReturnNoMemory;goto out;}
++        clock_get_uptime(&prepared);
+         for(unsigned n=0;n<r->nr_bos;n++) {
+             PolarisBO *b=buffer(bos[n].handle);
+             if(b->surface)__atomic_store_n(&b->surface->polarisGPUBusy,1,__ATOMIC_RELEASE);
+         }
+         if(!polaris_gpu_submit(addresses,words,count,&r->fence)) {poison();result=kIOReturnTimeout;goto out;}
++        clock_get_uptime(&submitted);
+         lastFence=r->fence;
+-        for(unsigned n=0;n<r->nr_bos;n++) {
+-            PolarisBO *b=buffer(bos[n].handle);
+-            polaris_gpu_cache((void*)b->map->getVirtualAddress(),b->size);
+-        }
++        cacheAfter(bos,r->nr_bos,&tally);
++        clock_get_uptime(&completed);
+         for(unsigned n=0;n<r->nr_bos;n++) {
+             PolarisBO *b=buffer(bos[n].handle);
+             if(b->surface)__atomic_store_n(&b->surface->polarisGPUBusy,0,__ATOMIC_RELEASE);
+@@ -385,6 +416,11 @@
+         if(gpuSubmissions<=4 || !(gpuSubmissions%256))
+             IOLog("POLARIS GPU: completed submission %u, IBs=%u BOs=%u surfaces=%u; GPU fence+idle+halt\n",
+                 r->fence,count,r->nr_bos,gpuSurfaces);
++        if(r->fence<=4 || !(r->fence%64))
++            IOLog("POLARIS GPU BO PERF: fence=%u actor=%u BOs=%u prebytes=%llu postbytes=%llu ROskip=%llu pre=%llu submit=%llu post=%llu us\n",
++                r->fence,callerKind,r->nr_bos,tally.before,tally.after,tally.readonlySkipped,
++                polaris_gpu_elapsed_us(before,prepared),polaris_gpu_elapsed_us(prepared,submitted),
++                polaris_gpu_elapsed_us(submitted,completed));
+         result=kIOReturnSuccess;
+     }
+ out:
+--- a/bsd/dev/polaris_a630_submit.h
++++ b/bsd/dev/polaris_a630_submit.h
+@@ -14,7 +14,18 @@
+ struct a630_submit {
+     uint32_t wptr, fence, completed, poisoned, count, error;
+     struct a630_core_snapshot live;
++    uint64_t timing[5]; /* prior idle, ring publish, execute/idle, fence visibility, halt */
++    uint32_t timing_mask, timing_polls;
+ };
++typedef uint64_t (*a630_submit_clock_fn)(void *);
++static inline void a630_submit_mark(struct a630_submit *r,a630_submit_clock_fn clock,
++    void *context,uint64_t *previous,unsigned stage)
++{
++    if (!r || !previous || stage>=5 || !clock) return;
++    uint64_t now=clock(context);
++    if (now>=*previous) {r->timing[stage]=now-*previous;r->timing_mask|=1u<<stage;}
++    *previous=now; /* Diagnostics never influence the hardware completion decision. */
++}
+ static inline bool a630_submit_adopt(struct a630_submit *r, const struct a630_core_snapshot *p)
+ {
+     if (!r || !p || p->error != A630_CORE_READY || p->stage != 7 ||
+@@ -29,8 +40,9 @@
+     ring[*at] = value;
+     *at = (*at + 1) % A630_CORE_WORDS;
+ }
+-static inline bool a630_submit_run(struct a630_submit *r, const struct a630_core_io *io,
+-    uint32_t *ring, volatile uint32_t *scratch, const struct a630_ib *ibs, uint32_t count)
++static inline bool a630_submit_profiled(struct a630_submit *r, const struct a630_core_io *io,
++    uint32_t *ring, volatile uint32_t *scratch, const struct a630_ib *ibs, uint32_t count,
++    a630_submit_clock_fn clock,void *clock_context)
+ {
+     if (!r || r->poisoned || !io || !io->owned || !io->read || !io->write ||
+         !io->sync || !io->wait || !ring || !scratch || !ibs || !count || count > A630_SUBMIT_MAX ||
+@@ -43,8 +55,13 @@
+      * and stopped. No overwrite of unread commands, including at wrap. */
+     struct a630_core_snapshot *s = &r->live;
+     s->wptr = r->wptr; s->error = 0;
++    uint64_t stamp=clock?clock(clock_context):0;
++    uint32_t polls=s->polls;
++    for(unsigned n=0;n<5;n++)r->timing[n]=0;
++    r->timing_mask=0;r->timing_polls=0;
+     uint32_t control;
+     if (!a630_core_idle(io,s) || !a630_core_rd(io,s,0x808,&control) || control != 3) goto poison;
++    a630_submit_mark(r,clock,clock_context,&stamp,0);
+     uint32_t at=r->wptr, fence=r->fence+1;
+     if (!fence) fence=1;
+     scratch[12]=0;
+@@ -69,12 +86,18 @@
+     a630_submit_word(ring,&at,fence);
+     a630_submit_word(ring,&at,a630_core_pkt7(0x26,0));
+     if (!a630_core_sync(io,s)) goto poison;
++    a630_submit_mark(r,clock,clock_context,&stamp,1);
+     s->wptr=at; s->halted=0; s->idle=0; s->keep_live=1;
+     /* Ring and tables visible before either CP release or the new WPTR. */
+     if (!a630_core_wr(io,s,0x808,1) || !a630_core_wr(io,s,0x807,at) ||
+-        !a630_core_idle(io,s) || !a630_core_sync(io,s)) goto poison;
++        !a630_core_idle(io,s)) goto poison;
++    a630_submit_mark(r,clock,clock_context,&stamp,2);
++    if (!a630_core_sync(io,s)) goto poison;
+     if (scratch[12] != fence) {s->error=A630_CORE_DATA;goto poison;}
++    a630_submit_mark(r,clock,clock_context,&stamp,3);
+     if (!a630_core_halt(io,s)) goto poison;
++    a630_submit_mark(r,clock,clock_context,&stamp,4);
++    r->timing_polls=s->polls-polls;
+     r->wptr=at;r->fence=fence;r->completed=fence;r->count++;
+     return true;
+ poison:
+@@ -82,4 +105,9 @@
+     /* No reset, unmap, memory release, IRQ clear or retry on ambiguity. */
+     return false;
+ }
++static inline bool a630_submit_run(struct a630_submit *r,const struct a630_core_io *io,
++    uint32_t *ring,volatile uint32_t *scratch,const struct a630_ib *ibs,uint32_t count)
++{
++    return a630_submit_profiled(r,io,ring,scratch,ibs,count,NULL,NULL);
++}
+ #endif
+--- a/bsd/dev/polaris_a630_runtime.h
++++ b/bsd/dev/polaris_a630_runtime.h
+@@ -147,6 +147,14 @@
+         }
+     return polaris_gpu_commit();
+ }
++static uint64_t a630_submit_now(void *unused)
++{
++    (void)unused;uint64_t now;clock_get_uptime(&now);return now;
++}
++static uint64_t a630_submit_us(uint64_t ticks)
++{
++    uint64_t ns;absolutetime_to_nanoseconds(ticks,&ns);return ns/1000;
++}
+ bool polaris_gpu_submit(const uint64_t *addresses,const uint32_t *words,uint32_t count,uint32_t *fence)
+ {
+     if (!addresses || !words || !fence || !count || count>A630_SUBMIT_MAX || !a630_client_begin()) return false;
+@@ -154,15 +162,25 @@
+     for (unsigned n=0; n<count; n++) ibs[n]=(struct a630_ib){addresses[n],words[n]};
+     const struct a630_core_io io={a630_core_owned,a630_core_read,a630_core_write,
+         a630_gmu_sync,a630_delay_us,&a630_client_io};
+-    bool ok=a630_submit_run(&a630_client_submit,&io,(uint32_t*)(a630_dma+0x30000),
+-        (volatile uint32_t*)(a630_dma+0x38000),ibs,count);
+-    if (!ok || !polaris_gpu_quiescent()) {
++    bool ok=a630_submit_profiled(&a630_client_submit,&io,(uint32_t*)(a630_dma+0x30000),
++        (volatile uint32_t*)(a630_dma+0x38000),ibs,count,a630_submit_now,NULL);
++    uint64_t before=a630_submit_now(NULL);
++    bool quiescent=ok&&polaris_gpu_quiescent();
++    uint64_t after=a630_submit_now(NULL);
++    if (!ok || !quiescent) {
+         printf("POLARIS GPU: runtime failed error=%u wptr=%x rptr=%x CP=%x IRQ=%x; retaining BOs\n",
+             a630_client_submit.error,a630_client_submit.live.wptr,a630_client_submit.live.rptr,
+             a630_client_submit.live.cp_irq,a630_client_submit.live.irq);
+         polaris_gpu_quarantine();return false;
+     }
+     *fence=a630_client_submit.completed;
++    if (*fence<=4 || !(*fence%64)) {
++        const struct a630_submit *p=&a630_client_submit;
++        printf("POLARIS GPU CORE PERF: fence=%u valid=%x prior=%llu ring=%llu execute_idle=%llu visibility=%llu halt=%llu postcheck=%llu us polls=%u\n",
++            *fence,p->timing_mask,a630_submit_us(p->timing[0]),a630_submit_us(p->timing[1]),
++            a630_submit_us(p->timing[2]),a630_submit_us(p->timing[3]),a630_submit_us(p->timing[4]),
++            after>=before?a630_submit_us(after-before):UINT64_MAX,p->timing_polls);
++    }
+     return true;
+ }
+ static void a630_client_adopt(const struct a630_io *io)

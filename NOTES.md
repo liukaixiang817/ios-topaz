@@ -34,6 +34,30 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0079 GPU latency priority: first bounded optimization ready for full build
+
+- Human's latest request is to prioritize the measured frame latency. Persistent
+  root work is deferred while this is addressed. Current inspection iOS remains
+  running; directed state keepalive succeeded at 00:54 UTC. No phone reboot,
+  injected contact or device write during offline development.
+- New profile0876 changes only the GPU driver. It retains full pre-submit cache
+  clean/invalidate on EVERY referenced BO. After successful GPU fence/idle/halt,
+  it skips post invalidation ONLY for allocations whose actual SMMU mapping is
+  GPU_READONLY. Writable textures/surfaces retain full post sync even when the
+  submit reference says READ. No ownership, fence, idle, halt or quarantine
+  barrier was removed. This is a candidate optimization, not measured success.
+- Sparse BO timing/byte counts and native prior-idle/ring/execute-idle/fence/
+  halt/postcheck timings now separate cache cost from the synchronous runner.
+  Timings include scheduling/preemption; they are not pure GPU cycle counters.
+- Actual modified cache methods and PM4 runner passed 13 ASan/UBSan regression
+  tests in 7.247s, including writable READ references, repeated CPU command edits,
+  mapping failure, exact hardware operation counts, reversed diagnostic clock
+  and existing fault/quarantine cases. Both real Appleclang27 full-header native
+  TUs compile (PolarisGPU.cpp and polaris_a630.c); exact patch applies with
+  zero fuzz/offset and produces byte-identical native sources. Private evidence:
+  0079/gpu-latency-candidate/candidate-checks.json. Full CI and physical before/
+  after measurements are still pending. Do not claim improved phone frame rate.
+
 ### LIVE performance inspection: GPU hardware active; synchronous pipeline slow
 
 - HumanreportedstutterandaskedwhetherGPUstillunavailable. KeptCURRENT

@@ -17,6 +17,7 @@
 #include <sys/systm.h>
 #include <mach/vm_param.h>
 #include <kern/thread.h>
+#include <kern/clock.h>
 #include "SweetSurface.h"
 #include "polaris_gpu.h"
 #include "polaris_gpu_abi.h"
@@ -184,6 +185,12 @@ struct PolarisBO {
     uint64_t address, size;
     uint32_t flags;
 };
+struct PolarisCacheTally {uint64_t before,after,readonlySkipped;};
+static uint64_t polaris_gpu_elapsed_us(uint64_t before,uint64_t after)
+{
+    if(after<before)return UINT64_MAX;
+    uint64_t ns;absolutetime_to_nanoseconds(after-before,&ns);return ns/1000;
+}
 class PolarisGPUUserClient : public IOUserClient {
     OSDeclareDefaultStructors(PolarisGPUUserClient);
     typedef IOUserClient super;
@@ -196,6 +203,8 @@ class PolarisGPUUserClient : public IOUserClient {
     void poison();
     IOReturn make(IOMemoryDescriptor *,SweetSurface *,uint64_t,uint32_t,uint32_t *);
     bool drop(uint32_t);
+    bool cacheBefore(const msm_gem_submit_bo *,uint32_t,PolarisCacheTally *);
+    void cacheAfter(const msm_gem_submit_bo *,uint32_t,PolarisCacheTally *);
     IOReturn submit(msm_gem_submit *);
     IOReturn surface(redwood_surface *);
 public:
@@ -329,6 +338,31 @@ IOReturn PolarisGPUUserClient::surface(redwood_surface *r)
     }
     s->release();return result;
 }
+bool PolarisGPUUserClient::cacheBefore(const msm_gem_submit_bo *bos,uint32_t count,PolarisCacheTally *tally)
+{
+    for(unsigned n=0;n<count;n++) {
+        PolarisBO *b=buffer(bos[n].handle);
+        if(!b->map)b->map=b->memory->createMappingInTask(kernel_task,0,kIOMapAnywhere|kIOMapDefaultCache,0,b->size);
+        if(!b->map)return false;
+        /* CPU writers may change even GPU-read-only command/constant BOs.
+         * Keep the full pre-submit clean+invalidate on EVERY reference. */
+        polaris_gpu_cache((void*)b->map->getVirtualAddress(),b->size);
+        tally->before+=b->size;
+    }
+    return true;
+}
+void PolarisGPUUserClient::cacheAfter(const msm_gem_submit_bo *bos,uint32_t count,PolarisCacheTally *tally)
+{
+    for(unsigned n=0;n<count;n++) {
+        PolarisBO *b=buffer(bos[n].handle);
+        /* make() installed READONLY in every SMMU PTE for this allocation.
+         * A successful fence/idle/halt cannot have changed such memory. Do
+         * not trust submit READ flags to skip writable textures/surfaces. */
+        if(b->flags&GPU_READONLY) {tally->readonlySkipped+=b->size;continue;}
+        polaris_gpu_cache((void*)b->map->getVirtualAddress(),b->size);
+        tally->after+=b->size;
+    }
+}
 IOReturn PolarisGPUUserClient::submit(msm_gem_submit *r)
 {
     if(!r->nr_cmds || r->nr_cmds>GPU_CMDS || !r->nr_bos || r->nr_bos>GPU_BOS ||
@@ -360,22 +394,19 @@ IOReturn PolarisGPUUserClient::submit(msm_gem_submit *r)
         /* Kernel map every referenced BO before release; keep cached CPU and
          * SMMU attributes identical. All CPU aliases are cleaned before DMA,
          * invalidated after the observed GPU flush/fence/idle/halt. */
-        for(unsigned n=0;n<r->nr_bos;n++) {
-            PolarisBO *b=buffer(bos[n].handle);
-            if(!b->map)b->map=b->memory->createMappingInTask(kernel_task,0,kIOMapAnywhere|kIOMapDefaultCache,0,b->size);
-            if(!b->map) {result=kIOReturnNoMemory;goto out;}
-            polaris_gpu_cache((void*)b->map->getVirtualAddress(),b->size);
-        }
+        PolarisCacheTally tally={0,0,0};uint64_t before,prepared,submitted,completed;
+        clock_get_uptime(&before);
+        if(!cacheBefore(bos,r->nr_bos,&tally)) {result=kIOReturnNoMemory;goto out;}
+        clock_get_uptime(&prepared);
         for(unsigned n=0;n<r->nr_bos;n++) {
             PolarisBO *b=buffer(bos[n].handle);
             if(b->surface)__atomic_store_n(&b->surface->polarisGPUBusy,1,__ATOMIC_RELEASE);
         }
         if(!polaris_gpu_submit(addresses,words,count,&r->fence)) {poison();result=kIOReturnTimeout;goto out;}
+        clock_get_uptime(&submitted);
         lastFence=r->fence;
-        for(unsigned n=0;n<r->nr_bos;n++) {
-            PolarisBO *b=buffer(bos[n].handle);
-            polaris_gpu_cache((void*)b->map->getVirtualAddress(),b->size);
-        }
+        cacheAfter(bos,r->nr_bos,&tally);
+        clock_get_uptime(&completed);
         for(unsigned n=0;n<r->nr_bos;n++) {
             PolarisBO *b=buffer(bos[n].handle);
             if(b->surface)__atomic_store_n(&b->surface->polarisGPUBusy,0,__ATOMIC_RELEASE);
@@ -385,6 +416,11 @@ IOReturn PolarisGPUUserClient::submit(msm_gem_submit *r)
         if(gpuSubmissions<=4 || !(gpuSubmissions%256))
             IOLog("POLARIS GPU: completed submission %u, IBs=%u BOs=%u surfaces=%u; GPU fence+idle+halt\n",
                 r->fence,count,r->nr_bos,gpuSurfaces);
+        if(r->fence<=4 || !(r->fence%64))
+            IOLog("POLARIS GPU BO PERF: fence=%u actor=%u BOs=%u prebytes=%llu postbytes=%llu ROskip=%llu pre=%llu submit=%llu post=%llu us\n",
+                r->fence,callerKind,r->nr_bos,tally.before,tally.after,tally.readonlySkipped,
+                polaris_gpu_elapsed_us(before,prepared),polaris_gpu_elapsed_us(prepared,submitted),
+                polaris_gpu_elapsed_us(submitted,completed));
         result=kIOReturnSuccess;
     }
 out:
