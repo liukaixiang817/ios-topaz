@@ -1,0 +1,148 @@
+--- a/iokit/Kernel/arm/PolarisGPU.cpp
++++ b/iokit/Kernel/arm/PolarisGPU.cpp
+@@ -40,6 +40,7 @@
+ static IOLock *gpuLock;
+ static bool gpuOpened, gpuQuarantined;
+ static bool gpuWriteCombined; /* explicit RAM-trial boot opt-in; imported surfaces stay cached */
++static bool gpuMethodPerformance; /* existing explicit polarisperf=1 only */
+ static uint32_t gpuSubmissions, gpuSurfaces;
+ static uint32_t gpuDesktopAttempts,gpuDesktopSubmissions;
+ static uint32_t gpuRender[8],gpuRenderPublished;
+@@ -257,6 +258,50 @@
+ {
+     if(after<before)return UINT64_MAX;
+     uint64_t ns;absolutetime_to_nanoseconds(after-before,&ns);return ns/1000;
++}
++/* Serialized by gpuLock. Sums are admitted native method WALL time, including
++ * preemption; overlapping lock waits are not CPU busy time. Mach/IOKit work
++ * before entering these callbacks and the diagnostic print/unlock are excluded.
++ * No cached identity, permission check, DMA or fence behavior is changed. */
++struct PolarisMethodBin {uint64_t calls,errors,auth,dispatch,lock,body,total,maximum;};
++struct PolarisMethodMeter {uint64_t began,lastEnded,calls;PolarisMethodBin bins[9];};
++static PolarisMethodMeter gpuMethodMeter;
++static unsigned polaris_gpu_method_bin(uint32_t selector)
++{
++    switch(selector) {
++        case 0x42:return 0;case 0x43:return 1;case 0x44:case 0x45:return 2;
++        case 0x46:return 3;case 0x47:return 4;case 0x7e:return 5;
++        case 0x09:return 6;case 0x10000:return 7;default:return 8;
++    }
++}
++static bool polaris_gpu_method_record(PolarisMethodMeter *m,uint32_t selector,uint32_t error,
++    uint64_t entered,uint64_t authed,uint64_t waiting,uint64_t locked,uint64_t ended)
++{
++    if(!m || !(entered<=authed && authed<=waiting && waiting<=locked && locked<=ended) ||
++        (m->calls && ended<m->lastEnded))return false;
++    if(!m->calls || entered<m->began)m->began=entered; /* overlapping callers */
++    m->lastEnded=ended;
++    PolarisMethodBin *b=&m->bins[polaris_gpu_method_bin(selector)];
++    b->calls++;b->errors+=error!=0;m->calls++;
++    b->auth+=polaris_gpu_elapsed_us(entered,authed);
++    b->dispatch+=polaris_gpu_elapsed_us(authed,waiting);
++    b->lock+=polaris_gpu_elapsed_us(waiting,locked);
++    b->body+=polaris_gpu_elapsed_us(locked,ended);
++    uint64_t total=polaris_gpu_elapsed_us(entered,ended);
++    b->total+=total;if(total>b->maximum)b->maximum=total;
++    return selector==0x46 && polaris_gpu_elapsed_us(m->began,ended)>=2000000;
++}
++static void polaris_gpu_method_flush(PolarisMethodMeter *m,uint64_t ended)
++{
++    static const char *const names[]={"make","info","prep","submit","fence","surface","close","map","other"};
++    uint64_t ns;absolutetime_to_nanoseconds(ended,&ns);
++    for(unsigned n=0;n<9;n++) {
++        const PolarisMethodBin *b=&m->bins[n];if(!b->calls)continue;
++        IOLog("POLARIS GPU METHOD PERF: end_us=%llu window_us=%llu kind=%s calls=%llu errors=%llu auth_us=%llu dispatch_us=%llu lock_us=%llu body_us=%llu total_us=%llu max_us=%llu\n",
++            ns/1000,polaris_gpu_elapsed_us(m->began,ended),names[n],b->calls,b->errors,
++            b->auth,b->dispatch,b->lock,b->body,b->total,b->maximum);
++    }
++    *m=(PolarisMethodMeter){};
+ }
+ class PolarisGPUUserClient : public IOUserClient {
+     OSDeclareDefaultStructors(PolarisGPUUserClient);
+@@ -471,6 +516,7 @@
+         r->queueid>queues || !r->queueid || r->in_syncobjs || r->out_syncobjs ||
+         r->nr_in_syncobjs || r->nr_out_syncobjs || r->pad ||
+         (r->flags & ~(0x10u|0x80000000u))) return kIOReturnBadArgument;
++    uint64_t validationBegan;clock_get_uptime(&validationBegan);
+     msm_gem_submit_bo *bos=IONew(msm_gem_submit_bo,r->nr_bos);
+     msm_gem_submit_cmd *cmds=IONew(msm_gem_submit_cmd,r->nr_cmds);
+     IOReturn result=kIOReturnBadArgument;
+@@ -519,10 +565,11 @@
+             IOLog("POLARIS GPU: completed submission %u, IBs=%u BOs=%u surfaces=%u; GPU fence+idle+halt\n",
+                 r->fence,count,r->nr_bos,gpuSurfaces);
+         if(r->fence<=4 || !(r->fence%64))
+-            IOLog("POLARIS GPU BO PERF: fence=%u actor=%u BOs=%u prebytes=%llu postbytes=%llu ROskip=%llu pre=%llu submit=%llu post=%llu us WCpre=%llu WCpost=%llu\n",
++            IOLog("POLARIS GPU BO PERF: fence=%u actor=%u BOs=%u prebytes=%llu postbytes=%llu ROskip=%llu pre=%llu submit=%llu post=%llu us WCpre=%llu WCpost=%llu validate=%llu\n",
+                 r->fence,callerKind,r->nr_bos,tally.before,tally.after,tally.readonlySkipped,
+                 polaris_gpu_elapsed_us(before,prepared),polaris_gpu_elapsed_us(prepared,submitted),
+-                polaris_gpu_elapsed_us(submitted,completed),tally.wcBefore,tally.wcAfter);
++                polaris_gpu_elapsed_us(submitted,completed),tally.wcBefore,tally.wcAfter,
++                polaris_gpu_elapsed_us(validationBegan,before));
+         result=kIOReturnSuccess;
+     }
+ out:
+@@ -532,20 +579,34 @@
+ }
+ IOReturn PolarisGPUUserClient::clientMemoryForType(UInt32 type,IOOptionBits *options,IOMemoryDescriptor **memory)
+ {
++    bool profile=gpuMethodPerformance && callerKind==2;
++    uint64_t entered=0,authed=0,waiting=0,locked=0,ended=0;
++    if(profile)clock_get_uptime(&entered);
+     if(current_task()!=ownerTask || !polaris_gpu_caller_allowed())return kIOReturnNotPrivileged;
++    if(profile){clock_get_uptime(&authed);clock_get_uptime(&waiting);}
+     IOLockLock(gpuLock);
++    if(profile)clock_get_uptime(&locked);
+     PolarisBO *b=closed?NULL:buffer(type);
+     IOReturn result=kIOReturnNotFound;
+     if(b && polaris_gpu_ready()) {
+         *options=kIOMapAnywhere|(b->writeCombined?kIOMapWriteCombineCache:kIOMapDefaultCache);
+         b->memory->retain();*memory=b->memory;result=0;
+     }
++    if(profile) {
++        clock_get_uptime(&ended);
++        if(polaris_gpu_method_record(&gpuMethodMeter,0x10000,result,entered,authed,waiting,locked,ended))
++            polaris_gpu_method_flush(&gpuMethodMeter,ended);
++    }
+     IOLockUnlock(gpuLock);return result;
+ }
+ IOReturn PolarisGPUUserClient::externalMethod(uint32_t selector,IOExternalMethodArguments *a,
+     IOExternalMethodDispatch *,OSObject *,void *)
+ {
++    bool profile=gpuMethodPerformance && callerKind==2;
++    uint64_t entered=0,authed=0,waiting=0,locked=0,ended=0;
++    if(profile)clock_get_uptime(&entered);
+     if(current_task()!=ownerTask || !polaris_gpu_caller_allowed())return kIOReturnNotPrivileged;
++    if(profile)clock_get_uptime(&authed);
+     union {msm_param param;msm_gem_new make;msm_gem_info info;msm_gem_cpu_prep prep;
+         msm_gem_submit submit;msm_wait_fence wait;msm_gem_madvise madvise;
+         msm_submitqueue queue;msm_submitqueue_query query;drm_gem_close close;redwood_surface surface;
+@@ -571,7 +632,9 @@
+         a->scalarInputCount || a->scalarOutputCount || a->structureInputSize!=size ||
+         !a->structureOutput || a->structureOutputSize<size) return kIOReturnBadArgument;
+     bzero(&r,sizeof(r));memcpy(&r,a->structureInput,size);
++    if(profile)clock_get_uptime(&waiting);
+     IOLockLock(gpuLock);
++    if(profile)clock_get_uptime(&locked);
+     IOReturn result=kIOReturnBadArgument;
+     if(closed || (selector!=0x7c && selector!=0x7b && !polaris_gpu_ready())) {result=kIOReturnNotReady;goto done;}
+     switch(selector) {
+@@ -653,6 +716,11 @@
+     }
+ done:
+     if(result==0){memcpy(a->structureOutput,&r,size);a->structureOutputSize=size;}
++    if(profile) {
++        clock_get_uptime(&ended);
++        if(polaris_gpu_method_record(&gpuMethodMeter,selector,result,entered,authed,waiting,locked,ended))
++            polaris_gpu_method_flush(&gpuMethodMeter,ended);
++    }
+     IOLockUnlock(gpuLock);return result;
+ }
+ IOReturn PolarisGPUUserClient::clientClose()
+@@ -678,6 +746,7 @@
+     if(!polaris_gpu_ready() || gpuLock)return;
+     gpuLock=IOLockAlloc();if(!gpuLock)return;
+     uint32_t wc=0;PE_parse_boot_argn("polarisgpuwc",&wc,sizeof(wc));gpuWriteCombined=wc==1;
++    uint32_t perf=0;PE_parse_boot_argn("polarisperf",&perf,sizeof(perf));gpuMethodPerformance=perf==1;
+     IOLog("POLARIS GPU WC: owned GEM trial=%u; imported IOSurfaces remain cached\n",(unsigned)gpuWriteCombined);
+     PolarisGPU *s=new PolarisGPU;
+     if(s && s->init() && s->attach(IOService::getPlatform()) && s->start(IOService::getPlatform())) {

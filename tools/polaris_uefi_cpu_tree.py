@@ -1,7 +1,7 @@
-"""Select resident XNU CPU1, CPU7, or a CPU7+CPU6 pair in a Polaris RAM tree.
+"""Select resident XNU CPU1, CPU7, or a CPU7..CPU4 group in a Polaris RAM tree.
 
 CPU0 remains firmware-owned. No clocks, voltage, RAM or peripherals change.
-The two-core experiment additionally requires explicit cpus=2 kernel opt-in.
+Multi-core experiments require matching explicit cpus=2 or cpus=4 opt-in.
 The declared clock-frequency is a compatibility value, not a measurement.
 """
 import argparse
@@ -57,7 +57,7 @@ def owner_metadata(node, name):
 
 def validate(raw, core=1, qemu=False, count=1):
     if (type(core) is not int or core not in (1, 7) or type(qemu) is not bool or
-            type(count) is not int or count not in (1, 2) or count == 2 and core != 7):
+            type(count) is not int or count not in (1, 2, 4) or count > 1 and core != 7):
         raise ValueError('only firmware-reserved CPU1 or CPU7 trials are supported')
     tree, used = adt.parse(raw)
     if used != len(raw) or adt.serialize(tree) != raw:
@@ -134,7 +134,7 @@ def validate(raw, core=1, qemu=False, count=1):
 
 def select(raw, core=1, qemu=False, count=1):
     if (type(core) is not int or core not in (1, 7) or type(count) is not int or
-            count not in (1, 2) or count == 2 and core != 7):
+            count not in (1, 2, 4) or count > 1 and core != 7):
         raise ValueError('only firmware-reserved CPU1 or CPU7 trials are supported')
     tree = validate(raw, 1, qemu)
     cpu = child(tree, 'cpus').children[0]
@@ -152,26 +152,28 @@ def select(raw, core=1, qemu=False, count=1):
         expanded = struct.pack('<4Q', 0x7000000, 0x10000, 0x70a0000, 0x100000)
         gic_node.props = [(key, flags, expanded if key == 'reg' else value)
                           for key, flags, value in gic_node.props]
-    peer = None
-    if count == 2:
+    peers = []
+    if count > 1:
         def walk(node):
             yield node
             for sub in node.children:
                 yield from walk(sub)
         handles = [struct.unpack('<I', value)[0] for node in walk(tree)
                    for key, _, value in node.props if key == 'AAPL,phandle' and len(value) == 4]
-        if not handles or len(handles) != len(set(handles)) or max(handles) == 0xffffffff:
+        if not handles or len(handles) != len(set(handles)) or max(handles) > 0xffffffff - (count - 1):
             raise ValueError('invalid phandle namespace')
-        peer = copy.deepcopy(cpu)
-        updates = {'name': b'cpu1\0', 'cpu-id': struct.pack('<I', 1),
-                   'reg': struct.pack('<I', target - (1 if qemu else 0x100)),
-                   'cluster-core-id': struct.pack('<I', 1), 'l2-cache-id': struct.pack('<I', 1),
-                   'state': b'stopped\0', 'AAPL,phandle': struct.pack('<I', max(handles) + 1)}
-        peer.props = [(key, flags, updates.get(key, value)) for key, flags, value in peer.props]
-        child(tree, 'cpus').children.append(peer)
+        for logical in range(1, count):
+            peer = copy.deepcopy(cpu)
+            updates = {'name': f'cpu{logical}\0'.encode(), 'cpu-id': struct.pack('<I', logical),
+                       'reg': struct.pack('<I', target - logical * (1 if qemu else 0x100)),
+                       'cluster-core-id': struct.pack('<I', logical), 'l2-cache-id': struct.pack('<I', logical),
+                       'state': b'stopped\0', 'AAPL,phandle': struct.pack('<I', max(handles) + logical)}
+            peer.props = [(key, flags, updates.get(key, value)) for key, flags, value in peer.props]
+            child(tree, 'cpus').children.append(peer)
+            peers.append(peer)
     result = adt.serialize(tree)
     validate(result, core, qemu, count)
-    if peer is not None:
+    for peer in peers:
         child(tree, 'cpus').children.remove(peer)
     gic_node.props = [(key, flags, old_gic if key == 'reg' else value)
                       for key, flags, value in gic_node.props]
@@ -245,7 +247,7 @@ def main():
     parser.add_argument('output', type=Path)
     parser.add_argument('--core', type=int, choices=(1, 7), default=1)
     parser.add_argument('--qemu', action='store_true')
-    parser.add_argument('--cpus', type=int, choices=(1, 2), default=1)
+    parser.add_argument('--cpus', type=int, choices=(1, 2, 4), default=1)
     args = parser.parse_args()
     result = select(args.input.read_bytes(), args.core, args.qemu, args.cpus)
     with args.output.open('xb') as out:

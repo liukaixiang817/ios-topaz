@@ -51,6 +51,27 @@ class XnuAdmissionTests(unittest.TestCase):
         f[0]['RAM_native_shutdown_bridge']=True
         with self.assertRaises(ValueError):packer.admit(*f)
 
+    def test_four_core_cannot_reuse_pair_or_incomplete_shutdown_evidence(self):
+        f=list(self.fixtures());d,q=f[:2]
+        d.update(kernel_CPU_affinity=1792,kernel_CPU_count=4,RAM_native_shutdown_bridge=True)
+        q.update(kernel_CPU_affinity=7,kernel_CPU_count=4,RAM_native_drain_test='success')
+        keys=['both_kernel_CPUs_online','real_cross_core_callbacks','four_core_affinities_and_xcalls',
+              'native_peer_affinity_OFF','native_reboot_sync_path','real_zero_mounts_and_buffers',
+              'firmware_observed_RAM_drained','separate_RAM_result']
+        q['checks'].update({k:True for k in keys})
+        q['native_shutdown_mailbox']=dict(cookie=123,request_cookie=123,sequence=1,mode=2,phase=3,
+                                         error=0,write_epoch=0,flushed_epoch=0,capabilities=0x80000003)
+        packer.admit(*f)
+        q['kernel_CPU_count']=2
+        with self.assertRaises(ValueError):packer.admit(*f)
+        q['kernel_CPU_count']=4
+        for key in keys:
+            q['checks'][key]=False
+            with self.subTest(key=key),self.assertRaises(ValueError):packer.admit(*f)
+            q['checks'][key]=True
+        d['RAM_native_shutdown_bridge']=False
+        with self.assertRaises(ValueError):packer.admit(*f)
+
     def test_prototype_stale_source_queued_CI_and_root_change_refused(self):
         changes=[(1,'diagnostic_legacy_only',True),(1,'release_handoff_admitted',False),
                  (1,'kernel_sha256','e'*64),(1,'checks',{}),(1,'inputs',{}),

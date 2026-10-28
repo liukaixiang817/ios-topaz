@@ -9,8 +9,8 @@ static inline int polaris_uefi_cpu_declared(uint32_t mode,uint32_t target,
     uint32_t count,uint32_t logical,uint32_t physical)
 {
     if(mode!=1 || (target!=0x100 && target!=0x700 && target!=1 && target!=7) ||
-        logical>=count || (count!=1 && count!=2)) return 0;
-    if(count==2 && target!=0x700 && target!=7) return 0;
+        logical>=count || (count!=1 && count!=2 && count!=4)) return 0;
+    if(count>1 && target!=0x700 && target!=7) return 0;
     uint32_t step=target==0x700?0x100:1;
     return physical==target-logical*step && physical!=0;
 }

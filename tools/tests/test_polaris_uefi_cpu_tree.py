@@ -87,6 +87,30 @@ class ResidentCoreTree(unittest.TestCase):
                 with self.assertRaises(ValueError):cpu.validate(adt.serialize(root), 7, qemu, 2)
             with self.assertRaises(ValueError):cpu.select(raw, 1, qemu, 2)
 
+    def test_four_big_cores_preserve_reserved_firmware_and_tree(self):
+        for qemu in (False, True):
+            original=self.tree(qemu)
+            raw=cpu.select(original,7,qemu,4)
+            tree=cpu.validate(raw,7,qemu,4)
+            nodes=cpu.child(tree,'cpus').children
+            self.assertEqual([struct.unpack('<I',cpu.props(n)['reg'])[0] for n in nodes],
+                             [7,6,5,4] if qemu else [0x700,0x600,0x500,0x400])
+            self.assertEqual(len({cpu.props(n)['AAPL,phandle'] for n in nodes}),4)
+            for i in range(1,4):
+                self.assertEqual(cpu.props(nodes[i])['state'],b'stopped\0')
+                bad,_=adt.parse(raw)
+                builder.setprop(cpu.child(bad,'cpus').children[i],'reg',struct.pack('<I',0))
+                with self.assertRaises(ValueError):cpu.validate(adt.serialize(bad),7,qemu,4)
+            for count in (0,3,5,7,8,True):
+                with self.assertRaises(ValueError):cpu.select(original,7,qemu,count)
+            with self.assertRaises(ValueError):cpu.select(original,1,qemu,4)
+            if qemu:
+                with self.assertRaises(ValueError):cpu.isolated_qemu_ufs(raw,0)
+            # Four-core admission does not broaden either owned-writing fixture.
+            n=adt.Node();n.props=[('name',0,b'polaris-owned-marker\0')]
+            tree.children.append(n)
+            with self.assertRaises(ValueError):cpu.validate(adt.serialize(tree),7,qemu,4)
+
     def test_isolated_UFS_cannot_reach_phone_or_unbound_virtual_hardware(self):
         raw = cpu.select(self.tree(True), 7, True, 2)
         virtual = cpu.isolated_qemu_ufs(raw, 0x12345678)

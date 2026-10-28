@@ -64,7 +64,7 @@ def main():
                     help='QEMU-only old-loader mismatch: native owned writes must be refused before MMIO')
     ap.add_argument('--kernel-core',type=int,choices=(1,7),default=1,
                     help='boot XNU core: existing small CPU1 or opt-in big CPU7; firmware retains CPU0')
-    ap.add_argument('--kernel-cpus',type=int,choices=(1,2),default=1,
+    ap.add_argument('--kernel-cpus',type=int,choices=(1,2,4),default=1,
                     help='one kernel core or opt-in CPU7+CPU6 pair; firmware CPU0 stays reserved')
     ap.add_argument('--test-ram-drain',choices=['success','stale-cookie','peer-refused'],
                     help='QEMU-only real BSD RAM drain experiment; never UFS durability proof')
@@ -90,8 +90,8 @@ def main():
         ap.error('controlled response injection requires isolated owned-file mode')
     if a.test_omit_durable_guard and (not a.test_qemu_owned or a.test_owned_response_short):
         ap.error('guard-omission injection requires the isolated owned QEMU test alone')
-    if a.kernel_cpus==2 and a.kernel_core!=7:ap.error('two-core trial requires the CPU7+CPU6 pair')
-    if a.test_ram_drain=='peer-refused' and a.kernel_cpus!=2:
+    if a.kernel_cpus>1 and a.kernel_core!=7:ap.error('multi-core trial requires CPU7 with descending declared peers')
+    if a.test_ram_drain=='peer-refused' and a.kernel_cpus not in (2,4):
         ap.error('peer refusal injection requires the explicit two-core QEMU test')
     if a.test_ram_drain and (not a.test_qemu or a.chain_app_manifest):
         ap.error('RAM drain experiment requires QEMU without a chain wrapper')

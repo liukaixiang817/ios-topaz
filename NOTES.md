@@ -34,6 +34,34 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0085 four-big-core lifecycle and GPU callback timing: SOURCE READY, unproven on phone
+
+- Human now prioritizes actual60FPS and SD845 CPU performance; explicitly allows
+  reserving one small core for stable resident UEFI/USB. Own live DT binds all
+  four big affinities400/500/600/700 (PSCI, same efficiency1740/L2 256KiB).
+  New RAM-only topology admits700/600/500/400, leaves firmware0 reserved.
+  This is NOT all7 XNU cores and makes no clock/voltage or60FPS claim.
+- Native scheduler-driven shutdown now serially removes each declared peer,
+  publishes its actual sleep token, calls its bound PSCI conduit and requires
+  actual AFFINITY_OFF for ALL peers before RAM_DRAINED. First-peer refusal
+  remains a QEMU-only software fault. Owned/UFS/marker modes stay exactly2.
+  Four-core phone admission additionally requires matching actual VM online/
+  64callbacks proof and successful native all-peer shutdown, not just boot.
+- New polarisperf1 native callback meter separates authorization, dispatch,
+  lockwait and body WALL time by method, plus copyin/BO validation duration.
+  It preserves every executable identity check/cache/fence/completion rule;
+  includes preemption, excludes pre-callback Mach work and print/unlock. This
+  is measurement, NOT an FPS optimization or CPU-busy counter by itself.
+- Actual Appleclang27/full kernel headers compiled SweetCPU.cpp/cpu_common.c/
+  polaris_touch.c/PolarisGPU.cpp. Five-file exact overlay replay zero offset/
+  fuzz passed. New local admission/oracle tests run; full CI/actual EFI-XNU
+  four-core+64xcalls+dirtywriter/native drain and refusal proof STILL PENDING.
+  No new physical candidate, no device reboot/write, no frequency writes.
+- Current phone remains0083 cached-surface control in Settings; directed
+  state keepalive0401 succeeded. Never promote badsurfaceWC1. Next fullCI once
+  for0881/0882, actual native four-core success/refusal AND pair regression,
+  then prepare one controlled RAM trial and measure same20 scroll/panel work.
+
 ### 0083 actual GPU+panel-copy bottleneck PROVEN; cached control LEFT RUNNING
 
 - physical-cached-surface-GPU-panel-proof.json binds actual viewed lock/home

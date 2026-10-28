@@ -62,8 +62,8 @@ def main():
         raise ValueError('unsupported native RAM drain test configuration')
     target=manifest.get('kernel_CPU_affinity')
     count=manifest.get('kernel_CPU_count',1)
-    if (not manifest.get('QEMU_variant') or target not in (1,7) or count not in (1,2) or
-        (count==2 and target!=7) or (drain=='peer-refused' and count!=2) or
+    if (not manifest.get('QEMU_variant') or target not in (1,7) or count not in (1,2,4) or
+        (count>1 and target!=7) or (drain=='peer-refused' and count not in (2,4)) or
         manifest.get('sha256')!=sha(app) or manifest.get('payload_sha256')!=sha(a.payload) or
         manifest.get('kernel_sha256')!=sha(a.kernel)):
         raise ValueError('QEMU inputs do not match the built test driver')
@@ -186,8 +186,8 @@ def main():
                            ('QEMU_RAM_DRAINED=1' in text or 'QEMU_RAM_DRAIN_STALE_REFUSED=1' in text or
                             'QEMU_RAM_DRAIN_FAILED=1' in text or 'QEMU_RAM_PEER_OFF_REFUSED=1' in text) if drain else
                            ('SMP STRESS all4 PASS' in text and 'QEMU_INPUT_BRIDGE=1' in text))
-                if count==2:
-                    test_done=test_done and 'POLARIS SMP CHECK: PASS selected=2 callbacks=32 remote=' in text
+                if count>1:
+                    test_done=test_done and f'POLARIS SMP CHECK: PASS selected={count} callbacks={count*16} remote=' in text
                 if ('panic(cpu ' in text or test_done or
                     'XNU_ADMISSION=0x8' in text or p.poll() is not None):break
                 time.sleep(.2)
@@ -261,15 +261,17 @@ def main():
     else:
         checks.update(boot_variable_snapshot='EFI_BOOT_OPTIONS_CAPTURE=0x0000000000000001' in text,
                       explicit_kernel_core_count=(f'POLARIS UEFI: one kernel CPU, logical0 physical{target:#x}; firmware CPU0 reserved' in ring if count==1 else
-                          f'POLARIS UEFI: resident kernel CPUs=2 boot logical0 physical{target:#x}; firmware CPU0 reserved' in ring),
+                          f'POLARIS UEFI: resident kernel CPUs={count} boot logical0 physical{target:#x}; firmware CPU0 reserved' in ring),
                       four_process_VM_stress='SMP STRESS all4 PASS' in ring,
                       each_child_passed=ring.count('SMP STRESS child PASS')==4,
                       bounded_input_handshake='QEMU_INPUT_BRIDGE=1' in text and 'POLARIS UEFI INPUT: seq=2 down=0' in ring,
                       no_panic='panic(cpu ' not in ring and 'panic(cpu ' not in text,
                       no_stress_failure='SMP STRESS FAIL' not in ring)
-        if count==2:
-            checks.update(both_kernel_CPUs_online='SWEET CPU: 2/2 CPUs initialized, SGI1 verified' in ring,
-                          real_cross_core_callbacks='POLARIS SMP CHECK: PASS selected=2 callbacks=32 remote=' in ring)
+        if count>1:
+            checks.update(both_kernel_CPUs_online=f'SWEET CPU: {count}/{count} CPUs initialized, SGI1 verified' in ring,
+                          real_cross_core_callbacks=f'POLARIS SMP CHECK: PASS selected={count} callbacks={count*16} remote=' in ring)
+    if count==4 and not a.legacy_core_refusal:
+        checks['four_core_affinities_and_xcalls']=checks.get('both_kernel_CPUs_online') is True and checks.get('real_cross_core_callbacks') is True
     if manifest.get('disk_payload_read_only'):
         checks.update(unique_GPT_filesystem='DISK_ESP_MATCHES=0x0000000000000001' in text,
                       disk_payload_exact_read=f'DISK_READ_BYTES=0x{manifest["payload_bytes"]:016x}' in text,
@@ -354,8 +356,10 @@ def main():
                               mailbox['mode']==mailbox['request_mode']==2 and mailbox['phase']==3 and
                               mailbox['error']==mailbox['write_epoch']==mailbox['flushed_epoch']==0 and
                               mailbox['capabilities']==0x80000003))
-            if count==2:
-                checks['native_peer_affinity_OFF']='POLARIS UEFI CPU DRAIN: logical1 physical0x6 actual PSCI AFFINITY_OFF; coordinator logical0 physical0x7' in ring
+            if count>1:
+                checks['native_peer_affinity_OFF']=all(
+                    f'POLARIS UEFI CPU DRAIN: logical{logical} physical{target-logical:#x} actual PSCI AFFINITY_OFF; coordinator logical0 physical{target:#x}' in ring
+                    for logical in range(1,count))
         elif drain=='peer-refused':
             checks.update(native_shutdown_entered='POLARIS UEFI DRAIN: accepted seq=1 mode=2' in ring,
                           real_zero_mounts_and_buffers='POLARIS UEFI DRAIN: actual VFS mounts=0 busy=0' in ring,
