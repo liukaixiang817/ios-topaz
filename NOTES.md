@@ -36,6 +36,11 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### 0099 physical display publication/backoff COMPLETE; phone left RUNNING home
 
+- Completed source b895636 committed and pushed (prior readonly WLED source
+  464beaf, native0097 source41e774c unchanged). Final directed keepalive-1827
+  PASS at18:27:14UTC, state kernel-entered. Automation prompt now reflects
+  human sustained60-first priority and this RUNNING0099 case; no old feedback
+  pending or old0096 controller. No active CI/model/USB transaction.
 - CURRENT PHONE is0099/phone-display-wake-0099-0001, not0096 or0094. One
   originalUEFI RAM boot and one kernel command; actual lockscreen, four-big
   SMP/64SGI48remote, GPU GLSL/GMEM/icon4096 checks and arrival_wake1 passed.
