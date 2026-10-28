@@ -439,3 +439,36 @@ formula rejects all53 live snapshots. The host decoder exposes only a
 reference-graph rate and explicitly leaves physical clock frequency unknown.
 Do not invent a divide-by-two adjustment to fit the request. A bounded
 original-device HFI request A/B is the next candidate, not an achieved gain.
+
+## Physical bandwidth request A/B (0093)
+
+The default original HFI bandwidth request4 (table IB1200000KB/s) was an
+actual major performance limit. In the default-OFF mode1 RAM experiment,
+only the active bandwidth request changes to8 (3072000KB/s); GPU performance
+request stays1. These are requests, not measured DDR/GPU frequency. Same
+GPU bundle/tree/four-core CPU policy and40 consumed warm/measured gestures
+produce845 measured full frames: median34.526->17.971ms, about47.95% lower.
+Complete native window ratios show pre/post cache3.228/3.174->1.077/1.070ms,
+execute/idle15.418->9.032ms and panel-copy median14.221->5.718ms. Fixed first
+second after release has43 frames at18.412ms median, versus23/36.693ms.
+This single cross-boot comparison includes bounded idle/cooldown transitions;
+it is neither repeated stability nor60FPS/hardware VSYNC proof.
+
+Actual native shutdown verified GPU1/BW4 restoration after VFS0/busy0, then
+CPU request0 and all three peers really OFF, matching RAM_DRAINED and
+independently observed Polaris FASTBOOT. The follow-up mode3 held active BW8
+and requested original-table GPU performance4:919 actual full frames median
+14.560ms/p9516.281ms (25 exceed16.667ms), versus17.971ms in mode1. Native
+execute/idle fell9.032->6.241ms, while cache and panel costs remained near
+1.1+1.1ms and6ms. The same kernel, GPU/tree, CPU policy and exact40 consumed
+motions are bound to separate actual case records. Both trials completed native
+GPU1/BW4 and CPU0 restoration before all peer cores OFF, then independent real
+FASTBOOT. GPU frequency remains unknown; these are original HFI requests.
+
+The bounded30s-high/10s-backoff experiment itself caused35.6..41ms frames
+when it returned to1/4 inside the fixed post-release window. A separate fixed
+first1s after six extra swipes had no request transition,53 full frames with
+14.950ms median rendering and17.305ms median begin period. This is not stable
+60FPS or hardware scanout proof. Next work must measure ready-to-copy queue
+latency and design a justified continuous policy, rather than discard barriers
+or disable the experiment's guard without original-device evidence.

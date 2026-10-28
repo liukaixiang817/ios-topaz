@@ -34,6 +34,104 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0093 physical bandwidth/core A/B COMPLETE; phone actually FASTBOOT
+
+**LATEST 2026-10-28 11:27UTC: this entry overrides all older ACTIVE/READY
+0093 entries below. Both physical cases ended by native drain/restore and
+independent real FASTBOOT. No active iOS/recovery/USB transaction/CI/model.
+Do not use either old controller or repeat an old boot. Next ready candidate
+must first read-only verify actual expected Polaris, then authorized RAM boot;
+no repeated confirmation is needed. No Android, keys, raw fallback or writes.**
+
+- Native source827eacf2b45ee7caa050856a7ca4845e6d973213/full macOS27-Xcode27
+ CI40668630383/job122749471496 SUCCESS; kernelcd8906d19a85acaaf18beece5852cf501
+ 779ae97d9b0926f9b7b0d652de74ce5 exact source/profile/ZIP CRC/SHA verified.
+ Same GPU bundle42d5ec4c.../ADT/four-big/CPUstock2/GEMWC1/surfaceWC0 throughout.
+ Actual six selected EFI/XNU regressions154 checks and51 local checks already
+ passed; no native change since827, so do NOT rebuild CI for this handoff.
+- Mode1 only original bandwidth request4->8, core request1 unchanged:
+ 845 measured full frames median34.526->17.971ms(-47.949%),13 complete native
+ windows773 completions, pre/post cache3.228/3.174->1.077/1.070ms,
+ execute/idle15.418->9.032ms, actual panel-copy windowmedian14.221->5.718ms.
+ Physical-bandwidth-latency-and-restore-proof.json binds real40 consumed
+ warm/measured gestures/screens/native1/4 restore and actual FASTBOOT10:41UTC.
+ Trial ENDED. One cross-boot experiment, not repeated stability or DDR Hz proof.
+- Mode3 keeps active BW8 and changes only original-table core request1->4:
+ 919 measured full frames median14.560ms/mean14.249/p9516.281/max21.711;
+ 25/919 exceed16.667ms (97.28% fit the render budget). Median18.981% below
+ mode1 and57.829% below0092.13 complete windows833 completions: validation
+ .049ms/cachepre1.093/submit6.433/cachepost1.084; execute/idle6.241 is a
+ SUBSET of submit, not additive/pure GPU busy. Panel windowmedian6.017ms.
+ Actual52 policy transitions error0/return0, actual4/8 and idle1/4 observed.
+ No quarantine/runtimefailure/panic. Seven stable screens actually viewed:
+ lock/home icons/Settings/warm/measured/short/returned home. Proof generator
+ now independently binds the correct MODE3 case's40 inputs/monotonic21..740,
+ same exact gesture parameters vsMODE1, plus six extra actual741..848 inputs
+ and returnhome849..866. Earlier aggregate accidentally referenced mode1's
+ input list; corrected and all actual mode3 SHA/ACK/parameters revalidated.
+- IMPORTANT sustained60 is NOT proven: finalUP740 fixed first1s encounters
+ the experiment's 30s-high cap at+609366us, actual request returns1/4 and
+ following frames take35.6..41ms. This is an observed forced-backoff stall,
+ not proof GPU stopped. Do NOT silently remove the30s/10s guard or claim
+ constant-high operation/physical GPU MHz from the successful request.
+- Six additional controlled700ms swipes741..848 isolate a fixed first1s
+ afterUP848 with NO request transition in-window:53 full frames median14.950ms,
+ begin-period median17.305ms/mean18.588, about2.35ms gap;54.081 EAGL completed
+ frames/s over actual first-last span, NOT hardware VSYNC/scanout FPS. Next
+ successful idle1/4 request occurs+1301408us, outside the fixed1s window.
+ Initial overwide+500ms transition guard rejected that future request;
+ failure preserved, corrected exact-window analysis and prior500ms guard
+ retained. Do not call the2.4ms gap pure CPU busy or display wait unmeasured.
+- Mode3 native end11:18:25.688732UTC: actual ownHFSX unmount/VFS0busy0, GPU
+ PERF1/BW4 restored error0 AFTER VFS0 and BEFORE CPUrequest0 restore, then
+ actual600/500/400 PSCI_OFF and700 parked. Matching cookie6362788017/seq1/
+ mode2/phase3/error0/RAM_DRAINED80000003; full native log saved before gated
+ reset. Independent actual expectedPolaris FASTBOOT11:21:20.692167UTC
+ recorded actual-fastboot-after-GPU-core-native-restore.json. Not command ACK.
+ physical-core-request-latency-and-restore-proof.json PASSED and rehashes
+ complete source/CI/kernel/screens/real inputs/phase/native restore evidence.
+ No raw fallback/physical key/Android/storage write. All trials ENDED.
+
+NEXT0094 (design only, no native code/candidate/CI yet): measure actual ready
+publish sequence/time -> copy begin/end and notification deadline lateness;
+framebuffer swap currently only sets dirty, no arrival wake, timer has separate
+VSYNC/copy deadlines and START-to-start nextPresent. Existing lock is released
+before copy. Queuing cost is a hypothesis, NOT established2.4ms attribution.
+If late arrivals wait, use a coalesced providerless IOInterruptEventSource on
+existing workloop (native source explicitly supports software pokes), preserving
+ownership/lifetime, no earlyVSYNC/spin/synchronous copy on userclient. Need real
+workloop/strict bound tests/TUs/fullCI/actual EFI-XNU before phone. Continuous
+request policy also needs original-device read-only thermal/controller evidence;
+do not blindly remove experimental backoff/raise PLL/voltage/copy K40 EPSS.
+Possible nonmax original PERF5/BW8 is NOT implemented/admitted/proven. Do not
+reenable rejected600ms surfaceWC1. Preserve all cache/DSB/fence/idle/halt/auth.
+Private next-presentation-diagnosis-design.json records the evidence and limits.
+
+User priority remains measured stable60, report every15min. Four big cores
+700/600/500/400 already physically proven; little0 retained for UEFI/USB, three
+other little cores OFF, not7/8-core/actual clock proof. Persistent16GiB runtime
+and original physical volume-key menu deferred, not canceled; only small8MiB
+owned marker durability proven. Still RO base+512MiB RAMCOW. Do not redo marker,
+ESP additions, prior CPU/UI tests or CI without native changes. All preservation
+constraints in older completed durable-marker handoff remain in force.
+
+### CURRENT PHONE0093 mode3 ACTIVE; do NOT reuse mode1 or repeat boot
+
+- case0093/phone-stock-GPU-0093-3-0001 RAMUEFI sent10:43UTC; unique
+ kernel-start-0001 succeeded. Actualcapture-0001-progress log armed1 mode3
+ saved1/4 target4/8 error0 andactualGL4096pixel/icon acceptancePASS. No
+ runtimefailure/quarantine/panic observed. capture-0002-lockcheck pending;
+ VIEW itbeforeunlock. Newcontroller7 4 3 ONLY; nootherUSBtransactionparallel.
+- Mode1 trialfullyended with nativeGPU1/BW4 restoreafterVFS0busy0, thenCPU0
+ andallpeerOFF; independentactualFASTBOOT10:41. ItsphysicalproofPASS with
+ measured48%framegain and5.7mscopy alreadycomplete. Do NOTrerunmode1.
+- Nextmode3holdBW8 equal andtestoriginalGPUrequest4 vs1, same4big/CPUOSM2/
+ GPUbundle/ADT/WC. ActualclockMHzstillunproven. Lock->unlock(actual18ACK),
+ stablehomeicons->Settings(actual20ACK), stableSettingscapture thenSAME20warm+
+ 20measured run-scroll-comparison.py3 warmup|measured, strict381..740 frame
+ andnativephases. Currenthelpers all0093bound; bootstrap stock1/4 hardware
+ restores beforepeerOFF mandatory. No disk/Android/rawfallback changes.
+
 ### 0093 bandwidth-only physical COMPLETE; GPU-core comparison READY
 
 - physical-bandwidth-latency-and-restore-proof.json PASS binds source827/fullCI
