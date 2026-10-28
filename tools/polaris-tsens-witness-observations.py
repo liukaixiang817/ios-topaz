@@ -16,6 +16,43 @@ WORD = re.compile(r'us=(\d+) id=(\d+) count=(\d+) selected=(\d+)/(\d+) values=([
 FAIL = re.compile(r'us=(\d+) begin=(\d+) end=(\d+) error=(\d+) id=(\d+) count=(\d+) reads=(\d+) raw=([0-9a-f]+(?:/[0-9a-f]+){3}) last=([0-9a-f]+); no partial admission')
 
 
+def bounded_observation_records(text, end_us):
+    """Retain all records through the exact native measurement endpoint.
+
+    A log snapshot can finish between a later summary and its two raw lines.
+    Do not fabricate that missing line, or discard a partial observation in
+    the measured interval. Return every excluded post-window line's hash.
+    Frame/CPU analyses must continue to use the unmodified original log.
+    """
+    if not isinstance(end_us, int) or isinstance(end_us, bool) or not 0 < end_us < 2**64:
+        raise ValueError('bounded native measurement endpoint required')
+    tags = ['POLARIS TSENS RO: ', 'POLARIS TSENS RAW: ', 'POLARIS TSENS PAIR IO: ',
+            'POLARIS TSENS WITNESS: ', 'POLARIS TSENS PAIR FAIL: ']
+    kept, excluded = [], []
+    for line in text.splitlines(keepends=True):
+        future = False
+        for tag in tags:
+            if tag not in line:
+                continue
+            body = line.split(tag, 1)[1]
+            if tag == 'POLARIS TSENS RO: ' and body.rstrip('\r\n') in (
+                    'armed TMc263000 gold7..10 GPU11..12; READONLY, stock guard unchanged',
+                    'armed TMc263000 gold7..10 GPU11..12; READONLY, GPU thermal experiment'):
+                break  # Exact untimed startup announcement, never a temperature.
+            match = re.match(r'us=(\d+)\b', body)
+            if not match:
+                raise ValueError('malformed native observation identity')
+            stamp = int(match[1])
+            if stamp > end_us:
+                excluded.append(dict(tag=tag.strip(), us=stamp,
+                                     line_sha256=hashlib.sha256(line.encode()).hexdigest()))
+                future = True
+            break
+        if not future:
+            kept.append(line)
+    return ''.join(kept), excluded
+
+
 def choose(values):
     peak = values.index(max(values))
     for i in range(len(values) - 1, -1, -1):

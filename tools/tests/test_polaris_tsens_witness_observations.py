@@ -25,6 +25,22 @@ def witness():
 
 
 class WitnessObservations(unittest.TestCase):
+    def test_only_post_window_snapshot_tail_may_be_excluded(self):
+        tail = 'POLARIS TSENS RO: us=310 begin=300 span=10 gold=40000/41000/42000/43000 gpu=44000/45000; mC observations, not sensor freshness\n'
+        text = ('POLARIS TSENS RO: armed TMc263000 gold7..10 GPU11..12; READONLY, GPU thermal experiment\n'
+                + ordinary() + witness() + tail)
+        bounded, excluded = m.bounded_observation_records(text, 250)
+        self.assertEqual(len(excluded), 1)
+        self.assertEqual(excluded[0]['us'], 310)
+        self.assertEqual(len(excluded[0]['line_sha256']), 64)
+        self.assertEqual(len(m.analyze(bounded)['witness_observations']), 1)
+        with self.assertRaises(ValueError):
+            m.analyze(m.bounded_observation_records(text, 310)[0])
+        with self.assertRaises(ValueError):
+            m.bounded_observation_records(text.replace('us=310', 'us=broken'), 250)
+        with self.assertRaises(ValueError):
+            m.bounded_observation_records(text, True)
+
     def test_conservative_authentic_words_and_failure_retention(self):
         d = m.analyze(ordinary() + witness())
         self.assertEqual(d['witness_observations'][0]['sensors'][0]['hottest_mC'], 45000)

@@ -34,6 +34,84 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0104 physical hottest-word repair + REAL600s outcome COMPLETE; phone actual FASTBOOT
+
+- CURRENT PHONE all0104 trials ENDED. True native end then independentactual
+  expectedPolaris FASTBOOT23:34:01.216869UTC. No activeiOS/recovery/USB/model/
+  CI/collector; worker48778/analysis36650/prover5397 ended. Neverreuse0104
+  controller/replayboot/start/500scroll orwaitforoldtrial. NoAndroid/physical
+  keys/rawfallback/PMIC/storage/NVRAMwrites. Nextcandidate fullyready then
+  readonlyactualexpectedPolaris query andauthorizedONE RAMboot, no reasking.
+- Sourceee688eb/fullmacOS27-Xcode27 CI40782623053/job123147840966 SUCCESS,
+  kernelb7fa37ac290781e02f96dbb1a14e92ef07138d430c1318bc0b8a999193ac31d3
+  exactsource/profile/ZIPCRC/SHA. SixSERIALactualEFI/XNU242checks alreadyPASS;
+  syntheticwords/nativeMMIOrefusal aren'tphoneproof. No newnativechanges.
+  Hostobserver1f971e6 pushed; subsequentbounded-snapshot helpercommit follows.
+- Physical-pair-witness-outcome-and-native-restore-proof.json andphysical-
+  TSENS-pair-witness-and-latency-proof.json independentlyrehashed25group
+  captures/viewed5QA sheets/502contactsACK0..9020 thenhome9038, actual4big
+  callbacks64remote64/GLSL+GMEM+iconALL4096. ONEcontinuous500worker(no400+tail
+  hostgap), all25fullSettings text/icons actuallyviewed; finalhome3app3dock
+  actuallyviewed. WidgetsWaiting/sideconsole stillpresent, notallUIissuesfixed.
+- NEW physicalpairrepair ACTUALLY observed1176822030us: sensor9 firstraw
+  209292=65.8C then2092ba=69.8C, third2092ba confirms69.8C.13actualREADS/
+  25us, selectedrealwords1/2 includinghighestseenVALID, notaverage/majority.
+  Allraws independentlydecoded/matched; thatcaseavoidedunnecessary10sLOW.
+  ZERO retainedTSENSfailures/contactsensorLOW, all723contact6sensorobservations
+  preserved. MaxCPU74.7C/GPU57.2C closeCPU75C experimentlimit: no moreblind
+  highvotes/guardextension. SensorvariationisNOT freshnesscounter/OEMthermal
+  proof. Thisonecontrolledrun isn't repeatedstatisticalstability.
+- NEW REALhard600elapsed PASSED: origin953910701us ->confirmedLOW1553919010us
+  =600008309us; actualconfirmedHIGH1563922322us after10003312usLOW. Prior
+  fixed1s32framesmedian15.3965ms ->following20frames34.8445ms. It'sanelapsed
+  cycleincludingbriefidleLOW, NOT uninterrupted600highresidency/production60.
+  No sensortriggeredearlycyclebreak thisrun; hard600/10s remains unchanged.
+- 21949actualcompleteEAGLframes overallmedian14.998ms/p9518.156/max41.788;
+  old0103median15.333/p9518.808. Firstmeasured911median14.629/p9516.755,
+  over16.667=49/911 vsold868median15.0565/p9519.507,197/868. Otherwindows
+  kept(e.g.extended1 p9518.920 worsevsold17.359). Not broad60/stabilityproof.
+  Measured13complete833completionnativewindows validation.0636/cachepre1.046/
+  submit6.430/cachepost1.059ms, execute_idle6.233ms SUBSETsubmit includespoll/
+  preemption notpureGPUbusy. Actualpanelcopymedian6.2465ms/readywait34us;
+  latecopy~7.5ms. Inputs+pause ratesareNOT device-throughput/physicalscanoutHz.
+- physical-CPU-request-gap-association-proof.json rederivesallboundedgroups:
+  20884frames bracketednormalrequest22 median14.945ms,20729SAMEunchanged-
+  requestintervalgapsmedian2.551ms. request0:998frames18.0865ms,984gaps3.161ms;
+  67changing/unknownframesexcluded. BothGPU/input/thermalalso vary, NOTHz/
+  CPUbusy/isolatedcausation. Highrequeststillhasgap, soCPUguardaloneisn't
+  wholecause. Currentnativefourbig+oldCPU30s/10s maintained.
+- Hostanalysis firstrefused snapshotendingafterlaterTSENSheader/pass0 before
+  pass1 (long07 us1365278992, AFTERactualcontactend1362800108). Originalfile/
+  failedanalysis0001 retained, nofakepass1/recovery. Boundedobserver excludes
+  ONLYtimedtemperaturelines AFTEReachactualselectednativeframeendpoint with
+  individualhashes; in-windowmissing/invalid stillrefuses. Firsthelperalso
+  refusedexactuntimedarmedannouncement, fixedexplicitknownstartupgrammar.
+  8negative/window/strictparser testsPASS. analyze-long-scroll-0003 all25PASS.
+  Producerfirsthashcomparison wronglymixedread_text CRLFnormalization with
+  read_bytes decode, failure0001 kept; correctedproducer usesexactsamebytes,
+  physicalproof0002 rehashPASS. No native/guardchange forobserver fixes.
+- Realshutdown: ownHFSXunmount/actualVFS0busy0/GPU1BW4restoreBEFORECPUrequest0
+  then600/500/400actualPSCI_OFF/coordinator700park/cookie7698635051seq1mode2
+  phase3error0/RAM_DRAINED80000003. Fullshutdownlog savedbeforegatedreset,
+  independentactualFASTBOOT23:34. RAM_DRAINED isNOT UFSdurability/rootinstall.
+- NEXT0105 focusremaining~2.55ms gap, NOTanotherlongerthermal/maxvote trial.
+  Offlinepost-frame-tail-measurement-design.json: actualown/refeagl.c records
+  frameendedBEFORE perframewrite(2)/IPCobservers/summary/census/finalcleanup.
+  Thatmeansgapincludeslibrarytail+externalcaller/scheduling; costisUNMEASURED,
+  notprovenloggingcause. PlanseparatelydefaultOFF boundedpercontexttail/logger/
+  observertiming(aggregatedwithoutnewperframeIPC/allocation), sameclockand
+  actualnextbegin, thenmeaningfulnewuserlandbundle/control/pixel/UI/native
+  lifecyclevalidation. Preserveoriginalbundle/oldtrace/allfence/cache/auth/
+  unknownDMA/lifetime; no unmodifiedkernelCI. Trace-sparsecontrolrequires
+  actualpublicationevidence; no claimingmemorycopiesphysical60Hz. No0105
+  productioncode/newbundle/phonecandidate yet. Otherfeatures/ownedruntime/
+  Mindowsphysicalvolumemenu/fuller16.5 remainpending inpriorpriorityorder.
+- LatestfullRO baseline0104 fresh-preflight-devt-review-0001/preflight-reviewed
+  22:57UTC: base16GiBSHA689a8cd1.../182map/marker8MiB/rawmetadata/6GPT/critical/
+  ESP7338692a.../header17016be3...unchanged. Onlyruntimeuserdata259:7(sda22)
+  vsold259:6 reviewedREADONLY, no changeproductionwriteownershipgate. Since
+  thenONLYcontrolledRAM/noAndroid/writes. Futureunknown/Android=>fullROreaudit.
+
 ### CURRENT0104 actual settledSettings; ONE continuous500scroll worker48778 ACTIVE
 
 - capture0002 actual lock,0003 actualhome3app3dock,0004 actualfullsettledSettings
