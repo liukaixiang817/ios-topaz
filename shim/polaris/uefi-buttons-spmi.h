@@ -86,7 +86,7 @@ static inline bool pb_gpio_input(const uint8_t id[2],const uint8_t cfg[7],uint8_
     if(id[0]!=0x10||!(cfg[6]&0x80)||(cfg[2]&7)>=4)return false;
     if(id[1]==1||id[1]==5||id[1]==9||id[1]==13)
         return ((cfg[0]>>4)&7)==0&&((cfg[0]>>1)&7)==0;
-    if(id[1]==0x10||id[1]==0x11)return (cfg[0]&3)==0&&(source&15)==0;
+    if(id[1]==0x10||id[1]==0x11)return (cfg[0]&3)==0&&(source&15)==0&&!(cfg[3]&0x80);
     return false;
 }
 static inline bool pb_start(struct polaris_button_bus *b)

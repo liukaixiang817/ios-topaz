@@ -34,7 +34,7 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### 0095 three-key source compile PASS; CI private-header admission FIXED
+### 0095 full CI PASS; first actual key model FAILED, control IN PROGRESS
 
 - Human priority remains physical lock/power + volume, Wi-Fi and sound FIRST,
  then return to display jank/60FPS. Persistent root/menu remain deferred.
@@ -52,6 +52,28 @@ early samples only. On0029 the human already confirmed boot complete and said
  header,3 cache-policy tests PASS. No native/header byte changed, no original
  interface check loosened. One corrected complete CI still REQUIRED; don't
  download/use the failed run's artifact or call this a kernel build success.
+- Corrected source1e4ed5d839df3a9effe853777bac95b970c3f493 full macOS27/
+ Xcode27 CI40695409352/job122840745957 SUCCESS. Downloaded out-polaris-0095
+ kernel f68c9f2064085aae72e9b06e275b55bbdbf9f1cffeb767558c8577f1fa27442c
+ verified exactsource/build-profile/artifactZIPCRC/SHA. First actual
+ keys-on-success-run-0001 FAILED: genuine native33.031ms interrupt-disabled
+ watchdog panic after first powerDOWN and touch input, before VMchildren/drain.
+ No release/model admission; failed checks/serial/ring/registers preserved.
+ Same-kernel keys-off-success-run-0001 CONTROL is now running; inspect result
+ before any follow-up. Cause unresolved, do not label emulator-only or key bug
+ without control. No phone boot/hardware result. Native source unchanged after CI.
+- Host firmware follow-up only adds LV/MV DTEST-input refusal and precise
+ failed key/register/status/poll logs. Tests retained; no native CI redo needed.
+- Correct original audio driver found under techpack/audio/asoc/sdm845.c,
+ blob4b74f55b9fecca122c74bef72cb692931155f410; original speaker DAI is
+ QuaternaryMI2S via msm-dai-q6-mi2s.3 to tas2559 ASI1, so Tavil SLIM alone
+ is insufficient for loudspeaker. Original WLFW header blob96c03d623a3ec8fe
+10da1d5e4d028fae0346e8ed/service45/version1/capability24 verified privately.
+ No audio/WLAN hardware initialized. Existing vendor-backup gzip is OS
+ compressed,dataless; local read blocked before first block. Stopped only our
+ verified reader (actual exit143 after elevated signal); zero-byte output is
+ NOT firmware evidence. Premature debugfs short-read attempt retained as
+ rejected; no source backup or phone change. Avoid waiting on hydration.
 - New0890 native opt-in polarisbuttons1 consumes a separate aligned256B key
  mailbox in the EXISTING resident input thread, dispatches only power/volup/
  voldown to actual SweetHIDButtons, releases only delivered keys on invalid,

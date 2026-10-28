@@ -88,6 +88,7 @@ int main(void){struct fake f;struct polaris_button_bus b;
   init(&f,&b);f.pmic[1][0x42]=v;assert(pb_start(&b)==((v&7)<4));
   init(&f,&b);f.pmic[1][0x46]=v;assert(pb_start(&b)==!!(v&0x80));
   init(&f,&b);f.pmic[1][0x44]=v;assert(pb_start(&b)==!(v&15));
+  init(&f,&b);f.pmic[1][0x43]=v;assert(pb_start(&b)==!(v&0x80));
  }
  init(&f,&b);f.pmic[0][5]=9;assert(!pb_start(&b)&&b.fault==PB_E_IDENTITY);
  init(&f,&b);f.pmic[1][4]=8;assert(!pb_start(&b)&&b.fault==PB_E_INPUT);
