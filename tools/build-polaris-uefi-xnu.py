@@ -128,6 +128,11 @@ def main():
     off_tokens=[t for t in tokens if t.startswith(b'polarisofftest=')]
     if off_tokens!=([b'polarisofftest=1'] if a.test_ram_drain=='peer-refused' else []):
         raise ValueError('peer refusal injection must be uniquely bound to its QEMU-only test')
+    osm_tokens=[t for t in tokens if t.startswith(b'polarisosm=')]
+    if osm_tokens not in ([],[b'polarisosm=1']) or (osm_tokens and
+        (a.kernel_core!=7 or a.kernel_cpus!=4 or a.test_qemu_ufs or a.physical_owned_marker or
+         not (a.test_ram_drain if a.test_qemu else a.ram_shutdown_bridge))):
+        raise ValueError('OSM read-only inventory requires the explicit four-big RAM native-drain trial')
     cpu_tokens=[t for t in tokens if t.startswith(b'polarisbootcpu=')]
     if cpu_tokens!=[f'polarisbootcpu={target}'.encode()]:
         raise ValueError('payload must uniquely declare the exact selected kernel core')
@@ -276,6 +281,7 @@ def main():
                   durable_guard_generated_after_reset_disabled=a.test_qemu_owned or a.physical_owned_marker,
                   kernel_CPU_affinity=target,
                   kernel_CPU_count=a.kernel_cpus,
+                  CPU_OSM_readonly_inventory=bool(osm_tokens),
                   RAM_base=0x130000000 if a.test_qemu else 0x180000000,RAM_bytes=0xfc8a0000,
                   firmware_core_reserved=0,firmware_services_exited=False,
                   device_execution_tested=False,inputs={p:sha(r/p) for p in inputs})

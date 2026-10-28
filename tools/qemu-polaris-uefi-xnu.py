@@ -272,6 +272,8 @@ def main():
                           real_cross_core_callbacks=f'POLARIS SMP CHECK: PASS selected={count} callbacks={count*16} remote=' in ring)
     if count==4 and not a.legacy_core_refusal:
         checks['four_core_affinities_and_xcalls']=checks.get('both_kernel_CPUs_online') is True and checks.get('real_cross_core_callbacks') is True
+    if manifest.get('CPU_OSM_readonly_inventory'):
+        checks['native_OSM_probe_refused_before_virtual_MMIO']='POLARIS OSM RO: REFUSED platform; no MMIO' in ring and 'POLARIS OSM RO: bank' not in ring and 'POLARIS OSM REQUEST:' not in ring
     if manifest.get('disk_payload_read_only'):
         checks.update(unique_GPT_filesystem='DISK_ESP_MATCHES=0x0000000000000001' in text,
                       disk_payload_exact_read=f'DISK_READ_BYTES=0x{manifest["payload_bytes"]:016x}' in text,
@@ -423,6 +425,7 @@ def main():
                 diagnostic_legacy_only=a.legacy_core_refusal,release_handoff_admitted=not virtual_ufs and not a.legacy_core_refusal and drain!='peer-refused' and all(checks.values()) and error is None,
                 full_iOS_boot_proven=False,physical_USB_proven=False,SDM845_emulated=False,
                 RAM_native_drain_test=drain,native_shutdown_mailbox=mailbox,
+                CPU_OSM_readonly_inventory=bool(manifest.get("CPU_OSM_readonly_inventory")),
                 persistent_root_or_UFS_durability_proven=False,
                 isolated_QEMU_readonly_UFS_test=virtual_ufs and not owned_ufs,
                 isolated_QEMU_owned_UFS_test=owned_ufs,owned_backend_reopen=reopened,

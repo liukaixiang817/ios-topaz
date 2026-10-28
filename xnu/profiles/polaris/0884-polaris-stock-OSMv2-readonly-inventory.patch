@@ -1,0 +1,142 @@
+--- a/iokit/Kernel/arm/polaris_uefi_cpu.h
++++ b/iokit/Kernel/arm/polaris_uefi_cpu.h
+@@ -44,4 +44,40 @@
+     }
+     return -1;
+ }
++/* Read-only SD845 OSMv2 inventory. Source: this phone's own DT and MiCode
++ * clk-cpu-osm.c c7cb50c18f812629b9620b2b8fa684bc40d82080. These pure helpers
++ * never map/register-write, choose a performance state, or claim actual Hz. */
++static inline int polaris_osm_ro_allowed(uint32_t flag,uint32_t mode,uint32_t target,
++    uint32_t count,uint64_t actual,uint64_t midr,uint64_t timer,
++    uint64_t dram_base,uint64_t dram_size,int compatible)
++{
++    return flag==1 && compatible==1 && target==0x700 && count==4 &&
++        polaris_uefi_cpu_allowed(mode,target,count,0,target,actual) &&
++        ((midr>>24)&0xff)==0x51 && ((midr>>4)&0xfff)==0x802 &&
++        timer==19200000 && dram_base==UINT64_C(0x180000000) &&
++        dram_size==UINT64_C(0xfc8a0000);
++}
++static inline uint64_t polaris_osm_lut_raw_hz(uint32_t word)
++{
++    return (word>>30)?UINT64_C(19200000)*(word&255):UINT64_C(300000000);
++}
++static inline uint64_t polaris_osm_lut_requested_hz(uint32_t word)
++{
++    uint32_t cores=(word>>16)&7;
++    if(cores<1 || cores>4)return 0;
++    uint64_t hz=polaris_osm_lut_raw_hz(word);
++    return hz>=200000000 && hz<=3200000000 ? hz:0;
++}
++static inline uint32_t polaris_osm_lut_rows(const uint32_t *words)
++{
++    if(!words)return 0;
++    for(uint32_t i=1;i<40;i++)
++        if(polaris_osm_lut_raw_hz(words[i])==polaris_osm_lut_raw_hz(words[i-1]) &&
++            ((words[i]>>16)&7)==((words[i-1]>>16)&7))return i;
++    return 40;
++}
++static inline uint64_t polaris_osm_requested_hz(const uint32_t *words,uint32_t rows,uint32_t index)
++{
++    return words && rows && rows<=40 && index<rows ? polaris_osm_lut_requested_hz(words[index]):0;
++}
+ #endif
+--- a/iokit/Kernel/arm/SweetCPU.cpp
++++ b/iokit/Kernel/arm/SweetCPU.cpp
+@@ -8,6 +8,7 @@
+ #if defined(SWEET)
+ #include <IOKit/IOCPU.h>
+ #include <IOKit/IOLib.h>
++#include <IOKit/IOMemoryDescriptor.h>
+ #include <libkern/c++/OSData.h>
+ #include <libkern/c++/OSNumber.h>
+ #include <arm64/proc_reg.h>
+@@ -19,6 +20,7 @@
+ #include <pexpert/pexpert.h>
+ #if defined(POLARIS_RAM_ONLY)
+ #include "polaris_uefi_cpu.h"
++#include <pexpert/device_tree.h>
+ #include <sys/errno.h>
+ #endif
+ 
+@@ -35,6 +37,72 @@
+ /* One-shot, opt-in cross-core diagnostics. Static callback records stay
+  * valid even if a response arrives after the bounded observer has stopped.
+  * Callbacks never print, allocate, touch hardware or wait for another CPU. */
++/* Default-OFF, one bounded snapshot before starting the peers. The verified
++ * OSM bank is always-on controller MMIO, not CPU-local/PMU registers. Only
++ * volatile loads are performed; firmware's clock/voltage/thermal policy stays. */
++static bool polaris_osm_dt_u64(DTEntry entry,const char *key,uint64_t *out)
++{
++    const void *value=NULL;unsigned size=0;
++    if(SecureDTGetProperty(entry,key,&value,&size)!=kSuccess || size!=8)return false;
++    memcpy(out,value,8);return true;
++}
++static void polaris_osm_readonly_probe(uint32_t mode,uint32_t target,uint32_t count)
++{
++    uint32_t flag=0;PE_parse_boot_argn("polarisosm",&flag,sizeof(flag));
++    if(!flag)return;
++    DTEntry root,chosen;const void *raw=NULL;unsigned length=0;
++    uint64_t base=0,bytes=0;bool polaris=false,sdm845=false;
++    if(SecureDTLookupEntry(NULL,"/",&root)==kSuccess &&
++        SecureDTLookupEntry(NULL,"/chosen",&chosen)==kSuccess &&
++        SecureDTGetProperty(root,"compatible",&raw,&length)==kSuccess && raw && length && length<=512 &&
++        polaris_osm_dt_u64(chosen,"dram-base",&base) &&
++        polaris_osm_dt_u64(chosen,"dram-size",&bytes)) {
++        const char *text=(const char*)raw;
++        for(unsigned start=0;start<length;) {
++            unsigned end=start;while(end<length && text[end])end++;
++            if(end==length)break;
++            if(end-start==14 && !memcmp(text+start,"xiaomi,polaris",14))polaris=true;
++            if(end-start==11 && !memcmp(text+start,"qcom,sdm845",11))sdm845=true;
++            start=end+1;
++        }
++    }
++    if(!polaris_osm_ro_allowed(flag,mode,target,count,__builtin_arm_rsr64("MPIDR_EL1"),
++        __builtin_arm_rsr64("MIDR_EL1"),__builtin_arm_rsr64("CNTFRQ_EL0"),
++        base,bytes,polaris && sdm845)) {
++        IOLog("POLARIS OSM RO: REFUSED platform; no MMIO\n");return;
++    }
++    /* Own live DT performance-bank third reg:17d45800/1400; never use K40 EPSS.
++     * CPU-only read-only/noncacheable mapping; no DMA preparation or aliases
++     * exposed to tasks. Release the mapping after the bounded snapshot. */
++    IOMemoryDescriptor *memory=IOMemoryDescriptor::withPhysicalAddress(0x17d45800,0x1400,kIODirectionIn);
++    IOMemoryMap *mapping=memory?memory->map(kIOMapInhibitCache|kIOMapReadOnly):NULL;
++    if(!mapping || !mapping->getVirtualAddress()) {
++        OSSafeReleaseNULL(mapping);OSSafeReleaseNULL(memory);
++        IOLog("POLARIS OSM RO: mapping refused; no register reads\n");return;
++    }
++    const volatile uint32_t *reg=(const volatile uint32_t*)mapping->getVirtualAddress();
++    uint32_t enabled=reg[0],control=reg[0xbc/4],lut[40],request[4];
++    for(unsigned n=0;n<40;n++)lut[n]=reg[(0x110+n*32)/4];
++    for(unsigned n=0;n<4;n++)request[n]=reg[(0x920+n*4)/4];
++    uint32_t counter_core=(control&1)?3:0;
++    uint64_t began=mach_absolute_time(),elapsed=0;uint32_t before=reg[(0x9c0+counter_core*4)/4];
++    volatile uint64_t sum=0;for(unsigned n=0;n<200000;n++)sum+=n;
++    uint32_t after=reg[(0x9c0+counter_core*4)/4];
++    absolutetime_to_nanoseconds(mach_absolute_time()-began,&elapsed);
++    uint32_t rows=polaris_osm_lut_rows(lut);uint64_t normal_max=0;
++    for(unsigned n=0;n<rows;n++)if(((lut[n]>>16)&7)==4) {
++        uint64_t hz=polaris_osm_lut_requested_hz(lut[n]);if(hz>normal_max)normal_max=hz;
++    }
++    IOLog("POLARIS OSM RO: bank17d45800 enabled=%#x core_control=%#x rows=%u normal4_max_requested_Hz=%llu; no clock/voltage writes\n",enabled,control,rows,normal_max);
++    for(unsigned n=0;n<40;n+=4)IOLog("POLARIS OSM LUT: index%u %08x/%08x/%08x/%08x\n",n,lut[n],lut[n+1],lut[n+2],lut[n+3]);
++    for(unsigned n=0;n<4;n++) {
++        unsigned effective=(control&1)?n:0;
++        IOLog("POLARIS OSM REQUEST: physical%#x raw_index=%#x effective_index=%#x requested_Hz=%llu; request is not measured Hz\n",0x400+n*0x100,request[n],request[effective],polaris_osm_requested_hz(lut,rows,request[effective]));
++    }
++    IOLog("POLARIS OSM CYCLES: core%u before=%#x after=%#x delta=%u elapsed_ns=%llu sum=%llu; raw counter, not instantaneous Hz\n",counter_core,before,after,(uint32_t)(after-before),elapsed,sum);
++    __builtin_arm_dsb(DSB_SY);
++    mapping->release();memory->release();
++}
+ struct polaris_smp_record {
+     uint64_t mpidr, frequency, counter;
+     uint32_t cpu, sender, done;
+@@ -271,6 +339,7 @@
+             __builtin_arm_rsr64("MPIDR_EL1"), __builtin_arm_rsr64("MIDR_EL1"), nanos, sum);
+     }
+ 
++    polaris_osm_readonly_probe(mode,target,topology->num_cpus);
+ #endif
+ 	if (!resident_core && (topology->boot_cpu->cpu_id != 0 || topology->boot_cpu->phys_id != 0)) {
+ 		panic("SWEET CPU: expected boot MPIDR 0 and logical CPU 0");

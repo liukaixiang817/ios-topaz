@@ -62,6 +62,15 @@ class XnuAdmissionTests(unittest.TestCase):
         q['native_shutdown_mailbox']=dict(cookie=123,request_cookie=123,sequence=1,mode=2,phase=3,
                                          error=0,write_epoch=0,flushed_epoch=0,capabilities=0x80000003)
         packer.admit(*f)
+        d['CPU_OSM_readonly_inventory']=True
+        with self.assertRaises(ValueError):packer.admit(*f)
+        q['CPU_OSM_readonly_inventory']=True
+        with self.assertRaises(ValueError):packer.admit(*f)
+        q['checks']['native_OSM_probe_refused_before_virtual_MMIO']=True
+        packer.admit(*f)
+        q['CPU_OSM_readonly_inventory']=False
+        with self.assertRaises(ValueError):packer.admit(*f)
+        q['CPU_OSM_readonly_inventory']=True
         q['kernel_CPU_count']=2
         with self.assertRaises(ValueError):packer.admit(*f)
         q['kernel_CPU_count']=4

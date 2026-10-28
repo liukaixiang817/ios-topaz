@@ -34,6 +34,54 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0086 physical four-big-core UI/performance COMPLETE; 0087 RO clock inventory SOURCE READY
+
+- CURRENT PHONE0086/phone-four-big-0086-0001 LEFT RUNNING on settled HOME.
+  Use0086/control-phone.py 7 4 with unique output directory. keepalive0518
+  passed. All other physical tests ended, no activeUSB transaction. RAM lease
+  still30min withouthostcommand. Do NOT use0083control or resend0086boot.
+- physical-four-big-CPU-GPU-UI-performance-proof.json rehashes real lock0002,
+  full3app+3dock home0003,Settings0004,20consumed gestures,after-scroll and
+  settled-return-home0006; all GPU4096/forcedGMEM/icon/livecaller pixels PASS.
+  Actual MPIDR700/600/500/400 all4online/SGI;64xcalls/48remote. Firmware0
+  remainsreserved. No all7XNU cores/clock/voltage writes/60FPS claim.
+- Same20 gestures:31NEW sparse EAGL frames median37.959ms (32.383..44.209),
+  glFlush19.004ms/frame_end12.370ms, versus0083control45.493ms. Actualpanel
+ 619copies/32.284024s=19.17357copies/s versus16.13399; mean-copy-window
+  median15.8025ms. Not rollingFPS/hardwareVSYNC/unique physicalscanout proof.
+- Native METHOD complete post-start windows:4508submits avg auth28.25us,
+  lock0.115us,body3034.11us,total3063.55us. Authorization/submit-lock NOT the
+  maincost. PairedBO/core sparse medians cachepre3us/post6us (imports still
+  max3.5/3.2ms for11.24MiB),submit1.523ms/execute-idle1.359ms. Synchronous
+  processing and final15.8ms CPUscaledcopy remain. Preserve security checks.
+- Old0083 ended via actual native drain then actual independent FASTBOOT
+  rechecked before0086RAM image sent04:38:47UTC. First kernel-start0001
+  missed USB discovery (wait0), NOcommandACK; later state waiting-payload
+  proved not started, then unique kernel-start0002 passed. Never resendboot.
+  Home0005 captured transientwidgetbands afteranimation; settled0006 no
+  bands, allicons intact. Waitingwidgets/sideresiduals remain, not hidden.
+- Four-core physical shutdown is deliberately NOT yet tested; do it when
+  next fullyready candidate replaces this boot, require actual peers600/500/
+ 400 OFF before gatedreset and independentFASTBOOT. No sourceclock changes.
+-0087 adds defaultOFF polarisosm1 read-only stockOSMv2 inventory only: strict
+  physicalPolaris/MIDR/MPIDR/timer/RAM/fourbig guard, exactown17d45800/1400
+  performancebank, CPU-only read-only/noncacheable IOKitmap, volatile LOADS
+  of enabled/40LUTrows/coreDCVS/4requests/counter then release. No register
+  writes, voltage changes, DMA, usermap or frequency-request selection.
+  Requests explicitly NOT measuredHz; counter loggedraw withelapsedns.
+- Native4TU compile and23localASan/UBSan/guard/5000LUTmutations/admission
+  tests, exacttwo-file patch0offset0fuzz pass. Localinitialcompile missing
+  private ml_io_map declaration changedto properIOKit readonlymap; nonexistent
+  IOMemoryMap.h include failure retained then removed(class already in
+  IOMemoryDescriptor.h). No weakenedheader checks or fakeAPI implementations.
+- NEXT fullCI once for0884, matching actual four-native model including
+  polarisosm1 virtual-platform refusal beforeMMIO; paircontrol staysflagoff.
+  Phonepackagerrequiresmatching virtualrefusal proof. Then readycandidate
+  triggersnative0086shutdown/realFASTBOOT/newRAM0087. Do not promotejustCI.
+  ActualOSMmeasurement unknown; this is a necessaryread-before-frequencychange.
+  HomogeneousSMP/NO_ECORE meansremaining3smallneedcapacity-awarepolicy.
+  Fullpersistentroot remainsdeferred; preserveallAndroid/Windows/data.
+
 ### 0086 corrected native four-core model COMPLETE; physical candidate prepared
 
 - Source d9284f0fe885bfffa753c665f79acc823ffea0ef complete macOS27/Xcode27

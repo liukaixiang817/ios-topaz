@@ -44,4 +44,40 @@ static inline int polaris_uefi_psci_running_conduit(uint32_t mode,uint32_t targe
     }
     return -1;
 }
+/* Read-only SD845 OSMv2 inventory. Source: this phone's own DT and MiCode
+ * clk-cpu-osm.c c7cb50c18f812629b9620b2b8fa684bc40d82080. These pure helpers
+ * never map/register-write, choose a performance state, or claim actual Hz. */
+static inline int polaris_osm_ro_allowed(uint32_t flag,uint32_t mode,uint32_t target,
+    uint32_t count,uint64_t actual,uint64_t midr,uint64_t timer,
+    uint64_t dram_base,uint64_t dram_size,int compatible)
+{
+    return flag==1 && compatible==1 && target==0x700 && count==4 &&
+        polaris_uefi_cpu_allowed(mode,target,count,0,target,actual) &&
+        ((midr>>24)&0xff)==0x51 && ((midr>>4)&0xfff)==0x802 &&
+        timer==19200000 && dram_base==UINT64_C(0x180000000) &&
+        dram_size==UINT64_C(0xfc8a0000);
+}
+static inline uint64_t polaris_osm_lut_raw_hz(uint32_t word)
+{
+    return (word>>30)?UINT64_C(19200000)*(word&255):UINT64_C(300000000);
+}
+static inline uint64_t polaris_osm_lut_requested_hz(uint32_t word)
+{
+    uint32_t cores=(word>>16)&7;
+    if(cores<1 || cores>4)return 0;
+    uint64_t hz=polaris_osm_lut_raw_hz(word);
+    return hz>=200000000 && hz<=3200000000 ? hz:0;
+}
+static inline uint32_t polaris_osm_lut_rows(const uint32_t *words)
+{
+    if(!words)return 0;
+    for(uint32_t i=1;i<40;i++)
+        if(polaris_osm_lut_raw_hz(words[i])==polaris_osm_lut_raw_hz(words[i-1]) &&
+            ((words[i]>>16)&7)==((words[i-1]>>16)&7))return i;
+    return 40;
+}
+static inline uint64_t polaris_osm_requested_hz(const uint32_t *words,uint32_t rows,uint32_t index)
+{
+    return words && rows && rows<=40 && index<rows ? polaris_osm_lut_requested_hz(words[index]):0;
+}
 #endif
