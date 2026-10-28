@@ -34,8 +34,44 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT PHONE0100 RAM image sent once; previous0099 ended natively
+
+- New case0100/phone-thermal-pace-0100-0001. boot.json confirms ONE original
+  UEFI RAM boot after independent actualexpectedPolaris FASTBOOT query19:05.
+  Inspect state-before-kernel-0001 before sending ONE bound payload. ONLY
+  0100/control-phone.py ACTION NEWDIR; do not use old0099 controller/boot.
+  New kernel not yet started/GUI not yet proved at this handoff.
+- FullCI40748174962/source604fc84/kernel3c98f55a... and SERIAL actualEFI/XNU
+  four cases all135checks PASS: thermalON35/38.233s, defaultOFF29/37.753s,
+  stale34/38.220s, peerrefused37/38.089s. Actual native boundedwire/future
+  timing callback, physical-platform refusal before virtualMMIO, original
+  dirtyRAM/PID1/4children/keys/input/SMP4/nativeBSDdrain/peerOFF or refusal.
+  GenericVM does not emulate TSENS/phonepanel. Exact original81FW and actual
+  EDK2decoder/whole-stream bytecompare passed. No newsource afterkernelCI.
+- Physical606Bargs restore touch_lat1, omit ONLY-noprogress and polariswait0
+  (disabledsampler/default0), add polaristsens1. Preserve wake1/GPUstock3/
+  fourbig/keys/GEMWC1/cachedsurface/512MiBRAMCOW/ufsrw0 and30s/10s guards.
+  Next capture actual boot/temperature raw+matchedvalues, then UI/performance.
+  Do not assume sensor enabled/fresh or60FPS before real observations.
+- Old0099 ENDED19:04:44UTC through actual reboot_kernel/ownHFSXunmount/
+  VFS0busy0/GPU1BW4 thenCPU0restore/all600500400actualPSCI_OFF/coordinator700,
+  cookie3299517149/seq1/mode2/RAM_DRAINED80000003; savednative log then gated
+  reset. Independent actualFASTBOOT before0100 boot verified. Closure binds
+  previous0099-native-end-and-actualFASTBOOT-proof.json. No rawfallback/keys/
+  Android/PMIC/partition/NVRAM write. No remainingactive0099trial.
+
 ### 0100 native readonly thermal + future deadline source candidate; no new phone boot
 
+- FULL macOS27/Xcode27 CI40748174962/job123027418059 SUCCESS. Exact
+  source604fc843cfac41956b43d112aa45e3eaf028a0b7/profile/artifactZIPCRC/SHA
+  verified: out-polaris-0100/kernel.development.sweet SHA
+3c98f55a4fc2c57b32540940162d7cbeffb9664d9969a161e7a9a18a1a5ee2ac.
+  Host-only parser sourceb2c827e committed/pushed, no second kernelCI.
+- New-kernel SERIAL actual EFI/XNU four-case native regression now RUNNING
+  via0100/run-native-regression.py --run0001, not yet passed. Check result
+  files/log before resuming; never start parallel QEMU models or reuse old
+  0097/99 proof as this kernel's result. Phone remains0099 RUNNING HOME,
+  keepalive1857 PASS; no new physical boot or data/PMIC writes.
 - Native source604fc843cfac41956b43d112aa45e3eaf028a0b7 committed/pushed;
   fullmacOS27/Xcode27 CI40748174962/job123027418059 in progress. Build step
   completed and artifact upload in progress at18:56UTC; NOT yet fullCI success
