@@ -34,6 +34,43 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0089 ACTUAL 584-frame latency diagnosis COMPLETE; next all-submit phase totals
+
+- CURRENT0089/phone-frame-trace-0089-0001 LEFT RUNNING Settings, use0089/
+  control-phone.py7 4 only, unique state output keeps30minRAMlease alive.
+  Actual lock/home3apps+3dock/Settings文字图标/20scroll allviewed; inputACKs
+  consumed21..380. Firmware0reserved, all4big+GPU unchanged, stockpolicyOFF.
+  No clockrequest/storage writes, no Android or newphysicalstartup pending.
+- physical-full-frame-latency-proof.json bindsactualcaptures/log/all20inputs
+  andcontact-bracketanalysis0002.584consecutivefullframes136..719, ALL>16.667ms.
+  Renderduration median36.708ms/mean37.176/p9543.037, beginperiodmean50.285ms
+  (median43.921,p9574.502), between-framegapmean13.106ms/median4.660/p9536.876.
+  LogicalEAGL rate19.897/s, completedpanelcopy19.940/s, NOT hardware scanout.
+  Firstanalysis0001 erroneously includedidleclockframe134+28.8s pregestureidle,
+  giving10.44logicalrate: preserved butNOTactive-scrollproof. Native actual
+  DOWN21/UP380 logbracketsnowexclude firstpossiblypre-contactcompletion135.
+-29matchedphase samples: glFlush handoffmedian18.835ms; frameEnd12.670ms
+  includesGPUmirror->IOSurfaceblit+flush+finish, notpureidlewait; CPUreadback5us;
+  otherinsideframe6.871ms. No addingseparate medians as a singleframe sum.
+  Same13complete nativewindows3843submits/520EAGL completions=7.390/batch/frame,
+  nativebodyaggregate22.519ms percompletion (windowratio, notexactassignment),
+  meanpermethod3.077ms/auth28.26us/lock0.462us. GPUdriver syncchain islarge;
+  auth/lock excludedasmaincost. ExistingBO/coreevery64sample isnotcomplete
+  decomposition; next aggregate ALL successfulsubmits cachepre/core/post and
+  validation, keepingallbarriers/readiness. AlsoRO CPUrequest underactivity
+  (boot825.6MHzonlynotUIproof). This isdiagnosisbeforeany0088boosttrial.
+- Actualpanelcopyperwindowmean median15.825ms, programmedcadencemedian31.919ms
+  due2*lastcopy rule. Displayfollowsabout20renderedframes/s now, so merely
+  raisingnotificationfrequency won'tfix37ms renderwork.2xcopy becomesa future
+  ceilingwhenrenderingimproves; don'tblindlydeleteitwhilecostremains15ms.
+- CI40644470994/kernel5c7d6f90/nativeecea5ae and0089 actual4models99checks all
+  PASS. Fulltrace switchonly606byteexactline/oldGPUbundlecode/no freqpolicy;
+  startup/GPU4096/GMEM/icon/livecallerPASS. WidgetWaiting/sidebarresiduals
+  remain. Sixanalyzer tests now covercontactmarkers/noidle/phasepair/context.
+  Native0087oldcaseendedall3peersOFF beforeactualFASTBOOT/new0089RAMboot.
+- User's60FPS priority persists; completepersistentroot deferrednotcanceled.
+  No physicalboost untilall-phase/underload evidence; preserveall systems.
+
 ### 0089 FIRST DIAGNOSE latest human priority; stock boost HELD OFFLINE
 
 - Human explicitly says FIRST locate sub60FPS delays, then target fixes.
@@ -42,15 +79,18 @@ early samples only. On0029 the human already confirmed boot complete and said
   kernel5c7d6f909a93108f3eb60df95bd289fa0da60dfc1a4a6ac5a6f900cb08ea7e09
   exactsource/profile/ZIPCRC/SHA verified. It is an OFFLINE candidate only,
   not a proven cause or measured improvement. No physicalclockwrite occurred.
-- CURRENT PHONE remains0087/phone-four-big-0087-0002 normal4-core RAM at
-  viewedlock; control-phone-hostfix.py7 4 only. Latest keepalive0650 passed
-  around06:46UTC;30minidleRAMlease. No activeGUItest orphysicalwrite.
+- CURRENT PHONE0089/phone-frame-trace-0089-0001 kernel-start0001 succeeded
+  around06:55UTC, fulltimestampsON/frequencygovernorOFF. Use0089/control-phone.py
+ 7 4 only, freshstate/capture dirs. AwaitingactualGUI, notrepeatboot. Older
+ 0087-0002 nativeVFS0busy0/all3peerOFF/RAM_DRAINED token3989760465/seq1/mode2
+  endedbeforeindependentrawFASTBOOTqueryandnewRAMboot. No Android/storagewrite.
 -0089 diagnostic uses same0088 kernel withstockpolicy OFF (polarisosm1),
   samefourcoreADT/GEMWC1/surfaceWC0/GPUbundle42d5ec4c unchanged, addsONLY
   existingtouch_lat1 fullEAGLstart/endtimes (606wirebytes exact) to correlate
   actualrenderperiod/gap withnative2s-method and1s-panel windows. No newCI
   required. Current actual fourmodel regressions99checks passed; packaging
-  nowfinishing. BeforedevicebootrequirefullCI/actualmodels/81FW/realcodec;
+  completedwith81originalFW/actualEDK2 wholedecodePASS. Alreadybootedafter
+  independentactualFASTBOOT; no newdeviceboot untildiagnosiscomplete. Previousworkflow:
   thennativeclosecurrent0087/allpeerOFF/independentFASTBOOT/newRAM0089.
   Uses0089/control-phone.py7 4 afteritsactualboot, neverbefore. No oldboot.
 - Initial independentdiagnosis from0086 preservedsource:31sparseframes
