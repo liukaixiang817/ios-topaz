@@ -34,6 +34,44 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0098 HUMAN PRIORITY: sustained 60 FPS first; readonly WLED hold checked offline
+
+- Human latest instruction overrides the earlier functionality-first order:
+  FIRST solve sustained 60 Hz / 60 FPS and jank, THEN backlight, Wi-Fi, sound
+  and the other pending work, LAST evaluate a fuller matching iOS 16.5 image.
+  Existing data preservation, persistent-root and Mindows-menu goals remain.
+  Do not change the root/userland now or claim a fuller image supplies drivers.
+- Current phone remains 0096/phone-keys-0096-0002 RUNNING. Directed readonly
+  keepalive-1758 PASS; no new physical boot, shutdown, touch or PMIC/storage
+  writes this continuation. Human scanning-black/backlight-on feedback is
+  answered, not awaiting another animation comparison. Use only its bound
+  control-phone-0002.py until a ready performance candidate replaces it.
+- 0098 completed an independent readonly WLED observer component and an
+  opt-in pre-XNU inventory hold with CPU_ON compiled OUT. Actual EFI models:
+  success 12/12 and explicit read-refusal 12/12, actual guest AP stage and
+  kernel log-total memory both zero. The backend is explicitly synthetic,
+  NOT a PMIC emulator, real identity inventory or backlight control proof.
+  Fifteen local ASan/UBSan/admission/protocol checks passed in 2.905 s.
+  Default-OFF rebuilt firmware is byte-identical to actual-tested 0097 normal
+  firmware SHA4c2f3bf58c122d1c632461b64058eb4f26d61da52e4f307540a24c98b49ab3cf.
+  First host observer failed on HMP's bare hexadecimal address formatting;
+  failure retained, strict exact-address/zero parser corrected and new runs
+  used. actual-EFI-readonly-WLED-hold-proof.json binds these artifacts.
+- No physical WLED candidate was packaged or booted. Ordinary iOS admission
+  explicitly rejects inventory evidence. No setter/PMIC-write path exists.
+  Defer this diagnostic phone trial while performance has priority; do not
+  spend another long iOS boot for a partial backlight change.
+- NEXT performance: existing 0094 publication/ready-to-copy telemetry and
+  coalesced workloop wake are in full-CI-tested 0097 kernel but wake1 has never
+  run on the phone. Reuse the exact new kernel, retain keys/GPU/four-big/RAM
+  protections, run matching actual EFI/XNU wake/native-drain cases and then
+  one authorized physical candidate. Measure completed render and panel-copy
+  timing separately; neither proves actual hardware scanout Hz. Keep stock
+  30 s / 10 s guards until valid own-device thermal evidence supports a
+  replacement policy; do not simply delete them to claim sustained 60 FPS.
+- Kernel source remains 41e774c / CI40733699293 / SHA299be2d0...; no native
+  changes this continuation, no new kernel CI. Last user report 17:59 UTC.
+
 ### 0097 full CI + actual native LCD blank regression PASS; UniXNU reference reviewed
 
 - Native source41e774c609990d6834980f891d967c753e45faed pushed. FullmacOS27/

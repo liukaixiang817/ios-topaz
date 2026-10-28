@@ -117,6 +117,8 @@ def main():
     ap.add_argument('--gpu-stock-inventory',type=Path,help='actual original-device read-only request baseline before this experiment')
     ap.add_argument('--framebuffer-arrival-wake',action='store_true',help='explicit coalesced display workloop wake; native probe required before phone admission')
     ap.add_argument('--physical-buttons',action='store_true',help='three original PM8998 keys on firmware CPU0; QEMU tests only the native consumer without Qualcomm MMIO')
+    ap.add_argument('--wled-inventory-only',action='store_true',help='short original WLED observer inventory then hold; CPU_ON compiled out, no PMIC writes')
+    ap.add_argument('--test-wled-read-failure',action='store_true',help='QEMU-only explicit observer refusal in the inventory hold')
     ap.add_argument('--cpu-stock-inventory',type=Path,help='required physical read-only OSM evidence for the first performance trial')
     ap.add_argument('--cpu-osm-readonly',action='store_true',
                     help='explicit four-big-core stock OSM read-only inventory intent')
@@ -136,6 +138,12 @@ def main():
     ap.add_argument('--chain-app-manifest',type=Path,help='RAM test wrapper for the exact already-built selected disk app')
     a=ap.parse_args();r=Path(__file__).resolve().parents[1]
     target=a.kernel_core if a.test_qemu else a.kernel_core<<8
+    if a.wled_inventory_only and (not a.physical_buttons or a.kernel_core!=7 or a.kernel_cpus!=4 or
+        a.test_qemu_ufs or a.test_qemu_owned or a.physical_owned_marker or a.disk_guid or
+        a.chain_app_manifest or a.efi_application or not (a.test_ram_drain=='success' if a.test_qemu else a.ram_shutdown_bridge)):
+        ap.error('WLED inventory is only a four-big RAM pre-XNU hold with original key observer and no disk/owned/chain mode')
+    if a.test_wled_read_failure and not (a.test_qemu and a.wled_inventory_only):
+        ap.error('WLED read refusal injection is isolated QEMU inventory only')
     if a.physical_owned_marker and (a.test_qemu or a.kernel_core!=7 or a.kernel_cpus!=2 or
                                     not a.ram_shutdown_bridge or a.chain_app_manifest):
         ap.error('physical marker requires physical CPU7+6 and its selected native shutdown bridge')
@@ -340,6 +348,8 @@ def main():
             f.write('#define EFI_XNU_CHAIN_PATH {'+','.join(str(ord(c)) for c in name)+',0}\n')
         flags.append('-DPOLARIS_EFI_CHAIN_APP=1')
     if a.efi_application:flags.append('-DPOLARIS_EFI_APPLICATION=1')
+    if a.wled_inventory_only:flags.append('-DEFI_XNU_WLED_INVENTORY_ONLY=1')
+    if a.test_wled_read_failure:flags.append('-DEFI_XNU_TEST_WLED_READ_FAILURE=1')
     sources=['uefi-xnu.c','uefi-xnu-ap.S','uefi-xnu-crc.c','payload.c','uefi-usb.c','uefi-usb-command.c','uefi-usb-control.c']
     inputs=['shim/polaris/'+n for n in sources]+['shim/polaris/uefi.h','shim/polaris/uefi-xnu.h','shim/polaris/uefi-usb.h','shim/polaris/uefi-memory.h','shim/polaris/uefi-reset.h','shim/polaris/uefi-file.h','shim/polaris/uefi-boot-options.h','shim/polaris/uefi-ram-lease.h','shim/polaris/payload.h','tools/build-polaris-uefi-xnu.py','tools/polaris-uefi-input.h']
     inputs+=['tools/polaris_uefi_cpu_tree.py','tools/adt.py','tools/mkpayload.py']
@@ -347,6 +357,7 @@ def main():
     if a.physical_buttons:
         inputs+=['shim/polaris/uefi-buttons.h','shim/polaris/uefi-buttons-spmi.h',
                  'tools/polaris-buttons.h','tools/polaris-uefi-buttons.h']
+    if a.wled_inventory_only:inputs+=['shim/polaris/uefi-wled-inventory.h','shim/polaris/uefi-wled-readonly.h']
     if shutdown_bridge:inputs.append('shim/polaris/runtime-quiesce.h')
     objects=[]
     for source in sources:
@@ -363,7 +374,10 @@ def main():
     manifest=dict(artifact=image.name,sha256=sha(image),bytes=image.stat().st_size,
                   kernel_sha256=sha(a.kernel),payload_sha256=sha(a.payload),payload_bytes=len(raw),
                   payload_crc32=zlib.crc32(raw),payload_C_admission=True,rebased_kernel_bytes_match=True,
-                  RAM_only_XNU_loader=not a.physical_owned_marker,kernel_handoff=True,storage_write_api=False,NVRAM_write_api=False,
+                  RAM_only_XNU_loader=not a.physical_owned_marker,kernel_handoff=not a.wled_inventory_only,storage_write_api=False,NVRAM_write_api=False,
+                  WLED_readonly_inventory_only=a.wled_inventory_only,controlled_WLED_read_refusal=a.test_wled_read_failure,
+                  PMIC_write_api=False,kernel_CPU_ON_compiled_out=a.wled_inventory_only,
+                  probe_only=a.wled_inventory_only,holds_before_OS_start=a.wled_inventory_only,
                   original_root_writes_volatile=True,physical_small_file_write_test=a.physical_owned_marker,
                   reset_commands=True,reset_commands_hardware_tested=False,ready_to_boot_driver=not application,
                   RAM_host_idle_recovery_seconds=None if (a.test_qemu_owned or a.physical_owned_marker) else 1800,

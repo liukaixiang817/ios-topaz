@@ -17,6 +17,8 @@ def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
 
 
 def admit(driver,qemu,ci,profile,preflight):
+    if driver.get('WLED_readonly_inventory_only') or qemu.get('WLED_readonly_inventory_only'):
+        raise ValueError('WLED pre-XNU inventory cannot be admitted as an iOS handoff')
     if driver.get('physical_owned_marker_test') or qemu.get('physical_owned_marker_test'):
         raise ValueError('physical owned marker needs separate fresh new-file and owned-native-proof admission; RAM-only packaging cannot grant it')
     if (driver.get('isolated_QEMU_readonly_UFS_test') or qemu.get('isolated_QEMU_readonly_UFS_test') or

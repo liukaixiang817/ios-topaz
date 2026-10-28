@@ -102,6 +102,12 @@ static void invalidate(uint64_t address,uint64_t bytes)
 #if EFI_XNU_BUTTONS_AVAILABLE
 #include "uefi-buttons.h"
 #endif
+#if defined(EFI_XNU_WLED_INVENTORY_ONLY)
+#if !EFI_XNU_BUTTONS_AVAILABLE || defined(EFI_XNU_DURABLE_GUARD)
+#error "WLED inventory requires original key observer and RAM-only pre-XNU hold"
+#endif
+#include "uefi-wled-inventory.h"
+#endif
 static int64_t psci(uint64_t function,uint64_t a,uint64_t b,uint64_t c)
 {
     register uint64_t x0 __asm__("x0")=function,x1 __asm__("x1")=a,x2 __asm__("x2")=b,x3 __asm__("x3")=c;
@@ -249,8 +255,18 @@ static void boot_kernel(void *context)
         load_state=3;report("BUTTONS_PRESTART_REFUSED=",1);return;
     }
 #endif
+#if defined(EFI_XNU_WLED_INVENTORY_ONLY)
+    /* Compile out CPU_ON entirely. Success and failure both remain in this
+     * controlled pre-kernel RAM hold; raw FASTBOOT and RAM lease still work. */
+    load_state=3;
+    report("WLED_READONLY_RESULT=",wled_inventory_probe());
+    report("WLED_KERNEL_AP_STAGE=",polaris_efi_ap_state.stage);
+    report("WLED_AP_STAGE_ADDRESS=",(uintptr_t)&polaris_efi_ap_state.stage);
+    text("WLED_INVENTORY_HOLD: NO_CPU_ON NO_PMIC_WRITE\r\n");
+#else
     cpu_status=psci(UINT64_C(0xc4000003),EFI_XNU_CPU,(uintptr_t)polaris_efi_ap_entry,(uintptr_t)&polaris_efi_ap_state);
     report("KERNEL_PSCI_STATUS=",(uint64_t)cpu_status);
+#endif
 }
 static int running(void *context){(void)context;return load_state>=4;}
 static int boot_options(void *context,const uint8_t **data,uint64_t *bytes)
