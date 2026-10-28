@@ -23,6 +23,11 @@ class FullFrameTrace(unittest.TestCase):
   with self.assertRaises(ValueError):m.contact_bounds(t,380,21)
   with self.assertRaises(ValueError):m.contact_bounds(t.replace('seq=21','seq=22'),21,380)
   with self.assertRaises(ValueError):m.contact_bounds(t+'\nPOLARIS UEFI INPUT: seq=21 down=1 x=1 y=1',21,380)
+ def test_all_submit_phases_match_native_success_and_are_not_added_twice(self):
+  line='\nPOLARIS GPU STAGE PERF: end_us=3000000 window_us=2000000 submits=100 rejected=0 core_missing=0 validation_us=50000 cache_pre_us=100000 submit_us=200000 cache_post_us=50000 prior_us=5000 ring_us=5000 execute_idle_us=150000 visibility_us=5000 halt_us=5000 postcheck_us=5000 prebytes=1000000 postbytes=1000000 WCpre=500000 WCpost=500000'
+  r=m.analyze(self.trace()+line,1000000,5000000);self.assertEqual(r['complete_all_submit_phase_windows'],1);self.assertEqual(r['all_submit_phase_totals']['submits'],100);self.assertTrue(r['core_phases_are_subset_of_submit_us']);self.assertGreater(r['phase_window_EAGL_completions'],0)
+  for bad in [line.replace('submits=100','submits=99'),line.replace('core_missing=0','core_missing=1'),line.replace('execute_idle_us=150000','execute_idle_us=250000')]:
+   with self.assertRaises(ValueError):m.analyze(self.trace()+bad,1000000,5000000)
  def test_sparse_only_never_claims_whole_rate(self):
   with self.assertRaises(ValueError):m.analyze('redwood-gl: frame20',0,1000000)
 if __name__=='__main__':unittest.main()

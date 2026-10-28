@@ -8,6 +8,7 @@ from pathlib import Path
 FRAME=re.compile(r'tl: g (\d+) began (\d+) ended (\d+) (\d+)')
 PANEL=re.compile(r'POLARIS PANEL PERF: (.*)')
 METHOD=re.compile(r'POLARIS GPU METHOD PERF: (.*)')
+PHASE=re.compile(r'POLARIS GPU STAGE PERF: (.*)')
 DETAIL=re.compile(r'redwood-gl: frame (\d+): .*; (\d+) us \((\d+) handing on, (\d+) waiting, (\d+) copying out\), (\d+) before it')
 def fields(text):
  return {k:int(v) if v.isdecimal() else v for k,v in re.findall(r'(\w+)=([^\s]+)',text)}
@@ -36,7 +37,7 @@ def contact_bounds(text,first,last):
   boundary='actual native input log ordering, not stale pre-capture or host UTC')
 def analyze(text,start,end):
  if not 0<=start<end:raise ValueError('a bounded monotonic window is required')
- frames=[];panels=[];methods=[];details=[]
+ frames=[];panels=[];methods=[];details=[];phases=[]
  for line in text.splitlines():
   m=DETAIL.search(line)
   if m:details.append(tuple(map(int,m.groups())))
@@ -45,7 +46,7 @@ def analyze(text,start,end):
    seq,began,ended,draws=map(int,m.groups())
    if ended<began:raise ValueError('negative EAGL duration')
    if began>=start and ended<=end:frames.append(dict(frame=seq,began_us=began,ended_us=ended,draws=draws))
-  for regex,result,key in [(PANEL,panels,'span_us'),(METHOD,methods,'window_us')]:
+  for regex,result,key in [(PANEL,panels,'span_us'),(METHOD,methods,'window_us'),(PHASE,phases,'window_us')]:
    m=regex.search(line)
    if m:
     item=fields(m.group(1));last=item.get('end_us');span=item.get(key)
@@ -76,6 +77,20 @@ def analyze(text,start,end):
  for b in by_method.values():
   if b['calls']:
    for k in ['auth_us','lock_us','body_us','total_us']:b['mean_'+k]=b[k]/b['calls']
+ phase_totals={};phase_frame_completions=0
+ core_keys=['prior_us','ring_us','execute_idle_us','visibility_us','halt_us','postcheck_us']
+ for phase in phases:
+  matched=[m for m in methods if m['kind']=='submit' and m['end_us']==phase['end_us']]
+  if len(matched)!=1 or phase['submits']!=matched[0]['calls']-matched[0]['errors']:
+   raise ValueError('full-stage and native method successful submission counts differ')
+  if phase['rejected'] or phase['core_missing']:raise ValueError('incomplete phase timings; no full decomposition claim')
+  if sum(phase[k] for k in core_keys)>phase['submit_us']:
+   raise ValueError('core sub-stages exceed containing submit walltime')
+  for k,v in phase.items():
+   if k not in ('end_us','window_us'):phase_totals[k]=phase_totals.get(k,0)+v
+  a,b=phase['end_us']-phase['window_us'],phase['end_us']
+  phase_frame_completions+=sum(a<f['ended_us']<=b for f in frames)
+ phase_per_frame={k:v/phase_frame_completions for k,v in phase_totals.items() if k.endswith('_us')} if phase_frame_completions else {}
  return dict(passed=True,bounded_window_us=[start,end],shared_timebase='mach_absolute_time, microseconds',
   full_frame_trace_count=len(frames),first_frame=frames[0],last_frame=frames[-1],
   logical_EAGL_completion_rate_per_second=rendered,frame_duration_us=stats(durations),
@@ -86,7 +101,9 @@ def analyze(text,start,end):
   completed_panel_copy_window_us=panel_span,panel_copy_rate_per_second=copies*1000000/panel_span if panel_span else None,
   per_window_panel_copy_mean_us=stats([p['copy_mean_us'] for p in panels]),
   per_window_panel_cadence_us=stats([p['cadence_us'] for p in panels]),
-  complete_native_method_windows=by_method,
+  complete_native_method_windows=by_method,complete_all_submit_phase_windows=len(phases),
+  all_submit_phase_totals=phase_totals,phase_window_EAGL_completions=phase_frame_completions,
+  phase_us_per_completion_window_ratio=phase_per_frame,core_phases_are_subset_of_submit_us=True,
   hardware_scanout_FPS_proven=False,CPU_busy_proven=False,
   limitations=['EAGL completion is not distinct scanout; panel copy is not hardware VSYNC.',
    'Native wall-time includes preemption; sums across stages/windows must not be added into one frame.',
