@@ -671,3 +671,18 @@ limits, not values copied from the original thermal trips. There is no native
 caller or clock-control admission yet. The next GPU-only bounded experiment
 must retain original ownership/idle/restoration rules, an unrenewable hard
 run budget and confirmed-low cooldown; CPU policy stays unchanged initially.
+
+## Transient TSENS status re-read correspondence (0102)
+
+The0101 native thermal experiment is now integrated and physically measured;
+the preceding offline-only description is historical. Its100-scroll phone run
+found two explicit INVALID status words followed by actual sensor-triggered
+low requests and ten-second cooldowns. The pinned own tsens2xxx.c
+(c7cb50c1, Git blob50c847febf73d9dbded5830b1f0440f4f4aab161) re-reads the same
+status up to three times. We adopt only that bounded VALID recovery sequence.
+Its final all-invalid/majority-code fallback is deliberately excluded: every
+accepted word must have VALID, and critical/read/range/persistent-invalid,
+two-pass disagreement and time-limit errors still reject the whole sample.
+No thresholds, performance limits, register mappings or writers change.
+The0102 native retry probe uses explicit synthetic words, not actual sensors;
+physical retry recovery and sustained panel60 still require new evidence.

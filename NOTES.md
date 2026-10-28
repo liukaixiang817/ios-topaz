@@ -34,6 +34,18 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0102 source17b0ab5 fullCI40767220352 IN PROGRESS; phone still0101
+
+- Source17b0ab5d1495a2f897b178e14eb4ff204a7ea42a committed/pushed. One full
+  macOS27/Xcode27 CI40767220352 in progress, one0102/collect-CI.py worker
+  waits, exactsource/profile/artifactCRC+SHA downloads on success, then four
+  sequential actualEFI/XNU thermalON/control/stale/peerrefused; new native
+  VALID-retry PASS required in every case. All are pending, not passed yet.
+  No duplicateCI/collector/VM. No newphysical candidate or kernelstart.
+- CURRENT0101 RUNNING Settings, keepalive2048passed, scrollworker ENDED100/100.
+  Use ONLY0101/control-phone.py state NEWDIR while build/models run. Fully
+  ready only then actual nativeend/save log/gatedreset/independentFASTBOOT.
+
 ### 0101 physical long-scroll diagnosis COMPLETE; 0102 bounded retry source ready
 
 - CURRENT PHONE0101/phone-gpu-thermal-0101-0001 RUNNING Settings. ONLY0101/
@@ -47,7 +59,7 @@ early samples only. On0029 the human already confirmed boot complete and said
   physical-thermal-long-scroll-and-invalid-cooldown-proof.json independently
   rehashes every102 inputresult/8screens and reparses five contact-bounded
   frame/native/panel/temp sets:4078 complete frames,143 contact-window actual
-  6sensor observations, maximumCPU71.4C/GPU53.5C. Not distinct scanout60Hz.
+  6sensor observations, maximumCPU71.1C/GPU53.5C. Not distinct scanout60Hz.
 - Warm824frames median14.3305ms/p9516.234; measured804 median14.728/p9533.852;
   extended1 744 median15.826/p9535.843; extended2 900 median14.583/p9516.600;
   extended3 806 median14.951/p9535.728. Request/pause cadence is host paced,
