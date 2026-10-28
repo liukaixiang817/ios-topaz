@@ -2,6 +2,68 @@
  * publication. These separate runtime snapshots/MMIO leases live forever.
  */
 #include "polaris_a630_performance.h"
+/* BEGIN BOUNDED THERMAL PLANNER: exact tested pure implementation. */
+/* Pure bounded experiment planner. Eligibility is produced from actual native
+ * TSENS observations separately. Neither a plan nor a host ACK is an actual
+ * request-state confirmation. Caller confirms only after the original HFI
+ * ownership/quiescence/ACK/return/readback transaction has succeeded.
+ * A thermal renewal cannot restart the120s hard budget. Only10s in a known
+ * low request state opens a new budget. Original stock target and idle remain.
+ */
+#define A630_THERMAL_HIGH_NS UINT64_C(120000000000)
+#define A630_THERMAL_COOL_NS UINT64_C(10000000000)
+#define A630_THERMAL_IDLE_NS UINT64_C(250000000)
+enum { AT_REQUEST=0,AT_UNCONFIRMED,AT_IDLE,AT_SENSOR,AT_HARD_LIMIT,AT_COOLING };
+struct a630_thermal_state {
+    uint64_t last_ns,cycle_since_ns,low_since_ns;
+    uint32_t confirmed,high,cooling,reason,fault;
+};
+static inline bool a630_thermal_clock(struct a630_thermal_state *s,uint64_t now)
+{
+    if(!s || s->fault || !now || now<s->last_ns ||
+       now>UINT64_MAX-A630_THERMAL_HIGH_NS) {
+        if(s)s->fault=1;
+        return false;
+    }
+    s->last_ns=now;return true;
+}
+static inline bool a630_thermal_confirm(struct a630_thermal_state *s,uint64_t now,
+    uint32_t perf,uint32_t bus)
+{
+    if(!a630_thermal_clock(s,now))return false;
+    if(!((perf==1 && bus==4)||(perf==4 && bus==8))){s->fault=1;return false;}
+    bool high=perf==4;
+    if(high) {
+        /* A desired high request without a prior successful low observation
+         * is never the beginning of an admitted experiment. */
+        if(!s->confirmed || s->cooling){s->fault=1;return false;}
+        if(!s->cycle_since_ns)s->cycle_since_ns=now;
+        s->low_since_ns=0;
+    } else if(!s->confirmed || s->high)s->low_since_ns=now;
+    s->confirmed=1;s->high=high;return true;
+}
+static inline bool a630_thermal_plan(struct a630_thermal_state *s,uint64_t now,
+    uint64_t activity,bool eligible,uint32_t *perf,uint32_t *bus)
+{
+    if(!perf || !bus || !a630_thermal_clock(s,now))return false;
+    if(activity>now){s->fault=1;return false;}
+    *perf=1;*bus=4;
+    if(!s->confirmed){s->reason=AT_UNCONFIRMED;return true;}
+    /* This is time in a confirmed-low request, not an idle/cooldown intent or
+     * time since a failed transaction. Repeated low confirmations don't move it. */
+    if(!s->high && s->low_since_ns && now-s->low_since_ns>=A630_THERMAL_COOL_NS) {
+        s->cooling=0;s->cycle_since_ns=0;
+    }
+    if(s->cycle_since_ns && now-s->cycle_since_ns>=A630_THERMAL_HIGH_NS) {
+        s->cooling=1;s->reason=AT_HARD_LIMIT;
+    }
+    if(s->cooling){s->reason=AT_COOLING;return true;}
+    if(!eligible){s->reason=AT_SENSOR;return true;}
+    if(!activity || now-activity>A630_THERMAL_IDLE_NS){s->reason=AT_IDLE;return true;}
+    *perf=4;*bus=8;s->reason=AT_REQUEST;return true;
+}
+
+/* END BOUNDED THERMAL PLANNER. */
 static struct a630_io a630_client_io;
 static struct a630_submit a630_client_submit;
 static uint64_t a630_client_postcheck_ticks;
@@ -225,6 +287,34 @@ bool polaris_gpu_submit(const uint64_t *addresses,const uint32_t *words,uint32_t
  * or caller-selected registers: original-board admission + native proof first.
  * Default OFF. Request success is not an instantaneous-frequency claim. */
 static struct a630_perf_state a630_client_perf;
+static struct a630_thermal_state a630_client_thermal;
+static bool a630_client_thermal_enabled;
+extern bool polaris_gpu_thermal_ready(void);
+extern unsigned polaris_gpu_thermal_verdict(void);
+static uint64_t a630_perf_now_ns(void)
+{
+    uint64_t ticks,ns;clock_get_uptime(&ticks);absolutetime_to_nanoseconds(ticks,&ns);return ns;
+}
+/* Executed in the real native QEMU kernel, but explicit synthetic state and
+ * timestamps. No controller MMIO, temperature or physical-frequency claim. */
+bool polaris_gpu_thermal_policy_vm_probe(void)
+{
+    struct a630_thermal_state s={0};uint32_t p=0,b=0;
+    bool ok=a630_thermal_plan(&s,100,100,true,&p,&b) && p==1 && b==4 &&
+        a630_thermal_confirm(&s,100,1,4) &&
+        a630_thermal_plan(&s,101,101,true,&p,&b) && p==4 && b==8 &&
+        a630_thermal_confirm(&s,101,4,8);
+    ok=ok && a630_thermal_plan(&s,31000000101ULL,31000000101ULL,true,&p,&b) && p==4 &&
+        s.cycle_since_ns==101 &&
+        a630_thermal_plan(&s,120000000101ULL,120000000101ULL,true,&p,&b) && p==1 &&
+        a630_thermal_plan(&s,140000000101ULL,140000000101ULL,true,&p,&b) && p==1 &&
+        !s.low_since_ns && a630_thermal_confirm(&s,140000000101ULL,1,4) &&
+        a630_thermal_plan(&s,150000000100ULL,150000000100ULL,true,&p,&b) && p==1 &&
+        a630_thermal_plan(&s,150000000101ULL,150000000101ULL,true,&p,&b) && p==4;
+    printf("POLARIS GPU THERMAL BUDGET VM: %s; actual native hard120s and confirmed-low10s planner only\n",ok?"PASS":"FAIL");
+    return ok;
+}
+
 static struct a630_channel_io a630_client_perf_io(void)
 {
     return (struct a630_channel_io){a630_core_owned,a630_read_register,
@@ -247,21 +337,43 @@ bool polaris_gpu_performance_configure(void)
         __builtin_arm_rsr64("MIDR_EL1"),__builtin_arm_rsr64("MPIDR_EL1")&0xffffffULL,
         __builtin_arm_rsr64("CNTFRQ_EL0"),board);
     if(!admitted){printf("POLARIS GPU STOCK: REFUSED platform/mode; no request write\n");return false;}
+    uint32_t thermal=0;PE_parse_boot_argn("polaristsens",&thermal,sizeof(thermal));
+    if(thermal>2 || (thermal==2 && (mode!=3 || !polaris_gpu_thermal_ready()))) {
+        printf("POLARIS GPU THERMAL: REFUSED observer/platform/mode; no request write\n");return false;
+    }
+    a630_client_thermal_enabled=thermal==2;
     struct a630_channel_io io=a630_client_perf_io();
     bool ok=polaris_gpu_quiescent() && a630_perf_init(&a630_client_perf,mode,true,&io);
     printf("POLARIS GPU STOCK: armed=%u mode=%u saved=1/4 target=%u/%u error=%u; original table requests, not measured Hz\n",
         ok,mode,a630_client_perf.target_perf,a630_client_perf.target_bus,a630_client_perf.fault);
+    if(ok && a630_client_thermal_enabled)
+        printf("POLARIS GPU THERMAL: armed hard120s confirmed-low10s idle250ms; CPU fixed guard unchanged\n");
     return ok;
 }
 bool polaris_gpu_performance_tick(uint64_t now_ns,uint64_t activity_ns)
 {
     struct a630_perf_state *s=&a630_client_perf;
     if(!s->armed || s->stopped)return !s->fault;
-    uint32_t perf=0,bus=0;bool ok=a630_perf_desired(s,now_ns,activity_ns,&perf,&bus);
-    if(ok && (s->perf!=perf || s->bus!=bus)) {
+    uint32_t perf=0,bus=0;
+    bool ok=a630_client_thermal_enabled ? a630_thermal_plan(&a630_client_thermal,now_ns,activity_ns,
+        polaris_gpu_thermal_verdict()==0,&perf,&bus):a630_perf_desired(s,now_ns,activity_ns,&perf,&bus);
+    if(!ok && a630_client_thermal_enabled) {
+        struct a630_channel_snapshot fault={.error=A630_CH_ARGUMENT};a630_perf_fail(s,&fault);
+    }
+    bool changed=s->perf!=perf || s->bus!=bus;
+    if(ok && (changed || (a630_client_thermal_enabled && !a630_client_thermal.confirmed))) {
         struct a630_channel_io io=a630_client_perf_io();
         ok=a630_perf_change(s,&io,perf,bus,polaris_gpu_quiescent());
-        printf("POLARIS GPU STOCK SAMPLE: end_us=%llu mode=%u PERF=%u BW=%u transitions=%llu error=%u return=%u; request not measured Hz\n",
+        if(ok && a630_client_thermal_enabled) {
+            /* Start low cooldown only AFTER real successful readback/ACK. */
+            ok=a630_thermal_confirm(&a630_client_thermal,a630_perf_now_ns(),perf,bus);
+            if(!ok){struct a630_channel_snapshot fault={.error=A630_CH_ARGUMENT};a630_perf_fail(s,&fault);}
+            printf("POLARIS GPU THERMAL PLAN: us=%llu high_since=%llu low_since=%llu cooling=%u reason=%u confirmed=%u fault=%u\n",
+                a630_perf_now_ns()/1000,a630_client_thermal.cycle_since_ns/1000,
+                a630_client_thermal.low_since_ns/1000,a630_client_thermal.cooling,
+                a630_client_thermal.reason,a630_client_thermal.confirmed,a630_client_thermal.fault);
+        }
+        if(changed)printf("POLARIS GPU STOCK SAMPLE: end_us=%llu mode=%u PERF=%u BW=%u transitions=%llu error=%u return=%u; request not measured Hz\n",
             now_ns/1000,s->mode,s->perf,s->bus,s->transitions,s->fault,s->returned);
     }
     if(!ok){printf("POLARIS GPU STOCK: FAILED error=%u offset=%x expected=%x actual=%x; retain DMA, refuse native reset\n",

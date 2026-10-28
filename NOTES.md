@@ -34,6 +34,37 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0101 first full CI failed safely; exact implementation binding repaired
+
+- Source584cb08e47df7016b8c2a9ad8ea355f8c66a19f8 was pushed; fullmacOS27/
+  Xcode27 CI40758781264 FAILED in installhdrs: strict IIG source review
+  rejected the newly added private planner header before a usable kernel.
+  ci-proof-failed-40758781264.json, CIfailed log/watch and old collector all
+  preserved. Collector stopped at failedCI assertion: NO artifact/model/
+  phonecandidate was used. This was a build failure, not a device failure.
+- Repair embeds planner VERBATIM in the existing private polaris_a630_runtime.h
+  (same as tested eligibility embedding inSweetCPU), removes the newly added
+  native header, updates tools canonical runtime copy. Onlyinclude is actual
+  polaris_a630.c; no IDL/header imports this implementation. Original runtime
+  baseline SHAac96ec... remains unchanged; reviewed replacement now exact
+  af85df65d179916dbadc94da10eb3517049df6e9d830a86b31c927e020958618.
+  No arbitrary-header allowance or original17IDL/source check was relaxed.
+- Actual current-tree strict IIG replay of all17originaldefinitions/34outputs
+  passed using pinned originalDriverKit286cache, with all original header/IDL
+  guards still active (iig-actual-replay-0001/proof.json). Native two real
+  Appleclang27 TU compiles passed, exactpatch0002 fuzz0/offset0 two modified
+  files match actualbuildtree and canonical runtime. First three-filepatch
+  proof retained as superseded failedCI candidate. Existing CPU policy, GPU
+  targets and all DMA/cache/HFI protections unchanged by this build repair.
+- Expanded29tests incl strictprivateheader hashes/unchangedIDL rejection,
+  thermal/policy/parser/profile/GPUclock/lifetime PASS6.047s. Original failed
+  local budget/source-context assertions retained; no false positive claim.
+  Need new full CI for repaired source, then SERIAL actual thermalON/control/
+  stalecookie/peerrefused native tests. No oldkernel model used as substitute.
+- Phone STILL0100 RUNNING Settings, latest keepalive-2004 PASS, no newRAMboot,
+  no Android/keys/rawfallback/PMIC/storage writes. Continue ONLY0100 directed
+  state while newbuild runs; do not resend boot/kernelstart.
+
 ### 0101 native GPU thermal candidate integrated; full CI/models not yet run
 
 - Native new profile0894 now binds defaultOFF polaristsens2 to own physical
