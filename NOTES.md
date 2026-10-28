@@ -34,6 +34,47 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0101 native GPU thermal candidate integrated; full CI/models not yet run
+
+- Native new profile0894 now binds defaultOFF polaristsens2 to own physical
+  board/four-big/RAMCOW/ufsrw0/native shutdown/OSM2/GPUstock3 before mapping;
+  polaristsens1 remains the unchanged readonly/fixed-policy control. GPU
+  configure separately requires native admitted observer; wrong modes refuse.
+  Header PTE body is embedded verbatim, no new IIG/private header exception.
+- Every actual250ms TSENS observation or failure updates eligibility BEFORE
+  1s diagnostic filtering. Bounded IOLock has only gpuLock->thermal order;
+  observer does not acquireGPUlock. GPU verdict reads clock AFTER locking,
+  avoiding concurrent-newer-observation future-time errors. Invalid/stale/
+  frozen/hot/clock/stop do not permit high. Shutdown stops eligibility after
+  the existing GPU restore; old DMA/HFI/ownership/cache barriers unchanged.
+- New pure120s planner tracks first CONFIRMED high and never renews the hard
+  budget for samples/frames/briefidle. Reopens only after10s in actually
+  confirmedlow. Runtime calls unchanged a630_perf_change/quiescence/HFI ACK/
+  RETURN/readback; timestamps confirmation AFTER that successful transaction.
+  No new MMIO setter. Mode2 uses original4/8 only,250msidle, original CPU30s/
+  10s policy unchanged. Protocol/unknownDMA failures retain old quarantine.
+- Native SweetCPU.cpp and polaris_a630.c compiled with actual Appleclang27/
+  full real CI headers. Exactpatch0001 fuzz0/offset0 matched all3source files
+  and plannerheader bytes. Local native/policy/parser/profile tests completed;
+  see native-local-final-0001.log for exact count/time. First budget test used
+  a pre-reset budget origin AFTER a valid10s low and failed; harness corrected
+  to actual post-plan budget, unchanged productplanner. First native-source
+  test wrongly searched only added lines for an unchanged HFIcall; corrected
+  to patchcontext. Both failed logs retained, not positive proof.
+- Strict hostflag --gpu-thermal-lease requires TSENSreadonly+stockCPU/GPU3,
+  exactunique polaristsens2, RAM-only/four-big/drain/noowned/nochain scope.
+  Imageadmission requires matching actual new-kernel native eligibility/
+  hardbudget/virtual-before-MMIO-refusal proofs and exact typed policy/caps;
+  missing proof, bool/float limit changes and latent inactive policy refuse.
+  Native VM probes use explicit synthetic observations/timestamps; NOT actual
+  sensor hardware, elapsed120s or phonefrequency proof. Need fullCI then
+  sequential actual newEFI/XNU thermalON/defaultOFF/stale/peerrefused.
+- Current phone STILL0100 RUNNING Settings; keepalive1938 PASS. No physical
+  candidate0101 prepared/booted, no PMIC/storage write, no guard change in the
+  running kernel. Continue directed0100state for lease while building. Only
+  after fullCI/actualmodels/physicaladmission ready native-end0100/save log/
+  verifyactualFASTBOOT then one newRAM. Existing phone data/root untouched.
+
 ### 0100 physical thermal/publication/backoff COMPLETE; phone RUNNING Settings
 
 - CURRENT phone0100/phone-thermal-pace-0100-0001, ONE originalUEFI RAM boot

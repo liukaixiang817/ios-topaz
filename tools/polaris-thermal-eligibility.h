@@ -1,9 +1,9 @@
-/* OFFLINE eligibility component, not a clock controller or hardware admission.
+/* Default-OFF experimental eligibility, not a clock controller or admission.
  * Consume complete own-TSENS observations, never host supplied temperatures.
  * The proposed conservative experiment limits below are NOT OEM trip values.
  * A caller must still retain ownership/quiescence, bounded run/cooldown, idle,
- * shutdown restoration and sticky DMA/protocol failure rules. No native caller
- * exists yet. Changing values are a liveness witness, not sensor freshness.
+ * shutdown restoration and sticky DMA/protocol failure rules. The native caller
+ * has independent explicit-mode guards. Changes are not sensor freshness.
  */
 #ifndef POLARIS_THERMAL_ELIGIBILITY_H
 #define POLARIS_THERMAL_ELIGIBILITY_H

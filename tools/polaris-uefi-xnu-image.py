@@ -16,6 +16,33 @@ from pathlib import Path
 def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
 
 
+def exact_policy(value,expected):
+    if type(value) is not dict or value.keys()!=expected.keys():return False
+    for key,want in expected.items():
+        actual=value[key]
+        if type(want) is list:
+            if type(actual) is not list or len(actual)!=len(want) or any(type(a) is not int or a!=b for a,b in zip(actual,want)):return False
+        elif type(actual) is not int or actual!=want:return False
+    return True
+
+
+def admit_thermal_policy(driver,qemu,thermal,gpu_mode):
+    lease=driver.get('GPU_thermal_lease_trial',False)
+    if type(lease) is not bool or type(qemu.get('GPU_thermal_lease_trial',False)) is not bool or lease!=qemu.get('GPU_thermal_lease_trial',False):
+        raise ValueError('physical and actual virtual GPU thermal lease intent must match')
+    policy={'experimental_limits_mC':[75000,70000,60000,55000],
+            'max_observation_age_us':500000,'hard_high_ns':120000000000,
+            'confirmed_low_ns':10000000000,'idle_ns':250000000}
+    if lease and (not thermal or gpu_mode!=3 or driver.get('CPU_OSM_stock_performance') is not True or
+        not exact_policy(driver.get('GPU_thermal_policy'),policy) or not exact_policy(qemu.get('GPU_thermal_policy'),policy) or
+        not all(qemu.get('checks',{}).get(k) is True for k in
+          ['native_thermal_eligibility_and_budget','native_thermal_hard_budget',
+           'native_thermal_refused_before_virtual_requests'])):
+        raise ValueError('GPU thermal lease needs actual native eligibility, hard budget and virtual refusal proof')
+    if not lease and (driver.get('GPU_thermal_policy') is not None or qemu.get('GPU_thermal_policy') is not None):
+        raise ValueError('inactive GPU thermal lease must not carry a policy')
+
+
 def admit(driver,qemu,ci,profile,preflight):
     if driver.get('WLED_readonly_inventory_only') or qemu.get('WLED_readonly_inventory_only'):
         raise ValueError('WLED pre-XNU inventory cannot be admitted as an iOS handoff')
@@ -61,6 +88,7 @@ def admit(driver,qemu,ci,profile,preflight):
                  'explicit_TSENS_readonly_payload','native_future_display_deadline_probe'])):
         raise ValueError('TSENS inventory requires actual native wire/deadline execution and platform refusal before MMIO')
     gpu_mode=driver.get('GPU_stock_request',0)
+    admit_thermal_policy(driver,qemu,thermal,gpu_mode)
     keys=driver.get('physical_buttons',False)
     if (type(keys) is not bool or type(qemu.get('physical_buttons',False)) is not bool or
         keys!=qemu.get('physical_buttons',False)):

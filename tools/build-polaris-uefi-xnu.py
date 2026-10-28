@@ -94,9 +94,13 @@ def physical_buttons_intent(tokens,enabled,core,count,qemu,drain,bridge,ufs,mark
                 raise ValueError('physical keys must preserve touch, RAM COW and native shutdown')
     return enabled
 
-def tsens_readonly_intent(tokens,enabled,core,count,qemu,drain,bridge,ufs,marker,osm):
+def tsens_readonly_intent(tokens,enabled,core,count,qemu,drain,bridge,ufs,marker,osm,
+                          lease=False,gpu_mode=0,osm_stock=False):
     actual=[t for t in tokens if t.startswith(b'polaristsens=')]
-    if type(enabled) is not bool or actual!=([b'polaristsens=1'] if enabled else []):
+    if type(lease) is not bool or (lease and (not enabled or gpu_mode!=3 or not osm_stock)):
+        raise ValueError('TSENS thermal lease requires explicit readonly/stock CPU and GPU mode3')
+    expected=b'polaristsens=2' if lease else b'polaristsens=1'
+    if type(enabled) is not bool or actual!=([expected] if enabled else []):
         raise ValueError('TSENS readonly intent must match one explicit token')
     if enabled:
         if core!=7 or count!=4 or ufs or marker or not osm or not (
@@ -130,7 +134,8 @@ def main():
     ap.add_argument('--gpu-stock-inventory',type=Path,help='actual original-device read-only request baseline before this experiment')
     ap.add_argument('--framebuffer-arrival-wake',action='store_true',help='explicit coalesced display workloop wake; native probe required before phone admission')
     ap.add_argument('--physical-buttons',action='store_true',help='three original PM8998 keys on firmware CPU0; QEMU tests only the native consumer without Qualcomm MMIO')
-    ap.add_argument('--tsens-readonly',action='store_true',help='original six CPU/GPU thermal status registers only; unchanged bounded performance policy')
+    ap.add_argument('--tsens-readonly',action='store_true',help='original six CPU/GPU thermal status registers only')
+    ap.add_argument('--gpu-thermal-lease',action='store_true',help='explicit default-OFF bounded GPU-only thermal experiment; requires readonly TSENS and stock mode3')
     ap.add_argument('--wled-inventory-only',action='store_true',help='short original WLED observer inventory then hold; CPU_ON compiled out, no PMIC writes')
     ap.add_argument('--test-wled-read-failure',action='store_true',help='QEMU-only explicit observer refusal in the inventory hold')
     ap.add_argument('--cpu-stock-inventory',type=Path,help='required physical read-only OSM evidence for the first performance trial')
@@ -152,6 +157,8 @@ def main():
     ap.add_argument('--chain-app-manifest',type=Path,help='RAM test wrapper for the exact already-built selected disk app')
     a=ap.parse_args();r=Path(__file__).resolve().parents[1]
     target=a.kernel_core if a.test_qemu else a.kernel_core<<8
+    if a.gpu_thermal_lease and (not a.tsens_readonly or not a.cpu_osm_stock_performance or a.gpu_stock_request!=3):
+        ap.error('TSENS thermal lease requires readonly TSENS, stock CPU and GPU request3')
     if a.tsens_readonly and (a.kernel_core!=7 or a.kernel_cpus!=4 or
         a.test_qemu_ufs or a.test_qemu_owned or a.physical_owned_marker or a.disk_guid or
         a.chain_app_manifest or a.efi_application or a.wled_inventory_only or
@@ -222,7 +229,8 @@ def main():
         a.test_qemu,a.test_ram_drain,a.ram_shutdown_bridge,a.test_qemu_ufs,a.physical_owned_marker)
     tsens_readonly_intent(tokens,a.tsens_readonly,a.kernel_core,a.kernel_cpus,
         a.test_qemu,a.test_ram_drain,a.ram_shutdown_bridge,a.test_qemu_ufs,
-        a.physical_owned_marker,a.cpu_osm_readonly or a.cpu_osm_stock_performance)
+        a.physical_owned_marker,a.cpu_osm_readonly or a.cpu_osm_stock_performance,
+        a.gpu_thermal_lease,a.gpu_stock_request,a.cpu_osm_stock_performance)
     gpu_inventory=None
     if a.gpu_stock_request and not a.test_qemu:
         if not a.gpu_stock_inventory:raise ValueError('GPU stock request requires actual physical read-only baseline')
@@ -411,6 +419,10 @@ def main():
                   bounded_input=input_present,input_offset=input_offset,
                   physical_buttons=a.physical_buttons,buttons_offset=buttons_offset if a.physical_buttons else None,
                   TSENS_readonly_inventory=a.tsens_readonly,thermal_configuration_write_api=False,
+                  GPU_thermal_lease_trial=a.gpu_thermal_lease,
+                  GPU_thermal_policy=({'experimental_limits_mC':[75000,70000,60000,55000],
+                    'max_observation_age_us':500000,'hard_high_ns':120000000000,
+                    'confirmed_low_ns':10000000000,'idle_ns':250000000} if a.gpu_thermal_lease else None),
                   RAM_native_drain_test=a.test_ram_drain,RAM_native_shutdown_bridge=shutdown_bridge,
                   shutdown_offset=shutdown_offset if shutdown_bridge else None,
                   persistent_root_or_UFS_durability_proven=False,

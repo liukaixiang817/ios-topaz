@@ -279,8 +279,13 @@ def main():
     if manifest.get('TSENS_readonly_inventory'):
         checks['native_TSENS_refused_before_virtual_MMIO']=('POLARIS TSENS RO: REFUSED platform/mode; no MMIO' in ring and 'POLARIS TSENS RO: armed' not in ring and 'POLARIS TSENS RAW:' not in ring)
         checks['native_TSENS_wire_core']=('POLARIS TSENS WIRE VM: PASS; actual native bounded core, synthetic reads only' in ring)
-        checks['explicit_TSENS_readonly_payload']=([t for t in a.payload.read_bytes()[0x48:0x2a8].split(b'\0',1)[0].split() if t.startswith(b'polaristsens=')]==[b'polaristsens=1'])
+        flag=b'polaristsens=2' if manifest.get('GPU_thermal_lease_trial') else b'polaristsens=1'
+        checks['explicit_TSENS_readonly_payload']=([t for t in a.payload.read_bytes()[0x48:0x2a8].split(b'\0',1)[0].split() if t.startswith(b'polaristsens=')]==[flag])
         checks['native_future_display_deadline_probe']=('POLARIS PFB PRECISION VM: PASS; actual native callback, future deadlines only' in ring)
+    if manifest.get('GPU_thermal_lease_trial'):
+        checks['native_thermal_eligibility_and_budget']=('POLARIS THERMAL GATE VM: PASS; actual native eligibility/budget, synthetic observations only' in ring)
+        checks['native_thermal_hard_budget']=('POLARIS GPU THERMAL BUDGET VM: PASS; actual native hard120s and confirmed-low10s planner only' in ring)
+        checks['native_thermal_refused_before_virtual_requests']=('POLARIS THERMAL GATE: armed experiment' not in ring and 'POLARIS GPU THERMAL: armed' not in ring and 'POLARIS GPU STOCK SAMPLE:' not in ring)
     if manifest.get('GPU_stock_request'):
         checks['native_GPU_stock_refused_before_virtual_MMIO']='POLARIS GPU STOCK: REFUSED platform/mode before GPU MMIO' in ring and 'POLARIS GPU STOCK: armed=' not in ring and 'POLARIS GPU STOCK SAMPLE:' not in ring
     if b'polarisgpuwctest=1' in a.payload.read_bytes()[0x48:0x2a8].split(b'\0',1)[0].split():
@@ -452,6 +457,8 @@ def main():
                 framebuffer_arrival_wake=manifest.get('framebuffer_arrival_wake',False),
                 physical_buttons=manifest.get('physical_buttons',False),
                 TSENS_readonly_inventory=manifest.get('TSENS_readonly_inventory',False),
+                GPU_thermal_lease_trial=manifest.get('GPU_thermal_lease_trial',False),
+                GPU_thermal_policy=manifest.get('GPU_thermal_policy'),
                 persistent_root_or_UFS_durability_proven=False,
                 isolated_QEMU_readonly_UFS_test=virtual_ufs and not owned_ufs,
                 isolated_QEMU_owned_UFS_test=owned_ufs,owned_backend_reopen=reopened,
