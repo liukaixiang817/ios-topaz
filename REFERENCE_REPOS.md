@@ -630,3 +630,24 @@ First audit a fuller matching16.x userland and preserve verified RAM boot,
 USB and native shutdown. Image completeness alone does not implement the
 ICNSS, DSP or amplifier hardware paths. No Apple image was downloaded, no
 reference code executed and no existing root or partition changed in this audit.
+
+## TSENS readonly observation prerequisite for sustained performance (0099)
+
+The same saved original Polaris DT maps the four gold CPU zones to TSENS0
+IDs7,8,9,10; GPU zones use11,12. The bounded offline helper reads only
+status0xa0+4*ID inside TM0xc263000/0x1ff. Signed12-bit decoding and validbit21
+match the pinned own tsens2xxx.c; critical status, read failures, implausible
+values, inconsistent successive observations and clock bounds reject the
+whole result without publishing partial temperatures. It does not map MMIO,
+enable sensors, configure thresholds/interrupts or change CPU/GPU requests.
+The original sensor enable register is outside the DT's four-byte SROT
+resource, so this helper deliberately does not probe it by assumption.
+A local observation timestamp is not proof of sensor freshness. Native
+platform admission and actual phone observations remain prerequisites to
+replacing the existing bounded30s/10s experiment with a sustained policy.
+
+0099 actual phone publication timing showed a near16.9ms median interval
+before the stock backoff and43.8ms after it, within one fresh-publication
+window. This is a display-publication observation, not physical scanout Hz
+or a pure GPU-frequency measurement. Full EAGL tracing was disabled by the
+omitted touch_lat token; keep that limitation explicit in comparisons.

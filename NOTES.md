@@ -34,6 +34,54 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0099 physical display publication/backoff COMPLETE; phone left RUNNING home
+
+- CURRENT PHONE is0099/phone-display-wake-0099-0001, not0096 or0094. One
+  originalUEFI RAM boot and one kernel command; actual lockscreen, four-big
+  SMP/64SGI48remote, GPU GLSL/GMEM/icon4096 checks and arrival_wake1 passed.
+  Forty actual consumed scroll gestures (20warm+20measured), unlock, Settings
+  and return-home ACK0..758 checked. Actual viewed stable Settings and home
+  contain text/icons; widgetsWaiting and side-console remnants remain.
+  Immediate capture0003/0004 caught transition frames and are retained, not
+  asserted to be stable render failures or full GUI success. Stable0005 and
+  return-home0006 actually viewed. LEFT RUNNING HOME, no active USB transaction.
+  Only0099/control-phone.py state NEWDIR for directed keepalive; RAM lease30min.
+- physical-wake-publication-and-backoff-proof.json binds real images, all40
+  input records, boot/model/payload and native logs. Measured940 consecutive
+  actual panel-copy publications,28 complete count-matching panel windows.
+  Ready->copybegin median1194us/p958808us; actualcopy median5783us/p956626us.
+  Wake callbacks393, timer547. Across controlled gesture+pause window periods
+  median17175us/mean31274us; USB point/pause pacing is not throughputFPS.
+  No matching same-kernel wake0 physical A/B, so NO wake speedup percentage.
+- The fixed fresh-publication first1s after finalUP catches native GPU return
+ 4/8->1/4 at596210190us, about510568us after its chosen publication start.
+  Before transition30 intervals median16856.5us; after10 intervals median
+43821us. Copy median6174.5->15925us. This is actual native request/backoff
+  correlation, not instantaneousGPUHz or pureGPUbusy; CPU policy can also
+  contribute. Full sustained60 and physical scanoutHz NOTproved. Existing
+30s/10s guards were NOT removed. Next valid own-device temperature observation
+  and a justified thermal-aware continuous policy, plus near-deadline pacing.
+- Instrumentation limitation: touch_lat=1 was omitted to fit605-byte command
+  line. It also disables full EAGL tl:g trace, confirmed ZEROrecords. Native
+  PFB/panel traces are complete; do not fabricate full render duration/FPS.
+  Next candidate should restore touch_lat=1 and omit ONLY redundant boot
+  progress suppression -noprogress instead, preserving debug0/other guards.
+  Do not reboot solely to recover that trace; combine meaningful next change.
+- Added tools/polaris-tsens-readonly.h and exhaustive signed12bit/VALID/range/
+  critical/readfault/clock/12READ boundary ASan/UBSan test; AArch64freestanding
+  compiled. Offline original-DT/vendor Gitblob audit confirms TSENS0 TM
+0xc263000/0x1ff, gold IDs7..10, GPU IDs11..12. New helper has NOmapping,
+  MMIOwrites or performancepolicy; local timestamps are NOT sensor freshness.
+  thermal-readonly-source-proof.json binds sources/tests. Not connected to
+  native kernel or phone, noCI needed yet. Do not call thermal protection or
+  continuous policy implemented just because the offline decoder passes.
+- Human priority: sustained60 FIRST, all remaining backlight/WiFi/sound etc
+  NEXT, fuller matching iOS16.5 LAST. Persistentroot/menu deferred notcanceled.
+  Current new kernel still fullCI0097/source41e774c/kernel299be2d0...;
+  no newnative source orCI this continuation. Last report18:23UTC. Candidate
+  can remain for human checks while next change is prepared offline; only
+  after full relevant checks use native shutdown+actualFASTBOOT beforeboot.
+
 ### CURRENT PHONE0099 wake1 RAM kernel sent once; performance priority
 
 - phone-display-wake-0099-0001 boot.json confirms actual expectedPolaris
