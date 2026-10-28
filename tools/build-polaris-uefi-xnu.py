@@ -45,12 +45,12 @@ def symbols(raw):
     return wanted
 
 
-def readonly_osm_intent(tokens,expected,core,count,qemu,drain,bridge,ufs,marker):
+def readonly_osm_intent(tokens,expected,core,count,qemu,drain,bridge,ufs,marker,performance=False):
     actual=[t for t in tokens if t.startswith(b'polarisosm=')]
-    if actual!=([b'polarisosm=1'] if expected else []) or (expected and
+    if (expected and performance) or actual!=([b'polarisosm=2'] if performance else [b'polarisosm=1'] if expected else []) or ((expected or performance) and
         (core!=7 or count!=4 or ufs or marker or
          not (drain in ('success','stale-cookie','peer-refused') if qemu else bridge))):
-        raise ValueError('OSM read-only inventory requires the explicit four-big RAM native-drain trial and intact token')
+        raise ValueError('OSM mode requires the explicit four-big RAM native-drain trial and intact unique token')
     return expected
 
 
@@ -71,6 +71,8 @@ def main():
                     help='separately admitted physical8MiB marker; original root stays RAM COW')
     ap.add_argument('--test-omit-durable-guard',action='store_true',
                     help='QEMU-only old-loader mismatch: native owned writes must be refused before MMIO')
+    ap.add_argument('--cpu-osm-stock-performance',action='store_true',help='bounded stock4-core OSM request; not overclocking or all7-core admission')
+    ap.add_argument('--cpu-stock-inventory',type=Path,help='required physical read-only OSM evidence for the first performance trial')
     ap.add_argument('--cpu-osm-readonly',action='store_true',
                     help='explicit four-big-core stock OSM read-only inventory intent')
     ap.add_argument('--kernel-core',type=int,choices=(1,7),default=1,
@@ -140,7 +142,25 @@ def main():
     if off_tokens!=([b'polarisofftest=1'] if a.test_ram_drain=='peer-refused' else []):
         raise ValueError('peer refusal injection must be uniquely bound to its QEMU-only test')
     readonly_osm_intent(tokens,a.cpu_osm_readonly,a.kernel_core,a.kernel_cpus,
-        a.test_qemu,a.test_ram_drain,a.ram_shutdown_bridge,a.test_qemu_ufs,a.physical_owned_marker)
+        a.test_qemu,a.test_ram_drain,a.ram_shutdown_bridge,a.test_qemu_ufs,a.physical_owned_marker,a.cpu_osm_stock_performance)
+    stock_inventory=None
+    if a.cpu_osm_stock_performance and not a.test_qemu:
+        if not a.cpu_stock_inventory:raise ValueError('stock performance requires actual physical read-only inventory')
+        evidence=json.loads(a.cpu_stock_inventory.read_text());case=Path(evidence['case'])
+        if not case.is_absolute():case=r/case
+        log=case/'capture-0001-OSM/kernel.log'
+        if (evidence.get('passed') is not True or evidence.get('clock_voltage_writes') is not False or
+            evidence.get('storage_writes') is not False or evidence.get('enabled')!=3 or
+            evidence.get('core_control')!=0 or evidence.get('rows')!=27 or
+            evidence.get('current_requested_index')!=0 or evidence.get('normal_four_core_max_index')!=22 or
+            evidence.get('normal_four_core_max_requested_Hz')!=2649600000 or
+            sha(log)!=evidence.get('actual_native_log_sha256') or
+            sha(case/'boot.json')!=evidence.get('boot_sha256')):
+            raise ValueError('physical stock OSM evidence/hash mismatch')
+        stock_inventory=dict(passed=True,sha256=sha(a.cpu_stock_inventory),
+            actual_native_log_sha256=evidence['actual_native_log_sha256'],target_index=22,
+            target_requested_Hz=2649600000,shared_cluster=True,clock_voltage_writes=False)
+    elif a.cpu_stock_inventory:raise ValueError('physical stock inventory belongs only to its physical performance trial')
     cpu_tokens=[t for t in tokens if t.startswith(b'polarisbootcpu=')]
     if cpu_tokens!=[f'polarisbootcpu={target}'.encode()]:
         raise ValueError('payload must uniquely declare the exact selected kernel core')
@@ -290,6 +310,7 @@ def main():
                   kernel_CPU_affinity=target,
                   kernel_CPU_count=a.kernel_cpus,
                   CPU_OSM_readonly_inventory=a.cpu_osm_readonly,
+                  CPU_OSM_stock_performance=a.cpu_osm_stock_performance,CPU_OSM_stock_inventory=stock_inventory,
                   RAM_base=0x130000000 if a.test_qemu else 0x180000000,RAM_bytes=0xfc8a0000,
                   firmware_core_reserved=0,firmware_services_exited=False,
                   device_execution_tested=False,inputs={p:sha(r/p) for p in inputs})

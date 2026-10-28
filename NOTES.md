@@ -34,6 +34,55 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0088 bounded stock CPU performance SOURCE READY; 0087 real OSM inventory COMPLETE
+
+- Human explicitly permits one LITTLE core for resident UEFI/USB. Firmware0
+  remains reserved; XNU big700/600/500/400 proven4/4. Remaining3little cores
+  are not enabled/capacity-aware yet. No all7-core or60FPS claim.
+- CURRENT PHONE0087/phone-four-big-0087-0002, usecontrol-phone-hostfix.py7 4
+  with new output dirs. Actual originalUEFI RAM boot after independent saved
+  rawgetvarpolaris succeeded06:11UTC, unique kernel-start0001 passed, capture
+ 0002 real lock screen viewed and allGPU4096/GMEM/icon/livecaller pixel tests
+  PASS. Last keepalive0635 passed. Normal RAMCOW/no partition or clock writes.
+ 0001 ended via nativeVFS0busy0/all3peerOFF/RAM_DRAINED gatedreset06:10UTC;
+  do not control it. Allfirst truncatedpayload evidence preserved.
+- physical-stock-OSMv2-readonly-proof.json binds realrawlog, actualwire/boot,
+  viewedlock/GPU tests: ownbank17d45800 enabled3/core_control0(shared),27rows.
+  All4request registers0: stockindex0 requested825600000Hz. Highest normal
+  FOUR-core row22 requested2649600000Hz; rows23..26 areONE-core boosts and
+  mustNOT be selected for4cores. Rawcounterdelta1203742/1456250ns preserved,
+  not promoted to instantCPUHz. Snapshot BEFOREpeerCPU_ON, not UI-load proof.
+- Host50431776ae176408c9e648a36336dfd437c5684e pushed. Corrected run0002 four
+  actualEFI/XNU regressions99checks PASS; exactwire594bytes/osm1 True and
+ 81originalFW/realEDK2 fullDecodePASS. Native58a1db5/CI40637578142/kernel6f7e1b0
+  unchanged. Old610->607flaglost case NOT hardwarefailure.
+-0088/profile0885 adds default-OFF polarisosm2 bounded stockrequest policy,
+  not overclock/PLL/voltage/thermal config. Same ownstockv2 request920+posted
+  readback as MiCode c7cb50c1. Must first pass ownDT/MIDR/4core/ROinventory,
+  sharedcontrol0/enabled3/valid27rowtable/originalrequest0 and untouched peer
+  requests; ordinaryRAMCOW/closedufsrw/nativequiesce only. Only registerSTORE
+  isbigcluster920 tosaved0 ornormal4target22; entireliveLUT/control checked
+  before everytransition, foreignrequest neveroverwritten. RWmap CPU-only.
+- Actual successful authorized GPU submission only publishes activitytime;
+  existing input worker polls, no extra earlyPID1 worker. Highwhenactive,
+  restore after250msidle;30s continuoushigh then10s savedrequest cooldown.
+  This is bounded diagnostic policy, not thermalsensor/temperature proof.
+  Onfault attempt known-safe restore and disablepolicy. Native shutdown
+  mustrestore/readback original beforeany peerOFF orrefuse native reset.
+  No physicalclockwrite has occurred yet. Current phone unchanged.
+- Exact4-file patch0offset0fuzz and actualAppleclang27/fullCIheaders fourTUs
+  PASS. ASan/UBSan policy callbacks coverhigh/idle/cooldown/blockedwrites/
+  foreignowner/LUTmutation/failedrestore plus5000mutations and20000ticks.
+  Source-level auditonly920store. Builderexplicitstockperformancemode and
+  actualphysicalROinventoryhash required; QEMU mustrefuse BEFORE RWmapping.
+  Actualclock transition/underload/UIgain stillUNPROVEN; nextfullCI+matching
+  actualmodels, thennewRAMcandidate. Initialtestcommands usedtwo wrongmodule
+  names (imports failed), failures kept; finalselected validmodules below.
+- Keepcurrentgood4coreiOSalive untilfullcandidate ready. No redundantCI or
+  oldboot. Actual finalCPUscaledpanelcopy15.8ms and sparseGPUframe37.959ms
+  remainprevious0086baseline. Fullpersistentroot staysdeferred, notcanceled;
+  preserveAndroid/Windows/allolddata and0078ownedmarker as documented below.
+
 ### 0087 current phone four-core NORMAL RAM boot, OSM flag lost; HOST FIX pending new model/boot
 
 - CURRENT PHONE0087/phone-four-big-0087-0001 kernel-entered, normal4big iOS,

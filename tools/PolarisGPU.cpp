@@ -28,6 +28,7 @@ extern "C" {
 #include "polaris_gpu_abi.h"
 
 #if defined(POLARIS_RAM_ONLY)
+extern "C" void polaris_cpu_performance_activity(void);
 #define GPU_BUFFERS 4096u
 #define GPU_MAX_BO (128u << 20)
 #define GPU_MAX_BYTES (384ull << 20)
@@ -715,6 +716,7 @@ IOReturn PolarisGPUUserClient::externalMethod(uint32_t selector,IOExternalMethod
             result=0;break;
     }
 done:
+    if(selector==0x46 && result==0)polaris_cpu_performance_activity();
     if(result==0){memcpy(a->structureOutput,&r,size);a->structureOutputSize=size;}
     if(profile) {
         clock_get_uptime(&ended);

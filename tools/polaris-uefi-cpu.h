@@ -80,4 +80,87 @@ static inline uint64_t polaris_osm_requested_hz(const uint32_t *words,uint32_t r
 {
     return words && rows && rows<=40 && index<rows ? polaris_osm_lut_requested_hz(words[index]):0;
 }
+/* Stock OSMv2 performance request, never PLL/voltage/thermal configuration.
+ * Explicit RAM experiment only. Same clk_cpu_set_rate request/posted readback
+ * as pinned MiCode c7cb50c1. Shared performance cluster only (CORE_DCVS=0).
+ * A high request is bounded to30s, then10s at the saved request. */
+struct polaris_cpu_perf_state {
+    uint32_t lut[40], saved, target, current, fault, stopped;
+    uint64_t high_since, cool_until, transitions;
+};
+struct polaris_cpu_perf_io {
+    void *context;
+    uint32_t (*read)(void *,uint32_t);
+    void (*write_request)(void *,uint32_t);
+    void (*barrier)(void *);
+};
+static inline int polaris_cpu_perf_init(struct polaris_cpu_perf_state *s,
+    const uint32_t *lut,uint32_t enabled,uint32_t control,uint32_t saved)
+{
+    if(!s || !lut || enabled!=3 || control!=0 || saved!=0)return 0;
+    uint32_t rows=polaris_osm_lut_rows(lut),target=0;uint64_t previous=0,best=0;
+    if(rows!=27)return 0;
+    for(uint32_t n=0;n<rows;n++) {
+        uint32_t count=(lut[n]>>16)&7;uint64_t hz=polaris_osm_lut_requested_hz(lut[n]);
+        if(!hz || hz<=previous || (n<=22?count!=4:count!=1))return 0;
+        previous=hz;
+        if(count==4 && hz<=UINT64_C(2649600000) && hz>best){best=hz;target=n;}
+    }
+    if(best!=UINT64_C(2649600000) || target!=22 ||
+        polaris_osm_requested_hz(lut,rows,0)!=UINT64_C(825600000))return 0;
+    for(uint32_t n=27;n<40;n++)if(lut[n]!=lut[26])return 0;
+    for(uint32_t n=0;n<40;n++)s->lut[n]=lut[n];
+    s->saved=saved;s->target=target;s->current=saved;s->fault=s->stopped=0;
+    s->high_since=s->cool_until=s->transitions=0;return 1;
+}
+static inline int polaris_cpu_perf_same_table(struct polaris_cpu_perf_state *s,
+    struct polaris_cpu_perf_io *io)
+{
+    if(io->read(io->context,0)!=3 || io->read(io->context,0xbc)!=0)return 0;
+    for(uint32_t n=0;n<40;n++)if(io->read(io->context,0x110+n*32)!=s->lut[n])return 0;
+    return 1;
+}
+static inline int polaris_cpu_perf_write(struct polaris_cpu_perf_state *s,
+    struct polaris_cpu_perf_io *io,uint32_t target)
+{
+    if(target!=s->saved && target!=s->target){s->fault=4;return 0;}
+    if(!polaris_cpu_perf_same_table(s,io)){s->fault=1;return 0;}
+    uint32_t current=io->read(io->context,0x920);
+    if(current!=s->current){s->fault=2;return 0;} /* Foreign requests are not overwritten. */
+    if(current==target)return 1;
+    io->write_request(io->context,target);io->barrier(io->context);
+    (void)io->read(io->context,0); /* Posted-write readback, original driver sequence. */
+    current=io->read(io->context,0x920);
+    if(current!=target){s->fault=3;return 0;}
+    s->current=current;++s->transitions;return 1;
+}
+static inline int polaris_cpu_perf_tick(struct polaris_cpu_perf_state *s,
+    struct polaris_cpu_perf_io *io,uint64_t now,uint64_t activity)
+{
+    if(!s || !io || !io->read || !io->write_request || !io->barrier)return 0;
+    if(s->stopped || s->fault)return 0;
+    uint32_t desired=s->saved;
+    if(s->high_since && (now<s->high_since || now-s->high_since>=UINT64_C(30000000000))) {
+        s->cool_until=now+UINT64_C(10000000000);s->high_since=0;
+    }
+    if(now && activity && activity<=now && now-activity<=UINT64_C(250000000) && now>=s->cool_until) {
+        desired=s->target;if(!s->high_since)s->high_since=now;
+    } else if(now>=s->cool_until)s->high_since=0;
+    /* Check the live request even without transitions; do not mask another owner. */
+    if(io->read(io->context,0x920)!=s->current){s->fault=2;return 0;}
+    return desired==s->current ? 1:polaris_cpu_perf_write(s,io,desired);
+}
+static inline int polaris_cpu_perf_stop(struct polaris_cpu_perf_state *s,
+    struct polaris_cpu_perf_io *io)
+{
+    if(!s || !io || !io->read || !io->write_request || !io->barrier)return 0;
+    s->stopped=1;
+    /* Preserve a previous error, but still restore our known request if safe.
+     * Refuse native reset if readback/ownership no longer proves restoration. */
+    if(!polaris_cpu_perf_same_table(s,io))return 0;
+    uint32_t current=io->read(io->context,0x920);
+    if(current==s->saved){s->current=current;return 1;}
+    if(current!=s->target || s->current!=s->target)return 0;
+    return polaris_cpu_perf_write(s,io,s->saved);
+}
 #endif

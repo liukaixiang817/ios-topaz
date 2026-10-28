@@ -1,0 +1,292 @@
+--- a/bsd/dev/polaris_touch.c
++++ b/bsd/dev/polaris_touch.c
+@@ -27,6 +27,7 @@
+ extern void sweet_hid_touch(int, int, int, int);
+ void polaris_touch_init(void);
+ void polaris_uefi_shutdown_ready(void);
++void polaris_cpu_performance_poll(void);
+ int polaris_uefi_shutdown_pending(void);
+ int polaris_ufs_ram_seal(void);
+ int polaris_ufs_owned_status(struct polaris_shutdown_status *);
+@@ -458,6 +459,7 @@
+ {
+     (void)arg; (void)result;
+     while (!polaris_hid_touch_ready()) {
++        polaris_cpu_performance_poll();
+         if (ps_poll()) { ps_execute(); } /* Native shutdown must not require a working GUI/HID server. */
+         pt_wait(10);
+     }
+@@ -467,6 +469,7 @@
+     printf("POLARIS UEFI INPUT: ready; bounded single contact,750ms auto-release\n");
+     bool active=false; unsigned idle=0; int x=0,y=0;
+     for (;;) {
++        polaris_cpu_performance_poll();
+         pi_cache((uintptr_t)slot,false);
+         uint64_t request=__atomic_load_n(&slot->request,__ATOMIC_ACQUIRE);
+         if (request!=slot->acknowledged) {
+--- a/iokit/Kernel/arm/PolarisGPU.cpp
++++ b/iokit/Kernel/arm/PolarisGPU.cpp
+@@ -28,6 +28,7 @@
+ #include "polaris_gpu_abi.h"
+ 
+ #if defined(POLARIS_RAM_ONLY)
++extern "C" void polaris_cpu_performance_activity(void);
+ #define GPU_BUFFERS 4096u
+ #define GPU_MAX_BO (128u << 20)
+ #define GPU_MAX_BYTES (384ull << 20)
+@@ -715,6 +716,7 @@
+             result=0;break;
+     }
+ done:
++    if(selector==0x46 && result==0)polaris_cpu_performance_activity();
+     if(result==0){memcpy(a->structureOutput,&r,size);a->structureOutputSize=size;}
+     if(profile) {
+         clock_get_uptime(&ended);
+--- a/iokit/Kernel/arm/SweetCPU.cpp
++++ b/iokit/Kernel/arm/SweetCPU.cpp
+@@ -8,6 +8,7 @@
+ #if defined(SWEET)
+ #include <IOKit/IOCPU.h>
+ #include <IOKit/IOLib.h>
++#include <IOKit/IOLocks.h>
+ #include <IOKit/IOMemoryDescriptor.h>
+ #include <libkern/c++/OSData.h>
+ #include <libkern/c++/OSNumber.h>
+@@ -40,6 +41,101 @@
+ /* Default-OFF, one bounded snapshot before starting the peers. The verified
+  * OSM bank is always-on controller MMIO, not CPU-local/PMU registers. Only
+  * volatile loads are performed; firmware's clock/voltage/thermal policy stays. */
++/* Owned stock big-cluster request only; default OFF, polarisosm=2. Firmware
++ * CPU0/little-cluster, LUT/voltage/PLL/thermal registers are never written.
++ * Existing input worker polls, GPU submit only publishes a timestamp. */
++static IOLock *polaris_perf_lock;
++static IOMemoryDescriptor *polaris_perf_memory;
++static IOMemoryMap *polaris_perf_mapping;
++static volatile uint32_t *polaris_perf_regs;
++static struct polaris_cpu_perf_state polaris_perf_state;
++static uint64_t polaris_perf_activity_ns,polaris_perf_last_ns;
++static uint32_t polaris_perf_last_cycle,polaris_perf_ready;
++static uint64_t polaris_perf_now(void)
++{
++    uint64_t ns=0;absolutetime_to_nanoseconds(mach_absolute_time(),&ns);return ns;
++}
++static uint32_t polaris_perf_read(void *,uint32_t offset)
++{
++    return polaris_perf_regs[offset/4];
++}
++static void polaris_perf_write(void *,uint32_t value)
++{
++    polaris_perf_regs[0x920/4]=value; /* The ONLY register store in this port. */
++}
++static void polaris_perf_barrier(void *){__builtin_arm_dsb(DSB_SY);}
++static struct polaris_cpu_perf_io polaris_perf_io={NULL,polaris_perf_read,polaris_perf_write,polaris_perf_barrier};
++static void polaris_perf_prepare(bool physical_inventory)
++{
++    uint32_t flag=0,cow=0,rw=0,quiesce=0;
++    PE_parse_boot_argn("polarisosm",&flag,sizeof(flag));if(flag!=2)return;
++    PE_parse_boot_argn("polarisramcow",&cow,sizeof(cow));
++    bool has_rw=PE_parse_boot_argn("ufsrw",&rw,sizeof(rw));
++    uint32_t owned=0;PE_parse_boot_argn("polarisownedmarker",&owned,sizeof(owned));
++    PE_parse_boot_argn("polarisquiesce",&quiesce,sizeof(quiesce));
++    if(!physical_inventory || cow!=1 || !has_rw || rw || owned || quiesce!=1){
++        IOLog("POLARIS OSM PERF: REFUSED platform/mode; no RW mapping\n");return;
++    }
++    polaris_perf_memory=IOMemoryDescriptor::withPhysicalAddress(0x17d45800,0x1400,kIODirectionInOut);
++    polaris_perf_mapping=polaris_perf_memory?polaris_perf_memory->map(kIOMapInhibitCache):NULL;
++    if(polaris_perf_mapping && polaris_perf_mapping->getVirtualAddress()) {
++        polaris_perf_regs=(volatile uint32_t *)polaris_perf_mapping->getVirtualAddress();
++        uint32_t lut[40];for(unsigned n=0;n<40;n++)lut[n]=polaris_perf_regs[(0x110+n*32)/4];
++        bool shared=polaris_perf_regs[0x924/4]==0 && polaris_perf_regs[0x928/4]==0 && polaris_perf_regs[0x92c/4]==0;
++        if(shared && polaris_cpu_perf_init(&polaris_perf_state,lut,polaris_perf_regs[0],
++            polaris_perf_regs[0xbc/4],polaris_perf_regs[0x920/4])) {
++            polaris_perf_lock=IOLockAlloc();
++            if(polaris_perf_lock){
++                IOLog("POLARIS OSM PERF: armed saved=%u target=%u requested_Hz=%llu high_limit_ms=30000 cooldown_ms=10000 idle_ms=250; no voltage/PLL/thermal writes\n",
++                    polaris_perf_state.saved,polaris_perf_state.target,
++                    polaris_osm_requested_hz(lut,27,polaris_perf_state.target));return;
++            }
++        }
++    }
++    polaris_perf_regs=NULL;OSSafeReleaseNULL(polaris_perf_mapping);OSSafeReleaseNULL(polaris_perf_memory);
++    IOLog("POLARIS OSM PERF: REFUSED mapping/LUT/state; no request written\n");
++}
++extern "C" void polaris_cpu_performance_activity(void)
++{
++    if(__atomic_load_n(&polaris_perf_ready,__ATOMIC_ACQUIRE))
++        __atomic_store_n(&polaris_perf_activity_ns,polaris_perf_now(),__ATOMIC_RELEASE);
++}
++extern "C" void polaris_cpu_performance_poll(void)
++{
++    if(!__atomic_load_n(&polaris_perf_ready,__ATOMIC_ACQUIRE))return;
++    IOLockLock(polaris_perf_lock);
++    if(!__atomic_load_n(&polaris_perf_ready,__ATOMIC_ACQUIRE)){IOLockUnlock(polaris_perf_lock);return;}
++    uint64_t now=polaris_perf_now(),previous=polaris_perf_state.transitions;
++    bool ok=polaris_cpu_perf_tick(&polaris_perf_state,&polaris_perf_io,now,
++        __atomic_load_n(&polaris_perf_activity_ns,__ATOMIC_ACQUIRE));
++    if(!ok || previous!=polaris_perf_state.transitions || now-polaris_perf_last_ns>=5*NSEC_PER_SEC) {
++        uint32_t cycle=polaris_perf_regs[0x9c0/4];
++        IOLog("POLARIS OSM PERF SAMPLE: mpidr=%#llx requested_index=%u requested_Hz=%llu raw_cycles=%u elapsed_ns=%llu transitions=%llu error=%u; request not measured Hz\n",
++            __builtin_arm_rsr64("MPIDR_EL1")&0xffffffULL,polaris_perf_regs[0x920/4],
++            polaris_osm_requested_hz(polaris_perf_state.lut,27,polaris_perf_regs[0x920/4]),
++            (uint32_t)(cycle-polaris_perf_last_cycle),now-polaris_perf_last_ns,
++            polaris_perf_state.transitions,polaris_perf_state.fault);
++        polaris_perf_last_ns=now;polaris_perf_last_cycle=cycle;
++    }
++    if(!ok) {
++        bool restored=polaris_cpu_perf_stop(&polaris_perf_state,&polaris_perf_io);
++        IOLog("POLARIS OSM PERF: fault=%u restored=%u; activity control disabled\n",polaris_perf_state.fault,restored);
++        __atomic_store_n(&polaris_perf_ready,0,__ATOMIC_RELEASE);
++    }
++    IOLockUnlock(polaris_perf_lock);
++}
++static int polaris_perf_shutdown(void)
++{
++    if(!polaris_perf_lock)return 0;
++    __atomic_store_n(&polaris_perf_ready,0,__ATOMIC_RELEASE);
++    IOLockLock(polaris_perf_lock);
++    bool restored=polaris_cpu_perf_stop(&polaris_perf_state,&polaris_perf_io);
++    IOLog("POLARIS OSM PERF RESTORE: restored=%u request=%u saved=%u error=%u; before peer OFF\n",
++        restored,polaris_perf_regs[0x920/4],polaris_perf_state.saved,polaris_perf_state.fault);
++    IOLockUnlock(polaris_perf_lock);
++    return restored?0:EIO;
++}
++
+ static bool polaris_osm_dt_u64(DTEntry entry,const char *key,uint64_t *out)
+ {
+     const void *value=NULL;unsigned size=0;
+@@ -50,6 +146,7 @@
+ {
+     uint32_t flag=0;PE_parse_boot_argn("polarisosm",&flag,sizeof(flag));
+     if(!flag)return;
++    bool performance=flag==2;if(performance)flag=1;
+     DTEntry root,chosen;const void *raw=NULL;unsigned length=0;
+     uint64_t base=0,bytes=0;bool polaris=false,sdm845=false;
+     if(SecureDTLookupEntry(NULL,"/",&root)==kSuccess &&
+@@ -69,7 +166,8 @@
+     if(!polaris_osm_ro_allowed(flag,mode,target,count,__builtin_arm_rsr64("MPIDR_EL1"),
+         __builtin_arm_rsr64("MIDR_EL1"),__builtin_arm_rsr64("CNTFRQ_EL0"),
+         base,bytes,polaris && sdm845)) {
+-        IOLog("POLARIS OSM RO: REFUSED platform; no MMIO\n");return;
++        IOLog("POLARIS OSM RO: REFUSED platform; no MMIO\n");
++        if(performance)polaris_perf_prepare(false);return;
+     }
+     /* Own live DT performance-bank third reg:17d45800/1400; never use K40 EPSS.
+      * CPU-only read-only/noncacheable mapping; no DMA preparation or aliases
+@@ -102,6 +200,7 @@
+     IOLog("POLARIS OSM CYCLES: core%u before=%#x after=%#x delta=%u elapsed_ns=%llu sum=%llu; raw counter, not instantaneous Hz\n",counter_core,before,after,(uint32_t)(after-before),elapsed,sum);
+     __builtin_arm_dsb(DSB_SY);
+     mapping->release();memory->release();
++    if(performance)polaris_perf_prepare(true);
+ }
+ struct polaris_smp_record {
+     uint64_t mpidr, frequency, counter;
+@@ -373,6 +472,11 @@
+ 	    topology->num_cpus, topology->num_cpus);
+ #if defined(POLARIS_RAM_ONLY)
+     polaris_smp_check();
++    if(polaris_perf_lock) {
++        polaris_perf_last_ns=polaris_perf_now();polaris_perf_last_cycle=polaris_perf_regs[0x9c0/4];
++        __atomic_store_n(&polaris_perf_ready,1,__ATOMIC_RELEASE);
++        IOLog("POLARIS OSM PERF: online four big cores; activity governor enabled\n");
++    }
+ 	polaris_ufs_probe();
+ 	/* The explicit diagnostic mode keeps its result visible after BSD/init
+ 	 * logs wrap the console. Sleep in this completed CPU startup thread;
+@@ -511,6 +615,7 @@
+     if (polaris_stop_conduit < 0) return EINVAL;
+     PE_parse_boot_argn("polarisofftest", &polaris_stop_fault, sizeof(polaris_stop_fault));
+     if (polaris_stop_fault && (polaris_stop_fault != 1 || polaris_stop_conduit != 1)) return EINVAL;
++    if(polaris_perf_shutdown()!=0)return EIO;
+     for (unsigned logical = 1; logical < topology->num_cpus; logical++) {
+         __atomic_store_n(&polaris_stop_armed, logical, __ATOMIC_RELEASE);
+         kern_return_t kr = processor_exit(sweet_cpus[logical]->getMachProcessor());
+--- a/iokit/Kernel/arm/polaris_uefi_cpu.h
++++ b/iokit/Kernel/arm/polaris_uefi_cpu.h
+@@ -80,4 +80,87 @@
+ {
+     return words && rows && rows<=40 && index<rows ? polaris_osm_lut_requested_hz(words[index]):0;
+ }
++/* Stock OSMv2 performance request, never PLL/voltage/thermal configuration.
++ * Explicit RAM experiment only. Same clk_cpu_set_rate request/posted readback
++ * as pinned MiCode c7cb50c1. Shared performance cluster only (CORE_DCVS=0).
++ * A high request is bounded to30s, then10s at the saved request. */
++struct polaris_cpu_perf_state {
++    uint32_t lut[40], saved, target, current, fault, stopped;
++    uint64_t high_since, cool_until, transitions;
++};
++struct polaris_cpu_perf_io {
++    void *context;
++    uint32_t (*read)(void *,uint32_t);
++    void (*write_request)(void *,uint32_t);
++    void (*barrier)(void *);
++};
++static inline int polaris_cpu_perf_init(struct polaris_cpu_perf_state *s,
++    const uint32_t *lut,uint32_t enabled,uint32_t control,uint32_t saved)
++{
++    if(!s || !lut || enabled!=3 || control!=0 || saved!=0)return 0;
++    uint32_t rows=polaris_osm_lut_rows(lut),target=0;uint64_t previous=0,best=0;
++    if(rows!=27)return 0;
++    for(uint32_t n=0;n<rows;n++) {
++        uint32_t count=(lut[n]>>16)&7;uint64_t hz=polaris_osm_lut_requested_hz(lut[n]);
++        if(!hz || hz<=previous || (n<=22?count!=4:count!=1))return 0;
++        previous=hz;
++        if(count==4 && hz<=UINT64_C(2649600000) && hz>best){best=hz;target=n;}
++    }
++    if(best!=UINT64_C(2649600000) || target!=22 ||
++        polaris_osm_requested_hz(lut,rows,0)!=UINT64_C(825600000))return 0;
++    for(uint32_t n=27;n<40;n++)if(lut[n]!=lut[26])return 0;
++    for(uint32_t n=0;n<40;n++)s->lut[n]=lut[n];
++    s->saved=saved;s->target=target;s->current=saved;s->fault=s->stopped=0;
++    s->high_since=s->cool_until=s->transitions=0;return 1;
++}
++static inline int polaris_cpu_perf_same_table(struct polaris_cpu_perf_state *s,
++    struct polaris_cpu_perf_io *io)
++{
++    if(io->read(io->context,0)!=3 || io->read(io->context,0xbc)!=0)return 0;
++    for(uint32_t n=0;n<40;n++)if(io->read(io->context,0x110+n*32)!=s->lut[n])return 0;
++    return 1;
++}
++static inline int polaris_cpu_perf_write(struct polaris_cpu_perf_state *s,
++    struct polaris_cpu_perf_io *io,uint32_t target)
++{
++    if(target!=s->saved && target!=s->target){s->fault=4;return 0;}
++    if(!polaris_cpu_perf_same_table(s,io)){s->fault=1;return 0;}
++    uint32_t current=io->read(io->context,0x920);
++    if(current!=s->current){s->fault=2;return 0;} /* Foreign requests are not overwritten. */
++    if(current==target)return 1;
++    io->write_request(io->context,target);io->barrier(io->context);
++    (void)io->read(io->context,0); /* Posted-write readback, original driver sequence. */
++    current=io->read(io->context,0x920);
++    if(current!=target){s->fault=3;return 0;}
++    s->current=current;++s->transitions;return 1;
++}
++static inline int polaris_cpu_perf_tick(struct polaris_cpu_perf_state *s,
++    struct polaris_cpu_perf_io *io,uint64_t now,uint64_t activity)
++{
++    if(!s || !io || !io->read || !io->write_request || !io->barrier)return 0;
++    if(s->stopped || s->fault)return 0;
++    uint32_t desired=s->saved;
++    if(s->high_since && (now<s->high_since || now-s->high_since>=UINT64_C(30000000000))) {
++        s->cool_until=now+UINT64_C(10000000000);s->high_since=0;
++    }
++    if(now && activity && activity<=now && now-activity<=UINT64_C(250000000) && now>=s->cool_until) {
++        desired=s->target;if(!s->high_since)s->high_since=now;
++    } else if(now>=s->cool_until)s->high_since=0;
++    /* Check the live request even without transitions; do not mask another owner. */
++    if(io->read(io->context,0x920)!=s->current){s->fault=2;return 0;}
++    return desired==s->current ? 1:polaris_cpu_perf_write(s,io,desired);
++}
++static inline int polaris_cpu_perf_stop(struct polaris_cpu_perf_state *s,
++    struct polaris_cpu_perf_io *io)
++{
++    if(!s || !io || !io->read || !io->write_request || !io->barrier)return 0;
++    s->stopped=1;
++    /* Preserve a previous error, but still restore our known request if safe.
++     * Refuse native reset if readback/ownership no longer proves restoration. */
++    if(!polaris_cpu_perf_same_table(s,io))return 0;
++    uint32_t current=io->read(io->context,0x920);
++    if(current==s->saved){s->current=current;return 1;}
++    if(current!=s->target || s->current!=s->target)return 0;
++    return polaris_cpu_perf_write(s,io,s->saved);
++}
+ #endif

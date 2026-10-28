@@ -41,6 +41,15 @@ def admit(driver,qemu,ci,profile,preflight):
         qemu.get('CPU_OSM_readonly_inventory') is not True or
         qemu.get('checks',{}).get('native_OSM_probe_refused_before_virtual_MMIO') is not True):
         raise ValueError('OSM physical inventory requires actual virtual-platform refusal before MMIO')
+    if bool(driver.get('CPU_OSM_stock_performance'))!=bool(qemu.get('CPU_OSM_stock_performance')):
+        raise ValueError('physical and virtual stock performance intent must match')
+    if driver.get('CPU_OSM_stock_performance'):
+        inventory=driver.get('CPU_OSM_stock_inventory') or {}
+        if (count!=4 or driver.get('CPU_OSM_readonly_inventory') or
+            qemu.get('checks',{}).get('native_stock_OSM_refused_before_virtual_RW') is not True or
+            inventory.get('passed') is not True or inventory.get('target_index')!=22 or
+            inventory.get('target_requested_Hz')!=2649600000 or not inventory.get('actual_native_log_sha256')):
+            raise ValueError('stock performance needs physical inventory and actual virtual guard refusal')
     if (qemu.get('passed') is not True or qemu.get('release_handoff_admitted') is not True or
         qemu.get('diagnostic_legacy_only') is not False or not qemu.get('checks') or
         not all(v is True for v in qemu['checks'].values()) or qemu['checks'].get('bounded_input_handshake') is not True or
