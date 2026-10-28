@@ -45,8 +45,8 @@ early samples only. On0029 the human already confirmed boot complete and said
   Forty identical700ms scrolls20warm/20measured plus unlock/tap all42 real
   consumed input records ACK0..740 verified. NO repeat boot/old controller.
 - Physical proof0100/physical-thermal-publication-backoff-proof.json reparses
-  and rehashes all logs/UI/input/source/CI/models. Live keepalive-1930 PASSED
-  actual19:28:59UTC kernel-entered. LEFT RUNNING Settings for inspection;
+  and rehashes all logs/UI/input/source/CI/models. Final keepalive-1936 PASSED
+  actual19:35:48UTC kernel-entered. LEFT RUNNING Settings for inspection;
   only0100/control-phone.py ACTION NEWDIR. No active USB/CI/model. Ordinary
   RAM lease30min, directed state on nextheartbeat. No Android/rawfallback/
   PMIC/storage/NVRAM writes, no full runtime or firmware replacement.
@@ -85,6 +85,8 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### 0101 offline thermal eligibility gate; native sustained policy NOT integrated
 
+- Completed offline source3a5e720 committed and pushed to existing
+  codex/polaris-preflight. No new native change/CI/device boot.
 - tools/polaris-thermal-eligibility.h consumes the exact bounded native TSENS
   sample shape and independently redecodes both raw passes, summaries/clock/
   max fields. Requires3complete observations spanning>=500ms, age<=500ms,
