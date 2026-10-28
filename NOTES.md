@@ -34,6 +34,35 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0100 native readonly thermal + future deadline source candidate; no new phone boot
+
+- Current phone remains0099 RUNNING HOME; keepalive1832 PASS. No new boot,
+  shutdown, input, PMIC/storage write or change to stock30s/10s guard.
+- New profile0893 embeds exact tested TSENS readonly core into SweetCPU.cpp,
+  optional polaristsens1 only. Exact original-platform/DRAM/MIDR/resident-four
+  guard BEFORE kernel-only RO/noncacheable mapping0xc263000/0x1ff; six own
+  sensor IDs7..12,12bounded reads,250ms observation/1s compact raw+temp logs.
+  Invalid results log error/last raw, no partial temperature or policy claim.
+  Existing resident input worker polls, no newthread/IRQ/DMA/taskalias or
+  sensor-enable/threshold/performance write. Shutdown disables observations.
+  This is NOT yet actualphone temperature/freshness or continuous performance.
+- Wake1-only next-deadline helper preserves exact future1..999us instead of
+  rounding every remainder up to1ms. Expired/invalid deadlines retain1ms
+  backoff; expired clean-copy deadlines ignored, originalVSYNC gates remain.
+  Native VM workloop callback now checks this helper; pure ASan/UBSan boundary
+  tests cover one future wake followed by next-period/clean-idle yield.
+- Actual Appleclang27 with complete native headers compiled SweetCPU.cpp and
+  SweetFramebuffer.cpp PASS. Exact overlay fuzz0/offset0 and byte-match to
+  compiled files PASS. First local19-test run failed ONLY a fixture's trailing
+  newline comparison of the verbatim header; failure retained, test corrected
+  to exact newline-preserving equality. New local0002 all19 tests PASS4.355s (read exact log for final elapsed).
+- Host builder/proof/image admission explicitly bind TSENSreadonly to token,
+  RAM/fourbig/platform modes and actual native wire/virtual-MMIO-refusal and
+  future-deadline checks. No new IIG/private-header exception; no hardware
+  change from the host markers. FullCI/newactualnative models NOT yet passed.
+  Next finish local checks/commit/fullCI, then SERIAL actual new-kernel success,
+  default-off control/stale/peerrefusal before any new physical candidate.
+
 ### 0099 physical display publication/backoff COMPLETE; phone left RUNNING home
 
 - Completed source b895636 committed and pushed (prior readonly WLED source

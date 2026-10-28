@@ -94,6 +94,19 @@ def physical_buttons_intent(tokens,enabled,core,count,qemu,drain,bridge,ufs,mark
                 raise ValueError('physical keys must preserve touch, RAM COW and native shutdown')
     return enabled
 
+def tsens_readonly_intent(tokens,enabled,core,count,qemu,drain,bridge,ufs,marker,osm):
+    actual=[t for t in tokens if t.startswith(b'polaristsens=')]
+    if type(enabled) is not bool or actual!=([b'polaristsens=1'] if enabled else []):
+        raise ValueError('TSENS readonly intent must match one explicit token')
+    if enabled:
+        if core!=7 or count!=4 or ufs or marker or not osm or not (
+            drain in ('success','stale-cookie','peer-refused') if qemu else bridge):
+            raise ValueError('TSENS readonly requires four-big RAM native drain and platform inventory')
+        for expected in (b'polarisramcow=1',b'ufsrw=0',b'polarisquiesce=1'):
+            if [t for t in tokens if t.startswith(expected.split(b'=')[0]+b'=')]!=[expected]:
+                raise ValueError('TSENS readonly must preserve RAM/write-protection/drain guards')
+    return enabled
+
 
 def main():
     ap=argparse.ArgumentParser(description=__doc__)
@@ -117,6 +130,7 @@ def main():
     ap.add_argument('--gpu-stock-inventory',type=Path,help='actual original-device read-only request baseline before this experiment')
     ap.add_argument('--framebuffer-arrival-wake',action='store_true',help='explicit coalesced display workloop wake; native probe required before phone admission')
     ap.add_argument('--physical-buttons',action='store_true',help='three original PM8998 keys on firmware CPU0; QEMU tests only the native consumer without Qualcomm MMIO')
+    ap.add_argument('--tsens-readonly',action='store_true',help='original six CPU/GPU thermal status registers only; unchanged bounded performance policy')
     ap.add_argument('--wled-inventory-only',action='store_true',help='short original WLED observer inventory then hold; CPU_ON compiled out, no PMIC writes')
     ap.add_argument('--test-wled-read-failure',action='store_true',help='QEMU-only explicit observer refusal in the inventory hold')
     ap.add_argument('--cpu-stock-inventory',type=Path,help='required physical read-only OSM evidence for the first performance trial')
@@ -138,6 +152,12 @@ def main():
     ap.add_argument('--chain-app-manifest',type=Path,help='RAM test wrapper for the exact already-built selected disk app')
     a=ap.parse_args();r=Path(__file__).resolve().parents[1]
     target=a.kernel_core if a.test_qemu else a.kernel_core<<8
+    if a.tsens_readonly and (a.kernel_core!=7 or a.kernel_cpus!=4 or
+        a.test_qemu_ufs or a.test_qemu_owned or a.physical_owned_marker or a.disk_guid or
+        a.chain_app_manifest or a.efi_application or a.wled_inventory_only or
+        not (a.cpu_osm_readonly or a.cpu_osm_stock_performance) or
+        not (a.test_ram_drain in ('success','stale-cookie','peer-refused') if a.test_qemu else a.ram_shutdown_bridge)):
+        ap.error('TSENS readonly is only an explicit four-big RAM native-drain inventory')
     if a.wled_inventory_only and (not a.physical_buttons or a.kernel_core!=7 or a.kernel_cpus!=4 or
         a.test_qemu_ufs or a.test_qemu_owned or a.physical_owned_marker or a.disk_guid or
         a.chain_app_manifest or a.efi_application or not (a.test_ram_drain=='success' if a.test_qemu else a.ram_shutdown_bridge)):
@@ -200,6 +220,9 @@ def main():
         a.test_qemu,a.test_ram_drain,a.ram_shutdown_bridge,a.test_qemu_ufs,a.physical_owned_marker)
     framebuffer_wake_intent(tokens,a.framebuffer_arrival_wake,a.kernel_core,a.kernel_cpus,
         a.test_qemu,a.test_ram_drain,a.ram_shutdown_bridge,a.test_qemu_ufs,a.physical_owned_marker)
+    tsens_readonly_intent(tokens,a.tsens_readonly,a.kernel_core,a.kernel_cpus,
+        a.test_qemu,a.test_ram_drain,a.ram_shutdown_bridge,a.test_qemu_ufs,
+        a.physical_owned_marker,a.cpu_osm_readonly or a.cpu_osm_stock_performance)
     gpu_inventory=None
     if a.gpu_stock_request and not a.test_qemu:
         if not a.gpu_stock_inventory:raise ValueError('GPU stock request requires actual physical read-only baseline')
@@ -387,6 +410,7 @@ def main():
                   chain_app=chain,
                   bounded_input=input_present,input_offset=input_offset,
                   physical_buttons=a.physical_buttons,buttons_offset=buttons_offset if a.physical_buttons else None,
+                  TSENS_readonly_inventory=a.tsens_readonly,thermal_configuration_write_api=False,
                   RAM_native_drain_test=a.test_ram_drain,RAM_native_shutdown_bridge=shutdown_bridge,
                   shutdown_offset=shutdown_offset if shutdown_bridge else None,
                   persistent_root_or_UFS_durability_proven=False,

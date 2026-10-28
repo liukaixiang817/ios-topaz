@@ -52,6 +52,14 @@ def admit(driver,qemu,ci,profile,preflight):
             inventory.get('passed') is not True or inventory.get('target_index')!=22 or
             inventory.get('target_requested_Hz')!=2649600000 or not inventory.get('actual_native_log_sha256')):
             raise ValueError('stock performance needs physical inventory and actual virtual guard refusal')
+    thermal=driver.get('TSENS_readonly_inventory',False)
+    if type(thermal) is not bool or type(qemu.get('TSENS_readonly_inventory',False)) is not bool or thermal!=qemu.get('TSENS_readonly_inventory',False):
+        raise ValueError('physical and actual virtual TSENS readonly intent must match')
+    if thermal and (count!=4 or driver.get('thermal_configuration_write_api') is not False or
+        not all(qemu.get('checks',{}).get(k) is True for k in
+                ['native_TSENS_refused_before_virtual_MMIO','native_TSENS_wire_core',
+                 'explicit_TSENS_readonly_payload','native_future_display_deadline_probe'])):
+        raise ValueError('TSENS inventory requires actual native wire/deadline execution and platform refusal before MMIO')
     gpu_mode=driver.get('GPU_stock_request',0)
     keys=driver.get('physical_buttons',False)
     if (type(keys) is not bool or type(qemu.get('physical_buttons',False)) is not bool or

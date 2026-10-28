@@ -1,0 +1,236 @@
+--- a/iokit/Kernel/arm/SweetCPU.cpp
++++ b/iokit/Kernel/arm/SweetCPU.cpp
+@@ -61,6 +61,163 @@
+ {
+     uint64_t ns=0;absolutetime_to_nanoseconds(mach_absolute_time(),&ns);return ns;
+ }
++
++/* BEGIN OWN TSENS READONLY CORE: tested verbatim host implementation. */
++/* Own Polaris TSENS0: DT TM0xc263000/0x1ff, gold sensors7..10,
++ * GPU sensors11..12. Pinned MiCode c7cb50c1 tsens2xxx.c: status0xa0+4*ID,
++ * valid bit21, signed12-bit temperatures in100millidegreesC.
++ * Pure bounded READ callbacks only; no mapping, enabling, IRQ/threshold or
++ * performance writes. A local observation timestamp is not sensor freshness.
++ * This component alone never authorizes removing the existing30s/10s policy.
++ */
++struct polaris_tsens_io {
++    void *context;
++    bool (*read)(void *,uint32_t,uint32_t *);
++    uint64_t (*now_us)(void *);
++};
++struct polaris_tsens_sample {
++    uint32_t raw[2][6];
++    int32_t temperature_mC[6],max_gold_mC,max_gpu_mC;
++    uint64_t began_us,ended_us;
++};
++enum { PTS_OK=0,PTS_ARGUMENT,PTS_TIME,PTS_READ,PTS_VALID,
++       PTS_RANGE,PTS_CRITICAL,PTS_CHANGED_TOO_FAST };
++static inline unsigned polaris_tsens_decode(uint32_t raw,int32_t *mC)
++{
++    if(!mC)return PTS_ARGUMENT;
++    if(!(raw&(1u<<21)))return PTS_VALID;
++    int32_t code=(int32_t)(raw&0xfff);
++    if(code&0x800)code-=4096;
++    int32_t value=code*100;
++    if(value < -40000 || value > 150000)return PTS_RANGE;
++    if(raw&(1u<<19))return PTS_CRITICAL;
++    *mC=value;return PTS_OK;
++}
++static inline unsigned polaris_tsens_observe(const struct polaris_tsens_io *io,
++    struct polaris_tsens_sample *out)
++{
++    if(!io||!io->read||!io->now_us||!out)return PTS_ARGUMENT;
++    struct polaris_tsens_sample sample={0};
++    sample.began_us=io->now_us(io->context);
++    if(!sample.began_us)return PTS_TIME;
++    int32_t first[6]={0};
++    for(unsigned pass=0;pass<2;pass++)for(unsigned n=0;n<6;n++) {
++        uint32_t raw=0;int32_t value=0;
++        if(!io->read(io->context,0xa0+(7+n)*4,&raw))return PTS_READ;
++        unsigned error=polaris_tsens_decode(raw,&value);
++        if(error)return error;
++        sample.raw[pass][n]=raw;
++        if(!pass)first[n]=value;
++        else {
++            int32_t delta=value-first[n];
++            if(delta < -2000 || delta > 2000)return PTS_CHANGED_TOO_FAST;
++            sample.temperature_mC[n]=value>first[n]?value:first[n];
++        }
++    }
++    sample.ended_us=io->now_us(io->context);
++    if(sample.ended_us<sample.began_us || sample.ended_us-sample.began_us>1000)
++        return PTS_TIME;
++    sample.max_gold_mC=sample.temperature_mC[0];
++    sample.max_gpu_mC=sample.temperature_mC[4];
++    for(unsigned n=1;n<4;n++)if(sample.temperature_mC[n]>sample.max_gold_mC)
++        sample.max_gold_mC=sample.temperature_mC[n];
++    if(sample.temperature_mC[5]>sample.max_gpu_mC)
++        sample.max_gpu_mC=sample.temperature_mC[5];
++    *out=sample;return PTS_OK;
++}
++
++/* END OWN TSENS READONLY CORE. */
++static IOMemoryDescriptor *polaris_tsens_memory;
++static IOMemoryMap *polaris_tsens_mapping;
++static const volatile uint32_t *polaris_tsens_regs;
++static uint32_t polaris_tsens_ready,polaris_tsens_last_offset,polaris_tsens_last_raw;
++static uint64_t polaris_tsens_next_us,polaris_tsens_report_us;
++static uint64_t polaris_tsens_now(void *){return polaris_perf_now()/1000;}
++static bool polaris_tsens_read(void *,uint32_t offset,uint32_t *out)
++{
++    if(!out || !polaris_tsens_regs || offset<0xbc || offset>0xd0 || (offset&3))return false;
++    polaris_tsens_last_offset=offset;
++    polaris_tsens_last_raw=polaris_tsens_regs[offset/4];
++    *out=polaris_tsens_last_raw;return true;
++}
++static void polaris_tsens_poll(void)
++{
++    if(!__atomic_load_n(&polaris_tsens_ready,__ATOMIC_ACQUIRE))return;
++    uint64_t now=polaris_perf_now()/1000;
++    if(now<polaris_tsens_next_us)return;
++    polaris_tsens_next_us=now+250000;
++    const struct polaris_tsens_io io={NULL,polaris_tsens_read,polaris_tsens_now};
++    struct polaris_tsens_sample sample={};
++    unsigned error=polaris_tsens_observe(&io,&sample);
++    if(now<polaris_tsens_report_us)return;
++    polaris_tsens_report_us=now+1000000;
++    if(error) {
++        IOLog("POLARIS TSENS RO: us=%llu error=%u last_offset=%x raw=%x; no temperature or policy admission\n",
++            now,error,polaris_tsens_last_offset,polaris_tsens_last_raw);return;
++    }
++    IOLog("POLARIS TSENS RO: us=%llu begin=%llu span=%llu gold=%d/%d/%d/%d gpu=%d/%d; mC observations, not sensor freshness\n",
++        sample.ended_us,sample.began_us,sample.ended_us-sample.began_us,
++        sample.temperature_mC[0],sample.temperature_mC[1],sample.temperature_mC[2],
++        sample.temperature_mC[3],sample.temperature_mC[4],sample.temperature_mC[5]);
++    for(unsigned pass=0;pass<2;pass++)IOLog("POLARIS TSENS RAW: us=%llu pass=%u values=%x/%x/%x/%x/%x/%x\n",
++        sample.ended_us,pass,sample.raw[pass][0],sample.raw[pass][1],sample.raw[pass][2],
++        sample.raw[pass][3],sample.raw[pass][4],sample.raw[pass][5]);
++}
++/* Real native execution of the exact bounded core on explicit synthetic words.
++ * No hardware access or temperature claim; the QEMU platform guard still fails. */
++struct polaris_tsens_vm {unsigned reads,clocks,fail;};
++static bool polaris_tsens_vm_read(void *v,uint32_t offset,uint32_t *out)
++{
++    struct polaris_tsens_vm *s=(struct polaris_tsens_vm *)v;
++    unsigned n=s->reads++;
++    if(n>=12 || offset!=0xbc+(n%6)*4 || s->fail==n+1)return false;
++    *out=(1u<<21)|(400+(n%6)*10);return true;
++}
++static uint64_t polaris_tsens_vm_now(void *v)
++{return 100+10*((struct polaris_tsens_vm *)v)->clocks++;}
++static bool polaris_tsens_vm_probe(void)
++{
++    struct polaris_tsens_vm state={};
++    const struct polaris_tsens_io io={&state,polaris_tsens_vm_read,polaris_tsens_vm_now};
++    struct polaris_tsens_sample out={};
++    bool ok=!polaris_tsens_observe(&io,&out) && state.reads==12 &&
++        out.max_gold_mC==43000 && out.max_gpu_mC==45000;
++    state=(struct polaris_tsens_vm){};state.fail=5;
++    memset(&out,0xa5,sizeof(out));struct polaris_tsens_sample before=out;
++    ok=ok && polaris_tsens_observe(&io,&out)==PTS_READ && state.reads==5 &&
++        !memcmp(&out,&before,sizeof(out));
++    IOLog("POLARIS TSENS WIRE VM: %s; actual native bounded core, synthetic reads only\n",ok?"PASS":"FAIL");
++    return ok;
++}
++static void polaris_tsens_prepare(bool physical)
++{
++    uint32_t flag=0;PE_parse_boot_argn("polaristsens",&flag,sizeof(flag));
++    if(!flag)return;
++    uint32_t test=0;PE_parse_boot_argn("polarisgpuwctest",&test,sizeof(test));
++    if(test==1 && !polaris_tsens_vm_probe())return;
++    uint32_t cow=0,rw=0,owned=0,quiesce=0;
++    PE_parse_boot_argn("polarisramcow",&cow,sizeof(cow));
++    bool has_rw=PE_parse_boot_argn("ufsrw",&rw,sizeof(rw));
++    PE_parse_boot_argn("polarisownedmarker",&owned,sizeof(owned));
++    PE_parse_boot_argn("polarisquiesce",&quiesce,sizeof(quiesce));
++    if(flag!=1 || !physical || cow!=1 || !has_rw || rw || owned || quiesce!=1) {
++        IOLog("POLARIS TSENS RO: REFUSED platform/mode; no MMIO\n");return;
++    }
++    /* Exact own DT TM resource. Do not read SROT+4 beyond its4-byte resource.
++     * Kernel-only RO/noncacheable mapping, no DMA, task alias or IRQ writes. */
++    polaris_tsens_memory=IOMemoryDescriptor::withPhysicalAddress(0xc263000,0x1ff,kIODirectionIn);
++    polaris_tsens_mapping=polaris_tsens_memory?
++        polaris_tsens_memory->map(kIOMapInhibitCache|kIOMapReadOnly):NULL;
++    if(!polaris_tsens_mapping || !polaris_tsens_mapping->getVirtualAddress()) {
++        OSSafeReleaseNULL(polaris_tsens_mapping);OSSafeReleaseNULL(polaris_tsens_memory);
++        IOLog("POLARIS TSENS RO: mapping refused; no register reads\n");return;
++    }
++    polaris_tsens_regs=(const volatile uint32_t *)polaris_tsens_mapping->getVirtualAddress();
++    __atomic_store_n(&polaris_tsens_ready,1,__ATOMIC_RELEASE);
++    IOLog("POLARIS TSENS RO: armed TMc263000 gold7..10 GPU11..12; READONLY, stock guard unchanged\n");
++    polaris_tsens_poll();
++}
++
+ static void polaris_osm_observe_poll(void)
+ {
+     if(!__atomic_load_n(&polaris_observe_ready,__ATOMIC_ACQUIRE))return;
+@@ -141,6 +298,7 @@
+ extern "C" bool polaris_gpu_performance_shutdown(void);
+ extern "C" void polaris_cpu_performance_poll(void)
+ {
++    polaris_tsens_poll();
+     polaris_osm_observe_poll();
+     if(!__atomic_load_n(&polaris_perf_ready,__ATOMIC_ACQUIRE))return;
+     IOLockLock(polaris_perf_lock);
+@@ -168,6 +326,7 @@
+ }
+ static int polaris_perf_shutdown(void)
+ {
++    __atomic_store_n(&polaris_tsens_ready,0,__ATOMIC_RELEASE);
+     __atomic_store_n(&polaris_observe_ready,0,__ATOMIC_RELEASE);
+     if(!polaris_perf_lock)return 0;
+     __atomic_store_n(&polaris_perf_ready,0,__ATOMIC_RELEASE);
+@@ -206,6 +365,10 @@
+             start=end+1;
+         }
+     }
++    bool thermal_platform=polaris_osm_ro_allowed(1,mode,target,count,
++        __builtin_arm_rsr64("MPIDR_EL1"),__builtin_arm_rsr64("MIDR_EL1"),
++        __builtin_arm_rsr64("CNTFRQ_EL0"),base,bytes,polaris && sdm845);
++    polaris_tsens_prepare(thermal_platform);
+     if(!polaris_osm_ro_allowed(flag,mode,target,count,__builtin_arm_rsr64("MPIDR_EL1"),
+         __builtin_arm_rsr64("MIDR_EL1"),__builtin_arm_rsr64("CNTFRQ_EL0"),
+         base,bytes,polaris && sdm845)) {
+--- a/iokit/Kernel/arm/SweetFramebuffer.cpp
++++ b/iokit/Kernel/arm/SweetFramebuffer.cpp
+@@ -191,6 +191,18 @@
+     }
+     return true;
+ }
++/* A strictly FUTURE deadline already yields to the timer. Rounding a
++ * remaining1..999us up to1ms delays every late frame. Preserve the1ms floor
++ * for overdue deadlines and ignore an expired clean-copy deadline, so idle
++ * callbacks cannot turn into a submillisecond catch-up/polling loop. */
++static uint32_t polaris_fb_precise_deadline_us(uint64_t now,uint64_t vsync,
++    uint64_t present,int dirty)
++{
++    uint64_t next=vsync;
++    if(present && (dirty || present>now) && present<next)next=present;
++    if(next>now && next-now<1000)return (uint32_t)(next-now);
++    return polaris_fb_deadline_delay_us(now,vsync,present,dirty);
++}
+ /* Called only by the existing opt-in generic-VM cache probe. Real native
+  * workloop/event-source delivery, not a display/GPU or performance emulator. */
+ struct PfbWakeProbe {
+@@ -216,6 +228,12 @@
+         }
+         if(polaris_fb_black_frame((uintptr_t)(p->blank+2),47,4,2,24))ok=false;
+         if(!ok)p->error=8;
++        bool precise=polaris_fb_precise_deadline_us(10000,10500,0,false)==500 &&
++            polaris_fb_precise_deadline_us(10000,20000,10200,true)==200 &&
++            polaris_fb_precise_deadline_us(10000,20000,9000,false)==10000 &&
++            polaris_fb_precise_deadline_us(10000,9000,0,false)==1000;
++        if(!precise)p->error=9;
++        IOLog("POLARIS PFB PRECISION VM: %s; actual native callback, future deadlines only\n",precise?"PASS":"FAIL");
+         p->black_checked=1;
+         IOLog("POLARIS LCD BLANK VM: %s; store-only bounded native workloop, no backlight or panel hardware\n",ok?"PASS":"FAIL");
+     }
+@@ -671,7 +689,7 @@
+         absolutetime_to_nanoseconds(mach_absolute_time(),&endedNS);
+         absolutetime_to_nanoseconds(fb->fPolarisNextPresent,&presentNS);
+         IOLockLock(fb->fLock);bool dirty=fb->fDirty;IOLockUnlock(fb->fLock);
+-        sender->setTimeoutUS(polaris_fb_deadline_delay_us(endedNS/1000,
++        sender->setTimeoutUS((fb->fPolarisWake?polaris_fb_precise_deadline_us:polaris_fb_deadline_delay_us)(endedNS/1000,
+             fb->fPolarisNextVsyncUS,presentNS/1000,dirty));
+     }else sender->setTimeoutUS(SWEET_FB_VSYNC_US);
+ #else

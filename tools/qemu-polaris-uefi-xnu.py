@@ -276,6 +276,11 @@ def main():
         checks['native_OSM_probe_refused_before_virtual_MMIO']='POLARIS OSM RO: REFUSED platform; no MMIO' in ring and 'POLARIS OSM RO: bank' not in ring and 'POLARIS OSM REQUEST:' not in ring
     if manifest.get('CPU_OSM_stock_performance'):
         checks['native_stock_OSM_refused_before_virtual_RW']='POLARIS OSM PERF: REFUSED platform/mode; no RW mapping' in ring and 'POLARIS OSM PERF: armed' not in ring and 'POLARIS OSM RO: bank' not in ring
+    if manifest.get('TSENS_readonly_inventory'):
+        checks['native_TSENS_refused_before_virtual_MMIO']=('POLARIS TSENS RO: REFUSED platform/mode; no MMIO' in ring and 'POLARIS TSENS RO: armed' not in ring and 'POLARIS TSENS RAW:' not in ring)
+        checks['native_TSENS_wire_core']=('POLARIS TSENS WIRE VM: PASS; actual native bounded core, synthetic reads only' in ring)
+        checks['explicit_TSENS_readonly_payload']=([t for t in a.payload.read_bytes()[0x48:0x2a8].split(b'\0',1)[0].split() if t.startswith(b'polaristsens=')]==[b'polaristsens=1'])
+        checks['native_future_display_deadline_probe']=('POLARIS PFB PRECISION VM: PASS; actual native callback, future deadlines only' in ring)
     if manifest.get('GPU_stock_request'):
         checks['native_GPU_stock_refused_before_virtual_MMIO']='POLARIS GPU STOCK: REFUSED platform/mode before GPU MMIO' in ring and 'POLARIS GPU STOCK: armed=' not in ring and 'POLARIS GPU STOCK SAMPLE:' not in ring
     if b'polarisgpuwctest=1' in a.payload.read_bytes()[0x48:0x2a8].split(b'\0',1)[0].split():
@@ -446,6 +451,7 @@ def main():
                 GPU_stock_request=manifest.get("GPU_stock_request",0),
                 framebuffer_arrival_wake=manifest.get('framebuffer_arrival_wake',False),
                 physical_buttons=manifest.get('physical_buttons',False),
+                TSENS_readonly_inventory=manifest.get('TSENS_readonly_inventory',False),
                 persistent_root_or_UFS_durability_proven=False,
                 isolated_QEMU_readonly_UFS_test=virtual_ufs and not owned_ufs,
                 isolated_QEMU_owned_UFS_test=owned_ufs,owned_backend_reopen=reopened,
