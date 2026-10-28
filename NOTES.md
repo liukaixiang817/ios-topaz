@@ -34,6 +34,36 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0086 corrected native four-core model COMPLETE; physical candidate prepared
+
+- Source d9284f0fe885bfffa753c665f79acc823ffea0ef complete macOS27/Xcode27
+  CI40631736339 succeeded. Kernel out-polaris-0086/kernel.development.sweet
+  SHA7949645e32219bd9079338d9ae22e252980b8fb179711c8d45bb3cfd0b3241cd
+  verified exact source/profile/artifactZIPCRC/SHA. No newer native changes.
+- actual-native-four-core-proof.json binds4 real EFI/XNU tests/96checks:
+  four-success24/24 37.785s, peer-refused26/26 37.772s, pair23/23 37.951s,
+  stale23/23 37.733s. True4/4 online/SGI,64xcalls/48remote and dirtywriter/
+  real PID1+4VMchildren+input; VFS0busy0 then scheduler removes logical1/2/3,
+  actual PSCI AFFINITY_OFF6/5/4, coordinator7 parked then RAM_DRAINED. Refused
+  CPU_OFF/old cookie yields no reset permission. Actual native WC/pmap/aliases/
+  bulkzero still PASS; genericQEMU NOT physical SD845/GPU/frequency proof.
+- First0085 real model panic preserved; corrected four-peer-refused0001
+  private command omitted required polarisofftest1, packager denied BEFORE
+  EFI/kernel start. Proper explicit fault0002 then passed; not a bypass.
+- Phone candidate phone-four-big-0086-0001 uses SAME preserved graphics bundle
+  and latest0078 physical tree with only CPU group changed to700/600/500/400;
+  firmware0 reserved. GEMWC1/surfaceWC0, unchanged readonly root+RAMCOW.
+  Original81FW/EDK2 GetInfo+wholeDecode verification required before boot.
+- CURRENT physical phone still0083cachedcontrol Settings, keepalive0429 passed.
+  No0086boot yet. Next once complete pack+codec, native shutdown current0083,
+  independent actualFASTBOOT query then authorized RAMboot0086; do not reuse
+  old control after switching. Four physical CPU/GUI/callback timings/panel
+  still unproven. Root persistent work still deferred, no frequency writes.
+- Source review: display releases framebuffer lock before15ms full CPUcopy;
+  physical panel mapping already WC. Current scheduler NO_ECORE/homogeneous
+  SMP, so remaining3little cores need capacity-aware scheduling design; blindly
+  treating them as big may hurt UI. Do not claim all7iOS cores/60FPS yet.
+
 ### 0085 actual four-core model caught migrating CPU_ON caller; phone unchanged
 
 - FullCI40630693931/job122626108047 sourceb4cd05c8585bb728fdfe12ed9416afd7bd5d7d22
