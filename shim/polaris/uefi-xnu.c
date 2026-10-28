@@ -642,7 +642,12 @@ static void test_monitor(void)
             }
         }
 #if defined(EFI_XNU_RAM_DRAIN_TEST)
+#if EFI_XNU_BUTTONS_AVAILABLE
+        /* Shutdown must not cut the real six-edge native fixture short. */
+        test_ram_drain(stress_done&&buttons_qemu_passed,contact_phase);
+#else
         test_ram_drain(stress_done,contact_phase);
+#endif
 #endif
     }
 }

@@ -34,7 +34,7 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### 0095 full CI PASS; first actual key model FAILED, control IN PROGRESS
+### 0095 actual three-key models115 checks PASS; phone candidate READY, NOT BOOTED
 
 - Human priority remains physical lock/power + volume, Wi-Fi and sound FIRST,
  then return to display jank/60FPS. Persistent root/menu remain deferred.
@@ -74,6 +74,35 @@ early samples only. On0029 the human already confirmed boot complete and said
  verified reader (actual exit143 after elevated signal); zero-byte output is
  NOT firmware evidence. Premature debugfs short-read attempt retained as
  rejected; no source backup or phone change. Avoid waiting on hydration.
+- Final actual EFI/XNU selected cases COMPLETE: keys-on-success0003 PASS29/
+38.149s, keys-off-success0002 PASS27/37.713s, keys-on-stale-cookie0001 PASS28/
+38.149s, keys-on-peer-refused0001 PASS31/38.196s. Aggregate115checks with
+ real PID1/fourVMchildren/dirtywriter/touch/fourCPU/WC/workloop/native drain.
+ Actual six keyboard edges30/e9/ea DOWN+UP and exact6 mailbox/ACK states
+ verified in native logs (0 user-space clients); no QualcommMMIO/switch/GUI
+ emulation claim. actual-native-three-key-proof.json rehashes selected files.
+ keys-on0002 had no panic and real drain, but test triggered shutdown after
+ only three DOWNs; native correctly released all held keys. Fixed ONLY EFI
+ fixture waiting for ACKed six edges, and host distinguishes normal shutdown
+ stop4 from invalid1/2/stale3. First0001 watchdog failure retained/unexplained;
+ no native guard disabled or IRQ-timeout workaround. A same-parameter final
+ success0004 stability repeat is currently starting; inspect result.
+- Fresh PHYSICAL fullRO audit fresh-preflight-0001 completed: known recovery
+ RAM only, nonce-framed remote exits, ro/noload + blockRO, entire16GiBbaseSHA/
+182map/6GPT/boot/recovery/abl_a/abl_b/ESP/marker8MiB pattern and raw ownership
+ metadata unchanged, actual unmount and independent expectedFASTBOOT afterward.
+ No journal replay/repair/allocation/phone partition write.22 required host
+ audit files were verified resident before recovery boot; no hydration wait.
+- phone-keys-0095-0001 source/CI/model/freshpreflight bound,601-byte payload
+ original GPUbundle/fourbig/CPUstock2/GPUstock3/GEMWC1/cachedsurface preserved,
+ defaultOFFfbwake remainsOFF. physical-buttons opt-in is the new functionality.
+ Original81FW/BootShim/SimpleInit/DT preserved; entire actual original EDK2
+ GetInfo/Decode exact stream check PASSED. Image is READY but NOT BOOTED yet.
+ Next boot-phone.py only after inspecting no boot.json; then unique kernel
+ start with bound payload via control-phone.py ACTION NEWDIR. No old0094
+ controllers. Verify BUTTONS_ARB/PON_ID/GPIO_ID/INITIAL_RT + native key ready
+ before asking human normal presses. Firmware refusal must be diagnosed, not
+ called working keys. No WiFi scan/association or speaker playback yet.
 - New0890 native opt-in polarisbuttons1 consumes a separate aligned256B key
  mailbox in the EXISTING resident input thread, dispatches only power/volup/
  voldown to actual SweetHIDButtons, releases only delivered keys on invalid,

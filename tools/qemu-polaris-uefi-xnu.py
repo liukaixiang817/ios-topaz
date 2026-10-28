@@ -285,7 +285,7 @@ def main():
             'POLARIS KEYS: seq=7 changed=4 pressed=0' in ring and
             all(f'POLARIS KEYS: seq={n} changed={changed:x} pressed={pressed:x}' in ring
                 for n,changed,pressed in [(2,1,1),(3,2,3),(4,4,7),(5,1,6),(6,2,4)]) and
-            'POLARIS KEYS: stopped error=' not in ring.split('POLARIS UEFI DRAIN: accepted',1)[0])
+            not any(f'POLARIS KEYS: stopped error={e};' in ring for e in (1,2,3)))
         checks['explicit_three_key_payload']=([t for t in a.payload.read_bytes()[0x48:0x2a8].split(b'\0',1)[0].split() if t.startswith(b'polarisbuttons=')]==[b'polarisbuttons=1'])
     if manifest.get('framebuffer_arrival_wake'):
         checks['explicit_framebuffer_wake_payload']=([t for t in a.payload.read_bytes()[0x48:0x2a8].split(b'\0',1)[0].split() if t.startswith(b'polarisfbwake=')]==[b'polarisfbwake=1'])
