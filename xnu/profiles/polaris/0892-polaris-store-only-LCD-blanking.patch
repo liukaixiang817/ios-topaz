@@ -1,0 +1,86 @@
+--- a/iokit/Kernel/arm/SweetFramebuffer.cpp
++++ b/iokit/Kernel/arm/SweetFramebuffer.cpp
+@@ -176,6 +176,21 @@
+     return fWorkLoop->runAction(polaris_copy_panel, this, out,
+         (void *)(uintptr_t)capacity) == kIOReturnSuccess ? 4320u * 2160u : 0;
+ }
++/* Store-only LCD blanking. The scanout mapping is WC, so reading every
++ * pixel to emulate an AMOLED fade stalls the workloop for multiple frames.
++ * Bounds are checked before any store; this does NOT turn off a backlight. */
++static bool polaris_fb_black_frame(uintptr_t pixels,uint64_t bytes,
++    uint32_t width,uint32_t height,uint32_t stride)
++{
++    if(!pixels || (pixels&3) || !width || !height || width>1080 || height>2160 ||
++       (stride&3) || stride<(uint64_t)width*4 || bytes<(uint64_t)stride*height ||
++       bytes>UINTPTR_MAX-pixels)return false;
++    for(uint32_t y=0;y<height;y++) {
++        volatile uint32_t *row=(volatile uint32_t *)(pixels+(uint64_t)y*stride);
++        for(uint32_t x=0;x<width;x++)row[x]=0;
++    }
++    return true;
++}
+ /* Called only by the existing opt-in generic-VM cache probe. Real native
+  * workloop/event-source delivery, not a display/GPU or performance emulator. */
+ struct PfbWakeProbe {
+@@ -184,13 +199,26 @@
+     IOInterruptEventSource *source;
+     struct pfb_queue queue;
+     uint64_t latest;
+-    unsigned callbacks,taken,empty,pokes,error;
++    unsigned callbacks,taken,empty,pokes,error,black_checked;
++    uint32_t blank[16];
+ };
+ static void pfb_probe_callback(OSObject *owner,IOInterruptEventSource *,int count)
+ {
+     PfbWakeProbe *p=(PfbWakeProbe *)((OSData *)owner)->getBytesNoCopy();
+     IOLockLock(p->lock);
+     if(count!=1 || !p->loop->onThread() || !p->loop->inGate())p->error=1;
++    if(!p->black_checked) {
++        for(unsigned n=0;n<16;n++)p->blank[n]=0x12345678;
++        bool ok=polaris_fb_black_frame((uintptr_t)(p->blank+2),48,4,2,24);
++        for(unsigned n=0;n<16;n++) {
++            bool visible=(n>=2&&n<6)||(n>=8&&n<12);
++            if(p->blank[n]!=(visible?0u:0x12345678u))ok=false;
++        }
++        if(polaris_fb_black_frame((uintptr_t)(p->blank+2),47,4,2,24))ok=false;
++        if(!ok)p->error=8;
++        p->black_checked=1;
++        IOLog("POLARIS LCD BLANK VM: %s; store-only bounded native workloop, no backlight or panel hardware\n",ok?"PASS":"FAIL");
++    }
+     pfb_wake_consumed(&p->queue);p->callbacks++;
+     struct pfb_publication publication={};
+     if(pfb_take(&p->queue,&publication)) {
+@@ -513,6 +541,19 @@
+ 		client->notify(SWEET_FB_NOTIFY_VSYNC, values, 6);
+ 	}
+ 	if (fb->fPowerOff) {
++#if defined(POLARIS_RAM_ONLY)
++        bool first=fb->fFadeStep==0;
++        fb->fFadeStep=1;
++        IOLockUnlock(fb->fLock);
++        if(first) {
++            uint64_t started=mach_absolute_time(),elapsed=0;
++            bool ok=polaris_fb_black_frame(fb->fPixels,(uint64_t)fb->fRowBytes*fb->fHeight,
++                fb->fWidth,fb->fHeight,fb->fRowBytes);
++            __asm__ volatile("dsb sy" ::: "memory");
++            absolutetime_to_nanoseconds(mach_absolute_time()-started,&elapsed);
++            IOLog("POLARIS LCD BLANK: ok=%u duration_us=%llu; one store-only pass, backlight unchanged\n",ok,elapsed/1000);
++        }
++#else
+ 		/* Fade out: halve every channel each vsync, then black, then idle. */
+ 		uint32_t step = fb->fFadeStep;
+ 		if (step <= 6) {
+@@ -527,9 +568,10 @@
+ 				}
+ 			}
+ 		}
+-		sender->setTimeoutUS(SWEET_FB_VSYNC_US);
+-		return;
+-	}
++#endif
++        sender->setTimeoutUS(SWEET_FB_VSYNC_US);
++        return;
++    }
+ #if defined(POLARIS_RAM_ONLY)
+     bool flush = fb->fDirty && now >= fb->fPolarisNextPresent;
+ #else

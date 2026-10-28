@@ -34,6 +34,35 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0097 store-only LCD black candidate local PASS; backlight still separate
+
+- Added profile0892 replacing ONLYPolaris's six volatilepixelread/halvepasses
+ pluszero withonebounded store-onlyblackpass ontheexistingdisplayworkloop.
+ RetainsnonPolarisfade, powerstate/VSYNC/on-redraw, DSB, displaybounds andUSB.
+ Native logs one LCD BLANK duration_us peractualofftransition, explicitly
+ says backlightunchanged. This is a candidate forslowblackening, NOTtrue
+ backlightofforphysicalperformanceproof. ActualWLEDhardwarecontrol still
+ unimplemented. Currentphone0096unchanged/running; keepalive-1711 PASS.
+- ActualAppleclang27 SweetFramebuffer TU/fullCIheaderscompilePASS. Profile
+ appliesfuzz0/offset0 and exactlymatchescompilednativefile (0097/exact-patch).
+ NewASan/UBSan5000whole-byteoraclegeometries/full1080x2160zero/padding/bounds
+ refusal plusexistingnativeinput/displayqueue tests10/10 in3.374s. Existing
+ generic-VMworkloopprobe now exercises sameblackhelper/canaries/invalidrange
+ initsrealcallback; NOTyetexecutedwithnewfullkernel. NEXT fullCI, exactartifact
+ identity andSERIALactualEFI/XNUpositive/stale/peerrefusal beforeanyphoneboot.
+ Do notcallmodelsnewPASSuntiltheirnewkernelresultsarebound. No newheader/IIG
+ cacheexception, noGPUbundlechangeorperformanceguardremoval.
+- OwnpinnedWLEDsource dcb3ec986243e17fc81505e602bdfa82a1c39a00 verified:
+ moduleenablectrl+46bit7; originalbrightness0 onlymoduledisable, preserving
+ brightnessregisters. Enablewait>=10ms/OVP/optionalPSMbehavior matters; doNOT
+ blindlywrite guessedregisters. Originaledk2polarisBLCPis anEMPTYbufferstub,
+ SimpleFbDxe onlyGOP, no actualpowercontrol. ExpectedMicrosoftdisplaypower
+ andQualcommdisplaypwr GUIDs notfoundinoriginal81PEimages byofflinebyte scan;
+ absenceinfileisnotliveLocateProtocolproof. No arbitraryprotocolcall/PMICwrite.
+ PrimarysourceandGUIDscan under0096/backlight-primary-0001. NeedboundedRO
+ actualWLEDidentity/map/config snapshot plusstrictrestore/wake/mailbox before
+ realbacklightoff. Preservehumaninspectionandnewdirectedstatekeepalive.
+
 ### CURRENT PHONE0096 human reports scanning black fade and backlight still lit
 
 - Human answered newpowerA/B: top-to-bottom scanning fade, then black pixels
