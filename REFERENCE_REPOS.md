@@ -651,3 +651,23 @@ before the stock backoff and43.8ms after it, within one fresh-publication
 window. This is a display-publication observation, not physical scanout Hz
 or a pure GPU-frequency measurement. Full EAGL tracing was disabled by the
 omitted touch_lat token; keep that limitation explicit in comparisons.
+
+0100 subsequently admitted the native kernel-only read-only mapping and
+observed all six own sensors during real UI work, with raw pass pairs bound
+to each reported temperature. In the measured29-second contact bracket,
+gold reached71.1C and GPU51.2C. One earlier transient VALID=0 was retained as
+an error. Full EAGL tracing was restored. A fixed first-second animation
+window straddles a30.000473-second high-request expiry: median drawing time
+changes14.743->36.748ms, with nearest prior temperatures63.8C gold/50.9C GPU.
+This strengthens the fixed-backoff diagnosis; it does not measure live clock
+frequency, prove hardware sensor freshness, isolate CPU from GPU throttling,
+or establish physical scanout60.
+
+The0101 offline eligibility component independently decodes complete native
+sample words and requires bounded observation age, several successive valid
+observations and recent value changes, with invalid/hot/clock/stop refusal.
+Its proposed75/70C gold and60/55C GPU hysteresis are conservative experiment
+limits, not values copied from the original thermal trips. There is no native
+caller or clock-control admission yet. The next GPU-only bounded experiment
+must retain original ownership/idle/restoration rules, an unrenewable hard
+run budget and confirmed-low cooldown; CPU policy stays unchanged initially.

@@ -34,6 +34,82 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0100 physical thermal/publication/backoff COMPLETE; phone RUNNING Settings
+
+- CURRENT phone0100/phone-thermal-pace-0100-0001, ONE originalUEFI RAM boot
+  19:05 and ONE kernel-start0001 completed19:07:41UTC. Directed capture0001
+  actually viewed Apple/startup;0002 lock,0003 home3app+3dock icons,0005
+  Settings text/icons, warmup+measured stable Settings all actually viewed.
+  Physical GPU4096GLSL/GMEM/icon checks and SMP4 callbacks64 remote53 passed;
+  remote count is this run's actual result, not a copied old48 assertion.
+  Forty identical700ms scrolls20warm/20measured plus unlock/tap all42 real
+  consumed input records ACK0..740 verified. NO repeat boot/old controller.
+- Physical proof0100/physical-thermal-publication-backoff-proof.json reparses
+  and rehashes all logs/UI/input/source/CI/models. Live keepalive-1930 PASSED
+  actual19:28:59UTC kernel-entered. LEFT RUNNING Settings for inspection;
+  only0100/control-phone.py ACTION NEWDIR. No active USB/CI/model. Ordinary
+  RAM lease30min, directed state on nextheartbeat. No Android/rawfallback/
+  PMIC/storage/NVRAM writes, no full runtime or firmware replacement.
+- Own native RO temperatures genuinely observed:608 fully paired six-sensor
+  records retained, four gold+two GPU all vary. One transient native VALID=0
+  (us640987217/error4/offsetcc/rawb193) explicitly retained, no partial value
+  published. In exact measured contact bracket29 temperature observations,
+  gold max71.1C/GPU51.2C. Local timestamps/variation do NOT establish hardware
+  freshness counters, controller health or continuous thermal admission.
+- Restored full EAGL trace904 consecutive frames: render median14.3295ms,
+  p9516.227ms,29>16.667ms; startperiod median17.059ms, interframe gap2.538ms.
+  Thirteen complete native split/count-matched windows797EAGL completions:
+  validation.0515/cachepre1.034/submit6.373/cachepost1.042ms per completion;
+  execute_idle6.180ms is SUBSET incl polling/preemption, not pureGPUbusy.
+  903 actualpanel-copy publications/28count-matched windows, ready->copybegin
+  median399us/p957642us, copymedian5921us,409wake/494timer callbacks.
+  Controlledgesture+pause rate30.66EAGL/s or30.83copies/s is NOT device limit
+  or hardwareVSYNC. No same-kernel olddeadline A/B, no pacing speedup claim.
+- Stronger exactbackoff evidence: fixed first1s after nativeUP380, GPU4/8->1/4
+  occurs410005us into it, EXACT30.000473s since preceding highrequest.
+  Before24fullframes median14.743ms/startperiod16.866ms, after13fullframes
+  median36.748ms/startperiod41.8825ms. Nearest prior TSENS CPU63.8C/GPU50.9C,
+  next56.5C/49.9C. Original fixed policy does not use temperatures. Association
+  includes CPU/GPU bounded policies, not an instantaneousfrequency isolation.
+  Separate measuredUP740 fixed1s(no request transition)57fullframes median
+ 14.818ms/startperiod17.037ms. Sustained hardware scanout60 NOT proved.
+- Frozen payload JSON inherited a historical 'removed touch_lat' note; its
+  exact cmdline and actual native launchd args both have touch_lat1 restored.
+  Proof explicitly records this stale annotation; do NOT mutate admitted
+  files during live session or hide it. Future manifest generation should
+  remove obsolete inherited commentary while keeping exactwire admission.
+- Native source604fc843cfac41956b43d112aa45e3eaf028a0b7/fullmacOS27-Xcode27
+  CI40748174962/job123027418059 SUCCESS, kernel3c98f55a4fc2c57b32540940162d7cbeffb9664d9969a161e7a9a18a1a5ee2ac
+  verifiedsource/profile/artifactCRC/SHA. Sequential actualEFI/XNU135checks
+ 35+29+34+37 complete. No native change since, do not rebuild CI.
+
+### 0101 offline thermal eligibility gate; native sustained policy NOT integrated
+
+- tools/polaris-thermal-eligibility.h consumes the exact bounded native TSENS
+  sample shape and independently redecodes both raw passes, summaries/clock/
+  max fields. Requires3complete observations spanning>=500ms, age<=500ms,
+  all6sensors changed within5s; unchanged values are conservatively rejected,
+  never a freshness guarantee. Invalid/error/duplicates clear observations
+  and impose10s recovery. Clock reversal sticky, stop terminal. Experimental
+  CPU75/70C and GPU60/55C stop/resume hysteresis are NOT OEM trip values.
+- ASan/UBSan10000 whole-sample mutations, invalid/future/stale/duplicate/raw
+  mismatch, freeze, hot/cool recovery and stop tests passed; together with
+  existing native/parser/scope tests8/8 in1.615s. Appleclang27 AArch64
+  freestanding compiled. offline-thermal-eligibility-proof.json binds results.
+  This is OFFLINE ONLY, no nativecaller or hostadmission/phoneflag, no MMIO
+  or performance write. Not permission to remove existing30s/10s guards.
+- NEXT0101 thermal-request-integration-design.json: separate defaultOFF GPU
+  experiment, keep CPU guard and original4/8 targets, bounded120s maximum
+  highrun then confirmedlow10s hardcooldown, existing250msidle retained.
+  Eligibility renewal must NOT reset hardbudget. Every actual250ms sensor
+  observation including errors must update gate before1slog filter. Use
+  bounded thermal lock with GPU->thermal ordering only; retain quiescence,
+  expectedownership/HFI ACK+return/stickyfailure and native shutdown restore.
+  Invalid/stale/hot/frozen evidence requests low, not fake successful samples.
+  Native TU+meaningful faults/fullCI/sequentialactualEFI-XNU then physical
+  GPU-only A/B beyond30s+120s with real temp/frame/publication/restore proof.
+  No new physicalcandidate or CI yet; current0100 remains running.
+
 ### CURRENT PHONE0100 RAM image sent once; previous0099 ended natively
 
 - New case0100/phone-thermal-pace-0100-0001. boot.json confirms ONE original
