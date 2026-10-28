@@ -1,0 +1,35 @@
+--- a/iokit/Kernel/arm/SweetFramebuffer.cpp
++++ b/iokit/Kernel/arm/SweetFramebuffer.cpp
+@@ -118,7 +118,7 @@
+     uint64_t fPolarisMeterLastUS,fPolarisMeterGapUS;
+     uint32_t fPolarisFPS10,fPolarisCopyMeanUS,fPolarisGapUS,fPolarisStatusPaintUS;
+     uint32_t fPolarisFrameHz;
+-    bool fDebugStatus;
++    bool fDebugStatus,fPolarisPerf;
+     uint32_t debugCapture(void *, uint32_t);
+ #endif
+ 	uint64_t      fPhys;
+@@ -328,6 +328,8 @@
+     if (!hz) hz = 10;
+     if (hz > 60) hz = 60;
+     fPolarisFrameHz = hz;
++    unsigned perf=0;PE_parse_boot_argn("polarisperf",&perf,sizeof(perf));
++    fPolarisPerf=perf==1;
+ #endif
+ 	fFlushTicks = (hz == 0 || hz >= 60) ? 1 : 60 / hz;
+ 	fVsync->setTimeoutUS(SWEET_FB_VSYNC_US);
+@@ -453,6 +455,14 @@
+         fb->fPolarisCopyMeanUS=fb->fPolarisMeterFrames?
+             (uint32_t)(fb->fPolarisMeterCopyUS/fb->fPolarisMeterFrames):0;
+         fb->fPolarisGapUS=(uint32_t)(fb->fPolarisMeterGapUS>UINT32_MAX?UINT32_MAX:fb->fPolarisMeterGapUS);
++        /* Real completed copies into panel memory, not GPU render FPS or a
++         * hardware VSYNC/scanout claim. Opt-in existing performance mode;
++         * one RAM-log line per >=1s, no additional screen overlay or wake. */
++        if(fb->fPolarisPerf && fb->fPolarisMeterFrames && gpuActive)
++            IOLog("POLARIS PANEL PERF: end_us=%llu span_us=%llu copies=%llu fps10=%u copy_mean_us=%u maxgap_us=%u cadence_us=%u\n",
++                meterUS*1ull,span*1ull,fb->fPolarisMeterFrames*1ull,
++                fb->fPolarisFPS10,fb->fPolarisCopyMeanUS,fb->fPolarisGapUS,
++                polaris_fb_gpu_interval_us(fb->fPolarisFrameHz,__atomic_load_n(&fb->fPolarisLastUS,__ATOMIC_RELAXED)));
+         fb->fPolarisMeterStartUS=meterUS;fb->fPolarisMeterFrames=fb->fPolarisMeterCopyUS=0;
+         fb->fPolarisMeterLastUS=fb->fPolarisMeterGapUS=0;
+     }

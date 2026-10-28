@@ -34,6 +34,28 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0083 panel-copy observability before next physical WC trial
+
+- 0082source89dd987eb7459617f14c0f6e99a8e22f90cef833 pushed; full CI
+  40622163214/job122598524145 PASSED. Verified new kernel SHA
+  33d87501119ef1aed2af74fe4435187d696b540c114c11b070596f9447891e9d;
+  actual native WC/bulkzero/dirtyRAMroot twoCPU regression is in progress.
+  No0082 physical image prepared or sent; phone still0081 Settings.
+- Code review found physical presentation still does CPU scaled gathering
+  into the panel. WC source may make those per-pixel reads slower despite
+  faster GPU sync; this is a risk to MEASURE, not a proven new regression.
+  Do not accept solely lower EAGL frame timings or call those physical FPS.
+- New0880 emits one actual completed-panel-copy meter line per>=1s in existing
+  polarisperf=1 mode. Uses actual completed copied frames, span/mean copy/gap
+  and applied cadence; no extra wake/overlay/render-policy change. Not a
+  hardware VSYNC or physical unique scanout FPS claim. Real framebuffer C++
+  TU and7 display/staged-copy/cadence tests pass4.690s.
+- NEXT commit/full CI with0880, same actual native VM/bulkzero/drain, then
+  ONLY the fully measured0083 RAM candidate. Current0081 remains improved47ms
+  Settings; use0081/control-gpu-phone.py keepalive while preparing. Never boot
+  the unmeasured0082 case just because its CI passed. If panel copy regresses,
+  use actual native shutdown and return to the preserved good configuration.
+
 ### 0082 next bounded BGRA surface WC trial: source ready, NOT physically proven
 
 - Current phone remains0081 Settings, improved47.319ms median sparse frames,
