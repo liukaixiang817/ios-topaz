@@ -51,6 +51,32 @@ class XnuAdmissionTests(unittest.TestCase):
         f[0]['RAM_native_shutdown_bridge']=True
         with self.assertRaises(ValueError):packer.admit(*f)
 
+    def test_stock_CPU_clock_request_needs_exact_mode_inventory_and_virtual_refusal(self):
+        f=list(self.fixtures());d,q=f[:2]
+        d.update(kernel_CPU_affinity=1792,kernel_CPU_count=4,RAM_native_shutdown_bridge=True)
+        q.update(kernel_CPU_affinity=7,kernel_CPU_count=4,RAM_native_drain_test='success')
+        q['checks'].update({k:True for k in ['both_kernel_CPUs_online','real_cross_core_callbacks',
+            'four_core_affinities_and_xcalls','native_peer_affinity_OFF','native_reboot_sync_path',
+            'real_zero_mounts_and_buffers','firmware_observed_RAM_drained','separate_RAM_result']})
+        q['native_shutdown_mailbox']=dict(cookie=123,request_cookie=123,sequence=1,mode=2,phase=3,
+            error=0,write_epoch=0,flushed_epoch=0,capabilities=0x80000003)
+        d['CPU_OSM_stock_performance']=True
+        with self.assertRaises(ValueError):packer.admit(*f)
+        q['CPU_OSM_stock_performance']=True
+        with self.assertRaises(ValueError):packer.admit(*f)
+        q['checks']['native_stock_OSM_refused_before_virtual_RW']=True
+        with self.assertRaises(ValueError):packer.admit(*f)
+        inventory=dict(passed=True,target_index=22,target_requested_Hz=2649600000,
+                       actual_native_log_sha256='e'*64)
+        d['CPU_OSM_stock_inventory']=inventory;packer.admit(*f)
+        for field,bad in [('passed',False),('target_index',26),('target_requested_Hz',2803200000),
+                          ('actual_native_log_sha256','')]:
+            old=inventory[field];inventory[field]=bad
+            with self.subTest(field=field),self.assertRaises(ValueError):packer.admit(*f)
+            inventory[field]=old
+        d['CPU_OSM_readonly_inventory']=True
+        with self.assertRaises(ValueError):packer.admit(*f)
+
     def test_four_core_cannot_reuse_pair_or_incomplete_shutdown_evidence(self):
         f=list(self.fixtures());d,q=f[:2]
         d.update(kernel_CPU_affinity=1792,kernel_CPU_count=4,RAM_native_shutdown_bridge=True)

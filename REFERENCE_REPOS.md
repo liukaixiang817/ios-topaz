@@ -85,6 +85,29 @@ surface trial passed pixels but made startup CPU copies about600ms; it was
 rejected and safely restored to cached surfaces. Do not generalize private-GEM
 WC to CPU-read display surfaces or call GPU initialization60FPS.
 
+## Own SD845 OSM inventory and bounded performance candidate (2026-10-28)
+
+Actual0087 read-only hardware inventory succeeded after exact payload argument
+binding was fixed. Own performance bank0x17d45800 reports enabled3, shared
+CORE_DCVS_CTRL0,27LUT rows and initial shared request0 (nominal825.6MHz).
+Row22 is the highest normal FOUR-core entry at2649.6MHz. Rows23..26 are
+ONE-core boost entries; do not request them for the four online big cores.
+This snapshot precedes secondary startup. A request/counter is not a claim of
+instantaneous UI-load frequency; raw evidence and the viewed lock screen are
+bound in private0087/physical-stock-OSMv2-readonly-proof.json.
+
+Pinned own `clk-cpu-osm.c` uses offset0x920 plus a posted enable-register read
+for performance-state requests. Its perfcl parent has no separate software
+vdd_class (unlike its little/L3 parents); do not transplant a K40 PLL, voltage
+vote or EPSS write. Profile0885 independently implements an explicit default-OFF
+RAM candidate that only writes the big-cluster request, choosing verified
+normal4 row22. It restores saved0 after250ms idle, caps continuous high request
+at30seconds followed by10seconds at the saved request, and requires native
+shutdown restore/readback before any peer powers off. Existing LUT/PLL/voltage,
+thermal configuration, little-cluster/firmware core and storage are untouched.
+This bounded policy does not establish temperature protection, actual higher
+frequency or60FPS until physical measurements pass.
+
 ## Where to look
 
 Paths in this table are relative to the corresponding reference checkout.

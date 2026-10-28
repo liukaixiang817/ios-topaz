@@ -34,6 +34,39 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0089 FIRST DIAGNOSE latest human priority; stock boost HELD OFFLINE
+
+- Human explicitly says FIRST locate sub60FPS delays, then target fixes.
+  This supersedes automatically trying0088 stock boost next. Do NOT boot
+  stock performance mode yet.0088 CI40644470994/job122669946364 PASSED;
+  kernel5c7d6f909a93108f3eb60df95bd289fa0da60dfc1a4a6ac5a6f900cb08ea7e09
+  exactsource/profile/ZIPCRC/SHA verified. It is an OFFLINE candidate only,
+  not a proven cause or measured improvement. No physicalclockwrite occurred.
+- CURRENT PHONE remains0087/phone-four-big-0087-0002 normal4-core RAM at
+  viewedlock; control-phone-hostfix.py7 4 only. Latest keepalive0650 passed
+  around06:46UTC;30minidleRAMlease. No activeGUItest orphysicalwrite.
+-0089 diagnostic uses same0088 kernel withstockpolicy OFF (polarisosm1),
+  samefourcoreADT/GEMWC1/surfaceWC0/GPUbundle42d5ec4c unchanged, addsONLY
+  existingtouch_lat1 fullEAGLstart/endtimes (606wirebytes exact) to correlate
+  actualrenderperiod/gap withnative2s-method and1s-panel windows. No newCI
+  required. Current actual fourmodel regressions99checks passed; packaging
+  nowfinishing. BeforedevicebootrequirefullCI/actualmodels/81FW/realcodec;
+  thennativeclosecurrent0087/allpeerOFF/independentFASTBOOT/newRAM0089.
+  Uses0089/control-phone.py7 4 afteritsactualboot, neverbefore. No oldboot.
+- Initial independentdiagnosis from0086 preservedsource:31sparseframes
+  median37.959ms,glFlush19.004ms/frameEnd12.370ms; per-frameOTHER residual
+  median5.590ms (4.367..11.284),CPUreadback5us. Native4508submits avg3.064ms,
+  auth28us/submitlock0.115us; imported11.24MiB cachemaintenance up to3.6ms
+  pre+3.2mspost, privateGEMWC sweepsalreadyfixed. Actual619panelcopies/32.284s,
+  copymean15.8ms andcadence2xcopy. Stages overlap, do NOT addmedians orclaim
+  clock825.6MHzsnapshot alone provesall UI delay. Needfulltrace toseparate
+  actualframework frombetween-frameidle/pacing. HardwareVSYNC FPS notproven.
+- Newtools/polaris-frame-latency.py onlyacceptscompleteboundedtimestamps,
+  monotonicconsecutive/nonoverlapframes andwholepanel/methodwindows; refuses
+  sparse/missing/ambiguouscontext traces.4parserchecksPASS. Reportsactual
+  logicalcompletion/copyrates/walltime, notCPUbusy orscanout. No policy
+  change/disablingfences/auth/sync. Aftertrace choosehighestmeasuredcost.
+
 ### 0088 bounded stock CPU performance SOURCE READY; 0087 real OSM inventory COMPLETE
 
 - Human explicitly permits one LITTLE core for resident UEFI/USB. Firmware0
@@ -71,13 +104,17 @@ early samples only. On0029 the human already confirmed boot complete and said
   mustrestore/readback original beforeany peerOFF orrefuse native reset.
   No physicalclockwrite has occurred yet. Current phone unchanged.
 - Exact4-file patch0offset0fuzz and actualAppleclang27/fullCIheaders fourTUs
-  PASS. ASan/UBSan policy callbacks coverhigh/idle/cooldown/blockedwrites/
+  PASS.27selectedlocaltests PASS2.181s (local-tests-0005). ASan/UBSan policy callbacks coverhigh/idle/cooldown/blockedwrites/
   foreignowner/LUTmutation/failedrestore plus5000mutations and20000ticks.
   Source-level auditonly920store. Builderexplicitstockperformancemode and
   actualphysicalROinventoryhash required; QEMU mustrefuse BEFORE RWmapping.
   Actualclock transition/underload/UIgain stillUNPROVEN; nextfullCI+matching
   actualmodels, thennewRAMcandidate. Initialtestcommands usedtwo wrongmodule
   names (imports failed), failures kept; finalselected validmodules below.
+- Kernel sourceecea5ae1090b0babb5495b725a150ed295d4fb63 pushed; CI40644470994/job122669946364
+  BUILD running. ghmustuse--repo liukaixiang817/ios-topaz: defaultlocalgh
+  wrongly selectsMakrSas upstream (404 query failure retained). Currentphone
+  isnotrestartedforbuild. Newprivate0088 scripts prepared butnotdeviceboot.
 - Keepcurrentgood4coreiOSalive untilfullcandidate ready. No redundantCI or
   oldboot. Actual finalCPUscaledpanelcopy15.8ms and sparseGPUframe37.959ms
   remainprevious0086baseline. Fullpersistentroot staysdeferred, notcanceled;
