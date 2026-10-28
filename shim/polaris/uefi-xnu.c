@@ -242,6 +242,13 @@ static void boot_kernel(void *context)
      * Same architectural handoff as the pinned resident-loader reference. */
     __asm__ volatile("msr ICC_IGRPEN1_EL1,%0; isb"::"r"(UINT64_C(0)):"memory");
     uint64_t group1;__asm__ volatile("mrs %0,ICC_IGRPEN1_EL1":"=r"(group1));report("EFI_IRQ_GROUP1=",group1);
+#if EFI_XNU_BUTTONS_AVAILABLE
+    if(!buttons_prepare()) {
+        /* No XNU core has run. Keep the controlled polled USB service and
+         * ordinary RAM reset available; don't spend an iOS boot on refusal. */
+        load_state=3;report("BUTTONS_PRESTART_REFUSED=",1);return;
+    }
+#endif
     cpu_status=psci(UINT64_C(0xc4000003),EFI_XNU_CPU,(uintptr_t)polaris_efi_ap_entry,(uintptr_t)&polaris_efi_ap_state);
     report("KERNEL_PSCI_STATUS=",(uint64_t)cpu_status);
 }

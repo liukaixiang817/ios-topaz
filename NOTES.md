@@ -34,6 +34,107 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0095 PON01/04 + BEFORE-CPU_ON precheck models57 checks PASS; packaging0002
+
+- PHONE remains independently verified expectedPolaris FASTBOOT14:28:50UTC;
+ no currentiOS/recovery/USB/CI transaction. First physicalbuttons trial ENDED,
+ no actual presses or working-key claim. Read failed-candidate snapshot below.
+- Firmware ONLY now requires actual PM8998 PONtype01/subtype04, replacing
+ wrong type08. Original GPIO6c500/type1010/APID/version/pull/input/EN/DTEST
+ guards unchanged. BeforeCPU_ON it checks masked residentCPU0/Group1/identity,
+ maps/identities/config and both actualRT bytes. It does NOT arm debounce or
+ publish keys until native HIDready. A failure leaves controlled prepared3
+ USB state and RAM reset available, no XNU start, avoiding a long failed boot.
+ No PMIC/pin/pull/reset/IRQ writes added; still ONLY observer READ commands.
+- Final32local tests PASS8.056s (read actual log for exactduration); preliminary
+8ASan/UBSan actual-policy/native-loader-controlflow tests PASS3.673s:
+ extracted actual boot_kernel refuses CPU_ON after precheckfalse and starts
+ once only when true (architecturalregisters explicitly stubbed, not physical
+ proof). Both physical/QEMU EFI TUs compile -Werror. Actual EFI/XNU new
+ keys-on-success-run-0005 PASS29/38.222s and keys-on-stale-cookie0002
+ PASS28/38.141s;57 current-source actualchecks. New actual-native-three-key-
+ prestart-proof.json binds source/logs/CI and prior115 kernel-suite proof.
+ phone-keys-0095-0002 packaging is in progress via prepare-phone-0002.py;
+ inspect image/codec manifest before any boot. Identical payload/kernel/GPU
+ from0001; only firmware changed. No new physical boot sent yet.
+ Kernel and private ABI are byte-unchanged from CI40695409352, no CI redo.
+- NEXT finalcurrent-source model positive +stale validation, snapshot binding,
+ corrected phone-keys-0095-0002 samepayload/kernel/GPU/4big using newfirmware,
+ original81FW/EDK2/admission. Reuse freshRO13:52 after only known controlled
+ RAM/nativeFASTBOOT (no Android/writes); queryactualexpectedPolaris just before
+ authorizedRAM. No old0001boot/controller. Prestart refusal should be observed
+ as prepared+logs and automatically recover ordinaryRAMFASTBOOT; cannot call
+ it runningiOS or physical key success. Once actual inputconfig/RT and realUI
+ pass, actual human shortpresses are needed for physical lock/volume proof.
+ WiFi/audio remain incomplete; display optimization resumes after functions.
+
+### 0095 physical PM8998 identity READ/REFUSAL; trial ENDED, actual FASTBOOT
+
+- CURRENT PHONE actual expectedPolaris FASTBOOT independently verified
+14:28:50.554460UTC after real native shutdown/restore and gatedreset.
+ actual-fastboot-after-identity-refusal.json binds native result. No active
+ iOS/recovery/USB/CI/model. No physical presses requested or key success.
+ Do NOT use0095 oldcontroller or repeatkernelboot. All015modeltrials ended.
+- phone-keys-0095-0001 booted originalUEFI14:00:13UTC and unique XNU
+ start14:03:27..57UTC. capture-0001-progress actual USB screen viewed at
+14:23:09..11: real lockscreen. Native4CPU/64SGI48remote and preservedGPU3
+ armed; side residual logs remain. Actual hardware read: arb version50000000,
+ PONAPIDac, GPIO6APIDbe, PONtype/subtype0104, GPIOtype/subtype1010.
+- WRONG conservative PONtype8 guess rejected identity in pb_start after only
+ two successful READ commands (PON04/2B andGPIO604/2B). It had not reached
+ GPIO config/RT reads (saved mode/pull/en0 is NOT an actual config snapshot).
+ Backend stopped error7, native error2 released delivered state. No PMIC/
+ pin/pull/reset/IRQ configuration writes and no physical key events. Saved
+ physical-key-identity-refusal-proof.json distinguishes identityREAD from
+ actual working buttons. Do not call this full key functionality.
+- Native-end-key-identity-refusal-0001 completed14:27:25UTC: genuine native
+ HFSX unmount/VFS0busy0/GPU1BW4 restore/CPU0 restore/all peers actualOFF/
+ matching cookie13900736821 seq1 mode2 RAM_DRAINED, full log then gatedreset.
+ ActualFASTBOOT was independently queried, not inferred from ACK. Root stays
+ readonly+512MiBRAMCOW; no Android/storage writes.
+- NEXT ONLY firmware/host fix, no kernelCI needed: require actual PM8998
+ PONtype1/subtype4 instead of guessed8, preserve strict identity, add original
+ primary source/physical snapshot correspondence. Move guarded PMIC identity/
+ input config/RT precheck BEFORE CPU_ON so hardware refusal can remain at
+ controlled UEFI prepared state without another long iOS boot. Don't loosen
+ GPIO/APID/clock/type guards or write PMIC. Native mailbox still only after
+ HIDready. Need source tests/-Werror/current-model proof and new original81FW/
+ codec/admission candidate, then readonlyexpectedPolaris and authorizedRAM.
+ Hardware metadata mismatch must not request human keypress. Physical press
+ testing is still pending. WiFi/audio audit-only, no scan/join/playback claim.
+- Latest completed sourcebceeb73 pushed; kernel CI40695409352/source1e4ed5d/
+ f68c9f2064085aae72e9b06e275b55bbdbf9f1cffeb767558c8577f1fa27442c retained.
+ Actual final models115checks plus identical positive repeat29checks PASS;
+ first emu33ms watchdog panic retained/unexplained, second early-shutdown
+ fixture error corrected ONLY test wait/normal-stop handling. No new native
+ code required. Fresh fullRO audit13:52:25 UTC allbase/GPT/ESP/marker unchanged;
+ since only this controlledRAMboot/nativeend, no Android or partition writes.
+ User15min progress last14:26UTC; function priority before furtherFPS.
+
+### CURRENT PHONE0095 physical-keys RAM boot ACTIVE; unique kernel-start sent
+
+- Exactcase0095/phone-keys-0095-0001 temporary originalUEFI boot succeeded
+14:00:13.713623UTC after new independent expectedFASTBOOT14:00:13.661406.
+ Actual UEFI state-before-kernel-0001 waiting-payload passed14:01:16UTC.
+ UNIQUE control-phone.py boot kernel-start-0001 has been sent; inspect result
+ before any command. Never resendboot/useold0094controller. No partition,
+ NVRAM/Android/flash/erase writes. Fresh fullRO audit13:52:25UTC passed.
+- Final identical-parameter actualEFI/XNU keys-on-success0004 stability repeat
+ PASS29/38.232s, exact six native edges and realVFS0/peerOFF/RAM_DRAINED; first
+ watchdog failure still retained/unexplained. Sourcebceeb73 pushed, native
+ kernel still CI40695409352/source1e4ed5d/kernel f68c9f2064085aae72e9b06e275b55
+ bbdbf9f1cffeb767558c8577f1fa27442c; no CI rebuild needed.
+- NEXT directed capture/log via0095/control-phone.py ACTION NEWDIR only,
+ inspect BUTTONS_ARB_VERSION/PON_ID/GPIO_ID/INITIAL_RT or precise refusal
+ and native keys ready. Need actual identity+RT proof before human presses.
+ USB/capture ACK alone is not lock/UI success. Firmware failure should keep
+ touch/logs/native shutdown working; diagnose it, don't call keys working.
+ WiFi/audio still audit-only; continue after actual keys. No40FPSgestures.
+- While active preserve30min RAM hostlease with directed state if needed.
+ No duplicatephysicalboot; native-drain+restore and actualFASTBOOT before
+ any future trial. User may be present to test actual buttons; do not inject
+ arbitrary keycodes (no USB key sender exists).
+
 ### 0095 actual three-key models115 checks PASS; phone candidate READY, NOT BOOTED
 
 - Human priority remains physical lock/power + volume, Wi-Fi and sound FIRST,

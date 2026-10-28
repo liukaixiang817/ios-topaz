@@ -10,6 +10,36 @@ builder=importlib.util.module_from_spec(spec);spec.loader.exec_module(builder)
 
 
 class NativeButtonTests(unittest.TestCase):
+    def test_actual_loader_never_CPU_ON_after_button_precheck_refusal(self):
+        text=(ROOT/'shim/polaris/uefi-xnu.c').read_text()
+        actual=function(text,'static void boot_kernel(')
+        # Only architectural register accesses are stubbed in this host test;
+        # actual precheck/refusal/lease/load-state/PSCI ordering stays intact.
+        actual=actual.replace('__asm__ volatile("mrs %0,cntvct_el0":"=r"(now));','now=100000;')
+        actual=actual.replace('__asm__ volatile("msr daifset,#15; dsb sy; isb":::"memory");','masked=1;')
+        actual=actual.replace('__asm__ volatile("msr ICC_IGRPEN1_EL1,%0; isb"::"r"(UINT64_C(0)):"memory");','group_disabled=1;')
+        actual=actual.replace('__asm__ volatile("mrs %0,ICC_IGRPEN1_EL1":"=r"(group1));','group1=0;')
+        self.assertNotIn('__asm__',actual)
+        run('#include "'+str(ROOT/'shim/polaris/uefi-ram-lease.h')+'"\n'+r'''
+#include <assert.h>
+#define EFI_XNU_BUTTONS_AVAILABLE 1
+#define EFI_XNU_CPU 1792u
+static unsigned load_state,masked,group_disabled,checks,permitted,calls;
+static int64_t cpu_status;static struct polaris_efi_ram_lease ram_lease;
+static unsigned polaris_efi_ap_state;
+static void polaris_efi_ap_entry(void){}
+static void report(const char *s,uint64_t v){(void)s;(void)v;}
+static int buttons_prepare(void){assert(masked&&group_disabled&&!calls);checks++;return permitted;}
+static int64_t psci(uint64_t fn,uint64_t cpu,uint64_t entry,uint64_t arg){
+ assert(checks&&permitted&&fn==UINT64_C(0xc4000003)&&cpu==1792);
+ assert(entry==(uintptr_t)polaris_efi_ap_entry&&arg==(uintptr_t)&polaris_efi_ap_state);calls++;return 0;}
+'''+actual+r'''
+int main(void){load_state=2;boot_kernel(0);assert(!checks&&!calls&&load_state==2);
+ load_state=3;boot_kernel(0);assert(checks==1&&!calls&&load_state==3&&ram_lease.active);
+ permitted=1;boot_kernel(0);assert(checks==2&&calls==1&&load_state==4&&!cpu_status);
+ boot_kernel(0);assert(checks==2&&calls==1);return 0;}
+''')
+
     def test_actual_native_deliver_edges_refusal_timeout_and_shutdown(self):
         patch=(ROOT/'xnu/profiles/polaris/0890-polaris-three-physical-key-consumer.patch').read_text()
         added='\n'.join(l[1:] for l in patch.splitlines() if l.startswith('+') and not l.startswith('+++'))

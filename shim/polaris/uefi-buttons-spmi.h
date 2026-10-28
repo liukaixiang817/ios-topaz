@@ -93,8 +93,10 @@ static inline bool pb_start(struct polaris_button_bus *b)
 {
     if(!b||b->fault||b->active)return false;
     if(!pb_read(b,0,4,b->pon_id,2)||!pb_read(b,1,4,b->gpio_id,2))return false;
-    /* PON primary Gen2 identity; no reset/debounce configuration changes. */
-    if(b->pon_id[0]!=8||b->pon_id[1]!=4)return pb_error(b,PB_E_IDENTITY);
+    /* Original PM8998 actual observer snapshot0095: type01/subtype04.
+     * The original qpnp-power-on.c names primary Gen2 subtype04; the old
+     * guessed type08 was physically rejected. No reset/debounce changes. */
+    if(b->pon_id[0]!=1||b->pon_id[1]!=4)return pb_error(b,PB_E_IDENTITY);
     if(!pb_read(b,1,0x40,b->gpio_config,7))return false;
     if(b->gpio_id[1]==0x10||b->gpio_id[1]==0x11) {
         if(!pb_read(b,1,0x44,&b->gpio_source,1))return false;

@@ -24,7 +24,7 @@ static void cmd(void *ctx,uint32_t off,uint32_t value){struct fake *f=ctx;
 static uint64_t now(void *ctx){struct fake *f=ctx;if(f->backward)return f->time--;return f->frozen?f->time:++f->time;}
 static void init(struct fake *f,struct polaris_button_bus *b){memset(f,0,sizeof(*f));memset(b,0,sizeof(*b));
  f->version=0x50010000;f->maps[7]=0x800;f->owners[7]=3;f->maps[9]=0xc500;f->owners[9]=0;
- f->status=1;f->time=1;f->pmic[0][4]=8;f->pmic[0][5]=4;f->pmic[0][0x10]=3;
+ f->status=1;f->time=1;f->pmic[0][4]=1;f->pmic[0][5]=4;f->pmic[0][0x10]=3;
  f->pmic[1][4]=0x10;f->pmic[1][5]=0x10;f->pmic[1][0x42]=1;f->pmic[1][0x46]=0x80;f->pmic[1][0x10]=1;
  b->context=f;b->read=rd;b->read_command=cmd;b->now_us=now;}
 '''
@@ -91,6 +91,7 @@ int main(void){struct fake f;struct polaris_button_bus b;
   init(&f,&b);f.pmic[1][0x43]=v;assert(pb_start(&b)==!(v&0x80));
  }
  init(&f,&b);f.pmic[0][5]=9;assert(!pb_start(&b)&&b.fault==PB_E_IDENTITY);
+ init(&f,&b);f.pmic[0][4]=8;assert(!pb_start(&b)&&b.fault==PB_E_IDENTITY);
  init(&f,&b);f.pmic[1][4]=8;assert(!pb_start(&b)&&b.fault==PB_E_INPUT);
  return 0;}
 ''')

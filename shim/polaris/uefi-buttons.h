@@ -49,6 +49,48 @@ static int buttons_publish(uint32_t pressed,uint64_t now,unsigned error)
     __atomic_store_n(&slot->request,slot->request+1,__ATOMIC_RELEASE);
     clean((uintptr_t)slot,128);buttons_last_publish=now;return 1;
 }
+static int buttons_prepare(void)
+{
+#if defined(POLARIS_EFI_TEST_QEMU)
+    return 1; /* Synthetic native consumer; no Qualcomm MMIO. */
+#else
+    if(buttons_started)return 0; /* Never retry an uncertain physical command. */
+    uint64_t affinity,el,mask,group;
+    __asm__ volatile("mrs %0,mpidr_el1":"=r"(affinity));
+    __asm__ volatile("mrs %0,CurrentEL":"=r"(el));
+    __asm__ volatile("mrs %0,DAIF":"=r"(mask));
+    __asm__ volatile("mrs %0,ICC_IGRPEN1_EL1":"=r"(group));
+    if((affinity&0xff00ffffffu)||el!=4||(mask&0x3c0)!=0x3c0||group||
+       !identity_range(0xc440000,0x1100)||!identity_range(0xc40a000,0x1000)||
+       !identity_range(0xe600000,0x10000)) {
+        report("BUTTONS_FIRMWARE_OWNER_REFUSED=",1);
+        buttons_bus.fault=PB_E_ARGUMENT;
+    }else {
+        buttons_bus=(struct polaris_button_bus){.read=buttons_rd,.read_command=buttons_command,.now_us=buttons_us};
+        (void)pb_start(&buttons_bus);
+    }
+    buttons_started=1;
+    report("BUTTONS_ARB_VERSION=",buttons_bus.version);
+    report("BUTTONS_PON_APID=",buttons_bus.apid[0]);report("BUTTONS_GPIO6_APID=",buttons_bus.apid[1]);
+    report("BUTTONS_PON_ID=",((unsigned)buttons_bus.pon_id[0]<<8)|buttons_bus.pon_id[1]);
+    report("BUTTONS_GPIO_ID=",((unsigned)buttons_bus.gpio_id[0]<<8)|buttons_bus.gpio_id[1]);
+    report("BUTTONS_GPIO_MODE_PULL_EN=",((unsigned)buttons_bus.gpio_config[0]<<16)|
+        ((unsigned)buttons_bus.gpio_config[2]<<8)|buttons_bus.gpio_config[6]);
+    if(buttons_bus.fault) {
+        report("BUTTONS_HARDWARE_STOP=",buttons_bus.fault);
+        report("BUTTONS_FAILED_KEY_REG=",((uint64_t)buttons_bus.last_key<<32)|buttons_bus.last_reg);
+        report("BUTTONS_FAILED_STATUS_POLLS=",((uint64_t)buttons_bus.last_status<<32)|buttons_bus.last_polls);
+        buttons_terminal=1;return 0;
+    }
+    uint8_t pon=0,gpio=0;
+    if(!pb_levels(&buttons_bus,&pon,&gpio)) {
+        report("BUTTONS_PRESTART_RT_FAILED=",buttons_bus.fault);buttons_terminal=1;return 0;
+    }
+    report("BUTTONS_PRESTART_RT=",((unsigned)pon<<8)|gpio);
+    report("BUTTONS_PRESTART_PASS=",1);
+    return 1; /* Do not arm debounce or send any key before native HIDready. */
+#endif
+}
 static void buttons_poll(void)
 {
     if(!EFI_XNU_BUTTONS_AVAILABLE||load_state!=4||cpu_status||buttons_terminal)return;
@@ -70,29 +112,7 @@ static void buttons_poll(void)
         buttons_qemu_passed=1;phase++;
     }else if(phase>=7)buttons_publish(0,now,0);
 #else
-    if(!buttons_started) {
-        uint64_t affinity,el,mask,group;
-        __asm__ volatile("mrs %0,mpidr_el1":"=r"(affinity));
-        __asm__ volatile("mrs %0,CurrentEL":"=r"(el));
-        __asm__ volatile("mrs %0,DAIF":"=r"(mask));
-        __asm__ volatile("mrs %0,ICC_IGRPEN1_EL1":"=r"(group));
-        if((affinity&0xff00ffffffu)||el!=4||(mask&0x3c0)!=0x3c0||group||
-           !identity_range(0xc440000,0x1100)||!identity_range(0xc40a000,0x1000)||
-           !identity_range(0xe600000,0x10000)) {
-            report("BUTTONS_FIRMWARE_OWNER_REFUSED=",1);
-            buttons_bus.fault=PB_E_ARGUMENT;
-        }else {
-            buttons_bus=(struct polaris_button_bus){.read=buttons_rd,.read_command=buttons_command,.now_us=buttons_us};
-            (void)pb_start(&buttons_bus);
-        }
-        buttons_started=1;
-        report("BUTTONS_ARB_VERSION=",buttons_bus.version);
-        report("BUTTONS_PON_APID=",buttons_bus.apid[0]);report("BUTTONS_GPIO6_APID=",buttons_bus.apid[1]);
-        report("BUTTONS_PON_ID=",((unsigned)buttons_bus.pon_id[0]<<8)|buttons_bus.pon_id[1]);
-        report("BUTTONS_GPIO_ID=",((unsigned)buttons_bus.gpio_id[0]<<8)|buttons_bus.gpio_id[1]);
-        report("BUTTONS_GPIO_MODE_PULL_EN=",((unsigned)buttons_bus.gpio_config[0]<<16)|
-            ((unsigned)buttons_bus.gpio_config[2]<<8)|buttons_bus.gpio_config[6]);
-    }
+    if(!buttons_started)return; /* Physical preflight must precede CPU_ON. */
     struct polaris_button_change change={0};uint8_t pon=0,gpio=0;
     bool valid=pb_levels(&buttons_bus,&pon,&gpio);
     if(valid&&!buttons_filter.initialized)report("BUTTONS_INITIAL_RT=",((unsigned)pon<<8)|gpio);

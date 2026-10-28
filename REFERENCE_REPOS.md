@@ -177,8 +177,13 @@ node's literal gpio6 and original of_xlate/gpio_idx implementation. The first
 zero-based GPIO7 interpretation was rejected before hardware access. Redwood's
 PON1300/PMK8350 and SID1/PM7325 mapping is incompatible. Derive512 v5 APIDs
 from our1100-byte core resource; do not copy a reference FEATURES assumption.
-New observer-read transport/policies are only source/model tested so far;
-no physical key press has been observed or dispatched by this candidate.
+First0095 actual firmware reads identified arb50000000, PON APIDac with
+type/subtype0104 and GPIO6 APIDbe with1010. A wrong guessed PON type08 was
+rejected before GPIO config/status reads. The corrected strict identity is
+type01/subtype04, and metadata/RT checks now run before CPU_ON so refusal can
+remain in controlled UEFI without booting iOS. The actual key presses/HID/UI
+responses still have not passed a physical test. No PMIC configuration is
+written; only observer READ command words are emitted.
 
 Own Wi-Fi is ICNSS18800000/SNOC/stream40 with12CE interrupts, not Redwood's
 WCN6750/WPSS/ath11k. Original drivers/soc/qcom/icnss.c blob
@@ -186,7 +191,11 @@ WCN6750/WPSS/ath11k. Original drivers/soc/qcom/icnss.c blob
 WLAN firmware identity, original QMI/SMEM/GLINK/calibration and association
 remain to implement. Own audio is SDM845 Tavil SLIM/NGD171c0000 plus TAS2559
 I2C4c and TAS2560I2C4d onGENI894000; reference PCM wrappers do not initialize
-these devices. Preserve original firmware/calibration/routing; neither
+these devices. The verified own audio-card source is
+techpack/audio/asoc/sdm845.c (blob4b74f55b9fecca122c74bef72cb692931155f410),
+not sound/soc/msm/sdm845.c. Speaker output uses the ADSP quaternary MI2S DAI
+msm-dai-q6-mi2s.3 to tas2559 ASI1; Tavil SLIM alone is insufficient. Preserve
+original firmware/calibration/routing; neither
 audio playback nor Wi-Fi scan/join has passed a physical test yet.
 
 ## Where to look
