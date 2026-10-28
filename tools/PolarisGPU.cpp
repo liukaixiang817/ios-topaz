@@ -29,6 +29,7 @@ extern "C" {
 
 #if defined(POLARIS_RAM_ONLY)
 extern "C" void polaris_cpu_performance_activity(void);
+extern "C" bool polaris_gpu_last_submit_us(uint32_t,uint64_t *);
 #define GPU_BUFFERS 4096u
 #define GPU_MAX_BO (128u << 20)
 #define GPU_MAX_BYTES (384ull << 20)
@@ -264,6 +265,43 @@ static uint64_t polaris_gpu_elapsed_us(uint64_t before,uint64_t after)
  * preemption; overlapping lock waits are not CPU busy time. Mach/IOKit work
  * before entering these callbacks and the diagnostic print/unlock are excluded.
  * No cached identity, permission check, DMA or fence behavior is changed. */
+/* Successful desktop submissions only, under the existing exclusive gpuLock.
+ * Aggregate EVERY timed call; core stages are a subset of submit_us, never
+ * additive to it. Wall time includes preemption, not hardware busy cycles. */
+struct PolarisStageMeter {
+    uint64_t began,calls,rejected,core_missing,validation,pre,submit,post;
+    uint64_t core[6],prebytes,postbytes,wcpre,wcpost;
+};
+static PolarisStageMeter gpuStageMeter;
+static bool polaris_gpu_stage_record(PolarisStageMeter *m,const uint64_t t[5],
+    const uint64_t core[6],bool validCore,const PolarisCacheTally *bytes)
+{
+    if(!m || !t || !bytes)return false;
+    for(unsigned n=1;n<5;n++)if(t[n]<t[n-1]){m->rejected++;return false;}
+    if(!m->calls)m->began=t[0];
+    m->calls++;m->validation+=polaris_gpu_elapsed_us(t[0],t[1]);
+    m->pre+=polaris_gpu_elapsed_us(t[1],t[2]);m->submit+=polaris_gpu_elapsed_us(t[2],t[3]);
+    m->post+=polaris_gpu_elapsed_us(t[3],t[4]);
+    uint64_t sum=0;
+    if(validCore && core)for(unsigned n=0;n<6;n++) {
+        if(core[n]>UINT64_MAX-sum){validCore=false;break;}sum+=core[n];
+    }
+    if(!validCore || !core || sum>polaris_gpu_elapsed_us(t[2],t[3]))m->core_missing++;
+    else for(unsigned n=0;n<6;n++)m->core[n]+=core[n];
+    m->prebytes+=bytes->before;m->postbytes+=bytes->after;
+    m->wcpre+=bytes->wcBefore;m->wcpost+=bytes->wcAfter;return true;
+}
+static void polaris_gpu_stage_flush(uint64_t ended)
+{
+    PolarisStageMeter *m=&gpuStageMeter;if(!m->calls)return;
+    uint64_t ns;absolutetime_to_nanoseconds(ended,&ns);
+    IOLog("POLARIS GPU STAGE PERF: end_us=%llu window_us=%llu submits=%llu rejected=%llu core_missing=%llu validation_us=%llu cache_pre_us=%llu submit_us=%llu cache_post_us=%llu prior_us=%llu ring_us=%llu execute_idle_us=%llu visibility_us=%llu halt_us=%llu postcheck_us=%llu prebytes=%llu postbytes=%llu WCpre=%llu WCpost=%llu\n",
+        ns/1000,polaris_gpu_elapsed_us(m->began,ended),m->calls,m->rejected,m->core_missing,
+        m->validation,m->pre,m->submit,m->post,m->core[0],m->core[1],m->core[2],
+        m->core[3],m->core[4],m->core[5],m->prebytes,m->postbytes,m->wcpre,m->wcpost);
+    *m=(PolarisStageMeter){};
+}
+
 struct PolarisMethodBin {uint64_t calls,errors,auth,dispatch,lock,body,total,maximum;};
 struct PolarisMethodMeter {uint64_t began,lastEnded,calls;PolarisMethodBin bins[9];};
 static PolarisMethodMeter gpuMethodMeter;
@@ -302,6 +340,7 @@ static void polaris_gpu_method_flush(PolarisMethodMeter *m,uint64_t ended)
             ns/1000,polaris_gpu_elapsed_us(m->began,ended),names[n],b->calls,b->errors,
             b->auth,b->dispatch,b->lock,b->body,b->total,b->maximum);
     }
+    polaris_gpu_stage_flush(ended);
     *m=(PolarisMethodMeter){};
 }
 class PolarisGPUUserClient : public IOUserClient {
@@ -559,6 +598,11 @@ IOReturn PolarisGPUUserClient::submit(msm_gem_submit *r)
         for(unsigned n=0;n<r->nr_bos;n++) {
             PolarisBO *b=buffer(bos[n].handle);
             if(b->surface)__atomic_store_n(&b->surface->polarisGPUBusy,0,__ATOMIC_RELEASE);
+        }
+        if(gpuMethodPerformance && callerKind==2) {
+            uint64_t stages[6]={0},ticks[5]={validationBegan,before,prepared,submitted,completed};
+            bool valid=polaris_gpu_last_submit_us(r->fence,stages);
+            (void)polaris_gpu_stage_record(&gpuStageMeter,ticks,stages,valid,&tally);
         }
         __atomic_fetch_add(&gpuSubmissions,1,__ATOMIC_RELEASE);
         if(callerKind==2)__atomic_fetch_add(&gpuDesktopSubmissions,1,__ATOMIC_RELEASE);

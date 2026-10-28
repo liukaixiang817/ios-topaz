@@ -3,6 +3,8 @@
  */
 static struct a630_io a630_client_io;
 static struct a630_submit a630_client_submit;
+static uint64_t a630_client_postcheck_ticks;
+bool polaris_gpu_last_submit_us(uint32_t fence,uint64_t *stages);
 static uint32_t a630_client_ready, a630_client_dead;
 struct a630_client_fault {
     uint32_t error,offset,expected,actual,cp,irq,hw,protect,wptr,rptr;
@@ -155,6 +157,16 @@ static uint64_t a630_submit_us(uint64_t ticks)
 {
     uint64_t ns;absolutetime_to_nanoseconds(ticks,&ns);return ns/1000;
 }
+/* Snapshot the already-observed completion while the caller still holds
+ * gpuLock. No new hardware read, permission change, MMIO or cache operation. */
+bool polaris_gpu_last_submit_us(uint32_t fence,uint64_t *stages)
+{
+    if(!stages || !fence || !polaris_gpu_ready() ||
+        fence!=a630_client_submit.completed || a630_client_submit.timing_mask!=31 ||
+        a630_client_postcheck_ticks==UINT64_MAX)return false;
+    for(unsigned n=0;n<5;n++)stages[n]=a630_submit_us(a630_client_submit.timing[n]);
+    stages[5]=a630_submit_us(a630_client_postcheck_ticks);return true;
+}
 bool polaris_gpu_submit(const uint64_t *addresses,const uint32_t *words,uint32_t count,uint32_t *fence)
 {
     if (!addresses || !words || !fence || !count || count>A630_SUBMIT_MAX || !a630_client_begin()) return false;
@@ -173,6 +185,7 @@ bool polaris_gpu_submit(const uint64_t *addresses,const uint32_t *words,uint32_t
             a630_client_submit.live.cp_irq,a630_client_submit.live.irq);
         polaris_gpu_quarantine();return false;
     }
+    a630_client_postcheck_ticks=after>=before?after-before:UINT64_MAX;
     *fence=a630_client_submit.completed;
     if (*fence<=4 || !(*fence%64)) {
         const struct a630_submit *p=&a630_client_submit;

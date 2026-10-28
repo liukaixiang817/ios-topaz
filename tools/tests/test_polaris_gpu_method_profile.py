@@ -15,10 +15,10 @@ ROOT = Path(__file__).resolve().parents[2]
 class MethodProfileTests(unittest.TestCase):
     def test_actual_meter_overlap_errors_clock_rejection_and_window_reset(self):
         text = (ROOT/'tools/PolarisGPU.cpp').read_text()
-        start = text.index('struct PolarisMethodBin ')
+        start = text.index('/* Successful desktop submissions only,')
         end = text.index('class PolarisGPUUserClient ', start)
         actual = text[start:end].replace('static PolarisMethodMeter gpuMethodMeter;\n', '')
-        actual = function(text, 'static uint64_t polaris_gpu_elapsed_us(') + actual
+        actual = 'struct PolarisCacheTally {uint64_t before,after,readonlySkipped,wcBefore,wcAfter;};\n' + function(text, 'static uint64_t polaris_gpu_elapsed_us(') + actual
         source = r'''
 #include <stdint.h>
 #include <stdio.h>
@@ -57,6 +57,27 @@ int main(){PolarisMethodMeter m={},old;
  assert(!m.calls&&!m.lastEnded&&!m.began&&strstr(logs,"kind=make calls=1 errors=1"));
  assert(strstr(logs,"kind=map calls=1 errors=0")&&strstr(logs,"kind=submit calls=1 errors=0"));
  assert(!strstr(logs,"kind=info"));
+ /* All successful submissions get full stage totals, independently of sparse BO logs. */
+ PolarisStageMeter stages={};PolarisCacheTally bytes={64,32,0,1024,2048};
+ uint64_t tick[5]={1000,2000,5000,17000,20000},core[6]={1,1,5,1,1,1};
+ assert(polaris_gpu_stage_record(&stages,tick,core,true,&bytes));
+ assert(stages.calls==1&&stages.validation==1&&stages.pre==3&&stages.submit==12&&stages.post==3);
+ assert(stages.core[2]==5&&!stages.core_missing&&stages.prebytes==64);
+ uint64_t bad[5]={1,2,1,4,5};
+ assert(!polaris_gpu_stage_record(&stages,bad,core,true,&bytes)&&stages.rejected==1&&stages.calls==1);
+ core[2]=100;assert(polaris_gpu_stage_record(&stages,tick,core,true,&bytes));
+ assert(stages.core_missing==1&&stages.core[2]==5); /* Missing core timing is not fake zero hardware time. */
+ assert(polaris_gpu_stage_record(&stages,tick,nullptr,false,&bytes)&&stages.core_missing==2);
+ gpuStageMeter=stages;polaris_gpu_stage_flush(2000000);assert(!gpuStageMeter.calls);
+ assert(strstr(logs,"POLARIS GPU STAGE PERF:")&&strstr(logs,"core_missing=2"));
+ stages={};core[2]=5;
+ for(unsigned n=0;n<5000;n++){
+  uint64_t start=100000+n*20000ull,stamp[5]={start,start+1000,start+4000,start+16000,start+19000};
+  assert(polaris_gpu_stage_record(&stages,stamp,core,true,&bytes));
+ }
+ assert(stages.calls==5000&&!stages.core_missing&&stages.validation==5000&&stages.pre==15000);
+ assert(stages.submit==60000&&stages.post==15000&&stages.core[2]==25000);
+ assert(stages.prebytes==320000&&stages.postbytes==160000&&stages.wcpre==5120000);
  /* Different bin patterns, exact integer-us stages; no count disappears. */
  uint64_t now=3000000000ull;unsigned state=37;
  for(unsigned n=0;n<5000;n++){

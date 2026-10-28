@@ -34,6 +34,36 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0090 DIAGNOSTIC SOURCE READY: all-submit phases + UI-load RO OSM
+
+- Humanpriority remainsdiagnosisBEFOREboost. No0090phonebootyet. CURRENT
+ 0089/phone-frame-trace-0089-0001 normal4coreSettings, control0089only; last
+  keepalive0722passed (around07:15UTC). Keepalivefreshdirbefore30minlease.
+- Profile0886 default existingpolarisperf1 only aggregatesEVERY successful
+  desktopsubmit: validation/cachepre/core-submit/cachepostbytes+walltime.
+  Native savedCORE6timings(prior/ring/execute_idle/visibility/halt/postcheck)
+  copiedunderexistinggpuLock, fence/maskmustmatch. No newHWread/sync/DMA,
+  nochangedcache/fence/permission/lifetime/readiness. Missingcore/invalidclock
+  counted, never zero-timehardwareproof.2sflush matchesMETHODendtime, core
+  phasesSUBSET ofsubmit_us notadditive. No privatepublicheader change.
+- Same0886 retainsONLY actualphysicalRO IOKit map inpolarisosm1+perf1 after
+  existingDT/MIDR/ownbankguard; existinginputworker samplesatmost1Hz whenGPU
+  submissionschanged. Loads4requests/control/enable/selectedLUTword/counter,
+  printsactualMPIDR/endtime/count/active250ms/rawcycle+elapsed, noCPUfreqwrites
+  ornewworker. ActualLOADresultstillunproven, QEMUmustrefusebeforeMMIO.
+  Shutdown disablesROobserver beforepeerOFF. Stockpolicy2 remainsOFF.
+- ActualAppleclang27/fullheaders FIVE TUs(SweetCPU/PolarisGPU/polaris_a630/
+  polaris_touch/cpu_common)PASS;14ASan/method/fullframe/deadline/ROchecksPASS,
+  realstageaccumulator5000calls/missingtiming/overlap/refusedclock/resetpass.
+  Exact3-file patch0offset0fuzz PASS. RuntimeimplementationheadernewSHA
+ e006303bda58b85599b92f75cff2dc6a4b4b37043108c293577532accddaf2ec
+  bindsoriginalac96... inIIGcacheprivateexception; onlypolaris_a630.c includes
+  it, noIDL/headerinclude, originalpublicheaders/17IDLchecksunchanged.
+- NEXTcommit/pushsource/fullCIonce; actual4nativeEFI-XNUmodels; prepare
+  newRAMdiagnosticONLYOSM1/fulltouch_lattrace/sameGPU4corebaseline, actual
+  nativeclose0089/realFASTBOOT/newbootonlywhenfullyready. No0088boosttrial
+  untilcompletephaseandload-evidence. Do not repeatCPU/GPU/ownedmarkertests.
+
 ### 0089 ACTUAL 584-frame latency diagnosis COMPLETE; next all-submit phase totals
 
 - CURRENT0089/phone-frame-trace-0089-0001 LEFT RUNNING Settings, use0089/

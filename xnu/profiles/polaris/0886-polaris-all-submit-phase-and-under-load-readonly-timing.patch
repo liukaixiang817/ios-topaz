@@ -1,0 +1,192 @@
+--- a/bsd/dev/polaris_a630_runtime.h
++++ b/bsd/dev/polaris_a630_runtime.h
+@@ -3,6 +3,8 @@
+  */
+ static struct a630_io a630_client_io;
+ static struct a630_submit a630_client_submit;
++static uint64_t a630_client_postcheck_ticks;
++bool polaris_gpu_last_submit_us(uint32_t fence,uint64_t *stages);
+ static uint32_t a630_client_ready, a630_client_dead;
+ struct a630_client_fault {
+     uint32_t error,offset,expected,actual,cp,irq,hw,protect,wptr,rptr;
+@@ -155,6 +157,16 @@
+ {
+     uint64_t ns;absolutetime_to_nanoseconds(ticks,&ns);return ns/1000;
+ }
++/* Snapshot the already-observed completion while the caller still holds
++ * gpuLock. No new hardware read, permission change, MMIO or cache operation. */
++bool polaris_gpu_last_submit_us(uint32_t fence,uint64_t *stages)
++{
++    if(!stages || !fence || !polaris_gpu_ready() ||
++        fence!=a630_client_submit.completed || a630_client_submit.timing_mask!=31 ||
++        a630_client_postcheck_ticks==UINT64_MAX)return false;
++    for(unsigned n=0;n<5;n++)stages[n]=a630_submit_us(a630_client_submit.timing[n]);
++    stages[5]=a630_submit_us(a630_client_postcheck_ticks);return true;
++}
+ bool polaris_gpu_submit(const uint64_t *addresses,const uint32_t *words,uint32_t count,uint32_t *fence)
+ {
+     if (!addresses || !words || !fence || !count || count>A630_SUBMIT_MAX || !a630_client_begin()) return false;
+@@ -173,6 +185,7 @@
+             a630_client_submit.live.cp_irq,a630_client_submit.live.irq);
+         polaris_gpu_quarantine();return false;
+     }
++    a630_client_postcheck_ticks=after>=before?after-before:UINT64_MAX;
+     *fence=a630_client_submit.completed;
+     if (*fence<=4 || !(*fence%64)) {
+         const struct a630_submit *p=&a630_client_submit;
+--- a/iokit/Kernel/arm/PolarisGPU.cpp
++++ b/iokit/Kernel/arm/PolarisGPU.cpp
+@@ -29,6 +29,7 @@
+ 
+ #if defined(POLARIS_RAM_ONLY)
+ extern "C" void polaris_cpu_performance_activity(void);
++extern "C" bool polaris_gpu_last_submit_us(uint32_t,uint64_t *);
+ #define GPU_BUFFERS 4096u
+ #define GPU_MAX_BO (128u << 20)
+ #define GPU_MAX_BYTES (384ull << 20)
+@@ -264,6 +265,43 @@
+  * preemption; overlapping lock waits are not CPU busy time. Mach/IOKit work
+  * before entering these callbacks and the diagnostic print/unlock are excluded.
+  * No cached identity, permission check, DMA or fence behavior is changed. */
++/* Successful desktop submissions only, under the existing exclusive gpuLock.
++ * Aggregate EVERY timed call; core stages are a subset of submit_us, never
++ * additive to it. Wall time includes preemption, not hardware busy cycles. */
++struct PolarisStageMeter {
++    uint64_t began,calls,rejected,core_missing,validation,pre,submit,post;
++    uint64_t core[6],prebytes,postbytes,wcpre,wcpost;
++};
++static PolarisStageMeter gpuStageMeter;
++static bool polaris_gpu_stage_record(PolarisStageMeter *m,const uint64_t t[5],
++    const uint64_t core[6],bool validCore,const PolarisCacheTally *bytes)
++{
++    if(!m || !t || !bytes)return false;
++    for(unsigned n=1;n<5;n++)if(t[n]<t[n-1]){m->rejected++;return false;}
++    if(!m->calls)m->began=t[0];
++    m->calls++;m->validation+=polaris_gpu_elapsed_us(t[0],t[1]);
++    m->pre+=polaris_gpu_elapsed_us(t[1],t[2]);m->submit+=polaris_gpu_elapsed_us(t[2],t[3]);
++    m->post+=polaris_gpu_elapsed_us(t[3],t[4]);
++    uint64_t sum=0;
++    if(validCore && core)for(unsigned n=0;n<6;n++) {
++        if(core[n]>UINT64_MAX-sum){validCore=false;break;}sum+=core[n];
++    }
++    if(!validCore || !core || sum>polaris_gpu_elapsed_us(t[2],t[3]))m->core_missing++;
++    else for(unsigned n=0;n<6;n++)m->core[n]+=core[n];
++    m->prebytes+=bytes->before;m->postbytes+=bytes->after;
++    m->wcpre+=bytes->wcBefore;m->wcpost+=bytes->wcAfter;return true;
++}
++static void polaris_gpu_stage_flush(uint64_t ended)
++{
++    PolarisStageMeter *m=&gpuStageMeter;if(!m->calls)return;
++    uint64_t ns;absolutetime_to_nanoseconds(ended,&ns);
++    IOLog("POLARIS GPU STAGE PERF: end_us=%llu window_us=%llu submits=%llu rejected=%llu core_missing=%llu validation_us=%llu cache_pre_us=%llu submit_us=%llu cache_post_us=%llu prior_us=%llu ring_us=%llu execute_idle_us=%llu visibility_us=%llu halt_us=%llu postcheck_us=%llu prebytes=%llu postbytes=%llu WCpre=%llu WCpost=%llu\n",
++        ns/1000,polaris_gpu_elapsed_us(m->began,ended),m->calls,m->rejected,m->core_missing,
++        m->validation,m->pre,m->submit,m->post,m->core[0],m->core[1],m->core[2],
++        m->core[3],m->core[4],m->core[5],m->prebytes,m->postbytes,m->wcpre,m->wcpost);
++    *m=(PolarisStageMeter){};
++}
++
+ struct PolarisMethodBin {uint64_t calls,errors,auth,dispatch,lock,body,total,maximum;};
+ struct PolarisMethodMeter {uint64_t began,lastEnded,calls;PolarisMethodBin bins[9];};
+ static PolarisMethodMeter gpuMethodMeter;
+@@ -302,6 +340,7 @@
+             ns/1000,polaris_gpu_elapsed_us(m->began,ended),names[n],b->calls,b->errors,
+             b->auth,b->dispatch,b->lock,b->body,b->total,b->maximum);
+     }
++    polaris_gpu_stage_flush(ended);
+     *m=(PolarisMethodMeter){};
+ }
+ class PolarisGPUUserClient : public IOUserClient {
+@@ -559,6 +598,11 @@
+         for(unsigned n=0;n<r->nr_bos;n++) {
+             PolarisBO *b=buffer(bos[n].handle);
+             if(b->surface)__atomic_store_n(&b->surface->polarisGPUBusy,0,__ATOMIC_RELEASE);
++        }
++        if(gpuMethodPerformance && callerKind==2) {
++            uint64_t stages[6]={0},ticks[5]={validationBegan,before,prepared,submitted,completed};
++            bool valid=polaris_gpu_last_submit_us(r->fence,stages);
++            (void)polaris_gpu_stage_record(&gpuStageMeter,ticks,stages,valid,&tally);
+         }
+         __atomic_fetch_add(&gpuSubmissions,1,__ATOMIC_RELEASE);
+         if(callerKind==2)__atomic_fetch_add(&gpuDesktopSubmissions,1,__ATOMIC_RELEASE);
+--- a/iokit/Kernel/arm/SweetCPU.cpp
++++ b/iokit/Kernel/arm/SweetCPU.cpp
+@@ -51,9 +51,37 @@
+ static struct polaris_cpu_perf_state polaris_perf_state;
+ static uint64_t polaris_perf_activity_ns,polaris_perf_last_ns;
+ static uint32_t polaris_perf_last_cycle,polaris_perf_ready;
++/* Read-only UI-load inventory, existing polarisosm1+polarisperf1 only. */
++static IOMemoryDescriptor *polaris_observe_memory;
++static IOMemoryMap *polaris_observe_mapping;
++static const volatile uint32_t *polaris_observe_regs;
++static uint32_t polaris_observe_ready,polaris_observe_cycle,polaris_observe_lut[40];
++static uint64_t polaris_observe_ns,polaris_observe_submissions,polaris_observe_reported;
+ static uint64_t polaris_perf_now(void)
+ {
+     uint64_t ns=0;absolutetime_to_nanoseconds(mach_absolute_time(),&ns);return ns;
++}
++static void polaris_osm_observe_poll(void)
++{
++    if(!__atomic_load_n(&polaris_observe_ready,__ATOMIC_ACQUIRE))return;
++    uint64_t now=polaris_perf_now(),count=__atomic_load_n(&polaris_observe_submissions,__ATOMIC_ACQUIRE);
++    if(now<polaris_observe_ns || now-polaris_observe_ns<NSEC_PER_SEC)return;
++    if(count==polaris_observe_reported)return; /* No idle log traffic. */
++    uint64_t activity=__atomic_load_n(&polaris_perf_activity_ns,__ATOMIC_ACQUIRE);
++    uint32_t enabled=polaris_observe_regs[0],control=polaris_observe_regs[0xbc/4],request[4];
++    for(unsigned n=0;n<4;n++)request[n]=polaris_observe_regs[(0x920+n*4)/4];
++    uint64_t actual=__builtin_arm_rsr64("MPIDR_EL1")&0xffffffULL;
++    unsigned physical=(unsigned)(actual>>8),slot=(physical>=4 && physical<=7)?physical-4:0;
++    unsigned effective=(control&1)?slot:0;uint32_t index=request[effective];uint64_t hz=0;
++    if(enabled==3 && !(control&~1u) && index<27 &&
++        polaris_observe_regs[(0x110+index*32)/4]==polaris_observe_lut[index])
++        hz=polaris_osm_requested_hz(polaris_observe_lut,27,index);
++    uint32_t cycle=polaris_observe_regs[(0x9c0+effective*4)/4];
++    IOLog("POLARIS OSM LOAD RO: end_us=%llu mpidr=%#llx enabled=%x control=%x requests=%u/%u/%u/%u requested_Hz=%llu GPU_submits=%llu active250ms=%u raw_cycles=%u elapsed_ns=%llu; no writes, not instantaneous Hz\n",
++        now/1000,actual,enabled,control,request[0],request[1],request[2],request[3],hz,count,
++        activity && activity<=now && now-activity<=250*NSEC_PER_MSEC,
++        (uint32_t)(cycle-polaris_observe_cycle),now-polaris_observe_ns);
++    polaris_observe_ns=now;polaris_observe_cycle=cycle;polaris_observe_reported=count;
+ }
+ static uint32_t polaris_perf_read(void *,uint32_t offset)
+ {
+@@ -97,11 +125,15 @@
+ }
+ extern "C" void polaris_cpu_performance_activity(void)
+ {
+-    if(__atomic_load_n(&polaris_perf_ready,__ATOMIC_ACQUIRE))
++    if(__atomic_load_n(&polaris_perf_ready,__ATOMIC_ACQUIRE) ||
++        __atomic_load_n(&polaris_observe_ready,__ATOMIC_ACQUIRE)) {
+         __atomic_store_n(&polaris_perf_activity_ns,polaris_perf_now(),__ATOMIC_RELEASE);
++        __atomic_fetch_add(&polaris_observe_submissions,1,__ATOMIC_RELEASE);
++    }
+ }
+ extern "C" void polaris_cpu_performance_poll(void)
+ {
++    polaris_osm_observe_poll();
+     if(!__atomic_load_n(&polaris_perf_ready,__ATOMIC_ACQUIRE))return;
+     IOLockLock(polaris_perf_lock);
+     if(!__atomic_load_n(&polaris_perf_ready,__ATOMIC_ACQUIRE)){IOLockUnlock(polaris_perf_lock);return;}
+@@ -126,6 +158,7 @@
+ }
+ static int polaris_perf_shutdown(void)
+ {
++    __atomic_store_n(&polaris_observe_ready,0,__ATOMIC_RELEASE);
+     if(!polaris_perf_lock)return 0;
+     __atomic_store_n(&polaris_perf_ready,0,__ATOMIC_RELEASE);
+     IOLockLock(polaris_perf_lock);
+@@ -199,6 +232,16 @@
+     }
+     IOLog("POLARIS OSM CYCLES: core%u before=%#x after=%#x delta=%u elapsed_ns=%llu sum=%llu; raw counter, not instantaneous Hz\n",counter_core,before,after,(uint32_t)(after-before),elapsed,sum);
+     __builtin_arm_dsb(DSB_SY);
++    uint32_t perf=0;PE_parse_boot_argn("polarisperf",&perf,sizeof(perf));
++    if(!performance && perf==1 && enabled==3 && rows==27) {
++        /* Keep ONLY this verified CPU-read-only map for the existing input
++         * worker. No user alias, DMA, register store or new worker. */
++        polaris_observe_memory=memory;polaris_observe_mapping=mapping;
++        polaris_observe_regs=reg;memcpy(polaris_observe_lut,lut,sizeof(lut));
++        polaris_observe_ns=polaris_perf_now();polaris_observe_cycle=after;
++        __atomic_store_n(&polaris_observe_ready,1,__ATOMIC_RELEASE);
++        IOLog("POLARIS OSM LOAD RO: armed; per-activity read-only requests/counter, no frequency writes\n");return;
++    }
+     mapping->release();memory->release();
+     if(performance)polaris_perf_prepare(true);
+ }
