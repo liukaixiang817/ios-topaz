@@ -19,10 +19,12 @@ TARBALL_SHA='a8cfdb9aa97043e887233ac072f3676790a484b34786a4462eac467db89a5d1e'
 # Set from the deterministic manifest of the pinned successful source archive.
 MANIFEST_SHA='d04b50c8a13850c71d1679c2d180582b8f294b116da1a7534ce2c0c74adc7d65'
 EXTRA_PRIVATE_HEADERS={'iokit/Kernel/arm/polaris_uefi_cpu.h','bsd/dev/polaris_uefi_input.h'}
-# RAM shutdown mailbox is included only by bsd/dev/polaris_touch.c, outside
-# DriverKit's interface include graph. Bind its reviewed bytes too; adding it
+# Private shutdown, GPU policy and display-queue implementation headers are
+# outside DriverKit's interface include graph. Bind their reviewed bytes; adding them
 # must not weaken the original IDL/header checks or admit arbitrary headers.
-EXTRA_PRIVATE_HEADER_SHA={'bsd/dev/polaris_a630_performance.h':
+EXTRA_PRIVATE_HEADER_SHA={'iokit/Kernel/arm/polaris_display_queue.h':
+    '8f58213606c7dad756a492ec8858170b5aecded769f5f730dc34c3d344043a39',
+    'bsd/dev/polaris_a630_performance.h':
     'c38f2397d7d5d179d8701707104d0b6af411d76aecd8325401d3fc6742c75d6a',
     'bsd/dev/polaris_runtime_quiesce.h':
     '184aa7ad4d296c407e061082fa1f83d46278489e0252ed142136c3718d778757'}

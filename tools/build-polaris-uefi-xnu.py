@@ -66,6 +66,20 @@ def gpu_stock_intent(tokens,mode,core,count,qemu,drain,bridge,ufs,marker):
     return mode
 
 
+def framebuffer_wake_intent(tokens,enabled,core,count,qemu,drain,bridge,ufs,marker):
+    actual=[t for t in tokens if t.startswith(b'polarisfbwake=')]
+    if type(enabled) is not bool or actual!=([b'polarisfbwake=1'] if enabled else []):
+        raise ValueError('framebuffer wake must match its unique explicit firmware intent')
+    if enabled:
+        if (core!=7 or count not in (2,4) or ufs or marker or
+            not (drain in ('success','stale-cookie','peer-refused') if qemu else bridge)):
+            raise ValueError('framebuffer wake trial requires native multi-core RAM drain')
+        for key,value in [('polarisramcow','1'),('ufsrw','0'),('polarisquiesce','1')]:
+            if [t for t in tokens if t.startswith((key+'=').encode())]!=[(key+'='+value).encode()]:
+                raise ValueError('framebuffer wake must preserve RAM-only native shutdown')
+    return enabled
+
+
 def main():
     ap=argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--zig',required=True,type=Path)
@@ -86,6 +100,7 @@ def main():
     ap.add_argument('--cpu-osm-stock-performance',action='store_true',help='bounded stock4-core OSM request; not overclocking or all7-core admission')
     ap.add_argument('--gpu-stock-request',type=int,choices=(1,2,3),default=0,help='bounded original HFI request:1 bandwidth only,2 core only,3 both; no physical MHz claim')
     ap.add_argument('--gpu-stock-inventory',type=Path,help='actual original-device read-only request baseline before this experiment')
+    ap.add_argument('--framebuffer-arrival-wake',action='store_true',help='explicit coalesced display workloop wake; native probe required before phone admission')
     ap.add_argument('--cpu-stock-inventory',type=Path,help='required physical read-only OSM evidence for the first performance trial')
     ap.add_argument('--cpu-osm-readonly',action='store_true',
                     help='explicit four-big-core stock OSM read-only inventory intent')
@@ -158,6 +173,8 @@ def main():
     readonly_osm_intent(tokens,a.cpu_osm_readonly,a.kernel_core,a.kernel_cpus,
         a.test_qemu,a.test_ram_drain,a.ram_shutdown_bridge,a.test_qemu_ufs,a.physical_owned_marker,a.cpu_osm_stock_performance)
     gpu_stock_intent(tokens,a.gpu_stock_request,a.kernel_core,a.kernel_cpus,
+        a.test_qemu,a.test_ram_drain,a.ram_shutdown_bridge,a.test_qemu_ufs,a.physical_owned_marker)
+    framebuffer_wake_intent(tokens,a.framebuffer_arrival_wake,a.kernel_core,a.kernel_cpus,
         a.test_qemu,a.test_ram_drain,a.ram_shutdown_bridge,a.test_qemu_ufs,a.physical_owned_marker)
     gpu_inventory=None
     if a.gpu_stock_request and not a.test_qemu:
@@ -341,6 +358,7 @@ def main():
                   CPU_OSM_readonly_inventory=a.cpu_osm_readonly,
                   CPU_OSM_stock_performance=a.cpu_osm_stock_performance,CPU_OSM_stock_inventory=stock_inventory,
                   GPU_stock_request=a.gpu_stock_request,GPU_stock_inventory=gpu_inventory,
+                  framebuffer_arrival_wake=a.framebuffer_arrival_wake,
                   RAM_base=0x130000000 if a.test_qemu else 0x180000000,RAM_bytes=0xfc8a0000,
                   firmware_core_reserved=0,firmware_services_exited=False,
                   device_execution_tested=False,inputs={p:sha(r/p) for p in inputs})

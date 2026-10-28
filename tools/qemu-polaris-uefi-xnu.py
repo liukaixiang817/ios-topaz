@@ -278,6 +278,11 @@ def main():
         checks['native_stock_OSM_refused_before_virtual_RW']='POLARIS OSM PERF: REFUSED platform/mode; no RW mapping' in ring and 'POLARIS OSM PERF: armed' not in ring and 'POLARIS OSM RO: bank' not in ring
     if manifest.get('GPU_stock_request'):
         checks['native_GPU_stock_refused_before_virtual_MMIO']='POLARIS GPU STOCK: REFUSED platform/mode before GPU MMIO' in ring and 'POLARIS GPU STOCK: armed=' not in ring and 'POLARIS GPU STOCK SAMPLE:' not in ring
+    if b'polarisgpuwctest=1' in a.payload.read_bytes()[0x48:0x2a8].split(b'\0',1)[0].split():
+        checks['native_framebuffer_workloop_probe']=('POLARIS PFB VM: PASS callbacks=4 taken=3 empty=1 pokes=3 latest=201 error=0; actual native workloop, no panel/GPU' in ring)
+    if manifest.get('framebuffer_arrival_wake'):
+        checks['explicit_framebuffer_wake_payload']=([t for t in a.payload.read_bytes()[0x48:0x2a8].split(b'\0',1)[0].split() if t.startswith(b'polarisfbwake=')]==[b'polarisfbwake=1'])
+        checks['arrival_wake_native_probe_required']=checks.get('native_framebuffer_workloop_probe') is True
     if manifest.get('disk_payload_read_only'):
         checks.update(unique_GPT_filesystem='DISK_ESP_MATCHES=0x0000000000000001' in text,
                       disk_payload_exact_read=f'DISK_READ_BYTES=0x{manifest["payload_bytes"]:016x}' in text,
@@ -432,6 +437,7 @@ def main():
                 CPU_OSM_readonly_inventory=bool(manifest.get("CPU_OSM_readonly_inventory")),
                 CPU_OSM_stock_performance=bool(manifest.get("CPU_OSM_stock_performance")),
                 GPU_stock_request=manifest.get("GPU_stock_request",0),
+                framebuffer_arrival_wake=manifest.get('framebuffer_arrival_wake',False),
                 persistent_root_or_UFS_durability_proven=False,
                 isolated_QEMU_readonly_UFS_test=virtual_ufs and not owned_ufs,
                 isolated_QEMU_owned_UFS_test=owned_ufs,owned_backend_reopen=reopened,

@@ -51,6 +51,14 @@ def admit(driver,qemu,ci,profile,preflight):
             inventory.get('target_requested_Hz')!=2649600000 or not inventory.get('actual_native_log_sha256')):
             raise ValueError('stock performance needs physical inventory and actual virtual guard refusal')
     gpu_mode=driver.get('GPU_stock_request',0)
+    wake=driver.get('framebuffer_arrival_wake',False)
+    if (type(wake) is not bool or type(qemu.get('framebuffer_arrival_wake',False)) is not bool or
+        wake!=qemu.get('framebuffer_arrival_wake',False)):
+        raise ValueError('physical and virtual framebuffer wake intent must match')
+    if wake and (count not in (2,4) or driver.get('RAM_native_shutdown_bridge') is not True or
+                 qemu.get('checks',{}).get('native_framebuffer_workloop_probe') is not True or
+                 qemu.get('checks',{}).get('explicit_framebuffer_wake_payload') is not True):
+        raise ValueError('framebuffer wake requires the actual native workloop probe and exact payload')
     if gpu_mode!=qemu.get('GPU_stock_request',0):
         raise ValueError('physical and virtual GPU stock request intent must match')
     if gpu_mode:

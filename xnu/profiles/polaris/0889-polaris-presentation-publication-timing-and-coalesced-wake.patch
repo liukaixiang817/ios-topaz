@@ -1,0 +1,290 @@
+--- a/iokit/Kernel/arm/SweetFramebuffer.cpp
++++ b/iokit/Kernel/arm/SweetFramebuffer.cpp
+@@ -39,6 +39,7 @@
+ #include "polaris_display_blit.h"
+ #include "polaris_display_staged.h"
+ #include "polaris_display_cadence.h"
++#include "polaris_display_queue.h"
+ #include <libkern/c++/OSData.h>
+ #endif
+ 
+@@ -52,6 +53,9 @@
+ #include <IOKit/IOLocks.h>
+ #include <IOKit/IOWorkLoop.h>
+ #include <IOKit/IOTimerEventSource.h>
++#if defined(POLARIS_RAM_ONLY)
++#include <IOKit/IOInterruptEventSource.h>
++#endif
+ #include <IOKit/system.h>
+ #include <pexpert/pexpert.h>
+ #include <kern/clock.h>
+@@ -119,6 +123,10 @@
+     uint32_t fPolarisFPS10,fPolarisCopyMeanUS,fPolarisGapUS,fPolarisStatusPaintUS;
+     uint32_t fPolarisFrameHz;
+     bool fDebugStatus,fPolarisPerf;
++    IOInterruptEventSource *fPolarisWake;
++    struct pfb_queue fPolarisQueue;
++    static void presentWake(OSObject *, IOInterruptEventSource *, int);
++    static void displayFired(AppleCLCD *, IOTimerEventSource *, bool);
+     uint32_t debugCapture(void *, uint32_t);
+ #endif
+ 	uint64_t      fPhys;
+@@ -168,6 +176,99 @@
+     return fWorkLoop->runAction(polaris_copy_panel, this, out,
+         (void *)(uintptr_t)capacity) == kIOReturnSuccess ? 4320u * 2160u : 0;
+ }
++/* Called only by the existing opt-in generic-VM cache probe. Real native
++ * workloop/event-source delivery, not a display/GPU or performance emulator. */
++struct PfbWakeProbe {
++    IOLock *lock;
++    IOWorkLoop *loop;
++    IOInterruptEventSource *source;
++    struct pfb_queue queue;
++    uint64_t latest;
++    unsigned callbacks,taken,empty,pokes,error;
++};
++static void pfb_probe_callback(OSObject *owner,IOInterruptEventSource *,int count)
++{
++    PfbWakeProbe *p=(PfbWakeProbe *)((OSData *)owner)->getBytesNoCopy();
++    IOLockLock(p->lock);
++    if(count!=1 || !p->loop->onThread() || !p->loop->inGate())p->error=1;
++    pfb_wake_consumed(&p->queue);p->callbacks++;
++    struct pfb_publication publication={};
++    if(pfb_take(&p->queue,&publication)) {
++        if(publication.sequence<=p->latest)p->error=2;
++        p->latest=publication.sequence;p->taken++;
++        /* A publication arriving during delivery must schedule another pass,
++         * not disappear when checkForWork commits its consumer snapshot. */
++        if(publication.sequence==100) {
++            if(!pfb_publish(&p->queue,101,101,true))p->error=3;
++            else {p->pokes++;p->source->interruptOccurred(NULL,NULL,0);}
++        }
++    }else p->empty++;
++    IOLockUnlock(p->lock);
++}
++static IOReturn pfb_probe_burst(OSObject *owner,void *,void *,void *,void *)
++{
++    PfbWakeProbe *p=(PfbWakeProbe *)((OSData *)owner)->getBytesNoCopy();
++    if(!p->loop->inGate() || p->loop->onThread())return kIOReturnError;
++    IOLockLock(p->lock);
++    unsigned before=p->callbacks;
++    for(unsigned n=0;n<100;n++) {
++        uint64_t next=p->queue.sequence+1;
++        if(pfb_publish(&p->queue,next,(uint32_t)next,true)) {
++            p->pokes++;p->source->interruptOccurred(NULL,NULL,0);
++        }
++    }
++    if(p->callbacks!=before)p->error=4; /* no inline producer-thread copy */
++    IOLockUnlock(p->lock);return kIOReturnSuccess;
++}
++static bool pfb_probe_wait(PfbWakeProbe *p,unsigned callbacks,uint64_t latest)
++{
++    /* A timeout is a failure, never evidence of delivery/drain. */
++    for(unsigned n=0;n<2000;n++) {
++        IOLockLock(p->lock);
++        bool done=p->callbacks==callbacks && p->latest==latest;
++        bool failed=p->error!=0;
++        IOLockUnlock(p->lock);
++        if(failed)return false;
++        if(done)return true;
++        IOSleep(1);
++    }
++    return false;
++}
++extern "C" int PolarisFramebufferWakeProbe(void)
++{
++    int error=0;bool attached=false;
++    IOLock *lock=IOLockAlloc();IOWorkLoop *loop=IOWorkLoop::workLoop();
++    struct PfbWakeProbe initial={};initial.lock=lock;initial.loop=loop;
++    OSData *owner=OSData::withBytes(&initial,sizeof(initial));
++    IOInterruptEventSource *source=NULL;
++    PfbWakeProbe *p=owner?(PfbWakeProbe *)owner->getBytesNoCopy():NULL;
++    unsigned callbacks=0,taken=0,empty=0,pokes=0;uint64_t latest=0;
++    if(!lock || !loop || !owner){error=1;goto cleanup;}
++    source=IOInterruptEventSource::interruptEventSource(owner,pfb_probe_callback);
++    if(!source || source->getProvider()!=NULL){error=2;goto cleanup;}
++    p->source=source;
++    if(loop->addEventSource(source)!=kIOReturnSuccess){error=3;goto cleanup;}
++    attached=true;
++    if(loop->runAction(pfb_probe_burst,owner)!=kIOReturnSuccess ||
++        !pfb_probe_wait(p,2,101)){error=4;goto cleanup;}
++    if(loop->runAction(pfb_probe_burst,owner)!=kIOReturnSuccess ||
++        !pfb_probe_wait(p,3,201)){error=5;goto cleanup;}
++    IOLockLock(lock);source->interruptOccurred(NULL,NULL,0);IOLockUnlock(lock);
++    if(!pfb_probe_wait(p,4,201)){error=6;goto cleanup;}
++cleanup:
++    if(attached) {source->disable();loop->removeEventSource(source);}
++    if(p) {
++        callbacks=p->callbacks;taken=p->taken;empty=p->empty;
++        pokes=p->pokes;latest=p->latest;if(!error)error=p->error;
++    }
++    if(!error && (callbacks!=4 || taken!=3 || empty!=1 || pokes!=3 || latest!=201))error=7;
++    OSSafeReleaseNULL(source);OSSafeReleaseNULL(owner);OSSafeReleaseNULL(loop);
++    if(lock)IOLockFree(lock);
++    IOLog("POLARIS PFB VM: %s callbacks=%u taken=%u empty=%u pokes=%u latest=%llu error=%d; actual native workloop, no panel/GPU\n",
++        error?"FAIL":"PASS",callbacks,taken,empty,pokes,latest*1ull,error);
++    return error;
++}
++
+ extern "C" uint32_t polaris_a630_details(char *, uint32_t);
+ extern "C" bool polaris_gpu_desktop_active(void);
+ extern "C" uint32_t polaris_gpu_client_line(char *,uint32_t);
+@@ -330,6 +431,16 @@
+     fPolarisFrameHz = hz;
+     unsigned perf=0;PE_parse_boot_argn("polarisperf",&perf,sizeof(perf));
+     fPolarisPerf=perf==1;
++    fPolarisWake=NULL;bzero(&fPolarisQueue,sizeof(fPolarisQueue));
++    unsigned wake=0;PE_parse_boot_argn("polarisfbwake",&wake,sizeof(wake));
++    if(wake>1)return false;
++    if(wake==1) {
++        fPolarisWake=IOInterruptEventSource::interruptEventSource(this,&AppleCLCD::presentWake);
++        if(!fPolarisWake || fWorkLoop->addEventSource(fPolarisWake)!=kIOReturnSuccess) {
++            OSSafeReleaseNULL(fPolarisWake);return false;
++        }
++    }
++    IOLog("POLARIS PFB: arrival_wake=%u; coalesced existing workloop, unchanged VSYNC/copy deadlines\n",wake);
+ #endif
+ 	fFlushTicks = (hz == 0 || hz >= 60) ? 1 : 60 / hz;
+ 	fVsync->setTimeoutUS(SWEET_FB_VSYNC_US);
+@@ -353,9 +464,29 @@
+ void
+ AppleCLCD::vsyncFired(OSObject *owner, IOTimerEventSource *sender)
+ {
+-	AppleCLCD *fb = (AppleCLCD *)owner;
++#if defined(POLARIS_RAM_ONLY)
++    displayFired((AppleCLCD *)owner,sender,false);
++}
++void
++AppleCLCD::presentWake(OSObject *owner, IOInterruptEventSource *, int)
++{
++    AppleCLCD *fb=(AppleCLCD *)owner;
++    IOLockLock(fb->fLock);
++    pfb_wake_consumed(&fb->fPolarisQueue);
++    bool run=fb->fDirty && !fb->fPowerOff;
++    IOLockUnlock(fb->fLock);
++    if(run && polaris_gpu_desktop_active())displayFired(fb,fb->fVsync,true);
++}
++void
++AppleCLCD::displayFired(AppleCLCD *fb,IOTimerEventSource *sender,bool fromWake)
++{
++#else
++    AppleCLCD *fb = (AppleCLCD *)owner;
++#endif
+ 	uint64_t now = mach_absolute_time();
+ #if defined(POLARIS_RAM_ONLY)
++    struct pfb_publication publication={};bool traced=false;
++    uint64_t notifyDeadline=fb->fPolarisNextVsyncUS;
+     bool gpuActive=polaris_gpu_desktop_active();
+     uint64_t nowNS=0;absolutetime_to_nanoseconds(now,&nowNS);
+     uint64_t nowUS=nowNS/1000;
+@@ -413,6 +544,9 @@
+ #endif
+ 		if (rec != NULL) {
+ 			memcpy(rec, fb->fPending, SWEET_FB_SWAP_REC_SIZE);
++#if defined(POLARIS_RAM_ONLY)
++            traced=pfb_take(&fb->fPolarisQueue,&publication);
++#endif
+ 			fb->fDirty = false;
+ 		}
+ 	}
+@@ -424,7 +558,22 @@
+ #endif
+ 		fb->present(rec);
+ #if defined(POLARIS_RAM_ONLY)
+-        absolutetime_to_nanoseconds(mach_absolute_time() - started, &elapsed);
++        uint64_t copyEnd=mach_absolute_time();
++        absolutetime_to_nanoseconds(copyEnd - started, &elapsed);
++        if(fb->fPolarisPerf && gpuActive && traced) {
++            uint64_t startNS=0,endNS=0;
++            absolutetime_to_nanoseconds(started,&startNS);
++            absolutetime_to_nanoseconds(copyEnd,&endNS);
++            /* Whole records remain below the native console's255-byte limit.
++             * q is a native publication, NOT an EAGL frame or scanout ID.
++             * c only reports actual writes into panel memory. */
++            IOLog("POLARIS PFB: q=%llu s=%u r=%llu t=%llu b=%llu e=%llu n=%llu w=%u v=%u c=%u d=%llu\n",
++                publication.sequence*1ull,publication.swap,publication.ready_us*1ull,
++                nowUS*1ull,startNS/1000,endNS/1000,notifyDeadline*1ull,
++                (unsigned)fromWake,(unsigned)notifyDue,
++                (unsigned)(__atomic_load_n(&polaris_fb_pixels,__ATOMIC_RELAXED)!=pixelsBefore),
++                publication.replaced*1ull);
++        }
+         uint32_t us = elapsed / 1000 > UINT32_MAX ? UINT32_MAX : (uint32_t)(elapsed / 1000);
+         __atomic_store_n(&fb->fPolarisLastUS, us, __ATOMIC_RELAXED);
+         if (us > __atomic_load_n(&fb->fPolarisMaxUS, __ATOMIC_RELAXED))
+@@ -552,6 +701,17 @@
+ 	IOLockLock(fLock);
+ 	memcpy(fPending, rec, SWEET_FB_SWAP_REC_SIZE);
+ 	fDirty = true;
++#if defined(POLARIS_RAM_ONLY)
++    uint64_t ns=0;absolutetime_to_nanoseconds(mach_absolute_time(),&ns);
++    bool wasFaulted=fPolarisQueue.fault;
++    if(pfb_publish(&fPolarisQueue,ns/1000,get32(rec,0x50),fPolarisWake && !fPowerOff)) {
++        /* Serialize producerCount too. signalWorkAvailable only takes the
++         * work-to-do spin lock, never the workloop gate. The callback takes
++         * fLock AFTER that spin lock has been released. No synchronous copy. */
++        fPolarisWake->interruptOccurred(NULL,NULL,0);
++    }
++    if(!wasFaulted && fPolarisQueue.fault)IOLog("POLARIS PFB ERROR: publication identity/clock failed; no timing claim\n");
++#endif
+ 	IOLockUnlock(fLock);
+ 	if ((++sweet_fb_swap_count % 1000) == 0) {
+ 		IOLog("SWEET FB: %llu swaps\n", sweet_fb_swap_count);
+--- a/iokit/Kernel/arm/PolarisGPU.cpp
++++ b/iokit/Kernel/arm/PolarisGPU.cpp
+@@ -243,9 +243,10 @@
+ }
+ /* Optional data-only native VM probe. Generic EFI/XNU can exercise the actual
+  * IOBufferMemoryDescriptor and pmap path without a pretend Adreno device. */
++extern "C" int PolarisFramebufferWakeProbe(void);
+ extern "C" int PolarisGPUCacheProbe(void)
+ {
+-    int error=0;unsigned checked=0;
++    int error=PolarisFramebufferWakeProbe();unsigned checked=0;
+     for(unsigned wc=0;wc<2 && !error;wc++) {
+         IOBufferMemoryDescriptor *m=IOBufferMemoryDescriptor::inTaskWithOptions(kernel_task,
+             kIODirectionInOut|kIOMemoryKernelUserShared|(wc?kIOMapWriteCombineCache:0),PAGE_SIZE,PAGE_SIZE);
+--- /dev/null
++++ b/iokit/Kernel/arm/polaris_display_queue.h
+@@ -0,0 +1,42 @@
++/* Latest-frame publication, called only with the framebuffer's existing
++ * IOLock held. A wake is a coalesced work-loop poke, never a VSYNC or a
++ * synchronous panel copy. The native work loop owns copy/notify deadlines.
++ */
++#ifndef POLARIS_DISPLAY_QUEUE_H
++#define POLARIS_DISPLAY_QUEUE_H
++#include <stdint.h>
++#include <stdbool.h>
++struct pfb_queue {
++    uint64_t sequence, ready_us, replaced;
++    uint32_t swap;
++    bool pending, wake_pending, fault;
++};
++struct pfb_publication {
++    uint64_t sequence, ready_us, replaced;
++    uint32_t swap;
++};
++static inline bool pfb_publish(struct pfb_queue *q, uint64_t now,
++    uint32_t swap, bool wake_enabled)
++{
++    if (!q) return false;
++    if (q->fault || !now || q->sequence == UINT64_MAX || now < q->ready_us) {
++        q->fault=true; q->pending=false;
++        return false;
++    }
++    if (q->pending && q->replaced != UINT64_MAX) q->replaced++;
++    q->sequence++; q->ready_us=now; q->swap=swap; q->pending=true;
++    if (!wake_enabled || q->wake_pending) return false;
++    q->wake_pending=true;
++    return true;
++}
++static inline void pfb_wake_consumed(struct pfb_queue *q)
++{if (q) q->wake_pending=false;}
++static inline bool pfb_take(struct pfb_queue *q, struct pfb_publication *out)
++{
++    if (!q || !out || q->fault || !q->pending || !q->sequence || !q->ready_us) return false;
++    out->sequence=q->sequence; out->ready_us=q->ready_us;
++    out->swap=q->swap; out->replaced=q->replaced;
++    q->pending=false;
++    return true;
++}
++#endif

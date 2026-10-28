@@ -26,6 +26,29 @@ class XnuAdmissionTests(unittest.TestCase):
 
     def test_matching_full_proofs_admitted(self):packer.admit(*self.fixtures())
 
+    def test_framebuffer_wake_requires_matching_native_workloop_and_drain_proof(self):
+        f=list(self.fixtures());d,q=f[:2]
+        d.update(kernel_CPU_affinity=1792,kernel_CPU_count=2,RAM_native_shutdown_bridge=True,
+                 framebuffer_arrival_wake=True)
+        q.update(kernel_CPU_affinity=7,kernel_CPU_count=2,RAM_native_drain_test='success',
+                 framebuffer_arrival_wake=True)
+        keys=['both_kernel_CPUs_online','real_cross_core_callbacks','native_peer_affinity_OFF',
+              'native_reboot_sync_path','real_zero_mounts_and_buffers','firmware_observed_RAM_drained',
+              'separate_RAM_result','native_framebuffer_workloop_probe','explicit_framebuffer_wake_payload']
+        q['checks'].update({k:True for k in keys})
+        q['native_shutdown_mailbox']=dict(cookie=123,request_cookie=123,sequence=1,mode=2,phase=3,
+            error=0,write_epoch=0,flushed_epoch=0,capabilities=0x80000003)
+        packer.admit(*f)
+        for key in keys:
+            q['checks'][key]=False
+            with self.subTest(key=key),self.assertRaises(ValueError):packer.admit(*f)
+            q['checks'][key]=True
+        for bad in [False,0,1,'true',None]:
+            q['framebuffer_arrival_wake']=bad
+            with self.subTest(bad=bad),self.assertRaises(ValueError):packer.admit(*f)
+        q['framebuffer_arrival_wake']=True;d['RAM_native_shutdown_bridge']=False
+        with self.assertRaises(ValueError):packer.admit(*f)
+
     def test_virtual_UFS_proof_never_admits_phone_even_if_other_fields_look_valid(self):
         for field in ('isolated_QEMU_readonly_UFS_test','isolated_QEMU_owned_UFS_test','physical_owned_marker_test'):
             for index in (0, 1):

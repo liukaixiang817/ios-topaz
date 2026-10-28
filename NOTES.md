@@ -34,6 +34,43 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0094 publication timing/coalesced wake source READY; no physical trial
+
+- Latest0093 physical trials remain ENDED, independently verified actualFASTBOOT
+ 11:21UTC; no active phone iOS/recovery or USB transaction. No new boot/write.
+ User priority remains measured stable60; do not rerun old0093 controllers.
+- Profile0889 adds native lock-protected publication sequence/ready timestamp,
+ actual copy begin/end, callback/notify deadline/source and actual panel-write
+ flag in compact <255B records. Strict host parser rejects malformed/duplicate/
+ missing/interleaved/out-of-order records and mismatched actual panel windows.
+ This measures queue wall time; do NOT call it GPU time or hardware scanout.
+- DEFAULT OFF polarisfbwake=1 creates a coalesced providerless
+ IOInterruptEventSource on the EXISTING framebuffer workloop. swap only
+ publishes/pokes under existing fLock, never sync-copies. Producers serialized;
+ signalWorkAvailable takes only its separate spinlock, not the workloop gate.
+ Native callback retains existing VSYNC/START-to-start copy deadlines, no early
+ notify, GPU-only and power-off guard; repeated wake cannot duplicate a consumed
+ publication or force idle polling. Original native IOKit source supports this
+ software-poke use. Queue generation/clock failure stops telemetry/wakes, leaves
+ timer/UI fallback and logs an error; never fabricates timings.
+- Existing opt-in generic GPU-WC probe now also runs an actual new native IOKit
+ workloop/event-source test: gate-held100-publication bursts, coalescing,
+ re-publication during callback and empty-wake handling; delivery timeout FAILS.
+ It has only compiled so far, NOT yet executed EFI/XNU. No panel/GPU emulator
+ claim. QEMU result/admission require real native-probe PASS and exact wake
+ payload, same CPU/native shutdown proof; old/default-OFF admission preserved.
+- Actual Appleclang27/fullCIheaders SweetFramebuffer and PolarisGPU TUs compile,
+ exact0889 overlay0offset0fuzz matches compiled source.20 first local queue/
+ cadence/performance/IIG/profile tests passed5.641s; additional admission/cache
+ tests in progress. Source commit/fullCI pending. New private implementation
+ header exact SHA bound, all original IDL/public-header checks retained.
+- Next complete local checks, commit source/fullCI, then actual EFI/XNU native
+ workloop/native shutdown success/stale/peer refusal/default-OFF controls.
+ Baseline and wake-enabled use same kernel/GPU/ADT/stockpolicy; physical timing
+ benefit unproven. No phone before real model/native checks. Do not drop original
+ cache/DSB/fence/idle/halt/auth/lifetime guards.30s/10s policy still bounded;
+ original-device thermal evidence and production continuous policy separate.
+
 ### 0093 physical bandwidth/core A/B COMPLETE; phone actually FASTBOOT
 
 **LATEST 2026-10-28 11:27UTC: this entry overrides all older ACTIVE/READY

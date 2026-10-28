@@ -243,9 +243,10 @@ static void polaris_gpu_memory_order(void)
 }
 /* Optional data-only native VM probe. Generic EFI/XNU can exercise the actual
  * IOBufferMemoryDescriptor and pmap path without a pretend Adreno device. */
+extern "C" int PolarisFramebufferWakeProbe(void);
 extern "C" int PolarisGPUCacheProbe(void)
 {
-    int error=0;unsigned checked=0;
+    int error=PolarisFramebufferWakeProbe();unsigned checked=0;
     for(unsigned wc=0;wc<2 && !error;wc++) {
         IOBufferMemoryDescriptor *m=IOBufferMemoryDescriptor::inTaskWithOptions(kernel_task,
             kIODirectionInOut|kIOMemoryKernelUserShared|(wc?kIOMapWriteCombineCache:0),PAGE_SIZE,PAGE_SIZE);

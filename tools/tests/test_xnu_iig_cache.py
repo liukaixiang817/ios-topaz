@@ -11,6 +11,11 @@ cache=importlib.util.module_from_spec(spec);spec.loader.exec_module(cache)
 
 
 class PrivateHeaderBinding(unittest.TestCase):
+    def test_added_private_implementation_headers_have_exact_shipped_bytes(self):
+        for name,want in cache.EXTRA_PRIVATE_HEADER_SHA.items():
+            source=ROOT/'tools'/Path(name).name.replace('_','-')
+            self.assertEqual(hashlib.sha256(source.read_bytes()).hexdigest(),want,name)
+
     def test_exact_private_replacements_only(self):
         with tempfile.TemporaryDirectory() as d:
             p=Path(d)/'header'
