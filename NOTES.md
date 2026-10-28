@@ -34,6 +34,33 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0096 fullCI PASS; actual models rerunning serially, phone0095 still ACTIVE
+
+- Native source704499e7f1869c70e520f8ad38ab7b4d26b3aba9 committed/pushed;
+ fullmacOS27/Xcode27 CI40719813589/job122927315759 SUCCESS. Downloadedkernel
+ out-polaris-0096/kernel.development.sweet SHA403dfd4191e253eef7218fd85443e31ca11d048dc88ab3cb4b219004c63a7c87
+ verifiedexactsource/buildprofile/artifactZIPCRC/SHA. No0096phonecandidateyet.
+- First4actualEFI/XNU0001 cases were mistakenly launchedsimultaneously and
+ allfailed17..22msIRQwatchdog, INCLUDINGkey-OFFcontrol. Allfailurelogs kept;
+ no threshold/timer/protection changed. Resourcecontention is a hypothesis,
+ not confirmedhardwarediagnosis. Sequentialnewrun0002 key-OFF27/37.905s and
+ keys-ONsuccess29/38.145s PASS. Stale0002 currentlyrunning; thenpeer-refused
+ serially. Needfullboundcurrentproof before anyphysical0096boot.
+- Phone0095-0003 remains runningafterhuman physicalpower/volume test; human
+ reports functionalbutpoweranimationjank. Lastdirectedstate15:59UTC passed;
+ useonlycontrol-phone-0003.py freshdir keepalive. Nonew gestures/reboot/write.
+- NEWoffline tools/polaris-wlfw.h original independentboundedCAPrequest/
+ responsecodec, strictservice45/version1/instance0/txn/message24/maxbody203,
+ duplicate/missing/truncation/string/result checks; 10kmutations+truncASan/
+ UBSan pass. Actualpinnedoriginal qmi_encdec.c and completeWLFWdescriptors/
+ originalcommonresponsedescriptor built unchanged withLinuxenvironmenttypes
+ replaced;96optionalflags/stringlength cases agree underASan/UBSan, proof
+ wifi-codec-original-oracle-0003/proof.json. Initialoracle/0002 fail-525 due
+ harnesscapacity249>declared203, correctedharnessonly, failuresretained.
+ Codec has NOtransport/MMIO/networkeffects, notWiFi boot/scan/join proof.
+ Syntheticchipid3990 is testdata, not actualphonechipidentity. Firmwareand
+ driver/calibration initialization remain; audio actualplayback also unproved.
+
 ### 0095 physical three keys PASS; 0096 cold-input/first-submit demand candidate
 
 - Human actual shortpress test reports powercanextinguish and volumeHUD,

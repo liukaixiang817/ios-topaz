@@ -198,6 +198,30 @@ msm-dai-q6-mi2s.3 to tas2559 ASI1; Tavil SLIM alone is insufficient. Preserve
 original firmware/calibration/routing; neither
 audio playback nor Wi-Fi scan/join has passed a physical test yet.
 
+## Polaris ICNSS wire codec validation (2026-10-29 local)
+
+The independent `tools/polaris-wlfw.h` is only a bounded capability-message
+codec. It does not initialize WLAN, discover a service, authenticate a remote
+port, map DMA, scan or join. The actual original MiCode codec at Git blob
+`d7221d8982388ea3f12bddde1c2956fec46e75d7`, full WLFW descriptor blob
+`96e7d6891cc381ea9c21172b8688bd242ce1d310`, and common response descriptor
+from `qmi_interface.c` blob`0b952a48a33e77c41f6224207238e074525bfde0`
+were privately compiled unchanged, replacing only the Linux host environment.
+Ninety-six optional-field and string-length combinations matched under
+ASan/UBSan. The first harness incorrectly supplied capacity249 to an original
+message declared max203; its rejection was retained, and only the harness
+was corrected. The production independent decoder also rejects missing or
+duplicate result fields, stale transactions and malformed nested strings.
+The example chip IDs in those tests are synthetic, not a measured chip ID.
+
+Own pinned `smem.c` blob`18ec52f2078aab2b27d0675ced0158908b4275ea` and
+`glink_smem_native_xprt.c` blob`187c80d8ca121e6316c4ac5e901dff13b120427b`
+are available privately for the next transport work. Own DT SMEM is86000000,
+2MiB with the original IRQ doorbell at1799000c; do not copy Redwood's IPCC
+408000 or WPSS host13. No SMEM/GLINK writes or radio firmware boot have been
+performed by this codec. Actual raw source identities and test artifacts are
+under0095/own-vendor and0096/wifi-codec-primary, outside Git.
+
 ## Where to look
 
 Paths in this table are relative to the corresponding reference checkout.
