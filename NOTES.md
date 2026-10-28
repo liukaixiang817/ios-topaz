@@ -34,6 +34,45 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0081 actual WC GPU latency improvement PROVEN;60FPS still not reached
+
+- physical-WC-GPU-latency-proof.json binds real lock/home/Settings images,
+ 20actual consumed same gestures and all pixel/import/GMEM/icon PASS evidence.
+  Nonzero WCpre/WCpost on55paired actual desktop submissions proves corrected
+  WC path active, not just a boot flag. No runtimefailure/quarantine observed.
+- Baseline7 sparse frame samples median165.844ms; corrected candidate25 sparse
+  samples median47.319ms (32.124..89.703ms). Clear improvement, NOT proof of
+  rolling FPS or60FPS. Same workload gestures, differing frame samples/load.
+  Cachepre/post medians1us/1us for paired batches (remaining imported surfaces
+  still up to3.1ms each); native submit1.300ms/execute-idle1.155ms median.
+  Remaining frame handoff median25.981ms, frame_end12.870ms; these include
+  scheduling and multiple synchronous submits, not pure GPU busy time.
+- Actual viewed home includes all3 application and3 dock icons. Settings text
+  and icons remain correct after scrolling; Waiting widgets remain. Phone LEFT
+  RUNNING in Settings on0081, control0081/control-gpu-phone.py. No disk writes.
+- NEXT investigate remaining shared-output cache and repeated synchronous
+  submit/presentation. Do not remove barriers or use seed-only cache skipping.
+  Private-GEM WC fix is working; prior0080 failure is preserved below.
+
+### 0081 corrected WC RAM trial ACTIVE; complete results above
+
+- Source169cb02db24838916531a75c62fb946798587d76 pushed. Full macOS27/Xcode27
+  CI40618838742/job122587625135 PASSED; verified new kernel SHA
+  cd50b97c7acc9448f02dc149b539a49758bcc16af663a697337329e4ca5b806c.
+  Actual EFI/XNU dualCPU dirtyRAMroot/native drain23/23 passed37.715s WITH
+  actual native cached/WC pmap and two-alias full-pattern probe PASS. Exact
+  CI/source/kernel/log/result binding:0081/actual-native-WC-VM-proof.json.
+- Original EDK2 decoder and all81 original firmware entries were verified.
+  0080 trial ENDED through native shutdown/drain, then actual expected Polaris
+  FASTBOOT independently verified. No rawfallback/Android/storage writes.
+- NEW ACTIVE PHONE0081/phone-gpu-wc-0081-0001, original UEFI RAM image sent
+  02:14:43UTC. kernel-start-0001 is in progress; do NOT send another boot.
+  Control0081/control-gpu-phone.py. Old0080 bindings MUST NOT be used now.
+  Same physical tree/graphics bundle/twoCPU topology/read-only root+RAMCOW.
+- NEXT actual capture, require nonzero real WCpre/WCpost plus GPU4096 pixel/
+  GMEM/shared/icon acceptance, then lock/home/Settings and same20 gestures.
+  Neither native VM probe nor boot ACK proves actual WC GPU drawing or60FPS.
+
 ### 0081 WC wire-type correction: 0080 missed actual BOs, latency NOT fixed
 
 - Human reports continued stutter and under10FPS; goal remains actual smooth
