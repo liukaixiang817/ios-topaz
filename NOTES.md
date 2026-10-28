@@ -34,6 +34,77 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0091 stock-request A/B STARTING; 0090 readonly diagnosis COMPLETE
+
+- CURRENT0091/phone-stock-latency-0091-0001 originalUEFI RAMboot and unique
+  kernel-start-0002 succeeded. Use0091/control-phone.py7 4 ONLY, freshoutput
+  forstate/capture. kernel-start-0001 was rejected CLI action beforeUSB, no
+  kernelstart;0002 actualboot only. Actual0091UI/performance notyetobserved.
+- SAME0090kernel7a186d00/source700f35f/fullCI40649721686, GPUbundle/4big/WC
+  unchanged. ONLY OSM1->2 boundedstock4-core row22 request policy. Additional
+  actualEFI/XNU stockintent test25/25 PASS38.003s, virtualplatform rejects
+  beforeRWMMIO; realEDK2 decode/81FW and actualphysicalROinventory admission
+  PASS. No newnative source orCI. Not an achieved60FPS/physicalclock claim.
+- 0090/physical-readonly-all-stage-diagnosis-proof.json bindsreal5captures/
+  40inputs/fullwarmtrace. Final20seq381..740:552completeframes, median37.2235ms,
+  all>16.667,logical19.819/s,panelcopies19.815/s,mean-copywindowmedian15.745ms.
+ 12wholeSTAGEprefix/METHODsuccessfulcountpairs,
+ 479EAGLcompletions:7.405batches/frame; validation0.118ms, cachepre3.163ms,
+  submit16.127ms, cachepost3.154ms. execute_idle15.651ms isSUBSET ofsubmit,
+  includespoll/preemption, NOT pureGPUbusy. Auth/locks are small as0089.
+- All27under-scrollRO samples requests0/0/0/0/requested825600000Hz; this is
+  realUIrequest not boot snapshot, stillnot instantaneousCPUHz. Targeted
+  boundedstockrequest A/B now justified bymeasuredCPUwork+copy; don'tpromise
+  fullfix. Preservecache/fence/idle/halt/auth andnever select1-coreboostrows.
+- IMPORTANT nativeSTAGEIOLogtruncated afterhalt_us; postcheck/bytes missing.
+  Intactprefixes independently boundedatnextwriter andmatchedtoMETHOD counts;
+  fullcoredecomposition explicitlyFALSE. Parsernowrejectsmissingfields and
+  duplicateinterleavedkeys,8testsPASS; never silently zero missingphases.
+  Initial failedparser/rawfiles preserved. Latercompactrecordsplit needed.
+- 0090 ended actualnativeVFS0busy0/all600/500/400 OFF/RAM_DRAINED
+  cookie4233965487/seq1/mode2 then gatedreset08:08:26UTC. Independentlyactual
+  expectedPolarisFASTBOOT queriedbefore0091RAMboot08:09:26UTC. No rawfallback/
+  keys/Android/storagewrites. Do NOT use0090control now. Old0089 alsoended.
+- NEXTcapture0091actualUI/OSM armed/sample row22, samewarm20/measured20 and
+  firstfixed1s postrelease, correlatecooldown/idletransitions. Candidate is
+  bounded30s high/10s saved cooldown/250msidle restore, mustnative restore
+  readback beforepeerOFF. Cannot call request itself actualHz or60FPS.
+
+### 0090 DIAGNOSTIC PHONE STARTING; 0089 ended, stock boost STILL OFF
+
+- Source700f35f73fa7db62c320e55d38724ef481ae82c5/fullCI40649721686/
+  job122686706780 PASSED. Kernel0090SHA
+ 7a186d00ae91d441e1f7445c7c5d2f60e0c2b28703be0627f04407280f65fbb4
+  exactsource/profile/ZIPCRC/SHA verified. All4actualnativeEFI/XNU models99
+  checksPASS25/27/23/24,37.856/37.677/37.724/37.688s. Original81FW/fullreal
+  EDK2GetInfoDecodePASS. No nativechanges after700; no moreCI needed.
+- CURRENT0090/phone-all-stage-0090-0001 RAM UEFIboot sent afterindependent
+  actualgetvarpolaris; inspectboot.json/state beforeunique kernelstart.
+  Use0090/control-phone.py7 4 onlyafterthatboot. No repeatedboot. Intended
+  payload606byteexact/fulltouch_lattrace/OSM1(ROobserver)/stockpolicyFalse,
+  sameGPUbundle/GEMWC1/surfaceWC0/fourbig. ActualUI/LOADRO/STAGE notyetknown.
+- Old0089 ended via realnativeVFS0busy0/all600/500/400 actualPSCI_OFF and
+  RAM_DRAINED cookie3961480459/seq1/mode2 thengatedreset beforeactualFASTBOOT.
+  No rawfallback/key/Android/storagewrite. Don'tuseold0089control anymore.
+- Sameboot0089 steadysecond20inputs381..740 completedwith566fullframes,
+  median37.026ms/mean37.587/19.283logicalrate,19.411panelcopies/s. Sustained
+  slownessnotcoldload/first600frameglerrorcheck: after600still36.4ms median.
+  physical-steady-scroll-latency-proof.json bindsinputs+fullnativebrackets.
+- IMPORTANTmeasurementlimit: USBswipe currently16MOVEsteps withduration/16
+  sleeps PLUSper-stepUSB/ACK overhead; actualfirst700ms-request took1.082s.
+  Thus~20deliveredFPS inthese testcontacts isNOThardwarethroughput ceiling.
+  First20fixed1s afterreleaseUP380 (noinjectedcontact)23completeframes,
+  median37.593ms/beginperiod41.957ms; secondUP740 fixed1s22frames,
+  median38.328ms/beginperiod42.951ms. Bothindependentanimation stillfar>16.7.
+  Do notlabelall13ms between-framegapdriver/scheduler delay: inputspacing
+  andUIpacingalso contribute. Firstwholewarmtail13.996fps included974ms idle
+  aftersettle, keptaswidewindow only; usepredeclaredfixed1s comparison, not
+  cherry-pickedgapthreshold. Active-per-contact375frames alsoall>16.7ms.
+- NEXT0090: nativeROLOAD duringactiveGPU plus ALL submit phases, realUI and
+  one20warm/one20measured onlyifneededforsteadywarmmatch; fixed1s postrelease
+  benchmark independentofUSBmovecadence. Do not invent60/scanout/CPUbusy.
+  Firstfindcache/core/validation costs, thenchoose target fix/stockA/B.
+
 ### 0090 DIAGNOSTIC SOURCE READY: all-submit phases + UI-load RO OSM
 
 - Humanpriority remainsdiagnosisBEFOREboost. No0090phonebootyet. CURRENT

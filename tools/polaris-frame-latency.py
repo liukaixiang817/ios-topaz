@@ -11,7 +11,11 @@ METHOD=re.compile(r'POLARIS GPU METHOD PERF: (.*)')
 PHASE=re.compile(r'POLARIS GPU STAGE PERF: (.*)')
 DETAIL=re.compile(r'redwood-gl: frame (\d+): .*; (\d+) us \((\d+) handing on, (\d+) waiting, (\d+) copying out\), (\d+) before it')
 def fields(text):
- return {k:int(v) if v.isdecimal() else v for k,v in re.findall(r'(\w+)=([^\s]+)',text)}
+ result={}
+ for k,v in re.findall(r'(\w+)=([^\s]+)',text):
+  if k in result:raise ValueError('interleaved diagnostic record has duplicate field: '+k)
+  result[k]=int(v) if v.isdecimal() else v
+ return result
 def stats(values):
  if not values:return None
  order=sorted(values)
@@ -80,6 +84,10 @@ def analyze(text,start,end):
  phase_totals={};phase_frame_completions=0
  core_keys=['prior_us','ring_us','execute_idle_us','visibility_us','halt_us','postcheck_us']
  for phase in phases:
+  required=['submits','rejected','core_missing','validation_us','cache_pre_us',
+   'submit_us','cache_post_us','prebytes','postbytes','WCpre','WCpost',*core_keys]
+  if any(not isinstance(phase.get(k),int) for k in required):
+   raise ValueError('truncated or malformed native stage record; no complete decomposition claim')
   matched=[m for m in methods if m['kind']=='submit' and m['end_us']==phase['end_us']]
   if len(matched)!=1 or phase['submits']!=matched[0]['calls']-matched[0]['errors']:
    raise ValueError('full-stage and native method successful submission counts differ')

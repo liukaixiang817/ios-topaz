@@ -30,4 +30,10 @@ class FullFrameTrace(unittest.TestCase):
    with self.assertRaises(ValueError):m.analyze(self.trace()+bad,1000000,5000000)
  def test_sparse_only_never_claims_whole_rate(self):
   with self.assertRaises(ValueError):m.analyze('redwood-gl: frame20',0,1000000)
+ def test_truncated_and_interleaved_stage_records_fail_explicitly(self):
+  short='\nPOLARIS GPU STAGE PERF: end_us=3000000 window_us=2000000 submits=100 rejected=0 core_missing=0 validation_us=50000 cache_pre_us=100000 submit_us=200000 cache_post_us=50000 prior_us=5000 ring_us=5000 execute_idle_us=150000 visibility_us=5000 halt_us=5000 p'
+  with self.assertRaisesRegex(ValueError,'truncated or malformed'):
+   m.analyze(self.trace()+short,1000000,5000000)
+  with self.assertRaisesRegex(ValueError,'duplicate field'):
+   m.analyze(self.trace()+short+'POLARIS OSM LOAD RO: end_us=3000010',1000000,5000000)
 if __name__=='__main__':unittest.main()
