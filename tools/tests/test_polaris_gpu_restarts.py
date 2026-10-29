@@ -67,7 +67,7 @@ int main(void){a630_access_begin(1,3,0x8000);assert(messages==1&&(a630_progress_
     def test_real_wrapper_skips_acceptance_and_injection_after_first_desktop_attempt(self):
         text=(ROOT/'userland/gpu/polaris-bbd-wrapper.c').read_text()
         code=''.join(function(text,n) for n in ['static uint64_t test_milliseconds(', 'static void test_notice(', 'static int run_acceptance('])+function(text,'int main(').replace('int main(','static int wrapper_main(')
-        run(HEADER+r'''
+        run(HEADER+'#include "'+str(ROOT/'tools/polaris-compositor-clock.h')+'"\n'+r'''
 #include <stdint.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -85,11 +85,12 @@ typedef int io_service_t;typedef void*CFTypeRef;
 #define kCFBooleanTrue ((void*)1)
 #define STDERR_FILENO 2
 static unsigned attempted,spawned,executed;
+static const char *bootargs="polarisgl=1";
 static int open_(const char*p,int f){assert(!strcmp(p,"/dev/console")&&f==O_WRONLY);return -1;}
 #define open open_
 static int dup2(int a,int b){(void)a;(void)b;return 0;}
 static int close(int fd){(void)fd;return 0;}
-static int sysctlbyname(const char*n,void*out,size_t*b,void*in,size_t bytes){assert(!strcmp(n,"kern.bootargs")&&*b>=12&&!in&&!bytes);strcpy(out,"polarisgl=1");return 0;}
+static int sysctlbyname(const char*n,void*out,size_t*b,void*in,size_t bytes){assert(!strcmp(n,"kern.bootargs")&&*b>strlen(bootargs)&&!in&&!bytes);strcpy(out,bootargs);return 0;}
 static void*IOServiceMatching(const char*n){assert(!strcmp(n,"PolarisGPU"));return (void*)2;}
 static int IOServiceGetMatchingService(int p,void*m){assert(!p&&m==(void*)2);return 3;}
 static void*IORegistryEntryCreateCFProperty(int s,const char*k,int a,int z){assert(s==3&&!strcmp(k,"PolarisDesktopAttempted")&&!a&&!z);return attempted?kCFBooleanTrue:0;}
@@ -109,5 +110,11 @@ extern char **environ;
 int main(void){char*argv[]={"wrapper",0};assert(wrapper_main(1,argv)==127&&spawned==1&&executed==1);
  assert(getenv("DYLD_INSERT_LIBRARIES")&&getenv("POLARIS_GL_TESTED"));
  attempted=1;assert(wrapper_main(1,argv)==127&&spawned==1&&executed==2);
- assert(!getenv("DYLD_INSERT_LIBRARIES")&&!getenv("POLARIS_GL_TESTED")&&!getenv("POLARIS_GPU_CONNECTION"));return 0;}
+ assert(!getenv("DYLD_INSERT_LIBRARIES")&&!getenv("POLARIS_GL_TESTED")&&!getenv("POLARIS_GPU_CONNECTION"));
+ bootargs="polarisgl=1 ca_vbl=1";assert(wrapper_main(1,argv)==127&&spawned==1&&executed==3);
+ assert(!getenv(PCC_ENV)&&!getenv(PCC_FORCE)); /* failed acceptance never enables the experiment */
+ attempted=0;bootargs="polarisgl=1 ca_vbl=0";assert(wrapper_main(1,argv)==127&&spawned==2&&executed==4);
+ assert(!strcmp(getenv(PCC_ENV),"0")&&!getenv(PCC_FORCE));unsetenv(PCC_ENV);
+ setenv(PCC_FORCE,"existing",1);bootargs="polarisgl=1 ca_vbl=1";
+ assert(wrapper_main(1,argv)==125&&spawned==3&&executed==4&&!strcmp(getenv(PCC_FORCE),"existing"));return 0;}
 ''')

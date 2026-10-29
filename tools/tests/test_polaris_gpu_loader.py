@@ -20,7 +20,7 @@ typedef unsigned io_service_t;typedef int kern_return_t;
 #define RTLD_NOW 2
 #define RTLD_LOCAL 4
 static unsigned desktop_connection,stage,error,methods,admitted,service,opens,open_error;
-static unsigned alias_set,env_error,load_error,symbol_error,mask,observed,hooks;
+static unsigned alias_set,env_error,load_error,symbol_error,mask,observed,hooks,clock_target_calls,clock_trial_mode;
 static void loader_note(unsigned s,unsigned e,unsigned m){stage=s;error=e;methods=m;}
 static int real_window_server(void){return admitted;}
 static void *IOServiceMatching(const char*n){assert(!strcmp(n,"PolarisGPU"));return (void*)1;}
@@ -43,7 +43,8 @@ static void crash_image(unsigned i,unsigned k,void*p){assert(i<4&&k<5&&p);}
 static void render_note(const struct pgpu_render_notice*p){(void)p;assert(0);}
 static void performance_note(const struct pgpu_perf_notice*p){(void)p;assert(0);}
 static void gl_hooks(void*h){assert(h==(void*)2);hooks++;}
-static void reset(void){stage=error=methods=opens=open_error=alias_set=env_error=load_error=symbol_error=observed=hooks=0;admitted=service=1;mask=255;}
+static int clock_target_prepare(void){clock_target_calls++;assert(hooks==1);return 0;}
+static void reset(void){stage=error=methods=opens=open_error=alias_set=env_error=load_error=symbol_error=observed=hooks=clock_target_calls=0;admitted=service=1;mask=255;}
 ''' + code + r'''
 int main(void){reset();admitted=0;polaris_gl_inject();assert(!opens&&!stage);
  reset();service=0;polaris_gl_inject();assert(!opens&&!stage);
@@ -52,7 +53,7 @@ int main(void){reset();admitted=0;polaris_gl_inject();assert(!opens&&!stage);
  reset();load_error=1;polaris_gl_inject();assert(stage==3&&error==2&&!hooks);
  reset();symbol_error=1;polaris_gl_inject();assert(stage==4&&error==3&&!hooks);
  reset();mask=63;polaris_gl_inject();assert(stage==4&&error==4&&methods==63&&!hooks);
- reset();polaris_gl_inject();assert(opens==1&&alias_set==1&&observed==1&&hooks==1&&stage==4&&!error&&methods==255);return 0;}
+ reset();assert(!clock_target_calls);polaris_gl_inject();assert(opens==1&&alias_set==1&&observed==1&&hooks==1&&stage==4&&!error&&methods==255&&clock_target_calls==1);return 0;}
 ''')
 
     def test_actual_path_guard_ignores_rewritten_program_name_and_refuses_other_images(self):

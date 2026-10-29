@@ -29,6 +29,22 @@ the full population. These are bounds, not individual scheduler-wait samples.
 Reducing logging alone therefore cannot account for the observed interframe gap.
 CPU-policy fallback and compositor/frame-clock timing remain separate concerns.
 
+0106 adds a default-off, scoped clock experiment. Exact `ca_vbl=0` observes
+the normal CoreAnimation decision; exact `ca_vbl=1` sets `CA_FORCE_TIMER=1`
+before executing the pixel-tested desktop process. No launchd-wide environment,
+GPU performance request, panel register or native VSYNC deadline changes.
+Duplicate settings, inherited clock variables and failed environment changes
+refuse the experimental exec. The existing no-token path stays unchanged.
+
+The injected observer checks the actual20H392 QuartzCore UUID, readable
+segment bounds, code signature and fixed `CADeviceUseVBL` state/once addresses.
+It reads them only after the existing >=1s performance callback. An uncompleted
+once token is explicitly uninitialized, not a zero-valued decision. The logged
+`window_frames` count belongs to that performance window, not a cumulative
+frame sequence. A selected CA path is neither physical refresh rate nor proof
+of60FPS; actual control/treatment UI, frame/copy timings and native shutdown
+must still pass before accepting this experiment.
+
 0054 has **physical native command/fence/4096-pixel/idle/halt proof, forced
 GMEM framebuffer-fetch/restore/pixel acceptance, and sustained real desktop
 GPU submissions**. The human confirmed submission counts rise with scrolling;

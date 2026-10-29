@@ -9,6 +9,7 @@
 #include <string.h>
 #include <objc/runtime.h>
 #include <mach/mach.h>
+#include <mach/mach_time.h>
 #include <mach/host_info.h>
 #include <stdint.h>
 #include <mach-o/dyld.h>
@@ -18,6 +19,7 @@
 #include <unistd.h>
 #include <time.h>
 #include "../../tools/polaris-gl-status.h"
+#include "../../tools/polaris-compositor-clock.h"
 extern const void *_dyld_get_shared_cache_range(size_t *);
 #define CACHE_BASE              0x180000000UL
 #define VT_GLES_CONTEXT         0x1d5b2f6e8UL   /* vtable for CA::OGL::GLESContext */
@@ -175,6 +177,59 @@ static void watch_for_faults(void)
 }
 
 static io_connect_t desktop_connection;
+static const uint64_t *clock_once;
+static const uint8_t *clock_choice;
+static mach_timebase_info_data_t clock_timebase;
+static unsigned clock_trial_mode;
+static int clock_target_prepare(void)
+{
+    clock_once=NULL;clock_choice=NULL;clock_trial_mode=0;
+    const char *mode=getenv(PCC_ENV);
+    if(!mode)return 0; /* original path: no new cache reads */
+    if(strcmp(mode,"0") && strcmp(mode,"1"))return -1;
+    clock_trial_mode=mode[0]=='1'?1:2;
+    size_t cache_bytes=0;const void *cache=_dyld_get_shared_cache_range(&cache_bytes);
+    if(!cache || (uintptr_t)cache<CACHE_BASE)return -2;
+    uint64_t base=(uintptr_t)cache,offset=base-CACHE_BASE;
+    const uint64_t targets[]={PCC_TEXT_BASE,PCC_BLOCK,PCC_STRING,PCC_STATE,PCC_ONCE};
+    const size_t spans[]={32,32,15,1,8};
+    for(unsigned i=0;i<5;i++)
+        if(targets[i]>UINT64_MAX-offset || !pcc_span(targets[i]+offset,spans[i],base,cache_bytes))return -3;
+    const struct mach_header_64 *header=NULL;
+    uint32_t images=_dyld_image_count();if(images>2048)return -4;
+    for(uint32_t i=0;i<images;i++) {
+        const char *name=_dyld_get_image_name(i);
+        if(name && !strcmp(name,"/System/Library/Frameworks/QuartzCore.framework/QuartzCore")) {
+            if(header)return -5;
+            header=(const void*)_dyld_get_image_header(i);
+        }
+    }
+    if((uintptr_t)header!=PCC_TEXT_BASE+offset || !header || header->sizeofcmds>65536 ||
+        !pcc_span((uintptr_t)header,32+header->sizeofcmds,base,cache_bytes) ||
+        !pcc_layout(header,32+header->sizeofcmds))return -6;
+    static const uint8_t code[32]={0xfd,0x7b,0xbf,0xa9,0xfd,0x03,0x00,0x91,
+        0x40,0x11,0x00,0xd0,0x00,0xd0,0x3e,0x91,0x8d,0x7f,0x61,0x95,
+        0x60,0x00,0x00,0xb4,0x62,0x94,0x07,0x94,0xe0,0x00,0x00,0x35};
+    if(memcmp((const void*)(uintptr_t)(PCC_BLOCK+offset),code,sizeof(code)) ||
+        memcmp((const void*)(uintptr_t)(PCC_STRING+offset),PCC_FORCE,sizeof(PCC_FORCE)))return -7;
+    if(mach_timebase_info(&clock_timebase)!=KERN_SUCCESS || !clock_timebase.numer || !clock_timebase.denom)return -8;
+    clock_once=(const void*)(uintptr_t)(PCC_ONCE+offset);
+    clock_choice=(const void*)(uintptr_t)(PCC_STATE+offset);
+    return 1;
+}
+static void clock_note(unsigned frames)
+{
+    if(!clock_once || !clock_choice)return;
+    uint64_t before=__atomic_load_n(clock_once,__ATOMIC_ACQUIRE);
+    unsigned choice=__atomic_load_n(clock_choice,__ATOMIC_ACQUIRE);
+    uint64_t after=__atomic_load_n(clock_once,__ATOMIC_ACQUIRE);
+    unsigned ready=before==UINT64_MAX && after==UINT64_MAX && choice<=1;
+    uint64_t ticks=mach_absolute_time();
+    if(ticks>UINT64_MAX/clock_timebase.numer)return;
+    uint64_t us=ticks*clock_timebase.numer/clock_timebase.denom/1000;
+    fprintf(stderr,"POLARIS CA CLOCK: us=%llu mode=%u ready=%u choice=%u window_frames=%u; choice not hardware Hz\n",
+        us,clock_trial_mode,ready,choice,frames);
+}
 static void performance_note(const struct pgpu_perf_notice *notice)
 {
     static mach_port_t host;
@@ -186,6 +241,7 @@ static void performance_note(const struct pgpu_perf_notice *notice)
     uint64_t now_us=(uint64_t)ts.tv_sec*1000000+(uint64_t)ts.tv_nsec/1000;
     if(last_us && now_us-last_us<1000000)return;
     last_us=now_us;
+    clock_note(notice->frames); /* existing >=1s observer, no extra IPC */
     if(!host)host=mach_host_self();
     struct pgpu_perf_notice copy=*notice;
     host_cpu_load_info_data_t load;mach_msg_type_number_t count=HOST_CPU_LOAD_INFO_COUNT;
@@ -254,5 +310,7 @@ __attribute__((constructor)) static void polaris_gl_inject(void)
         (void (*)(void (*)(const struct pgpu_perf_notice *)))dlsym(gl,"polaris_eagl_performance_observe");
     if(performance_observe)performance_observe(performance_note);
     gl_hooks(gl);
+    int clock=clock_target_prepare();
+    if(clock)fprintf(stderr,"POLARIS CA CLOCK TARGET: status=%d mode=%u; exact20H392 read-only\n",clock,clock_trial_mode);
     fprintf(stderr,"POLARIS GL: all8 EAGL methods installed; desktop submissions still require observation\n");
 }

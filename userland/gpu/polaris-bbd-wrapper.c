@@ -15,6 +15,7 @@
 #include <time.h>
 #include <errno.h>
 #include "../../tools/polaris-gl-status.h"
+#include "../../tools/polaris-compositor-clock.h"
 extern char **environ;
 extern int __mac_syscall(const char *,int,void *);
 static uint64_t test_milliseconds(void)
@@ -79,7 +80,7 @@ int main(int argc,char **argv)
         if(service)break;
         usleep(100000);
     }
-    int good=0;
+    int good=0,clock=0;
     if(service) {
         CFTypeRef attempted=IORegistryEntryCreateCFProperty(service,CFSTR("PolarisDesktopAttempted"),kCFAllocatorDefault,0);
         int already=attempted==kCFBooleanTrue;
@@ -91,6 +92,14 @@ int main(int argc,char **argv)
         good=run_acceptance();
     }
 launch:
+    /* Set before exec, not after QuartzCore may have cached its decision.
+     * Scope is this tested window server only; no launchd-wide environment. */
+    clock=pcc_environment(args,sizeof(args),good && strstr(args,"polarisgl=1"),
+        getenv,setenv,unsetenv);
+    if(clock || pcc_request(args,sizeof(args)))
+        fprintf(stderr,"POLARIS CA CLOCK ENV: request=%d status=%d; no refresh-rate claim\n",
+            pcc_request(args,sizeof(args)),clock);
+    if(clock<0)return 125; /* never exec after an ambiguous/failed mutation */
     /* Only this process gets the bridge, after the actual GLSL+surface test.
      * No global launchd environment or other applications are modified. */
     if(good && strstr(args,"polarisgl=1")) {

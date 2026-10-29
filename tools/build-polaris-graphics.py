@@ -106,7 +106,10 @@ def build(args):
                         SOURCES / 'eagl_slots_20H392.txt', *[SOURCES / n for n in
                             ('polaris-inject.c', 'polaris-bbd-wrapper.c', 'polaris-gl-test.c', 'polaris-init.c')],
                         ROOT / 'tools/polaris-gl-status.h',ROOT / 'tools/polaris-performance.h',
-                        ROOT / 'tools/polaris-frame-tail.h']},
+                        ROOT / 'tools/polaris-frame-tail.h',ROOT / 'tools/polaris-compositor-clock.h']},
+                    compositor_clock_trial=dict(default_enabled=False,token='ca_vbl=0|1',
+                        scope='tested backboardd child environment only; runtime read-only choice observer',
+                        hardware_refresh_rate_changed=False),
                     frame_tail_diagnostic=dict(default_enabled=False,full_trace_token='touch_lat=2',
                         aggregate_trace_token='touch_lat=3',paired_frame_window=64,
                         GPU_submission_semantics_changed=False),

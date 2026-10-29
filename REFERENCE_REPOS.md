@@ -59,9 +59,9 @@ device requirements and user instructions govern operations.
 
 The HackiOS userland reference implements `ca_vbl=1` in its legacy `inject.c`
 by setting `CA_FORCE_TIMER` before CoreAnimation initializes. Our actual
-graphics builder compiles `polaris-inject.c`, which does not contain this
-option or those old window-server vtable hooks. Adding the legacy boot argument
-alone cannot activate that reference path. Do not copy its function addresses:
+graphics builder compiles `polaris-inject.c`; at0105 it contained neither this
+option nor those old window-server vtable hooks. Adding the legacy boot argument
+alone could not activate that reference path. Do not copy its function addresses:
 the current20H392 cache has different IOMFBDisplay/EAGLServer targets.
 
 Read-only inspection of our actual QuartzCore20H392 (UUID
@@ -72,6 +72,14 @@ measured the GL-library tail and pre-frame API work as small, separately
 validate compositor preparation, clock/callback timing and native display
 publication before choosing a clock-policy change. Keep GPU completion and
 memory-lifetime barriers intact.
+
+The independent0106 candidate implements the exact scoped `ca_vbl=0|1`
+environment choice in `polaris-bbd-wrapper.c`, after pixel acceptance and before
+exec, plus a read-only target-UUID/code/bounds-checked observer in the actual
+injector. Its fixed state/once addresses were independently decoded from the
+current20H392 block, store and separate load sites. It does not install the
+reference window-server hooks, alter native display deadlines or establish
+phone performance before a physical A/B trial.
 
 ## Polaris GPU cache performance correspondence (2026-10-28)
 

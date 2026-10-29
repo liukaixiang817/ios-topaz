@@ -34,6 +34,51 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0106 default-OFF scoped CA clock candidate READY offline; phone actual FASTBOOT
+
+- CURRENTPHONEonlyreadonly0106query01:02UTC thenfreshrecoveryRAM auditENDED:
+  fresh-preflight0001 wholeoriginal16GiBSHA/182map/8MiBmarker/rawowner/GPT/
+  critical/ESP/header unchanged, nojournalreplay/repair/write; actualumount+
+  independentexpectedFASTBOOT verified. No0106iOSboot/imageyet/noUSBtransaction.
+  Don'tuseold0105controller/boot/start. NoAndroid/rawreset/physicalkeys/writes.
+- NewdefaultOFF exactca_vbl0|1 inactualpixel-testedbbdwrapperBEFOREexec,
+  scopedCA_FORCE_TIMER env onlyfortesteddesktop; inheritedvars/duplicatearg/
+  failedmutation refusetrialexec, rollbackchecked. Noargpathunchanged. Only
+  injection+wrapperbinarieschangedvs0105; EAGL/Mesa/pixeltest/initFOURbyteidentical.
+  Finalgraphics-clock0002 bundle865407ee5b402fe690c04f5888ee6758a29f6ef3eca639019ac89dfba0f3371f.
+- Actualpolaris-inject readonlyobserverguard currentQuartzCore20H392UUID/
+  readableMacho spans/codeprefix/string, oncePCC_ONCE1e1df6dd0==UINT64_MAX
+  before/afterreadingchoice1e1df65d8; no frameworkcall/pointerpatch/statewrite.
+  Existing>=1s performancecallback only, window_frames isWINDOWcount not
+  cumulativeframeID. Independentactual-target-clock-ABI-proof decodesseparate
+  blockinvoke/store/load/once addresses fromownunchangedQuartzCoreSHAe54c3e...
+  runtimechoiceandFPS NOTyetobserved. Don'tcopyoldinjectvtableaddresses.
+-38localASan/realPOSIXenvironment/rollback/strictclockparser/actualconstructor/
+  restart/loader/lifetime/tail/bundlechecksPASS16.889s; actualXcode27compiler
+  withfulliOS16.5SDK bothwrapper/injectTUsPASS. Firsthostfakefunctionmacros
+  shadowedlocalvarnames, retainedfailure0001; correctedharnessnotproductcode.
+- NewactualEFI/XNU v0002userPCCheader+tail actualC/4VMchildren/dirtywriter/
+  input/SGI/nativeVFS0busy0+allpeerOFForstalecookieindependentrefusal: success
+ 42checks38.177s andstale41checks38.152sPASS; actual-native-user-clock-proof
+  hashes83checks/currentheader/ELF/fixture/native logs. SYNTHETICABI/times/
+  envcallbacks, notQuartzCore/GPUemulation orphysicalperformance.
+- ImportantFAILEDv0001fixturepreserved: wrongly!seed rejectedLEGITconsoleFD0
+  beforefork, SMPSTRESSFAILthen15msIRQwatchdog. Exactrun0002retryabortedafter
+  causeidentified, neithercountspositive. Correctedfixturev0002 acceptsFD0/
+ 1/9/UINTMAX inhostexactCregression. Firsthostcompilemissingfreestandingstring
+  include causedFortify macroerror; fixedincludeonly, header/guardunchanged.
+  Privateprover0001 expectedwrongliteraldirtywriter; correctedexactreal
+  QEMU_RAM_DIRTY_WRITER_READY marker, alloriginalchecksremainedTrue. No
+  kernelthreshold/sourcechange, noCIspent: same0104b7fa37ac/CI40782623053.
+- NEXTcommit/pushsource, strictpayload+original81FW/EDK2decodebinding new
+  userproof/graphics+freshRO audit. FIRSTphysicalca_vbl0control observesnormal
+  choice; onlyifactualchoice0 andpixels/UI/nativeclosurepass do samebinary
+  ca_vbl1 A/B. Bothretainfulltouch_lat2/CPU4/GPU4BW8/600s10s/CPU30s10s/
+  thermalguards/WC/cachedsurface/wake/keys/RAMCOW/ufsrw0. DropONLYkeepsyms1
+  diagnosticretentionforwireargspace inBOTHABcandidates, keepnativepolicies.
+  Don'tclaimsourceoption orACK meansCAactuallyselected/physical60Hz. Need
+  actualCLOCKready1samples+typenotify5+fullframes/panel/UI/nativeactualFB.
+
 ### 0105 physical tail/GL-gap attribution COMPLETE; actual phone FASTBOOT
 
 - CURRENTPHONE0105 ALLtrialsENDED. Nativeend + independentactualexpected
