@@ -19,6 +19,7 @@ struct polaris_wled_read_bus {
     uint64_t (*now_us)(void *);
     uint32_t version,map[2],owner[2],apid[2],fault,reads;
     uint32_t last_bank,last_reg,last_status,last_polls;
+    uint32_t changed_byte_plus_one;uint8_t changed_first,changed_after;
     bool initialized;
 };
 struct polaris_wled_snapshot {
@@ -105,7 +106,10 @@ static inline bool polaris_wled_inventory(struct polaris_wled_read_bus *b,
     struct polaris_wled_snapshot first={0},after={0};
     if(!pw_collect(b,&first)||!pw_collect(b,&after))return false;
     const uint8_t *a=(const uint8_t *)&first,*c=(const uint8_t *)&after;
-    for(unsigned n=0;n<sizeof(first);n++)if(a[n]!=c[n])return pw_error(b,PW_E_CHANGED);
+    for(unsigned n=0;n<sizeof(first);n++)if(a[n]!=c[n]) {
+        b->changed_byte_plus_one=n+1;b->changed_first=a[n];b->changed_after=c[n];
+        return pw_error(b,PW_E_CHANGED);
+    }
     *out=first;return true; /* Optimistic metadata snapshot, NOT a remote lock. */
 }
 _Static_assert(sizeof(struct polaris_wled_snapshot)==66,"bounded WLED register inventory v2");

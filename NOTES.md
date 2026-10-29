@@ -34,6 +34,72 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0108 latest actual state after0915 interruption / user FASTBOOT restored
+
+- Fresh pre-XNU-audit0915 ONE known recoveryRAM command was accepted, but no ADB
+  recovery appeared within90s. No mount/read/write command ran afterward. Actual
+  read-only USB inventory09:23 showed no devices, no ADB, directed FASTBOOT timed
+  out. Asked once because no remote reset channel existed. Human now replied
+  "已到FASTBOOT并连接"; independent actual expectedPolaris query reconfirmed.
+  Do NOT replay the recovery boot or wait for its ended session96133.
+- The prior05:48 whole16GiB/root182map/marker/GPT/critical/ESP RO review remains
+  HISTORICAL, not fresh iOS/owned-write admission. Outer journal pending metadata
+  stays unchanged by us; no journal replay/repair/format/storage write occurred.
+- Scope clarification: next candidate is ONLY pre-XNU WLED electrical diagnostic,
+  not iOS/root access. CPU_ON compiled OUT; disk_guid/chain/app/owned modes all
+  rejected, no userdata filesystem or block API reachable. All payload is staged
+  in RAM. An unrelated full-root reread is not required to preserve data for this
+  narrowly no-root-access trial. Keep historical RO proof+ownDT+live WLED identity,
+  exact source/models/81FW/codec and fresh product query. This clarification does
+  NOT relax full fresh root/map/GPT/ESP audit before future iOS/installation.
+  Ordinary iOS packager explicitly rejects this mode even if flags are promoted.
+- New source diagnostic fields are exact changed byte/first/after plus explicit
+  PREPARE_WRITES_ISSUED=0; double-snapshot refusal NOT weakened. Combined23 tests
+ 8.961s, actual standalone EFI0004 twelve checks5.824s, complete resident cycle
+  success+timeout-run0003 seventeen+seventeen checks passed serially. All models
+  ended; no native code/kernel CI changed. physical-cycle-driver0002 rebuilt;
+  phone-power-cycle0002 image/actualEDK2 codec currently being prepared, NOT booted.
+  Next ONE authorized no-OS RAM cycle after frozen admission. Do not reuse0001.
+- Current completed commits c87614e/ad89348 pending push; uncommitted diagnostic/
+  prestart recovery changes to commit now. Current graphics865407ee.../ca_vbl1 and
+  native0104b7fa37ac unchanged. Actual lock-screen WLED bridge/sound/Wi-Fi pending.
+
+### 0108 physical cycle PREPARATION REFUSED; automatic FASTBOOT recovery COMPLETE
+
+- The0108 phone-power-cycle0001 ONE original-UEFI RAM boot05:56UTC and ONE cycle
+  request05:58UTC ENDED. Actual firmware PREPARE_ERROR7=PW_E_CHANGED: the two
+  initial readonly snapshots differed, BEFORE pwp_init/request/any power WRITE.
+  APstage0, no CPU_ON or OS execution. No OFF/readback/restore success is claimed.
+  First capture refused correctly. Raw failed capture and all original artifacts
+  retained. Existing firmware only allows reset when actual issued==0 or restored.
+- New narrowly scoped recover-prestart-fastboot accepts only no-OS preparation
+  refusal, not uncertain/started cycle. Firmware independently enforced the
+  actual reset gate. Recovery ACK06:01:57 then independent actual expectedPolaris
+  FASTBOOT06:02:44 verified; no manual keys/Android/raw fallback/storage write.
+  This is inferred no-writer preparation-path evidence, not an observed write
+  counter in the old log (old build lacked that field). No optical power proof.
+- CURRENT after intentional interruption: actual expectedPolaris FASTBOOT again
+  verified09:18UTC, not assumed from old ACK. No active iOS/old cycle/USB/model at
+  that point. Do NOT replay old phone-power-cycle0001 or old controllers. Fresh
+  pre-XNU RO audit0915 is ACTIVE in known recoveryRAM; inspect its result/session
+  before any USB command or boot. It compares the explicitly reviewed05:48
+  header/free counters, never replays the pending outer journal or mounts RW.
+- UNCOMMITTED diagnostic extension records exact changed snapshot byte offset+
+  first/second bytes and explicit zero preparation write count, WITHOUT relaxing
+  double-snapshot equality. Host refusal recovery has negative tests against
+  issued commands/OS/started cycle/mock/stale records. Combined23 ASan/parser/
+  admission tests8.961s PASS. New source-bound EFI/core models are rebuilding
+  serially as actual-EFI-power-model0004/cycle-success+timeout-run0003; inspect
+  results before admission. First refusal's changed byte remains UNKNOWN because
+  the old image had no diagnostic; do not guess its cause or ignore the mismatch.
+- Existing completed commits c87614e/ad89348 need push verification; current
+  native kernel/graphics unchanged, no new kernel CI. New physical candidate
+  requires those source-bound models, actual EDK2 decode/81originalFW, fresh RO
+  pre-XNU-only scope, unique boot, actual expected product check. Current dirty
+  outer journal still explicitly grants NO iOS/root-write/installation admission.
+  Backlight native lock-screen handshake, actual dark/bright human test, sound
+  and Wi-Fi still pending. Preserve latest ca_vbl1 improvement and all data.
+
 ### 0108 bounded WLED cycle READY offline; changed outer FS preserved
 
 - Latest human reconfirmed true LCD backlight OFF then sound/Wi-Fi, preserving

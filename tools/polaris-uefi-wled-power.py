@@ -58,9 +58,33 @@ def parse(text):
                 OS_started=False,fields=fields)
 
 
+def prestart_refusal(text):
+    """Only recover a failed preparation that never armed a writer.
+
+    The current image independently gates reset on its actual issued count.
+    This is not a bypass for a cycle failure, uncertain command or running OS.
+    """
+    pairs = re.findall(r'(?m)^(WLED_[A-Z_0-9]+)=0x([0-9a-f]{16})\r?$',text)
+    f = {}
+    for k,v in pairs:
+        if k in f:
+            raise ValueError('duplicate preparation record')
+        f[k] = int(v,16)
+    if (f.get('WLED_POWER_PREPARE_ERROR') not in (1,2,3,4,5,6,7,32,33) or
+            f.get('WLED_KERNEL_AP_STAGE') != 0 or not f.get('WLED_AP_STAGE_ADDRESS') or
+            'WLED_POWER_CYCLE_ARMED: NO_CPU_ON' not in text or
+            any(x in text for x in ('WLED_POWER_OFF_US=','WLED_POWER_CYCLE_ERROR=',
+                                    'WLED_POWER_MOCK_BACKEND=','Darwin Kernel Version','KERNEL_PSCI_STATUS='))):
+        raise ValueError('not a proven no-writer pre-XNU preparation refusal')
+    if f.get('WLED_POWER_WRITES_ISSUED',0) != 0:
+        raise ValueError('a PMIC command was issued; refusal recovery forbidden')
+    return dict(preparation_refused_before_writer=True,firmware_reset_gate_still_required=True,
+                electrical_module_off_and_restore_readbacks=False,physical_darkness_proven=False,fields=f)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument('action',choices=('state','cycle','capture','reboot-fastboot'))
+    ap.add_argument('action',choices=('state','cycle','capture','reboot-fastboot','recover-prestart-fastboot'))
     for name in ('libusb','boot-record','image-manifest','driver-manifest','output'):
         ap.add_argument('--'+name,type=Path,required=True)
     ap.add_argument('--payload',type=Path)
@@ -88,13 +112,14 @@ def main():
                 raise ValueError('cycle may only be started once from waiting-payload')
             protocol.stage_payload(raw,d);protocol.boot()
             record['cycle_request_acknowledged'] = True
-        if a.action in ('capture','reboot-fastboot'):
+        if a.action in ('capture','reboot-fastboot','recover-prestart-fastboot'):
             protocol.stage('logs');data = protocol.upload();p = a.output/'firmware.log'
             p.write_bytes(data);p.chmod(0o600);record['firmware_log_sha256'] = sha(p)
-            record['cycle'] = parse(data.decode(errors='replace'))
+            reader = prestart_refusal if a.action=='recover-prestart-fastboot' else parse
+            record['cycle'] = reader(data.decode(errors='replace'))
             if protocol.state()!='prepared':
                 raise ValueError('cycle did not stay in pre-XNU hold')
-        if a.action=='reboot-fastboot':
+        if a.action in ('reboot-fastboot','recover-prestart-fastboot'):
             protocol.reboot(True);record['reset_command_acknowledged'] = True
             record['actual_FASTBOOT_verified'] = False
         else:

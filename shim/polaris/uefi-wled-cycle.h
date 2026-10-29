@@ -115,6 +115,10 @@ static void wled_cycle_begin(void)
        !pwp_init(&cycle_power,&cycle_bus,&saved,false)||
        !pwp_request(&cycle_power,1,false)) {
         if(!cycle_power.error)pwp_fail(&cycle_power,cycle_bus.fault);
+        report("WLED_POWER_PREPARE_WRITES_ISSUED=",cycle_power.issued);
+        report("WLED_POWER_CHANGED_BYTE=",((uint64_t)cycle_bus.changed_byte_plus_one<<32)|
+            ((uint32_t)cycle_bus.changed_first<<8)|cycle_bus.changed_after);
+        report("WLED_POWER_PREPARE_READS=",cycle_bus.reads);
         cycle_done=1;
     }
     if(!cycle_power.error) {

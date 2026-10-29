@@ -49,6 +49,26 @@ def cycle_log():
 
 
 class PowerScope(unittest.TestCase):
+    def test_prepare_refusal_can_recover_but_issued_or_running_cycle_cannot(self):
+        text = ('WLED_POWER_PREPARE_ERROR=0x0000000000000007\r\n'
+                'WLED_KERNEL_AP_STAGE=0x0000000000000000\r\n'
+                'WLED_AP_STAGE_ADDRESS=0x0000000012345000\r\n'
+                'WLED_POWER_CYCLE_ARMED: NO_CPU_ON\r\n')
+        result = host.prestart_refusal(text)
+        self.assertTrue(result['preparation_refused_before_writer'])
+        self.assertTrue(result['firmware_reset_gate_still_required'])
+        self.assertFalse(result['electrical_module_off_and_restore_readbacks'])
+        for suffix in ('WLED_POWER_WRITES_ISSUED=0x0000000000000001\n',
+                       'WLED_POWER_OFF_US=0x0000000000000001\n',
+                       'WLED_POWER_CYCLE_ERROR=0x0000000000000024\n',
+                       'WLED_POWER_MOCK_BACKEND=0x0000000000000001\n',
+                       'Darwin Kernel Version','KERNEL_PSCI_STATUS=0'):
+            with self.subTest(suffix=suffix),self.assertRaises(ValueError):
+                host.prestart_refusal(text+suffix)
+        for before,after in [('0000000000000007','0000000000000000'),
+                             ('WLED_KERNEL_AP_STAGE=0x0000000000000000','WLED_KERNEL_AP_STAGE=0x0000000000000001')]:
+            with self.assertRaises(ValueError):host.prestart_refusal(text.replace(before,after))
+
     def test_explicit_cycle_success_and_uncertain_are_required(self):
         d,m = cycle_fixture();image.admit(d,m)
         for key,value in [('PMIC_write_api',False),('kernel_handoff',True),('WLED_readonly_inventory_only',True),

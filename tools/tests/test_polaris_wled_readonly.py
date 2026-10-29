@@ -45,6 +45,7 @@ int main(void){struct fake f;struct polaris_wled_read_bus b;struct polaris_wled_
  for(unsigned n=1;n<=32;n++){init(&f,&b);s=sentinel;f.fail_command=n;assert(!polaris_wled_inventory(&b,&s)&&b.fault==PW_E_RESPONSE&&f.commands==n);
   assert(!memcmp(&s,&sentinel,sizeof(s)));assert(!polaris_wled_inventory(&b,&s)&&f.commands==n);}
  init(&f,&b);s=sentinel;f.mutate_after=17;assert(!polaris_wled_inventory(&b,&s)&&b.fault==PW_E_CHANGED);assert(!memcmp(&s,&sentinel,sizeof(s)));
+ assert(b.changed_byte_plus_one==19&&b.changed_first==((0x46*7)&255)&&b.changed_after==(((0x46*7)&255)^0x80));
  init(&f,&b);s=sentinel;f.mutate_map=3;assert(!polaris_wled_inventory(&b,&s)&&b.fault==PW_E_MAPPING&&f.commands==3);assert(!memcmp(&s,&sentinel,sizeof(s)));return 0;}
 ''')
     def test_bounds_versions_owner_changes_and_clock_failures_stop_before_more_commands(self):
