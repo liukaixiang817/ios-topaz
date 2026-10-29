@@ -34,6 +34,100 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0107 HUMAN PRIORITY true backlight off, then sound/Wi-Fi; readonly hold READY
+
+- Latesthuman: screennowbasically60Hz, nextcompleteLCDbacklightOFF(notblack),
+  soundandWi-Fi. Preserveimprovedgraphics; don'tkeeprepeatingperformanceboots.
+  HumanfeedbackisNOTformal sustained60/physicalscanoutproof. Persistentroot/
+  originalMindowsmenu/fulleriOS16.5stillpending, notcancelled.
+- CURRENT0106phone-clock-vbl-0106-0001RUNNING HOME; uniqueRAM01:58:05UTC/
+  kernel01:58:53..01:59:23. Realvblcapture0002-GUI-waitactuallyHOME3app3dock,
+  notlock; nohosttouchsentinthistreatment(userinspection), donotinventauto
+  unlock. ThreeGPUALL4096PASS/SMP4callbacks64remote50, CAENV1/1 TARGET1mode1
+  ready1choice1actual. Defaultcontrolchoice0/UI/nativeclosurealreadyproven.
+  Humannewtaskoverridesplanned40treatmentrolls; NOTcompletedperformanceA-B.
+  Only0106/control-phone-vbl.py; readonlycapturepending, nootherUSBuntilend.
+- New0107toolsstrictWLEDimageadmission+isolatedhostreader+rawrecordparser
+  ONLYpre-XNUreadhold, noOS/touch/PMICwriter.11localtestsPASS2.405s(boundary/
+  everytruncation/foreignowner/mock/unsafe-resetbinding/oldadmission), two
+  SERIALactualEFIholdcases12+12PASSwithactualguestAPstage/kernel-logzero;
+  fakePMICwordsclearlylabelled,nophysicalpowerclaim. Currentfirmwaresource
+  unchanged/newkernelCIunnecessary. PhysicalownDT/CPU1792payloadvalidated,
+  CPU_ONcompiledout. Original81FWpreserved;actualEDK2decodecurrentlypending.
+- Retainedprivatefailures: firstphysicalbuildusedQEMUcore7payloadandrefused
+  exactphysicalcoreintent; nextprivateassertexpectedhexliteralbutactualtoken
+  decimal1792. CorrectedprivatepayloadusesownADT/exact1792, noadmissionrelax.
+  FirstunittestmanualimportlackedtoolsPythonpath; fixedtestloaderonly. New
+  imageadmitphysicalaffinitycorrectly1792vsQEMU7, modelpayloadsintentionally
+  distincttreesbutactualsamekernel/source-bound, neverkernelhandoffevidence.
+- NEXTafterfinalcodec/sourcefreezeandreadonlyscopechecks: nativeendcurrent
+  iOS/savedlog/gatedreset/actualFASTBOOT, thenONEoriginalUEFIRAMWLEDhold,
+  onlyREAD28double-snapshotcommands, actualowner/revision/configinventory,
+  reportbothsuccess/refusal, thenUEFIresetandactualFASTBOOT. NoPMICwriteyet;
+  identity/permissions/controlsoftstart/OVP/PSMreviewrequiredbeforesetter.
+  ExistingfreshfullRO0106audit01:37UTC remainsvalid(controlledRAMonly).
+
+### 0106 CURRENTPHONE treatment RAM/start SENT, capture pending
+
+- Controlcompleted+actualFASTBOOT01:56UTC/physicalproofPASS. TreatmentONE
+  originalUEFIRAMsent01:58:05UTC, actualexpectedquerybefore; ONEkernelstart
+ 01:58:53..01:59:23 done,state_beforewaiting-payload/payloadvalidated/ACK/
+  AP-start-pending. Only0106/control-phone-vbl.pyboundphone-clock-vbl-0106-0001.
+  Actualcapturevbl0001PENDING, noGUI/choice1/60claimyet. DoNOTrepeatboot/start.
+- Same602BargsONLYca_vbl0->1 vscontrol, exactsame6binarybundle865407ee.../
+  kernelb7fa37ac/CI40782623053/DT/nativeguards. Original81FW/EDK2wholedecode/
+  frozenadmissionPASSbeforeboot, requiresactualcontrolchoice0+safeclosure.
+  NoAndroid/PMIC/storage/NVRAMwrites. CurrentfullRO0106audit01:37UTC.
+- Localprecheckmistypedstate_afterthenstate fields; actualsavedstate_before
+  waswaiting-payloadandcontrollerindependentlyverifiedbeforestage/boot. ONE
+  kernelcommandonly, noinvaliddeviceoperation; failureandreviewrecordretained.
+  No product/source/permission/guardrelaxation. Needactualcapture/pixels/choice1/
+  fullUI/40warmmeasured/nativeend+actualFASTBOOT. OrdinaryRAM30minlease.
+
+### 0106 physical control COMPLETE; actual FASTBOOT, treatment READY
+
+- CURRENTPHONE controlnativeended; independentactualexpectedPolarisFASTBOOT
+ 01:56:33.094718UTC. NoactiveiOS/USB/CI/model/scrollworker. DoNOTusecontrol
+  controller/replayboot/start. Fortyinputworker88352ENDED. NoAndroid/writes.
+- Newphysical-control-clock-and-native-restore-proof rehashes6viewedscreens:
+  lock/home3app3dock/fullsettledSettings/warm20/measured20/returnhome;42contacts
+  ACK0..740+home758,3GPUALL4096PASS/SMP4callbacks64remote48. ActualCA ENV2/2
+  TARGET1mode2 ready1choice0 throughout52contactwindowobservations.
+- Controlwarm905frames render14.718ms/gap2.5455ms; measured867 render15.084/
+  p9519.613/period18.778/gap2.9435ms. Inputpausesretained, NOTphysicalFPS/Hz.
+  NativeactualownHFSXunmount/VFS0busy0/GPU1BW4restorebeforeCPU0restore/
+ 600500400actualPSCI_OFF/coordinator700park/cookie10190870167seq1mode2phase3/
+  error0/RAM_DRAINED80000003. Fullsavedlogthengatedreset;actualFASTBOOTquery
+  independent, notACK. Allthermal/CPU/GPU/memorysafetyguardsunchanged.
+- Samebinaryca_vbl1treatment phone-clock-vbl-0106-0001 payload602B+original
+ 81FW/actualupstreamEDK2wholedecodeprepared. Strictboot-phone-vbl.pyrequires
+  successfulphysicalcontrolchoice0+closureproof andexactcmdlineonly0->1diff.
+  Only0106/control-phone-vbl.pyfortreatment, ONEboot/startNEXTafterfrozen
+  admission+actualexpectedquery. Samebundle865407ee.../kernelb7fa37ac/full
+  CI40782623053. FreshRO0106audit01:37UTC remainsvalid(controlledRAMonly).
+  No treatmentphonebootyet. Needactualchoice1/pixels/UI/same40/nativeclosure,
+  cannotclaim60fromflagorclockchoice. No newkernelCIneeded.
+
+### 0106 CURRENTPHONE control RUNNING Settings; bounded40 worker ACTIVE
+
+- ONEoriginalUEFI RAMboot01:44UTC/ONEkernelstart01:45:10..40 done. Actual
+  lock/control-capture0001, home3app3dock/capture0002, fullsettledSettings/
+  capture0004 viewed. ThreeGPUALL4096PASS/SMP4 callbacks64remote48.
+- NEWactualCLOCK ENV2/2 TARGET1mode2 ready1choice0 observed: defaultCApath
+  differsfromcandidate1. ThisisNOT60Hz/FPSproof. Only0106/control-phone-control.py
+  boundphone-clock-control-0106-0001. Bounded40worker88352ACTIVE, nootherUSB
+  untilended. Unlock/tapACK0..20, groupswarm20+measured20expected740.
+- LatestfullRO0106freshpreflight01:37:25UTC whole16GiB56.787s/182map/marker/
+  GPT/critical/ESP/headerunchanged; actualumount+independentFASTBOOT verified.
+  NoAndroid/rawfallback/physicalkeys/PMIC/storage/NVRAMwrites.
+- Source de2c082COMMITTED/PUSHED,38local+83actualuserVM/actualXcodeTUs/
+  original81FW/actualEDK2wholedecode/frozenadmissionPASS. Bundle865407ee...
+  onlyinject+wrapperchanged; EAGL/Mesa/pixel/initfourbyteidentical. Same0104
+  kernelb7fa37ac/CI40782623053, noCIspent. Args602Bremoveonlykeepsyms1 +
+  ca_vbl0, fulltouch_lat2/nativepoliciesunchanged. Afteranalysis/nativeend+
+  actualFASTBOOT, candidateca_vbl1samebinaryA-BallowedifcontrolUI/closurepass.
+  OrdinaryRAM30minlease; noold0105controller/replayboot/start.
+
 ### 0106 default-OFF scoped CA clock candidate READY offline; phone actual FASTBOOT
 
 - CURRENTPHONEonlyreadonly0106query01:02UTC thenfreshrecoveryRAM auditENDED:
