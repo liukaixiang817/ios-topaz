@@ -1,5 +1,23 @@
 # Polaris20H392 GPU integration
 
+0105 adds a **default-off wall-time diagnostic**, without changing rendering,
+GPU submission/completion, surface ownership or performance requests. Exact
+`touch_lat=2` retains the full frame trace and measures library tail, logging,
+observer callbacks and pre-first-draw GL API work; `touch_lat=3` keeps the same
+accounting but omits the per-frame `tl: g` write for a separate comparison.
+The existing `touch_lat=1` path remains available as the original control.
+
+Each per-process/per-context window closes64 consecutive frame intervals at
+the next actual frame begin. Six short records carry one matching identity;
+the host rejects missing parts, broken time partitions or discontinuous
+windows. Full-trace mode independently matches every original frame timestamp.
+Output cost belongs to the next closed interval and is never subtracted.
+Idle intervals remain in totals; the separately reported active subset uses
+an explicit100ms period bound. The final unclosed interval is not measured.
+Wall times include preemption: pre-frame API time is not pure CPU busy, and
+the remaining outside interval also includes caller work and scheduling.
+These counters establish neither physical scanout frequency nor60FPS.
+
 0054 has **physical native command/fence/4096-pixel/idle/halt proof, forced
 GMEM framebuffer-fetch/restore/pixel acceptance, and sustained real desktop
 GPU submissions**. The human confirmed submission counts rise with scrolling;

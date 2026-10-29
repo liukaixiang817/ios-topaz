@@ -72,6 +72,7 @@
 
 #include "redwood_gl.h"
 #include "../../tools/polaris-gl-status.h"
+#include "../../tools/polaris-frame-tail.h"
 
 /* ---- OpenGL ES: the types, the few names used here, the library's functions --------------------- */
 
@@ -137,6 +138,8 @@ struct eagl;
 static int eagl_tracing;                /* this frame's calls are written down (boot-arg gltrace=FIRST-LAST) */
 static int frame_lines;                 /* boot-arg glframes=1: a line for every frame (see frame_end()) */
 static int latency_lines;               /* boot-arg touch_lat=1: when every frame began and ended (see frame_end()) */
+static unsigned frame_tail_mode;        /* exact touch_lat=2 full trace, =3 aggregate trace; default OFF */
+static uint32_t frame_tail_contexts,frame_tail_context_overflow;
 static uint64_t slow_calls_us;          /* boot-arg glslow=US: a line for every call that takes longer (eagl_leave()) */
 static uint64_t call_began_us;          /* (when the call in progress began) */
 static uint64_t now_us(void);
@@ -305,6 +308,9 @@ struct eagl {
 	uint64_t upload_bytes, began, attaching, flushing;
     uint64_t hashing,uploading;
     struct pgpu_perf_window performance;
+    struct pgpu_frame_tail tail;
+    uint64_t tail_context;
+    uint32_t tail_fault_said;
 	/* everything so far */
 	unsigned frames, shaders, programs, errors, shared, refused;
 	uint64_t all_calls, all_draws, all_triangles, readback_us, wait_us, attach_us, flush_us, frame_us;
@@ -399,6 +405,8 @@ static void polaris_render_fault(unsigned kind,unsigned arg,unsigned slot)
 static void
 eagl_enter(struct eagl *e, unsigned offset)
 {
+    if(frame_tail_mode && e->tail.pending && !e->tail.active)
+        (void)pgpu_tail_api_enter(&e->tail,now_us());
 	if (current != e) {
 		if (!redwood_gl_make_current(e->gl)) {
 			say("redwood-gl: the context cannot be made this thread's\n");
@@ -440,6 +448,7 @@ eagl_leave(struct eagl *e, unsigned offset)
 			    e->in_frame ? "" : " (before its first draw)");
 		}
 	}
+    if(frame_tail_mode && e->tail.api_open)(void)pgpu_tail_api_leave(&e->tail,now_us());
 }
 
 /* An entry the library has no function for: say so, once an entry. */
@@ -957,6 +966,15 @@ frame_begin(struct eagl *e)
 	}
 	e->in_frame = true;
 	e->began = now_us();
+    if(frame_tail_mode) {
+        if(!e->tail_context && !__atomic_load_n(&frame_tail_context_overflow,__ATOMIC_RELAXED)) {
+            uint32_t next=__atomic_add_fetch(&frame_tail_contexts,1,__ATOMIC_RELAXED);
+            if(!next)__atomic_store_n(&frame_tail_context_overflow,1,__ATOMIC_RELAXED);
+            else e->tail_context=((uint64_t)(uint32_t)getpid()<<32)|next;
+        }
+        if(!e->tail_context)pgpu_tail_fail(&e->tail,PGT_OVERFLOW);
+        (void)pgpu_tail_begin(&e->tail,e->frames+1,e->began);
+    }
 	eagl_tracing = e->frames + 1 >= trace_first && e->frames + 1 <= trace_last;
 	if ((trace_at != 0 && e->began >= trace_at) || (trace_draws != 0 && e->last_draws == trace_draws) || trace_function_met) {
 		trace_left = trace_frames;      /* (once) */
@@ -1001,12 +1019,37 @@ frame_begin(struct eagl *e)
  * library has been waited for already.
  */
 static void frame_functions(struct eagl *e);
+static void polaris_tail_elapsed(struct eagl *e,uint64_t *sum,uint64_t began)
+{
+    uint64_t ended=now_us();
+    if(ended<began || !pgpu_tail_add(sum,ended-began))pgpu_tail_fail(&e->tail,PGT_CLOCK);
+}
+static void polaris_tail_emit(uint64_t id,unsigned mode,uint32_t sequence,
+    const struct pgpu_tail_window *w)
+{
+    /* Each record fits the native255-byte console limit. All six parts must
+     * match context/sequence/end_us. Report cost is in the NEXT sample. */
+    say("POLARIS GL TAIL HEAD: id=%llx q=%u end_us=%llu from_us=%llu n=%u first=%u last=%u mode=%u\n",
+        id,sequence,w->end_us,w->from_us,w->frames,w->first,w->last,mode);
+    say("POLARIS GL TAIL TOTAL: id=%llx q=%u end_us=%llu gap=%llu tail=%llu outside=%llu render=%llu maxgap=%llu\n",
+        id,sequence,w->end_us,w->gap,w->tail,w->outside,w->render,w->max_gap);
+    say("POLARIS GL TAIL WORK: id=%llx q=%u end_us=%llu log=%llu obs=%llu report=%llu maxtail=%llu maxobs=%llu\n",
+        id,sequence,w->end_us,w->log,w->observer,w->report,w->max_tail,w->max_observer);
+    say("POLARIS GL TAIL ACTIVE: id=%llx q=%u end_us=%llu n=%u idle=%u gap=%llu tail=%llu outside=%llu render=%llu over=%u\n",
+        id,sequence,w->end_us,w->active,w->frames-w->active,w->active_gap,w->active_tail,
+        w->active_outside,w->active_render,w->over_budget);
+    say("POLARIS GL TAIL ACTIVEWORK: id=%llx q=%u end_us=%llu log=%llu obs=%llu report=%llu\n",
+        id,sequence,w->end_us,w->active_log,w->active_observer,w->active_report);
+    say("POLARIS GL TAIL API: id=%llx q=%u end_us=%llu api=%llu active=%llu calls=%llu activecalls=%llu maxapi=%llu\n",
+        id,sequence,w->end_us,w->api,w->active_api,w->calls,w->active_calls,w->max_api);
+}
 static void
 frame_end(struct eagl *e, bool finished)
 {
 	static unsigned unfollowed;
 	uint64_t before, waited, after;
 	unsigned copied = 0, in_place = 0;
+    uint64_t tail_log=0,tail_observer=0,tail_report=0,tail_mark=0;
 
 	clear_now(e);
 	before = now_us();
@@ -1055,8 +1098,12 @@ frame_end(struct eagl *e, bool finished)
 	e->in_frame = false;
 	e->frames++;
     polaris_render.frames=e->frames;
+    if(frame_tail_mode)tail_mark=now_us();
     if(polaris_render_observer && (e->frames<=4 || !(e->frames%60)))
         polaris_render_observer(&polaris_render);
+    if(frame_tail_mode) {
+        polaris_tail_elapsed(e,&tail_observer,tail_mark);tail_mark=now_us();
+    }
 	if (latency_lines) {
 		/* "tl: g FRAME began US ended US DRAWS": microseconds of mach_absolute_time (tools/latency.py) */
 		say("tl: g %u began %llu ended %llu %u\n", e->frames, e->began, after, e->draws);
@@ -1083,6 +1130,7 @@ frame_end(struct eagl *e, bool finished)
 		say("redwood-gl: frame %u: %u draws, and none into an IOSurface that is known here (framebuffer %u, texture %u)\n",
 		    e->frames, e->draws, e->framebuffer, e->colour);
 	}
+    if(frame_tail_mode)polaris_tail_elapsed(e,&tail_log,tail_mark);
 	e->all_calls += e->calls;
 	e->all_draws += e->draws;
 	e->all_triangles += e->triangles;
@@ -1091,11 +1139,13 @@ frame_end(struct eagl *e, bool finished)
 	e->attach_us += e->attaching;
 	e->flush_us += e->flushing;
 	e->frame_us += after - e->began;
+    if(frame_tail_mode)tail_mark=now_us();
     if(polaris_performance_observer) {
         struct pgpu_perf_notice notice;
         if(pgpu_perf_add(&e->performance,e->began,after,waited-before,after-waited,
             e->uploading,e->hashing,&notice))polaris_performance_observer(&notice);
     }
+    if(frame_tail_mode)polaris_tail_elapsed(e,&tail_observer,tail_mark);
 	{
 		uint64_t cpu;
 		__asm__ volatile ("mrs %0, TPIDR_EL0" : "=r"(cpu));     /* the topaz kernel keeps the CPU number there */
@@ -1111,6 +1161,7 @@ frame_end(struct eagl *e, bool finished)
 	if (e->triangles > e->most_triangles) {
 		e->most_triangles = e->triangles;
 	}
+    if(frame_tail_mode)tail_mark=now_us();
 	if (e->frames <= 40 || e->frames % 20 == 0) {
 		say("redwood-gl: frame %u: %u GL calls, %u draws, %u triangles, %u clears; %u textures refilled from IOSurfaces "
 		    "(%llu KB); %u picture%s copied out, %u drawn in place; %llu us (%llu handing on, %llu waiting, %llu copying "
@@ -1122,6 +1173,7 @@ frame_end(struct eagl *e, bool finished)
 		summary(e);
 	}
 	census_report();
+    if(frame_tail_mode)polaris_tail_elapsed(e,&tail_log,tail_mark);
 	if (e->frames == 600 && e->errors == 0) {
 		check_errors = 0;
 	}
@@ -1129,6 +1181,19 @@ frame_end(struct eagl *e, bool finished)
 	e->calls = e->draws = e->triangles = e->uploads = e->clears = 0;
 	e->upload_bytes = e->attaching = e->flushing = 0;
     e->hashing=e->uploading=0;
+    if(frame_tail_mode) {
+        struct pgpu_tail_window notice;uint32_t sequence;
+        if(pgpu_tail_take(&e->tail,&notice,&sequence)) {
+            tail_mark=now_us();polaris_tail_emit(e->tail_context,frame_tail_mode,sequence,&notice);
+            polaris_tail_elapsed(e,&tail_report,tail_mark);
+            if(!pgpu_tail_add(&tail_log,tail_report))pgpu_tail_fail(&e->tail,PGT_OVERFLOW);
+        }
+        (void)pgpu_tail_end(&e->tail,e->frames,e->began,after,now_us(),tail_log,tail_observer,tail_report);
+        if(e->tail.fault && !e->tail_fault_said) {
+            e->tail_fault_said=1;
+            say("POLARIS GL TAIL FAULT: id=%llx error=%u; timing disabled, rendering unchanged\n",e->tail_context,e->tail.fault);
+        }
+    }
 }
 
 #ifndef GL_BLEND
@@ -2956,6 +3021,7 @@ static void
 my_glFinish(void *context)
 {
 	struct eagl *e = context;
+    unsigned prior=e->frames;
 
 	EAGL_ENTER(e, 0x2d0);
 	if (eagl_tracing) {
@@ -2965,6 +3031,7 @@ my_glFinish(void *context)
 	glFinish();
 	frame_end(e, true);
 	EAGL_LEAVE(e, 0x2d0);
+    if(frame_tail_mode && e->frames!=prior)(void)pgpu_tail_returned(&e->tail,e->frames,now_us());
 }
 
 static void
@@ -2972,6 +3039,7 @@ my_glFlush(void *context)
 {
 	struct eagl *e = context;
 	uint64_t began;
+    unsigned prior=e->frames;
 
 	EAGL_ENTER(e, 0x2d8);
 	if (eagl_tracing) {
@@ -2983,6 +3051,7 @@ my_glFlush(void *context)
 	e->flushing += now_us() - began;
 	frame_end(e, false);
 	EAGL_LEAVE(e, 0x2d8);
+    if(frame_tail_mode && e->frames!=prior)(void)pgpu_tail_returned(&e->tail,e->frames,now_us());
 }
 
 /* APPLE_fence: wait for one object to be done with. Everything is done with after glFinish. */
@@ -2990,6 +3059,7 @@ static void
 my_glFinishObjectAPPLE(void *context, GLenum object, GLint name)
 {
 	struct eagl *e = context;
+    unsigned prior=e->frames;
 
 	(void)object;
 	(void)name;
@@ -2998,6 +3068,7 @@ my_glFinishObjectAPPLE(void *context, GLenum object, GLint name)
 	glFinish();
 	frame_end(e, true);
 	EAGL_LEAVE(e, 0xeb8);
+    if(frame_tail_mode && e->frames!=prior)(void)pgpu_tail_returned(&e->tail,e->frames,now_us());
 }
 
 static void
@@ -3800,6 +3871,12 @@ install(void)
 		census_on = strstr(arguments, "glcensus=1") != NULL;
 		frame_lines = strstr(arguments, "glframes=1") != NULL;
 		latency_lines = strstr(arguments, "touch_lat=1") != NULL;
+        frame_tail_mode=pgpu_tail_mode(arguments);
+        if(frame_tail_mode) {
+            latency_lines=frame_tail_mode==2;
+            say("POLARIS GL TAIL MODE: mode=%u window=%u active_period_us=%u; wall times, not hardware Hz\n",
+                frame_tail_mode,PGPU_TAIL_WINDOW,PGPU_TAIL_ACTIVE_PERIOD_US);
+        }
 		if ((argument = strstr(arguments, "glslow=")) != NULL) {
 			slow_calls_us = strtoull(argument + 7, NULL, 10);
 		}
