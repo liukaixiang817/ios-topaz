@@ -34,6 +34,60 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0108 bounded WLED cycle READY offline; changed outer FS preserved
+
+- Latest human reconfirmed true LCD backlight OFF then sound/Wi-Fi, preserving
+  ca_vbl1 graphics. Native lock-screen handshake remains unfinished. No physical
+  WLED writer has run yet. CURRENT phone actual expected FASTBOOT after the
+  fresh RO review05:48UTC; no active iOS/recovery/USB/CI/model. Previous05:12
+  sandbox query timeout was NOT a hardware outage: elevated readonly query
+  succeeded05:19. No human action needed.
+- New uefi-wled-power.h fixed scope: exact own PMIC v5/APID253+254/EE0/map/revision/
+  configuration/brightness; every command rechecks complete live metadata.
+  Module46 bit7 OFF, OVP notification EN_CLR16 bit1, ON module, cooperative
+  >=10ms softstart, LATCHED_CLR14+EN_SET15 bit1 restore; actual hardware protection
+  thresholds/PSM/current/brightness/type/polarity/permissions untouched. Source
+  qpnp_wled_module_en+own irqchip reviewed. Sticky uncertainty/no retry and
+  independent restored readback before reset. At most one WRITE per poll.
+- New pre-XNU --wled-power-cycle-only is disjoint from readonly inventory and
+  ordinary iOS admission. One OFF/two-second hold/one restore, CPU_ON compiled
+  OUT; raw reset and RAM lease reject after any uncertain/not-restored write.
+  No arbitrary PMIC/OS/touch/storage command. Separate packager/host protocol
+  require real0108 RO inventory+ownDT and exact source-bound model outcomes.
+- 22 ASan/UBSan/parser/admission tests10.620s PASS (includes every initial byte
+  bit, each read failure, every write/status failure, stale sequences, map/owner/
+  clock/config, coalescing, softstart, no retry, truncated/duplicate records).
+  Actual standalone AArch64 EFI power model0003 passed12 checks5.625s with real
+  guest architectural softstart clock. Actual complete resident EFI cycle models
+  success-run0002 and timeout-run0002 passed17+17 checks8.883/6.750s, actual guest
+  APstage0/kernel-log0, four completed writes/restored reset vs one uncertain
+  write/zero completed/no reset. PMIC is explicit SOFTWARE fixture, NOT phone
+  power/darkness or native shutdown proof. Initial model import/label mismatch
+  and test helper warnings/missing OFF timestamp failures are retained.
+- physical-cycle-driver0001 compiled actual AArch64 EFI hardware path. New
+  phone-power-cycle0001 image preserves81 original firmware files and actual
+  upstream EDK2 whole27889352B decode. READY for final frozen admission/expected
+  product check then ONE authorized RAM cycle; no iOS kernel is allowed to run.
+  Do NOT replay old0107/0108readonly hold or old iOS controllers.
+- IMPORTANT fresh-preflight0001 refused before mount: outer userdata header
+  changed during the unobserved02:51..05:12 interval. Mount count35->37, free
+  blocks decreased10766, incompat RECOVER bit now set. No claim of cause/Android
+  boot proof. Current critical GPT/boot/recovery/abl/ESP unchanged. We did NOT
+  replay journal, repair, clear flags, mount RW, allocate, or write storage.
+- First pre-XNU-only-audit0001 then refused because identity includes changed
+  filesystem free/available counters. Separate explicit readonly review found
+  ONLY those counters differ; inode/generation/UUID/flags/link/extents unchanged.
+  Continuation pre-XNU-only-audit0002 kept same blockRO+ro,noload mount, whole
+  original16GiB SHA689a8cd1...56.561s/182map and whole8MiB marker pattern unchanged;
+  own metadata inode page unchanged, SB/GDT pages changed and retained. Actual
+  unmount/blockRO+ADB bootloader then independent expected FASTBOOT completed.
+  Outer header now0934b48080ed38a2e43964901178697f7978daec280c817ffb173194c84fa305.
+  This new audit admits ONLY pre-XNU WLED RAM trial, explicitly may_boot_iOS=false/
+  may_write_userdata=false. Do NOT replace old clean baseline/owned packets or
+  reuse it for installation. Review pending journal separately before any future
+  iOS/root-write admission; do not auto repair. All current changes are host/EFI
+  source only; existing0104 kernel and0106 graphics unchanged, no kernel CI spent.
+
 ### 0108 expanded physical WLED read inventory COMPLETE; writer next
 
 - Latest human reconfirms true LCD backlight OFF, then sound/Wi-Fi; preserve

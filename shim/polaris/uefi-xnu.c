@@ -108,6 +108,12 @@ static void invalidate(uint64_t address,uint64_t bytes)
 #endif
 #include "uefi-wled-inventory.h"
 #endif
+#if defined(EFI_XNU_WLED_POWER_CYCLE_ONLY)
+#if !EFI_XNU_BUTTONS_AVAILABLE || defined(EFI_XNU_DURABLE_GUARD) || defined(EFI_XNU_WLED_INVENTORY_ONLY)
+#error "WLED cycle requires its separate RAM-only pre-XNU scope"
+#endif
+#include "uefi-wled-cycle.h"
+#endif
 static int64_t psci(uint64_t function,uint64_t a,uint64_t b,uint64_t c)
 {
     register uint64_t x0 __asm__("x0")=function,x1 __asm__("x1")=a,x2 __asm__("x2")=b,x3 __asm__("x3")=c;
@@ -255,7 +261,14 @@ static void boot_kernel(void *context)
         load_state=3;report("BUTTONS_PRESTART_REFUSED=",1);return;
     }
 #endif
-#if defined(EFI_XNU_WLED_INVENTORY_ONLY)
+#if defined(EFI_XNU_WLED_POWER_CYCLE_ONLY)
+    load_state=3;
+    wled_cycle_begin();
+    report("WLED_POWER_PREPARE_ERROR=",cycle_power.error);
+    report("WLED_KERNEL_AP_STAGE=",polaris_efi_ap_state.stage);
+    report("WLED_AP_STAGE_ADDRESS=",(uintptr_t)&polaris_efi_ap_state.stage);
+    text("WLED_POWER_CYCLE_ARMED: NO_CPU_ON\r\n");
+#elif defined(EFI_XNU_WLED_INVENTORY_ONLY)
     /* Compile out CPU_ON entirely. Success and failure both remain in this
      * controlled pre-kernel RAM hold; raw FASTBOOT and RAM lease still work. */
     load_state=3;
@@ -384,6 +397,9 @@ static int shutdown_reset_ready(void *context,unsigned mode)
 static int prepare_reset(void *context,unsigned mode)
 {
     (void)context;if(mode!=1&&mode!=2)return 0;
+#if defined(EFI_XNU_WLED_POWER_CYCLE_ONLY)
+    if(!wled_cycle_reset_ready())return 0;
+#endif
 #if defined(EFI_XNU_DURABLE_GUARD)
     if(load_state>=4&&!shutdown_reset_ready(context,mode))return 0;
 #endif
@@ -496,6 +512,9 @@ static void host_activity(void *context)
 }
 static void idle_guard(void *context)
 {
+#if defined(EFI_XNU_WLED_POWER_CYCLE_ONLY)
+    wled_cycle_poll();
+#endif
 #if EFI_XNU_BUTTONS_AVAILABLE
     buttons_poll();
 #endif
@@ -639,12 +658,29 @@ static void test_monitor(void)
 #if EFI_XNU_BUTTONS_AVAILABLE
     unsigned keys_reported=0;
 #endif
+#if defined(EFI_XNU_WLED_POWER_CYCLE_ONLY)
+    unsigned cycle_reset_checked=0,cycle_final_checked=0;
+#endif
 #if defined(EFI_XNU_RAM_DRAIN_TEST)
     int stress_done=0;
 #endif
     volatile uint32_t *uart=(void*)(uintptr_t)UINT64_C(0x9000000);
     for(;;){
         uint64_t now;__asm__ volatile("mrs %0,cntvct_el0":"=r"(now));
+#if defined(EFI_XNU_WLED_POWER_CYCLE_ONLY)
+        wled_cycle_poll();
+        if(cycle_stage==1&&!cycle_reset_checked) {
+            cycle_reset_checked=1;
+            report("WLED_POWER_OFF_RESET_REFUSED=",!prepare_reset(0,1)&&!prepare_reset(0,2));
+        }
+        if(cycle_done&&!cycle_final_checked) {
+            cycle_final_checked=1;
+            report("WLED_POWER_FINAL_RESET_ALLOWED=",prepare_reset(0,1)&&prepare_reset(0,2));
+            report("WLED_POWER_FINAL_ERROR=",cycle_power.error);
+            report("WLED_POWER_FINAL_UNCERTAIN=",cycle_power.uncertain);
+            text("WLED_POWER_MODEL_HOLD: NO_CPU_ON\r\n");
+        }
+#endif
 #if EFI_XNU_BUTTONS_AVAILABLE
         buttons_poll();
 #endif
