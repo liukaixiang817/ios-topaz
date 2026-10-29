@@ -34,6 +34,78 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0107 PHYSICAL WLED readonly inventory COMPLETE; actual phone FASTBOOT
+
+- LATESTHUMAN: screenalreadybasically60Hz, nowtrueLCDbacklightoff(notblack),
+  thenSOUND/WIFI. Preserveactualca_vbl1improvement; don'trepeatperformanceboots.
+  HumanfeedbackNOTformal sustained60/physicalscanoutproof. Otherpersistentroot/
+  originalMindowsmenu/fulleriOS16.5goalsremainpendinglater.
+- CURRENTPHONEall0106and0107trialsENDED. IndependentactualexpectedPolaris
+  FASTBOOT 2026-10-29T02:25:04.841051+00:00; noactiveiOS/recovery/USB/CI/models/workers. DO NOTuseold
+  controller/replayboot/start/inventory. NoAndroid/physicalkeys/rawfallback/
+  PMIC/storage/NVRAMwrites. Candidatefullyreadythenreadonlyexpectedquery+
+  automaticauthorizedRAM, no repeatpermission. Completedsourcef93f149PUSHED.
+- Newphysical-readonly-WLED-inventory-and-FASTBOOT-proof.json independently
+  rehashescurrentdriver/allinputs/twoactualmodelresults/original81FW/actual
+  upstreamEDK2GetInfo+whole27886792Bdecode/boot/28READcommands/result/reset/
+  actualFASTBOOT. Uniquephone-readonly-hold0001RAMboot+inventoryrequest0001,
+  CPU_ONcompiledOUT, reportedAPstage0/noDarwin/noPSCION. Twoidentical63B
+  snapshots,28observerREAD/result0. Rawfirmwarelogpreserved, notmockproof.
+- ACTUALSPMIv5=50000000, CTRLAPID253 ownerEE0 map0103d800; SINK254 ownerEE0
+  map0103d900. Ctrlrevision=0000101703010300, sinkrevision=
+ 0000111701000101; littlebyteTYPE17/subCTRL10/SINK11.
+  DISPLAY44=00/MODULE_READY45=00/MODULE_ENABLE46=80 (don'tinventready0failure),
+  FAULT08=0/RT10=0, sink46..4b=034c00000ff0; fourstrings
+  config=80000000080280, brightness2047ALL. Original
+  realbacklightstillON. ThisisNOTwriterpermission/admission/offorlightproof.
+- Firstphysicalreadonlyimagepreserved81originalfirmwarefiles/BootShim/DTB/
+  SimpleInit, noWindows/default/NVRAM/ESP/GPTwrites. Hostonlystate/inventory/
+  capture/rebootfastboot, notOS/touch/generalPMICcommands. RealUEFIresetthen
+  independentfastbootquery, ACKnotusedasmodeproof.11localtests2.405s+two
+  SERIALactualEFI12+12checks6.750/6.693sPASS(fakePMICwordsexplicit), current
+  firmware/nativecodeunchanged/noCIspent. Noactiveworker/model.
+- 0106treatmentactualCAENV1/1 TARGET1mode1 ready1choice1, threeGPUALL4096/
+  SMP4 callbacks64remote50/viewedHOME3app3dock/userfeedbackbasic60 documented
+  physical-scoped-CA-choice-user-feedback-and-native-restore-proof.json.
+  NoHOSTtouch; vblcapture0002-GUI-waitactuallyHOME, notlock. Newhumanpriority
+  overridesplanned40treatmentrolls: formalABfalse/hardwareHzfalse, don'tfake
+  measurements. Control40wascompleted separatelydefaultchoice0/formal867
+  framesmedian15.084ms/gap2.9435ms; samebinary1onlyswitchscopedCAchoice.
+  Treatmentrealnativeend02:19:32 VFS0busy0/GPU1BW4restorebeforeCPU0restore/
+ 600500400actualPSCI_OFF/coordinator700park/cookie5370793865seq1mode2phase3/
+  RAM_DRAINED80000003/fullsavedlog/gatedreset;actualFASTBOOT02:20:34verified.
+  Samebundle865407ee.../0104kernelb7fa37ac/CI40782623053, no newnativeCI.
+- NEXT0108 IMPLEMENTtrueWLEDcontrol, notyetdone: optionalPSM5a/5b+IRQenable15
+  NOTinthe63Bsnapshot, firstreadtheseexactownconfigfields/ownDTlcd-psm-ctrl
+  andderiveconservativeenable/disablesequence. Primaryownleds-qpnp-wled.c
+  saysd846bit7onlymodule, >=10msenable softstart/OVPIRQoffwhenmoduleoff/
+  optionalPSM. Do NOTignoreactualIRQ/PSMorshortcutotherrails. Primaryown
+  spmi-pmic-arb.c: RWwindowc600000/stride10000APIDvsobservere600000/stride80;
+  ctrl253=>RW+fd0000, WDATA0+10/CMD+0/STATUS+8, EXT_WRITELopcode0 onebyte
+  cmd460. NoPMICwritercodeyet; don'tguessmapping/permissionsoralterIRQsetup.
+- Implementstrictsavedstatebackend/canonicalversion/map/owner/type/config
+  beforeeverycommand, boundedcompletion/readback, keepallnon-enablebits/
+  brightness/current/voltage/IRQ/PSM unchanged, stickyfail/unknown notsuccess
+  orblindretry. Separatecacheline native/FWcookie-seq-desired-ACK mailbox,
+  oneoutstanding/coalescelatest; nativeworkloopoffrequestrealbacklight+fast
+  storeblack; onactualfreshframe+DSBthenrestorebacklight. FWCPU0serialize
+  sameSPMIwithbuttons/USB, cooperative10mswait; nativeendverifiedrestore
+  beforeresetgate. Purefault/owner/config/timeout/stale/rapidtoggle tests+
+  realTU/newnativeCIonlyifnativechanges/SERIALactualEFI-XNU beforephone
+  OFF/readback/ON/readback thenhumanactualdarkness/wakeverification. ACK/
+  blackPNGnotphysicaloffproof. No newsetter/nativebridgecandidateyet.
+- WiFi/audio stillNOTworking: ownvendor/modem68smallfiles/privatefirmware/
+  calibrationalreadyROextracted, no repeatdatalessreader. WLFWcodec/legacy
+  MSM_SMEMparseronlyoffline, nextSmemDxegetterABI/map/legacyROinventorythen
+  GLINK/QRTR/QMI45v1/firmware, notWCN6750/ath11k. AudioADSP/APR/quaternary
+  MI2S->TAS2559ASI1+TAS2560/GENI894000/I2C4c4d, noPCMproof; HUDnotaudio.
+- LatestfullRO0106freshpreflight01:37UTC whole16GiB56.787s/182map/marker/
+  GPT/critical/ESP/headerunchanged/blockRO+noload/actualumount+actualFB.
+  SinceonlycontrolledRAM/nativeend/readonlyWLEDhold, noAndroid/storagewrite.
+  Alloriginaldata/runtimedevtstrictness/thermal/GPU/CPU/memorysafetyguards
+  remain. Automationuefi-iosUPDATEDtosamecurrentstate/newhumanpriority,
+  every15minreportpreserved. Latestprogress02:25UTC.
+
 ### 0107 HUMAN PRIORITY true backlight off, then sound/Wi-Fi; readonly hold READY
 
 - Latesthuman: screennowbasically60Hz, nextcompleteLCDbacklightOFF(notblack),
