@@ -40,14 +40,21 @@ def parse(text):
     if fields['WLED_READONLY_RESULT']:
         result['complete_inventory'] = False
         return result
+    version = fields.get('WLED_SNAPSHOT_FORMAT', 1)
+    if version not in (1, 2):
+        raise ValueError('unsupported WLED snapshot format')
     required = ['WLED_READONLY_VERSION', 'WLED_CTRL_APID_OWNER', 'WLED_SINK_APID_OWNER',
                 'WLED_CTRL_MAPPING', 'WLED_SINK_MAPPING', 'WLED_READ_COMMANDS',
                 'WLED_CTRL_REVISION', 'WLED_SINK_REVISION', 'WLED_DISPLAY_READY_ENABLE',
                 'WLED_FAULT_RT', 'WLED_SINK_CONFIG']
     if (any(k not in fields for k in required) or len(strings) != 4 or
-            any(len(s) != 3 for s in strings) or fields['WLED_READ_COMMANDS'] != 28 or
+            any(len(s) != 3 for s in strings) or fields['WLED_READ_COMMANDS'] != (32 if version == 2 else 28) or
             not 0x50000000 <= fields['WLED_READONLY_VERSION'] < 0x60000000):
         raise ValueError('incomplete WLED double snapshot')
+    if version == 2 and (not all(k in fields for k in ('WLED_PSM_CONFIG', 'WLED_IRQ_ENABLE')) or
+                         not 0 <= fields['WLED_PSM_CONFIG'] < 2**16 or
+                         not 0 <= fields['WLED_IRQ_ENABLE'] < 256):
+        raise ValueError('incomplete PSM/IRQ inventory')
     for bank, ppid in [('CTRL', 0x3d8), ('SINK', 0x3d9)]:
         owned = fields['WLED_' + bank + '_APID_OWNER']
         if owned >> 32 >= 512 or owned & 0xffffffff > 7 or (fields['WLED_' + bank + '_MAPPING'] >> 8) & 0xfff != ppid:
@@ -57,7 +64,7 @@ def parse(text):
             fields['WLED_SINK_CONFIG'] >= 2**48 or
             any(s['WLED_STRING_CONFIG'] >= 2**56 or s['WLED_STRING_LEVEL'] >= 2**16 for s in strings)):
         raise ValueError('WLED register width overflow')
-    result.update(complete_inventory=True, strings=strings,
+    result.update(complete_inventory=True, snapshot_format=version, strings=strings,
                   optimistic_snapshot_not_remote_lock=True,
                   writer_permission_or_identity_admitted=False)
     return result

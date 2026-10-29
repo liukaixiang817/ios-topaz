@@ -36,7 +36,7 @@ def fixture():
                    inputs=d['inputs'].copy(), kernel_sha256='kernel',
                    checks={k: True for k in image.MODEL_CHECKS}, controlled_read_refusal=v,
                    raw_fields=dict(WLED_MOCK_BACKEND=1, WLED_KERNEL_AP_STAGE=0,
-                                   WLED_READ_COMMANDS=4 if v else 28, WLED_READONLY_RESULT=6 if v else 0),
+                                   WLED_READ_COMMANDS=4 if v else 32, WLED_SNAPSHOT_FORMAT=2, WLED_READONLY_RESULT=6 if v else 0),
                    actual_guest_memory=dict(actual_AP_stage='synthetic VM', actual_kernel_log_total='synthetic VM'))
               for v in (False, True)]
     return d, models
@@ -105,6 +105,15 @@ class Scope(unittest.TestCase):
             with self.subTest(value=value[-80:]), self.assertRaises(ValueError): observe.parse(value)
         for n in range(len(text)):
             with self.assertRaises(ValueError): observe.parse(text[:n])
+
+
+    def test_v2_requires_psm_irq_and_32_reads_but_keeps_old_records_readable(self):
+        old = inventory(); self.assertEqual(observe.parse(old)['snapshot_format'], 1)
+        new = old.replace('WLED_READ_COMMANDS=0x000000000000001c', 'WLED_READ_COMMANDS=0x0000000000000020')
+        new += '\nWLED_SNAPSHOT_FORMAT=0x0000000000000002\nWLED_PSM_CONFIG=0x0000000000000000\nWLED_IRQ_ENABLE=0x0000000000000000'
+        self.assertEqual(observe.parse(new)['snapshot_format'], 2)
+        for key in ['WLED_PSM_CONFIG', 'WLED_IRQ_ENABLE', 'WLED_READ_COMMANDS']:
+            with self.assertRaises(ValueError): observe.parse('\n'.join(l for l in new.splitlines() if not l.startswith(key+'=')))
 
     def test_hardware_read_refusal_is_preserved_not_power_success(self):
         result = observe.parse('WLED_READONLY_RESULT=0x0000000000000006\nWLED_KERNEL_AP_STAGE=0x0000000000000000\nWLED_INVENTORY_HOLD: NO_CPU_ON NO_PMIC_WRITE')

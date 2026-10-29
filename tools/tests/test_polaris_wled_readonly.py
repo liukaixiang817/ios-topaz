@@ -33,18 +33,18 @@ class WledReadOnly(unittest.TestCase):
         run(H+r'''
 int main(void){struct fake f;struct polaris_wled_read_bus b;struct polaris_wled_snapshot s;init(&f,&b);
  uint8_t original[2][256];memcpy(original,f.pmic,sizeof(original));assert(polaris_wled_inventory(&b,&s));
- assert(b.reads==28&&f.commands==28&&b.apid[0]==7&&b.apid[1]==9&&b.owner[1]==3);
+ assert(b.reads==32&&f.commands==32&&b.apid[0]==7&&b.apid[1]==9&&b.owner[1]==3);
  assert(!memcmp(s.revision,f.pmic[0],8)&&!memcmp(s.revision[1],f.pmic[1],8));
  assert(!memcmp(s.ctrl,f.pmic[0]+0x44,3)&&s.faults[0]==f.pmic[0][8]&&s.faults[1]==f.pmic[0][0x10]);
  assert(!memcmp(s.sink,f.pmic[1]+0x46,6));for(unsigned n=0;n<4;n++)assert(!memcmp(s.string[n],f.pmic[1]+0x50+n*0x10,9));
- assert(!memcmp(original,f.pmic,sizeof(original)));return 0;}
+ assert(s.psm[0]==f.pmic[0][0x5a]&&s.psm[1]==f.pmic[0][0x5b]&&s.irq_enable==f.pmic[0][0x15]);assert(!memcmp(original,f.pmic,sizeof(original)));return 0;}
 ''')
     def test_every_read_failure_and_changed_snapshot_keep_output_unpublished(self):
         run(H+r'''
 int main(void){struct fake f;struct polaris_wled_read_bus b;struct polaris_wled_snapshot s,sentinel;memset(&sentinel,0xa5,sizeof(sentinel));
- for(unsigned n=1;n<=28;n++){init(&f,&b);s=sentinel;f.fail_command=n;assert(!polaris_wled_inventory(&b,&s)&&b.fault==PW_E_RESPONSE&&f.commands==n);
+ for(unsigned n=1;n<=32;n++){init(&f,&b);s=sentinel;f.fail_command=n;assert(!polaris_wled_inventory(&b,&s)&&b.fault==PW_E_RESPONSE&&f.commands==n);
   assert(!memcmp(&s,&sentinel,sizeof(s)));assert(!polaris_wled_inventory(&b,&s)&&f.commands==n);}
- init(&f,&b);s=sentinel;f.mutate_after=15;assert(!polaris_wled_inventory(&b,&s)&&b.fault==PW_E_CHANGED);assert(!memcmp(&s,&sentinel,sizeof(s)));
+ init(&f,&b);s=sentinel;f.mutate_after=17;assert(!polaris_wled_inventory(&b,&s)&&b.fault==PW_E_CHANGED);assert(!memcmp(&s,&sentinel,sizeof(s)));
  init(&f,&b);s=sentinel;f.mutate_map=3;assert(!polaris_wled_inventory(&b,&s)&&b.fault==PW_E_MAPPING&&f.commands==3);assert(!memcmp(&s,&sentinel,sizeof(s)));return 0;}
 ''')
     def test_bounds_versions_owner_changes_and_clock_failures_stop_before_more_commands(self):

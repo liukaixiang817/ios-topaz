@@ -34,6 +34,45 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0108 expanded physical WLED read inventory COMPLETE; writer next
+
+- Latest human reconfirms true LCD backlight OFF, then sound/Wi-Fi; preserve
+  improved ca_vbl1 display. No more performance scrolling. Native WLED control,
+  actual darkness and sound/Wi-Fi remain UNIMPLEMENTED, not claimed complete.
+- 0108/physical-expanded-readonly-WLED-proof.json rehashes both actual EFI mock
+  results, actual physical driver/source/image/81 preserved firmware files,
+  upstream EDK2 whole27886792B decode, unique RAM boot/inventory/capture/reset
+  and independent expected Polaris FASTBOOT at02:51:11UTC. CPU_ON compiled OUT,
+  actual APstage0, two identical66B snapshots/32 observer READ commands/result0.
+  No PMIC/storage/NVRAM writes. All0108 physical/model trials ENDED.
+- NEW actual ctrl5a/5b PSM=0x8480 and IRQ-enable15=0x02. Own live DT independently
+  decoded and SHA-bound: qcom,lcd-psm-ctrl ABSENT. Preserve PSM untouched.
+  Original driver masks OVP notification while OFF and restores after >=10ms
+  softstart on ON. Actual enabled OVP bit1 means enable-bit-only shortcut is
+  incomplete. Reviewed own spmi-pmic-arb irqchip uses EN_CLR16 and LATCHED_CLR14+
+  EN_SET15. Next narrowly allow only notification mask/restore bit0x02 and module
+  enable46 bit0x80; never IRQ type/polarity, protection thresholds, permissions,
+  brightness/current/voltage, PSM, other rails or arbitrary host register writes.
+- Snapshot type/revision/owner/APID/string brightness agree with0107. String
+  config is0x80000000080280, brightness2047, not the stale automation typo.
+  Read parser supports v1 historical records and requires v2's PSM/IRQ/32 READs;
+  old frozen proof files are not edited. Read inventory is NOT writer permission,
+  power-control or physical-light proof. Local readonly/scope10 tests2.266s PASS;
+  prior expanded combined12 checks and two actual EFI12+12 checks also passed.
+- 05:12UTC resume: directed expected-product query timed out after15s. Recorded
+  actual-fastboot-resume-0500.json; CURRENT mode/connection not assumed. No new
+  device boot/write. Continue independent backend fault tests; candidate-ready
+  only after fresh connection and full RO preflight if long unobserved interval.
+- NEXT implement cooperative strict saved-state backend with source-bound live
+  ownership/config verification before each narrowly limited command, bounded
+  response/readback, sticky uncertain failure and no blind retry. >=10ms ON wait
+  must not block USB/buttons. Pure fault/rapid toggle/owner/config/time tests,
+  actual EFI state machine first, then native cacheline mailbox/workloop/restore
+  gate and real TU/CI/native drain. Only then physical short OFF/readback/ON/
+  readback and human true-darkness confirmation. No writer/native bridge yet.
+- Same0104 native kernel and0106 graphics preserved. No native changes or kernel
+  CI spent. All existing data/partition/root-RAMCOW safety constraints unchanged.
+
 ### 0107 PHYSICAL WLED readonly inventory COMPLETE; actual phone FASTBOOT
 
 - LATESTHUMAN: screenalreadybasically60Hz, nowtrueLCDbacklightoff(notblack),

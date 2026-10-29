@@ -63,7 +63,7 @@ def main():
                     'no_PSCI_CPU_ON':'KERNEL_PSCI_STATUS=' not in text,
                     'mock_backend_explicit':values.get('WLED_MOCK_BACKEND')==1,
                     'expected_observer_result':values.get('WLED_READONLY_RESULT')==(6 if injected else 0),
-                    'expected_completed_read_count':values.get('WLED_READ_COMMANDS')==(4 if injected else 28),
+                    'expected_completed_read_count':values.get('WLED_READ_COMMANDS')==(4 if injected else 32) and values.get('WLED_SNAPSHOT_FORMAT')==2,
                     'inventory_holds_on_both_results':'WLED_INVENTORY_HOLD: NO_CPU_ON NO_PMIC_WRITE' in text,
                     'actual_AP_context_stage_zero':bool(actual.get('actual_AP_stage')),
                     'actual_kernel_log_total_zero':bool(actual.get('actual_kernel_log_total')),

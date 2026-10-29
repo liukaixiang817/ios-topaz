@@ -65,7 +65,8 @@ def admit(driver, models):
         seen.add(refused)
         raw = model.get('raw_fields', {})
         if (raw.get('WLED_MOCK_BACKEND') != 1 or raw.get('WLED_KERNEL_AP_STAGE') != 0 or
-                raw.get('WLED_READ_COMMANDS') != (4 if refused else 28) or
+                raw.get('WLED_READ_COMMANDS') != (4 if refused else 32) or
+                raw.get('WLED_SNAPSHOT_FORMAT') != 2 or
                 raw.get('WLED_READONLY_RESULT') != (6 if refused else 0) or
                 set(model.get('actual_guest_memory', {})) != {'actual_AP_stage', 'actual_kernel_log_total'}):
             raise ValueError('missing actual guest hold/read-refusal observations')

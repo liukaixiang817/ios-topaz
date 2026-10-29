@@ -66,6 +66,7 @@ static unsigned wled_inventory_probe(void)
     bus.read=buttons_rd;bus.read_command=buttons_command;bus.now_us=buttons_us;
 #endif
     bool valid=polaris_wled_inventory(&bus,&s);
+    report("WLED_SNAPSHOT_FORMAT=",2);
     report("WLED_READONLY_VERSION=",bus.version);
     report("WLED_CTRL_APID_OWNER=",((uint64_t)bus.apid[0]<<32)|bus.owner[0]);
     report("WLED_SINK_APID_OWNER=",((uint64_t)bus.apid[1]<<32)|bus.owner[1]);
@@ -80,6 +81,8 @@ static unsigned wled_inventory_probe(void)
     report("WLED_SINK_REVISION=",wled_pack(s.revision[1],8));
     report("WLED_DISPLAY_READY_ENABLE=",wled_pack(s.ctrl,3));
     report("WLED_FAULT_RT=",wled_pack(s.faults,2));
+    report("WLED_PSM_CONFIG=",wled_pack(s.psm,2));
+    report("WLED_IRQ_ENABLE=",s.irq_enable);
     report("WLED_SINK_CONFIG=",wled_pack(s.sink,6));
     for(unsigned n=0;n<4;n++) {
         report("WLED_STRING_INDEX=",n);

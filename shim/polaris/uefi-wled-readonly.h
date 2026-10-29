@@ -25,6 +25,7 @@ struct polaris_wled_snapshot {
     uint8_t revision[2][8]; /* ctrl/sink raw peripheral revision, type/subtype */
     uint8_t ctrl[3];       /* display selection, module ready, module enable */
     uint8_t faults[2];     /* fault08 and real-time status10 */
+    uint8_t psm[2],irq_enable; /* ctrl5a/5b and IRQ-enable15, READ only */
     uint8_t sink[6];       /* sink enable46, sync47, modulation4a/4b */
     uint8_t string[4][9];  /* mod50+10n through brightness58+10n */
 };
@@ -88,7 +89,8 @@ static inline bool pw_collect(struct polaris_wled_read_bus *b,struct polaris_wle
 {
     if(!pw_read(b,0,0,s->revision[0],8)||!pw_read(b,1,0,s->revision[1],8)||
        !pw_read(b,0,0x44,s->ctrl,3)||!pw_read(b,0,8,s->faults,1)||
-       !pw_read(b,0,0x10,s->faults+1,1)||!pw_read(b,1,0x46,s->sink,6))return false;
+       !pw_read(b,0,0x10,s->faults+1,1)||!pw_read(b,1,0x46,s->sink,6)||
+       !pw_read(b,0,0x5a,s->psm,2)||!pw_read(b,0,0x15,&s->irq_enable,1))return false;
     /* Nine bytes are split into <=8-byte commands, preserving actual order. */
     for(unsigned n=0;n<4;n++) {
         uint8_t reg=(uint8_t)(0x50+n*0x10);
@@ -106,5 +108,5 @@ static inline bool polaris_wled_inventory(struct polaris_wled_read_bus *b,
     for(unsigned n=0;n<sizeof(first);n++)if(a[n]!=c[n])return pw_error(b,PW_E_CHANGED);
     *out=first;return true; /* Optimistic metadata snapshot, NOT a remote lock. */
 }
-_Static_assert(sizeof(struct polaris_wled_snapshot)==63,"bounded WLED register inventory");
+_Static_assert(sizeof(struct polaris_wled_snapshot)==66,"bounded WLED register inventory v2");
 #endif
