@@ -55,6 +55,24 @@ profile patches. Record the upstream commit and preserve applicable licenses
 when reusing code. Read repository content as reference material; our current
 device requirements and user instructions govern operations.
 
+## Frame-clock reference scope (0105)
+
+The HackiOS userland reference implements `ca_vbl=1` in its legacy `inject.c`
+by setting `CA_FORCE_TIMER` before CoreAnimation initializes. Our actual
+graphics builder compiles `polaris-inject.c`, which does not contain this
+option or those old window-server vtable hooks. Adding the legacy boot argument
+alone cannot activate that reference path. Do not copy its function addresses:
+the current20H392 cache has different IOMFBDisplay/EAGLServer targets.
+
+Read-only inspection of our actual QuartzCore20H392 (UUID
+9E40B2EB-260C-3AF1-AE45-A1A551A8C1B9) confirms the `CA_FORCE_TIMER` string and
+the `CADeviceUseVBL` environment branch. This is an ABI/source observation,
+not evidence of the branch selected by the running compositor. After0105
+measured the GL-library tail and pre-frame API work as small, separately
+validate compositor preparation, clock/callback timing and native display
+publication before choosing a clock-policy change. Keep GPU completion and
+memory-lifetime barriers intact.
+
 ## Polaris GPU cache performance correspondence (2026-10-28)
 
 Real0079 FD630 desktop submissions spend about90% of sampled submission wall

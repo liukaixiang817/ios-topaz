@@ -18,6 +18,17 @@ Wall times include preemption: pre-frame API time is not pure CPU busy, and
 the remaining outside interval also includes caller work and scheduling.
 These counters establish neither physical scanout frequency nor60FPS.
 
+The physical0105 trial matched1664 pairs against the full trace, passed GPU
+pixels and lock/home/Settings/scroll/home checks, then completed native shutdown
+and independently verified FASTBOOT. In its measured832-pair window, average
+library tail was73.266us (logging63.819us), and pre-frame GL API work119.191us.
+Subtracting both per-window maxima from each exact gap still leaves a median
+2095us lower bound outside those paths. The separate <=25ms-period cohort has
+570 pairs and a1872us median lower bound; all longer input pauses remain in
+the full population. These are bounds, not individual scheduler-wait samples.
+Reducing logging alone therefore cannot account for the observed interframe gap.
+CPU-policy fallback and compositor/frame-clock timing remain separate concerns.
+
 0054 has **physical native command/fence/4096-pixel/idle/halt proof, forced
 GMEM framebuffer-fetch/restore/pixel acceptance, and sustained real desktop
 GPU submissions**. The human confirmed submission counts rise with scrolling;

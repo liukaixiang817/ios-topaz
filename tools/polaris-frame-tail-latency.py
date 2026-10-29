@@ -53,7 +53,7 @@ def analyze(text, start, end, mode=2):
         if kind in group:
             raise ValueError('duplicate tail part')
         group[kind] = row
-    selected, contexts = [], {}
+    selected, contexts, residuals = [], {}, []
     all_frames = [tuple(map(int, m.groups())) for m in fm.FRAME.finditer(text)]
     for key, group in sorted(parts.items(), key=lambda pair: pair[0][2]):
         head = group.get('HEAD')
@@ -112,6 +112,15 @@ def analyze(text, start, end, mode=2):
                     or sum(gaps[i] for i in real_active) != active['gap']
                     or sum(renders[i] + gaps[i] > 16667 for i in real_active) != active['over']):
                 raise ValueError('aggregate frame accounting differs from exact native-time trace')
+            # A window supplies maxima, not individual tail/API samples. Even
+            # subtracting BOTH maxima from EVERY pair leaves this much outside
+            # those measured paths. This is a lower bound, not scheduler time.
+            for a, b, render, gap in zip(frames, following, renders, gaps):
+                residuals.append(dict(context=head['id'], window=head['q'], frame=a[0],
+                                      begin_us=a[1], next_begin_us=b[1],
+                                      render_us=render, gap_us=gap,
+                                      tail_upper_us=work['maxtail'], api_upper_us=api['maxapi'],
+                                      outside_tail_and_API_lower_us=max(0, gap - work['maxtail'] - api['maxapi'])))
         selected.append(dict(head=head, total=total, work=work, active=active, active_work=aw, api=api,
                              full_trace_independently_matched=mode == 2))
     if not selected:
@@ -123,6 +132,12 @@ def analyze(text, start, end, mode=2):
     n = 64 * len(selected)
     api_total = sum(v['api']['api'] for v in selected)
     api_active = sum(v['api']['active'] for v in selected)
+    # Contact pauses remain in the full population. The separately named
+    # <=25ms-period cohort excludes long waits without claiming steady FPS.
+    short = [v for v in residuals if v['next_begin_us'] - v['begin_us'] <= 25000]
+    def bounds(rows):
+        return dict(pairs=len(rows), gap_us=fm.stats([v['gap_us'] for v in rows]),
+                    outside_tail_and_API_lower_us=fm.stats([v['outside_tail_and_API_lower_us'] for v in rows]))
     return dict(passed=True, mode=mode, complete_windows=selected, complete_pairs=n,
                 mean_wall_us_per_pair={k: v / n for k, v in dict(totals, **works).items()},
                 active_totals=active, active_work_totals=active_work,
@@ -133,6 +148,9 @@ def analyze(text, start, end, mode=2):
                 mean_pre_frame_API_wall_us=api_total / n,
                 active_mean_pre_frame_API_wall_us=api_active / active['n'] if active['n'] else None,
                 pre_frame_API_includes_preemption=True,
+                full_trace_residual_bounds=dict(all_pairs=bounds(residuals),
+                    period_le_25000_us=bounds(short), rows=residuals,
+                    individual_tail_or_API_time_proven=False, scheduler_wait_proven=False) if mode == 2 else None,
                 final_unclosed_tail_measured=False)
 
 

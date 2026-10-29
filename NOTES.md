@@ -34,6 +34,83 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0105 physical tail/GL-gap attribution COMPLETE; actual phone FASTBOOT
+
+- CURRENTPHONE0105 ALLtrialsENDED. Nativeend + independentactualexpected
+  PolarisFASTBOOT00:49:58.567050UTC. No activeiOS/recovery/USB/CI/model/collector;
+  worker52425/3293/83281allENDED. Neveruseold0105controller/replayboot/start/
+  40scroll. Nextcandidate fullyready thenreadonlyexpectedPolarisquery+ONE
+  authorizedRAMboot, no reasking. NoAndroid/physicalkeys/rawreset/PMIC/storage/
+  NVRAMwrites. LatestfullRO0105fresh-preflight0001 at00:15UTC remainsbaseline.
+- NEWphysical-frame-tail-and-native-restore-proof.json independentlyrehashes
+  actual7viewedscreens(lock/home3app3dock/settledSettings/two20scrollgroupends/
+  returnhome/startconsole),42contactsACK0..740+home758,all3GPUALL4096 checks,
+  SMPselected4 callbacks64 remote50. WidgetsWaiting/sideconsole stillpresent.
+  Newbundlee41c53f...sourcebcb7aec changesONLYlibPolarisGL; otherfivebinaries
+  byteidentical. Original0104kernelb7fa37ac/CI40782623053 unchanged, noCIspent.
+- NEWreal26complete6partwindows=1664pairs reparse/crossmatch everyfullframe
+  timestamp, zeroTAILFAULT. Warm20 913framesmedian14.668/p9516.537ms;
+  measured20 900median14.801/p9519.297ms,168over16.667. ThisisdiagnosisNOT
+  performancefix/stable60/physicalscanoutHz. Actual13nativewindowmeasured
+  validation.0664/cachepre1.0619/submit6.4102/cachepost1.0715ms percompletion,
+  execute_idle6.2044 SUBSETsubmit includespoll/preemption. Panelcopymedian
+ 6.190ms/readywait38us. Contact58temps maxCPU70.1C/GPU51.6C, noerrors.
+- Mainfinding: measured832fullymatchedpairs meanlibrarytail73.266us,
+  log63.819us/observer3.773us/report.701us; prefirstdrawAPI119.191us.
+  Allpairmedianexactgap2476.5us. NEWconservativeanalysis subtractsBOTHwindow
+  maxtail+maxAPIfromEVERYactualgap: residuallowerboundmedian2095us. Explicit
+  period<=25mscohort570pairs gapmedian2203.5us/lowerbound1872us. ALLpauses
+  retainedinseparatefullpopulation; aggregateactive<=100ms stillincludes
+  inputpauses, mean16msisNOTsteadygap. BoundsareNOTperframeexacttails,
+  schedulerwait/CPUbusy orcausation. Sparse-logbootwouldnotfixthe~2msgap.
+- CPUfixedpolicyremains: measured741framesbracketedrequest22 render14.625/
+  p9516.418ms,736sameintervalgapmedian2348.5us/period17.308ms;156request0
+  render18.491/p9521.448ms,154sameintervalgap3033.5us.3transitionunknown
+  excluded. NoinstantHzclaim or isolatedcausation. vmdCPUledgerwarning60%over
+  ~148s appearedAFTERcontrolledcontacts; preservefulllog, notproofitcaused
+  specificframes. Furtherprocesssamplingneededbeforedisablinganything.
+- Nativeclosure: ownHFSXunmount/VFS0busy0, GPU1BW4restore BEFORECPUrequest0
+  restore BEFORE600/500/400actualPSCI_OFF/coordinator700park; cookie21547489027
+  seq1mode2phase3/error0/RAM_DRAINED80000003. Fullsavednative logthengatedreset,
+  independentactualFASTBOOTboundresult/log/token. NotUFSdurability/install.
+- Source/modelbeforephone: bcb7aec pushed; 23localchecks12.390s +83actual
+  EFI/XNUuserCchecks(success42/38.406s,stale41/38.146s)PASS; syntheticclock
+  inputs notGPUemulation. NEWpostphonehostresidualbound5tests+combined24tests
+ 10.946sPASS, sourcehostonly/noheader/bridgechange. ActualCformatteroracle
+  stillmatches; conservative-maxvsaverage testproveslowerboundclampsatzero.
+- NEXT0106compositor-clock-and-stage-design.json DESIGNONLY, no production
+  code/newbundle/phonecandidate. Ownactivebuilder compilespolaris-inject.c,
+  NOTlegacyinject.c: legacyca_vblandwindowserverhooksareNOTinactualbundle.
+  DoNOTblindlyaddca_vblarg/copyoldAppleCLCDvtableaddresses. Actualtarget
+  QuartzCore20H392UUID9e40b2eb.../SHAe54c3e00...containsCA_FORCE_TIMERat
+ 0x188597fb4 andCADeviceUseVBLblock0x18836d0e4, inspectedreadonly; actualruntime
+  branchnotobserved. Firstbindcurrenttimer/callbackABIthenboundeddefaultOFF
+  compositorstage timing/verifiedclockA-B; remainingGL-externaltimeincludes
+  callerprep/notification/scheduling, no purewaitclaim. Preserveallnative
+  thermal/CPU/GPU/cache/fence/auth/lifetime/unknownDMA protections. No more
+  guardextensions/maximumvotes/500repeat orkernelCIwithoutnativechange.
+
+### 0105 physical frame-tail trial RUNNING Settings; bounded40 worker ACTIVE
+
+- CURRENTPHONE phone-frame-tail-0105-0001, originalUEFIRAMsent00:32:52UTC,
+  independentexpectedPolarisquerythenONEkernelstart00:33:33..00:34:03. No
+  storage/NVRAM/Androidwrites. Only0105/control-phone.py ACTION NEWDIR bound
+  here; neverreplayboot/start/old0104controller. RegularRAM30minlease applies.
+- Sourcebcb7aec committed/pushed. Finalfrozenadmission/81originalFW/actual
+  EDK2wholedecode/current6partheader+83actualuserVMchecks/23localchecks/new
+  sixfilebundlePASSbeforephoneboot. Kernel0104b7fa37ac/fullCI40782623053
+  unchanged; no newkernelCI. OnlylibPolarisGL changed, otherfivebyteidentical.
+- Actualcapture0001startupconsole,0002lockscreen,0003home3app3dockicons,
+  0004fullsettledSettingstext/icons haveallbeenviewed. ThreeGPU4096pixel
+  acceptancechecksPASS; SMPselected4 callbacks64 remote50 (NOT64thisrun).
+  MODE2/fulltrace/6partoutputvisible,noaccountingfaultinlatestcapture.
+- UnlockandSettingstapactualconsumedACK0..20. Newbounded40worker52425ACTIVE:
+ 20warm+20measured, no500repeat; don'tparallelUSBorinjectotherinputuntilend.
+  Initialtailwindowsunboundedbycontactsarenotsteadycostproof. NEXTreanalyze
+  onlycompletebounded6partwindowsagainstexactfulltrace, frames/native/panel/
+  temperatures; actuallyviewbothgroupcaptures, thenhome/nativeend+actualFB.
+  DoNOTblameloggingorclaim60beforeactualcontrolledanalysis.
+
 ### 0105 default-OFF userland tail source/model READY; phone FASTBOOT, not yet booted
 
 - New FINAL6part/preAPI graphics-tail-0003 BUILT/signed/fullMachO/dependencies
@@ -48,8 +125,7 @@ early samples only. On0029 the human already confirmed boot complete and said
   NewpreAPI partialentry closesatnextframebegin andneveroverlapsrender/tail;
   allsamecontexttotals/activebounds/outputcostcarry checked. Only23tests are
   finalsuite, earlier22/9/10 belong developmentstages, no inflatedtotal.
-- FINALnative-user-v0002 actualEFI/XNU success42/38.406s +stale41/38.261s
-  (check exactcaseproof forstale elapsed) BOTH83checksPASS; -fno-inline real
+- FINALnative-user-v0002 actualEFI/XNU success42/38.406s +stale41/38.146s BOTH83checksPASS; -fno-inline real
   AArch64userC executesCURRENTactualheader includingpreAPI+partialentry,
   SYNTHETICtimestamps, PID1/fourchildren/dirtywriter/input/SGI/nativeVFS0busy0/
   peerOFForrefusal. Actual-native-user-tail-accounting-v0002-proof.json binds

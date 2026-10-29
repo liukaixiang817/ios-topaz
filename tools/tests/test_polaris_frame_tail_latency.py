@@ -47,6 +47,12 @@ int main(void){struct pgpu_frame_tail s={0};uint64_t b=1000;
         self.assertTrue(all(w['full_trace_independently_matched'] for w in d['complete_windows']))
         self.assertFalse(d['outside_is_pure_scheduler_wait'])
         self.assertFalse(d['hardware_scanout_Hz_proven'])
+        b = d['full_trace_residual_bounds']
+        self.assertEqual(b['all_pairs']['pairs'], 128)
+        self.assertEqual(b['period_le_25000_us']['pairs'], 128)
+        self.assertEqual(b['all_pairs']['outside_tail_and_API_lower_us']['min'], 2900)
+        self.assertFalse(b['individual_tail_or_API_time_proven'])
+        self.assertFalse(b['scheduler_wait_proven'])
 
     def test_missing_duplicate_forged_truncated_and_fault_records_refuse(self):
         text = self.text
@@ -72,6 +78,7 @@ int main(void){struct pgpu_frame_tail s={0};uint64_t b=1000;
         self.assertEqual(d['complete_pairs'], 128)
         self.assertFalse(any(w['full_trace_independently_matched'] for w in d['complete_windows']))
         self.assertFalse(d['final_unclosed_tail_measured'])
+        self.assertIsNone(d['full_trace_residual_bounds'])
         with self.assertRaises(ValueError):
             m.analyze(text, 0, 2000000, 2)
 
@@ -84,6 +91,17 @@ int main(void){struct pgpu_frame_tail s={0};uint64_t b=1000;
             m.analyze(text, 0, 2000000, 2)
         with self.assertRaises(ValueError):
             m.analyze(self.text, 2000, 830000, 2)
+
+    def test_residual_uses_conservative_window_maximum_not_an_average(self):
+        # Totals alone permit one long tail. Subtract the window maximum
+        # from every pair; do not assign the 100us average to each frame.
+        text = self.text.replace('maxtail=100 ', 'maxtail=5000 ')
+        d = m.analyze(text, 0, 2000000, 2)
+        self.assertEqual(d['mean_wall_us_per_pair']['tail'], 100)
+        self.assertEqual(d['full_trace_residual_bounds']['all_pairs']
+                         ['outside_tail_and_API_lower_us']['max'], 0)
+        self.assertTrue(all(v['tail_upper_us'] == 5000 for v in
+                            d['full_trace_residual_bounds']['rows']))
 
 
 if __name__ == '__main__':
