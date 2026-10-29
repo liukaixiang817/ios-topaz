@@ -75,7 +75,7 @@ early samples only. On0029 the human already confirmed boot complete and said
   independentactualFASTBOOTboundresult/log/token. NotUFSdurability/install.
 - Source/modelbeforephone: bcb7aec pushed; 23localchecks12.390s +83actual
   EFI/XNUuserCchecks(success42/38.406s,stale41/38.146s)PASS; syntheticclock
-  inputs notGPUemulation. NEWpostphonehostresidualbound5tests+combined24tests
+  inputs notGPUemulation. NEWpostphonehostca76b09COMMITTED/PUSHED: residualbound5tests+combined24tests
  10.946sPASS, sourcehostonly/noheader/bridgechange. ActualCformatteroracle
   stillmatches; conservative-maxvsaverage testproveslowerboundclampsatzero.
 - NEXT0106compositor-clock-and-stage-design.json DESIGNONLY, no production
