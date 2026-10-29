@@ -70,13 +70,20 @@ def prestart_refusal(text):
         if k in f:
             raise ValueError('duplicate preparation record')
         f[k] = int(v,16)
-    if (f.get('WLED_POWER_PREPARE_ERROR') not in (1,2,3,4,5,6,7,32,33) or
+    initial_refusal = (f.get('WLED_POWER_PREPARE_ERROR') in (1,2,3,4,5,6,7,32,33) and
+                       'WLED_POWER_CYCLE_ERROR' not in f)
+    zero_write_refusal = (f.get('WLED_POWER_PREPARE_ERROR') == 0 and
+                          f.get('WLED_POWER_CYCLE_ERROR') in (1,2,3,4,5,6,7,32,33,34,35,36,37,38) and
+                          f.get('WLED_POWER_WRITES_ISSUED') == 0 and
+                          f.get('WLED_POWER_WRITES_COMPLETED') == 0 and
+                          f.get('WLED_POWER_UNCERTAIN') == 0)
+    if (not (initial_refusal or zero_write_refusal) or
             f.get('WLED_KERNEL_AP_STAGE') != 0 or not f.get('WLED_AP_STAGE_ADDRESS') or
             'WLED_POWER_CYCLE_ARMED: NO_CPU_ON' not in text or
-            any(x in text for x in ('WLED_POWER_OFF_US=','WLED_POWER_CYCLE_ERROR=',
+            any(x in text for x in ('WLED_POWER_OFF_US=',
                                     'WLED_POWER_MOCK_BACKEND=','Darwin Kernel Version','KERNEL_PSCI_STATUS='))):
         raise ValueError('not a proven no-writer pre-XNU preparation refusal')
-    if f.get('WLED_POWER_WRITES_ISSUED',0) != 0:
+    if f.get('WLED_POWER_WRITES_ISSUED',0) != 0 or f.get('WLED_POWER_PREPARE_WRITES_ISSUED',0) != 0:
         raise ValueError('a PMIC command was issued; refusal recovery forbidden')
     return dict(preparation_refused_before_writer=True,firmware_reset_gate_still_required=True,
                 electrical_module_off_and_restore_readbacks=False,physical_darkness_proven=False,fields=f)

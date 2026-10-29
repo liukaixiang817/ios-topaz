@@ -68,6 +68,18 @@ class PowerScope(unittest.TestCase):
         for before,after in [('0000000000000007','0000000000000000'),
                              ('WLED_KERNEL_AP_STAGE=0x0000000000000000','WLED_KERNEL_AP_STAGE=0x0000000000000001')]:
             with self.assertRaises(ValueError):host.prestart_refusal(text.replace(before,after))
+        zero = text.replace('WLED_POWER_PREPARE_ERROR=0x0000000000000007',
+                            'WLED_POWER_PREPARE_ERROR=0x0000000000000000')
+        zero += ('WLED_POWER_CYCLE_ERROR=0x0000000000000007\n'
+                 'WLED_POWER_WRITES_ISSUED=0x0000000000000000\n'
+                 'WLED_POWER_WRITES_COMPLETED=0x0000000000000000\n'
+                 'WLED_POWER_UNCERTAIN=0x0000000000000000\n')
+        self.assertTrue(host.prestart_refusal(zero)['preparation_refused_before_writer'])
+        for key in ('WLED_POWER_WRITES_ISSUED','WLED_POWER_WRITES_COMPLETED','WLED_POWER_UNCERTAIN'):
+            bad = zero.replace(key+'=0x0000000000000000',key+'=0x0000000000000001')
+            with self.subTest(key=key),self.assertRaises(ValueError):host.prestart_refusal(bad)
+        with self.assertRaises(ValueError):
+            host.prestart_refusal(zero+'WLED_POWER_PREPARE_WRITES_ISSUED=0x0000000000000001\n')
 
     def test_explicit_cycle_success_and_uncertain_are_required(self):
         d,m = cycle_fixture();image.admit(d,m)

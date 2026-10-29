@@ -135,6 +135,11 @@ static void wled_cycle_poll(void)
     if(!cycle_started||cycle_done)return;
     if(!pwp_poll(&cycle_power)) {
         report("WLED_POWER_CYCLE_ERROR=",cycle_power.error);
+        report("WLED_POWER_CHANGED_BYTE=",((uint64_t)cycle_bus.changed_byte_plus_one<<32)|
+            ((uint32_t)cycle_bus.changed_first<<8)|cycle_bus.changed_after);
+        report("WLED_POWER_FAILED_BANK_REG=",((uint64_t)cycle_bus.last_bank<<32)|cycle_bus.last_reg);
+        report("WLED_POWER_FAILED_STATUS_POLLS=",((uint64_t)cycle_bus.last_status<<32)|cycle_bus.last_polls);
+        report("WLED_POWER_FAILED_READS=",cycle_bus.reads);
         report("WLED_POWER_UNCERTAIN=",cycle_power.uncertain);
         report("WLED_POWER_WRITES_ISSUED=",cycle_power.issued);
         report("WLED_POWER_WRITES_COMPLETED=",cycle_power.completed);

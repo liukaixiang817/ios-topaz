@@ -34,6 +34,37 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0108 cycle0002 zero-WRITE refusal safely ENDED; exact-byte diagnostic003 READY
+
+- Current phone actual expectedPolaris FASTBOOT after automatic0002 reset has
+  been independently checked (actual-fastboot-after-cycle0002-zero-write-refusal).
+  No active iOS/recovery/USB transaction. Do NOT use old0001/0002 controllers or
+  replay their boot/cycle requests. No PMIC power write, storage or NVRAM write.
+- phone-power-cycle0002 ONE RAM/ONE cycle: canonical initial metadata/init PASS,
+  then pwp_write's pre-command double-snapshot verification returnedPW_E_CHANGED7.
+  Actual firmware issued0/completed0/uncertain0/APstage0, no OFF event. It did NOT
+  draw or execute XNU. Host capture rejected incomplete cycle. New zero-write-only
+  refusal recovery requires those exact counters and no OFF/OS/mock; independent
+  firmware gate still checks actual issued==0 or fully restored. Recovery actual
+  FASTBOOT verified without user action. Not electrical/optical success.
+- The previous diagnostic printed changed byte only on init refusal, so0002 did
+  NOT reveal the differing field. Added same exact byte/before/after plus last
+  read bank/reg/status/count at the pwp_poll failure point. Equality/readback,
+  ownership, clock, current, softstart and timeout gates unchanged. Eight focused
+  parser/read tests2.350s PASS including zero-write-vs-issued/uncertain/OS rejection.
+  Full prior23 checks remained valid. SERIAL actual cycle-success+timeout-run0004
+  17+17 PASS; actual power-core0004 twelve PASS. All completed, no native CI.
+- New physical-cycle-driver0003 and phone-power-cycle0003 prepare exact no-root-
+  access pre-XNU RAM diagnostic. Original81FW/source/models+actualEDK2 decode
+  required, fresh expected product before ONE boot/cycle. Frozen scripts cloned
+  from0002, not old iOS. Root data not used; no recovery boot for this scope.
+- Source d6cd464 PUSHED (c87614e/ad89348 also pushed), latest diagnostic files to
+  commit. Existing root dirty-journal state remains untouched; historical05:48
+  RO full-root/map/marker/GPT/ESP review is NOT new iOS/installation permission.
+  New0915 recovery attempt failed to enumerateUSB, human returnedFASTBOOT once,
+  actual verified; no repeat recovery. Native lock-screen mailbox/hardware
+  off/restore user proof, sound/Wi-Fi still pending. Keep ca_vbl1 improvement.
+
 ### 0108 latest actual state after0915 interruption / user FASTBOOT restored
 
 - Fresh pre-XNU-audit0915 ONE known recoveryRAM command was accepted, but no ADB
