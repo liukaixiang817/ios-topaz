@@ -59,8 +59,26 @@ def pack_newc(entries):
     return bytes(archive)
 
 
-def init_rc(adbd, ueventd):
-    return f"""# polaris backup environment: all persistent block devices stay unmounted.
+def watchdog_script(seconds):
+    if type(seconds) is not int or seconds != 300:
+        raise ValueError("read-only audit watchdog is exactly300 seconds")
+    return b'''#!/sbin/sh
+# RAM-only audit timeout. No storage path, mount, fsck, repair or write job.
+PATH=/sbin:/system/bin
+export PATH
+audit_ticks=0
+while [ "$audit_ticks" -lt 60 ]; do
+    sleep 5 || break
+    audit_ticks=$((audit_ticks + 1))
+done
+setprop sys.powerctl reboot,bootloader
+'''
+
+
+def init_rc(adbd, ueventd, watchdog_seconds=None):
+    if watchdog_seconds is not None:
+        watchdog_script(watchdog_seconds)
+    text=f"""# polaris backup environment: all persistent block devices stay unmounted.
 on early-init
     start ueventd
 
@@ -102,6 +120,7 @@ on fs
 on boot
     setprop service.adb.root 1
     start adbd
+{('    start polaris-audit-watchdog' if watchdog_seconds is not None else '')}
 
 on property:sys.usb.ffs.ready=1
     symlink /config/usb_gadget/g1/functions/ffs.adb /config/usb_gadget/g1/configs/b.1/f1
@@ -117,7 +136,20 @@ service adbd {adbd} --root_seclabel=u:r:su:s0 --device_banner=recovery
     disabled
     socket adbd stream 660 system system
     seclabel u:r:adbd:s0
-""".encode()
+"""
+    if watchdog_seconds is not None:
+        text+='''
+service polaris-audit-watchdog /sbin/sh /sbin/polaris-audit-watchdog.sh
+    disabled
+    oneshot
+    user root
+    group root
+    seclabel u:r:su:s0
+'''
+    else:
+        # Retain the original default-OFF ramdisk bytes exactly.
+        text=text.replace('    start adbd\n\n\non property:', '    start adbd\n\non property:')
+    return text.encode()
 
 
 def main():
@@ -125,7 +157,14 @@ def main():
     parser.add_argument("--source", type=Path, required=True)
     parser.add_argument("--sha256-file", type=Path, required=True)
     parser.add_argument("--mkbootimg", type=Path, required=True)
+    parser.add_argument("--output", type=Path, help="new exclusive output directory; preserves archived images")
+    parser.add_argument("--readonly-watchdog-seconds", type=int, choices=(300,),
+                        help="independent default-OFF bounded read-only audit environment")
     args = parser.parse_args()
+    if args.readonly_watchdog_seconds is not None and args.output is None:
+        parser.error("bounded audit requires a NEW explicit output directory")
+    if args.output is not None and args.output.exists():
+        parser.error("refuse to overwrite an existing image or partial audit build")
     source = args.source.read_bytes()
     source_sha = hashlib.sha256(source).hexdigest()
     if (source_sha != OFFICIAL_TWRP_SHA256 or
@@ -145,6 +184,16 @@ def main():
     ueventd = next(("/" + n for n in ("sbin/ueventd", "system/bin/ueventd") if n in names), None)
     if not adbd or not ueventd or "init.rc" not in names:
         raise ValueError("required init/adbd/ueventd files missing")
+    if args.readonly_watchdog_seconds is not None:
+        if "sbin/sh" not in names or not ("sbin/setprop" in names or "system/bin/setprop" in names):
+            raise ValueError("actual ramdisk lacks required shell/property client")
+        script_name="sbin/polaris-audit-watchdog.sh"
+        if script_name in names:raise ValueError("watchdog source path already occupied")
+        inode=max(e[1][0] for e in entries)+1
+        if inode>0xffffffff:raise ValueError("cpio inode overflow")
+        script=watchdog_script(args.readonly_watchdog_seconds)
+        metadata=[inode,0o100750,0,0,1,0,len(script),0,0,0,0,len(script_name)+1,0]
+        entries.insert(len(entries)-1,[script_name,metadata,script])
     overrides = {"ro.secure": "0", "ro.adb.secure": "0", "ro.debuggable": "1",
                  "ro.product.device": "polaris", "ro.build.product": "polaris"}
     property_files = 0
@@ -152,7 +201,7 @@ def main():
         if entry[0] == "init.rc":
             if entry[1][1] & 0o170000 != 0o100000:
                 raise ValueError("init.rc is not a regular file")
-            entry[2] = init_rc(adbd, ueventd)
+            entry[2] = init_rc(adbd, ueventd,args.readonly_watchdog_seconds)
         elif entry[0] in ("default.prop", "prop.default", "system/etc/prop.default"):
             if entry[1][1] & 0o170000 == 0o120000:
                 continue  # TWRP default.prop -> prop.default must remain a symlink.
@@ -165,7 +214,7 @@ def main():
             property_files += 1
     if not property_files:
         raise ValueError("source property files missing")
-    out = Path(__file__).resolve().parents[1] / "shim/out/polaris-backup-recovery"
+    out = args.output or Path(__file__).resolve().parents[1] / "shim/out/polaris-backup-recovery"
     out.mkdir(parents=True, exist_ok=True)
     (out / "kernel").write_bytes(kernel)
     (out / "ramdisk.gz").write_bytes(gzip.compress(pack_newc(entries), mtime=0))
@@ -211,11 +260,17 @@ def main():
             raise ValueError("packed archive changed content or metadata")
         if after[0] in original_links and after[2] != original_links[after[0]]:
             raise ValueError("source symlink target changed")
-    if next(e[2] for e in written if e[0] == "init.rc") != init_rc(adbd, ueventd):
+    if next(e[2] for e in written if e[0] == "init.rc") != init_rc(adbd, ueventd,args.readonly_watchdog_seconds):
         raise ValueError("packed init configuration mismatch")
     record = dict(source_sha256=source_sha, sha256=hashlib.sha256(packed).hexdigest(),
                   bytes=len(packed), header_version=version, kernel_preserved=True,
                   purpose="temporary root ADB with no persistent-filesystem mounts or recovery UI",
+                  bounded_readonly_audit=args.readonly_watchdog_seconds is not None,
+                  watchdog_seconds=args.readonly_watchdog_seconds,
+                  watchdog_trigger="RAM-only sys.powerctl=reboot,bootloader" if args.readonly_watchdog_seconds else None,
+                  persistent_filesystem_mount_or_repair_job=False,
+                  builder_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+                  mkbootimg_sha256=hashlib.sha256(args.mkbootimg.read_bytes()).hexdigest(),
                   hardware_boot_tested=False)
     (out / "manifest.json").write_text(json.dumps(record, indent=2) + "\n")
     print(json.dumps(record, indent=2))

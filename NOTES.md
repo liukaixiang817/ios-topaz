@@ -34,6 +34,36 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0120 bounded readonly audit image READY; no new phone boot yet
+
+- Human requests faster development/fewer unnecessary steps: combine relevant
+  checks/commits, no unchanged repeated models or kernel CI; proceed through
+  recoverable physical loops. Preserve all data/guards. This overrides verbose
+  repeated diagnostic expansion as the preferred workflow.
+- NEW default-OFF --readonly-watchdog-seconds300 backup-recovery scope requires
+  new exclusive output directory. Same original verified TWRP kernel/ramdisk
+  tools, no automatic storage mount/fsck/UI. Adds one RAM shell service that
+  sleeps60*5s then sends sys.powerctl=reboot,bootloader exactly once; sleep failure
+  requests early return. No storage paths/repair jobs. Actual hardware watchdog
+  not proven yet, no unconditional recovery claim. No physical iOS admission.
+- Actual independent image checks PASS: default-OFF control whole SHA remains
+  f9ad6529c1632fa2116377ec5f12c78f6d5cf7f5a1baa0b0f1bec4b5a518bd99;
+  new watchdog image ecb73be4bd591f836ab1a9132e998a28fd4ef356624ba3dab1550b5a105f12ba.
+  Original kernel exact; only init.rc changes +one root0750 RAM script added;
+  all other cpio entries/metadata preserved relative to known headless control.
+  Local7 shell/default-OFF/scope/nonce-framing checks pass0.038s; no new kernelCI.
+- `0120/readonly-watchdog-image-proof.json` binds actual image/source. New private
+  audit-once.py uses nonce-bound remote RC and one boot-attempt directory; no
+  old controller/AST execution. Strict blockRO+noload fullroot/map/marker/rawowner/
+  sixGPT/critical/ESP plus bounded raw journal capture, actual unmount/FASTBOOT.
+  All outcomes remain may_boot_iOS=false/may_write_userdata=false until separate
+  journal review. Fresh candidate FASTBOOT query before authorized ONE RAM.
+- Actual readonly expectedPolaris13:37:02UTC PASS, actual-fastboot-start-0001.json.
+  No phone boot/cycle/PMIC/OS/root/storage/NVRAM/Android action yet in this round.
+  NEXT execute this fully prepared new bounded RO audit, not old0915 recovery.
+  Existing nativeWLED physical backend/image/client/admission still unfinished;
+  ca_vbl1/graphics preserved; original opticalOFF trial remains ENDED/confirmed.
+
 ### 0119 actual lifecycle + lease continuation COMPLETE; phone FASTBOOT; physical runtime NOT READY
 
 - Completed source8b7c62cabc213a3edfdc59867e10e8f348c086fa committed/PUSHED. New independent
