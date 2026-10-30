@@ -34,13 +34,22 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### 0113 physical OEM candidate READY; phone connection not yet recovered
+### 0113 physical OEM candidate READY; USB absent, physical reconnect requested
 
-- All0113 local/build/model/codec workers ENDED; NO phone boot/cycle, PMIC
-  power write, OS/root/storage/NVRAM access or kernel CI.05:48:44UTC directed
-  expected Polaris FASTBOOT query timed out. Last real expected FASTBOOT
-  remains05:08:59UTC; current screen/OS/connection unknown. Do not infer Android
-  activity or claim phone still connected. No physical action requested yet.
+- Completed source a3f5c52 committed and PUSH VERIFIED to codex/polaris-preflight.
+  Latest06:46UTC boot-once.py --boot-once first revalidated the frozen proof,
+  then directed expected Polaris getvar timed out. It sent NO boot and created
+  NO boot.json.06:47:22UTC valid IOUSB tree parsed successfully: no matching
+  phone candidates, fastboot devices0, adb devices0. Evidence actual-USB-after-
+  ready-query-0001.json plus phone-OEM-cycle-0003/preboot-*.json. Last true
+  expected FASTBOOT remains05:08:59UTC; current screen/OS unknown. Do not infer
+  Android or a storage mode. No PMIC power, OS/root/storage/NVRAM writes.
+- Requested physical FASTBOOT/USB reconnect ONCE via asynchronous user input
+  after preparing the concrete candidate; no remote endpoint is available.
+  Await that actual action, do NOT repeat the request/oldrecovery/guessed
+  vendor commands. Every continuation first ONE directed readonly query;
+  if expected Polaris returns, automatically continue authorized ONE new RAM
+  candidate without asking again. All local/model/codec/USB workers ENDED.
 - physical-OEM-candidate-readiness-proof.json independently rehashes current
   sources,11 OEM full-EFI models plus strict control, all raw firmware memory
   journals/final or zero receipts, physical inventory/timeline/vendor oracle,
@@ -83,11 +92,11 @@ early samples only. On0029 the human already confirmed boot complete and said
   Early local fixture incorrectly labelled zero error as restored despite
   prepare refusal; fixed fixture, not power gate. Missing None-valued scope
   key now rejects cleanly. Current selected proof includes all three cases.
-- NEXT commit/push completed source, fresh directed readonly connection check.
-  If expected Polaris present, automatically ONE pre-XNU RAM/cycle/capture of
+- NEXT first directed readonly connection check, after pending physical
+  reconnect. If expected Polaris present, automatically ONE pre-XNU RAM/cycle/capture of
   actual binary journal/final receipt, reset and independently actual FASTBOOT.
-  If still absent/no remote endpoint, request physical USB/FASTBOOT recovery
-  once because candidate is concrete and ready; do not repeat old recovery,
+  If still absent/no remote endpoint, keep the already requested physical
+  reconnect pending without another reminder; do not repeat old recovery,
   vendor commands or failed power cycles. ACK/electrical readback is NOT optical
   darkness. Native lock-screen/FW mailbox and human true-dark/wake remain NEXT.
 - Pending outer userdata journal review STILL may_boot_iOS=false and
