@@ -36,8 +36,11 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### 0118 actual EFI-XNU native/FW WLED exchange + 7 fault paths COMPLETE; physical runtime NOT READY
 
-- Actual-EFI-XNU-native-WLED-and-fault-proof.json (lowercase filename:
-  `0118/actual-EFI-XNU-native-WLED-and-fault-proof.json`) PASSED, independently
+- Completed FW/host sourcefbf6a654665d5096f6915a4ca844a45989bda021 is committed,
+  PUSH VERIFIED by independent ls-remote (2df1ea4 fault instrumentation and
+  2d55a4e native timer correction also pushed). Existing automation `uefi-ios` updated IN PLACE to this0118 actual outcome/next work;
+  no duplicate automation, no completion/deletion claim.
+- `0118/actual-EFI-XNU-native-WLED-and-fault-proof.json` PASSED, independently
   rehashes source/native exact patch/TU/fullCI/kernel/each actual EFI image,
   serial/native RAM ring/pages/receipt/2mailboxes and reparses actual binaries.
   Selected8 full EFI-XNU models have362 checks: normal0005 47/47 38.571s, timeout
