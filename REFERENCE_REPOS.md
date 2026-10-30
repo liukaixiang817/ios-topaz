@@ -63,6 +63,16 @@ Polaris kernel/DT, UEFI USB/control and existing root unchanged until a separate
 compatible RAM candidate is verified. Its destructive darwin/GPT installation
 recipe is outside this phone's data-preservation authorization.
 
+0110 completed the offline input preparation: the OS, both cryptex images and
+kernelcache whole SHA384 match Apple's BuildManifest. A native macOS UDRO
+conversion followed by bounded raw/ignored-run export produces the documented
+5628755968-byte APFS root. Its used-run CRC matches the UDIF table, and the
+root+OS-cryptex+App-cryptex concatenation matches dipper's published
+`9efb156f417e32b6f92d709af33c0e8e584693c3fbd29eaf139b57eee3735560` exactly.
+This establishes byte correspondence of the complete three-part source package,
+not a bootable Polaris image, ABI compatibility or an installation. Our current
+kernel is xnu8796.141.3; theirs is8796.121.2. No proprietary files enter Git.
+
 ## Alioth CPU/GPU comparison (2026-10-28 local)
 
 The human requested this port as a performance reference. Read its pinned

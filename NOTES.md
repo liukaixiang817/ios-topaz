@@ -34,6 +34,54 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0110 physical fault timeline COMPLETE; full16.5 source package exact match
+
+- CURRENT all0110 physical/model/build/export workers ENDED. ONE originalUEFI
+  RAM / ONE inventory request of phone-readonly-watch0001 completed. Ordinary
+  readonly reset followed by independently verified actual expected Polaris
+  FASTBOOT at actual-fastboot-after-watch.json. No active iOS/recovery/USB.
+  Do not replay any old0110/0108 boot/request/controller. No WLED power write,
+  storage/NVRAM change, Android or human-key recovery. Source656059f committed;
+  push latest completed source/handoff before stopping. No native kernel CI.
+- physical-readonly-fault-timeline-and-FASTBOOT-proof.json rehashes full model/
+  binary/source/codec/boot/request/log/parsed timeline/reset/actual FASTBOOT.
+  Actual32 samples/128 observer READs over504592us between first and last;
+ 7 pairs1->0,5 pairs0->1,one1->1,14 both0,5 RT=1 with bothFAULT0. FaultOR1/RTOR1,
+  module-enable always80. Initial full metadata inventory still refused7; this
+  readonly wrapper did not log the exact initial changed byte, so do not claim
+  it was proven identical to0108byte19. Timeline proves rising AND falling raw
+  values during unchanged enable, not clear-on-read, fault-free hardware, power
+  permission or physical darkness. APstage0/CPU_ON OUT/no Darwin or PSCI start.
+- NEXT targeted correction is source-semantic, not random writer retries:
+  own qpnp_wled_module_en switches module bit7 and OVP notification without
+  requiring FAULT_STATUS equality/zero; own IRQ handler records ILIM and only
+  OVP bit1 enters recalibration. Review volatile-status treatment separately
+  from static configuration. OEM-status-correspondence-next-design.json is
+  DESIGN ONLY: independent default-OFF candidate retaining strict old mode,
+  all observed bit0/RT history, no fake clean snapshot/health claim, fail on
+  OVP/SC/unknown bits/owner/static configuration/read/time errors, exact factory
+  limited write scope/softstart/uncertain/no-retry/restored-reset gates. Must
+  prove new status policy and explicit physical-evidence admission in actual
+  EFI/fault tests before any new phone writer. No new writer candidate exists.
+- Fuller iOS16.5 source preparation COMPLETE offline: four original component
+  wholeSHA384 match Apple's20F66 manifest. Native macOS UDRO conversion, bounded
+  raw/ignored-run export yields APFS5628755968B, SHA2569f430a582b86dd422bba74b66b16b1e0311af570a533b87e4b17014e996579a3.
+  Its used-raw-run CRC3abcd8a4 matches UDIF partition checksum. Initial assertion
+  over the whole logical zero-filled address space was the wrong checksum
+  domain; failure/export script retained, not an input corruption or relaxed
+  validation. Raw root+OScryptex+Appcryptex concatenation SHA256 is EXACTLY
+ 9efb156f417e32b6f92d709af33c0e8e584693c3fbd29eaf139b57eee3735560,
+  matching dipper's documented complete three-part package. Independent actual
+  root NXSB/4096B block geometry and output length checked. No combined flash
+  file/device install or boot performed. ios16.5-expanded-package-proof.json.
+- ABI remains NOT verified: our actual native kernel is22.6.0/xnu8796.141.3,
+  dipper uses8796.121.2; current graphical user space/hooks are20H392. Keep
+  graphics865407ee.../ca_vbl1 and native0104b7fa37ac untouched until20F66 target
+  offsets/interfaces and independent RAM candidate validated. Current pending
+  outer-journal audit still grants no new iOS/root-write admission; no repair.
+  Real lock-screen/FW backlight handshake, PCM, Wi-Fi transport/scan/join and
+  persistent runtime/menu remain pending, not implied by this package proof.
+
 ### 0110 readonly fault timeline READY; fuller16.5 inputs verified COMPLETE
 
 - CURRENT phone still independently verified expected Polaris FASTBOOT at0110
