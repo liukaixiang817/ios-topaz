@@ -34,6 +34,57 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0109 dipper reference applied offline; 0108 actual fault-byte refusal ENDED
+
+- Latest human supplied youzjuzi/dipper-xnu and also requests its fuller iOS
+  recommendation. Priority remains true LCD backlight OFF, sound, Wi-Fi while
+  preserving the current ca_vbl1 display improvement. No new performance loop.
+- CURRENT PHONE actual expected Polaris FASTBOOT independently verified after
+  cycle0003 automatic recovery, `actual-fastboot-after-cycle0003-refusal.json`.
+  ONE original-MindowsUEFI RAM boot03:32:37UTC / ONE cycle request only. Initial
+  double readonly snapshot refused PW_E_CHANGED7 before power init/writer;
+  actual PREPARE_WRITES_ISSUED0/APstage0. Exact witness0x1400000100 means snapshot
+  byte19, CTRL d808 FAULT_STATUS first1 then0. Own vendor labels bit0 ILIM. This
+  is an observed changing fault-status word, NOT proof of clear-on-read behavior,
+  a false alarm, hardware damage, or permission to retry/ignore it. No electrical
+  OFF/restore or optical darkness success. Automatic zero-write reset followed by
+  independent actual FASTBOOT, no human keys/Android/PMIC/storage/NVRAM write.
+  All0108 physical cycles now ENDED; do not reuse their controllers or requests.
+- 0108 diagnostic829b9a3 committed (push to verify), no native/kernel CI change.
+  New host snapshot decoder maps all66 witness offsets to their actual registers,
+  preserves before/after and explicitly never permits retry. Frozen cycle0003
+  host archived privately before this host-only change; old evidence unmodified.
+- Dipper pinned e930c26c4303283d7f2f5fc87479946d46409783, shallow source clone;
+  45 checksums/35 added-text source hashes verified. No reference scripts or
+  prebuilts ran. README/STATUS/VALIDATION distinguish historical Wi-Fi/A630/UI
+  records from public build reproducibility. Sound still incomplete there.
+  REFERENCE_REPOS.md records actual display/touch/GPU/network compatibility.
+  OLED DCS/FTM5 hardware differs from our JDI LCD/WLED and Synaptics RMI; no panel,
+  touch GPIO, scaler, sysmem GPU mode, MMIO or new calibration was copied.
+- New polaris-glink-inventory.h connects the reference transport design to our
+  existing SMEM metadata parser. Own c7cb50c1 independently confirms item478
+  descriptor32B/FIFOs479+480/cached-first RX. Bounded private APPS heap scans,
+  exact all-header/partition/legacy/TOC rereads, duplicate/padding/size/overlap/
+  read-failure/race checks and atomic output. No native mapping, lock, allocation,
+  FIFO payload consumer/index write/doorbell/DSP/radio. Caller-owned workspace.
+  ASan/UBSan10000 mutations+every-read failure and AArch64 freestanding/<=1KiB
+  frame compile passed. Combined12 SMEM/GLINK/WLED tests3.072s PASS. Initial
+  compiler indentation failure and overstrict fixture-classifier assertion are
+  retained; corrupt size may label bounded data as a candidate header, so reader
+  refusal must remain a failure, not a successful item result. No hardware claim.
+- Apple official partial BuildManifest16.5/20F66 confirms iPhone10,3/10,6 and all
+  three dipper OS/cryptex paths. Only metadata verified so far. Component download
+  is now ACTIVE session34827: inspect log/result before restarting it. Current
+ 20H392 graphics865407ee.../native0104b7fa37ac remain unchanged; 20F66 ABI hooks,
+  root/cryptex packaging and RAM boot need separate validation. No phone install.
+- NEXT true backlight: retain refusal, investigate bounded readonly fault-status
+  timeline/own vendor semantics before issuing a new writer candidate. Never
+  random-reboot until a clean snapshot or suppress ILIM. Native/FW lock-screen
+  mailbox, first-frame-before-ON and shutdown restore gate still pending. Continue
+  sound/GLINK transport afterward; parser is not Wi-Fi. Outer pending journal
+  stays untouched: historical05:48 RO review grants NO iOS/root-write permission.
+  No repeated recovery boot (0915 failedUSB and human recovery already ENDED).
+
 ### 0108 cycle0002 zero-WRITE refusal safely ENDED; exact-byte diagnostic003 READY
 
 - Current phone actual expectedPolaris FASTBOOT after automatic0002 reset has

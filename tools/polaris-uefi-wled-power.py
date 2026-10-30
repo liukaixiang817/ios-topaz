@@ -58,6 +58,39 @@ def parse(text):
                 OS_started=False,fields=fields)
 
 
+def snapshot_change(fields):
+    """Decode a refused snapshot witness, never authorize a PMIC retry.
+
+    The two bytes are observations. A disappearing fault bit does not establish
+    clear-on-read behavior, a false alarm, or hardware health.
+    """
+    packed = fields.get('WLED_POWER_CHANGED_BYTE', 0)
+    if packed == 0:
+        return None  # Older images and non-snapshot refusals have no witness.
+    offset = (packed >> 32) - 1
+    before, after = (packed >> 8) & 255, packed & 255
+    if not 0 <= offset < 66 or packed & 0xffff0000 or before == after:
+        raise ValueError('malformed snapshot-change witness')
+    peripheral = 0xd800
+    if offset < 16:
+        peripheral += 0x100 if offset >= 8 else 0
+        register = offset % 8
+    elif offset < 19:
+        register = 0x44 + offset - 16
+    elif offset < 24:
+        register = (8, 0x10, 0x5a, 0x5b, 0x15)[offset - 19]
+    elif offset < 30:
+        peripheral = 0xd900
+        register = 0x46 + offset - 24
+    else:
+        peripheral = 0xd900
+        register = 0x50 + ((offset - 30) // 9) * 16 + (offset - 30) % 9
+    return dict(snapshot_offset=offset, slave=3, register=peripheral+register,
+                before=before, after=after,
+                fault_status_observed=(peripheral == 0xd800 and register == 8),
+                permits_retry=False)
+
+
 def prestart_refusal(text):
     """Only recover a failed preparation that never armed a writer.
 
@@ -86,7 +119,8 @@ def prestart_refusal(text):
     if f.get('WLED_POWER_WRITES_ISSUED',0) != 0 or f.get('WLED_POWER_PREPARE_WRITES_ISSUED',0) != 0:
         raise ValueError('a PMIC command was issued; refusal recovery forbidden')
     return dict(preparation_refused_before_writer=True,firmware_reset_gate_still_required=True,
-                electrical_module_off_and_restore_readbacks=False,physical_darkness_proven=False,fields=f)
+                electrical_module_off_and_restore_readbacks=False,physical_darkness_proven=False,
+                observed_snapshot_change=snapshot_change(f),fields=f)
 
 
 def main():

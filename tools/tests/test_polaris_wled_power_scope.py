@@ -49,6 +49,21 @@ def cycle_log():
 
 
 class PowerScope(unittest.TestCase):
+    def test_refused_snapshot_witness_maps_to_actual_register_without_retry(self):
+        for offset in range(66):
+            packed = ((offset+1) << 32) | 0x100
+            d = host.snapshot_change({'WLED_POWER_CHANGED_BYTE': packed})
+            self.assertEqual(d['snapshot_offset'], offset)
+            self.assertEqual((d['before'], d['after']), (1, 0))
+            self.assertFalse(d['permits_retry'])
+        d = host.snapshot_change({'WLED_POWER_CHANGED_BYTE': 0x1400000100})
+        self.assertEqual(d['register'], 0xd808)
+        self.assertTrue(d['fault_status_observed'])
+        for invalid in (0x4300000100, 0x100, 0x1400010100, 0x1400000101):
+            with self.subTest(invalid=invalid), self.assertRaises(ValueError):
+                host.snapshot_change({'WLED_POWER_CHANGED_BYTE': invalid})
+        self.assertIsNone(host.snapshot_change({}))
+
     def test_prepare_refusal_can_recover_but_issued_or_running_cycle_cannot(self):
         text = ('WLED_POWER_PREPARE_ERROR=0x0000000000000007\r\n'
                 'WLED_KERNEL_AP_STAGE=0x0000000000000000\r\n'

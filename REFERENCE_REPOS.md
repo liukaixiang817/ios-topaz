@@ -12,6 +12,56 @@ their build/setup scripts or prebuilts has been executed.
 | [HackiOS userland](https://github.com/oosexgang/hackios-xnu-userland) | `research/reference-repos/hackios-xnu-userland` | `a79ff0772a3454fd1ef127e181e5b3bce6c9ce18` |
 | [User-supplied alioth port](https://github.com/MrMoxing/ios-alioth) | `research/reference-repos/ios-alioth` (shallow source reference) | `2f9207ca27f9b0fad480702e587b88dcc7271ec9` |
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
+| [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
+
+## Dipper / SDM845 comparison (0109)
+
+The human requested this reference for display, touch, GPU, networking and its
+fuller iOS version. Read the pinned README, STATUS, VALIDATION, BUILD, INSTALL,
+upstream locks, licensing and all relevant patch sections. Its 45 published
+checksums and 35 independently extracted added text files match its manifests.
+No reference setup/build script, binary, firmware or device command was run.
+Private evidence is under `research/polaris/uefi-ios-0109`.
+
+Its stated development results include A630 desktop drawing and WCN3990 Wi-Fi
+with Safari. Its STATUS/VALIDATION explicitly distinguish those historical
+results from public-package reproducibility; audio is not complete. It still
+reports stutter and GPU-SMMU/modem restoration issues. Treat this as source
+correspondence, not a verified drop-in image or proof our port has those features.
+
+- Display: dipper's EA8074 **OLED command-mode** panel uses DCS 0x51/0x28/0x29.
+  Polaris's own live DT identifies **JDI NT35596S video-mode LCD + PMI8998 WLED**.
+  Its brightness/lock-screen DSI writes cannot switch our LCD backlight. Dipper's
+  TE timings, 2248-line counter, DPU pipe/scaler addresses and splash allocation
+  also require independent own-panel/memory ownership evidence before any port.
+- Touch: dipper's ST FTM5 on I2C0x49 / SE14 differs from our verified Synaptics
+  RMI F01/F12 on0x20. Preserve the working Polaris discovery, geometry, release
+  handling and transport. Do not replace it with dipper GPIO/regulator/reset data.
+- GPU: same A630/Freedreno family; partial damage tracking and frame completion
+  are useful design references. Its sysmem rendering does not validate a sysmem
+  switch in our currently GMEM-tested bundle. Keep the proven pixels, cache,
+  authentication, ownership, unknown-DMA retention and native shutdown guards.
+  Do not import its GPL initialization tables or weaken our recovery to match it.
+- Wi-Fi: the useful path is SMEM/GLINK -> QRTR/QMI WLFW69(decimal,0x45)/v1 ->
+  ath10k SNOC. Our own c7cb50c1 `glink_smem_native_xprt.c` independently confirms
+  descriptor478 (32 bytes), FIFO479/480 and cached-first RX lookup. New
+  `tools/polaris-glink-inventory.h` extends our existing read-only SMEM inventory
+  with bounded allocation-header traversal, padding/duplicate/overlap checks and
+  exact metadata rereads. This is an offline component, not a mapped transport,
+  SMEM write permission, DSP startup or radio/scan/join success. Dipper's observed
+  QMI settings and calibration assumptions must be checked against our ICNSS and
+  factory files; do not copy a synthetic chip identity or omit board data by fiat.
+
+The recommended user space is **iOS16.5 /20F66 /iPhone10,3 or10,6**. We obtained
+BuildManifest.plist by a partial download from Apple's original restore URL;
+version/product types and these three paths match dipper's documentation:
+`096-04088-077.dmg` (OS), `096-04666-078.dmg` (OS cryptex),
+`096-03536-083.dmg` (App cryptex). Component preparation is private/offline.
+The current20H392 injector/QuartzCore UUID and vtable checks MUST be rediscovered
+for20F66; XNU8796 family alone does not prove ABI compatibility. Keep our custom
+Polaris kernel/DT, UEFI USB/control and existing root unchanged until a separate
+compatible RAM candidate is verified. Its destructive darwin/GPT installation
+recipe is outside this phone's data-preservation authorization.
 
 ## Alioth CPU/GPU comparison (2026-10-28 local)
 
