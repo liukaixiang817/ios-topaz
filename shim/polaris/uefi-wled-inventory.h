@@ -5,9 +5,39 @@
 #define POLARIS_EFI_WLED_INVENTORY_H
 #include "uefi-wled-readonly.h"
 static unsigned wled_inventory_attempted;
+#if defined(EFI_XNU_WLED_FAULT_WATCH)
+#include "uefi-wled-fault-watch.h"
+static struct polaris_wled_fault_watch wled_fault_watch;
+static unsigned wled_fault_watch_reported,wled_fault_watch_source_error;
+static void wled_fault_watch_poll(void)
+{
+    polaris_wled_fault_watch_poll(&wled_fault_watch);
+    if(!wled_inventory_attempted||!wled_fault_watch.done||wled_fault_watch_reported)return;
+    wled_fault_watch_reported=1;
+    report("WH_VERSION=",1);report("WH_SOURCE_REFUSAL=",wled_fault_watch_source_error);
+    report("WH_SAMPLES=",wled_fault_watch.count);report("WH_ERROR=",wled_fault_watch.error);
+    report("WH_COMPLETE=",!wled_fault_watch.error&&wled_fault_watch.count==PWF_SAMPLES);
+    report("WH_FAULT_OR=",wled_fault_watch.fault_or);report("WH_RT_OR=",wled_fault_watch.rt_or);
+    report("WH_ENABLE_XOR=",wled_fault_watch.enable_xor);report("WH_READS=",wled_fault_watch.bus.reads);
+    report("WH_PARTIAL_VALID=",wled_fault_watch.partial_valid);
+    const struct polaris_wled_fault_sample *p=&wled_fault_watch.partial;
+    report("WH_PARTIAL_WORD=",p->first|((uint32_t)p->after<<8)|((uint32_t)p->rt<<16)|((uint32_t)p->enable<<24));
+    for(unsigned n=0;n<wled_fault_watch.count;n++) {
+        char label[16]="WH_S00_AT=";label[4]=(char)('0'+n/10);label[5]=(char)('0'+n%10);
+        const struct polaris_wled_fault_sample *s=&wled_fault_watch.samples[n];
+        report(label,((uint64_t)s->began_us<<32)|s->ended_us);
+        bytes_copy(label+7,"WORD=",6);
+        report(label,s->first|((uint32_t)s->after<<8)|((uint32_t)s->rt<<16)|((uint32_t)s->enable<<24));
+    }
+    text("WH_WATCH_HOLD: READ_ONLY NO_WRITER_PERMISSION\r\n");
+}
+#endif
 #if defined(POLARIS_EFI_TEST_QEMU)
 struct wled_mock {uint32_t command,offset,commands,error;uint64_t clock;};
 static struct wled_mock wled_mock_state;
+#if defined(EFI_XNU_TEST_WLED_FAULT_PULSE)
+static unsigned wled_mock_fault_pulses;
+#endif
 static uint32_t wled_mock_read(void *context,unsigned bank,uint32_t offset)
 {
     struct wled_mock *s=context;
@@ -29,6 +59,9 @@ static uint32_t wled_mock_read(void *context,unsigned bank,uint32_t offset)
     if(local!=0x18&&local!=0x1c){s->error=2;return 0;}
     uint32_t reg=(s->command>>4)&255,value=0;
     for(unsigned n=0;n<4;n++)value|=((reg+n+(local==0x1c?4:0))&255)<<(8*n);
+#if defined(EFI_XNU_TEST_WLED_FAULT_PULSE)
+    if(reg==8&&local==0x18)value=(value&~255u)|(wled_mock_fault_pulses&1);
+#endif
     return value;
 }
 static void wled_mock_command(void *context,uint32_t offset,uint32_t value)
@@ -36,6 +69,9 @@ static void wled_mock_command(void *context,uint32_t offset,uint32_t value)
     struct wled_mock *s=context;
     if((offset!=7*0x80&&offset!=9*0x80)||(value>>27)!=1||(value&0x07fff008))s->error=3;
     s->command=value;s->offset=offset;s->commands++;
+#if defined(EFI_XNU_TEST_WLED_FAULT_PULSE)
+    if(((value>>4)&255)==8)wled_mock_fault_pulses++;
+#endif
 }
 static uint64_t wled_mock_clock(void *context)
 {return ++((struct wled_mock *)context)->clock;}
@@ -66,6 +102,10 @@ static unsigned wled_inventory_probe(void)
     bus.read=buttons_rd;bus.read_command=buttons_command;bus.now_us=buttons_us;
 #endif
     bool valid=polaris_wled_inventory(&bus,&s);
+#if defined(EFI_XNU_WLED_FAULT_WATCH)
+    wled_fault_watch_source_error=bus.fault;
+    polaris_wled_fault_watch_start(&wled_fault_watch,&bus,buttons_us);
+#endif
     report("WLED_SNAPSHOT_FORMAT=",2);
     report("WLED_READONLY_VERSION=",bus.version);
     report("WLED_CTRL_APID_OWNER=",((uint64_t)bus.apid[0]<<32)|bus.owner[0]);

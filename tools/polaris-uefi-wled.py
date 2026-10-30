@@ -28,6 +28,9 @@ def binding(boot, image, driver):
                 raise ValueError('not an isolated readonly WLED hold: ' + key)
     if driver.get('QEMU_variant') is not False:
         raise ValueError('mock WLED image is not a phone image')
+    watch = driver.get('WLED_readonly_fault_watch',False)
+    if type(watch) is not bool or image.get('WLED_readonly_fault_watch',False) is not watch or boot.get('WLED_readonly_fault_watch',False) is not watch:
+        raise ValueError('fault-watch boot/image/driver scope mismatch')
 
 
 def main():
@@ -48,6 +51,7 @@ def main():
                   sent_utc=boot['sent_utc'], image_sha256=image['sha256'],
                   driver_sha256=driver['sha256'], reader_sha256=sha(Path(__file__)),
                   PMIC_writes=False, storage_writes=False, NVRAM_writes=False,
+                  WLED_readonly_fault_watch=driver.get('WLED_readonly_fault_watch',False),
                   kernel_CPU_ON_compiled_out=True, errors=[])
     native = None
     try:
@@ -74,6 +78,10 @@ def main():
             p = a.output / 'firmware.log'; p.write_bytes(data); p.chmod(0o600)
             record['firmware_log_sha256'] = sha(p)
             record['inventory'] = module.parse(data.decode(errors='replace'))
+            if driver.get('WLED_readonly_fault_watch'):
+                spec = importlib.util.spec_from_file_location('watch_records', Path(__file__).with_name('polaris-wled-watch-observations.py'))
+                module = importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+                record['fault_watch'] = module.parse(data.decode(errors='replace'))
             record['state_after'] = protocol.state()
             if record['state_after'] != 'prepared':
                 raise ValueError('inventory capture is not pre-XNU hold')

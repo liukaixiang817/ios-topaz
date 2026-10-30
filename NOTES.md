@@ -34,6 +34,54 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0110 readonly fault timeline READY; fuller16.5 inputs verified COMPLETE
+
+- CURRENT phone still independently verified expected Polaris FASTBOOT at0110
+  preparation. No new physical boot yet. All0108 cycles ended; do not reuse old
+  controllers. New phone-readonly-watch0001 is a NO-WRITER/NO-OS RAM diagnostic,
+  not another power-cycle retry or iOS boot. Native lock-screen bridge unfinished.
+- New default-OFF --wled-fault-watch requires --wled-inventory-only; excludes
+  power cycle, disk/owned/chain, and compiles CPU_ON OUT. Separate diagnostic
+  reader leaves the original snapshot refusal sticky.32 observations, four
+  literal observer READs each (FAULT twice, RT and module enable), >=10ms between
+  completed samples and <=2s total. Alternate middle-read order; preserve both
+  raw fault words, OR of all seen bits, partial read mask, elapsed start/end and
+  failures. Never a health/retry/writer permission. No PMIC rail/threshold/IRQ/
+  permission write, no XNU/root access. Cooperative polling keeps resident USB.
+-19 local scope/ASan/UBSan/parser tests1.799s PASS, including each128 read
+  failure, pulse1->0 retention, stale/reversed/frozen/late time, owner change,
+  truncation/duplicate/unknown/lost-fault words and synthetic/physical scope.
+  SERIAL actual complete EFI watch success15/15 in7.189s, initial read-refusal
+ 15/15 in6.635s. Success uses explicitly SOFTWARE fault pulse, actual guest
+  elapsed architectural clock spanning>=310ms; originalPW_E_CHANGED7 remains,
+ 128 reads/faultOR1. Refusal6 denies watch/count0; both actual APstage and kernel
+  log total0. Not phone/PMIC simulation or physical power proof. First model
+ 0001 rejected missing '=' in dynamic sample labels (12 base checks true, two
+  watch checks false); fixed formatting only and retained failure. Initial
+  harness unused-helper compile failure and private stale path failure retained.
+- Actual original Mindows package preserves81FW/SimpleInit/BootShim/DTB;
+  whole27889352B upstream EDK2 GetInfo/decode PASS. Image/driver/model hashes are
+  frozen in0110/phone-readonly-watch0001. Candidate is ready for source commit,
+  final frozen admission/current expected product and ONE RAM/ONE inventory
+  request. Then inspect actual raw timeline, save full log, ordinary readonly
+  FASTBOOT reset and independent actual product. No WLED writer can run here.
+- Apple20F66 downloads session34827 ENDED exit0. All FOUR whole SHA384 digests
+  match original BuildManifest: OS4728546953B, Systemcryptex2726297600B,
+  Appcryptex10485760B, kernelcache18183395B.0109/ios16.5-download-and-digest-proof
+  binds hashes and version. Not bootable/ABI/installation proof. Current20H392
+  graphics865407ee... and native0104b7fa37ac remain unchanged, no kernel CI.
+- ipsw disk dmg reader refused a valid74,448,896B expanded chunk (its bound),
+  despite matching Apple digest. Failure retained, do not label source corrupt
+  or relax our phone gates. macOS native hdiutil converted compressed OS to
+  UDRO offline successfully, CRC32 D3690A8D. UDRO retains zero runs; not itself
+  a contiguous APFS root. Partition metadata identifies Apple_APFS sector34,
+ 10993664 sectors=5628755968B. Next bounded raw/zero export + NXSB/geometry and
+  reference whole three-part hash verification before offline ABI analysis.
+- No device storage/journal changes. Outer pending-journal review still admits
+  NO iOS or userdata write. No repeat failed recovery boot. Next WLED diagnosis
+  must preserve observed ILIM, not randomly retry writer until zero. Real LCD
+  off/native handshake, sound/Wi-Fi and full persistent install still pending.
+
 ### 0109 latest own-vendor TX/RX scope correction; download remains ACTIVE
 
 - Completed6092a89 (and earlier829b9a3) PUSHED to codex/polaris-preflight.

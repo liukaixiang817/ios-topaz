@@ -156,6 +156,8 @@ def main():
     ap.add_argument('--gpu-thermal-extended',action='store_true',help='separate default-OFF 600s GPU duration experiment; all thermal/idle/10s low guards retained')
     ap.add_argument('--tsens-pair-witness',action='store_true',help='separate default-OFF bounded VALID-word witness, retaining hottest observed temperature')
     ap.add_argument('--wled-inventory-only',action='store_true',help='short original WLED observer inventory then hold; CPU_ON compiled out, no PMIC writes')
+    ap.add_argument('--wled-fault-watch',action='store_true',help='readonly inventory plus bounded FAULT/RT/enable timeline, never health or writer admission')
+    ap.add_argument('--test-wled-fault-pulse',action='store_true',help='QEMU-only explicit nonzero/disappearing FAULT words for readonly watch')
     ap.add_argument('--wled-power-cycle-only',action='store_true',help='isolated pre-XNU WLED OFF/two-second hold/ON; no OS or storage writes')
     ap.add_argument('--test-wled-write-timeout',action='store_true',help='isolated QEMU uncertain WLED command; no reset or retry')
     ap.add_argument('--test-wled-read-failure',action='store_true',help='QEMU-only explicit observer refusal in the inventory hold')
@@ -192,6 +194,10 @@ def main():
         ap.error('TSENS readonly is only an explicit four-big RAM native-drain inventory')
     if a.wled_inventory_only and a.wled_power_cycle_only:
         ap.error('read-only WLED inventory and PMIC power cycle are different scopes')
+    if a.wled_fault_watch and not a.wled_inventory_only:
+        ap.error('WLED fault watch requires the no-writer pre-XNU inventory scope')
+    if a.test_wled_fault_pulse and not (a.test_qemu and a.wled_fault_watch):
+        ap.error('synthetic WLED fault words are QEMU readonly watch only')
     wled_hold=a.wled_inventory_only or a.wled_power_cycle_only
     if wled_hold and (not a.physical_buttons or a.kernel_core!=7 or a.kernel_cpus!=4 or
         a.test_qemu_ufs or a.test_qemu_owned or a.physical_owned_marker or a.disk_guid or
@@ -412,6 +418,8 @@ def main():
         flags.append('-DPOLARIS_EFI_CHAIN_APP=1')
     if a.efi_application:flags.append('-DPOLARIS_EFI_APPLICATION=1')
     if a.wled_inventory_only:flags.append('-DEFI_XNU_WLED_INVENTORY_ONLY=1')
+    if a.wled_fault_watch:flags.append('-DEFI_XNU_WLED_FAULT_WATCH=1')
+    if a.test_wled_fault_pulse:flags.append('-DEFI_XNU_TEST_WLED_FAULT_PULSE=1')
     if a.wled_power_cycle_only:flags.append('-DEFI_XNU_WLED_POWER_CYCLE_ONLY=1')
     if a.test_wled_write_timeout:flags.append('-DEFI_XNU_TEST_WLED_WRITE_TIMEOUT=1')
     if a.test_wled_read_failure:flags.append('-DEFI_XNU_TEST_WLED_READ_FAILURE=1')
@@ -423,6 +431,7 @@ def main():
         inputs+=['shim/polaris/uefi-buttons.h','shim/polaris/uefi-buttons-spmi.h',
                  'tools/polaris-buttons.h','tools/polaris-uefi-buttons.h']
     if a.wled_inventory_only:inputs+=['shim/polaris/uefi-wled-inventory.h','shim/polaris/uefi-wled-readonly.h']
+    if a.wled_fault_watch:inputs+=['shim/polaris/uefi-wled-fault-watch.h']
     if a.wled_power_cycle_only:inputs+=['shim/polaris/uefi-wled-cycle.h','shim/polaris/uefi-wled-power.h','shim/polaris/uefi-wled-readonly.h']
     if shutdown_bridge:inputs.append('shim/polaris/runtime-quiesce.h')
     objects=[]
@@ -442,6 +451,7 @@ def main():
                   payload_crc32=zlib.crc32(raw),payload_C_admission=True,rebased_kernel_bytes_match=True,
                   RAM_only_XNU_loader=not a.physical_owned_marker,kernel_handoff=not wled_hold,storage_write_api=False,NVRAM_write_api=False,
                   WLED_readonly_inventory_only=a.wled_inventory_only,controlled_WLED_read_refusal=a.test_wled_read_failure,
+                  WLED_readonly_fault_watch=a.wled_fault_watch,controlled_WLED_fault_pulse=a.test_wled_fault_pulse,
                   WLED_power_cycle_only=a.wled_power_cycle_only,controlled_WLED_write_timeout=a.test_wled_write_timeout,
                   PMIC_write_api=a.wled_power_cycle_only,kernel_CPU_ON_compiled_out=wled_hold,
                   probe_only=wled_hold,holds_before_OS_start=wled_hold,

@@ -43,7 +43,9 @@ def main():
             q('qmp_capabilities')
             while time.monotonic()-began<60:
                 text=(out/'serial.log').read_text(errors='replace') if (out/'serial.log').exists() else ''
-                if 'WLED_INVENTORY_HOLD: NO_CPU_ON NO_PMIC_WRITE' in text or p.poll() is not None:break
+                marker=('WH_WATCH_HOLD: READ_ONLY NO_WRITER_PERMISSION' if m.get('WLED_readonly_fault_watch')
+                        else 'WLED_INVENTORY_HOLD: NO_CPU_ON NO_PMIC_WRITE')
+                if marker in text or p.poll() is not None:break
                 time.sleep(.2)
             q('stop')
             values={k:int(v,16) for k,v in re.findall(r'([A-Z_0-9]+)=0x([0-9a-f]{16})',text)}
@@ -58,17 +60,30 @@ def main():
                 if not match or int(match[1],16)!=pa or int(match[2],16)!=0:
                     raise ValueError('kernel/AP executed or snapshot unreadable: '+name)
             injected=m.get('controlled_WLED_read_refusal') is True
+            watch=m.get('WLED_readonly_fault_watch') is True
+            pulse=m.get('controlled_WLED_fault_pulse') is True
             checks={'firmware_EL1_admission':values.get('XNU_ADMISSION')==0,'exact_payload_valid':values.get('QEMU_PAYLOAD_VALID')==1,
                     'kernel_prepared_not_executed':'KERNEL_PREPARED_ENTRY=' in text and values.get('WLED_KERNEL_AP_STAGE')==0,
                     'no_PSCI_CPU_ON':'KERNEL_PSCI_STATUS=' not in text,
                     'mock_backend_explicit':values.get('WLED_MOCK_BACKEND')==1,
-                    'expected_observer_result':values.get('WLED_READONLY_RESULT')==(6 if injected else 0),
+                    'expected_observer_result':values.get('WLED_READONLY_RESULT')==(6 if injected else 7 if pulse else 0),
                     'expected_completed_read_count':values.get('WLED_READ_COMMANDS')==(4 if injected else 32) and values.get('WLED_SNAPSHOT_FORMAT')==2,
                     'inventory_holds_on_both_results':'WLED_INVENTORY_HOLD: NO_CPU_ON NO_PMIC_WRITE' in text,
                     'actual_AP_context_stage_zero':bool(actual.get('actual_AP_stage')),
                     'actual_kernel_log_total_zero':bool(actual.get('actual_kernel_log_total')),
                     'no_native_startup_log':'Darwin Kernel Version' not in text and 'POLARIS SMP CHECK:' not in text,
                     'no_panic':'panic(cpu ' not in text}
+            if watch:
+                times=[values.get(f'WH_S{n:02d}_AT',0) for n in range(32)]
+                words=[values.get(f'WH_S{n:02d}_WORD',0) for n in range(32)]
+                monotonic=all((t&0xffffffff)>=(t>>32) for t in times) and all(
+                    (times[n]>>32)-(times[n-1]&0xffffffff)>=10000 for n in range(1,32))
+                checks.update(watch_result_matches_scope=(values.get('WH_SAMPLES')==(0 if injected else 32) and
+                    values.get('WH_ERROR')==(1 if injected else 0) and values.get('WH_COMPLETE')==int(not injected) and
+                    values.get('WH_SOURCE_REFUSAL')==(6 if injected else 7) and values.get('WH_READS')==(0 if injected else 128)),
+                    watch_uses_elapsed_arch_clock=(injected or monotonic and (times[-1]&0xffffffff)-(times[0]>>32)>=310000),
+                    watch_keeps_all_fault_words=(pulse and (injected or all(v==0x46100001 for v in words) and
+                        values.get('WH_FAULT_OR')==1 and values.get('WH_RT_OR')==0x10 and values.get('WH_ENABLE_XOR')==0)))
         except Exception as e:error=str(e)
         finally:
             if p.poll() is None:p.terminate()
@@ -78,6 +93,8 @@ def main():
             'driver_sha256':sha(app),'driver_manifest_sha256':sha(a.driver_manifest),'kernel_sha256':sha(a.kernel),'payload_sha256':sha(a.payload),
             'inputs':m['inputs'],'raw_fields':values,'actual_guest_memory':actual,'controlled_read_refusal':m['controlled_WLED_read_refusal'],
             'WLED_readonly_inventory_only':True,'release_handoff_admitted':False,'actual_phone_or_PMIC_emulated':False,
+            'WLED_readonly_fault_watch':m.get('WLED_readonly_fault_watch',False),
+            'controlled_fault_pulse':m.get('controlled_WLED_fault_pulse',False),
             'kernel_CPU_started':False,'PMIC_power_control_tested':False,'command':cmd}
     (out/'result.json').write_text(json.dumps(result,indent=2)+'\n');print(json.dumps(result,indent=2));raise SystemExit(not result['passed'])
 if __name__=='__main__':main()

@@ -512,6 +512,9 @@ static void host_activity(void *context)
 }
 static void idle_guard(void *context)
 {
+#if defined(EFI_XNU_WLED_FAULT_WATCH)
+    wled_fault_watch_poll();
+#endif
 #if defined(EFI_XNU_WLED_POWER_CYCLE_ONLY)
     wled_cycle_poll();
 #endif
@@ -667,6 +670,9 @@ static void test_monitor(void)
     volatile uint32_t *uart=(void*)(uintptr_t)UINT64_C(0x9000000);
     for(;;){
         uint64_t now;__asm__ volatile("mrs %0,cntvct_el0":"=r"(now));
+#if defined(EFI_XNU_WLED_FAULT_WATCH)
+        wled_fault_watch_poll();
+#endif
 #if defined(EFI_XNU_WLED_POWER_CYCLE_ONLY)
         wled_cycle_poll();
         if(cycle_stage==1&&!cycle_reset_checked) {
