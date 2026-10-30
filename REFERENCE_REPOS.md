@@ -678,8 +678,25 @@ actual AArch64 freestanding compilation uses192 bytes of wrapper stack.
 ASan/UBSan mutation, read-failure, observed metadata-change and foreign-header
 isolation cases pass. This is not an atomic remote snapshot, lock, SMEM item
 reader/allocator, GLINK/QMI transport, radio startup or working Wi-Fi/audio.
-The phone's original SmemDxe getter ABI and safe mapping still need binding
-before physical read-only diagnostics; no such access is claimed here.
+The phone's original SmemDxe getter ABI was subsequently bound offline in0114.
+It was re-extracted byte-for-byte from the original81-file Mindows firmware.
+Its table revision0x10001 and Get slot16 match the unmodified EFISmem header:
+int item, uint32 size pointer, address pointer, with no protocol This argument.
+The wrapper returns EFI_SUCCESS even when its returned address is null, so
+status alone is insufficient. Its conditional cold path includes a shared
+version-header store; that path has not been observed running on this phone.
+Do not invoke this getter as a strictly read-only inventory operation. The
+legacy lock entry/exit are RET stubs, not proof of remote synchronization.
+The25 binary/DT checks and10 AArch64 layout assertions are static evidence;
+no protocol was located/called and no physical shared memory was mapped.
+
+The original DT's SMEM86000000/2MiB region is MPU-enabled. Its own SMEM IRQ
+resource17911008 differs from GLINK-modem doorbell1799000c/mask0x1000.
+Dipper's svc_item selects APPS/MODEM(remote1); the radio chip's WCNSS name
+alone does not select host4 or prove the route of Polaris's WLFW service.
+First inventory own metadata through a separately admitted bounded read-only
+mapping, then authenticate the actual QRTR service path. Do not copy Redwood
+IPCC, allocate via firmware or write FIFO indexes during that inventory.
 
 
 ## UniXNU display, backlight and OS correspondence (2026-10-29 local)

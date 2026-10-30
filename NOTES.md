@@ -34,6 +34,51 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0114 OFFLINE own SmemDxe ABI audit COMPLETE; 0113 phone candidate unchanged
+
+- Phone still unobserved:07:05UTC one expected-Polaris readonly query timed out;
+ 0113/phone-OEM-cycle-0003/preboot-*.json retained. NO boot.json, boot/cycle,
+  PMIC power, root/storage/NVRAM or Android action. Existing physical reconnect
+  request remains pending; do not repeat it or guess device mode. Last genuine
+  expected FASTBOOT still05:08:59UTC. All current USB/offline workers ENDED.
+- Useful independent Wi-Fi prerequisite completed while USB is absent:
+  own-Smem-ABI-and-DT-proof.json re-extracts original SmemDxe from the verified
+  original Mindows image/81FFS, byte-exact SHA9e366873287fbde6452bb8990ee233f7e53513454befb48df01378d88a072ea8.
+ 25 encoded-instruction/table/DT checks and10 original-header AArch64 compile
+  assertions PASS. Read-only binary analysis, NO firmware/getter execution,
+  live LocateProtocol, SMEM mapping, FIFO write/doorbell, DSP/radio/PCM or CI.
+- Original protocol GUIDf4e5c7d0-d239-47cb-aacd-7f66ef763238, tableRVA7090,
+  revision10001, AllocRVA1ca0, GetRVA1ccc, optional functionsNULL. Get ABI is
+  int item(w0),uint32 size*(x1),void address**(x2), NO This argument. Original
+  header SHA15566c69... compiled unchanged with explicit environment type
+  stubs; actual assembly loads slot16 and calls item478 with these3arguments.
+  This proves static ABI correspondence, NOT live callable-pointer admission.
+- Critical finding: Get wrapper returns EFI_SUCCESS regardless of returned
+  pointer; success alone cannot establish an existing item. Conditional lazy
+  init path inside lookup calls shared-version update (SMEM header+64+28).
+  That path contains an actual store, but was NOT observed running on phone.
+  Therefore do NOT call the firmware getter as a strict-readonly diagnostic.
+  Legacy lock entry/exit at4054/4058 are RET stubs, NOT a remote-lock guarantee.
+  Use existing independent bounded metadata parsers after separately proving
+  safe original-DT translation/read mapping, without allocator/getter calls.
+- Own DT freshly decoded from immutable backupf7762357...: shared86000000/
+ 2MiB, MPU enabled, distinct SMEM irq17911008 and target-info1fd4000 resources.
+  Modem GLINK uses same shared region but doorbell1799000c/mask1000/labelmpss.
+  Dipper svc_item explicitly uses APPS/MODEM partition(remote1), not WCNSS4;
+  our actual Wi-Fi service route still requires QRTR discovery. Do not infer
+  ICNSS service host from radio chip name or import Redwood IPCC/host13.
+- Preserved initial llvm-objdump refusal: original PE debug directory212B is
+  not a28B multiple. ANALYSIS-ONLY copy omits exactly8B debug-directory header
+  (three changed bytes); every text/data/reloc section checked byte-identical.
+  Original binary unchanged; copy NEVER linked/booted/executed. It is not a
+  firmware repair, device image or permission to substitute it in0113.
+- Current priority and concrete next device action remain0113 ONE no-OS RAM
+  WLED OFF2s/ON test, ONLY after correct directed FASTBOOT appears.0114 changed
+  no builder/header/client/kernel/bundle input, so selected0113 readiness proof
+  and image still match; no kernel CI/rebuild needed. Native backlight mailbox,
+  optical darkness/wake, PCM/Wi-Fi, persistent runtime/menu/full16.5 unfinished.
+  Root pending-journal restrictions and all preservation rules remain unchanged.
+
 ### 0113 physical OEM candidate READY; USB absent, physical reconnect requested
 
 - Completed source a3f5c52 committed and PUSH VERIFIED to codex/polaris-preflight.
