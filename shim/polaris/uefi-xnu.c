@@ -122,6 +122,9 @@ static void invalidate(uint64_t address,uint64_t bytes)
 #error "Runtime WLED must not reuse pre-XNU or durable-write admission"
 #endif
 static int prepare_reset(void *,unsigned);
+static int runtime_arm_reset(unsigned);
+static int runtime_unarm_reset(void);
+static int cache_reset_protocol(void);
 static int shutdown_reset_ready(void *,unsigned);
 static int shutdown_status(void *,const uint8_t **,uint64_t *);
 #include "uefi-wled-native.h"
@@ -198,6 +201,10 @@ static int disk_payload(void)
 static int prepare_boot(void *context)
 {
     (void)context;if(load_state!=2)return 0;
+#if defined(EFI_XNU_WLED_NATIVE_RUNTIME)
+    /* A BootServices lookup belongs BEFORE CPU0 IRQ ownership changes. */
+    if(!cache_reset_protocol()){report("WLED_NATIVE_RESET_CACHE_REFUSED=",1);return 0;}
+#endif
     int64_t affinity=psci(UINT64_C(0xc4000004),EFI_XNU_CPU,0,0);report("AP_AFFINITY=",(uint64_t)affinity);
     if(affinity!=1)return 0; /* Never seize a core already owned by firmware. */
     uint64_t sre;__asm__ volatile("mrs %0,ICC_SRE_EL1":"=r"(sre));report("EFI_GIC_SRE=",sre);
@@ -297,7 +304,7 @@ static void boot_kernel(void *context)
 #if defined(EFI_XNU_WLED_NATIVE_START_REFUSAL) && EFI_XNU_WLED_NATIVE_START_REFUSAL==3
     (void)wln_begin;load_state=3;report("WLED_NATIVE_BEFORE_RUNTIME_REFUSED=",1);return;
 #else
-    if(!prepare_reset(0,2)||!wln_begin()){load_state=3;report("WLED_NATIVE_PREPARE_REFUSED=",1);return;}
+    if(!wln_begin()){load_state=3;report("WLED_NATIVE_PREPARE_REFUSED=",1);return;}
 #endif
 #endif
 #if defined(EFI_XNU_WLED_NATIVE_RUNTIME)
@@ -434,6 +441,75 @@ static int shutdown_reset_ready(void *context,unsigned mode)
 #endif
 }
 #endif
+#if defined(EFI_XNU_WLED_NATIVE_RUNTIME)
+static unsigned runtime_reset_armed,runtime_reset_mode,runtime_reset_error;
+#if !defined(POLARIS_EFI_TEST_QEMU)
+static uint32_t runtime_reset_before;
+static struct polaris_efi_reset_marker runtime_reset_marker;
+#endif
+static int cache_reset_protocol(void)
+{
+#if !defined(POLARIS_EFI_TEST_QEMU)
+    if(reset_pon)return reset_pon->revision==0x10001&&reset_pon->get&&reset_pon->set;
+    if(wln_cpu_on_issued||!identity(UINT64_C(0x146bf65c)))return 0;
+    static const efi_guid guid={0x97044b58,0xfea4,0x4ad0,{0x9d,0x0b,0xe4,0x17,0xd6,0x0f,0x11,0xa1}};
+    efi_status status=system_table->boot->locate_protocol(&guid,0,(void**)&reset_pon);
+    if(status||!reset_pon||reset_pon->revision!=0x10001||!reset_pon->get||!reset_pon->set){reset_pon=0;return 0;}
+#endif
+    return 1;
+}
+static int runtime_unarm_reset(void)
+{
+    if(!runtime_reset_armed)return !runtime_reset_error;
+#if !defined(POLARIS_EFI_TEST_QEMU)
+    volatile uint32_t *reason=(void*)(uintptr_t)UINT64_C(0x146bf65c);
+    *reason=runtime_reset_before;__asm__ volatile("dsb sy":::"memory");
+    uint8_t restored=0;efi_status status=reset_pon->set(0,3,runtime_reset_marker.before,0xfe);
+    if(!status)status=reset_pon->get(0,3,&restored);
+    int matches=!status&&*reason==runtime_reset_before&&(restored&0xfe)==(runtime_reset_marker.before&0xfe);
+    if(!matches)runtime_reset_error=1;
+    report("RESET_ARM_RESTORE_STATUS=",status);report("RESET_ARM_RESTORE_MATCH=",matches);
+    __asm__ volatile("msr daifset,#15; dsb sy; isb":::"memory");
+    __asm__ volatile("msr ICC_IGRPEN1_EL1,%0; isb"::"r"(UINT64_C(0)):"memory");
+#endif
+    runtime_reset_armed=0;return !runtime_reset_error;
+}
+static int runtime_arm_reset(unsigned mode)
+{
+    if(mode!=2||runtime_reset_error||wln_actual_reset_entered)return 0;
+    /* An existing native/WLED failure must reject BEFORE even the volatile
+     * restart marker is prepared. Zero-CPU/no-WRITE refusal is separate. */
+    if(wln_cpu_on_issued&&(wln_power.error||wln_runtime.error||wln_firmware.error||
+       wln_power.uncertain||wln_runtime.pending||!wln_power.actual_on||wln_closing_mode!=mode))return 0;
+    if(runtime_reset_armed)return runtime_reset_mode==mode;
+    if(!cache_reset_protocol()||!system_table->runtime||!system_table->runtime->reset_system)return 0;
+    uint64_t began=buttons_us(0);if(!began)return 0;
+#if !defined(POLARIS_EFI_TEST_QEMU)
+    volatile uint32_t *reason=(void*)(uintptr_t)UINT64_C(0x146bf65c);
+    runtime_reset_before=*reason;
+    int valid=polaris_efi_pon_marker(reset_pon,mode,&runtime_reset_marker);
+    report("RESET_ARM_PON_STATUS=",runtime_reset_marker.status);
+    report("RESET_ARM_PON_BEFORE=",runtime_reset_marker.before);
+    report("RESET_ARM_PON_AFTER=",runtime_reset_marker.after);
+    if(!valid){runtime_reset_error=1;report("RESET_ARM_PON_FAILURE_RESTORE=",runtime_reset_marker.restore_status);return 0;}
+    runtime_reset_armed=1;runtime_reset_mode=mode;
+    *reason=0x77665500u;__asm__ volatile("dsb sy":::"memory");
+    if(*reason!=0x77665500u){runtime_reset_error=1;(void)runtime_unarm_reset();return 0;}
+    /* Firmware protocol calls may restore masks. Reestablish the original
+     * handoff context BEFORE any new saved-state WLED observation. */
+    __asm__ volatile("msr daifset,#15; dsb sy; isb":::"memory");
+    __asm__ volatile("msr ICC_IGRPEN1_EL1,%0; isb"::"r"(UINT64_C(0)):"memory");
+#else
+#if defined(EFI_XNU_WLED_NATIVE_RUNTIME_TEST)
+    uint64_t at=began;do{at=buttons_us(0);__asm__ volatile("yield");}while(at>=began&&at-began<250000);
+#endif
+    runtime_reset_armed=1;runtime_reset_mode=mode;
+#endif
+    uint64_t ended=buttons_us(0);report("RESET_ARM_BEGAN_US=",began);report("RESET_ARM_ENDED_US=",ended);
+    if(ended<began){runtime_reset_error=1;(void)runtime_unarm_reset();return 0;}
+    return 1;
+}
+#endif
 static int prepare_reset(void *context,unsigned mode)
 {
     (void)context;if(mode!=1&&mode!=2)return 0;
@@ -443,12 +519,15 @@ static int prepare_reset(void *context,unsigned mode)
 #if defined(EFI_XNU_WLED_NATIVE_RUNTIME)
     const uint8_t *native_data=0;uint64_t native_bytes=0;
     if(!wln_zero_ready(mode)) {
-        if(!shutdown_reset_ready(context,mode)||!shutdown_status(context,&native_data,&native_bytes)||
-           native_bytes!=128)return 0;
-        const struct polaris_shutdown_status *native=(const void *)native_data;
-        if(!wln_reset_ready(native->cookie,native->sequence,mode))return 0;
+        if(!shutdown_reset_ready(context,mode)||!shutdown_status(context,&native_data,&native_bytes)||native_bytes!=128)return 0;
     }
-#endif
+    if(!runtime_arm_reset(mode))return 0;
+    if(!wln_zero_ready(mode)) {
+        const struct polaris_shutdown_status *native=(const void *)native_data;
+        if(!wln_reset_ready(native->cookie,native->sequence,mode)){(void)runtime_unarm_reset();return 0;}
+    }
+    return 1;
+#else
 #if defined(EFI_XNU_DURABLE_GUARD)
     if(load_state>=4&&!shutdown_reset_ready(context,mode))return 0;
 #endif
@@ -472,21 +551,27 @@ static int prepare_reset(void *context,unsigned mode)
     }
 #endif
     return 1;
+#endif
 }
 static void reset(void *context,unsigned mode)
 {
 #if defined(EFI_XNU_WLED_NATIVE_RUNTIME)
     wln_reset_retryable=0;
-    if(!wln_final_fresh(mode)){wln_reset_retryable=1;return;}
-    if(!wln_zero_ready(mode)&&!shutdown_reset_ready(context,mode))return;
-#endif
-#if defined(EFI_XNU_WLED_NATIVE_RUNTIME) && (defined(EFI_XNU_WLED_NATIVE_LIFECYCLE) || defined(EFI_XNU_WLED_NATIVE_EXIT_TEST))
-    /* QEMU-only reset observer AFTER the real reset guards. Hold this model
-     * for binary capture; this is not proof of an actual guest/device reset. */
+    uint64_t at=buttons_us(0);report("RESET_FINAL_CHECK_US=",at);
+    if(!wln_final_fresh(mode)) {
+        wln_reset_retryable=1;(void)runtime_unarm_reset();return;
+    }
+    if(!runtime_reset_armed||runtime_reset_mode!=mode||runtime_reset_error||
+       (!wln_zero_ready(mode)&&!shutdown_reset_ready(context,mode)))return;
+#if defined(POLARIS_EFI_TEST_QEMU) && (defined(EFI_XNU_WLED_NATIVE_LIFECYCLE) || defined(EFI_XNU_WLED_NATIVE_EXIT_TEST))
     wln_actual_reset_entered=1;wln_test_reset_observed++;
-    report("WLED_NATIVE_TEST_RESET_AFTER_GATES=",wln_test_reset_observed);
-    return;
+    report("WLED_NATIVE_TEST_RESET_AFTER_GATES=",wln_test_reset_observed);return;
 #endif
+    if(!wln_final_fresh(mode)){wln_reset_retryable=1;(void)runtime_unarm_reset();return;}
+    wln_actual_reset_entered=1;report("RESET_REQUESTED=",mode);
+    system_table->runtime->reset_system(0,0,0,0);
+    report("RESET_RETURNED=",1);runtime_reset_error=1;(void)runtime_unarm_reset();return;
+#else
     (void)context;
 #if !defined(POLARIS_EFI_TEST_QEMU)
     volatile uint32_t *reason=(void*)(uintptr_t)UINT64_C(0x146bf65c);
@@ -523,6 +608,7 @@ static void reset(void *context,unsigned mode)
 #if !defined(POLARIS_EFI_TEST_QEMU)
     if(reset_pon)report("RESET_PON_RESTORE=",reset_pon->set(0,3,marker.before,0xfe));
     *reason=before;__asm__ volatile("dsb sy":::"memory");
+#endif
 #endif
 }
 static efi_status admission(void)

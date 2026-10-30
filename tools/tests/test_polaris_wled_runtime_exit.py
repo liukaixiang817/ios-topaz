@@ -151,9 +151,12 @@ static uint64_t buttons_us(void*x){(void)x;return f.time;}
 static int wln_zero_ready(unsigned mode){(void)mode;return 0;}
 static int shutdown_reset_ready(void*x,unsigned mode){(void)x;return mode==2;}
 static int shutdown_status(void*x,const uint8_t**d,uint64_t*n){(void)x;*d=(void*)&native;*n=128;return 1;}
+static unsigned arm_count,unarm_count;
+static int runtime_arm_reset(unsigned mode){assert(mode==2);arm_count++;f.time+=250001;return 1;}
+static int runtime_unarm_reset(void){unarm_count++;return 1;}
 static int prepare_reset(void*,unsigned);
 ''' + functions + r'''
-static int prepare_reset(void*x,unsigned mode){(void)x;return wln_reset_ready(native.cookie,native.sequence,mode);}
+static int prepare_reset(void*x,unsigned mode){(void)x;return runtime_arm_reset(mode)&&wln_reset_ready(native.cookie,native.sequence,mode);}
 int main(void){
  begin(8192,1);for(unsigned c=0;c<3;c++){target(false);target(true);}assert(r.count==74&&f.writes==12);
  assert(pwr_close(&r));wln_sync_history();unsigned prefix=r.count;uint32_t crc=~wln_crc;
@@ -167,7 +170,7 @@ int main(void){
  assert(wln_exit_begin(0,1,wln_cookie,r.count,~wln_crc,&data,&bytes)&&bytes==100);
  f.time+=250001;assert(wln_exit_finish(0,&data,&bytes)&&r.count==82&&f.writes==12);
  wln_exit_abort(0,1);assert(!wln_exit_begin(0,1,wln_cookie,r.count,~wln_crc,&data,&bytes));
- assert(p.issued==p.completed&&p.issued==12&&!p.uncertain);
+ assert(p.issued==p.completed&&p.issued==12&&!p.uncertain&&arm_count==2&&unarm_count==2);
  for(unsigned bad=1;bad<=reads+5;bad++) {
   wln_crc=~0u;wln_crc_count=wln_snapshot_sequence=wln_snapshot_count=0;
   wln_native_cookie=wln_native_sequence=wln_receipt_issued=0;

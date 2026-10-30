@@ -34,6 +34,101 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0122 reset-arm BEFORE fresh receipt COMPLETE; NEW candidate READY; old phone RAM hold awaits physical FASTBOOT
+
+- Completed the actionable sequencing repair, not another design-only step.
+  New0122 physical-runtime-driver-0002/image-0002/runtime-codec-0002 and
+  boot-runtime-once.py are independently frozen offline. No0122 phone boot sent.
+  `0122/reset-staging-models-and-candidate-proof.json` PASS14 checks/101files.
+  Kernel/nativeprofile still exactdd4bd757/2d55a4e/CI41056172330, no new kernelCI.
+- PON LocateProtocol cache now belongs to prepare_boot BEFORE DAIF/Group1
+  handoff. All original architecture/window/identity/owner/static guards remain;
+  new actual affinity/EL/DAIF/group/PAR/core/config/observer scope values log
+  on the next physical start. Old failing scope predicate is NOT isolated.
+- Slow volatile PON+IMEM reset-arm now completes BEFORE terminal WLED reads or
+  WLZ4 creation. Reset uses the already checked marker and performs no slow PON
+  call after the receipt. Original200ms freshness remains at actual reset.
+  ARM began/ended/finalcheck actual clocks log. Failed USB/latefresh unwinds
+  saved IMEM+PON with readback; uncertainty/sticky failure forbids retries.
+  Native/WLED errors refuse BEFORE even marker APIs. No WLED writer change.
+- Current-source two whole EFI-XNU models selected *-driver-0002/*-run-0002:
+  delayed-footer18checks38.829787s, explicit actual guest ARM250014us +footer
+  >=250000us, then NEW read pair->reset248us/80raw/still12writes. Failed-receipt
+  read-only recovery18checks39.212081s, ARM250002us/newpair->reset44us/82raw/
+  still12writes/one guarded reset observer. Real native3RAMcopies/seq6/HFS
+  unmount/VFS0busy0/peersOFF/coordinator/RAM_DRAINED80000003. SOFTWARE PMIC,
+  explicit software ARM delay and RAM USB sink, not physical PON/USB/SD845/
+  panel/actual guest reset proof. Original failed models stay archived.
+- Current actual before-runtime0002 EFI15checks6.949456s verifies >=250ms ARM
+  occurs BEFORE actual WLZ4/zeroCPU/AP/WRITEs and receipt freshness. Combined26
+  local ASan/UBSan/scope/USB/wire/ownership/marker-guard checks PASS5.816s;
+  actual reset-arm guard executed for sticky native/WLED errors before any
+  firmware callback. Both positive/current-source image paths compile/link
+  full warnings; actual upstream EDK2 whole28170952B exact decode and original
+  81FW/SimpleInit/BootShim/DTB preservation verified. Same own602B payload,
+  GPU865407ee/ca_vbl1/all thermal/CPU/GPU/cache/auth/lifetime guards.
+- PHONE CURRENT is NOT a confirmed FASTBOOT: last actual observation15:19UTC
+  is old0121 prepared UEFI hold after final freshness refusal. No new native
+  iOS/root/storage/Android/WLED power activity; normal reset marker had been
+  prepared/restored. Pending ONE human physical power+volume-down FASTBOOT
+  request from this chat; do not repeat it or send oldboot/cycle/recovery.
+  Do not wait old25381/86565/99868/52727/29135/6992/18892/etc workers: ended.
+- NEXT after source commit+push, new0122 boot-once --boot-once first rehashes
+  frozen evidence and queries actual expectedPolaris; only if present ONE NEW
+  RAM boot is authorized automatically, no repeated permission. It sends image
+  only, then dedicated native runtime client/exact payload/state/log/screen.
+  If no connection, remain offline; don't patch oldimage/manifest or clear gates.
+  After a long uncontrolled interval/Android, renew strictRO fullroot/map/GPT/ESP/
+  journal review first; no replay/repair. Current narrow0120 RO+512MiBRAMCOW/
+  ufsrw0 only, may_write_userdata=false. Native phone lockscreen/wake still
+  UNPROVEN; original0116 opticalOFF remains completed/human-confirmed, don't
+  repeat its question. Sound/WiFi/full ABI16.5/persistence/menu remain pending.
+
+### 0121 physical prestart scope refusal; zero receipt delivered but final reset REFUSED; LIVE RAM hold / physical FASTBOOT requested
+
+- Source79b1d0072d0a6061233fcb43795dbfd0dcb36736 committed/PUSHED. Actual new
+  ONE RAM image15:14UTC/one exact payload/start15:15UTC, phone-native-WLED-0001.
+  Firmware actual loadedPE/map/archive ownership and original81FW/whole codec
+  passed; actual input/buttons prestart passed. Native start then refused with
+  PWP scope32 BEFORE cookie initialization/PWP status snapshots/PSCI. Exact
+  scope field not logged; do NOT call it an actual changed owner. WLZ4 cookie
+  equals receipt-time XOR constant, proving no earlier runtime cookie. Actual
+  CPU_ON-issued0/APstage0/WLEDissued0/completed0/uncertain0. No native iOS/root/
+  storage/NVRAM/Android activity. This is not a lockscreen/WLED power failure.
+- Dedicated zero recovery15:16:43 returned actual44B OKAY+WLZ4/error32. This ACK
+  did NOT prove FASTBOOT. Subsequent actual directed expected-product timed out;
+  live new-client state and readonly RAM log confirm same prepared UEFI hold.
+  Actual log: RESET_PON_STATUS0/before0/after4, RESET_WLED_FRESH_REFUSED1 and
+  RESET_PON_RESTORE0. Thus volatile reset marker was prepared then restored;
+  no reset occurred. Last true expectedPolaris is preboot, not a post-test pass.
+  Original log does NOT distinguish >200ms elapsed from backward/changed clock;
+  earlier commentary inferred timeout too strongly, corrected in chat.
+- Current RAM zero receipt is one-shot and final freshness cannot be bypassed;
+  no remote reset command can safely exit this frozen image. ONE async physical
+  power+volume-down FASTBOOT request is pending. Do not repeat/cycle/oldrecovery/
+  rawfallback or claim all phone work ended. HostUSB workers have ended, phone
+  pre-XNU hold remains live. Readonly-after-zero-receipt-0001/native.log retained.
+- Scope source has an ordering issue to fix: PON LocateProtocol is currently
+  called AFTER handoff DAIF/Group1 masking, immediately before physical scope.
+  Such firmware services can restore IRQ state; actual failing field unobserved.
+  Move cache admission to prepare_boot BEFORE masking; reassert original masks
+  and log each actual EL/affinity/DAIF/group/PAR/window predicate, no weakened gate.
+- Reset sequencing fix NEXT: separate/cache actual volatile PON+IMEM arm BEFORE
+  fresh WLED pair / zero receipt creation, so no slow firmware prep remains
+  after a supposedly-fresh receipt. Keep original200ms gate; log actual pre/post
+  clocks. On failed USB/stale gate, undo saved marker with readback and preserve
+  sticky uncertainty. Only known-safe bounded read-only recovery may issue a NEW
+  receipt, no replay/clear/unknown hardware retry. Current image is immutable;
+  implement/test/build a NEW candidate, never patch old manifest or reuse thisboot.
+- Minor host failure capture0001 attempted while start transport15578 still
+  owned USB; claim refused BEFORE commands, retained. Later captures were serial.
+  First post-reset getvar raised timeout before writing its JSON and exposed
+  an unsanitized argument in tool traceback; future helper catches timeout and
+  logs only redacted text. No serial committed. No more USB concurrency.
+- ROOT permission still narrow0120 original16GiB RO+512MiBRAMCOW/ufsrw0 only;
+  may_write_userdata=false. No old onecycle/optical question/performance scroll/
+  native CI replay. Sound/WiFi/full16.5 remain after real native lockscreen.
+
 ### 0121 atomic WLED terminal export + independent physical candidate READY; phone FASTBOOT
 
 - New default-null internal USB callbacks stream actual terminal footer, then

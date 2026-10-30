@@ -93,6 +93,7 @@ def main():
                 zero_WRITE=raw.get('WLED_NATIVE_ZERO_ISSUED')==raw.get('WLED_NATIVE_ZERO_COMPLETED')==raw.get('WLED_NATIVE_ZERO_UNCERTAIN')==0,
                 actual_error_retained=decoded['error']==raw.get('WLED_NATIVE_ZERO_ERROR')=={'owner':32,'configuration':66,'before-runtime':0}[kind],
                 no_native_start_or_PSCI='Darwin Kernel Version' not in text and 'KERNEL_PSCI_STATUS=' not in text,
+                actual_arm_precedes_zero_receipt=raw.get('RESET_ARM_ENDED_US',0)>=raw.get('RESET_ARM_BEGAN_US',0)+250000 and decoded['observed_us']>=raw.get('RESET_ARM_ENDED_US',0),
                 no_panic='panic(cpu ' not in text,actual_receipt_decoded=True)
             if not all(checks.values()):raise ValueError('actual EFI prestart checks failed')
         except Exception as e:error=str(e)

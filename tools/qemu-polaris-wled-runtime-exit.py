@@ -87,6 +87,8 @@ def main():
                 original_errors_zero=values.get('WLED_EXIT_FINAL_ERROR')==0,
                 footer_actual_delay_over_original_freshness=values.get('WLED_EXIT_DELAY_US',0)>=250000,
                 actual_reset_observer_only_after_final_pair=values.get('WLED_EXIT_RESET_OBSERVED')==1,
+                reset_arm_actual_guest_delay=values.get('RESET_ARM_ENDED_US',0)-values.get('RESET_ARM_BEGAN_US',0)>=250000,
+                reset_checked_after_new_pair=previous['records'][-1]['ended_us']<=values.get('RESET_FINAL_CHECK_US',0)<=previous['records'][-1]['ended_us']+200000,
                 bounded_attempts=values.get('WLED_EXIT_ATTEMPTS')==attempt_count,
                 expected_first_delivery=values.get('WLED_EXIT_FIRST_RESULT')==int(attempt_count==1),
                 failed_delivery_no_reset=attempt_count==1 or values.get('WLED_EXIT_FAILED_NO_RESET')==1,

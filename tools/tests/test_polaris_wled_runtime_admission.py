@@ -11,7 +11,7 @@ ROOT=Path(__file__).resolve().parents[2]
 
 def fixture():
     d=dict(PHYSICAL,kernel_sha256=KERNEL_SHA,GPU_thermal_policy=copy.deepcopy(THERMAL),TSENS_pair_policy=copy.deepcopy(PAIR),inputs={'exact.c':'x'})
-    models=[dict(controlled_exit=k,passed=True,inputs=d['inputs'],SOFTWARE_PMIC=True,RAM_USB_sink=True,physical_admission=False,checks={str(n):True for n in range(16)}) for k in ('delayed-footer','lost-receipt-recovery')]
+    models=[dict(controlled_exit=k,passed=True,inputs=d['inputs'],SOFTWARE_PMIC=True,RAM_USB_sink=True,physical_admission=False,checks={str(n):True for n in range(18)}) for k in ('delayed-footer','lost-receipt-recovery')]
     ci=dict(conclusion='success',status='completed',databaseId=41056172330,headSha=NATIVE_SOURCE)
     pre=dict(may_boot_iOS=True,may_write_userdata=False,full_image_sha256=ROOT_SHA,extent_count=182,phone_partition_writes=False,outer_needs_journal_recovery=False,outer_state=1,write_ownership_baseline_update_permitted=False,permitted_boot_arguments={'ufsrw':0,'polarisramcow':1,'rootrw':1,'polarisrammb':512,'polarisownedmarker':0})
     for k in ('all_six_GPT_copies_match_original','fresh_maps_before_after_match','unmounted','block_readonly','outer_header_unchanged_during_readonly_check','outer_header_independently_reviewed','actual_expected_fastboot_after_verified','critical_partitions_match_reviewed_baselines'):pre[k]=True

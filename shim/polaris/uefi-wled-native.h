@@ -231,10 +231,15 @@ static int wln_physical_scope(void)
     __asm__ volatile("mrs %0,ICC_IGRPEN1_EL1":"=r"(group));
     __asm__ volatile("at s1e1w,%1; isb; mrs %0,par_el1":"=r"(par):
         "r"(UINT64_C(0xd5d0000)):"memory");
+    report("WLED_NATIVE_SCOPE_AFFINITY=",affinity);report("WLED_NATIVE_SCOPE_EL=",el);
+    report("WLED_NATIVE_SCOPE_DAIF=",mask);report("WLED_NATIVE_SCOPE_GROUP=",group);
+    report("WLED_NATIVE_SCOPE_WRITE_PAR=",par);
+    int core=identity_range(0xc440000,0x1100),config=identity_range(0xc40a000,0x1000);
+    int observer=identity_range(0xe600000,0x10000);
+    report("WLED_NATIVE_SCOPE_CORE_IDENTITY=",core);report("WLED_NATIVE_SCOPE_CONFIG_IDENTITY=",config);
+    report("WLED_NATIVE_SCOPE_OBSERVER_IDENTITY=",observer);
     return !(affinity&0xff00ffffffu)&&el==4&&(mask&0x3c0)==0x3c0&&!group&&
-        !(par&1)&&(par&UINT64_C(0x0000fffffffff000))==UINT64_C(0xd5d0000)&&
-        identity_range(0xc440000,0x1100)&&identity_range(0xc40a000,0x1000)&&
-        identity_range(0xe600000,0x10000);
+        !(par&1)&&(par&UINT64_C(0x0000fffffffff000))==UINT64_C(0xd5d0000)&&core&&config&&observer;
 }
 #endif
 static uint64_t wln_bus_now(void *context)
@@ -454,6 +459,7 @@ static int wln_exit_begin(void *context,int recover,uint64_t cookie,uint32_t cou
         const struct polaris_shutdown_status *native=(const void *)native_data;
         if(native->cookie!=wln_native_cookie||native->sequence!=wln_native_sequence||native->mode!=2)return 0;
     }
+    if(recover&&!runtime_arm_reset(2))return 0;
     unsigned added=wln_runtime.count-count;
     if(added!=(recover?0u:4u))return 0;
     const uint8_t *page=0;uint64_t page_bytes=0;
@@ -495,7 +501,8 @@ static void wln_exit_abort(void *context,unsigned cause)
     (void)context;
     if(!wln_actual_reset_entered&&wln_exit_active) {
         wln_exit_active=0;
-        wln_exit_aborted=(cause==1)||(cause==2&&wln_reset_retryable);
+        int unarmed=runtime_unarm_reset();
+        wln_exit_aborted=unarmed&&((cause==1)||(cause==2&&wln_reset_retryable));
         report("WLED_NATIVE_EXIT_DELIVERY_REFUSED=",((uint64_t)cause<<32)|wln_exit_attempt);
     }
 }

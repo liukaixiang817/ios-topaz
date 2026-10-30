@@ -19,7 +19,8 @@ PHYSICAL=dict(RAM_only_XNU_loader=True,kernel_handoff=True,PMIC_write_api=True,
     probe_only=False,holds_before_OS_start=False,payload_C_admission=True,rebased_kernel_bytes_match=True,
     WLED_runtime_journal_version=3,WLED_runtime_archive_capacity=8192,WLED_runtime_archive_storage_capacity=8192,
     raw_reset_requires_native_and_WLED_restore=True,WLED_native_zero_write_receipt_bytes=40,
-    WLED_atomic_exit_footer_max=212,WLED_atomic_exit_receipt_bytes=60)
+    WLED_atomic_exit_footer_max=212,WLED_atomic_exit_receipt_bytes=60,
+    WLED_reset_prepared_before_terminal_reads=True,WLED_reset_arm_SOFTWARE_delay_us=0)
 THERMAL=dict(experimental_limits_mC=[75000,70000,60000,55000],max_observation_age_us=500000,
     hard_high_ns=600000000000,confirmed_low_ns=10000000000,idle_ns=250000000)
 PAIR=dict(max_physical_reads=72,max_words_per_sensor=4,max_span_us=1000,max_pair_delta_mC=2000,
@@ -56,7 +57,7 @@ def admit(d,models,ci,pre,review):
     for m in models:
         if (m.get('passed') is not True or m.get('inputs')!=d['inputs'] or
             m.get('SOFTWARE_PMIC') is not True or m.get('RAM_USB_sink') is not True or
-            m.get('physical_admission') is not False or len(m.get('checks',{}))!=16 or
+            m.get('physical_admission') is not False or len(m.get('checks',{}))!=18 or
             any(v is not True for v in m['checks'].values())):
             raise ValueError('stale/incomplete actual terminal model')
     if (review.get('passed') is not True or review.get('may_boot_iOS') is not True or

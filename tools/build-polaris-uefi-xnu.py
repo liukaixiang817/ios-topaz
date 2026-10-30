@@ -569,6 +569,8 @@ def main():
                   WLED_native_runtime_test=a.wled_native_runtime_test,
                   WLED_native_runtime_physical=a.wled_native_runtime,
                   controlled_WLED_native_exit=a.test_wled_native_exit,
+                  WLED_reset_prepared_before_terminal_reads=native_runtime,
+                  WLED_reset_arm_SOFTWARE_delay_us=250000 if a.wled_native_runtime_test else 0,
                   WLED_atomic_exit_footer_max=212 if native_runtime else None,
                   WLED_atomic_exit_receipt_bytes=60 if native_runtime else None,
                   controlled_WLED_native_start_refusal=a.test_wled_native_start_refusal,
