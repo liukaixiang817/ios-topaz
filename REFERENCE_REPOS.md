@@ -846,3 +846,23 @@ still do not prove sustained60FPS. Retain conservative thermal/error handling;
 do not copy an unbounded reference clock policy or interpret a valid table
 request as measured frequency. Next work must address the observed failures
 and exact remaining timing boundaries rather than lengthening the limit again.
+
+
+## Original Polaris amplifier firmware catalog (0115)
+
+The own TAS2559 driver-format0x401 firmware can now be cataloged offline by
+`tools/polaris-tas-firmware.h`. It preserves raw program/configuration fields
+and bounded command spans without executing them. The private original
+MiCode core parser (blobe17bef78...) and structures (blob530e7000...) were
+compiled verbatim with host allocation/logging stubs and compared against
+the original96,514-byte phone firmware:5PLLs,4programs,18configurations,
+73blocks and90,560 payload bytes agree. The original register-loading path
+was excluded. Only our independent bounded parser received truncation and
+mutation inputs. Checksum values are retained, not device-verified; successful
+parsing does not authenticate a chip, authorize register replay or prove sound.
+
+Future hardware work still requires the own GENI/I2C identity, original left/
+right calibration, bounded TAS initialization and CRC checks, ADSP/APR and
+quaternaryMI2S routing, owned PCM completion and stop/restoration. No regulator,
+I2C/MMIO, calibration/persist write or audio playback occurred in this work.
+The ready0113 backlight RAM candidate and current display bundle stay unchanged.

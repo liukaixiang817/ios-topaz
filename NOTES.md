@@ -34,6 +34,60 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0115 OFFLINE original TAS firmware catalog COMPLETE; phone USB still absent
+
+- Source990a6d5 committed; push completed source/handoff before stopping.
+  Latest directed readonly expected-Polaris query08:20:06UTC timed out, saved as
+ 0113/phone-OEM-cycle-0003/preboot-20261030T082014424693.json. NO boot.json,
+  boot/cycle/PMIC power, OS/root/storage/NVRAM or Android action. Existing
+  physical FASTBOOT/USB reconnect request still pending; do not repeat it,
+  infer mode or replay old recovery. Last actual FASTBOOT05:08:59UTC.
+- While waiting, completed independent tools/polaris-tas-firmware.h: bounded
+  NON-EXECUTING catalog for own TAS2559 driver-format401/family0/device4.
+  No dynamic allocation, callbacks, register replay, I2C/MMIO, ADSP startup,
+  PCM playback or calibration/persist write. Retains original names/descriptions,
+  PLL/program/config/calibration references and all checksum flags/values.
+  Header/checksum fields are NOT device-verified authentication; command spans
+  are NOT semantic validation or permission to execute. Input must stay frozen.
+- Explicit4MiB/256entries/1024blocks/4096Bdescription limits; checked count
+  multiplication/complete consumption, references/flag encoding, distinct
+  input/output/workspace. Caller-owned workspace, publish only a complete
+  catalog; malformed/truncated input leaves output byte-identical. Supports
+  exact own401 wire format, not an unrestricted cross-device loader.
+- offline-original-TAS-catalog-proof.json binds actual own96,514B firmware
+  SHA c3091d2684e7bb368002bd65a1564fe6403c469434ac514ef43ca28509dc2efc,
+  original TAScore blob e17bef78d5f9775d5da704a31bc663196f52008d and tas2559.h
+  blob530e70008f792e179fde239dd60feb8a143338c9. Verbatim original parser and
+  structs compiled with host environment allocation/log stubs; original
+  register loader omitted. Original unsafe parser used ONLY on known positive
+  firmware, not mutation inputs. All5PLLs/4programs/18configs/73blocks and
+ 90,560 payload bytes match; calibration count0 in this uCDSP source file.
+- ASan/UBSan independent parser passes EVERY96,514 truncation and10,000 real
+  file mutations with bounds/output checks. Nine synthetic host cases include
+  calibration references/maximum descriptions/alias/count/flag/trailing data
+  and another10,000 mutations. Combined with unchanged physical OEM admission,
+ 16local tests1.171s pass. Appleclang AArch64 freestanding compile passes;
+  largest INDIVIDUAL function frame96B, workspace remains caller-owned. This
+  is offline format evidence, not amplifier identity, hardware CRC or audio.
+- First original-source oracle compilation refused its own signed/unsigned
+  comparison under -Werror; failure preserved. Private oracle0002 suppresses
+  only that original warning plus unused environment parameters, leaves the
+  extracted parser verbatim. Production independent header and unit tests
+  compile with full -Wall/-Wextra/-Werror. No native code/CI or source exception.
+- All current test/build/USB workers ENDED; positive oracle, real-file fuzz and
+  final catalog-and-current-admission-final-0002.log selected. Existing private
+  firmware/left/rightftcfg/ACDB and current displayed image untouched. No new
+  firmware/device/Apple binaries in Git.0113 frozen image/source proof rechecked
+  unchanged; do not rebuild/repeat its completed259checks or use old candidates.
+- NEXT on actual connection return: ONE ready0113 no-OS RAM WLED OFF2s/ON,
+  actual journal/final receipt/reset and independent FASTBOOT. Then native
+  framebuffer/FW handshake and actual darkness/wake. Audio still needs own
+  GENI/I2C identity, safe TAS initialization with original calibration and
+  device CRC, ADSP/APR/quaternaryMI2S/owned PCM/stop/restore. Wi-Fi still needs
+  separately admitted bounded shared-memory mapping, GLINK/QRTR/WLFW/radio;
+  do not call the side-effectful firmware getter as strictRO. Preserve ca_vbl1,
+  all original systems/data and pending-journal no-iOS/no-userdata-write review.
+
 ### 0114 OFFLINE own SmemDxe ABI audit COMPLETE; 0113 phone candidate unchanged
 
 - Latest directed readonly query08:05:05UTC still timed out; last query saved
