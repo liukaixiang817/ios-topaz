@@ -34,9 +34,21 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### 0112 final-read journal + actual EFI receipt COMPLETE; phone stays FASTBOOT
+### 0112 final-read journal COMPLETE; USB absent after last confirmed FASTBOOT
 
 - Completed source5a1e3fa committed and pushed to codex/polaris-preflight.
+- LATEST connection change05:43UTC: final directed FASTBOOT query timed out;
+ 05:45:11UTC actual IOUSB tree parsed successfully and has no phone candidates,
+  FASTBOOT devices count0. actual-fastboot-final-0001.json and
+  actual-USB-after-final-timeout-0001.json retain this NEGATIVE result. Last
+  actual expected FASTBOOT was05:08:59UTC, not the final query. Current screen/
+  OS state is unknown; do not claim still connected or infer Android activity.
+  No device boot/reset/PMIC command was issued by this work. First class-only
+  ioreg probe returned empty/non-plist and was NOT accepted as inventory;
+  successful IOUSB-plane parse + independent fastboot inventory followed.
+  Next turn one readonly check, continue useful offline admission work if
+  absent; don't repeat asks/reboots or guess vendor commands. New iOS still
+  requires full fresh RO audit; no long-unobserved-mode exception.
 - CURRENT all0112 build/model/local workers ENDED. No phone boot/cycle/PMIC
   power write or OS/root/storage/NVRAM/Android activity; no kernel changes/CI.
   Actual expected Polaris FASTBOOT independently verified05:08:59UTC in
