@@ -34,6 +34,38 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0116 FIRST physical WLED electrical cycle COMPLETE; human requested optical retry
+
+- Connection recovered after human FASTBOOT/replug reply. ONE originalUEFI
+  RAM boot0113/phone-OEM-cycle-0003 at10:25:13UTC and ONE cycle-request-0001
+  completed. Actual dedicated statewaiting-payload/product verified before
+  staging own1792token payload. CPU_ON OUT, no OS/root/storage/NVRAM access.
+  Old “USB absent” entries below are historical, no current reconnect blocker.
+- physical-OEM-WLED-electrical-cycle-and-FASTBOOT-proof.json PASSED rehashes
+  actual boot/query/image/codec/currentmodel/source/capture/journal/receipt/
+  reset/FASTBOOT. Real module readback80->00->80 and OVPnotification02->00->02,
+ 4issued=4completed/error0. OFF-to-restored log elapsed2311164us; reported
+  softstart160650us includes cooperative/readback overhead, NOT optical time.
+  Raw26records plus actual final reset pair28, FAULTOR0/RTOR1(ILIM) retained.
+  Final restore historyCRC/cookie/sequence/mode all matched. Reset after actual
+  final read delivery; independent expected FASTBOOT at10:27:46UTC verified.
+  No rawfallback/keys/Android/partition/NVRAM write. Trial ENDED, no active USB.
+- Human explicitly said “没看到”, then requested another attempt because
+  not watching. Optical darkness remains UNPROVEN; native lockscreen not yet
+  integrated. Next authorized ONE separately recorded identical-image optical
+  retry, announce to look at PHONE screen immediately before triggering. Do
+  not replay firstcase boot.json/cycle. Reuse SHA-identical admitted image/
+  source/model/codec proof, no native change/rebuild/CI or loosened gate.
+- First privateprover mistakenly passed entire60B OKAY+WLR2 response into
+ 56Breceipt parser; retained failure0001. Corrected proof0002 requires exact
+ 60B/OKAY framing then independently parses56Bbody, matches stored client
+  result and fullhistory; no firmware/client/receipt gate changes.
+- Current NOTES has uncommitted closure; commit before newboot (wrapper clean
+  source gate). Prepare0116/phone-optical-cycle-0001 with unique bootrecord,
+  source binding and original image/codec identity. Newtrial only, no OS/root
+  permission inferred from hardware success. Pending journal still requires
+  fresh strictRO audit before any iOS/native integration. ca_vbl1 unchanged.
+
 ### 0115 OFFLINE original TAS firmware catalog COMPLETE; phone USB still absent
 
 - Fresh09:21:09UTC valid IOUSB-plane inventory still has no matching phone
