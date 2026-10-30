@@ -34,37 +34,52 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### 0116 FIRST physical WLED electrical cycle COMPLETE; human requested optical retry
+### 0116 physical WLED OFF + human optical confirmation COMPLETE; actual FASTBOOT
 
-- Connection recovered after human FASTBOOT/replug reply. ONE originalUEFI
-  RAM boot0113/phone-OEM-cycle-0003 at10:25:13UTC and ONE cycle-request-0001
-  completed. Actual dedicated statewaiting-payload/product verified before
-  staging own1792token payload. CPU_ON OUT, no OS/root/storage/NVRAM access.
-  Old “USB absent” entries below are historical, no current reconnect blocker.
-- physical-OEM-WLED-electrical-cycle-and-FASTBOOT-proof.json PASSED rehashes
-  actual boot/query/image/codec/currentmodel/source/capture/journal/receipt/
-  reset/FASTBOOT. Real module readback80->00->80 and OVPnotification02->00->02,
- 4issued=4completed/error0. OFF-to-restored log elapsed2311164us; reported
-  softstart160650us includes cooperative/readback overhead, NOT optical time.
-  Raw26records plus actual final reset pair28, FAULTOR0/RTOR1(ILIM) retained.
-  Final restore historyCRC/cookie/sequence/mode all matched. Reset after actual
-  final read delivery; independent expected FASTBOOT at10:27:46UTC verified.
-  No rawfallback/keys/Android/partition/NVRAM write. Trial ENDED, no active USB.
-- Human explicitly said “没看到”, then requested another attempt because
-  not watching. Optical darkness remains UNPROVEN; native lockscreen not yet
-  integrated. Next authorized ONE separately recorded identical-image optical
-  retry, announce to look at PHONE screen immediately before triggering. Do
-  not replay firstcase boot.json/cycle. Reuse SHA-identical admitted image/
-  source/model/codec proof, no native change/rebuild/CI or loosened gate.
-- First privateprover mistakenly passed entire60B OKAY+WLR2 response into
- 56Breceipt parser; retained failure0001. Corrected proof0002 requires exact
- 60B/OKAY framing then independently parses56Bbody, matches stored client
-  result and fullhistory; no firmware/client/receipt gate changes.
-- Current NOTES has uncommitted closure; commit before newboot (wrapper clean
-  source gate). Prepare0116/phone-optical-cycle-0001 with unique bootrecord,
-  source binding and original image/codec identity. Newtrial only, no OS/root
-  permission inferred from hardware success. Pending journal still requires
-  fresh strictRO audit before any iOS/native integration. ca_vbl1 unchanged.
+- CURRENT both0116 physical trials ENDED, allUSB/workers ENDED. Independent
+  actual expected Polaris FASTBOOT10:32:24UTC verified, connected, no pending
+  user action. Do NOT reuse old0113boot/cycle or0116opticalboot/cycle/controller,
+  re-run inventory/models, or wait old42877/49129workers. First readonly query
+  next continuation, but newcandidate only after full admission, no repeat ask.
+- First0113/phone-OEM-cycle-0003 ONE RAMboot10:25:13/ONEcycle completed with
+  electrical saved-state readbacks, fulljournal/finalreceipt and independent
+  actualFASTBOOT10:27:46. Human missed it and explicitly requested retry.
+  Source/handoff71edc90 pushed before newtrial. No fault or policy change.
+- Separately recorded0116/phone-optical-cycle-0001 used SHA-identical admitted
+  image/codec/driver/source, distinct boot.json after freshactualFASTBOOT,
+  ONEnewRAMboot and ONEcycle. No native change/rebuild/CI. Actual initialstate
+  productpolaris-uefi-diag/waiting-payload passed before exactown1792payload.
+  Immediately before triggering, human told to look at PHONE; human replied
+  “有，真的关闭了2秒背光”. human-optical-confirmation.json binds reply to this
+  boot.sent_utc. This IS physical opticalOFF confirmation, not an iOS key test.
+- physical-optical-WLED-cycle-and-FASTBOOT-proof.json PASSED independently
+  rehashes boot/query/source/currentmodel/image/codec/journal/log/receipt/human/
+  actualFASTBOOT. Actual module80->00->80, OVPnotification02->00->02,4issued=
+ 4completed/error0. OFF-to-restored log elapsed2311226us and reported
+  softstart160677us include cooperative/readback overhead, NOT optical timing.
+  Actual26rawrecords + finaltwo28; FAULTOR0/RTOR0(ILIM) all preserved.
+  Final restore cookie/seq/mode/fullhistoryCRC checked; hardwareguard sent
+ 56B WLR2 body before resetting. Entire60B OKAY+body response stored. Independent
+  actualFASTBOOTafteropticalcycle verified10:32:24, ACK never used as proof.
+- No CPU_ON/XNU/OS/root/storage/NVRAM/Android activity, rawfallback or physical
+  recovery keys. Both tests exclusively originalUEFI RAM/no-OS admitted scope;
+ 81originalFW/SimpleInit/BootShim/DTB and original data untouched. Native iOS
+  lockscreen/powerbutton/backlight integration is STILL unfinished. No repeated
+  optical request needed; confirmation received. Physical connection restored.
+- First privateproof passed full60B USB response into56B receipt parser and
+  refused; failure0001 retained. Corrected proof0002 first checks exact60B/OKAY,
+  then parses body independently, no firmware/client/guard changes. Secondproof
+  likewise verifies complete framing, actual firmware packet and final CRC.
+- NEXT0117 integrate independently scoped native/FW mailbox: cookie/sequence/
+  desired/ACK in separate cachelines; displayworkloop OFF/storeblack and ON
+  freshframe+DSB BEFORE savedbacklightrestore; CPU0 cooperativeSPMI/USB/keys.
+  Preserve canonicalidentity/owner/staticconfig, allserious/read/time/uncertain
+  failures and noretry. Shutdown/reset/lease must restore and verify before
+  reset, no rawbypass. Do not reuse one-cycle-only scope as runtime admission.
+  Localfaults/realTUs/fullmacOS27CI/SERIALactualEFI-XNU then freshstrictRO root
+  audit before actualiOS/nativekey/dark/wake. Currentpendingjournal still
+  may_boot_iOS=false/may_write_userdata=false; optical test does not waive it.
+  ca_vbl1/graphics/currentroot unchanged; sound/WiFi/runtime/menu/full16.5 remain.
 
 ### 0115 OFFLINE original TAS firmware catalog COMPLETE; phone USB still absent
 

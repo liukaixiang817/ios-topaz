@@ -866,3 +866,22 @@ right calibration, bounded TAS initialization and CRC checks, ADSP/APR and
 quaternaryMI2S routing, owned PCM completion and stop/restoration. No regulator,
 I2C/MMIO, calibration/persist write or audio playback occurred in this work.
 The ready0113 backlight RAM candidate and current display bundle stay unchanged.
+
+
+## Polaris physical LCD backlight result (0116)
+
+The independent original-UEFI RAM WLED cycle now has actual Polaris evidence:
+module enable80->00->80, saved OVP notification02->00->02, all four issued
+commands completed and the final full raw-history receipt validated before
+reset. An independent product query then verified actual Polaris FASTBOOT.
+After the human requested a separately recorded identical-image retry, they
+confirmed “有，真的关闭了2秒背光”. This establishes physical backlight OFF in
+the bounded pre-XNU test. It is not native iOS lock-screen integration or a
+claim that a black screenshot proves backlight power. No OS, root, storage,
+firmware file or NVRAM write occurred; original hardware protection stayed.
+
+Next integrate a separately admitted display-workloop/firmware handshake and
+restore-before-reset gate. The original one-cycle image must not become a
+runtime writer simply by changing a flag. Future iOS tests still require a
+fresh strict read-only root/journal audit; the outstanding journal issue was
+not repaired or waived by this hardware-only milestone.
