@@ -36,6 +36,9 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### 0120 physical runtime backend + actual zero-WRITE EFI COMPLETE; phone FASTBOOT; image/controller NOT READY
 
+- Completed source e787e54fe35404546dff9e33e4d43b9f3ebbe54f committed; this
+  handoff records the exact milestone. Push and independent remote check follow.
+
 - Human acceleration request is active: relevant checks combined; reused the
   verified native kernel, NO new kernelCI and NO unchanged13-model/500-scroll
   replay. Current source adds actual independent default-OFF physical runtime
