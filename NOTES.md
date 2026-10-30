@@ -34,6 +34,75 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0119 actual lifecycle + lease continuation COMPLETE; phone FASTBOOT; physical runtime NOT READY
+
+- Completed source8b7c62cabc213a3edfdc59867e10e8f348c086fa committed/PUSHED. New independent
+  `0119/actual-native-WLED-lifecycle-and-lease-continuation-proof.json` PASSED:
+  222 files rehashed,13 actual whole EFI-XNU models602 checks, all actual raw
+  pages/WLR3/2mailboxes independently reparsed.13 current-source actual EFI
+  builds use full warnings; real C TU matrix0002 normal+8fault+4lifecycle also
+  passes.22 local ASan/UBSan/control/IIG/scope/ownership/lease tests7.187s PASS.
+  No new native kernel source or CI; native profile byte-identical2d55a4e,
+  CI41056172330/kerneldd4bd757... remains exact. No physical runtime admission.
+- Fixed ACTUAL control idle_guard liveness bug: expired() sets fired once;
+  formerly first callback could start native drain but not yet reset, and later
+  callbacks skipped recovery. Native-WLED latch now continues the real guards.
+  Actual lease0001 48checks38.590s: ONE synthetic last-activity deadline input,
+  TWO actual idle_guard callbacks, fired1/latch1, real native HFS/VFS0busy0 and
+  model peers6/5/4 actualPSCIOFF/coordinator7, new4 final WLED reads/78total and
+  original60B WLR3. Reset observer reached ONLY after product freshness/native
+  drain gates; holds model for binary capture. NOT actual30min wait, actual
+  guest reset, SD845/panel/physicalUSB emulation or real iOS lockscreen.
+- Normal0002 47checks38.631s preserves3cycles/3RAMcopies/seq6/12complete/78raw.
+  Capacity0003 45checks38.491s: active bound64/backing8192,2cycles/8complete/
+  raw50, next OFF refused with native133 while ON, zero further WRITE. Reserved
+  terminal4 reads yield54/WLR3; native attemptedseq5 is not powerrequest4 success.
+- Stale-ACK0004 45checks40.128s: actual OFF completes but publishedseq0 remains
+  stale; native times out132 with0cycles/0newcopies and no false OFF success.
+  Terminal close independently restores ON via original PWP,4commands/30raw/
+  WLR3; native ACK remainsseq0/on0/frame0, never manufacture a native ON frame.
+- Receipt-age0005 48checks38.736s: real guest elapsed>=250ms after final reads,
+  direct reset call is refused before test observer(count0); no new receipt or
+  fake timestamp refresh. Clock-regression0006 47checks38.121s: one actual PWP
+  clock input prev-1 AFTER firstWRITE, error38/issued1/completed0/uncertain1,
+  native134/all reset/receipt gates refuse; no retry or dropped prior4raw.
+- Regression0007..0013 timeout+FAULT OVP/SC/unknown+RT OVP/SC/unknown each46checks
+  about38.2s pass with current source, sticky/partial/raw/OR/no-secondWRITE kept.
+  All13 current cases have no panic. Old0118/0010 rtclock_intr watchdog PANIC
+  remains bound in proof; no threshold/hygiene changes and NO repeated-stability
+  or host-jitter/WLED causal claim. TU0001 fixture wrong poll name compile failure
+  retained, fixed to actual idle_guard without warning suppression.
+- CURRENT final readonly expectedPolaris FASTBOOT13:30:45.403518UTC PASS,
+  `0119/actual-fastboot-final-0001.json`. No phone boot/cycle/PMIC/OS/root/storage/
+  NVRAM/Android this turn. All local/build/QEMU/USB workers ENDED; no activeCI/iOS.
+  Do not wait/replay old workers or0113/0116 physical cycles/controllers; human
+  already confirmed2s opticalOFF. Root may_boot_iOS=false/may_write_userdata=false.
+- New concrete OFFLINE parameter design resolves real602-byte budget without a
+  new native alias/CI or truncation: proposal replaces ONLY polarisperf=1 with
+  same-length polariswled=1, still602(max607). Own actual SweetCPU/PolarisGPU/
+  SweetFramebuffer audit: this perf flag controls timestamps/diagnostic meters,
+  boot throughput sample and optional OSM1 read-only observer; currentOSM2
+  performance preparation, GPU/CPU activity/auth/cache/submit/fence/restore are
+  outside it. ca_vbl1/bundle/thermal/CPU/GPU flags unchanged. Native diagnostic
+  performance trace WOULD change; not a same-trace performanceAB or phone proof.
+  `physical-runtime-parameter-budget-design.json` is DESIGN ONLY, no new payload.
+- NEXT implement independent defaultOFF actual PMIC runtime backend/image/client/
+  admission; use `physical-runtime-and-root-audit-next-design.json`. Port only
+  already-proven own cycle WDATA/DSB/CMD/status bindings, canonical owner/config
+  checks and raw history. New native startup failure needs independent zero-write
+  recovery bound to CPU_ON-not-issued/APstage0/0issued/0completed/0uncertain,
+  not a fake native drain. Existing onecycle packagers cannot be reused/flagged.
+- Before physical iOS, prepare/review NEW bounded headless strictRO recovery audit
+  (watchdog proposal only, not implemented) then full root/map/marker/GPT/ESP/
+  journal review. Do NOT blindly boot0915 recovery, replay/repair journal, or
+  waive root gate based on these models. No physical candidate is READY. Keep
+  ca_vbl1/all native protections/Android/Windows/data; sound/PCM, WiFi transport/
+  scanjoin, full16.5 ABI/persistent runtime remain unfinished. No kernelCI unless
+  genuine native source changes. Current kernel already supports WLED boot arg.
+
+Earlier0119 PENDING implementation notes are historical; actual outcomes above
+supersede those states. Existing automation is updated IN PLACE, never duplicate.
+
 ### 0119 runtime lifecycle/lease continuation implementation COMPILED; actual models PENDING
 
 - Directed readonly actual expectedPolaris FASTBOOT13:00:22.464914UTC passed,
