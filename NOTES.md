@@ -36,7 +36,12 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### 0114 OFFLINE own SmemDxe ABI audit COMPLETE; 0113 phone candidate unchanged
 
-- Phone still unobserved:07:05UTC one expected-Polaris readonly query timed out;
+- Latest directed readonly query07:49:58UTC still timed out; last query saved
+  as0113/phone-OEM-cycle-0003/preboot-20261030T075012866775.json.
+  No new phone action or progress claim: waiting for the existing physical
+  reconnect request. Completed source dfbbcf7 push was verified. All USB and
+  offline workers ENDED; do not repeat models/builds or the user request.
+- Phone still unobserved; previous07:05/07:19 queries also timed out.
  0113/phone-OEM-cycle-0003/preboot-*.json retained. NO boot.json, boot/cycle,
   PMIC power, root/storage/NVRAM or Android action. Existing physical reconnect
   request remains pending; do not repeat it or guess device mode. Last genuine
