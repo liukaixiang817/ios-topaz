@@ -55,6 +55,19 @@ int polaris_usb_control_command(struct polaris_usb_diag *d,struct polaris_usb_co
             return reply(d,"FAILWLED journal unavailable");
         d->staged=data;d->staged_bytes=bytes;return reply(d,"OKAY");
     }
+    static const char runtime_page[]="oem wled-runtime-page:";
+    if(n==sizeof(runtime_page)-1+8){
+        unsigned match=1;for(unsigned i=0;i<sizeof(runtime_page)-1;i++)
+            if(p[i]!=(uint8_t)runtime_page[i])match=0;
+        if(match){
+            uint64_t page=0;const uint8_t *data=0;uint64_t bytes=0;
+            d->staged=0;d->staged_bytes=0;
+            if(!hexadecimal(p+sizeof(runtime_page)-1,&page)||page>=2048||
+               !c->wled_runtime_page||!c->wled_runtime_page(c->context,(uint32_t)page,&data,&bytes)||
+               !data||bytes<84||bytes>1348)return reply(d,"FAILruntime WLED page unavailable");
+            d->staged=data;d->staged_bytes=bytes;return reply(d,"OKAY");
+        }
+    }
     unsigned shutdown=same(p,n,"oem shutdown:1")?1:same(p,n,"oem shutdown:2")?2:0;
     if(shutdown){
         if(!c->shutdown_begin||!c->shutdown_begin(c->context,shutdown))

@@ -25,6 +25,9 @@ void begin(void) {
  slot.firmware=(struct polaris_wled_ack){.cookie=0xabc123,.on=1,.completed_us=100,
   .records=2,.ready=PWM_READY};
  assert(pwn_init(&adapter,&slot,cache,true));
+ assert(cleans==2&&!clean_cookie[0]&&clean_cookie[1]==PWM_NATIVE_START);
+ assert(clean_seq[0]==0&&clean_seq[1]==0&&clean_on[0]==1&&clean_on[1]==1);
+ assert(pwm_native_start_ready(&slot.native));cleans=0;
  assert(pwn_exchange(&adapter,true,100));
  assert(adapter.state.cookie==0xabc123&&!cleans&&invalidates==1);
 }
@@ -91,6 +94,7 @@ int main(void) {
  assert(pwn_init(&adapter,&slot,cache,false));
  assert(!pwn_exchange(&adapter,false,1)&&!pwn_presented(&adapter)&&!invalidates&&!cleans);
  assert(pwn_init(&adapter,&slot,cache,true));
+ assert(cleans==2&&pwm_native_start_ready(&slot.native));cleans=0;
  assert(!pwn_exchange(&adapter,false,1)&&!adapter.state.error&&!cleans);
  assert(!pwn_exchange(&adapter,false,1+PWM_TIMEOUT_US)&&adapter.state.error==PWM_E_TIMEOUT);
  assert(!pwn_exchange(&adapter,true,2+PWM_TIMEOUT_US)&&!cleans);

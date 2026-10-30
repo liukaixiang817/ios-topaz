@@ -20,7 +20,15 @@ static inline bool pwn_init(struct polaris_wled_native_adapter *a,
         return false;
     if(!enabled)return true;
     if(!slot||!cache||((uintptr_t)slot&127))return false;
-    a->slot=slot;a->cache=cache;a->enabled=true;return true;
+    const uint8_t *initial=(const uint8_t *)&slot->native;
+    if(!pwm_zero(initial,sizeof(slot->native)))return false;
+    a->slot=slot;a->cache=cache;a->enabled=true;
+    /* Native BSS initialization precedes FW advertisement. This canonical
+     * sequence-zero sentinel cannot request a device transition. */
+    a->slot->native.on=1;
+    a->cache(&a->slot->native,true);
+    __atomic_store_n(&a->slot->native.cookie,PWM_NATIVE_START,__ATOMIC_RELEASE);
+    a->cache(&a->slot->native,true);return true;
 }
 /* A boot advertisement uses READY-last, later acknowledgements SEQUENCE-last.
  * Always acquire then copy the entire independently owned128-byte line.

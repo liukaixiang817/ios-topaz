@@ -27,9 +27,9 @@ EXTRA_PRIVATE_HEADER_SHA={'bsd/dev/polaris_uefi_buttons.h':
     # Native WLED wire/adapter are private SweetFramebuffer.cpp-only includes;
     # no IDL/interface type or generator option changes. Exact reviewed bytes.
     'iokit/Kernel/arm/polaris_wled_mailbox.h':
-    '6353b5848b8adb84b5ce76a18ee0c26365c6740bca6d38c5f6f8a065a4a9a472',
+    'de8b2fbc39e6ec406e7786ca4741ae76f76ecae01f311017ad127e2629715215',
     'iokit/Kernel/arm/polaris_wled_native.h':
-    '68c0d10ee06240b835f0325232b968fab90a883ddd80a1201a520be2ac67bc42',
+    '929933fec9083e88698f445ff22e8a2f2afef57b16c27d370546e40327af9bc7',
     'iokit/Kernel/arm/polaris_display_queue.h':
     '8f58213606c7dad756a492ec8858170b5aecded769f5f730dc34c3d344043a39',
     'bsd/dev/polaris_a630_performance.h':

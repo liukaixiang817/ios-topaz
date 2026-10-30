@@ -65,6 +65,8 @@ struct polaris_usb_control {
     /* Optional pre-XNU WLED-only evidence. NULL preserves ordinary clients. */
     int (*wled_journal)(void *,const uint8_t **,uint64_t *);
     int (*reset_receipt)(void *,unsigned,const uint8_t **,uint64_t *);
+    /* Independent bounded runtime-history page, never a PMIC command. */
+    int (*wled_runtime_page)(void *,uint32_t,const uint8_t **,uint64_t *);
 };
 /* Command parsing is shared by the native host test and the real EFI driver. */
 int polaris_usb_command(struct polaris_usb_diag *,const uint8_t *,uint64_t);

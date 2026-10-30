@@ -34,7 +34,64 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### 0118 native display handshake COMPILED; full CI/FW runtime still required
+### 0118 native/FW runtime implementation COMPILED; new full CI/serial checks PENDING
+
+- LATEST follow-up supersedes the initial95 stage below: native READY-first
+  startup sentinel precedes firmware advertisement, so kernel initialization
+  cannot erase an early advertisement. pwn_init cleans native body, publishes
+  canonical sequence0/PWM_NATIVE_START LAST, then cleans again. New native
+  PolarisWledNativeProbe is explicitly generic-VM-only (GPU9/MPIDR7); it uses
+  actual IOWorkLoop/IOTimer/cache instructions and64 RAM pixels for3 OFF/ON
+  handshakes, NOT physical panel/PMIC evidence. Currently compiled, not executed.
+- FW shim/polaris/uefi-wled-native.h is now included in actual uefi-xnu.c under
+  NEW independent --wled-native-runtime-test, STRICT QEMU-only, four cores,
+  keys/workloop/native RAM drain. Physical/pre-XNU/durable/disk/chain/mixed
+  scopes refused before inputs; native arguments without scope refused. Builder
+  additionally requires the new _PolarisWledNativeProbe symbol: the successful
+  initial95 kernel cannot admit this follow-up ABI. No physical runtime flag,
+  image packager/controller or phone candidate exists. No PMIC hardware branch.
+- Actual resident CPU0 glue waits canonical native START, then advertises its
+  fresh cookie, validates/replies one outstanding operation, polls original PWP
+  cooperatively with USB/keys and during RAM-log copies. SOFTWARE PMIC accepts
+  only the same four original commands, dynamic ILIM raw retained. No new native
+  polling thread. Full/partial history appended into own8192*32B static EFI BSS;
+  image containment, disjoint kernel bank and every page's validated LoaderCode/
+  LoaderData ownership checked BEFORE IRQ/native handoff, identity separately.
+  No post-handoff BootServices allocation/query for that archive.
+- New optional read-only USB runtime-page callback: exact8hex page selector,
+  bounded980B packets/32raw28B records, frozen snapshot metadata/count, every raw
+  absolute timestamp/status/context/request sequence and full prefixCRC. Later
+  appends cannot overwrite a captured prefix. New independent WLR3 final60B
+  receipt binds native shutdown cookie/sequence/mode to final two NEW full
+  readback pairs and whole historyCRC. One receipt attempt, no blind retry;
+  direct reset freshness/restore/native-drain guards and RAM lease restore
+  gates wired. Lease initiates real native shutdown; it cannot jump to raw reset.
+  This source is NOT yet actual EFI/XNU execution or physical admission.
+- Current native TU0004 and BOTH actual EFI C TUs compile with full warnings,
+  no environment stubs. EFI check uses explicitly UNBOUND offset config and
+  creates objects only, not an image/admission/boot. Native exact patch0003
+  applies0fuzz/0offset and hashes all3 compiled native files.17 local tests total
+  PASS (16 native/wire/control/scope/IIG4.985s + separate archive-ownership test):
+  sequence-last cache publication, post-ACK frame, stale/reserved/default-OFF,
+  full wire bit/truncation/missing/foreign/CRC/rawfault/nativecookie checks,
+  bounded optional read-only command and self-PE/map/overflow/alias/owner faults.
+  Initial fixture staging callback omission and terminal sequence fixture error
+  retained and fixed in tests; no production restriction removed. Compile0002
+  wrong local working directory lacked meta_features.h;0003/0004 use actual
+  recovered component directory, no fake header or flag workaround.
+- Initial native-only source95cf7253bf5685694e4b1a73a3fa99ea79b77bff FULL
+  macOS27/Xcode27 CI41047197392/job124034075423 SUCCESS. Profile/source and
+  downloaded kernel SHA d29e23b1a6e40e4549c1e5e02d7b8c120692baaad9bd1d8312161eb24ffaea89
+  verified in native95-artifact-check.json. This is NOT the current follow-up
+  native-probe/START kernel. Need a NEW fullCI for these genuine native changes,
+  then exact artifact + SERIAL actualEFI-XNU with memory page/receipt decoding,
+  severe/unknown/timeout/stale/native-end faults. No new phone/CI success claim.
+- Phone remains last readonly actualFASTBOOT11:06:09, no device activity since.
+  Pendingjournal still may_boot_iOS=false/may_write_userdata=false. New strictRO
+  root audit and separately admitted physical runtime required before real iOS
+  powerkey/dark/wake. ca_vbl1/graphics bundle untouched; sound/WiFi/full16.5 remain.
+
+Initial95 stage (historical; follow-up state above has priority):
 
 - Actual expected Polaris FASTBOOT11:06:09UTC readonly query PASS, saved as
  0118/actual-fastboot-start-0001.json. No phone boot/cycle/PMIC/OS/root/storage/

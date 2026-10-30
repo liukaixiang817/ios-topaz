@@ -6,6 +6,50 @@ import unittest
 
 
 class ControlCommands(unittest.TestCase):
+    def test_runtime_page_is_bounded_readonly_optional_and_never_resets(self):
+        root=Path(__file__).resolve().parents[2]
+        source=r'''
+#include "uefi-xnu.h"
+#include <assert.h>
+#include <string.h>
+static char response[65];static unsigned calls;static unsigned page;static unsigned bytes=980;
+static unsigned char raw[1349];
+static int tx(void *c,const uint8_t *p,uint64_t n)
+{(void)c;assert(n<=64);memcpy(response,p,n);response[n]=0;return 1;}
+static int stage(void *c,unsigned kind,const uint8_t **p,uint64_t *n)
+{(void)c;(void)kind;(void)p;(void)n;return 0;}
+static int capture(void *c,uint32_t number,const uint8_t **p,uint64_t *n)
+{(void)c;calls++;page=number;*p=raw;*n=bytes;return 1;}
+int main(void) {
+ struct polaris_usb_diag d={.transmit=tx,.stage=stage};struct polaris_usb_control c={0};
+ const char *good="oem wled-runtime-page:00000002";
+ assert(polaris_usb_control_command(&d,&c,(const void *)good,strlen(good)));
+ assert(!strncmp(response,"FAIL",4)&&!calls&&!d.staged);
+ c.wled_runtime_page=capture;
+ assert(polaris_usb_control_command(&d,&c,(const void *)good,strlen(good)));
+ assert(!strcmp(response,"OKAY")&&calls==1&&page==2&&d.staged==raw&&d.staged_bytes==980);
+ const char *bad[]={"oem wled-runtime-page:0000000g","oem wled-runtime-page:00000800",
+ "oem wled-runtime-page:ffffffff","oem wled-runtime-page:0000002","oem wled-runtime-page:-0000002"};
+ for(unsigned i=0;i<sizeof(bad)/sizeof(bad[0]);i++) {
+  assert(polaris_usb_control_command(&d,&c,(const void *)bad[i],strlen(bad[i])));
+  assert(!strncmp(response,"FAIL",4)&&calls==1);
+ }
+ bytes=1349;assert(polaris_usb_control_command(&d,&c,(const void *)good,strlen(good)));
+ assert(!strncmp(response,"FAIL",4)&&!d.staged);
+ bytes=83;assert(polaris_usb_control_command(&d,&c,(const void *)good,strlen(good)));
+ assert(!strncmp(response,"FAIL",4)&&!d.staged);
+ assert(polaris_usb_command(&d,(const void *)good,strlen(good))&&!strncmp(response,"FAIL",4));
+ return 0;
+}
+'''
+        with tempfile.TemporaryDirectory() as d:
+            c=Path(d)/'control.c';exe=Path(d)/'control';c.write_text(source)
+            subprocess.run(['/usr/bin/clang','-std=c11','-O1','-Wall','-Wextra','-Werror',
+                '-fsanitize=address,undefined','-I'+str(root/'shim/polaris'),str(c),
+                str(root/'shim/polaris/uefi-usb-command.c'),str(root/'shim/polaris/uefi-usb-control.c'),
+                str(root/'shim/polaris/uefi-xnu-crc.c'),'-o',str(exe)],check=True)
+            subprocess.run([str(exe)],check=True)
+
     def test_real_parser_download_limits_reset_order_and_readonly_separation(self):
         root=Path(__file__).resolve().parents[2]
         source=r'''

@@ -161,6 +161,7 @@ def main():
     ap.add_argument('--wled-power-cycle-only',action='store_true',help='isolated pre-XNU WLED OFF/two-second hold/ON; no OS or storage writes')
     ap.add_argument('--wled-oem-status',action='store_true',help='QEMU-only explicit OEM volatile-status policy; no physical image admission yet')
     ap.add_argument('--wled-oem-physical-cycle',action='store_true',help='separate pre-XNU physical OEM cycle; requires independent OEM image admission')
+    ap.add_argument('--wled-native-runtime-test',action='store_true',help='independent QEMU-only actual native/FW mailbox test with SOFTWARE PMIC; never a phone image')
     ap.add_argument('--test-wled-prepare-refusal',nargs='?',const='owner',choices=('owner','configuration','before-cycle'),help='QEMU OEM-only zero-write owner/configuration/pre-WLED refusal')
     ap.add_argument('--test-wled-status-after-issue',type=lambda s:int(s,0),default=0,help='QEMU-only packed FAULT/RT severe bits after first issued command')
     ap.add_argument('--test-wled-write-timeout',action='store_true',help='isolated QEMU uncertain WLED command; no reset or retry')
@@ -183,6 +184,12 @@ def main():
     ap.add_argument('--disk-version',default='V0061')
     ap.add_argument('--chain-app-manifest',type=Path,help='RAM test wrapper for the exact already-built selected disk app')
     a=ap.parse_args();r=Path(__file__).resolve().parents[1]
+    if a.wled_native_runtime_test and (not a.test_qemu or a.kernel_core!=7 or a.kernel_cpus!=4 or
+        a.test_ram_drain not in ('success','stale-cookie','peer-refused') or not a.physical_buttons or
+        not a.framebuffer_arrival_wake or a.wled_power_cycle_only or a.wled_inventory_only or
+        a.wled_oem_status or a.wled_oem_physical_cycle or a.test_qemu_ufs or a.test_qemu_owned or
+        a.physical_owned_marker or a.disk_guid or a.chain_app_manifest or a.efi_application):
+        ap.error('native WLED is an independent QEMU four-core RAM-drain/keys/workloop test only')
     target=a.kernel_core if a.test_qemu else a.kernel_core<<8
     if a.tsens_pair_witness and not a.gpu_thermal_extended:
         ap.error('TSENS pair witness requires the explicit extended thermal experiment')
@@ -360,6 +367,16 @@ def main():
                             a.kernel_core,a.kernel_cpus,a.test_qemu,a.test_ram_drain,
                             a.ram_shutdown_bridge,a.test_qemu_ufs,a.physical_owned_marker)
     buttons_offset=syms.get('_polaris_uefi_buttons',va)-va
+    wled_offset=syms.get('_polaris_uefi_wled',va)-va
+    wled_tokens=raw[0x48:0x2a8].split(b'\0',1)[0].split()
+    for key in (b'polariswled=',b'polariswledvm='):
+        if [t for t in wled_tokens if t.startswith(key)]!=([key+b'1'] if a.wled_native_runtime_test else []):
+            raise ValueError('native WLED arguments require their separate QEMU runtime intent')
+    if a.wled_native_runtime_test:
+        if ('_PolarisWledNativeProbe' not in syms or '_polaris_uefi_wled' not in syms or wled_offset%128 or
+            not 0<=wled_offset<=end-256 or not input_present or
+            any(abs(wled_offset-other)<256 for other in (input_offset,buttons_offset,shutdown_offset))):
+            raise ValueError('native WLED mailbox must be independent/aligned/kernel-owned')
     if a.physical_buttons:
         if ('_polaris_uefi_buttons' not in syms or buttons_offset%128 or
             not 0<=buttons_offset<=end-256 or not input_present or
@@ -392,6 +409,7 @@ def main():
 #define EFI_XNU_INPUT_OFFSET 0x{input_offset:x}ULL
 #define EFI_XNU_BUTTONS_AVAILABLE {int(a.physical_buttons)}
 #define EFI_XNU_BUTTONS_OFFSET 0x{buttons_offset:x}ULL
+#define EFI_XNU_WLED_OFFSET 0x{wled_offset:x}ULL
 #define EFI_XNU_CPU {target}u
 #define EFI_XNU_BOOT_CPU_TOKEN "polarisbootcpu={target}"
 #define EFI_XNU_CPUS_TOKEN "cpus={a.kernel_cpus}"
@@ -440,6 +458,7 @@ def main():
     if a.wled_power_cycle_only:flags.append('-DEFI_XNU_WLED_POWER_CYCLE_ONLY=1')
     if oem_status:flags.append('-DEFI_XNU_WLED_OEM_STATUS=1')
     if a.wled_oem_physical_cycle:flags.append('-DEFI_XNU_WLED_OEM_PHYSICAL_CYCLE=1')
+    if a.wled_native_runtime_test:flags.append('-DEFI_XNU_WLED_NATIVE_RUNTIME_TEST=1')
     if a.test_wled_prepare_refusal:flags.append('-DEFI_XNU_TEST_WLED_PREPARE_REFUSAL='+str({'owner':1,'configuration':2,'before-cycle':3}[a.test_wled_prepare_refusal]))
     if a.test_wled_status_after_issue:flags.append('-DEFI_XNU_TEST_WLED_STATUS_AFTER_ISSUE='+str(a.test_wled_status_after_issue))
     if a.test_wled_write_timeout:flags.append('-DEFI_XNU_TEST_WLED_WRITE_TIMEOUT=1')
@@ -455,6 +474,11 @@ def main():
     if a.wled_fault_watch:inputs+=['shim/polaris/uefi-wled-fault-watch.h']
     if a.wled_power_cycle_only:inputs+=['shim/polaris/uefi-wled-cycle.h','shim/polaris/uefi-wled-power.h','shim/polaris/uefi-wled-readonly.h','shim/polaris/uefi-wled-status.h']
     if oem_status:inputs+=['shim/polaris/uefi-wled-journal.h']
+    if a.wled_native_runtime_test:
+        inputs+=['shim/polaris/uefi-wled-native.h','shim/polaris/uefi-wled-runtime.h',
+                 'shim/polaris/uefi-wled-power.h','shim/polaris/uefi-wled-readonly.h',
+                 'shim/polaris/uefi-wled-status.h','shim/polaris/uefi-wled-journal.h',
+                 'tools/polaris-wled-mailbox.h']
     if shutdown_bridge:inputs.append('shim/polaris/runtime-quiesce.h')
     objects=[]
     for source in sources:
@@ -476,13 +500,18 @@ def main():
                   WLED_readonly_fault_watch=a.wled_fault_watch,controlled_WLED_fault_pulse=a.test_wled_fault_pulse,
                   WLED_power_cycle_only=a.wled_power_cycle_only,controlled_WLED_write_timeout=a.test_wled_write_timeout,
                   WLED_OEM_status_policy=oem_status,WLED_OEM_physical_cycle=a.wled_oem_physical_cycle,
+                  WLED_native_runtime_test=a.wled_native_runtime_test,
+                  WLED_native_SOFTWARE_PMIC=a.wled_native_runtime_test,
+                  WLED_runtime_journal_version=3 if a.wled_native_runtime_test else None,
+                  WLED_runtime_archive_capacity=8192 if a.wled_native_runtime_test else None,
+                  raw_reset_requires_native_and_WLED_restore=a.wled_native_runtime_test,
                   controlled_WLED_prepare_refusal=bool(a.test_wled_prepare_refusal),controlled_WLED_prepare_kind=a.test_wled_prepare_refusal,
                   controlled_WLED_status_after_issue=a.test_wled_status_after_issue,
                   WLED_journal_version=2 if oem_status else None,
                   WLED_journal_bytes_max=1348 if oem_status else None,
                   WLED_final_reset_receipt_bytes=56 if oem_status else None,
                   WLED_zero_write_receipt_bytes=16 if oem_status else None,
-                  PMIC_write_api=a.wled_power_cycle_only,kernel_CPU_ON_compiled_out=wled_hold,
+                  PMIC_write_api=a.wled_power_cycle_only or a.wled_native_runtime_test,kernel_CPU_ON_compiled_out=wled_hold,
                   probe_only=wled_hold,holds_before_OS_start=wled_hold,
                   original_root_writes_volatile=True,physical_small_file_write_test=a.physical_owned_marker,
                   reset_commands=True,reset_commands_hardware_tested=False,ready_to_boot_driver=not application,

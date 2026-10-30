@@ -10,6 +10,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #define PWM_READY UINT64_C(0x50574c4544310001)
+#define PWM_NATIVE_START UINT64_C(0x50574c4e00010001)
 #define PWM_TIMEOUT_US UINT64_C(2000000)
 #ifdef __cplusplus
 #define PWM_EMPTY {}
@@ -43,6 +44,11 @@ struct polaris_wled_firmware {
 };
 static inline bool pwm_zero(const uint8_t *p,size_t bytes)
 {for(size_t n=0;n<bytes;n++)if(p[n])return false;return true;}
+static inline bool pwm_native_start_ready(const struct polaris_wled_request *r)
+{
+    return r&&r->cookie==PWM_NATIVE_START&&!r->sequence&&r->on==1&&!r->frame&&
+        pwm_zero(r->reserved,sizeof(r->reserved));
+}
 static inline bool pwm_native_fail(struct polaris_wled_native *n,unsigned error)
 {if(n&&!n->error)n->error=error;return false;}
 static inline bool pwm_firmware_fail(struct polaris_wled_firmware *f,unsigned error)

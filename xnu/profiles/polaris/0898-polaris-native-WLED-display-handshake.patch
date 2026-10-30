@@ -18,7 +18,7 @@
      static void presentWake(OSObject *, IOInterruptEventSource *, int);
      static void displayFired(AppleCLCD *, IOTimerEventSource *, bool);
      uint32_t debugCapture(void *, uint32_t);
-@@ -158,6 +162,47 @@
+@@ -158,9 +162,125 @@
  /* Retained once for this boot, published after all framebuffer setup. */
  static AppleCLCD *polaris_debug_fb;
  static uint64_t polaris_fb_calls,polaris_fb_swaps,polaris_fb_presents,polaris_fb_pixels;
@@ -66,7 +66,93 @@
  extern "C" unsigned char iso_font[256 * 16];
  extern "C" uint32_t polaris_usb_status(char *, uint32_t);
  extern "C" uint32_t polaris_a630_status(void);
-@@ -408,6 +453,13 @@
++/* Explicit generic-VM probe: actual native workloop/cache/mailbox exchange
++ * with resident firmware. SOFTWARE PMIC and small RAM pixels, NOT a panel. */
++struct PwnProbe {
++    IOLock *lock;IOWorkLoop *loop;IOTimerEventSource *timer;
++    struct polaris_wled_native_adapter adapter;
++    uint32_t pixels[64];unsigned phase,cycles,copies,error;bool done;
++};
++static void pwn_probe_callback(OSObject *owner,IOTimerEventSource *timer)
++{
++    PwnProbe *p=(PwnProbe *)((OSData *)owner)->getBytesNoCopy();
++    IOLockLock(p->lock);
++    uint64_t ns=0;absolutetime_to_nanoseconds(mach_absolute_time(),&ns);
++    bool on=p->phase!=1;
++    if(!p->loop->onThread()||!p->loop->inGate())p->error=1;
++    if(!p->error)(void)pwn_exchange(&p->adapter,on,ns/1000);
++    if(p->adapter.state.error)p->error=p->adapter.state.error;
++    if(!p->error) {
++        if(p->phase==0&&p->adapter.state.cookie)p->phase=1;
++        else if(p->phase==1&&!p->adapter.state.actual_on&&!p->adapter.state.inflight)
++            p->phase=2;
++        else if(p->phase==2) {
++            if(!pwn_needs_frame(&p->adapter)||p->adapter.state.inflight)p->error=2;
++            else {
++                for(unsigned i=0;i<64;i++)p->pixels[i]=0x12340000+i+p->cycles;
++                __asm__ volatile("dsb sy":::"memory");
++                if(!pwn_presented(&p->adapter))p->error=3;
++                else {p->copies++;p->phase=3;}
++                (void)pwn_exchange(&p->adapter,true,ns/1000);
++            }
++        }else if(p->phase==3&&p->adapter.state.actual_on&&!p->adapter.state.inflight) {
++            p->cycles++;
++            if(p->cycles==3)p->done=true;else p->phase=1;
++        }
++    }
++    if(!p->done&&!p->error)timer->setTimeoutMS(1);
++    IOLockUnlock(p->lock);
++}
++extern "C" int PolarisWledNativeProbe(void)
++{
++    uint32_t test=0;PE_parse_boot_argn("polariswledvm",&test,sizeof(test));
++    if(!test)return 0;
++    uint32_t enabled=0,gpu=0;PE_parse_boot_argn("polariswled",&enabled,sizeof(enabled));
++    PE_parse_boot_argn("polarisgpu",&gpu,sizeof(gpu));
++    if(test!=1||enabled!=1||gpu!=9||
++       (__builtin_arm_rsr64("MPIDR_EL1")&UINT64_C(0xffffff))!=7)return 10;
++    int error=0;bool attached=false;unsigned cycles=0,copies=0;uint64_t sequence=0;
++    PwnProbe initial={};initial.lock=IOLockAlloc();initial.loop=IOWorkLoop::workLoop();
++    OSData *owner=OSData::withBytes(&initial,sizeof(initial));
++    PwnProbe *p=owner?(PwnProbe *)owner->getBytesNoCopy():NULL;
++    IOTimerEventSource *timer=NULL;
++    if(!initial.lock||!initial.loop||!p){error=11;goto cleanup;}
++    if(!pwn_init(&p->adapter,&polaris_uefi_wled,polaris_wled_native_cache,true)){
++        error=12;goto cleanup;
++    }
++    timer=IOTimerEventSource::timerEventSource(owner,pwn_probe_callback);
++    if(!timer||initial.loop->addEventSource(timer)!=kIOReturnSuccess){error=13;goto cleanup;}
++    attached=true;p->timer=timer;timer->setTimeoutMS(1);
++    for(unsigned i=0;i<5000;i++) {
++        IOLockLock(initial.lock);bool done=p->done;error=p->error;IOLockUnlock(initial.lock);
++        if(done||error)break;IOSleep(1);
++    }
++    IOLockLock(initial.lock);
++    if(!p->done&&!error)error=14;
++    cycles=p->cycles;copies=p->copies;sequence=p->adapter.state.acknowledged;
++    IOLockUnlock(initial.lock);
++cleanup:
++    if(attached){timer->cancelTimeout();timer->disable();initial.loop->removeEventSource(timer);}
++    OSSafeReleaseNULL(timer);OSSafeReleaseNULL(owner);OSSafeReleaseNULL(initial.loop);
++    if(initial.lock)IOLockFree(initial.lock);
++    if(!error&&(cycles!=3||copies!=3||sequence!=6))error=15;
++    IOLog("POLARIS WLED NATIVE VM: %s cycles=%u copies=%u seq=%llu error=%d; native workloop/cache, SOFTWARE PMIC and RAM pixels only\n",
++        error?"FAIL":"PASS",cycles,copies,sequence*1ull,error);
++    return error;
++}
++
+ static IOReturn
+ polaris_copy_panel(OSObject *owner, void *out, void *size, void *, void *)
+ {
+@@ -282,6 +402,7 @@
+ }
+ extern "C" int PolarisFramebufferWakeProbe(void)
+ {
++    int wled_error=PolarisWledNativeProbe();if(wled_error)return wled_error;
+     int error=0;bool attached=false;
+     IOLock *lock=IOLockAlloc();IOWorkLoop *loop=IOWorkLoop::workLoop();
+     struct PfbWakeProbe initial={};initial.lock=lock;initial.loop=loop;
+@@ -408,6 +529,13 @@
          IOLog("POLARIS DISPLAY: disabled; explicit ADT and boot argument required\n");
          return false;
      }
@@ -80,7 +166,7 @@
      fPolarisLastUS = fPolarisMaxUS = 0;
      fPolarisTotalNS = 0;
      fPolarisNextPresent = 0;
-@@ -551,6 +603,7 @@
+@@ -551,6 +679,7 @@
  
  	IOLockLock(fb->fLock);
  #if defined(POLARIS_RAM_ONLY)
@@ -88,7 +174,7 @@
      if(notifyDue)
  #endif
  	for (unsigned int i = 0; i < fb->fClients->getCount(); i++) {
-@@ -619,6 +672,17 @@
+@@ -619,6 +748,17 @@
  		fb->present(rec);
  #if defined(POLARIS_RAM_ONLY)
          uint64_t copyEnd=mach_absolute_time();
@@ -106,7 +192,7 @@
          absolutetime_to_nanoseconds(copyEnd - started, &elapsed);
          if(fb->fPolarisPerf && gpuActive && traced) {
              uint64_t startNS=0,endNS=0;
-@@ -783,6 +847,7 @@
+@@ -783,6 +923,7 @@
  {
  #if defined(POLARIS_RAM_ONLY)
      __atomic_fetch_add(&polaris_fb_presents, 1, __ATOMIC_RELAXED);
@@ -114,7 +200,7 @@
  #endif
  	uint32_t mask = get32(rec, 0x104);
  
-@@ -856,6 +921,16 @@
+@@ -856,6 +997,16 @@
                  fPolarisRow, 1080);
          }
          __atomic_fetch_add(&polaris_fb_pixels, copied, __ATOMIC_RELAXED);
@@ -133,7 +219,7 @@
                  fWidth, fHeight, fRowBytes, fLogicalW, fLogicalH);
 --- /dev/null
 +++ b/iokit/Kernel/arm/polaris_wled_mailbox.h
-@@ -0,0 +1,192 @@
+@@ -0,0 +1,198 @@
 +/* Shared native/FW WLED protocol policy. OFFLINE: no mapping/cache operations,
 + * PMIC writes or frame presentation. Runtime adapters must independently admit
 + * both sides, copy an acquire-published line, validate every reserved byte and
@@ -146,6 +232,7 @@
 +#include <stddef.h>
 +#include <stdint.h>
 +#define PWM_READY UINT64_C(0x50574c4544310001)
++#define PWM_NATIVE_START UINT64_C(0x50574c4e00010001)
 +#define PWM_TIMEOUT_US UINT64_C(2000000)
 +#ifdef __cplusplus
 +#define PWM_EMPTY {}
@@ -179,6 +266,11 @@
 +};
 +static inline bool pwm_zero(const uint8_t *p,size_t bytes)
 +{for(size_t n=0;n<bytes;n++)if(p[n])return false;return true;}
++static inline bool pwm_native_start_ready(const struct polaris_wled_request *r)
++{
++    return r&&r->cookie==PWM_NATIVE_START&&!r->sequence&&r->on==1&&!r->frame&&
++        pwm_zero(r->reserved,sizeof(r->reserved));
++}
 +static inline bool pwm_native_fail(struct polaris_wled_native *n,unsigned error)
 +{if(n&&!n->error)n->error=error;return false;}
 +static inline bool pwm_firmware_fail(struct polaris_wled_firmware *f,unsigned error)
@@ -328,7 +420,7 @@
 +#endif
 --- /dev/null
 +++ b/iokit/Kernel/arm/polaris_wled_native.h
-@@ -0,0 +1,86 @@
+@@ -0,0 +1,94 @@
 +/* Native display-workloop adapter. Caller owns the display lock; no separate
 + * thread, PMIC access, allocation, reset or unverified frame acknowledgement.
 + * The kernel profile includes these exact bytes as a private implementation
@@ -351,7 +443,15 @@
 +        return false;
 +    if(!enabled)return true;
 +    if(!slot||!cache||((uintptr_t)slot&127))return false;
-+    a->slot=slot;a->cache=cache;a->enabled=true;return true;
++    const uint8_t *initial=(const uint8_t *)&slot->native;
++    if(!pwm_zero(initial,sizeof(slot->native)))return false;
++    a->slot=slot;a->cache=cache;a->enabled=true;
++    /* Native BSS initialization precedes FW advertisement. This canonical
++     * sequence-zero sentinel cannot request a device transition. */
++    a->slot->native.on=1;
++    a->cache(&a->slot->native,true);
++    __atomic_store_n(&a->slot->native.cookie,PWM_NATIVE_START,__ATOMIC_RELEASE);
++    a->cache(&a->slot->native,true);return true;
 +}
 +/* A boot advertisement uses READY-last, later acknowledgements SEQUENCE-last.
 + * Always acquire then copy the entire independently owned128-byte line.
