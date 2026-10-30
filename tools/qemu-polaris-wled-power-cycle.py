@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Actual pre-XNU power-cycle adapter, software PMIC only; never phone admission alone."""
-import argparse,hashlib,importlib.util,json,re,shutil,struct,subprocess,time
+import argparse,hashlib,importlib.util,json,re,shutil,struct,subprocess,sys,time
 from pathlib import Path
 
 def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
@@ -19,6 +19,9 @@ def main():
         raise ValueError('explicit source-bound QEMU-only pre-XNU inventory required')
     for name,digest in m['inputs'].items():
         if sha(root/name)!=digest:raise ValueError('inventory source changed: '+name)
+    if m.get('WLED_OEM_status_policy') is True and tuple(m.get(k) for k in
+        ('WLED_journal_version','WLED_journal_bytes_max','WLED_final_reset_receipt_bytes','WLED_zero_write_receipt_bytes'))!=(2,1348,56,16):
+        raise ValueError('missing exact WLED journal/receipt wire version')
     out=a.output.resolve();out.mkdir(parents=True,exist_ok=False);esp=out/'esp/EFI/BOOT';esp.mkdir(parents=True)
     shutil.copyfile(app,esp/'BOOTAA64.EFI');shutil.copyfile(a.payload,out/'esp/PAYLOAD.BIN');shutil.copyfile(a.vars,out/'vars.fd')
     cmd=[str(a.qemu),'-M','virt,gic-version=3,virtualization=off','-cpu','cortex-a55','-smp','8','-m','8G',
@@ -26,7 +29,7 @@ def main():
          '-drive','if=pflash,format=raw,readonly=on,file='+str(a.code),'-drive','if=pflash,format=raw,file='+str(out/'vars.fd'),
          '-drive','if=none,id=esp,format=raw,readonly=on,file=fat:ro:'+str(out/'esp'),
          '-device','virtio-blk-pci,drive=esp','-device','virtio-gpu-pci']
-    began=time.monotonic();error=None;values={};actual={};text='';checks={}
+    began=time.monotonic();error=None;values={};actual={};text='';checks={};journal_evidence={}
     with (out/'qemu.log').open('wb') as log:
         p=subprocess.Popen(cmd,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=log)
         try:
@@ -90,6 +93,26 @@ def main():
                         ((v>>8)&255)&(status_injected>>8) for v in words.values())
                 else:
                     checks['ILIM_history_not_discarded']=values.get('WLED_POWER_WITNESS_FAULT_OR')==1 and values.get('WLED_POWER_WITNESS_RT_OR')==1
+                sys.path.insert(0,str(root/'tools'))
+                from polaris_wled_journal import parse_packet,parse_reset_receipt
+                def dump(label,address,size,maximum):
+                    if not 0x40000000<=address<0x240000000 or not 0<size<=maximum or address+size>0x240000000:
+                        raise ValueError('invalid model-only WLED witness address/size')
+                    target=out/(label+'.bin')
+                    q('pmemsave',{'val':address,'size':size,'filename':str(target)})
+                    raw=target.read_bytes()
+                    if len(raw)!=size:raise ValueError('short actual EFI memory snapshot')
+                    return raw
+                raw=dump('actual-journal',values.get('WLED_JOURNAL_ADDRESS',0),values.get('WLED_JOURNAL_BYTES',0),1348)
+                parsed=parse_packet(raw);journal_evidence['journal']=parsed
+                checks['actual_binary_journal']=values.get('WLED_JOURNAL_CAPTURED')==1 and parsed['error']==expected_error
+                if refused:
+                    checks['no_false_final_receipt']=values.get('WLED_RESET_RECEIPT_READY')==0 and not parsed['cycle_restored_readbacks']
+                else:
+                    receipt=dump('actual-final-receipt',values.get('WLED_RESET_RECEIPT_ADDRESS',0),values.get('WLED_RESET_RECEIPT_BYTES',0),56)
+                    validated=parse_reset_receipt(receipt,raw)
+                    journal_evidence['final_receipt']=validated
+                    checks['final_two_actual_reset_reads']=values.get('WLED_RESET_RECEIPT_READY')==1 and validated['final_restore_receipt_valid']
         except Exception as e:error=str(e)
         finally:
             if p.poll() is None:p.terminate()
@@ -102,5 +125,7 @@ def main():
             'WLED_OEM_status_policy':m.get('WLED_OEM_status_policy',False),
             'controlled_status_after_issue':m.get('controlled_WLED_status_after_issue',0),
             'kernel_CPU_started':False,'physical_PMIC_power_control_tested':False,'command':cmd}
+    result['binary_journal_evidence']=journal_evidence
+    result['observer_inputs']={'tools/polaris_wled_journal.py':sha(root/'tools/polaris_wled_journal.py')}
     (out/'result.json').write_text(json.dumps(result,indent=2)+'\n');print(json.dumps(result,indent=2));raise SystemExit(not result['passed'])
 if __name__=='__main__':main()

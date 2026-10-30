@@ -443,6 +443,7 @@ def main():
     if a.wled_inventory_only:inputs+=['shim/polaris/uefi-wled-inventory.h','shim/polaris/uefi-wled-readonly.h']
     if a.wled_fault_watch:inputs+=['shim/polaris/uefi-wled-fault-watch.h']
     if a.wled_power_cycle_only:inputs+=['shim/polaris/uefi-wled-cycle.h','shim/polaris/uefi-wled-power.h','shim/polaris/uefi-wled-readonly.h','shim/polaris/uefi-wled-status.h']
+    if a.wled_oem_status:inputs+=['shim/polaris/uefi-wled-journal.h']
     if shutdown_bridge:inputs.append('shim/polaris/runtime-quiesce.h')
     objects=[]
     for source in sources:
@@ -464,6 +465,10 @@ def main():
                   WLED_readonly_fault_watch=a.wled_fault_watch,controlled_WLED_fault_pulse=a.test_wled_fault_pulse,
                   WLED_power_cycle_only=a.wled_power_cycle_only,controlled_WLED_write_timeout=a.test_wled_write_timeout,
                   WLED_OEM_status_policy=a.wled_oem_status,controlled_WLED_status_after_issue=a.test_wled_status_after_issue,
+                  WLED_journal_version=2 if a.wled_oem_status else None,
+                  WLED_journal_bytes_max=1348 if a.wled_oem_status else None,
+                  WLED_final_reset_receipt_bytes=56 if a.wled_oem_status else None,
+                  WLED_zero_write_receipt_bytes=16 if a.wled_oem_status else None,
                   PMIC_write_api=a.wled_power_cycle_only,kernel_CPU_ON_compiled_out=wled_hold,
                   probe_only=wled_hold,holds_before_OS_start=wled_hold,
                   original_root_writes_volatile=True,physical_small_file_write_test=a.physical_owned_marker,

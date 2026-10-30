@@ -537,6 +537,9 @@ static struct polaris_usb_control controls={.begin=begin,.write=write_payload,.f
 #if defined(EFI_XNU_SHUTDOWN_BRIDGE)
     .shutdown_status=shutdown_status,.shutdown_begin=shutdown_begin,.shutdown_reset_ready=shutdown_reset_ready,
 #endif
+#if defined(EFI_XNU_WLED_OEM_STATUS)
+    .wled_journal=wled_journal_capture,.reset_receipt=wled_reset_receipt,
+#endif
     .autoboot=disk_autoboot,.idle_guard=idle_guard,.host_activity=host_activity};
 #if defined(POLARIS_EFI_TEST_QEMU)
 struct file {
@@ -684,6 +687,18 @@ static void test_monitor(void)
             report("WLED_POWER_FINAL_RESET_ALLOWED=",prepare_reset(0,1)&&prepare_reset(0,2));
             report("WLED_POWER_FINAL_ERROR=",cycle_power.error);
             report("WLED_POWER_FINAL_UNCERTAIN=",cycle_power.uncertain);
+#if defined(EFI_XNU_WLED_OEM_STATUS)
+            const uint8_t *journal=0,*receipt=0;uint64_t journal_bytes=0,receipt_bytes=0;
+            int captured=wled_journal_capture(0,&journal,&journal_bytes);
+            report("WLED_JOURNAL_CAPTURED=",captured);
+            report("WLED_JOURNAL_ADDRESS=",(uintptr_t)journal);
+            report("WLED_JOURNAL_BYTES=",journal_bytes);
+            int final_ready=prepare_reset(0,2);
+            int final_receipt=final_ready&&wled_reset_receipt(0,2,&receipt,&receipt_bytes);
+            report("WLED_RESET_RECEIPT_READY=",final_receipt);
+            report("WLED_RESET_RECEIPT_ADDRESS=",(uintptr_t)receipt);
+            report("WLED_RESET_RECEIPT_BYTES=",receipt_bytes);
+#endif
             text("WLED_POWER_MODEL_HOLD: NO_CPU_ON\r\n");
         }
 #endif

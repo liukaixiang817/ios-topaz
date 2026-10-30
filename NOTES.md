@@ -34,6 +34,70 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0112 final-read journal + actual EFI receipt COMPLETE; phone stays FASTBOOT
+
+- CURRENT all0112 build/model/local workers ENDED. No phone boot/cycle/PMIC
+  power write or OS/root/storage/NVRAM/Android activity; no kernel changes/CI.
+  Actual expected Polaris FASTBOOT independently verified05:08:59UTC in
+  actual-fastboot-start-0001.json. No active iOS/recovery/USB. Do not replay
+  old0111/0110/0108 commands or wait ended97840/52837 model workers. New OEM
+  mode remains QEMU-only; there is still NO physical OEM power admission.
+- Added bounded binary journal v2:64-byte header + <=64 exact20-byte records
+  + CRC, max1348 bytes. Every record retains absolute64-bit start/end, FAULT,
+  RT, partial-valid mask and expected module/IRQ context. Separate fixed56B
+  final reset receipt carries precisely TWO additional actual observations
+  and cumulative whole-history CRC, tied to the captured cookie/count/origin.
+  No dropped middle pair, log truncation, old completed-cycle print or ACK
+  substitutes for final readback. No dynamic allocation/PMIC operation in the
+  serializer. Existing status history/refusals/protection remain intact.
+- Optional WLED journal/reset-receipt callbacks appended to the INTERNAL USB
+  controls; actual QCOM protocol ABI unchanged. Ordinary callbacks remain NULL
+  and ordinary reset replies remain empty OKAY. New oem wled-journal only
+  stages bounded read-only RAM data. WLED ordinary-reset path first performs
+  the real reset gate, then must deliver the final receipt, then resets; no
+  reset if receipt missing/too large, gate failed or transmit failed. Unknown
+  reply never allows blind host retry. New WledOemProtocol forbids touch,
+  native shutdown and raw reboot; one evidence-bound reset request per client.
+  Separate16B WLR0 receipt preserves recovery before ANY command was issued.
+- actual-EFI-final-read-journal-proof.json rehashes NINE actual full EFI cases
+ 193 checks, selected *-driver-0002/*-run-0002, and48 local ASan/UBSan/wire/
+  parser/control/scope checks13.485s. Actual OEM success22/22 9.017s: QMP dumps
+  the firmware-produced journal30 records and final receipt extending to32;
+  host independently decodes all raw observations, prefix/OR/history CRC.
+  Actual timeout and six FAULT/RT OVP/SC/unknown cases each22/22 6.742..6.846s:
+  failed binary journal retained, NO false final receipt/reset. Original strict
+  path17/17 8.655s still passes. Actual AP memory stage0/kernel-log0, CPU_ON OUT.
+  SOFTWARE PMIC, not SD845/physical USB/power/optical simulation. Actual binary
+  memory snapshots are not host ACKs or reconstructed raw registers.
+- Local tests include every packet truncation/single-bit corruption, each
+  final-receipt bit, rechecksummed serious/invalid states, lost pending pair,
+  stale/foreign cookie, partial serious fault, failing/oversized USB receipt,
+  delivery failure, unchanged ordinary client and zero-write host recovery.
+  First test wrongly expected changing a nonzero cookie to invalidate an
+  otherwise valid separate session's packet; corrected harness to require
+  rejection by THIS session's final receipt. Failure retained. First private
+ 0002 build script accidentally renamed the old0098 driver path and failed
+  BEFORE build/access; failed script retained and exact old path corrected.
+ 0001 model artifacts precede explicit wire-version manifest fields, so only
+  selected0002 carries exact ABI2/1348/56/16 declarations and current hashes.
+- NEXT finish actual zero-write/preparation-refusal EFI receipt test (WLR0 is
+  currently covered by native command/host tests, not a full EFI refusal run),
+  then independent explicit physical OEM builder/packager/controller. Bind
+  actual0110 timeline + expanded physical inventory + own DT/vendor/source
+  oracle + current full firmware success/timeout/severe/zero-write cases;
+  keep original strict modes and forbid flag stripping/old host substitution.
+  Builder currently rejects physical --wled-oem-status; do not bypass it.
+  Frozen complete evidence must admit a NEW explicit physical scope first.
+  Then actual upstream EDK2 whole decode/81FW preservation/current expected
+  FASTBOOT and ONE authorized pre-XNU electrical OFF2s/ON/actual journal/final
+  receipt/reset + independent FASTBOOT. This hardware-only step must not read
+  or boot the root, and old pending-journal pre-XNU scope review remains
+  restricted. No more random retries of old strict-cycle refusals.
+- Native lock-screen/FW mailbox and optical-darkness/wake still unfinished;
+  future iOS requires NEW strictRO root/map/GPT/ESP/journal audit, no repair or
+  replay/RW inferred. Current ca_vbl1/bundle865407ee/native0104b7fa37ac and
+  fuller20F66 verified inputs unchanged. PCM/Wi-Fi/runtime/menu still pending.
+
 ### 0111 OEM status semantics + actual EFI integration COMPLETE; phone FASTBOOT
 
 - Completed source54c26a3 committed and pushed to codex/polaris-preflight.

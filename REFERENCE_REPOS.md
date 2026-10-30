@@ -723,6 +723,12 @@ while comparing all64 non-status snapshot bytes exactly. Original strict
 mode/refusals remain intact. The new policy is currently QEMU-only; no
 physical writer/image/control admission or true-darkness result is implied.
 Private source/oracle/model evidence is under `research/polaris/uefi-ios-0111`.
+0112 adds an independent bounded raw journal and a final reset response that
+extends it with both actual reset-gate observations. Actual EFI memory dumps
+are checked by the host against the full history, rather than treating the
+earlier cycle-completion print or empty ACK as the final evidence. Nine
+software-PMIC EFI cases pass; physical USB/power/darkness and the native lock
+screen remain unproven, and physical OEM image admission remains disabled.
 
 The audited UniXNU OS profile is iPadOS17.7.11/21H461 with XNU10063.141.1 and
 new MobileGraphics/IOSurface/IOHID ABI integration. Our current iOS16/XNU8796

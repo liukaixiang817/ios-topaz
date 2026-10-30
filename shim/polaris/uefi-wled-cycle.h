@@ -5,6 +5,11 @@
 #ifndef POLARIS_EFI_WLED_CYCLE_H
 #define POLARIS_EFI_WLED_CYCLE_H
 #include "uefi-wled-power.h"
+#if defined(EFI_XNU_WLED_OEM_STATUS)
+#include "uefi-wled-journal.h"
+static struct polaris_wled_journal cycle_journal;
+static uint8_t cycle_journal_wire[PWJ_LIMIT],cycle_reset_wire[PWJ_RECEIPT];
+#endif
 static struct polaris_wled_read_bus cycle_bus;
 static struct polaris_wled_power cycle_power;
 static unsigned cycle_started,cycle_stage,cycle_done;
@@ -105,6 +110,10 @@ static void wled_cycle_begin(void)
 {
     if(cycle_started)return;
     cycle_started=1;
+#if defined(EFI_XNU_WLED_OEM_STATUS)
+    cycle_journal.cookie=buttons_us(0)^UINT64_C(0x574c45444a320001);
+    if(!cycle_journal.cookie)cycle_journal.cookie=1;
+#endif
 #if defined(POLARIS_EFI_TEST_QEMU)
     cycle_mock_init();report("WLED_POWER_MOCK_BACKEND=",1);
     cycle_bus.read=cycle_read;cycle_bus.read_command=cycle_read_command;
@@ -172,7 +181,7 @@ static void wled_cycle_status_report(void)
         report(at,((w->record[n].began_us&UINT64_C(0xffffffff))<<32)|
             (w->record[n].ended_us&UINT64_C(0xffffffff)));
         report(word,(uint32_t)w->record[n].fault|((uint32_t)w->record[n].rt<<8)|
-            ((uint32_t)w->record[n].valid<<16));
+            ((uint32_t)w->record[n].valid<<16)|((uint32_t)w->record[n].expected<<24));
     }
 }
 #endif
@@ -224,4 +233,26 @@ static int wled_cycle_reset_ready(void)
      * Every path after a write, including the RAM lease, requires readback. */
     return !cycle_started||!cycle_power.issued||pwp_restored(&cycle_power);
 }
+#if defined(EFI_XNU_WLED_OEM_STATUS)
+static int wled_journal_capture(void *context,const uint8_t **data,uint64_t *bytes)
+{
+    (void)context;unsigned length=0;
+    if(!cycle_started||!cycle_done||!data||!bytes||
+       !pwj_packet(&cycle_journal,&cycle_power,cycle_journal_wire,sizeof(cycle_journal_wire),&length))return 0;
+    *data=cycle_journal_wire;*bytes=length;return 1;
+}
+static int wled_reset_receipt(void *context,unsigned mode,const uint8_t **data,uint64_t *bytes)
+{
+    (void)context;
+    if(data&&bytes&&!cycle_power.issued&&!cycle_power.completed&&!cycle_power.uncertain&&mode>=1&&mode<=2) {
+        for(unsigned n=0;n<16;n++)cycle_reset_wire[n]=0;
+        cycle_reset_wire[0]='W';cycle_reset_wire[1]='L';cycle_reset_wire[2]='R';cycle_reset_wire[3]='0';
+        pwj_put(cycle_reset_wire+4,cycle_journal.cookie,8);
+        cycle_reset_wire[12]=(uint8_t)mode;cycle_reset_wire[13]=(uint8_t)cycle_power.error;
+        *data=cycle_reset_wire;*bytes=16;return 1;
+    }
+    if(!data||!bytes||!pwj_receipt(&cycle_journal,&cycle_power,mode,buttons_us(0),cycle_reset_wire))return 0;
+    *data=cycle_reset_wire;*bytes=sizeof(cycle_reset_wire);return 1;
+}
+#endif
 #endif

@@ -15,7 +15,7 @@
 enum {PWS_E_ARGUMENT=64,PWS_E_STATUS,PWS_E_CONFIG,PWS_E_TIME,PWS_E_CAPACITY};
 struct polaris_wled_status_record {
     uint64_t began_us,ended_us;
-    uint8_t fault,rt,valid,reserved;
+    uint8_t fault,rt,valid,expected; /* exact expected module bit7 / OVP bit1 */
 };
 struct polaris_wled_status_witness {
     struct polaris_wled_status_record record[PWS_RECORDS];
@@ -51,10 +51,11 @@ static inline bool pws_status(struct polaris_wled_status_witness *w,
     return true;
 }
 static inline bool pws_collect(struct polaris_wled_status_witness *w,
-    struct polaris_wled_read_bus *b,struct polaris_wled_snapshot *s)
+    struct polaris_wled_read_bus *b,struct polaris_wled_snapshot *s,uint8_t expected)
 {
     if(w->count>=PWS_RECORDS)return pws_fail(w,PWS_E_CAPACITY);
     struct polaris_wled_status_record *r=&w->record[w->count++];
+    r->expected=expected;
     uint64_t began=b->now_us(b->context);r->began_us=began;
     if(!began||began<w->previous_us)return pws_fail(w,PWS_E_TIME);
     bool ok=pws_status(w,b,r);
@@ -81,9 +82,10 @@ static inline bool pws_verify(struct polaris_wled_status_witness *w,
     uint64_t began=b->now_us(b->context);
     if(!began||began<w->previous_us)return pws_fail(w,PWS_E_TIME);
     struct polaris_wled_snapshot first={0},after={0};
-    if(!pws_collect(w,b,&first)||!pws_static_equal(&first,expected))
+    uint8_t context=(expected->ctrl[2]&0x80u)|(expected->irq_enable&2u);
+    if(!pws_collect(w,b,&first,context)||!pws_static_equal(&first,expected))
         return pws_fail(w,PWS_E_CONFIG);
-    if(!pws_collect(w,b,&after)||!pws_static_equal(&after,expected)||
+    if(!pws_collect(w,b,&after,context)||!pws_static_equal(&after,expected)||
        !pws_static_equal(&first,&after))return pws_fail(w,PWS_E_CONFIG);
     uint64_t end=b->now_us(b->context);
     if(end<w->previous_us||end-began>PWS_MAX_CHECK_US)return pws_fail(w,PWS_E_TIME);

@@ -17,6 +17,16 @@ static int hexadecimal(const uint8_t *p,uint64_t *out)
         if(v>15)return 0;n=n*16+v;
     }*out=n;return 1;
 }
+static int reset_reply(struct polaris_usb_diag *d,struct polaris_usb_control *c,unsigned mode)
+{
+    if(!c->reset_receipt)return reply(d,"OKAY");
+    const uint8_t *data=0;uint64_t bytes=0;
+    if(!c->reset_receipt(c->context,mode,&data,&bytes)||!data||!bytes||bytes>60)
+        return reply(d,"FAILreset witness unavailable")?2:0;
+    uint8_t response[64]={'O','K','A','Y'};
+    for(uint64_t n=0;n<bytes;n++)response[4+n]=data[n];
+    return d->transmit(d->context,response,4+bytes);
+}
 int polaris_usb_control_command(struct polaris_usb_diag *d,struct polaris_usb_control *c,const uint8_t *p,uint64_t n)
 {
     if(!d||!d->transmit||!c)return 0;
@@ -39,6 +49,12 @@ int polaris_usb_control_command(struct polaris_usb_diag *d,struct polaris_usb_co
             return reply(d,"FAILshutdown state unavailable");
         d->staged=data;d->staged_bytes=bytes;return reply(d,"OKAY");
     }
+    if(same(p,n,"oem wled-journal")){
+        const uint8_t *data=0;uint64_t bytes=0;d->staged=0;d->staged_bytes=0;
+        if(!c->wled_journal||!c->wled_journal(c->context,&data,&bytes)||!data||bytes<68||bytes>1348)
+            return reply(d,"FAILWLED journal unavailable");
+        d->staged=data;d->staged_bytes=bytes;return reply(d,"OKAY");
+    }
     unsigned shutdown=same(p,n,"oem shutdown:1")?1:same(p,n,"oem shutdown:2")?2:0;
     if(shutdown){
         if(!c->shutdown_begin||!c->shutdown_begin(c->context,shutdown))
@@ -51,7 +67,8 @@ int polaris_usb_control_command(struct polaris_usb_diag *d,struct polaris_usb_co
         if(!c->shutdown_reset_ready||!c->shutdown_reset_ready(c->context,drained)||
            !c->prepare_reset||!c->reset||!c->prepare_reset(c->context,drained))
             return reply(d,"FAILnative shutdown not complete");
-        if(!reply(d,"OKAY"))return 0;c->reset(c->context,drained);return 1;
+        int sent=reset_reply(d,c,drained);if(sent!=1)return sent==2;
+        c->reset(c->context,drained);return 1;
     }
     if(same(p,n,"getvar:input")){
         struct polaris_uefi_input_status s={0};
@@ -97,7 +114,8 @@ int polaris_usb_control_command(struct polaris_usb_diag *d,struct polaris_usb_co
     unsigned reset=same(p,n,"reboot")?1:same(p,n,"reboot-bootloader")?2:0;
     if(reset){
         if(!c->prepare_reset||!c->reset||!c->prepare_reset(c->context,reset))return reply(d,"FAILreset unavailable");
-        if(!reply(d,"OKAY"))return 0;c->reset(c->context,reset);return 1;
+        int sent=reset_reply(d,c,reset);if(sent!=1)return sent==2;
+        c->reset(c->context,reset);return 1;
     }
     return polaris_usb_command(d,p,n);
 }
