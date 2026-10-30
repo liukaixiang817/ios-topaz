@@ -34,6 +34,73 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0118 actual EFI-XNU native/FW WLED exchange + 7 fault paths COMPLETE; physical runtime NOT READY
+
+- Actual-EFI-XNU-native-WLED-and-fault-proof.json (lowercase filename:
+  `0118/actual-EFI-XNU-native-WLED-and-fault-proof.json`) PASSED, independently
+  rehashes source/native exact patch/TU/fullCI/kernel/each actual EFI image,
+  serial/native RAM ring/pages/receipt/2mailboxes and reparses actual binaries.
+  Selected8 full EFI-XNU models have362 checks: normal0005 47/47 38.571s, timeout
+  0006 and severe0007/0008/0009/0013/0011/0012 each45/45 about38.1..38.4s.
+  This is real native workloop/cache/SMP/own synthetic-HFS drain with SOFTWARE
+  PMIC and64 RAM pixels. NOT SD845 PMIC/panel/physicalUSB/GPU emulation, actual
+  iOS UI, optical evidence, persistent SAFE or physical runtime admission.
+- Normal actual three OFF/ON cycles/copies3/seq6; firmware12issued=12completed,
+  74 raw before terminal +4NEW final readbacks=78, rawFAULT/RT OR1/1 retained,
+  module80/IRQ02 restored. Actual QMP memory3pages independently parsed with
+  complete pairs/prefixCRC, WLR3 actual60B binds separate native drain cookie/
+  seq1/mode2 and final ranges76..78. Actual native VFS0/busy0,generic peers actual PSCI_OFF
+  (model affinities6/5/4), coordinator7/RAM_DRAINED80000003. NOT UFS SAFE.
+- Timeout actual1issued/0complete/error36/uncertain1; each FAULT/RT OVP/SC/unknown
+  actual1issued/1complete/error65/uncertain1, no second WRITE. Raw counts4(timeout)
+  or5(severe) include partial failures, original bad bits/OR kept. Actual error
+  ACK propagates native error134. ONE ordinary native shutdown request is
+  published, aggregate reply refused; native really drains anyway. Both reset
+  modes/fresh gate/final receipt remain REFUSED after actual native drain. No
+  retry/reset/receipt manufacturing. Fault-aborted display probes explicitly
+  excluded, not falsely counted as display PASS.
+- Native source2d55a4e6da5c73edc0d72cd3c17203a00fa6a7bb full macOS27/Xcode27
+  CI41056172330/job124064140960 SUCCESS, exact profile/ZIPentryCRC/whole kernel
+  SHA dd4bd7571c00278d3b5dc116fc63639da8271254ecb59d55cfd754f822b7a50f.
+  Actual SweetFramebuffer TU0005/exactpatch0004 PASS; explicit PriorityWorkLoop
+  timer preserves onThread+inGate checks. Native headers exact hashes remain
+  de8b2fbc.../929933fe...; all original thermal/GPU/cache/auth/lifetime protections
+  and ca_vbl1/userland graphics bundle unchanged. No physical runtime backend.
+- Failures stay archived:0001 host allowlist omitted new actual symbols;0002
+  payload missing explicit debug0;0003 actual native error1 from default timer
+  thread_call rather than loop thread;0004 native cycles PASS but post-handoff
+  report() bytes stayed firmwareRAM and model checked only UART. Fixed bounded
+  QEMU-only actual RAM-log UART export, not restore checks. Download helper
+  import replacement failure0001 retained and fixed only in helper0002.
+- Actual RT-OVP model0010 FAILED with rtclock_intr17.592ms >13.631488ms native IRQ
+  watchdog before drain. Symbol/serial/result saved, no threshold/hygiene guard
+  changed; cause not isolated, not proven host jitter or WLED causation. Separate
+  fresh0013 same kernel/policy RT-OVP passes; proof explicitly retains0010 and
+  makes NO repeated-stability claim. Initial wire-pair fixture regression failure
+  retained; corrected fixture, existing sequence-regression refusal unchanged.
+- Local20 tests6.150s PASS (native/wire/control/IIG/scope/ownership); actual normal
+  plus7 EFI fault builds compile full warnings, no native environment stubs. New
+  decoder refuses missing/mismatched/late pairs even with recomputed wholeCRC,
+  while failed raw records remain diagnostic. No new kernel source after2d55a4e;
+  FW/host observer/fault changes do not require another kernel CI.
+- CURRENT final directed readonly actual expected Polaris FASTBOOT12:51:15.994777
+  UTC PASS, `0118/actual-fastboot-final-0001.json`. NO phone boot/cycle/PMIC/OS/
+  root/storage/NVRAM/Android this turn. All model/build/download/USB workers
+  ENDED, no active iOS/CI; do not wait/replay old0113/0116 cycles/controllers.
+  Human opticalOFF2s is established; do not ask again. Existing pendingjournal
+  gate may_boot_iOS=false/may_write_userdata=false remains unchanged.
+- NEXT continue actual integration: remaining whole-EFI stale/clock/end/lease/
+  capacity fault coverage and independent physical runtime backend/image/client/
+  admission (old onecycle scope cannot be repurposed). Then NEW strictRO root/
+  journal review before any real iOS powerkey/dark/wake. Do not blindly repeat
+  0915 recovery, replay/repair journal, or bypass root gate. Phone candidates only
+  after full readiness, fresh readonly expectedPolaris then automatically use
+  already-authorized RAM. Sound/PCM, WiFi transport/scanjoin and full16.5 ABI stay
+  unfinished; keep ca_vbl1. No new kernelCI unless genuine native source changes.
+
+Earlier0118 implementation/failed-run details below are historical; latest
+actual outcomes above supersede their PENDING/current state.
+
 ### 0118 corrected native full CI SUCCESS; actual runtime/fault models PENDING
 
 - Source2d55a4e6da5c73edc0d72cd3c17203a00fa6a7bb pushed; full macOS27/Xcode27

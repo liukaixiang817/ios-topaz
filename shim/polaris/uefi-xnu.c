@@ -752,6 +752,9 @@ static void test_ram_drain(int stress_done,unsigned contact_phase)
 static void test_monitor(void)
 {
     uint64_t position=0,last=0;unsigned contact_phase=0;
+#if defined(EFI_XNU_WLED_NATIVE_RUNTIME_TEST)
+    uint64_t report_position=0;
+#endif
 #if EFI_XNU_BUTTONS_AVAILABLE
     unsigned keys_reported=0;
 #endif
@@ -768,6 +771,18 @@ static void test_monitor(void)
     volatile uint32_t *uart=(void*)(uintptr_t)UINT64_C(0x9000000);
     for(;;){
         uint64_t now;__asm__ volatile("mrs %0,cntvct_el0":"=r"(now));
+#if defined(EFI_XNU_WLED_NATIVE_RUNTIME_TEST)
+        /* report() deliberately writes RAM only after handoff. Export those
+         * actual bytes once on this QEMU monitor's existing UART, rather than
+         * making the host synthesize a missing runtime/final observation. */
+        uint64_t report_end=log_bytes;
+        if(report_end<=sizeof(log_buffer)&&report_position<=report_end) {
+            for(uint64_t i=report_position;i<report_end;i++) {
+                while(uart[6]&(1u<<5))__asm__ volatile("yield");uart[0]=log_buffer[i];
+            }
+            report_position=report_end;
+        }
+#endif
 #if defined(EFI_XNU_WLED_FAULT_WATCH)
         wled_fault_watch_poll();
 #endif

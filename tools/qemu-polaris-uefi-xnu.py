@@ -218,6 +218,7 @@ def main():
                 if native_wled:
                     test_done=test_done and ('WLED_NATIVE_FAULT_AFTER_NATIVE_DRAIN=1' if native_wled_fault else
                         'WLED_NATIVE_FINAL_RECEIPT=0x0000000000000001') in text
+                    if native_wled_fault:test_done=test_done and 'WLED_NATIVE_FAULT_PAGE_BYTES=0x' in text
                 if ('panic(cpu ' in text or test_done or
                     'XNU_ADMISSION=0x8' in text or p.poll() is not None):break
                 time.sleep(.2)
