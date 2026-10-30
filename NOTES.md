@@ -34,6 +34,70 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0117 OFFLINE runtime mailbox/history core COMPLETE; native integration NOT READY
+
+- Read0116 first physical milestone as established: human explicitly confirmed
+  real two-second backlight OFF. Do NOT repeat either archived physical cycle
+  or ask for optical confirmation again. Fresh readonly expected Polaris query
+ 10:41:44UTC passed (0117/actual-fastboot-start-0001.json); this session performed
+  NO phone boot/cycle/PMIC/OS/root/storage/NVRAM/Android action. No user action
+  is pending. Phone was last actually verified FASTBOOT, not a running iOS UI.
+- NEW dormant shim/polaris/uefi-wled-runtime.h wraps the UNCHANGED PWP writer;
+  tools/polaris-wled-mailbox.h supplies a C/C++128+128-byte protocol policy.
+  Neither is included by the actual builder/loader/native profile. No runtime
+  image, mapping, native TU, kernel change/CI, host runtime client or physical
+  admission exists yet. Do not turn pre-XNU onecycle into runtime via a flag.
+- Native policy uses session cookie/exact sequence, one outstanding command,
+  latest desired state coalescing, reserved-byte checks, sticky clock/frozen/
+  timeout/stale/backend errors. ON requires a frame serial strictly newer than
+  the frame at OFF acknowledgement; a frame copied before that ACK is refused.
+  Tokens/verified booleans in this pure policy are NOT hardware evidence. Actual
+  native adapter must supply them only after real panel writes and DSB.
+- Runtime history is caller-owned bounded RAM, max65536*32B=2MiB; actual firmware
+  memory allocation/mapping/ownership NOT selected/admitted. Every full/partial
+  raw status observation is appended without overwrite. Active64-record witness
+  retires ONLY after all records are copied and successful ON independent
+  readback; lifetime OR/time/counters/errors remain. Reserve32 observations
+  BEFORE each OFF (28 covers OFF/ON/readback/final gate). Capacity refusal stays
+  ON, issues0 new commands and keeps final restore/readback capacity. This is
+  explicitly finite history, not unlimited lock cycles or a silent ringbuffer.
+- Terminal close waits for any outstanding transition then restores ON through
+  the same sequencer/softstart. One-shot seal performs TWO NEW complete pairs
+  and retains exact archive boundaries. It grants neither reset, native SAFE,
+  VFS/peer-off, nor a frame ON ACK. Error/uncertain completion never retries or
+  clears. Firmware reset/lease/receipt integration is still required.
+-19local ASan/UBSan/runtime+unchanged OEM admission tests8.803s PASS:200 complete
+  cycles/4802raw records, all448 observer-read failures in cycle+terminal gate,
+  every severe/unknown status bit after each of4writes, write timeout/status,
+  owner/map/static config changes, capacity reserve, each request/ACK reserved
+  bit, stale/late/cookie/sequence, coalescing/fresh-frame and close at every phase.
+  True freestanding AArch64 C and arm64 C++ builds PASS, Appleclang21; largest
+  INDIVIDUAL generated frame384B, not total stack or actual native XNU TUs.
+- New --runtime-core in isolated qemu-polaris-wled-power.py requires explicit
+  --oem-status, no phone image. runtime-core-EFI-0002 executes actual AArch64 EFI
+  at EL1,11checks/6.010746s PASS:16 cycles using real guest architectural time,
+  minimum softstart10770us,386raw+4terminal=390; severe/unknown/uncertain/capacity
+  and mailbox refusal checks. Frame tokens and fault-case clocks are explicitly
+  synthetic; SOFTWARE PMIC, not SD845/display/USB/native runtime emulation.
+  Unchanged strict-mode EFI11checks/5.665725s also passes after runner change.
+- offline-runtime-mailbox-and-raw-history-core-proof.json independently checks
+  current source hashes, exact generated C, both EFI binaries/serial/results,
+  local log and freestanding compilation. No old result relabeled new-source.
+  Initial local0001 C++ aggregate-initializer and unused fixture helper errors
+  retained; actualEFI0001 unused memcmp fixture compile failure retained. Fixed
+  C++ initialization/helper linkage and added independent restored-config check;
+  production warnings remain full -Wall/-Wextra/-Werror, no gate weakened.
+- NEXT0118 actually wire native displayworkloop and independent FW CPU0 runtime
+  scope, cache ownership/publication, archive export/final receipt and ALL
+  shutdown/rawreset/RAMlease gates. Existing present(rec) may SKIP a surface;
+  submission/VSYNC or old pixel counter alone is not a fresh complete frame.
+  Mark after actual accepted pixel writes+DSB and rearm fDirty after OFF ACK so
+  an early copied frame cannot deadlock wake. Preserve GPU/cache/fence/lifetime.
+  Native profile/private-header exact hashes, real TUs/fullmacOS27CI and SERIAL
+  actualEFI-XNU/faults then NEW strictRO root/journal review are still required
+  before any physical iOS. may_boot_iOS=false/may_write_userdata=false remains.
+  ca_vbl1 untouched; audio/WiFi/full16.5/persistent runtime remain unfinished.
+
 ### 0116 physical WLED OFF + human optical confirmation COMPLETE; actual FASTBOOT
 
 - CURRENT both0116 physical trials ENDED, allUSB/workers ENDED. Independent

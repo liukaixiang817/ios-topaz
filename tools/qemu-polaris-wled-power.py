@@ -27,8 +27,12 @@ def main():
     ap.add_argument('--zig', type=Path, required=True)
     ap.add_argument('--oem-status', action='store_true',
                     help='Exercise the separate volatile-status policy; no phone image/admission')
+    ap.add_argument('--runtime-core', action='store_true',
+                    help='Isolated runtime policy core with SOFTWARE PMIC; requires --oem-status, no native integration')
     ap.add_argument('--qemu', type=Path, default=Path('/opt/homebrew/bin/qemu-system-aarch64'))
     a = ap.parse_args()
+    if a.runtime_core and not a.oem_status:
+        ap.error('--runtime-core requires explicit --oem-status')
     root = Path(__file__).resolve().parents[1]
     out = a.output.resolve()
     out.mkdir(parents=True, exist_ok=False)
@@ -36,6 +40,8 @@ def main():
     fixture = importlib.import_module('tools.tests.test_polaris_wled_power')
     if a.oem_status:
         fixture = importlib.import_module('tools.tests.test_polaris_wled_status')
+    if a.runtime_core:
+        fixture = importlib.import_module('tools.tests.test_polaris_wled_runtime')
     prefix = r'''
 #include "uefi.h"
 static unsigned checks;
@@ -65,8 +71,8 @@ static int memcmp(const void *a,const void *b,size_t count) {
 }
 '''
     # Same independently asserted register semantics as ASan/UBSan tests.
-    body = (fixture.OEM_H if a.oem_status else fixture.H).replace(
-        '#include <assert.h>', '').replace('#include <string.h>', '')
+    body = (fixture.H if a.runtime_core else fixture.OEM_H if a.oem_status else fixture.H).replace(
+        '#include <assert.h>', '').replace('#include <string.h>', '').replace('#include <stdlib.h>', '')
     suffix = r'''
 static uint64_t actual_clock(void *ctx) {
  struct fake *f=ctx;uint64_t ticks,freq;
@@ -119,7 +125,7 @@ efi_status EfiMain(efi_handle image,struct efi_system *st) {
  for(;;)__asm__ volatile("wfe");
 }
 '''
-    if a.oem_status:
+    if a.oem_status and not a.runtime_core:
         oem_checks = r'''
  setup(&f,&b,&p);b.now_us=actual_clock;
  struct polaris_wled_snapshot expected;
@@ -164,6 +170,8 @@ efi_status EfiMain(efi_handle image,struct efi_system *st) {
  serial("WLED_POWER_OEM_NO_SWITCH_AFTER_REFUSAL_PASS\n");
 '''
         suffix = suffix.replace(' assert(checks>1000);', oem_checks+' assert(checks>1000);')
+    if a.runtime_core:
+        suffix = (root/'tools/tests/polaris_wled_runtime_efi.c').read_text()
     source = out/'model.c'
     source.write_text(prefix+body+suffix)
     obj = out/'model.obj'
@@ -211,14 +219,20 @@ efi_status EfiMain(efi_handle image,struct efi_system *st) {
     expected = ['MODEL_SOFTWARE_PMIC_ONLY', 'ACTUAL_CLOCK_OFF_ON_PASS', 'COALESCED_PASS',
                 'FOREIGN_OWNER_PASS', 'CHANGED_CONFIG_PASS', 'UNCERTAIN_NO_RETRY_PASS',
                 'EARLY_IRQ_RESTORE_REFUSED', 'MODEL_DONE']
-    if a.oem_status:
+    if a.oem_status and not a.runtime_core:
         expected += ['OEM_VOLATILE_CYCLE_PASS', 'OEM_ALL_SEVERE_UNKNOWN_PASS',
                      'OEM_OWNER_CONFIG_UNCERTAIN_PASS', 'OEM_NO_SWITCH_AFTER_REFUSAL_PASS']
+    if a.runtime_core:
+        expected = ['MODEL_SOFTWARE_PMIC_ONLY', 'RUNTIME_REAL_CLOCK_16_CYCLES_PASS',
+                    'RUNTIME_FINAL_NEW_READS_PASS', 'RUNTIME_CAPACITY_RESERVE_PASS',
+                    'RUNTIME_ALL_SEVERE_PARTIAL_PASS', 'RUNTIME_UNCERTAIN_PASS',
+                    'RUNTIME_MAILBOX_NO_RETRY_PASS', 'MODEL_DONE']
     checks = {name: text.count('WLED_POWER_'+name+'\n') == 1 for name in expected}
     values = {k: int(v,16) for k,v in re.findall(r'(WLED_POWER_\w+)=0x([0-9a-f]{16})',text)}
     checks['actual_EL1'] = values.get('WLED_POWER_CURRENT_EL') == 4
-    checks['actual_architectural_softstart'] = values.get('WLED_POWER_SOFTSTART_US',0) >= 10000
-    if a.oem_status:
+    softstart_field = 'WLED_POWER_RUNTIME_MIN_SOFTSTART_US' if a.runtime_core else 'WLED_POWER_SOFTSTART_US'
+    checks['actual_architectural_softstart'] = values.get(softstart_field,0) >= 10000
+    if a.oem_status and not a.runtime_core:
         checks['OEM_actual_architectural_softstart'] = values.get('WLED_POWER_OEM_SOFTSTART_US',0) >= 10000
     checks['no_assertion_failure'] = 'WLED_POWER_MODEL_FAILED' not in text
     paths = [Path(__file__).resolve(), root/'shim/polaris/uefi-wled-power.h',
@@ -227,12 +241,16 @@ efi_status EfiMain(efi_handle image,struct efi_system *st) {
              root/'tools/tests/test_polaris_wled_power.py']
     if a.oem_status:
         paths.append(root/'tools/tests/test_polaris_wled_status.py')
+    if a.runtime_core:
+        paths += [root/'shim/polaris/uefi-wled-runtime.h', root/'tools/polaris-wled-mailbox.h',
+                  root/'tools/tests/test_polaris_wled_runtime.py', root/'tools/tests/polaris_wled_runtime_efi.c']
     result = dict(passed=all(checks.values()), checks=checks, seconds=time.monotonic()-began,
                   inputs={str(p.relative_to(root)): sha(p) for p in paths}, source_sha256=sha(source),
                   binary_sha256=sha(app), serial_sha256=sha(out/'serial.log'), raw_fields=values, command=cmd,
                   actual_phone_or_PMIC_emulated=False, phone_compatible=False,
                   release_handoff_admitted=False, XNU_started=False,
                   OEM_status_policy_explicit=a.oem_status,
+                  runtime_core_only=a.runtime_core, native_runtime_integrated=False,
                   real_guest_clock_softstart=True, synthetic_fault_clocks=True)
     (out/'result.json').write_text(json.dumps(result, indent=2)+'\n')
     print(json.dumps(result, indent=2))
