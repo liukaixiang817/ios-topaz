@@ -36,6 +36,14 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### 0122 reset-arm BEFORE fresh receipt COMPLETE; NEW candidate READY; old phone RAM hold awaits physical FASTBOOT
 
+- Completed sourcece3ab4aec6bd10d46c5af5a73c2fb7a34562f813 committed/PUSHED.
+  Final fresh expected-product query 2026-10-30T15:55:50.678117+00:00 did not find correct
+  FASTBOOT; new0122 helper sent NO boot and created NO boot.json. Last actual
+  phone state remains old0121 prepared RAM hold; physical request still pending.
+  All host build/model/USB workers ENDED; do not wait98285/69093/25381/86565/
+  99868/52727/29135/6992/18892 or reuse old controllers. Native lockscreen still
+  unproven. Source-and-handoff remote push proof saved separately at0122.
+
 - Completed the actionable sequencing repair, not another design-only step.
   New0122 physical-runtime-driver-0002/image-0002/runtime-codec-0002 and
   boot-runtime-once.py are independently frozen offline. No0122 phone boot sent.
