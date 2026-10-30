@@ -7,6 +7,9 @@
 #if !defined(POLARIS_EFI_TEST_QEMU) || !defined(EFI_XNU_SHUTDOWN_BRIDGE) || !EFI_XNU_BUTTONS_AVAILABLE
 #error "Native WLED integration is an independent QEMU RAM-drain scope only"
 #endif
+#if defined(EFI_XNU_WLED_NATIVE_FAULT) && (EFI_XNU_WLED_NATIVE_FAULT<1 || EFI_XNU_WLED_NATIVE_FAULT>7)
+#error "Unknown explicit SOFTWARE PMIC fault"
+#endif
 #include "uefi-wled-runtime.h"
 #include "uefi-wled-journal.h"
 #include "../../tools/polaris-wled-mailbox.h"
@@ -110,6 +113,13 @@ static void wln_read_command(void *context,uint32_t offset,uint32_t command)
         unsigned reg=(command>>4)&255;
         if(reg==8)wln_pmic[0][8]=(uint8_t)(++wln_mock_fault_reads&1);
         if(reg==0x10)wln_pmic[0][0x10]=(uint8_t)(++wln_mock_rt_reads&1);
+#if defined(EFI_XNU_WLED_NATIVE_FAULT) && EFI_XNU_WLED_NATIVE_FAULT>=2
+        if(wln_power.issued) {
+            const unsigned masks[6]={2,4,8,2,4,8};
+            unsigned fault=EFI_XNU_WLED_NATIVE_FAULT-2;
+            if(reg==(fault<3?8u:0x10u))wln_pmic[0][reg]|=(uint8_t)masks[fault];
+        }
+#endif
     }
 }
 static void wln_issue(void *context,uint32_t offset,uint32_t command,uint32_t data)
@@ -122,7 +132,14 @@ static void wln_issue(void *context,uint32_t offset,uint32_t command,uint32_t da
     else wln_pmic[0][0x15]|=2;
 }
 static uint32_t wln_status(void *context,uint32_t offset)
-{(void)context;return wln_backend_error||offset!=0xfd0008?2:1;}
+{
+    (void)context;
+    if(wln_backend_error||offset!=0xfd0008)return 2;
+#if defined(EFI_XNU_WLED_NATIVE_FAULT) && EFI_XNU_WLED_NATIVE_FAULT==1
+    if(wln_power.issued)return 0; /* Actual unknown completion; never retried. */
+#endif
+    return 1;
+}
 static int wln_begin(void)
 {
     if(wln_started)return 0;wln_started=1;

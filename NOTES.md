@@ -34,6 +34,34 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0118 corrected native full CI SUCCESS; actual runtime/fault models PENDING
+
+- Source2d55a4e6da5c73edc0d72cd3c17203a00fa6a7bb pushed; full macOS27/Xcode27
+  CI41056172330/job124064140960 SUCCESS. Explicit native WorkLoop timer selection
+  keeps both runtime context checks. Actual TU0005/exactpatch0004 PASS. Exact new
+  kernel artifact download/identity/CRC/SHA check is in progress, not yet a model
+  success. Old0001/0002 admission failures and actual0003 native error1 retained.
+- New SOFTWARE-PMIC-only runtime injections: timeout and FAULT/RT OVP/SC/unknown
+  after first WRITE. Independent default-OFF --test-wled-native-fault requires
+  the exact QEMU runtime scope; no physical builder or physical MMIO exists.
+  Actual EFI TU normal+all7 fault definitions compile Wall/Wextra/Werror with
+  UNBOUND compile-only offsets; not execution/image proof. Unit scope/wire9tests
+  PASS. Full actual EFI-XNU fault executions remain pending.
+- Fault fixture makes ONE ordinary native shutdown request, retains aggregate
+  refusal, then checks actual native drain separately from WLED reset gates.
+  Failed raw page/ACK must remain visible; no WLR3/restore success may be inferred.
+  Host raw decoder additionally checks complete same-context/sequence pairs and
+  whole pair timing even with recomputed CRC; failed partial/raw still retained.
+  No native kernel source changed for these FW/host fault diagnostics, no new CI.
+- Artifact helper0001 failed before download due an overbroad private filename
+  replacement changing the concurrent import. Failure/script retained; targeted
+  download-workloop-kernel-0002.py uses the same successful CI, no rebuild.
+- CURRENT last phone actual readonly expected FASTBOOT11:06:09UTC; no phone boot,
+  PMIC/OS/root/storage/NVRAM/Android action. Original optical test remains done.
+  Root pendingjournal gates remain false. NEXT new normal model0004, then actual
+  fault models, source/binary evidence and separately admitted physical runtime
+  plus fresh strictRO/journal audit. Keep ca_vbl1; audio/WiFi/full16.5 later.
+
 ### 0118 actual native/FW model FAIL retained; explicit workloop timer correction COMPILED
 
 - Current source ffbceac34c833aad2de04379dbdd05432a66e626 FULL macOS27/Xcode27

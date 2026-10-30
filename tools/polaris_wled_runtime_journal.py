@@ -65,6 +65,16 @@ def journal(pages):
         previous=r['ended_us']
     if fault_or!=first['fault_or'] or rt_or!=first['rt_or']:
         raise ValueError('cumulative raw status omitted/replaced')
+    # Each full hardware verification contributes two observations under one
+    # expected module/IRQ state and request. Per-record validity alone cannot
+    # prove a complete pair, especially after a missing/relabelled record.
+    pairs_valid=len(records)%2==0
+    for at in range(0,len(records)-1,2):
+        a,b=records[at:at+2]
+        pairs_valid=pairs_valid and a['expected']==b['expected'] and \
+            a['sequence']==b['sequence'] and b['ended_us']>=a['began_us'] and \
+            b['ended_us']-a['began_us']<=200000
+    observations_valid=observations_valid and pairs_valid
     failed=bool(first['error'] or first['firmware_error'] or first['runtime_error'])
     if not failed and not observations_valid:
         raise ValueError('invalid observation in purported success')

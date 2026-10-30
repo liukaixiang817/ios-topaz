@@ -89,5 +89,25 @@ class RuntimeWire(unittest.TestCase):
             bad=dict(j);bad[field]=True if field=='failed' else j[field]^1
             with self.assertRaises(ValueError):wire.receipt(r,bad,cookie=123,native_cookie=456,native_sequence=1,mode=2)
 
+    def test_recomputed_whole_history_crc_cannot_replace_a_complete_pair(self):
+        records=[(100+i*20,110+i*20,0,0,3,130,6) for i in range(78)]
+        bad_cases=[records[:-1]]
+        for field,value in [(5,128),(6,5)]:
+            index=1 if field==5 else 0
+            bad=list(records);r=list(bad[index]);r[field]=value;bad[index]=tuple(r)
+            bad_cases.append(bad)
+        # Individually bounded and monotonic observations, but their combined
+        # pair exceeds the original verification's elapsed bound.
+        late=[(100+i*200010,110+i*200010,0,0,3,130,6) for i in range(78)]
+        bad_cases.append(late)
+        for bad in bad_cases:
+            with self.assertRaises(ValueError):wire.journal(pages(bad))
+            p=pages(bad)
+            for at,b in enumerate(p):
+                v=bytearray(b);struct.pack_into('<I',v,36,65);p[at]=reCRC(v)
+            j=wire.journal(p)
+            self.assertTrue(j['failed']);self.assertFalse(j['observations_valid'])
+            self.assertEqual(len(j['records']),len(bad))
+
 
 if __name__=='__main__':unittest.main()

@@ -642,6 +642,38 @@ static void test_ram_drain(int stress_done,unsigned contact_phase)
     struct polaris_shutdown_status s;
     invalidate((uintptr_t)&slot->kernel,sizeof(slot->kernel));
     bytes_copy(&s,(const void*)&slot->kernel,sizeof(s));
+#if defined(EFI_XNU_WLED_NATIVE_RUNTIME_TEST) && defined(EFI_XNU_WLED_NATIVE_FAULT)
+    /* One actual normal native shutdown request. The WLED error may reject
+     * the aggregate sender after it published that request; never retry it. */
+    if(!sent&&wln_error_reported&&s.cookie&&s.phase==POLARIS_Q_RUNNING&&
+       !s.sequence&&!s.mode&&!s.error) {
+        sent=1;cookie=s.cookie;
+        report("WLED_NATIVE_FAULT_SHUTDOWN_REPLY=",shutdown_begin(0,2));
+        if(slot->firmware.cookie==cookie&&slot->firmware.sequence==1&&slot->firmware.mode==2)
+            test_uart_text("\nQEMU_RAM_DRAIN_REQUESTED=1\n");
+    }
+    if(sent&&polaris_q_ram_drained(&s,cookie,1,2)&&shutdown_reset_ready(0,2)) {
+        static uint8_t failed_page[980];
+        const uint8_t *page=0,*receipt=0;uint64_t bytes=0,receipt_bytes=0;
+        int captured=wln_capture_page(0,0,&page,&bytes);
+        if(captured&&bytes<=sizeof(failed_page))bytes_copy(failed_page,page,bytes);else captured=0;
+        report("WLED_NATIVE_FAULT_PAGE_ADDRESS=",captured?(uintptr_t)failed_page:0);
+        report("WLED_NATIVE_FAULT_PAGE_BYTES=",captured?bytes:0);
+        report("WLED_NATIVE_FAULT_KIND=",EFI_XNU_WLED_NATIVE_FAULT);
+        report("WLED_NATIVE_RAW_COUNT=",wln_runtime.count);
+        report("WLED_NATIVE_ISSUED=",wln_power.issued);
+        report("WLED_NATIVE_COMPLETED=",wln_power.completed);
+        report("WLED_NATIVE_ERROR=",wln_power.error);
+        report("WLED_NATIVE_UNCERTAIN=",wln_power.uncertain);
+        report("WLED_NATIVE_FAULT_RESET1_REFUSED=",!prepare_reset(0,1));
+        report("WLED_NATIVE_FAULT_RESET2_REFUSED=",!prepare_reset(0,2));
+        report("WLED_NATIVE_FAULT_RECEIPT_REFUSED=",!wln_reset_receipt(0,2,&receipt,&receipt_bytes));
+        report("WLED_NATIVE_FAULT_FRESH_REFUSED=",!wln_final_fresh(2));
+        test_uart_text("\nQEMU_RAM_DRAINED=1\nWLED_NATIVE_FAULT_AFTER_NATIVE_DRAIN=1\n");
+        finished=1;
+    }
+    return;
+#endif
 #if defined(EFI_XNU_OWNED_TEST)
     static unsigned protected;
     if(!protected){
