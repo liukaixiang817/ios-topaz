@@ -34,6 +34,30 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0109 latest own-vendor TX/RX scope correction; download remains ACTIVE
+
+- Completed6092a89 (and earlier829b9a3) PUSHED to codex/polaris-preflight.
+  A second own-vendor call-site review tightened GLINK inventory: descriptor
+  AND TX must select the uncached allocations made by own probe; only RX uses
+  cached-first fallback. Do not infer a generic cached TX lookup from dipper's
+  helper. Added negatives for cached-only TX and a real uncached-RX fallback
+  fixture. Combined12 checks now3.069s PASS; source-bound proof0002 includes
+  AArch64 compile/ASan10000 mutations/all-read failures/race checks. This remains
+  entirely offline, no transport or new device/native/kernelCI action.
+- Apple partial metadata identifies all4 build identities as16.5/20F66 with
+  matching OS/cryptex names; `ios16.5-metadata-proof.json` records paths/digests.
+  App cryptex10485760B wholeSHA384 MATCHES Apple manifest. Session34827 still
+  actively downloads the other components, currently partial OS (~2.2GiB last
+  observed). Inspect session/log before restarting. The .dmg filenames are
+  written incrementally: existence/size alone is NOT a completed/correct image.
+  Wait actual exit then verify whole SHA384 before decoding or using them.
+- Actual source/reference/header/checksum audit and own live DT comparison
+  are recorded in0109; original ca_vbl1 graphics/native kernel remain intact.
+  Phone still actual FASTBOOT after0108cycle0003 zero-write fault refusal; no
+  OS/new WLED writer. NEXT remains bounded readonly fault witness timeline and
+  primary-source semantics, then real backlight/native lock integration. New
+  fuller OS must not bypass the pending outer-journal/root admission issue.
+
 ### 0109 dipper reference applied offline; 0108 actual fault-byte refusal ENDED
 
 - Latest human supplied youzjuzi/dipper-xnu and also requests its fuller iOS
@@ -50,7 +74,7 @@ early samples only. On0029 the human already confirmed boot complete and said
   OFF/restore or optical darkness success. Automatic zero-write reset followed by
   independent actual FASTBOOT, no human keys/Android/PMIC/storage/NVRAM write.
   All0108 physical cycles now ENDED; do not reuse their controllers or requests.
-- 0108 diagnostic829b9a3 committed (push to verify), no native/kernel CI change.
+- 0108 diagnostic829b9a3 committed and PUSHED, no native/kernel CI change.
   New host snapshot decoder maps all66 witness offsets to their actual registers,
   preserves before/after and explicitly never permits retry. Frozen cycle0003
   host archived privately before this host-only change; old evidence unmodified.

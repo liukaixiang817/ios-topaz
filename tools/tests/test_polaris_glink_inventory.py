@@ -41,7 +41,7 @@ static bool metadata_read(void *context,uint32_t at,void *out,size_t n) {
  assert(at<=sizeof(memory)&&n<=sizeof(memory)-at);
  bool allowed=(at==0&&n==208)||(at>=toc&&n<=sizeof(memory)-at)||
    ((at==12288||at==part)&&n==32)||
-   ((at==part+32||at==part+80||at==part+span-64||at==part+span-640)&&n==16);
+   ((at==part+32||at==part+80||at==part+352||at==part+span-64||at==part+span-640)&&n==16);
  if(!allowed){forbidden++;return false;}
  if(calls==deny)return false;
  memcpy(out,memory+at,n);
@@ -75,10 +75,13 @@ int main(void) {
  setup();put(part+span-64+4,span);assert(!polaris_glink_inventory(&r,2,&out,&work));
  setup();put(toc+32+48+8,1);assert(!polaris_glink_inventory(&r,2,&out,&work));
  setup();put(toc+32+48+32,64);assert(!polaris_glink_inventory(&r,2,&out,&work));
- /* Cached FIFO takes precedence over its separate uncached allocation, just
-  * as own get_rx_fifo. Descriptor is always the uncached allocation. */
+ /* A cached TX entry must NOT replace the uncached TX selected by own probe.
+  * Only RX uses the cached-first fallback; this is not a generic item lookup. */
  setup();entry(part+span-640,479,128,0,48);put(part+16,span-768);
- assert(polaris_glink_inventory(&r,2,&out,&work));assert(out.tx.cached&&out.tx.bytes==128&&out.headers==4);
+ assert(polaris_glink_inventory(&r,2,&out,&work));assert(!out.tx.cached&&out.tx.bytes==256&&out.headers==4);
+ put(part+80,0xa5a5|(481u<<16));assert(!polaris_glink_inventory(&r,2,&out,&work)); /* Cached TX alone not allowed. */
+ setup();entry(part+352,480,512,0,0);put(part+12,880);put(part+16,span);
+ assert(polaris_glink_inventory(&r,2,&out,&work));assert(!out.rx.cached&&out.rx.offset==part+368&&out.rx.bytes==512);
  setup();entry(part+span-640,478,128,0,48);put(part+16,span-768);
  assert(!polaris_glink_inventory(&r,2,&out,&work));
  uint32_t seed=19;

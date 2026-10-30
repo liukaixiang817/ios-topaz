@@ -86,10 +86,11 @@ static inline bool polaris_glink_inventory(const struct polaris_smem_reader *r,
     }
     w->count=0;
     if(!pgl_headers(r,p,w,false)||!pgl_headers(r,p,w,true))return false;
-    /* Own driver allocates the 32-byte descriptor uncached. FIFO lookup tries
-     * cached first and then uncached, so the two heaps are distinct namespaces. */
+    /* Own probe allocates descriptor and TX uncached. Only get_rx_fifo tries
+     * cached first and then uncached; do not substitute a cached TX allocation
+     * merely because the reference port's generic lookup can find one. */
     struct polaris_glink_layout candidate={remote,p->offset,p->bytes,w->count,
-        w->items[0][0],w->items[w->items[1][1].bytes?1:0][1],
+        w->items[0][0],w->items[0][1],
         w->items[w->items[1][2].bytes?1:0][2]};
     if(candidate.descriptor.bytes!=32||w->items[1][0].bytes)return false;
     const struct polaris_glink_item *items[3]={&candidate.descriptor,&candidate.tx,&candidate.rx};
