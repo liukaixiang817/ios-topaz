@@ -34,6 +34,55 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0121 atomic WLED terminal export + independent physical candidate READY; phone FASTBOOT
+
+- New default-null internal USB callbacks stream actual terminal footer, then
+  take/archive a NEW real read-only pair AFTER footer delivery. WLR5 carries
+  the literal two20B raw records/cookie/count/full-history CRC inside60B. Original
+  <=200ms freshness checked before reset and again before actual physical reset;
+  no time-only refresh/no PMIC WRITE replay. WLEXIT05 footer carries native token
+  and actual seal records. Old WLR3/WLZ4 retained for separate legacy/zero scopes.
+- Known failed USB delivery/late-freshness refusal permits ONE explicit bounded
+  READ-ONLY recovery with a NEW full prefix cookie/count/CRC, retaining every
+  failed-attempt raw observation. Third attempt/old prefix/severe/unknown/READ/
+  owner/config/clock failures refuse. Failed PON/reset call is not admitted as a
+  freshness retry. Lease latch continues; cannot reset midway through exit, and
+  can use the same one bounded read-only recovery after known delivery failure.
+  PON protocol is now cached BEFORE CPU_ON; no post-handoff LocateProtocol.
+- Actual whole EFI-XNU delayed-footer0003 PASS16/38.440964s: actual >=250ms
+  footer delay, then2 NEW raw observations and guarded reset observer1;80total/
+  still12issued=12completed. Lost-receipt-recovery0003 PASS16/38.768401s: failed
+  final delivery does NOT reset; new80-record prefix+read-only recovery ->82raw,
+  still12writes/one reset observer. Both real native workloop3copies/seq6/HFS
+  VFS0busy0/peerOFF/coordinator/nativeRAM_DRAINED80000003. SOFTWARE PMIC/RAM USB
+  sink only, not SD845/physicalUSB/panel or actual guest reset. Initial runner
+  syntax error and wrong shutdown cacheline offset rejected/retained; corrected
+  observer reads actual native status at+128, no product gate change.
+- Combined25 relevant ASan/UBSan/scope/ownership/atomicwire/USB tests PASS5.531s.
+  Includes every actual final READ fault, serious FAULT/RT, owner/map/backward
+  clock with all partials retained/no new WRITE, failed USB header/footer/final,
+  one recover/new-prefix/third-refusal and literal host evidence/no raw reboot.
+  Initial test import and post-status fixture assumptions failed/retained;
+  fixed fixture to actual PMIC bytes/actual measured READ count. No native
+  kernel/profile modification, no new CI or unchanged13-case replay.
+- New independent physical packager/controller/admission and compiled driver
+  `0121/physical-runtime-driver-0001`, image `physical-runtime-image-0001` bind
+  current actual models, old fault foundation through exact historical Git
+  blobs, completed0116 optical proof, fresh0120 narrow ROroot review, original81
+  firmware. Actual upstream EDK2 GetInfo/Decode whole28168392B exact PASS in
+  runtime-codec-0001; original SimpleInit/BootShim/DTB preserved. Same native
+  kerneldd4bd757/CI41056172330, same own602B payload/GPU865407ee/ca_vbl1.
+- NEXT authorized ONE RAM via new0121/boot-runtime-once.py --boot-once after
+  completed source commit/fresh actual expectedPolaris. Boot sends image only;
+  new dedicated controller then state/exact payload/boot/capture/limitedtouch.
+  Prestart refusal only WLZ4 recovery. Native exit only actual native drain+
+  complete raw prefix/atomicfooter/freshWLR5, then independent actualFASTBOOT.
+  No reuse0113/0116 or ordinary iOS/onecycle clients. Native physical UI/backlight
+  runtime still UNTESTED at this READY handoff; update actual outcome below next.
+  Root permission remains ONLY immutableRO+512MiBRAMCOW/ufsrw0; no persistent
+  writes/ownership update/erase/GPT/etc. Current first query14:40:05UTC actual
+  FASTBOOT passed; no new phone boot yet. Preserve current display improvement.
+
 ### 0120 physical runtime backend + actual zero-WRITE EFI COMPLETE; phone FASTBOOT; image/controller NOT READY
 
 - Completed source e787e54fe35404546dff9e33e4d43b9f3ebbe54f committed; this

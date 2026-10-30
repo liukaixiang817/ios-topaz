@@ -182,6 +182,7 @@ def main():
     ap.add_argument('--wled-oem-physical-cycle',action='store_true',help='separate pre-XNU physical OEM cycle; requires independent OEM image admission')
     ap.add_argument('--wled-native-runtime',action='store_true',help='independent physical PMIC native runtime scope; needs its own image/admission/controller')
     ap.add_argument('--wled-native-runtime-test',action='store_true',help='independent QEMU-only actual native/FW mailbox test with SOFTWARE PMIC; never a phone image')
+    ap.add_argument('--test-wled-native-exit',choices=('delayed-footer','lost-receipt-recovery'),help='QEMU-only actual native-drain/terminal USB-response fixture; never physical USB emulation')
     ap.add_argument('--test-wled-native-start-refusal',choices=('owner','configuration','before-runtime'),help='QEMU runtime-only pre-CPU/zero-WRITE recovery test')
     ap.add_argument('--test-wled-native-fault',choices=('timeout','fault-ovp','fault-sc','fault-unknown','rt-ovp','rt-sc','rt-unknown','clock-regression'),help='independent SOFTWARE PMIC error after first runtime WRITE; QEMU only')
     ap.add_argument('--test-wled-native-lifecycle',choices=('capacity','stale-ack','receipt-age','lease'),help='independent QEMU runtime lifecycle fixture; never physical admission')
@@ -207,6 +208,11 @@ def main():
     ap.add_argument('--disk-version',default='V0061')
     ap.add_argument('--chain-app-manifest',type=Path,help='RAM test wrapper for the exact already-built selected disk app')
     a=ap.parse_args();r=Path(__file__).resolve().parents[1]
+    if a.test_wled_native_exit and (not a.wled_native_runtime_test or not a.test_qemu or
+        a.test_ram_drain!='success' or a.test_wled_native_fault or a.test_wled_native_lifecycle or
+        a.test_wled_native_start_refusal or a.test_wled_prepare_refusal or a.test_wled_status_after_issue or
+        a.test_wled_write_timeout or a.test_wled_read_failure or a.test_wled_fault_pulse):
+        ap.error('native WLED atomic exit requires only its independent QEMU runtime scope')
     if a.test_wled_native_start_refusal and (not a.wled_native_runtime_test or not a.test_qemu or
         a.test_ram_drain!='success' or a.test_wled_native_fault or a.test_wled_native_lifecycle or
         a.test_wled_prepare_refusal or a.test_wled_status_after_issue or a.test_wled_write_timeout or
@@ -236,7 +242,7 @@ def main():
         a.chain_app_manifest or a.efi_application or a.test_ram_drain or a.cpu_osm_readonly or
         a.test_wled_prepare_refusal or a.test_wled_native_fault or a.test_wled_native_lifecycle or
         a.test_wled_read_failure or a.test_wled_status_after_issue or a.test_wled_write_timeout or
-        a.test_wled_fault_pulse or a.test_omit_durable_guard or a.test_wled_native_start_refusal):
+        a.test_wled_fault_pulse or a.test_omit_durable_guard or a.test_wled_native_start_refusal or a.test_wled_native_exit):
         ap.error('physical native WLED requires its independent guarded four-big RO/RAMCOW scope')
     native_runtime=a.wled_native_runtime or a.wled_native_runtime_test
     target=a.kernel_core if a.test_qemu else a.kernel_core<<8
@@ -511,6 +517,8 @@ def main():
     if a.wled_oem_physical_cycle:flags.append('-DEFI_XNU_WLED_OEM_PHYSICAL_CYCLE=1')
     if a.wled_native_runtime_test:flags.append('-DEFI_XNU_WLED_NATIVE_RUNTIME_TEST=1')
     if a.wled_native_runtime:flags.append('-DEFI_XNU_WLED_NATIVE_RUNTIME_PHYSICAL=1')
+    if a.test_wled_native_exit:
+        flags.append('-DEFI_XNU_WLED_NATIVE_EXIT_TEST='+str(('delayed-footer','lost-receipt-recovery').index(a.test_wled_native_exit)+1))
     if a.test_wled_native_start_refusal:
         flags.append('-DEFI_XNU_WLED_NATIVE_START_REFUSAL='+str(('owner','configuration','before-runtime').index(a.test_wled_native_start_refusal)+1))
     if a.test_wled_native_fault:
@@ -560,6 +568,9 @@ def main():
                   WLED_OEM_status_policy=oem_status,WLED_OEM_physical_cycle=a.wled_oem_physical_cycle,
                   WLED_native_runtime_test=a.wled_native_runtime_test,
                   WLED_native_runtime_physical=a.wled_native_runtime,
+                  controlled_WLED_native_exit=a.test_wled_native_exit,
+                  WLED_atomic_exit_footer_max=212 if native_runtime else None,
+                  WLED_atomic_exit_receipt_bytes=60 if native_runtime else None,
                   controlled_WLED_native_start_refusal=a.test_wled_native_start_refusal,
                   controlled_WLED_native_fault=a.test_wled_native_fault,
                   controlled_WLED_native_lifecycle=a.test_wled_native_lifecycle,

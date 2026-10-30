@@ -67,6 +67,11 @@ struct polaris_usb_control {
     int (*reset_receipt)(void *,unsigned,const uint8_t **,uint64_t *);
     /* Independent bounded runtime-history page, never a PMIC command. */
     int (*wled_runtime_page)(void *,uint32_t,const uint8_t **,uint64_t *);
+    /* Independent native-drained exit: footer transfer precedes a NEW actual
+     * read pair carried inside its final <=60B receipt. NULL in old scopes. */
+    int (*wled_exit_begin)(void *,int,uint64_t,uint32_t,uint32_t,const uint8_t **,uint64_t *);
+    int (*wled_exit_finish)(void *,const uint8_t **,uint64_t *);
+    void (*wled_exit_abort)(void *,unsigned); /* Known delivery failure; never a HW retry. */
 };
 /* Command parsing is shared by the native host test and the real EFI driver. */
 int polaris_usb_command(struct polaris_usb_diag *,const uint8_t *,uint64_t);

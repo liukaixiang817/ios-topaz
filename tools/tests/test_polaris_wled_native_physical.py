@@ -55,6 +55,7 @@ class PhysicalRuntime(unittest.TestCase):
             '#include "'+str(ROOT/'shim/polaris/uefi-wled-journal.h')+'"\n'+
             '#include "'+str(ROOT/'tools/polaris-wled-mailbox.h')+'"\n'+r'''
 static unsigned wln_cpu_on_issued,wln_zero_receipt_issued,wln_receipt_issued,wln_closing_mode;
+static unsigned wln_exit_attempt,wln_exit_active,wln_exit_finished;
 static uint64_t wln_cookie,wln_zero_receipt_us,time_us=100;
 static uint8_t wln_zero_receipt[40];
 static struct {uint64_t stage;} polaris_efi_ap_state;

@@ -122,3 +122,79 @@ def zero_write_receipt(data,*,cookie=None):
     return dict(cookie=session,observed_us=observed,error=error,runtime_error=runtime_error,
                 mode=mode,CPU_ON_issued=False,AP_stage=0,issued=0,completed=0,uncertain=False,
                 native_drain_proven=False,WLED_restoration_proven=False)
+
+
+def _extend_actual(j,fields,records):
+    """Append actual raw fields only; no synthesized clock/status observation."""
+    before=b''.join(RECORD.pack(*(r[k] for k in ('began_us','ended_us','fault','rt','valid','expected','sequence')))
+                    for r in j['records'])
+    if len(j['records'])!=j['total'] or zlib.crc32(before)!=j['prefix_crc']:
+        raise ValueError('changed captured prefix')
+    all_records=j['records']+records
+    raw=b''.join(RECORD.pack(*(r[k] for k in ('began_us','ended_us','fault','rt','valid','expected','sequence')))
+                 for r in all_records)
+    if len(all_records)!=fields['total'] or fields['total']>LIMIT or zlib.crc32(raw)!=fields['prefix_crc']:
+        raise ValueError('terminal full raw-history CRC/count')
+    previous=sequence=fault=rt=0
+    for i,r in enumerate(all_records):
+        if (r['valid']!=3 or r['expected'] not in (0,2,128,130) or
+            (r['fault']|r['rt'])&~1 or r['began_us']<=0 or r['began_us']<previous or
+            not r['began_us']<r['ended_us']<=r['began_us']+200000 or
+            not sequence<=r['sequence']<=fields['request']):
+            raise ValueError('terminal invalid/serious/partial raw observation')
+        if i&1:
+            a=all_records[i-1]
+            if (a['sequence']!=r['sequence'] or a['expected']!=r['expected'] or
+                r['ended_us']-a['began_us']>200000):raise ValueError('terminal incomplete raw pair')
+        previous=r['ended_us'];sequence=r['sequence'];fault|=r['fault'];rt|=r['rt']
+    if len(all_records)%2 or (fault,rt)!=(fields['fault_or'],fields['rt_or']):
+        raise ValueError('terminal lifetime status omitted')
+    return dict(fields,records=all_records,observations_valid=True,failed=False,analysis_passed=True,
+                physical_admission=False,optical_off_proven=False)
+
+
+def exit_footer(data,prefix,*,native_cookie,native_sequence,recover=False):
+    if (type(data) is not bytes or len(data) not in (100,212) or data[:8]!=b'WLEXIT05' or
+        zlib.crc32(data[:-4])!=struct.unpack_from('<I',data,len(data)-4)[0]):
+        raise ValueError('atomic exit footer framing/CRC')
+    cookie,snapshot,total,offset=struct.unpack_from('<QIII',data,8)
+    count,size=struct.unpack_from('<HH',data,28)
+    nc,ns,mode=struct.unpack_from('<QII',data,80)
+    if (type(recover) is not bool or not cookie or cookie!=prefix['cookie'] or not snapshot or
+        snapshot<=prefix['snapshot'] or count!=(0 if recover else 4) or size!=28 or
+        offset!=prefix['total'] or total!=offset+count or len(data)!=100+count*28 or
+        not native_cookie or not native_sequence or (nc,ns,mode)!=(native_cookie,native_sequence,2)):
+        raise ValueError('foreign/stale prefix or native drain token')
+    if (prefix['failed'] or not prefix['observations_valid'] or prefix['flags']!=(27 if recover else 11) or
+        any(data[36:48]) or any(data[77:80]) or data[72:75]!=bytes([128,2,27])):
+        raise ValueError('native WLED not restored/drained')
+    issued,completed=struct.unpack_from('<II',data,48);request,ack=struct.unpack_from('<QQ',data,56)
+    if (issued!=completed or issued!=request*2 or request!=ack or
+        any(prefix[k]!=v for k,v in zip(('issued','completed','request','ack'),(issued,completed,request,ack)))):
+        raise ValueError('terminal command history changed')
+    fields={k:v for k,v in prefix.items() if k!='records'}
+    fields.update(snapshot=snapshot,total=total,offset=0,count=min(32,total),
+                  prefix_crc=struct.unpack_from('<I',data,32)[0],flags=27,fault_or=data[75],rt_or=data[76])
+    records=[dict(zip(('began_us','ended_us','fault','rt','valid','expected','sequence'),r))
+             for r in RECORD.iter_unpack(data[96:-4])]
+    for r in records:
+        if r['expected']!=130 or r['sequence']!=request:raise ValueError('terminal saved-state readbacks absent')
+    return _extend_actual(prefix,fields,records)
+
+
+def exit_receipt(data,sealed):
+    if type(data) is not bytes or len(data)!=60 or data[:4]!=b'WLR5':
+        raise ValueError('atomic exit final receipt framing')
+    cookie,count,crc=struct.unpack_from('<QII',data,4)
+    if cookie!=sealed['cookie'] or count!=sealed['total']+2:
+        raise ValueError('atomic exit foreign or replayed receipt')
+    records=[]
+    for at in (20,40):
+        began,ended,fault,rt,valid,expected=struct.unpack_from('<QQBBBB',data,at)
+        if expected!=130:raise ValueError('fresh pair did not restore original WLED state')
+        records.append(dict(began_us=began,ended_us=ended,fault=fault,rt=rt,valid=valid,
+                            expected=expected,sequence=sealed['request']))
+    fields={k:v for k,v in sealed.items() if k!='records'}
+    fields.update(total=count,prefix_crc=crc,fault_or=sealed['fault_or']|records[0]['fault']|records[1]['fault'],
+                  rt_or=sealed['rt_or']|records[0]['rt']|records[1]['rt'])
+    return _extend_actual(sealed,fields,records)

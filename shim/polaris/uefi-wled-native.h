@@ -11,7 +11,7 @@
 #error "SOFTWARE and physical PMIC runtime scopes cannot substitute for one another"
 #endif
 #if defined(EFI_XNU_WLED_NATIVE_RUNTIME_PHYSICAL) && \
-    (defined(EFI_XNU_WLED_NATIVE_FAULT) || defined(EFI_XNU_WLED_NATIVE_LIFECYCLE) || defined(EFI_XNU_WLED_NATIVE_START_REFUSAL))
+    (defined(EFI_XNU_WLED_NATIVE_FAULT) || defined(EFI_XNU_WLED_NATIVE_LIFECYCLE) || defined(EFI_XNU_WLED_NATIVE_START_REFUSAL) || defined(EFI_XNU_WLED_NATIVE_EXIT_TEST))
 #error "Physical runtime forbids software fault/lifecycle injection"
 #endif
 #if defined(EFI_XNU_WLED_NATIVE_FAULT) && (EFI_XNU_WLED_NATIVE_FAULT<1 || EFI_XNU_WLED_NATIVE_FAULT>8)
@@ -24,6 +24,12 @@
     (EFI_XNU_WLED_NATIVE_START_REFUSAL<1 || EFI_XNU_WLED_NATIVE_START_REFUSAL>3 || \
      defined(EFI_XNU_WLED_NATIVE_FAULT) || defined(EFI_XNU_WLED_NATIVE_LIFECYCLE))
 #error "Prestart refusal must be a separate SOFTWARE scope"
+#endif
+#if defined(EFI_XNU_WLED_NATIVE_EXIT_TEST) && \
+    (EFI_XNU_WLED_NATIVE_EXIT_TEST<1 || EFI_XNU_WLED_NATIVE_EXIT_TEST>2 || \
+     defined(EFI_XNU_WLED_NATIVE_FAULT) || defined(EFI_XNU_WLED_NATIVE_LIFECYCLE) || \
+     defined(EFI_XNU_WLED_NATIVE_START_REFUSAL))
+#error "Atomic exit fixture must be an independent SOFTWARE scope"
 #endif
 #include "uefi-wled-runtime.h"
 #include "uefi-wled-journal.h"
@@ -57,7 +63,10 @@ static unsigned wln_archive_owned;
 static uint64_t wln_native_cookie;
 static uint32_t wln_native_sequence;
 static unsigned wln_receipt_issued,wln_lease_recovery;
-#if defined(EFI_XNU_WLED_NATIVE_LIFECYCLE)
+static unsigned wln_exit_attempt,wln_exit_active,wln_exit_aborted,wln_exit_finished,wln_actual_reset_entered,wln_reset_retryable;
+static uint32_t wln_exit_sealed_count;
+static uint8_t wln_exit_footer[212],wln_exit_receipt[60];
+#if defined(EFI_XNU_WLED_NATIVE_LIFECYCLE) || defined(EFI_XNU_WLED_NATIVE_EXIT_TEST)
 static unsigned wln_test_reset_observed;
 #endif
 static volatile struct polaris_wled_slot *wln_slot(void)
@@ -423,12 +432,80 @@ static int wln_reset_receipt(void *context,unsigned mode,const uint8_t **data,ui
     pwj_put(wln_receipt+52,~crc,4);wln_receipt_issued=1;
     *data=wln_receipt;*bytes=sizeof(wln_receipt);return 1;
 }
+/* At most ONE explicit recovery after a known USB/late-reset refusal. Both
+ * operations after seal are READ ONLY. The host must first capture a NEW full
+ * prefix; old cookie/count/CRC or a replayed command cannot admit recovery. */
+static int wln_exit_begin(void *context,int recover,uint64_t cookie,uint32_t count,uint32_t crc,
+    const uint8_t **data,uint64_t *bytes)
+{
+    if(!data||!bytes||!wln_cpu_on_issued||!wln_started||wln_zero_ready(2)||
+       wln_actual_reset_entered||wln_exit_active||wln_exit_attempt>=2||
+       recover!=(int)(wln_exit_attempt==1)||
+       (recover&&!wln_exit_aborted)||wln_power.error||wln_runtime.error||wln_firmware.error||
+       wln_power.uncertain||wln_closing_mode!=2||wln_runtime.pending||!wln_power.actual_on||
+       wln_runtime.count>WLN_CAPACITY-(recover?2u:8u)||cookie!=wln_cookie||count!=wln_runtime.count)return 0;
+    wln_sync_history();if(crc!=~wln_crc)return 0;
+    if(!recover) {
+        if(wln_runtime.sealed||wln_receipt_issued||!prepare_reset(context,2))return 0;
+    } else {
+        const uint8_t *native_data=0;uint64_t native_bytes=0;
+        if(!wln_runtime.sealed||!shutdown_reset_ready(context,2)||
+           !shutdown_status(context,&native_data,&native_bytes)||native_bytes!=128)return 0;
+        const struct polaris_shutdown_status *native=(const void *)native_data;
+        if(native->cookie!=wln_native_cookie||native->sequence!=wln_native_sequence||native->mode!=2)return 0;
+    }
+    unsigned added=wln_runtime.count-count;
+    if(added!=(recover?0u:4u))return 0;
+    const uint8_t *page=0;uint64_t page_bytes=0;
+    if(!wln_capture_page(context,0,&page,&page_bytes)||page_bytes<84)return 0;
+    bytes_copy(wln_exit_footer,page,80);bytes_copy(wln_exit_footer,"WLEXIT05",8);
+    pwj_put(wln_exit_footer+24,count,4);pwj_put(wln_exit_footer+28,added,2);
+    pwj_put(wln_exit_footer+80,wln_native_cookie,8);
+    pwj_put(wln_exit_footer+88,wln_native_sequence,4);pwj_put(wln_exit_footer+92,2,4);
+    for(unsigned n=0;n<added;n++)wln_encode_record(wln_exit_footer+96+n*28,&wln_archive[count+n]);
+    unsigned length=100+added*28;
+    pwj_put(wln_exit_footer+length-4,~pwj_crc_step(~0u,wln_exit_footer,length-4),4);
+    wln_exit_attempt++;wln_exit_active=1;wln_exit_aborted=0;wln_exit_finished=0;
+    wln_exit_sealed_count=wln_runtime.count;
+    *data=wln_exit_footer;*bytes=length;return 1;
+}
+static int wln_exit_finish(void *context,const uint8_t **data,uint64_t *bytes)
+{
+    (void)context;
+    if(!data||!bytes||!wln_exit_active||wln_exit_finished||wln_actual_reset_entered||
+       wln_power.error||wln_runtime.error||wln_firmware.error||wln_power.uncertain||
+       !wln_runtime.sealed||wln_runtime.count!=wln_exit_sealed_count||
+       wln_runtime.count>WLN_CAPACITY-2||!shutdown_reset_ready(context,2))return 0;
+    /* Footer USB delivery completed. Take and ARCHIVE a NEW actual full pair;
+     * do not refresh a timestamp, retry a WRITE, retire history or clear error. */
+    unsigned before=wln_runtime.count;
+    bool restored=pwp_restored(&wln_power);
+    if(!pwr_archive(&wln_runtime)||!restored)return 0;
+    wln_sync_history();if(wln_runtime.count!=before+2)return 0;
+    uint64_t now=buttons_us(0),last=wln_archive[wln_runtime.count-1].raw.ended_us;
+    if(now<last||now-last>PWS_MAX_CHECK_US)return 0;
+    bytes_copy(wln_exit_receipt,"WLR5",4);pwj_put(wln_exit_receipt+4,wln_cookie,8);
+    pwj_put(wln_exit_receipt+12,wln_runtime.count,4);pwj_put(wln_exit_receipt+16,~wln_crc,4);
+    for(unsigned n=0;n<2;n++)pwj_record(wln_exit_receipt+20+n*20,&wln_archive[before+n].raw);
+    wln_receipt_issued=1;wln_exit_finished=1;
+    *data=wln_exit_receipt;*bytes=sizeof(wln_exit_receipt);return 1;
+}
+static void wln_exit_abort(void *context,unsigned cause)
+{
+    (void)context;
+    if(!wln_actual_reset_entered&&wln_exit_active) {
+        wln_exit_active=0;
+        wln_exit_aborted=(cause==1)||(cause==2&&wln_reset_retryable);
+        report("WLED_NATIVE_EXIT_DELIVERY_REFUSED=",((uint64_t)cause<<32)|wln_exit_attempt);
+    }
+}
 static int wln_final_fresh(unsigned mode)
 {
     if(wln_zero_ready(mode)) {
         uint64_t now=buttons_us(0);
         return wln_zero_receipt_issued&&now>=wln_zero_receipt_us&&now-wln_zero_receipt_us<=PWS_MAX_CHECK_US;
     }
+    if(wln_exit_attempt&&(!wln_exit_active||!wln_exit_finished))return 0;
     if(!wln_runtime.sealed||!wln_receipt_issued||wln_closing_mode!=mode||
        wln_power.error||wln_runtime.error||wln_firmware.error||!wln_runtime.count)return 0;
     uint64_t now=buttons_us(0),last=wln_archive[wln_runtime.count-1].raw.ended_us;

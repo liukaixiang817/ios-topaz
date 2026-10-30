@@ -121,6 +121,9 @@ static void invalidate(uint64_t address,uint64_t bytes)
 #if defined(EFI_XNU_WLED_POWER_CYCLE_ONLY) || defined(EFI_XNU_WLED_INVENTORY_ONLY) || defined(EFI_XNU_DURABLE_GUARD)
 #error "Runtime WLED must not reuse pre-XNU or durable-write admission"
 #endif
+static int prepare_reset(void *,unsigned);
+static int shutdown_reset_ready(void *,unsigned);
+static int shutdown_status(void *,const uint8_t **,uint64_t *);
 #include "uefi-wled-native.h"
 #endif
 static int64_t psci(uint64_t function,uint64_t a,uint64_t b,uint64_t c)
@@ -294,7 +297,7 @@ static void boot_kernel(void *context)
 #if defined(EFI_XNU_WLED_NATIVE_START_REFUSAL) && EFI_XNU_WLED_NATIVE_START_REFUSAL==3
     (void)wln_begin;load_state=3;report("WLED_NATIVE_BEFORE_RUNTIME_REFUSED=",1);return;
 #else
-    if(!wln_begin()){load_state=3;report("WLED_NATIVE_PREPARE_REFUSED=",1);return;}
+    if(!prepare_reset(0,2)||!wln_begin()){load_state=3;report("WLED_NATIVE_PREPARE_REFUSED=",1);return;}
 #endif
 #endif
 #if defined(EFI_XNU_WLED_NATIVE_RUNTIME)
@@ -456,10 +459,16 @@ static int prepare_reset(void *context,unsigned mode)
      * This is a volatile reset marker, never a partition/NVRAM file write. */
     if(!identity(UINT64_C(0x146bf65c)))return 0;
     static const efi_guid pon_guid={0x97044b58,0xfea4,0x4ad0,{0x9d,0x0b,0xe4,0x17,0xd6,0x0f,0x11,0xa1}};
-    reset_pon=0;
-    efi_status s=system_table->boot->locate_protocol(&pon_guid,0,(void**)&reset_pon);
-    if(s||!reset_pon||reset_pon->revision!=0x10001||!reset_pon->get||!reset_pon->set){
-        reset_pon=0;if(mode==2)return 0;
+#if defined(EFI_XNU_WLED_NATIVE_RUNTIME)
+    if(!reset_pon&&wln_cpu_on_issued)return 0; /* No post-handoff BS query. */
+    if(!reset_pon) {
+#else
+    reset_pon=0;{
+#endif
+        efi_status s=system_table->boot->locate_protocol(&pon_guid,0,(void**)&reset_pon);
+        if(s||!reset_pon||reset_pon->revision!=0x10001||!reset_pon->get||!reset_pon->set){
+            reset_pon=0;if(mode==2)return 0;
+        }
     }
 #endif
     return 1;
@@ -467,12 +476,14 @@ static int prepare_reset(void *context,unsigned mode)
 static void reset(void *context,unsigned mode)
 {
 #if defined(EFI_XNU_WLED_NATIVE_RUNTIME)
-    if(!wln_final_fresh(mode)||(!wln_zero_ready(mode)&&!shutdown_reset_ready(context,mode)))return;
+    wln_reset_retryable=0;
+    if(!wln_final_fresh(mode)){wln_reset_retryable=1;return;}
+    if(!wln_zero_ready(mode)&&!shutdown_reset_ready(context,mode))return;
 #endif
-#if defined(EFI_XNU_WLED_NATIVE_RUNTIME) && defined(EFI_XNU_WLED_NATIVE_LIFECYCLE)
+#if defined(EFI_XNU_WLED_NATIVE_RUNTIME) && (defined(EFI_XNU_WLED_NATIVE_LIFECYCLE) || defined(EFI_XNU_WLED_NATIVE_EXIT_TEST))
     /* QEMU-only reset observer AFTER the real reset guards. Hold this model
      * for binary capture; this is not proof of an actual guest/device reset. */
-    wln_test_reset_observed++;
+    wln_actual_reset_entered=1;wln_test_reset_observed++;
     report("WLED_NATIVE_TEST_RESET_AFTER_GATES=",wln_test_reset_observed);
     return;
 #endif
@@ -495,6 +506,17 @@ static void reset(void *context,unsigned mode)
     }
 #else
     (void)mode;
+#endif
+#if defined(EFI_XNU_WLED_NATIVE_RUNTIME)
+    if(!wln_final_fresh(mode)) {
+        wln_reset_retryable=1;report("RESET_WLED_FRESH_REFUSED=",1);
+#if !defined(POLARIS_EFI_TEST_QEMU)
+        if(reset_pon)report("RESET_PON_RESTORE=",reset_pon->set(0,3,marker.before,0xfe));
+        *reason=before;__asm__ volatile("dsb sy":::"memory");
+#endif
+        return;
+    }
+    wln_actual_reset_entered=1;
 #endif
     report("RESET_REQUESTED=",mode);system_table->runtime->reset_system(0,0,0,0);
     report("RESET_RETURNED=",1);
@@ -602,6 +624,16 @@ static void idle_guard(void *context)
 #endif
 #if defined(EFI_XNU_WLED_NATIVE_RUNTIME)
         wln_lease_recovery=1;
+        if(wln_exit_active)return; /* Do not reset midway through an exit transfer. */
+        if(wln_exit_aborted&&wln_exit_attempt==1) {
+            const uint8_t *footer=0,*receipt=0;uint64_t footer_bytes=0,receipt_bytes=0;
+            wln_sync_history();
+            if(wln_exit_begin(context,1,wln_cookie,wln_runtime.count,~wln_crc,&footer,&footer_bytes)&&
+               wln_exit_finish(context,&receipt,&receipt_bytes)) {
+                report("WLED_NATIVE_LEASE_READONLY_RECOVERY=",receipt_bytes);reset(context,2);
+            }
+            return;
+        }
         if(!wln_zero_ready(2)&&!shutdown_begin(context,2))return;
 #endif
         if(prepare_reset(context,2)){
@@ -625,6 +657,7 @@ static struct polaris_usb_control controls={.begin=begin,.write=write_payload,.f
 #endif
 #if defined(EFI_XNU_WLED_NATIVE_RUNTIME)
     .wled_runtime_page=wln_capture_page,.reset_receipt=wln_reset_receipt,
+    .wled_exit_begin=wln_exit_begin,.wled_exit_finish=wln_exit_finish,.wled_exit_abort=wln_exit_abort,
 #endif
     .autoboot=disk_autoboot,.idle_guard=idle_guard,.host_activity=host_activity};
 #if defined(POLARIS_EFI_TEST_QEMU)
@@ -801,6 +834,67 @@ static void test_ram_drain(int stress_done,unsigned contact_phase)
 #endif
 }
 #endif
+#if defined(EFI_XNU_WLED_NATIVE_EXIT_TEST)
+static uint8_t wln_test_exit_prefix[2][3][980],wln_test_exit_footer[2][212],wln_test_exit_reply[2][64];
+static unsigned wln_test_exit_attempt,wln_test_exit_tx;
+static uint64_t wln_test_exit_delay;
+static int test_exit_tx(void *context,const uint8_t *data,uint64_t bytes)
+{
+    (void)context;unsigned at=wln_test_exit_attempt;
+    if(at>=2)return 0;
+    if(++wln_test_exit_tx==1)return bytes==12;
+    if(wln_test_exit_tx==2) {
+        if(bytes>212)return 0;bytes_copy(wln_test_exit_footer[at],data,bytes);
+        report(at?"WLED_EXIT_FOOTER1_ADDRESS=":"WLED_EXIT_FOOTER0_ADDRESS=",(uintptr_t)wln_test_exit_footer[at]);
+        report(at?"WLED_EXIT_FOOTER1_BYTES=":"WLED_EXIT_FOOTER0_BYTES=",bytes);
+        uint64_t start=buttons_us(0),now=start;
+        do{now=buttons_us(0);__asm__ volatile("yield");}while(now>=start&&now-start<250000);
+        wln_test_exit_delay=now-start;return 1;
+    }
+    if(wln_test_exit_tx==3) {
+        if(bytes!=64)return 0;bytes_copy(wln_test_exit_reply[at],data,bytes);
+        report(at?"WLED_EXIT_REPLY1_ADDRESS=":"WLED_EXIT_REPLY0_ADDRESS=",(uintptr_t)wln_test_exit_reply[at]);
+#if EFI_XNU_WLED_NATIVE_EXIT_TEST==2
+        if(!at)return 0; /* Actual parser sees known failed final delivery. */
+#endif
+        return 1;
+    }return 0;
+}
+static int test_exit_once(unsigned recover)
+{
+    for(unsigned n=0;n<3;n++) {
+        const uint8_t *page=0;uint64_t bytes=0;
+        if(!wln_capture_page(0,n,&page,&bytes)||bytes>980)return 0;
+        bytes_copy(wln_test_exit_prefix[recover][n],page,bytes);
+        char label[]="WLED_EXIT_P00_ADDRESS=",size[]="WLED_EXIT_P00_BYTES=";
+        label[11]=size[11]=(char)('0'+recover);label[12]=size[12]=(char)('0'+n);
+        report(label,(uintptr_t)wln_test_exit_prefix[recover][n]);report(size,bytes);
+    }
+    char cmd[64];const char *prefix=recover?"oem wled-recover:":"oem wled-exit:";unsigned at=0;
+    while(*prefix)cmd[at++]=*prefix++;
+    for(unsigned n=0;n<16;n++)cmd[at++]="0123456789abcdef"[(wln_cookie>>(60-n*4))&15];
+    cmd[at++]=':';uint32_t words[2]={wln_runtime.count,~wln_crc};
+    for(unsigned w=0;w<2;w++){for(unsigned n=0;n<8;n++)cmd[at++]="0123456789abcdef"[(words[w]>>(28-n*4))&15];if(!w)cmd[at++]=':';}
+    struct polaris_usb_diag diag={.transmit=test_exit_tx};
+    wln_test_exit_attempt=recover;wln_test_exit_tx=0;
+    return polaris_usb_control_command(&diag,&controls,(const void *)cmd,at);
+}
+static void test_exit_run(void)
+{
+    int first=test_exit_once(0);
+    report("WLED_EXIT_FIRST_RESULT=",first);report("WLED_EXIT_DELAY_US=",wln_test_exit_delay);
+#if EFI_XNU_WLED_NATIVE_EXIT_TEST==2
+    report("WLED_EXIT_FAILED_NO_RESET=",!wln_test_reset_observed&&wln_exit_aborted&&wln_exit_attempt==1);
+    report("WLED_EXIT_RECOVERY_RESULT=",test_exit_once(1));
+#endif
+    report("WLED_EXIT_FINAL_COUNT=",wln_runtime.count);report("WLED_EXIT_FINAL_ISSUED=",wln_power.issued);
+    report("WLED_EXIT_FINAL_COMPLETED=",wln_power.completed);
+    report("WLED_EXIT_FINAL_ERROR=",wln_power.error|wln_runtime.error|wln_firmware.error);
+    report("WLED_EXIT_RESET_OBSERVED=",wln_test_reset_observed);
+    report("WLED_EXIT_ATTEMPTS=",wln_exit_attempt);
+    text("WLED_EXIT_MODEL_HOLD\r\n");
+}
+#endif
 static void test_monitor(void)
 {
     uint64_t position=0,last=0;unsigned contact_phase=0;
@@ -821,7 +915,9 @@ static void test_monitor(void)
 #if defined(EFI_XNU_WLED_NATIVE_START_REFUSAL)
     unsigned wln_zero_reported=0;
 #endif
+#if !defined(EFI_XNU_WLED_NATIVE_EXIT_TEST)
     static uint8_t wln_test_pages[3][980];
+#endif
 #if defined(EFI_XNU_WLED_NATIVE_LIFECYCLE) && EFI_XNU_WLED_NATIVE_LIFECYCLE==3
     unsigned wln_age_checked=0;
 #endif
@@ -916,6 +1012,9 @@ static void test_monitor(void)
 #endif
            ) {
             wln_final_reported=1;
+#if defined(EFI_XNU_WLED_NATIVE_EXIT_TEST)
+            test_exit_run();
+#else
 #if defined(EFI_XNU_WLED_NATIVE_LIFECYCLE) && EFI_XNU_WLED_NATIVE_LIFECYCLE==4
             /* idle_guard() made the one-shot receipt and called reset's
              * guarded test observer. Preserve those actual original bytes. */
@@ -940,6 +1039,7 @@ static void test_monitor(void)
             report("WLED_NATIVE_ERROR=",wln_power.error|wln_runtime.error|wln_firmware.error);
             report("WLED_NATIVE_FINAL_MODE1_REFUSED=",!prepare_reset(0,1));
             report("WLED_NATIVE_FINAL_ONCE_REFUSED=",!wln_reset_receipt(0,2,&receipt,&receipt_bytes));
+#endif
         }
 #if defined(EFI_XNU_WLED_NATIVE_LIFECYCLE) && EFI_XNU_WLED_NATIVE_LIFECYCLE==3
         if(wln_final_reported&&!wln_age_checked&&wln_runtime.sealed&&wln_runtime.count) {

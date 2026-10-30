@@ -68,6 +68,46 @@ int polaris_usb_control_command(struct polaris_usb_diag *d,struct polaris_usb_co
             d->staged=data;d->staged_bytes=bytes;return reply(d,"OKAY");
         }
     }
+    /* One bounded response: DATA/footer, then actual fresh readbacks in
+     * OKAY/receipt, then guarded reset. Never finalize after failed delivery. */
+    static const char exit_prefix[]="oem wled-exit:",recover_prefix[]="oem wled-recover:";
+    unsigned prefix=0,recover=0;
+    if(n==sizeof(exit_prefix)-1+34) {
+        prefix=sizeof(exit_prefix)-1;
+        for(unsigned i=0;i<prefix;i++)if(p[i]!=(uint8_t)exit_prefix[i])prefix=0;
+    }
+    if(!prefix&&n==sizeof(recover_prefix)-1+34) {
+        prefix=sizeof(recover_prefix)-1;recover=1;
+        for(unsigned i=0;i<prefix;i++)if(p[i]!=(uint8_t)recover_prefix[i])prefix=0;
+    }
+    if(prefix) {
+        uint64_t hi=0,lo=0,count=0,crc=0,bytes=0;const uint8_t *data=0;
+        if(p[prefix+16]!=':'||p[prefix+25]!=':'||
+           !hexadecimal(p+prefix,&hi)||!hexadecimal(p+prefix+8,&lo)||
+           !hexadecimal(p+prefix+17,&count)||!hexadecimal(p+prefix+26,&crc)||
+           !c->wled_exit_begin||!c->wled_exit_finish||!c->wled_exit_abort||!c->reset||
+           !c->wled_exit_begin(c->context,(int)recover,(hi<<32)|lo,(uint32_t)count,(uint32_t)crc,&data,&bytes)||
+           !data||bytes<100||bytes>212)
+            return reply(d,"FAILnative WLED exit unavailable");
+        uint8_t header[12]={'D','A','T','A'};
+        for(unsigned i=0;i<8;i++)header[4+i]="0123456789abcdef"[(bytes>>(28-i*4))&15];
+        if(!d->transmit(d->context,header,12)||!d->transmit(d->context,data,bytes)) {
+            c->wled_exit_abort(c->context,1);return 0;
+        }
+        data=0;bytes=0;
+        if(!c->wled_exit_finish(c->context,&data,&bytes)||!data||bytes!=60) {
+            c->wled_exit_abort(c->context,1);return reply(d,"FAILfresh WLED exit witness unavailable");
+        }
+        uint8_t response[64]={'O','K','A','Y'};
+        for(unsigned i=0;i<60;i++)response[4+i]=data[i];
+        if(!d->transmit(d->context,response,sizeof(response))) {
+            c->wled_exit_abort(c->context,1);return 0;
+        }
+        c->reset(c->context,2);
+        /* Real reset cannot return. A freshness/PON refusal may return and
+         * permits only the one separate, newly inventoried read-only recovery. */
+        c->wled_exit_abort(c->context,2);return 1;
+    }
     unsigned shutdown=same(p,n,"oem shutdown:1")?1:same(p,n,"oem shutdown:2")?2:0;
     if(shutdown){
         if(!c->shutdown_begin||!c->shutdown_begin(c->context,shutdown))
