@@ -107,3 +107,18 @@ def receipt(data,j,*,cookie,native_cookie,native_sequence,mode):
         records=count,first=first,last=last,history_crc=history_crc,request=request,
         restoration_consistent=True,physical_admission=False,optical_off_proven=False,
         firmware_age_guard_source_required=True)
+
+
+def zero_write_receipt(data,*,cookie=None):
+    """WLZ4 is pre-CPU/pre-WRITE refusal recovery, never native restoration."""
+    if type(data) is not bytes or len(data)!=40 or data[:4]!=b'WLZ4' or \
+       zlib.crc32(data[:36])!=struct.unpack_from('<I',data,36)[0]:
+        raise ValueError('native zero-write receipt framing/CRC')
+    mode=struct.unpack_from('<I',data,4)[0]
+    session,observed=struct.unpack_from('<QQ',data,8)
+    error,runtime_error,flags=struct.unpack_from('<III',data,24)
+    if mode!=2 or not session or not observed or flags or (cookie is not None and cookie!=session):
+        raise ValueError('native zero-write receipt scope/session')
+    return dict(cookie=session,observed_us=observed,error=error,runtime_error=runtime_error,
+                mode=mode,CPU_ON_issued=False,AP_stage=0,issued=0,completed=0,uncertain=False,
+                native_drain_proven=False,WLED_restoration_proven=False)

@@ -27,6 +27,8 @@ PHYSICAL_SCOPE['controlled_WLED_prepare_kind']=None
 
 
 def exact_scope(driver):
+    if driver.get('WLED_native_runtime_physical') or driver.get('WLED_native_runtime_test'):
+        raise ValueError('native runtime requires its separate image/controller')
     for key,value in PHYSICAL_SCOPE.items():
         if key not in driver or type(driver.get(key)) is not type(value) or driver[key]!=value:
             raise ValueError('not the independent physical OEM WLED scope: '+key)

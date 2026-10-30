@@ -12,7 +12,7 @@ ROOT=Path(__file__).resolve().parents[2]
 class ArchiveOwnership(unittest.TestCase):
     def test_exact_self_image_bounds_disjoint_bank_and_every_page_owner(self):
         body=function((ROOT/'shim/polaris/uefi-wled-native.h').read_text(),'static int wln_image_owned(')
-        run('#include "'+str(ROOT/'shim/polaris/uefi-memory.h')+'"\n'+r'''
+        fixture='#include "'+str(ROOT/'shim/polaris/uefi-memory.h')+'"\n'+r'''
 #include <assert.h>
 #include <string.h>
 static uint8_t wln_archive[8192*32] __attribute__((aligned(4096)));
@@ -40,7 +40,7 @@ int main(void) {
   if(bad==4)image.base=(void *)(uintptr_t)(begin+4096);
   if(bad==5)image.bytes=sizeof(wln_archive);
   if(bad==6)image.code_type=7;
-  if(bad==7)image.data_type=4;
+  if(bad==7)image.data_type=7;
   if(bad==8)ram_base=begin+4096;
   if(bad==9)map_snapshot.data[1].physical+=4096;
   if(bad==10)map_snapshot.data[1].type=7;
@@ -50,7 +50,10 @@ int main(void) {
  }
  assert(!wln_image_owned(0));return 0;
 }
-''')
+'''
+        run(fixture)
+        physical=fixture.replace('.code_type=1,.data_type=2','.code_type=3,.data_type=4').replace('.type=1,','.type=3,').replace('.type=2,','.type=4,')
+        run('#define EFI_XNU_WLED_NATIVE_RUNTIME_PHYSICAL 1\n'+physical)
 
 
 if __name__=='__main__':unittest.main()

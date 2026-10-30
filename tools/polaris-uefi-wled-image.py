@@ -28,6 +28,8 @@ def admit(driver, models, fault_watch=False):
         raise ValueError('OEM writer status policy is not readonly inventory')
     if type(fault_watch) is not bool or driver.get('WLED_readonly_fault_watch',False) is not fault_watch:
         raise ValueError('explicit readonly fault-watch scope mismatch')
+    if driver.get('WLED_native_runtime_physical') or driver.get('WLED_native_runtime_test'):
+        raise ValueError('native runtime requires its separate image/controller')
     required = dict(WLED_readonly_inventory_only=True,
                     kernel_CPU_ON_compiled_out=True, kernel_handoff=False,
                     PMIC_write_api=False, storage_write_api=False,

@@ -38,6 +38,27 @@ def reCRC(b):
 
 
 class RuntimeWire(unittest.TestCase):
+    def test_zero_write_receipt_cannot_claim_native_drain_or_accept_corruption(self):
+        b=bytearray(40);b[:4]=b'WLZ4'
+        struct.pack_into('<IQQIII',b,4,2,123,456,32,0,0)
+        struct.pack_into('<I',b,36,zlib.crc32(b[:36]));b=bytes(b)
+        result=wire.zero_write_receipt(b,cookie=123)
+        self.assertFalse(result['native_drain_proven'])
+        self.assertFalse(result['WLED_restoration_proven'])
+        with self.assertRaises(ValueError):wire.zero_write_receipt(b,cookie=124)
+        for length in range(40):
+            with self.assertRaises(ValueError):wire.zero_write_receipt(b[:length])
+        for at in range(40):
+            for bit in range(8):
+                changed=bytearray(b);changed[at]^=1<<bit
+                with self.assertRaises(ValueError):wire.zero_write_receipt(bytes(changed))
+        for at in (4,8,16,32):
+            changed=bytearray(b)
+            if at in (8,16):struct.pack_into('<Q',changed,at,0)
+            else:changed[at]=1
+            struct.pack_into('<I',changed,36,zlib.crc32(changed[:36]))
+            with self.assertRaises(ValueError):wire.zero_write_receipt(bytes(changed))
+
     def test_complete_history_and_final_pairs_bind_native_session_without_physical_claim(self):
         p=pages();j=wire.journal(p);r=wire.receipt(receipt(j),j,cookie=123,native_cookie=456,native_sequence=1,mode=2)
         self.assertTrue(j['analysis_passed'] and r['restoration_consistent'])

@@ -34,35 +34,96 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### 0120 bounded readonly audit image READY; no new phone boot yet
+### 0120 physical runtime backend + actual zero-WRITE EFI COMPLETE; phone FASTBOOT; image/controller NOT READY
 
-- Human requests faster development/fewer unnecessary steps: combine relevant
-  checks/commits, no unchanged repeated models or kernel CI; proceed through
-  recoverable physical loops. Preserve all data/guards. This overrides verbose
-  repeated diagnostic expansion as the preferred workflow.
-- NEW default-OFF --readonly-watchdog-seconds300 backup-recovery scope requires
-  new exclusive output directory. Same original verified TWRP kernel/ramdisk
-  tools, no automatic storage mount/fsck/UI. Adds one RAM shell service that
-  sleeps60*5s then sends sys.powerctl=reboot,bootloader exactly once; sleep failure
-  requests early return. No storage paths/repair jobs. Actual hardware watchdog
-  not proven yet, no unconditional recovery claim. No physical iOS admission.
-- Actual independent image checks PASS: default-OFF control whole SHA remains
-  f9ad6529c1632fa2116377ec5f12c78f6d5cf7f5a1baa0b0f1bec4b5a518bd99;
-  new watchdog image ecb73be4bd591f836ab1a9132e998a28fd4ef356624ba3dab1550b5a105f12ba.
-  Original kernel exact; only init.rc changes +one root0750 RAM script added;
-  all other cpio entries/metadata preserved relative to known headless control.
-  Local7 shell/default-OFF/scope/nonce-framing checks pass0.038s; no new kernelCI.
-- `0120/readonly-watchdog-image-proof.json` binds actual image/source. New private
-  audit-once.py uses nonce-bound remote RC and one boot-attempt directory; no
-  old controller/AST execution. Strict blockRO+noload fullroot/map/marker/rawowner/
-  sixGPT/critical/ESP plus bounded raw journal capture, actual unmount/FASTBOOT.
-  All outcomes remain may_boot_iOS=false/may_write_userdata=false until separate
-  journal review. Fresh candidate FASTBOOT query before authorized ONE RAM.
-- Actual readonly expectedPolaris13:37:02UTC PASS, actual-fastboot-start-0001.json.
-  No phone boot/cycle/PMIC/OS/root/storage/NVRAM/Android action yet in this round.
-  NEXT execute this fully prepared new bounded RO audit, not old0915 recovery.
-  Existing nativeWLED physical backend/image/client/admission still unfinished;
-  ca_vbl1/graphics preserved; original opticalOFF trial remains ENDED/confirmed.
+- Human acceleration request is active: relevant checks combined; reused the
+  verified native kernel, NO new kernelCI and NO unchanged13-model/500-scroll
+  replay. Current source adds actual independent default-OFF physical runtime
+  backend, not another onecycle flag. Native kernel/profile/graphics unchanged.
+- `0120/physical-runtime-backend-and-zero-write-EFI-proof.json` PASSED25 checks/
+  75 rehashed files. Real AArch64 physical PE683520B build/link passed full
+  Wall/Wextra/Werror, correct boot-service-driver subsystem. New own physical
+  payload uses same ADT/GPU bundle and602-byte arguments, ONLY diagnostic
+  polarisperf=1 -> polariswled=1; ca_vbl1 and every other token retained. Native
+  kerneldd4bd757.../source2d55a4e/CI41056172330 reused exactly; no performanceAB
+  claim because diagnostic trace changed.
+- Physical backend copies completed0116 optical-cycle WDATA/DSB/CMD/DSB/status
+  operations verbatim, only APIDfd fixed commands; independent CPU0/EL1/DAIF3c0/
+  ICC_IGRPEN1=0/AT S1E1W d5d0000/read-window gates. Actual source PWP/readonly/
+  status/runtime core and mailbox headers unchanged. Shared CPU0 polling/log/
+  shutdown/lease hooks now select exactly one physical or SOFTWARE runtime.
+- Archive remains own loaded-PE/whole-page map/disjoint-payload bound before
+  handoff. Physical EFI_BOOT_SERVICE_DRIVER requires exact code/data3/4;
+  QEMU EFI_APPLICATION remains1/2. This follows [EDK2 CoreLoadPeImage](https://github.com/tianocore/edk2/blob/master/MdeModulePkg/Core/Dxe/Image/Image.c#L616),
+  tested both paths against wrong type/free/runtime/hole/alias. Actual phone
+  loaded-image types are NOT observed yet; mismatch refuses before any writer.
+- New independent40B WLZ4 CRC receipt is ONLY pre-CPU/pre-WRITE recovery:
+  actual APstage0/CPU_ON-not-issued/issued0/completed0/uncertain0. CPU latch
+  sets BEFORE PSCI (including unknown/refused result). Mode2 only/one-shot/
+  original freshness retained; never fake native drain or WLED restoration.
+  Ordinary iOS/readonly/onecycle admission/clients reject new runtime scope.
+- Current actual whole EFI-XNU normal0001 PASS47/38.692904s:3cycles/3RAMcopies/
+  seq6/12complete/78raw including final4, WLR3/native drain independently
+  reparsed. Three actual EFI prestart cases owner0001/configuration0002/
+  before-runtime0001 each14 checks, about6.6..6.8s, actual AP+kernel-log RAM0/
+  noPSCI/noWRITE, original errors32/66/0 retained in actual QMP-dumped WLZ4.
+  Config66 is the unchanged runtime witness configuration refusal; initial
+  runner guessed older cycle33 and refused,0001 failure retained. No product
+  gate was relaxed. SOFTWARE PMIC/64RAMpixels are not SD845/panel/USB emulation.
+- Combined27 local ASan/UBSan/scope/ownership/wire/USB/unchangedOEM/watchdog tests
+  PASS4.287s. Actual physical/software TUs compile; first physical TU carried
+  a QEMU fixture macro and correctly refused, corrected compile-only0002.
+  Initial fixture missing byte helpers, wrong data-type negative, and partial
+  zero-cookie test failures retained; fixed fixtures only, no warning suppression.
+- CURRENT final actual expectedPolaris FASTBOOT14:34:07.315302UTC PASS,
+  `0120/actual-fastboot-final-0001.json`. All audit/model/USB/build workers ENDED.
+  No phone runtime boot/PMIC write/iOS/storage/NVRAM/Android action since the
+  controlled readonly audits. Original0113/0116 optical trials stay ENDED.
+- NEXT implementation is concrete: `0120/physical-runtime-final-read-export-next.json`.
+  Existing WLR3 has only final full-history CRC, not four new raw observations;
+  old pages captured before reset cannot be claimed as final. Add bounded actual
+  final-tail export after native drain/readback, preserve freshness/one-shot/
+  failed-delivery gates, then independent physical packager/controller/admission.
+  Current physical driver/payload are compiled materials, NOT a ready RAM image.
+  Do not start phone iOS or reuse old clients until this is complete. New narrow
+  RO root review BELOW permits iOS only with immutable root+512MiB RAMCOW;
+  all userdata writes/persistence remain forbidden. Sound/WiFi/full16.5 later.
+
+### 0120 fresh physical readonly root review COMPLETE; phone FASTBOOT; runtime backend in progress
+
+- Human requests faster development: combine relevant checks/commits, do not
+  repeat unchanged models/kernel CI. Continue actual integration with existing
+  safeguards and recoverable physical loops. Source3d4110e is committed/pushed.
+- NEW bounded headless RAM recovery was actually booted twice. Service/script/
+  init hashes and root ADB verified. No automatic mount/fsck/UI. The300s service
+  expiry itself was NOT physically waited/tested; both returns used ordinary
+  ADB reboot only AFTER actual unmount. First collector stopped on variable
+  filesystem free counters before saving them; failure retained, no fullroot
+  claim for0001. Second independent collector0002 saved all differences first.
+- `0120/fresh-readonly-root-and-journal-state-review.json` PASSED. Full16GiB
+  SHA689a8cd1df0fc0093706272241a9ac77d5eddd7a62df5d340913ec6abcd7ce2b
+  in56.682537s,182maps, whole8MiB marker pattern, persistent inode/generation/
+  flags/extents/raw owner page/marker-group descriptor, six GPT/boot/recovery/
+  abl_a/b/ESP all match. Actual blockRO+ro,noload, unchanged before/after header,
+  actual unmount and independent expectedPolaris FASTBOOT14:00:46.064341UTC.
+- Current outer header c042a66f19da2ca5c32d84418dcec0419dc723db07dbfe834de08d34e76c7cdb
+  was already present BEFORE both boots and remained unchanged. Actual ext4
+  VALID/unmounted state1, RECOVER bit clear (incompat10042), orphan0/errorcount0.
+  Prior0934b480... had RECOVER set. Cause of intervening counter/time changes
+  UNKNOWN; we performed NO replay/repair/RW/allocate. Whole GDT page differs in
+  other groups' counters/checksums; marker group210 descriptor remains exact.
+  Journal inode8 is512MiB;256MiB diagnostic cap refused before journal data.
+  Do not repeat a boot only to dump it or claim full journal/filesystem health.
+- New `0120/fresh-readonly-preflight.json` permits may_boot_iOS=true ONLY the
+  immutable original root RO+512MiB RAMCOW, ufsrw=0/rootrw=1/polarisramcow=1/
+  polarisrammb=512 and no owned-marker mode. may_write_userdata=false; no
+  persistence/ownership-baseline update/automatic repair. This narrowly
+  supersedes historical may_boot_iOS=false, not the storage-write prohibition.
+- CURRENT all audit/USB workers ENDED. Phone actual FASTBOOT at14:00:46UTC;
+  no active iOS/CI. NativeWLED real PMIC backend/image/client/admission remains
+  unfinished; do not boot until that independent candidate is complete.
+  Keep ca_vbl1/graphics/kernel and all CPU/GPU/thermal/native restore guards.
+  Existing0113/0116 opticalOFF cycles remain ENDED and human-confirmed.
 
 ### 0119 actual lifecycle + lease continuation COMPLETE; phone FASTBOOT; physical runtime NOT READY
 

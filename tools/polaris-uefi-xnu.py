@@ -21,6 +21,9 @@ def now():return datetime.datetime.now(datetime.timezone.utc).isoformat()
 
 
 def binding(boot, image, driver):
+    if any(x.get(k) for x in (image,driver) for k in
+           ('WLED_native_runtime_physical','WLED_native_runtime_test','PMIC_write_api')):
+        raise ValueError('WLED native runtime requires its independent controller and final receipt')
     if (boot.get('state')!='temporary_UEFI_XNU_boot_command_succeeded' or
         boot.get('image_sha256')!=image.get('sha256') or not boot.get('sent_utc') or
         not image.get('RAM_only_XNU_loader') or image.get('storage_write_api') is not False or

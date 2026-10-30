@@ -70,7 +70,7 @@ def admit_pair_witness_policy(driver,qemu,thermal,extended):
 
 def admit(driver,qemu,ci,profile,preflight):
     if any(x.get(k) for x in (driver,qemu) for k in
-           ('WLED_readonly_inventory_only','WLED_readonly_fault_watch','controlled_WLED_fault_pulse',
+           ('WLED_native_runtime_physical','WLED_native_runtime_test','WLED_readonly_inventory_only','WLED_readonly_fault_watch','controlled_WLED_fault_pulse',
             'WLED_power_cycle_only','WLED_OEM_status_policy','controlled_WLED_status_after_issue',
             'WLED_OEM_physical_cycle','controlled_WLED_prepare_refusal',
             'PMIC_write_api','kernel_CPU_ON_compiled_out')):
