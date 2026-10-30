@@ -11,7 +11,7 @@ from .test_polaris_wled_status import OEM_H
 
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/'tools'))
-from polaris_wled_journal import parse_packet,parse_reset_receipt,WledOemProtocol
+from polaris_wled_journal import parse_packet,parse_reset_receipt,parse_zero_write_receipt,WledOemProtocol
 
 SOURCE=OEM_H+'\n#include "'+str(ROOT/'shim/polaris/uefi-wled-journal.h')+'"\n'+r'''
 #include <stdio.h>
@@ -39,6 +39,13 @@ int main(int argc,char **argv) {
  assert(!pwj_receipt(&j,&p,2,f.time,receipt));
  assert(pwj_packet(&j,&p,packet,sizeof(packet),&bytes));save(argv[1],"failed.bin",packet,bytes);
  unsigned writes=f.writes;for(unsigned n=0;n<10;n++)assert(!pwp_poll(&p));assert(f.writes==writes);
+ memset(&p,0,sizeof(p));j=(struct polaris_wled_journal){.cookie=0xabcdef};
+ assert(pwj_packet(&j,&p,packet,sizeof(packet),&bytes));save(argv[1],"unstarted.bin",packet,bytes);
+ pwp_fail(&p,PWP_E_CONFIG);
+ assert(p.status_policy==PWP_STRICT_SNAPSHOT&&pwj_packet(&j,&p,packet,sizeof(packet),&bytes));
+ save(argv[1],"early-failed.bin",packet,bytes);
+ assert(!pwp_init_oem_status(&p,&b,0,false)); /* Publishing is never a policy switch. */
+ p.issued=1;assert(!pwj_packet(&j,&p,packet,sizeof(packet),&bytes));
  return 0;
 }
 '''
@@ -59,6 +66,7 @@ class WledJournal(unittest.TestCase):
         cls.packet=(p/'journal.bin').read_bytes();cls.receipt=(p/'receipt.bin').read_bytes()
         cls.packet2=(p/'journal2.bin').read_bytes();cls.receipt2=(p/'receipt2.bin').read_bytes()
         cls.failed=(p/'failed.bin').read_bytes()
+        cls.unstarted=(p/'unstarted.bin').read_bytes();cls.early_failed=(p/'early-failed.bin').read_bytes()
 
     @classmethod
     def tearDownClass(cls):
@@ -144,6 +152,15 @@ class WledJournal(unittest.TestCase):
         before=len(t.commands)
         with self.assertRaises(ValueError):c.reboot_restored()
         self.assertEqual(len(t.commands),before)
+
+    def test_unstarted_and_pre_policy_failure_packets_only_admit_zero_write_recovery(self):
+        for packet,error in [(self.unstarted,0),(self.early_failed,33)]:
+            parsed=parse_packet(packet)
+            self.assertEqual((parsed['issued'],parsed['completed'],parsed['count']),(0,0,0))
+            self.assertFalse(parsed['cycle_restored_readbacks'])
+            receipt=b'WLR0'+struct.pack('<Q',parsed['cookie'])+bytes([2,error,0,0])
+            self.assertTrue(parse_zero_write_receipt(receipt,packet)['no_PMIC_command_issued_receipt'])
+            with self.assertRaises(ValueError):parse_reset_receipt(self.receipt,packet)
 
 
 if __name__=='__main__':unittest.main()

@@ -62,11 +62,17 @@ def main():
                     raise ValueError('kernel/AP executed or snapshot unreadable: '+name)
             injected=m.get('controlled_WLED_write_timeout') is True
             oem=m.get('WLED_OEM_status_policy') is True
+            prepare_refused=m.get('controlled_WLED_prepare_refusal',False)
+            prepare_kind=m.get('controlled_WLED_prepare_kind')
+            if prepare_kind not in (None,'owner','configuration','before-cycle') or prepare_refused!=(prepare_kind is not None):
+                raise ValueError('unknown or inconsistent WLED preparation refusal')
+            if type(prepare_refused) is not bool or (prepare_refused and (not oem or injected)):
+                raise ValueError('incompatible zero-write preparation refusal scope')
             status_injected=m.get('controlled_WLED_status_after_issue',0)
-            if type(status_injected) is not int or not 0<=status_injected<=0xffff or (status_injected and (not oem or injected)):
+            if type(status_injected) is not int or not 0<=status_injected<=0xffff or (status_injected and (not oem or injected or prepare_refused)):
                 raise ValueError('incompatible status fault scope')
             refused=injected or bool(status_injected)
-            expected_error=65 if status_injected else 36 if injected else 0
+            expected_error={'owner':32,'configuration':33,'before-cycle':0}.get(prepare_kind,65 if status_injected else 36 if injected else 0)
             checks={'firmware_EL1_admission':values.get('XNU_ADMISSION')==0,'exact_payload_valid':values.get('QEMU_PAYLOAD_VALID')==1,
                     'kernel_prepared_not_executed':'KERNEL_PREPARED_ENTRY=' in text and values.get('WLED_KERNEL_AP_STAGE')==0,
                     'no_PSCI_CPU_ON':'KERNEL_PSCI_STATUS=' not in text,
@@ -74,27 +80,37 @@ def main():
                     'preflight_succeeded':values.get('WLED_POWER_PREPARE_ERROR')==0,
                     'expected_final_error':values.get('WLED_POWER_FINAL_ERROR')==expected_error,
                     'expected_final_uncertainty':values.get('WLED_POWER_FINAL_UNCERTAIN')==int(refused),
-                    'writes_issued_exactly':values.get('WLED_POWER_WRITES_ISSUED')==(1 if refused else 4),
-                    'writes_completed_exactly':values.get('WLED_POWER_WRITES_COMPLETED')==(1 if status_injected else 0 if injected else 4),
+                    'writes_issued_exactly':values.get('WLED_POWER_WRITES_ISSUED',values.get('WLED_POWER_PREPARE_WRITES_ISSUED'))==(0 if prepare_refused else 1 if refused else 4),
+                    'writes_completed_exactly':values.get('WLED_POWER_WRITES_COMPLETED',0 if prepare_refused else -1)==(0 if prepare_refused else 1 if status_injected else 0 if injected else 4),
                     'reset_gate':values.get('WLED_POWER_FINAL_RESET_ALLOWED')==int(not refused),
-                    'off_readback_and_reset':refused or (values.get('WLED_POWER_OFF_MODULE')==0 and values.get('WLED_POWER_OFF_IRQ')==0 and values.get('WLED_POWER_OFF_RESET_REFUSED')==1),
-                    'on_readback_after_two_seconds':refused or (values.get('WLED_POWER_RESTORED_MODULE')==0x80 and values.get('WLED_POWER_RESTORED_IRQ')==2 and values.get('WLED_POWER_RESTORED_US',0)-values.get('WLED_POWER_OFF_US',0)>=2000000),
+                    'off_readback_and_reset':refused or prepare_refused or (values.get('WLED_POWER_OFF_MODULE')==0 and values.get('WLED_POWER_OFF_IRQ')==0 and values.get('WLED_POWER_OFF_RESET_REFUSED')==1),
+                    'on_readback_after_two_seconds':refused or prepare_refused or (values.get('WLED_POWER_RESTORED_MODULE')==0x80 and values.get('WLED_POWER_RESTORED_IRQ')==2 and values.get('WLED_POWER_RESTORED_US',0)-values.get('WLED_POWER_OFF_US',0)>=2000000),
                     'actual_AP_context_stage_zero':bool(actual.get('actual_AP_stage')),
                     'actual_kernel_log_total_zero':bool(actual.get('actual_kernel_log_total')),
                     'no_native_startup_log':'Darwin Kernel Version' not in text and 'POLARIS SMP CHECK:' not in text,
                     'no_panic':'panic(cpu ' not in text}
+            if prepare_refused:
+                checks.pop('preflight_succeeded')
+                checks['preflight_refused_without_write']=values.get('WLED_POWER_PREPARE_ERROR')==expected_error and values.get('WLED_POWER_PREPARE_WRITES_ISSUED')==0
             if oem:
                 words={int(k[len('WLED_POWER_W'):-len('_WORD')],16):v for k,v in values.items()
                        if re.fullmatch(r'WLED_POWER_W[0-9A-F]{2}_WORD',k)}
                 checks.update(OEM_policy_explicit=values.get('WLED_POWER_OEM_STATUS_POLICY')==1,
-                              retained_status_history=bool(words) and len(words)==values.get('WLED_POWER_WITNESS_COUNT'))
+                              retained_status_history=(bool(words) or prepare_refused) and len(words)==values.get('WLED_POWER_WITNESS_COUNT'))
+                if prepare_kind=='before-cycle':
+                    checks.pop('OEM_policy_explicit')
+                    checks['OEM_scope_compiled_but_not_entered']='WLED_POWER_OEM_STATUS_POLICY' not in values and values.get('WLED_POWER_UNSTARTED')==1
                 if status_injected:
                     checks['serious_word_retained']=any((v&255)&(status_injected&255) or
                         ((v>>8)&255)&(status_injected>>8) for v in words.values())
+                elif prepare_refused:
+                    if prepare_kind=='before-cycle':
+                        checks['before_cycle_no_WLED_access']=values.get('WLED_POWER_UNSTARTED')==1 and values.get('BUTTONS_PRESTART_REFUSED')==1 and values.get('WLED_POWER_PREPARE_READS')==0 and 'WLED_POWER_SOURCE_STATUS' not in values
+                    else:checks['source_status_retained_before_refusal']=values.get('WLED_POWER_SOURCE_STATUS_VALID')==3 and values.get('WLED_POWER_SOURCE_STATUS')==0x101
                 else:
                     checks['ILIM_history_not_discarded']=values.get('WLED_POWER_WITNESS_FAULT_OR')==1 and values.get('WLED_POWER_WITNESS_RT_OR')==1
                 sys.path.insert(0,str(root/'tools'))
-                from polaris_wled_journal import parse_packet,parse_reset_receipt
+                from polaris_wled_journal import parse_packet,parse_reset_receipt,parse_zero_write_receipt
                 def dump(label,address,size,maximum):
                     if not 0x40000000<=address<0x240000000 or not 0<size<=maximum or address+size>0x240000000:
                         raise ValueError('invalid model-only WLED witness address/size')
@@ -106,7 +122,12 @@ def main():
                 raw=dump('actual-journal',values.get('WLED_JOURNAL_ADDRESS',0),values.get('WLED_JOURNAL_BYTES',0),1348)
                 parsed=parse_packet(raw);journal_evidence['journal']=parsed
                 checks['actual_binary_journal']=values.get('WLED_JOURNAL_CAPTURED')==1 and parsed['error']==expected_error
-                if refused:
+                if prepare_refused:
+                    receipt=dump('actual-zero-write-receipt',values.get('WLED_RESET_RECEIPT_ADDRESS',0),values.get('WLED_RESET_RECEIPT_BYTES',0),16)
+                    validated=parse_zero_write_receipt(receipt,raw)
+                    journal_evidence['zero_write_receipt']=validated
+                    checks['actual_zero_write_recovery_receipt']=values.get('WLED_RESET_RECEIPT_READY')==1 and validated['no_PMIC_command_issued_receipt']
+                elif refused:
                     checks['no_false_final_receipt']=values.get('WLED_RESET_RECEIPT_READY')==0 and not parsed['cycle_restored_readbacks']
                 else:
                     receipt=dump('actual-final-receipt',values.get('WLED_RESET_RECEIPT_ADDRESS',0),values.get('WLED_RESET_RECEIPT_BYTES',0),56)
@@ -120,10 +141,13 @@ def main():
             except subprocess.TimeoutExpired:p.kill();p.wait()
     result={'passed':bool(checks) and all(checks.values()) and error is None,'checks':checks,'error':error,'seconds':time.monotonic()-began,
             'driver_sha256':sha(app),'driver_manifest_sha256':sha(a.driver_manifest),'kernel_sha256':sha(a.kernel),'payload_sha256':sha(a.payload),
+            'driver_manifest_path':str(a.driver_manifest.resolve().relative_to(root)),
             'inputs':m['inputs'],'runner_sha256':sha(Path(__file__)),'raw_fields':values,'actual_guest_memory':actual,'controlled_write_timeout':m['controlled_WLED_write_timeout'],
             'WLED_power_cycle_only':True,'release_handoff_admitted':False,'actual_phone_or_PMIC_emulated':False,
             'WLED_OEM_status_policy':m.get('WLED_OEM_status_policy',False),
             'controlled_status_after_issue':m.get('controlled_WLED_status_after_issue',0),
+            'controlled_prepare_refusal':m.get('controlled_WLED_prepare_refusal',False),
+            'controlled_prepare_kind':m.get('controlled_WLED_prepare_kind'),
             'kernel_CPU_started':False,'physical_PMIC_power_control_tested':False,'command':cmd}
     result['binary_journal_evidence']=journal_evidence
     result['observer_inputs']={'tools/polaris_wled_journal.py':sha(root/'tools/polaris_wled_journal.py')}

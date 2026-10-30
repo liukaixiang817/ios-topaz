@@ -728,7 +728,15 @@ extends it with both actual reset-gate observations. Actual EFI memory dumps
 are checked by the host against the full history, rather than treating the
 earlier cycle-completion print or empty ACK as the final evidence. Nine
 software-PMIC EFI cases pass; physical USB/power/darkness and the native lock
-screen remain unproven, and physical OEM image admission remains disabled.
+screen remain unproven, and physical OEM image admission remains disabled
+at that historical0112 checkpoint.0113 now adds a separate physical-only
+admission, bound to the real Polaris inventory/timeline and Qualcomm source
+oracle. Eleven OEM full-EFI cases cover success, timeout, three zero-write
+preparation paths and six serious-status faults; the original strict control
+also passes. All raw binary receipts are independently decoded. This is a
+prepared no-OS RAM candidate, not a phone OFF/optical/native lock-screen proof.
+The original strict path and saved register scope remain intact; dormant
+zero-write diagnostics never grant writer permission.
 
 The audited UniXNU OS profile is iPadOS17.7.11/21H461 with XNU10063.141.1 and
 new MobileGraphics/IOSurface/IOHID ABI integration. Our current iOS16/XNU8796

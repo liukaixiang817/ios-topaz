@@ -23,7 +23,8 @@ def sha(path):
 
 
 def admit(driver, models, fault_watch=False):
-    if driver.get('WLED_OEM_status_policy',False) is not False or driver.get('controlled_WLED_status_after_issue',0)!=0:
+    if (driver.get('WLED_OEM_status_policy',False) is not False or
+        any(driver.get(k) for k in ('WLED_OEM_physical_cycle','controlled_WLED_prepare_refusal','controlled_WLED_status_after_issue'))):
         raise ValueError('OEM writer status policy is not readonly inventory')
     if type(fault_watch) is not bool or driver.get('WLED_readonly_fault_watch',False) is not fault_watch:
         raise ValueError('explicit readonly fault-watch scope mismatch')

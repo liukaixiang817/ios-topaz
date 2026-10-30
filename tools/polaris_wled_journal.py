@@ -87,12 +87,29 @@ def parse_reset_receipt(receipt,packet,mode=2):
                 actual_FASTBOOT_proven=False,hardware_health_proven=False)
 
 
+def parse_zero_write_receipt(raw,packet=None,mode=2):
+    if len(raw)!=16 or raw[:4]!=b'WLR0' or mode not in (1,2) or raw[12]!=mode or any(raw[14:]):
+        raise ValueError('invalid zero-write WLED reset receipt')
+    if packet is not None:
+        p=parse_packet(packet)
+        if (p['issued'] or p['completed'] or p['flags']&4 or not (p['error'] or zero_unstarted(p)) or
+            struct.unpack_from('<Q',raw,4)[0]!=p['cookie'] or raw[13]!=p['error']):
+            raise ValueError('foreign or nonzero-write WLED reset receipt')
+    return dict(no_PMIC_command_issued_receipt=True,actual_FASTBOOT_proven=False)
+
+
+def zero_unstarted(p):
+    return (p['phase']==0 and p['count']==0 and p['error']==p['witness_error']==0 and
+            p['flags']==0 and p['issued']==p['completed']==0 and
+            p['request']==p['acknowledged']==0 and p['module']==p['irq']==0)
+
+
 class WledOemProtocol(KernelProtocol):
     """Dedicated pre-XNU client. It exposes no touch, native shutdown or raw reset."""
     limits=dict(KernelProtocol.limits,**{'wled-journal':LIMIT})
 
     def __init__(self,transport):
-        super().__init__(transport);self.journal=None;self.reset_sent=False
+        super().__init__(transport);self.journal=None;self.reset_sent=False;self.last_reset_response=None
 
     def _control(self,command):
         if command not in (b'getvar:kernel-state',b'oem boot'):
@@ -122,6 +139,7 @@ class WledOemProtocol(KernelProtocol):
         self.reset_sent=True
         self.transport.write(b'reboot-bootloader' if bootloader else b'reboot')
         response=self.transport.read(64)
+        self.last_reset_response=response
         if not response.startswith(b'OKAY'):
             raise RuntimeError('WLED reset refused: '+response.decode('ascii',errors='replace'))
         return parse_reset_receipt(response[4:],self.journal,mode)
@@ -134,16 +152,13 @@ class WledOemProtocol(KernelProtocol):
             if self.journal is None:
                 raise ValueError('preparation refusal requires the actual journal')
             p=parse_packet(self.journal)
-            if p['issued'] or p['completed'] or p['flags']&4 or not p['error']:
+            if p['issued'] or p['completed'] or p['flags']&4 or not(p['error'] or zero_unstarted(p)):
                 raise ValueError('not a proven zero-write preparation refusal')
         elif state not in ('waiting-payload','validated'):
             raise ValueError('no unstarted WLED recovery')
         self.reset_sent=True;self.transport.write(b'reboot-bootloader');response=self.transport.read(64)
+        self.last_reset_response=response
         if not response.startswith(b'OKAY'):
             raise RuntimeError('unstarted WLED reset refused')
         raw=response[4:]
-        if len(raw)!=16 or raw[:4]!=b'WLR0' or raw[12]!=2 or any(raw[14:]):
-            raise ValueError('invalid zero-write WLED reset receipt')
-        if state=='prepared' and (struct.unpack_from('<Q',raw,4)[0]!=p['cookie'] or raw[13]!=p['error']):
-            raise ValueError('foreign zero-write WLED reset receipt')
-        return dict(no_PMIC_command_issued_receipt=True,actual_FASTBOOT_proven=False)
+        return parse_zero_write_receipt(raw,self.journal if state=='prepared' else None,2)

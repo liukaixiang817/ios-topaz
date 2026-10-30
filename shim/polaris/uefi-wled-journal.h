@@ -36,11 +36,18 @@ static inline uint32_t pwj_history_crc(const struct polaris_wled_status_witness 
 }
 static inline uint8_t pwj_flags(const struct polaris_wled_power *p)
 {return (p->actual_on?1u:0u)|(p->desired_on?2u:0u)|(p->uncertain?4u:0u);}
+static inline bool pwj_dormant_zero(const struct polaris_wled_power *p)
+{
+    return p->status_policy==PWP_STRICT_SNAPSHOT&&!p->issued&&!p->completed&&!p->uncertain&&
+        !p->witness.count&&!p->witness.error&&!p->request&&!p->acknowledged&&
+        ((p->phase==PWP_UNINITIALIZED&&!p->error&&!p->actual_on&&!p->desired_on&&!p->module&&!p->irq)||
+         (p->phase==PWP_FAILED&&p->error));
+}
 static inline bool pwj_packet(struct polaris_wled_journal *j,
     const struct polaris_wled_power *p,uint8_t *out,unsigned capacity,unsigned *bytes)
 {
     if(!j||!p||!out||!bytes||!j->cookie||j->sequence==UINT32_MAX||
-       p->status_policy!=PWP_OEM_STATUS_WITNESS||p->witness.count>PWS_RECORDS||
+       (p->status_policy!=PWP_OEM_STATUS_WITNESS&&!pwj_dormant_zero(p))||p->witness.count>PWS_RECORDS||
        p->error>UINT16_MAX||p->witness.error>UINT16_MAX||p->issued>255||p->completed>255)
         return false;
     unsigned count=p->witness.count,length=PWJ_HEADER+count*PWJ_RECORD+4;

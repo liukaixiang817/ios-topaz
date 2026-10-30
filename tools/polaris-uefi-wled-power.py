@@ -15,7 +15,7 @@ def sha(p):
 
 
 def binding(boot, image, driver):
-    if any(x.get('WLED_OEM_status_policy') or x.get('controlled_WLED_status_after_issue') for x in (boot,image,driver)):
+    if any(x.get(k) for x in (boot,image,driver) for k in ('WLED_OEM_status_policy','WLED_OEM_physical_cycle','controlled_WLED_prepare_refusal','controlled_WLED_status_after_issue')):
         raise ValueError('OEM status policy has no physical power-controller admission yet')
     if (boot.get('state') != 'temporary_WLED_power_cycle_boot_command_succeeded' or
             boot.get('image_sha256') != image.get('sha256') or not boot.get('sent_utc') or

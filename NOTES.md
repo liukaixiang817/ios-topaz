@@ -34,6 +34,69 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0113 physical OEM candidate READY; phone connection not yet recovered
+
+- All0113 local/build/model/codec workers ENDED; NO phone boot/cycle, PMIC
+  power write, OS/root/storage/NVRAM access or kernel CI.05:48:44UTC directed
+  expected Polaris FASTBOOT query timed out. Last real expected FASTBOOT
+  remains05:08:59UTC; current screen/OS/connection unknown. Do not infer Android
+  activity or claim phone still connected. No physical action requested yet.
+- physical-OEM-candidate-readiness-proof.json independently rehashes current
+  sources,11 OEM full-EFI models plus strict control, all raw firmware memory
+  journals/final or zero receipts, physical inventory/timeline/vendor oracle,
+  packaged image and actual upstream EDK2 whole27897544B decode.12 actual EFI
+  cases259 checks and56 local ASan/UBSan/scope/wire checks15.003s PASS. Explicit
+  SOFTWARE PMIC, NOT SD845/actual USB/power/optical emulation or phone OFF proof.
+- SELECTED *-driver-0002/*-run-0003 only: normal OEM22, timeout22, three
+  zero-write owner/configuration/before-cycle cases22 each, six FAULT/RT
+  OVP/SC/unknown cases22 each, original strict17. Successful actual firmware
+  packet30 records/final receipt32/four commands/OFF2s/ON softstart retained.
+  Three actual WLR0 cases preserve zero issued/completed/uncertain counters.
+  Timeout1issued/0completed and serious1issued/1completed both remain sticky,
+  uncertain and reset-denied. AP memory stage0/kernel-log0, CPU_ON compiled OUT.
+- New separate --wled-oem-physical-cycle flag, packager and client; old
+  --wled-oem-status stays QEMU-only. Ordinary iOS/readonly/old power admissions
+  reject both new physical and refusal-injection scopes, including stripped
+  OEM flag. New image binds exact physical DT/inventory0110timeline/Qualcomm
+  source oracle/current eleven models/source/wire2/1348/56/16. Only original
+  saved d846bit7 and OVP notification d814/15/16bit1, original >=10ms softstart;
+  owner/static config/severe statuses/read/clock/timeout protections unchanged.
+  No policy switch after refusal or general PMIC/storage interface added.
+- Important actual zero-write recovery fix: configuration can fail before
+  OEM policy assignment; buttons can refuse before WLED cycle starts. Bounded
+  diagnostic serialization now accepts ONLY exact dormant zero-write state;
+  no power permission, error clearing or invented WLED error. Actual unstarted
+  case preserves error0/phase0/no WLED read, and independent WLR0 checks exact
+  zero counters. Owner/config cases retain original32/33 errors and raw source
+  status/partial validity. This closes safe recovery gaps before device testing.
+- READY candidate ONLY0113/phone-OEM-cycle-0003 with physical-OEM-driver-0002.
+  Original81FW/SimpleInit/BootShim/board DT preserved; actual whole GetInfo/
+  decode byte-exact. Private boot-once.py defaults OFFLINE and was checked;
+  explicit --boot-once requires committed source, no existing boot.json,
+  fresh expected serial-directed Polaris FASTBOOT, complete frozen proof.
+  It sends ONE RAM image only; cycle is a separate dedicated client action.
+  Freeze/boot cannot permit OS/root/storage writes. No boot.json exists yet.
+- Failures retained: old limited owner-only matrices/candidates0001/2 must
+  NEVER boot. Before-cycle observer initially demanded a policy-entry log
+  from a path intentionally never entered; fixed observer to verify compiled
+  scope plus actual unstarted path, reran all cases under current observer.
+  Early local fixture incorrectly labelled zero error as restored despite
+  prepare refusal; fixed fixture, not power gate. Missing None-valued scope
+  key now rejects cleanly. Current selected proof includes all three cases.
+- NEXT commit/push completed source, fresh directed readonly connection check.
+  If expected Polaris present, automatically ONE pre-XNU RAM/cycle/capture of
+  actual binary journal/final receipt, reset and independently actual FASTBOOT.
+  If still absent/no remote endpoint, request physical USB/FASTBOOT recovery
+  once because candidate is concrete and ready; do not repeat old recovery,
+  vendor commands or failed power cycles. ACK/electrical readback is NOT optical
+  darkness. Native lock-screen/FW mailbox and human true-dark/wake remain NEXT.
+- Pending outer userdata journal review STILL may_boot_iOS=false and
+  may_write_userdata=false. This CPU_ON-OUT hardware-only candidate accesses
+  no root and does not replace a fresh full strictRO audit before iOS/native
+  integration. ca_vbl1/graphics865407ee/native0104b7fa37ac and fuller20F66
+  inputs unchanged; no new kernel code, so no kernel CI. Sound/Wi-Fi/runtime/
+  menu remain unfinished. Preserve Android/Windows/all existing data.
+
 ### 0112 final-read journal COMPLETE; USB absent after last confirmed FASTBOOT
 
 - Completed source5a1e3fa committed and pushed to codex/polaris-preflight.

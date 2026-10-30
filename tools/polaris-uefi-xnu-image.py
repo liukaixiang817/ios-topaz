@@ -72,6 +72,7 @@ def admit(driver,qemu,ci,profile,preflight):
     if any(x.get(k) for x in (driver,qemu) for k in
            ('WLED_readonly_inventory_only','WLED_readonly_fault_watch','controlled_WLED_fault_pulse',
             'WLED_power_cycle_only','WLED_OEM_status_policy','controlled_WLED_status_after_issue',
+            'WLED_OEM_physical_cycle','controlled_WLED_prepare_refusal',
             'PMIC_write_api','kernel_CPU_ON_compiled_out')):
         raise ValueError('WLED pre-XNU inventory/power cycle cannot be admitted as an iOS handoff')
     if driver.get('physical_owned_marker_test') or qemu.get('physical_owned_marker_test'):

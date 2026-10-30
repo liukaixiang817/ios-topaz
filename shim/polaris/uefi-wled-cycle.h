@@ -4,8 +4,17 @@
  */
 #ifndef POLARIS_EFI_WLED_CYCLE_H
 #define POLARIS_EFI_WLED_CYCLE_H
+#if defined(EFI_XNU_WLED_OEM_PHYSICAL_CYCLE) && (defined(POLARIS_EFI_TEST_QEMU) || !defined(EFI_XNU_WLED_OEM_STATUS))
+#error "Physical OEM WLED cannot be a mock or implicit status mode"
+#endif
+#if defined(EFI_XNU_TEST_WLED_PREPARE_REFUSAL) && (!defined(POLARIS_EFI_TEST_QEMU) || !defined(EFI_XNU_WLED_OEM_STATUS))
+#error "WLED preparation refusal is an isolated OEM mock only"
+#endif
 #include "uefi-wled-power.h"
 #if defined(EFI_XNU_WLED_OEM_STATUS)
+#if !defined(POLARIS_EFI_TEST_QEMU) && !defined(EFI_XNU_WLED_OEM_PHYSICAL_CYCLE)
+#error "Physical OEM WLED needs its separate explicit cycle admission"
+#endif
 #include "uefi-wled-journal.h"
 static struct polaris_wled_journal cycle_journal;
 static uint8_t cycle_journal_wire[PWJ_LIMIT],cycle_reset_wire[PWJ_RECEIPT];
@@ -30,6 +39,9 @@ static void cycle_mock_init(void)
     cycle_mock_pmic[0][0x5a]=0x80;cycle_mock_pmic[0][0x5b]=0x84;
     bytes_copy(cycle_mock_pmic[1]+0x46,sink,6);
     for(unsigned n=0;n<4;n++)bytes_copy(cycle_mock_pmic[1]+0x50+0x10*n,string,9);
+#if defined(EFI_XNU_TEST_WLED_PREPARE_REFUSAL) && EFI_XNU_TEST_WLED_PREPARE_REFUSAL==2
+    cycle_mock_pmic[1][0x57]^=1; /* Config mismatch before OEM policy init. */
+#endif
 }
 static uint32_t cycle_read(void *context,unsigned bank,uint32_t offset)
 {
@@ -40,7 +52,13 @@ static uint32_t cycle_read(void *context,unsigned bank,uint32_t offset)
         if(offset==0x900+254*4)return 0x0103d900;
         return 0;
     }
-    if(bank==PW_CONFIG)return 0;
+    if(bank==PW_CONFIG) {
+#if defined(EFI_XNU_TEST_WLED_PREPARE_REFUSAL) && EFI_XNU_TEST_WLED_PREPARE_REFUSAL==1
+        return 1; /* Explicit foreign owner; zero writes and independent recovery. */
+#else
+        return 0;
+#endif
+    }
     if(bank!=PW_OBSERVER||offset<cycle_mock_offset){cycle_channel_error=1;return 2;}
     unsigned local=offset-cycle_mock_offset;
     if(local==8)return cycle_channel_error?2:1;
@@ -141,8 +159,12 @@ static void wled_cycle_begin(void)
      * The first raw status is retained in saved; init checks every canonical
      * factory byte and two live snapshots. This is not a clean-health claim. */
     report("WLED_POWER_OEM_STATUS_POLICY=",1);
-    bool initialized=pw_collect(&cycle_bus,&saved)&&
-        pwp_init_oem_status(&cycle_power,&cycle_bus,&saved,false);
+    unsigned source_before=cycle_bus.reads;
+    bool collected=pw_collect(&cycle_bus,&saved);
+    unsigned source_reads=cycle_bus.reads-source_before;
+    report("WLED_POWER_SOURCE_STATUS_VALID=",(source_reads>=4?1u:0u)|(source_reads>=5?2u:0u));
+    report("WLED_POWER_SOURCE_STATUS=",(uint32_t)saved.faults[0]|((uint32_t)saved.faults[1]<<8));
+    bool initialized=collected&&pwp_init_oem_status(&cycle_power,&cycle_bus,&saved,false);
 #else
     bool initialized=polaris_wled_inventory(&cycle_bus,&saved)&&
         pwp_init(&cycle_power,&cycle_bus,&saved,false);
@@ -237,7 +259,12 @@ static int wled_cycle_reset_ready(void)
 static int wled_journal_capture(void *context,const uint8_t **data,uint64_t *bytes)
 {
     (void)context;unsigned length=0;
-    if(!cycle_started||!cycle_done||!data||!bytes||
+    if(load_state!=3||(cycle_started&&!cycle_done)||!data||!bytes)return 0;
+    if(!cycle_journal.cookie) {
+        cycle_journal.cookie=buttons_us(0)^UINT64_C(0x574c45444a320001);
+        if(!cycle_journal.cookie)cycle_journal.cookie=1;
+    }
+    if(
        !pwj_packet(&cycle_journal,&cycle_power,cycle_journal_wire,sizeof(cycle_journal_wire),&length))return 0;
     *data=cycle_journal_wire;*bytes=length;return 1;
 }

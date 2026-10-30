@@ -255,7 +255,11 @@ static void boot_kernel(void *context)
     __asm__ volatile("msr ICC_IGRPEN1_EL1,%0; isb"::"r"(UINT64_C(0)):"memory");
     uint64_t group1;__asm__ volatile("mrs %0,ICC_IGRPEN1_EL1":"=r"(group1));report("EFI_IRQ_GROUP1=",group1);
 #if EFI_XNU_BUTTONS_AVAILABLE
-    if(!buttons_prepare()) {
+    int keys_prepared=buttons_prepare();
+#if defined(POLARIS_EFI_TEST_QEMU) && defined(EFI_XNU_TEST_WLED_PREPARE_REFUSAL) && EFI_XNU_TEST_WLED_PREPARE_REFUSAL==3
+    keys_prepared=0; /* Exercise the actual pre-WLED refusal return path. */
+#endif
+    if(!keys_prepared) {
         /* No XNU core has run. Keep the controlled polled USB service and
          * ordinary RAM reset available; don't spend an iOS boot on refusal. */
         load_state=3;report("BUTTONS_PRESTART_REFUSED=",1);return;
@@ -682,13 +686,27 @@ static void test_monitor(void)
             cycle_reset_checked=1;
             report("WLED_POWER_OFF_RESET_REFUSED=",!prepare_reset(0,1)&&!prepare_reset(0,2));
         }
-        if(cycle_done&&!cycle_final_checked) {
+        int before_cycle_refused=0;
+#if defined(EFI_XNU_TEST_WLED_PREPARE_REFUSAL) && EFI_XNU_TEST_WLED_PREPARE_REFUSAL==3
+        before_cycle_refused=load_state==3&&!cycle_started;
+#endif
+        if((cycle_done||before_cycle_refused)&&!cycle_final_checked) {
             cycle_final_checked=1;
+            if(before_cycle_refused) {
+                report("WLED_POWER_MOCK_BACKEND=",1);
+                report("WLED_POWER_UNSTARTED=",1);
+                report("WLED_POWER_PREPARE_ERROR=",cycle_power.error);
+                report("WLED_POWER_PREPARE_WRITES_ISSUED=",cycle_power.issued);
+                report("WLED_POWER_PREPARE_READS=",cycle_bus.reads);
+                report("WLED_KERNEL_AP_STAGE=",polaris_efi_ap_state.stage);
+                report("WLED_AP_STAGE_ADDRESS=",(uintptr_t)&polaris_efi_ap_state.stage);
+            }
             report("WLED_POWER_FINAL_RESET_ALLOWED=",prepare_reset(0,1)&&prepare_reset(0,2));
             report("WLED_POWER_FINAL_ERROR=",cycle_power.error);
             report("WLED_POWER_FINAL_UNCERTAIN=",cycle_power.uncertain);
 #if defined(EFI_XNU_WLED_OEM_STATUS)
             const uint8_t *journal=0,*receipt=0;uint64_t journal_bytes=0,receipt_bytes=0;
+            if((cycle_power.error||before_cycle_refused)&&!cycle_power.issued)wled_cycle_status_report();
             int captured=wled_journal_capture(0,&journal,&journal_bytes);
             report("WLED_JOURNAL_CAPTURED=",captured);
             report("WLED_JOURNAL_ADDRESS=",(uintptr_t)journal);

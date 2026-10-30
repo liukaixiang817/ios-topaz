@@ -23,7 +23,7 @@ def sha(p):
 
 
 def admit(d, models):
-    if d.get('WLED_OEM_status_policy') or d.get('controlled_WLED_status_after_issue'):
+    if any(d.get(k) for k in ('WLED_OEM_status_policy','WLED_OEM_physical_cycle','controlled_WLED_prepare_refusal','controlled_WLED_status_after_issue')):
         raise ValueError('OEM status policy has no physical power-image admission yet')
     required = dict(WLED_power_cycle_only=True,WLED_readonly_inventory_only=False,
                     PMIC_write_api=True,kernel_CPU_ON_compiled_out=True,kernel_handoff=False,
