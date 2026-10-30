@@ -34,6 +34,37 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0119 runtime lifecycle/lease continuation implementation COMPILED; actual models PENDING
+
+- Directed readonly actual expectedPolaris FASTBOOT13:00:22.464914UTC passed,
+  `0119/actual-fastboot-start-0001.json`. No phone boot/cycle/PMIC/OS/root/storage/
+  NVRAM/Android operation. Prior0113/0116 physical trials stay ENDED, opticalOFF
+  human confirmation received; no repeat. Root gates still false.
+- Actual idle_guard() had a liveness bug: expiry helper sets fired once, first
+  callback starts native shutdown but cannot yet reset; later expiry returns0
+  so continuation was skipped. New native-WLED-only latch keeps invoking the
+  real shutdown/restore/readback/receipt guards on later callbacks. No shortening
+  1800s policy and no reset/drain/restore bypass. Needs actual wholeEFI model.
+- New independent QEMU-only lifecycle flags: capacity64 (backing storage8192),
+  stale ACK after actual OFF completion (native must timeout, terminal restore
+  remains separate), actual250ms terminal receipt age/refuse-reset, and lease
+  continuation. Lease seeds only synthetic deadline INPUT, calls actual control
+  idle_guard repeatedly; reset observer is AFTER actual guards and holds generic
+  model for raw binary capture, NOT actual guest reset/physical30min proof.
+  New clock-regression fault changes one PWP time input after first WRITE; old
+  static config, severe-bit, uncertain/no-retry and cache guards remain intact.
+- Local22 native/wire/control/IIG/scope/ownership/lease tests7.187s PASS. Actual
+  normal+8fault+4lifecycle EFI TUs0002 compiled full Wall/Wextra/Werror with
+  explicitly UNBOUND compile-only offsets, not image/execution admission.
+  TU0001 lease fixture erroneously called poll rather than actual idle_guard;
+  compile failure retained, corrected fixture without warning suppression.
+- Actual model work is NEXT, not yet PASS. Current native kernel/profile has
+  NOT changed: reuse verified0118 CI41056172330/source2d55a4e/kerneldd4bd757...
+  Do not create new kernelCI for these FW/host changes. No physical runtime
+  backend/image/client/admission exists yet; must finish these actual models,
+  then independent physical scope and NEW strictRO root/journal review before
+  real iOS powerkey dark/wake. Keep ca_vbl1 and all Android/Windows/data/marker.
+
 ### 0118 actual EFI-XNU native/FW WLED exchange + 7 fault paths COMPLETE; physical runtime NOT READY
 
 - Completed FW/host sourcefbf6a654665d5096f6915a4ca844a45989bda021 is committed,

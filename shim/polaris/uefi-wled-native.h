@@ -7,13 +7,21 @@
 #if !defined(POLARIS_EFI_TEST_QEMU) || !defined(EFI_XNU_SHUTDOWN_BRIDGE) || !EFI_XNU_BUTTONS_AVAILABLE
 #error "Native WLED integration is an independent QEMU RAM-drain scope only"
 #endif
-#if defined(EFI_XNU_WLED_NATIVE_FAULT) && (EFI_XNU_WLED_NATIVE_FAULT<1 || EFI_XNU_WLED_NATIVE_FAULT>7)
+#if defined(EFI_XNU_WLED_NATIVE_FAULT) && (EFI_XNU_WLED_NATIVE_FAULT<1 || EFI_XNU_WLED_NATIVE_FAULT>8)
 #error "Unknown explicit SOFTWARE PMIC fault"
+#endif
+#if defined(EFI_XNU_WLED_NATIVE_LIFECYCLE) && (EFI_XNU_WLED_NATIVE_LIFECYCLE<1 || EFI_XNU_WLED_NATIVE_LIFECYCLE>4 || defined(EFI_XNU_WLED_NATIVE_FAULT))
+#error "Unknown/mixed SOFTWARE runtime lifecycle fixture"
 #endif
 #include "uefi-wled-runtime.h"
 #include "uefi-wled-journal.h"
 #include "../../tools/polaris-wled-mailbox.h"
 #define WLN_RECORDS 8192u
+#if defined(EFI_XNU_WLED_NATIVE_LIFECYCLE) && EFI_XNU_WLED_NATIVE_LIFECYCLE==1
+#define WLN_CAPACITY 64u
+#else
+#define WLN_CAPACITY WLN_RECORDS
+#endif
 static struct polaris_wled_read_bus wln_bus;
 static struct polaris_wled_power wln_power;
 static struct polaris_wled_runtime wln_runtime;
@@ -31,6 +39,9 @@ static unsigned wln_archive_owned;
 static uint64_t wln_native_cookie;
 static uint32_t wln_native_sequence;
 static unsigned wln_receipt_issued,wln_lease_recovery;
+#if defined(EFI_XNU_WLED_NATIVE_LIFECYCLE)
+static unsigned wln_test_reset_observed;
+#endif
 static volatile struct polaris_wled_slot *wln_slot(void)
 {return (void *)(uintptr_t)(POLARIS_RAM_BASE+EFI_XNU_WLED_OFFSET);}
 /* Called only during pre-handoff admission with the just-validated map. Self
@@ -70,7 +81,13 @@ static void wln_publish(const struct polaris_wled_ack *ack,bool first)
         __atomic_store_n(&to->ready,PWM_READY,__ATOMIC_RELEASE);
     } else {
         clean((uintptr_t)to,128);
-        __atomic_store_n(&to->sequence,ack->sequence,__ATOMIC_RELEASE);
+        uint64_t sequence=ack->sequence;
+#if defined(EFI_XNU_WLED_NATIVE_LIFECYCLE) && EFI_XNU_WLED_NATIVE_LIFECYCLE==2
+        /* Explicit stale publication fault, not a product acknowledgement.
+         * The native producer must not accept OFF or invent an ON frame. */
+        if(sequence==1&&!ack->error&&!ack->on)sequence=0;
+#endif
+        __atomic_store_n(&to->sequence,sequence,__ATOMIC_RELEASE);
     }
     clean((uintptr_t)to,128);
 }
@@ -113,7 +130,7 @@ static void wln_read_command(void *context,uint32_t offset,uint32_t command)
         unsigned reg=(command>>4)&255;
         if(reg==8)wln_pmic[0][8]=(uint8_t)(++wln_mock_fault_reads&1);
         if(reg==0x10)wln_pmic[0][0x10]=(uint8_t)(++wln_mock_rt_reads&1);
-#if defined(EFI_XNU_WLED_NATIVE_FAULT) && EFI_XNU_WLED_NATIVE_FAULT>=2
+#if defined(EFI_XNU_WLED_NATIVE_FAULT) && EFI_XNU_WLED_NATIVE_FAULT>=2 && EFI_XNU_WLED_NATIVE_FAULT<=7
         if(wln_power.issued) {
             const unsigned masks[6]={2,4,8,2,4,8};
             unsigned fault=EFI_XNU_WLED_NATIVE_FAULT-2;
@@ -140,6 +157,19 @@ static uint32_t wln_status(void *context,uint32_t offset)
 #endif
     return 1;
 }
+static uint64_t wln_bus_now(void *context)
+{
+#if defined(EFI_XNU_WLED_NATIVE_FAULT) && EFI_XNU_WLED_NATIVE_FAULT==8
+    static unsigned injected;
+    if(wln_power.issued&&!injected) {
+        injected=1;
+        report("WLED_NATIVE_CLOCK_PREVIOUS=",wln_power.previous_us);
+        report("WLED_NATIVE_CLOCK_INJECTED=",wln_power.previous_us-1);
+        return wln_power.previous_us-1; /* One explicit input fault; sticky. */
+    }
+#endif
+    return buttons_us(context);
+}
 static int wln_begin(void)
 {
     if(wln_started)return 0;wln_started=1;
@@ -153,7 +183,7 @@ static int wln_begin(void)
     expected.ctrl[2]=0x80;expected.irq_enable=2;expected.psm[0]=0x80;expected.psm[1]=0x84;
     bytes_copy(expected.sink,wln_pmic[1]+0x46,6);
     for(unsigned n=0;n<4;n++)bytes_copy(expected.string[n],wln_pmic[1]+0x50+n*16,9);
-    wln_bus.read=wln_read;wln_bus.read_command=wln_read_command;wln_bus.now_us=buttons_us;
+    wln_bus.read=wln_read;wln_bus.read_command=wln_read_command;wln_bus.now_us=wln_bus_now;
     wln_power.issue=wln_issue;wln_power.status=wln_status;
     wln_cookie=buttons_us(0)^UINT64_C(0x574c454452330001);
     if(!wln_cookie||wln_cookie==PWM_NATIVE_START)wln_cookie=1;
@@ -163,10 +193,10 @@ static int wln_begin(void)
         wln_runtime.power=&wln_power;wln_runtime.records=wln_archive;wln_runtime.capacity=WLN_RECORDS;
         (void)pwr_archive(&wln_runtime);wln_sync_history();return 0;
     }
-    if(!pwr_init(&wln_runtime,&wln_power,wln_archive,WLN_RECORDS))return 0;
+    if(!pwr_init(&wln_runtime,&wln_power,wln_archive,WLN_CAPACITY))return 0;
     wln_sync_history();
     report("WLED_NATIVE_SOFTWARE_PMIC=",1);report("WLED_NATIVE_ARCHIVE_ADDRESS=",(uintptr_t)wln_archive);
-    report("WLED_NATIVE_ARCHIVE_CAPACITY=",WLN_RECORDS);
+    report("WLED_NATIVE_ARCHIVE_CAPACITY=",WLN_CAPACITY);
     return 1;
 }
 static int wln_close(unsigned mode)

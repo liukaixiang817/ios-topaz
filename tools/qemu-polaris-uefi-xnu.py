@@ -45,8 +45,12 @@ def main():
     drain=manifest.get('RAM_native_drain_test')
     native_wled=manifest.get('WLED_native_runtime_test',False)
     native_wled_fault=manifest.get('controlled_WLED_native_fault')
-    if native_wled_fault not in (None,'timeout','fault-ovp','fault-sc','fault-unknown','rt-ovp','rt-sc','rt-unknown') or (native_wled_fault and not native_wled):
+    native_wled_lifecycle=manifest.get('controlled_WLED_native_lifecycle')
+    if native_wled_lifecycle not in (None,'capacity','stale-ack','receipt-age','lease') or (native_wled_lifecycle and (not native_wled or native_wled_fault)):
+        raise ValueError('unknown/mixed native WLED SOFTWARE lifecycle fixture')
+    if native_wled_fault not in (None,'timeout','fault-ovp','fault-sc','fault-unknown','rt-ovp','rt-sc','rt-unknown','clock-regression') or (native_wled_fault and not native_wled):
         raise ValueError('unknown or unscoped native WLED SOFTWARE PMIC fault')
+    wled_probe_aborted=bool(native_wled_fault or native_wled_lifecycle in ('capacity','stale-ack'))
     if type(native_wled) is not bool:
         raise ValueError('native WLED scope must be explicit boolean')
     wled_tokens=a.payload.read_bytes()[0x48:0x2a8].split(b'\0',1)[0].split()
@@ -56,7 +60,8 @@ def main():
     if native_wled and (drain!='success' or manifest.get('kernel_CPU_count')!=4 or
         manifest.get('WLED_native_SOFTWARE_PMIC') is not True or
         manifest.get('WLED_runtime_journal_version')!=3 or
-        manifest.get('WLED_runtime_archive_capacity')!=8192 or
+        manifest.get('WLED_runtime_archive_capacity')!=(64 if native_wled_lifecycle=='capacity' else 8192) or
+        manifest.get('WLED_runtime_archive_storage_capacity')!=8192 or
         manifest.get('raw_reset_requires_native_and_WLED_restore') is not True):
         raise ValueError('this native WLED runner requires the current independent success fixture')
     owned_ufs=manifest.get('isolated_QEMU_owned_UFS_test',False)
@@ -219,6 +224,8 @@ def main():
                     test_done=test_done and ('WLED_NATIVE_FAULT_AFTER_NATIVE_DRAIN=1' if native_wled_fault else
                         'WLED_NATIVE_FINAL_RECEIPT=0x0000000000000001') in text
                     if native_wled_fault:test_done=test_done and 'WLED_NATIVE_FAULT_PAGE_BYTES=0x' in text
+                    if native_wled_lifecycle=='receipt-age':
+                        test_done=test_done and 'WLED_NATIVE_AGED_RESET_REFUSED=0x0000000000000001' in text
                 if ('panic(cpu ' in text or test_done or
                     'XNU_ADMISSION=0x8' in text or p.poll() is not None):break
                 time.sleep(.2)
@@ -265,16 +272,22 @@ def main():
                 # fails; an absent receipt must not erase the actual error ACK.
                 q('pmemsave',{'val':base+syms['_polaris_uefi_wled']-va,'size':256,
                               'filename':str(out/'native-WLED-mailbox.bin')})
+                import polaris_wled_runtime_journal as runtime_wire
                 pages=[]
-                for at in range(1 if native_wled_fault else 3):
+                page_count=1;at=0
+                while at<page_count:
                     prefix='WLED_NATIVE_FAULT_PAGE' if native_wled_fault else f'WLED_NATIVE_PAGE{at}'
                     size=field(prefix+'_BYTES')
                     if not 84<=size<=980:raise ValueError('bounded runtime page missing')
                     pages.append(dump_image(f'wled-page-{at}.bin',field(prefix+'_ADDRESS'),size))
+                    if not at:
+                        page_count=(runtime_wire.page(pages[0])['total']+31)//32
+                        if not 1<=page_count<=(1 if native_wled_fault else 3):
+                            raise ValueError('history exceeds this exact bounded model fixture')
+                    at+=1
                 slot=(out/'native-WLED-mailbox.bin').read_bytes()
                 cookie,sequence,on,wire_error,completed_us,records,ready=struct.unpack_from('<7Q',slot,128)
                 native_cookie=struct.unpack_from('<Q',(out/'native-shutdown-mailbox.bin').read_bytes(),128)[0]
-                import polaris_wled_runtime_journal as runtime_wire
                 journal=runtime_wire.journal(pages)
                 receipt=None
                 if not native_wled_fault:
@@ -344,19 +357,40 @@ def main():
     if count==4 and not a.legacy_core_refusal:
         checks['four_core_affinities_and_xcalls']=checks.get('both_kernel_CPUs_online') is True and checks.get('real_cross_core_callbacks') is True
     if native_wled and not native_wled_fault:
-        checks['native_WLED_actual_workloop_cache_exchange']=('POLARIS WLED NATIVE VM: PASS cycles=3 copies=3 seq=6 error=0; native workloop/cache, SOFTWARE PMIC and RAM pixels only' in ring)
+        if not wled_probe_aborted:
+            checks['native_WLED_actual_workloop_cache_exchange']=('POLARIS WLED NATIVE VM: PASS cycles=3 copies=3 seq=6 error=0; native workloop/cache, SOFTWARE PMIC and RAM pixels only' in ring)
         archive_values={int(v,16) for v in re.findall(r'WLED_NATIVE_ARCHIVE_OWNED=0x([0-9a-fA-F]{16})',text)}
         checks['native_WLED_archive_own_image_and_map']=archive_values=={1}
         checks['native_WLED_current_history_and_final_receipt']=bool(native_wled_wire and
             native_wled_wire['journal']['analysis_passed'] and native_wled_wire['receipt']['restoration_consistent'])
-        checks['native_WLED_actual_12_commands']=all(f'{name}=0x{value:016x}' in text for name,value in
-            [('WLED_NATIVE_RAW_COUNT',78),('WLED_NATIVE_ISSUED',12),('WLED_NATIVE_COMPLETED',12),
-             ('WLED_NATIVE_REQUEST',6),('WLED_NATIVE_ERROR',0),('WLED_NATIVE_FINAL_MODE1_REFUSED',1),
+        raw_count,commands,request={'capacity':(54,8,4),'stale-ack':(30,4,2)}.get(native_wled_lifecycle,(78,12,6))
+        checks['native_WLED_exact_command_and_terminal_population']=all(f'{name}=0x{value:016x}' in text for name,value in
+            [('WLED_NATIVE_RAW_COUNT',raw_count),('WLED_NATIVE_ISSUED',commands),('WLED_NATIVE_COMPLETED',commands),
+             ('WLED_NATIVE_REQUEST',request),('WLED_NATIVE_ERROR',0),('WLED_NATIVE_FINAL_MODE1_REFUSED',1),
              ('WLED_NATIVE_FINAL_ONCE_REFUSED',1)])
+        ack_sequence,ack_on,ack_error,ack_records={'capacity':(5,1,133,50),'stale-ack':(0,0,0,12)}.get(native_wled_lifecycle,(6,1,0,74))
         checks['native_WLED_ack_matches_actual_terminal_population']=bool(native_wled_wire and
-            native_wled_wire['firmware_ack']['sequence']==6 and native_wled_wire['firmware_ack']['on']==1 and
-            native_wled_wire['firmware_ack']['error']==0 and native_wled_wire['firmware_ack']['records']==74 and
+            native_wled_wire['firmware_ack']['sequence']==ack_sequence and native_wled_wire['firmware_ack']['on']==ack_on and
+            native_wled_wire['firmware_ack']['error']==ack_error and native_wled_wire['firmware_ack']['records']==ack_records and
             native_wled_wire['firmware_ack']['ready']==0x50574c4544310001)
+        if native_wled_lifecycle=='receipt-age':
+            try:
+                checks['actual_terminal_readbacks_age_out_without_forged_refresh']=(bool(native_wled_wire) and
+                    field('WLED_NATIVE_RECEIPT_ACTUAL_AGE_US')>=250000 and
+                    field('WLED_NATIVE_AGED_RESET_OBSERVER_COUNT')==0 and field('WLED_NATIVE_AGED_RESET_REFUSED')==1)
+            except ValueError:checks['actual_terminal_readbacks_age_out_without_forged_refresh']=False
+        if native_wled_lifecycle=='lease':
+            try:
+                checks['one_shot_deadline_continues_actual_shutdown_and_restore']=(bool(native_wled_wire) and
+                    field('WLED_NATIVE_LEASE_POLLS')>=2 and field('WLED_NATIVE_LEASE_FIRED')==1 and
+                    field('WLED_NATIVE_LEASE_LATCH')==1 and field('WLED_NATIVE_TEST_RESET_AFTER_GATES')==1 and
+                    field('WLED_NATIVE_LEASE_SYNTHETIC_DEADLINE_INPUT')==1)
+            except ValueError:checks['one_shot_deadline_continues_actual_shutdown_and_restore']=False
+    if wled_probe_aborted:
+        probe_error=134 if native_wled_fault else 133 if native_wled_lifecycle=='capacity' else 132
+        cycles=2 if native_wled_lifecycle=='capacity' else 0
+        acknowledged=4 if cycles else 0
+        checks['native_WLED_expected_native_probe_error']=(f'POLARIS WLED NATIVE VM: FAIL cycles={cycles} copies={cycles} seq={acknowledged} error={probe_error};' in ring)
     if native_wled_fault:
         checks['native_WLED_error_propagates_from_actual_firmware']=('POLARIS WLED NATIVE VM: FAIL cycles=0 copies=0 seq=0 error=134;' in ring and
             'WLED_NATIVE_STOPPED=' in text)
@@ -364,11 +398,17 @@ def main():
         checks['native_WLED_fault_reset_and_receipt_refused']=all(f'WLED_NATIVE_FAULT_{name}_REFUSED=0x0000000000000001' in text
             for name in ('RESET1','RESET2','RECEIPT','FRESH')) and 'WLED_NATIVE_FINAL_RECEIPT=' not in text
         checks['native_WLED_fault_no_retry_unknown_sticky']=all(f'{name}=0x{value:016x}' in text for name,value in
-            [('WLED_NATIVE_ISSUED',1),('WLED_NATIVE_COMPLETED',0 if native_wled_fault=='timeout' else 1),('WLED_NATIVE_UNCERTAIN',1)])
+            [('WLED_NATIVE_ISSUED',1),('WLED_NATIVE_COMPLETED',0 if native_wled_fault in ('timeout','clock-regression') else 1),('WLED_NATIVE_UNCERTAIN',1)])
         checks['native_WLED_failed_raw_and_ACK_retained']=bool(native_wled_wire and native_wled_wire['journal']['failed'] and
             native_wled_wire['firmware_ack']['sequence']==1 and native_wled_wire['firmware_ack']['error']==native_wled_wire['journal']['error'] and
             native_wled_wire['journal']['cookie']==native_wled_wire['firmware_ack']['cookie'] and
             native_wled_wire['journal']['total']==native_wled_wire['firmware_ack']['records'])
+        if native_wled_fault=='clock-regression':
+            try:
+                checks['actual_WRITE_clock_regression_retained_without_retry']=(bool(native_wled_wire) and
+                    native_wled_wire['journal']['error']==38 and
+                    field('WLED_NATIVE_CLOCK_INJECTED')+1==field('WLED_NATIVE_CLOCK_PREVIOUS'))
+            except ValueError:checks['actual_WRITE_clock_regression_retained_without_retry']=False
     if manifest.get('CPU_OSM_readonly_inventory'):
         checks['native_OSM_probe_refused_before_virtual_MMIO']='POLARIS OSM RO: REFUSED platform; no MMIO' in ring and 'POLARIS OSM RO: bank' not in ring and 'POLARIS OSM REQUEST:' not in ring
     if manifest.get('CPU_OSM_stock_performance'):
@@ -380,7 +420,7 @@ def main():
         flag=b'polaristsens=3' if manifest.get('GPU_thermal_extended_trial') else b'polaristsens=2' if manifest.get('GPU_thermal_lease_trial') else b'polaristsens=1'
         checks['explicit_TSENS_readonly_payload']=([t for t in a.payload.read_bytes()[0x48:0x2a8].split(b'\0',1)[0].split() if t.startswith(b'polaristsens=')]==[flag])
         checks['native_future_display_deadline_probe']=('POLARIS PFB PRECISION VM: PASS; actual native callback, future deadlines only' in ring)
-        if native_wled_fault:
+        if wled_probe_aborted:
             checks.pop('native_future_display_deadline_probe')
     if manifest.get('GPU_thermal_lease_trial'):
         checks['native_thermal_eligibility_and_budget']=('POLARIS THERMAL GATE VM: PASS; actual native eligibility/budget, synthetic observations only' in ring)
@@ -393,7 +433,7 @@ def main():
         checks['explicit_TSENS_pair_payload']=([t for t in pair_tokens if t.startswith(b'polarispts=')]==[b'polarispts=1'])
     if manifest.get('GPU_stock_request'):
         checks['native_GPU_stock_refused_before_virtual_MMIO']='POLARIS GPU STOCK: REFUSED platform/mode before GPU MMIO' in ring and 'POLARIS GPU STOCK: armed=' not in ring and 'POLARIS GPU STOCK SAMPLE:' not in ring
-    if not native_wled_fault and b'polarisgpuwctest=1' in a.payload.read_bytes()[0x48:0x2a8].split(b'\0',1)[0].split():
+    if not wled_probe_aborted and b'polarisgpuwctest=1' in a.payload.read_bytes()[0x48:0x2a8].split(b'\0',1)[0].split():
         checks['native_framebuffer_workloop_probe']=('POLARIS PFB VM: PASS callbacks=4 taken=3 empty=1 pokes=3 latest=201 error=0; actual native workloop, no panel/GPU' in ring)
     if manifest.get('physical_buttons'):
         checks['native_three_key_consumer']=('QEMU_PHYSICAL_KEY_CONSUMER=1' in text and
@@ -404,9 +444,9 @@ def main():
         checks['explicit_three_key_payload']=([t for t in a.payload.read_bytes()[0x48:0x2a8].split(b'\0',1)[0].split() if t.startswith(b'polarisbuttons=')]==[b'polarisbuttons=1'])
     if manifest.get('framebuffer_arrival_wake'):
         checks['explicit_framebuffer_wake_payload']=([t for t in a.payload.read_bytes()[0x48:0x2a8].split(b'\0',1)[0].split() if t.startswith(b'polarisfbwake=')]==[b'polarisfbwake=1'])
-        if native_wled_fault:
+        if wled_probe_aborted:
             checks['display_probes_explicitly_aborted_by_injected_WLED_failure']=('POLARIS PFB VM: PASS' not in ring and
-                'POLARIS PFB PRECISION VM: PASS' not in ring and checks['native_WLED_error_propagates_from_actual_firmware'])
+                'POLARIS PFB PRECISION VM: PASS' not in ring and checks['native_WLED_expected_native_probe_error'])
         else:
             checks['arrival_wake_native_probe_required']=checks.get('native_framebuffer_workloop_probe') is True
     if manifest.get('disk_payload_read_only'):
@@ -561,6 +601,7 @@ def main():
                 full_iOS_boot_proven=False,physical_USB_proven=False,SDM845_emulated=False,
                 RAM_native_drain_test=drain,native_shutdown_mailbox=mailbox,
                 WLED_native_runtime_test=native_wled,controlled_WLED_native_fault=native_wled_fault,
+                controlled_WLED_native_lifecycle=native_wled_lifecycle,
                 actual_native_WLED_wire=native_wled_wire,
                 physical_WLED_runtime_admission=False,
                 CPU_OSM_readonly_inventory=bool(manifest.get("CPU_OSM_readonly_inventory")),

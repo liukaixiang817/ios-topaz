@@ -455,6 +455,13 @@ static void reset(void *context,unsigned mode)
 #if defined(EFI_XNU_WLED_NATIVE_RUNTIME_TEST)
     if(!wln_final_fresh(mode)||!shutdown_reset_ready(context,mode))return;
 #endif
+#if defined(EFI_XNU_WLED_NATIVE_RUNTIME_TEST) && defined(EFI_XNU_WLED_NATIVE_LIFECYCLE)
+    /* QEMU-only reset observer AFTER the real reset guards. Hold this model
+     * for binary capture; this is not proof of an actual guest/device reset. */
+    wln_test_reset_observed++;
+    report("WLED_NATIVE_TEST_RESET_AFTER_GATES=",wln_test_reset_observed);
+    return;
+#endif
     (void)context;
 #if !defined(POLARIS_EFI_TEST_QEMU)
     volatile uint32_t *reason=(void*)(uintptr_t)UINT64_C(0x146bf65c);
@@ -567,7 +574,13 @@ static void idle_guard(void *context)
 #endif
     uint64_t now,frequency;__asm__ volatile("mrs %0,cntvct_el0":"=r"(now));
     __asm__ volatile("mrs %0,cntfrq_el0":"=r"(frequency));
-    if(polaris_efi_ram_lease_expired(&ram_lease,now,frequency)){
+    int lease_recovering=polaris_efi_ram_lease_expired(&ram_lease,now,frequency);
+#if defined(EFI_XNU_WLED_NATIVE_RUNTIME_TEST)
+    /* Expiry fires once. Native shutdown/restore requires later polls, too;
+     * do not lose the pending recovery merely because lease.fired is set. */
+    if(wln_lease_recovery)lease_recovering=1;
+#endif
+    if(lease_recovering){
 #if defined(EFI_XNU_WLED_NATIVE_RUNTIME_TEST)
         if(!wln_lease_recovery)report("RAM_HOST_LEASE_EXPIRED=",POLARIS_RAM_LEASE_SECONDS);
 #else
@@ -642,6 +655,31 @@ static void test_ram_drain(int stress_done,unsigned contact_phase)
     struct polaris_shutdown_status s;
     invalidate((uintptr_t)&slot->kernel,sizeof(slot->kernel));
     bytes_copy(&s,(const void*)&slot->kernel,sizeof(s));
+#if defined(EFI_XNU_WLED_NATIVE_RUNTIME_TEST) && defined(EFI_XNU_WLED_NATIVE_LIFECYCLE) && EFI_XNU_WLED_NATIVE_LIFECYCLE==4
+    static unsigned request_reported,lease_polls;
+    if(!sent&&s.cookie&&s.phase==POLARIS_Q_RUNNING&&!s.sequence&&!s.mode&&!s.error) {
+        uint64_t ticks,frequency;
+        __asm__ volatile("mrs %0,cntvct_el0":"=r"(ticks));
+        __asm__ volatile("mrs %0,cntfrq_el0":"=r"(frequency));
+        if(!frequency||frequency>UINT64_MAX/POLARIS_RAM_LEASE_SECONDS)return;
+        cookie=s.cookie;sent=1;ram_lease.active=1;ram_lease.fired=0;
+        ram_lease.last=ticks-frequency*POLARIS_RAM_LEASE_SECONDS;
+        report("WLED_NATIVE_LEASE_SYNTHETIC_DEADLINE_INPUT=",1);
+    }
+    if(sent) {
+        lease_polls++;idle_guard(0); /* Actual control callback, not a helper. */
+        if(!request_reported&&slot->firmware.cookie==cookie&&slot->firmware.sequence==1&&slot->firmware.mode==2) {
+            request_reported=1;test_uart_text("\nQEMU_RAM_DRAIN_REQUESTED=1\n");
+        }
+        if(polaris_q_ram_drained(&s,cookie,1,2)&&shutdown_reset_ready(0,2)&&wln_test_reset_observed) {
+            report("WLED_NATIVE_LEASE_POLLS=",lease_polls);
+            report("WLED_NATIVE_LEASE_FIRED=",ram_lease.fired);
+            report("WLED_NATIVE_LEASE_LATCH=",wln_lease_recovery);
+            test_uart_text("\nQEMU_RAM_DRAINED=1\n");finished=1;
+        }
+    }
+    return;
+#endif
 #if defined(EFI_XNU_WLED_NATIVE_RUNTIME_TEST) && defined(EFI_XNU_WLED_NATIVE_FAULT)
     /* One actual normal native shutdown request. The WLED error may reject
      * the aggregate sender after it published that request; never retry it. */
@@ -767,6 +805,9 @@ static void test_monitor(void)
 #if defined(EFI_XNU_WLED_NATIVE_RUNTIME_TEST)
     unsigned wln_final_reported=0;
     static uint8_t wln_test_pages[3][980];
+#if defined(EFI_XNU_WLED_NATIVE_LIFECYCLE) && EFI_XNU_WLED_NATIVE_LIFECYCLE==3
+    unsigned wln_age_checked=0;
+#endif
 #endif
     volatile uint32_t *uart=(void*)(uintptr_t)UINT64_C(0x9000000);
     for(;;){
@@ -832,10 +873,22 @@ static void test_monitor(void)
 #if defined(EFI_XNU_WLED_NATIVE_RUNTIME_TEST)
         wln_poll();
         if(!wln_final_reported&&shutdown_reset_ready(0,2)&&wln_closing_mode==2&&
-           !wln_runtime.pending&&wln_power.actual_on) {
+           !wln_runtime.pending&&wln_power.actual_on
+#if defined(EFI_XNU_WLED_NATIVE_LIFECYCLE) && EFI_XNU_WLED_NATIVE_LIFECYCLE==4
+           &&wln_test_reset_observed
+#endif
+           ) {
             wln_final_reported=1;
+#if defined(EFI_XNU_WLED_NATIVE_LIFECYCLE) && EFI_XNU_WLED_NATIVE_LIFECYCLE==4
+            /* idle_guard() made the one-shot receipt and called reset's
+             * guarded test observer. Preserve those actual original bytes. */
+            int ready=wln_test_reset_observed&&wln_receipt_issued;
+            const uint8_t *receipt=wln_receipt;uint64_t receipt_bytes=sizeof(wln_receipt);
+            int witnessed=ready;
+#else
             int ready=prepare_reset(0,2);const uint8_t *receipt=0;uint64_t receipt_bytes=0;
             int witnessed=ready&&wln_reset_receipt(0,2,&receipt,&receipt_bytes);
+#endif
             report("WLED_NATIVE_FINAL_READY=",ready);report("WLED_NATIVE_FINAL_RECEIPT=",witnessed);
             report("WLED_NATIVE_RECEIPT_ADDRESS=",(uintptr_t)receipt);report("WLED_NATIVE_RECEIPT_BYTES=",receipt_bytes);
             for(unsigned n=0;n<3;n++) {
@@ -851,6 +904,17 @@ static void test_monitor(void)
             report("WLED_NATIVE_FINAL_MODE1_REFUSED=",!prepare_reset(0,1));
             report("WLED_NATIVE_FINAL_ONCE_REFUSED=",!wln_reset_receipt(0,2,&receipt,&receipt_bytes));
         }
+#if defined(EFI_XNU_WLED_NATIVE_LIFECYCLE) && EFI_XNU_WLED_NATIVE_LIFECYCLE==3
+        if(wln_final_reported&&!wln_age_checked&&wln_runtime.sealed&&wln_runtime.count) {
+            uint64_t now_us=buttons_us(0),last_us=wln_archive[wln_runtime.count-1].raw.ended_us;
+            if(now_us>=last_us&&now_us-last_us>=250000) {
+                wln_age_checked=1;reset(0,2);
+                report("WLED_NATIVE_RECEIPT_ACTUAL_AGE_US=",now_us-last_us);
+                report("WLED_NATIVE_AGED_RESET_OBSERVER_COUNT=",wln_test_reset_observed);
+                report("WLED_NATIVE_AGED_RESET_REFUSED=",!wln_test_reset_observed&&!wln_final_fresh(2));
+            }
+        }
+#endif
 #endif
         if(now-last<6250000){__asm__ volatile("yield");continue;}last=now;
 #if EFI_XNU_BUTTONS_AVAILABLE

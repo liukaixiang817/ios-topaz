@@ -166,7 +166,8 @@ def main():
     ap.add_argument('--wled-oem-status',action='store_true',help='QEMU-only explicit OEM volatile-status policy; no physical image admission yet')
     ap.add_argument('--wled-oem-physical-cycle',action='store_true',help='separate pre-XNU physical OEM cycle; requires independent OEM image admission')
     ap.add_argument('--wled-native-runtime-test',action='store_true',help='independent QEMU-only actual native/FW mailbox test with SOFTWARE PMIC; never a phone image')
-    ap.add_argument('--test-wled-native-fault',choices=('timeout','fault-ovp','fault-sc','fault-unknown','rt-ovp','rt-sc','rt-unknown'),help='independent SOFTWARE PMIC error after first runtime WRITE; QEMU only')
+    ap.add_argument('--test-wled-native-fault',choices=('timeout','fault-ovp','fault-sc','fault-unknown','rt-ovp','rt-sc','rt-unknown','clock-regression'),help='independent SOFTWARE PMIC error after first runtime WRITE; QEMU only')
+    ap.add_argument('--test-wled-native-lifecycle',choices=('capacity','stale-ack','receipt-age','lease'),help='independent QEMU runtime lifecycle fixture; never physical admission')
     ap.add_argument('--test-wled-prepare-refusal',nargs='?',const='owner',choices=('owner','configuration','before-cycle'),help='QEMU OEM-only zero-write owner/configuration/pre-WLED refusal')
     ap.add_argument('--test-wled-status-after-issue',type=lambda s:int(s,0),default=0,help='QEMU-only packed FAULT/RT severe bits after first issued command')
     ap.add_argument('--test-wled-write-timeout',action='store_true',help='isolated QEMU uncertain WLED command; no reset or retry')
@@ -189,6 +190,10 @@ def main():
     ap.add_argument('--disk-version',default='V0061')
     ap.add_argument('--chain-app-manifest',type=Path,help='RAM test wrapper for the exact already-built selected disk app')
     a=ap.parse_args();r=Path(__file__).resolve().parents[1]
+    if a.test_wled_native_lifecycle and (not a.wled_native_runtime_test or not a.test_qemu or
+        a.test_ram_drain!='success' or a.test_wled_native_fault or a.test_wled_prepare_refusal or
+        a.test_wled_status_after_issue or a.test_wled_write_timeout or a.test_wled_read_failure or a.test_wled_fault_pulse):
+        ap.error('native WLED lifecycle requires only the independent QEMU runtime success-drain fixture')
     if a.test_wled_native_fault and (not a.wled_native_runtime_test or not a.test_qemu or
         a.test_ram_drain!='success' or a.test_wled_prepare_refusal or a.test_wled_status_after_issue or
         a.test_wled_write_timeout or a.test_wled_read_failure or a.test_wled_fault_pulse):
@@ -473,7 +478,9 @@ def main():
     if a.wled_oem_physical_cycle:flags.append('-DEFI_XNU_WLED_OEM_PHYSICAL_CYCLE=1')
     if a.wled_native_runtime_test:flags.append('-DEFI_XNU_WLED_NATIVE_RUNTIME_TEST=1')
     if a.test_wled_native_fault:
-        flags.append('-DEFI_XNU_WLED_NATIVE_FAULT='+str(('timeout','fault-ovp','fault-sc','fault-unknown','rt-ovp','rt-sc','rt-unknown').index(a.test_wled_native_fault)+1))
+        flags.append('-DEFI_XNU_WLED_NATIVE_FAULT='+str(('timeout','fault-ovp','fault-sc','fault-unknown','rt-ovp','rt-sc','rt-unknown','clock-regression').index(a.test_wled_native_fault)+1))
+    if a.test_wled_native_lifecycle:
+        flags.append('-DEFI_XNU_WLED_NATIVE_LIFECYCLE='+str(('capacity','stale-ack','receipt-age','lease').index(a.test_wled_native_lifecycle)+1))
     if a.test_wled_prepare_refusal:flags.append('-DEFI_XNU_TEST_WLED_PREPARE_REFUSAL='+str({'owner':1,'configuration':2,'before-cycle':3}[a.test_wled_prepare_refusal]))
     if a.test_wled_status_after_issue:flags.append('-DEFI_XNU_TEST_WLED_STATUS_AFTER_ISSUE='+str(a.test_wled_status_after_issue))
     if a.test_wled_write_timeout:flags.append('-DEFI_XNU_TEST_WLED_WRITE_TIMEOUT=1')
@@ -517,9 +524,11 @@ def main():
                   WLED_OEM_status_policy=oem_status,WLED_OEM_physical_cycle=a.wled_oem_physical_cycle,
                   WLED_native_runtime_test=a.wled_native_runtime_test,
                   controlled_WLED_native_fault=a.test_wled_native_fault,
+                  controlled_WLED_native_lifecycle=a.test_wled_native_lifecycle,
                   WLED_native_SOFTWARE_PMIC=a.wled_native_runtime_test,
                   WLED_runtime_journal_version=3 if a.wled_native_runtime_test else None,
-                  WLED_runtime_archive_capacity=8192 if a.wled_native_runtime_test else None,
+                  WLED_runtime_archive_capacity=(64 if a.test_wled_native_lifecycle=='capacity' else 8192) if a.wled_native_runtime_test else None,
+                  WLED_runtime_archive_storage_capacity=8192 if a.wled_native_runtime_test else None,
                   raw_reset_requires_native_and_WLED_restore=a.wled_native_runtime_test,
                   controlled_WLED_prepare_refusal=bool(a.test_wled_prepare_refusal),controlled_WLED_prepare_kind=a.test_wled_prepare_refusal,
                   controlled_WLED_status_after_issue=a.test_wled_status_after_issue,

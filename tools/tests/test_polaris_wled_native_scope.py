@@ -12,7 +12,7 @@ ROOT=Path(__file__).resolve().parents[2]
 class NativeScope(unittest.TestCase):
     def test_native_faults_cannot_escape_the_runtime_software_fixture(self):
         with tempfile.TemporaryDirectory() as d:
-            for fault in ('timeout','fault-ovp','fault-sc','fault-unknown','rt-ovp','rt-sc','rt-unknown'):
+            for fault in ('timeout','fault-ovp','fault-sc','fault-unknown','rt-ovp','rt-sc','rt-unknown','clock-regression'):
                 for opts in ([],['--test-qemu'],['--test-qemu','--wled-native-runtime-test','--test-wled-write-timeout']):
                     p=subprocess.run(['python3',str(ROOT/'tools/build-polaris-uefi-xnu.py'),
                         '--kernel','/nonexistent/kernel','--payload','/nonexistent/payload',
@@ -20,6 +20,19 @@ class NativeScope(unittest.TestCase):
                         capture_output=True,text=True)
                     self.assertEqual(p.returncode,2)
                     self.assertIn('native WLED fault requires only',p.stderr)
+                    self.assertNotIn('FileNotFoundError',p.stderr)
+                    self.assertFalse((Path(d)/'refused').exists())
+
+    def test_lifecycle_scope_cannot_select_physical_or_mixed_faults(self):
+        with tempfile.TemporaryDirectory() as d:
+            for case in ('capacity','stale-ack','receipt-age','lease'):
+                for opts in ([],['--test-qemu'],['--test-qemu','--wled-native-runtime-test','--test-wled-native-fault','timeout']):
+                    p=subprocess.run(['python3',str(ROOT/'tools/build-polaris-uefi-xnu.py'),
+                        '--kernel','/nonexistent/kernel','--payload','/nonexistent/payload',
+                        '--zig','/nonexistent/zig','--output',d+'/refused','--test-wled-native-lifecycle',case,*opts],
+                        capture_output=True,text=True)
+                    self.assertEqual(p.returncode,2)
+                    self.assertIn('native WLED lifecycle requires only',p.stderr)
                     self.assertNotIn('FileNotFoundError',p.stderr)
                     self.assertFalse((Path(d)/'refused').exists())
 
