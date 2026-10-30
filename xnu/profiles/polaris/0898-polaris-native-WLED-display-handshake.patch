@@ -18,7 +18,7 @@
      static void presentWake(OSObject *, IOInterruptEventSource *, int);
      static void displayFired(AppleCLCD *, IOTimerEventSource *, bool);
      uint32_t debugCapture(void *, uint32_t);
-@@ -158,9 +162,125 @@
+@@ -158,9 +162,128 @@
  /* Retained once for this boot, published after all framebuffer setup. */
  static AppleCLCD *polaris_debug_fb;
  static uint64_t polaris_fb_calls,polaris_fb_swaps,polaris_fb_presents,polaris_fb_pixels;
@@ -120,7 +120,10 @@
 +    if(!pwn_init(&p->adapter,&polaris_uefi_wled,polaris_wled_native_cache,true)){
 +        error=12;goto cleanup;
 +    }
-+    timer=IOTimerEventSource::timerEventSource(owner,pwn_probe_callback);
++    /* Default timers run a thread_call under the workloop gate. Select the
++     * actual workloop thread explicitly; the callback checks both invariants. */
++    timer=IOTimerEventSource::timerEventSource(
++        kIOTimerEventSourceOptionsPriorityWorkLoop,owner,pwn_probe_callback);
 +    if(!timer||initial.loop->addEventSource(timer)!=kIOReturnSuccess){error=13;goto cleanup;}
 +    attached=true;p->timer=timer;timer->setTimeoutMS(1);
 +    for(unsigned i=0;i<5000;i++) {
@@ -144,7 +147,7 @@
  static IOReturn
  polaris_copy_panel(OSObject *owner, void *out, void *size, void *, void *)
  {
-@@ -282,6 +402,7 @@
+@@ -282,6 +405,7 @@
  }
  extern "C" int PolarisFramebufferWakeProbe(void)
  {
@@ -152,7 +155,7 @@
      int error=0;bool attached=false;
      IOLock *lock=IOLockAlloc();IOWorkLoop *loop=IOWorkLoop::workLoop();
      struct PfbWakeProbe initial={};initial.lock=lock;initial.loop=loop;
-@@ -408,6 +529,13 @@
+@@ -408,6 +532,13 @@
          IOLog("POLARIS DISPLAY: disabled; explicit ADT and boot argument required\n");
          return false;
      }
@@ -166,7 +169,7 @@
      fPolarisLastUS = fPolarisMaxUS = 0;
      fPolarisTotalNS = 0;
      fPolarisNextPresent = 0;
-@@ -551,6 +679,7 @@
+@@ -551,6 +682,7 @@
  
  	IOLockLock(fb->fLock);
  #if defined(POLARIS_RAM_ONLY)
@@ -174,7 +177,7 @@
      if(notifyDue)
  #endif
  	for (unsigned int i = 0; i < fb->fClients->getCount(); i++) {
-@@ -619,6 +748,17 @@
+@@ -619,6 +751,17 @@
  		fb->present(rec);
  #if defined(POLARIS_RAM_ONLY)
          uint64_t copyEnd=mach_absolute_time();
@@ -192,7 +195,7 @@
          absolutetime_to_nanoseconds(copyEnd - started, &elapsed);
          if(fb->fPolarisPerf && gpuActive && traced) {
              uint64_t startNS=0,endNS=0;
-@@ -783,6 +923,7 @@
+@@ -783,6 +926,7 @@
  {
  #if defined(POLARIS_RAM_ONLY)
      __atomic_fetch_add(&polaris_fb_presents, 1, __ATOMIC_RELAXED);
@@ -200,7 +203,7 @@
  #endif
  	uint32_t mask = get32(rec, 0x104);
  
-@@ -856,6 +997,16 @@
+@@ -856,6 +1000,16 @@
                  fPolarisRow, 1080);
          }
          __atomic_fetch_add(&polaris_fb_pixels, copied, __ATOMIC_RELAXED);

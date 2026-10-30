@@ -37,7 +37,11 @@ def symbols(raw):
                 end=raw.find(b'\0',strings+name,strings+bytes_)
                 if end<0:raise ValueError('unterminated kernel symbol')
                 text=raw[strings+name:end]
-                if text in (b'_sweet_log_ring',b'_sweet_log_total',b'_polaris_uefi_input',b'_polaris_uefi_shutdown',b'_polaris_uefi_buttons'):
+                if text in (b'_sweet_log_ring',b'_sweet_log_total',b'_polaris_uefi_input',b'_polaris_uefi_shutdown',b'_polaris_uefi_buttons',
+                            b'_polaris_uefi_wled',b'_PolarisWledNativeProbe'):
+                    if text in (b'_polaris_uefi_wled',b'_PolarisWledNativeProbe') and \
+                        ((typ&0x0e)!=0x0e or not section or not value):
+                        raise ValueError('native WLED symbol must be actually defined')
                     if text.decode() in wanted:raise ValueError('duplicate log symbol')
                     wanted[text.decode()]=value
         at+=size
@@ -377,6 +381,10 @@ def main():
             not 0<=wled_offset<=end-256 or not input_present or
             any(abs(wled_offset-other)<256 for other in (input_offset,buttons_offset,shutdown_offset))):
             raise ValueError('native WLED mailbox must be independent/aligned/kernel-owned')
+        probe=syms['_PolarisWledNativeProbe']
+        if (probe&3) or not any(s['vmaddr']<=probe<s['vmaddr']+s['vmsize'] and
+                               s['name']=='__TEXT_EXEC' for s in m['segs']):
+            raise ValueError('native WLED probe must be in actual kernel executable text')
     if a.physical_buttons:
         if ('_polaris_uefi_buttons' not in syms or buttons_offset%128 or
             not 0<=buttons_offset<=end-256 or not input_present or

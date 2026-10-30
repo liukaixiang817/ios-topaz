@@ -1,6 +1,8 @@
 """Current native/FW runtime option cannot produce a physical device image."""
 from pathlib import Path
 import subprocess
+import importlib.util
+import struct
 import tempfile
 import unittest
 
@@ -8,6 +10,24 @@ ROOT=Path(__file__).resolve().parents[2]
 
 
 class NativeScope(unittest.TestCase):
+    def test_exact_new_symbols_are_found_but_undefined_duplicate_or_foreign_names_are_not(self):
+        spec=importlib.util.spec_from_file_location('efi_builder',ROOT/'tools/build-polaris-uefi-xnu.py')
+        builder=importlib.util.module_from_spec(spec);spec.loader.exec_module(builder)
+        def image(names):
+            strings=bytearray(b'\0');entries=bytearray()
+            for name,typ,section in names:
+                entries+=struct.pack('<IBBHQ',len(strings),typ,section,0,0x100000)
+                strings+=name.encode()+b'\0'
+            raw=bytearray(32);raw[:4]=b'\xcf\xfa\xed\xfe';struct.pack_into('<II',raw,16,1,24)
+            return bytes(raw)+struct.pack('<6I',2,24,56,len(names),56+len(entries),len(strings))+entries+strings
+        base=[('_sweet_log_ring',15,1),('_sweet_log_total',15,1)]
+        extra=[('_polaris_uefi_wled',15,2),('_PolarisWledNativeProbe',15,1)]
+        self.assertEqual(set(builder.symbols(image(base+extra))),{r[0] for r in base+extra})
+        for name in [r[0] for r in extra]:
+            with self.assertRaises(ValueError):builder.symbols(image(base+[(name,1,0)]))
+            with self.assertRaises(ValueError):builder.symbols(image(base+extra+[(name,15,2)]))
+        self.assertNotIn('_PolarisWledNativeProbe',builder.symbols(image(base+[('_foreign_probe',15,1)])))
+
     def test_phone_mixed_and_incomplete_runtime_scopes_refuse_before_input_reads(self):
         complete=['--test-qemu','--kernel-core','7','--kernel-cpus','4',
                   '--test-ram-drain','success','--physical-buttons','--framebuffer-arrival-wake']

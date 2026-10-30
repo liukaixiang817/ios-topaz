@@ -34,6 +34,48 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0118 actual native/FW model FAIL retained; explicit workloop timer correction COMPILED
+
+- Current source ffbceac34c833aad2de04379dbdd05432a66e626 FULL macOS27/Xcode27
+  CI41052357047 SUCCESS; exact downloaded source/profile/ZIP entryCRC/SHA passed,
+  kernel54a88345b14742c134a3783aa928d9dbfd7a0b2d7fedb88bcf5275a3e8a927c2.
+  CI-current-proof.json/kernel-artifact-current.json bind it. This kernel is
+  NOT a successful native WLED runtime result or physical admission.
+- Actual model0001 refused before EFI because host symbols() only selected the
+  old five exports. Actual nm independently proved both new symbols present;
+  corrected the exact allowlist plus defined-section/executable-range checks,
+  with undefined/duplicate/foreign-name tests. No native symbol workaround.
+- Model0002 refused before CPU_ON: private payload omitted required explicit
+  polarisdebug=0. Firmware gate correctly rejected it. Corrected ONLY the new
+  private payload, retaining original failure. Model0003 really entered XNU
+  and safely drained synthetic HFS/RAM, but native probe FAIL cycles0/copies0/
+  seq0/error1. Missing WLED final pages correctly prevents overall success.
+- Actual own IOTimerEventSource.cpp proves default callbacks run thread_call
+  under the workloop gate, whereas explicit PriorityWorkLoop uses signal/
+  checkForWork delivery on the actual loop thread. Probe had wrongly required
+  onThread for a default timer. Selected PriorityWorkLoop explicitly, keeping
+  BOTH onThread/inGate assertions. No physical driver policy or thermal change.
+  Corrected actual SweetFramebuffer TU0005 compiles without environment stubs;
+  exact native patch0004 applies0fuzz/0offset and matches all3 compiled sources.
+  New source requires its own full CI and a fresh model; old failed cases stay.
+- FW actual resident CPU0/cache/archive/page/WLR3/native shutdown integration
+  exists ONLY in independent default-OFF QEMU scope, SOFTWARE PMIC/RAM pixels.
+  Archive LoaderCode/Data ownership checked before handoff; no physical MMIO,
+  physical runtime image/client/admission or phone candidate. Native 3cycle/
+  final receipt and fault cases remain unproven. New host runner decodes actual
+  QMP firmware pages/receipt/native mailboxes and never admits physical release.
+- Last physical observation is readonly actual expected Polaris FASTBOOT
+  11:06:09UTC (actual-fastboot-start-0001.json), no phone boot/cycle/PMIC/OS/root/
+  storage/NVRAM/Android action this turn. Original0113/0116 trials ENDED; human
+  optical OFF confirmed; do not repeat them or ask again. Pendingjournal gates
+  may_boot_iOS=false/may_write_userdata=false unchanged. Fresh strictRO root/
+  journal audit and independent physical runtime admission remain mandatory.
+- NEXT finish actual new native/FW successful exchange, complete binary raw/
+  receipt proof and genuine fullEFI-XNU faults; then separately prepare phone
+  runtime and new strictRO audit. Keep ca_vbl1/graphics, sound/WiFi/full16.5 goals.
+
+Previous implementation details (historical, corrected actual outcomes above):
+
 ### 0118 native/FW runtime implementation COMPILED; new full CI/serial checks PENDING
 
 - LATEST follow-up supersedes the initial95 stage below: native READY-first
