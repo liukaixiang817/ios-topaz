@@ -36,8 +36,12 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### 0115 OFFLINE original TAS firmware catalog COMPLETE; phone USB still absent
 
-- Source990a6d5 committed; push completed source/handoff before stopping.
-  Latest directed readonly expected-Polaris query08:20:06UTC timed out, saved as
+- Source990a6d5 and handoff9b55fa4 committed and PUSH VERIFIED. Current
+  connection remains absent; subsequent routine directed readonly queries are
+  appended to0113/phone-OEM-cycle-0003/preboot-*.json (read the newest record).
+  Routine negative attempts do not start a boot, rerun models or change frozen
+  candidate evidence. Existing reconnect request remains pending, no repeat ask.
+  Earlier directed readonly expected-Polaris query08:20:06UTC timed out, saved as
  0113/phone-OEM-cycle-0003/preboot-20261030T082014424693.json. NO boot.json,
   boot/cycle/PMIC power, OS/root/storage/NVRAM or Android action. Existing
   physical FASTBOOT/USB reconnect request still pending; do not repeat it,
