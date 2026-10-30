@@ -36,6 +36,9 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### 0111 OEM status semantics + actual EFI integration COMPLETE; phone FASTBOOT
 
+- Completed source54c26a3 committed and pushed to codex/polaris-preflight.
+  All selected private results are bound by actual-EFI-OEM-status-integration-
+  proof.json; no device/Apple/reference firmware files entered Git.
 - CURRENT all0111 checks/models ENDED. No phone boot/cycle/PMIC power write,
   native kernel change/CI, root access, storage/NVRAM/Android activity. Directed
   actual expected Polaris FASTBOOT verified at04:43UTC and again after tests;
