@@ -1,0 +1,417 @@
+--- a/iokit/Kernel/arm/SweetFramebuffer.cpp
++++ b/iokit/Kernel/arm/SweetFramebuffer.cpp
+@@ -40,6 +40,7 @@
+ #include "polaris_display_staged.h"
+ #include "polaris_display_cadence.h"
+ #include "polaris_display_queue.h"
++#include "polaris_wled_native.h"
+ #include <libkern/c++/OSData.h>
+ #endif
+ 
+@@ -125,6 +126,9 @@
+     bool fDebugStatus,fPolarisPerf;
+     IOInterruptEventSource *fPolarisWake;
+     struct pfb_queue fPolarisQueue;
++    struct polaris_wled_native_adapter fPolarisWled;
++    bool fPolarisWledCopied;
++    unsigned fPolarisWledReported;
+     static void presentWake(OSObject *, IOInterruptEventSource *, int);
+     static void displayFired(AppleCLCD *, IOTimerEventSource *, bool);
+     uint32_t debugCapture(void *, uint32_t);
+@@ -158,6 +162,47 @@
+ /* Retained once for this boot, published after all framebuffer setup. */
+ static AppleCLCD *polaris_debug_fb;
+ static uint64_t polaris_fb_calls,polaris_fb_swaps,polaris_fb_presents,polaris_fb_pixels;
++/* Independent kernel-owned mailbox; firmware and kernel own separate lines.
++ * The EFI builder must bind this exact symbol and exclude all other mailboxes. */
++extern "C" { struct polaris_wled_slot polaris_uefi_wled; }
++static uint64_t polaris_wled_cache_line(void)
++{
++    uint64_t ctr;__asm__ volatile("mrs %0,ctr_el0":"=r"(ctr));
++    return UINT64_C(4)<<((ctr>>16)&15);
++}
++static void polaris_wled_native_cache(void *address,bool clean)
++{
++    uint64_t line=polaris_wled_cache_line(),base=(uintptr_t)address;
++    for(uint64_t at=base;at<base+128;at+=line) {
++        if(clean)__asm__ volatile("dc cvac,%0"::"r"(at):"memory");
++        else __asm__ volatile("dc ivac,%0"::"r"(at):"memory");
++    }
++    __asm__ volatile("dsb sy":::"memory");
++}
++/* Only under fLock on the existing display workloop, including OFF callbacks.
++ * No native PMIC operation and no second polling thread. */
++static void polaris_wled_exchange_locked(AppleCLCD *fb,uint64_t now_us)
++{
++    if(!fb->fPolarisWled.enabled)return;
++    uint64_t old_cookie=fb->fPolarisWled.state.cookie;
++    uint64_t old_ack=fb->fPolarisWled.state.acknowledged;
++    (void)pwn_exchange(&fb->fPolarisWled,!fb->fPowerOff,now_us);
++    const struct polaris_wled_native *n=&fb->fPolarisWled.state;
++    if(!old_cookie&&n->cookie)
++        IOLog("POLARIS WLED NATIVE: ready cookie=%llu; independent128-byte lines\n",n->cookie*1ull);
++    if(n->acknowledged!=old_ack)
++        IOLog("POLARIS WLED NATIVE: ack=%llu on=%u raw=%llu; firmware readback, not optical evidence\n",
++            n->acknowledged*1ull,(unsigned)n->actual_on,n->records*1ull);
++    if(n->error&&!fb->fPolarisWledReported) {
++        fb->fPolarisWledReported=n->error;
++        IOLog("POLARIS WLED NATIVE: stopped error=%u seq=%llu ack=%llu; no retry or reset permission\n",
++            n->error,n->sequence*1ull,n->acknowledged*1ull);
++    }
++    /* An ON frame copied before OFF ACK was deliberately not sufficient.
++     * Re-present the retained latest swap after ACK, without requiring UIKit
++     * to send another publication just to release this wake dependency. */
++    if(pwn_needs_frame(&fb->fPolarisWled))fb->fDirty=true;
++}
+ extern "C" unsigned char iso_font[256 * 16];
+ extern "C" uint32_t polaris_usb_status(char *, uint32_t);
+ extern "C" uint32_t polaris_a630_status(void);
+@@ -408,6 +453,13 @@
+         IOLog("POLARIS DISPLAY: disabled; explicit ADT and boot argument required\n");
+         return false;
+     }
++    fPolarisWled={};fPolarisWledCopied=false;fPolarisWledReported=0;
++    uint32_t wled=0;PE_parse_boot_argn("polariswled",&wled,sizeof(wled));
++    uint64_t wled_line=polaris_wled_cache_line();
++    if(wled>1 || (wled && (wled_line<16||wled_line>128||128%wled_line)) ||
++       !pwn_init(&fPolarisWled,&polaris_uefi_wled,polaris_wled_native_cache,wled==1)) {
++        IOLog("POLARIS WLED NATIVE: refused mode/cache ownership; no PMIC writes\n");return false;
++    }
+     fPolarisLastUS = fPolarisMaxUS = 0;
+     fPolarisTotalNS = 0;
+     fPolarisNextPresent = 0;
+@@ -551,6 +603,7 @@
+ 
+ 	IOLockLock(fb->fLock);
+ #if defined(POLARIS_RAM_ONLY)
++    polaris_wled_exchange_locked(fb,nowUS);
+     if(notifyDue)
+ #endif
+ 	for (unsigned int i = 0; i < fb->fClients->getCount(); i++) {
+@@ -619,6 +672,17 @@
+ 		fb->present(rec);
+ #if defined(POLARIS_RAM_ONLY)
+         uint64_t copyEnd=mach_absolute_time();
++        if(fb->fPolarisWled.enabled && fb->fPolarisWled.state.desired_on &&
++           !fb->fPolarisWled.state.actual_on) {
++            /* Qualification is set only by an actual full fitted-view blit,
++             * not by present() entry or an incremented publication counter. */
++            __asm__ volatile("dsb sy":::"memory");
++            IOLockLock(fb->fLock);
++            if(fb->fPolarisWledCopied)(void)pwn_presented(&fb->fPolarisWled);
++            uint64_t wled_ns=0;absolutetime_to_nanoseconds(mach_absolute_time(),&wled_ns);
++            polaris_wled_exchange_locked(fb,wled_ns/1000);
++            IOLockUnlock(fb->fLock);
++        }
+         absolutetime_to_nanoseconds(copyEnd - started, &elapsed);
+         if(fb->fPolarisPerf && gpuActive && traced) {
+             uint64_t startNS=0,endNS=0;
+@@ -783,6 +847,7 @@
+ {
+ #if defined(POLARIS_RAM_ONLY)
+     __atomic_fetch_add(&polaris_fb_presents, 1, __ATOMIC_RELAXED);
++    fPolarisWledCopied=false;
+ #endif
+ 	uint32_t mask = get32(rec, 0x104);
+ 
+@@ -856,6 +921,16 @@
+                 fPolarisRow, 1080);
+         }
+         __atomic_fetch_add(&polaris_fb_pixels, copied, __ATOMIC_RELAXED);
++        if(pwn_needs_frame(&fPolarisWled)&&copied) {
++            struct polaris_fb_view view={};
++            /* A SINGLE accepted layer must cover the whole fitted view.
++             * Adding overlapping partial-layer counts cannot manufacture it.
++             * Busy/invalid surfaces took their original early-release path. */
++            if(polaris_fb_fit(fWidth,fHeight,fLogicalW,fLogicalH,&view)&&
++               copied==(uint64_t)view.width*view.height&&
++               polaris_fb_black_bars((uint8_t *)fPixels,(size_t)fRowBytes*fHeight,
++                   fWidth,fHeight,fRowBytes,fLogicalW,fLogicalH))fPolarisWledCopied=true;
++        }
+         if (copied && !fConsolePaused) {
+             polaris_fb_black_bars((uint8_t *)fPixels, (size_t)fRowBytes * fHeight,
+                 fWidth, fHeight, fRowBytes, fLogicalW, fLogicalH);
+--- /dev/null
++++ b/iokit/Kernel/arm/polaris_wled_mailbox.h
+@@ -0,0 +1,192 @@
++/* Shared native/FW WLED protocol policy. OFFLINE: no mapping/cache operations,
++ * PMIC writes or frame presentation. Runtime adapters must independently admit
++ * both sides, copy an acquire-published line, validate every reserved byte and
++ * clean ONLY their own line. A boolean/token supplied here is not hardware
++ * evidence. Native presented() may be called ONLY after actual panel copy+DSB.
++ */
++#ifndef POLARIS_WLED_MAILBOX_H
++#define POLARIS_WLED_MAILBOX_H
++#include <stdbool.h>
++#include <stddef.h>
++#include <stdint.h>
++#define PWM_READY UINT64_C(0x50574c4544310001)
++#define PWM_TIMEOUT_US UINT64_C(2000000)
++#ifdef __cplusplus
++#define PWM_EMPTY {}
++#else
++#define PWM_EMPTY {0}
++#endif
++enum {PWM_E_WIRE=128,PWM_E_SEQUENCE,PWM_E_FRAME,PWM_E_CLOCK,PWM_E_TIMEOUT,
++      PWM_E_CAPACITY,PWM_E_BACKEND};
++struct polaris_wled_request {
++    uint64_t cookie,sequence,on,frame;
++    uint8_t reserved[96];
++} __attribute__((aligned(128)));
++struct polaris_wled_ack {
++    uint64_t cookie,sequence,on,error,completed_us,records,ready;
++    uint8_t reserved[72];
++} __attribute__((aligned(128)));
++struct polaris_wled_slot {
++    struct polaris_wled_request native;
++    struct polaris_wled_ack firmware;
++} __attribute__((aligned(128)));
++struct polaris_wled_native {
++    uint64_t cookie,sequence,acknowledged,last_frame,off_frame,sent_us,last_us;
++    uint64_t firmware_us,records;
++    unsigned error,frozen_polls;
++    bool desired_on,actual_on,inflight,sent_on;
++};
++struct polaris_wled_firmware {
++    uint64_t cookie,sequence,off_frame,last_frame,last_us,records;
++    unsigned error;
++    bool actual_on,pending,target_on,closing,capacity_stop;
++};
++static inline bool pwm_zero(const uint8_t *p,size_t bytes)
++{for(size_t n=0;n<bytes;n++)if(p[n])return false;return true;}
++static inline bool pwm_native_fail(struct polaris_wled_native *n,unsigned error)
++{if(n&&!n->error)n->error=error;return false;}
++static inline bool pwm_firmware_fail(struct polaris_wled_firmware *f,unsigned error)
++{if(f&&!f->error)f->error=error;return false;}
++static inline bool pwm_native_time(struct polaris_wled_native *n,uint64_t now)
++{
++    if(!now||now<n->last_us)return pwm_native_fail(n,PWM_E_CLOCK);
++    if(now==n->last_us) {
++        if(++n->frozen_polls>=4096)return pwm_native_fail(n,PWM_E_CLOCK);
++    } else n->frozen_polls=0;
++    n->last_us=now;return true;
++}
++static inline bool pwm_native_init(struct polaris_wled_native *n,
++    const struct polaris_wled_ack *a,uint64_t now)
++{
++    if(!n||!a||n->cookie||n->error||n->frozen_polls||n->sequence||n->acknowledged||n->last_frame||
++       n->off_frame||n->sent_us||n->last_us||n->firmware_us||n->records||
++       n->desired_on||n->actual_on||n->inflight||
++       n->sent_on||!a->cookie||a->sequence||a->on!=1||a->error||a->ready!=PWM_READY||
++       !a->completed_us||!a->records||!pwm_zero(a->reserved,sizeof(a->reserved))||!now)
++        return false;
++    n->cookie=a->cookie;n->desired_on=n->actual_on=true;n->last_us=now;
++    n->firmware_us=a->completed_us;n->records=a->records;return true;
++}
++/* Run under the same native lock as framebuffer state and presented(). A
++ * rapid latest intent changes no already-published request. */
++static inline bool pwm_native_intent(struct polaris_wled_native *n,bool on)
++{
++    if(!n||!n->cookie||n->error)return false;
++    if(n->desired_on&&!on)n->off_frame=n->last_frame;
++    n->desired_on=on;return true;
++}
++static inline bool pwm_native_presented(struct polaris_wled_native *n,uint64_t frame)
++{
++    if(!n||!n->cookie||n->error)return false;
++    if(!frame||frame<=n->last_frame)return pwm_native_fail(n,PWM_E_FRAME);
++    n->last_frame=frame;return true;
++}
++static inline bool pwm_native_next(struct polaris_wled_native *n,uint64_t now,
++    struct polaris_wled_request *out)
++{
++    if(!n||!out||!n->cookie||n->error||!pwm_native_time(n,now))return false;
++    if(n->inflight||n->desired_on==n->actual_on)return false;
++    if(n->desired_on&&n->last_frame<=n->off_frame)return false;
++    if(n->sequence==UINT64_MAX)return pwm_native_fail(n,PWM_E_SEQUENCE);
++    struct polaris_wled_request r=PWM_EMPTY;
++    r.cookie=n->cookie;r.sequence=++n->sequence;r.on=n->desired_on;r.frame=n->last_frame;
++    n->sent_on=n->desired_on;n->inflight=true;n->sent_us=now;*out=r;return true;
++}
++static inline bool pwm_native_ack(struct polaris_wled_native *n,
++    const struct polaris_wled_ack *a,uint64_t now)
++{
++    if(!n||!a||!n->cookie||n->error||!pwm_native_time(n,now))return false;
++    if(n->inflight&&now-n->sent_us>=PWM_TIMEOUT_US)
++        return pwm_native_fail(n,PWM_E_TIMEOUT);
++    if(!n->inflight||a->cookie!=n->cookie||a->sequence!=n->sequence||
++       a->ready!=PWM_READY||a->on>1||a->completed_us<=n->firmware_us||
++       a->records<n->records||(!a->error&&a->records==n->records)||
++       !pwm_zero(a->reserved,sizeof(a->reserved)))return pwm_native_fail(n,PWM_E_WIRE);
++    if(a->error)return pwm_native_fail(n,a->error==PWM_E_CAPACITY?
++        PWM_E_CAPACITY:PWM_E_BACKEND);
++    if(a->on!=(uint64_t)n->sent_on)return pwm_native_fail(n,PWM_E_WIRE);
++    n->actual_on=n->sent_on;n->acknowledged=a->sequence;n->inflight=false;
++    n->firmware_us=a->completed_us;n->records=a->records;
++    /* Even a frame copied while OFF was outstanding is insufficient: require
++     * another actual presentation AFTER consuming the OFF acknowledgement. */
++    if(!n->actual_on)n->off_frame=n->last_frame;
++    return true;
++}
++static inline bool pwm_native_tick(struct polaris_wled_native *n,uint64_t now)
++{
++    if(!n||!n->cookie||n->error||!pwm_native_time(n,now))return false;
++    if(n->inflight&&now-n->sent_us>=PWM_TIMEOUT_US)
++        return pwm_native_fail(n,PWM_E_TIMEOUT);
++    return true; /* Timeout never acknowledges or retries a request. */
++}
++/* Invoke only after the backend's actual initial saved-state validation and
++ * archival. Like complete(), this policy cannot itself establish that fact. */
++static inline bool pwm_firmware_init(struct polaris_wled_firmware *f,uint64_t cookie,
++    uint64_t records,uint64_t now,struct polaris_wled_ack *out)
++{
++    if(!f||!out||!cookie||!records||!now||f->cookie||f->sequence||f->off_frame||
++       f->last_frame||f->last_us||f->records||f->error||
++       f->actual_on||f->pending||f->target_on||f->closing||f->capacity_stop)return false;
++    struct polaris_wled_ack a=PWM_EMPTY;a.cookie=cookie;a.on=1;a.ready=PWM_READY;
++    a.completed_us=now;a.records=records;
++    f->cookie=cookie;f->actual_on=true;f->records=records;f->last_us=now;*out=a;return true;
++}
++static inline bool pwm_firmware_request(struct polaris_wled_firmware *f,
++    const struct polaris_wled_request *r)
++{
++    if(!f||!r||!f->cookie||f->error||f->closing||f->capacity_stop)return false;
++    if(f->pending||r->cookie!=f->cookie||f->sequence==UINT64_MAX||
++       !r->sequence||r->sequence!=f->sequence+1||r->on>1||
++       !pwm_zero(r->reserved,sizeof(r->reserved))||r->on==(uint64_t)f->actual_on)
++        return pwm_firmware_fail(f,PWM_E_SEQUENCE);
++    if(r->frame<f->last_frame||(r->on&&r->frame<=f->off_frame))
++        return pwm_firmware_fail(f,PWM_E_FRAME);
++    if(!r->on)f->off_frame=r->frame;
++    f->sequence=r->sequence;f->last_frame=r->frame;f->target_on=r->on;
++    f->pending=true;return true;
++}
++/* Adapter calls this ONLY after PWP acknowledgement, independent readback,
++ * full raw archive and no uncertainty. It is not a PMIC completion emulator. */
++static inline bool pwm_firmware_complete(struct polaris_wled_firmware *f,
++    bool actual_on,bool verified,uint64_t records,uint64_t now,struct polaris_wled_ack *out)
++{
++    if(!f||!out||!f->cookie||f->error)return false;
++    if(!f->pending||!verified||actual_on!=f->target_on||records<=f->records||
++       !now||now<=f->last_us)
++        return pwm_firmware_fail(f,PWM_E_BACKEND);
++    struct polaris_wled_ack a=PWM_EMPTY;a.cookie=f->cookie;a.sequence=f->sequence;
++    a.on=actual_on;a.completed_us=now;a.records=records;a.ready=PWM_READY;
++    f->actual_on=actual_on;f->pending=false;f->last_us=now;f->records=records;
++    *out=a;return true;
++}
++/* Capacity is a refusal, never an OFF success or a hardware-error clear. The
++ * runtime sequencer has issued NO command for this pending OFF. Its separate
++ * terminal restore/readback gate remains mandatory and has reserved space. */
++static inline bool pwm_firmware_capacity(struct polaris_wled_firmware *f,
++    uint64_t records,uint64_t now,struct polaris_wled_ack *out)
++{
++    if(!f||!out||!f->cookie||f->error||f->closing||f->capacity_stop||!f->pending||
++       f->target_on||!f->actual_on||!records||records<f->records||
++       !now||now<=f->last_us)return false;
++    struct polaris_wled_ack a=PWM_EMPTY;a.cookie=f->cookie;a.sequence=f->sequence;
++    a.on=1;a.error=PWM_E_CAPACITY;a.completed_us=now;a.records=records;a.ready=PWM_READY;
++    f->capacity_stop=true;f->pending=false;f->last_us=now;*out=a;return true;
++}
++/* Terminal restoration is deliberately NOT a display ON acknowledgement and
++ * has no fresh-frame bypass in the native request ABI. A runtime adapter must
++ * still complete PWP restore+new readbacks and the separate shutdown gate. */
++static inline bool pwm_firmware_close(struct polaris_wled_firmware *f)
++{if(!f||!f->cookie)return false;f->closing=true;return !f->error;}
++#if defined(__cplusplus)
++static_assert(sizeof(polaris_wled_request)==128,"native request ownership");
++static_assert(sizeof(polaris_wled_ack)==128,"firmware ack ownership");
++static_assert(offsetof(polaris_wled_slot,firmware)==128,"independent cachelines");
++static_assert(sizeof(polaris_wled_slot)==256,"bounded WLED mailbox ABI");
++#else
++_Static_assert(sizeof(struct polaris_wled_request)==128,"native request ownership");
++_Static_assert(sizeof(struct polaris_wled_ack)==128,"firmware ack ownership");
++_Static_assert(offsetof(struct polaris_wled_slot,firmware)==128,"independent cachelines");
++_Static_assert(sizeof(struct polaris_wled_slot)==256,"bounded WLED mailbox ABI");
++#endif
++#undef PWM_EMPTY
++#endif
+--- /dev/null
++++ b/iokit/Kernel/arm/polaris_wled_native.h
+@@ -0,0 +1,86 @@
++/* Native display-workloop adapter. Caller owns the display lock; no separate
++ * thread, PMIC access, allocation, reset or unverified frame acknowledgement.
++ * The kernel profile includes these exact bytes as a private implementation
++ * header. cache() MUST clean only native's line / invalidate only FW's line.
++ */
++#ifndef POLARIS_WLED_NATIVE_H
++#define POLARIS_WLED_NATIVE_H
++#include "polaris_wled_mailbox.h"
++struct polaris_wled_native_adapter {
++    struct polaris_wled_native state;
++    struct polaris_wled_slot *slot;
++    void (*cache)(void *,bool);
++    uint64_t began_us;
++    bool enabled;
++};
++static inline bool pwn_init(struct polaris_wled_native_adapter *a,
++    struct polaris_wled_slot *slot,void (*cache)(void *,bool),bool enabled)
++{
++    if(!a||a->slot||a->cache||a->enabled||a->began_us||a->state.cookie||a->state.error)
++        return false;
++    if(!enabled)return true;
++    if(!slot||!cache||((uintptr_t)slot&127))return false;
++    a->slot=slot;a->cache=cache;a->enabled=true;return true;
++}
++/* A boot advertisement uses READY-last, later acknowledgements SEQUENCE-last.
++ * Always acquire then copy the entire independently owned128-byte line.
++ * Never write FW's cacheline or use a partially copied acknowledgement. */
++static inline bool pwn_exchange(struct polaris_wled_native_adapter *a,bool on,uint64_t now)
++{
++    if(!a||!a->enabled)return false;
++    struct polaris_wled_native *n=&a->state;
++    if(n->error)return false;
++    if(!now||(a->began_us&&now<a->began_us))return pwm_native_fail(n,PWM_E_CLOCK);
++    if(!a->began_us)a->began_us=now;
++    a->cache(&a->slot->firmware,false);
++    uint64_t ready=__atomic_load_n(&a->slot->firmware.ready,__ATOMIC_ACQUIRE);
++    if(!ready&&!n->cookie) {
++        if(now-a->began_us>=PWM_TIMEOUT_US)return pwm_native_fail(n,PWM_E_TIMEOUT);
++        return false;
++    }
++    uint64_t sequence=__atomic_load_n(&a->slot->firmware.sequence,__ATOMIC_ACQUIRE);
++    struct polaris_wled_ack ack;
++    uint8_t *dst=(uint8_t *)&ack;
++    const volatile uint8_t *src=(const volatile uint8_t *)&a->slot->firmware;
++    for(unsigned i=0;i<sizeof(ack);i++)dst[i]=src[i];
++    /* A publication may complete while this RAM copy runs. Defer that sample;
++     * this is not a device-command retry and never consumes/ACKs partial data. */
++    if(ack.ready!=ready||ack.sequence!=sequence)return false;
++    if(ready!=PWM_READY)return pwm_native_fail(n,PWM_E_WIRE);
++    if(!n->cookie) {
++        if(!pwm_native_init(n,&ack,now))return pwm_native_fail(n,PWM_E_WIRE);
++    } else {
++        if(ack.cookie!=n->cookie||!pwm_zero(ack.reserved,sizeof(ack.reserved)))
++            return pwm_native_fail(n,PWM_E_WIRE);
++        if(ack.sequence!=n->acknowledged||(!n->inflight&&ack.error)) {
++            if(!pwm_native_ack(n,&ack,now))return false;
++        }
++    }
++    if(!pwm_native_tick(n,now)||!pwm_native_intent(n,on))return false;
++    struct polaris_wled_request request;
++    if(pwm_native_next(n,now,&request)) {
++        /* Body first, clean, release sequence LAST, clean. Do not memcpy the
++         * sequence first: a cache eviction could publish an unfinished body. */
++        a->slot->native.cookie=request.cookie;
++        a->slot->native.on=request.on;a->slot->native.frame=request.frame;
++        for(unsigned i=0;i<sizeof(request.reserved);i++)a->slot->native.reserved[i]=0;
++        a->cache(&a->slot->native,true);
++        __atomic_store_n(&a->slot->native.sequence,request.sequence,__ATOMIC_RELEASE);
++        a->cache(&a->slot->native,true);
++    }
++    return !n->error;
++}
++static inline bool pwn_needs_frame(const struct polaris_wled_native_adapter *a)
++{
++    return a&&a->enabled&&a->state.cookie&&!a->state.error&&a->state.desired_on&&
++        !a->state.actual_on&&!a->state.inflight&&a->state.last_frame<=a->state.off_frame;
++}
++/* Invoke only after actual accepted panel writes and the caller's DSB, never
++ * on swap submission, timer notification, busy/skipped surface or black fill. */
++static inline bool pwn_presented(struct polaris_wled_native_adapter *a)
++{
++    if(!a||!a->enabled||!a->state.cookie||a->state.error)return false;
++    if(a->state.last_frame==UINT64_MAX)return pwm_native_fail(&a->state,PWM_E_FRAME);
++    return pwm_native_presented(&a->state,a->state.last_frame+1);
++}
++#endif

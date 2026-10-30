@@ -30,6 +30,8 @@ class PrivateHeaderBinding(unittest.TestCase):
             source=ROOT/'tools'/Path(name).name.replace('_','-')
             if source.exists():
                 raw=source.read_bytes().replace(b'"polaris-a630-post.h"',b'"polaris_a630_post.h"')
+                if name=='iokit/Kernel/arm/polaris_wled_native.h':
+                    raw=raw.replace(b'"polaris-wled-mailbox.h"',b'"polaris_wled_mailbox.h"')
                 self.assertEqual(raw,bodies[0],name)
 
     def test_exact_private_replacements_only(self):

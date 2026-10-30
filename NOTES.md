@@ -34,6 +34,47 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0118 native display handshake COMPILED; full CI/FW runtime still required
+
+- Actual expected Polaris FASTBOOT11:06:09UTC readonly query PASS, saved as
+ 0118/actual-fastboot-start-0001.json. No phone boot/cycle/PMIC/OS/root/storage/
+  NVRAM/Android operation. Prior0113/0116 trials remain ENDED; human optical OFF
+  confirmation is received, never repeat the old tests or ask again.
+- NEW profile0898 integrates default-OFF polariswled=1 in actual SweetFramebuffer.
+  Separate exported kernel-owned polaris_uefi_wled256B mailbox,128B-per-owner
+  cache maintenance, body-clean then release-sequence-last/clean. Firmware line
+  is only invalidated/read. Own native line alone is written/cleaned. Unsupported
+  cache geometry refuses opt-in. No native PMIC accesses or additional thread.
+- Native displayworkloop calls exact pwn adapter under fLock, including OFF
+  callbacks. Latest RequestPowerChange intent is coalesced; OFF black-fill is
+  retained. ON requires a SINGLE actual accepted layer covering the full fitted
+  view, fresh bar stores and DSB; skipped/busy/partial layers cannot qualify via
+  summed pixel counts. Only wake waits do this extra coverage/bar pass. OFF ACK
+  rearms fDirty; actual post-ACK copy precedes ON publication. Normal default-OFF
+  display/GPU/cadence/cache/lifetime behavior is unchanged.
+- tools/polaris-wled-native.h is copied verbatim except its one local include
+  rename. Shared PWM header unchanged from0117. Both private native header SHAs
+  independently bound in strict IIG cache; no original header/IDL/ABI exception
+  broadened. Eight new adapter+IIG local tests3.507s PASS: instrumented native
+  cache-line ownership, body/sequence publication order, old-sequence/new-body
+  sampling, post-OFF-ACK new frame, foreign/reserved/stale, default-OFF/noadvert
+  timeout, and real PWP sequencer+SOFTWARE PMIC coupling. Not actual cache/PMIC
+  or panel execution. Initial unused fixture-helper and include-rename harness
+  failures0001/0002 retained; no warning suppression or product gate weakening.
+- Actual SweetFramebuffer.cpp TU compiled to object with real XNU headers and
+  recovered CI options, /usr/bin Appleclang21, no environment stubs. Exact0898
+  patch applied with0fuzz/0offset to reviewed baseline9cd05478...; all three
+  resulting native files byte-identical to actual compiled tree. Evidence
+ 0118/exact-native-display-patch-and-TU-proof.json. Full macOS27-Xcode27 CI is
+  required NEXT (native profile changed); no successful new kernel claim yet.
+- FW CPU0 runtime scope, archive memory ownership/export/final receipt and
+  shutdown/rawreset/RAMlease restore gates are NOT connected yet. Current
+  physical builders/old onecycle images do NOT admit native runtime. No phone
+  candidate READY, no physical iOS; pendingjournal may_boot_iOS=false and
+  may_write_userdata=false remain. Continue actual FW integration while fullCI
+  builds; then SERIAL actualEFI-XNU+faults and NEW strictRO root audit before
+  actual native powerkey/dark/wake. ca_vbl1/audio/WiFi/full16.5 goals retained.
+
 ### 0117 OFFLINE runtime mailbox/history core COMPLETE; native integration NOT READY
 
 - Source8d3d82f committed/PUSH VERIFIED (remote full SHA8d3d82f07ce3c7120230d817c6c446b435cd99bd).
