@@ -58,22 +58,38 @@ def main():
                 if not match or int(match[1],16)!=pa or int(match[2],16)!=0:
                     raise ValueError('kernel/AP executed or snapshot unreadable: '+name)
             injected=m.get('controlled_WLED_write_timeout') is True
+            oem=m.get('WLED_OEM_status_policy') is True
+            status_injected=m.get('controlled_WLED_status_after_issue',0)
+            if type(status_injected) is not int or not 0<=status_injected<=0xffff or (status_injected and (not oem or injected)):
+                raise ValueError('incompatible status fault scope')
+            refused=injected or bool(status_injected)
+            expected_error=65 if status_injected else 36 if injected else 0
             checks={'firmware_EL1_admission':values.get('XNU_ADMISSION')==0,'exact_payload_valid':values.get('QEMU_PAYLOAD_VALID')==1,
                     'kernel_prepared_not_executed':'KERNEL_PREPARED_ENTRY=' in text and values.get('WLED_KERNEL_AP_STAGE')==0,
                     'no_PSCI_CPU_ON':'KERNEL_PSCI_STATUS=' not in text,
                     'mock_backend_explicit':values.get('WLED_POWER_MOCK_BACKEND')==1,
                     'preflight_succeeded':values.get('WLED_POWER_PREPARE_ERROR')==0,
-                    'expected_final_error':values.get('WLED_POWER_FINAL_ERROR')==(36 if injected else 0),
-                    'expected_final_uncertainty':values.get('WLED_POWER_FINAL_UNCERTAIN')==int(injected),
-                    'writes_issued_exactly':values.get('WLED_POWER_WRITES_ISSUED')==(1 if injected else 4),
-                    'writes_completed_exactly':values.get('WLED_POWER_WRITES_COMPLETED')==(0 if injected else 4),
-                    'reset_gate':values.get('WLED_POWER_FINAL_RESET_ALLOWED')==int(not injected),
-                    'off_readback_and_reset':injected or (values.get('WLED_POWER_OFF_MODULE')==0 and values.get('WLED_POWER_OFF_IRQ')==0 and values.get('WLED_POWER_OFF_RESET_REFUSED')==1),
-                    'on_readback_after_two_seconds':injected or (values.get('WLED_POWER_RESTORED_MODULE')==0x80 and values.get('WLED_POWER_RESTORED_IRQ')==2 and values.get('WLED_POWER_RESTORED_US',0)-values.get('WLED_POWER_OFF_US',0)>=2000000),
+                    'expected_final_error':values.get('WLED_POWER_FINAL_ERROR')==expected_error,
+                    'expected_final_uncertainty':values.get('WLED_POWER_FINAL_UNCERTAIN')==int(refused),
+                    'writes_issued_exactly':values.get('WLED_POWER_WRITES_ISSUED')==(1 if refused else 4),
+                    'writes_completed_exactly':values.get('WLED_POWER_WRITES_COMPLETED')==(1 if status_injected else 0 if injected else 4),
+                    'reset_gate':values.get('WLED_POWER_FINAL_RESET_ALLOWED')==int(not refused),
+                    'off_readback_and_reset':refused or (values.get('WLED_POWER_OFF_MODULE')==0 and values.get('WLED_POWER_OFF_IRQ')==0 and values.get('WLED_POWER_OFF_RESET_REFUSED')==1),
+                    'on_readback_after_two_seconds':refused or (values.get('WLED_POWER_RESTORED_MODULE')==0x80 and values.get('WLED_POWER_RESTORED_IRQ')==2 and values.get('WLED_POWER_RESTORED_US',0)-values.get('WLED_POWER_OFF_US',0)>=2000000),
                     'actual_AP_context_stage_zero':bool(actual.get('actual_AP_stage')),
                     'actual_kernel_log_total_zero':bool(actual.get('actual_kernel_log_total')),
                     'no_native_startup_log':'Darwin Kernel Version' not in text and 'POLARIS SMP CHECK:' not in text,
                     'no_panic':'panic(cpu ' not in text}
+            if oem:
+                words={int(k[len('WLED_POWER_W'):-len('_WORD')],16):v for k,v in values.items()
+                       if re.fullmatch(r'WLED_POWER_W[0-9A-F]{2}_WORD',k)}
+                checks.update(OEM_policy_explicit=values.get('WLED_POWER_OEM_STATUS_POLICY')==1,
+                              retained_status_history=bool(words) and len(words)==values.get('WLED_POWER_WITNESS_COUNT'))
+                if status_injected:
+                    checks['serious_word_retained']=any((v&255)&(status_injected&255) or
+                        ((v>>8)&255)&(status_injected>>8) for v in words.values())
+                else:
+                    checks['ILIM_history_not_discarded']=values.get('WLED_POWER_WITNESS_FAULT_OR')==1 and values.get('WLED_POWER_WITNESS_RT_OR')==1
         except Exception as e:error=str(e)
         finally:
             if p.poll() is None:p.terminate()
@@ -81,8 +97,10 @@ def main():
             except subprocess.TimeoutExpired:p.kill();p.wait()
     result={'passed':bool(checks) and all(checks.values()) and error is None,'checks':checks,'error':error,'seconds':time.monotonic()-began,
             'driver_sha256':sha(app),'driver_manifest_sha256':sha(a.driver_manifest),'kernel_sha256':sha(a.kernel),'payload_sha256':sha(a.payload),
-            'inputs':m['inputs'],'raw_fields':values,'actual_guest_memory':actual,'controlled_write_timeout':m['controlled_WLED_write_timeout'],
+            'inputs':m['inputs'],'runner_sha256':sha(Path(__file__)),'raw_fields':values,'actual_guest_memory':actual,'controlled_write_timeout':m['controlled_WLED_write_timeout'],
             'WLED_power_cycle_only':True,'release_handoff_admitted':False,'actual_phone_or_PMIC_emulated':False,
+            'WLED_OEM_status_policy':m.get('WLED_OEM_status_policy',False),
+            'controlled_status_after_issue':m.get('controlled_WLED_status_after_issue',0),
             'kernel_CPU_started':False,'physical_PMIC_power_control_tested':False,'command':cmd}
     (out/'result.json').write_text(json.dumps(result,indent=2)+'\n');print(json.dumps(result,indent=2));raise SystemExit(not result['passed'])
 if __name__=='__main__':main()

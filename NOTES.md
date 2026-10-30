@@ -34,6 +34,68 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0111 OEM status semantics + actual EFI integration COMPLETE; phone FASTBOOT
+
+- CURRENT all0111 checks/models ENDED. No phone boot/cycle/PMIC power write,
+  native kernel change/CI, root access, storage/NVRAM/Android activity. Directed
+  actual expected Polaris FASTBOOT verified at04:43UTC and again after tests;
+  actual-fastboot-final-0001.json is the current device result. Do not replay
+  any old0110/0108 controller/boot/cycle. No physical OEM candidate is admitted.
+- Resolved RT bit0 meaning from Qualcomm-authored PmicLib pm_wled.h Gitblob
+  eff87f29b50bf331572156a9a3685072dc191c14 and pm_wled.c
+  7e6be3d48e5d2cbd0e08b454a51a92754cd9c48a. Verbatim enum + IRQ status function
+  compiled with explicit read-only environment stubs:768 RT/mask cases pass.
+  RT bit0=ILIM, bit1=OVP, bit2=SC, consistent with own Polaris fault definitions.
+  This identifies the bit, NOT harmlessness/health or a phone write permission.
+  Own c7cb50c1 module_en does not require volatile status equality/zero; all
+  original raw statuses and earlier strict refusals remain preserved.
+- Independent pwp_init_oem_status/polaris_wled_status_witness added, original
+  pwp_init stays strict. Only two status bytes may vary and only bit0 is
+  accepted; all64 other snapshot bytes remain exact. Bounded64 raw records,
+  both ILIM/RT values, valid/partial mask, actual local start/end, cumulative
+  OR preserved; no zeroing, majority substitution, fault clear, unbounded
+  logging or uncertain retry. OVP/SC/unknown bits, read/owner/map/config/clock/
+  history-capacity errors remain sticky; severe post-completion status keeps
+  uncertain=true and denies reset. Four exact original commands and >=10ms
+  cooperative softstart unchanged. New --wled-oem-status is QEMU-only and
+  requires explicit pre-XNU cycle; physical builder, power packager/client,
+  readonly packager/client and ordinary iOS admission reject the new scope.
+- actual-EFI-OEM-status-integration-proof.json independently rehashes40 local
+  ASan/UBSan/scope/parser checks13.076s and TEN actual AArch64 EFI cases193
+  checks. Full firmware adapter: original strict17/17 in8.801s; OEM normal
+ 20/20 in8.703s; timeout20/20 in6.697s; FAULT OVP/SC/unknown and RT OVP/SC/unknown
+  six cases20/20 each6.637..6.792s. Actual AP memory stage0/kernel-log0 and
+  CPU_ON compiled OUT; explicit SOFTWARE PMIC, not SD845 power simulation.
+  Successful dynamic ILIM fixture restores module80/IRQ2 after2s OFF, four
+  commands. Severe bits after completed first command: issued1/completed1,
+  FAILED65/uncertain1/reset denied. Unknown command completion: issued1/
+  completed0/timeout36/reset denied. Core EFI fixture16/16 in5.772s covers
+  actual architectural softstart10908us, every severe/unknown bit, retention
+  and no policy switch after strict refusal. No phone power/light result.
+- First local0001/0002 unused fixture helper compile failures retained;
+  local0003 test mutated internal saved module/IRQ instead of hardware and
+  failed its expected assertion. Corrected the harness to mutate each actual
+  peripheral byte/bit (512 static-bit checks), not a production gate relaxation.
+  Final40 tests include every read failure, all serious bits before/after each
+  of four writes, frozen/reversed clock, all static configuration bytes,
+  capacity exhaustion, scope stripping and uncertain no-retry. No failure
+  evidence was promoted. Source/build dependency hashes include new header.
+- NEXT physical admission work, not more random failed cycles: complete a
+  strictly parsed raw status journal covering EVERY reset-gate revalidation.
+  Current cycle completion prints its history; later pwp_restored calls append
+  new records in memory, so that earlier print alone is NOT the final witness.
+  Bind actual0110 timeline + own DT/vendor + source oracle + all actual EFI
+  fault results in an independent default-OFF physical packager and host
+  parser before allowing a phone build. Preserve old strict modes/refusals.
+  Then one pre-XNU bounded electrical OFF/readback/ON/restore/readback and
+  independent FASTBOOT; ACK/black screenshot never means optical darkness.
+  Native framebuffer/FW cookie/seq/cache-line handshake and human true-dark/
+  wake verification still pending, as are PCM/Wi-Fi and persistent runtime.
+- Current ca_vbl1 graphics865407ee.../native0104b7fa37ac untouched. Fuller20F66
+  source package remains exactly validated as below, not ABI or boot tested.
+  Pending outer userdata journal still forbids new iOS/root writes until a
+  new strict read-only audit/review; no repair/replay/RW permission inferred.
+
 ### 0110 physical fault timeline COMPLETE; full16.5 source package exact match
 
 - CURRENT all0110 physical/model/build/export workers ENDED. ONE originalUEFI

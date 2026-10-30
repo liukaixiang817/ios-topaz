@@ -13,6 +13,9 @@ static uint32_t cycle_channel_error;
 #if defined(POLARIS_EFI_TEST_QEMU)
 static uint8_t cycle_mock_pmic[2][256];
 static uint32_t cycle_mock_command,cycle_mock_offset;
+#if defined(EFI_XNU_WLED_OEM_STATUS)
+static unsigned cycle_mock_fault_reads,cycle_mock_rt_reads;
+#endif
 static void cycle_mock_init(void)
 {
     const uint8_t a[8]={0,3,1,3,0x17,0x10,0,0},b[8]={1,1,0,1,0x17,0x11,0,0};
@@ -49,6 +52,19 @@ static void cycle_read_command(void *context,uint32_t offset,uint32_t command)
     if((offset!=253*0x80&&offset!=254*0x80)||(command>>27)!=1||
        (command&0x07fff008))cycle_channel_error=3;
     cycle_mock_offset=offset;cycle_mock_command=command;
+#if defined(EFI_XNU_WLED_OEM_STATUS)
+    if(offset==253*0x80) {
+        unsigned reg=(command>>4)&255;
+        if(reg==8)cycle_mock_pmic[0][8]=(uint8_t)(++cycle_mock_fault_reads&1);
+        if(reg==0x10)cycle_mock_pmic[0][0x10]=(uint8_t)(++cycle_mock_rt_reads&1);
+#if defined(EFI_XNU_TEST_WLED_STATUS_AFTER_ISSUE)
+        if(cycle_power.issued) {
+            cycle_mock_pmic[0][8]=(uint8_t)EFI_XNU_TEST_WLED_STATUS_AFTER_ISSUE;
+            cycle_mock_pmic[0][0x10]=(uint8_t)(EFI_XNU_TEST_WLED_STATUS_AFTER_ISSUE>>8);
+        }
+#endif
+    }
+#endif
 }
 #endif
 static void cycle_issue(void *context,uint32_t offset,uint32_t command,uint32_t data)
@@ -111,8 +127,18 @@ static void wled_cycle_begin(void)
     cycle_bus.now_us=buttons_us;
     cycle_power.issue=cycle_issue;cycle_power.status=cycle_status;
     struct polaris_wled_snapshot saved={0};
-    if(!polaris_wled_inventory(&cycle_bus,&saved)||
-       !pwp_init(&cycle_power,&cycle_bus,&saved,false)||
+#if defined(EFI_XNU_WLED_OEM_STATUS)
+    /* Independent entry, never a retry after the strict reader refused.
+     * The first raw status is retained in saved; init checks every canonical
+     * factory byte and two live snapshots. This is not a clean-health claim. */
+    report("WLED_POWER_OEM_STATUS_POLICY=",1);
+    bool initialized=pw_collect(&cycle_bus,&saved)&&
+        pwp_init_oem_status(&cycle_power,&cycle_bus,&saved,false);
+#else
+    bool initialized=polaris_wled_inventory(&cycle_bus,&saved)&&
+        pwp_init(&cycle_power,&cycle_bus,&saved,false);
+#endif
+    if(!initialized||
        !pwp_request(&cycle_power,1,false)) {
         if(!cycle_power.error)pwp_fail(&cycle_power,cycle_bus.fault);
         report("WLED_POWER_PREPARE_WRITES_ISSUED=",cycle_power.issued);
@@ -128,8 +154,28 @@ static void wled_cycle_begin(void)
         report("WLED_POWER_INITIAL_CTRL_APID_OWNER=",((uint64_t)cycle_bus.apid[0]<<32)|cycle_bus.owner[0]);
         report("WLED_POWER_INITIAL_SINK_APID_OWNER=",((uint64_t)cycle_bus.apid[1]<<32)|cycle_bus.owner[1]);
         report("WLED_POWER_INITIAL_PSM=",(uint32_t)saved.psm[0]|((uint32_t)saved.psm[1]<<8));
+        report("WLED_POWER_INITIAL_STATUS=",(uint32_t)saved.faults[0]|((uint32_t)saved.faults[1]<<8));
     }
 }
+#if defined(EFI_XNU_WLED_OEM_STATUS)
+static void wled_cycle_status_report(void)
+{
+    const struct polaris_wled_status_witness *w=&cycle_power.witness;
+    report("WLED_POWER_WITNESS_COUNT=",w->count);
+    report("WLED_POWER_WITNESS_ERROR=",w->error);
+    report("WLED_POWER_WITNESS_FAULT_OR=",w->fault_or);
+    report("WLED_POWER_WITNESS_RT_OR=",w->rt_or);
+    for(unsigned n=0;n<w->count&&n<PWS_RECORDS;n++) {
+        char at[]="WLED_POWER_W00_AT=",word[]="WLED_POWER_W00_WORD=";
+        at[12]=word[12]="0123456789ABCDEF"[(n>>4)&15];
+        at[13]=word[13]="0123456789ABCDEF"[n&15];
+        report(at,((w->record[n].began_us&UINT64_C(0xffffffff))<<32)|
+            (w->record[n].ended_us&UINT64_C(0xffffffff)));
+        report(word,(uint32_t)w->record[n].fault|((uint32_t)w->record[n].rt<<8)|
+            ((uint32_t)w->record[n].valid<<16));
+    }
+}
+#endif
 static void wled_cycle_poll(void)
 {
     if(!cycle_started||cycle_done)return;
@@ -143,6 +189,9 @@ static void wled_cycle_poll(void)
         report("WLED_POWER_UNCERTAIN=",cycle_power.uncertain);
         report("WLED_POWER_WRITES_ISSUED=",cycle_power.issued);
         report("WLED_POWER_WRITES_COMPLETED=",cycle_power.completed);
+#if defined(EFI_XNU_WLED_OEM_STATUS)
+        wled_cycle_status_report();
+#endif
         cycle_done=1;return;
     }
     uint64_t now=buttons_us(0);
@@ -163,6 +212,9 @@ static void wled_cycle_poll(void)
         report("WLED_POWER_WRITES_ISSUED=",cycle_power.issued);
         report("WLED_POWER_WRITES_COMPLETED=",cycle_power.completed);
         report("WLED_POWER_CYCLE_ERROR=",0);
+#if defined(EFI_XNU_WLED_OEM_STATUS)
+        wled_cycle_status_report();
+#endif
         text("WLED_POWER_CYCLE_HOLD: NO_CPU_ON SAVED_STATE_RESTORED\r\n");
     }
 }

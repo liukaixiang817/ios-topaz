@@ -71,7 +71,8 @@ def admit_pair_witness_policy(driver,qemu,thermal,extended):
 def admit(driver,qemu,ci,profile,preflight):
     if any(x.get(k) for x in (driver,qemu) for k in
            ('WLED_readonly_inventory_only','WLED_readonly_fault_watch','controlled_WLED_fault_pulse',
-            'WLED_power_cycle_only','PMIC_write_api','kernel_CPU_ON_compiled_out')):
+            'WLED_power_cycle_only','WLED_OEM_status_policy','controlled_WLED_status_after_issue',
+            'PMIC_write_api','kernel_CPU_ON_compiled_out')):
         raise ValueError('WLED pre-XNU inventory/power cycle cannot be admitted as an iOS handoff')
     if driver.get('physical_owned_marker_test') or qemu.get('physical_owned_marker_test'):
         raise ValueError('physical owned marker needs separate fresh new-file and owned-native-proof admission; RAM-only packaging cannot grant it')

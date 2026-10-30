@@ -25,6 +25,8 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--output', type=Path, required=True)
     ap.add_argument('--zig', type=Path, required=True)
+    ap.add_argument('--oem-status', action='store_true',
+                    help='Exercise the separate volatile-status policy; no phone image/admission')
     ap.add_argument('--qemu', type=Path, default=Path('/opt/homebrew/bin/qemu-system-aarch64'))
     a = ap.parse_args()
     root = Path(__file__).resolve().parents[1]
@@ -32,6 +34,8 @@ def main():
     out.mkdir(parents=True, exist_ok=False)
     sys.path.insert(0, str(root))
     fixture = importlib.import_module('tools.tests.test_polaris_wled_power')
+    if a.oem_status:
+        fixture = importlib.import_module('tools.tests.test_polaris_wled_status')
     prefix = r'''
 #include "uefi.h"
 static unsigned checks;
@@ -61,7 +65,8 @@ static int memcmp(const void *a,const void *b,size_t count) {
 }
 '''
     # Same independently asserted register semantics as ASan/UBSan tests.
-    body = fixture.H.replace('#include <assert.h>', '').replace('#include <string.h>', '')
+    body = (fixture.OEM_H if a.oem_status else fixture.H).replace(
+        '#include <assert.h>', '').replace('#include <string.h>', '')
     suffix = r'''
 static uint64_t actual_clock(void *ctx) {
  struct fake *f=ctx;uint64_t ticks,freq;
@@ -114,6 +119,51 @@ efi_status EfiMain(efi_handle image,struct efi_system *st) {
  for(;;)__asm__ volatile("wfe");
 }
 '''
+    if a.oem_status:
+        oem_checks = r'''
+ setup(&f,&b,&p);b.now_us=actual_clock;
+ struct polaris_wled_snapshot expected;
+ assert(polaris_wled_inventory(&b,&expected));
+ f.pulse=1;b.read_command=dynamic_command;
+ assert(pwp_init_oem_status(&p,&b,&expected,false));
+ assert(pwp_request(&p,1,false));actual_drive(st,&p,1);
+ assert(!p.actual_on&&!pwp_restored(&p));
+ assert(pwp_request(&p,2,true));actual_drive(st,&p,2);
+ assert(pwp_restored(&p)&&f.writes==4&&!p.uncertain);
+ assert(f.ovp_time-f.enable_time>=10000);
+ number("WLED_POWER_OEM_SOFTSTART_US=",f.ovp_time-f.enable_time);
+ assert(p.witness.fault_or==1&&p.witness.rt_or==1&&p.witness.count>=24);
+ unsigned high=0,low=0;
+ for(unsigned n=0;n<p.witness.count;n++) {
+  assert(p.witness.record[n].valid==3);
+  high+=p.witness.record[n].fault==1;low+=p.witness.record[n].fault==0;
+ }
+ assert(high&&low);serial("WLED_POWER_OEM_VOLATILE_CYCLE_PASS\n");
+ for(unsigned bank=0;bank<2;bank++)for(unsigned bit=1;bit<8;bit++) {
+  oem_start(&f,&b,&p,0);unsigned count=p.witness.count;
+  f.pmic[0][bank?0x10:8]=(uint8_t)(1u<<bit);
+  assert(!pwp_verify(&p)&&p.error==PWS_E_STATUS&&!f.writes&&!pwp_restored(&p));
+  assert((bank?p.witness.rt_or:p.witness.fault_or)&(1u<<bit));
+  assert((bank?p.witness.record[count].rt:p.witness.record[count].fault)==(1u<<bit));
+ }
+ serial("WLED_POWER_OEM_ALL_SEVERE_UNKNOWN_PASS\n");
+ for(unsigned bad=0;bad<3;bad++) {
+  oem_start(&f,&b,&p,1);assert(pwp_request(&p,1,false)&&pwp_poll(&p));
+  if(bad==0)f.foreign_owner=1;
+  if(bad==1)f.pmic[1][0x54]^=1;
+  if(bad==2){f.fail_write=1;f.status=0;}
+  assert(!pwp_poll(&p)&&!pwp_restored(&p)&&p.error);
+  unsigned writes=f.writes;for(unsigned n=0;n<20;n++)assert(!pwp_poll(&p));
+  assert(f.writes==writes&&writes==(bad==2?1u:0u));
+ }
+ serial("WLED_POWER_OEM_OWNER_CONFIG_UNCERTAIN_PASS\n");
+ setup(&f,&b,&p);assert(polaris_wled_inventory(&b,&expected));
+ f.pulse=1;b.read_command=dynamic_command;
+ assert(!pwp_init(&p,&b,&expected,false)&&!f.writes&&b.fault==PW_E_CHANGED);
+ assert(!pwp_init_oem_status(&p,&b,&expected,false)&&!f.writes);
+ serial("WLED_POWER_OEM_NO_SWITCH_AFTER_REFUSAL_PASS\n");
+'''
+        suffix = suffix.replace(' assert(checks>1000);', oem_checks+' assert(checks>1000);')
     source = out/'model.c'
     source.write_text(prefix+body+suffix)
     obj = out/'model.obj'
@@ -161,19 +211,28 @@ efi_status EfiMain(efi_handle image,struct efi_system *st) {
     expected = ['MODEL_SOFTWARE_PMIC_ONLY', 'ACTUAL_CLOCK_OFF_ON_PASS', 'COALESCED_PASS',
                 'FOREIGN_OWNER_PASS', 'CHANGED_CONFIG_PASS', 'UNCERTAIN_NO_RETRY_PASS',
                 'EARLY_IRQ_RESTORE_REFUSED', 'MODEL_DONE']
+    if a.oem_status:
+        expected += ['OEM_VOLATILE_CYCLE_PASS', 'OEM_ALL_SEVERE_UNKNOWN_PASS',
+                     'OEM_OWNER_CONFIG_UNCERTAIN_PASS', 'OEM_NO_SWITCH_AFTER_REFUSAL_PASS']
     checks = {name: text.count('WLED_POWER_'+name+'\n') == 1 for name in expected}
     values = {k: int(v,16) for k,v in re.findall(r'(WLED_POWER_\w+)=0x([0-9a-f]{16})',text)}
     checks['actual_EL1'] = values.get('WLED_POWER_CURRENT_EL') == 4
     checks['actual_architectural_softstart'] = values.get('WLED_POWER_SOFTSTART_US',0) >= 10000
+    if a.oem_status:
+        checks['OEM_actual_architectural_softstart'] = values.get('WLED_POWER_OEM_SOFTSTART_US',0) >= 10000
     checks['no_assertion_failure'] = 'WLED_POWER_MODEL_FAILED' not in text
     paths = [Path(__file__).resolve(), root/'shim/polaris/uefi-wled-power.h',
              root/'shim/polaris/uefi-wled-readonly.h', root/'shim/polaris/uefi.h',
+             root/'shim/polaris/uefi-wled-status.h',
              root/'tools/tests/test_polaris_wled_power.py']
+    if a.oem_status:
+        paths.append(root/'tools/tests/test_polaris_wled_status.py')
     result = dict(passed=all(checks.values()), checks=checks, seconds=time.monotonic()-began,
                   inputs={str(p.relative_to(root)): sha(p) for p in paths}, source_sha256=sha(source),
                   binary_sha256=sha(app), serial_sha256=sha(out/'serial.log'), raw_fields=values, command=cmd,
                   actual_phone_or_PMIC_emulated=False, phone_compatible=False,
                   release_handoff_admitted=False, XNU_started=False,
+                  OEM_status_policy_explicit=a.oem_status,
                   real_guest_clock_softstart=True, synthetic_fault_clocks=True)
     (out/'result.json').write_text(json.dumps(result, indent=2)+'\n')
     print(json.dumps(result, indent=2))

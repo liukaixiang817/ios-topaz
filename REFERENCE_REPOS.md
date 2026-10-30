@@ -709,6 +709,21 @@ for zero brightness and retains the level registers, with soft-start and IRQ/
 optional-PSM sequencing. The reference OS-facing backlight interface is useful;
 its hardware transport and register encoding are not this phone's.
 
+0111 distinguishes volatile status from configuration using the original
+Polaris driver above and Qualcomm-authored PmicLib sources (public source
+mirror `David112x/android-firmware-qti-sdm660`). `pm_wled.h` Gitblob
+`eff87f29b50bf331572156a9a3685072dc191c14` defines the WLED IRQ enum in
+ILIM/OVP/SC order; `pm_wled.c` blob
+`7e6be3d48e5d2cbd0e08b454a51a92754cd9c48a` uses `1 << irq` when reading
+real-time status. This identifies RT bit0 as ILIM; it does not establish
+hardware health or make an ILIM pulse harmless. Own Polaris OVP handling
+records ILIM and only enters OVP calibration for bit1. The independent OEM
+policy retains both raw status words and rejects every bit except ILIM,
+while comparing all64 non-status snapshot bytes exactly. Original strict
+mode/refusals remain intact. The new policy is currently QEMU-only; no
+physical writer/image/control admission or true-darkness result is implied.
+Private source/oracle/model evidence is under `research/polaris/uefi-ios-0111`.
+
 The audited UniXNU OS profile is iPadOS17.7.11/21H461 with XNU10063.141.1 and
 new MobileGraphics/IOSurface/IOHID ABI integration. Our current iOS16/XNU8796
 kernel and graphics bundle cannot simply consume that profile or root image.

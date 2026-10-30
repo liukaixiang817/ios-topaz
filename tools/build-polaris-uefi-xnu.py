@@ -159,6 +159,8 @@ def main():
     ap.add_argument('--wled-fault-watch',action='store_true',help='readonly inventory plus bounded FAULT/RT/enable timeline, never health or writer admission')
     ap.add_argument('--test-wled-fault-pulse',action='store_true',help='QEMU-only explicit nonzero/disappearing FAULT words for readonly watch')
     ap.add_argument('--wled-power-cycle-only',action='store_true',help='isolated pre-XNU WLED OFF/two-second hold/ON; no OS or storage writes')
+    ap.add_argument('--wled-oem-status',action='store_true',help='QEMU-only explicit OEM volatile-status policy; no physical image admission yet')
+    ap.add_argument('--test-wled-status-after-issue',type=lambda s:int(s,0),default=0,help='QEMU-only packed FAULT/RT severe bits after first issued command')
     ap.add_argument('--test-wled-write-timeout',action='store_true',help='isolated QEMU uncertain WLED command; no reset or retry')
     ap.add_argument('--test-wled-read-failure',action='store_true',help='QEMU-only explicit observer refusal in the inventory hold')
     ap.add_argument('--cpu-stock-inventory',type=Path,help='required physical read-only OSM evidence for the first performance trial')
@@ -194,6 +196,12 @@ def main():
         ap.error('TSENS readonly is only an explicit four-big RAM native-drain inventory')
     if a.wled_inventory_only and a.wled_power_cycle_only:
         ap.error('read-only WLED inventory and PMIC power cycle are different scopes')
+    if a.wled_oem_status and not (a.test_qemu and a.wled_power_cycle_only):
+        ap.error('OEM status policy is currently isolated QEMU power-cycle only')
+    if a.test_wled_status_after_issue and (not a.wled_oem_status or
+        not 0<a.test_wled_status_after_issue<=0xffff or
+        not (a.test_wled_status_after_issue&0xfefe) or a.test_wled_write_timeout):
+        ap.error('status fault injection requires separate QEMU OEM cycle without timeout injection')
     if a.wled_fault_watch and not a.wled_inventory_only:
         ap.error('WLED fault watch requires the no-writer pre-XNU inventory scope')
     if a.test_wled_fault_pulse and not (a.test_qemu and a.wled_fault_watch):
@@ -421,6 +429,8 @@ def main():
     if a.wled_fault_watch:flags.append('-DEFI_XNU_WLED_FAULT_WATCH=1')
     if a.test_wled_fault_pulse:flags.append('-DEFI_XNU_TEST_WLED_FAULT_PULSE=1')
     if a.wled_power_cycle_only:flags.append('-DEFI_XNU_WLED_POWER_CYCLE_ONLY=1')
+    if a.wled_oem_status:flags.append('-DEFI_XNU_WLED_OEM_STATUS=1')
+    if a.test_wled_status_after_issue:flags.append('-DEFI_XNU_TEST_WLED_STATUS_AFTER_ISSUE='+str(a.test_wled_status_after_issue))
     if a.test_wled_write_timeout:flags.append('-DEFI_XNU_TEST_WLED_WRITE_TIMEOUT=1')
     if a.test_wled_read_failure:flags.append('-DEFI_XNU_TEST_WLED_READ_FAILURE=1')
     sources=['uefi-xnu.c','uefi-xnu-ap.S','uefi-xnu-crc.c','payload.c','uefi-usb.c','uefi-usb-command.c','uefi-usb-control.c']
@@ -432,7 +442,7 @@ def main():
                  'tools/polaris-buttons.h','tools/polaris-uefi-buttons.h']
     if a.wled_inventory_only:inputs+=['shim/polaris/uefi-wled-inventory.h','shim/polaris/uefi-wled-readonly.h']
     if a.wled_fault_watch:inputs+=['shim/polaris/uefi-wled-fault-watch.h']
-    if a.wled_power_cycle_only:inputs+=['shim/polaris/uefi-wled-cycle.h','shim/polaris/uefi-wled-power.h','shim/polaris/uefi-wled-readonly.h']
+    if a.wled_power_cycle_only:inputs+=['shim/polaris/uefi-wled-cycle.h','shim/polaris/uefi-wled-power.h','shim/polaris/uefi-wled-readonly.h','shim/polaris/uefi-wled-status.h']
     if shutdown_bridge:inputs.append('shim/polaris/runtime-quiesce.h')
     objects=[]
     for source in sources:
@@ -453,6 +463,7 @@ def main():
                   WLED_readonly_inventory_only=a.wled_inventory_only,controlled_WLED_read_refusal=a.test_wled_read_failure,
                   WLED_readonly_fault_watch=a.wled_fault_watch,controlled_WLED_fault_pulse=a.test_wled_fault_pulse,
                   WLED_power_cycle_only=a.wled_power_cycle_only,controlled_WLED_write_timeout=a.test_wled_write_timeout,
+                  WLED_OEM_status_policy=a.wled_oem_status,controlled_WLED_status_after_issue=a.test_wled_status_after_issue,
                   PMIC_write_api=a.wled_power_cycle_only,kernel_CPU_ON_compiled_out=wled_hold,
                   probe_only=wled_hold,holds_before_OS_start=wled_hold,
                   original_root_writes_volatile=True,physical_small_file_write_test=a.physical_owned_marker,

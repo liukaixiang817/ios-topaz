@@ -8,6 +8,7 @@
 #ifndef POLARIS_EFI_WLED_POWER_H
 #define POLARIS_EFI_WLED_POWER_H
 #include "uefi-wled-readonly.h"
+#include "uefi-wled-status.h"
 
 enum pwp_phase { PWP_UNINITIALIZED, PWP_ON, PWP_OFF_MODULE, PWP_OFF_IRQ,
     PWP_OFF, PWP_ON_MODULE, PWP_SOFTSTART, PWP_ON_IRQ, PWP_VERIFY_ON, PWP_FAILED };
@@ -15,6 +16,7 @@ enum { PWP_E_SCOPE=32, PWP_E_CONFIG, PWP_E_REQUEST, PWP_E_WRITE,
        PWP_E_WRITE_TIMEOUT, PWP_E_READBACK, PWP_E_CLOCK };
 enum pwp_command { PWP_DISABLE_MODULE, PWP_DISABLE_OVP, PWP_ENABLE_MODULE,
                    PWP_RESTORE_OVP };
+enum pwp_status_policy { PWP_STRICT_SNAPSHOT, PWP_OEM_STATUS_WITNESS };
 struct polaris_wled_power {
     struct polaris_wled_read_bus *bus;
     void *write_context;
@@ -27,6 +29,8 @@ struct polaris_wled_power {
     uint32_t error, phase, issued, completed, last_status, polls, frozen_polls;
     uint8_t module, irq;
     bool desired_on, actual_on, uncertain;
+    enum pwp_status_policy status_policy;
+    struct polaris_wled_status_witness witness;
 };
 static inline bool pwp_fail(struct polaris_wled_power *p,unsigned error)
 {
@@ -60,34 +64,55 @@ static inline bool pwp_verify(struct polaris_wled_power *p)
 {
     struct polaris_wled_snapshot s={0},expected=p->saved;
     if(!pwp_scope(p))return false;
-    if(!polaris_wled_inventory(p->bus,&s))return pwp_fail(p,p->bus->fault);
     expected.ctrl[2]=p->module;expected.irq_enable=p->irq;
+    if(p->status_policy==PWP_OEM_STATUS_WITNESS) {
+        if(!pws_verify(&p->witness,p->bus,&expected))
+            return pwp_fail(p,p->witness.error);
+        return true;
+    }
+    if(p->status_policy!=PWP_STRICT_SNAPSHOT)return pwp_fail(p,PWP_E_SCOPE);
+    if(!polaris_wled_inventory(p->bus,&s))return pwp_fail(p,p->bus->fault);
     if(!pwp_equal(&s,&expected,sizeof(s)))return pwp_fail(p,PWP_E_CONFIG);
     return true;
 }
-static inline bool pwp_init(struct polaris_wled_power *p,
+static inline bool pwp_init_policy(struct polaris_wled_power *p,
     struct polaris_wled_read_bus *bus,
     const struct polaris_wled_snapshot *source_bound_expected,
-    bool own_DT_has_lcd_psm_ctrl)
+    bool own_DT_has_lcd_psm_ctrl,enum pwp_status_policy policy)
 {
     static const uint8_t ctrl_rev[8]={0,3,1,3,0x17,0x10,0,0};
     static const uint8_t sink_rev[8]={1,1,0,1,0x17,0x11,0,0};
     static const uint8_t sink_config[6]={0xf0,0x0f,0,0,0x4c,3};
     static const uint8_t string_config[9]={0x80,2,8,0,0,0,0x80,0xff,7};
     if(!p||p->error||p->phase!=PWP_UNINITIALIZED||!bus||!source_bound_expected||
-       own_DT_has_lcd_psm_ctrl||!p->issue||!p->status)
+       own_DT_has_lcd_psm_ctrl||!p->issue||!p->status||p->issued||p->completed||
+       p->request||p->witness.count||p->witness.error||
+       (policy!=PWP_STRICT_SNAPSHOT&&policy!=PWP_OEM_STATUS_WITNESS))
         return pwp_fail(p,PWP_E_SCOPE);
     const struct polaris_wled_snapshot *s=source_bound_expected;
     if(!pwp_equal(s->revision[0],ctrl_rev,8)||!pwp_equal(s->revision[1],sink_rev,8)||
        s->ctrl[0]||s->ctrl[1]||s->ctrl[2]!=0x80||s->irq_enable!=2||
-       s->faults[0]||s->faults[1]||s->psm[0]!=0x80||s->psm[1]!=0x84||
+       ((s->faults[0]|s->faults[1])&~(policy==PWP_OEM_STATUS_WITNESS?1u:0u))||
+       s->psm[0]!=0x80||s->psm[1]!=0x84||
        !pwp_equal(s->sink,sink_config,6))return pwp_fail(p,PWP_E_CONFIG);
     for(unsigned n=0;n<4;n++)if(!pwp_equal(s->string[n],string_config,9))
         return pwp_fail(p,PWP_E_CONFIG);
+    p->status_policy=policy;
     p->bus=bus;p->saved=*s;p->module=0x80;p->irq=2;
     if(!pwp_verify(p)||!pwp_now(p))return false;
     p->phase=PWP_ON;p->desired_on=p->actual_on=true;return true;
 }
+/* Existing callers retain strict equality/zero-status behavior. The separate
+ * entry is for explicit offline/model integration, not a runtime switch after
+ * refusal. No image flag or physical admission is granted by this header. */
+static inline bool pwp_init(struct polaris_wled_power *p,
+    struct polaris_wled_read_bus *b,const struct polaris_wled_snapshot *expected,
+    bool psm)
+{return pwp_init_policy(p,b,expected,psm,PWP_STRICT_SNAPSHOT);}
+static inline bool pwp_init_oem_status(struct polaris_wled_power *p,
+    struct polaris_wled_read_bus *b,const struct polaris_wled_snapshot *expected,
+    bool psm)
+{return pwp_init_policy(p,b,expected,psm,PWP_OEM_STATUS_WITNESS);}
 static inline bool pwp_write(struct polaris_wled_power *p,enum pwp_command command)
 {
     uint32_t reg,data,count=1;
