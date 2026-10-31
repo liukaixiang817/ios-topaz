@@ -29,9 +29,12 @@ def main():
     for n in ('libusb','boot-record','image-manifest','driver-manifest','output'):ap.add_argument('--'+n,type=Path,required=True)
     ap.add_argument('--payload',type=Path);ap.add_argument('--wait-seconds',type=int,default=8)
     ap.add_argument('--shutdown-seconds',type=int,default=180)
+    ap.add_argument('--boot-ack-seconds',type=int,default=10,help='boot action only: one bounded OEM boot reply wait1..90s; all other transfers remain10s')
     ap.add_argument('--x',type=int);ap.add_argument('--y',type=int);ap.add_argument('--to-x',type=int);ap.add_argument('--to-y',type=int)
     a=ap.parse_args();root=Path(__file__).resolve().parents[1]
     if not 0<=a.wait_seconds<=30 or not 1<=a.shutdown_seconds<=240:raise ValueError('bounded control deadlines required')
+    if not 1<=a.boot_ack_seconds<=90 or (a.action!='boot' and a.boot_ack_seconds!=10):
+        raise ValueError('boot ACK wait1..90seconds is only configurable for boot')
     b,i,d=(json.loads(p.read_text()) for p in (a.boot_record,a.image_manifest,a.driver_manifest));binding(b,i,d)
     if sha(a.image_manifest)!=b.get('image_manifest_sha256') or sha(a.driver_manifest)!=i['driver_manifest_sha256'] or sha(Path(__file__))!=i['controller_sha256']:
         raise ValueError('frozen native runtime controller binding changed')
@@ -80,7 +83,14 @@ def main():
                     record['host_UTC_delivery_unknown']=dict(cookie=error.cookie,sequence=error.sequence,recovery='utc-status only; never resend SET')
                     save();raise
         elif a.action=='boot':
-            record['kernel_command_attempted']=True;save();p.stage_payload(a.payload.read_bytes(),d);p.boot();record['kernel_command_ACK']=True
+            record['kernel_command_attempted']=True;record['payload_stage_started_utc']=now();save()
+            began=time.monotonic();p.stage_payload(a.payload.read_bytes(),d)
+            record['payload_transfer_and_validation_seconds']=time.monotonic()-began
+            record['boot_ack_seconds']=a.boot_ack_seconds;record['protocol_boot_call_started_utc']=now();save()
+            began=time.monotonic()
+            try:p.boot(ack_seconds=a.boot_ack_seconds)
+            finally:record['protocol_boot_call_seconds']=time.monotonic()-began;save()
+            record['kernel_command_ACK']=True
         elif a.action=='recover-prestart':
             record['zero_write_receipt']=p.recover_prestart();record['reset_ACK_received']=True
         elif a.action=='capture':

@@ -10,10 +10,10 @@ class WledRuntimeProtocol(KernelProtocol):
     def __init__(self,transport):
         super().__init__(transport);self.exit_sent=False;self.actual_footer=b'';self.actual_reply=b''
 
-    def _control(self,command):
+    def _control(self,command,*,boot_ack_seconds=10):
         if command in (b'reboot',b'reboot-bootloader',b'oem drained-reboot:1',b'oem drained-reboot:2'):
             raise ValueError('runtime reset requires atomic raw-history exit')
-        return super()._control(command)
+        return super()._control(command,boot_ack_seconds=boot_ack_seconds)
 
     def capture_history(self):
         pages=[];wanted=1

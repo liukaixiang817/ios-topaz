@@ -36,6 +36,15 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### 0140 GPU scopedretention trial f790 READY; exactnativepin update needsONE CI; PHONE confirmedFASTBOOT/nootherboot
 
+- NativeGPU source41e9a87f7b18efb3029803a41b18ee1984bf66ed committed/pushed;
+  ONE requiredCI41205803135 inprogress, no workflowdispatch duplicate.
+  Separatenewhost fix: explicit --boot-ack-seconds1..90 (default10) affects
+  ONLY single oemboot ACK receive; product/state/payload/upload/WLR/WLZ all
+  keep original10s anddevicefresh200ms unchanged. No retry onunknown/FAIL/
+  short/extra reply. Actualpayload vsprotocolhostelapsed now separately
+  recorded, notfirmwarephase timings. 34relatedhosttestsPASS1.667s,
+  proof0140/host-boot-ack-0001 e142da9a...; nofirmware/nativeCIneededforthis.
+  Old0139 COPY/controller/manifest untouched; onlyfuture0140 bindsnewhost.
 - Final0139/performance/bbd-activation-final-0002/graphics-retained-trial:
   bundle f790512548bfb9d46911590bedf5ec3962e9c3dc566b10f219d618131ae65353
   /19072848B; manifest00dbde9a.../actualproof442fc94d... . OnlyMesa d283+

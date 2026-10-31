@@ -216,11 +216,22 @@ class LibusbTransport:
             raise ValueError('short diagnostic command transfer')
 
     def read(self, count):
+        # State, uploads and fresh exit receipts retain the original10s bound.
+        return self._read(count,10000)
+
+    def read_boot_reply(self, *, timeout_seconds=10):
+        # Only the fixed64B OEM boot ACK may opt into a longer host wait.
+        # No command is sent here and this performs one receive, never retry.
+        if type(timeout_seconds) is not int or not 1<=timeout_seconds<=90:
+            raise ValueError('bounded boot ACK wait must be1..90seconds')
+        return self._read(64,timeout_seconds*1000)
+
+    def _read(self, count, timeout_ms):
         if not self.claimed or not 0 < count <= 65536:
             raise ValueError('invalid diagnostic read bounds')
         buf = (C.c_ubyte * count)()
         done = C.c_int()
-        self._check(self.usb.libusb_bulk_transfer(self.handle, 0x81, buf, count, C.byref(done), 10000), 'response transfer')
+        self._check(self.usb.libusb_bulk_transfer(self.handle, 0x81, buf, count, C.byref(done), timeout_ms), 'response transfer')
         if not 0 < done.value <= count:
             raise ValueError('invalid diagnostic completion length')
         return bytes(buf[:done.value])
@@ -251,12 +262,20 @@ class KernelProtocol(ReadOnlyProtocol):
         super().__init__(transport)
         self.shutdown_token=None
 
-    def _control(self,command):
+    def _control(self,command,*,boot_ack_seconds=10):
+        if (type(boot_ack_seconds) is not int or not 1<=boot_ack_seconds<=90 or
+                (command!=b'oem boot' and boot_ack_seconds!=10)):
+            raise ValueError('longer ACK wait is restricted to OEM boot')
+        reader=None
+        if command==b'oem boot' and boot_ack_seconds!=10:
+            reader=getattr(self.transport,'read_boot_reply',None)
+            if not callable(reader):raise ValueError('transport has no bounded boot ACK reader')
         contact=re.fullmatch(rb'oem touch:[01]:[0-9]{1,4}:[0-9]{1,4}',command)
         if not self.verified or (command not in [b'getvar:kernel-state',b'getvar:input',b'oem boot',b'reboot',b'reboot-bootloader',
                 b'oem shutdown:1',b'oem shutdown:2',b'oem drained-reboot:1',b'oem drained-reboot:2'] and not contact):
             raise ValueError('unsupported or unverified control command')
-        self.transport.write(command);reply=self.transport.read(64)
+        self.transport.write(command)
+        reply=reader(timeout_seconds=boot_ack_seconds) if reader else self.transport.read(64)
         if not reply.startswith(b'OKAY'):
             raise RuntimeError('UEFI control refused: '+reply.decode('ascii',errors='replace'))
         return reply[4:]
@@ -281,9 +300,12 @@ class KernelProtocol(ReadOnlyProtocol):
         if self.transport.read(64)!=b'OKAY':raise ValueError('device rejected RAM payload validation')
         if self.state()!='validated':raise ValueError('device did not publish validated payload state')
 
-    def boot(self):
+    def boot(self,*,ack_seconds=10):
+        if type(ack_seconds) is not int or not 1<=ack_seconds<=90:
+            raise ValueError('bounded boot ACK wait must be1..90seconds')
         if self.state()!='validated':raise ValueError('no validated RAM kernel')
-        if self._control(b'oem boot'):raise ValueError('invalid RAM boot acknowledgement')
+        reply=self._control(b'oem boot') if ack_seconds==10 else self._control(b'oem boot',boot_ack_seconds=ack_seconds)
+        if reply:raise ValueError('invalid RAM boot acknowledgement')
 
     def reboot(self,bootloader=False):
         if self._control(b'reboot-bootloader' if bootloader else b'reboot'):
