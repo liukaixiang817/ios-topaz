@@ -34,6 +34,58 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### LATEST0145 fresh strictRO+NV COMPLETE / NPA candidate READY; actual FASTBOOT17:32, no new native boot yet
+
+- Actual bounded frozen0144 statequery17:28:40Z could not enumerate its diagnostic
+  service; no reset/payload sent. A prior local-only attempt used a nonexistent
+  frozenbootrecord path and stopped beforeUSB, then corrected to original consumed
+  bootrecord. Independent expected-product query17:28:56Z actually returned
+  PolarisFASTBOOT. How0144 reachedFASTBOOT is UNKNOWN; no normaldrain/reset claim,
+  and old16:21nativeLIVE is superseded. No physicalaction request needed.
+- Because that interval was not continuously observed, performed ONE already
+  reviewed0120 watchdogRAM recovery ecb73be4/300s, now merging necessary fresh
+  fullroot audit AND own3NV24MiB. 48759 ENDED0 at17:32:19Z actualFASTBOOT after
+  verifiedactualumount. Source936d91e40b0e7082015eca7a4a243fddf189cc385ea7d59c5cb7c40269891bd7;
+  originalrecoverybuilder/watchdog/safety/cleanup retained. No repair/replay/RW /
+  NVwrite/MSS command. Actualboth16GiB roots SHA91515474/689a8cd1 match, 142/182
+  maps+markerraw/8MiBpattern, sixGPT/critical/ESP102 andjournalmetadata pass.
+  Whole512MiBjournal notcaptured; no generalFShealth/writepermission claim.
+- NEW0145 independent39checksPASS:
+  fresh-20F66-readonly-root-review.json a04c5ab7de640e1754bd95d8697f6f7fc71efc01b6f65f0cd5dbee96eca235e0;
+  preflight25492d1c24d993ebb433041a4fd9aede99fac76e329ab2f32c75ea6da29ff3fa.
+  This supersedes0139 alone for nextphysicaladmission. may_boot_iOS=true ONLY
+  sameimmutable20F66/RAMCOW512/ufsrw0/noownedmarker; may_write_userdata=false.
+- Actual modemst1=sdf6/modemst2=sdf7/fsg=sde36 each8MiB private0600, whole
+  before/local/afterSHA equal; freshsde/sdfGPT beforeafter byteequal. EntireFSC
+ 256KiB fromactualsdfhead matches8a39d2ab. Newmodemst1/2 differ from20261023
+  historicalcopies (originunknown); FSGmatches. NeverrestorehistoricalNV.
+  These4inputs nowfresh in
+  phone-fresh-root-readonly-audit-0001/*.bin, neverGit; no remoteNV service or
+  physicalMSSownership inferred. ExplicitMSS_started=false denotes no actions
+  issued by thisaudit, NOT observedDSPoff/exclusivepermission.
+- NEWhostSOURCEc8c3431016c89fcbe0269b1643faa697b6f3f964 committed/pushed;
+  physicaldriver/source48c1572 c9e939da/1653760B/65inputs unchanged, no nativeCI.
+  Independentnewcopies +original81FW packagewhole d9c299538cc5fe42d268290e182a49515656b893e098c44327ea043f931e6953 /
+  5982208B, EDK2whole29135560B exactdecode. physical-runtime-image-0002 binds
+  NEWfresh0145review, byteidenticalimage to0001 reusescompletecodec explicitly;
+  oldmanifests untouched. New83scope+94resource metadata andold66NC/audiofields
+  retained. 27affectedhostchecks/actualno-mockadmit and twoexisting19checkmodels
+  pass; no repeat22native-bodytests/models/oldcycles.
+- IndependentCOPY at /private/tmp/polaris-runtime-0145-frozen-0002:
+  806files+10separateCOMMIT_ONLY,358actualcurrentcommittedsources/65compiled,
+  wholekernel7d24/payload63cb/f790/wallpaper7400/Melbourne/battery/WLED unchanged.
+  current-runtime-source-freeze-0002.json PASS; sharedONErecord will be
+  ORIGINALrepo0145/phone-NPA-runtime-0001/boot.json, currentlyABSENT. Candidate
+ 0001/frozen0001 is superseded OFFLINEONLY; do not use its old0139gate.
+- NEXT execute ONLY frozen0002/research/polaris/uefi-ios-0145/
+  boot-NPA-runtime-once-0002.py --boot-once. Helper verifies all806filehashes /
+  newactualRO+NVreview /committedsources/currentproduct before ONE newimage,
+  then ONLY frozen0002tools controller+image0002/driver0001+sharedbootrecord
+  state/ONE63cbpayload --boot-ack-seconds90/capture. CaptureactualNPAnamespace /
+  source/guard/raw before deciding MSS lifecycle. namespace != VMID/MPU/owner /
+  railvotepermission. may_start_MSS=false/may_serve_NV_to_remote=false.
+  ONLYWi-Fi; actualscan/join/data unfinished; audio/camera/children STOPPED.
+
 ### Serial Wi-Fi0145 NEW NPA host scope admitted offline; image/freeze still pending
 
 - NEW GCD_CLOCK_0145 binds actual65 compiledinputs to committed firmware
