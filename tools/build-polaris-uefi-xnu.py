@@ -308,6 +308,8 @@ def main():
                     help='default-OFF native Wi-Fi readonly diagnostic opt-in; no EFI SMEM or transmit API')
     ap.add_argument('--wifi-firmware-cache-pe',type=Path,
                     help='explicit exact own original SmemDxe PE for cache-only CPU0 image-RAM inspection; requires --wifi-readonly')
+    ap.add_argument('--wifi-cpu0-firstread',action='store_true',
+                    help='default-OFF one preboot CPU0 36B x2 SMEM read; exact original cache witness required; external SError is not recoverable')
     ap.add_argument('--efi-application',action='store_true',help='selected application, never ReadyToBoot interception')
     ap.add_argument('--disk-guid',type=uuid.UUID,help='exact GPT partition UUID for read-only disk payload')
     ap.add_argument('--disk-start-lba',type=int)
@@ -352,6 +354,8 @@ def main():
         a.test_wled_fault_pulse or a.test_omit_durable_guard or a.test_wled_native_start_refusal or a.test_wled_native_exit):
         ap.error('physical native WLED requires its independent guarded four-big RO/RAMCOW scope')
     native_runtime=a.wled_native_runtime or a.wled_native_runtime_test
+    if a.wifi_cpu0_firstread and (not a.wifi_firmware_cache_pe or not a.wifi_readonly or not native_runtime):
+        ap.error('CPU0 first-read requires exact --wifi-firmware-cache-pe, --wifi-readonly and guarded native runtime')
     cache_header=None;cache_binding=None;cache_pe_relative=None
     if a.wifi_firmware_cache_pe:
         if not a.wifi_readonly or not native_runtime:
@@ -616,6 +620,7 @@ def main():
 #define EFI_XNU_BATTERY_OFFSET 0x{battery_binding['offset'] if battery_binding else 0:x}ULL
 #define EFI_XNU_BATTERY_SPAN_LIMIT_US 500000u
 #define EFI_XNU_WIFI_CACHE_AVAILABLE {int(cache_binding is not None)}
+#define EFI_XNU_WIFI_FIRSTREAD_AVAILABLE {int(a.wifi_cpu0_firstread)}
 #define EFI_XNU_CPU {target}u
 #define EFI_XNU_BOOT_CPU_TOKEN "polarisbootcpu={target}"
 #define EFI_XNU_CPUS_TOKEN "cpus={a.kernel_cpus}"
@@ -685,6 +690,7 @@ def main():
     if cache_binding:
         inputs+=['shim/polaris/uefi-wifi-cache-readonly.h','tools/polaris-wifi-firmware-identity.py',
                  'tools/polaris-wifi-firmware-identity.h',cache_pe_relative]
+    if a.wifi_cpu0_firstread:inputs.append('shim/polaris/uefi-wifi-firstread.h')
     if a.host_utc_sync:
         inputs+=['tools/polaris-clock-sync.h','tools/polaris-clock-uefi.h',
                  'tools/polaris-clock-native.h','tools/polaris-clock-host.py']
@@ -777,6 +783,26 @@ def main():
                   wifi_firmware_cache_new_SMEM_reads=False,
                   wifi_firmware_cache_native_permission=False,wifi_firmware_cache_transmit=False,
                   wifi_firmware_cache_physical_inspection_compiled_out=bool(cache_binding and a.test_qemu),
+                  wifi_CPU0_firstread_readonly=a.wifi_cpu0_firstread,
+                  wifi_CPU0_firstread_default_OFF=True,
+                  wifi_CPU0_firstread_new_SMEM_read_body=bool(a.wifi_cpu0_firstread and not a.test_qemu),
+                  wifi_CPU0_firstread_compiled_target_LDR32_max=18 if a.wifi_cpu0_firstread and not a.test_qemu else 0,
+                  wifi_CPU0_firstread_actual_target_reads_observed=False,
+                  wifi_CPU0_firstread_bytes_each=36 if a.wifi_cpu0_firstread else None,
+                  wifi_CPU0_firstread_passes_max=2 if a.wifi_cpu0_firstread else None,
+                  wifi_CPU0_firstread_target_LDR32_max=18 if a.wifi_cpu0_firstread else None,
+                  wifi_CPU0_firstread_addresses=[0x8600005c,0x860000c0,0x861ff000,0x861ff004,
+                    0x861ff008,0x860b9000,0x860b9008,0x860b900c,0x860b9010] if a.wifi_cpu0_firstread else None,
+                  wifi_CPU0_firstread_fresh_limit_ticks=3840000 if a.wifi_cpu0_firstread else None,
+                  wifi_CPU0_firstread_frequency=19200000 if a.wifi_cpu0_firstread else None,
+                  wifi_CPU0_firstread_before_CPU_ON=True if a.wifi_cpu0_firstread else None,
+                  wifi_CPU0_firstread_before_console_and_PON=True if a.wifi_cpu0_firstread else None,
+                  wifi_CPU0_firstread_no_runtime_or_USB_command=True,
+                  wifi_CPU0_firstread_retrospective_constructor_admission=True if a.wifi_cpu0_firstread else None,
+                  wifi_CPU0_firstread_hardware_MPU_or_VMID_query=False,
+                  wifi_CPU0_firstread_external_SError_recoverable=False,
+                  wifi_CPU0_firstread_native_permission=False,wifi_CPU0_firstread_FIFO_or_TX=False,
+                  wifi_CPU0_firstread_physical_SMEM_reads_compiled_out=bool(a.wifi_cpu0_firstread and a.test_qemu),
                   runtime_services_DT=runtime_services,
                   physical_buttons=a.physical_buttons,buttons_offset=buttons_offset if a.physical_buttons else None,
                   TSENS_readonly_inventory=a.tsens_readonly,thermal_configuration_write_api=False,

@@ -245,11 +245,24 @@ static inline void pwfc_hex(const uint8_t *raw,size_t bytes)
         line[2*n]=0;text(line);text("\r\n");at+=n;
     }
 }
+#if EFI_XNU_WIFI_FIRSTREAD_AVAILABLE
+static inline int pwfc_collect_preboot(struct efi_system *system,uint32_t stage)
+{
+    if(pwfc_record.attempted)return 0;
+    const struct pwfc_io io={system,0,pwfc_actual_arch,pwfc_actual_identity,pwfc_actual_order};
+    return pwfc_collect(&io,stage,&pwfc_record,&pwfc_work);
+}
+/* Separate reporting: a new explicitly admitted first-read candidate must run
+ * immediately after collect, before any console call consumes its freshness. */
+static inline void pwfc_report(void)
+{
+#else
 static inline void pwfc_prepare(struct efi_system *system,uint32_t stage)
 {
     if(pwfc_record.attempted)return;
     const struct pwfc_io io={system,0,pwfc_actual_arch,pwfc_actual_identity,pwfc_actual_order};
     (void)pwfc_collect(&io,stage,&pwfc_record,&pwfc_work);
+#endif
     report("WIFI_CACHE_ONLY_ERROR=",pwfc_record.error);report("WIFI_CACHE_COOKIE=",pwfc_record.cookie);
     report("WIFI_CACHE_PROTOCOL_STATUS=",pwfc_record.protocol_status);
     report("WIFI_CACHE_ENUM_STATUS=",pwfc_record.enumerate_status);report("WIFI_CACHE_MAP_STATUS=",pwfc_record.map_status);
@@ -289,4 +302,13 @@ static inline void pwfc_prepare(struct efi_system *system,uint32_t stage)
     text("WIFI_CACHE_SOURCE_SHA256=" PWFI_SOURCE_SHA256 "\r\n");
     text("WIFI_CACHE_ONLY: original-image RAM witness; new_SMEM_reads=0 native_permission=0 FIFO=0 radio=0 may_transmit=0\r\n");
 }
+#if EFI_XNU_WIFI_FIRSTREAD_AVAILABLE
+/* Explicit first-read callers can still use the original combined wrapper. */
+static inline void pwfc_prepare(struct efi_system *system,uint32_t stage)
+{
+    if(pwfc_record.attempted)return;
+    (void)pwfc_collect_preboot(system,stage);
+    pwfc_report();
+}
+#endif
 #endif

@@ -34,6 +34,40 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0139 WiFi fixedCPU0 firstread integration COMPLETE defaultOFF; physicalON candidate NOTyetadmitted/booted; otheradaptation parallel
+
+- SixWiFifiles frozen: firstread.h/cache-readonly.h/uefi-xnu.c, builder,
+  firstreadcheck.py/test.c. Finalproof0139/wifi/integrated-firstread-source-and-build-proof.json
+  d99cd935cf0d6dca0a06562e215278b0a573035bdf35a4dd5b27560bd823d1b3.
+  Parentandindependentcamera0139 read-onlyfullreviewPASS. ActualON/OFF/
+  SOFTWARE EFIbuilds/33ASAN+UBSAN/ISA/3CLIprerequisitegatesPASS. DefaultOFF
+  entireEFI byteidenticaloriginal0138, notjustsemanticclaim. ON799744B
+  d8fd61d09e98a77b0ad05b737f27495596a8a1a49b5fa886885669f24f192269,
+  48inputs=old47+firstreadheader; onlymain/cache/buildercommon changed,
+  other44same. No newnativecode/CI/payload/GPU/wallpaper/time/batterychange.
+- Newphysicalbody explicitlytrue/max18 targetLDR32 andnoactualreadclaim;
+  QEMUbodyfalse/max0/compiledouttrue withonlySOFTWAREmarker. Samefreshcache
+  ->36Bx2read ->report ->originalPON/mask ordering. Retains200ms/3pageNS
+  identityDevice0/ownedBSS/sticky/issued-before-LDR andzeroTX/FIFO/native
+  permission. Cachewitness notliveMPU/VMID; externalSErrorunrecoverable.
+  mapkeybefore/afterwascollectedBEFOREFreePool, notwholecollector-exit
+  unchanged-mapclaim; copiedmaponlybindsoriginaldriver/codeRAMownership.
+  Cachecomponentnew_SMEM_reads=0 doesNOTmeanwholeONfirmwarezeroreads.
+- Ordinarycache-onlyhostprofile continuesexplicitfirstreadrefusal (source
+  0389387 pushed,12testsPASS). Parentpreparing separateSOURCE-bound reviewed
+  profile/newcandidate, notstrippingfields/looseningoldpolicy. WiFiworker
+  preparesonlytwoactualnewinput terminalmodels; noextra13models/oldoptical.
+  Reusesexact009c/face669/CI41189769833+4fe2/602B/immutable142map/RAMCOW.
+  NOactualSMEMread/scan/join ornewphoneimageyet; USBreplugquestionstillpending.
+- Camera standaloneobserver source+buildercompleted, actualSDK16.5link/
+  strictsign/3hostrefusalsPASS, butnotincurrentbundle/phone/noactualcamera.
+  CorrectFWcount:84FFSentries/79executablePEorTE;81isprotectedinnerfilecount.
+  Missingoriginalcamera modules/tuningbytes remainblocker, exactpaths in
+  0139/camera/HANDOFF.md. Audio475B originalcalibrationevidence in0139/audio,
+  noPCM/ADSPtransportyet. GPUworkerpreparesdefaultOFF actual-native-success
+  retainedWILLNEED cache only, withclose/reconnect/fork/inflightguards; no
+  removalofcache/fence/DSB/unknownDMAorblindMi8sysmem/OLEDchanges.
+
 ### 0139 ACTIVE WiFi +stutter +camera +audio parallel; HUMAN confirms0138 wallpaper/time/battery basicallynormal
 
 - Human now confirms wallpaper, localtime andbattery basicallynormal and

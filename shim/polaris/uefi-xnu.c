@@ -167,7 +167,13 @@ static int shutdown_status(void *,const uint8_t **,uint64_t *);
 #endif
 #if !defined(POLARIS_EFI_TEST_QEMU)
 #include "uefi-wifi-cache-readonly.h"
+#if EFI_XNU_WIFI_FIRSTREAD_AVAILABLE
+#include "uefi-wifi-firstread.h"
 #endif
+#endif
+#endif
+#if EFI_XNU_WIFI_FIRSTREAD_AVAILABLE && !EFI_XNU_WIFI_CACHE_AVAILABLE
+#error "CPU0 first-read requires its exact original firmware cache witness"
 #endif
 static int64_t psci(uint64_t function,uint64_t a,uint64_t b,uint64_t c)
 {
@@ -247,11 +253,27 @@ static int prepare_boot(void *context)
     if(!wifi_cache_software_reported){
         wifi_cache_software_reported=1;
         report("WIFI_CACHE_SOFTWARE_PHYSICAL_IMAGE_INSPECTION_COMPILED_OUT=",1);
+#if EFI_XNU_WIFI_FIRSTREAD_AVAILABLE
+        report("WIFI_FIRSTREAD_SOFTWARE_PHYSICAL_SMEM_READ_COMPILED_OUT=",1);
+#endif
     }
 #else
     /* Diagnostic only: all BootServices queries before any IRQ mask/change.
      * Failure records evidence and does not block the other runtime services. */
+#if EFI_XNU_WIFI_FIRSTREAD_AVAILABLE
+    /* No text/report/console or PON call may enter this fresh interval. */
+    if(!pwfc_record.attempted){
+        int cache_ok=pwfc_collect_preboot(system_table,load_state);
+        if(cache_ok)pwfr_prepare(&pwfc_record,load_state);
+        else {
+            report("WIFI_FIRSTREAD_SKIPPED_CACHE_ERROR=",pwfc_record.error);
+            report("WIFI_FIRSTREAD_ATTEMPTED=",0);
+        }
+        pwfc_report();
+    }
+#else
     pwfc_prepare(system_table,load_state);
+#endif
 #endif
 #endif
 #if defined(EFI_XNU_WLED_NATIVE_RUNTIME)
@@ -700,6 +722,9 @@ static efi_status admission(void)
     map_snapshot.bytes=size;map_snapshot.stride=stride;map_snapshot.version=version;map_bytes=32+size;
 #if defined(EFI_XNU_WLED_NATIVE_RUNTIME)
     if(!wln_image_owned(image))return EFI_ERROR|3;
+#if EFI_XNU_WIFI_FIRSTREAD_AVAILABLE && !defined(POLARIS_EFI_TEST_QEMU)
+    if(!pwfr_bind_resident(image))report("WIFI_FIRSTREAD_SELF_BIND_REFUSED=",1);
+#endif
 #endif
 #if defined(POLARIS_EFI_TEST_QEMU)
     /* virt has no physical panel reservation. Claim the synthetic panel RAM
