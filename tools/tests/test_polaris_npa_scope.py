@@ -11,7 +11,7 @@ from polaris_uefi_usb_transport import KernelProtocol
 
 class NpaScope(unittest.TestCase):
     def candidate(self,policy=None):
-        p=policy or a.GCD_CLOCK_0145
+        p=policy or a.GCD_CLOCK_0146
         return dict(copy.deepcopy(p['metadata']),**copy.deepcopy(p['resource_fields']),
             inputs=copy.deepcopy(p['inputs']),kernel_sha256=p['kernel'],payload_sha256=p['payload'],
             wifi_CPU0_firstread_readonly=False,
@@ -19,21 +19,21 @@ class NpaScope(unittest.TestCase):
             **{a.AUDIO_I2C_PREFIX+k:v for k,v in a.AUDIO_I2C_PHYSICAL_FIELDS.items()})
 
     def test_new_scope_and_both_frozen_legacy_scopes_remain_distinct(self):
-        for policy in (a.GCD_CLOCK_0145,a.GCD_CLOCK_0144,a.GCD_CLOCK_0143):
+        for policy in (a.GCD_CLOCK_0146,a.GCD_CLOCK_0145,a.GCD_CLOCK_0144,a.GCD_CLOCK_0143):
             d=self.candidate(policy)
             self.assertIs(a.original_gcd_policy(d),policy)
             for gate in (a.resources_clock_scope,a.normal_nc_firstread_scope,a.audio_i2c_cache_scope):
                 self.assertTrue(gate(d))
-        self.assertEqual(len(a.GCD_CLOCK_0145['inputs']),65)
-        self.assertEqual(len(a.GCD_CLOCK_0145['metadata']),83)
-        self.assertEqual(a.GCD_CLOCK_0145['firmware_source'],'48c1572b7a161cb0346603b96de44c824ff16e56')
+        self.assertEqual(len(a.GCD_CLOCK_0146['inputs']),65)
+        self.assertEqual(len(a.GCD_CLOCK_0146['metadata']),83)
+        self.assertEqual(a.GCD_CLOCK_0146['firmware_source'],'53fcc867dffe6a08d637396bc7bb3cfab0315bfe')
 
     def test_every_compiled_input_and_new_field_is_bound(self):
         d=self.candidate()
         for name in d['inputs']:
             bad=copy.deepcopy(d);bad['inputs'][name]='changed'
             with self.subTest(input=name),self.assertRaises(ValueError):a.original_gcd_scope(bad)
-        for name,value in a.GCD_CLOCK_0145['metadata'].items():
+        for name,value in a.GCD_CLOCK_0146['metadata'].items():
             if not name.startswith(a.NPA_PREFIX):continue
             for mutation in ('remove','value','type'):
                 bad=copy.deepcopy(d)
@@ -47,7 +47,7 @@ class NpaScope(unittest.TestCase):
             for fields in ({},a.GCD_CLOCK_DISABLED):
                 with self.subTest(source=source),self.assertRaises(ValueError):
                     a.original_gcd_scope(dict(fields,inputs={source:'hash'}))
-        for legacy in (a.GCD_CLOCK_0144,a.GCD_CLOCK_0143):
+        for legacy in (a.GCD_CLOCK_0145,a.GCD_CLOCK_0144,a.GCD_CLOCK_0143):
             for part in ('inputs','metadata','resource_fields'):
                 bad=self.candidate()
                 if part=='inputs':bad['inputs']=copy.deepcopy(legacy['inputs'])
@@ -73,7 +73,7 @@ class NpaScope(unittest.TestCase):
     def test_firmware_snapshot_fits_bounded_native_log_transport(self):
         d=self.candidate()
         cap=d['original_GCD_new_scope_RAM_log_capacity']
-        self.assertEqual(cap,524288)
+        self.assertEqual(cap,1572864)
         self.assertEqual(d['wifi_CPU0_resources_firmware_RAM_log_capacity'],cap)
         self.assertGreaterEqual(KernelProtocol.limits['logs'],(4<<20)+cap+128)
         self.assertEqual(KernelProtocol.limits['logs'],(4<<20)+1572864+128)

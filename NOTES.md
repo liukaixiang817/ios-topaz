@@ -34,6 +34,22 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### NEW0146 host exactscope admitted offline; source53fcc86 pushed, package/freeze next; phone0145 unchanged
+
+- New GCD_CLOCK_0146 exactliteral source53fcc867dffe6a08d637396bc7bb3cfab0315bfe /
+  actual65compiledinputs/83NPA-GCDtypedfields/94resourcefields. Only4scopevalues
+  and1resourcevalue change versus0145: finite512/RAW_V2/470496/log1572864;
+  original3legacyprofile literals staybyte-semanticunchanged. No stripping /
+  oldscopefallback. 27affectedhostchecksPASS afternewselector, actual(no mocks)
+  twoexisting19checkmodels +fresh0145a04c/2549/rootCI admitPASS,4badNPAmarker
+  variantsreject. NPA512-parent-actual-admit-proof-0001.json recordsbinding.
+- NEXT independent0146copies/package/codec/current-sourceaudit/oneboothelper /
+  freeze, usingfresh0145root+4NVdata and unchanged7d24/63cb/f790. No repeat
+  26componentchecks/two models unless sourcechanges. AllhostworkersENDED;
+  noUSB, currentphone lastactual0145LIVE17:39; onlyfrozen0145controller can
+  laterdrainit beforenewimage. Newhostsource mustcommit/push beforepackage /
+  physicalboot; no newnativeCI. ONLYWi-Fi, allchildren/audio/cameraSTOPPED.
+
 ### NEW0146 finite512 NPA source compiled and affected models PASS; host admission/image not ready; currentphone still0145
 
 - Actual0145 partial128-node record measured13036us with its original typedef;
