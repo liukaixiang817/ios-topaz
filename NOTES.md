@@ -34,6 +34,62 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0145 nativeLIVE17:39 / real NPA LIMIT9 retained; Wi-Fi still unfinished, only serial Wi-Fi next
+
+- Supersedes old0144LIVE and17:32FASTBOOT/READY notes. ONE new0145 image59819
+  ENDED0 sent17:33:58.792629Z SOURCEb92edf1/image d9c299538cc5fe42d268290e182a49515656b893e098c44327ea043f931e6953 /
+  5982208B; actualwaiting-payload statequery ENDED0 at17:34:12Z. ONE unchanged
+  63cbpayload42071 ENDED0 ACK17:35:12Z/transfer32.954s/bootcall16.918s. Original
+  repo0145/phone-NPA-runtime-0001/boot.json CONSUMED. No replay/oldcontroller.
+- Current ONLY /private/tmp/polaris-runtime-0145-frozen-0002/tools/
+  polaris-uefi-wled-runtime.py with frozen0145physical-runtime-driver-0001 /
+  physical-runtime-image-0002 and ORIGINALrepo0145 sharedconsumedbootrecord.
+  Actualcurrent-ui-capture-0003/30638 ENDED0 at17:39:25.449940Z kernel-entered:
+  screenshot actually shows default7400 lockscreen/SundayNov1/Melbourne4:39 /
+  chargingicon; nativeactualFG3/SMB2=57%/3929mV/charging1. Earlybattery8/12 and
+  startupconsole/logo are superseded, NOT currentbatteryfailure. FullWLED
+  prefix26/error0/issued4=completed4/req2=ack2/module128/irq2; no repeated
+  opticalcycle or newopticalclaim. GPU4actualfence+idle+halt submissions,
+  not60Hz/fullrendering/desktop/performanceAB proof. No newCameraApp claim
+  fromlockscreen shortcut. AllUSB/hostworkersENDED, allchildrenSTOPPED.
+- NewNPA observation genuinely ran: complete126432B RAWV1 at
+  wifi/actual-NPA-namespace-0001/raw.bin SHA1de90454d2e46222b8b2759077b3c5c00db547860e5db35322b82c2228e8b657.
+  Actual attempted1/error9=PWNPA_LIMIT/unknown0/outstanding0/issued2=returned2 /
+  owner_matches1/stable0. FirstLocateProtocol+GetMap returned under2actual
+  FP/arch/TPLguards (saved=restored1/TPL4→4), first5immutablehashes pass.
+  First128distinctnodes fullyretained, loopreachednonzero129thcursor and
+  correctlystopped atfixed128; secondpassNOTissued. This is NOT complete
+  graph/twopass/stable/vote/owner permission. Prefixcontainsrail_xo andmany
+  originalPMnodes, endsldoa27/mode. MSS/CX/MX names not reached != absent.
+  NoNPAAPI/plugin/client/vote/SMC/MMIO/MSSactions issued bycollector.
+- Actualtypedef-baseddecode +partial/currentUIreview proof
+  wifi/actual-NPA-namespace-0001/physical-partial-and-current-UI-proof.json
+  4da351c088dc5d338d8cc8b9ccd9ffd74d0278fcbb6ec4674ef5f3b131830d58.
+  TreatitsPASS as proof ofcorrectlyretainedpartialfailure+currentUI ONLY,
+  NEVER NPAfullsuccess/WiFi. Underlyingprimitive/BSS/guardraw retained.
+- UTC0145 READY0→ONESET→independentUTC-status-0001 confirmedcookie3374302667 /
+  seq1/status2/error0/applied_count1/uncertainty2268us. NeverSET0145again.
+  NoRTC/NVRAM/networktime proof. Fresh0145 fullROrootreviewa04c5ab7/preflight
+ 25492d1c +freshfourNV raw inputs below remain authoritative within this
+  controlledRO/RAMCOW interval. Historicalmodemst1/2 differ, neverrestorethem.
+- NEXT rootaloneONLYWi-Fi: fix now-observed128limit in NEW source/candidate
+  (e.g. finiteexpandedcapture or boundedspecificresourcewalk with actual
+  originalprovider/count evidence). Preserve ownedRAM/identity/sourcehash /
+  cycle/partial/FP/arch/TPL/200ms/UNKNOWN gates; do not make traversalunbounded
+  or inferMSSabsence frompartial. This actualnewdiagnosticreason justifies
+  affectedNPAchecks/newtwo compiledmodels only ifsourcechanges; no nativeCI,
+  old13models/2sec/500scroll. Do not mutatefrozen0145 or oldmanifest/profile.
+  Then actualsourceboundnamespace/plugin/units/privateclient+fullrestore,
+  allocatedVMID/MPU/guard/cache/remotelease, MSS AOP/rail/clock/reset/RMB/auth /
+  SFPB-SMEM/GLINK/RMTFS; freshNV data prerequisite nowresolved, but RMTFS not
+  physicallyregistered/served and2MiBPA/MSA stillUNASSIGNED. may_start_MSS /
+  may_serve_NV_to_remote remainfalse. Real scan/join/data stillnotdone.
+- BeforeANYnextimage onlythisfrozen0145 actualnativeVFS/GPU/CPUdrain+full
+  appendraw/WLEXIT05/WLR5freshreceipt, then independentactualFASTBOOT.
+  ACKnotreset; unknownACK readactualstate, no blindlyresend/cleanup/reset.
+  zero-prestart onlyWLZ4; originalUNKNOWN blocksnative/PON/receipt. No physical
+  action pending. Sound/camera stopped untilWiFi realnetworkcompletion.
+
 ### LATEST0145 fresh strictRO+NV COMPLETE / NPA candidate READY; actual FASTBOOT17:32, no new native boot yet
 
 - Actual bounded frozen0144 statequery17:28:40Z could not enumerate its diagnostic
