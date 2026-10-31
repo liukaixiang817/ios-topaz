@@ -7,11 +7,11 @@ GPU_SHA='865407ee5b402fe690c04f5888ee6758a29f6ef3eca639019ac89dfba0f3371f'
 # The new profile stays closed until the exact successful-CI artifact is bound.
 TARGETS={
     '20H392':dict(kernel=KERNEL_SHA,source=NATIVE_SOURCE,CI=41056172330,root=ROOT_SHA,GPU=GPU_SHA,extents=182),
-    '20F66':dict(kernel='b3e2cbf1bbefa868551eb98cb5561d40d371ae5d3d376460ea4e6dfab3ca3fcb',
-        source='66f334f00d5b93f3cfd28b42306120f69fb0bba5',CI=41172159732,
+    '20F66':dict(kernel='d51ad260df5002ffa46a16e2125365cac6663c153462e892a3eedd8114d3862a',
+        source='a55026075fe59255b02bb7c8652ce16965b68aeb',CI=41174275124,
         root='91515474f2f886e1508e2ef62f0d8dce6fe4188c0dd382e566ba819264d37c0f',
-        GPU='ee3f927dc175f6be3184344f77773b6bc16ed986e365523f673e3c3cc7bb2790',extents=142,
-        graphics_manifest='research/polaris/uefi-ios-0130/graphics-media-compat-0001/manifest.json')}
+        GPU='6ab8e26039824073356156923be7cca267713359f90a3bd3ad63488647771b3b',extents=142,
+        graphics_manifest='research/polaris/uefi-ios-0131/graphics-media-original-job-0001/manifest.json')}
 
 def target_profile(build):
     if build not in TARGETS or TARGETS[build]['kernel'] is None or TARGETS[build]['extents'] is None:

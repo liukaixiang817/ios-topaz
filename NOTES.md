@@ -34,6 +34,49 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0131 ORIGINAL-media-job candidate READY; PHONE actualFASTBOOT; ONEnewboot next
+
+- Sourcea550/CI41174275124/job124458470561 SUCCESS, actualkernel
+  d51ad260df5002ffa46a16e2125365cac6663c153462e892a3eedd8114d3862a
+  /17248992B exactZIPCRC/SHA/profile checked. Bothactualnewkernel terminal
+  models PASS18 each, worker6104 ENDED; physicaldriver27987/package69902 ENDED.
+  Whole28170952B originalEDK2 decode PASS, original81FW/SimpleInit/BootShim/DTB
+  retained. Offlinefreeze/source/root/mapping PASS. NewimageSHA
+  1a93942ca562cdc1263143eacc3a4bce429ea304cc310fba151ce5a86f96b123;
+  graphics6ab8 ONLYinitdiff, five otherbinaries unchanged. Prooforiginal-media-job-
+  candidate-ready-proof.json. NoactualnewUI/media/HEVC/wallpaper claim.
+- CurrentPHONE actualFASTBOOT fromstrictclosed0130; allUSB/build/modelworkers
+  ENDED. New0131phone-media-original-job-0001/boot.json ABSENT. Nextcommit/push
+  hostadmission/NOTES thenONEnewimage+ONEexactpayload. Recoverdesktop/actualON
+  first, thenSettings/picker/realmedia decode; no repeatedpower/optical prompt.
+
+### 0131 CI SUCCESS/artifact verified; PHONE actualFASTBOOT; newdriver/models running
+
+- CI41174275124/job124458470561 SUCCESS/sourcea55026075fe59255b02bb7c8652ce16965b68aeb.
+  Actualkernel d51ad260df5002ffa46a16e2125365cac6663c153462e892a3eedd8114d3862a
+  /17248992B ZIPCRC/SHA/profile verified. Downloadworker19274/CIwatch9598
+  ENDED. Newexact602B physicalpayload +existing syntheticRAMmodel payload
+  prepared; hostprofile now exactd51/a550/CI411742/6ab8/path0131. No0131bootyet.
+- Twoactualnewkernel terminalmodels and physicaldriver building; mustEND/PASS
+  beforeimage/wholecodec/offlinefreeze/hostcommitpush/ONEnewimage+ONEpayload.
+  CurrentPHONE independentactualFASTBOOT, noUSBworker. Goal desktop/brightness
+  recovery first, wallpaper next; nonewphysical UI/decode result claimed.
+
+### 0131 sourcea550260 PUSHED; ONE CI41174275124/job124458470561 running; PHONE actualFASTBOOT
+
+- Sourcea55026075fe59255b02bb7c8652ce16965b68aeb committed/pushed. ONEnew
+  CI41174275124/job124458470561 inprogress; hostwatch9598 owns status, doNOTdispatch
+  again. Only native change is exact6ab8 graphics digestpin for revisedinit;
+  allnative role/hardware/thermal/storage code unchanged. Actualnewartifact/
+  models/image/boot NOTready. Newhelpers under0131 alreadyprepared, no0131boot.
+- CurrentPHONE stillindependentactualFASTBOOT afterfullnormal0130exit. User
+  SHORTpowercouldnotwakeold0130; pendingpowerquestion is ANSWERED, doNOTrepeat.
+  Priority is recoverdesktop onneworiginal-media-job candidate, thenwallpaper.
+  Last successfulUI was0129 withwhitegallery, not0130. No blackscreen rootcause
+  isolation or newwallpaper claim. AllUSBworkersENDED; onlyCIwatch9598 active.
+- Originalroot hostreadonlyanalysis mount detachednormally (no force) after
+  finishedfilechecks, host-readonly-root-detach.json. Phone/rootdata unchanged.
+
 ### 0131 restore ORIGINAL media job source READY; 0130 CLOSED; PHONE actualFASTBOOT; ONE CI next
 
 - User repliedSHORTpowerstillblack. Actual0130 after-physical-power capture:
