@@ -34,7 +34,7 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0146 last actualLIVE18:02; NEW0147 own RPMh RAM prerequisite integrated, host/image NOT READY
+### CURRENT0146 last actualLIVE18:02; NEW0147 own RPMh RAM candidate OFFLINE READY/frozen
 
 - ONLY Wi-Fi, serial parent; allchildren/audio/camera staySTOPPED. Actual0146
   controller/consumedimage/payload/UTCcount1 unchanged, no newUSB this milestone.
@@ -64,7 +64,15 @@ early samples only. On0029 the human already confirmed boot complete and said
   markers; physicalRPMh bodies/records absent inactualpreprocessedmain. NEW
   host0147exactprofile105typed+94resource fields admits actualmodels+fresh0145
   root/CI with no mocks; fourmalformedRPMhmarkers reject. Old0143..0146
-  exactliterals remainunchanged. Hostsourcecommit/image/freeze NOTREADY.
+  exactliterals remainunchanged. HOSTcf73d66 committed/pushed; 24affectedhost
+  checksPASS. Independentnewwhole81image 424815dd91307f8a3d54cd648a862c0acebd29d294adebfb94c620e018912468 /
+  5986304B, unmodifiedEDK2 whole30560456B exactdecodePASS, oldmanifest /
+  81FW/SimpleInit/BootShim/DTB unchanged. Independentfrozen0147 COPY783files+
+  10COMMIT_ONLY/365committedsources/69compiled, defaultofflinehelperPASS;
+  freeze63f94ee86f7f26037da415d279d4b641b63b4286b4f3c7d7891991b0d945c8cc.
+  NEXTcurrentfrozen0146 normalnative drain+fullrawreceipt+independentFASTBOOT,
+  newsource-boundtransitionreview then ONLY0147boot-RPMh-runtime-once.py
+  --boot-once. ONE image/payload stillunused, realRPMh notyetobserved.
   No nativechange/CI/download; preserve7d24/63cb/f790/7400 /
   all existingCPU/GPU/WLED/storageguards. NEXTfinish affectedmodels and NEW
   committed-source hostscope/package/freeze before physicalbaseline, not old
