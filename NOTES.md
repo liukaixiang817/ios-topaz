@@ -34,6 +34,28 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0127 scoped wallpaper preview candidate COMPLETE/READY; actualPHONE FASTBOOT
+
+- Exactnative sourceefc80619003dd49e6badd85bee4782097210eaf1 CI41166338002/
+  job124434800581 SUCCESS. Actualkernel17231344B SHA
+  f455700a44a3990a03ee8029d9c0c60f5454504506007e16c003fcbe986ba9cf,
+  ZIP CRC/size/SHA256SUMS/profilechecked; downloadworker44199 ENDED.
+- Twoactualnewkernel terminalmodels PASS18checks each (delayed-footer and
+  lost-receipt-recovery), SOFTWAREPMIC/RAMUSB/syntheticroot only, worker50859
+  ENDED; physicaldriverworker56478 ENDED. OriginalphysicalFW/PON/WLED inputs
+  byteidentical0122driver0002 exceptmkpayload.py. No physicalUIKit/Metalclaim.
+- Newimage1f4faeefe90941906e80a00cbe160754b8c06933d87f4129a52ff5e3604013a2,
+  physicaldriver/image0001, runtime-codec0001; original81FW/SimpleInit/BootShim/
+  DTB retained and upstream whole28170952B EDK2decode byteexact. Offlinehelper
+  freezePASS, newphone-poster-preview-0001/boot.json ABSENT. Worker54356 ENDED.
+  Finalbundleba69c16b...0004; host20F66profile now binds exactnewkernel/source/CI/
+  bundle; old20H392profile and root915/142map/602Bphysicalflags unchanged.
+  Evidencewallpaper-preview-candidate-ready-proof.json. NEXT commit/pushhost
+  profile thenactualexpectedproduct+ONEnewRAM/ONEexactpayload, limitedtouch/
+  capture actualconstructor/identity/bitmap/gallery/selection/realwallpaper.
+- CURRENTphone stillindependentlyverifiedFASTBOOT afterstrictnormal0126exit;
+  nooldsessioncommands/replay, noadditionalhumanpermission/keysrequired.
+
 ### 0127 currentPHONE FASTBOOT verified; scoped-exec native CI41166338002 pending
 
 - Sourceefc80619003dd49e6badd85bee4782097210eaf1 committed/pushed, ONEnewnative
