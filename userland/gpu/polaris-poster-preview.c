@@ -26,6 +26,7 @@ static CGContextRef (*image_context)(void);
 static id (*get_image)(void);
 static void (*end_image)(void);
 static void (*translate_context)(CGContextRef,CGFloat,CGFloat);
+static void (*clear_context)(CGContextRef,CGRect);
 static size_t (*image_width)(const void *),(*image_height)(const void *);
 static unsigned preview_calls;
 
@@ -60,9 +61,23 @@ static id snapshot_preview(id self,SEL cmd,id view)
     begin_image((CGSize){pw/scale,ph/scale},NO,scale);
     CGContextRef context=image_context();
     id result=NULL;
+    BOOL hierarchy=NO;
     if(context) {
-        translate_context(context,-bounds.origin.x,-bounds.origin.y);
-        ((void(*)(id,SEL,CGContextRef))objc_msgSend)(layer,sel_registerName("renderInContext:"),context);
+        /* UIKit's full view snapshot also asks the render server for hosted
+         * content. CALayer renderInContext alone cannot capture CALayerHost
+         * contents from another task. Keep the original scene/view, geometry
+         * and UIKit ownership; no substituted wallpaper or Metal device. */
+        SEL snapshot=sel_registerName("drawViewHierarchyInRect:afterScreenUpdates:");
+        CGRect rect={{0,0},{pw/scale,ph/scale}};
+        if(((BOOL(*)(id,SEL,SEL))objc_msgSend)(view,sel_registerName("respondsToSelector:"),snapshot))
+            hierarchy=((BOOL(*)(id,SEL,CGRect,BOOL))objc_msgSend)(view,snapshot,rect,YES);
+        if(!hierarchy) {
+            /* A refused hierarchy draw may have partially touched our own
+             * bitmap. Clear it before the existing local-layer fallback. */
+            clear_context(context,rect);
+            translate_context(context,-bounds.origin.x,-bounds.origin.y);
+            ((void(*)(id,SEL,CGContextRef))objc_msgSend)(layer,sel_registerName("renderInContext:"),context);
+        }
         id image=get_image();
         const void *cg=((const void *(*)(id,SEL))objc_msgSend)(image,sel_registerName("CGImage"));
         if(cg && image_width(cg)==pw && image_height(cg)==ph)
@@ -71,8 +86,8 @@ static id snapshot_preview(id self,SEL cmd,id view)
     }
     end_image();
     if(preview_calls++<16 || !result)
-        fprintf(stderr,"POLARIS POSTER PREVIEW: real layer %ux%u scale=%g UIKit bitmap=%s; Metal device=%d queue absent\n",
-            pw,ph,(double)scale,result?"created":"FAILED",device_present);
+        fprintf(stderr,"POLARIS POSTER PREVIEW: real view %ux%u scale=%g hierarchy=%d UIKit bitmap=%s; Metal device=%d queue absent\n",
+            pw,ph,(double)scale,hierarchy,result?"created":"FAILED",device_present);
     return result;
 }
 
@@ -140,14 +155,15 @@ static void install_preview(void *unused)
     get_image=(void *)dlsym(RTLD_DEFAULT,"UIGraphicsGetImageFromCurrentImageContext");
     end_image=(void *)dlsym(RTLD_DEFAULT,"UIGraphicsEndImageContext");
     translate_context=(void *)dlsym(RTLD_DEFAULT,"CGContextTranslateCTM");
+    clear_context=(void *)dlsym(RTLD_DEFAULT,"CGContextClearRect");
     image_width=(void *)dlsym(RTLD_DEFAULT,"CGImageGetWidth");
     image_height=(void *)dlsym(RTLD_DEFAULT,"CGImageGetHeight");
     if(!metal_device || !begin_image || !image_context || !get_image || !end_image ||
-       !translate_context || !image_width || !image_height || !objc_getClass("UIImage")) {
+       !translate_context || !clear_context || !image_width || !image_height || !objc_getClass("UIImage")) {
         unsigned mask=(metal_device?1:0)|(begin_image?2:0)|(image_context?4:0)|(get_image?8:0)|
             (end_image?16:0)|(translate_context?32:0)|(image_width?64:0)|(image_height?128:0)|
-            (objc_getClass("UIImage")?256:0);
-        fprintf(stderr,"POLARIS POSTER PREVIEW: UIKit bitmap API mask=%x/1ff; unchanged\n",mask);return;
+            (objc_getClass("UIImage")?256:0)|(clear_context?512:0);
+        fprintf(stderr,"POLARIS POSTER PREVIEW: UIKit bitmap API mask=%x/3ff; unchanged\n",mask);return;
     }
     original_preview=(void *)method_getImplementation(method);
     IMP previous=method_setImplementation(method,(IMP)snapshot_preview);

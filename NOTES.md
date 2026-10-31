@@ -34,6 +34,57 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0133 realUIView hierarchy snapshot candidate source READY; PHONE remainsLIVE0132, gallerywhite
+
+- User reiteratedMi8reference; pinnedDipper longpressswitcher isexplicitlydisabled
+  becausehostedPBFcontextblack, notsettingsfix. Its experimentalMetal sources
+  exist but arenotdrop-in/provencomplete preview; noMetaldevicefabricated or
+  foreignGPU/DMA driverported. Current0132 genuineMedia loadingfixed, actual
+  whitegallery NOTfixed. AllUSBworkersENDED (lastColorcapture70495; categorytap
+  didnotopeneditor, noColor-editorresultclaimed). Currentfrozen0132controller
+  +ORIGINAL0132 boot/image/driver only; consumedimage/payloadneverreplay.
+- 0133 PBF exactoriginalmethod/UUID/codeSHA gate unchanged. When realMetalqueue
+  absent, firsttryUIKit drawViewHierarchyInRect:afterScreenUpdates: ontheactual
+  view, includingrender-server hostedcontent; ifrefused clearonlyourbitmap then
+  existingCALayerrenderfallback. Sameboundedsize/scale/originalUIImagecontract,
+  no substituteimage/Metaldevice/nativehardware/storagepolicy. Logsactual
+  hierarchyreturn separatelyfrombitmapvalid; neithermeansphotoexpectedpixels.
+- Strictactual16.5SDK AArch64 -Wall/-Wextra/-Werror compilePASS. Newgraphics
+  graphics-poster-hierarchy-0001 bundlebf8a704411fae01abeb23578b19f0c6c1738f90cedaeedb7b394930187069b70;
+  ONLYinjectordiff, otherFIVEbinaries unchanged vs0132. Exact0899/mkpayloadpin
+  updated withoutweakening. No othernativecode/header/CPU/GPU/WLED/thermal/
+  rootchange; one necessarydigestCI after2bundlechecks/nativeoverlayobject.
+  NewCI/kernel/models/image/phoneboot NOTready, nofixclaim. Needactualnew
+  previewthumbnail/selection/desktopimage proof, remainingCollectionsstartup
+  TileCreate timeout/PosterBoardsceneappassertion stillnotisolated.
+
+### 0132 HUMAN confirms gallery stillWHITE; mediaexec fixed but wallpaper NOTfixed; currentLIVE0132
+
+- User explicitly: wallpaper menu stillwhiteframes, asksMi8 implementation again.
+  Actualcapture0004 and after-white-gallery-media-capture-0001 prove samewhite
+  cards/FeaturedonlyAstronomy; Settings currentpreview alsoGRAY. AllUSBworkers
+  ENDED (latestclose/reopen24048/13944), sourcef9e5a8d onlyhandoff afterfdfhost.
+  Currentphone remainsLIVE0132; no newimage/payload/nativeCI/sourcechanges.
+- ActualgenuineMedia ctor/image/fullidentity/install PASS remainsvalid, but
+  CollectionsPoster firstlaunchstillTileCreate/check-in timeout. Lateractual
+  mediaserverd createsrealLA08 surfaces, Collections createsYUV/BGRA. Neither
+  provesfinishedHEVC. TWO ownmedia snapshots90/240s captured, workers71763/
+  52139 ENDED; first20threads waitIDS/syncXPC/LS/audioinitialscan, second14threads
+  mostlyrunloop/workerwait; oneinbsdthread_ctl prioritychange, notdecodecall.
+  PrewarmCALL neverseen; don'tclaimthatcallbackcausedthiswhitegallery.
+- NewactualSpringBoard exception atnative299s: Unable tofetchSBApplication for
+  PosterBoardscene, thenSBreexec. Notisolatedasrootcause. Dipperpatches include
+  SpringBoard registrationdelay and stopsunsupportedactivationdaemon toavoid
+  IDS/apsd waits; ownloghasmedia/IDS/apsd/mobileactivationexec butnoactivation
+  crashproofyet, so don'tblinddisablejobs. Its poster_switcher_allowed disables
+  ONLYlockscreenlongpress becausehostedcontextblack; it is NOTa settings-gallery
+  fix and shouldn'tbeportedasmakingmenuwork. PBFUIKitbitmap stilldoesnotprove
+  remotehostedcontent. Continueactualpreview/render/extensionregistrationpath.
+- Onecontrolledclose/reopen gallery aftermedia240sready executed, capture
+  reopened-gallery-capture-0001 caughttransition, no newcompletedpreview yet.
+  Frozen0132controller +ORIGINAL0132manifests, strictserialUSB. Needactualfresh
+  frame/realimage/rendering, notpermissionparseriterations or anotherblindCI.
+
 ### 0132 ACTUAL post-launchd missingDYLD CONFIRMED; mediactor/identity/install PASS; UI stillstartup
 
 - capture0002 worker66247 ENDEDexit0: realMEDIA EXEC preenv0/1 added1/status0
