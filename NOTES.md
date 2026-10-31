@@ -34,6 +34,61 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0137 ACTUALLIVE: UTC applied ONCE + realFG3 battery PASS; defaultwallpaper BLACK/CollectionsPoster trap; 0138 repair inprogress
+
+- This actual handoff supersedes every older READY/LIVE0135 entry. Old0135
+  normalexit50279 ENDED0 with nativephase3/error0/caps80000003/fullraw/
+  WLEXIT05/WLR5, then independent expectedFASTBOOT PASS. ONE0137 image
+  95fd21a195afd62a5098cf7b1345a4e6f76cb95c17eead2a3e92730e2c16d2a0
+  sent2026-10-31T09:18:58.584007Z; image67442/payload46889 ENDED0. Source
+  ba5913050899d5e8452beac70df3e221749585ce/native7929942/CI41187202135/
+  job124496430663/kernel14bac3f041de48a7a5fec6a61ab35adb627affaa244f770632d064acd746a97e.
+  Case0137/phone-default-clock-battery-0001/boot.json is CONSUMED. No replay.
+- ONLY current controller /private/tmp/polaris-runtime-0137-frozen-0001
+  COPY/hash397files plus ORIGINAL0137 physical-runtime-image-0001 and
+  physical-runtime-driver-0001 manifests. Current edited source must not
+  control this image. AllUSBworkers including latestSettingscapture19196
+  ENDED0; no human question pending. Phone LIVE0137 Settings UI, notFASTBOOT.
+- Actual clock READY had positive19.2MHz counters; UTC-one-sync-0001 applied
+  ONCE sequence1/status2/error0/applied_count1, actualUTC1793438551648724us,
+  ticks4782165618/uncertainty2270us. Separate independentstatus confirms.
+  Do not repeat SET needlessly. NoRTC/NVRAM/monotonicwrite or networktimeproof.
+  UI timezone still US/Pacific(PDT), NOT user-requested Melbourne yet.
+- Actual-default-and-battery-capture-0003: canonicalRO8bank scope/map PASS,
+  maskff/error0; first complete28reads/valid1ff/sampleSOC73/4033681uV/
+  -82031uA/3400centiC/external1/charging1/full0. Native accepted73%,4033mV,
+  charging=1 and SpringBoard matchedPolarisBattery. No fakeSOC fallback.
+  OriginalrevidAPID115 has WRITEowner4, confirming old falseREADrefusal.
+  Actual GLstage6/error0/completed13/surfaces1 and4bigSMP PASS; WLEDreq2ack2/
+  issued4completed4/error0/module128IRQ2, rawfaultOR1/rtOR retained. CORE8/
+  HFI8/SMMU8/BUS6 are READY enums. No new optical/60Hz claim.
+- Wallpaper installer context root_device+actualblockrdev/fsid/COW passed;
+  originaldefault7400 and8sourceassets validated, PNG1/CAML3 activated.
+  Nevertheless actual default-home-capture-0004 is BLACK; human confirms.
+  CollectionsPoster has repeatedSIGTRAPs. Actual20F66 WallpaperKit symbols
+  require Locked/Unlock/Sleep CAStates; priorflatCAML omitted allthree.
+  Current0138 repair preserves officialPNG and adds originalnamedstates and
+  packagepublished-layer contracts; actualparser/state/render checks ongoing.
+  Installation/renderfixture is NOT visiblephonewallpaper success.
+- User explicitly wants Australia/Melbourne default inclDST. Agentprepared
+  exactoriginal2195B TZif SHA9c49d5cfe497359dcda1753005435d9cdc9eb49a06345cf4d73558e5411465d9,
+  transactional zoneinfo/localtime repair in RAMCOW (HackiOSa79ff077 approach
+  checked). 0138 graphics-melbourne-default-0001 is superseded forboot by
+  pending0002 wallpaperpackagefix; no0138image/boot/UTC/localtimezoneclaim.
+- WiFi actual0137 originalPE/cache-only capture PASS:632B doubleSHA97936a22
+  ed9035baa8b12121ebbd80a159293a61c8f39fdd08d57abde34beb20, unchangedmapkey/
+  CPU0arch/fourimmutablehashes. NewCPU7actualAT PAR80b faults, noSMEM/radio.
+  NewdefaultOFF CPU0 bounded36Bx2 firstreadsource is separate NOTintegrated/
+  committed/executed; parentreview pending, including before-console200ms
+  freshness ordering. No Get/Alloc/SMC/permissions/FIFO/TX/scan/join.
+- NEXT finish0138 officialstate/publishedlayer+Melbourne finalbundle and
+  review realread-onlyPRS selected/active query; pin exactbundle with one
+  necessarynativeCI, twoactualkernel terminalmodels/wholecodec/sourcefreeze,
+  normalexitLIVE0137/fullreceipt -> independentFASTBOOT -> ONEnewcandidate.
+  Do not reproduceFitness/userdeferredpanic. Root915/142map immutableRO+
+  512MiBRAMCOW only, may_write_userdata=false; allCPU/GPU/WLED/drain gates
+  remain. Old0137utc/battery success does not establish wallpaper/WiFi success.
+
 ### 0137 FINALcandidate READY; actual14b kernel+officialdefault676c; PHONE stillLIVE0135 pendingnormalexit
 
 - Native7929942/CI41187202135/job124496430663 SUCCESS, actualkernel
