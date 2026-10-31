@@ -970,3 +970,25 @@ argument/NVRAM/file/signature, no existing dyld0x5a orGPUcaller/reporter role,
 and no CPU/GPU/WLED/storage/thermal guard. Actualclient queries, provider
 registration and usable wallpaper remain to be verified on the new physical
 candidate. Graphic bundleba69 remains byte-identical. Evidence under0129.
+
+## Actual media decode correspondence (0130, still incomplete)
+
+Actual0129 gallery has categories/text but white thumbnail cards; the user sees
+only a single-color wallpaper. The provider's check-in timeout stack resolves to
+CoreMedia FigSemaphoreWaitRelative, VideoToolbox VTDecompressionSessionRemote_DecodeTile
+and CMPhoto auxiliary HEIC decode. Mediaserverd allocates L008 decoder surfaces;
+no media-server crash is observed in that captured prefix. This identifies a
+blocked decode path, not its underlying cause or proof the GPU texture format is wrong.
+
+Pinned Dipper906425b skips CMCapture's portrait-filter GPU prewarm to keep its
+software HEVC service alive. Our actual20F66 cache independently matches method
+1a2115c0c/184B/SHA d2430aa3e309a5cfb86a991aa1b2191e58eb85c4f6c581f7651df5a20c82f18e,
+UUIDdb6cb6b3-a26b-3a86-9e55-299cf1c485be. The actual Objective-C encoding is
+v24@0:8I16B20: unsigned version, unlike the reference C int spelling. Own0130
+candidate checks exact UUID, all method bytes and ABI before replacing this
+portrait-only prewarm; no decoder, Metal, camera/audio device or hardware writes
+are invented. Exact original mediaserverd vnode/owner/mode/size/wholehash in the
+verified RAM root admits only dyld pathbit2, with no GPU caller/reporter role.
+Only its launchd job and existing PBF job gain scoped wrappers/console in RAMCOW;
+all Apple service names, user and argv stay intact. Real loading and HEVC completion
+remain unproven until the new actual build. Mesa/GL/wrapper/test stay byte-identical.

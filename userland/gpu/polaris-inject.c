@@ -278,6 +278,8 @@ static int real_window_server(void)
 __attribute__((constructor)) static void polaris_gl_inject(void)
 {
 #if defined(PGPU_USERLAND_20F66)
+    extern int polaris_media_compat_entry(void);
+    if(polaris_media_compat_entry())return;
     extern int polaris_poster_preview_entry(void);
     if(polaris_poster_preview_entry())return;
 #endif

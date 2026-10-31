@@ -34,6 +34,70 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0130 media compatibility source locally COMPLETE; PHONE still LIVE0129; ONE necessary CI NEXT
+
+- Exact pinned Dipper906425b portrait-prewarm approach checked against actual
+  20F66 CMCapture UUIDdb6cb6b3-a26b-3a86-9e55-299cf1c485be, method1a2115c0c/
+  184B wholeSHA d2430aa3... rawcache==reconstructed. Actual encoding is
+  v24@0:8I16B20 (UNSIGNED version), corrected from reference int assumption.
+  Own shim verifies wholemethod/UUID/ABI before skipping portrait-only GPU
+  prewarm; real HEVC codec, callbacks/errors/Metal remain unchanged. This is
+  relevant compatibility plus genuine media console output, NOT isolated cause
+  or actual decoder-completion proof. No fake wallpaper/codec/Metal.
+- New0902 exact mediaserverd original vnode/root/0:0/0755/188112B/wholeSHA35d76b...
+  permits dyld pathbit2 only, never GPU caller/reporter. Two actual-function
+  ASAN/UBSAN checks PASS; actualCI-header native overlay+AMFI objects PASS.
+  Init changes exactly PBF+media jobs in530-job original launchdcache; all8
+  atomic success/refusal host cases PASS, original media Appleargv/UserName/
+  MachServices/KeepAlive preserved; RAM COW only.
+- New graphics0130/graphics-media-compat-0001 bundle ee3f927dc175f6be3184344f77773b6bc16ed986e365523f673e3c3cc7bb2790;
+  Mesa/GL/BBDwrapper/GLtest byte-identical to current0129. Only init+inject
+  changed; native0899+tools pins updated exactly, no hashgate relaxation.
+  CPU/GPU/WLED/thermal/storage code unchanged. FOUR changed-impact localtests
+  PASS, no oldmatrix/perf/optical repeat. Next commit/push triggers ONE nativeCI.
+- CURRENT PHONE remains LIVE0129 consumed source4919/d568, allUSBworkersENDED;
+  use frozen0129 controller +original0129 manifests because source nowchanged.
+  New0130 no image/boot yet. Real white picker and decodewait persist; no fix claim.
+
+### 0130 actual wallpaper STILLWHITE; LIVE0129 media tile-decode wait identified, cause NOT isolated
+
+- Latest PHONE remains LIVE0129 image84fe06/kernel d568/source491912f; all USB
+  workers including capture0006 worker20250 ENDED. Gallery now has real categories
+  and text, thumbnail cards remain blank. Human sees single-color wallpaper.
+  DoNOTclaim wallpaper fixed. Actual verified original extension table and lsd
+  state0x86/status0, real CollectionsPoster exec are now proven (0129 captures).
+- Actual CollectionsPoste PID286 check-in timeout stack independently resolves to
+  FigSemaphoreWaitRelative -> VTDecompressionSessionRemote_DecodeTile -> CMPhoto
+  auxiliary image decode. Mediaserverd makes512x512 L008 surfaces; no mediaserverd
+  crash observed in captured prefix. This identifies a blocked HEIC decode path,
+  NOT its root cause; doNOTassert PBF loader remains the sole issue or blindly
+  copy Dipper media/prewarm/hardware changes. Capture0005 still white after startup;
+  one bounded Featured tap followed by0006 shows dimmed sheet, no image proof.
+- Before any bound source edits, all370 actual0129 image evidence files copied
+  (NOT hardlinked) and hashes verified to /private/tmp/polaris-runtime-0129-frozen-0001.
+  Use that frozen controller + ORIGINAL0129 boot/image/driver manifests for current
+  session once source changes. Boot CONSUMED; no replay/ordinary reset. Exit only
+  native RAM drain +complete raw prefix/WLEXIT05/WLR5 +independent actualFASTBOOT.
+- Evidence:0130/actual-wallpaper-white-and-tile-decode-wait-proof.json and
+  current-live0129-runtime-source-freeze.json. NEXT focus actual20F66 media path /
+  pinned Dipper906425b media compatibility; preserve CPU/GPU/WLED/root gates.
+
+### 0129 ONEexactnative payload ACKed; worker15779 ENDED; actualtable/query capture NEXT
+
+- runtime-native-boot-0001/result.json PASS, ONEexactpayload ACKed once.
+  Worker15779 ENDED beforecapture0001. CurrentactualPHONE new0129native startup,
+  noEXT TABLE/query/provider/wallpaper claimuntilcapture. Source4919/current
+  0129controller bound; bootCONSUMED, nooldcontroller/bootreplay.
+
+### 0129 ONEnewRAM image ACKed; CONSUMEDbootrecord, native startup NEXT
+
+- Source491912f56dde92a0538525745a9d969f635c6a63 committed/pushed. ONEnew
+  image84fe06... sent05:01:03.645197UTC perphone-poster-preview-0001/boot.json.
+  Worker84427 ENDED. Currentnew0129UEFI/native session, NOTFASTBOOT andNOTold
+  LIVE0128; nooldcontroller/bootreplay. Statecheck mustEND beforeONEexactpayload.
+  ActualEXT TABLE/state/provider/wallpaper stillunproven. Current4919controller
+  boundnewd568/1204/CI41170151451, onlyNOTES edits allowedwithoutnewsourcefreeze.
+
 ### 0129 verifiedextensionstate candidate COMPLETE/READY; actualPHONE FASTBOOT; nextONEnewboot
 
 - CI41170151451/job124446162173 SUCCESS, native1204deb..., actualkernel

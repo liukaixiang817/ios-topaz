@@ -126,7 +126,8 @@ def build(args):
                                *cf, *io, *surface, '-lobjc']),
         ('libPolarisInject.dylib', ['-dynamiclib', '-Wl,-install_name,/usr/lib/libPolarisInject.dylib',
                                    str(SOURCES / 'polaris-inject.c'),
-                                   *([str(SOURCES / 'polaris-poster-preview.c')] if args.build == '20F66' else []),
+                                   *([str(SOURCES / 'polaris-poster-preview.c'),
+                                      str(SOURCES / 'polaris-media-compat.c')] if args.build == '20F66' else []),
                                    *cf, *io, '-framework', 'OpenGLES', '-lobjc']),
         ('polaris-bbd-wrapper', [str(SOURCES / 'polaris-bbd-wrapper.c'), *cf, *io]),
         ('polaris-gl-test', [str(SOURCES / 'polaris-gl-test.c'), str(mesa), *cf, *surface, *io, '-lobjc']),
@@ -199,7 +200,8 @@ def build(args):
                     builder_sha256=sha(Path(__file__).resolve()),
                     hardware_test_passed=False, desktop_GPU_proven=False, writes_phone=False)
     if args.build == '20F66':
-        for p in (SOURCES / 'polaris-poster-preview.c', ROOT / 'tools/polaris-poster-preview.h'):
+        for p in (SOURCES / 'polaris-poster-preview.c', ROOT / 'tools/polaris-poster-preview.h',
+                  SOURCES / 'polaris-media-compat.c', ROOT / 'tools/polaris-media-compat.h'):
             manifest['source_inputs'][str(p.relative_to(ROOT))] = sha(p)
     (out / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
     print(json.dumps(manifest, indent=2))
