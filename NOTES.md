@@ -34,70 +34,82 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### 0124 full16.5 local root + exact graphics ABI READY; minimal native version admission completed, CI next
+### 0124 new16.5 kernel/graphics COMPLETE; partial root independently reviewed; append-only tail READY
 
-- New user priority is full iOS16.5 while retaining CPU/GPU/backlight and checking
-  Dipper CPU/GPU. Native human lock/wake result and safe actualFASTBOOT0123 remain
-  authoritative; phone has NOT yet booted/installed20F66. No new phone command.
-- Built NEW16GiB HFSX20F66/16.5 root from all three whole-SHA384-verified readonly
-  Apple OS/System/App sources, merged cryptexes and numeric ownership/modes,
-  actual critical hashes + fsck_hfs-fn PASS. SHA25691515474f2f886e1508e2ef62f0d8dce
-  6fe4188c0dd382e566ba819264d37c0f, private0124/ios16.5-20F66-full-root-0001.img.
-  Root builder/tweaks now derive exact build/version from SystemVersion BEFORE
-  mutations; old20H392 behavior remains. Scoped temporary Mac build avoids TCC
-  Documents access widening. No credential stored or printed.
-- Actual official20F66 QuartzCore/OpenGLES/IOSurface UUIDs/images independently
-  decoded; both QC targets+CADeviceUseVBL code/string/layout and ALL457 EAGL
-  names/409slots verified against machine instructions and separate disassembly.
-  20F66 graphics0003 bundlefa615096... keeps current865407ee Mesa/GL/test/init
-  BYTEIDENTICAL; only version-related inject/wrapper rebuilt. Build and strict
-  codesign PASS; source registry/slot correspondence now checked before output.
-  This is host graphics ABI evidence, not whole-OS/physical16.5 boot proof.
-- Found actual native overlay only admitted20H392. NEW0899 changes ONLY that
-  version admission:20F66 additionally requires exact verifiedfa615096 bundle
-  digest; all CPU/GPU/WLED/storage/thermal/auth/lifetime paths unchanged. Exact
-  zero-fuzz patch/host-native header agreement and actual Apple-clang native
-  overlay object PASS.7 targeted build/clock tests PASS3.768s. One new full CI
-  is warranted by this minimal native edit; do not repeat old13-model matrix.
-- Focused Dippere930c26 comparison recorded at0124. Own OSM stockrow22 is already
-  present. No measured foreignCPU/GPU advantage established; don't import default
-  DDR16/unboundedfreq or busy-unmap behavior weaker than own unknownDMA guard.
-  Matching16.5 userland targets adopted after own actual-cache verification.
-  Damage rectangles remain a possible optimization requiring own bounds/lifetime,
-  FULL first wake frame + real pixel/timing evidence, not copied yet.
-- Native sourcefd8af9f762c77dc4e7f27dd34f576686dbd429f1 committed/PUSHED;
-  exact new full kernelCI41157865344/job124408564565 is in progress. No duplicate
-  dispatch. Production exclusive receiver/isolated real Linux stream integration
-  now PASS26 checks: whole new content after actual unmount+RO, preserved baseline
-  raw bytes/inodes, existing/symlink/short-input/bad-header/digest refusal, pin/sync.
-  SOFTWARE Linux evidence is not physical UFS persistence. Receiver has fixed new
-  path+16GiB+91515474 hash/ownuserdata identity, no raw-write/delete/overwrite API.
-  Host controller additionally verifies actual RAM stdin transport before RW.
-- First newCI41157865344 FAILED at IIG source-cache identity: existing bundle
-  header changed, not a native compile/link error. Corrected0899 to keep the
-  original parser header BYTEIDENTICAL and place version admission privately in
-  overlay.c; generated DriverKit headers/IDL/cache guards remain untouched.
-  Host-only exact function mirror has separate polaris-gpu-build.h for tests.
-- Actual migration attempt0001 stopped BEFORE ANY MOUNT/partition write because
-  RAM stdin check failed; all sixGPT/critical/ESP and cleanouter matched. Actual
-  normalFASTBOOT02:02:57UTC. No root namespace created. Host now waits for actual
-  remote completion and retains RAM probe bytes; attempt0002 is running (exec42654)
-  with the same unchanged production writer and no new physical policy.
-- Attempt0002 also stopped BEFORE ANY MOUNT/partition write, actual RAM probe
-  received only765/65536 bytes (exact original prefix), remote completion absent.
-  Normal actualFASTBOOT after recorded in its result; no new namespace. This
-  isolates a real stream truncation observation, not a WLED/root/owner failure.
-  New duplex smart-socket transport retains the connection until fixed-size
-  remote completion;2 real local TCP tests PASS incl2MiB+256 exact bytes/delayed
-  completion. Production receiver and all filesystem guards unchanged. Next
-  attempt0003 will first prove64KiB exact actual RAM transfer before any RW.
-- NEXT complete exclusive NEW root-file transport through Linux ext4, verify only
-  changed behavior in isolated real Linux, commit/push before physical use. New
-  file must preserve original689a root+immutablemarker+all Android/Windows/GPT/ESP.
-  OldRO review remains may_write_userdata=false and does NOT grant native writes.
-  New file allocation is a separate bounded migration; no overwrite/erase/repair.
-  Need actual post-copy unmount+fullRO newroot/map+oldroot/marker/GPT/ESP review,
-  new20F66 payload/independent runtime admission, then ONE temporary16.5 boot.
+- Latest priority: actual full iOS16.5 while retaining CPU/GPU/ca_vbl1 and native
+  LCD lock/wake, plus focused Dipper comparison. Real human “背光熄灭，唤醒正常”
+  and0123 native/safeFASTBOOT proof remain valid for OLD20H392. NO actual20F66
+  phone boot or completed new root is claimed. Sound/WiFi/persistent/menu later.
+- NEW full16GiB HFSX20F66/16.5 LOCAL root completed from three official whole
+  SHA384-verified readonly OS/System/App images. Numeric ownership/mode/critical
+  hashes/fsck_hfs-fn PASS. SHA91515474f2f886e1508e2ef62f0d8dce6fe4188c0dd382e566
+  ba819264d37c0f,0124/ios16.5-20F66-full-root-0001.img. Mac worker86589 ENDED,
+  three task source mounts detached, originals retained, no credential logged.
+- Actual20F66 QC/EAGL/IOSurface UUIDs/code/table targets decoded independently:
+  ALL457 EAGLnames409slots and QC two vtable targets+CADeviceUseVBL matched;
+  IOSurface6/7/27 actual32B/2scalar/0x88 requests +0xa68 outputs match native.
+  New graphics-20F66-0003 bundlefa61509603478bbe942cf113626275639267b2c3dd4f3b240
+  fb0acae1c6bc5f9; four current865407ee Mesa/GL/test/init binaries BYTEIDENTICAL.
+  Only inject/wrapper version interfaces rebuilt.7 targeted clock/build tests
+  PASS; narrow actual-library correspondence is not a whole-OS ABI/phone proof.
+- Native0899 changes ONLY overlay version admission (20F66 also requires exact
+  fa615096 digest). CPU/GPU/WLED/storage/thermal/auth/lifetime code unchanged.
+  FirstCI41157865344/fd8af9f FAILED at IIG header identity. Corrected by restoring
+  original bundle header BYTEIDENTICAL and moving the private check into .c;
+  no IDL/cache protection weakened. Source05bb9bd5ba31be91ed0f722aeea7fa19441c8332
+  full macOS27 CI41158333620 SUCCESS. Actual kernel17231344B SHA8b10db776e4a373e4
+  ad77a312f87559bc013b7629c2400a10b583703495cf60b, kernel-20F66-0002. ZIP CRC/
+  SHA256SUMS/profile verified,0124/native-20F66-kernel-artifact-proof.json. Slow
+  gh download stopped; bounded ranges succeeded. No new CI without native edit.
+  Both NEW actual-kernel terminal models PASS18checks each (new-kernel-terminal-
+  models.log), SOFTWARE PMIC/RAM USB/fixture only, not phone or16.5 userland.
+- Physical new-root attempt0001/0002 wrote NO partition and mounted no userdata.
+  Actual exec-in RAM transport truncated;0002 recorded765/65536 exact prefix,
+  no completion. New bounded duplex smart-socket holds connection through actual
+  remote service close;2 local TCP tests and actual64KiB RAM byteexact passed.
+  Host source8021ffd committed/PUSHED. No old WLED/controller policy changed.
+- Physical attempt0003 started writer02:08:22UTC. Its fixed600s alarm stopped
+  transfer after at least14GiB; no completion receipt/immutable pin. Normal real
+  unmount/actualFASTBOOT02:18:30UTC. Worker96339 ENDED. No blind retry/delete.
+  New partial file is /polaris-ios-20F66-0124-0001/root.img, inode6193154/gen
+  2167264735/flags80000/15324938240B. No existing system image was overwritten.
+- NEW strictRO watchdog audit (worker43202 ENDED) independently re-read entire
+  partial prefix and old16GiB root: prefixSHA3ae5699d3988fbf412a0171e58e64f130072
+  d3621c4b3ca09f159e4e8423335d equals host prefix; original689a.../182map/whole
+  marker+identity/raw inode/sixGPT/boot/recovery/abl/ESP preserved. Actual clean
+  unmounted outer b5d0d35e76d079f7f05febdb7f3f9bbb7edc1128eb3e69aa258fdcbecbef7c15
+  differs after our known normal ext4 new-file allocation; state1/RECOVERclear/
+  orphan0/error0. No repair/replay/generalFShealth claim; whole512MiB journal
+  still not captured. ActualFASTBOOT02:22:43.399962UTC. Latest phone is FASTBOOT,
+  no active iOS/recovery/USB worker at this handoff. Original marker never unpinned.
+- NEXT separate append-only candidate, not a replay of failed creator: tools/
+  polaris-complete-20F66-root.py --append-once and polaris-root-append.c. Fixed
+  own new path, reviewed inode/gen/size/full-prefix hash, O_APPEND/write ONLY,
+  no overwrite/truncate/unlink/unpin/raw API, unchanged600s bound, exact final
+  91515474 digest+immutablepin/fsync/syncfs.12 real Linux integration checks PASS
+  Linux-root-append-0001: actual interrupted-file completion, wronggen/hash zero
+  write, immutable reuse refusal, preserved old inode/data, actualumount/RO pin/
+  fullcontent. SOFTWARE Linux evidence is not physical persistence. Bind fresh
+  prefix proof0124/partial-root-tail-admission.json (actualFASTBOOT must<=600s),
+  append only remaining1854930944B, verify full new+old roots after unmount RO,
+  marker/maps/sixGPT/critical/ESP and actualFASTBOOT. No generic native UFS writes.
+- New20F66 runtime profile is presently CLOSED pending final root extent count/
+  RO review. New kernelSHA is pinned, old profile stays exact. Prepared actual
+  new-kernel terminal-model payload; physical payload NOT yet built. After tail
+  complete: prepare-20F66-payloads.py -> new map/ADT/exact602B same CPU/GPU/WLED
+  flags/ca_vbl1 +newfa615096 bundle, independent profile/image/fullcodec, source
+  commit/push, then ONE new16.5 RAM image/payload. Only verify changed integration.
+- Dippere930c26 focused comparison: own OSMrow22 already exists; no measured
+  foreignCPU/GPU improvement established. Don't copy defaultDDR16/unboundedfreq,
+  weaker busy-GEM-unmap, OLED/FTM5 hardware. Compatible16.5 cache targets adopted
+  after actual-cache checks. Damage rectangles remain potential optimization,
+  requiring own bounds/lifetime/FULL first-wake frame +real pixel/timing proof.
+- Preserve originalroot/marker/Android/Windows/data/GPT/ESP/default/BootOrder/81FW.
+  may_write_userdata=false remains the generic/native rule; the user's16.5
+  replacement authorizes only the separately guarded new-file/tail migration.
+  No erase/format/resize/delete/unpin/repair. All USB serialized; check a current
+  worker result before any new USB call. Don't wait old ended worker IDs. Keep
+  latest automation prompt synchronized; don't create duplicates/delete goals.
 
 ### 0123 actual native iOS LCD lock/wake + safe FASTBOOT COMPLETE; NEXT user prioritizes full16.5 and Dipper CPU/GPU comparison
 
