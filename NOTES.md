@@ -34,7 +34,44 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### 0134 panic-only SOURCE READY; actualFASTBOOT afterhuman recovery; ONEnewnativeCI NEXT
+### 0134 panic-only candidate READY; PHONE actualFASTBOOT; hostcommit/freeze thenONEnewRAM NEXT
+
+- Actualkernelc901/source9138/CI41181883387/job124480798311 SUCCESS. Physical
+  driver54358 ENDEDexit0, twoactualkernel terminalcases73739 ENDEDexit0/PASS18
+  each. Package/wholecodec/offlinefreeze82071 ENDEDexit0: full28170952B exact
+  originalEDK2 decode/81FW/SimpleInit/BootShim/DTB preserved. Newimage
+  c4548d1facd2e26e13b4d432f4500fc0663b3b4218b19bfb6d25acba025b74db.
+  Allfirmwareinputssameasactual0133; nativechangesonly0907/0908/0909. Actual
+  graphicsbf8/0133,602Bargs/CPU/GPU/WLED/thermal/root915142map/512MiB retained.
+- panic-only-candidate-ready-proof.json and4hostadmissiontestsPASS. SOFTWARE
+  modelsarenotphysicalpanicfixproof. AllUSB/build/model/CIworkersENDED;
+  actualcorrectFASTBOOT confirmedafterhumanrecovery, nohumanpending. New
+  phone-panic-repair-0001 NOboot.json/phoneaction. Commit/pushhostadmission,
+  exactCOPYfreezeall372evidence+manifests, thenfreshproduct+ONEnewimage/ONE
+  exactpayload. NativeUI/Fitness/HFSRAMcapacityreclaim/stoprestore stillunproven.
+
+### 0134 CI SUCCESS/exactkernel c901 verified; PHONE actualFASTBOOT; candidate exitchecks running
+
+- Source9138b0c0c23d15d0a9f332f71a295d8ea7932142 CI41181883387/
+  job124480798311 SUCCESS; watch/download46584 ENDEDexit0. Exactactualkernel
+  c901a66ec7972c8aacf1471f93b7a7f16e4be8e1ef95030577a28eca003b9ccb
+  /17249784B ZIPCRC/SHA/profileverified. Onlynative0907/0908/0909 added;
+  allexistingnativepatches/shim/graphicsuserland bytesidentical toactual0133.
+- Physicaldriver54358 ENDEDexit0; allfirmwareinputs andprotectedpolicies exactly
+  match0133 (physical-driver-unchanged-protection-proof.json). Host20F66 exact
+  kernel/source/CIupdated;4admissiontestsPASS. Twoactualkernelterminalmodels
+  worker73739 active, delayed-footerPASS18, otherpending; waitENDED beforepackage.
+  ModelsSOFTWAREPMIC/RAMUSB/syntheticroot, notphysicalpanicremedyproof.
+- PhoneactualFASTBOOT stillready/nohumanpending/noUSBworker. Newcandidate
+  phone-panic-repair-0001 NO boot.json; pack/wholecodec/offlinefreeze/current
+  sourcecommit review stillrequired, thenauthorizedONEnewRAM/ONEexactpayload.
+
+### 0134 panic-only source9138 PUSHED; CI41181883387 running; PHONE actualFASTBOOT
+
+- Exactsource9138b0c0c23d15d0a9f332f71a295d8ea7932142 committed/pushed.
+  UniqueCI41181883387/job124480798311 running; watch/download worker46584
+  ownsCIstate+actualartifact verification. No duplicateCI/newphoneaction.
+  AllUSBworkersENDED; phoneactualFASTBOOT ready, nohumanquestionpending.
 
 - HumanphysicallyreturnedFASTBOOT; independentexpected-productquery07:40:01
   PASS/exit0, proofpanic/actual-FASTBOOT-after-human-panic-recovery-0001.json.
@@ -56,7 +93,7 @@ early samples only. On0029 the human already confirmed boot complete and said
   panic/panic-only-combined-source-proof.json;3IIGscope/binding testsPASS.
   Independentprimaryreview confirmsHFS kernelcontext→kernproc andsu.bdev
   identity,zero/partialedge+lockcontract. ActualcompletekernelCI/phonefix still
-  NOTproven. Commit/pushONLYpanic source thenONECI; don'twaitwallpaper/battery/
+  NOTproven. Committed/pushedONLYpanic source forONECI; don'twaitwallpaper/battery/
   WiFi/time completion anddon'tinjectunrelatedfeatures inpanic comparison.
 - Clock5sharedhostfilechanges fullypreserved/deferred atclock/deferred-host-
   integration-0001, baselineHEAD restored;0904/0905/0906/newfeaturefiles remain
