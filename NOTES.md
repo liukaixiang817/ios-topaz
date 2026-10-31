@@ -34,7 +34,37 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### 0143 ACTUAL native LIVE / new rendering kernel+wallpaper+time+battery; GCD config RuntimeData refusal isolated; NEW0144 in progress
+### 0144 exact config RuntimeData candidate fully offline READY; current0143 actual native LIVE awaits normal drain
+
+- FirmwareSOURCE5eb66389e38873ee82fee0f070cff643374aa859 and hostSOURCE
+  3830dafcee8c369f5c70a3b30c54668eaebcd6c3 committed/pushed. ActualON
+  2452ccb312b18a0e2dcdcdabceb96d576ed79b05b8b89f9ff7bed0b7daa78208 /
+  1253888B/61inputs, manifest5cd9dc60...; fullmain8compile/link logs clean.
+  Only compiled GCDheader and builder changed vs0143, plus targetedtest/host
+  source. GCD30224B/configspanoffset30000+2x112/Clock43504/62typedfields;
+  old0143profile kept exact, new0144separate. Parent27hostchecks PASS.
+- Unique twoactualwholeEFI-XNU terminalmodels each19checks, all61inputs
+  identical to physical/7literalint1compiledout markers, fullraw/12WLEDwrites/
+  200ms/oneobserver retained; proof5c41d8b1... . SOFTWAREPMIC/delay/RAMUSB
+  is not hardware/realguestreset. Same completednative7d24/source7e9/
+  CI41213766168/job124573937913 reused, no newnativeCI or payload rebuild.
+- Newimage e7e776dc33288a72d54584c6d5f6d1d6e3c4212908d059203436bcd175234bd6 /
+  5980160B; wholeoriginalEDK228735688B exact/81FW/SimpleInit/BootShim/DTB
+  preserved, codec9d89784b... . Parentactualadmit a27b85f6... PASS without
+  mocks, current0143continuity6ba2db26... from actualcapture0006at16:06:15Z,
+  samecookie/prefix26/error0/RO16GiB142map+512MiBRAMCOW/no knownAndroid.
+- Sourceaudit191e0cf3... /defaultofflinehelperd43165aa... /independentCOPY
+  f664a13d... complete: /private/tmp/polaris-runtime-0144-frozen-0001,
+  783files+10separateCOMMIT_ONLY/noactivehistoricalfallback. Allofflineworkers
+  ENDED, NO0144boot.json/unusedONEattempt. ActualnewGCD/Clock not yet proven.
+- NEXT ONLYfrozen0143controller+original0143manifests/consumedrecord actual
+  nativeVFS/GPU/CPU drain+completeappendraw/WLEXIT05/WLR5, then separate
+  realexpectedFASTBOOT. Onlythenrepo0144helper--boot-once ONEnewimage,
+  frozen0144state/ONEexact63cbpayload--boot-ack-seconds90/capture. Keep USB
+  serial/require_escalated; ACKunknown firstactualstate, no replay/fallback.
+  No newphysicalkeys request needed so far. WiFi/PCM/sensor/frame unfinished.
+
+### Historical 0143 ACTUAL native LIVE / new rendering kernel+wallpaper+time+battery; GCD config RuntimeData refusal isolated; NEW0144 in progress
 
 - Latest human returned FASTBOOT and requests Wi-Fi/sound/camera fixes. Normal
   old0142 native drain+WLEXIT05/WLR5 worker31191 ENDED0 at15:51:34.762328Z;
