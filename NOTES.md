@@ -34,6 +34,51 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0128 FINAL candidate COMPLETE/READY; actualPHONE FASTBOOT; nextONEnewboot
+
+- FinalnativeCI41168181984/job124440215334 SUCCESS, sourcea5b0f8a..., exact
+  kernel22f9864d...17231752B andactualposterloader symbolverified. Bothactual
+  changedkernel terminalmodels PASS18checks each; SOFTWAREPMIC/RAMUSB only,
+  worker88348 ENDED. Physicaldriverworker42558 ENDED. ba69gfxbundle unchanged.
+- Newphysicaldriver/image0001 imageSHA
+  ffd1522752470230570a076052756ab46e3a31ff81dec553c4b7edbcc3dac41a.
+  WholeupstreamEDK2decode28170952B byteexact, original81FW/SimpleInit/BootShim/
+  DTB unchanged; model/source/codec/root/admission offlinefreezePASS. ActualEFI
+  sourceinputs remain0122driver0002 byteidentical exceptmkpayload.py. Worker91946
+  ENDED; final-PBF-admission-candidate-ready-proof.json. NoPBFloading/renderclaim.
+- Host20F66profile bindsfinal22f/a5/CI41168181984, sameba69bundle0127/root915/
+  142map/602Bflags. New0128phone-poster-preview-0001/boot.json ABSENT. NEXTcommit/
+  pushhostprofile thenactualproduct+ONEnewimage+ONEexactpayload, actualPBFidentity/
+  constructor/bitmap/gallery/selection/freshrealwallpaper evidence. CurrentPHONE
+  independentlyverifiedFASTBOOT afterstrict104raw0127exit, nohumanreplyneeded.
+
+### 0128 finalnative CI SUCCESS; current0127 CLOSED normally +independentFASTBOOT
+
+- Finala5b0f8a/CI41168181984 SUCCESS, actualkernel17231752B
+  SHA22f9864db93f2fabab3fe2115768f153426bc9fcce16475b41e8d6ec603933a6.
+  ActualZIP CRC/size/SHA256SUMS/profile verified; actualnativeposter symbolpresent.
+  Artifactworker44508 ENDED, physicaldriverworker42558 ENDED. Newkernelmodel
+  worker88348 pending/completing, mustcheckEND/results beforepackaging.
+- Current0127 strictnormalexit PASS: exit-live0127-0001/result.json complete104
+  rawrecords/16issued16completed/request8ack8/module128/IRQ2/error0, native
+  RAM_DRAINED80000003/epoch0/flushed0/WLEXIT05/WLR5. USBworker13770 ENDED, then
+  actual-FASTBOOT-after-live0127-exit.json independentlyexpectedPolarisTRUE.
+  Noopticalfeedback/durableSAFE claim. PHONE nowactualFASTBOOT, noLIVE0127 use.
+- NEXT finalmodels/image/wholecodec/offlinefreeze/hostprofilecommitpush, then
+  actualproduct+ONE0128image/ONEexactpayload; new0128boot.json stillABSENT.
+
+### 0128 FINAL sourcea5b0f8a PUSHED; ONE CI41168181984 running; CURRENTLIVE0127 unchanged
+
+- Finalnative0900 exactoriginalPBF0:80/0775/119520B/WHOLESHA +canonicalvnode/
+  verifiedroot/RAMCOW/bundle admission, onlydyldmask2; readerror/partial/hash/
+  allocationfail retained, noApplefilemetadatachange. Actualhostfunctions and
+  actualkernelobjects PASS. Sourcea5b0f8a3adfa439811eac2d08bd9b26db95a9366 pushed,
+  ONEnewCI41168181984 running; doNOT duplicate. Supersedede5bcCI41167878582
+  nowactualCANCELLED, neverused/admitted/booted. ba69gfxbundle unchanged0127.
+- New0128scripts nowbindFINALa5/41168181984; no0128boot.json. ActualPHONE still
+  LIVE0127 blankwallpaper, working32apps/GPU/nativeWLEDstartup; control via frozen
+  25bc snapshot ONLY. AllUSBworkersENDED. Noordinaryreset/oldhelperreplay.
+
 ### 0128 originalPBF metadata +wholehash identity CORRECTED BEFORE any newphoneboot
 
 - Actual reviewedoriginalPBF file is0:80/0775,119520B,

@@ -7,8 +7,8 @@ GPU_SHA='865407ee5b402fe690c04f5888ee6758a29f6ef3eca639019ac89dfba0f3371f'
 # The new profile stays closed until the exact successful-CI artifact is bound.
 TARGETS={
     '20H392':dict(kernel=KERNEL_SHA,source=NATIVE_SOURCE,CI=41056172330,root=ROOT_SHA,GPU=GPU_SHA,extents=182),
-    '20F66':dict(kernel='f455700a44a3990a03ee8029d9c0c60f5454504506007e16c003fcbe986ba9cf',
-        source='efc80619003dd49e6badd85bee4782097210eaf1',CI=41166338002,
+    '20F66':dict(kernel='22f9864db93f2fabab3fe2115768f153426bc9fcce16475b41e8d6ec603933a6',
+        source='a5b0f8a3adfa439811eac2d08bd9b26db95a9366',CI=41168181984,
         root='91515474f2f886e1508e2ef62f0d8dce6fe4188c0dd382e566ba819264d37c0f',
         GPU='ba69c16b28524107f28e63b094faeed6c2009391eaa7d04ae44933d1f1675369',extents=142,
         graphics_manifest='research/polaris/uefi-ios-0127/graphics-poster-preview-0004/manifest.json')}
