@@ -34,6 +34,30 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0137 FINALcandidate READY; actual14b kernel+officialdefault676c; PHONE stillLIVE0135 pendingnormalexit
+
+- Native7929942/CI41187202135/job124496430663 SUCCESS, actualkernel
+  14bac3f041de48a7a5fec6a61ab35adb627affaa244f770632d064acd746a97e
+  /17306760B ZIPCRC/SHA/profileverified. Hostcache e5876216a58f37b984dfde92bdf191f8368cf6e5
+  committed/pushed; noadditionalnativeCIneededforFWcache. 36915ENDED0.
+- Physical+twoactualkernelmodels1824 ENDED0, both19checksPASS38.89/39.35s,
+  actualclockDATA256B andSOFTWAREbattery+originalfirmwarecacheinspection
+  compiledoutmarkers. True19.2MHzactualDTandcounter configuration, noUTCSET,
+  noemulatedphysical PMIC/USB/SMEM/guestresetclaim. Strictactualscope+11host
+  admissionfixturesPASS; 47actualsourceinputs and263protectedsourcebytes
+  independentlyreviewed, limitedadditivecachebeforemask/PONorderingretained.
+- Pack/wholeEDK2codec/offlineactualfreeze96085 ENDED0. Newimage
+  95fd21a195afd62a5098cf7b1345a4e6f76cb95c17eead2a3e92730e2c16d2a0 /5959680B,395evidencefiles.
+  WholeunmodifiedEDK2decode28273864B exact,81originalFW/SimpleInit/BootShim/
+  DTBpreserved. Default676c19.07MBonlyinitnew; original602B/root915142map/
+  512MiBRAMCOW/CPU/GPU/WLEDallretained. Nothingyetphysicallyfixedby0137.
+- NEXT hostprofilecommit/push -> COPY/hashfrozen397files -> frozen0135
+  actualnormaldrain/fullraw/WLEXIT05/WLR5 -> independentactualFASTBOOT ->
+  ONE0137image/ONEexactpayload -> realdefaultctx/activation andfreshscreen,
+  realbatteryrawvalid/nativeacceptance/UI, oneUTCSETonlywhenactualnewREADY
+  validcounters+independentstatus, actualWiFiSCMINFO/cache onlydiagnostics.
+  Current0135knownbadclockmustnotSET; allUSBworkersENDED/nohumanpending.
+
 ### 0137 FINALcombined source7929942 PUSHED/CI41187202135 running; cache-onlyFWintegrated; PHONE remainsLIVE0135
 
 - Finalnativeexactdefault676c+clockMRS+WiFiAT+knownSCMINFOavailability source
