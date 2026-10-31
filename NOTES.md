@@ -83,6 +83,14 @@ early samples only. On0029 the human already confirmed boot complete and said
   normalFASTBOOT02:02:57UTC. No root namespace created. Host now waits for actual
   remote completion and retains RAM probe bytes; attempt0002 is running (exec42654)
   with the same unchanged production writer and no new physical policy.
+- Attempt0002 also stopped BEFORE ANY MOUNT/partition write, actual RAM probe
+  received only765/65536 bytes (exact original prefix), remote completion absent.
+  Normal actualFASTBOOT after recorded in its result; no new namespace. This
+  isolates a real stream truncation observation, not a WLED/root/owner failure.
+  New duplex smart-socket transport retains the connection until fixed-size
+  remote completion;2 real local TCP tests PASS incl2MiB+256 exact bytes/delayed
+  completion. Production receiver and all filesystem guards unchanged. Next
+  attempt0003 will first prove64KiB exact actual RAM transfer before any RW.
 - NEXT complete exclusive NEW root-file transport through Linux ext4, verify only
   changed behavior in isolated real Linux, commit/push before physical use. New
   file must preserve original689a root+immutablemarker+all Android/Windows/GPT/ESP.
