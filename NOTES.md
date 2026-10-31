@@ -34,7 +34,32 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### 0144 ACTUAL native LIVE / originalGCD+16Clock queries PASS; cold SE5 and MSS branches now measured; NEW0145 hardware work parallel
+### USER LATEST: SERIAL Wi-Fi first; audio/camera work STOPPED; current0144 native LIVE
+
+- Human explicitly says Wi-Fi/sound/camera still do not work and requests
+  one-at-a-time work, no parallel adaptation. Current priority is ONLY Wi-Fi;
+  sound then camera later. Stop using simultaneous child work. audio0139 and
+  gpu0142(camera) interrupted; wifi0139 returned finalhandoff then stopped.
+  All child work must remain stopped until an explicit later serial resumption.
+- Success means actualradio scan/join/data, realPCM/speaker playback and real
+  sensor frames respectively. Last0144 completion was GCD/clock baseline,
+  not any of these functions. Keep user-facing claims precise.
+- Current0144 controller/image/bootrecord remain as below. ui-capture-0002
+  worker13352 ENDED0 at16:13:58Z, kernel-entered/SpringBoard/firstframe;
+  WLEDprefix12/error0/issued2=completed2/req1=ack1 is an earlyOFF-stage sample,
+  not completednewUI/wake. UTCalreadySETonce/independentstatusconfirmed.
+- Wi-Fi0145 finalhandoff: own MSS is pil-q6v55-mss/self-auth, NOqcom,pas-id;
+  mem-protect-id15 is NOT PASID. Newprivate original81-SMC-executable-inventory
+  and SmemDxe wrappers show those wrappers do ABI/PRNG, not MSS provider.
+  No namedPIL/ScmDxe found is not absence proof. Exactfiles under0145/wifi;
+  next actual capability primitive requires ownSCM ABI qualification, and
+  IsCallAvailable itself would not grant VMID/owner. Do not blindPAS15,
+  EnableClock/PIL/reset/SMEMpublish. Original30modem/MBA artifacts reused,
+  RMTFS originalNV RAMshadow/lifetime still unfinished. Parent now owns
+  serialWi-Fi investigation from0142/wifi/MSS-GLINK-RMTFS-handoff.md.
+
+### Current0144 hardware facts (all next-work parallel instructions below are superseded by SERIAL rule)
+
 
 - Old0143 normal native drain+WLEXIT05/WLR5 worker66269 ENDED0 at16:08:51Z:
   nativecookie2981069445/seq1/mode2/phase3/error0/epochs0/caps80000003;
@@ -69,7 +94,7 @@ early samples only. On0029 the human already confirmed boot complete and said
   status2/error0/count1/uncertainty2281us. NeverSETagain0144. New0144 UI/
   battery/WLED full native path awaits startup completion; exact7d24/63cb/
   f790/7400/Melbourne/RO915/142map source retained, old0143 UI proof historical.
-- NEXT new0145 independenthardware drafts only, current0144 native remains
+- HISTORICAL superseded parallel plan: new0145 independenthardware drafts only, current0144 native remains
   controlled LIVE: audio derives smallest saved-state coldSE5 singlebranch/
   parent-source/GENI idle+protocol+pins/reset lease toward real3commandTASID;
   WiFi derives exactMSS/PIL/secureowner/AOP/rail/RMTFS RAMshadow primitive;
