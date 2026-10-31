@@ -34,6 +34,25 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0127 scoped exec entry COMPLETE; supersedes prior0003 candidate BEFORE any phone boot
+
+- Integration review found historical launchd filtering of DYLD_ job env; own
+  current kernel does not contain historical exec_inject. Do not assume job-env
+  insertion reaches dyld. Added ONLY PBF job Program=/usr/libexec/polaris-init,
+  preserving genuineApple argv. That verifiedbinary now has a non-PID1 narrow
+  role: exactPBF argv+flag required, set library afterlaunchd, then exec genuine
+  Apple executable. Any other non-PID1 invocation refuses beforePID1 mutations.
+  NoApplebinary rename/edit or new GPU task permission. Original529jobs unchanged.
+- Actual530-job cache positive/explicitoriginal/otherenv and foreignprogram/
+  foreignDYLD/foreignflag refusalchecks PASS. Host mockedexec proves exactApple
+  argv/library after missingDYLD, wrongargv/flag/argc refuse; noAppleexe runonhost.
+  Newbundle ba69c16b28524107f28e63b094faeed6c2009391eaa7d04ae44933d1f1675369 graphics-poster-preview-0004.
+  Onlyinit/inject differ; Mesa/GL/test/BBDwrapper FOUR byteidentical0126.
+- Prior31ddc2b/CI41165985829 requestedCANCEL, never downloaded/admitted/booted;
+  it is superseded and MUST NOT be used. Newsource mustcommit/push andbind its
+  ONEsuccessfulCI beforephysicalcandidate. CURRENTactualphone remainsLIVE0126,
+  originalconsumedboot+frozen3bbccontroller; noUSB action/newboot thismilestone.
+
 ### 0127 actual wallpaper failure isolated to missing Metal preview queue; bounded UIKit preview source READY
 
 - 0126 actual stdio now captured the missing exception: NSInvalidArgumentException,

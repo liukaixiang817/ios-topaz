@@ -55,6 +55,8 @@ static int poster_console(const char *root)
     if(!label || !CFEqual(label,CFSTR("com.apple.PosterBoard")) || !args ||
        CFGetTypeID(args)!=CFArrayGetTypeID() || CFArrayGetCount(args)!=1 ||
        !CFEqual(CFArrayGetValueAtIndex(args,0),CFSTR("/Applications/PosterBoard.app/PosterBoard")))goto done;
+    CFTypeRef program=CFDictionaryGetValue(poster,CFSTR("Program"));
+    if(program && !CFEqual(program,CFSTR("/Applications/PosterBoard.app/PosterBoard")))goto done;
     const CFStringRef keys[]={CFSTR("StandardOutPath"),CFSTR("StandardErrorPath")};
     for(unsigned i=0;i<2;i++) {
         CFTypeRef old=CFDictionaryGetValue(poster,keys[i]);
@@ -76,6 +78,10 @@ static int poster_console(const char *root)
         if(old && !CFEqual(old,env_values[i]))goto done;
     }
     for(unsigned i=0;i<2;i++)CFDictionarySetValue(environment,env_keys[i],env_values[i]);
+    /* Some launchd versions filter DYLD_ job variables. Run our verified init
+     * as this one job's small exec wrapper, with Apple's argv unchanged. It
+     * sets the library after launchd, then execs the genuine Apple binary. */
+    CFDictionarySetValue(poster,CFSTR("Program"),CFSTR("/usr/libexec/polaris-init"));
     encoded=CFPropertyListCreateData(NULL,plist,kCFPropertyListBinaryFormat_v1_0,0,NULL);
     if(!encoded || CFDataGetLength(encoded)<=0 || CFDataGetLength(encoded)>2*1024*1024)goto done;
     out=open(temporary,O_WRONLY|O_CREAT|O_EXCL|O_NOFOLLOW,0600);
@@ -99,7 +105,7 @@ done:
     if(plist)CFRelease(plist);
     if(data)CFRelease(data);
     free(bytes);
-    printf("POLARIS POSTER CONFIG: %s; Apple job retained, RAM COW only\n",result?"unmodified (unavailable)":"console + scoped preview prepared");
+    printf("POLARIS POSTER CONFIG: %s; Apple argv retained, RAM COW only\n",result?"unmodified (unavailable)":"console + scoped exec preview prepared");
     return result;
 }
 
@@ -165,9 +171,21 @@ int main(int argc,char **argv)
     return publish_apps(argv[1])==32?0:1;
 }
 #else
-int main(void)
+int main(int argc,char **argv)
 {
+    (void)argc;(void)argv;
 #if defined(PGPU_USERLAND_20F66)
+    if(getpid()!=1) {
+        const char *flag=getenv("POLARIS_POSTER_PREVIEW");
+        if(argc!=1 || !argv || !argv[0] ||
+           strcmp(argv[0],"/Applications/PosterBoard.app/PosterBoard") ||
+           !flag || strcmp(flag,"1"))return 125;
+        if(setenv("DYLD_INSERT_LIBRARIES","/usr/lib/libPolarisInject.dylib",1))return 125;
+        char *const poster_args[]={"/Applications/PosterBoard.app/PosterBoard",NULL};
+        fprintf(stderr,"POLARIS POSTER EXEC: scoped library set after launchd; genuine Apple binary\n");
+        execv(poster_args[0],poster_args);
+        perror("polaris: genuine PosterBoard exec");return 127;
+    }
     int console=open("/dev/console",O_WRONLY|O_NOCTTY|O_CLOEXEC);
     if(console>=0) {
         (void)dup2(console,STDOUT_FILENO);
