@@ -36,6 +36,15 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### CURRENT0150 remains ONLY last actual nativeLIVE19:10; NEW0154 conditional runtime ARC trial host-reviewed / whole81 packaged; independent freeze and physical test pending
 
+- Host scope source1bc6960fb947deb6645f97697186f66ac78658bc is committed.
+  The first independent frozen0001 copy/default-off helper passed788files+
+  10COMMIT_ONLY/385sources/80inputs, then was superseded BEFORE ANY USB use:
+  source review found the inherited product regex's word boundary also admits
+  polaris-uefi-diag. New committed exact-response helper rejects suffixes,
+  duplicates/conflicting/malformed replies and nonzero/unknown return codes;
+  five focused host tests pass. This is a code finding, not a historical
+  wrong-target boot. Frozen0001/old0150 are not edited. New helper requires
+  fresh frozen0002/manifest0002, not yet created at this handoff point.
 - This supersedes0153's unfinished host-scope review, NOT its absence of
   physical observations. The new source review is explicitly a conditional
   APPS DRV2 runtime experiment: no prior hardware lease is claimed and no
