@@ -5,7 +5,7 @@ from pathlib import Path
 import sys
 import unittest
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
-from polaris_wled_runtime_admission import PHYSICAL,THERMAL,PAIR,KERNEL_SHA,NATIVE_SOURCE,ROOT_SHA,admit,exact_scope
+from polaris_wled_runtime_admission import PHYSICAL,THERMAL,PAIR,KERNEL_SHA,NATIVE_SOURCE,ROOT_SHA,TARGETS,admit,exact_scope
 ROOT=Path(__file__).resolve().parents[2]
 
 
@@ -19,6 +19,22 @@ def fixture():
 
 
 class RuntimeAdmission(unittest.TestCase):
+    def test_20F66_requires_its_kernel_CI_root_and_separate_post_unmount_review(self):
+        args=fixture();d,models,ci,pre,review=args;t=TARGETS['20F66']
+        d['kernel_sha256']=t['kernel'];ci.update(databaseId=t['CI'],headSha=t['source'])
+        pre.update(build='20F66',full_image_sha256=t['root'],extent_count=t['extents'])
+        review.update(build='20F66',post_unmount_RO_only=True,
+            new_file_install_preceded_readonly_review=True,original_root_and_marker_preserved=True,new_root_immutable=True)
+        admit(*args,build='20F66');exact_scope(d,'20F66')
+        with self.assertRaises(ValueError):admit(*args)
+        for at,key,value in [(0,'kernel_sha256',KERNEL_SHA),(2,'databaseId',41056172330),
+                             (3,'full_image_sha256',ROOT_SHA),(3,'extent_count',182),
+                             (4,'build','20H392'),(4,'post_unmount_RO_only',False),
+                             (4,'new_file_install_preceded_readonly_review',False),
+                             (4,'original_root_and_marker_preserved',False),(4,'new_root_immutable',False)]:
+            bad=copy.deepcopy(args);bad[at][key]=value
+            with self.assertRaises(ValueError):admit(*bad,build='20F66')
+
     def test_exact_scope_all_bits_and_integer_bool_confusion_refuse(self):
         d,*_=fixture();exact_scope(d)
         for k,v in PHYSICAL.items():

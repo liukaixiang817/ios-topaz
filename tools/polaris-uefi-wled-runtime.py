@@ -12,7 +12,8 @@ def now():return datetime.datetime.now(datetime.timezone.utc).isoformat()
 
 
 def binding(boot,image,driver):
-    exact_scope(driver);exact_scope(image)
+    build=image.get('userland_build','20H392')
+    exact_scope(driver,build);exact_scope(image,build)
     if (boot.get('state')!='temporary_native_WLED_runtime_RAM_boot_succeeded' or not boot.get('sent_utc') or
         boot.get('image_sha256')!=image.get('sha256') or boot.get('driver_manifest_sha256')!=image.get('driver_manifest_sha256') or
         image.get('driver_sha256')!=driver.get('sha256') or image.get('scope')!='independent_native_WLED_RO_RAMCOW_runtime' or

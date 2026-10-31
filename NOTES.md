@@ -34,7 +34,34 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### 0124 new16.5 kernel/graphics COMPLETE; partial root independently reviewed; append-only tail READY
+### 0124 FULL16.5 new root COMPLETE; exact kernel/graphics/runtime READY for ONE physical boot
+
+- NEW latest supersedes partial/READY statuses below: append-only tail succeeded
+  without changing original15324938240B prefix. Final16GiB fullSHA91515474... and
+  inode6193154/gen2167264735/flags80090 verified after actualumount+blockRO ro,noload.
+  New142extents do not overlap oldroot/marker. Full oldroot689a... after append,
+  marker+182oldmap/sixGPT/critical/ESP preserved. Actual independent FASTBOOT
+  02:30:31.638892UTC. USB worker77623 ENDED, no current recovery/iOS.12 independent
+  post-unmount review checks PASS; fresh-20F66-readonly-root-review/preflight only
+  allow immutableRO+512MiBRAMCOW/ufsrw0. Linux file creation is not native durable
+  UFS SAFE; no whole-journal/generalFShealth claim. New outer SHA is recorded there.
+- Newphysical payload32781136B uses actual successful CI8b10... kernel, exact602B
+  original CPU/GPU/WLED/ca_vbl1 flags and newfa615096 bundle. Only new142map/CRCs,
+  version-matched userland and rebased newkernel differ. physical-runtime-driver-
+  0001/image-0001/runtime-codec-0001 ready. Whole upstream EDK2 decode28170952B
+  byteexact, original81FW/SimpleInit/BootShim/DTB preserved. Both newkernel models
+  PASS18checks. Physical FW/PON/WLED source inputs BYTEIDENTICAL to0122; only
+  host mkpayload.py differs.4 targeted cross-version admission tests pass.
+- New explicit20F66 runtime profile/controller/packager independently pins new
+  kernelCI/source, root915/142map, actualfa bundle bytes+new ABI provenance and
+  post-unmount RO review. Old20H392 profile unchanged. No old manifest overwritten.
+  0124/new-20F66-candidate-and-root-proof.json and boot-20F66-runtime-once.py freeze
+  pass offline. NO20F66 boot.json or actual20F66 boot yet. NEXT commit/push current
+  host source, run that helper --boot-once ONE time, then exact new runtime client
+  payload/state/capture. Exit only full actual native/WLED restoration receipts
+  plus independent FASTBOOT; no ordinary old client or raw reset.
+
+### 0124 migration development and partial-file history (superseded by completed root above)
 
 - Latest priority: actual full iOS16.5 while retaining CPU/GPU/ca_vbl1 and native
   LCD lock/wake, plus focused Dipper comparison. Real human “背光熄灭，唤醒正常”
