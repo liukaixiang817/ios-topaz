@@ -34,6 +34,29 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0123 physical recovery + NEW full readonly review COMPLETE; NEW0122 runtime candidate starting
+
+- Human replied FASTBOOT restored. Actual directed expectedPolaris query passed
+  2026-10-31T01:30:12.852554UTC; old0121 RAM hold ended by physical recovery.
+  No old controller/cycle/reset was replayed. New0122 boot.json still absent.
+- Because of the uncontrolled interval, performed ONE new bounded headless RAM
+  audit using unchanged0120 watchdog image. `0123/audit-current.py` changes only
+  output paths/RAM mountpoint from0120 audit-complete.py. Full16GiB original SHA
+  689a8cd1df0fc0093706272241a9ac77d5eddd7a62df5d340913ec6abcd7ce2b in56.572383s,
+  all182maps/whole8MiB marker/persistent identity/raw-owner/group210/sixGPT/
+  boot/recovery/abl_a/b/ESP matched. Actual blockRO+ro,noload, actual unmount,
+  independent expected FASTBOOT 01:31:57.990928UTC. Worker3469 ENDED.
+- `0123/fresh-readonly-root-and-journal-state-review.json` and preflight PASS17
+  checks. Outer c042a66f... exact0120, state1/RECOVERclear/orphan0/error0;
+  no replay/repair/RW/allocate. Whole512MiB journal still outside256MiB capture
+  bound; no filesystem-health or whole-journal claim. may_boot_iOS ONLY original
+  immutableRO+512MiBRAMCOW/ufsrw0; may_write_userdata=false. Old bound evidence
+  and all0122 manifests untouched; fresh review is an additional current gate.
+- NEXT execute unchanged committed NEW0122 boot-runtime-once.py ONCE, then its
+  dedicated runtime client/payload/actual logs. No new kernelCI or repeated old
+  models. Actual native lockscreen/wake still unproven. Physical optical0116
+  remains completed; do not repeat the old optical question.
+
 ### 0122 reset-arm BEFORE fresh receipt COMPLETE; NEW candidate READY; old phone RAM hold awaits physical FASTBOOT
 
 - Completed sourcece3ab4aec6bd10d46c5af5a73c2fb7a34562f813 committed/PUSHED.
