@@ -16,6 +16,9 @@
 #if defined(POLARIS_POSTER_ASSETS)
 #include "polaris-poster-assets.h"
 #endif
+#if defined(POLARIS_MELBOURNE_TIMEZONE)
+#include "polaris-timezone.h"
+#endif
 
 static int media_environment(CFDictionaryRef jobs)
 {
@@ -231,6 +234,18 @@ int main(int argc,char **argv)
         if(console>STDERR_FILENO)close(console);
     }
     setvbuf(stdout,NULL,_IONBF,0);
+#if defined(POLARIS_MELBOURNE_TIMEZONE)
+    struct polaris_timezone_report timezone;
+    int timezone_result=polaris_timezone_install(&timezone);
+    printf("POLARIS TIMEZONE: result=%d stage=%u error=%u validated=%u prepared=%u zoneinfo=%u original=%u localtime=%u restored=%u cleanup=%u must_hold=%u zone=Australia/Melbourne January=%d July=%d; RAM COW symlinks only, UTC unchanged\n",
+        timezone_result,timezone.stage,timezone.error,timezone.validated,timezone.prepared,
+        timezone.zoneinfo_active,timezone.original_saved,timezone.localtime_active,timezone.restored,
+        timezone.cleanup_failures,timezone.must_hold,timezone.january_offset,timezone.july_offset);
+    if(timezone.must_hold||timezone_result==PTZ_ROLLBACK_FAILED) {
+        fprintf(stderr,"POLARIS TIMEZONE: incomplete rollback; PID1 HOLD, Apple launchd prohibited\n");
+        for(;;)sleep(1);
+    }
+#endif
 #if defined(POLARIS_POSTER_ASSETS)
     struct polaris_poster_assets_report assets;
     int asset_result=polaris_poster_assets_install(&assets);

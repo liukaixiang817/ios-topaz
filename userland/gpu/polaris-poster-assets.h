@@ -2,11 +2,11 @@
  * The caller must remain in PID1 until result0 or a complete rollback. A
  * must_hold result MUST stop launchd activation; never expose a partial set.
  * Private Apple-derived bytes are supplied only by the separately frozen
- * prepared-static-0001 header, never by a generic file/path/table API. */
+ * prepared-static-states-0002 header, never by a generic file/path/table API. */
 #ifndef POLARIS_POSTER_ASSETS_H
 #define POLARIS_POSTER_ASSETS_H
 #include <stdint.h>
-#define POLARIS_POSTER_ASSET_HEADER_SHA256 "8677e328ff073084e01b716140591d264b7348438b21eb2c29f841f0b6293fc1"
+#define POLARIS_POSTER_ASSET_HEADER_SHA256 "2377b197c84246719fd7828a0e47cca918bed63b712be3813baaeef940b859c7"
 struct polaris_poster_assets_report {
     uint32_t version,stage,error,validated,created_png,prepared_caml;
     uint32_t activated_caml,restored_caml,cleanup_failures,must_hold;

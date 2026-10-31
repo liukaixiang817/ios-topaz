@@ -26,6 +26,7 @@ def build(args):
     abi = None
     preserved = {}
     poster = None
+    timezone = None
     if args.rebuild_init and args.preserve_common_from is None:
         raise ValueError('rebuild-init requires the verified current common binaries')
     if args.poster_assets_header is not None:
@@ -35,9 +36,9 @@ def build(args):
         prepared = header.parent / 'manifest.json'
         baseline = ROOT / 'research/polaris/uefi-ios-0133/graphics-poster-hierarchy-0001'
         if not header.is_relative_to(ROOT / 'research') or \
-           sha(header) != '8677e328ff073084e01b716140591d264b7348438b21eb2c29f841f0b6293fc1' or \
-           sha(prepared) != '92eec60d1942195534c72aaf00a773d7b95551effd5466866fa41c9447573118':
-            raise ValueError('only exact prepared-static-0001 private official default7400 assets are admitted')
+           sha(header) != '2377b197c84246719fd7828a0e47cca918bed63b712be3813baaeef940b859c7' or \
+           sha(prepared) != 'df8b340f9a50f88aed8f9045ca331c8bccf387872855670a5e4c2180cb4f9420':
+            raise ValueError('only exact prepared-static-states-0002 private official default7400 assets are admitted')
         if sha(baseline / 'manifest.json') != '858230c94aa282bd683b953a5ee1e4637d1419e33fd440818699f110818aa49e' or \
            sha(baseline / 'polaris-gpu.bundle') != 'bf8a704411fae01abeb23578b19f0c6c1738f90cedaeedb7b394930187069b70':
             raise ValueError('the exact current0133 graphics baseline is required')
@@ -46,6 +47,28 @@ def build(args):
             if name != 'userland/gpu/polaris-init.c' and sha(ROOT / name) != digest:
                 raise ValueError('unchanged0133 graphics source changed: ' + name)
         poster = dict(header=header, prepared=prepared, baseline=baseline, previous=previous)
+    if args.melbourne_timezone_source_root is not None:
+        if args.build != '20F66' or not args.rebuild_init or poster is None:
+            raise ValueError('Melbourne timezone requires20F66, rebuild-init and the exact five-binary-preserving poster baseline')
+        source = args.melbourne_timezone_source_root.resolve()
+        tzif = source / 'usr/share/zoneinfo.default/Australia/Melbourne'
+        version = source / 'System/Library/CoreServices/SystemVersion.plist'
+        metadata = ROOT / 'research/polaris/uefi-ios-0138/melbourne-source-raw-HFS-metadata.json'
+        if tzif.is_symlink() or sha(tzif) != '9c49d5cfe497359dcda1753005435d9cdc9eb49a06345cf4d73558e5411465d9' or \
+           tzif.stat().st_size != 2195 or sha(version) != '46457f81a04a81f462bfa0ab24693eff2140ce81a254e64354e43bd0b996dd22' or \
+           sha(metadata) != '042c9af96b0d36f5407255c8b317f8d588ebf1eb1575e162e3eef42d414af464':
+            raise ValueError('exact original20F66 Melbourne TZif/SystemVersion and raw HFS metadata proof required')
+        # lstat/readlink rather than resolve: original absolute links must
+        # never escape the read-only source root into host /var.
+        for path, target in [('usr/share/zoneinfo', '/var/db/timezone/zoneinfo'),
+                             ('private/var/db/timezone/localtime', '/var/db/timezone/zoneinfo/US/Pacific')]:
+            link = source / path
+            if not link.is_symlink() or str(link.readlink()) != target:
+                raise ValueError('original20F66 timezone link differs: ' + path)
+        link = source / 'private/var/db/timezone/zoneinfo'
+        if link.exists() or link.is_symlink():
+            raise ValueError('original20F66 zoneinfo node must be absent')
+        timezone = dict(source=source, metadata=metadata, tzif=tzif)
     if args.build == '20F66':
         if args.abi_proof is None:
             raise ValueError('20F66 requires the separately verified actual-library ABI proof')
@@ -169,6 +192,9 @@ def build(args):
                              '-DPOLARIS_POSTER_ASSET_HEADER="' + str(poster['header']) + '"',
                              '-Wall', '-Wextra', '-Werror',
                              str(SOURCES / 'polaris-poster-assets.c')] if poster else []),
+                          *(['-DPOLARIS_MELBOURNE_TIMEZONE=1',
+                             '-Wall', '-Wextra', '-Werror',
+                             str(SOURCES / 'polaris-timezone.c')] if timezone else []),
                           *(cf if args.build == '20F66' else [])]),
     ]
     for name, options in jobs:
@@ -245,19 +271,40 @@ def build(args):
     if poster:
         for p in (SOURCES / 'polaris-poster-assets.c', SOURCES / 'polaris-poster-assets.h',
                   poster['header'], poster['prepared'], poster['baseline'] / 'manifest.json',
-                  poster['header'].parent.parent / 'render-official-default.m',
-                  poster['header'].parent.parent / 'default-identity-raw-metadata.json',
+                  ROOT / 'research/polaris/uefi-ios-0136/default-wallpaper/render-official-default.m',
+                  ROOT / 'research/polaris/uefi-ios-0136/default-wallpaper/default-identity-raw-metadata.json',
+                  ROOT / 'research/polaris/uefi-ios-0138/prepare-static-states.py',
+                  poster['header'].parent.parent / 'check-static-states.m',
+                  poster['header'].parent.parent / 'state-contract-render-proof.json',
+                  poster['header'].parent.parent / 'original-package-index-raw-HFS-metadata.json',
                   ROOT / 'research/polaris/uefi-ios-0134/wallpaper-assets/original-source-catalog-BSDInfo-readonly.json'):
             manifest['source_inputs'][str(p.relative_to(ROOT))] = sha(p)
         manifest['poster_assets'] = dict(enabled=True, destination='verified512MiB RAM COW only',
             private_header_sha256=sha(poster['header']), prepared_manifest_sha256=sha(poster['prepared']),
             official_default_wallpaper_identifier=7400, source='original3CAML+5HEIC; full staticRGBA8, no generated image',
+            package_contract=dict(states=['Locked', 'Unlock', 'Sleep'], static_empty_elements=True,
+                original_published_scene_ids=['Background', 'Floating', 'Foreground'],
+                original_index_and_asset_manifest_retained=True,
+                actual_CAMLParser_CAPackage_CAStateController_and_CPU_Metal_pixel_proof=True),
             baseline_bundle_sha256=poster['previous']['bundle_sha256'],
             target='PID1 after console, before poster jobs/app publication/launchd',
             source_failure='original CAMLs retained; original UI continues without retry',
             incomplete_rollback='PID1 hold; Apple launchd prohibited',
             actual_bundle_bytes=len(bundle), cap_bytes=32 * 1024 * 1024,
             physical_wallpaper_fixed=False)
+    if timezone:
+        for p in (SOURCES / 'polaris-timezone.c', SOURCES / 'polaris-timezone.h', timezone['metadata'],
+                  ROOT / 'research/reference-repos/hackios-xnu-userland/userland/build.sh',
+                  ROOT / 'research/polaris/uefi-ios-0138/tzinit-localtime-prefix-proof.txt'):
+            manifest['source_inputs'][str(p.relative_to(ROOT))] = sha(p)
+        manifest['default_timezone'] = dict(zone='Australia/Melbourne',
+            source_tzif_sha256=sha(timezone['tzif']), source_tzif_bytes=timezone['tzif'].stat().st_size,
+            source='unmodified original20F66 TZif; DST rules read by CoreFoundation',
+            scope='exact PID1/root_device/devfs identity/immutable-base512MiB RAM COW before launchd',
+            changes=['RAM-only zoneinfo symlink', 'RAM-only localtime symlink'],
+            original_localtime='same inode retained as .polaris-0138-localtime.original',
+            source_failure='original timezone retained; no retry', incomplete_rollback='PID1 hold',
+            kernel_UTC_changed=False, fixed_offset_used=False, physical_timezone_verified=False)
     (out / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
     print(json.dumps(manifest, indent=2))
 
@@ -275,5 +322,7 @@ if __name__ == '__main__':
     p.add_argument('--rebuild-init', action='store_true',
                    help='rebuild only the changed20F66 init among the four common binaries')
     p.add_argument('--poster-assets-header', type=Path,
-                   help='exact private prepared-static-0001 default7400 header;20F66/rebuild-init only, preserves five0133 binaries')
+                   help='exact private prepared-static-states-0002 default7400 header;20F66/rebuild-init only, preserves five0133 binaries')
+    p.add_argument('--melbourne-timezone-source-root', type=Path,
+                   help='read-only exact20F66 original root for the PID1 RAM-only Australia/Melbourne default; preserves five current graphics files')
     build(p.parse_args())

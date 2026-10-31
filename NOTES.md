@@ -34,6 +34,31 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0138 officialwallpaper state/package +Melbourne default FINAL0002 READY; PHONE remainsACTUALLIVE0137
+
+- Finalbundle0138/graphics-melbourne-default-0002/polaris-gpu.bundle
+  4fe2b903efcdfabddc7b84c16284c4ab4b7c5fc851b090e531b95c57658fc770 /19072768B,
+  init43ea84788cbad7a5346a7804e3bd4e6127d6dbc55fca3791ccfd436ec98619b0 /
+  3649536B. Other5signedgraphicsfiles byteidentical current0137. Original
+  officialPNG unchanged,3CAML add Locked/Unlock/Sleep staticCAStates and
+  originalpublished Background/Floating/Foreground ids, originalindex and
+  assetManifest preserved. ActualAppleCAMLParser/CAPackage/CAStateController
+  3package/9states/3publishedobject PASS; CPU+M2Metal6fullRGBA exact10962000B,
+  oldflatnegativecontrol reallyrefusedmissingLocked. No assertion suppression.
+- Exact originalMelbourneTZif+RAMCOW transaction included, 14timezone and
+  8initbranch fixtures;15actualassetloaderfixtures andactualSDK16.5 signed
+  bundle PASS. Finalproof melbourne-and-wallpaper-states-0002-proof.json
+  SHA107176ebcee73534cc0873127a21212379a3791ead6670d26885c0c0092c8d67.
+  Allmanifestsourcehashes independently rechecked. Native/host exact20F66
+  digestpins now4fe2; noCPU/GPU/WLED implementation changes. One necessary
+  nativeCI after thissourcepush, then exactnewkernel model/codec/freeze.
+  No0138image/payload/phoneaction yet;0001notselected, do notoverwriteit.
+- Currentphone STILL0137/95fd/14b, correctUTC/applied_count1 andrealbattery73%
+  succeeded; wallpaperBLACK. ONLYfrozen0137COPY397+ORIGINAL0137manifests.
+  AllUSBworkersENDED. Nextactualnormalexit/fullreceipt beforeindependent
+  FASTBOOT/ONEnewcandidate, noFitnessrepro. Read-onlyPRS activequery being
+  preparedseparately; WiFifirstread is NOTpartof0138 and remainsunexecuted.
+
 ### 0137 ACTUALLIVE: UTC applied ONCE + realFG3 battery PASS; defaultwallpaper BLACK/CollectionsPoster trap; 0138 repair inprogress
 
 - This actual handoff supersedes every older READY/LIVE0135 entry. Old0135

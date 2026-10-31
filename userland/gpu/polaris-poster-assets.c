@@ -2,7 +2,10 @@
  * into one full staticPNG; simpleCAML retains the official default identity.
  * No HEIC overwrite, decode on phone, generic path
  * writer, persistent storage operation, placeholder or graphics-policy change.
- * The frozen private header's whole SHA256 is 8677e328...; an independently
+ * All three packages retain Locked/Unlock/Sleep static CAStates and their
+ * original published scene ID. WallpaperKit requires these states even for
+ * a still image; omitting them triggers its real Swift assertion.
+ * The frozen private header's whole SHA256 is 2377b197...; an independently
  * pinned table+payload digest below also rejects any alternate embedded data.
  */
 #include "polaris-poster-assets.h"
@@ -22,7 +25,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #ifndef POLARIS_POSTER_ASSET_HEADER
-#error Supply only the private prepared-static-0001 embedded header, whole SHA 8677e328...
+#error Supply only the private prepared-static-states-0002 header, whole SHA 2377b197...
 #endif
 #include POLARIS_POSTER_ASSET_HEADER
 #define PPA_CAP UINT64_C(33554432)
@@ -39,10 +42,10 @@ static const char *const expected_source[8]={
     PPA_FLOAT "assets/Arm.HEIC",PPA_FORE "assets/Body.HEIC",
     PPA_BACK "main.caml",PPA_FLOAT "main.caml",PPA_FORE "main.caml"};
 static const uint32_t source_bytes[8]={65125,608897,310057,677535,808440,18842,11589,11646};
-static const uint32_t output_bytes[8]={3571553,0,0,0,0,326,261,261};
+static const uint32_t output_bytes[8]={3571553,0,0,0,0,471,404,406};
 static const uint8_t table_binding[32]={
-    0xd3,0x11,0xcd,0x85,0x6b,0x8b,0x8d,0xf9,0x2f,0x55,0x2f,0x3b,0x8f,0x24,0xab,0x2e,
-    0xcf,0x1d,0xbd,0x41,0xdd,0xb2,0xd8,0x95,0x95,0xfc,0xde,0x41,0x6d,0x19,0xe0,0x13};
+    0x73,0x5e,0x6e,0x05,0xb7,0x59,0x61,0xc6,0xab,0xee,0x8e,0xfe,0x80,0x0b,0xbb,0x7c,
+    0xb7,0x56,0x3a,0x79,0x66,0x61,0x72,0xf9,0x70,0xf1,0x8d,0xd3,0xf6,0x74,0xe4,0x00};
 static const uint8_t version_binding[32]={
     0x46,0x45,0x7f,0x81,0xa0,0x4a,0x81,0xf4,0x62,0xbf,0xa0,0xab,0x24,0x69,0x3e,0xff,
     0x21,0x40,0xce,0x81,0xa2,0x54,0xe6,0x43,0x54,0xe4,0x3b,0xd0,0xb9,0x96,0xdd,0x22};
