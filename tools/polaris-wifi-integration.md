@@ -146,3 +146,62 @@ SMEM read, MPU/owner proof or Wi-Fi operation. The source-only0905 patch adds
 these objects to the kernel build but deliberately supplies no automatic
 hardware activation. Parent integration owns the actual read-only entry and
 later individually reviewed transmit admission.
+
+## Own MSS power path correspondence (0145)
+
+The original81 NpaDxe PE (73728B, SHA256
+`0e4a6ce1eb72400ab70e281eea1f478ca3a35b209d3ff7ee75d10e680354b715`)
+provides another possible route for separately owned resource votes. Static
+inspection establishes GUID `79d6c870-725e-489e-a0a1-27e7a5d0cb35`, revision
+`0x10002`, table RVA `0x100b0`, and installation at `0x1c64`. This does not
+establish the current loaded instance, live namespace or permission to vote.
+
+These original protocol functions take their ordinary NPA arguments directly;
+they have **no leading This argument**. Selected table offsets and code are:
+
+| Table offset | Operation | Wrapper RVA | Internal target |
+| --- | --- | --- | --- |
+| 0x10 | CreateSyncClientEx | 0x1c80 | 0x37d0 |
+| 0x18 | CompleteRequest | 0x1cac | 0x4568 |
+| 0x28 | IssueScalarRequest | 0x1cdc | 0x4020 |
+| 0x70 | ResourceAvailable | 0x1df0 | 0x9a80 |
+| 0x78 | DestroyClient | 0x1e1c | 0x46c8 |
+| 0x98 | CreateQueryHandle | 0x1e7c | 0x974c |
+| 0xa0 | DestroyQueryHandle | 0x1ea8 | 0x9774 |
+| 0xa8 | QueryByHandle | 0x1ec0 | 0x98d0 |
+
+CreateSyncClientEx takes resource/name/type/value/data/output in x0..x5.
+Its wrapper returns EFI0 even when the internal result is NULL; the actual
+output handle and its identity must be checked. ResourceAvailable similarly
+returns its real status through the uint32 output at x1. Its internal path
+looks up RAM links rooted at image+0x108b0, checks the resource definition,
+and returns status0 for available or2 for missing. The current list must be
+bounded, source/descriptor/identity checked and stable before a live call;
+the original name lookup itself has no finite traversal limit.
+
+QueryByHandle is not an unconditional read-only observation: it can invoke a
+definition's query callback before the standard query cases. DestroyClient
+calls CompleteRequest at RVA0x4730 and can invoke resource/plugin callbacks;
+it is not a harmless detach or a safe cleanup after an unknown operation.
+Original Clock strings contain `/arc/client/rail_cx`, `rail_mx`, `rail_xo`
+and `/vcs/vdd_gx`. These are source names only. Absence of an MSS resource
+string in that scan is not proof the live NPA namespace lacks one. Do not
+guess `/arc/client/rail_mss`, create a client or issue a vote from these facts.
+
+Own DT's three MSS supplies are ARC level regulators for `cx.lvl`, `mx.lvl`
+and `mss.lvl`; each request is `0x181`. The pinned own regulator API applies
+offset1, so this denotes raw level384, not385 microvolts or an arbitrary
+maximum. Reusing the actual5600B own debugfs collection from2026-10-24
+(SHA256 `861858b1296a3ba4ff9a421429affe58e11696e03a61079b03dee6bc673cf55a`)
+binds command addresses0x30000/0x30010/0x30060 and original indices7/4/7.
+Preserve MX's duplicate16 entries. This historical table is not current
+aggregate vote state, ownership of a TCS, or permission to program a rail.
+
+Mi8's W2b requests the tops and restores only MSS to zero while retaining
+CX/MX. That is not an own saved-state restoration path. A physical provider
+still needs a current admitted namespace, private client lifetime, actual
+before/after votes and complete stop/restore. No NPA function, rail, clock,
+reset or SCM operation was executed in this static review; current0144 and
+all existing native/GPU/WLED code remain unchanged. Exact per-wrapper hashes,
+call targets and own source identities are private0145/wifi/original-Npa-
+provider-0001/static-ABI-and-own-MSS-level-proof.json.

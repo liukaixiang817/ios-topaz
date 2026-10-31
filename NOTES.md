@@ -34,6 +34,43 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Serial Wi-Fi0145 own MSS/NPA power ABI and original level mapping resolved statically; phone unchanged
+
+- Continued ONLYWi-Fi, nochildren/USB/nativeCI/models. Original81NpaDxe
+  73728B whole0e4a6ce1... inspected offline via privateDISPLAY-ONLY Mach-O
+  wrapper of originaltext (no execution/originalPE modification). Exact8
+  protocolslots/BLtargets checked; proof196e0f3a3ab2e967b991b1c95d65f27e03b2ef17ed71bfbfff9f3230ba0cc4e6
+  at0145/wifi/original-Npa-provider-0001/static-ABI-and-own-MSS-level-proof.json.
+- Important concreteABI: GUID79d6c870-725e-489e-a0a1-27e7a5d0cb35,
+  revision10002/tableRVA100b0; NPA methods have NO This argument. CreateSyncEx
+  x0..x5out_handle, EFI0stillpossiblewithNULL; ResourceAvailable hasuint32
+  outstatusatx1 (0available/2missing), EFI0notavailability. Real NPA RAMlist
+  headimage+108b0/linknext0/name10/resource18. Availability path is RAMlookup /
+  definitionstate; originalwalkunbounded, needsboundedstableliveRAMsource
+  before anyfuturecall. QueryByHandle can callplugin, NOT automaticallyRO.
+  DestroyClient callsCompleteRequest at4730→4568 andplugins: no blindcleanup.
+- OwnDT MSS all3CX/MX/MSS supplyrequests181 are ARCclasseswithAPIoffset1:
+  rawlevel384, not385microvolts. Reused actual0033 recovery-cmd-db-mounted.txt
+  5600B whole861858b1296a3ba4ff9a421429affe58e11696e03a61079b03dee6bc673cf55a,
+  original2026-10-24 capture: cx/mx/mss command30000/30010/30060,
+  selectedoriginalindices7/4/7; MXduplicate16 entries preserved. Earlier
+  recovery-cmd-db.txt is0B and must not be used. No recapture/download/USB.
+  Tablehistorical != currentvotes/owner/TCSwritepermission.
+- OriginalClock source strings have /arc/client/rail_cx/mx/xo and/vcs/vdd_gx;
+  liveNPA namespace NOT sampled. MissingMSSstring != absenceproof. Mi8 W2b's
+  topvotes/CXMXleftup are not our complete-restoration path; no port of those
+  writes. Newfacts documented in tools/polaris-wifi-integration.md, no new
+  parser, test-onlycontract, writer/provider ornativeprofile added.
+- NEXT concreteMSS integration: bind exactcurrentloadedNPA/source/RAMlist /
+  realresource definitions+plugin+units before private-client votes, alongside
+  actualAOP/clock/reset/RMB/auth andSFPB/SMEM/providerlifetime. Do not call
+  queryplugins/Create/Scalar/Complete/Destroy merely from staticABI. Fold
+  necessarynewphysical evidence and3NV24MiB into nextalreadyneededcontrolledRO /
+  candidate transition; no separateboot forstaticavailability/oldNV/TOC.
+  All priorphysicalgates remain; may_start_MSS=false/may_serve_NV=false.
+  Current0144 lastactualLIVE16:21; originalfrozencontroller/manifest/payload /
+  GPU/WLED/wallpaper/Melbournetime/battery remain unchanged. No newradioresult.
+
 ### Serial Wi-Fi0145 executable RMTFS RAM-shadow service completed offline; physical integration NOT READY
 
 - Source7a3c163 committed and pushed toorigin/codex/polaris-preflight; no
