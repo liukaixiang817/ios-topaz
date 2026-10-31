@@ -34,7 +34,7 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### 0143 GCD+new rendering kernel SOURCE READY, unsealed; current0142 remains actual controlled LIVE
+### 0143 GCD+new rendering kernel SOURCE committed / host seal ready; current0142 remains actual controlled LIVE
 
 - Actualcurrent0142 directedcapture50547 ENDED0 at15:41Z/kernel-entered:
   samecookie/completeappendprefix26/error0, no knownAndroid interruption.
@@ -71,9 +71,14 @@ early samples only. On0029 the human already confirmed boot complete and said
   payload; QEMU MMD/preprocessor/symbol/disasm removesnewphysical/FP bodies
   and records, twoactualinteger1 markers. No repeatnativeCI orold13models.
   Activeproofcd025394.../parentreview61cdd29d.../payloadproof5c280eea... .
-- NEXT commit/push firmwareSOURCE, seal GCD_CLOCK_0143 exact61/metadata/
-  newnative CI+payload, then only2newkernelterminalmodels/ONEpackage/codec/
-  sourceaudit/helper/freeze. Currently GCD_CLOCK_0143=None/NOnewmodels/NOimage/
+- FirmwareSOURCEef1d1ad44bf22b3d6bdbf63765b73994c7b98ea1 committed/pushed.
+  GCD_CLOCK_0143 now sealed exact61inputs/51newtyped+94retainedresource fields,
+  newkernel7d24/payload63cb. Currenthost20F66target now native7e9/CI41213766168;
+  oldfrozen0142 carries its own original82b3 target and remainscontroller.
+  38relatedtests PASS, including each61inputmutation refused. No oldmanifest/
+  sourcegate edited to make the old0142 actualquery pass.
+- NEXT commit/push host seal, then only2newkernelterminalmodels/ONEpackage/
+  codec/sourceaudit/helper/freeze. Currently NOnewmodels/NOimage/
   NOphoneboot; do not use this unsealed candidate or change old0142 policy.
   RealWiFi/radio/scan/join/TASID/PCM/sensor/frame/CameraApp stillunfinished.
 

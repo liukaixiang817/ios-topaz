@@ -17,6 +17,19 @@ class GcdClockScope(unittest.TestCase):
         d.update(fields);resource=copy.deepcopy(a.RESOURCES_CLOCK_PHYSICAL_FIELDS);resource.update(wifi_CPU0_resources_firmware_RAM_log_capacity=262144,audio_Clock_query_raw_report_format='RAW_V2',audio_Clock_query_raw_report_bytes=43504,audio_Clock_query_combined_I2C_Clock_RAM_report_bytes=98076,audio_Clock_query_actual_Device_identity_and_EFI_MMIO_required=False);d.update(resource)
         return d,dict(firmware_source='SOFTWARE-FIXTURE',inputs=copy.deepcopy(d['inputs']),kernel='kernel',payload='payload',metadata=fields,resource_fields=resource)
 
+    def test_production_seal_is_bound_to_all61_inputs_and_current_native(self):
+        policy=a.GCD_CLOCK_0143
+        self.assertEqual(policy['firmware_source'],'ef1d1ad44bf22b3d6bdbf63765b73994c7b98ea1')
+        self.assertEqual(len(policy['inputs']),61)
+        self.assertEqual(policy['kernel'],a.TARGETS['20F66']['kernel'])
+        d=dict(inputs=copy.deepcopy(policy['inputs']),kernel_sha256=policy['kernel'],payload_sha256=policy['payload'])
+        d.update(copy.deepcopy(policy['metadata']));d.update(copy.deepcopy(policy['resource_fields']))
+        self.assertTrue(a.original_gcd_scope(d));self.assertTrue(a.resources_clock_scope(d))
+        for path in policy['inputs']:
+            bad=copy.deepcopy(d);bad['inputs'][path]='changed'
+            with self.subTest(path=path):
+                with self.assertRaises(ValueError):a.original_gcd_scope(bad)
+
     def test_unsealed_new_source_refuses(self):
         with patch.object(a,'GCD_CLOCK_0143',None):
             with self.assertRaisesRegex(ValueError,'separately reviewed'):a.original_gcd_scope(self.enabled()[0])
