@@ -34,7 +34,53 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### 0144 exact config RuntimeData candidate fully offline READY; current0143 actual native LIVE awaits normal drain
+### 0144 ACTUAL native LIVE / originalGCD+16Clock queries PASS; cold SE5 and MSS branches now measured; NEW0145 hardware work parallel
+
+- Old0143 normal native drain+WLEXIT05/WLR5 worker66269 ENDED0 at16:08:51Z:
+  nativecookie2981069445/seq1/mode2/phase3/error0/epochs0/caps80000003;
+  fullWLEDprefix32/error0/4=4/2=2. Independent realPolarisFASTBOOT query
+  ENDED0 at16:09:01.868182Z confirms actualreset. Old0143 CLOSED.
+- ONE0144image35011 ENDED0 sent2026-10-31T16:09:16.227519Z fromSOURCE
+  b8544c7fc44b1d84cacc07a779daf3c82e420b2f, imagee7e776dc.../5980160B.
+  phone-gcd-clock-0001/boot.json CONSUMED; newactualstate waiting-payload.
+  ONE63cbpayload78077 ENDED0 ACK16:10:19.559214Z/transfer32.9585s/
+  bootcall16.8993s. Actualstartupcapture79217 ENDED0 at16:10:34Z confirms
+  kernel-entered/216453B log. ONLY currentcontroller:
+  /private/tmp/polaris-runtime-0144-frozen-0001 with original0144 manifests/
+  consumedrecord; no old0143/rooteditedcontroller/image/payload replay.
+- ActualGCD30224B+final624B allraw/31checks PASS17cb496e...: both config
+  passes exact17ffdfb18/count16/384B, type6/attrs800000000000000f,
+  actualpagePARff0000017ffdfb80. OriginalDS unique/5hash twice, 8getters
+  issued=returned8/unknown0, 53/53arch, FPsave/restore flags1/TPL4->4;
+  12.264ms. FourGCCpages actually share registeredtype3/base100000/lenb0000/
+  caps c000000000000001/attrsUC1, before/after equal. Two actual prestart
+  checkpoints/hash5/restoration complete; unknown0. This fixes the previous
+  config RuntimeData predicate and establishes the intended read baseline,
+  NOT hardware MPU/exclusiveowner/clock-write/pin/radio permission.
+- ActualClock43504B/29checks PASS4c8cfa6a...: 16realAPI status0,16 actual
+  independentNSDeviceAT admitted,16 full464Bguards/80BS/6hash/context and
+  15double-descriptors stable,8baseline complete, span24.602ms. ExactGCDobs
+  cross-byte matched. SE5 Enabled0/On0; wrappermAHB+sAHB Enabled0/On1;
+  MSScfgAHB1/1, SNOC0/0, Q6MEMNOC0/0. These bools do not establish
+  owner/wholeMSSoff/exclusive bus. SevenCAMCC stillNOT_ISSUED.
+- ActualPFR17416B stillPASSdd7dfff9.../17arch/7PSCIraw1 instantaneousOFF,
+  stable58descriptor maps; sixcarveoutsReserved not free/MPU/exclusive.
+  NewUTC READY0 -> ONESET -> independentstatus cookie1683852593/seq1/
+  status2/error0/count1/uncertainty2281us. NeverSETagain0144. New0144 UI/
+  battery/WLED full native path awaits startup completion; exact7d24/63cb/
+  f790/7400/Melbourne/RO915/142map source retained, old0143 UI proof historical.
+- NEXT new0145 independenthardware drafts only, current0144 native remains
+  controlled LIVE: audio derives smallest saved-state coldSE5 singlebranch/
+  parent-source/GENI idle+protocol+pins/reset lease toward real3commandTASID;
+  WiFi derives exactMSS/PIL/secureowner/AOP/rail/RMTFS RAMshadow primitive;
+  camera derives realCCI clock/GDSC/pin/sharedVIO/BOB/PM8998GPIO9 and
+  sensorID/frame stop/restore. No generalparser/format-placeholder repeat,
+  no active source/manifest/USB mutation by children, no blindOpen/Enable/
+  PLL/voltage/sharedowner assumptions. Need actual hardware identity and
+  completion before PCM/scan-join/CameraApp capability claims. All three
+  functional goals UNFINISHED. Preserve currentnormalexit/unknown guards.
+
+### Historical 0144 exact config RuntimeData candidate fully offline READY; current0143 actual native LIVE awaits normal drain
 
 - FirmwareSOURCE5eb66389e38873ee82fee0f070cff643374aa859 and hostSOURCE
   3830dafcee8c369f5c70a3b30c54668eaebcd6c3 committed/pushed. ActualON
