@@ -34,7 +34,74 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0154 fresh fullRO PASS / actualFASTBOOT22:02; NEW runtime-gated ARC candidate frozen0003 READY, no iOS trial sent yet
+### CURRENT0154 nativeLIVE22:17 / actual CmdDb85fe0000 pre-mask refusal retired / ZERO ARC; next exact namespace source fix
+
+- PHONE current actual0154: ONE image65468 ENDED0 sent22:09:03.223373Z,
+  actual waiting-payload22:10:01Z; ONE63cb payload26130 ENDED0 ACK22:11:18Z,
+  transfer32.953s/bootcall17.021s. startupcapture19255 ENDED0 actual kernel-
+  entered22:12:43Z; early console screenshot is NOT the current UI. Later
+  current-ui-capture-0002/98188 ENDED0 at22:17:29.927004Z was visually inspected:
+  actual7400 lock screen/SundayNov1/Melbourne9:17/charging icon. Left border/
+  tiny residue is not a full rendering/60Hz proof. Camera shortcut is not an
+  App/provider/preview. Native CPU/GPU payload unchanged; Wi-Fi still absent.
+- Sole controller=/private/tmp/polaris-runtime-0154-frozen-0003/tools/polaris-
+  uefi-wled-runtime.py, its physicaldriver0001/image0002 and ORIGINALrepo0154/
+  phone-power-runtime-0001/consumedboot.json (actual filename boot.json).
+  Never use old0150 or superseded0154 frozen0001/0002, replay image/payload,
+  edit old manifests or change policy on this refused session. AllUSBworkers
+  ENDED; no human action pending. This phone is NOT FASTBOOT.
+- Actual complete raw client227104B SHA f6536d277cf8e0cb5db6800c9afe14f4b417
+  1554493dc2fd27a2ed5fa886cd63; path1235200B SHA1ff16b7882e23f6695eb86b0c1ae
+  b9ead4f8c6425b3e4486cd80d27e716a0712. Existing actual C types decode both
+  full records; independent five CmdDb immutable hashes and relocated72B table
+  match original source. Path attempted1/PWRPT_CMDDB2/unknown0/phase1/retired1/
+  known_refusal1, original knownCreate/Delete both0/API2=2/held0/returned1.
+  CmdDb actual LocateProtocol+GetMap2=2/owner_matches1, PWCD_DATABASE6 before
+  FIRST shared namespace GCD/AT/read or original ThisQuery. Both actual cached
+  and platform RAM pointers equal85fe0000; current adapter rejects it below
+  its mistaken86000000 SMEM lower bound. CPU-critical/RSC/access attempted0,
+  direct new RSC writes/triggers/events0. This is a correctly retired pre-mask
+  refusal, not successful power/physical lease/MSS/radio. Main native CPU_ON
+  and WLED startup occurred afterwards; do not mislabel those as zero.
+- physical-returned-refusal-and-current-UI-proof.json SHA0822060871ea0332604
+  31730ddd234a026297179b5f4bf9119f2c96d61cfc5bf is in0154/wifi/actual-power-
+  0001. Current fullWLED26/error0/issued4=completed4/req2=ack2/module128/irq2;
+  native optical behavior remains the user's existing confirmed feature, no
+  extra optical cycle. UTC0154 has ONESET+independent actual status confirmed:
+  cookie9853778071/seq1/status2/error0/count1/uncertainty2272us. NEVER SET0154
+  again. New current frame proves wallpaper/time, not network clock/scan/data.
+- NEXT ONLY Wi-Fi: fix this NEW candidate's exact CmdDb RO region using actual
+  original85fe0000 provenance; update BOTH pwcd_database_read and the masked
+  pwra_cmddb recheck. Do NOT edit frozen0154 or relax its rejected scope. Own
+  Android DT node name861e0000 is not a direct DB map: reg=c3f000c/8, and the
+  pinned original CmdDb Init reads that indirection (Init remains forbidden).
+  The actually observed original runtime cached/platform pair, five hashes/
+  table/owner, current memory map and actual GCD/AT must qualify the NEW exact
+  128KiB RO namespace. Do not assume DT agrees with85fe or borrow Mi8's
+  hardcoded85fe as provenance. SMEM86000000/2MiB writer bounds stay unchanged;
+  no getter/allocator/pin/VMID/radio action is authorized by this read fix.
+  No CmdDb bytes/descriptor/AT have yet been read at85fe; do not claim they
+  passed. Keep NormalWB/NS identity/source/FP/TPL/200ms/UNKNOWN gates, new
+  source/profile/wholeimage/freeze, test only affected checks/models. No native
+  CI. After ready, only frozen0154 normal native drain/fullappendraw WLEXIT05/
+  WLR5 receipt and independently actualFASTBOOT before next image. Fresh0154
+  root/NV95d932fc/5831fa6a remains authoritative during controlled RO/RAMCOW;
+  no recovery/fullhash repeat without an actual uncontrolled interval.
+
+### HISTORY0154 ONE RAM/payload startup (all workers below have now ENDED)
+
+- LATEST physical0154: helper65468 ENDED0, ONE image3075879d/6012928B sent
+  22:09:03.223373Z/source0de99051fc737c5605733e61e8752197e5f581ef.
+  Original0154/phone-power-runtime-0001/boot.json is now CONSUMED; never replay.
+  Native state ce0065 ENDED0 actual polaris-uefi-diag/waiting-payload22:10:01Z.
+  ONE exact63cb payload through frozen0003 started worker26130; wait for ENDED
+  before ANY USB/state/capture/other operation. No ARC success, CPU_ON, iOS
+  startup or WLED outcome has yet been observed. ONLY new controller is
+  /private/tmp/polaris-runtime-0154-frozen-0003/tools/polaris-uefi-wled-runtime.py
+  with its driver0001/image0002 and ORIGINALrepo consumed0154 bootrecord.
+  Old0150 and superseded0154 frozen0001/0002 must never control this session.
+
+### CURRENT0154 fresh fullRO PASS / actualFASTBOOT22:02; preparation before ONE trial
 
 - Latest actual transition replaces0150 lastLIVE: frozen0150 state query
   93091 ENDED1 could not connect its bound service; independent expected-only
