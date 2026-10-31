@@ -257,3 +257,44 @@ new full physical NPA graph, original-provider calls, rail ownership or Wi-Fi.
 A separate new host profile, image, source freeze and normal old-boot drain are
 required before the next physical trial. No NPA client, vote, plugin or MSS
 startup is authorized by the namespace observation.
+
+
+The physical0146 scope now completes two identical189-node passes with four
+returned BootServices calls, no error/unknown/outstanding, all four restored
+FP/architecture/TPL guards, and ten immutable hashes independently matched to
+the original PE. Both full432B relocated protocol-table copies also match.
+This resolves the diagnostic128-node truncation. It does not start a radio.
+The latest real UI remains the default7400 lockscreen with Melbourne time and
+actual FG3/SMB2 battery data; the source retains the native backlight/GPU paths.
+
+There are185 non-NULL definition pointers. Four names are unresolved placeholders:
+`/arc/client/rail_xo`, `/arc/client/rail_mx`, `/vcs/vdd_gx`, and
+`/arc/client/rail_cx`. Their definition/plugin pointers are NULL in both passes.
+The exact original definition-state routine8904 and mask4 lookup6510 classify
+these as unavailable, inferred from captured RAM; no ResourceAvailable API was
+called. Name presence cannot admit a rail vote. No literal MSS name occurs in
+this complete snapshot; that is not absence of every MSS power provider.
+
+The original81 inventory also contains a separate61440B RpmhDxe, whole SHA256
+b718efb605db2c1d7be3b5e84d13adb148e24eebae66496e9569cfe9b34bfdc5.
+Its original protocol GUID is e1d0b573-f29f-495d-9352-ca0dd42a0a74,
+revision10001/table RVAd0d8. Verified wrappers take no This argument. The
+CreateHandle form at slot0x20 has drvID/name/low8flag and an output handle atx3;
+the flag1/flag0 variants at0x28/0x30 output atx2. DeleteHandle is slot0x48→0x2ee8,
+not0x38 or0x40. These are mutating operations with allocation/lock/logger paths;
+unknown handles cannot be cleaned up speculatively. Init0x08→0x3ea8 writes the
+initialized flag at0xd2e8 before the full initialization finishes, and is not a
+readiness getter. Do not call Init or sleep/wake/invalidate to force a baseline.
+
+The original IsDrvValid slot0x10 writes an8-bit output atx1. Its source0x5aa4
+walks a configuration root via RVA0xb100, count at0, row pointer at0x20, stride0x30;
+the static template has one configured ID,2. This is not live ownership.
+Other getters/Create assert through0x6cd8 and can spin forever at0x6d20 on an
+invalid ID, so guessing0/1 or importing a reference's DRV number is unsafe.
+Before a real MSS client lifecycle, bind the actual registered RPMh provider,
+current initialized/configuration/DRV/TCS state, own DT/ARC units and complete
+private-client stop/restore. Account for allocator map-key changes before the
+final Clock/GCD interval; keep its existing gates. Static ABI evidence and the
+complete NPA graph grant no MMIO, rail, reset, authentication or VMID action.
+The private static proof and display-only disassembly never execute or modify
+the original PE. Current may_start_MSS/may_serve_NV_to_remote remain false.

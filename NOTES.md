@@ -34,6 +34,72 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0146 nativeLIVE18:02 / actual complete189 NPA two-pass SUCCESS; CX/MX unresolved, Wi-Fi not yet working
+
+- Supersedes allold0145LIVE/inflight/READY. Old0145 normallyclosed48891 ENDED0
+  at17:54:12.580364Z/nativecookie4004461657/seq1mode2phase3error0/epochs0 /
+  caps80000003; completeappendraw/WLEXIT05/WLR5 independentlyredecodedfinal32.
+  IndependentactualPolarisFASTBOOT17:54:46.720953Z. No genericreset/physicalkeys.
+- ONE0146image20520 ENDED0 sent17:55:21.802638Z/sourcef7ee6df/image
+  f23674af9b7e203d216fafae91e6f39c9b1e99c665f8fefbaac495a5aba1bcb7/5982208B.
+  Actualwaiting-payload thenONE63cbpayload72720 ENDED0 ACK17:57:00Z /
+  transfer32.956s/bootcall16.931s. SharedORIGINALrepo0146/phone-NPA-runtime-0001 /
+  boot.json CONSUMED; no replay. ONLY /private/tmp/polaris-runtime-0146-frozen-0001 /
+  tools/polaris-uefi-wled-runtime.py withfrozen0146physicaldriver0001/image0001 /
+  originalsharedbootrecord controls currentphone. No old0145/currenteditedclient.
+- ActualNPA RAW_V2 complete470496B atwifi/actual-NPA512-namespace-0001/raw.bin
+  SHA2dfc45700fd2065f6c0f31dd1d8315a69f51285c07c0db8b6bc1356d54ff97ce;
+  attempted1/error0/unknown0/outstanding0/issued4=returned4/owner_matches1 /
+  stable1. BOTH complete189node walks (capacity512), samekey5898/map2880B,
+  5hashes perpass. All4 originalFP/arch/TPLguards returned/restored1/TPL4→4.
+  Hostindependentlymatches actual10hashbytes AND both432B relocatedprotocol
+  tables toexactoriginalNpaDxe PE. No raw truncation, no NPA API/plugin/client /
+  vote/SMC/MMIO/MSSaction. Actual128limit fixed; DO NOTrepeat128/512diagnostic
+  redesign/models/boots justforinventory now. Fullreadsuccess is NOT radio.
+- 185definitions nonNULL, FOURnames are unresolved placeholders inbothpasses:
+  /arc/client/rail_xo, /arc/client/rail_mx, /vcs/vdd_gx, /arc/client/rail_cx;
+  theirdefinition/plugin pointersNULL, not usable railproviders. Exactoriginal
+  8904+6510mask4 source classifiesunavailable fromtheseRAMfields (API itself
+  NOTcalled). Full189snapshot hasnoMSSliteralname, notabsenceofotherMSSpower
+  paths. Never Create/vote merelybecauseaCX/MXnameexists or treatNULLasoff/free.
+- Proofwifi/actual-NPA512-namespace-0001/physical-full-source-and-current-UI-
+  proof.json 35d7f4fd5f1e993b6a51b35554500895db7d2d30da7d8cad92e7e56e2a5e841b.
+  Actualcurrent-ui-capture-0002/32912 ENDED0 at18:02:28.941151Z/kernel-entered:
+  screenshot7400 lockscreen/SundayNov1/Melbourne5:02/chargingicon; actualFG3 /
+  SMB2=57%/3928mV/charging1, fullWLED26/error0/issued4=completed4/req2=ack2.
+  GPU4actualfence+idle+halt submissions, not60Hz/fullrendering/AB proof. No
+  newopticalcycle/confirmation andnoCameraAppclaimfromlockshortcut.
+- UTC0146 ONESET+independentstatus cookie3225469241/seq1/status2/error0 /
+  applied_count1/uncertainty2267us. NEVER SET0146again. AllUSB/hostworkersENDED,
+  allchildren/audio/cameraSTOPPED; no physicalactionpending. Kernel7d24/source7e9 /
+  CI41213766168/payload63cb/f790/ca_vbl1/WLED retained, no newnativeCI.
+- Newstaticnext-provider evidence: original81 hasRpmhDxe61440B/b718efb6...,
+  GUIDe1d0b573-f29f-495d-9352-ca0dd42a0a74/rev10001/tableRVAd0d8. MethodsnoThis;
+  CreateHandle slot0x20 out=x3 (drv/name/low8flag), variants0x28/30 out=x2.
+  DeleteHandle is0x48→2ee8, NOT0x38(invalidateexplicitRAM) or0x40(callback).
+  Init0x08→3ea8 setsd2e8flag beforefinishingmutatinginit; doNOTcallasaquery.
+  IsDrvValid0x10 out=x1uint8 readsconfigpointerb100→count0/rowpointer20/stride30.
+  Originalstatictemplate oneDRVID2 (NOTlive/TCSownership). Othergetters/Create
+  canassert6cd8→selfspin6d20 onbadID, neverguess0/1 orPAS15. DISPLAY-onlytext
+  disassembly keptoriginalPEunchanged/unexecuted. Proofs atwifi/original-Rpmh-
+  provider-0001/static-ABI-next-MSS-provider-proof.json andstatic-config-DRVID2-
+  proof.json; no liveRPMh lookup/API/config/owner query yet.
+- NEXT ONLYWi-Fi: progress actualMSS power/clock/reset/auth throughownoriginal
+  RPMh/AOP path ratherthanunavailableNPAplaceholders. BindregisteredRPMhsource /
+  realboundedliveinit/config/DRV/TCSbaseline, ownDTARCraw384/units and private
+  clientstoprestore; Createalloc/lock/logger canchangemapkey, muststagebefore
+  finalClock/GCDinterval WITHOUTweakeningit. Do not Init/sleep/wake/invalidate /
+  deleteunknownclient ascleanup. IntegrateactualMSS/GLINK/RMTFS lifecycle with
+  fresh0145fourNV and independent2MiBPA/MSA/VMID/MPU/guard/cache/remoteDMAstop.
+  ExistingRMTFSservice7a3c163 isrealsoftware butstillnotphysicalregistered/served.
+  may_start_MSS=false/may_serve_NV_to_remote=false, scan/join/data NOTdone.
+  Avoidanothergenericparser/availability-onlyloop replacing thisintegration.
+- BeforeANYnextimage ONLYcurrentfrozen0146 actualnativeVFS/GPU/CPUdrain /
+  completeappendraw/WLEXIT05/WLR5freshreceipt then independentactualFASTBOOT;
+  ACKnotreset/unknownfirstactualstate/no blindretry/genericreset. Currentfresh
+  root0145a04c/2549 and4NVdatabasis continueundercontrolledRO/RAMCOW; no new
+  recovery solelyforNPA/oldNV/TOC, unlessuncontrolled/Androidrequiresreaudit.
+
 ### NEW0146 NPA512 candidate OFFLINE READY/frozen; currentphone0145 awaits normal controlled drain
 
 - FirmwareSOURCE53fcc867dffe6a08d637396bc7bb3cfab0315bfe and exacthostSOURCE
