@@ -36,6 +36,16 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### CURRENT0150 remains ONLY last actual nativeLIVE19:10; NEW0154 conditional runtime ARC trial host-reviewed / whole81 packaged; independent freeze and physical test pending
 
+- LATEST OFFLINE READY: frozen0002/default-off helper passed790files+
+  10COMMIT_ONLY/387current committed sources/80unchanged compiled inputs.
+  /private/tmp/polaris-runtime-0154-frozen-0002 is the sole NEW candidate copy;
+  power-trial-freeze-manifest-0002.json SHAfd214a47bd078000afe1954faab240a67164
+  e17d21f43ecf5e272dbf262d9f2c. Host6eb1a154eae8f43ed126630d4d3b99ecac25511a
+  includes exact-product fix; host-scope1bc6960 and firmware1f55e44 are its
+  ancestors. Both host commits are pushed. Original new phone-power-runtime-
+  0001/boot.json does not exist; no USB yet. Superseded frozen0001 must not
+  be used. NEXT actual state ONLY through frozen0150; transition/readback
+  review and actualFASTBOOT are still required before NEW ONE RAM.
 - Host scope source1bc6960fb947deb6645f97697186f66ac78658bc is committed.
   The first independent frozen0001 copy/default-off helper passed788files+
   10COMMIT_ONLY/385sources/80inputs, then was superseded BEFORE ANY USB use:
