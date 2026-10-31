@@ -1,0 +1,163 @@
+diff --git a/bsd/dev/polaris_wifi_scm_info.c b/bsd/dev/polaris_wifi_scm_info.c
+new file mode 100644
+--- /dev/null
++++ b/bsd/dev/polaris_wifi_scm_info.c
+@@ -0,0 +1,61 @@
++/* Native availability-only integration, intentionally separate from frozen
++ *0910/current candidate. No SMEM address/pointer is ever an SMC argument. */
++#include <sys/param.h>
++#include <libkern/libkern.h>
++#include <pexpert/pexpert.h>
++#include "polaris-wifi-scm-info.h"
++extern bool polaris_ram_overlay_allowed(void);
++extern bool polaris_gpu_overlay_ready(void);
++extern int polaris_uefi_shutdown_pending(void);
++void polaris_wifi_scm_info_once(void);
++static uint32_t pwi_consumed;
++static struct pwi_report pwi_result;
++static bool pwi_ready(void *context)
++{
++    (void)context;
++    uint64_t el,freq;
++    __asm__ volatile("mrs %0,currentel":"=r"(el));
++    __asm__ volatile("mrs %0,cntfrq_el0":"=r"(freq));
++    uint32_t mode=0;PE_parse_boot_argn("polarisuefi",&mode,sizeof(mode));
++    return el==4&&freq==19200000&&mode==1&&!polaris_uefi_shutdown_pending()&&
++        polaris_ram_overlay_allowed()&&polaris_gpu_overlay_ready();
++}
++static uint64_t pwi_counter(void *context)
++{
++    (void)context;uint64_t ticks;
++    __asm__ volatile("isb\n\tmrs %0,cntvct_el0":"=r"(ticks)::"memory");return ticks;
++}
++static void pwi_invoke(void *context,uint64_t raw[7])
++{
++    (void)context;
++    /* Same register ABI as audited a630_scm_call and own __scm_call_armv8_64.
++     * The function ID is NON-fast SMC64 INFO, matching scm_call2, not the
++     * atomic IO_READ0xc2000501. No GPU-owner gate is weakened or borrowed. */
++    register uint64_t x0 __asm__("x0")=raw[0],x1 __asm__("x1")=raw[1];
++    register uint64_t x2 __asm__("x2")=raw[2],x3 __asm__("x3")=raw[3];
++    register uint64_t x4 __asm__("x4")=raw[4],x5 __asm__("x5")=raw[5];
++    register uint64_t x6 __asm__("x6")=raw[6];
++    __asm__ volatile("dsb sy\n\tsmc #0\n\tdsb sy"
++        :"+r"(x0),"+r"(x1),"+r"(x2),"+r"(x3),"+r"(x4),"+r"(x5),"+r"(x6)
++        ::"x7","x8","x9","x10","x11","x12","x13","x14","x15","x16","x17","memory","cc");
++    raw[0]=x0;raw[1]=x1;raw[2]=x2;raw[3]=x3;raw[4]=x4;raw[5]=x5;raw[6]=x6;
++}
++void polaris_wifi_scm_info_once(void)
++{
++    /* Caller is0910's resident-thread path AFTER exact board/DT/overlay/CPU
++     * gates and before reporting missing MPU proof. Atomic consume prevents
++     * a second logical query even if another caller appears unexpectedly. */
++    if(__atomic_exchange_n(&pwi_consumed,1,__ATOMIC_ACQ_REL))return;
++    const struct pwi_io io={NULL,pwi_ready,pwi_counter,pwi_invoke};
++    polaris_wifi_scm_info_query(&io,&pwi_result);
++    printf("POLARIS WIFI SCM INFO: once fn=42000601 parm=1 target=02000501 calls=%u issued=%u complete=%u available=%u error=%u begin=%llu end=%llu; API exists is NOT address/MPU/lease permission, may_transmit=0\n",
++        pwi_result.calls,(unsigned)pwi_result.issued,(unsigned)pwi_result.complete,
++        (unsigned)pwi_result.available,pwi_result.error,pwi_result.begin,pwi_result.end);
++    for(unsigned i=0;i<pwi_result.calls;i++) {
++        const struct pwi_round *r=&pwi_result.rounds[i];
++        printf("POLARIS WIFI SCM INFO RAW: round=%u before=%llu after=%llu x0=%llx x1=%llx x2=%llx x3=%llx x4=%llx x5=%llx x6=%llx\n",
++            i,r->before,r->after,r->raw[0],r->raw[1],r->raw[2],r->raw[3],r->raw[4],r->raw[5],r->raw[6]);
++    }
++    /* Never calls IO_READ/IO_WRITE, changes permissions, maps SMEM or unlocks
++     *0910. Timeout/unknown/error is retained, no fallback or future replay. */
++}
+diff --git a/bsd/dev/polaris-wifi-scm-info.h b/bsd/dev/polaris-wifi-scm-info.h
+new file mode 100644
+--- /dev/null
++++ b/bsd/dev/polaris-wifi-scm-info.h
+@@ -0,0 +1,62 @@
++/* Exact own MiCode c7cb50c1 scm_is_call_available(IO,READ) protocol, not IO_READ.
++ * Value parameters only. No firmware buffer, address, permission or radio call.
++ * Native source supplies the real SMC backend; host fixtures never execute it. */
++#ifndef POLARIS_WIFI_SCM_INFO_H
++#define POLARIS_WIFI_SCM_INFO_H
++#include <stdint.h>
++#include <stdbool.h>
++#include <stddef.h>
++#define PWI_INFO_FN UINT64_C(0x42000601) /* non-fast, SMC64, SIP INFO command1 */
++#define PWI_ARGINFO UINT64_C(1)        /* SCM_ARGS(1), one plain value */
++#define PWI_TARGET_FN UINT64_C(0x02000501) /* own SCM_SIP_FNID(IO,READ), no64/fast */
++#define PWI_MAX_CALLS 4u
++#define PWI_TICK_BUDGET UINT64_C(384000) /*20ms at verified19.2MHz */
++enum pwi_error {PWI_OK,PWI_GATE,PWI_CLOCK,PWI_TRANSPORT,PWI_RESULT,PWI_RESUME_LIMIT,PWI_DEADLINE};
++struct pwi_round {uint64_t before,after,raw[7];};
++struct pwi_report {
++    uint32_t error,calls;
++    bool issued,complete,available;
++    uint64_t begin,end;
++    struct pwi_round rounds[PWI_MAX_CALLS];
++};
++struct pwi_io {
++    void *context;
++    bool (*ready)(void *);
++    uint64_t (*counter)(void *);
++    void (*invoke)(void *,uint64_t [7]);
++};
++/* One logical INFO query. x0==1 resumes the SAME request with x1..x6 exactly
++ * preserved (x6 is the secure resume context). No EBUSY retry/SMC32/fastcall
++ * fallback/new INFO submission. Budget bounds returned protocol steps, not a
++ * firmware call that never returns; this architectural limit is not hidden. */
++static inline void polaris_wifi_scm_info_query(const struct pwi_io *io,struct pwi_report *r)
++{
++    if(!r)return;
++    uint8_t *zero=(uint8_t *)r;for(size_t i=0;i<sizeof(*r);i++)zero[i]=0;
++    r->error=PWI_GATE;
++    if(!io||!io->ready||!io->counter||!io->invoke||!io->ready(io->context))return;
++    uint64_t raw[7]={PWI_INFO_FN,PWI_ARGINFO,PWI_TARGET_FN,0,0,0,0};
++    uint64_t begin=io->counter(io->context),last=begin;
++    if(!begin){r->error=PWI_CLOCK;return;}
++    r->begin=begin;
++    for(unsigned i=0;i<PWI_MAX_CALLS;i++) {
++        if(!io->ready(io->context)){r->error=PWI_GATE;return;}
++        uint64_t before=io->counter(io->context);
++        if(before<last){r->error=PWI_CLOCK;return;}
++        if(before-begin>PWI_TICK_BUDGET){r->error=PWI_DEADLINE;return;}
++        r->rounds[i].before=before;r->issued=true;
++        io->invoke(io->context,raw);
++        uint64_t after=io->counter(io->context);r->end=after;
++        r->rounds[i].after=after;r->calls=i+1;
++        for(unsigned n=0;n<7;n++)r->rounds[i].raw[n]=raw[n];
++        if(after<before){r->error=PWI_CLOCK;return;}
++        if(after-begin>PWI_TICK_BUDGET){r->error=PWI_DEADLINE;return;}
++        last=after;
++        if(raw[0]==1)continue;
++        if(raw[0]){r->error=PWI_TRANSPORT;return;}
++        if(raw[1]>1){r->error=PWI_RESULT;return;}
++        r->complete=true;r->available=raw[1]==1;r->error=PWI_OK;return;
++    }
++    r->error=PWI_RESUME_LIMIT;
++}
++#endif
+diff --git a/bsd/dev/polaris_wifi_native_ro.c b/bsd/dev/polaris_wifi_native_ro.c
+--- a/bsd/dev/polaris_wifi_native_ro.c
++++ b/bsd/dev/polaris_wifi_native_ro.c
+@@ -23,6 +23,7 @@
+ extern int polaris_uefi_shutdown_pending(void);
+ extern vm_offset_t ml_io_map_with_prot(vm_offset_t,vm_size_t,vm_prot_t);
+ void polaris_wifi_readonly_poll(void);
++extern void polaris_wifi_scm_info_once(void);
+ 
+ static struct {
+     bool configured,disabled,attempted,read_admitted,failed,par_sampled;
+@@ -165,7 +166,10 @@
+     if(pwn.el==4){pwn.par_sampled=true;(void)pwn_at((uintptr_t)PWF_SMEM_PHYSICAL,&pwn.identity_pa,&pwn.identity_par);}
+     pwn.admission.independent_mpu_read=pwn_independent_mpu_read_witness();
+     unsigned error=polaris_wifi_native_admit(&pwn.admission);
+-    if(error){pwn_report(error,NULL);return;}
++    if(error){
++        if(error==PWN_MPU_READ_UNKNOWN)polaris_wifi_scm_info_once();
++        pwn_report(error,NULL);return;
++    }
+     /* Real native callbacks are wired, but presently unreachable because the
+      * independent read witness above is absent. No host property bypasses it. */
+     pwn.epoch=pwn_counter();if(!pwn.epoch){pwn_report(PWN_BAD_CPU,NULL);return;}
+diff --git a/bsd/conf/files b/bsd/conf/files
+--- a/bsd/conf/files
++++ b/bsd/conf/files
+@@ -1,2 +1,3 @@
+ bsd/dev/polaris_wifi_smem_probe.c		standard
+ bsd/dev/polaris_wifi_native_ro.c		standard
++bsd/dev/polaris_wifi_scm_info.c		standard

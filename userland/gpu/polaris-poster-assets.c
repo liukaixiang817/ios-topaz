@@ -1,7 +1,8 @@
-/* Exact original7400 scenes: genuine HEIC-derived lossless PNGs and exact
- * CAML URL substitutions. No HEIC overwrite, decode on phone, generic path
+/* Exact official default7400: originalCAML/5HEIC rendered by real hostCA
+ * into one full staticPNG; simpleCAML retains the official default identity.
+ * No HEIC overwrite, decode on phone, generic path
  * writer, persistent storage operation, placeholder or graphics-policy change.
- * The frozen private header's whole SHA256 is ff04f9fc...; an independently
+ * The frozen private header's whole SHA256 is 8677e328...; an independently
  * pinned table+payload digest below also rejects any alternate embedded data.
  */
 #include "polaris-poster-assets.h"
@@ -21,7 +22,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #ifndef POLARIS_POSTER_ASSET_HEADER
-#error Supply only the private prepared-0002 embedded header, whole SHA ff04f9fc...
+#error Supply only the private prepared-static-0001 embedded header, whole SHA 8677e328...
 #endif
 #include POLARIS_POSTER_ASSET_HEADER
 #define PPA_CAP UINT64_C(33554432)
@@ -30,7 +31,7 @@
 #define PPA_FLOAT PPA_BASE "Floating-375w-812h@3x~iphone.ca/"
 #define PPA_FORE PPA_BASE "Foreground-375w-812h@3x~iphone.ca/"
 static const char *const expected_path[8]={
-    PPA_BACK "assets/Head Mask.PNG",PPA_BACK "assets/Head.PNG",PPA_BACK "assets/Leg.PNG",
+    PPA_BACK "assets/Polaris-iOS16-Default.PNG",PPA_BACK "assets/Head.PNG",PPA_BACK "assets/Leg.PNG",
     PPA_FLOAT "assets/Arm.PNG",PPA_FORE "assets/Body.PNG",
     PPA_BACK "main.caml",PPA_FLOAT "main.caml",PPA_FORE "main.caml"};
 static const char *const expected_source[8]={
@@ -38,10 +39,10 @@ static const char *const expected_source[8]={
     PPA_FLOAT "assets/Arm.HEIC",PPA_FORE "assets/Body.HEIC",
     PPA_BACK "main.caml",PPA_FLOAT "main.caml",PPA_FORE "main.caml"};
 static const uint32_t source_bytes[8]={65125,608897,310057,677535,808440,18842,11589,11646};
-static const uint32_t output_bytes[8]={139318,1622469,1011871,1792594,2249277,18839,11588,11645};
+static const uint32_t output_bytes[8]={3571553,0,0,0,0,326,261,261};
 static const uint8_t table_binding[32]={
-    0xf9,0x18,0xfc,0xef,0x1a,0x58,0xf5,0x48,0x14,0xaf,0x1a,0xf9,0xd3,0xa9,0xed,0x21,
-    0x1b,0x4b,0xd0,0x0a,0xea,0xf0,0x33,0x30,0x4a,0xe4,0x3d,0x48,0x69,0xb9,0x2a,0x9d};
+    0xd3,0x11,0xcd,0x85,0x6b,0x8b,0x8d,0xf9,0x2f,0x55,0x2f,0x3b,0x8f,0x24,0xab,0x2e,
+    0xcf,0x1d,0xbd,0x41,0xdd,0xb2,0xd8,0x95,0x95,0xfc,0xde,0x41,0x6d,0x19,0xe0,0x13};
 static const uint8_t version_binding[32]={
     0x46,0x45,0x7f,0x81,0xa0,0x4a,0x81,0xf4,0x62,0xbf,0xa0,0xab,0x24,0x69,0x3e,0xff,
     0x21,0x40,0xce,0x81,0xa2,0x54,0xe6,0x43,0x54,0xe4,0x3b,0xd0,0xb9,0x96,0xdd,0x22};
@@ -126,6 +127,23 @@ static int version_file(int root,struct ppa_run *run)
     if(fd>=0)close(fd);if(parent>=0)close(parent);
     return ok?0:-1;
 }
+/* Exact original plist bytes already select official7400 for this phone.
+ * Keep that identity and all existing choices; replace only its volatile
+ * three-scene rendering with the complete original static image. */
+static int default_identity(int root,struct ppa_run *run)
+{
+    static const char *const path[]={"/Library/Wallpaper/DefaultWallpapers~iphone.plist","/Library/Wallpaper/Collections/iOS_16~iphone.wallpaperCollection/WallpaperCollection.plist","/Library/Wallpaper/Collections/iOS_16~iphone.wallpaperCollection/Wallpapers/7400.WWDC_2022-375w-812h@3x~iphone.wallpaper/Wallpaper.plist"};
+    static const uint32_t bytes[]={371,168,536};
+    static const uint8_t digest[3][32]={{0xe9,0xb9,0x02,0x14,0x8c,0xba,0xe4,0xa9,0xf0,0xe9,0x59,0x50,0x3a,0x02,0xed,0x1e,0x05,0x6a,0x5e,0xa0,0x38,0xf6,0x83,0xcc,0x01,0x31,0x4b,0x90,0xb0,0x3e,0x3a,0x6e},{0xa2,0x7d,0x92,0x19,0xc3,0x8d,0x64,0xba,0x24,0x9c,0x40,0x6f,0x10,0xd2,0xe0,0x8f,0x35,0xcb,0xfd,0xa9,0x94,0x14,0x9a,0x62,0xd3,0xfc,0xf0,0xe7,0x25,0x40,0x7f,0x16},{0x65,0xbb,0xda,0x84,0x78,0x56,0x38,0x03,0x03,0x84,0xfd,0x1f,0x25,0xc2,0x70,0x92,0x3c,0x1f,0xe6,0xd6,0xa9,0xe3,0x77,0x76,0x24,0x85,0xb7,0x8b,0xfc,0xcf,0x9c,0x5c}};
+    for(unsigned i=0;i<3;i++) {
+        const char *leaf;int parent=fixed_parent(root,path[i],&leaf);
+        int fd=parent<0?-1:openat(parent,leaf,O_RDONLY|O_NOFOLLOW|O_CLOEXEC);struct stat st;
+        int ok=fd>=0&&!file_hash(run,fd,bytes[i],digest[i],&st,NULL);
+        if(fd>=0)close(fd);if(parent>=0)close(parent);
+        if(!ok)return -1;
+    }
+    return 0;
+}
 static int current_source(struct ppa_run *run,unsigned index)
 {
     struct ppa_file *f=&run->file[index];struct stat current,fdstat;
@@ -142,7 +160,7 @@ static int bound_table(uint64_t *total)
         const struct polaris_wallpaper_embedded_asset *a=&polaris_wallpaper_assets[i];
         if(!a->path||!a->source_path||strcmp(a->path,expected_path[i])||
            strcmp(a->source_path,expected_source[i])||!a->data||a->bytes!=output_bytes[i]||
-           a->mode!=0644||a->operation!=(i<5?1u:2u)||
+           a->mode!=0644||a->operation!=(i==0?1u:i<5?0u:2u)||
            !equal_sha(a->data,(size_t)a->bytes,a->sha256)||a->bytes>PPA_CAP-*total)return -1;
         *total+=a->bytes;uint8_t fields[16];
         for(unsigned n=0;n<8;n++)fields[n]=(uint8_t)(a->bytes>>(8*n));
@@ -231,7 +249,8 @@ static int install_fixed(int root,struct ppa_run *run)
            i>=5?&f->original_bytes:NULL))goto source_failure;
         struct stat st;
         if(i<5) {
-            if(!fstatat(f->parent,f->target_name,&st,AT_SYMLINK_NOFOLLOW)||errno!=ENOENT)goto source_failure;
+            if(polaris_wallpaper_assets[i].operation==1&&
+               (!fstatat(f->parent,f->target_name,&st,AT_SYMLINK_NOFOLLOW)||errno!=ENOENT))goto source_failure;
         } else {
             if(f->original.st_nlink!=1)goto source_failure;
             if(!fstatat(f->parent,new_name,&st,AT_SYMLINK_NOFOLLOW)||errno!=ENOENT)goto source_failure;
@@ -243,6 +262,7 @@ static int install_fixed(int root,struct ppa_run *run)
     r->stage=3;
     for(unsigned i=0;i<5;i++) {
         struct ppa_file *f=&run->file[i];const struct polaris_wallpaper_embedded_asset *a=&polaris_wallpaper_assets[i];
+        if(a->operation==0)continue; /* Original HEIC source admission only. */
         if(prepare_one(run,i,f->target_name,a->data,(size_t)a->bytes,a->sha256,0,
             &f->created,&f->made_png,&f->png_stat))goto prepare_failure;
         r->created_png++;
@@ -317,18 +337,49 @@ int polaris_poster_assets_install(struct polaris_poster_assets_report *report)
 #if !defined(PGPU_USERLAND_20F66)
     report->error=EPERM;return PPA_REFUSED;
 #else
-    char path[PATH_MAX];uint32_t bytes=sizeof(path);
-    struct statfs fs;
+    char path[PATH_MAX]={0};uint32_t bytes=sizeof(path);
+    struct statfs fs={0};
     struct {uint32_t version,bytes,flags,reserved;uint64_t values[9];} cow={0};size_t size=sizeof(cow);
-    if(getpid()!=1||getuid()!=0||geteuid()!=0||_NSGetExecutablePath(path,&bytes)||
-       strcmp(path,"/usr/libexec/polaris-init")||statfs("/",&fs)||
-       strcmp(fs.f_fstypename,"hfs")||strcmp(fs.f_mntfromname,"/dev/ufsroot0")||
-       !(fs.f_flags&MNT_ROOTFS)||(fs.f_flags&MNT_RDONLY)||
-       sysctlbyname("kern.polaris_ramcow_status",&cow,&size,NULL,0)||size!=sizeof(cow)||
-       cow.version!=1||cow.bytes!=sizeof(cow)||cow.flags!=1||!cow.values[0]||
-       cow.values[0]>32768||cow.values[3]<PPA_CAP||bound_table(&report->embedded_bytes)) {
-        report->error=EPERM;return PPA_REFUSED;
+    pid_t pid=getpid();uid_t real=getuid(),effective=geteuid();
+    fprintf(stderr,"POLARIS POSTER CONTEXT: pid=%d uid=%u euid=%u\n",pid,(unsigned)real,(unsigned)effective);
+    if(pid!=1||real!=0||effective!=0){report->error=EPERM;return PPA_REFUSED;}
+    errno=0;int result=_NSGetExecutablePath(path,&bytes),saved=errno;
+    fprintf(stderr,"POLARIS POSTER CONTEXT EXEC: rc=%d errno=%d bytes=%u path=%.*s\n",
+        result,saved,bytes,(int)sizeof(path),path);
+    if(result||strcmp(path,"/usr/libexec/polaris-init")) {
+        report->error=result&&saved?saved:EPERM;return PPA_REFUSED;
     }
+    errno=0;result=statfs("/",&fs);saved=errno;
+    fprintf(stderr,"POLARIS POSTER CONTEXT ROOT: rc=%d errno=%d type=%.*s from=%.*s flags=%x\n",
+        result,saved,(int)sizeof(fs.f_fstypename),fs.f_fstypename,
+        (int)sizeof(fs.f_mntfromname),fs.f_mntfromname,fs.f_flags);
+    /* Actual linked0135 vfs_mountroot passes literal "root_device" to the
+     * allocator; statfs copies it unchanged before launchd's remount. It is
+     * not itself a device identity. Bind HFS's actual dev_t separately to the
+     * original devfs block node, using metadata only, never opening the disk. */
+    if(result||strcmp(fs.f_fstypename,"hfs")||strcmp(fs.f_mntfromname,"root_device")||
+       !(fs.f_flags&MNT_ROOTFS)||(fs.f_flags&MNT_RDONLY)) {
+        report->error=result&&saved?saved:EPERM;return PPA_REFUSED;
+    }
+    struct stat device={0};errno=0;result=lstat("/dev/ufsroot0",&device);saved=errno;
+    fprintf(stderr,"POLARIS POSTER CONTEXT DEVICE: rc=%d errno=%d mode=%x rdev=%x rootfsid=%x\n",
+        result,saved,(unsigned)device.st_mode,(unsigned)device.st_rdev,(unsigned)fs.f_fsid.val[0]);
+    if(result||!S_ISBLK(device.st_mode)||!device.st_rdev||
+       (uint32_t)device.st_rdev!=(uint32_t)fs.f_fsid.val[0]) {
+        report->error=result&&saved?saved:EPERM;return PPA_REFUSED;
+    }
+    errno=0;result=sysctlbyname("kern.polaris_ramcow_status",&cow,&size,NULL,0);saved=errno;
+    fprintf(stderr,"POLARIS POSTER CONTEXT COW: rc=%d errno=%d size=%llu version=%u bytes=%u flags=%u limit=%llu used=%llu available=%llu remaining=%llu\n",
+        result,saved,(unsigned long long)size,cow.version,cow.bytes,cow.flags,
+        (unsigned long long)cow.values[0],(unsigned long long)cow.values[1],
+        (unsigned long long)cow.values[2],(unsigned long long)cow.values[3]);
+    if(result||size!=sizeof(cow)||cow.version!=1||cow.bytes!=sizeof(cow)||
+       cow.flags!=1||!cow.values[0]||cow.values[0]>32768||cow.values[3]<PPA_CAP) {
+        report->error=result&&saved?saved:EPERM;return PPA_REFUSED;
+    }
+    result=bound_table(&report->embedded_bytes);
+    fprintf(stderr,"POLARIS POSTER CONTEXT TABLE: rc=%d bytes=%llu\n",result,(unsigned long long)report->embedded_bytes);
+    if(result){report->error=EINVAL;return PPA_REFUSED;}
     const char *const bundle[]={"/usr/lib/libPolarisMesa.dylib","/usr/lib/libPolarisGL.dylib",
         "/usr/lib/libPolarisInject.dylib","/usr/libexec/polaris-bbd-wrapper",
         "/usr/libexec/polaris-gl-test","/usr/libexec/polaris-init"};
@@ -342,7 +393,10 @@ int polaris_poster_assets_install(struct polaris_poster_assets_report *report)
     }
     int root=open("/",O_RDONLY|O_DIRECTORY|O_NOFOLLOW|O_CLOEXEC);if(root<0)return PPA_REFUSED;
     if(version_file(root,&run)){close(root);report->error=EINVAL;return PPA_REFUSED;}
-    int result=install_fixed(root,&run);close(root);return result;
+    result=default_identity(root,&run);
+    fprintf(stderr,"POLARIS POSTER DEFAULT ID: rc=%d official7400 sourceplists unchanged\n",result);
+    if(result){close(root);report->error=EINVAL;return PPA_REFUSED;}
+    result=install_fixed(root,&run);close(root);return result;
 #endif
 }
 #ifdef POLARIS_POSTER_ASSET_FIXTURE
@@ -358,6 +412,7 @@ int polaris_poster_assets_fixture(const char *directory,int limit,int activation
     struct stat st;
     if(fstat(root,&st)||st.st_uid!=geteuid()||(st.st_mode&07777)!=0700){close(root);return PPA_REFUSED;}
     run.gid=st.st_gid;
+    if(default_identity(root,&run)){close(root);report->error=EINVAL;return PPA_SOURCE;}
     int result=install_fixed(root,&run);close(root);return result;
 }
 /* Calls the production SystemVersion verifier, with only the private fixture

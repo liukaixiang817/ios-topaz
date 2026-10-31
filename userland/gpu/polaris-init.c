@@ -238,7 +238,7 @@ int main(int argc,char **argv)
         asset_result,assets.stage,assets.error,assets.validated,assets.created_png,
         assets.prepared_caml,assets.activated_caml,assets.restored_caml,
         assets.cleanup_failures,assets.must_hold,(unsigned long long)assets.embedded_bytes,
-        (unsigned long long)assets.bundle_bytes,asset_result==PPA_OK?"exact original assets installed in RAM COW":"assets NOT installed");
+        (unsigned long long)assets.bundle_bytes,asset_result==PPA_OK?"official default7400 static image installed in RAM COW":"assets NOT installed");
     if(assets.must_hold || asset_result==PPA_ROLLBACK_FAILED) {
         fprintf(stderr,"POLARIS POSTER ASSETS: incomplete rollback; PID1 HOLD, Apple launchd prohibited\n");
         for(;;)sleep(1);

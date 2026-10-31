@@ -35,9 +35,9 @@ def build(args):
         prepared = header.parent / 'manifest.json'
         baseline = ROOT / 'research/polaris/uefi-ios-0133/graphics-poster-hierarchy-0001'
         if not header.is_relative_to(ROOT / 'research') or \
-           sha(header) != 'ff04f9fc8d8192f8210fa995228914b6bef2c2f0c9923f275271c0896cd9cffd' or \
-           sha(prepared) != 'c4d2ade75221202ee8d74a1e2f2d207f25d6f47587cf7bea1088fc8ad66e6199':
-            raise ValueError('only exact prepared-0002 private poster assets are admitted')
+           sha(header) != '8677e328ff073084e01b716140591d264b7348438b21eb2c29f841f0b6293fc1' or \
+           sha(prepared) != '92eec60d1942195534c72aaf00a773d7b95551effd5466866fa41c9447573118':
+            raise ValueError('only exact prepared-static-0001 private official default7400 assets are admitted')
         if sha(baseline / 'manifest.json') != '858230c94aa282bd683b953a5ee1e4637d1419e33fd440818699f110818aa49e' or \
            sha(baseline / 'polaris-gpu.bundle') != 'bf8a704411fae01abeb23578b19f0c6c1738f90cedaeedb7b394930187069b70':
             raise ValueError('the exact current0133 graphics baseline is required')
@@ -244,10 +244,14 @@ def build(args):
             manifest['source_inputs'][str(p.relative_to(ROOT))] = sha(p)
     if poster:
         for p in (SOURCES / 'polaris-poster-assets.c', SOURCES / 'polaris-poster-assets.h',
-                  poster['header'], poster['prepared'], poster['baseline'] / 'manifest.json'):
+                  poster['header'], poster['prepared'], poster['baseline'] / 'manifest.json',
+                  poster['header'].parent.parent / 'render-official-default.m',
+                  poster['header'].parent.parent / 'default-identity-raw-metadata.json',
+                  ROOT / 'research/polaris/uefi-ios-0134/wallpaper-assets/original-source-catalog-BSDInfo-readonly.json'):
             manifest['source_inputs'][str(p.relative_to(ROOT))] = sha(p)
         manifest['poster_assets'] = dict(enabled=True, destination='verified512MiB RAM COW only',
             private_header_sha256=sha(poster['header']), prepared_manifest_sha256=sha(poster['prepared']),
+            official_default_wallpaper_identifier=7400, source='original3CAML+5HEIC; full staticRGBA8, no generated image',
             baseline_bundle_sha256=poster['previous']['bundle_sha256'],
             target='PID1 after console, before poster jobs/app publication/launchd',
             source_failure='original CAMLs retained; original UI continues without retry',
@@ -271,5 +275,5 @@ if __name__ == '__main__':
     p.add_argument('--rebuild-init', action='store_true',
                    help='rebuild only the changed20F66 init among the four common binaries')
     p.add_argument('--poster-assets-header', type=Path,
-                   help='exact private prepared-0002 header;20F66/rebuild-init only, preserves five0133 binaries')
+                   help='exact private prepared-static-0001 default7400 header;20F66/rebuild-init only, preserves five0133 binaries')
     build(p.parse_args())

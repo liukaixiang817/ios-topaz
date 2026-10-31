@@ -34,6 +34,35 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0136 officialdefault676c +clock/battery fixes READY; finalnativepin+SCMINFO CI NEXT; PHONE stillLIVE0135
+
+- FirstcounterfixCI41186374177/job124494018125 SUCCESS for01de300. Actual
+  linked449d16988a00c057b7d9d27c5b3aa47f9d1c159e300b7266f60313e9a958576e
+  /17306760B verified. Actualclock_poll4ISB/MRSsites andWiFiPAR/AT/ISB/read/
+  restore chainallpresent; nophysicaltime/radioproof. 72906ENDED0.
+- WallpaperactualcontextrootcauseISOLATEDfromcurrent0135linkedkernel:
+  vfs_mountrootpassesliteralroot_device tocopystr→f_mntfromname. Oldloader
+  /dev/ufsroot0comparisonalwaysrefused. Correctuniqueearlyroot_device plus
+  lstat /dev/ufsroot0 block st_rdev==actualHFSfsid0 bindsrealdevice, noalias
+  list/diskopen; allPID/exe/HFS/rootflags/COW/sourceSHA/rollbackgatesretained.
+- Newofficialdefaultbundle0002SHA676c8c208f5e756c0ed5511cbdc9ab25add40251ce3575ed72bc89485f858d53
+  /19072128B; onlyinitchanges3648896B, other5graphicsbyteidentical0135.
+  Original3CAML+5HEIC renderedfaithfulfull1125x2436officialiOS16default7400,
+  noMetalflatCAMLCPUroundtrip10,962,000RGBAbyteszero-difference; onePNG+three
+  transaction/CAMLchanges, originalresourcespreserved. 22context/device and
+  originaltransaction/init/HOLD/CF/32appchecksPASS, actual16.5SDKfullbuild.
+  ThisisNOTactualphonewallpapersuccessyet.0001retained/notoverwritten.
+- Newnativeexact676cpin/0911knownSCMINFOIO_READ-availability-onlyneedsfinal
+  CI. 0911neverpassesSMEMaddress/readsbyte/maps/TX/radio; actualownTZ20address
+  whitelistEXCLUDESallSMEM andunmatchedIO_READreturns0, cannotuseproxyread.
+  OriginalSmemDxeconstructorread/cachebeforeinstallproven; agentpreparing
+  cache-onlyloaded-original-image632Bdoublecapture/provenance(noGet/Alloc/
+  pointerfollow/SMEMread), separateoptionalFWworknotblockingdefault/clock.
+- BatteryROv5canonicalfix2c13c12ready. Isolatedclock+batteryworktreeprepared
+  butNOnewphoneboot; canusefirstreadycandidateonlyifusefulbeforefinalready.
+  Parentwillavoidunnecessaryphonebootsnowdefaultallready. CurrentallUSB
+  ENDED/LIVE0135frozen390only; NOUTCSETonitsknownbadnativecounter.
+
 ### 0136 nativecounter source01de300 PUSHED/CI41186374177 inprogress; batteryROcanonicalFWfix READY; PHONE LIVE0135
 
 - Nativeclock+WiFiMachOinstructionfix source01de300e1d309e7542bf292e828f8462698deb08
