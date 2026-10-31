@@ -34,7 +34,53 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### 0141 ACTUAL NC18LDR/I2C5096B PASS; realhome/wallpaper/Melbourne/battery/GPU/WLED PASS; WiFi/audio/camera STILLUNFINISHED
+### 0142 resource/originalClock SOURCE READY; ACTUAL Polaris FASTBOOT 14:59Z; WiFi/audio/camera unfinished, rendering repair parallel
+
+- Latest human physically returned to FASTBOOT, requests continuing WiFi,
+  sound and missing CameraApp. Realhost expected-only product query at
+  2026-10-31T14:59:06.921519Z returned polaris/exit0/0.001s. Proof0142/
+  phone-resources-clock-0001/expected-product-before-candidate-0001.json.
+  This supersedes0141 LIVE. No oldcontroller/exit/reboot/payload sent.
+  Human physical keys caused the transition; no automatic reset claim.
+- Before this, actual0141 current-screen capture2965 ENDED1/service8s
+  unconnected, no screenshot/native.log. Directed realhost66158 ENDED0 at
+  14:55:13Z saw no scoped target descriptors and expectedproduct8s timeout;
+  instant scoped result, not panic/USB-loss root cause. Replug question was
+  answered by physicalFASTBOOT; no current rendering screenshot was obtained.
+- New combined57 actualinputs are reviewed: resource two8192B raw EFI maps,
+  seven original PSCI AFFINITY_INFO observations before CPU_ON, and original
+  ClockDxe IsEnabled/IsOn only for eight GCC baselines (max16calls), including
+  SE5 audio, cameraGCC parents and three MSS branches. Seven CAMCC targets
+  remain NOT_ISSUED; parentON/AT alone never qualifies cold CAMCC. No bus/
+  clock/pin/rail/PIL/SMEM allocation/radio/PCM/camera writes or success claim.
+  OriginalPE wholehash/6immutable ranges/DAL/context/descriptors/actualDevice
+  AT+EFItype11 checks, fullRAW/unknown/sticky/fresh200ms gates retained.
+- ONf3186342.../1104896B, SOFTWARE5302bee6.../797184B both57inputs; all five
+  physical bodies absent from SOFTWARE TU. NEWflagsOFF wholeEFI equals0141
+  7ba7c045.../879616B, with OLD NC/cache/I2C retained (the variants proof's
+  I2C=false labels the new coordinator, not the old I2C collector). Actual
+  inputs changed only main/NCsplit/builder, added five including private
+  originalClockPE. Native82b3/payloadb31/GPUf790 unchanged, no kernelCI.
+- 25related admission tests, eight CLI refusals, seven extracted RAM-append
+  ASAN checks and actual AArch64 warnings/compile/link variants passed.
+  PFR32 and Clock37 ASAN/UBSAN checks retained. Main RAM log131072 with
+  stickyoverflow/fullsnapshot allocation prevents truncating new raw reports.
+  Readyproof20475c23... binds actual sources/artifacts; parent source review
+  also covers full HAL-IsOn11instructions/DAL no-op locks/uint64 ClockId ABI.
+  Host0142 policy is still fail-closed/unsealed pending this source commit.
+- NEXT seal exact57/source/82b3/b31, commit host, run only two affected actual
+  wholeEFI-XNU terminal models, ONEpackage/wholecodec/audit/freeze, then one
+  temporary image/exactpayload and real raw capture. Reuse controlled fresh
+  0139 ed39/c7d3 RO+RAMCOW interval; no Android known. No userdata writes.
+- Rendering parallel: saved0141 frames show41px console sidebars; first-copy
+  console mute has a direct_cnputc bypass. Mi8 atomic whole-surface display
+  acquisition also exposes a possible own per-layer busy-check race; neither
+  proves the reported striping's root cause. GPU agent keeps draft/native
+  compile isolated under0142/performance, preserving current57input candidate.
+  WiFi follows own SMEM/GLINK->QRTR/WLFW69v1->ath10k, not foreign carveouts;
+  actual network/PCM/sensor/frame and CameraApp registration remain unfinished.
+
+### Historical 0141 ACTUAL NC18LDR/I2C5096B PASS; realhome/wallpaper/Melbourne/battery/GPU/WLED PASS; WiFi/audio/camera STILLUNFINISHED
 
 - ONEimage37183 ENDED0/image37b6/source9069aed sent14:15:46.330541Z,
   ONEb31payload76681 ENDED0/ACK14:17:06.842205Z; transfer32.959410s/

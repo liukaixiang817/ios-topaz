@@ -41,7 +41,12 @@ struct args {uint16_t revision,version;uint64_t va,pa,size,top;struct video vide
 _Static_assert(sizeof(struct args)==736,"XNU boot args ABI");
 static struct efi_system *system_table;
 static efi_handle driver_image;
+#if EFI_XNU_WIFI_RESOURCES_AVAILABLE
+static uint8_t log_buffer[131072];static uint64_t log_bytes;
+static volatile uint32_t log_overflow;
+#else
 static uint8_t log_buffer[32768];static uint64_t log_bytes;
+#endif
 static struct {uint64_t magic,bytes,stride,version;uint8_t data[65536];} map_snapshot;
 static uint64_t map_bytes;
 static struct polaris_efi_boot_options boot_inventory;
@@ -66,6 +71,9 @@ static void text(const char *s)
     uint16_t wide[128];unsigned at=0;
     while(*s){
         if(log_bytes<sizeof(log_buffer))log_buffer[log_bytes++]=(uint8_t)*s;
+#if EFI_XNU_WIFI_RESOURCES_AVAILABLE
+        else log_overflow=1;
+#endif
         if(at<127)wide[at++]=(uint8_t)*s;s++;
     }
     wide[at]=0;
@@ -76,6 +84,31 @@ static void report(const char *name,uint64_t value)
     char buf[19]={'0','x'};for(unsigned i=0;i<16;i++)buf[2+i]="0123456789abcdef"[(value>>(60-i*4))&15];
     buf[18]=0;text(name);text(buf);text("\r\n");
 }
+#if EFI_XNU_WIFI_RESOURCES_AVAILABLE && !defined(POLARIS_EFI_TEST_QEMU)
+/* New bulk witnesses stay in RAM. They never enter OutputString and cannot
+ * consume a WLED terminal-receipt/200ms interval. Reserve each append in full;
+ * overflow is sticky and logs() explicitly reports an incomplete prefix. */
+static void ram_text(const char *s)
+{
+    uint64_t n=0;while(s[n])n++;
+    if(log_bytes>sizeof(log_buffer)||n>sizeof(log_buffer)-log_bytes){log_overflow=1;return;}
+    bytes_copy(log_buffer+log_bytes,s,n);log_bytes+=n;
+}
+static void ram_report(const char *name,uint64_t value)
+{
+    char buf[19]={'0','x'};for(unsigned i=0;i<16;i++)buf[2+i]="0123456789abcdef"[(value>>(60-i*4))&15];
+    buf[18]=0;ram_text(name);ram_text(buf);ram_text("\r\n");
+}
+static void ram_hex(const uint8_t *raw,uint64_t bytes)
+{
+    if(bytes>UINT64_MAX/3||log_bytes>sizeof(log_buffer)||bytes*2+2*((bytes+63)/64)>sizeof(log_buffer)-log_bytes){log_overflow=1;return;}
+    for(uint64_t n=0;n<bytes;n++){
+        log_buffer[log_bytes++]="0123456789abcdef"[raw[n]>>4];
+        log_buffer[log_bytes++]="0123456789abcdef"[raw[n]&15];
+        if((n&63)==63||n+1==bytes){log_buffer[log_bytes++]='\r';log_buffer[log_bytes++]='\n';}
+    }
+}
+#endif
 static int overlap(uint64_t a,uint64_t n,uint64_t b,uint64_t z)
 {return n&&z&&a<b+z&&b<a+n;}
 static int identity(uint64_t address)
@@ -173,6 +206,9 @@ static int shutdown_status(void *,const uint8_t **,uint64_t *);
 #if EFI_XNU_WIFI_NORMAL_NC_FIRSTREAD_AVAILABLE
 #include "uefi-wifi-firstread-normal-nc.h"
 #endif
+#if EFI_XNU_WIFI_RESOURCES_AVAILABLE
+#include "uefi-wifi-resources-readonly.h"
+#endif
 #endif
 #endif
 #if EFI_XNU_AUDIO_I2C_CACHE_AVAILABLE
@@ -181,6 +217,16 @@ static int shutdown_status(void *,const uint8_t **,uint64_t *);
 #endif
 #if !defined(POLARIS_EFI_TEST_QEMU)
 #include "uefi-audio-i2c-cache.h"
+#endif
+#endif
+#if EFI_XNU_AUDIO_CLOCK_QUERY_AVAILABLE
+#if !defined(POLARIS_EFI_TEST_QEMU)
+#include "uefi-audio-clock-query.h"
+#endif
+#endif
+#if EFI_XNU_WIFI_RESOURCES_AVAILABLE || EFI_XNU_AUDIO_CLOCK_QUERY_AVAILABLE || EFI_XNU_AUDIO_CLOCK_QUERY_CAMERA_READONLY || EFI_XNU_AUDIO_CLOCK_QUERY_MSS_READONLY
+#if !EFI_XNU_WIFI_RESOURCES_AVAILABLE || !EFI_XNU_AUDIO_CLOCK_QUERY_AVAILABLE || !EFI_XNU_AUDIO_CLOCK_QUERY_CAMERA_READONLY || !EFI_XNU_AUDIO_CLOCK_QUERY_MSS_READONLY || !EFI_XNU_AUDIO_I2C_CACHE_AVAILABLE || !EFI_XNU_WIFI_NORMAL_NC_FIRSTREAD_AVAILABLE || !EFI_XNU_WIFI_CACHE_AVAILABLE
+#error "Resource/Clock scope requires exact combined original caches, NC and GCC readonly clock baseline"
 #endif
 #endif
 #if EFI_XNU_WIFI_NORMAL_NC_FIRSTREAD_AVAILABLE && EFI_XNU_WIFI_FIRSTREAD_AVAILABLE
@@ -276,6 +322,9 @@ static int prepare_boot(void *context)
 #if EFI_XNU_WIFI_NORMAL_NC_FIRSTREAD_AVAILABLE
         report("WIFI_NORMAL_NC_FIRSTREAD_SOFTWARE_PHYSICAL_SMEM_READ_COMPILED_OUT=",1);
 #endif
+#if EFI_XNU_WIFI_RESOURCES_AVAILABLE
+        report("WIFI_RESOURCES_SOFTWARE_PHYSICAL_MAP_PSCI_COMPILED_OUT=",1);
+#endif
     }
 #else
     /* Diagnostic only: all BootServices queries before any IRQ mask/change.
@@ -286,7 +335,13 @@ static int prepare_boot(void *context)
         int cache_ok=pwfc_collect_preboot(system_table,load_state);
         if(cache_ok){
 #if EFI_XNU_WIFI_NORMAL_NC_FIRSTREAD_AVAILABLE
+#if EFI_XNU_WIFI_RESOURCES_AVAILABLE
+            pwnc_collect_preboot(&pwfc_record,load_state);
+            (void)pfr_prepare(system_table,&pwfc_record,load_state);
+            pwnc_report();
+#else
             pwnc_prepare(&pwfc_record,load_state);
+#endif
 #else
             pwfr_prepare(&pwfc_record,load_state);
 #endif
@@ -301,6 +356,13 @@ static int prepare_boot(void *context)
 #endif
         }
         pwfc_report();
+#if EFI_XNU_WIFI_RESOURCES_AVAILABLE
+        ram_report("WIFI_RESOURCES_ATTEMPTED=",pfr_record.attempted);
+        ram_report("WIFI_RESOURCES_ERROR=",pfr_record.error);
+        ram_report("WIFI_RESOURCES_RAW_V1_BYTES=",sizeof(pfr_record));
+        ram_text("WIFI_RESOURCES_RAW_V1_BEGIN\r\n");ram_hex((const uint8_t*)&pfr_record,sizeof(pfr_record));
+        ram_text("WIFI_RESOURCES_RAW_V1_END\r\nWIFI_RESOURCES_SCOPE=MAP_PSCI_OBSERVATIONS_ONLY NO_FREE_OR_OWNER_GRANT RMTFS_UNASSIGNED MSA_UNASSIGNED\r\n");
+#endif
     }
 #else
     pwfc_prepare(system_table,load_state);
@@ -317,7 +379,21 @@ static int prepare_boot(void *context)
         report("AUDIO_I2C_CACHE_SOFTWARE_PHYSICAL_IMAGE_INSPECTION_COMPILED_OUT=",1);
     }
 #else
+#if EFI_XNU_AUDIO_CLOCK_QUERY_AVAILABLE
+    pacq_collect_preboot(system_table,load_state);
+    pacq_report_preboot(ram_text);
+#else
     paic_prepare(system_table,load_state);
+#endif
+#endif
+#endif
+#if EFI_XNU_AUDIO_CLOCK_QUERY_AVAILABLE
+#if defined(POLARIS_EFI_TEST_QEMU)
+    static unsigned audio_clock_software_reported;
+    if(!audio_clock_software_reported){
+        audio_clock_software_reported=1;
+        report("AUDIO_CLOCK_QUERY_SOFTWARE_PHYSICAL_ORIGINAL_QUERY_COMPILED_OUT=",1);
+    }
 #endif
 #endif
 #if defined(EFI_XNU_WLED_NATIVE_RUNTIME)
@@ -477,6 +553,12 @@ static const char *state(void *context)
 static int logs(void *context,const uint8_t **data,uint64_t *count)
 {
     (void)context;uint64_t at=log_bytes;bytes_copy(log_snapshot,log_buffer,at);
+#if EFI_XNU_WIFI_RESOURCES_AVAILABLE
+    if(log_overflow){
+        static const char incomplete[]="\nFIRMWARE_RAM_LOG_OVERFLOW=1 INCOMPLETE_PREFIX\n";
+        bytes_copy(log_snapshot+at,incomplete,sizeof(incomplete)-1);at+=sizeof(incomplete)-1;
+    }
+#endif
     if(load_state>=4 && !cpu_status){
         uint64_t total_pa=POLARIS_RAM_BASE+EFI_XNU_LOG_TOTAL_OFFSET;
         invalidate(total_pa,8);uint64_t total=*(const volatile uint64_t*)(uintptr_t)total_pa;
@@ -772,6 +854,9 @@ static efi_status admission(void)
 #if EFI_XNU_WIFI_NORMAL_NC_FIRSTREAD_AVAILABLE && !defined(POLARIS_EFI_TEST_QEMU)
     if(!pwnc_bind_resident(image))report("WIFI_NORMAL_NC_FIRSTREAD_SELF_BIND_REFUSED=",1);
 #endif
+#if EFI_XNU_WIFI_RESOURCES_AVAILABLE && !defined(POLARIS_EFI_TEST_QEMU)
+    if(!pfr_bind_resident(image))report("WIFI_RESOURCES_SELF_BIND_REFUSED=",1);
+#endif
 #endif
 #if defined(POLARIS_EFI_TEST_QEMU)
     /* virt has no physical panel reservation. Claim the synthetic panel RAM
@@ -782,7 +867,7 @@ static efi_status admission(void)
     address=POLARIS_RAM_BASE-1;s=system_table->boot->allocate_pages(1,2,(EFI_XNU_PAYLOAD_BYTES+4095)/4096,&address);
     if((s&EFI_ERROR)||address<UINT64_C(0x80000000)||address+EFI_XNU_PAYLOAD_BYTES>POLARIS_RAM_BASE)return EFI_ERROR|9;
     payload=(void*)(uintptr_t)address;
-    s=system_table->boot->allocate_pool(2,32768+128+EFI_XNU_LOG_SIZE,(void**)&log_snapshot);if(s&EFI_ERROR)return s;
+    s=system_table->boot->allocate_pool(2,sizeof(log_buffer)+128+EFI_XNU_LOG_SIZE,(void**)&log_snapshot);if(s&EFI_ERROR)return s;
     static const efi_guid graphics={0x9042a9de,0x23dc,0x4a38,{0x96,0xfb,0x7a,0xde,0xd0,0x80,0x51,0x6a}};
     s=system_table->boot->locate_protocol(&graphics,0,(void**)&gop);
 #if !defined(POLARIS_EFI_TEST_QEMU)

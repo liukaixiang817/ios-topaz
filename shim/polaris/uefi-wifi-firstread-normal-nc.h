@@ -238,7 +238,11 @@ static struct pwnc_result pwnc_record;
 /* Parent calls from already admitted self LoadedImage path, with no new BS. */
 static inline int pwnc_bind_resident(const struct efi_loaded *image)
 {return pwnc_bind(&pwnc_record,image);}
+#if EFI_XNU_WIFI_RESOURCES_AVAILABLE
+static inline void pwnc_collect_preboot(const struct pwfc_result *cache,uint32_t stage)
+#else
 static inline void pwnc_prepare(const struct pwfc_result *cache,uint32_t stage)
+#endif
 {
     if(pwnc_record.attempted)return;
 #if EFI_XNU_WIFI_NORMAL_NC_FIRSTREAD_AVAILABLE && !defined(POLARIS_EFI_TEST_QEMU)
@@ -248,6 +252,11 @@ static inline void pwnc_prepare(const struct pwfc_result *cache,uint32_t stage)
     else (void)pwnc_collect(1,stage,cache,&io,&pwnc_record);
 #else
     (void)cache;(void)stage;pwnc_record.attempted=1;pwnc_record.error=PWNC_DISABLED;
+#endif
+#if EFI_XNU_WIFI_RESOURCES_AVAILABLE
+}
+static inline void pwnc_report(void)
+{
 #endif
     report("WIFI_NORMAL_NC_FIRSTREAD_ATTEMPTED=",pwnc_record.attempted);
     report("WIFI_NORMAL_NC_FIRSTREAD_ARCHITECTURAL_LDR32_MAX=",18);
@@ -281,4 +290,11 @@ static inline void pwnc_prepare(const struct pwfc_result *cache,uint32_t stage)
     }
     text("WIFI_NORMAL_NC_FIRSTREAD: CPU0 NormalNC constructor retrospective admission only; architectural_LDR32_max=18 physical_bus_transaction_cap=0 speculative_coalesced_repeated_reads_possible=1 external_SERROR_recoverable=0 hardware_MPU_query=0 VMID_query=0 native_permission=0 FIFO=0 radio=0 may_transmit=0\r\n");
 }
+#if EFI_XNU_WIFI_RESOURCES_AVAILABLE
+static inline void pwnc_prepare(const struct pwfc_result *cache,uint32_t stage)
+{
+    if(pwnc_record.attempted)return;
+    pwnc_collect_preboot(cache,stage);pwnc_report();
+}
+#endif
 #endif

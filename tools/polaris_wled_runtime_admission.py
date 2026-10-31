@@ -364,13 +364,230 @@ AUDIO_I2C_PHYSICAL_FIELDS={'DIR64_relocations': 43,
  'readonly': True,
  'snapshot_count': 2}
 
+# New combined resource/ten-clock scope is deliberately unsealed. Original
+# Device, NormalNC0141 and cache-only profiles remain unchanged. No flag or
+# stripped manifest can grant the new original-method/PSCI observation scope.
+RESOURCES_CLOCK_0142=None
+RESOURCES_PREFIX='wifi_CPU0_resources_'
+CLOCK_QUERY_PREFIX='audio_Clock_query_'
+RESOURCES_CLOCK_DISABLED={'audio_Clock_query_CAMCC_indirect_MMIO_read_body': False,
+ 'audio_Clock_query_CAMCC_queries_NOT_ISSUED': None,
+ 'audio_Clock_query_GetFreq_Enable_Disable_Open': False,
+ 'audio_Clock_query_I2C_CCI_or_TAS_methods': False,
+ 'audio_Clock_query_MMIO_writes': False,
+ 'audio_Clock_query_MSS_GCC_readonly_targets': None,
+ 'audio_Clock_query_PCM_or_camera_completion': False,
+ 'audio_Clock_query_SE5_or_camera_bus_lease': False,
+ 'audio_Clock_query_actual_Device_identity_and_EFI_MMIO_required': None,
+ 'audio_Clock_query_actual_observations_proven': False,
+ 'audio_Clock_query_after_complete_WiFi_diagnostics': None,
+ 'audio_Clock_query_audio_readonly_targets': None,
+ 'audio_Clock_query_before_CPU_ON_PON_and_mask': None,
+ 'audio_Clock_query_binding_SHA256': None,
+ 'audio_Clock_query_blocked_CAMCC_targets': None,
+ 'audio_Clock_query_booleans_are_not_raw_CSR': None,
+ 'audio_Clock_query_camera_descriptor_targets': None,
+ 'audio_Clock_query_clock_or_pin_ownership_proven': False,
+ 'audio_Clock_query_clock_reset_voltage_or_PLL_writes': False,
+ 'audio_Clock_query_combined_I2C_Clock_RAM_report_bytes': None,
+ 'audio_Clock_query_default_OFF': True,
+ 'audio_Clock_query_descriptor_targets': None,
+ 'audio_Clock_query_diagnostic_error_zero_is_not_complete_baseline': None,
+ 'audio_Clock_query_exact_I2C_cache_required': None,
+ 'audio_Clock_query_external_SError_recoverable': False,
+ 'audio_Clock_query_frequency': None,
+ 'audio_Clock_query_immutable_hashes': None,
+ 'audio_Clock_query_independent_clock_fresh_limit_ticks': None,
+ 'audio_Clock_query_indirect_GCC_MMIO_read_body': False,
+ 'audio_Clock_query_methods': None,
+ 'audio_Clock_query_native_permission': False,
+ 'audio_Clock_query_no_runtime_or_USB_command': True,
+ 'audio_Clock_query_original_PE': None,
+ 'audio_Clock_query_original_PE_whole_SHA256': None,
+ 'audio_Clock_query_original_image_bytes': None,
+ 'audio_Clock_query_outer_status_may_drop_inner_DAL_status': None,
+ 'audio_Clock_query_parent_clock_ON_does_not_qualify_CAMCC': None,
+ 'audio_Clock_query_physical_original_query_body': False,
+ 'audio_Clock_query_physical_original_query_compiled_out': False,
+ 'audio_Clock_query_possible_GCC_baseline_targets': None,
+ 'audio_Clock_query_prepare_stage': None,
+ 'audio_Clock_query_query_calls_max': None,
+ 'audio_Clock_query_raw_report_RAM_only': None,
+ 'audio_Clock_query_raw_report_bytes': None,
+ 'audio_Clock_query_raw_report_endianness': None,
+ 'audio_Clock_query_raw_report_format': None,
+ 'audio_Clock_query_raw_report_max_append_chars': None,
+ 'audio_Clock_query_readonly': False,
+ 'audio_Clock_query_uses_original_descriptor_not_cross_version_DT_ID': None,
+ 'wifi_CPU0_resources_GetMemoryMap_calls_max': None,
+ 'wifi_CPU0_resources_MSA_address_assigned': False,
+ 'wifi_CPU0_resources_MSS_PIL_or_SCM_initialization': False,
+ 'wifi_CPU0_resources_PSCI_calls_max': None,
+ 'wifi_CPU0_resources_PSCI_function': None,
+ 'wifi_CPU0_resources_PSCI_target_MPIDRs': None,
+ 'wifi_CPU0_resources_PSCI_uses_SMC': None,
+ 'wifi_CPU0_resources_RMTFS_address_assigned': False,
+ 'wifi_CPU0_resources_Reserved_is_free_or_owned': False,
+ 'wifi_CPU0_resources_SFPB_writes': False,
+ 'wifi_CPU0_resources_SMEM_reads': 0,
+ 'wifi_CPU0_resources_actual_observations_proven': False,
+ 'wifi_CPU0_resources_after_NC_before_console_and_PON': None,
+ 'wifi_CPU0_resources_all_OFF_is_instantaneous_not_exclusive': None,
+ 'wifi_CPU0_resources_before_CPU_ON': None,
+ 'wifi_CPU0_resources_cache_after_fresh_limit_ticks': None,
+ 'wifi_CPU0_resources_default_OFF': True,
+ 'wifi_CPU0_resources_descriptor_version': None,
+ 'wifi_CPU0_resources_exact_cache_witness_required': None,
+ 'wifi_CPU0_resources_external_SError_recoverable': False,
+ 'wifi_CPU0_resources_firmware_RAM_log_capacity': None,
+ 'wifi_CPU0_resources_firmware_RAM_log_overflow_sticky': None,
+ 'wifi_CPU0_resources_frequency': None,
+ 'wifi_CPU0_resources_full_raw_buffers_preserved': None,
+ 'wifi_CPU0_resources_hardware_MPU_or_VMID_query': False,
+ 'wifi_CPU0_resources_map_buffer_capacity': None,
+ 'wifi_CPU0_resources_map_buffer_count': None,
+ 'wifi_CPU0_resources_native_permission': False,
+ 'wifi_CPU0_resources_no_runtime_or_USB_command': True,
+ 'wifi_CPU0_resources_nonreturning_service_wall_time_bound_proven': False,
+ 'wifi_CPU0_resources_partial_GetMemoryMap_output_extent_unknown': None,
+ 'wifi_CPU0_resources_physical_map_PSCI_body': False,
+ 'wifi_CPU0_resources_physical_map_PSCI_compiled_out': False,
+ 'wifi_CPU0_resources_prepare_stage': None,
+ 'wifi_CPU0_resources_radio_or_transmit': False,
+ 'wifi_CPU0_resources_raw_maps_offset': None,
+ 'wifi_CPU0_resources_raw_report_RAM_only': None,
+ 'wifi_CPU0_resources_raw_report_bytes': None,
+ 'wifi_CPU0_resources_raw_report_endianness': None,
+ 'wifi_CPU0_resources_raw_report_format': None,
+ 'wifi_CPU0_resources_readonly': False,
+ 'wifi_CPU0_resources_resource_allocation': False,
+ 'wifi_CPU0_resources_resource_ranges': None,
+ 'wifi_CPU0_resources_resource_writes': False,
+ 'wifi_CPU0_resources_single_boot_ticket': None}
+RESOURCES_CLOCK_PHYSICAL_FIELDS={'audio_Clock_query_CAMCC_indirect_MMIO_read_body': False,
+ 'audio_Clock_query_CAMCC_queries_NOT_ISSUED': True,
+ 'audio_Clock_query_GetFreq_Enable_Disable_Open': False,
+ 'audio_Clock_query_I2C_CCI_or_TAS_methods': False,
+ 'audio_Clock_query_MMIO_writes': False,
+ 'audio_Clock_query_MSS_GCC_readonly_targets': 3,
+ 'audio_Clock_query_PCM_or_camera_completion': False,
+ 'audio_Clock_query_SE5_or_camera_bus_lease': False,
+ 'audio_Clock_query_actual_Device_identity_and_EFI_MMIO_required': True,
+ 'audio_Clock_query_actual_observations_proven': False,
+ 'audio_Clock_query_after_complete_WiFi_diagnostics': True,
+ 'audio_Clock_query_audio_readonly_targets': 3,
+ 'audio_Clock_query_before_CPU_ON_PON_and_mask': True,
+ 'audio_Clock_query_binding_SHA256': 'fce2b569473b17209cc5a7d8a86a1ff85f8a1d8dd8df0e4f7c9c79193f7641be',
+ 'audio_Clock_query_blocked_CAMCC_targets': 7,
+ 'audio_Clock_query_booleans_are_not_raw_CSR': True,
+ 'audio_Clock_query_camera_descriptor_targets': 9,
+ 'audio_Clock_query_clock_or_pin_ownership_proven': False,
+ 'audio_Clock_query_clock_reset_voltage_or_PLL_writes': False,
+ 'audio_Clock_query_combined_I2C_Clock_RAM_report_bytes': 37001,
+ 'audio_Clock_query_default_OFF': True,
+ 'audio_Clock_query_descriptor_targets': 15,
+ 'audio_Clock_query_diagnostic_error_zero_is_not_complete_baseline': True,
+ 'audio_Clock_query_exact_I2C_cache_required': True,
+ 'audio_Clock_query_external_SError_recoverable': False,
+ 'audio_Clock_query_frequency': 19200000,
+ 'audio_Clock_query_immutable_hashes': 6,
+ 'audio_Clock_query_independent_clock_fresh_limit_ticks': 3840000,
+ 'audio_Clock_query_indirect_GCC_MMIO_read_body': True,
+ 'audio_Clock_query_methods': ['IsEnabled', 'IsOn'],
+ 'audio_Clock_query_native_permission': False,
+ 'audio_Clock_query_no_runtime_or_USB_command': True,
+ 'audio_Clock_query_original_PE': 'research/polaris/uefi-integration-0057/firmware-files/4db5dea6-5302-4d1a-8a82-677a683b0d29.efi',
+ 'audio_Clock_query_original_PE_whole_SHA256': 'b9e618d63edbe81e4e3f04b1d7a51e21584e113d2dd79320ba6a90d2c63377ed',
+ 'audio_Clock_query_original_image_bytes': 266240,
+ 'audio_Clock_query_outer_status_may_drop_inner_DAL_status': True,
+ 'audio_Clock_query_parent_clock_ON_does_not_qualify_CAMCC': True,
+ 'audio_Clock_query_physical_original_query_body': True,
+ 'audio_Clock_query_physical_original_query_compiled_out': False,
+ 'audio_Clock_query_possible_GCC_baseline_targets': 8,
+ 'audio_Clock_query_prepare_stage': 2,
+ 'audio_Clock_query_query_calls_max': 16,
+ 'audio_Clock_query_raw_report_RAM_only': True,
+ 'audio_Clock_query_raw_report_bytes': 13000,
+ 'audio_Clock_query_raw_report_endianness': 'little',
+ 'audio_Clock_query_raw_report_format': 'RAW_V1',
+ 'audio_Clock_query_raw_report_max_append_chars': 126,
+ 'audio_Clock_query_readonly': True,
+ 'audio_Clock_query_uses_original_descriptor_not_cross_version_DT_ID': True,
+ 'wifi_CPU0_resources_GetMemoryMap_calls_max': 2,
+ 'wifi_CPU0_resources_MSA_address_assigned': False,
+ 'wifi_CPU0_resources_MSS_PIL_or_SCM_initialization': False,
+ 'wifi_CPU0_resources_PSCI_calls_max': 7,
+ 'wifi_CPU0_resources_PSCI_function': 3288334340,
+ 'wifi_CPU0_resources_PSCI_target_MPIDRs': [256, 512, 768, 1024, 1280, 1536, 1792],
+ 'wifi_CPU0_resources_PSCI_uses_SMC': True,
+ 'wifi_CPU0_resources_RMTFS_address_assigned': False,
+ 'wifi_CPU0_resources_Reserved_is_free_or_owned': False,
+ 'wifi_CPU0_resources_SFPB_writes': False,
+ 'wifi_CPU0_resources_SMEM_reads': 0,
+ 'wifi_CPU0_resources_actual_observations_proven': False,
+ 'wifi_CPU0_resources_after_NC_before_console_and_PON': True,
+ 'wifi_CPU0_resources_all_OFF_is_instantaneous_not_exclusive': True,
+ 'wifi_CPU0_resources_before_CPU_ON': True,
+ 'wifi_CPU0_resources_cache_after_fresh_limit_ticks': 3840000,
+ 'wifi_CPU0_resources_default_OFF': True,
+ 'wifi_CPU0_resources_descriptor_version': 1,
+ 'wifi_CPU0_resources_exact_cache_witness_required': True,
+ 'wifi_CPU0_resources_external_SError_recoverable': False,
+ 'wifi_CPU0_resources_firmware_RAM_log_capacity': 131072,
+ 'wifi_CPU0_resources_firmware_RAM_log_overflow_sticky': True,
+ 'wifi_CPU0_resources_frequency': 19200000,
+ 'wifi_CPU0_resources_full_raw_buffers_preserved': True,
+ 'wifi_CPU0_resources_hardware_MPU_or_VMID_query': False,
+ 'wifi_CPU0_resources_map_buffer_capacity': 8192,
+ 'wifi_CPU0_resources_map_buffer_count': 2,
+ 'wifi_CPU0_resources_native_permission': False,
+ 'wifi_CPU0_resources_no_runtime_or_USB_command': True,
+ 'wifi_CPU0_resources_nonreturning_service_wall_time_bound_proven': False,
+ 'wifi_CPU0_resources_partial_GetMemoryMap_output_extent_unknown': True,
+ 'wifi_CPU0_resources_physical_map_PSCI_body': True,
+ 'wifi_CPU0_resources_physical_map_PSCI_compiled_out': False,
+ 'wifi_CPU0_resources_prepare_stage': 2,
+ 'wifi_CPU0_resources_radio_or_transmit': False,
+ 'wifi_CPU0_resources_raw_maps_offset': 1032,
+ 'wifi_CPU0_resources_raw_report_RAM_only': True,
+ 'wifi_CPU0_resources_raw_report_bytes': 17416,
+ 'wifi_CPU0_resources_raw_report_endianness': 'little',
+ 'wifi_CPU0_resources_raw_report_format': 'RAW_V1',
+ 'wifi_CPU0_resources_readonly': True,
+ 'wifi_CPU0_resources_resource_allocation': False,
+ 'wifi_CPU0_resources_resource_ranges': [[2386558976, 125829120],
+                                         [2526019584, 2097152],
+                                         [2385510400, 1048576],
+                                         [2347761664, 5242880],
+                                         [2353090560, 8192],
+                                         [2354053120, 31457280]],
+ 'wifi_CPU0_resources_resource_writes': False,
+ 'wifi_CPU0_resources_single_boot_ticket': True}
+
+def resources_clock_scope(d):
+    actual={k:v for k,v in d.items() if k.startswith(RESOURCES_PREFIX) or k.startswith(CLOCK_QUERY_PREFIX)}
+    paths={'shim/polaris/uefi-wifi-resources-readonly.h','shim/polaris/uefi-audio-clock-query.h'}
+    if not actual or _exact(actual,RESOURCES_CLOCK_DISABLED):
+        if paths.intersection(d.get('inputs',{})):
+            raise ValueError('resource/Clock source cannot hide behind absent/disabled metadata')
+        return False
+    policy=RESOURCES_CLOCK_0142
+    if (type(policy) is not dict or not policy.get('firmware_source') or
+        not _exact(actual,RESOURCES_CLOCK_PHYSICAL_FIELDS) or not _exact(d.get('inputs'),policy.get('inputs')) or
+        d.get('kernel_sha256')!=policy.get('kernel') or d.get('payload_sha256')!=policy.get('payload') or
+        not paths.issubset(d.get('inputs',{})) or d.get('wifi_CPU0_normal_nc_firstread_readonly') is not True or
+        d.get('audio_I2C_cache_readonly') is not True or d.get('wifi_CPU0_firstread_readonly') is not False):
+        raise ValueError('resource/Clock observations require their exact separately committed-source0142 combined scope')
+    return True
+
+
 def audio_i2c_cache_scope(d):
     actual={k[len(AUDIO_I2C_PREFIX):]:v for k,v in d.items() if k.startswith(AUDIO_I2C_PREFIX)}
     if not actual or _exact(actual,AUDIO_I2C_DISABLED):
         if 'shim/polaris/uefi-audio-i2c-cache.h' in d.get('inputs',{}):
             raise ValueError('audio I2C image read cannot hide behind absent/disabled metadata')
         return False
-    policy=AUDIO_I2C_0141
+    policy=RESOURCES_CLOCK_0142 if resources_clock_scope(d) else AUDIO_I2C_0141
     if (type(policy) is not dict or not policy.get('firmware_source') or
         not _exact(actual,AUDIO_I2C_PHYSICAL_FIELDS) or not _exact(d.get('inputs'),policy.get('inputs')) or
         d.get('kernel_sha256')!=policy.get('kernel') or d.get('payload_sha256')!=policy.get('payload') or
@@ -385,7 +602,7 @@ def normal_nc_firstread_scope(d):
         if 'shim/polaris/uefi-wifi-firstread-normal-nc.h' in d.get('inputs',{}):
             raise ValueError('NormalNC firstread source cannot hide behind absent/disabled metadata')
         return False
-    policy=NORMAL_NC_0141
+    policy=RESOURCES_CLOCK_0142 if resources_clock_scope(d) else NORMAL_NC_0141
     if (type(policy) is not dict or not policy.get('firmware_source') or
         not _exact(actual,NORMAL_NC_PHYSICAL_FIELDS) or
         not _exact(d.get('inputs'),policy.get('inputs')) or
@@ -462,6 +679,7 @@ def runtime_model_scope(m):
 
 def exact_scope(d,build=None):
     profile=target_profile(build or d.get('userland_build','20H392'))
+    resources_clock_scope(d)
     firstread_scope(d)
     normal_nc_firstread_scope(d)
     audio_i2c_cache_scope(d)
@@ -517,6 +735,12 @@ def admit(d,models,ci,pre,review,build='20H392'):
                 flag=m.get('raw_fields',{}).get('AUDIO_I2C_CACHE_SOFTWARE_PHYSICAL_IMAGE_INSPECTION_COMPILED_OUT')
                 if type(flag) is not int or flag!=1:
                     raise ValueError('reviewed audio model must compile out all physical image inspection')
+            if resources_clock_scope(d):
+                for name in ('WIFI_RESOURCES_SOFTWARE_PHYSICAL_MAP_PSCI_COMPILED_OUT',
+                             'AUDIO_CLOCK_QUERY_SOFTWARE_PHYSICAL_ORIGINAL_QUERY_COMPILED_OUT'):
+                    flag=m.get('raw_fields',{}).get(name)
+                    if type(flag) is not int or flag!=1:
+                        raise ValueError('combined resource/Clock model must compile out physical bodies: '+name)
     if (review.get('passed') is not True or review.get('may_boot_iOS') is not True or
         review.get('may_write_userdata') is not False or pre.get('may_boot_iOS') is not True or
         pre.get('may_write_userdata') is not False or pre.get('full_image_sha256')!=profile['root'] or

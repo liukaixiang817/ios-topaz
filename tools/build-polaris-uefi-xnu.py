@@ -21,6 +21,62 @@ import zlib
 def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
 
 
+def resource_clock_metadata(enabled,qemu,clock_binding,clock_pe):
+    """Explicit observations; neither a memory descriptor nor a clock bit grants ownership."""
+    pfr=dict(readonly=enabled,default_OFF=True,physical_map_PSCI_body=bool(enabled and not qemu),
+        actual_observations_proven=False,GetMemoryMap_calls_max=2 if enabled else None,
+        map_buffer_count=2 if enabled else None,map_buffer_capacity=8192 if enabled else None,
+        descriptor_version=1 if enabled else None,full_raw_buffers_preserved=True if enabled else None,
+        partial_GetMemoryMap_output_extent_unknown=True if enabled else None,
+        PSCI_function=0xc4000004 if enabled else None,PSCI_calls_max=7 if enabled else None,
+        PSCI_uses_SMC=True if enabled else None,
+        PSCI_target_MPIDRs=[0x100,0x200,0x300,0x400,0x500,0x600,0x700] if enabled else None,
+        all_OFF_is_instantaneous_not_exclusive=True if enabled else None,prepare_stage=2 if enabled else None,
+        after_NC_before_console_and_PON=True if enabled else None,before_CPU_ON=True if enabled else None,
+        exact_cache_witness_required=True if enabled else None,cache_after_fresh_limit_ticks=3840000 if enabled else None,
+        frequency=19200000 if enabled else None,single_boot_ticket=True if enabled else None,
+        raw_report_format='RAW_V1' if enabled else None,raw_report_endianness='little' if enabled else None,
+        raw_report_bytes=17416 if enabled else None,raw_maps_offset=1032 if enabled else None,
+        raw_report_RAM_only=True if enabled else None,firmware_RAM_log_capacity=131072 if enabled else None,
+        firmware_RAM_log_overflow_sticky=True if enabled else None,
+        resource_ranges=[[0x8e400000,0x7800000],[0x96900000,0x200000],[0x8e300000,0x100000],
+            [0x8bf00000,0x500000],[0x8c415000,0x2000],[0x8c500000,0x1e00000]] if enabled else None,
+        Reserved_is_free_or_owned=False,RMTFS_address_assigned=False,MSA_address_assigned=False,
+        SMEM_reads=0,SFPB_writes=False,resource_allocation=False,resource_writes=False,
+        MSS_PIL_or_SCM_initialization=False,hardware_MPU_or_VMID_query=False,native_permission=False,
+        radio_or_transmit=False,no_runtime_or_USB_command=True,
+        external_SError_recoverable=False,nonreturning_service_wall_time_bound_proven=False,
+        physical_map_PSCI_compiled_out=bool(enabled and qemu))
+    clock=dict(readonly=enabled,default_OFF=True,physical_original_query_body=bool(enabled and not qemu),
+        actual_observations_proven=False,original_PE=clock_pe,
+        original_PE_whole_SHA256=clock_binding['source_whole_sha256'] if clock_binding else None,
+        binding_SHA256=clock_binding['binding_sha256'] if clock_binding else None,
+        original_image_bytes=266240 if enabled else None,immutable_hashes=6 if enabled else None,
+        methods=['IsEnabled','IsOn'] if enabled else None,query_calls_max=16 if enabled else None,
+        descriptor_targets=15 if enabled else None,possible_GCC_baseline_targets=8 if enabled else None,
+        blocked_CAMCC_targets=7 if enabled else None,CAMCC_queries_NOT_ISSUED=True if enabled else None,
+        parent_clock_ON_does_not_qualify_CAMCC=True if enabled else None,
+        actual_Device_identity_and_EFI_MMIO_required=True if enabled else None,
+        camera_descriptor_targets=9 if enabled else None,audio_readonly_targets=3 if enabled else None,
+        MSS_GCC_readonly_targets=3 if enabled else None,uses_original_descriptor_not_cross_version_DT_ID=True if enabled else None,
+        indirect_GCC_MMIO_read_body=bool(enabled and not qemu),CAMCC_indirect_MMIO_read_body=False,
+        exact_I2C_cache_required=True if enabled else None,prepare_stage=2 if enabled else None,
+        after_complete_WiFi_diagnostics=True if enabled else None,before_CPU_ON_PON_and_mask=True if enabled else None,
+        independent_clock_fresh_limit_ticks=3840000 if enabled else None,frequency=19200000 if enabled else None,
+        raw_report_format='RAW_V1' if enabled else None,raw_report_endianness='little' if enabled else None,
+        raw_report_bytes=13000 if enabled else None,raw_report_max_append_chars=126 if enabled else None,
+        combined_I2C_Clock_RAM_report_bytes=37001 if enabled else None,
+        raw_report_RAM_only=True if enabled else None,outer_status_may_drop_inner_DAL_status=True if enabled else None,
+        diagnostic_error_zero_is_not_complete_baseline=True if enabled else None,
+        booleans_are_not_raw_CSR=True if enabled else None,clock_or_pin_ownership_proven=False,
+        GetFreq_Enable_Disable_Open=False,clock_reset_voltage_or_PLL_writes=False,I2C_CCI_or_TAS_methods=False,
+        MMIO_writes=False,SE5_or_camera_bus_lease=False,PCM_or_camera_completion=False,native_permission=False,
+        no_runtime_or_USB_command=True,external_SError_recoverable=False,
+        physical_original_query_compiled_out=bool(enabled and qemu))
+    return dict({('wifi_CPU0_resources_'+k):v for k,v in pfr.items()},
+                **{('audio_Clock_query_'+k):v for k,v in clock.items()})
+
+
 def symbols(raw):
     if len(raw)<32 or raw[:4]!=b'\xcf\xfa\xed\xfe':raise ValueError('requires kernel Mach-O')
     count,commands=struct.unpack_from('<II',raw,16)
@@ -314,6 +370,14 @@ def main():
                     help='default-OFF separate exactNormalNC44/NS/OuterShareable CPU0 read;18architecturalLDR max, not a buscap; original cache and guarded native runtime required')
     ap.add_argument('--audio-i2c-cache-pe',type=Path,
                     help='default-OFF exact original I2CDxe image-RAM cache witness; no I2C/DAL/MMIO/pointer follow; after completeWiFi diagnostics andbeforePON')
+    ap.add_argument('--wifi-resources-readonly',action='store_true',
+                    help='default-OFF exact combined pre-CPU_ON resource observation: two full maps and seven AFFINITY_INFO queries; no free/owner grant')
+    ap.add_argument('--audio-clock-query-pe',type=Path,
+                    help='default-OFF exact original ClockDxe readonly IsEnabled/IsOn queries; requires the combined resource/I2C/NC scope')
+    ap.add_argument('--audio-clock-query-camera-readonly',action='store_true',
+                    help='explicit two GCC camera-parent readonly targets plus seven blocked CAMCC descriptors; no CAMCC query, CCI or rail writer')
+    ap.add_argument('--audio-clock-query-mss-readonly',action='store_true',
+                    help='explicit three exact original MSS GCC branch readonly baselines; no cold-MSS MMIO, PLL, vote, reset or PIL write')
     ap.add_argument('--efi-application',action='store_true',help='selected application, never ReadyToBoot interception')
     ap.add_argument('--disk-guid',type=uuid.UUID,help='exact GPT partition UUID for read-only disk payload')
     ap.add_argument('--disk-start-lba',type=int)
@@ -364,6 +428,22 @@ def main():
         ap.error('NormalNC CPU0 first-read requires exact --wifi-firmware-cache-pe, --wifi-readonly and guarded native runtime')
     if a.wifi_cpu0_firstread and (not a.wifi_firmware_cache_pe or not a.wifi_readonly or not native_runtime):
         ap.error('CPU0 first-read requires exact --wifi-firmware-cache-pe, --wifi-readonly and guarded native runtime')
+    combined_resources=bool(a.wifi_resources_readonly or a.audio_clock_query_pe or a.audio_clock_query_camera_readonly or a.audio_clock_query_mss_readonly)
+    if combined_resources and (not a.wifi_resources_readonly or not a.audio_clock_query_pe or
+        not a.audio_clock_query_camera_readonly or not a.audio_clock_query_mss_readonly or not a.audio_i2c_cache_pe or
+        not a.wifi_cpu0_firstread_normal_nc or not a.wifi_firmware_cache_pe or not a.wifi_readonly or not native_runtime):
+        ap.error('resource/Clock queries require the explicit combined exact NC, SmemDxe, I2CDxe, ClockDxe and GCC readonly scope')
+    audio_clock_header=None;audio_clock_binding=None;audio_clock_pe_relative=None
+    if a.audio_clock_query_pe:
+        try:
+            clock_pe=a.audio_clock_query_pe.resolve(strict=True)
+            audio_clock_pe_relative=str(clock_pe.relative_to(r))
+            spec=importlib.util.spec_from_file_location('polaris_audio_clock_identity',r/'tools/polaris-audio-clock-identity.py')
+            module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+            audio_clock_header,audio_clock_binding=module.binding(clock_pe)
+            audio_clock_binding['binding_sha256']=hashlib.sha256(audio_clock_header.encode()).hexdigest()
+        except (OSError,ValueError) as error:
+            ap.error('Clock query PE must be the exact original project-local image: '+str(error))
     audio_header=None;audio_binding=None;audio_pe_relative=None
     if a.audio_i2c_cache_pe:
         if not native_runtime or not a.wifi_readonly or not a.wifi_firmware_cache_pe:
@@ -474,6 +554,9 @@ def main():
     if audio_binding:
         (out/'uefi-audio-i2c-cache-binding.h').write_text(audio_header)
         (out/'audio-i2c-cache-binding.json').write_text(json.dumps(audio_binding,indent=2)+'\n')
+    if audio_clock_binding:
+        (out/'uefi-audio-clock-binding.h').write_text(audio_clock_header)
+        (out/'audio-clock-query-binding.json').write_text(json.dumps(audio_clock_binding,indent=2)+'\n')
     raw=a.payload.read_bytes();k=a.kernel.read_bytes()
     sys.path.insert(0,str(r/'tools'));import mkpayload
     tokens=raw[0x48:0x2a8].split(b'\0',1)[0].split()
@@ -647,6 +730,10 @@ def main():
 #define EFI_XNU_WIFI_FIRSTREAD_AVAILABLE {int(a.wifi_cpu0_firstread)}
 #define EFI_XNU_WIFI_NORMAL_NC_FIRSTREAD_AVAILABLE {int(a.wifi_cpu0_firstread_normal_nc)}
 #define EFI_XNU_AUDIO_I2C_CACHE_AVAILABLE {int(audio_binding is not None)}
+#define EFI_XNU_WIFI_RESOURCES_AVAILABLE {int(a.wifi_resources_readonly)}
+#define EFI_XNU_AUDIO_CLOCK_QUERY_AVAILABLE {int(audio_clock_binding is not None)}
+#define EFI_XNU_AUDIO_CLOCK_QUERY_CAMERA_READONLY {int(a.audio_clock_query_camera_readonly)}
+#define EFI_XNU_AUDIO_CLOCK_QUERY_MSS_READONLY {int(a.audio_clock_query_mss_readonly)}
 #define EFI_XNU_CPU {target}u
 #define EFI_XNU_BOOT_CPU_TOKEN "polarisbootcpu={target}"
 #define EFI_XNU_CPUS_TOKEN "cpus={a.kernel_cpus}"
@@ -718,9 +805,13 @@ def main():
                  'tools/polaris-wifi-firmware-identity.h',cache_pe_relative]
     if a.wifi_cpu0_firstread:inputs.append('shim/polaris/uefi-wifi-firstread.h')
     if a.wifi_cpu0_firstread_normal_nc:inputs.append('shim/polaris/uefi-wifi-firstread-normal-nc.h')
+    if a.wifi_resources_readonly:inputs.append('shim/polaris/uefi-wifi-resources-readonly.h')
     if audio_binding:
         inputs+=['shim/polaris/uefi-audio-i2c-cache.h','tools/polaris-audio-i2c-firmware-identity.py',
                  'tools/polaris-audio-i2c-firmware-identity.h',audio_pe_relative]
+    if audio_clock_binding:
+        inputs+=['shim/polaris/uefi-audio-clock-query.h','tools/polaris-audio-clock-identity.py',
+                 'tools/polaris-audio-clock-identity.h',audio_clock_pe_relative]
     if a.host_utc_sync:
         inputs+=['tools/polaris-clock-sync.h','tools/polaris-clock-uefi.h',
                  'tools/polaris-clock-native.h','tools/polaris-clock-host.py']
@@ -928,6 +1019,7 @@ def main():
                   RAM_base=0x130000000 if a.test_qemu else 0x180000000,RAM_bytes=0xfc8a0000,
                   firmware_core_reserved=0,firmware_services_exited=False,
                   device_execution_tested=False,inputs={p:sha(r/p) for p in inputs})
+    manifest.update(resource_clock_metadata(a.wifi_resources_readonly,a.test_qemu,audio_clock_binding,audio_clock_pe_relative))
     (out/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
     print(json.dumps({k:manifest[k] for k in ['artifact','sha256','bytes','QEMU_variant','device_execution_tested']}))
 
