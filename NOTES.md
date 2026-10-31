@@ -34,6 +34,54 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0135 four-feature candidate READY; newimagee809ae38a36a; currentPHONE stillLIVE0134
+
+- Actualnewkernelddd4c5afd65e7fd27acdd41b2fd3a5662e03ec57b3ddc274e398061c8ca09628
+  /17306760B source0f17917/CI41184619436/job124488874895 SUCCESS. Physical
+  driver0001PASS; corrected19.2MHzSOFTWAREmodels0002both19namedchecksPASS,
+  38.83/39.43s, actualclockDATA256Breadback/physicalbatteryreadsoff/noUTCSET.
+  Modelsarenotphysicalbattery/UTC/USB/SD845/radioproof. Old0001wrongDTkept
+  butexcluded; no110sdeadline/freshness/PC_FREQ/physicalprotectionchange.
+- Pack/wholeEDK2decode/offlinefreeze71912 ENDED0. Newimage
+  e809ae38a36aaea58b63cbe6cd34dedeed5c5896e5d2e0d294927b46a360d2f1 /5951488B.
+  WholeactualunmodifiedEDK2decode28184776B exactmatch; original81FW/
+  SimpleInit/BootShim/DTB retained. Exactnewgraphicsaeaf22.36MB onlyinit differs,
+  original602Bargs/root915142map/512MiBRAMCOW/CPU/GPU/WLED retained. Full
+  source-delta244protectedfilesunchanged +actualkernel/DT/symbol/GPU6files
+  freezePASS. No0135boot.json/noimage/payloadsentyet.
+- NEXT commithostprofile+currenthandoff/push, COPY/hashfreezecurrentevidence,
+  frozen0134normaldrain+fullraw/WLEXIT05/WLR5receipt -> independentactual
+  expectedFASTBOOT -> authorizedONE0135image/exactpayload -> targetcapture,
+  onehostUTCsync/status, wallpaperUI andactualbattery. WiFiwillreportreal
+  missingMPU/readwitnessrefusal, stillnoscanning/join/network. NoFitnessrepro.
+  NoactiveUSBworker/nohumanpending; 45175/59082/49593/71912 allENDED.
+
+### 0135 CI SUCCESS/actualddd4kernel +physicaldriverPASS; correctedSOFTWAREclockDT model0002 running; PHONE LIVE0134
+
+- UniqueCI41184619436/job124488874895 SUCCESS, exactsource0f1791771259841609fc2c4904fbccb579c343b1.
+  Actualkernelddd4c5afd65e7fd27acdd41b2fd3a5662e03ec57b3ddc274e398061c8ca09628
+  /17306760B verifiedZIPCRC/SHA256SUMS/profile. Hostd12764f pushed(no extraCI).
+  Physicaldriver0001compile/linkPASS andstrictactual20F66newservicescopePASS;
+  runtimeprofileatomicallyboundactualnative/source/CI/GFXaeaf+runtime_services.
+- FirstSOFTWAREmodel0001 revealedrealDT mismatch: guestCNTFRQ19.2MHz while
+  4CPUthreeDTtimebasevaluesstill62.5MHz. delayed0001raw19checksPASS106.51s,
+  butnotadmittedtimingproof; secondinterruptedonlyafterknownmismatch andall
+  offlineworkersENDED. Preservedoriginalresults/logs. Notphysicalclockfailure.
+- Exclusive0002modelDT only12u32valuesnow19.2MHz; originalmodelargs/root/kernel
+  unchanged. OfficialrunnerrejectscanonicalDTproperty/commandmismatchbefore
+  QEMU,1affectedpositive/negativefixturePASS, original110sdeadline/19named
+  checks/PC_FREQ/PON/WLED/gatesunchanged. Twoactualnewkernelmodels0002running
+  worker49593; physicaldriver0001notrebuilt, nonewCI/phoneimageaction.
+- 244oldprotectedsourcefilesbyteidentical; onlyreviewedadditiveUTC+PBATentry/
+  fixedUTCUSBdispatch allowed bysource-delta-proof. ExistingCPU/GPU/WLED/
+  thermal/nativeVFSRAMCOW protectionsretained. WiFiownsourceauditfindsnoMPU
+  readwitness; nativeexistingnofaultcopycannotreadreservedSMEMbelowmanaged
+  RAM, currentcandidatewilltruthfullyrefuse/error6, notscan/join.
+- Lastboundedactualstate08:29:51 frozen0134controllerPASSkernel-entered,
+  workerENDED0. NoUSBworkeractive, nohumanpending. NEXT model0002PASS ->
+  package/fullcodec/freeze+hostcommit -> normalexitold0134 -> independent
+  expectedFASTBOOT -> ONEnew0135image/exactpayload, fourfeaturescapture.
+
 ### 0135 four-feature source0f17917 PUSHED; uniqueCI41184619436 inprogress; PHONE remainsLIVE0134
 
 - Source0f1791771259841609fc2c4904fbccb579c343b1 committed/pushed. OneCI41184619436

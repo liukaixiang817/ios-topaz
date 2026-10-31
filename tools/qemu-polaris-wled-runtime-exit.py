@@ -29,6 +29,34 @@ def clock_slot_prepared(raw):
         request[2:6]==(0,0,0,0) and request[6:8]==(19200000,1) and request[8:]==(0,)*8)
 
 
+def clock_model_timebase(raw,command):
+    """The real payload ADT and explicit SOFTWARE CPU must use one timebase."""
+    import adt
+    if (command.count('-cpu')!=1 or command.count('-accel')!=1 or
+        command.index('-cpu')+1>=len(command) or
+        command[command.index('-cpu')+1]!='cortex-a55,cntfrq=19200000' or
+        command.index('-accel')+1>=len(command) or command[command.index('-accel')+1]!='tcg'):
+        raise ValueError('clock model requires explicit SOFTWARE19.2MHz CPU/counter configuration')
+    if len(raw)<72:raise ValueError('clock model payload header truncated')
+    at,size=struct.unpack_from('<QQ',raw,32)
+    if at>len(raw) or not 8<=size<=len(raw)-at:raise ValueError('clock model actual ADT bounds')
+    actual=raw[at:at+size]
+    try:tree,used=adt.parse(actual)
+    except (struct.error,UnicodeError,RecursionError) as error:
+        raise ValueError('clock model actual ADT malformed') from error
+    if used!=size or adt.serialize(tree)!=actual:raise ValueError('clock model requires its complete canonical ADT')
+    nodes=[n for n in tree.children if n.name=='cpus']
+    if len(nodes)!=1 or len(nodes[0].children)!=4:raise ValueError('clock model requires the actual four CPU timebases')
+    properties=('timebase-frequency','peripheral-frequency','fixed-frequency')
+    for cpu in nodes[0].children:
+        for name in properties:
+            entries=[(flags,value) for key,flags,value in cpu.props if key==name]
+            if entries!=[(0,struct.pack('<I',19200000))]:
+                raise ValueError('clock model actual CPU '+cpu.name+' requires unique4B LE19200000 '+name)
+    return dict(actual_ADT_sha256=hashlib.sha256(actual).hexdigest(),CPUs=4,
+        properties=list(properties),property_bytes=4,little_endian=True,frequency_hz=19200000)
+
+
 def main():
     ap=argparse.ArgumentParser(description=__doc__)
     for n in ('driver-manifest','kernel','payload','output'):ap.add_argument('--'+n,type=Path,required=True)
@@ -45,14 +73,16 @@ def main():
     for n,digest in m['inputs'].items():
         p=(root/n).resolve()
         if root not in p.parents or sha(p)!=digest:raise ValueError('changed fixture input '+n)
-    out=a.output.resolve();out.mkdir(parents=True,exist_ok=False);esp=out/'esp/EFI/BOOT';esp.mkdir(parents=True)
-    shutil.copyfile(app,esp/'BOOTAA64.EFI');shutil.copyfile(a.payload,out/'esp/PAYLOAD.BIN');shutil.copyfile('/opt/homebrew/share/qemu/edk2-arm-vars.fd',out/'vars.fd')
+    out=a.output.resolve();clock_DT=None
     cmd=['/opt/homebrew/bin/qemu-system-aarch64','-M','virt,gic-version=3,virtualization=off','-cpu','cortex-a55','-smp','8','-m','8G','-display','none','-monitor','none','-nic','none','-serial','file:'+str(out/'serial.log'),'-qmp','stdio','-no-reboot','-drive','if=pflash,format=raw,readonly=on,file=/opt/homebrew/share/qemu/edk2-aarch64-code.fd','-drive','if=pflash,format=raw,file='+str(out/'vars.fd'),'-drive','if=none,id=esp,format=raw,readonly=on,file=fat:ro:'+str(out/'esp'),'-device','virtio-blk-pci,drive=esp','-device','virtio-gpu-pci']
     if clock_binding is not None:
         # Explicit SOFTWARE machine property, never a guest CNT write or a
         # relaxed physical PC_FREQUENCY guard. The legacy command is unchanged.
         cmd[cmd.index('-cpu')+1]='cortex-a55,cntfrq=19200000'
         cmd[1:1]=['-accel','tcg']
+        clock_DT=clock_model_timebase(a.payload.read_bytes(),cmd)
+    out.mkdir(parents=True,exist_ok=False);esp=out/'esp/EFI/BOOT';esp.mkdir(parents=True)
+    shutil.copyfile(app,esp/'BOOTAA64.EFI');shutil.copyfile(a.payload,out/'esp/PAYLOAD.BIN');shutil.copyfile('/opt/homebrew/share/qemu/edk2-arm-vars.fd',out/'vars.fd')
     began=time.monotonic();error=None;checks={};values={};attempts=[]
     with (out/'qemu.log').open('wb') as log:
         p=subprocess.Popen(cmd,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=log)
@@ -146,7 +176,7 @@ def main():
         driver_sha256=sha(app),runner_sha256=sha(Path(__file__)),SOFTWARE_PMIC=True,RAM_USB_sink=True,physical_USB_or_PMIC_emulation=False,physical_admission=False,actual_guest_reset_proven=False)
     if clock_binding is not None:
         result.update(QEMU_command=cmd,SOFTWARE_CNTFRQ_hz=19200000,host_UTC_SET_sent=False,
-            host_UTC_sync_applied_proven=False,
+            host_UTC_sync_applied_proven=False,actual_clock_model_DT=clock_DT,
             clock_mailbox_sha256=sha(out/'clock-mailbox.bin') if (out/'clock-mailbox.bin').is_file() else None,
             battery_physical_PMIC_reads_compiled_out=m.get('battery_physical_PMIC_reads_compiled_out') is True,
             battery_SOFTWARE_disabled_observed=values.get('BATTERY_SOFTWARE_PHYSICAL_READS_COMPILED_OUT')==1)

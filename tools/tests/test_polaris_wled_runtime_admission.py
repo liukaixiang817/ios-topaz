@@ -175,5 +175,31 @@ class ModelClockFixture(unittest.TestCase):
             bad=raw[:];struct.pack_into('<Q',bad,index*8,value)
             self.assertFalse(self.runner.clock_slot_prepared(bad),str(index))
 
+    def test_clock_enabled_actual_payload_DT_and_CPU_counter_must_match(self):
+        import adt,struct
+        command=['qemu','-accel','tcg','-cpu','cortex-a55,cntfrq=19200000']
+        tree=adt.Node();cpus=adt.Node();cpus.props=[('name',0,b'cpus\0')];tree.children=[cpus]
+        names=('timebase-frequency','peripheral-frequency','fixed-frequency')
+        for i in range(4):
+            cpu=adt.Node();cpu.props=[('name',0,('cpu'+str(i)+'\0').encode())]
+            cpu.props += [(n,0,struct.pack('<I',19200000)) for n in names];cpus.children.append(cpu)
+        def payload(t):
+            blob=adt.serialize(t);raw=bytearray(72);struct.pack_into('<QQ',raw,32,72,len(blob));return raw+blob
+        self.assertEqual(self.runner.clock_model_timebase(payload(tree),command)['frequency_hz'],19200000)
+        for name in names:
+            for change in ('old62_5MHz','u64','placeholder','duplicate','missing'):
+                bad=copy.deepcopy(tree);cpu=bad.children[0].children[3]
+                index=next(i for i,p in enumerate(cpu.props) if p[0]==name)
+                if change=='old62_5MHz':cpu.props[index]=(name,0,struct.pack('<I',62500000))
+                elif change=='u64':cpu.props[index]=(name,0,struct.pack('<Q',19200000))
+                elif change=='placeholder':cpu.props[index]=(name,1,struct.pack('<I',19200000))
+                elif change=='duplicate':cpu.props.append(cpu.props[index])
+                else:cpu.props.pop(index)
+                with self.assertRaises(ValueError,msg=(name,change)):
+                    self.runner.clock_model_timebase(payload(bad),command)
+        with self.assertRaises(ValueError):self.runner.clock_model_timebase(payload(tree),['qemu','-cpu','cortex-a55'])
+        bad=payload(tree);at,size=struct.unpack_from('<QQ',bad,32);bad+=b'xxxx';struct.pack_into('<Q',bad,40,size+4)
+        with self.assertRaises(ValueError):self.runner.clock_model_timebase(bad,command)
+
 
 if __name__=='__main__':unittest.main()
