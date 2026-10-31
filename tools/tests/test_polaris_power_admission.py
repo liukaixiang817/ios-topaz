@@ -6,7 +6,7 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from polaris_wled_runtime_admission import (
-    GCD_CLOCK_0154, GCD_CLOCK_0150, POWER_PREFIX, POWER_SOURCE_PATHS,
+    GCD_CLOCK_0155, GCD_CLOCK_0154, GCD_CLOCK_0150, POWER_PREFIX, POWER_SOURCE_PATHS,
     original_gcd_policy, original_gcd_model_markers)
 
 
@@ -16,6 +16,22 @@ def descriptor(profile):
 
 
 class ConditionalPowerAdmission(unittest.TestCase):
+    def test_new_exact_cmddb_region_requires_new_source_and_scope(self):
+        d = descriptor(GCD_CLOCK_0155)
+        self.assertIs(original_gcd_policy(d), GCD_CLOCK_0155)
+        self.assertIs(original_gcd_policy(descriptor(GCD_CLOCK_0154)), GCD_CLOCK_0154)
+        self.assertNotEqual(GCD_CLOCK_0155['power_scope_review'], GCD_CLOCK_0154['power_scope_review'])
+        changes = [('CmdDb_RO_base', 0x861e0000), ('CmdDb_RO_base', 0x85fe1000),
+                   ('CmdDb_RO_bytes', 2097152), ('CmdDb_RO_not_SMEM_writer', 1)]
+        for key, value in changes:
+            bad = copy.deepcopy(d)
+            bad[POWER_PREFIX+key] = value
+            with self.subTest(key=key, value=value), self.assertRaises(ValueError):
+                original_gcd_policy(bad)
+        d['inputs'] = copy.deepcopy(GCD_CLOCK_0154['inputs'])
+        with self.assertRaises(ValueError):
+            original_gcd_policy(d)
+
     def test_independent_scope_retains_build_time_absence_of_hardware_proof(self):
         d = descriptor(GCD_CLOCK_0154)
         self.assertIs(original_gcd_policy(d), GCD_CLOCK_0154)

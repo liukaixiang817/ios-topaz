@@ -34,7 +34,29 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0154 last actual state22:30; NEW0155 exact CmdDb RO fix / full link and affected checks PASS; host profile NOT READY
+### CURRENT0154 last actual state22:30; NEW0155 exact CmdDb RO fix / complete host profile and original81 codec PASS; freeze pending
+
+- FW84ef767ca0212b0ffdba8bb1411a093c3b313333 commits the affected source,
+  linked80inputs8794ba7f and38CmdDb/17parent software cases. Two new SERIAL
+  terminal models each19checks pass; full evidence under0155/wifi.
+- NEW literal GCD_CLOCK_0155 pins162Power/GCDmetadata,94resource fields and
+  new scope-review7562abcc. All9 historical literal profiles remain unchanged;
+ 20 affected host cases pass, including exact base/size/typed flag/source
+  rejection. Actual full no-mock admit PASS000b697e, using fresh0154 reviewed
+  roots/NV and unchanged nativeCI/kernel/63cbpayload/GPUf790.
+- NEW image packaging preserves81original firmware entries, SimpleInit/BootShim/
+  DTB; unmodified original EDK2 GetInfo+whole decode38905032B PASS. No new
+  physical CmdDb descriptor/AT/read/Query or ARC vote has run. Firmware build
+  flags candidate_ready=false/ownership_not_observed remain truthful; runtime
+  qualification is still required by the conditional experiment.
+- Sole current phone/controller remains0154 frozen0003, consumed original
+  boot.json. Its directed state22:30:56Z kernel-entered passed. No human action
+  pending. Complete independent source COPY/ONE helper before normal native
+  drain+fullappendraw/WLEXIT05/WLR5+independent exact FASTBOOT, then ONE0155.
+  Do not replay0154/alter old manifest or use old policy for this source fix.
+  No nativeCI/fullroot audit/old models/optical cycles repeated.
+
+### HISTORY0155 exact CmdDb RO fix / full link and affected checks PASS
 
 - NEW0155 fixes BOTH normal CmdDb reader and masked recheck to the exact original
   runtime85fe0000/128KiB namespace observed in0154. Own DT's c3f000c indirection
