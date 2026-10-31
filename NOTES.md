@@ -93,8 +93,15 @@ early samples only. On0029 the human already confirmed boot complete and said
   mergeproof81b4001f... . PID1fixture extractor corrected to current realmain,
   original3rollback assertions unchanged; no PID1productsource changes.
 - NativeSOURCE7e9d461cef06f9a025aaedee6ef4a952d6f2de01 committed/pushed,
-  automaticONE CI41213766168/job124573937913 actualin_progress/Build asof
-  15:13Z. Do not workflow_dispatch duplicate. Newheader exact6e015e52... is private .cpp
+  automaticONE CI41213766168/job124573937913 completedSUCCESS. New kernel
+  0143/kernel-native-display-0001/kernel.development.sweet=17307080B,
+  SHA7d2482541ad93a42005c0d92a4d6def9740f76e3acde7142b0ff1b3c3f3c41bf,
+  exact7e9/Polaris/SWEET buildprofile/ZIPCRC/wholeSHA/ARM64MachO and new
+  display_fault symbol verified, artifactproofe191a2f0... . Fullartifact
+  transfer9124 cancelled ENDED241/gh-15; rangeworker4450 ENDED0 took only
+  profile/SHA/kernel24parts. Do not redownload or workflow_dispatch.
+  This newkernel is NOTinphone0142; keep frozen old82b3 controller there.
+  Newheader exact6e015e52... is private .cpp
   implementation only, no DriverKit/IDL/layout change. WiFi/GCD and audio
   onelease PAGE0/BOOK127/PGID sessions advance separately; physicalproviders
   and actualTASID/PCM/sensor/frames/CameraApp publication remain unfinished.
@@ -112,6 +119,26 @@ early samples only. On0029 the human already confirmed boot complete and said
   MGanswer was sampled; icon filtering solecause still unproved. Firstlockscreen
   still-camera result is cached, so true future sensor/frame-ready publication
   must precede initial query or use a proved controlled cache rebuild.
+- NEXT0143 still offline/unsealed, not ready to boot: nativepayloads now
+  physical63cb2395.../36459872B and model95a60871.../84410192B under0143/
+  payloads. KernelVMspans/entry/end unchanged, onlyLINKEDIT+320B, payloadfile
+  offsets+320 while wholeADT/608Bargs/f790/142rootmap stayexact. Fullbyte
+  reconstruction/Cvalidators PASS5c280eea... . No model/phone run yet.
+  WiFi owns newexact-originalDxeCore GCDgetter/FP-TPL guard+main/builder/host
+  draft; audio owns new ClockGCDadapter. OrdinaryGCD attrs0 remainsUNSET;
+  type3/CapUC/fullfixedpage/noBS RAM-reserved-unknownoverlap plus eachquery
+  actualNSDeviceAT required. 7CAMCC stillblocked, no write/ownerlease grant.
+  NewGCDRAW30000B/ClockRAW43488B require NEW256KiBlog+snapshot/hostcap.
+  GCD35 ASAN/UBSAN+actualCOFF/MachO/FP first-instruction guard PASSf012dc77;
+  Clock27cases+actualfullproviderlinkedcompile PASS5314140a (before one
+  pendingpartial-map fix). Parentfound GetMap failedbuffer notcopied; NEW
+  adapter will use fixed4096B and copy fullbuffer before statusvalidation,
+  no retry/losingpartialraw. Prestartcheck onlyafterFreePool1/finalPRE-DAIF2;
+  later reset gates inspect cached UNKNOWN, no postmask false comparison.
+  Allnew firmware source/profile/models/package/codec/freeze still unfinished;
+  never change old0142 gate/manifest after its actualrefusal. No newnativeCI.
+  Camera exact20F66/ADT/home+lock evidence d984429c... saved under0143/camera;
+  its defaultOFFpublication contract has NOphysicalprovider or DTwrite.
 
 ### Historical 0142 resource/originalClock SOURCE READY; ACTUAL Polaris FASTBOOT 14:59Z; WiFi/audio/camera unfinished, rendering repair parallel
 
