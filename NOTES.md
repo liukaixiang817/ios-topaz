@@ -34,6 +34,40 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0140 GPU7650 image READY/COPY438; actual2models+wholecodec PASS; NO boot yet; camera15file read-only preparation parallel
+
+- Pipeline28251 ENDED0, TWOactualnew82b3wholeEFI-XNU cases each19checks
+  PASS39.274/39.831s, SOFTWAREARM250029/250000us+footer250ms thenfreshpair,
+  80/82fullraw and12WLEDwrites/oneobserver; cache+battery physicalcompiledout.
+  Physicaldriverfa08d088.../792064B/47inputs; Device/NCfirstreadOFF, noSMEM
+  body. Pipeline21549 ENDED0 ONEpackage/wholeunmodifiedEDK2 decode28273864B
+  PASS/81originalFW unchanged. Image7650db002d72aa658e1c28c09c03e0874db759b59cb5d50b15a7f13e35c7fd91
+  /5959680B, manifest4e3e3b88d37b65348d04976de177cc546ea8cc476a92d5accc1676a0e8d9803b.
+- Sourceaudit89263 ENDED0 proof f157815e526c0687813a81eb978fc41cbfce204d0a92cb0947598c4697338433:
+  actual47inputs/262currentprotected/88currentcommittedsources/10literal8b7
+  COMMIT_ONLY paths, NOactive-source historicalfallback. Native41e9a87/CI
+  41205803135/82b3 andhostACKcf13048/f790 source/provenance independentlybound.
+  Fullpayloadb31ca438.../6signedfiles+FOURpreserved, original602B/root142map/
+  wallpaper/Melbourne sourcechain+fresh0139 ed39/c7d3 allreviewed.
+- Parenthelper46370 ENDED0 defaultofflinefreezePASS; helper6cc1ab9b... .
+  ParentCOPY1042 ENDED0: /private/tmp/polaris-runtime-0140-frozen-0001,
+  438independentfiles+10separate COMMIT_ONLY blobs/428imageevidence, all53
+  freshrootrawsamples included, currentworkinginputs matchcommittedHEAD.
+  Sourcefreeze8a353af4... . Casephone-gpu-retention-0001 NOboot.json,
+  no0140image/payload/PMIC/UTC sentyet. Allmodel/build/COPYworkersENDED.
+- Nextparent firstboundedtargetedcamera vendor-onlyRO extraction ifprepared
+  (own sde47 ext4/4GiB confirmed;15knownmodule/tuningpaths, not68oldfiles or
+  wholevendor dump), actualumount+FASTBOOT; no rootmount/reinstall/write.
+  ThenONE0140 image/ONEexactpayload usingfrozen0140controller plus ORIGINAL
+  manifests/newbootrecord, payload boot MUST --boot-ack-seconds90. Actual
+  state/capture/UTC/status/limitednavigation beforeanysuccessclaim. Unknown
+  ACK actualstateonly, neverreplay. Source changessharedwithfuture0141 wait
+  until0140image actuallysent; cannotinvalidateitscurrent-sourceprebootgate.
+- Currentphone lastactualFASTBOOT13:26 afterzero-prestartreset, nohumanpending.
+  ActualGPUacceptance/hits/stutterbenefit notyetproven; f790staticcounters
+  notexported/MADVISE mixednativebin/perfargabsent. ENV1 isn'thit evidence,
+  old0138startup isn'tmatchedAB. Onlyclaimwhatnewpixels/guards/logsprove.
+
 ### 0140 actualnewkernel82b3 CI SUCCESS; physicaldriver/payload built, TWOcurrentmodels running; PHONE stillFASTBOOT
 
 - UniqueCI41205803135/job124550530596 actualSUCCESS/source41e9a87.
