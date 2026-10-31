@@ -34,6 +34,41 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0148 remains last actual LIVE18:35; NEW0149 private RPMh lifecycle offline verified, NOT boot-ready
+
+- Serial ONLY Wi-Fi. No USB/phone change in0149 work so far; ONLY frozen0148
+  controller/consumedbootrecord below controls the phone. No new native source
+  or kernelCI. Audio/camera/children remain stopped. scan/join/data=false.
+- New default-OFF --wifi-rpmh-private-client integrates original noThis
+  CreateNoExplicit(slot0x30/flag0/DRV2) -> actual bounded pool membership ->
+  Delete(slot0x48) -> actual retirement checks BEFORE Clock allocations/calls
+  and final GCD. Independent bootstrap+reader tickets; NEVER reset/reopen the
+  final GCD ticket. Optional known refusal before API can retire safely;
+  partial/nonreturn/error/UNKNOWN/held client blocks native/PON/receipt, no
+  NULL/unknown cleanup/retry. No vote/commandset/MMIO/SMC/MSS/NVserve/radio.
+- Original pool root16B/listheader24B/client88B/four childheaders24B are source
+  matched; bounded128 nodes/list, two full reads at each of3 stages. Loaded
+  image exclusions/BootServicesData/actualAT, originalCore+RPMh immutable hashes,
+  FP/arch/TPL/fresh200ms retained. Retired free-list rotation/new pooled slot
+  is recorded; this does NOT claim bitwise allocator/hardware restore or TCS
+  ownership. Future actual votes still require ownCMDdb/ARC units/stoprestore.
+- Current actual physical-body EFI is0149/wifi/private-client-driver-ON-0002,
+  SHA4dd3876fd836be266c55a89b0433befc29c4e6cafae94ea54f41ef95ebbfb218,
+  3846656B/70inputs. Earlier0001 is STALE, never admit/freeze/boot it.
+  private-client-verified-0001/proof.json SHA10c9c79f024122829bbfbadf95cb32f217
+  d38a43b22471bdd70f9fe034262e31:45 ASAN/UBSAN cases including complete
+  private->NPA->lateRPMh->finalGCD execution and stale/forged ticket faults;
+  actual combined coordinator AArch64 COFF/MachO maxframe1024 and full EFI link
+  PASS. RAW_V1=227104B, complete6pool snapshots+bootstrap+reader/partial raw;
+  firmware log2MiB, host full log4MiB+2MiB+128. SOFTWARE peer only, original
+  firmware/API/physical pool were NOT executed. Source defaultOFF, total scope
+  honestly declares RPMh RAMreadonly=false/API2/client=true/votes0.
+- Two NEW affected wholeEFI/XNU terminal models are running SERIAL; no result
+  claimed yet. Host exact0149 profile/package/whole81codec/freeze/helper are
+  NOT READY. Old0143..0148 policy literals/manifests remain unchanged. Before
+  any nextimage use ONLY frozen0148 complete native drain/full raw/fresh receipt
+  and independent actualFASTBOOT. Latest0145 fresh roots/NV remain authority.
+
 ### CURRENT0148 nativeLIVE18:35; actual originalRPMh four calls SUCCESS/DRV2 stable; Wi-Fi not yet working
 
 - Supersedes everyold0146/0147LIVE/0148inflight/READY. Old0147 shutdown71720

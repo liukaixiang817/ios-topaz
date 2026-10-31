@@ -51,7 +51,8 @@ struct pwrph_io {
     int (*locate)(void *,struct efi_system *,const efi_guid *,void **,uint64_t *);
     int (*map)(void *,struct efi_system *,uint8_t *,struct paic_map_sample *);
 };
-static struct { uint32_t used,outstanding; } pwrph_ticket;
+struct pwrph_lifetime { uint32_t used,outstanding; };
+static struct pwrph_lifetime pwrph_ticket;
 static struct pwrph_result pwrph_record;
 static struct pwrph_work pwrph_work;
 static inline void pwrph_fail(struct pwrph_result *r,unsigned e,int unknown)
@@ -138,16 +139,16 @@ static inline int pwrph_snapshot(const struct paic_io *io,struct pwrph_result *r
     }
     r->snapshot_complete[pass]=1;return 1;
 }
-static inline int pwrph_enter(struct pgcd_context *g,struct pwrph_result *r,unsigned operation)
+static inline int pwrph_enter(struct pgcd_context *g,struct pwrph_result *r,unsigned operation,struct pwrph_lifetime *life)
 {
     if(!pgcd_service_enter(g,&r->guard[operation])) { pwrph_fail(r,PWRPH_GUARD,pgcd_uncertain(g)); return 0; }
-    r->outstanding=pwrph_ticket.outstanding=operation+1; r->issued++; paic_actual_order(0); return 1;
+    r->outstanding=life->outstanding=operation+1; r->issued++; paic_actual_order(0); return 1;
 }
-static inline int pwrph_leave(struct pgcd_context *g,struct pwrph_result *r,unsigned operation,int returned)
+static inline int pwrph_leave(struct pgcd_context *g,struct pwrph_result *r,unsigned operation,int returned,struct pwrph_lifetime *life)
 {
     if(returned)r->returned++; paic_actual_order(0);
     if(!pgcd_service_leave(g,&r->guard[operation],returned)) { pwrph_fail(r,PWRPH_GUARD,1); return 0; }
-    r->outstanding=pwrph_ticket.outstanding=0; paic_actual_order(0); return 1;
+    r->outstanding=life->outstanding=0; paic_actual_order(0); return 1;
 }
 /* Share the one opened original-service context. NPA has already consumed
  * its open ticket in the real combined path. Never reopen/reset that ticket,
@@ -165,12 +166,12 @@ static inline int pwrph_context_ready(struct pgcd_context *g)
         if(r->query[p][k].issued) return 0;
     return 1;
 }
-static inline int pwrph_collect(const struct pwrph_io *ops,unsigned stage,
+static inline int pwrph_collect_once(const struct pwrph_io *ops,unsigned stage,
     const struct paic_result *enumeration,struct pgcd_context *g,
-    struct pwrph_result *r,struct pwrph_work *w)
+    struct pwrph_result *r,struct pwrph_work *w,struct pwrph_lifetime *life)
 {
-    if(!r || !w || r->attempted || pwrph_ticket.used) return 0;
-    r->attempted=pwrph_ticket.used=1;
+    if(!r || !w || !life || r->attempted || life->used) return 0;
+    r->attempted=life->used=1;
     if(stage!=2) { pwrph_fail(r,PWRPH_STAGE,0); return 0; }
     const struct paic_io *io=ops?&ops->memory:0;
     if(!ops || !ops->locate || !ops->map || !io || !io->arch || !io->identity || !io->order || !io->system || !io->system->boot ||
@@ -185,15 +186,15 @@ static inline int pwrph_collect(const struct pwrph_io *ops,unsigned stage,
     for(unsigned pass=0;pass<2;pass++) {
         void *table=0; unsigned op=pass*2;
         r->protocol_status[pass]=UINT64_MAX;
-        if(!pwrph_enter(g,r,op)) return 0;
+        if(!pwrph_enter(g,r,op,life)) return 0;
         int returned=ops->locate(io->context,io->system,&protocol,&table,&r->protocol_status[pass]); r->protocol[pass]=(uintptr_t)table;
-        if(!pwrph_leave(g,r,op,returned)) return 0;
+        if(!pwrph_leave(g,r,op,returned,life)) return 0;
         if(r->protocol_status[pass] || !table) { pwrph_fail(r,PWRPH_BS,0); return 0; }
         r->maps[pass]=(struct paic_map_sample){UINT64_MAX,0,sizeof(w->map),0,0};
-        if(!pwrph_enter(g,r,op+1)) return 0;
+        if(!pwrph_enter(g,r,op+1,life)) return 0;
         returned=ops->map(io->context,io->system,w->map,&r->maps[pass]);
         pgcd_copy(r->map_raw[pass],w->map,sizeof(w->map));
-        if(!pwrph_leave(g,r,op+1,returned)) return 0;
+        if(!pwrph_leave(g,r,op+1,returned,life)) return 0;
         uint64_t bytes=r->maps[pass].bytes,key=r->maps[pass].key,stride=r->maps[pass].stride;
         uint64_t status=r->maps[pass].status;uint32_t version=r->maps[pass].version;
         (void)key;
@@ -245,6 +246,12 @@ static inline int pwrph_collect(const struct pwrph_io *ops,unsigned stage,
     }
     r->stable=1; return 1; /* FirmwareRAM observation ONLY, all mutation grants false. */
 }
+/* Existing late collector keeps its own immutable one-use ticket. A distinct
+ * preparatory client phase may use a separate ticket/context; no ticket reset. */
+static inline int pwrph_collect(const struct pwrph_io *ops,unsigned stage,
+    const struct paic_result *enumeration,struct pgcd_context *g,
+    struct pwrph_result *r,struct pwrph_work *w)
+{ return pwrph_collect_once(ops,stage,enumeration,g,r,w,&pwrph_ticket); }
 static inline int pwrph_actual_locate(void *ctx,struct efi_system *system,const efi_guid *guid,void **table,uint64_t *status)
 { (void)ctx; *status=system->boot->locate_protocol(guid,0,table); return 1; }
 static inline int pwrph_actual_map(void *ctx,struct efi_system *system,uint8_t *buffer,struct paic_map_sample *m)

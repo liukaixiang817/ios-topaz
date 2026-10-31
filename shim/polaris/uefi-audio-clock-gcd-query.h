@@ -28,6 +28,12 @@
 #if EFI_XNU_WIFI_RPMH_READONLY_AVAILABLE
 #include "uefi-wifi-rpmh-readonly.h"
 #endif
+#ifndef EFI_XNU_WIFI_RPMH_CLIENT_AVAILABLE
+#define EFI_XNU_WIFI_RPMH_CLIENT_AVAILABLE 0
+#endif
+#if EFI_XNU_WIFI_RPMH_CLIENT_AVAILABLE
+#include "uefi-wifi-rpmh-client.h"
+#endif
 #ifndef EFI_XNU_AUDIO_CLOCK_QUERY_CAMERA_READONLY
 #define EFI_XNU_AUDIO_CLOCK_QUERY_CAMERA_READONLY 0
 #endif
@@ -310,8 +316,14 @@ static inline int pacgq_collect(const struct pacgq_io *io,const struct paic_resu
     if(!gcd_context){pacgq_fail(r,PACGQ_BS,0);return 0;}
     r->gcd_context_address=(uintptr_t)gcd_context;
     if(!pacgq_i2c_admitted(i2c,stage)){pacgq_fail(r,PACGQ_I2C_CACHE,0);return 0;}
-    if(!io||!io->memory.system||!io->memory.system->boot||!io->memory.arch||!io->memory.identity||!io->memory.order||!io->query||!io->translate_mmio||
-       !io->memory.arch(io->memory.context,&r->before)||!paic_arch_admitted(&r->before)||
+    if(!io||!io->memory.system||!io->memory.system->boot||!io->memory.arch||!io->memory.identity||!io->memory.order||!io->query||!io->translate_mmio){pacgq_fail(r,PACGQ_ARCH,0);return 0;}
+#if EFI_XNU_WIFI_RPMH_CLIENT_AVAILABLE
+    /* A distinct preparation ticket/context retires before Clock calls or
+     * allocations. The final GCD ticket remains unopened and unmodified. */
+    pwrcl_preboot(&io->memory,i2c,stage,gcd_context);
+    if(pwrcl_unsafe()){pacgq_fail(r,PACGQ_UNKNOWN,1);return 0;}
+#endif
+    if(!io->memory.arch(io->memory.context,&r->before)||!paic_arch_admitted(&r->before)||
        !pacgq_environment(&i2c->after,&r->before)){pacgq_fail(r,PACGQ_ARCH,0);return 0;}
     if(i2c->owner.system!=io->memory.system){pacgq_fail(r,PACGQ_I2C_CACHE,0);return 0;}
     struct efi_boot *bs=io->memory.system->boot;void *table=0;uint64_t count=0;int handles_owned=0;
@@ -499,6 +511,9 @@ static inline void pacgq_report_preboot(void (*ram_append)(const char *))
 #endif
 #if EFI_XNU_WIFI_RPMH_READONLY_AVAILABLE
     pwrph_report_preboot(ram_append);
+#endif
+#if EFI_XNU_WIFI_RPMH_CLIENT_AVAILABLE
+    pwrcl_report(ram_append);
 #endif
     pacgq_ram_number(ram_append,"AUDIO_I2C_CACHE_ERROR=",pacgq_preboot_i2c.error);
     pacgq_ram_number(ram_append,"AUDIO_I2C_CACHE_RAW_V1_BYTES=",sizeof(pacgq_preboot_i2c));

@@ -41,7 +41,10 @@ struct args {uint16_t revision,version;uint64_t va,pa,size,top;struct video vide
 _Static_assert(sizeof(struct args)==736,"XNU boot args ABI");
 static struct efi_system *system_table;
 static efi_handle driver_image;
-#if EFI_XNU_WIFI_NPA_READONLY_AVAILABLE
+#if EFI_XNU_WIFI_RPMH_CLIENT_AVAILABLE
+static uint8_t log_buffer[2097152];static uint64_t log_bytes;
+static volatile uint32_t log_overflow;
+#elif EFI_XNU_WIFI_NPA_READONLY_AVAILABLE
 static uint8_t log_buffer[1572864];static uint64_t log_bytes;
 static volatile uint32_t log_overflow;
 #elif EFI_XNU_GCD_MMIO_QUERY_AVAILABLE
@@ -242,6 +245,9 @@ static int new_original_unknown(void)
 #if EFI_XNU_WIFI_RPMH_READONLY_AVAILABLE
     ||pwrph_unknown()
 #endif
+#if EFI_XNU_WIFI_RPMH_CLIENT_AVAILABLE
+    ||pwrcl_unsafe()
+#endif
     ;}
 #endif
 #elif EFI_XNU_AUDIO_CLOCK_QUERY_AVAILABLE
@@ -355,6 +361,9 @@ static int prepare_boot(void *context)
 #endif
 #if EFI_XNU_WIFI_RPMH_READONLY_AVAILABLE
         report("WIFI_RPMH_SOFTWARE_PHYSICAL_PROVIDER_RAM_COMPILED_OUT=",1);
+#endif
+#if EFI_XNU_WIFI_RPMH_CLIENT_AVAILABLE
+        report("WIFI_RPMH_PRIVATE_SOFTWARE_PHYSICAL_CLIENT_COMPILED_OUT=",1);
 #endif
     }
 #else

@@ -51,6 +51,7 @@ static void rp_reset(unsigned f)
     if(f==18) {enumeration->handle_count=2;enumeration->loaded_address[1]=enumeration->loaded_address[0];}
     if(f==19)self->bytes=r->self_owner.bytes=r->self_bytes=0x1a3000;
 }
+#ifndef POLARIS_RPMH_FIXTURE_ONLY
 int main(int argc,char **argv)
 {
     assert(argc==4);assert(!posix_memalign((void**)&arena,4096,0x240000));
@@ -123,3 +124,5 @@ int main(int argc,char **argv)
     printf("{\"checks\":%u,\"raw_bytes\":%zu,\"snapshot_bytes\":%zu,\"DRV_bytes\":%zu,\"original_RPMh_API_calls\":0,\"physical_MMIO_or_radio\":false}\n",checks,sizeof(*rr),sizeof(struct pwrph_snapshot),sizeof(struct pwrph_drv));
     free(original);free(npa_original);free(rp_original);free(arena);return 0;
 }
+
+#endif
