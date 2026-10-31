@@ -12,6 +12,12 @@
 #include "uefi-wifi-rpmh-readonly.h"
 #include "../../tools/polaris-wifi-cmddb-identity.h"
 #define PWCD_DB_BYTES 0x20000u
+/* Original0154 live CmdDb cached AND platform pointers, with five source
+ * hashes and relocated protocol table verified, identify this separate RO
+ * namespace. Android's cmd-db node uses c3f000c indirection; its node name
+ * is not a physical mapping. This singleton does not change own SMEM bounds
+ * or grant a read before the original GCD + exact NS/WB AT checks below. */
+#define PWCD_UEFI_DB_BASE UINT64_C(0x85fe0000)
 #define PWCD_PAGES (PWCD_DB_BYTES/4096u)
 #define PWCD_RESOURCES 3u
 #define PWCD_CALLS (2u*(2u+PWCD_PAGES+PWCD_RESOURCES))
@@ -84,12 +90,12 @@ static inline int pwcd_leave(struct pgcd_context *g,struct pwcd_result *r,unsign
     r->outstanding=0;paic_actual_order(0);return 1;
 }
 /* This is a shared immutable namespace READ classification, not allocated
- * RAM, MPU/VMID or SMEM-write permission. Exact own SMEM bounds stay fixed. */
+ * RAM, MPU/VMID or SMEM-write permission. Own SMEM bounds stay fixed. */
 static inline int pwcd_database_read(const struct pwcd_io *ops,struct pgcd_context *g,
     struct pwcd_result *r,struct pwrph_work *w,unsigned pass,unsigned first)
 {
     const struct paic_io *io=&ops->original.memory;uint64_t base=r->database[pass];
-    if(base<UINT64_C(0x86000000)||(base&4095)||base>UINT64_C(0x86200000)-PWCD_DB_BYTES)return 0;
+    if(base!=PWCD_UEFI_DB_BASE)return 0;
     unsigned prior=0;
     for(unsigned k=0;k<PWCD_PAGES;k++){
         if(!pwcd_fresh(io,r))return 0;

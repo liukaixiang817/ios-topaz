@@ -14,7 +14,7 @@ static uint64_t DAIF,Group1;
 static volatile uint32_t *native_on;
 static uint32_t hardware[0x3000/4],initial[0x3000/4],votes[3];
 static uint8_t pwcd_test_load(uint64_t at)
-{assert(at>=0x861e0000&&at<0x86200000);return cmd_database[at-0x861e0000];}
+{assert(at>=0x85fe0000&&at<0x86000000);return cmd_database[at-0x85fe0000];}
 static int path_arch(void *ctx,struct pgcd_arch *a)
 {int ok=arch(ctx,a);a->cpu.daif=DAIF;a->cpu.group1=Group1;return ok;}
 static int path_memory_arch(void *ctx,struct paic_arch *a)
@@ -26,13 +26,13 @@ static int path_memory_arch(void *ctx,struct paic_arch *a)
 static int path_identity(void *ctx,uint64_t at,uint64_t bytes,uint64_t *where,uint64_t *par)
 {
     (void)ctx;(void)bytes;*where=at;*par=at&~UINT64_C(4095);
-    if(at>=0x86000000&&at<0x86200000){*par|=UINT64_C(0xff00000000000b80);if(jf==6&&DAIF)*par^=0x200;}
+    if(at>=0x85fe0000&&at<0x86000000){*par|=UINT64_C(0xff00000000000b80);if(jf==6&&DAIF)*par^=0x200;}
     return 1;
 }
 static int path_core_map(void *ctx,struct efi_system *sys,struct pgcd_map *m,void *out)
 {
     (void)ctx;assert(sys==s&&m->issued);maps++;
-    struct efi_memory d[2]={{3,0,(uintptr_t)arena,0,0x800000/4096,8},{0,0,0x86000000,0,512,8}};
+    struct efi_memory d[2]={{3,0,(uintptr_t)arena,0,0x800000/4096,8},{0,0,0x85fe0000,0,32,8}};
     memcpy(out,d,sizeof(d));m->bytes=sizeof(d);m->key=map_key;m->stride=sizeof(d[0]);m->version=1;m->status=0;return 1;
 }
 static int path_map(void *ctx,struct efi_system *sys,uint8_t *out,struct paic_map_sample *m)
@@ -40,7 +40,7 @@ static int path_map(void *ctx,struct efi_system *sys,uint8_t *out,struct paic_ma
     (void)ctx;assert(sys==s);
     struct efi_memory d[4]={{3,0,(uintptr_t)arena,0,0x600000/4096,8},
         {4,0,(uintptr_t)links,0,0x10000/4096,8},{3,0,(uintptr_t)arena+0x610000,0,(0x800000-0x610000)/4096,8},
-        {0,0,0x86000000,0,512,8}};
+        {0,0,0x85fe0000,0,32,8}};
     memset(out,0,4096);memcpy(out,d,sizeof(d));m->bytes=sizeof(d);m->key=map_key;m->stride=sizeof(d[0]);m->version=1;m->status=0;return 1;
 }
 static int path_locate(void *ctx,struct efi_system *sys,const efi_guid *guid,void **out,uint64_t *status)
@@ -52,7 +52,7 @@ static int path_locate(void *ctx,struct efi_system *sys,const efi_guid *guid,voi
 static int path_descriptor(void *ctx,uint64_t function,uint64_t page,struct pgcd_descriptor *d,uint64_t *status)
 {
     (void)ctx;assert(function==(uintptr_t)core+0x2c68&&early->record->outstanding);*status=0;
-    if(page>=0x86000000&&page<0x86200000)*d=(struct pgcd_descriptor){0x86000000,0x200000,8,8,2,0,0,0};
+    if(page>=0x85fe0000&&page<0x86000000)*d=(struct pgcd_descriptor){0x85fe0000,0x20000,8,8,2,0,0,0};
     else{
         assert(page>=0x179e0000&&page<=0x179e2000);*d=(struct pgcd_descriptor){page,4096,1,0,3,0,0x123,0};
         if(jf==3&&path->CPU.local_restored)d->length=8192;
@@ -164,7 +164,9 @@ static void configure(unsigned scenario)
     }
     cmd_image=arena+0x500000;memcpy(cmd_image,cmd_original,PWCDI_IMAGE_BYTES);
     for(unsigned k=0;k<PWCDI_RELOC_COUNT;k++)put(cmd_image+pwcdi_relocs[k],pwfi_le(cmd_image+pwcdi_relocs[k],8)+(uintptr_t)cmd_image,8);
-    put(cmd_image+0x5158,0x861e0000,8);put(cmd_image+0x5198,0x861e0000,8);
+    put(cmd_image+0x5158,0x85fe0000,8);put(cmd_image+0x5198,0x85fe0000,8);
+    if(jf==14||jf==15){uint64_t bad=jf==14?0x861e0000:0x85fe1000;
+        put(cmd_image+0x5158,bad,8);put(cmd_image+0x5198,bad,8);}
     struct efi_loaded *owner=(void*)(arena+0x188100);*owner=(struct efi_loaded){.revision=0x1000,.system=s,.base=cmd_image,.bytes=PWCDI_IMAGE_BYTES,.code_type=3,.data_type=4};
     enumeration->handle_count=2;enumeration->loaded_address[1]=(uintptr_t)owner;
     memset(cmd_database,0,sizeof(cmd_database));put(cmd_database,1,4);put(cmd_database+4,0x0c0330db,4);
@@ -218,9 +220,9 @@ int main(int argc,char **argv)
     check_raw_segment("WIFI_POWER_PATH_RAW_V1_BEGIN\r\n","\r\nWIFI_POWER_PATH_RAW_V1_END",&pwrpt_record,sizeof(pwrpt_record));
     assert(!strstr(parent_report,"ZERO_VOTE")&&strstr(parent_report,"NO_MSS NO_NV_SERVE NO_RADIO_PERMISSION"));checks++;
     free(parent_report);
-    for(unsigned k=1;k<=13;k++){
+    for(unsigned k=1;k<=15;k++){
         ok=execute(k);
-        if(k==5){assert(ok&&path->known_refusal&&path->retired&&path->refusal.retired&&!path->unknown&&!modeled_stores&&!mask_calls&&delete_calls==1);}
+        if(k==5||k==14||k==15){assert(ok&&path->known_refusal&&path->retired&&path->refusal.retired&&!path->unknown&&!modeled_stores&&!mask_calls&&delete_calls==1);}
         else{
             if(ok||!pwrcl_result_unsafe(cr))fprintf(stderr,"unexpected fault%u ok%d err%u phase%u client%u unknown%u del%u\n",k,ok,path->error,path->phase,cr->error,path->unknown,delete_calls);
             assert(!ok&&pwrcl_result_unsafe(cr)&&cr->client_held&&cr->unknown);
@@ -234,7 +236,7 @@ int main(int argc,char **argv)
             if(k==10)assert(path->retired&&delete_calls==1&&cr->outstanding&&!cr->client_returned);
             if(k==12)assert(path->access.error==PWRA_UNKNOWN_STATUS&&(path->access.command_status_OR[0]&0x20000)&&!acks&&!unmask_calls);
             if(k==13)assert(!mask_calls&&!modeled_stores&&!path->refusal.attempted&&path->unknown);
-        }assert(cached_parent()==(k!=5));checks++;
+        }assert(cached_parent()==(k!=5&&k!=14&&k!=15));checks++;
     }
     printf("{\"checks\":%u,\"path_raw_bytes\":%zu,\"access_raw_bytes\":%zu,\"CPU_raw_bytes\":%zu,\"ONE_SOFTWARE_original_API_to_RSC_retirement_path\":true,\"queries\":6,\"PSCI_calls\":14,\"real_firmware_or_MMIO_execution\":false,\"physical_lease_proven\":false,\"parent_cached_gate_checked\":true,\"whole_raw_report_bytes\":%zu,\"parent_registered\":false}\n",checks,sizeof(*path),sizeof(path->access),sizeof(path->CPU),parent_report_bytes);
     free(original);free(npa_original);free(rp_original);free(cmd_original);free(arena);return 0;

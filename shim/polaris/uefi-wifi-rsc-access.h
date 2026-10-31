@@ -139,7 +139,7 @@ static inline int pwra_cmddb(struct pwra_context *c,unsigned slot)
     if(slot>1)return pwra_fail(c,PWRA_SCOPE,1);
     struct pwra_cmd_snapshot *s=&c->record->CmdDb[slot];const struct pwcd_result *d=c->cmd;
     if(s->attempted||!d||!d->stable||d->error||d->unknown||d->outstanding||d->database[0]!=d->database[1]||
-       d->database[1]<0x86000000||(d->database[1]&4095)||d->database[1]>0x86200000-PWCD_DB_BYTES)return pwra_fail(c,PWRA_SCOPE,1);
+       d->database[1]!=PWCD_UEFI_DB_BASE)return pwra_fail(c,PWRA_SCOPE,1);
     s->attempted=1;c->record->outstanding=0x20000u|slot;paic_actual_order(0);
     struct pwrcl_result *p=c->provider;const struct paic_io *m=c->io.memory;uint32_t native;uint64_t ticks;
     if(!pwra_live(c,&native,&ticks)||!pwrcl_copy(m,p,c->work,&s->owner,d->owner_address,sizeof(s->owner),&s->owner_bytes)||

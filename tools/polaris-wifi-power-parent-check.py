@@ -57,7 +57,7 @@ def main():
     files = [ROOT/manifest[key] for key in ['original_GCD_original_PE',
              'wifi_CPU0_NPA_source_PE', 'wifi_CPU0_RPMh_source_PE', 'wifi_CPU0_power_source_PE']]
     peer = json.loads(run('affected-path-ASAN-UBSAN-run', [out/'peer', *files]))
-    assert peer['checks'] == 15 and peer['parent_cached_gate_checked'] is True
+    assert peer['checks'] == 17 and peer['parent_cached_gate_checked'] is True
     assert peer['whole_raw_report_bytes'] == 2924839
     assert peer['real_firmware_or_MMIO_execution'] is False
     # Compile the actual parent main, not a replacement wrapper. Both targets
@@ -75,7 +75,7 @@ def main():
     assert ',&wln_cpu_on_issued' in preprocessed
     assert 'power_unknown_hold' in preprocessed and 'pwrpt_preboot' in preprocessed
     assert 'WIFI_POWER_PATH_RAW_V1_BEGIN' in preprocessed
-    proof = dict(passed=True, scope='NEW complete physical-body parent link and 15 SOFTWARE path/report/gate cases; NO hardware execution',
+    proof = dict(passed=True, scope='NEW complete physical-body parent link and 17 SOFTWARE path/report/gate cases; NO hardware execution',
         checks=records, software=peer, parent_registered=True, whole_EFI_linked=True,
         actual_main_CO_FF_and_MachO=True, actual_main_max_frame=1024,
         literal_native_flag_is_source_address=True, complete_client_and_path_hex_bytes=2924839,

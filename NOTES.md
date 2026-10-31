@@ -34,7 +34,35 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0154 nativeLIVE22:17 / actual CmdDb85fe0000 pre-mask refusal retired / ZERO ARC; next exact namespace source fix
+### CURRENT0154 last actual state22:30; NEW0155 exact CmdDb RO fix / full link and affected checks PASS; host profile NOT READY
+
+- NEW0155 fixes BOTH normal CmdDb reader and masked recheck to the exact original
+  runtime85fe0000/128KiB namespace observed in0154. Own DT's c3f000c indirection
+  is not inferred from its node name; SMEM86000000/2MiB writer bounds remain.
+  Exact GCD/NS-WB/map/source/FP/arch/TPL/200ms/UNKNOWN gates are unchanged.
+  New builder metadata exposes the separate RO base/size/no-SMEM-writer scope.
+- Affected CmdDb38 sanitizer cases and two real AArch64 COFF/MachO adapter
+  objects PASS (proof8cf0ab04); full new physical-body EFI8794ba7f/11423232B/
+  80inputs linked. Only the builder and two CmdDb/RSC-access headers changed
+  compiled inputs. Parent17 sanitizer path cases + actual main COFF/MachO/
+  maxframe1024 PASS (proofb2afc80b), including wrong historical/misaligned bases
+  rejected pre-mask with known-client retirement and zero stores. Checker-only
+  include search fixed explicitly; no firmware warning disabled.
+- Two NEW terminal models SERIAL19checks each/38.879s and39.419s PASS, source
+  inputs identical,11resource/Power literalint1 markers plus battery1; actual
+  preprocessed main excludes physical bodies/records. Evidence review initially
+  selected a wrong battery marker name/missed model defines, then corrected and
+  reused the already-passed runs without rerunning QEMU. Model proof5109584d
+  in0155/wifi. Software PMIC/delay/RAMUSB is not actual firmware/radio/reset.
+- No USB boot or new physical power action yet. Original0154 live frozen0003
+  remains sole controller; directed state returned at22:30 with kernel-entered.
+  No old manifest/policy changed. Next NEW0155 exact host scope/full original81
+  image codec/source review/independent freeze/ONE helper, then only current
+  frozen0154 native drain/full appendraw/fresh receipt + independent FASTBOOT.
+  Source changes must be committed before candidate boot. No nativeCI/download.
+  Wi-Fi scan/join/data, MSS/NVserve remain incomplete; audio/camera STOP.
+
+### HISTORY0154 nativeLIVE22:17 / actual CmdDb85fe0000 pre-mask refusal retired / ZERO ARC; exact namespace source fix
 
 - PHONE current actual0154: ONE image65468 ENDED0 sent22:09:03.223373Z,
   actual waiting-payload22:10:01Z; ONE63cb payload26130 ENDED0 ACK22:11:18Z,

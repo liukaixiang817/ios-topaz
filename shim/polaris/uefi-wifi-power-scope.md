@@ -1,10 +1,21 @@
 # Conditional APPS DRV2 runtime experiment
 
-This review is limited to the physical-body firmware source
-`1f55e44e14e0c56af2e5cd6f84d68bb63ba721b6`, its exact 80 compiled inputs,
-and the separate new host profile. It qualifies an attempted **runtime-gated
+This review is limited to the physical-body firmware source selected by the
+new literal host profile and its exact 80 compiled inputs (0154 used
+`1f55e44e14e0c56af2e5cd6f84d68bb63ba721b6`). It qualifies a **runtime-gated
 experiment**, not a previously observed hardware lease or working Wi-Fi.
 No runtime prerequisite can be replaced by this document or a host boolean.
+
+The 0154 physical trial returned a known pre-mask refusal with zero RSC stores.
+Both original CmdDb cached/platform pointers were 0x85fe0000; the five immutable
+hashes, relocated table and provider owner matched. The prior SMEM lower-bound
+test rejected that separate namespace before its first GCD/AT/read or Query.
+Own DT supplies an indirection register at 0x0c3f000c, not a direct mapping
+inferred from the node name. The new reader and masked recheck accept only
+the exact 0x85fe0000/128KiB RO region, still requiring the complete current
+map, GCD descriptor, NS/WB translations and unchanged source. Those checks
+have not yet passed on this phone. This correction leaves the 0x86000000/2MiB
+SMEM writer bounds unchanged and grants no allocator, MPU/VMID or radio scope.
 
 The original Polaris RpmhDxe configures one logical DRV2 at bank2 of the
 APPS RSC. Its immutable source and its registered live provider, runtime HAL,

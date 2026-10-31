@@ -14,7 +14,7 @@ static struct paic_result *enumeration;
 static uint8_t *cd_original,*cd_image,db[PWCD_DB_BYTES];
 static unsigned cf,locates,cdmaps,api_calls,descriptors;
 static uint8_t pwcd_test_load(uint64_t at)
-{assert(at>=0x861e0000&&at<0x86200000);return db[at-0x861e0000];}
+{assert(at>=0x85fe0000&&at<0x86000000);return db[at-0x85fe0000];}
 static int cd_arch(void *ctx,struct paic_arch *a)
 {
     struct pgcd_arch g;if(!arch(ctx,&g))return 0;
@@ -26,13 +26,13 @@ static int cd_arch(void *ctx,struct paic_arch *a)
 static int cd_identity(void *ctx,uint64_t at,uint64_t bytes,uint64_t *where,uint64_t *par)
 {
     (void)ctx;(void)bytes;*where=at;*par=at&~UINT64_C(4095);
-    if(at>=0x86000000&&at<0x86200000){*par|=UINT64_C(0xff00000000000b80);if(cf==8)*par^=0x100;}
+    if(at>=0x85fe0000&&at<0x86000000){*par|=UINT64_C(0xff00000000000b80);if(cf==8)*par^=0x100;}
     return 1;
 }
 static int cd_core_map(void *ctx,struct efi_system *sys,struct pgcd_map *m,void *out)
 {
     (void)ctx;assert(sys==s&&m->issued);maps++;
-    struct efi_memory d[2]={{3,0,(uintptr_t)arena,0,0x240000/4096,8},{0,0,0x86000000,0,512,8}};
+    struct efi_memory d[2]={{3,0,(uintptr_t)arena,0,0x240000/4096,8},{0,0,0x85fe0000,0,32,8}};
     memcpy(out,d,sizeof(d));m->bytes=sizeof(d);m->key=1;m->stride=sizeof(d[0]);m->version=1;m->status=0;return 1;
 }
 static int cd_locate(void *ctx,struct efi_system *sys,const efi_guid *guid,void **out,uint64_t *status)
@@ -43,17 +43,17 @@ static int cd_locate(void *ctx,struct efi_system *sys,const efi_guid *guid,void 
 static int cd_map(void *ctx,struct efi_system *sys,uint8_t *out,struct paic_map_sample *m)
 {
     (void)ctx;assert(sys==s);cdmaps++;
-    struct efi_memory d[2]={{3,0,(uintptr_t)arena,0,0x240000/4096,8},{cf==7?7:0,0,0x86000000,0,512,8}};
+    struct efi_memory d[2]={{3,0,(uintptr_t)arena,0,0x240000/4096,8},{cf==7?7:0,0,0x85fe0000,0,32,8}};
     memset(out,0,4096);memcpy(out,d,sizeof(d));m->bytes=sizeof(d);m->key=cf==23&&cdmaps==2?2:1;
     m->stride=sizeof(d[0]);m->version=1;m->status=0;return cf!=3;
 }
 static int cd_descriptor(void *ctx,uint64_t fn,uint64_t page,struct pgcd_descriptor *d,uint64_t *status)
 {
-    (void)ctx;assert(fn==(uintptr_t)core+0x2c68&&page>=0x861e0000&&page<0x86200000);descriptors++;
+    (void)ctx;assert(fn==(uintptr_t)core+0x2c68&&page>=0x85fe0000&&page<0x86000000);descriptors++;
     int pages=cf==30||cf==31;
-    *d=(struct pgcd_descriptor){pages?page:0x86000000,pages?4096:0x200000,8,8,2,0,0,0};*status=0;
+    *d=(struct pgcd_descriptor){pages?page:0x85fe0000,pages?4096:0x20000,8,8,2,0,0,0};*status=0;
     if(cf==6)d->type=1;
-    if(cf==31&&page==0x861e1000)d->length=1;
+    if(cf==31&&page==0x85fe1000)d->length=1;
     return cf!=4;
 }
 static void fill_db(void)
@@ -104,7 +104,7 @@ static struct pwcd_io cd_reset(unsigned f)
     assert((uintptr_t)cd+sizeof(*cd)<(uintptr_t)work);
     cd_image=arena+0x200000;memcpy(cd_image,cd_original,PWCDI_IMAGE_BYTES);
     for(unsigned j=0;j<PWCDI_RELOC_COUNT;j++)put(cd_image+pwcdi_relocs[j],pwfi_le(cd_image+pwcdi_relocs[j],8)+(uintptr_t)cd_image,8);
-    put(cd_image+0x5158,0x861e0000,8);put(cd_image+0x5198,0x861e0000,8);
+    put(cd_image+0x5158,0x85fe0000,8);put(cd_image+0x5198,0x85fe0000,8);
     struct efi_loaded *owner=(void*)(arena+0x192000);
     *owner=(struct efi_loaded){.revision=0x1000,.system=s,.base=cd_image,.bytes=PWCDI_IMAGE_BYTES,.code_type=3,.data_type=4};
     enumeration->owner_matches=enumeration->cache_consistent=enumeration->handle_count=1;
@@ -120,7 +120,9 @@ static struct pwcd_io cd_reset(unsigned f)
     if(f==27)enumeration->handle_status[0]=1;
     if(f==28){enumeration->handle_count=2;enumeration->loaded_address[1]=enumeration->loaded_address[0];}
     if(f==29)owner->system=0;
-    if(f==31)put(cd_image+0x5158,0x861e0000,8); /* separate per-page descriptor fault below */
+    if(f==31)put(cd_image+0x5158,0x85fe0000,8); /* separate per-page descriptor fault below */
+    if(f>=34&&f<=36){uint64_t bad=f==34?0x861e0000:f==35?0x85fc0000:0x85fe1000;
+        put(cd_image+0x5158,bad,8);put(cd_image+0x5198,bad,8);}
     struct pwcd_io ops={{{s,0,cd_arch,cd_identity,order},cd_locate,cd_map},cd_query};return ops;
 }
 #ifndef POLARIS_CMDDB_FIXTURE_ONLY
@@ -140,7 +142,7 @@ int main(int argc,char **argv)
     assert(cd->verified_bytes[1]==PWCD_DB_BYTES&&cd->rereads[0]==3&&cd->rereads[1]==3&&cd->namespace[1][31].issued==0&&cd->descriptor_page[1][31]==0);
     assert(saves==restores&&ticket->spent==1&&r->phase==1&&!r->pre_mask);checks++;
     assert(!pwcd_collect(&ops,enumeration,c,cd,work)&&api_calls==6);checks++;
-    for(unsigned j=1;j<=33;j++){
+    for(unsigned j=1;j<=36;j++){
         ops=cd_reset(j);ok=pwcd_collect(&ops,enumeration,c,cd,work);
         if(j==30){assert(ok&&descriptors==64&&cd->issued==74&&cd->descriptor_page[1][31]==31);}
         else{
@@ -151,6 +153,7 @@ int main(int argc,char **argv)
             if(j==19||j==20)assert(api_calls==1&&cd->error==PWCD_SOURCE);
             if(j<=12||(j>=25&&j<=31))assert(!api_calls);
             if(j==32)assert(cd->error==PWCD_CHANGED&&api_calls==1&&!cd->rereads[0]&&cd->verified_bytes[0]==14);
+            if(j>=34)assert(cd->error==PWCD_DATABASE&&!pwcd_unknown(cd)&&!api_calls&&!descriptors&&!cd->database_bytes[0]);
         }checks++;
     }
     printf("{\"checks\":%u,\"raw_bytes\":%zu,\"guard_bytes\":%zu,\"SOFTWARE_peer\":true,\"original_firmware_executed\":false,\"power_votes\":0,\"radio\":false}\n",checks,sizeof(*cd),sizeof(struct pgcd_service_guard));

@@ -37,14 +37,16 @@ def main():
             raise RuntimeError(f'{name}: inspect {out/(name+".log")}')
         return result.stdout
 
-    inc = ['-I'+str(ROOT/'tools'), '-I'+str(ROOT/'shim/polaris'), '-I'+str(bindings), '-I'+str(out)]
+    # Select this generated binding explicitly before historical configuration
+    # directories; do not rely on MSVC's parent-include-stack search rule.
+    inc = ['-I'+str(out), '-I'+str(bindings), '-I'+str(ROOT/'tools'), '-I'+str(ROOT/'shim/polaris')]
     with tempfile.TemporaryDirectory(prefix='polaris-cmddb-check-') as temporary:
         temporary = Path(temporary)
         common = ['/usr/bin/clang', '-std=c11', '-Wall', '-Wextra', '-Werror', '-Wno-unused-function']
         run('software-build', [*common, '-D_POSIX_C_SOURCE=200112L', '-DEFI_XNU_GCD_MMIO_QUERY_AVAILABLE=1',
             '-O1', '-g', '-fsanitize=address,undefined', *inc, ROOT/'tools/polaris-wifi-cmddb-test.c', '-o', temporary/'test'])
         host = json.loads(run('software-API-and-faults', [temporary/'test', core, a.original_pe.resolve()]))
-        assert host['checks'] == 35 and host['raw_bytes'] == 345248
+        assert host['checks'] == 38 and host['raw_bytes'] == 345248
         assert host['original_firmware_executed'] is False and host['power_votes'] == 0
         wrapper = out/'physical-adapter.c'
         wrapper.write_text('#include <stdint.h>\nvoid text(const char *);void report(const char *,uint64_t);\n'
@@ -71,9 +73,10 @@ def main():
         host=host, checks=records, source_whole_sha256=binding['source_whole_sha256'],
         sources={name:sha(ROOT/name) for name in sources}, binding_sha256=sha(out/'uefi-wifi-cmddb-binding.h'),
         raw_bytes=345248, exact_own_SMEM_physical_bounds_preserved=True,
+        separate_original_UEFI_CmdDb_RO_base=0x85fe0000,namespace_bytes=131072,
         current_CMDdb_captured=False, current_ARC_indices_observed=False,
-        standalone_inventory_boot_created=False, builder_registered=False, parent_integrated=False,
-        new_driver_linked=False, new_host_admission_ready=False, new_native_CI=False, phone_USB=False,
+        standalone_inventory_boot_created=False, this_check_links_whole_driver=False,
+        this_check_reviews_host_admission=False, new_native_CI=False, phone_USB=False,
         may_vote=False, may_start_MSS=False, may_serve_NV_to_remote=False, scan_join_data=False)
     (out/'proof.json').write_text(json.dumps(proof, indent=2)+'\n')
     print(json.dumps(dict(passed=True, software_cases=host['checks'], checks=len(records),

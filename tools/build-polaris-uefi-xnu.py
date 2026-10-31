@@ -1238,6 +1238,8 @@ def main():
             wifi_CPU0_power_physical_body=not a.test_qemu,wifi_CPU0_power_physical_compiled_out=a.test_qemu,
             wifi_CPU0_power_source_PE=cmddb_pe_relative,wifi_CPU0_power_source_SHA256=cmddb_binding['source_whole_sha256'],
             wifi_CPU0_power_binding_SHA256=cmddb_binding['binding_sha256'],
+            wifi_CPU0_power_CmdDb_RO_base=0x85fe0000,wifi_CPU0_power_CmdDb_RO_bytes=131072,
+            wifi_CPU0_power_CmdDb_RO_not_SMEM_writer=True,
             wifi_CPU0_power_raw_format='RAW_V1',wifi_CPU0_power_raw_bytes=1235200,
             wifi_CPU0_power_client_raw_bytes=227104,wifi_CPU0_power_access_raw_bytes=399240,
             wifi_CPU0_power_CPU_raw_bytes=10048,wifi_CPU0_power_guarded_PSCI_calls_max=14,

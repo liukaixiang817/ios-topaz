@@ -46,7 +46,7 @@ def main():
 
     with tempfile.TemporaryDirectory(prefix='polaris-power-path-') as temporary:
         temporary = Path(temporary)
-        for label, name, count in [('client', 'rpmh-client', 46), ('CPU', 'power-critical', 26), ('path', 'power-path', 15)]:
+        for label, name, count in [('client', 'rpmh-client', 46), ('CPU', 'power-critical', 26), ('path', 'power-path', 17)]:
             binary, dep = temporary/label, out/(label+'.d')
             run(label+'-ASAN-UBSAN-build', [*common, '-D_POSIX_C_SOURCE=200112L', '-DEFI_XNU_GCD_MMIO_QUERY_AVAILABLE=1',
                 '-O1', '-g', '-fsanitize=address,undefined', '-MD', '-MF', dep, *inc,
