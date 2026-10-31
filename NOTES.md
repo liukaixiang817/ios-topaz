@@ -71,7 +71,15 @@ early samples only. On0029 the human already confirmed boot complete and said
   do not summarize all GPU raw fields as error0. Earlybattery8/12 unavailable
   retained, no current realSOC sample yet. Captures0001/0002 show bootconsole,
   not stableUI proof; WLED prefix2/error0/issued0/completed0. UIcapture0003
-  34183 currentlyrunning; no panic(cpu/Kernelpanic observed in priorprefix.
+  34183 ENDED0/363613Blog: realclear7400lockscreen/SundayNov1/2:12/charging,
+  GPUacceptancestage6/error0/completed13 and ALL4096GLSL/GMEM/EAGL actual
+  tests PASS. ActualFG3/SMB2 now58%/3933mV/charging1, supersedesearly8/12.
+  WLEDprefix26/error0/issued4=completed4/request2=ack2/fullraw retained.
+  One intendedlockscreen-left gestureACK; actualcapture63563 ENDED0 shows
+  clearsecondhomepage/2:13, noCameraexec found, focusmayhavechanged; NOTa
+  completed camera-launch diagnosis. No kernelpanic in capturedprefix.
+  ActualpreservedUI proof0142/actual0142-startup-resources-and-preserved-UI-
+  proof.json records both screenshots. New0912/0913 are NOTinthisphone yet.
 - Native rendering SOURCE ready (not in phone0142):0912 honors mute in
   direct_cnputc and clears fitted margins;0913 pins every selected surface
   before any panel write and holds common GPU/display CAS through cache/DMA/
@@ -84,8 +92,9 @@ early samples only. On0029 the human already confirmed boot complete and said
   checks4555dc12...;15different affected tests nowPASS (new4/old11), final
   mergeproof81b4001f... . PID1fixture extractor corrected to current realmain,
   original3rollback assertions unchanged; no PID1productsource changes.
-- NEXT commit/push this nativefix and let push trigger ONE nativeCI; do not
-  workflow_dispatch duplicate. Newheader exact6e015e52... is private .cpp
+- NativeSOURCE7e9d461cef06f9a025aaedee6ef4a952d6f2de01 committed/pushed,
+  automaticONE CI41213766168/job124573937913 actualin_progress/Build asof
+  15:13Z. Do not workflow_dispatch duplicate. Newheader exact6e015e52... is private .cpp
   implementation only, no DriverKit/IDL/layout change. WiFi/GCD and audio
   onelease PAGE0/BOOK127/PGID sessions advance separately; physicalproviders
   and actualTASID/PCM/sensor/frames/CameraApp publication remain unfinished.
