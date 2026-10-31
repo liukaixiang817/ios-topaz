@@ -34,7 +34,28 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0154 last actual state22:30; NEW0155 exact CmdDb RO fix / complete host profile and original81 codec PASS; freeze pending
+### CURRENT0154 last actual state22:30; NEW0155 exact CmdDb trial READY / independent frozen0001; normal drain next
+
+- FW84ef767ca0212b0ffdba8bb1411a093c3b313333/HOSTb6d594d committed and
+  pushed. New image275fe19a1117e41bec32cd5668183e41345d2503162dca18b5df61e89fc3b1a9/
+  6012928B carries driver8794ba7f/11423232B/80inputs. Complete unmodified EDK2
+  whole38905032B decode and preservation of81FW/SimpleInit/BootShim/DTB PASS.
+- Independent /private/tmp/polaris-runtime-0155-frozen-0001 COPY794files plus
+  10separate COMMIT_ONLY,389current committed sources/80inputs; freeze311d801d.
+  Default helper boot-power-runtime-once-0001.py offline PASS. No USB send yet,
+  no0155boot.json, no physical CmdDb/ARC qualification observed. Old0154 frozen3
+  and consumed manifest/boot remain intact. Newhost162/94 typed literal fields
+  plus scope7562abcc; all previous literals unchanged. 38CmdDb+17parent+20host,
+  two SERIAL19check models already passed; do not repeat without source change.
+- NEXT only use live frozen0154 normal nativeVFS/GPU/CPU drain/fullappendraw/
+  WLEXIT05/WLR5 fresh receipt, independent exactPolaris FASTBOOT, record actual
+  transition review then automatic ONE0155 RAM/ONE63cb payload. Fresh0154 root/
+  NV95d932fc/5831fa6a authority continues under controlled RO/RAMCOW. No new
+  nativeCI/recovery/storage/NV write. Actual success still requires current
+  GCD/NS-WB/complete CmdDb, saved cache, CPU/DRV/RSC qualification and full
+  retirement. Wi-Fi scan/join/data not complete; sound and camera remain STOP.
+
+### HISTORY0155 complete host profile and original81 codec PASS; freeze pending
 
 - FW84ef767ca0212b0ffdba8bb1411a093c3b313333 commits the affected source,
   linked80inputs8794ba7f and38CmdDb/17parent software cases. Two new SERIAL
