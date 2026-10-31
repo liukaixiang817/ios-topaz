@@ -34,6 +34,36 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0140 ACTUALboot7650/82b3/f790: nativeGPUacceptancePASS+ENV1, UTCsingleSET+MelbournePASS; desktopframe stillpending
+
+- ONEimage37855 ENDED0 sent2026-10-31T13:46:01.617209Z/source7b472d5,
+  statewaiting-payloadPASS. ONEexactb31payload93019 ENDED0/ACK13:47:05.912578Z,
+  transfer+validation32.953423s, protocolbootcall9.201142s with explicit90s
+  ACK-onlybound. No retry; old0139timeoutcause notclaimedisolatedbythis.
+  phone-gpu-retention-0001/boot.json CONSUMED. ONLYcontroller now
+  /private/tmp/polaris-runtime-0140-frozen-0001 +ORIGINAL0140 image/driver
+  manifests/newbootrecord; no currenteditedsource/old0139/0138 controller.
+- Actualcaptures15569/24857/17437 allENDED0; kernel-entered/4CPU SGIPASS,
+  nativeFD630 acceptance stage6/error0/completed13/surface1/ALL4096 shader,
+  GMEMrestore x4/EAGLcaller x4 pixels PASS. ActualBBD ENV1/all8EAGLmethods
+  installed, NOTyetactualdesktopGPUcompletion/hitcount/performanceproof.
+  Latestcapture0003 stillApplebootlogo, notdesktop/lockscreen verified.
+- UTCnewREADY seq0/count0/status1 observed, ONEsync ENDED0 andindependent
+  statusafter confirmseq1/status2/error0/count1/UTC1793454481762014us/
+  uncertainty2273us/19.2MHz. NEVERrepeatSET. ActualMelbourne transaction
+  result0/stage5/error0/Jan39600/Jul36000; official7400 assets result0/
+  stage5/error0/PNG1/3statesactivated. Batteryearly8/12unavailable, nofakeSOC;
+  latestnewdigits/actualmeasurement stillpending. NoRTC/NVRAM/monotonicwrites.
+- New0141 parallelSOURCE integration allowed onlyAFTER0140imagesent:
+  wifi0139 owns main/builder/hostadmission, separateNCflag +originalI2Ccache
+  flag/defaultOFF exactprofile stillNone/failclosed. audio0139 onlyheader/
+  identity/tests, compactRAW_V1 preservesall5096B partial/results in8lines.
+  Entry afterENTIREWiFifreshcollect/NC/report beforePON/DAIF, noMMIO/BSmethod/
+  pointerfollow. No newnativeCI (reuse82b3/f790). ActualdefaultOFFwholeEFI
+  initiallybyteidenticalfa08, combinedON foundconditionalhelperexport needs
+  OLD||NEW in cacheheader; fixingthenrepeatONLYaffectedcompile. No0141models/
+  phone/read/admissionyet; oldmanifests/profilesnotstrippedorrewritten.
+
 ### 0139 camera targeted15files ACTUAL COMPLETE/ROpreserved/FASTBOOT13:44Z; GPU0140ONEboot NEXT
 
 - Solecameraextract65076 ENDED0, exactreviewed69d3a1bf.../0120watchdogecb73.
