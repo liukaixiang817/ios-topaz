@@ -39,7 +39,7 @@ EXTRA_PRIVATE_HEADER_SHA={
     'bsd/dev/polaris-wlfw.h':
     '671333fc2ebbe3ba25f959709aec07dcf13d82551abdfa85fdeea89c0b6754f2',
     'bsd/dev/polaris_clock.h':
-    '8eaa9e713b507c434196df3496234bf2e5820fdfc3b1a34edf97e66c64cdfbb5',
+    'fc34ea97a6cdf5d1a1850257147db6a13fac79463d78ad3fd9761e20231de16c',
     'bsd/dev/polaris_clock_wire.h':
     'f82b864530564ec92d45390590dc34c8c15c53cd3afc833021117f5c29f95e1d',
     'iokit/Kernel/arm/polaris-battery-shared.h':

@@ -165,7 +165,7 @@
 + * PEGetUTC may run concurrently with the serialized calendar writer. */
 +static uint64_t pc_ram_version,pc_ram_utc,pc_ram_ticks;
 +static uint64_t pc_counter(void)
-+{ uint64_t v;__asm__ volatile("isb; mrs %0,cntvct_el0":"=r"(v)::"memory");return v; }
++{ uint64_t v;__asm__ volatile("isb\n\tmrs %0,cntvct_el0":"=r"(v)::"memory");return v; }
 +static uint64_t pc_frequency(void)
 +{ uint64_t v;__asm__ volatile("mrs %0,cntfrq_el0":"=r"(v));return v; }
 +static uint64_t pc_cache_line(void)

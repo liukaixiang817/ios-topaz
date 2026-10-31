@@ -53,7 +53,7 @@ static bool pwn_board(void)
     return false;
 }
 static uint64_t pwn_counter(void)
-{uint64_t n;__asm__ volatile("isb; mrs %0,cntvct_el0":"=r"(n)::"memory");return n;}
+{uint64_t n;__asm__ volatile("isb\n\t" "mrs %0,cntvct_el0":"=r"(n)::"memory");return n;}
 static bool pwn_order(void *context)
 {
     if(context!=&pwn)return false;
@@ -66,7 +66,11 @@ static bool pwn_at(uintptr_t address,uint64_t *physical,uint64_t *par)
      * IRQ configuration is unchanged. Treat a mismatch as rejection; this is
      * diagnostic translation evidence and cannot grant any read permission. */
     disable_preemption();
-    __asm__ volatile("mrs %0,par_el1; at s1e1r,%2; isb; mrs %1,par_el1; msr par_el1,%0"
+    __asm__ volatile("mrs %0,par_el1\n\t"
+        "at s1e1r,%2\n\t"
+        "isb\n\t"
+        "mrs %1,par_el1\n\t"
+        "msr par_el1,%0"
         :"=&r"(saved),"=&r"(*par):"r"(address):"memory");
     enable_preemption();
     *physical=(*par&UINT64_C(0x0000fffffffff000))|(address&4095u);

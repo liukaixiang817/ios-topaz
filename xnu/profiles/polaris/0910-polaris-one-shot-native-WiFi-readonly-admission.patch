@@ -2,7 +2,7 @@ diff --git a/bsd/dev/polaris_wifi_native_ro.c b/bsd/dev/polaris_wifi_native_ro.c
 new file mode 100644
 --- /dev/null
 +++ b/bsd/dev/polaris_wifi_native_ro.c
-@@ -0,0 +1,180 @@
+@@ -0,0 +1,184 @@
 +/* Polaris actual-native one-shot SMEM diagnostic, resident touch thread only.
 + * Own DT: qcom,smem@86000000 reg0x86000000/2MiB, qcom,mpu-enabled;
 + * own c7cb50c1 legacy mpss edge, descriptor478/TX479/RX480.
@@ -58,7 +58,7 @@ new file mode 100644
 +    return false;
 +}
 +static uint64_t pwn_counter(void)
-+{uint64_t n;__asm__ volatile("isb; mrs %0,cntvct_el0":"=r"(n)::"memory");return n;}
++{uint64_t n;__asm__ volatile("isb\n\t" "mrs %0,cntvct_el0":"=r"(n)::"memory");return n;}
 +static bool pwn_order(void *context)
 +{
 +    if(context!=&pwn)return false;
@@ -71,7 +71,11 @@ new file mode 100644
 +     * IRQ configuration is unchanged. Treat a mismatch as rejection; this is
 +     * diagnostic translation evidence and cannot grant any read permission. */
 +    disable_preemption();
-+    __asm__ volatile("mrs %0,par_el1; at s1e1r,%2; isb; mrs %1,par_el1; msr par_el1,%0"
++    __asm__ volatile("mrs %0,par_el1\n\t"
++        "at s1e1r,%2\n\t"
++        "isb\n\t"
++        "mrs %1,par_el1\n\t"
++        "msr par_el1,%0"
 +        :"=&r"(saved),"=&r"(*par):"r"(address):"memory");
 +    enable_preemption();
 +    *physical=(*par&UINT64_C(0x0000fffffffff000))|(address&4095u);

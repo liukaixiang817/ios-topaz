@@ -34,6 +34,38 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0136 PRIORITY actualclock/battery/WiFi repairs +directiOS16defaultwallpaper; PHONE LIVE0135, NO UTC SET
+
+- Userreportsallfourstillwrong, asksrepairtime/battery/WiFi anddirectlyset
+  officialiOS16defaultwallpaper. Parallelagentsworkingtheseconcretefixes;
+  noFitness/crashrepro. PhoneLIVE0135/e809/ddd4 withfrozen0135controlleronly.
+- Actual0135capture0003 worker20885 ENDED0: genuineGLacceptance stage6/error0/
+  completed13/surfaces1 (CORE8/SMMU8/HFI8/BUS6areREADYenums, notfaults).
+  WLEDreq2ack2/issued4completed4/error0/module128IRQ2/faultOR1rtOR1retained.
+  Batteryactualscope+BSSadmitted, butMAPerror3 BEFOREanyPMICcommand/read0,
+  stickySTOP3/rawallzero. DoNOTretrycurrentbattery orfakeSOC. Newownvendor
+  sourceconfirmedlegitimatev5duplicateAPIDs/canonicalROreadselection and
+  WRITEownerisnotREADpermission; fixingthatwithfullsame-scanrawdiagnostics.
+- ActualUTCstatus READYseq0/error0 wasMISLEADING: actual_ticks
+  0xfffffe000704da50 pointsto'UEFI INPUT released expired remote contact'
+  kernelstring. TrueDarwinAArch64assembler treatssemicolonASCOMMENT:
+  ISB;MRS compiledONLYISB, inheritedx19 published. NOUTCSETsent, doNOTsend
+  untilnewkernel. Minimalclock0906 usesnewlineISB+MRS; actualMachOpositive/
+  oldnegativeinstructionfixturePASS, EFI COFFalreadycorrect, PBATnativeMRS
+  actualpresent. NativeWiFicounter+AT/PARchain hadsamebug, fixednewlineall
+  instructionswithactualMachO/objects. Old0135rawPAR1NOTvalidATevidence;
+  stillnoSMEMreads/map/FIFO/radio, independentMPUgateerror6retained.
+- Wallpaperloaderactualstage1unifiedEPERM beforeanysourcevalidate/PNG/CAML
+  activation; exactfailedpredicateunknown. Agentpreservesallcontextgates/
+  originalerrno andaddsfirst-predicateactualdiagnostics, officialdefault
+  confirmed20F66DefaultWallpapers plist7400/collection23EC2CF1...; prepares
+  originalscene/geometryfaithfulstaticPNG directdefault, noAI/foreignimage.
+  Noactualdefaultsetclaim. OriginalimmutableUFS/512MiBRAMCOW only.
+- NEXT startnecessarynativeclock+WiFiasmCI immediately(ownIIGclockheader
+  exactpinupdated); batteryROFWfix anddefaultwallpaperparallelnotblocked
+  onWiFiradio. CurrentallUSBworkersENDED/nohumanpending. DoNOTrepeatcurrent
+  image/payload/oldopticalcycle; allcurrentcontrolfrozen390source+manifests.
+
 ### 0135 ONEnewimage/ONEexactpayload ACKed; PHONE ACTUALLIVE0135 startup; old0134 normalexitCLOSED
 
 - Host1bdef47 committed/pushed; old0134normalexit84163 ENDED0 withactual
