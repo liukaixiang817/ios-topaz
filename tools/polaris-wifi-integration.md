@@ -1,5 +1,18 @@
 # Polaris Wi-Fi transport integration
 
+## 0150 original allocator alignment after actual0149 refusal
+
+The first actual private-client preparation retained all73 loaded-image
+exclusions, then rejected the pool address17e64ed9c with ZERO provider API
+calls. Its actual page was BootServicesData and its actual AT/PAR identity
+passed. Original RPMh allocator6ed8 branches9894, which reserves a4B size
+header and returns allocation+4. The previous8B alignment requirement was
+wrong for this provider. The new source requires4B alignment while retaining
+all page/image/source/lifetime/FP/arch/TPL/time gates. The46 software cases now
+exercise4mod8 pool roots, headers, clients and queues, plus rejection of a
+2mod4 address beforeAPI. The old0149 manifest and frozen controller are intact.
+No successful physical Create/Delete, MSS start or radio scan/join is claimed.
+
 ## 0149 default-OFF private RPMh preparation
 
 The original noThis DRV2 CreateNoExplicit and Delete callbacks now have a

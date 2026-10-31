@@ -66,4 +66,22 @@ class PrivateRpmhScope(unittest.TestCase):
         self.assertEqual(KernelProtocol.limits['logs'],(4<<20)+cap+128)
         self.assertEqual(d['wifi_CPU0_RPMh_private_raw_bytes'],227104)
 
+class OriginalAllocatorAlignmentScope(PrivateRpmhScope):
+    def candidate(self):
+        p=a.GCD_CLOCK_0150
+        return dict(copy.deepcopy(p['metadata']),**copy.deepcopy(p['resource_fields']),
+            inputs=copy.deepcopy(p['inputs']),kernel_sha256=p['kernel'],payload_sha256=p['payload'])
+    def test_new_scope_exposes_private_mutation(self):
+        d=self.candidate()
+        self.assertIs(a.original_gcd_policy(d),a.GCD_CLOCK_0150)
+        self.assertTrue(a.resources_clock_scope(d))
+        self.assertEqual(len(d['inputs']),70)
+    def test_0149_cannot_claim_corrected_source(self):
+        d=self.candidate()
+        header='shim/polaris/uefi-wifi-rpmh-client.h'
+        self.assertNotEqual(d['inputs'][header],a.GCD_CLOCK_0149['inputs'][header])
+        d['inputs'][header]=a.GCD_CLOCK_0149['inputs'][header]
+        self.assertIs(a.original_gcd_policy(d),a.GCD_CLOCK_0149)
+        self.assertIsNot(a.original_gcd_policy(d),a.GCD_CLOCK_0150)
+
 if __name__=='__main__':unittest.main()
