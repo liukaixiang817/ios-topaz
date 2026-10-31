@@ -34,6 +34,28 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0140 GPU scopedretention trial f790 READY; exactnativepin update needsONE CI; PHONE confirmedFASTBOOT/nootherboot
+
+- Final0139/performance/bbd-activation-final-0002/graphics-retained-trial:
+  bundle f790512548bfb9d46911590bedf5ec3962e9c3dc566b10f219d618131ae65353
+  /19072848B; manifest00dbde9a.../actualproof442fc94d... . OnlyMesa d283+
+  wrapper4dcb changed, otherFOURsignedfiles andactualwallpaper/Melbourne/init
+  preserved. Superseded0001 metadata hadoldbundle bytecount;0002 corrected,
+  binarysame. 19actual-wrapper-main ASAN/UBSAN activation/failure cases,
+  4actualbuilderCLIrefusals/SDK16.5ON/OFF+OFFwholeCPP/objectbyteidentityPASS.
+- CompiledefaultOFF; ONwrapper clears/verifiescacheintent+inheritedGPUport
+  atentryandbeforeexec; shaderacceptancechildseesneither. Onlyactualaccepted
+  backboardd/canonicalunique polarisgl=1 sets exactprocessenv1 justbeforeexec;
+  fallback/restart/badtoken/ambiguousenvfailure clears/denies, execfailure
+  clears. Nativecachehits/phoneperformance NOTyetobserved, no60Hzclaim.
+- Parentexactnative0899+hostmirroredheader/mkpayloaddigest pin changes ONLY
+  to f790; existingallhashes/ranges/ABI/storage/thermal/fence/WLED unchanged.
+  TwoactualC GPUbundle testsPASS. Thisnewnativepin requiresONE CI, not a
+  needlessrebuildof009c. New0140 pipeline willreuse existingtwoactualmodel
+  patterns andfresh0139 rootreview; firstread remainsOFF forGPUtrial, NC
+  WiFiresourcebinding separatelyunderreview. Currentphone stillactualFASTBOOT
+  afterclosed0139 zeroexit; no newimage/payload/UTC/PMICaction.
+
 ### 0139 actualcandidate0002 CLOSED: cachePASS, SMEM attribute gate refused BEFORE anyLDR; bootACK failed; NEWzeroexit+independentFASTBOOT PASS13:26Z
 
 - ONEimage12205 ENDED0 sent2026-10-31T13:24:39.181336Z/source93e049f;

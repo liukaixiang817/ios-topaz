@@ -16,6 +16,12 @@
 #include <errno.h>
 #include "../../tools/polaris-gl-status.h"
 #include "../../tools/polaris-compositor-clock.h"
+#ifndef POLARIS_BBD_RETAIN_CACHE_TRIAL
+#define POLARIS_BBD_RETAIN_CACHE_TRIAL 0
+#endif
+#if POLARIS_BBD_RETAIN_CACHE_TRIAL
+#include "../../tools/polaris-drm-retained-environment.h"
+#endif
 extern char **environ;
 extern int __mac_syscall(const char *,int,void *);
 static uint64_t test_milliseconds(void)
@@ -70,6 +76,10 @@ static int run_acceptance(void)
 int main(int argc,char **argv)
 {
     (void)argc;
+#if POLARIS_BBD_RETAIN_CACHE_TRIAL
+    /* A launcher-supplied intent/port must not reach the acceptance child. */
+    if(pdrme_clear(getenv,unsetenv))return 125;
+#endif
     int console=open("/dev/console",O_WRONLY);
     if(console>=0){dup2(console,STDERR_FILENO);if(console!=STDERR_FILENO)close(console);}
     char args[2048]={0};size_t bytes=sizeof(args)-1;
@@ -108,8 +118,21 @@ launch:
         setenv("POLARIS_GL_TESTED","1",1);
     }else {unsetenv("DYLD_INSERT_LIBRARIES");unsetenv("POLARIS_GL_TESTED");}
     fprintf(stderr,"POLARIS GL: shared-surface test %s; backboardd %s\n",good?"PASS":"not passed",good?"GPU trial":"CPU fallback");
+#if POLARIS_BBD_RETAIN_CACHE_TRIAL
+    /* Last environment mutation before exec: only this independently tested
+     * server opts in, with its own new connection and no inherited port. */
+    int retained=pdrme_launch(args,sizeof(args),good!=0,getenv,setenv,unsetenv);
+    if(retained<0)return 125;
+    fprintf(stderr,"POLARIS DRM RETAIN ENV: %d; process-only intent, actual cached answers still require native evidence\n",retained);
+#else
     unsetenv("POLARIS_GPU_CONNECTION"); /* the child test owns its port, never the real server */
+#endif
     argv[0]="backboardd";
     execv("/usr/libexec/polaris-bbd-real",argv);
+#if POLARIS_BBD_RETAIN_CACHE_TRIAL
+    int exec_error=errno;
+    (void)pdrme_clear(getenv,unsetenv);
+    errno=exec_error;
+#endif
     perror("polaris: backboardd exec");return 127;
 }

@@ -27,6 +27,45 @@ def build(args):
     preserved = {}
     poster = None
     timezone = None
+    retained = None
+    if args.retained_cache_trial_from is not None:
+        if args.build != '20F66' or args.rebuild_init or args.preserve_common_from is not None or \
+           args.poster_assets_header is not None or args.melbourne_timezone_source_root is not None:
+            raise ValueError('retained-cache trial is a separate20F66 Mesa+wrapper build; no init/resource rebuild or mixed preservation mode')
+        base = args.retained_cache_trial_from.resolve()
+        expected_base = ROOT / 'research/polaris/uefi-ios-0138/graphics-melbourne-default-0002'
+        if base != expected_base or sha(base / 'manifest.json') != 'b682d17ef03876c052b85c0cd7b7d4c28bc034b377d1489e5942d823a2b87c1a' or \
+           sha(base / 'polaris-gpu.bundle') != '4fe2b903efcdfabddc7b84c16284c4ab4b7c5fc851b090e531b95c57658fc770':
+            raise ValueError('retained-cache trial requires the exact complete0138 wallpaper/Melbourne baseline')
+        if sha(args.mesa_library) != 'd283234ba4bbe7294b533f101a9ac0d9306aac7930b33396c214b4f413f4a7bc':
+            raise ValueError('only the independently linked/signed0139 retention-query Mesa is admitted')
+        old = json.loads((base / 'manifest.json').read_text())
+        mesa_proof = ROOT / 'research/polaris/uefi-ios-0139/performance/mesa-retained-trial-0001/proof.json'
+        fixture_proof = ROOT / 'research/polaris/uefi-ios-0139/performance/retained-madvise-final-0002/proof.json'
+        if sha(mesa_proof) != 'ea52b126e3495f55f87fe3798d383c6ad458f7d6eac847e2d676ab6127516793' or \
+           sha(fixture_proof) != '407d4c70c6dcdb786d4ed3eed3a86ba3c0bce017f6937d80ec2175fb99084e2f':
+            raise ValueError('exact real-shim lifetime/concurrency and complete Mesa link proofs required')
+        for proof in (mesa_proof, fixture_proof):
+            for name, digest in json.loads(proof.read_text())['source_sha256'].items():
+                if sha(ROOT / name) != digest:
+                    raise ValueError('retention-query source changed since its actual tests/link: ' + name)
+        if sha(args.gl_xml) != old['gl_xml_sha256']:
+            raise ValueError('retained-cache trial cannot change the current GL registry')
+        # Preserve the already tested init, including its exact private PNG,
+        # state/package contracts, time zone and rollback. Only the wrapper's
+        # source is intentionally rebuilt in this scope.
+        for name, digest in old['source_inputs'].items():
+            if name != 'userland/gpu/polaris-bbd-wrapper.c' and sha(ROOT / name) != digest:
+                raise ValueError('retained-cache trial changed a baseline graphics/resource source: ' + name)
+        for item in old['files']:
+            path = base / item['name']
+            if sha(path) != item['sha256']:
+                raise ValueError('retained-cache baseline signed file changed: ' + item['name'])
+            if item['name'] not in ('libPolarisMesa.dylib', 'polaris-bbd-wrapper'):
+                preserved[item['name']] = path
+        if len(preserved) != 4:
+            raise ValueError('retained-cache trial must preserve exactly four current signed graphics files')
+        retained = dict(base=base, previous=old, mesa_proof=mesa_proof, fixture_proof=fixture_proof)
     if args.rebuild_init and args.preserve_common_from is None:
         raise ValueError('rebuild-init requires the verified current common binaries')
     if args.poster_assets_header is not None:
@@ -185,7 +224,9 @@ def build(args):
                                    *([str(SOURCES / 'polaris-poster-preview.c'),
                                       str(SOURCES / 'polaris-media-compat.c')] if args.build == '20F66' else []),
                                    *cf, *io, '-framework', 'OpenGLES', '-lobjc']),
-        ('polaris-bbd-wrapper', [str(SOURCES / 'polaris-bbd-wrapper.c'), *cf, *io]),
+        ('polaris-bbd-wrapper', [str(SOURCES / 'polaris-bbd-wrapper.c'),
+                                 *(['-DPOLARIS_BBD_RETAIN_CACHE_TRIAL=1', '-Wall', '-Wextra', '-Werror'] if retained else []),
+                                 *cf, *io]),
         ('polaris-gl-test', [str(SOURCES / 'polaris-gl-test.c'), str(mesa), *cf, *surface, *io, '-lobjc']),
         ('polaris-init', [str(SOURCES / 'polaris-init.c'),
                           *(['-DPOLARIS_POSTER_ASSETS=1',
@@ -305,6 +346,33 @@ def build(args):
             original_localtime='same inode retained as .polaris-0138-localtime.original',
             source_failure='original timezone retained; no retry', incomplete_rollback='PID1 hold',
             kernel_UTC_changed=False, fixed_offset_used=False, physical_timezone_verified=False)
+    if retained:
+        original = retained['previous']
+        current_inputs = manifest['source_inputs']
+        manifest['source_inputs'] = dict(original['source_inputs'])
+        manifest['source_inputs'].update(current_inputs)
+        for path in (retained['base'] / 'manifest.json', retained['mesa_proof'], retained['fixture_proof'],
+                     ROOT / 'tools/polaris-drm-retained-environment.h',
+                     ROOT / 'tools/polaris-drm-retained-environment-test.c',
+                     ROOT / 'tools/polaris-drm-retained-environment-check.py',
+                     ROOT / 'userland/mesa/redwood-drm/redwood_drm.c',
+                     ROOT / 'userland/mesa/redwood-drm/polaris-retained-cache.h'):
+            manifest['source_inputs'][str(path.relative_to(ROOT))] = sha(path)
+        manifest['poster_assets'] = dict(original['poster_assets'])
+        manifest['poster_assets']['actual_bundle_bytes'] = len(bundle)
+        manifest['default_timezone'] = original['default_timezone']
+        manifest['retained_madvise_trial'] = dict(enabled_in_this_candidate=True,
+            compile_default_OFF=True, runtime_environment='POLARIS_DRM_RETAIN_CACHE=1',
+            scope='only accepted genuine backboardd child, canonical polarisgl=1, own new PolarisGPU connection',
+            acceptance_child_cache_enabled=False, inherited_GPU_port_cleared=True,
+            fallback_restart_and_environment_failure='cache cleared; ambiguous mutation denies exec',
+            only_native_successful_WILLNEED_retained1_reused=True,
+            native_SUBMIT_fence_cache_DSB_auth_lifetime_thermal_unchanged=True,
+            changed_signed_files=['libPolarisMesa.dylib', 'polaris-bbd-wrapper'],
+            preserved_signed_files=sorted(preserved), baseline_bundle_sha256=original['bundle_sha256'],
+            source_and_link_proof_sha256=sha(retained['mesa_proof']),
+            actual_shim_fixture_proof_sha256=sha(retained['fixture_proof']),
+            actual_target_cache_hits_observed=False, physical_performance_improved=False)
     (out / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
     print(json.dumps(manifest, indent=2))
 
@@ -325,4 +393,6 @@ if __name__ == '__main__':
                    help='exact private prepared-static-states-0002 default7400 header;20F66/rebuild-init only, preserves five0133 binaries')
     p.add_argument('--melbourne-timezone-source-root', type=Path,
                    help='read-only exact20F66 original root for the PID1 RAM-only Australia/Melbourne default; preserves five current graphics files')
+    p.add_argument('--retained-cache-trial-from', type=Path,
+                   help='explicit separate20F66 trial: exact0138 baseline, reviewed Mesa+scoped wrapper only; preserve four signed files and all recovered resources')
     build(p.parse_args())
