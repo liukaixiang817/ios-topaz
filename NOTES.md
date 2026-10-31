@@ -34,6 +34,29 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0139 WiFi source828389d PUSHED; exactreviewed48input profile +2terminalmodels PASS; newpackage NEXT, PHONE connectionpending
+
+- WiFi/cameraobserver source828389d committed/pushed; noextra nativeCI.
+  Newseparate FIRSTREAD_0139 profile bindsfull48inputSHA map, firmwareSOURCE
+  828389d, actual009c kernel/exactf7d50f84...payload andall20newmetadatafields.
+  Oldcache-only/defaultOFFscope retained; wrong/partial/absent/hiddenenabled
+  reader/source/payload/address/count/fresh/MPU claims reject. SOFTWAREneeds
+  actualinteger1 firstreadcompiledoutmarker, bool1/absent reject.14hosttests
+  PASS andactualnewphysical+bothcurrentmodels+originalrootadmissionPASS.
+- 0139 physicald8fd/799744B andoriginal009c/profile/CI/exactphysical/model
+  payloads independentlyCOPY/hashverified. Newtwo actualkernelterminalmodels
+  9167 ENDED0:19/19each,38.884/39.374s,80/82raw,12writes/oneobserver,
+  SOFTWAREARM250025/250000us beforefreshpair. Firstread/cache compiledout
+  rawmarkers1 andactualgenerated-configpreprocess excludesbothphysical
+  bodies. Proof0139/wifi/two-actual-kernel-terminal-models-proof.json
+  4a19203ea6b51541ea701508bf215f34ca9d062dbe73a80e7f9002ac4a9b071c.
+  ThisisnotphysicalSMEM/permission/radio/scanjoin ornewnativeCIproof.
+- NEXT package/wholeEDK2codec/freshSOURCE review+COPYfreeze undernewprofile,
+  nochangeold0138manifest/controller. PhoneUSBreplugquestionstillpending;
+  nofurtherUSBquery/reboot/boot/cycle sincebounded10:03timeout. LastknownUI
+  LIVE0138/humanbasicnormal. Don'tbootuntilactualnormalexit/receipt and
+  independentcorrectFASTBOOT; noheartbeatstaleREADYoverride.
+
 ### 0139 WiFi fixedCPU0 firstread integration COMPLETE defaultOFF; physicalON candidate NOTyetadmitted/booted; otheradaptation parallel
 
 - SixWiFifiles frozen: firstread.h/cache-readonly.h/uefi-xnu.c, builder,
