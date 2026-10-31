@@ -34,6 +34,49 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0129 verifiedextensionstate candidate COMPLETE/READY; actualPHONE FASTBOOT; nextONEnewboot
+
+- CI41170151451/job124446162173 SUCCESS, native1204deb..., actualkernel
+  d56815bd8723129fcd5645a262d094dff0863064859da09d33b7c69baecd92b1
+  17248584B/profile/CRC/SHA +nativeextension symbolverified. Bothactualnewkernel
+  terminalmodels PASS18checks each; SOFTWAREPMIC/RAMUSB only, worker28972ENDED.
+- Physicaldriver/image0001 imageSHA
+  84fe06cb7845050a4ccfef7053b3ddc2b6e4122cd0cf4a6af410b3f421592aa6;
+  original81FW/SimpleInit/BootShim/DTB retained and whole28170952B upstreamEDK2
+  decode byteexact. Offlinefreeze/source/model/root/codec PASS, worker38125 ENDED.
+  verified-extension-state-candidate-ready-proof.json. Actualnewtable/query/
+  providers/wallpaper NOTyetphysical. ba69gfxbundle stillbyteidentical0127.
+- Host20F66profile bindsexactd568/1204/CI41170151451, root915/142map/602Bflags
+  unchanged. New0129phone-poster-preview-0001/boot.json ABSENT. CurrentPHONE
+  independentactualFASTBOOT afterstrictnormal0128full32rawexit. NEXTcommit/push
+  thenONEnewimage+ONEexactpayload, captureEXT TABLE/EXT STATE/realproviderexec/
+  actualgallery/selection/realwallpaper. Noextrauserreply/keysneeded.
+
+### 0129 extensionnative CI SUCCESS; old0128 CLOSED +actualFASTBOOT; newcandidate finishing
+
+- CI41170151451/job124446162173 SUCCESS, source1204deb..., actualkernel
+  d56815bd8723129fcd5645a262d094dff0863064859da09d33b7c69baecd92b1 /17248584B ZIPCRC/SHA/profileverified,
+  actualextensiontable symbolpresent. Artifactworker9947 ENDED, physicaldriver
+  worker9440 ENDED. Modelworker28972 firstPASS18, secondpending/checkEND.
+- Actualold0128 strictnormalexitPASS: full32raw/4issued4completed/request2ack2/
+  module128/IRQ2/error0, nativeRAM_DRAINED80000003/epoch0/flushed0/WLEXIT05/WLR5.
+  USBworker22559 ENDED, independentactual-FASTBOOT-after-live0128-exit.json TRUE.
+  PHONE nowactualFASTBOOT, noold0128controller/action/replay. Nooptical/durable
+  UFSclaim. NEXT finalmodels/image/codec/offlinefreeze/hostcommitpush thenONE0129.
+
+### 0129 verifiedextensionstate source1204deb COMMITTED/PUSHED; ONE CI41170151451 running
+
+- Source1204deb767cb910295ad00f45e6d76729cd8a554 committed/pushed. ONEnewnative
+  CI41170151451 inprogress for0901; doNOTdispatchagain. Actualobjects+2host
+  sanitizer tests PASS, originaltablemetadata andregular-file identitychecked
+  BEFORECI. ExistingPBFidentity/GPUcaller/reporterfunctions byteidentical.
+  ba69graphicsbundle unchanged0127; new0129scripts explicitlyreuseit.
+- CURRENTPHONE stillLIVE0128 blankAddNewWallpaper; PBFrealbitmapproved,0x60
+  newstate/providerregistration NOTyetphysical. AllUSBworkersENDED. Use frozen
+  023e0128controller withoriginal0128boot/image/driver0001. New0129boot.json
+  ABSENT; futureONEnewRAM onlyafteractualCI/artifact/models/codec/hostcommit and
+  currentstrictnativeexit+completeprefix/WLEXIT05/WLR5+independentactualFASTBOOT.
+
 ### 0129 actualPBF bitmap PASS but wallpaper STILLBLANK; verifiedextension-state source READY; PHONE LIVE0128
 
 - Actual0128capture3 hasreal375x811/scale3 UIKitbitmapcreated, Metaldevice0/queue
