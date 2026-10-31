@@ -9,7 +9,10 @@
 #endif
 #if EFI_XNU_WIFI_NPA_READONLY_AVAILABLE && !defined(POLARIS_EFI_TEST_QEMU)
 #include "../../tools/polaris-wifi-npa-identity.h"
-#define PWNPA_NODES 128u
+/* The real0145 list reached a nonzero129th cursor in13ms. Keep a finite
+ * larger diagnostic capacity; the original200ms whole observation deadline,
+ * ownership, cycle and two-pass identity gates still apply to every node. */
+#define PWNPA_NODES 512u
 #define PWNPA_NAME 64u
 #define PWNPA_PROTOCOL_BYTES 432u
 /* All followed fields correspond to the exact original NpaDxe ABI. Captured
@@ -36,7 +39,7 @@ struct pwnpa_result {
 };
 struct pwnpa_work { uint8_t map[4096] __attribute__((aligned(8))); uint64_t bytes,stride; };
 _Static_assert(sizeof(struct pwnpa_node)==448,"original NPA node raw record ABI");
-_Static_assert(sizeof(struct pwnpa_result)==126432,"NPA raw V1 complete extent");
+_Static_assert(sizeof(struct pwnpa_result)==470496,"NPA raw V2 complete extent");
 struct pwnpa_io {
     struct paic_io memory;
     /* Return1 only after the original service returned; a non-return retains
@@ -212,14 +215,14 @@ static inline int pwnpa_unknown(void)
 static inline void pwnpa_report_preboot(void (*append)(const char *))
 {
     static const char hex[]="0123456789abcdef"; char chunk[127];
-    append("WIFI_NPA_RAW_V1_BEGIN\r\n");
+    append("WIFI_NPA_RAW_V2_BEGIN\r\n");
     const uint8_t *p=(const uint8_t*)&pwnpa_record;
     for(size_t at=0;at<sizeof(pwnpa_record);) {
         unsigned n=(unsigned)(sizeof(pwnpa_record)-at); if(n>63)n=63;
         for(unsigned j=0;j<n;j++) { chunk[2*j]=hex[p[at+j]>>4]; chunk[2*j+1]=hex[p[at+j]&15]; }
         chunk[2*n]=0; append(chunk); at+=n;
     }
-    append("\r\nWIFI_NPA_RAW_V1_END\r\nWIFI_NPA_SOURCE_SHA256=" PWNPI_SOURCE_SHA256 "\r\n");
+    append("\r\nWIFI_NPA_RAW_V2_END\r\nWIFI_NPA_SOURCE_SHA256=" PWNPI_SOURCE_SHA256 "\r\n");
     append("WIFI_NPA_SCOPE=SOURCE_BOUND_RAM_NAMESPACE NO_NPA_API NO_QUERY_PLUGIN NO_CLIENT NO_VOTE NO_MSS_START NO_WRITE_PERMISSION\r\n");
 }
 #else

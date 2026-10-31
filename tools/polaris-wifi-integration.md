@@ -217,24 +217,43 @@ under the existing FP/architecture/TPL original-service guards. No original NPA
 function or plugin is called. Unknown delivery retains its operation and blocks
 native startup/reset through the existing parent gate.
 
-Each pass retains up to128 nodes, names up to64 bytes, complete link/resource/
-definition/plugin RAM records and full map outputs. Cycles, non-owned pointers,
-source/owner changes, traversal limit, changed namespace/map, backward or stale
-architecture, and incomplete service delivery refuse. Unresolved NULL resources
-remain raw observations. This does not create clients, assign ownership or
-translate a software aggregate into measured rail voltage. RawV1 is126432B;
-the new scope explicitly uses524288B for firmware logs, and snapshot allocation
-continues to use the actual buffer's `sizeof`. The old frozen0144 controller,
-image and records remain untouched.
+The real0145 trial returned128 distinct nodes and then a nonzero129th cursor.
+It retained the complete RAW_V1 record and stopped with `PWNPA_LIMIT`, with no
+unknown original call. The first five immutable hashes passed and the two
+issued BootServices calls returned under restored FP/architecture/TPL guards.
+The recorded128-node prefix took13036us. This proves neither a complete graph
+nor absence of later MSS/CX/MX names. The original128-node scope and frozen0145
+controller remain separate and unchanged.
+
+The new0146 source keeps the walk finite at512 nodes and retains all fields in
+each of two passes. RAW_V2 is470496B, with the same448B node layout and the
+same200ms whole-observation deadline. Source/owner/map/namespace identity,
+per-span owned RAM, cycle, partial-record and original-service guards are
+unchanged. The larger capacity is not a relaxation of write permissions or
+hardware protection thresholds. If the real graph or time exceeds the new
+limit it still stops and keeps the raw partial record. Two passes are required
+before calling a graph stable; the13ms prefix is not a prediction of success.
+
+The complete hex NPA record takes940992B. A1572864B firmware log also fits the
+retained pre-NPA scope's262144B bound plus bounded labels. Snapshot allocation
+still uses the actual buffer's `sizeof`; the host native-log bound is now
+4MiB+1572864+128. The old frozen controllers keep their old exact transport
+sources. New typed metadata explicitly declares512/RAW_V2/470496; no legacy
+manifest is relabelled or stripped to admit this scope.
 
 `polaris-wifi-npa-check.py --driver <new-driver-directory> --out <private-dir>`
-checks22 focused sanitizer cases using relocated original PE bytes as data,
-and compiles the actual combined coordinator for AArch64 COFF and Mach-O with
-matching raw ABI and1024B maximum frames. The new whole EFI linked successfully
-with65 exact inputs and the unchanged7d24 kernel/63cb physical payload. Two
-serial whole EFI/XNU terminal models pass19 checks each and eight literal
-compiled-out markers; their physical NPA/GCD/Clock bodies and records are absent.
-They use software PMIC/RAM USB and do not execute original NPA or collect live
-phone data. Host boot admission, source freeze and final image packaging still
-need a separate new profile before a physical trial; this compile is not a
-physical candidate authorization or Wi-Fi scan/join result.
+checks26 focused sanitizer cases, including complete256-node and512-node
+collector runs, full target records after node128, changed tail data, a late
+whole-observation deadline after129 nodes and513-node rejection. Relocated
+original PE bytes are data only. The test fixture's NPA record was moved to a
+larger isolated arena, with the original GCD configuration table outside its
+self-image span; the real guards were not weakened to make the fixture pass.
+Actual combined AArch64 COFF/Mach-O coordinator builds retain1024B maximum
+frames, and the complete EFI links with65 inputs. The7d24 native kernel and
+63cb payload remain unchanged; no native CI is needed. Two affected serial
+whole EFI/XNU terminal models must bind the new65 inputs and all eight literal
+physical-body compiled-out markers. None of these software checks proves the
+new full physical NPA graph, original-provider calls, rail ownership or Wi-Fi.
+A separate new host profile, image, source freeze and normal old-boot drain are
+required before the next physical trial. No NPA client, vote, plugin or MSS
+startup is authorized by the namespace observation.

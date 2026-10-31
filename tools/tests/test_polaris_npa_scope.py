@@ -75,7 +75,8 @@ class NpaScope(unittest.TestCase):
         cap=d['original_GCD_new_scope_RAM_log_capacity']
         self.assertEqual(cap,524288)
         self.assertEqual(d['wifi_CPU0_resources_firmware_RAM_log_capacity'],cap)
-        self.assertEqual(KernelProtocol.limits['logs'],(4<<20)+cap+128)
+        self.assertGreaterEqual(KernelProtocol.limits['logs'],(4<<20)+cap+128)
+        self.assertEqual(KernelProtocol.limits['logs'],(4<<20)+1572864+128)
 
 
 if __name__=='__main__':unittest.main()

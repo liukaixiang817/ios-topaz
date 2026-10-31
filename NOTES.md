@@ -34,6 +34,37 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### NEW0146 finite512 NPA source compiled and affected models PASS; host admission/image not ready; currentphone still0145
+
+- Actual0145 partial128-node record measured13036us with its original typedef;
+  source/raw retained. NEWsource expands only finite diagnostic capacity512,
+  keeps all448B/node fields/twopasses/cycle/ownedRAM/identity/source5hash /
+  FP/arch/TPL/200mswhole/UNKNOWN gates. RAW_V2=470496B explicitly distinct
+  fromold126432B V1; no NPA API/client/vote/plugin/SMC/MMIO/MSS action added.
+  Newfirmwarelog1572864B fits940992B hex+retained262144B scope+labels; snapshot
+  stillsizeofactualbuffer, hostbound4MiB+1572864+128, oldfrozen0145 untouched.
+- 26affectedASAN/UBSAN casesPASS: full256/full512, actualrecord fields of
+  targetnode300, changedtail after128, >200ms after129, finite513reject +all
+  originalfault/UNKNOWN cases. Initialsoftwarefixture rejected because its
+  configtable overlapped expandedself; onlyfixturetable moved out, realguard
+  preserved. ActualcombinedAArch64COFF/MachO/maxframe1024 PASS. Physicalbody
+  EFI97ca86eb13d178fa3bf5619a2c7667115f0c4fc42266d4c5522226d8d22f3811 /
+ 3046400B/65inputs compiled/linked at0146/wifi/NPA512-driver-ON-0001.
+  Componentproof09194e6d5f87869ee0de24070b31a8f9cc5b2da6300f9110c26b25d682396e4a.
+- TwoNEWwholeEFI-XNU models SERIAL each19checks/8literalint1 physicalcompiledout
+  markersPASS, same65inputs; bodies/records absent from actualpreprocessedmain.
+  ProofNPA512-two-terminal-models-0001-proof.json; 27legacyaffectedhostchecks
+  alsoPASS. AllworkersENDED. No nativeCI/build/download/USB or newphoneaction.
+  SOFTWAREpeer/PMIC/RAMUSB != physical512graph/MSS/WiFi. No speculative pass.
+- NEXT bind exactNEWsource toseparate0146 hostprofile retaining0143/44/45,
+  then independentcopies/package/codec/sourcefreeze/oneboothelper with latest
+  fresh0145a04c/2549 and same7d24/63cb/f790. Do not useold0145 profile or edit
+  frozen/oldmanifest. BeforephysicalONE onlyfrozen0145 normalnative drain /
+  fullappendraw/WLEXIT05/WLR5 and independentactualFASTBOOT. Currentnative0145
+  remains lastactual17:39 lockedUI/57%/3929mV/charging1, UTCcount1 neverreSET.
+  ONLYWi-Fi; actualscan/join/data and allMSS/writeownership prerequisites
+  unfinished; audio/camera/children remainSTOPPED.
+
 ### CURRENT0145 nativeLIVE17:39 / real NPA LIMIT9 retained; Wi-Fi still unfinished, only serial Wi-Fi next
 
 - Supersedes old0144LIVE and17:32FASTBOOT/READY notes. ONE new0145 image59819

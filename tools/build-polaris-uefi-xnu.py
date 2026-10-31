@@ -1132,14 +1132,14 @@ def main():
             wifi_CPU0_NPA_physical_body=not a.test_qemu,wifi_CPU0_NPA_physical_compiled_out=a.test_qemu,
             wifi_CPU0_NPA_source_PE=npa_pe_relative,wifi_CPU0_NPA_source_SHA256=npa_binding['source_whole_sha256'],
             wifi_CPU0_NPA_binding_SHA256=npa_binding['binding_sha256'],wifi_CPU0_NPA_immutable_hashes=5,
-            wifi_CPU0_NPA_list_nodes_max=128,wifi_CPU0_NPA_full_raw_two_passes=True,
-            wifi_CPU0_NPA_raw_format='RAW_V1',wifi_CPU0_NPA_raw_bytes=126432,
+            wifi_CPU0_NPA_list_nodes_max=512,wifi_CPU0_NPA_full_raw_two_passes=True,
+            wifi_CPU0_NPA_raw_format='RAW_V2',wifi_CPU0_NPA_raw_bytes=470496,
             wifi_CPU0_NPA_reuses_current_loaded_image_enumeration=True,
             wifi_CPU0_NPA_new_BS_LocateProtocol_calls_max=2,wifi_CPU0_NPA_new_BS_GetMap_calls_max=2,
             wifi_CPU0_NPA_original_service_FP_arch_TPL_guard=True,wifi_CPU0_NPA_unknown_blocks_native_and_reset=True,
             wifi_CPU0_NPA_api_calls=0,wifi_CPU0_NPA_query_plugins=False,wifi_CPU0_NPA_client_or_vote=False,
             wifi_CPU0_NPA_RAM_namespace_not_owner_or_write_permission=True,
-            original_GCD_new_scope_RAM_log_capacity=524288,wifi_CPU0_resources_firmware_RAM_log_capacity=524288)
+            original_GCD_new_scope_RAM_log_capacity=1572864,wifi_CPU0_resources_firmware_RAM_log_capacity=1572864)
     (out/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
     print(json.dumps({k:manifest[k] for k in ['artifact','sha256','bytes','QEMU_variant','device_execution_tested']}))
 
