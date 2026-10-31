@@ -34,7 +34,63 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### 0142 resource/originalClock SOURCE READY; ACTUAL Polaris FASTBOOT 14:59Z; WiFi/audio/camera unfinished, rendering repair parallel
+### 0142 ACTUAL resource PASS / Clock NOT_ISSUED; phone newnative LIVE; native rendering repair ready for unique CI
+
+- Sole0142image59960 ENDED0 sent2026-10-31T15:07:17.515820Z fromSOURCE
+  36163e0b3ac386c6eb93f5e91d57a3c78d8ddf9c; casephone-resource-clock-0001/
+  boot.json CONSUMED. Actualnewstate waiting-payload PASS. ONEb31payload
+  34036 ENDED0 ACK15:08:25.722699Z, transfer32.964037s/bootcall16.915306s
+  (ACK90 only). ONLY /private/tmp/polaris-runtime-0142-frozen-0001 controller
+  and original0142driver0001/image0002/bootrecord control this live phone.
+  Current active native sources now diverge for the NEXT build; never use
+  currenteditedcontroller or replay0142helper/image/payload.
+- Actualcapture7096 ENDED0/kernel-entered/92086Blog; fourCPU SGI PASS.
+  PFR complete17416B/error0, map2x8192B/58descriptors/key4238/2784B/48/v1
+  byteidentical,17archchecks/CPU0EL1/DAIF0/19.2MHz stable; sevenPSCIreturns1
+  issued/completed7f/unknown0. Duration1.016354ms/cache.after->end1.103906ms.
+  All six carved resource ranges cover Reserved/type0/attrsf, NOT free or
+  owner permission. AP7OFF does not establish MSS/DSPoff or exclusive lifetime.
+  Actualproof63f38296... . No radio/SMEMallocation/PIL action occurred.
+- ActualClock RAW13000B/error0/6hash/uniqueowner/336Bcontext+15x96B two
+  descriptors stable; collector9.403958ms/3maps key5897/2784B/48/v1 stable.
+  All15flags/refcount0 is RAM observation only. Eight GCC targets refused
+  because the BS memory map has NO descriptor covering the lowMMIOpages;
+  therefore AT and all16 originalAPIcalls were NOT_ISSUED. UINT64_MAXstatus/
+  0xa5values are sentinels, NOT hardwareOFF or failed-query return values.
+  SevenCAMCC remain fixedNOT_ISSUED. Actualproof088fdc2c... . Baseline0 is
+  diagnostic incompleteness, not a completed clock baseline or audio fix.
+  ExactEDK2 Page.c source explains ordinary nonruntime GCDMMIO may be absent
+  from BS map; this is correspondence, not original81FW source equivalence.
+  NEXT independentGCDclassification+actualDeviceAT/noRAMoverlap provider;
+  do not alter0142manifest or switch its policy after refusal.
+- NewUTC READYseq0/count0 observed, ONESET then independentstatus seq1/
+  status2/error0/count1/uncertainty2268us/UTC1793459367371256us. Never repeat
+  SET0142. Capture25545 ENDED0/188166Blog: original7400assets+Melbourne
+  stage5/error0, GPU EAGL ALL4096 pixels/methods plus real submissions1..4
+  fence/idle/halt observed. Old diagnosticCOREerror8/stage7 remains raw;
+  do not summarize all GPU raw fields as error0. Earlybattery8/12 unavailable
+  retained, no current realSOC sample yet. Captures0001/0002 show bootconsole,
+  not stableUI proof; WLED prefix2/error0/issued0/completed0. UIcapture0003
+  34183 currentlyrunning; no panic(cpu/Kernelpanic observed in priorprefix.
+- Native rendering SOURCE ready (not in phone0142):0912 honors mute in
+  direct_cnputc and clears fitted margins;0913 pins every selected surface
+  before any panel write and holds common GPU/display CAS through cache/DMA/
+  copy/DSB. Invalid/missing/busy layer rejects whole frame, unknownDMA remains
+  busy/quarantined, owner-failure retains refs. Max100sleeps/100ms contention,
+  no forcedunlock. WLED full-single-layer/newframe/DSB/exchange and original
+  make/drop/poison/clientClose/free blocks unchanged. Mi8 whole-frame locking
+  motivated this own implementation; no claim DPU samebuffer or CPU-direct
+  pixel writes are fixed. 3actualAppleClang nativeTU objects PASS,20safety
+  checks4555dc12...;15different affected tests nowPASS (new4/old11), final
+  mergeproof81b4001f... . PID1fixture extractor corrected to current realmain,
+  original3rollback assertions unchanged; no PID1productsource changes.
+- NEXT commit/push this nativefix and let push trigger ONE nativeCI; do not
+  workflow_dispatch duplicate. Newheader exact6e015e52... is private .cpp
+  implementation only, no DriverKit/IDL/layout change. WiFi/GCD and audio
+  onelease PAGE0/BOOK127/PGID sessions advance separately; physicalproviders
+  and actualTASID/PCM/sensor/frames/CameraApp publication remain unfinished.
+
+### Historical 0142 resource/originalClock SOURCE READY; ACTUAL Polaris FASTBOOT 14:59Z; WiFi/audio/camera unfinished, rendering repair parallel
 
 - Latest human physically returned to FASTBOOT, requests continuing WiFi,
   sound and missing CameraApp. Realhost expected-only product query at

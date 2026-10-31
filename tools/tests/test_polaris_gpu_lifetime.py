@@ -174,7 +174,10 @@ int main(){
 
     def test_actual_pid1_activation_failure_rolls_back_before_apple_exec(self):
         code = (ROOT / 'userland/gpu/polaris-init.c').read_text()
-        code = code[code.index('int main(void)'):].replace('int main(void)', 'static int activate(void)', 1)
+        # The production entry follows two conditional test entry points.
+        signature = 'int main(int argc,char **argv)'
+        code = function(code[code.rindex(signature):], signature).replace(
+            signature, 'static int activate(int argc,char **argv)', 1)
         source = r'''
 #include <assert.h>
 #include <string.h>
@@ -197,7 +200,7 @@ static int exec_(const char*p,char*const argv[]){assert(!strcmp(p,"/sbin/launchd
 int main(void){
  for(scenario=0;scenario<3;scenario++){
   calls=restored=activated=0;apple_original=1;
-  if(!setjmp(done))activate();
+  if(!setjmp(done))activate(0,NULL);
   if(!scenario)assert(calls==2&&activated&&!restored);
   if(scenario==1)assert(calls==1&&!activated&&apple_original);
   if(scenario==2)assert(calls==3&&!activated&&restored&&apple_original);

@@ -23,6 +23,10 @@ EXTRA_PRIVATE_HEADERS={'iokit/Kernel/arm/polaris_uefi_cpu.h','bsd/dev/polaris_ue
 # outside DriverKit's interface include graph. Bind their reviewed bytes; adding them
 # must not weaken the original IDL/header checks or admit arbitrary headers.
 EXTRA_PRIVATE_HEADER_SHA={
+    # Private GPU/display ownership implementation, included only by the two
+    # native .cpp files; no DriverKit interface/layout or IDL change.
+    'iokit/Kernel/arm/polaris_surface_access.h':
+    '6e015e52a4713529db24a05d14daf2a70d096cb826ad946456fad8243adaa4a7',
     'bsd/dev/polaris-wifi-scm-info.h':
     'ffc7184bd4e46b1a9db8ce09d95843f877e9e63dbf66a3fb93953f4c6ed2104d',
     # Exact private battery/calendar and Wi-Fi implementation headers.

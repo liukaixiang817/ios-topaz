@@ -28,6 +28,7 @@ extern "C" {
 #include "polaris_gpu_abi.h"
 
 #if defined(POLARIS_RAM_ONLY)
+#include "polaris_surface_access.h"
 extern "C" void polaris_cpu_performance_activity(void);
 extern "C" bool polaris_gpu_last_submit_us(uint32_t,uint64_t *);
 extern "C" bool polaris_gpu_clock_snapshot(uint32_t *,uint32_t);
@@ -447,6 +448,16 @@ void PolarisGPUUserClient::poison()
     __atomic_store_n(&gpuFaultStatus,1,__ATOMIC_RELEASE);
     if (!quarantined) {quarantined=true;retain();} /* DMA ownership survives task death */
 }
+extern "C" void polaris_gpu_display_fault(void)
+{
+    /* Display calls only after dropping its surface pins and outside fLock.
+     * Preserve the existing GPU quarantine/unknown-DMA shutdown refusal. */
+    if(!gpuLock)return;
+    IOLockLock(gpuLock);
+    gpuQuarantined=true;polaris_gpu_quarantine();
+    __atomic_store_n(&gpuFaultStatus,1,__ATOMIC_RELEASE);
+    IOLockUnlock(gpuLock);
+}
 bool PolarisGPUUserClient::initWithTask(task_t task,void *security,UInt32 type,OSDictionary *props)
 {
     if (!super::initWithTask(task,security,type,props)) return false;
@@ -626,8 +637,10 @@ IOReturn PolarisGPUUserClient::submit(msm_gem_submit *r)
     uint64_t validationBegan;clock_get_uptime(&validationBegan);
     msm_gem_submit_bo *bos=IONew(msm_gem_submit_bo,r->nr_bos);
     msm_gem_submit_cmd *cmds=IONew(msm_gem_submit_cmd,r->nr_cmds);
+    SweetSurface **pinned=IONew(SweetSurface *,r->nr_bos);
+    uint32_t pinCount=0;bool dmaIssued=false;
     IOReturn result=kIOReturnBadArgument;
-    if(!bos || !cmds) {result=kIOReturnNoMemory;goto out;}
+    if(!bos || !cmds || !pinned) {result=kIOReturnNoMemory;goto out;}
     if(copyin(r->bos,bos,r->nr_bos*sizeof(*bos)) || copyin(r->cmds,cmds,r->nr_cmds*sizeof(*cmds))) {
         result=kIOReturnVMError;goto out;
     }
@@ -651,22 +664,38 @@ IOReturn PolarisGPUUserClient::submit(msm_gem_submit *r)
          * invalidated after the observed GPU flush/fence/idle/halt. */
         PolarisCacheTally tally={0,0,0,0,0};uint64_t before,prepared,submitted,completed;
         if(!polaris_gpu_desktop_demand(callerKind)) {poison();result=kIOReturnNotReady;goto out;}
+        /* gpuLock serializes writers; panel readers use the same per-surface
+         * CAS. Pin before cache maintenance, not only before GPU execution.
+         * No GPU command is issued on contention/timeout. Never force-clear a
+         * previous GPU/unknown state or release a surface owned by a reader. */
+        uint64_t pinBegan=0;uint32_t pinSleeps=0;clock_get_uptime(&pinBegan);
+        for(unsigned n=0;n<r->nr_bos;n++) {
+            SweetSurface *surface=buffer(bos[n].handle)->surface;
+            if(!surface)continue;
+            bool duplicate=false;
+            for(unsigned k=0;k<pinCount;k++)if(pinned[k]==surface){duplicate=true;break;}
+            if(duplicate)continue;
+            while(!pfs_acquire(&surface->polarisGPUBusy,PFS_GPU)) {
+                uint64_t now=0;clock_get_uptime(&now);
+                if(now<pinBegan || polaris_gpu_elapsed_us(pinBegan,now)>=100000 || pinSleeps++>=100) {
+                    result=kIOReturnBusy;goto out;
+                }
+                IOSleep(1);
+            }
+            pinned[pinCount++]=surface;
+        }
         clock_get_uptime(&before);
         if(!cacheBefore(bos,r->nr_bos,&tally)) {result=kIOReturnNoMemory;goto out;}
         clock_get_uptime(&prepared);
-        for(unsigned n=0;n<r->nr_bos;n++) {
-            PolarisBO *b=buffer(bos[n].handle);
-            if(b->surface)__atomic_store_n(&b->surface->polarisGPUBusy,1,__ATOMIC_RELEASE);
-        }
+        dmaIssued=true;
         if(!polaris_gpu_submit(addresses,words,count,&r->fence)) {poison();result=kIOReturnTimeout;goto out;}
         clock_get_uptime(&submitted);
         lastFence=r->fence;
         cacheAfter(bos,r->nr_bos,&tally);
         clock_get_uptime(&completed);
-        for(unsigned n=0;n<r->nr_bos;n++) {
-            PolarisBO *b=buffer(bos[n].handle);
-            if(b->surface)__atomic_store_n(&b->surface->polarisGPUBusy,0,__ATOMIC_RELEASE);
-        }
+        /* The original observed fence/idle/halt AND cache-after have passed.
+         * Only now may the common out path release our GPU ownership. */
+        dmaIssued=false;
         if(gpuMethodPerformance && callerKind==2) {
             uint64_t stages[6]={0},ticks[5]={validationBegan,before,prepared,submitted,completed};
             bool valid=polaris_gpu_last_submit_us(r->fence,stages);
@@ -686,6 +715,13 @@ IOReturn PolarisGPUUserClient::submit(msm_gem_submit *r)
         result=kIOReturnSuccess;
     }
 out:
+    if(!dmaIssued)for(unsigned n=0;n<pinCount;n++)
+        if(!pfs_release(&pinned[n]->polarisGPUBusy,PFS_GPU)) {
+            poison();result=kIOReturnNotReady;
+        }
+    /* On unknown DMA the BOs/descriptors retain their original quarantine;
+     * only this temporary list is freed. GPU state stays busy, no retry. */
+    if(pinned)IODelete(pinned,SweetSurface *,r->nr_bos);
     if(bos)IODelete(bos,msm_gem_submit_bo,r->nr_bos);
     if(cmds)IODelete(cmds,msm_gem_submit_cmd,r->nr_cmds);
     return result;

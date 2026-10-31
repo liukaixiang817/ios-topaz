@@ -1,0 +1,81 @@
+--- a/iokit/Kernel/arm/SweetFramebuffer.cpp
++++ b/iokit/Kernel/arm/SweetFramebuffer.cpp
+@@ -927,6 +927,7 @@
+ #if defined(POLARIS_RAM_ONLY)
+     __atomic_fetch_add(&polaris_fb_presents, 1, __ATOMIC_RELAXED);
+     fPolarisWledCopied=false;
++    bool panelUpdated=false;
+ #endif
+ 	uint32_t mask = get32(rec, 0x104);
+ 
+@@ -1000,6 +1001,7 @@
+                 fPolarisRow, 1080);
+         }
+         __atomic_fetch_add(&polaris_fb_pixels, copied, __ATOMIC_RELAXED);
++        panelUpdated|=copied!=0;
+         if(pwn_needs_frame(&fPolarisWled)&&copied) {
+             struct polaris_fb_view view={};
+             /* A SINGLE accepted layer must cover the whole fitted view.
+@@ -1011,13 +1013,13 @@
+                    fWidth,fHeight,fRowBytes,fLogicalW,fLogicalH))fPolarisWledCopied=true;
+         }
+         if (copied && !fConsolePaused) {
++            int quiet = 0;
++            if (PE_parse_boot_argn("sweetfb_noconsole", &quiet, sizeof(quiet)) && quiet == 1) {
++                __atomic_store_n(&sweet_console_muted, 1, __ATOMIC_RELEASE);
++            }
+             polaris_fb_black_bars((uint8_t *)fPixels, (size_t)fRowBytes * fHeight,
+                 fWidth, fHeight, fRowBytes, fLogicalW, fLogicalH);
+             fConsolePaused = true;
+-            int quiet = 0;
+-            if (PE_parse_boot_argn("sweetfb_noconsole", &quiet, sizeof(quiet)) && quiet == 1) {
+-                sweet_console_muted = 1;
+-            }
+             /* Keep the handoff diagnostic in RAM without redrawing the
+              * console over the frame we have just copied. */
+             IOLog("POLARIS DISPLAY: first CPU frame fitted, %llu pixels\n", copied);
+@@ -1065,6 +1067,27 @@
+ 		}
+ 		s->release();
+ 	}
++#if defined(POLARIS_RAM_ONLY)
++    if(panelUpdated && fConsolePaused) {
++        /* A console writer already in flight at handoff can finish a glyph
++         * after the first clear. Preserve the fitted GUI and store only its
++         * margins after every actual update. No full-screen read/modify/write. */
++        struct polaris_fb_view view={};
++        if(polaris_fb_fit(fWidth,fHeight,fLogicalW,fLogicalH,&view) &&
++           polaris_fb_buffer(fWidth,fHeight,fRowBytes,0,(size_t)fRowBytes*fHeight)) {
++            for(uint32_t y=0;y<fHeight;y++) {
++                uint8_t *row=(uint8_t *)fPixels+(uint64_t)y*fRowBytes;
++                if(y<view.y || y>=view.y+view.height) __builtin_memset(row,0,(size_t)fWidth*4);
++                else {
++                    __builtin_memset(row,0,(size_t)view.x*4);
++                    __builtin_memset(row+(uint64_t)(view.x+view.width)*4,0,
++                        (size_t)(fWidth-view.x-view.width)*4);
++                }
++            }
++            __asm__ volatile("dsb sy":::"memory");
++        }
++    }
++#endif
+ }
+ 
+ bool
+--- a/osfmk/console/serial_console.c
++++ b/osfmk/console/serial_console.c
+@@ -245,6 +245,14 @@
+ static inline void
+ _cnputc(char c, bool poll)
+ {
++#if defined(POLARIS_RAM_ONLY)
++    /* Unbuffered output bypasses _cnputs. Honour the same GUI ownership
++     * here, including a chunk that began before the first GUI frame.
++     * Panic output keeps its original path; RAM logging remains in _cnputs. */
++    extern int sweet_console_muted;
++    if (__atomic_load_n(&sweet_console_muted, __ATOMIC_ACQUIRE) && !panic_active())
++        return;
++#endif
+ 	bool in_debugger = (kernel_debugger_entry_count > 0);
+ 	const uint32_t idx = get_cons_ops_index();
+ 

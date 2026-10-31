@@ -1,0 +1,276 @@
+--- a/iokit/Kernel/arm/SweetFramebuffer.cpp
++++ b/iokit/Kernel/arm/SweetFramebuffer.cpp
+@@ -41,6 +41,7 @@
+ #include "polaris_display_cadence.h"
+ #include "polaris_display_queue.h"
+ #include "polaris_wled_native.h"
++#include "polaris_surface_access.h"
+ #include <libkern/c++/OSData.h>
+ #endif
+ 
+@@ -921,6 +922,44 @@
+ 	}
+ }
+ 
++#if defined(POLARIS_RAM_ONLY)
++extern "C" void polaris_gpu_display_fault(void);
++static bool polaris_frame_layer_valid(SweetSurface *s,const uint8_t *rec,uint32_t layer)
++{
++    const uint8_t *a=rec+0x64+16*layer,*b=rec+0xc4+16*layer;
++    int32_t sx=(int32_t)get32(a,0),sy=(int32_t)get32(a,4);
++    int32_t aw=(int32_t)get32(a,8),ah=(int32_t)get32(a,12);
++    int32_t dx=(int32_t)get32(b,0),dy=(int32_t)get32(b,4);
++    int32_t w=(int32_t)get32(b,8),h=(int32_t)get32(b,12);
++    if(!s || !s->memory || !s->kernelAddress() || s->width>16384 || s->height>16384 ||
++       (s->bytesPerElement && s->bytesPerElement!=4) || s->elementWidth!=1 || s->elementHeight!=1 ||
++       sx<0 || sy<0 || (uint32_t)sx>=s->width || (uint32_t)sy>=s->height)return false;
++    if(aw<=0)aw=(int32_t)s->width-sx;
++    if(ah<=0)ah=(int32_t)s->height-sy;
++    if(w<=0 || h<=0){w=(int32_t)s->width;h=(int32_t)s->height;}
++    return aw>0 && ah>0 && (uint64_t)sx+aw<=s->width && (uint64_t)sy+ah<=s->height &&
++        w>0 && h>0 && w<=16384 && h<=16384 && dx>=-16384 && dx<=16384 && dy>=-16384 && dy<=16384 &&
++        polaris_fb_buffer(s->width,s->height,s->bytesPerRow,s->offset,s->memory->getLength());
++}
++static bool polaris_frame_release(SweetSurface **frame)
++{
++    bool released[SWEET_FB_LAYERS]={},ok=true;
++    for(unsigned n=0;n<SWEET_FB_LAYERS;n++)if(frame[n]) {
++        bool duplicate=false;
++        for(unsigned k=0;k<n;k++)if(frame[k]==frame[n]) {
++            duplicate=true;released[n]=released[k];break;
++        }
++        if(!duplicate)released[n]=pfs_release(&frame[n]->polarisGPUBusy,PFS_PANEL);
++        ok&=released[n];
++    }
++    /* A writer can acquire immediately after release; never reread its new
++     * state to decide whether OUR reference was safely released. On a failed
++     * owner transition retain that reference permanently, never clear it. */
++    for(unsigned n=0;n<SWEET_FB_LAYERS;n++)if(released[n])OSSafeReleaseNULL(frame[n]);
++    if(!ok)polaris_gpu_display_fault();
++    return ok;
++}
++#endif
+ void
+ AppleCLCD::present(const uint8_t *rec)
+ {
+@@ -930,6 +969,37 @@
+     bool panelUpdated=false;
+ #endif
+ 	uint32_t mask = get32(rec, 0x104);
++
++#if defined(POLARIS_RAM_ONLY)
++    SweetSurface *frame[SWEET_FB_LAYERS]={};
++    bool complete=true,busy=false;
++    for(unsigned n=0;n<SWEET_FB_LAYERS;n++) {
++        uint32_t id=get32(rec,0x54+4*n);
++        if(!(mask&(1u<<n)) || !id)continue;
++        SweetSurface *surface=sweet_surface_copy(id);
++        if(!surface || surface==fSurface){OSSafeReleaseNULL(surface);complete=false;break;}
++        bool duplicate=false;
++        for(unsigned k=0;k<n;k++)if(frame[k]==surface){duplicate=true;break;}
++        if(!duplicate && !pfs_acquire(&surface->polarisGPUBusy,PFS_PANEL)) {
++            uint32_t state=__atomic_load_n(&surface->polarisGPUBusy,__ATOMIC_ACQUIRE);
++            busy=state==PFS_GPU && polaris_gpu_desktop_active();
++            /* Unrecognised ownership is sticky: keep this lookup reference
++             * for the common release/quarantine path; never force it idle. */
++            if(state>PFS_PANEL)frame[n]=surface;else surface->release();
++            complete=false;break;
++        }
++        frame[n]=surface;
++        if(!polaris_frame_layer_valid(surface,rec,n)){complete=false;break;}
++    }
++    if(!complete) {
++        polaris_frame_release(frame);
++        /* A busy layer may become complete without another UIKit publication.
++         * Retry the current latest record at the existing bounded copy cadence.
++         * Invalid layers are rejected with NO partial panel writes. */
++        if(busy){IOLockLock(fLock);fDirty=true;IOLockUnlock(fLock);}
++        return;
++    }
++#endif
+ 
+ 
+ #if !defined(POLARIS_RAM_ONLY)
+@@ -955,7 +1025,11 @@
+ 		if (!(mask & (1u << layer)) || id == 0) {
+ 			continue;
+ 		}
++#if defined(POLARIS_RAM_ONLY)
++        SweetSurface *s=frame[layer];
++#else
+ 		SweetSurface *s = sweet_surface_copy(id);
++#endif
+ 		if (sweet_fb_swaps_logged < 16) {
+ 			sweet_fb_swaps_logged++;
+ 			IOLog("SWEET FB: swap %u layer %u surface %u %ux%u fmt 0x%x bpr %u a %d,%d %ux%u b %d,%d %dx%d\n",
+@@ -963,10 +1037,12 @@
+ 			    s ? s->pixelFormat : 0, s ? s->bytesPerRow : 0, sx, sy, get32(a, 8),
+ 			    get32(a, 12), dx, dy, w, h);
+ 		}
++#if !defined(POLARIS_RAM_ONLY)
+ 		if (s == NULL || s == fSurface || __atomic_load_n(&s->polarisGPUBusy, __ATOMIC_ACQUIRE)) {
+ 			OSSafeReleaseNULL(s);
+ 			continue;
+ 		}
++#endif
+ 		uintptr_t src = s->kernelAddress();
+ 		uint32_t bpe = s->bytesPerElement ? s->bytesPerElement : 4;
+ 		if (w <= 0 || h <= 0) {
+@@ -985,8 +1061,7 @@
+         int32_t aw = (int32_t)get32(a, 8), ah = (int32_t)get32(a, 12);
+         if (sx < 0 || sy < 0 || s->width > 16384 || s->height > 16384 ||
+             (uint32_t)sx >= s->width || (uint32_t)sy >= s->height) {
+-            s->release();
+-            continue;
++            continue; /* Preflight already rejected this geometry before any copy. */
+         }
+         if (aw <= 0) { aw = (int32_t)s->width - sx; }
+         if (ah <= 0) { ah = (int32_t)s->height - sy; }
+@@ -1024,8 +1099,7 @@
+              * console over the frame we have just copied. */
+             IOLog("POLARIS DISPLAY: first CPU frame fitted, %llu pixels\n", copied);
+         }
+-        s->release();
+-        continue;
++        continue; /* Whole-frame pins and references are released below. */
+ #endif
+ 		/* Logical (presented) display coordinates -> panel coordinates. */
+ 		dx -= fOffX;
+@@ -1068,6 +1142,10 @@
+ 		s->release();
+ 	}
+ #if defined(POLARIS_RAM_ONLY)
++    /* Store completion before releasing source pins; WLED still independently
++     * requires its original OFF ACK/new full copy/DSB qualification. */
++    __asm__ volatile("dsb sy":::"memory");
++    if(!polaris_frame_release(frame))fPolarisWledCopied=false;
+     if(panelUpdated && fConsolePaused) {
+         /* A console writer already in flight at handoff can finish a glyph
+          * after the first clear. Preserve the fitted GUI and store only its
+--- a/iokit/Kernel/arm/PolarisGPU.cpp
++++ b/iokit/Kernel/arm/PolarisGPU.cpp
+@@ -28,6 +28,7 @@
+ #include "polaris_gpu_abi.h"
+ 
+ #if defined(POLARIS_RAM_ONLY)
++#include "polaris_surface_access.h"
+ extern "C" void polaris_cpu_performance_activity(void);
+ extern "C" bool polaris_gpu_last_submit_us(uint32_t,uint64_t *);
+ extern "C" bool polaris_gpu_clock_snapshot(uint32_t *,uint32_t);
+@@ -447,6 +448,16 @@
+     __atomic_store_n(&gpuFaultStatus,1,__ATOMIC_RELEASE);
+     if (!quarantined) {quarantined=true;retain();} /* DMA ownership survives task death */
+ }
++extern "C" void polaris_gpu_display_fault(void)
++{
++    /* Display calls only after dropping its surface pins and outside fLock.
++     * Preserve the existing GPU quarantine/unknown-DMA shutdown refusal. */
++    if(!gpuLock)return;
++    IOLockLock(gpuLock);
++    gpuQuarantined=true;polaris_gpu_quarantine();
++    __atomic_store_n(&gpuFaultStatus,1,__ATOMIC_RELEASE);
++    IOLockUnlock(gpuLock);
++}
+ bool PolarisGPUUserClient::initWithTask(task_t task,void *security,UInt32 type,OSDictionary *props)
+ {
+     if (!super::initWithTask(task,security,type,props)) return false;
+@@ -626,8 +637,10 @@
+     uint64_t validationBegan;clock_get_uptime(&validationBegan);
+     msm_gem_submit_bo *bos=IONew(msm_gem_submit_bo,r->nr_bos);
+     msm_gem_submit_cmd *cmds=IONew(msm_gem_submit_cmd,r->nr_cmds);
++    SweetSurface **pinned=IONew(SweetSurface *,r->nr_bos);
++    uint32_t pinCount=0;bool dmaIssued=false;
+     IOReturn result=kIOReturnBadArgument;
+-    if(!bos || !cmds) {result=kIOReturnNoMemory;goto out;}
++    if(!bos || !cmds || !pinned) {result=kIOReturnNoMemory;goto out;}
+     if(copyin(r->bos,bos,r->nr_bos*sizeof(*bos)) || copyin(r->cmds,cmds,r->nr_cmds*sizeof(*cmds))) {
+         result=kIOReturnVMError;goto out;
+     }
+@@ -651,22 +664,38 @@
+          * invalidated after the observed GPU flush/fence/idle/halt. */
+         PolarisCacheTally tally={0,0,0,0,0};uint64_t before,prepared,submitted,completed;
+         if(!polaris_gpu_desktop_demand(callerKind)) {poison();result=kIOReturnNotReady;goto out;}
++        /* gpuLock serializes writers; panel readers use the same per-surface
++         * CAS. Pin before cache maintenance, not only before GPU execution.
++         * No GPU command is issued on contention/timeout. Never force-clear a
++         * previous GPU/unknown state or release a surface owned by a reader. */
++        uint64_t pinBegan=0;uint32_t pinSleeps=0;clock_get_uptime(&pinBegan);
++        for(unsigned n=0;n<r->nr_bos;n++) {
++            SweetSurface *surface=buffer(bos[n].handle)->surface;
++            if(!surface)continue;
++            bool duplicate=false;
++            for(unsigned k=0;k<pinCount;k++)if(pinned[k]==surface){duplicate=true;break;}
++            if(duplicate)continue;
++            while(!pfs_acquire(&surface->polarisGPUBusy,PFS_GPU)) {
++                uint64_t now=0;clock_get_uptime(&now);
++                if(now<pinBegan || polaris_gpu_elapsed_us(pinBegan,now)>=100000 || pinSleeps++>=100) {
++                    result=kIOReturnBusy;goto out;
++                }
++                IOSleep(1);
++            }
++            pinned[pinCount++]=surface;
++        }
+         clock_get_uptime(&before);
+         if(!cacheBefore(bos,r->nr_bos,&tally)) {result=kIOReturnNoMemory;goto out;}
+         clock_get_uptime(&prepared);
+-        for(unsigned n=0;n<r->nr_bos;n++) {
+-            PolarisBO *b=buffer(bos[n].handle);
+-            if(b->surface)__atomic_store_n(&b->surface->polarisGPUBusy,1,__ATOMIC_RELEASE);
+-        }
++        dmaIssued=true;
+         if(!polaris_gpu_submit(addresses,words,count,&r->fence)) {poison();result=kIOReturnTimeout;goto out;}
+         clock_get_uptime(&submitted);
+         lastFence=r->fence;
+         cacheAfter(bos,r->nr_bos,&tally);
+         clock_get_uptime(&completed);
+-        for(unsigned n=0;n<r->nr_bos;n++) {
+-            PolarisBO *b=buffer(bos[n].handle);
+-            if(b->surface)__atomic_store_n(&b->surface->polarisGPUBusy,0,__ATOMIC_RELEASE);
+-        }
++        /* The original observed fence/idle/halt AND cache-after have passed.
++         * Only now may the common out path release our GPU ownership. */
++        dmaIssued=false;
+         if(gpuMethodPerformance && callerKind==2) {
+             uint64_t stages[6]={0},ticks[5]={validationBegan,before,prepared,submitted,completed};
+             bool valid=polaris_gpu_last_submit_us(r->fence,stages);
+@@ -686,6 +715,13 @@
+         result=kIOReturnSuccess;
+     }
+ out:
++    if(!dmaIssued)for(unsigned n=0;n<pinCount;n++)
++        if(!pfs_release(&pinned[n]->polarisGPUBusy,PFS_GPU)) {
++            poison();result=kIOReturnNotReady;
++        }
++    /* On unknown DMA the BOs/descriptors retain their original quarantine;
++     * only this temporary list is freed. GPU state stays busy, no retry. */
++    if(pinned)IODelete(pinned,SweetSurface *,r->nr_bos);
+     if(bos)IODelete(bos,msm_gem_submit_bo,r->nr_bos);
+     if(cmds)IODelete(cmds,msm_gem_submit_cmd,r->nr_cmds);
+     return result;
+--- /dev/null
++++ b/iokit/Kernel/arm/polaris_surface_access.h
+@@ -0,0 +1,24 @@
++/* Private Polaris IOSurface CPU-display/GPU exclusion. No hardware writes.
++ * polarisGPUBusy: 0 idle, 1 GPU (uncertain DMA remains 1), 2 panel reader.
++ * A reader must pin the WHOLE selected frame before touching panel memory.
++ * Only an owner may release its own state. No forced clear or timeout unlock. */
++#ifndef POLARIS_SURFACE_ACCESS_H
++#define POLARIS_SURFACE_ACCESS_H
++#include <stdint.h>
++#include <stdbool.h>
++enum { PFS_IDLE=0, PFS_GPU=1, PFS_PANEL=2 };
++static inline bool pfs_acquire(uint32_t *state,uint32_t owner)
++{
++    if(!state || (owner!=PFS_GPU && owner!=PFS_PANEL))return false;
++    uint32_t expected=PFS_IDLE;
++    return __atomic_compare_exchange_n(state,&expected,owner,false,
++        __ATOMIC_ACQUIRE,__ATOMIC_RELAXED);
++}
++static inline bool pfs_release(uint32_t *state,uint32_t owner)
++{
++    if(!state || (owner!=PFS_GPU && owner!=PFS_PANEL))return false;
++    uint32_t expected=owner;
++    return __atomic_compare_exchange_n(state,&expected,PFS_IDLE,false,
++        __ATOMIC_RELEASE,__ATOMIC_RELAXED);
++}
++#endif
