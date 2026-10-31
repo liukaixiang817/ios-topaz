@@ -34,6 +34,29 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0132 CI41176587390 FAILED at exact private-header allowlist; PHONE stillLIVE0131
+
+- Firstc2c42f4 CI41176587390/job124465292914 FAILED, worker62928 ENDEDexit1;
+  logworker77175 ENDED. Not a phone/kernel runtime result. ExactIIG286 replay
+  refused newly added media-status/admission private headers before kernel
+  compilation: ValueError unreviewed added source headers/IDL. THREE local
+  nativeobjects hadpassed; wholeCIadds thisindependentguard. Preserve failure
+  logs/proof, noimage/payload/phoneaction. CurrentPHONE stillLIVE0131.
+- Fix binds only TWO new media-only implementation headers to exact shipped
+  SHA256 in EXTRA_PRIVATE_HEADER_SHA. No DriverKit/IDL/header/ABI check relaxed;
+  generated286outputs/originalinputhashes unchanged. Need3IIGbindingtests,
+  commitpushONEcorrected sourceCI; newnativecode/graphics8d unchanged. OldCI
+  maynotbeused asready; actualcorrected source/CI artifact stillrequired.
+
+### 0132 sourcec2c42f4 PUSHED; ONE CI41176587390 running; PHONE stillLIVE0131
+
+- Sourcec2c42f441e1cb47c3682eda97a3770452c72ba07 committed/pushed. Unique
+  nativeCI41176587390/job124465292914 running; hostworker62928 owns boundedwatch/download/
+  exactartifact verification. DoNOTdispatchduplicate or boot beforeactual
+  artifact/models/codec/offlinefreeze/sourceadmissionready. New0132 helpers
+  prepared, no0132 boot/image/payload yet. AllUSBworkersENDED, phoneLIVE0131
+  atwhitewallpapergallery; originalfrozen0131 controlleronly forcurrentRAM.
+
 ### 0132 exact media EXEC candidate source READY; PHONE LIVE0131, human boot recovered; wallpaper stillwhite
 
 - Human confirms0131 boot recovered. Fresh0132/current-wallpaper-capture-0001

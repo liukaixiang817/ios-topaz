@@ -22,7 +22,13 @@ EXTRA_PRIVATE_HEADERS={'iokit/Kernel/arm/polaris_uefi_cpu.h','bsd/dev/polaris_ue
 # Private shutdown, GPU policy and display-queue implementation headers are
 # outside DriverKit's interface include graph. Bind their reviewed bytes; adding them
 # must not weaken the original IDL/header checks or admit arbitrary headers.
-EXTRA_PRIVATE_HEADER_SHA={'bsd/dev/polaris_uefi_buttons.h':
+EXTRA_PRIVATE_HEADER_SHA={
+    # Media-only implementation includes, outside DriverKit/IDL include graph.
+    'bsd/dev/polaris-media-status.h':
+    '36546b9a6bc92a3efc0af9f22aace2235fe5da1a6bac93d1868247744155f71d',
+    'bsd/dev/polaris-media-admission.h':
+    'abf19217aa86034767c0988540a901ff78bde0158f3796d76e2baa464bb5d613',
+    'bsd/dev/polaris_uefi_buttons.h':
     '06bab9e8a1de3057de220d952da56ccb20c5c35e9db130e00308868ccd71fe8d',
     # Native WLED wire/adapter are private SweetFramebuffer.cpp-only includes;
     # no IDL/interface type or generator option changes. Exact reviewed bytes.
