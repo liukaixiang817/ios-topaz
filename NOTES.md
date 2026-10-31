@@ -59,8 +59,13 @@ early samples only. On0029 the human already confirmed boot complete and said
   AArch64COFF+MachO(maxframe1024)/fullEFI pass, proof
   4de59597ddac76f58d189ecdd2708533731c742f77df57f0b3dd934c4779d07d.
   Software servicepeer/originalPEasDATA is NOT physicalRPMh/MSS/radio.
-- Two affected wholeEFI-XNU terminalmodels are INFLIGHT, hostexactprofile/image/
-  freeze NOTREADY. No nativechange/CI/download; preserve7d24/63cb/f790/7400 /
+- FirmwareSOURCEdc5483d45b35a05a61d439869082c18e0e00e670 committed. Bothaffected
+  wholeEFI-XNU terminalmodels SERIALPASS19/69inputs/9literalint1 compiledout
+  markers; physicalRPMh bodies/records absent inactualpreprocessedmain. NEW
+  host0147exactprofile105typed+94resource fields admits actualmodels+fresh0145
+  root/CI with no mocks; fourmalformedRPMhmarkers reject. Old0143..0146
+  exactliterals remainunchanged. Hostsourcecommit/image/freeze NOTREADY.
+  No nativechange/CI/download; preserve7d24/63cb/f790/7400 /
   all existingCPU/GPU/WLED/storageguards. NEXTfinish affectedmodels and NEW
   committed-source hostscope/package/freeze before physicalbaseline, not old
   manifest/profile reuse. Currentphone only frozen0146 can laterdrain normally.
