@@ -64,12 +64,16 @@ early samples only. On0029 the human already confirmed boot complete and said
   six finished/failed/phase/postquery/forgedticket contexts reject beforecalls.
   Old22+7new=29ASAN/UBSAN, actualCOFF/MachO/fullEFI pass, driver601e955d /
   3078656B/69inputs, proofd5475fdf6254edc55b5f8ef614cc4a9b482f013ef5db670f2
-  c13571f4eb65bbc. Twoaffectedterminalmodels INFLIGHT; NEW0148host/profile /
-  package/freeze NOTREADY. Frozen0147/oldmanifests nevermodified/retried.
+  c13571f4eb65bbc. Bothaffectedterminalmodels SERIALPASS19/69inputs/9literalint1 compiledout
+  markers. NEW0148hostprofile105typed+94resource fields/no-mockactualadmit /
+  24hostchecksPASS, old0143..0147literals unchanged. Source099684d committed.
+  Hostcommit/package/freeze NOTREADY. Frozen0147/oldmanifests nevermodified/retried.
 - UTC0147 alreadyONESET and independentUTC-status-0001 completed, NEVER SET
-  again; see actualresult forcookie/count. CurrentUI/battery/WLED finalsample
-  notyetrefreshed afterstartup; no newlockscreen/60Hz claim. AllUSBended,
-  modelworker99910INFLIGHT. ONLYWi-Fi/allchildren/audio/cameraSTOPPED.
+  again: cookie2267514701/seq1/status2/error0/count1/uncertainty2272us. New
+  current-ui-capture-0002/93558 ENDED0 at18:27:14.595062Z actual7400lockscreen /
+  SundayNov1/Melbourne5:27/chargingicon, FG3/SMB2=58%/3938mV/charging1. No
+  60Hz/fullrendering or camera claim. AllUSB/host/modelworkersENDED. ONLY
+  Wi-Fi/allchildren/audio/cameraSTOPPED.
 - No nativechange/CI/download; keep7d24/63cb/f790/7400/CPU/GPU/WLED. Latest
   fresh0145root/NV a04c/2549 continuescontrolledRO/RAMCOW. No MSS/SMC/MMIO /
   client/vote/NVserve/radio. NEXTfinish correctedexactsource/model/admission /

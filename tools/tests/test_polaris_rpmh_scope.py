@@ -10,19 +10,19 @@ import polaris_wled_runtime_admission as a
 
 class RpmhScope(unittest.TestCase):
     def candidate(self):
-        p=a.GCD_CLOCK_0147
+        p=a.GCD_CLOCK_0148
         return dict(copy.deepcopy(p['metadata']),**copy.deepcopy(p['resource_fields']),
             inputs=copy.deepcopy(p['inputs']),kernel_sha256=p['kernel'],payload_sha256=p['payload'])
     def test_new_source_and_exact_scope(self):
         d=self.candidate()
-        self.assertIs(a.original_gcd_policy(d),a.GCD_CLOCK_0147)
+        self.assertIs(a.original_gcd_policy(d),a.GCD_CLOCK_0148)
         self.assertTrue(a.resources_clock_scope(d))
         self.assertEqual(len(d['inputs']),69)
         self.assertEqual(d['wifi_CPU0_RPMh_raw_bytes'],19264)
         self.assertEqual(d['wifi_CPU0_RPMh_provider_API_calls'],0)
         self.assertFalse(d['wifi_CPU0_RPMh_client_or_vote'])
     def test_every_RPMh_field_is_typed_and_mandatory(self):
-        for k,v in a.GCD_CLOCK_0147['metadata'].items():
+        for k,v in a.GCD_CLOCK_0148['metadata'].items():
             if not k.startswith(a.RPMH_PREFIX):continue
             for mutation in ('missing','value','type'):
                 d=self.candidate()
@@ -31,7 +31,7 @@ class RpmhScope(unittest.TestCase):
                 else:d[k]=int(v) if type(v) is bool else True
                 with self.subTest(k=k,mutation=mutation),self.assertRaises(ValueError):a.original_gcd_scope(d)
     def test_every_compiled_input_is_bound(self):
-        for k in a.GCD_CLOCK_0147['inputs']:
+        for k in a.GCD_CLOCK_0148['inputs']:
             d=self.candidate();d['inputs'][k]='changed'
             with self.subTest(k=k),self.assertRaises(ValueError):a.original_gcd_scope(d)
     def test_sources_cannot_hide(self):
@@ -44,14 +44,23 @@ class RpmhScope(unittest.TestCase):
             if k.startswith(a.RPMH_PREFIX):del d[k]
         with self.assertRaises(ValueError):a.original_gcd_scope(d)
     def test_legacy_profiles_cannot_admit_new_body(self):
-        for p in (a.GCD_CLOCK_0143,a.GCD_CLOCK_0144,a.GCD_CLOCK_0145,a.GCD_CLOCK_0146):
+        for p in (a.GCD_CLOCK_0143,a.GCD_CLOCK_0144,a.GCD_CLOCK_0145,a.GCD_CLOCK_0146,a.GCD_CLOCK_0147):
             d=self.candidate();d['inputs']=copy.deepcopy(p['inputs'])
-            with self.assertRaises(ValueError):a.original_gcd_scope(d)
+            if p['metadata']==a.GCD_CLOCK_0148['metadata']:
+                # Replacing ALL inputs reconstructs the exact old scope, not
+                # a new body: it must select old, never the new profile.
+                self.assertIs(a.original_gcd_policy(d),p)
+            else:
+                with self.assertRaises(ValueError):a.original_gcd_scope(d)
             d=self.candidate()
             for k in list(d):
                 if k.startswith(a.GCD_PREFIXES):del d[k]
             d.update(copy.deepcopy(p['metadata']))
-            with self.assertRaises(ValueError):a.original_gcd_scope(d)
+            if p['metadata']==a.GCD_CLOCK_0148['metadata']:
+                self.assertIs(a.original_gcd_policy(d),a.GCD_CLOCK_0148)
+                self.assertIsNot(a.original_gcd_policy(d),p)
+            else:
+                with self.assertRaises(ValueError):a.original_gcd_scope(d)
     def test_model_requires_literal_compiledout_marker(self):
         raw=dict.fromkeys(('ORIGINAL_GCD_SOFTWARE_PHYSICAL_SERVICE_FP_COMPILED_OUT',
             'AUDIO_CLOCK_GCD_SOFTWARE_PHYSICAL_QUERY_COMPILED_OUT','WIFI_NPA_SOFTWARE_PHYSICAL_NAMESPACE_COMPILED_OUT'),1)
