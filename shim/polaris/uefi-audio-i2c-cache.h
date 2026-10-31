@@ -231,56 +231,49 @@ static inline void paic_actual_order(void *context)
     __asm__ volatile("dsb sy":::"memory");
 #endif
 }
-/* Parent may call once from admitted prepare_boot stage2 before IRQ masking.
- * Not integrated into any phone image. QEMU and defaultOFF execute no BS. */
-static struct paic_result paic_record;
-static struct paic_workspace paic_work;
-static inline void paic_report_arch(const struct paic_arch *a,unsigned pass)
+/* One compact complete raw result. This is diagnostic ABI1, native little-endian
+ * AArch64 layout, not a wire protocol for I2C/DAL. The focused checker records
+ * every member offset/size from the actual compiled C layout. Partial fields,
+ * unused zeros and padding are retained verbatim; bytes/count precede hex.
+ * No console call exceeds126 characters; all raw chunks form ONE log line. */
+static inline void paic_hex(const uint8_t *raw,size_t bytes)
 {
-    report("AUDIO_I2C_CACHE_ARCH_PASS=",pass);
-    report("AUDIO_I2C_CACHE_EL=",a->el);report("AUDIO_I2C_CACHE_MPIDR=",a->mpidr);
-    report("AUDIO_I2C_CACHE_TTBR0=",a->ttbr0);report("AUDIO_I2C_CACHE_TTBR1=",a->ttbr1);
-    report("AUDIO_I2C_CACHE_TCR=",a->tcr);report("AUDIO_I2C_CACHE_SCTLR=",a->sctlr);report("AUDIO_I2C_CACHE_MAIR=",a->mair);
-    report("AUDIO_I2C_CACHE_DAIF=",a->daif);report("AUDIO_I2C_CACHE_SRE=",a->sre);report("AUDIO_I2C_CACHE_GROUP1=",a->group1);
-    report("AUDIO_I2C_CACHE_FREQUENCY=",a->frequency);report("AUDIO_I2C_CACHE_TICKS=",a->ticks);
+    char chunk[127];
+    for(size_t at=0;at<bytes;){
+        unsigned n=(unsigned)(bytes-at);if(n>63)n=63;
+        for(unsigned j=0;j<n;j++){chunk[2*j]="0123456789abcdef"[raw[at+j]>>4];chunk[2*j+1]="0123456789abcdef"[raw[at+j]&15];}
+        chunk[2*n]=0;text(chunk);at+=n;
+    }
 }
+static inline void paic_report_record(const struct paic_result *r)
+{
+    report("AUDIO_I2C_CACHE_ERROR=",r->error);
+    report("AUDIO_I2C_CACHE_RAW_V1_BYTES=",sizeof(*r));
+    text("AUDIO_I2C_CACHE_RAW_V1_BEGIN\r\n");
+    paic_hex((const uint8_t*)r,sizeof(*r));
+    text("\r\nAUDIO_I2C_CACHE_RAW_V1_END\r\n");
+    text("AUDIO_I2C_CACHE_SOURCE_SHA256=" PAII_SOURCE_SHA256 "\r\n");
+    text("AUDIO_I2C_CACHE_SCOPE=RAM_ONLY I2C_DAL=0 MMIO=0 POINTER_FOLLOW=0\r\n");
+    text("AUDIO_I2C_CACHE_PROVES=NO_SE5_OWNER NO_TAS_ID NO_PCM\r\n");
+}
+/* Parent calls once from admitted prepare_boot stage2, after the complete
+ * WiFi fresh collect/NC/report interval, before PON/DAIF/Group1 changes. */
 static inline void paic_prepare(struct efi_system *system,uint32_t stage)
 {
-    if(paic_record.attempted)return;
+#if !EFI_XNU_AUDIO_I2C_CACHE_AVAILABLE || defined(POLARIS_EFI_TEST_QEMU)
+    (void)system;(void)stage;
+#if defined(POLARIS_EFI_TEST_QEMU)
+    text("AUDIO_I2C_CACHE_SOFTWARE_PHYSICAL_IMAGE_INSPECTION_COMPILED_OUT=1\r\n");
+#else
+    text("AUDIO_I2C_CACHE_DEFAULT_OFF=1\r\n");
+#endif
+#else
+    static struct paic_result record;
+    static struct paic_workspace work;
+    if(record.attempted)return;
     const struct paic_io io={system,0,paic_actual_arch,paic_actual_identity,paic_actual_order};
-    (void)paic_collect(&io,stage,&paic_record,&paic_work);
-    report("AUDIO_I2C_CACHE_ERROR=",paic_record.error);report("AUDIO_I2C_CACHE_COOKIE=",paic_record.cookie);
-    paic_report_arch(&paic_record.before,0);paic_report_arch(&paic_record.after,1);
-    report("AUDIO_I2C_CACHE_IMAGE=",paic_record.image);report("AUDIO_I2C_CACHE_PROTOCOL=",paic_record.protocol);
-    report("AUDIO_I2C_CACHE_PROTOCOL_STATUS=",paic_record.protocol_status);report("AUDIO_I2C_CACHE_ENUMERATE_STATUS=",paic_record.enumerate_status);
-    report("AUDIO_I2C_CACHE_PROTOCOL_AFTER_STATUS=",paic_record.protocol_after_status);report("AUDIO_I2C_CACHE_PROTOCOL_AFTER=",paic_record.protocol_after);
-    report("AUDIO_I2C_CACHE_IDENTITY_ADDRESS=",paic_record.identity_address);report("AUDIO_I2C_CACHE_IDENTITY_PAR=",paic_record.identity_par);
-    report("AUDIO_I2C_CACHE_OWNER_MATCHES=",paic_record.owner_matches);
-    report("AUDIO_I2C_CACHE_OWNER_ADDRESS=",paic_record.owner_address);report("AUDIO_I2C_CACHE_HANDLE_COUNT=",paic_record.handle_count);
-    for(unsigned n=0;n<paic_record.handle_count&&n<PAIC_HANDLES;n++){
-        report("AUDIO_I2C_CACHE_HANDLE_INDEX=",n);report("AUDIO_I2C_CACHE_HANDLE_STATUS=",paic_record.handle_status[n]);
-        report("AUDIO_I2C_CACHE_LOADED_ADDRESS=",paic_record.loaded_address[n]);
-    }
-    report("AUDIO_I2C_CACHE_HASH_COUNT=",paic_record.hash_count);report("AUDIO_I2C_CACHE_FAILED_HASH=",paic_record.hash_failed);
-    for(unsigned n=0;n<paic_record.hash_count&&n<PAII_RANGE_COUNT;n++){
-        report("AUDIO_I2C_CACHE_HASH_INDEX=",n);
-        for(unsigned byte=0;byte<32;byte+=8)report("AUDIO_I2C_CACHE_HASH_RAW64=",paii_le(paic_record.hashes[n]+byte,8));
-    }
-    report("AUDIO_I2C_CACHE_MAP_KEY_BEFORE=",paic_record.map_key[0]);report("AUDIO_I2C_CACHE_MAP_KEY_BEFORE_FREEPOOL=",paic_record.map_key[1]);
-    report("AUDIO_I2C_CACHE_MAP_VERSION_BEFORE=",paic_record.map_version[0]);report("AUDIO_I2C_CACHE_MAP_VERSION_BEFORE_FREEPOOL=",paic_record.map_version[1]);
-    for(unsigned n=0;n<paic_record.map_samples;n++){
-        const struct paic_map_sample *m=&paic_record.map_sample[n];report("AUDIO_I2C_CACHE_MAP_SAMPLE=",n);
-        report("AUDIO_I2C_CACHE_MAP_STATUS=",m->status);report("AUDIO_I2C_CACHE_MAP_KEY=",m->key);
-        report("AUDIO_I2C_CACHE_MAP_BYTES=",m->bytes);report("AUDIO_I2C_CACHE_MAP_STRIDE=",m->stride);report("AUDIO_I2C_CACHE_MAP_VERSION=",m->version);
-    }
-    report("AUDIO_I2C_CACHE_FREE_STATUS=",paic_record.release_status);
-    report("AUDIO_I2C_CACHE_RAW_CONTEXT_HEAD_NOT_FOLLOWED=",paic_record.raw_context_head);
-    report("AUDIO_I2C_CACHE_RAW_CLOCK_HANDLE_NOT_CALLED=",paic_record.raw_clock_handle);
-    report("AUDIO_I2C_CACHE_RAW_TLMM_HANDLE_NOT_CALLED=",paic_record.raw_TLMM_handle);
-    for(unsigned pass=0;pass<2;pass++)if(paic_record.snapshot_bytes[pass]){
-        report("AUDIO_I2C_CACHE_RAW_PASS=",pass);report("AUDIO_I2C_CACHE_RAW_BYTES=",paic_record.snapshot_bytes[pass]);
-        for(unsigned n=0;n<PAIC_CACHE_BYTES;n+=8)report("AUDIO_I2C_CACHE_RAW64=",paii_le(paic_record.snapshot[pass]+n,8));
-    }
-    text("AUDIO_I2C_CACHE: original-image RAM only; pointer_follow=0 methods_called=0 DAL=0 MMIO=0 SE5_owner_proved=0 TAS_identity_proved=0 PCM_completed=0\r\n");
+    (void)paic_collect(&io,stage,&record,&work);
+    paic_report_record(&record);
+#endif
 }
 #endif

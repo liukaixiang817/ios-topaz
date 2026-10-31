@@ -170,7 +170,24 @@ static int shutdown_status(void *,const uint8_t **,uint64_t *);
 #if EFI_XNU_WIFI_FIRSTREAD_AVAILABLE
 #include "uefi-wifi-firstread.h"
 #endif
+#if EFI_XNU_WIFI_NORMAL_NC_FIRSTREAD_AVAILABLE
+#include "uefi-wifi-firstread-normal-nc.h"
 #endif
+#endif
+#endif
+#if EFI_XNU_AUDIO_I2C_CACHE_AVAILABLE
+#if !defined(EFI_XNU_WLED_NATIVE_RUNTIME)
+#error "Audio image cache inspection requires guarded native runtime"
+#endif
+#if !defined(POLARIS_EFI_TEST_QEMU)
+#include "uefi-audio-i2c-cache.h"
+#endif
+#endif
+#if EFI_XNU_WIFI_NORMAL_NC_FIRSTREAD_AVAILABLE && EFI_XNU_WIFI_FIRSTREAD_AVAILABLE
+#error "Normal-NC and original Device-only firstread are mutually exclusive"
+#endif
+#if EFI_XNU_WIFI_NORMAL_NC_FIRSTREAD_AVAILABLE && !EFI_XNU_WIFI_CACHE_AVAILABLE
+#error "Normal-NC first-read requires its exact original firmware cache witness"
 #endif
 #if EFI_XNU_WIFI_FIRSTREAD_AVAILABLE && !EFI_XNU_WIFI_CACHE_AVAILABLE
 #error "CPU0 first-read requires its exact original firmware cache witness"
@@ -256,24 +273,51 @@ static int prepare_boot(void *context)
 #if EFI_XNU_WIFI_FIRSTREAD_AVAILABLE
         report("WIFI_FIRSTREAD_SOFTWARE_PHYSICAL_SMEM_READ_COMPILED_OUT=",1);
 #endif
+#if EFI_XNU_WIFI_NORMAL_NC_FIRSTREAD_AVAILABLE
+        report("WIFI_NORMAL_NC_FIRSTREAD_SOFTWARE_PHYSICAL_SMEM_READ_COMPILED_OUT=",1);
+#endif
     }
 #else
     /* Diagnostic only: all BootServices queries before any IRQ mask/change.
      * Failure records evidence and does not block the other runtime services. */
-#if EFI_XNU_WIFI_FIRSTREAD_AVAILABLE
+#if EFI_XNU_WIFI_FIRSTREAD_AVAILABLE || EFI_XNU_WIFI_NORMAL_NC_FIRSTREAD_AVAILABLE
     /* No text/report/console or PON call may enter this fresh interval. */
     if(!pwfc_record.attempted){
         int cache_ok=pwfc_collect_preboot(system_table,load_state);
-        if(cache_ok)pwfr_prepare(&pwfc_record,load_state);
+        if(cache_ok){
+#if EFI_XNU_WIFI_NORMAL_NC_FIRSTREAD_AVAILABLE
+            pwnc_prepare(&pwfc_record,load_state);
+#else
+            pwfr_prepare(&pwfc_record,load_state);
+#endif
+        }
         else {
+#if EFI_XNU_WIFI_NORMAL_NC_FIRSTREAD_AVAILABLE
+            report("WIFI_NORMAL_NC_FIRSTREAD_SKIPPED_CACHE_ERROR=",pwfc_record.error);
+            report("WIFI_NORMAL_NC_FIRSTREAD_ATTEMPTED=",0);
+#else
             report("WIFI_FIRSTREAD_SKIPPED_CACHE_ERROR=",pwfc_record.error);
             report("WIFI_FIRSTREAD_ATTEMPTED=",0);
+#endif
         }
         pwfc_report();
     }
 #else
     pwfc_prepare(system_table,load_state);
 #endif
+#endif
+#endif
+#if EFI_XNU_AUDIO_I2C_CACHE_AVAILABLE
+    /* Audio is independent original-imageRAM only. All ofWiFi's fresh
+     * collect/read/report is FINISHED before these BootServices orconsole. */
+#if defined(POLARIS_EFI_TEST_QEMU)
+    static unsigned audio_cache_software_reported;
+    if(!audio_cache_software_reported){
+        audio_cache_software_reported=1;
+        report("AUDIO_I2C_CACHE_SOFTWARE_PHYSICAL_IMAGE_INSPECTION_COMPILED_OUT=",1);
+    }
+#else
+    paic_prepare(system_table,load_state);
 #endif
 #endif
 #if defined(EFI_XNU_WLED_NATIVE_RUNTIME)
@@ -724,6 +768,9 @@ static efi_status admission(void)
     if(!wln_image_owned(image))return EFI_ERROR|3;
 #if EFI_XNU_WIFI_FIRSTREAD_AVAILABLE && !defined(POLARIS_EFI_TEST_QEMU)
     if(!pwfr_bind_resident(image))report("WIFI_FIRSTREAD_SELF_BIND_REFUSED=",1);
+#endif
+#if EFI_XNU_WIFI_NORMAL_NC_FIRSTREAD_AVAILABLE && !defined(POLARIS_EFI_TEST_QEMU)
+    if(!pwnc_bind_resident(image))report("WIFI_NORMAL_NC_FIRSTREAD_SELF_BIND_REFUSED=",1);
 #endif
 #endif
 #if defined(POLARIS_EFI_TEST_QEMU)

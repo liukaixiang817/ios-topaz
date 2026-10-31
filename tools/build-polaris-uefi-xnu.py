@@ -310,6 +310,10 @@ def main():
                     help='explicit exact own original SmemDxe PE for cache-only CPU0 image-RAM inspection; requires --wifi-readonly')
     ap.add_argument('--wifi-cpu0-firstread',action='store_true',
                     help='default-OFF one preboot CPU0 36B x2 SMEM read; exact original cache witness required; external SError is not recoverable')
+    ap.add_argument('--wifi-cpu0-firstread-normal-nc',action='store_true',
+                    help='default-OFF separate exactNormalNC44/NS/OuterShareable CPU0 read;18architecturalLDR max, not a buscap; original cache and guarded native runtime required')
+    ap.add_argument('--audio-i2c-cache-pe',type=Path,
+                    help='default-OFF exact original I2CDxe image-RAM cache witness; no I2C/DAL/MMIO/pointer follow; after completeWiFi diagnostics andbeforePON')
     ap.add_argument('--efi-application',action='store_true',help='selected application, never ReadyToBoot interception')
     ap.add_argument('--disk-guid',type=uuid.UUID,help='exact GPT partition UUID for read-only disk payload')
     ap.add_argument('--disk-start-lba',type=int)
@@ -354,8 +358,25 @@ def main():
         a.test_wled_fault_pulse or a.test_omit_durable_guard or a.test_wled_native_start_refusal or a.test_wled_native_exit):
         ap.error('physical native WLED requires its independent guarded four-big RO/RAMCOW scope')
     native_runtime=a.wled_native_runtime or a.wled_native_runtime_test
+    if a.wifi_cpu0_firstread and a.wifi_cpu0_firstread_normal_nc:
+        ap.error('Device-only and exactNormalNC firstread flags are mutually exclusive')
+    if a.wifi_cpu0_firstread_normal_nc and (not a.wifi_firmware_cache_pe or not a.wifi_readonly or not native_runtime):
+        ap.error('NormalNC CPU0 first-read requires exact --wifi-firmware-cache-pe, --wifi-readonly and guarded native runtime')
     if a.wifi_cpu0_firstread and (not a.wifi_firmware_cache_pe or not a.wifi_readonly or not native_runtime):
         ap.error('CPU0 first-read requires exact --wifi-firmware-cache-pe, --wifi-readonly and guarded native runtime')
+    audio_header=None;audio_binding=None;audio_pe_relative=None
+    if a.audio_i2c_cache_pe:
+        if not native_runtime or not a.wifi_readonly or not a.wifi_firmware_cache_pe:
+            ap.error('audio I2C cache requires guarded native runtime and exact WiFi cache diagnostics ordering')
+        try:
+            audio_pe=a.audio_i2c_cache_pe.resolve(strict=True)
+            audio_pe_relative=str(audio_pe.relative_to(r))
+            spec=importlib.util.spec_from_file_location('polaris_audio_i2c_firmware_identity',r/'tools/polaris-audio-i2c-firmware-identity.py')
+            module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+            audio_header,audio_binding=module.binding(audio_pe)
+            audio_binding['binding_sha256']=hashlib.sha256(audio_header.encode()).hexdigest()
+        except (OSError,ValueError) as error:
+            ap.error('audio I2C cache PE must be the exact original project-local image: '+str(error))
     cache_header=None;cache_binding=None;cache_pe_relative=None
     if a.wifi_firmware_cache_pe:
         if not a.wifi_readonly or not native_runtime:
@@ -450,6 +471,9 @@ def main():
     if cache_binding:
         (out/'uefi-wifi-cache-binding.h').write_text(cache_header)
         (out/'wifi-firmware-cache-binding.json').write_text(json.dumps(cache_binding,indent=2)+'\n')
+    if audio_binding:
+        (out/'uefi-audio-i2c-cache-binding.h').write_text(audio_header)
+        (out/'audio-i2c-cache-binding.json').write_text(json.dumps(audio_binding,indent=2)+'\n')
     raw=a.payload.read_bytes();k=a.kernel.read_bytes()
     sys.path.insert(0,str(r/'tools'));import mkpayload
     tokens=raw[0x48:0x2a8].split(b'\0',1)[0].split()
@@ -621,6 +645,8 @@ def main():
 #define EFI_XNU_BATTERY_SPAN_LIMIT_US 500000u
 #define EFI_XNU_WIFI_CACHE_AVAILABLE {int(cache_binding is not None)}
 #define EFI_XNU_WIFI_FIRSTREAD_AVAILABLE {int(a.wifi_cpu0_firstread)}
+#define EFI_XNU_WIFI_NORMAL_NC_FIRSTREAD_AVAILABLE {int(a.wifi_cpu0_firstread_normal_nc)}
+#define EFI_XNU_AUDIO_I2C_CACHE_AVAILABLE {int(audio_binding is not None)}
 #define EFI_XNU_CPU {target}u
 #define EFI_XNU_BOOT_CPU_TOKEN "polarisbootcpu={target}"
 #define EFI_XNU_CPUS_TOKEN "cpus={a.kernel_cpus}"
@@ -691,6 +717,10 @@ def main():
         inputs+=['shim/polaris/uefi-wifi-cache-readonly.h','tools/polaris-wifi-firmware-identity.py',
                  'tools/polaris-wifi-firmware-identity.h',cache_pe_relative]
     if a.wifi_cpu0_firstread:inputs.append('shim/polaris/uefi-wifi-firstread.h')
+    if a.wifi_cpu0_firstread_normal_nc:inputs.append('shim/polaris/uefi-wifi-firstread-normal-nc.h')
+    if audio_binding:
+        inputs+=['shim/polaris/uefi-audio-i2c-cache.h','tools/polaris-audio-i2c-firmware-identity.py',
+                 'tools/polaris-audio-i2c-firmware-identity.h',audio_pe_relative]
     if a.host_utc_sync:
         inputs+=['tools/polaris-clock-sync.h','tools/polaris-clock-uefi.h',
                  'tools/polaris-clock-native.h','tools/polaris-clock-host.py']
@@ -803,6 +833,72 @@ def main():
                   wifi_CPU0_firstread_external_SError_recoverable=False,
                   wifi_CPU0_firstread_native_permission=False,wifi_CPU0_firstread_FIFO_or_TX=False,
                   wifi_CPU0_firstread_physical_SMEM_reads_compiled_out=bool(a.wifi_cpu0_firstread and a.test_qemu),
+                  wifi_CPU0_normal_nc_firstread_readonly=a.wifi_cpu0_firstread_normal_nc,
+                  wifi_CPU0_normal_nc_firstread_default_OFF=True,
+                  wifi_CPU0_normal_nc_firstread_new_SMEM_read_body=bool(a.wifi_cpu0_firstread_normal_nc and not a.test_qemu),
+                  wifi_CPU0_normal_nc_firstread_compiled_architectural_target_LDR32_max=18 if a.wifi_cpu0_firstread_normal_nc and not a.test_qemu else 0,
+                  wifi_CPU0_normal_nc_firstread_actual_architectural_target_reads_observed=False,
+                  wifi_CPU0_normal_nc_firstread_architectural_bytes_each=36 if a.wifi_cpu0_firstread_normal_nc else None,
+                  wifi_CPU0_normal_nc_firstread_passes_max=2 if a.wifi_cpu0_firstread_normal_nc else None,
+                  wifi_CPU0_normal_nc_firstread_architectural_target_LDR32_max=18 if a.wifi_cpu0_firstread_normal_nc else None,
+                  wifi_CPU0_normal_nc_firstread_addresses=[2248147036, 2248147136, 2250240000, 2250240004, 2250240008, 2248904704, 2248904712, 2248904716, 2248904720] if a.wifi_cpu0_firstread_normal_nc else None,
+                  wifi_CPU0_normal_nc_firstread_translation_pages=[2248146944, 2248904704, 2250240000] if a.wifi_cpu0_firstread_normal_nc else None,
+                  wifi_CPU0_normal_nc_firstread_PAR_attributes=68 if a.wifi_cpu0_firstread_normal_nc else None,
+                  wifi_CPU0_normal_nc_firstread_PAR_shareability=2 if a.wifi_cpu0_firstread_normal_nc else None,
+                  wifi_CPU0_normal_nc_firstread_PAR_nonsecure=True if a.wifi_cpu0_firstread_normal_nc else None,
+                  wifi_CPU0_normal_nc_firstread_PAR_exact_low12=2816 if a.wifi_cpu0_firstread_normal_nc else None,
+                  wifi_CPU0_normal_nc_firstread_MAIR_expected=4290462720 if a.wifi_cpu0_firstread_normal_nc else None,
+                  wifi_CPU0_normal_nc_firstread_whole_raw_PAR_stable=True if a.wifi_cpu0_firstread_normal_nc else None,
+                  wifi_CPU0_normal_nc_firstread_all3pages_required_before_target_LDR=True if a.wifi_cpu0_firstread_normal_nc else None,
+                  wifi_CPU0_normal_nc_firstread_fresh_limit_ticks=3840000 if a.wifi_cpu0_firstread_normal_nc else None,
+                  wifi_CPU0_normal_nc_firstread_frequency=19200000 if a.wifi_cpu0_firstread_normal_nc else None,
+                  wifi_CPU0_normal_nc_firstread_before_CPU_ON=True if a.wifi_cpu0_firstread_normal_nc else None,
+                  wifi_CPU0_normal_nc_firstread_before_console_and_PON=True if a.wifi_cpu0_firstread_normal_nc else None,
+                  wifi_CPU0_normal_nc_firstread_no_runtime_or_USB_command=True,
+                  wifi_CPU0_normal_nc_firstread_retrospective_constructor_admission=True if a.wifi_cpu0_firstread_normal_nc else None,
+                  wifi_CPU0_normal_nc_firstread_hardware_MPU_or_VMID_query=False,
+                  wifi_CPU0_normal_nc_firstread_external_SError_recoverable=False,
+                  wifi_CPU0_normal_nc_firstread_native_permission=False,
+                  wifi_CPU0_normal_nc_firstread_FIFO_or_TX=False,
+                  wifi_CPU0_normal_nc_firstread_physical_SMEM_reads_compiled_out=bool(a.wifi_cpu0_firstread_normal_nc and a.test_qemu),
+                  wifi_CPU0_normal_nc_firstread_normal_speculative_repeated_coalesced_bus_reads_possible=True if a.wifi_cpu0_firstread_normal_nc else None,
+                  wifi_CPU0_normal_nc_firstread_physical_bus_transaction_cap=False,
+                  wifi_CPU0_normal_nc_firstread_original_Device_policy_unchanged=True,
+                  wifi_CPU0_normal_nc_firstread_mutually_exclusive_with_Device_firstread=True,
+                  wifi_CPU0_normal_nc_firstread_policy_version='exact-NormalNC44-NS-OuterShareable-v1' if a.wifi_cpu0_firstread_normal_nc else None,
+                  audio_I2C_cache_readonly=audio_binding is not None,
+                  audio_I2C_cache_default_OFF=True,
+                  audio_I2C_cache_new_original_image_RAM_read_body=bool(audio_binding and not a.test_qemu),
+                  audio_I2C_cache_actual_cache_observed=False,
+                  audio_I2C_cache_original_PE=audio_pe_relative,
+                  audio_I2C_cache_original_PE_whole_SHA256=audio_binding['source_whole_sha256'] if audio_binding else None,
+                  audio_I2C_cache_binding_SHA256=audio_binding['binding_sha256'] if audio_binding else None,
+                  audio_I2C_cache_image_bytes=32768 if audio_binding else None,
+                  audio_I2C_cache_cache_RVA=28000 if audio_binding else None,
+                  audio_I2C_cache_bytes_per_snapshot=120 if audio_binding else None,
+                  audio_I2C_cache_snapshot_count=2 if audio_binding else None,
+                  audio_I2C_cache_immutable_hashes=4 if audio_binding else None,
+                  audio_I2C_cache_DIR64_relocations=43 if audio_binding else None,
+                  audio_I2C_cache_map_calls_max=3 if audio_binding else None,
+                  audio_I2C_cache_map_keys_before_FreePool_only=True if audio_binding else None,
+                  audio_I2C_cache_prepare_stage=2 if audio_binding else None,
+                  audio_I2C_cache_after_complete_WiFi_collect_read_report=True if audio_binding else None,
+                  audio_I2C_cache_before_PON_and_mask=True if audio_binding else None,
+                  audio_I2C_cache_no_runtime_or_USB_command=True,
+                  audio_I2C_cache_calls_original_firmware=False,
+                  audio_I2C_cache_calls_I2C_DAL_methods=False,
+                  audio_I2C_cache_MMIO_reads=False,
+                  audio_I2C_cache_cached_pointer_follow=False,
+                  audio_I2C_cache_SE5_owner_proven=False,
+                  audio_I2C_cache_TAS_identity_proven=False,
+                  audio_I2C_cache_PCM_completion_proven=False,
+                  audio_I2C_cache_native_permission=False,
+                  audio_I2C_cache_physical_image_inspection_compiled_out=bool(audio_binding and a.test_qemu),
+                  audio_I2C_cache_raw_report_format='RAW_V1' if audio_binding else None,
+                  audio_I2C_cache_raw_report_endianness='little' if audio_binding else None,
+                  audio_I2C_cache_raw_report_bytes=5096 if audio_binding else None,
+                  audio_I2C_cache_raw_report_lines=8 if audio_binding else None,
+                  audio_I2C_cache_raw_report_max_text_units=126 if audio_binding else None,
                   runtime_services_DT=runtime_services,
                   physical_buttons=a.physical_buttons,buttons_offset=buttons_offset if a.physical_buttons else None,
                   TSENS_readonly_inventory=a.tsens_readonly,thermal_configuration_write_api=False,

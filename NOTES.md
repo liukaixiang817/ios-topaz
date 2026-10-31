@@ -34,6 +34,39 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0140 ACTUALUI normalwallpaper/home/pages +GPUdesktopcompletions; 0141 combinedWiFiNC/audioSOURCE ready, NOTadmitted/booted
+
+- Actualcapture0004/44702 ENDED0 showsfullofficial7400 colorlockscreen,
+  SundayNov1/12:52=Melbourne00:52/UTC13:52, chargingicon; replacesallbootlogo
+  pendingclaims. ActualFG3/SMB2 sample78%/4105mV/charging1, notsynthetic.
+  NativeWLEDarchive26/error0/runtime0/issued4/completed4/request2ack2, raw
+  ILIM-onlyfault retained; no newopticalclaimorold2seccycleconfirmationask.
+- Onehomegesture/oneleftpage/onerightpage allACK; captures0006(homeidle)
+  and0007(secondpage) visuallyclear/fullwallpaper/stockapps, nativeGPUactual
+  completions>=11264+fence/idle/halt (notframeFPS). Firstpost-unlock0005
+  caughtfragmentedicons duringtransition, preserved; subsequentstaticframes
+  clear, notclaimedanisolatedrootcause/allanimationtear-free. KnownGLfunction40
+  unsupportednote present; nocompleteall-appcompatibilityclaim. NoFitness
+  launch. GPUhits/benefit/matchedAB/continuous60Hz stillNOTproven.
+- NEW0141 integratedsource proof37ebd098... readyforparentSOURCEcommit:
+  old47 onlymain/builder/cache twointerfaceguardschanged,44otherinputs
+  unchanged; actualON52inputs/7ba7c045.../879616B, SOFTWARE48a1ac83.../
+  698880B anddefaultOFF wholeEFIbyteidentical0140fa08/792064B. WholeTU proves
+  exactWiFicollect->NC->report->audio->PON, QEMUphysicalbodies/records absent
+  andnew2markers present. 66typedmetadata exact, oldDeviceheader/policy
+  unchanged. 29relatedadmission/bootACKtestsPASS afterparentreview; new
+  NC/audio SOURCEprofilesNone/failclosed untilactualcommitted52/source/
+  b31payload/82b3 audited. No new2models/guest/CI/0141phone yet.
+- Audio RAW_V1 compact5096B/8lines/max92textcalls, everypartial/owner/256
+  handles/map/arch/hash/120Bx2 retained.35ASAN/UBSAN+6log/layout/member
+  checks/actualCOFF+MachO+OFF/SOFTWARE+3wrongPEPASS, proof357ce8d3.../
+  ready8a8e12de... . NoI2C/DAL/MMIO/pointerfollowing/SE5/TAS/PCM proof.
+- UserlatestagainprioritizesWiFi/camera/audio. Nextseal+commitnew0141 SOURCE,
+  runONLYtwoaffectedwholeEFI-XNUterminalmodels/wholecodec/newcasefreeze
+  reusingactual82b3/f790 (no nativeCI). Actualcurrent0140 remainsLIVE with
+  ONLYitsfrozencontroller; normalVFS/GPU/CPUdrain+fullraw/newWLEXIT05/WLR5
+  andindependentFASTBOOT requiredBEFOREnew0141 ONEimage. No genericreboot.
+
 ### 0140 ACTUALboot7650/82b3/f790: nativeGPUacceptancePASS+ENV1, UTCsingleSET+MelbournePASS; desktopframe stillpending
 
 - ONEimage37855 ENDED0 sent2026-10-31T13:46:01.617209Z/source7b472d5,

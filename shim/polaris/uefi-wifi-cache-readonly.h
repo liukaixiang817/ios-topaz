@@ -245,7 +245,7 @@ static inline void pwfc_hex(const uint8_t *raw,size_t bytes)
         line[2*n]=0;text(line);text("\r\n");at+=n;
     }
 }
-#if EFI_XNU_WIFI_FIRSTREAD_AVAILABLE
+#if EFI_XNU_WIFI_FIRSTREAD_AVAILABLE || EFI_XNU_WIFI_NORMAL_NC_FIRSTREAD_AVAILABLE
 static inline int pwfc_collect_preboot(struct efi_system *system,uint32_t stage)
 {
     if(pwfc_record.attempted)return 0;
@@ -302,7 +302,7 @@ static inline void pwfc_prepare(struct efi_system *system,uint32_t stage)
     text("WIFI_CACHE_SOURCE_SHA256=" PWFI_SOURCE_SHA256 "\r\n");
     text("WIFI_CACHE_ONLY: original-image RAM witness; new_SMEM_reads=0 native_permission=0 FIFO=0 radio=0 may_transmit=0\r\n");
 }
-#if EFI_XNU_WIFI_FIRSTREAD_AVAILABLE
+#if EFI_XNU_WIFI_FIRSTREAD_AVAILABLE || EFI_XNU_WIFI_NORMAL_NC_FIRSTREAD_AVAILABLE
 /* Explicit first-read callers can still use the original combined wrapper. */
 static inline void pwfc_prepare(struct efi_system *system,uint32_t stage)
 {

@@ -160,6 +160,188 @@ def _exact(actual,expected):
     return actual==expected
 
 
+#Independent NormalNC scope. None means NOT admitted; populate only after
+#committed-source/actual-f790-kernel/payload and full compiled input review.
+NORMAL_NC_0141=None
+NORMAL_NC_PREFIX='wifi_CPU0_normal_nc_firstread_'
+NORMAL_NC_DISABLED={'FIFO_or_TX': False,
+ 'MAIR_expected': None,
+ 'PAR_attributes': None,
+ 'PAR_exact_low12': None,
+ 'PAR_nonsecure': None,
+ 'PAR_shareability': None,
+ 'actual_architectural_target_reads_observed': False,
+ 'addresses': None,
+ 'all3pages_required_before_target_LDR': None,
+ 'architectural_bytes_each': None,
+ 'architectural_target_LDR32_max': None,
+ 'before_CPU_ON': None,
+ 'before_console_and_PON': None,
+ 'compiled_architectural_target_LDR32_max': 0,
+ 'default_OFF': True,
+ 'external_SError_recoverable': False,
+ 'frequency': None,
+ 'fresh_limit_ticks': None,
+ 'hardware_MPU_or_VMID_query': False,
+ 'mutually_exclusive_with_Device_firstread': True,
+ 'native_permission': False,
+ 'new_SMEM_read_body': False,
+ 'no_runtime_or_USB_command': True,
+ 'normal_speculative_repeated_coalesced_bus_reads_possible': None,
+ 'original_Device_policy_unchanged': True,
+ 'passes_max': None,
+ 'physical_SMEM_reads_compiled_out': False,
+ 'physical_bus_transaction_cap': False,
+ 'policy_version': None,
+ 'readonly': False,
+ 'retrospective_constructor_admission': None,
+ 'translation_pages': None,
+ 'whole_raw_PAR_stable': None}
+NORMAL_NC_PHYSICAL_FIELDS={'FIFO_or_TX': False,
+ 'MAIR_expected': 4290462720,
+ 'PAR_attributes': 68,
+ 'PAR_exact_low12': 2816,
+ 'PAR_nonsecure': True,
+ 'PAR_shareability': 2,
+ 'actual_architectural_target_reads_observed': False,
+ 'addresses': [2248147036,
+               2248147136,
+               2250240000,
+               2250240004,
+               2250240008,
+               2248904704,
+               2248904712,
+               2248904716,
+               2248904720],
+ 'all3pages_required_before_target_LDR': True,
+ 'architectural_bytes_each': 36,
+ 'architectural_target_LDR32_max': 18,
+ 'before_CPU_ON': True,
+ 'before_console_and_PON': True,
+ 'compiled_architectural_target_LDR32_max': 18,
+ 'default_OFF': True,
+ 'external_SError_recoverable': False,
+ 'frequency': 19200000,
+ 'fresh_limit_ticks': 3840000,
+ 'hardware_MPU_or_VMID_query': False,
+ 'mutually_exclusive_with_Device_firstread': True,
+ 'native_permission': False,
+ 'new_SMEM_read_body': True,
+ 'no_runtime_or_USB_command': True,
+ 'normal_speculative_repeated_coalesced_bus_reads_possible': True,
+ 'original_Device_policy_unchanged': True,
+ 'passes_max': 2,
+ 'physical_SMEM_reads_compiled_out': False,
+ 'physical_bus_transaction_cap': False,
+ 'policy_version': 'exact-NormalNC44-NS-OuterShareable-v1',
+ 'readonly': True,
+ 'retrospective_constructor_admission': True,
+ 'translation_pages': [2248146944, 2248904704, 2250240000],
+ 'whole_raw_PAR_stable': True}
+
+#Independent I2CDxe original-imageRAM witness, never a deviceI2C permission.
+AUDIO_I2C_0141=None
+AUDIO_I2C_PREFIX='audio_I2C_cache_'
+AUDIO_I2C_DISABLED={'DIR64_relocations': None,
+ 'MMIO_reads': False,
+ 'PCM_completion_proven': False,
+ 'SE5_owner_proven': False,
+ 'TAS_identity_proven': False,
+ 'actual_cache_observed': False,
+ 'after_complete_WiFi_collect_read_report': None,
+ 'before_PON_and_mask': None,
+ 'binding_SHA256': None,
+ 'bytes_per_snapshot': None,
+ 'cache_RVA': None,
+ 'cached_pointer_follow': False,
+ 'calls_I2C_DAL_methods': False,
+ 'calls_original_firmware': False,
+ 'default_OFF': True,
+ 'image_bytes': None,
+ 'immutable_hashes': None,
+ 'map_calls_max': None,
+ 'map_keys_before_FreePool_only': None,
+ 'native_permission': False,
+ 'new_original_image_RAM_read_body': False,
+ 'no_runtime_or_USB_command': True,
+ 'original_PE': None,
+ 'original_PE_whole_SHA256': None,
+ 'physical_image_inspection_compiled_out': False,
+ 'prepare_stage': None,
+ 'raw_report_bytes': None,
+ 'raw_report_endianness': None,
+ 'raw_report_format': None,
+ 'raw_report_lines': None,
+ 'raw_report_max_text_units': None,
+ 'readonly': False,
+ 'snapshot_count': None}
+AUDIO_I2C_PHYSICAL_FIELDS={'DIR64_relocations': 43,
+ 'MMIO_reads': False,
+ 'PCM_completion_proven': False,
+ 'SE5_owner_proven': False,
+ 'TAS_identity_proven': False,
+ 'actual_cache_observed': False,
+ 'after_complete_WiFi_collect_read_report': True,
+ 'before_PON_and_mask': True,
+ 'binding_SHA256': '897f0d6bde76b50f645ba0567ae75f293f80eb0bb8a58ddf84fb20fdb66a0aa5',
+ 'bytes_per_snapshot': 120,
+ 'cache_RVA': 28000,
+ 'cached_pointer_follow': False,
+ 'calls_I2C_DAL_methods': False,
+ 'calls_original_firmware': False,
+ 'default_OFF': True,
+ 'image_bytes': 32768,
+ 'immutable_hashes': 4,
+ 'map_calls_max': 3,
+ 'map_keys_before_FreePool_only': True,
+ 'native_permission': False,
+ 'new_original_image_RAM_read_body': True,
+ 'no_runtime_or_USB_command': True,
+ 'original_PE': 'research/polaris/uefi-integration-0057/firmware-files/04de8591-d2b3-4077-bbbe-b12070094eb6.efi',
+ 'original_PE_whole_SHA256': '5eb6c9ddd3449ef3f74feb3644448c279fcc619dc95812b16ad2fb616d738332',
+ 'physical_image_inspection_compiled_out': False,
+ 'prepare_stage': 2,
+ 'raw_report_bytes': 5096,
+ 'raw_report_endianness': 'little',
+ 'raw_report_format': 'RAW_V1',
+ 'raw_report_lines': 8,
+ 'raw_report_max_text_units': 126,
+ 'readonly': True,
+ 'snapshot_count': 2}
+
+def audio_i2c_cache_scope(d):
+    actual={k[len(AUDIO_I2C_PREFIX):]:v for k,v in d.items() if k.startswith(AUDIO_I2C_PREFIX)}
+    if not actual or _exact(actual,AUDIO_I2C_DISABLED):
+        if 'shim/polaris/uefi-audio-i2c-cache.h' in d.get('inputs',{}):
+            raise ValueError('audio I2C image read cannot hide behind absent/disabled metadata')
+        return False
+    policy=AUDIO_I2C_0141
+    if (type(policy) is not dict or not policy.get('firmware_source') or
+        not _exact(actual,AUDIO_I2C_PHYSICAL_FIELDS) or not _exact(d.get('inputs'),policy.get('inputs')) or
+        d.get('kernel_sha256')!=policy.get('kernel') or d.get('payload_sha256')!=policy.get('payload') or
+        'shim/polaris/uefi-audio-i2c-cache.h' not in d.get('inputs',{})):
+        raise ValueError('audio I2C cache requires its exact separately committed-source0141 scope')
+    return True
+
+
+def normal_nc_firstread_scope(d):
+    actual={k[len(NORMAL_NC_PREFIX):]:v for k,v in d.items() if k.startswith(NORMAL_NC_PREFIX)}
+    if not actual or _exact(actual,NORMAL_NC_DISABLED):
+        if 'shim/polaris/uefi-wifi-firstread-normal-nc.h' in d.get('inputs',{}):
+            raise ValueError('NormalNC firstread source cannot hide behind absent/disabled metadata')
+        return False
+    policy=NORMAL_NC_0141
+    if (type(policy) is not dict or not policy.get('firmware_source') or
+        not _exact(actual,NORMAL_NC_PHYSICAL_FIELDS) or
+        not _exact(d.get('inputs'),policy.get('inputs')) or
+        d.get('kernel_sha256')!=policy.get('kernel') or d.get('payload_sha256')!=policy.get('payload') or
+        'shim/polaris/uefi-wifi-firstread-normal-nc.h' not in d.get('inputs',{}) or
+        'shim/polaris/uefi-wifi-firstread.h' in d.get('inputs',{}) or
+        d.get('wifi_CPU0_firstread_readonly') is not False):
+        raise ValueError('NormalNC firstread requires its exact separately committed-source0141 scope')
+    return True
+
+
 def firstread_scope(d):
     actual={k[len(FIRSTREAD_PREFIX):]:v for k,v in d.items() if k.startswith(FIRSTREAD_PREFIX)}
     if not actual or _exact(actual,FIRSTREAD_DISABLED):
@@ -226,6 +408,8 @@ def runtime_model_scope(m):
 def exact_scope(d,build=None):
     profile=target_profile(build or d.get('userland_build','20H392'))
     firstread_scope(d)
+    normal_nc_firstread_scope(d)
+    audio_i2c_cache_scope(d)
     for k,v in PHYSICAL.items():
         if type(d.get(k)) is not type(v) or d[k]!=v:raise ValueError('not the independent physical runtime scope: '+k)
     if d.get('chain_app') is not None or d.get('disk_guid') is not None or d.get('RAM_native_drain_test') is not None:
@@ -270,6 +454,14 @@ def admit(d,models,ci,pre,review,build='20H392'):
                 flag=raw.get('WIFI_FIRSTREAD_SOFTWARE_PHYSICAL_SMEM_READ_COMPILED_OUT')
                 if type(flag) is not int or flag!=1:
                     raise ValueError('reviewed firstread model must compile out all physical SMEM loads')
+            if normal_nc_firstread_scope(d):
+                flag=m.get('raw_fields',{}).get('WIFI_NORMAL_NC_FIRSTREAD_SOFTWARE_PHYSICAL_SMEM_READ_COMPILED_OUT')
+                if type(flag) is not int or flag!=1:
+                    raise ValueError('reviewed NormalNC model must compile out all physical SMEM loads')
+            if audio_i2c_cache_scope(d):
+                flag=m.get('raw_fields',{}).get('AUDIO_I2C_CACHE_SOFTWARE_PHYSICAL_IMAGE_INSPECTION_COMPILED_OUT')
+                if type(flag) is not int or flag!=1:
+                    raise ValueError('reviewed audio model must compile out all physical image inspection')
     if (review.get('passed') is not True or review.get('may_boot_iOS') is not True or
         review.get('may_write_userdata') is not False or pre.get('may_boot_iOS') is not True or
         pre.get('may_write_userdata') is not False or pre.get('full_image_sha256')!=profile['root'] or

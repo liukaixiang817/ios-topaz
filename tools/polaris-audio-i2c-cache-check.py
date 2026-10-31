@@ -16,6 +16,58 @@ import subprocess
 import tempfile
 
 
+def decode_compact(log, schema, source_sha256):
+    """Read the full/partial diagnostic result; never derive hardware permission.
+
+    Schema must come from the exact candidate's compiled/checker metadata. Every
+    raw byte remains available even when a field or the serial transfer is short.
+    """
+    begin = "AUDIO_I2C_CACHE_RAW_V1_BEGIN\r\n"
+    end = "\r\nAUDIO_I2C_CACHE_RAW_V1_END\r\n"
+    count = log.count(begin)
+    if not count:
+        return dict(present=False, complete=False, diagnostic_consistent=False)
+    if count != 1 or log.count(end) > 1:
+        raise ValueError("requires exactly one audio raw result; do not combine/replay attempts")
+    tail = log.split(begin, 1)[1]
+    ended = end in tail
+    body = tail.split(end, 1)[0] if ended else tail
+    prefix = re.match(r"[0-9a-f]*", body).group()
+    raw = bytes.fromhex(prefix[:len(prefix)//2*2])
+    declared = re.findall(r"AUDIO_I2C_CACHE_RAW_V1_BYTES=0x([0-9a-f]{16})\r\n", log)
+    complete = bool(ended and prefix == body and len(prefix) == 2*schema["bytes"] and
+                    len(declared) == 1 and int(declared[0], 16) == schema["bytes"])
+    fields = {}
+    u32_arrays = {"map_version", "snapshot_bytes"}
+    u64_arrays = {"map_key", "handle_status", "loaded_address"}
+    arch_names = ["el", "mpidr", "ttbr0", "ttbr1", "tcr", "sctlr", "mair", "daif", "sre", "group1", "frequency", "ticks"]
+    for name, (offset, size) in schema["members"].items():
+        value = raw[offset:offset+size]
+        if len(value) != size:
+            fields[name] = dict(complete=False, raw_hex=value.hex())
+        elif name in u32_arrays or name in u64_arrays:
+            stride = 4 if name in u32_arrays else 8
+            fields[name] = [int.from_bytes(value[n:n+stride], "little") for n in range(0, size, stride)]
+        elif name in ("before", "after"):
+            fields[name] = {key:int.from_bytes(value[8*n:8*n+8], "little") for n, key in enumerate(arch_names)}
+        elif name in ("hashes", "snapshot"):
+            stride = 32 if name == "hashes" else 120
+            fields[name] = [value[n:n+stride].hex() for n in range(0, size, stride)]
+        elif size in (4, 8):
+            fields[name] = int.from_bytes(value, "little")
+        else:
+            fields[name] = dict(complete=True, raw_hex=value.hex())
+    summary = re.findall(r"AUDIO_I2C_CACHE_ERROR=0x([0-9a-f]{16})\r\n", log)
+    source = re.findall(r"AUDIO_I2C_CACHE_SOURCE_SHA256=([0-9a-f]{64})\r\n", log)
+    consistent = bool(complete and len(summary) == 1 and fields.get("error") == int(summary[0], 16) and
+                      source == [source_sha256])
+    return dict(present=True, complete=complete, diagnostic_consistent=consistent,
+                declared_bytes=int(declared[0], 16) if len(declared) == 1 else None,
+                received_bytes=len(raw), trailing_hex_nibble=prefix[-1:] if len(prefix)%2 else "",
+                raw_hex=raw.hex(), fields=fields,
+                SE5_owner_proved=False, TAS_identity_proved=False, PCM_completed=False)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--original-i2c-pe", type=Path, required=True)
@@ -46,10 +98,37 @@ def main():
     run("host-ASAN-UBSAN-compile", ["/usr/bin/clang", "-std=c11", "-Wall", "-Wextra", "-Werror",
         "-O2", "-g", "-fsanitize=address,undefined", "-DEFI_XNU_AUDIO_I2C_CACHE_AVAILABLE=1",
         "-I" + str(out), root / "tools/polaris-audio-i2c-cache-test.c", "-o", fixture])
-    fixture_result = json.loads(run("host-ASAN-UBSAN-fixture", [fixture, original]))
+    fixture_result = json.loads(run("host-ASAN-UBSAN-fixture", [fixture, original, out / "compact"]))
+    schema = fixture_result["wire_schema"]
+    if schema["version"] != 1 or schema["endian"] != "little":
+        raise RuntimeError("requires the exact candidate diagnostic ABI1 little-endian layout")
+    decoded = {}
+    for name in ("positive", "changed-cache", "partial-map", "max-handles"):
+        decoded[name] = decode_compact((out / ("compact-" + name + ".log")).read_bytes().decode(), schema, source["source_whole_sha256"])
+        if not decoded[name]["complete"] or not decoded[name]["diagnostic_consistent"]:
+            raise RuntimeError("compact log failed complete byte-preserving decode: " + name)
+    if decoded["positive"]["fields"]["error"] or decoded["max-handles"]["fields"]["handle_count"] != 256:
+        raise RuntimeError("compact positive/maximum-handle status lost")
+    changed = decoded["changed-cache"]["fields"]
+    if not changed["error"] or changed["snapshot"][0] == changed["snapshot"][1]:
+        raise RuntimeError("partial changed-cache evidence lost")
+    if not decoded["partial-map"]["fields"]["map_status"] or decoded["partial-map"]["fields"]["map_samples"] != 2:
+        raise RuntimeError("partial map error evidence lost")
+    positive = (out / "compact-positive.log").read_bytes().decode()
+    short = positive[:positive.index("AUDIO_I2C_CACHE_RAW_V1_BEGIN\r\n") + len("AUDIO_I2C_CACHE_RAW_V1_BEGIN\r\n") + 1001]
+    short_result = decode_compact(short, schema, source["source_whole_sha256"])
+    if short_result["complete"] or short_result["diagnostic_consistent"] or not short_result["trailing_hex_nibble"]:
+        raise RuntimeError("partial serial transfer incorrectly accepted or discarded")
+    bad_source = decode_compact(positive.replace(source["source_whole_sha256"], "0"*64), schema, source["source_whole_sha256"])
+    if bad_source["diagnostic_consistent"]:
+        raise RuntimeError("compact source mismatch accepted")
     wrapper = out / "actual-audio-cache-entry.c"
     wrapper.write_text('#include <stdint.h>\nvoid text(const char *);\nvoid report(const char *,uint64_t);\n'
         '#include "' + str(root / "shim/polaris/uefi-audio-i2c-cache.h") + '"\n'
+        '_Static_assert(sizeof(struct paic_result)==' + str(schema["bytes"]) + ',"actual diagnostic result size");\n' +
+        '\n'.join('_Static_assert(offsetof(struct paic_result,' + name + ')==' + str(offset) +
+                  '&&sizeof(((struct paic_result*)0)->' + name + ')==' + str(size) + ',"actual diagnostic member ' + name + '");'
+                  for name, (offset, size) in schema["members"].items()) + '\n' +
         'void audio_cache_actual_entry(struct efi_system *system){paic_prepare(system,2);}\n')
     common = ["-ffreestanding", "-fno-builtin", "-fno-stack-protector", "-fshort-wchar",
               "-mgeneral-regs-only", "-O2", "-Wall", "-Wextra", "-Werror", "-I" + str(out)]
@@ -83,8 +162,8 @@ def main():
         obj = out / (name + "-audio-cache-entry.o")
         run(name + "-AppleClang", ["/usr/bin/clang", "--target=arm64-apple-macos14", *common, *defines,
             "-c", wrapper, "-o", obj])
-        decoded = run(name + "-instructions", ["/usr/bin/otool", "-tvV", obj]).lower()
-        if re.search(r"\b(mrs|msr|at|blr|smc|hvc|dsb)\b", decoded):
+        disabled_disassembly = run(name + "-instructions", ["/usr/bin/otool", "-tvV", obj]).lower()
+        if re.search(r"\b(mrs|msr|at|blr|smc|hvc|dsb)\b", disabled_disassembly):
             raise RuntimeError(name + " must contain no architecture read, indirect BS call or hardware instruction")
         disabled.append(dict(variant=name, no_arch_reads_or_indirect_BS_calls=True))
 
@@ -115,6 +194,13 @@ def main():
                   generated_binding_sha256=hashlib.sha256(header.encode()).hexdigest(),
                   actual_instruction_chains=chains, required_actual_instructions=required,
                   only_MSR_saved_PAR_restore=msr, disabled_variants=disabled,
+                  compact_wire_schema=schema, compact_log_checks=6,
+                  compact_log_max_text_calls=fixture_result["compact_log_max_text_calls"],
+                  compact_log_lines=fixture_result["compact_log_lines"],
+                  compact_ordinary_COFF_MachO_layout_assertions=True,
+                  compact_log_examples={name:dict(error=value["fields"]["error"], raw_bytes=value["received_bytes"],
+                      complete=value["complete"], full_raw_sha256=hashlib.sha256(bytes.fromhex(value["raw_hex"])).hexdigest())
+                      for name, value in decoded.items()},
                   original_image_negative_checks=negatives, runs=runs,
                   inputs={f:hashlib.sha256((root/f).read_bytes()).hexdigest() for f in files},
                   shared_source_modified=False, integrated_in_phone_image=False,
