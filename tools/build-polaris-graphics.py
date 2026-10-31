@@ -128,7 +128,7 @@ def build(args):
                                    str(SOURCES / 'polaris-inject.c'), *cf, *io, '-framework', 'OpenGLES', '-lobjc']),
         ('polaris-bbd-wrapper', [str(SOURCES / 'polaris-bbd-wrapper.c'), *cf, *io]),
         ('polaris-gl-test', [str(SOURCES / 'polaris-gl-test.c'), str(mesa), *cf, *surface, *io, '-lobjc']),
-        ('polaris-init', [str(SOURCES / 'polaris-init.c')]),
+        ('polaris-init', [str(SOURCES / 'polaris-init.c'), *(cf if args.build == '20F66' else [])]),
     ]
     for name, options in jobs:
         if name in preserved:

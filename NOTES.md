@@ -34,6 +34,40 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0126 wallpaper fault observability: source ready, actual0125 full-app system remainsLIVE
+
+- Actual0125 stock32icons and Calculator7*8=56/AppleTVwelcome success remains the
+  latest phone result. New actualwallpaperAdd gallery is also empty after full
+  appregistration; PBF samefirstassertion then repeatedsig6. Exception reason text
+  goes to unobserved stdio; officialroot haslogd/diagnosticd but no/usr/bin/log or
+  syslog/launchctl command. No blindrestart, no success/Metal-root-cause claim.
+- NEW0126 init keeps the32-app publication function BYTEIDENTICAL, adds only
+  ownconsole output and PosterBoard job stdio observability BEFORE Apple launchd.
+  Genuine20F66 530-job cache: ONLY StandardOutPath/StandardErrorPath on exact
+  com.apple.PosterBoard job become/dev/console; same genuineApple executable/args,
+  other529jobs/allotherfields unchanged. CF parses/serializes the actual cache;
+  ownexclusive temporary file +checkedfullwrite/owner/mode/fsync thenatomicrename
+  only in admitted RAMCOW. Read/parse/foreignprogram/existingstdio/temp-collision
+  failures retainoriginal; no fault suppress/catch or hardware/storage authority.
+  Actual cache functional/4refusal/repeat checks PASS; iOS ARM64 warning compile
+  and nativeoverlayobject compile PASS. CoreFoundation first-PID1 runtime effects
+  remain untested physically; don't labelthis a wallpaperfix or physicalsuccess.
+- New diagnostic bundle70066c1bb9e5463d2ccb7a27ef0969633edf5c9fc525398eaf8f25eb8767933a
+  changes ONLYinit again; otherfive graphics binaries BYTEIDENTICAL0125. Native
+  ONLY0899 exactdigest changes, noCPU/GPU/WLED/thermal/auth/lifetime/ABI/IIG change.
+  NEXT commit/push to ONE necessary newnativeCI, then exactnewartifact/changed-
+  impactterminalmodels/image/fullcodec; currenthostprofile stillpoints0125 and
+  must notbootnewbundleearly. Existing app repair is not repeated/redesigned.
+- CURRENTPHONE LIVE0125, originalbootconsumed. Sourceedited: use exactbc4 snapshot
+  /private/tmp/polaris-runtime-0125-frozen-0001/tools/polaris-uefi-wled-runtime.py
+  for currentboundcapture/touch/safeexit. All368hashes match, originalmanifests/
+  policyunchanged. Lastactions canceledblankwallpapergallery and returnedHome;
+  worker64079 ENDED, noactiveUSBworker. No ordinaryreset/recovery/newboot until
+  true nativeVFS/GPU/CPUdrain+fullraw/WLEXIT05/WLR5 thenindependentactualFASTBOOT.
+- Local ORIGINAL image readonlymount/private/tmp/polaris-20F66-readonly-0125 active,
+  metadata0125/HFS-readonly-attachment.plist; normaldetachonlyrecordeddevice when
+  done. Originalimmutable915root remains unchanged, no userdata/ESP/defaultwrite.
+
 ### 0125 CURRENT: actual full stock apps + Calculator56 + AppleTV welcome PASS; wallpaper still pending, phone LIVE
 
 - Latest actual hardware supersedes historical LIVE/READY below: original0124

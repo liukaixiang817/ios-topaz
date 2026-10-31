@@ -22,7 +22,7 @@ int check(const void *v,size_t n,const void *h){return pgpu_build_matches(v,n,h)
                             '-o', str(p / 'build.dylib')], check=True)
             lib = ctypes.CDLL(str(p / 'build.dylib'))
             lib.check.argtypes = [ctypes.c_void_p, ctypes.c_size_t, ctypes.c_void_p]
-            digest = bytes.fromhex('9c147000bbf5adb3ad72e637d2393d663c9cced0005b9b3d876ec75ac96bdc78')
+            digest = bytes.fromhex('70066c1bb9e5463d2ccb7a27ef0969633edf5c9fc525398eaf8f25eb8767933a')
             self.assertEqual(lib.check(b'20H392\0', 7, bytes(32)), 1)
             self.assertEqual(lib.check(b'20F66\0', 6, digest), 1)
             for version in (b'20H392X', b'20F66X', b'20F65\0', b'20F66\0extra'):
