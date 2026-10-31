@@ -7,7 +7,7 @@ r=Path(__file__).resolve().parents[1];w=r/'research/polaris/uefi-ios-0124';sys.p
 import polaris_adb_exec as framing
 sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
 now=lambda:datetime.datetime.now(datetime.timezone.utc).isoformat()
-ap=argparse.ArgumentParser();ap.add_argument('--install-once',action='store_true');args=ap.parse_args()
+ap=argparse.ArgumentParser();ap.add_argument('--install-once',action='store_true');ap.add_argument('--attempt',choices=('0001','0002'),default='0001');args=ap.parse_args()
 image=w/'root-transfer-recovery-0001/polaris-backup-recovery.img';manifest=json.loads((image.parent/'manifest.json').read_text())
 assert sha(image)==manifest['sha256']=='f9ad6529c1632fa2116377ec5f12c78f6d5cf7f5a1baa0b0f1bec4b5a518bd99'
 root=w/'ios16.5-20F66-full-root-0001.img';rootmeta=json.loads(root.with_suffix('.json').read_text())
@@ -22,7 +22,10 @@ for path,key in [('tools/polaris-root-receive.c','source_sha256'),('tools/tests/
  assert hashlib.sha256(subprocess.check_output(['git','show','HEAD:'+path])).hexdigest()==vm[key],'commit source before physical use'
 assert hashlib.sha256(subprocess.check_output(['git','show','HEAD:tools/polaris-install-20F66-root.py'])).hexdigest()==sha(Path(__file__)),'commit controller before physical use'
 if not args.install_once:print('Exact new16.5 root/receiver/recovery frozen; no device command sent');sys.exit(0)
-o=w/'phone-new-root-install-0001';o.mkdir(exist_ok=False)
+if args.attempt=='0002':
+ prior=json.loads((w/'phone-new-root-install-0001/result.json').read_text())
+ assert prior['phone_partition_writes'] is False and prior['mounted_at_end'] is False and prior['actual_expected_FASTBOOT_after'] is True
+o=w/('phone-new-root-install-'+args.attempt);o.mkdir(exist_ok=False)
 serial=re.search(r'androidboot.serialno=(\S+)',(r/'backup/polaris-20261023-193109/cmdline.txt').read_text()).group(1)
 adb=[str(r/'research/host-tools/platform-tools/adb'),'-s',serial];fb=[str(r/'research/host-tools/platform-tools/fastboot'),'-s',serial]
 record=dict(state='prepared',phone_partition_writes=False,journal_replayed=False,metadata_repaired=False,may_boot_iOS=False,may_write_userdata=False,image_sha256=sha(image),script_sha256=sha(Path(__file__)),new_root_sha256=rootmeta['sha256'],new_file_only=True,raw_device_writes=False,old_root_overwritten=False);mounted=False;own=False;sent=False;start=None
@@ -47,6 +50,13 @@ def raw(path,block,count=1):
 def fastboot():
  p=subprocess.run(fb+['getvar','product'],capture_output=True,timeout=8)
  return p.returncode==0 and bool(re.search(rb'product:\s*polaris\b',p.stdout+p.stderr))
+def wait_result(path,seconds):
+ until=time.monotonic()+seconds
+ while time.monotonic()<until:
+  value=sh('if [ -f '+path+' ]; then cat '+path+'; else echo pending; fi').strip()
+  if value!=b'pending':return value
+  time.sleep(1)
+ raise RuntimeError('remote completion still unknown for '+path+'; no retransmission')
 def clean_header(header):
  sb=header[1024:2048]
  assert struct.unpack_from('<H',sb,56)[0]==0xef53 and struct.unpack_from('<I',sb,24)[0]==2
@@ -111,9 +121,14 @@ try:
   call(adb+['push',str(source),'/dev/'+name]);sh('chmod 700 /dev/'+name);assert sh('sha256sum /dev/'+name).split()[0].decode()==sha(source)
  # Exercise the actual stdin transport in RAM before any writable mount.
  probe=bytes((i*37+0x24)&255 for i in range(65536))
- transport=subprocess.run(adb+['exec-in','dd of=/dev/polaris-root-stream-probe bs=1 count=65536 2>/dev/polaris-root-stream-probe.log'],input=probe,capture_output=True,timeout=20)
+ command='dd of=/dev/polaris-root-stream-probe bs=1 count=65536 2>/dev/polaris-root-stream-probe.log; probe_rc=$?; echo $probe_rc >/dev/polaris-root-stream-probe.rc'
+ transport=subprocess.run(adb+['exec-in',command],input=probe,capture_output=True,timeout=20)
  (o/'RAM-stream-probe.log').write_bytes((transport.stdout+transport.stderr).replace(serial.encode(),b'<phone>'))
- assert transport.returncode==0 and sh('sha256sum /dev/polaris-root-stream-probe').split()[0].decode()==hashlib.sha256(probe).hexdigest()
+ completion=wait_result('/dev/polaris-root-stream-probe.rc',8)
+ actual_probe=sh('cat /dev/polaris-root-stream-probe');(o/'RAM-stream-probe.bin').write_bytes(actual_probe)
+ (o/'RAM-stream-remote.log').write_bytes(sh('cat /dev/polaris-root-stream-probe.log'))
+ record['RAM_stream_probe']=dict(transport_exit=transport.returncode,remote_exit=completion.decode(),actual_bytes=len(actual_probe),actual_sha256=hashlib.sha256(actual_probe).hexdigest(),expected_sha256=hashlib.sha256(probe).hexdigest());save()
+ assert transport.returncode==0 and completion==b'0' and actual_probe==probe,'actual complete RAM transport content mismatch'
  record['actual_RAM_stream_transport_verified']=True;save()
  sh('mkdir -m 700 '+mount);mount_ro()
  oldmap=json.loads(sh('/dev/polaris-file-extents '+base));assert oldmap==json.loads((r/'research/polaris/uefi-ios-0123/phone-readonly-audit-0001/root-fiemap.json').read_text())
@@ -133,7 +148,7 @@ try:
   try:rc=proc.wait(timeout=660)
   except subprocess.TimeoutExpired:proc.kill();proc.wait();raise RuntimeError('stream transport deadline; no retransmission')
  # A failed/unknown transport is never retried. Inspect actual completion first.
- actual=sh('cat /dev/root-receive.rc').strip();receiver_live=False
+ actual=wait_result('/dev/root-receive.rc',150);receiver_live=False
  (o/'receiver.log').write_bytes(sh('cat /dev/root-receive.log'))
  result=json.loads(sh('cat /dev/root-receive-result.json'));(o/'receiver-result.json').write_text(json.dumps(result,indent=2)+'\n')
  assert rc==0 and actual==b'0' and result['complete'] is True and result['test_build'] is False and result['sha256']==rootmeta['sha256'] and result['bytes']==16<<30
