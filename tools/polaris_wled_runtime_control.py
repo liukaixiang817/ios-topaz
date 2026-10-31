@@ -7,8 +7,15 @@ from polaris_wled_runtime_journal import page,journal,exit_footer,exit_receipt,z
 class WledRuntimeProtocol(KernelProtocol):
     limits=dict(KernelProtocol.limits,**{'wled-runtime':980})
 
-    def __init__(self,transport):
+    def __init__(self,transport,*,firmware_log_capacity=None):
+        # The manifest-bound controller performs exact image/source admission
+        # BEFORE constructing this client. This parameter only bounds upload
+        # length; it cannot grant a new command, physical scope or boot.
+        if firmware_log_capacity is not None and (type(firmware_log_capacity) is not int or firmware_log_capacity!=8388608):
+            raise ValueError('only the NEW explicit 8MiB firmware log scope is supported')
         super().__init__(transport);self.exit_sent=False;self.actual_footer=b'';self.actual_reply=b''
+        if firmware_log_capacity is not None:
+            self.limits=dict(self.limits,logs=(4<<20)+firmware_log_capacity+128)
 
     def _control(self,command,*,boot_ack_seconds=10):
         if command in (b'reboot',b'reboot-bootloader',b'oem drained-reboot:1',b'oem drained-reboot:2'):

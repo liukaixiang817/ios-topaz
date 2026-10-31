@@ -34,6 +34,15 @@
 #if EFI_XNU_WIFI_RPMH_CLIENT_AVAILABLE
 #include "uefi-wifi-rpmh-client.h"
 #endif
+#ifndef EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE
+#define EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE 0
+#endif
+#if EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE
+#if !EFI_XNU_WIFI_RPMH_CLIENT_AVAILABLE || !EFI_XNU_WIFI_CMDDB_QUERY_AVAILABLE
+#error "Power path requires its exact private-client and original CmdDb scopes"
+#endif
+#include "uefi-wifi-power-path.h"
+#endif
 #ifndef EFI_XNU_AUDIO_CLOCK_QUERY_CAMERA_READONLY
 #define EFI_XNU_AUDIO_CLOCK_QUERY_CAMERA_READONLY 0
 #endif
@@ -137,6 +146,9 @@ struct pacgq_io {
     /* Architectural translation only; no register is dereferenced. Return1
      * after AT/PAR completed and preserve its raw fault/success PAR either way. */
     int (*translate_mmio)(void *,uint64_t,uint64_t *);
+#if EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE
+    const volatile uint32_t *native_cpu_on;
+#endif
 };
 static struct {uint32_t used,outstanding;uintptr_t result;} pacgq_ticket;
 #if defined(PACGQ_SOFTWARE_PEER_ONLY)
@@ -320,8 +332,13 @@ static inline int pacgq_collect(const struct pacgq_io *io,const struct paic_resu
 #if EFI_XNU_WIFI_RPMH_CLIENT_AVAILABLE
     /* A distinct preparation ticket/context retires before Clock calls or
      * allocations. The final GCD ticket remains unopened and unmodified. */
+#if EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE
+    pwrpt_preboot(&io->memory,i2c,stage,gcd_context,io->native_cpu_on);
+    if(pwrpt_parent_unsafe()){pacgq_fail(r,PACGQ_UNKNOWN,1);return 0;}
+#else
     pwrcl_preboot(&io->memory,i2c,stage,gcd_context);
     if(pwrcl_unsafe()){pacgq_fail(r,PACGQ_UNKNOWN,1);return 0;}
+#endif
 #endif
     if(!io->memory.arch(io->memory.context,&r->before)||!paic_arch_admitted(&r->before)||
        !pacgq_environment(&i2c->after,&r->before)){pacgq_fail(r,PACGQ_ARCH,0);return 0;}
@@ -474,7 +491,11 @@ static struct paic_workspace pacgq_preboot_i2c_work;
 static struct pacgq_result pacgq_preboot_record;
 static struct pacgq_work pacgq_preboot_work;
 #endif
-static inline void pacgq_collect_preboot(struct efi_system *system,uint32_t stage,void *gcd_context)
+static inline void pacgq_collect_preboot(struct efi_system *system,uint32_t stage,void *gcd_context
+#if EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE
+    ,const volatile uint32_t *native_cpu_on
+#endif
+    )
 {
 #if !EFI_XNU_AUDIO_CLOCK_GCD_QUERY_AVAILABLE || defined(POLARIS_EFI_TEST_QEMU)
     (void)system;(void)stage;(void)gcd_context;
@@ -482,7 +503,11 @@ static inline void pacgq_collect_preboot(struct efi_system *system,uint32_t stag
     if(pacgq_preboot_i2c.attempted||pacgq_preboot_record.attempted||pacgq_ticket.used)return;
     const struct paic_io io={system,0,paic_actual_arch,paic_actual_identity,paic_actual_order};
     (void)paic_collect(&io,stage,&pacgq_preboot_i2c,&pacgq_preboot_i2c_work);
-    const struct pacgq_io clock={io,pacgq_actual_query,pacgq_actual_mmio_translation};
+    const struct pacgq_io clock={io,pacgq_actual_query,pacgq_actual_mmio_translation
+#if EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE
+        ,native_cpu_on
+#endif
+    };
     (void)pacgq_collect(&clock,&pacgq_preboot_i2c,stage,&pacgq_preboot_record,&pacgq_preboot_work,(struct pgcd_context*)gcd_context);
 #endif
 }
@@ -513,7 +538,11 @@ static inline void pacgq_report_preboot(void (*ram_append)(const char *))
     pwrph_report_preboot(ram_append);
 #endif
 #if EFI_XNU_WIFI_RPMH_CLIENT_AVAILABLE
+#if EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE
+    pwrpt_report(ram_append);
+#else
     pwrcl_report(ram_append);
+#endif
 #endif
     pacgq_ram_number(ram_append,"AUDIO_I2C_CACHE_ERROR=",pacgq_preboot_i2c.error);
     pacgq_ram_number(ram_append,"AUDIO_I2C_CACHE_RAW_V1_BYTES=",sizeof(pacgq_preboot_i2c));
@@ -543,6 +572,9 @@ static inline int pacgq_prestart_safe(const void *gcd_context)
     (void)gcd_context;return 1;
 #else
     return !pacgq_preboot_record.uncertain&&!pacgq_preboot_record.outstanding&&!pacgq_ticket.outstanding&&
+#if EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE
+        !pwrpt_parent_unsafe()&&
+#endif
         (!gcd_context||!pgcd_uncertain((const struct pgcd_context*)gcd_context));
 #endif
 }

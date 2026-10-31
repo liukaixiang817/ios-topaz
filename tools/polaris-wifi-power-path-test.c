@@ -189,6 +189,16 @@ static int execute(unsigned scenario)
         {0,path_affinity,path_mask,path_restore},{&memory,&path->access_context,path_AT,path_read,path_write},enumeration,(uintptr_t)native_on,path};
     return pwrcl_run_body(&client,enumeration,2,c,early,cr,rw,pwrpt_body,&io);
 }
+static char *parent_report;static size_t parent_report_bytes,parent_report_capacity;
+static void parent_append(const char *s)
+{size_t n=strlen(s);assert(n<=parent_report_capacity-parent_report_bytes);memcpy(parent_report+parent_report_bytes,s,n);parent_report_bytes+=n;}
+static int cached_parent(void)
+{memcpy(&pwrpt_record,path,sizeof(*path));memcpy(&pwrcl_record,cr,sizeof(*cr));return pwrpt_parent_unsafe();}
+static void check_raw_segment(const char *begin,const char *end,const void *raw,size_t bytes)
+{
+    char *s=strstr(parent_report,begin);assert(s);s+=strlen(begin);assert(!strncmp(s+bytes*2,end,strlen(end)));
+    const uint8_t *p=raw;for(size_t k=0;k<bytes;k++)assert(s[k*2]=="0123456789abcdef"[p[k]>>4]&&s[k*2+1]=="0123456789abcdef"[p[k]&15]);
+}
 int main(int argc,char **argv)
 {
     assert(argc==5&&!posix_memalign((void**)&arena,4096,0x800000));
@@ -201,6 +211,13 @@ int main(int argc,char **argv)
     assert(api_queries==6&&psci_calls==14&&mask_calls==1&&unmask_calls==1&&requests==2&&acks==2&&delete_calls==1&&!ticket->spent);
     assert(path->transaction.tcs==2&&path->access.CmdDb[0].complete&&path->access.CmdDb[1].complete);
     assert(votes[0]==8&&votes[1]==2&&votes[2]==1&&!memcmp(hardware,initial,0x30));checks++;
+    assert(!cached_parent());
+    parent_report_capacity=2*(sizeof(pwrpt_record)+sizeof(pwrcl_record))+2048;
+    parent_report=calloc(1,parent_report_capacity+1);assert(parent_report);pwrpt_report(parent_append);
+    check_raw_segment("WIFI_POWER_CLIENT_RAW_V1_BEGIN\r\n","\r\nWIFI_POWER_CLIENT_RAW_V1_END",&pwrcl_record,sizeof(pwrcl_record));
+    check_raw_segment("WIFI_POWER_PATH_RAW_V1_BEGIN\r\n","\r\nWIFI_POWER_PATH_RAW_V1_END",&pwrpt_record,sizeof(pwrpt_record));
+    assert(!strstr(parent_report,"ZERO_VOTE")&&strstr(parent_report,"NO_MSS NO_NV_SERVE NO_RADIO_PERMISSION"));checks++;
+    free(parent_report);
     for(unsigned k=1;k<=13;k++){
         ok=execute(k);
         if(k==5){assert(ok&&path->known_refusal&&path->retired&&path->refusal.retired&&!path->unknown&&!modeled_stores&&!mask_calls&&delete_calls==1);}
@@ -217,8 +234,8 @@ int main(int argc,char **argv)
             if(k==10)assert(path->retired&&delete_calls==1&&cr->outstanding&&!cr->client_returned);
             if(k==12)assert(path->access.error==PWRA_UNKNOWN_STATUS&&(path->access.command_status_OR[0]&0x20000)&&!acks&&!unmask_calls);
             if(k==13)assert(!mask_calls&&!modeled_stores&&!path->refusal.attempted&&path->unknown);
-        }checks++;
+        }assert(cached_parent()==(k!=5));checks++;
     }
-    printf("{\"checks\":%u,\"path_raw_bytes\":%zu,\"access_raw_bytes\":%zu,\"CPU_raw_bytes\":%zu,\"ONE_SOFTWARE_original_API_to_RSC_retirement_path\":true,\"queries\":6,\"PSCI_calls\":14,\"real_firmware_or_MMIO_execution\":false,\"physical_lease_proven\":false,\"parent_registered\":false}\n",checks,sizeof(*path),sizeof(path->access),sizeof(path->CPU));
+    printf("{\"checks\":%u,\"path_raw_bytes\":%zu,\"access_raw_bytes\":%zu,\"CPU_raw_bytes\":%zu,\"ONE_SOFTWARE_original_API_to_RSC_retirement_path\":true,\"queries\":6,\"PSCI_calls\":14,\"real_firmware_or_MMIO_execution\":false,\"physical_lease_proven\":false,\"parent_cached_gate_checked\":true,\"whole_raw_report_bytes\":%zu,\"parent_registered\":false}\n",checks,sizeof(*path),sizeof(path->access),sizeof(path->CPU),parent_report_bytes);
     free(original);free(npa_original);free(rp_original);free(cmd_original);free(arena);return 0;
 }

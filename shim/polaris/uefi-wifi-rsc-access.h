@@ -1,5 +1,5 @@
-/* Checked backend for the SAME power transaction. Default OFF and not hooked
- * into prepare_boot. No caller-supplied permission boolean exists. The local
+/* Checked backend for the SAME power transaction. Default OFF in its new
+ * pre-final-GCD parent scope. No caller-supplied permission boolean exists. The local
  * NS interval is derived from the original known client, complete provider
  * RAM, actual registered Device namespace/geometry and post-mask CPU evidence.
  * It is not an EL3/MPU/VMID grant and cannot start MSS or write SMEM/rails.

@@ -70,7 +70,8 @@ def main():
         while not transport.open_target():
             if time.monotonic()-start>=a.wait_seconds:raise RuntimeError('bound UEFI service not connected')
             time.sleep(.2)
-        p=WledRuntimeProtocol(transport);record['product']=p.product();record['state_before']=p.state();save()
+        capacity=d.get('original_GCD_new_scope_RAM_log_capacity') if d.get('wifi_CPU0_power_transaction') is True else None
+        p=WledRuntimeProtocol(transport,firmware_log_capacity=capacity);record['product']=p.product();record['state_before']=p.state();save()
         if a.action=='state':pass
         elif a.action in ('utc-sync','utc-status'):
             if record['state_before']!='kernel-entered':raise ValueError('calendar metadata requires the actual native running phase')

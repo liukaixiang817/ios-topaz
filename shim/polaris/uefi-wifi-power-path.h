@@ -1,6 +1,6 @@
 /* One integrated private-client body: original CmdDb -> source RAM/Device ->
  * masked CPU admission -> bounded transaction -> exact retirement -> original
- * GCD namespace again. No standalone inventory boot or production parent hook.
+ * GCD namespace again. No standalone inventory boot.
  * The checked backend is internal to this path; a callback return is delivery,
  * never an ownership grant. Every raw component remains resident. */
 #ifndef POLARIS_UEFI_WIFI_POWER_PATH_H
@@ -108,6 +108,34 @@ before_mask:
      * mask never reach original Delete or native/PON/receipt. */
     if(r->unknown||pgcd_uncertain(g)||pwrpc_unsafe(&r->CPU)||r->transaction.writes)return 0;
     return pwrpt_refuse_retired(memory,p,work,r);
+}
+/* New parent uses this whole record, never the old ZERO_VOTE scope label. */
+static struct pwrpt_result pwrpt_record;
+static inline int pwrpt_parent_unsafe(void)
+{return pwrpt_unsafe(&pwrpt_record)||pwrcl_unsafe();}
+static inline void pwrpt_preboot(const struct paic_io *memory,const struct paic_result *enumeration,
+    unsigned stage,struct pgcd_context *final,const volatile uint32_t *native_cpu_on)
+{
+    const struct pwrcl_io client={{*memory,pwrph_actual_locate,pwrph_actual_map},pwrcl_actual_create,pwrcl_actual_drop,pwrcl_name};
+    struct pwrpt_io io={{{*memory,pwrph_actual_locate,pwrph_actual_map},pwcd_actual_query},
+        {memory,0,pwrmd_actual_translate,pwrmd_actual_read},
+        {0,pwrpc_actual_affinity,pwrpc_actual_mask,pwrpc_actual_restore},
+        pwra_physical_io(memory,&pwrpt_record.access_context),enumeration,(uintptr_t)native_cpu_on,&pwrpt_record};
+    (void)pwrcl_run_body(&client,enumeration,stage,final,&pwrcl_early_context,&pwrcl_record,&pwrcl_work,pwrpt_body,&io);
+}
+static inline void pwrpt_raw_hex(void (*append)(const char *),const void *raw,size_t bytes)
+{
+    const uint8_t *p=raw;char chunk[127];
+    for(size_t at=0;at<bytes;){unsigned n=(unsigned)(bytes-at);if(n>63)n=63;
+        for(unsigned k=0;k<n;k++){chunk[k*2]="0123456789abcdef"[p[at+k]>>4];chunk[k*2+1]="0123456789abcdef"[p[at+k]&15];}
+        chunk[n*2]=0;append(chunk);at+=n;}
+}
+static inline void pwrpt_report(void (*append)(const char *))
+{
+    append("WIFI_POWER_CLIENT_RAW_V1_BEGIN\r\n");pwrpt_raw_hex(append,&pwrcl_record,sizeof(pwrcl_record));
+    append("\r\nWIFI_POWER_CLIENT_RAW_V1_END\r\nWIFI_POWER_PATH_RAW_V1_BEGIN\r\n");
+    pwrpt_raw_hex(append,&pwrpt_record,sizeof(pwrpt_record));
+    append("\r\nWIFI_POWER_PATH_RAW_V1_END\r\nWIFI_POWER_SCOPE=PRE_FINAL_GCD_PRIVATE_BOUNDED_ARC_FULL_RETIREMENT NO_MSS NO_NV_SERVE NO_RADIO_PERMISSION\r\n");
 }
 #endif
 #endif

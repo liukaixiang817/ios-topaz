@@ -3,7 +3,7 @@
  * No original service runs after masking. A second typed PSCI OFF round is
  * admitted under the masked FP/context guard BEFORE local_quiescent. Once
  * that interval is published, no SMC runs until exact restoration.
- * Default OFF; not installed in prepare_boot or any host policy yet. */
+ * Default OFF; the new parent scope requires an independent host policy. */
 #ifndef POLARIS_UEFI_WIFI_POWER_CRITICAL_H
 #define POLARIS_UEFI_WIFI_POWER_CRITICAL_H
 #if EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE && !defined(POLARIS_EFI_TEST_QEMU)

@@ -34,6 +34,91 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0150 remains ONLY last actual nativeLIVE19:10; NEW0153 power path PARENT/LINK verified OFFLINE; physical ownership and NEW host admission NOT READY
+
+- New0153 completes the concrete parent/link/log work requested by0152. No
+  USB, actual original firmware/PSCI/AT/MMIO, image sent, native change/CI,
+  root/NV write, MSS/remote NV/radio action occurred. Phone remains ONLY last
+  actual0150/19:10:55Z with its unchanged frozen0150 controller and consumed
+  bootrecord; UTC already ONESET. All hostworkers ENDED, allchildren STOP.
+  No physical action is pending. This is not a fresh LIVE/FASTBOOT sample.
+- uefi-audio-clock-gcd-query.h now selects the existing pwrpt_body in the NEW
+  default-OFF power scope, before any Clock allocations/calls or final GCD
+  ticket. Main supplies literal &wln_cpu_on_issued. Old private-only path is
+  retained. pwrpt_parent_unsafe explicitly gates Clock continuation, cached
+  prestart and new_original_unknown/native/PON/receipt, including a retained
+  client, masked CPU, access/transaction UNKNOWN/outstanding and log overflow.
+  No final ticket is reopened/reset/rebased. No original blocking submission,
+  foreign cleanup or new permission callback was added.
+- Important parent consequence: returning UNKNOWN to the UsbFn transport
+  would execute opaque original firmware services. The NEW scope instead
+  appends full resident evidence to RAM and enters a nonreturning local hold;
+  it cannot send a FAIL/OKAY reply or service later USB captures. The hold
+  records32B before/after DAIF/Group1, locally masks all DAIF and Group1 so an
+  initially unmasked refusal cannot dispatch a foreign IRQ handler, then WFE.
+  No Console/Stall/UsbFn/PON/native/reset/cleanup follows. This is quarantine,
+  not a restoration/exit success. A real occurrence would need physical
+  recovery; do not blindly resend after the resulting unknown host ACK.
+- Both complete raw records are published with NEW WIFI_POWER_CLIENT_RAW_V1
+  and WIFI_POWER_PATH_RAW_V1 labels; no old ZERO_VOTE/noMMIO label is used for
+  the power body. Client227104B+path1235200B produce2924839B including hex/
+  labels/scope. Firmware log is explicitly8MiB with compile-time whole-record
+  capacity assertion; snapshot allocation still uses sizeof(real log buffer)
+  plus4MiB native ring+128B. Overflow is sticky and blocks the NEW scope.
+  NEW explicit host capacity12MiB+128B accepts complete uploads and rejects
+  the next byte before body reads. Default Kernel/WLED6MiB+128 and RO32KiB
+  bounds are unchanged; capacity is not image admission or a new command.
+- Builder default-OFF --wifi-power-transaction-pe binds the already implemented
+  exact original CmdDb ABI/source and compiles all existing caller components.
+  New total-scope metadata replaces old zero-vote/RAM-only flags honestly;
+  it explicitly says hardware ownership unqualified/new admission required/
+  candidate_ready=false. Old literal host policies/manifests/frozen0150 remain
+  unchanged. Actual old-policy admission of NEW driver was tested and refused,
+  without mock or USB. Do NOT strip flags or borrow0150 policy to boot it.
+- Full actual AArch64 physical-body EFI link:
+  0153/wifi/power-driver-ON-0002, fbf4c5b29f3578fe57a507b9b8a54b1831d5daa0d9c
+  10163d05f0fd03718e387/11423232B/80inputs. This is an offline EFI driver, NOT
+  a wrapped original81 whole image, independently frozen candidate or boot.
+  New parent proof0153/wifi/power-parent-verified-0002/proof.json SHA
+  152b4f962379d9a93ed2b38ad13b9d46cc73bbf8bf997bac4a7224e904c77d26:
+  15 affected same-context sanitizer path/report cases, raw byte-for-byte
+  publication and cached parent refusal across every failed stage; actual
+  whole parent main COFF+MachO/allwarnings/maxframe1024 and preprocessing.
+  Normal source/owner/FP/arch/TPL/200ms and post-mask7-PSCI gates unchanged.
+  Software peer tests do not execute the physical parent hold/API/MMIO.
+- Two NEW wholeEFI/XNU terminal models ran SERIAL, each19checks PASS
+  38.856s/39.327s. Full80inputs match; actual preprocessed QEMU main removes
+  every power/NPA/RPMh body and record. Eleven resource/Power literal int1
+  compiledout markers plus the separate battery int1 marker are retained.
+  Proof0153/wifi/power-two-terminal-models-0001-proof.json SHA
+  859d989c2152cb77b67256a4453a9bd7a7c77f585f0921d924e19a3244a16e50.
+  The first model already passed; an evidence-script marker count initially
+  included the existing battery marker and was corrected without rerunning
+  that model. SOFTWARE PMIC/delay/RAM USB is not hardware or guestreset.
+- Five NEW host log tests pass; actual unmocked old-policy rejection proof
+  0153/wifi/host-log-and-old-policy-refusal-proof-0001.json SHA
+  c678c5dca51f175895cef2e14cdb85e30baa6f7e046daf6a319d7bcd75beccf1.
+  No unchanged46client/26CPU/119component cases, old models/nativeCI/optical
+  cycles or scrolling were repeated. Current native/kernel/payload/GPU and
+  fresh0145 root/NV review are preserved.
+- NEXT ONLY Wi-Fi: qualify the same original DRV2/bank2 ACTIVE-TCS lifetime
+  jointly with original source/runtime config, current full cache/queues,
+  actual GCD+NS read/write AT, CPU0/exact masked seven-peer exclusion and
+  no-service interval. Do not turn any individual observation or callback
+  into an EE/EL3/MPU grant. The [pinned upstream binding](https://kernel.googlesource.com/pub/scm/linux/kernel/git/soc/soc/+/add9f6f30e54b5c07e7a0260cda459ef1d9646b7/Documentation/devicetree/bindings/soc/qcom/rpmh-rsc.txt)
+  corroborates DRV2=179e0000/TCS+d00 and distinguishes ACTIVE from firmware
+  SLEEP/WAKE/CONTROL; it does not independently certify our current exclusive
+  hardware lease. Own DT ACTIVE2 differs from original runtime-mode source
+  and must not replace actual original-provider configuration with Linux/Mi8
+  counts. No standalone inventory/client-only boot. After qualification,
+  NEW exact host profile/full original81 image codec/sourceaudit/independent
+  freeze/ONE helper must precede any image. Native CI stays reused.
+  may_vote/MSS/NVserve/scan_join_data=false. Then continue ownMSS/GLINK/RMTFS
+  to actual scan/join/data, then sound, then camera. Next phone transition
+  ONLY frozen0150 full native drain/freshraw WLEXIT05/WLR5 plus independent
+  actualFASTBOOT; unknown/nonresponsive is not a confirmed reset. No old
+  controller/replay/fallback. Do not rerun these passed checks without change.
+
 ### CURRENT0150 remains ONLY last actual nativeLIVE19:10; NEW0152 integrated private power path verified OFFLINE; parent/admission and physical ownership NOT READY
 
 - Source1383abaa1c01820dd8c5d98fe064825ae49bc1c7 contains this milestone.

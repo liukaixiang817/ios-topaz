@@ -107,6 +107,15 @@ rail or secure-memory grant. No Mi8 fixedTCS/top-vote/uncertain cleanup was
 adopted. The86 affected and integrated software cases plus AArch64 objects
 remain offline evidence; parent registration, hardware ownership qualification
 and a new physical candidate are still outstanding.
+
+0153 wires that path into the actual pre-Clock/final-GCD parent and literal
+native CPU_ON flag, with complete raw publication and a nonreturning RAM-only
+quarantine on UNKNOWN. Full physical-body EFI and actual parent COFF/MachO
+compile; two serial terminal models compile the power body OUT. The pinned
+upstream RPMh binding corroborates own DRV2/bank2 address geometry and the
+ACTIVE versus firmware sleep/wake distinction; neither it nor Mi8's runtime
+grants current exclusive ownership. This remains an offline link: the old
+host policy correctly refuses it and no new image has been sent.
 No standalone inventory boot, original blocking submission, borrowed Mi8 TCS
 or unqualified register store was enabled.
 
