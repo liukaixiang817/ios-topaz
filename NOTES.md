@@ -34,6 +34,25 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0140 actualnewkernel82b3 CI SUCCESS; physicaldriver/payload built, TWOcurrentmodels running; PHONE stillFASTBOOT
+
+- UniqueCI41205803135/job124550530596 actualSUCCESS/source41e9a87.
+  Boundedartifact65335 ENDED0: actualprofile+ZIPCRC+SHA256SUMS verified,
+  kernel82b3fef383365efdfbf3c8fd72c4a98cab15589d96dbaf006c5af5cd96ab5802
+  /17306760B in0140/kernel-retained-cache-0001. Actualnativeproofsaved;
+  no duplicateCI/old009c replacementorproprietaryGitfiles.
+- ONE0140 prepare-and-models worker28251 active: physicaldriverbuild0,
+  actual47inputs/firstreadOFF(newbodyfalse/compiledLDR0)/cacheonlytrue.
+  Newpayload b31ca438733318708cbf7af7bc4e2729cfb0a1db4972b88115f492d6c01ad38a
+  /36459552B, unchanged602B/142rootmap/4big1792+512MiBRAMCOW/ufsrw0;
+  onlynewkernel82b3+GPUf790 bundle bytes. Twoactualnewkernels models pending;
+  no package/codec/freeze/phoneactionyet. Fresh0139rooted39/c7d3 required.
+- Host20F66 TARGETS nowbindsactual82b3/source41e9a87/CI41205803135/f790/
+  final0002manifest; old009c rejected.16relatedadmission+GPUtestsPASS;
+  preserved0139markercontracttest usesexplicit historicalfixture ONLY,
+  productionprofile notrelaxed. NewhostACKcf13048 willbefrozenindependently
+  fromnativeSOURCE. GPU/host/helper/actualsource mustbecommittedbeforeboot.
+
 ### 0140 GPU scopedretention trial f790 READY; exactnativepin update needsONE CI; PHONE confirmedFASTBOOT/nootherboot
 
 - NativeGPU source41e9a87f7b18efb3029803a41b18ee1984bf66ed committed/pushed;

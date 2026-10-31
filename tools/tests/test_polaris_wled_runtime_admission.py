@@ -86,7 +86,7 @@ class RuntimeAdmission(unittest.TestCase):
         if t.get('runtime_services') is True:add_runtime_services(args)
         admit(*args,build='20F66');exact_scope(d,'20F66')
         with self.assertRaises(ValueError):admit(*args)
-        for at,key,value in [(0,'kernel_sha256',KERNEL_SHA),(2,'databaseId',41056172330),
+        for at,key,value in [(0,'kernel_sha256',KERNEL_SHA),(0,'kernel_sha256',FIRSTREAD_0139['kernel']),(2,'databaseId',41056172330),
                              (3,'full_image_sha256',ROOT_SHA),(3,'extent_count',182),
                              (4,'build','20H392'),(4,'post_unmount_RO_only',False),
                              (4,'new_file_install_preceded_readonly_review',False),
@@ -125,6 +125,11 @@ class RuntimeAdmission(unittest.TestCase):
 
 
 class RuntimeServicesAdmission(unittest.TestCase):
+    # Exercise the preserved0139 marker contract under its historical native
+    # profile. Production20F66 now binds the separately built0140 kernel.
+    @patch.dict(TARGETS['20F66'],kernel=FIRSTREAD_0139['kernel'],
+        source='face6695a03d9bc940436642428331870b47f5d1',CI=41189769833,
+        GPU='4fe2b903efcdfabddc7b84c16284c4ab4b7c5fc851b090e531b95c57658fc770')
     def test_reviewed_firstread_requires_actual_software_compiled_out_marker(self):
         args=add_runtime_services(fixture());d,models,ci,pre,review=args;t=TARGETS['20F66']
         d.update(kernel_sha256=t['kernel'],payload_sha256=FIRSTREAD_0139['payload'],
