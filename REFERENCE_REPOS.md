@@ -90,6 +90,17 @@ Actual original resource cache/TCS/mode/queue state, RSC geometry and write-map
 identity plus exclusive lifetime and parent retirement gates still precede any
 new physical candidate. No Mi8 fixedTCS1/top-vote/uncertain-cleanup rule was used.
 
+The next0151 caller components preserve the original driver's retired-request
+pool separately from active/pending queues and read its full392B runtime HAL
+table rather than inferring a mapping from static configuration. CPU-local
+PSCI/interrupt exclusion and source/protocol/hash checks are connected to full
+transaction-prefix retirement before interrupt restoration. A separate actual
+GCD+NS read/write translation adapter admits only finite own-register reads;
+it exposes no writer. The119 software cases and AArch64 component objects do
+not prove an exclusive DRV2/EE/EL3 lease, a physical vote or working Wi-Fi.
+No standalone inventory boot, original blocking submission, borrowed Mi8 TCS
+or unqualified register store was enabled.
+
 0110 completed the offline input preparation: the OS, both cryptex images and
 kernelcache whole SHA384 match Apple's BuildManifest. A native macOS UDRO
 conversion followed by bounded raw/ignored-run export produces the documented

@@ -104,7 +104,7 @@ static int run(unsigned f)
 }
 static void restored(void)
 {
-    assert(r.finished&&r.restored&&!r.error&&!r.unknown&&!r.outstanding);
+    assert(r.finished&&r.restored&&!r.error&&!r.unknown&&!r.outstanding&&pwrsc_retired(&r));
     assert(r.completed==2&&triggers==2&&r.triggers==2&&acks==2&&r.acknowledged==2);
     assert(!memcmp(votes,saved,sizeof(votes))&&raised[0]==8&&raised[1]==4&&raised[2]==7);
     assert(r.IRQ_OR==(1u<<r.tcs));
@@ -154,6 +154,23 @@ int main(void)
     assert(!pwrsc_restore_registers(&io,&r)&&r.error==PWRSC_ARGUMENT&&!writes);checks++;
     reset_peer(0);assert(pwrsc_begin(&io,&r,15,saved,desired));r.events=PWRSC_HISTORY+1;
     assert(pwrsc_step(&io,&r)==-1&&r.error==PWRSC_HISTORY_FULL&&!writes);checks++;
+    assert(run(0)==1&&pwrsc_retired(&r));r.writes--;assert(!pwrsc_retired(&r));checks++;
+    assert(run(0)==1&&pwrsc_retired(&r));r.history[r.events-1].returned=0;assert(!pwrsc_retired(&r));checks++;
+    assert(run(0)==1&&pwrsc_retired(&r));
+    for(unsigned k=0;k<r.events;k++)if(r.history[k].operation==1&&r.history[k].address==pwrsc_tcs(&r)+0x3c&&r.history[k].phase==2)r.history[k].value=0;
+    assert(!pwrsc_retired(&r));checks++;
+    assert(run(0)==1&&pwrsc_retired(&r));
+    for(unsigned k=0;k<r.events;k++)if(r.history[k].operation==2&&r.history[k].address==PWRSC_BASE+8){r.history[k].value=0x80;break;}
+    assert(!pwrsc_retired(&r));checks++;
+    assert(run(0)==1&&pwrsc_retired(&r));
+    for(unsigned k=0;k<r.events;k++)if(r.history[k].operation==2&&r.history[k].address==pwrsc_tcs(&r)+0x34){r.history[k+1].value^=1;break;}
+    assert(!pwrsc_retired(&r));checks++;
+    assert(run(0)==1&&pwrsc_retired(&r));
+    for(unsigned k=0;k<r.events;k++)if(r.history[k].operation==1&&r.history[k].address==PWRSC_BASE+4&&r.history[k].phase==2&&r.history[k].value){r.history[k].value=0;break;}
+    assert(!pwrsc_retired(&r));checks++;
+    assert(run(0)==1&&pwrsc_retired(&r));
+    for(unsigned k=0;k<r.events;k++)if(r.history[k].operation==2&&r.history[k].address==pwrsc_tcs(&r)+0x38){r.history[k].operation=1;break;}
+    assert(!pwrsc_retired(&r));checks++;
     printf("{\"checks\":%u,\"raw_bytes\":%zu,\"event_bytes\":%zu,\"SOFTWARE_register_peer\":true,\"physical_lease_established\":false,\"hardware_MMIO_executed\":false,\"radio\":false}\n",checks,sizeof(r),sizeof(struct pwrsc_event));
     return 0;
 }

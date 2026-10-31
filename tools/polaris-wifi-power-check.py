@@ -48,7 +48,7 @@ def main():
                 '-O1', '-g', '-fsanitize=address,undefined', *inc, ROOT/'tools'/source, '-o', binary])
             args = [] if label == 'RSC' else [core, a.original_pe.resolve()]
             peers[label] = json.loads(run(label+'-software-run', [binary, *args]))
-        assert peers['RSC']['checks'] == 36 and peers['CmdDb']['checks'] == 35 and peers['pipeline']['checks'] == 1
+        assert peers['RSC']['checks'] == 43 and peers['CmdDb']['checks'] == 35 and peers['pipeline']['checks'] == 1
         assert peers['RSC']['hardware_MMIO_executed'] is False and peers['pipeline']['physical_lease_established'] is False
         wrapper = out/'freestanding-components.c'
         wrapper.write_text('#include <stdint.h>\nvoid text(const char *);void report(const char *,uint64_t);\n'
@@ -70,7 +70,7 @@ def main():
         'tools/polaris-wifi-cmddb-identity.py', 'tools/polaris-wifi-cmddb-identity.h', 'tools/polaris-uefi-gcd-test.c']
     sha = lambda path: hashlib.sha256(path.read_bytes()).hexdigest()
     proof = dict(passed=True, scope='software actual public-ABI query -> ARC index -> bounded transaction -> saved vote/register restore; no original code or MMIO execution',
-        peers=peers, software_cases=72, checks=results, source_sha256=bound['source_whole_sha256'],
+        peers=peers, software_cases=sum(peer['checks'] for peer in peers.values()), checks=results, source_sha256=bound['source_whole_sha256'],
         sources={name:sha(ROOT/name) for name in names}, RSC_raw_bytes=49464, RSC_event_bytes=48,
         new_RSC_backend_not_original_firmware_patch_or_fallback=True, original_blocking_submit_not_called=True,
         RSC_total_budget_ticks=960000, counter_frequency=19200000, maximum_steps=256, raw_history_capacity=1024,
@@ -82,7 +82,7 @@ def main():
         phone_USB=False, new_native_CI=False, whole_EFI_models_rerun=False,
         may_vote=False, may_start_MSS=False, may_serve_NV_to_remote=False, scan_join_data=False)
     (out/'proof.json').write_text(json.dumps(proof, indent=2)+'\n')
-    print(json.dumps(dict(passed=True, software_cases=72, checks=len(results),
+    print(json.dumps(dict(passed=True, software_cases=proof['software_cases'], checks=len(results),
         proof_sha256=sha(out/'proof.json'), physical_lease=False, phone_USB=False)))
 
 

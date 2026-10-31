@@ -57,7 +57,7 @@ int main(int argc,char **argv)
     const struct pwrsc_io io={0,combined_read,combined_write,combined_clock,order};
     assert(pwrsc_begin(&io,&transaction,5,saved_indices,desired_indices)&&transaction.tcs==2);
     int result=0;for(unsigned i=0;i<12&&!result;i++)result=pwrsc_step(&io,&transaction);
-    assert(result==1&&transaction.restored&&!transaction.unknown&&!transaction.outstanding&&requests==2&&acknowledgements==2);
+    assert(result==1&&transaction.restored&&pwrsc_retired(&transaction)&&!transaction.unknown&&!transaction.outstanding&&requests==2&&acknowledgements==2);
     assert(!memcmp(actual_votes,saved_indices,sizeof(actual_votes)));
     unsigned t=PWRSC_STRIDE*transaction.tcs;
     for(unsigned k=0;k<3;k++)for(unsigned j=0;j<3;j++)assert(hardware[(t+0x30+20*k+4*j)/4]==initial[(t+0x30+20*k+4*j)/4]);

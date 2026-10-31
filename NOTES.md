@@ -34,6 +34,78 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0150 remains ONLY last actual nativeLIVE19:10; NEW0151 source-RAM / CPU-local / RSC-read caller components verified OFFLINE; hardware lease and parent NOT READY
+
+- This turn adds concrete caller components, not a new phone observation or
+  boot candidate. No USB/original firmware execution/physical AT or MMIO, new
+  native CI/image/profile/manifest/freeze, MSS/NVserve/radio action. All host
+  workers ENDED; allchildren remainSTOP. ONLY lastactual0150/19:10:55Z remains
+  authoritative, with the same frozen0150 controller and consumedbootrecord.
+  UTC0150 already ONESET; never SET again. No physical action is pending.
+- shim/polaris/uefi-wifi-rsc-baseline.h re-reads the source-bound original pool,
+  all four foreign-client queue headers, five driver queue headers, complete retired request
+  objects, mode/TCS and bounded128x24B cache/72B perDRV states. Two full captures
+  compare every preserved byte. An absent/invalid/dirty active state is never
+  converted to a saved zero; only an actually observed valid zero is accepted.
+  Original4b24 consumes queue-state+18 as its FREE request pool; its historical
+  ONE object is not pending work. Active/pending/sleep/wake must be empty.
+- The original runtime HAL is a separate392B object at image+d538:8B header
+  plus16x24B logical-DRV entries. Do not substitute the already captured static
+  HAL config or omit its trailing8B. The new read checks source count, unique
+  initialized logicalDRV2/base179c0000/bank2 and runtime8TCS/16cmd geometry.
+  Original6f58/700c derive hardware count/NCPT from179e000c; original7fb0 uses
+  bank2's base+20d04. These runtime HAL/cache/hardware values have NOT yet been
+  physically captured by the new code. Static sourceaudit0151/wifi/power-caller-
+  source-audit-0001/proof.json SHA42f0528c7510b2d058492466805f98c746c1c4ea485a0
+  bab11fab29811f187a3 binds six original opcode spans and existing0150 evidence.
+- shim/polaris/uefi-wifi-power-critical.h implements the CPU-LOCAL interval:
+  seven fresh guarded PSCI AFFINITY_INFO calls, source-bound actual native
+  CPU_ON flag0, exact CPU0EL1/MMU/CPACR/TPL/table/owner context, observed DAIF
+  I/F and Group1 mask/readback and exact restoration. Core/RPMh immutable5hash
+  sets plus original owner/protocol are checked before masking and again BEFORE
+  re-enabling original interrupts. No original API/SMC runs while masked.
+  The original200ms ticket is never reset/rebased. After RSC writes, restore
+  requires complete raw-prefix retirement and equal complete before/after RAM;
+  partial mask/restore/source/context/transaction UNKNOWN retains the mask and
+  blocks cleanup/retry. CPU-local exclusion is NOT a DRV2/EE/EL3/MPU lease.
+- shim/polaris/uefi-wifi-rsc-device.h implements the actual read admission:
+  three original registered GCD getter calls with the unchanged FP/arch/TPL
+  guard, exclusion maps, then fresh actual S1E1R AND S1E1W before each of70
+  finite own-register reads. Both PAR results must identify the same NS Device
+  page, and saved PAR must be restored/readback exactly. S1E1W is a translation,
+  not a store. Only own child-config/IRQ and eight TCS wait/control/status/enable
+  words are readable. Two complete geometry/IRQ/TCS captures must match and
+  active TCS must be idle. No write/ACK/Init/submit callback is exposed; GCD,
+  translation, stability or callback success is not a hardware grant.
+- tools/polaris-wifi-rsc-transaction.h now independently validates full actual
+  append-only prefix before CPU retirement: two correctly staged requests,
+  immediate RW readbacks, NEW IRQ before all three DONE/idle observations,
+  exact own IRQ ACK and zero follow-up, saved reverse votes and final touched
+  RW readbacks. Summary booleans/counters cannot replace that prefix. Original
+  blocking slot78/98 is still never called or patched; IRQenable/type unchanged.
+- Combinedcheck0151/wifi/power-caller-components-0004/proof.json SHA
+  06ef863c838e1e9697b50b246f93a4fc97c8cb06e051f2da037233231dbb750b PASS:
+  43RSC+31RAM+18CPU+26device+1CmdDb-pipeline=119 ASAN/UBSAN cases;14checks,
+  38exact source inputs; real AArch64 COFF/MachO bodies with maxframe1024 and
+  defaultOFF/QEMU-compiledout checks. Complete raw sizes: RAM117392B,
+  CPU5632B/transitions72B, device12256B/events104B/AT64B, RSC49464B/events48B.
+  Software PSCI/IRQ/AT/registers and component objects are NOT hardware, full
+  EFI link, new parent registration, kernel boot or radio evidence. Earlier
+  72/112/114-case proofs are historical inputs, not current source proofs.
+- NEXT ONLY Wi-Fi: integrate the same current CmdDb/ARC inputs, these RAM and
+  device stages, a genuinely qualified exclusive CPU0/DRV2 physical lifetime,
+  actual bounded store/completion/stoprestore path and mandatory parent
+  UNKNOWN/native/PON/receipt gate in a NEW private phase BEFORE finalClock/GCD.
+  The new read adapter deliberately cannot be relabeled a writer or lease;
+  do not insert a boolean grant, original RET lock, PSCI instantOFF or original
+  blocking submit as a substitute. No standalone inventory/client-only boot.
+  No candidate/profile/image until that physical lifecycle is complete. Then
+  ownMSS AOP/clock/reset/RMB/auth, independent MSA/RMTFS/SFPB/SMEM toward real
+  scan/join/data. may_vote/MSS/NVserve/scan_join_data=false; audio/camera STOP.
+  Fresh0145 roots/NV remain authoritative. Next image only via frozen0150 full
+  native drain/freshraw WLEXIT05/WLR5 plus independent actualFASTBOOT. Do not
+  repeat these119cases, old models/CI/optical tests without affected changes.
+
 ### CURRENT0150 remains last actual nativeLIVE19:10; NEW0151 bounded ARC transaction core integrated with CmdDb in SOFTWARE; physical lease/parent NOT READY
 
 - Source553477a4be0b6d8221d96b6250bc20a4955db4e5 adds the concrete finite RSC

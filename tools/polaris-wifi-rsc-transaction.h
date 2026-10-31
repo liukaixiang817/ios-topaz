@@ -235,4 +235,93 @@ static inline int pwrsc_step(const struct pwrsc_io *io,struct pwrsc_transaction 
     }
     pwrsc_fail(r,PWRSC_ARGUMENT);return -1;
 }
+/* Retirement is checked from the full append-only prefix, not a callback's
+ * success boolean or the summary counters. Required before IRQ re-enable. */
+static inline int pwrsc_retired(const struct pwrsc_transaction *r)
+{
+    if(!r||!r->attempted||r->error||r->unknown||r->outstanding||!r->finished||!r->restored||r->phase!=5||
+       r->tcs>=8||!(r->active_mask&(1u<<r->tcs))||r->frequency!=19200000||r->last<r->started||
+       r->last-r->started>PWRSC_DEADLINE||!r->events||r->events>PWRSC_HISTORY||!r->steps||r->steps>256||
+       r->triggers!=2||r->completed!=2||r->acknowledged!=2)return 0;
+    if(r->saved.enable||!(r->saved.status&1)||(r->saved.control&PWRSC_TRIGGER))return 0;
+    static const uint32_t canonical[3]={0x30000,0x30010,0x30060};
+    for(unsigned k=0;k<3;k++)if(r->address[k]!=canonical[k]||r->saved_vote[k]>15||r->raised_vote[k]>15||r->raised_vote[k]<r->saved_vote[k])return 0;
+    uint64_t t=pwrsc_tcs(r),last_time=r->started;
+    uint32_t count_write=0,count_trigger=0,count_ack=0,pending=0,new_irq=0,done=0,idle=0,last_irq=UINT32_MAX;
+    uint32_t control=UINT32_MAX,enabled=UINT32_MAX,wait=UINT32_MAX,IRQ_enable=UINT32_MAX;
+    uint32_t seen_values=0,seen_control=0,seen_enabled=0,seen_wait=0,prepared=0,last_phase=0;
+    uint32_t values[3][3]={{0}};
+    for(unsigned i=0;i<r->events;i++){
+        const struct pwrsc_event *e=&r->history[i];
+        if(e->issued!=1||e->returned!=1||e->unknown||(e->operation!=1&&e->operation!=2)||
+           e->before<last_time||e->after<e->before||e->after>r->last||e->phase>4||e->phase<last_phase||
+           e->address<PWRSC_BASE||e->address>=PWRSC_BASE+0x3000||(e->address&3))return 0;
+        last_time=e->after;last_phase=e->phase;
+        if(e->operation==2){
+            count_write++;if(e->address==PWRSC_BASE||!e->phase)return 0;
+            unsigned allowed=e->address==PWRSC_BASE+8;
+            if(e->address==t+0x14){
+                allowed=1;seen_control=0;
+                if(e->value!=r->saved.control&&e->value!=(r->saved.control|PWRSC_AMC)&&e->value!=(r->saved.control|PWRSC_AMC|PWRSC_TRIGGER))return 0;
+                if((e->phase==2||e->phase==4)&&(!pending||!new_irq||done!=7||!idle))return 0;
+            }
+            if(e->address==t+0x10){allowed=1;seen_wait=0;if(e->value!=r->saved.wait&&e->value!=(r->saved.wait|7u))return 0;}
+            if(e->address==t+0x1c){
+                allowed=1;seen_enabled=0;if(e->value!=0&&e->value!=7)return 0;
+                if(!e->value&&(!pending||!new_irq||done!=7||!idle))return 0;
+            }
+            static const uint32_t address[3]={0x30000,0x30010,0x30060};
+            for(unsigned k=0;k<3;k++)for(unsigned j=0;j<3;j++)if(e->address==t+0x30+20*k+4*j){
+                allowed=1;seen_values&=~(1u<<(3*k+j));
+                if(count_ack==2){if(e->value!=r->saved.command[k][j])return 0;}
+                else{
+                    if(e->phase!=1&&e->phase!=3)return 0;
+                    unsigned resource=e->phase==3?2-k:k;
+                    uint32_t want=j==0?PWRSC_MESSAGE:(j==1?address[resource]:(e->phase==3?r->saved_vote[resource]:r->raised_vote[resource]));
+                    if(e->value!=want)return 0;
+                    prepared|=1u<<(3*k+j);
+                }
+            }
+            if(!allowed)return 0;
+            if(e->address==t+0x14&&(e->value&PWRSC_TRIGGER)){
+                if(pending||last_irq||count_trigger>=2||count_ack!=count_trigger||e->phase!=(count_trigger?3u:1u)||
+                   prepared!=0x1ff||control!=(r->saved.control|PWRSC_AMC)||enabled!=7||wait!=(r->saved.wait|7u)||
+                   IRQ_enable!=r->IRQ_enable||!(IRQ_enable&(1u<<r->tcs))||
+                   e->value!=(r->saved.control|PWRSC_AMC|PWRSC_TRIGGER))return 0;
+                count_trigger++;pending=1;new_irq=done=idle=prepared=0;
+            }
+            if(e->address==PWRSC_BASE+8){
+                if(!pending||!new_irq||done!=7||!idle||last_irq!=(1u<<r->tcs)||e->value!=(1u<<r->tcs)||
+                   e->phase!=(count_ack?4u:2u)||i+1==r->events)return 0;
+                const struct pwrsc_event *q=&r->history[i+1];
+                if(q->operation!=1||q->address!=PWRSC_BASE+4||q->value)return 0;
+                pending=0;count_ack++;
+            }else if(!(e->address==t+0x14&&(e->value&PWRSC_TRIGGER))){
+                if(i+1==r->events)return 0;const struct pwrsc_event *q=&r->history[i+1];
+                if(q->operation!=1||q->address!=e->address||q->value!=e->value)return 0;
+            }
+        }else{
+            if(e->address==PWRSC_BASE)IRQ_enable=e->value;
+            if(e->address==PWRSC_BASE+4){
+                last_irq=e->value;
+                if(pending&&e->value){if(e->value!=(1u<<r->tcs))return 0;new_irq=1;}
+            }
+            if(e->address==t+0x14){control=e->value;seen_control=1;}
+            if(e->address==t+0x1c){enabled=e->value;seen_enabled=1;}
+            if(e->address==t+0x10){wait=e->value;seen_wait=1;}
+            if(pending&&new_irq&&e->address==t+0x18&&(e->value&1))idle=1;
+            for(unsigned k=0;k<3;k++){
+                if(pending&&new_irq&&e->address==t+0x3c+20*k&&(e->value&PWRSC_DONE)==PWRSC_DONE)done|=1u<<k;
+                for(unsigned j=0;j<3;j++)if(e->address==t+0x30+20*k+4*j){values[k][j]=e->value;seen_values|=1u<<(3*k+j);}
+            }
+        }
+    }
+    if(pending||count_trigger!=2||count_ack!=2||count_write!=r->writes||last_irq||IRQ_enable!=r->IRQ_enable||
+       seen_values!=0x1ff||!seen_control||!seen_wait||!seen_enabled||
+       control!=r->saved.control||enabled||wait!=r->saved.wait||r->observed.control!=control||
+       r->observed.enable!=enabled||r->observed.wait!=wait||!(r->observed.status&1))return 0;
+    for(unsigned k=0;k<3;k++)for(unsigned j=0;j<3;j++)
+        if(values[k][j]!=r->saved.command[k][j]||r->observed.command[k][j]!=values[k][j])return 0;
+    return 1;
+}
 #endif
