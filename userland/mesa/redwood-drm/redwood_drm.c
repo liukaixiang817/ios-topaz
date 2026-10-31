@@ -16,14 +16,71 @@
 
 #include "xf86drm.h"
 
+/* Compile-time default OFF. A trial build additionally needs exact runtime
+ * intent and a normal task-owned Polaris connection. No reference shortcut
+ * that answers for every arbitrary handle is used. */
+#ifndef POLARIS_DRM_RETAIN_CACHE_TRIAL
+#define POLARIS_DRM_RETAIN_CACHE_TRIAL 0
+#endif
+#if POLARIS_DRM_RETAIN_CACHE_TRIAL
+#include <pthread.h>
+#include <stdatomic.h>
+#include "polaris-retained-cache.h"
+#endif
+
 #ifndef REDWOOD_GPU_SERVICE
 #define REDWOOD_GPU_SERVICE     "RedwoodGPU"
 #endif
 #define REDWOOD_GPU_SURFACE     0x7e            /* the request that is not Linux's */
 #define REDWOOD_GPU_DESCRIBE    0xffffffffu     /* ... asked only what the buffer would be like */
 
+#if POLARIS_DRM_RETAIN_CACHE_TRIAL
+static _Atomic(io_connect_t) connection;
+static _Atomic(int) connection_fd = -1;
+#else
 static io_connect_t connection;
 static int connection_fd = -1;
+#endif
+
+#if POLARIS_DRM_RETAIN_CACHE_TRIAL
+static struct pdrc_state retained_cache;
+static pthread_mutex_t retained_mutex=PTHREAD_MUTEX_INITIALIZER;
+static pthread_once_t retained_once=PTHREAD_ONCE_INIT;
+static int retained_fork_ready;
+static void retained_fork_prepare(void){pthread_mutex_lock(&retained_mutex);}
+static void retained_fork_parent(void){pthread_mutex_unlock(&retained_mutex);}
+static void retained_fork_child(void)
+{
+    pdrc_failed(&retained_cache);
+    retained_cache.inflight=0;
+    pthread_mutex_unlock(&retained_mutex);
+}
+static void retained_register_fork(void)
+{retained_fork_ready=pthread_atfork(retained_fork_prepare,retained_fork_parent,retained_fork_child)==0;}
+static void retained_connect(int inherited)
+{
+    pthread_once(&retained_once,retained_register_fork);
+    const char *intent=getenv("POLARIS_DRM_RETAIN_CACHE");
+    bool eligible=retained_fork_ready&&!inherited&&connection_fd>=0&&
+        !strcmp(REDWOOD_GPU_SERVICE,"PolarisGPU")&&intent&&!strcmp(intent,"1");
+    pthread_mutex_lock(&retained_mutex);
+    pdrc_connect(&retained_cache,(uint64_t)getpid(),connection,eligible);
+    pthread_mutex_unlock(&retained_mutex);
+}
+static void retained_external_begin(io_connect_t port,struct pdrc_ticket *ticket)
+{
+    pthread_mutex_lock(&retained_mutex);
+    (void)pdrc_before(&retained_cache,(uint64_t)getpid(),port,UINT32_MAX,NULL,0,ticket);
+    pthread_mutex_unlock(&retained_mutex);
+}
+static void retained_external_end(io_connect_t port,kern_return_t result,const struct pdrc_ticket *ticket)
+{
+    pthread_mutex_lock(&retained_mutex);
+    if(port!=connection)port=0; /* A completion from an old connection cannot bless a new one. */
+    pdrc_after(&retained_cache,(uint64_t)getpid(),port,UINT32_MAX,NULL,0,result,0,ticket);
+    pthread_mutex_unlock(&retained_mutex);
+}
+#endif
 
 int
 drmOpenWithType(const char *name, const char *busid, int type)
@@ -48,18 +105,32 @@ drmOpenWithType(const char *name, const char *busid, int type)
 		if (!port || port > UINT32_MAX || !end || *end) return -1;
 		connection = (io_connect_t)port;
 		connection_fd = open("/dev/null", O_RDWR);
+#if POLARIS_DRM_RETAIN_CACHE_TRIAL
+        retained_connect(1);
+#endif
 		return connection_fd < 0 ? -1 : dup(connection_fd);
 	}
 	service = IOServiceGetMatchingService(0, IOServiceMatching(REDWOOD_GPU_SERVICE));
 	if (service == 0) {
 		return -1;
 	}
+#if POLARIS_DRM_RETAIN_CACHE_TRIAL
+    io_connect_t opened_connection=0;
+    if (IOServiceOpen(service, mach_task_self(), 0, &opened_connection) != 0) {
+#else
 	if (IOServiceOpen(service, mach_task_self(), 0, &connection) != 0) {
+#endif
 		IOObjectRelease(service);
 		return -1;
 	}
+#if POLARIS_DRM_RETAIN_CACHE_TRIAL
+    connection=opened_connection;
+#endif
 	IOObjectRelease(service);
 	connection_fd = open("/dev/null", O_RDWR);
+#if POLARIS_DRM_RETAIN_CACHE_TRIAL
+    retained_connect(0);
+#endif
 	return dup(connection_fd);
 }
 
@@ -67,7 +138,26 @@ static int
 call(unsigned number, void *data, size_t size)
 {
 	size_t returned = size;
+#if POLARIS_DRM_RETAIN_CACHE_TRIAL
+    io_connect_t call_connection=connection;
+    struct pdrc_ticket ticket;
+    pthread_mutex_lock(&retained_mutex);
+    if(pdrc_before(&retained_cache,(uint64_t)getpid(),call_connection,number,data,size,&ticket)) {
+        pthread_mutex_unlock(&retained_mutex);return 0;
+    }
+    pthread_mutex_unlock(&retained_mutex);
+    /* Never hold the cache mutex across IOKit. In particular a WAIT may need
+     * another thread's SUBMIT to complete. Inflight + generation bind any
+     * candidate retained answer after the original native request returns. */
+    kern_return_t result = IOConnectCallStructMethod(call_connection, number, data, size, data, &returned);
+#else
 	kern_return_t result = IOConnectCallStructMethod(connection, number, data, size, data, &returned);
+#endif
+#if POLARIS_DRM_RETAIN_CACHE_TRIAL
+    pthread_mutex_lock(&retained_mutex);
+    pdrc_after(&retained_cache,(uint64_t)getpid(),connection,number,data,size,result,returned,&ticket);
+    pthread_mutex_unlock(&retained_mutex);
+#endif
 
 	switch (result) {
 	case 0:
@@ -171,7 +261,14 @@ redwood_drm_map(int fd, uint32_t handle, uint64_t size)
 	 * the program and the memory the GPU sees. So does the kernel's driver here: the memory is
 	 * made that way, and this mapping is as the memory is.
 	 */
+#if POLARIS_DRM_RETAIN_CACHE_TRIAL
+    io_connect_t port=connection;struct pdrc_ticket ticket;retained_external_begin(port,&ticket);
+    kern_return_t result=IOConnectMapMemory64(port,handle,mach_task_self(),&address,&mapped,kIOMapAnywhere);
+    retained_external_end(port,result,&ticket);
+    if(result!=0) {
+#else
 	if (IOConnectMapMemory64(connection, handle, mach_task_self(), &address, &mapped, kIOMapAnywhere) != 0) {
+#endif
 		return (void *)-1;              /* mmap()'s MAP_FAILED */
 	}
 	return (void *)(uintptr_t)address;
@@ -181,7 +278,13 @@ void
 redwood_drm_unmap(int fd, uint32_t handle, void *address)
 {
 	(void)fd;
+#if POLARIS_DRM_RETAIN_CACHE_TRIAL
+    io_connect_t port=connection;struct pdrc_ticket ticket;retained_external_begin(port,&ticket);
+    kern_return_t result=IOConnectUnmapMemory64(port,handle,mach_task_self(),(mach_vm_address_t)(uintptr_t)address);
+    retained_external_end(port,result,&ticket);
+#else
 	IOConnectUnmapMemory64(connection, handle, mach_task_self(), (mach_vm_address_t)(uintptr_t)address);
+#endif
 }
 
 int

@@ -34,6 +34,49 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0139 WiFi NEWcandidate b7f51d READY/COPY407, NO boot; GPU narrower retained-query trial source+signedMesa READY; phoneUSB pending
+
+- NewWiFiimage b7f51d53734ad558458213e5b04dce02009792cbe895b03ee0e17a3081d0c855
+  /5959680B packaged52538 ENDED0; wholeoriginalEDK2codec39334 ENDED0,
+  28281544B exactdecode/all81originalinnerFW preserved. Host9865442 pushed;
+  firmware828389d/nativeface669/CI41189769833/009c/GPU4fe2/exactwholepayload
+  f7d50f84 unchanged. NoactualSMEMread/newimageonthephone orscan/joinclaim.
+- New0139/boot-wifi-firstread-runtime-once.py defaultofflinefreezePASS,
+  SHA4ffeb6fa58f11b32b85375dcf928eeadfc80155c5de54817e26e4fe2bf14d03c.
+  Delta1def40850d8ca19f3fb3357fc6eb7985752242e953d06da5527acab9dc144dd5,
+  actual48/60currentHEAD/263protectedcommitted/24exacthistoricalwhitelist;
+  29negativechecks+independentsecondreviewPASS. Wholef7d/6signed4fe2/private
+  wallpaper/Melbourne/root/rawSOFTWAREmarkers/fullcodec/ONEattempt/product
+  gates retained. Historicalsource exception is ONLYoldbuilt4fe2/009c,
+  neveractual48/activehostchecker/privateApple orarbitraryfallback.
+- ParentCOPY59958 ENDED0: /private/tmp/polaris-runtime-0139-frozen-0001,
+  407independentfiles/allhashes/nohardlink/23explicitcommittedhistorical
+  blobs,0currentmismatches. Future0139controllerONLYafterthatimageboots;
+  currentphone remainslastknown0138 andmustusefrozen0138 controller.
+  Newcasephone-wifi-firstread-0001 hasNOboot.json. Source/phoneUSBreplug
+  questionstillpending; noadditionalUSBafter10:03timeouts. No blindreboot.
+- GPU4source trialcompleted: defaultOFF compilemacro0; ON additionallyexact
+  env1/task-ownedPolarisconnection, actualnativeWILLNEEDretained1fact only.
+  Generation+epoch+inflight invalidateNEW/CLOSE/import/DONTNEED/unknownboth
+  BEFORE/AFTER nativecompletion; errorssticky/forkchilddisabled/cap256native
+  fallback. NOmutexacrossANYIOKit/WAIT/SUBMIT.28realshimASAN/UBSAN cases
+  includingWAIT-needs-otherthreadSUBMIT/CLOSE-race/reconnect/fork PASS;
+  actualSDK16.5 OFFpreprocessor+O2object+originalO3archiveobjectbyteidentical.
+  Finaltestproof407d4c70c6dcdb786d4ed3eed3a86ba3c0bce017f6937d80ec2175fb99084e2f.
+- PrivatewholeMesa ON linked/strictsigned d283234ba4bbe7294b533f101a9ac0d9306aac7930b33396c214b4f413f4a7bc
+  /14841296B; only1of14privateDRMarchiveobjects changed,29originallinkinputs
+  wholeSHAunchanged, exports/dependenciesmatchcurrente1b9. Old4fe2untouched.
+  NotincurrentphoneorWiFiimage, noactualspeedupclaim. NEXTGPUtrialneeds
+  scopedbbd-onlywrapperactivation(newdefaultOFFmacro), newMesa+wrapper TWO
+  signedfiles (otherFOURsame), newbundle/exactnativepin/ONEnecessaryCI and
+  controlledA/B/runtimehitcounts. Do notremove4.94mshandoff/2.2mscachework,
+  assume60Hz, blindlysysmem/damage/scale orweakenfences/thermal/WLED.
+- Cameraobserver/sourcecommitted828389d, actualsensor/CCI/ISP/frame still
+  missingownmodulebytes; audiooriginal475Bcal recovered, noactualPCM/ADSP
+  transport. Bothdetailed0139HANDOFFs remainnextinput ratherthanfakeworking
+  devices. Allsource/model/build workersENDED; existinguefi-ios automation
+  retainedforremaininggoals, no duplicateorcompletiondeletion.
+
 ### 0139 WiFi source828389d PUSHED; exactreviewed48input profile +2terminalmodels PASS; newpackage NEXT, PHONE connectionpending
 
 - WiFi/cameraobserver source828389d committed/pushed; noextra nativeCI.
