@@ -34,7 +34,50 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0154 last actual state22:30; NEW0155 exact CmdDb trial READY / independent frozen0001; normal drain next
+### CURRENT0155 startup ACK UNKNOWN / UEFI state unavailable / FASTBOOT query timeout22:40; physical recovery requested ONCE
+
+- ONE0155 image48869 ENDED0 sent22:37:08.183964Z/source6a208b66b9b4ea65b0a98
+  a7d5d2f954633e66244/image275fe19a/6012928B. Actual newUEFI waiting-payload
+ 22:37:19Z was confirmed. ONE exact63cb payload26044 ENDED1: transfer32.95669s,
+  bootcall90.48987s ended response-transfer timeout(-7), no boot ACK. Shared
+  ORIGINALrepo0155/phone-power-runtime-0001/boot.json is CONSUMED, never replay.
+  Do NOT call the phone nativeLIVE, FASTBOOT or successful power/boot/Wi-Fi.
+- AFTER26044 ENDED, sole new frozen0155 state70383 ENDED1: actual bound UEFI
+  could not connect over8seconds. Independent expected-product36864 ENDED0
+  at22:40:24Z timed out8seconds. These observations do not isolate kernel
+  panic, parent quarantine, USB loss or any other root cause. No new raw path/
+  client export exists, so exact CmdDb predicate, CPU_ON, WLED/RSC writes and
+  execution progress are UNKNOWN, not zero. Do not claim the85fe fix has
+  physically passed or that quarantine was observed. Offline tests are separate.
+- One human power+volume-down FASTBOOT request is now pending; do not repeat
+  it or send old boot/recover/reset/rawfallback. AllUSB/host/modelworkers ENDED.
+  ONLY current frozen controller=/private/tmp/polaris-runtime-0155-frozen-0001/
+  tools/polaris-uefi-wled-runtime.py with its driver0001/image0001 and original
+  repo consumedbootrecord; old0154 cannot control this session. State was tried
+  once after unknown ACK, not blindly retried. No new UTC SET was attempted.
+- Physical attempted-start evidence0155/physical-start-ACK-unknown-and-no-safe-
+  remote-exit-proof-0001.json preserves every actual file/digest. It proves
+  faithful UNKNOWN handling, NOT successful power, zero writes or a root cause.
+  The actual parent has a nonreturning unknown hold by design, but this boot
+  has no exported record proving that path. No safe remote exit is established.
+- PRIOR0154 really DID close normally:34696 ENDED0 at22:36:33.858529Z,
+  nativecookie10484233987/seq1mode2phase3error0/epochs0/caps80000003. Full
+  appendprefix/WLEXIT05/WLR5 independently redecoded32records, noWLEDerror;
+  independent exactPolarisFASTBOOT22:36:47.104867Z. Reviewea5f6985 binds the
+  newimage. This old successful exit does not prove the later0155 state.
+- NEXT ONLY Wi-Fi: preserve consumed0155 and its frozen image; actual correct
+  FASTBOOT appearing needs no repeated permission, but NO replay or new boot
+  until a separately reviewed NEW candidate addresses/localizes this new
+  unknown failure. Need actual evidence before naming a cause; avoid broad
+  policy changes, guessed zero votes or arbitrary MMIO/API calls. After physical
+  recovery this uncontrolled interval requires a fresh strictRO full roots/
+  maps/GPT/ESP/journal+currentNV review merged with the next already-needed
+  transition, not an immediate standalone recovery just for old inventories.
+  Latest completed root review remains0154 95d932fc/5831fa6a, not authority to
+  skip a new audit after uncontrolled recovery. No nativeCI. Wi-Fi has never
+  completed actual scan/join/data; sound/camera STOP, allchildren STOP.
+
+### HISTORY0155 exact CmdDb trial READY / independent frozen0001; normal drain next
 
 - FW84ef767ca0212b0ffdba8bb1411a093c3b313333/HOSTb6d594d committed and
   pushed. New image275fe19a1117e41bec32cd5668183e41345d2503162dca18b5df61e89fc3b1a9/
