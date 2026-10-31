@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <string.h>
+#include "polaris-graphics-abi.h"
 
 #define PCC_ENV "POLARIS_CA_CLOCK_TRIAL"
 #define PCC_FORCE "CA_FORCE_TIMER"
@@ -53,13 +54,8 @@ static inline int pcc_environment(const char *args,size_t capacity,int admitted,
     return request;
 }
 
-/* Actual20H392 QuartzCore constants, independently audited against its UUID
- * and code. Only read the resulting cache addresses; never call/patch them. */
-#define PCC_TEXT_BASE UINT64_C(0x188284000)
-#define PCC_BLOCK UINT64_C(0x18836d0e4)
-#define PCC_STRING UINT64_C(0x188597fb4)
-#define PCC_STATE UINT64_C(0x1e1df65d8)
-#define PCC_ONCE UINT64_C(0x1e1df6dd0)
+/* Exact build targets are selected at compile time, including UUID/code.
+ * Only read the resulting cache addresses; never call/patch them. */
 static inline int pcc_span(uint64_t address,uint64_t bytes,uint64_t start,uint64_t size)
 {return bytes && address>=start && size>=bytes && address-start<=size-bytes;}
 /* Parse only a bounded, caller-provided Mach-O header/commands snapshot. */
@@ -71,7 +67,7 @@ static inline int pcc_layout(const void *data,size_t bytes)
     memcpy(&count,p+16,4);memcpy(&size,p+20,4);
     if(magic!=0xfeedfacf || cpu!=0x100000c || type!=6 || !count || count>256 || size>65536 || size>bytes-32)return 0;
     unsigned uuid=0,text=0,string=0,state=0,once=0;size_t at=32;
-    static const uint8_t expected[16]={0x9e,0x40,0xb2,0xeb,0x26,0x0c,0x3a,0xf1,0xae,0x45,0xa1,0xa5,0x51,0xa8,0xc1,0xb9};
+    static const uint8_t expected[16]=PCC_UUID_BYTES;
     for(uint32_t i=0;i<count;i++) {
         uint32_t cmd,n;if(at>32+size || 32+size-at<8)return 0;
         memcpy(&cmd,p+at,4);memcpy(&n,p+at+4,4);

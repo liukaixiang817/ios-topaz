@@ -11,6 +11,30 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class GPUBundleTests(unittest.TestCase):
+    def test_exact_build_and_digest_admission(self):
+        with tempfile.TemporaryDirectory() as directory:
+            p = Path(directory)
+            (p / 'build.c').write_text('''#include "polaris-gpu-bundle.h"
+int check(const void *v,size_t n,const void *h){return pgpu_build_matches(v,n,h);}
+''')
+            subprocess.run(['/usr/bin/clang', '-std=c11', '-Wall', '-Wextra', '-Werror',
+                            '-dynamiclib', '-I', str(ROOT / 'tools'), str(p / 'build.c'),
+                            '-o', str(p / 'build.dylib')], check=True)
+            lib = ctypes.CDLL(str(p / 'build.dylib'))
+            lib.check.argtypes = [ctypes.c_void_p, ctypes.c_size_t, ctypes.c_void_p]
+            digest = bytes.fromhex('fa61509603478bbe942cf113626275639267b2c3dd4f3b240fb0acae1c6bc5f9')
+            self.assertEqual(lib.check(b'20H392\0', 7, bytes(32)), 1)
+            self.assertEqual(lib.check(b'20F66\0', 6, digest), 1)
+            for version in (b'20H392X', b'20F66X', b'20F65\0', b'20F66\0extra'):
+                self.assertEqual(lib.check(version, len(version), digest), 0)
+            for length in (0, 1, 5, 7, 8):
+                self.assertEqual(lib.check(b'20F66\0xx', length, digest), 0)
+            for i in range(32):
+                broken = bytearray(digest); broken[i] ^= 1
+                self.assertEqual(lib.check(b'20F66\0', 6, bytes(broken)), 0)
+            self.assertEqual(lib.check(None, 6, digest), 0)
+            self.assertEqual(lib.check(b'20F66\0', 6, None), 0)
+
     def test_all_hashes_before_outputs_and_malformed_ranges(self):
         with tempfile.TemporaryDirectory() as directory:
             p = Path(directory)

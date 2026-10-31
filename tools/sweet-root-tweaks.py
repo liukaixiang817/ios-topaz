@@ -29,7 +29,6 @@ screen (image versions v8-v14 in NOTES.md):
 """
 import glob, os, plistlib, shutil, sys
 
-BUILD, VERSION = '20H392', '16.7.16'
 MOBILE = 501
 
 
@@ -90,7 +89,7 @@ def find_container(root, kind, identifier):
     return None
 
 
-def activation(root):
+def activation(root, build, version):
     c = find_container(root, 'Data/System', 'com.apple.mobileactivationd')
     if c is None:
         print('warning: no mobileactivationd system container in the image; skipped data ark')
@@ -101,7 +100,7 @@ def activation(root):
     os.chmod(d, 0o755)
     save(os.path.join(d, 'data_ark.plist'), {
         '-ActivationState': 'Activated', '-BrickState': False,
-        '-BuildVersion': BUILD, '-ProductVersion': VERSION,
+        '-BuildVersion': build, '-ProductVersion': version,
         '-DataMigrationCompleted': True, '-PreSydroDataMigrationCompleted': True,
     }, MOBILE, MOBILE, 0o600)
     print('data ark', d)
@@ -126,13 +125,17 @@ def main():
     if len(sys.argv) != 2 or not os.path.isdir(os.path.join(sys.argv[1], 'System/Library/xpc')):
         sys.exit(__doc__)
     root = sys.argv[1]
+    version = load(os.path.join(root, 'System/Library/CoreServices/SystemVersion.plist'))
+    build, product = version.get('ProductBuildVersion'), version.get('ProductVersion')
+    if (build, product) not in (('20H392', '16.7.16'), ('20F66', '16.5')):
+        sys.exit('unsupported root build/version; no changes made')
     launchd(root)
     containers(root)
-    activation(root)
+    activation(root, build, product)
     audio(root)
     merge_pref(root, 'com.apple.migration', {
-        'LastSystemVersion': BUILD,
-        'DMUserDataDisposition': {'SyntheticDidUpgrade': False, 'buildVersion': BUILD}})
+        'LastSystemVersion': build,
+        'DMUserDataDisposition': {'SyntheticDidUpgrade': False, 'buildVersion': build}})
     merge_pref(root, 'com.apple.springboard', {
         'BKNoWatchdogs': True,
         'FBLaunchWatchdogExceptions': {'com.apple.purplebuddy': 100.0},

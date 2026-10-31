@@ -147,7 +147,10 @@ def command_line_bytes(cmdline):
     return encoded
 
 
-def build(kernel_path, adt_path, cmdline, ramdisk_path=None, *, gpu_bundle_path=None):
+def build(kernel_path, adt_path, cmdline, ramdisk_path=None, *, gpu_bundle_path=None,
+          gpu_build='20H392'):
+    if gpu_build not in ('20H392', '20F66') or (gpu_build != '20H392' and not gpu_bundle_path):
+        raise ValueError('known graphics build and matching bundle required')
     cl = command_line_bytes(cmdline)  # Validate before any file I/O; never truncate flags.
     buf = bytearray(open(kernel_path, 'rb').read())
     m = parse_macho(buf)
@@ -180,9 +183,11 @@ def build(kernel_path, adt_path, cmdline, ramdisk_path=None, *, gpu_bundle_path=
         assert b'xiaomi,polaris' in root.prop('compatible').split(b'\0')
         assert not any(c.name == 'polaris-gpu-userland' for c in root.children)
         import hashlib
+        if gpu_build == '20F66' and hashlib.sha256(image).hexdigest() != 'fa61509603478bbe942cf113626275639267b2c3dd4f3b240fb0acae1c6bc5f9':
+            raise ValueError('20F66 requires the exact actual-ABI-verified preserved graphics bundle')
         node = adt.Node()
         node.props = [('name', 0, b'polaris-gpu-userland\0'),
-                      ('ios-build', 0, b'20H392\0'),
+                      ('ios-build', 0, gpu_build.encode() + b'\0'),
                       ('reg', 0, struct.pack('<QQ', rd_pa, len(image))),
                       ('sha256', 0, hashlib.sha256(image).digest())]
         root.children.append(node)
@@ -217,7 +222,7 @@ def build(kernel_path, adt_path, cmdline, ramdisk_path=None, *, gpu_bundle_path=
         struct.pack_into('<4Q', out, SEG_TABLE + 32 * i, *t)
     info = dict(cputype=hex(m['cputype']), cpusub=m['cpusub'], fixups=nfix, virt_base=hex(virt_base),
                 entry=hex(m['entry']), kernel_end=hex(kernel_end), ramdisk=ramdisk, size=len(out),
-                gpu_bundle=bool(gpu_bundle_path),
+                gpu_bundle=bool(gpu_bundle_path), gpu_build=gpu_build if gpu_bundle_path else None,
                 segs=[(s['name'], hex(s['vmaddr']), hex(s['vmsize'])) for s in segs])
     return bytes(out), info
 
@@ -228,8 +233,10 @@ if __name__ == '__main__':
     ap.add_argument('--cmdline', default='debug=0xc serial=3 cpus=1 keepsyms=1')
     ap.add_argument('--ramdisk', help='root image for md0 (boot with rd=md0)')
     ap.add_argument('--gpu-bundle', help='Polaris volatile GPU userland bundle (file root remains unchanged)')
+    ap.add_argument('--gpu-build', choices=('20H392', '20F66'), default='20H392')
     a = ap.parse_args()
-    blob, info = build(a.kernel, a.adt, a.cmdline, a.ramdisk, gpu_bundle_path=a.gpu_bundle)
+    blob, info = build(a.kernel, a.adt, a.cmdline, a.ramdisk, gpu_bundle_path=a.gpu_bundle,
+                       gpu_build=a.gpu_build)
     open(a.out, 'wb').write(blob)
     for k, v in info.items():
         if k != 'segs':

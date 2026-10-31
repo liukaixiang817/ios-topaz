@@ -17,6 +17,32 @@ static void layout(unsigned char*p){memset(p,0,200);put32(p,0xfeedfacf);put32(p+
 
 
 class CompositorClockTests(unittest.TestCase):
+    def test_build_profiles_reject_each_others_UUID_and_keep_code_distinct(self):
+        for newer in (False, True):
+            prefix = '#define PGPU_USERLAND_20F66 1\n' if newer else ''
+            run(prefix + HEADER + r'''
+#include <assert.h>
+static void put32(unsigned char*p,unsigned n){memcpy(p,&n,4);}
+static void put64(unsigned char*p,uint64_t n){memcpy(p,&n,8);}
+int main(void){unsigned char p[200]={0};
+ put32(p,0xfeedfacf);put32(p+4,0x100000c);put32(p+12,6);put32(p+16,3);put32(p+20,168);
+ put32(p+32,0x1b);put32(p+36,24);const unsigned char own[]=PCC_UUID_BYTES;memcpy(p+40,own,16);
+ put32(p+56,0x19);put32(p+60,72);put64(p+80,PCC_TEXT_BASE);put64(p+88,0x400000);put32(p+116,1);
+ put32(p+128,0x19);put32(p+132,72);put64(p+152,PCC_STATE&~UINT64_C(0x3fff));put64(p+160,0x8000);put32(p+188,1);
+ assert(pcc_layout(p,sizeof(p)));
+ const unsigned char old[]={0x9e,0x40,0xb2,0xeb,0x26,0x0c,0x3a,0xf1,0xae,0x45,0xa1,0xa5,0x51,0xa8,0xc1,0xb9};
+ const unsigned char next[]={0xdc,0x2d,0xd4,0xc1,0x78,0x66,0x34,0x43,0x80,0x50,0xfc,0x91,0x5a,0x02,0x04,0xc1};
+ const unsigned char code[]=PCC_BLOCK_CODE;
+#ifdef PGPU_USERLAND_20F66
+ assert(PCC_BLOCK==UINT64_C(0x188364614)&&PGPU_QC_GLES_VTABLE==UINT64_C(0x1d5b3b540));
+ assert(code[13]==0xcc&&!memcmp(own,next,16));memcpy(p+40,old,16);
+#else
+ assert(PCC_BLOCK==UINT64_C(0x18836d0e4)&&PGPU_QC_GLES_VTABLE==UINT64_C(0x1d5b2f6e8));
+ assert(code[13]==0xd0&&!memcmp(own,old,16));memcpy(p+40,next,16);
+#endif
+ assert(!pcc_layout(p,sizeof(p)));return 0;}
+''')
+
     def test_exact_bounded_unique_tokens_and_real_POSIX_environment_scope(self):
         run(HEADER + r'''
 #include <assert.h>

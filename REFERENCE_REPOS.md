@@ -897,3 +897,17 @@ restore-before-reset gate. The original one-cycle image must not become a
 runtime writer simply by changing a flag. Future iOS tests still require a
 fresh strict read-only root/journal audit; the outstanding journal issue was
 not repaired or waived by this hardware-only milestone.
+
+
+## Focused Dipper CPU/GPU recheck for20F66 migration (0124)
+
+Pinned e930c26 source uses the same SDM845 OSM cluster bases and stock big row22
+already present on Polaris. Its default DDR16 vote and busy-GEM-unmap behavior
+do not establish an improvement over own bounded thermal/restoration and DMA
+lifetime guards. Keep current GMEM, WC GEM/cached surface and four-big policy.
+The compatible20F66 QuartzCore/EAGL targets have been independently decoded from
+the actual official cache and integrated into a version-matched graphics bundle;
+four current common binaries remain byte-identical. Bounded damage rectangles
+are a promising future optimization, pending own ABI, bounds/lifetime, full first
+wake frame and actual pixel/timing verification. No foreign hardware writes or
+reference scripts/prebuilt execution; no claim that this proves faster CPU/GPU.

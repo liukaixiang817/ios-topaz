@@ -1,4 +1,4 @@
-/* Polaris20H392 window-server EAGL bridge, adapted from HackiOS (MIT;
+/* Polaris exact-build window-server EAGL bridge, adapted from HackiOS (MIT;
  * LICENSE.hackios). Actual QuartzCore vtable targets and all457 OpenGLES
  * slots checked against this build. No foreign hardware registers. */
 #include <CoreFoundation/CoreFoundation.h>
@@ -22,10 +22,10 @@
 #include "../../tools/polaris-compositor-clock.h"
 extern const void *_dyld_get_shared_cache_range(size_t *);
 #define CACHE_BASE              0x180000000UL
-#define VT_GLES_CONTEXT         0x1d5b2f6e8UL   /* vtable for CA::OGL::GLESContext */
+#define VT_GLES_CONTEXT         PGPU_QC_GLES_VTABLE
 #define VSLOT(vtable, offset)   ((vtable) + 0x10 + (offset))
-#define FN_FUNCTION_SUPPORTED   0x1884b2164UL   /* CA::OGL::GLContext::function_supported() const */
-#define FN_FUNCTION_UNIFORM     0x1884b21acUL   /* CA::OGL::GLContext::function_uniform(unsigned, unsigned long, unsigned long, float const*) */
+#define FN_FUNCTION_SUPPORTED   PGPU_QC_FUNCTION_SUPPORTED
+#define FN_FUNCTION_UNIFORM     PGPU_QC_FUNCTION_UNIFORM
 
 static uintptr_t slide;
 
@@ -207,9 +207,7 @@ static int clock_target_prepare(void)
     if((uintptr_t)header!=PCC_TEXT_BASE+offset || !header || header->sizeofcmds>65536 ||
         !pcc_span((uintptr_t)header,32+header->sizeofcmds,base,cache_bytes) ||
         !pcc_layout(header,32+header->sizeofcmds))return -6;
-    static const uint8_t code[32]={0xfd,0x7b,0xbf,0xa9,0xfd,0x03,0x00,0x91,
-        0x40,0x11,0x00,0xd0,0x00,0xd0,0x3e,0x91,0x8d,0x7f,0x61,0x95,
-        0x60,0x00,0x00,0xb4,0x62,0x94,0x07,0x94,0xe0,0x00,0x00,0x35};
+    static const uint8_t code[32]=PCC_BLOCK_CODE;
     if(memcmp((const void*)(uintptr_t)(PCC_BLOCK+offset),code,sizeof(code)) ||
         memcmp((const void*)(uintptr_t)(PCC_STRING+offset),PCC_FORCE,sizeof(PCC_FORCE)))return -7;
     if(mach_timebase_info(&clock_timebase)!=KERN_SUCCESS || !clock_timebase.numer || !clock_timebase.denom)return -8;
@@ -311,6 +309,6 @@ __attribute__((constructor)) static void polaris_gl_inject(void)
     if(performance_observe)performance_observe(performance_note);
     gl_hooks(gl);
     int clock=clock_target_prepare();
-    if(clock)fprintf(stderr,"POLARIS CA CLOCK TARGET: status=%d mode=%u; exact20H392 read-only\n",clock,clock_trial_mode);
+    if(clock)fprintf(stderr,"POLARIS CA CLOCK TARGET: status=%d mode=%u; exact%s read-only\n",clock,clock_trial_mode,PGPU_USERLAND_BUILD);
     fprintf(stderr,"POLARIS GL: all8 EAGL methods installed; desktop submissions still require observation\n");
 }

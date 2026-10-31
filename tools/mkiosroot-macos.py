@@ -78,12 +78,20 @@ def raw_hfs_length(path):
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--execute', action='store_true')
+    ap.add_argument('--sources', type=Path, default=SOURCES,
+                    help='source and readonly-mount boundary below research/')
+    ap.add_argument('--verified-images', type=Path,
+                    help='verified OS/System/App manifest; defaults to SOURCES/verified-images.json')
     ap.add_argument('--output', type=Path,
                     default=ROOT / 'research/polaris/ios16-root-20H392-macos-v1.img')
     ap.add_argument('--size-gib', type=int, default=16)
     args = ap.parse_args()
     output = args.output.absolute()
     research = (ROOT / 'research').resolve()
+    sources = args.sources.resolve()
+    records_path = (args.verified_images or sources / 'verified-images.json').resolve()
+    if not sources.is_relative_to(research) or not records_path.is_relative_to(research):
+        ap.error('sources and verified manifest must be below repository research/')
     if not output.parent.resolve().is_relative_to(research) or output.is_symlink():
         ap.error('output must be a new file under repository research/')
     if not 12 <= args.size_gib <= 64:
@@ -91,25 +99,33 @@ def main():
     work = output.with_suffix('.build')
     if output.exists() or work.exists() or output.with_suffix('.json').exists():
         ap.error('refusing existing output or build directory; choose a new output name')
-    records = json.loads((SOURCES / 'verified-images.json').read_text())
+    records = json.loads(records_path.read_text())
+    if len(records) != 3 or {x['component'] for x in records} != {'OS', 'Cryptex1,SystemOS', 'Cryptex1,AppOS'}:
+        raise ValueError('exact OS/System/App source set required')
     info = plistlib.loads(run(['hdiutil', 'info', '-plist'], capture=True))
     mounts = {}
     for record in records:
-        src = (SOURCES / record['path']).resolve()
-        if not src.is_relative_to(SOURCES.resolve()) or src.stat().st_size != record['bytes']:
+        src = (sources / record['path']).resolve()
+        if not src.is_relative_to(sources) or src.stat().st_size != record['bytes']:
             raise ValueError('source size/path mismatch')
         images = [i for i in info.get('images', []) if Path(i.get('image-path', '')).resolve() == src]
         if len(images) != 1 or images[0].get('writeable') is not False:
             raise ValueError('source must have exactly one read-only attachment: ' + str(src))
         points = [Path(e['mount-point']) for e in images[0]['system-entities'] if 'mount-point' in e]
-        if len(points) != 1 or not points[0].resolve().is_relative_to(SOURCES.resolve()):
+        if len(points) != 1 or not points[0].resolve().is_relative_to(sources):
             raise ValueError('unexpected source mount')
         mounts[record['component']] = points[0]
         if args.execute:
             print('Verifying SHA384:', src.name, flush=True)
             if digest(src, 'sha384') != record['sha384']:
                 raise ValueError('Apple source SHA384 mismatch')
+    version = plistlib.loads((mounts['OS'] / 'System/Library/CoreServices/SystemVersion.plist').read_bytes())
+    if (version.get('ProductBuildVersion'), version.get('ProductVersion')) not in (
+            ('20H392', '16.7.16'), ('20F66', '16.5')):
+        raise ValueError('source root build/version not supported by this builder')
     plan = dict(output=str(output), size_gib=args.size_gib,
+                build=version['ProductBuildVersion'], version=version['ProductVersion'],
+                source_manifest_sha256=digest(records_path),
                 sources={k: str(v) for k, v in mounts.items()},
                 copy='rsync -aH --numeric-ids; no xattr/ACL/decmpfs copy',
                 changes='merge cryptexes, seed log/keybag paths, apply sweet-root-tweaks.py',

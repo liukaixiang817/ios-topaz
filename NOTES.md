@@ -34,6 +34,45 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0124 full16.5 local root + exact graphics ABI READY; minimal native version admission completed, CI next
+
+- New user priority is full iOS16.5 while retaining CPU/GPU/backlight and checking
+  Dipper CPU/GPU. Native human lock/wake result and safe actualFASTBOOT0123 remain
+  authoritative; phone has NOT yet booted/installed20F66. No new phone command.
+- Built NEW16GiB HFSX20F66/16.5 root from all three whole-SHA384-verified readonly
+  Apple OS/System/App sources, merged cryptexes and numeric ownership/modes,
+  actual critical hashes + fsck_hfs-fn PASS. SHA25691515474f2f886e1508e2ef62f0d8dce
+  6fe4188c0dd382e566ba819264d37c0f, private0124/ios16.5-20F66-full-root-0001.img.
+  Root builder/tweaks now derive exact build/version from SystemVersion BEFORE
+  mutations; old20H392 behavior remains. Scoped temporary Mac build avoids TCC
+  Documents access widening. No credential stored or printed.
+- Actual official20F66 QuartzCore/OpenGLES/IOSurface UUIDs/images independently
+  decoded; both QC targets+CADeviceUseVBL code/string/layout and ALL457 EAGL
+  names/409slots verified against machine instructions and separate disassembly.
+  20F66 graphics0003 bundlefa615096... keeps current865407ee Mesa/GL/test/init
+  BYTEIDENTICAL; only version-related inject/wrapper rebuilt. Build and strict
+  codesign PASS; source registry/slot correspondence now checked before output.
+  This is host graphics ABI evidence, not whole-OS/physical16.5 boot proof.
+- Found actual native overlay only admitted20H392. NEW0899 changes ONLY that
+  version admission:20F66 additionally requires exact verifiedfa615096 bundle
+  digest; all CPU/GPU/WLED/storage/thermal/auth/lifetime paths unchanged. Exact
+  zero-fuzz patch/host-native header agreement and actual Apple-clang native
+  overlay object PASS.7 targeted build/clock tests PASS3.768s. One new full CI
+  is warranted by this minimal native edit; do not repeat old13-model matrix.
+- Focused Dippere930c26 comparison recorded at0124. Own OSM stockrow22 is already
+  present. No measured foreignCPU/GPU advantage established; don't import default
+  DDR16/unboundedfreq or busy-unmap behavior weaker than own unknownDMA guard.
+  Matching16.5 userland targets adopted after own actual-cache verification.
+  Damage rectangles remain a possible optimization requiring own bounds/lifetime,
+  FULL first wake frame + real pixel/timing evidence, not copied yet.
+- NEXT complete exclusive NEW root-file transport through Linux ext4, verify only
+  changed behavior in isolated real Linux, commit/push before physical use. New
+  file must preserve original689a root+immutablemarker+all Android/Windows/GPT/ESP.
+  OldRO review remains may_write_userdata=false and does NOT grant native writes.
+  New file allocation is a separate bounded migration; no overwrite/erase/repair.
+  Need actual post-copy unmount+fullRO newroot/map+oldroot/marker/GPT/ESP review,
+  new20F66 payload/independent runtime admission, then ONE temporary16.5 boot.
+
 ### 0123 actual native iOS LCD lock/wake + safe FASTBOOT COMPLETE; NEXT user prioritizes full16.5 and Dipper CPU/GPU comparison
 
 - Actual NEW0122 ONE RAM image01:32:31UTC / ONE exact payload completed. Real
