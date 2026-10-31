@@ -45,6 +45,16 @@ early samples only. On0029 the human already confirmed boot complete and said
   recorded, notfirmwarephase timings. 34relatedhosttestsPASS1.667s,
   proof0140/host-boot-ack-0001 e142da9a...; nofirmware/nativeCIneededforthis.
   Old0139 COPY/controller/manifest untouched; onlyfuture0140 bindsnewhost.
+- Audiofive independentdefaultOFF sourcefiles completed/reviewed, notincluded
+  in0140. OriginalI2CDxe PE5eb6c9.../GUID/vtable/43DIR64/fourimmutablehash
+  ranges bindonly120B RAMcache6d60..6dd8 doublecopy, rawhead/Clock/TLMM values
+  neverfollowed/called.33ASAN/UBSAN+actualAArch64COFF/MachO+OFF/SOFTWARE
+  compiledout+3wrongPErefusalsPASS; proof82021107.../readydeb056c4... .
+  FutureentryafterENTIREWiFifreshblock/beforePONcache+DAIF, newindependent
+  firmwarecandidate/model/sourcebinding required. NoMMIO/I2C/DAL/clockwrite/
+  TASidentity/ADSP/PCM/phoneclaim; nonzeroheadisNOTSE5ownership. Do notkeep
+  addingofflineparsers: nextisactualoriginalimagecache+separatehardware
+  lifetime/permission evidence beforeanynativeaudio transport.
 - Final0139/performance/bbd-activation-final-0002/graphics-retained-trial:
   bundle f790512548bfb9d46911590bedf5ec3962e9c3dc566b10f219d618131ae65353
   /19072848B; manifest00dbde9a.../actualproof442fc94d... . OnlyMesa d283+
