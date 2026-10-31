@@ -34,6 +34,36 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0139 actualcandidate0002 CLOSED: cachePASS, SMEM attribute gate refused BEFORE anyLDR; bootACK failed; NEWzeroexit+independentFASTBOOT PASS13:26Z
+
+- ONEimage12205 ENDED0 sent2026-10-31T13:24:39.181336Z/source93e049f;
+  imageb7f51d.../manifest e5c4504d.../freshrooted39e7...+preflightc7d343...;
+  COPY0002 470files/464evidence/23historicalblobs. ONEpayload77899 ENDED1:
+  oemboot ACK read timedout(-7), commandMAYhavebeenreceived/NEVERreplay.
+  Followupstate21578 ENDED0 actuallyprepared. Capture61422 ENDED1 because
+  runtimehistory unavailable BEFOREnative start; actualnative.log+PPM saved.
+- Actualcache originalPE/owner/protocol/fourhashes/two632B consistent, error0.
+  Fixedreader error7(PWFR_ATTRIBUTES), firstPAR0x4400000086000b00 at86000000,
+  issued/completed bothpasses0: NOtargetLDR/SMEMread/FIFO/radio/TX. Actual
+  mapping ATTR0x44 was notthe requiredDevice0; doNOTweaken/retryoldgate or
+  inferliveMPU/nativeCPU7permission fromcache. Logs reachKERNEL_PREPARED_ENTRY
+  thenUSB_TX_ERROR0x8000000000000012. NoCPU_ON/nativeiOSentry observed.
+  Longerprepare/report vs10shostbootreply deadline is a hypothesis; no
+  per-phaseelapsed evidence isolatesitscause. NoWLED/nativefaultclaim.
+- Unique recover-prestart zero-prestart-exit-once-0001 ENDED0, NEW44B
+  OKAY+WLZ4: CPU_ONissuedfalse/APstage0/WLEDissued0/completed0/uncertainfalse/
+  powererror0/runtimeerror0. Thenindependentactualpolaris FASTBOOT verified
+  2026-10-31T13:26:46.212379Z. Newreset-arm-before-receipt physicalpath
+  actuallyreturnedFASTBOOT; ACKalonewasNOTusedasresetproof. No humankeys
+  needed. This iszero-prestartproof, notnative drain/WLEDrestore/durableSAFE.
+- Case0002 consumed/CLOSED, nooldcontroller/payload/bootreplay. Actualfresh
+  rootreview remainsfrom13:23 withONLYzero-native/no-storageactions since.
+  WiFiworker reviews ownoriginalSMEM/Mi8 mapping correspondence and proposes
+  separate future scope only; originalgate/manifestimmutable. Hostnextfix
+  ONLYboundedlongerbootACKreceive, allotherreads/resetfreshnessunchanged.
+  GPUwrapper/twofiletrial ready forfinalreview/newexactnativepin/ONEneededCI;
+  audiooriginalI2Ccacheinspection offlineunderreview, nohardwareactions.
+
 ### 0139 NEW actual strictRO audit PASS34; actual FASTBOOT13:23Z; fresh-bound WiFi candidate0002 NEXT
 
 - ONE new audit55222 ENDED0, using reviewed0120 watchdog ecb73be4... only.
