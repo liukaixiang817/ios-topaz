@@ -7,7 +7,8 @@ import unittest
 from unittest.mock import patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from polaris_wled_runtime_admission import (PHYSICAL,THERMAL,PAIR,KERNEL_SHA,NATIVE_SOURCE,ROOT_SHA,
-    TARGETS,RUNTIME_SERVICES,RUNTIME_DT,CLOCK_INITIAL_SHA,BASE_TERMINAL_CHECKS,admit,exact_scope)
+    TARGETS,RUNTIME_SERVICES,RUNTIME_DT,CLOCK_INITIAL_SHA,BASE_TERMINAL_CHECKS,
+    FIRSTREAD_PREFIX,FIRSTREAD_DISABLED,admit,exact_scope)
 ROOT=Path(__file__).resolve().parents[2]
 
 
@@ -39,6 +40,18 @@ def add_runtime_services(args):
 
 
 class RuntimeAdmission(unittest.TestCase):
+    def test_cache_only_profile_cannot_silently_admit_a_new_fixed_SMEM_reader(self):
+        d,*_=fixture()
+        d.update({FIRSTREAD_PREFIX+k:v for k,v in FIRSTREAD_DISABLED.items()})
+        exact_scope(d)
+        for key,value in [('readonly',True),('readonly',1),('new_SMEM_read_body',True),
+                          ('compiled_target_LDR32_max',18),('addresses',[0x8600005c]),
+                          ('hardware_MPU_or_VMID_query',True),('unknown_scope',False)]:
+            changed=copy.deepcopy(d);changed[FIRSTREAD_PREFIX+key]=value
+            with self.assertRaises(ValueError,msg=key):exact_scope(changed)
+        hidden=fixture()[0];hidden[FIRSTREAD_PREFIX+'new_SMEM_read_body']=True
+        with self.assertRaises(ValueError):exact_scope(hidden)
+
     def test_20F66_requires_its_kernel_CI_root_and_separate_post_unmount_review(self):
         args=fixture();d,models,ci,pre,review=args;t=TARGETS['20F66']
         d['kernel_sha256']=t['kernel'];ci.update(databaseId=t['CI'],headSha=t['source'])

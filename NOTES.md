@@ -34,6 +34,45 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0139 ACTIVE WiFi +stutter +camera +audio parallel; HUMAN confirms0138 wallpaper/time/battery basicallynormal
+
+- Human now confirms wallpaper, localtime andbattery basicallynormal and
+  requests WiFi, smallremainingstutters (compareMi8GPU/othercauses), camera
+  andsound inparallel. Preservecurrent0138 fixes/ca_vbl1/CPU/GPU/WLED. No
+  requesttoreproduceFitness. Threeboundedsourceworkers wifi0139/audio0139/
+  camera0139; parentaloneownsUSB/CI/boot. Notallfeaturescomplete.
+- Lastactual0138 capture0004 worker51653 ENDED0 shows fullofficialcolored
+  default7400 lockscreen, SaturdayOct31 8:58 (Melbourne20:58/UTC09:58),
+  chargingicon; this supersedes earlierbootlogo/pendingwallpaper statements.
+  2CollectionsPoster starts andNOCollectionsPoster crash inthatprefix, but
+  SpringBoard crashedonce sig6 on missingSBApplication forPosterBoard scene,
+  restartedandrenderedlock. Do notcallallUIstable orrelabelasGPUkernelpanic.
+  OriginalPosterBoard.appalreadyin/Applications; staged32publish omission
+  alone doesnotexplainmissingLaunchServices/SB record. Needactualregistry
+  evidence, noassertsuppression/guessedappregistrationfix.
+- Parentnewboundedcapture0139/current-ui-performance-baseline-0001 failed
+  boundUEFIservicenotconnected;40676 ENDED1. OneindependentexpectedFASTBOOT
+  query8699 ENDED0 timedout10:03Z (NO boot). CurrentmodenotprovenFASTBOOT or
+  USBabsent; lastknownLIVE0138+humanUIconfirmation. RequestedUSBreplugONCE,
+  pending; noFASTBOOT/physicalresetrequested. Don'tstartcontinuousobserver.
+- WiFi firstread source is beingintegratedDEFAULT-OFF withnewexplicitflag:
+  cachecollect -> immediate36Bx2read -> console -> originalPON/mask. No
+  radio/native/FIFO/TX/SMC/Get/Alloc/constructor. Parentnewhostguard rejects
+  anyfirstread-enable/partial/unknownmetadata underoldcache-onlyprofile;
+  12hostadmission testsPASS. Noactual0139SMEMread ornewimage/boot yet.
+- Audiofoundactual475B /persist/audio/tas2559_cal.bin intwopreservedlocal
+  backups, identicalSHA528990f26c00e8a893363f7914185c980716e14a2d85d5168cdbe28c5882228b;
+  read-onlyextraction/backupwholeSHAunchanged. Factoryl/r.ftcfg !=thiscal.
+  Ownoriginaldriver100parseraccepts; currentproduction401catalogrefuses,
+  notcalintegration/playback. TASidentityalsochangesbook/page; GENI894000
+  freshclock/owner/idle missing, ADSP host2/lpass notMPSS host1permission.
+- CameraownDT CCIac4a000/4000/3slots lacksrealchipID; extracted68vendorfiles
+  don'tincludecamera modules; fullvendorbackupdataless, vendor-ro0B invalid.
+  NoMi8cameraimplementation/realcamera-successclaim; itscamera-regionreuse
+  cannotfreeourmemory. 81originalPE/TE noobviouscameraDXE/cache; Clock/DAL
+  resource stringsaren'tpermission. Cameraagentpreparesactualinputgaps and
+  read-onlycapabilityhelper only, noISP/sensorstart/photosuccess.
+
 ### 0138 ACTUALBOOT d015/009c/4fe2: UTC appliedONCE +Melbourne transaction PASS; UI stillstarting, wallpaper visibility pending
 
 - Old0137 normalexit44249 ENDED0: nativephase3/error0/caps80000003, full32

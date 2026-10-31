@@ -57,6 +57,17 @@ BASE_TERMINAL_CHECKS=frozenset(('actual_EL1','actual_payload','actual_native_sta
     'reset_checked_after_new_pair','bounded_attempts','expected_first_delivery',
     'failed_delivery_no_reset','explicit_readonly_recovery','complete_literal_raw_prefix_footer_receipt','no_panic'))
 
+# A fixed early CPU0 read is a distinct physical scope, even though it exposes
+# no USB read command. Existing cache-only profiles must not silently admit it.
+FIRSTREAD_PREFIX='wifi_CPU0_firstread_'
+FIRSTREAD_DISABLED=dict(readonly=False,default_OFF=True,new_SMEM_read_body=False,
+    compiled_target_LDR32_max=0,actual_target_reads_observed=False,bytes_each=None,
+    passes_max=None,target_LDR32_max=None,addresses=None,fresh_limit_ticks=None,
+    frequency=None,before_CPU_ON=None,before_console_and_PON=None,
+    no_runtime_or_USB_command=True,retrospective_constructor_admission=None,
+    hardware_MPU_or_VMID_query=False,external_SError_recoverable=False,
+    native_permission=False,FIFO_or_TX=False,physical_SMEM_reads_compiled_out=False)
+
 
 def _exact(actual,expected):
     if type(actual) is not type(expected):return False
@@ -64,6 +75,12 @@ def _exact(actual,expected):
         return actual.keys()==expected.keys() and all(_exact(actual[k],v) for k,v in expected.items())
     if type(expected) is list:return len(actual)==len(expected) and all(_exact(a,b) for a,b in zip(actual,expected))
     return actual==expected
+
+
+def firstread_scope(d):
+    actual={k[len(FIRSTREAD_PREFIX):]:v for k,v in d.items() if k.startswith(FIRSTREAD_PREFIX)}
+    if actual and not _exact(actual,FIRSTREAD_DISABLED):
+        raise ValueError('CPU0 SMEM firstread requires a separately reviewed physical profile')
 
 
 def runtime_services_scope(d):
@@ -117,6 +134,7 @@ def runtime_model_scope(m):
 
 def exact_scope(d,build=None):
     profile=target_profile(build or d.get('userland_build','20H392'))
+    firstread_scope(d)
     for k,v in PHYSICAL.items():
         if type(d.get(k)) is not type(v) or d[k]!=v:raise ValueError('not the independent physical runtime scope: '+k)
     if d.get('chain_app') is not None or d.get('disk_guid') is not None or d.get('RAM_native_drain_test') is not None:
