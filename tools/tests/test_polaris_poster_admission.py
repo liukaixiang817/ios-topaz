@@ -25,17 +25,24 @@ class PosterAdmissionTests(unittest.TestCase):
 #include <stdint.h>
 #include <stddef.h>
 #include <string.h>
-typedef int vnode_t;
+#include <stdlib.h>
+typedef int vnode_t,vfs_context_t;
+#define caddr_t char*
+#define Z_WAITOK 1
+#define UIO_READ 1
+#define UIO_SYSSPACE 2
 #define NULLVP 0
 #define MNT_ROOTFS 1
 #define VNODE_LOOKUP_NOFOLLOW 2
 #define VNODE_LOOKUP_NOCROSSMOUNT 4
-struct vnode_attr{unsigned va_uid,va_mode;};
+struct vnode_attr{unsigned va_uid,va_gid,va_mode;uint64_t va_data_size;};
 #define VATTR_INIT(a) memset(a,0,sizeof(*(a)))
 #define VATTR_WANTED(a,b) ((void)(a))
 #define VATTR_IS_SUPPORTED(a,b) ((void)(a),supported)
 static uint32_t pgpu_poster_preview=1;
-static unsigned ready=1,allowed=1,image=9,expected=9,uid,mode=0755,rootfs=1;
+static unsigned ready=1,allowed=1,image=9,expected=9,uid,gid=80,mode=0775,rootfs=1;
+static uint64_t bytes=119520;
+static unsigned allocations,frees,allocation_error,read_error,short_read,digest_good=1;
 static unsigned refs,releases,regular=1,supported=1,attr_error,lookup_error;
 static const char *process_name="PosterBoard";
 static bool polaris_gpu_overlay_ready(void){return ready;}
@@ -48,16 +55,30 @@ static bool vnode_isreg(int v){assert(v==(int)image);return regular;}
 static int vnode_mount(int v){assert(v==(int)image);return 2;}
 static int vfs_flags(int m){assert(m==2);return rootfs;}
 static int vfs_context_kernel(void){return 3;}
-static int vnode_getattr(int v,struct vnode_attr*a,int c){assert(v==(int)image&&c==3);a->va_uid=uid;a->va_mode=mode;return attr_error;}
+static int vnode_getattr(int v,struct vnode_attr*a,int c){assert(v==(int)image&&c==3);a->va_uid=uid;a->va_gid=gid;a->va_mode=mode;a->va_data_size=bytes;return attr_error;}
 static int vnode_lookup(const char*p,int f,int*out,int c){assert(!strcmp(p,"/Applications/PosterBoard.app/PosterBoard")&&f==6&&c==3);if(lookup_error)return 1;*out=expected;if(*out)refs++;return *out?0:1;}
 static void vnode_put(int v){assert(v>0);releases++;}
+static void *kalloc_data(size_t n,int f){assert(n==119520&&f==Z_WAITOK);if(allocation_error)return NULL;allocations++;return malloc(n);}
+static void kfree_data(void*p,size_t n){assert(p&&n==119520);frees++;free(p);}
+static int vfs_context_ucred(int c){assert(c==3);return 4;}
+static int vfs_context_proc(int c){assert(c==3);return 5;}
+static int vn_rdwr(int rw,int v,char*p,int n,long long at,int seg,int flags,int cred,int*resid,int proc){assert(rw==UIO_READ&&v==(int)image&&p&&n==119520&&!at&&seg==UIO_SYSSPACE&&!flags&&cred==4&&proc==5);*resid=short_read?1:0;if(read_error)return 14;memset(p,0xab,n);return 0;}
+static bool pgpu_digest(const void*p,size_t n,const uint8_t*h){assert(p&&n==119520&&h[0]==0x0f&&h[31]==0x4a&&((const uint8_t*)p)[n-1]==0xab);return digest_good;}
+static int log_(const char*format,...){assert(format);return 0;}
+#define printf log_
 ''' + code + r'''
-#define CHECK(want) do{assert(polaris_poster_preview_allowed()==(want));assert(refs==releases);}while(0)
+#define CHECK(want) do{assert(polaris_poster_preview_allowed()==(want));assert(refs==releases);assert(allocations==frees);}while(0)
 int main(void){CHECK(true);
  expected=8;CHECK(false);expected=9;
  image=8;CHECK(false);image=9;
  uid=501;CHECK(false);uid=0;
- mode=0775;CHECK(false);mode=0755;
+ mode=0777;CHECK(false);mode=0775;
+ gid=501;CHECK(false);gid=80;
+ bytes=119519;CHECK(false);bytes=119520;
+ allocation_error=1;CHECK(false);allocation_error=0;
+ read_error=1;CHECK(false);read_error=0;
+ short_read=1;CHECK(false);short_read=0;
+ digest_good=0;CHECK(false);digest_good=1;
  rootfs=0;CHECK(false);rootfs=1;
  regular=0;CHECK(false);regular=1;
  supported=0;CHECK(false);supported=1;

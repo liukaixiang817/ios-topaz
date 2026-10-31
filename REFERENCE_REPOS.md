@@ -936,7 +936,7 @@ and comparison:0128/dipper-wallpaper-and-loader-comparison.json.
   Its bounded portrait-prewarm compatibility is a later relevant source to verify
   against actual20F66 media code, not proof own decode/audio/camera already works.
 - Our0900 adaptation follows the loader correspondence with a separate exact
-  PosterBoard executable-vnode/UID/mode/root/RAM-overlay identity and only mask2
+  PosterBoard executable-vnode/original UID/GID/mode/size/wholeSHA/root/RAM-overlay identity and only mask2
   (path variables, per Apple's dyld1066.8), leaving GPU caller/reporter identity
   and all CPU/GPU/WLED/storage gates unchanged. It does not copy generic0xff,
   hide the picker, fake Metal, or add GPU-device access for PBF. Physical loading,

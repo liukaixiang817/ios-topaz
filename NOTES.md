@@ -34,6 +34,33 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0128 originalPBF metadata +wholehash identity CORRECTED BEFORE any newphoneboot
+
+- Actual reviewedoriginalPBF file is0:80/0775,119520B,
+  SHA0ffb703374d8f9b8d4ad5f505afcb741cd8c1a89bbc6933b2d63c983047a814a.
+  Privatehelper0755/non-group-write assumption wouldrefuse thisgenuineApplefile;
+  caughtofflinebeforeanynewphoneboot. Neverchmod/rename/edit ApplePBF.
+- Final0900 identity nowbinds EXACToriginalUID/GID/mode/size/canonicalvnode +
+  read-only whole119520B SHA in boundedallocatedbuffer, fullread/noresid and
+  rootRAMgate recheck; balancedfree/ref onallfailure. Adds boundedactualpredicate
+  diagnostics. OnlyPBFmask2; existingGPUcaller/reporterfunctions byteidentical.
+  ASAN/UBSAN actualfunctions PASS inclwrongmetadata/hash/shortread/readerror/
+  allocfail andcopyerrors; actualnativeoverlayrecompile PASS; worker33652 ENDED.
+- Supersededsourcee5bc076/CI41167878582 cancellationrequested, MUSTNOTadmit/use.
+  Newcorrectedsource mustcommit/push ONEnewnativeCI, unchangedba69bundle reuses.
+  CURRENTPHONE remainsLIVE0127, galleryunfixed, noUSBaction/reboot thismilestone.
+  Use frozen25bccontroller withold0127artifacts; new0128boot.json ABSENT.
+
+### 0128 narrownative source COMMITTED/PUSHED; ONE CI41167878582 running; actualPHONE LIVE0127
+
+- Sourcee5bc07637d5d18d3a36071a6f88d5986c578e915 committed/pushed. ONEnecessary
+  newnativeCI41167878582 inprogress for0900scopedPBFloader. DoNOT dispatchagain.
+  Oldsuperseded31ddCI41165985829 actualCANCELLED; efcCI41166338002 SUCCESS.
+- No newphoneboot/exit yet, actualPHONE remainsLIVE0127 blankgallery, consumed
+  bootrecord. AllUSBworkersENDED. Use frozen25bc controller asbelow forcurrent
+  state/strictsafeexit; unmodifiedba69gfxbundle0127 willbe reusedbynew0128.
+  Newkernel/artifact/profile/model/image/codec unverified untilactualCIcompletes.
+
 ### 0128 exactDipper wallpaper recheck COMPLETE; native loader admission source READY; PHONE LIVE0127
 
 - Actual0127 startup passed32/32 apps, allGPU pixel/surface checks, CAmode1 and

@@ -1,6 +1,14 @@
 --- a/bsd/dev/polaris_gpu_overlay.c
 +++ b/bsd/dev/polaris_gpu_overlay.c
-@@ -30,8 +30,9 @@
+@@ -13,6 +13,7 @@
+ #include <sys/fcntl.h>
+ #include <sys/proc.h>
+ #include <kern/thread.h>
++#include <kern/kalloc.h>
+ #include <kern/clock.h>
+ #include <kern/sched_prim.h>
+ #include <sys/uio.h>
+@@ -30,8 +31,9 @@
  bool polaris_gpu_overlay_stage(void);
  bool polaris_gpu_overlay_ready(void);
  bool polaris_gpu_caller_allowed(void);
@@ -11,13 +19,13 @@
  static uint64_t pgpu_begin;
  static uint32_t pgpu_progress_seq;
  static struct {uint32_t step,file,done,total,error,ms;} pgpu_progress;
-@@ -98,6 +99,30 @@
+@@ -98,6 +100,56 @@
  }
  bool polaris_gpu_overlay_ready(void)
  {return __atomic_load_n(&pgpu_ready,__ATOMIC_ACQUIRE)!=0;}
 +/* Separate dyld-only identity. This never becomes a GPU caller/reporter.
 + * The exact20F66 bundle is already fully staged, and the current executable
-+ * must be the root-owned genuine PosterBoard vnode in the verified RAM root. */
++ * must be the original whole-hash PosterBoard vnode in the verified RAM root. */
 +bool polaris_poster_preview_allowed(void)
 +{
 +    if(!polaris_gpu_overlay_ready() ||
@@ -28,21 +36,47 @@
 +    if(strcmp(name,"PosterBoard"))return false;
 +    vnode_t image=proc_getexecutablevnode(current_proc());
 +    if(!image)return false;
-+    struct vnode_attr attr;VATTR_INIT(&attr);VATTR_WANTED(&attr,va_uid);VATTR_WANTED(&attr,va_mode);
++    struct vnode_attr attr={0};VATTR_INIT(&attr);
++    VATTR_WANTED(&attr,va_uid);VATTR_WANTED(&attr,va_gid);
++    VATTR_WANTED(&attr,va_mode);VATTR_WANTED(&attr,va_data_size);
 +    bool ok=vnode_isreg(image) && (vfs_flags(vnode_mount(image))&MNT_ROOTFS) &&
 +        !vnode_getattr(image,&attr,vfs_context_kernel()) &&
-+        VATTR_IS_SUPPORTED(&attr,va_uid) && VATTR_IS_SUPPORTED(&attr,va_mode) &&
-+        attr.va_uid==0 && !(attr.va_mode&022);
++        VATTR_IS_SUPPORTED(&attr,va_uid) && VATTR_IS_SUPPORTED(&attr,va_gid) &&
++        VATTR_IS_SUPPORTED(&attr,va_mode) && VATTR_IS_SUPPORTED(&attr,va_data_size) &&
++        attr.va_uid==0 && attr.va_gid==80 && (attr.va_mode&07777)==0775 &&
++        attr.va_data_size==119520;
 +    vnode_t expected=NULLVP;
 +    if(ok)ok=!vnode_lookup("/Applications/PosterBoard.app/PosterBoard",
 +        VNODE_LOOKUP_NOFOLLOW|VNODE_LOOKUP_NOCROSSMOUNT,&expected,vfs_context_kernel());
 +    ok=ok && expected==image;
++    int read_error=0,resid=0;bool hashed=false;
++    if(ok) {
++        /* Genuine20F66 Apple metadata is0:80/0775, not our private helper's
++         *0755. Bind all119520 actual bytes, never chmod the Apple executable. */
++        static const uint8_t hash[32]={
++            0x0f,0xfb,0x70,0x33,0x74,0xd8,0xf9,0xb8,0xd4,0xad,0x5f,0x50,0x5a,0xfc,0xb7,0x41,
++            0xcd,0x8c,0x1a,0x89,0xbb,0xc6,0x93,0x3b,0x2d,0x63,0xc9,0x83,0x04,0x7a,0x81,0x4a};
++        void *data=kalloc_data(119520,Z_WAITOK);
++        if(!data)ok=false;
++        else {
++            vfs_context_t ctx=vfs_context_kernel();
++            read_error=vn_rdwr(UIO_READ,image,(caddr_t)data,119520,0,UIO_SYSSPACE,
++                0,vfs_context_ucred(ctx),&resid,vfs_context_proc(ctx));
++            hashed=!read_error && !resid && pgpu_digest(data,119520,hash);
++            ok=hashed && polaris_ram_overlay_allowed();kfree_data(data,119520);
++        }
++    }
++    static uint32_t reports;
++    if(__atomic_fetch_add(&reports,1,__ATOMIC_RELAXED)<8)
++        printf("POLARIS POSTER ID: uid%u gid%u mode%o bytes%llu match%d hash%d read%d resid%d\n",
++            (unsigned)attr.va_uid,(unsigned)attr.va_gid,(unsigned)attr.va_mode,
++            (unsigned long long)attr.va_data_size,ok,hashed,read_error,resid);
 +    if(expected)vnode_put(expected);vnode_put(image);return ok;
 +}
  uint32_t polaris_gpu_caller_kind(void)
  {
      /* backboardd runs as mobile on20H392. UID/admin checks alone either
-@@ -210,6 +235,7 @@
+@@ -210,6 +262,7 @@
          int error=pgpu_write(n,&files[n]);
          if(error) {printf("POLARIS GL RAM overlay: stage%u failed %d; Apple bootstrap unchanged\n",n,error);return false;}
      }
