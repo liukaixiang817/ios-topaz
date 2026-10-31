@@ -36,6 +36,11 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### CURRENT0150 remains ONLY last actual nativeLIVE19:10; NEW0151 source-RAM / CPU-local / RSC-read caller components verified OFFLINE; hardware lease and parent NOT READY
 
+- Sourcee5433a327183266d21cbc27c79df2f9b5bfdbdee contains the code/tests below.
+  All29 unique committed test inputs match that source commit; eight unique
+  generated binding/check-wrapper inputs remain private (38 compiler path
+  spellings). Push/stop proof is0151/wifi/power-caller-source-and-handoff-push-
+  proof-0001.json; actual remote identity is recorded there after push.
 - This turn adds concrete caller components, not a new phone observation or
   boot candidate. No USB/original firmware execution/physical AT or MMIO, new
   native CI/image/profile/manifest/freeze, MSS/NVserve/radio action. All host
