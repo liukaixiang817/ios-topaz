@@ -34,6 +34,28 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0139 camera targeted15files ACTUAL COMPLETE/ROpreserved/FASTBOOT13:44Z; GPU0140ONEboot NEXT
+
+- Solecameraextract65076 ENDED0, exactreviewed69d3a1bf.../0120watchdogecb73.
+  Actual15/15 originalvendor module/tuning/ICP/OIS files20674007B privately
+  collected, perfilecanonicalregular/caps/identity/SHA beforeafter andlocal
+  wholebytes verified. NO68file re-extraction/wholevendor dump/vendorbinary
+  execution/rootimage read ormount/partitionwrite/repair/replay/explicit
+  cameraIO/powercommands. ThisdoesnotassertLinuxboot hasnohardwareinit.
+- Actualvendor sde47/4GiB/ext4/fullSHAaf8db49c... beforeafterunchanged,
+  allblockRO/ro,noload,nodev,nosuid,noexec+actualumount; sixGPT+8critical/ESP
+  beforeafter exactbaseline, headerunchanged. IndependentpolarisFASTBOOT
+  2026-10-31T13:44:57.357989Z;100.471433s total. ParentactualreviewPASS at
+  camera/actual-vendor-camera-input-review.json, resultSHAf8860888... .
+  Cameraagent nowanalyzesACTUAL15bytes; oldmissingoriginalmodulebytesblocker
+  superseded. PhysicalsensorID/CCI/power/ISP/frame/provider remainunproved.
+- ThiswasCONTROLLEDvendor-onlystrictRO afterfresh0139 rootreview, allLUN/
+  partitionsRO anduserdata/root notmounted; noAndroid/userdata action. Fresh
+  rooted39/c7d3 remainscurrentwithinthiscontrolledinterval. No extra32GiB
+  reaudit needed justforthisread. GPU0140source/image/controllerunchanged,
+  model/build/USB65076 workersallENDED. ParentnowONE0140image thenONEb31
+  payload(--boot-ack-seconds90), no permission/questionwaiting.
+
 ### 0140 GPU7650 image READY/COPY438; actual2models+wholecodec PASS; NO boot yet; camera15file read-only preparation parallel
 
 - Pipeline28251 ENDED0, TWOactualnew82b3wholeEFI-XNU cases each19checks
