@@ -201,7 +201,8 @@ def build(args):
                     hardware_test_passed=False, desktop_GPU_proven=False, writes_phone=False)
     if args.build == '20F66':
         for p in (SOURCES / 'polaris-poster-preview.c', ROOT / 'tools/polaris-poster-preview.h',
-                  SOURCES / 'polaris-media-compat.c', ROOT / 'tools/polaris-media-compat.h'):
+                  SOURCES / 'polaris-media-compat.c', ROOT / 'tools/polaris-media-compat.h',
+                  ROOT / 'tools/polaris-media-status.h'):
             manifest['source_inputs'][str(p.relative_to(ROOT))] = sha(p)
     (out / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
     print(json.dumps(manifest, indent=2))

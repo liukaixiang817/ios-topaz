@@ -18,7 +18,8 @@ def additions():
 
 class MediaAdmissionTests(unittest.TestCase):
     def test_real_executable_requires_exact_overlay_root_vnode_and_owner(self):
-        code = function(additions(), 'bool polaris_media_compat_allowed(void)\n{')
+        header = (ROOT / 'tools/polaris-media-admission.h').read_text()
+        code = function(header, 'bool polaris_media_image_allowed(vnode_t image)\n{') + '\n' + function(header, 'bool polaris_media_compat_allowed(void)\n{')
         run(r'''
 #include <assert.h>
 #include <stdbool.h>

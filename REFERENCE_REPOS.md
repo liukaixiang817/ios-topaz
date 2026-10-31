@@ -992,3 +992,20 @@ verified RAM root admits only dyld pathbit2, with no GPU caller/reporter role.
 Only its launchd job and existing PBF job gain scoped wrappers/console in RAMCOW;
 all Apple service names, user and argv stay intact. Real loading and HEVC completion
 remain unproven until the new actual build. Mesa/GL/wrapper/test stay byte-identical.
+
+## Exact media launch comparison (0132)
+
+Pinned Dipper kernel8e61187098f2c26c5daee8f9f72b6416aa64b9ab and
+userland906425b75e02b4f99eb5d7bb1ef7c9583472d772 deliver the media library
+through exec environment injection, after launchd. Their comment explicitly
+states launchd drops DYLD job variables. Polaris0131 proved original media
+exec and path-variable policy, but retained stdio hid constructor evidence;
+its gallery still has white cards and a real tile-session creation timeout.
+0132 ports only fixed, exact-original-media target delivery, with whole-file
+identity and the verified RAM overlay, preserving original argv/job/stdio.
+It records preexisting variable bits and bounded media-owned snapshots to
+distinguish loading, portrait prewarm and genuine decoder waits. This is not
+yet physical proof of variable filtering or a completed HEIC/wallpaper fix.
+No reference flashlight/camera code, broad injection sysctl or hardware
+tables were copied. The existing MIT reference attribution remains in
+polaris-media-compat.c and LICENSE.hackios.

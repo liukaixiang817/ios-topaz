@@ -34,6 +34,74 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0132 exact media EXEC candidate source READY; PHONE LIVE0131, human boot recovered; wallpaper stillwhite
+
+- Human confirms0131 boot recovered. Fresh0132/current-wallpaper-capture-0001
+  worker76141 ENDEDexit0: AddNewWallpaper labels/categories and WHITE cards;
+  onlyAstronomy remainsFeatured. LatestCollectionsPoster timeout is actual
+  TileCreate/MachRPC -> remoteTileSessionCreate -> CMPhoto tile availability,
+  not prior0129 DecodeTilewait. Subsequentmedia IOSurfaces doNOTprove completed
+  HEIC decode. Noactualmediactor/prewarm visible inoriginalstdio; no rootcause
+  isolation, no wallpaper success claimed. Sourcehost2ef/nativea550/CI411742/
+  kerneld51/image1a9394 remain CURRENTLIVE0131; image/payload CONSUMED. Frozen
+  COPY372 /private/tmp/polaris-runtime-0131-frozen-0001 +ORIGINAL0131 manifests
+  controls currentRAM despite newsource edits. AllUSBworkersENDED.
+- New0132 source0903 follows pinnedDipper kernel8e61187/userland906425b at
+  post-launchd exec, but only exactoriginalmediaserverd target vnode/root/
+  owner/mode/188112B/wholeSHA and verified20F66 overlay. Adds only missing
+  fixedDYLD/compat env afterobserving preenvbits; duplicate/foreignvalues,
+  size/NCARGS/copyerrors refuse. PID1/otherexec/argv/jobProgram/stdio/services
+  unchanged. Existingmedia identity refactored into borrowed-vnode helper;
+  no GPU role/generic injection/sysctl introduced. Actualfiltering hypothesis
+  remainsunproven until physical preenv/constructor/HEVC observation.
+- Media hook now waits foractualCMCaptureimage before one fullUUID/ABI/IMP/
+  184B SHA attempt. Fixed88B uniqueprivate notice sink is exactmedia-only,
+  max160/boot, no commands/copyout/hardware; ctor/image/identity/install/call
+  and TWO ownprocess snapshots90/240s, max64threads/8PCs, no suspend/resume/
+  taskforpid, bounded self-read with errors retained. Originalstdio kept.
+- Newgraphics-media-exec-0002 bundle8d04787c835eb194569fa5901247862f641b00b2952b751b5bee3b736a5b61d8;
+  ONLYinjector differs from0131, five otherbinaries identical. StrictAArch64
+  media compile +THREE actualCI-header nativeobjects PASS. Fouractualfunction
+  ASAN/UBSAN mediaidentity/exec/notice tests andtwoexactbundle tests PASS;
+  0903 fuzz0 actualfiles match. No nativeGPU/CPU/WLED/UFS/thermal changes.
+  Exact0899/hosthashpin updated, no loosenedgate. NewCI/artifact/models/image/
+  boot NOTyetready. Need sourcecommitpushONEnecessaryCI, thenchanged-impact
+  candidate checks; strictLIVE0131 exit -> independentFASTBOOT -> ONEnewRAM.
+- uefi-ios automation refreshed toactualLIVE0131/userbootconfirmed/gallerywhite.
+  No pending humanpower/connectionquestion; don'trepeat0130 blackscreen prompts.
+
+### 0131 actual ORIGINALmedia exec/identity/dyld PASS; UI stillstartup, no desktop claim
+
+- Capture0001 worker93534 ENDED: realmediaserverdexec; exactoriginal file
+  uid0/gid0/mode100755/188112B/match1/hash1/read0/resid0; MEDIA dyldpathbit2
+  status0. Actualmedia joblaunch recovered afterrestoringoriginalProgram/stdio.
+  NewCtor/prewarm is notdirectlyobserved because originalstdio retained; doNOT
+  claimmethodinstalled/HEVCcompletion. Proofactual-media-original-launch-and-
+  identity-proof.json. Sourcehost2ef/currentLIVE0131 d51/image1a9394 consumed.
+- Screenshot stillstartupconsole, GLdesktopL4/maskff/submissions13/import1;
+  WLEDinitial2reads/0writes/module128/IRQ2/error0. NeedactualUIframe thenpicker.
+  AllUSBworkersENDED, no newsource edits or extraCI/boot. Frozen0131 copyready.
+
+### 0131 ONEexactpayload ACKed; worker59509 ENDED; actual newstartup/UI capture NEXT
+
+- runtime-native-boot-0001/result.json PASS/ONEexactpayload ACK06:07:47.612759UTC,
+  worker59509 ENDEDexit0. PHONE currentLIVE0131 kernel d51/sourcehost2efbe05 /
+  image1a9394..., NOTFASTBOOT/old0130. Noactualnewdesktop/media/HEVC/wallpaper
+  resultyet. AllUSBworkersENDED; nexttargetedcapture, recoverUI beforepicker.
+- Full372 image evidence COPY/hashchecked to /private/tmp/polaris-runtime-0131-
+  frozen-0001 beforeanyfuture source edits; current-live0131-runtime-source-freeze.json.
+  Currentunchanged2efcontroller or copiedfrozenone +ORIGINAL0131 boot/image/driver
+  controls currentRAM. BootCONSUMED, no image/payload replay, normalexitonly.
+
+### 0131 ONEnewRAM image ACKed/CONSUMED; sourcehost2efbe05; native payload startup next
+
+- Hostsource2efbe05 committed/pushed. Newimage1a93942ca562cdc1263143eacc3a4bce429ea304cc310fba151ce5a86f96b123
+  ONE ACK2026-10-31T06:06:58.134077+00:00;0131phone-media-original-job-0001/boot.json CONSUMED.
+  CurrentPHONE new0131UEFI/native session, NOTFASTBOOT/old0130. Sequentialstate/
+  ONEexactpayload processstarted; mustEND beforeanotherUSB. No newactualdesktop/
+  media/HEVC/wallpaper success yet. Current2efbe05controller +original0131
+  image0001/driver0001 manifests; neverreplayoldimage/payload or mixcontrollers.
+
 ### 0131 ORIGINAL-media-job candidate READY; PHONE actualFASTBOOT; ONEnewboot next
 
 - Sourcea550/CI41174275124/job124458470561 SUCCESS, actualkernel

@@ -1,0 +1,262 @@
+--- a/bsd/dev/polaris_gpu_overlay.c
++++ b/bsd/dev/polaris_gpu_overlay.c
+@@ -33,6 +33,7 @@
+ bool polaris_gpu_caller_allowed(void);
+ bool polaris_poster_preview_allowed(void);
+ bool polaris_media_compat_allowed(void);
++bool polaris_media_image_allowed(vnode_t image);
+ bool polaris_extension_table_verified(void);
+ uint32_t polaris_gpu_caller_kind(void);
+ static uint32_t pgpu_started,pgpu_ready,pgpu_poster_preview,pgpu_extension_table;
+@@ -196,54 +197,7 @@
+             (unsigned long long)attr.va_data_size,ok,hashed,read_error,resid);
+     if(expected)vnode_put(expected);vnode_put(image);return ok;
+ }
+-/* Independent media dyld identity; never a GPU caller/reporter. */
+-bool polaris_media_compat_allowed(void)
+-{
+-    if(!polaris_gpu_overlay_ready() ||
+-       !__atomic_load_n(&pgpu_poster_preview,__ATOMIC_RELAXED) ||
+-       !polaris_ram_overlay_allowed())return false;
+-    char name[32]={0};
+-    proc_name(proc_pid(current_proc()),name,sizeof(name));
+-    if(strcmp(name,"mediaserverd"))return false;
+-    vnode_t image=proc_getexecutablevnode(current_proc());
+-    if(!image)return false;
+-    struct vnode_attr attr={0};VATTR_INIT(&attr);
+-    VATTR_WANTED(&attr,va_uid);VATTR_WANTED(&attr,va_gid);
+-    VATTR_WANTED(&attr,va_mode);VATTR_WANTED(&attr,va_data_size);
+-    bool ok=vnode_isreg(image) && (vfs_flags(vnode_mount(image))&MNT_ROOTFS) &&
+-        !vnode_getattr(image,&attr,vfs_context_kernel()) &&
+-        VATTR_IS_SUPPORTED(&attr,va_uid) && VATTR_IS_SUPPORTED(&attr,va_gid) &&
+-        VATTR_IS_SUPPORTED(&attr,va_mode) && VATTR_IS_SUPPORTED(&attr,va_data_size) &&
+-        attr.va_uid==0 && attr.va_gid==0 && (attr.va_mode&07777)==0755 &&
+-        attr.va_data_size==188112;
+-    vnode_t expected=NULLVP;
+-    if(ok)ok=!vnode_lookup("/usr/sbin/mediaserverd",
+-        VNODE_LOOKUP_NOFOLLOW|VNODE_LOOKUP_NOCROSSMOUNT,&expected,vfs_context_kernel());
+-    ok=ok && expected==image;
+-    int read_error=0,resid=0;bool hashed=false;
+-    if(ok) {
+-        /* Bind the genuine0:0/0755 metadata and all188112 original bytes.
+-         * Never chmod or replace the Apple executable. */
+-        static const uint8_t hash[32]={
+-            0x35,0xd7,0x6b,0xbe,0x90,0xe8,0x4c,0x6d,0x45,0xb6,0x63,0x62,0x1c,0x52,0x3d,0xd6,
+-            0x41,0x9a,0x7f,0x24,0x81,0x4c,0x2b,0x53,0x7e,0x69,0xaf,0xe1,0x38,0x11,0x8e,0x20};
+-        void *data=kalloc_data(188112,Z_WAITOK);
+-        if(!data)ok=false;
+-        else {
+-            vfs_context_t ctx=vfs_context_kernel();
+-            read_error=vn_rdwr(UIO_READ,image,(caddr_t)data,188112,0,UIO_SYSSPACE,
+-                0,vfs_context_ucred(ctx),&resid,vfs_context_proc(ctx));
+-            hashed=!read_error && !resid && pgpu_digest(data,188112,hash);
+-            ok=hashed && polaris_ram_overlay_allowed();kfree_data(data,188112);
+-        }
+-    }
+-    static uint32_t reports;
+-    if(__atomic_fetch_add(&reports,1,__ATOMIC_RELAXED)<8)
+-        printf("POLARIS MEDIA ID: uid%u gid%u mode%o bytes%llu match%d hash%d read%d resid%d\n",
+-            (unsigned)attr.va_uid,(unsigned)attr.va_gid,(unsigned)attr.va_mode,
+-            (unsigned long long)attr.va_data_size,ok,hashed,read_error,resid);
+-    if(expected)vnode_put(expected);vnode_put(image);return ok;
+-}
++#include "polaris-media-admission.h"
+ uint32_t polaris_gpu_caller_kind(void)
+ {
+     /* backboardd runs as mobile on20H392. UID/admin checks alone either
+--- a/bsd/kern/sweet_amfi.c
++++ b/bsd/kern/sweet_amfi.c
+@@ -378,6 +378,7 @@
+ extern bool polaris_extension_table_verified(void);
+ extern void polaris_gpu_loader_policy(int error);
+ #include <dev/polaris-gl-status.h>
++#include <dev/polaris-media-status.h>
+ extern bool polaris_gpu_record_test(unsigned actor,const struct pgpu_test_notice *);
+ extern bool polaris_gpu_record_crash(const struct pgpu_crash *,uint32_t pid);
+ /* Apple's dyld1066 policy bit1 accepts DYLD_INSERT_LIBRARIES. No interpose,
+@@ -420,9 +421,32 @@
+     }
+     return error;
+ }
++/* Fixed diagnostic sink, exact original mediaserverd only. No GPU role,
++ * command, copyout, pointer dereference, target read or hardware operation. */
++static int polaris_media_diagnostic(user_addr_t arg)
++{
++    struct polaris_media_notice notice;
++    int error=copyin(arg,&notice,sizeof(notice));if(error)return error;
++    if(notice.magic!=PMD_MAGIC || notice.bytes!=sizeof(notice) ||
++       notice.kind<PMD_ENTRY || notice.kind>PMD_SAMPLER ||
++       (notice.kind==PMD_THREAD && (notice.detail>PMD_PCS ||
++        (notice.index>>16)<1 || (notice.index>>16)>2 || (notice.index&65535)>=PMD_THREADS)))return EINVAL;
++    for(unsigned i=0;i<PMD_PCS;i++)if(notice.pc[i]>=UINT64_C(0x1000000000000))return EINVAL;
++    static uint32_t reports;
++    if(__atomic_fetch_add(&reports,1,__ATOMIC_RELAXED)>=PMD_LIMIT)return EAGAIN;
++    printf("POLARIS MEDIA NOTE: kind%u status%d index%u detail%u pcs %llx %llx %llx %llx %llx %llx %llx %llx\n",
++        notice.kind,notice.status,notice.index,notice.detail,
++        notice.pc[0],notice.pc[1],notice.pc[2],notice.pc[3],notice.pc[4],notice.pc[5],notice.pc[6],notice.pc[7]);
++    return 0;
++}
+ static int polaris_gl_dyld_policy(struct proc *p, int call, user_addr_t arg)
+ {
+     if(call==0x60)return polaris_extension_boot_state(p,arg);
++    if(call==PMD_CALL) {
++        if(proc_isinitproc(p) || !polaris_gpu_overlay_ready() ||
++           !polaris_media_compat_allowed())return ENOPOLICY;
++        return polaris_media_diagnostic(arg);
++    }
+     /* Only the verified, opt-in RAM overlay's window-server executable may
+      * load its bridge. Other processes/policies keep their previous result. */
+     /* __mac_syscall returns ENOPOLICY when this named policy is absent.
+--- a/bsd/kern/kern_exec.c
++++ b/bsd/kern/kern_exec.c
+@@ -5568,6 +5568,56 @@
+  * Note:	The argument and environment vectors are user space pointers
+  *		to arrays of user space pointers.
+  */
++#if defined(POLARIS_RAM_ONLY)
++extern bool polaris_gpu_overlay_ready(void);
++extern bool polaris_media_image_allowed(vnode_t image);
++/* Narrow equivalent of pinned Dipper's post-launchd exec injection. No sysctl,
++ * configurable paths, wrappers, argv/job/stdio changes, or other executables.
++ * Entire original Apple target/root/owner/hash and exact overlay must match. */
++static int
++exec_polaris_media_environment(struct image_params *imgp,int pointer_bytes)
++{
++    if(!imgp || !imgp->ip_vfs_context ||
++       !vfs_context_proc(imgp->ip_vfs_context) || proc_isinitproc(vfs_context_proc(imgp->ip_vfs_context)) ||
++       !(imgp->ip_flags&IMGPF_IS_64BIT_ADDR) || (imgp->ip_flags&IMGPF_INTERPRET) ||
++       pointer_bytes!=8 || !imgp->ip_ndp || !polaris_gpu_overlay_ready())return 0;
++    struct componentname *cn=&imgp->ip_ndp->ni_cnd;
++    if(cn->cn_namelen!=12 || !cn->cn_nameptr || memcmp(cn->cn_nameptr,"mediaserverd",12) ||
++       !polaris_media_image_allowed(imgp->ip_vp))return 0;
++    const char *wanted[]={"DYLD_INSERT_LIBRARIES=/usr/lib/libPolarisInject.dylib","POLARIS_MEDIA_COMPAT=1"};
++    const size_t keybytes[]={22,21};
++    /* key lengths include '='; never print any environment value. */
++    bool seen[2]={false,false};int error=0;unsigned added=0;
++    char *p=imgp->ip_endargv,*end=imgp->ip_strendp;
++    if(!p || !end || end<p || (size_t)(end-p)>128*1024 || (imgp->ip_envc<0 || imgp->ip_envc>512))error=E2BIG;
++    if(!error)for(int i=0;i<imgp->ip_envc;i++) {
++        size_t remain=(size_t)(end-p),n=strnlen(p,remain);
++        if(n==remain){error=EINVAL;break;}
++        for(unsigned k=0;k<2;k++)if(n>=keybytes[k] && !memcmp(p,wanted[k],keybytes[k])) {
++            if(seen[k] || strcmp(p,wanted[k])){error=EINVAL;break;}
++            seen[k]=true;
++        }
++        if(error)break;p+=n+1;
++    }
++    if(!error && p!=end)error=EINVAL;
++    /* Preflight both strings, both pointers and the existing env NULL slot.
++     * exec_add_user_string still accounts all bytes and propagates errors. */
++    size_t strings=0,pointers=8;
++    for(unsigned k=0;k<2;k++)if(!seen[k]){strings+=strlen(wanted[k])+1;pointers+=8;}
++    if(!error && (imgp->ip_argspace<0 || imgp->ip_strspace<0 ||
++        (size_t)imgp->ip_argspace<strings+pointers || (size_t)imgp->ip_strspace<strings))error=E2BIG;
++    if(!error)for(unsigned k=0;k<2;k++)if(!seen[k]) {
++        error=exec_add_user_string(imgp,CAST_USER_ADDR_T(wanted[k]),UIO_SYSSPACE,TRUE);
++        if(error)break;
++        imgp->ip_argspace-=8;imgp->ip_envc++;added|=1u<<k;
++    }
++    static uint32_t reports;
++    if(__atomic_fetch_add(&reports,1,__ATOMIC_RELAXED)<8)
++        printf("POLARIS MEDIA EXEC: original target verified preenv%u/%u added%u status%d\n",seen[0],seen[1],added,error);
++    return error;
++}
++#endif
++
+ __attribute__((noinline))
+ static int
+ exec_extract_strings(struct image_params *imgp)
+@@ -5740,6 +5790,11 @@
+ 		imgp->ip_argspace -= new_ptr_size; /* to hold envv[] entry */
+ 		imgp->ip_envc++;
+ 	}
++
++#if defined(POLARIS_RAM_ONLY)
++    error=exec_polaris_media_environment(imgp,new_ptr_size);
++    if(error)goto bad;
++#endif
+ 
+ 	/* Save space for envv[] NULL terminator */
+ 	if (imgp->ip_argspace < new_ptr_size) {
+--- /dev/null
++++ b/bsd/dev/polaris-media-status.h
+@@ -0,0 +1,19 @@
++/* Fixed, bounded, media-owned diagnostics; no commands or user strings. */
++#ifndef POLARIS_MEDIA_STATUS_H
++#define POLARIS_MEDIA_STATUS_H
++#include <stdint.h>
++#define PMD_CALL 0x504d4401
++#define PMD_MAGIC 0x504d4431u
++#define PMD_LIMIT 160u
++#define PMD_THREADS 64u
++#define PMD_PCS 8u
++enum { PMD_ENTRY=1, PMD_IMAGE=2, PMD_IDENTITY=3, PMD_INSTALLED=4,
++       PMD_CALLED=5, PMD_SNAPSHOT=6, PMD_THREAD=7, PMD_SAMPLER=8 };
++struct polaris_media_notice {
++    uint32_t magic,bytes,kind;
++    int32_t status;
++    uint32_t index,detail;
++    uint64_t pc[PMD_PCS];
++};
++_Static_assert(sizeof(struct polaris_media_notice)==88,"media notice ABI");
++#endif
+--- /dev/null
++++ b/bsd/dev/polaris-media-admission.h
+@@ -0,0 +1,57 @@
++/* Exact media target identity, shared by pre-exec and runtime admission. */
++#ifndef POLARIS_MEDIA_ADMISSION_H
++#define POLARIS_MEDIA_ADMISSION_H
++/* Borrowed target vnode: exact media dyld identity, never a GPU role.
++ * Also used before exec, when current_proc still names xpcproxy/launchd. */
++bool polaris_media_image_allowed(vnode_t image)
++{
++    if(!polaris_gpu_overlay_ready() ||
++       !__atomic_load_n(&pgpu_poster_preview,__ATOMIC_RELAXED) ||
++       !polaris_ram_overlay_allowed())return false;
++    if(!image)return false;
++    struct vnode_attr attr={0};VATTR_INIT(&attr);
++    VATTR_WANTED(&attr,va_uid);VATTR_WANTED(&attr,va_gid);
++    VATTR_WANTED(&attr,va_mode);VATTR_WANTED(&attr,va_data_size);
++    bool ok=vnode_isreg(image) && (vfs_flags(vnode_mount(image))&MNT_ROOTFS) &&
++        !vnode_getattr(image,&attr,vfs_context_kernel()) &&
++        VATTR_IS_SUPPORTED(&attr,va_uid) && VATTR_IS_SUPPORTED(&attr,va_gid) &&
++        VATTR_IS_SUPPORTED(&attr,va_mode) && VATTR_IS_SUPPORTED(&attr,va_data_size) &&
++        attr.va_uid==0 && attr.va_gid==0 && (attr.va_mode&07777)==0755 &&
++        attr.va_data_size==188112;
++    vnode_t expected=NULLVP;
++    if(ok)ok=!vnode_lookup("/usr/sbin/mediaserverd",
++        VNODE_LOOKUP_NOFOLLOW|VNODE_LOOKUP_NOCROSSMOUNT,&expected,vfs_context_kernel());
++    ok=ok && expected==image;
++    int read_error=0,resid=0;bool hashed=false;
++    if(ok) {
++        /* Bind the genuine0:0/0755 metadata and all188112 original bytes.
++         * Never chmod or replace the Apple executable. */
++        static const uint8_t hash[32]={
++            0x35,0xd7,0x6b,0xbe,0x90,0xe8,0x4c,0x6d,0x45,0xb6,0x63,0x62,0x1c,0x52,0x3d,0xd6,
++            0x41,0x9a,0x7f,0x24,0x81,0x4c,0x2b,0x53,0x7e,0x69,0xaf,0xe1,0x38,0x11,0x8e,0x20};
++        void *data=kalloc_data(188112,Z_WAITOK);
++        if(!data)ok=false;
++        else {
++            vfs_context_t ctx=vfs_context_kernel();
++            read_error=vn_rdwr(UIO_READ,image,(caddr_t)data,188112,0,UIO_SYSSPACE,
++                0,vfs_context_ucred(ctx),&resid,vfs_context_proc(ctx));
++            hashed=!read_error && !resid && pgpu_digest(data,188112,hash);
++            ok=hashed && polaris_ram_overlay_allowed();kfree_data(data,188112);
++        }
++    }
++    static uint32_t reports;
++    if(__atomic_fetch_add(&reports,1,__ATOMIC_RELAXED)<8)
++        printf("POLARIS MEDIA ID: uid%u gid%u mode%o bytes%llu match%d hash%d read%d resid%d\n",
++            (unsigned)attr.va_uid,(unsigned)attr.va_gid,(unsigned)attr.va_mode,
++            (unsigned long long)attr.va_data_size,ok,hashed,read_error,resid);
++    if(expected)vnode_put(expected);return ok;
++}
++bool polaris_media_compat_allowed(void)
++{
++    char name[32]={0};proc_name(proc_pid(current_proc()),name,sizeof(name));
++    if(strcmp(name,"mediaserverd"))return false;
++    vnode_t image=proc_getexecutablevnode(current_proc());
++    if(!image)return false;
++    bool ok=polaris_media_image_allowed(image);vnode_put(image);return ok;
++}
++#endif
