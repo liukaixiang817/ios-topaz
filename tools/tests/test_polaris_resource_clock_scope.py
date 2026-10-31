@@ -31,9 +31,23 @@ class ResourceClockScope(unittest.TestCase):
                         a.resources_clock_scope(dict(metadata,inputs={name:'x'}))
 
     def test_unsealed_actual_policy_refuses_the_complete_new_scope(self):
-        self.assertIsNone(a.RESOURCES_CLOCK_0142)
-        with self.assertRaisesRegex(ValueError,'separately committed-source0142'):
-            a.resources_clock_scope(self.enabled()[0])
+        with patch.object(a,'RESOURCES_CLOCK_0142',None):
+            with self.assertRaisesRegex(ValueError,'separately committed-source0142'):
+                a.resources_clock_scope(self.enabled()[0])
+
+    def test_production_seal_keeps_the_entire_reviewed_input_set(self):
+        policy=a.RESOURCES_CLOCK_0142
+        self.assertEqual(policy['firmware_source'],'9f44c3ddb52da592a391dbbe3eddd575eac0ec2c')
+        self.assertEqual(len(policy['inputs']),57)
+        d=dict(kernel_sha256=policy['kernel'],payload_sha256=policy['payload'],
+            inputs=copy.deepcopy(policy['inputs']),wifi_CPU0_normal_nc_firstread_readonly=True,
+            audio_I2C_cache_readonly=True,wifi_CPU0_firstread_readonly=False)
+        d.update(copy.deepcopy(a.RESOURCES_CLOCK_PHYSICAL_FIELDS))
+        self.assertTrue(a.resources_clock_scope(d))
+        for path in policy['inputs']:
+            bad=copy.deepcopy(d);bad['inputs'][path]='changed'
+            with self.subTest(path=path):
+                with self.assertRaises(ValueError):a.resources_clock_scope(bad)
 
     def test_synthetic_seal_is_exact_typed_source_and_payload_bound(self):
         d,policy=self.enabled()

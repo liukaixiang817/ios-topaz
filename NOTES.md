@@ -67,8 +67,12 @@ early samples only. On0029 the human already confirmed boot complete and said
   stickyoverflow/fullsnapshot allocation prevents truncating new raw reports.
   Readyproof20475c23... binds actual sources/artifacts; parent source review
   also covers full HAL-IsOn11instructions/DAL no-op locks/uint64 ClockId ABI.
-  Host0142 policy is still fail-closed/unsealed pending this source commit.
-- NEXT seal exact57/source/82b3/b31, commit host, run only two affected actual
+  FirmwareSOURCE9f44c3ddb52da592a391dbbe3eddd575eac0ec2c committed/pushed.
+  Parentreview968a84e0... verifies75 source/artifact hashes. Host0142 policy
+  now seals exact57/source9f44/82b3/b31; 26 related tests PASS including each
+  of57 changed-input refusals. DefaultOFF I2C label clarification b96f31e3...
+  retains oldpaic body/call/record; no original proof/manifest rewritten.
+- NEXT commit host seal, run only two affected actual
   wholeEFI-XNU terminal models, ONEpackage/wholecodec/audit/freeze, then one
   temporary image/exactpayload and real raw capture. Reuse controlled fresh
   0139 ed39/c7d3 RO+RAMCOW interval; no Android known. No userdata writes.
