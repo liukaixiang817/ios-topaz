@@ -34,49 +34,47 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0146 last actualLIVE18:02; NEW0147 own RPMh RAM candidate OFFLINE READY/frozen
+### CURRENT0147 nativeLIVE18:23; actualRPMh zero-call BASELINE refusal; NEW0148 shared-context correction verified offline
 
-- ONLY Wi-Fi, serial parent; allchildren/audio/camera staySTOPPED. Actual0146
-  controller/consumedimage/payload/UTCcount1 unchanged, no newUSB this milestone.
-  The following0146 physical189-node/source/UI results remain latest actual.
-- New defaultOFF --wifi-rpmh-readonly-pe binds exact original81 RpmhDxe whole
-  b718efb6/61440B to five immutable hashes/relocations/protocolGUID+200B table.
-  ActualEFI prepare hook is after all Clock allocations/context verification,
-  BEFORE firstGCD; only2LocateProtocol+2GetMap under originalFP/arch/TPL guards.
-  No RPMh API/Init/IsDrvValid/client/vote/SMC/MMIO/alloc/free/provider execution.
-- Two bounded source-ABI RAM snapshots: initflag+liveconfig/count/DRVrows,
-  modepointers/24B raw, perDRV24B TCSstates, originalfive40B requestqueueheaders.
-  Max4DRV/16TCS/4modes, raw19264B retains allpartialbytecounts+originalmaps/
-  protocoltables/5hashes perpass. Initflag1+missingdynamicstate refusesNOT_READY;
-  flag1 alone cannot prove initcompletion. Whole200ms/identity/ownedRAM/time /
-  stabletwopass/UNKNOWN gates retained; UNKNOWN propagates parentnative/PON/
-  receipt block. No Init/query-loop/cleanup fallback. RAMsnapshot is NOT live
-  hardwareTCSowner, exclusiveDRV/VMID or railpermission; hardware prerequisites
-  and realMSS start/scan/join/data stillfalse.
-- New physical-body build0147/wifi/RPMh-driver-ON-0001 is12f8acd92e15e153e541f9
-  ac7d250f62ac5d3aaf138706cdaa88b46155cd51b4/3078656B/69inputs. New22ASAN/UBSAN
-  softwarestate/source/partial/UNKNOWN cases and actualcombinedcoordinator
-  AArch64COFF+MachO(maxframe1024)/fullEFI pass, proof
-  4de59597ddac76f58d189ecdd2708533731c742f77df57f0b3dd934c4779d07d.
-  Software servicepeer/originalPEasDATA is NOT physicalRPMh/MSS/radio.
-- FirmwareSOURCEdc5483d45b35a05a61d439869082c18e0e00e670 committed. Bothaffected
-  wholeEFI-XNU terminalmodels SERIALPASS19/69inputs/9literalint1 compiledout
-  markers; physicalRPMh bodies/records absent inactualpreprocessedmain. NEW
-  host0147exactprofile105typed+94resource fields admits actualmodels+fresh0145
-  root/CI with no mocks; fourmalformedRPMhmarkers reject. Old0143..0146
-  exactliterals remainunchanged. HOSTcf73d66 committed/pushed; 24affectedhost
-  checksPASS. Independentnewwhole81image 424815dd91307f8a3d54cd648a862c0acebd29d294adebfb94c620e018912468 /
-  5986304B, unmodifiedEDK2 whole30560456B exactdecodePASS, oldmanifest /
-  81FW/SimpleInit/BootShim/DTB unchanged. Independentfrozen0147 COPY783files+
-  10COMMIT_ONLY/365committedsources/69compiled, defaultofflinehelperPASS;
-  freeze63f94ee86f7f26037da415d279d4b641b63b4286b4f3c7d7891991b0d945c8cc.
-  NEXTcurrentfrozen0146 normalnative drain+fullrawreceipt+independentFASTBOOT,
-  newsource-boundtransitionreview then ONLY0147boot-RPMh-runtime-once.py
-  --boot-once. ONE image/payload stillunused, realRPMh notyetobserved.
-  No nativechange/CI/download; preserve7d24/63cb/f790/7400 /
-  all existingCPU/GPU/WLED/storageguards. NEXTfinish affectedmodels and NEW
-  committed-source hostscope/package/freeze before physicalbaseline, not old
-  manifest/profile reuse. Currentphone only frozen0146 can laterdrain normally.
+- Supersedes old0146LIVE/0147inflight/unusedREADY. Old0146 normalexit43081 /
+  independentFASTBOOT18:21:27.752625Z complete; rawredecodednativecookie
+  3855561651/seq1mode2phase3error0/epochs0/caps80000003/finalWLED32error0.
+- ONE0147image12652 ENDED0 sent18:21:43.421613Z/source688b8ff/image424815dd
+  91307f8a3d54cd648a862c0acebd29d294adebfb94c620e018912468/5986304B. Actual
+  waiting-payload thenONE63cbpayload54091 ENDED0 ACK18:23:16.389264Z /
+  transfer32.95667s/bootcall16.95156s. Sharedoriginalrepo0147/phone-NPA-runtime-
+  0001/boot.json CONSUMED, no replay. ONLY /private/tmp/polaris-runtime-0147-
+  frozen-0001/tools/polaris-uefi-wled-runtime.py withfrozen0147driver0001 /
+  image0001/sharedbootrecord controls currentphone; no old0146/editedclient.
+- Startupcapture6825 ENDED0 at18:23:27.630117Z/kernel-entered. ActualRPMh
+  RAW_V1 full19264B SHA2e09099a7d2b159570ba27359b6f82020033de94455a8a0f24
+  e99aba7d482a60: attempted1/error2BASELINE/unknown0/outstanding0/issued0 /
+  returned0/owner0/stable0. Zero originalBS/RPMh API calls, no liveRPMh provider/
+  initialization/DRV/TCS conclusion. PrioractualNPA189x2/stable1/4returned /
+  unknown0 and GCDerror0. Exact source+new executablecombined NPA->RPMh
+  regression isolates duplicate pgcd_open: NPA already consumed one shared
+  open ticket; RPMh wrongly tried opening it again. This is NOT owner change
+  or absent provider. Actualrefusalproof at0147/wifi/actual-RPMh-namespace-
+  0001/actual-zero-call-refusal-proof.json. Do not reinterpret as liveinit0.
+- New0148 correction reuses ONLY alreadyopen, stage2, phase1, error0/UNKNOWN0 /
+  no outstanding/no prior pagequery/prestart, exactspentticket/result context;
+  standalone opens once. Never reset/reopen ticket or weaken originalGCD /
+  mapkey/hash/FP/arch/TPL/200ms/UNKNOWN gates. Full executableNPA->RPMh chain
+  now passes preserving sameGCDmap/key/ticket and8returnedoriginalservices;
+  six finished/failed/phase/postquery/forgedticket contexts reject beforecalls.
+  Old22+7new=29ASAN/UBSAN, actualCOFF/MachO/fullEFI pass, driver601e955d /
+  3078656B/69inputs, proofd5475fdf6254edc55b5f8ef614cc4a9b482f013ef5db670f2
+  c13571f4eb65bbc. Twoaffectedterminalmodels INFLIGHT; NEW0148host/profile /
+  package/freeze NOTREADY. Frozen0147/oldmanifests nevermodified/retried.
+- UTC0147 alreadyONESET and independentUTC-status-0001 completed, NEVER SET
+  again; see actualresult forcookie/count. CurrentUI/battery/WLED finalsample
+  notyetrefreshed afterstartup; no newlockscreen/60Hz claim. AllUSBended,
+  modelworker99910INFLIGHT. ONLYWi-Fi/allchildren/audio/cameraSTOPPED.
+- No nativechange/CI/download; keep7d24/63cb/f790/7400/CPU/GPU/WLED. Latest
+  fresh0145root/NV a04c/2549 continuescontrolledRO/RAMCOW. No MSS/SMC/MMIO /
+  client/vote/NVserve/radio. NEXTfinish correctedexactsource/model/admission /
+  package/freeze, thenonlyfrozen0147 normalrawdrain+independentFASTBOOT before
+  one NEW0148 image; do not repeatgenericinventory/oldmodels/opticalcycles.
 
 ### CURRENT0146 nativeLIVE18:02 / actual complete189 NPA two-pass SUCCESS; CX/MX unresolved, Wi-Fi not yet working
 

@@ -43,7 +43,7 @@ def main():
             '-Wno-unused-function', '-fsanitize=address,undefined', *inc,
             str(ROOT/'tools/polaris-wifi-rpmh-test.c'), '-o', str(tmp/'test')])
         host = json.loads(run('ASAN-UBSAN-run', [str(tmp/'test'), str(core), str(npa), str(rpmh)]))
-        assert host['checks'] == 22 and host['raw_bytes'] == 19264 and host['snapshot_bytes'] == 4000
+        assert host['checks'] == 29 and host['raw_bytes'] == 19264 and host['snapshot_bytes'] == 4000
         wrapper = out/'actual-coordinator.c'
         wrapper.write_text('#include <stdint.h>\nvoid text(const char *);void report(const char *,uint64_t);\n'
             '#include "uefi-xnu-config.h"\n#include "uefi-audio-clock-gcd-query.h"\n'
@@ -57,7 +57,7 @@ def main():
                 '-mgeneral-regs-only', '-Wall', '-Wextra', '-Werror', '-Wno-unused-function',
                 '-Wframe-larger-than=1024', *inc, '-c', str(wrapper), '-o', str(out/('actual-coordinator.'+suffix))])
     files = ['tools/polaris-wifi-rpmh-test.c', 'tools/polaris-wifi-rpmh-check.py', 'tools/polaris-wifi-npa-test.c']
-    proof = dict(passed=True, scope='22 software source/init/DRV/TCS/lifetime checks plus actual AArch64 coordinator objects and complete EFI link; NO physical RPMh/firmware execution',
+    proof = dict(passed=True, scope='29 software source/init/DRV/TCS/lifetime including executable combined NPA-to-RPMh and spent-context refusals checks plus actual AArch64 coordinator objects and complete EFI link; NO physical RPMh/firmware execution',
         host=host, driver_sha256=manifest['sha256'], driver_bytes=manifest['bytes'],
         driver_manifest_sha256=sha(driver/'manifest.json'), full_compiled_inputs_match_current=True,
         new_native_CI=False, phone_USB=False, live_RPMh_state_captured=False,

@@ -149,6 +149,22 @@ static inline int pwrph_leave(struct pgcd_context *g,struct pwrph_result *r,unsi
     if(!pgcd_service_leave(g,&r->guard[operation],returned)) { pwrph_fail(r,PWRPH_GUARD,1); return 0; }
     r->outstanding=pwrph_ticket.outstanding=0; paic_actual_order(0); return 1;
 }
+/* Share the one opened original-service context. NPA has already consumed
+ * its open ticket in the real combined path. Never reopen/reset that ticket,
+ * and never borrow a finished/failed/post-query context. Each RPMh service
+ * still enters the unchanged source/owner/FP/architecture/TPL guard. */
+static inline int pwrph_context_ready(struct pgcd_context *g)
+{
+    if(!g || !g->record || !g->ticket || g->stage!=2) return 0;
+    if(!g->opened && !pgcd_open(g)) return 0;
+    const struct pgcd_result *r=g->record;
+    if(g->finished || pgcd_uncertain(g) || r->error || r->phase!=1 ||
+       !r->self_bound || !r->attempted || g->ticket->spent!=1 ||
+       g->ticket->result!=(uintptr_t)r || r->pre_mask || r->post_mask || r->prestart_count) return 0;
+    for(unsigned p=0;p<2;p++) for(unsigned k=0;k<PGCD_PAGES;k++)
+        if(r->query[p][k].issued) return 0;
+    return 1;
+}
 static inline int pwrph_collect(const struct pwrph_io *ops,unsigned stage,
     const struct paic_result *enumeration,struct pgcd_context *g,
     struct pwrph_result *r,struct pwrph_work *w)
@@ -160,7 +176,7 @@ static inline int pwrph_collect(const struct pwrph_io *ops,unsigned stage,
     if(!ops || !ops->locate || !ops->map || !io || !io->arch || !io->identity || !io->order || !io->system || !io->system->boot ||
         !enumeration || enumeration->error || enumeration->owner_matches!=1 || !enumeration->cache_consistent ||
         enumeration->handle_count==0 || enumeration->handle_count>PAIC_HANDLES ||
-        !io->arch(io->context,&r->before) || !paic_arch_admitted(&r->before) || !g || !pgcd_open(g)) {
+        !io->arch(io->context,&r->before) || !paic_arch_admitted(&r->before) || !pwrph_context_ready(g)) {
         pwrph_fail(r,PWRPH_BASELINE,g&&pgcd_uncertain(g)); return 0;
     }
     static const efi_guid protocol={0xe1d0b573,0xf29f,0x495d,{0x93,0x52,0xca,0x0d,0xd4,0x2a,0x0a,0x74}};

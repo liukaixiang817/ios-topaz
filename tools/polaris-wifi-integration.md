@@ -312,3 +312,16 @@ It never calls RPMh Init, IsDrvValid, Create/Delete, sends a vote, accesses MMIO
 or starts MSS. Software TCS state is not hardware TCS ownership. Actual stable
 provider/config/queue evidence and the subsequent owned private-client/stop,
 MSS/authentication, memory and GLINK/RMTFS work remain required before Wi-Fi.
+
+
+Actual0147 retained a zero-call RPMh BASELINE refusal: NPA had already opened
+the same GCD service context, while the RPMh reader called pgcd_open again.
+The original GCD error stayed zero and NPA completed189 nodes twice. The0148
+fix shares only the current pre-query stage2/phase1 context, requiring the
+exact spent ticket/result, no error, outstanding operation, page query or final
+checkpoint. It never resets or reopens the ticket. Each provider observation
+still enters the unchanged original source/owner/FP/architecture/TPL guard.
+The executable combined NPA-to-RPMh regression failed before this correction
+and now passes without adding another GCD map read; six stale/forged/finished
+contexts refuse before any new service call. This corrects integration order,
+not a physical owner, RPMh initialization or Wi-Fi completion claim.

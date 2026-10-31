@@ -6,16 +6,16 @@
 #include "uefi-wifi-rpmh-readonly.h"
 static struct pwrph_result *rr;
 static struct pwrph_work *rw;
-static uint8_t *rp_original;
+static uint8_t *rp_original,*rimage;
 static unsigned rf,rcalls;
 static int rp_arch(void *ctx,struct paic_arch *a)
 { int ok=npa_arch(ctx,a);if(rf==15&&rcalls>=2)a->ticks=rr->before.ticks+3840001;return ok; }
 static int rp_locate(void *ctx,struct efi_system *sys,const efi_guid *guid,void **table,uint64_t *status)
 {
     (void)ctx;assert(sys==s&&guid->a==0xe1d0b573);rcalls++;
-    *table=npa+0xd0d8;*status=0;
+    *table=rimage+0xd0d8;*status=0;
     if(rf==1)*status=0x800000000000000eULL;
-    if(rf==2&&rcalls>2)*table=npa+0xd0e0;
+    if(rf==2&&rcalls>2)*table=rimage+0xd0e0;
     if(rf==3)put(core+0x1b098,8,8);
     if(rf==4)fault=2;
     return rf!=10;
@@ -27,7 +27,7 @@ static int rp_map(void *ctx,struct efi_system *sys,uint8_t *buffer,struct paic_m
     m->bytes=sizeof(*d);m->key=rf==5&&rcalls>3?2:1;m->stride=sizeof(*d);m->version=1;m->status=0;
     if(rf==6)d->type=7;
     if(rf==7&&rcalls>3)links[0x440]^=1; /* TCS RAM state changed */
-    if(rf==8&&rcalls>3)npa[0x1000]^=1;
+    if(rf==8&&rcalls>3)rimage[0x1000]^=1;
     if(rf==9)m->bytes=5000;
     if(rf==16&&rcalls>3)links[0x220]^=1; /* queue header changed */
     return rf!=11;
@@ -36,7 +36,7 @@ static void rp_reset(unsigned f)
 {
     npa_reset(0);rf=f;rcalls=0;pwrph_ticket.used=pwrph_ticket.outstanding=0;
     rr=(void*)nr;rw=(void*)nw;memset(rr,0,sizeof(*rr));
-    memcpy(npa,rp_original,PWRPI_IMAGE_BYTES);
+    rimage=npa;memcpy(rimage,rp_original,PWRPI_IMAGE_BYTES);
     for(unsigned j=0;j<PWRPI_RELOC_COUNT;j++)put(npa+pwrpi_relocs[j],pwfi_le(npa+pwrpi_relocs[j],8)+(uintptr_t)npa,8);
     ((struct efi_loaded*)(arena+0x188000))->bytes=PWRPI_IMAGE_BYTES;
     put(npa+0xd2e8,1,4);put(npa+0xd2f8,(uintptr_t)links,8);
@@ -84,6 +84,42 @@ int main(int argc,char **argv)
         checks++;
     }
     rp_reset(0);ops.memory.system=s;assert(!pwrph_collect(&ops,3,enumeration,c,rr,rw)&&!rcalls);checks++;
+    /* Real0147 ran NPA first, consuming the SAME original GCD open ticket.
+     * Execute that full chain here; compile-only coordinator checks missed it. */
+    npa_reset(0);self->bytes=r->self_owner.bytes=r->self_bytes=0x194000;
+    npa=arena+0x200000;memcpy(npa,npa_original,PWNPI_IMAGE_BYTES);
+    for(unsigned j=0;j<PWNPI_RELOC_COUNT;j++)put(npa+pwnpi_relocs[j],pwfi_le(npa+pwnpi_relocs[j],8)+(uintptr_t)npa,8);
+    put(npa+0x108b0,(uintptr_t)links,8);((struct efi_loaded*)(arena+0x188000))->base=npa;
+    struct pwnpa_io nops={{s,NULL,npa_arch,identity,order},locate_npa,npa_map};
+    ok=pwnpa_collect(&nops,2,enumeration,c,nr,nw);
+    if(!ok)fprintf(stderr,"combined first NPAerr%u GCD%u owner%u hash%u/%u calls%u\n",nr->error,r->error,nr->owner_matches,nr->hash_count[0],nr->hash_failed[0],bs_calls);
+    assert(ok&&nr->stable&&c->opened&&ticket->spent);
+    unsigned original_maps=maps;uint64_t original_key=r->map[0].key;
+    rimage=arena+0x214000;memcpy(rimage,rp_original,PWRPI_IMAGE_BYTES);
+    for(unsigned j=0;j<PWRPI_RELOC_COUNT;j++)put(rimage+pwrpi_relocs[j],pwfi_le(rimage+pwrpi_relocs[j],8)+(uintptr_t)rimage,8);
+    put(rimage+0xd2e8,1,4);uint8_t *heap=arena+0x1c0000;
+    put(rimage+0xd2f8,(uintptr_t)heap,8);put(rimage+0xd3e0,(uintptr_t)heap+0x40,8);put(rimage+0xd3e8,(uintptr_t)heap+0x80,8);
+    put(heap,(uintptr_t)heap+0x100,8);put(heap+0x40,(uintptr_t)heap+0x400,8);
+    for(unsigned j=0;j<5;j++)put(heap+0x108+8*j,(uintptr_t)heap+0x200+64*j,8);
+    struct efi_loaded *rp_owner=(void*)(arena+0x191000);
+    *rp_owner=(struct efi_loaded){.revision=0x1000,.system=s,.base=rimage,.bytes=PWRPI_IMAGE_BYTES,.code_type=3,.data_type=4};
+    enumeration->handle_count=2;enumeration->loaded_address[1]=(uintptr_t)rp_owner;
+    rr=(void*)(arena+0x189000);rw=(void*)(arena+0x18f000);memset(rr,0,sizeof(*rr));memset(rw,0,sizeof(*rw));
+    rf=rcalls=0;pwrph_ticket.used=pwrph_ticket.outstanding=0;ops.memory.system=s;
+    ok=pwrph_collect(&ops,2,enumeration,c,rr,rw);
+    if(!ok)fprintf(stderr,"combined NPA->RPMh err%u GCD%u open%u spent%u calls%u\n",rr->error,r->error,c->opened,ticket->spent,rcalls);
+    assert(ok&&rr->stable&&rr->issued==4&&nr->stable&&nr->issued==4&&queries==0);
+    assert(maps==original_maps&&r->map[0].key==original_key&&ticket->spent==1&&ticket->result==(uintptr_t)r);checks++;
+    for(unsigned kind=0;kind<6;kind++) {
+        rp_reset(0);ops.memory.system=s;assert(pgcd_open(c));
+        if(kind==0)c->finished=1;
+        if(kind==1)r->phase=2;
+        if(kind==2)r->pre_mask=1;
+        if(kind==3)r->error=PGCD_CHANGED;
+        if(kind==4)ticket->spent=0;
+        if(kind==5)ticket->result++;
+        assert(!pwrph_collect(&ops,2,enumeration,c,rr,rw)&&rcalls==0&&queries==0);checks++;
+    }
     printf("{\"checks\":%u,\"raw_bytes\":%zu,\"snapshot_bytes\":%zu,\"DRV_bytes\":%zu,\"original_RPMh_API_calls\":0,\"physical_MMIO_or_radio\":false}\n",checks,sizeof(*rr),sizeof(struct pwrph_snapshot),sizeof(struct pwrph_drv));
     free(original);free(npa_original);free(rp_original);free(arena);return 0;
 }
