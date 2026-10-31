@@ -34,6 +34,72 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0127 actual wallpaper failure isolated to missing Metal preview queue; bounded UIKit preview source READY
+
+- 0126 actual stdio now captured the missing exception: NSInvalidArgumentException,
+  NSDictionary objects[1] nil. Full firstthrow stack maps to exact20F66
+  -[PBFHomeScreenPreviewImageBuilder _imageForView:]+428. Actual originalcode inserts
+  x24 returned by -newCommandQueue as object1 underkCARendererMetalCommandQueue.
+  This is the observednil, not missingwallpaperassets. Device-nil vs queue-failure
+  still not separatelymeasured. Originalmethod returnsautoreleasedUIImage(scale1).
+  Actualshared-cache756bytes independently equal reconstructedmethodSHA43c3ff53...,
+  UUID9c2136c2e64031c98b01dee1a4e3926a, methodVA1c0a0f8fc. Completeproof0127/
+  actual-PBF-nil-Metal-queue-and-ABI-proof.json; no Metaldevice/sound/network claim.
+- NEWpolaris-poster-preview.c targets ONLY genuinePosterBoard path +explicitenv,
+  exactloadedframework UUID, methodABI/IMP andWHOLE756byteSHA beforeObjCmethodchange.
+  ForavailableMetalqueue it preservesoriginalmethod. Foractualmissingqueue, UIKit
+  real bitmapcontext +CALayer renderInContext of the realview createsa realUIImage,
+  samepixel dimensions/scale1return, max4096dimension/8MP, finite/bounds/ownership
+  checks, no placeholder/fakeMetaldevice/catch/exceptionclear/nativeframebufferwrite.
+  UIKitresolvedonlyinPosterBoard; injector hasNOUIKitlink; BBDactiveimplementation
+  sourceBYTEIDENTICAL exceptnewconstructorrolecheck (which returns0 outsidePBF).
+- Init changesonlysamePBFjob's EnvironmentVariables: verified/usr/lib/libPolarisInject.dylib
+  andscopedpreviewflag; originalAppleprogram/args/other529jobs preserve, foreignenv
+  refuses. Original32app publication unchanged. Actual530-job/negativeenv/bounds
+  checks PASS, iOSARM64allwarningcompile/nativeoverlayobject PASS. NOactualUIKit
+  previewrender/goodwallpaperyet. This is substantivecompatibilityintegration,
+  not generalMetalport orCPU/GPUhardwarechange. No foreignhardware/prebuilt/code.
+- Finalnewbundle39dcadb82355bce9d4b1b0fda36b73367d827e5f87703f9386d70b62c06becdd,
+  graphics-poster-preview-0003. Onlyinit/injectchange; Mesa/GL/test/wrapper FOUR
+  binaries byteidentical0126. NativeONLY0899exactdigest constantchanges; allGPU/
+  CPU/WLED/thermal/ABI/IIG/storage/unknownDMA/lifetimeprotections preserved. NEXT
+  commit/push ONEnecessaryCI, exactartifact+twochanged-impactterminalmodels/driver/
+  independentimage/fullcodec/newhostprofile commit, currentstrictsafeexit thenONE
+  newRAM. Do not use oldkernel/evidence for this newbundle orbootbeforeadmission.
+- CURRENTactualphone stillLIVE0126 diagnosticsystem, blankwallpapergalleryafter
+  capture6; allUSBworkers97045/18079/93620/93988/etc ENDED. CurrentCODESOURCEedited:
+  use exactfrozen3bbc/private/tmp/polaris-runtime-0126-frozen-0001/tools/polaris-
+  uefi-wled-runtime.py for currentcapture/touch/safeexit, original0126boot/image/
+  driver0001.0127/current-live0126-runtime-source-freeze.json binds368originalhashes.
+  Oldmanifest/policyunchanged. Never replayconsumedboot/ordinaryreset/rawfallback.
+
+### 0126 actual CF/PID1/cache +32app publication PASS; phoneLIVE, wallpaper diagnosis ongoing
+
+- Unique0126 payload ACKed, worker3355 ENDED. Actualcapture2 proves
+  “POLARIS POSTER STDIO: console enabled” and every32published line +32/32 summary
+  BEFORE genuineApplelaunchd; SpringBoard executed, threeGPU ALL4096 checks and
+  wrappedIOSurface check passed. CoreFoundation PID1/cacheedit now physically
+  proven through successfulboot, not just hosttest.0126/actual-CF-init-and-32apps-proof.json.
+- Actualcapture4 afterONElimitedtouch hasstartupOFF/ON26raw/4issued4completed/
+  error0/request2ack2/module128; PosterBoard executed but no crash/exception text
+  in that earlysample. No optical/powerkeyfeedback moved fromoldsession. Wallpaper
+  still notvalidated. Worker18079 now unlock/settings/capture5; END before nextUSB.
+  CurrentphoneLIVE0126, boot.json CONSUMED; never replay/ordinaryreset. Current
+  sources3bbc exactbound (onlyNOTES edited, unbound). Original0125session CLOSED.
+
+### 0126 NEW PHONE RAM boot sent; diagnostic native startup awaiting actual result
+
+- Supersedes prior LIVE0125/READY: source3bbcdbd committed/pushed. Actual0125 fully
+  populated app system exited normally with nativeRAM_DRAINED80000003, zeroerror/
+  writeepoch0/flushedepoch0 and full56raw/8issued8completed/request4ack4/module128/
+  IRQ2/WLEXIT05/WLR5, then independent actualPolarisFASTBOOT verified. Worker6816
+  ENDED. No ordinaryreset or loss of oldroot/data. This remains temporaryRAMonly.
+- ONE0126 new image sent per phone-poster-stdio-0001/boot.json (CONSUMED), source
+  3bbcdbd, exactff05b0... image/new4a6f kernel/70066 diagnosticinitbundle. Unique
+  payload worker3355 currently pending/completing: inspect result/session before
+  any otherUSB. No iOS/CF/jobpatch/exception-message success claimed yet. Do not
+  replayboot or assume FASTBOOT; actualphone currently NEWUEFI/native startup.
+
 ### 0126 diagnostic candidate COMPLETE/READY; actual phone remainsLIVE0125 until strict exit
 
 - New native CI41163845336/job124427026394 SUCCESS, source3057de5bb374780c3950a31f8653e2789873027f.

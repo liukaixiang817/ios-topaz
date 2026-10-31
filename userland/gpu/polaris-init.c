@@ -14,9 +14,8 @@
 #include <CoreFoundation/CoreFoundation.h>
 #include <stdlib.h>
 
-/* The genuine530-job cache sends PosterBoard's uncaught-exception text to
- * /dev/null. Change just that Apple job's two stdio paths in RAM COW so the
- * next actual failure is observable; leave its executable, arguments and
+/* Prepare only the genuine PosterBoard job's stdio and scoped preview shim
+ * in RAM COW. Leave its executable, arguments and
  * all other jobs intact. Atomic replacement preserves a valid original on
  * every read/parse/encode/write failure. This does not suppress any fault.
  */
@@ -62,6 +61,21 @@ static int poster_console(const char *root)
         if(old && !CFEqual(old,CFSTR("/dev/console")))goto done;
     }
     for(unsigned i=0;i<2;i++)CFDictionarySetValue(poster,keys[i],CFSTR("/dev/console"));
+    CFMutableDictionaryRef environment=(CFMutableDictionaryRef)CFDictionaryGetValue(poster,CFSTR("EnvironmentVariables"));
+    if(environment && CFGetTypeID(environment)!=CFDictionaryGetTypeID())goto done;
+    if(!environment) {
+        environment=CFDictionaryCreateMutable(NULL,0,&kCFTypeDictionaryKeyCallBacks,&kCFTypeDictionaryValueCallBacks);
+        if(!environment)goto done;
+        CFDictionarySetValue(poster,CFSTR("EnvironmentVariables"),environment);
+        CFRelease(environment);
+    }
+    const CFStringRef env_keys[]={CFSTR("DYLD_INSERT_LIBRARIES"),CFSTR("POLARIS_POSTER_PREVIEW")};
+    const CFStringRef env_values[]={CFSTR("/usr/lib/libPolarisInject.dylib"),CFSTR("1")};
+    for(unsigned i=0;i<2;i++) {
+        CFTypeRef old=CFDictionaryGetValue(environment,env_keys[i]);
+        if(old && !CFEqual(old,env_values[i]))goto done;
+    }
+    for(unsigned i=0;i<2;i++)CFDictionarySetValue(environment,env_keys[i],env_values[i]);
     encoded=CFPropertyListCreateData(NULL,plist,kCFPropertyListBinaryFormat_v1_0,0,NULL);
     if(!encoded || CFDataGetLength(encoded)<=0 || CFDataGetLength(encoded)>2*1024*1024)goto done;
     out=open(temporary,O_WRONLY|O_CREAT|O_EXCL|O_NOFOLLOW,0600);
@@ -85,7 +99,7 @@ done:
     if(plist)CFRelease(plist);
     if(data)CFRelease(data);
     free(bytes);
-    printf("POLARIS POSTER STDIO: %s; Apple job retained, RAM COW only\n",result?"unmodified (diagnostic unavailable)":"console enabled");
+    printf("POLARIS POSTER CONFIG: %s; Apple job retained, RAM COW only\n",result?"unmodified (unavailable)":"console + scoped preview prepared");
     return result;
 }
 

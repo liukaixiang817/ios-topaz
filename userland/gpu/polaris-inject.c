@@ -277,6 +277,10 @@ static int real_window_server(void)
 }
 __attribute__((constructor)) static void polaris_gl_inject(void)
 {
+#if defined(PGPU_USERLAND_20F66)
+    extern int polaris_poster_preview_entry(void);
+    if(polaris_poster_preview_entry())return;
+#endif
     if(!real_window_server())return;
     watch_for_faults();
     io_service_t gpu=IOServiceGetMatchingService(0,IOServiceMatching("PolarisGPU"));

@@ -125,7 +125,9 @@ def build(args):
                                str(SOURCES / 'eagl.c'), str(SOURCES / 'gl_osmesa.c'), str(mesa),
                                *cf, *io, *surface, '-lobjc']),
         ('libPolarisInject.dylib', ['-dynamiclib', '-Wl,-install_name,/usr/lib/libPolarisInject.dylib',
-                                   str(SOURCES / 'polaris-inject.c'), *cf, *io, '-framework', 'OpenGLES', '-lobjc']),
+                                   str(SOURCES / 'polaris-inject.c'),
+                                   *([str(SOURCES / 'polaris-poster-preview.c')] if args.build == '20F66' else []),
+                                   *cf, *io, '-framework', 'OpenGLES', '-lobjc']),
         ('polaris-bbd-wrapper', [str(SOURCES / 'polaris-bbd-wrapper.c'), *cf, *io]),
         ('polaris-gl-test', [str(SOURCES / 'polaris-gl-test.c'), str(mesa), *cf, *surface, *io, '-lobjc']),
         ('polaris-init', [str(SOURCES / 'polaris-init.c'), *(cf if args.build == '20F66' else [])]),
@@ -196,6 +198,9 @@ def build(args):
                     mesa_input_sha256=sha(args.mesa_library), gl_xml_sha256=sha(args.gl_xml),
                     builder_sha256=sha(Path(__file__).resolve()),
                     hardware_test_passed=False, desktop_GPU_proven=False, writes_phone=False)
+    if args.build == '20F66':
+        for p in (SOURCES / 'polaris-poster-preview.c', ROOT / 'tools/polaris-poster-preview.h'):
+            manifest['source_inputs'][str(p.relative_to(ROOT))] = sha(p)
     (out / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
     print(json.dumps(manifest, indent=2))
 
