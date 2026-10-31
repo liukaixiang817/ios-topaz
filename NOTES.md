@@ -34,6 +34,51 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0125 CURRENT: actual16.5 LIVE; complete stock apps/wallpaper integration in progress
+
+- Supersedes historical READY/no20F66boot below: actual0124 ONE RAM image sent
+  02:35:36.167616UTC, imageSHA6446b4f5273220fbea9076e1533924cd977e0242daa8e65e7478f4aa735124fc,
+  source8d4941b committed/pushed. ONE exact payload started02:36:04-02:36:34UTC.
+  phone-native-WLED-0001/boot.json CONSUMED, do not replay. Actual captures2/3/4
+  prove new16GiB root915/142map immutableRO+512MiBRAMCOW, four bigCPUs/SMP64
+  callbacks48remote, threeGPU ALL4096 checks, exact20F66 CA mode1, clean lockscreen
+  and Settings General. Native startup WLED OFF/ON:26raw/4issued4completed/error0.
+  No new16.5 human power-key result; old0123 confirmation belongs to old20H392.
+  No sound/WiFi/sustained60Hz/permanent boot or whole-OS ABI claim.
+- User now explicitly requests the most complete usable16.5 system, including
+  wallpapers and genuine stock apps, and asks why Calculator/AppleTV are absent.
+  Actual local root has141 Applications entries plus32 genuine first-boot apps
+  under/private/var/staged_system_apps, each ARM64 MachO with cryptid0; no installed
+  container directory. Calculator/AppleTV programs/resources exist. Wallpaper has
+  234 files. Own polaris-init only activated bbd then exec launchd, missing the
+  stock-app publication step. Fixed HackiOS a79ff077 init219-253/select-system20
+  confirms the same staging correspondence; no scripts/prebuilts executed.
+- New0125 init publishes these32 real app directories into/Applications BEFORE
+  launchd through exclusive HFS rename, RAM COW only, no data copy/UFS base write,
+  no replace/copy fallback. Actual host HFS shadow test published all32 with real
+  executable/plist/resources readable; this is macOS HFS software evidence, not
+  physical XNU/app-launch success. iOS ARM64 all-warning compile passed. New bundle
+  9c147000bbf5adb3ad72e637d2393d663c9cced0005b9b3d876ec75ac96bdc78 changes ONLY
+  polaris-init; other five GPU/inject/wrapper/test binaries BYTEIDENTICAL to0124.
+  Native0899 exact bundle digest changed accordingly; native object compile and exact digest refusal checks PASS; next one necessary
+  nativeCI, preserving all hardware/storage/thermal/lifetime gates. Stock app
+  icon/launch and wallpaper still need physical validation; do not claim done.
+- Phone remains the actual0124 LIVE16.5 session, user may be navigating Settings.
+  No reset/shutdown requested yet. Current host sources were edited, so current
+  live control MUST use the exact frozen8d4941b snapshot at/private/tmp/polaris-
+  runtime-0124-frozen-0001/tools/polaris-uefi-wled-runtime.py; all368 original
+  evidence/source hashes verified (0125/current-live-runtime-source-freeze.json),
+  original manifests/policy unchanged. Ordinary current edited source rightly
+  refused before USB. capture-0005 worker72618 ENDED; actual home has three visible main icons plus
+  waiting widgets and black background, confirming incomplete first-boot UI. New snapshot is only for controlling/exiting this actual
+  bound0124 session, never old0121/0122 boot replay. Exit requires actual native
+  drain+fullrawprefix/WLEXIT05/WLR5 fresh readbacks then independent FASTBOOT.
+- Local original readonly inspection mount detached; a NEW host HFS shadow mount
+  /private/tmp/polaris-20F66-shadow-0125 is active, attachment metadata0125/HFS-
+  shadow-attachment.plist. Original root image unchanged. Normal detach only its
+  recorded device when done, noforce. Do not rerun completed root creator/append.
+  Preserve new immutable file, old root/marker/Android/Windows/GPT/ESP/default.
+
 ### 0124 FULL16.5 new root COMPLETE; exact kernel/graphics/runtime READY for ONE physical boot
 
 - NEW latest supersedes partial/READY statuses below: append-only tail succeeded

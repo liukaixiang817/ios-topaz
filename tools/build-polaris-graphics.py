@@ -25,6 +25,8 @@ def sha(path):
 def build(args):
     abi = None
     preserved = {}
+    if args.rebuild_init and args.preserve_common_from is None:
+        raise ValueError('rebuild-init requires the verified current common binaries')
     if args.build == '20F66':
         if args.abi_proof is None:
             raise ValueError('20F66 requires the separately verified actual-library ABI proof')
@@ -72,6 +74,8 @@ def build(args):
             raise ValueError('common graphics registry changed')
         for name in ('eagl.c', 'gl_osmesa.c', 'mkeagl.py', 'eagl_slots_20H392.txt',
                      'polaris-gl-test.c', 'polaris-init.c'):
+            if name == 'polaris-init.c' and args.rebuild_init:
+                continue
             path = SOURCES / name
             if previous['source_inputs'].get(str(path.relative_to(ROOT))) != sha(path):
                 raise ValueError('common graphics source changed: ' + name)
@@ -84,9 +88,10 @@ def build(args):
                 path = base / item['name']
                 if sha(path) != item['sha256']:
                     raise ValueError('physically verified common binary changed')
-                preserved[item['name']] = path
-        if len(preserved) != 4 or sha(args.mesa_library) != sha(preserved['libPolarisMesa.dylib']):
-            raise ValueError('exact current Mesa and four common files required')
+                if item['name'] != 'polaris-init' or not args.rebuild_init:
+                    preserved[item['name']] = path
+        if len(preserved) != (3 if args.rebuild_init else 4) or sha(args.mesa_library) != sha(preserved['libPolarisMesa.dylib']):
+            raise ValueError('exact current Mesa and all unchanged common files required')
     out = args.output.resolve()
     out.mkdir(parents=True, exist_ok=False)
     sdk = args.sdk.resolve()
@@ -205,4 +210,6 @@ if __name__ == '__main__':
     p.add_argument('--abi-proof', type=Path)
     p.add_argument('--preserve-common-from', type=Path,
                    help='keep four exact binaries from the current verified20H392 bundle')
+    p.add_argument('--rebuild-init', action='store_true',
+                   help='rebuild only the changed20F66 init among the four common binaries')
     build(p.parse_args())
