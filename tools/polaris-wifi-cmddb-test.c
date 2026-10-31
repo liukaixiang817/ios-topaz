@@ -123,6 +123,7 @@ static struct pwcd_io cd_reset(unsigned f)
     if(f==31)put(cd_image+0x5158,0x861e0000,8); /* separate per-page descriptor fault below */
     struct pwcd_io ops={{{s,0,cd_arch,cd_identity,order},cd_locate,cd_map},cd_query};return ops;
 }
+#ifndef POLARIS_CMDDB_FIXTURE_ONLY
 int main(int argc,char **argv)
 {
     assert(argc==3&&!posix_memalign((void**)&arena,4096,0x240000));
@@ -155,3 +156,4 @@ int main(int argc,char **argv)
     printf("{\"checks\":%u,\"raw_bytes\":%zu,\"guard_bytes\":%zu,\"SOFTWARE_peer\":true,\"original_firmware_executed\":false,\"power_votes\":0,\"radio\":false}\n",checks,sizeof(*cd),sizeof(struct pgcd_service_guard));
     free(cd_original);free(original);free(arena);return 0;
 }
+#endif
