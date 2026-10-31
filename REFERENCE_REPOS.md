@@ -63,6 +63,21 @@ Polaris kernel/DT, UEFI USB/control and existing root unchanged until a separate
 compatible RAM candidate is verified. Its destructive darwin/GPT installation
 recipe is outside this phone's data-preservation authorization.
 
+0151 rechecked Dipper's RPMh supply path against own DT and original81 firmware.
+Its fixed CmdDb85fe0000 and raw TCS1 selection are Mi8 observations, not Polaris
+ownership evidence. It votes CX/MX/MSS to the top and clears its TCS even after
+uncertain completion; those writes/restoration rules were not ported. Own DT
+uses ARC APIoffset1/raw384, not microvolts. Original Polaris CmdDb's public Query
+has a required `This` plus separate uint32 CmdDb status and uint64 EFI result;
+our default-OFF adapter validates the live cached namespace and reads exact ARC
+auxiliary tables through that ABI. Its 35 software cases and AArch64 objects
+are not physical query, supply or Wi-Fi evidence. Original RPMh churn methods
+have unbounded waits; its completion service takes DRV ID2, not IRQ ID0, and may
+process foreign queues/callbacks. A bounded private power transaction still
+requires actual current cache/TCS ownership, completion and complete restoration
+before Delete. Private evidence is in0151/wifi; no reference scripts or prebuilts
+were executed and no standalone inventory boot was introduced.
+
 0110 completed the offline input preparation: the OS, both cryptex images and
 kernelcache whole SHA384 match Apple's BuildManifest. A native macOS UDRO
 conversion followed by bounded raw/ignored-run export produces the documented

@@ -34,6 +34,77 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0150 remains last actual nativeLIVE19:10; NEW0151 original CmdDb API adapter verified OFFLINE; power transaction NOT READY
+
+- Supersedes only the next-source work below, not the phone identity. Source
+  65bbd1654e25c23750064dbd5955bf356c14ef57 adds the default-OFF original CmdDb
+  adapter, exact digest/RVA binding and executable software peer. No USB,
+  source-freeze/new image/profile/parent hook, firmware API, vote/MMIO/SMC/MSS,
+  new native CI or new wholeEFI model was run this turn. All host workers ENDED.
+  Existing0150 consumedbootrecord/frozen controller/image remain unchanged;
+  ONLY /private/tmp/polaris-runtime-0150-frozen-0001/tools/polaris-uefi-wled-runtime.py
+  controls that phone. Last actualUI is19:10:55Z/60%/3913mV/charging1, not a new
+  observation. UTC0150 already ONESET; never SET again. Not current FASTBOOT.
+- Original CmdDbDxe28672B SHA22c4c5ec932eee82a6d3fba1404dee7f2c5a656ecdccf1cd
+  332907945d6fd22b, GUID1c34f691-d33d-4e14-b8f8-32c6c029e95b/rev10000/table5088.
+  Unlike RPMh, its public methods require This=x0. Query uses query24=x1,
+  response32=x2, aux=x3, uint32 status-out=x4 and separate EFI64 return. Version
+  output is16bit; aux-only length is8bit. Type1 Query writes its input hwtype;
+  only fixed-name type0 is used. Public Query reads cached5158, not constructor;
+  platform5198 must match. Missing cache never authorizes Init/SMEM getter or
+  the constructor's MMIO word0xc3f000c. Original lock/unlock33cc/33d0 are RET,
+  not an exclusivity witness. Static sourceproof32df4fe77b410d1f9c885514d4c6c8c8
+  9f65f384635a430842e52749b251b8dd in0151/wifi/original-CmdDb-provider-0001.
+- shim/polaris/uefi-wifi-cmddb-query.h calls the actual public ABI under the
+  original FP/arch/TPL/200ms/UNKNOWN service guard; no context open/reset/rebase.
+  It binds the registered original owner/table and preserves nine5hash sets,
+  two128KiB namespace copies and all raw guarded calls. Own physical root must
+  come from both live cached pointers inside86000000..86200000, with complete
+  map/GCD SystemMemory+WB and per-page actualAT identity. One covering original
+  GCD descriptor can serve more pages, with explicit unissued/source-page links;
+  split descriptors remain finitely bounded. No SMEM stores or MPU/DMA lease.
+  Three actual source-bound queries per pass select cx/mx/mss.lvl, exact full32B
+  aux and own raw384 first>= index, preserve duplicates and both priority words.
+  Priority is scheduling data, not write permission. Full namespace reread after
+  EVERY query rejects changed footprints before another query. Final immutable
+  owner/table/cache/hash recheck stays mandatory. Actual CMDdb/indices are NOT
+  observed yet; 7/4/7 and duplicateMX16 remain historical20261024 only.
+- tools/polaris-wifi-cmddb-check.py:35ASAN/UBSAN executable cases pass, including
+  real This/u32-out/u64-return adapter, all6 modeled query roundtrips, fixed
+  own-PA translation only in hosted software, EFI-vs-CmdDb errors, malformed
+  full aux/levels/duplicates, source/cache/late-byte mutation, partial/nonreturn,
+  stale context, maps/AT and split-descriptor paths. Guard464B/raw345248B.
+  Typical software covering-descriptor case12foreign calls; per-page fixture74,
+  neither a physical timing/call-count claim. Actual AArch64 COFF+MachO bodies
+  compile all warnings/maxframe1024, defaultOFF compiles and hosted address
+  translator is rejected in freestanding firmware. Six checks total, proof
+  0151/wifi/CmdDb-API-verified-0001/proof.json SHAc7c61370ed5641bd0527fafe34e37694
+  93e83571531288008d3acdd149536322. Single objects are NOT fullEFI link/parent
+  registration/admission/physical calls. No reason to repeat old models/CI.
+- Original RPMh completion-source audit identified an unsafe wait path:
+  slots58/60 churn recurse4864 and spin47a4 without walltime timeout. Do not call
+  these in a bounded transaction. Slot68->3138 takes DRV ID2, NOT IRQ ID0, and
+  can retire foreign completions and dispatch queued commands/callbacks. It is
+  not an unconditional read-only poll. Sourceproof89d66ec96d59fdeb99c08fcaf5c211
+  196c205a302fcc2ef028e7ed679ae41a3d in0151/wifi/original-RPMh-completion-source-0001.
+  Slot78 full commandset avoids slot98's globald310 scratch, but still needs
+  actual bounded current cache/TCS/queue/MMIO identity and real completion.
+  Delete alone never restores votes. Mi8 e930c26 fixedTCS1/topvotes/clear after
+  uncertain completion were reviewed against own DT, not copied or executed.
+- NEXT SERIAL ONLY Wi-Fi: integrate this original-API adapter into the SAME
+  necessary private power transaction with current resource-cache/TCS/queue and
+  GCD/AT baseline, ownARC units, known private request, bounded completion and
+  complete stoprestore before Delete. No standalone CmdDb/inventory/client-only
+  boot; no builder/profile activation until the entire mandatory parent UNKNOWN
+  and retirement path exists, separate from final Clock/GCD ticket. Then ownMSS
+  AOP/rail/clock/reset/RMB/auth, independent2MiB/MSA/VMID/MPU/cache/guard/remote
+  lifetime, SFPB/SMEM and GLINK/RMTFS toward real scan/join/data. Current
+  may_vote=false/may_start_MSS=false/may_serve_NV_to_remote=false/scan_join_data=false.
+  All audio/camera/children remainSTOP. Fresh0145 roots/NV remain the latest
+  authority; do not repeat fullhash/recovery under continuous controlled0150.
+  Before next image use ONLY frozen0150 normal native drain/full raw/fresh
+  WLEXIT05/WLR5 receipt and independent actualFASTBOOT, never ACK-as-reset.
+
 ### CURRENT0150 nativeLIVE19:10; actual originalRPMh private Create/Delete/retirement SUCCESS; Wi-Fi not yet working
 
 - Supersedes0149LIVE/0150inflight. ONE0150image3278 ENDED0 sent
