@@ -161,6 +161,14 @@ static int shutdown_status(void *,const uint8_t **,uint64_t *);
 #if EFI_XNU_BATTERY_AVAILABLE
 #include "uefi-battery-native.h"
 #endif
+#if EFI_XNU_WIFI_CACHE_AVAILABLE
+#if !defined(EFI_XNU_WLED_NATIVE_RUNTIME)
+#error "Firmware image cache inspection requires its guarded native runtime scope"
+#endif
+#if !defined(POLARIS_EFI_TEST_QEMU)
+#include "uefi-wifi-cache-readonly.h"
+#endif
+#endif
 static int64_t psci(uint64_t function,uint64_t a,uint64_t b,uint64_t c)
 {
     register uint64_t x0 __asm__("x0")=function,x1 __asm__("x1")=a,x2 __asm__("x2")=b,x3 __asm__("x3")=c;
@@ -233,6 +241,19 @@ static int disk_payload(void)
 static int prepare_boot(void *context)
 {
     (void)context;if(load_state!=2)return 0;
+#if EFI_XNU_WIFI_CACHE_AVAILABLE
+#if defined(POLARIS_EFI_TEST_QEMU)
+    static unsigned wifi_cache_software_reported;
+    if(!wifi_cache_software_reported){
+        wifi_cache_software_reported=1;
+        report("WIFI_CACHE_SOFTWARE_PHYSICAL_IMAGE_INSPECTION_COMPILED_OUT=",1);
+    }
+#else
+    /* Diagnostic only: all BootServices queries before any IRQ mask/change.
+     * Failure records evidence and does not block the other runtime services. */
+    pwfc_prepare(system_table,load_state);
+#endif
+#endif
 #if defined(EFI_XNU_WLED_NATIVE_RUNTIME)
     /* A BootServices lookup belongs BEFORE CPU0 IRQ ownership changes. */
     if(!cache_reset_protocol()){report("WLED_NATIVE_RESET_CACHE_REFUSED=",1);return 0;}

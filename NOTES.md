@@ -34,6 +34,35 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0137 FINALcombined source7929942 PUSHED/CI41187202135 running; cache-onlyFWintegrated; PHONE remainsLIVE0135
+
+- Finalnativeexactdefault676c+clockMRS+WiFiAT+knownSCMINFOavailability source
+  7929942dae88aa3bf570eae47febd009faa4b6e0 committed/pushed. Unique
+  CI41187202135/job124496430663 inprogress, watcher36915; no duplicateCI.
+  Defaultloaderroot_device+devfsrdev/fsid identityrootcausefixed, original
+  3defaultplists rawHFS0:0/0644/fullSHAconfirmed. Allsourceandfinalbundle0002
+  frozen. NOTyetactualnewdefault/time/battery/radio success.
+- ActualWiFicache-onlyadapternowintegratedbehindexplicitoriginalPEflag:
+  exactoriginalSmemDxe9e366873... wholePE,63DIR64normalizedimmutablehash,
+  originalLoadedImage/protocol/memoryowner+actualCPU0before/afterarchmapkey,
+  two632Bowned-original-imageRAMsnapshots. NOGet/Alloc/constructor execution,
+  cachedpointerfollow/newSMEMread/SCM/permission/IRQ/radio/TX. Failureonly
+  recordsnotblockothers. BSqueriesprepare_bootBEFOREDAIF/Group1mask and
+  originalPONcacheorderingunchanged; QEMUactualcodecompiledoutwithSOFTWARE
+  marker. CommonPErelativepath/generator/headersboundinputssamephysicaland
+  models, privategeneratedbindingcanonicalf85ba9e4... notGit. 28ASAN/UBSAN+
+  actualCOFF/MachO/wholeEFIphysical+QEMUcompile and4CLInegativechecksPASS.
+- Firstclock/batteryisolatedworktree70854ENDED: twonew449dmodelsPASS, but
+  physicalbuildneverready/inventorypaths thenexclusiveemptydir, NOimage/
+  phoneboot. Withdefaultreadyparentdefersitandusescombined0137toavoidextra
+  phoneboots. Preservefailed/privateartifacts; don'tresumeorwaitworker.
+- Lastactualcurrentphoneboundedstatefor0137 ENDED0/kernel-entered (noSET),
+  allUSBworkersENDED/nohumanpending. Currentonlyfrozen0135controller390+
+  ORIGINAL0135manifests; cannotusecurrenteditedsourcecontrolleronoldimage.
+  NEXT actual792kernelSHA -> physicaldriver+2correct19.2MHzmodels once ->
+  pack/wholecodec/actualsourcefreeze/hostcommit -> normalexitold0135/fullraw/
+  WLEXIT05/WLR5 -> independentactualFASTBOOT -> ONE0137image/exactpayload.
+
 ### 0136 officialdefault676c +clock/battery fixes READY; finalnativepin+SCMINFO CI NEXT; PHONE stillLIVE0135
 
 - FirstcounterfixCI41186374177/job124494018125 SUCCESS for01de300. Actual

@@ -7,6 +7,7 @@ cannot validate the Qualcomm peripheral implementation or physical DDR map.
 import argparse
 import ctypes
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -305,6 +306,8 @@ def main():
                     help='default-OFF real battery telemetry; exact native BSS and payload DT opt-in')
     ap.add_argument('--wifi-readonly',action='store_true',
                     help='default-OFF native Wi-Fi readonly diagnostic opt-in; no EFI SMEM or transmit API')
+    ap.add_argument('--wifi-firmware-cache-pe',type=Path,
+                    help='explicit exact own original SmemDxe PE for cache-only CPU0 image-RAM inspection; requires --wifi-readonly')
     ap.add_argument('--efi-application',action='store_true',help='selected application, never ReadyToBoot interception')
     ap.add_argument('--disk-guid',type=uuid.UUID,help='exact GPT partition UUID for read-only disk payload')
     ap.add_argument('--disk-start-lba',type=int)
@@ -349,6 +352,19 @@ def main():
         a.test_wled_fault_pulse or a.test_omit_durable_guard or a.test_wled_native_start_refusal or a.test_wled_native_exit):
         ap.error('physical native WLED requires its independent guarded four-big RO/RAMCOW scope')
     native_runtime=a.wled_native_runtime or a.wled_native_runtime_test
+    cache_header=None;cache_binding=None;cache_pe_relative=None
+    if a.wifi_firmware_cache_pe:
+        if not a.wifi_readonly or not native_runtime:
+            ap.error('firmware cache inspection requires --wifi-readonly and its guarded native runtime scope')
+        try:
+            cache_pe=a.wifi_firmware_cache_pe.resolve(strict=True)
+            cache_pe_relative=str(cache_pe.relative_to(r))
+            spec=importlib.util.spec_from_file_location('polaris_wifi_firmware_identity',r/'tools/polaris-wifi-firmware-identity.py')
+            module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+            cache_header,cache_binding=module.binding(cache_pe)
+            cache_binding['binding_sha256']=hashlib.sha256(cache_header.encode()).hexdigest()
+        except (OSError,ValueError) as error:
+            ap.error('firmware cache PE must be the exact original project-local image: '+str(error))
     if a.host_utc_sync and (not native_runtime or not a.physical_buttons or
         not (a.test_ram_drain if a.test_qemu else a.ram_shutdown_bridge) or
         a.test_qemu_owned or a.physical_owned_marker or a.disk_guid or a.chain_app_manifest or a.efi_application):
@@ -427,6 +443,9 @@ def main():
         ap.error('selected application requires a complete disk identity')
     if a.chain_app_manifest and (not a.disk_guid or a.efi_application):ap.error('chain wrapper requires disk identity and no --efi-application')
     out=a.output.resolve();out.mkdir(parents=True,exist_ok=False)
+    if cache_binding:
+        (out/'uefi-wifi-cache-binding.h').write_text(cache_header)
+        (out/'wifi-firmware-cache-binding.json').write_text(json.dumps(cache_binding,indent=2)+'\n')
     raw=a.payload.read_bytes();k=a.kernel.read_bytes()
     sys.path.insert(0,str(r/'tools'));import mkpayload
     tokens=raw[0x48:0x2a8].split(b'\0',1)[0].split()
@@ -596,6 +615,7 @@ def main():
 #define EFI_XNU_BATTERY_AVAILABLE {int(a.battery_readonly)}
 #define EFI_XNU_BATTERY_OFFSET 0x{battery_binding['offset'] if battery_binding else 0:x}ULL
 #define EFI_XNU_BATTERY_SPAN_LIMIT_US 500000u
+#define EFI_XNU_WIFI_CACHE_AVAILABLE {int(cache_binding is not None)}
 #define EFI_XNU_CPU {target}u
 #define EFI_XNU_BOOT_CPU_TOKEN "polarisbootcpu={target}"
 #define EFI_XNU_CPUS_TOKEN "cpus={a.kernel_cpus}"
@@ -662,6 +682,9 @@ def main():
     inputs=['shim/polaris/'+n for n in sources]+['shim/polaris/uefi.h','shim/polaris/uefi-xnu.h','shim/polaris/uefi-usb.h','shim/polaris/uefi-memory.h','shim/polaris/uefi-reset.h','shim/polaris/uefi-file.h','shim/polaris/uefi-boot-options.h','shim/polaris/uefi-ram-lease.h','shim/polaris/payload.h','tools/build-polaris-uefi-xnu.py','tools/polaris-uefi-input.h']
     inputs+=['tools/polaris_uefi_cpu_tree.py','tools/adt.py','tools/mkpayload.py']
     inputs.append('shim/polaris/runtime-marker.h')
+    if cache_binding:
+        inputs+=['shim/polaris/uefi-wifi-cache-readonly.h','tools/polaris-wifi-firmware-identity.py',
+                 'tools/polaris-wifi-firmware-identity.h',cache_pe_relative]
     if a.host_utc_sync:
         inputs+=['tools/polaris-clock-sync.h','tools/polaris-clock-uefi.h',
                  'tools/polaris-clock-native.h','tools/polaris-clock-host.py']
@@ -743,6 +766,17 @@ def main():
                   battery_physical_PMIC_reads_compiled_out=a.test_qemu if a.battery_readonly else None,
                   battery_PMIC_write_api=False,wifi_readonly=a.wifi_readonly,
                   wifi_EFI_SMEM_read_api=False,wifi_EFI_transmit_api=False,
+                  wifi_firmware_cache_readonly=cache_binding is not None,
+                  wifi_firmware_cache_original_PE=cache_pe_relative,
+                  wifi_firmware_cache_original_PE_whole_SHA256=cache_binding['source_whole_sha256'] if cache_binding else None,
+                  wifi_firmware_cache_binding_SHA256=cache_binding['binding_sha256'] if cache_binding else None,
+                  wifi_firmware_cache_before_mask=True if cache_binding else None,
+                  wifi_firmware_cache_bytes_per_snapshot=632 if cache_binding else None,
+                  wifi_firmware_cache_snapshot_count=2 if cache_binding else None,
+                  wifi_firmware_cache_calls_original_code=False,
+                  wifi_firmware_cache_new_SMEM_reads=False,
+                  wifi_firmware_cache_native_permission=False,wifi_firmware_cache_transmit=False,
+                  wifi_firmware_cache_physical_inspection_compiled_out=bool(cache_binding and a.test_qemu),
                   runtime_services_DT=runtime_services,
                   physical_buttons=a.physical_buttons,buttons_offset=buttons_offset if a.physical_buttons else None,
                   TSENS_readonly_inventory=a.tsens_readonly,thermal_configuration_write_api=False,
