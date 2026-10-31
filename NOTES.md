@@ -34,6 +34,27 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Serial Wi-Fi0145 NEW NPA host scope admitted offline; image/freeze still pending
+
+- NEW GCD_CLOCK_0145 binds actual65 compiledinputs to committed firmware
+  48c1572, all83 typedGCD/NPA fields and94 resource/Clock fields. Original
+  0143/0144 profile literals are unchanged. NewNPA source cannot hide behind
+  absent/disabled/strippedmetadata or borrow oldscope. Newmodel admission
+  additionally requires literalint1 NPA compiledoutmarker; legacy scopes do
+  not acquire that newrequirement. No firmware/native source change.
+- HostKernelProtocol full-log bound now4MiB+524288+128, matching newNPA
+  firmware snapshot; legacyReadOnly remains32768. Current0144 frozencontroller
+  remains unchanged. 27affectedhosttestsPASS, plus actual(no mocks) source65 /
+  twoexisting19checkmodels/CI/fresh0139root admitPASS; fourbadNPAmarker cases
+  reject. ProofNPA-parent-actual-admit-proof-0001.json; no repeatEFI models,
+  nativeCI orUSB. PhysicalNPA/radio remains unobserved.
+- NEXT finish independentnewcopies/original81 wholeEFIimage/EDK2codec /
+  sourceinventory/frozenoneboothelper; do not boot this incompletecandidate.
+  At nextneededcontrolledROtransition combine3NV24MiB+freshGPT/hashes with
+  NPAactualnamespace/votebaseline evidence. Phone0144 lastactualLIVE16:21;
+  no currentUSB observation or newphysicalpermission. Allchildren STOPPED,
+  ONLYWi-Fi untilscan/join/data; audio/camera remainpending.
+
 ### Serial Wi-Fi0145 NPA live namespace collector integrated/compiled; NEW host admission/image still NOT READY
 
 - Root serial-only implemented shim/polaris/uefi-wifi-npa-readonly.h and exact
