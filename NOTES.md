@@ -34,6 +34,79 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0134 PRIORITY actual0133 HFS PANIC afterFitness white screen; native drain NOT proven; no newboot/UI actions
+
+- Human nowclarifies: openedFitness, prolongedWHITE screen, thenkernelpanic.
+  after-user-reported-panic-capture-0001 worker82883 ENDEDexit0: residentUEFI
+  captureworks, nativepanic hfs_UNswap_BTNode invalidforwardlink0x2CD70026
+  @hfs_endian.c275; callerff89 hfs_swap_BTNode.cold.1+2c, nofullbacktrace
+  (handshakeuninitialized). Don'tinferGPUcause/Freeformtrigger ornormalexit.
+- ACTUAL logalreadyhad RAMCOW budgetexhausted atnative~404.5s, BEFOREobserved
+  Freeform/Fitnessexec; latermanycatalogfileID4 node129xx/offset0zero failures,
+  thenpanic. Preservefirstrefusal/allraw; noFSrepair/replay/RW/rootrecopy.
+  Native512MiBRAMCOW only; noactualdiskhealthassertion. Hostoriginalcatalog
+  nodes129xx arepreallocatedzero, innerjournal8MiB; hostonlynotnewphysicalaudit.
+  Proof0134/panic/actual-Fitness-white-screen-and-HFS-panic-proof.json.
+- AllUSBworkersENDED (61154Freeformcapture,82883paniccapture); NOnewtouch/
+  boot/payload/reset/rawfallback. NativeVFS/GPU/CPUdrain/WLEXIT05/WLR5 notproven;
+  preparedremotecontrol doesnotgrantpanicreset. Currentimagef8e8/nativeff89/
+  frozen0133controller+originalmanifests remainbound/consumed. Physicalkeys
+  onlywhenactuallyneeded; nonewquestionpending now. PriorityrepairRAMCOW/HFS.
+- Parallelreviews: batteryagent0907 whole-strategyCOWwritepreallocation so
+  a latechunk FULL cannotleaveearlierchunkscommitted; clockagent0908 HFS
+  journalasyncbuf_error propagation; wifiagent0909 boundedRAM-onlyTRIM/
+  reclaim+capacity semantics. Specificcodefaults/candidates, NOTphysicalfix.
+  Preserveintegritychecks and512MiB/UFSRO/drain/thermal/WLEDguardseverywhere.
+- Userrequires eachreadyfixcanbephysicaltested independently, don'twaitall
+  features. Clocksource0906/firmwarehostbridge compiledoffline butnotCI/boot;
+  batterysource0904 andWiFitransport0905 offlinecompiled, neitherphysicalready.
+  Wallpaperoriginal5HEIC→PNG exactRGBA/alpha/size and3CAMLURL-only prepared
+  in0134/wallpaper-assets/prepared-0002 (6,857,601B; total22,340,797B<32MiB).
+  Hostonly, loadernotintegrated/noactualwallpaperfix. NoApple/derivedassetsgit.
+
+### 0133 USB control RESTORED afterhuman reconnect; noFASTBOOT needed; parallelbattery/WiFi/clock authorized
+
+- Human repluggedUSB. Newafter-USB-reconnect-capture-0001 worker31184 ENDED
+  exit0/PASS, actualbound kernel-entered currentLIVE0133 imagef8e8/nativeff89.
+  Earlier15scapture56616/8sexpected48712timedout, notUSBabsence/resetproof.
+  No reboot/image/payload resend. Newcurrentcapture logs/screen available.
+  ActualWLED total50/issued8completed8/request4ack4/module128/IRQ2/error0/
+  analysisPASS; rawOR fault1=ILIMbit0 preserved (allowedvariant, NOTOVP/SC),
+  rtOR0. DoNOTclearraw/fault orblindretry; notwallpapercauseproof. AllUSBworkers
+  ENDED. UseroffersmanualFASTBOOT butit iscurrentlyunneeded; normalexitavailable.
+- Human nowexplicitlyasksbattery/power, WiFi andclocksync INPARALLEL withwallpaper.
+  Threeauthorizedsubagents battery/wifi/clock_sync active, NOdevice/CI/gitpush
+  allowedtoagents, onlynewdedicatedsources/0904/0905/0906patches/privatechecks.
+  RootserializesallUSB/integration. BatteryfoundoldSweetBattery fake100%/4200mV/
+  5020mAh andwrongPM6150 path; newPMI8998SID2FG/SMB2 producerRO mustcheckrev/
+  APID/EE/nochargingwrites, invalid/stale remainsunknown. WiFi actualbounded
+  GLINK/QRTRtransport +ROSMEMmapping/descriptorprobe, no getter/allocatorinRO,
+  no radio beforeactuallease/MPU/owner. ClockactualPEgetGMTreturns0; bounded
+  hostUTC/calendar-only path underimplementation, neverCNT/PON/WLED/RTC writes.
+  Physicalbattery/WiFi/time success NOTyetclaimed. ParentmergesonecohortCI.
+
+### 0133 user stillWHITE/solidhome; latestboundcapture FAILED beforeaction, actualstate review pending
+
+- User nowreportswhiteframes ANDmonochromehome. DoNOTclaimwallpaperfixed.
+  Newafter-user-white-and-solid-capture-0001 worker56616 ENDEDexit1: bound
+  UEFI service notconnected within15s, beforecaptureaction; no newimage/log/
+  hierarchyreturn orhardwarewritefromthisquery. Currentphysicalstate UNKNOWN
+  afterlastsuccessful0133capture0002 (Applelogo/GPU L6), userreportsUIvisible.
+  Can'tinferUSBabsent/FASTBOOT/resetcause, cannotreplayconsumed0133image/payload.
+- OneboundedreadonlyexpectedFASTBOOTquery started separately, mustEND before
+  ANYotherUSB. No ordinaryreset/rawfallback/unknownACK resend. Earlierloading
+  evidencevalid but0133PBFhierarchyactualresult notyetretrieved. Frozen0133
+  source+ORIGINALmanifests stillonlybinding ifservice returns. Sourcec408a49.
+- Originaldefault iOS16 375w812h wallpaper verifiedpresent: threeCAML scenes
+  loadfiveactualHEIC assets (Body/Arm/Leg/Head/HeadMask); plainpaths under
+  /Library/Wallpaper/Collections/iOS_16~iphone.wallpaperCollection. No hostroot
+  orphoneasset edits. Ifactualnewhierarchyfailed, nextconcretecompat option
+  isgenuineoriginal layers decoded losslesslytoPNG andexactCAMLURL replacement
+  inRAMCOW only, withoriginalinput/pixel/alpha checks, notrandomplaceholder or
+  externalwallpaper. NOTimplemented/READY; needcurrentcontrol/state first and
+  don'tuseofflineassetprep ascompletion. Currentgraphics15,475,776B leaves
+  existing32MiBbundle cap; don'trelaxcap/hardware/hash/root gates.
+
 ### 0133 actualcapture0002 Applelogo/GPU L6; newPBF path NOTyetexecuted
 
 - Firstcapture67701 andsecond57551 bothENDEDexit0. ActualnewMEDIA ctor/
