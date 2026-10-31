@@ -124,7 +124,8 @@ try:
  command='dd of=/dev/polaris-root-stream-probe bs=1 count=65536 2>/dev/polaris-root-stream-probe.log; probe_rc=$?; echo $probe_rc >/dev/polaris-root-stream-probe.rc'
  transport=subprocess.run(adb+['exec-in',command],input=probe,capture_output=True,timeout=20)
  (o/'RAM-stream-probe.log').write_bytes((transport.stdout+transport.stderr).replace(serial.encode(),b'<phone>'))
- completion=wait_result('/dev/polaris-root-stream-probe.rc',8)
+ try:completion=wait_result('/dev/polaris-root-stream-probe.rc',8)
+ except RuntimeError:completion=b'unknown'
  actual_probe=sh('cat /dev/polaris-root-stream-probe');(o/'RAM-stream-probe.bin').write_bytes(actual_probe)
  (o/'RAM-stream-remote.log').write_bytes(sh('cat /dev/polaris-root-stream-probe.log'))
  record['RAM_stream_probe']=dict(transport_exit=transport.returncode,remote_exit=completion.decode(),actual_bytes=len(actual_probe),actual_sha256=hashlib.sha256(actual_probe).hexdigest(),expected_sha256=hashlib.sha256(probe).hexdigest());save()
