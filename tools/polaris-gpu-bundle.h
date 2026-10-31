@@ -7,17 +7,6 @@
 #define PGPU_FILES 6u
 #define PGPU_HEADER (16u + 48u * PGPU_FILES)
 #define PGPU_MAX (32u << 20)
-/* Exact host-verified20F66 overlay only. This does not admit arbitrary caches
- * or change any native GPU/storage/thermal ownership gate. */
-static inline bool pgpu_build_matches(const void *version,size_t bytes,const void *sha)
-{
-    static const uint8_t f66_sha[32]={
-        0xfa,0x61,0x50,0x96,0x03,0x47,0x8b,0xbe,0x94,0x2c,0xf1,0x13,0x62,0x62,0x75,0x63,
-        0x92,0x67,0xb2,0xc3,0xdd,0x4f,0x3b,0x24,0x0f,0xb0,0xac,0xae,0x1c,0x6b,0xc5,0xf9};
-    return version && sha &&
-        ((bytes==7 && !__builtin_memcmp(version,"20H392",7)) ||
-         (bytes==6 && !__builtin_memcmp(version,"20F66",6) && !__builtin_memcmp(sha,f66_sha,32)));
-}
 struct pgpu_file {const uint8_t *data,*sha;uint32_t bytes,kind;};
 static inline uint32_t pgpu_u32(const uint8_t *p)
 {return (uint32_t)p[0]|(uint32_t)p[1]<<8|(uint32_t)p[2]<<16|(uint32_t)p[3]<<24;}

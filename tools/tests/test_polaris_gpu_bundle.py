@@ -14,7 +14,7 @@ class GPUBundleTests(unittest.TestCase):
     def test_exact_build_and_digest_admission(self):
         with tempfile.TemporaryDirectory() as directory:
             p = Path(directory)
-            (p / 'build.c').write_text('''#include "polaris-gpu-bundle.h"
+            (p / 'build.c').write_text('''#include "polaris-gpu-build.h"
 int check(const void *v,size_t n,const void *h){return pgpu_build_matches(v,n,h);}
 ''')
             subprocess.run(['/usr/bin/clang', '-std=c11', '-Wall', '-Wextra', '-Werror',

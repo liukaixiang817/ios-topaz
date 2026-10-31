@@ -1,9 +1,9 @@
---- a/bsd/dev/polaris_gpu_bundle.h
-+++ b/bsd/dev/polaris_gpu_bundle.h
-@@ -7,6 +7,17 @@
- #define PGPU_FILES 6u
- #define PGPU_HEADER (16u + 48u * PGPU_FILES)
- #define PGPU_MAX (32u << 20)
+--- a/bsd/dev/polaris_gpu_overlay.c
++++ b/bsd/dev/polaris_gpu_overlay.c
+@@ -75,6 +75,17 @@
+     "/usr/lib/libPolarisInject.dylib", "/usr/libexec/polaris-bbd-wrapper",
+     "/usr/libexec/polaris-gl-test", "/usr/libexec/polaris-init"
+ };
 +/* Exact host-verified20F66 overlay only. This does not admit arbitrary caches
 + * or change any native GPU/storage/thermal ownership gate. */
 +static inline bool pgpu_build_matches(const void *version,size_t bytes,const void *sha)
@@ -15,12 +15,10 @@
 +        ((bytes==7 && !__builtin_memcmp(version,"20H392",7)) ||
 +         (bytes==6 && !__builtin_memcmp(version,"20F66",6) && !__builtin_memcmp(sha,f66_sha,32)));
 +}
- struct pgpu_file {const uint8_t *data,*sha;uint32_t bytes,kind;};
- static inline uint32_t pgpu_u32(const uint8_t *p)
- {return (uint32_t)p[0]|(uint32_t)p[1]<<8|(uint32_t)p[2]<<16|(uint32_t)p[3]<<24;}
---- a/bsd/dev/polaris_gpu_overlay.c
-+++ b/bsd/dev/polaris_gpu_overlay.c
-@@ -183,7 +183,7 @@
+ static bool pgpu_digest(const void *data,size_t bytes,const uint8_t *expected)
+ {
+     /* Same built-in SHA256 provider as the proven firmware validator.
+@@ -183,7 +194,7 @@
      if(SecureDTLookupEntry(NULL,"/polaris-gpu-userland",&node)!=kSuccess ||
          SecureDTGetProperty(node,"reg",&reg,&rn)!=kSuccess || rn!=16 ||
          SecureDTGetProperty(node,"sha256",&sha,&sn)!=kSuccess || sn!=32 ||

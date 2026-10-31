@@ -73,6 +73,16 @@ early samples only. On0029 the human already confirmed boot complete and said
   SOFTWARE Linux evidence is not physical UFS persistence. Receiver has fixed new
   path+16GiB+91515474 hash/ownuserdata identity, no raw-write/delete/overwrite API.
   Host controller additionally verifies actual RAM stdin transport before RW.
+- First newCI41157865344 FAILED at IIG source-cache identity: existing bundle
+  header changed, not a native compile/link error. Corrected0899 to keep the
+  original parser header BYTEIDENTICAL and place version admission privately in
+  overlay.c; generated DriverKit headers/IDL/cache guards remain untouched.
+  Host-only exact function mirror has separate polaris-gpu-build.h for tests.
+- Actual migration attempt0001 stopped BEFORE ANY MOUNT/partition write because
+  RAM stdin check failed; all sixGPT/critical/ESP and cleanouter matched. Actual
+  normalFASTBOOT02:02:57UTC. No root namespace created. Host now waits for actual
+  remote completion and retains RAM probe bytes; attempt0002 is running (exec42654)
+  with the same unchanged production writer and no new physical policy.
 - NEXT complete exclusive NEW root-file transport through Linux ext4, verify only
   changed behavior in isolated real Linux, commit/push before physical use. New
   file must preserve original689a root+immutablemarker+all Android/Windows/GPT/ESP.
