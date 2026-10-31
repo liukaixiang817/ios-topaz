@@ -34,6 +34,44 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0132 ACTUAL post-launchd missingDYLD CONFIRMED; mediactor/identity/install PASS; UI stillstartup
+
+- capture0002 worker66247 ENDEDexit0: realMEDIA EXEC preenv0/1 added1/status0
+  proveslaunchd'sDYLDmissingwhilecompatflagretained; fixedpathadded atverified
+  targetexec. ActualMEDIA NOTE kind1entry0/kind2CMCaptureimage/kind3identity1/
+  kind4installed0/kind8sampler0 proveactualshim+fullmethodidentity+installation.
+  Exactoriginalmediaserverd root/file wholeSHA/attrs againPASS. Notjustpermission
+  orstderrguess now. Proofactual-media-exec-loading-and-exact-method-proof.json.
+- CurrentPHONE LIVE0132 firststartupconsole, noactualnewdesktop/preview/HEVC
+  completionyet. PrewarmCALL kind5 notyetseen. Keepfrozen0132controller/original
+  manifests; allUSBworkersENDED. NeedactualnewUI andgenuinewallpaperdecode;
+  don'tclaimthisloadingmilestone meanswallpaperfixed or changehardwareguards.
+
+### 0132 ONEexactpayload ACKed; worker30424 ENDEDexit0; firstactualcapture pendingEND
+
+- runtime-native-boot-0001/result.json PASS, ONEexactpayload accepted. Worker
+  30424 ENDEDexit0; nosecondpayload. CurrentPHONE LIVE0132 kernel920/imageab4/
+  native42ed/hostfdf1, NOTFASTBOOT/old0131. Firsttargetedcapture45786 running;
+  mustEND before nextUSB. Noactualnewmedia/prewarm/HEVC/UI/wallpaper successyet.
+- Full373source/artifactCOPYalreadyfrozen beforeboot; usefrozen0132controller
+  +ORIGINAL0132 boot/image/driver manifests iffuturecodechanges. Native/GPU/
+  CPU/WLED/storage safety and immutable16.5root915/142map/512MiBRAMCOW unchanged.
+
+### 0132 ONEnewimage ACK/CONSUMED; exactpayload worker30424 mustEND; PHONE new0132
+
+- Hostsourcefdf1f915bd2fa43d6f10413bdd0ff33b779d21ba committed/pushed. StrictLIVE0131 exit
+  worker81607 ENDEDexit0: nativeRAM_DRAINED80000003/epochs0/full32raw/
+  WLEXIT05/WLR5/error0, thenindependentexpectedFASTBOOT queryTRUE saved in
+  new0132actual-preboot-product.json. live0131-closed-proof.json binds both.
+- Newimageab4cdee12b392bb76f77b2fc43364f63d40e94c0e7479f0392a9f2ddf316a17f
+  ONEACK/0132phone-media-exec-0001/boot.json CONSUMED. PHONE new0132UEFI/payload
+  startup, NOTFASTBOOT/old0131. StatePASS thenONEexact602Bpayload worker30424
+  inprogress; mustEND before ANYnextUSB. No newactualUI/media/wallpaper claim.
+- All373 currentimage evidenceCOPY/hashverified at /private/tmp/polaris-runtime-
+  0132-frozen-0001, nothardlinks. Currentunchangedhostfdfcontroller or thisfrozen
+  copy +ORIGINAL0132 boot/image/driver manifests forcurrentRAM. No oldboot/
+  payloadreplay. Actualkernel920/42ed/CI411770/graphics8d, protection/root unchanged.
+
 ### 0132 mediaEXEC candidate READY; PHONE stillLIVE0131; strictnormalexit then ONEnewRAM NEXT
 
 - Source42ed/CI41177023094/job124466566290 SUCCESS, actualkernel92057300...

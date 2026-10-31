@@ -1009,3 +1009,11 @@ yet physical proof of variable filtering or a completed HEIC/wallpaper fix.
 No reference flashlight/camera code, broad injection sysctl or hardware
 tables were copied. The existing MIT reference attribution remains in
 polaris-media-compat.c and LICENSE.hackios.
+
+The first real0132 trace confirms this launch difference on Polaris:
+`MEDIA EXEC preenv0/1 added1 status0` (DYLD absent, compatibility flag retained),
+then the genuine media constructor, actual CMCapture image, full method
+identity and installation notices all pass. This supersedes the earlier
+permission-only inference. Genuine portrait callback, HEVC completion and
+wallpaper pixels still require their own subsequent physical observations.
+Private proof:0132/actual-media-exec-loading-and-exact-method-proof.json.
