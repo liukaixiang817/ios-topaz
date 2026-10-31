@@ -258,8 +258,8 @@ class KernelProtocol(ReadOnlyProtocol):
     """Explicit RAM-boot/reset client. ReadOnlyProtocol keeps its old whitelist."""
     #0143 reviewed GCD/Clock prefix: firmware256KiB + XNU4MiB + labels.
     #ReadOnlyProtocol retains its original32KiB bound.
-    # Native ring plus the reviewed NPA scope's complete firmware snapshot.
-    limits=dict(ReadOnlyProtocol.limits,logs=(4<<20)+1572864+128,**{'boot-options':65536,'shutdown-state':128})
+    # Native ring plus the reviewed private RPMh scope's complete2MiB firmware snapshot.
+    limits=dict(ReadOnlyProtocol.limits,logs=(4<<20)+2097152+128,**{'boot-options':65536,'shutdown-state':128})
 
     def __init__(self,transport):
         super().__init__(transport)

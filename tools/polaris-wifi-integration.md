@@ -1,5 +1,25 @@
 # Polaris Wi-Fi transport integration
 
+## 0149 default-OFF private RPMh preparation
+
+The original noThis DRV2 CreateNoExplicit and Delete callbacks now have a
+separate pre-Clock lifecycle. It keeps independent bootstrap/reader tickets,
+full source hashes and six bounded pool snapshots, and retires before the final
+GCD context is opened. The final GCD map key is never reset to accommodate the
+provider's allocator. Failed/partial/unknown calls retain all evidence and block
+native/PON/receipt; they never trigger blind Delete. Free pool rotation or a new
+retired slot is recorded rather than described as bitwise heap restoration.
+
+This is a zero-vote private provider RAM client, with no commandset/MMIO/SMC/MSS
+or NV serving. It does not grant TCS ownership or power authority. The physical
+body compiled,45 software lifecycle/fault/complete-order cases and actual COFF/
+MachO objects passed; the two affected wholeEFI/XNU terminal models passed with
+the private physical body compiled out. Phone0148 has not executed this scope.
+Original firmware callbacks may dispatch existing events; absence of indirect
+hardware side effects is not claimed. The old0148 read-only policy cannot admit
+this new scope. Actual Wi-Fi scan/join/data is still unfinished.
+
+
 This is executable SMEM FIFO / GLINK / QRTR / WLFW CAP transport code. It is
 not an attached ICNSS/ath10k radio driver and does not provide scan or join.
 There is no boot registration, radio power, MPU programming, firmware copy,

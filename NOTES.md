@@ -34,7 +34,7 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0148 remains last actual LIVE18:35; NEW0149 private RPMh lifecycle offline verified, NOT boot-ready
+### CURRENT0148 remains last actual LIVE18:35; NEW0149 private RPMh lifecycle/models/host admission PASS, package pending
 
 - Serial ONLY Wi-Fi. No USB/phone change in0149 work so far; ONLY frozen0148
   controller/consumedbootrecord below controls the phone. No new native source
@@ -63,9 +63,15 @@ early samples only. On0029 the human already confirmed boot complete and said
   firmware log2MiB, host full log4MiB+2MiB+128. SOFTWARE peer only, original
   firmware/API/physical pool were NOT executed. Source defaultOFF, total scope
   honestly declares RPMh RAMreadonly=false/API2/client=true/votes0.
-- Two NEW affected wholeEFI/XNU terminal models are running SERIAL; no result
-  claimed yet. Host exact0149 profile/package/whole81codec/freeze/helper are
-  NOT READY. Old0143..0148 policy literals/manifests remain unchanged. Before
+- FW1edc90f committed/pushed. Two NEW SERIAL actual wholeEFI/XNU terminal
+  models passed19checks each/38.829s+39.262s,70inputs identical,10literal int1
+  physical compiledout markers and actual preprocessed body/record absence.
+  proof private-client-two-terminal-models-0001-proof.json SHAd094a145d59511c
+  806b2008732836f1e25221b919c2cbdf08be2e1c9b6eeb716. SOFTWARE PMIC/delay/RAM
+  USB sink, NOT physical firmware/API/pool or guestreset/radio. New exact0149
+  host policy passed32affected checks and actual no-mockadmit; old0143..0148
+  literal profiles independently compared unchanged. Package/whole81codec /
+  freeze/helper remain NOT READY. Before
   any nextimage use ONLY frozen0148 complete native drain/full raw/fresh receipt
   and independent actualFASTBOOT. Latest0145 fresh roots/NV remain authority.
 
