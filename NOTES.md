@@ -98,6 +98,20 @@ early samples only. On0029 the human already confirmed boot complete and said
   implementation only, no DriverKit/IDL/layout change. WiFi/GCD and audio
   onelease PAGE0/BOOK127/PGID sessions advance separately; physicalproviders
   and actualTASID/PCM/sensor/frames/CameraApp publication remain unfinished.
+- Audio's reviewed onelease three-command core is now promoted to standalone
+  tools/polaris-audio-geni-selector-session.{h,-test.c,-check.py}, defaultOFF
+  and absent from current0142. Header6a443581.../test2d472ade... match exact
+  draft; public checker39889 ENDED0 PASS28 ASAN/UBSAN/twoactualAArch64
+  compile/threeOFFvariants. PAGE/BOOK must actually read0 before PGID, no
+  selector-data writes or status dump, allraw/UNKNOWN/hardwarefaultlease
+  retained. Successful IDbyte transaction is not authenticated chip/calibration
+  or permission to initialize an amp. Physicalprovider and actual ID remain0.
+- Camera20F66 correction: still-camera callback19c53bf68 tests camera-front/
+  rear on /arm-io/isp, not directly /product/camera. The actualb31payload ADT
+  (offset36364272/95280B/SHA4f6cf844...) lacks BOTH nodes. No direct runtime
+  MGanswer was sampled; icon filtering solecause still unproved. Firstlockscreen
+  still-camera result is cached, so true future sensor/frame-ready publication
+  must precede initial query or use a proved controlled cache rebuild.
 
 ### Historical 0142 resource/originalClock SOURCE READY; ACTUAL Polaris FASTBOOT 14:59Z; WiFi/audio/camera unfinished, rendering repair parallel
 
