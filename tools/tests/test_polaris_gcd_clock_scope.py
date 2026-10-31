@@ -34,6 +34,27 @@ class GcdClockScope(unittest.TestCase):
         with patch.object(a,'GCD_CLOCK_0143',None):
             with self.assertRaisesRegex(ValueError,'separately reviewed'):a.original_gcd_scope(self.enabled()[0])
 
+    def test_configuration_ram_revision_needs_its_own_complete_seal(self):
+        old=copy.deepcopy(a.GCD_CLOCK_0143)
+        legacy=dict(inputs=copy.deepcopy(old['inputs']),kernel_sha256=old['kernel'],payload_sha256=old['payload'])
+        legacy.update(copy.deepcopy(old['metadata']));legacy.update(copy.deepcopy(old['resource_fields']))
+        d,new=self.enabled()
+        d['original_GCD_config_table_RAM_policy']='latched exact span only'
+        new['metadata']['original_GCD_config_table_RAM_policy']=d['original_GCD_config_table_RAM_policy']
+        with patch.object(a,'GCD_CLOCK_0144',None):
+            with self.assertRaises(ValueError):a.original_gcd_scope(d)
+        with patch.object(a,'GCD_CLOCK_0144',new):
+            self.assertIs(a.original_gcd_policy(d),new)
+            self.assertTrue(a.resources_clock_scope(d))
+            self.assertIs(a.original_gcd_policy(legacy),a.GCD_CLOCK_0143)
+            for key in ('original_GCD_config_table_RAM_policy','inputs','kernel_sha256','payload_sha256'):
+                bad=copy.deepcopy(d)
+                bad[key]=copy.deepcopy(legacy[key]) if key in legacy else None
+                if bad==d:bad[key]='foreign'
+                with self.subTest(key=key):
+                    with self.assertRaises(ValueError):a.original_gcd_scope(bad)
+        self.assertEqual(a.GCD_CLOCK_0143,old)
+
     def test_new_source_cannot_hide_behind_missing_or_disabled_metadata(self):
         for source in self.enabled()[0]['inputs']:
             for metadata in ({},a.GCD_CLOCK_DISABLED):

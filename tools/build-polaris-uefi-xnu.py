@@ -24,7 +24,7 @@ def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
 def gcd_clock_metadata(enabled,qemu,core_binding,core_pe):
     # Explicit NEW scope; the previous Device/BSmap-only policy is unchanged.
     e=bool(enabled);physical=bool(e and not qemu)
-    return dict(original_GCD_query=e,original_GCD_default_OFF=True,
+    fields=dict(original_GCD_query=e,original_GCD_default_OFF=True,
         original_GCD_physical_body=physical,original_GCD_physical_compiled_out=bool(e and qemu),
         original_GCD_original_PE=core_pe,
         original_GCD_original_PE_whole_SHA256=core_binding['whole_SHA256'] if core_binding else None,
@@ -35,7 +35,7 @@ def gcd_clock_metadata(enabled,qemu,core_binding,core_pe):
         original_GCD_original_getter_calls_max=8 if e else None,original_GCD_BS_GetMap_calls_max=2 if e else None,
         original_GCD_original_TPL_lock_and_event_dispatch=physical,
         original_GCD_getter_RO_may_write_original_TPL_lock_RAM=physical,
-        original_GCD_raw_bytes=30000 if e else None,original_GCD_raw_format='RAW_V1' if e else None,
+        original_GCD_raw_bytes=30224 if e else None,original_GCD_raw_format='RAW_V1' if e else None,
         original_GCD_full_partial_raw_preserved=True if e else None,
         original_GCD_bootstrap_authority='incoming UEFI BS contract' if e else None,
         original_GCD_bootstrap_TPL_UNOBSERVED=True if e else None,
@@ -60,6 +60,22 @@ def gcd_clock_metadata(enabled,qemu,core_binding,core_pe):
         audio_Clock_GCD_combined_I2C_Clock_RAM_report_bytes=98076 if e else None,
         original_GCD_new_scope_RAM_log_capacity=262144 if e else None,
         original_GCD_snapshot_allocation_matches_log_capacity=True if e else None)
+    if e:
+        # NEW0144 qualifies only the original latched ConfigurationTable RAM.
+        # The previous core/self/DS/guard and GCC MMIO rules are unchanged.
+        fields.update(
+            original_GCD_config_RAM_types=[3,4,6],
+            original_GCD_config_BS3_4_nonruntime_required=True,
+            original_GCD_config_RuntimeData_attributes=0x800000000000000f,
+            original_GCD_config_span_limit=dict(entries=128,entry_bytes=24,bytes=3072,boundary_pages=2),
+            original_GCD_config_latched_pointer_count_only=True,
+            original_GCD_config_single_complete_descriptor_no_alias=True,
+            original_GCD_config_no_overlap_current_image_or_core=True,
+            original_GCD_config_full_page_AT_required=True,
+            original_GCD_config_RuntimeData_PAR_base=0xff00000000000b80,
+            original_GCD_config_readonly_no_general_runtime_permission=True,
+            original_GCD_config_raw_span=dict(offset=30000,bytes=112,count=2))
+    return fields
 
 
 def resource_clock_metadata(enabled,qemu,clock_binding,clock_pe):

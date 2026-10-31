@@ -1,4 +1,8 @@
-/* NEW0143 draft. Registered original DxeCore GCD descriptor query only.
+/* NEW0144 exact ConfigurationTable RO runtime-data scope.
+ * Extends only the latched UEFI ConfigurationTable span; runtime RAM never
+ * becomes reclaimable, writable, executable or an MMIO/ownership capability.
+ * Original0143 source/manifest and frozen phone controller stay unchanged.
+ * Registered original DxeCore GCD descriptor query only.
  * This never edits old0142 policy or registers/allocates an MMIO resource.
  * GCD classification+AT is not an exclusive clock/I2C/DMA/power owner lease.
  * Internal original RestoreTPL can dispatch original firmware events; all
@@ -39,6 +43,14 @@ struct pgcd_map {
 };
 struct pgcd_config {efi_guid guid;uint64_t table;};
 struct pgcd_prestart {struct pgcd_arch arch;uint64_t TPL,boot,tables,count;uint32_t issued,completed,hash_count,hash_failed;uint8_t hashes[PGCI_RANGE_COUNT][32];};
+struct pgcd_config_span {
+    uint64_t pointer,bytes;
+    struct efi_memory descriptor;
+    uint64_t address[2],par[2];
+    volatile uint32_t attempted,admission_class,issued,completed,error;
+    uint32_t reserved;
+};
+_Static_assert(sizeof(struct pgcd_config_span)==112,"exact config span raw ABI");
 struct pgcd_result {
     uint64_t self_base,self_bytes,self_system,core,DS,get_descriptor,config_pointer,config_count,self_owner_address;
     struct efi_loaded self_owner;
@@ -52,6 +64,8 @@ struct pgcd_result {
     struct pgcd_observation query[2][PGCD_PAGES];
     uint32_t prestart_count;struct pgcd_prestart prestart[2];
     uint8_t maps[2][PGCD_MAP_CAP] __attribute__((aligned(8)));
+    uint64_t preserved0143_tail_padding; /* original30000B includes this8B */
+    struct pgcd_config_span config_span[2];
 };
 struct pgcd_lifetime {volatile uint32_t spent;uint64_t result;};
 struct pgcd_io {
@@ -126,6 +140,49 @@ static inline int pgcd_map_read(struct pgcd_context *c,unsigned slot)
     if(m->status||!m->key||m->version!=1||!polaris_efi_memory_check(r->maps[slot],m->bytes,PGCD_MAP_CAP,m->stride,&checked)){pgcd_fail(c,PGCD_MAP,0);return 0;}
     m->valid=1;return 1;
 }
+/* Read only the exact incoming/later-still-latched ConfigurationTable.
+ * The original InstallConfigurationTable allocates its table with type6.
+ * A validated map classification does not grant any other runtime access.
+ * One descriptor must cover the full span, including both boundary pages;
+ * the map has already rejected physical descriptor alias/overlap. */
+static inline int pgcd_config_readonly(struct pgcd_context *c,unsigned pass)
+{
+    if(pass>1)return 0;
+    struct pgcd_result *r=c->record;struct pgcd_config_span *p=&r->config_span[pass];
+    const struct pgcd_map *m=&r->map[pass];struct efi_system *s=c->io.system;
+    if(p->attempted)return 0;
+    p->attempted=1;p->pointer=r->config_pointer;
+    if(!r->config_count||r->config_count>PGCD_CONFIG_MAX||!p->pointer||!m->valid){p->error=1;return 0;}
+    p->bytes=r->config_count*sizeof(struct pgcd_config);
+    if(p->bytes>3072||p->pointer>UINT64_MAX-p->bytes||p->pointer+p->bytes>UINT64_MAX-4095){p->error=2;return 0;}
+    uint64_t end=p->pointer+p->bytes;
+    if((p->pointer<r->self_base+r->self_bytes&&r->self_base<end)||
+       (p->pointer<r->core+PGCI_IMAGE_BYTES&&r->core<end)){p->error=3;return 0;}
+    if((uintptr_t)s->tables!=p->pointer||s->table_count!=r->config_count){p->error=4;pgcd_fail(c,PGCD_CHANGED,1);return 0;}
+    unsigned matches=0;
+    for(uint64_t at=0;at<m->bytes;at+=m->stride){
+        const struct efi_memory *d=(const void*)(r->maps[pass]+at);
+        uint64_t stop=d->physical+d->pages*4096;
+        if(d->physical<=p->pointer&&end<=stop){p->descriptor=*d;matches++;}
+    }
+    if(matches!=1){p->error=5;return 0;}
+    if((p->descriptor.type==3||p->descriptor.type==4)&&!(p->descriptor.attributes>>63))p->admission_class=1;
+    else if(p->descriptor.type==6&&p->descriptor.attributes==UINT64_C(0x800000000000000f))p->admission_class=2;
+    else {p->error=6;return 0;}
+    unsigned n=0;
+    for(uint64_t page=p->pointer&~UINT64_C(4095);page<end;page+=4096,n++){
+        if(n>=2){p->error=7;return 0;}
+        p->address[n]=page;p->par[n]=UINT64_MAX;p->issued|=1u<<n;r->outstanding=0x40000u|(pass<<4)|n;c->io.order(c->io.opaque);
+        uint64_t actual=UINT64_MAX;int identity=c->io.identity(c->io.opaque,page,4096,&actual,&p->par[n]);
+        p->completed|=1u<<n;c->io.order(c->io.opaque);r->outstanding=0;c->io.order(c->io.opaque);
+        /* Callback return is an identity verdict, not an invented delivery
+         * status. Its actual AT F/raw result remains recorded on refusal. */
+        if(!identity||actual!=page||(p->par[n]&1)||(p->par[n]&UINT64_C(0x0000fffffffff000))!=page){p->error=8;return 0;}
+        if(p->admission_class==2&&p->par[n]!=(UINT64_C(0xff00000000000b80)|page)){p->error=9;return 0;}
+    }
+    if((uintptr_t)s->tables!=p->pointer||s->table_count!=r->config_count){p->error=4;pgcd_fail(c,PGCD_CHANGED,1);return 0;}
+    return 1;
+}
 static inline int pgcd_crc(const uint8_t *p,unsigned bytes)
 {
     uint32_t actual=(uint32_t)pwfi_le(p+16,4);if(!actual)return 1;uint32_t crc=UINT32_MAX;
@@ -137,11 +194,12 @@ static inline int pgcd_snapshot(struct pgcd_context *c,unsigned pass)
     struct pgcd_result *r=c->record;struct efi_system *s=c->io.system;
     if((uintptr_t)s->boot!=r->core+0x1b800||(uintptr_t)s->boot->get_map!=r->core+0xd3ec||
        (uintptr_t)s->tables!=r->config_pointer||s->table_count!=r->config_count){pgcd_fail(c,PGCD_CHANGED,pass);return 0;}
-    if(!pgcd_owned(c,pass,r->core,PGCI_IMAGE_BYTES)||!pgcd_owned(c,pass,r->config_pointer,r->config_count*sizeof(struct pgcd_config))){pgcd_fail(c,PGCD_CORE,pass);return 0;}
+    if(!pgcd_owned(c,pass,r->core,PGCI_IMAGE_BYTES)||!pgcd_config_readonly(c,pass)){pgcd_fail(c,PGCD_CORE,pass);return 0;}
     pgcd_copy(r->DS_raw[pass],(const void*)(uintptr_t)r->DS,168);
     if(pwfi_le(r->DS_raw[pass],8)!=UINT64_C(0x565245535f455844)||pwfi_le(r->DS_raw[pass]+8,4)!=0x10046||pwfi_le(r->DS_raw[pass]+12,4)!=168||pwfi_le(r->DS_raw[pass]+20,4)||!pgcd_crc(r->DS_raw[pass],168)||pwfi_le(r->DS_raw[pass]+0x38,8)!=r->get_descriptor){pgcd_fail(c,PGCD_TABLE,pass);return 0;}
     if(!pgci_verify((const void*)(uintptr_t)r->core,r->core,PGCI_IMAGE_BYTES,r->hashes[pass],&r->hash_failed[pass],&r->hash_count[pass])){pgcd_fail(c,PGCD_HASH,pass);return 0;}
     pgcd_copy(r->config[pass],(const void*)(uintptr_t)r->config_pointer,r->config_count*sizeof(struct pgcd_config));
+    if((uintptr_t)s->tables!=r->config_pointer||s->table_count!=r->config_count){pgcd_fail(c,PGCD_CHANGED,1);return 0;}
     static const efi_guid guid={0x05ad34ba,0x6f02,0x4214,{0x95,0x2e,0x4d,0xa0,0x39,0x8e,0x2b,0xb9}};
     unsigned matches=0,index=0;
     for(unsigned k=0;k<r->config_count;k++)if(pgcd_equal(&r->config[pass][k].guid,&guid,sizeof(guid))){matches++;index=k;if(r->config[pass][k].table!=r->DS){pgcd_fail(c,PGCD_TABLE,pass);return 0;}}

@@ -17,10 +17,12 @@ def run(cmd,name):
  p=subprocess.run(cmd,cwd=R,text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT);commands.append(dict(command=cmd,exit=p.returncode,log=name));(out/name).write_text(p.stdout)
  if p.returncode:raise RuntimeError(p.stdout)
  return p.stdout
-run(['clang','-std=c11','-D_POSIX_C_SOURCE=200112L','-O1','-g','-fsanitize=address,undefined','-Wall','-Wextra','-Werror','-Wno-unused-function',*inc,str(R/'tools/polaris-uefi-gcd-test.c'),'-o',str(out/'host-test')],'host-build.log')
+run(['clang','-std=c11','-D_POSIX_C_SOURCE=200112L','-O1','-g','-fsanitize=address,undefined','-Wall','-Wextra','-Werror','-Wno-unused-function',*inc,str(R/'tools/polaris-uefi-gcd-config-runtime-test.c'),'-o',str(out/'host-test')],'host-build.log')
 fixture=R/'research/polaris/uefi-integration-0057/firmware-files/d6a2cb7f-6a18-4e2f-b43b-9920a733700a.efi'
-host=json.loads(run([str(out/'host-test'),str(fixture)],'host-result.json'))
-s='#include <stdint.h>\nvoid text(const char *);void report(const char *,uint64_t);\n#include "uefi-gcd-mmio-readonly.h"\nvoid actual_prepare(struct efi_system *system,const struct efi_loaded *self){\n#if EFI_XNU_GCD_MMIO_QUERY_AVAILABLE && !defined(POLARIS_EFI_TEST_QEMU)\n (void)pgcd_bind_resident(self);struct pgcd_context *c=pgcd_prepare(system,2);const struct pgcd_observation *o=0;\n for(unsigned k=0;k<4;k++)(void)pgcd_query_page(c,pgcd_pages[k],&o);\n (void)pgcd_finish(c);(void)pgcd_prestart_check(c);\n#else\n (void)system;(void)self;\n#endif\n}\n'.replace('void actual_prepare','_Static_assert(sizeof(struct pgcd_result)==30000,"actual GCD result ABI");\n_Static_assert(sizeof(struct pgcd_service_guard)==464,"actual guard ABI");\n_Static_assert(sizeof(struct pgcd_observation)==576,"actual observation ABI");\nvoid actual_prepare')
+host_lines=[json.loads(line) for line in run([str(out/'host-test'),str(fixture)],'host-result.log').splitlines()]
+assert host_lines[0]['checks']==36 and host_lines[1]['NEW_exactspan_tests']==15
+host=dict(checks=51,affected_legacy_cases=36,new_exactspan_cases=15,record_bytes=30224,original_code_executed=False,MMIO=0,SMEM=0,details=host_lines)
+s='#include <stdint.h>\nvoid text(const char *);void report(const char *,uint64_t);\n#include "uefi-gcd-mmio-readonly.h"\nvoid actual_prepare(struct efi_system *system,const struct efi_loaded *self){\n#if EFI_XNU_GCD_MMIO_QUERY_AVAILABLE && !defined(POLARIS_EFI_TEST_QEMU)\n (void)pgcd_bind_resident(self);struct pgcd_context *c=pgcd_prepare(system,2);const struct pgcd_observation *o=0;\n for(unsigned k=0;k<4;k++)(void)pgcd_query_page(c,pgcd_pages[k],&o);\n (void)pgcd_finish(c);(void)pgcd_prestart_check(c);\n#else\n (void)system;(void)self;\n#endif\n}\n'.replace('void actual_prepare','_Static_assert(sizeof(struct pgcd_result)==30224,"actual GCD result ABI");\n_Static_assert(sizeof(struct pgcd_service_guard)==464,"actual guard ABI");\n_Static_assert(sizeof(struct pgcd_observation)==576,"actual observation ABI");\nvoid actual_prepare')
 (out/'actual.c').write_text(s)
 base=['clang','-O2','-ffreestanding','-fno-stack-protector','-mgeneral-regs-only','-Wall','-Wextra','-Werror','-Wno-unused-function',*inc,'-DEFI_XNU_GCD_MMIO_QUERY_AVAILABLE=1']
 for target,ext in [('aarch64-pc-windows-msvc','obj'),('arm64-apple-macos11','o')]:
@@ -42,6 +44,6 @@ proof=dict(PASS=True,host=host,actual_cross_compiled_targets=['AArch64 COFF','AA
  first_GetMap_TPL_sentinel='UINT64_MAX=NOT_OBSERVED, not proven current TPL',
  final_prestart_not_a_renewed_read_permission=True,architecture_external_SError_recoverable=False,
  indirect_original_event_dispatch_possible=True,nonreturning_original_service_has_no_proven_walltime_bound=True,
- source_sha256={str(p.relative_to(R)):sha(p) for p in [W/'uefi-gcd-mmio-readonly.h',W/'gcd-core-identity.h',R/'tools/polaris-uefi-gcd-identity.py',R/'tools/polaris-uefi-gcd-test.c',Path(__file__).resolve()]},
+ source_sha256={str(p.relative_to(R)):sha(p) for p in [W/'uefi-gcd-mmio-readonly.h',W/'gcd-core-identity.h',R/'tools/polaris-uefi-gcd-identity.py',R/'tools/polaris-uefi-gcd-test.c',R/'tools/polaris-uefi-gcd-config-runtime-test.c',Path(__file__).resolve()]},
  commands=commands)
 (out/'proof.json').write_text(json.dumps(proof,indent=2)+'\n');print(json.dumps(dict(proof=str(out/'proof.json'),sha256=sha(out/'proof.json'),checks=host['checks'])))

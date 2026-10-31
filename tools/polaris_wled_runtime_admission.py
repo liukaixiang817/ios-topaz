@@ -839,6 +839,9 @@ GCD_CLOCK_0143={'firmware_source': 'ef1d1ad44bf22b3d6bdbf63765b73994c7b98ea1',
                      'audio_Clock_query_no_runtime_or_USB_command': True,
                      'audio_Clock_query_external_SError_recoverable': False,
                      'audio_Clock_query_physical_original_query_compiled_out': False}}
+# A changed configuration-table RAM policy needs its own complete source seal.
+# The actual0143 profile above remains immutable and can still be recognized.
+GCD_CLOCK_0144=None
 GCD_PREFIXES=('original_GCD_','audio_Clock_GCD_')
 GCD_CLOCK_DISABLED={'original_GCD_query': False, 'original_GCD_default_OFF': True, 'original_GCD_physical_body': False, 'original_GCD_physical_compiled_out': False, 'original_GCD_original_PE': None, 'original_GCD_original_PE_whole_SHA256': None, 'original_GCD_binding_SHA256': None, 'original_GCD_registered_DS_GUID': None, 'original_GCD_immutable_hashes': None, 'original_GCD_exact_descriptor_bytes': None, 'original_GCD_fixed_pages': None, 'original_GCD_original_getter_calls_max': None, 'original_GCD_BS_GetMap_calls_max': None, 'original_GCD_original_TPL_lock_and_event_dispatch': False, 'original_GCD_getter_RO_may_write_original_TPL_lock_RAM': False, 'original_GCD_raw_bytes': None, 'original_GCD_raw_format': None, 'original_GCD_full_partial_raw_preserved': None, 'original_GCD_bootstrap_authority': None, 'original_GCD_bootstrap_TPL_UNOBSERVED': None, 'original_GCD_FP_CPACR_before_Q_instructions': None, 'original_GCD_FP_q8_q15_full128_FPCR_FPSR_preserved': None, 'original_GCD_CPACR_write': False, 'original_GCD_original_call_unknown_blocks_native_and_reset': None, 'original_GCD_final_prestart_checkpoints': None, 'original_GCD_final_checkpoint_RAM_appended': None, 'original_GCD_classification_is_not_MPU_or_exclusive_permission': True, 'original_GCD_GetMap_unlisted_alone_grants_MMIO': False, 'original_GCD_type_required': None, 'original_GCD_UC_capability_required': None, 'original_GCD_Attributes_allowed': None, 'original_GCD_Attributes_zero_is_UC': False, 'original_GCD_no_BS_RAM_reserved_unknown_overlap': None, 'original_GCD_each_Clock_call_actual_Device_NS_identity': None, 'original_GCD_indirect_GCC_MMIO_read_body': False, 'original_GCD_MMIO_writes': False, 'original_GCD_MMIO_writes_field_scope': 'direct getter/provider body only', 'original_GCD_indirect_event_hardware_side_effects_proven_absent': False, 'original_GCD_actual_observations_proven': False, 'original_GCD_SMEM_or_radio': False, 'original_GCD_external_SError_recoverable': False, 'original_GCD_nonreturning_walltime_bound_proven': False, 'audio_Clock_GCD_query': False, 'audio_Clock_GCD_raw_format': None, 'audio_Clock_GCD_raw_bytes': None, 'audio_Clock_GCD_original_query_calls_max': None, 'audio_Clock_GCD_CapUC_Attributes0_or_UC': None, 'audio_Clock_GCD_CAMCC_NOT_ISSUED': True, 'audio_Clock_GCD_combined_I2C_Clock_RAM_report_bytes': None, 'original_GCD_new_scope_RAM_log_capacity': None, 'original_GCD_snapshot_allocation_matches_log_capacity': None}
 
@@ -850,27 +853,32 @@ def original_gcd_model_markers(m):
             raise ValueError('NEW GCD/Clock model must compile out physical service/FP/query bodies: '+name)
 
 
-def original_gcd_scope(d):
+def original_gcd_policy(d):
     actual={k:v for k,v in d.items() if k.startswith(GCD_PREFIXES)}
     paths={'shim/polaris/uefi-gcd-mmio-readonly.h','shim/polaris/gcd-core-identity.h',
            'shim/polaris/uefi-audio-clock-gcd-query.h','tools/polaris-uefi-gcd-identity.py'}
     if not actual or _exact(actual,GCD_CLOCK_DISABLED):
         if paths.intersection(d.get('inputs',{})):
             raise ValueError('original GCD source cannot hide behind absent/disabled metadata')
-        return False
-    policy=GCD_CLOCK_0143
-    if (type(policy) is not dict or not policy.get('firmware_source') or
-        not _exact(actual,policy.get('metadata')) or not _exact(d.get('inputs'),policy.get('inputs')) or
-        d.get('kernel_sha256')!=policy.get('kernel') or d.get('payload_sha256')!=policy.get('payload') or
-        not paths.issubset(d.get('inputs',{}))):
-        raise ValueError('original GCD/Clock chain requires separately reviewed exact committed-source0143 scope')
-    return True
+        return None
+    for policy in (GCD_CLOCK_0144,GCD_CLOCK_0143):
+        if (type(policy) is dict and policy.get('firmware_source') and
+            _exact(actual,policy.get('metadata')) and _exact(d.get('inputs'),policy.get('inputs')) and
+            d.get('kernel_sha256')==policy.get('kernel') and d.get('payload_sha256')==policy.get('payload') and
+            paths.issubset(d.get('inputs',{}))):
+            return policy
+    raise ValueError('original GCD/Clock chain requires separately reviewed exact committed-source scope')
+
+
+def original_gcd_scope(d):
+    return original_gcd_policy(d) is not None
 
 
 def resources_clock_scope(d):
-    if original_gcd_scope(d):
+    policy=original_gcd_policy(d)
+    if policy is not None:
         actual={k:v for k,v in d.items() if k.startswith(RESOURCES_PREFIX) or k.startswith(CLOCK_QUERY_PREFIX)}
-        if not _exact(actual,GCD_CLOCK_0143.get('resource_fields')):
+        if not _exact(actual,policy.get('resource_fields')):
             raise ValueError('NEW GCD chain must retain all exact resource/Clock metadata')
         return True
     actual={k:v for k,v in d.items() if k.startswith(RESOURCES_PREFIX) or k.startswith(CLOCK_QUERY_PREFIX)}
@@ -895,7 +903,7 @@ def audio_i2c_cache_scope(d):
         if 'shim/polaris/uefi-audio-i2c-cache.h' in d.get('inputs',{}):
             raise ValueError('audio I2C image read cannot hide behind absent/disabled metadata')
         return False
-    policy=GCD_CLOCK_0143 if original_gcd_scope(d) else RESOURCES_CLOCK_0142 if resources_clock_scope(d) else AUDIO_I2C_0141
+    policy=original_gcd_policy(d) or (RESOURCES_CLOCK_0142 if resources_clock_scope(d) else AUDIO_I2C_0141)
     if (type(policy) is not dict or not policy.get('firmware_source') or
         not _exact(actual,AUDIO_I2C_PHYSICAL_FIELDS) or not _exact(d.get('inputs'),policy.get('inputs')) or
         d.get('kernel_sha256')!=policy.get('kernel') or d.get('payload_sha256')!=policy.get('payload') or
@@ -910,7 +918,7 @@ def normal_nc_firstread_scope(d):
         if 'shim/polaris/uefi-wifi-firstread-normal-nc.h' in d.get('inputs',{}):
             raise ValueError('NormalNC firstread source cannot hide behind absent/disabled metadata')
         return False
-    policy=GCD_CLOCK_0143 if original_gcd_scope(d) else RESOURCES_CLOCK_0142 if resources_clock_scope(d) else NORMAL_NC_0141
+    policy=original_gcd_policy(d) or (RESOURCES_CLOCK_0142 if resources_clock_scope(d) else NORMAL_NC_0141)
     if (type(policy) is not dict or not policy.get('firmware_source') or
         not _exact(actual,NORMAL_NC_PHYSICAL_FIELDS) or
         not _exact(d.get('inputs'),policy.get('inputs')) or

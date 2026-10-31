@@ -74,6 +74,16 @@ early samples only. On0029 the human already confirmed boot complete and said
   ActualPFR17416B/error0/17arch, sevenPSCIreturns1 instantaneousOFF; two
   8192cap58descriptor maps stable. SixcarveoutsReserved != free/exclusive;
   actualproofb4fd72ca...; no SMEM/RMTFS/MSA/PIL/radio writes.
+- NEW0144 minimal config qualification SOURCE now implemented: exact latched
+  1..128 entries/<=3072B, single disjoint descriptor, oldBS3/4nonruntime or
+  onlytype6/attrs800000000000000f; two boundary pages max with actualAT;
+  type6 fullPAR must WB/NS/SH3/identity(ff...b80|page), no self/core overlap.
+  No generalruntime/write/reclaim/clock/pin grant. Pointer/count change sticky.
+  New raw30224B preserves old30000B (including8Btailpad) then2x112span;
+  guard464/obs576/Clock43504 unchanged. ASan/UBSan15new+36affectedcases and
+  actualCOFF/MachO all-member layout/allwarnings PASS08dff3ca... . Builder
+  binds62typedGCD fields; newhostprofile remainsNone until actual61input
+  ONbuild/source seal. Previous0143profile and all frozen artifacts unchanged.
 - NEXT NEW0144 independently bound config-table exactspan read-only
   RuntimeData qualification, leaving core3/4/GCD/DeviceAT/unknown/reset
   protection intact; source+affectedchecks only, reuse completednativeCI,
