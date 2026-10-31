@@ -34,6 +34,61 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0129 actualPBF bitmap PASS but wallpaper STILLBLANK; verifiedextension-state source READY; PHONE LIVE0128
+
+- Actual0128capture3 hasreal375x811/scale3 UIKitbitmapcreated, Metaldevice0/queue
+  absent. Originalnil-queue PBFexception notin capture3/4. Capture4 +humanagain
+  “壁纸还是不行”: AddNewWallpaper STILLBLANK, homebackgroundblack. NoCollections
+  providerexec observedincapturedwindow. DoNOTclaimwallpaperfixed/allAppscomplete.
+  Worker81726/62691 ENDED; CURRENTPHONE LIVE0128, consumedboot023e/current22f.
+- Exactcurrent20F66 ExtensionFoundation disassembly independentlyshows0x60 AMFI
+  query/errorpath/TST0x86; actuallibamfi8-bytepointerABI checked. ActualExtensionKit
+  enforce_xpc_cache_code_signing EnabledTRUE. Original138-entrytablecontains
+  posterkit.provider,0:80/0644/104731B/SHAe92ee2b8...; currentAMFI lacks0x60,
+  matching a prerequisite present inexactDipper8e611870. Actualclientquery and
+  solecause NOTyetobserved; private0129/actual-extension-registration-gap-and-
+  candidate-proof.json, REFERENCE_REPOS0129. Noforeignscripts/prebuilt.
+- NEW0901 read-only wholeoriginaltablecheck during20F66 RAMoverlaystage BEFORE
+  ApplePID1. Onlyverifiedtable/root/RAMCOW enables non-PID1query0x60 software
+  state0x86. Copyerrorretained; unknown/changed/shortread/hash/allocation/root
+  failurekeepsgateclosed, PID1baselineunchanged. Nofile/bootarg/NVRAM/signature
+  edits; existingPBFdyldmask2/wholeexeidentity andGPUcaller/reporterfunctions
+  byteidentical. ba69graphicsbundle unchanged. AllCPU/GPU/WLED/storage/thermal
+  guardsunchanged. Actual2function ASAN/UBSAN tests +actual2nativeobjects PASS.
+- CURRENTcontrolfrozen023e at/private/tmp/polaris-runtime-0128-frozen-0001/tools/
+  polaris-uefi-wled-runtime.py +original0128boot/image/driver0001.0129/current-
+  live0128-runtime-source-freeze.json binds370copy hashes. Newsource mustcommit/
+  push ONEnecessarynativeCI, thenactualartifact/profile/twochangedkernelmodels/
+  image/codec, strictcurrentnativeexit+fullraw/WLEXIT05/WLR5+actualFASTBOOT before
+  ONEnew0129RAM. Nooldboot/ordinaryreset/policywaiver. New0129boot.json ABSENT.
+
+### 0128 ACTUAL PBF wholehash/dyld/constructor/exactmethod installation PASS; bitmap/gallery stillpending
+
+- Actualcapture2 proves PBFuid0/gid80/mode100775/119520B match1/hash1/read0/
+  resid0; dyldmask2status0; scopedconstructorran; exact20F66 UUID/IMP/ABI/full
+  methodSHA checked andmethodinstalled. Thisisphysicalintegrationproof, not
+  hostonly. actual-PBF-identity-library-method-installed-proof.json bindslog.
+- Noactualbitmaplog/gallery/wallpaper successyet. Currentnew0128LIVE, screen
+  initiallynativeOFF (12raw/2writes/request1ack1/error0); ONElimitedwake touch
+  pending/completing, mustEND beforecapture. Nooldcontroller/bootreplay.
+  Worker43198 capture2 ENDED. Source023e remainscurrentbound, onlyNOTES edited.
+
+### 0128 ONEexactnative payload ACKed; worker65514 ENDED; actualcapture pending
+
+- Newimage +ONEexactphysicalpayload ACKed; runtime-native-boot-0001/result.json
+  PASS. Worker65514 ENDED beforecapture0001. CurrentactualPHONE new0128native
+  startup, noPBFload/bitmap/wallpaper successclaimyet; bootrecordCONSUMED.
+  Source023e/current0128controller bound, noold0127use and no bootreplay.
+
+### 0128 ONEnewRAM image ACKed; CONSUMEDbootrecord, native start NEXT
+
+- Hostsource023e2ddd02eed1cd619d3e52e1ce0026ab88a781 committed/pushed.
+  ONEnewffd152...image sent04:34:18.629227UTC perphone-poster-preview-0001/
+  boot.json. Worker23857 ENDED. DoNOTreplayhelper/newimage. Currentnew0128UEFI
+  session, noPBFloading/bitmap/wallpaperclaimyet. Prior0127 CLOSED normally.
+  Statecheck mustEND beforeONEexactpayload. Newactualcontroller/currentprofile
+  nowbound22f/a5/CI41168181984; noold0127controller/actionuse.
+
 ### 0128 FINAL candidate COMPLETE/READY; actualPHONE FASTBOOT; nextONEnewboot
 
 - FinalnativeCI41168181984/job124440215334 SUCCESS, sourcea5b0f8a..., exact

@@ -1,0 +1,111 @@
+--- a/bsd/dev/polaris_gpu_overlay.c
++++ b/bsd/dev/polaris_gpu_overlay.c
+@@ -32,8 +32,9 @@
+ bool polaris_gpu_overlay_ready(void);
+ bool polaris_gpu_caller_allowed(void);
+ bool polaris_poster_preview_allowed(void);
++bool polaris_extension_table_verified(void);
+ uint32_t polaris_gpu_caller_kind(void);
+-static uint32_t pgpu_started,pgpu_ready,pgpu_poster_preview;
++static uint32_t pgpu_started,pgpu_ready,pgpu_poster_preview,pgpu_extension_table;
+ static uint64_t pgpu_begin;
+ static uint32_t pgpu_progress_seq;
+ static struct {uint32_t step,file,done,total,error,ms;} pgpu_progress;
+@@ -98,8 +99,52 @@
+     ccdigest_di_clear(di,context);
+     return !memcmp(hash,expected,32);
+ }
++/* Check the original20F66 extension definitions once before Apple PID1.
++ * This is a bounded READ into ordinary kernel data, never a filesystem write
++ * or a grant of GPU/device access. A failed check keeps query0x60 unavailable. */
++static bool pgpu_verify_extension_table(void)
++{
++    if(!polaris_ram_overlay_allowed())return false;
++    vnode_t vp=NULLVP;struct vnode_attr attr={0};
++    int lookup=vnode_lookup("/System/Library/xpc/extensions.plist",
++        VNODE_LOOKUP_NOFOLLOW|VNODE_LOOKUP_NOCROSSMOUNT,&vp,vfs_context_kernel());
++    VATTR_INIT(&attr);VATTR_WANTED(&attr,va_uid);VATTR_WANTED(&attr,va_gid);
++    VATTR_WANTED(&attr,va_mode);VATTR_WANTED(&attr,va_data_size);
++    bool ok=!lookup && vp && vnode_isreg(vp) &&
++        (vfs_flags(vnode_mount(vp))&MNT_ROOTFS) &&
++        !vnode_getattr(vp,&attr,vfs_context_kernel()) &&
++        VATTR_IS_SUPPORTED(&attr,va_uid) && VATTR_IS_SUPPORTED(&attr,va_gid) &&
++        VATTR_IS_SUPPORTED(&attr,va_mode) && VATTR_IS_SUPPORTED(&attr,va_data_size) &&
++        attr.va_uid==0 && attr.va_gid==80 && (attr.va_mode&07777)==0644 &&
++        attr.va_data_size==104731;
++    bool hashed=false;int read_error=0,resid=0;
++    if(ok) {
++        static const uint8_t hash[32]={
++            0xe9,0x2e,0xe2,0xb8,0x5c,0xea,0x78,0xe1,0x7f,0x95,0x11,0x69,0xc6,0x74,0xa5,0x5d,
++            0x71,0x7b,0xe5,0x3e,0x33,0x1a,0x4b,0x0a,0x5a,0x26,0xde,0x82,0x21,0xc0,0x95,0xa4};
++        void *data=kalloc_data(104731,Z_WAITOK);
++        if(!data)ok=false;
++        else {
++            vfs_context_t ctx=vfs_context_kernel();
++            read_error=vn_rdwr(UIO_READ,vp,(caddr_t)data,104731,0,UIO_SYSSPACE,
++                0,vfs_context_ucred(ctx),&resid,vfs_context_proc(ctx));
++            hashed=!read_error && !resid && pgpu_digest(data,104731,hash);
++            ok=hashed && polaris_ram_overlay_allowed();kfree_data(data,104731);
++        }
++    }
++    printf("POLARIS EXT TABLE: uid%u gid%u mode%o bytes%llu match%d hash%d lookup%d read%d resid%d\n",
++        (unsigned)attr.va_uid,(unsigned)attr.va_gid,(unsigned)attr.va_mode,
++        (unsigned long long)attr.va_data_size,ok,hashed,lookup,read_error,resid);
++    if(vp)vnode_put(vp);return ok;
++}
+ bool polaris_gpu_overlay_ready(void)
+ {return __atomic_load_n(&pgpu_ready,__ATOMIC_ACQUIRE)!=0;}
++bool polaris_extension_table_verified(void)
++{
++    return polaris_gpu_overlay_ready() &&
++        __atomic_load_n(&pgpu_extension_table,__ATOMIC_RELAXED) && polaris_ram_overlay_allowed();
++}
++
+ /* Separate dyld-only identity. This never becomes a GPU caller/reporter.
+  * The exact20F66 bundle is already fully staged, and the current executable
+  * must be the original whole-hash PosterBoard vnode in the verified RAM root. */
+@@ -263,6 +308,8 @@
+         if(error) {printf("POLARIS GL RAM overlay: stage%u failed %d; Apple bootstrap unchanged\n",n,error);return false;}
+     }
+     __atomic_store_n(&pgpu_poster_preview,vn==6 && !memcmp(version,"20F66",6),__ATOMIC_RELAXED);
++    if(vn==6 && !memcmp(version,"20F66",6))
++        __atomic_store_n(&pgpu_extension_table,pgpu_verify_extension_table(),__ATOMIC_RELAXED);
+     __atomic_store_n(&pgpu_ready,1,__ATOMIC_RELEASE);
+     pgpu_note(7,PGPU_FILES,(uint32_t)bytes,(uint32_t)bytes,0,true);
+     printf("POLARIS GL RAM overlay: six verified files staged, %llu bytes; UFS base READ ONLY\n",bytes);
+--- a/bsd/kern/sweet_amfi.c
++++ b/bsd/kern/sweet_amfi.c
+@@ -374,6 +374,7 @@
+ extern uint32_t polaris_gpu_caller_kind(void);
+ extern bool polaris_gpu_wrapper_allowed(void);
+ extern bool polaris_poster_preview_allowed(void);
++extern bool polaris_extension_table_verified(void);
+ extern void polaris_gpu_loader_policy(int error);
+ #include <dev/polaris-gl-status.h>
+ extern bool polaris_gpu_record_test(unsigned actor,const struct pgpu_test_notice *);
+@@ -391,8 +392,25 @@
+         printf("POLARIS POSTER DYLD: exact executable path-vars-only mask2 status%d\n",error);
+     return error;
+ }
++/* Same software compatibility state used by the pinned Mi8/HackiOS port.
++ * Actual20F66 ExtensionFoundation queries0x60 and tests mask0x86. Its official
++ * extension table has already passed our whole-file/root checks before PID1.
++ * This query changes no boot argument, signature bytes, dyld or GPU permission. */
++static int polaris_extension_boot_state(struct proc *p,user_addr_t arg)
++{
++    if(proc_isinitproc(p) || !polaris_extension_table_verified())return ENOPOLICY;
++    uint64_t state=0x86;
++    int error=copyout(&state,arg,sizeof(state));
++    static uint32_t reports;
++    if(__atomic_fetch_add(&reports,1,__ATOMIC_RELAXED)<16) {
++        char name[32]={0};proc_name(proc_pid(p),name,sizeof(name));
++        printf("POLARIS EXT STATE: %s officialtable verified state86 status%d\n",name,error);
++    }
++    return error;
++}
+ static int polaris_gl_dyld_policy(struct proc *p, int call, user_addr_t arg)
+ {
++    if(call==0x60)return polaris_extension_boot_state(p,arg);
+     /* Only the verified, opt-in RAM overlay's window-server executable may
+      * load its bridge. Other processes/policies keep their previous result. */
+     /* __mac_syscall returns ENOPOLICY when this named policy is absent.

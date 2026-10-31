@@ -941,3 +941,32 @@ and comparison:0128/dipper-wallpaper-and-loader-comparison.json.
   and all CPU/GPU/WLED/storage gates unchanged. It does not copy generic0xff,
   hide the picker, fake Metal, or add GPU-device access for PBF. Physical loading,
   preview bitmap and wallpaper selection still require the new actual build.
+
+
+## Exact extension registration state correspondence (0129)
+
+Actual0128 proves the PBF full-file identity, mask2 library load, exact-method
+installation and real375x811 UIKit bitmap creation; its Add New Wallpaper sheet
+still displays empty. NoPBF terminating exception is in capture3/4. This is not
+working-wallpaper evidence. NoCollectionsPoster/provider exec appears in that
+captured window; that absence alone does not isolate the full cause.
+
+The pinned Dipper kernel8e611870 `kern_minimac.c` also handles AMFI request0x60,
+returning its software non-enforcement state0x86. We independently decoded the
+actual20F66 libamfi wrapper (0x1d11ef55c: policy AMFI, call0x60,8-byte output) and
+ExtensionFoundation (0x19371fa9c: error leaves signing-disabling booleanfalse;
+only successful output masked0x86 changes it). The actual ExtensionKit feature
+`enforce_xpc_cache_code_signing` isEnabled. CurrentPolaris AMFI had no0x60 handler.
+The stock138-entry extensions.plist containscom.apple.posterkit.provider; its
+104731 bytes SHAe92ee2b85cea78e17f951169c674a55d717be53e331a4b0a5a26de8221c095a4
+and metadata0:80/0644 are independently checked. This establishes a missing
+compatibility prerequisite, not a physical query trace or sole-cause proof.
+
+Own0901 validates that exact original table read-only once during verified
+20F66 RAM overlay staging, beforeApplePID1. Only that successful root/metadata/
+wholehash check enables the non-PID1 0x60 state query. PID1 and an unverified or
+changed table keep ENOPOLICY; copyout errors remain errors. It changes no boot
+argument/NVRAM/file/signature, no existing dyld0x5a orGPUcaller/reporter role,
+and no CPU/GPU/WLED/storage/thermal guard. Actualclient queries, provider
+registration and usable wallpaper remain to be verified on the new physical
+candidate. Graphic bundleba69 remains byte-identical. Evidence under0129.
