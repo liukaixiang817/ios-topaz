@@ -34,6 +34,35 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### NEW0146 NPA512 candidate OFFLINE READY/frozen; currentphone0145 awaits normal controlled drain
+
+- FirmwareSOURCE53fcc867dffe6a08d637396bc7bb3cfab0315bfe and exacthostSOURCE
+ 43c46f2c14c65b19a65d38f7e00d81efc0a3d9a2 committed/pushed. Actualphysical
+  driver97ca86eb/3046400B/65inputs, RAW_V2 full470496B/finite512/log1572864.
+ 26affectedsanitizer+actualCOFF/MachO/fullEFI and2serial19checkmodels pass;
+ 27hostchecks/actualfresh0145root+CI+models admit pass. No newnativeCI.
+- Independentcopiedkernel7d24/payload63cb/model95a6/CI/source65, wholeoriginal81
+  EFI package f23674af9b7e203d216fafae91e6f39c9b1e99c665f8fefbaac495a5aba1bcb7 /
+ 5982208B. UnmodifiedupstreamEDK2 whole30528200B exactdecode PASS; original81 /
+  SimpleInit/BootShim/DTB preserved. oldmanifests unmodified. latestactual
+  fresh0145a04c/2549+fourNV inputs reused in samecontrolledRO/RAMCOW interval,
+  no newrecovery/fullhashrepeat justforNPA. No newphoneaction yet.
+- /private/tmp/polaris-runtime-0146-frozen-0001 COPY771files+10COMMIT_ONLY /
+ 359currentcommittedsources/65compiled, defaultofflinehelper actualPASS,
+  freeze46995e8ee758f2d97fb76a403537f96347d6bf8561d1a6d15c9240fa09de3cae.
+  OnlyNEXTNEWhelper research/polaris/uefi-ios-0146/boot-NPA512-runtime-once.py;
+  sharedoriginalrepo0146/phone-NPA-runtime-0001/boot.json ABSENT/unusedONE.
+  Physicallynew512graph stillNOTproven; source13msoldprefix notfullgraphproof.
+- NEXT ONLYfrozen0145controller normalshutdown-fastboot to ORIGINALrepo0145 /
+  phone-NPA-runtime-0001/native-drain-and-exit-0001, fullnativeVFS/GPU/CPUdrain /
+  appendraw/WLEXIT05/WLR5 then independentactualFASTBOOT. NEW0146 helper also
+  redecodes oldactualraw native/exit transaction beforeONEimage; cannot use
+  ACK/boolean asreset. Build preboot-controlled-transition-review.json only
+  from actualsuccessfuloldexit+independentFASTBOOT and latestfreshroot/NV.
+  Thenfrozen0146helper--boot-once, actualstate/ONE63cbpayload/capture. No old
+  controller/profile/manifest edits orgenericreset/retry. AllworkersENDED;
+  currentphone stilllastactual0145LIVE17:39/UTCcount1, allchildrenSTOPPED.
+
 ### NEW0146 host exactscope admitted offline; source53fcc86 pushed, package/freeze next; phone0145 unchanged
 
 - New GCD_CLOCK_0146 exactliteral source53fcc867dffe6a08d637396bc7bb3cfab0315bfe /
