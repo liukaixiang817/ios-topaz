@@ -34,7 +34,31 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### 0143 GCD+new rendering kernel SOURCE committed / host seal ready; current0142 remains actual controlled LIVE
+### 0143 GCD+new rendering kernel fully offline READY; current0142 controlled LIVE awaits normal exit
+
+- Firmwareef1d/hostfa238 pushed. Uniqueactualnewkernel modelpair28276 ENDED0,
+ 19checks each/39.416s+39.866s/61inputs/7exactinteger1compiledout markers,
+  fullraw/12WLEDwrites/200ms/oneobserver retained, proof66a251ac... .
+  Parentactualadmit e6b508cd... with newnativeCI41213766168 and freshRO review.
+- ONEpackage+codec ENDED0: physical-runtime-image-0001 image37d15d520dac0994
+  cf52a384cd87734f5db693c96d38d8c190c0bce969abb822/5978112B, driver5f37368b.
+  OriginalEDK2 whole28733128B exact decode/original81FW/SimpleInit/BootShim/
+  DTB preserved, codec3a37e2da... . Actualsourceauditfd985a65... covers
+ 61compiled/262protection checks with7explicitnative7e9 changes/99HEADsources/
+ 10separateCOMMIT_ONLY; no active historicalfallback. Currentactualinputs
+  remain final public45bf GCD+d8e39 Clock; olde898 phase evidence separately
+  retained is not a current source substitute.
+- Helperaa55b5cf... defaultoffline PASS/e7d29b20..., COPY31889 ENDED0 at
+  /private/tmp/polaris-runtime-0143-frozen-0001:774files+10COMMIT_ONLY,
+ 53freshrootraw and actual0142continuity/result/native.log; freezeaae81ca9...
+  Allworkers ENDED, case0143/phone-gcd-clock-0001 NOboot.json/unusedONEattempt.
+  Commands in reviewed-controller-command-templates.json are NOT_EXECUTED.
+- NEXT ONLYfrozen0142 actualnative drain+fullraw/WLEXIT05/WLR5 then independent
+  actualPolarisFASTBOOT; onlythennew0143helper--boot-once/onlynewfrozen0143
+  state/ONEexact63cbpayload--boot-ack-seconds90/capture. UnknownACK firststate,
+  no replay/fallback/oldcontroller. No physicalnewGCD/Clock/nativeGPUresult yet.
+
+### Historical 0143 GCD+new rendering kernel SOURCE committed / host seal ready; current0142 remains actual controlled LIVE
 
 - Actualcurrent0142 directedcapture50547 ENDED0 at15:41Z/kernel-entered:
   samecookie/completeappendprefix26/error0, no knownAndroid interruption.
