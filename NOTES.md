@@ -34,6 +34,26 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0139 HUMAN FASTBOOT +actualproduct PASS13:11Z; LONGuncontrolled interval requiresNEW strictRO rootreview BEFORE WiFi/iOS boot
+
+- Human replied alreadyFASTBOOT (notjustUSBreplug). Serial-bound independent
+  getvarproduct13:11:50Z PASSpolaris, noimage sent. Latesthostclock13:11Z;
+  lastcontrolled0138 UI09:58Z/diagnosticloss10:03Z, interval~3h. Old0138 was
+  physicallyreset, NOTnative-drained/durableSAFE; do notsendoldcontroller.
+- Perexistinglong-uncontrolled rule, original0124 preflightcannotaloneadmit
+  newXNU now. Firstread b7f51d candidate-0001 remainsNO boot.json, noSMEM/
+  CPU_ON/payload sent; treatitsold-rootproof READYasSUPERSEDEDpendingfreshRO.
+  No changingoldmanifest orstripflags. PrepareNEW0139 boundedstrictRO audit
+  fromalreadyverified0120watchdogecb73be4.../300s, NOTold0915recovery.
+- AuditmustsetallblockRO, ro,noload/nodev/nosuid/noexec only, whole16GiB
+  20F66root915/142map/inode6193154/gen2167264735/flags80090 plusold689root/
+  182map/marker8MiB/exactidentity/rawowner/sixGPT/critical/ESP. No allocation/
+  repair/replay/unpin/appending/RW. Actualumount+before/afterheader+independent
+  FASTBOOT required. Whole512MiBjournalnotrequired; metadata/superblockRO,
+  explicitcapturecap/noFS-healthclaim. NewreviewmaybootONLYimmutableRO+
+  512MiBRAMCOW afteractualpass, may_write_userdata=false. ParentaloneUSB;
+  wifi0139preparesnewaudit/reviewoffline. No repeatedFASTBOOTpermission needed.
+
 ### 0139 WiFi NEWcandidate b7f51d READY/COPY407, NO boot; GPU narrower retained-query trial source+signedMesa READY; phoneUSB pending
 
 - NewWiFiimage b7f51d53734ad558458213e5b04dce02009792cbe895b03ee0e17a3081d0c855
