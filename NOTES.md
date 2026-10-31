@@ -86,8 +86,22 @@ early samples only. On0029 the human already confirmed boot complete and said
   Package17279 ENDED0 image378b60e2.../5971968B/0001 is UNUSED/SUPERSEDED
   because it binds oldtransport7935aeb1... . No codec/freeze/boot ran for0001;
   preserve its manifest, package0002 must bind this new host-only source.
-- NEXT commit host logcap, newpackage0002/wholecodec/audit/freeze, then one
-  temporary image/exactpayload and real raw capture. Reuse controlled fresh
+- Hostlogcap10a157ec61dc0afc8b8fbd57c2f86abdd98ec297 committed/pushed.
+  NEWpackage77771/codec10717/sourceaudit38366 allENDED0. UseONLY0142
+  physical-runtime-image-0002: image378b60e2e94a44ea41fd959dd885aed2dad5a2f
+  ceb6c1a431679c59043da8972/5971968B, manifestf99e79366c2b4a17f581792b320
+  c45195cc46e35b0bccd9772b7962fefb24632. ActualEDK2 whole28586696B exact
+  decode/original81FW/SimpleInit/BootShim/DTB preserved; codec20d63132... .
+  Sourceauditae266a8d.../57compiled262protected96currentHEAD/10separate
+  COMMIT_ONLY passed. No active historical fallback. Exacthelper77a6853a...
+  defaultoffline39208 PASS; independentCOPY740files+10COMMIT_ONLY with53
+  freshrootraw at /private/tmp/polaris-runtime-0142-frozen-0001 PASS.
+  Case0142/phone-resource-clock-0001 NOboot.json; ONEattempt unused asof
+  thisreadyhandoff. Old0001package remains unused/superseded, neverboot it.
+- NEXT ONE newhelper boot-resource-clock-runtime-once.py --boot-once, then
+  ONLYnewfrozen0142controller state/ONEexactb31payload--boot-ack-seconds90/
+  actualrawcapture. No furtherhumanpermissionneeded atcorrectactualFASTBOOT.
+  Reuse controlled fresh
   0139 ed39/c7d3 RO+RAMCOW interval; no Android known. No userdata writes.
 - Rendering parallel: saved0141 frames show41px console sidebars; first-copy
   console mute has a direct_cnputc bypass. Mi8 atomic whole-surface display
