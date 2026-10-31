@@ -34,7 +34,61 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### 0141 fullREADY/COPY715; 0140 nativeDRAIN + WLR5 ACK COMPLETE, actualFASTBOOT NOTconfirmed; physical keys requested ONCE
+### 0141 ACTUAL NC18LDR PASS + originalI2C5096B PASS; nativeboot/UTC/GPUacceptance PASS, UIstillpending14:19Z
+
+- ONEimage37183 ENDED0/image37b6/source9069aed sent14:15:46.330541Z,
+  ONEb31payload76681 ENDED0/ACK14:17:06.842205Z; transfer32.959410s/
+  bootcall27.579990s withbootACK90s. No replay. Capture67239 ENDED0 actual
+  kernel-entered/4CPU SGI PASS. ONLYfrozen0141controller, realhostUSBpermission.
+- ActualNC error0/phase4/SELF_BOUND1/CACHE_ADMITTED1, twoissued/completed
+  masks1ff/1ff,12PAR/33arch checks complete,18architecturalLDRreturned;
+  allthreepagesexact44000000...b00/MAIRffbb4400. Two9u32 raw arrayssame:
+  0c0000,1,434f5424,1,f,54525024,7c000,20,7c000. NC45.989583us;
+  cache-after->NCend77.1875us. Wholeoriginalcache632Bx2/4hashesmatch.
+  Independentreview0142/wifi/actual0141-NormalNC-firstread-and-next-frontier-
+  proof.json SHA09442e83... . NoMPU/VMID/nativeCPU7/FIFO/TX/radio permission,
+  noarchitecturalcount->buscap claim. OwnSMEMheader boundary semantics
+  (uncached32/cached=partitionbytes7c000) imply noallocation inthisobserved
+  partition, butTOChostidentity/full32Bheaderstillunread: NOTGLINKinventory
+  orremote-off proof. Nextminimal752BTOC+32BuniqueMPSSheaderx2,notFIFOscan.
+- ActualaudioRAMcache error0/owner1/73imagequeries0/4hashesmatch/two120B
+  byteidentical/5096B completeRAW/map3stable/key5895/FreePool0. Original
+  image17aafb000/32768B/protocolimage+6098; actualhead/Clock/TLMMallZERO.
+  Collector2262.447917us excludesprinting. Independent15checkreview0142/
+  audio/actual-0141-I2C-cache-review-proof.json SHAc432952c... . Thisdoesnot
+  proveSE5off/freeorcallOpen permission. CorrectoriginalABI: Open2510,
+  Read2808,Write2c2c,Transfer295c,Close2dd8; originalClosehasnostate-restore
+  contract, nooriginalmethodcalled. ActualTASidentity/PCMstill0.
+- ActualnewUTC READYseq0/count0 observed, ONESET thenindependentstatusPASS
+  seq1/status2/error0/count1/UTC1793456278864166us/uncertainty2269us; NEVER
+  repeatSETthisboot. NoRTC/NVRAM/monotonic/networktimewrites/proof.
+  Capture39530 ENDED0 actualFD630GPU stage6/error0/completed13/surface1/
+  ALL4096GLSL+GMEMrestore+EAGLcallerPASS, all8hooks installed, sixsignedfiles
+  19072848B. Melbourneactualstage5/error0/Jan39600/Jul36000; official7400
+  PNG+3statesactivated inRAMCOW. Earlybattery8/12unavailable,nofakeSOC.
+  Capture63784 ENDED0 14:19:21Z screenshotblackafterApplelogo; noactual
+  lockscreen/desktop claimyet. Prefix2/error0/issued0/completed0/request0ack0,
+  nonewpanic(cpuline/Kernelpanic observed. AllUSBworkersENDED; current
+  LIVE0141native, NOTFASTBOOT. WaitusefulUIintervalwhile0142independent
+  defaultOFFsourceprogresses; donotrebootjustforanothermetadataformat.
+
+### Historical 0141 ACTUALONEimage37b6 sent14:15Z; payload76681 running; original0140 USB-negative inference INVALID under sandbox
+
+- Correction9069 handoff: original0140 expectedproduct8s/state1320/empty
+  descriptor checks ran INSIDErestricted sandbox. They do NOTestablish a
+  physicalUSB/resetfailure. ACKstillnotresetproof, but actual0140postreset
+  mode isUNKNOWN because humanlaterpressedphysicalkeys. RootcauseNOTisolated.
+  HumanrepliedFASTBOOT; initial0141helper50390 also sandbox timeout/NOBOOT,
+  NOboot.json created. Outside-sandbox readonly14:15:26.723887Z saw18d1:d00d
+  andactualproductpolaris/exit0/0.001s. Use realhostUSBpermissions henceforth.
+- ONE0141helper37183 ENDED0 sent2026-10-31T14:15:46.330541Z/source9069aed,
+  boot.json CONSUMED, image37b6a03f...; actualnewstatewaiting-payload PASS.
+  ONEexactb31payload76681 currentlyrunning, bootACK-only90s, no retry.
+  ONLY /private/tmp/polaris-runtime-0141-frozen-0001 +ORIGINAL0141 manifests/
+  currentbootrecord maycontrolthisphone. NEVER0140/0139/currenteditedclient.
+  Native/NC/audio resultsNOTyetcollected; no radio/scan/join/PCMclaim.
+
+### Historical 0141 fullREADY/COPY715; 0140 nativeDRAIN + WLR5 ACK COMPLETE, actualFASTBOOT NOTconfirmed; physical keys requested ONCE
 
 - Parent0140 sole shutdown-fastboot90456 ENDED (sessiongone; actualresult
   passedtrue/completed2026-10-31T14:11:14.284461Z). Actualnative seq1/mode2/
