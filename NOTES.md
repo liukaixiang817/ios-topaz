@@ -34,6 +34,29 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0136 nativecounter source01de300 PUSHED/CI41186374177 inprogress; batteryROcanonicalFWfix READY; PHONE LIVE0135
+
+- Nativeclock+WiFiMachOinstructionfix source01de300e1d309e7542bf292e828f8462698deb08
+  committed/pushed, uniqueCI41186374177 running; watcher72906 ownsartifact
+  verification. NOduplicateCI. Current0135mustNOTreceiveUTCSET: itsnative
+  CNTVCTreadwasremovedbyDarwinsemicoloncomment. WiFipriorrawPARalsoinvalid.
+- BatteryFWcanonicalREADfixready: ownv5sourcefirstmap/lastEE0preferred,
+  foreignWRITEowner≠readban; allactualselectedfullidentity/ownerchangesstill
+  sticky. Preservesoneobserverread/tick/28readplan/500msquality/15sage/5speriod,
+  ABI256/WLEDstrictowner0allunchanged. Keeps512rawmaps+already-readowners
+  fixedcache/smalloncefailurelog, noextraMMIO. RelatedASAN/UBSAN+physical
+  combinedEFIcompilePASS. Current0135STOP3NOTcleared/retried. Needsnewcandidate.
+- Wallpaperofficialdefault7400realoriginalCAML+5HEIC renderedviaAppleCAMLParser/
+  CARenderer into1125x2436fullstaticPNG (MacM2Metal, noUItext), notgradient-only
+  CPUbadoutput. Agentbuildingtransactional1PNG+3flatCAML/defaultbinding while
+  preservingexactcontextgates andaddingfirst-failurediagnostics. NOTonphone.
+- WiFiSCMINFOavailability-only0911preparedseparately, noSMEMaddress/read/radio;
+  notyetcommitted/intocurrentCI. PotentialnextactualAPIavailabilityisnot
+  permission/association. OwnTZaddresswhiteliststillneedsstaticproof.
+- Userwantsreadyfeaturesphysicallytestedwithoutwaitingall: parentprepares
+  isolatedclock+batterynewcandidatewithsameprovenaeafgraphicswhiledefault
+  wallpapercontinues. CurrentallUSBworkersENDED, phoneLIVE0135frozen390only.
+
 ### 0136 PRIORITY actualclock/battery/WiFi repairs +directiOS16defaultwallpaper; PHONE LIVE0135, NO UTC SET
 
 - Userreportsallfourstillwrong, asksrepairtime/battery/WiFi anddirectlyset

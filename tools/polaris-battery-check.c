@@ -8,6 +8,8 @@ struct fixture {
     uint8_t regs[PBAT_BANKS][256];
     unsigned bank,reg,bytes,commands,adc_reads,invalid_commands;
     unsigned owner_changed,timeout,frozen,unstable,command_delay_us;
+    uint32_t version,maps[512],owners[512];
+    unsigned map_reads,owner_reads;
     uint64_t us;
 };
 static const unsigned fixture_ppid[PBAT_BANKS]={0x201,0x240,0x241,0x210,0x212,0x213,0x214,0x216};
@@ -15,12 +17,14 @@ static uint32_t fixture_read(void *context,unsigned kind,uint32_t offset)
 {
     struct fixture *f=context;
     if(kind==PBAT_CORE) {
-        if(!offset)return 0x50000000;
-        for(unsigned k=0;k<PBAT_BANKS;k++)if(offset==0x900+4*(100+k))
-            return 0x01000000|(fixture_ppid[k]<<8);
-        return 0;
+        if(!offset)return f->version;
+        assert(offset>=0x900&&offset<0x1100&&!(offset&3));f->map_reads++;
+        return f->maps[(offset-0x900)/4];
     }
-    if(kind==PBAT_CONFIG)return f->owner_changed?1:0;
+    if(kind==PBAT_CONFIG) {
+        assert(offset>=0x700&&offset<0xf00&&!(offset&3));f->owner_reads++;
+        return f->owner_changed?1:f->owners[(offset-0x700)/4];
+    }
     assert(kind==PBAT_OBSERVER);
     unsigned local=offset-0x80*(100+f->bank);
     if(local==8)return f->timeout?0:1;
@@ -46,6 +50,8 @@ static uint64_t fixture_time(void *context)
 static struct polaris_battery_bus make_bus(struct fixture *f,unsigned revision)
 {
     memset(f,0,sizeof(*f));f->us=1000000;
+    f->version=0x50000000;
+    for(unsigned k=0;k<PBAT_BANKS;k++)f->maps[100+k]=0x01000000|(fixture_ppid[k]<<8);
     f->regs[0][3]=(uint8_t)revision;f->regs[0][4]=0x51;f->regs[0][5]=0x15;
     f->regs[1][5]=0x10;f->regs[2][5]=0x11;
     f->regs[1][0x10]=2;f->regs[1][0x46]=0x80;f->regs[1][9]=128;f->regs[1][10]=128;
@@ -74,9 +80,43 @@ int main(void)
     assert(!pbat_sample_valid(&s,s.sampled_us+PBAT_MAX_AGE_US+1,b.counter_hz));
     assert(!pbat_sample_valid(&s,s.sampled_us,b.counter_hz+1));
     b=make_bus(&f,1);assert(pbat_acquire(&b,&s)&&s.voltage_uv==3999989&&s.current_ua==499999);
-    b=make_bus(&f,2);f.owner_changed=1;
+    b=make_bus(&f,2);assert(pbat_map(&b));f.owner_changed=1;
     assert(!pbat_acquire(&b,&s)&&s.error==PBAT_E_MAPPING&&f.commands==0);
+    assert(b.mapping.reason==PBAT_MAP_OWNER_CHANGED&&b.mapping.stage==PBAT_MAP_OWNER&&
+        b.mapping.bank==0&&b.mapping.apid==100&&b.mapping.expected==0&&b.mapping.actual==1);
     f.owner_changed=0;assert(!pbat_acquire(&b,&s)&&f.commands==0); /* sticky */
+    /* Own v5 READ0400 permission does not require local WRITE ownership. */
+    b=make_bus(&f,2);f.owners[100]=0x80000003;
+    assert(pbat_acquire(&b,&s)&&s.valid==PBAT_ALL&&b.owner[0]==0x80000003&&f.commands==28);
+    /* First mapping, each later EE0 mapping overrides; later foreign owner
+     * does not override local. All raw words from this one scan are saved. */
+    b=make_bus(&f,2);
+    f.maps[20]=f.maps[110]=f.maps[120]=f.maps[130]=f.maps[100];
+    f.owners[20]=7;f.owners[110]=0x80000000;f.owners[120]=4;f.owners[130]=0x40000000;
+    assert(pbat_map(&b)&&b.apid[0]==130&&b.owner[0]==0x40000000&&b.mapping.matches[0]==5);
+    assert(b.mapping.scanned==512&&f.map_reads==520&&f.owner_reads==20&&f.commands==0);
+    assert(b.mapping.scan_map[130]==f.maps[130]&&b.mapping.scan_owner[130]==f.owners[130]&&
+        (b.mapping.owner_valid[130/32]&(1u<<(130%32)))&&!(b.mapping.owner_valid[0]&1));
+    b=make_bus(&f,2);f.maps[20]=f.maps[100];f.owners[20]=2;f.owners[100]=3;
+    assert(pbat_map(&b)&&b.apid[0]==20&&b.owner[0]==2&&b.mapping.matches[0]==2);
+    b=make_bus(&f,2);f.maps[102]=0;
+    assert(!pbat_map(&b)&&b.fault==PBAT_E_MAPPING&&b.mapping.stage==PBAT_MAP_SELECT&&
+        b.mapping.reason==PBAT_MAP_MISSING&&b.mapping.bank==2&&b.mapping.apid==UINT32_MAX&&
+        b.mapping.expected==0x241&&b.mapping.scanned==512&&b.apid[2]==UINT32_MAX&&f.commands==0);
+    b=make_bus(&f,2);assert(pbat_map(&b));unsigned old_owner_reads=f.owner_reads;
+    uint32_t original_map=f.maps[100];f.maps[100]^=0x01000000;
+    assert(!pbat_map(&b)&&b.fault==PBAT_E_MAPPING&&b.mapping.stage==PBAT_MAP_VERIFY&&
+        b.mapping.reason==PBAT_MAP_CHANGED&&b.mapping.expected==original_map&&
+        b.mapping.actual==f.maps[100]&&f.owner_reads==old_owner_reads&&f.commands==0);
+    unsigned old_map_reads=f.map_reads;f.maps[100]=original_map;
+    assert(!pbat_map(&b)&&f.map_reads==old_map_reads&&f.owner_reads==old_owner_reads); /* sticky, no reads */
+    b=make_bus(&f,2);assert(pbat_map(&b));f.owners[100]=0x80000000; /* Same low3 owner; raw identity changed. */
+    assert(!pbat_map(&b)&&b.mapping.reason==PBAT_MAP_OWNER_CHANGED&&
+        b.mapping.actual==0x80000000&&b.mapping.expected==0&&f.commands==0);
+    b=make_bus(&f,2);f.version=0x60000000;
+    assert(!pbat_map(&b)&&b.fault==PBAT_E_IDENTITY&&b.mapping.reason==PBAT_MAP_BAD_VERSION&&
+        b.mapping.version==f.version&&b.mapping.stage==PBAT_MAP_VERSION&&
+        b.mapping.scanned==0&&b.apid[0]==UINT32_MAX&&!f.map_reads&&!f.owner_reads&&!f.commands);
     b=make_bus(&f,2);f.regs[0][5]=0x25;
     assert(!pbat_acquire(&b,&s)&&s.error==PBAT_E_IDENTITY&&f.commands==3);
     b=make_bus(&f,2);f.timeout=1;
@@ -125,6 +165,6 @@ int main(void)
     assert(!pbat_runtime_authorized(board,sizeof(board)-1,one,4,one,4,1));
     assert(!pbat_runtime_authorized("xiaomi,dipper",14,one,4,one,4,1));
     assert(!pbat_runtime_authorized(NULL,0,one,4,one,4,1));
-    puts("PASS: 16 acquisition/publication + 10 explicit runtime-DT admission checks; SOFTWARE fixture, no device access");
+    puts("PASS: acquisition/publication + 10 runtime-DT + 8 canonical-v5 map/diagnostic cases; SOFTWARE fixture, no device access");
     return 0;
 }

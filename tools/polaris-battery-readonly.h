@@ -5,8 +5,10 @@
  * MEMIF/SRAM/HOLD/profile load, charger action, allocation or enable writes.
  * Runtime admission MUST establish original Polaris DT, CPU0/EL/DAIF/group,
  * mapped MMIO and serialization with all other EE0 observer clients. Caller
- * sets admitted only after that review. Every selected SID2 APID must be
- * uniquely mapped to EE0; full map/owner identities remain fixed this boot.
+ * sets admitted only after that review. Original v5 READ APID selection is
+ * first mapping, overridden by each later EE0 WRITE-owned mapping. Other
+ * WRITE owners do not forbid observer reads; no write permission is granted.
+ * The selected full map/WRITE-owner identities remain fixed this boot.
  * Offsets: CORE c440000, CONFIG c40a000, EE0 OBSERVER e600000 stride80.
  * Never use c600000 stride10000 (the PMIC write channels).
  */
@@ -14,6 +16,18 @@
 #define POLARIS_BATTERY_READONLY_H
 #include "polaris-battery-shared.h"
 enum { PBAT_CORE=0,PBAT_CONFIG=1,PBAT_OBSERVER=2,PBAT_BANKS=8 };
+enum { PBAT_MAP_VERSION=1,PBAT_MAP_SCAN,PBAT_MAP_SELECT,PBAT_MAP_VERIFY,
+       PBAT_MAP_OWNER,PBAT_MAP_READY };
+enum { PBAT_MAP_OK=0,PBAT_MAP_BAD_VERSION,PBAT_MAP_MISSING,
+       PBAT_MAP_CHANGED,PBAT_MAP_OWNER_CHANGED };
+struct polaris_battery_map_diag {
+    uint32_t stage,reason,bank,apid,expected,actual,version,scanned;
+    uint32_t matches[PBAT_BANKS],verified_map,verified_owner;
+    uint32_t current_map[PBAT_BANKS],current_owner[PBAT_BANKS];
+    /* Same first scan only. Zero owner words need their explicit valid bit;
+     * nonmatching owners were never read and are never invented as zero. */
+    uint32_t scan_map[512],scan_owner[512],owner_valid[16];
+};
 struct polaris_battery_bus {
     void *context;
     uint32_t (*read)(void *,unsigned,uint32_t);
@@ -23,6 +37,7 @@ struct polaris_battery_bus {
     uint32_t apid[PBAT_BANKS],map[PBAT_BANKS],owner[PBAT_BANKS],version;
     uint32_t fault,reads,last_bank,last_reg,last_status,last_polls,span_limit_us;
     bool admitted,initialized;
+    struct polaris_battery_map_diag mapping;
 };
 static inline bool pbat_fault(struct polaris_battery_bus *b,unsigned error)
 { if(b&&!b->fault)b->fault=error;return false; }
@@ -32,35 +47,61 @@ static inline bool pbat_time(struct polaris_battery_bus *b,uint64_t *now)
     if(!*now||*now<b->last_us)return pbat_fault(b,PBAT_E_CLOCK);
     b->last_us=*now;return true;
 }
+static inline bool pbat_map_fail(struct polaris_battery_bus *b,unsigned reason,
+    unsigned bank,unsigned apid,uint32_t expected,uint32_t actual,unsigned error)
+{
+    if(!b->mapping.reason) {
+        b->mapping.reason=reason;b->mapping.bank=bank;b->mapping.apid=apid;
+        b->mapping.expected=expected;b->mapping.actual=actual;
+    }
+    return pbat_fault(b,error);
+}
 static inline bool pbat_map(struct polaris_battery_bus *b)
 {
     static const unsigned ppid[PBAT_BANKS]={0x201,0x240,0x241,0x210,0x212,0x213,0x214,0x216};
     if(!b||b->fault||!b->admitted||!b->read||!b->read_command||!b->now_us||
        !b->cookie||!b->counter_hz||!b->span_limit_us||
        b->span_limit_us>PBAT_UI_MAX_SPAN_US)return pbat_fault(b,PBAT_E_ARGUMENT);
-    uint32_t version=b->read(b->context,PBAT_CORE,0);
+    if(!b->initialized)for(unsigned k=0;k<PBAT_BANKS;k++)b->apid[k]=UINT32_MAX;
+    b->mapping.stage=PBAT_MAP_VERSION;
+    uint32_t version=b->read(b->context,PBAT_CORE,0);b->mapping.version=version;
     if(version<0x50000000u||version>=0x60000000u||
-       (b->initialized&&version!=b->version))return pbat_fault(b,PBAT_E_IDENTITY);
+       (b->initialized&&version!=b->version))return pbat_map_fail(b,PBAT_MAP_BAD_VERSION,
+           UINT32_MAX,UINT32_MAX,b->initialized?b->version:0x50000000u,version,PBAT_E_IDENTITY);
     if(!b->initialized) {
-        for(unsigned k=0;k<PBAT_BANKS;k++)b->apid[k]=UINT32_MAX;
+        b->mapping.stage=PBAT_MAP_SCAN;
         for(unsigned a=0;a<512;a++) {
             uint32_t map=b->read(b->context,PBAT_CORE,0x900+4*a);
+            b->mapping.scan_map[a]=map;b->mapping.scanned=a+1;
             for(unsigned k=0;k<PBAT_BANKS;k++)if(map&&((map>>8)&0xfff)==ppid[k]) {
-                /* Ambiguous lanes are not resolved by guessing an owner. */
-                if(b->apid[k]!=UINT32_MAX)return pbat_fault(b,PBAT_E_MAPPING);
                 uint32_t owner=b->read(b->context,PBAT_CONFIG,0x700+4*a);
-                if((owner&7)!=0)return pbat_fault(b,PBAT_E_MAPPING);
-                b->apid[k]=a;b->map[k]=map;b->owner[k]=owner;
+                b->mapping.scan_owner[a]=owner;b->mapping.owner_valid[a/32]|=1u<<(a%32);
+                b->mapping.matches[k]++;
+                /* Own c7cb50c1 read_apid_map_v5/mode_v2: first mapping or
+                 * later local WRITE owner; READ0400 is granted regardless
+                 * of WRITE owner. The EE0 observer command/status gates stay. */
+                if(b->apid[k]==UINT32_MAX||(owner&7)==0) {
+                    b->apid[k]=a;b->map[k]=map;b->owner[k]=owner;
+                }
             }
         }
+        b->mapping.stage=PBAT_MAP_SELECT;
         for(unsigned k=0;k<PBAT_BANKS;k++)if(b->apid[k]==UINT32_MAX)
-            return pbat_fault(b,PBAT_E_MAPPING);
+            return pbat_map_fail(b,PBAT_MAP_MISSING,k,UINT32_MAX,ppid[k],0,PBAT_E_MAPPING);
         b->version=version;b->initialized=true;
     }
-    for(unsigned k=0;k<PBAT_BANKS;k++)if(
-       b->read(b->context,PBAT_CORE,0x900+4*b->apid[k])!=b->map[k]||
-       b->read(b->context,PBAT_CONFIG,0x700+4*b->apid[k])!=b->owner[k])
-        return pbat_fault(b,PBAT_E_MAPPING);
+    b->mapping.verified_map=b->mapping.verified_owner=0;
+    for(unsigned k=0;k<PBAT_BANKS;k++) {
+        b->mapping.stage=PBAT_MAP_VERIFY;
+        uint32_t map=b->read(b->context,PBAT_CORE,0x900+4*b->apid[k]);
+        b->mapping.current_map[k]=map;b->mapping.verified_map|=1u<<k;
+        if(map!=b->map[k])return pbat_map_fail(b,PBAT_MAP_CHANGED,k,b->apid[k],b->map[k],map,PBAT_E_MAPPING);
+        b->mapping.stage=PBAT_MAP_OWNER;
+        uint32_t owner=b->read(b->context,PBAT_CONFIG,0x700+4*b->apid[k]);
+        b->mapping.current_owner[k]=owner;b->mapping.verified_owner|=1u<<k;
+        if(owner!=b->owner[k])return pbat_map_fail(b,PBAT_MAP_OWNER_CHANGED,k,b->apid[k],b->owner[k],owner,PBAT_E_MAPPING);
+    }
+    b->mapping.stage=PBAT_MAP_READY;
     return true;
 }
 static inline bool pbat_allowed(unsigned bank,unsigned reg,unsigned bytes)

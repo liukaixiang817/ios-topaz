@@ -45,11 +45,27 @@ static int pbat_runtime_scope(uint64_t *frequency)
 static void pbat_runtime_record(void)
 {
     struct polaris_battery_bus *b=&pbat_runtime.bus;
-    if(b->initialized&&!pbat_maps_reported) {
-        pbat_maps_reported=1;report("BATTERY_ARB_VERSION=",b->version);
+    unsigned mapping_report=b->mapping.reason?2u:b->initialized?1u:0u;
+    if(mapping_report&&!(pbat_maps_reported&mapping_report)) {
+        pbat_maps_reported|=mapping_report;report("BATTERY_ARB_VERSION=",b->version);
+        report("BATTERY_MAP_OBSERVED_VERSION=",b->mapping.version);
+        report("BATTERY_MAP_STAGE=",b->mapping.stage);report("BATTERY_MAP_REASON=",b->mapping.reason);
+        report("BATTERY_MAP_SCANNED=",b->mapping.scanned);
+        report("BATTERY_MAP_FAILURE_BANK=",b->mapping.bank);report("BATTERY_MAP_FAILURE_APID=",b->mapping.apid);
+        report("BATTERY_MAP_FAILURE_EXPECTED=",b->mapping.expected);report("BATTERY_MAP_FAILURE_ACTUAL=",b->mapping.actual);
+        report("BATTERY_MAP_VERIFIED_MASK=",b->mapping.verified_map);
+        report("BATTERY_MAP_OWNER_VERIFIED_MASK=",b->mapping.verified_owner);
+        /* All512 map words and already-read matching owner words remain in
+         * the fixed bus.mapping cache, with owner_valid bits. This report
+         * adds no MMIO and avoids printing a whole arbiter table in the
+         * critical resident service loop. No alternate APID retry occurs. */
+        report("BATTERY_MAP_RAW_RETAINED_WORDS=",b->mapping.scanned);
         for(unsigned i=0;i<PBAT_BANKS;i++) {
             report("BATTERY_BANK_INDEX=",i);report("BATTERY_BANK_APID=",b->apid[i]);
             report("BATTERY_BANK_MAP=",b->map[i]);report("BATTERY_BANK_OWNER=",b->owner[i]);
+            report("BATTERY_BANK_MATCHES=",b->mapping.matches[i]);
+            if(b->mapping.verified_map&(1u<<i))report("BATTERY_BANK_CURRENT_MAP=",b->mapping.current_map[i]);
+            if(b->mapping.verified_owner&(1u<<i))report("BATTERY_BANK_CURRENT_OWNER=",b->mapping.current_owner[i]);
         }
     }
     if(pbat_runtime.sequence==pbat_last_sequence)return;
