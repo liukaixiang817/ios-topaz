@@ -36,6 +36,9 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Serial Wi-Fi0145 executable RMTFS RAM-shadow service completed offline; physical integration NOT READY
 
+- Source7a3c163 committed and pushed toorigin/codex/polaris-preflight; no
+  proprietaryinputs committed. Finalhandoff commit/push proof is recorded
+  separately at0145/wifi/rmtfs-RAM-shadow-0002/source-and-handoff-push-proof.json.
 - Root alone implemented tools/polaris-wifi-rmtfs.c/.h, adapting MIT Mi8
   e930c26 realhostsvc RMTFS14/v1/instance1 on the existing ownGLINK/QRTR core.
   This actually handles OPEN1/CLOSE2/RW3/ALLOC4/DEVERR5/SYNC6, full4NV RAM
