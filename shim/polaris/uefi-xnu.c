@@ -41,7 +41,10 @@ struct args {uint16_t revision,version;uint64_t va,pa,size,top;struct video vide
 _Static_assert(sizeof(struct args)==736,"XNU boot args ABI");
 static struct efi_system *system_table;
 static efi_handle driver_image;
-#if EFI_XNU_GCD_MMIO_QUERY_AVAILABLE
+#if EFI_XNU_WIFI_NPA_READONLY_AVAILABLE
+static uint8_t log_buffer[524288];static uint64_t log_bytes;
+static volatile uint32_t log_overflow;
+#elif EFI_XNU_GCD_MMIO_QUERY_AVAILABLE
 static uint8_t log_buffer[262144];static uint64_t log_bytes;
 static volatile uint32_t log_overflow;
 #elif EFI_XNU_WIFI_RESOURCES_AVAILABLE
@@ -232,7 +235,11 @@ static int shutdown_status(void *,const uint8_t **,uint64_t *);
 #include "uefi-audio-clock-gcd-query.h"
 static int original_service_unknown;
 static int new_original_unknown(void)
-{return original_service_unknown||(pgcd_resident_context.record&&pgcd_uncertain(&pgcd_resident_context))||pacgq_preboot_record.uncertain||pacgq_preboot_record.outstanding||pacgq_ticket.outstanding;}
+{return original_service_unknown||(pgcd_resident_context.record&&pgcd_uncertain(&pgcd_resident_context))||pacgq_preboot_record.uncertain||pacgq_preboot_record.outstanding||pacgq_ticket.outstanding
+#if EFI_XNU_WIFI_NPA_READONLY_AVAILABLE
+    ||pwnpa_unknown()
+#endif
+    ;}
 #endif
 #elif EFI_XNU_AUDIO_CLOCK_QUERY_AVAILABLE
 #if !defined(POLARIS_EFI_TEST_QEMU)
@@ -339,6 +346,9 @@ static int prepare_boot(void *context)
 #endif
 #if EFI_XNU_WIFI_RESOURCES_AVAILABLE
         report("WIFI_RESOURCES_SOFTWARE_PHYSICAL_MAP_PSCI_COMPILED_OUT=",1);
+#endif
+#if EFI_XNU_WIFI_NPA_READONLY_AVAILABLE
+        report("WIFI_NPA_SOFTWARE_PHYSICAL_NAMESPACE_COMPILED_OUT=",1);
 #endif
     }
 #else

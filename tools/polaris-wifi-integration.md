@@ -205,3 +205,36 @@ reset or SCM operation was executed in this static review; current0144 and
 all existing native/GPU/WLED code remain unchanged. Exact per-wrapper hashes,
 call targets and own source identities are private0145/wifi/original-Npa-
 provider-0001/static-ABI-and-own-MSS-level-proof.json.
+
+The new explicit `--wifi-npa-readonly-pe` builder flag now wires a source-bound
+live collector into the actual EFI prepare path. It runs after Clock's handle
+allocations and before the first GCD query. This order keeps GCD's original
+exact map-key interval intact. The collector reuses that same boot's completed
+loaded-image enumeration, rechecks every followed RAM span and NpaDxe owner,
+verifies five immutable relocated spans twice, and captures the bounded live
+namespace twice. It calls only two LocateProtocol and two GetMemoryMap entries
+under the existing FP/architecture/TPL original-service guards. No original NPA
+function or plugin is called. Unknown delivery retains its operation and blocks
+native startup/reset through the existing parent gate.
+
+Each pass retains up to128 nodes, names up to64 bytes, complete link/resource/
+definition/plugin RAM records and full map outputs. Cycles, non-owned pointers,
+source/owner changes, traversal limit, changed namespace/map, backward or stale
+architecture, and incomplete service delivery refuse. Unresolved NULL resources
+remain raw observations. This does not create clients, assign ownership or
+translate a software aggregate into measured rail voltage. RawV1 is126432B;
+the new scope explicitly uses524288B for firmware logs, and snapshot allocation
+continues to use the actual buffer's `sizeof`. The old frozen0144 controller,
+image and records remain untouched.
+
+`polaris-wifi-npa-check.py --driver <new-driver-directory> --out <private-dir>`
+checks22 focused sanitizer cases using relocated original PE bytes as data,
+and compiles the actual combined coordinator for AArch64 COFF and Mach-O with
+matching raw ABI and1024B maximum frames. The new whole EFI linked successfully
+with65 exact inputs and the unchanged7d24 kernel/63cb physical payload. Two
+serial whole EFI/XNU terminal models pass19 checks each and eight literal
+compiled-out markers; their physical NPA/GCD/Clock bodies and records are absent.
+They use software PMIC/RAM USB and do not execute original NPA or collect live
+phone data. Host boot admission, source freeze and final image packaging still
+need a separate new profile before a physical trial; this compile is not a
+physical candidate authorization or Wi-Fi scan/join result.

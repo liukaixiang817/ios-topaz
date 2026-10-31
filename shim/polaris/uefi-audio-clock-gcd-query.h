@@ -16,6 +16,12 @@
 #ifndef EFI_XNU_AUDIO_CLOCK_GCD_QUERY_AVAILABLE
 #define EFI_XNU_AUDIO_CLOCK_GCD_QUERY_AVAILABLE 0
 #endif
+#ifndef EFI_XNU_WIFI_NPA_READONLY_AVAILABLE
+#define EFI_XNU_WIFI_NPA_READONLY_AVAILABLE 0
+#endif
+#if EFI_XNU_WIFI_NPA_READONLY_AVAILABLE
+#include "uefi-wifi-npa-readonly.h"
+#endif
 #ifndef EFI_XNU_AUDIO_CLOCK_QUERY_CAMERA_READONLY
 #define EFI_XNU_AUDIO_CLOCK_QUERY_CAMERA_READONLY 0
 #endif
@@ -336,6 +342,13 @@ static inline int pacgq_collect(const struct pacgq_io *io,const struct paic_resu
         pacgq_fail(r,PACGQ_HASH,0);goto finish;
     }
     if(!pacgq_context(io,r,w,0)){pacgq_fail(r,PACGQ_CONTEXT,0);goto finish;}
+#if EFI_XNU_WIFI_NPA_READONLY_AVAILABLE
+    /* AFTER all Clock handle allocations, BEFORE the first GCD baseline.
+     * NPA uses no Allocate/Free call. Opening GCD before LocateHandleBuffer
+     * would invalidate its exact map-key interval; that ordering is forbidden. */
+    pwnpa_collect_preboot(&io->memory,stage,i2c,gcd_context);
+    if(pwnpa_unknown()){pacgq_fail(r,PACGQ_UNKNOWN,1);goto finish;}
+#endif
     r->target_count=PACGQ_TARGETS;r->baseline_expected=PACGQ_CALL_TARGETS;r->query_count=PACGQ_TARGETS*2;
     for(unsigned n=0;n<PACGQ_TARGETS;n++){
         for(unsigned mode=0;mode<2;mode++){struct pacgq_query *q=&r->query[n*2+mode];
@@ -469,6 +482,9 @@ static inline void pacgq_report_preboot(void (*ram_append)(const char *))
 #if !EFI_XNU_AUDIO_CLOCK_GCD_QUERY_AVAILABLE || defined(POLARIS_EFI_TEST_QEMU)
     ram_append("AUDIO_CLOCK_QUERY_PHYSICAL_BODY_COMPILED_OUT=1\r\n");
 #else
+#if EFI_XNU_WIFI_NPA_READONLY_AVAILABLE
+    pwnpa_report_preboot(ram_append);
+#endif
     pacgq_ram_number(ram_append,"AUDIO_I2C_CACHE_ERROR=",pacgq_preboot_i2c.error);
     pacgq_ram_number(ram_append,"AUDIO_I2C_CACHE_RAW_V1_BYTES=",sizeof(pacgq_preboot_i2c));
     ram_append("AUDIO_I2C_CACHE_RAW_V1_BEGIN\r\n");pacgq_ram_hex(ram_append,(const uint8_t*)&pacgq_preboot_i2c,sizeof(pacgq_preboot_i2c));

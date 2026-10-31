@@ -34,6 +34,57 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Serial Wi-Fi0145 NPA live namespace collector integrated/compiled; NEW host admission/image still NOT READY
+
+- Root serial-only implemented shim/polaris/uefi-wifi-npa-readonly.h and exact
+  tools/polaris-wifi-npa-identity.py/.h, plus explicitdefaultOFF
+  --wifi-npa-readonly-pe in the actual builder/prepare path. ActualNpaDxe
+  code is NOT called: twoLocateProtocol +twoGetMemoryMap only, all4 guarded
+  with existingoriginalFP/architecture/TPL serviceguards. SamebootI2C-loaded
+  enumeration reused WITHOUT itsfreedhandlearray; eachloadedobject/current
+  NPAowner/RAMspan revalidated, source5hash twice, fullnamespace2passes.
+- Importantintegrationorder: NPA hook AFTER Clock's own handleallocations /
+  context validation and BEFORE firstGCD query. OpeningGCD before those
+  allocations would change its mapkey; currentcode avoids that. No original
+  guard/freshness/config/restore gate weakened. NPAunknown/outstanding enters
+  parent's original-service UNKNOWN gate and blocks native/PON/receipt; no
+  blindcleanup/free/retry. No NPA Create/Scalar/Query/plugin/Destroy call.
+- Two bounded128node passes capture actual32Blinks/<=64Bnames/160Bresource /
+  64Bdefinition/64Bplugin, allrawcounts/partialprefix/maps/hash/owner/arch /
+  four464Bguards. Cycles/limit/foreignRAM/aliasowner/hash/key/namespace or
+  architecturechanges reject; unresolvedNULLresource preserved. RAWV1=126432B,
+  node448B onHOST/AArch64COFF/MachO. NewscopeRAMlog524288B and snapshotuses
+  sizeofactualbuffer. Namespace/currentRAMaggregate != railvoltage/owner /
+  clockwrite permission; may_create_client=false/may_start_MSS=false.
+- 22new targetedASAN/UBSAN cases +actualcombinedcoordinatorCOFF/MachO pass
+  (maxframe1024). Completephysical-body EFI compiled/linked at
+  0145/wifi/NPA-driver-ON-0001: c9e939da2cd904920b56c50977b0d46b0443605fe72cfbfdf13dd453e9fd7388 /
+  1653760B/65inputs; unchangedkernel7d24/physicalpayload63cb. Proof at
+  NPA-live-verified-0001/proof.json
+  ff4ef307c5ccec20b115f54148c5b5131e01b63b6bd5dbd45cb1c6c61e395c19.
+  ExactoldnativeSOURCE7e9/CI41213766168 reused; no newnativeCI/download.
+- Two NEW wholeEFI/XNU terminalmodels executed SERIAL, each19checksPASS,
+  65actualinputs matchON and8literalint1 rawcompiledout markers. Preprocessed
+  actualmain has no NPA/GCD/Clock physicalbodies/records. Results at
+  NPA-delayed-footer-run-0001 andNPA-lost-receipt-recovery-run-0001; proof
+  NPA-two-terminal-models-0001-proof.json. AllnewhostworkersENDED0. SOFTWARE
+  PMIC/delay/RAMUSB != actualoriginalfirmware/NPAgraph/guestreset/radio.
+- NoUSB/phone/storage/NVaction. Lastactualphone0144nativeLIVE16:21 remains
+  latestobservation, onlyfrozen0144controller may control that liveboot;
+  no replay/currenteditedcontroller. NPA live data NOT collected. Newsource
+  compile is NOT a bootable/admittedphysicalcandidate: exactnewhostpolicy /
+  newsourcefreeze/imagecodec/parentreview remain unfinished. Do not bypass
+  old0144 profile or mutateoldmanifest to call this READY. Do not repeat
+  these22tests/two models unless sourcechanges justify it.
+- NEXT serialWi-Fi: bind newNPA65inputs/metadata/evidence as a NEW exact host
+  profile preservingold0144, completefreshindependentcopies/image/codec /
+  oneboothelper. At nextneededcontrolledROtransition combine3NV24MiB fresh
+  hashes/GPT with newsourceboundNPA liveRAM/vote baseline trial; no standalone
+  boot foroldNV/TOC orstaticavailability. Only afteractualnamespace/plugin /
+  units and allocated/VMID/MPU/privateclient/stoprestore evidence, progress
+  MSS AOP/rail/clock/reset/RMB/auth +SFPB/SMEM/GLINK/RMTFS. Scan/join/data
+  unfinished; allaudio/camera/otherchildren stay STOPPED.
+
 ### Serial Wi-Fi0145 own MSS/NPA power ABI and original level mapping resolved statically; phone unchanged
 
 - Continued ONLYWi-Fi, nochildren/USB/nativeCI/models. Original81NpaDxe
