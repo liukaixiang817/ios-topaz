@@ -68,5 +68,24 @@ class TransportTests(unittest.TestCase):
         for bad in [b'',raw[:-1],raw+b'\x00']:
             with self.assertRaises(ValueError):transport.validate_configuration(bad)
 
+    def test_native_capture_preserves_full_resource_prefix_and_native_ring(self):
+        # Actual0142 firmware can publish128KiB before the4MiB XNU ring.
+        data=b'R'*131072+b'\nNATIVE_RING\n'+b'N'*(4*1024*1024)
+        replies=[b'OKAYpolaris-uefi-diag',b'OKAY',f'DATA{len(data):08x}'.encode()]
+        replies += [data[n:n+65536] for n in range(0,len(data),65536)]+[b'OKAY']
+        wire=Wire(replies);protocol=transport.KernelProtocol(wire)
+        protocol.product();protocol.stage('logs')
+        self.assertEqual(protocol.upload(),data)
+        self.assertEqual(wire.commands,[b'getvar:product',b'oem logs',b'upload'])
+        self.assertFalse(wire.replies)
+        # Legacy bound stays unchanged; excessive native headers fail before
+        # consuming any body bytes.
+        for kind,count in ((transport.ReadOnlyProtocol,len(data)),
+                           (transport.KernelProtocol,(4<<20)+131072+129)):
+            wire=Wire([b'OKAYpolaris-uefi-diag',b'OKAY',f'DATA{count:08x}'.encode()])
+            protocol=kind(wire);protocol.product();protocol.stage('logs')
+            with self.assertRaisesRegex(ValueError,'exceeds diagnostic bounds'):protocol.upload()
+            self.assertEqual(wire.reads,[64,64,64])
+
 
 if __name__=='__main__':unittest.main()

@@ -256,7 +256,9 @@ class LibusbTransport:
 
 class KernelProtocol(ReadOnlyProtocol):
     """Explicit RAM-boot/reset client. ReadOnlyProtocol keeps its old whitelist."""
-    limits=dict(ReadOnlyProtocol.limits,logs=(4<<20)+32768+128,**{'boot-options':65536,'shutdown-state':128})
+    #0142 full resource/Clock prefix: firmware128KiB + XNU4MiB + labels.
+    #ReadOnlyProtocol retains its original32KiB bound.
+    limits=dict(ReadOnlyProtocol.limits,logs=(4<<20)+131072+128,**{'boot-options':65536,'shutdown-state':128})
 
     def __init__(self,transport):
         super().__init__(transport)

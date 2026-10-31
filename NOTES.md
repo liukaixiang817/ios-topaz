@@ -72,8 +72,21 @@ early samples only. On0029 the human already confirmed boot complete and said
   now seals exact57/source9f44/82b3/b31; 26 related tests PASS including each
   of57 changed-input refusals. DefaultOFF I2C label clarification b96f31e3...
   retains oldpaic body/call/record; no original proof/manifest rewritten.
-- NEXT commit host seal, run only two affected actual
-  wholeEFI-XNU terminal models, ONEpackage/wholecodec/audit/freeze, then one
+- Hostseal46de63722986d83a6240a2e99602e35d7abb47e7 pushed. Unique modelpair
+  38323 ENDED0 PASS19checks each/39.734284s and40.135440s, actual57inputs/
+  five literal integer1 compiledout markers/fullraw/12WLEDwrites retained;
+  SOFTWARE PMIC/delay/RAMUSB is not physical evidence. Proofdfaf48e7... .
+  Parentactual source+physical+models/nativeCI/freshRO admission PASSd8057650...
+  34 independentCOPY inputs (old32+Clockbinding2), no nativeCI/physicalON rebuild.
+- Host review found a necessary capture bug: oldKernelProtocol logbound was
+  4MiB+32KiB, insufficient for new128KiB firmwareprefix+4MiB native ring.
+  New full-prefix regression failed against old code; host-only limit now
+  4MiB+128KiB+128, legacyReadOnly32KiB unchanged. 32 related tests PASS,
+  including exactfullcapture and oversize rejection beforebodyconsumption.
+  Package17279 ENDED0 image378b60e2.../5971968B/0001 is UNUSED/SUPERSEDED
+  because it binds oldtransport7935aeb1... . No codec/freeze/boot ran for0001;
+  preserve its manifest, package0002 must bind this new host-only source.
+- NEXT commit host logcap, newpackage0002/wholecodec/audit/freeze, then one
   temporary image/exactpayload and real raw capture. Reuse controlled fresh
   0139 ed39/c7d3 RO+RAMCOW interval; no Android known. No userdata writes.
 - Rendering parallel: saved0141 frames show41px console sidebars; first-copy
@@ -83,6 +96,10 @@ early samples only. On0029 the human already confirmed boot complete and said
   compile isolated under0142/performance, preserving current57input candidate.
   WiFi follows own SMEM/GLINK->QRTR/WLFW69v1->ath10k, not foreign carveouts;
   actual network/PCM/sensor/frame and CameraApp registration remain unfinished.
+  Actual0141 native log twice reports product/camera node absent; local
+  HackiOSd82loader declares product/camera + arm-io/isp camera-rear only with
+  its cam5 driver. Mi8 pinnedpatch adds no camera provider. Proofd6b8fca2...
+  records capability-publication gap, not sole icon-filter cause or frame proof.
 
 ### Historical 0141 ACTUAL NC18LDR/I2C5096B PASS; realhome/wallpaper/Melbourne/battery/GPU/WLED PASS; WiFi/audio/camera STILLUNFINISHED
 
