@@ -34,6 +34,40 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0123 actual native iOS LCD lock/wake + safe FASTBOOT COMPLETE; NEXT user prioritizes full16.5 and Dipper CPU/GPU comparison
+
+- Actual NEW0122 ONE RAM image01:32:31UTC / ONE exact payload completed. Real
+  CPU0 scope logged affinity81000000/EL4/DAIF3c0/Group0/PARd5d0b00 and all
+  identity windows PASS; original81FW and loadedPE/archive ownership preserved.
+  Actual Darwin/native4big/SMP64callbacks48remote/root immutableRO+512MiBRAMCOW
+  booted. Three realGPU ALL4096 checks and CA mode1/ca_vbl1 passed.
+- Native startup OFF/ON seq1/2 completed, then user explicitly tested the power
+  key and replied **“背光熄灭，唤醒正常”**. Actual seq3OFF/seq4ON raw readbacks
+  match that session:8issued=8completed/50raw/error0/module80/IRQ02. Later
+  seq5OFF has10complete/60raw/module00/IRQ00. One bounded host touch was ACKed
+  but did not request ON; do not call it touch-to-wake success. No optical
+  question/old0113/0116 cycle replay. Native powerkey lock/wake is now proven.
+- Original native shutdown from OFF restored WLED via seq6, VFS0busy0/UFS owned
+  queue26454=26454/stockGPU1BW4+CPUrequest0 restored BEFORE actual600/500/400
+  peerOFF. Native status phase3/RAM_DRAINED80000003, not persistentUFS SAFE.
+  Actual raw prefix74+WLEXIT05 fourread footer+WLR5 two NEW finalread=80records,
+  12issued=12completed/error0/module80/IRQ02;212B footer/64B OKAY+WLR5 saved.
+  Host independently reparsed all pages/footer/receipt and76file hashes at
+  `0123/physical-native-lock-wake-and-FASTBOOT-proof.json` PASS. Independent
+  expectedPolaris FASTBOOT01:38:41.860073UTC PASS. All phone USB sessions ENDED;
+  no active iOS, no partition/NVRAM/Android write, no raw reset or forced exit.
+- Limitation retained: one post-wake AppLibrary screenshot contains composition
+  or capture artifacts; cause not isolated, no stable-home regression claim.
+  Human normal-wake report and WLED electrical evidence do not prove physical
+  scanout60, general UI correctness or durable installation. Current flags and
+  graphics865407ee unchanged; current-source kernelCI not repeated.
+- NEW HUMAN PRIORITY overrides old sound/WiFi-next: replace userland with fuller
+  iOS16.5 while retaining CPU/GPU acceleration/backlight; concurrently compare
+  Dipper CPU/GPU and absorb demonstrably better compatible parts. Sound/WiFi
+  remain pending.0124 official20F66 OS/System/App are now Mac READONLY mounts;
+  no16.5 ABI acceptance, new root image, phone install or16.5 boot yet. No source
+  scripts/prebuilts from reference executed. Keep originalroot/marker/ESP/data.
+
 ### 0123 physical recovery + NEW full readonly review COMPLETE; NEW0122 runtime candidate starting
 
 - Human replied FASTBOOT restored. Actual directed expectedPolaris query passed

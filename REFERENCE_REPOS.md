@@ -870,6 +870,18 @@ The ready0113 backlight RAM candidate and current display bundle stay unchanged.
 
 ## Polaris physical LCD backlight result (0116)
 
+**0123 update:** the separate native runtime has now booted actual iOS on
+Polaris. The human tested the power key and confirmed “背光熄灭，唤醒正常”.
+Session-bound raw records show native OFF/ON, then restoration from a later OFF
+before native drain and the actual FASTBOOT return. All80 raw observations,
+the four-read WLEXIT05 tail and two new WLR5 final observations independently
+decode;12 issued commands completed. This is native LCD lock/wake evidence,
+not OLED-register reuse, touch-to-wake, sustained60Hz or persistent installation.
+One post-wake screenshot has unresolved composition/capture artifacts; a clean
+stable-home visual regression is not claimed. The user now prioritizes fuller
+20F66 iOS16.5 and another focused Dipper CPU/GPU comparison, preserving these
+own-device drivers and restoration guards.
+
 The independent original-UEFI RAM WLED cycle now has actual Polaris evidence:
 module enable80->00->80, saved OVP notification02->00->02, all four issued
 commands completed and the final full raw-history receipt validated before
