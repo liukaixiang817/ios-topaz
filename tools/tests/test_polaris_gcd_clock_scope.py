@@ -34,6 +34,29 @@ class GcdClockScope(unittest.TestCase):
         with patch.object(a,'GCD_CLOCK_0143',None):
             with self.assertRaisesRegex(ValueError,'separately reviewed'):a.original_gcd_scope(self.enabled()[0])
 
+    def test_actual_runtime_config_revision_keeps_all_four_source_gates(self):
+        policy=a.GCD_CLOCK_0144
+        self.assertEqual(policy['firmware_source'],'5eb66389e38873ee82fee0f070cff643374aa859')
+        self.assertEqual(len(policy['inputs']),61)
+        d=dict(inputs=copy.deepcopy(policy['inputs']),kernel_sha256=policy['kernel'],payload_sha256=policy['payload'])
+        d.update(copy.deepcopy(policy['metadata']));d.update(copy.deepcopy(policy['resource_fields']))
+        gates=(a.original_gcd_scope,a.resources_clock_scope,a.normal_nc_firstread_scope,a.audio_i2c_cache_scope)
+        d['wifi_CPU0_firstread_readonly']=False
+        d.update({a.NORMAL_NC_PREFIX+k:v for k,v in a.NORMAL_NC_PHYSICAL_FIELDS.items()})
+        d.update({a.AUDIO_I2C_PREFIX+k:v for k,v in a.AUDIO_I2C_PHYSICAL_FIELDS.items()})
+        self.assertEqual(len(policy['metadata']),62)
+        self.assertEqual(d['original_GCD_raw_bytes'],30224)
+        for gate in gates:self.assertTrue(gate(d))
+        for name in policy['inputs']:
+            bad=copy.deepcopy(d);bad['inputs'][name]='changed'
+            for gate in gates:
+                with self.subTest(input=name,gate=gate.__name__):
+                    with self.assertRaises(ValueError):gate(bad)
+        for key,value in [('original_GCD_config_RuntimeData_attributes',15),('original_GCD_config_full_page_AT_required',1),('original_GCD_config_RAM_types',[3,4,5,6]),('original_GCD_config_raw_span',dict(offset=29992,bytes=112,count=2))]:
+            bad=copy.deepcopy(d);bad[key]=value
+            with self.subTest(metadata=key):
+                with self.assertRaises(ValueError):a.original_gcd_scope(bad)
+
     def test_configuration_ram_revision_needs_its_own_complete_seal(self):
         old=copy.deepcopy(a.GCD_CLOCK_0143)
         legacy=dict(inputs=copy.deepcopy(old['inputs']),kernel_sha256=old['kernel'],payload_sha256=old['payload'])
