@@ -34,6 +34,79 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0148 nativeLIVE18:35; actual originalRPMh four calls SUCCESS/DRV2 stable; Wi-Fi not yet working
+
+- Supersedes everyold0146/0147LIVE/0148inflight/READY. Old0147 shutdown71720
+  ENDED0/nativecookie2897998993/seq1mode2phase3error0/epochs0/caps80000003,
+  fullappendraw/WLEXIT05/WLR5 independentlyredecodedfinal32/error0; independent
+  actualPolarisFASTBOOT18:29:22.168625Z. No genericreset/physicalkeys.
+- ONE0148image64243 ENDED0 sent18:29:39.969161Z/sourceea54fbb/imageed3b64cf
+  542831846d065caf7bf77cc585c8dc87cf8f261f78ac669f8e119052/5986304B. Actual
+  waiting-payload thenONE63cbpayload77798 ENDED0 ACK18:30:47.087871Z /
+  transfer32.95657s/bootcall16.95345s. Originalrepo0148/phone-NPA-runtime-0001 /
+  boot.json CONSUMED; no replay. ONLY /private/tmp/polaris-runtime-0148-frozen-
+  0001/tools/polaris-uefi-wled-runtime.py +frozen0148driver0001/image0001 and
+  originalsharedbootrecord controls phone. No old0147/currenteditedcontroller.
+- ActualRPMh snapshot now COMPLETE: startupcapture21574 ENDED0 at18:30:56.967818Z /
+  kernel-entered; fullRAW_V1 19264B SHAcbf7df20c6cc7a1b441c98da03f5c38528de2
+  afd182a7afeefe5c562b85b9096. attempted1/error0/unknown0/outstanding0/4issued=4
+  returned/owner_matches1/stable1. Bothpass5hashbytes independentlymatch exact
+  originalRpmhDxe; both200B relocatedprotocoltables match originalPE atbase
+  17fe4b000. All4FP/arch/TPL guards returned/restored1/TPL4→4. Samekey5898 /
+  map2784B, entire4000B snapshots equal. initflag1, oneactualDRV2, eight24B
+  TCSRAMrecords192B, 48B requeststate+five40B queueheaders, modeindex0. This
+  observes populated stablefirmwareRAM, NOT directInitreturn, hardwareTCSidle /
+  exclusiveowner/VMID/railpermissions. OriginalGCDerror0/finalprestartPASS.
+- Fullsource/contextproof0148/wifi/actual-RPMh-runtime-0001/physical-full-source-
+  and-context-proof.json SHA275fb0f9f3ca3822b798dbfb644784aed63b3d23c685982725
+  f4dea237312b8a. Existing0147 Ctypedef decoder reused for same19264B ABI,
+  not anotherwireparser. Only2LocateProtocol+2GetMap; noRPMhproviderAPI/Init /
+  client/vote/MMIO/SMC/MSS/NVserve. Actual14.7 zero-callBASELINE is historical:
+  exact duplicateopen was reproduced BEFOREfix and corrected, notownermove.
+- CorrectedFW099684d/HOSTea54fbb pushed. Onlycurrent prequery stage2/phase1 /
+  error0/UNKNOWN0/no outstanding/no pagequery/prestart/exactspentticket/result
+  isshared; standaloneopensonce. Neverreset/reopenoriginalticket. Alloriginal
+  source/owner/hash/200ms/FP/arch/TPL/GCDmapkey/UNKNOWN gates retained. New29
+  ASAN/UBSAN(executableNPA->RPMh +six stale/forgedcontexts) +actualCOFF/MachO /
+  fullEFI +twoSERIAL19checkterminalmodels/69inputs/9literalint1 markers+24
+  hostchecks+actualno-mockadmit PASS. Old0143..0147exactliterals unchanged.
+  Driver601e955d/3078656B/69inputs; softwaremodels NOThardware/guestreset.
+- Original81/SimpleInit/BootShim/DTB whole30560456B exactEDK2decodePASS.
+  Freeze bc677c627f62bc360734b53777be97d4cdade539e74926385a40631d2cfd5289,
+  COPY783+10COMMIT_ONLY/365committedsources. No nativechange/CI/download;
+  native7e9d461/CI41213766168/kernel7d24/payload63cb/f790/ca_vbl1 retained.
+- UTC0148 ONESET+independentstatus cookie1790737735/seq1/status2/error0/count1 /
+  uncertainty2261us. NEVER SETagain. Latestcurrent-ui-capture-0003/99525 ENDED0
+  at18:35:19.623911Z/kernel-entered, viewed7400 lockscreen/SundayNov1/Melbourne
+  5:35/chargingicon. ActualFG3/SMB2=58%/3942mV/charging1; independentfullWLED
+  prefix26/error0/issued4=completed4/req2=ack2/module128/irq2, rawORfault1/rt1
+  ONLYallowedILIMbit0 retained, nevercleared. No OVP/SC/unknownfault waiver.
+  EarlierApplelogo/battery8/12 logs arestartup, notcurrentUI. Source+currentUI
+  proof0148/wifi/actual-RPMh-runtime-0001/physical-full-source-and-current-UI-
+  proof.json SHA395b32c90f40a561230f26b4ef099ffb3d00a32211fbbceb0336aef5b2dabdd5.
+  GPUactualcompletedfence/idle/halt samples+visiblelockscreen not60Hz/full
+  rendering/AB. Camera lockshortcut notApp/realframe. AllUSB/hostworkersENDED,
+  allchildrenSTOPPED, no physicalactionpending; cannotcallphoneFASTBOOT.
+- NEXT ONLYWi-Fi: stopdoing namespace/capacity/parser inventory boots. Use
+  actualsourceboundRPMh provider for realprivate-client/power lifecycle. Before
+  anyAPI, bind currentboundedclientpool/membership, exactABI/FP/arch/TPL and
+  knownhandle/stoprestore. OriginalDelete0x48→2ee8→42d4 is unboundedpoolwalk;
+  missinghandle errors then selfspins4330. Verifiedopcodeproof under0148/wifi /
+  original-client-lifecycle-source-0001/delete-return-to-pool-path-proof.json.
+  Delete justunlinks/returnsRAMslot, NOT hardwarecompletion/restore; never
+  deleteNULL/unknown. Create/Destroy mayallocate/lock/log: anynewmutation must
+  stage BEFORE finalClock/GCD mapinterval, notpiggybackthisreadonlyhook or
+  resetspentticket/rebaseoldguard. Integrate neededpool/CMDdb/liveARCraw384
+  checks with that real lifecycle, not a separategenericavailability boot.
+  Stillneed independent2MiBPA/MSA/VMID/MPU/guard/cache/remoteDMAstop, ownMSS
+  AOP/rail/clock/reset/RMB/auth, SFPB/SMEM/GLINK/RMTFS with fresh0145NV. Existing
+  RMTFS service7a3c163 issoftware/notphysicalregistered. may_start_MSS=false /
+  may_serve_NV_to_remote=false/scan_join_data=false. Allchildren/audio/camera
+  staySTOPPED. PreserveallCPU/GPU/thermal/WLED/storageguards. Nextnewimage only
+  frozen0148 normalfullrawnative drain+freshreceipt+independentFASTBOOT first.
+  Fresh0145a04c/2549 root/NV continuescontrolledRO/RAMCOW; no newrecovery solely
+  forinventory/NV/TOC and no storagewrites.
+
 ### CURRENT0147 nativeLIVE18:23; actualRPMh zero-call BASELINE refusal; NEW0148 shared-context correction verified offline
 
 - Supersedes old0146LIVE/0147inflight/unusedREADY. Old0146 normalexit43081 /
@@ -67,7 +140,13 @@ early samples only. On0029 the human already confirmed boot complete and said
   c13571f4eb65bbc. Bothaffectedterminalmodels SERIALPASS19/69inputs/9literalint1 compiledout
   markers. NEW0148hostprofile105typed+94resource fields/no-mockactualadmit /
   24hostchecksPASS, old0143..0147literals unchanged. Source099684d committed.
-  Hostcommit/package/freeze NOTREADY. Frozen0147/oldmanifests nevermodified/retried.
+  HOSTea54fbb committed/pushed. NEW0148 independentlypackaged/frozen READY:
+  imageed3b64cf542831846d065caf7bf77cc585c8dc87cf8f261f78ac669f8e119052 /
+  5986304B, wholeEDK230560456B exactdecode/81FW/SimpleInit/BootShim/DTB
+  unchanged. Freeze bc677c627f62bc360734b53777be97d4cdade539e74926385a40631d2
+  cfd5289, COPY783+10COMMIT_ONLY/365committedsources/69inputs. Default
+  frozenhelperPASS; current0147 native-drain-and-exit now INFLIGHT, waitexec
+  ENDED before actualindependentFASTBOOT+sourceboundtransitionreview/ONE0148. Frozen0147/oldmanifests nevermodified/retried.
 - UTC0147 alreadyONESET and independentUTC-status-0001 completed, NEVER SET
   again: cookie2267514701/seq1/status2/error0/count1/uncertainty2272us. New
   current-ui-capture-0002/93558 ENDED0 at18:27:14.595062Z actual7400lockscreen /

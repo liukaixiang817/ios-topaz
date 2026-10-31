@@ -325,3 +325,17 @@ The executable combined NPA-to-RPMh regression failed before this correction
 and now passes without adding another GCD map read; six stale/forged/finished
 contexts refuse before any new service call. This corrects integration order,
 not a physical owner, RPMh initialization or Wi-Fi completion claim.
+
+
+Actual0148 confirms the corrected shared context: all four original services
+returned with FP/TPL restored, both complete RPMh snapshots match, the live
+configured driver is2, and initialized flag1 accompanies192 bytes of TCS state
+and populated per-driver request queues. The host independently matched all
+ten immutable hashes and both relocated200-byte protocol tables to the exact
+original firmware. These are RAM/source observations, not hardware TCS idle,
+exclusive ownership, direct Init completion or rail-vote permission. No RPMh
+provider API, client, vote, SMC, MMIO or MSS operation was issued. Original
+DeleteHandle's42d4 path scans the client pool without a bound and spins at4330
+if the handle is missing; returning a RAM slot is not hardware completion or
+restoration. A future actual private-client lifecycle must validate membership
+and use a distinct preparatory stage before the final Clock/GCD map interval.
