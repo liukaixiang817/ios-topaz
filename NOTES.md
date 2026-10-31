@@ -34,7 +34,77 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0149 nativeLIVE19:01; actual private client ZERO-API alignment refusal; NEW0150 correction offline
+### CURRENT0150 nativeLIVE19:10; actual originalRPMh private Create/Delete/retirement SUCCESS; Wi-Fi not yet working
+
+- Supersedes0149LIVE/0150inflight. ONE0150image3278 ENDED0 sent
+ 19:05:17.687214Z/SOURCEb053ad494fd4e7e5befaf9228a7150820eea3ae8/image147dfe
+  964ce352e9fdee06f20236cb629f9f198663d7b7598d1f2f325f48239e/5990400B. Actual
+  waitingpayload thenONE63cbpayload34036 ENDED0 ACK2026-10-31T19:06:35.474036Z/transfer32.95809s;
+  bootcall16.97309s; exactresult in native-boot-0001/result.json. Original
+  repo0150/phone-private-RPMh-runtime-0001/boot.json CONSUMED; no replay. ONLY
+  /private/tmp/polaris-runtime-0150-frozen-0001/tools/polaris-uefi-wled-runtime.py
+  withfrozen0150driver0001/image0001/shared originalbootrecord. No editedsource,
+  old0149controller/policy/stripflags. AllUSB/host/modelworkersENDED.
+- Actual startup-capture-0001/86400 ENDED0 at19:06:43.412173Z/kernel-entered.
+  FullprivateRAW_V1=227104B SHA5beacf724801de36d1f8a158b6de1297bd7b0ca25edb3
+  44305297be8eb38cd27: attempted1/error0/unknown0/outstanding0/retired1 /
+  clientheld0/clientreturned1/4issued=4returned/provider2=2. OriginalDRV2 noThis
+  CreateNoExplicit flag0 andDelete bothstatus0; actualhandle17cdcc01c.73loaded
+  image exclusions; actualroot17e64ed9c4mod8. Sixfullpool snapshots/twopass each
+  equal: active/free4/0 ->5/0 ->4/1, knowncreatedclient returned to freepool;
+  all4childqueues empty, created/requestFFFFFFFF00000000->releasedFFFFFFFFFFFFFFFF.
+  Reader至最后postmap返回29.184ms(非完整退休耗时)，最终200msfresh门PASS。
+  All8reader+client/postmap FP/arch/TPL guards
+  restored1/TPL4->4; originalCore+RPMh30checkpoint hashbytes independentlymatch,
+  reader10hashbytes+both200B relocatedprotocoltables match exactoriginalPE.
+- Actual earlybootstrap mapkey5898, Create changedto5899/Delete5899; final GCD
+  independentlyvalidates5899/5899 with31checks/eightgetters/twoactualprestarts.
+  FinalGCD ticket stayedunopened/unmodified duringprivatephase, neverreset or
+  rebased. Pool'snewretiredslot isretained: NOT bitwiseallocator/hardware rail
+  restore/TCSidle/MPU/VMID/ownership. No vote/commandset/MMIO/SMC/MSS/NVserve/
+  radio; may_start_MSS=false/may_serve_NV_to_remote=false/scan_join_data=false.
+  Actualproof0150/wifi/actual-private-client-0001/actual-private-client-retirement-
+  and-final-GCD-proof.json SHA6c8be7e689190f2a7ab716559f009bc0bee628021978ec2d83ec0372d31f81b5. ExistingCtypedef decoder reused
+  same227104B ABI; no newparser. Old0149 zeroAPI alignmentrefusal is historical.
+- UTC0150 ONESET+independentstatus cookie1969646061/seq1/status2/error0/count1 /
+  uncertainty2272us. NEVER SET0150again. Latestcurrent-ui-capture-0002/16105
+  ENDED0 at19:10:55.345251Z/kernel-entered; actuallyviewed7400 lockscreen /
+  SundayNov1/Melbourne6:10/chargingicon. FG3/SMB2=60%/3913mV/charging1.
+  FullWLED26/error0/issued4=completed4/req2=ack2/module128/irq2/faultOR1/rtOR1
+  onlyILIMbit0, retainraw/no clear. Tinyconsole/sidebar artifacts remain, NOT
+  allrender/60Hz/AB. Camera shortcut notcamera. Combinedsource+currentUIproof
+  fc180da9a63e89fcd5ded324ddc7341e1860693e227d2c3827dbd4662ef4e846.
+  AllUSB/build/modelworkersENDED. No physical action pending; NOT FASTBOOT.
+- Old0149 drain56965 ENDED0 at19:04:52.598398Z/nativecookie2623099347 /
+  seq1mode2phase3error0/epochs0/caps80000003/fullappendraw/WLEXIT05/WLR5
+  independentlyredecodedfinal32/error0; independentactualPolarisFASTBOOT
+ 19:05:06.009640Z. No genericreset/recovery/physicalkeys; continuouscontrolled
+  RO/RAMCOW sincefresh0145fullroots/NV remainsauthoritative, no newfullhash.
+- NewFW104a09c/HOSTb053ad4 pushed,46softwarelifecyclecases(original4mod8 and
+  bad2mod4),actualCOFF/MachO/fullEFI,twoSERIAL19checkwholeEFI/XNUmodels/10literal
+  int1 compiledoutmarkers/70inputs/40hostchecks/actualno-mockadmit PASS. No
+  nativechange/newCI. Driverb4dbda16/3846656B. Original81wholeEFI31328456B
+  exactEDK2decode; freeze36fb4cf1a62124172eecd8980dbe4942f98cd0eaa6df009cbfd6e
+  dc7335929c1/COPY787+10COMMIT_ONLY/369sources. Old0143..0149 exactpolicies and
+  oldmanifests preserved. SoftwarePMIC/delay/RAMUSB nothardware/guestreset.
+- NEXT SERIAL ONLY Wi-Fi: build on this now-physical original privateclient
+  lifecycle toward actualcurrentCMDdb/ownARCraw384 units/currentDRV2 TCS/private
+  vote+completion+stoprestore and ownMSS AOP/rail/clock/reset/RMB/auth. No NPA
+  placeholdervote, Init/sleep/wake/invalidate/NULLunknownDelete oroldMi8topvote
+  shortcut. Couple actual allocated2MiB/MSA/VMID/MPU/cache/guard/remote-lifetime
+  andSFPB/SMEM/GLINK/RMTFS; noReserved/camera borrow. Do not repeat client-only
+  orinventoryboot now solved. NextcommandstaticABIproof0150/wifi/next-original-
+  command-lifecycle-source-0001/next-command-ABI-source-proof.json SHA4efb5b35
+  c041cbbfcd59b7563bbd5c17b20160306f40833943112beace71bb04:slot0x78->330c
+  commandset/outuint32x2;0x98->36f0 singlecommand/outuint32x5. EFI0 isnot
+  completion; global26x24B resourcecache isNOT CMDdb/units/hardwarebaseline,
+  rowsnotcaptured, unknownaddress may realloc cache; no nextAPIpermission.
+  Noactualscan/join/data yet; audio/camera/children
+  remainSTOP. Nextimage onlyfrozen0150 fullnativeVFS/GPU/CPUdrain+appendraw /
+  freshWLEXIT05/WLR5receipt+independentactualFASTBOOT; unknown firstactualstate,
+  no blindretry/reset/cleanup/fallback. No physical action pending.
+
+### CURRENT0149 nativeLIVE19:03; actual ZERO-API alignment refusal isolated; NEW0150 candidate frozen READY
 
 - Supersedes all0148LIVE/0149inflight. ONE0149image32788 ENDED0 sent
  18:57:29.223435Z/SOURCE0653d7a/image24d7b1a69d9d885b931efb0c9ac4c05b510debad
@@ -61,6 +131,12 @@ early samples only. On0029 the human already confirmed boot complete and said
   refusal safely retired; actual finalGCDerror0/prestartPASS and native entered.
   Evidence0149/wifi/actual-private-client-0001/actual-pre-API-refusal-and-source-
   proof.json; same Ctypedef host decoder retains first AND second pool state.
+- Latestactual UI0149/current-ui-capture-0004/84340 ENDED0 at19:03:47.557177Z:
+  viewed7400 lockscreen/SundayNov1/Melbourne6:03/chargingicon. FG3/SMB2=59% /
+  3947mV/charging1. FullWLED26/error0/issued4=completed4/req2=ack2/module128 /
+  irq2/faultOR1/rtOR1 onlyILIMbit0, retainraw/no clear. Tinyconsole/display
+  artifacts not fullrender/60Hz/AB. Source+actualUIproof5d62f0eba87da422a99e
+  7963d4e121f520c849ed3ca2431c8dd9a870343e9c17. Earlierlogo/prefix2 is historical.
 - UTC0149 ONESET+independentstatus cookie1993524639/seq1/status2/error0/count1 /
   uncertainty2277us. NEVER SET0149again. Capture17758 ENDED0/kernel-entered;
   current-ui-capture-0003/3347 ENDED0 at19:01:53.028934Z shows Applelogo while

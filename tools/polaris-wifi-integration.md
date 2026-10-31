@@ -1,5 +1,30 @@
 # Polaris Wi-Fi transport integration
 
+## 0150 actual private provider lifecycle
+
+The corrected4B pool alignment has now passed on the physical phone. The
+original DRV2 CreateNoExplicit and Delete each returned EFI0; four guarded
+calls, including the post-call maps, returned with FP/architecture/TPL restored.
+All six complete pool snapshots were preserved: active/free4/0 ->5/0 ->4/1.
+The new known client was returned to the provider pool with four empty queues.
+The reader-to-last-postmap-return interval was29.184ms; retirement passed
+the original200ms gate and retained the new free slot. It is not a
+bitwise heap restoration or hardware vote/rail restoration claim.
+
+The allocator changed map key5898 to5899. The independent final GCD context
+validated5899 on both passes, all31 physical checks and two prestart checkpoints
+passed, and native XNU started. The early bootstrap/final GCD tickets stayed
+distinct and were never reset. Exact physical evidence is private under
+`research/polaris/uefi-ios-0150/wifi/actual-private-client-0001/`.
+
+No commandset, vote, MMIO, SMC, MSS or NV-serving operation was issued. This
+completes a physical private-client prerequisite for the next real power and
+MSS lifecycle; Wi-Fi scan/join/data remains unfinished. The original0x78 and
+0x98 submission wrappers output a uint32 request ID, not completion evidence.
+Their resource cache is not the command database or rail hardware baseline.
+Current resource/TCS/cache ownership, own ARC units and complete stop/restore
+must be established in the actual power transaction before using these APIs.
+
 ## 0150 original allocator alignment after actual0149 refusal
 
 The first actual private-client preparation retained all73 loaded-image
