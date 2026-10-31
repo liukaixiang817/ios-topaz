@@ -48,6 +48,20 @@ early samples only. On0029 the human already confirmed boot complete and said
   worker13352 ENDED0 at16:13:58Z, kernel-entered/SpringBoard/firstframe;
   WLEDprefix12/error0/issued2=completed2/req1=ack1 is an earlyOFF-stage sample,
   not completednewUI/wake. UTCalreadySETonce/independentstatusconfirmed.
+- Latestactual current-ui-capture-0003 worker11033 ENDED0 at16:21:15Z:
+  real7400 firsthomepage/Melbourne3:21, battery51%/3848mV/charging1,
+  WLEDcompleteprefix50/error0/issued8=completed8/req4=ack4. No newoptical
+  claim; this supersedes earlyOFF12 for currentdisplay state. Phone nativeLIVE,
+  no hostUSBworker remains. Allchildagents verified stopped/interrupted.
+- Parent serialreview reused the existing0911 SCMINFO source and own pinned
+  scm.c/.h, not a fresh duplicateprotocol/parser. Original602B payload has
+  no polariswifi flag and inspected0143/0144 logs have no nativeSCMINFO line;
+  do not call that availability probe physically completed. Its fixed query
+  only checks IO_READ API existence, no address/VMID grant. Review of Mi8's
+  realMSS flow confirms QMP/AOP+RPMh+clocks+selfauth/RMTFS prerequisites;
+  Mi8 retaining elevatedCX/MX is not our complete-restore implementation.
+  New serialreview is0145/wifi/serial-WiFi-priority-and-next-implementation-
+  review.json. No currentfirmware/native source changed during serialreview.
 - Wi-Fi0145 finalhandoff: own MSS is pil-q6v55-mss/self-auth, NOqcom,pas-id;
   mem-protect-id15 is NOT PASID. Newprivate original81-SMC-executable-inventory
   and SmemDxe wrappers show those wrappers do ABI/PRNG, not MSS provider.
