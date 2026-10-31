@@ -8,10 +8,32 @@ from polaris_wled_runtime_journal import journal,exit_footer,exit_receipt
 def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
 
 
+def clock_fixture(m):
+    enabled=m.get('host_UTC_sync',False)
+    if type(enabled) is not bool:raise ValueError('clock opt-in must be boolean')
+    if not enabled:return None
+    binding=m.get('host_UTC_mailbox')
+    if (m.get('calendar_RAM_only') is not True or m.get('RTC_write_api') is not False or
+        m.get('monotonic_counter_write_api') is not False or not isinstance(binding,dict) or
+        binding.get('symbol')!='_polaris_uefi_clock' or binding.get('BSS') is not False or
+        binding.get('bytes')!=256 or binding.get('alignment')!=128 or
+        binding.get('segment')!='__DATA' or binding.get('section')!='__data'):
+        raise ValueError('clock model requires its exact file-backed RAM-only fixture')
+    return binding
+
+
+def clock_slot_prepared(raw):
+    if len(raw)!=256:return False
+    request=struct.unpack_from('<16Q',raw)
+    return (request[0]==0x50434c4f434b3031 and request[1]!=0 and
+        request[2:6]==(0,0,0,0) and request[6:8]==(19200000,1) and request[8:]==(0,)*8)
+
+
 def main():
     ap=argparse.ArgumentParser(description=__doc__)
     for n in ('driver-manifest','kernel','payload','output'):ap.add_argument('--'+n,type=Path,required=True)
     a=ap.parse_args();root=Path(__file__).resolve().parents[1];m=json.loads(a.driver_manifest.read_text());app=a.driver_manifest.parent/m['artifact']
+    clock_binding=clock_fixture(m)
     case=m.get('controlled_WLED_native_exit')
     if (case not in ('delayed-footer','lost-receipt-recovery') or m.get('QEMU_variant') is not True or
         m.get('WLED_native_runtime_test') is not True or m.get('WLED_native_runtime_physical') is not False or
@@ -26,6 +48,11 @@ def main():
     out=a.output.resolve();out.mkdir(parents=True,exist_ok=False);esp=out/'esp/EFI/BOOT';esp.mkdir(parents=True)
     shutil.copyfile(app,esp/'BOOTAA64.EFI');shutil.copyfile(a.payload,out/'esp/PAYLOAD.BIN');shutil.copyfile('/opt/homebrew/share/qemu/edk2-arm-vars.fd',out/'vars.fd')
     cmd=['/opt/homebrew/bin/qemu-system-aarch64','-M','virt,gic-version=3,virtualization=off','-cpu','cortex-a55','-smp','8','-m','8G','-display','none','-monitor','none','-nic','none','-serial','file:'+str(out/'serial.log'),'-qmp','stdio','-no-reboot','-drive','if=pflash,format=raw,readonly=on,file=/opt/homebrew/share/qemu/edk2-aarch64-code.fd','-drive','if=pflash,format=raw,file='+str(out/'vars.fd'),'-drive','if=none,id=esp,format=raw,readonly=on,file=fat:ro:'+str(out/'esp'),'-device','virtio-blk-pci,drive=esp','-device','virtio-gpu-pci']
+    if clock_binding is not None:
+        # Explicit SOFTWARE machine property, never a guest CNT write or a
+        # relaxed physical PC_FREQUENCY guard. The legacy command is unchanged.
+        cmd[cmd.index('-cpu')+1]='cortex-a55,cntfrq=19200000'
+        cmd[1:1]=['-accel','tcg']
     began=time.monotonic();error=None;checks={};values={};attempts=[]
     with (out/'qemu.log').open('wb') as log:
         p=subprocess.Popen(cmd,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=log)
@@ -57,6 +84,18 @@ def main():
             for name,symbol,size in [('shutdown.bin','_polaris_uefi_shutdown',256),('wled-mailbox.bin','_polaris_uefi_wled',256)]:
                 q('pmemsave',{'val':base+symbols[symbol]-va,'size':size,'filename':str(out/name)})
             native=(out/'shutdown.bin').read_bytes();nc,ns,mode,phase,err,epoch,flushed,caps=struct.unpack_from('<QIIIIQQI',native,128)
+            if clock_binding is not None:
+                count=struct.unpack_from('<I',payload,12)[0]
+                if not 0<count<=64 or len(payload)<0x2a8+32*count:raise ValueError('clock payload segment bounds')
+                end=max(struct.unpack_from('<Q',payload,0x2a8+32*n)[0]+
+                    struct.unpack_from('<Q',payload,0x2b0+32*n)[0]-va for n in range(count))
+                others=[(symbols[s]-va,256) for s in ('_polaris_uefi_input','_polaris_uefi_shutdown',
+                    '_polaris_uefi_buttons','_polaris_uefi_wled','_polaris_uefi_battery') if s in symbols]
+                others += [(symbols['_sweet_log_ring']-va,4<<20),(symbols['_sweet_log_total']-va,8)]
+                if b.clock_mailbox_binding(a.kernel.read_bytes(),symbols,va,end,others)!=clock_binding:
+                    raise ValueError('clock model manifest differs from actual file-backed native symbol')
+                q('pmemsave',{'val':base+clock_binding['offset'],'size':256,'filename':str(out/'clock-mailbox.bin')})
+                clock_prepared=clock_slot_prepared((out/'clock-mailbox.bin').read_bytes())
             attempt_count=2 if case=='lost-receipt-recovery' else 1
             previous=None
             for at in range(attempt_count):
@@ -95,6 +134,7 @@ def main():
                 explicit_readonly_recovery=attempt_count==1 or values.get('WLED_EXIT_RECOVERY_RESULT')==1,
                 complete_literal_raw_prefix_footer_receipt=True,no_panic='panic(cpu ' not in text and 'panic(cpu ' not in ring
             )
+            if clock_binding is not None:checks['actual_clock_firmware_slot_prepared']=clock_prepared
             if not all(checks.values()):raise ValueError('actual native exit checks failed: '+','.join(k for k,v in checks.items() if not v))
         except Exception as e:error=str(e)
         finally:
@@ -104,6 +144,12 @@ def main():
     result=dict(passed=error is None and bool(checks) and all(checks.values()),checks=checks,error=error,seconds=time.monotonic()-began,
         controlled_exit=case,attempts=attempts,raw_fields=values,inputs=m['inputs'],driver_manifest_sha256=sha(a.driver_manifest),
         driver_sha256=sha(app),runner_sha256=sha(Path(__file__)),SOFTWARE_PMIC=True,RAM_USB_sink=True,physical_USB_or_PMIC_emulation=False,physical_admission=False,actual_guest_reset_proven=False)
+    if clock_binding is not None:
+        result.update(QEMU_command=cmd,SOFTWARE_CNTFRQ_hz=19200000,host_UTC_SET_sent=False,
+            host_UTC_sync_applied_proven=False,
+            clock_mailbox_sha256=sha(out/'clock-mailbox.bin') if (out/'clock-mailbox.bin').is_file() else None,
+            battery_physical_PMIC_reads_compiled_out=m.get('battery_physical_PMIC_reads_compiled_out') is True,
+            battery_SOFTWARE_disabled_observed=values.get('BATTERY_SOFTWARE_PHYSICAL_READS_COMPILED_OUT')==1)
     (out/'result.json').write_text(json.dumps(result,indent=2)+'\n');print(json.dumps({k:result[k] for k in ('passed','error','seconds')}))
     if not result['passed']:raise SystemExit(1)
 

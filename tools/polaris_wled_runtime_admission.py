@@ -1,4 +1,7 @@
 """Independent physical native-WLED RAM scope, never owned/persistent writes."""
+import hashlib
+import struct
+
 KERNEL_SHA='dd4bd7571c00278d3b5dc116fc63639da8271254ecb59d55cfd754f822b7a50f'
 NATIVE_SOURCE='2d55a4e6da5c73edc0d72cd3c17203a00fa6a7bb'
 ORIGINAL_SHA='8588a9a5218d407dd3169ec1f340097db689b3d046f3d38189514e09f3944336'
@@ -38,6 +41,20 @@ THERMAL=dict(experimental_limits_mC=[75000,70000,60000,55000],max_observation_ag
     hard_high_ns=600000000000,confirmed_low_ns=10000000000,idle_ns=250000000)
 PAIR=dict(max_physical_reads=72,max_words_per_sensor=4,max_span_us=1000,max_pair_delta_mC=2000,
           hottest_word_required=1,actual_words_only=1)
+RUNTIME_SERVICES=dict(host_UTC_sync=True,host_UTC_source='host-realtime-plus-monotonic-RTT',
+    calendar_RAM_only=True,RTC_write_api=False,monotonic_counter_write_api=False,
+    battery_readonly=True,battery_UI_span_limit_us=500000,battery_PMIC_write_api=False,
+    battery_physical_PMIC_reads_compiled_out=False,wifi_readonly=True,
+    wifi_EFI_SMEM_read_api=False,wifi_EFI_transmit_api=False,RAM_bytes=0xfc8a0000)
+RUNTIME_DT=dict(version=1,battery_readonly=True,wifi_readonly=True,
+    path='/polaris-runtime-services',boot_argument_tokens_changed=False)
+CLOCK_INITIAL_SHA=hashlib.sha256(struct.pack('<Q',0x50434c4f434b3031)+bytes(248)).hexdigest()
+BASE_TERMINAL_CHECKS=frozenset(('actual_EL1','actual_payload','actual_native_started',
+    'native_workloop_three_actual_RAM_copies','actual_native_RAM_drain','actual_final_archive',
+    'no_additional_PMIC_WRITE','original_errors_zero','footer_actual_delay_over_original_freshness',
+    'actual_reset_observer_only_after_final_pair','reset_arm_actual_guest_delay',
+    'reset_checked_after_new_pair','bounded_attempts','expected_first_delivery',
+    'failed_delivery_no_reset','explicit_readonly_recovery','complete_literal_raw_prefix_footer_receipt','no_panic'))
 
 
 def _exact(actual,expected):
@@ -46,6 +63,55 @@ def _exact(actual,expected):
         return actual.keys()==expected.keys() and all(_exact(actual[k],v) for k,v in expected.items())
     if type(expected) is list:return len(actual)==len(expected) and all(_exact(a,b) for a,b in zip(actual,expected))
     return actual==expected
+
+
+def runtime_services_scope(d):
+    for key,value in RUNTIME_SERVICES.items():
+        if not _exact(d.get(key),value):raise ValueError('runtime service physical scope changed: '+key)
+    if not _exact(d.get('runtime_services_DT'),RUNTIME_DT):
+        raise ValueError('runtime services require exact canonical payload DT opt-ins')
+    spans=[]
+    for key,symbol,bss,sections in (('host_UTC_mailbox','_polaris_uefi_clock',False,('__data',)),
+                                  ('battery_mailbox','_polaris_uefi_battery',True,('__bss','__common'))):
+        box=d.get(key)
+        fixed=dict(symbol=symbol,bytes=256,alignment=128,segment='__DATA',BSS=bss)
+        keys=set(fixed)|{'offset','section'}|({'pre_CPU_ON_publish'} if bss else {'file_offset','initial_sha256'})
+        if (type(box) is not dict or set(box)!=keys or
+            any(not _exact(box.get(k),v) for k,v in fixed.items()) or box.get('section') not in sections or
+            type(box.get('offset')) is not int or box['offset']%128 or
+            not 0<=box['offset']<=d['RAM_bytes']-256):
+            raise ValueError('runtime service requires its exact independent native mailbox: '+key)
+        if bss:
+            if box['pre_CPU_ON_publish'] is not False:raise ValueError('battery cannot publish before native BSS init')
+        elif (type(box['file_offset']) is not int or box['file_offset']<0 or box['file_offset']%128 or
+              type(d.get('payload_bytes')) is not int or box['file_offset']>d['payload_bytes']-256 or
+              box['initial_sha256']!=CLOCK_INITIAL_SHA):
+            raise ValueError('clock requires the exact file-backed DATA initializer')
+        spans.append((box['offset'],256))
+    for key in ('input_offset','buttons_offset','shutdown_offset'):
+        offset=d.get(key)
+        if type(offset) is not int or offset%128 or not 0<=offset<=d['RAM_bytes']-256:
+            raise ValueError('runtime mailbox must exclude existing native channel: '+key)
+        spans.append((offset,256))
+    for i,(start,size) in enumerate(spans):
+        if any(start<other+length and other<start+size for other,length in spans[i+1:]):
+            raise ValueError('runtime/native mailbox ranges overlap')
+
+
+def runtime_model_scope(m):
+    command=m.get('QEMU_command')
+    if (type(command) is not list or not all(type(x) is str for x in command) or
+        command.count('-cpu')!=1 or command.count('-accel')!=1):
+        raise ValueError('clock model requires its explicit SOFTWARE CPU/counter command')
+    cpu,accel=command.index('-cpu'),command.index('-accel')
+    if (cpu+1>=len(command) or command[cpu+1]!='cortex-a55,cntfrq=19200000' or
+        accel+1>=len(command) or command[accel+1]!='tcg' or
+        type(m.get('SOFTWARE_CNTFRQ_hz')) is not int or m['SOFTWARE_CNTFRQ_hz']!=19200000 or
+        m.get('host_UTC_SET_sent') is not False or m.get('host_UTC_sync_applied_proven') is not False or
+        m.get('battery_physical_PMIC_reads_compiled_out') is not True or
+        m.get('battery_SOFTWARE_disabled_observed') is not True or
+        m.get('physical_USB_or_PMIC_emulation') is not False or m.get('actual_guest_reset_proven') is not False):
+        raise ValueError('runtime model must retain SOFTWARE battery disable and no calendar/physical proof')
 
 
 def exact_scope(d,build=None):
@@ -59,6 +125,7 @@ def exact_scope(d,build=None):
     if d.get('kernel_sha256')!=profile['kernel'] or not _exact(d.get('GPU_thermal_policy'),THERMAL) or not _exact(d.get('TSENS_pair_policy'),PAIR):
         raise ValueError('verified native kernel/protection policy changed')
     if not d.get('inputs'):raise ValueError('missing exact source inputs')
+    if profile.get('runtime_services') is True:runtime_services_scope(d)
 
 
 def admit(d,models,ci,pre,review,build='20H392'):
@@ -76,11 +143,18 @@ def admit(d,models,ci,pre,review,build='20H392'):
     if len(models)!=2 or {m.get('controlled_exit') for m in models}!={'delayed-footer','lost-receipt-recovery'}:
         raise ValueError('both current actual terminal EFI-XNU paths required')
     for m in models:
+        runtime=profile.get('runtime_services') is True
+        if runtime and type(m.get('checks')) is not dict:
+            raise ValueError('runtime terminal checks must be an exact dictionary')
         if (m.get('passed') is not True or m.get('inputs')!=d['inputs'] or
             m.get('SOFTWARE_PMIC') is not True or m.get('RAM_USB_sink') is not True or
-            m.get('physical_admission') is not False or len(m.get('checks',{}))!=18 or
+            m.get('physical_admission') is not False or len(m.get('checks',{}))!=(19 if runtime else 18) or
             any(v is not True for v in m['checks'].values())):
             raise ValueError('stale/incomplete actual terminal model')
+        if runtime:
+            if set(m['checks'])!=BASE_TERMINAL_CHECKS|{'actual_clock_firmware_slot_prepared'}:
+                raise ValueError('runtime terminal model requires its additional actual clock slot check')
+            runtime_model_scope(m)
     if (review.get('passed') is not True or review.get('may_boot_iOS') is not True or
         review.get('may_write_userdata') is not False or pre.get('may_boot_iOS') is not True or
         pre.get('may_write_userdata') is not False or pre.get('full_image_sha256')!=profile['root'] or
