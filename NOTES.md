@@ -34,7 +34,57 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### 0143 GCD+new rendering kernel fully offline READY; current0142 controlled LIVE awaits normal exit
+### 0143 ACTUAL native LIVE / new rendering kernel+wallpaper+time+battery; GCD config RuntimeData refusal isolated; NEW0144 in progress
+
+- Latest human returned FASTBOOT and requests Wi-Fi/sound/camera fixes. Normal
+  old0142 native drain+WLEXIT05/WLR5 worker31191 ENDED0 at15:51:34.762328Z;
+  independent real product=polaris at15:51:54.802415Z confirms actual reset.
+  Old0142 is CLOSED. No physical keys requested, no generic reset or disk write.
+- ONE new0143 image worker10131 ENDED0 sent2026-10-31T15:52:26.583545Z,
+  sourcefc0dae37ba9ad8a166077e3439ad31f6697a604b/image37d15d52.../5978112B.
+  phone-gcd-clock-0001/boot.json CONSUMED. State waiting-payload passed;
+  ONE exact63cb2395... payload worker43957 ENDED0 ACK. Actual capture confirms
+  kernel-entered (ACK alone did not). Only controller for current live phone:
+  /private/tmp/polaris-runtime-0143-frozen-0001 plus original0143 manifests and
+  consumedbootrecord. Never replay image/payload or use edited/older controller.
+- startup-capture-0001 complete216004B and UI-capture-0002 complete367991B;
+  actual ui-capture-0003 at15:57:27Z complete494257B shows clean original7400
+  lockscreen/November1/2:57. Kernel7d24/source7e9/CI41213766168 has actual
+  fourCPU SGI PASS, firstCPUframe2153520pixels and all4096GLSL/GMEM/EAGL
+  acceptance; new full-frame preflight/pin success path reached. Current sample
+  is not all-rendering-faults-fixed/performanceAB/tearfree/60Hz proof. Physical
+  CPU direct writes and scanout-vs-copy tearing remain separate limitations.
+- FreshUTC READYseq0/count0 -> ONESET -> independentstatus cookie2350716691,
+  seq1/status2/error0/applied_count1/uncertainty2270us; no moreSET this boot.
+  ActualFG3/SMB2 sample52%/3877mV/charging1 supersedes earlyerror8/12 only for
+  current sample. WLED completeprefix26/error0/issued4=completed4/req2=ack2,
+  firmware OFF/ON readback retained, not new optical proof. No old2secondcycle.
+- ActualGCD30000B+final624B fully retained: error7/CORE is SPECIFIC config RAM
+  refusal, not bad PE/hash/GCD registration. Core13c8a8000..13c8e1000 is
+  type3/nonruntime/attrs0xf with actual identity; config17ffdfb18/count16/384B
+  lies in type6 RuntimeServicesData17ffb0000..17ffe0000/attrs800000000000000f.
+  Oldpgcd_owned accepts only3/4 nonruntime. Therefore config AT0/DSread0/
+  hash0/getter0/ClockAPI0/checkpoint0. StandardGetMap returned with FP-save/
+  restore1/CPACR.FPEN3 unchanged, but no independent register readback claim.
+  Actualproof471ad5ec...; finalcachedsafe1 is known pure refusal, NOT success.
+- ActualClockV2 full43504B/error12(CHANGED)/uncertain0/outstanding0: unique
+  originalClock6hash/336Bcontext+15x96Bdouble-descriptors stable, all8GCC
+  baseline rejected beforeAT/API, 16callsNOT_ISSUED, 7CAMCCstillblocked.
+  No hardware clockON/OFF result/TASID/PCM. Actualreviewaaa5312a... .
+  ActualPFR17416B/error0/17arch, sevenPSCIreturns1 instantaneousOFF; two
+  8192cap58descriptor maps stable. SixcarveoutsReserved != free/exclusive;
+  actualproofb4fd72ca...; no SMEM/RMTFS/MSA/PIL/radio writes.
+- NEXT NEW0144 independently bound config-table exactspan read-only
+  RuntimeData qualification, leaving core3/4/GCD/DeviceAT/unknown/reset
+  protection intact; source+affectedchecks only, reuse completednativeCI,
+  no oldmanifest edits or policy switch in current0143. WiFi agent owns GCD
+  body, audio prepares0144 pipeline, parent owns exacthostscope+USB.
+  Currentphone native LIVE; normal drain+fullraw+independentFASTBOOT required
+  before any nextimage. ActualWiFi/radio/scan/join, TASidentity/PCM and real
+  sensor/frame/CameraApp remain UNFINISHED. Camera installed in root but
+  actual sensor/provider/capability chain still absent; shortcut is not proof.
+
+### Historical 0143 GCD+new rendering kernel fully offline READY; current0142 controlled LIVE awaits normal exit
 
 - Firmwareef1d/hostfa238 pushed. Uniqueactualnewkernel modelpair28276 ENDED0,
  19checks each/39.416s+39.866s/61inputs/7exactinteger1compiledout markers,
