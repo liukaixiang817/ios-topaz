@@ -34,6 +34,24 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0127 currentPHONE FASTBOOT verified; scoped-exec native CI41166338002 pending
+
+- Sourceefc80619003dd49e6badd85bee4782097210eaf1 committed/pushed, ONEnewnative
+  CI41166338002 queued; supersededCI41165985829 cancellation requested/forced,
+  neverused. Finalbundleba69c16b28524107f28e63b094faeed6c2009391eaa7d04ae44933d1f1675369
+  graphics-poster-preview-0004. NewSDKARM64 -Wall/-Wextra/-Werror initcompile and
+  exactdigestadmission test PASS. Previewbody/identity/geometry unchanged0003.
+- Current0126 session CLOSED normally: exit-live0126-0001/result.json PASS;
+  actualnativeRAM_DRAINED80000003,writeepoch0/flushedepoch0, complete32raw ALL
+  records,4issued4completed/request2ack2/module128/IRQ2/error0,WLEXIT05/WLR5.
+  Independentactual-FASTBOOT-after-live0126-exit.json expectedPolarisTRUE.
+  Worker61790 ENDED beforeindependentquery. Noordinaryreset/UFSwrite/durableSAFE
+  claim.0126 boot remainsCONSUMED; doNOT reuse controller/exit/replay now.
+- NEXT actualsuccessfulnewCI/artifact, newhostprofile binding/twochanged-impact
+  terminalmodels/physicaldriver/image/wholecodec/offlinefreeze thencommit/push,
+  read-only expectedproduct andONE0127RAMboot. Newboot.json ABSENT. Noadditional
+  humanFASTBOOT reply/keys required whileexpecteddevicealreadyverified.
+
 ### 0127 scoped exec entry COMPLETE; supersedes prior0003 candidate BEFORE any phone boot
 
 - Integration review found historical launchd filtering of DYLD_ job env; own
