@@ -1,6 +1,8 @@
 /* New power caller's CPU-local exclusion interval. This is NOT a DRV2/EL3/
  * TCS/MPU grant: source/cache/geometry/NS-write-map admission remains separate.
- * No original service or SMC runs after masking until exact restoration.
+ * No original service runs after masking. A second typed PSCI OFF round is
+ * admitted under the masked FP/context guard BEFORE local_quiescent. Once
+ * that interval is published, no SMC runs until exact restoration.
  * Default OFF; not installed in prepare_boot or any host policy yet. */
 #ifndef POLARIS_UEFI_WIFI_POWER_CRITICAL_H
 #define POLARIS_UEFI_WIFI_POWER_CRITICAL_H
@@ -17,6 +19,11 @@ struct pwrpc_source {
     struct efi_loaded owner;uint8_t table[PWRPH_PROTOCOL_BYTES],hashes[2][5][32];
 };
 struct pwrpc_context {struct pgcd_arch arch;uint64_t TPL,boot,tables,count;uint32_t complete;};
+struct pwrpc_masked_psci {
+    struct pwrpc_context before,after;struct pgcd_fp_guard fp;
+    uint64_t target;int64_t raw;
+    uint32_t issued,returned,unknown,native_before,native_after,complete;
+};
 struct pwrpc_result {
     uint32_t attempted,error,unknown,outstanding,local_mask_held,local_restored,retired;
     uint32_t affinity_issued,affinity_returned,affinity_unknown,flag_reads;
@@ -29,6 +36,9 @@ struct pwrpc_result {
      * retain counters, the current/failed raw sample and two source-stage
      * checkpoints; these are not another append-only MMIO event stream. */
     uint32_t live_calls,live_valid;struct pwrpc_context last_context,source_context[2];
+    uint32_t masked_issued,masked_returned,masked_unknown,local_quiescent;
+    struct pwrpc_masked_psci masked_psci[7];
+    struct pwrpc_source masked_source;struct pwrpc_context masked_source_context;
 };
 struct pwrpc_io {
     void *context;
@@ -77,12 +87,12 @@ static inline int pwrpc_cpu_flag(const struct paic_io *memory,struct pwrcl_resul
 /* Pure bounded RAM/AT/digest checkpoint. It calls no original service while
  * masked. Immutable Core/RPMh and the registered owner/table are verified
  * before any local mask, and again BEFORE re-enabling original interrupts. */
-static inline int pwrpc_source_check(const struct paic_io *memory,struct pwrcl_result *p,
-    const struct pwrph_work *w,struct pgcd_context *g,struct pwrpc_result *r,unsigned slot)
+static inline int pwrpc_source_sample(const struct paic_io *memory,struct pwrcl_result *p,
+    const struct pwrph_work *w,struct pgcd_context *g,struct pwrpc_result *r,
+    struct pwrpc_source *s,struct pwrpc_context *context)
 {
-    if(slot>1)return pwrpc_fail(r,PWRPC_SOURCE,r->local_mask_held!=0);
-    struct pwrpc_source *s=&r->source[slot];
-    if(s->complete||!p->reader.stable||p->reader.owner_matches!=1||p->reader.error||p->reader.unknown||p->reader.outstanding||
+    if(!pgcd_in_self(&p->core,(uintptr_t)s,sizeof(*s))||!pgcd_in_self(&p->core,(uintptr_t)context,sizeof(*context))||
+       s->complete||!p->reader.stable||p->reader.owner_matches!=1||p->reader.error||p->reader.unknown||p->reader.outstanding||
        !pwrcl_copy(memory,p,w,&s->owner,p->reader.owner_address,sizeof(s->owner),&s->owner_bytes)||
        !pgcd_equal(&s->owner,&p->reader.owner,sizeof(s->owner))||
        !pwrcl_copy(memory,p,w,s->table,p->reader.protocol[1],sizeof(s->table),&s->table_bytes)||
@@ -92,8 +102,68 @@ static inline int pwrpc_source_check(const struct paic_io *memory,struct pwrcl_r
     s->identity_address=p->identity_address;s->identity_par=p->identity_par;
     if(!pwrpi_verify((const void*)(uintptr_t)p->reader.image,p->reader.image,s->hashes[0],&s->hash_count[0],&s->hash_failed[0])||
        !pgci_verify((const void*)(uintptr_t)p->core.core,p->core.core,PGCI_IMAGE_BYTES,s->hashes[1],&s->hash_failed[1],&s->hash_count[1])||
-       !pwrpc_live(g,r,slot?1:0,&r->after))return pwrpc_fail(r,PWRPC_SOURCE,r->local_mask_held!=0);
-    r->source_context[slot]=r->last_context;s->complete=1;return 1;
+       !pwrpc_live(g,r,r->local_mask_held?1:0,&r->after))return pwrpc_fail(r,PWRPC_SOURCE,r->local_mask_held!=0);
+    *context=r->last_context;s->complete=1;return 1;
+}
+static inline int pwrpc_source_check(const struct paic_io *memory,struct pwrcl_result *p,
+    const struct pwrph_work *w,struct pgcd_context *g,struct pwrpc_result *r,unsigned slot)
+{
+    if(slot>1)return pwrpc_fail(r,PWRPC_SOURCE,r->local_mask_held!=0);
+    return pwrpc_source_sample(memory,p,w,g,r,&r->source[slot],&r->source_context[slot]);
+}
+/* AFFINITY_INFO is a logical-state observation, not an EE/EL3 permission.
+ * The second round closes the normal-IRQ window BEFORE this CPU-local
+ * interval is published. Only typed PSCI, our own FP save/restore and bounded
+ * RAM/AT/context readers run here: no original UEFI method/TPL transition.
+ * This is deliberately separate from the normal original-service guard;
+ * that guard's DAIF0/G1-on contract is never relaxed. */
+static inline int pwrpc_masked_off(const struct pwrpc_io *io,const struct paic_io *memory,
+    struct pwrcl_result *p,const struct pwrph_work *w,struct pgcd_context *g,struct pwrpc_result *r)
+{
+    if(!r->local_mask_held||r->local_quiescent||r->masked_issued||r->unknown||r->outstanding||
+       !g->io.fp_save||!g->io.fp_restore)return pwrpc_fail(r,PWRPC_PENDING,1);
+    for(unsigned k=0;k<7;k++){
+        struct pwrpc_masked_psci *q=&r->masked_psci[k];q->target=0x100u+0x100u*k;
+        if(!pwrpc_live(g,r,1,&r->after)||!pwrcl_owned(memory,p,w,r->cpu_on_address,4))return pwrpc_fail(r,PWRPC_SOURCE,1);
+        q->before=r->last_context;q->native_before=*(const volatile uint32_t*)(uintptr_t)r->cpu_on_address;
+        if(q->native_before)return pwrpc_fail(r,PWRPC_FLAG,1);
+        if(!g->io.fp_save(g->io.opaque,&q->fp)||!q->fp.saved||q->fp.cpacr_before!=r->normal.cpacr)return pwrpc_fail(r,PWRPC_GUARD,1);
+        q->issued=q->unknown=1;r->masked_issued|=1u<<k;r->masked_unknown|=1u<<k;r->outstanding=16+k;paic_actual_order(0);
+        int returned=io->affinity(io->context,q->target,&q->raw);q->returned=returned?1:0;
+        if(returned)r->masked_returned|=1u<<k;paic_actual_order(0);
+        int arch_ok=pwrpc_live(g,r,1,&r->after);q->after=r->last_context;
+        int fp_ok=g->io.fp_restore(g->io.opaque,&q->fp);
+        if(!returned||!arch_ok||!fp_ok||!q->fp.restored||q->fp.cpacr_after!=q->fp.cpacr_before)return pwrpc_fail(r,PWRPC_GUARD,1);
+        if(!pwrcl_owned(memory,p,w,r->cpu_on_address,4))return pwrpc_fail(r,PWRPC_SOURCE,1);
+        q->native_after=*(const volatile uint32_t*)(uintptr_t)r->cpu_on_address;
+        if(q->native_after||q->raw!=1)return pwrpc_fail(r,q->native_after?PWRPC_FLAG:PWRPC_PSCI,1);
+        q->unknown=0;q->complete=1;r->masked_unknown&=~(1u<<k);r->outstanding=0;paic_actual_order(0);
+    }
+    if(!pwrpc_source_sample(memory,p,w,g,r,&r->masked_source,&r->masked_source_context))return pwrpc_fail(r,PWRPC_SOURCE,1);
+    r->local_quiescent=1;paic_actual_order(0);return 1;
+}
+/* Raw CPU-local evidence only. A successful call is never a DRV/EE/EL3 grant. */
+static inline int pwrpc_local_held(const struct pwrpc_result *r)
+{
+    if(!r||r->error||r->unknown||r->outstanding||r->retired||!r->local_mask_held||!r->local_quiescent||
+       r->affinity_issued!=0x7f||r->affinity_returned!=0x7f||r->affinity_unknown||
+       r->masked_issued!=0x7f||r->masked_returned!=0x7f||r->masked_unknown||!r->masked_source.complete||!r->source[0].complete||
+       r->normal.cpu.el!=4||(r->normal.cpu.mpidr&0xffffff)||r->normal.cpu.frequency!=19200000||r->normal.cpu.daif||r->normal.cpu.group1!=1||
+       !r->mask.returned||r->mask.precondition_error||!r->mask.daif_written||!r->mask.group_written||
+       !r->mask.daif_observed||!r->mask.group_observed||r->mask.daif_before||r->mask.group_before!=1||r->mask.daif_read!=0xc0||r->mask.group_read||
+       r->flag_reads<9||r->flag_reads>10)return 0;
+    for(unsigned k=0;k<r->flag_reads;k++)if(r->cpu_on[k])return 0;
+    for(unsigned k=0;k<7;k++){
+        const struct pgcd_service_guard *g=&r->guard[k];const struct pwrpc_masked_psci *q=&r->masked_psci[k];
+        if(r->affinity[k]!=1||!g->entered||!g->left||g->unknown||!g->foreign_returned||!g->fp.saved||!g->fp.restored||
+           g->fp.cpacr_before!=0x300000||g->fp.cpacr_after!=g->fp.cpacr_before||g->TPL_before!=g->TPL_after||
+           !q->complete||q->issued!=1||q->returned!=1||q->unknown||q->raw!=1||q->target!=0x100u+0x100u*k||
+           q->native_before||q->native_after||!q->fp.saved||!q->fp.restored||q->fp.cpacr_before!=0x300000||
+           q->fp.cpacr_after!=q->fp.cpacr_before||!q->before.complete||!q->after.complete||
+           q->before.arch.cpu.daif!=0xc0||q->after.arch.cpu.daif!=0xc0||q->before.arch.cpu.group1||q->after.arch.cpu.group1||
+           q->before.TPL!=q->after.TPL||q->before.boot!=q->after.boot||q->before.tables!=q->after.tables||q->before.count!=q->after.count)
+            return 0;
+    }return 1;
 }
 static inline int pwrpc_begin(const struct pwrpc_io *io,const struct paic_io *memory,
     struct pwrcl_result *p,const struct pwrph_work *w,struct pgcd_context *g,
@@ -129,7 +199,9 @@ static inline int pwrpc_begin(const struct pwrpc_io *io,const struct paic_io *me
         pwrpc_fail(r,PWRPC_MASK,r->local_mask_held!=0);goto refuse;
     }
     if(!pwrpc_live(g,r,1,&r->masked)||!pwrpc_cpu_flag(memory,p,w,r)){r->unknown=1;goto refuse;}
-    r->outstanding=0;paic_actual_order(0);return 1;
+    r->outstanding=0;paic_actual_order(0);
+    if(!pwrpc_masked_off(io,memory,p,w,g,r))goto refuse;
+    return 1;
 refuse:
     if(pgcd_uncertain(g)||r->affinity_unknown||r->outstanding)r->unknown=1;
     if(!r->unknown&&!r->local_mask_held)r->retired=1;
@@ -140,7 +212,7 @@ static inline int pwrpc_end(const struct pwrpc_io *io,const struct paic_io *memo
     const struct pwrsc_transaction *transaction,const struct pwrpb_baseline *before,
     const struct pwrpb_baseline *after,struct pwrpc_result *r)
 {
-    if(!r||r->unknown||r->outstanding||!r->local_mask_held||r->retired||!transaction)
+    if(!pwrpc_local_held(r)||!transaction)
         return r?pwrpc_fail(r,PWRPC_PENDING,1):0;
     if(!io||!io->restore||!memory||!memory->identity||!p||!w||!g)return pwrpc_fail(r,PWRPC_ARGUMENT,1);
     if(transaction->unknown||transaction->outstanding||
@@ -158,7 +230,7 @@ static inline int pwrpc_end(const struct pwrpc_io *io,const struct paic_io *memo
     r->outstanding=r->local_mask_held=0;r->local_restored=r->retired=1;paic_actual_order(0);return 1;
 }
 /* These are real AArch64 instructions, compiled as general-register-only
- * code. Host peers never execute them. No EFI/SMC call is made while masked. */
+ * code. Host peers never execute them. No original EFI service is called. */
 static inline int pwrpc_actual_affinity(void *ctx,uint64_t target,int64_t *raw)
 {
     (void)ctx;

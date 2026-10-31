@@ -98,6 +98,15 @@ transaction-prefix retirement before interrupt restoration. A separate actual
 GCD+NS read/write translation adapter admits only finite own-register reads;
 it exposes no writer. The119 software cases and AArch64 component objects do
 not prove an exclusive DRV2/EE/EL3 lease, a physical vote or working Wi-Fi.
+
+0152 connects those own-source components through one private-client body,
+including bounded CmdDb/ARC transactions and full source/CPU/namespace
+retirement before known Delete. It adds a second guarded PSCI round after
+masking to close a local admission gap; logical CPU state is not a physical
+rail or secure-memory grant. No Mi8 fixedTCS/top-vote/uncertain cleanup was
+adopted. The86 affected and integrated software cases plus AArch64 objects
+remain offline evidence; parent registration, hardware ownership qualification
+and a new physical candidate are still outstanding.
 No standalone inventory boot, original blocking submission, borrowed Mi8 TCS
 or unqualified register store was enabled.
 

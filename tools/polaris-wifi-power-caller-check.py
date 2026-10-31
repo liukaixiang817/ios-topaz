@@ -55,7 +55,7 @@ void text(const char *);void report(const char *,uint64_t);
 #include "uefi-wifi-power-critical.h"
 #include "uefi-wifi-rsc-device.h"
 _Static_assert(sizeof(struct pwrpb_baseline)==117392,"complete current RAM V1");
-_Static_assert(sizeof(struct pwrpc_result)==5632,"CPU-local interval V1");
+_Static_assert(sizeof(struct pwrpc_result)==10048,"CPU-local interval V2");
 _Static_assert(sizeof(struct pwrmd_result)==12256,"read admission V1");
 int RAM_component(const struct paic_io *m,struct pwrcl_result *p,const struct pwrph_work *w,
  const struct pwrcl_pool *pool,const struct paic_arch *arch,struct pwrpb_baseline *r)
@@ -79,7 +79,7 @@ int ARC_step(const struct pwrsc_io *io,struct pwrsc_transaction *r){return pwrsc
     with tempfile.TemporaryDirectory(prefix='polaris-power-caller-') as temporary:
         temporary = Path(temporary)
         cases = [('RSC', 'rsc-transaction', 43), ('RAM', 'rsc-baseline', 31),
-                 ('CPU', 'power-critical', 18), ('device', 'rsc-device', 26), ('pipeline', 'power-integration', 1)]
+                 ('CPU', 'power-critical', 26), ('device', 'rsc-device', 26), ('pipeline', 'power-integration', 1)]
         for label, name, count in cases:
             source, binary = ROOT/('tools/polaris-wifi-'+name+'-test.c'), temporary/label
             dep = out/(label+'.d')

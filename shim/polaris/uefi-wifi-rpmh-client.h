@@ -36,7 +36,7 @@ struct pwrcl_io {
     const char *name;
 };
 enum pwrcl_error {PWRCL_OK,PWRCL_STAGE,PWRCL_BASELINE,PWRCL_SOURCE,PWRCL_POOL,
-    PWRCL_LIMIT,PWRCL_CHANGED,PWRCL_CLIENT,PWRCL_API,PWRCL_MAP,PWRCL_GUARD,PWRCL_TIME};
+    PWRCL_LIMIT,PWRCL_CHANGED,PWRCL_CLIENT,PWRCL_API,PWRCL_MAP,PWRCL_GUARD,PWRCL_TIME,PWRCL_BODY};
 static const char pwrcl_name[]="polaris.wifi.private.zero";
 static struct pwrcl_result pwrcl_record;
 static struct pwrph_work pwrcl_work;
@@ -237,8 +237,10 @@ static inline int pwrcl_final_unopened(const struct pgcd_context *g)
         !g->record->pre_mask&&!g->record->post_mask&&!g->record->prestart_count&&
         !pgcd_uncertain(g)&&!g->ticket->spent&&!g->ticket->result;
 }
-static inline int pwrcl_run(const struct pwrcl_io *ops,const struct paic_result *enumeration,unsigned stage,
-    struct pgcd_context *final,struct pgcd_context *early,struct pwrcl_result *r,struct pwrph_work *w)
+typedef int (*pwrcl_body_fn)(void *,const struct paic_io *,struct pwrcl_result *,struct pwrph_work *,struct pgcd_context *);
+static inline int pwrcl_run_body(const struct pwrcl_io *ops,const struct paic_result *enumeration,unsigned stage,
+    struct pgcd_context *final,struct pgcd_context *early,struct pwrcl_result *r,struct pwrph_work *w,
+    pwrcl_body_fn body,void *body_context)
 {
     if(!r||!w||!early||r->attempted)return 0;r->attempted=1;
     if(stage!=2){pwrcl_fail(r,PWRCL_STAGE,0);goto stopped;}
@@ -288,6 +290,13 @@ static inline int pwrcl_run(const struct pwrcl_io *ops,const struct paic_result 
        !pwrcl_client_read(io,r,w,&r->pools[1][1],(uintptr_t)r->handle_output,1,&r->created)||!pwrcl_source(io,r,w,1)){
         pwrcl_fail(r,PWRCL_CLIENT,1);goto stopped;
     }
+    /* A NEW source-bound body may use this known private client. Its return
+     * means a completed, retired phase, not hardware permission. The body
+     * must establish its own raw source/device/lifetime evidence. Unknown or
+     * outstanding work never reaches Delete; the old no-body path is intact. */
+    if(body&&(!body(body_context,io,r,w,early)||!pwrcl_final_unopened(final))){
+        pwrcl_fail(r,PWRCL_BODY,1);goto stopped;
+    }
     r->delete_status=UINT64_MAX;
     if(!pwrcl_enter(early,r,2,1))goto stopped;
     returned=ops->drop(io->context,r->functions[1],r->handle_output,&r->delete_status);
@@ -309,6 +318,9 @@ stopped:
     if(!r->provider_issued&&!r->unknown&&!r->outstanding){r->refused_before_API=1;r->retired=1;early->finished=1;}
     paic_actual_order(0);return 0;
 }
+static inline int pwrcl_run(const struct pwrcl_io *ops,const struct paic_result *enumeration,unsigned stage,
+    struct pgcd_context *final,struct pgcd_context *early,struct pwrcl_result *r,struct pwrph_work *w)
+{return pwrcl_run_body(ops,enumeration,stage,final,early,r,w,0,0);}
 static inline int pwrcl_result_unsafe(const struct pwrcl_result *r)
 {return r->unknown||r->outstanding||r->client_held||
     (r->provider_issued&&!r->client_returned)||(r->attempted&&!r->retired);}

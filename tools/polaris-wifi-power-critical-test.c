@@ -13,7 +13,7 @@ static uint32_t hw[0x3000/4];
 static int critical_arch(void *ctx,struct pgcd_arch *a)
 {
     int ok=arch(ctx,a);a->cpu.daif=sim_daif;a->cpu.group1=sim_group;
-    if(scenario==5&&mask_calls)a->cpacr=0;return ok;
+    if((scenario==5&&mask_calls)||(scenario==19&&affinity_calls>=8))a->cpacr=0;return ok;
 }
 static int critical_memory_arch(void *ctx,struct paic_arch *a)
 {
@@ -22,11 +22,19 @@ static int critical_memory_arch(void *ctx,struct paic_arch *a)
 }
 static int affinity_peer(void *ctx,uint64_t target,int64_t *raw)
 {
-    (void)ctx;assert(!sim_daif&&sim_group==1&&r->outstanding);
-    assert(target==0x100+0x100*affinity_calls);affinity_calls++;
+    (void)ctx;
+    if(affinity_calls<7)assert(!sim_daif&&sim_group==1&&r->outstanding);
+    else assert(sim_daif==0xc0&&!sim_group&&!r->outstanding&&critical->outstanding&&!critical->local_quiescent);
+    assert(target==0x100+0x100*(affinity_calls%7));affinity_calls++;
     *raw=scenario==1?0:1;
     if(scenario==4)*native_issued=1;
-    return scenario!=2;
+    if(affinity_calls>=8){
+        if(scenario==17)*raw=0;
+        if(scenario==20)put(core+0x1b098,8,8);
+        if(scenario==21)*native_issued=1;
+        if(scenario==22&&affinity_calls==14)rimage[0x1000]^=1;
+    }
+    return scenario!=2&&!(scenario==18&&affinity_calls>=8);
 }
 static int mask_peer(void *ctx,struct pwrpc_transition *t)
 {
@@ -103,6 +111,8 @@ static int run_critical(unsigned which)
     if(which==12)core[0x1000]^=1;
     if(which==13)rimage[0xd0d8+0x20]^=1;
     if(which==16)s->table_count++;
+    if(which==23)critical->masked_psci[0].raw=0;
+    if(which==24)critical->masked_psci[0].complete=0;
     return pwrpc_end(&cpu_io,&memory,provider,rw,c,tx,during,post,critical);
 }
 int main(int argc,char **argv)
@@ -113,10 +123,10 @@ int main(int argc,char **argv)
     for(unsigned k=0;k<3;k++){FILE *f=fopen(argv[k+1],"rb");assert(f&&fread(dst[k],1,sizes[k],f)==sizes[k]&&!fclose(f));}
     unsigned checks=0;int ok=run_critical(0);
     if(!ok)fprintf(stderr,"baseline critical%u unknown%u outstanding%u mask%u TX%u source%u\n",critical->error,critical->unknown,critical->outstanding,critical->local_mask_held,tx->error,r->error);
-    assert(ok&&critical->retired&&critical->local_restored&&!pwrpc_unsafe(critical)&&critical->affinity_returned==0x7f&&critical->flag_reads==10&&restore_calls==1&&!sim_daif&&sim_group==1&&critical->source[0].complete&&critical->source[1].complete);checks++;
+    assert(ok&&critical->retired&&critical->local_restored&&!pwrpc_unsafe(critical)&&critical->affinity_returned==0x7f&&critical->masked_returned==0x7f&&affinity_calls==14&&critical->flag_reads==10&&restore_calls==1&&!sim_daif&&sim_group==1&&critical->source[0].complete&&critical->source[1].complete&&critical->masked_source.complete);checks++;
     unsigned old_calls=affinity_calls;
     assert(!pwrpc_begin(&cpu_io,0,provider,rw,c,(uintptr_t)native_issued,critical)&&affinity_calls==old_calls);checks++;
-    for(unsigned k=1;k<=16;k++){
+    for(unsigned k=1;k<=24;k++){
         ok=run_critical(k);
         if(k==8){assert(ok&&critical->retired&&critical->local_restored&&!pwrpc_unsafe(critical)&&!tx->writes&&!hw_requests);}
         else{
@@ -128,6 +138,7 @@ int main(int argc,char **argv)
             if(k>=6&&k!=7)assert(!restore_calls);
             if(k==2)assert(critical->affinity_unknown==1&&critical->outstanding==1&&!mask_calls);
             if(k==7)assert(critical->restore.group_written&&!critical->restore.daif_written&&critical->outstanding==9);
+            if(k>=17&&k<=22)assert(!tx->writes&&!hw_requests&&!restore_calls);
         }checks++;
     }
     printf("{\"checks\":%u,\"raw_bytes\":%zu,\"transition_bytes\":%zu,\"SOFTWARE_CPU_IRQ_and_PSCI\":true,\"full_transaction_and_prefix_restore\":true,\"physical_IRQ_or_MMIO_executed\":false,\"DRV2_EL3_TCS_lease_granted\":false}\n",checks,sizeof(*critical),sizeof(struct pwrpc_transition));

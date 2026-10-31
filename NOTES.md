@@ -34,6 +34,74 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0150 remains ONLY last actual nativeLIVE19:10; NEW0152 integrated private power path verified OFFLINE; parent/admission and physical ownership NOT READY
+
+- This supersedes the0151 component-only next step. New source connects the
+  original known private-client Create to the existing This/u32/EFI64 CmdDb
+  adapter, complete source RAM, original GCD/actual Device translations, CPU
+  admission, finite ARC transaction, full restore and known-client Delete in
+  ONE callable path. It is not yet registered in prepare_boot or a new builder
+  profile. No USB, actual firmware API/PSCI/AT/MMIO, new driver/image/freeze,
+  native change/CI, MSS/NVserve/radio action occurred. Lastactual phone remains
+  ONLY0150/19:10:55Z; frozen0150 controller and consumedbootrecord unchanged.
+  UTC0150 already ONESET. All hostworkers ENDED; allchildren STOP.
+- shim/polaris/uefi-wifi-power-path.h uses pwrcl_run_body after verified
+  Create and before Delete. Missing/invalid saved active cache is never zero.
+  A returned pre-mask refusal revalidates full pool, known client/empty queues
+  and original source before retiring. UNKNOWN/partial/held mask or changed
+  final unopened ticket cannot reach Delete. Old pwrcl_run remains the no-body
+  path; its46 affected lifecycle regressions pass. A new parent must publish
+  combined raw evidence instead of the old ZERO_VOTE report label.
+- The CPU-local code closes a code-observed admission gap: after the original
+  seven normal guarded PSCI queries, it masks/readbacks DAIF I/F and Group1,
+  makes seven separately FP/arch/TPL guarded typed PSCI queries while masked,
+  rechecks the actual native CPU_ON flag and full source/owner/hash state, then
+  enters local quiescence. This is a code finding, not a new phone fault.
+  It supersedes the old0151 statement "No original API/SMC runs while masked":
+  these seven typed admission SMCs precede the active RSC interval; no original
+  service or SMC runs during that interval. The original normal service guard
+  and200ms ticket are unchanged. PSCI reports logical state, not rail-off or
+  an EE/EL3/MPU grant; see Arm PSCI DEN0022, AFFINITY_INFO/CPU_OFF semantics.
+- shim/polaris/uefi-wifi-rsc-access.h binds actual I/O to the same resident
+  client/source/CPU/CmdDb/RAM/Device/transaction records. It revalidates every
+  checked transfer against the current append-only engine event, own register
+  whitelist, saved/desired indices and fresh NS read AND write translations
+  with exact PAR restoration. IRQenable/type stay unchanged. Unknown command
+  status bits remain in raw OR fields and block ACK/restoration; no hidden
+  retry/cleanup. Two new complete128KiB current CmdDb RO copies, exact source
+  bytes/AT and masked geometry/IRQ/TCS snapshots precede store and retirement.
+  Local NS interval evidence is NOT a hardware authorization callback or a
+  DRV2/EE/EL3/MPU lease. Physical ownership qualification remains outstanding.
+- Full path requires reverse saved votes, NEW IRQ/all3 DONE/idle before ACK,
+  complete touched-RW readback, independent full-prefix retirement, unchanged
+  complete RAM, original source before unmask, exact CPU restoration, original
+  GCD/Device namespace again, then known Delete. Any uncertain stage retains
+  its raw state/private handle and blocks continuation; no generic reset.
+- Current proof0152/wifi/integrated-power-path-0001/proof.json SHA
+  fcd340be48d8ac92d1929c2e01981a7217332bffc0d21daf0b411f5d6aa31dc7 PASS:
+  46client+26CPU+14same-context path=86 ASAN/UBSAN cases,10checks,37 canonical
+  current source inputs all SHA-matched. The14 path cases include success,
+  timeout/noIRQ, changed CmdDb/descriptor, post-mask peerON, absent savedcache,
+  read/write translation faults, partial store, ticket forgery, unknown Delete,
+  reentry, unknown command bits and initial peerON. Full raw path1235200B,
+  checked-access399240B, CPU10048B/transitions72B. Actual complete integrated
+  AArch64 COFF/MachO bodies compile with all warnings/maxframe1024; defaultOFF
+  and QEMU compiledout pass. Software firmware/PSCI/AT/TCS/IRQ is not hardware.
+  These objects are not a wholeEFI link, parent registration, boot or radio.
+- NEXT ONLY Wi-Fi: wire this existing path into the distinct pre-finalClock/GCD
+  private phase, literal actual native CPU_ON flag, and mandatory parent
+  UNKNOWN/native/PON/receipt gate; keep held/unknown paths RAM-only without
+  foreign firmware services. Preserve complete raw logs with a new explicit
+  capacity/profile, not truncation/old ZERO_VOTE scope. Review actual DRV2 bank
+  ownership/lifetime before enabling the writer. No new candidate until those
+  gates, wholeEFI/source-bound build/admission and sourcefreeze are complete.
+  No standalone inventory/client-only boot. may_vote/MSS/NVserve/scan_join_data
+  remain false. Continue ownMSS/GLINK/RMTFS to real scan/join/data, then sound,
+  then camera. Fresh0145 roots/NV remain authoritative; next image only via
+  frozen0150 full native drain/fresh WLEXIT05/WLR5 and independent FASTBOOT.
+  No reason to repeat unchanged119 component cases, old models/nativeCI or
+  optical/scroll tests. Never interpret this offline milestone as new LIVE.
+
 ### CURRENT0150 remains ONLY last actual nativeLIVE19:10; NEW0151 source-RAM / CPU-local / RSC-read caller components verified OFFLINE; hardware lease and parent NOT READY
 
 - Sourcee5433a327183266d21cbc27c79df2f9b5bfdbdee contains the code/tests below.

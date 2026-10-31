@@ -138,6 +138,7 @@ static void client_reset(unsigned f)
     if(f==41)cr->reader_ticket.used=1;
     if(f==42)put(rimage+0xd300,(uintptr_t)pool+2,8);
 }
+#ifndef POLARIS_PRIVATE_CLIENT_FIXTURE_ONLY
 int main(int argc,char **argv)
 {
     assert(argc==4);assert(!posix_memalign((void**)&arena,4096,0x240000));
@@ -200,3 +201,4 @@ int main(int argc,char **argv)
     printf("{\"checks\":%u,\"raw_bytes\":%zu,\"pool_bytes\":%zu,\"node_bytes\":%zu,\"SOFTWARE_peer_only\":true,\"physical_original_API_executed\":false,\"votes\":0,\"MMIO\":0,\"MSS\":false}\n",checks,sizeof(*cr),sizeof(struct pwrcl_pool),sizeof(struct pwrcl_node));
     free(original);free(npa_original);free(rp_original);free(arena);return 0;
 }
+#endif
