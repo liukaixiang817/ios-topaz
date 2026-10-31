@@ -65,6 +65,14 @@ early samples only. On0029 the human already confirmed boot complete and said
   Matching16.5 userland targets adopted after own actual-cache verification.
   Damage rectangles remain a possible optimization requiring own bounds/lifetime,
   FULL first wake frame + real pixel/timing evidence, not copied yet.
+- Native sourcefd8af9f762c77dc4e7f27dd34f576686dbd429f1 committed/PUSHED;
+  exact new full kernelCI41157865344/job124408564565 is in progress. No duplicate
+  dispatch. Production exclusive receiver/isolated real Linux stream integration
+  now PASS26 checks: whole new content after actual unmount+RO, preserved baseline
+  raw bytes/inodes, existing/symlink/short-input/bad-header/digest refusal, pin/sync.
+  SOFTWARE Linux evidence is not physical UFS persistence. Receiver has fixed new
+  path+16GiB+91515474 hash/ownuserdata identity, no raw-write/delete/overwrite API.
+  Host controller additionally verifies actual RAM stdin transport before RW.
 - NEXT complete exclusive NEW root-file transport through Linux ext4, verify only
   changed behavior in isolated real Linux, commit/push before physical use. New
   file must preserve original689a root+immutablemarker+all Android/Windows/GPT/ESP.
