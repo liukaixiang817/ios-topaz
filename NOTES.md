@@ -34,6 +34,46 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Serial Wi-Fi0145 executable RMTFS RAM-shadow service completed offline; physical integration NOT READY
+
+- Root alone implemented tools/polaris-wifi-rmtfs.c/.h, adapting MIT Mi8
+  e930c26 realhostsvc RMTFS14/v1/instance1 on the existing ownGLINK/QRTR core.
+  This actually handles OPEN1/CLOSE2/RW3/ALLOC4/DEVERR5/SYNC6, full4NV RAM
+  copies, ownexact3x8MiB+FSC256KiB sizes and wholeSHA256 beforepublication.
+  Four referencepaths only; no OEMblankEFS, disk-write API or guessedPA.
+- Realservice behavior tested through software FIFO/QRTR frames, not another
+  stand-alone TLV parser: boundMSSnode/epoch with sourceportchanges, client1 /
+  checked2MiB window, fullbatchpreflight/stagedincomingwrites, privateNVdirty,
+  exactrecent16request/replyreplay beforetransmission, callbackonlyqueue /
+  boundeddispatch/no publicrecursivepoll, stop/DONE/retirement and RAMscrub.
+  Partialread/write/order/scope/epoch/replyfaults are sticky; UNKNOWN retains
+  memory/no retry or forcefree. SYNC alwaysvolatile anddurable_NV=false.
+- polaris-wifi-rmtfs-check.py final0002 proof
+  feaf9cddd177ec5a705c645e3e62f25e47e40c5533e9abe2134907f38e8a5489:
+  5checksPASS (newASAN/UBSANservicebuild/run, affectedoldtransportbuild/run,
+  singleactualnativeARM64object). Newtestincludes8stickyfaultcases, wrong
+  node/unknownOEMpath/badlastvector, recenttxncollision, reentrantsend and
+  providerpoll, pendingDONE that cannot be bypassed by retirement. Testfixture
+  inputs/peer/sharedmemory are SOFTWARE; no physicalNV/MSS/SMEM orradio.
+- Nativeobject uses actuallocallystagedXNUheaders/architecture/ABIflags and
+  realcorecryptoSHAprovider, maxframe1024, no stubs/link/boot. Warningconfig
+  usesWall/Extra/Error instead of newerClang'sWeverything headernoise; one
+  existingSMEMinventory implicitconversionwarning remains nonfatal per
+  inheritedflags. Exactcommand/object/logs at0145/wifi/rmtfs-RAM-shadow-0002;
+  commandseed/cwd/warningadjustment at0001. No newnativeprofile/CI/artifact.
+- No physicalprovider/bootregistration added: current0144 binary/manifest /
+  frozencontroller/consumedboot remain unchanged; phone lastactual0144LIVE.
+  may_serve_NV_to_remote=false/may_start_MSS=false. Mandatoryinputs_current
+  cannot be faked: historical3NV still notfresh. SharedPA stillUNASSIGNED;
+  scope requiresactualallocated+guardedpages/VMID/MPU/cache/remotelease,
+  retirement requiresactualremoteDMAstop/handback, notReservedorboolclaims.
+- NEXT onlyWi-Fi: at nextalreadyneededcontrolledROtransition combine3wholeNV
+  capture24MiB/freshGPT+beforeafterSHA; wire this realservice to actualownMSS /
+  GLINK lifecycle and realallocation/ownership, originalRMTFS NVinputs. MSS
+  AOP/rail/clock/reset/RMB/auth +SFPB/SMEM allocations remain unresolved;
+  do not boot merely foroldNV/TOC and do not blindPAS15/clockenable. Complete
+  actualscan/join/data before resumingaudio/camera. Allchildren remainstopped.
+
 ### Serial Wi-Fi0145 RMTFS original NV inputs found/frozen offline; phone unchanged0144 LIVE
 
 - No parallel worker resumed and no USB/clock/rail/SCM/SMEM action. Existing

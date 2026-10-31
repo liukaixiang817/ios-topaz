@@ -15,6 +15,8 @@ struct model {
     unsigned forbidden, local_intent, remote_intent, data_sent, producer_writes;
     uint32_t remote_head;
     bool lease, freeze_clock, responding;
+    void (*data_hook)(struct model *, const uint8_t *, uint32_t);
+    void *data_context;
 };
 static uint32_t const DESC = 0x10020, TX = 0x10040, RX = 0x20000, FSIZE = 0x4000;
 static void remote_frame(struct model *m, unsigned cmd, uint32_t cid, uint32_t arg,
@@ -69,6 +71,7 @@ static void peer(struct model *m)
             assert(cmd==DATA&&get32(body+4)==0);
             remote_frame(m,DONE_REUSE,7,arg,NULL,0);
             const uint8_t *p=body+8;
+            if(get32(p+4)==Q_DATA && m->data_hook) m->data_hook(m,p,get32(body));
             if(get32(p+4)==Q_NEW_LOOKUP) {
                 assert(get32(p+32+4)==PW_SERVICE&&get32(p+32+8)==1);
                 uint8_t service[20]={0};put32(service,Q_NEW_SERVER);put32(service+4,PW_SERVICE);
@@ -225,4 +228,4 @@ static void bounded(void)
     m->g->owner=0;assert(!polaris_wifi_glink_destroy(m->g));free(m);
 }
 int main(void)
-{integrated();faults();bounded();puts("PASS full GLINK/QRTR/WLFW software integration; 7 sticky fault classes; finite clock/gate; no hardware");}
+{integrated();faults();bounded();puts("PASS full GLINK/QRTR/WLFW software integration; 7 sticky fault classes; finite clock/gate; no hardware");return 0;}

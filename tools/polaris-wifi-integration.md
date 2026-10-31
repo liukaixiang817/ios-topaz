@@ -70,6 +70,65 @@ completion, stop and restoration, then native network interface/Userland Wi-Fi
 registration. The pinned Mi8 Linux shim/userland is a useful next source after
 those own hardware contracts; compiling this transport is not that milestone.
 
+## RMTFS NV RAM-shadow service (0145, serial Wi-Fi work)
+
+`polaris-wifi-rmtfs.c/.h` implements the real service14/version1/instance1
+endpoint on this GLINK transport. It adapts the MIT Dipper e930c26
+`mi8_hostsvc.c` protocol, checked against own DT client1/dynamic2MiB/guard-memory.
+It is a callable service, not a native boot registration or an MSS power driver.
+There is no physical provider or default address, and the current0144 kernel
+does not contain this new service. No radio operation is established.
+
+Creation takes all four whole, immutable, owned NV RAM inputs, exact own GPT
+sizes (three8MiB plus FSC256KiB), SHA256 digests and a mandatory callback that
+revalidates their current whole-NV/GPT provenance. Copies are hashed before
+publication. Historical20261023 modemst1/2/fsg inputs currently fail physical
+freshness: capture their24MiB at the next already-needed controlled RO
+transition, with fresh GPT/ranges and before/after hashes. FSC alone already
+matches fresh0139. Do not boot solely for this capture, feed old NV to a remote,
+or fake the freshness callback. The private originals remain untouched.
+
+The provider must supply genuinely allocated/shared/guarded2MiB memory,
+actual MPU/VMID ownership, checked RX invalidate/TX clean, device ordering,
+selected MSS node and lifetime epoch. `scope` verifies those facts on access;
+it does not create permission. No camera carveout, SMEM getter/allocator,
+clock/rail/reset/PAS/SCM operation, or partition-write callback is supplied.
+
+The real QMI messages are OPEN1, CLOSE2, RW3, ALLOC4, DEVERR5 and SYNC6.
+OPEN accepts only `/boot/modem_fs1`, `/boot/modem_fs2`, `/boot/modem_fsg` and
+`/boot/modem_fsc`; these remain reference paths until the own remote requests
+them. Unknown paths, including Mi8's synthetic OEM blank areas, are refused.
+ALLOC checks client1 and the admitted memory size. Handles belong to the
+bound node/epoch and can move between that MSS's QRTR ports. Entire vector
+batches are checked before I/O; incoming batches are staged before any NV
+shadow modification. Outgoing partial/faulted writes retain UNKNOWN.
+
+Receive callbacks only enqueue. The sole workloop dispatches bounded batches
+and handles callbacks reentered by QRTR send. Recent16 full requests/responses
+are retained before sending; exact repeats do not repeat memory I/O, and a
+recent transaction collision freezes the service. There is no exactly-once
+guarantee beyond this bounded replay history or automatic send retry. SYNC
+acknowledges volatile RAM only; status always reports `durable_nv=false`.
+
+Close all handles, finish queued requests, withdraw the endpoint, and retain
+the same transport/lifetime until actual DONE. `stop` additionally requires
+the provider's actual remote-stop/DMA-drain/memory-handback witness; `destroy`
+rechecks it before scrubbing/freeing shadows. Pending replies cannot be
+overridden by that witness. Fault/UNKNOWN has no clear/force-release path.
+This service's retirement is separate from native VFS/GPU/CPU drain and UFS
+persistence. Physical MSS/RMTFS/SMEM integration, original NV freshness,
+WLFW/ath10k scan/join/data remain unfinished.
+
+`python3 tools/polaris-wifi-rmtfs-check.py --out <private-directory>` runs
+the new service through actual software FIFO/QRTR frames under ASAN/UBSAN,
+plus the affected existing transport regression. It covers all four shadows,
+client1, both copy directions, batch rejection, replay, port changes, malformed
+TLVs, wrong peers, callback reentry, pending DONE/retirement and eight sticky
+fault cases. `--native-command <audited-command.json>` can compile one ARM64
+object against the real locally staged XNU headers; this is not a kernel
+link/build, boot, MPU witness or hardware success. No new kernel CI is needed
+until this service is actually added to a separately reviewed native profile.
+
 ## Validation
 
 `python3 tools/polaris-wifi-check.py --out <private-evidence-directory>` builds
