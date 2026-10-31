@@ -36,6 +36,11 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### CURRENT0150 remains ONLY last actual nativeLIVE19:10; NEW0152 integrated private power path verified OFFLINE; parent/admission and physical ownership NOT READY
 
+- Source1383abaa1c01820dd8c5d98fe064825ae49bc1c7 contains this milestone.
+  All29 unique committed inputs match that commit; eight generated binding/
+  integrated-wrapper inputs remain private,37 canonical inputs total. Push
+  and stop evidence:0152/wifi/integrated-power-path-source-and-handoff-push-
+  proof-0001.json. No firmware/vendor/Apple/NV bytes were added to Git.
 - This supersedes the0151 component-only next step. New source connects the
   original known private-client Create to the existing This/u32/EFI64 CmdDb
   adapter, complete source RAM, original GCD/actual Device translations, CPU
@@ -61,7 +66,7 @@ early samples only. On0029 the human already confirmed boot complete and said
   these seven typed admission SMCs precede the active RSC interval; no original
   service or SMC runs during that interval. The original normal service guard
   and200ms ticket are unchanged. PSCI reports logical state, not rail-off or
-  an EE/EL3/MPU grant; see Arm PSCI DEN0022, AFFINITY_INFO/CPU_OFF semantics.
+  an EE/EL3/MPU grant; see [Arm PSCI DEN0022, AFFINITY_INFO/CPU_OFF semantics](https://documentation-service.arm.com/static/5f905c71f86e16515cdc1fd0).
 - shim/polaris/uefi-wifi-rsc-access.h binds actual I/O to the same resident
   client/source/CPU/CmdDb/RAM/Device/transaction records. It revalidates every
   checked transfer against the current append-only engine event, own register
