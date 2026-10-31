@@ -36,6 +36,10 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### CURRENT0150 remains ONLY last actual nativeLIVE19:10; NEW0153 power path PARENT/LINK verified OFFLINE; physical ownership and NEW host admission NOT READY
 
+- Source1f55e44e14e0c56af2e5cd6f84d68bb63ba721b6 contains the parent/link/
+  log milestone below. Push/stop evidence is0153/wifi/power-parent-source-and-
+  handoff-push-proof-0001.json. All80 compiled inputs are compared with current
+  files and that commit (original private PE inputs stay out of Git).
 - New0153 completes the concrete parent/link/log work requested by0152. No
   USB, actual original firmware/PSCI/AT/MMIO, image sent, native change/CI,
   root/NV write, MSS/remote NV/radio action occurred. Phone remains ONLY last
