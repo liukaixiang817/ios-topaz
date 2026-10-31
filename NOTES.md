@@ -34,6 +34,33 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0138 ACTUALBOOT d015/009c/4fe2: UTC appliedONCE +Melbourne transaction PASS; UI stillstarting, wallpaper visibility pending
+
+- Old0137 normalexit44249 ENDED0: nativephase3/error0/caps80000003, full32
+  append-onlyraw/newWLEXIT05/WLR5/ACK. Separate newhelper actualproduct
+  polaris FASTBOOT PASS09:52:19Z. This is notUFSdurableSAFE.
+- ONE0138 imaged015131f22ee8e8c0a2e8c7ba58741b304f0f555daa4b092f268f2ef2d926dd0
+  sent2026-10-31T09:52:19.478710Z;69455 ENDED0. ONEexactpayload84138 ENDED0
+  ACK09:53:28.270879Z, neverreplay. Source430545692e9b33f47761587f9b7ca38a8c4cde69,
+  nativeface669/CI41189769833/job124503957945/kernel009c8a0fe66a0374670b57831c92741cea70e8dc34a0f514c8c4fe8ba5566655.
+  CurrentONLY /private/tmp/polaris-runtime-0138-frozen-0001 COPY406 +ORIGINAL
+  0138 phone-wallpaper-melbourne-0001/boot.json andphysical0001 manifests.
+  Old0137 CLOSED; don'tuseoldcontroller/currenteditedsource. Nohumanpending.
+- Actualnewclock READY positiveCNT19.2MHz, ONESET UTC-one-sync-0001
+  09:54:50Z appliedsequence1/status2/error0/count1, UTC1793440490457107us,
+  ticks3324596156/uncertainty2263us; independentreconnectedstatus confirms.
+  NoRTC/NVRAM/monotonicwrite/networktimeproof. DoNOTrepeatSET.
+- Actualnewcapture0002: TIMEZONEresult0/stage5/error0/validated5/prepared2/
+  zoneinfo1/original1/localtime1/cleanup0/must_hold0 Australia/Melbourne
+  Jan39600/Jul36000. ASSETSresult0/stage5/error0/8sources/PNG1/CAML3activated.
+  ActualGLstage6/error0/completed13/surfaces1,4CPU/SMP19.2MHz PASS.
+  ScreenshotstillApplebootlogo; desktop/lock/defaultwallpaper andUIlocaltime
+  NOTverifiedyet. NoCollectionsPoster crash inthisearlystartupcapture, not
+  evidenceofstablewallpaper. Batteryunavailable8/12beforefirstrealhandshake,
+  nofakeSOC; actualnewcompletebatterymeasurementstillpending. Allcaptures
+  40403/61270 ENDED0. NEXT boundedfreshUI/log capture afterstartup, then
+  realHome/default/Settings checks; keepstrictUSBserial/noFitnessrepro.
+
 ### 0138 FINAL READY: actual009c/4fe2/wholecodec/source review PASS; PHONE stillLIVE0137 pendingnormalexit
 
 - Nativeface669/CI41189769833/job124503957945 SUCCESS;009c8a0f... actualkernel.
