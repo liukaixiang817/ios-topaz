@@ -34,6 +34,39 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0133 actualcapture0002 Applelogo/GPU L6; newPBF path NOTyetexecuted
+
+- Firstcapture67701 andsecond57551 bothENDEDexit0. ActualnewMEDIA ctor/
+  CMCaptureidentity/install pass, GPUdesktopL6/maskff; screenshotApplelogo at
+  native255s, notyetdesktop. NoPBF PREVIEW/hierarchyreturn/providerexec seen
+  yet. Don'tclaimnewAPIworked/failed orwhitegalleryfromprior0132 as0133result.
+  CurrentPHONE LIVE0133, allUSBworkersENDED. Targetedcaptureafterstartup then
+  actualSettings/wallpaper/images, noanotherboot orblindpowerprompt.
+
+### 0133 ONEexactpayload ACKed; worker40399 ENDEDexit0; PHONE LIVE0133 startup
+
+- SequentialstatePASS/ONEexactpayload runtime-native-boot-0001/result.json
+  PASS; worker40399 ENDEDexit0. PHONE currentLIVE0133 kernelff89/imagef8e8/
+  native3d58/host3447, NOTFASTBOOT/old0132. AllUSBworkersENDED; nexttargeted
+  actualstartup/UI/PBFhierarchyreturn capture. No newwallpaper/renderingclaim.
+  All373frozenCOPYverified; sourceeditsmustusefrozen0133controller +ORIGINAL
+  boot/image/driver manifests. Existingroot915/142map/512MiBRAMCOW unchanged.
+
+### 0133 ONEnewimage ACK/CONSUMED; PHONE new0133; exactpayload mustEND beforeUSB
+
+- Hostsource3447c4e99fee913b2a4124800b2b55bd9bef1c23 committed/pushed. Strict0132normalexit
+  worker41654 ENDEDexit0: RAM_DRAINED80000003/epochs0/full32raw/WLEXIT05/WLR5/
+  error0, then0133actual-preboot-product.json independentactualFASTBOOT TRUE.
+  live0132-closed-proof.json binds both. Old0132 CLOSED/consumed, no replay.
+- Newimagef8e8a8c88fa938531c02a2d422096f745c5c8cabd4a4d0cbf811ce32e7bf010f
+  ONEACK, phone-poster-hierarchy-0001/boot.json CONSUMED. CurrentPHONE new0133
+  nativepayloadstartup, NOTFASTBOOT/old0132. Sequentialstate/ONEexactpayload
+  workeractive; musttrulyEND beforeANYnextUSB. No newUI/preview successyet.
+- All373 imageevidenceCOPY/hashverified /private/tmp/polaris-runtime-0133-
+  frozen-0001 beforeboot; frozen0133controller+ORIGINAL0133 boot/image/driver
+  manifests control currentRAM despitefutureedits. Nativeff89/3d58/CI411787/
+  graphicsbf8, protectedhardware androot915/142map/512MiBRAMCOW unchanged.
+
 ### 0133 hierarchy candidate READY; PHONE LIVE0132; sourcehostcommit thennormalexit/ONEnewRAM NEXT
 
 - Actualkernelff89/source3d58/CI41178731928/job124471578444 SUCCESS. Both
