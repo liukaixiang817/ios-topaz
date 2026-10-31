@@ -74,12 +74,13 @@ def main():
             raise ValueError('actual20F66 graphics correspondence absent')
         checked(abi['evidence_sha256'])
         for entry in abi['images'].values():checked({entry['path']:entry['sha256']})
-        gfx=json.loads(bind(folder/'graphics-20F66-0003/manifest.json').read_text())
+        graphics_manifest=root/profile['graphics_manifest']
+        gfx=json.loads(bind(graphics_manifest).read_text())
         if gfx.get('build')!='20F66' or gfx.get('bundle_sha256')!=profile['GPU']:
             raise ValueError('new graphics provenance mismatch')
         checked(gfx['source_inputs'])
         for entry in gfx['files']:
-            if sha(bind(folder/'graphics-20F66-0003'/entry['name']))!=entry['sha256']:
+            if sha(bind(graphics_manifest.parent/entry['name']))!=entry['sha256']:
                 raise ValueError('new actual graphics binary changed')
         wire=json.loads(bind(folder/'20F66-IOSurface-native-wire-correspondence.json').read_text())
         if wire.get('passed') is not True or wire.get('build')!='20F66':
