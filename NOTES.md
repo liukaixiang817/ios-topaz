@@ -34,6 +34,50 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0133 hierarchy candidate READY; PHONE LIVE0132; sourcehostcommit thennormalexit/ONEnewRAM NEXT
+
+- Actualkernelff89/source3d58/CI41178731928/job124471578444 SUCCESS. Both
+  actualkernel terminalmodels worker42295 ENDEDexit0/PASS18each; physicaldriver
+  59732 ENDEDexit0. Package/wholecodec/offlinefreeze31066 ENDEDexit0, whole
+  28170952B upstreamEDK2 exactdecode/81FW/SimpleInit/BootShim/DTB retained,
+  originalFW/PON/WLEDcode vs0122driver0002 onlymkpayloadpinchanged. Newimage
+  f8e8a8c88fa938531c02a2d422096f745c5c8cabd4a4d0cbf811ce32e7bf010f
+  graphicsbf8.../PBFfullhierarchy candidate; hostadmission4tests PASS, current
+  16.5root915/142map immutableRO+512MiBRAMCOW reviewPASS. Candidateproofsaved.
+- No0133boot.json/payloadphoneactionyet. CurrentPHONE LIVE0132 whitegallery,
+  frozen0132controller/originalmanifests. AllUSB/build/modelworkersENDED. Commit/
+  pushhostadmission thenstrictnormalexit/fullraw/WLEXIT05/WLR5, independent
+  actualFASTBOOT andONEnew0133image/exactpayload. Actualnewview/picture/thumbnail
+  NOTproven; candidateAPIreturn alone maynotreplacevisualproof.
+
+### 0133 CI SUCCESS/exactkernel verified; PHONE LIVE0132; newcandidate checks NEXT
+
+- Source3d58a5037f9722622517662a057c70206fa47121 CI41178731928/
+  job124471578444 SUCCESS; watch/download80591 ENDEDexit0. Actualkernel
+  ff8915b4516b5a4a0a2d60470290705b5214fe6e850402314a0199f38016c3b8
+  /17249136B exactZIPCRC/SHA/profile verified. Newhost20F66admission nowexact
+  ff89/3d58/CI411787/graphicsbf8/path0133, 20H392unchanged. Neednewactualkernel
+  2terminalmodels/physicaldriver/wholecodec/offlinefreeze beforeONEnewboot.
+- Actualoriginal20F66 UIKit method confirmed calls_UIRenderViewImageAfterCommit,
+  which moves offscreenviews totemporarywindow/commits before snapshot; actual
+  SDK saysBOOLNO meansmissingimagedata. ActualUIKitAPIreview saved, notphysical
+  photo/thumbnail proof. Candidate noMetaldevice orGPUhardwarecodechanges.
+  CurrentPHONE remainsLIVE0132 whitegallery, allUSBworkersENDED/frozencontroller.
+
+### 0133 hierarchy source3d58a50 PUSHED; ONECI41178731928 running; PHONE LIVE0132 whitegallery
+
+- Source3d58a5037f9722622517662a057c70206fa47121 committed/pushed; unique
+  CI41178731928 running, no duplicateCI. Onlynativechange is exactbundlehash
+  forPBFhierarchy candidate; twoactualhash tests andchangednativeoverlayobject
+  PASS. Newartifact/models/image/boot NOTready. CurrentPHONE remainsLIVE0132,
+  actualwhiteframes/noColor-editor response. AllUSBworkersENDED. NewCIwatch80591
+  owns status/download only. Newhelpers0133 ready, no phoneaction untilchecked.
+- SourceMi8 mkjobs/inject_sb actualregistration/services paths reviewed further;
+  it usesaSpringBoarddelay andfiltersunsupportedservices. Ownfirstmedia snapshot
+  hadIDS/XPC/LS/audioinit waits, butactualactivationcrashnotshown, so no blind
+  daemonremoval/delay orallMetalAPI import. Candidateaddressesactualpreview
+  capture path only; no claimthisalonealreadyfixesgallery/providerstartup.
+
 ### 0133 realUIView hierarchy snapshot candidate source READY; PHONE remainsLIVE0132, gallerywhite
 
 - User reiteratedMi8reference; pinnedDipper longpressswitcher isexplicitlydisabled
