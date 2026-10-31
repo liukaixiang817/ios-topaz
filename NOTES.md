@@ -34,7 +34,7 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### 0125 CURRENT: stock-app candidate COMPLETE/READY; actual phone FASTBOOT; NEXT ONE RAM
+### 0125 CURRENT: actual full stock apps + Calculator56 + AppleTV welcome PASS; wallpaper still pending, phone LIVE
 
 - Latest actual hardware supersedes historical LIVE/READY below: original0124
   real20F66/16.5 session CLOSED via strict native RAM_DRAINED80000003, final30raw/
@@ -97,6 +97,36 @@ early samples only. On0029 the human already confirmed boot complete and said
   may_write_userdata=false, immutableRO+512MiBRAMCOW only. RAM_DRAINED not UFSdurableSAFE.
   No rootcreator/append/unpin/replay/ordinaryreset/recovery/rawfallback. After a new
   session, exit only native drain+fullrawprefix/WLEXIT05/WLR5 NEW reads plus actualFASTBOOT.
+
+- LATEST after the preceding preboot status: sourcebc4cc6e03aa233e70ae4cca12624c15fde295919
+  committed/pushed, ONE image03:02:43.553726UTC SHA44533aad12d7c9deb113271101b14bc2f51dbe6b442db0b5c5f08e2dde2ec279
+  sent, phone-stock-apps-0001/boot.json CONSUMED. Unique payload ACK03:03:26UTC;
+  worker26268 ENDED. Actual captures2/3 prove newkernel2f7/root915142map/RAMCOW512,
+  fourbig/SMP and threeGPU ALL4096, exact20F66 CA mode1. Actual SpringBoard started
+  once with no captured SpringBoard crash. Lastcapture3 still native console;
+  WLED baseline count2/issued0/error0 (no first-frame OFF/ON yet). This is startup,
+  not completed UI/app/wallpaper success. No active USB worker. Do not replayboot.
+
+- LATEST actual GUI milestone: capture5 real lockscreen, native startupOFF/ON
+  26raw/4issued4completed/error0/request2ack2/module128. Proper unlock exposes full
+  stockhome across two pages +Utilities: actualTV/FaceTime/Calendar/Mail/Notes/Clock/
+  Music/Maps/Weather/Files/Shortcuts/Freeform/etc icons; Calculator present in Utilities.
+  AppleTV actually executed and displayed Welcome to AppleTV (capture8), no stream/
+  network success claimed. Calculator actually executed and7*8 displayed56 (capture13).
+  0125/actual-stock-apps-and-calculator-proof.json binds real screenshots/logs. This
+  supersedes preceding startup/pendingapp statements. No newhumanpowerkeyfeedback.
+  Wallpaper still shows same startupPosterBoard assertion at unslid1c09bb268 (now
+  slide51c88000); actualgallery on this newfullapp session pending targeted test.
+  Phone CURRENT LIVE16.5; worker3596 ENDED. New fullapp session Wallpaper Add gallery still empty, actual
+  PBF assertion then repeatedsig6 captured15; exact exception text still absent.
+  All USB workers ENDED. No newboot/reset/oldcontroller. Native source remainsbc4 exact bound.
+
+- 0125 current live control source has now been frozen at/private/tmp/polaris-
+  runtime-0125-frozen-0001, all image-bound evidence hashes matchbc4cc6e. Use that
+  exact current-session controller if later source edits invalidate active hashes;
+  no oldmanifest/policy alteration. Current phone remainsLIVE16.5; do not boot new
+  images until actual native drain/WLED restore/independentFASTBOOT. Stock32icons/
+  actualCalculator56/TVwelcome complete; remaining priority actualwallpaper failure.
 
 ### 0124 FULL16.5 new root COMPLETE; exact kernel/graphics/runtime READY for ONE physical boot
 
