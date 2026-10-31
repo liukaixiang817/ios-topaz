@@ -34,6 +34,49 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0128 exactDipper wallpaper recheck COMPLETE; native loader admission source READY; PHONE LIVE0127
+
+- Actual0127 startup passed32/32 apps, allGPU pixel/surface checks, CAmode1 and
+  WLEDstartup26raw/4issued4completed/request2ack2/error0. Actualcapture4 +human
+  “系统壁纸还是不行”: gallery STILLBLANK. ScopedPBFexec logged, genuinePBFexec
+  logged, but NOpreviewconstructor; same actualnil object1 queueexception remains.
+  DoNOT claim fallbackran/wallpaperfixed. Worker21305 ENDED, currentPHONE LIVE0127.
+- User requested exactMi8 source check. Dipper e930c26 locks kernel8e611870 and
+  userland906425b7; exactobjects audited, notnewera79 userland. Dipper usesPID1
+  kern.exec_inject +generalAMFI0xff, while its poster_switcher_allowed returnsNO
+  for unresolvedhostedblackscene. Its stockHEIClayers needmedia softwaredecode.
+  SeeREFERENCE_REPOS0128 and privatecomparisonproof; noforeignscripts/prebuilts.
+- OwncurrentAMFIonlyadmitsBBD for0x5a, explaining missingPBFload despiteexecenv.
+  NEW0900 independentexactPBFvnode/rootowner/notwritable/rootmount/RAMoverlay/
+  exact20F66stagedbundle admission, onlydyldPATH_VARS mask2. PBF remainsNOTaGPU
+  caller/reporter. ExistingGPUidentityfunctions byteidentical; noCPU/GPUhardware/
+  WLED/storage/thermalpolicychange. ExactphysicalGUIloading notyetproven.
+- Twoactualfunction hostsanitizer tests PASS (wrongvnode/name/UID/mode/root/
+  overlay/readiness/attribute failures balancedrefs, mask2only/copyfailretention/
+  boundedlogs). ActualCIheaders/options objectcompile sweet_amfi+overlay PASS;
+  initialproc_name voidprototype mismatch fixed beforeCI. Gfxbundleba69...0004
+  UNCHANGED; next ONEnecessarynativeCI for0900, then exactartifact/profile and
+  changedkernelintegration only. No newRAMboot/oldpolicywaiver.
+- CURRENTcontrol MUSTuse frozen25bc controller at/private/tmp/polaris-runtime-
+  0127-frozen-0001/tools/polaris-uefi-wled-runtime.py withoriginal0127boot/image/
+  driver0001.0128/current-live0127-runtime-source-freeze.json binds370original
+  hashes bycopies, nothardlinks. BootrecordCONSUMED; neverreplay/ordinaryreset.
+
+### 0127 ONE exactnative payload ACK; worker40749 ENDED, actualcapture pending
+
+- Newphone-poster-preview-0001 image andexactphysicalpayload BOTHACKed once.
+  runtime-native-boot-0001/result.json PASS; worker40749 ENDED. Currentactual
+  PHONE new0127native startup, NOTFASTBOOT and NOTold0126. DoNOT replayboot.
+  capture0001 pending mustEND before anynextUSB; noUIKit/wallpaperclaimyet.
+
+### 0127 ONE newRAM image sent; bootrecord CONSUMED, actualnative start NEXT
+
+- Source25bc48f66f71e59ce20263195ec89dd62f85bfc4 committed/pushed. ONEnewimage
+  ACK at04:05:43.617385UTC perphone-poster-preview-0001/boot.json, sha1f4faeef...
+  Worker42386 ENDED. DoNOT replayhelper/bootimage. CurrentnewUEFI session only,
+  actualnative/PBFbitmap/wallpaper success NOT YET observed. Stateworker active
+  mustEND beforeONEexactpayload. Prior0126 strictlyCLOSED/FASTBOOT verified.
+
 ### 0127 scoped wallpaper preview candidate COMPLETE/READY; actualPHONE FASTBOOT
 
 - Exactnative sourceefc80619003dd49e6badd85bee4782097210eaf1 CI41166338002/

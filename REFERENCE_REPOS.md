@@ -911,3 +911,33 @@ four current common binaries remain byte-identical. Bounded damage rectangles
 are a promising future optimization, pending own ABI, bounds/lifetime, full first
 wake frame and actual pixel/timing verification. No foreign hardware writes or
 reference scripts/prebuilt execution; no claim that this proves faster CPU/GPU.
+
+
+## Exact Dipper wallpaper and injection recheck (0128)
+
+User requested checking the loader-permission diagnosis directly against Mi8.
+Dipper e930c26 locks HackiOS kernel8e61187098f2c26c5daee8f9f72b6416aa64b9ab
+and userland906425b75e02b4f99eb5d7bb1ef7c9583472d772. Read these exact Git objects,
+not the newer local userland HEAD; fetched only the missing pinned source commit.
+No reference scripts, prebuilts or firmware were executed. Private source hashes
+and comparison:0128/dipper-wallpaper-and-loader-comparison.json.
+
+- Its PID1 configures `/etc/inject.conf` through `kern.exec_inject`; the kernel
+  adds the library environment during exec. `kern_minimac.c` answers AMFI0x5a
+  with0xff for general dynamic-loader options. Own Polaris deliberately only
+  handled the verified BBD executable, and actual0127 PBF wrapper ran but no
+  preview constructor appeared before the same nil-queue exception.
+- The exact userland `inject_sb.c:poster_switcher_allowed` returnsNO: its comment
+  describes a foreground PosterBoard scene whose hosted context still renders
+  black. Its publication is not evidence of a complete working wallpaper picker.
+  We found no PBFHomeScreenPreviewImageBuilder imageForView replacement there.
+- `inject_media.c` explains that the four HEIC layers of stock16 wallpaper need
+  mediaserverd's VideoToolbox software decoder; otherwise only a gradient appears.
+  Its bounded portrait-prewarm compatibility is a later relevant source to verify
+  against actual20F66 media code, not proof own decode/audio/camera already works.
+- Our0900 adaptation follows the loader correspondence with a separate exact
+  PosterBoard executable-vnode/UID/mode/root/RAM-overlay identity and only mask2
+  (path variables, per Apple's dyld1066.8), leaving GPU caller/reporter identity
+  and all CPU/GPU/WLED/storage gates unchanged. It does not copy generic0xff,
+  hide the picker, fake Metal, or add GPU-device access for PBF. Physical loading,
+  preview bitmap and wallpaper selection still require the new actual build.

@@ -1,0 +1,88 @@
+--- a/bsd/dev/polaris_gpu_overlay.c
++++ b/bsd/dev/polaris_gpu_overlay.c
+@@ -30,8 +30,9 @@
+ bool polaris_gpu_overlay_stage(void);
+ bool polaris_gpu_overlay_ready(void);
+ bool polaris_gpu_caller_allowed(void);
++bool polaris_poster_preview_allowed(void);
+ uint32_t polaris_gpu_caller_kind(void);
+-static uint32_t pgpu_started,pgpu_ready;
++static uint32_t pgpu_started,pgpu_ready,pgpu_poster_preview;
+ static uint64_t pgpu_begin;
+ static uint32_t pgpu_progress_seq;
+ static struct {uint32_t step,file,done,total,error,ms;} pgpu_progress;
+@@ -98,6 +99,30 @@
+ }
+ bool polaris_gpu_overlay_ready(void)
+ {return __atomic_load_n(&pgpu_ready,__ATOMIC_ACQUIRE)!=0;}
++/* Separate dyld-only identity. This never becomes a GPU caller/reporter.
++ * The exact20F66 bundle is already fully staged, and the current executable
++ * must be the root-owned genuine PosterBoard vnode in the verified RAM root. */
++bool polaris_poster_preview_allowed(void)
++{
++    if(!polaris_gpu_overlay_ready() ||
++       !__atomic_load_n(&pgpu_poster_preview,__ATOMIC_RELAXED) ||
++       !polaris_ram_overlay_allowed())return false;
++    char name[32]={0};
++    proc_name(proc_pid(current_proc()),name,sizeof(name));
++    if(strcmp(name,"PosterBoard"))return false;
++    vnode_t image=proc_getexecutablevnode(current_proc());
++    if(!image)return false;
++    struct vnode_attr attr;VATTR_INIT(&attr);VATTR_WANTED(&attr,va_uid);VATTR_WANTED(&attr,va_mode);
++    bool ok=vnode_isreg(image) && (vfs_flags(vnode_mount(image))&MNT_ROOTFS) &&
++        !vnode_getattr(image,&attr,vfs_context_kernel()) &&
++        VATTR_IS_SUPPORTED(&attr,va_uid) && VATTR_IS_SUPPORTED(&attr,va_mode) &&
++        attr.va_uid==0 && !(attr.va_mode&022);
++    vnode_t expected=NULLVP;
++    if(ok)ok=!vnode_lookup("/Applications/PosterBoard.app/PosterBoard",
++        VNODE_LOOKUP_NOFOLLOW|VNODE_LOOKUP_NOCROSSMOUNT,&expected,vfs_context_kernel());
++    ok=ok && expected==image;
++    if(expected)vnode_put(expected);vnode_put(image);return ok;
++}
+ uint32_t polaris_gpu_caller_kind(void)
+ {
+     /* backboardd runs as mobile on20H392. UID/admin checks alone either
+@@ -210,6 +235,7 @@
+         int error=pgpu_write(n,&files[n]);
+         if(error) {printf("POLARIS GL RAM overlay: stage%u failed %d; Apple bootstrap unchanged\n",n,error);return false;}
+     }
++    __atomic_store_n(&pgpu_poster_preview,vn==6 && !memcmp(version,"20F66",6),__ATOMIC_RELAXED);
+     __atomic_store_n(&pgpu_ready,1,__ATOMIC_RELEASE);
+     pgpu_note(7,PGPU_FILES,(uint32_t)bytes,(uint32_t)bytes,0,true);
+     printf("POLARIS GL RAM overlay: six verified files staged, %llu bytes; UFS base READ ONLY\n",bytes);
+--- a/bsd/kern/sweet_amfi.c
++++ b/bsd/kern/sweet_amfi.c
+@@ -373,10 +373,24 @@
+ extern bool polaris_gpu_overlay_ready(void);
+ extern uint32_t polaris_gpu_caller_kind(void);
+ extern bool polaris_gpu_wrapper_allowed(void);
++extern bool polaris_poster_preview_allowed(void);
+ extern void polaris_gpu_loader_policy(int error);
+ #include <dev/polaris-gl-status.h>
+ extern bool polaris_gpu_record_test(unsigned actor,const struct pgpu_test_notice *);
+ extern bool polaris_gpu_record_crash(const struct pgpu_crash *,uint32_t pid);
++/* Apple's dyld1066 policy bit1 accepts DYLD_INSERT_LIBRARIES. No interpose,
++ * custom cache, fallback, embedded variables or ignored insertion failure.
++ * Only called for the separately verified exact PosterBoard executable. */
++static int polaris_poster_dyld_policy(user_addr_t arg)
++{
++    uint64_t request[2],allow=2;
++    int error=copyin(arg,request,sizeof(request));
++    if(!error)error=copyout(&allow,(user_addr_t)request[1],sizeof(allow));
++    static uint32_t reports;
++    if(__atomic_fetch_add(&reports,1,__ATOMIC_RELAXED)<8)
++        printf("POLARIS POSTER DYLD: exact executable path-vars-only mask2 status%d\n",error);
++    return error;
++}
+ static int polaris_gl_dyld_policy(struct proc *p, int call, user_addr_t arg)
+ {
+     /* Only the verified, opt-in RAM overlay's window-server executable may
+@@ -386,6 +400,8 @@
+      * launchd must never enter executable-vnode lookup for a graphics hook. */
+     if ((call!=0x5a && call!=0x5b && call!=0x5c) || proc_isinitproc(p) || !polaris_gpu_overlay_ready())return ENOPOLICY;
+     uint32_t actor=polaris_gpu_caller_kind();
++    if(call==0x5a && actor!=2 && polaris_poster_preview_allowed())
++        return polaris_poster_dyld_policy(arg);
+     if(call==0x5c) {
+         if(actor!=1) {if(!polaris_gpu_wrapper_allowed())return ENOPOLICY;actor=3;}
+         struct pgpu_test_notice notice;int error=copyin(arg,&notice,sizeof(notice));
