@@ -34,7 +34,55 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0150 remains ONLY last actual nativeLIVE19:10; NEW0154 conditional runtime ARC trial host-reviewed / whole81 packaged; independent freeze and physical test pending
+### CURRENT0154 fresh fullRO PASS / actualFASTBOOT22:02; NEW runtime-gated ARC candidate frozen0003 READY, no iOS trial sent yet
+
+- Latest actual transition replaces0150 lastLIVE: frozen0150 state query
+  93091 ENDED1 could not connect its bound service; independent expected-only
+  strict product query returned actual polaris FASTBOOT21:58:55Z. Old0150's
+  exit cause is UNKNOWN, not a claimed native drain/receipt or lease reset.
+  No old image/payload/reset/recovery fallback was replayed.
+- One necessary original0120 watchdog300s strict-RO audit85825 ENDED0 then
+  completed actual unmount and independent actualFASTBOOT22:02:48.405684Z.
+  New0154 audit only changes epoch/RAM mount label and exact-product gate;
+  original recovery image/RAM tools and250s host budget unchanged. Two whole
+  16GiB hashes match91515474/689a8cd1 (55.845/55.833s),142/182 maps, marker
+  raw inode+8MiB pattern,6GPT/critical/ESP102 and journal metadata pass. No
+  repair/replay/RW/install/write. Whole512MiB journal still not captured;
+  do not claim general FS health. Independent39checks PASS.
+- CURRENT root/NV authority is fresh0154, not0145:
+  fresh-20F66-readonly-root-review.json SHA95d932fc7cf1edb9cbffb735cd187e4e4e
+  723dd45799eb19b6627ed8dd3130de; preflight5831fa6ad04766df005646ae052ede45bf
+  a7bcd7005fcdf540ce7a32abad5c75. Three8MiB NV before/local/after and fresh
+  GPT/FSC passed; all3 NV SHA also equal fresh0145. Files remain private0600,
+  no restoration of historical NV. may_boot_iOS immutableRO+RAMCOW=true,
+  may_write_userdata=false; original Android/Windows/ESP/GPT/marker preserved.
+- New physical-runtime-image-0002 binds the fresh0154 review with append-only
+  additional evidence in a NEW manifest, SHA46c8afa8ffe0d63c9691dd1edae6f6e99
+  d179df0a8c072c6bc6b52c2263c927f. Its actual6012928B image is whole-byte
+  identical3075879d to0001; original81 and38905032B EDK2 decode are reused
+  ONLY after exact wholeimage SHA/byte identity. No compression/build/model/
+  codec rerun or old manifest modification. Fresh-RO transition review replaces
+  the unavailable old native exit evidence; it does not invent a drain cookie.
+- SOLE NEW candidate=/private/tmp/polaris-runtime-0154-frozen-0003,
+  power-trial-freeze-manifest-0003.json SHAd23d26d25bb8e06c9539c5ed42ccb4825c2
+  d7c0d22c83f7e393d58cf27af66fe;863COPY+10COMMIT_ONLY/387sources/80inputs.
+  Every file independently rechecked/current active sources match HEAD; actual
+  correct boot-power-runtime-once-0003.py default-off helper passed. The copy
+  script's final postcheck initially named the old helper filename; the exact
+  correct helper was then run independently without editing any copied source.
+  Its stdout's0145 label is historical text; actual f.preflight/review binding
+  is fresh0154. frozen0001/0002 are superseded and forbidden. Allworkers ENDED,
+  no newphone-power-runtime-0001/boot.json, no new iOS/payload/ARC action yet.
+- NEXT: source already committed/pushed; verify current source and actual
+  product through frozen0003 boot-power-runtime-once-0003.py --boot-once, ONE
+  new RAM image then ONE exact63cb payload under that NEW frozen controller.
+  Runtime guards must actually pass before ARC writes; a pre-mask refusal is
+  not zero/noMSS baseline. UNKNOWN is a nonreturning local RAM-only hold, no
+  USB ACK/cleanup/retry/reset/policy change. New namespace/raw evidence should
+  be decoded with existing C types. Continue ONLY Wi-Fi to real scan/join/data,
+  then sound/camera. Native7d24/GPUf790/wallpaper/time/battery/WLED unchanged.
+
+### HISTORY0154 candidate preparation before the required fresh RO transition
 
 - LATEST OFFLINE READY: frozen0002/default-off helper passed790files+
   10COMMIT_ONLY/387current committed sources/80unchanged compiled inputs.
