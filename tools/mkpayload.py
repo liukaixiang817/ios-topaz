@@ -183,7 +183,7 @@ def build(kernel_path, adt_path, cmdline, ramdisk_path=None, *, gpu_bundle_path=
         assert b'xiaomi,polaris' in root.prop('compatible').split(b'\0')
         assert not any(c.name == 'polaris-gpu-userland' for c in root.children)
         import hashlib
-        if gpu_build == '20F66' and hashlib.sha256(image).hexdigest() != 'ee3f927dc175f6be3184344f77773b6bc16ed986e365523f673e3c3cc7bb2790':
+        if gpu_build == '20F66' and hashlib.sha256(image).hexdigest() != '6ab8e26039824073356156923be7cca267713359f90a3bd3ad63488647771b3b':
             raise ValueError('20F66 requires the exact actual-ABI-verified stock-app graphics bundle')
         node = adt.Node()
         node.props = [('name', 0, b'polaris-gpu-userland\0'),

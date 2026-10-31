@@ -34,6 +34,35 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0131 restore ORIGINAL media job source READY; 0130 CLOSED; PHONE actualFASTBOOT; ONE CI next
+
+- User repliedSHORTpowerstillblack. Actual0130 after-physical-power capture:
+  physicalbutton edgesseen; stillnativeWLEDrequest1ack1/module0/IRQ0/error0,
+  noONrequest. Thus neither touch nor SHORTpower restoredUI. NohardwareWLED
+  fault/rootcause isolated, and noactualnewmedia exec/shim seen. DoNOTrepeat
+  power/touch/optical prompts or call thiswallpaper success.
+- Currentblack0130 CLOSED via strictnormalexit: nativeRAM_DRAINED80000003/
+  epochs0/full32raw/4issued4completed/request2ack2/module128/IRQ2/flags27/error0/
+  WLEXIT05/WLR5. Worker79878 ENDEDexit0 using saved-before-cleanup Darwinfix.
+  IndependentactualFASTBOOT05:50:14TRUE. Noordinaryreset/replay/rootwrite;
+  0131/live0130-closed-proof.json, original0130result retained.
+- NEW0131 reverses only introduced media Program/stdio wrapper changes. Preserve
+  its original Program(absent)/original Appleargv/UserName/MachServices/KeepAlive/
+  stdio exactly; mediajob only scopedDYLD+compat environment. PBFworkingwrapper
+  remains, sharedinit nonPIDrole returns toPBFonly. Newmediaactual loading and
+  blackrootcause stillUNPROVEN; this removes introduced launchbehavior changes.
+- Newgraphics0131/graphics-media-original-job-0001 bundle6ab8e26039824073356156923be7cca267713359f90a3bd3ad63488647771b3b;
+  ONLYinit changed versus0130; Mesa/GL/inject/BBDwrapper/test FIVEbinaries exact.
+  Kernel0902mediaidentity/permissions and allnativeCPU/GPU/WLED/storage/thermal
+  code unchanged; native0899 digestpin updatedexactly (no relaxation). Two
+  hash/bundle localtests +8actual530-job-plist atomic success/refusal cases PASS,
+  mediachangedkeys proven ONLYenvironment; initstrictAArch64 PASS. One changed
+  nativeoverlay actual-header objectcheckPASS; commit/pushONEnecessarydigestCI next.
+- PHONE actualFASTBOOT, allUSBworkersENDED; no0131image/payload/bootrecord yet.
+  Need exactsuccessfulCI/artifact then2changed-kernel terminalmodels/physical
+  image/wholecodec/offlinefreeze/sourcecommitpush/ONEnewboot. Keep16.5root915/
+  142map/512MiBRAMCOW andGPU/backlight. Nooldconsumedimage/controller replay.
+
 ### 0130 user BLACKSCREEN; actual native OFF completed/error0; ONEshort power wake requested, pending
 
 - CURRENT PHONE LIVE0130 consumedf434/imagea0c7/kernelb3e. Capture1 startupconsole,

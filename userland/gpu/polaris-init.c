@@ -14,7 +14,7 @@
 #include <CoreFoundation/CoreFoundation.h>
 #include <stdlib.h>
 
-static int media_console(CFDictionaryRef jobs)
+static int media_environment(CFDictionaryRef jobs)
 {
     CFMutableDictionaryRef job=(CFMutableDictionaryRef)CFDictionaryGetValue(jobs,
         CFSTR("/System/Library/LaunchDaemons/com.apple.mediaserverd.plist"));
@@ -26,11 +26,6 @@ static int media_console(CFDictionaryRef jobs)
        CFGetTypeID(args)!=CFArrayGetTypeID() || CFArrayGetCount(args)!=1 ||
        !CFEqual(CFArrayGetValueAtIndex(args,0),CFSTR("/usr/sbin/mediaserverd")) ||
        (program && !CFEqual(program,CFSTR("/usr/sbin/mediaserverd"))))return -1;
-    const CFStringRef keys[]={CFSTR("StandardOutPath"),CFSTR("StandardErrorPath")};
-    for(unsigned i=0;i<2;i++) {
-        CFTypeRef old=CFDictionaryGetValue(job,keys[i]);
-        if(old && !CFEqual(old,CFSTR("/dev/console")))return -1;
-    }
     CFMutableDictionaryRef environment=(CFMutableDictionaryRef)CFDictionaryGetValue(job,CFSTR("EnvironmentVariables"));
     if(environment && CFGetTypeID(environment)!=CFDictionaryGetTypeID())return -1;
     if(!environment) {
@@ -45,10 +40,8 @@ static int media_console(CFDictionaryRef jobs)
         if(old && !CFEqual(old,values[i]))return -1;
     }
     for(unsigned i=0;i<2;i++) {
-        CFDictionarySetValue(job,keys[i],CFSTR("/dev/console"));
         CFDictionarySetValue(environment,env_keys[i],values[i]);
     }
-    CFDictionarySetValue(job,CFSTR("Program"),CFSTR("/usr/libexec/polaris-init"));
     return 0;
 }
 
@@ -122,7 +115,7 @@ static int poster_console(const char *root)
     CFDictionarySetValue(poster,CFSTR("Program"),CFSTR("/usr/libexec/polaris-init"));
     /* The second exact original job retains UserName, MachServices and every
      * Apple argument. Publish neither change if this validation fails. */
-    if(media_console(jobs))goto done;
+    if(media_environment(jobs))goto done;
     encoded=CFPropertyListCreateData(NULL,plist,kCFPropertyListBinaryFormat_v1_0,0,NULL);
     if(!encoded || CFDataGetLength(encoded)<=0 || CFDataGetLength(encoded)>2*1024*1024)goto done;
     out=open(temporary,O_WRONLY|O_CREAT|O_EXCL|O_NOFOLLOW,0600);
@@ -147,7 +140,7 @@ done:
     if(data)CFRelease(data);
     free(bytes);
     printf("POLARIS POSTER CONFIG: %s; Apple argv retained, RAM COW only\n",result?"unmodified (unavailable)":"console + scoped exec preview prepared");
-    printf("POLARIS MEDIA CONFIG: %s; Apple services/user/argv retained, RAM COW only\n",result?"unmodified (unavailable)":"console + scoped portrait compatibility prepared");
+    printf("POLARIS MEDIA CONFIG: %s; Apple services/user/argv retained, RAM COW only\n",result?"unmodified (unavailable)":"original Program/stdio + scoped environment prepared");
     return result;
 }
 
@@ -218,19 +211,15 @@ int main(int argc,char **argv)
     (void)argc;(void)argv;
 #if defined(PGPU_USERLAND_20F66)
     if(getpid()!=1) {
-        if(argc!=1 || !argv || !argv[0])return 125;
-        const char *flag=NULL,*exe=NULL;
-        if(!strcmp(argv[0],"/Applications/PosterBoard.app/PosterBoard")) {
-            exe=argv[0];flag=getenv("POLARIS_POSTER_PREVIEW");
-        } else if(!strcmp(argv[0],"/usr/sbin/mediaserverd")) {
-            exe=argv[0];flag=getenv("POLARIS_MEDIA_COMPAT");
-        }
-        if(!exe || !flag || strcmp(flag,"1"))return 125;
+        const char *flag=getenv("POLARIS_POSTER_PREVIEW");
+        if(argc!=1 || !argv || !argv[0] ||
+           strcmp(argv[0],"/Applications/PosterBoard.app/PosterBoard") ||
+           !flag || strcmp(flag,"1"))return 125;
         if(setenv("DYLD_INSERT_LIBRARIES","/usr/lib/libPolarisInject.dylib",1))return 125;
-        char *const child_args[]={(char *)exe,NULL};
-        fprintf(stderr,"POLARIS SCOPED EXEC: library set after launchd; genuine %s\n",exe);
-        execv(exe,child_args);
-        perror("polaris: genuine scoped Apple exec");return 127;
+        char *const child_args[]={"/Applications/PosterBoard.app/PosterBoard",NULL};
+        fprintf(stderr,"POLARIS POSTER EXEC: scoped library set after launchd; genuine Apple binary\n");
+        execv(child_args[0],child_args);
+        perror("polaris: genuine PosterBoard exec");return 127;
     }
     int console=open("/dev/console",O_WRONLY|O_NOCTTY|O_CLOEXEC);
     if(console>=0) {
