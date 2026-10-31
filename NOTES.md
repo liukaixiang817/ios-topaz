@@ -34,7 +34,7 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### 0141 ACTUAL NC18LDR PASS + originalI2C5096B PASS; nativeboot/UTC/GPUacceptance PASS, UIstillpending14:19Z
+### 0141 ACTUAL NC18LDR/I2C5096B PASS; realhome/wallpaper/Melbourne/battery/GPU/WLED PASS; WiFi/audio/camera STILLUNFINISHED
 
 - ONEimage37183 ENDED0/image37b6/source9069aed sent14:15:46.330541Z,
   ONEb31payload76681 ENDED0/ACK14:17:06.842205Z; transfer32.959410s/
@@ -65,12 +65,52 @@ early samples only. On0029 the human already confirmed boot complete and said
   Capture39530 ENDED0 actualFD630GPU stage6/error0/completed13/surface1/
   ALL4096GLSL+GMEMrestore+EAGLcallerPASS, all8hooks installed, sixsignedfiles
   19072848B. Melbourneactualstage5/error0/Jan39600/Jul36000; official7400
-  PNG+3statesactivated inRAMCOW. Earlybattery8/12unavailable,nofakeSOC.
-  Capture63784 ENDED0 14:19:21Z screenshotblackafterApplelogo; noactual
-  lockscreen/desktop claimyet. Prefix2/error0/issued0/completed0/request0ack0,
-  nonewpanic(cpuline/Kernelpanic observed. AllUSBworkersENDED; current
-  LIVE0141native, NOTFASTBOOT. WaitusefulUIintervalwhile0142independent
-  defaultOFFsourceprogresses; donotrebootjustforanothermetadataformat.
+  PNG+3statesactivated inRAMCOW. Earlybattery8/12unavailable wasbeforeactual
+  FG3/SMB2 sample74%/4040mV/charging1, notsyntheticSOC.
+  Capture63784 14:19 blackwasboottransition, supersededby41272 partiallock
+  frameand61075 actualclearhomepage/official7400/1:21 Nov1+chargingicon.
+  ONEhomegestureACK; GPUactualcompleted>=3328+fence/idle/halt, notFPS/cache
+  hit/speedproof. Prefix26/error0/runtime0/issued4=completed4/request2=ack2,
+  ILIM-onlyrawretained; no newopticalclaim/2scycleasked. No newpanic(cpuline/
+  Kernelpanic inactualcapturedprefix. Current LIVE0141native, NOTFASTBOOT.
+- UseragainconfirmsWiFi/soundnotworkingandnoCameraApp, asksMi8WiFi. We
+  explicitlyagreed: successfulROdiagnostics!=network/PCM/capture. Actual
+  rawconstructor4hashes+632Bcache CANbindMPSS host1: 3c74/78 readsTOChosts,
+  3c88..94 selectsAPPS0 peerw19;3cf8 indexes48Bslot,3d14/24 storespointer/
+  size/cacheline. Slot96 actual860b9000+emptyheader observed, proof0142/wifi/
+  actual0141-MPSS-constructor-host-binding-proof.json
+  SHA0ed27532... . Do NOTbootjusttorepeatTOCmetadata; draftTOCstopped.
+  NextactualMi8SMEM/GLINK->QRTR/QMI69v1->ath10k pathneedsownedSMEMalloc/
+  SFPBlock/MSS-PIL/RMTFS; Mi8failedtrylock unconditionalunlockand8bf/8c1
+  cameracarveoutborrow MUSTNOTport. Residentownmodem backupwholeSHA46144cad
+  matches0096; offline30 MBA/modemloadablefiles64004355B prepared privately,
+  no newrecovery/extraction68/firmwareexecution. Segmentrange8e4..95c is
+  NOTcurrentwholeEFIownership/writepermission. Realproviders stillrequired.
+- CameraAppSTATICpresenceconfirmed onhdiutil actualREADONLYmountofsame0124
+  fullroot915: Camera62368B SHA9a0a8ab3...,Info3126B SHAb4f8da14...,
+  requiredcapabilityarm64/SBAppTagsstill-camera/noexplicitHidden; original
+  DefaultIconState4variants allcontaincom.apple.camera. Staticproof0142/
+  camera/camera-app-static-presence-review.json. CurrenthomehasnoCamera.
+  Spotlightcamtestonlypartial/asynchronous/leftsearch observations; NOTa
+  completedLS/MGregistrationquery orprovedfilterrootcause. Do notclaimmissing
+  download orforcefakehardwarecapability/icon asactualcamerafix.
+- AllUSBworkersENDED. Independent0142camera/audio defaultOFFtransaction
+  coresunderparentreview (notintegrated/notphysicalpermission): actualowner/
+  clock/pin/rails/selector/fullrestoreprovidersremainunfinished. Audioexact
+  originalClockDxe pureROIsEnabled/IsOn chainnowbeingimplementedfornext
+  actualbaseline; noGetFreq/Enable/Open/selector/PCM. Native/source/GPU/WLED
+  0141unchanged, no newkernelCI/rebootsolelyforformat/parser.
+- Newindependenttransactioncores reviewedandreadyforsourcecommitonly:
+  shim/polaris/camera-cci-id.{c,h}+tools/polaris-camera-cci-id-test.c,
+  explicitonlyownedRD_DONE mask/clear/restore (notunprovedmask0latch),
+  35SOFTWAREASAN/UBSAN+OFFzeroIO/AArch64ELF+COFF+16.5MachO PASS;
+  currentproof066e73b0... . tools/polaris-audio-geni-fifo.{h},-test.c,
+  -check.py now25SOFTWAREASAN/UBSAN+actualCOFF/MachO/3OFFbranchesPASS,
+  proofaudio/fifo-verified-0003/result.json. ParentfixedIOintent/UNKNOWN/
+  dirtybeforewrite/DSB/outstandingretentionincludingrelease/synchronous
+  nonreturn, wholebootoneticket. BothNOphysicalprovider/NOphoneIO/NOID/
+  NOframe/NOaudio/NOcurrentimageintegration. SuccessfulCCIobservable
+  readbackstillholdslease/outstanding; nevernativeSAFEreceipt.
 
 ### Historical 0141 ACTUALONEimage37b6 sent14:15Z; payload76681 running; original0140 USB-negative inference INVALID under sandbox
 
