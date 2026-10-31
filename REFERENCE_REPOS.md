@@ -78,6 +78,18 @@ requires actual current cache/TCS ownership, completion and complete restoration
 before Delete. Private evidence is in0151/wifi; no reference scripts or prebuilts
 were executed and no standalone inventory boot was introduced.
 
+The subsequent0151 full submit trace also finds `330c ->35bc ->2fb8` inside
+original public submission itself: slots78/98 can enter the unbounded churn
+before returning. An outer finite polling loop cannot make those calls bounded.
+Original RPMh lock/unlock targets2b70/2b74 are RET stubs. The separate new RSC
+transaction core therefore implements finite completion and reverse saved-vote
+restoration without invoking or patching that submission code. Its72 software
+checks include the real CmdDb adapter's modeled output flowing into two modeled
+requests; they do not establish a physical CPU0/DRV2 lease or authorize MMIO.
+Actual original resource cache/TCS/mode/queue state, RSC geometry and write-map
+identity plus exclusive lifetime and parent retirement gates still precede any
+new physical candidate. No Mi8 fixedTCS1/top-vote/uncertain-cleanup rule was used.
+
 0110 completed the offline input preparation: the OS, both cryptex images and
 kernelcache whole SHA384 match Apple's BuildManifest. A native macOS UDRO
 conversion followed by bounded raw/ignored-run export produces the documented

@@ -34,6 +34,75 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0150 remains last actual nativeLIVE19:10; NEW0151 bounded ARC transaction core integrated with CmdDb in SOFTWARE; physical lease/parent NOT READY
+
+- Source553477a4be0b6d8221d96b6250bc20a4955db4e5 adds the concrete finite RSC
+  transaction core and CmdDb->ARC-index->transaction software integration. This
+  supersedes the planned original-slot78 submission route below. No USB/new
+  phone sample/image/manifest/profile/freeze, native change/CI, original provider
+  API or actual MMIO this turn. All host workers ENDED; allchildren remainSTOP.
+  Phone is ONLY lastactual0150/19:10:55Z, same frozen0150controller/image and
+  consumedbootrecord; UTC already ONESET. Not a new LIVE/FASTBOOT observation.
+- Important new STATIC source finding: original public slot78->330c itself
+  calls35bc->2fb8(churn_all)->3034->4864->47a4 before returning. Slot98->36f0
+  also calls330c. A pending request can wait/recurse without walltime timeout;
+  request0/alreadycompleted may return quickly but does not qualify a new active
+  power request. Outer200ms after-return checks cannot preempt that callee.
+  Original6d24/6d30 lock wrappers branch2b70/2b74, both RET: not a TCS lease.
+  Do NOT activate original-slot78/98+externalpoll as a bounded writer. Neither
+  original firmware patch nor internal-entry bypass/fallback was used.
+  Opcodeproof0151/wifi/original-RPMh-completion-source-0001/submission-internal-
+  churn-discovery-0001.json SHA9eba6cb1116055af11459e98ed7ab733ecc94285ae7a67c0551
+  a14d986a14e47. This is source analysis, not a newly observed physical hang.
+- tools/polaris-wifi-rsc-transaction.h implements actual transaction logic via
+  read/write/clock/order interfaces: finite begin+step, dynamic eligibleTCS from
+  supplied actual-mode mask, own179e0d00/stride672/three fixed ARC addresses;
+  no assumedTCS1. Raise CX->MX->MSS at max(saved,index), restore MSS->MX->CX at
+  the saved indices. Require NEW selected IRQ after baseline0 plus all3 issued/
+  completion bits and idle before ACK; never ACK pending/partial/UNKNOWN. Two
+  complete requests then exact touched RW registers/wait/control restored and
+  readback, IRQenable/type never modified. RO status/response remain raw results,
+  not bitwise restoration. Writes restricted by exact register/value/phase;
+  known unissued refusal has zero writes, post-write faults preserve UNKNOWN/
+  outstanding and never cleanup/retry/reset. Entire core50ms at19.2MHz,256steps,
+  append-only1024events/48B; fullraw49464B retains every partial read/store. An
+  initially frozen counter refuses before writes; a later freeze has finite
+  steps/history bounds. Parent200ms gate is unchanged, never reset/rebased.
+- Current source-bound CmdDb adapter -> live-format software table -> computed
+  7/4/7 -> core now runs as ONE software integration chain. Six modeled public
+  Query calls, two modeled requests/two ACKs, saved vote/RW restoration and
+  original GCD ticket unchanged are exercised. Saved cache values and TCS/IRQ
+  registers here are explicit software fixtures, NOT current physical values or
+  ownership. No physical MMIO adapter/CPU0-exclusive lease/parent registration
+  exists yet; callbacks, mask, cache values or a successful core are not a lease.
+  Do NOT boot this as a standalone inventory or unqualified raw-MMIO fallback.
+- Combinedcheck0151/wifi/bounded-power-components-0003/proof.json SHA
+  f4d28681e02dcb5aa8f5c7d00b80e153bcaa43c086a3d9c85e319baad7adc4a1 PASS:
+  36new RSC fault/lifetime cases +35affected CmdDb cases +1joint pipeline=72
+  ASAN/UBSAN cases, eight checks including AArch64 COFF/MachO component objects
+  allwarnings/maxframe1024. Stale IRQ/RO completion without fresh IRQ, partial
+  command completion, foreign IRQ, no completion, restore timeout/readback,
+  failed/partial I/O, clock frequency/backward/frozen, forged phase/register/
+  rail/ACK and history overflow all stay sticky without cleanup. CmdDb test
+  only gained a fixture include guard; original adapter algorithm unchanged.
+  Component objects are NOT a fullEFI link or physical driver. No old wholeEFI
+  models/nativeCI/opticalcycle rerun; no production preparation code changed.
+- NEXT SERIAL ONLY Wi-Fi: complete the source-bound physical caller: actual
+  bounded current26x24B resourcecache/72B perDRV state and complete original
+  pool/mode/TCS/queue identity, CmdDb/current ARC, own RSC revision/geometry,
+  GCD/actual NS read+write translations, actual exclusive CPU0/DRV2 lifetime and
+  clock/source/guard readbacks. Missing active cache state is NOT zero baseline;
+  original RETlocks/PSCIinstantOFF/map classification are NOT exclusivity. Bind
+  the above core into a NEW separate private phase before finalClock/GCD, with
+  mandatory parent UNKNOWN/native/PON/receipt gates and full post-restore source/
+  provider RAM/readback/retirement. No activation/profile/candidate until that
+  real lifecycle is complete; no original blocking submit or blind raw fallback.
+  Then ownMSS AOP/rail/clock/reset/RMB/auth, MSA/RMTFS/SFPB/SMEM toward real Wi-Fi.
+  may_vote=false/may_start_MSS=false/may_serve_NV_to_remote=false/scan_join_data=false.
+  Fresh0145 roots/NV remain authoritative; no new audit/recovery/fullhash.
+  Next image only through frozen0150 fullnative drain/freshraw WLEXIT05/WLR5 and
+  independent actualFASTBOOT. No physical action pending; audio/camera STOP.
+
 ### CURRENT0150 remains last actual nativeLIVE19:10; NEW0151 original CmdDb API adapter verified OFFLINE; power transaction NOT READY
 
 - Supersedes only the next-source work below, not the phone identity. Source
