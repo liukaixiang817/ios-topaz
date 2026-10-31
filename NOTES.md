@@ -34,6 +34,30 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0138 FINAL READY: actual009c/4fe2/wholecodec/source review PASS; PHONE stillLIVE0137 pendingnormalexit
+
+- Nativeface669/CI41189769833/job124503957945 SUCCESS;009c8a0f... actualkernel.
+  Host0b0e248 committed/pushed. Physical+2newactualkernel models43431 ENDED0;
+  both19checks PASS,80/82raw,12writes/oneobserver; explicitSOFTWARE PMIC/RAM
+  USBsink, noUTCSET/physicalPMIC/USB/guestresetclaim. Physicalpayload36459472B
+  f7d50f840d01f039ccbcef434747e3b7375ab26b3ac5f5dc6df725227df10708,
+  original602B/142rootmap/ca_vbl1/CPU/GPU/WLED flags unchanged.
+- Package+wholecodec29609 ENDED0. Newimage d015131f22ee8e8c0a2e8c7ba58741b304f0f555daa4b092f268f2ef2d926dd0
+  /5959680B; actualunmodifiedEDK2 full28273864B decodeexact, original81FW/
+  SimpleInit/BootShim/boardDTB preserved,404evidencefiles. Newsourceaudit
+  6cb2d1888f38ea912b9ee15d786705c0e2716a20a0e11855082890c7f9980ae4
+  binds47inputs/263unchangedprotected/33pinned, exactface669 changedsource
+  whitelist andallnewprivate0002 states+Melbourneprovenance. Independent
+  secondreview rejectsoldflat/header; fullboothelper defaultofflinefreezePASS.
+- New helper0138/boot-wallpaper-melbourne-runtime-once.py defaultsNOUSB;
+  casephone-wallpaper-melbourne-0001 hasNOboot.json beforefirstactualattempt.
+  COPY/hashfrozennewcontroller /private/tmp/polaris-runtime-0138-frozen-0001
+  forfuture0138 only; do NOT use oncurrent0137. Currentphonecontrol ONLY
+  frozen0137+ORIGINAL0137 manifests. Nextnormalexit0137/fullraw/newreceipt,
+  thennewhelper independentexpectedFASTBOOT andONEimage/ONEexactpayload.
+  NoWiFifirstread/PRShelper addedtothisimage. Noactual0138wallpaper/localtime
+  ornewopticalsuccess yet. Allhostbuild/model/package workers ENDED.
+
 ### 0138 sourceface669/CI41189769833 SUCCESS; actual009c kernel bound; final4fe2 offlinecandidate building; PHONE LIVE0137
 
 - Sourceface6695a03d9bc940436642428331870b47f5d1 committed/pushed, unique
