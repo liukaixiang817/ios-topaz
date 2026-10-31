@@ -34,6 +34,53 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0130 user BLACKSCREEN; actual native OFF completed/error0; ONEshort power wake requested, pending
+
+- CURRENT PHONE LIVE0130 consumedf434/imagea0c7/kernelb3e. Capture1 startupconsole,
+  2/3 Applelogo,4 blackconsole; no actualdesktop/picker success seen. User now
+  reports blackscreen. Freshblack-screen-capture-0001 worker48762 ENDED:
+  kernel-entered, nativeWLED total12/issued2completed2/request1ack1/module0/
+  IRQ0/flags0/error0. This is a completed requestedOFF, not a WLED error.
+- ONE ordinarytouch after thisactualOFF wasACKed; after-wake capture worker50543
+  ENDED stillrequest1ack1/module0. NoactualON/newframe observed. DoNOT infer
+  touch-to-wake works or declare the system dead. Ordinarytouch wake is not
+  established by prior native power-button proof. ONEhuman request for SHORT
+  powerpress (NOTlong/reset) was sent, pending; doNOTrepeat/call it opticalcycle.
+- Media+PBF twojobconfig and32/32apps/GLdesktopL6 proven; realmediaserverdexec,
+  MEDIA identity/constructor/prewarm logs have NOT appeared in capturedprefix.
+  DoNOTclaim compatible shim physically loaded, decode completion, wallpaperfix
+  or mediajob as isolated boot rootcause. No source changes after f434 yet;
+  no newCI/secondboot/replay. Currentcontroller or copiedf434 frozen0130 works.
+- AllUSBworkersENDED. Need actualshort-power result +targetedcapture; ifactual
+  normalwake, unlock/navigateSettings/picker and triggerrealmedia decode. If
+  cannotrecover, retainstrictnativeRAMdrain/fullprefix/WLEXIT05/WLR5 exitonly,
+  independentactualFASTBOOT, then separatelyadmitted newcandidate. No blind
+  retry/rawreset/rootwrite. Evidenceactual-black-screen-and-pending-power-wake-proof.json.
+
+### 0130 exactnative payload ACKed; workers ENDED; actual newkernel startup capture0001
+
+- ONEexactpayload ACK at05:35:44.602170UTC, runtime-native-boot-0001/result.json
+  PASS; worker74807 ENDEDexit0 naturally. Capture0001 worker33988 ENDED:
+  originalmedia+PBF twojob config prepared, stockapps32/32, SpringBoardexec,
+  originaltable/lsd state86/status0. Screenshot is stillstartupconsole; no UI,
+  actualmedia shim/HEVC/picker success claim yet. CurrentPHONE LIVE0130 kernelb3e,
+  sourcehostf434, NOTFASTBOOT. Bootrecord CONSUMED; no replay.
+- Before any further source edits, all372 currentimage evidence files COPY/hash
+  verified to /private/tmp/polaris-runtime-0130-frozen-0001; proofcurrent-live0130-
+  runtime-source-freeze.json. Either currentunchanged f434 controller or this
+  frozen one +ORIGINAL0130 manifests controls currentRAM. Needtargeted capture
+  after startup and realmedia constructor/prewarm/decoder/picker verification.
+
+### 0130 ONEnewRAM image ACKed/CONSUMED; hostf434443; native payload worker74807 pendingEND
+
+- Sourcehost f434443c3c77369904c6fc715126686e608acd5d committed/pushed. ONE
+  newimagea0c7c2d953695f7f08abddfab5d47b3b8284f2e832aa2ea0ca0ab62387f01d4a
+  ACK05:34:45.898700UTC;0130phone-media-compat-0001/boot.json CONSUMED.
+  Actual waiting-payload verified; ONEexactnativepayload worker74807 running,
+  mustEND beforeanynewUSB. PHONE is nownew0130 session, NOTFASTBOOT/old0129.
+  Newactualmedia/HEVC/picker/optical result NOTyetknown. Currentf434controller
+  +original0130image/driver manifests bound; nooldcontroller/boot/payload replay.
+
 ### 0130 NEW media candidate READY; actualPHONE FASTBOOT; old0129 CLOSED; ONEnewboot NEXT
 
 - CI41172159732/job124452240376/native66f334f SUCCESS; kernelb3e2cbf1bbefa868551eb98cb5561d40d371ae5d3d376460ea4e6dfab3ca3fcb
