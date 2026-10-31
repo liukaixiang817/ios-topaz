@@ -23,6 +23,27 @@ EXTRA_PRIVATE_HEADERS={'iokit/Kernel/arm/polaris_uefi_cpu.h','bsd/dev/polaris_ue
 # outside DriverKit's interface include graph. Bind their reviewed bytes; adding them
 # must not weaken the original IDL/header checks or admit arbitrary headers.
 EXTRA_PRIVATE_HEADER_SHA={
+    # Exact private battery/calendar and Wi-Fi implementation headers.
+    'bsd/dev/polaris-glink-inventory.h':
+    '707c9515d7b51af9c8690eebcd8f07f2e5d80905f329eebda4e975946818fa15',
+    'bsd/dev/polaris-smem-inventory.h':
+    '162530742a13c965d0e16091ae5fa8386ea353b41e06969350a95dc22cb96f94',
+    'bsd/dev/polaris-wifi-cap.h':
+    'b477bc967cdb422f2ffb059ff9e0240b84ac74b7abbc3e79769adde6dc118b56',
+    'bsd/dev/polaris-wifi-glink.h':
+    '5855169795bfd51db520126cd70404f761bc183d612e317c3f526e950e116cfe',
+    'bsd/dev/polaris-wifi-native-policy.h':
+    '5f0af976649a8bfb88e5d1c01d59e149f943a34110e77c959f750c9f6a08c812',
+    'bsd/dev/polaris-wifi-smem-probe.h':
+    '7d06018efcaf61a48773608232372d7ef7c7714765da4dbc9e033fed8c370495',
+    'bsd/dev/polaris-wlfw.h':
+    '671333fc2ebbe3ba25f959709aec07dcf13d82551abdfa85fdeea89c0b6754f2',
+    'bsd/dev/polaris_clock.h':
+    '8eaa9e713b507c434196df3496234bf2e5820fdfc3b1a34edf97e66c64cdfbb5',
+    'bsd/dev/polaris_clock_wire.h':
+    'f82b864530564ec92d45390590dc34c8c15c53cd3afc833021117f5c29f95e1d',
+    'iokit/Kernel/arm/polaris-battery-shared.h':
+    'e11a3ff135c92a13c2b8f2dab908c8a70c25e9f595228ac49efd49f960f88ce0',
     'bsd/dev/polaris_ram_discard.h':
     '9065973132524411f2c4046c0ff4d2952a7d1441949c4ed4dcdf4732a9987fa9',
     # RAM-only root write preflight, included only by sweet_ufs.c.

@@ -13,6 +13,9 @@
 #if defined(PGPU_USERLAND_20F66)
 #include <CoreFoundation/CoreFoundation.h>
 #include <stdlib.h>
+#if defined(POLARIS_POSTER_ASSETS)
+#include "polaris-poster-assets.h"
+#endif
 
 static int media_environment(CFDictionaryRef jobs)
 {
@@ -228,6 +231,21 @@ int main(int argc,char **argv)
         if(console>STDERR_FILENO)close(console);
     }
     setvbuf(stdout,NULL,_IONBF,0);
+#if defined(POLARIS_POSTER_ASSETS)
+    struct polaris_poster_assets_report assets;
+    int asset_result=polaris_poster_assets_install(&assets);
+    printf("POLARIS POSTER ASSETS: result=%d stage=%u error=%u validated=%u png=%u prepared=%u activated=%u restored=%u cleanup=%u must_hold=%u embedded=%llu bundle=%llu; %s\n",
+        asset_result,assets.stage,assets.error,assets.validated,assets.created_png,
+        assets.prepared_caml,assets.activated_caml,assets.restored_caml,
+        assets.cleanup_failures,assets.must_hold,(unsigned long long)assets.embedded_bytes,
+        (unsigned long long)assets.bundle_bytes,asset_result==PPA_OK?"exact original assets installed in RAM COW":"assets NOT installed");
+    if(assets.must_hold || asset_result==PPA_ROLLBACK_FAILED) {
+        fprintf(stderr,"POLARIS POSTER ASSETS: incomplete rollback; PID1 HOLD, Apple launchd prohibited\n");
+        for(;;)sleep(1);
+    }
+    /* Refusal/preparation failure or a verified complete rollback retains
+     * original CAMLs. Continue the original UI, without a blind retry. */
+#endif
     (void)poster_console("");
     (void)publish_apps("");
 #endif

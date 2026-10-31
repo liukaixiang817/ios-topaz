@@ -72,6 +72,8 @@ struct polaris_usb_control {
     int (*wled_exit_begin)(void *,int,uint64_t,uint32_t,uint32_t,const uint8_t **,uint64_t *);
     int (*wled_exit_finish)(void *,const uint8_t **,uint64_t *);
     void (*wled_exit_abort)(void *,unsigned); /* Known delivery failure; never a HW retry. */
+    /* Optional fixed calendar metadata only. NULL keeps this scope disabled. */
+    int (*host_utc)(void *,const uint8_t *,uint64_t,uint8_t [60],uint64_t *);
 };
 /* Command parsing is shared by the native host test and the real EFI driver. */
 int polaris_usb_command(struct polaris_usb_diag *,const uint8_t *,uint64_t);

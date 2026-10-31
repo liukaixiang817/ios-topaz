@@ -1,0 +1,352 @@
+--- /dev/null
++++ b/iokit/Kernel/arm/polaris-battery-shared.h
+@@ -0,0 +1,82 @@
++/* Polaris PMI8998 telemetry, firmware writes / XNU reads only.
++ * This is not a charger-control ABI. No voltage curve, nominal capacity,
++ * current-sign guess from USB presence, or synthetic fallback is permitted.
++ * Producer publishes odd sequence + clean, payload + clean, then even + clean.
++ * Consumer invalidates, copies, then invalidates/rechecks sequence. Both use
++ * the same CNTVCT/CNTFRQ domain; a domain mismatch must keep data invalid. */
++#ifndef POLARIS_BATTERY_SHARED_H
++#define POLARIS_BATTERY_SHARED_H
++#include <stdint.h>
++#include <stdbool.h>
++#define PBAT_MAGIC UINT64_C(0x50424d4938393938)
++#define PBAT_VERSION 1u
++#define PBAT_SOURCE_PMI8998_FG3_SMB2 1u
++#define PBAT_MAX_AGE_US UINT64_C(15000000)
++/* UI telemetry quality ceiling, NOT a PMIC/charger/thermal hardware limit.
++ * The actual transaction budget must be explicitly admitted by the parent;
++ * there is no implicit firmware default. Timestamp the oldest and newest read. */
++#define PBAT_UI_MAX_SPAN_US UINT64_C(1000000)
++enum { PBAT_SOC=1u,PBAT_VOLTAGE=2u,PBAT_CURRENT=4u,PBAT_TEMP=8u,
++       PBAT_PRESENT=16u,PBAT_EXTERNAL=32u,PBAT_CHARGING=64u,PBAT_FULL=128u,
++       PBAT_CAPABLE=256u,PBAT_ALL=511u };
++enum { PBAT_E_ARGUMENT=1,PBAT_E_IDENTITY,PBAT_E_MAPPING,PBAT_E_CLOCK,
++       PBAT_E_TIMEOUT,PBAT_E_RESPONSE,PBAT_E_UNSTABLE,PBAT_E_NOT_READY,
++       PBAT_E_ABSENT,PBAT_E_RANGE,PBAT_E_STALE,PBAT_E_WIRE };
++struct polaris_battery_sample {
++    uint64_t magic,sequence,began_us,sampled_us,counter_hz,cookie;
++    uint32_t version,bytes,source,valid,error,reads,span_limit_us;
++    int32_t soc_percent,voltage_uv,current_ua,temperature_centi_c;
++    uint32_t present,external,charging,full,capable;
++    uint8_t raw[64]; /* exact acquisition bytes, including errors/partial data */
++    uint8_t reserved[80];
++} __attribute__((aligned(128)));
++#if defined(__cplusplus)
++static_assert(sizeof(struct polaris_battery_sample)==256,"battery producer span");
++#else
++_Static_assert(sizeof(struct polaris_battery_sample)==256,"battery producer span");
++#endif
++/* Explicit native activation is immutable SecureDT metadata, not another
++ * boot argument. Properties are exact u32 LE=1 and compatible is a bounded,
++ * completely NUL-terminated string list containing our actual board. */
++static inline bool pbat_runtime_authorized(const void *compatible,unsigned compatible_bytes,
++    const void *version,unsigned version_bytes,const void *enabled,unsigned enabled_bytes,
++    uint32_t uefi)
++{
++    if(uefi!=1||!compatible||!compatible_bytes||compatible_bytes>256||
++       !version||version_bytes!=4||!enabled||enabled_bytes!=4)return false;
++    const uint8_t *v=(const uint8_t *)version,*e=(const uint8_t *)enabled;
++    if(v[0]!=1||v[1]||v[2]||v[3]||e[0]!=1||e[1]||e[2]||e[3])return false;
++    const uint8_t *p=(const uint8_t *)compatible;
++    static const char board[]="xiaomi,polaris";bool matched=false;
++    for(unsigned i=0;i<compatible_bytes;) {
++        unsigned n=0;while(i+n<compatible_bytes&&p[i+n])n++;
++        if(!n||i+n==compatible_bytes)return false;
++        if(n==sizeof(board)-1) {
++            bool same=true;
++            for(unsigned j=0;j<n;j++)if(p[i+j]!=(uint8_t)board[j])same=false;
++            matched|=same;
++        }
++        i+=n+1;
++    }
++    return matched;
++}
++static inline bool pbat_sample_valid(const struct polaris_battery_sample *s,
++    uint64_t now_us,uint64_t counter_hz)
++{
++    if(!s||s->magic!=PBAT_MAGIC||s->version!=PBAT_VERSION||s->bytes!=sizeof(*s)||
++       s->source!=PBAT_SOURCE_PMI8998_FG3_SMB2||!s->cookie||!s->sequence||
++       (s->sequence&1)||s->valid!=PBAT_ALL||s->error||!s->began_us||
++       s->sampled_us<s->began_us||!s->span_limit_us||
++       s->span_limit_us>PBAT_UI_MAX_SPAN_US||s->sampled_us-s->began_us>s->span_limit_us||
++       !counter_hz||s->counter_hz!=counter_hz||now_us<s->sampled_us||
++       now_us-s->began_us>PBAT_MAX_AGE_US||s->soc_percent<0||s->soc_percent>100||
++       s->voltage_uv<2000000||s->voltage_uv>5000000||
++       s->current_ua< -16000000||s->current_ua>16000000||
++       s->temperature_centi_c< -4000||s->temperature_centi_c>10000||
++       s->present!=1||s->external>1||s->charging>1||s->full>1||s->capable>1||
++       (s->charging&&(!s->external||!s->capable||s->full))||
++       (s->full&&(!s->external||!s->capable)))return false;
++    for(unsigned i=0;i<sizeof(s->reserved);i++)if(s->reserved[i])return false;
++    return true;
++}
++#endif
+--- /dev/null
++++ b/iokit/Kernel/arm/PolarisBattery.cpp
+@@ -0,0 +1,226 @@
++/* Built-in Polaris IOPMPowerSource. Real firmware-owned PMI8998 telemetry only.
++ * No PMIC MMIO, boot service calls, charger settings or guessed capacity.
++ * The EFI builder must bind the exact BSS symbol, restrict firmware writes to
++ * its 256 bytes and reserve the range like the existing WLED/input channels.
++ */
++#if defined(ARM64_BOARD_CONFIG_SWEET)
++#include <device/device_types.h>
++#include <IOKit/IOLib.h>
++#include <IOKit/IOWorkLoop.h>
++#include <IOKit/IOTimerEventSource.h>
++#include <IOKit/pwr_mgt/IOPMPowerSource.h>
++#include <libkern/c++/OSCollectionIterator.h>
++#include <pexpert/pexpert.h>
++#include <pexpert/device_tree.h>
++#include "polaris-battery-shared.h"
++extern "C" {
++struct polaris_battery_sample polaris_uefi_battery;
++bool polaris_ram_overlay_allowed(void);
++bool polaris_gpu_overlay_ready(void);
++int polaris_uefi_shutdown_pending(void);
++}
++
++class PolarisBattery : public IOPMPowerSource {
++    OSDeclareDefaultStructors(PolarisBattery);
++public:
++    bool init(OSDictionary *dictionary=NULL) APPLE_KEXT_OVERRIDE;
++    bool start(IOService *) APPLE_KEXT_OVERRIDE;
++    void stop(IOService *) APPLE_KEXT_OVERRIDE;
++    void free(void) APPLE_KEXT_OVERRIDE;
++private:
++    IOWorkLoop *fLoop;
++    IOTimerEventSource *fTimer;
++    bool fAdded,fRunning,fMeasured;
++    uint64_t fCookie,fSequence,fSampleTime;
++    unsigned fError;
++    void number(const char *,uint64_t,unsigned bits=32);
++    void flag(const char *,bool);
++    void erase(const char *);
++    void invalidate(unsigned,uint64_t);
++    void poll(void);
++    static void fired(OSObject *,IOTimerEventSource *);
++    static IOReturn halt(OSObject *,void *,void *,void *,void *);
++};
++OSDefineMetaClassAndStructors(PolarisBattery,IOPMPowerSource);
++
++static bool pbat_native_authorized(void)
++{
++    DTEntry root,node;const void *compatible=NULL,*version=NULL,*enabled=NULL;
++    unsigned compatible_bytes=0,version_bytes=0,enabled_bytes=0;uint32_t uefi=0;
++    PE_parse_boot_argn("polarisuefi",&uefi,sizeof(uefi));
++    if(SecureDTLookupEntry(NULL,"/",&root)!=kSuccess||
++       SecureDTGetProperty(root,"compatible",&compatible,&compatible_bytes)!=kSuccess||
++       SecureDTLookupEntry(NULL,"/polaris-runtime-services",&node)!=kSuccess||
++       SecureDTGetProperty(node,"version",&version,&version_bytes)!=kSuccess||
++       SecureDTGetProperty(node,"battery-readonly",&enabled,&enabled_bytes)!=kSuccess)return false;
++    return pbat_runtime_authorized(compatible,compatible_bytes,version,version_bytes,
++        enabled,enabled_bytes,uefi);
++}
++static uint64_t pbat_native_time(uint64_t *frequency)
++{
++    uint64_t ticks,hz;
++    __asm__ volatile("mrs %0,cntvct_el0":"=r"(ticks));
++    __asm__ volatile("mrs %0,cntfrq_el0":"=r"(hz));
++    *frequency=hz;
++    return hz?(ticks/hz)*1000000+(ticks%hz)*1000000/hz:0;
++}
++static void pbat_native_invalidate(void)
++{
++    uint64_t ctr;__asm__ volatile("mrs %0,ctr_el0":"=r"(ctr));
++    uint64_t line=UINT64_C(4)<<((ctr>>16)&15);
++    uintptr_t base=(uintptr_t)&polaris_uefi_battery;
++    for(uintptr_t at=base;at<base+sizeof(polaris_uefi_battery);at+=line)
++        __asm__ volatile("dc ivac,%0"::"r"(at):"memory");
++    __asm__ volatile("dsb sy":::"memory");
++}
++static bool pbat_native_copy(struct polaris_battery_sample *out)
++{
++    pbat_native_invalidate();
++    uint64_t first=__atomic_load_n(&polaris_uefi_battery.sequence,__ATOMIC_ACQUIRE);
++    if(!first||(first&1))return false;
++    const volatile uint8_t *src=(const volatile uint8_t *)&polaris_uefi_battery;
++    uint8_t *dst=(uint8_t *)out;
++    for(unsigned i=0;i<sizeof(*out);i++)dst[i]=src[i];
++    pbat_native_invalidate();
++    uint64_t after=__atomic_load_n(&polaris_uefi_battery.sequence,__ATOMIC_ACQUIRE);
++    return first==after&&out->sequence==first;
++}
++bool PolarisBattery::init(OSDictionary *dictionary)
++{
++    if(!IOPMPowerSource::init())return false;
++    fLoop=NULL;fTimer=NULL;fAdded=fRunning=fMeasured=false;
++    fCookie=fSequence=fSampleTime=0;fError=0;
++    if(dictionary) {
++        OSCollectionIterator *it=OSCollectionIterator::withCollection(dictionary);
++        if(!it)return false;
++        OSObject *object;bool ok=true;
++        while((object=it->getNextObject())) {
++            const OSSymbol *key=OSDynamicCast(OSSymbol,object);
++            if(!key||!setProperty(key,dictionary->getObject(key))){ok=false;break;}
++        }
++        it->release();if(!ok)return false;
++    }
++    return true;
++}
++void PolarisBattery::number(const char *key,uint64_t value,unsigned bits)
++{
++    const OSSymbol *symbol=OSSymbol::withCString(key);
++    OSNumber *n=OSNumber::withNumber(value,bits);
++    if(symbol&&n)setPSProperty(symbol,n);
++    OSSafeReleaseNULL(n);OSSafeReleaseNULL(symbol);
++}
++void PolarisBattery::flag(const char *key,bool value)
++{
++    const OSSymbol *symbol=OSSymbol::withCString(key);
++    if(symbol)setPSProperty(symbol,value?kOSBooleanTrue:kOSBooleanFalse);
++    OSSafeReleaseNULL(symbol);
++}
++void PolarisBattery::erase(const char *key)
++{
++    if(properties&&properties->getObject(key)) {
++        properties->removeObject(key);removeProperty(key);settingsChangedSinceUpdate=true;
++    }
++}
++void PolarisBattery::invalidate(unsigned error,uint64_t age)
++{
++    /* Remove old measurements rather than leaving a stale charging icon or
++     * turning an unknown battery into a fictitious absent/empty battery. */
++    const char *keys[]={"CurrentCapacity","MaxCapacity","Voltage","Amperage",
++        "InstantAmperage","Temperature","ExternalConnected","ExternalChargeCapable",
++        "BatteryInstalled","IsCharging","FullyCharged","AppleRawExternalConnected",
++        "AtWarnLevel","AtCriticalLevel","TimeRemaining","LegacyBatteryInfo"};
++    for(unsigned i=0;i<sizeof(keys)/sizeof(keys[0]);i++)erase(keys[i]);
++    const OSSymbol *condition=OSSymbol::withCString("TelemetryUnavailable");
++    if(condition)setErrorCondition(const_cast<OSSymbol *>(condition));
++    OSSafeReleaseNULL(condition);
++    flag("PolarisBatteryDataValid",false);
++    number("PolarisBatteryError",error);number("PolarisBatteryAgeUS",age,64);
++    if(error!=fError)IOLog("POLARIS BATTERY: unavailable error=%u; no synthetic fallback\n",error);
++    fError=error;fMeasured=false;updateStatus();
++}
++void PolarisBattery::poll(void)
++{
++    /* IOResources may start before the root overlay is installed. Keep the
++     * timer/service alive and publish unknown until actual admission exists.
++     * Native never reads PMIC, and must not even consume the firmware cache
++     * before root/graphics ownership is ready or during native shutdown. */
++    if(!polaris_ram_overlay_allowed()||!polaris_gpu_overlay_ready()||
++       polaris_uefi_shutdown_pending()) {
++        invalidate(PBAT_E_NOT_READY,UINT64_MAX);return;
++    }
++    struct polaris_battery_sample s={};uint64_t hz=0,now=pbat_native_time(&hz);
++    if(!pbat_native_copy(&s)) {invalidate(PBAT_E_WIRE,UINT64_MAX);return;}
++    uint64_t age=now>=s.began_us?now-s.began_us:UINT64_MAX;
++    if(!pbat_sample_valid(&s,now,hz)) {
++        invalidate(s.error?s.error:age>PBAT_MAX_AGE_US?PBAT_E_STALE:PBAT_E_WIRE,age);return;
++    }
++    if((fCookie&&s.cookie!=fCookie)||(fSequence&&s.sequence<fSequence)||
++       (fSampleTime&&s.sampled_us<fSampleTime)) {
++        invalidate(PBAT_E_WIRE,age);return;
++    }
++    fCookie=s.cookie;
++    if(s.sequence==fSequence&&fMeasured) {
++        number("PolarisBatteryAgeUS",age,64);updateStatus();return;
++    }
++    fSequence=s.sequence;fSampleTime=s.sampled_us;
++    erase("ErrorCondition");
++    setBatteryInstalled(true);
++    /* Percentage units, as in pinned reference IOPMPowerSource. No invented
++     * mAh, cycle count, remaining-time model or voltage-derived SOC. */
++    setCurrentCapacity((unsigned)s.soc_percent);setMaxCapacity(100);
++    setVoltage((unsigned)s.voltage_uv/1000);setAmperage(s.current_ua/1000);
++    setExternalConnected(s.external);setExternalChargeCapable(s.capable);
++    setIsCharging(s.charging);setTimeRemaining(-1);
++    flag("FullyCharged",s.full);flag("AppleRawExternalConnected",s.external);
++    number("InstantAmperage",(uint32_t)(s.current_ua/1000));
++    number("Temperature",(uint32_t)s.temperature_centi_c);
++    flag("PolarisBatteryDataValid",true);flag("PolarisBatterySOCEstimated",false);
++    number("PolarisBatterySource",s.source);number("PolarisBatteryError",0);
++    number("PolarisBatterySequence",s.sequence,64);number("PolarisBatteryAgeUS",age,64);
++    number("PolarisBatteryBeganUS",s.began_us,64);
++    number("PolarisBatterySpanUS",s.sampled_us-s.began_us,64);
++    number("PolarisBatterySpanLimitUS",s.span_limit_us);
++    number("PolarisBatterySampleUS",s.sampled_us,64);number("PolarisBatteryCounterHz",hz,64);
++    number("PolarisBatteryVoltageUV",s.voltage_uv);
++    number("PolarisBatteryCurrentUA",(uint32_t)s.current_ua);
++    OSData *raw=OSData::withBytes(s.raw,sizeof(s.raw));
++    const OSSymbol *key=OSSymbol::withCString("PolarisBatteryRaw");
++    if(raw&&key)setPSProperty(key,raw);
++    OSSafeReleaseNULL(raw);OSSafeReleaseNULL(key);
++    if(!fMeasured)IOLog("POLARIS BATTERY: actual FG3/SMB2 sample %d%% %dmV charging=%u\n",
++        s.soc_percent,s.voltage_uv/1000,s.charging);
++    fMeasured=true;fError=0;updateStatus();
++}
++void PolarisBattery::fired(OSObject *owner,IOTimerEventSource *sender)
++{
++    PolarisBattery *self=OSDynamicCast(PolarisBattery,owner);
++    if(self&&self->fRunning){self->poll();sender->setTimeoutMS(1000);}
++}
++bool PolarisBattery::start(IOService *provider)
++{
++    if(!pbat_native_authorized()) {
++        IOLog("POLARIS BATTERY: not enabled by exact Polaris runtime DT/board; no synthetic fallback\n");
++        return false;
++    }
++    if(!IOPMPowerSource::start(provider))return false;
++    fLoop=IOWorkLoop::workLoop();fTimer=IOTimerEventSource::timerEventSource(this,&PolarisBattery::fired);
++    if(!fLoop||!fTimer||fLoop->addEventSource(fTimer)!=kIOReturnSuccess)return false;
++    fAdded=fRunning=true;poll();registerService();fTimer->setTimeoutMS(1000);return true;
++}
++IOReturn PolarisBattery::halt(OSObject *owner,void *,void *,void *,void *)
++{
++    PolarisBattery *self=OSDynamicCast(PolarisBattery,owner);
++    if(!self)return kIOReturnBadArgument;
++    self->fRunning=false;self->fTimer->cancelTimeout();self->fTimer->disable();return kIOReturnSuccess;
++}
++void PolarisBattery::stop(IOService *provider)
++{
++    if(fLoop&&fAdded){(void)fLoop->runAction(&PolarisBattery::halt,this);
++        fLoop->removeEventSource(fTimer);fAdded=false;}
++    IOPMPowerSource::stop(provider);
++}
++void PolarisBattery::free(void)
++{
++    OSSafeReleaseNULL(fTimer);OSSafeReleaseNULL(fLoop);IOPMPowerSource::free();
++}
++#endif
+--- a/iokit/Kernel/arm/SweetBattery.cpp
++++ b/iokit/Kernel/arm/SweetBattery.cpp
+@@ -259,6 +259,11 @@
+ bool
+ SweetBattery::start(IOService *provider)
+ {
++	/* Polaris owns a different PMI8998 gauge. Never publish Sweet defaults or
++	 * call the PM6150 observer path on this board, even if telemetry is absent. */
++	uint32_t polaris = 0;
++	PE_parse_boot_argn("polarisuefi", &polaris, sizeof(polaris));
++	if (polaris == 1) { return false; }
+ 	if (!IOPMPowerSource::start(provider)) {
+ 		return false;
+ 	}
+--- a/iokit/conf/files.arm64
++++ b/iokit/conf/files.arm64
+@@ -16,6 +16,7 @@
+ iokit/Kernel/arm/SweetSurface.cpp                                optional iokitcpp
+ iokit/Kernel/arm/SweetFramebuffer.cpp                            optional iokitcpp
+ iokit/Kernel/arm/SweetBattery.cpp                                optional iokitcpp
++iokit/Kernel/arm/PolarisBattery.cpp                              optional iokitcpp
+ iokit/Kernel/arm/hid/SweetHID.cpp                                optional iokitcpp
+ iokit/Kernel/arm/hid/IOHIDEvent.cpp                              optional iokitcpp
+ iokit/Kernel/arm/hid/IOHIDEventServiceQueue.cpp                  optional iokitcpp
+--- a/iokit/KernelConfigTables.cpp
++++ b/iokit/KernelConfigTables.cpp
+@@ -78,9 +78,9 @@
+     "     'IOMatchCategory' = SweetHIDTouch;"
+     "   },"
+     "   {"
+-    "     'IOClass'         = SweetBattery;"
++    "     'IOClass'         = PolarisBattery;"
+     "     'IOProviderClass' = IOResources;"
+-    "     'IOMatchCategory' = SweetBattery;"
++    "     'IOMatchCategory' = PolarisBattery;"
+     "   },"
+ #endif
+     "   {"

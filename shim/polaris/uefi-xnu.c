@@ -102,6 +102,35 @@ static void invalidate(uint64_t address,uint64_t bytes)
     uint64_t line=cache_line();for(uint64_t p=address&~(line-1);p<address+bytes;p+=line)__asm__ volatile("dc ivac,%0"::"r"(p):"memory");
     __asm__ volatile("dsb sy":::"memory");
 }
+#if EFI_XNU_HOST_UTC_AVAILABLE
+#include "../../tools/polaris-clock-uefi.h"
+static struct pc_fw host_utc_context;
+static uint64_t host_utc_counter(void *context)
+{ (void)context;uint64_t n;__asm__ volatile("isb; mrs %0,cntvct_el0":"=r"(n)::"memory");return n; }
+static uint64_t host_utc_frequency(void *context)
+{ (void)context;uint64_t n;__asm__ volatile("mrs %0,cntfrq_el0":"=r"(n));return n; }
+static void host_utc_clean(void *context,uintptr_t address,size_t bytes)
+{ (void)context;clean(address,bytes); }
+static void host_utc_invalidate(void *context,uintptr_t address,size_t bytes)
+{ (void)context;invalidate(address,bytes); }
+static int host_utc_prepare(void)
+{
+    const struct pc_fw_io io={host_utc_counter,host_utc_frequency,host_utc_clean,host_utc_invalidate,0};
+    uint64_t address=POLARIS_RAM_BASE+EFI_XNU_HOST_UTC_OFFSET;
+    if(cache_line()>128 || !identity_range(address,256))return 0;
+    return pc_fw_prepare(&host_utc_context,(void*)(uintptr_t)address,
+        host_utc_counter(0)|UINT64_C(1),&io,true);
+}
+static int host_utc_command(void *context,const uint8_t *command,uint64_t bytes,uint8_t out[60],uint64_t *count)
+{
+    (void)context;*count=0;
+    if(load_state!=4 || cpu_status)return 0;
+    invalidate((uintptr_t)&polaris_efi_ap_state,sizeof(polaris_efi_ap_state));
+    if(polaris_efi_ap_state.stage!=1)return 0;
+    size_t result=0;int ok=pc_fw_command(&host_utc_context,(const char*)command,(size_t)bytes,out,&result);
+    *count=result;return ok;
+}
+#endif
 #if EFI_XNU_BUTTONS_AVAILABLE
 #include "uefi-buttons.h"
 #endif
@@ -128,6 +157,9 @@ static int cache_reset_protocol(void);
 static int shutdown_reset_ready(void *,unsigned);
 static int shutdown_status(void *,const uint8_t **,uint64_t *);
 #include "uefi-wled-native.h"
+#endif
+#if EFI_XNU_BATTERY_AVAILABLE
+#include "uefi-battery-native.h"
 #endif
 static int64_t psci(uint64_t function,uint64_t a,uint64_t b,uint64_t c)
 {
@@ -225,6 +257,12 @@ static int prepare_boot(void *context)
         bytes_copy((void*)(uintptr_t)dest,payload+s->file_off,s->file_size);
         bytes_zero((void*)(uintptr_t)(dest+s->file_size),s->vmsize-s->file_size);clean(dest,s->vmsize);
     }
+#if EFI_XNU_HOST_UTC_AVAILABLE
+    /* Exact file-backed native DATA symbol; after all copy/zero, before CPU_ON.
+     * No native clock is changed until a later explicitly requested host SET. */
+    if(!host_utc_prepare()){report("HOST_UTC_PREPARE_REFUSED=",1);return 0;}
+    report("HOST_UTC_RAM_MAILBOX_PREPARED=",1);
+#endif
     bytes_copy((void*)(uintptr_t)plan.adt_pa,payload+p->adt_off,p->adt_size);
     bytes_zero((void*)(uintptr_t)plan.args_pa,POLARIS_PAGE);struct args *a=(void*)(uintptr_t)plan.args_pa;
     a->revision=2;a->version=2;a->va=p->virt_base;a->pa=p->phys_base;a->size=p->mem_size;a->top=plan.top;
@@ -691,6 +729,9 @@ static void idle_guard(void *context)
 #if defined(EFI_XNU_WLED_NATIVE_RUNTIME)
     wln_poll();
 #endif
+#if EFI_XNU_BATTERY_AVAILABLE
+    pb_runtime_poll();
+#endif
 #if defined(EFI_XNU_DURABLE_GUARD)
     if(load_state>=4)return;
 #endif
@@ -744,6 +785,9 @@ static struct polaris_usb_control controls={.begin=begin,.write=write_payload,.f
 #if defined(EFI_XNU_WLED_NATIVE_RUNTIME)
     .wled_runtime_page=wln_capture_page,.reset_receipt=wln_reset_receipt,
     .wled_exit_begin=wln_exit_begin,.wled_exit_finish=wln_exit_finish,.wled_exit_abort=wln_exit_abort,
+#endif
+#if EFI_XNU_HOST_UTC_AVAILABLE
+    .host_utc=host_utc_command,
 #endif
     .autoboot=disk_autoboot,.idle_guard=idle_guard,.host_activity=host_activity};
 #if defined(POLARIS_EFI_TEST_QEMU)
@@ -1091,6 +1135,9 @@ static void test_monitor(void)
 #endif
 #if defined(EFI_XNU_WLED_NATIVE_RUNTIME_TEST)
         wln_poll();
+#if EFI_XNU_BATTERY_AVAILABLE
+        pb_runtime_poll();
+#endif
         if(!wln_final_reported&&shutdown_reset_ready(0,2)&&wln_closing_mode==2&&
            !wln_runtime.pending&&wln_power.actual_on
 #if defined(EFI_XNU_WLED_NATIVE_LIFECYCLE) && EFI_XNU_WLED_NATIVE_LIFECYCLE==4

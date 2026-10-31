@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """One manifest-bound native WLED RO/RAMCOW RAM session; no generic reset/flash."""
-import argparse,datetime,hashlib,json,sys,time
+import argparse,datetime,hashlib,importlib.util,json,sys,time
 from pathlib import Path
 from polaris_uefi_usb_transport import LibusbTransport
 from polaris_wled_runtime_control import WledRuntimeProtocol
@@ -24,7 +24,8 @@ def binding(boot,image,driver):
 
 def main():
     ap=argparse.ArgumentParser(description=__doc__)
-    ap.add_argument('action',choices=('state','boot','capture','tap','swipe','shutdown-fastboot','exit-drained','recover-exit','recover-prestart'))
+    ap.add_argument('action',choices=('state','boot','capture','tap','swipe','shutdown-fastboot','exit-drained','recover-exit','recover-prestart','utc-sync','utc-status'))
+    ap.add_argument('--host-utc-sync',action='store_true',help='explicit one-shot host UTC calendar calibration; no RTC/monotonic writes')
     for n in ('libusb','boot-record','image-manifest','driver-manifest','output'):ap.add_argument('--'+n,type=Path,required=True)
     ap.add_argument('--payload',type=Path);ap.add_argument('--wait-seconds',type=int,default=8)
     ap.add_argument('--shutdown-seconds',type=int,default=180)
@@ -41,6 +42,16 @@ def main():
         p=(root/name).resolve()
         if root not in p.parents or sha(p)!=digest:raise ValueError('bound evidence/source changed '+name)
     if (a.action=='boot')!=(a.payload is not None):raise ValueError('only boot accepts the exact payload')
+    if (a.action=='utc-sync')!=a.host_utc_sync:raise ValueError('only utc-sync requires the explicit --host-utc-sync intent')
+    clock=None
+    if a.action in ('utc-sync','utc-status'):
+        mailbox=d.get('host_UTC_mailbox')
+        if d.get('host_UTC_sync') is not True or not isinstance(mailbox,dict) or mailbox.get('BSS') is not False or mailbox.get('bytes')!=256:
+            raise ValueError('this frozen driver has no admitted host UTC metadata bridge')
+        for name in ('tools/polaris-clock-host.py','tools/polaris-clock-sync.h','tools/polaris-clock-uefi.h','tools/polaris-clock-native.h'):
+            if d.get('inputs',{}).get(name)!=sha(root/name):raise ValueError('frozen clock implementation binding changed')
+        spec=importlib.util.spec_from_file_location('polaris_clock_host',root/'tools/polaris-clock-host.py')
+        clock=importlib.util.module_from_spec(spec);sys.modules[spec.name]=clock;spec.loader.exec_module(clock)
     if a.payload and (sha(a.payload)!=d['payload_sha256'] or a.payload.stat().st_size!=d['payload_bytes']):raise ValueError('exact payload required')
     out=a.output.resolve();out.mkdir(parents=True,exist_ok=False)
     record=dict(action=a.action,started_utc=now(),sent_utc=b['sent_utc'],image_sha256=i['sha256'],
@@ -58,6 +69,16 @@ def main():
             time.sleep(.2)
         p=WledRuntimeProtocol(transport);record['product']=p.product();record['state_before']=p.state();save()
         if a.action=='state':pass
+        elif a.action in ('utc-sync','utc-status'):
+            if record['state_before']!='kernel-entered':raise ValueError('calendar metadata requires the actual native running phase')
+            if a.action=='utc-status':
+                record['host_UTC_status']=clock.asdict(clock.status(p))
+            else:
+                record['host_UTC_SET_may_be_attempted']=True;save()
+                try:record['host_UTC_sync']=clock.synchronize(p)
+                except clock.DeliveryUnknown as error:
+                    record['host_UTC_delivery_unknown']=dict(cookie=error.cookie,sequence=error.sequence,recovery='utc-status only; never resend SET')
+                    save();raise
         elif a.action=='boot':
             record['kernel_command_attempted']=True;save();p.stage_payload(a.payload.read_bytes(),d);p.boot();record['kernel_command_ACK']=True
         elif a.action=='recover-prestart':
@@ -115,7 +136,8 @@ def main():
             if defer_context:transport.close(process_exit_after_disconnect=True)
             else:transport.close()
         save()
-    print('Native WLED action completed; actual FASTBOOT requires a separate readonly query')
+    if a.action in ('utc-sync','utc-status'):print('Calendar metadata action completed; no reset requested')
+    else:print('Native WLED action completed; actual FASTBOOT requires a separate readonly query')
 
 
 if __name__=='__main__':main()

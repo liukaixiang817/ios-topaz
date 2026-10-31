@@ -25,8 +25,27 @@ def sha(path):
 def build(args):
     abi = None
     preserved = {}
+    poster = None
     if args.rebuild_init and args.preserve_common_from is None:
         raise ValueError('rebuild-init requires the verified current common binaries')
+    if args.poster_assets_header is not None:
+        if args.build != '20F66' or not args.rebuild_init:
+            raise ValueError('poster assets require20F66 and explicit rebuild-init')
+        header = args.poster_assets_header.resolve()
+        prepared = header.parent / 'manifest.json'
+        baseline = ROOT / 'research/polaris/uefi-ios-0133/graphics-poster-hierarchy-0001'
+        if not header.is_relative_to(ROOT / 'research') or \
+           sha(header) != 'ff04f9fc8d8192f8210fa995228914b6bef2c2f0c9923f275271c0896cd9cffd' or \
+           sha(prepared) != 'c4d2ade75221202ee8d74a1e2f2d207f25d6f47587cf7bea1088fc8ad66e6199':
+            raise ValueError('only exact prepared-0002 private poster assets are admitted')
+        if sha(baseline / 'manifest.json') != '858230c94aa282bd683b953a5ee1e4637d1419e33fd440818699f110818aa49e' or \
+           sha(baseline / 'polaris-gpu.bundle') != 'bf8a704411fae01abeb23578b19f0c6c1738f90cedaeedb7b394930187069b70':
+            raise ValueError('the exact current0133 graphics baseline is required')
+        previous = json.loads((baseline / 'manifest.json').read_text())
+        for name, digest in previous['source_inputs'].items():
+            if name != 'userland/gpu/polaris-init.c' and sha(ROOT / name) != digest:
+                raise ValueError('unchanged0133 graphics source changed: ' + name)
+        poster = dict(header=header, prepared=prepared, baseline=baseline, previous=previous)
     if args.build == '20F66':
         if args.abi_proof is None:
             raise ValueError('20F66 requires the separately verified actual-library ABI proof')
@@ -92,6 +111,20 @@ def build(args):
                     preserved[item['name']] = path
         if len(preserved) != (3 if args.rebuild_init else 4) or sha(args.mesa_library) != sha(preserved['libPolarisMesa.dylib']):
             raise ValueError('exact current Mesa and all unchanged common files required')
+    if poster:
+        # Asset installation changes only PID1. Retain all five current0133
+        # signed binaries, including the existing preview/media injector.
+        for item in poster['previous']['files']:
+            if item['name'] == 'polaris-init':
+                continue
+            path = poster['baseline'] / item['name']
+            if sha(path) != item['sha256']:
+                raise ValueError('current0133 graphics binary changed: ' + item['name'])
+            if item['name'] in preserved and sha(preserved[item['name']]) != item['sha256']:
+                raise ValueError('original common baseline differs from current0133')
+            preserved[item['name']] = path
+        if len(preserved) != 5:
+            raise ValueError('poster assets may rebuild only init')
     out = args.output.resolve()
     out.mkdir(parents=True, exist_ok=False)
     sdk = args.sdk.resolve()
@@ -131,7 +164,12 @@ def build(args):
                                    *cf, *io, '-framework', 'OpenGLES', '-lobjc']),
         ('polaris-bbd-wrapper', [str(SOURCES / 'polaris-bbd-wrapper.c'), *cf, *io]),
         ('polaris-gl-test', [str(SOURCES / 'polaris-gl-test.c'), str(mesa), *cf, *surface, *io, '-lobjc']),
-        ('polaris-init', [str(SOURCES / 'polaris-init.c'), *(cf if args.build == '20F66' else [])]),
+        ('polaris-init', [str(SOURCES / 'polaris-init.c'),
+                          *(['-DPOLARIS_POSTER_ASSETS=1',
+                             '-DPOLARIS_POSTER_ASSET_HEADER="' + str(poster['header']) + '"',
+                             '-Wall', '-Wextra', '-Werror',
+                             str(SOURCES / 'polaris-poster-assets.c')] if poster else []),
+                          *(cf if args.build == '20F66' else [])]),
     ]
     for name, options in jobs:
         if name in preserved:
@@ -204,6 +242,18 @@ def build(args):
                   SOURCES / 'polaris-media-compat.c', ROOT / 'tools/polaris-media-compat.h',
                   ROOT / 'tools/polaris-media-status.h'):
             manifest['source_inputs'][str(p.relative_to(ROOT))] = sha(p)
+    if poster:
+        for p in (SOURCES / 'polaris-poster-assets.c', SOURCES / 'polaris-poster-assets.h',
+                  poster['header'], poster['prepared'], poster['baseline'] / 'manifest.json'):
+            manifest['source_inputs'][str(p.relative_to(ROOT))] = sha(p)
+        manifest['poster_assets'] = dict(enabled=True, destination='verified512MiB RAM COW only',
+            private_header_sha256=sha(poster['header']), prepared_manifest_sha256=sha(poster['prepared']),
+            baseline_bundle_sha256=poster['previous']['bundle_sha256'],
+            target='PID1 after console, before poster jobs/app publication/launchd',
+            source_failure='original CAMLs retained; original UI continues without retry',
+            incomplete_rollback='PID1 hold; Apple launchd prohibited',
+            actual_bundle_bytes=len(bundle), cap_bytes=32 * 1024 * 1024,
+            physical_wallpaper_fixed=False)
     (out / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
     print(json.dumps(manifest, indent=2))
 
@@ -220,4 +270,6 @@ if __name__ == '__main__':
                    help='keep four exact binaries from the current verified20H392 bundle')
     p.add_argument('--rebuild-init', action='store_true',
                    help='rebuild only the changed20F66 init among the four common binaries')
+    p.add_argument('--poster-assets-header', type=Path,
+                   help='exact private prepared-0002 header;20F66/rebuild-init only, preserves five0133 binaries')
     build(p.parse_args())

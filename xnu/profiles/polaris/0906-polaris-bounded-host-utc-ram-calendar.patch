@@ -1,0 +1,289 @@
+--- a/bsd/dev/polaris_touch.c
++++ b/bsd/dev/polaris_touch.c
+@@ -40,6 +40,8 @@
+ int polaris_ufs_owned_finish(const struct polaris_shutdown_request *,unsigned,unsigned,struct polaris_shutdown_status *);
+ int polaris_uefi_shutdown_finish(int, unsigned, unsigned);
+ extern int polaris_uefi_stop_secondaries(void);
++extern bool polaris_ram_overlay_allowed(void);
++#include "polaris_clock.h"
+ 
+ static struct {
+     vm_offset_t gcc, se, pin[5];
+@@ -525,6 +527,7 @@
+         pk_poll(false);
+         polaris_cpu_performance_poll();
+         polaris_gpu_performance_poll();
++        polaris_clock_poll();
+         if (ps_poll()) { pk_poll(true);ps_execute(); } /* Native shutdown must not require a working GUI/HID server. */
+         pt_wait(10);
+     }
+@@ -537,6 +540,7 @@
+         pk_poll(false);
+         polaris_cpu_performance_poll();
+         polaris_gpu_performance_poll();
++        polaris_clock_poll();
+         pi_cache((uintptr_t)slot,false);
+         uint64_t request=__atomic_load_n(&slot->request,__ATOMIC_ACQUIRE);
+         if (request!=slot->acknowledged) {
+@@ -662,6 +666,7 @@
+ {
+     struct polaris_shutdown_slot *slot=&polaris_uefi_shutdown;
+     if (!polaris_uefi_shutdown_pending()) { return; }
++    polaris_clock_seal(); /* Same thread; no UTC work survives native drain. */
+     printf("POLARIS UEFI DRAIN: accepted seq=%u mode=%u; calling reboot_kernel sync path\n",
+         slot->kernel.sequence,slot->kernel.mode);
+     int error=reboot_kernel(0,NULL);
+--- a/iokit/Kernel/IOPlatformExpert.cpp
++++ b/iokit/Kernel/IOPlatformExpert.cpp
+@@ -64,6 +64,11 @@
+ #include <sys/sysctl.h>
+ }
+ 
++#if defined(POLARIS_RAM_ONLY)
++extern "C" bool polaris_clock_ram_get(clock_sec_t *, clock_usec_t *);
++extern "C" void polaris_clock_ram_set(clock_sec_t, clock_usec_t);
++#endif
++
+ #define kShutdownTimeout    30 //in secs
+ 
+ #if defined(XNU_TARGET_OS_OSX)
+@@ -1360,6 +1365,9 @@
+ void
+ PEGetUTCTimeOfDay(clock_sec_t * secs, clock_usec_t * usecs)
+ {
++#if defined(POLARIS_RAM_ONLY)
++	if (polaris_clock_ram_get(secs, usecs)) { return; }
++#endif
+ 	clock_nsec_t    nsecs = 0;
+ 
+ 	*secs = 0;
+@@ -1374,6 +1382,11 @@
+ void
+ PESetUTCTimeOfDay(clock_sec_t secs, clock_usec_t usecs)
+ {
++#if defined(POLARIS_RAM_ONLY)
++	/* RAM-only calendar backend. Never issue a platform RTC/NVRAM write. */
++	polaris_clock_ram_set(secs, usecs);
++	return;
++#endif
+ 	assert(usecs < USEC_PER_SEC);
+ 	if (gIOPlatform) {
+ 		gIOPlatform->setUTCTimeOfDay(secs, usecs * NSEC_PER_USEC);
+--- /dev/null
++++ b/bsd/dev/polaris_clock_wire.h
+@@ -0,0 +1,74 @@
++/* Polaris calendar metadata only. No physical clock, RTC, storage or reset API.
++ * Firmware produces the first 128B; native owns the other 128B. */
++#ifndef POLARIS_CLOCK_SYNC_H
++#define POLARIS_CLOCK_SYNC_H
++#include <stdbool.h>
++#include <stdint.h>
++#define PC_MAGIC UINT64_C(0x50434c4f434b3031)
++#define PC_FREQUENCY UINT64_C(19200000)
++#define PC_MIN_UTC_US UINT64_C(1577836800000000) /* 2020-01-01 UTC inclusive */
++#define PC_MAX_UTC_US UINT64_C(4102444800000000) /* 2100-01-01 UTC exclusive */
++#define PC_MAX_AGE_TICKS (PC_FREQUENCY*10)
++#define PC_MAX_UNCERTAINTY_US UINT64_C(150000)
++#define PC_SOURCE_HOST_UTC UINT64_C(1)
++enum { PC_OFF=0,PC_READY=1,PC_APPLIED=2,PC_REJECTED=3,PC_SEALED=4 };
++enum { PC_OK=0,PC_BAD_WIRE=1,PC_BAD_SOURCE=2,PC_BAD_SEQUENCE=3,
++    PC_BAD_TIME=4,PC_BAD_COUNTER=5,PC_BAD_UNCERTAINTY=6,PC_READBACK=7 };
++struct polaris_clock_request {
++    uint64_t magic,cookie,sequence,utc_us,anchor_ticks,uncertainty_us,frequency_hz,source;
++    uint64_t reserved[8];
++};
++struct polaris_clock_status {
++    uint64_t magic,cookie,sequence,status,error,actual_utc_us,actual_ticks,uncertainty_us;
++    uint64_t applied_count,frequency_hz,revision,reserved[5];
++};
++struct polaris_clock_slot {
++    struct polaris_clock_request firmware;
++    struct polaris_clock_status kernel;
++} __attribute__((aligned(128)));
++#if defined(__cplusplus)
++static_assert(sizeof(struct polaris_clock_request)==128,"clock producer cacheline");
++static_assert(sizeof(struct polaris_clock_status)==128,"clock consumer cacheline");
++static_assert(sizeof(struct polaris_clock_slot)==256,"bounded clock mailbox");
++#else
++_Static_assert(sizeof(struct polaris_clock_request)==128,"clock producer cacheline");
++_Static_assert(sizeof(struct polaris_clock_status)==128,"clock consumer cacheline");
++_Static_assert(sizeof(struct polaris_clock_slot)==256,"bounded clock mailbox");
++_Static_assert(__builtin_offsetof(struct polaris_clock_slot,kernel)==128,"independent cacheline owners");
++#endif
++static inline bool pc_utc_valid(uint64_t utc)
++{ return utc>=PC_MIN_UTC_US && utc<PC_MAX_UTC_US; }
++/* Division before multiplication keeps the full counter range representable.
++ * This reads the counter's fixed frequency; it never changes that frequency. */
++static inline bool pc_elapsed_us(uint64_t anchor,uint64_t now,uint64_t *elapsed)
++{
++    if(now<anchor)return false;
++    uint64_t delta=now-anchor,whole=delta/PC_FREQUENCY;
++    if(whole>UINT64_MAX/1000000)return false;
++    *elapsed=whole*1000000+(delta%PC_FREQUENCY)*1000000/PC_FREQUENCY;
++    return true;
++}
++static inline unsigned pc_validate(const struct polaris_clock_request *r,
++    uint64_t cookie,uint64_t previous,uint64_t now,uint64_t frequency,uint64_t *utc)
++{
++    if(r->magic!=PC_MAGIC || !cookie || r->cookie!=cookie)return PC_BAD_WIRE;
++    for(unsigned i=0;i<8;i++)if(r->reserved[i])return PC_BAD_WIRE;
++    if(r->source!=PC_SOURCE_HOST_UTC)return PC_BAD_SOURCE;
++    if(previous>=UINT32_MAX || r->sequence!=previous+1)return PC_BAD_SEQUENCE;
++    if(frequency!=PC_FREQUENCY || r->frequency_hz!=PC_FREQUENCY ||
++       !r->anchor_ticks || now<r->anchor_ticks || now-r->anchor_ticks>PC_MAX_AGE_TICKS)
++        return PC_BAD_COUNTER;
++    if(!r->uncertainty_us || r->uncertainty_us>PC_MAX_UNCERTAINTY_US)
++        return PC_BAD_UNCERTAINTY;
++    uint64_t elapsed=0;
++    if(!pc_utc_valid(r->utc_us) || !pc_elapsed_us(r->anchor_ticks,now,&elapsed) ||
++       elapsed>=PC_MAX_UTC_US || r->utc_us>=PC_MAX_UTC_US-elapsed)return PC_BAD_TIME;
++    *utc=r->utc_us+elapsed;return PC_OK;
++}
++static inline uint64_t pc_distance(uint64_t a,uint64_t b)
++{ return a>b?a-b:b-a; }
++static inline void pc_put32(uint8_t *p,uint32_t v)
++{ for(unsigned i=0;i<4;i++)p[i]=(uint8_t)(v>>(8*i)); }
++static inline void pc_put64(uint8_t *p,uint64_t v)
++{ for(unsigned i=0;i<8;i++)p[i]=(uint8_t)(v>>(8*i)); }
++#endif
+--- /dev/null
++++ b/bsd/dev/polaris_clock.h
+@@ -0,0 +1,138 @@
++/* Installed as bsd/dev/polaris_clock.h by profile0906. Included only by
++ * polaris_touch.c: the existing resident thread is the sole consumer. */
++#ifndef POLARIS_CLOCK_NATIVE_H
++#define POLARIS_CLOCK_NATIVE_H
++#include "polaris_clock_wire.h"
++/* Firmware seeds this only after all payload segments have been copied and
++ * zero-filled. Keep the slot file-backed, outside every BSS/common range, so
++ * native BSS initialization cannot erase its before-CPU_ON boot cookie. */
++struct polaris_clock_slot polaris_uefi_clock __attribute__((section("__DATA,__data")))={
++    .firmware={.magic=PC_MAGIC}};
++static bool pc_bound,pc_sealed;
++static uint64_t pc_last_poll,pc_cookie,pc_sequence,pc_applied,pc_publish_revision;
++/* A separate RAM backend for PE calendar resume. Values are atomics because
++ * PEGetUTC may run concurrently with the serialized calendar writer. */
++static uint64_t pc_ram_version,pc_ram_utc,pc_ram_ticks;
++static uint64_t pc_counter(void)
++{ uint64_t v;__asm__ volatile("isb; mrs %0,cntvct_el0":"=r"(v)::"memory");return v; }
++static uint64_t pc_frequency(void)
++{ uint64_t v;__asm__ volatile("mrs %0,cntfrq_el0":"=r"(v));return v; }
++static uint64_t pc_cache_line(void)
++{
++    uint64_t ctr;__asm__ volatile("mrs %0,ctr_el0":"=r"(ctr));
++    return UINT64_C(4)<<((ctr>>16)&15);
++}
++static void pc_cache(uintptr_t address,bool clean)
++{
++    uint64_t line=pc_cache_line();
++    /* 128B ownership units cannot share an actual cache line. */
++    if(line>128 || !line)return;
++    for(uintptr_t p=address&~(line-1);p<address+128;p+=line) {
++        if(clean)__asm__ volatile("dc cvac,%0"::"r"(p):"memory");
++        else __asm__ volatile("dc ivac,%0"::"r"(p):"memory");
++    }
++    __asm__ volatile("dsb sy":::"memory");
++}
++bool polaris_clock_ram_get(clock_sec_t *secs,clock_usec_t *usecs);
++void polaris_clock_ram_set(clock_sec_t secs,clock_usec_t usecs);
++void polaris_clock_poll(void);
++void polaris_clock_seal(void);
++bool polaris_clock_ram_get(clock_sec_t *secs,clock_usec_t *usecs)
++{
++    if(pc_frequency()!=PC_FREQUENCY)return false;
++    for(unsigned attempt=0;attempt<3;attempt++) {
++        uint64_t before=__atomic_load_n(&pc_ram_version,__ATOMIC_ACQUIRE);
++        if(!before || (before&1))continue;
++        uint64_t utc=__atomic_load_n(&pc_ram_utc,__ATOMIC_RELAXED);
++        uint64_t ticks=__atomic_load_n(&pc_ram_ticks,__ATOMIC_RELAXED),now=pc_counter(),elapsed=0;
++        __atomic_thread_fence(__ATOMIC_ACQUIRE);
++        if(before!=__atomic_load_n(&pc_ram_version,__ATOMIC_RELAXED))continue;
++        if(!pc_elapsed_us(ticks,now,&elapsed) || elapsed>=PC_MAX_UTC_US ||
++           utc>=PC_MAX_UTC_US-elapsed)return false;
++        utc+=elapsed;if(!pc_utc_valid(utc))return false;
++        *secs=(clock_sec_t)(utc/1000000);*usecs=(clock_usec_t)(utc%1000000);return true;
++    }
++    return false;
++}
++void polaris_clock_ram_set(clock_sec_t secs,clock_usec_t usecs)
++{
++    /* Called by standard clock_set_calendar_microtime under settime_lock.
++     * RAM only: deliberately no IOPlatformExpert RTC/NVRAM callback. */
++    if((uint64_t)secs>=PC_MAX_UTC_US/1000000 || (uint64_t)usecs>=1000000 ||
++       pc_frequency()!=PC_FREQUENCY)return;
++    uint64_t utc=(uint64_t)secs*1000000+usecs;if(!pc_utc_valid(utc))return;
++    uint64_t ram_revision=__atomic_load_n(&pc_ram_version,__ATOMIC_ACQUIRE);
++    if((ram_revision&1) || ram_revision>UINT64_MAX-2 || !__atomic_compare_exchange_n(
++       &pc_ram_version,&ram_revision,ram_revision+1,false,__ATOMIC_ACQ_REL,__ATOMIC_ACQUIRE))return;
++    __atomic_store_n(&pc_ram_utc,utc,__ATOMIC_RELAXED);
++    __atomic_store_n(&pc_ram_ticks,pc_counter(),__ATOMIC_RELAXED);
++    __atomic_store_n(&pc_ram_version,ram_revision+2,__ATOMIC_RELEASE);
++}
++static void pc_publish(unsigned status,unsigned error,uint64_t utc,uint64_t ticks,uint64_t uncertainty)
++{
++    struct polaris_clock_status *s=&polaris_uefi_clock.kernel;
++    __atomic_store_n(&s->revision,++pc_publish_revision,__ATOMIC_RELEASE);
++    pc_cache((uintptr_t)s,true); /* Publish odd before changing payload in RAM. */
++    s->magic=PC_MAGIC;s->cookie=pc_cookie;s->status=status;s->error=error;
++    s->actual_utc_us=utc;s->actual_ticks=ticks;s->uncertainty_us=uncertainty;
++    s->applied_count=pc_applied;s->frequency_hz=PC_FREQUENCY;
++    __atomic_store_n(&s->sequence,pc_sequence,__ATOMIC_RELEASE);
++    pc_cache((uintptr_t)s,true);
++    __atomic_store_n(&s->revision,++pc_publish_revision,__ATOMIC_RELEASE);
++    pc_cache((uintptr_t)s,true);
++}
++void polaris_clock_seal(void)
++{
++    /* Same resident thread, before reboot_kernel/VFS/CPU drain. No callback
++     * or timer remains that could consume or publish after CPUs are sealed. */
++    pc_sealed=true;
++    if(pc_bound)pc_publish(PC_SEALED,PC_OK,0,pc_counter(),0);
++}
++void polaris_clock_poll(void)
++{
++    if(pc_sealed || pc_frequency()!=PC_FREQUENCY || pc_cache_line()>128)return;
++    uint64_t now=pc_counter();if(!now)return;
++    if(pc_last_poll && now<pc_last_poll) {
++        pc_sealed=true;if(pc_bound)pc_publish(PC_SEALED,PC_BAD_COUNTER,0,now,0);return;
++    }
++    if(pc_last_poll && now-pc_last_poll<PC_FREQUENCY/10)return;
++    pc_last_poll=now;
++    if(!pc_bound && !polaris_ram_overlay_allowed())return;
++    struct polaris_clock_request r;
++    pc_cache((uintptr_t)&polaris_uefi_clock.firmware,false);
++    uint64_t sequence=__atomic_load_n(&polaris_uefi_clock.firmware.sequence,__ATOMIC_ACQUIRE);
++    memcpy(&r,&polaris_uefi_clock.firmware,sizeof(r));
++    pc_cache((uintptr_t)&polaris_uefi_clock.firmware,false);
++    if(sequence!=__atomic_load_n(&polaris_uefi_clock.firmware.sequence,__ATOMIC_ACQUIRE))return;
++    if(!pc_bound) {
++        if(r.magic!=PC_MAGIC || !r.cookie || r.sequence || r.utc_us || r.anchor_ticks ||
++           r.uncertainty_us || r.frequency_hz!=PC_FREQUENCY || r.source!=PC_SOURCE_HOST_UTC)return;
++        for(unsigned i=0;i<8;i++)if(r.reserved[i])return;
++        pc_cookie=r.cookie;pc_bound=true;pc_publish(PC_READY,PC_OK,0,now,0);return;
++    }
++    if(r.sequence==pc_sequence)return;
++    /* The producer can publish during the invalidation/copy above. Associate
++     * admission with a counter sampled after that complete request, not the
++     * earlier polling-budget timestamp. */
++    now=pc_counter();
++    uint64_t utc=0;unsigned error=pc_validate(&r,pc_cookie,pc_sequence,now,pc_frequency(),&utc);
++    if(error) {
++        if(r.sequence==pc_sequence+1 && pc_sequence<UINT32_MAX)pc_sequence=r.sequence;
++        else pc_sealed=true;
++        pc_publish(pc_sealed?PC_SEALED:PC_REJECTED,error,0,now,r.uncertainty_us);return;
++    }
++    /* Calendar adjustment only. Counter, mach_absolute_time and all device
++     * age/freshness guards retain their original timebase and frequency. */
++    clock_set_calendar_microtime((clock_sec_t)(utc/1000000),(clock_usec_t)(utc%1000000));
++    clock_sec_t sec=0;clock_usec_t us=0;
++    uint64_t before=pc_counter();clock_get_calendar_microtime(&sec,&us);uint64_t after=pc_counter();
++    uint64_t actual=(uint64_t)sec*1000000+us,expected=0;
++    error=pc_validate(&r,pc_cookie,pc_sequence,after,pc_frequency(),&expected);
++    if(!error && (after<before || after-before>PC_FREQUENCY/100 ||
++       !pc_utc_valid(actual) || pc_distance(actual,expected)>10000))error=PC_READBACK;
++    pc_sequence=r.sequence;if(!error)pc_applied++;
++    pc_publish(error?PC_REJECTED:PC_APPLIED,error,actual,before+(after-before)/2,r.uncertainty_us);
++    printf("POLARIS CLOCK: host UTC seq=%llu status=%u error=%u uncertainty_us=%llu; RAM calendar only\n",
++        pc_sequence,(unsigned)(error?PC_REJECTED:PC_APPLIED),error,r.uncertainty_us);
++}
++#endif

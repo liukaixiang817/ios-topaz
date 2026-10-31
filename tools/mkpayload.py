@@ -147,8 +147,30 @@ def command_line_bytes(cmdline):
     return encoded
 
 
+def add_runtime_services(adt_blob, services):
+    """Explicit Polaris read-only service opt-ins; never shorten boot args."""
+    if services is None:
+        return adt_blob
+    if not isinstance(services, (tuple, list)) or not services or \
+        any(type(x) is not str for x in services) or len(set(services)) != len(services) or \
+        set(services)-{'battery-readonly', 'wifi-readonly'}:
+        raise ValueError('only explicit distinct read-only runtime services are allowed')
+    root, consumed = adt.parse(adt_blob)
+    if consumed != len(adt_blob) or adt.serialize(root) != adt_blob or \
+        b'xiaomi,polaris' not in (root.prop('compatible') or b'').split(b'\0') or \
+        any(n.name == 'polaris-runtime-services' for n in root.children):
+        raise ValueError('runtime services require the original Polaris tree without a prior opt-in')
+    node = adt.Node()
+    node.props = [('name', 0, b'polaris-runtime-services\0'),
+                  ('version', 0, struct.pack('<I', 1)),
+                  ('battery-readonly', 0, struct.pack('<I', int('battery-readonly' in services))),
+                  ('wifi-readonly', 0, struct.pack('<I', int('wifi-readonly' in services)))]
+    root.children.append(node)
+    return adt.serialize(root)
+
+
 def build(kernel_path, adt_path, cmdline, ramdisk_path=None, *, gpu_bundle_path=None,
-          gpu_build='20H392'):
+          gpu_build='20H392', runtime_services=None):
     if gpu_build not in ('20H392', '20F66') or (gpu_build != '20H392' and not gpu_bundle_path):
         raise ValueError('known graphics build and matching bundle required')
     cl = command_line_bytes(cmdline)  # Validate before any file I/O; never truncate flags.
@@ -183,7 +205,7 @@ def build(kernel_path, adt_path, cmdline, ramdisk_path=None, *, gpu_bundle_path=
         assert b'xiaomi,polaris' in root.prop('compatible').split(b'\0')
         assert not any(c.name == 'polaris-gpu-userland' for c in root.children)
         import hashlib
-        if gpu_build == '20F66' and hashlib.sha256(image).hexdigest() != 'bf8a704411fae01abeb23578b19f0c6c1738f90cedaeedb7b394930187069b70':
+        if gpu_build == '20F66' and hashlib.sha256(image).hexdigest() != 'aeaf8d45c686e261654ae9dccfb115c83dc67963950365763d2ad94740cbd58c':
             raise ValueError('20F66 requires the exact actual-ABI-verified stock-app graphics bundle')
         node = adt.Node()
         node.props = [('name', 0, b'polaris-gpu-userland\0'),
@@ -201,6 +223,8 @@ def build(kernel_path, adt_path, cmdline, ramdisk_path=None, *, gpu_bundle_path=
         pieces.append((rd_va, rd_size, image))
         adt_blob = add_ramdisk_to_adt(adt_blob, rd_pa, rd_size)
         ramdisk = (hex(rd_pa), hex(rd_size))
+
+    adt_blob = add_runtime_services(adt_blob, runtime_services)
 
     hdr_size = SEG_TABLE + 32 * len(pieces)
     out = bytearray(hdr_size)
@@ -234,9 +258,11 @@ if __name__ == '__main__':
     ap.add_argument('--ramdisk', help='root image for md0 (boot with rd=md0)')
     ap.add_argument('--gpu-bundle', help='Polaris volatile GPU userland bundle (file root remains unchanged)')
     ap.add_argument('--gpu-build', choices=('20H392', '20F66'), default='20H392')
+    ap.add_argument('--runtime-services', nargs='+', choices=('battery-readonly','wifi-readonly'),
+                    help='explicit read-only device-tree opt-ins; original boot arguments are retained')
     a = ap.parse_args()
     blob, info = build(a.kernel, a.adt, a.cmdline, a.ramdisk, gpu_bundle_path=a.gpu_bundle,
-                       gpu_build=a.gpu_build)
+                       gpu_build=a.gpu_build, runtime_services=a.runtime_services)
     open(a.out, 'wb').write(blob)
     for k, v in info.items():
         if k != 'segs':

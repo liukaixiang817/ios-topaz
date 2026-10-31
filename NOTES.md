@@ -34,6 +34,95 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0135 USER PRIORITY: deferpanic/Fitness repro; parallel wallpaper+battery+UTC+WiFi tests; PHONE LIVE0134 lockscreen
+
+- Humanexplicitly: ignorethispanicfornow/testremaining; thenclarifiedfouritems
+  canbeparalleltoavoidwaitingonebyone. StopFitness/crashrepro, retainalready
+  committed0907/0908/0909fix. New0135willtestoriginalwallpaperassetfallback,
+  actualbatteryRO, hostUTC andWiFiROadmissiontogetherwhenready, nofeaturewait
+  justbecauseanotherisunfinished. AllphoneUSBstillstrictserial.
+- LastactualUSB worker18920 ENDEDexit0, capture0003 realLOCKSCREEN andalive.
+  RAMrealtrim368/recycled42824/reused42824/active20463/32734/datafree12271,
+  noFULL/HFSbadnode/panic inprefix; GPUstage6 andactualWLED4writes/4completed/
+  request2ack2/module128IRQ2/error0/rawfaultOR1rtOR1preserved. ThisisrealRAM
+  reuse/lockscreen, NOTcompletepanicregression orFitnessfunctionalityproof.
+- PendingoldFitnessreturnhome/swipe+capture toolcell1881 wasREJECTEDbefore
+  execprocesscreation byautomaticapproval: conflictsnewuserpriority andUSB
+  serialconstraintwarning. NochildUSBworkerwascreated, don'tretrythatFitness
+  actionindirectly. CurrentPHONE LIVE0134/c901/imagec4548, frozen0134controller
+  +ORIGINAL0134manifests onlyfornormalexit/readstate. No humanpendingquestion.
+- Parallel0135 SOURCES: realoriginal5PNG+3CAML RAMCOWloader integratedininit;
+  bundle22,355,280B SHAaeaf8d45c686e261654ae9dccfb115c83dc67963950365763d2ad94740cbd58c,
+  ONLYinitchanged/5othersactual0133byteidentical, original32MiBcap retained.
+  15assetfixtures/realowner0:0/resource0644/SystemVersion0444/pixelSHA+rollback
+  andinitHOLD/defaultlegacychecksPASS. New0899/mkpayload exactpinupdated.
+- Battery0904 nowPBAT/pbatnamespace, genuinePMI8998SID2RO+nativecacheconsumer;
+  newexplicitDT /polaris-runtime-services version1/battery-readonly1 replaces
+  extraarg(nooriginal602Bflagsstripped). 26focusedchecks/nativeobjectsPASS.
+  Fatherfirmwareadapteronecommand/tick afteractualWLEDstartup+secondsequence,
+  fullBSSzero/CPU0/EL/DAIF/group/frq19.2/maps/owner/rev, UIspan500ms separate
+  fromallWLED/TSENSsafetyrules; skipscritical/nativepending/close/lease. No
+  chargingwrites, stale/unknown removesmeasurements. Actualbattery NOTproven.
+- Clock0906 restoredfixedOEM bridge/separatefile-backedDATA256B+nativecalendar;
+  actualCPU0/CPU7QEMUguest CNTFRQ19.2 withexplicitSOFTWARE c55propertyverified,
+  noCNTwrite/frequencygateweaken. Physical/QEMUclock+batterytrueTU compile0.
+  WiFi0905 transport+0910 nativeone-shot: actualCPU/PARdiagnostic butMPU/read
+  witnessUNKNOWN, soindependentrealgateREFUSES SMEMmap/read/descriptor/FIFO/
+  radio, may_transmit0. DoNOTlabelasWiFi scan/join/networksuccess.
+- All7native0904..0910 patchesrealapply29files/exactprivateheaderbindingsPASS;
+  10newexactIIGheadSHA reviewed,3bindingtestsPASS. NewDTopt-ins original602B
+  untouched; defaultsourcebytebehaviorretained. Sharedclock/battery/WiFi/
+  initbuildersnowlocallycompiled, parentsreview/commitONEnecessarynewCI NEXT.
+  Newkernel/artifact/models/image/boot NOTREADYyet, current0134mustnotreplay.
+
+### 0134 ACTUAL RAMreclaim6199groups/96.86MiB +GPUstage6PASS; Applelogo, Fitness NOTyetreproduced
+
+- startup-capture-0002 worker68078 ENDEDexit0/PASS. NewphysicalRAMCAPACITY
+  reports32734groups, peak12297active then7424active/25310data-free/6199
+  reusable;6trimcalls, recycled6199groups=101564416B, reused0atthissample.
+  Thisisrealreclaim evidence, NOTyet actualreuse/Fitness/UI/panicfullfix.
+  ActualGPUacceptancestage6/error0/completed13/surfaces1. ScreenApplelogo.
+- NoFULL/HFSbadnode/panic inthiscapturedprefix; CPU/GPUthermalreadsalive,
+  WLEDissued0/completed0/module128/IRQ02/error0/rawfaultOR1rtOR1retained.
+  AllUSBworkersENDED; PHONE LIVE0134, frozen0134controller only. NextUI then
+  exactFitnesscase; don'tclaimprogressfromelapsedalone orreboot startup.
+- Timingcorrection: rawCNTVCT/usincludesearlierFASTBOOTwait, itisNOTkernel
+  uptime. Firstcapture~1252s absolute, not125s. Compareboot.sent_utc andactual
+  nativecounterdifferences, nofreq/CNT/clockchanges. Detailedphysicalproof
+  actual-startup-reclamation-proof.json. Nohumanquestionpending.
+
+### 0134 ONEexactpayload ACKed; PHONE LIVE0134 startup; firstactualcapture noHFSerror sofar
+
+- Exactpayload worker44412 ENDEDexit0/PASS, nosecondpayload. Firstcapture38272
+  ENDEDexit0/PASS withabsoluteCNTVCT~1252s (notkerneluptime): actualGPT/HFSX16384MiB/142extents/baseREADONLY,
+ 512MiBRAMCOW initialized, mediaserverexec identity/DYLD preserved, GLselftest
+  earlystage1; screenstillstartupconsole, NOTyetnewdesktop/Fitnessresult.
+  NoHFSbadnode/panic/FULL inthisearlylog; cannotclaimruntimefixedfromthis.
+- WLED actualissued0/completed0/request0/ack0/module128/IRQ02/error0;
+  rawfaultOR1/rtOR1 retained (allowedILIMbit0; noOVP/SCclaimfromzeros).
+  No powercycle/retry/faultclear. PHONE LIVE0134/c901/c4548/host04bc, notFASTBOOT.
+  AllUSBworkersENDED; frozen0134controller+ORIGINAL0134manifests only.
+  Nextactualstartup/UI thenFitness/realRAMbudget+reclaim/asyncerrorobservations.
+- Readonlyreviewflag: initialHFSUNMAP<=1024 extents; journaldefault256/soft240,
+  butlarge singletransactions canexceed1024 andbeexplicitlyrefused. No current
+  physical >1024 observation; don'tclaimallbatchsizes supported orlinear-only
+  trimcost. Hash/freeunlink worstboundedextra~16.8Msteps, notphysicaltimingproof.
+
+### 0134 ONEnewimage ACK/CONSUMED; PHONE new0134; exactpayload worker44412 pendingEND
+
+- Hostadmission04bc167 committed/pushed; newc4548d1f imageONEACK, worker89720
+  ENDEDexit0; phone-panic-repair-0001/boot.json CONSUMED. Independentfresh
+  actualprebootproductPASS. PHONE nownew0134UEFI/nativepayloadstart, NOTFASTBOOT/
+  old0133. StatePASS thenONEexactpayload worker44412 active; mustEND before
+  ANYnextUSB. No actualnewUI/capacity/reclaim/Fitness/panicfixclaimyet.
+- Exact374evidence/artifactCOPY/hashverified to/private/tmp/polaris-runtime-
+  0134-frozen-0001 (372imageevidence +manifests/image). Currentfrozencontroller
+  +ORIGINAL0134 boot/image/driver manifests onlyafterfutureedits. Everyactual
+  candidate sourceinput bytecheckedagainstGitHEAD; uncommittedparallelfeature
+  files excludedfromcandidate, notsilentlyadmitted. Kernelc901/source9138/
+  CI41181883387/job124480798311; graphicsbf8/old602B/CPU/GPU/WLED/root915142map/
+ 512MiB unchanged, onlynative0907/0908/0909panicfix.
+
 ### 0134 panic-only candidate READY; PHONE actualFASTBOOT; hostcommit/freeze thenONEnewRAM NEXT
 
 - Actualkernelc901/source9138/CI41181883387/job124480798311 SUCCESS. Physical

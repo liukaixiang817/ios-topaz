@@ -38,8 +38,8 @@ def symbols(raw):
                 if end<0:raise ValueError('unterminated kernel symbol')
                 text=raw[strings+name:end]
                 if text in (b'_sweet_log_ring',b'_sweet_log_total',b'_polaris_uefi_input',b'_polaris_uefi_shutdown',b'_polaris_uefi_buttons',
-                            b'_polaris_uefi_wled',b'_PolarisWledNativeProbe'):
-                    if text in (b'_polaris_uefi_wled',b'_PolarisWledNativeProbe') and \
+                            b'_polaris_uefi_wled',b'_PolarisWledNativeProbe',b'_polaris_uefi_clock',b'_polaris_uefi_battery'):
+                    if text in (b'_polaris_uefi_wled',b'_PolarisWledNativeProbe',b'_polaris_uefi_clock',b'_polaris_uefi_battery') and \
                         ((typ&0x0e)!=0x0e or not section or not value):
                         raise ValueError('native WLED symbol must be actually defined')
                     if text.decode() in wanted:raise ValueError('duplicate log symbol')
@@ -47,6 +47,104 @@ def symbols(raw):
         at+=size
     if not {'_sweet_log_ring','_sweet_log_total'}<=set(wanted):raise ValueError('kernel RAM console symbols absent')
     return wanted
+
+
+def clock_mailbox_binding(kernel,syms,va,end,other_spans):
+    """Actual defined symbol, writable/file-backed DATA, exact initial ABI.
+
+    Firmware seeds the slot after segment copy/zero and before CPU_ON. BSS or
+    common storage would lose that seed during native initialization.
+    """
+    address=syms.get('_polaris_uefi_clock',0);offset=address-va
+    if not address or offset%128 or not 0<=offset<=end-256:
+        raise ValueError('UTC mailbox must be aligned and entirely kernel-owned')
+    if any(offset<start+bytes_ and start<offset+256 for start,bytes_ in other_spans):
+        raise ValueError('UTC mailbox overlaps another kernel-owned channel')
+    count,command_bytes=struct.unpack_from('<II',kernel,16);at=32;matches=[]
+    if count>4096 or command_bytes>len(kernel)-32:raise ValueError('UTC Mach-O command bounds')
+    for _ in range(count):
+        kind,size=struct.unpack_from('<II',kernel,at)
+        if size<8 or size>32+command_bytes-at:raise ValueError('UTC Mach-O command size')
+        if kind==0x19:
+            if size<72:raise ValueError('UTC truncated segment')
+            segname=kernel[at+8:at+24].split(b'\0',1)[0]
+            vm,vmsize,fileoff,filesize=struct.unpack_from('<4Q',kernel,at+24)
+            _,prot,nsects,_=struct.unpack_from('<4I',kernel,at+56)
+            if nsects>(size-72)//80:raise ValueError('UTC section table bounds')
+            for n in range(nsects):
+                sec=at+72+n*80;name=kernel[sec:sec+16].split(b'\0',1)[0]
+                owner=kernel[sec+16:sec+32].split(b'\0',1)[0]
+                start,bytes_,source=struct.unpack_from('<QQI',kernel,sec+32)
+                flags=struct.unpack_from('<I',kernel,sec+64)[0]
+                if start<=address and 256<=bytes_ and address-start<=bytes_-256:
+                    if (segname!=b'__DATA' or owner!=b'__DATA' or name!=b'__data' or flags&0xff or
+                        not prot&2 or prot&4 or vm>start or start-vm>vmsize or bytes_>vmsize-(start-vm) or
+                        start-vm>filesize or bytes_>filesize-(start-vm) or source!=fileoff+start-vm):
+                        raise ValueError('UTC mailbox must be writable file-backed __DATA,__data, never BSS')
+                    source+=address-start
+                    if source>len(kernel) or 256>len(kernel)-source:
+                        raise ValueError('UTC mailbox initial bytes outside kernel file')
+                    initial=bytes(kernel[source:source+256])
+                    if initial!=struct.pack('<Q',0x50434c4f434b3031)+bytes(248):
+                        raise ValueError('UTC mailbox exact native ABI initializer changed')
+                    matches.append(dict(symbol='_polaris_uefi_clock',offset=offset,bytes=256,alignment=128,
+                        segment='__DATA',section='__data',file_offset=source,
+                        initial_sha256=hashlib.sha256(initial).hexdigest(),BSS=False))
+        at+=size
+    if len(matches)!=1:raise ValueError('UTC requires one actual file-backed native mailbox')
+    return matches[0]
+
+
+def battery_mailbox_binding(kernel,syms,va,end,other_spans):
+    """Bound the actual native zero-fill span; publish only after native BSS init."""
+    address=syms.get('_polaris_uefi_battery',0);offset=address-va
+    if not address or offset%128 or not 0<=offset<=end-256:
+        raise ValueError('battery mailbox must be aligned and entirely kernel-owned')
+    if any(offset<start+bytes_ and start<offset+256 for start,bytes_ in other_spans):
+        raise ValueError('battery mailbox overlaps another kernel-owned channel')
+    count,command_bytes=struct.unpack_from('<II',kernel,16);at=32;matches=[]
+    if count>4096 or command_bytes>len(kernel)-32:raise ValueError('battery Mach-O command bounds')
+    for _ in range(count):
+        kind,size=struct.unpack_from('<II',kernel,at)
+        if size<8 or size>32+command_bytes-at:raise ValueError('battery Mach-O command size')
+        if kind==0x19:
+            if size<72:raise ValueError('battery truncated segment')
+            segname=kernel[at+8:at+24].split(b'\0',1)[0]
+            vm,vmsize,fileoff,filesize=struct.unpack_from('<4Q',kernel,at+24)
+            _,prot,nsects,_=struct.unpack_from('<4I',kernel,at+56)
+            if nsects>(size-72)//80:raise ValueError('battery section table bounds')
+            for n in range(nsects):
+                sec=at+72+n*80;name=kernel[sec:sec+16].split(b'\0',1)[0]
+                owner=kernel[sec+16:sec+32].split(b'\0',1)[0]
+                start,bytes_,source=struct.unpack_from('<QQI',kernel,sec+32)
+                flags=struct.unpack_from('<I',kernel,sec+64)[0]
+                if start<=address and 256<=bytes_ and address-start<=bytes_-256:
+                    if (segname!=b'__DATA' or owner!=b'__DATA' or name not in (b'__bss',b'__common') or
+                        flags&0xff!=1 or not prot&2 or prot&4 or vm>start or start-vm>vmsize or
+                        bytes_>vmsize-(start-vm) or source):
+                        raise ValueError('battery mailbox must be writable native __DATA zero-fill')
+                    matches.append(dict(symbol='_polaris_uefi_battery',offset=offset,bytes=256,alignment=128,
+                        segment='__DATA',section=name.decode(),BSS=True,pre_CPU_ON_publish=False))
+        at+=size
+    if len(matches)!=1:raise ValueError('battery requires one actual native zero-fill mailbox')
+    return matches[0]
+
+
+def runtime_services_intent(tree,battery,wifi):
+    """Exact payload DT opt-ins; boot argument bytes are not edited here."""
+    if type(battery) is not bool or type(wifi) is not bool:
+        raise ValueError('runtime service intent must be explicit boolean flags')
+    nodes=[n for n in tree.children if n.name=='polaris-runtime-services']
+    if not nodes and not (battery or wifi):return None
+    if len(nodes)!=1:raise ValueError('runtime services require one explicit payload DT node')
+    node=nodes[0];props={name:value for name,_,value in node.props}
+    expected={'name':b'polaris-runtime-services\0','version':struct.pack('<I',1),
+        'battery-readonly':struct.pack('<I',int(battery)),'wifi-readonly':struct.pack('<I',int(wifi))}
+    if (len(props)!=len(node.props) or props!=expected or node.children or
+        any(flags for _,flags,_ in node.props)):
+        raise ValueError('runtime service flags must exactly match canonical payload DT opt-ins')
+    return dict(version=1,battery_readonly=battery,wifi_readonly=wifi,
+        path='/polaris-runtime-services',boot_argument_tokens_changed=False)
 
 
 def readonly_osm_intent(tokens,expected,core,count,qemu,drain,bridge,ufs,marker,performance=False):
@@ -201,6 +299,12 @@ def main():
                     help='QEMU-only real BSD RAM drain experiment; never UFS durability proof')
     ap.add_argument('--ram-shutdown-bridge',action='store_true',
                     help='expose native RAM-only shutdown mailbox over resident USB')
+    ap.add_argument('--host-utc-sync',action='store_true',
+                    help='default-OFF fixed host UTC metadata bridge; calendar RAM only, no RTC/CNT writes')
+    ap.add_argument('--battery-readonly',action='store_true',
+                    help='default-OFF real battery telemetry; exact native BSS and payload DT opt-in')
+    ap.add_argument('--wifi-readonly',action='store_true',
+                    help='default-OFF native Wi-Fi readonly diagnostic opt-in; no EFI SMEM or transmit API')
     ap.add_argument('--efi-application',action='store_true',help='selected application, never ReadyToBoot interception')
     ap.add_argument('--disk-guid',type=uuid.UUID,help='exact GPT partition UUID for read-only disk payload')
     ap.add_argument('--disk-start-lba',type=int)
@@ -245,6 +349,15 @@ def main():
         a.test_wled_fault_pulse or a.test_omit_durable_guard or a.test_wled_native_start_refusal or a.test_wled_native_exit):
         ap.error('physical native WLED requires its independent guarded four-big RO/RAMCOW scope')
     native_runtime=a.wled_native_runtime or a.wled_native_runtime_test
+    if a.host_utc_sync and (not native_runtime or not a.physical_buttons or
+        not (a.test_ram_drain if a.test_qemu else a.ram_shutdown_bridge) or
+        a.test_qemu_owned or a.physical_owned_marker or a.disk_guid or a.chain_app_manifest or a.efi_application):
+        ap.error('host UTC metadata requires its guarded native WLED RO/RAMCOW session and native drain')
+    if (a.battery_readonly or a.wifi_readonly) and (not native_runtime or not a.physical_buttons or
+        not (a.test_ram_drain if a.test_qemu else a.ram_shutdown_bridge) or
+        a.test_qemu_ufs or a.test_qemu_owned or a.physical_owned_marker or a.disk_guid or
+        a.chain_app_manifest or a.efi_application):
+        ap.error('runtime service opt-ins require the guarded native WLED RO/RAMCOW session and drain')
     target=a.kernel_core if a.test_qemu else a.kernel_core<<8
     if a.tsens_pair_witness and not a.gpu_thermal_extended:
         ap.error('TSENS pair witness requires the explicit extended thermal experiment')
@@ -391,6 +504,7 @@ def main():
     if tree_at>len(raw) or not 8<=tree_bytes<=len(raw)-tree_at:
         raise ValueError('CPU tree source outside payload')
     tree=polaris_uefi_cpu_tree.validate(raw[tree_at:tree_at+tree_bytes],a.kernel_core,a.test_qemu,a.kernel_cpus)
+    runtime_services=runtime_services_intent(tree,a.battery_readonly,a.wifi_readonly)
     if any(n.name=='polaris-qemu-ufs' for n in tree.children)!=a.test_qemu_ufs:
         raise ValueError('virtual UFS opt-in does not match the actual tree')
     if any(n.name=='polaris-qemu-owned-file' for n in tree.children)!=a.test_qemu_owned:
@@ -448,6 +562,16 @@ def main():
                 not 0<=shutdown_offset<=end-256 or not input_present or
                 abs(shutdown_offset-input_offset)<256):
             raise ValueError('invalid independent shutdown mailbox symbol')
+    clock_binding=None
+    reserved=[(input_offset,256),(shutdown_offset,256),(buttons_offset,256),(wled_offset,256),
+        (log,4<<20),(total,8)]
+    battery_span=[(syms['_polaris_uefi_battery']-va,256)] if '_polaris_uefi_battery' in syms else []
+    if a.host_utc_sync:
+        clock_binding=clock_mailbox_binding(k,syms,va,end,reserved+battery_span)
+    battery_binding=None
+    if a.battery_readonly:
+        clock_span=[(syms['_polaris_uefi_clock']-va,256)] if '_polaris_uefi_clock' in syms else []
+        battery_binding=battery_mailbox_binding(k,syms,va,end,reserved+clock_span)
     # Run the exact C copy-plan admission function before emitting an EFI image.
     lib=out/'payload-validator.dylib';flags=['-DPOLARIS_EFI_TEST_QEMU=1'] if a.test_qemu else []
     subprocess.run(['/usr/bin/clang','-shared','-fPIC',*flags,str(r/'shim/polaris/payload.c'),'-o',str(lib)],check=True)
@@ -467,6 +591,11 @@ def main():
 #define EFI_XNU_BUTTONS_AVAILABLE {int(a.physical_buttons)}
 #define EFI_XNU_BUTTONS_OFFSET 0x{buttons_offset:x}ULL
 #define EFI_XNU_WLED_OFFSET 0x{wled_offset:x}ULL
+#define EFI_XNU_HOST_UTC_AVAILABLE {int(a.host_utc_sync)}
+#define EFI_XNU_HOST_UTC_OFFSET 0x{clock_binding['offset'] if clock_binding else 0:x}ULL
+#define EFI_XNU_BATTERY_AVAILABLE {int(a.battery_readonly)}
+#define EFI_XNU_BATTERY_OFFSET 0x{battery_binding['offset'] if battery_binding else 0:x}ULL
+#define EFI_XNU_BATTERY_SPAN_LIMIT_US 500000u
 #define EFI_XNU_CPU {target}u
 #define EFI_XNU_BOOT_CPU_TOKEN "polarisbootcpu={target}"
 #define EFI_XNU_CPUS_TOKEN "cpus={a.kernel_cpus}"
@@ -533,6 +662,13 @@ def main():
     inputs=['shim/polaris/'+n for n in sources]+['shim/polaris/uefi.h','shim/polaris/uefi-xnu.h','shim/polaris/uefi-usb.h','shim/polaris/uefi-memory.h','shim/polaris/uefi-reset.h','shim/polaris/uefi-file.h','shim/polaris/uefi-boot-options.h','shim/polaris/uefi-ram-lease.h','shim/polaris/payload.h','tools/build-polaris-uefi-xnu.py','tools/polaris-uefi-input.h']
     inputs+=['tools/polaris_uefi_cpu_tree.py','tools/adt.py','tools/mkpayload.py']
     inputs.append('shim/polaris/runtime-marker.h')
+    if a.host_utc_sync:
+        inputs+=['tools/polaris-clock-sync.h','tools/polaris-clock-uefi.h',
+                 'tools/polaris-clock-native.h','tools/polaris-clock-host.py']
+    if a.battery_readonly:
+        inputs+=['shim/polaris/uefi-battery-native.h','tools/polaris-battery-shared.h',
+                 'tools/polaris-battery-readonly.h','tools/polaris-battery-producer.h',
+                 'tools/polaris-battery-native.cpp']
     if a.physical_buttons:
         inputs+=['shim/polaris/uefi-buttons.h','shim/polaris/uefi-buttons-spmi.h',
                  'tools/polaris-buttons.h','tools/polaris-uefi-buttons.h']
@@ -598,6 +734,16 @@ def main():
                   disk_blocks=a.disk_blocks,disk_payload_path=disk_path,
                   chain_app=chain,
                   bounded_input=input_present,input_offset=input_offset,
+                  host_UTC_sync=a.host_utc_sync,host_UTC_mailbox=clock_binding,
+                  host_UTC_source='host-realtime-plus-monotonic-RTT' if a.host_utc_sync else None,
+                  calendar_RAM_only=True if a.host_utc_sync else None,
+                  RTC_write_api=False,monotonic_counter_write_api=False,
+                  battery_readonly=a.battery_readonly,battery_mailbox=battery_binding,
+                  battery_UI_span_limit_us=500000 if a.battery_readonly else None,
+                  battery_physical_PMIC_reads_compiled_out=a.test_qemu if a.battery_readonly else None,
+                  battery_PMIC_write_api=False,wifi_readonly=a.wifi_readonly,
+                  wifi_EFI_SMEM_read_api=False,wifi_EFI_transmit_api=False,
+                  runtime_services_DT=runtime_services,
                   physical_buttons=a.physical_buttons,buttons_offset=buttons_offset if a.physical_buttons else None,
                   TSENS_readonly_inventory=a.tsens_readonly,thermal_configuration_write_api=False,
                   GPU_thermal_lease_trial=a.gpu_thermal_lease,

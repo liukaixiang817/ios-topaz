@@ -37,6 +37,14 @@ int polaris_usb_control_command(struct polaris_usb_diag *d,struct polaris_usb_co
         while(s[i]&&i<60){b[4+i]=(uint8_t)s[i];i++;}return d->transmit(d->context,b,4+i);
     }
     if(same(p,n,"getvar:max-download-size"))return reply(d,"OKAY0x08000000");
+    if((n==14&&same(p,n,"oem utc-status")) ||
+       (n==22&&p[0]=='o'&&p[1]=='e'&&p[2]=='m'&&p[3]==' '&&p[4]=='u'&&p[5]=='t'&&p[6]=='c'&&p[7]=='-') ||
+       (n==63&&p[0]=='o'&&p[1]=='e'&&p[2]=='m'&&p[3]==' '&&p[4]=='u'&&p[5]=='t'&&p[6]=='c'&&p[7]=='-')) {
+        uint8_t response[64]={'O','K','A','Y'};uint64_t bytes=0;
+        if(!c->host_utc || !c->host_utc(c->context,p,n,response+4,&bytes) ||
+           (bytes!=0&&bytes!=60))return reply(d,"FAILUTC metadata unavailable");
+        return d->transmit(d->context,response,4+bytes);
+    }
     if(same(p,n,"oem boot-options")){
         const uint8_t *data=0;uint64_t bytes=0;d->staged=0;d->staged_bytes=0;
         if(!c->boot_options||!c->boot_options(c->context,&data,&bytes)||!data||bytes<32||bytes>65536)
