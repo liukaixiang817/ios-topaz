@@ -22,6 +22,12 @@
 #if EFI_XNU_WIFI_NPA_READONLY_AVAILABLE
 #include "uefi-wifi-npa-readonly.h"
 #endif
+#ifndef EFI_XNU_WIFI_RPMH_READONLY_AVAILABLE
+#define EFI_XNU_WIFI_RPMH_READONLY_AVAILABLE 0
+#endif
+#if EFI_XNU_WIFI_RPMH_READONLY_AVAILABLE
+#include "uefi-wifi-rpmh-readonly.h"
+#endif
 #ifndef EFI_XNU_AUDIO_CLOCK_QUERY_CAMERA_READONLY
 #define EFI_XNU_AUDIO_CLOCK_QUERY_CAMERA_READONLY 0
 #endif
@@ -349,6 +355,12 @@ static inline int pacgq_collect(const struct pacgq_io *io,const struct paic_resu
     pwnpa_collect_preboot(&io->memory,stage,i2c,gcd_context);
     if(pwnpa_unknown()){pacgq_fail(r,PACGQ_UNKNOWN,1);goto finish;}
 #endif
+#if EFI_XNU_WIFI_RPMH_READONLY_AVAILABLE
+    /* Source-bound RPMh RAM baseline uses no provider API or allocation.
+     * Keep it after Clock allocations, before the first GCD map-key interval. */
+    pwrph_collect_preboot(&io->memory,stage,i2c,gcd_context);
+    if(pwrph_unknown()){pacgq_fail(r,PACGQ_UNKNOWN,1);goto finish;}
+#endif
     r->target_count=PACGQ_TARGETS;r->baseline_expected=PACGQ_CALL_TARGETS;r->query_count=PACGQ_TARGETS*2;
     for(unsigned n=0;n<PACGQ_TARGETS;n++){
         for(unsigned mode=0;mode<2;mode++){struct pacgq_query *q=&r->query[n*2+mode];
@@ -484,6 +496,9 @@ static inline void pacgq_report_preboot(void (*ram_append)(const char *))
 #else
 #if EFI_XNU_WIFI_NPA_READONLY_AVAILABLE
     pwnpa_report_preboot(ram_append);
+#endif
+#if EFI_XNU_WIFI_RPMH_READONLY_AVAILABLE
+    pwrph_report_preboot(ram_append);
 #endif
     pacgq_ram_number(ram_append,"AUDIO_I2C_CACHE_ERROR=",pacgq_preboot_i2c.error);
     pacgq_ram_number(ram_append,"AUDIO_I2C_CACHE_RAW_V1_BYTES=",sizeof(pacgq_preboot_i2c));

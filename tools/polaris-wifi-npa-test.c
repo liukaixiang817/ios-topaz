@@ -91,6 +91,7 @@ static void large_graph(unsigned count)
         put(resource+0x28,(uintptr_t)resource+0x200,8);
     }
 }
+#ifndef POLARIS_NPA_FIXTURE_ONLY
 int main(int argc,char **argv)
 {
     assert(argc==3);assert(!posix_memalign((void**)&arena,4096,0x240000));
@@ -146,3 +147,5 @@ int main(int argc,char **argv)
     printf("{\"checks\":%u,\"raw_bytes\":%zu,\"node_bytes\":%zu,\"original_NPA_API_calls\":0,\"SOFTWARE_UEFI_FP_arch_only\":true,\"physical_MMIO_or_radio\":false}\n",checks,sizeof(*nr),sizeof(struct pwnpa_node));
     free(original);free(npa_original);free(arena);return 0;
 }
+
+#endif

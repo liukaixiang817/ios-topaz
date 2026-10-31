@@ -444,6 +444,7 @@ def main():
     ap.add_argument('--original-gcd-query-pe',type=Path,help='default-OFF exact registered original DxeCore GCD getter; TPL/FP guarded')
     ap.add_argument('--audio-clock-gcd-query',action='store_true',help='default-OFF new GCD namespace plus actual DeviceNS AT Clock readonly scope')
     ap.add_argument('--wifi-npa-readonly-pe',type=Path,help='default-OFF original NpaDxe source-bound RAM namespace only; no NPA API/vote; requires whole GCD/Clock scope')
+    ap.add_argument('--wifi-rpmh-readonly-pe',type=Path,help='default-OFF exact original RPMh init/DRV/TCS RAM baseline; NO provider API/client/MMIO/vote')
     a=ap.parse_args();r=Path(__file__).resolve().parents[1]
     if a.test_wled_native_exit and (not a.wled_native_runtime_test or not a.test_qemu or
         a.test_ram_drain!='success' or a.test_wled_native_fault or a.test_wled_native_lifecycle or
@@ -506,6 +507,17 @@ def main():
             gcd_binding['binding_sha256']=hashlib.sha256(gcd_header.encode()).hexdigest()
         except (OSError,ValueError) as error:
             ap.error('GCD query PE must be the exact original project-local image: '+str(error))
+    rpmh_header=None;rpmh_binding=None;rpmh_pe_relative=None
+    if a.wifi_rpmh_readonly_pe:
+        if not gcd_enabled:ap.error('RPMh baseline requires complete original GCD/Clock scope')
+        try:
+            rpmh_pe=a.wifi_rpmh_readonly_pe.resolve(strict=True);rpmh_pe_relative=str(rpmh_pe.relative_to(r))
+            spec=importlib.util.spec_from_file_location('polaris_wifi_rpmh_identity',r/'tools/polaris-wifi-rpmh-identity.py')
+            module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+            rpmh_header,rpmh_binding=module.binding(rpmh_pe)
+            rpmh_binding['binding_sha256']=hashlib.sha256(rpmh_header.encode()).hexdigest()
+        except (ValueError,OSError) as error:
+            ap.error('RPMh source must be exact project-local original PE: '+str(error))
     npa_header=None;npa_binding=None;npa_pe_relative=None
     if a.wifi_npa_readonly_pe:
         if not gcd_enabled:ap.error('NPA RAM namespace requires the complete original GCD/Clock scope')
@@ -644,6 +656,9 @@ def main():
     if gcd_binding:
         (out/'uefi-gcd-core-binding.h').write_text(gcd_header)
         (out/'original-gcd-query-binding.json').write_text(json.dumps(gcd_binding,indent=2)+'\n')
+    if rpmh_binding:
+        (out/'uefi-wifi-rpmh-binding.h').write_text(rpmh_header)
+        (out/'wifi-rpmh-binding.json').write_text(json.dumps(rpmh_binding,indent=2)+'\n')
     if npa_binding:
         (out/'uefi-wifi-npa-binding.h').write_text(npa_header)
         (out/'wifi-npa-binding.json').write_text(json.dumps(npa_binding,indent=2)+'\n')
@@ -823,6 +838,7 @@ def main():
 #define EFI_XNU_WIFI_RESOURCES_AVAILABLE {int(a.wifi_resources_readonly)}
 #define EFI_XNU_GCD_MMIO_QUERY_AVAILABLE {int(gcd_enabled)}
 #define EFI_XNU_WIFI_NPA_READONLY_AVAILABLE {int(npa_binding is not None)}
+#define EFI_XNU_WIFI_RPMH_READONLY_AVAILABLE {int(rpmh_binding is not None)}
 #define EFI_XNU_AUDIO_CLOCK_GCD_QUERY_AVAILABLE {int(gcd_enabled)}
 #define EFI_XNU_AUDIO_CLOCK_QUERY_AVAILABLE {int(audio_clock_binding is not None)}
 #define EFI_XNU_AUDIO_CLOCK_QUERY_CAMERA_READONLY {int(a.audio_clock_query_camera_readonly)}
@@ -905,6 +921,9 @@ def main():
     if audio_clock_binding:
         inputs+=[('shim/polaris/uefi-audio-clock-gcd-query.h' if gcd_binding else 'shim/polaris/uefi-audio-clock-query.h'),'tools/polaris-audio-clock-identity.py',
                  'tools/polaris-audio-clock-identity.h',audio_clock_pe_relative]
+    if rpmh_binding:
+        inputs+=['shim/polaris/uefi-wifi-rpmh-readonly.h','tools/polaris-wifi-rpmh-identity.py',
+                 'tools/polaris-wifi-rpmh-identity.h',rpmh_pe_relative]
     if npa_binding:
         inputs+=['shim/polaris/uefi-wifi-npa-readonly.h','tools/polaris-wifi-npa-identity.py',
                  'tools/polaris-wifi-npa-identity.h',npa_pe_relative]
@@ -1127,6 +1146,18 @@ def main():
         manifest['audio_Clock_query_raw_report_format']='RAW_V2'
         manifest['audio_Clock_query_raw_report_bytes']=43504
         manifest['audio_Clock_query_combined_I2C_Clock_RAM_report_bytes']=98076
+    if rpmh_binding:
+        manifest.update(wifi_CPU0_RPMh_RAM_readonly=True,wifi_CPU0_RPMh_default_OFF=True,
+            wifi_CPU0_RPMh_physical_body=not a.test_qemu,wifi_CPU0_RPMh_physical_compiled_out=a.test_qemu,
+            wifi_CPU0_RPMh_source_PE=rpmh_pe_relative,wifi_CPU0_RPMh_source_SHA256=rpmh_binding['source_whole_sha256'],
+            wifi_CPU0_RPMh_binding_SHA256=rpmh_binding['binding_sha256'],wifi_CPU0_RPMh_immutable_hashes=5,
+            wifi_CPU0_RPMh_raw_format='RAW_V1',wifi_CPU0_RPMh_raw_bytes=19264,
+            wifi_CPU0_RPMh_DRV_max=4,wifi_CPU0_RPMh_TCS_max=16,wifi_CPU0_RPMh_modes_max=4,
+            wifi_CPU0_RPMh_full_raw_two_passes=True,wifi_CPU0_RPMh_new_BS_LocateProtocol_calls_max=2,
+            wifi_CPU0_RPMh_new_BS_GetMap_calls_max=2,wifi_CPU0_RPMh_original_service_FP_arch_TPL_guard=True,
+            wifi_CPU0_RPMh_unknown_blocks_native_and_reset=True,wifi_CPU0_RPMh_provider_API_calls=0,
+            wifi_CPU0_RPMh_client_or_vote=False,wifi_CPU0_RPMh_MMIO_or_SMC=False,
+            wifi_CPU0_RPMh_RAM_baseline_not_TCS_owner_or_rail_permission=True)
     if npa_binding:
         manifest.update(wifi_CPU0_NPA_RAM_readonly=True,wifi_CPU0_NPA_default_OFF=True,
             wifi_CPU0_NPA_physical_body=not a.test_qemu,wifi_CPU0_NPA_physical_compiled_out=a.test_qemu,

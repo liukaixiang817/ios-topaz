@@ -239,6 +239,9 @@ static int new_original_unknown(void)
 #if EFI_XNU_WIFI_NPA_READONLY_AVAILABLE
     ||pwnpa_unknown()
 #endif
+#if EFI_XNU_WIFI_RPMH_READONLY_AVAILABLE
+    ||pwrph_unknown()
+#endif
     ;}
 #endif
 #elif EFI_XNU_AUDIO_CLOCK_QUERY_AVAILABLE
@@ -349,6 +352,9 @@ static int prepare_boot(void *context)
 #endif
 #if EFI_XNU_WIFI_NPA_READONLY_AVAILABLE
         report("WIFI_NPA_SOFTWARE_PHYSICAL_NAMESPACE_COMPILED_OUT=",1);
+#endif
+#if EFI_XNU_WIFI_RPMH_READONLY_AVAILABLE
+        report("WIFI_RPMH_SOFTWARE_PHYSICAL_PROVIDER_RAM_COMPILED_OUT=",1);
 #endif
     }
 #else

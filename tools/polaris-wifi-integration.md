@@ -298,3 +298,17 @@ final Clock/GCD interval; keep its existing gates. Static ABI evidence and the
 complete NPA graph grant no MMIO, rail, reset, authentication or VMID action.
 The private static proof and display-only disassembly never execute or modify
 the original PE. Current may_start_MSS/may_serve_NV_to_remote remain false.
+
+
+0147 adds an explicit default-off source-bound RPMh initialization and queue
+RAM snapshot to the actual preboot coordinator. The original Init entry writes
+its initialized flag before completing its allocations; flag1 with missing
+per-DRV queue/TCS state is therefore retained and refused as NOT_READY. The
+reader follows only bounded BootServices RAM extents with actual identity checks,
+keeps full partial bytes, and repeats the complete snapshot under the existing
+200ms/architecture and original service FP/TPL guards. It calls LocateProtocol
+and GetMemoryMap only, after Clock handle allocations and before first GCD.
+It never calls RPMh Init, IsDrvValid, Create/Delete, sends a vote, accesses MMIO
+or starts MSS. Software TCS state is not hardware TCS ownership. Actual stable
+provider/config/queue evidence and the subsequent owned private-client/stop,
+MSS/authentication, memory and GLINK/RMTFS work remain required before Wi-Fi.

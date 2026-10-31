@@ -34,6 +34,37 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0146 last actualLIVE18:02; NEW0147 own RPMh RAM prerequisite integrated, host/image NOT READY
+
+- ONLY Wi-Fi, serial parent; allchildren/audio/camera staySTOPPED. Actual0146
+  controller/consumedimage/payload/UTCcount1 unchanged, no newUSB this milestone.
+  The following0146 physical189-node/source/UI results remain latest actual.
+- New defaultOFF --wifi-rpmh-readonly-pe binds exact original81 RpmhDxe whole
+  b718efb6/61440B to five immutable hashes/relocations/protocolGUID+200B table.
+  ActualEFI prepare hook is after all Clock allocations/context verification,
+  BEFORE firstGCD; only2LocateProtocol+2GetMap under originalFP/arch/TPL guards.
+  No RPMh API/Init/IsDrvValid/client/vote/SMC/MMIO/alloc/free/provider execution.
+- Two bounded source-ABI RAM snapshots: initflag+liveconfig/count/DRVrows,
+  modepointers/24B raw, perDRV24B TCSstates, originalfive40B requestqueueheaders.
+  Max4DRV/16TCS/4modes, raw19264B retains allpartialbytecounts+originalmaps/
+  protocoltables/5hashes perpass. Initflag1+missingdynamicstate refusesNOT_READY;
+  flag1 alone cannot prove initcompletion. Whole200ms/identity/ownedRAM/time /
+  stabletwopass/UNKNOWN gates retained; UNKNOWN propagates parentnative/PON/
+  receipt block. No Init/query-loop/cleanup fallback. RAMsnapshot is NOT live
+  hardwareTCSowner, exclusiveDRV/VMID or railpermission; hardware prerequisites
+  and realMSS start/scan/join/data stillfalse.
+- New physical-body build0147/wifi/RPMh-driver-ON-0001 is12f8acd92e15e153e541f9
+  ac7d250f62ac5d3aaf138706cdaa88b46155cd51b4/3078656B/69inputs. New22ASAN/UBSAN
+  softwarestate/source/partial/UNKNOWN cases and actualcombinedcoordinator
+  AArch64COFF+MachO(maxframe1024)/fullEFI pass, proof
+  4de59597ddac76f58d189ecdd2708533731c742f77df57f0b3dd934c4779d07d.
+  Software servicepeer/originalPEasDATA is NOT physicalRPMh/MSS/radio.
+- Two affected wholeEFI-XNU terminalmodels are INFLIGHT, hostexactprofile/image/
+  freeze NOTREADY. No nativechange/CI/download; preserve7d24/63cb/f790/7400 /
+  all existingCPU/GPU/WLED/storageguards. NEXTfinish affectedmodels and NEW
+  committed-source hostscope/package/freeze before physicalbaseline, not old
+  manifest/profile reuse. Currentphone only frozen0146 can laterdrain normally.
+
 ### CURRENT0146 nativeLIVE18:02 / actual complete189 NPA two-pass SUCCESS; CX/MX unresolved, Wi-Fi not yet working
 
 - Supersedes allold0145LIVE/inflight/READY. Old0145 normallyclosed48891 ENDED0
