@@ -34,6 +34,30 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0141 committedSOURCEbe29 +actual2models/source52 admission PASS; package/freeze NEXT; phone0140 stillLIVE normalUI
+
+- NewfirmwareSOURCE be29d607b1ea1bb943dc394d8eac92dfd4e5dcd4 committed/pushed.
+  Parent逐读main/cache/builder/RAW/typedhostdiff+29relatedtestsPASS. Source
+  52 actualinputs=50committedcode+2privateexactoriginalPEs, other44 oldinputs
+  unchanged. NewphysicalON7ba7c045.../879616B/manifestceacc604... independently
+  COPY, kernel82b3/model+physicalb31/CIproof reuseCOPY32files (fd8d7ea1...);
+  no nativeCI/download/rebuildsamephysicalON/originalpathchanges.
+- ONEtwoactual wholeEFI-XNU models49244 ENDED0:19checks each,39.489489/
+  39.870043s, SOFTWAREARM250014/250000us,80/82raw/12writes/oneobserver.
+  Actualcache+NC+audio rawcompiledoutmarkers alltypeint1 (batteryalso1),
+  actual52inputs equalphysicalON; fullTU removesphysicalbodies/records/work.
+  Proof48fab3ab8036fcd38fe21773935a144938a8f93cd6d1e7bf43a9486be11e5a85.
+  NophysicalSMEM/audio/radio/PCM/guestresetclaim fromthesemodels.
+- Parentsealed BOTHnew SOURCEprofiles onlytoexactcombined52/be29/82b3/
+  unchangedb31 payload (notarbitraryNC/audio mode); oldDevicegate unchanged.
+  Actualphysical+2currentmodels+nativeCI41205803135/source41e9a87 andfresh
+  rooted39/c7d3 admissionPASS, proofparent-source-profile-and-actual-model-
+  admission-proof.json.21relatedtestsPASS; no strips/rewrittenoldmanifest.
+  NEXT ONEpackage/wholecodec/current-sourceaudit/COPY/newcase, then0140
+  realnativeVFS/GPU/CPUdrain/fullappendraw/newreceipt/independentFASTBOOT,
+  ONLYthenONE0141image/payload. Nohumanquestionpending. Current0140still
+  controlledLIVE/frozen0140controller; no currenteditedclient/rebootfallback.
+
 ### 0140 ACTUALUI normalwallpaper/home/pages +GPUdesktopcompletions; 0141 combinedWiFiNC/audioSOURCE ready, NOTadmitted/booted
 
 - Actualcapture0004/44702 ENDED0 showsfullofficial7400 colorlockscreen,

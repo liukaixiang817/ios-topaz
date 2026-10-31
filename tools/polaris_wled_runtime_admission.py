@@ -160,9 +160,64 @@ def _exact(actual,expected):
     return actual==expected
 
 
-#Independent NormalNC scope. None means NOT admitted; populate only after
-#committed-source/actual-f790-kernel/payload and full compiled input review.
-NORMAL_NC_0141=None
+# Independent combined0141 source scope: exact committed52 inputs, reused
+# 82b3/f790 native artifact and unchanged b31 payload. Both new observers
+# must match these inputs; this does not authorize another combination.
+NORMAL_NC_0141={'firmware_source': 'be29d607b1ea1bb943dc394d8eac92dfd4e5dcd4',
+ 'inputs': {'research/polaris/uefi-integration-0057/firmware-files/04de8591-d2b3-4077-bbbe-b12070094eb6.efi': '5eb6c9ddd3449ef3f74feb3644448c279fcc619dc95812b16ad2fb616d738332',
+            'research/polaris/uefi-integration-0057/firmware-files/f541d663-4a48-40aa-aabf-ff158ccae34c.efi': '9e366873287fbde6452bb8990ee233f7e53513454befb48df01378d88a072ea8',
+            'shim/polaris/payload.c': 'd5a3901b87692b5e0776713a8dd7c163ac18b40984b684524103514922e6bd5d',
+            'shim/polaris/payload.h': '268b7f90c6c5076aeaf28421848fa82ee435f4c57f48b444d02cc15f0dd31cd6',
+            'shim/polaris/runtime-marker.h': '23ae6c2ea5c43520cf29e59a9dbbe1f0bcdc0653464c8e052aaebfc83fc3bd8e',
+            'shim/polaris/runtime-quiesce.h': '184aa7ad4d296c407e061082fa1f83d46278489e0252ed142136c3718d778757',
+            'shim/polaris/uefi-audio-i2c-cache.h': 'e05e4ed656690ae99b5de2348ec502cbf00c37bdf2cf78c34f5487e654573ff3',
+            'shim/polaris/uefi-battery-native.h': 'b07ff3fe03732565fd2a7b34935a771250e1a6c6d5f1966bedf7a24d687edd1d',
+            'shim/polaris/uefi-boot-options.h': 'e6162e260155ac0ddc29d30a72589e39f20bb4e1137e2f44144d5cef7635f1dc',
+            'shim/polaris/uefi-buttons-spmi.h': '3010dfb293f4cef33d44a28754090752a77f22fee04930487b54e5114f60a8e8',
+            'shim/polaris/uefi-buttons.h': 'ce7872c28a560b7ae09131f85b460b9b9766dc1ddf3e93287a800d1c7d95bd2f',
+            'shim/polaris/uefi-file.h': '8c0745612a3965ef24d3a220ace186eef0c84ec24f9f606f4abbc851ef02a3b8',
+            'shim/polaris/uefi-memory.h': '6b7927260bcf2492bf6d5ae037d541bddcce58f3f8134a716b0d728f31651753',
+            'shim/polaris/uefi-ram-lease.h': '75b256a7b3da6f64f9be04f2930485b53b9dad4dbbda9d617f550a5db88693c3',
+            'shim/polaris/uefi-reset.h': '594cbe372e810162982a71e3c8a2ec4f9812df33807a03f6aa86f82bef65c3f2',
+            'shim/polaris/uefi-usb-command.c': '46a85fd86c752ba3ed327862f74b107bb08c28d94f9a6f2bde1202260155e46a',
+            'shim/polaris/uefi-usb-control.c': '74cb9fe5c4709ed89b70ea5a70fa22e21d8cf5deb3d4076827a68d10618cf44f',
+            'shim/polaris/uefi-usb.c': 'cb2573ab5ca7c4bd7629bd4d1c0e5964d10bd9b0bd184cfce1b51241d1954b1a',
+            'shim/polaris/uefi-usb.h': '8ad0adef34e90e929da8fc14e552dab6abad7e51951038badba1c35289cf7c6d',
+            'shim/polaris/uefi-wifi-cache-readonly.h': 'caddefda2d78318a43999be99f4c0251ae773c2f208a1bf02517c590adf23804',
+            'shim/polaris/uefi-wifi-firstread-normal-nc.h': 'f377b490ca67c1db6b4a6872abed2c10603587464025c035476a4bc6e4910dc6',
+            'shim/polaris/uefi-wled-journal.h': '599e5244c2c90407fcf6e45a23c5375dd1f3cb66a99389128058cf6742eed93e',
+            'shim/polaris/uefi-wled-native.h': 'a8353fd083fd561b6158621d92299ed0621fd3b84b173e2a73b23be8d359831d',
+            'shim/polaris/uefi-wled-power.h': '6f411cf7c9a819f51eddb7317cb285954a15da3043f3488a910bbadce2dba88d',
+            'shim/polaris/uefi-wled-readonly.h': '6784dd380e56cb5b94601ad52cd0e165c1df3632338c188495f3d72a7787a9b6',
+            'shim/polaris/uefi-wled-runtime.h': 'c4aab671375b5e0f5b29e8529bd48d489f6504c30dd5957aa1680135be8bf111',
+            'shim/polaris/uefi-wled-status.h': '7f1e988b1a27904d4b021ee4dd43ea88a330c9e87fad64816154e7bbbc457db5',
+            'shim/polaris/uefi-xnu-ap.S': '060f146b68ddc1f98beeaefc2ff42899791149e8ce37a9cc22830039f872e2cb',
+            'shim/polaris/uefi-xnu-crc.c': '1de4bdaede7864c861aa78d7845da9a2bf1dae023a49efc896804ae0c648b2cb',
+            'shim/polaris/uefi-xnu.c': 'f1cc43c731fc3f5c284dabf25651fb55685e9b5388c9b1377e3c229a0e32f949',
+            'shim/polaris/uefi-xnu.h': '8d394e618d92fc3188550b8b94da279bfe8a2334b88a14f45b87ce45d9b87b8f',
+            'shim/polaris/uefi.h': '4c704e68dafbf36c59eddd9623275c2c51168d9ed6353106c9900b0c5894e2c6',
+            'tools/adt.py': 'ebb7a858835fc7acf5da1e543a05b9561e70c6fd4f9328f4d52c009465573bdd',
+            'tools/build-polaris-uefi-xnu.py': '6f67b3a562270e271b2372e9dd33da78edb40e92b0d7db21eaee8ad12f85787a',
+            'tools/mkpayload.py': '33c670c2287691f9ba19cbb2f56bfa32e433c0e0bfa2c178ffb5403aecb46b23',
+            'tools/polaris-audio-i2c-firmware-identity.h': '648c34541a51f4836d66ce4883811c2239d4f471884295e031443f8b094bb799',
+            'tools/polaris-audio-i2c-firmware-identity.py': '93982fe30e4b274936ccb266b02c65a1c5dd5c1ec103146cb61ee7c9f96411b2',
+            'tools/polaris-battery-native.cpp': '22e0fee9b66ee82d524dfb90c285230590f7037abfeac2fa05722dafbf9309b5',
+            'tools/polaris-battery-producer.h': '5834a761cc1c5c618efca4ccf5b604afd4a44f68cbfd612e47c259496278411c',
+            'tools/polaris-battery-readonly.h': '4763209498244fedb95d5e7edec97994fb4d2d5e8f9521d4d4f94278fb2c0e21',
+            'tools/polaris-battery-shared.h': 'e11a3ff135c92a13c2b8f2dab908c8a70c25e9f595228ac49efd49f960f88ce0',
+            'tools/polaris-buttons.h': 'f31cfb945680007f8b100f01d2680c2822e035bcf6a1888e28581603fe56913d',
+            'tools/polaris-clock-host.py': 'a2219a00329d16a8e01992d83bc89a41205a809470a79668110a3fb7a3c6e39a',
+            'tools/polaris-clock-native.h': 'fc34ea97a6cdf5d1a1850257147db6a13fac79463d78ad3fd9761e20231de16c',
+            'tools/polaris-clock-sync.h': 'f82b864530564ec92d45390590dc34c8c15c53cd3afc833021117f5c29f95e1d',
+            'tools/polaris-clock-uefi.h': '537d558904b27c2118c5b6263cc2a4c22704c1a61ee48d75283ef24bed297ef3',
+            'tools/polaris-uefi-buttons.h': '06bab9e8a1de3057de220d952da56ccb20c5c35e9db130e00308868ccd71fe8d',
+            'tools/polaris-uefi-input.h': '2f81d45cdfcf400eb924f299ab44458092aabb10530bb4acf374d56f612c14dc',
+            'tools/polaris-wifi-firmware-identity.h': '35af76a7a754d481980c51750382fd006786abba093ea635ec92863c67af4b50',
+            'tools/polaris-wifi-firmware-identity.py': '35a5c7e18113f8f1a9d9e529ffce22de98085fe88981e904ffa8e3ce19d6abac',
+            'tools/polaris-wled-mailbox.h': 'de8b2fbc39e6ec406e7786ca4741ae76f76ecae01f311017ad127e2629715215',
+            'tools/polaris_uefi_cpu_tree.py': '7cc6c14bcb907ff3e6141e1102b8c7e6105996c669a89692caf6f34318f6372a'},
+ 'kernel': '82b3fef383365efdfbf3c8fd72c4a98cab15589d96dbaf006c5af5cd96ab5802',
+ 'payload': 'b31ca438733318708cbf7af7bc4e2729cfb0a1db4972b88115f492d6c01ad38a'}
 NORMAL_NC_PREFIX='wifi_CPU0_normal_nc_firstread_'
 NORMAL_NC_DISABLED={'FIFO_or_TX': False,
  'MAIR_expected': None,
@@ -240,7 +295,7 @@ NORMAL_NC_PHYSICAL_FIELDS={'FIFO_or_TX': False,
  'whole_raw_PAR_stable': True}
 
 #Independent I2CDxe original-imageRAM witness, never a deviceI2C permission.
-AUDIO_I2C_0141=None
+AUDIO_I2C_0141=dict(NORMAL_NC_0141)
 AUDIO_I2C_PREFIX='audio_I2C_cache_'
 AUDIO_I2C_DISABLED={'DIR64_relocations': None,
  'MMIO_reads': False,
