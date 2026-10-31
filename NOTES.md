@@ -55,6 +55,18 @@ early samples only. On0029 the human already confirmed boot complete and said
   TASidentity/ADSP/PCM/phoneclaim; nonzeroheadisNOTSE5ownership. Do notkeep
   addingofflineparsers: nextisactualoriginalimagecache+separatehardware
   lifetime/permission evidence beforeanynativeaudio transport.
+- Actual0139 mappinganalysis e7511cad...: cache4668.49us, firstreadATTR
+  refusal37.34usaftercache (not200mstimeout); PAR44/NS1/SH2=NormalInner/
+  OuterNC, consistentwithEDK2 UNCACHED_UNBUFFERED/ownvendorWC/Mi8WCOMB.
+  ONLYfirstpageATobserved; nootherpage/read/MPU/VMIDclaim. Independent0141
+  NCheader+test+checker defaultOFF completed, exactPAR44/NS/SH2/identity
+  ALL3pagesbeforeANYload +stablebeforeafter/MAIRffbb4400/cachefresh200ms/
+  singleattempt/issuedDSB/sticky retained.41ASAN/UBSAN+fourAArch64variants+
+  doubleflag/no-cache compile refusalsPASS (sourceproof955dfd5d.../draft13a8506b...).
+  Max18 isONLYarchitecturalLDR32, Normal speculative/repeated/coalescedbus
+  accesses cannotbecappedbyit. OriginalDevicegate unchanged, newflagalone
+  distinct. NOTintegrated/admitted/phone-tested: main/builder/host changes
+  onlyPROPOSAL in0141; doNOTapplyuntil0140source/model/image frozen.
 - Final0139/performance/bbd-activation-final-0002/graphics-retained-trial:
   bundle f790512548bfb9d46911590bedf5ec3962e9c3dc566b10f219d618131ae65353
   /19072848B; manifest00dbde9a.../actualproof442fc94d... . OnlyMesa d283+
