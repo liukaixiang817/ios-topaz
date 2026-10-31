@@ -41,7 +41,10 @@ struct args {uint16_t revision,version;uint64_t va,pa,size,top;struct video vide
 _Static_assert(sizeof(struct args)==736,"XNU boot args ABI");
 static struct efi_system *system_table;
 static efi_handle driver_image;
-#if EFI_XNU_WIFI_RESOURCES_AVAILABLE
+#if EFI_XNU_GCD_MMIO_QUERY_AVAILABLE
+static uint8_t log_buffer[262144];static uint64_t log_bytes;
+static volatile uint32_t log_overflow;
+#elif EFI_XNU_WIFI_RESOURCES_AVAILABLE
 static uint8_t log_buffer[131072];static uint64_t log_bytes;
 static volatile uint32_t log_overflow;
 #else
@@ -219,7 +222,19 @@ static int shutdown_status(void *,const uint8_t **,uint64_t *);
 #include "uefi-audio-i2c-cache.h"
 #endif
 #endif
-#if EFI_XNU_AUDIO_CLOCK_QUERY_AVAILABLE
+#if EFI_XNU_AUDIO_CLOCK_GCD_QUERY_AVAILABLE
+#if !EFI_XNU_GCD_MMIO_QUERY_AVAILABLE || !EFI_XNU_WIFI_RESOURCES_AVAILABLE || !EFI_XNU_AUDIO_CLOCK_QUERY_AVAILABLE
+#error "NEW GCD/Clock requires its exact combined original-resource scope"
+#endif
+#if !defined(POLARIS_EFI_TEST_QEMU)
+/* Outer include gate removes every new physical/query/FP body from QEMU. */
+#include "uefi-gcd-mmio-readonly.h"
+#include "uefi-audio-clock-gcd-query.h"
+static int original_service_unknown;
+static int new_original_unknown(void)
+{return original_service_unknown||(pgcd_resident_context.record&&pgcd_uncertain(&pgcd_resident_context))||pacgq_preboot_record.uncertain||pacgq_preboot_record.outstanding||pacgq_ticket.outstanding;}
+#endif
+#elif EFI_XNU_AUDIO_CLOCK_QUERY_AVAILABLE
 #if !defined(POLARIS_EFI_TEST_QEMU)
 #include "uefi-audio-clock-query.h"
 #endif
@@ -379,7 +394,20 @@ static int prepare_boot(void *context)
         report("AUDIO_I2C_CACHE_SOFTWARE_PHYSICAL_IMAGE_INSPECTION_COMPILED_OUT=",1);
     }
 #else
-#if EFI_XNU_AUDIO_CLOCK_QUERY_AVAILABLE
+#if EFI_XNU_AUDIO_CLOCK_GCD_QUERY_AVAILABLE
+    if(original_service_unknown)return 0;
+    struct pgcd_context *gcd=pgcd_prepare(system_table,load_state);
+    pacgq_collect_preboot(system_table,load_state,gcd);
+    pacgq_report_preboot(ram_text);
+    ram_report("ORIGINAL_GCD_ATTEMPTED=",pgcd_record.attempted);
+    ram_report("ORIGINAL_GCD_ERROR=",pgcd_record.error);
+    ram_report("ORIGINAL_GCD_RAW_V1_BYTES=",sizeof(pgcd_record));
+    ram_text("ORIGINAL_GCD_RAW_V1_BEGIN\r\n");ram_hex((const uint8_t*)&pgcd_record,sizeof(pgcd_record));
+    ram_text("ORIGINAL_GCD_RAW_V1_END\r\n");
+    if(new_original_unknown()){
+        original_service_unknown=1;ram_report("ORIGINAL_SERVICE_UNKNOWN_NATIVE_AND_RESET_BLOCKED=",1);return 0;
+    }
+#elif EFI_XNU_AUDIO_CLOCK_QUERY_AVAILABLE
     pacq_collect_preboot(system_table,load_state);
     pacq_report_preboot(ram_text);
 #else
@@ -395,6 +423,10 @@ static int prepare_boot(void *context)
         report("AUDIO_CLOCK_QUERY_SOFTWARE_PHYSICAL_ORIGINAL_QUERY_COMPILED_OUT=",1);
     }
 #endif
+#endif
+#if EFI_XNU_GCD_MMIO_QUERY_AVAILABLE && defined(POLARIS_EFI_TEST_QEMU)
+    report("ORIGINAL_GCD_SOFTWARE_PHYSICAL_SERVICE_FP_COMPILED_OUT=",1);
+    report("AUDIO_CLOCK_GCD_SOFTWARE_PHYSICAL_QUERY_COMPILED_OUT=",1);
 #endif
 #if defined(EFI_XNU_WLED_NATIVE_RUNTIME)
     /* A BootServices lookup belongs BEFORE CPU0 IRQ ownership changes. */
@@ -465,6 +497,22 @@ static void boot_kernel(void *context)
     }
 #endif
     clean(plan.args_pa,sizeof(*args));report("DURABLE_RESET_GUARD_ARMED=",physical?1:2);
+#endif
+#if EFI_XNU_GCD_MMIO_QUERY_AVAILABLE && !defined(POLARIS_EFI_TEST_QEMU)
+    /* Final restoration checkpoint AFTER all original BS/PON/Console calls,
+     * BEFORE intentional DAIF/Group1 change. All following evidence uses RAM
+     * only. It does not renew the earlier namespace/Device read permission. */
+    int original_safe=!new_original_unknown()&&pacgq_prestart_checkpoint(&pgcd_resident_context);
+    ram_report("ORIGINAL_SERVICE_FINAL_PRESTART_SAFE=",original_safe);
+    ram_report("AUDIO_CLOCK_GCD_FINAL_PRESTART_CHECKED=",pacgq_preboot_record.prestart_checked);
+    ram_report("AUDIO_CLOCK_GCD_FINAL_PRESTART_PASSED=",pacgq_preboot_record.prestart_passed);
+    ram_report("AUDIO_CLOCK_GCD_FINAL_UNCERTAIN=",pacgq_preboot_record.uncertain);
+    ram_report("AUDIO_CLOCK_GCD_FINAL_OUTSTANDING=",pacgq_preboot_record.outstanding);
+    ram_report("ORIGINAL_GCD_FINAL_PRESTART_COUNT=",pgcd_record.prestart_count);
+    ram_report("ORIGINAL_GCD_FINAL_PRESTART_BYTES=",sizeof(pgcd_record.prestart));
+    ram_text("ORIGINAL_GCD_FINAL_PRESTART_BEGIN\r\n");ram_hex((const uint8_t*)pgcd_record.prestart,sizeof(pgcd_record.prestart));ram_text("ORIGINAL_GCD_FINAL_PRESTART_END\r\n");
+    if(!original_safe){original_service_unknown=1;load_state=3;ram_lease.active=0;return;}
+    if(log_overflow){load_state=3;ram_lease.active=0;return;}
 #endif
     /* IRQ ownership moves to XNU. USB's controller API is polled; no firmware
      * UFS/file operation or GOP BLT is allowed while the kernel owns devices. */
@@ -720,6 +768,9 @@ static int runtime_arm_reset(unsigned mode)
 static int prepare_reset(void *context,unsigned mode)
 {
     (void)context;if(mode!=1&&mode!=2)return 0;
+#if EFI_XNU_GCD_MMIO_QUERY_AVAILABLE && !defined(POLARIS_EFI_TEST_QEMU)
+    if(new_original_unknown())return 0; /* No PON/marker/receipt on unknown original state. */
+#endif
 #if defined(EFI_XNU_WLED_POWER_CYCLE_ONLY)
     if(!wled_cycle_reset_ready())return 0;
 #endif
@@ -762,6 +813,9 @@ static int prepare_reset(void *context,unsigned mode)
 }
 static void reset(void *context,unsigned mode)
 {
+#if EFI_XNU_GCD_MMIO_QUERY_AVAILABLE && !defined(POLARIS_EFI_TEST_QEMU)
+    if(new_original_unknown())return;
+#endif
 #if defined(EFI_XNU_WLED_NATIVE_RUNTIME)
     wln_reset_retryable=0;
     uint64_t at=buttons_us(0);report("RESET_FINAL_CHECK_US=",at);
@@ -857,6 +911,9 @@ static efi_status admission(void)
 #if EFI_XNU_WIFI_RESOURCES_AVAILABLE && !defined(POLARIS_EFI_TEST_QEMU)
     if(!pfr_bind_resident(image))report("WIFI_RESOURCES_SELF_BIND_REFUSED=",1);
 #endif
+#if EFI_XNU_GCD_MMIO_QUERY_AVAILABLE && !defined(POLARIS_EFI_TEST_QEMU)
+    if(!pgcd_bind_resident(image))report("ORIGINAL_GCD_SELF_BIND_REFUSED=",1);
+#endif
 #endif
 #if defined(POLARIS_EFI_TEST_QEMU)
     /* virt has no physical panel reservation. Claim the synthetic panel RAM
@@ -951,6 +1008,13 @@ static void idle_guard(void *context)
         }
     }
 }
+#if EFI_XNU_GCD_MMIO_QUERY_AVAILABLE && !defined(POLARIS_EFI_TEST_QEMU)
+static int new_guarded_reset_receipt(void *context,unsigned mode,const uint8_t **data,uint64_t *bytes)
+{
+    if(new_original_unknown()){if(data)*data=0;if(bytes)*bytes=0;return 0;}
+    return wln_reset_receipt(context,mode,data,bytes);
+}
+#endif
 static struct polaris_usb_control controls={.begin=begin,.write=write_payload,.finish=finish,
     .prepare_boot=prepare_boot,.boot=boot_kernel,.prepare_reset=prepare_reset,.reset=reset,
     .state=state,.logs=logs,.running=running,.touch=touch,.input_status=input_status,.boot_options=boot_options,
@@ -961,7 +1025,12 @@ static struct polaris_usb_control controls={.begin=begin,.write=write_payload,.f
     .wled_journal=wled_journal_capture,.reset_receipt=wled_reset_receipt,
 #endif
 #if defined(EFI_XNU_WLED_NATIVE_RUNTIME)
-    .wled_runtime_page=wln_capture_page,.reset_receipt=wln_reset_receipt,
+    .wled_runtime_page=wln_capture_page,
+#if EFI_XNU_GCD_MMIO_QUERY_AVAILABLE && !defined(POLARIS_EFI_TEST_QEMU)
+    .reset_receipt=new_guarded_reset_receipt,
+#else
+    .reset_receipt=wln_reset_receipt,
+#endif
     .wled_exit_begin=wln_exit_begin,.wled_exit_finish=wln_exit_finish,.wled_exit_abort=wln_exit_abort,
 #endif
 #if EFI_XNU_HOST_UTC_AVAILABLE

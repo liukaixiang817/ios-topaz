@@ -21,6 +21,47 @@ import zlib
 def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
 
 
+def gcd_clock_metadata(enabled,qemu,core_binding,core_pe):
+    # Explicit NEW scope; the previous Device/BSmap-only policy is unchanged.
+    e=bool(enabled);physical=bool(e and not qemu)
+    return dict(original_GCD_query=e,original_GCD_default_OFF=True,
+        original_GCD_physical_body=physical,original_GCD_physical_compiled_out=bool(e and qemu),
+        original_GCD_original_PE=core_pe,
+        original_GCD_original_PE_whole_SHA256=core_binding['whole_SHA256'] if core_binding else None,
+        original_GCD_binding_SHA256=core_binding['binding_sha256'] if core_binding else None,
+        original_GCD_registered_DS_GUID='05ad34ba-6f02-4214-952e-4da0398e2bb9' if e else None,
+        original_GCD_immutable_hashes=5 if e else None,original_GCD_exact_descriptor_bytes=56 if e else None,
+        original_GCD_fixed_pages=[0x10b000,0x117000,0x152000,0x18a000] if e else None,
+        original_GCD_original_getter_calls_max=8 if e else None,original_GCD_BS_GetMap_calls_max=2 if e else None,
+        original_GCD_original_TPL_lock_and_event_dispatch=physical,
+        original_GCD_getter_RO_may_write_original_TPL_lock_RAM=physical,
+        original_GCD_raw_bytes=30000 if e else None,original_GCD_raw_format='RAW_V1' if e else None,
+        original_GCD_full_partial_raw_preserved=True if e else None,
+        original_GCD_bootstrap_authority='incoming UEFI BS contract' if e else None,
+        original_GCD_bootstrap_TPL_UNOBSERVED=True if e else None,
+        original_GCD_FP_CPACR_before_Q_instructions=True if e else None,
+        original_GCD_FP_q8_q15_full128_FPCR_FPSR_preserved=True if e else None,
+        original_GCD_CPACR_write=False,original_GCD_original_call_unknown_blocks_native_and_reset=True if e else None,
+        original_GCD_final_prestart_checkpoints=2 if e else None,original_GCD_final_checkpoint_RAM_appended=True if e else None,
+        original_GCD_classification_is_not_MPU_or_exclusive_permission=True,
+        original_GCD_GetMap_unlisted_alone_grants_MMIO=False,
+        original_GCD_type_required=3 if e else None,original_GCD_UC_capability_required=True if e else None,
+        original_GCD_Attributes_allowed=[0,1] if e else None,original_GCD_Attributes_zero_is_UC=False,
+        original_GCD_no_BS_RAM_reserved_unknown_overlap=True if e else None,
+        original_GCD_each_Clock_call_actual_Device_NS_identity=True if e else None,
+        original_GCD_indirect_GCC_MMIO_read_body=physical,original_GCD_MMIO_writes=False,
+        original_GCD_MMIO_writes_field_scope='direct getter/provider body only',
+        original_GCD_indirect_event_hardware_side_effects_proven_absent=False,
+        original_GCD_actual_observations_proven=False,original_GCD_SMEM_or_radio=False,
+        original_GCD_external_SError_recoverable=False,original_GCD_nonreturning_walltime_bound_proven=False,
+        audio_Clock_GCD_query=e,audio_Clock_GCD_raw_format='RAW_V2' if e else None,
+        audio_Clock_GCD_raw_bytes=43504 if e else None,audio_Clock_GCD_original_query_calls_max=16 if e else None,
+        audio_Clock_GCD_CapUC_Attributes0_or_UC=True if e else None,audio_Clock_GCD_CAMCC_NOT_ISSUED=True,
+        audio_Clock_GCD_combined_I2C_Clock_RAM_report_bytes=98076 if e else None,
+        original_GCD_new_scope_RAM_log_capacity=262144 if e else None,
+        original_GCD_snapshot_allocation_matches_log_capacity=True if e else None)
+
+
 def resource_clock_metadata(enabled,qemu,clock_binding,clock_pe):
     """Explicit observations; neither a memory descriptor nor a clock bit grants ownership."""
     pfr=dict(readonly=enabled,default_OFF=True,physical_map_PSCI_body=bool(enabled and not qemu),
@@ -384,6 +425,8 @@ def main():
     ap.add_argument('--disk-blocks',type=int)
     ap.add_argument('--disk-version',default='V0061')
     ap.add_argument('--chain-app-manifest',type=Path,help='RAM test wrapper for the exact already-built selected disk app')
+    ap.add_argument('--original-gcd-query-pe',type=Path,help='default-OFF exact registered original DxeCore GCD getter; TPL/FP guarded')
+    ap.add_argument('--audio-clock-gcd-query',action='store_true',help='default-OFF new GCD namespace plus actual DeviceNS AT Clock readonly scope')
     a=ap.parse_args();r=Path(__file__).resolve().parents[1]
     if a.test_wled_native_exit and (not a.wled_native_runtime_test or not a.test_qemu or
         a.test_ram_drain!='success' or a.test_wled_native_fault or a.test_wled_native_lifecycle or
@@ -433,6 +476,19 @@ def main():
         not a.audio_clock_query_camera_readonly or not a.audio_clock_query_mss_readonly or not a.audio_i2c_cache_pe or
         not a.wifi_cpu0_firstread_normal_nc or not a.wifi_firmware_cache_pe or not a.wifi_readonly or not native_runtime):
         ap.error('resource/Clock queries require the explicit combined exact NC, SmemDxe, I2CDxe, ClockDxe and GCC readonly scope')
+    gcd_enabled=bool(a.original_gcd_query_pe or a.audio_clock_gcd_query)
+    if gcd_enabled and (not a.original_gcd_query_pe or not a.audio_clock_gcd_query or not combined_resources):
+        ap.error('NEW GCD/Clock requires both explicit flags and the complete original-resource/NC/I2C/Clock scope')
+    gcd_header=None;gcd_binding=None;gcd_pe_relative=None
+    if gcd_enabled:
+        try:
+            gcd_pe=a.original_gcd_query_pe.resolve(strict=True);gcd_pe_relative=str(gcd_pe.relative_to(r))
+            spec=importlib.util.spec_from_file_location('polaris_gcd_identity',r/'tools/polaris-uefi-gcd-identity.py')
+            module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+            gcd_header,gcd_binding=module.binding(gcd_pe)
+            gcd_binding['binding_sha256']=hashlib.sha256(gcd_header.encode()).hexdigest()
+        except (OSError,ValueError) as error:
+            ap.error('GCD query PE must be the exact original project-local image: '+str(error))
     audio_clock_header=None;audio_clock_binding=None;audio_clock_pe_relative=None
     if a.audio_clock_query_pe:
         try:
@@ -557,6 +613,9 @@ def main():
     if audio_clock_binding:
         (out/'uefi-audio-clock-binding.h').write_text(audio_clock_header)
         (out/'audio-clock-query-binding.json').write_text(json.dumps(audio_clock_binding,indent=2)+'\n')
+    if gcd_binding:
+        (out/'uefi-gcd-core-binding.h').write_text(gcd_header)
+        (out/'original-gcd-query-binding.json').write_text(json.dumps(gcd_binding,indent=2)+'\n')
     raw=a.payload.read_bytes();k=a.kernel.read_bytes()
     sys.path.insert(0,str(r/'tools'));import mkpayload
     tokens=raw[0x48:0x2a8].split(b'\0',1)[0].split()
@@ -731,6 +790,8 @@ def main():
 #define EFI_XNU_WIFI_NORMAL_NC_FIRSTREAD_AVAILABLE {int(a.wifi_cpu0_firstread_normal_nc)}
 #define EFI_XNU_AUDIO_I2C_CACHE_AVAILABLE {int(audio_binding is not None)}
 #define EFI_XNU_WIFI_RESOURCES_AVAILABLE {int(a.wifi_resources_readonly)}
+#define EFI_XNU_GCD_MMIO_QUERY_AVAILABLE {int(gcd_enabled)}
+#define EFI_XNU_AUDIO_CLOCK_GCD_QUERY_AVAILABLE {int(gcd_enabled)}
 #define EFI_XNU_AUDIO_CLOCK_QUERY_AVAILABLE {int(audio_clock_binding is not None)}
 #define EFI_XNU_AUDIO_CLOCK_QUERY_CAMERA_READONLY {int(a.audio_clock_query_camera_readonly)}
 #define EFI_XNU_AUDIO_CLOCK_QUERY_MSS_READONLY {int(a.audio_clock_query_mss_readonly)}
@@ -810,8 +871,11 @@ def main():
         inputs+=['shim/polaris/uefi-audio-i2c-cache.h','tools/polaris-audio-i2c-firmware-identity.py',
                  'tools/polaris-audio-i2c-firmware-identity.h',audio_pe_relative]
     if audio_clock_binding:
-        inputs+=['shim/polaris/uefi-audio-clock-query.h','tools/polaris-audio-clock-identity.py',
+        inputs+=[('shim/polaris/uefi-audio-clock-gcd-query.h' if gcd_binding else 'shim/polaris/uefi-audio-clock-query.h'),'tools/polaris-audio-clock-identity.py',
                  'tools/polaris-audio-clock-identity.h',audio_clock_pe_relative]
+    if gcd_binding:
+        inputs+=['shim/polaris/uefi-gcd-mmio-readonly.h','shim/polaris/gcd-core-identity.h',
+                 'tools/polaris-uefi-gcd-identity.py',gcd_pe_relative]
     if a.host_utc_sync:
         inputs+=['tools/polaris-clock-sync.h','tools/polaris-clock-uefi.h',
                  'tools/polaris-clock-native.h','tools/polaris-clock-host.py']
@@ -1020,6 +1084,14 @@ def main():
                   firmware_core_reserved=0,firmware_services_exited=False,
                   device_execution_tested=False,inputs={p:sha(r/p) for p in inputs})
     manifest.update(resource_clock_metadata(a.wifi_resources_readonly,a.test_qemu,audio_clock_binding,audio_clock_pe_relative))
+    manifest.update(gcd_clock_metadata(gcd_enabled,a.test_qemu,gcd_binding,gcd_pe_relative))
+    if gcd_enabled:
+        # Old raw/gate fields remain present, with explicit NEW values. No strip/retry policy.
+        manifest['wifi_CPU0_resources_firmware_RAM_log_capacity']=262144
+        manifest['audio_Clock_query_actual_Device_identity_and_EFI_MMIO_required']=False
+        manifest['audio_Clock_query_raw_report_format']='RAW_V2'
+        manifest['audio_Clock_query_raw_report_bytes']=43504
+        manifest['audio_Clock_query_combined_I2C_Clock_RAM_report_bytes']=98076
     (out/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
     print(json.dumps({k:manifest[k] for k in ['artifact','sha256','bytes','QEMU_variant','device_execution_tested']}))
 

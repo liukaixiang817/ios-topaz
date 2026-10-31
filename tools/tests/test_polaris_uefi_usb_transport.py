@@ -68,20 +68,23 @@ class TransportTests(unittest.TestCase):
         for bad in [b'',raw[:-1],raw+b'\x00']:
             with self.assertRaises(ValueError):transport.validate_configuration(bad)
 
-    def test_native_capture_preserves_full_resource_prefix_and_native_ring(self):
-        # Actual0142 firmware can publish128KiB before the4MiB XNU ring.
-        data=b'R'*131072+b'\nNATIVE_RING\n'+b'N'*(4*1024*1024)
-        replies=[b'OKAYpolaris-uefi-diag',b'OKAY',f'DATA{len(data):08x}'.encode()]
-        replies += [data[n:n+65536] for n in range(0,len(data),65536)]+[b'OKAY']
-        wire=Wire(replies);protocol=transport.KernelProtocol(wire)
-        protocol.product();protocol.stage('logs')
-        self.assertEqual(protocol.upload(),data)
-        self.assertEqual(wire.commands,[b'getvar:product',b'oem logs',b'upload'])
-        self.assertFalse(wire.replies)
+    def test_native_capture_preserves_128_and_256KiB_prefixes_and_native_ring(self):
+        # NEW0143 supports256KiB; completed0142's128KiB remains readable.
+        for prefix in (131072,262144):
+            with self.subTest(prefix=prefix):
+                data=b'R'*prefix+b'\nNATIVE_RING\n'+b'N'*(4*1024*1024)
+                replies=[b'OKAYpolaris-uefi-diag',b'OKAY',f'DATA{len(data):08x}'.encode()]
+                replies += [data[n:n+65536] for n in range(0,len(data),65536)]+[b'OKAY']
+                wire=Wire(replies);protocol=transport.KernelProtocol(wire)
+                protocol.product();protocol.stage('logs')
+                self.assertEqual(protocol.upload(),data)
+                self.assertEqual(wire.commands,[b'getvar:product',b'oem logs',b'upload'])
+                self.assertFalse(wire.replies)
         # Legacy bound stays unchanged; excessive native headers fail before
         # consuming any body bytes.
-        for kind,count in ((transport.ReadOnlyProtocol,len(data)),
-                           (transport.KernelProtocol,(4<<20)+131072+129)):
+        self.assertEqual(transport.ReadOnlyProtocol.limits['logs'],32768)
+        for kind,count in ((transport.ReadOnlyProtocol,32769),
+                           (transport.KernelProtocol,(4<<20)+262144+129)):
             wire=Wire([b'OKAYpolaris-uefi-diag',b'OKAY',f'DATA{count:08x}'.encode()])
             protocol=kind(wire);protocol.product();protocol.stage('logs')
             with self.assertRaisesRegex(ValueError,'exceeds diagnostic bounds'):protocol.upload()

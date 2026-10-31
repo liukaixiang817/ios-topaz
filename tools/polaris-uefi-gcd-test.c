@@ -1,0 +1,31 @@
+/* SOFTWARE peer: original Core PE is data only; no original instructions,
+ * MMIO, TPL dispatch or FP instruction executes on this host. */
+#include <assert.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+void text(const char *s){(void)s;}void report(const char *s,uint64_t v){(void)s;(void)v;}
+#include "uefi-gcd-mmio-readonly.h"
+static uint8_t *arena,*original,*core;static struct pgcd_result *r;static struct pgcd_context *c;static struct pgcd_lifetime *ticket;static struct efi_system *s;static struct efi_loaded *self;static struct pgcd_config *cfg;static unsigned fault,queries,maps,arches,orders,saves,restores;
+static void put(void *p,uint64_t v,unsigned n){for(unsigned k=0;k<n;k++)((uint8_t*)p)[k]=(uint8_t)(v>>(8*k));}
+static int arch(void *p,struct pgcd_arch *a){(void)p;arches++;*a=(struct pgcd_arch){.cpu={.el=4,.mpidr=0x81000000,.ttbr0=0x180000001,.tcr=0x80803520,.sctlr=0x30d00801,.mair=0xffbb4400,.sre=1,.group1=1,.frequency=19200000,.ticks=1000+100*arches},.cpacr=0x300000};if(fault==1)a->cpu.el=8;if(fault==2)a->cpacr=0;if(fault==16&&queries)a->cpacr=0;if(fault==17&&queries)a->cpu.daif=0x80;if(fault==18&&queries)a->cpu.ticks=5000000;if(fault==23&&r->prestart_count)a->cpacr=0;return !(fault==24&&r->prestart_count);}
+static int identity(void *p,uint64_t at,uint64_t z,uint64_t *where,uint64_t *par){(void)p;(void)z;*where=at;*par=at&~UINT64_C(4095);return fault!=3;}
+static int map(void *p,struct efi_system *sys,struct pgcd_map *m,void *out){(void)p;assert(sys==s);maps++;assert(m->issued&&r->outstanding&&r->map_guard[maps-1].unknown);struct efi_memory d={fault==4?7:3,0,(uintptr_t)arena,0,0x100000/4096,8};memcpy(out,&d,sizeof(d));m->status=fault==5?0x8000000000000005ULL:0;m->bytes=fault==6?8193:sizeof(d);m->key=fault==20&&maps==2?2:1;m->stride=sizeof(d);m->version=1;return fault!=7;}
+static int fp_save(void *p,struct pgcd_fp_guard *g){(void)p;saves++;g->cpacr_before=0x300000;g->saved=fault==8?0:1;return g->saved;}
+static int fp_restore(void *p,struct pgcd_fp_guard *g){(void)p;restores++;g->cpacr_after=fault==16&&queries?0:0x300000;g->restored=(fault==15&&queries)||(fault==16&&queries)?0:1;return g->restored;}
+static int query(void *p,uint64_t fn,uint64_t page,struct pgcd_descriptor *d,uint64_t *status){(void)p;assert(fn==(uintptr_t)core+0x2c68);queries++;assert(r->outstanding&&r->query[(queries-1)/4][(queries-1)%4].issued&&r->query[(queries-1)/4][(queries-1)%4].unknown);*d=(struct pgcd_descriptor){page,4096,1,0,3,0,0x123,0x456};*status=fault==9?0x800000000000000eULL:0;if(fault==10&&queries>4)d->length=8192;if(fault==11)cfg[0].table++;if(fault==12)put(core+0x1b098,8,8);if(fault==13)s->table_count=2;if(fault==14&&queries==1)core[0x1000]^=1;if(fault==31)self->bytes--;return fault!=19;}
+static void order(void *p){(void)p;orders++;}
+static void reset(unsigned f){fault=f;queries=maps=arches=orders=saves=restores=0;memset(arena,0,0x100000);core=arena+0x1000;r=(void*)(arena+0x40000);c=(void*)(arena+0x48000);ticket=(void*)(arena+0x49000);s=(void*)(arena+0x4a000);self=(void*)(arena+0x4b000);cfg=(void*)(arena+0x4c000);memcpy(core,original,PGCI_IMAGE_BYTES);for(unsigned n=0;n<PGCI_RELOC_COUNT;n++)put(core+pgci_relocations[n],pwfi_le(core+pgci_relocations[n],8)+(uintptr_t)core,8);s->boot=(void*)(core+0x1b800);s->tables=cfg;s->table_count=1;cfg[0]=(struct pgcd_config){{0x05ad34ba,0x6f02,0x4214,{0x95,0x2e,0x4d,0xa0,0x39,0x8e,0x2b,0xb9}},(uintptr_t)core+0x1bb18};*self=(struct efi_loaded){.revision=0x1000,.system=s,.base=arena,.bytes=0x100000,.code_type=3,.data_type=4};assert(pgcd_bind(r,self));*c=(struct pgcd_context){.io={0,s,arch,map,identity,query,fp_save,fp_restore,order},.record=r,.ticket=ticket,.stage=2};if(f==25)c->stage=3;if(f==26)cfg[0].table++;if(f==27){s->table_count=2;cfg[1]=cfg[0];}if(f==28)core[0x1010]^=1;if(f==29)self->bytes--;if(f==30)c->ticket=(void*)(arena+0x100000);}
+static int all(void){const struct pgcd_observation *q=0;for(unsigned k=0;k<4;k++)(void)pgcd_query_page(c,pgcd_pages[k],&q);return pgcd_finish(c);}
+int main(int argc,char **argv){assert(argc==2);assert(!posix_memalign((void**)&arena,4096,0x101000));original=malloc(PGCI_IMAGE_BYTES);assert(original);FILE *f=fopen(argv[1],"rb");assert(f&&fread(original,1,PGCI_IMAGE_BYTES,f)==PGCI_IMAGE_BYTES&&!fclose(f));unsigned checks=0;
+reset(0);assert(all()&&queries==8&&maps==2&&!pgcd_uncertain(c)&&r->phase==2&&r->hash_count[0]==5&&r->hash_count[1]==5);assert(pgcd_prestart_check(c)&&pgcd_prestart_check(c));assert(r->prestart[1].completed);checks++;
+unsigned n=queries;const struct pgcd_observation *q=0;assert(!pgcd_query_page(c,pgcd_pages[0],&q)&&queries==n);checks++;
+reset(0);assert(pgcd_query_page(c,pgcd_pages[0],&q));n=queries;assert(pgcd_query_page(c,pgcd_pages[0],&q)&&queries==n);checks++;
+reset(9);assert(all()&&queries==8&&!pgcd_uncertain(c)&&r->query[0][0].status==0x800000000000000eULL&&r->query[0][0].returned);checks++;
+for(unsigned k=1;k<=31;k++){if(k==9||k==21||k==22)continue;reset(k);int ok=all();if(k==23||k==24){assert(ok&&!pgcd_prestart_check(c)&&pgcd_uncertain(c));}else{if(ok||!r->error)fprintf(stderr,"fault%u ok%d err%u queries%u maps%u\n",k,ok,r->error,queries,maps);assert(!ok&&r->error);if(k==7||k==10||k==11||k==12||k==13||k==15||k==16||k==17||k==18||k==19||k==20)assert(pgcd_uncertain(c));}if(k<9||(k>=25&&k<=30))assert(!queries);if(k==11||k==31)assert(queries==1&&pgcd_uncertain(c));if(k==19)assert(r->query[0][0].issued&&!r->query[0][0].returned&&r->query[0][0].unknown&&r->outstanding);if(k==7)assert(r->map[0].issued&&!r->map[0].returned&&r->map_guard[0].unknown&&r->outstanding);checks++;}
+reset(0);assert(!pgcd_query_page(c,0xdead000,&q)&&!queries&&r->error==PGCD_PAGE);checks++;
+reset(0);assert(pgcd_query_page(c,pgcd_pages[0],&q));assert(!pgcd_finish(c)&&r->error==PGCD_LIFETIME);checks++;
+reset(0);assert(all());assert(pgcd_prestart_check(c)&&pgcd_prestart_check(c));assert(!pgcd_prestart_check(c)&&pgcd_uncertain(c));checks++;
+reset(0);assert(all());ticket->spent=1;n=queries;assert(!pgcd_open(c)&&queries==n);checks++;
+printf("{\"checks\":%u,\"record_bytes\":%zu,\"guard_bytes\":%zu,\"observation_bytes\":%zu,\"original_code_executed\":false,\"SOFTWARE_fake_FP_TPL_GCD\":true,\"MMIO\":0,\"SMEM\":0,\"radio\":false}\n",checks,sizeof(*r),sizeof(struct pgcd_service_guard),sizeof(struct pgcd_observation));free(original);free(arena);return 0;}

@@ -34,7 +34,50 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### 0142 ACTUAL resource PASS / Clock NOT_ISSUED; phone newnative LIVE; native rendering repair ready for unique CI
+### 0143 GCD+new rendering kernel SOURCE READY, unsealed; current0142 remains actual controlled LIVE
+
+- Actualcurrent0142 directedcapture50547 ENDED0 at15:41Z/kernel-entered:
+  samecookie/completeappendprefix26/error0, no knownAndroid interruption.
+  Continuityproof phone-resource-clock-0001/pre-next-controlled-session-
+  continuity-proof.json permits continuing same fresh0139 RO/RAMCOW interval,
+  NOTwritepermission. Onlyfrozen0142controller, originaldriver0001/image0002/
+  consumedbootrecord controls currentphone; no reset/nextimage sent.
+- NEW0143 final12publicsources promoted, all61actualcompiledinputs verified
+  current. CompletephysicalON5f37368bcdb594677c1585049684ba342f0cb35c7ec96a3c
+  1819565cb55d1350/1251328B, manifestcc3800485e918a568a24444e8e8088d83c4fbb
+  7a114ff7c484c4b11f7d934a3c. Newkernel7d248254.../nativeSOURCE7e9d461/
+  CI41213766168/job124573937913 SUCCESS and newphysicalpayload63cb2395...
+  bound, f790/ca_vbl1/root915/142map/608Bargs unchanged. OldON294manifest
+  fields unchanged,12explicit native/newscope differences+51newtypedfields.
+- New originalDxeCore registeredDS/GCD getter exactPE/hash5range source,
+  full56B descriptors onfourfixedGCCpages before/after, complete30000B raw.
+  InternalTPLlock can dispatch originalevents: directgetter noMMIO is not
+  proof the transitive event chain has no hardware effects. ActualCPACR FPEN3
+  before anyFPinstruction, q8-q15/FPCR/FPSR preserved, noCPACRwrite. Unknown
+  FP/TPL/owner/config/arch/return blocks furtheroriginalcalls/native/PON/receipt,
+  no blindcleanup/retry; firstGetMap authority is incomingUEFI BS contract,
+  initialTPLUINT64_MAX is explicitly unobserved, not fabricatedRAMpermission.
+- ClocknewRAW43504B: actualGCDtype3/CapUC/attrs0(UNSET)orUC/fullpage,
+  noBS RAM/reserved/unknownoverlap, thenownNSDeviceAT before each original
+  IsEnabled/IsOn; max16calls/8GCC,7CAMCCblocked. Failed/partialGetMap copies
+  wholefixed4096B beforestatusvalidation, need>cap retained+refused/no retry.
+  Two physicalrestoration checkpoints onlyafterFreePool andfinalPRE-DAIF;
+  normalreset usescachedunknown verdict, never repeats postmaskarch test.
+  NEW256KiB firmwarelog/snapshot+4MiB native/host4456576 bound preserves all
+  raw, legacy32KiB untouched. Newheader45bfdfd4/Clockd8e39b0f reviewed.
+- GCD36sanitizer+COFF/MachO, Clock27unchanged+4affectedpartial/checkpoint
+  cases/actualproviderlinkedcompile,30hostrelatedtests and3CLIrefusals PASS.
+  OFF wholeEFI byteidentical to old0142SOURCE control using SAMEnewnative
+  payload; QEMU MMD/preprocessor/symbol/disasm removesnewphysical/FP bodies
+  and records, twoactualinteger1 markers. No repeatnativeCI orold13models.
+  Activeproofcd025394.../parentreview61cdd29d.../payloadproof5c280eea... .
+- NEXT commit/push firmwareSOURCE, seal GCD_CLOCK_0143 exact61/metadata/
+  newnative CI+payload, then only2newkernelterminalmodels/ONEpackage/codec/
+  sourceaudit/helper/freeze. Currently GCD_CLOCK_0143=None/NOnewmodels/NOimage/
+  NOphoneboot; do not use this unsealed candidate or change old0142 policy.
+  RealWiFi/radio/scan/join/TASID/PCM/sensor/frame/CameraApp stillunfinished.
+
+### Historical 0142 ACTUAL resource PASS / Clock NOT_ISSUED; phone newnative LIVE; native rendering repair ready for unique CI
 
 - Sole0142image59960 ENDED0 sent2026-10-31T15:07:17.515820Z fromSOURCE
   36163e0b3ac386c6eb93f5e91d57a3c78d8ddf9c; casephone-resource-clock-0001/
