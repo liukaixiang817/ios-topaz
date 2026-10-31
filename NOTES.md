@@ -34,7 +34,43 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### 0141 committedSOURCEbe29 +actual2models/source52 admission PASS; package/freeze NEXT; phone0140 stillLIVE normalUI
+### 0141 fullREADY/COPY715; 0140 nativeDRAIN + WLR5 ACK COMPLETE, actualFASTBOOT NOTconfirmed; physical keys requested ONCE
+
+- Parent0140 sole shutdown-fastboot90456 ENDED (sessiongone; actualresult
+  passedtrue/completed2026-10-31T14:11:14.284461Z). Actualnative seq1/mode2/
+  phase3/error0/caps80000003, VFS mounts0/busy0, UFS ownedqueue33877/33877,
+  GPUstockrestored1/error0, OSMrestored1/error0 and CPU600/500/400 actual
+  PSCIAFFINITY_OFF. ThisisRAMdrain, NOTUFSdurableSAFE orpersistentinstall.
+  Fullappendprefix26->32 records/error0/issued4=completed4/request2=ack2,
+  actual212B WLEXIT05 footer+64B OKAY/WLR5 receipt saved. ACKisnotresetproof.
+- Independentexpected-only8s product query14:13:07.571985Z TIMEDOUT;
+  matchingfrozen0140state1320 ENDED1/boundserviceNOTconnected8s. Directed
+  libusbVIDdescriptor inventory14:13:44Z hadno18d1/2717/05c6 entries, without
+  string/serialquery; scopedinstantobservationonly, notgeneralUSBabsence.
+  NOnewimage/payload/reboot/retry/rawfallbacksent. Actualpostresetmode and
+  rootcauseUNKNOWN. AskedONCEforpower+voldownFASTBOOT, replypending.
+- NEW0141 offlinefullyREADY, sourcebe29d607b1ea1bb943dc394d8eac92dfd4e5dcd4
+  +hostcee823f461aef9e643f5cd8a4666a9efb431b22b committed/pushed62134 ENDED0.
+  Onlycombined52inputs/66typedfields, oldDevicegate unchanged. Solepackage
+  1202/wholecodec95292 ENDED0: originalEDK2 exact28361416B,81FW preserved;
+  image37b6a03f3e0cc4d892b107c0f7019543b243f2459eab1480c5ddb05f878880f4
+  /5965824B/433evidence, driver7ba7c045.../879616B. Native82b3/f790/b31
+  reused, no newnativeCI. Sourceaudit92615d73.../52compiled262protected/
+  92currentHEAD/10literalCOMMIT_ONLY, noactivehistoricalfallback.
+  Solehelper29213 ENDED0 defaultofflinePASS/e3434501..., independentCOPY
+  40558 ENDED0 /private/tmp/polaris-runtime-0141-frozen-0001/715files+
+  10separateCOMMIT_ONLY/53freshrootraw. Freezeproof7d19177d... .
+  phone-nc-audio-0001 hasNOboot.json/ONEattemptunused. NewNCis18architectural
+  LDRs/NormalNC (nobuscap), audioonlyoriginalownedimageRAMcache; no actual
+  SMEM/GLINK/radio/scan/join/I2C/TAS/PCM yet. Allbuild/model/USBworkersENDED.
+- NEXT actualcorrectFASTBOOT -> current-source/codec/model/freshrootadmit
+  ->ONE0141helper--boot-once ->ONLYnewfrozen0141controller state/ONEexactb31
+  payload--boot-ack-seconds90/capture. UnknownACK firstactualstate, never
+  replay. Onlynewfullappend/drain/freshreceipt+independentFASTBOOTforexit.
+  Reusefresh0139ed39/c7d3 withincontrolledRO+RAMCOWinterval, noAndroid or
+  userdatawriteknown. No old0140/0139controller afternew0141 image.
+
+### Historical 0141 committedSOURCEbe29 +actual2models/source52 admission PASS; package/freeze NEXT; phone0140 stillLIVE normalUI
 
 - NewfirmwareSOURCE be29d607b1ea1bb943dc394d8eac92dfd4e5dcd4 committed/pushed.
   Parent逐读main/cache/builder/RAW/typedhostdiff+29relatedtestsPASS. Source
