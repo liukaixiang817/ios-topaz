@@ -34,6 +34,17 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0138 sourceface669/CI41189769833 SUCCESS; actual009c kernel bound; final4fe2 offlinecandidate building; PHONE LIVE0137
+
+- Sourceface6695a03d9bc940436642428331870b47f5d1 committed/pushed, unique
+  CI41189769833/job124503957945 SUCCESS. Actual009c8a0fe66a0374670b57831c92741cea70e8dc34a0f514c8c4fe8ba5566655
+  /17306760B kernel ZIPCRC/wholeSHA256/profile verified; watcher6492 ENDED0.
+  Final4fe2 officialstates+Melbourne graphics pinned. Hostadmission now binds
+  onlythisnewsource/kernel/CI/GPU; allscope/root/runtime/thermal/drain guards
+  unchanged. Physical+2actualkernel terminalmodels starting; nopackage/boot
+  success yet. Currentphone stillfrozen0137, blackwallpaper/knowncorrectUTC
+  andrealbattery; new009c hasnotrunonphone. NoWiFifirstread inthiscandidate.
+
 ### 0138 officialwallpaper state/package +Melbourne default FINAL0002 READY; PHONE remainsACTUALLIVE0137
 
 - Finalbundle0138/graphics-melbourne-default-0002/polaris-gpu.bundle
