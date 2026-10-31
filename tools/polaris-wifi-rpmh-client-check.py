@@ -52,7 +52,7 @@ def main():
             '-Wno-unused-function', '-fsanitize=address,undefined', *inc,
             str(ROOT/'tools/polaris-wifi-rpmh-client-test.c'), '-o', str(tmp/'test')])
         host = json.loads(run('ASAN-UBSAN-run', [str(tmp/'test'), str(core), str(npa), str(rpmh)]))
-        assert host['checks'] == 45 and host['raw_bytes'] == 227104 and host['pool_bytes'] == 26752
+        assert host['checks'] == 46 and host['raw_bytes'] == 227104 and host['pool_bytes'] == 26752
         assert host['physical_original_API_executed'] is False and host['votes'] == 0
         wrapper = out/'actual-coordinator.c'
         wrapper.write_text('#include <stdint.h>\nvoid text(const char *);void report(const char *,uint64_t);\n'
@@ -67,7 +67,7 @@ def main():
                 '-mgeneral-regs-only', '-Wall', '-Wextra', '-Werror', '-Wno-unused-function',
                 '-Wframe-larger-than=1024', *inc, '-c', str(wrapper), '-o', str(out/('actual-coordinator.'+suffix))])
     files = ['tools/polaris-wifi-rpmh-client-test.c', 'tools/polaris-wifi-rpmh-client-check.py', 'tools/polaris-wifi-rpmh-test.c', 'tools/polaris-wifi-npa-test.c']
-    proof = dict(passed=True, scope='45 software original-pool/client lifecycle and lifetime checks including executable private-before-NPA-before-RPMh-before-final-GCD sequence, failures/partial/UNKNOWN and stale ticket refusal; actual AArch64 coordinator objects and complete EFI link; NO physical RPMh/firmware execution',
+    proof = dict(passed=True, scope='46 software original-pool/client lifecycle and lifetime checks including executable private-before-NPA-before-RPMh-before-final-GCD sequence, failures/partial/UNKNOWN and stale ticket refusal; actual AArch64 coordinator objects and complete EFI link; NO physical RPMh/firmware execution',
         host=host, driver_sha256=manifest['sha256'], driver_bytes=manifest['bytes'],
         driver_manifest_sha256=sha(driver/'manifest.json'), full_compiled_inputs_match_current=True,
         new_native_CI=False, phone_USB=False, live_RPMh_state_captured=False,

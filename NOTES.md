@@ -34,7 +34,49 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0148 remains last actual LIVE18:35; NEW0149 private RPMh lifecycle/models/host admission PASS, package pending
+### CURRENT0149 nativeLIVE19:01; actual private client ZERO-API alignment refusal; NEW0150 correction offline
+
+- Supersedes all0148LIVE/0149inflight. ONE0149image32788 ENDED0 sent
+ 18:57:29.223435Z/SOURCE0653d7a/image24d7b1a69d9d885b931efb0c9ac4c05b510debad
+  0386c380a683fead1ab7461d/5990400B. Actualwaitingpayload thenONE63cbpayload
+  22089 ENDED0 ACK18:58:45.120640Z/transfer32.96065s/bootcall16.96243s.
+  bootrecord0149/phone-private-RPMh-runtime-0001/boot.json CONSUMED. ONLY
+  /private/tmp/polaris-runtime-0149-frozen-0001/tools/polaris-uefi-wled-runtime.py
+  with frozen0149driver0001/image0001/shared originalbootrecord controls phone.
+  No replay/editedcontroller/old0148controller or oldpolicy fornewsource.
+- Actual227104B privateRAW_V1 SHAed668a6b5aa09a5e63e9ffdc899f7ceb27ea84b3cd
+  277e0389f19512a98f6289, attempted1/error4=PWRCL_POOL/unknown0/outstanding0 /
+  retired1/refused_before_API1/providerissued0=returned0/clientreturned0.
+  73image exclusions COMPLETED, firstpool pointer17e64ed9c recorded before
+  refusal/rootbytes0. It is4mod8; actualpageBootServicesData4+actualPAR
+  ff0000017e64eb80 at17e64e000 PASS. Code wrongly required8B alignment. Own
+  original6ed8 branches9894, which allocates size+4/stores4B header and returns
+  allocation+4 (98dc). This is source+actual alignment isolation, NOT owner
+  change/providerabsence or NULLpool. Second pool record was unissued/zero:
+  do not mistake that for the first actual pointer or failed image exclusion.
+- Four actual original Locate/GetMap bootstrap calls returned with allFP/arch/
+  TPL restored4->4; stable initializedDRV2. Independent10actualhashbytes and
+  both200B relocatedtables match exact originalRPMh. No clientCreate/Delete /
+  vote/commandset/MMIO/SMC/MSS/NVserve/radio was issued. Correct optional known
+  refusal safely retired; actual finalGCDerror0/prestartPASS and native entered.
+  Evidence0149/wifi/actual-private-client-0001/actual-pre-API-refusal-and-source-
+  proof.json; same Ctypedef host decoder retains first AND second pool state.
+- UTC0149 ONESET+independentstatus cookie1993524639/seq1/status2/error0/count1 /
+  uncertainty2277us. NEVER SET0149again. Capture17758 ENDED0/kernel-entered;
+  current-ui-capture-0003/3347 ENDED0 at19:01:53.028934Z shows Applelogo while
+  native services continue; fullWLEDprefix2/error0/0=0/req0=ack0 at this sample.
+  No0149 finalwallpaper/batteryUI claim yet; old0148UI remains historical.
+- NEW0150 source changes ONLY pool alignment8->source-proven4, retaining
+  BootServicesData/actualAT/allimage exclusions/source/hash/128bound/FP/arch/TPL/
+  200ms/UNKNOWN and retirement gates. Software fixture now genuinely4mod8 for
+  root/headers/clients/queues; extra2mod4 bad pointer rejects beforeAPI.46new
+  ASAN/UBSAN cases PASS. ActualCOFF/MachO/fullEFI and two affected terminal
+  models are running SERIAL inworker1590; wait ENDED. No nativechange/newCI.
+  Newhost0150profile/package/freeze/helper NOT READY;0149freeze untouched.
+  ONLY Wi-Fi, allchildren/audio/cameraSTOP, scan_join_data=false. Nextimage
+  requires ONLYfrozen0149 fullnative drain/rawfreshreceipt+independentFASTBOOT.
+
+### CURRENT0149 ONE RAM sent18:57; payload startup IN PROGRESS;0148 normally drained/actualFASTBOOT
 
 - Serial ONLY Wi-Fi. No USB/phone change in0149 work so far; ONLY frozen0148
   controller/consumedbootrecord below controls the phone. No new native source
@@ -71,7 +113,18 @@ early samples only. On0029 the human already confirmed boot complete and said
   USB sink, NOT physical firmware/API/pool or guestreset/radio. New exact0149
   host policy passed32affected checks and actual no-mockadmit; old0143..0148
   literal profiles independently compared unchanged. Package/whole81codec /
-  freeze/helper remain NOT READY. Before
+  freeze/helper now PASS. Original81 wholeEFI31328456B exact EDK2 decode;
+  newimage24d7b1a69d9d885b931efb0c9ac4c05b510debad0386c380a683fead1ab7461d /
+  5990400B. SourceFW1edc90f/HOST0653d7a pushed; independent frozen0149 COPY787
+  +10COMMIT_ONLY/369committedsources/70inputs, freeze94ab20718eb87d8f10c294
+  397908137fd26d1fc6a9e9f125543c49213a1a9c1a. Default offline helper PASS.
+  Old0148 shutdown59081 ENDED0 at18:57:01.000777Z/nativecookie2421325715 /
+  seq1mode2phase3error0/epochs0/caps80000003; fullappendraw/WLEXIT05/WLR5
+  independently redecodedfinal32/error0. Independent actualPolarisFASTBOOT
+ 18:57:10.066174Z. ONE0149image32788 ENDED0 sent18:57:29.223435Z/source0653d7a;
+  bootrecord phone-private-RPMh-runtime-0001/boot.json CONSUMED. Actual0149
+  waiting-payload18:57:39; payload startup22089 IN PROGRESS, do NOT start any
+  other USB until ENDED. No actual privateAPI/radio result yet. Before
   any nextimage use ONLY frozen0148 complete native drain/full raw/fresh receipt
   and independent actualFASTBOOT. Latest0145 fresh roots/NV remain authority.
 

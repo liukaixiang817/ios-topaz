@@ -65,7 +65,10 @@ static inline int pwrcl_copy(const struct paic_io *io,struct pwrcl_result *r,
 static inline int pwrcl_heap(const struct paic_io *io,struct pwrcl_result *r,
     const struct pwrph_work *w,uint64_t at,uint32_t n)
 {
-    if(!pwrcl_owned(io,r,w,at,n)||(at&7))return 0;
+    /* Original6ed8->9894 reserves a4B size prefix and returns allocation+4.
+     * Actual0149 pool was4mod8 with type4+identityPASS. Require the original
+     * 4B alignment; all page/source/image-exclusion gates still apply. */
+    if(!pwrcl_owned(io,r,w,at,n)||(at&3))return 0;
     for(uint64_t p=at&~UINT64_C(4095);p<at+n;p+=4096)
         if(!polaris_efi_range_owned(w->map,w->bytes,w->stride,p,4096,4))return 0;
     if(pwrcl_overlap(at,n,r->core.self_base,r->core.self_bytes)||

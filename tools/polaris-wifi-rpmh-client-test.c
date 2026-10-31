@@ -51,7 +51,7 @@ static void own_state(int live)
     put(own_client+8,live?(uintptr_t)own_name:(uintptr_t)rimage+0xaf50,8);
     put(own_client+0x30,live?UINT64_C(0xffffffff00000000):UINT64_MAX,8);
     for(unsigned k=0;k<4;k++){
-        uint8_t *q=links+0x9000+32*k;put(own_client+0x10+8*k,(uintptr_t)q,8);
+        uint8_t *q=links+0x9004+32*k;put(own_client+0x10+8*k,(uintptr_t)q,8);
         memset(q,0,24);put(q,k<2?16:24,4);
     }
 }
@@ -104,8 +104,8 @@ static void client_reset(unsigned f)
     cr=(void*)(arena+0x120000);early=(void*)(arena+0x180000);memset(cr,0,sizeof(*cr));memset(early,0,sizeof(*early));
     assert((uintptr_t)cr+sizeof(*cr)<(uintptr_t)early);
     own_name=(void*)(arena+0x182000);memcpy((void*)own_name,pwrcl_name,sizeof(pwrcl_name));
-    pool=links+0x1000;active_header=links+0x1100;free_header=links+0x1140;
-    foreign_client=links+0x2000;own_client=links+0x8000;
+    pool=links+0x1004;active_header=links+0x1104;free_header=links+0x1144;
+    foreign_client=links+0x2004;own_client=links+0x8004;
     put(rimage+0xd300,(uintptr_t)pool,8);put(pool,(uintptr_t)active_header,8);put(pool+8,(uintptr_t)free_header,8);
     put(foreign_client,2,4);header(active_header,1,foreign_client,foreign_client);own_state(0);header(free_header,1,own_client,own_client);
     c->io.arch=client_core_arch;c->io.map=client_core_map;
@@ -113,9 +113,9 @@ static void client_reset(unsigned f)
     if(f==2)put(foreign_client+80,(uintptr_t)foreign_client,8);
     if(f==4)put(own_client+0x40,1,8);
     if(f==5)put(own_client+0x48,1,8);
-    if(f==6)put(links+0x9004,1,4);
+    if(f==6)put(links+0x9008,1,4);
     if(f==24)put(active_header+8,(uintptr_t)rimage+0xd1a0,8);
-    if(f==25)put(foreign_client+0x10,(uintptr_t)links+0x9000,8);
+    if(f==25)put(foreign_client+0x10,(uintptr_t)links+0x9004,8);
     if(f==26)c->opened=1;
     if(f==28)header(free_header,0,0,0);
     if(f==29){
@@ -136,6 +136,7 @@ static void client_reset(unsigned f)
     if(f==39){early->record=&cr->core;early->opened=1;}
     if(f==40)cr->core_ticket.spent=1;
     if(f==41)cr->reader_ticket.used=1;
+    if(f==42)put(rimage+0xd300,(uintptr_t)pool+2,8);
 }
 int main(int argc,char **argv)
 {
@@ -148,6 +149,7 @@ int main(int argc,char **argv)
     int ok=pwrcl_run(&ops,enumeration,2,c,early,cr,rw);
     if(!ok)fprintf(stderr,"baseline error%u unknown%u core%u reader%u provider%u/%u pools%u%u%u\n",cr->error,cr->unknown,cr->core.error,cr->reader.error,cr->provider_issued,cr->provider_returned,cr->pools_complete[0],cr->pools_complete[1],cr->pools_complete[2]);
     assert(ok&&cr->retired&&cr->client_returned&&!pwrcl_result_unsafe(cr)&&create_calls==1&&delete_calls==1&&cr->provider_issued==2);
+    assert(((uintptr_t)pool&7)==4&&((uintptr_t)own_client&7)==4);
     assert(cr->core.map[0].key==1&&cr->maps[0].key==2&&cr->maps[1].key==3&&cr->final_context_untouched&&!ticket->spent&&!pwrph_ticket.used);checks++;
     assert(!pwrcl_run(&ops,enumeration,2,c,early,cr,rw)&&create_calls==1&&delete_calls==1);checks++;
     assert(all()&&r->map[0].key==3&&r->map[1].key==3&&queries==8);checks++;
@@ -170,7 +172,7 @@ int main(int argc,char **argv)
     assert(pwrph_collect(&rp,2,enumeration,c,rr,rw)&&rr->stable&&rr->issued==4);
     assert(cr->retired&&cr->client_returned&&!pwrcl_result_unsafe(cr)&&all());
     assert(r->map[0].key==3&&r->map[1].key==3&&queries==8&&cr->core.map[0].key==1);checks++;
-    for(unsigned k=1;k<=41;k++){
+    for(unsigned k=1;k<=42;k++){
         client_reset(k);ops.reader.memory.system=s;ops.name=own_name;ok=pwrcl_run(&ops,enumeration,2,c,early,cr,rw);
         if(k==28||k==32||k==33||k==34||k==38){
             assert(ok&&cr->client_returned&&!pwrcl_result_unsafe(cr));
@@ -183,8 +185,8 @@ int main(int argc,char **argv)
         else{
             if(ok||!cr->error)fprintf(stderr,"fault%u ok%d err%u unknown%u calls%u/%u\n",k,ok,cr->error,cr->unknown,create_calls,delete_calls);
             assert(!ok&&cr->error);
-            int pre=k<=6||k==23||k==24||k==25||k==26||k==29||k==30||k==31||k==35||k==36||k==37;
-            int lifetime=k==26||k==35||k==36||k==37||k>=39;
+            int pre=k<=6||k==23||k==24||k==25||k==26||k==29||k==30||k==31||k==35||k==36||k==37||k==42;
+            int lifetime=k==26||k==35||k==36||k==37||(k>=39&&k<=41);
             if(lifetime)assert(!create_calls&&!delete_calls&&cr->unknown&&!cr->retired&&pwrcl_result_unsafe(cr));
             else if(pre)assert(!create_calls&&!delete_calls&&cr->retired&&cr->refused_before_API&&!pwrcl_result_unsafe(cr));
             else{assert(pwrcl_result_unsafe(cr)&&create_calls==1);if(k<=14||k==21||k==22)assert(delete_calls==0);else assert(delete_calls==1);}
