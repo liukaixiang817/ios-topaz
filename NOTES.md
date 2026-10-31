@@ -34,6 +34,62 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0150 remains ONLY last actual nativeLIVE19:10; NEW0154 conditional runtime ARC trial host-reviewed / whole81 packaged; independent freeze and physical test pending
+
+- This supersedes0153's unfinished host-scope review, NOT its absence of
+  physical observations. The new source review is explicitly a conditional
+  APPS DRV2 runtime experiment: no prior hardware lease is claimed and no
+  individual CPU mask/PSCI/AT/provider flag is promoted to an EL3/MPU grant.
+  shim/polaris/uefi-wifi-power-scope.md SHA51d2ade243d688874ba8ea2e6cdb14badc34
+  ad0652618587624e904d905a1f85 records the exact source-based concurrency
+  argument, trusted original boot/bank assignment assumption, every actual
+  same-interval prerequisite, finite operations and retirement/quarantine.
+  CPU0 must stay active in the no-service busy interval; original APPS ACTIVE
+  bank selection, complete empty work state and the post-mask seven-peer OFF
+  round all remain mandatory runtime checks BEFORE any store. No code gate,
+  timeout, original-source/owner/FP/arch/TPL or UNKNOWN rule was weakened.
+- NEW literal GCD_CLOCK_0154 binds firmware1f55e44/80inputs,159 Power/GCD/NPA/
+  RPMh metadata fields and94 resource fields plus the exact scope review.
+  All eight0143..0150 literal policies compare unchanged. The builder's
+  candidate_ready=false/hardware_ownership_independently_qualified=false are
+  preserved as BUILD-TIME absence-of-observation facts. The new host profile
+  permits the bounded experiment only after its current physical predicates
+  pass; it does not turn those facts into prior hardware success. No old
+  physical rejection was bypassed and no old manifest/flags were modified.
+  Power compiledout int1 is required in BOTH existing current80input models.
+  Packager binds the review bytes into image evidence. No new firmware/native
+  build/CI/model rerun was needed: firmware body and all80 inputs are unchanged.
+- Nineteen affected host tests PASS (five new plus fourteen existing
+  admission cases). Actual no-mock admit with the real model results/native CI/
+  fresh0145 root review passed;0154/power-parent-actual-host-admit-proof-0001.json
+  SHA85481270d7593fcbd4c4bb5cec4d12e05516323691e8b8899974a825299470a2.
+  Models remain SOFTWARE, not physical power or radio evidence.
+- New independent package0154/physical-runtime-image-0001:
+  image3075879dd30487e78bd9006c49ac5f07eefd5c1eab76367f2dcb51b4cdecfd88/
+  6012928B; driverfbf4c5b2/11423232B copied from0153 without recompilation.
+  Original81FW/SimpleInit/BootShim/DTB retained. Original EDK2 GetInfo/decode
+  compiled unmodified verifies the WHOLE38905032B stream byte-for-byte;
+  runtime-codec-0001/proof.json SHA306cf3eeca66e0d173bf16057ec95ca2fb14671a7ea
+  01bd8830df78efaa1a122. No firmware/vendor/NV/Apple bytes added to Git.
+- Phone still ONLY lastactual0150/19:10:55Z, same frozen0150 controller and
+  consumed bootrecord; UTC already ONESET. No USB, actual firmware/PSCI/AT/
+  MMIO, image sent, new native CI, recovery/fullroot rehash or disk/NV write.
+  Allworkers ENDED/allchildren STOP. No human action is pending. Nothing here
+  proves a current LIVE/FASTBOOT state, actual ARC success or Wi-Fi.
+- NEXT ONLY Wi-Fi: commit/push this distinct host scope, complete independent
+  source/evidence COPY + default-off ONE helper and exact image/codec review.
+  Then use ONLY frozen0150 actual state/full native drain/appendraw WLEXIT05/
+  WLR5 receipts and independently actualFASTBOOT. If old session unexpectedly
+  exited, do not assert controlled continuity; fresh strictRO root/NV review
+  is required. No new boot until transition and new candidate admission both
+  pass. On the ONE new image/payload, preserve and decode the actual complete
+  power/client records using their existing C types; only their real current
+  guards may qualify the ARC interval. A returned pre-mask refusal is not a
+  missing-cache zero. UNKNOWN remains nonreturning RAM-only hold/noUSB ACK,
+  never cleanup/retry/reset or policy change after rejection. No standalone
+  inventory/client-only boot. MSS/SMEM/SFPB/VMID/RMTFS/radio are still forbidden
+  by this scope; real scan/join/data still unfinished, then sound, then camera.
+
 ### CURRENT0150 remains ONLY last actual nativeLIVE19:10; NEW0153 power path PARENT/LINK verified OFFLINE; physical ownership and NEW host admission NOT READY
 
 - Source1f55e44e14e0c56af2e5cd6f84d68bb63ba721b6 contains the parent/link/

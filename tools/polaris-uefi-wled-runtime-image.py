@@ -2,7 +2,7 @@
 """Package only the independent native-WLED RO/RAMCOW RAM trial. No device access."""
 import argparse,hashlib,importlib.util,json,re,struct,subprocess
 from pathlib import Path
-from polaris_wled_runtime_admission import admit,ORIGINAL_SHA,GPU_SHA,target_profile
+from polaris_wled_runtime_admission import admit,ORIGINAL_SHA,GPU_SHA,target_profile,original_gcd_policy
 from polaris_wled_runtime_journal import journal,exit_footer,exit_receipt
 
 
@@ -36,6 +36,9 @@ def main():
                 if original.returncode==0 and hashlib.sha256(original.stdout).hexdigest()==digest:
                     historical[commit+':'+name]=digest;continue
             raise ValueError('changed evidence/source '+name)
+    policy=original_gcd_policy(d)
+    if policy and policy.get('power_scope_review'):
+        checked(policy['power_scope_review'])
     checked(d['inputs']);app=a.driver_manifest.parent/d['artifact']
     if app.resolve().parent!=a.driver_manifest.parent.resolve() or sha(app)!=d['sha256']:
         raise ValueError('changed actual physical driver')
