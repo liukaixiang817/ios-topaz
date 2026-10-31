@@ -34,6 +34,47 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0132 mediaEXEC candidate READY; PHONE stillLIVE0131; strictnormalexit then ONEnewRAM NEXT
+
+- Source42ed/CI41177023094/job124466566290 SUCCESS, actualkernel92057300...
+  /17249136B contains actualMEDIA EXEC/NOTE compiled paths. Physicaldriver
+  worker20882 ENDEDexit0, twoactualkernel terminalmodels worker1926 ENDEDexit0,
+  PASS18checks EACH. SOFTWAREPMIC/RAMUSB/syntheticroot are NOT physicalproof.
+  Firmware/PON/WLEDinputs identical to0122driver0002 exceptmkpayloadexactpin.
+- Package/wholecodec/offlinefreeze worker76541 ENDEDexit0: whole28170952B
+  originalEDK2 exactdecode, 81originalFW/SimpleInit/BootShim/DTB retained;
+  currentroot915/142map immutableRO/512MiBRAMCOW review/admission PASS. Newimage
+  ab4cdee12b392bb76f77b2fc43364f63d40e94c0e7479f0392a9f2ddf316a17f
+  physical-runtime-image-0001, graphics8d04787.../ONLYinjectorchanged. Four
+  changedhostadmission tests PASS0.021s. Proofmedia-exec-candidate-ready-proof.
+  NO0132boot.json/physicalmedia/newwallpaper claim. Sourcehostcommitpushnext.
+- CurrentPHONE LIVE0131 actualgallerywhite, frozen0131 controller+ORIGINAL
+  image/driver/boot manifests only. AllUSBworkersENDED. StrictnativeVFS/GPU/CPU
+  RAMdrain/fullrawprefix/WLEXIT05/WLR5 normalexit, thenindependentactualFASTBOOT;
+  onlythennew0132ONEimage/ONEexactpayload. No humanquestionpending/replay/rawreset.
+
+### 0132 CI SUCCESS/actualkernel verified; PHONE LIVE0131; changed-kernel candidate checks NEXT
+
+- Correctedsource42ed04791e13e4250f4f85ca9ba96cf242e6d2fd CI41177023094/
+  job124466566290 SUCCESS; watch/download37120 ENDEDexit0. Actualkernel
+  92057300c05afff0140f09d51009a50a19600835e1b894f6ff223b2305b766e5
+  /17249136B exactZIPCRC/SHA/profile checked. Host20F66admission updated to
+  exact920/42ed/CI411770/graphics8d/path0132; 20H392 unchanged. NoCI rerun.
+- Newphysical/modelpayloads, twoactualkernel terminalmodels and physicaldriver
+  next. CurrentPHONE remainsLIVE0131/frozenoldcontroller, notFASTBOOT/new0132.
+  AllUSBworkersENDED. Needmodels/PONsourceidentity/wholecodec/offlinefreeze/
+  hostsourcecommitpush, thenstrictcurrentexit->independentactualFASTBOOT->
+  ONEnewimage/ONEexactpayload. No newphysicalmedia/wallpaper resultyet.
+
+### 0132 correctedsource42ed047 PUSHED; ONE currentCI41177023094 running; PHONE LIVE0131
+
+- Source42ed04791e13e4250f4f85ca9ba96cf242e6d2fd pushed. CurrentCI41177023094
+  running (unique forcorrectedsource); failedc2 CI41176587390 archived, not
+  retried/reused. OnlycorrectedCIwatchmayrun now. ThreeexactIIGbindingtests
+  PASS0.162s: two media-only privateheaders wholeSHAbound, alloriginalheader/
+  17IDL/generated286ABI checks unchanged. Media source/graphics8d unchanged.
+  Newnativeartifact/models/image/payload stillNOTready; no phoneaction.
+
 ### 0132 CI41176587390 FAILED at exact private-header allowlist; PHONE stillLIVE0131
 
 - Firstc2c42f4 CI41176587390/job124465292914 FAILED, worker62928 ENDEDexit1;
