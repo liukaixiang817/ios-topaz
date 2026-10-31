@@ -14,6 +14,24 @@ class Wire:
 
 
 class TransportTests(unittest.TestCase):
+    def test_one_shot_disconnect_still_releases_interface_and_handle(self):
+        class USB:
+            def __init__(self):self.calls=[]
+            def libusb_release_interface(self,handle,interface):self.calls.append(('release',handle.value,interface))
+            def libusb_close(self,handle):self.calls.append(('close',handle.value))
+            def libusb_exit(self,context):self.calls.append(('exit',context.value))
+        for one_shot in (False,True):
+            device=transport.LibusbTransport.__new__(transport.LibusbTransport)
+            device.usb=USB();device.claimed=True
+            device.handle=transport.C.c_void_p(11);device.context=transport.C.c_void_p(22)
+            device.close(process_exit_after_disconnect=one_shot)
+            expected=[('release',11,0),('close',11)]
+            if not one_shot:expected.append(('exit',22))
+            self.assertEqual(device.usb.calls,expected)
+            self.assertFalse(device.claimed or device.handle or device.context)
+            device.close()
+            self.assertEqual(device.usb.calls,expected)
+
     def test_identity_before_capture_and_unsafe_commands_refused(self):
         wire=Wire([b'OKAYpolaris']);protocol=transport.ReadOnlyProtocol(wire)
         with self.assertRaises(ValueError):protocol.stage('logs')

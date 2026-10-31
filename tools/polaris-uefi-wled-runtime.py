@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """One manifest-bound native WLED RO/RAMCOW RAM session; no generic reset/flash."""
-import argparse,datetime,hashlib,json,time
+import argparse,datetime,hashlib,json,sys,time
 from pathlib import Path
 from polaris_uefi_usb_transport import LibusbTransport
 from polaris_wled_runtime_control import WledRuntimeProtocol
@@ -105,7 +105,15 @@ def main():
         if p:
             if p.actual_footer:(out/'actual-exit-footer.bin').write_bytes(p.actual_footer)
             if p.actual_reply:(out/'actual-reset-response.bin').write_bytes(p.actual_reply)
-        if transport:transport.close()
+        # Preserve the validated transaction before any host-only cleanup.
+        # This program exits immediately afterward; no context is reused.
+        defer_context=(sys.platform=='darwin' and record.get('passed') is True and
+                       record.get('reset_ACK_received') is True)
+        if defer_context:record['host_context_cleanup']='immediate_process_exit_after_validated_receipt'
+        save()
+        if transport:
+            if defer_context:transport.close(process_exit_after_disconnect=True)
+            else:transport.close()
         save()
     print('Native WLED action completed; actual FASTBOOT requires a separate readonly query')
 

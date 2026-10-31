@@ -225,7 +225,12 @@ class LibusbTransport:
             raise ValueError('invalid diagnostic completion length')
         return bytes(buf[:done.value])
 
-    def close(self):
+    def close(self, *, process_exit_after_disconnect=False):
+        # One-shot CLI only, after a validated terminal receipt. Darwin's
+        # detached-device callback can deadlock libusb_exit's event-thread
+        # join. Release the interface/handle normally; immediate process exit
+        # reclaims the final context. Reusable/failed/unknown sessions retain
+        # normal libusb_exit cleanup. This sends no device command.
         if self.claimed:
             self.usb.libusb_release_interface(self.handle, 0)
             self.claimed = False
@@ -233,7 +238,8 @@ class LibusbTransport:
             self.usb.libusb_close(self.handle)
             self.handle = C.c_void_p()
         if self.context:
-            self.usb.libusb_exit(self.context)
+            if not process_exit_after_disconnect:
+                self.usb.libusb_exit(self.context)
             self.context = C.c_void_p()
 
 

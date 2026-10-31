@@ -34,6 +34,55 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0130 NEW media candidate READY; actualPHONE FASTBOOT; old0129 CLOSED; ONEnewboot NEXT
+
+- CI41172159732/job124452240376/native66f334f SUCCESS; kernelb3e2cbf1bbefa868551eb98cb5561d40d371ae5d3d376460ea4e6dfab3ca3fcb
+  /17248992B exactZIPCRC/SHA/profile/symbol checked. Bothactualnewkernel terminal
+  models PASS18 each, physicaldriver/image0001 built; whole28170952B unmodified
+  EDK2 codec PASS, original81FW/SimpleInit/BootShim/DTB retained. Imagea0c7c2d953695f7f08abddfab5d47b3b8284f2e832aa2ea0ca0ab62387f01d4a;
+  ee3 gfxbundle preserves4 common actualbinaries. Offlinefreeze/root/map/
+  sourcebindings PASS; media-compat-candidate-ready-proof.json. No0130boot yet.
+- Old0129 actualnative RAM drain80000003/epochs0/full56raw/8issued8completed/
+  request4ack4/module128/IRQ2/error0/WLEXIT05/WLR5 independently validated.
+  OriginalCLI hung AFTERcomplete receipt in host libusb_exit/darwin_exit /
+  detached hotplug mutex, sampled inhost-close-sample.txt. NoUSBtransfer pending;
+  interface+handle alreadyreleased. Onlythat hostcleanup process SIGTERM, worker
+  73051 ENDEDexit143; originalresult was NOTrewritten toPASS. Independent whole
+  receipt validation +actualFASTBOOT05:32:44 prove oldsession CLOSED;
+  live0129-closed-proof.json. Neverreplay oldcontroller/image/payload.
+- New host-only cleanup fix saves validated record BEFOREcleanup, and only on
+  Darwin+validterminalreceipt+successful one-shotCLI defers libusb context exit
+  until immediateprocess termination. Interface/handle stillreleased normally;
+  reusable/unknown/error sessions retainnormalcleanup. New meaningfulmockcase
+  PASS bothpaths; noUSBcommand/policy/native changes or newCI. Allhostmodel/
+  USB/build workers ENDED. Phone actualFASTBOOT; sourcehostcommit/push next,
+  thenONEnew image/ONEexactpayload, actualmedia/prewarm/decoder/gallery checks.
+  Whitewallpaper unresolved; newcandidate is NOTrealmedia/HEVC/optical proof.
+
+### 0130 native CI SUCCESS/artifact verified; old0129 strict exit in progress, new models/driver running
+
+- CI41172159732/job124452240376 SUCCESS, native source66f334f00d5b93f3cfd28b42306120f69fb0bba5.
+  Actualkernel b3e2cbf1bbefa868551eb98cb5561d40d371ae5d3d376460ea4e6dfab3ca3fcb
+  17248992B ZIPCRC/SHA/profile verified, new media symbols present. Worker96255
+  ENDED. New exact602B physicalpayload and existing syntheticRAMmodel payload
+  prepared. Host20F66profile now binds new native66f/CI411721/kernelb3e and
+  ee3 graphicsbundle; 20H392profile unchanged. No new0130phone boot yet.
+- CURRENT old0129 shutdown-fastboot worker73051 running; native RAM drain phase3
+  caps80000003/epochs0 observed, final atomic exit pending. DoNOTclaimFASTBOOT
+  or issue anotherUSB untilworkerENDED and finalfullprefix/WLEXIT05/WLR5 checked.
+- Newkernel two terminalmodels worker51750 and physicaldriver worker18812 running;
+  needEND/PASS thenimage/wholecodec/offlinefreeze/sourcecommitpush/ONEnewboot.
+  Wallpaper remains physically incomplete; no newmedia service proof yet.
+
+### 0130 source66f334f COMMITTED/PUSHED; ONE CI41172159732/job124452240376 running; PHONE LIVE0129
+
+- Exact source66f334f00d5b93f3cfd28b42306120f69fb0bba5 pushed; automatic
+  ONE nativeCI41172159732/job124452240376 inprogress. DoNOTdispatchduplicate.
+  New media scopedexec checks alsoPASS; no cross-role flag/executable fallback.
+  Newmedia actualmethod/UUID/ABI/library loading, softwareHEVC completion and
+  wallpaper remain UNPROVEN. CurrentrealPHONE remains oldLIVE0129 whitegallery;
+  sourcefreeze controller is required. No0130image/boot yet. AllUSBworkersENDED.
+
 ### 0130 media compatibility source locally COMPLETE; PHONE still LIVE0129; ONE necessary CI NEXT
 
 - Exact pinned Dipper906425b portrait-prewarm approach checked against actual
