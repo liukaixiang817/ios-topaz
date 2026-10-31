@@ -34,6 +34,35 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Serial Wi-Fi0145 RMTFS original NV inputs found/frozen offline; phone unchanged0144 LIVE
+
+- No parallel worker resumed and no USB/clock/rail/SCM/SMEM action. Existing
+  20261023-193109 and205328 fullsdf32MiB backups are byteequal/fullSHA
+  05a20a057ae3cc2a34dd3a8e9eb6068d17f7ae3badb3f7ef1d16d5c0d71f3333;
+  originalfsg8MiB whole2b03a197... matches its backup manifest.
+- Actual ownGPT4096Bsectors/sdf: fscLBA6..69=262144B, modemst1LBA2048..4095
+  andmodemst2LBA4096..6143 each8MiB; sde fsgLBA8192..10239=8MiB.
+  Full original bytes (25427968B total) extracted to ignored/private
+  0145/wifi/own-NV-shadow-inputs-0001 with0600 files, no generatedblankEFS,
+  originalinputs reread/hashunchanged. Scriptprepare-own-NV-shadow-inputs.py
+  is offline only; proofcf451ee8ceb3deab5ea61d7479c4b08c5de290a0a930988ab4b692d56f883268.
+- Important freshness distinction: fresh0139 actualsdf.head.bin includes
+  entireFSC; its extracted262144B is byteexact/current0139 SHA8a39d2ab...
+  (bound to freshrootreview). The other3 fullNV images have ONLYhistorical
+  backup provenance. Fresh0139 critical audit hashes boot/recovery/abl_a/
+  abl_b/ESP only, not modemst1/2/fsg. Do not promote GPTmatch/backupSHA into
+  currentNV identity. At next already-needed controlledRO transition capture
+  only those3 whole partitions/24MiB + names/ranges/freshGPT and before/after
+  hashes. Do not reboot solely to repeat the old NV/FAT/TOC result.
+- OwnDT RMTFSclient1/dynamic2MiB/guardmemory confirmed, physicaladdress still
+  UNASSIGNED. Mi8 /boot/modem_fs1/fs2/fsg/fsc paths are protocol references,
+  not yet ownremote requests. No OEMblank fallback, no physicalNVwrite API.
+  may_serve_NV_to_remote=false/may_start_MSS=false until freshidentity and
+  actualRMTFS RAMshadow service/GLINK/remote-lifecycle integration exists.
+  Wi-Fi scan/join/data remain UNFINISHED; this closes source-location work,
+  not radio boot/authentication or service operation. Native/firmware source
+  and0144 manifests/controller stay unchanged; noCI/build/model repeat.
+
 ### USER LATEST: SERIAL Wi-Fi first; audio/camera work STOPPED; current0144 native LIVE
 
 - Human explicitly says Wi-Fi/sound/camera still do not work and requests
