@@ -34,6 +34,26 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0126 diagnostic candidate COMPLETE/READY; actual phone remainsLIVE0125 until strict exit
+
+- New native CI41163845336/job124427026394 SUCCESS, source3057de5bb374780c3950a31f8653e2789873027f.
+  Actual kernel17231344B SHA4a6f998ebf322c2b857210e7d43f173281f2ec1b4b96de9124b2477ade50d39a,
+  kernel-poster-stdio-0001, ZIP CRC/size/SHA256SUMS/profile verified. Build/download
+  workers21813/38549 ENDED. Two actualnewkernel terminalmodels PASS18checks each,
+  workers83461/51983 ENDED, SOFTWARE PMIC/RAMUSB only. No physicalCF/PBF fix claim.
+- New physicaldriver0001/image0001 imageSHAff05b0a145d6cba99162a1df8bd3f23d753fb3ac9e4f547695c4755f6ecd4886;
+  original81FW/SimpleInit/BootShim/DTB retained, wholeupstreamEDK2 decode28170952B
+  byteexact. OriginalphysicalFW/PON/WLED sourceinputs byteidentical0122driver0002
+  excepthostmkpayload.py. Copiedhelper first incorrectlyreferenced0122driver0001,
+  offlinefreeze refused before anyphoneaction; correctedONLY the historical path
+  to actualreset-staging driver0002, fullfreeze nowPASS. No oldmanifest/policyedit.
+  0126/poster-diagnostic-candidate-ready-proof.json, newboot.json stillABSENT.
+- NEXT commit/push exactnewhostprofile, strictcurrent0125native drain+fullrawprefix/
+  WLEXIT05/WLR5 NEWreads with frozenbc4controller, then independentactualFASTBOOT;
+  onlythen ONE0126 image+exactpayload. Do not interruptcurrentlyLIVEfullappsystem
+  with ordinaryreset/newboot. USBallserial; noactiveUSBworker now. Host20F66profile
+  bindsnew4a6/CI3057/70066bundle, root915/142map/original602Bflags unchanged.
+
 ### 0126 wallpaper fault observability: source ready, actual0125 full-app system remainsLIVE
 
 - Actual0125 stock32icons and Calculator7*8=56/AppleTVwelcome success remains the
