@@ -34,6 +34,31 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0135 ONEnewimage/ONEexactpayload ACKed; PHONE ACTUALLIVE0135 startup; old0134 normalexitCLOSED
+
+- Host1bdef47 committed/pushed; old0134normalexit84163 ENDED0 withactual
+  nativephase3/error0/capabilities80000003 +completeappend-onlyraw/WLEXIT05/
+  WLR5finalreceipt, thenindependentactualcorrectFASTBOOTinnewboothelperPASS.
+  RAM_DRAINED/normalresetNOTUFSdurableSAFE. Oldc901/c4548imageconsumed/CLOSED.
+- New0135 imagee809ae38a36aaea58b63cbe6cd34dedeed5c5896e5d2e0d294927b46a360d2f1
+  ONEACK89640 ENDED0, sent2026-10-31T08:40:29.447567+00:00. Bootrecord
+  phone-parallel-services-0001/boot.json CONSUMED. Firststatewaiting-payload
+  wascorrect; parentextra'prepared'assertstoppedbeforeanypayload, thenactual
+  waiting-stateverifiedbyoriginalcontrollerandONLYONEexactpayload85448
+  ENDED0/ACK2026-10-31T08:41:44.760792+00:00. Noimage/payloadreplay.
+- Currentkernelddd4/source0f17917/CI41184619436/job124488874895; GPUbundleaeaf,
+  original602B/root915142map/512MiBRAMCOW/CPU/GPU/WLEDretained. IndepCOPY/hash
+  freeze390files(388evidence+manifests/image) at
+  /private/tmp/polaris-runtime-0135-frozen-0001. ONLYthatfrozencontroller+
+  ORIGINAL0135manifestsforcurrentphone. Neverold0134controlleronnewimage.
+- Firstactualcapture92504 ENDED0: actualkernel-entered/4bigcoresSMPPASS/
+  CNTFRQ19200000/startupconsole; noactualwallpaper/UI/battery/UTCsyncyet.
+  Batteryunavailableerror8(rootnotready)expected, nothardwarefailure. WLED
+  issued0/completed0/request0ack0/module128IRQ02/error0/rawfaultOR1rtOR0
+  retained, noOVP/SCclear. NoUSBworkeractive/nohumanpending. NEXTactualstartup
+  loader/battery/WiFi/GPUlogs+freshUI, thenexplicitonehostUTCsync/status,
+  wallpaperSettings/actualpixels; noFitness/crashrepro oroldopticalcycles.
+
 ### 0135 four-feature candidate READY; newimagee809ae38a36a; currentPHONE stillLIVE0134
 
 - Actualnewkernelddd4c5afd65e7fd27acdd41b2fd3a5662e03ec57b3ddc274e398061c8ca09628
