@@ -1,0 +1,271 @@
+--- a/bsd/sweet_hfs/core/hfs_journal.h
++++ b/bsd/sweet_hfs/core/hfs_journal.h
+@@ -192,6 +192,7 @@
+ 
+     int                 last_flush_err;    // last error from flushing the cache
+     uint32_t            flush_counter;     // a monotonically increasing value assigned on track cache flush
++    int                 async_write_error; // first actual metadata buf_error; RAM only, never cleared
+ } journal;
+ 
+ /* internal-only journal flags (top 16 bits) */
+--- a/bsd/sweet_hfs/core/hfs_journal.c
++++ b/bsd/sweet_hfs/core/hfs_journal.c
+@@ -57,6 +57,23 @@
+ 
+ #include "hfs.h"
+ 
++/* Completion runs inside biodone: no allocation, filesystem I/O, abort or
++ * transaction destruction is allowed here. Latch the first actual errno in
++ * separate RAM so a concurrent legacy flags update cannot lose the failure. */
++static int
++polaris_journal_io_error(const journal *jnl, int fallback)
++{
++    int error = __atomic_load_n(&jnl->async_write_error, __ATOMIC_ACQUIRE);
++    return error ? error : fallback;
++}
++
++static bool
++polaris_journal_invalid(const journal *jnl)
++{
++    return __atomic_load_n(&jnl->async_write_error, __ATOMIC_ACQUIRE) != 0 ||
++        (jnl->flags & JOURNAL_INVALID) != 0;
++}
++
+ kern_return_t	thread_terminate(thread_t);
+ 
+ /*
+@@ -626,6 +643,19 @@
+ 
+ 	CHECK_JOURNAL(jnl);
+ 
++    /* num_flushed is a completion/lifetime counter, not a durability claim.
++     * Publish failure BEFORE contributing this callback's completion: the last
++     * successful peer must also observe an earlier failed buffer. Keep the
++     * original bp errno/flags intact for the normal biodone/brelse owner. */
++    int io_error = buf_error(bp);
++    if (io_error) {
++        int expected = 0;
++        (void)__atomic_compare_exchange_n(&jnl->async_write_error, &expected,
++            io_error, false, __ATOMIC_ACQ_REL, __ATOMIC_ACQUIRE);
++        (void)__atomic_fetch_or(&jnl->flags, JOURNAL_INVALID, __ATOMIC_RELEASE);
++        __atomic_store_n(&jnl->flush_aborted, TRUE, __ATOMIC_RELEASE);
++    }
++
+ 	amt_flushed = tr->num_killed;
+ 	total_bytes = tr->total_bytes;
+     
+@@ -664,8 +694,20 @@
+ 	// cleanup for this transaction
+ 	tr->total_bytes = 0xfbadc0de;
+ 
+-	if (jnl->flags & JOURNAL_INVALID)
+-		goto transaction_done;
++    if (polaris_journal_invalid(jnl)) {
++        /* All I/O callbacks (including failures) are now finished. Do not
++         * clear old_start's pending bit or advance active_start on error.
++         * Defer freeing this and already-completed out-of-order transactions
++         * to free_old_stuff, exactly as in the successful last-callback path. */
++        tr->next = jnl->tr_freeme;
++        jnl->tr_freeme = tr;
++        while ((ctr = jnl->completed_trs) != NULL) {
++            jnl->completed_trs = ctr->next;
++            ctr->next = jnl->tr_freeme;
++            jnl->tr_freeme = ctr;
++        }
++        goto transaction_done;
++    }
+ 
+ 	//printf("jnl: tr 0x%x (0x%llx 0x%llx) in jnl 0x%x completed.\n",
+ 	//   tr, tr->journal_start, tr->journal_end, jnl);
+@@ -2259,7 +2301,7 @@
+ 	//
+ 	// only write stuff to disk if the journal is still valid
+ 	//
+-	if ((jnl->flags & JOURNAL_INVALID) == 0) {
++	if ((polaris_journal_invalid(jnl)) == 0) {
+ 
+ 		if (jnl->active_tr) {
+ 			/*
+@@ -2564,8 +2606,8 @@
+     
+ 	free_old_stuff(jnl);
+ 
+-	if (jnl->flags & JOURNAL_INVALID) {
+-		return EINVAL;
++	if (polaris_journal_invalid(jnl)) {
++		return polaris_journal_io_error(jnl, EINVAL);
+ 	}
+ 	if (jnl->owner == current_thread()) {
+ 		if (jnl->active_tr == NULL) {
+@@ -2638,8 +2680,8 @@
+ 
+ 	free_old_stuff(jnl);
+ 
+-	if (jnl->flags & JOURNAL_INVALID) {
+-		return EINVAL;
++	if (polaris_journal_invalid(jnl)) {
++		return polaris_journal_io_error(jnl, EINVAL);
+ 	}
+ 
+ 	if (vfs_isswapmount(jnl->fsmount)) {
+@@ -2763,10 +2805,10 @@
+ 		return 0;
+ 	}
+ 
+-	if (jnl->flags & JOURNAL_INVALID) {
++	if (polaris_journal_invalid(jnl)) {
+     	/* Still need to buf_brelse(). Callers assume we consume the bp. */
+     	buf_brelse(bp);
+-		return EINVAL;
++		return polaris_journal_io_error(jnl, EINVAL);
+ 	}
+ 
+ 	CHECK_TRANSACTION(tr);
+@@ -2819,10 +2861,10 @@
+ 
+ 	free_old_stuff(jnl);
+ 
+-	if (jnl->flags & JOURNAL_INVALID) {
++	if (polaris_journal_invalid(jnl)) {
+     	/* Still need to buf_brelse(). Callers assume we consume the bp. */
+     	buf_brelse(bp);
+-		return EINVAL;
++		return polaris_journal_io_error(jnl, EINVAL);
+ 	}
+ 
+ 	tr = jnl->active_tr;
+@@ -2978,7 +3020,7 @@
+ 
+ 	free_old_stuff(jnl);
+ 
+-	if (jnl->flags & JOURNAL_INVALID) {
++	if (polaris_journal_invalid(jnl)) {
+ 		buf_brelse(bp);
+ 		return 0;
+ 	}
+@@ -3239,8 +3281,8 @@
+ 	CHECK_JOURNAL(jnl);
+ 
+ 	/* TODO: Is it OK to manipulate the trim list even if JOURNAL_INVALID is set?  I think so... */
+-	if (jnl->flags & JOURNAL_INVALID) {
+-		return EINVAL;
++	if (polaris_journal_invalid(jnl)) {
++		return polaris_journal_io_error(jnl, EINVAL);
+ 	}
+ 
+ 	tr = jnl->active_tr;
+@@ -3586,8 +3628,8 @@
+ 	CHECK_JOURNAL(jnl);
+ 
+ 	/* TODO: Is it OK to manipulate the trim list even if JOURNAL_INVALID is set?  I think so... */
+-	if (jnl->flags & JOURNAL_INVALID) {
+-		return EINVAL;
++	if (polaris_journal_invalid(jnl)) {
++		return polaris_journal_io_error(jnl, EINVAL);
+ 	}
+ 
+ 	tr = jnl->active_tr;
+@@ -3839,7 +3881,7 @@
+ 	 * need to notice and abort the current transaction
+ 	 */
+ 	bool is_revoked = (vnode_isrecycled(jnl->jdev) || ((jnl->fsdev != jnl->jdev) && vnode_isrecycled(jnl->fsdev)));
+-	if ((jnl->flags & JOURNAL_INVALID) || jnl->flush_aborted == TRUE || is_revoked) {
++	if ((polaris_journal_invalid(jnl)) || jnl->flush_aborted == TRUE || is_revoked) {
+ 		unlock_condition(jnl, &jnl->flushing);
+ 
+ 		if (is_revoked) {
+@@ -4585,8 +4627,8 @@
+ 
+ 	free_old_stuff(jnl);
+ 
+-	if ((jnl->flags & JOURNAL_INVALID) && jnl->owner == NULL) {
+-		return 0;
++	if ((polaris_journal_invalid(jnl)) && jnl->owner == NULL) {
++		return polaris_journal_io_error(jnl, 0);
+ 	}
+ 
+ 	if (jnl->owner != current_thread()) {
+@@ -4601,7 +4643,7 @@
+ 		panic("jnl: jnl @ %p has negative nested count (%d). bad boy.\n", jnl, jnl->nested_count);
+ 	}
+     
+-	if (jnl->flags & JOURNAL_INVALID) {
++	if (polaris_journal_invalid(jnl)) {
+ 		if (jnl->active_tr) {
+ 			if (jnl->cur_tr != NULL) {
+ 				panic("jnl: journal @ %p has active tr (%p) and cur tr (%p)\n",
+@@ -4614,7 +4656,7 @@
+ 		}
+ 		journal_unlock(jnl);
+ 
+-		return EINVAL;
++		return polaris_journal_io_error(jnl, EINVAL);
+ 	}
+ 
+ 	tr = jnl->active_tr;
+@@ -4681,8 +4723,8 @@
+     
+ 	free_old_stuff(jnl);
+ 
+-	if (jnl->flags & JOURNAL_INVALID) {
+-		return -1;
++	if (polaris_journal_invalid(jnl)) {
++		return polaris_journal_io_error(jnl, EIO);
+ 	}
+ 
+ 	KDBG(DBG_JOURNAL_FLUSH | DBG_FUNC_START, jnl);
+@@ -4731,6 +4773,12 @@
+ 		wait_condition(jnl, &jnl->asyncIO, "journal_flush");
+ 	}
+ 
++    /* The callback can fail while either wait above has dropped its lock.
++     * A wakeup means I/O completed; it never overrides the latched errno. */
++    if (polaris_journal_invalid(jnl)) {
++        return polaris_journal_io_error(jnl, EIO);
++    }
++
+ 	if (ISSET(options, JOURNAL_FLUSH_FULL)) {
+ 
+ 		dk_synchronize_t sync_request = {
+@@ -4742,20 +4790,26 @@
+ 			error = VNOP_IOCTL(jnl->jdev, DKIOCSYNCHRONIZE, (caddr_t)&sync_request, FWRITE, vfs_context_kernel());
+ 
+ 		// If external journal partition is enabled, flush filesystem data partition.
+-		if (jnl->jdev != jnl->fsdev)
+-			error = VNOP_IOCTL(jnl->fsdev, DKIOCSYNCHRONIZE, (caddr_t)&sync_request, FWRITE, vfs_context_kernel());
++        if (jnl->jdev != jnl->fsdev) {
++            errno_t fs_error = VNOP_IOCTL(jnl->fsdev, DKIOCSYNCHRONIZE,
++                (caddr_t)&sync_request, FWRITE, vfs_context_kernel());
++            if (!error) error = fs_error;
++        }
+ 
+ 	}
+ 
+ 	KDBG(DBG_JOURNAL_FLUSH | DBG_FUNC_END, jnl);
+ 
+-	return 0;
++    if (polaris_journal_invalid(jnl)) {
++        return polaris_journal_io_error(jnl, EIO);
++    }
++    return error;
+ }
+ 
+ int
+ journal_active(journal *jnl)
+ {
+-	if (jnl->flags & JOURNAL_INVALID) {
++	if (polaris_journal_invalid(jnl)) {
+ 		return -1;
+ 	}
+     
+@@ -4860,8 +4914,8 @@
+ 	CHECK_JOURNAL(jnl);
+ 
+ 	/* Guarantee we own the active transaction. */
+-	if (jnl->flags & JOURNAL_INVALID) {
+-		return EINVAL;
++	if (polaris_journal_invalid(jnl)) {
++		return polaris_journal_io_error(jnl, EINVAL);
+ 	}
+ 	if (jnl->owner != current_thread()) {
+ 		panic("jnl: relocate: Not the owner! jnl %p, owner %p, curact %p\n",

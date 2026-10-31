@@ -34,6 +34,38 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### 0134 panic-only SOURCE READY; actualFASTBOOT afterhuman recovery; ONEnewnativeCI NEXT
+
+- HumanphysicallyreturnedFASTBOOT; independentexpected-productquery07:40:01
+  PASS/exit0, proofpanic/actual-FASTBOOT-after-human-panic-recovery-0001.json.
+  CurrentPHONE actualFASTBOOT, oldLIVE0133panic CLOSED byphysicalrecovery,
+  NOTnormalRAM_DRAINED/SAFE. Oldimage/payload remainsconsumed. NoactiveUSBworker.
+- Panic-only0907 whole-strategywritepreallocation repairsreproduced8KiB
+  splitENOSPC halfcommit: completebudget/map/partialedge preflightbeforeany
+  requestbytechange, fullresidonfailure; 24 actualCOW/RAMIO modelchecksPASS.
+  0908 firstasyncmetadata buf_error latched andpropagated; failedjournal
+  transactionnevermarkeddurable/advanceactive_start,119 actualfunctionchecks
+  incl32concurrentcallbacksPASS. Endianpanic/integritychecksunchanged.
+- 0909 RAM-onlyDKUNMAP/tombstonereadzero/emptygroupreuse andexact-root-only
+  conservativeHFSallocation/statfsbudget:16GiBlogicalgeometryunchanged;
+  trimbitmap/scratch557056B carvedINSIDEoriginal512MiB,32734data groups.
+  Exact0907partialedges/1000reuse/wholeinvalidbatch/frozenunknownchain tests
+  ASAN/UBSAN+freestandingARM64PASS; actualnative sweet_ufs/hfs_vfsutils/
+  hfs_journal objectscompile0. No radio/PMIC/clock/graphics/rootbase changes.
+- Combinedthreepatchapply8files/exactchangedprivateheaderbindingsPASS in
+  panic/panic-only-combined-source-proof.json;3IIGscope/binding testsPASS.
+  Independentprimaryreview confirmsHFS kernelcontext→kernproc andsu.bdev
+  identity,zero/partialedge+lockcontract. ActualcompletekernelCI/phonefix still
+  NOTproven. Commit/pushONLYpanic source thenONECI; don'twaitwallpaper/battery/
+  WiFi/time completion anddon'tinjectunrelatedfeatures inpanic comparison.
+- Clock5sharedhostfilechanges fullypreserved/deferred atclock/deferred-host-
+  integration-0001, baselineHEAD restored;0904/0905/0906/newfeaturefiles remain
+  parallelOFFLINE source, notthispanicCI. Actualcandidateinputstobebytechecked
+  againstGitHEAD individually; unrelatedparalleluntrackedfiles notimageinputs.
+  Newcasephone-panic-repair-0001 hasNOboot.json. Newhelperdraftsblockeduntil
+  exactactualkernel/source/CI bound. Currentgraphicsbf8/602Bargs/root915/142map/
+ 512MiB/WLED/PON/CPU/GPU/thermal allretained. No sourcechangeallowsdiskwrites.
+
 ### 0134 PRIORITY actual0133 HFS PANIC afterFitness white screen; native drain NOT proven; no newboot/UI actions
 
 - Human nowclarifies: openedFitness, prolongedWHITE screen, thenkernelpanic.

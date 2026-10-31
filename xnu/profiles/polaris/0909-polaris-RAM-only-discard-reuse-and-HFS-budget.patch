@@ -1,0 +1,559 @@
+diff --git a/bsd/dev/polaris_ram_discard.h b/bsd/dev/polaris_ram_discard.h
+new file mode 100644
+--- /dev/null
++++ b/bsd/dev/polaris_ram_discard.h
+@@ -0,0 +1,61 @@
++/* RAM-only discard bookkeeping. The whole object, request scratch and zero
++ * bitmap live INSIDE the original fixed COW arena. No disk or DMA handle.
++ * The existing COW group table supplies next links for reusable RAM chunks. */
++#ifndef POLARIS_RAM_DISCARD_H
++#define POLARIS_RAM_DISCARD_H
++#include <stdint.h>
++#include <stdbool.h>
++#include <stddef.h>
++#define POLARIS_TRIM_MAGIC UINT64_C(0x504352414d545231)
++#define POLARIS_TRIM_MAX_EXTENTS 1024u
++#define POLARIS_TRIM_BLOCK 4096u
++#define POLARIS_TRIM_GRANULE 16384u
++struct polaris_ram_trim_extent { uint64_t offset, length; };
++struct polaris_ram_discard {
++    uint64_t magic,nblocks,bitmap_bytes;
++    uint32_t free_head,reusable;
++    uint64_t calls,trimmed_blocks,recycled_groups,reused_groups,zero_blocks;
++    uint32_t peak_stage,event_count;
++    uint8_t first_full,first_reclaim;
++    struct polaris_ram_trim_extent request[POLARIS_TRIM_MAX_EXTENTS];
++    uint8_t visited[32768u/8u]; /* Scratch only; original group-table maximum. */
++    uint8_t zeroes[];
++};
++static inline bool polaris_discard_reserve_bytes(uint64_t blocks,size_t *out)
++{
++    if(!out||!blocks||blocks>(UINT64_C(64)<<18))return false;
++    uint64_t n=sizeof(struct polaris_ram_discard)+(blocks+7)/8;
++    if(n>SIZE_MAX-(POLARIS_TRIM_GRANULE-1))return false;
++    *out=((size_t)n+POLARIS_TRIM_GRANULE-1)&~((size_t)POLARIS_TRIM_GRANULE-1);
++    return true;
++}
++static inline bool polaris_discard_valid(const struct polaris_ram_discard *d,uint64_t blocks)
++{
++    return d&&blocks&&blocks<=(UINT64_C(64)<<18)&&d->magic==POLARIS_TRIM_MAGIC&&
++        d->nblocks==blocks&&d->bitmap_bytes==(blocks+7)/8&&d->zero_blocks<=blocks;
++}
++static inline bool polaris_discard_zero(const struct polaris_ram_discard *d,uint64_t block)
++{
++    return d&&block<d->nblocks&&(d->zeroes[block/8]&(1u<<(block%8)));
++}
++static inline void polaris_discard_clear(struct polaris_ram_discard *d,uint64_t block)
++{
++    if(d&&polaris_discard_zero(d,block)){d->zeroes[block/8]&=(uint8_t)~(1u<<(block%8));d->zero_blocks--;}
++}
++/* Validate ALL ranges, alignment and aggregate bounded work before touching
++ * a single tombstone. No rounding, partial success or outside-root extent.
++ * Overlap is rejected, rather than multiplied into unbounded repeated work. */
++static inline bool polaris_discard_extents_valid(const struct polaris_ram_discard *d,
++    uint64_t blocks,unsigned count,const struct polaris_ram_trim_extent *extents)
++{
++    if(!polaris_discard_valid(d,blocks)||!extents||!count||count>POLARIS_TRIM_MAX_EXTENTS)return false;
++    uint64_t end=0,total=0,bytes=blocks*POLARIS_TRIM_BLOCK;
++    for(unsigned i=0;i<count;i++) {
++        uint64_t at=extents[i].offset,n=extents[i].length;
++        if(!n||((at|n)&(POLARIS_TRIM_BLOCK-1))||at>=bytes||n>bytes-at||
++           (i&&at<end)||n>bytes-total)return false;
++        end=at+n;total+=n;
++    }
++    return true;
++}
++#endif
+diff --git a/bsd/dev/polaris_ram_cow.h b/bsd/dev/polaris_ram_cow.h
+--- a/bsd/dev/polaris_ram_cow.h
++++ b/bsd/dev/polaris_ram_cow.h
+@@ -7,6 +7,12 @@
+ #include <stdbool.h>
+ #include <stdint.h>
+ #include <stddef.h>
++#if defined(POLARIS_RAM_ONLY)
++#include "polaris_ram_discard.h"
++#else
++#include "polaris-ram-discard.h"
++#endif
++#define POLARIS_COW_REUSE_API 1
+ #define POLARIS_COW_GROUPS 32768u /* maximum512MiB; caller selects a lower budget */
+ #define POLARIS_COW_BUCKETS 1024u
+ #define POLARIS_COW_BLOCK 4096u
+@@ -19,6 +25,7 @@
+ };
+ struct polaris_cow {
+     uint64_t nblocks;
++    struct polaris_ram_discard *discard;
+     unsigned limit, used;
+     uint64_t dirty_blocks, written_blocks;
+     uint32_t buckets[POLARIS_COW_BUCKETS]; /* index+1; zero means absent */
+@@ -36,11 +43,108 @@
+     return NULL;
+ }
+ 
++/* Caller serializes this with every read/write/trim and arena reservation. */
++static inline unsigned polaris_cow_available(struct polaris_cow *c)
++{
++    if(!c||c->used>c->limit)return 0;
++    if(!c->discard)return c->limit-c->used;
++    if(!polaris_discard_valid(c->discard,c->nblocks)||c->discard->reusable>c->used||
++       c->discard->free_head>c->used||((c->discard->free_head!=0)!=(c->discard->reusable!=0)))return 0;
++    return c->limit-c->used+c->discard->reusable;
++}
++static inline struct polaris_cow_group *polaris_cow_ensure(struct polaris_cow *c,
++    uint64_t number,polaris_cow_alloc allocate,void *context)
++{
++    struct polaris_cow_group *g=polaris_cow_find(c,number);
++    if(g)return g;
++    if(!allocate||!polaris_cow_available(c))return NULL;
++    uint32_t index;
++    if(c->discard&&c->discard->free_head) {
++        index=c->discard->free_head-1;g=&c->groups[index];
++        if(!g->data||g->valid||g->number!=UINT64_MAX||g->next>c->used||!c->discard->reusable)return NULL;
++        c->discard->free_head=g->next;c->discard->reusable--;c->discard->reused_groups++;
++    } else {
++        uint8_t *data=allocate(POLARIS_COW_BYTES,context);if(!data)return NULL;
++        index=c->used++;g=&c->groups[index];g->data=data;
++    }
++    g->number=number;g->valid=0;unsigned bucket=(unsigned)(number%POLARIS_COW_BUCKETS);
++    g->next=c->buckets[bucket];c->buckets[bucket]=index+1;
++    return g;
++}
++/* Only an already validated whole ioctl may call this. Fully empty groups
++ * retain their RAM data and reuse the EXISTING BSS next field as a free link. */
++static inline bool polaris_cow_discard(struct polaris_cow *c,unsigned count,
++    const struct polaris_ram_trim_extent *extents)
++{
++    if(!c||!polaris_discard_extents_valid(c->discard,c->nblocks,count,extents)||
++       c->used>c->limit||c->discard->free_head>c->used||c->discard->reusable>c->used)return false;
++    /* Validate complete hash/free membership once before logical mutation.
++     * visited is bounded arena scratch, not the tombstone or file data. */
++    __builtin_memset(c->discard->visited,0,sizeof(c->discard->visited));
++    unsigned seen=0,free_count=0;uint64_t dirty=0;
++    for(unsigned bucket=0;bucket<POLARIS_COW_BUCKETS;bucket++) {
++        uint32_t index=c->buckets[bucket];
++        while(index) {
++            if(index>c->used||seen==c->used)return false;
++            unsigned bit=index-1;uint8_t mask=(uint8_t)(1u<<(bit%8));
++            if(c->discard->visited[bit/8]&mask)return false;
++            c->discard->visited[bit/8]|=mask;seen++;
++            const struct polaris_cow_group *g=&c->groups[bit];
++            if(!g->data||g->valid>15||g->number>=(c->nblocks+3)/4||
++               g->number%POLARIS_COW_BUCKETS!=bucket)return false;
++            dirty+=(unsigned)__builtin_popcount((unsigned)g->valid);index=g->next;
++        }
++    }
++    for(uint32_t index=c->discard->free_head;index;) {
++        if(index>c->used||seen==c->used)return false;
++        unsigned bit=index-1;uint8_t mask=(uint8_t)(1u<<(bit%8));
++        if(c->discard->visited[bit/8]&mask)return false;
++        c->discard->visited[bit/8]|=mask;seen++;free_count++;
++        const struct polaris_cow_group *g=&c->groups[bit];
++        if(!g->data||g->valid||g->number!=UINT64_MAX)return false;
++        index=g->next;
++    }
++    if(seen!=c->used||free_count!=c->discard->reusable||dirty!=c->dirty_blocks)return false;
++    /* Byte-bounded bitmap update; a full16GiB discard does not walk millions
++     * of empty hash lookups. At most512KiB bitmap work + the existing table. */
++    for(unsigned i=0;i<count;i++) {
++        uint64_t first=extents[i].offset/POLARIS_COW_BLOCK;
++        uint64_t last=first+extents[i].length/POLARIS_COW_BLOCK;
++        for(uint64_t byte=first/8;byte<=(last-1)/8;byte++) {
++            unsigned low=byte==first/8?(unsigned)(first%8):0;
++            unsigned high=byte==(last-1)/8?(unsigned)((last-1)%8)+1:8;
++            uint8_t mask=(uint8_t)(((1u<<high)-1u)&~((1u<<low)-1u));
++            uint8_t before=c->discard->zeroes[byte];
++            unsigned added=(unsigned)__builtin_popcount((unsigned)(mask&(uint8_t)~before));
++            c->discard->trimmed_blocks+=added;c->discard->zero_blocks+=added;
++            c->discard->zeroes[byte]=before|mask;
++        }
++    }
++    for(unsigned index=0;index<c->used;index++) {
++        struct polaris_cow_group *g=&c->groups[index];
++        if(g->number==UINT64_MAX)continue;
++        for(unsigned slot=0;slot<4;slot++) {
++            uint8_t bit=(uint8_t)(1u<<slot);
++            if((g->valid&bit)&&polaris_discard_zero(c->discard,g->number*4+slot)) {
++                g->valid&=(uint8_t)~bit;c->dirty_blocks--;
++            }
++        }
++        if(!g->valid) {
++            uint32_t *link=&c->buckets[g->number%POLARIS_COW_BUCKETS];
++            while(*link && &c->groups[*link-1]!=g)link=&c->groups[*link-1].next;
++            *link=g->next;g->number=UINT64_MAX;
++            g->next=c->discard->free_head;c->discard->free_head=index+1;
++            c->discard->reusable++;c->discard->recycled_groups++;
++        }
++    }
++    c->discard->calls++;return true;
++}
++
+ static inline bool
+ polaris_cow_range(struct polaris_cow *c, uint64_t lba, uint32_t blocks)
+ {
+     return c && c->limit && c->limit <= POLARIS_COW_GROUPS &&
+-        c->used <= c->limit && c->nblocks && c->nblocks <= (UINT64_C(64) << 18) &&
++        c->used <= c->limit && (!c->discard||polaris_discard_valid(c->discard,c->nblocks)) && c->nblocks && c->nblocks <= (UINT64_C(64) << 18) &&
+         blocks && blocks <= 256 && lba < c->nblocks && blocks <= c->nblocks - lba;
+ }
+ 
+@@ -53,7 +157,9 @@
+         uint64_t block = lba + i;
+         struct polaris_cow_group *g = polaris_cow_find(c, block / 4);
+         unsigned slot = block % 4;
+-        if (g && (g->valid & (1u << slot))) {
++        if (polaris_discard_zero(c->discard,block)) {
++            __builtin_memset((uint8_t *)buffer+i*POLARIS_COW_BLOCK,0,POLARIS_COW_BLOCK);
++        } else if (g && (g->valid & (1u << slot))) {
+             __builtin_memcpy((uint8_t *)buffer + i * POLARIS_COW_BLOCK,
+                 g->data + slot * POLARIS_COW_BLOCK, POLARIS_COW_BLOCK);
+         }
+@@ -75,16 +181,9 @@
+     unsigned needed = 0;
+     for (uint64_t group = first; group <= last; group++)
+         if (!polaris_cow_find(c, group)) needed++;
+-    if (needed > c->limit - c->used) return false;
+-    for (uint64_t group = first; group <= last; group++) {
+-        if (polaris_cow_find(c, group)) continue;
+-        uint8_t *data = allocate(POLARIS_COW_BYTES, context);
+-        if (!data) return false;
+-        struct polaris_cow_group *g = &c->groups[c->used];
+-        g->number = group; g->data = data; g->valid = 0;
+-        unsigned bucket = group % POLARIS_COW_BUCKETS;
+-        g->next = c->buckets[bucket]; c->buckets[bucket] = ++c->used;
+-    }
++    if (needed > polaris_cow_available(c)) return false;
++    for (uint64_t group=first;group<=last;group++)
++        if(!polaris_cow_ensure(c,group,allocate,context))return false;
+     for (uint32_t i = 0; i < blocks; i++) {
+         uint64_t block = lba + i;
+         struct polaris_cow_group *g = polaris_cow_find(c, block / 4);
+@@ -93,6 +192,7 @@
+         __builtin_memcpy(g->data + slot * POLARIS_COW_BLOCK,
+             (const uint8_t *)buffer + i * POLARIS_COW_BLOCK, POLARIS_COW_BLOCK);
+         g->valid |= (uint8_t)(1u << slot);
++        polaris_discard_clear(c->discard,block);
+     }
+     c->written_blocks += blocks;
+     return true;
+diff --git a/bsd/dev/polaris_ram_io.h b/bsd/dev/polaris_ram_io.h
+--- a/bsd/dev/polaris_ram_io.h
++++ b/bsd/dev/polaris_ram_io.h
+@@ -42,7 +42,7 @@
+     for (uint32_t i = 0; i < blocks; i++) {
+         uint64_t block = lba + i;
+         struct polaris_cow_group *g = polaris_cow_find(c, block / 4);
+-        if (!g || !g->data || !(g->valid & (1u << (block % 4)))) return false;
++        if (!polaris_discard_zero(c->discard,block) && (!g || !g->data || !(g->valid & (1u << (block % 4))))) return false;
+     }
+     return polaris_cow_overlay(c, lba, blocks, buffer);
+ }
+diff --git a/bsd/dev/sweet_ufs.c b/bsd/dev/sweet_ufs.c
+--- a/bsd/dev/sweet_ufs.c
++++ b/bsd/dev/sweet_ufs.c
+@@ -455,19 +455,29 @@
+ static unsigned polaris_cow_used_snapshot, polaris_cow_limit_snapshot;
+ 
+ static int
+-polaris_ram_reserve(unsigned mib)
++polaris_ram_reserve(unsigned mib,uint64_t root_blocks)
+ {
+     size_t bytes;
+     unsigned groups;
++    size_t trim_bytes;
+     vm_offset_t memory = 0;
+     if (polaris_root_arena.base || !polaris_arena_budget(mib, &bytes, &groups) ||
+-        groups > POLARIS_COW_GROUPS) { return EINVAL; }
++        groups > POLARIS_COW_GROUPS || !polaris_discard_reserve_bytes(root_blocks,&trim_bytes) ||
++        trim_bytes>=bytes || bytes-trim_bytes<POLARIS_COW_BYTES) { return EINVAL; }
++    groups=(unsigned)((bytes-trim_bytes)/POLARIS_COW_BYTES);
+     /* Root not mounted yet, before UFS locking/commands. These wired pages
+      * never need to be allocated or reclaimed during a filesystem request. */
+     if (kmem_alloc(kernel_map, &memory, bytes, KMA_DATA | KMA_ZERO | KMA_PERMANENT,
+         VM_KERN_MEMORY_IOKIT) != KERN_SUCCESS) { return ENOMEM; }
+-    polaris_root_arena.base = (uint8_t *)memory;
+-    polaris_root_arena.size = bytes;
++    /* Bitmap + request scratch + free-head/counters are carved from the SAME
++     * original reservation; no increase to512MiB. next links use the existing
++     * native BSS group array, not another allocation. */
++    struct polaris_ram_discard *discard=(struct polaris_ram_discard *)memory;
++    discard->magic=POLARIS_TRIM_MAGIC;discard->nblocks=root_blocks;
++    discard->bitmap_bytes=(root_blocks+7)/8;
++    polaris_root_cow.discard=discard;
++    polaris_root_arena.base = (uint8_t *)memory+trim_bytes;
++    polaris_root_arena.size = bytes-trim_bytes;
+     polaris_ram_mib = mib;
+     polaris_root_cow.limit = groups;
+     __atomic_store_n(&polaris_cow_limit_snapshot, groups, __ATOMIC_RELAXED);
+@@ -482,6 +492,7 @@
+ static bool polaris_qemu_ufs;
+ static uint64_t polaris_ufs_submitted, polaris_ufs_completed;
+ int polaris_ufs_ram_seal(void);
++static void polaris_ram_capacity_publish(unsigned);
+ bool polaris_ram_overlay_allowed(void);
+ 
+ #endif
+@@ -568,6 +579,47 @@
+ 	bool ready;
+ } su;
+ 
++/* One atomic packed snapshot: high32 exact root dev, low32 conservatively
++ * writable4KiB blocks. UFS geometry remains the original whole HFS volume. */
++#if defined(POLARIS_RAM_ONLY)
++static uint64_t polaris_ram_free_snapshot;
++uint32_t polaris_ram_freeblks(dev_t dev,uint32_t allocation_bytes,uint32_t original);
++static void polaris_ram_capacity_publish(unsigned event)
++{
++    struct polaris_cow *c=&polaris_root_cow;
++    struct polaris_ram_discard *d=c->discard;
++    bool active=polaris_file_active&&polaris_ram_cow_enabled&&su.ready&&su.writable&&
++        polaris_native_owner&&!polaris_io_failed&&!polaris_ufs_sealed&&!polaris_ufs_inflight&&
++        polaris_discard_valid(d,c->nblocks);
++    unsigned free=polaris_discard_valid(d,c->nblocks)?polaris_cow_available(c):0;
++    /* Keep root identity while sealed/failed so unknown exposes ZERO free,
++     * rather than falling through to the immutable base's optimistic space. */
++    uint64_t snapshot=((uint64_t)(uint32_t)su.bdev<<32)|(active?free:0);
++    __atomic_store_n(&polaris_ram_free_snapshot,snapshot,__ATOMIC_RELEASE);
++    __atomic_store_n(&polaris_cow_used_snapshot,c->used,__ATOMIC_RELAXED);
++    if(!d||!polaris_discard_valid(d,c->nblocks)||d->event_count>=12)return;
++    unsigned used=c->limit>=free?c->limit-free:c->limit;
++    unsigned stage=c->limit?(unsigned)((uint64_t)used*8/c->limit):8;
++    bool note=stage>d->peak_stage;
++    if(note)d->peak_stage=stage;
++    if(event==1&&!d->first_full){d->first_full=1;note=true;}
++    if(event==2&&d->reusable&&!d->first_reclaim){d->first_reclaim=1;note=true;}
++    if(note){d->event_count++;printf("POLARIS RAM CAPACITY: event=%u sample=%u used=%u/%u data-free=%u admitted=%u reusable=%u dirty=%llu tombstone=%llu trim=%llu recycled=%llu reused=%llu; RAM only, 16GiB geometry unchanged\n",
++        event,d->event_count,used,c->limit,free,(unsigned)active,d->reusable,c->dirty_blocks,d->zero_blocks,
++        d->calls,d->recycled_groups,d->reused_groups);}
++}
++uint32_t polaris_ram_freeblks(dev_t dev,uint32_t allocation_bytes,uint32_t original)
++{
++    uint64_t snapshot=__atomic_load_n(&polaris_ram_free_snapshot,__ATOMIC_ACQUIRE);
++    if(!snapshot||(uint32_t)dev!=(uint32_t)(snapshot>>32))return original;
++    if(!allocation_bytes||allocation_bytes%POLARIS_COW_BLOCK)return 0;
++    /* Conservative: one new4KiB block may require an entire16KiB RAM group.
++     * Not a guarantee for in-place overwrites/concurrent outstanding metadata. */
++    uint64_t blocks=((uint64_t)(uint32_t)snapshot*POLARIS_COW_BLOCK)/allocation_bytes;
++    return blocks<original?(uint32_t)blocks:original;
++}
++#endif
++
+ static LCK_GRP_DECLARE(sweet_ufs_grp, "sweet_ufs");
+ static LCK_MTX_DECLARE(sweet_ufs_lock, &sweet_ufs_grp);
+ 
+@@ -672,13 +724,13 @@
+     if (polaris_ufs_sealed || polaris_io_failed || polaris_ufs_inflight ||
+         polaris_ufs_submitted != polaris_ufs_completed) goto out;
+     if (!su.regs && !su.dma && !su.ready && !polaris_native_owner && !polaris_file_active) {
+-        polaris_ufs_sealed = true;
++        polaris_ufs_sealed = true; polaris_ram_capacity_publish(0);
+         printf("POLARIS UFS SEAL: no native controller; submissions=0\n");
+         error = 0; goto out;
+     }
+     if ((!polaris_qemu_ufs && (!su.ready || !polaris_file_active)) ||
+         !polaris_ufs_queue_owned() || ufs_rd(REG_UTRLDBR)) goto out;
+-    polaris_ufs_sealed = true; /* Later RAM strategy, IOCTL and CDBs also refuse. */
++    polaris_ufs_sealed = true; polaris_ram_capacity_publish(0); /* Later RAM strategy, IOCTL and CDBs also refuse. */
+     printf("POLARIS UFS SEAL: owned idle native queue submitted=%llu completed=%llu; RAM only, no device flush\n",
+         polaris_ufs_submitted, polaris_ufs_completed);
+     error = 0;
+@@ -715,7 +767,7 @@
+ #endif
+ #if defined(POLARIS_RAM_ONLY)
+     if (!polaris_ufs_queue_owned() || ufs_rd(REG_UTRLDBR)) {
+-        polaris_io_failed = true; /* No descriptor/bounce mutation on ownership loss. */
++        polaris_io_failed = true; polaris_ram_capacity_publish(0); /* No descriptor/bounce mutation on ownership loss. */
+         if (polaris_owned_active) { polaris_owned_failed=true;polaris_q_fail(&polaris_owned_q,POLARIS_Q_IO_ERROR); }
+         return EBUSY;
+     }
+@@ -803,7 +855,7 @@
+ #if !defined(POLARIS_RAM_ONLY)
+ 			ufs_wr(REG_UTRLCLR, ~1u);
+ #else
+-            polaris_io_failed = true; /* Never reuse outstanding descriptors. */
++            polaris_io_failed = true; polaris_ram_capacity_publish(0); /* Never reuse outstanding descriptors. */
+             if (owned_data) { (void)polaris_q_complete(&polaris_owned_q,false,false,0);polaris_owned_failed=true; }
+ #endif
+ 			printf("SWEET UFS: command 0x%02x timed out\n", cdb[0]);
+@@ -823,7 +875,7 @@
+ 	__builtin_arm_dsb(0xf);
+ #if defined(POLARIS_RAM_ONLY)
+     if (!polaris_ufs_queue_owned()) {
+-        polaris_io_failed = true;
++        polaris_io_failed = true; polaris_ram_capacity_publish(0);
+         if (owned_data) { (void)polaris_q_complete(&polaris_owned_q,false,false,0);polaris_owned_failed=true; }
+         return EIO; /* Completion/ownership unknown: retain queue and inflight. */
+     }
+@@ -854,7 +906,7 @@
+ 	if (ocs || ucd->resp[0] != 0x21 || ucd->resp[6] || ucd->resp[7]) {
+ #if defined(POLARIS_RAM_ONLY)
+         /* Only initialization TUR may consume a bounded unit-attention retry. */
+-        if (polaris_owned_active || polaris_file_active || cdb[0] != 0) polaris_io_failed = true;
++        if (polaris_owned_active || polaris_file_active || cdb[0] != 0) polaris_io_failed = true; polaris_ram_capacity_publish(0);
+         if (owned_data) { (void)polaris_q_complete(&polaris_owned_q,true,false,0);polaris_owned_failed=true; }
+ #endif
+ 		printf("SWEET UFS: command 0x%02x failed: ocs 0x%x upiu 0x%x response 0x%x status 0x%x\n",
+@@ -865,7 +917,7 @@
+ 	/* Never call a short/stale read a successful integrity check. */
+ 	if (ucd->resp[1] || ucd->resp[2] != su.lun || ucd->resp[3] != su.tag ||
+ 	    ucd->resp[12] || ucd->resp[13] || ucd->resp[14] || ucd->resp[15]) {
+-        polaris_io_failed = true;
++        polaris_io_failed = true; polaris_ram_capacity_publish(0);
+         if (owned_data) { (void)polaris_q_complete(&polaris_owned_q,true,false,0);polaris_owned_failed=true; }
+ 		printf("POLARIS UFS: unexpected response flags/tag/residual\n");
+ 		return EIO;
+@@ -1059,7 +1111,7 @@
+         !polaris_ufs_queue_owned() || ufs_rd(REG_UTRLDBR) ||
+         !polaris_q_request(&polaris_owned_q,request->cookie,request->sequence,request->mode) ||
+         !polaris_q_seal(&polaris_owned_q,mounts,busy)) goto out;
+-    polaris_ufs_sealed=true;
++    polaris_ufs_sealed=true; polaris_ram_capacity_publish(0);
+     if (!polaris_q_flush_begin(&polaris_owned_q)) goto out;
+     polaris_owned_final_sync=true;
+     printf("POLARIS OWNED SYNC: native sealed final SYNCHRONIZE CACHE10 begin epoch=%llu\n",polaris_owned_q.write_epoch);
+@@ -1343,7 +1395,7 @@
+     }
+ out:
+     if (error) {
+-        polaris_io_failed=true;
++        polaris_io_failed=true; polaris_ram_capacity_publish(0);
+         if (owned) polaris_owned_failed=true;
+         printf("POLARIS QEMU UFS: FAILED stage=%u error=%d; DMA retained, no reset grant\n",stage,error);
+         if (su.regs) printf("POLARIS QEMU UFS STATE: HCE=%x HCS=%x IS=%x UIC=%x ARG2=%x DBR=%x\n",
+@@ -1561,7 +1613,7 @@
+                         count,polaris_root_cow.used,polaris_root_cow.limit,
+                         polaris_cow_available(&polaris_root_cow));
+             } else if(!error)polaris_cow_prepared++;
+-            __atomic_store_n(&polaris_cow_used_snapshot,polaris_root_cow.used,__ATOMIC_RELAXED);
++            polaris_ram_capacity_publish(error==ENOSPC?1:0);
+         }
+         if(error) {
+             lck_mtx_unlock(&sweet_ufs_lock);buf_unmap(bp);goto done;
+@@ -1623,7 +1675,7 @@
+                     printf("POLARIS RAM COW: RAM budget exhausted; write refused (%llu)\n", polaris_cow_failures);
+                 }
+             }
+-            __atomic_store_n(&polaris_cow_used_snapshot, polaris_root_cow.used, __ATOMIC_RELAXED);
++            polaris_ram_capacity_publish(error==ENOSPC?1:0);
+         } else {
+             /* Read-only roots without COW retain the original base path. */
+             polaris_base_calls++;
+@@ -1663,14 +1715,68 @@
+ 	buf_biodone(bp);
+ }
+ 
++#if defined(POLARIS_RAM_ONLY)
++static bool polaris_ram_kernel_pointer(const void *p,size_t bytes)
++{
++    uintptr_t at=(uintptr_t)p;
++    return p&&bytes&&at>=VM_MIN_KERNEL_ADDRESS&&at<=VM_MAX_KERNEL_ADDRESS&&
++        bytes-1<=VM_MAX_KERNEL_ADDRESS-at;
++}
++static bool polaris_ram_unmap_scope(dev_t dev,int is_char,struct proc *p)
++{
++    return !is_char&&p==kernproc&&dev==su.bdev&&su.ready&&su.writable&&
++        polaris_file_active&&polaris_ram_cow_enabled&&polaris_native_owner&&
++        !polaris_ufs_sealed&&!polaris_io_failed&&!polaris_ufs_inflight&&
++        polaris_discard_valid(polaris_root_cow.discard,polaris_root_cow.nblocks);
++}
++static int polaris_ram_unmap(dev_t dev,caddr_t data,int is_char,struct proc *p)
++{
++    dk_unmap_t request;
++    if(!p||p!=kernproc||is_char||dev!=su.bdev)return EPERM;
++    if(!polaris_ram_kernel_pointer(data,sizeof(request))||
++       ml_nofault_copy((vm_offset_t)data,(vm_offset_t)&request,sizeof(request))!=sizeof(request))return EFAULT;
++    /* Only the documented HFS initial-scan hint is accepted. No stronger
++     * UNMAP/zero/durability feature is advertised or routed to the real UFS. */
++    if(request.options&~_DK_UNMAP_INITIALIZE||!request.extentsCount||
++       request.extentsCount>POLARIS_TRIM_MAX_EXTENTS||
++       !polaris_ram_kernel_pointer(request.extents,(size_t)request.extentsCount*sizeof(dk_extent_t)))return EINVAL;
++    lck_mtx_lock(&sweet_ufs_lock);
++    int error=0;
++    if(!polaris_ram_unmap_scope(dev,is_char,p)){error=EBUSY;goto out;}
++    struct polaris_ram_discard *d=polaris_root_cow.discard;
++    _Static_assert(sizeof(dk_extent_t)==sizeof(struct polaris_ram_trim_extent),"RAM trim extent ABI");
++    size_t bytes=(size_t)request.extentsCount*sizeof(dk_extent_t);
++    /* request[] is dedicated wired scratch inside the original512MiB; a
++     * partial nofault copy changes no tombstone/valid/data/free-chain bit. */
++    if(ml_nofault_copy((vm_offset_t)request.extents,(vm_offset_t)d->request,bytes)!=bytes){error=EFAULT;goto out;}
++    if(!polaris_cow_discard(&polaris_root_cow,request.extentsCount,d->request)){error=EINVAL;goto out;}
++    polaris_ram_capacity_publish(2);
++out:
++    lck_mtx_unlock(&sweet_ufs_lock);return error;
++}
++#endif
++
+ static int
+-sweet_ufs_ioctl(__unused dev_t dev, u_long cmd, caddr_t data, __unused int flag,
+-    __unused struct proc *p, int is_char)
++sweet_ufs_ioctl(dev_t dev, u_long cmd, caddr_t data, __unused int flag,
++    struct proc *p, int is_char)
+ {
+ 	uint32_t *f = (uint32_t *)data;
+ 	uint64_t *o = (uint64_t *)data;
+ 
+ 	switch (cmd) {
++#if defined(POLARIS_RAM_ONLY)
++    case DKIOCUNMAP:
++        return polaris_ram_unmap(dev,data,is_char,p);
++    case DKIOCGETFEATURES: {
++        if(!polaris_ram_kernel_pointer(data,sizeof(uint32_t)))return EFAULT;
++        lck_mtx_lock(&sweet_ufs_lock);
++        bool allowed=polaris_ram_unmap_scope(dev,is_char,p);
++        lck_mtx_unlock(&sweet_ufs_lock);
++        if(!allowed)return ENOTTY;
++        uint32_t features=DK_FEATURE_UNMAP;
++        return ml_nofault_copy((vm_offset_t)&features,(vm_offset_t)data,sizeof(features))==sizeof(features)?0:EFAULT;
++    }
++#endif
+ 	case DKIOCGETBLOCKSIZE:
+ 		*f = su.secsize;
+ 		return 0;
+@@ -1861,7 +1967,7 @@
+         return EINVAL;
+     }
+     /* Reserve bounded volatile backing BEFORE any host access or storage lock. */
+-    if (cow && polaris_ram_reserve(ram_mib)) {
++    if (cow && polaris_ram_reserve(ram_mib,layout[2])) {
+         printf("POLARIS RAM COW: could not reserve %uMiB; root refused, no MMIO\n", ram_mib);
+         return ENOMEM;
+     }
+@@ -1945,7 +2051,7 @@
+         error=polaris_owned_fixture(owner,(const void *)(su.dma+DMA_BOUNCE),
+             polaris_file_map,polaris_file_count*sizeof(struct polaris_extent),layout[2]);
+         if (error) {
+-            polaris_owned_failed=true;polaris_io_failed=true;
++            polaris_owned_failed=true;polaris_io_failed=true; polaris_ram_capacity_publish(0);
+             printf("POLARIS OWNED: physical marker FAILED %d; no reset permission\n",error);
+             goto out;
+         }
+@@ -1967,6 +2073,7 @@
+     devfs_make_node(su.bdev, DEVFS_BLOCK, UID_ROOT, GID_OPERATOR, su.writable ? 0600 : 0400, "ufsroot0");
+     devfs_make_node(makedev(su.cmajor, 0), DEVFS_CHAR, UID_ROOT, GID_OPERATOR, su.writable ? 0600 : 0400, "rufsroot0");
+     su.ready = true;
++    polaris_ram_capacity_publish(0);
+     printf("POLARIS FILE ROOT: verified GPT + HFSX, %llu MiB, %u extents, base READ ONLY\n",
+         su.nblocks * UFS_BLOCK >> 20, polaris_file_count);
+     if (polaris_ram_cow_enabled) {
+diff --git a/bsd/sweet_hfs/core/hfs_vfsutils.c b/bsd/sweet_hfs/core/hfs_vfsutils.c
+--- a/bsd/sweet_hfs/core/hfs_vfsutils.c
++++ b/bsd/sweet_hfs/core/hfs_vfsutils.c
+@@ -2088,6 +2088,17 @@
+ 		freeblks = MIN(freeblks, vfreeblks);
+ #endif /* HFS_SPARSE_DEV */
+ 
++
++#if defined(POLARIS_RAM_ONLY)
++    /* Same exact virtual-root snapshot as the RAM block driver. A sparse
++     *4KiB allocation can consume one16KiB COW group; no geometry adjustment
++     * or physical write permission follows from this conservative clamp.
++     * The getter is one atomic read and NEVER takes sweet_ufs_lock while
++     * HFS allocation/catalog/journal locks may be held. */
++    extern uint32_t polaris_ram_freeblks(dev_t,uint32_t,uint32_t);
++    if(vfs_flags(hfsmp->hfs_mp)&MNT_ROOTFS)
++        freeblks=polaris_ram_freeblks(hfsmp->hfs_raw_dev,hfsmp->blockSize,freeblks);
++#endif
+ 	return (freeblks);
+ }
+ 

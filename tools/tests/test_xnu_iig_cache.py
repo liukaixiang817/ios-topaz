@@ -4,6 +4,8 @@ import importlib.util
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch as mock_patch
+import subprocess
 
 ROOT=Path(__file__).resolve().parents[2]
 spec=importlib.util.spec_from_file_location('iig_cache',ROOT/'tools/xnu-iig-cache.py')
@@ -20,7 +22,7 @@ class PrivateHeaderBinding(unittest.TestCase):
             for patch in (ROOT/'xnu/profiles/polaris').glob('*.patch'):
                 text=patch.read_text();marker='+++ b/'+name+'\n'
                 if marker not in text:continue
-                body=text.split(marker,1)[1].split('--- ',1)[0]
+                body=text.split(marker,1)[1].split('diff --git ',1)[0].split('--- ',1)[0]
                 if not body.startswith('@@ -0,0 '):continue
                 lines=body.splitlines(keepends=True)[1:]
                 self.assertTrue(all(line.startswith('+') for line in lines))
@@ -39,7 +41,22 @@ class PrivateHeaderBinding(unittest.TestCase):
             p=Path(d)/'header'
             for name,(old,new) in cache.PRIVATE_IMPLEMENTATION_REPLACEMENTS.items():
                 host=ROOT/'tools'/Path(name).name.replace('_','-')
-                raw=host.read_bytes().replace(b'"polaris-a630-core.h"',b'"polaris_a630_core.h"')
+                if name=='bsd/sweet_hfs/core/hfs_journal.h':
+                    # The upstream HFS header is materialized and whole-hashed
+                    # by the real build, not copied into tools as a test asset.
+                    # Exercise exception scope here; CI checks the real bytes.
+                    with mock_patch.object(cache,'sha',return_value=new):
+                        self.assertTrue(cache.header_matches(name,old,p))
+                        self.assertFalse(cache.header_matches(name,'0'*64,p))
+                        self.assertFalse(cache.header_matches('iokit/DriverKit/IOService.iig',old,p))
+                    continue
+                if name in ('bsd/dev/polaris_ram_cow.h','bsd/dev/polaris_ram_io.h'):
+                    target=Path(d)/name;target.parent.mkdir(parents=True,exist_ok=True)
+                    target.write_bytes(host.read_bytes())
+                    subprocess.run(['git','apply','--include='+name,str(ROOT/'xnu/profiles/polaris/0909-polaris-RAM-only-discard-reuse-and-HFS-budget.patch')],cwd=d,check=True)
+                    raw=target.read_bytes()
+                else:
+                    raw=host.read_bytes().replace(b'"polaris-a630-core.h"',b'"polaris_a630_core.h"')
                 self.assertEqual(hashlib.sha256(raw).hexdigest(),new)
                 p.write_bytes(raw)
                 self.assertTrue(cache.header_matches(name,old,p))

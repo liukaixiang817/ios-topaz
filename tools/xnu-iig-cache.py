@@ -23,6 +23,11 @@ EXTRA_PRIVATE_HEADERS={'iokit/Kernel/arm/polaris_uefi_cpu.h','bsd/dev/polaris_ue
 # outside DriverKit's interface include graph. Bind their reviewed bytes; adding them
 # must not weaken the original IDL/header checks or admit arbitrary headers.
 EXTRA_PRIVATE_HEADER_SHA={
+    'bsd/dev/polaris_ram_discard.h':
+    '9065973132524411f2c4046c0ff4d2952a7d1441949c4ed4dcdf4732a9987fa9',
+    # RAM-only root write preflight, included only by sweet_ufs.c.
+    'bsd/dev/polaris_ram_transaction.h':
+    'e6345921bdcbd61e63d887303c50d94b9af77c8b71135d920fdf433b3948575b',
     # Media-only implementation includes, outside DriverKit/IDL include graph.
     'bsd/dev/polaris-media-status.h':
     '36546b9a6bc92a3efc0af9f22aace2235fe5da1a6bac93d1868247744155f71d',
@@ -51,6 +56,18 @@ EXTRA_PRIVATE_HEADER_SHA={
 # still included ONLY by polaris_a630.c. Bind original and replacement
 # bytes. Every other original header and all 17 IDLs still require identity.
 PRIVATE_IMPLEMENTATION_REPLACEMENTS={
+    # Private volatile-root implementation; no DriverKit interface includes.
+    'bsd/dev/polaris_ram_cow.h':(
+        '869ffecdda69188c2faee2fd9a3e8d4a7c422bc8161a3eda76463811cd87929c',
+        '5eecfdf7d7bfd5f607269f30d5c09827530082822a6b61c01fa7dcb3b784e4a3'),
+    'bsd/dev/polaris_ram_io.h':(
+        '1c4275456fc473533307e5108019bcf8b8d298b4758b8733fd68bb3c97302b48',
+        '62d398e32e3ca2ba4e2834378f5d5a0db1d50e97fc32336f855acf836fa4abad'),
+    # Private HFS journal bookkeeping appends its first asynchronous error.
+    # It is outside the DriverKit interface graph; retain exact input binding.
+    'bsd/sweet_hfs/core/hfs_journal.h':(
+        '1de7e23acb743775d99970ce83ddad68d2f56200ab52f5dfd7aafa8038b4aa40',
+        'ea32f0b153ebbda79e0245ab460dade52b8d3660330c6e5d322a2c6bd8905f56'),
     'bsd/dev/polaris_a630_runtime.h':(
         'ac96ec731d4a49a5a1de5edf734f3382a971e881d1d5878167d55701d94b36aa',
         '8113b553ebbbccfdd6d89f87d6214e41d91950da336d93e86bb83cac0089fbd8'),

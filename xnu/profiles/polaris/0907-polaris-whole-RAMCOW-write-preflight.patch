@@ -1,0 +1,210 @@
+--- /dev/null
++++ b/bsd/dev/polaris_ram_transaction.h
+@@ -0,0 +1,82 @@
++/* Whole-strategy RAM-COW write preparation. Caller holds the SAME mutex as
++ * all reads/writes for preparation and every subsequent write fragment.
++ * No persistent writer or storage command is exposed here. A base callback
++ * may read exactly one immutable logical block into the existing bounce.
++ * Reserve ALL groups before changing any request byte; materializing an
++ * immutable partial edge in RAM is data-equivalent to the original base.
++ * The strategy must split partial edge blocks from aligned full overwrites,
++ * so its commit phase needs no base reads or further allocations.
++ */
++#ifndef POLARIS_RAM_TRANSACTION_H
++#define POLARIS_RAM_TRANSACTION_H
++#if defined(POLARIS_RAM_ONLY)
++#include "polaris_ram_io.h"
++#else
++#include "polaris-ram-io.h"
++#endif
++/* 0909 may supply the same contract with empty-group reuse. Existing boards
++ * retain this exact append-only implementation when that API is absent. */
++#ifndef POLARIS_COW_REUSE_API
++static inline unsigned polaris_cow_available(struct polaris_cow *c)
++{return c&&c->used<=c->limit?c->limit-c->used:0;}
++static inline struct polaris_cow_group *polaris_cow_ensure(struct polaris_cow *c,
++    uint64_t number,polaris_cow_alloc allocate,void *allocator)
++{
++    struct polaris_cow_group *g=polaris_cow_find(c,number);
++    if(g)return g;
++    if(!polaris_cow_available(c))return NULL;
++    uint8_t *data=allocate(POLARIS_COW_BYTES,allocator);if(!data)return NULL;
++    g=&c->groups[c->used];g->number=number;g->data=data;g->valid=0;
++    unsigned bucket=(unsigned)(number%POLARIS_COW_BUCKETS);
++    g->next=c->buckets[bucket];c->buckets[bucket]=++c->used;return g;
++}
++#endif
++struct polaris_ram_preparation {
++    enum polaris_ram_status status;
++    int base_error;
++    uint64_t first,last;
++    uint32_t groups_needed,base_reads,materialized_edges;
++};
++typedef int (*polaris_ram_read_edge_fn)(void *,uint64_t,void *);
++static inline struct polaris_ram_preparation
++polaris_ram_prepare_write(struct polaris_cow *c,uint64_t logical,
++    uint32_t skip,uint32_t bytes,void *bounce,polaris_cow_alloc allocate,
++    void *allocator,polaris_ram_read_edge_fn read_edge,void *reader,bool halted)
++{
++    struct polaris_ram_preparation out={POLARIS_RAM_INVALID,0,0,0,0,0,0};
++    if(halted){out.status=POLARIS_RAM_STOPPED;return out;}
++    if(!c||!bounce||!allocate||!read_edge||!bytes||skip>=POLARIS_COW_BLOCK||
++       !c->limit||c->limit>POLARIS_COW_GROUPS||c->used>c->limit||
++       !c->nblocks||c->nblocks>(UINT64_C(64)<<18)||logical>=c->nblocks)return out;
++    uint64_t blocks=((uint64_t)skip+bytes+POLARIS_COW_BLOCK-1)/POLARIS_COW_BLOCK;
++    if(blocks>c->nblocks-logical)return out;
++    out.first=logical/4;out.last=(logical+blocks-1)/4;
++    if(out.last-out.first+1>c->limit){out.status=POLARIS_RAM_FULL;return out;}
++    for(uint64_t n=out.first;n<=out.last;n++)if(!polaris_cow_find(c,n))out.groups_needed++;
++    if(out.groups_needed>polaris_cow_available(c)){out.status=POLARIS_RAM_FULL;return out;}
++    /* Allocation failure leaves only empty groups, never partial request data.
++     * The wired arena used on the phone cannot fail after this budget check,
++     * but keep generic allocator failure observable instead of assuming it. */
++    for(uint64_t n=out.first;n<=out.last;n++)
++        if(!polaris_cow_ensure(c,n,allocate,allocator)) {
++            out.status=POLARIS_RAM_FULL;return out;
++        }
++    uint64_t edge[2]={logical,logical+blocks-1};
++    bool partial[2]={skip!=0,((uint64_t)skip+bytes)%POLARIS_COW_BLOCK!=0};
++    for(unsigned n=0;n<2;n++) {
++        if(!partial[n]||(n&&edge[n]==edge[0]&&partial[0]))continue;
++        struct polaris_cow_group *g=polaris_cow_find(c,edge[n]/4);
++        unsigned slot=(unsigned)(edge[n]%4);
++        if(g->valid&(1u<<slot))continue;
++        out.base_reads++;
++        out.base_error=read_edge(reader,edge[n],bounce);
++        if(out.base_error){out.status=POLARIS_RAM_BASE_ERROR;return out;}
++        /* 0909 zero tombstones must override immutable data before an edge
++         * is materialized, so a partial write cannot resurrect discarded data. */
++        if(!polaris_cow_overlay(c,edge[n],1,bounce))return out;
++        __builtin_memcpy(g->data+slot*POLARIS_COW_BLOCK,bounce,POLARIS_COW_BLOCK);
++        g->valid|=(uint8_t)(1u<<slot);c->dirty_blocks++;out.materialized_edges++;
++    }
++    out.status=POLARIS_RAM_OK;return out;
++}
++#endif
+--- a/bsd/dev/sweet_ufs.c
++++ b/bsd/dev/sweet_ufs.c
+@@ -440,12 +440,15 @@
+ #include "polaris_filemap.h"
+ #include "polaris_ram_cow.h"
+ #include "polaris_ram_io.h"
++#include "polaris_ram_transaction.h"
++#include <sys/sysctl.h>
+ static struct polaris_cow polaris_root_cow;
+ static bool polaris_ram_cow_enabled;
+ #include "polaris_cow_arena.h"
+ _Static_assert(POLARIS_ARENA_GRANULE == POLARIS_COW_BYTES, "COW arena granularity");
+ static struct polaris_cow_arena polaris_root_arena;
+ static uint64_t polaris_cow_failures;
++static uint64_t polaris_cow_prepared, polaris_cow_prepare_base_reads;
+ /* All updates/snapshots hold sweet_ufs_lock; no periodic MMIO sampling. */
+ static uint64_t polaris_base_calls, polaris_ram_reads, polaris_ram_merges, polaris_full_writes;
+ static unsigned polaris_ram_mib = 128;
+@@ -569,6 +572,29 @@
+ static LCK_MTX_DECLARE(sweet_ufs_lock, &sweet_ufs_grp);
+ 
+ #if defined(POLARIS_RAM_ONLY)
++/* Read-only capacity of volatile RAM backing, NOT the logical disk geometry.
++ * No wait behind live storage, no physical address or firmware data exposed. */
++static int polaris_ram_cow_status SYSCTL_HANDLER_ARGS
++{
++    struct { uint32_t version,bytes,flags,reserved;
++        uint64_t limit_groups,used_groups,available_groups,remaining_bytes,
++            valid_blocks,written_blocks,failures,prepared,edge_reads; } status={0};
++    if(!lck_mtx_try_lock(&sweet_ufs_lock))return EBUSY;
++    status.version=1;status.bytes=sizeof(status);status.flags=polaris_ram_cow_enabled?1:0;
++    status.limit_groups=polaris_root_cow.limit;status.used_groups=polaris_root_cow.used;
++    status.available_groups=polaris_cow_available(&polaris_root_cow);
++    status.remaining_bytes=status.available_groups*POLARIS_COW_BYTES;
++    status.valid_blocks=polaris_root_cow.dirty_blocks;
++    status.written_blocks=polaris_root_cow.written_blocks;
++    status.failures=polaris_cow_failures;status.prepared=polaris_cow_prepared;
++    status.edge_reads=polaris_cow_prepare_base_reads;
++    lck_mtx_unlock(&sweet_ufs_lock);
++    return SYSCTL_OUT(req,&status,sizeof(status));
++}
++SYSCTL_PROC(_kern,OID_AUTO,polaris_ramcow_status,
++    CTLTYPE_STRUCT|CTLFLAG_RD|CTLFLAG_LOCKED,0,0,polaris_ram_cow_status,
++    "S,polaris_ramcow_status","Volatile RAM-COW capacity; no persistent write permission");
++
+ /* Opt-in bring-up evidence, RAM only. Keep the FIRST failure per category so
+  * a respawn storm cannot erase it. Copy/print outside the spin lock; no MMIO,
+  * filesystem calls, dynamic allocation or changes to syscall results. */
+@@ -874,6 +900,17 @@
+     if (buffer != (void *)(su.dma + DMA_BOUNCE)) return EINVAL;
+     return ufs_read_blocks(lba, count); /* READ(10) only, same admission policy */
+ }
++/* Preparation reads only missing partial edges; the whole request's groups
++ * are already reserved, and no request byte has been committed yet. */
++static int polaris_ram_read_edge(void *context,uint64_t logical,void *buffer)
++{
++    (void)context;uint64_t physical=0;uint32_t count=1;
++    if(buffer!=(void *)(su.dma+DMA_BOUNCE)||polaris_io_failed||
++       !polaris_map_read(polaris_file_map,polaris_file_count,logical,1,&physical,&count)||
++       count!=1)return EIO;
++    return ufs_read_blocks(physical,1);
++}
++
+ #endif
+ 
+ /*
+@@ -1492,11 +1529,58 @@
+         lck_mtx_unlock(&sweet_ufs_lock); buf_unmap(bp); error = EBUSY; goto done;
+     }
+ #endif
++#if defined(POLARIS_RAM_ONLY)
++    if(!rd&&polaris_ram_cow_enabled) {
++        uint64_t first=off/UFS_BLOCK;
++        uint32_t skip=(uint32_t)(off%UFS_BLOCK);
++        uint64_t remaining=((uint64_t)skip+count+UFS_BLOCK-1)/UFS_BLOCK,at=first;
++        /* Validate the complete immutable mapping BEFORE any commit. All
++         * mutable map/controller/COW state remains under sweet_ufs_lock. */
++        if(!polaris_file_active||polaris_io_failed)error=EIO;
++        while(!error&&remaining) {
++            uint64_t physical=0;uint32_t chunk=(uint32_t)MIN(remaining,UINT64_C(256));
++            if(!polaris_map_read(polaris_file_map,polaris_file_count,at,chunk,&physical,&chunk)||
++               !chunk||chunk>remaining){error=EINVAL;break;}
++            at+=chunk;remaining-=chunk;
++        }
++        if(!error) {
++            struct polaris_ram_preparation preparation=polaris_ram_prepare_write(
++                &polaris_root_cow,first,skip,count,(void *)(su.dma+DMA_BOUNCE),
++                polaris_arena_allocate,&polaris_root_arena,polaris_ram_read_edge,NULL,
++                polaris_io_failed);
++            polaris_cow_prepare_base_reads+=preparation.base_reads;
++            polaris_base_calls+=preparation.base_reads;
++            error=preparation.status==POLARIS_RAM_OK?0:
++                preparation.status==POLARIS_RAM_BASE_ERROR?preparation.base_error:
++                preparation.status==POLARIS_RAM_FULL?ENOSPC:
++                preparation.status==POLARIS_RAM_STOPPED?EIO:EINVAL;
++            if(error==ENOSPC) {
++                polaris_cow_failures++;
++                if(polaris_cow_failures==1||!(polaris_cow_failures&(polaris_cow_failures-1)))
++                    printf("POLARIS RAM COW: whole-request refused ENOSPC bytes=%u groups=%u/%u available=%u; zero request bytes committed\n",
++                        count,polaris_root_cow.used,polaris_root_cow.limit,
++                        polaris_cow_available(&polaris_root_cow));
++            } else if(!error)polaris_cow_prepared++;
++            __atomic_store_n(&polaris_cow_used_snapshot,polaris_root_cow.used,__ATOMIC_RELAXED);
++        }
++        if(error) {
++            lck_mtx_unlock(&sweet_ufs_lock);buf_unmap(bp);goto done;
++        }
++    }
++#endif
+ 	for (uint32_t done = 0; done < count;) {
+ 		uint64_t pos = off + done;
+ 		uint64_t lba = pos / UFS_BLOCK;
+ 		uint32_t skip = (uint32_t)(pos % UFS_BLOCK);
+ 		uint32_t want = MIN(count - done, BOUNCE_SIZE - skip);
++#if defined(POLARIS_RAM_ONLY)
++        if(!rd&&polaris_ram_cow_enabled) {
++            /* Prepared partial edges are cache hits. All middle fragments
++             * are aligned full overwrites: commit needs no base I/O/alloc. */
++            if(skip)want=MIN(want,UFS_BLOCK-skip);
++            else if(want>UFS_BLOCK && want%UFS_BLOCK)want-=want%UFS_BLOCK;
++        }
++#endif
+ 		uint32_t blocks = (skip + want + UFS_BLOCK - 1) / UFS_BLOCK;
+ 		void *bounce = (void *)(su.dma + DMA_BOUNCE);
+ 		uint64_t physical = su.first_block + lba;
