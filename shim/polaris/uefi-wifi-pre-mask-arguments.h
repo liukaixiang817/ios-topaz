@@ -45,38 +45,59 @@ static inline int pwrpa_live(const struct paic_io *m,struct pwrcl_result *p,
     r->native_last=*(const volatile uint32_t*)(uintptr_t)r->native_address;r->native_reads++;
     if(r->native_last)return pwrpa_fail(r,PWRPA_CONTEXT,1);return 1;
 }
-static inline int pwrpa_close(const struct paic_io *m,struct pwrcl_result *p,
-    const struct pwrph_work *w,struct pgcd_context *g,const struct pwrpa_input input[PWRPA_OBJECTS],struct pwrpa_result *r)
+/* Pure validation of the retained normal record. This does not read current
+ * hardware, renew a ticket or establish the later masked lifetime. */
+static inline int pwrpa_prefix_valid(const struct pwrpa_input input[PWRPA_OBJECTS],const struct pwrpa_result *r)
 {
-    /* Output fields never authorize another address. Recheck the full
-     * returned prefix against the caller's independent typed arguments. */
-    if(!r->objects||r->objects>PWRPA_OBJECTS||r->pages>PWRPA_PAGES||r->complete||r->admitted||r->declined)
-        return pwrpa_fail(r,PWRPA_PREFIX,1);
+    if(!input||!r)return 0;
+    if(!r->objects||r->objects>PWRPA_OBJECTS||r->pages>PWRPA_PAGES)
+        return 0;
     unsigned at=0;
     for(unsigned k=0;k<r->objects;k++){
         const struct pwrpa_object *o=&r->object[k];
         if(o->address!=(uintptr_t)input[k].object||o->bytes!=input[k].bytes||o->pages_first!=at||
            o->complete>1||o->in_self>1||o->pages>r->pages-at||(!o->complete&&k+1!=r->objects)||
            (o->complete&&(o->in_self!=1||!o->bytes||o->address>UINT64_MAX-o->bytes||
-               o->pages!=(o->address+o->bytes-1)/4096-o->address/4096+1)))return pwrpa_fail(r,PWRPA_PREFIX,1);
+               o->pages!=(o->address+o->bytes-1)/4096-o->address/4096+1)))return 0;
         for(unsigned j=0;j<o->pages;j++,at++){
             const struct pwrpa_page *q=&r->page[at];const struct pgns_translation *t=&q->AT;
-            if(q->object!=k||t->page!=(o->address&~UINT64_C(4095))+4096u*j)return pwrpa_fail(r,PWRPA_PREFIX,1);
+            if(q->object!=k||t->page!=(o->address&~UINT64_C(4095))+4096u*j)return 0;
             if(q->valid){
                 if(q->valid!=1||t->issued!=1||t->returned!=1||t->saved!=t->restored||
-                   t->par!=(UINT64_C(0xff00000000000b80)|t->page))return pwrpa_fail(r,PWRPA_PREFIX,1);
+                   t->par!=(UINT64_C(0xff00000000000b80)|t->page))return 0;
             }else if(k+1!=r->objects||j+1!=o->pages||o->complete||
-                (r->error!=PWRPA_MAP&&r->error!=PWRPA_TRANSLATION))return pwrpa_fail(r,PWRPA_PREFIX,1);
+                (r->error!=PWRPA_MAP&&r->error!=PWRPA_TRANSLATION))return 0;
             else if(r->error==PWRPA_TRANSLATION&&
                 (t->issued!=1||t->returned!=1||t->saved!=t->restored||t->par==(UINT64_C(0xff00000000000b80)|t->page)))
-                return pwrpa_fail(r,PWRPA_PREFIX,1);
+                return 0;
             else if(r->error==PWRPA_MAP&&(t->issued||t->returned||t->par||t->saved||t->restored))
-                return pwrpa_fail(r,PWRPA_PREFIX,1);
+                return 0;
         }
     }
-    if(at!=r->pages||(!r->error&&r->objects!=PWRPA_OBJECTS))return pwrpa_fail(r,PWRPA_PREFIX,1);
+    if(at!=r->pages||(!r->error&&r->objects!=PWRPA_OBJECTS))return 0;
     if(!pwra_zero(r->object+r->objects,(PWRPA_OBJECTS-r->objects)*sizeof(r->object[0]))||
-       !pwra_zero(r->page+r->pages,(PWRPA_PAGES-r->pages)*sizeof(r->page[0])))return pwrpa_fail(r,PWRPA_PREFIX,1);
+       !pwra_zero(r->page+r->pages,(PWRPA_PAGES-r->pages)*sizeof(r->page[0])))return 0;
+    return 1;
+}
+static inline int pwrpa_admitted_prefix(const struct pwrpa_input input[PWRPA_OBJECTS],const struct pwrpa_result *r)
+{
+    if(!r||r->attempted!=1||r->complete!=1||r->admitted!=1||r->declined||r->error||r->unknown||r->outstanding||
+       r->objects!=PWRPA_OBJECTS||r->failed_object!=UINT32_MAX||r->failed_page!=UINT32_MAX||
+       r->native_first||r->native_last||r->native_reads!=2*r->pages+2||!pwrpa_prefix_valid(input,r)||
+       !pwfc_arch_admitted(&r->before.cpu)||!pwfc_arch_stable(&r->before.cpu,&r->last.cpu)||
+       r->before.cpu.daif||r->last.cpu.daif||r->before.cpu.group1!=1||r->last.cpu.group1!=1||
+       r->before.cpacr!=r->last.cpacr||r->last.cpu.ticks-r->before.cpu.ticks>PGCD_FRESH_TICKS)return 0;
+    for(unsigned k=0;k<PWRPA_OBJECTS;k++)if(r->object[k].complete!=1)return 0;
+    for(unsigned k=0;k<r->pages;k++)if(r->page[k].valid!=1)return 0;
+    return 1;
+}
+static inline int pwrpa_close(const struct paic_io *m,struct pwrcl_result *p,
+    const struct pwrph_work *w,struct pgcd_context *g,const struct pwrpa_input input[PWRPA_OBJECTS],struct pwrpa_result *r)
+{
+    /* Output fields never authorize another address. Recheck the full
+     * returned prefix against the caller's independent typed arguments. */
+    if(r->complete||r->admitted||r->declined||!pwrpa_prefix_valid(input,r))
+        return pwrpa_fail(r,PWRPA_PREFIX,1);
     if(r->unknown||r->outstanding||!pwrpa_live(m,p,w,g,r))return 0;
     r->admitted=!r->error;r->declined=!!r->error;r->complete=1;paic_actual_order(0);return 1;
 }

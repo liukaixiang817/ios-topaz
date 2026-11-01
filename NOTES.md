@@ -34,6 +34,61 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0180 local source/461ASAN/full parent/two SERIAL models complete; exact profile/codec/freeze pending NOT READY; phone last actual Polaris FASTBOOT20:17; Wi-Fi NOT DONE
+
+- Human actualanswer“批准公开推送本次交接”closed0179publicationquestion.
+  0179NOTES885d7d0/292a456/93c564a push29240 ENDED0 andindependentlsremote
+  93c564a62f1ba72da5c3cbe0d22d1207a0517272 matched. Record0179/public-handoff-
+  publication-human-authorization-20261101.json. No newkernel/partitionpermission
+  or unlimitedfuturepublichandoffconsentinferred. 0180sourcewasnotinthatpush.
+- NEWdefaultOFF --wifi-power-normal-to-masked-database requiresexplicitfresh
+  normalarguments/fullDBdependencies. SAME NEWprivateclient checksnormaltyped
+  objectsprefix→ALLfreshoriginalCPU/maskedsource/cache/fullCmdDb/namespace/
+  completeCPU/source/privateclose. Normalprefix/pointers/arch/time+all68work
+  samples/decision retained andcheckedbeforemask/afterDB/beforebodyretire.
+- Afterfreshnormalargumentobservation, SAMEoriginal200msopening andcapturedlast
+  normaltickdetermineoriginalremainingtime; unchangedestimateincludesall68+
+  READ50ms+25msreserve. Earlierworkadmissionandsamplesnotrewritten/rebased.
+  Latebudgetdecline12/normalunsupported16 fullycloseknownclient; successstops
+  existingmaskedDBreason15. Partial/expired/corruptedprefix staysUNKNOWN,
+  allraw/localDAIFall+G1/optionalGOP/nonreturn, nocleanup/USB/ACK/reset/lease.
+- FullRAW1969056B/argument25216B/newNORMAL_TO_MASKED_DBlabel. StillNULLmasked
+  RSCtranslate/read/literalrejectstore/noaccessacquired-held-retired/noengine,
+  no resourcevote/MSS/NVserve/scanjoin. NormalDevice2x70reads+6originalqueries
+  remainpossible; no totalMMIOzero claim. NochangeWLED/GPU/nativekernel.
+- Finalchecks0007=461ASAN/UBSAN:201normal+260realouterreader-copycombined,
+  normalfirst/lastobjectboundaryfaults/full64maskedATfaults/latebudgetdecline/
+  originalexpiry/source/work/prefix/privateargs faults allpassed. SOFTWAREonly.
+  Initialhosttestexecute-namecollision/injectedread.finishedwholezeroassert/
+  admitted==2faultcallbackassert fixedTESTonly; oldsuccessful0004..6 prior
+  hardeningarehistory. Finalpartial/UNKNOWNretainsmask/privateclient/noDelete;
+  knownnormaldeclinesfullyDeletewithoutCPU; completecombinedmodel14PSCI+exact
+  maskrestore/currentnamespace/source/pools/Delete. NotphysicalCPU/DBproof.
+- CurrentON0003driver2778061ea842d471a56fb392f056752d8a44b300549c1e19f42f9a30dee94df2/
+  16089088B/93inputs allcurrentmatch; 64actualcompilerlocaldeps+9generatedcovered.
+  ActualwholemainCOFF+MachO/generalregs/maxframe1024/fullCABI/capacity/QEMUpp/
+  noactualmaskedRSCreader-writer passed. 478oldotherscope executingnonblankPP
+  byteequalfrozen0179, NOT rerun. OFF0002wholeEFI byteequal0178/0179b6f27adb...
+  (91inputs). Original10MiBFW/14MiB+128host/fullrecords notstripped.
+- TwoSERIALNEWwholeEFI-XNUmodels0001 each19checks/93sameinputs/11resource+
+  1battery literalint1/actualQEMUphysnormal-masked-CPU-GOP-RSC compiledout,
+  seconds38.85048491699854/39.348670209001284 passed. Parentinitialharness
+  expectedgenericpwrpc_end; exactphysicalusespwrpc_end_checked(...CPU,0).
+  Correctedhostassertonly, reusedalreadyENDED0COFF/MachO/noFWchange/compile
+  rerun. ModelPMIC/delay/RAMUSB arenotphysical/guestreset/radio.
+- Parentprooff10fae27408df73755db0ad40854627c2465c138ad4479bb59e388982e717aaf/
+  model9825fe83af43d6c67f28e7521e0ba41e9b5e8a39ba15bbcee5d2d82c12bf0540/
+  source0180/wifi/normal-masked-source-and-offline-proof-0001.json
+  SHA17de9a8b1b06a73336fb2a36e1bdc2a58bf520c5926d9206eb598ae5d0b50088.
+- NO0180image/payload/devicecommand/newnativeCI. LastactualcontrolledPolarisFB
+  remains2026-11-01T20:17:05.473503Z,0179sessionENDED/consumed/no replay.
+  FreshrootNV0179 afterONLYcontrolleddrain remainsbasis, nofullhashredo now.
+  NEXT commitnewsource/newexactGCD0180+affectedmetadata/refusals+actualfulladmit,
+  original81FWwholecodec/newimage/independentfreeze/ONEofflinehelper/current
+  actualcorrectFB beforeONEqualifiednewRAM. No oldpolicy/frozencontrollerreuse.
+  OnlyWi-Fi; realmaskedDB/access/READ/vote/ownFOURVRM/MSS/...scan/join/data NOT
+  DONE. Sound/cameraSTOP. Allhost/modelworkersENDED/allchildrenSTOP.
+
 ### CURRENT0179 actual normal argument admission/complete retirement and controlled Polaris FASTBOOT20:17; masked DB/READ/Wi-Fi NOT DONE; public NOTES push pending approval
 
 - ONE0179image92696 ENDED0 sent2026-11-01T20:12:52.382579Z/source

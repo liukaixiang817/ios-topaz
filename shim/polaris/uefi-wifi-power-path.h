@@ -17,6 +17,9 @@
 #ifndef EFI_XNU_WIFI_PRE_MASK_ARGUMENTS
 #define EFI_XNU_WIFI_PRE_MASK_ARGUMENTS 0
 #endif
+#ifndef EFI_XNU_WIFI_NORMAL_TO_MASKED_DB
+#define EFI_XNU_WIFI_NORMAL_TO_MASKED_DB 0
+#endif
 #include "uefi-wifi-rsc-access.h"
 #if EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE && !defined(POLARIS_EFI_TEST_QEMU)
 #if EFI_XNU_WIFI_ARC_READ_AVAILABLE && !EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
@@ -38,6 +41,9 @@
 #error Pre-mask arguments require the full current private database dependencies
 #endif
 #include "uefi-wifi-pre-mask-arguments.h"
+#endif
+#if EFI_XNU_WIFI_NORMAL_TO_MASKED_DB && (!EFI_XNU_WIFI_PRE_MASK_ARGUMENTS || !EFI_XNU_WIFI_READ_DB_CHECKPOINT)
+#error Normal-to-masked database observation requires fresh normal arguments and full database dependencies
 #endif
 #if EFI_XNU_WIFI_ARC_READ_WORK_ADMISSION
 #if !EFI_XNU_WIFI_ARC_READ_AVAILABLE || !EFI_XNU_WIFI_ARC_READ_CAPTURE_ONLY || !EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
@@ -242,6 +248,40 @@ static inline int pwrpt_work_admit(const struct paic_io *memory,struct pwrcl_res
     b->remaining_ticks=PGCD_FRESH_TICKS-b->elapsed_ticks;
     b->admitted=b->estimate_ticks<=b->remaining_ticks;b->declined=!b->admitted;b->complete=1;paic_actual_order(0);return 1;
 }
+#if EFI_XNU_WIFI_NORMAL_TO_MASKED_DB
+/* Retain the original admission as evidence. This pure check neither samples
+ * a new clock nor resets its ticket, elapsed time, estimate or decision. */
+static inline int pwrpt_work_retained(const struct pwsp_result *prepared,
+    const struct pgcd_context *g,const struct pwrpt_result *r)
+{
+    const struct pwrpt_work *b=&r->work;
+    if(!prepared||!g||!g->record||b->attempted!=1||b->complete!=1||b->admitted!=1||
+       b->declined||b->error||b->unknown||b->samples!=PWRPT_WORK_SAMPLES||
+       b->preparation!=(uintptr_t)prepared||b->core!=(uintptr_t)g||b->ticket!=(uintptr_t)g->ticket||
+       !r->prepared_cmd.pages||r->prepared_cmd.pages>PWCP_PAGES||
+       b->source_units!=18+r->prepared_cmd.pages||b->native_before||b->native_after||
+       b->READ_ticks!=PWRSC_DEADLINE||b->reserve_ticks!=PWRPT_WORK_RESERVE||
+       !pwfc_arch_stable(&g->record->before.cpu,&b->current.cpu)||
+       b->current.cpacr!=g->record->before.cpacr||
+       b->current.cpu.ticks>r->arguments.before.cpu.ticks)return 0;
+    uint64_t maximum=0;
+    for(unsigned k=0;k<PWRPT_WORK_SAMPLES;k++){
+        const struct pwrpt_work_sample *s=&b->sample[k];
+        const struct pgns_target *t=&prepared->phase[k/(PWSP_PAGES+1)].target[k%(PWSP_PAGES+1)];
+        if(s->before!=t->before.cpu.ticks||s->after!=t->after.cpu.ticks||
+           s->after<=s->before||s->ticks!=s->after-s->before)return 0;
+        if(s->ticks>maximum)maximum=s->ticks;
+    }
+    if(!maximum||maximum!=b->maximum_ticks||
+       maximum>(UINT64_MAX-b->READ_ticks-b->reserve_ticks)/b->source_units||
+       b->hash_ticks!=maximum*b->source_units||
+       b->estimate_ticks!=b->hash_ticks+b->READ_ticks+b->reserve_ticks||
+       b->elapsed_ticks!=b->current.cpu.ticks-g->record->before.cpu.ticks||
+       b->elapsed_ticks>PGCD_FRESH_TICKS||b->remaining_ticks!=PGCD_FRESH_TICKS-b->elapsed_ticks||
+       b->estimate_ticks>b->remaining_ticks)return 0;
+    return 1;
+}
+#endif
 #endif
 #if EFI_XNU_WIFI_PRIVATE_CPU_CHECKPOINT
 /* No fake completed engine/access record. Keep every unused byte zero. This
@@ -325,8 +365,8 @@ static inline int pwrpt_body(void *context,const struct paic_io *memory,struct p
 #endif
 #if EFI_XNU_WIFI_PRE_MASK_ARGUMENTS
     /* Exact prospective access objects, not a fabricated masked context.
-     * CPU, access and engines stay unobserved/zero. Even a complete match
-     * stops through the original current namespace/source/pool/client close. */
+     * The original normal-only scope stops through full known close. Only
+     * the explicit NEW composition below proceeds to fresh masked checks. */
     (void)resources;
     const struct pwrpa_input arguments[PWRPA_OBJECTS]={
         {&r->access_context,sizeof(r->access_context)},{p,sizeof(*p)},
@@ -339,8 +379,31 @@ static inline int pwrpt_body(void *context,const struct paic_io *memory,struct p
            io->cmd.namespace_io.translate,&r->arguments))return pwrpt_fail(r,PWRPT_ARGUMENT,1);
     if(pwrpa_unsafe(&r->arguments)||!r->arguments.complete||
        !pwra_zero(&r->CPU,sizeof(r->CPU))||!pwrpt_checkpoint_zero_engines(r))return pwrpt_fail(r,PWRPT_ARGUMENT,1);
-    pwrpt_fail(r,PWRPT_ARGUMENT_CHECKPOINT,0);goto before_mask;
+#if EFI_XNU_WIFI_NORMAL_TO_MASKED_DB
+    /* This boot's normal evidence is not masked admission. Keep its prefix
+     * and the same original deadline; all existing CPU/cache/source/DB
+     * checks below still run afresh. A returned normal decline closes here. */
+    if(r->arguments.declined){pwrpt_fail(r,PWRPT_ARGUMENT_CHECKPOINT,0);goto before_mask;}
+    if(!pwrpa_admitted_prefix(arguments,&r->arguments)||
+       r->arguments.provider!=(uintptr_t)p||r->arguments.core!=(uintptr_t)g||
+       r->arguments.ticket!=(uintptr_t)g->ticket||r->arguments.memory!=(uintptr_t)memory||
+       r->arguments.work!=(uintptr_t)work||r->arguments.native_address!=io->native_flag||
+       !pwfc_arch_stable(&g->record->before.cpu,&r->arguments.before.cpu)||
+       r->arguments.before.cpacr!=g->record->before.cpacr||
+       r->arguments.last.cpu.ticks-g->record->before.cpu.ticks>PGCD_FRESH_TICKS)
+        return pwrpt_fail(r,PWRPT_ARGUMENT,1);
+    if(!pwrpt_work_retained(io->preparation,g,r))return pwrpt_work_fail(r,11);
+    /* Charge normal argument observation to the SAME original remaining
+     * interval. Preserve the earlier admission and every sample unchanged. */
+    if(r->work.estimate_ticks>PGCD_FRESH_TICKS-
+       (r->arguments.last.cpu.ticks-g->record->before.cpu.ticks)){
+        pwrpt_fail(r,PWRPT_WORK,0);goto before_mask;
+    }
 #else
+    pwrpt_fail(r,PWRPT_ARGUMENT_CHECKPOINT,0);goto before_mask;
+#endif
+#endif
+#if !EFI_XNU_WIFI_PRE_MASK_ARGUMENTS || EFI_XNU_WIFI_NORMAL_TO_MASKED_DB
     r->phase=2;
     if(!pwrpc_begin(&io->CPU,memory,p,work,g,io->native_flag,&r->CPU)){
 #if EFI_XNU_WIFI_ARC_READ_AVAILABLE && EFI_XNU_WIFI_ARC_READ_CAPTURE_ONLY
@@ -367,6 +430,17 @@ static inline int pwrpt_body(void *context,const struct paic_io *memory,struct p
     if(!pwra_prepare_checked(&r->access_context,&io->access,g,p,work,&r->CPU,0,&r->RAM[0],&r->RAM[1],
        &r->device[0],&r->read.io,&r->access,&r->prepared_cmd,&r->read,&r->transaction)||
        !pwra_observe_database_close(&r->access_context))return pwrpt_fail(r,PWRPT_ACCESS,1);
+#if EFI_XNU_WIFI_NORMAL_TO_MASKED_DB
+    if(!pwrpa_admitted_prefix(arguments,&r->arguments)||
+       r->arguments.provider!=(uintptr_t)p||r->arguments.core!=(uintptr_t)g||
+       r->arguments.ticket!=(uintptr_t)g->ticket||r->arguments.memory!=(uintptr_t)memory||
+       r->arguments.work!=(uintptr_t)work||r->arguments.native_address!=io->native_flag||
+       !pwfc_arch_stable(&g->record->before.cpu,&r->arguments.before.cpu)||
+       r->arguments.before.cpacr!=g->record->before.cpacr||
+       r->arguments.last.cpu.ticks-g->record->before.cpu.ticks>PGCD_FRESH_TICKS)
+        return pwrpt_fail(r,PWRPT_ARGUMENT,1);
+    if(!pwrpt_work_retained(io->preparation,g,r))return pwrpt_work_fail(r,11);
+#endif
     r->phase=3;pwrpt_fail(r,PWRPT_DATABASE_CHECKPOINT,0);
 #else
     if(!pwra_acquire_read(&r->access_context,&io->access,g,p,work,&r->CPU,&r->prepared_cmd,&r->RAM[0],&r->RAM[1],
@@ -466,6 +540,17 @@ power_retired:
 #if EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
     if(!pwcp_finish(&prepared_io,p,work,g,io->preparation,&r->prepared_cmd)||!r->prepared_cmd.closed)return pwrpt_fail(r,PWRPT_NAMESPACE,1);
 #endif
+#if EFI_XNU_WIFI_NORMAL_TO_MASKED_DB
+    if(!pwrpa_admitted_prefix(arguments,&r->arguments)||
+       r->arguments.provider!=(uintptr_t)p||r->arguments.core!=(uintptr_t)g||
+       r->arguments.ticket!=(uintptr_t)g->ticket||r->arguments.memory!=(uintptr_t)memory||
+       r->arguments.work!=(uintptr_t)work||r->arguments.native_address!=io->native_flag||
+       !pwfc_arch_stable(&g->record->before.cpu,&r->arguments.before.cpu)||
+       r->arguments.before.cpacr!=g->record->before.cpacr||
+       r->arguments.last.cpu.ticks-g->record->before.cpu.ticks>PGCD_FRESH_TICKS)
+        return pwrpt_fail(r,PWRPT_ARGUMENT,1);
+    if(!pwrpt_work_retained(io->preparation,g,r))return pwrpt_work_fail(r,11);
+#endif
     r->phase=5;r->retired=1;
 #if EFI_XNU_WIFI_ARC_READ_AVAILABLE
     if(r->error==PWRPT_PLAN||r->error==PWRPT_READ_ONLY
@@ -517,7 +602,7 @@ static inline void pwrpt_preboot(const struct paic_io *memory,const struct paic_
     struct pwrpt_io io={.cmd={.original=client.reader,.query=0,
         .namespace_io={&client.reader.memory,0,pgns_actual_translate}},
         .device={&client.reader.memory,0,pwrmd_actual_translate,pwrmd_actual_read},
-#if EFI_XNU_WIFI_PRE_MASK_ARGUMENTS
+#if EFI_XNU_WIFI_PRE_MASK_ARGUMENTS && !EFI_XNU_WIFI_NORMAL_TO_MASKED_DB
         .CPU={0},
 #else
         .CPU={0,pwrpc_actual_affinity,pwrpc_actual_mask,pwrpc_actual_restore},
@@ -579,8 +664,13 @@ static inline void pwrpt_report(void (*append)(const char *))
 #if EFI_XNU_WIFI_ARC_READ_CAPTURE_ONLY
 #if EFI_XNU_WIFI_READ_ACCESS_CHECKPOINT
 #if EFI_XNU_WIFI_PRE_MASK_ARGUMENTS
+#if EFI_XNU_WIFI_NORMAL_TO_MASKED_DB
+    append("WIFI_CURRENT_PRIVATE_NORMAL_TO_MASKED_DB_RAW_V1_BEGIN\r\n");pwrpt_raw_hex(append,&pwrpt_record,sizeof(pwrpt_record));
+    append("\r\nWIFI_CURRENT_PRIVATE_NORMAL_TO_MASKED_DB_RAW_V1_END\r\n");
+#else
     append("WIFI_CURRENT_PRIVATE_PRE_MASK_ARGUMENT_RAW_V1_BEGIN\r\n");pwrpt_raw_hex(append,&pwrpt_record,sizeof(pwrpt_record));
     append("\r\nWIFI_CURRENT_PRIVATE_PRE_MASK_ARGUMENT_RAW_V1_END\r\n");
+#endif
 #else
 #if EFI_XNU_WIFI_READ_DB_CHECKPOINT
     append("WIFI_CURRENT_PRIVATE_MASKED_DB_OBSERVATION_RAW_V1_BEGIN\r\n");pwrpt_raw_hex(append,&pwrpt_record,sizeof(pwrpt_record));
