@@ -34,6 +34,72 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0161 remains actual controlled FASTBOOT04:14; NEW0162 prepared/current/private bounded power parent verified OFFLINE; new exact admission/candidate NOT READY
+
+- ONLY Wi-Fi, scan/join/data false; sound/camera/allchildren STOP. User asks
+  for Wi-Fi quickly: next candidate is the integrated conditional power path,
+  never another standalone preparation/inventory/client-only boot. No USB or
+  native CI in this source work. Phone remains last actual controlled0161
+  FASTBOOT04:14:42.882308Z, no physical action pending; all workers ENDED.
+- New default-OFF --wifi-power-prepared-transaction requires full staged RO
+  and rejects capture-only label. Parent now runs four complete independent
+  RO phases, then one SAME original known private client using the existing
+  pwrpt CPU/Device/RSC/complete-restore/Delete chain. Private context newly
+  opens AFTER all RO retirement; finalClock/GCD remains unopened throughout.
+  No oldticket/context adoption, reset/rebase, fakeclient or boollease.
+- New uefi-wifi-cmddb-prepared.h reuses the existing ARC decoder and complete
+  two-pass current Core namespace inside actual private interval. Current
+  registered CmdDb owner/5hash/table/globals plus entire144Bheader/three24B
+  entries/three32Baux tables re-read twice, per-page immediate full source/
+  head/lock/node/NSWBAT/PAR guards. Selected bytes must equal prepared fullDB.
+  After final originalDevice/GCD calls, a THIRD selected pass and source/
+  namespace closure precede knownDelete; clean pre-maskrefusal closes too.
+  No originalCmdDbQuery or fabricated GCD API status. Prepared evidence is
+  comparison data, not current hardware authority. Admission/close arch raw
+  samples retained separately so final closure cannot overwrite admissiontime.
+- Both existing masked FULL128KiB byte comparisons remain, before first RSC
+  store and after full engine retirement. NEW explicit actual saved/readback
+  PAR restoration and exactNSWB is retained for EVERY32pages in both copies.
+  Changed unselected/padding bytes still block store/retirement. No current
+  fullbyte check removed. Old unused CmdDb record remains ENTIRELYzero and
+  exported honestly inside newbody, no fake capture success/Query statuses.
+- Same originalcache/perDRV72/fullpool/mode/TCS/queues/runtimeHAL+Device/
+  14PSCI/nativeflag/CPU0masked-source interval, dynamic ACTIVE TCS selection,
+  max(saved,index) CX→MX→MSS, newIRQ/all3DONE/idle, reverse exact savedrestore,
+  fullRWreadback/prefix/RAM/source beforeunmask/finalGCD/knownDelete remain.
+  Missing savedactivecache is refusal, neverzero. Original200ms and50ms/
+  256step/1024event gates unchanged; originalblockingSubmit/RETlocks unused.
+  Conditional experiment limited to originaltrustedboot APPSDRV2 concurrency,
+  not secure EL3/VMID/MPU grant. All actual runtime predicates precede store.
+- New fullbody1892336B/currentbinding233520B/access401800B; preparation1660544B
+  and client227104B all retained with distinct STAGED_RO/POWER_CLIENT/
+  PREPARED_POWER_RAW_V1 labels. FW12MiB complete-log staticassert/snapshot
+  sizeofactualbuffer+native4MiB+128, NEW host16MiB+128 after exactsource/image
+  admission. Old8MiB, defaultKernel/WLED6MiB+128 and RO32KiB unchanged;7host
+  bounded-log tests PASS. Capacity grants no command, scope or boot.
+- Actual compiled full physical-body EFI0162/wifi/prepared-driver-ON-0002
+  SHAd85a0a766edc92657a988830c71714a789439f41e8b813c25ec7d954cee673fa/
+  17966080B/86inputs. No image wrapped/frozen/sent.202ASAN/UBSAN (old165+
+  17currentbinding+20fullsame-chain),19checks/actualwholeparentCOFF-MachO/
+  maxframe1024/defaultOFF/QEMUpp PASS, proofprepared-parent-verified-0001
+  SHA5a197c165af390d481f8ee99bc79b514e2d77b5c9c1b8b2759d45c4a3dcdb778.
+  Evidence script initially searched unexpandedPWCD_PAGES in preprocessed C;
+  corrected assertion and reused same already passed unchanged binaries,
+  dependencies/commands checked, no unnecessary202rerun or gate change.
+- Two SERIAL newwholeEFI/XNU terminalmodels19checks each38.792039/39.214398s,
+  86identical currentinputs/11resourcePower+1battery int1/actualQEMUpp no
+  prepared/private/CPU/RSC bodies or records PASS, proof6e902e3cfb637c78f25a
+  158a91b00741ab8002948aeaef0073bd23a8d61dab01. SOFTWARE PMIC/delay/RAMUSB
+  not physical timing/ownership/guestreset/radio. No unchanged checks need rerun.
+- NEXT: commit reviewed new source and exacthostprofile86inputs/newmetadata/
+  logcap/scope; fulloriginal81codec/sourceaudit/independentfreeze/ONEhelper,
+  normal0161drain+currentfresh0160ROOT/NV qualification retained. Only after
+  all admission, actual expectedPolarisFASTBOOT and the SAME runtime predicate
+  conjunction may ONE conditional fullpower attempt proceed. No blank grant
+  from software or source review. Then ownMSS/auth/reset/rails/clock and
+  MSA/VMID/MPU/SMEM/GLINK/RMTFS until actual scan/join/data. No MSS/NVserve
+  enabled by this experiment; all storage/Android/Windows/NV preserved.
+
 ### CURRENT0161 actual controlled FASTBOOT04:14; real full namespace/two complete CmdDb captures SUCCESS; Wi-Fi scan/join/data still NOT DONE
 
 - Wi-Fi还不行 remains correct. ONLY Wi-Fi, then sound, then camera; allchildren

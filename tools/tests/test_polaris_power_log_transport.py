@@ -48,6 +48,16 @@ class PowerLogTransport(unittest.TestCase):
         self.assertEqual(peer.writes, [b'upload'])
         self.assertIsNone(client.staged)
 
+    def test_complete_preparation_private_power_log_bound(self):
+        client, peer = prepared((16 << 20)+128, 12 << 20)
+        self.assertEqual(len(client.upload()), (16 << 20)+128)
+        self.assertEqual(peer.writes, [b'upload'])
+
+    def test_prepared_scope_overbound_refuses_without_body(self):
+        client, peer = prepared((16 << 20)+129, 12 << 20)
+        with self.assertRaises(ValueError):client.upload()
+        self.assertEqual(peer.body_reads, 0)
+
     def test_over_bound_header_refuses_before_reading_body(self):
         client, peer = prepared((12 << 20)+129, 8 << 20)
         with self.assertRaises(ValueError):

@@ -20,7 +20,10 @@
 #if EFI_XNU_WIFI_GCD_NAMESPACE_RO_AVAILABLE
 #include "uefi-wifi-gcd-namespace.h"
 #endif
-#if EFI_XNU_WIFI_GCD_NAMESPACE_RO_AVAILABLE && !EFI_XNU_WIFI_CMDDB_CAPTURE_ONLY
+#ifndef EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
+#define EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE 0
+#endif
+#if EFI_XNU_WIFI_GCD_NAMESPACE_RO_AVAILABLE && !EFI_XNU_WIFI_CMDDB_CAPTURE_ONLY && !EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
 #error "Bounded namespace diagnostic requires explicit capture-only; it never enables the power writer"
 #endif
 #define PWCD_DB_BYTES 0x20000u

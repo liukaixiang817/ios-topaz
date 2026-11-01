@@ -206,7 +206,7 @@ static int execute(unsigned scenario)
     const struct paic_io memory={s,0,path_memory_arch,path_identity,order};
     struct pwrcl_io client={{{s,0,path_memory_arch,path_identity,order},path_locate,path_map},client_create,client_drop,own_name};
     struct pwrpt_io io={.cmd={.original={memory,path_locate,path_map},.query=path_query},.device={&memory,0,path_AT,path_read},
-        .CPU={0,path_affinity,path_mask,path_restore},.access={&memory,&path->access_context,path_AT,path_read,path_write},
+        .CPU={0,path_affinity,path_mask,path_restore},.access={.memory=&memory,.context=&path->access_context,.translate=path_AT,.read=path_read,.write=path_write},
         .enumeration=enumeration,.native_flag=(uintptr_t)native_on,.record=path};
     return pwrcl_run_body(&client,enumeration,2,c,early,cr,rw,pwrpt_body,&io);
 }

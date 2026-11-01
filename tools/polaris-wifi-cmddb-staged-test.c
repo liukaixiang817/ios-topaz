@@ -68,6 +68,7 @@ static int staged_execute(void)
 }
 static void no_hardware(void)
 {assert(!create_calls&&!delete_calls&&!cr->attempted&&!pwrcl_record.attempted&&!original_queries&&!api_queries&&!psci_calls&&!mask_calls&&!unmask_calls&&!modeled_stores&&!requests&&!acks);}
+#ifndef POLARIS_CMDDB_STAGED_FIXTURE_ONLY
 int main(int argc,char **argv)
 {
     assert(argc==5&&!posix_memalign((void**)&arena,4096,0x800000));
@@ -119,3 +120,4 @@ int main(int argc,char **argv)
     printf("{\"passed\":true,\"checks\":%u,\"staged_raw_bytes\":%zu,\"phase_bytes\":%zu,\"RO_owner_bytes\":%zu,\"source_bytes\":%zu,\"actual_two_DB_assembled_in_SOFTWARE\":true,\"same_final_ticket_unchanged\":true,\"private_Create_Delete_Query_PSCI_RSC\":0,\"physical_firmware_executed\":false}\n",checks,sizeof(*prep),sizeof(struct pwsp_phase),sizeof(struct pgns_ro_owner),sizeof(struct pwsp_source));
     free(parent_report);free(original);free(npa_original);free(rp_original);free(cmd_original);free(arena);return 0;
 }
+#endif

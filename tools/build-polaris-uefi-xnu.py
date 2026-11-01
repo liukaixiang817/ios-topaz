@@ -452,6 +452,7 @@ def main():
     ap.add_argument('--wifi-power-cmddb-first-node-stop',action='store_true',help='default-OFF failure-isolation cutpoint: validate and retain first Core namespace node, then planned known-client retirement; NO database target load or full-namespace claim')
     ap.add_argument('--wifi-power-cmddb-budget-admission',action='store_true',help='default-OFF complete bounded capture with independent completed RO timing admission BEFORE private Create; estimate only, unchanged private/final 200ms and ownership gates')
     ap.add_argument('--wifi-power-cmddb-staged-ro',action='store_true',help='default-OFF four independent completed RO phases capture64KiB each before ANY private client; full two-pass namespaces/immediate source+AT guards and original200ms per ticket retained')
+    ap.add_argument('--wifi-power-prepared-transaction',action='store_true',help='default-OFF distinct full staged RO then SAME current known-client/bounded RSC/completion/restore; new hardware/source admission still required')
     a=ap.parse_args();r=Path(__file__).resolve().parents[1]
     if a.test_wled_native_exit and (not a.wled_native_runtime_test or not a.test_qemu or
         a.test_ram_drain!='success' or a.test_wled_native_fault or a.test_wled_native_lifecycle or
@@ -520,12 +521,14 @@ def main():
     namespace_header=None;namespace_binding=None
     if a.wifi_power_cmddb_first_node_stop and not a.wifi_power_cmddb_bounded_gcd:
         ap.error('first-node planned stop requires the explicit bounded capture-only scope')
+    if a.wifi_power_prepared_transaction and (not a.wifi_power_cmddb_staged_ro or a.wifi_power_cmddb_capture_only):
+        ap.error('prepared transaction requires full staged RO and its distinct writer scope, not a capture-only label')
     if a.wifi_power_cmddb_staged_ro and (not a.wifi_power_cmddb_bounded_gcd or a.wifi_power_cmddb_first_node_stop or a.wifi_power_cmddb_budget_admission):
         ap.error('staged RO preparation requires its distinct full bounded capture, never an old first-node or budget scope')
     if a.wifi_power_cmddb_budget_admission and (not a.wifi_power_cmddb_bounded_gcd or a.wifi_power_cmddb_first_node_stop):
         ap.error('work admission requires the distinct full bounded capture, never first-node mode')
     if a.wifi_power_cmddb_bounded_gcd:
-        if not a.wifi_power_cmddb_capture_only or not gcd_binding:
+        if (not a.wifi_power_cmddb_capture_only and not a.wifi_power_prepared_transaction) or not gcd_binding:
             ap.error('bounded GCD namespace requires explicit capture-only and exact original Core binding')
         spec=importlib.util.spec_from_file_location('polaris_wifi_gcd_namespace_identity',r/'tools/polaris-wifi-gcd-namespace-identity.py')
         module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
@@ -888,6 +891,7 @@ def main():
 #define EFI_XNU_WIFI_CMDDB_FIRST_NODE_STOP {int(a.wifi_power_cmddb_first_node_stop)}
 #define EFI_XNU_WIFI_CMDDB_BUDGET_ADMISSION {int(a.wifi_power_cmddb_budget_admission)}
 #define EFI_XNU_WIFI_CMDDB_STAGED_RO_AVAILABLE {int(a.wifi_power_cmddb_staged_ro)}
+#define EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE {int(a.wifi_power_prepared_transaction)}
 #define EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE {int(cmddb_binding is not None)}
 #define EFI_XNU_AUDIO_CLOCK_GCD_QUERY_AVAILABLE {int(gcd_enabled)}
 #define EFI_XNU_AUDIO_CLOCK_QUERY_AVAILABLE {int(audio_clock_binding is not None)}
@@ -980,7 +984,7 @@ def main():
                  'tools/polaris-wifi-cmddb-identity.py',cmddb_pe_relative]
     if namespace_binding:
         inputs+=['shim/polaris/uefi-wifi-gcd-namespace.h','tools/polaris-wifi-gcd-namespace-identity.py']
-    if cmddb_binding:inputs+=['shim/polaris/uefi-wifi-cmddb-budget.h','shim/polaris/uefi-wifi-cmddb-staged.h']
+    if cmddb_binding:inputs+=['shim/polaris/uefi-wifi-cmddb-budget.h','shim/polaris/uefi-wifi-cmddb-staged.h','shim/polaris/uefi-wifi-cmddb-prepared.h']
     if a.wifi_power_cmddb_staged_ro:inputs+=['shim/polaris/uefi-wifi-gcd-ro-owner.h']
     if rpmh_binding:
         inputs+=['shim/polaris/uefi-wifi-rpmh-readonly.h','tools/polaris-wifi-rpmh-identity.py',
@@ -1373,6 +1377,44 @@ def main():
                     wifi_CPU0_power_CmdDb_staged_RO_all_loaded_headers_before_after=True,
                     wifi_CPU0_power_CmdDb_staged_RO_cross_phase_namespace_map_source_equal=True,
                     wifi_CPU0_power_CmdDb_staged_RO_original_ARC_decoder_reused=True)
+    if a.wifi_power_prepared_transaction:
+        # Whole combined scope, with every previously captured raw byte plus
+        # real private/current/critical/RSC records. No capture-only disguise.
+        manifest.update(wifi_CPU0_RPMh_RAM_readonly=False,wifi_CPU0_RPMh_client_or_vote=True,
+            wifi_CPU0_RPMh_MMIO_or_SMC=True,wifi_CPU0_RPMh_provider_API_calls=2,
+            wifi_CPU0_RPMh_private_client=True,wifi_CPU0_RPMh_private_compiled_dependency_only=False,
+            wifi_CPU0_RPMh_private_physical_body=not a.test_qemu,wifi_CPU0_RPMh_private_raw_bytes=227104,
+            wifi_CPU0_RPMh_private_API_calls_max=2,wifi_CPU0_RPMh_private_BS_LocateProtocol_calls_max=2,
+            wifi_CPU0_RPMh_private_BS_GetMap_calls_max=5,
+            wifi_CPU0_RPMh_private_vote_commandset_MMIO_SMC_MSS_NVserve_calls=None,
+            wifi_CPU0_power_execution_kind='STAGED_RO_THEN_CURRENT_PRIVATE_BOUNDED_POWER',
+            wifi_CPU0_power_prepared_transaction=True,wifi_CPU0_power_prepared_default_OFF=True,
+            wifi_CPU0_power_CmdDb_capture_only=False,wifi_CPU0_power_CPUcritical_and_RSC_reachable=True,
+            wifi_CPU0_power_raw_format='PREPARED_POWER_RAW_V1',wifi_CPU0_power_raw_bytes=1892336,
+            wifi_CPU0_power_staged_RO_raw_bytes=1660544,wifi_CPU0_power_client_raw_bytes=227104,
+            wifi_CPU0_power_prepared_binding_raw_bytes=233520,wifi_CPU0_power_access_raw_bytes=401800,
+            wifi_CPU0_power_CPU_raw_bytes=10048,wifi_CPU0_power_guarded_PSCI_calls_max=14,
+            wifi_CPU0_power_steps_max=256,wifi_CPU0_power_transaction_events_max=1024,
+            wifi_CPU0_power_exact_local_restore_before_known_Delete=True,
+            wifi_CPU0_power_CmdDb_original_Query_calls_max=0,
+            wifi_CPU0_power_CmdDb_GCD_namespace_target_guard_count=120,
+            wifi_CPU0_power_prepared_staged_target_guards=68,
+            wifi_CPU0_power_prepared_private_target_guards_max=52,
+            wifi_CPU0_power_prepared_binding_admission_and_close_arch_retained_separately=True,
+            wifi_CPU0_power_prepared_current_header_entry_aux_ranges=7,
+            wifi_CPU0_power_prepared_current_selected_byte_passes=3,
+            wifi_CPU0_power_prepared_current_complete_namespace_passes=2,
+            wifi_CPU0_power_prepared_current_original_Query_calls=0,
+            wifi_CPU0_power_prepared_masked_FULL_DB_bytes_per_snapshot=131072,
+            wifi_CPU0_power_prepared_masked_FULL_DB_snapshots=2,
+            wifi_CPU0_power_prepared_masked_fresh_NS_WB_PAR_restore_each_page=True,
+            wifi_CPU0_power_prepared_NO_fake_API_observation_or_client=True,
+            wifi_CPU0_power_prepared_no_old_RO_ticket_reuse=True,
+            wifi_CPU0_power_prepared_original_private_deadline_ticks=3840000,
+            wifi_CPU0_power_prepared_final_ticket_unopened_before_Clock=True,
+            wifi_CPU0_power_prepared_both_raw_scopes_exported_complete=True,
+            original_GCD_new_scope_RAM_log_capacity=12582912,
+            wifi_CPU0_resources_firmware_RAM_log_capacity=12582912)
     (out/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
     print(json.dumps({k:manifest[k] for k in ['artifact','sha256','bytes','QEMU_variant','device_execution_tested']}))
 

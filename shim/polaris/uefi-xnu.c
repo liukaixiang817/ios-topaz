@@ -41,7 +41,10 @@ struct args {uint16_t revision,version;uint64_t va,pa,size,top;struct video vide
 _Static_assert(sizeof(struct args)==736,"XNU boot args ABI");
 static struct efi_system *system_table;
 static efi_handle driver_image;
-#if EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE
+#if EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
+static uint8_t log_buffer[12582912];static uint64_t log_bytes;
+static volatile uint32_t log_overflow;
+#elif EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE
 static uint8_t log_buffer[8388608];static uint64_t log_bytes;
 static volatile uint32_t log_overflow;
 #elif EFI_XNU_WIFI_RPMH_CLIENT_AVAILABLE
@@ -281,17 +284,26 @@ __attribute__((noreturn)) static void power_unknown_hold(void)
     ram_text("WIFI_POWER_UNKNOWN_HOLD_RAW_V1_END\r\n");
     for(;;)__asm__ volatile("wfe":::"memory");
 }
-#if EFI_XNU_WIFI_GCD_NAMESPACE_RO_AVAILABLE
+#if EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
+_Static_assert(sizeof(struct pwrpt_result)==1892336,"complete prepared power body raw ABI");
+_Static_assert(sizeof(struct pwra_result)==401800,"complete prepared access raw ABI");
+#elif EFI_XNU_WIFI_GCD_NAMESPACE_RO_AVAILABLE
 _Static_assert(sizeof(struct pwrpt_result)==1235200+2*sizeof(struct pgns_result)+66*sizeof(struct pgns_target),"complete bounded namespace power RAW_V2 ABI");
 #else
 _Static_assert(sizeof(struct pwrpt_result)==1235200,"complete power raw ABI");
 #endif
+#if !EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
 _Static_assert(sizeof(struct pwra_result)==399240,"complete checked access raw ABI");
+#endif
 _Static_assert(sizeof(struct pwrpc_result)==10048,"complete CPU-local raw ABI");
 /* Includes both complete client/path records, NPA/RPMh, current Clock/I2C/GCD
  * records and 1MiB for earlier firmware evidence/labels. Native 4MiB ring is
  * stored separately in the already sizeof(log_buffer)-based snapshot. */
-#if EFI_XNU_WIFI_CMDDB_STAGED_RO_AVAILABLE
+#if EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
+_Static_assert(sizeof(log_buffer)>=2*(sizeof(pwsp_record)+sizeof(pwrpt_record)+sizeof(pwrcl_record)+sizeof(pwnpa_record)+
+    sizeof(pwrph_record)+sizeof(pacgq_preboot_record)+sizeof(pacgq_preboot_i2c)+sizeof(pgcd_record))+1048576,
+    "complete preparation/client/power/source raw must fit without truncation");
+#elif EFI_XNU_WIFI_CMDDB_STAGED_RO_AVAILABLE
 _Static_assert(sizeof(log_buffer)>=2*(sizeof(pwsp_record)+sizeof(pwnpa_record)+
     sizeof(pwrph_record)+sizeof(pacgq_preboot_record)+sizeof(pacgq_preboot_i2c)+sizeof(pgcd_record))+1048576,
     "complete staged RO/source raw records must fit without truncation");

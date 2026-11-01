@@ -8,6 +8,8 @@
 #define POLARIS_UEFI_WIFI_RSC_ACCESS_H
 #include "uefi-wifi-power-critical.h"
 #include "uefi-wifi-rsc-device.h"
+#include "uefi-wifi-cmddb-prepared.h"
+struct pwcp_result;
 #if EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE && !defined(POLARIS_EFI_TEST_QEMU)
 #define PWRA_EVENTS (PWRSC_HISTORY+96u)
 struct pwra_event {
@@ -19,6 +21,9 @@ struct pwra_cmd_snapshot {
     uint32_t hash_count,hash_failed,page_issued[PWCD_PAGES],page_returned[PWCD_PAGES];
     uint64_t where[PWCD_PAGES],par[PWCD_PAGES];
     struct efi_loaded owner;uint8_t table[72],globals[72],hashes[5][32],raw[PWCD_DB_BYTES];
+#if EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
+    struct pgns_translation current_AT[PWCD_PAGES];
+#endif
 };
 struct pwra_result {
     uint32_t attempted,error,unknown,outstanding,local_held,retired,acquired;
@@ -33,6 +38,9 @@ struct pwra_io {
     int (*translate)(void *,struct pwrmd_translation *);
     int (*read)(void *,uint64_t,uint32_t *);
     int (*write)(void *,uint64_t,uint32_t);
+#if EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
+    int (*RAM_translate)(void *,struct pgns_translation *);
+#endif
 };
 struct pwra_context {
     struct pwra_io io;struct pgcd_context *core;
@@ -40,6 +48,9 @@ struct pwra_context {
     struct pwrpc_result *critical;struct pwrsc_transaction *transaction;
     const struct pwrmd_result *device;struct pwra_result *record;
     const struct pwcd_result *cmd;
+#if EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
+    const struct pwcp_result *prepared;
+#endif
 };
 enum pwra_error {PWRA_OK,PWRA_ARGUMENT,PWRA_SCOPE,PWRA_CLIENT,PWRA_SAVED,PWRA_CHANGED,
     PWRA_TRANSLATION,PWRA_IO,PWRA_TIME,PWRA_PREFIX,PWRA_HISTORY,PWRA_UNKNOWN_STATUS};
@@ -134,9 +145,53 @@ static inline int pwra_snapshot(struct pwra_context *c,unsigned post)
  * Query/getter/allocator, MPU change or SMEM store. Keep both complete fresh
  * byte copies, each per-page AT and every partial count; never substitute the
  * earlier API success/record flag for this current immutable data check. */
+#if EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
+static inline int pwra_cmddb_prepared(struct pwra_context *c,unsigned slot)
+{
+    const struct pwcp_result *d=c->prepared;struct pwra_cmd_snapshot *s=&c->record->CmdDb[slot];
+    if(slot>1||!d||pwcp_unsafe(d)||!d->stable||!d->complete||d->provider!=(uintptr_t)c->provider||
+       d->core!=(uintptr_t)c->core||!c->io.RAM_translate||s->attempted)return pwra_fail(c,PWRA_SCOPE,1);
+    const struct pwsp_result *prepared=(const void*)(uintptr_t)d->preparation;
+    if(!prepared||!pgcd_in_self(&c->provider->core,(uintptr_t)prepared,sizeof(*prepared))||
+       !prepared->complete||pwsp_unsafe(prepared)||!prepared->retired)return pwra_fail(c,PWRA_SCOPE,1);
+    s->attempted=1;c->record->outstanding=0x20000u|slot;paic_actual_order(0);
+    const struct pwcp_source *prior=&d->source[2];struct pwrcl_result *p=c->provider;
+    const struct paic_io *m=c->io.memory;uint32_t native;uint64_t ticks;
+    if(!pwra_live(c,&native,&ticks)||!pwrcl_copy(m,p,c->work,&s->owner,d->owner_address,sizeof(s->owner),&s->owner_bytes)||
+       !pgcd_equal(&s->owner,&prior->owner,sizeof(s->owner))||
+       !pwrcl_copy(m,p,c->work,s->table,d->protocol,72,&s->table_bytes)||!pgcd_equal(s->table,prior->table,72)||
+       !pwrcl_copy(m,p,c->work,s->globals,d->image+0x5158,72,&s->global_bytes)||!pgcd_equal(s->globals,prior->globals,72)||
+       !pwrcl_owned(m,p,c->work,d->image,PWCDI_IMAGE_BYTES)||
+       !pwcdi_verify((const void*)(uintptr_t)d->image,d->image,s->hashes,&s->hash_count,&s->hash_failed))return pwra_fail(c,PWRA_CHANGED,1);
+    /* Preserve the existing FULL128KiB fresh comparisons before first store
+     * and after full engine retirement. No earlier API status or preparation
+     * boolean replaces these bytes. New NS/WB AT retains actual PAR restore.
+     * A captured namespace descriptor is never labelled an original getter. */
+    for(unsigned k=0;k<PWCD_PAGES;k++){
+        uint64_t page=PWCD_UEFI_DB_BASE+4096u*k;struct pgcd_descriptor g;
+        if(!pgns_descriptor(&d->namespace,page,&g)||g.type!=2||!(g.capabilities&8)||g.attributes!=8||
+           (!polaris_efi_range_owned(c->work->map,c->work->bytes,c->work->stride,page,4096,0)&&
+            !polaris_efi_range_owned(c->work->map,c->work->bytes,c->work->stride,page,4096,4))||
+           !pwra_live(c,&native,&ticks))return pwra_fail(c,PWRA_SCOPE,1);
+        struct pgns_translation *t=&s->current_AT[k];t->page=page;s->page_issued[k]=1;paic_actual_order(0);
+        int returned=c->io.RAM_translate(c->io.context,t);s->page_returned[k]=returned?1:0;paic_actual_order(0);
+        s->where[k]=t->page;s->par[k]=t->par;
+        if(!returned||t->page!=page||t->issued!=1||t->returned!=1||t->saved!=t->restored||
+           t->par!=(UINT64_C(0xff00000000000b80)|page))return pwra_fail(c,PWRA_TRANSLATION,1);
+        for(unsigned j=0;j<4096;j++){
+            unsigned offset=4096*k+j;s->raw[offset]=PWCD_LOAD(page+j);s->bytes=offset+1;
+            if(s->raw[offset]!=prepared->database[1][offset])return pwra_fail(c,PWRA_CHANGED,1);
+        }
+    }
+    if(!pwra_live(c,&native,&ticks))return 0;s->complete=1;c->record->outstanding=0;paic_actual_order(0);return 1;
+}
+#endif
 static inline int pwra_cmddb(struct pwra_context *c,unsigned slot)
 {
     if(slot>1)return pwra_fail(c,PWRA_SCOPE,1);
+#if EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
+    if(c->prepared)return pwra_cmddb_prepared(c,slot);
+#endif
     struct pwra_cmd_snapshot *s=&c->record->CmdDb[slot];const struct pwcd_result *d=c->cmd;
     if(s->attempted||!d||!d->stable||d->error||d->unknown||d->outstanding||d->database[0]!=d->database[1]||
        d->database[1]!=PWCD_UEFI_DB_BASE)return pwra_fail(c,PWRA_SCOPE,1);
@@ -169,18 +224,37 @@ static inline int pwra_cmddb(struct pwra_context *c,unsigned slot)
     }
     if(!pwra_live(c,&native,&ticks))return 0;s->complete=1;c->record->outstanding=0;paic_actual_order(0);return 1;
 }
-static inline int pwra_acquire(struct pwra_context *c,const struct pwra_io *io,struct pgcd_context *g,
+static inline int pwra_acquire_as(struct pwra_context *c,const struct pwra_io *io,struct pgcd_context *g,
     struct pwrcl_result *provider,const struct pwrph_work *w,struct pwrpc_result *critical,
     const struct pwcd_result *cmd,const struct pwrpb_baseline *normal,const struct pwrpb_baseline *masked,
-    const struct pwrmd_result *device,struct pwrsc_transaction *tx,struct pwra_result *r)
+    const struct pwrmd_result *device,struct pwrsc_transaction *tx,struct pwra_result *r,const struct pwcp_result *prepared)
 {
     if(!r||r->attempted)return 0;r->attempted=1;
-    if(!c||!io||!io->memory||!io->translate||!io->read||!io->write||!g||!provider||!w||!critical||!cmd||!normal||!masked||!device||!tx){r->error=PWRA_ARGUMENT;return 0;}
-    *c=(struct pwra_context){*io,g,provider,w,critical,tx,device,r,cmd};
+    if(!c||!io||!io->memory||!io->translate||!io->read||!io->write||!g||!provider||!w||!critical||(!cmd&&!prepared)||(cmd&&prepared)||!normal||!masked||!device||!tx){r->error=PWRA_ARGUMENT;return 0;}
+    *c=(struct pwra_context){*io,g,provider,w,critical,tx,device,r,cmd
+#if EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
+        ,prepared
+#endif
+    };
+    const void *command=cmd;uint64_t command_bytes=sizeof(*cmd);const struct pwcd_resource *desired=cmd?cmd->resources[1]:0;
+    int command_ready=cmd&&cmd->stable&&!cmd->error&&!cmd->unknown&&!cmd->outstanding&&cmd->owner_matches==1&&
+        cmd->after.ticks<=critical->normal.cpu.ticks&&cmd->before.ticks>=g->record->before.cpu.ticks&&
+        pgcd_equal(cmd->resources[0],cmd->resources[1],sizeof(cmd->resources[0]));
+#if EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
+    if(prepared){
+        command=prepared;command_bytes=sizeof(*prepared);desired=prepared->resources[1];
+        command_ready=prepared->complete&&prepared->stable&&!prepared->error&&!pwcp_unsafe(prepared)&&prepared->owner_matches==1&&
+            prepared->provider==(uintptr_t)provider&&prepared->core==(uintptr_t)g&&
+            prepared->bound_after.ticks<=critical->normal.cpu.ticks&&prepared->before.ticks>=g->record->before.cpu.ticks&&
+            pgcd_equal(prepared->resources[0],prepared->resources[1],sizeof(prepared->resources[0]));
+    }
+#else
+    if(prepared){r->error=PWRA_ARGUMENT;return 0;}
+#endif
     r->client=(uintptr_t)provider->handle_output;r->provider=(uintptr_t)provider;r->critical=(uintptr_t)critical;r->transaction=(uintptr_t)tx;
     r->normal_RAM=(uintptr_t)normal;r->masked_RAM=(uintptr_t)masked;r->namespace_record=(uintptr_t)device;
-    const void *objects[]={c,provider,critical,cmd,normal,masked,device,tx,r};
-    const uint64_t sizes[]={sizeof(*c),sizeof(*provider),sizeof(*critical),sizeof(*cmd),sizeof(*normal),sizeof(*masked),sizeof(*device),sizeof(*tx),sizeof(*r)};
+    const void *objects[]={c,provider,critical,command,normal,masked,device,tx,r};
+    const uint64_t sizes[]={sizeof(*c),sizeof(*provider),sizeof(*critical),command_bytes,sizeof(*normal),sizeof(*masked),sizeof(*device),sizeof(*tx),sizeof(*r)};
     for(unsigned k=0;k<9;k++)if(!pgcd_in_self(&provider->core,(uintptr_t)objects[k],sizes[k])||
        !pwrcl_owned(io->memory,provider,w,(uintptr_t)objects[k],(uint32_t)sizes[k]))return pwra_fail(c,PWRA_SCOPE,1);
     for(unsigned k=0;k<9;k++)for(unsigned j=0;j<k;j++)
@@ -191,10 +265,7 @@ static inline int pwra_acquire(struct pwra_context *c,const struct pwra_io *io,s
        !device->complete||device->error||device->unknown||device->outstanding||device->queries!=3||device->reads!=70||
        device->image!=provider->reader.image||device->core!=provider->core.core||device->self_base!=provider->core.self_base||
        device->self_bytes!=provider->core.self_bytes||device->after.ticks>critical->normal.cpu.ticks||
-       !cmd->stable||cmd->error||cmd->unknown||cmd->outstanding||cmd->owner_matches!=1||
-       cmd->after.ticks>critical->normal.cpu.ticks||cmd->before.ticks<g->record->before.cpu.ticks||
-       !pgcd_equal(cmd->resources[0],cmd->resources[1],sizeof(cmd->resources[0]))||
-       !pwrpb_plan(masked,cmd->resources[1],r->saved,r->desired))return pwra_fail(c,PWRA_SCOPE,1);
+       !command_ready||!pwrpb_plan(masked,desired,r->saved,r->desired))return pwra_fail(c,PWRA_SCOPE,1);
     unsigned matches=0;const struct pwrcl_list *active=&masked->pool.list[0];
     for(unsigned k=0;k<active->count;k++)if(active->node[k].address==r->client&&
        pgcd_equal(active->node[k].raw,provider->created.raw,88))matches++;
@@ -204,6 +275,18 @@ static inline int pwra_acquire(struct pwra_context *c,const struct pwra_io *io,s
     if(!pwra_cmddb(c,0)||!pwra_snapshot(c,0))return 0;
     r->acquired=r->local_held=1;paic_actual_order(0);return 1;
 }
+static inline int pwra_acquire(struct pwra_context *c,const struct pwra_io *io,struct pgcd_context *g,
+    struct pwrcl_result *provider,const struct pwrph_work *w,struct pwrpc_result *critical,
+    const struct pwcd_result *cmd,const struct pwrpb_baseline *normal,const struct pwrpb_baseline *masked,
+    const struct pwrmd_result *device,struct pwrsc_transaction *tx,struct pwra_result *r)
+{return pwra_acquire_as(c,io,g,provider,w,critical,cmd,normal,masked,device,tx,r,0);}
+#if EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
+static inline int pwra_acquire_prepared(struct pwra_context *c,const struct pwra_io *io,struct pgcd_context *g,
+    struct pwrcl_result *provider,const struct pwrph_work *w,struct pwrpc_result *critical,
+    const struct pwcp_result *prepared,const struct pwrpb_baseline *normal,const struct pwrpb_baseline *masked,
+    const struct pwrmd_result *device,struct pwrsc_transaction *tx,struct pwra_result *r)
+{return pwra_acquire_as(c,io,g,provider,w,critical,0,normal,masked,device,tx,r,prepared);}
+#endif
 static inline int pwra_read(void *context,uint64_t at,uint32_t *value)
 {struct pwra_context *c=context;return c&&c->record->acquired?pwra_transfer(c,at,value,0,1):0;}
 static inline int pwra_write(void *context,uint64_t at,uint32_t value)
@@ -247,6 +330,10 @@ static inline int pwra_actual_write(void *context,uint64_t at,uint32_t value)
 #endif
 }
 static inline struct pwra_io pwra_physical_io(const struct paic_io *memory,struct pwra_context *context)
-{return (struct pwra_io){memory,context,pwrmd_actual_translate,pwra_actual_read,pwra_actual_write};}
+{return (struct pwra_io){memory,context,pwrmd_actual_translate,pwra_actual_read,pwra_actual_write
+#if EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
+    ,pgns_actual_translate
+#endif
+};}
 #endif
 #endif
