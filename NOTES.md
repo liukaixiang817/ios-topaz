@@ -34,6 +34,59 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0179 actual normal argument admission/complete retirement and controlled Polaris FASTBOOT20:17; masked DB/READ/Wi-Fi NOT DONE; public NOTES push pending approval
+
+- ONE0179image92696 ENDED0 sent2026-11-01T20:12:52.382579Z/source
+  885d7d03eda1be931c4a064966822a2da78409b5/image9c39df43a440d28e462b863fb55a97f37dcb88470c983f178e388abc56d1256a/6025216B.
+  Solematchingfrozenstate actualwaitingpayload20:13:04.093466Z. ONEsame63cb
+  payload11526 ENDED0,557chunks36459872B/validationACKtrue/validatedtrue/
+  transfer32.96139516698895s; p.boot20:13:48.463364Z/17.45524604100501s,
+  actualIN4of64/return0/kernelcommandACKtrue. ThisisactualACK, not0178UNKNOWN.
+- Capture63240 ENDED0 actualkernel-entered/fullnative.log8910569B/PPM6998417B.
+  ExactfrozenCABI independentdecode/assertions confirmNEWnormalarguments:
+  bodyattempt1/error16planned/phase1/retired1/knownrefusal1/unknown0; private
+  clienterror0/held0/returned1/retired1/CreateDeleteissued2=returned2. Tenactual
+  typedobjects/308pages allcurrentNS/WB/samePA/PARsavedrestored, fullprefix,
+  204unusedtailpageszero. NormalCPU0EL1/CPACR300000/DAIF0/G1on, nativeflag
+  before0/last0/618reads atthisphase. Objectobservation3.72734375ms/firstprivate
+  open→lastargument45.640885417ms NOTtotalretire/READtime/lease/securegrant.
+- Fullcurrentnamespace113x2/selectedCmdDb3passes/20CmdDbhashes/30privateCoreRPMh
+  hashes/one26rowRAM/oneDevice70loads+3originalguardedqueries/fullsource/
+  exactknownclientemptyqueues/twoequalpools/knownDelete verified. CPU/maskedDB/
+  access/context/READ/WRITErecords entireZERO/UNOBSERVED inthisscope, nothardware
+  countingzero or proofabout0178predicate. Original68slowest/max61919/units19/
+  estimate2616461/remaining3060586ticks/READ50+25msreserve/200ms unchanged.
+  FourindependentROprepphases460Core40CmdDbhashes/two128KiBDB match; allthree
+  fullrawrecords byteidentical in controllednativedrainlog. FinaloriginalGCD
+  8getters/20hashes/error0/key5899=5899/2appendedprestarts verified. Initial
+  GCDrawhas1prestart/phase2/masks15; second isseparatelyappended624B, notfake
+  phase3/2insideearlierraw. FirstGetMapTPL isUNOBSERVED, laterguards4/restored.
+- OneUTCSETcookie16878875591/seq1 thenindependentAPPLIEDstatus2/error0/count1,
+  uncertainty2265us; noRTC/monotonic/networktimeclaim. Normalshutdown1584ENDED0,
+  nativedrainphase3/cap80000003/error0/epoch0flushed0, complete212BWLEXIT05+
+  64BOKAYWLR5 independentlydecoded; entireprefix/faultOR1/RTOR1 preserved,
+  savedstatevalid/restored, noerrorclear oropticalcycle. Independentactual
+  productpolaris2026-11-01T20:17:05.473503Z/exit0. No physicalkeys/resetfallback.
+- Physicalproof0179/wifi/physical-normal-argument-admission-retirement-and-controlled-FASTBOOT-proof-0002.json
+  SHA094d3f394545a9219559db0e8c5e86f1461c152b103c8d167e76a4c4815e08d4.
+  PhoneactualcontrolledFASTBOOT,0179sessionENDED/ORIGINALrecordCONSUMED;
+  noreplay/refreeze/oldcontrollerfornewsession. AllworkersENDED/allchildrenSTOP,
+  no physicalactionpending. FullstrictRO39 NEW0179 remainscurrent afterONLY
+  controllednativedrain/actualFB; noAndroid/uncontrolledexit/nohashredo now.
+- FW70b2bdc/HOST9e970a4 alreadypushed/remotematched87b9f506. LocalNOTESreadiness
+  commit885d7d0 NOTpushed: automaticapproval twice rejectedpublicdevicehandoff
+  publication, evenafterGitHubrepoID1430772888/owner/admin/push/public identity
+  verified. Specific23linepublicationapprovalquestionpending; noindirectpush
+  workaround orassumedpermission. Currentactualmilestonenotesalsolocal only.
+- NEXT audittruephysicalnormal→maskedcaller/leaf/currentowner/arguments/ranges/
+  source-time usingthisnewnormalrecord asfacts ONLY, notlaterpermission. Any
+  nextcandidate NEWfresh completechecks/models/profile/codec/freeze/helper;
+  revalidateallnormalandmaskedcurrentowner/source/cache/DeviceNSRWAT/CPU,
+  nooldticket/clientheld/rebase/renewal/relaxed200ms/UNKNOWNcleanup. NEW0180
+  notimplemented/NOTREADY, no furtherdevicepoll orold0179boot. OnlyWi-Fi:
+  maskedDB/access/realREAD/vote/FOURownVRM/MSS/MSA/GLINK/WLFW/ath10k scan/join/
+  data allunfinished; Wi-Fistillunavailable. Sound/cameraSTOP.
+
 ### CURRENT0179 complete independent freeze/offline helper READY for ONE new RAM; phone last actual FASTBOOT19:59; Wi-Fi NOT DONE
 
 - NEW0179 freeze completed, COPY884+10COMMIT_ONLY/471 currentcommittedsources/
