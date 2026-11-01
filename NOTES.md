@@ -88,8 +88,16 @@ early samples only. On0029 the human already confirmed boot complete and said
   SHA7d32495c87030efffba939a0e3b4c6edd13250cd04f38331f775f0a1a07f7492.
   SOFTWARE PMIC/delay/RAMUSB only, not physical timing/API/guestreset/radio.
   All verification/build/model workers ENDED. No unchanged tests need rerun.
-- NEXT ONLY Wi-Fi: NEW exact hostprofile/controller for85inputs and honest
-  staged metadata/raw capacity, source audit/original81 full codec/independent
+- FW8669557ed5b8d0f682535d4197ac747b9d76fe7c committed/pushed and independently
+  ls-remote matched. NEW explicit GCD_CLOCK_0161 pins85inputs/198GCD-Power+
+  94resource fields and scope-review4b7e019232dcec1f8d146c6fc732a6652d27e973594e48f3452264c5f960b90d.
+  All14oldliteral profiles AST-identical.24host admission tests PASS; actual
+  no-mock complete admit with both new models/current fresh0160 ROOT/NV passed,
+  proof0161/wifi/staged-new-host-scope-proof-0001.json
+  SHAa02bf195c2cb6581b13812e366024d10b1647fc70bcd5e31e3d2bd81c04340ac.
+  Existing controller's boundimage/source selection retains8MiB firmware and
+  12MiB+128host log cap; no capacity/policy fallback or oldfrozen edits.
+- NEXT ONLY Wi-Fi: source audit/original81 full codec/independent
   freeze/default offlineONE helper before candidate. Old0160 profile/frozen/
   consumed record remain immutable. Current fresh0160 ROOT/NV authority plus
   normal drain/actualFASTBOOT can be reused; no repeated fullhash/recovery or
