@@ -34,7 +34,7 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0158 remains ONLY last actual nativeLIVE02:36; NEW0160 independent RO work admission + full capture parent verified OFFLINE; NEW host/image NOT READY
+### CURRENT0158 remains ONLY last actual nativeLIVE02:36; NEW0160 independent RO work admission/full parent/NEW host verified OFFLINE; image/freeze NOT READY
 
 - ONLY Wi-Fi. User “Wi-Fi还不行” remains correct: scan/join/data false;
   full physical namespace/DB unread, allchildren/audio/cameraSTOP. No USB,
@@ -72,9 +72,17 @@ early samples only. On0029 the human already confirmed boot complete and said
   3ae6e0270f035dad3414db35e9bf8480ef9a4f40f1ff285484e. SoftwarePMIC/delay/
   RAMUSB != physicalPMIC/USB/guestreset/radio. No nativeCI/download. Prior0159
   scalar3007/91/twomodels below are completed, no irrelevant reruns.
-- NEXT NEW exact0160hostprofile must bind83inputs/all workadmissionmetadata/
-  31552B scope/defaultOFF/200ms unchanged and honestestimate/no lease. Old13
-  literals/manifests neverchange. Then original81wholeEFIcodec/sourceaudit/
+- FW3bda2216209e761b0c7daff1f568ac84cfdc1782 committed/pushed; NEW explicit
+  GCD_CLOCK_0160 host literal now binds that83inputsource and193GCD/Power
+  metadata + original94 resource fields, exact31552B workrecord and separate
+  reviewed work-scope doc. All13 old literal ASTs unchanged.17affectedhost
+  tests pass; actual NO-MOCK admit(d,2newmodels,unchangedCI,fresh0158RO) PASS
+  proof4dfc8e9e374134a271a895a66629d60ce5400a164b72459cd73fc2b615bc6422.
+  Hostscope proof40c36e18d194ae414ac0f8cf6a711affd05e04b7a93b7235e65f7a74752771d0.
+  Header cannot hide behind disabledmetadata; oldinputsets/firststop/extraAPI/
+  deadline renewal/type/size changes reject. Oldprofile/manifests notedited.
+- NEXT original81wholeEFIcodec/sourceaudit/independentfreeze/newadmission/
+  ONEhelper before candidate. Then original81wholeEFIcodec/sourceaudit/
   independentfreeze/newadmission/ONEhelper, ONLY after frozen0158 clean normal
   nativeVFS/GPU/CPUdrain+completeappendraw/WLEXIT05/WLR5 receipt -> independent
   actualFASTBOOT. Reuse fresh0158 fullRO within continuouscontrolled chain;
