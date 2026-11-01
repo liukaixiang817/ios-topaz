@@ -34,6 +34,28 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0170 remains controlled FASTBOOT09:44; NEW0171 exact host/image/codec verified OFFLINE; independent freeze pending
+
+- FWsource f57080485e745df36a301fdaede034d4e8b12ca2 committed/pushed;
+  actualdriver0003 e846f9b0a217bdc10f0fee94e37f6afbf074f90d99702d638473b99ad72c5e09/
+  15932928B/90inputs,83committed+7privateoriginalDATA eachmatchFWsource.
+  NEWGCD_CLOCK_0171 exact271GCDPower+94resource/90inputs, all24oldenabled
+  literalAST unchanged.21affectedhosttests+actualnomockcompleteadmit passed.
+  Final83ASAN/UBSAN/fullparentCOFF-MachO/maxframe1024/defaultOFF-QEMU and
+  finaltwoSERIALnew19checkterminalmodels0003 passed. Oldbudget125ms unchanged.
+- Newimageea2415f83e88501038f26bff86847fcb027995549b2e33e5b718b102300560ad/6033408B packaged;
+  actualunmodifiedEDK2whole43414728B GetInfo/decodebyteequal, original81FW/
+  SimpleInit/BootShim/DTB preserved. Newdriver/workraw entirelyretained.
+  Sourceproof0171/wifi/READ-work-source-and-parent-proof-0001.json
+  SHA6c74b78db7ab57064483c4dfc3704123ceb6c9c921e95043dff6e2f73dd01125; exacthostproofSHAf3a216d238240e7fbdc7b09ef078e154b1de873cfcfc5bbfe2979829a94e5f9f.
+  No USB/newfirmwarecall/physicalREAD/vote/newnativeCI. CandidateNOTREADY
+  until independentfreeze/ONEhelper; phone remains0170actualcontrolledFB.
+- Last0170exception permission wasONLY0170 once andconsumed. Priorautomatic
+  reviewer twice requiredexplicit user exception to reuse immutable63cbnative
+  payload stored under0145. Complete newcandidate/freeze first, then request
+  any neededNEW0171 exception before image orpayload; no disguisepath/oldpolicy/
+  indirectbypass. No approvalquestion pending yet. AllworkersENDED/childSTOP.
+
 ### CURRENT0170 remains controlled FASTBOOT09:44; NEW0171 same-private bounded READ work admission verified OFFLINE; host/freeze NOT READY
 
 - Phone remains actual0170controlledFASTBOOT09:44:25.515530Z, no newUSB/
