@@ -34,6 +34,52 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0181 startup ACK UNKNOWN / UEFI unavailable / FASTBOOT query timeout23:56; V2photo + physical recovery requested ONCE; Wi-Fi NOT DONE
+
+- FWd5df7ff890ba0fea513ccc292fc118b71b777e7a/HOST2f4650f38d12feb5536c56dfe8afd342a81ed71a/
+  readinessec685adf34d9c01107e183ec6d7e90ef60b480dapublished/independentremote
+  matched. Actualbroadkernelreuse df995cae... andactualfuturelikesource/text
+  publication873635fc...persist, no furtherauthorizationquestionneeded.
+- ONEimage68316 ENDED0 sent2026-11-01T23:52:08.637336Z/sourceec685ad/image
+  7bf6730b415458dd7a49702f9df40cfbf979f5fcea3473855f0b7586e290e7fd/6033408B.
+  Solefrozenactualwaitingpayload23:52:23.987935Z/ENDED0. ONEsame63cbpayload
+  59938 ENDED1 stage23:52:43.994412Z/full557chunks36459872B/validationACKtrue+
+  validatedtrue/32.957261624978855s; p.boot23:53:16.951866Z/90.331294374977s,
+  lastIN129(-7)/hostreply0of64/90000ms, no kernelcommandACK. StartupACKUNKNOWN,
+  notnativeLIVE/actualFB/normalreturnedrefusal. DownloadisnotDB/READ/network;
+  host0replyisnot0CPU_ON/WLED/mask/AT/MMIO/TCSwrites.
+- OnlyAFTER59938ENDED: solematchingfrozenstate48494 ENDED1/8s unavailable,
+  started23:55:25.446090Z; soleindependentexpected83523 ENDED0/8stimeout,
+  started23:55:58.966004Z/completed23:56:06.972281Z. No safe remoteexitverified.
+  PhysicalrecoveryrequestedONCE: firstphotoentireV2HOLD includingWHY CALL,
+  MASK ARCH OK, OPEN/NORM/FAIL HI LO, DB0/1, CPU H R; thenpower+volumedown
+  FASTBOOT/keepUSB/reply已到FASTBOOTwithphoto(orstateifnodigits). Currentlypending.
+  DoNOTrepeatrequest/state/capture/expectedpoll/cleanup/genericreset/rawfallback.
+  ActualuserrecoveryreplyallowsONEnew8sreadonlyexpectedproduct, notreplay0181.
+- NoactualnewV2photo/numericvaluesorbinaryGOP/prep/arguments/CPU/DB/access/
+  READ/RSCrawexported. Actualwhy/call/ticks/predicates/countsallUNKNOWNnot0.
+  DoNOTbackfill0180photo/CPUARCHslot1orSOFTWARE340casesintothisnewsession.
+  Cannotclaimreason19/200msexpiry/otherregister/owner/panic/quarantine/rootcause.
+  NodynamicproofV2drawactuallyoccurred; notexceptionhandler. NoUTCSET/UI/WLED/
+  optical/performance/nativeCI. Physicalproof0181/wifi/physical-start-ACK-unknown-
+  and-no-safe-remote-exit-proof-0001.json SHAd16e283522ec1ca75deac0a405523f9549002f5a4c6ba79577c48676f1a5c7fd.
+  PASSonlyfaithfullypreservesUNKNOWN/notsuccess.
+- ORIGINAL0181/phone-cpu-live-diagnostics-runtime-0001/boot.jsonCONSUMED,
+  literaltemporary_native_WLED_runtime_RAM_boot_succeededonlyimageACK.
+  Uniqueusedcontroller/private/tmp/polaris-runtime-0181-frozen-0001/tools/
+  polaris-uefi-wled-runtime.pywithmatchingfrozen0181physicaldriver/image+ORIGINAL.
+  AllUSB/host/build/modelworkersENDED/allchildrenSTOP, no morenativecommands.
+  Noimage/payload/OEMbootreplay/refreeze/oldpolicy/manifestedit/stripflags/
+  old0180/editedcontroller. NEW0182NOTimplemented/NOTREADY.
+- FreezeCOPY888+10COMMIT_ONLY/476committedsources/94inputs/nohardlinks
+  SHA5e5ddbcd0be4d58aa0761d4f44577895e5ba761b787d4ea6ffaf2b583bf61261;
+  freeze-record794614ce1d54f759322ef8896aef9f82140953d62b8bfb216c926a2f78b21d1e.
+  ONEofflinehelper/actualfull39/imagecodec/publishproofpassedbeforeconsumption;
+  neverrerunusedboot. NewROOTNVfull39(8df356b3.../0f806986...)nowHISTORICAL
+  after0181UNKNOWNwithoutcontrolledreceipt. Afterphysicalrecovery,nextnecessary
+  NEWcandidateconversionmustmergeNEWfullstrictRO39, no18/17skip/noinventoryboot.
+  ONLYWi-Fi; actualscan/join/dataNOTDONE; sound/cameraSTOP.
+
 ### CURRENT0181 independent freeze + ONEofflinehelper complete; source readiness push pending; no native0181 attempt; actual Polaris FASTBOOT23:33; Wi-Fi NOT DONE
 
 - Independentfreeze/private/tmp/polaris-runtime-0181-frozen-0001 COPY888+
