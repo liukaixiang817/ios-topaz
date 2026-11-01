@@ -34,6 +34,41 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0181 NEWfull39 current ROOT/NV + actual image/full codec complete; independent freeze/helper pending NOTREADY; actual Polaris FASTBOOT23:33; Wi-Fi NOT DONE
+
+- ONEnecessaryNEW0181strictROaudit37589 ENDED0; normalumount andindependentactual
+  productpolaris2026-11-01T23:33:34.651060Z. Independent39checksallpassed;
+  rootreview8df356b376342be8044d456c96e36188fce222c5d8772c183096d2a4c2ef2067/
+  preflight0f806986afc5f23818a9ff21d63e3315970e57dcf09d4c3ccb0c10f1e8afe793.
+  Fullnew16GiB91515474/old16GiB689a8cd1/56.71751829201821+56.68389545902028s;
+  actual142/182maps/marker8MiBpattern/GPT6/critical5/ESP102/journalmetadata/
+  3x8MiBNVwholebefore-local-after/FSC/fourNV0600/noRestorepassed. Hostelapsed
+  234.63299891600036s, originalhost250/watchdog300unchanged. Onlymetadata512MiB
+  journalcaptured, noFShealth/DSPoff/EEleaseclaim. ThisisNEW0181after0180reset,
+  notold0179reusedqualification; nofullhash/recoveryrepeatneedednow.
+- FWd5df7ff890ba0fea513ccc292fc118b71b777e7a/HOST2f4650f38d12feb5536c56dfe8afd342a81ed71a
+  andofflinehandoffe505e3984190e4b1f3a8d419540fbe89170c2406published/remotematched.
+  Newphysicaldriver0001independenttopfilecopy/nohardlinks/noZigcachefromfinal
+  ON0002 c6ff995184d69ced215d7568d7a0dca320ffd566870e343ecf2645750a96a334/
+  16091136B/94inputs. Actualfullno-mockimageadmit/build39945 ENDED0 withNEWroot39,
+  newexactGCD0181andtwoSERIALmodels. Image7bf6730b415458dd7a49702f9df40cfbf979f5fcea3473855f0b7586e290e7fd/
+  6033408B, original81FW/SimpleInit/BootShim/DTBpreserved. ActualunmodifiedEDK2
+  wholeGetInfo/fullDecode43572936Bbyteequal. Nonewimageorpayloadsenttophone.
+- Freshcontrolledtransitionreview0181/preboot-controlled-transition-review.json
+  SHA456b024e282d7a4ef038e2d196b5b8c321e3f102d4dbf7c4028ee599b7d67cfc;
+  actualfulladmitproof0181/wifi/live-diagnostic-exact-host-admit-proof-0001.json
+  SHAa9b3a16474d4c5212573381a1d88fa7f12cbbcd3abdcfaa49505fa03196c1253.
+  NewONEhelperwrittenagainstrealbroadkernel df995cae... andactualfuturelike
+  publication873635fc... record; neverfabricate"approved0181once"/renameauth.
+  RequiresoriginalnewfullROOTNV, exactGCD370/94inputs, completefrozenraw/image/
+  codec/models/actualpushproof/currentcorrectFBbeforeatomicNEWoriginalrecord.
+- NEXT independentCOPYfreeze(allcurrentcommittedsources/94inputs/newinodes),
+  ONEdefaultofflinehelper, NOTESreadinesscommit+approvedpush/independentlsremote,
+  genuine0181source+physicalhandoffproof; onlythenautomaticONEqualifiedNEW0181
+  temporaryRAMsessionunderpersistentsame63cbauthorization. No newpermissionor
+  physicalactionpending; ORIGINAL0181runtimebootrecordstillabsent. Old0180
+  CONSUMED/sessionENDED/noreplay. AllworkersENDED/allchildrenSTOP; onlyWi-Fi.
+
 ### CURRENT0181 source/340ASAN/full parent/two SERIAL models/exact host complete; fresh strictRO39/image/codec/freeze pending NOTREADY; phone last actual Polaris FASTBOOT23:07; Wi-Fi NOT DONE
 
 - NewdefaultOFF --wifi-power-cpu-live-diagnostics requires explicitnormal-to-
