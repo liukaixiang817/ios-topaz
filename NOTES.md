@@ -81,6 +81,19 @@ early samples only. On0029 the human already confirmed boot complete and said
   Hostscope proof40c36e18d194ae414ac0f8cf6a711affd05e04b7a93b7235e65f7a74752771d0.
   Header cannot hide behind disabledmetadata; oldinputsets/firststop/extraAPI/
   deadline renewal/type/size changes reject. Oldprofile/manifests notedited.
+- NEW0160 offline candidate now packaged/frozen, no USB yet: image6f5e06fbe32e
+  bb7abc5e5939e400e20be69037dc8e8f6ba9d63993234eaff579/6008832B; original
+  unmodified EDK2 whole39339208B exactdecode, original81FW/SimpleInit/BootShim/
+  DTB preserved. FW3bda221/HOST2851fca committed/pushed. Independent frozen
+  /private/tmp/polaris-runtime-0160-frozen-0001 COPY815+10COMMIT_ONLY,411current
+  committedsources/83inputs/nohardlinks. Freeze0416ed0a7acbc041ee5ad4f4fa2457b
+  6ea52ff595eca00c164ce06b21b72f92b; default offlineONEhelper PASS. No0160
+  bootrecord/image/payload/UTC sent. Original0158 liveboot remainsCONSUMED,
+  frozen0158 controller is the ONLY currentdevice controller.
+  Frozen0160 helper only admits complete work-budget scope, fullRAWV2 and
+  exactnewprofile. It requires actual old0158 nativeVFS/GPU/CPUdrain + full
+  WLEXIT05/WLR5 rawreceipt + independent FASTBOOT + current continuousfreshRO
+  review before ONE RAM. No guessed hardwarelease/timing/completeDB claim.
 - NEXT original81wholeEFIcodec/sourceaudit/independentfreeze/newadmission/
   ONEhelper before candidate. Then original81wholeEFIcodec/sourceaudit/
   independentfreeze/newadmission/ONEhelper, ONLY after frozen0158 clean normal
