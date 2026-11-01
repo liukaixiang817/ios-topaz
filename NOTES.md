@@ -34,6 +34,98 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0161 actual controlled FASTBOOT04:14; real full namespace/two complete CmdDb captures SUCCESS; Wi-Fi scan/join/data still NOT DONE
+
+- Wi-Fi还不行 remains correct. ONLY Wi-Fi, then sound, then camera; allchildren
+  STOP/no delegation or parallel tasks. This is completed physical RO supply
+  preparation, not a vote, MSS start or networking. All USB/host/build/model
+  workers ENDED. No user physical action pending. Phone now actual Polaris
+  FASTBOOT04:14:42.882308Z after full NORMAL0161 native drain/receipt, notLIVE.
+- FW8669557ed5b8d0f682535d4197ac747b9d76fe7c / HOST3aa88085fc03762d9050b5ffb4da75ec051bc375
+  committed/pushed with independent ls-remote match. NEW GCD_CLOCK_0161 exact
+  85inputs/198GCD-Power+94resource fields and stagedscope4b7e0192; all14old
+  literal ASTs unchanged.165affectedASAN/UBSAN, actualwholeparentCOFF/MachO/
+  maxframe1024/defaultOFF/QEMUpp,24hosttests/actualno-mockadmit, twoSERIAL
+  19checkwholeEFI-XNU models38.978103/39.553896s passed. Do not repeat unchanged
+  old3007/165/24/models/nativeCI/opticalcycle/scrolling.
+- ONE0161 image ENDED0 sent04:07:04.152019Z/source3aa8808/image2d03d2fbc65df18d
+  d86643bc89e58581c70ec5f06d4fd6f137dc6ba549b394aa/6000640B. Actualwaitingpayload
+  at04:07:24.700680Z; ONEoriginal63cbpayload84334 ENDED0 ACK~04:08:25Z,
+  transfer32.967725s/bootcall17.344401s. ORIGINALrepo phone-CmdDb-staged-runtime-
+  0001/boot.json CONSUMED. Never replay image/payload/OEMboot/refreeze0161.
+  ONLYusedcontroller=/private/tmp/polaris-runtime-0161-frozen-0001/tools/
+  polaris-uefi-wled-runtime.py with that frozen physical-runtime-driver-0001/
+  image-0001 and original shared consumed bootrecord. Its session now ENDED;
+  no more commands using it. Old0160/editedcontrollers/oldpolicy/stripflags
+  cannot control a new session.
+- Independent freeze COPY827+10COMMIT_ONLY/417committedsources/85inputs,
+  nohardlinks, freeze3ac22f7552a7fbea9c845725dcf4130953e267a6feb0f0115753f5c2389c8b41.
+  Driver8d518601f0457d22559596c3fef15d0496baf778e56464177cdd116fd479d920/
+  11588608B; originalunmodifiedEDK2 whole39070408B exactGetInfo/decode,
+  original81FW/SimpleInit/BootShim/DTB preserved; defaultofflineONEhelper passed.
+- ACTUAL staged RAW_V1 full1660544B a577c0dea71c3f20ba1882c8d26bb0194c0c2e3865a
+  858b6b6b83643f2b160b3 in0161/wifi/actual-staged-full-0001/staged.raw.
+  attempted1/error0/unknown0/retired1/complete1/parts4, assembled131072x2/
+  parsed1x2. Existing actual frozen C ABI decoder independently verified:
+  FOURdistinct resident spentonce tickets/finished contexts, all2pass namespaces
+  **113nodes per pass**, all73LoadedImage headers before/after/crossphase,
+  allmaps2736B/key5897/5897 stable, all17immediate source/head/lock/node/target
+  guards perphase. FullCore460 digestbytes + CmdDb40 digestbytes match original
+  source. All12original Locate/GetMap FP/arch guards returned/restored; each
+  firstGetMap TPLbefore/after UINT64_MAX is UNOBSERVED, remaining8guards4→4.
+- Actual firstopen→lastlive spans98711.875/98266.718750/98126.458333/
+  98233.333333us, each ORIGINAL200ms passes. Separate fully retired RO phases,
+  no private/final ticket reset/rebase, no continuous hardware lease claim.
+  Both complete128KiB DBs SHA40b0cf1847d9754fcedbe6062e9c235641aefe4413e86d70da
+  116a1c879912f7 identicalbyteforbyte. Current originalregistered CmdDb owner/
+  all8relocatedtable pointers/72Btable+72Bglobals/fivehashes match in allphases.
+  Original existing ARC decoder: actualCX/MX/MSS30000/30010/30060, raw384
+  indices7/4/7, MX duplicate16 retained; auxversion4097, prioritiesd3c/0,d3c/0,
+  800/0 retained. RAWunits notmicrovolts/currentvotes/TCSownership.
+- No privateCreate/Delete/Query/criticalPSCI/RSC/MSS/NVserve in NEW RO body.
+  Independent finalClock/GCD actual8getters/20Corehash/twoactualprestarts/
+  error0/key5898/5898 PASS. Clock allocations BETWEEN contexts explain5897→5898,
+  never force cross-phase keys equal. Fullsource/finalproofad5d45dbffb6fe1e77b7
+  ee24a614d8ba719bd24014e4ac921a64955da3226536. Complete raw unchanged in laterUI.
+  Decoder initially required firstmap observedTPL4; corrected evidence-only
+  UNOBSERVED handling, no firmware/gates/data/model/reboot changes.
+- EarlyUTC sync failed at initialSTATUS, beforeprobe/SET. Independent later
+  actual READY/sequence0/count0 proved no priorSET; then ONEactualSET and
+  independent APPLIEDstatus cookie39739939669/seq1/status2/error0/count1/
+  uncertainty2274us. NEVER SET0161 again. No uncertainSET replay.
+- LatestactualUI current-ui-capture-0003 ENDED0 at04:14:02.332960Z/kernel-entered:
+  viewed7400lockscreen/SundayNov1/Melbourne3:14PM/chargingicon. RawFG3/SMB2
+  latestvalid98%/4267mV/charging0; unavailableerror7 records retained; icon is
+  not rawchargerstate or continuouslyvalid batteryclaim. CompleteWLEDprefix26/
+  error0/issued4=completed4/req2=ack2/module128/irq2/faultOR0/rtOR0 actuallyread,
+  allraw preserved/no errorclear/opticalcycle. Sidebar/tinyresidual remains,
+  nofullrender/60Hz/AB claim. FouractualGPUfence+idle+halt; Camera shortcut≠frame.
+- NORMAL0161 shutdown ENDED0 at04:14:31.302623Z/nativecookie40370304777/seq1
+  mode2phase3error0/epochs0/caps80000003. Completeappendraw/WLEXIT05/WLR5
+  independentlydecoded final32/error0/faultOR0rtOR0. IndependentactualPolaris
+  FASTBOOT04:14:42.882308Z. Exitreview92a3f5be8c8675393b217a079e7555b89062f5adebbdf8ab42da62b468f3fa79.
+  Combinedphysical/UI/normalexit proof476a8749e740499d392f50f9f6955d5baf9d1fbe06a8c21f7d3aab75371beb12.
+- ROOT/NV authority stays fresh0160 review994b0c8a/preflight90b3c5da plus ONLY
+  controlledRO/RAMCOW and normal0160/0161 drains/independentFASTBOOT since.
+  No new recovery/fullhash/NVread repeated; reuse for nextneededcandidate if
+  noAndroid/uncontrolled/abnormalinterval. NoUFS/NV/ESP/BootOrder/81FW writes.
+- NEXT ONLY Wi-Fi: full namespace+currentDB preparation is PHYSICALLY DONE,
+  no more prep/budget/firstnode/client-only/inventory boot or newparser.
+  Integrate the existing prepared ARC output with the existing SAME known
+  privateRPMh lifecycle/current fullRAM+cache/perDRV72/mode/TCS/queue baseline,
+  currentGCD/NS R-W AT and actualCPU0/sevenpeer exclusion, bounded RSC
+  vote→completion→reverse savedrestore→fullRAM/source/CPU/namespace retirement
+  →knownDelete BEFORE unopened finalClock/GCD. Revalidate current source/
+  namespace/actual relevant CmdDb bytes in the actual private interval; prior
+  prepared DB/raw384 is not a writer or lifetime grant. Do not simply bypass
+  pwcd current-checks or reuse its stale readonly context, fakeclientheld,
+  boollease, reset/rebase tickets, relax200ms/UNKNOWN or originalblockingSubmit.
+  Existing pwrcl/pwrmd/pwrpc/pwra/pwrsc components are already written; reuse,
+  not redesign. Actual new cache/TCS/DRV2 ownership and complete physical
+  transaction/restore still unproven. may_vote/MSS/NVserve/scan_join_data=false.
+  Then ownMSS AOP/rail/clock/reset/RMB/auth and MSA/VMID/MPU/SFPB/SMEM/GLINK/
+  RMTFS to realscan/join/data. Sound/camera remainSTOP.
+
 ### CURRENT0160 remains last actual controlled FASTBOOT03:34; NEW0161 four-stage full RO preparation/parent verified OFFLINE; NEW host admission/candidate NOT READY
 
 - Wi-Fi scan/join/data still false. ONLY Wi-Fi; sound/camera/allchildren STOP.
