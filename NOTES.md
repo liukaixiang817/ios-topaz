@@ -78,7 +78,12 @@ early samples only. On0029 the human already confirmed boot complete and said
   publication, evenafterGitHubrepoID1430772888/owner/admin/push/public identity
   verified. Specific23linepublicationapprovalquestionpending; noindirectpush
   workaround orassumedpermission. Currentactualmilestonenotesalsolocal only.
-- NEXT audittruephysicalnormal→maskedcaller/leaf/currentowner/arguments/ranges/
+- Post-normalread-onlyphysicalcaller/leafauditcompleted: pwrpt_preboot/body,
+  pwra_prepare_checked/live/cmddb_prepared/database_close, pwrpc_live andactual
+  pgnsAT/paicidentity leavesreviewed. No newdeterministicsourcebug found; noFW
+  edit/retest/models/CI/devicecommands. Review0179/wifi/post-normal-physical-caller-leaf-readonly-review-0001.json
+  SHA7227b0fd85a77b6c98355f3200d88643acda2ed9253ccd16d710fab9aaf23993.
+- NEXT newnormal→maskedcandidatecomposition/currentowner/arguments/ranges/
   source-time usingthisnewnormalrecord asfacts ONLY, notlaterpermission. Any
   nextcandidate NEWfresh completechecks/models/profile/codec/freeze/helper;
   revalidateallnormalandmaskedcurrentowner/source/cache/DeviceNSRWAT/CPU,
