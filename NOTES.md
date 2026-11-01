@@ -34,6 +34,26 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0180 publication approved for this and future same-project source/text; push verification pending; no0180device action; Wi-Fi NOT DONE
+
+- Actualhumanreply to concrete0180publicationquestion: "批准0180及后续同类公开推送".
+  Scope is thissamepublicrepo projectsource+text handoffs, excludingfirmware/
+  Apple/vendorartifacts/NV/backups/rawdevicedumps/serial/password. Permission
+  persists for laterlikeupdates; do notaskagainwithinthisscope. Separatefrom
+  unchangedkernelSHA/partition/radioauthorization; prior0179-only rejection
+  remains truthfulhistorical, newlyauthorized0180normalpush cannowproceed.
+- Genuineoriginalauthrecord research/polaris/uefi-ios-0180/public-source-and-
+  handoff-publication-human-authorization-20261101.json SHA873635fcf90da43ff0a4fc102f9ee7d53526a29149e8b02ff68423825b1b9032.
+  FW9b8cacfb9b4d5c19c1e02ce7915185a994ce7249/HOST5a50631730acde7909b74d32ef7f33f8f13b97c1,
+  frozenimage61083d04.../manifest31905bb9... allunchanged. Offlinechecks,
+  independentfreeze andONEhelper alreadycomplete; no repeatingchecksneeded.
+- NEXT normalapprovedpush/currentHEAD independentlsremote thenactual0180
+  publicationproof+genuineauthhash; onlythenfrozenONEhelper verifiescorrect
+  actualPolarisFB8s andclaimsNEWoriginalbootrecordbeforeONEtemporaryRAMimage.
+  No0180query/image/payload/SMC/MMIO yet, lastactualphone controlledFB20:17.
+  0179ENDED/CONSUMED/noreplay; root17full39+controlledexitbasis reusedtruthfully.
+  AllworkersENDED/allchildrenSTOP; ONLYWi-Fi maskedDB/READ/realnetworkNOTDONE.
+
 ### CURRENT0180 frozen offline candidate complete; ONLY public source/notes publication approval missing; no0180device action; Wi-Fi NOT DONE
 
 - CompleteindependentfreezeCOPY889+10COMMIT_ONLY/473currentcommittedsources/
