@@ -55,7 +55,13 @@ early samples only. On0029 the human already confirmed boot complete and said
   Scope in shim/polaris/uefi-wifi-cpu-masked-ro-scope.md. No USB/physicalSMC/
   MMIO/newnativeCI in this work. Newexacthostpolicy/codec/freeze/admission
   still needed; candidate NOTREADY. Wi-Fi scan/join/data still NOTDONE.
-- Source/host commits and physical outcome will be recorded below when made.
+- FWsource c95d2b302cf7b43d938082b0eb486675c007e05f committed/pushed;
+  60committed+4privateDATA inputs each match exactdriver. NEWGCD_CLOCK_0170
+  literal107GCD/Power+94resource/64inputs; all23oldenabled literalAST unchanged.
+  12affectedhosttests+actualnomockfulladmit passed. ActualoriginalEDK2whole
+  29591240B GetInfo/decode byte-equal; original81/SimpleInit/BootShim/DTB kept.
+  Newimage5ef8be4ac5fcc8a02bcd2e09507f5c8667e650d91def43913ceb91c482afa0e7/5990400B; sourceproof and exacthostproof in0170/wifi.
+  Independentfreeze/ONEhelper stillneeded, noimage sent. CandidateNOTREADY.
   Fresh0169ROOT/NV and controllednormalexit/actualFB remain authoritative.
   Allbuild/modelworkersENDED; allchildrenSTOP. ONLYWi-Fi, sound/cameraSTOP.
 
