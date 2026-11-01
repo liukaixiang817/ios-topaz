@@ -34,6 +34,49 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0174 SOURCE/OFFLINE: physical parent memory-copy binding defect fixed; phone remains recovered FASTBOOT0173/11:59; Wi-Fi NOT DONE
+
+- User again “请你参照小米8的实现Wi-Fi啊，已经1天了都没有实现”: realWiFi
+  scan/join/data stillnotdelivered. Continue Mi8actual fourVRM/MSS/GLINK-QRTR/
+  WLFW/ath10k sequenceagainstownDT/vendor, notfakeSettings/capability. Re-read
+  actualMi8 wlan_power/mi8_rproc_init/arrive source thisturn, noscripts/prebuilt.
+- Found preciseSOURCEwiringdefect in0173: pwrpt_preboot embedsCOPY ofincoming
+  paic_io inclient.reader.memory; pwrcl_run_body passes &ops->reader.memory
+  tobody. ObserverwasboundtoOUTERmemory pointer, so unchangedstrict
+  io.access.memory!=bodymemory gate rejects despiteequalfivefields. Original
+  softwarefixture constructedIO INSIDEcallback andthereforemissedboundary.
+- Productionfix onlybinds .access=pwra_observation_io(&client.reader.memory,
+  &pwrpt_record.access_context). Strictpointer/context/deny-store gates not
+  removed/relaxed. No newflag/scope/component/parser/leaseboole/ticket/time/
+  source/UNKNOWN/recordABI/restorechange. No originalservice/MMIO added.
+- NewregressionconstructsouterincomingIO, realprivateembeddedcopyandactual
+  pwrcl_run_body callback composition, substitutingonlyhardwareleaves with
+  softwarepeers. TwoASAN/UBSANcases reproduceOLDPWRPT_ARGUMENT/UNKNOWN before
+  prepared/CPU (knownclientheld,noDelete/noSMC/noMMIO), then correctedbinding
+  completesexisting fullcurrentCmdDb/70geometryreads/exactCPUrestore/namespace/
+  knownDelete withzeroengines/stores. ThisprovesSOURCEdefect, notactual0173
+  executionpointorsolephysicalcause;0173neverexportedraw andremainsUNKNOWN.
+- ActualwholeparentCOFF/MachOallwarnings/maxframe1024/generalregs-only andPP
+  literal &client.reader.memory/unchangedpointercheck verified; noactualwrite
+  symbol/defaultOFF-QEMUpp pass. Prior309softwareexecutingPP isBYTEIDENTICAL
+  afterexcludingONLYunusedprebootfunction; oldexecutablesindeednothaveits
+  symbol, so147+109+30+23checkedresults correctlyREUSED, notrepeated. Parent
+  proofa3abadb75e1ab7a8b838922c6d76d53d5d6247547cc8f7136f5ad5ec718caddc.
+- TwoSERIALnewwholeEFI-XNUeach19checks/90sameinputs/11resource+1battery
+  literalint1/actualQEMUpp nophysicalbodyrecords pass. Modelproof
+  ac7d665d9f2ea72995389d297ebaa62050154d341fb21015bfd05abdc83c81ce.
+  Drivercf3249a39d415ed4b693158fadd37677b70175e4dbd20d73b00577c7fc419749/
+  15924736B/90inputs; ONLYchangedcompiledinput ispower-path.h. Sourceproof
+  9fa25c8058d71c50142b94fb7407ebfcb98c0032c806e7888d06f5bafc88b8ca.
+- NoUSBthisturn/noactual0174image/payload/SMC/AT/MMIO/UTC/UI/nativeCI.
+  Phone remainsactualPolarisFASTBOOT0173/11:59:58.856735Z. AllworkersENDED/
+  allchildrenSTOP/nophysicalactionpending.0174candidateNOTREADY untilnewexact
+  hostprofile/necessaryNEWfullstrictRO roots+currentNV/original81wholecodec/
+  sourceaudit/independentfreeze/ONEhelper. Same63cbfuturequalifiedNEWsessions
+  explicitlyauthorizedbyactualhumanrecord; doNOTreasksameSHApermission.
+  0173bootconsumed, neverreplay/modifyoldpolicy/editedcontroller. Newaudit
+  requiredatnextnecessarytransitionbecause0173UNKNOWN, notstandaloneinventory.
+
 ### CURRENT0173 startup ACK UNKNOWN; user physically recovered, actual Polaris FASTBOOT11:59; access/READ/vote/Wi-Fi NOT DONE
 
 - User explicitlyapproved “批准0173及后续合格新会话复用同一内核”. Persistent

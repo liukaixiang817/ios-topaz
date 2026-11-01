@@ -448,7 +448,10 @@ static inline void pwrpt_preboot(const struct paic_io *memory,const struct paic_
         .device={memory,0,pwrmd_actual_translate,pwrmd_actual_read},
         .CPU={0,pwrpc_actual_affinity,pwrpc_actual_mask,pwrpc_actual_restore},
 #if EFI_XNU_WIFI_READ_ACCESS_CHECKPOINT
-        .access=pwra_observation_io(memory,&pwrpt_record.access_context),
+        /* pwrcl_run_body passes its own copied reader.memory to the body.
+         * Bind that exact live object; equal entry-copy contents are not
+         * pointer identity and must not relax the body's admission gate. */
+        .access=pwra_observation_io(&client.reader.memory,&pwrpt_record.access_context),
 #elif EFI_XNU_WIFI_PRIVATE_CPU_CHECKPOINT
         .access={0},
 #else
