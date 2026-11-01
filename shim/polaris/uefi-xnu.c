@@ -451,6 +451,9 @@ static int prepare_boot(void *context)
 #endif
 #if EFI_XNU_WIFI_CPU_RO_ADMISSION
         report("WIFI_CPU_RO_SOFTWARE_PHYSICAL_COMPILED_OUT=",1);
+#if EFI_XNU_WIFI_CPU_MASKED_RO_ADMISSION
+        report("WIFI_CPU_MASKED_RO_SOFTWARE_PHYSICAL_COMPILED_OUT=",1);
+#endif
 #endif
     }
 #else

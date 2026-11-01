@@ -34,6 +34,31 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### NEW0170 CPU-local masked path verified OFFLINE; phone remains actual controlled FASTBOOT0169/08:58
+
+- Default-OFF distinct masked CPU RO body now implemented and linked through
+  the SAME actual normal caller, before private/Clock/finalGCD. One own fresh
+  spentonce200ms context; normal7 then typed DAIFc0/G1off, masked7 with FP/
+  arch/TPL/nativeflag and full Core hashes before/after each; exact Group1/DAIF
+  restoration plus full source before original final GetMap. No privateclient,
+  TCS/READ/vote/MSS/NVserve. Oldnormal39344B ABI retained; NEWfull50800B raw.
+- Shared oldtyped mask/restore functions and 72B transition/raw types extracted
+  exactly, no ordinary IRQguard relaxation. UNKNOWN/partial/heldmask does not
+  unmask as cleanup or call original service/USB; parent RAM/nonreturnhold
+  blocks Clock/native/PON/receipt. NormalnonOFF declines beforemask with full
+  ROclose. MaskednonOFF remains terminal. This is not DRV/EE/EL3/VMID/MPU lease.
+- Offline150newmasked+72normal+30affectedREAD=252ASAN/UBSAN cases PASS;
+  actualwholemain COFF/MachO|maxframe1024/defaultOFF/QEMUpp PASS.
+  parentproofb1ca5cf51cccec3e4814c789b5ae32f167ccb595229d68650de1767efb408412.
+  Two SERIAL newwholeEFI-XNU terminalmodels each19checks/64sameinputs and
+  9resourceCPU+1battery literalint1 markers passed; physicalbody/raw CPP-out.
+  Scope in shim/polaris/uefi-wifi-cpu-masked-ro-scope.md. No USB/physicalSMC/
+  MMIO/newnativeCI in this work. Newexacthostpolicy/codec/freeze/admission
+  still needed; candidate NOTREADY. Wi-Fi scan/join/data still NOTDONE.
+- Source/host commits and physical outcome will be recorded below when made.
+  Fresh0169ROOT/NV and controllednormalexit/actualFB remain authoritative.
+  Allbuild/modelworkersENDED; allchildrenSTOP. ONLYWi-Fi, sound/cameraSTOP.
+
 ### CURRENT0169 actual controlled FASTBOOT08:58; actual seven normal PSCI OFF/full RO retirement SUCCESS; Wi-Fi scan/join/data NOT DONE
 
 - NORMAL0169 exit98156 ENDED0 at2026-11-01T08:56:52.590913+00:00, nativecookie8278797495/

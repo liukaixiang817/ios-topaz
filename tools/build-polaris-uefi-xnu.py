@@ -455,7 +455,10 @@ def main():
     ap.add_argument('--wifi-power-prepared-transaction',action='store_true',help='default-OFF distinct full staged RO then SAME current known-client/bounded RSC/completion/restore; new hardware/source admission still required')
     ap.add_argument('--wifi-power-current-arc-read',action='store_true',help='default-OFF same qualified private/CPU/Device interval: three bounded single-command READs and full restoration; RAW responses only, resource WRITE compiled unreachable in this scope')
     ap.add_argument('--wifi-cpu-ro-admission',action='store_true',help='default-OFF independent normal-IRQ seven-peer AFFINITY_INFO64 raw capture and full source/map retirement; NO private client, mask, TCS or READ')
+    ap.add_argument('--wifi-cpu-masked-ro-admission',action='store_true',help='default-OFF fresh normal and masked seven-peer CPU-local observations, exact DAIF/G1/FP/source restoration and full independent RO retirement; NO private client/TCS/READ/vote or hardware grant')
     a=ap.parse_args();r=Path(__file__).resolve().parents[1]
+    if a.wifi_cpu_masked_ro_admission and not a.wifi_cpu_ro_admission:
+        ap.error('masked CPU RO requires the distinct independent CPU RO scope')
     if a.wifi_power_current_arc_read and not a.wifi_power_prepared_transaction:
         ap.error('current ARC READ requires the complete prepared/current private path')
     if a.test_wled_native_exit and (not a.wled_native_runtime_test or not a.test_qemu or
@@ -904,6 +907,7 @@ def main():
 #define EFI_XNU_WIFI_ARC_READ_AVAILABLE {int(a.wifi_power_current_arc_read)}
 #define EFI_XNU_WIFI_ARC_READ_CAPTURE_ONLY 1
 #define EFI_XNU_WIFI_CPU_RO_ADMISSION {int(a.wifi_cpu_ro_admission)}
+#define EFI_XNU_WIFI_CPU_MASKED_RO_ADMISSION {int(a.wifi_cpu_masked_ro_admission)}
 #define EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE {int(cmddb_binding is not None)}
 #define EFI_XNU_AUDIO_CLOCK_GCD_QUERY_AVAILABLE {int(gcd_enabled)}
 #define EFI_XNU_AUDIO_CLOCK_QUERY_AVAILABLE {int(audio_clock_binding is not None)}
@@ -999,7 +1003,8 @@ def main():
     if cmddb_binding:inputs+=['shim/polaris/uefi-wifi-cmddb-budget.h','shim/polaris/uefi-wifi-cmddb-staged.h','shim/polaris/uefi-wifi-cmddb-prepared.h']
     if a.wifi_power_cmddb_staged_ro:inputs+=['shim/polaris/uefi-wifi-gcd-ro-owner.h']
     if a.wifi_cpu_ro_admission:inputs+=['shim/polaris/uefi-wifi-cpu-readonly.h','shim/polaris/uefi-wifi-psci-affinity.h']
-    if cmddb_binding:inputs+=['shim/polaris/uefi-wifi-psci-affinity.h']
+    if cmddb_binding:inputs+=['shim/polaris/uefi-wifi-psci-affinity.h','shim/polaris/uefi-wifi-cpu-local-mask.h']
+    if a.wifi_cpu_masked_ro_admission:inputs+=['shim/polaris/uefi-wifi-cpu-local-mask.h']
     if a.wifi_power_current_arc_read:inputs+=['shim/polaris/uefi-wifi-rsc-read-plan.h','tools/polaris-wifi-rsc-read.h']
     if rpmh_binding:
         inputs+=['shim/polaris/uefi-wifi-rpmh-readonly.h','tools/polaris-wifi-rpmh-identity.py',
@@ -1492,6 +1497,27 @@ def main():
             wifi_CPU0_power_CPU_RO_all_OFF_does_not_continue_private=True,
             original_GCD_new_scope_RAM_log_capacity=1048576,
             wifi_CPU0_resources_firmware_RAM_log_capacity=1048576)
+    if a.wifi_cpu_masked_ro_admission:
+        manifest.update(
+            wifi_CPU0_power_CPU_RO_execution_kind='INDEPENDENT_NORMAL_AND_MASKED_SEVEN_PEER_EXACT_LOCAL_RESTORE_FULL_RO_RETIRE_ONLY',
+            wifi_CPU0_power_CPU_RO_raw_format='CPU_MASKED_RO_ADMISSION_RAW_V1',wifi_CPU0_power_CPU_RO_raw_bytes=50800,
+            wifi_CPU0_power_CPU_RO_calls_max=14,wifi_CPU0_power_CPU_RO_Core_checkpoints=32,
+            wifi_CPU0_power_CPU_RO_native_flag_reads_max=64,wifi_CPU0_power_CPU_RO_no_mask_TCS_READ_or_vote=False,
+            wifi_CPU0_power_CPU_MASKED_RO_admission=True,wifi_CPU0_power_CPU_MASKED_RO_default_OFF=True,
+            wifi_CPU0_power_CPU_MASKED_RO_normal_and_masked_calls_each=7,
+            wifi_CPU0_power_CPU_MASKED_RO_original_services_while_held=0,
+            wifi_CPU0_power_CPU_MASKED_RO_no_private_TCS_READ_or_vote=True,
+            wifi_CPU0_power_CPU_MASKED_RO_mask_DAIF=192,wifi_CPU0_power_CPU_MASKED_RO_mask_Group1=0,
+            wifi_CPU0_power_CPU_MASKED_RO_restore_DAIF=0,wifi_CPU0_power_CPU_MASKED_RO_restore_Group1=1,
+            wifi_CPU0_power_CPU_MASKED_RO_transition_raw_bytes=72,
+            wifi_CPU0_power_CPU_MASKED_RO_exact_mask_and_restore_readbacks=True,
+            wifi_CPU0_power_CPU_MASKED_RO_full_source_before_after_each_masked_SMC=True,
+            wifi_CPU0_power_CPU_MASKED_RO_full_source_before_IRQ_restore=True,
+            wifi_CPU0_power_CPU_MASKED_RO_masked_nonOFF_or_uncertainty_terminal=True,
+            wifi_CPU0_power_CPU_MASKED_RO_partial_restore_never_cleanup_or_service=True,
+            wifi_CPU0_power_CPU_MASKED_RO_no_IRQ_contract_relaxation=True,
+            wifi_CPU0_power_CPU_MASKED_RO_no_DRV_EE_EL3_VMID_MPU_grant=True,
+            wifi_CPU0_power_CPU_MASKED_RO_same_fresh_spentonce_200ms_not_rebased=True)
     (out/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
     print(json.dumps({k:manifest[k] for k in ['artifact','sha256','bytes','QEMU_variant','device_execution_tested']}))
 

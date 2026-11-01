@@ -331,7 +331,11 @@ static inline int pacgq_collect(const struct pacgq_io *io,const struct paic_resu
     if(!pacgq_i2c_admitted(i2c,stage)){pacgq_fail(r,PACGQ_I2C_CACHE,0);return 0;}
     if(!io||!io->memory.system||!io->memory.system->boot||!io->memory.arch||!io->memory.identity||!io->memory.order||!io->query||!io->translate_mmio){pacgq_fail(r,PACGQ_ARCH,0);return 0;}
 #if EFI_XNU_WIFI_CPU_RO_ADMISSION
-    const struct pwcq_io CPU_RO={0,pwrpc_actual_affinity};
+    const struct pwcq_io CPU_RO={.context=0,.affinity=pwrpc_actual_affinity
+#if EFI_XNU_WIFI_CPU_MASKED_RO_ADMISSION
+        ,.mask=pwrpc_actual_mask,.restore=pwrpc_actual_restore
+#endif
+    };
     if(!pwcq_run(&CPU_RO,gcd_context,stage,io->native_cpu_on,&pwcq_record)||pwcq_parent_unsafe()){
         pacgq_fail(r,PACGQ_UNKNOWN,1);return 0;
     }
@@ -552,9 +556,15 @@ static inline void pacgq_report_preboot(void (*ram_append)(const char *))
 #endif
 #endif
 #if EFI_XNU_WIFI_CPU_RO_ADMISSION
+#if EFI_XNU_WIFI_CPU_MASKED_RO_ADMISSION
+    ram_append("WIFI_CPU_MASKED_RO_ADMISSION_RAW_V1_BEGIN\r\n");pacgq_ram_hex(ram_append,(const uint8_t*)&pwcq_record,sizeof(pwcq_record));
+    ram_append("\r\nWIFI_CPU_MASKED_RO_ADMISSION_RAW_V1_END\r\n");
+    ram_append("WIFI_CPU_MASKED_RO_SCOPE=FRESH_NORMAL_AND_MASKED_SEVEN_PEER_EXACT_LOCAL_RESTORE_FULL_RO_RETIRE_NO_PRIVATE_NO_TCS_NO_READ_NO_VOTE_NO_HARDWARE_GRANT\r\n");
+#else
     ram_append("WIFI_CPU_RO_ADMISSION_RAW_V1_BEGIN\r\n");pacgq_ram_hex(ram_append,(const uint8_t*)&pwcq_record,sizeof(pwcq_record));
     ram_append("\r\nWIFI_CPU_RO_ADMISSION_RAW_V1_END\r\n");
     ram_append("WIFI_CPU_RO_SCOPE=INDEPENDENT_NORMAL_IRQ_SEVEN_AFFINITY_INFO64_FULL_SOURCE_MAP_RETIRE_NO_PRIVATE_NO_MASK_NO_TCS_NO_READ_NO_VOTE_NO_HARDWARE_GRANT\r\n");
+#endif
 #endif
     pacgq_ram_number(ram_append,"AUDIO_I2C_CACHE_ERROR=",pacgq_preboot_i2c.error);
     pacgq_ram_number(ram_append,"AUDIO_I2C_CACHE_RAW_V1_BYTES=",sizeof(pacgq_preboot_i2c));

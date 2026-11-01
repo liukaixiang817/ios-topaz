@@ -53,7 +53,8 @@ static struct pgcd_context *prepare(unsigned f)
     r=&cpu->core;return final;
 }
 static int run(struct pgcd_context *final)
-{const struct pwcq_io io={0,cpu_affinity};return pwcq_run(&io,final,2,native_on,cpu);}
+{const struct pwcq_io io={.context=0,.affinity=cpu_affinity};return pwcq_run(&io,final,2,native_on,cpu);}
+ #ifndef POLARIS_CPU_RO_FIXTURE_ONLY
 int main(int argc,char **argv)
 {
     assert(argc==2&&!posix_memalign((void**)&arena,4096,0x101000));original=malloc(PGCI_IMAGE_BYTES);
@@ -85,3 +86,5 @@ int main(int argc,char **argv)
     printf("{\"passed\":true,\"checks\":%u,\"raw_bytes\":%zu,\"source_bytes\":%zu,\"call_bytes\":%zu,\"SOFTWARE_only\":true,\"actual_SMC_MMIO\":false}\n",checks,sizeof(*cpu),sizeof(struct pwcq_source),sizeof(struct pwcq_call));
     free(saved);free(original);free(arena);return 0;
 }
+
+#endif
