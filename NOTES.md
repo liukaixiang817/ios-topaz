@@ -34,6 +34,52 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0176 masked-DB-only source complete OFFLINE; phone last actual FASTBOOT13:14; Wi-Fi NOT DONE
+
+- Only Wi-Fi, strict serial/allchildrenSTOP. No new USB/iOSimage/payload/UTC/UI
+  or native CI. Phone last actual PolarisFASTBOOT13:14:03.194602Z, not nativeLIVE.
+  0175/74 consumed sessions/controllers remain immutable. No action pending.
+- New default-OFF --wifi-power-read-database-checkpoint requires all existing
+  read-access/privateCPU/work/prepared dependencies; purpose is to isolate the
+  unobserved SAMEprivate masked2x128KiB CmdDb/64NSWB-AT transition BEFORE first
+  masked RSC MMIO read, not repeat0172CPU-only or claim a0175root-cause fix.
+- Existing argument/owner/CPU/currentRAM/Device prefix extracted into
+  pwra_prepare_checked, ordinary acquisition still calls same prefix then35
+  checked geometry reads before publishing acquired/held. New scope instead
+  installs NULL maskedRSC read+translation/deny-only store, captures secondfull
+  DB, validates sameowner/table/globals/hash/completebytes/PARrestore via same
+  validator, then fullRAM/source/exactCPUrestore/normalDevice/namespace/Delete.
+  Access acquired/localheld/retired stay0 because no access lifetime opened;
+  pathplannedreason15/fullretired is this actual RAM observation, not fakeengine.
+- RAW CURRENT_PRIVATE_MASKED_DB_OBSERVATION_RAW_V1 remains1943840B; prep1660544,
+  client227104/fullrecords/logcapacity intact. Old200ms/68slowest/fullREAD50ms+
+  25msreserve/UNKNOWN gates unchanged, no forgedclient/lease or ticketrenewal.
+- New159ASAN/UBSAN cases PASS: both64AT partial/PAR failures, source/owner/data/
+  partial/fakeaccess/engine/record/binding/realdeadline faults retainUNKNOWN;
+  correct peer2fullDB/64AT/normalDevice140loads/no maskedMMIO/exactrestore/Delete.
+  Initialtest clockadvanced130ms instead of >200ms; corrected test to260ms,
+  firmwaredeadline unchanged. Initial newreason15 omitted from final known-
+  refusal literal, fixed before finaldriver/checks/models; no physicalattempt.
+-210affectedoldcases(147access+10outerbinding+30fullREAD+23work) PASS.109oldCPU
+  case actual executing nonblankPP unchanged after removing unused acquisition
+  helperdefs+unusedenum/preboot;nm proves absenthelpers, reused not rerun. First
+  proof compare differed by one non-executable blankline only; corrected proof,
+  reused already-passed wholemain compiles instead of rerunning them.
+- ActualwholeparentCOFF/MachO/generalregs|maxframe1024/defaultOFF-QEMUpp passed;
+  newphysicalbody contains prepare+DBclose but no acquisition/snapshot/engine
+  calls or pwra_actual_read/write symbols. NormalDevice reader remains real;
+  don't claim no MMIO anywhere. Two new SERIAL19checkwholeEFI-XNU/90inputs/
+  11resource+1batteryint1/actualQEMUpp no physicalbodyrecords passed.
+- Sourceproof0176/wifi/masked-database-source-and-offline-proof-0001.json SHA
+  423c8bc0ab7454777ca76396c53b148b71a7d22367d7517543cbec649e69ac31/drivere596e9aa8bb2f530e8fa66760d3bffbd169b3a0bf1499077694fded9965e3d28/
+  15922688B/90inputs, onlybuilder+path+access headers changed.
+  Parentproofec8d86d98791bbd54ef5bd5b0e9fe74740851f8db13f38b610ef7d11f9710b31.
+- Host exactprofile/image/wholecodec/NEWstrictRO39/freeze/ONEhelper NOTREADY.
+  Latest0175rootaudit is historical afterUNKNOWN/reset; next needed candidate
+  transition must mergeNEWstrictRO, no oldqualification/replay/standaloneinventory.
+  No related source changes means no repeatchecks/models/CI. Still no actual
+  maskedDB/RSCREAD/vote/MSS/NVserve/network permission orscan/join/data proof.
+
 ### CURRENT0175 startup ACK UNKNOWN; user physically recovered, actual Polaris FASTBOOT13:14; access/READ/vote/Wi-Fi NOT DONE
 
 - This overrides ALL older CURRENT/ACTIVE/READY/LIVE. All USB/host/build/model

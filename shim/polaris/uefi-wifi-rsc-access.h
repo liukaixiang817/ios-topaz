@@ -9,6 +9,9 @@
 #ifndef EFI_XNU_WIFI_READ_ACCESS_CHECKPOINT
 #define EFI_XNU_WIFI_READ_ACCESS_CHECKPOINT 0
 #endif
+#ifndef EFI_XNU_WIFI_READ_DB_CHECKPOINT
+#define EFI_XNU_WIFI_READ_DB_CHECKPOINT 0
+#endif
 #include "uefi-wifi-power-critical.h"
 #include "uefi-wifi-rsc-device.h"
 #include "uefi-wifi-cmddb-prepared.h"
@@ -66,6 +69,9 @@ struct pwra_context {
 };
 enum pwra_error {PWRA_OK,PWRA_ARGUMENT,PWRA_SCOPE,PWRA_CLIENT,PWRA_SAVED,PWRA_CHANGED,
     PWRA_TRANSLATION,PWRA_IO,PWRA_TIME,PWRA_PREFIX,PWRA_HISTORY,PWRA_UNKNOWN_STATUS};
+#if EFI_XNU_WIFI_READ_ACCESS_CHECKPOINT
+static inline int pwra_reject_store(void *,uint64_t,uint32_t);
+#endif
 #if EFI_XNU_WIFI_ARC_READ_AVAILABLE
 static inline int pwra_zero(const void *data,size_t bytes)
 {const uint8_t *p=data;for(size_t k=0;k<bytes;k++)if(p[k])return 0;return 1;}
@@ -264,14 +270,20 @@ static inline int pwra_cmddb(struct pwra_context *c,unsigned slot)
     }
     if(!pwra_live(c,&native,&ticks))return 0;s->complete=1;c->record->outstanding=0;paic_actual_order(0);return 1;
 }
-static inline int pwra_acquire_checked(struct pwra_context *c,const struct pwra_io *io,struct pgcd_context *g,
+static inline int pwra_prepare_checked(struct pwra_context *c,const struct pwra_io *io,struct pgcd_context *g,
     struct pwrcl_result *provider,const struct pwrph_work *w,struct pwrpc_result *critical,
     const struct pwcd_result *cmd,const struct pwrpb_baseline *normal,const struct pwrpb_baseline *masked,
     const struct pwrmd_result *device,struct pwrsc_transaction *tx,struct pwra_result *r,const struct pwcp_result *prepared,
     struct pwrr_transaction *read,struct pwrsc_transaction *writer)
 {
     if(!r||r->attempted)return 0;r->attempted=1;
-    if(!c||!io||!io->memory||!io->translate||!io->read||!io->write||!g||!provider||!w||!critical||(!cmd&&!prepared)||(cmd&&prepared)||!normal||!masked||!device||!tx){r->error=PWRA_ARGUMENT;return 0;}
+    if(!c||!io||!io->memory||!io->write||!g||!provider||!w||!critical||(!cmd&&!prepared)||(cmd&&prepared)||!normal||!masked||!device||!tx){r->error=PWRA_ARGUMENT;return 0;}
+#if EFI_XNU_WIFI_READ_DB_CHECKPOINT
+    /* This separate RAM observation cannot reach a masked RSC reader. */
+    if(io->translate||io->read||io->write!=pwra_reject_store){r->error=PWRA_ARGUMENT;return 0;}
+#else
+    if(!io->translate||!io->read){r->error=PWRA_ARGUMENT;return 0;}
+#endif
     *c=(struct pwra_context){*io,g,provider,w,critical,tx,device,r,cmd
 #if EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
         ,prepared
@@ -329,7 +341,16 @@ static inline int pwra_acquire_checked(struct pwra_context *c,const struct pwra_
     if(matches!=1)return pwra_fail(c,PWRA_CLIENT,1);
     for(unsigned k=0;k<4;k++)if(provider->created.queue_bytes[k]!=24||pwfi_le(provider->created.queue[k]+4,4))return pwra_fail(c,PWRA_CLIENT,1);
     r->mask=masked->active_mask;
-    if(!pwra_cmddb(c,0)||!pwra_snapshot(c,0))return 0;
+    return pwra_cmddb(c,0);
+}
+static inline int pwra_acquire_checked(struct pwra_context *c,const struct pwra_io *io,struct pgcd_context *g,
+    struct pwrcl_result *provider,const struct pwrph_work *w,struct pwrpc_result *critical,
+    const struct pwcd_result *cmd,const struct pwrpb_baseline *normal,const struct pwrpb_baseline *masked,
+    const struct pwrmd_result *device,struct pwrsc_transaction *tx,struct pwra_result *r,const struct pwcp_result *prepared,
+    struct pwrr_transaction *read,struct pwrsc_transaction *writer)
+{
+    if(!pwra_prepare_checked(c,io,g,provider,w,critical,cmd,normal,masked,device,tx,r,prepared,read,writer)||
+       !pwra_snapshot(c,0))return 0;
     r->acquired=r->local_held=1;paic_actual_order(0);return 1;
 }
 static inline int pwra_acquire_as(struct pwra_context *c,const struct pwra_io *io,struct pgcd_context *g,
@@ -445,6 +466,55 @@ static inline int pwra_retire(struct pwra_context *c)
     r->local_held=0;r->retired=1;paic_actual_order(0);return 1;
 }
 #if EFI_XNU_WIFI_READ_ACCESS_CHECKPOINT
+static inline int pwra_observed_databases_valid(struct pwra_context *c)
+{
+    struct pwra_result *r=c->record;
+    for(unsigned slot=0;slot<2;slot++){
+        const struct pwra_cmd_snapshot *s=&r->CmdDb[slot];
+        if(s->attempted!=1||s->complete!=1||s->bytes!=PWCD_DB_BYTES||s->hash_count!=5||s->hash_failed||
+           s->owner_bytes!=sizeof(s->owner)||s->table_bytes!=72||s->global_bytes!=72||
+           !pgcd_equal(s->raw,r->CmdDb[0].raw,PWCD_DB_BYTES)||
+           !pgcd_equal(s->table,r->CmdDb[0].table,72)||!pgcd_equal(s->globals,r->CmdDb[0].globals,72)||
+           !pgcd_equal(&s->owner,&r->CmdDb[0].owner,sizeof(s->owner)))return pwra_fail(c,PWRA_CHANGED,1);
+        for(unsigned h=0;h<5;h++)if(!pgcd_equal(s->hashes[h],pwcdi_spans[h].hash,32))return pwra_fail(c,PWRA_CHANGED,1);
+        for(unsigned k=0;k<PWCD_PAGES;k++){
+            const struct pgns_translation *t=&s->current_AT[k];uint64_t page=PWCD_UEFI_DB_BASE+4096u*k;
+            if(s->page_issued[k]!=1||s->page_returned[k]!=1||s->where[k]!=page||
+               t->page!=page||t->issued!=1||t->returned!=1||t->saved!=t->restored||
+               s->par[k]!=t->par||t->par!=(UINT64_C(0xff00000000000b80)|page))return pwra_fail(c,PWRA_TRANSLATION,1);
+        }
+    }return 1;
+}
+#if EFI_XNU_WIFI_READ_DB_CHECKPOINT
+/* Close the second full RAM capture, not an RSC acquisition. acquired,
+ * local_held and retired stay ZERO because that lifetime never opened. The
+ * enclosing private caller still owns CPU/source/RAM/namespace retirement. */
+static inline int pwra_observe_database_close(struct pwra_context *c)
+{
+    if(!c||!c->record||!c->read||!c->write||!c->provider||!c->device||!c->critical||!c->prepared)return 0;
+    struct pwra_result *r=c->record;
+    if(r->acquired||r->local_held||r->retired||r->error||r->unknown||r->outstanding||
+       c->transaction!=&c->read->io||r->transaction!=(uintptr_t)&c->read->io||
+       r->read_transaction!=(uintptr_t)c->read||r->write_transaction!=(uintptr_t)c->write||
+       r->client!=(uintptr_t)c->provider->handle_output||r->namespace_record!=(uintptr_t)c->device||
+       c->io.translate||c->io.read||c->io.write!=pwra_reject_store||
+       r->write_bound||r->read_retired||r->read_events||r->read_writes||r->events||r->reads||r->writes||
+       r->pre_reads||r->post_reads||r->clock_calls||r->clock_returned||
+       !pwra_zero(c->read,sizeof(*c->read))||!pwra_zero(c->write,sizeof(*c->write)))return pwra_fail(c,PWRA_PREFIX,1);
+    if(!pwra_cmddb(c,1)||!pwra_observed_databases_valid(c))return 0;
+    if(r->acquired||r->local_held||r->retired||r->error||r->unknown||r->outstanding||
+       r->events||r->reads||r->writes||r->pre_reads||r->post_reads||r->clock_calls||r->clock_returned||
+       r->read_events||r->read_writes||r->read_retired||r->write_bound||
+       !pwra_zero(r->history,sizeof(r->history))||!pwra_zero(r->saved,sizeof(r->saved))||
+       !pwra_zero(r->desired,sizeof(r->desired))||r->config||r->IRQ_enable||r->IRQ_status||
+       !pwra_zero(r->tcs,sizeof(r->tcs))||!pwra_zero(r->command_status_OR,sizeof(r->command_status_OR))||
+       c->io.translate||c->io.read||c->io.write!=pwra_reject_store||
+       r->client!=(uintptr_t)c->provider->handle_output||r->namespace_record!=(uintptr_t)c->device||
+       r->transaction!=(uintptr_t)&c->read->io||r->read_transaction!=(uintptr_t)c->read||r->write_transaction!=(uintptr_t)c->write||
+       !pwra_zero(c->read,sizeof(*c->read))||!pwra_zero(c->write,sizeof(*c->write)))return pwra_fail(c,PWRA_PREFIX,1);
+    uint32_t native;uint64_t ticks;return pwra_live(c,&native,&ticks);
+}
+#endif
 /* A distinct observation scope: no engine was started, so do not fabricate
  * READ completion. Both full current CmdDb captures and all checked geometry
  * reads still close inside the same masked interval before CPU restoration. */
@@ -466,21 +536,7 @@ static inline int pwra_retire_observation(struct pwra_context *c)
        r->read_transaction!=(uintptr_t)c->read||r->write_transaction!=(uintptr_t)c->write||
        !pwra_zero(c->read,sizeof(*c->read))||!pwra_zero(c->write,sizeof(*c->write))||
        !pwra_engine_prefixes(c))return pwra_fail(c,PWRA_PREFIX,1);
-    for(unsigned slot=0;slot<2;slot++){
-        const struct pwra_cmd_snapshot *s=&r->CmdDb[slot];
-        if(s->attempted!=1||s->complete!=1||s->bytes!=PWCD_DB_BYTES||s->hash_count!=5||s->hash_failed||
-           s->owner_bytes!=sizeof(s->owner)||s->table_bytes!=72||s->global_bytes!=72||
-           !pgcd_equal(s->raw,r->CmdDb[0].raw,PWCD_DB_BYTES)||
-           !pgcd_equal(s->table,r->CmdDb[0].table,72)||!pgcd_equal(s->globals,r->CmdDb[0].globals,72)||
-           !pgcd_equal(&s->owner,&r->CmdDb[0].owner,sizeof(s->owner)))return pwra_fail(c,PWRA_CHANGED,1);
-        for(unsigned h=0;h<5;h++)if(!pgcd_equal(s->hashes[h],pwcdi_spans[h].hash,32))return pwra_fail(c,PWRA_CHANGED,1);
-        for(unsigned k=0;k<PWCD_PAGES;k++){
-            const struct pgns_translation *t=&s->current_AT[k];uint64_t page=PWCD_UEFI_DB_BASE+4096u*k;
-            if(s->page_issued[k]!=1||s->page_returned[k]!=1||s->where[k]!=page||
-               t->page!=page||t->issued!=1||t->returned!=1||t->saved!=t->restored||
-               s->par[k]!=t->par||t->par!=(UINT64_C(0xff00000000000b80)|page))return pwra_fail(c,PWRA_TRANSLATION,1);
-        }
-    }
+    if(!pwra_observed_databases_valid(c))return 0;
     for(unsigned k=0;k<r->events;k++)if(r->history[k].operation!=1||r->history[k].engine_event||
        r->history[k].native_before||r->history[k].native_after||r->history[k].io.issued!=1||
        r->history[k].io.returned!=1||r->history[k].io.unknown||
@@ -525,7 +581,13 @@ static inline struct pwra_io pwra_physical_io(const struct paic_io *memory,struc
 };}
 #if EFI_XNU_WIFI_READ_ACCESS_CHECKPOINT
 static inline struct pwra_io pwra_observation_io(const struct paic_io *memory,struct pwra_context *context)
-{return (struct pwra_io){memory,context,pwrmd_actual_translate,pwra_actual_read,pwra_reject_store,pgns_actual_translate};}
+{return (struct pwra_io){memory,context,
+#if EFI_XNU_WIFI_READ_DB_CHECKPOINT
+    0,0,
+#else
+    pwrmd_actual_translate,pwra_actual_read,
+#endif
+    pwra_reject_store,pgns_actual_translate};}
 #endif
 #endif
 #endif

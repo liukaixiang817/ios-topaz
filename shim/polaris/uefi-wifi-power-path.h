@@ -27,6 +27,9 @@
 #if EFI_XNU_WIFI_READ_ACCESS_CHECKPOINT && !EFI_XNU_WIFI_PRIVATE_CPU_CHECKPOINT
 #error Read access checkpoint requires the complete same-private CPU checkpoint
 #endif
+#if EFI_XNU_WIFI_READ_DB_CHECKPOINT && !EFI_XNU_WIFI_READ_ACCESS_CHECKPOINT
+#error Database checkpoint requires the complete same-private read observation dependencies
+#endif
 #if EFI_XNU_WIFI_ARC_READ_WORK_ADMISSION
 #if !EFI_XNU_WIFI_ARC_READ_AVAILABLE || !EFI_XNU_WIFI_ARC_READ_CAPTURE_ONLY || !EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
 #error READ work admission belongs only to the full prepared/current capture-only READ path
@@ -86,7 +89,7 @@ struct pwrpt_io {
 #endif
 };
 enum pwrpt_error {PWRPT_OK,PWRPT_ARGUMENT,PWRPT_CMDDB,PWRPT_RAM,PWRPT_PLAN,PWRPT_DEVICE,
-    PWRPT_CPU,PWRPT_ACCESS,PWRPT_TRANSACTION,PWRPT_RESTORE,PWRPT_NAMESPACE,PWRPT_READ_ONLY,PWRPT_WORK,PWRPT_CPU_CHECKPOINT,PWRPT_ACCESS_CHECKPOINT};
+    PWRPT_CPU,PWRPT_ACCESS,PWRPT_TRANSACTION,PWRPT_RESTORE,PWRPT_NAMESPACE,PWRPT_READ_ONLY,PWRPT_WORK,PWRPT_CPU_CHECKPOINT,PWRPT_ACCESS_CHECKPOINT,PWRPT_DATABASE_CHECKPOINT};
 static inline int pwrpt_unsafe(const struct pwrpt_result *r)
 {return r->unknown||pwcd_unknown(&r->cmd)||
 #if EFI_XNU_WIFI_ARC_READ_WORK_ADMISSION
@@ -249,6 +252,9 @@ static inline int pwrpt_body(void *context,const struct paic_io *memory,struct p
        io->cmd.original.memory.system!=memory->system||io->cmd.original.memory.context!=memory->context||
        io->cmd.original.memory.arch!=memory->arch||io->cmd.original.memory.identity!=memory->identity||
        io->cmd.original.memory.order!=memory->order||
+#if EFI_XNU_WIFI_READ_DB_CHECKPOINT
+       io->access.translate||io->access.read||!io->access.RAM_translate||
+#endif
        io->access.context!=&r->access_context||io->access.write!=pwra_reject_store||
 #else
        !pwra_zero(&io->access,sizeof(io->access))||
@@ -316,9 +322,19 @@ static inline int pwrpt_body(void *context,const struct paic_io *memory,struct p
     (void)resources;
     if(!pwrpt_checkpoint_zero_engines(r))return pwrpt_fail(r,PWRPT_RESTORE,1);
 #if EFI_XNU_WIFI_READ_ACCESS_CHECKPOINT
+#if EFI_XNU_WIFI_READ_DB_CHECKPOINT
+    /* Complete two fresh masked RAM copies, BEFORE any checked RSC/MMIO
+     * access. No acquisition/held/retired state is fabricated for that
+     * unopened access lifetime; enclosing CPU/private retirement follows. */
+    if(!pwra_prepare_checked(&r->access_context,&io->access,g,p,work,&r->CPU,0,&r->RAM[0],&r->RAM[1],
+       &r->device[0],&r->read.io,&r->access,&r->prepared_cmd,&r->read,&r->transaction)||
+       !pwra_observe_database_close(&r->access_context))return pwrpt_fail(r,PWRPT_ACCESS,1);
+    r->phase=3;pwrpt_fail(r,PWRPT_DATABASE_CHECKPOINT,0);
+#else
     if(!pwra_acquire_read(&r->access_context,&io->access,g,p,work,&r->CPU,&r->prepared_cmd,&r->RAM[0],&r->RAM[1],
        &r->device[0],&r->read,&r->transaction,&r->access)||!pwra_retire_observation(&r->access_context))return pwrpt_fail(r,PWRPT_ACCESS,1);
     r->phase=3;pwrpt_fail(r,PWRPT_ACCESS_CHECKPOINT,0);
+#endif
 #else
     r->phase=3;pwrpt_fail(r,PWRPT_CPU_CHECKPOINT,0);
 #endif
@@ -389,7 +405,13 @@ power_retired:
     if(
 #if EFI_XNU_WIFI_READ_ACCESS_CHECKPOINT
        !pwra_zero(&r->read,sizeof(r->read))||!pwra_zero(&r->transaction,sizeof(r->transaction))||
-       !r->access.retired||r->access.local_held||r->access.error||r->access.unknown||r->access.outstanding||
+#if EFI_XNU_WIFI_READ_DB_CHECKPOINT
+       r->access.acquired||r->access.retired||r->access.local_held||r->access.events||r->access.reads||r->access.writes||
+       !pwra_observed_databases_valid(&r->access_context)||
+#else
+       !r->access.retired||r->access.local_held||
+#endif
+       r->access.error||r->access.unknown||r->access.outstanding||
 #else
        !pwrpt_checkpoint_zero_engines(r)||
 #endif
@@ -413,6 +435,9 @@ power_retired:
        ||r->error==PWRPT_CPU_CHECKPOINT
 #if EFI_XNU_WIFI_READ_ACCESS_CHECKPOINT
        ||r->error==PWRPT_ACCESS_CHECKPOINT
+#if EFI_XNU_WIFI_READ_DB_CHECKPOINT
+       ||r->error==PWRPT_DATABASE_CHECKPOINT
+#endif
 #endif
 #endif
        )r->known_refusal=1;
@@ -510,8 +535,13 @@ static inline void pwrpt_report(void (*append)(const char *))
 #if EFI_XNU_WIFI_ARC_READ_AVAILABLE
 #if EFI_XNU_WIFI_ARC_READ_CAPTURE_ONLY
 #if EFI_XNU_WIFI_READ_ACCESS_CHECKPOINT
+#if EFI_XNU_WIFI_READ_DB_CHECKPOINT
+    append("WIFI_CURRENT_PRIVATE_MASKED_DB_OBSERVATION_RAW_V1_BEGIN\r\n");pwrpt_raw_hex(append,&pwrpt_record,sizeof(pwrpt_record));
+    append("\r\nWIFI_CURRENT_PRIVATE_MASKED_DB_OBSERVATION_RAW_V1_END\r\n");
+#else
     append("WIFI_CURRENT_PRIVATE_ACCESS_OBSERVATION_RAW_V1_BEGIN\r\n");pwrpt_raw_hex(append,&pwrpt_record,sizeof(pwrpt_record));
     append("\r\nWIFI_CURRENT_PRIVATE_ACCESS_OBSERVATION_RAW_V1_END\r\n");
+#endif
 #elif EFI_XNU_WIFI_PRIVATE_CPU_CHECKPOINT
     append("WIFI_CURRENT_PRIVATE_CPU_CHECKPOINT_RAW_V1_BEGIN\r\n");pwrpt_raw_hex(append,&pwrpt_record,sizeof(pwrpt_record));
     append("\r\nWIFI_CURRENT_PRIVATE_CPU_CHECKPOINT_RAW_V1_END\r\n");
@@ -524,7 +554,11 @@ static inline void pwrpt_report(void (*append)(const char *))
 #endif
 #if EFI_XNU_WIFI_PRIVATE_CPU_CHECKPOINT
 #if EFI_XNU_WIFI_READ_ACCESS_CHECKPOINT
+#if EFI_XNU_WIFI_READ_DB_CHECKPOINT
+    append("WIFI_CURRENT_PRIVATE_ACCESS_SCOPE=TWO_FULL_MASKED_CURRENT_CMDDB_RAM_OBSERVATIONS_CLOSE_CPU_SOURCE_NAMESPACE_DELETE_BEFORE_FIRST_MASKED_RSC_MMIO_READ_NO_ACQUIRED_HELD_RETIRED_ACCESS_NO_ENGINE_NO_STORE_NO_HARDWARE_GRANT\r\n");
+#else
     append("WIFI_CURRENT_PRIVATE_ACCESS_SCOPE=SAME_PRIVATE_EMBEDDED_CALLER_ARGUMENT_IDENTITY_FULL_CURRENT_CMDDB_AND_CHECKED_RSC_GEOMETRY_READS_COMPLETE_RETIRE_CPU_RESTORE_DELETE_NO_ENGINE_NO_TCS_STORE_NO_READ_REQUEST_NO_HARDWARE_GRANT\r\n");
+#endif
 #else
     append("WIFI_CURRENT_PRIVATE_CPU_SCOPE=SAME_REAL_PRIVATE_CURRENT_NAMESPACE_RAM_DEVICE_MASKED_CPU_EXACT_RESTORE_DELETE_BEFORE_FIRST_TCS_STORE_NO_ACCESS_CALLBACK_NO_READ_NO_VOTE_NO_HARDWARE_GRANT\r\n");
 #endif
@@ -541,7 +575,11 @@ static inline void pwrpt_report(void (*append)(const char *))
 #endif
 #if EFI_XNU_WIFI_PRIVATE_CPU_CHECKPOINT
 #if EFI_XNU_WIFI_READ_ACCESS_CHECKPOINT
+#if EFI_XNU_WIFI_READ_DB_CHECKPOINT
+    append("WIFI_POWER_SCOPE=SAME_PRIVATE_FULL_CURRENT_MASKED_CMDDB_RAM_OBSERVATION_CPU_SOURCE_NAMESPACE_DELETE_BEFORE_FIRST_MASKED_RSC_MMIO_READ_NO_ACCESS_ACQUISITION_NO_ENGINE_NO_HARDWARE_GRANT_NO_MSS_NO_NV_SERVE\r\n");
+#else
     append("WIFI_POWER_SCOPE=SAME_PRIVATE_CURRENT_NAMESPACE_RAM_DEVICE_CPU_FULL_CMDDB_CHECKED_READ_ACCESS_RETIRE_RESTORE_DELETE_NO_TCS_STORE_NO_READ_REQUEST_NO_HARDWARE_GRANT_NO_MSS_NO_NV_SERVE\r\n");
+#endif
 #else
     append("WIFI_POWER_SCOPE=FULL_RO_PREPARATION_THEN_SAME_KNOWN_PRIVATE_CURRENT_NAMESPACE_DEVICE_CPU_EXACT_RESTORE_DELETE_NO_RSC_ACCESS_NO_QUERY_API_NO_HARDWARE_GRANT_NO_MSS_NO_NV_SERVE\r\n");
 #endif
