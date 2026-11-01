@@ -34,7 +34,7 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0167 actual recovered FASTBOOT07:20; NEW0168 returned CPU-refusal retirement verified OFFLINE; NEW host/audit/freeze NOT READY
+### CURRENT0167 actual recovered FASTBOOT07:20; NEW0168 returned CPU-refusal retirement/host/image verified OFFLINE; actual strictRO FASTBOOT07:48, freeze NOT READY
 
 - Phone remains independently confirmed PolarisFASTBOOT07:20:38.214019Z after
   physical recovery.0167 startupACK/CPU/RSC remain UNKNOWN, not zero; no new
@@ -64,9 +64,24 @@ early samples only. On0029 the human already confirmed boot complete and said
   unchanged. Actual newdriverf451ee8bb1072fe0aeb6f653d1c63abd4e21e9eab7cf525e83caac8f5e90d05f/
   15926784B/88inputs, UNWRAPPED/UNSENT. Four new metadata fields need NEW0168
   exacthostprofile. Old profiles/frozen0167/consumedboot untouched.
-- NEXT finish NEW exacthostscope/test/admit and merge NEW strictRO39 roots/
-  maps/GPT/ESP/journalmetadata/currentNV audit in next required candidate
-  transition because0167 exit unobserved. No standalone stock/client/probe
+- FW e6fb4d416bcb00c5932fad2ce35ad39a5d00935c committed/pushed, independent
+  remote matches. NEWGCD_CLOCK_0168 exact252PowerGCD+94resource/88inputs,
+  21oldliteralAST unchanged.38hosttests and actualno-mock completeadmit pass;
+  hostproof3f5f83c532513c60670a8d17f5325f2ce7ac33a02fedf0d037429ca7129f2b85.
+  Initial harness used nonexistent testmodule and retained newfields in old
+  descriptor negativecase; corrected harness only, no FW/gate/model rerun.
+- NEW0168 ONE0120 strictRO audit ENDED0,39independentchecks PASS, actualumount
+  -> independentPolarisFASTBOOT07:48:43.111736Z. Review40528587b9a52b1c0e4c9487d970265251b4c9327073f92859cdf6db868e9f73/
+  preflightec711de8baaefbba8cca243a62260b3115b7feae2b2948bc1c160d5856a10fb1.
+  Two whole16GiB/142-182maps/marker8MiBpattern/6GPT/critical/ESP102/journalmetadata/
+  currentNV3x8MiB before-local-after/FSC pass; four originalNV mode0600 same0165,
+  no restore/writes.Whole512MiBjournal notcaptured/noFShealthclaim. Fresh audit
+  replaces0167 unobservedexit; old0165 qualification alone notused.
+- Newimage2079dcafce7b4ec9886ce533e580a053d1db3a637883ef7b13fffe6d3b90d9e8/
+  6029312B UNSENT; full unmodified EDK2 GetInfo/decode43408584B exact,81FW/
+  SimpleInit/BootShim/DTB preserved. No opticalcycle/nativeCI/download.
+- NEXT create independent sourcebound freeze and ONEhelper, then exactactual
+  FASTBOOT+alladmission may automatically sendONEnewRAM without repeated permission. No standalone stock/client/probe
   boot, no old0155..0167 replay. New original81codec/sourcefreeze/ONEhelper
   needed before one authorized newRAM attempt. Missing actualREAD/vote/MSS/
   NVserve/scan-join-data stays false. No physical request pending.
