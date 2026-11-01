@@ -34,6 +34,59 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0181 source/340ASAN/full parent/two SERIAL models/exact host complete; fresh strictRO39/image/codec/freeze pending NOTREADY; phone last actual Polaris FASTBOOT23:07; Wi-Fi NOT DONE
+
+- NewdefaultOFF --wifi-power-cpu-live-diagnostics requires explicitnormal-to-
+  maskedDB+terminalGOP. It recordsFIRSToriginalARCHfailedpredicate(25reasons)
+  withcall/masked/originalopening+normal+failedsampleticks; preservesexact24
+  comparisontermshortcircuitorder, noextraarch/clock/ownerread, nohold-time
+  reclassification. Callbackreturnfalse isreason1/arch_callback_ok0/failedticks0;
+  nonreturningcallbackstillcannotbeclassified. Original200ms/all68/READ50+25/
+  source/owner/FP/NSRWAT/restore/UNKNOWNholdallunchanged. No RSC/engine/vote/MSS/NV.
+- FWd5df7ff890ba0fea513ccc292fc118b71b777e7a/HOST2f4650f38d12feb5536c56dfe8afd342a81ed71a
+  committed. FinaldriverON0002 c6ff995184d69ced215d7568d7a0dca320ffd566870e343ecf2645750a96a334/
+  16091136B/94inputs(87committed+7privatePEdata); compiler65localdeps+9generated
+  covered. OFF0002 wholeEFI b6f27adb.../16057856B/91inputsbyteequal0178..0180.
+  Only5compiledinputschange(builder/main/critical/path/newdiagnosticheader).
+- Fullrecords: CPU10096B(+48firstfailure), parent1969104B; argument25216B,
+  full10MiBFW/14MiB+128hostcapacityremain. IndependentnewRAWlabel
+  WIFI_CURRENT_PRIVATE_CPU_LIVE_DIAGNOSTIC_RAW_V1. V2numeric16rows/same576x384ROI/
+  405pages/50msterminalgate: WHY/CALL, original64bitticks, DB0/1bytes+hashcounts,
+  accessmarker/CPUheld+restored/engineattempts. NoGOPmapping/permissionchange.
+- Finalchecks0003:80actualpwrpc_livegates(including26oldCPUcases)+260actualouter
+  normal->maskedreader-copy ASAN/UBSAN pass; original200msboundary/each25reason/
+  firstfailuresticky/noextraread tested. Initialtestwrappermaincollisiononly
+  fixedtestentrymacro; initial0002fields renamedarch_callback_ok fortruthful
+  false-returnsemantics; final0003/currentdriver0002arethequalifiedversions.
+- ActualwholemainCOFF/MachO/generalregs/maxframe1024/defaultOFF/QEMUphysicalbody
+  recordscompiledout pass. Old939otherOFFscopecases executingnonblankPP exactly
+  equal0180, reusednotrerun. parentproof17aef92338c268a14b1efc44ef493c106857b5265abd657d2a9db82af67d112e.
+  TwoSERIALnewwholeEFI-XNUmodels0001 each19checks/94sameinputs/11resource+1battery
+  literalint1/38.826450292021036+39.21926620899467s; modelproof
+  e43c21a8b5f5e44a482daf06e1fd36ce4f3908801ecbabc350b52b100014d5d4.
+  SOURCEproof7040e3ee5f060fbf49d2af235eaa3917e9c481e4d7b0382e75222755fd30b1d3.
+  SOFTWAREmodelsnotactualradio/guestreset. No nativeCI/download/opticalcycle.
+- GCD_CLOCK_0181 exact370PowerGCD+94resource/94inputs; all35oldliteralAST
+  unchanged. 21hosttests+21actualmetadatamutations+3missingdependencies+
+  2realCLIflagdependencyrefusals(beforeoutputcreation)passed. No changedFW
+  afterchecks/models; no repeatsneeded. FullphysicaladmitNOTyetclaimed.
+- NecessaryNEW0181transition nowneedsfreshfullstrictRO39after0180UNKNOWNreset.
+  Newaudit/reviewer clonedreviewed0179 withonlynewexactFW/HOST/candidatepaths/
+  bindings/RAMmountname; normalizeddevice-operationASTandall39checksidentical.
+  AuditSHA37122cf20d9d29e03bec63644393db58011bd112b917c7693739767cd14430c7;
+  reviewerSHA6b9ac37e68a12dec8a69e28291d74658e18c4eaba1aa830d0bf55986ee774f14;
+  source-review70a40df0fd0f14363549a2a9891743f6c7f8b6c8e7dc812077e1bbc233068260,
+  defaultofflinehelperpassed/no devicecommands. Originalhost250/watchdog300,
+  fulltwo16GiB/GPT/ESP/marker/journalmetadata/currentNV/noRW/noRestorepreserved.
+- NEXT approvedsource+NOTESpush/independentremote; ONEnewqualifiedauditonly
+  temporaryrecoverywithitsnew0181record, full39independentreview->currentrootNV,
+  thennewimage/original81wholecodec/independentfreeze/ONEnativehelper/currentFB.
+  No0181phonequery/image/payloadyet; lastactualFB23:07remainsphoneevidence.
+  No physicalorpublicationquestionpending. Old0180CONSUMED/sessionENDED/no replay.
+  Kernelreuse df995cae... andsameprojectsourcetextpublish873635fc...persist.
+  AllworkersENDED/allchildrenSTOP. ONLYWi-Fi: actual0180ARCHpredicate/timecause
+  stillunresolved; newdiagnosticsNOTphysicalpass; realnetwork/sound/cameraNOTDONE.
+
 ### CURRENT0180 actual photographed HOLD: access slot1 / CPU ARCH, normal10objects308pages; user recovered actual Polaris FASTBOOT23:07; masked DB retirement/READ/Wi-Fi NOT DONE
 
 - Human uploaded actualphonephoto for0180, then replied "已到FASTBOOT".
