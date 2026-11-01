@@ -34,6 +34,93 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0173 startup ACK UNKNOWN; user physically recovered, actual Polaris FASTBOOT11:59; access/READ/vote/Wi-Fi NOT DONE
+
+- User explicitlyapproved “批准0173及后续合格新会话复用同一内核”. Persistent
+  actualreply at research/polaris/immutable-native-payload-reuse-authorization-20261101.json
+  SHAdf995cae2d0989f029a79808b284657dc8b9c33d6302dd5524b2d15bf3c0db12.
+  Applies ONLYsame immutable63cb23956ff4b5a8d1981a52ae5a9beda4cea956b74686d54bff95f8e664ad96
+  payload/native7d2482..., NEWcomplete-review/exactprofile/affectedchecks/two
+  serialmodels/originalcodec/independentfreeze/ONEhelper/currentroot+phone
+  qualification, EACHneworiginalsessionatmostonce/nooldreplay/nopartition
+  writes/allsource-owner-time-UNKNOWN-restoregates. No needreaskthissameSHA
+  forfuturequalifiedNEWsessions. ChangedSHA/unqualifiedcandidate/outside
+  scope remainunapproved. Neverfabricate “user approved NEW0174once”; future
+  helper mustverifyandbindthisactualbroadauthorization record directly.
+- ONE0173image67636 ENDED0 sent11:54:24.697751Z/sourcea9541a98fece1aab1ff607556495d7548ce00af3/
+  imagef70e8040f78323733229bad19df545e7773a6d39db458586076111c750a753c6/
+  6027264B. Solefrozenactualwaitingpayload11:54:55.806220Z. ONE63cbpayload
+  62670 ENDED1 transfer32.954771833s/bootcall90.488318417s/response(-7)timeout,
+  NOstartupACK. No newprepared/client/work/CPU/access/CmdDb/RSCraw exported.
+  Actualpredicate/CPU_ON/WLED/mask/AT/MMIO/TCS/countsUNKNOWN, not0. No new
+  UTCSET/UI/optical/nativeCI. Cannotclaimquarantine/panic/causeisolated or
+  access/READsuccess merelyfromscopeCPP-outorUSBnonresponse.
+- AFTER62670ENDED, solematchingfrozenstate80430 ENDED1/8s at11:57:33Z UEFI
+  unavailable; soleexpected82058 ENDED0/8stimeout11:58:00.096461Z. Physical
+  recoveryrequestedONCE, user “已到 FASTBOOT”; independentactualproduct
+  polaris11:59:58.856735Z/exit0. Phone NOWactualFASTBOOT, notnativeLIVE.
+  AllUSB/host/build/modelworkers ENDED/allchildrenSTOP. Noentityaction or
+  kernelreuseauthorizationpending. No furtherUSBinventoryquerywithoutnew
+  candidate/event. Physicalproof0173/wifi/
+  physical-start-ACK-unknown-and-recovered-FASTBOOT-proof-0001.json
+  SHAb310b4fce13be8e3e975981859b7f8a1ba2c9ce3f7143091e3c8b711b439b6ac;
+  PASS faithfullypreservesUNKNOWN+actualrecovery, notfunctionality.
+- ORIGINALrepo0173/phone-read-access-checkpoint-runtime-0001/boot.json now
+  CONSUMED. ItsRAM_boot_succeeded literalstate isimageACK only, notpayload/
+  nativeconfirmation. Neverreplayimage/payload/OEMboot/refreeze/oldpolicy/
+  stripflags/oldmanifest. ONLYused /private/tmp/polaris-runtime-0173-frozen-0001/tools/polaris-uefi-wled-runtime.py
+  withfrozen0173driver/imageandORIGINALsharedrecord; sessionENDED. It/old0172/
+  editedcontrollercannotcontrolanewsession. Futurebroadkernelfilepermission
+  does NOTreopenoldsession. FreezeCOPY866+10COMMIT_ONLY/458committedsources/
+  90inputs/nohardlinks f630032fe6319336610406798cbb37b1e97f5f4907cced3ba598f8a99bccb6d3
+  anddefaultofflinehelperpassed BEFOREconsumption; cannotrerunspentstartup.
+- SourceFW7cb04c31612b78f660cee2f7407a458aead4004c/HOSTbabaf81549903f70cc7dc23c2b6b08af134367b2
+  completed309affectedASAN/UBSAN(147new+109CPU+30READ+23work), actualwhole
+  parentCOFF/MachO|maxframe1024/noactualwrite symbol/defaultOFF-QEMUpp,
+  twoSERIAL19checkmodels/90sameinputs/11resource+1battery literalint1,
+  GCD_CLOCK_0173 exact301PowerGCD+94resource/90inputs/26oldenabled+DISABLED
+  ASTunchanged/21hosttests+actualnomockadmit, original81FW/SimpleInit/BootShim/
+  DTB/originalEDK2whole43406536B exactdecode. DriverON0002 6dd301a4f8ae1d77efcd6262e30ca90b8c1f9264cc737b2090d69df2c1194174/
+  15924736B. ThoseareOFFLINE/SOFTWARE, noneproveactual0173accessorREAD.
+  No relatedsourcechange meansdonotrerunthese/old3007/13models/nativeCI.
+- Newobservation source retainsSAMEfreshprivate/currentnamespace/cache/Device/
+  work/CPU→pwra_acquire_read→fullcurrent128KiBCmdDb32ATtwice+70geometryreads
+  →realobservationretirement→CPUrestore/fullRAM/namespace/source/knownDelete;
+  literalstorecallbackdenieswithoutMMIO, enginesunattemptedentirezero, full
+  1943840Bdistinctraw. Noerrorclearing/fakefinished/leasebool orrelaxed200ms/
+  fullREAD50ms+25msreserve/IRQenabletype/UNKNOWN/nonreturnhold. Actualwhich
+  transitionran isUNKNOWN;0172successdoesnotretroactivelyname0173failure.
+- Offline RETROSPECTIVE0172-CABI dataaudit only:
+  0173/wifi/retrospective0172-read-access-data-audit.c/.log findsoneknownclient
+  rawmatch/88B, normal0/on maskedc0/off, all32CmdDbpages haveactualcaptured
+  descriptorWB/type2 andcurrentfullmapreserved-orBSData. Theseare OLD0172
+  captureddata, NOTnew0173AT/currentpermission/rootcause/passedacquisition.
+  Do notusefixture/staleROcontext/tickettoclaimnewhardwarequalification.
+- ROOT/NVlatestcompletedfullaudit remainsNEW0172strictRO0002 review00db1291.../
+  preflighte0f39077.../39checks/two16GiB/142-182maps/marker/GPT/ESP/currentNV/
+  journalmetadata. Itsqualificationwasvalid BEFORE0173.0173UNKNOWN+physical
+  reset nowmakes itHISTORICAL. AtNEXTalreadynecessaryNEWcandidateconversion
+  mergeNEWfullstrictRO roots/maps/GPT/ESP/journal/currentNV, notstandalone
+  inventoryrecoverynow/notreuseoldreviewtoskip/noRWeraseNVrestore. Whole
+  512MiBjournalstillnotcaptured/noFShealthclaim. Rootimmutable20F66/142map+
+  512MiBRAMCOW/noownedmarker/may_write_userdata=false; preserveallAndroid/
+  Windowsdata, GPT/ESP/default/BootOrder/81FW unchanged.
+- NEXT0174 NOTIMPLEMENTED/NOTREADY: stopguessingfullopaque boots. Audit same
+  physicalcaller entryarguments/owner/recordbounds/normal-vs-masked source/
+  fullCmdDb/readaccess/source-time transitions; move only independently
+  checkable ROwork/argument admission BEFOREmask withfullknownclient/source/
+  namespace/poolclosure, thenfreshsamecontext runtime revalidation remains.
+  Do NOTclearUNKNOWN/unmaskunknown/loosentime/borrowpasttickets orfakeheld
+  toexport. Anysegmentedphase mustfullyretire beforeUSBreturn, andactualREAD
+  needsNEWfreshfullowner/source/cache/DeviceNSRWAT/CPU afterpriorphase.
+  Existingcomponents/parserdoNOTneedredesign; no repeat0172CPUcheckpoint/
+  standaloneCPU/prep/client/NPA/cacheinventoryboot. Needactualevidencebefore
+  namingfailedpredicate, thenboundedREAD/completion/fulltouchedRWrestore/
+  sourceCPU/namespace/knownDelete, qualifiedperDRV ARCbaseline thenvote+
+  reverse savedrestore, FOURWiFiVRMsavedrestore BEFOREownMSS/MSA/GLINK/RMTFS/
+  WLFW/ath10k real scan/join/data. may_vote/MSS/NVserve/scan_join_data=false;
+  sound/cameraSTOP. User “请你加快Wi-Fi开发” remainsactivegoal, nofakeUItoggle.
+
 ### CURRENT0173 OFFLINE FROZEN candidate complete; phone remains controlled FASTBOOT0172/11:27; kernel reuse permission needed, Wi-Fi NOT DONE
 
 - New0173concretecandidate completedsource/affected309ASAN-UBSAN/actualwhole
