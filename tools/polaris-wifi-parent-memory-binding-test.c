@@ -22,7 +22,7 @@ static int binding_restore(void*ctx,struct pwrpc_transition*t)
  unmask_calls++;t->daif_before=DAIF;t->group_before=Group1;DAIF=0;Group1=1;
  t->daif_written=t->daif_observed=t->group_written=t->group_observed=1;t->daif_read=DAIF;t->group_read=Group1;return 1;
 }
-static int execute_outer_binding(unsigned old_binding)
+static int execute_outer_binding(unsigned fault)
 {
  reset_bound(0);read_fault=19;
  const uint32_t other[3]={0x40900,0x40904,0x50000};for(unsigned k=0;k<3;k++)put(links+0x3004+24*k,other[k],4);
@@ -34,12 +34,20 @@ static int execute_outer_binding(unsigned old_binding)
  entry_memory=&incoming;expected_body_memory=&client.reader.memory;
  /* Same constructor as physical preboot. Only its address argument differs
   * between the preserved0173 bug and corrected caller. No permission bool. */
- struct pwra_io access=pwra_observation_io(old_binding?&incoming:&client.reader.memory,&path->access_context);
+ struct pwra_io access=pwra_observation_io(fault==1?&incoming:&client.reader.memory,&path->access_context);
  access.translate=current_read_AT;access.read=current_read_load;access.RAM_translate=current_read_RAM_AT;
  assert(access.write==pwra_reject_store);
- struct pwrpt_io io={.cmd={.original={incoming,path_locate,current_read_map},.query=0,.namespace_io={&incoming,0,current_AT}},
-  .device={&incoming,0,current_read_AT,current_read_load},.CPU={0,current_read_affinity,path_mask,binding_restore},.access=access,
+ struct pwrpt_io io={.cmd={.original=client.reader,.query=0,.namespace_io={&client.reader.memory,0,current_AT}},
+  .device={&client.reader.memory,0,current_read_AT,current_read_load},.CPU={0,current_read_affinity,path_mask,binding_restore},.access=access,
   .enumeration=enumeration,.native_flag=(uintptr_t)native_on,.record=path,.preparation=prep};
+ if(fault==2)io.device.memory=&incoming;
+ if(fault==3)io.cmd.namespace_io.memory=&incoming;
+ if(fault==4)io.cmd.original.memory.system=0;
+ if(fault==5)io.cmd.original.memory.context=&io;
+ if(fault==6)io.cmd.original.memory.arch=0;
+ if(fault==7)io.cmd.original.memory.identity=0;
+ if(fault==8)io.cmd.original.memory.order=0;
+ if(fault==9)io.access.context=&io;
  return pwrcl_run_body(&client,enumeration,2,c,early,cr,rw,binding_body,&io);
 }
 int main(int argc,char**argv)
@@ -48,14 +56,16 @@ int main(int argc,char**argv)
  original=malloc(PGCI_IMAGE_BYTES);npa_original=malloc(PWNPI_IMAGE_BYTES);rp_original=malloc(PWRPI_IMAGE_BYTES);cmd_original=malloc(PWCDI_IMAGE_BYTES);
  uint8_t*data[]={original,npa_original,rp_original,cmd_original};size_t sizes[]={PGCI_IMAGE_BYTES,PWNPI_IMAGE_BYTES,PWRPI_IMAGE_BYTES,PWCDI_IMAGE_BYTES};
  for(unsigned k=0;k<4;k++){FILE*f=fopen(argv[k+1],"rb");assert(f&&fread(data[k],1,sizes[k],f)==sizes[k]&&!fclose(f));}
- assert(!execute_outer_binding(1));
- assert(path->error==PWRPT_ARGUMENT&&path->unknown&&pwrpt_unsafe(path)&&cr->client_held&&!delete_calls&&!mask_calls&&!psci_calls&&!unmask_calls);
- assert(!path->prepared_cmd.attempted&&pwra_zero(&path->read,sizeof(path->read))&&!modeled_stores&&!requests&&!acks);
+ for(unsigned fault=1;fault<=9;fault++){
+  assert(!execute_outer_binding(fault));
+  assert(path->error==PWRPT_ARGUMENT&&path->unknown&&pwrpt_unsafe(path)&&cr->client_held&&!delete_calls&&!mask_calls&&!psci_calls&&!unmask_calls);
+  assert(!path->prepared_cmd.attempted&&pwra_zero(&path->read,sizeof(path->read))&&!modeled_stores&&!requests&&!acks);
+ }
  assert(execute_outer_binding(0));
  assert(path->error==PWRPT_ACCESS_CHECKPOINT&&!path->unknown&&path->retired&&path->known_refusal&&!pwrpt_unsafe(path));
  assert(path->access.retired&&!path->access.local_held&&path->access.reads==70&&!path->access.writes&&path->access.CmdDb[0].bytes==PWCD_DB_BYTES&&path->access.CmdDb[1].bytes==PWCD_DB_BYTES);
  assert(cr->retired&&cr->client_returned&&!cr->client_held&&create_calls==1&&delete_calls==1&&psci_calls==14&&mask_calls==1&&unmask_calls==1);
  assert(!DAIF&&Group1==1&&!ticket->spent&&!modeled_stores&&!requests&&!acks&&pwra_zero(&path->read,sizeof(path->read))&&pwra_zero(&path->transaction,sizeof(path->transaction)));
- puts("{\"passed\":true,\"checks\":2,\"actual_outer_reader_copy_and_callback_composition\":true,\"old_binding_rejected_before_CPU\":true,\"same_pointer_guard_retained\":true,\"fixed_binding_full_observation_CPU_restore_Delete\":true,\"SOFTWARE_only\":true,\"actual0173_root_cause_proven\":false}");
+ puts("{\"passed\":true,\"checks\":10,\"actual_outer_reader_copy_and_callback_composition\":true,\"all_three_current_reader_bindings_and_five_memory_members_checked_before_CPU\":true,\"old_binding_rejected_before_CPU\":true,\"same_pointer_guard_retained\":true,\"fixed_binding_full_observation_CPU_restore_Delete\":true,\"SOFTWARE_only\":true,\"actual0173_root_cause_proven\":false}");
  free(original);free(npa_original);free(rp_original);free(cmd_original);free(arena);return 0;
 }

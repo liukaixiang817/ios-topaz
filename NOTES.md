@@ -34,6 +34,34 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0175 source complete OFFLINE; phone last actual FASTBOOT12:39; same-private access/Wi-Fi NOT DONE
+
+- Only Wi-Fi, strict serial, all children STOP. No new USB/image/payload/UTC/UI
+  or native CI. Phone last actual productpolaris12:39:44.708336Z after0174
+  physical recovery.0174 consumed image/payload/controller remain immutable.
+- NEW0175 same current read observer binds namespace, Device and access to
+  &client.reader.memory, and compares all five original reader memory members
+  before prepared bytes/CPU. This strengthens actual argument admission; it
+  does not create a lease, add READ/TCS stores or relax200ms/UNKNOWN/restore.
+  .cmd.original=client.reader; new scope review
+  shim/polaris/uefi-wifi-current-reader-binding-scope.md. Existing full observer,
+  2x128KiB/64AT/70loads/complete RAM/source/CPU/namespace/Delete retained.
+-157 affected ASAN/UBSAN(147 existing observation +10 real outer-composition
+  cases) PASS, actual wholeparent COFF/MachO/generalregs/maxframe1024/defaultOFF
+  and QEMUpp/no writer PASS. Remaining162 prior cases executing PP byteequal
+  except unusedpreboot, exact proofs reused; no unchanged old reruns.
+- Two new SERIAL19check wholeEFI-XNU models/90sameinputs/11resource+1battery
+  literalint1/actualQEMUpp physicalbodyrecords absent PASS. Models remain
+  SOFTWARE PMIC/delay/RAMUSB, not hardware/guestreset/Wi-Fi proof.
+- Sourceproof0175/wifi/current-reader-source-and-offline-proof-0001.json SHA
+  091af959c0034f9f0e50966d2c5ddf9de39bc6ed2a86dbab266f8647c3a6f94e/driver77b1a3ed8fa3f144262a05b90c979b2d6644adf8dc7629161461d07a99e3382b/15924736B/90inputs.
+  Only two compiled inputs changed: builder metadata and actual path header.
+- Host new exact profile/image/codec/NEWstrictRO/freeze/ONEhelper NOTREADY.
+  Current host telemetry035aa65 will be included in new candidate, no old
+  controller can control it. All 0174 root qualification is historical after
+  nonreceipt physical reset; merge NEWfullstrictRO39 at next needed conversion.
+  No firmware/payload or partition replay. Wi-Fi scan/join/data remains false.
+
 ### CURRENT0174 payload transfer FAILED; actual UEFI receiving, user recovered actual Polaris FASTBOOT12:39; fixed access/Wi-Fi NOT DONE
 
 - Completed FW e4b6f16dcebe528d8cf150fcc97691335089c3ad and latest HOST

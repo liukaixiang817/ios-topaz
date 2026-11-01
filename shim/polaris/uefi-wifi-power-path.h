@@ -242,7 +242,14 @@ static inline int pwrpt_body(void *context,const struct paic_io *memory,struct p
 #if EFI_XNU_WIFI_PRIVATE_CPU_CHECKPOINT
     if(!pwrpt_checkpoint_zero_engines(r)||
 #if EFI_XNU_WIFI_READ_ACCESS_CHECKPOINT
-       io->access.memory!=memory||io->access.context!=&r->access_context||io->access.write!=pwra_reject_store||
+       /* All current readers must be bound to the exact private caller's
+        * embedded memory object BEFORE any prepared read or CPU transition.
+        * This is argument identity only, never a hardware ownership grant. */
+       io->access.memory!=memory||io->device.memory!=memory||io->cmd.namespace_io.memory!=memory||
+       io->cmd.original.memory.system!=memory->system||io->cmd.original.memory.context!=memory->context||
+       io->cmd.original.memory.arch!=memory->arch||io->cmd.original.memory.identity!=memory->identity||
+       io->cmd.original.memory.order!=memory->order||
+       io->access.context!=&r->access_context||io->access.write!=pwra_reject_store||
 #else
        !pwra_zero(&io->access,sizeof(io->access))||
 #endif
@@ -443,9 +450,9 @@ static inline void pwrpt_preboot(const struct paic_io *memory,const struct paic_
 #if EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
     if(!pwsp_record.complete||!pwsp_record.retired||pwsp_record.error||pwsp_unsafe(&pwsp_record))return;
     const struct pwrcl_io client={{*memory,pwrph_actual_locate,pwrph_actual_map},pwrcl_actual_create,pwrcl_actual_drop,pwrcl_name};
-    struct pwrpt_io io={.cmd={.original={*memory,pwrph_actual_locate,pwrph_actual_map},.query=0,
-        .namespace_io={memory,0,pgns_actual_translate}},
-        .device={memory,0,pwrmd_actual_translate,pwrmd_actual_read},
+    struct pwrpt_io io={.cmd={.original=client.reader,.query=0,
+        .namespace_io={&client.reader.memory,0,pgns_actual_translate}},
+        .device={&client.reader.memory,0,pwrmd_actual_translate,pwrmd_actual_read},
         .CPU={0,pwrpc_actual_affinity,pwrpc_actual_mask,pwrpc_actual_restore},
 #if EFI_XNU_WIFI_READ_ACCESS_CHECKPOINT
         /* pwrcl_run_body passes its own copied reader.memory to the body.
@@ -455,7 +462,7 @@ static inline void pwrpt_preboot(const struct paic_io *memory,const struct paic_
 #elif EFI_XNU_WIFI_PRIVATE_CPU_CHECKPOINT
         .access={0},
 #else
-        .access=pwra_physical_io(memory,&pwrpt_record.access_context),
+        .access=pwra_physical_io(&client.reader.memory,&pwrpt_record.access_context),
 #endif
         .enumeration=enumeration,.native_flag=(uintptr_t)native_cpu_on,.record=&pwrpt_record,.preparation=&pwsp_record};
     (void)pwrcl_run_body(&client,enumeration,stage,final,&pwrcl_early_context,&pwrcl_record,&pwrcl_work,pwrpt_body,&io);
@@ -517,7 +524,7 @@ static inline void pwrpt_report(void (*append)(const char *))
 #endif
 #if EFI_XNU_WIFI_PRIVATE_CPU_CHECKPOINT
 #if EFI_XNU_WIFI_READ_ACCESS_CHECKPOINT
-    append("WIFI_CURRENT_PRIVATE_ACCESS_SCOPE=SAME_PRIVATE_FULL_CURRENT_CMDDB_AND_CHECKED_RSC_GEOMETRY_READS_COMPLETE_RETIRE_CPU_RESTORE_DELETE_NO_ENGINE_NO_TCS_STORE_NO_READ_REQUEST_NO_HARDWARE_GRANT\r\n");
+    append("WIFI_CURRENT_PRIVATE_ACCESS_SCOPE=SAME_PRIVATE_EMBEDDED_CALLER_ARGUMENT_IDENTITY_FULL_CURRENT_CMDDB_AND_CHECKED_RSC_GEOMETRY_READS_COMPLETE_RETIRE_CPU_RESTORE_DELETE_NO_ENGINE_NO_TCS_STORE_NO_READ_REQUEST_NO_HARDWARE_GRANT\r\n");
 #else
     append("WIFI_CURRENT_PRIVATE_CPU_SCOPE=SAME_REAL_PRIVATE_CURRENT_NAMESPACE_RAM_DEVICE_MASKED_CPU_EXACT_RESTORE_DELETE_BEFORE_FIRST_TCS_STORE_NO_ACCESS_CALLBACK_NO_READ_NO_VOTE_NO_HARDWARE_GRANT\r\n");
 #endif
