@@ -34,7 +34,7 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0158 actual FASTBOOT02:27; FIRST RAW NODE image + freshRO ready, independent freeze pending
+### CURRENT0158 actual FASTBOOT02:27; FIRST RAW NODE diagnostic READY for ONE RAM, not yet sent
 
 - Human fulfilled the NEW0157 recovery request, independently confirmed actual
   Polaris FASTBOOT02:14. No pending physical request. The next already-required
@@ -114,8 +114,17 @@ early samples only. On0029 the human already confirmed boot complete and said
   Actual no-mock fullhostadmit25014abb passed with these NEW reviews.
   NEWimagef3b09e49a4673704aafe82e942742cbe9d160dae52f331e8d39361f333f44305
   /5996544B retains original81/SimpleInit/BootShim/DTB. OriginalunmodifiedEDK2
-  GetInfo+whole39289032B decode matched. Independent sourcefreeze/ONEhelper
-  still pending; no diagnostic send until complete.
+  GetInfo+whole39289032B decode matched. Independent sourcefreeze + defaultoffline ONEhelper now passed: COPY812+10
+  COMMIT_ONLY/404committedsources/82inputs/nohardlinks, manifestSHA1e0c65474e99
+  53fd731656bc6ad61d86ffe954f0620af05083362cfe51c8a22e. Frozen directory
+  /private/tmp/polaris-runtime-0158-frozen-0001, FW0a7ce93/HOSTf5a4035.
+  Ready only for this explicitly partial failure-isolation diagnostic, not
+  complete namespace/Wi-Fi/power capability. No0158 image/payload/UTC sent yet.
+  Next only frozen0158/research/polaris/uefi-ios-0158/boot-CmdDb-first-node-
+  once-0001.py --boot-once, shared originalrepo phone-CmdDb-first-node-runtime-
+  0001/boot.json must remain absent until the ONE attempt. Actual waiting-
+  payload must precede ONE original63cb via solely frozen0158 controller.
+  All0155/56/57 previousfrozen/consumed artifacts remain immutable/no replay.
   No repeated old models/CI/inventory/client-only boot and no weakened bool
   lease/time/reset/fallback. New0158 diagnostic candidate is NOT READY. The
   post-recovery NEWfullRO transition has now been completed above. Prior0157
