@@ -34,7 +34,63 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0155 startup ACK UNKNOWN / UEFI state unavailable / FASTBOOT query timeout22:40; physical recovery requested ONCE
+### CURRENT0156 actual FASTBOOT01:21 / focused CmdDb capture-only full EFI and affected verification PASS; host/RO/image NOT READY
+
+- Actual product recovery01:21:01Z is verified, no physical recovery request
+  pending. No new USB action after that query. Phone stays lastactualFASTBOOT,
+  not nativeLIVE. All0155 image/payload/bootrecord remain consumed and frozen.
+- NEW defaultOFF --wifi-power-cmddb-capture-only linked actual8dedaf406956d096
+  d9f9f71dbf478a6c9b26e13e532c2962e5f613db7497335e/11384320B/80inputs.
+  Only builder+CmdDb query+powerpath compiled source changed. This captures
+  two complete current128KiB RO namespaces under the original gates, retains
+  raw ABI and deliberately PWCD_CAPTURE_STOP13 before originalQuery/Device/
+  CPUcritical/RSC. Complete source/pool/client retirement still precedes Delete;
+  partial/changed/UNKNOWN still hold with no unsafe cleanup/native/PON/receipt.
+  No root cause or physical capture has yet been established.
+- 7capture plus17normal path sanitizer cases passed, including noQuery trap,
+  wrongbase/descriptor returns, changed bytes and unknown map return. Actual
+  complete main COFF/MachO allwarnings/maxframe1024 passed; preprocessed parent
+  diagnostic body has no Query adapter or Device/CPU/RSC continuation and its
+  callback fields are zero. Proof f23bcab4 in0156/wifi/capture-verified-0001.
+  Fixture include/main configuration issues were corrected before the passing
+  final run; no hardware ran in any software fixture.
+- Two NEW wholeEFI-XNU terminalmodels SERIAL19checks each/38.931s/39.420s
+  passed, same80inputs/11resource+Power literalint1 markers plusbattery1;
+  actualQEMU main has no physical bodies/records. Software PMIC/delay/RAMUSB
+  is not actual firmware/reset/radio. No need to repeat unchanged tests/models.
+- NEXT new exact diagnostic host profile and already-required fresh strictRO
+  fullroots/maps/GPT/ESP/journal/currentNV after uncontrolled0155 recovery,
+  then original81wholeimage codec/source freeze/ONE helper. Audit/reviewer
+  copies are prepared with epoch/mountlabel/AUDIT_SHA changes only, audit SHA
+  7722dc48a9f71f9a72a1b0096974fa4aad2fade04bcdb904c2d1ca123b57d48d;
+  defaultoffline admission passed, NO recovery boot yet. NativeCI unchanged.
+  Only Wi-Fi; no MSS/NVserve/scan_join_data, sound/camera/children STOP.
+
+### HISTORY0156 capture-only diagnostic source implementation
+
+- Human replied arrived FASTBOOT; independent exact product query at
+  2026-11-01T01:21:01.223816Z returned exit0/product:polaris. Recovery request
+  is satisfied, no longer pending. No image/payload/UTC/reset/recovery sent in
+  this new interval. All previous0155 consumed artifacts/frozen image remain
+  unchanged, never replay. Current state is actual FASTBOOT, not nativeLIVE.
+- The0155 failure still has NO exported raw/root cause. New default-OFF
+  --wifi-power-cmddb-capture-only is being implemented: same original known
+  client, original source/owner/map/GCD/NS-WB gates and two complete128KiB
+  CmdDb snapshots/footprint checks, but NO original CmdDb Query API, CPU
+  critical admission, Device/RSC access or vote. Its planned PWCD_CAPTURE_STOP
+  is a diagnostic refusal, never ARC completion. Full pool/client/source
+  revalidation and known Delete remain mandatory; all UNKNOWN gates stay.
+  This targets previously UNOBSERVED new namespace reads after the unknown
+  failure, not another already-completed NPA/provider/client inventory boot.
+- Source/test/build work currently IN PROGRESS; no new host profile/image/
+  freeze/boot, NOT READY. Preserve raw ABI/normal transaction path and old
+  literal policies. After full affected verification/new exact admission, the
+  already-required transition must include fresh strictRO roots/maps/GPT/ESP/
+  journal/currentNV because physical recovery followed UNKNOWN. Do not use
+  fresh0154 alone to skip it; no immediate recovery merely for old inventory.
+  Only Wi-Fi; sound/camera/child agents remain STOP. No nativeCI/download.
+
+### HISTORY0155 startup ACK UNKNOWN / recovery request subsequently satisfied
 
 - ONE0155 image48869 ENDED0 sent22:37:08.183964Z/source6a208b66b9b4ea65b0a98
   a7d5d2f954633e66244/image275fe19a/6012928B. Actual newUEFI waiting-payload

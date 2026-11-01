@@ -69,6 +69,11 @@ static inline int pwrpt_body(void *context,const struct paic_io *memory,struct p
         pwrpt_fail(r,PWRPT_CMDDB,pwcd_unknown(&r->cmd)||pgcd_uncertain(g)||r->cmd.error==PWCD_CHANGED||
             r->cmd.error==PWCD_SOURCE||r->cmd.error==PWCD_OWNER);goto before_mask;
     }
+#if EFI_XNU_WIFI_CMDDB_CAPTURE_ONLY
+    /* Capture-only must always stop through the known-refusal retirement.
+     * An unexpected success is unsafe, never permission to enter the writer. */
+    return pwrpt_fail(r,PWRPT_CMDDB,1);
+#else
     struct paic_arch normal;
     if(!memory->arch(memory->context,&normal)||!pwrpb_capture(memory,p,work,&p->pools[1][1],&normal,&r->RAM[0])){
         pwrpt_fail(r,PWRPT_RAM,0);goto before_mask;
@@ -102,6 +107,7 @@ static inline int pwrpt_body(void *context,const struct paic_io *memory,struct p
     if(pgcd_uncertain(g)||!pwrph_context_ready(g)||pwrpc_unsafe(&r->CPU)||r->access.local_held||!r->access.retired)
         return pwrpt_fail(r,PWRPT_RESTORE,1);
     r->phase=5;r->retired=1;paic_actual_order(0);return 1;
+#endif
 before_mask:
     /* A returned pre-mask refusal has issued no raw RSC write. The original
      * known-client retirement may proceed. Unknown, partial calls or a held
@@ -117,10 +123,15 @@ static inline void pwrpt_preboot(const struct paic_io *memory,const struct paic_
     unsigned stage,struct pgcd_context *final,const volatile uint32_t *native_cpu_on)
 {
     const struct pwrcl_io client={{*memory,pwrph_actual_locate,pwrph_actual_map},pwrcl_actual_create,pwrcl_actual_drop,pwrcl_name};
+#if EFI_XNU_WIFI_CMDDB_CAPTURE_ONLY
+    struct pwrpt_io io={.cmd={.original={*memory,pwrph_actual_locate,pwrph_actual_map},.query=0},
+        .enumeration=enumeration,.native_flag=(uintptr_t)native_cpu_on,.record=&pwrpt_record};
+#else
     struct pwrpt_io io={{{*memory,pwrph_actual_locate,pwrph_actual_map},pwcd_actual_query},
         {memory,0,pwrmd_actual_translate,pwrmd_actual_read},
         {0,pwrpc_actual_affinity,pwrpc_actual_mask,pwrpc_actual_restore},
         pwra_physical_io(memory,&pwrpt_record.access_context),enumeration,(uintptr_t)native_cpu_on,&pwrpt_record};
+#endif
     (void)pwrcl_run_body(&client,enumeration,stage,final,&pwrcl_early_context,&pwrcl_record,&pwrcl_work,pwrpt_body,&io);
 }
 static inline void pwrpt_raw_hex(void (*append)(const char *),const void *raw,size_t bytes)
@@ -135,7 +146,12 @@ static inline void pwrpt_report(void (*append)(const char *))
     append("WIFI_POWER_CLIENT_RAW_V1_BEGIN\r\n");pwrpt_raw_hex(append,&pwrcl_record,sizeof(pwrcl_record));
     append("\r\nWIFI_POWER_CLIENT_RAW_V1_END\r\nWIFI_POWER_PATH_RAW_V1_BEGIN\r\n");
     pwrpt_raw_hex(append,&pwrpt_record,sizeof(pwrpt_record));
-    append("\r\nWIFI_POWER_PATH_RAW_V1_END\r\nWIFI_POWER_SCOPE=PRE_FINAL_GCD_PRIVATE_BOUNDED_ARC_FULL_RETIREMENT NO_MSS NO_NV_SERVE NO_RADIO_PERMISSION\r\n");
+    append("\r\nWIFI_POWER_PATH_RAW_V1_END\r\n");
+#if EFI_XNU_WIFI_CMDDB_CAPTURE_ONLY
+    append("WIFI_POWER_SCOPE=CMDDB_CAPTURE_ONLY_PLANNED_STOP_NO_QUERY_API_NO_CPU_CRITICAL_NO_RSC NO_MSS NO_NV_SERVE NO_RADIO_PERMISSION\r\n");
+#else
+    append("WIFI_POWER_SCOPE=PRE_FINAL_GCD_PRIVATE_BOUNDED_ARC_FULL_RETIREMENT NO_MSS NO_NV_SERVE NO_RADIO_PERMISSION\r\n");
+#endif
 }
 #endif
 #endif

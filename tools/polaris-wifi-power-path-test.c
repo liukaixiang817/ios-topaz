@@ -38,10 +38,11 @@ static int path_core_map(void *ctx,struct efi_system *sys,struct pgcd_map *m,voi
 static int path_map(void *ctx,struct efi_system *sys,uint8_t *out,struct paic_map_sample *m)
 {
     (void)ctx;assert(sys==s);
+    if(jf==16&&path->cmd.attempted&&path->cmd.maps[0].bytes)cmd_database[PWCD_DB_BYTES-1]^=1;
     struct efi_memory d[4]={{3,0,(uintptr_t)arena,0,0x600000/4096,8},
         {4,0,(uintptr_t)links,0,0x10000/4096,8},{3,0,(uintptr_t)arena+0x610000,0,(0x800000-0x610000)/4096,8},
         {0,0,0x85fe0000,0,32,8}};
-    memset(out,0,4096);memcpy(out,d,sizeof(d));m->bytes=sizeof(d);m->key=map_key;m->stride=sizeof(d[0]);m->version=1;m->status=0;return 1;
+    memset(out,0,4096);memcpy(out,d,sizeof(d));m->bytes=sizeof(d);m->key=map_key;m->stride=sizeof(d[0]);m->version=1;m->status=0;return jf!=18||!path->cmd.attempted;
 }
 static int path_locate(void *ctx,struct efi_system *sys,const efi_guid *guid,void **out,uint64_t *status)
 {
@@ -52,7 +53,7 @@ static int path_locate(void *ctx,struct efi_system *sys,const efi_guid *guid,voi
 static int path_descriptor(void *ctx,uint64_t function,uint64_t page,struct pgcd_descriptor *d,uint64_t *status)
 {
     (void)ctx;assert(function==(uintptr_t)core+0x2c68&&early->record->outstanding);*status=0;
-    if(page>=0x85fe0000&&page<0x86000000)*d=(struct pgcd_descriptor){0x85fe0000,0x20000,8,8,2,0,0,0};
+    if(page>=0x85fe0000&&page<0x86000000){*d=(struct pgcd_descriptor){0x85fe0000,0x20000,8,8,2,0,0,0};if(jf==17)d->attributes=0;}
     else{
         assert(page>=0x179e0000&&page<=0x179e2000);*d=(struct pgcd_descriptor){page,4096,1,0,3,0,0x123,0};
         if(jf==3&&path->CPU.local_restored)d->length=8192;
@@ -66,7 +67,14 @@ static uint64_t query_abi(void *This,void *query,void *response,void *aux,uint32
     put(out+24,32,4);put(out+28,0x100,2);memcpy(aux,cmd_database+144+0x1000+32*k,32);*status=0;return 0;
 }
 static int path_query(void *ctx,uint64_t fn,uint64_t This,uint8_t *q,uint8_t *out,uint8_t *aux,uint32_t *status,uint64_t *EFI_status)
-{assert(fn==(uintptr_t)cmd_image+0x1878);return pwcd_actual_query(ctx,(uintptr_t)query_abi,This,q,out,aux,status,EFI_status);}
+{
+#if EFI_XNU_WIFI_CMDDB_CAPTURE_ONLY
+    (void)ctx;(void)fn;(void)This;(void)q;(void)out;(void)aux;(void)status;(void)EFI_status;
+    assert(!"capture-only reached original Query callback");return 0;
+#else
+    assert(fn==(uintptr_t)cmd_image+0x1878);return pwcd_actual_query(ctx,(uintptr_t)query_abi,This,q,out,aux,status,EFI_status);
+#endif
+}
 static int path_affinity(void *ctx,uint64_t target,int64_t *raw)
 {
     (void)ctx;assert(target==0x100+0x100*(psci_calls%7));
@@ -201,6 +209,7 @@ static void check_raw_segment(const char *begin,const char *end,const void *raw,
     char *s=strstr(parent_report,begin);assert(s);s+=strlen(begin);assert(!strncmp(s+bytes*2,end,strlen(end)));
     const uint8_t *p=raw;for(size_t k=0;k<bytes;k++)assert(s[k*2]=="0123456789abcdef"[p[k]>>4]&&s[k*2+1]=="0123456789abcdef"[p[k]&15]);
 }
+#ifndef POLARIS_POWER_PATH_FIXTURE_ONLY
 int main(int argc,char **argv)
 {
     assert(argc==5&&!posix_memalign((void**)&arena,4096,0x800000));
@@ -241,3 +250,4 @@ int main(int argc,char **argv)
     printf("{\"checks\":%u,\"path_raw_bytes\":%zu,\"access_raw_bytes\":%zu,\"CPU_raw_bytes\":%zu,\"ONE_SOFTWARE_original_API_to_RSC_retirement_path\":true,\"queries\":6,\"PSCI_calls\":14,\"real_firmware_or_MMIO_execution\":false,\"physical_lease_proven\":false,\"parent_cached_gate_checked\":true,\"whole_raw_report_bytes\":%zu,\"parent_registered\":false}\n",checks,sizeof(*path),sizeof(path->access),sizeof(path->CPU),parent_report_bytes);
     free(original);free(npa_original);free(rp_original);free(cmd_original);free(arena);return 0;
 }
+#endif

@@ -8,6 +8,9 @@
 #ifndef EFI_XNU_WIFI_CMDDB_QUERY_AVAILABLE
 #define EFI_XNU_WIFI_CMDDB_QUERY_AVAILABLE 0
 #endif
+#ifndef EFI_XNU_WIFI_CMDDB_CAPTURE_ONLY
+#define EFI_XNU_WIFI_CMDDB_CAPTURE_ONLY 0
+#endif
 #if EFI_XNU_WIFI_CMDDB_QUERY_AVAILABLE && !defined(POLARIS_EFI_TEST_QEMU)
 #include "uefi-wifi-rpmh-readonly.h"
 #include "../../tools/polaris-wifi-cmddb-identity.h"
@@ -44,7 +47,7 @@ struct pwcd_io {
     int (*query)(void *,uint64_t,uint64_t,uint8_t *,uint8_t *,uint8_t *,uint32_t *,uint64_t *);
 };
 enum pwcd_error {PWCD_OK,PWCD_STAGE,PWCD_BASELINE,PWCD_OWNER,PWCD_SOURCE,PWCD_MAP,PWCD_DATABASE,
-    PWCD_BOUNDS,PWCD_RESOURCE,PWCD_QUERY,PWCD_CHANGED,PWCD_GUARD,PWCD_TIME};
+    PWCD_BOUNDS,PWCD_RESOURCE,PWCD_QUERY,PWCD_CHANGED,PWCD_GUARD,PWCD_TIME,PWCD_CAPTURE_STOP};
 static const char pwcd_names[3][9]={"cx.lvl","mx.lvl","mss.lvl"};
 static const uint32_t pwcd_addresses[3]={0x30000,0x30010,0x30060};
 static inline void pwcd_fail(struct pwcd_result *r,unsigned e,int unknown)
@@ -198,7 +201,7 @@ static inline int pwcd_collect(const struct pwcd_io *ops,const struct paic_resul
     struct pgcd_context *g,struct pwcd_result *r,struct pwrph_work *w)
 {
     if(!r||r->attempted)return 0;r->attempted=1;
-    if(!ops||!ops->query||!w||!g||!g->record||!g->ticket||g->stage!=2||!g->opened||g->finished||
+    if(!ops||(!EFI_XNU_WIFI_CMDDB_CAPTURE_ONLY&&!ops->query)||!w||!g||!g->record||!g->ticket||g->stage!=2||!g->opened||g->finished||
        !pwrph_context_ready(g)){pwcd_fail(r,PWCD_BASELINE,1);return 0;}
     const struct paic_io *io=&ops->original.memory;
     if(!io->arch||!io->identity||!io->order||!io->system||!io->system->boot||io->system!=g->io.system||!g->io.query||
@@ -237,6 +240,7 @@ static inline int pwcd_collect(const struct pwcd_io *ops,const struct paic_resul
         r->database[pass]=pwfi_le(r->globals[pass],8);
         if(!r->database[pass]||r->database[pass]!=pwfi_le(r->globals[pass]+64,8)||!pwcd_database_read(ops,g,r,w,pass,op)){if(!r->error)pwcd_fail(r,PWCD_DATABASE,0);return 0;}op+=PWCD_PAGES;
         if(!pwcd_select(r,pass)){pwcd_fail(r,PWCD_RESOURCE,0);return 0;}
+#if !EFI_XNU_WIFI_CMDDB_CAPTURE_ONLY
         for(unsigned k=0;k<3;k++,op++){
             if(!pwcd_checkpoint(io,r,w,pass,pass*4+k+1))return 0;
             struct pwcd_message *q=&r->messages[pass][k];pgcd_copy(q->query,pwcd_names[k],9);q->response[24]=32;q->result=UINT32_MAX;q->EFI_status=UINT64_MAX;
@@ -249,6 +253,7 @@ static inline int pwcd_collect(const struct pwcd_io *ops,const struct paic_resul
              * next call; do not follow a newly malformed live footprint. */
             if(!pwcd_database_same(io,r,pass))return 0;
         }
+#endif
         if(!pwcd_fresh(io,r))return 0;
     }
     if(r->maps[0].key!=r->maps[1].key||r->maps[0].bytes!=r->maps[1].bytes||r->maps[0].stride!=r->maps[1].stride||r->database[0]!=r->database[1]||
@@ -256,9 +261,18 @@ static inline int pwcd_collect(const struct pwcd_io *ops,const struct paic_resul
        !pgcd_equal(r->globals[0],r->globals[1],72)||!pgcd_equal(r->database_raw[0],r->database_raw[1],PWCD_DB_BYTES)||
        !pgcd_equal(r->resources[0],r->resources[1],sizeof(r->resources[0]))){pwcd_fail(r,PWCD_CHANGED,0);return 0;}
     if(!pwcd_checkpoint(io,r,w,1,8))return 0;
-    r->stable=1;return 1;
+    r->stable=1;
+#if EFI_XNU_WIFI_CMDDB_CAPTURE_ONLY
+    /* A planned diagnostic stop, never an ARC/query completion. Both full
+     * snapshots and all original gates remain in the resident raw record. */
+    pwcd_fail(r,PWCD_CAPTURE_STOP,0);return 0;
+#else
+    return 1;
+#endif
 }
+#if !EFI_XNU_WIFI_CMDDB_CAPTURE_ONLY
 static inline int pwcd_actual_query(void *ctx,uint64_t fn,uint64_t This,uint8_t *q,uint8_t *resp,uint8_t *aux,uint32_t *result,uint64_t *EFI_status)
 {(void)ctx;*EFI_status=((uint64_t(*)(void*,void*,void*,void*,uint32_t*))(uintptr_t)fn)((void*)(uintptr_t)This,q,resp,aux,result);return 1;}
+#endif
 #endif
 #endif

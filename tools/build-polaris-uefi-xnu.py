@@ -447,6 +447,7 @@ def main():
     ap.add_argument('--wifi-rpmh-readonly-pe',type=Path,help='default-OFF exact original RPMh init/DRV/TCS RAM baseline; NO provider API/client/MMIO/vote')
     ap.add_argument('--wifi-rpmh-private-client',action='store_true',help='default-OFF distinct pre-Clock original RPMh zero-vote private RAM client create/verify/retire; no commandset/MSS')
     ap.add_argument('--wifi-power-transaction-pe',type=Path,help='default-OFF NEW bounded private ARC path with exact original CmdDb source; offline link only until independent hardware ownership and NEW host admission')
+    ap.add_argument('--wifi-power-cmddb-capture-only',action='store_true',help='default-OFF focused CmdDb namespace diagnostic; planned retirement before Query API, CPU critical admission or RSC access')
     a=ap.parse_args();r=Path(__file__).resolve().parents[1]
     if a.test_wled_native_exit and (not a.wled_native_runtime_test or not a.test_qemu or
         a.test_ram_drain!='success' or a.test_wled_native_fault or a.test_wled_native_lifecycle or
@@ -512,6 +513,8 @@ def main():
     if a.wifi_rpmh_private_client and not (gcd_enabled and a.wifi_rpmh_readonly_pe and a.wifi_npa_readonly_pe):
         ap.error('private RAM client requires complete source-bound original GCD/Clock/NPA/RPMh scope')
     cmddb_header=None;cmddb_binding=None;cmddb_pe_relative=None
+    if a.wifi_power_cmddb_capture_only and not a.wifi_power_transaction_pe:
+        ap.error('CmdDb capture-only requires the separately bound original power-parent scope')
     if a.wifi_power_transaction_pe:
         if not a.wifi_rpmh_private_client:ap.error('NEW power path requires the explicit original private-client scope')
         try:
@@ -859,6 +862,7 @@ def main():
 #define EFI_XNU_WIFI_RPMH_READONLY_AVAILABLE {int(rpmh_binding is not None)}
 #define EFI_XNU_WIFI_RPMH_CLIENT_AVAILABLE {int(a.wifi_rpmh_private_client)}
 #define EFI_XNU_WIFI_CMDDB_QUERY_AVAILABLE {int(cmddb_binding is not None)}
+#define EFI_XNU_WIFI_CMDDB_CAPTURE_ONLY {int(a.wifi_power_cmddb_capture_only)}
 #define EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE {int(cmddb_binding is not None)}
 #define EFI_XNU_AUDIO_CLOCK_GCD_QUERY_AVAILABLE {int(gcd_enabled)}
 #define EFI_XNU_AUDIO_CLOCK_QUERY_AVAILABLE {int(audio_clock_binding is not None)}
@@ -1254,6 +1258,14 @@ def main():
             wifi_CPU0_power_MSS_or_NVserve_or_radio=False,
             original_GCD_new_scope_RAM_log_capacity=8388608,
             wifi_CPU0_resources_firmware_RAM_log_capacity=8388608)
+        if a.wifi_power_cmddb_capture_only:
+            manifest.update(wifi_CPU0_power_CmdDb_capture_only=True,
+                wifi_CPU0_power_CmdDb_original_Query_calls_max=0,
+                wifi_CPU0_power_CmdDb_planned_stop_error=13,
+                wifi_CPU0_power_CPUcritical_and_RSC_reachable=False,
+                wifi_CPU0_power_guarded_PSCI_calls_max=0,
+                wifi_CPU0_power_steps_max=0,wifi_CPU0_power_transaction_events_max=0,
+                wifi_CPU0_RPMh_private_vote_commandset_MMIO_SMC_MSS_NVserve_calls=0)
     (out/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
     print(json.dumps({k:manifest[k] for k in ['artifact','sha256','bytes','QEMU_variant','device_execution_tested']}))
 
