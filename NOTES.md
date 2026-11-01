@@ -91,7 +91,15 @@ early samples only. On0029 the human already confirmed boot complete and said
   prepared/private/CPU/RSC bodies or records PASS, proof6e902e3cfb637c78f25a
   158a91b00741ab8002948aeaef0073bd23a8d61dab01. SOFTWARE PMIC/delay/RAMUSB
   not physical timing/ownership/guestreset/radio. No unchanged checks need rerun.
-- NEXT: commit reviewed new source and exacthostprofile86inputs/newmetadata/
+- FWa01ed152663bae5685172fa5a4d252383eb469e3 committed/pushed and independently
+  ls-remote matched. NEW GCD_CLOCK_0162 pins86inputs/217PowerGCD+94resource
+  fields, preparedscope789e1b53805020a493bb253512354100989fdb2ae1e029bc5cf40783291f0d49.
+  All15oldliteralprofiles unchanged.38affectedhost+logtests PASS and actual
+  no-mock fulladmit with bothmodels/currentfresh0160RO passed, proof577386cd
+  6a366f3e75a34424c5c30bb125128efd328fd44e138aa6f739d1d292. An initial overly
+  broad unittest discovery hit3 unrelated package-relative imports; corrected
+  invocation runs only affectedmodules, no unrelated source/test edits.
+- NEXT: newhostprofile committed then
   logcap/scope; fulloriginal81codec/sourceaudit/independentfreeze/ONEhelper,
   normal0161drain+currentfresh0160ROOT/NV qualification retained. Only after
   all admission, actual expectedPolarisFASTBOOT and the SAME runtime predicate
