@@ -9,6 +9,16 @@
 #if EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE && !defined(POLARIS_EFI_TEST_QEMU)
 #include "uefi-wifi-rsc-baseline.h"
 #include "../../tools/polaris-wifi-rsc-transaction.h"
+#ifndef EFI_XNU_WIFI_ARC_READ_AVAILABLE
+#define EFI_XNU_WIFI_ARC_READ_AVAILABLE 0
+#endif
+#ifndef EFI_XNU_WIFI_ARC_READ_CAPTURE_ONLY
+#define EFI_XNU_WIFI_ARC_READ_CAPTURE_ONLY 1
+#endif
+#if EFI_XNU_WIFI_ARC_READ_AVAILABLE
+#include "uefi-wifi-rsc-read-plan.h"
+#endif
+struct pwrr_transaction;
 struct pwrpc_transition {
     uint64_t target_daif,target_group,daif_before,group_before,daif_read,group_read;
     uint32_t returned,precondition_error,daif_written,daif_observed,group_written,group_observed;
@@ -207,19 +217,29 @@ refuse:
     if(!r->unknown&&!r->local_mask_held)r->retired=1;
     paic_actual_order(0);return 0;
 }
-static inline int pwrpc_end(const struct pwrpc_io *io,const struct paic_io *memory,
+static inline int pwrpc_end_checked(const struct pwrpc_io *io,const struct paic_io *memory,
     struct pwrcl_result *p,const struct pwrph_work *w,struct pgcd_context *g,
     const struct pwrsc_transaction *transaction,const struct pwrpb_baseline *before,
-    const struct pwrpb_baseline *after,struct pwrpc_result *r)
+    const struct pwrpb_baseline *after,struct pwrpc_result *r,const struct pwrr_transaction *read)
 {
     if(!pwrpc_local_held(r)||!transaction)
         return r?pwrpc_fail(r,PWRPC_PENDING,1):0;
     if(!io||!io->restore||!memory||!memory->identity||!p||!w||!g)return pwrpc_fail(r,PWRPC_ARGUMENT,1);
+#if EFI_XNU_WIFI_ARC_READ_AVAILABLE
+    if(read&&(!pgcd_in_self(&p->core,(uintptr_t)read,sizeof(*read))||
+       !pwrcl_owned(memory,p,w,(uintptr_t)read,sizeof(*read))||!pwrr_retired(read)||
+       !pwrpb_equal(before,after)||read->io.started<r->normal.cpu.ticks))return pwrpc_fail(r,PWRPC_PENDING,1);
+#else
+    if(read)return pwrpc_fail(r,PWRPC_ARGUMENT,1);
+#endif
     if(transaction->unknown||transaction->outstanding||
        (!transaction->writes&&(transaction->triggers||transaction->completed||transaction->acknowledged||transaction->finished||transaction->restored))||
        (transaction->writes&&(!pwrsc_retired(transaction)||!pwrpb_equal(before,after))))
         return pwrpc_fail(r,PWRPC_PENDING,1);
     if(!pwrpc_live(g,r,1,&r->after)||!pwrpc_cpu_flag(memory,p,w,r))return pwrpc_fail(r,PWRPC_ARCH,1);
+#if EFI_XNU_WIFI_ARC_READ_AVAILABLE
+    if(read&&read->io.last>r->after.cpu.ticks)return pwrpc_fail(r,PWRPC_PENDING,1);
+#endif
     if(!pwrpc_source_check(memory,p,w,g,r,1))return pwrpc_fail(r,PWRPC_SOURCE,1);
     r->restore.target_daif=r->normal.cpu.daif;r->restore.target_group=r->normal.cpu.group1;
     r->outstanding=9;paic_actual_order(0);
@@ -229,6 +249,11 @@ static inline int pwrpc_end(const struct pwrpc_io *io,const struct paic_io *memo
        !pwrpc_live(g,r,0,&r->after))return pwrpc_fail(r,PWRPC_RESTORE,1);
     r->outstanding=r->local_mask_held=0;r->local_restored=r->retired=1;paic_actual_order(0);return 1;
 }
+static inline int pwrpc_end(const struct pwrpc_io *io,const struct paic_io *memory,
+    struct pwrcl_result *p,const struct pwrph_work *w,struct pgcd_context *g,
+    const struct pwrsc_transaction *transaction,const struct pwrpb_baseline *before,
+    const struct pwrpb_baseline *after,struct pwrpc_result *r)
+{return pwrpc_end_checked(io,memory,p,w,g,transaction,before,after,r,0);}
 /* These are real AArch64 instructions, compiled as general-register-only
  * code. Host peers never execute them. No original EFI service is called. */
 static inline int pwrpc_actual_affinity(void *ctx,uint64_t target,int64_t *raw)

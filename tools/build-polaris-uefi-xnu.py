@@ -453,7 +453,10 @@ def main():
     ap.add_argument('--wifi-power-cmddb-budget-admission',action='store_true',help='default-OFF complete bounded capture with independent completed RO timing admission BEFORE private Create; estimate only, unchanged private/final 200ms and ownership gates')
     ap.add_argument('--wifi-power-cmddb-staged-ro',action='store_true',help='default-OFF four independent completed RO phases capture64KiB each before ANY private client; full two-pass namespaces/immediate source+AT guards and original200ms per ticket retained')
     ap.add_argument('--wifi-power-prepared-transaction',action='store_true',help='default-OFF distinct full staged RO then SAME current known-client/bounded RSC/completion/restore; new hardware/source admission still required')
+    ap.add_argument('--wifi-power-current-arc-read',action='store_true',help='default-OFF same qualified private/CPU/Device interval: three bounded single-command READs and full restoration; RAW responses only, resource WRITE compiled unreachable in this scope')
     a=ap.parse_args();r=Path(__file__).resolve().parents[1]
+    if a.wifi_power_current_arc_read and not a.wifi_power_prepared_transaction:
+        ap.error('current ARC READ requires the complete prepared/current private path')
     if a.test_wled_native_exit and (not a.wled_native_runtime_test or not a.test_qemu or
         a.test_ram_drain!='success' or a.test_wled_native_fault or a.test_wled_native_lifecycle or
         a.test_wled_native_start_refusal or a.test_wled_prepare_refusal or a.test_wled_status_after_issue or
@@ -892,6 +895,8 @@ def main():
 #define EFI_XNU_WIFI_CMDDB_BUDGET_ADMISSION {int(a.wifi_power_cmddb_budget_admission)}
 #define EFI_XNU_WIFI_CMDDB_STAGED_RO_AVAILABLE {int(a.wifi_power_cmddb_staged_ro)}
 #define EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE {int(a.wifi_power_prepared_transaction)}
+#define EFI_XNU_WIFI_ARC_READ_AVAILABLE {int(a.wifi_power_current_arc_read)}
+#define EFI_XNU_WIFI_ARC_READ_CAPTURE_ONLY 1
 #define EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE {int(cmddb_binding is not None)}
 #define EFI_XNU_AUDIO_CLOCK_GCD_QUERY_AVAILABLE {int(gcd_enabled)}
 #define EFI_XNU_AUDIO_CLOCK_QUERY_AVAILABLE {int(audio_clock_binding is not None)}
@@ -986,6 +991,7 @@ def main():
         inputs+=['shim/polaris/uefi-wifi-gcd-namespace.h','tools/polaris-wifi-gcd-namespace-identity.py']
     if cmddb_binding:inputs+=['shim/polaris/uefi-wifi-cmddb-budget.h','shim/polaris/uefi-wifi-cmddb-staged.h','shim/polaris/uefi-wifi-cmddb-prepared.h']
     if a.wifi_power_cmddb_staged_ro:inputs+=['shim/polaris/uefi-wifi-gcd-ro-owner.h']
+    if a.wifi_power_current_arc_read:inputs+=['shim/polaris/uefi-wifi-rsc-read-plan.h','tools/polaris-wifi-rsc-read.h']
     if rpmh_binding:
         inputs+=['shim/polaris/uefi-wifi-rpmh-readonly.h','tools/polaris-wifi-rpmh-identity.py',
                  'tools/polaris-wifi-rpmh-identity.h',rpmh_pe_relative]
@@ -1419,6 +1425,31 @@ def main():
             wifi_CPU0_power_HAL_count_and_logical_DRV_checked_separately=True,
             original_GCD_new_scope_RAM_log_capacity=10485760,
             wifi_CPU0_resources_firmware_RAM_log_capacity=10485760)
+    if a.wifi_power_current_arc_read:
+        manifest.update(
+            wifi_CPU0_power_execution_kind='STAGED_RO_CURRENT_PRIVATE_THREE_READ_RESTORE_NO_RESOURCE_WRITE',
+            wifi_CPU0_power_raw_format='CURRENT_ARC_READ_RAW_V1',
+            wifi_CPU0_power_raw_bytes=1941984,wifi_CPU0_power_access_raw_bytes=401936,
+            wifi_CPU0_power_current_ARC_read=True,wifi_CPU0_power_current_ARC_read_default_OFF=True,
+            wifi_CPU0_power_current_ARC_read_capture_only=True,
+            wifi_CPU0_power_current_ARC_resource_WRITE_reachable=False,
+            wifi_CPU0_power_current_ARC_resource_WRITE_commands_max=0,
+            wifi_CPU0_power_current_ARC_original_Read_API_calls=0,
+            wifi_CPU0_power_current_ARC_read_raw_bytes=49488,
+            wifi_CPU0_power_current_ARC_read_requests_max=3,
+            wifi_CPU0_power_current_ARC_commands_per_read=1,
+            wifi_CPU0_power_current_ARC_read_single_outstanding=True,
+            wifi_CPU0_power_current_ARC_read_MSGID=0x108,
+            wifi_CPU0_power_current_ARC_read_CMD_DATA_writes=False,
+            wifi_CPU0_power_current_ARC_read_RAW_not_qualified_vote=True,
+            wifi_CPU0_power_current_ARC_read_full_RW_prefix_before_CPU_restore=True,
+            wifi_CPU0_power_current_ARC_read_checked_IO_prefix_crossbound=True,
+            wifi_CPU0_power_current_ARC_read_same_source_client_200ms=True,
+            wifi_CPU0_power_current_ARC_read_entire_partial_raw_preserved=True,
+            wifi_CPU0_power_current_ARC_read_shared_event_limit=1024,
+            wifi_CPU0_power_current_ARC_read_shared_step_limit=256,
+            wifi_CPU0_power_current_ARC_read_shared_deadline_ticks=960000,
+            wifi_CPU0_power_current_ARC_read_qualified_response_semantics_proven=False)
     (out/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
     print(json.dumps({k:manifest[k] for k in ['artifact','sha256','bytes','QEMU_variant','device_execution_tested']}))
 

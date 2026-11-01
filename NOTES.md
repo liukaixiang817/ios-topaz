@@ -34,6 +34,55 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0164 remains last actual native05:24; NEW0165 three RAW READ/full-restore parent verified OFFLINE, host/candidate NOT READY
+
+- Wi-Fi still grey OFF; no scan/join/data. Phone remains the SAME0164
+  kernel-entered session, last actual05:24:37Z. No USB/API/PSCI/AT/MMIO,
+  image send, native CI or new physical observations in this offline work.
+  ONLY Wi-Fi; sound/camera/all children STOP, strict serial parent work.
+- NEW default-OFF --wifi-power-current-arc-read requires existing prepared
+  transaction. Builder hardcodes CAPTURE_ONLY=1; resource WRITE body is
+  preprocessed OUT. Three dynamically selected single-command/single-
+  outstanding READs produce RAW uint32 words, then complete touchedRW
+  restoration, exact CPU/source/fullRAM/namespace retirement and known Delete.
+  No CMD_DATA/IRQenable/type writes. Missing cache is not saved0. No ARC
+  response-to-vote semantics is claimed; no MSS/NVserve/radio permissions.
+- Original exact b718efb6/61440B PE bank2 HAL8610..870c corroborates type2
+  WRITEbit0/RESP_REQbit1/length8=>MSGID108, and8328..8354 loads uint32 at
+  base+20d40+TCS*672+CMD*20. Static proof89247e1e29d6eba50d96e37f123fef0a7b41022409c7d7c03f90858777f4c4b6
+  in0165/wifi/original-read-format-source-0001/proof.json. Original HAL also
+  writesDATA; new READ skipsDATA, as generic pinned upstream READ does.
+  Strings are not reachable-workaround proof; original APIs/internal entries
+  are not called/patched. Conditional APPSDRV2 scope is not EE/EL3/MPU grant.
+- New READ163event full-prefix audit cross-binds every engine event to fresh
+  checked NSDevice R/W AT/savedPAR/nativeflag/actualIO. Fresh IRQ+allDONE+idle
+  precedes ACK. FullRW snapshot plus final IRQ status/enable precedes CPU
+  restore. 50ms/256steps/1024events and original private200ms unchanged, no
+  reset/rebase; final Clock/GCD ticket still unopened during private phase.
+  UNKNOWN/partial/heldmask sticky: complete RAM append then localmask/nonreturn
+  WFE, no Console/USB/Stall/ACK/reset/cleanup/Delete. It is not safe restore.
+- New body1941984B/access401936B/READ49488B; complete preparation/client/raw
+  retained. Hex+1MiBreserve9845008<10MiB FWlog; host14MiB+128 unchanged.
+  Old defaultOFF ABI and86inputs preserved; new physical driver88inputs,
+  15926784B SHAc951d93a93ad193c94e7c560a41868f2417b76c4aee02be9588b39e508aaacdd,
+  at0165/wifi/current-read-driver-ON-0004 (UNWRAPPED/UNSENT).
+- Affected204legacy +555READ +18samecontext parent =777 ASAN/UBSAN software
+  cases,9newchecks, actual main COFF/MachO/allwarnings/maxframe1024/fullEFI,
+  defaultOFF/QEMU preprocessed absence passed. Proofee6b09316a3ea34669a7a73848edfe7eff5b2d7a397fce24b467d7eb27a1114b
+  at0165/wifi/current-read-verified-0001/proof.json. No unchanged3007/oldmodels
+  or nativeCI rerun. Two NEW SERIAL terminalmodels each19checks/88sameinputs,
+  38.839163583/39.621748833s passed;11resourcePower+1battery literalint1,
+  actualQEMUpp has no READ/power body/raw. Modelproof288a453cafa1245889f5a2ce70ff93750e9c8ecdddc4963c4e659c4ae9a72403.
+  SOFTWARE PMIC/delay/RAMUSB is not hardware or guest-reset proof.
+- NEXT new exact host literal/scope review, affected host checks/actual admit,
+  original81 whole codec, independent freeze/ONEhelper; NOT READY until all
+  pass. Do not send or replay0164. Before any newimage use ONLY frozen0164
+  controller to normal nativeVFS/GPU/CPU drain with full fresh appendraw/
+  WLEXIT05/WLR5 receipt, then independent actual expectedPolarisFASTBOOT.
+  Current0164 UTC already SET once, NEVER SET again. FreshROOT/NV0160 remains
+  usable only through controlled normal exit. Preserve all data and all older
+  literals/manifests/consumedbootrecords. No fake lease/cache/level qualification.
+
 ### CURRENT0164 native last actual05:24; real complete26-row RAM cache captured, ARC saved-vote PLAN safely refused; Wi-Fi grey/scan-join-data NOT DONE
 
 - User says Wi-Fi still cannot enable; correct and physically confirmed in

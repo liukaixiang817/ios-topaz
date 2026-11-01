@@ -285,8 +285,13 @@ __attribute__((noreturn)) static void power_unknown_hold(void)
     for(;;)__asm__ volatile("wfe":::"memory");
 }
 #if EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
+#if EFI_XNU_WIFI_ARC_READ_AVAILABLE
+_Static_assert(sizeof(struct pwrpt_result)==1941984,"complete current ARC READ body raw ABI");
+_Static_assert(sizeof(struct pwra_result)==401936,"complete current ARC READ access raw ABI");
+#else
 _Static_assert(sizeof(struct pwrpt_result)==1892336,"complete prepared power body raw ABI");
 _Static_assert(sizeof(struct pwra_result)==401800,"complete prepared access raw ABI");
+#endif
 #elif EFI_XNU_WIFI_GCD_NAMESPACE_RO_AVAILABLE
 _Static_assert(sizeof(struct pwrpt_result)==1235200+2*sizeof(struct pgns_result)+66*sizeof(struct pgns_target),"complete bounded namespace power RAW_V2 ABI");
 #else

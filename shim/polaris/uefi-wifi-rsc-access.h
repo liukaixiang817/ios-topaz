@@ -32,6 +32,11 @@ struct pwra_result {
     uint32_t saved[3],desired[3],mask,config,IRQ_enable,IRQ_status,tcs[8][4],command_status_OR[3];
     struct pwra_event history[PWRA_EVENTS];
     struct pwra_cmd_snapshot CmdDb[2];
+#if EFI_XNU_WIFI_ARC_READ_AVAILABLE
+    uint64_t read_transaction,write_transaction;
+    uint32_t read_events,read_writes,read_retired,write_bound;
+    struct pgcd_arch read_end;
+#endif
 };
 struct pwra_io {
     const struct paic_io *memory;void *context;
@@ -51,9 +56,17 @@ struct pwra_context {
 #if EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
     const struct pwcp_result *prepared;
 #endif
+#if EFI_XNU_WIFI_ARC_READ_AVAILABLE
+    struct pwrr_transaction *read;
+    struct pwrsc_transaction *write;
+#endif
 };
 enum pwra_error {PWRA_OK,PWRA_ARGUMENT,PWRA_SCOPE,PWRA_CLIENT,PWRA_SAVED,PWRA_CHANGED,
     PWRA_TRANSLATION,PWRA_IO,PWRA_TIME,PWRA_PREFIX,PWRA_HISTORY,PWRA_UNKNOWN_STATUS};
+#if EFI_XNU_WIFI_ARC_READ_AVAILABLE
+static inline int pwra_zero(const void *data,size_t bytes)
+{const uint8_t *p=data;for(size_t k=0;k<bytes;k++)if(p[k])return 0;return 1;}
+#endif
 static inline int pwra_fail(struct pwra_context *c,unsigned e,int unknown)
 {
     struct pwra_result *r=c->record;if(!r->error)r->error=e;
@@ -78,21 +91,45 @@ static inline int pwra_address(uint64_t at)
     for(unsigned k=0;k<3;k++)if(off>=0x30+20*k&&off<=0x40+20*k)return 1;
     return 0;
 }
+static inline int pwra_engine_writable(const struct pwra_context *c,uint64_t at,uint32_t value)
+{
+#if EFI_XNU_WIFI_ARC_READ_AVAILABLE
+    if(c->read&&c->transaction==&c->read->io&&!c->record->write_bound)return pwrr_writable(c->read,at,value);
+#endif
+    return pwrsc_writable(c->transaction,at,value);
+}
 static inline int pwra_transfer(struct pwra_context *c,uint64_t at,uint32_t *value,unsigned write,unsigned engine)
 {
     struct pwra_result *r=c->record;struct pwrsc_transaction *t=c->transaction;
     if(r->unknown||r->error||r->outstanding||r->retired||r->events==PWRA_EVENTS||!pwra_address(at)||(!write&&at==PWRSC_BASE+8)||
-       (write&&(!r->acquired||!r->local_held||!engine||!pwrsc_writable(t,at,*value))))return pwra_fail(c,PWRA_SCOPE,write!=0);
+       (write&&(!r->acquired||!r->local_held||!engine||!pwra_engine_writable(c,at,*value))))return pwra_fail(c,PWRA_SCOPE,write!=0);
+    unsigned read_engine=0;
+#if EFI_XNU_WIFI_ARC_READ_AVAILABLE
+    read_engine=c->read&&t==&c->read->io&&!r->write_bound;
+#endif
     if(engine){
         if(!t->attempted||!t->outstanding||t->outstanding>t->events||t->events>PWRSC_HISTORY)return pwra_fail(c,PWRA_PREFIX,1);
+#if EFI_XNU_WIFI_ARC_READ_AVAILABLE
+        if(c->read&&!read_engine&&c->read->io.events+t->events>PWRSC_HISTORY)return pwra_fail(c,PWRA_HISTORY,1);
+#endif
         const struct pwrsc_event *e=&t->history[t->outstanding-1];
         if(e->address!=at||e->operation!=(write?2u:1u)||!e->issued||!e->unknown||
            (write&&e->value!=*value)||t->active_mask!=r->mask)return pwra_fail(c,PWRA_PREFIX,1);
-        for(unsigned k=0;k<3;k++)if(t->saved_vote[k]!=r->saved[k]||t->raised_vote[k]!=(r->saved[k]>r->desired[k]?r->saved[k]:r->desired[k]))
-            return pwra_fail(c,PWRA_SAVED,1);
+        for(unsigned k=0;k<3;k++){
+            if(read_engine){if(t->saved_vote[k]||t->raised_vote[k]||t->address[k])return pwra_fail(c,PWRA_SAVED,1);}
+            else if(t->saved_vote[k]!=r->saved[k]||t->raised_vote[k]!=(r->saved[k]>r->desired[k]?r->saved[k]:r->desired[k]))return pwra_fail(c,PWRA_SAVED,1);
+        }
+#if EFI_XNU_WIFI_ARC_READ_AVAILABLE
+        if(c->read&&!read_engine){
+            uint32_t saved[3],requested[3];
+            if(!r->write_bound||!pwrr_plan((const void*)(uintptr_t)r->masked_RAM,c->prepared->resources[1],c->read,saved,requested))return pwra_fail(c,PWRA_SAVED,1);
+            for(unsigned k=0;k<3;k++)if(saved[k]!=r->saved[k]||requested[k]!=r->desired[k])return pwra_fail(c,PWRA_SAVED,1);
+        }
+#endif
     }else if(write||!pwrmd_readable(at))return pwra_fail(c,PWRA_SCOPE,1);
     struct pwra_event *event=&r->history[r->events++];struct pwrmd_event *q=&event->io;
-    q->address=at;q->value=write?*value:UINT32_MAX;event->operation=write?2u:1u;event->engine_event=engine?t->outstanding:0;
+    q->address=at;q->value=write?*value:UINT32_MAX;event->operation=write?2u:1u;
+    event->engine_event=engine?(t->outstanding|(read_engine?UINT32_C(0x80000000):0)):0;
     if(!pwra_live(c,&event->native_before,&q->before))return 0;
     uint64_t page=at&~UINT64_C(4095);unsigned k;for(k=0;k<3&&pwrmd_pages[k]!=page;k++){}
     if(k==3||!pwrmd_exclude(c->work,page)||!c->device->GCD[k].issued||!c->device->GCD[k].returned||c->device->GCD[k].unknown||c->device->GCD[k].status)
@@ -224,10 +261,11 @@ static inline int pwra_cmddb(struct pwra_context *c,unsigned slot)
     }
     if(!pwra_live(c,&native,&ticks))return 0;s->complete=1;c->record->outstanding=0;paic_actual_order(0);return 1;
 }
-static inline int pwra_acquire_as(struct pwra_context *c,const struct pwra_io *io,struct pgcd_context *g,
+static inline int pwra_acquire_checked(struct pwra_context *c,const struct pwra_io *io,struct pgcd_context *g,
     struct pwrcl_result *provider,const struct pwrph_work *w,struct pwrpc_result *critical,
     const struct pwcd_result *cmd,const struct pwrpb_baseline *normal,const struct pwrpb_baseline *masked,
-    const struct pwrmd_result *device,struct pwrsc_transaction *tx,struct pwra_result *r,const struct pwcp_result *prepared)
+    const struct pwrmd_result *device,struct pwrsc_transaction *tx,struct pwra_result *r,const struct pwcp_result *prepared,
+    struct pwrr_transaction *read,struct pwrsc_transaction *writer)
 {
     if(!r||r->attempted)return 0;r->attempted=1;
     if(!c||!io||!io->memory||!io->translate||!io->read||!io->write||!g||!provider||!w||!critical||(!cmd&&!prepared)||(cmd&&prepared)||!normal||!masked||!device||!tx){r->error=PWRA_ARGUMENT;return 0;}
@@ -235,7 +273,16 @@ static inline int pwra_acquire_as(struct pwra_context *c,const struct pwra_io *i
 #if EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
         ,prepared
 #endif
+#if EFI_XNU_WIFI_ARC_READ_AVAILABLE
+        ,read,writer
+#endif
     };
+#if EFI_XNU_WIFI_ARC_READ_AVAILABLE
+    if(read&&(!prepared||tx!=&read->io||!writer||writer==tx))return pwra_fail(c,PWRA_ARGUMENT,1);
+    if(!read&&writer)return pwra_fail(c,PWRA_ARGUMENT,1);
+#else
+    if(read||writer)return pwra_fail(c,PWRA_ARGUMENT,1);
+#endif
     const void *command=cmd;uint64_t command_bytes=sizeof(*cmd);const struct pwcd_resource *desired=cmd?cmd->resources[1]:0;
     int command_ready=cmd&&cmd->stable&&!cmd->error&&!cmd->unknown&&!cmd->outstanding&&cmd->owner_matches==1&&
         cmd->after.ticks<=critical->normal.cpu.ticks&&cmd->before.ticks>=g->record->before.cpu.ticks&&
@@ -253,19 +300,26 @@ static inline int pwra_acquire_as(struct pwra_context *c,const struct pwra_io *i
 #endif
     r->client=(uintptr_t)provider->handle_output;r->provider=(uintptr_t)provider;r->critical=(uintptr_t)critical;r->transaction=(uintptr_t)tx;
     r->normal_RAM=(uintptr_t)normal;r->masked_RAM=(uintptr_t)masked;r->namespace_record=(uintptr_t)device;
-    const void *objects[]={c,provider,critical,command,normal,masked,device,tx,r};
-    const uint64_t sizes[]={sizeof(*c),sizeof(*provider),sizeof(*critical),command_bytes,sizeof(*normal),sizeof(*masked),sizeof(*device),sizeof(*tx),sizeof(*r)};
-    for(unsigned k=0;k<9;k++)if(!pgcd_in_self(&provider->core,(uintptr_t)objects[k],sizes[k])||
+    uint64_t tx_bytes=sizeof(*tx);unsigned object_count=9;
+#if EFI_XNU_WIFI_ARC_READ_AVAILABLE
+    if(read){tx_bytes=sizeof(*read);object_count=10;r->read_transaction=(uintptr_t)read;r->write_transaction=(uintptr_t)writer;}
+#endif
+    const void *objects[]={c,provider,critical,command,normal,masked,device,tx,r,writer};
+    const uint64_t sizes[]={sizeof(*c),sizeof(*provider),sizeof(*critical),command_bytes,sizeof(*normal),sizeof(*masked),sizeof(*device),tx_bytes,sizeof(*r),sizeof(*writer)};
+    for(unsigned k=0;k<object_count;k++)if(!pgcd_in_self(&provider->core,(uintptr_t)objects[k],sizes[k])||
        !pwrcl_owned(io->memory,provider,w,(uintptr_t)objects[k],(uint32_t)sizes[k]))return pwra_fail(c,PWRA_SCOPE,1);
-    for(unsigned k=0;k<9;k++)for(unsigned j=0;j<k;j++)
+    for(unsigned k=0;k<object_count;k++)for(unsigned j=0;j<k;j++)
         if(pwrcl_overlap((uintptr_t)objects[k],sizes[k],(uintptr_t)objects[j],sizes[j]))return pwra_fail(c,PWRA_SCOPE,1);
+#if EFI_XNU_WIFI_ARC_READ_AVAILABLE
+    if(read&&(!pwra_zero(read,sizeof(*read))||!pwra_zero(writer,sizeof(*writer))))return pwra_fail(c,PWRA_SCOPE,1);
+#endif
     if(!provider->client_held||provider->client_returned||provider->retired||provider->unknown||provider->outstanding||provider->error||
        !provider->pools_complete[1]||provider->created.bytes!=88||!r->client||!pwrpc_local_held(critical)||
        !pwrpb_equal(normal,masked)||normal->before.daif||normal->before.group1!=1||masked->before.daif!=0xc0||masked->before.group1||
        !device->complete||device->error||device->unknown||device->outstanding||device->queries!=3||device->reads!=70||
        device->image!=provider->reader.image||device->core!=provider->core.core||device->self_base!=provider->core.self_base||
        device->self_bytes!=provider->core.self_bytes||device->after.ticks>critical->normal.cpu.ticks||
-       !command_ready||!pwrpb_plan(masked,desired,r->saved,r->desired))return pwra_fail(c,PWRA_SCOPE,1);
+       !command_ready||(!read&&!pwrpb_plan(masked,desired,r->saved,r->desired)))return pwra_fail(c,PWRA_SCOPE,1);
     unsigned matches=0;const struct pwrcl_list *active=&masked->pool.list[0];
     for(unsigned k=0;k<active->count;k++)if(active->node[k].address==r->client&&
        pgcd_equal(active->node[k].raw,provider->created.raw,88))matches++;
@@ -275,6 +329,11 @@ static inline int pwra_acquire_as(struct pwra_context *c,const struct pwra_io *i
     if(!pwra_cmddb(c,0)||!pwra_snapshot(c,0))return 0;
     r->acquired=r->local_held=1;paic_actual_order(0);return 1;
 }
+static inline int pwra_acquire_as(struct pwra_context *c,const struct pwra_io *io,struct pgcd_context *g,
+    struct pwrcl_result *provider,const struct pwrph_work *w,struct pwrpc_result *critical,
+    const struct pwcd_result *cmd,const struct pwrpb_baseline *normal,const struct pwrpb_baseline *masked,
+    const struct pwrmd_result *device,struct pwrsc_transaction *tx,struct pwra_result *r,const struct pwcp_result *prepared)
+{return pwra_acquire_checked(c,io,g,provider,w,critical,cmd,normal,masked,device,tx,r,prepared,0,0);}
 static inline int pwra_acquire(struct pwra_context *c,const struct pwra_io *io,struct pgcd_context *g,
     struct pwrcl_result *provider,const struct pwrph_work *w,struct pwrpc_result *critical,
     const struct pwcd_result *cmd,const struct pwrpb_baseline *normal,const struct pwrpb_baseline *masked,
@@ -287,6 +346,61 @@ static inline int pwra_acquire_prepared(struct pwra_context *c,const struct pwra
     const struct pwrmd_result *device,struct pwrsc_transaction *tx,struct pwra_result *r)
 {return pwra_acquire_as(c,io,g,provider,w,critical,0,normal,masked,device,tx,r,prepared);}
 #endif
+#if EFI_XNU_WIFI_ARC_READ_AVAILABLE
+static inline int pwra_acquire_read(struct pwra_context *c,const struct pwra_io *io,struct pgcd_context *g,
+    struct pwrcl_result *provider,const struct pwrph_work *w,struct pwrpc_result *critical,
+    const struct pwcp_result *prepared,const struct pwrpb_baseline *normal,const struct pwrpb_baseline *masked,
+    const struct pwrmd_result *device,struct pwrr_transaction *read,struct pwrsc_transaction *writer,struct pwra_result *r)
+{if(!read)return 0;return pwra_acquire_checked(c,io,g,provider,w,critical,0,normal,masked,device,&read->io,r,prepared,read,writer);}
+static inline int pwra_read_prefix(struct pwra_context *c)
+{
+    struct pwra_result *r=c->record;uint32_t native;uint64_t ticks;
+    if(!c->read||!c->write||r->read_transaction!=(uintptr_t)c->read||r->write_transaction!=(uintptr_t)c->write||
+       !pwrr_retired(c->read)||c->read->io.active_mask!=r->mask||
+       !pwra_live(c,&native,&ticks)||c->read->io.started<c->critical->normal.cpu.ticks||
+       c->read->io.last>ticks)return pwra_fail(c,PWRA_PREFIX,1);
+    if(r->read_retired){
+        if(r->read_events!=c->read->io.events||r->read_writes!=c->read->io.writes)return pwra_fail(c,PWRA_PREFIX,1);
+    }else{
+        r->read_events=c->read->io.events;r->read_writes=c->read->io.writes;
+        r->read_end=c->critical->after;r->read_retired=1;
+    }
+    return 1;
+}
+static inline int pwra_bind_write(struct pwra_context *c)
+{
+    if(!c||!c->record||!c->read||!c->write||!c->prepared)return 0;
+    struct pwra_result *r=c->record;
+    if(r->write_bound||c->transaction!=&c->read->io||!r->acquired||!r->local_held||
+       !pwra_read_prefix(c)||!pwra_zero(c->write,sizeof(*c->write))||
+       !pwrr_plan((const void*)(uintptr_t)r->masked_RAM,c->prepared->resources[1],c->read,r->saved,r->desired))return pwra_fail(c,PWRA_SAVED,1);
+    /* The READ prefix and its pointer/count/timestamp remain immutable.
+     * Only this bounded transition selects the independently resident,
+     * unused WRITE record. No source context or spent ticket is reopened. */
+    c->transaction=c->write;r->transaction=(uintptr_t)c->write;r->write_bound=1;paic_actual_order(0);return 1;
+}
+static inline int pwra_engine_prefixes(const struct pwra_context *c)
+{
+    const struct pwra_result *r=c->record;unsigned read_seen=0,write_seen=0;
+    for(unsigned k=0;k<r->events;k++){
+        const struct pwra_event *a=&r->history[k];
+        if(!a->engine_event){if(a->operation!=1||!pwrmd_readable(a->io.address))return 0;continue;}
+        unsigned is_read=a->engine_event>>31,index=a->engine_event&UINT32_C(0x7fffffff);
+        const struct pwrsc_transaction *engine;
+        if(is_read){
+            if(!c->read||write_seen||index!=++read_seen) return 0;engine=&c->read->io;
+        }else{
+            if(index!=++write_seen|| (c->read&&read_seen!=c->read->io.events))return 0;engine=c->transaction;
+        }
+        if(!index||index>engine->events)return 0;const struct pwrsc_event *e=&engine->history[index-1];
+        if(a->operation!=e->operation||a->io.address!=e->address||a->io.value!=e->value||
+           a->io.before<e->before||a->io.after<a->io.before||a->io.after>e->after||
+           a->native_before||a->native_after)return 0;
+    }
+    if(c->read&&read_seen!=c->read->io.events)return 0;
+    return write_seen==(c->read&&!r->write_bound?0:c->transaction->events);
+}
+#endif
 static inline int pwra_read(void *context,uint64_t at,uint32_t *value)
 {struct pwra_context *c=context;return c&&c->record->acquired?pwra_transfer(c,at,value,0,1):0;}
 static inline int pwra_write(void *context,uint64_t at,uint32_t value)
@@ -294,13 +408,33 @@ static inline int pwra_write(void *context,uint64_t at,uint32_t value)
 static inline int pwra_clock(void *context,uint64_t *ticks,uint64_t *frequency)
 {
     struct pwra_context *c=context;uint32_t native;c->record->clock_calls++;
-    if(!pwra_live(c,&native,ticks))return 0;*frequency=c->critical->after.cpu.frequency;c->record->clock_returned++;return 1;
+    if(!pwra_live(c,&native,ticks))return 0;
+#if EFI_XNU_WIFI_ARC_READ_AVAILABLE
+    if(c->read&&c->read->io.started&&(*ticks<c->read->io.started||*ticks-c->read->io.started>PWRSC_DEADLINE||
+       (c->record->write_bound&&c->read->io.steps+c->transaction->steps>256)))return pwra_fail(c,PWRA_TIME,1);
+#endif
+    *frequency=c->critical->after.cpu.frequency;c->record->clock_returned++;return 1;
 }
 static inline void pwra_order(void *context){(void)context;paic_actual_order(0);}
 static inline int pwra_retire(struct pwra_context *c)
 {
     struct pwra_result *r=c->record;
-    if(!r->acquired||!r->local_held||r->unknown||r->outstanding||r->error||!pwrsc_retired(c->transaction)||r->writes!=c->transaction->writes)
+    unsigned engine_ok=pwrsc_retired(c->transaction);uint32_t writes=c->transaction->writes;
+#if EFI_XNU_WIFI_ARC_READ_AVAILABLE
+    if(c->read){
+        if(!pwra_read_prefix(c))return 0;
+        engine_ok=r->write_bound?pwrsc_retired(c->transaction):pwra_zero(c->write,sizeof(*c->write));
+        writes=r->read_writes+(r->write_bound?c->transaction->writes:0);
+        if(r->write_bound){
+            uint32_t saved[3],requested[3];
+            if(!pwrr_plan((const void*)(uintptr_t)r->masked_RAM,c->prepared->resources[1],c->read,saved,requested))return pwra_fail(c,PWRA_SAVED,1);
+            for(unsigned k=0;k<3;k++)if(saved[k]!=r->saved[k]||requested[k]!=r->desired[k]||
+               c->transaction->saved_vote[k]!=saved[k]||c->transaction->raised_vote[k]!=(saved[k]>requested[k]?saved[k]:requested[k]))return pwra_fail(c,PWRA_SAVED,1);
+        }
+    }
+    if(!pwra_engine_prefixes(c))return pwra_fail(c,PWRA_PREFIX,1);
+#endif
+    if(!r->acquired||!r->local_held||r->unknown||r->outstanding||r->error||!engine_ok||r->writes!=writes)
         return pwra_fail(c,PWRA_PREFIX,1);
     for(unsigned k=0;k<r->events;k++)if(r->history[k].io.issued!=1||r->history[k].io.returned!=1||r->history[k].io.unknown||
        !pwrmd_translation_valid(&r->history[k].io.translation))return pwra_fail(c,PWRA_PREFIX,1);
@@ -322,7 +456,7 @@ static inline int pwra_actual_write(void *context,uint64_t at,uint32_t value)
 {
     struct pwra_context *c=context;
     if(!c||!c->record||!c->record->outstanding||!c->record->acquired||!c->record->local_held||
-       !pwrpc_local_held(c->critical)||!pwrsc_writable(c->transaction,at,value))return 0;
+       !pwrpc_local_held(c->critical)||!pwra_engine_writable(c,at,value))return 0;
 #if defined(__aarch64__) || defined(__arm64__)
     *(volatile uint32_t*)(uintptr_t)at=value;paic_actual_order(0);return 1;
 #else

@@ -7,6 +7,9 @@
 #define POLARIS_UEFI_WIFI_POWER_PATH_H
 #include "uefi-wifi-rsc-access.h"
 #if EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE && !defined(POLARIS_EFI_TEST_QEMU)
+#if EFI_XNU_WIFI_ARC_READ_AVAILABLE && !EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
+#error Current ARC READ requires full prepared/current private binding
+#endif
 #include "uefi-wifi-cmddb-budget.h"
 #include "uefi-wifi-cmddb-staged.h"
 struct pwrpt_refusal {
@@ -25,11 +28,17 @@ struct pwrpt_result {
     struct pwrpb_baseline RAM[3];
     struct pwrmd_result device[2];
     struct pwrpc_result CPU;
+#if EFI_XNU_WIFI_ARC_READ_AVAILABLE
+    struct pwrr_transaction read;
+#endif
     struct pwrsc_transaction transaction;
     struct pwra_result access;
     struct pwra_context access_context;
     struct pwrpt_refusal refusal;
 };
+#if EFI_XNU_WIFI_ARC_READ_AVAILABLE
+_Static_assert(sizeof(struct pwrpt_result)==1941984,"complete current ARC READ scope raw V1");
+#endif
 struct pwrpt_io {
     struct pwcd_io cmd;struct pwrmd_io device;struct pwrpc_io CPU;struct pwra_io access;
     const struct paic_result *enumeration;uint64_t native_flag;
@@ -39,9 +48,12 @@ struct pwrpt_io {
 #endif
 };
 enum pwrpt_error {PWRPT_OK,PWRPT_ARGUMENT,PWRPT_CMDDB,PWRPT_RAM,PWRPT_PLAN,PWRPT_DEVICE,
-    PWRPT_CPU,PWRPT_ACCESS,PWRPT_TRANSACTION,PWRPT_RESTORE,PWRPT_NAMESPACE};
+    PWRPT_CPU,PWRPT_ACCESS,PWRPT_TRANSACTION,PWRPT_RESTORE,PWRPT_NAMESPACE,PWRPT_READ_ONLY};
 static inline int pwrpt_unsafe(const struct pwrpt_result *r)
 {return r->unknown||pwcd_unknown(&r->cmd)||
+#if EFI_XNU_WIFI_ARC_READ_AVAILABLE
+    (r->read.io.attempted&&!pwrr_retired(&r->read))||
+#endif
 #if EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
     pwcp_unsafe(&r->prepared_cmd)||
 #endif
@@ -107,9 +119,11 @@ static inline int pwrpt_body(void *context,const struct paic_io *memory,struct p
     if(!memory->arch(memory->context,&normal)||!pwrpb_capture(memory,p,work,&p->pools[1][1],&normal,&r->RAM[0])){
         pwrpt_fail(r,PWRPT_RAM,0);goto before_mask;
     }
+#if !EFI_XNU_WIFI_ARC_READ_AVAILABLE
     if(!pwrpb_plan(&r->RAM[0],resources,r->saved,r->desired)){
         pwrpt_fail(r,PWRPT_PLAN,0);goto before_mask;
     }
+#endif
     if(!pwrmd_collect(&io->device,p,work,g,&r->RAM[0],&r->device[0])){
         pwrpt_fail(r,PWRPT_DEVICE,r->device[0].unknown||r->device[0].outstanding||pgcd_uncertain(g));goto before_mask;
     }
@@ -120,7 +134,10 @@ static inline int pwrpt_body(void *context,const struct paic_io *memory,struct p
     struct paic_arch masked;
     if(!memory->arch(memory->context,&masked)||!pwrpb_capture(memory,p,work,&p->pools[1][1],&masked,&r->RAM[1])||
        !pwrpb_equal(&r->RAM[0],&r->RAM[1]))return pwrpt_fail(r,PWRPT_RAM,1);
-#if EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
+#if EFI_XNU_WIFI_ARC_READ_AVAILABLE
+    if(!pwra_acquire_read(&r->access_context,&io->access,g,p,work,&r->CPU,&r->prepared_cmd,&r->RAM[0],&r->RAM[1],
+       &r->device[0],&r->read,&r->transaction,&r->access))return pwrpt_fail(r,PWRPT_ACCESS,1);
+#elif EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
     if(!pwra_acquire_prepared(&r->access_context,&io->access,g,p,work,&r->CPU,&r->prepared_cmd,&r->RAM[0],&r->RAM[1],
        &r->device[0],&r->transaction,&r->access))return pwrpt_fail(r,PWRPT_ACCESS,1);
 #else
@@ -128,13 +145,50 @@ static inline int pwrpt_body(void *context,const struct paic_io *memory,struct p
        &r->device[0],&r->transaction,&r->access))return pwrpt_fail(r,PWRPT_ACCESS,1);
 #endif
     const struct pwrsc_io power={&r->access_context,pwra_read,pwra_write,pwra_clock,pwra_order};r->phase=3;
+#if EFI_XNU_WIFI_ARC_READ_AVAILABLE
+    if(!pwrr_begin(&power,&r->read,r->RAM[1].active_mask))return pwrpt_fail(r,PWRPT_TRANSACTION,1);
+    int read_result=0;
+    for(unsigned k=0;k<256&&!read_result;k++)read_result=pwrr_step(&power,&r->read);
+    if(read_result!=1||!pwrr_retired(&r->read))return pwrpt_fail(r,PWRPT_TRANSACTION,1);
+#if EFI_XNU_WIFI_ARC_READ_CAPTURE_ONLY
+    (void)resources;
+    /* This first actual READ scope deliberately does not label a RAW word
+     * a known per-DRV ARC level. Retire the complete real transaction and
+     * restore CPU/source/namespace without making any resource WRITE. */
+    if(!pwra_retire(&r->access_context))return pwrpt_fail(r,PWRPT_RESTORE,1);
+    pwrpt_fail(r,PWRPT_READ_ONLY,0);goto power_retired;
+#else
+    if(r->read.io.steps>252||!pwrr_plan(&r->RAM[1],resources,&r->read,r->saved,r->desired)){
+        /* RAW responses without a usable ARC interpretation do not become
+         * votes. A fully retired READ can close through the exact same
+         * RAM/source/CPU/namespace restoration, with WRITE entirely unused. */
+        if(!pwra_retire(&r->access_context))return pwrpt_fail(r,PWRPT_RESTORE,1);
+        pwrpt_fail(r,PWRPT_PLAN,0);goto power_retired;
+    }
+    if(!pwra_bind_write(&r->access_context))return pwrpt_fail(r,PWRPT_ACCESS,1);
+#endif
+#endif
+#if !EFI_XNU_WIFI_ARC_READ_AVAILABLE || !EFI_XNU_WIFI_ARC_READ_CAPTURE_ONLY
     if(!pwrsc_begin(&power,&r->transaction,r->RAM[1].active_mask,r->saved,r->desired))return pwrpt_fail(r,PWRPT_TRANSACTION,1);
     int result=0;
-    for(unsigned k=0;k<256&&!result;k++){r->steps=k+1;result=pwrsc_step(&power,&r->transaction);}
+    for(unsigned k=0;k<256&&!result;k++){
+#if EFI_XNU_WIFI_ARC_READ_AVAILABLE
+        if(k+r->read.io.steps==256)break;
+#endif
+        r->steps=k+1;result=pwrsc_step(&power,&r->transaction);
+    }
     if(result!=1||!pwrsc_retired(&r->transaction)||!pwra_retire(&r->access_context))return pwrpt_fail(r,PWRPT_TRANSACTION,1);
+#endif
+#if EFI_XNU_WIFI_ARC_READ_AVAILABLE
+power_retired:
+#endif
     r->phase=4;
     if(!pwrpb_capture(memory,p,work,&p->pools[1][1],&masked,&r->RAM[2])||!pwrpb_equal(&r->RAM[1],&r->RAM[2])||
+#if EFI_XNU_WIFI_ARC_READ_AVAILABLE
+       !pwrpc_end_checked(&io->CPU,memory,p,work,g,&r->transaction,&r->RAM[1],&r->RAM[2],&r->CPU,&r->read))return pwrpt_fail(r,PWRPT_RESTORE,1);
+#else
        !pwrpc_end(&io->CPU,memory,p,work,g,&r->transaction,&r->RAM[1],&r->RAM[2],&r->CPU))return pwrpt_fail(r,PWRPT_RESTORE,1);
+#endif
     if(!pwrmd_collect(&io->device,p,work,g,&r->RAM[2],&r->device[1]))return pwrpt_fail(r,PWRPT_NAMESPACE,1);
     for(unsigned k=0;k<3;k++)if(!pgcd_equal(&r->device[0].GCD[k].descriptor,&r->device[1].GCD[k].descriptor,sizeof(struct pgcd_descriptor)))
         return pwrpt_fail(r,PWRPT_NAMESPACE,1);
@@ -143,13 +197,20 @@ static inline int pwrpt_body(void *context,const struct paic_io *memory,struct p
 #if EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
     if(!pwcp_finish(&prepared_io,p,work,g,io->preparation,&r->prepared_cmd)||!r->prepared_cmd.closed)return pwrpt_fail(r,PWRPT_NAMESPACE,1);
 #endif
-    r->phase=5;r->retired=1;paic_actual_order(0);return 1;
+    r->phase=5;r->retired=1;
+#if EFI_XNU_WIFI_ARC_READ_AVAILABLE
+    if(r->error==PWRPT_PLAN||r->error==PWRPT_READ_ONLY)r->known_refusal=1;
+#endif
+    paic_actual_order(0);return 1;
 #endif
 before_mask:
     /* A returned pre-mask refusal has issued no raw RSC write. The original
      * known-client retirement may proceed. Unknown, partial calls or a held
      * mask never reach original Delete or native/PON/receipt. */
     if(r->unknown||pgcd_uncertain(g)||pwrpc_unsafe(&r->CPU)||r->transaction.writes)return 0;
+#if EFI_XNU_WIFI_ARC_READ_AVAILABLE
+    if(r->read.io.writes)return 0;
+#endif
 #if EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
     if(r->prepared_cmd.complete&&!r->prepared_cmd.closed&&
        !pwcp_finish(&prepared_io,p,work,g,io->preparation,&r->prepared_cmd))return pwrpt_fail(r,PWRPT_NAMESPACE,1);
@@ -221,8 +282,19 @@ static inline void pwrpt_report(void (*append)(const char *))
 #if EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
     append("WIFI_POWER_CLIENT_RAW_V1_BEGIN\r\n");pwrpt_raw_hex(append,&pwrcl_record,sizeof(pwrcl_record));
     append("\r\nWIFI_POWER_CLIENT_RAW_V1_END\r\n");
+#if EFI_XNU_WIFI_ARC_READ_AVAILABLE
+#if EFI_XNU_WIFI_ARC_READ_CAPTURE_ONLY
+    append("WIFI_CURRENT_ARC_READ_RAW_V1_BEGIN\r\n");pwrpt_raw_hex(append,&pwrpt_record,sizeof(pwrpt_record));
+    append("\r\nWIFI_CURRENT_ARC_READ_RAW_V1_END\r\n");
+    append("WIFI_CURRENT_ARC_READ_SCOPE=THREE_SINGLE_COMMAND_READS_COMPLETE_TCS_RW_RESTORE_SOURCE_CPU_NAMESPACE_DELETE RAW_WORDS_ONLY_NO_RESOURCE_WRITE_NO_MSS_NO_NV_SERVE_NO_RADIO_PERMISSION\r\n");
+#else
+    append("WIFI_CURRENT_ARC_POWER_RAW_V1_BEGIN\r\n");pwrpt_raw_hex(append,&pwrpt_record,sizeof(pwrpt_record));
+    append("\r\nWIFI_CURRENT_ARC_POWER_RAW_V1_END\r\n");
+#endif
+#else
     append("WIFI_PREPARED_POWER_RAW_V1_BEGIN\r\n");pwrpt_raw_hex(append,&pwrpt_record,sizeof(pwrpt_record));
     append("\r\nWIFI_PREPARED_POWER_RAW_V1_END\r\n");
+#endif
     append("WIFI_POWER_SCOPE=FULL_RO_PREPARATION_THEN_SAME_KNOWN_PRIVATE_CURRENT_ARC_NAMESPACE_CPU_RSC_COMPLETION_SAVED_RESTORE_DELETE NO_QUERY_API NOT_SECURE_GRANT NO_MSS NO_NV_SERVE NO_RADIO_PERMISSION\r\n");
 #else
     append("WIFI_POWER_SCOPE=FOUR_COMPLETED_RO_PREPARATION_PHASES_TWO_FULL_DB_COPIES_NO_PRIVATE_CLIENT_NO_QUERY_NO_CRITICAL_PSCI_NO_RSC NOT_CONTINUOUS_HARDWARE_LEASE NO_MSS NO_NV_SERVE NO_RADIO_PERMISSION\r\n");
