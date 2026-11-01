@@ -34,6 +34,33 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0180 new image fulladmitted/wholecodec done; freeze/helper pending, publication NOT approved; phone last actual Polaris FASTBOOT20:17; Wi-Fi NOT DONE
+
+- FW9b8cacfb9b4d5c19c1e02ce7915185a994ce7249/HOST5a50631730acde7909b74d32ef7f33f8f13b97c1
+  LOCALcommitted,0180pushautomaticapprovalREJECTED(newprivatesource/notesnot
+  coveredby0179specificpublicapproval). Do not retry/bypass/rename/alternate
+  remote. Finishconcretecandidateoffline, thenone0180publicationconfirmation.
+  0179through93c564a alreadypublic/remotematchedunderactualhumanapproval.
+- Newphysicaldriver0001 independentlycopiedtopfiles/nohardlinks/noZigcache
+  fromON0003SHA2778061ea842d471a56fb392f056752d8a44b300549c1e19f42f9a30dee94df2/16089088B/93currentinputs.
+  Actualno-mockfulladmit withnewGCD0180/modelpairs/currentroot17 passed.
+  Image61083d04a0203e6affc922892e58cdcb017a06e25ff6add6184a34413bf37ed1/6037504B,
+  original81FW/SimpleInit/BootShim/DTBpreserved. UnmodifiedoriginalEDK2actual
+  GetInfo/fullDecode43570888Bbyteequal, runtime-codec0001 proofPASS.
+- ROOT qualificationREUSESactualNEW0179full39 ONLYafter0179controllednative
+  drain/fullWLEXIT05+WLR5/independentactualPolarisFB20:17:05.473503Z. NoNEW0180
+  auditlabel, nofullhash/recovery oradditionalphonecommand. Old0179review
+  26814d60.../preflightdae7205a... remainunchanged. Reusereview0180/preboot-
+  controlled-transition-review.json SHA72078fca96a6562481916b4a23fe797016b39e09bd6440270bd9e627aeea40b0;
+  fulladmitproof0180/wifi/normal-masked-exact-host-admit-proof-0001.json
+  SHA544ac605475543565144d0d36cd0ae707be37695d80ea2213f537554d6b68471.
+- NEXT independentCOPYfreeze473currentcommittedsources/93inputs/allnewproofs/
+  matchingnewcontroller+driver+image+ONEofflinehelper; explicitlyrequireactual
+  0180publicationproofbeforeanydevicecommand. Thenconcretebatchpublicapproval
+  isfinalpendingstep, notnewkernelreusequestion. No0180sessionstarted/bootrecord
+  existsyet; physicalNOTREADY. AllworkersENDED/allchildrenSTOP; onlyWi-Fi.
+  0179consumed/ENDED/noreplay/noeditedcontroller. Wi-Firealscan/join/dataNOTDONE.
+
 ### CURRENT0180 local source/461ASAN/full parent/two SERIAL models complete; exact profile/codec/freeze pending NOT READY; phone last actual Polaris FASTBOOT20:17; Wi-Fi NOT DONE
 
 - Human actualanswer“批准公开推送本次交接”closed0179publicationquestion.
