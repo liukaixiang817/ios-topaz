@@ -34,6 +34,57 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0160 actual FASTBOOT03:23 + NEW fullRO39 checks complete; image0002 fresh-bound, NEW freeze0002 pending; no0160 iOS image/payload sent
+
+- ONE0120 audit73281 ENDED0: actualumount and actualPolarisFASTBOOT
+  2026-11-01T03:23:27.195154Z. Independent39checks PASS: newroot16GiB91515474
+  hash56.174818750s, old16GiB689a8cd1 hash56.257362375s,142/182maps,rawmarker
+  +8MiBpattern,6GPT/critical/ESP102/journalmetadata/current3NV+FSC pass.
+  NEWauthority0160 review994b0c8aaff238834944047f76bf167559795ba971436edef6bb7d
+  378c9d0365/preflight90b3c5da2b9b498d1929a29ac7c3efde9495d8c96cdae01ab77277
+  c0536211ea. All3NV8MiB before/local/after andGPT agree, allcurrentNV/FSC byte
+  SHAequalfresh0158,4originalfiles0600. Whole512MiBjournal NOT captured/no
+  FShealthclaim. No replay/repair/RW/storage/NVwrite. AuditnoMSS action is not
+  wholeDSPoff or exclusivegrant. Previous0158 exit cause remains UNKNOWN.
+- CandidateNEW physical-runtime-image-0002 binds fresh0160 review and
+  preflight, whole-byteidentical6008832B/SHA6f5e06fbe32ebb7abc5e5939e400e20be
+  69037dc8e8f6ba9d63993234eaff579 to offlineimage0001, which remains unchanged.
+  Thus priorcomplete39339208B unmodifiedEDK2 decode reused only by actualwhole
+  byteequality; no new irrelevant codec/model/nativeCI. Driver83/source3bda221
+  +host2851fca remain exact. NEWboot-CmdDb-budget-once-0002.py requires the
+  freshfullRO transition review replacing unobserved0158receipt and actual
+  expectedproduct; no oldcleanexit shortcut. No0160 consumedbootrecord exists.
+- NEXT independentfreeze0002 with currentcommittedsources + freshRO proof,
+  defaultofflinehelper, then actualproduct+ONEnewRAM automatically. Never
+  edit/use priorunused image0001/frozen0001 oldRO metadata or oldcontroller.
+  Actualphone remains FASTBOOT afteraudit, notnativeLIVE. LastnativeUI02:36
+  is historical. ONLYWiFi/allchildren/audio/cameraSTOP; scan/join/datafalse.
+
+### CURRENT0158 UEFI unavailable03:19; independent actual Polaris FASTBOOT03:19; NEW0160 fresh fullRO required before new candidate
+
+- Actual frozen0158 normal shutdown attempt4209 ENDED1 at03:19:18 start,
+  error boundUEFIservice notconnected after8s. It never reached a service
+  connection or issued a native drain/PON command; no new raw/receipt. This
+  does NOT prove normal idleexit/panic/quarantine or current UI. Last actual
+  nativeUI remains02:36 historical. No blindresend/cleanup/genericreset.
+- Only after4209 ENDED, one independent actual expected product query ENDED0
+  2026-11-01T03:19:48.202699Z productpolaris. Device IS actualFASTBOOT then;
+  no physicalkeys required/pending. Exit cause unknown, normal complete WLED/
+  native receipt unobserved. Fresh0158 is historical, not current qualification
+  after this interval. No0160 image/payload/OEMboot or UTC has been sent.
+- NEW0160 source/current driver83/newprofile/models/81codec/frozen0001 below
+  are completed OFFLINE only. Immutable image0001/frozen0001 bind old0158RO,
+  never edit them or use oldclean-exit helper to bypass missingreceipt. NEXT
+  already-required candidate conversion merges ONE0120 watchdog300s complete
+  strictRO roots/map/marker/GPT/ESP/journalmetadata/currentNV audit0160; source
+  differs from reviewed0158 ONLY epoch/mountlabel. Newaudit33af8d02d9c8a3a99c4
+  23ca71ee99035d56af06b452b9bd8a1e5e093fb393735, review35c4c5281dd6287231203
+  64dcaf09e874fd5eca0fd46740a4a9fb950ad636cc5, defaultoffline PASS/noUSB.
+  After actual unmount/FASTBOOT and independent39checks, make NEW image0002/
+  sourcefreeze0002/helper bound to that NEW fullRO. Reuse byte-identicaldriver/
+  models/nativeCI/codec only when proven exact; no oldmanifest/policy edits.
+  ONLY Wi-Fi; allchildren/audio/cameraSTOP. No partition/NV/repair/replay/RW.
+
 ### CURRENT0158 remains ONLY last actual nativeLIVE02:36; NEW0160 independent RO work admission/full parent/NEW host verified OFFLINE; image/freeze NOT READY
 
 - ONLY Wi-Fi. User “Wi-Fi还不行” remains correct: scan/join/data false;
