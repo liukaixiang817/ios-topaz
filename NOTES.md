@@ -34,7 +34,7 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0167 actual recovered FASTBOOT07:20; NEW0168 returned CPU-refusal retirement/host/image verified OFFLINE; actual strictRO FASTBOOT07:48, freeze NOT READY
+### CURRENT0167 actual recovered FASTBOOT07:20; NEW0168 exact candidate frozen OFFLINE; actual strictRO FASTBOOT07:48, one newRAM not yet sent
 
 - Phone remains independently confirmed PolarisFASTBOOT07:20:38.214019Z after
   physical recovery.0167 startupACK/CPU/RSC remain UNKNOWN, not zero; no new
@@ -80,8 +80,18 @@ early samples only. On0029 the human already confirmed boot complete and said
 - Newimage2079dcafce7b4ec9886ce533e580a053d1db3a637883ef7b13fffe6d3b90d9e8/
   6029312B UNSENT; full unmodified EDK2 GetInfo/decode43408584B exact,81FW/
   SimpleInit/BootShim/DTB preserved. No opticalcycle/nativeCI/download.
-- NEXT create independent sourcebound freeze and ONEhelper, then exactactual
-  FASTBOOT+alladmission may automatically sendONEnewRAM without repeated permission. No standalone stock/client/probe
+- FW e6fb4d4/HOSTa95589fd9132dd330a0899bf2dd0a05619f80ad5 pushed, remote matched.
+  Independent frozen0168 COPY853+10COMMIT_ONLY/441current committedsources/
+  88inputs/nohardlinks PASS, manifestb8518b18a40f24e1b3984909ce5bf850462dc650d049e9e02241d2791d565064;
+  defaultofflineONEhelper exactadmit/source/original81codec/freshROtransition
+  passes. ONLYnewcontroller /private/tmp/polaris-runtime-0168-frozen-0001/tools/polaris-uefi-wled-runtime.py
+  with matchingnew0168 driver0001/image0001 and ORIGINALrepo unique bootrecord.
+  No0168bootrecord exists yet; no image/payload has been sent. Source remains
+  captureonly/noresourceWRITE/noMSS/NVserve/scan-join-data grant.
+- NEXT actualcorrectPolarisFASTBOOT + allnewadmission may automatically send
+  ONEnewRAM, then actualwaitingpayload and ONE63cbpayload90s bounded ACK.
+  No replay on unknown; only correspondingfrozenstate once/expectedproduct
+  once, then physicalrequest once if truly no safe exit. No standalone stock/client/probe
   boot, no old0155..0167 replay. New original81codec/sourcefreeze/ONEhelper
   needed before one authorized newRAM attempt. Missing actualREAD/vote/MSS/
   NVserve/scan-join-data stays false. No physical request pending.
