@@ -34,6 +34,67 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0177 actual controlled FASTBOOT15:55; real normal GOP attribute0xBA refusal, Wi-Fi private/READ NOT RUN
+
+- Overrides ALL old CURRENT/READY/LIVE. 0177 ended by reviewed recover-prestart,
+  not physical keys. Independent actualproductpolaris15:55:17.432118Z/exit0.
+  No pending physical action/authorization; allUSB/host/build/modelworkersENDED,
+  allchildrenSTOP. OnlyWi-Fi; actual scan/join/data never completed.
+- FWc4e567402c31979d2b035696c8f9f0d408571694/HOST56712191d81df66995ed42c662b37b11c0711bfc
+  and preparedhandoff9c70a6f9f3ddd12cd3b0a52509e74ddb00d13c1d pushed/matched.
+  ONEimage50487 ENDED0 sent15:42:12.377170Z/source9c70a6f/image5d3b29af.../
+  6033408B; actualmatchingwaitingpayload15:44:15.735466Z. ONEsame63cbpayload
+  30756 ENDED1 after full557chunks/36459872B/validationACK+validatedtrue.
+  p.boot15:45:27.055896Z/0.002312250s, realIN28of64/return0 explicit
+  FAILkernel admission refused. This is a returned known refusal, NOT UNKNOWN
+  or the earlier90s(-7) pattern. KernelACKsuccess absent; no replay allowed.
+- Solematchingfrozenstate ENDED0 realvalidated15:48:08.775252Z. Controlled
+  capture79859 ENDED1 only at unsupported pre-nativeWLEDhistory page; actual
+  firmwarelog257096B and fullPPM6998417B were saved BEFORE that extra failure.
+  native.log is firmware-only filename, not native boot proof. Do not retry
+  capture/inventory or call this a WLED/native failure. NoUTCSET/UI/nativeCI.
+- NEWactualGOPraw126096B SHA3226e0ffb0569ca0f986c249b3838565e32040df8707d53d1b5964c454186ef6,
+  exact frozenCtypes+extracted parenttypedef independently decoded/asserted.
+  attempted1/error6PWTG_TRANSLATION/armed0/terminal_attempt0/pixels0/pagesbound0.
+  ActualGetMapstatus0/2880B/stride48/version1,FPsavedrestored1/normalarch and
+  native-before0. native-afterraw0 is UNOBSERVED after earlyrefusal. ActualGOP
+  mode1/0/info36/base9d400000/9331200B,1080x2160/stride1080/format1 and three
+  headerpages WBNSRW/PARrestore pass. FIRST FBpage9d465000 actualread=write
+  ba0000009d465b80/issuedreturned1/PARsavedrestored. ALL address/NS/RW/restore
+  conditions pass; exact frozen classifier rejects attribute0xBA because it
+  accepts only0xFF/0x44. No terminal draw, UNKNOWNhold or Wi-Fi private path
+  entered; no client/CPU/access/DB/READ raw labels. This identifies ONLY this
+  new display-admission refusal, NOT any earlieropaque0176/75/73 rootcause.
+- Matchingfrozen recover-prestart ENDED0 at15:54:44.425230Z, actual44Bzero-write
+  receipt independently decoded,error0/runtimeerror0/mode2/CPU_ONfalse/APstage0/
+  WLEDissued0=completed0/uncertainfalse; native_drain/WLEDrestoration provenfalse
+  correctly reflects pre-native scope. ACK is not reset; separate actualFB as
+  above. No genericreset/cleanup/editedcontroller/physical request was used.
+- Physicalproof0177/wifi/physical-GOP-attribute-refusal-and-controlled-FASTBOOT-proof-0001.json
+  SHA90b881a72b7a5fd10990bc3746f0394b79a71785b1a4fb0d30d5adbce23a5efd. PASS preserves
+  actual refusal/current raw/controlled exit only, not Wi-Fi or hardwarelease.
+- ORIGINAL0177/phone-terminal-GOP-runtime-0001/boot.json CONSUMED. Neverreplay
+  image/payload/OEMboot/refreeze/oldpolicy/stripflags/manifest. Onlycontroller
+  used /private/tmp/polaris-runtime-0177-frozen-0001/tools/polaris-uefi-wled-runtime.py
+  with frozen0177driver/image and ORIGINALsharedrecord. SessionnowENDED, no
+  more currentnative/USB actions. Freeze872+10COMMIT_ONLY/466sources/91inputs
+  d046bba35b4d8fbee9479da7e56183fd97c77213fedb8fdbe32965b9c9bf5597 remains immutable.
+- Rootqualification latestNEW0177 strictRO39/e55bedb3.../8fead391... actualFB15:29,
+  then ONLY controlled pre-native diagnostic and fullzero-receipt/actualFB.
+  Nextneeded newcandidate can reuse it; no repeat16GiBhash/recovery unless new
+  uncontrolled/Android/abnormal interval. NoUFS/RW/NVrestore/ESP/GPT permission;
+  Android/Windows/data protected, wholejournal notcaptured/noFShealth claim.
+- NEXT0178 NOTREADY/unimplemented: audit actual0xBA PAR against primaryArm
+  memory-attribute semantics and exactownGOP provenance before any new UI
+  classifier change. Do NOT map/changeMAIR/TTBR/cachemode or treat BA asradio
+  permission. If qualified, newsource/defaultOFF/exact literalprofile must
+  explicitly bind only observedGOPnormalWT case, allRW/NS/PA/PAR/architecture/
+  native0/prefix/terminal50ms/bounds/UNKNOWNhold intact; sourcechanged requires
+  affectedchecks+twoSERIALnewmodels/newcodec/freeze/ONEhelper. Never edit0177
+  policy or retry its image. Then sameprivate maskedDB purpose stillunproven,
+  followed by boundedREAD/qualifiedARCbaseline/vote/restore/fourWiFiVRM/MSS/
+  MSA/GLINK/RMTFS/WLFW/ath10k realnetwork. may_vote/MSS/NVserve/scan_join_data=false.
+
 ### CURRENT0177 frozen offline READY for ONE new RAM; last actual FASTBOOT15:29; no Wi-Fi success
 
 - No0177image/payload has been sent yet. Latest actual controlled PolarisFB
