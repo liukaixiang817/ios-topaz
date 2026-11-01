@@ -34,6 +34,48 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0180 actual photographed HOLD: access slot1 / CPU ARCH, normal10objects308pages; user recovered actual Polaris FASTBOOT23:07; masked DB retirement/READ/Wi-Fi NOT DONE
+
+- Human uploaded actualphonephoto for0180, then replied "已到FASTBOOT".
+  Originalphoto privatelyretained0180/wifi/physical-terminal-photo-0001/original.jpg
+  SHA79dbf99f16408226d34b8974b0c4fad1dbeabbe14bb522f5f2614e4e35bdbcc6; neverGitpublishphoto/rawdump.
+  IndependentONEreadonlyexpectedproduct actualproductpolaris2026-11-01T23:07:02.487571Z/
+  exit0. NowactualFASTBOOT,notnativeLIVE. PhysicalrequestONCEanswered, no pending
+  physicalactionorpublicationpermission, no moredevicequery/pollneeded.
+- All16visiblerows matched EXACTfrozen0180pwtg_line expressions:
+  HOLD1/phase2; BODY7/unknown1; CLIENT0C/out0; CPU3/out0;
+  CPUnormalissued7F/maskedissued7F; localheld1/restored0;
+  ACCattempted1/error2; ACCunknown1/outstanding00020001;
+  ARGattempted1/error0/unknown0/out0/objectsA/pages134/failedFFFFFFFF:FFFFFFFF;
+  ACCreads0/writes0; COREerror0/phase1; GOParmed1/mapuncertain0;
+  NOTWIFIreadattempt0/transactionattempt0. Hexnumbers, pages134hex=308decimal.
+- Exactenums: BODY7=PWRPT_ACCESS, CLIENT0C=PWRCL_BODY, CPU3=PWRPC_ARCH,
+  ACC2=PWRA_SCOPE. Sourcebasedinference: outstanding20001 issetinsideprepared
+  CmdDbslot1, afterslot0returnedcomplete; samepathhaspassednormal10object308page
+  admission andpwrpc_begin, thenenteredmaskedsecondDB. No fullrawexportexists;
+  slot0full128KiBcompletion iscaller-derivedinference, notindependentrawdecode.
+- CPUARCHisambiguous: archcallbackfailureORcompound EL/MPIDR/registers/DAIF/G1/
+  FPcontrol/TPL/systemtable/config/DS/owner/timeconditions, includingoriginal
+  200msdeadline. pwra_live propagatesCPUlivefailureasSCOPE2, bodyACCESS7, clientBODY12.
+  Cannotclaimwhichpredicate/200msexpiry/failedpage/PSCI/MMIOfault/panic/rootcause.
+  Needprecisefailedsample/predicate/timeevidencebeforeanynewmaskedcandidate;
+  neverrelax200ms/rebase/renewalorclearUNKNOWN/heldforUSB.
+- PhotoisactualintentionalHOLDvisibility, notUSBkernelACK. StartupACKstillUNKNOWN;
+  no newlyexportedGOP/prep/arguments/CPU/DB/access/READ/RSCbinaryrecords, no full
+  DBslot1bytes/hashes/ATPAR/retirement/CPUrestore. VisibleACC0/0isresidentcounter,
+  nottotalMMIO/hardwarewrites0; native/realWiFiscan/join/dataNOTDONE. Oldopaque
+  0178/76/75causesarenotretroactivelyexplained. Oldunknownproofunchanged.
+- Phototranscript/frozenreview0180/wifi/physical-terminal-photo-0001/transcription-
+  and-frozen-source-review.json SHA6394552631178c7b5e5bccc7b4cb0a1aca8189f5597b74c3a20efd91af694775.
+  Newactualproof0180/wifi/physical-terminal-numeric-evidence-and-recovered-FASTBOOT-
+  proof-0001.json SHA1bb19377ad103e418f4132f7848d920997a50d904f655c07c0ffac6b23671405.
+  PASSonlynumericobservation+recovery. ORIGINAL0180CONSUMED/sessionENDED;
+  doNOTreplayimage/payload/OEMboot/refreeze/oldmanifest/controller. AllworkersENDED/
+  allchildrenSTOP, new0181NOTREADY. ROOTNV17qualificationremainsHISTORICAL:
+  nextnecessaryNEWcandidateconversionmustmergeNEWfullstrictRO39, notinventoryboot.
+  Publicsource+textfuturepermission873635fc... andbroadkernelreuse df995cae...
+  persist; no repeatedpermissionquestionneeded. ONLYWi-Fi; sound/cameraSTOP.
+
 ### CURRENT0180 startup ACK UNKNOWN / UEFI unavailable / FASTBOOT query timeout22:46; physical recovery requested ONCE; Wi-Fi NOT DONE
 
 - Actualhumanpublicationreply "批准0180及后续同类公开推送" is recordedandfulfilled:
