@@ -34,7 +34,7 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0168 only last actual recovered FASTBOOT07:55; NEW0169 independent normal CPU RO parent/host/image verified OFFLINE; actual strictRO FASTBOOT08:31, freeze NOT READY
+### CURRENT0168 only last actual recovered FASTBOOT07:55; NEW0169 independent normal CPU RO exact candidate frozen OFFLINE; actual strictRO FASTBOOT08:31, one newRAM not yet sent
 
 - Phone's ONLY last actual state remains independentproductpolaris07:55:36Z
   after user physicalrecovery. No new USB/image/payload/actualfirmwareAPI/SMC/
@@ -98,7 +98,19 @@ early samples only. On0029 the human already confirmed boot complete and said
   5988352B UNSENT. Original81FW/SimpleInit/BootShim/DTB preserved, fullunmodified
   EDK2 GetInfo/decode29575880B exact. Actualno-mock completeadmit passed,
   hostproofa2853047ba44ccee70e48932d665dcb8f5e5280136b1865d3baedb9ca64f317b.
-- NEXT independent sourceboundfreeze/ONEhelper; actualoldpolicy already refuses new
+- Independentfrozen0169 COPY845+10COMMIT_ONLY/446current committedsources/
+  63inputs/nohardlinks PASS, manifest e01bf087aee6a06838eb964c37c528e80b60712d218f61b2175f73e6ef3424dc,
+  defaultofflineONEhelper exactsource/host/model/original81codec/newROtransition
+  PASS. Frozenhostsource6c1d4bf10b997ba3490a9ad22353280be53e7706; newnativeCI=false.
+  ONLYnewcontroller /private/tmp/polaris-runtime-0169-frozen-0001/tools/polaris-uefi-wled-runtime.py
+  with matching0169 driver0001/image0001 and ORIGINALrepo unique
+  research/polaris/uefi-ios-0169/phone-CPU-RO-runtime-0001/boot.json (notexistsyet).
+  No0169image/payload sent, no actualSMC/CPUstates yet.
+- NEXT actualcorrectPolarisFASTBOOT+allnewadmission permits ONECPURO RAMimage,
+  actualwaitingpayload thenONE63cbpayload90sboundedACK. This phase cannot
+  continueprivate/TCS/READ/vote evenallOFF. UnknownACK onlyafterexecENDED
+  matchingfrozenstateONCE/expectedproductONCE; if no safe exit physicalrequest
+  once, no replay/reset/cleanup/rawfallback. actualoldpolicy already refuses new
   source/metadata. New host/admission/packagedimage/freeze/ONEhelper NOTREADY,
   noUSBquery/send before ready. Nextrequiredcandidate transition mergeNEW
   strictRO39 roots/maps/GPT/ESP/journalmetadata/currentNV due0168UNKNOWN; old
