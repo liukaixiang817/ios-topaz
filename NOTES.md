@@ -34,7 +34,7 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0158 actual FASTBOOT02:14 after NEW0157 startup UNKNOWN; NEW FIRST RAW NODE planned-stop parent verified OFFLINE, two models PASS, new host NOT READY
+### CURRENT0158 actual FASTBOOT02:14 after NEW0157 startup UNKNOWN; NEW FIRST RAW NODE planned-stop parent verified OFFLINE, two models + NEW exact host scope PASS; freshRO/image NOT READY
 
 - Human fulfilled the NEW0157 recovery request. Independent exact product at
   2026-11-01T02:14:30.101621Z returned product:polaris/exit0. No pending physical
@@ -91,13 +91,20 @@ early samples only. On0029 the human already confirmed boot complete and said
   ActualfullEFI first-node-driver-ON-0001 SHAda3e7e5e593cd71438a1632c445d793
   1204030db7f39038629daf336a6836273/11807232B/82inputs. RAWlayout unchanged
   1656240B, new scope metadata specifies effective budget1/target bytes0.
-  Source edits ready to commit. Two affected models completed SERIAL each19
+  SourceFW0a7ce93b70a002b21c87f5c676d491643cc42e59 committed/pushed. Two affected models completed SERIAL each19
   checks/38.8496s and39.3122s/82sameinputs, all11resource-Power+1battery markers
   literalint1; actual QEMU main has no physical bodies/records includingfirst
   node. Proof0158/wifi/first-node-two-terminal-models-0001-proof.json passed.
   Software PMIC/delay/RAMUSB not originalfirmware/hardware/guestreset. No nativeCI
-  or USB since actualFASTBOOT02:14. NEW host/sourceprofile/image/freeze/helper
-  and post-recovery strictRO audit remain absent: candidate NOT READY.
+  or USB since actualFASTBOOT02:14. NEW exact GCD_CLOCK_0158 host profile binds82inputs/185Power-GCDmetadata/
+  94resource fields and firstscopeSHA c4b7f37244792dfedbe4016cd1d29ad36f00d4865
+  3430a8cc6a0d5d8add517da;19affectedhosttests passed, all12old literal tables
+  unchanged. Actual no-mock exact scope/newmodel matches passed, absent NEW
+  post-recovery root review still correctly refuses full admit. Hostproof
+  0158/wifi/first-node-new-host-scope-proof-0001.json SHA23019c808a7da25473472
+  ce8c8004155107791a6e9a9d908a04e7fb4a480ee68; host edits pending commit.
+  NEW image/freeze/helper and post-recovery strictRO audit remain absent:
+  candidate NOT READY.
   No repeated old models/CI/inventory/client-only boot and no weakened bool
   lease/time/reset/fallback. New0158 diagnostic candidate is NOT READY. This
   latest physical recovery creates another uncontrolled interval: merge NEW
