@@ -34,6 +34,84 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0160 actual controlled FASTBOOT03:34; real RO work-admission DECLINED safely, full namespace/DB/Wi-Fi still NOT DONE
+
+- User “Wi-Fi还不行” remains correct: scan/join/data false. ONLY Wi-Fi,
+  sound/camera/allchildren STOP. This milestone is physical work-admission/
+  complete retirement/native UI preservation, never Wi-Fi completion. All
+  host/build/model/USB workers ENDED. No user physical action pending.
+- ONEnew0160image91644 ENDED0 sent03:25:55.728514Z/sourcec4b22e0/image6f5e06fb/
+  6008832B. Actualwaiting-payload03:26:05.711138Z -> ONEoriginal63cbpayload
+  27519 ENDED0 ACK03:27:17.824618Z/transfer32.930514750s/bootcall16.967738917s.
+  Originalrepo phone-CmdDb-budget-runtime-0001/boot.json is now CONSUMED.
+  NEVER replay image0001/0002/payload/OEMboot/refreeze0160 or change its policy.
+  frozen0001 is obsoleteunusedoldRO; ONLY frozen0160-0002 was used, independent
+  COPY821+10COMMIT_ONLY/411committedsources/83inputs, freeze685bd5b0ce7da808a
+  572ed82c3b84bb699e3886691de97c2e9105c88031cd58e. Original81/SimpleInit/
+  BootShim/DTB preserved; original39339208B wholecodec exact via imagebyteidentity.
+- Real budget31552B SHA273a67a3d1e94773b8995a51a8733369a9997eda2632971758c0
+  fd999f7ac197 exported complete with client227104B/path1656240B, using frozen
+  actual Ctypedef decoder in wifi/actual-budget-full-0001. Budgetattempted1/
+  error0/unknown0/retired1/admitted0/declined1/samples3; phase3 actual completed
+  RO interval8985us, keys5898/5898. Three complete-check samples26114/62184/
+  25988ticks =1.360104/3.238750/1.353542ms, max62184. Conservative80*max+480000
+  estimate5454720ticks=284.1ms exceeds125ms planning limit, so NO privateCreate,
+  namespace walk or DB load attempted. Both ENTIREclient/path rawrecords zero.
+  Not an actual full-read duration, not proof of old0155/56/57 failure cause,
+  not performanceAB or a reason to relax200ms/UNKNOWN/planninglimit.
+- All25 actual budgetCore digestbytes match originalfive spans. Both original
+  GetMap FP/arch guards returned/restored; firstTPL UINT64_MAX retains
+  UNOBSERVED, finalmap4→4. Complete maps/keys, config/source/lock/owner close
+  passed. No query/provider/pool API/criticalPSCI/RSC/MSS/NVserve in thisbody.
+  Independent finalClock/GCD actual8getters/20matchedCore hashes/twoactual
+  prestarts/error0/keys5899/5899 passed. Clock allocation occurs BETWEEN the
+  completed RO context and original unopened finalticket; no key reset/rebase.
+  Decoder initially inherited wrong cross-phase key equality, corrected ONLY
+  evidence assumption; actual interval keys/data/firmware/models unchanged.
+- Physical work-decline/finalGCD proof774cdb3357146bdbfa07d65acd409707ead8ae4b
+  74d0e6340d00d9f62619728d; combinedUIproof e0b3c6a88352f422c1789faea9479c4d
+  26277012b9e3acd872eff1c58a79391c. Actualcapture39955 ENDED0 at03:32:39.591397Z
+  kernel-entered, seen7400wallpaper lockscreen/Melbourne2:32PM/BatteryCharging
+  label+icon. RawFG3/SMB2 latest99%/4290mV/charging0; icon/label is NOT actual
+  chargerstate. FullWLEDprefix26/error0/4issued=4completed/req2=ack2/module128/
+  irq2/faultOR1/rtOR1 onlyILIMbit0 permitted, allraw retained, no errorclear.
+  Earlier03:29Applelogo/prefix2 is earlysample, not latestUI/battery fault.
+  Sidebar persists; not fullrender/60Hz/performanceAB. Camera shortcut≠frame.
+- UTC0160 ONESET + independentstatus cookie4496417201/seq1/status2/error0/
+  appliedcount1/uncertainty2273us. NEVER SET0160 again. No nativeCI/download/
+  ABI change, still source7e9d461/CI41213766168/kernel7d248254/payload63cb2395.
+- Completed trial then NORMAL drain70469 ENDED0 at03:33:55.395509Z, actual
+  nativecookie5126652011/seq1mode2phase3error0/epochs0/caps80000003. Complete
+  appendraw/WLEXIT05/WLR5 independently redecoded final32/error0. Independent
+  actualPolarisFASTBOOT03:34:17.109772Z, exitreviewSHA 29a377e585a1d5ba431621524ea6c11511ef0507af37e43ff396871b748047c7.
+  Phone now actually FASTBOOT, notnativeLIVE. Onlyfrozen0160-0002 controller
+  belongs to this ENDED session, no more commands/replay; bootrecord consumed.
+- ROOT/NV currentauthority remains fresh0160 below, followed ONLY controlled
+  RO/RAMCOW plus complete normaldrain/independentFASTBOOT. No new fullhash/
+  recovery needed for upcoming source work/candidate unless Android/uncontrolled
+  interval occurs. Immutable20F66/142map+512MiB RAMCOW only, neverUFS writes.
+- NEXT ONLY Wi-Fi: implement real STAGED RO PREPARATION BEFORE ANY private
+  client, using the existing sourcebound pgcd/pgns/CmdDb decoder. Concrete
+  bounded work: four64KiB parts (two parts per full128KiB capture, two full
+  captures), each separate resident Core/map/record/context/spent-once ticket
+  with actual fullsource/head/lock/node/loadedimage-exclusion/NSWB-PAR/source
+  closure and original200ms. Do NOT borrow/reset/rebase old ticket or set fake
+  client_held. Retain original full two-pass namespaces and every immediate
+  target guard/source hash, compare complete snapshots/maps/table/globals
+  across retired RO phases, assemble two full DB copies in own residentRAM,
+  then reuse existing pwcd_select/ARC decoder. Any UNKNOWN/partial/counter/map/
+  source fault still parentRAMquarantine, no cleanup/retry/USB/PON/ACK.
+  Refactor read-only ownership from existing pwrcl helpers without making a
+  writer/EE/EL3/MPU/DMA lease; stage captures are NOT a continuous hardwaregrant.
+  New defaultOFF/source/profile/raw/log-cap/freeze/affectedchecks and twoSERIAL
+  models only after parent source changes. No new inventory/client-only or
+  budget-only boot; nextphysical candidate must progress full namespace/DB.
+  No threshold relaxation, digest cache, skipped hash/bytes/oldblockingRPMh
+  submit, oldpolicy edits or repeated unchanged3007/115/17/models/nativeCI.
+  Then actual ARC/currentcache/DRV2/TCS/private vote→completion→savedrestore,
+  ownMSS power/clock/reset/RMB/auth, MSA/VMID/MPU/SFPB/SMEM/GLINK/RMTFS and real
+  scan/join/data. Audio/camera stay STOP. Newstaged code NOT YET IMPLEMENTED.
+
 ### CURRENT0160 actual FASTBOOT03:23 + NEW fullRO39 checks complete; image0002 fresh-bound, NEW freeze0002 pending; no0160 iOS image/payload sent
 
 - ONE0120 audit73281 ENDED0: actualumount and actualPolarisFASTBOOT
