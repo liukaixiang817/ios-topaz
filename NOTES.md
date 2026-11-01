@@ -64,8 +64,12 @@ early samples only. On0029 the human already confirmed boot complete and said
 - FinalunwrappeddriverON0002 6dd301a4f8ae1d77efcd6262e30ca90b8c1f9264cc737b2090d69df2c1194174/
   15924736B/90inputs.0001predatesfinalprefixhardening, historicalonly. No
   physical0173image/payload/API/SMC/AT/MMIO/UTC/UI/nativeCI/download yet.
-  CandidateNOTREADY: nextnewexacthostprofile/original81wholecodec/sourceaudit/
-  independentfreeze/ONEhelper beforefuturepermission(ifneeded)andnewONEboot.
+  NewexacthostGCD_CLOCK_0173 301PowerGCD+94resource/90inputs;26priorenabled
+  +DISABLED AST unchanged;21targetedtests+actualnomockcompleteadmit passed.
+  Imagef70e8040f78323733229bad19df545e7773a6d39db458586076111c750a753c6/
+  6027264B;original81FW/SimpleInit/BootShim/DTB preserved,upstreamEDK2
+  whole43406536B exactGetInfo/decode matched. StillNOTREADY untilindependent
+  freeze/ONEhelper; futureexceptionpermission(ifneeded)BEFOREimage staging.
 - Phone remainsactualPolarisFASTBOOT0172/11:27:43.315703Z afternormaldrain;
   allworkersENDED/allchildrenSTOP, noauthorizations/entityactionpending.
   Newfresh0172strictRO0002+ONLYcontrolled0172exit qualification reusable; do
