@@ -34,6 +34,45 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0176 fresh strictRO actual FASTBOOT13:57; masked-DB-only candidate offline admitted; Wi-Fi NOT DONE
+
+- FW754f5558307858db74b87c2a94b6dfc34ffa13fa committed/pushed and independent
+  lsremote matched. Scope is failure isolation of SAMEprivate masked2x128KiB
+  CmdDb/64NSWB AT before FIRSTmaskedRSC/MMIO read; no identified0175rootcause,
+  no RSC access acquired/held/retired published, no engine/store/vote/MSS/NV.
+-159new+210affected ASAN/UBSAN passed,109oldCPU exactnonblankPP afterunused
+  helpers/enum removed reused. ActualwholemainCOFF/MachO|maxframe1024/noaccess
+  MMIOcallbacks/defaultOFF-QEMUpp passed; twoSERIALnew19checkmodels/90inputs
+  passed. Original200ms/68slowest/fullREAD50ms+25msreserve unchanged. RAWABI
+  1943840/prep1660544/client227104/fullsource/owner/CPU/namespace/Delete retained.
+- GCD_CLOCK_0176 exact313PowerGCD+94resource/90inputs/29oldenabled+DISABLED
+  AST unchanged;21hosttests+4actualmetadata exact/refusal checks+actualnomock
+  fulladmit passed. Newmetadata can't fake maskedRSCcallbacks/accessretirement.
+- Image8050f99065683967959714b2bd89caa33662531fea2d10cb25e1d4cbd00004eb/6025216B/driver
+  e596e9aa8bb2f530e8fa66760d3bffbd169b3a0bf1499077694fded9965e3d28/15922688B.
+  Original81FW/SimpleInit/BootShim/DTB retained, unmodifiedEDK2whole43404488B
+  GetInfo/full decode byteequal. Newhelper directly binds actualpersistent
+  same63cb authorization df995cae..., no fabricatednewonce or repeated ask.
+- NecessaryNEWstrictROaudit73329 ENDED0, normalumount→actualproductpolaris
+  13:57:17.490500Z. Independent39checks PASS review
+  ce8afbdf7c2a01098596f44f35e9ced09f98efc80501c9082d6a2d777d11a7a7/
+  preflight50e3578740faffb8282f582d07dbe256a7e6293fd590ada8ecc8cdd8bd839661.
+  Fulltwo16GiB91515474/689a8cd1 56.795150709/56.713936750s/maps142-182/marker
+  8MiBpattern/6GPTcritical/ESP102/journalmetadata/NV3x8MiBbefore-local-after/FSC
+  passed/4NV0600/no restore. Host250/watchdog300 unchanged, no whole512MiBjournal
+  or FShealth/DSPoff claim. Only offlinework and actualcontrolledFASTBOOT since.
+- Offline unconsumed staging copy was interrupted in Zigcompiler cache, no USB
+  action affected. All requiredtop-levelfiles copied bybytes/independentinode/
+  exacthash; partialcache preserved private and will not be used or frozen.
+- Source/model proofs0176/wifi/masked-database-source-and-offline-proof-0001.json
+  SHA423c8bc0ab7454777ca76396c53b148b71a7d22367d7517543cbec649e69ac31 /
+  models69f7b99c5603bfccbd3fcabbbac7eedf06e59c45505ba670f008a66d11701a07.
+- FinalcurrentHOSTcommit/independentfreeze/ONEofflinehelper remain before USB.
+  NEW0176 iOSimage/payload not sent, not nativeLIVE.0175/74 records CONSUMED,
+  no oldreplay/controller/policy/manifest edits. AllchildrenSTOP/strictserial
+  Wi-Fi only. scan/join/data remainsfalse; correctactualFB+allnewadmission allow
+  automaticONEnewRAM under actualbroad same-SHA permission without repeatask.
+
 ### CURRENT0176 masked-DB-only source complete OFFLINE; phone last actual FASTBOOT13:14; Wi-Fi NOT DONE
 
 - Only Wi-Fi, strict serial/allchildrenSTOP. No new USB/iOSimage/payload/UTC/UI
