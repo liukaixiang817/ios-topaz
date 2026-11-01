@@ -34,6 +34,83 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0172 actual controlled FASTBOOT11:27; SAME-private CPU/Device/exact restore/full retirement SUCCESS; READ/vote/Wi-Fi NOT DONE
+
+- User requested “请你加快Wi-Fi开发”; continue ONLYWiFi and skip repeated
+  independentnormalCPU/maskedCPU/prep/NPA/client/cacheinventoryboots. NEW0172
+  SAMEprivate gap is now PHYSICALLY DONE, notanothercandidate torepeat. WiFi
+  remainsunavailable: realREAD/vote/MSS/scan/join/data notdone, nofakecapability.
+- User explicit “批准0172复用一次” recorded BEFORE image; thisONE permission
+  nowconsumed. ONEimage47765 ENDED0 sent11:21:21.741175Z/sourcebd8608eefbe16db22347443a4e9f8ae4b81bdb89/
+  image50c31202d1836e2fc5f23a09ca25a5a004a7108ab7d952fece193b1be2191ab1/
+  6025216B. Solefrozen actualwaitingpayload11:21:41.653933Z, ONE63cbpayload
+  77549 ENDED0 ACK11:22:54.941506Z, transfer32.962975583s/bootcall17.443781333s.
+  Firstfullrawcapture13763 ENDED0 actualkernel-entered. ORIGINALrepo0172/
+  phone-private-CPU-checkpoint-runtime-0001/boot.json CONSUMED: noimage/payload/
+  OEMbootreplay/refreeze/oldpolicy/stripflags/oldmanifestchange.0172reuseonce
+  isspent; nevergeneralizeforfuturecandidateexceptions.
+- Actualcheckpointcomplete raw prep1660544/client227104/power1943840B retained
+  at0172/wifi/actual-private-CPU-checkpoint-0001. Bodyerror13=plannedcheckpoint,
+  phase5/retired1/knownrefusal1/unknown0, privateerror0/held0/returned1/retired1,
+  twoissued=tworeturned originalknownCreate/Delete/fullpoolretirement. Same
+  currentnamespace113x2/selectedbytes3passes/CmdDb20hash/privateCoreRPMh30hash.
+  Threefull26rowRAM snapshots equal. TwoactualDevice captures70readseach/
+  3originalGCDquerieseach/observedconfig+IRQ+allTCScontrol/status/wait/enable
+  bytes equal. NeitherIRQtype norunobservedcommandwords falselyclaimed.
+- SAMEprivate normal7+masked7 targets100..700 eachraw1OFF; bothissued127=
+  returned127, FP/TPL4/CPUarch/nativeflag0 verified, DAIF0/G1on->c0/off->exact
+  restore0/on; CPUerror0/held0/restored1/retired1/unknown0/outstanding0.
+  CPU3fullsourcecheckpoints actual30Core/RPMhdigestbytes matchPE. Workactual
+  samples68/max62591ticks, sourceunits19/estimate2629229ticks versusremaining
+  3067685ticks admitted, oldfullREAD50ms+25msreserve and200ms retained. This
+  estimateisNOTactualREADduration orhardwareauthority. Privatefirstopen to
+  lastCPUlive55.106302ms isNOTtotalretirement/wholeREADbound.
+- EntireunusedREAD/WRITE/access/accesscontext records ZERO, notjustcounts;
+  noRSCaccesscallback wired/firstTCSstore absent. No grant frompastOFF/AT/
+  RAM/retiredclient/returnbool; noEL3/VMID/MPU/DMAlease. Actualsameprivate
+  sourceCPUrestoration nowqualified onlythiscompletedinterval.0171failure
+  actualpredicate/writecounts remainUNKNOWN, notretroactivelynamedrootcause.
+- FullstagedfourindependentROphases/460Core+40CmdDbactualdigests/113node/73LI
+  passedagain, twofull128KiBDB equal40b0cf...; no newparser. Independentfinal
+  ClockGCD actual8getters/20Corehash/2prestarts/error0/key5899=5899. Preparation
+  key5898 andprivate5899 aredistinctcontexts, noforcedcrossphaseequality or
+  ticketrebase. Evidencevalidatorinitiallyassumed privatecorephase3/record
+  pointer; originalpwrclretirement keepscorephase1+earlyfinished andactual
+  residentcoreoffset fixed. Onlydecoderassertions corrected; nofirmware,
+  gate,model,dataorbootchange. Physicalproof
+  c23dec9eba58d4fdcac166674577db1b3aef5465b9a5d95be2b74f705fbd07c3.
+- NormalnativeVFS/GPU/CPUdrain79773 ENDED0 at11:27:30.206017Z/nativecookie
+  18270257279/seq1mode2phase3error0/epochs0/caps80000003. Completeappendraw/
+  WLEXIT05/WLR5 independentlydecodedfinal32/error0/faultOR0rtOR1 onlyILIMbit0;
+  allthreefullraw in drainlog byteidentical. Soleindependentactualproduct
+  polaris11:27:43.315703Z/exit0. Phone NOWactualFASTBOOT, NOTnativeLIVE. Exit
+  review1e09eb54845bc092869ad634cf259de52051476daeeb7284f9fb307d0aa0e96f.
+  ACKnotreset; actualproductproved. AllworkersENDED/childrenSTOP/no pending
+  permission/entityaction. No current-nativecommand orUSBinventorypollneeded.
+- FWaf2d44923b8f3dcf8501df0d618b948b3eb00884/HOSTc4fa399098e816e1ecf3c0926a4c500c7497f221/freeze
+  389b469db948d4b036e4249390e6d40833f7148946c18281fc23cd4e42921a28 wereused.
+  ONLYusedfrozen0172controller matchesactualdriver/image+ORIGINALsharedrecord;
+  sessionENDED, do notuseit/old0171/editedcontrollerfornewsession. User0172
+  exceptiononceconsumed. NoUTCSET/opticalcycle/scroll/performance/nativeCI;
+  thisrawdiagnosticnotWiFiconnection.0172captureexists butnoscreencontentclaim.
+- NEWfresh0172 strictRO0002 complete39checks/currentNV/roots review00db1291.../
+  preflighte0f39077... precededONLY0172controlledRO/RAMCOW+normaldrain+actualFB.
+  Nextcandidate canreuse thisqualification, do notrepeatfullhash/recovery.
+  Earlier0001incomplete budgetstop retained; nojournalwhole/FShealth/write/
+  NVrestoreclaim. Rootimmutable20F66/142map+512MiBRAMCOW/noownedmarker only.
+- NEXT0173 notimplemented/NOTREADY: audit existing pwra_acquire_checked/read,
+  fullcurrentmaskedCmdDb32AT+35geometryreads, enginefirstaccess andREADretire
+  source/time predicates againstnewactual0172 currentRAM/Device/CPU evidence.
+  Do notrepeatTHIScheckpoint/standaloneCPU/clientboot orblindfullopaqueREAD
+  basedon guesses. Any lateractualREAD must useNEWfreshsameprivatecontext/
+  owner/cache/DeviceNSRWAT/CPU/original200ms/sourceclosure, notpastphaselease.
+  ExistingboundedREADcomponents remain, neverlowerreserve/200ms/UNKNOWN or
+  restoreoriginalunboundedsubmit/internalentry/patch/fallback. Obtainactual
+  READcompletion/fulltouchedRWrestore/sourceCPU/namespace/knownDelete first;
+  RAWnotqualifiedperDRV ARCvote. Thenqualifiedsavedvote/restore+FOURWiFiVRM
+  savedrestore BEFORE ownMSS/MSA/GLINK/RMTFS/WLFW/ath10k realscan/join/data.
+  may_vote/MSS/NVserve/scan_join_data=false, sounds/cameraSTOP.
+
 ### CURRENT0172 OFFLINE FROZEN candidate complete; phone controlled FASTBOOT11:07; NEW0172 payload reuse approval needed, Wi-Fi NOT DONE
 
 - NEW0172 specificcandidate sourceFWaf2d44923b8f3dcf8501df0d618b948b3eb00884/
