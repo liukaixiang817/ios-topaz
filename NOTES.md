@@ -34,7 +34,7 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0174 SOURCE/OFFLINE: physical parent memory-copy binding defect fixed; phone remains recovered FASTBOOT0173/11:59; Wi-Fi NOT DONE
+### CURRENT0174 actual strictRO FASTBOOT12:26; parent-copy fix verified OFFLINE; access/Wi-Fi NOT DONE
 
 - User again “请你参照小米8的实现Wi-Fi啊，已经1天了都没有实现”: realWiFi
   scan/join/data stillnotdelivered. Continue Mi8actual fourVRM/MSS/GLINK-QRTR/
@@ -68,11 +68,21 @@ early samples only. On0029 the human already confirmed boot complete and said
   Drivercf3249a39d415ed4b693158fadd37677b70175e4dbd20d73b00577c7fc419749/
   15924736B/90inputs; ONLYchangedcompiledinput ispower-path.h. Sourceproof
   9fa25c8058d71c50142b94fb7407ebfcb98c0032c806e7888d06f5bafc88b8ca.
-- NoUSBthisturn/noactual0174image/payload/SMC/AT/MMIO/UTC/UI/nativeCI.
-  Phone remainsactualPolarisFASTBOOT0173/11:59:58.856735Z. AllworkersENDED/
-  allchildrenSTOP/nophysicalactionpending.0174candidateNOTREADY untilnewexact
-  hostprofile/necessaryNEWfullstrictRO roots+currentNV/original81wholecodec/
-  sourceaudit/independentfreeze/ONEhelper. Same63cbfuturequalifiedNEWsessions
+- Noactual0174iOSimage/payload/newpower-CPU-accessraw/UTC/UI/nativeCI;
+  ONLYthenecessarystrictROauditUSBperformedandcompletedasbelow.
+  Phone nowactualPolarisFASTBOOTafterNEWstrictRO0174/12:26:39.494192Z. AllworkersENDED/
+  allchildrenSTOP/nophysicalactionpending.NewexactGCD_CLOCK_0174 301PowerGCD+94resource/90inputs/old27enabled+
+  DISABLED ASTunchanged/21hosttests/actualnomockcompleteadmit pass. Image
+  6f083c3a8b86facb2dcec0f5da82a8a90dc877eed037cbe649d4edbf1db78d5c/
+  6027264B/original81FW/SimpleInit/BootShim/DTB preserved,upstreamEDK2whole
+  43406536B GetInfo/decode byteequal. StillNOTREADY untilindependentfreeze/
+  ONEhelper. Newrootreview242b8b9d9d3d109c9b4196c71bf528c1b3b318941d3fda886a1b63400693c4db/
+  preflight9cf8f8162ceeb564ced19d284db00cfa3f833c63ab8772d6b1cdb3c879d14cc9,
+  actual39checkfullstrictRO/umount/FB passed; two16GiB91515474/689a8cd1
+  hashes56.773/56.722s/maps142-182/marker/GPT/ESP102/journalmetadata/NV3x8MiB
+  before-local-after/FSC allpass,four0600NVsame0172,norestore. Wholejournal
+  uncollected/noFShealthclaim. Auditoronlyepoch/case/pinnedSHAupdated; all
+  devicecommands/checks/250s/300swatchdogunchanged. Same63cbfuturequalifiedNEWsessions
   explicitlyauthorizedbyactualhumanrecord; doNOTreasksameSHApermission.
   0173bootconsumed, neverreplay/modifyoldpolicy/editedcontroller. Newaudit
   requiredatnextnecessarytransitionbecause0173UNKNOWN, notstandaloneinventory.
