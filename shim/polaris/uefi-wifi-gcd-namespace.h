@@ -6,6 +6,9 @@
 #ifndef EFI_XNU_WIFI_GCD_NAMESPACE_RO_AVAILABLE
 #define EFI_XNU_WIFI_GCD_NAMESPACE_RO_AVAILABLE 0
 #endif
+#ifndef EFI_XNU_WIFI_CMDDB_FIRST_NODE_STOP
+#define EFI_XNU_WIFI_CMDDB_FIRST_NODE_STOP 0
+#endif
 #if EFI_XNU_WIFI_GCD_NAMESPACE_RO_AVAILABLE && !defined(POLARIS_EFI_TEST_QEMU)
 #include "uefi-wifi-rpmh-client.h"
 #include "uefi-wifi-gcd-namespace-binding.h"
@@ -29,7 +32,7 @@ struct pgns_target {
 };
 struct pgns_io {const struct paic_io *memory;void *context;int (*translate)(void *,struct pgns_translation *);};
 enum pgns_error {PGNS_OK,PGNS_ARGUMENT,PGNS_REENTRY,PGNS_CONTEXT,PGNS_SOURCE,PGNS_LOCK,
-    PGNS_RAM,PGNS_TRANSLATION,PGNS_LIMIT,PGNS_CYCLE,PGNS_LINK,PGNS_RANGE,PGNS_CHANGED,PGNS_TIME};
+    PGNS_RAM,PGNS_TRANSLATION,PGNS_LIMIT,PGNS_CYCLE,PGNS_LINK,PGNS_RANGE,PGNS_CHANGED,PGNS_TIME,PGNS_FIRST_NODE_STOP};
 static inline int pgns_fail(struct pgns_result *r,unsigned e,int unknown)
 {if(!r->error)r->error=e;if(unknown)r->unknown=1;r->returned=1;paic_actual_order(0);return 0;}
 static inline int pgns_unsafe(const struct pgns_result *r){return r->unknown||r->outstanding||(r->attempted&&!r->returned);}
@@ -102,11 +105,23 @@ static inline int pgns_collect(const struct pgns_io *io,struct pwrcl_result *p,c
             for(unsigned k=0;k<s->count;k++)if(pwrcl_overlap(address,80,s->node[k].address,80))return pgns_fail(r,PGNS_CYCLE,1);
             struct pgns_node *n=&s->node[s->count];n->address=address;s->visited=s->count+1;
             if(!pgns_copy(io,p,w,g,r,n->raw,address,80,&n->bytes,n->AT,&n->pages,1))return 0;
+#if EFI_XNU_WIFI_CMDDB_FIRST_NODE_STOP
+            /* Explicit raw-read cutpoint BEFORE interpreting node fields.
+             * Owned RAM/exclusion/AT/PAR/source/context/time gates still cover
+             * the entire80B. This partial record never admits the namespace
+             * or any database load, even if its signature/fields differ. */
+            s->count=1;
+            if(!pgns_checkpoint(io,p,w,g,r,s,1))return 0;
+            if(!pgcd_equal(s->head_raw[0],s->head_raw[1],16)||!pgcd_equal(s->lock_raw[0],s->lock_raw[1],24)||
+               !pgcd_equal(s->template_raw[0],s->template_raw[1],80))return pgns_fail(r,PGNS_CHANGED,1);
+            return pgns_fail(r,PGNS_FIRST_NODE_STOP,0);
+#else
             uint64_t base=pwfi_le(n->raw+24,8),last=pwfi_le(n->raw+32,8);
             if(pwfi_le(n->raw,8)!=PGNS_SIGNATURE||pwfi_le(n->raw+16,8)!=previous||!pwfi_le(n->raw+8,8)||
                last<base||pwfi_le(n->raw+56,4)>4||pwfi_le(n->raw+60,4)||
                (!s->count&&base)||(s->count&&(end==UINT64_MAX||base!=end+1)))return pgns_fail(r,PGNS_RANGE,1);
             previous=cursor;cursor=pwfi_le(n->raw+8,8);end=last;s->count++;
+#endif
         }
         if(previous!=pwfi_le(s->head_raw[0]+8,8)||end<UINT64_C(0x85ffffff)||!pgns_checkpoint(io,p,w,g,r,s,1))return pgns_fail(r,PGNS_LINK,1);
         if(!pgcd_equal(s->head_raw[0],s->head_raw[1],16)||!pgcd_equal(s->lock_raw[0],s->lock_raw[1],24)||
@@ -117,6 +132,15 @@ static inline int pgns_collect(const struct pgns_io *io,struct pwrcl_result *p,c
     if(a->count!=b->count||!pgcd_equal(a->head_raw[0],b->head_raw[0],16)||!pgcd_equal(a->lock_raw[0],b->lock_raw[0],24))return pgns_fail(r,PGNS_CHANGED,1);
     for(unsigned k=0;k<a->count;k++)if(a->node[k].address!=b->node[k].address||!pgcd_equal(a->node[k].raw,b->node[k].raw,80))return pgns_fail(r,PGNS_CHANGED,1);
     r->stable=r->returned=1;return 1;
+}
+static inline int pgns_first_node_stopped(const struct pgns_result *r)
+{
+    const struct pgns_pass *s=&r->pass[0];
+    if(!EFI_XNU_WIFI_CMDDB_FIRST_NODE_STOP||r->attempted!=1||r->error!=PGNS_FIRST_NODE_STOP||pgns_unsafe(r)||
+       r->returned!=1||r->stable||r->phase!=1||s->complete||s->count!=1||s->visited!=1||
+       r->pass[1].attempted||s->node[0].bytes!=80||!s->node[0].pages||s->node[0].pages>2)return 0;
+    for(unsigned k=0;k<2;k++)if(s->hash_count[k]!=5||s->hash_failed[k]||s->head_bytes[k]!=16||s->lock_bytes[k]!=24||s->template_bytes[k]!=80)return 0;
+    return 1;
 }
 /* Pure lookup of a completed captured namespace, NOT a fabricated original
  * API status, a fresh namespace check or permission to load target memory.

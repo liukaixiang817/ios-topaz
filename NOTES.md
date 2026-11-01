@@ -34,7 +34,7 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0158 actual FASTBOOT02:14 after NEW0157 startup UNKNOWN; next source/gate audit IN PROGRESS, candidate NOT READY
+### CURRENT0158 actual FASTBOOT02:14 after NEW0157 startup UNKNOWN; NEW FIRST RAW NODE planned-stop parent verified OFFLINE, two models PASS, new host NOT READY
 
 - Human fulfilled the NEW0157 recovery request. Independent exact product at
   2026-11-01T02:14:30.101621Z returned product:polaris/exit0. No pending physical
@@ -75,7 +75,29 @@ early samples only. On0029 the human already confirmed boot complete and said
   any database load. Retain all source/hash/AT/partial/FP/arch/TPL/200ms/UNKNOWN
   and complete known-client retirement, no arbitrary predicate/time weakening.
   This is failure isolation, not a full namespace/inventory/Wi-Fi completion.
-  New implementation/builder/profile/wholeEFI/models not ready yet.
+  New parent/builder/actual fullEFI now verified OFFLINE: defaultOFF explicit
+  --wifi-power-cmddb-first-node-stop requires bounded+capture-only. Stops after
+  ownedRAM/exclusion/AT/source/context/time-qualified RAW80B before any node
+  signature/range/backlink interpretation or database load. Namespace stable0/
+  complete0/count1/dedicatedPGNS+PWCDstop14; both source checkpoints retained.
+  No semantic-graph or hardware permission. Existing fullknown-client/pool/
+  source/emptyqueue retirement handles only this returned planned-stop; actual
+  UNKNOWN/partial/source/time/AT gates unchanged and never cleared. Unissued
+  EFIstatusMAX also initialized before the read, not invented success.
+  0158/wifi/first-node-parent-verified-0001/proof.json SHA018391ad3d80752ba76d
+  39c2422e773649f5b3cc7e751efff0354b9f59b6a852:91ASAN/UBSAN (normal17/old
+  bounded37/newfirst37), actual mainCOFF-MachO/maxframe1024/preprocessed
+  database body has no target load/GCDquery/CPUcritical/RSC, ninechecks pass.
+  ActualfullEFI first-node-driver-ON-0001 SHAda3e7e5e593cd71438a1632c445d793
+  1204030db7f39038629daf336a6836273/11807232B/82inputs. RAWlayout unchanged
+  1656240B, new scope metadata specifies effective budget1/target bytes0.
+  Source edits ready to commit. Two affected models completed SERIAL each19
+  checks/38.8496s and39.3122s/82sameinputs, all11resource-Power+1battery markers
+  literalint1; actual QEMU main has no physical bodies/records includingfirst
+  node. Proof0158/wifi/first-node-two-terminal-models-0001-proof.json passed.
+  Software PMIC/delay/RAMUSB not originalfirmware/hardware/guestreset. No nativeCI
+  or USB since actualFASTBOOT02:14. NEW host/sourceprofile/image/freeze/helper
+  and post-recovery strictRO audit remain absent: candidate NOT READY.
   No repeated old models/CI/inventory/client-only boot and no weakened bool
   lease/time/reset/fallback. New0158 diagnostic candidate is NOT READY. This
   latest physical recovery creates another uncontrolled interval: merge NEW

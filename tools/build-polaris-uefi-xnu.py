@@ -449,6 +449,7 @@ def main():
     ap.add_argument('--wifi-power-transaction-pe',type=Path,help='default-OFF NEW bounded private ARC path with exact original CmdDb source; offline link only until independent hardware ownership and NEW host admission')
     ap.add_argument('--wifi-power-cmddb-capture-only',action='store_true',help='default-OFF focused CmdDb namespace diagnostic; planned retirement before Query API, CPU critical admission or RSC access')
     ap.add_argument('--wifi-power-cmddb-bounded-gcd',action='store_true',help='default-OFF capture-only diagnostic using finite source-bound original Core RAM namespace; no original GCD query fallback')
+    ap.add_argument('--wifi-power-cmddb-first-node-stop',action='store_true',help='default-OFF failure-isolation cutpoint: validate and retain first Core namespace node, then planned known-client retirement; NO database target load or full-namespace claim')
     a=ap.parse_args();r=Path(__file__).resolve().parents[1]
     if a.test_wled_native_exit and (not a.wled_native_runtime_test or not a.test_qemu or
         a.test_ram_drain!='success' or a.test_wled_native_fault or a.test_wled_native_lifecycle or
@@ -515,6 +516,8 @@ def main():
         ap.error('private RAM client requires complete source-bound original GCD/Clock/NPA/RPMh scope')
     cmddb_header=None;cmddb_binding=None;cmddb_pe_relative=None
     namespace_header=None;namespace_binding=None
+    if a.wifi_power_cmddb_first_node_stop and not a.wifi_power_cmddb_bounded_gcd:
+        ap.error('first-node planned stop requires the explicit bounded capture-only scope')
     if a.wifi_power_cmddb_bounded_gcd:
         if not a.wifi_power_cmddb_capture_only or not gcd_binding:
             ap.error('bounded GCD namespace requires explicit capture-only and exact original Core binding')
@@ -876,6 +879,7 @@ def main():
 #define EFI_XNU_WIFI_CMDDB_QUERY_AVAILABLE {int(cmddb_binding is not None)}
 #define EFI_XNU_WIFI_CMDDB_CAPTURE_ONLY {int(a.wifi_power_cmddb_capture_only)}
 #define EFI_XNU_WIFI_GCD_NAMESPACE_RO_AVAILABLE {int(a.wifi_power_cmddb_bounded_gcd)}
+#define EFI_XNU_WIFI_CMDDB_FIRST_NODE_STOP {int(a.wifi_power_cmddb_first_node_stop)}
 #define EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE {int(cmddb_binding is not None)}
 #define EFI_XNU_AUDIO_CLOCK_GCD_QUERY_AVAILABLE {int(gcd_enabled)}
 #define EFI_XNU_AUDIO_CLOCK_QUERY_AVAILABLE {int(audio_clock_binding is not None)}
@@ -1295,6 +1299,16 @@ def main():
                 wifi_CPU0_power_CmdDb_GCD_namespace_no_EFI_status_fabrication=True,
                 wifi_CPU0_power_CmdDb_GCD_namespace_no_API_fallback=True,
                 wifi_CPU0_power_raw_format='RAW_V2',wifi_CPU0_power_raw_bytes=1656240)
+            if a.wifi_power_cmddb_first_node_stop:
+                manifest.update(wifi_CPU0_power_CmdDb_first_node_stop=True,
+                    wifi_CPU0_power_CmdDb_first_node_default_OFF=True,
+                    wifi_CPU0_power_CmdDb_effective_node_budget=1,
+                    wifi_CPU0_power_CmdDb_namespace_complete_possible=False,
+                    wifi_CPU0_power_CmdDb_database_target_bytes_max=0,
+                    wifi_CPU0_power_CmdDb_GCD_namespace_target_guard_count=0,
+                    wifi_CPU0_power_CmdDb_planned_stop_error=14,
+                    wifi_CPU0_power_CmdDb_first_node_requires_both_source_checkpoints=True,
+                    wifi_CPU0_power_CmdDb_first_node_no_UNKNOWN_clearing=True)
     (out/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
     print(json.dumps({k:manifest[k] for k in ['artifact','sha256','bytes','QEMU_variant','device_execution_tested']}))
 

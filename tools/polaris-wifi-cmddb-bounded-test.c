@@ -38,6 +38,7 @@ static int execute_bounded(unsigned fault,unsigned cmd_fault)
         .namespace_io={0,0,bounded_AT}},.enumeration=enumeration,.native_flag=(uintptr_t)native_on,.record=path};
     return pwrcl_run_body(&client,enumeration,2,c,early,cr,rw,bounded_body,&io);
 }
+#ifndef POLARIS_CMDDB_BOUNDED_FIXTURE_ONLY
 int main(int argc,char **argv)
 {
     assert(argc==5&&!posix_memalign((void**)&arena,4096,0x800000));
@@ -88,3 +89,4 @@ int main(int argc,char **argv)
     printf("{\"passed\":true,\"checks\":%u,\"path_raw_bytes\":%zu,\"cmd_raw_bytes\":%zu,\"namespace_raw_bytes\":%zu,\"target_guard_bytes\":%zu,\"original_GCD_Query\":0,\"original_CmdDb_Query\":0,\"critical_PSCI\":0,\"RSC_stores\":0,\"physical_firmware_executed\":false}\n",checks,sizeof(*path),sizeof(path->cmd),sizeof(*ns),sizeof(struct pgns_target));
     free(parent_report);free(original);free(npa_original);free(rp_original);free(cmd_original);free(arena);return 0;
 }
+#endif

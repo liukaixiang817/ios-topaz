@@ -68,7 +68,7 @@ struct pwcd_io {
 #endif
 };
 enum pwcd_error {PWCD_OK,PWCD_STAGE,PWCD_BASELINE,PWCD_OWNER,PWCD_SOURCE,PWCD_MAP,PWCD_DATABASE,
-    PWCD_BOUNDS,PWCD_RESOURCE,PWCD_QUERY,PWCD_CHANGED,PWCD_GUARD,PWCD_TIME,PWCD_CAPTURE_STOP};
+    PWCD_BOUNDS,PWCD_RESOURCE,PWCD_QUERY,PWCD_CHANGED,PWCD_GUARD,PWCD_TIME,PWCD_CAPTURE_STOP,PWCD_FIRST_NODE_STOP};
 static const char pwcd_names[3][9]={"cx.lvl","mx.lvl","mss.lvl"};
 static const uint32_t pwcd_addresses[3]={0x30000,0x30010,0x30060};
 static inline void pwcd_fail(struct pwcd_result *r,unsigned e,int unknown)
@@ -130,6 +130,18 @@ static inline int pwcd_database_read(const struct pwcd_io *ops,struct pgcd_conte
 {
     const struct paic_io *io=&ops->original.memory;uint64_t base=r->database[pass];
     if(base!=PWCD_UEFI_DB_BASE)return 0;
+#if EFI_XNU_WIFI_CMDDB_FIRST_NODE_STOP
+#if !EFI_XNU_WIFI_GCD_NAMESPACE_RO_AVAILABLE
+#error "First-node diagnostic requires the exact bounded namespace parent"
+#endif
+    (void)first;
+    struct pgns_result *ns=&r->bounded_namespace[pass];
+    if(!ops->namespace_provider||ops->namespace_io.memory!=io){pwcd_fail(r,PWCD_BASELINE,1);return 0;}
+    int complete=pgns_collect(&ops->namespace_io,ops->namespace_provider,w,g,ns);
+    if(!complete&&pgns_first_node_stopped(ns))pwcd_fail(r,PWCD_FIRST_NODE_STOP,0);
+    else pwcd_fail(r,PWCD_DATABASE,ns->unknown||ns->outstanding||complete);
+    return 0;
+#else
 #if EFI_XNU_WIFI_GCD_NAMESPACE_RO_AVAILABLE
     (void)first;
     struct pgns_result *ns=&r->bounded_namespace[pass];
@@ -189,6 +201,7 @@ static inline int pwcd_database_read(const struct pwcd_io *ops,struct pgcd_conte
         &r->bounded_target[pass][PWCD_PAGES],&last)) {pwcd_fail(r,PWCD_DATABASE,1);return 0;}
 #endif
     return 1;
+#endif
 }
 static inline int pwcd_query_matches(const struct pwcd_message *q,const struct pwcd_resource *x,unsigned k)
 {
@@ -259,6 +272,9 @@ static inline int pwcd_collect(const struct pwcd_io *ops,const struct paic_resul
     struct pgcd_context *g,struct pwcd_result *r,struct pwrph_work *w)
 {
     if(!r||r->attempted)return 0;r->attempted=1;
+#if EFI_XNU_WIFI_GCD_NAMESPACE_RO_AVAILABLE
+    for(unsigned pass=0;pass<2;pass++)for(unsigned k=0;k<PWCD_PAGES;k++)r->namespace[pass][k].status=UINT64_MAX;
+#endif
     if(!ops||(!EFI_XNU_WIFI_CMDDB_CAPTURE_ONLY&&!ops->query)||!w||!g||!g->record||!g->ticket||g->stage!=2||!g->opened||g->finished||
        !pwrph_context_ready(g)){pwcd_fail(r,PWCD_BASELINE,1);return 0;}
     const struct paic_io *io=&ops->original.memory;
