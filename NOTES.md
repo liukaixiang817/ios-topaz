@@ -34,6 +34,61 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0177 terminal-GOP diagnostic offline complete; NEW candidate NOT READY; phone last actual FASTBOOT14:23, Wi-Fi NOT DONE
+
+- Overrides older CURRENT/READY/LIVE. Phone has NOT received0177. Last actual
+  remains user-recovered Polaris FASTBOOT14:23:37.329774Z;0176 startupACK UNKNOWN
+  with no new physical raw. No pending physical action/authorization, no USB
+  poll/replay. All children STOP, strict serial only Wi-Fi. Actual scan/join/data
+  never completed; sound/camera remain STOP.
+- NewdefaultOFF --wifi-power-terminal-gop-diagnostics requires the explicit
+  masked-database diagnostic. This addresses missing failure visibility, NOT
+  an identified0176 predicate or a Wi-Fi enable. Source is
+  shim/polaris/uefi-wifi-terminal-gop.h and uefi-xnu.c, reviewed scope in
+  shim/polaris/uefi-wifi-terminal-gop-scope.md. GOP spec permits direct linear
+  framebuffer access by boot software; own existingGOP9d400000/1080x2160 is the
+  provenance, NOT Reserved-as-free/AT-as-grant or EE/EL3/radio permission.
+- Independent normal admission BEFORE any Wi-Fi phase captures full original
+  GetMap/descriptorversion1/map/FP/architecture and actualGOP protocol/mode/info,
+  self/native flag ownership and all405 target NS-normal-memory RWAT/PARrestore
+  pages. No pixels in normal admission/success. Unsupported display safely
+  refuses before privateCPU work; uncertain foreign return stays UNKNOWN.
+- UNKNOWN still appends full powerRAM, masksALLDAIF/G1 then nonreturnsWFE.
+  Optional local renderer rechecks literalbindings/nativeCPUflag0/architecture,
+  exactGOPheaders, all405page mappings before firstpixel, eachpage again before
+  stores, saved/restoredPAR and freshnativeflag. Only576x384 at48,96 monochrome
+  numericlabels/actual attempted-issued/error/partialbytes; screen NOT WIFI.
+  Samecheckedpages-onlycacheclean. Terminal50ms is NOT private renewal/resume;
+  noGOP/Blt/Console/USB/SMC/Stall/allocation/reset/ACK/cleanup/restoration. Draw
+  success/failure/partial all keepterminalhold. No fault handler/visible-record
+  guarantee for nonreturn/fault BEFOREhold or unsupportedchanged display.
+- Final driver0003 c46a6a8bfbdaaafa1800c0059a0305a73977fdb9b17fcb47c7ad9fb0ba4f0f40,
+  16057856B/91inputs. New2054ASAN/UBSAN software checks pass, including all405
+  pre-store failures and405 partial-prefix failures/PARrestore/nativeflag/
+  architecture/header/timeout/unsupported mapversion/stickyresidual/reentry.
+  Preview inspected legible and exact outside-rectangle sentinel unchanged.
+  ActualmainCOFF/MachO/generalregs/maxframe1024/QEMU+defaultOFF body/raw absent
+  pass. FullparentCABI126096B/module125664B, full10MiBFW/14MiB+128host capacity
+  includes two extra copies withoutstrip. Old478 power cases have byteequal
+  actualexecutingPP against frozen0176 (not rerun); original200ms/68slowest/
+  READ50+25ms/UNKNOWN/fullretirement all unchanged.
+- FinaltwoSERIALnew wholeEFI-XNU models0002 pass19each/91sameinputs/11resource+
+  1battery literalint1, QEMU physicalGOP/CPU/private/READ bodyrecords absent.
+  Modelproofc474993b921f940e1d9a13ac09299b3e5ef3d3e1113e10373a07d9841df3dfa3,
+  parentproof8465f0b0efcf8f6fca54f4b971f151b7fce1155a5721164675862d848af60685.
+  Earlierprototype driver0001/0002 and models0001 are HISTORICAL before final
+  mapversion/residual hardening, not candidate evidence. SOFTWARE PMIC/delay/
+  RAMUSB/AT are not physical display/power/guestreset/network proof.
+- Sourceproof0177/wifi/terminal-GOP-source-and-offline-proof-0001.json SHA24421732236428bde1050274f524cabf4b0430940c16863a164cfc0ba8bfc6c8.
+  NEXT complete sourcecommit/push, NEW exacthostprofile/metadata admission,
+  original81 wholecodec/newimage/sourceaudit/independentfreeze/ONEofflinehelper
+  and NEWfullstrictRO39 at next necessary transition;0176audit is HISTORICAL
+  afterUNKNOWNphysicalreset. Only then actualcorrectFB permitsONEnewRAM using
+  existing broadsame63cb authorization df995cae... (do not ask again). No old
+  image/payload/session replay. Do not start opaque masked tests without the
+  new visibility admission. Candidate NOTREADY and may_vote/MSS/NVserve/
+  scan_join_data=false. All Android/Windows/UFS/NV/ESP protections unchanged.
+
 ### CURRENT0176 startup ACK UNKNOWN; user physically recovered, actual Polaris FASTBOOT14:23; masked-DB/access/READ/Wi-Fi NOT DONE
 
 - Overrides ALL prior CURRENT/ACTIVE/READY/LIVE. All USB/host/build/modelworkers

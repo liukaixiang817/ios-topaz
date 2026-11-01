@@ -460,11 +460,14 @@ def main():
     ap.add_argument('--wifi-power-private-cpu-checkpoint',action='store_true',help='default-OFF source-bound failure isolation: same real private/current namespace/fullRAM/Device/normal+masked CPU/complete restore/Delete before ANY RSC access/TCS store; no writer callback or fake engine retirement')
     ap.add_argument('--wifi-power-read-access-checkpoint',action='store_true',help='default-OFF same private CPU path plus full current masked CmdDb and checked RSC geometry reads/complete observation retirement; deny-only store callback, no engine or READ request')
     ap.add_argument('--wifi-power-read-database-checkpoint',action='store_true',help='default-OFF two full current masked CmdDb RAM captures and complete CPU/private retirement BEFORE first masked RSC MMIO read; no access acquisition or engine state')
+    ap.add_argument('--wifi-power-terminal-gop-diagnostics',action='store_true',help='default-OFF bounded numeric UNKNOWN evidence in the current GOP framebuffer, no firmware/GOP method or USB/reset/cleanup on the terminal path; requires the explicit masked database diagnostic')
     a=ap.parse_args();r=Path(__file__).resolve().parents[1]
     if a.wifi_power_read_access_checkpoint and not a.wifi_power_private_cpu_checkpoint:
         ap.error('read access checkpoint requires the complete same-private CPU checkpoint dependencies')
     if a.wifi_power_read_database_checkpoint and not a.wifi_power_read_access_checkpoint:
         ap.error('database checkpoint requires the complete same-private read observation dependencies')
+    if a.wifi_power_terminal_gop_diagnostics and not a.wifi_power_read_database_checkpoint:
+        ap.error('terminal GOP evidence requires the explicit current masked database diagnostic scope')
     if a.wifi_power_private_cpu_checkpoint and not a.wifi_power_current_arc_read_work_admission:
         ap.error('private CPU checkpoint requires the full prepared/current source and unchanged READ work admission dependencies')
     if a.wifi_power_current_arc_read_work_admission and not a.wifi_power_current_arc_read:
@@ -922,6 +925,7 @@ def main():
 #define EFI_XNU_WIFI_PRIVATE_CPU_CHECKPOINT {int(a.wifi_power_private_cpu_checkpoint)}
 #define EFI_XNU_WIFI_READ_ACCESS_CHECKPOINT {int(a.wifi_power_read_access_checkpoint)}
 #define EFI_XNU_WIFI_READ_DB_CHECKPOINT {int(a.wifi_power_read_database_checkpoint)}
+#define EFI_XNU_WIFI_TERMINAL_GOP_DIAGNOSTICS {int(a.wifi_power_terminal_gop_diagnostics)}
 #define EFI_XNU_WIFI_CPU_RO_ADMISSION {int(a.wifi_cpu_ro_admission)}
 #define EFI_XNU_WIFI_CPU_MASKED_RO_ADMISSION {int(a.wifi_cpu_masked_ro_admission)}
 #define EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE {int(cmddb_binding is not None)}
@@ -995,6 +999,7 @@ def main():
     inputs=['shim/polaris/'+n for n in sources]+['shim/polaris/uefi.h','shim/polaris/uefi-xnu.h','shim/polaris/uefi-usb.h','shim/polaris/uefi-memory.h','shim/polaris/uefi-reset.h','shim/polaris/uefi-file.h','shim/polaris/uefi-boot-options.h','shim/polaris/uefi-ram-lease.h','shim/polaris/payload.h','tools/build-polaris-uefi-xnu.py','tools/polaris-uefi-input.h']
     inputs+=['tools/polaris_uefi_cpu_tree.py','tools/adt.py','tools/mkpayload.py']
     inputs.append('shim/polaris/runtime-marker.h')
+    if a.wifi_power_terminal_gop_diagnostics:inputs.append('shim/polaris/uefi-wifi-terminal-gop.h')
     if cache_binding:
         inputs+=['shim/polaris/uefi-wifi-cache-readonly.h','tools/polaris-wifi-firmware-identity.py',
                  'tools/polaris-wifi-firmware-identity.h',cache_pe_relative]
@@ -1569,6 +1574,20 @@ def main():
             wifi_CPU0_power_private_database_checkpoint_RAM_AT_per_capture=32,
             wifi_CPU0_power_private_database_checkpoint_same_original_200ms_and_READ_reserves=True,
             wifi_CPU0_power_private_database_checkpoint_complete_CPU_source_namespace_Delete_before_USB=True)
+    if a.wifi_power_terminal_gop_diagnostics:
+        manifest.update(wifi_CPU0_power_terminal_GOP_diagnostics=True,
+            wifi_CPU0_power_terminal_GOP_default_OFF=True,
+            wifi_CPU0_power_terminal_GOP_physical_body=not a.test_qemu,
+            wifi_CPU0_power_terminal_GOP_physical_compiled_out=a.test_qemu,
+            wifi_CPU0_power_terminal_GOP_scope='NUMERIC_TERMINAL_EVIDENCE_ONLY_NO_FOREIGN_METHOD_NO_EXIT_OR_RF_GRANT',
+            wifi_CPU0_power_terminal_GOP_base=0x9d400000,
+            wifi_CPU0_power_terminal_GOP_native_CPU_must_not_be_issued=True,
+            wifi_CPU0_power_terminal_GOP_fresh_RW_AT_and_PAR_restore_per_page=True,
+            wifi_CPU0_power_terminal_GOP_complete_mapping_check_before_first_pixel=True,
+            wifi_CPU0_power_terminal_GOP_rect=[48,96,576,384],
+            wifi_CPU0_power_terminal_GOP_terminal_deadline_ticks=960000,
+            wifi_CPU0_power_terminal_GOP_private_ticket_or_UNKNOWN_changed=False,
+            wifi_CPU0_power_terminal_GOP_original_hold_still_nonreturning=True)
     if a.wifi_cpu_ro_admission:
         manifest.update(wifi_CPU0_power_transaction=False,
             wifi_CPU0_power_CPU_RO_admission=True,wifi_CPU0_power_CPU_RO_default_OFF=True,

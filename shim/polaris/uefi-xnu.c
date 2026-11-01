@@ -252,9 +252,79 @@ static int shutdown_status(void *,const uint8_t **,uint64_t *);
 /* Outer include gate removes every new physical/query/FP body from QEMU. */
 #include "uefi-gcd-mmio-readonly.h"
 #include "uefi-audio-clock-gcd-query.h"
+#if EFI_XNU_WIFI_TERMINAL_GOP_DIAGNOSTICS
+#if !EFI_XNU_WIFI_READ_DB_CHECKPOINT
+#error "Terminal GOP evidence requires its distinct masked database diagnostic"
+#endif
+#include "uefi-wifi-terminal-gop.h"
+struct terminal_gop_result {
+    struct pwtg_result pixels;struct pgcd_fp_guard map_FP;
+    struct pwtg_arch map_before,map_after;
+    uint64_t map_function;uint32_t map_issued,map_returned,uncertain;
+};
+static struct terminal_gop_result terminal_gop;
+static void terminal_gop_raw(void)
+{
+    ram_report("WIFI_TERMINAL_GOP_RAW_V1_BYTES=",sizeof(terminal_gop));
+    ram_text("WIFI_TERMINAL_GOP_RAW_V1_BEGIN\r\n");ram_hex((const void*)&terminal_gop,sizeof(terminal_gop));
+    ram_text("WIFI_TERMINAL_GOP_RAW_V1_END\r\n");
+}
+/* Separate normal admission, before ANY Wi-Fi private context opens. The
+ * original GetMap is the only foreign call. Keep its raw FP/architecture
+ * evidence; an uncertain return is still terminal, never a clean refusal. */
+static int terminal_gop_arm(void)
+{
+    struct pwtg_result*r=&terminal_gop.pixels;
+    if(r->attempted||terminal_gop.map_issued)return pwtg_fail(r,PWTG_REENTRY);
+    if(wln_cpu_on_issued)return pwtg_fail(r,PWTG_NATIVE);
+    if(!pgcd_record.self_bound||!pwtg_arch_read(&terminal_gop.map_before)||!pwtg_normal(&terminal_gop.map_before)||
+       !pgcd_actual_fp_save(0,&terminal_gop.map_FP))return pwtg_fail(r,PWTG_ARCH);
+    r->map_bytes=sizeof(r->map);
+    terminal_gop.map_function=(uintptr_t)system_table->boot->get_map;
+    terminal_gop.map_issued=1;
+    r->map_status=system_table->boot->get_map(&r->map_bytes,r->map,&r->map_key,&r->map_stride,&r->map_version);
+    terminal_gop.map_returned=1;
+    int fp_ok=pgcd_actual_fp_restore(0,&terminal_gop.map_FP);
+    if(!fp_ok||!terminal_gop.map_FP.saved||!terminal_gop.map_FP.restored||
+       !pwtg_arch_read(&terminal_gop.map_after)||!pwtg_same_arch(&terminal_gop.map_before,&terminal_gop.map_after,0)){
+        terminal_gop.uncertain=1;return pwtg_fail(r,PWTG_ARCH);
+    }
+    return pwtg_arm(r,(uintptr_t)gop,(uintptr_t)&wln_cpu_on_issued,pgcd_record.self_base,pgcd_record.self_bytes);
+}
+static void terminal_gop_evidence(void)
+{
+    struct pwtg_result*r=&terminal_gop.pixels;
+    if(r->native_address!=(uintptr_t)&wln_cpu_on_issued||r->self_base!=pgcd_record.self_base||
+       r->self_bytes!=pgcd_record.self_bytes||r->headers.address[0]!=(uintptr_t)gop){
+        (void)pwtg_fail(r,PWTG_ARGUMENT);terminal_gop_raw();return;
+    }
+    /* Numeric resident observations, never an inference from an unused zero.
+     * The attempted/issued masks beside the errors distinguish UNOBSERVED. */
+    pwtg_line(r,0,"V1 HOLD",pwrpt_record.attempted,pwrpt_record.phase);
+    pwtg_line(r,1,"BODY E U",pwrpt_record.error,pwrpt_record.unknown);
+    pwtg_line(r,2,"CLIENT E OUT",pwrcl_record.error,pwrcl_record.outstanding);
+    pwtg_line(r,3,"CPU E OUT",pwrpt_record.CPU.error,pwrpt_record.CPU.outstanding);
+    pwtg_line(r,4,"CPU N M",pwrpt_record.CPU.affinity_issued,pwrpt_record.CPU.masked_issued);
+    pwtg_line(r,5,"CPU H R",pwrpt_record.CPU.local_mask_held,pwrpt_record.CPU.local_restored);
+    pwtg_line(r,6,"ACC A E",pwrpt_record.access.attempted,pwrpt_record.access.error);
+    pwtg_line(r,7,"ACC U OUT",pwrpt_record.access.unknown,pwrpt_record.access.outstanding);
+    pwtg_line(r,8,"DB0 A BYTES",pwrpt_record.access.CmdDb[0].attempted,pwrpt_record.access.CmdDb[0].bytes);
+    pwtg_line(r,9,"DB1 A BYTES",pwrpt_record.access.CmdDb[1].attempted,pwrpt_record.access.CmdDb[1].bytes);
+    pwtg_line(r,10,"DB0 H FAIL",pwrpt_record.access.CmdDb[0].hash_count,pwrpt_record.access.CmdDb[0].hash_failed);
+    pwtg_line(r,11,"DB1 H FAIL",pwrpt_record.access.CmdDb[1].hash_count,pwrpt_record.access.CmdDb[1].hash_failed);
+    pwtg_line(r,12,"ACC R W",pwrpt_record.access.reads,pwrpt_record.access.writes);
+    pwtg_line(r,13,"CORE E PH",pwrcl_record.core.error,pwrcl_record.core.phase);
+    pwtg_line(r,14,"GOP A MAP U",r->armed,terminal_gop.uncertain);
+    pwtg_line(r,15,"NOT WIFI",pwrpt_record.read.io.attempted,pwrpt_record.transaction.attempted);
+    (void)pwtg_draw(r);terminal_gop_raw();
+}
+#endif
 static int original_service_unknown;
 static int new_original_unknown(void)
 {return pwcq_parent_unsafe()||original_service_unknown||(pgcd_resident_context.record&&pgcd_uncertain(&pgcd_resident_context))||pacgq_preboot_record.uncertain||pacgq_preboot_record.outstanding||pacgq_ticket.outstanding
+#if EFI_XNU_WIFI_TERMINAL_GOP_DIAGNOSTICS
+    ||terminal_gop.uncertain
+#endif
 #if EFI_XNU_WIFI_NPA_READONLY_AVAILABLE
     ||pwnpa_unknown()
 #endif
@@ -288,6 +358,11 @@ __attribute__((noreturn)) static void power_unknown_hold(void)
     __asm__ volatile("mrs %0,daif; mrs %1,ICC_IGRPEN1_EL1":"=r"(power_hold_raw.daif_after),"=r"(power_hold_raw.group_after));
     ram_text("WIFI_POWER_UNKNOWN_HOLD_RAW_V1_BEGIN\r\n");ram_hex((const void*)&power_hold_raw,sizeof(power_hold_raw));
     ram_text("WIFI_POWER_UNKNOWN_HOLD_RAW_V1_END\r\n");
+#if EFI_XNU_WIFI_TERMINAL_GOP_DIAGNOSTICS
+    /* Remains terminal even if this local draw fails or is partial. No
+     * foreign method, cleanup, response or CPU/private restoration follows. */
+    terminal_gop_evidence();
+#endif
     for(;;)__asm__ volatile("wfe":::"memory");
 }
 #endif
@@ -322,7 +397,11 @@ _Static_assert(sizeof(struct pwrpc_result)==10048,"complete CPU-local raw ABI");
  * stored separately in the already sizeof(log_buffer)-based snapshot. */
 #if EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
 _Static_assert(sizeof(log_buffer)>=2*(sizeof(pwsp_record)+sizeof(pwrpt_record)+sizeof(pwrcl_record)+sizeof(pwnpa_record)+
-    sizeof(pwrph_record)+sizeof(pacgq_preboot_record)+sizeof(pacgq_preboot_i2c)+sizeof(pgcd_record))+1048576,
+    sizeof(pwrph_record)+sizeof(pacgq_preboot_record)+sizeof(pacgq_preboot_i2c)+sizeof(pgcd_record))+
+#if EFI_XNU_WIFI_TERMINAL_GOP_DIAGNOSTICS
+    4*sizeof(terminal_gop)+
+#endif
+    1048576,
     "complete preparation/client/power/source raw must fit without truncation");
 #elif EFI_XNU_WIFI_CMDDB_STAGED_RO_AVAILABLE
 _Static_assert(sizeof(log_buffer)>=2*(sizeof(pwsp_record)+sizeof(pwnpa_record)+
@@ -426,6 +505,16 @@ static int disk_payload(void)
 static int prepare_boot(void *context)
 {
     (void)context;if(load_state!=2)return 0;
+#if EFI_XNU_WIFI_TERMINAL_GOP_DIAGNOSTICS && !defined(POLARIS_EFI_TEST_QEMU)
+    if(!terminal_gop_arm()){
+        terminal_gop_raw();
+        if(terminal_gop.uncertain){original_service_unknown=1;power_unknown_hold();}
+        /* No private/CPU/access work has started. Missing display provenance
+         * safely refuses this diagnostic instead of running another opaque
+         * power test. Reentry cannot open a second admission. */
+        return 0;
+    }
+#endif
 #if EFI_XNU_WIFI_CACHE_AVAILABLE
 #if defined(POLARIS_EFI_TEST_QEMU)
     static unsigned wifi_cache_software_reported;
