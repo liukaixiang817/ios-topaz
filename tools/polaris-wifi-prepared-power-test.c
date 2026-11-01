@@ -28,6 +28,8 @@ static int execute_power(unsigned fault,unsigned oldfault)
     reset_bound(0);power_fault=fault;masked_AT=load_phase=0;jf=oldfault;
     if(oldfault==5)put(links+0x3004+48,0x30070,4);
     if(oldfault==10)cf=15;
+    if(fault==5)put(rimage+0xd53c,2,4);
+    if(fault==6)put(rimage+0xd228,3,4);
     c->io.query=path_descriptor;
     const struct pwrcl_io io={{{s,0,path_memory_arch,path_identity,order},path_locate,ns_map},client_create,client_drop,own_name};
     return pwrcl_run_body(&io,enumeration,2,c,early,cr,rw,power_body,0);
@@ -69,6 +71,11 @@ int main(int argc,char**argv)
         else if(f==10){assert(!v&&path->retired&&delete_calls==1&&cr->client_held&&cr->outstanding&&!cr->client_returned&&pwrcl_result_unsafe(cr));}
         else{if(v||!cr->client_held||delete_calls||!pwrpt_unsafe(path))fprintf(stderr,"oldfault%u result%d held%u delete%u patherr%u CPU%u access%u tx%u\n",f,v,cr->client_held,delete_calls,path->error,path->CPU.error,path->access.error,path->transaction.error);assert(!v&&cr->client_held&&!delete_calls&&pwrpt_unsafe(path));}
         assert(!api_queries);checks++;
+    }
+    for(unsigned fault=5;fault<=6;fault++){
+        assert(execute_power(fault,0)&&path->error==PWRPT_RAM&&path->RAM[0].error==PWRPB_SOURCE);
+        assert(path->known_refusal&&path->prepared_cmd.closed&&cr->client_returned&&delete_calls==1);
+        assert(!mask_calls&&!psci_calls&&!modeled_stores&&!pwrpt_unsafe(path));checks++;
     }
     printf("{\"passed\":true,\"checks\":%u,\"same_preparation_private_power_restore_Delete\":true,\"new_full_body_bytes\":%zu,\"new_access_bytes\":%zu,\"old_unused_CmdDb_raw_still_zero\":true,\"original_CmdDb_Query\":0,\"physical_executed\":false}\n",checks,sizeof(*path),sizeof(path->access));
     free(original);free(npa_original);free(rp_original);free(cmd_original);free(arena);return 0;

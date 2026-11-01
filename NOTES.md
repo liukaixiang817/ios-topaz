@@ -34,6 +34,58 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0163 actual controlled FASTBOOT05:06; integrated power safely refused at HAL count/ID mismatch; NEW0164 exact field correction verified OFFLINE, host/candidate NOT READY
+
+- User asks Wi-Fi quickly. ONLY Wi-Fi; scan/join/data NOT DONE. Sound/camera/
+  children STOP. Actual0163 integrated attempt was sent ONCE04:58:04.665278Z,
+  imagee03b0df5d5b5c8ccb706a2e20a157d070091f8e01b61e05e8e8de7a78be36609/
+  6025216B; payload ACK returned. ORIGINALrepo0163 bootrecord CONSUMED;
+  never replay image/payload/OEMboot/refreeze. Only frozen0163 controlled it.
+- Real preparation1660544B/current namespace113x2/three selected-byte passes
+  plus known privateCreate/Delete succeeded. Completeclient227104B and
+  preparedpower1892336B exported, later UI capture byte-for-byte identical.
+  Bodyerror3/RAMerror3 SOURCE, knownrefusal1/retired1/clientheld0/returned1,
+  originalAPI2issued=2returned. Current CmdDb20actualdigest bytes and private
+  Core/RPMh30digests matched; entire Device/CPU/RSC/access/legacyCmdDb records
+  ZERO. Full HAL392B captured, no cache/queue/TCS collection reached. This
+  proves safe refusal BEFORE critical admission/MMIO, not Wi-Fi or a vote.
+- Exact original728c..7294 copies staticd238 count to runtimed538+4; runtime
+  count1 and staticlogicalDRV ID2 are different fields. Old reader compared
+  d208+20 ID2 with count1. Actual full source ABI proofd05b22ceb2dcbaf01b6980d
+  70772717395efa1b909b218e63cd9866eb4b00900 matches originalPE .text and
+  explains THIS returned refusal. No guesses about old0155/56/57 UNKNOWN.
+- NEW0164 changes comparison to staticd238 count==currentconfigcount and
+  separately staticd228ID==currentdrvrowID. Initialized/uniqueDRV2/bank/base/
+  geometry/source/owner/200ms/UNKNOWN/full restore gates preserved. Fixtures
+  use original count1; count2/wrongstaticID/changedcount explicitly rejected.
+  204affected chain ASAN/UBSAN cases+34RAM+26Device cases PASS, actual whole
+  parentCOFF/MachO|maxframe1024/defaultOFF/QEMUpp/fullEFI PASS. Parentproof
+  c30e20c6d8bdb1534b25b5b74bea60296107060c23897e9cf0ce127276b14cb4.
+  Two SERIAL new19check terminalmodels PASS/86sameinputs, 11resourcePower+
+  battery literalint1 and actualQEMUpp physical bodies/records compiledout;
+  proof1debdabc582a6a6438fb84403836a50c0670dd395f6e674fe504a9d5430a479e.
+  No native source/CI/download. SOFTWARE is not physical rail/guest reset.
+- Actual0163 UTC uniqueSET confirmed independentAPPLIEDcookie51485962639/
+  seq1/status2/error0/count1/uncertainty2246us. Never SET0163 again. Actual
+  UI05:05:48.960788Z shows7400 SpringBoard home/time4:05/chargingicon;
+  calendar widget stillcachedThursday1, no correct-date/fullrender claim.
+  WLEDprefix26/error0/4=4/req2=ack2/module128/irq2/faultOR0rtOR0; latestvalid
+  battery98%/4267mV/charging0, error7 raw retained; icon not charger sample.
+- NORMAL0163drain ENDED0 at05:06:25.247400Z: nativecookie52116270909/seq1/
+  mode2/phase3/error0/epochs0/caps80000003. Full appendraw/WLEXIT05/WLR5
+  independently redecodedfinal32/error0/faultOR0rtOR0. Independently actual
+  PolarisFASTBOOT05:06:34.589020Z. No keys/genericreset. No current-native
+  commands remain. Full physical source/exit proof8a95a7d9b68c3f8abb88c8ec
+  624ea4553ae0fab602f3d3a7cbca5cbff9b20f65 at0163/wifi/actual-prepared-power-0001.
+  FinalGCD8getters/20Corehash/2prestarts/key5899=5899 independently passed.
+  Decoder initially assumed rawphase3; original pgcd_finish explicitly sets2,
+  corrected evidence only. No firmware/gate/reboot changed for that audit.
+- NEXT new exacthostprofile/source commit/fulloriginal81codec/sourceaudit/
+  independentfreeze/ONEhelper then real expectedFASTBOOT and ONE integrated
+  currentcache/TCS/bounded vote/completion/savedrestore attempt. No standalone
+  inventory/prep/client-only boot. Fresh0160ROOT/NV remains reusable through
+  normal0161+0163drains; no repeat fullhash/recovery. MSS/NVserve/radio false.
+
 ### CURRENT0161 remains actual controlled FASTBOOT04:14; NEW0163 full power candidate fits unchanged FFS after capacity-only fix; host profile/freeze NOT READY
 
 - User requests Wi-Fi quickly; ONLY Wi-Fi, sound/camera/children STOP. Next

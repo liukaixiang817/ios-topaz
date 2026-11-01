@@ -127,8 +127,12 @@ static inline int pwrpb_driver(const struct paic_io *io,struct pwrcl_result *p,c
      * entry+14 must be initialized, +c is base and +10 selects the DRV bank.
      * Original7fb0 adds0x20d04 for bank2:179c0000->179e0d04. Read the actual
      * table; the static HAL config and a DT name are not substituted for it. */
-    unsigned configured=(unsigned)pwfi_le(old->HAL_config+0x20,4);
-    if(!configured||configured>16||
+    /* Original728c->7294 copies static HAL header d238 (count) to
+     * runtime d538+4. d208+20 is instead the logical DRV ID in its12B
+     * row. Keep both bindings: count agrees with config, ID with drv_row. */
+    unsigned configured=(unsigned)pwfi_le(old->HAL_config+0x30,4);
+    if(!configured||configured>16||configured!=pwfi_le(b->config,4)||
+       pwfi_le(old->HAL_config+0x20,4)!=pwfi_le(b->drv_row,4)||
        !pwrpb_copy(io,p,w,b,b->HAL_runtime,p->reader.image+0xd538,sizeof(b->HAL_runtime),&b->HAL_runtime_bytes,0)||
        b->HAL_runtime[0]!=1||pwfi_le(b->HAL_runtime+4,4)!=configured||
        pwfi_le(b->HAL_runtime+48+0x18,4)!=8||pwfi_le(b->HAL_runtime+48+0x1c,4)!=16)return pwrpb_fail(b,PWRPB_SOURCE);

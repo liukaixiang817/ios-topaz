@@ -1413,6 +1413,10 @@ def main():
             wifi_CPU0_power_prepared_original_private_deadline_ticks=3840000,
             wifi_CPU0_power_prepared_final_ticket_unopened_before_Clock=True,
             wifi_CPU0_power_prepared_both_raw_scopes_exported_complete=True,
+            wifi_CPU0_power_runtime_HAL_count_static_RVA=0xd238,
+            wifi_CPU0_power_runtime_HAL_count_offset=4,
+            wifi_CPU0_power_static_logical_DRV_RVA=0xd228,
+            wifi_CPU0_power_HAL_count_and_logical_DRV_checked_separately=True,
             original_GCD_new_scope_RAM_log_capacity=10485760,
             wifi_CPU0_resources_firmware_RAM_log_capacity=10485760)
     (out/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')

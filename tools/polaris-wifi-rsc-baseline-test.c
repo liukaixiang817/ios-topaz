@@ -36,7 +36,7 @@ static struct paic_io setup(unsigned which)
     uint8_t *retired=links+0xa004,*commands=links+0xa104;
     list(links+0x200+64*2,40,1,retired);put(retired,(uintptr_t)commands,8);
     for(unsigned j=0;j<8;j++){put(links+0x400+24*j,j,4);put(links+0x404+24*j,j<4?0:3,4);put(links+0x408+24*j,1234,8);}
-    memset(rimage+0xd538,0,8+16*24);rimage[0xd538]=1;put(rimage+0xd538+4,pwfi_le(rimage+0xd208+0x20,4),4);
+    memset(rimage+0xd538,0,8+16*24);rimage[0xd538]=1;put(rimage+0xd538+4,pwfi_le(rimage+0xd238,4),4);
     put(rimage+0xd538+48+0xc,0x179c0000,4);put(rimage+0xd538+48+0x10,2,4);rimage[0xd538+48+0x14]=1;
     put(rimage+0xd538+48+0x18,8,4);put(rimage+0xd538+48+0x1c,16,4);
     put(rimage+0xd2ec,3,4);put(rimage+0xd2f0,(uintptr_t)links+0x3004,8);
@@ -69,6 +69,9 @@ static struct paic_io setup(unsigned which)
     if(which==23)rimage[0xd538+48+0x14]=0;
     if(which==24)put(rimage+0xd538+4,0,4);
     if(which==25)put(rimage+0xd538+48+0x18,7,4);
+    if(which==26)put(rimage+0xd538+4,2,4); /* ID2 is not the count1 header. */
+    if(which==27)put(rimage+0xd228,3,4); /* count still1, wrong static logical ID. */
+    if(which==28)put(rimage+0xd238,2,4); /* static/runtime count disagreement. */
     struct pwrph_io ops={{s,0,baseline_arch,identity,order},rp_locate,baseline_map};
     assert(pwrph_collect(&ops,2,enumeration,c,rr,rw));provider->core=*r;provider->reader=*rr;
     assert(pwrcl_exclusions(&ops.memory,provider,rw,enumeration));
@@ -99,7 +102,7 @@ int main(int argc,char **argv)
     assert(pwrpb_capture(&io,provider,rw,&provider->pools[0][1],&reference,after)&&pwrpb_equal(before,after));checks++;
     assert(!pwrpb_capture(&io,provider,rw,&provider->pools[0][1],&reference,before));checks++;
     assert(pwrpb_plan(before,desired,saved,requested)&&!memcmp(saved,values,sizeof(saved)));checks++;
-    for(unsigned k=1;k<=25;k++){
+    for(unsigned k=1;k<=28;k++){
         io=setup(k);ok=pwrpb_capture(&io,provider,rw,&provider->pools[0][1],&reference,before);
         if(k==3||k==4||k==16||k==17||k==19){
             assert(ok);for(unsigned j=0;j<3;j++)saved[j]=requested[j]=99;

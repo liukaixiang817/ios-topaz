@@ -83,7 +83,7 @@ def main():
     for name, config, source, count in [('normal', normal, 'power-path', 17),
             ('old-bounded', bounded, 'cmddb-bounded', 37), ('old-first', first, 'cmddb-first-node', 37),
             ('old-budget', budget, 'cmddb-budget', 24), ('old-staged', staged, 'cmddb-staged', 50),
-            ('prepared-bind', staged, 'cmddb-prepared', 17), ('prepared-power', staged, 'prepared-power', 20)]:
+            ('prepared-bind', staged, 'cmddb-prepared', 17), ('prepared-power', staged, 'prepared-power', 22)]:
         dep = out/(name+'.d')
         if a.reuse_software_proof:
             prior=json.loads(a.reuse_software_proof.read_text());assert prior['passed'] is True

@@ -170,7 +170,7 @@ static void configure(unsigned scenario)
     }
     for(unsigned k=0;k<5;k++){uint8_t *q=links+0x200+64*k;memset(q,0,40);put(q,40,4);}
     for(unsigned k=0;k<8;k++){put(links+0x400+24*k,k,4);put(links+0x404+24*k,k<4?0:3,4);}
-    memset(rimage+0xd538,0,392);rimage[0xd538]=1;put(rimage+0xd53c,pwfi_le(rimage+0xd228,4),4);
+    memset(rimage+0xd538,0,392);rimage[0xd538]=1;put(rimage+0xd53c,pwfi_le(rimage+0xd238,4),4);
     put(rimage+0xd538+48+0xc,0x179c0000,4);put(rimage+0xd538+48+0x10,2,4);rimage[0xd538+48+0x14]=1;
     put(rimage+0xd538+48+0x18,8,4);put(rimage+0xd538+48+0x1c,16,4);
     put(rimage+0xd2ec,3,4);put(rimage+0xd2f0,(uintptr_t)links+0x3004,8);
