@@ -34,6 +34,48 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0169 actual controlled FASTBOOT08:58; actual seven normal PSCI OFF/full RO retirement SUCCESS; Wi-Fi scan/join/data NOT DONE
+
+- NORMAL0169 exit98156 ENDED0 at2026-11-01T08:56:52.590913+00:00, nativecookie8278797495/
+  seq1/mode2/phase3/error0/epochs0/caps80000003; fullappendraw/WLEXIT05/WLR5
+  independently redecoded all32records/error0/faultOR1rtOR0 onlyILIMbit0.
+  CPU39344Braw identical in drainlog. Independentactualproductpolaris
+  08:58:03.364096Z/exit0. Phone now controlledFASTBOOT, NOTnativeLIVE.
+  ACK alone notreset; this has independentphysical evidence. No pending
+  physicalrequest, no furthercurrent-native command needed. AllworkersENDED/
+  childrenSTOP. ONLYWi-Fi; realgreyOFF/scan-join-data NOT DONE, sound/cameraSTOP.
+- Exitreview0169/native0169-controlled-exit-review-0001.json
+  SHAd581c92a82536ca1ec9d708365fd70cc659ebf0ebc323982374fd38c07298740. Fresh0169strictRO39 ROOT/NV was followed ONLYcontrolled
+  RO/RAMCOW and fullnormaldrain+actualFASTBOOT, so nextcandidate may reuse
+  thatfreshqualification; no newfullhash/recovery unless uncontrolled/Android/
+  abnormalexit. RAM_DRAINED is notUFSdurableSAFE/persistentinstallation.
+- NEWphysicalnormalCPU proof is COMPLETE: independentRO captures100..700
+  eachraw1OFF,7issued=7returned/FParchTPL4guards/16nativeflag0/80Coreactual
+  digestbytes/originalmaps2784stride48/key5897=5897/fullretire/unknown0.
+  SeparatelyfinalClockGCD8getters/20hashbytes/2prestarts/key5898=5898 passed.
+  Do not repeatanindependentnormalCPU/prep/NPA/client/cacheinventoryboot.
+  RO firstopen->lastlive24591.822917us is NOT totalretirement, initialmapTPL
+  UINT64_MAX remainsUNOBSERVED. Past7OFF is notcurrentCPUstate, masked
+  exclusion, DRV2/EL3/VMID/MPU lease or proof of0167/0168 cause.
+- MasteractualCPU/finalGCD/UIproofb88b74c372be22240345506d5a7144aab362b82defa7b8ca316845d0aa8e7f1e.
+  LatestUI beforeexitSettingsgreyWiFiOFF/Melbourne7:46PM/chargingicon;
+  FG3/SMB2latestvalid100%4297mVcharging0, iconnotsensor. WLEDprefix26/error0,
+  4=4/req2=ack2/module128/irq2/faultOR1rtOR0 preserved. Blacksidebar remains,
+  nofullrender/60Hz/opticalcycle/performanceAB. UTC0169ONESET independently
+  APPLIED cookie7648565559/seq1/status2/error0/count1/uncertainty2277us;
+  NEVERSET0169again. Bootrecordconsumed/sessionENDED; nooldcontrollerreuse.
+- NEXT0170 NOTREADY: actualCPU-local masked seven-peer qualification plus
+  exactDAIF/G1/FP/source readback/restoration, NO private/TCS/READ/vote in
+  thatdiagnostic. Reuse existingtypedmask/restore and actualnormalcaller;
+  preservefresh owncontext/200ms/UNKNOWN/fullraw/defaultOFF/explicitparent
+  gate/newexactprofile/twoSERIALmodels/codec/freeze/ONEhelper. No pastRO
+  ticket/OFF observation or callbackbool becomes a writerlease. Then connect
+  SAMEfreshprivate/currentnamespace/cache/Device/CPU admission to bounded
+  RSCREAD/completion/fullRWrestore/sourceCPU/namespace/knownDelete, qualified
+  ARC/vote/MSS/GLINK/RMTFS untilrealnetwork. ActualmaskedCPU/RSClease/READ/
+  vote/MSS/NVserve/scan_join_data stillunproved/false. Source-only success
+  nevercountsasWiFi. No kernel/nativeCI oroldtests withoutrelevantchange.
+
 ### CURRENT0169 native last actual2026-11-01T08:46:19.945233+00:00; actual seven normal PSCI OFF/full RO retirement SUCCESS; Wi-Fi grey/scan-join-data NOT DONE
 
 - PHONE0169 actualkernel-entered; latestcapture/view Settings Wi-Fi greyOFF,
