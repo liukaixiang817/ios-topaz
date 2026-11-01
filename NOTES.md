@@ -34,6 +34,46 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0173 SOURCE/OFFLINE only; phone remains actual controlled FASTBOOT0172/11:27; new access/READ/Wi-Fi NOT DONE
+
+- User “请你加快Wi-Fi开发”: moved directly fromphysicallydoneSAMEprivateCPU
+  toitsnextunproven access segment, no inventory/standaloneCPU/prep/clientboot.
+  NewdefaultOFF --wifi-power-read-access-checkpoint requiresfull0172privateCPU/
+  0171work/prepareddependencies. SAMEfreshprivate caller usesexisting
+  pwra_acquire_read for fullcurrentmasked128KiBCmdDb/32NSWBAT+35checkedRSC
+  geometryreads, thenrealobservationretirement repeatsall128KiB/32AT+35reads.
+  Bothfullsnapshots/owner/table/globals/digestbytes/PARrestore/all70eventprefix
+  crosschecks precede originalfullRAM/typedCPUrestore/Device/source/namespace/
+  knownDelete. No borrowedcontext/ticket/leasebool or fakeclientheld.
+- PhysicalIO wiresONLYpwra_reject_store inwriteposition, notactualMMIOwriter;
+  accidentalcall stickyfailswithoutstore. Allenginebegin/step/request/trigger/
+  IRQACK CPPout; READ/WRITEenginerecords stayENTIREZERO withnofakefinished/
+  retired flags. PWRPT_ACCESS_CHECKPOINT plannedreason14, distinct
+  WIFI_CURRENT_PRIVATE_ACCESS_OBSERVATION_RAW_V1/full1943840Bbody. CPU/RAM/
+  observedDevicebyteequality andcompleteROaccessretirement beforeUSB kept;
+  partial/late/source/translation/heldUNKNOWN quarantine unchanged. Original
+  200ms/fullREAD50ms+25msreserve/68slowest samples/wholeRAW/FW10MiB/host14MiB
+  unchanged. ThisischeckedROobservation, NOTaREADrequest/ARCvote/hardwaregrant.
+- Finalsource309ASAN/UBSAN=147newaccess+109oldCPUcheckpoint+30fullREAD+23work
+  pass; actualwholeparentCOFF/MachOallwarnings/maxframe1024/generalregs-only,
+  actualCPPnoenginecalls/literalobservationIO, actualMachOnoactualwrite symbol,
+  defaultOFF/QEMUpp pass. Parentproof3a122d948031bcd370b7508986da4c44f85a7e718f0d06164bea1d1b5bc08b12.
+  TwoSERIALnewwholeEFI-XNUeach19checks/90sameinputs/11resource+1battery
+  literalint1/actualQEMUpp nophysicalbodyrecords pass. Modelproof
+  c858c2baa889f50ae36f2f27e17fa40f8741d59615f7c59aaaf95ef11d108ab5.
+- FinalunwrappeddriverON0002 6dd301a4f8ae1d77efcd6262e30ca90b8c1f9264cc737b2090d69df2c1194174/
+  15924736B/90inputs.0001predatesfinalprefixhardening, historicalonly. No
+  physical0173image/payload/API/SMC/AT/MMIO/UTC/UI/nativeCI/download yet.
+  CandidateNOTREADY: nextnewexacthostprofile/original81wholecodec/sourceaudit/
+  independentfreeze/ONEhelper beforefuturepermission(ifneeded)andnewONEboot.
+- Phone remainsactualPolarisFASTBOOT0172/11:27:43.315703Z afternormaldrain;
+  allworkersENDED/allchildrenSTOP, noauthorizations/entityactionpending.
+  Newfresh0172strictRO0002+ONLYcontrolled0172exit qualification reusable; do
+  notrepeatfullhash/recovery. NoUSBinventorypoll.0172boot/payload/license
+  consumed, frozen0172cannotcontrolnewsession. WiFi scan/join/datafalse;
+  sounds/cameraSTOP. LateractualREAD stillneedsNEWfreshsameprivateownership/
+  source/Device/CPU/fullrestore gates, notanobserverreturnbool orpastOFFlease.
+
 ### CURRENT0172 actual controlled FASTBOOT11:27; SAME-private CPU/Device/exact restore/full retirement SUCCESS; READ/vote/Wi-Fi NOT DONE
 
 - User requested “请你加快Wi-Fi开发”; continue ONLYWiFi and skip repeated

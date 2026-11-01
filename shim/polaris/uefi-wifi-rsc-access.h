@@ -6,6 +6,9 @@
  * A physical candidate still needs its parent gate and exact host admission. */
 #ifndef POLARIS_UEFI_WIFI_RSC_ACCESS_H
 #define POLARIS_UEFI_WIFI_RSC_ACCESS_H
+#ifndef EFI_XNU_WIFI_READ_ACCESS_CHECKPOINT
+#define EFI_XNU_WIFI_READ_ACCESS_CHECKPOINT 0
+#endif
 #include "uefi-wifi-power-critical.h"
 #include "uefi-wifi-rsc-device.h"
 #include "uefi-wifi-cmddb-prepared.h"
@@ -441,6 +444,57 @@ static inline int pwra_retire(struct pwra_context *c)
     if(!pwra_cmddb(c,1)||!pwra_snapshot(c,1))return 0;
     r->local_held=0;r->retired=1;paic_actual_order(0);return 1;
 }
+#if EFI_XNU_WIFI_READ_ACCESS_CHECKPOINT
+/* A distinct observation scope: no engine was started, so do not fabricate
+ * READ completion. Both full current CmdDb captures and all checked geometry
+ * reads still close inside the same masked interval before CPU restoration. */
+static inline int pwra_retire_observation(struct pwra_context *c)
+{
+    if(!c||!c->record||!c->read||!c->write||!c->provider||!c->device||!c->critical||!c->prepared)return 0;
+    struct pwra_result *r=c->record;
+    if(!r->acquired||!r->local_held||r->retired||r->error||r->unknown||r->outstanding||
+       c->transaction!=&c->read->io||r->transaction!=(uintptr_t)&c->read->io||
+       r->read_transaction!=(uintptr_t)c->read||r->write_transaction!=(uintptr_t)c->write||
+       r->client!=(uintptr_t)c->provider->handle_output||r->namespace_record!=(uintptr_t)c->device||
+       r->write_bound||r->read_retired||r->read_events||r->read_writes||r->writes||r->clock_calls||r->clock_returned||
+       r->events!=35||r->reads!=35||r->pre_reads!=35||r->post_reads||
+       !pwra_zero(c->read,sizeof(*c->read))||!pwra_zero(c->write,sizeof(*c->write))||
+       !pwra_engine_prefixes(c))return pwra_fail(c,PWRA_PREFIX,1);
+    if(!pwra_cmddb(c,1)||!pwra_snapshot(c,1))return 0;
+    if(r->events!=70||r->reads!=70||r->writes||r->post_reads!=35||
+       r->client!=(uintptr_t)c->provider->handle_output||r->namespace_record!=(uintptr_t)c->device||
+       r->read_transaction!=(uintptr_t)c->read||r->write_transaction!=(uintptr_t)c->write||
+       !pwra_zero(c->read,sizeof(*c->read))||!pwra_zero(c->write,sizeof(*c->write))||
+       !pwra_engine_prefixes(c))return pwra_fail(c,PWRA_PREFIX,1);
+    for(unsigned slot=0;slot<2;slot++){
+        const struct pwra_cmd_snapshot *s=&r->CmdDb[slot];
+        if(s->attempted!=1||s->complete!=1||s->bytes!=PWCD_DB_BYTES||s->hash_count!=5||s->hash_failed||
+           s->owner_bytes!=sizeof(s->owner)||s->table_bytes!=72||s->global_bytes!=72||
+           !pgcd_equal(s->raw,r->CmdDb[0].raw,PWCD_DB_BYTES)||
+           !pgcd_equal(s->table,r->CmdDb[0].table,72)||!pgcd_equal(s->globals,r->CmdDb[0].globals,72)||
+           !pgcd_equal(&s->owner,&r->CmdDb[0].owner,sizeof(s->owner)))return pwra_fail(c,PWRA_CHANGED,1);
+        for(unsigned h=0;h<5;h++)if(!pgcd_equal(s->hashes[h],pwcdi_spans[h].hash,32))return pwra_fail(c,PWRA_CHANGED,1);
+        for(unsigned k=0;k<PWCD_PAGES;k++){
+            const struct pgns_translation *t=&s->current_AT[k];uint64_t page=PWCD_UEFI_DB_BASE+4096u*k;
+            if(s->page_issued[k]!=1||s->page_returned[k]!=1||s->where[k]!=page||
+               t->page!=page||t->issued!=1||t->returned!=1||t->saved!=t->restored||
+               s->par[k]!=t->par||t->par!=(UINT64_C(0xff00000000000b80)|page))return pwra_fail(c,PWRA_TRANSLATION,1);
+        }
+    }
+    for(unsigned k=0;k<r->events;k++)if(r->history[k].operation!=1||r->history[k].engine_event||
+       r->history[k].native_before||r->history[k].native_after||r->history[k].io.issued!=1||
+       r->history[k].io.returned!=1||r->history[k].io.unknown||
+       !pwrmd_translation_valid(&r->history[k].io.translation))return pwra_fail(c,PWRA_PREFIX,1);
+    r->local_held=0;r->retired=1;paic_actual_order(0);return 1;
+}
+/* Supplied instead of a physical writer. An accidental request fails sticky;
+ * no MMIO store, IRQ ACK, fake engine result or authority boolean exists. */
+static inline int pwra_reject_store(void *context,uint64_t at,uint32_t value)
+{
+    (void)at;(void)value;struct pwra_context *c=context;
+    return c&&c->record?pwra_fail(c,PWRA_SCOPE,1):0;
+}
+#endif
 /* These leaves are wired only by a future exact physical caller. They do
  * not bypass the checked context: no naked address-based store is exported. */
 static inline int pwra_actual_read(void *context,uint64_t at,uint32_t *value)
@@ -469,5 +523,9 @@ static inline struct pwra_io pwra_physical_io(const struct paic_io *memory,struc
     ,pgns_actual_translate
 #endif
 };}
+#if EFI_XNU_WIFI_READ_ACCESS_CHECKPOINT
+static inline struct pwra_io pwra_observation_io(const struct paic_io *memory,struct pwra_context *context)
+{return (struct pwra_io){memory,context,pwrmd_actual_translate,pwra_actual_read,pwra_reject_store,pgns_actual_translate};}
+#endif
 #endif
 #endif
