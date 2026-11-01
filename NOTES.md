@@ -34,6 +34,53 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0168 startup ACK UNKNOWN; user physically recovered, actualPolarisFASTBOOT07:55; READ/vote/Wi-Fi NOT DONE
+
+- ONE0168 image87985 ENDED0 sent2026-11-01T07:51:52.502980+00:00/source60b325a52b4be78ae2160351dbacd24ef5b2d9f8/
+  image2079dcafce7b4ec9886ce533e580a053d1db3a637883ef7b13fffe6d3b90d9e8/6029312B. Actualwaitingpayload07:52:03.607418Z ->
+  ONE63cbpayload7359 ENDED1, transfer32.961984s/
+  bootcall90.395020s, transfer(-7) timeout, NO ACK.
+  ORIGINALrepo0168/phone-prepared-power-runtime-0001/boot.json CONSUMED; never
+  replay image/payload/OEMboot/refreeze/oldpolicy/stripflags/oldmanifest edits.
+- Sole frozenstate11495 ENDED1/boundUEFI unavailable8s; independentexpected
+  query12665 ENDED0/8stimeout at07:54:52.830231Z. Physicalrequest ONCE, user
+  replied 已到FASTBOOT; independentactualproductpolaris07:55:36.653159Z/exit0.
+  No pending physical request. Phone is recoveredFASTBOOT, NOTnativeLIVE.
+- No new client/path/CPU/READ/RSC raw exported. Actual failingpredicate,
+  CPU_ON/normalPSCI/mask/READ/IRQ/RSCwritecount UNKNOWN, notzero. New0168
+  returned CPU-refusal handling is source/software-verified but not physically
+  observed; it did not establish cause of0167 or0168. No proof of quarantine,
+  panic or which call returned. No new UTCSET/UI/optical/performance claims.
+  All USB/host/build/modelworkers ENDED/allchildren STOP. ONLYWi-Fi; greyOFF/
+  scan/join/data remain NOT DONE; sound/camera STOP. No fakecapability/icon.
+- Evidence0168/wifi/physical-start-ACK-unknown-and-recovered-FASTBOOT-proof-0001.json
+  SHA8ea0e22c2398302b51c59ca8145fc7243f7f1e625c7ee31e025c7093f1dc64c5. PASS only preserves UNKNOWN/recovery, not function. No blindretry,
+  cleanup/genericreset/rawfallback or blockingSubmit/patch/internalentry sent.
+- FW e6fb4d416bcb00c5932fad2ce35ad39a5d00935c/HOSTa95589fd9132dd330a0899bf2dd0a05619f80ad5
+  and preboot handoff60b325a52b4be78ae2160351dbacd24ef5b2d9f8 pushed/remotematched.
+  Actualsourceboundfreeze COPY853+10COMMIT_ONLY/441sources/88inputs/nohardlinks,
+  b8518b18a40f24e1b3984909ce5bf850462dc650d049e9e02241d2791d565064, defaultofflineONEhelper
+  passed beforeconsumed. ONLYused frozen0168controller with driver0001/image0001
+  and ORIGINALsharedconsumedrecord; now ended, no currentnative commands.
+- New0168strictRO39 was completed before this unknownboot: review40528587/
+  preflightec711de8/actualumount+FB07:48. It is now HISTORICAL qualification
+  after unobserved0168 exit, cannot be reused alone. At next already-required
+  newcandidate transition merge NEW complete strictRO roots/maps/GPT/ESP/
+  journalmetadata/currentNV; no separate recovery just for oldTOC/NV. Keep
+  immutable20F66/142map+RAMCOW/noUFSwrites, Android/Windows/marker/ESP/81FW;
+  no historicalNVrestore. Whole512MiBjournal notcaptured/noFShealthclaim.
+- NEXT new0169 NOT IMPLEMENTED/NOTREADY. Stop repeating opaque fullboot on
+  guesses. Audit normal/maskedCPU sourceguard/time/actual SMC and transition
+  before READ; if smaller diagnostic is needed, newdefaultOFF/sourcebound
+  scope must capture full normalCPU/work-admission in a fully retired RO
+  phase before any mask/TCS write. Report evidence honestly and retain all
+  source/owner/FP/arch/TPL/200ms/UNKNOWN gates; do not classify guesses as a
+  rootcause or borrow a retired ticket as writer permission. No completed
+  prep/client/cache inventory repetition, no fakeleasebool, no oldscope
+  relaxation. Need actual boundedREAD/completeRW+CPU/source/namespace restore,
+  then qualifiedsavedARC/vote/completion/restore, ownMSS/MSA/GLINK/RMTFS and
+  real scan/join/data. Currentmay_vote/MSS/NVserve/scan_join_data=false.
+
 ### CURRENT0167 actual recovered FASTBOOT07:20; NEW0168 exact candidate frozen OFFLINE; actual strictRO FASTBOOT07:48, one newRAM not yet sent
 
 - Phone remains independently confirmed PolarisFASTBOOT07:20:38.214019Z after
