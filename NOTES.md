@@ -34,7 +34,28 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0156 actual freshRO COMPLETE / FASTBOOT01:30; capture-only image codec and admit PASS; independent freeze next
+### CURRENT0156 capture-only NEW trial READY / frozen0001 / freshRO FASTBOOT01:30; ONE helper next
+
+- New independent COPY797files+10COMMIT_ONLY/392committedsources/80inputs in
+  /private/tmp/polaris-runtime-0156-frozen-0001; freezeSHA c34b111168b924dc3446
+  fda67f8786b0152986b9e1a0b349b0582e61504765aa. Default helper actualoffline
+  passed. Sole NEW helper=research/polaris/uefi-ios-0156/boot-CmdDb-capture-
+  once-0001.py in that frozen tree. Newphonecase phone-CmdDb-capture-runtime-
+  0001 has NO boot.json yet. No iOS image or payload sent for0156 yet.
+- Imagef5aeacb1/6000640B/driver8dedaf40/11384320B, original81FW/SimpleInit/
+  BootShim/DTB and unmodified EDK2whole38866120Bdecode PASS. FW16f9158/HOST
+  da81d60/sourcehandoffaa0ab5b committed/pushed; raw ABI unchanged, new166/94
+  exact metadata, two scope docs. Fresh0156reviewde8f9289/preflight1c62eacc
+  after actual strictRO/umount/FASTBOOT01:30 remains current authority.
+- NEXT automatic ONE newRAM after helper independently rechecks exactproduct,
+  then actualwaitingpayload before ONE original63cb payload. ONLY frozen0156
+  driver0001/image0001/controller may operate that new session, shared original
+  repo0156 consumedbootrecord; NEVER old0155 or replay. Diagnostic deliberately
+  stops with13 after complete capture and known retirement; no originalQuery,
+  CPUcritical/Device/RSC continuation. No claimed physical result/lease/radio.
+  No nativeCI/recovery repeat/extra optical cycles. Audio/camera/children STOP.
+
+### HISTORY0156 freshRO/codecs complete; independent freeze next
 
 - AllUSBworkers ENDED. Actual audit68778 ENDED0: both complete16GiB roots
   matched56.790/56.693s, maps142/182/markerraw+8MiBpattern/6GPT/critical/ESP102/
