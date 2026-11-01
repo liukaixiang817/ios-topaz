@@ -34,7 +34,7 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0166 remains actual controlled FASTBOOT06:40; NEW0167 retired-latch RAW READ V2 verified OFFLINE; host/freeze NOT READY
+### CURRENT0166 remains actual controlled FASTBOOT06:40; NEW0167 retired-latch RAW READ V2 verified OFFLINE; host/image verified OFFLINE, freeze NOT READY
 
 - Phone unchanged after NORMAL0166drain/independentPolarisFASTBOOT06:40:55Z.
   No new USB/API/PSCI/AT/MMIO/boot/UTC/UI/nativeCI during this offline work.
