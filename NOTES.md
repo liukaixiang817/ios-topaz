@@ -34,6 +34,27 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0178 fully admitted and independently frozen; ONE new RAM pending, phone last controlled FASTBOOT15:55; Wi-Fi NOT DONE
+
+- New candidate offlineREADY, not a physical pass: independentfreeze0178
+  COPY879+10COMMIT_ONLY/468currentcommittedsources/91inputs/nohardlinks,
+  manifestSHA2cbabc3fb25b53285202ca81f3e58c69700e71a1dfab793a26228413718e7bd1.
+  FrozenofflineONEhelper actuallyPASS; no0178image/payload/USBcommands yet.
+- ONLYnewcontroller /private/tmp/polaris-runtime-0178-frozen-0001/tools/polaris-uefi-wled-runtime.py
+  pairedwith its frozenphysicaldriver0001/image0001 and newORIGINAL
+  0178/phone-own-WT-runtime-0001/boot.json (currentlyABSENT/unconsumed).
+  Newimage01d077b0cc32aaabfb106a92067df71dafeb00fa1bb79d3b95e53353ee85add7/6033408B.
+  FreezeSOURCE FWf28acd7a1fb5399f35c858a8880103266b1aa48f/HOST0a774ffb3899fdbb1013f3ebbff3f7853daf454a,
+  compiledhostprofile695ce7f... unchanged. No oldsession/manifest/policy edits.
+- Actual0177strictRO39 and controlledzero-writeprestartreceipt/independentFB
+  reused under explicitreviewc237beef..., no newauditclaimed/performed. Broad
+  same63cb authorizationdf995cae... appliesONLYqualifiedNEWsession once.
+  NEXT fresh actualexpectedproduct once thenONEnewimage; matchingfrozenactual
+  waitingpayload requiredbeforeONEsame63cbpayload. No replay after consumption.
+- Phone latestactualcontrolledPolarisFB15:55:17.432118Z, NOTnativeLIVE. No
+  pendinghumaninput; allworkersENDED/allchildrenSTOP. OnlyWi-Fi, still no
+  actualterminaldraw/currentprivateDB/READ/vote/MSS/NVserve/scan_join_data.
+
 ### CURRENT0178 own-WT image fully admitted, freeze pending; phone last actual controlled FASTBOOT15:55; Wi-Fi NOT DONE
 
 - No0178image/payload/devicecommand sent. NewFWf28acd7a1fb5399f35c858a8880103266b1aa48f/
