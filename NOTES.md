@@ -34,6 +34,67 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0166 actual controlled FASTBOOT06:40; real3GCD+35NS-AT guarded RSC RO loads, TCS lifecycle admission refused; READ/vote/Wi-Fi NOT DONE
+
+- ActualPHONE PolarisFASTBOOT06:40:55.748553Z after complete NORMAL0166drain.
+  Not nativeLIVE. All USB/host/modelworkersENDED, all children STOP/no physical
+  request pending. ONLY Wi-Fi, then sound, then camera. No repeatedUSBpolling.
+- FW60f5dd16aff656b2b1c5b8629138b29e1099e05c/HOSTafa10ebc878dbfbab944f16f6a1350511e45d786
+  pushed/independentremote matched. ONEimage23482 ENDED0 sent2026-11-01T06:35:59.409202+00:00,
+  imagee84f1173d4c97547fc3a520f56d6db52fb576dfdad4d044b91d86b83b5e27694/
+  6029312B. Actualwaitingpayload06:36:09.531988Z -> ONE63cbpayload44359 ENDED0
+  ACK2026-11-01T06:37:08.072469+00:00, transfer32.956578s/
+  bootcall17.454123s. ORIGINALrepo0166/phone-prepared-power-runtime-0001/
+  boot.json CONSUMED. NO replay/refreeze/image/payload/OEMboot/oldpolicy/strip.
+- Freeze0166 COPY850+10COMMIT_ONLY/437sources/88inputs nohardlinks, SHA3009b334a69e3430f7a05b7743fabae8ec7d1ed1054d6aa132bbb6563a174677;
+  actualdefaultofflinehelper passed. ONLY used frozen0166 controller with same
+  driver0001/image0001 +ORIGINALrepo sharedconsumedrecord, now sessionENDED.
+  No morecurrent-native commands. Newepoch required for any future candidate.
+- Complete actualcapture58853 ENDED0 2026-11-01T06:37:26.018681+00:00/kernel-entered.
+  Fullprep1660544 SHA677ca057f27763c6cabe0401e5ab272ca76a2ea0f28f82b8f0b90f9b700717bf,
+  client227104 SHAe9c56ef3f1756e42fe3aeb3b9db51e73243258a53faad0114646f3807dbfb13c,
+  READscopebody1941984 SHAcdd66acdb8dd23377bdb168972cf17b0843fb2f990343085faeb5c6c928bc728.
+  KnownCreate/Delete retired/API2=2/error0/unknown0/held0/returned1/fullpool.
+  Again fullcurrent113x2namespace/selectedbytes/source/private30hash/current
+  CmdDb20hash/26rowRAM closure pass, do not repeat inventory/prep/client boot.
+- Actual stride48 fix PASSED. Three original registered GCD getters returned
+  status0/type3/base179c0000/length30000/capc000000000000001/attrs1 for all
+  pages179e0000/1000/2000; actualFP/arch/TPLguards restored.35actual bounded
+  own-register loads each freshNSDevice read+writeAT, samePA, PARsaved/restored,
+  allissued/returned1/unknown0. Childconfig80008104, IRQenable1/status0.
+  This is real physicalRO, not TCS lifetime/write/rail/radio permission.
+- Devicefirstpass read8TCS control sets then refused existing PWRMD_BUSY10:
+  TCS0 wait0/control01010000/status1/commandEnable1; TCS1..3 wait0/control10000/
+  status1/enable0. TCS4..7 control0/status1/enable0. OnlyIRQbit0 enabled.
+  Raw TCS0 originalRAM24B allzero; others index/type remain raw. Do not infer
+  current transfer or harmless stale trigger from these values without original
+  lifecycle source. Our trigger-auto-clear/commandEnable=0 assumptions are not
+  validated. No blindclearing/reset/IRQenable changes or choosing disabledTCS1.
+- BodyDEVICE5/knownrefusal1/unknown0/retired1. EntireCPU/READ/WRITE/accessZERO:
+  no PSCI/CPU mask/TCSstore/commandREAD/resourcevote. FinalClockGCD independent
+  8getters/20Coreactualhashbytes/twoactualprestarts/error0/key5899=5899 PASS.
+  Physicalproof664c06cf3a4e4f2a3d26eed6cf1bc2a365d96d990563b7ba5cf4fd4713f52dfa
+  at0166/wifi/actual-current-read-0001/physical-device-TCS-refusal-and-final-GCD-proof.json.
+  Decoder initialprintf retained oldMAP labels, corrected labels and added all
+  3GCD/35AT assertions against SAMEraw; no firmware/raw/boot/gate changed.
+- Normaldrain73539 ENDED0 at2026-11-01T06:40:42.291746+00:00; cookie12628183339/
+  seq1mode2phase3error0/epochs0/caps80000003. Fullappendraw/WLEXIT05/WLR5 fresh
+  independentfinal32/error0/faultOR1rtOR1 onlyallowedILIMbit0 retained. Exitreview
+  0ca15915f9c24b6eb5392e934cfbd8d21857ede83eb48c126b54ef9f1ac2c4e8, independent
+  actualproductpolaris06:40:55.748553Z. FreshROOT/NV0165 +controlled0165/0166
+  normaldrains qualifies futurecandidate; no newfullhash/recovery required.
+  No UTC SET0166/UIclaim/optical/performance/nativeCI/download in this session.
+- NEXT audit original ACTIVE TCS trigger/completion/commandEnable/IRQ/queue
+  lifecycle with actualRAM/freeTCS fields and source-bound originalHAL before
+  modifying READ core/device admission. Restoring trigger1 by writing after
+  deassertion may retrigger old commands; do not just relaxBUSY. Original
+  slot78/98 blocking/internalentry/RETlocks remain prohibited. Need truly
+  bounded READ->newIRQ/allDONE/idle->completeRWrestore in SAME qualified
+  private interval before any saved-vote semantics. Preserve50ms/256steps/
+  1024events/200ms/source/CPU/UNKNOWN/quarantine. NEW0167 not implemented or
+  ready. No actualcommandREAD/resourcevote/MSS/NVserve/scan/join/data yet;
+  Wi-Fi remains grey OFF, no fakecapability. Sound/camera STOP.
+
 ### CURRENT0165 actual controlled FASTBOOT06:26; NEW0166 real stride48 ABI fix verified OFFLINE; READ/vote/Wi-Fi NOT DONE
 
 - Wi-Fi is still not functional.0165 ONEimage56564 ENDED0; actual waiting-
