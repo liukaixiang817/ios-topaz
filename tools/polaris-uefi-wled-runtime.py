@@ -84,10 +84,12 @@ def main():
                     record['host_UTC_delivery_unknown']=dict(cookie=error.cookie,sequence=error.sequence,recovery='utc-status only; never resend SET')
                     save();raise
         elif a.action=='boot':
-            record['kernel_command_attempted']=True;record['payload_stage_started_utc']=now();save()
+            record['payload_stage_attempted']=True;record['kernel_command_attempted']=False
+            record['payload_stage_started_utc']=now();save()
             began=time.monotonic();p.stage_payload(a.payload.read_bytes(),d)
             record['payload_transfer_and_validation_seconds']=time.monotonic()-began
             record['boot_ack_seconds']=a.boot_ack_seconds;record['protocol_boot_call_started_utc']=now();save()
+            record['kernel_command_attempted']=True;save()
             began=time.monotonic()
             try:p.boot(ack_seconds=a.boot_ack_seconds)
             finally:record['protocol_boot_call_seconds']=time.monotonic()-began;save()
@@ -135,8 +137,11 @@ def main():
         record['passed']=False;record['errors'].append(type(e).__name__+': '+str(e));raise
     finally:
         if p:
+            if hasattr(p,'payload_stage'):record['payload_stage_host_evidence']=dict(p.payload_stage)
             if p.actual_footer:(out/'actual-exit-footer.bin').write_bytes(p.actual_footer)
             if p.actual_reply:(out/'actual-reset-response.bin').write_bytes(p.actual_reply)
+        if transport and hasattr(transport,'last_transfer'):
+            record['last_USB_host_transfer']=dict(transport.last_transfer)
         # Preserve the validated transaction before any host-only cleanup.
         # This program exits immediately afterward; no context is reused.
         defer_context=(sys.platform=='darwin' and record.get('passed') is True and

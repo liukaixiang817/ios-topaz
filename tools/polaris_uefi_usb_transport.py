@@ -13,6 +13,16 @@ import struct
 import time
 
 
+class USBTransferError(RuntimeError):
+    """Raw host completion evidence; transferred bytes are not device ACKs."""
+    def __init__(self, evidence):
+        self.evidence = dict(evidence)
+        super().__init__(
+            f"libusb endpoint {evidence['endpoint']:#x} transfer failed "
+            f"({evidence['return_code']}); host completion "
+            f"{evidence['transferred_bytes']}/{evidence['requested_bytes']} bytes")
+
+
 class DeviceDescriptor(C.Structure):
     _fields_ = [(name, kind) for name, kind in [
         ('length', C.c_uint8), ('type', C.c_uint8), ('usb', C.c_uint16),
@@ -211,7 +221,11 @@ class LibusbTransport:
     def _out(self,data):
         buf = (C.c_ubyte * len(data)).from_buffer_copy(data)
         done = C.c_int()
-        self._check(self.usb.libusb_bulk_transfer(self.handle, 1, buf, len(data), C.byref(done), 10000), 'command transfer')
+        code = self.usb.libusb_bulk_transfer(self.handle, 1, buf, len(data), C.byref(done), 10000)
+        self.last_transfer = dict(endpoint=1, requested_bytes=len(data),
+                                  transferred_bytes=done.value, return_code=code, timeout_ms=10000)
+        if code < 0:
+            raise USBTransferError(self.last_transfer)
         if done.value != len(data):
             raise ValueError('short diagnostic command transfer')
 
@@ -231,7 +245,11 @@ class LibusbTransport:
             raise ValueError('invalid diagnostic read bounds')
         buf = (C.c_ubyte * count)()
         done = C.c_int()
-        self._check(self.usb.libusb_bulk_transfer(self.handle, 0x81, buf, count, C.byref(done), timeout_ms), 'response transfer')
+        code = self.usb.libusb_bulk_transfer(self.handle, 0x81, buf, count, C.byref(done), timeout_ms)
+        self.last_transfer = dict(endpoint=0x81, requested_bytes=count,
+                                  transferred_bytes=done.value, return_code=code, timeout_ms=timeout_ms)
+        if code < 0:
+            raise USBTransferError(self.last_transfer)
         if not 0 < done.value <= count:
             raise ValueError('invalid diagnostic completion length')
         return bytes(buf[:done.value])
@@ -297,11 +315,21 @@ class KernelProtocol(ReadOnlyProtocol):
             manifest.get('payload_bytes')!=len(data) or not 0<len(data)<=128<<20 or
             hashlib.sha256(data).hexdigest()!=manifest.get('payload_sha256')):
             raise ValueError('RAM payload does not match the physical loader manifest')
+        self.payload_stage = dict(expected_bytes=len(data), completed_host_chunks=0,
+                                  completed_host_bytes=0, current_offset=0,
+                                  current_bytes=0, validation_ACK=False, validated_state=False)
         command=f'download:{len(data):08x}'.encode();self.transport.write(command)
         if self.transport.read(64)!=b'DATA'+command[9:]:raise ValueError('RAM download admission did not match size')
-        for at in range(0,len(data),65536):self.transport.write_data(data[at:at+65536])
+        for at in range(0,len(data),65536):
+            chunk=data[at:at+65536]
+            self.payload_stage.update(current_offset=at,current_bytes=len(chunk))
+            self.transport.write_data(chunk)
+            self.payload_stage['completed_host_chunks']+=1
+            self.payload_stage['completed_host_bytes']+=len(chunk)
         if self.transport.read(64)!=b'OKAY':raise ValueError('device rejected RAM payload validation')
+        self.payload_stage['validation_ACK']=True
         if self.state()!='validated':raise ValueError('device did not publish validated payload state')
+        self.payload_stage['validated_state']=True
 
     def boot(self,*,ack_seconds=10):
         if type(ack_seconds) is not int or not 1<=ack_seconds<=90:

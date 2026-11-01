@@ -14,6 +14,54 @@ class Wire:
 
 
 class TransportTests(unittest.TestCase):
+    def test_failed_bulk_transfer_retains_partial_host_completion_without_retry(self):
+        class USB:
+            def __init__(self,code,done):self.code,self.done,self.calls=code,done,[]
+            def libusb_bulk_transfer(self,handle,endpoint,buf,count,done,timeout):
+                self.calls.append((endpoint,count,timeout))
+                transport.C.cast(done,transport.C.POINTER(transport.C.c_int))[0]=self.done
+                return self.code
+        for endpoint,requested,done,code in [(1,65536,0,-1),(1,65536,8192,-7),(0x81,64,12,-7)]:
+            device=transport.LibusbTransport.__new__(transport.LibusbTransport)
+            device.claimed=True;device.handle=transport.C.c_void_p(11);device.usb=USB(code,done)
+            with self.assertRaises(transport.USBTransferError) as caught:
+                if endpoint==1:device.write_data(b'x'*requested)
+                else:device.read_boot_reply(timeout_seconds=90)
+            timeout=10000 if endpoint==1 else 90000
+            self.assertEqual(device.usb.calls,[(endpoint,requested,timeout)])
+            self.assertEqual(caught.exception.evidence,dict(endpoint=endpoint,requested_bytes=requested,
+                transferred_bytes=done,return_code=code,timeout_ms=timeout))
+            self.assertEqual(device.last_transfer,caught.exception.evidence)
+
+    def test_payload_failure_keeps_offset_and_never_sends_OEM_boot_or_retries(self):
+        data=b'p'*131073
+        manifest=dict(RAM_only_XNU_loader=True,storage_write_api=False,NVRAM_write_api=False,
+                      QEMU_variant=False,payload_bytes=len(data),payload_sha256=transport.hashlib.sha256(data).hexdigest())
+        class PayloadWire(Wire):
+            def __init__(self,fail):
+                super().__init__([b'OKAYwaiting-payload',f'DATA{len(data):08x}'.encode(),b'OKAY',b'OKAYvalidated'])
+                self.fail,self.chunks=fail,[]
+            def write_data(self,chunk):
+                self.chunks.append(len(chunk))
+                if len(self.chunks)==self.fail:
+                    raise transport.USBTransferError(dict(endpoint=1,requested_bytes=len(chunk),
+                        transferred_bytes=min(512,len(chunk)),return_code=-1,timeout_ms=10000))
+        for fail in (1,2,3):
+            peer=PayloadWire(fail);client=transport.KernelProtocol(peer);client.verified=True
+            with self.assertRaises(transport.USBTransferError):client.stage_payload(data,manifest)
+            evidence=client.payload_stage
+            self.assertEqual(peer.chunks,[65536,65536,1][:fail])
+            self.assertEqual(evidence['completed_host_chunks'],fail-1)
+            self.assertEqual(evidence['completed_host_bytes'],(fail-1)*65536)
+            self.assertEqual(evidence['current_offset'],(fail-1)*65536)
+            self.assertFalse(evidence['validation_ACK'] or evidence['validated_state'])
+            self.assertEqual(peer.commands,[b'getvar:kernel-state',f'download:{len(data):08x}'.encode()])
+        peer=PayloadWire(0);client=transport.KernelProtocol(peer);client.verified=True
+        client.stage_payload(data,manifest)
+        self.assertEqual(client.payload_stage['completed_host_bytes'],len(data))
+        self.assertTrue(client.payload_stage['validation_ACK'] and client.payload_stage['validated_state'])
+        self.assertNotIn(b'oem boot',peer.commands)
+
     def test_one_shot_disconnect_still_releases_interface_and_handle(self):
         class USB:
             def __init__(self):self.calls=[]
@@ -84,7 +132,7 @@ class TransportTests(unittest.TestCase):
         # consuming any body bytes.
         self.assertEqual(transport.ReadOnlyProtocol.limits['logs'],32768)
         for kind,count in ((transport.ReadOnlyProtocol,32769),
-                           (transport.KernelProtocol,(4<<20)+262144+129)):
+                           (transport.KernelProtocol,(6<<20)+129)):
             wire=Wire([b'OKAYpolaris-uefi-diag',b'OKAY',f'DATA{count:08x}'.encode()])
             protocol=kind(wire);protocol.product();protocol.stage('logs')
             with self.assertRaisesRegex(ValueError,'exceeds diagnostic bounds'):protocol.upload()

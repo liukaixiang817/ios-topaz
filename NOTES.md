@@ -34,6 +34,61 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0174 payload transfer FAILED; actual UEFI receiving, user recovered actual Polaris FASTBOOT12:39; fixed access/Wi-Fi NOT DONE
+
+- This overrides ALL earlier current/ACTIVE/READY/LIVE. All USB/host/model workers
+  ENDED, all children STOP. Real scan/join/data never completed; only Wi-Fi remains
+  active. Do not call this nativeLIVE, a power-path failure, panic or quarantine.
+- ONE0174image66937 ENDED0 sent12:37:31.729843Z/source
+  daf8a139b2b1de798c8b1619593d934eb56d9907/image
+  6f083c3a8b86facb2dcec0f5da82a8a90dc877eed037cbe649d4edbf1db78d5c/6027264B.
+  Sole frozen actual state12:37:39.905021Z was waiting-payload. ONE63cbpayload
+  24156 ENDED1 during stage_payload/libusb OUT(-1), begun12:37:56.561417Z;
+  complete validation and p.boot/OEMboot were not reached in this host invocation.
+  Old kernel_command_attempted=true was set before download, not proof of OEMboot.
+  Transferred bytes/offset were discarded by old host, so are UNOBSERVED, not0.
+- Sole matching frozen post-failure state ENDED0 actual12:38:17.902096Z receiving.
+  Frozen recover-prestart explicitly excludes receiving; no modified controller,
+  reset/cleanup/raw fallback or retransmission. Sole independent expected-product
+  query15728 ENDED0/8stimeout12:39:08.185432Z. Asked physical keys ONCE; user
+  replied 已到 FASTBOOT; independent query ENDED0 actual productpolaris
+  12:39:44.708336Z. No authorization/action pending; no repeated USB polling.
+- Original0174/phone-fixed-memory-runtime-0001/boot.json CONSUMED: no image,
+  payload, OEMboot replay/refreeze or oldpolicy/stripflags. Used ONLY frozen0174
+  /private/tmp/polaris-runtime-0174-frozen-0001 controller+driver/image with that
+  original shared record; session ENDED, do not control a new session with it.
+  No new Wi-Fi preparation/private CPU/access/CmdDb/READ raw, no UTCSET/UI or CI.
+  Fixed parent binding remains source-proven, physically UNTESTED this round.
+  Actual hardware counts were not measured. Physicalproof0174/wifi/
+  physical-transfer-failure-and-recovered-FASTBOOT-proof-0001.json SHA
+  21da4b62ea5b35cc0e808d4f7b89858be2bade9959cc556e0216e040da6d16a3.
+- Actual human broad permission “批准0173及后续合格新会话复用同一内核” remains
+  bound by immutable authorization df995cae... to same63cb/36459872B, EACH NEW
+  fully qualified shared session once. Do not ask again for same-SHA reuse; it
+  never authorizes replay of consumed0174 or an unreviewed next candidate.
+- Necessary full strictRO0174 review242b8b9d.../preflight9cf8f816... passed39
+  before this image. Physical reset without a controlled receipt makes it
+  historical now; merge NEW complete strictRO/root/map/GPT/ESP/journal/currentNV
+  into the next already-needed candidate transition, not a standalone inventory
+  recovery. No root/ESP/GPT/NV write or restore is permitted.
+- Host-only next-source work preserves libusb endpoint/error/requested/transferred
+  bytes and failed payload chunk offset, without retry, chunk/deadline changes or
+  protocol extension. kernel_command_attempted moves after successful complete
+  staging. 21 affected host transport/read/log tests PASS; first run found a
+  pre-existing stale old256KiB-bound test, corrected to current6MiB+128 default;
+  no runtime bound changed. Frozen0174 remains untouched. No parent/native source
+  changed, so no unchanged wholeEFI/XNU models/old checks or CI rerun.
+- Host evidence patch reviewed/checked; proof0174/wifi/
+  host-transfer-evidence-source-and-check-proof-0001.json SHA
+  cff82db10d62ea98b837851914344354c1e4e61b43cf7f2697843bdf669826a2.
+- NEXT: NEW source/exact profile/candidate/freeze/whole-codec/root qualification
+  before any USB. Host telemetry is not a remedy for the raw USB I/O error.
+  Do not repeat opaque READ boots or declare the source-binding fix physically
+  validated. Continue same-private checked access/full retirement, then actual
+  bounded READ/qualified ARC saved baseline/vote/full restore, four own Wi-Fi VRM
+  rails BEFORE MSS, MSA/GLINK/RMTFS/WLFW/ath10k, and actual scan/join/data. Do not
+  fabricate ownership/lease/missing cache0 or weaken200ms/UNKNOWN/restore.
+
 ### CURRENT0174 OFFLINE FROZEN fixed-parent candidate complete; phone actual strictRO FASTBOOT12:26; access/Wi-Fi NOT DONE
 
 - FW e4b6f16dcebe528d8cf150fcc97691335089c3ad/HOST af07521b77e3272338790644f9b1e7b2d1856917
