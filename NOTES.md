@@ -34,7 +34,45 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0156 actual FASTBOOT01:21 / capture-only FW16f9158 and new host profile PASS; necessary freshRO next
+### CURRENT0156 actual freshRO COMPLETE / FASTBOOT01:30; capture-only image codec and admit PASS; independent freeze next
+
+- AllUSBworkers ENDED. Actual audit68778 ENDED0: both complete16GiB roots
+  matched56.790/56.693s, maps142/182/markerraw+8MiBpattern/6GPT/critical/ESP102/
+  journalmetadata/current3NV+FSC collected, realumount then independently
+  actualPolarisFASTBOOT2026-11-01T01:30:36.582446Z. NEW independent39checks
+  reviewde8f9289e93ca224fa198fbf1924035e1c726c692037755267eab97bd75f727a,
+  preflight1c62eaccf28023ef6e0e2ba77cd38e8953a7f4a7bc586d1efc577d6e126302f8.
+  No repair/replay/RW/NVwrite. Whole512MiBjournal not captured, no FShealthclaim.
+  This new evidence replaces0154 as current root/NV boot authority during the
+  continuous controlled RO/RAMCOW interval; don't repeat this full audit.
+- FW16f9158/HOSTda81d60 pushed; actual full no-mock admit662c45ae PASS using
+  fresh0156 review/preflight and two current19checkmodels. Capture-only image
+  f5aeacb1d4ca845fe59cd173b4118f1a6ab9b707f1c7d4347cf965e856a2a89e/6000640B,
+  driver8dedaf40/11384320B/80inputs; complete unmodified EDK2 wholedecode PASS,
+  original81FW/SimpleInit/BootShim/DTB preserved. No new nativeCI/download.
+- No new iOS image/payload sent, no physical CmdDb capture/Query/CPU/RSC success.
+  Next independent source COPY/one-use helper, then actual correctFASTBOOT and
+  automatic ONE NEW capture-only RAM trial. This planned diagnostic stop13
+  is not ARC/Wi-Fi completion; all UNKNOWN and exact retirement gates retained.
+  Consumed0155 never replayed. Human recovery request resolved; no pending
+  physical action. Sound/camera/children STOP; only Wi-Fi scan/join/data goal.
+
+### HISTORY0156 strictRO audit worker (now ENDED)
+
+- Host audit worker68778 owns ALL USB. It sent ONLY original reviewed0120
+  watchdog300s RAM recovery at01:28:13Z, actual RO,noload mount01:28:34Z.
+  New whole16GiB20F66 SHA matched in56.790s; old16GiB hash is in progress.
+  Do not run FASTBOOT/state/ADB/another USB worker while68778 is active.
+  No new iOS candidate/RTC/RSC action; immutable root audit and currentNV are
+  the one already-required post-physical-recovery review, not installation.
+  Independent review/preflight must await actual audit/unmount/FASTBOOT.
+- FW16f9158/HOSTda81d60 committed/pushed. 80input capture-only link8dedaf40,
+  24software cases,22hostchecks,2SERIAL19checkmodels PASS. Newprofile166typed+
+  94resource fields and both scope reviews; all old literal policies retained.
+  No new nativeCI. New capture helper/package command prepared but NOT run;
+  image/source freeze remains NOT READY until fresh evidence and codec pass.
+
+### HISTORY0156 actual FASTBOOT01:21 / capture-only FW16f9158 and new host profile PASS; freshRO next
 
 - FW16f9158b97d74dec78beab94dec887e598de2705 commits the capture-only
   source/defaultOFF selector, separate scope document and affected checks.
