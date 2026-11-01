@@ -34,6 +34,59 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0178 own-GOP-WT compatibility offline complete, NOT READY; phone last controlled FASTBOOT15:55; Wi-Fi NOT DONE
+
+- Overrides olderCURRENT/READY/LIVE. No0178 image/payload/device commands yet.
+  Phone last actual controlledPolarisFASTBOOT15:55:17.432118Z after0177normal
+  pre-native refusal/complete44Bzero-write receipt, NOTnativeLIVE. No pending
+  authorization/physicalaction; allworkersENDED/allchildrenSTOP, onlyWi-Fi.
+  Real scan/join/data never completed; no sound/camera/fakeenable work.
+- Verified primaryArm PAR_EL1 table4-65 (DDI0488D printed4-85/86) explicitly
+  gives AttrH=B NormalouterWT RA/WA and AttrL=A NormalinnerWT RA/noWA. BA vsBB
+  differs in innerwriteallocation; this is PAR semantics, not merelyMAIR2
+  inference and NOT a claim phonecore isA57 or a radio/EL3grant. OfficialPDF
+  screenshottool cachemiss recorded; primarytable text directly checked.
+  Review0178/wifi/own-WT-primary-PAR-review-0001.json binds actual0177raw.
+- NewdefaultOFF --wifi-power-terminal-gop-own-wt requires explicitGOPdiagnostic
+  and its completeDBcheckpoint dependencies. OnlyliteralBA added to GOPpixel
+  attributes FF/44; firmwareheaders remainFFonly. DefaultOFF oldFF/44 behavior
+  retained. NoMAIR/TTBR/PTE/permissions/cachepolicy changes. All currentGOP/
+  self/native0/FP/architecture/NS/RW/samePA/PARrestore/all405preflight+freshpage/
+  576x384ROI/50msterminal/stickyresidual/prefix checks unchanged. NoRSC/ARC/
+  SMEM/radio widening; UNKNOWN stillfullRAMappend→allDAIF/G1→localdraw→WFE,
+  neverGOPmethod/Console/USB/SMC/Stall/ACK/reset/cleanup orprivate renewal.
+- Finaldriverb6f27adb0427bc3d711c72c671bafaa7ba5cd670eb111fca8028c2a1a72b8b09/16057856B/91inputs;
+  compiledonlybuilder+terminal-GOP.h change.526newWT checks+2054GOPcases OFF+
+  2054ON and explicitdefaultOFFhistoricalBA refusal passedASAN/UBSAN. All256
+  attributes checkedforpixel/header scope; completeFF/44/BA drawsoftware,
+  oldactual0177one-page predicate(DATAonly/notcurrentlease), and otherNS/RW/
+  PA/PAR/returned/fault/sourcechange refusals pass. Old478powercases executing
+  PPbyteequal to frozen0177, not rerun. ActualwholemainCOFF/MachO/generalregs/
+  maxframe1024/defaultOFF+QEMUpp noGOP/physicalbodyrecords pass, RAWABI unchanged
+  module125664/parent126096 and full10MiBFW/14MiB+128host capacity preserved.
+- TwoSERIALfinalnewwholeEFI-XNU models19each/91sameinputs/11resource+1battery
+  literalint1, QEMUphysicalGOP/CPU/private/READ code+records absent, passed.
+  Actualseconds[38.84262437498546, 39.32396795900422].
+  Parentproofe1b6f66491dd70cc0a45926a99602f180f5e0165ae1c5d7e86f86af618c26aa1,
+  modelproofb3fb8f42ba70628f1cdc6d9396d10417d1b492f5be703204f16186fff53dc936.
+  SoftwarePMIC/delay/RAMUSB/pixel peers nothardware/guestreset/radio proof.
+- Sourceproof0178/wifi/own-WT-source-and-offline-proof-0001.json SHAf1396b9f94b0eee7e1aa5fccdee409d49947fa2f00e8ace81b239cf763160f0a.
+  NEXT commit/pushsource, newexacthostprofile with observedliteralattributes,
+  original81wholecodec/newimage/sourceaudit/independentfreeze/ONEhelper. Reuse
+  actualNEW0177strictRO39/rootNV qualification after controlledprestartreceipt
+  and independentFB; doNOT fabricateNEW0178audit/copyoldreview undernewname or
+  repeatfullhash/recovery merelyforinventory. Fulladmit/newcandidateNOTREADY.
+  Same63cb futurequalifiedNEWsessionbroadpermission df995cae... remainsvalid,
+  no new permissionquestion; all oldbootrecords including0177 CONSUMED.
+- Sameprivate maskedDB/checkedaccess still physicallyunproven. This cache-type
+  fix concerns only0177newdisplay-admission failure, NOT earlier0176/75/73
+  opaque causes. Freshallowner/source/cache/DeviceNSRWAT/CPU checks required
+  in each newprivatephase. No200ms/READ50+25ms/UNKNOWN/restore weakening, fake
+  clientheld/leasebool/oldticket/rebase, originalunboundedsubmit/internalentry/
+  patch/fallback. ContinueactualboundedREAD→completefullrestore→qualifiedARC/
+  vote/restore→fourownWiFiVRM→MSS/MSA/GLINK/RMTFS/WLFW/ath10k realnetwork only
+  afteractualevidence. may_vote/MSS/NVserve/scan_join_data=false.
+
 ### CURRENT0177 actual controlled FASTBOOT15:55; real normal GOP attribute0xBA refusal, Wi-Fi private/READ NOT RUN
 
 - Overrides ALL old CURRENT/READY/LIVE. 0177 ended by reviewed recover-prestart,

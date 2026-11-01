@@ -11,6 +11,7 @@
 static struct {struct pwtg_result r;uint32_t native;} *self;
 static struct {struct polaris_gop g;struct polaris_gop_mode m;struct polaris_gop_info i;} *headers;
 static unsigned terminal,fault,at_calls,fail_at,phase_at,writes,cleans,arch_calls,render_pixels;
+static unsigned framebuffer_attr=0xff;
 static uint32_t *pixels;
 static struct pwtg_arch arch;
 static int pwtg_arch_read(struct pwtg_arch *a)
@@ -28,6 +29,8 @@ static int pwtg_translate(struct pwtg_at*t)
 {
     t->issued=t->returned=1;t->saved=t->restored=0x1234;
     t->read=t->write=UINT64_C(0xff00000000000b80)|t->page;at_calls++;
+    if(t->page>=PWTG_FIRST&&t->page<PWTG_FIRST+PWTG_PAGES*4096)
+        t->read=t->write=(t->read&UINT64_C(0x00ffffffffffffff))|((uint64_t)framebuffer_attr<<56);
     if(terminal&&t->page>=PWTG_FIRST&&t->page<PWTG_FIRST+PWTG_PAGES*4096){
         phase_at++;
         if(phase_at==fail_at){
@@ -57,7 +60,7 @@ static void pwtg_order(void){}
 static void setup(void)
 {
     memset(self,0,sizeof(*self));memset(headers,0,sizeof(*headers));
-    terminal=fault=at_calls=fail_at=phase_at=writes=cleans=arch_calls=0;
+    terminal=fault=at_calls=fail_at=phase_at=writes=cleans=arch_calls=0;framebuffer_attr=0xff;
     arch=(struct pwtg_arch){.el=4,.mpidr=0x80000000,.ttbr0=0x1000,.ttbr1=0x2000,.tcr=0x1234,.sctlr=1,
         .mair=0xff4400,.cpacr=0x300000,.sre=1,.frequency=19200000,.line=64};
     headers->g.mode=&headers->m;headers->m=(struct polaris_gop_mode){1,0,&headers->i,sizeof(headers->i),PWTG_BASE,9331200};
@@ -69,6 +72,7 @@ static void setup(void)
 }
 static int arm(void)
 {return pwtg_arm(&self->r,(uintptr_t)&headers->g,(uintptr_t)&self->native,(uintptr_t)self,(sizeof(*self)+4095)&~(size_t)4095);}
+#ifndef PWTG_FIXTURE_ONLY
 int main(int argc,char**argv)
 {
     assert(!posix_memalign((void**)&self,4096,(sizeof(*self)+4095)&~(size_t)4095));
@@ -125,3 +129,4 @@ int main(int argc,char**argv)
     printf("{\"passed\":true,\"checks\":%u,\"pages\":%u,\"raw_bytes\":%zu,\"pixel_rectangle\":[%u,%u,%u,%u],\"SOFTWARE_only\":true}\n",checks,(unsigned)PWTG_PAGES,sizeof(struct pwtg_result),PWTG_X,PWTG_Y,PWTG_PIXEL_WIDTH,PWTG_PIXEL_HEIGHT);
     free(pixels);free(headers);free(self);return 0;
 }
+#endif

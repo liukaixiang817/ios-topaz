@@ -8,6 +8,9 @@
 #define POLARIS_WIFI_TERMINAL_GOP_H
 #include <stdint.h>
 #include <stddef.h>
+#ifndef EFI_XNU_WIFI_TERMINAL_GOP_OWN_WT
+#define EFI_XNU_WIFI_TERMINAL_GOP_OWN_WT 0
+#endif
 #define PWTG_BASE UINT64_C(0x9d400000)
 #define PWTG_WIDTH 1080u
 #define PWTG_HEIGHT 2160u
@@ -95,7 +98,15 @@ static inline int pwtg_at_valid(const struct pwtg_at *t,unsigned header)
     unsigned attr=(unsigned)(t->read>>56);
     return t->issued==1&&t->returned==1&&t->saved==t->restored&&!(t->read&1)&&t->write==t->read&&
         (t->read&0x200)&&(t->read&UINT64_C(0x0000fffffffff000))==t->page&&
-        (attr==0xff||(!header&&attr==0x44));
+        (attr==0xff||(!header&&(attr==0x44
+#if EFI_XNU_WIFI_TERMINAL_GOP_OWN_WT
+        /* Actual0177 first GOP page: BA0000009D465B80. PAR AttrH=B,
+         * AttrL=A are Normal WT (outer RA/WA, inner RA/noWA). This is
+         * confined to the existing GOP pixel pages, never headers/RSC.
+         * No MAIR, TTBR, permissions or cache policy is changed here. */
+        ||attr==0xba
+#endif
+        )));
 }
 static inline int pwtg_owned(const struct pwtg_result *r,uint64_t at,uint64_t n)
 {

@@ -461,6 +461,7 @@ def main():
     ap.add_argument('--wifi-power-read-access-checkpoint',action='store_true',help='default-OFF same private CPU path plus full current masked CmdDb and checked RSC geometry reads/complete observation retirement; deny-only store callback, no engine or READ request')
     ap.add_argument('--wifi-power-read-database-checkpoint',action='store_true',help='default-OFF two full current masked CmdDb RAM captures and complete CPU/private retirement BEFORE first masked RSC MMIO read; no access acquisition or engine state')
     ap.add_argument('--wifi-power-terminal-gop-diagnostics',action='store_true',help='default-OFF bounded numeric UNKNOWN evidence in the current GOP framebuffer, no firmware/GOP method or USB/reset/cleanup on the terminal path; requires the explicit masked database diagnostic')
+    ap.add_argument('--wifi-power-terminal-gop-own-wt',action='store_true',help='default-OFF exact own GOP PAR attribute0xBA Normal WT admission; original literal framebuffer/header/NS/RW/PA/PAR/CPU/hold gates unchanged, no mapping or radio permission change')
     a=ap.parse_args();r=Path(__file__).resolve().parents[1]
     if a.wifi_power_read_access_checkpoint and not a.wifi_power_private_cpu_checkpoint:
         ap.error('read access checkpoint requires the complete same-private CPU checkpoint dependencies')
@@ -468,6 +469,8 @@ def main():
         ap.error('database checkpoint requires the complete same-private read observation dependencies')
     if a.wifi_power_terminal_gop_diagnostics and not a.wifi_power_read_database_checkpoint:
         ap.error('terminal GOP evidence requires the explicit current masked database diagnostic scope')
+    if a.wifi_power_terminal_gop_own_wt and not a.wifi_power_terminal_gop_diagnostics:
+        ap.error('own GOP WT admission requires explicit terminal GOP diagnostics')
     if a.wifi_power_private_cpu_checkpoint and not a.wifi_power_current_arc_read_work_admission:
         ap.error('private CPU checkpoint requires the full prepared/current source and unchanged READ work admission dependencies')
     if a.wifi_power_current_arc_read_work_admission and not a.wifi_power_current_arc_read:
@@ -926,6 +929,7 @@ def main():
 #define EFI_XNU_WIFI_READ_ACCESS_CHECKPOINT {int(a.wifi_power_read_access_checkpoint)}
 #define EFI_XNU_WIFI_READ_DB_CHECKPOINT {int(a.wifi_power_read_database_checkpoint)}
 #define EFI_XNU_WIFI_TERMINAL_GOP_DIAGNOSTICS {int(a.wifi_power_terminal_gop_diagnostics)}
+#define EFI_XNU_WIFI_TERMINAL_GOP_OWN_WT {int(a.wifi_power_terminal_gop_own_wt)}
 #define EFI_XNU_WIFI_CPU_RO_ADMISSION {int(a.wifi_cpu_ro_admission)}
 #define EFI_XNU_WIFI_CPU_MASKED_RO_ADMISSION {int(a.wifi_cpu_masked_ro_admission)}
 #define EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE {int(cmddb_binding is not None)}
@@ -1588,6 +1592,13 @@ def main():
             wifi_CPU0_power_terminal_GOP_terminal_deadline_ticks=960000,
             wifi_CPU0_power_terminal_GOP_private_ticket_or_UNKNOWN_changed=False,
             wifi_CPU0_power_terminal_GOP_original_hold_still_nonreturning=True)
+    if a.wifi_power_terminal_gop_own_wt:
+        manifest.update(wifi_CPU0_power_terminal_GOP_own_WT=True,
+            wifi_CPU0_power_terminal_GOP_own_WT_default_OFF=True,
+            wifi_CPU0_power_terminal_GOP_framebuffer_attr_bytes=[0xff,0x44,0xba],
+            wifi_CPU0_power_terminal_GOP_header_attr_bytes=[0xff],
+            wifi_CPU0_power_terminal_GOP_own_WT_observed_PAR=0xba0000009d465b80,
+            wifi_CPU0_power_terminal_GOP_no_MAIR_TTBR_or_mapping_change=True)
     if a.wifi_cpu_ro_admission:
         manifest.update(wifi_CPU0_power_transaction=False,
             wifi_CPU0_power_CPU_RO_admission=True,wifi_CPU0_power_CPU_RO_default_OFF=True,
