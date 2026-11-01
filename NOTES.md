@@ -34,6 +34,43 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0167 actual recovered FASTBOOT07:20; NEW0168 returned CPU-refusal retirement verified OFFLINE; NEW host/audit/freeze NOT READY
+
+- Phone remains independently confirmed PolarisFASTBOOT07:20:38.214019Z after
+  physical recovery.0167 startupACK/CPU/RSC remain UNKNOWN, not zero; no new
+  USB/firmwareAPI/PSCI/AT/MMIO/image/UI/UTC/nativeCI during0168 offline work.
+  ONLY Wi-Fi, actual grey OFF/scan-join-data still NOT DONE; children/sound/camera STOP.
+- New static finding: a fully returned unmasked normal-PSCI ON0/ON_PENDING2
+  refusal is already retired by pwrpc_begin, but parent formerly made every
+  failure UNKNOWN. This is NOT proof of0167 cause. NEW capture-only parent
+  permits ONLY retiring that refusal: contiguous identical issued/returned
+  masks, all issued guards entered/returned/left, FP saved/restored, TPL4/4,
+  prior peers OFF1/final0or2, no unknown/outstanding/mask/restore/READ/WRITE/
+  access records, complete source and original fresh200ms required. Full
+  currentCmdDb/namespace/source/two pool/knownclient/emptyqueue closure and
+  knownDelete remain mandatory. Changed/late/unsupported/unrecognized/partial/
+  heldmask remains UNKNOWN, no cleanup/Delete/native/PON/receipt. No READ is
+  admitted by ON/pending; allOFF still needs ALL original masked gates.
+- New parent30 ASAN/UBSAN cases, actual mainCOFF/MachO allwarnings|maxframe1024,
+  defaultOFF/QEMUpp passed. Reused unchangedREAD1077 exactcompilerdependencies;
+  reused legacy204 only after all7 softwarepeer and actualparent preprocessed
+  bytes match with originalheader VFSoverlay, otherdependencies unchanged,
+  actual defaultOFF fullEFI byte-identical09d0ba8c. No rerun claimed. Two NEW
+  SERIAL wholeEFI-XNU terminalmodels19checks each/88sameinputs passed, actual
+  QEMUpp has no powerbody/RAW_V2,11resourcePower+1battery literalint1.
+- Proof0168/wifi/returned-CPU-refusal-source-and-offline-proof-0001.json
+  is OFFLINE only. READbody1941984/access401936/READ49488 unchanged; captureonly
+  resourceWRITE CPP-OUT,50ms/256steps/1024events/private200ms/raw/UNKNOWN gates
+  unchanged. Actual newdriverf451ee8bb1072fe0aeb6f653d1c63abd4e21e9eab7cf525e83caac8f5e90d05f/
+  15926784B/88inputs, UNWRAPPED/UNSENT. Four new metadata fields need NEW0168
+  exacthostprofile. Old profiles/frozen0167/consumedboot untouched.
+- NEXT finish NEW exacthostscope/test/admit and merge NEW strictRO39 roots/
+  maps/GPT/ESP/journalmetadata/currentNV audit in next required candidate
+  transition because0167 exit unobserved. No standalone stock/client/probe
+  boot, no old0155..0167 replay. New original81codec/sourcefreeze/ONEhelper
+  needed before one authorized newRAM attempt. Missing actualREAD/vote/MSS/
+  NVserve/scan-join-data stays false. No physical request pending.
+
 ### CURRENT0167 startup ACK UNKNOWN; user physically recovered, actualPolarisFASTBOOT07:20; READ/vote/Wi-Fi NOT DONE
 
 - NEW0167 startup did NOT return ACK. It cannot be called nativeLIVE or a

@@ -51,6 +51,10 @@ def main():
             current_ARC_trigger_low_readback_before_staging=True,
             current_ARC_three_new_rising_edges=True,
             current_ARC_restore_enable_after_final_ACK=True,
+            current_ARC_normal_ON_pending_known_refusal=True,
+            current_ARC_CPU_refusal_requires_all_guard_returns_and_full_close=True,
+            current_ARC_CPU_refusal_never_masks_or_stores=True,
+            current_ARC_unsupported_or_unknown_CPU_state_quarantines=True,
             current_ARC_read_qualified_response_semantics_proven=False).items():
         assert d['wifi_CPU0_power_' + name] is value
     assert type(d['wifi_CPU0_power_current_ARC_high_trigger_restore_stores_max']) is int
@@ -79,7 +83,7 @@ def main():
         'wifi_CPU0_RPMh_source_PE', 'wifi_CPU0_power_source_PE')]
     for name, source, count, arguments in (
             ('read-core', 'polaris-wifi-rsc-read-test.c', 1077, []),
-            ('read-parent', 'polaris-wifi-current-read-test.c', 23, originals)):
+            ('read-parent', 'polaris-wifi-current-read-test.c', 30, originals)):
         if name == 'read-core' and a.reuse_read_proof:
             prior_path = a.reuse_read_proof.resolve()
             prior_read = json.loads(prior_path.read_text())

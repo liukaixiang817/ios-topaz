@@ -1455,7 +1455,11 @@ def main():
             wifi_CPU0_power_current_ARC_trigger_low_readback_before_staging=True,
             wifi_CPU0_power_current_ARC_high_trigger_restore_stores_max=0,
             wifi_CPU0_power_current_ARC_three_new_rising_edges=True,
-            wifi_CPU0_power_current_ARC_restore_enable_after_final_ACK=True)
+            wifi_CPU0_power_current_ARC_restore_enable_after_final_ACK=True,
+            wifi_CPU0_power_current_ARC_normal_ON_pending_known_refusal=True,
+            wifi_CPU0_power_current_ARC_CPU_refusal_requires_all_guard_returns_and_full_close=True,
+            wifi_CPU0_power_current_ARC_CPU_refusal_never_masks_or_stores=True,
+            wifi_CPU0_power_current_ARC_unsupported_or_unknown_CPU_state_quarantines=True)
     (out/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
     print(json.dumps({k:manifest[k] for k in ['artifact','sha256','bytes','QEMU_variant','device_execution_tested']}))
 

@@ -80,6 +80,32 @@ static inline int pwrpt_refuse_retired(const struct paic_io *memory,struct pwrcl
        !pgcd_equal(&s->client,&p->created,sizeof(s->client)))return pwrpt_fail(r,PWRPT_RESTORE,1);
     s->retired=r->known_refusal=r->retired=1;paic_actual_order(0);return 1;
 }
+#if EFI_XNU_WIFI_ARC_READ_AVAILABLE && EFI_XNU_WIFI_ARC_READ_CAPTURE_ONLY
+/* This permits ONLY retiring a fully returned normal-IRQ ON/ON_PENDING
+ * refusal. It never admits READ, masks a CPU, grants a lease or clears an
+ * UNKNOWN. Source/pool/client/namespace must still close in before_mask. */
+static inline int pwrpt_cpu_returned_refusal(const struct pwrpt_result *r,struct pgcd_context *g)
+{
+    const struct pwrpc_result *c=&r->CPU;
+    if(c->attempted!=1||c->error!=PWRPC_PSCI||c->unknown||c->outstanding||c->retired!=1||
+       c->local_mask_held||c->local_restored||c->masked_issued||c->masked_returned||c->masked_unknown||
+       !pwrph_context_ready(g)||!c->source[0].complete||
+       !pwra_zero(&c->mask,sizeof(c->mask))||!pwra_zero(&c->restore,sizeof(c->restore))||
+       !pwra_zero(&r->read,sizeof(r->read))||!pwra_zero(&r->transaction,sizeof(r->transaction))||
+       !pwra_zero(&r->access,sizeof(r->access))||
+       !c->affinity_issued||c->affinity_issued>127||
+       (c->affinity_issued&(c->affinity_issued+1))||c->affinity_returned!=c->affinity_issued||c->affinity_unknown)
+        return 0;
+    for(unsigned k=0;k<7;k++)if(c->affinity_issued&(1u<<k)){
+        const struct pgcd_service_guard *q=&c->guard[k];
+        if(q->entered!=1||q->left!=1||q->foreign_returned!=1||q->unknown||
+           q->fp.saved!=1||q->fp.restored!=1||q->TPL_before!=4||q->TPL_after!=4)return 0;
+        if(c->affinity_issued>>(k+1)){if(c->affinity[k]!=1)return 0;}
+        else if(c->affinity[k]!=0&&c->affinity[k]!=2)return 0;
+    }
+    return 1;
+}
+#endif
 static inline int pwrpt_body(void *context,const struct paic_io *memory,struct pwrcl_result *p,
     struct pwrph_work *work,struct pgcd_context *g)
 {
@@ -129,6 +155,11 @@ static inline int pwrpt_body(void *context,const struct paic_io *memory,struct p
     }
     r->phase=2;
     if(!pwrpc_begin(&io->CPU,memory,p,work,g,io->native_flag,&r->CPU)){
+#if EFI_XNU_WIFI_ARC_READ_AVAILABLE && EFI_XNU_WIFI_ARC_READ_CAPTURE_ONLY
+        if(pwrpt_cpu_returned_refusal(r,g)){
+            pwrpt_fail(r,PWRPT_CPU,0);goto before_mask;
+        }
+#endif
         return pwrpt_fail(r,PWRPT_CPU,1);
     }
     struct paic_arch masked;

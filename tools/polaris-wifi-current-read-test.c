@@ -5,6 +5,20 @@
 #define POLARIS_CMDDB_PREPARED_FIXTURE_ONLY 1
 #include "polaris-wifi-cmddb-prepared-test.c"
 static unsigned read_fault;
+static int current_read_affinity(void *context,uint64_t target,int64_t *raw)
+{
+    int ok=path_affinity(context,target,raw);
+    if(read_fault==23&&psci_calls==1)*raw=2;
+    if(read_fault==24&&psci_calls==1)*raw=-1;
+    if(read_fault==25&&psci_calls==1)*raw=3;
+    if(read_fault==26&&psci_calls==1){*raw=0;return 0;}
+    if(read_fault>=27&&read_fault<=29&&psci_calls==7){
+        *raw=0;
+        if(read_fault==28)path->CPU.affinity[0]=2;
+        if(read_fault==29)path->CPU.guard[0].fp.restored=0;
+    }
+    return ok;
+}
 static int current_read_map(void *ctx,struct efi_system *sys,uint8_t *out,struct paic_map_sample *m)
 {
     int ok=ns_map(ctx,sys,out,m);
@@ -72,7 +86,7 @@ static int current_read_body(void *context,const struct paic_io *memory,struct p
 {
     (void)context;ns=&path->prepared_cmd.namespace;ng=g;
     struct pwrpt_io io={.cmd={.original={*memory,path_locate,current_read_map},.query=0,.namespace_io={memory,0,current_AT}},
-        .device={memory,0,current_read_AT,current_read_load},.CPU={0,path_affinity,path_mask,current_read_restore},
+        .device={memory,0,current_read_AT,current_read_load},.CPU={0,current_read_affinity,path_mask,current_read_restore},
         .access={.memory=memory,.context=&path->access_context,.translate=current_read_AT,.read=current_read_load,
             .write=current_read_store,.RAM_translate=current_read_RAM_AT},
         .enumeration=enumeration,.native_flag=(uintptr_t)native_on,.record=path,.preparation=prep};
@@ -120,6 +134,7 @@ int main(int argc,char**argv)
         checks++;
     }
     for(unsigned fault=2;fault<=17;fault++){
+        if(fault==16)continue; /* Fully returned normal ON is a known refusal. */
         int ok=execute_read(fault);
         if(ok||!pwrpt_unsafe(path)||delete_calls||unmask_calls)fprintf(stderr,"fault%u ok%d path%u CPU%u access%u read%u delete%u unmask%u\n",fault,ok,path->error,path->CPU.error,path->access.error,path->read.io.error,delete_calls,unmask_calls);
         assert(!ok&&pwrpt_unsafe(path)&&cr->client_held&&!delete_calls&&!unmask_calls);
@@ -130,6 +145,18 @@ int main(int argc,char**argv)
     for(unsigned fault=21;fault<=22;fault++){
         assert(execute_read(fault)&&path->error==PWRPT_DEVICE&&path->known_refusal&&path->retired&&!pwrpt_unsafe(path));
         assert(delete_calls==1&&!mask_calls&&!modeled_stores&&pwra_zero(&path->read,sizeof(path->read)));checks++;
+    }
+    for(unsigned n=0;n<3;n++){
+        unsigned fault=(unsigned[]){16,23,27}[n];
+        assert(execute_read(fault)&&path->error==PWRPT_CPU&&path->known_refusal&&path->retired&&!pwrpt_unsafe(path));
+        assert(path->CPU.error==PWRPC_PSCI&&path->CPU.retired&&!path->CPU.unknown&&!path->CPU.local_mask_held);
+        assert(delete_calls==1&&!mask_calls&&!unmask_calls&&!modeled_stores&&pwra_zero(&path->read,sizeof(path->read)));
+        assert(path->prepared_cmd.closed&&!ticket->spent);checks++;
+    }
+    for(unsigned n=0;n<5;n++){
+        unsigned fault=(unsigned[]){24,25,26,28,29}[n];
+        assert(!execute_read(fault)&&pwrpt_unsafe(path)&&cr->client_held&&!delete_calls&&!mask_calls&&!unmask_calls&&!modeled_stores);
+        checks++;
     }
     printf("{\"passed\":true,\"checks\":%u,\"body_bytes\":%zu,\"access_bytes\":%zu,\"read_bytes\":%zu,\"same_prepare_private_Device_CPU_READ_restore_Delete\":true,\"ARC_missing_cache_not_zero\":true,\"resource_WRITE_reachable\":false,\"READ_RAW_not_qualified_vote\":true,\"physical_executed\":false}\n",checks,sizeof(*path),sizeof(path->access),sizeof(path->read));
     free(original);free(npa_original);free(rp_original);free(cmd_original);free(arena);return 0;
