@@ -281,7 +281,11 @@ __attribute__((noreturn)) static void power_unknown_hold(void)
     ram_text("WIFI_POWER_UNKNOWN_HOLD_RAW_V1_END\r\n");
     for(;;)__asm__ volatile("wfe":::"memory");
 }
+#if EFI_XNU_WIFI_GCD_NAMESPACE_RO_AVAILABLE
+_Static_assert(sizeof(struct pwrpt_result)==1235200+2*sizeof(struct pgns_result)+66*sizeof(struct pgns_target),"complete bounded namespace power RAW_V2 ABI");
+#else
 _Static_assert(sizeof(struct pwrpt_result)==1235200,"complete power raw ABI");
+#endif
 _Static_assert(sizeof(struct pwra_result)==399240,"complete checked access raw ABI");
 _Static_assert(sizeof(struct pwrpc_result)==10048,"complete CPU-local raw ABI");
 /* Includes both complete client/path records, NPA/RPMh, current Clock/I2C/GCD

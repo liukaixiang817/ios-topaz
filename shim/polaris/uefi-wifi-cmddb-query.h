@@ -14,6 +14,15 @@
 #if EFI_XNU_WIFI_CMDDB_QUERY_AVAILABLE && !defined(POLARIS_EFI_TEST_QEMU)
 #include "uefi-wifi-rpmh-readonly.h"
 #include "../../tools/polaris-wifi-cmddb-identity.h"
+#ifndef EFI_XNU_WIFI_GCD_NAMESPACE_RO_AVAILABLE
+#define EFI_XNU_WIFI_GCD_NAMESPACE_RO_AVAILABLE 0
+#endif
+#if EFI_XNU_WIFI_GCD_NAMESPACE_RO_AVAILABLE
+#include "uefi-wifi-gcd-namespace.h"
+#endif
+#if EFI_XNU_WIFI_GCD_NAMESPACE_RO_AVAILABLE && !EFI_XNU_WIFI_CMDDB_CAPTURE_ONLY
+#error "Bounded namespace diagnostic requires explicit capture-only; it never enables the power writer"
+#endif
 #define PWCD_DB_BYTES 0x20000u
 /* Original0154 live CmdDb cached AND platform pointers, with five source
  * hashes and relocated protocol table verified, identify this separate RO
@@ -39,12 +48,24 @@ struct pwcd_result {
     uint32_t descriptor_page[2][PWCD_PAGES];
     struct pwcd_resource resources[2][PWCD_RESOURCES];struct pwcd_message messages[2][PWCD_RESOURCES];
     uint8_t database_raw[2][PWCD_DB_BYTES];
+#if EFI_XNU_WIFI_GCD_NAMESPACE_RO_AVAILABLE
+    /* New raw ABI preserves both complete namespaces plus each immediate
+     * target guard. Original-API observations above remain UNISSUED with
+     * status UINT64_MAX; a RAM descriptor never fabricates EFI_SUCCESS. */
+    struct pgns_result bounded_namespace[2];
+    struct pgns_target bounded_target[2][PWCD_PAGES+1];
+#endif
 };
+#if !EFI_XNU_WIFI_GCD_NAMESPACE_RO_AVAILABLE
 _Static_assert(sizeof(struct pwcd_result)==345248,"CmdDb transaction-preflight complete raw extent");
+#endif
 _Static_assert(sizeof(struct pwcd_message)==104,"CmdDb query/status public ABI extent");
 struct pwcd_io {
     struct pwrph_io original;
     int (*query)(void *,uint64_t,uint64_t,uint8_t *,uint8_t *,uint8_t *,uint32_t *,uint64_t *);
+#if EFI_XNU_WIFI_GCD_NAMESPACE_RO_AVAILABLE
+    struct pwrcl_result *namespace_provider;struct pgns_io namespace_io;
+#endif
 };
 enum pwcd_error {PWCD_OK,PWCD_STAGE,PWCD_BASELINE,PWCD_OWNER,PWCD_SOURCE,PWCD_MAP,PWCD_DATABASE,
     PWCD_BOUNDS,PWCD_RESOURCE,PWCD_QUERY,PWCD_CHANGED,PWCD_GUARD,PWCD_TIME,PWCD_CAPTURE_STOP};
@@ -52,7 +73,17 @@ static const char pwcd_names[3][9]={"cx.lvl","mx.lvl","mss.lvl"};
 static const uint32_t pwcd_addresses[3]={0x30000,0x30010,0x30060};
 static inline void pwcd_fail(struct pwcd_result *r,unsigned e,int unknown)
 {if(!r->error)r->error=e;if(unknown)r->unknown=1;paic_actual_order(0);}
-static inline int pwcd_unknown(const struct pwcd_result *r){return r->unknown||r->outstanding;}
+static inline int pwcd_unknown(const struct pwcd_result *r)
+{
+    if(r->unknown||r->outstanding)return 1;
+#if EFI_XNU_WIFI_GCD_NAMESPACE_RO_AVAILABLE
+    for(unsigned pass=0;pass<2;pass++){
+        if(pgns_unsafe(&r->bounded_namespace[pass]))return 1;
+        for(unsigned k=0;k<PWCD_PAGES+1;k++)if(r->bounded_target[pass][k].attempted&&!r->bounded_target[pass][k].complete)return 1;
+    }
+#endif
+    return 0;
+}
 static inline int pwcd_fresh(const struct paic_io *io,struct pwcd_result *r)
 {
     if(!io->arch(io->context,&r->after)||!paic_arch_stable(&r->before,&r->after)||
@@ -99,10 +130,21 @@ static inline int pwcd_database_read(const struct pwcd_io *ops,struct pgcd_conte
 {
     const struct paic_io *io=&ops->original.memory;uint64_t base=r->database[pass];
     if(base!=PWCD_UEFI_DB_BASE)return 0;
+#if EFI_XNU_WIFI_GCD_NAMESPACE_RO_AVAILABLE
+    (void)first;
+    struct pgns_result *ns=&r->bounded_namespace[pass];
+    if(!ops->namespace_provider||ops->namespace_io.memory!=io||
+       !pgns_collect(&ops->namespace_io,ops->namespace_provider,w,g,ns)){
+        pwcd_fail(r,PWCD_DATABASE,ns->unknown||ns->outstanding||!ops->namespace_provider);return 0;}
+#else
     unsigned prior=0;
+#endif
     for(unsigned k=0;k<PWCD_PAGES;k++){
         if(!pwcd_fresh(io,r))return 0;
         uint64_t p=base+4096*k;struct pgcd_observation *q=&r->namespace[pass][k];q->page=p;q->status=UINT64_MAX;
+#if EFI_XNU_WIFI_GCD_NAMESPACE_RO_AVAILABLE
+        if(!pgns_descriptor(ns,p,&q->descriptor)){pwcd_fail(r,PWCD_DATABASE,1);return 0;}
+#else
         /* One original descriptor may cover many pages. Reuse only its exact
          * admitted extent in this pass; still check every page's map and AT.
          * Unissued observations are explicitly linked to the source page. */
@@ -119,8 +161,9 @@ static inline int pwcd_database_read(const struct pwcd_io *ops,struct pgcd_conte
             q->guard=r->guard[first+k];q->after_ticks=q->guard.after.cpu.ticks;q->unknown=0;
         }
         r->descriptor_page[pass][k]=prior;
+#endif
         const struct pgcd_descriptor *d=&q->descriptor;
-        if(q->status||d->type!=2||!(d->capabilities&8)||d->attributes!=8||
+        if((!EFI_XNU_WIFI_GCD_NAMESPACE_RO_AVAILABLE&&q->status)||d->type!=2||!(d->capabilities&8)||d->attributes!=8||
            !d->length||d->base>p||d->base>UINT64_MAX-d->length||p+4096>d->base+d->length||
            (!polaris_efi_range_owned(w->map,w->bytes,w->stride,p,4096,0)&&
             !polaris_efi_range_owned(w->map,w->bytes,w->stride,p,4096,4)))return 0;
@@ -129,8 +172,23 @@ static inline int pwcd_database_read(const struct pwcd_io *ops,struct pgcd_conte
     }
     for(unsigned k=0;k<PWCD_DB_BYTES;k++){
         if(!(k&4095)&&!pwcd_fresh(io,r))return 0;
+#if EFI_XNU_WIFI_GCD_NAMESPACE_RO_AVAILABLE
+        if(!(k&4095)){
+            unsigned page=k/4096;struct pgcd_descriptor live;
+            if(!pgns_target_guard(&ops->namespace_io,ops->namespace_provider,w,g,ns,base+k,
+                &r->bounded_target[pass][page],&live)||
+               !pgcd_equal(&live,&r->namespace[pass][page].descriptor,sizeof(live))){pwcd_fail(r,PWCD_DATABASE,1);return 0;}
+            r->descriptor_page[pass][page]=r->bounded_target[pass][page].index;
+        }
+#endif
         r->database_raw[pass][k]=PWCD_LOAD(base+k);r->database_bytes[pass]=k+1;
-    }return 1;
+    }
+#if EFI_XNU_WIFI_GCD_NAMESPACE_RO_AVAILABLE
+    struct pgcd_descriptor last;
+    if(!pgns_target_guard(&ops->namespace_io,ops->namespace_provider,w,g,ns,base,
+        &r->bounded_target[pass][PWCD_PAGES],&last)) {pwcd_fail(r,PWCD_DATABASE,1);return 0;}
+#endif
+    return 1;
 }
 static inline int pwcd_query_matches(const struct pwcd_message *q,const struct pwcd_resource *x,unsigned k)
 {

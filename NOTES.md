@@ -34,42 +34,53 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0157 actual FASTBOOT after second physical recovery01:42; bounded originalGCD RAM component VERIFIED OFFLINE, parent NOT READY
+### CURRENT0157 actual FASTBOOT01:42; bounded CmdDb PARENT/LINK VERIFIED OFFLINE, two terminal models PASS; host NOT READY
 
-- User answered the0156 recovery request; independent exact product at
-  2026-11-01T01:42:42.384037Z returned product:polaris/exit0. No physical
-  recovery request is now pending. No new boot/reset/UTC/recovery after this
-  query; current lastactualFASTBOOT, not nativeLIVE. Both0155/0156 consumed
-  images/payloads/frozen manifests remain unchanged and may never be replayed.
-- New OFFLINE component work only: tools/polaris-wifi-gcd-namespace-identity.py
-  binds exact ownCore61236b07, allocator80B at7f64/7f84, head1bd60/lock1bd48,
-  nodeLink+8/Base24/End32/Cap40/Attr48/Type56/IO60/handles64,72; actual original
-  template1bd70 has signaturegcdm and SHA4da525b8. Static original bytes/opcodes
-  checked, not currentRAM evidence. No original code executed.
-- shim/polaris/uefi-wifi-gcd-namespace.h defaultOFF now implements finite512node
-  raw two-pass originalCore namespace capture with source5hash/templatehash,
-  currentRAM/NSWB+PARreadback, loaded-image exclusion, signature/links/cycle/
-  ranges/head/lock checks and same original context/200ms gates. No original
-  GCD API/lock/TPL service/allocator/SMC/MMIO. A released lock observation is
-  NOT exclusivity. Captured descriptor lookup is pure and explicitly grants
-  no actual target read without a future caller's fresh source/context checks.
-  Component qualification0157/wifi/namespace-verified-0001/proof.json SHA
-  9b1cbef2d6571f5b291b618829fe3ee34069806b91f6b2319c24e26756307c87:
-  27ASAN/UBSAN cases plus actual AArch64COFF/MachO/maxframe1024 and defaultOFF/
-  QEMUcompiledout, sixchecks passed. RAW183064B retains all checkpoint/node AT
-  and partial bytes. SOFTWARE source data/AT/client callbacks are not actual
-  firmware execution. No parent/builder/profile integration yet and no actual
-  namespace. Next integrate its fresh target validation into the same focused
-  CmdDb capture diagnostic; never fallback to the original unbounded API.
-- Prior0156 failure remains UNKNOWN: no raw/currentstage/zero CPU-WLED-RSC/
-  boot/rootcause claims. Source narrowing alone is not physical completion.
-  SourceFW16f9158/HOSTda81d60/handoff0b99441 are pushed. Current new component
-  verified offline only; no new nativeCI/models or physical attempt.
-- Latest completed root/NV0156 de8f9289/preflight1c62eacc preceded the failed
-  trial. After this physical recovery, merge NEW fullstrictRO root/map/GPT/
-  ESP/journal/currentNV into the next already-required transition, not now
-  merely for old inventories. may_write_userdata=false, no root-copy/repair/
-  replay/RW/NVrestore. Only Wi-Fi; sound/camera/allchildren STOP.
+- User answered the second physical recovery request; independent exact product
+  2026-11-01T01:42:42.384037Z returned product:polaris/exit0. Nothing physical
+  pending. No USB/recovery/reset/UTC/image after that query. Only lastactual
+  FASTBOOT, not nativeLIVE. Both0155/0156 consumed artifacts/frozen manifests
+  are unchanged and may never be replayed. No physical root cause isolated.
+- Component sourcec88ec2d is pushed: finite512node exact originalCore GCD RAM
+  reader, source5hash/templateSHA, currentRAM/NSWB/PARrestore/loaded exclusion,
+  complete raw twopass/cycle/backlink/ranges/partial/time. Original80B node,
+  head1bd60/lock1bd48/template1bd70 bound to ownCore61236b07 and templateSHA
+  4da525b8. The initial27ASAN/UBSAN+COFF/MachO/componentproof9b1cbef2 is history
+  for that component, not the current integrated physical implementation.
+- NEW parent/builder integration is now verified OFFLINE: defaultOFF explicit
+  --wifi-power-cmddb-bounded-gcd requires capture-only plus originalCore scope.
+  Same known privateCreate -> two full finite namespaces -> actual current
+  CmdDb read -> known refusal retirement/Delete. No original GCD query in this
+  CmdDb body, no Query/criticalPSCI/Device/RSC continuation and no API fallback.
+  Unissued original descriptor observations preserve EFIstatusUINT64_MAX, not
+  fabricated success. Five sourcehash/head/released-lock/targetnode and actual
+  NSWB PAR restoration rechecked immediately before EACH database page plus
+  after each fullcopy; all raw retained. Releasedlock/stableRAM are not lease.
+- Current physical-body EFI0157/wifi/bounded-capture-driver-ON-0002 SHA
+  776b3de301791af7fb2f65b60b9ede857560dc147f286d28224732a95b702672,
+  11813376B/82compiledinputs. ClientRAW_V1/pathRAW_V2 1656240B, two namespaces
+  183064B each/66targetguards832B; FW8MiB compiletime sizeof capacity passes.
+  Parent explicitly gates bounded UNKNOWN/outstanding/incomplete targetguard;
+  original200ms/ticket/noUSB-quarantine/finalGCD remain unchanged. Old profiles
+  and frozen artifacts unmodified. Diagnostic driver0001 was superseded before
+  qualification; only0002 is the current complete source-bound build.
+- Currentproof0157/wifi/bounded-parent-verified-0001/proof.json SHA482b2861
+  ca9b3d72220b5d0c3a9b77f9e98f95a148fcd9f4f322aaaf8e7f0a5e:61ASAN/UBSAN
+  (normal17/oldcapture7/newbounded37), ninechecks; actual main COFF/MachO with
+  maxframe1024 and preprocessed actual body passed. All82inputs match current
+  source. Software source-data/map/AT/private APIs are not actual firmware.
+  Two affected wholeEFI-XNU terminal models completed SERIAL, each19checks/
+  38.8624s and39.2753s/82sameinputs; all11resource/Power+1battery markers literal
+  int1. Actual QEMU main has no bounded namespace/power/NPA/RPMh bodies orraw.
+  Combinedproof bounded-two-terminal-models-0001-proof.json passed; SOFTWARE
+  PMIC/delay/RAMUSB not originalfirmware/hardware/guestreset. No nativeCI/phone.
+- NEW exact host profile/controller/raw admission, original81 wrapping/codec,
+  sourceaudit/independent freeze/ONEhelper still missing: candidate NOT READY.
+  No single inventory or client-only physical boot. Before the next already
+  needed transition merge NEW strictRO complete roots/map/GPT/ESP/journal+
+  currentNV after this untrusted interval; prior0156 de8f9289/1c62eacc predates
+  recovery and cannot independently qualify a new boot. No repair/replay/RW/
+  NVrestore/root-copy. Only Wi-Fi; sound/camera/allchildren STOP.
 
 ### HISTORY0156 capture-only startup UNKNOWN; recovery request since fulfilled
 

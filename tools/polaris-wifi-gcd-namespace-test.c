@@ -1,6 +1,7 @@
 /* The existing original-PE private client fixture is a SOFTWARE peer only. */
 #define POLARIS_POWER_PATH_FIXTURE_ONLY 1
 #include "polaris-wifi-power-path-test.c"
+#undef EFI_XNU_WIFI_GCD_NAMESPACE_RO_AVAILABLE
 #define EFI_XNU_WIFI_GCD_NAMESPACE_RO_AVAILABLE 1
 #include "uefi-wifi-gcd-namespace.h"
 _Static_assert(sizeof(struct pgns_result)<=0x40000,"resident test extent");
@@ -72,6 +73,7 @@ static int execute_namespace(unsigned fault)
     c->io.arch=path_arch;c->io.map=path_core_map;
     return pwrcl_run_body(&client,enumeration,2,c,early,cr,rw,ns_body,0);
 }
+#ifndef POLARIS_GCD_NAMESPACE_FIXTURE_ONLY
 int main(int argc,char **argv)
 {
     assert(argc==5&&!posix_memalign((void**)&arena,4096,0x800000));
@@ -103,3 +105,4 @@ int main(int argc,char **argv)
     printf("{\"passed\":true,\"checks\":%u,\"raw_bytes\":%zu,\"max_nodes\":512,\"original_GCD_API\":0,\"lock_or_TPL_calls\":0,\"SMC_MMIO\":0,\"physical_firmware_executed\":false}\n",checks,sizeof(*ns));
     free(original);free(npa_original);free(rp_original);free(cmd_original);free(arena);return 0;
 }
+#endif

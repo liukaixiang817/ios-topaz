@@ -21,6 +21,12 @@ struct pgns_pass {
     struct pgns_node node[PGNS_NODES];
 };
 struct pgns_result {uint32_t attempted,error,unknown,outstanding,stable,phase,returned;uint64_t core;struct pgns_pass pass[2];};
+struct pgns_target {
+    uint32_t attempted,complete,index,head_bytes,lock_bytes,pages[2];uint64_t page;
+    uint32_t hash_count,hash_failed;uint8_t source_hash[5][32];
+    struct pgcd_arch before,after;uint8_t head[16],lock[24];
+    struct pgns_translation AT[2][2],target_AT;struct pgns_node node;
+};
 struct pgns_io {const struct paic_io *memory;void *context;int (*translate)(void *,struct pgns_translation *);};
 enum pgns_error {PGNS_OK,PGNS_ARGUMENT,PGNS_REENTRY,PGNS_CONTEXT,PGNS_SOURCE,PGNS_LOCK,
     PGNS_RAM,PGNS_TRANSLATION,PGNS_LIMIT,PGNS_CYCLE,PGNS_LINK,PGNS_RANGE,PGNS_CHANGED,PGNS_TIME};
@@ -128,6 +134,38 @@ static inline int pgns_descriptor(const struct pgns_result *r,uint64_t page,stru
                 (uint32_t)pwfi_le(n+56,4),0,pwfi_le(n+64,8),pwfi_le(n+72,8)};return 1;
         }
     }return 0;
+}
+/* Immediate same-context validation of the exact captured head, released-lock
+ * observation and target node. This only admits the immutable CmdDb RAM read;
+ * no descriptor status is invented and no Device/MMIO address is accepted.
+ * The caller still checks its current map and fresh target NS/WB AT, and keeps
+ * the original source hashes around the complete database copies. */
+static inline int pgns_target_guard(const struct pgns_io *io,struct pwrcl_result *p,const struct pwrph_work *w,
+    struct pgcd_context *g,struct pgns_result *r,uint64_t page,struct pgns_target *s,struct pgcd_descriptor *out)
+{
+    if(!s||s->attempted||!pgns_descriptor(r,page,out))return pgns_fail(r,PGNS_ARGUMENT,1);
+    s->attempted=1;s->page=page;
+    for(s->index=0;s->index<r->pass[1].count;s->index++){
+        const struct pgns_node *n=&r->pass[1].node[s->index];
+        if(pwfi_le(n->raw+24,8)==out->base)break;
+    }
+    if(s->index==r->pass[1].count||!pgns_live(g,r,&s->before))return pgns_fail(r,PGNS_CONTEXT,1);
+    if(!pwrcl_owned(io->memory,p,w,r->core,PGCI_IMAGE_BYTES)||
+       !pgci_verify((const void*)(uintptr_t)r->core,r->core,PGCI_IMAGE_BYTES,
+        s->source_hash,&s->hash_failed,&s->hash_count))return pgns_fail(r,PGNS_SOURCE,1);
+    s->node.address=r->pass[1].node[s->index].address;
+    if(!pgns_copy(io,p,w,g,r,s->head,r->core+PGNS_HEAD_RVA,16,&s->head_bytes,s->AT[0],&s->pages[0],0)||
+       !pgns_copy(io,p,w,g,r,s->lock,r->core+PGNS_LOCK_RVA,24,&s->lock_bytes,s->AT[1],&s->pages[1],0)||
+       !pgns_copy(io,p,w,g,r,s->node.raw,s->node.address,80,&s->node.bytes,s->node.AT,&s->node.pages,1))return 0;
+    if(!pgcd_equal(s->head,r->pass[1].head_raw[1],16)||!pgcd_equal(s->lock,r->pass[1].lock_raw[1],24)||
+       !pgcd_equal(s->node.raw,r->pass[1].node[s->index].raw,80))return pgns_fail(r,PGNS_CHANGED,1);
+    s->target_AT.page=page;r->outstanding=1;paic_actual_order(0);
+    int returned=io->translate(io->context,&s->target_AT);paic_actual_order(0);
+    const struct pgns_translation *t=&s->target_AT;
+    if(!returned||t->page!=page||t->issued!=1||t->returned!=1||t->saved!=t->restored||
+       t->par!=(UINT64_C(0xff00000000000b80)|page))return pgns_fail(r,PGNS_TRANSLATION,1);
+    r->outstanding=0;
+    if(!pgns_live(g,r,&s->after))return 0;s->complete=1;return 1;
 }
 static inline int pgns_actual_translate(void *context,struct pgns_translation *t)
 {

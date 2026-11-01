@@ -134,7 +134,13 @@ static int path_write(void *ctx,uint64_t at,uint32_t value)
 static void configure(unsigned scenario)
 {
     client_reset(0);jf=scenario;api_queries=psci_calls=mask_calls=unmask_calls=modeled_stores=requests=acks=0;DAIF=0;Group1=1;
-    uint8_t *old=rimage;rimage=arena+0x400000;memcpy(rimage,old,PWRPI_IMAGE_BYTES);
+    uint8_t *old=rimage;
+#if EFI_XNU_WIFI_GCD_NAMESPACE_RO_AVAILABLE
+    rimage=arena+0x4c0000;
+#else
+    rimage=arena+0x400000;
+#endif
+    memcpy(rimage,old,PWRPI_IMAGE_BYTES);
     for(unsigned k=0;k<PWRPI_RELOC_COUNT;k++){
         uint8_t *p=rimage+pwrpi_relocs[k];uint64_t v=pwfi_le(p,8);
         if(v>=(uintptr_t)old&&v<(uintptr_t)old+PWRPI_IMAGE_BYTES)put(p,v+(uintptr_t)rimage-(uintptr_t)old,8);
@@ -149,9 +155,13 @@ static void configure(unsigned scenario)
         if(value>=(uintptr_t)old_links&&value<(uintptr_t)old_links+0x10000)put(rimage+k,value+(uintptr_t)links-(uintptr_t)old_links,8);}
     pool=links+(pool-old_links);active_header=links+(active_header-old_links);free_header=links+(free_header-old_links);
     foreign_client=links+(foreign_client-old_links);own_client=links+(own_client-old_links);
+#if EFI_XNU_WIFI_GCD_NAMESPACE_RO_AVAILABLE
+    self->bytes=r->self_owner.bytes=r->self_bytes=0x480000;
+#else
     self->bytes=r->self_owner.bytes=r->self_bytes=0x3c0000;
+#endif
     struct pgcd_config original_config=*cfg;cfg=(void*)(arena+0x780000);*cfg=original_config;s->tables=cfg;
-    path=(void*)(arena+0x240000);memset(path,0,sizeof(*path));assert(sizeof(*path)<0x180000);
+    path=(void*)(arena+0x240000);memset(path,0,sizeof(*path));assert(sizeof(*path)<0x240000);
     native_on=(void*)(arena+0x183000);*native_on=0;
     put(own_client+8,(uintptr_t)rimage+0xaf50,8);header(free_header,0,0,0);
     put(foreign_client+0x34,UINT32_MAX,4);
@@ -195,8 +205,9 @@ static int execute(unsigned scenario)
     configure(scenario);
     const struct paic_io memory={s,0,path_memory_arch,path_identity,order};
     struct pwrcl_io client={{{s,0,path_memory_arch,path_identity,order},path_locate,path_map},client_create,client_drop,own_name};
-    struct pwrpt_io io={{{memory,path_locate,path_map},path_query},{&memory,0,path_AT,path_read},
-        {0,path_affinity,path_mask,path_restore},{&memory,&path->access_context,path_AT,path_read,path_write},enumeration,(uintptr_t)native_on,path};
+    struct pwrpt_io io={.cmd={.original={memory,path_locate,path_map},.query=path_query},.device={&memory,0,path_AT,path_read},
+        .CPU={0,path_affinity,path_mask,path_restore},.access={&memory,&path->access_context,path_AT,path_read,path_write},
+        .enumeration=enumeration,.native_flag=(uintptr_t)native_on,.record=path};
     return pwrcl_run_body(&client,enumeration,2,c,early,cr,rw,pwrpt_body,&io);
 }
 static char *parent_report;static size_t parent_report_bytes,parent_report_capacity;
