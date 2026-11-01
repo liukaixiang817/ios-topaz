@@ -41,6 +41,10 @@ early samples only. On0029 the human already confirmed boot complete and said
   93c564a62f1ba72da5c3cbe0d22d1207a0517272 matched. Record0179/public-handoff-
   publication-human-authorization-20261101.json. No newkernel/partitionpermission
   or unlimitedfuturepublichandoffconsentinferred. 0180sourcewasnotinthatpush.
+- New0180sourcecommit9b8cacf isLOCALonly. Automaticapproval rejected0180push:
+  userpublicapprovalwaslimitedto0179NOTES, notnew0180privatesource/nextnotes.
+  No workaround/alternatepush/retry; completeallremainingofflinecandidatework
+  first, thenoneconcretereviewable0180publicationquestion. Old0179questionclosed.
 - NEWdefaultOFF --wifi-power-normal-to-masked-database requiresexplicitfresh
   normalarguments/fullDBdependencies. SAME NEWprivateclient checksnormaltyped
   objectsprefix→ALLfreshoriginalCPU/maskedsource/cache/fullCmdDb/namespace/
@@ -80,6 +84,12 @@ early samples only. On0029 the human already confirmed boot complete and said
   model9825fe83af43d6c67f28e7521e0ba41e9b5e8a39ba15bbcee5d2d82c12bf0540/
   source0180/wifi/normal-masked-source-and-offline-proof-0001.json
   SHA17de9a8b1b06a73336fb2a36e1bdc2a58bf520c5926d9206eb598ae5d0b50088.
+- NEWGCD_CLOCK_0180 literalFW9b8cacfb9b4d5c19c1e02ce7915185a994ce7249,
+  exact360PowerGCD+94resource/93inputs;34oldenabled+DISABLED literalASTunchanged.
+  21hosttests+20actualmetadatarefusals+2dependencyrefusals+actualmissingnormal
+  flagCLIrefusalbeforeoutput passed. Host-onlychange didnotalter93FWinputs;
+  no repeat461tests/models. NewprofileandnewFWlocal/publicpushstillblocked
+  untilconcrete0180publicationapproval;0179approvalnotexpandedtofuturecode.
 - NO0180image/payload/devicecommand/newnativeCI. LastactualcontrolledPolarisFB
   remains2026-11-01T20:17:05.473503Z,0179sessionENDED/consumed/no replay.
   FreshrootNV0179 afterONLYcontrolleddrain remainsbasis, nofullhashredo now.
