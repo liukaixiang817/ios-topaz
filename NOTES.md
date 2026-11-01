@@ -34,7 +34,7 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0164 remains last actual native05:24; NEW0165 three RAW READ/full-restore parent verified OFFLINE, host/candidate NOT READY
+### CURRENT0164 remains last actual native05:24; NEW0165 three RAW READ/full-restore parent verified OFFLINE, exact host/image verified OFFLINE, transition/freeze NOT READY
 
 - Wi-Fi still grey OFF; no scan/join/data. Phone remains the SAME0164
   kernel-entered session, last actual05:24:37Z. No USB/API/PSCI/AT/MMIO,
@@ -74,9 +74,14 @@ early samples only. On0029 the human already confirmed boot complete and said
   38.839163583/39.621748833s passed;11resourcePower+1battery literalint1,
   actualQEMUpp has no READ/power body/raw. Modelproof288a453cafa1245889f5a2ce70ff93750e9c8ecdddc4963c4e659c4ae9a72403.
   SOFTWARE PMIC/delay/RAMUSB is not hardware or guest-reset proof.
-- NEXT new exact host literal/scope review, affected host checks/actual admit,
-  original81 whole codec, independent freeze/ONEhelper; NOT READY until all
-  pass. Do not send or replay0164. Before any newimage use ONLY frozen0164
+- FW4021370893ff18dcbd7ce9f2d46df0505bea4ec4 pushed/independentremote matched.
+  NEW GCD_CLOCK_0165 binds242PowerGCD+94resource/88inputs and new scope; all
+  18oldliteralAST unchanged.20affectedhosttests plus actual no-mock fulladmit
+  passed. Hostproof35d7b32f321beeccaaaf468bf627c4da5c2eb29b273d0587d1e96547e3280938 .
+  Newimagea892c90551dd98ce795c1bd4758c3824cf3787b1499a303dac872f7619934870/6029312B,
+  complete original unmodifiedEDK2whole43408584B decode/81FW preserved.
+  NEXT genuine0164normaldrain+independentactualFB, independentnewfreeze/ONEhelper;
+  physical candidate NOT READY until complete. Do not send or replay0164. Before any newimage use ONLY frozen0164
   controller to normal nativeVFS/GPU/CPU drain with full fresh appendraw/
   WLEXIT05/WLR5 receipt, then independent actual expectedPolarisFASTBOOT.
   Current0164 UTC already SET once, NEVER SET again. FreshROOT/NV0160 remains
