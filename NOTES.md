@@ -34,6 +34,29 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0163 actual controlled FASTBOOT05:06; NEW0164 HAL count/ID fix full candidate verified OFFLINE, freeze/physical attempt NEXT
+
+- FWf75534f97f77206c3a4c5e4edaaaae776f1e32da pushed and independent remote
+  matched. Same conditional integrated path; only corrected original count/ID
+  binding and honest metadata. No original200ms/UNKNOWN/owner gate relaxation.
+- NEW GCD_CLOCK_0164 literal86inputs/221PowerGCD+94resource includes static
+  countRVAd238/runtimeoffset4 and separate logicalDRV RVAd228. All17prior
+  literalprofiles AST unchanged.15affected exacthosttests and actualno-mock
+  fulladmit PASS, including oldheader/count-ID/deadline/raw substitutions.
+- Full parent proof204ASAN/UBSAN+34RAM+26Device and two SERIAL new19check
+  terminalmodels/86sameinputs PASS. No nativeCI or unrelated oldmodel rerun.
+  Newdriver14cdb2672e9ef9cda41de3359e41c37871ef7276f9b13ae12400dcaa3fd8860c/
+  15868928B retains full10MiB RAMlog/host14MiB+128. No raw stripped.
+- Newimage60c02e3d8553e464d59f5023780d447a6eb778f70cf28ee4b54de524d32f57b0/6025216B created offline;
+  originalunmodifiedEDK2 whole43350728B GetInfo/decode exact, all81FW/
+  SimpleInit/BootShim/DTB preserved. Not sent. Freeze+defaultONEhelper and
+  fresh expectedFASTBOOT still required. Current phone is prior0163 actual
+  FASTBOOT05:06:34Z; no current-native commands or physical request pending.
+- NEXT serial ONE0164 after immutable source/freeze admission, continuing
+  actual currentcache/TCS/RSC power/completion/savedrestore/Delete path.
+  Not another preparation/client-only/inventory experiment. Real power and
+  Wi-Fi still unproven. Sound/camera/children STOP, MSS/NVserve/radio false.
+
 ### CURRENT0163 actual controlled FASTBOOT05:06; integrated power safely refused at HAL count/ID mismatch; NEW0164 exact field correction verified OFFLINE, host/candidate NOT READY
 
 - User asks Wi-Fi quickly. ONLY Wi-Fi; scan/join/data NOT DONE. Sound/camera/
