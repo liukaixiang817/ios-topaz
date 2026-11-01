@@ -34,6 +34,69 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0169 native last actual2026-11-01T08:46:19.945233+00:00; actual seven normal PSCI OFF/full RO retirement SUCCESS; Wi-Fi grey/scan-join-data NOT DONE
+
+- PHONE0169 actualkernel-entered; latestcapture/view Settings Wi-Fi greyOFF,
+  Melbourne7:46PM/chargingicon/blacksidebar remains. NOTFASTBOOT. User says
+  Wi-Fi stillfails correctly: scan/join/data nevercompleted, no fakecapability.
+  AllUSB/host/build/modelworkers ENDED/allchildren STOP, ONLYWi-Fi then sound
+  then camera. No physicalaction pending. No reason for moreinventory/UIpolls.
+- ONEimage70256 ENDED0 sent2026-11-01T08:37:03.495094+00:00/sourced47ac7a0cbd1d58837c4553fe6485db8461f59d3/
+  image31a95d951c471110770fd1b239954bb35b000a3b36e27b40a5d2cb42f0c821d7/5988352B.
+  Actualwaitingpayload08:37:13.879798Z -> ONE63cbpayload5666 ENDED0,
+  ACK2026-11-01T08:38:19.720345+00:00, transfer32.936186s/
+  bootcall16.939961s. ORIGINALrepo0169/phone-CPU-RO-runtime-0001/
+  boot.json CONSUMED. Never replayimage/payload/OEMboot/refreeze/oldpolicy/stripflags.
+  ONLYcontroller=/private/tmp/polaris-runtime-0169-frozen-0001/tools/polaris-uefi-wled-runtime.py
+  withmatchingfrozen0169 driver0001/image0001 and ORIGINALsharedconsumedrecord.
+- Actualcomplete39344B CPU_RO_ADMISSION_RAW_V1 SHA1fdf78fc16469f1073abf2ca30ad243263578903c0ae32d20f62a2cc879529c4;
+  same fullbytes in laterUIcapture. FrozenCtypedef decoder reused, notnewwireparser.
+  attempted1/error0/unknown0/outstanding0/retired1/complete1/calls7/issued127=
+  returned127/sources14/nativeflagreads16all0. ExactsevenMPIDRs100..700 each
+  raw1=logicalOFF; on/pending/unsupported/other masks0. Sevennormalguards
+  entered/returned/left/FPsavedrestored1/CPACR300000/TPL4->4/DAIF0/G1on.
+  All80Core actualdigestbytes matchoriginalPE via independentCdecoder; full
+  map2784B/stride48/key5897->5897/DS/config/lock stable. Residentticket spent1,
+  ownrecord/ticketoffsets matchCABI/contextfinished1/phase3. Firstopen->lastlive
+  24591.822917us NOT totalretirementtime; original200ms notreset/rebased.
+  InitialGetMapTPLbefore/after UINT64_MAX isUNOBSERVED, finalmap4->4.
+- These7OFF observations are from independentnormalRO BEFOREnativeCPU_ON,
+  notcurrentkernelCPUstates, masked7peer exclusion, DRV2/EE/EL3/VMID/MPU
+  lease, RSCREAD/vote or cause of0167/0168. No privateCreate/Delete, RSC/TCS,
+  MSS orNVserve in CPUROphase. OrdinaryAFFINITY_INFO64 works inTHIS context;
+  oldfullpath failingpredicate stillUNKNOWN withoutitsraw. Do notnamecause.
+- IndependentfinalClockGCD actual8getters/full20Corehashbytes/twoactual
+  prestarts/error0/unknown0/key5898->5898/TPL4 pass. Clockallocation occurs
+  between finishedCPURO and unopenedfinalticket; never require5897=5898.
+  ActualcombinedCPU/finalGCD/UIproof0169/wifi/actual-CPU-RO-0001/
+  physical-normal-CPU-RO-final-GCD-and-current-UI-proof.json
+  SHAb88b74c372be22240345506d5a7144aab362b82defa7b8ca316845d0aa8e7f1e.
+- UTC0169 actualREADYseq0count0 beforeONESET, then independentAPPLIED
+  cookie7648565559/seq1/status2/error0/count1/uncertainty2277us. NEVERSET0169again.
+  LatestvalidFG3/SMB2=100%/4297mV/charging0; UIicon notchargerreading.
+  FullWLEDprefix26/error0/issued4=completed4/request2=ack2/module128/irq2/
+  faultOR1/rtOR0 onlyILIMbit0 allowed; raw preserved, no clearfault. No optical
+  cycle/performanceAB/fullrender/60Hz claim; SettingsgreyOFF isactualUI.
+- FWf6759e1/HOST2451d2b/prebootd47ac7a pushed/remotematched. FrozenCOPY845+
+  10COMMIT_ONLY/446sources/63inputs/nohardlinks e01bf087aee6a06838eb964c37c528e80b60712d218f61b2175f73e6ef3424dc.
+  ActualstrictRO0169reviewbc32c1ef/preflight8f7737f6 beforeboot/full39checks/
+  NVsame0168; thereafter onlycontrolledRO/RAMCOW. Normaldrain+actualFB will
+  permitnextcandidate reuse withoutnewfullhash/recovery. If abnormal/Android/
+  longuncontrolled then mergeNEWstrictRO nextrequiredtransition. NoUFS/NVwrites.
+- NEXT preserve thisactualmilestone then ONLYfrozen0169 normalnativeVFS/GPU/
+  CPUdrain/fullappendraw/WLEXIT05/WLR5freshreceipt, independentactualproduct.
+  ACKnotreset; unknownACK onlymatchingstateONCE/expectedONCE afterENDED,
+  no blindretry/reset/cleanup/rawfallback; onlytrulyunableexit requestkeysONCE.
+  Next0170 NOTREADY: qualify actualCPU-local masked seven-peer admission and
+  exactDAIF/G1/FP/source restoration withoutTCS, reusing typedexisting
+  pwrpc masks/guards. KeepcapturedefaultOFF/newscope/fullraw/parentUNKNOWN
+  gate and original200ms. No pastOFF result/ticket becomes a livelease.
+  Then SAMEfresh private/currentnamespace/cache/Device/CPU qualification→
+  boundedRSCREAD/completion/fullRWrestore/sourceCPU/namespace/knownDelete,
+  qualifiedARC/vote/MSS/GLINK/RMTFS→realnetwork. Do not repeatcompleted
+  independentnormalCPU/prep/NPA/client inventories. may_vote/MSS/NVserve/
+  scan_join_data=false. Sound/cameraSTOP; nativeCI/kernelunchanged.
+
 ### CURRENT0168 only last actual recovered FASTBOOT07:55; NEW0169 independent normal CPU RO exact candidate frozen OFFLINE; actual strictRO FASTBOOT08:31, one newRAM not yet sent
 
 - Phone's ONLY last actual state remains independentproductpolaris07:55:36Z
