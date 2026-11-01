@@ -34,7 +34,7 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0157 actual FASTBOOT01:42; bounded CmdDb PARENT/LINK VERIFIED OFFLINE, two terminal models PASS; host NOT READY
+### CURRENT0157 actual FASTBOOT01:42; bounded CmdDb PARENT/LINK VERIFIED OFFLINE, two terminal models and NEW exact host scope PASS; freshRO/image NOT READY
 
 - User answered the second physical recovery request; independent exact product
   2026-11-01T01:42:42.384037Z returned product:polaris/exit0. Nothing physical
@@ -74,8 +74,15 @@ early samples only. On0029 the human already confirmed boot complete and said
   int1. Actual QEMU main has no bounded namespace/power/NPA/RPMh bodies orraw.
   Combinedproof bounded-two-terminal-models-0001-proof.json passed; SOFTWARE
   PMIC/delay/RAMUSB not originalfirmware/hardware/guestreset. No nativeCI/phone.
-- NEW exact host profile/controller/raw admission, original81 wrapping/codec,
-  sourceaudit/independent freeze/ONEhelper still missing: candidate NOT READY.
+- NEW GCD_CLOCK_0157 exact host scope now binds FW220cdd5/82inputs/178power-GCD
+  metadata/94resource fields and new scopeSHAfcd24812. Seven new bound-admission
+  tests+eight affected power-scope+five log-transport passed20total. Actual
+  no-mock exact_scope and two model source checks passed, all11old literals
+  unchanged; missing NEW post-recovery RO review correctly refuses full admit.
+  Hostproof bounded-new-host-scope-proof-0001.json SHAa87f761d561eea86bb1b62
+  ea5afaed2aeb0b9f1404cd9df9618519920eda558b. Host edits pending commit.
+  Original81 wrapping/codec/sourceaudit/independent freeze/ONEhelper and NEW
+  strictRO audit still missing: candidate NOT READY.
   No single inventory or client-only physical boot. Before the next already
   needed transition merge NEW strictRO complete roots/map/GPT/ESP/journal+
   currentNV after this untrusted interval; prior0156 de8f9289/1c62eacc predates
