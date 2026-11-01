@@ -34,6 +34,31 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0177 frozen offline READY for ONE new RAM; last actual FASTBOOT15:29; no Wi-Fi success
+
+- No0177image/payload has been sent yet. Latest actual controlled PolarisFB
+  remains15:29:25.157270Z from NEWstrictRO normalumount. QualifiedNEWroot/NV39,
+  exacthost326+94/91, twoSERIALmodels, fulloriginal81codec and newsource audits
+  complete. Existing broadsame63cb futurequalifiedNEW-session permission valid.
+- Independent freezeCOPY872+10COMMIT_ONLY/466currentcommittedsources/91inputs/
+  nohardlinks, manifestd046bba35b4d8fbee9479da7e56183fd97c77213fedb8fdbe32965b9c9bf5597;
+  defaultofflineONEhelper passed. Immutablefrozen controller/driver/image ONLY
+  /private/tmp/polaris-runtime-0177-frozen-0001/ with ORIGINALsharedrecord
+  research/polaris/uefi-ios-0177/phone-terminal-GOP-runtime-0001/boot.json
+  (absent/unconsumed now). No refreeze/oldpolicy/stripflags or0176 replay.
+- NEXT matchingfrozen boot-terminal-GOP-once-0001.py --boot-once performs one
+  bounded actualexpectedproduct query and only sends the newimage ifpolaris.
+  Then solematchingfrozen waiting-payload state before ONEsame63cb payload.
+  Pending/unknown executesafterpreviousENDED only: oncefrozenstate8s and once
+  independentexpected8s; no blindreplay/cleanup/genericreset/rawfallback. If no
+  safe exit and terminaltext visible, preserve actualnumericfields before ONE
+  physicalrecovery request. There is no pendinghuman authorization/action now.
+- TerminalGOP is localnumeric failure evidence only, unproven on hardware.
+  NewdefaultOFF scope never returns fromUNKNOWN, never callsGOP/Console/USB/
+  SMC/Stall/reset/ACK/cleanup or renews200ms/privatehardwarepermission. Planned
+  maskedDB path hasnoRSCengine/store/READrequest/vote/MSS/NVserve. RealWi-Fi
+  scan/join/data remainsfalse; sound/cameraSTOP. AllworkersENDED/childrenSTOP.
+
 ### CURRENT0177 NEW strictRO passed, actual FASTBOOT15:29; terminal-GOP image admitted, freeze pending; Wi-Fi NOT DONE
 
 - Overrides old CURRENT/READY/LIVE. No0177 Wi-Fi image or payload sent. New
