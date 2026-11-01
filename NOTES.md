@@ -34,6 +34,47 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0180 startup ACK UNKNOWN / UEFI unavailable / FASTBOOT query timeout22:46; physical recovery requested ONCE; Wi-Fi NOT DONE
+
+- Actualhumanpublicationreply "批准0180及后续同类公开推送" is recordedandfulfilled:
+  FW9b8cacfb9b4d5c19c1e02ce7915185a994ce7249/HOST5a50631730acde7909b74d32ef7f33f8f13b97c1
+  andNOTES pushedtoe67dcae11b71575fcfbf7f60b47abb238736b221; independentlsremote
+  matched. Sameproject/repo source+texthandoffs futurepermissionpersists,
+  excludingfirmware/Apple/vendor/NV/backup/rawdump/serial/password; no more
+  publicationquestionneededforthisscope. AuthrecordSHA873635fcf90da43ff0a4fc102f9ee7d53526a29149e8b02ff68423825b1b9032.
+- ONE0180image41297 ENDED0 sent2026-11-01T22:43:16.690816Z/sourcee67dcae/image
+  61083d04a0203e6affc922892e58cdcb017a06e25ff6add6184a34413bf37ed1/6037504B.
+  Soleactualmatchingfrozenstate waiting-payload22:43:24.204736Z/ENDED0.
+  ONEsame63cbpayload6094 ENDED1: stage22:43:35.721810Z/557chunks36459872B/
+  validationACKtrue+validatedtrue/32.96699720900506s; p.boot22:44:08.689014Z/
+  90.42403745901538s, lastIN129(-7)/hostreply0of64/90000ms. No kernelcommandACK.
+  StartupACKUNKNOWN, notnativeLIVE/nativerejection/rootcauseproof. Complete
+  transferdoesnotproveCPU/DB/access/READ/network; host0replyisnot0hardwarewrites.
+- OnlyAFTER6094ENDED: solematchingfrozenstate80077 ENDED1/8s unavailable,
+  started22:45:48.941762Z; soleindependentexpected50681 ENDED0/8stimeout,
+  started22:46:06.446275Z/completed22:46:14.451951Z. ActualFBnotverifiednow.
+  PhysicalrecoveryrequestedONCE, currentlypending: recordexactnumericdiagnostic
+  first(V1HOLD/BODY/CPU/DB0/DB1etc), thenpower+volumedownFASTBOOT/keepUSB/reply.
+  DoNOTrepeatrequest/state/capture/expectedpoll/cleanup/genericreset/rawfallback.
+  UserreplyallowsONEnewindependent8sreadonlyexpectedproduct; notreplay0180.
+- NonewGOP/preparation/normalargument/CPU/maskedDB/access/CmdDb/READ/RSCraw.
+  Actualpredicate/CPU_ON/WLED/mask/AT/MMIO/TCS/countsallUNKNOWNnot0. Do notclaim
+  normalpass/BApass/DBscope/panic/quarantine/rootcausefromstaticscopeorfixtures.
+  NoUTCSET/nativeUI/WLED/optical/performance/CIoperations. Physicalproof
+  0180/wifi/physical-start-ACK-unknown-and-no-safe-remote-exit-proof-0001.json
+  SHAa9389ac09a0dfec3189c82ded03afdcdf0d3abe20f23db7fe05473482f46fb51. PASSonlyfaithfullypreservesUNKNOWN/notWiFi.
+- ORIGINAL0180/phone-normal-masked-database-runtime-0001/boot.jsonCONSUMED;
+  literaltemporary_native_WLED_runtime_RAM_boot_succeededisonlyimageACK.
+  Uniqueusedcontroller/private/tmp/polaris-runtime-0180-frozen-0001/tools/
+  polaris-uefi-wled-runtime.pywithmatchingfrozen0180driver/image+ORIGINALrecord.
+  AllworkersENDED/allchildrenSTOP; no replayimage/payload/OEMboot/refreeze/
+  editoldmanifest/policy/stripflags/useoldcontroller. No newcandidateready.
+- ROOT17full39qualificationnowHISTORICALafter0180UNKNOWNwithoutcontrolledreceipt.
+  Afterphysicalrecovery,nextalreadynecessaryNEWcandidateconversionmustmerge
+  NEWfullstrictRO39roots/maps/GPT/ESP/journal/currentNV; noold17/72skip, no
+  standaloneinventoryrecovery. PreserveAndroid/Windows/alldata/noRW/NVrestore.
+  ONLYWi-Fi; no source/check/model/nativeCI repeats unchanged; no sound/camera.
+
 ### CURRENT0180 publication approved for this and future same-project source/text; push verification pending; no0180device action; Wi-Fi NOT DONE
 
 - Actualhumanreply to concrete0180publicationquestion: "批准0180及后续同类公开推送".
