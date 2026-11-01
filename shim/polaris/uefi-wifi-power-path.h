@@ -284,8 +284,8 @@ static inline void pwrpt_report(void (*append)(const char *))
     append("\r\nWIFI_POWER_CLIENT_RAW_V1_END\r\n");
 #if EFI_XNU_WIFI_ARC_READ_AVAILABLE
 #if EFI_XNU_WIFI_ARC_READ_CAPTURE_ONLY
-    append("WIFI_CURRENT_ARC_READ_RAW_V1_BEGIN\r\n");pwrpt_raw_hex(append,&pwrpt_record,sizeof(pwrpt_record));
-    append("\r\nWIFI_CURRENT_ARC_READ_RAW_V1_END\r\n");
+    append("WIFI_CURRENT_ARC_READ_RAW_V2_BEGIN\r\n");pwrpt_raw_hex(append,&pwrpt_record,sizeof(pwrpt_record));
+    append("\r\nWIFI_CURRENT_ARC_READ_RAW_V2_END\r\n");
     append("WIFI_CURRENT_ARC_READ_SCOPE=THREE_SINGLE_COMMAND_READS_COMPLETE_TCS_RW_RESTORE_SOURCE_CPU_NAMESPACE_DELETE RAW_WORDS_ONLY_NO_RESOURCE_WRITE_NO_MSS_NO_NV_SERVE_NO_RADIO_PERMISSION\r\n");
 #else
     append("WIFI_CURRENT_ARC_POWER_RAW_V1_BEGIN\r\n");pwrpt_raw_hex(append,&pwrpt_record,sizeof(pwrpt_record));

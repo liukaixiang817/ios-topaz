@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "polaris-wifi-rsc-read.h"
-static struct pwrr_transaction q,good;
+static struct pwrr_transaction q,good,latched;
 static uint32_t reg[0x3000/4],saved[0x3000/4];
 static uint32_t answers[3]={0,4,7};
 static unsigned fault,reads,writes,triggers,acks,pending,polls,selected;
@@ -20,7 +20,7 @@ static int clock_peer(void *ctx,uint64_t *t,uint64_t *f)
 static void complete(void)
 {
     unsigned t=PWRSC_STRIDE*selected,k=triggers-1;
-    reg[4/4]|=1u<<selected;reg[(t+0x14)/4]&=~PWRSC_TRIGGER;
+    reg[4/4]|=1u<<selected; /* Own bank2 trigger is a retained launch latch. */
     reg[(t+0x18)/4]=(fault==10||fault==11)?0:1;
     reg[(t+0x3c)/4]=PWRSC_DONE;
     reg[(t+0x40)/4]=fault==23?UINT32_MAX:answers[k];
@@ -55,8 +55,9 @@ static int write_peer(void *ctx,uint64_t at,uint32_t v)
     assert(o/PWRSC_STRIDE==selected);
     unsigned within=o%PWRSC_STRIDE;
     assert(within==0x10||within==0x14||within==0x1c||within==0x30||within==0x34);
-    reg[o/4]=v;
+    uint32_t previous=reg[o/4];reg[o/4]=v;
     if(within==0x14&&(v&PWRSC_TRIGGER)){
+        assert(!(previous&PWRSC_TRIGGER)); /* No redundant high restore write. */
         assert(!pending&&triggers==acks&&triggers<3);
         unsigned t=PWRSC_STRIDE*selected;
         assert(reg[(t+0x30)/4]==PWRR_MESSAGE&&reg[(t+0x34)/4]==addresses[triggers]);
@@ -64,6 +65,7 @@ static int write_peer(void *ctx,uint64_t at,uint32_t v)
         triggers++;pending=1;polls=0;reg[(t+0x18)/4]=0;
         if(fault==24)complete();
     }
+    if(fault==26&&q.io.phase==7&&within==0x1c&&v==1)reg[4/4]|=1u<<selected;
     return !(fault==4&&writes==5);
 }
 static void order_peer(void *ctx){(void)ctx;}
@@ -78,6 +80,10 @@ static void setup(unsigned f)
     if(f==1)reg[4/4]=1u<<3;
     if(f==2)reg[0]=0;
     if(f==3)reg[(t+0x1c)/4]=1;
+    if(f>=25){reg[(t+0x14)/4]=PWRSC_AMC|PWRSC_TRIGGER;reg[(t+0x1c)/4]=1;}
+    if(f==27)reg[(t+0x1c)/4]=2;
+    if(f==28)reg[(t+0x14)/4]=PWRSC_TRIGGER;
+    if(f==29)reg[(t+0x14)/4]|=2;
     memcpy(saved,reg,sizeof(reg));
 }
 static int run(unsigned f)
@@ -126,6 +132,28 @@ int main(void)
     q=good;q.io.saved_vote[0]=0xf;assert(!pwrr_retired(&q));checks++;
     q=good;q.io.events--;assert(!pwrr_retired(&q));checks++;
     q=good;q.valid=0;assert(!pwrr_retired(&q));checks++;
+    assert(run(25)&&pwrr_retired(&q));RW_restored();assert(triggers==3&&acks==3&&q.io.saved.enable==1);
+    latched=q;checks++;
+    for(unsigned f=26;f<=29;f++){
+        assert(!run(f)&&q.io.error&&!pwrr_retired(&q));
+        unsigned before=writes;assert(pwrr_step(&io,&q)==-1&&writes==before);checks++;
+    }
+    for(unsigned n=0;n<latched.io.events;n++){
+        q=latched;q.io.history[n].returned=0;assert(!pwrr_retired(&q));checks++;
+        q=latched;q.io.history[n].unknown=1;assert(!pwrr_retired(&q));checks++;
+        q=latched;q.io.history[n].after=q.io.history[n].before-1;assert(!pwrr_retired(&q));checks++;
+        if(latched.io.history[n].operation==2){
+            q=latched;q.io.history[n].value^=0x80000000;assert(!pwrr_retired(&q));checks++;
+        }
+    }
+    q=latched;
+    for(unsigned n=0;n<q.io.events;n++)if(q.io.history[n].phase==7&&q.io.history[n].operation==2){
+        q.io.history[n].address=PWRSC_BASE+PWRSC_STRIDE*q.io.tcs+0x14;
+        q.io.history[n].value=q.io.saved.control;break;
+    }
+    assert(!pwrr_retired(&q));checks++;
+    q=latched;q.io.IRQ_OR^=1u<<q.io.tcs;assert(!pwrr_retired(&q));checks++;
+    q=latched;q.io.IRQ_status=1u<<q.io.tcs;assert(!pwrr_retired(&q));checks++;
     printf("{\"passed\":true,\"checks\":%u,\"raw_bytes\":%zu,\"full_prefix_events\":%u,\"single_outstanding_reads\":3,\"resource_vote_writes\":0,\"CMD_DATA_writes\":0,\"actual_MMIO\":false,\"ARC_response_semantics_qualified\":false,\"physical_caller_registered\":false}\n",checks,sizeof(q),good.io.events);
     return 0;
 }

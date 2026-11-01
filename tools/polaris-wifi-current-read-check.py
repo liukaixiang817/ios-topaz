@@ -29,7 +29,7 @@ def main():
     for name, value in d['inputs'].items():
         assert sha(ROOT / name) == value, name
     assert d['wifi_CPU0_power_execution_kind'] == 'STAGED_RO_CURRENT_PRIVATE_THREE_READ_RESTORE_NO_RESOURCE_WRITE'
-    assert d['wifi_CPU0_power_raw_format'] == 'CURRENT_ARC_READ_RAW_V1'
+    assert d['wifi_CPU0_power_raw_format'] == 'CURRENT_ARC_READ_RAW_V2'
     for name, value in dict(raw_bytes=1941984, access_raw_bytes=401936,
             current_ARC_read_raw_bytes=49488, current_ARC_read_requests_max=3,
             current_ARC_commands_per_read=1, current_ARC_resource_WRITE_commands_max=0,
@@ -46,8 +46,15 @@ def main():
             current_ARC_read_checked_IO_prefix_crossbound=True,
             current_ARC_read_same_source_client_200ms=True,
             current_ARC_read_entire_partial_raw_preserved=True,
+            current_ARC_retired_single_command_latch=True,
+            current_ARC_original_FREE_and_request_NULL_required=True,
+            current_ARC_trigger_low_readback_before_staging=True,
+            current_ARC_three_new_rising_edges=True,
+            current_ARC_restore_enable_after_final_ACK=True,
             current_ARC_read_qualified_response_semantics_proven=False).items():
         assert d['wifi_CPU0_power_' + name] is value
+    assert type(d['wifi_CPU0_power_current_ARC_high_trigger_restore_stores_max']) is int
+    assert d['wifi_CPU0_power_current_ARC_high_trigger_restore_stores_max'] == 0
     records, sources, peers = [], {}, {}
 
     def run(name, command):
@@ -71,8 +78,8 @@ def main():
     originals = [ROOT / d[k] for k in ('original_GCD_original_PE', 'wifi_CPU0_NPA_source_PE',
         'wifi_CPU0_RPMh_source_PE', 'wifi_CPU0_power_source_PE')]
     for name, source, count, arguments in (
-            ('read-core', 'polaris-wifi-rsc-read-test.c', 555, []),
-            ('read-parent', 'polaris-wifi-current-read-test.c', 19, originals)):
+            ('read-core', 'polaris-wifi-rsc-read-test.c', 1077, []),
+            ('read-parent', 'polaris-wifi-current-read-test.c', 23, originals)):
         if name == 'read-core' and a.reuse_read_proof:
             prior_path = a.reuse_read_proof.resolve()
             prior_read = json.loads(prior_path.read_text())
@@ -117,7 +124,7 @@ def main():
     for forbidden in ('pwrsc_begin(', 'pwrsc_step(', 'pwra_bind_write(', 'pwrr_plan('):
         assert forbidden not in body, forbidden
     assert '&wln_cpu_on_issued' in pp
-    assert 'WIFI_CURRENT_ARC_READ_RAW_V1_BEGIN' in pp and 'WIFI_PREPARED_POWER_RAW_V1_BEGIN' not in pp
+    assert 'WIFI_CURRENT_ARC_READ_RAW_V2_BEGIN' in pp and 'WIFI_PREPARED_POWER_RAW_V1_BEGIN' not in pp
     hold = pp.split('static void power_unknown_hold(', 1)[1].split('_Static_assert', 1)[0]
     for forbidden in ('OutputString', 'Stall(', 'UsbFn', 'reset(', 'pwrcl_actual_drop'):
         assert forbidden not in hold
@@ -127,7 +134,7 @@ def main():
             ('QEMU', ['-DPOLARIS_EFI_TEST_QEMU=1', '-DEFI_XNU_WLED_NATIVE_RUNTIME_TEST=1'], inc)):
         text = run(name + '-preprocessed', [*common, '--target=aarch64-unknown-windows',
             '-ffreestanding', *extra, *includes, '-E', '-P', ROOT / 'shim/polaris/uefi-xnu.c'])
-        for forbidden in ('static inline int pwrr_begin(', 'WIFI_CURRENT_ARC_READ_RAW_V1_BEGIN'):
+        for forbidden in ('static inline int pwrr_begin(', 'WIFI_CURRENT_ARC_READ_RAW_V2_BEGIN'):
             assert forbidden not in text, (name, forbidden)
     sources['tools/polaris-wifi-current-read-check.py'] = sha(Path(__file__))
     total = old['software_cases'] + sum(x['checks'] for x in peers.values())

@@ -44,6 +44,11 @@ static int load_peer(void *ctx,uint64_t at,uint32_t *value)
     if(device_fault==11&&at==0x179e0d04)*value=1;
     if(device_fault==12&&at==0x179e0d1c)*value=1;
     if(device_fault==13&&loads>35&&at==0x179e0d10)*value=1;
+    if(device_fault>=27&&device_fault<=30){
+        if(at==0x179e0d14)*value=device_fault==28?0x01000000u:0x01010000u;
+        if(at==0x179e0d1c)*value=device_fault==29?2:1;
+        if(device_fault==30&&at==0x179e0d14)*value|=2;
+    }
     return device_fault!=20;
 }
 static int run_device(unsigned which)
@@ -79,6 +84,10 @@ int main(int argc,char **argv)
     const struct pwrmd_io io={0};assert(!pwrmd_collect(&io,provider,rw,c,before,device));checks++;
     assert(run_device(23)&&device->complete&&loads==70);checks++;
     assert(run_device(26)&&device->complete&&loads==70&&translations==70&&gcd_calls==3);checks++;
+#if EFI_XNU_WIFI_ARC_READ_AVAILABLE && EFI_XNU_WIFI_ARC_READ_CAPTURE_ONLY
+    assert(run_device(27)&&device->complete&&loads==70&&gcd_calls==3);checks++;
+    for(unsigned k=28;k<=30;k++){assert(!run_device(k)&&device->error==PWRMD_BUSY&&!device->unknown&&loads==35);checks++;}
+#endif
     for(unsigned k=1;k<=25;k++){
         if(k==3||k==15||k==23)continue;
         ok=run_device(k);

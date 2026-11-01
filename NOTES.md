@@ -34,6 +34,49 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0166 remains actual controlled FASTBOOT06:40; NEW0167 retired-latch RAW READ V2 verified OFFLINE; host/freeze NOT READY
+
+- Phone unchanged after NORMAL0166drain/independentPolarisFASTBOOT06:40:55Z.
+  No new USB/API/PSCI/AT/MMIO/boot/UTC/UI/nativeCI during this offline work.
+  ONLY Wi-Fi; grey/scan/join/data NOT DONE, sound/camera/all children STOP.
+- NEW originalsource audit25a260966217b39d8a2b09484a4c25b8a9833974e2e8cff90c33ad239ebde46a
+  at0167/wifi/original-retired-TCS-lifecycle-source-0001.json binds exact
+  b718efb6/61440B PE and DISPLAY-only disassembly. Ownbank2 HAL7704..7734
+  clears trigger/readback then raises bit24; HAL7874..7898 readsSTATUSbit0;
+  normalcompletion6490/6498 clears RAMstate0/requestNULL, control/enable reset
+  calls89a0/8a88 are in all-TCS initloop4050. Free search5ff0..6028 testsstate0.
+  No originalroutine/internalentry/patch/RETlock/submit is invoked. Pinned
+  genericupstream corroborates deassert/retrigger but is not ownpermission.
+- New READ core supports ONLY ordinary empty/untriggered or the exact source-
+  bound completed single-command shape CONTROL01010000/STATUS1/enable1 with
+  originalFREE/no-requestRAM and existing completeDevice/CPU/source gates.
+  Deassert+readback precedes every commandchange; exactly3 new launch edges.
+  On complete disablecmd, retain completed highlatch if originallyhigh; never
+  store a hightrigger during ACK/restore. Restore oldMSG/address/wait/enable
+  after finalACK without another edge. No CMD_DATA/IRQenable/type writes.
+  Fullprefix independently checks low-before-stage/3edges/OR/raw/completeRW/
+  finalIRQ, rejects forgedhighrestore and ghost replayIRQ. RAWwords still not
+  qualifiedsavedARCvotes; resourceWRITE CPP-OUT. No sleep/wake/PAS/MSS/NV/radio.
+- Original50ms/256steps/1024events/private200ms and parentUNKNOWN localmask/
+  nonreturnWFE/noConsoleUSBStallACKresetcleanupDelete gates unchanged. No
+  ticket reset/rebase/fakeclientheld/leasebool. New RAW_V2 label; extents stay
+  body1941984/access401936/READ49488, fullraw retained in10MiB/host14MiB+128.
+- 1077READ +23samechain +44READDevice +40legacyDevice +204affectedlegacy =1388
+  ASAN/UBSAN cases pass; actualwholeparentCOFF/MachO/allwarnings|maxframe1024/
+  fullEFI/defaultOFF/QEMUpp pass. Jointproofa228c9f1646ea2ca1d373121b81feea6cc74f5df491e106e97809c8e50422eca.
+  Finalparentproof1273de28ccdeed8af629b82e383848733e35bd755f2a2232af4326ecd5ce217e.
+  Two NEW SERIAL19checkwholeEFI-XNU/88sameinputs passed, physicalbody/RAWV2
+  absent in actualQEMUpp,11resourcePower+1battery literalint1. No old3007 or
+  nativeCI/download rerun. SOFTWARE PMIC/delay/RAMUSB not physical/guestreset.
+- Driver0167/wifi/current-read-driver-ON-0002 SHA3e74405e6468ed4ffeb56a371c95eed76c490b399d059cec9345eb42196ed468/
+  15926784B/88inputs, UNWRAPPED/UNSENT. Earlier0001 is obsolete/unwrapped/
+  unsent, do not mix. NEXT distinct new exactprofile/wholeimage/codec/independent
+  freeze/ONEhelper; no candidate ready yet. FreshROOT/NV0165 +full normal0165/
+  0166drains and independentFB remains qualification; no repeatfullhash/recovery.
+- Existing actual0166raw timing (no newboot): privateopen→last of35RO loads
+  37298.542us, lastRO→finalprivateclose7357.083us. This is the previous safe
+  refusal's elapsedtime, not futurelatency bound/hardwarelease/performanceAB.
+
 ### CURRENT0166 actual controlled FASTBOOT06:40; real3GCD+35NS-AT guarded RSC RO loads, TCS lifecycle admission refused; READ/vote/Wi-Fi NOT DONE
 
 - ActualPHONE PolarisFASTBOOT06:40:55.748553Z after complete NORMAL0166drain.

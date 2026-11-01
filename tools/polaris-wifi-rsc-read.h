@@ -12,6 +12,16 @@ struct pwrr_transaction {
     struct pwrsc_transaction io;
     uint32_t response[3],response_seen,valid,reserved;
 };
+/* Own HAL7704..7734 explicitly clears then raises TRIGGER; it is not an
+ * automatic busy flag. A completed original ACTIVE slot may retain both
+ * AMC/TRIGGER and one enabled command. Caller still needs the source-bound
+ * FREE/no-request RAM state and actual idle/IRQ/CPU interval. */
+static inline int pwrr_saved_supported(const struct pwrsc_registers *s)
+{
+    if(s->status!=1||(s->control&~(PWRSC_AMC|PWRSC_TRIGGER)))return 0;
+    if(s->control&PWRSC_TRIGGER)return s->control==(PWRSC_AMC|PWRSC_TRIGGER)&&s->enable==1;
+    return s->enable==0;
+}
 static inline int pwrr_readable(uint64_t at)
 {
     if(at==PWRSC_BASE||at==PWRSC_BASE+4)return 1;
@@ -28,9 +38,10 @@ static inline int pwrr_writable(const struct pwrr_transaction *q,uint64_t at,uin
     uint64_t t=pwrsc_tcs(r);unsigned stage=r->phase<7&&(r->phase&1);
     unsigned complete=r->phase<7&&!(r->phase&1)&&r->completed==r->triggers;
     if(at==PWRSC_BASE+8)return complete&&v==(1u<<r->tcs);
-    if(at==t+0x14)return (stage&&(v==(r->saved.control|PWRSC_AMC)||v==(r->saved.control|PWRSC_AMC|PWRSC_TRIGGER)))||
-        (complete&&v==r->saved.control);
-    if(at==t+0x1c)return (stage&&v==1)||(complete&&v==0);
+    uint32_t arm=(r->saved.control&~PWRSC_TRIGGER)|PWRSC_AMC;
+    if(at==t+0x14)return (stage&&(v==arm||v==(arm|PWRSC_TRIGGER)))||
+        (complete&&!(r->saved.control&PWRSC_TRIGGER)&&v==r->saved.control);
+    if(at==t+0x1c)return (stage&&v==1)||(complete&&v==0)||(r->phase==7&&v==r->saved.enable);
     if(at==t+0x10)return (stage&&v==(r->saved.wait|1u))||(r->phase==7&&v==r->saved.wait);
     static const uint32_t addresses[3]={0x30000,0x30010,0x30060};
     if(at==t+0x30)return (stage&&v==PWRR_MESSAGE)||(r->phase==7&&v==r->saved.command[0][0]);
@@ -83,7 +94,7 @@ static inline int pwrr_begin(const struct pwrsc_io *io,struct pwrr_transaction *
     unsigned found=0;
     for(unsigned k=0;k<8;k++)if((active&r->IRQ_enable)&(1u<<k)){
         r->tcs=k;if(!pwrr_snapshot(io,q,&r->observed))return 0;
-        if((r->observed.status&1)&&!r->observed.enable&&!(r->observed.control&PWRSC_TRIGGER)){
+        if(pwrr_saved_supported(&r->observed)){
             r->saved=r->observed;found=1;break;
         }
     }
@@ -100,14 +111,16 @@ static inline int pwrr_stage(const struct pwrsc_io *io,struct pwrr_transaction *
        !pwrr_read(io,q,t+0x10,&wait)||!pwrr_read(io,q,t+0x30,&msg)||
        !pwrr_read(io,q,t+0x34,&addr)||!pwrr_read(io,q,t+0x38,&data))return 0;
     static const uint32_t addresses[3]={0x30000,0x30010,0x30060};
-    if(irq||control!=r->saved.control||enabled||!(status&1)||irq_enabled!=r->IRQ_enable||
+    if(irq||control!=r->saved.control||enabled!=(r->triggers?0:r->saved.enable)||!(status&1)||irq_enabled!=r->IRQ_enable||
        wait!=(r->triggers?(r->saved.wait|1u):r->saved.wait)||data!=r->saved.command[0][2]||
        msg!=(r->triggers?PWRR_MESSAGE:r->saved.command[0][0])||
        addr!=(r->triggers?addresses[r->triggers-1]:r->saved.command[0][1])){pwrsc_fail(r,PWRSC_CHANGED);return 0;}
-    if(!pwrr_store(io,q,t+0x30,PWRR_MESSAGE)||!pwrr_store(io,q,t+0x34,addresses[r->triggers])||
-       !pwrr_store(io,q,t+0x10,r->saved.wait|1u)||!pwrr_store(io,q,t+0x1c,1)||
-       !pwrr_store(io,q,t+0x14,r->saved.control|PWRSC_AMC))return 0;
-    uint32_t trigger=r->saved.control|PWRSC_AMC|PWRSC_TRIGGER;
+    /* Deassert before changing any command. The only subsequent rising edge
+     * is the explicitly counted NEW READ launch; no restore writes a1. */
+    uint32_t arm=(r->saved.control&~PWRSC_TRIGGER)|PWRSC_AMC;
+    if(!pwrr_store(io,q,t+0x14,arm)||!pwrr_store(io,q,t+0x30,PWRR_MESSAGE)||!pwrr_store(io,q,t+0x34,addresses[r->triggers])||
+       !pwrr_store(io,q,t+0x10,r->saved.wait|1u)||!pwrr_store(io,q,t+0x1c,1))return 0;
+    uint32_t trigger=arm|PWRSC_TRIGGER;
     if(!pwrr_access(io,q,t+0x14,&trigger,1))return 0;
     r->triggers++;r->phase++;return 1;
 }
@@ -123,13 +136,21 @@ static inline int pwrr_poll(const struct pwrsc_io *io,struct pwrr_transaction *q
     r->response_OR[k]|=response;
     if((q->response_seen&(1u<<k))&&q->response[k]!=response){pwrsc_fail(r,PWRSC_CHANGED);return -1;}
     q->response[k]=response;q->response_seen|=1u<<k;
-    if(!(idle&1))return 0;r->completed++;return 1;
+    if(idle&~1u){pwrsc_fail(r,PWRSC_COMPLETION);return -1;}
+    if(!idle)return 0;r->completed++;return 1;
 }
 static inline int pwrr_ack(const struct pwrsc_io *io,struct pwrr_transaction *q)
 {
-    struct pwrsc_transaction *r=&q->io;uint64_t t=pwrsc_tcs(r);uint32_t irq,value=1u<<r->tcs;
+    struct pwrsc_transaction *r=&q->io;uint64_t t=pwrsc_tcs(r);uint32_t irq,control,value=1u<<r->tcs;
     if(r->completed!=r->triggers||r->acknowledged+1!=r->completed){pwrsc_fail(r,PWRSC_ARGUMENT);return 0;}
-    if(!pwrr_store(io,q,t+0x1c,0)||!pwrr_store(io,q,t+0x14,r->saved.control)||!pwrr_irq(io,q,&irq))return 0;
+    if(!pwrr_store(io,q,t+0x1c,0))return 0;
+    if(r->saved.control&PWRSC_TRIGGER){
+        /* Leave the completed NEW launch latch high. Writing the saved high
+         * trigger is forbidden outside a NEW launch; no fourth rising edge. */
+        if(!pwrr_read(io,q,t+0x14,&control))return 0;
+        if(control!=r->saved.control){pwrsc_fail(r,PWRSC_CHANGED);return 0;}
+    }else if(!pwrr_store(io,q,t+0x14,r->saved.control))return 0;
+    if(!pwrr_irq(io,q,&irq))return 0;
     if(irq!=value){pwrsc_fail(r,PWRSC_CHANGED);return 0;}
     if(!pwrr_access(io,q,PWRSC_BASE+8,&value,1)||!pwrr_irq(io,q,&irq))return 0;
     if(irq){pwrsc_fail(r,PWRSC_CHANGED);return 0;}r->acknowledged++;return 1;
@@ -139,9 +160,10 @@ static inline int pwrr_restore(const struct pwrsc_io *io,struct pwrr_transaction
     struct pwrsc_transaction *r=&q->io;uint64_t t=pwrsc_tcs(r);uint32_t irq,enabled;
     if(r->triggers!=3||r->completed!=3||r->acknowledged!=3){pwrsc_fail(r,PWRSC_ARGUMENT);return 0;}
     if(!pwrr_store(io,q,t+0x30,r->saved.command[0][0])||!pwrr_store(io,q,t+0x34,r->saved.command[0][1])||
-       !pwrr_store(io,q,t+0x10,r->saved.wait)||!pwrr_snapshot(io,q,&r->observed)||
+       !pwrr_store(io,q,t+0x10,r->saved.wait)||
+       (r->saved.enable&&!pwrr_store(io,q,t+0x1c,r->saved.enable))||!pwrr_snapshot(io,q,&r->observed)||
        !pwrr_read(io,q,PWRSC_BASE,&enabled)||!pwrr_irq(io,q,&irq))return 0;
-    if(enabled!=r->IRQ_enable||irq||r->observed.control!=r->saved.control||r->observed.enable||
+    if(enabled!=r->IRQ_enable||irq||r->observed.control!=r->saved.control||r->observed.enable!=r->saved.enable||
        r->observed.wait!=r->saved.wait||!(r->observed.status&1)){pwrsc_fail(r,PWRSC_RESTORE);return 0;}
     for(unsigned k=0;k<3;k++)for(unsigned j=0;j<3;j++)if(r->observed.command[k][j]!=r->saved.command[k][j]){
         pwrsc_fail(r,PWRSC_RESTORE);return 0;
@@ -170,14 +192,14 @@ static inline int pwrr_retired(const struct pwrr_transaction *q)
        r->tcs>=8||!(r->active_mask&(1u<<r->tcs))||(r->active_mask&~255u)||r->frequency!=19200000||
        r->last<r->started||r->last-r->started>PWRSC_DEADLINE||!r->events||r->events>PWRSC_HISTORY||
        !r->steps||r->steps>256||r->triggers!=3||r->completed!=3||r->acknowledged!=3||
-       q->valid!=7||q->response_seen!=7||q->reserved||r->saved.enable||!(r->saved.status&1)||
-       (r->saved.control&PWRSC_TRIGGER)||!(r->IRQ_enable&(1u<<r->tcs)))return 0;
+       q->valid!=7||q->response_seen!=7||q->reserved||!pwrr_saved_supported(&r->saved)||
+       !(r->IRQ_enable&(1u<<r->tcs)))return 0;
     for(unsigned k=0;k<3;k++)if(r->address[k]||r->saved_vote[k]||r->raised_vote[k]||
        r->status_OR[k]!=PWRSC_DONE||r->response_OR[k]!=q->response[k])return 0;
     uint64_t t=pwrsc_tcs(r),last=r->started;
-    uint32_t phase=0,writes=0,triggers=0,acks=0,pending=0,irq_seen=0,done=0,response=0,idle=0;
+    uint32_t phase=0,writes=0,triggers=0,acks=0,pending=0,irq_seen=0,done=0,response=0,idle=0,arm_written=0,armed=0;
     uint32_t enable=UINT32_MAX,control=UINT32_MAX,wait=UINT32_MAX,last_irq=UINT32_MAX,irq_enable=UINT32_MAX;
-    uint32_t values[3][3]={{0}},initial=0,final=0,seen=0,final_global=0;
+    uint32_t values[3][3]={{0}},initial=0,final=0,seen=0,final_global=0,IRQ_OR=0;
     static const uint32_t addresses[3]={0x30000,0x30010,0x30060};
     for(unsigned n=0;n<r->events;n++){
         const struct pwrsc_event *e=&r->history[n];
@@ -192,35 +214,37 @@ static inline int pwrr_retired(const struct pwrr_transaction *q)
             if(e->address==PWRSC_BASE+8){
                 if(!complete||e->value!=(1u<<r->tcs)||!pending||!irq_seen||!done||!response||!idle||
                    enable||control!=r->saved.control||(seen&3)!=3||last_irq!=(1u<<r->tcs))return 0;
-                acks++;pending=irq_seen=done=response=idle=0;if(acks!=triggers||acks>3)return 0;continue;
+                acks++;pending=irq_seen=done=response=idle=arm_written=armed=0;if(acks!=triggers||acks>3)return 0;continue;
             }
             if(e->address==t+0x14){
                 seen&=~1u;
                 if(stage){
                     if(phase!=1+2*acks||pending||acks!=triggers)return 0;
-                    if(e->value!=(r->saved.control|PWRSC_AMC)&&e->value!=(r->saved.control|PWRSC_AMC|PWRSC_TRIGGER))return 0;
+                    uint32_t arm=(r->saved.control&~PWRSC_TRIGGER)|PWRSC_AMC;
+                    if(e->value!=arm&&e->value!=(arm|PWRSC_TRIGGER))return 0;
                     if(e->value&PWRSC_TRIGGER){
-                        if(last_irq||enable!=1||control!=(r->saved.control|PWRSC_AMC)||wait!=(r->saved.wait|1u)||(seen&14)!=14||
+                        if(!armed||arm_written!=1||last_irq||enable!=1||control!=arm||wait!=(r->saved.wait|1u)||(seen&14)!=14||
                            values[0][0]!=PWRR_MESSAGE||values[0][1]!=addresses[acks]||
                            (seen&(3u<<4))!=(3u<<4))return 0;
-                        triggers++;pending=1;
-                    }
-                }else if(!complete||!pending||!irq_seen||!done||!response||!idle||enable||
+                        triggers++;pending=1;armed=0;
+                    }else{if(arm_written||armed)return 0;arm_written=1;}
+                }else if(!complete||(r->saved.control&PWRSC_TRIGGER)||!pending||!irq_seen||!done||!response||!idle||enable||
                          e->value!=r->saved.control)return 0;
                 continue;
             }
             if(e->address==t+0x1c){
-                seen&=~2u;if(stage){if(e->value!=1||pending||phase!=1+2*acks)return 0;}
+                seen&=~2u;if(stage){if(!armed||e->value!=1||pending||phase!=1+2*acks)return 0;}
+                else if(phase==7){if(pending||acks!=3||e->value!=r->saved.enable)return 0;}
                 else if(!complete||e->value||!pending||!irq_seen||!done||!response||!idle)return 0;continue;
             }
             if(e->address==t+0x10){
                 seen&=~4u;
-                if((stage&&e->value==(r->saved.wait|1u))||(phase==7&&acks==3&&e->value==r->saved.wait))continue;
+                if((stage&&armed&&e->value==(r->saved.wait|1u))||(phase==7&&acks==3&&e->value==r->saved.wait))continue;
                 return 0;
             }
             if(e->address==t+0x30||e->address==t+0x34){
                 unsigned k=e->address==t+0x30?0:1;seen&=~(1u<<(4+k));
-                if((!stage&&phase!=7)||pending||acks>2+(phase==7))return 0;
+                if((!stage&&phase!=7)||(stage&&!armed)||pending||acks>2+(phase==7))return 0;
                 uint32_t want=phase==7?r->saved.command[0][k]:(k?addresses[acks]:PWRR_MESSAGE);
                 if(e->value!=want)return 0;continue;
             }
@@ -232,6 +256,7 @@ static inline int pwrr_retired(const struct pwrr_transaction *q)
             if(phase==7){if(final!=524287u)return 0;final_global|=1;}continue;
         }
         if(e->address==PWRSC_BASE+4){
+            IRQ_OR|=e->value;
             last_irq=e->value;if(e->value&~(1u<<r->tcs))return 0;
             if(phase==7){if(final_global!=1||e->value)return 0;final_global|=2;}
             if(e->value){if(!pending||!complete)return 0;irq_seen=1;}continue;
@@ -239,10 +264,14 @@ static inline int pwrr_retired(const struct pwrr_transaction *q)
         if(!phase&&e->address<t)continue;
         if(e->address<t||e->address>=t+PWRSC_STRIDE)return 0;
         unsigned bit=UINT32_MAX;
-        if(e->address==t+0x14){control=e->value;seen|=1;bit=0;}
+        if(e->address==t+0x14){
+            control=e->value;seen|=1;bit=0;
+            if(stage&&!pending&&arm_written&&control==((r->saved.control&~PWRSC_TRIGGER)|PWRSC_AMC))armed=1;
+        }
         if(e->address==t+0x1c){enable=e->value;seen|=2;bit=1;}
         if(e->address==t+0x10){wait=e->value;seen|=4;bit=2;}
         if(e->address==t+0x18){
+            if(e->value&~1u)return 0;
             if(e->value&1)seen|=8;else seen&=~8u;
             bit=3;if(pending&&complete&&irq_seen&&done&&response)idle=(e->value&1)!=0;
         }
@@ -269,6 +298,7 @@ static inline int pwrr_retired(const struct pwrr_transaction *q)
         }
     }
     return phase==7&&initial==524287u&&final==524287u&&final_global==3&&last==r->last&&writes==r->writes&&triggers==3&&acks==3&&
-        !pending&&!last_irq&&irq_enable==r->IRQ_enable&&!enable&&control==r->saved.control&&wait==r->saved.wait;
+        !pending&&!last_irq&&!r->IRQ_status&&IRQ_OR==r->IRQ_OR&&irq_enable==r->IRQ_enable&&
+        enable==r->saved.enable&&control==r->saved.control&&wait==r->saved.wait;
 }
 #endif

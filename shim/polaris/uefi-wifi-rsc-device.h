@@ -155,8 +155,25 @@ static inline int pwrmd_collect(const struct pwrmd_io *io,struct pwrcl_result *p
         static const uint32_t offset[4]={0x10,0x14,0x18,0x1c};
         for(unsigned k=0;k<8;k++)for(unsigned j=0;j<4;j++)
             if(!pwrmd_load(io,p,w,g,r,UINT64_C(0x179e0d00)+672*k+offset[j],&r->tcs[pass][k][j]))return 0;
-        for(unsigned k=0;k<8;k++)if(b->active_mask&(1u<<k))
-            if((r->tcs[pass][k][1]&(1u<<24))||!(r->tcs[pass][k][2]&1)||r->tcs[pass][k][3])return pwrmd_fail(r,PWRMD_BUSY,0);
+        for(unsigned k=0;k<8;k++)if(b->active_mask&(1u<<k)){
+            if(!(r->tcs[pass][k][2]&1))return pwrmd_fail(r,PWRMD_BUSY,0);
+#if EFI_XNU_WIFI_ARC_READ_AVAILABLE && EFI_XNU_WIFI_ARC_READ_CAPTURE_ONLY
+            /* Original HAL7704..7734 raises a new edge after clearing the
+             * previous latch. Actual0166 FREE/no-request TCS0 retained
+             * CONTROL01010000/CMD_ENABLE1 with STATUS1/IRQ0. Support only
+             * that source-bound completed single-command shape, not every
+             * asserted trigger or programmed command. READ will deassert
+             * before staging and never store saved TRIGGER1 on restoration. */
+            uint32_t control=r->tcs[pass][k][1],enabled=r->tcs[pass][k][3];
+            const uint8_t *t=b->tcs+24*k;
+            if(r->tcs[pass][k][2]!=1||pwfi_le(t,4)!=k||pwfi_le(t+4,4)||pwfi_le(t+16,8)||
+               (control&~0x01010000u)||
+               ((control&0x01000000u)?(control!=0x01010000u||enabled!=1):enabled!=0))
+                return pwrmd_fail(r,PWRMD_BUSY,0);
+#else
+            if((r->tcs[pass][k][1]&(1u<<24))||r->tcs[pass][k][3])return pwrmd_fail(r,PWRMD_BUSY,0);
+#endif
+        }
     }
     if(r->config[0]!=r->config[1]||r->IRQ_enable[0]!=r->IRQ_enable[1]||r->IRQ_status[0]!=r->IRQ_status[1]||
        !pgcd_equal(r->tcs[0],r->tcs[1],sizeof(r->tcs[0])))return pwrmd_fail(r,PWRMD_CHANGED,0);

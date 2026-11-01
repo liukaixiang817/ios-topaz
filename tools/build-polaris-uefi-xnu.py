@@ -1428,7 +1428,7 @@ def main():
     if a.wifi_power_current_arc_read:
         manifest.update(
             wifi_CPU0_power_execution_kind='STAGED_RO_CURRENT_PRIVATE_THREE_READ_RESTORE_NO_RESOURCE_WRITE',
-            wifi_CPU0_power_raw_format='CURRENT_ARC_READ_RAW_V1',
+            wifi_CPU0_power_raw_format='CURRENT_ARC_READ_RAW_V2',
             wifi_CPU0_power_raw_bytes=1941984,wifi_CPU0_power_access_raw_bytes=401936,
             wifi_CPU0_power_current_ARC_read=True,wifi_CPU0_power_current_ARC_read_default_OFF=True,
             wifi_CPU0_power_current_ARC_read_capture_only=True,
@@ -1449,7 +1449,13 @@ def main():
             wifi_CPU0_power_current_ARC_read_shared_event_limit=1024,
             wifi_CPU0_power_current_ARC_read_shared_step_limit=256,
             wifi_CPU0_power_current_ARC_read_shared_deadline_ticks=960000,
-            wifi_CPU0_power_current_ARC_read_qualified_response_semantics_proven=False)
+            wifi_CPU0_power_current_ARC_read_qualified_response_semantics_proven=False,
+            wifi_CPU0_power_current_ARC_retired_single_command_latch=True,
+            wifi_CPU0_power_current_ARC_original_FREE_and_request_NULL_required=True,
+            wifi_CPU0_power_current_ARC_trigger_low_readback_before_staging=True,
+            wifi_CPU0_power_current_ARC_high_trigger_restore_stores_max=0,
+            wifi_CPU0_power_current_ARC_three_new_rising_edges=True,
+            wifi_CPU0_power_current_ARC_restore_enable_after_final_ACK=True)
     (out/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
     print(json.dumps({k:manifest[k] for k in ['artifact','sha256','bytes','QEMU_variant','device_execution_tested']}))
 

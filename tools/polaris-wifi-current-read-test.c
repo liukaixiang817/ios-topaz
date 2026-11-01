@@ -48,21 +48,23 @@ static int current_read_store(void *context,uint64_t at,uint32_t value)
     if(off==8){hardware[1]&=~value;acks++;return read_fault!=8;}
     unsigned within=off%PWRSC_STRIDE;
     assert(within==0x10||within==0x14||within==0x1c||within==0x30||within==0x34);
-    hardware[off/4]=value;if(read_fault==3)return 0;
+    uint32_t previous=hardware[off/4];hardware[off/4]=value;if(read_fault==3)return 0;
     if(within==0x14&&(value&PWRSC_TRIGGER)){
+        assert(!(previous&PWRSC_TRIGGER));
         unsigned t=off-0x14;assert(requests==acks&&requests<3);requests++;
         assert(hardware[(t+0x30)/4]==PWRR_MESSAGE&&hardware[(t+0x34)/4]==pwcd_addresses[requests-1]);
         assert(hardware[(t+0x38)/4]==initial[(t+0x38)/4]);
         hardware[(t+0x3c)/4]=read_fault==6?(1u<<8):PWRSC_DONE;
         if(read_fault==7)hardware[(t+0x3c)/4]|=0x20000;
         hardware[(t+0x40)/4]=read_fault==1?UINT32_MAX:(uint32_t[]){0,4,7}[requests-1];
-        if(read_fault!=4){hardware[1]|=1u<<(t/PWRSC_STRIDE);hardware[off/4]&=~PWRSC_TRIGGER;}
+        if(read_fault!=4)hardware[1]|=1u<<(t/PWRSC_STRIDE);
         if(read_fault==5)hardware[1]|=128;
         if(read_fault==10)cmd_database[PWCD_DB_BYTES-1]^=1;
         if(read_fault==11&&requests==3)links[0x4004+0x3f]^=1;
         if(read_fault==12&&requests==3)((struct efi_loaded*)(arena+0x188000))->bytes^=4096;
         if(read_fault==13)*native_on=1;
     }
+    if(read_fault==20&&path->read.io.phase==7&&within==0x1c&&value==1)hardware[1]|=1;
     return 1;
 }
 static int current_read_body(void *context,const struct paic_io *memory,struct pwrcl_result *p,
@@ -83,6 +85,13 @@ static int execute_read(unsigned fault)
      * Three other valid rows stand in for its26 non-ARC rows in SOFTWARE. */
     const uint32_t other[3]={0x40900,0x40904,0x50000};
     for(unsigned k=0;k<3;k++)put(links+0x3004+24*k,other[k],4);
+    if(fault>=19){
+        hardware[0]=1;hardware[0x14/4]=PWRSC_AMC|PWRSC_TRIGGER;hardware[0x1c/4]=1;
+        hardware[0x30/4]=0x10108;hardware[0x34/4]=0x50000;hardware[0x38/4]=0x77;
+        memcpy(initial,hardware,sizeof(initial));
+    }
+    if(fault==21)hardware[0x14/4]|=2;
+    if(fault==22)hardware[0x1c/4]=2;
     if(fault==14)jf=4;if(fault==15)jf=7;if(fault==16)jf=13;
     c->io.query=path_descriptor;
     const struct pwrcl_io io={{{s,0,path_memory_arch,path_identity,order},path_locate,current_read_map},client_create,client_drop,own_name};
@@ -95,8 +104,8 @@ int main(int argc,char**argv)
     uint8_t *data[]={original,npa_original,rp_original,cmd_original};size_t sizes[]={PGCI_IMAGE_BYTES,PWNPI_IMAGE_BYTES,PWRPI_IMAGE_BYTES,PWCDI_IMAGE_BYTES};
     for(unsigned k=0;k<4;k++){FILE*f=fopen(argv[k+1],"rb");assert(f&&fread(data[k],1,sizes[k],f)==sizes[k]&&!fclose(f));}
     unsigned checks=0;
-    for(unsigned sample=0;sample<3;sample++){
-        unsigned fault=sample==2?18:sample;
+    for(unsigned sample=0;sample<4;sample++){
+        unsigned fault=sample>=2?16+sample:sample;
         int ok=execute_read(fault);
         if(!ok)fprintf(stderr,"READ path%u unknown%u phase%u client%u CPU%u access%u read%u events%u T/C/A%u/%u/%u RAM%u/%u/%u\n",path->error,path->unknown,path->phase,cr->error,path->CPU.error,path->access.error,path->read.io.error,path->read.io.events,path->read.io.triggers,path->read.io.completed,path->read.io.acknowledged,path->RAM[0].error,path->RAM[1].error,path->RAM[2].error);
         assert(ok&&path->retired&&path->known_refusal&&path->error==PWRPT_READ_ONLY&&!pwrpt_unsafe(path));
@@ -115,6 +124,12 @@ int main(int argc,char**argv)
         if(ok||!pwrpt_unsafe(path)||delete_calls||unmask_calls)fprintf(stderr,"fault%u ok%d path%u CPU%u access%u read%u delete%u unmask%u\n",fault,ok,path->error,path->CPU.error,path->access.error,path->read.io.error,delete_calls,unmask_calls);
         assert(!ok&&pwrpt_unsafe(path)&&cr->client_held&&!delete_calls&&!unmask_calls);
         assert(votes[0]==8&&votes[1]==2&&votes[2]==1&&pwra_zero(&path->transaction,sizeof(path->transaction)));checks++;
+    }
+    assert(!execute_read(20)&&pwrpt_unsafe(path)&&cr->client_held&&!delete_calls&&!unmask_calls);
+    assert(requests==3&&acks==3&&path->read.io.unknown);checks++;
+    for(unsigned fault=21;fault<=22;fault++){
+        assert(execute_read(fault)&&path->error==PWRPT_DEVICE&&path->known_refusal&&path->retired&&!pwrpt_unsafe(path));
+        assert(delete_calls==1&&!mask_calls&&!modeled_stores&&pwra_zero(&path->read,sizeof(path->read)));checks++;
     }
     printf("{\"passed\":true,\"checks\":%u,\"body_bytes\":%zu,\"access_bytes\":%zu,\"read_bytes\":%zu,\"same_prepare_private_Device_CPU_READ_restore_Delete\":true,\"ARC_missing_cache_not_zero\":true,\"resource_WRITE_reachable\":false,\"READ_RAW_not_qualified_vote\":true,\"physical_executed\":false}\n",checks,sizeof(*path),sizeof(path->access),sizeof(path->read));
     free(original);free(npa_original);free(rp_original);free(cmd_original);free(arena);return 0;
