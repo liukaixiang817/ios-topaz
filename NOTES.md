@@ -34,7 +34,7 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0157 actual FASTBOOT02:07; NEW bounded CmdDb image + freshRO READY, independent freeze pending
+### CURRENT0157 actual FASTBOOT02:07; NEW bounded CmdDb diagnostic candidate READY for ONE RAM (not yet sent)
 
 - User answered the second physical recovery request; independent exact product
   2026-11-01T01:42:42.384037Z returned product:polaris/exit0. Nothing physical
@@ -85,8 +85,17 @@ early samples only. On0029 the human already confirmed boot complete and said
   Actual no-mock full admit with NEW reviews now passed58943a92. Original81
   wrapperimage ef36de984cddd3741ebfdbb486e7235f0bcefddbb5fd4d76edc3f0118eb43afb
   /5998592B retains all81FW/SimpleInit/BootShim/DTB. Original unmodified EDK2
-  GetInfo+whole39295176B decode matched. Independent sourcefreeze/ONEhelper
-  still pending: not yet candidate READY for send.
+  GetInfo+whole39295176B decode matched. Independent sourcefreeze and ONEhelper defaultoffline passed: COPY808+10
+  COMMIT_ONLY/400committedcurrent sources/82inputs, no hardlinks. Freeze
+  9c046773bd36aaf11d5ac6b4934ed3d3e620220cd272ce201d146dbd9e3ab7ba.
+  Directory/private/tmp/polaris-runtime-0157-frozen-0001, sourceFW220cdd5/
+  HOST57d4f5b. NEW candidate ready only for focused diagnostic ONE RAM, not
+  Wi-Fi completion or power permission. No image/payload has been sent yet.
+  Next ONLY frozen0157/research/polaris/uefi-ios-0157/boot-CmdDb-bounded-once-
+  0001.py --boot-once, originalrepo shared phone-CmdDb-bounded-runtime-0001/
+  boot.json must remain absent until its ONE attempt. Then actual waiting-
+  payload before ONE unchanged63cb payload using ONLY newfrozen controller.
+  Old0155/0156 remain consumed and cannot control the next session.
   No single inventory or client-only physical boot. NEW0157 strictRO audit47729
   ENDED0: ONE0120boot02:05:10.790005Z, both whole16GiB SHA91515474/689a8cd1
   matched56.548/56.519s, maps142/182/markerraw+8MiBpattern/6GPT/critical/ESP102/
