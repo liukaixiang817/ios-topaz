@@ -36,6 +36,11 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### CURRENT0174 payload transfer FAILED; actual UEFI receiving, user recovered actual Polaris FASTBOOT12:39; fixed access/Wi-Fi NOT DONE
 
+- Completed FW e4b6f16dcebe528d8cf150fcc97691335089c3ad and latest HOST
+  035aa65aced2d00fa8f6652a01b221e85403a4bf committed/pushed; independent
+  ls-remote matched035aa65. The frozen0174 still binds olderHOSTaf07521 and
+  remains immutable/consumed. New host telemetry is source-only, not a new
+  admitted physical image and not a USB-error fix; NEW0175 is NOTREADY.
 - This overrides ALL earlier current/ACTIVE/READY/LIVE. All USB/host/model workers
   ENDED, all children STOP. Real scan/join/data never completed; only Wi-Fi remains
   active. Do not call this nativeLIVE, a power-path failure, panic or quarantine.
