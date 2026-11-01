@@ -34,6 +34,39 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0165 actual audited FASTBOOT06:18; NEW three-RAW-READ/full-restore candidate verified OFFLINE, no READ/vote/network executed yet
+
+- Phone last independently actualPolarisFASTBOOT06:18:56.545627Z after NEW0165
+  strictRO audit/unmount. It is NOT nativeLIVE.0164frozen shutdown61797 ENDED1:
+  bound UEFI service not connected; no normaldrain/receipt obtained. Independent
+  expectedquery06:15:52.522657Z actualproductpolaris. Cause of0164exit UNKNOWN;
+  do not infer panic/quarantine or user key action. Consumed0164 not replayed.
+- Required new candidate transition merged ONE0120watchdog300 strictRO audit
+  38387 ENDED0, no repair/replay/RW.39independentchecks pass, both complete
+  16GiB91515474/689a8cd1 (56.743/56.698s),142/182maps/markerraw8MiBpattern/
+  6GPT/critical/ESP102/journalmetadata/currentNV3x8MiB before-local-after/FSC.
+  Reviewfe27793b4a862e90be9c165e3f6f21dd9503d061e13546479d23914a52e6bad0,
+  preflight017d9bf96d6732109ec9afe1efccd753f9b1527716f4ce2c9932e287ff9875c6.
+  Four0600originalNVfiles samefresh0160; no NVrestore, no whole512MiBjournal
+  capture/FShealth claim. This NEWaudit replaces missing0164drain receipt.
+- NEW FW4021370893ff18dcbd7ce9f2d46df0505bea4ec4 /HOST7c787c0a4f8caf7239556b9e76959f4f58fa7cbc
+  source and exact literal pushed/independentremote matched.88inputs/242PowerGCD
+  +94resource fields;777affectedsoftwarecases/20hosttests/actualno-mockadmit/
+  twoSERIAL19checkterminalmodels passed as detailed below; no reruns for fresh
+  root rebinding. Read capture-only; resource WRITE body CPP-OUT, no CMD_DATA
+  write/oldAPI/knownmissingcache=>0. Actualruntime guards can still refuse.
+- New physical-runtime-image-0002 is entirely byte-identical to UNSENT0001,
+  a892c90551dd98ce795c1bd4758c3824cf3787b1499a303dac872f7619934870/6029312B;
+  fresh0165 root/review are bound by NEWmanifest, oldmanifest unchanged.
+  Original81FW and complete43408584B unmodifiedEDK2 decode proof safely reused
+  ONLY after wholeimagebyte equality. No USBimage/payload yet. Next complete
+  independent freeze/defaultofflinehelper then ONE new RAM only if actual
+  expectedFASTBOOT and every candidate gate passes. No further polling now.
+- Wi-Fi grey/scan/join/data NOT DONE. Sound/camera/children STOP. Source proof
+  and conditional APPSDRV2 scope do not qualify RAW ARC words as saved votes
+  or grant EE/EL3/VMID/MPU rights. No nativeCI/download/oldoptical/perftests.
+  All USBworkersENDED; no physical request pending. Root/data safety unchanged.
+
 ### CURRENT0164 remains last actual native05:24; NEW0165 three RAW READ/full-restore parent verified OFFLINE, exact host/image verified OFFLINE, transition/freeze NOT READY
 
 - Wi-Fi still grey OFF; no scan/join/data. Phone remains the SAME0164
