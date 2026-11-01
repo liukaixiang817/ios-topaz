@@ -6,7 +6,7 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from polaris_wled_runtime_admission import (
-    GCD_CLOCK_0155, GCD_CLOCK_0154, GCD_CLOCK_0150, POWER_PREFIX, POWER_SOURCE_PATHS,
+    GCD_CLOCK_0156, GCD_CLOCK_0155, GCD_CLOCK_0154, GCD_CLOCK_0150, POWER_PREFIX, POWER_SOURCE_PATHS,
     original_gcd_policy, original_gcd_model_markers)
 
 
@@ -16,6 +16,27 @@ def descriptor(profile):
 
 
 class ConditionalPowerAdmission(unittest.TestCase):
+    def test_capture_scope_is_a_distinct_no_query_no_critical_profile(self):
+        d = descriptor(GCD_CLOCK_0156)
+        self.assertIs(original_gcd_policy(d), GCD_CLOCK_0156)
+        for key, value in [('CmdDb_capture_only', False), ('CmdDb_original_Query_calls_max', True),
+                           ('CPUcritical_and_RSC_reachable', True), ('guarded_PSCI_calls_max', 14),
+                           ('CmdDb_planned_stop_error', 0), ('steps_max', 256)]:
+            bad = copy.deepcopy(d)
+            bad[POWER_PREFIX+key] = value
+            with self.subTest(key=key), self.assertRaises(ValueError):
+                original_gcd_policy(bad)
+
+    def test_capture_flag_cannot_admit_the_consumed_full_transaction_source(self):
+        d = descriptor(GCD_CLOCK_0156)
+        d['inputs'] = copy.deepcopy(GCD_CLOCK_0155['inputs'])
+        with self.assertRaises(ValueError):
+            original_gcd_policy(d)
+        old = descriptor(GCD_CLOCK_0155)
+        old[POWER_PREFIX+'CmdDb_capture_only'] = True
+        with self.assertRaises(ValueError):
+            original_gcd_policy(old)
+
     def test_new_exact_cmddb_region_requires_new_source_and_scope(self):
         d = descriptor(GCD_CLOCK_0155)
         self.assertIs(original_gcd_policy(d), GCD_CLOCK_0155)

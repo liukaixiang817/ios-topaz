@@ -34,7 +34,30 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0156 actual FASTBOOT01:21 / focused CmdDb capture-only full EFI and affected verification PASS; host/RO/image NOT READY
+### CURRENT0156 actual FASTBOOT01:21 / capture-only FW16f9158 and new host profile PASS; necessary freshRO next
+
+- FW16f9158b97d74dec78beab94dec887e598de2705 commits the capture-only
+  source/defaultOFF selector, separate scope document and affected checks.
+  NEW GCD_CLOCK_0156 pins80inputs/166Power-GCDtypedmetadata/94resource fields,
+  exact old scope7562abcc plus new capture-only review. All prior literal
+  dictionaries, including disabled scopes, remain unchanged. 22affectedhost
+  checks pass; full actual admit awaits the NEW post-recovery root/NV review.
+- Physical-body EFI8dedaf40/11384320B,24softwarecases (17normal+7capture),
+  actual parent COFF/MachO/maxframe1024, two SERIAL19checkmodels passed.
+  No originalQuery adapter or CPU/Device/RSC continuation is reachable from
+  capture-only parent body; a complete stable capture returns planned13 and
+  still needs known source/pool/client retirement. This is not a power fix or
+  successful physical read. No new physical image/payload sent; current last
+  actual product was PolarisFASTBOOT01:21:01Z after human recovery.
+- NEXT execute the already-needed bounded0120 watchdog300s strictRO audit
+  with the reviewed epoch0156 script7722dc48 (only output/mount label changed
+  from0154), merging whole roots/maps/GPT/ESP/journalmetadata/current3NV/FSC.
+  No repair/replay/RW/storage/NV writes, no nativeCI. Then actual full admit,
+  original81wholeimage codec/independent freeze/one-use helper and ONE new RAM
+  diagnostic. Consumed0155 may never be replayed. Candidate image NOT READY
+  until those steps pass. Sound/camera/allchildren remain STOP; only Wi-Fi.
+
+### HISTORY0156 capture-only full EFI and affected verification
 
 - Actual product recovery01:21:01Z is verified, no physical recovery request
   pending. No new USB action after that query. Phone stays lastactualFASTBOOT,
