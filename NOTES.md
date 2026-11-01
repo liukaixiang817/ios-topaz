@@ -34,7 +34,60 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0156 capture-only NEW trial READY / frozen0001 / freshRO FASTBOOT01:30; ONE helper next
+### CURRENT0156 capture-only startup ACK UNKNOWN / UEFI unavailable / expected FASTBOOT timeout01:36; NEW physical recovery requested ONCE
+
+- ONE newimage90595 ENDED0 sent2026-11-01T01:33:13.643697Z/source00588b5ec3c
+  ad7be9a4f097bf36671f826da6b51/imagef5aeacb1/6000640B. Actual UEFI
+  waiting-payload01:33:22.260137Z, then ONE63cbpayload13943 ENDED1: transfer
+  32.953370667s/bootcall90.495763125s, response(-7) timeout, NO startup ACK.
+  Originalrepo0156/phone-CmdDb-capture-runtime-0001/boot.json is CONSUMED,
+  do not replay. Its literal image-succeeded state is image ACK only, not a
+  native boot observation. No physical raw client/path was exported.
+- After13943 ENDED, ONLYfrozen0156 state95954 ENDED1:8s could not connect;
+  independent expected-product8651 ENDED0 at01:36:31.344275Z timed out8s.
+  No current nativeLIVE/FASTBOOT/currentUI/UTC/zeroCPU-or-WLED-or-RSC claim.
+  No new UTC SET. Omitted Query API/Device/CPUcritical/RSC continuation is
+  verified source/preprocessed-body evidence, not an execution-stage record.
+  It narrows this candidate's code, NOT a physical root cause or observed hold.
+- Current ONLYcontroller=/private/tmp/polaris-runtime-0156-frozen-0001/tools/
+  polaris-uefi-wled-runtime.py with its driver0001/image0001 and originalrepo
+  shared consumedbootrecord. Old0155/0154/editedcontroller/oldpolicy/stripflags/
+  changedmanifest are forbidden. One state read after unknown ACK has already
+  been attempted; no blind retry/cleanup/genericreset/rawfallback. All USB/
+  host/model workers ENDED. A NEW human power+volume-down FASTBOOT request
+  for0156 is pending; the earlier0155 request WAS fulfilled01:21. Don't repeat.
+- Actual failure evidence0156/physical-capture-start-ACK-unknown-proof-0001.json
+  preserves complete host results, no successful diagnostic/boot claim. Source
+  FW16f9158/HOSTda81d60 remains unchanged;24software/22host/2x19model passes
+  are OFFLINE. No new nativeCI. 0155 or0156 images may never be replayed.
+- Rechecked EXISTING0143 originalDxeCore opcode proof against whole61236b07
+  and all saved disassemblies: GetDescriptor2c68 calls unbounded linked-list
+  search1264; ReleaseLock/RestoreTPL can dispatch arbitrary original callbacks.
+  A host timeout or outer200ms guard cannot bound a callee that never returns.
+  Static recheck in0156/wifi/original-GCD-call-static-recheck-0001.json; NOT a
+  new actual observation or proof that this boot reached/hung in that call.
+- NEXT ONLY Wi-Fi: before another physical trial improve failure observability
+  and qualify a genuinely bounded source-bound originalCore GCD namespace
+  reader, rather than reissue the same unbounded API or weaken its gates.
+  Source layout/head/list/signature/current map+NS-WB identity/loaded-owner/
+  protocol+immutablehash, bounded complete two-pass/cycle/overlap/partial/time
+  evidence all need qualification. No lock mutation/Init/allocator/opaque API
+  fallback or arbitrary MMIO, no permission boolean. A new provider is not
+  an old-policy retry; it requires defaultOFF/new source/profile/review/model/
+  image/freeze. Do not substitute a generic parser or fake descriptor for the
+  actual live namespace. This offline Wi-Fi work can proceed while physical
+  recovery is pending; sound/camera/allchildren remain STOP.
+- Latest completed root/NV review is fresh0156 de8f9289/preflight1c62eacc:
+  actualumount+FASTBOOT01:30:36Z,39checks both whole16GiB91515474/689a8cd1/
+  maps142/182/markerraw+8MiB/6GPT/critical/ESP102/journalmetadata/3NV+FSC PASS.
+  This preceded the UNKNOWN trial, not proof of later state. Whole512MiBjournal
+  not captured, no FShealthclaim. After uncontrolled/physical recovery, merge
+  a NEW strictRO fullroot/map/GPT/ESP/journal/currentNV review into the next
+  already-required transition; don't boot recovery solely for old inventory.
+  Never repair/replay/RW/restore historic NV. may_write_userdata=false and
+  no scan/join/data/PCM/camera completion. Preserve data/display/WLED safeguards.
+
+### HISTORY0156 capture-only candidate (subsequently CONSUMED with UNKNOWN result)
 
 - New independent COPY797files+10COMMIT_ONLY/392committedsources/80inputs in
   /private/tmp/polaris-runtime-0156-frozen-0001; freezeSHA c34b111168b924dc3446
