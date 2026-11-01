@@ -34,7 +34,7 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0172 SOURCE/OFFLINE only; phone remains recovered Polaris FASTBOOT0171/10:28; same-private CPU/READ/Wi-Fi NOT DONE
+### CURRENT0172 actual controlled strictRO FASTBOOT11:07; same-private CPU candidate OFFLINE only; READ/Wi-Fi NOT DONE
 
 - NEW0172 defaultOFF --wifi-power-private-cpu-checkpoint is implemented and
   OFFLINE verified. It narrows the SAME real known original private lifecycle:
@@ -63,14 +63,31 @@ early samples only. On0029 the human already confirmed boot complete and said
 - Actualunwrappeddriver6dc906115db381ec96f8a79f2eeafafd4560bd0bb9ceff034d66cb5ef744bcb9/
   15914496B/90inputs, allcurrentbytes matched. SOFTWAREpeer calls no physical
   API/SMC/MMIO. No newnativeCI/download/USB/UI/UTC/optical/performance.
-- Phone remains independentactualPolarisFASTBOOT0171/10:28:09.680946Z;
+- Phone now actualPolarisFASTBOOT11:07:39.373498Z afterNEWstrictRO0002;
   0171UNKNOWN actualpredicate/writecounts remainUNKNOWN, no newrootcauseclaim.
-  Allthisturnworkers ENDED. NEW0172candidate stillNOTREADY: next exacthost
-  scope/necessary NEWstrictRO root+currentNV audit/original81wholecodec/
-  sourceaudit/independentfreeze/ONEhelper must pass first.0169audit historical
-  after0171UNKNOWN. User0171 kernelreuseexception consumed; ifnewexception
+  Allthisturnworkers ENDED. NEW0172candidate stillNOTREADY untilsourceaudit/independentfreeze/ONEhelper.
+  Newexacthost GCD_CLOCK_0172 metadata288/resource94/90inputs, prior25enabled
+  +DISABLED literalAST unchanged;21targetedhosttests and actualnomockcomplete
+  admit inimagebuilder passed. Image50c31202d1836e2fc5f23a09ca25a5a004a7108ab7d952fece193b1be2191ab1/
+  6025216B, original81FW retained, upstreamEDK2whole43396296B decode byteequal. User0171 kernelreuseexception consumed; ifnewexception
   needed ask onconcretereviewablecandidate BEFORE staging image. No pending
   useraction; noUSBinventorypoll. WiFi scan/join/data=false; sounds/cameraSTOP.
+
+- NEW0172 necessarystrictRO0001 safelystopped incomplete: only3.058s remained
+  atfirstfullroot hash afterearlierreads, no completedfullSHA. Fullraw/failed
+  record retained; actualunmount/FB11:03:30.995829Z, neveradmitted.0002adds
+  ONLY hostcommandtiming/newrecorddirectory; allreads/checks/250sworkbudget/
+  300swatchdog unchanged.0002actualNORMALumount/FB11:07:39.373498Z, independent
+  39checks PASS. New16GiB91515474/old16GiB689a8cd1 fullSHA56.735/56.694s,
+  142/182maps/marker8MiBpattern/6GPT/critical/ESP102/journalmetadata/currentNV
+  3x8MiBbefore-local-after/FSC allpass. FourNV0600 same0169, noNVrestore.
+  Journalwhole512MiB stillnotcaptured/noFShealthclaim. Newreview/preflight
+  see0172/fresh-20F66-readonly-*.json; no partitionwritepermission.
+- Firstofflineimagepackager blocked inhostread ofhistorical0119 serial.log;
+  boundedescalatedread matcheditsSHA immediately. Stoppedblockedhostchild,
+  noimagecreated/noUSB. Exactsamepackager withsamechecks/inputs underescalated
+  hostread completed. No evidencegate/policychangedforthis; originalfailedlog
+  retained. No actual0172iOSimage/payload sent, no newUTC/UI/WLED/CPUraw.
 
 ### CURRENT0171 startup ACK UNKNOWN; user physically recovered, actual Polaris FASTBOOT10:28; private CPU/READ/vote/Wi-Fi NOT DONE
 
