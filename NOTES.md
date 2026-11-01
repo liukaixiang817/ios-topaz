@@ -60,7 +60,12 @@ early samples only. On0029 the human already confirmed boot complete and said
   currentinputs PASS; 11resourcePower+1battery literalint1 and actualQEMUpp
   no prepared/current/private bodies/records. All model/buildworkers ENDED.
   SOFTWARE PMIC/delay/RAMUSB not hardware/guestreset/radio. No kernel CI.
-- NEXT NEW exact0163hostprofile preserving old0162 and all olderliterals,
+- FW9eea8fa30b787703bffb603597b64f15b84df87e committed/pushed and independently
+  remote matched. NEW GCD_CLOCK_0163 exact86inputs/217PowerGCD+94resource,
+  all16oldliterals unchanged;44affectedhost/logtests and actualno-mockadmit
+  pass, proof5854cdf7a7b4759c93ae41a0d3946c05d3f22f8e57eb24b07d1c48c2d1c5eb47.
+  Runtime writer gates remain SAME conditional APPSDRV2 scope, not blankgrant.
+- NEXT after newhostprofile commit,
   original81wholecodec/sourceaudit/independentfreeze/ONEhelper plus normal
   0161drain/currentfresh0160ROOT-NV. Then actualexpectedFASTBOOT and ONE
   conditional integrated power attempt. No blind votes or permission boolean;
