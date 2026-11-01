@@ -8,6 +8,7 @@
 #define POLARIS_UEFI_WIFI_POWER_CRITICAL_H
 #if EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE && !defined(POLARIS_EFI_TEST_QEMU)
 #include "uefi-wifi-rsc-baseline.h"
+#include "uefi-wifi-psci-affinity.h"
 #include "../../tools/polaris-wifi-rsc-transaction.h"
 #ifndef EFI_XNU_WIFI_ARC_READ_AVAILABLE
 #define EFI_XNU_WIFI_ARC_READ_AVAILABLE 0
@@ -256,16 +257,6 @@ static inline int pwrpc_end(const struct pwrpc_io *io,const struct paic_io *memo
 {return pwrpc_end_checked(io,memory,p,w,g,transaction,before,after,r,0);}
 /* These are real AArch64 instructions, compiled as general-register-only
  * code. Host peers never execute them. No original EFI service is called. */
-static inline int pwrpc_actual_affinity(void *ctx,uint64_t target,int64_t *raw)
-{
-    (void)ctx;
-#if defined(__aarch64__) || defined(__arm64__)
-    register uint64_t x0 __asm__("x0")=UINT64_C(0xc4000004),x1 __asm__("x1")=target,x2 __asm__("x2")=0,x3 __asm__("x3")=0;
-    __asm__ volatile("smc #0":"+r"(x0),"+r"(x1),"+r"(x2),"+r"(x3)::"x4","x5","x6","x7","x8","x9","x10","x11","x12","x13","x14","x15","x16","x17","cc","memory");*raw=(int64_t)x0;return 1;
-#else
-    (void)target;(void)raw;return 0;
-#endif
-}
 static inline int pwrpc_actual_mask(void *ctx,struct pwrpc_transition *t)
 {
     (void)ctx;

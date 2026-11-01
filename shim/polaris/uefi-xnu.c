@@ -41,7 +41,10 @@ struct args {uint16_t revision,version;uint64_t va,pa,size,top;struct video vide
 _Static_assert(sizeof(struct args)==736,"XNU boot args ABI");
 static struct efi_system *system_table;
 static efi_handle driver_image;
-#if EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
+#if EFI_XNU_WIFI_CPU_RO_ADMISSION
+static uint8_t log_buffer[1048576];static uint64_t log_bytes;
+static volatile uint32_t log_overflow;
+#elif EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
 static uint8_t log_buffer[10485760];static uint64_t log_bytes;
 static volatile uint32_t log_overflow;
 #elif EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE
@@ -73,7 +76,7 @@ static struct polaris_plan plan;
 static uint8_t *payload,*log_snapshot;
 static uint64_t received,payload_count;
 static uint32_t load_state;
-#if EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE && !defined(POLARIS_EFI_TEST_QEMU)
+#if (EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE || EFI_XNU_WIFI_CPU_RO_ADMISSION) && !defined(POLARIS_EFI_TEST_QEMU)
 static int new_original_unknown(void);
 #endif
 static struct polaris_efi_ram_lease ram_lease;
@@ -96,7 +99,7 @@ static void text(const char *s)
     }
     wide[at]=0;
     if(load_state<4 && system_table&&system_table->out
-#if EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE && !defined(POLARIS_EFI_TEST_QEMU)
+#if (EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE || EFI_XNU_WIFI_CPU_RO_ADMISSION) && !defined(POLARIS_EFI_TEST_QEMU)
         &&!new_original_unknown()
 #endif
     )system_table->out->string(system_table->out,wide);
@@ -251,7 +254,7 @@ static int shutdown_status(void *,const uint8_t **,uint64_t *);
 #include "uefi-audio-clock-gcd-query.h"
 static int original_service_unknown;
 static int new_original_unknown(void)
-{return original_service_unknown||(pgcd_resident_context.record&&pgcd_uncertain(&pgcd_resident_context))||pacgq_preboot_record.uncertain||pacgq_preboot_record.outstanding||pacgq_ticket.outstanding
+{return pwcq_parent_unsafe()||original_service_unknown||(pgcd_resident_context.record&&pgcd_uncertain(&pgcd_resident_context))||pacgq_preboot_record.uncertain||pacgq_preboot_record.outstanding||pacgq_ticket.outstanding
 #if EFI_XNU_WIFI_NPA_READONLY_AVAILABLE
     ||pwnpa_unknown()
 #endif
@@ -261,11 +264,14 @@ static int new_original_unknown(void)
 #if EFI_XNU_WIFI_RPMH_CLIENT_AVAILABLE
     ||pwrcl_unsafe()
 #endif
+#if EFI_XNU_WIFI_CPU_RO_ADMISSION
+    ||log_overflow
+#endif
 #if EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE
     ||pwrpt_parent_unsafe()||log_overflow
 #endif
     ;}
-#if EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE
+#if EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE || EFI_XNU_WIFI_CPU_RO_ADMISSION
 /* A held/UNKNOWN power interval must never return to UsbFn transmit/poll,
  * BootServices Stall, Console, PON or native handoff. Those opaque original
  * services may touch the same resource provider. Preserve all resident raw
@@ -284,6 +290,12 @@ __attribute__((noreturn)) static void power_unknown_hold(void)
     ram_text("WIFI_POWER_UNKNOWN_HOLD_RAW_V1_END\r\n");
     for(;;)__asm__ volatile("wfe":::"memory");
 }
+#endif
+#if EFI_XNU_WIFI_CPU_RO_ADMISSION
+_Static_assert(sizeof(log_buffer)>=2*(PWCQ_RAW_BYTES+sizeof(pacgq_preboot_record)+sizeof(pacgq_preboot_i2c)+sizeof(pgcd_record))+65536,
+    "complete CPU RO and original source reports fit without truncation");
+#endif
+#if EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE
 #if EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
 #if EFI_XNU_WIFI_ARC_READ_AVAILABLE
 _Static_assert(sizeof(struct pwrpt_result)==1941984,"complete current ARC READ body raw ABI");
@@ -437,6 +449,9 @@ static int prepare_boot(void *context)
 #if EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE
         report("WIFI_POWER_SOFTWARE_PHYSICAL_TRANSACTION_COMPILED_OUT=",1);
 #endif
+#if EFI_XNU_WIFI_CPU_RO_ADMISSION
+        report("WIFI_CPU_RO_SOFTWARE_PHYSICAL_COMPILED_OUT=",1);
+#endif
     }
 #else
     /* Diagnostic only: all BootServices queries before any IRQ mask/change.
@@ -492,10 +507,13 @@ static int prepare_boot(void *context)
     }
 #else
 #if EFI_XNU_AUDIO_CLOCK_GCD_QUERY_AVAILABLE
+#if EFI_XNU_WIFI_CPU_RO_ADMISSION
+    if(new_original_unknown()){original_service_unknown=1;power_unknown_hold();}
+#endif
     if(original_service_unknown)return 0;
     struct pgcd_context *gcd=pgcd_prepare(system_table,load_state);
     pacgq_collect_preboot(system_table,load_state,gcd
-#if EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE
+#if EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE || EFI_XNU_WIFI_CPU_RO_ADMISSION
         ,&wln_cpu_on_issued
 #endif
     );
@@ -507,7 +525,7 @@ static int prepare_boot(void *context)
     ram_text("ORIGINAL_GCD_RAW_V1_END\r\n");
     if(new_original_unknown()){
         original_service_unknown=1;ram_report("ORIGINAL_SERVICE_UNKNOWN_NATIVE_AND_RESET_BLOCKED=",1);
-#if EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE
+#if EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE || EFI_XNU_WIFI_CPU_RO_ADMISSION
         ram_report("WIFI_POWER_UNKNOWN_RAM_ONLY_NO_FOREIGN_FIRMWARE_NO_ACK_HOLD=",1);
         power_unknown_hold();
 #endif
@@ -618,7 +636,7 @@ static void boot_kernel(void *context)
     ram_report("ORIGINAL_GCD_FINAL_PRESTART_BYTES=",sizeof(pgcd_record.prestart));
     ram_text("ORIGINAL_GCD_FINAL_PRESTART_BEGIN\r\n");ram_hex((const uint8_t*)pgcd_record.prestart,sizeof(pgcd_record.prestart));ram_text("ORIGINAL_GCD_FINAL_PRESTART_END\r\n");
     if(!original_safe){original_service_unknown=1;load_state=3;ram_lease.active=0;
-#if EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE
+#if EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE || EFI_XNU_WIFI_CPU_RO_ADMISSION
         ram_report("WIFI_POWER_FINAL_UNKNOWN_RAM_ONLY_NO_FOREIGN_FIRMWARE_NO_ACK_HOLD=",1);power_unknown_hold();
 #endif
         return;

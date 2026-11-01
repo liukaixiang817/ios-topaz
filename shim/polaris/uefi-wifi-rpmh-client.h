@@ -231,12 +231,7 @@ static inline int pwrcl_transition(struct pwrcl_result *r,int after_delete)
     return 1;
 }
 static inline int pwrcl_final_unopened(const struct pgcd_context *g)
-{
-    return g&&g->record&&g->ticket&&g->stage==2&&!g->opened&&!g->finished&&
-        g->record->self_bound&&!g->record->attempted&&!g->record->error&&!g->record->phase&&
-        !g->record->pre_mask&&!g->record->post_mask&&!g->record->prestart_count&&
-        !pgcd_uncertain(g)&&!g->ticket->spent&&!g->ticket->result;
-}
+{return pgcd_final_unopened(g);}
 typedef int (*pwrcl_body_fn)(void *,const struct paic_io *,struct pwrcl_result *,struct pwrph_work *,struct pgcd_context *);
 static inline int pwrcl_run_body(const struct pwrcl_io *ops,const struct paic_result *enumeration,unsigned stage,
     struct pgcd_context *final,struct pgcd_context *early,struct pwrcl_result *r,struct pwrph_work *w,

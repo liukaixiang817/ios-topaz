@@ -247,6 +247,14 @@ static inline int pgcd_cached_owner_stable(const struct pgcd_context *c)
     return pgcd_equal(&r->self_owner,(const void*)(uintptr_t)r->self_owner_address,sizeof(r->self_owner))&&
         pgcd_equal(r->config[0],(const void*)(uintptr_t)r->config_pointer,r->config_count*sizeof(struct pgcd_config));
 }
+/* An independent RO phase may inspect, never reopen or renew, the final ticket. */
+static inline int pgcd_final_unopened(const struct pgcd_context *g)
+{
+    return g&&g->record&&g->ticket&&g->stage==2&&!g->opened&&!g->finished&&
+        g->record->self_bound&&!g->record->attempted&&!g->record->error&&!g->record->phase&&
+        !g->record->pre_mask&&!g->record->post_mask&&!g->record->prestart_count&&
+        !pgcd_uncertain(g)&&!g->ticket->spent&&!g->ticket->result;
+}
 static inline int pgcd_service_enter(struct pgcd_context *c,struct pgcd_service_guard *g)
 {
     if(!c||!g||!c->record||!c->opened||c->finished||pgcd_uncertain(c)||g->entered)return 0;

@@ -34,6 +34,63 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0168 only last actual recovered FASTBOOT07:55; NEW0169 independent normal CPU RO parent/link verified OFFLINE; new host/admission NOT READY
+
+- Phone's ONLY last actual state remains independentproductpolaris07:55:36Z
+  after user physicalrecovery. No new USB/image/payload/actualfirmwareAPI/SMC/
+  PSCI/AT/MMIO/UI/UTC/optical/nativeCI/download during0169.0168 startup and
+  actualfailingpredicate/CPU/mask/READ/RSCcount remain UNKNOWN, notzero. All
+  workers ENDED/allchildren STOP; ONLYWi-Fi, scan/join/data still NOT DONE.
+- NewdefaultOFF --wifi-cpu-ro-admission implements an independent resident
+  normal-IRQ capture before ANYprivateclient or Clock allocation/finalGCD.
+  It excludes NPA/RPMh inventory/private/staged/READ flags. A newspentonceRO
+  ticket opens once, original200ms notreset/rebased; finalticket stays
+  unopened/unchanged. Literalnativeflag &wln_cpu_on_issued has16raw zero
+  checks. Sevenfixedtargets100..700 use the exact originalshared
+  pwrpc_actual_affinity (functionIDc4000004/level0), extracted byte-for-byte
+  into uefi-wifi-psci-affinity.h. Own0114DT PSCI1.0/SMC/targets match STATICALLY.
+- Seven496Bcallrecords and fourteen384B immediate fullCore5hash/source guards
+  retain ALL raw64 values including ON/OFF/PENDING/unsupported/other; only
+  fullyreturned/FPsavedrestored/arch/TPL4/sourceverified calls classify.
+  Unissued0 is UNOBSERVED, notON. Two guardedGetMap/fullsource/config/owner/
+  lock/map closure and unchanged finalticket required before ROretired.
+  No privateCreate/Delete/criticalmask/TCS/READ/vote/MSS/NVserve route in the
+  CPURO phase, even allOFF. It is a diagnostic, never a currenthardwarelease.
+  SMC can nonreturn; physical walltime bound notproved, not rescued by timer.
+- Newparent explicit pwcq_unsafe/Clock/prestart/new_original_unknown/native/
+  PON/receipt gates; logoverflow blocks before phase and after rawreport.
+  UNKNOWN retains raw then existinglocalmask/nonreturnWFE, noConsole/UsbFn/
+  Stall/ACK/reset/cleanup. New39344B CPU_RO_ADMISSION_RAW_V1 label/1MiBFWlog/
+  sizeofactualbuffer snapshot fits with full Clock/I2C/GCD records, no old
+  ZERO_VOTE/client/READ success labels. DefaultOFF/QEMU physicalbody absent.
+- Finaldriver0169/wifi/CPU-RO-driver-ON-0002 SHA3040bead597e9809827bd9a4b78294ca958f542e9bcc0426474c2715af7f03da/
+  2094080B/63inputs UNWRAPPED/UNSENT. Earlier0001 before explicitoverflowgate
+  is obsolete/unwrapped.72newASAN/UBSAN CPURO cases pass, including semantic
+  rawstates/all7targets, source/FP/map/TPL/clock/nativeflag/callbackfail/
+  reentry/finalticket/flagbounds. Sharedhelper extraction affectedREADparent30
+  passed; unitdependencies unchanged after final main-onlyoverflowfix, reused.
+  Actualwholeparent COFF/MachO/allwarnings|maxframe1024/newscope/defaultOFF/
+  QEMUpp pass. Initialfixture erroneously TPL0/config inside expandedself;
+  fixture corrected to TPL4/configoutsideself without weakening source gates.
+- Finaltwo NEW SERIALwholeEFI-XNU models0002 each19checks/63sameinputs PASS;
+  8resourceCPU+1battery literalint1, actualQEMUpp has noCPURO/SMC/private/
+  READ body orraw. Earlier0001 models preceded discoveredoverflowgate;
+  relatednewsource/models0002 used, no unrelatedold3007/13models/opticaltests.
+  parentproofa0d4fffa5a8a2d3bb08b7c9bf1e6a4171f1b9ade21775cd8ee864118c7f54466/
+  modelproof99316c1ce29fbcc45d912b13d80f300422f46ca32520ddea0f45382be4063659/
+  sourceproofe296d169ec484d8c03fcde3b65427cfd3c80d3083318b71a376fbe1730ea03b8.
+- NEXT NEW exacthostprofile for63inputs/CPUROmetadata/1MiB FW+6MiB+128 host,
+  affectedhostchecks/actualno-mockadmit; actualoldpolicy already refuses new
+  source/metadata. New host/admission/packagedimage/freeze/ONEhelper NOTREADY,
+  noUSBquery/send before ready. Nextrequiredcandidate transition mergeNEW
+  strictRO39 roots/maps/GPT/ESP/journalmetadata/currentNV due0168UNKNOWN; old
+  0168prebootaudit is historical, notvalid newqualification. Do not stockboot
+  prep/client/NPA/cache or replay consumed0168/editedoldcontroller. Then full
+  original81codec/sourceaudit/independentfreeze/uniqueONEhelper, actualcorrect
+  FASTBOOT+allnewadmission permits automaticONEnewRAM without reasking.
+  ActualnormalCPUraw remains uncaptured. This stage does not diagnose0168,
+  authorizecriticalREAD, vote, MSS/NVserve or Wi-Fi scan/join/data.
+
 ### CURRENT0168 startup ACK UNKNOWN; user physically recovered, actualPolarisFASTBOOT07:55; READ/vote/Wi-Fi NOT DONE
 
 - ONE0168 image87985 ENDED0 sent2026-11-01T07:51:52.502980+00:00/source60b325a52b4be78ae2160351dbacd24ef5b2d9f8/

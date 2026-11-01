@@ -12,6 +12,7 @@
 #define POLARIS_UEFI_AUDIO_CLOCK_GCD_QUERY_H
 #include "uefi-audio-i2c-cache.h"
 #include "uefi-gcd-mmio-readonly.h"
+#include "uefi-wifi-cpu-readonly.h"
 #include "../../tools/polaris-audio-clock-identity.h"
 #ifndef EFI_XNU_AUDIO_CLOCK_GCD_QUERY_AVAILABLE
 #define EFI_XNU_AUDIO_CLOCK_GCD_QUERY_AVAILABLE 0
@@ -146,7 +147,7 @@ struct pacgq_io {
     /* Architectural translation only; no register is dereferenced. Return1
      * after AT/PAR completed and preserve its raw fault/success PAR either way. */
     int (*translate_mmio)(void *,uint64_t,uint64_t *);
-#if EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE
+#if EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE || EFI_XNU_WIFI_CPU_RO_ADMISSION
     const volatile uint32_t *native_cpu_on;
 #endif
 };
@@ -329,6 +330,12 @@ static inline int pacgq_collect(const struct pacgq_io *io,const struct paic_resu
     r->gcd_context_address=(uintptr_t)gcd_context;
     if(!pacgq_i2c_admitted(i2c,stage)){pacgq_fail(r,PACGQ_I2C_CACHE,0);return 0;}
     if(!io||!io->memory.system||!io->memory.system->boot||!io->memory.arch||!io->memory.identity||!io->memory.order||!io->query||!io->translate_mmio){pacgq_fail(r,PACGQ_ARCH,0);return 0;}
+#if EFI_XNU_WIFI_CPU_RO_ADMISSION
+    const struct pwcq_io CPU_RO={0,pwrpc_actual_affinity};
+    if(!pwcq_run(&CPU_RO,gcd_context,stage,io->native_cpu_on,&pwcq_record)||pwcq_parent_unsafe()){
+        pacgq_fail(r,PACGQ_UNKNOWN,1);return 0;
+    }
+#endif
 #if EFI_XNU_WIFI_RPMH_CLIENT_AVAILABLE
     /* A distinct preparation ticket/context retires before Clock calls or
      * allocations. The final GCD ticket remains unopened and unmodified. */
@@ -492,7 +499,7 @@ static struct pacgq_result pacgq_preboot_record;
 static struct pacgq_work pacgq_preboot_work;
 #endif
 static inline void pacgq_collect_preboot(struct efi_system *system,uint32_t stage,void *gcd_context
-#if EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE
+#if EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE || EFI_XNU_WIFI_CPU_RO_ADMISSION
     ,const volatile uint32_t *native_cpu_on
 #endif
     )
@@ -504,7 +511,7 @@ static inline void pacgq_collect_preboot(struct efi_system *system,uint32_t stag
     const struct paic_io io={system,0,paic_actual_arch,paic_actual_identity,paic_actual_order};
     (void)paic_collect(&io,stage,&pacgq_preboot_i2c,&pacgq_preboot_i2c_work);
     const struct pacgq_io clock={io,pacgq_actual_query,pacgq_actual_mmio_translation
-#if EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE
+#if EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE || EFI_XNU_WIFI_CPU_RO_ADMISSION
         ,native_cpu_on
 #endif
     };
@@ -544,6 +551,11 @@ static inline void pacgq_report_preboot(void (*ram_append)(const char *))
     pwrcl_report(ram_append);
 #endif
 #endif
+#if EFI_XNU_WIFI_CPU_RO_ADMISSION
+    ram_append("WIFI_CPU_RO_ADMISSION_RAW_V1_BEGIN\r\n");pacgq_ram_hex(ram_append,(const uint8_t*)&pwcq_record,sizeof(pwcq_record));
+    ram_append("\r\nWIFI_CPU_RO_ADMISSION_RAW_V1_END\r\n");
+    ram_append("WIFI_CPU_RO_SCOPE=INDEPENDENT_NORMAL_IRQ_SEVEN_AFFINITY_INFO64_FULL_SOURCE_MAP_RETIRE_NO_PRIVATE_NO_MASK_NO_TCS_NO_READ_NO_VOTE_NO_HARDWARE_GRANT\r\n");
+#endif
     pacgq_ram_number(ram_append,"AUDIO_I2C_CACHE_ERROR=",pacgq_preboot_i2c.error);
     pacgq_ram_number(ram_append,"AUDIO_I2C_CACHE_RAW_V1_BYTES=",sizeof(pacgq_preboot_i2c));
     ram_append("AUDIO_I2C_CACHE_RAW_V1_BEGIN\r\n");pacgq_ram_hex(ram_append,(const uint8_t*)&pacgq_preboot_i2c,sizeof(pacgq_preboot_i2c));
@@ -571,7 +583,7 @@ static inline int pacgq_prestart_safe(const void *gcd_context)
 #if !EFI_XNU_AUDIO_CLOCK_GCD_QUERY_AVAILABLE || defined(POLARIS_EFI_TEST_QEMU)
     (void)gcd_context;return 1;
 #else
-    return !pacgq_preboot_record.uncertain&&!pacgq_preboot_record.outstanding&&!pacgq_ticket.outstanding&&
+    return !pwcq_parent_unsafe()&&!pacgq_preboot_record.uncertain&&!pacgq_preboot_record.outstanding&&!pacgq_ticket.outstanding&&
 #if EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE
         !pwrpt_parent_unsafe()&&
 #endif

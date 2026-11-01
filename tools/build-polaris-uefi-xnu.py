@@ -454,6 +454,7 @@ def main():
     ap.add_argument('--wifi-power-cmddb-staged-ro',action='store_true',help='default-OFF four independent completed RO phases capture64KiB each before ANY private client; full two-pass namespaces/immediate source+AT guards and original200ms per ticket retained')
     ap.add_argument('--wifi-power-prepared-transaction',action='store_true',help='default-OFF distinct full staged RO then SAME current known-client/bounded RSC/completion/restore; new hardware/source admission still required')
     ap.add_argument('--wifi-power-current-arc-read',action='store_true',help='default-OFF same qualified private/CPU/Device interval: three bounded single-command READs and full restoration; RAW responses only, resource WRITE compiled unreachable in this scope')
+    ap.add_argument('--wifi-cpu-ro-admission',action='store_true',help='default-OFF independent normal-IRQ seven-peer AFFINITY_INFO64 raw capture and full source/map retirement; NO private client, mask, TCS or READ')
     a=ap.parse_args();r=Path(__file__).resolve().parents[1]
     if a.wifi_power_current_arc_read and not a.wifi_power_prepared_transaction:
         ap.error('current ARC READ requires the complete prepared/current private path')
@@ -508,6 +509,11 @@ def main():
     gcd_enabled=bool(a.original_gcd_query_pe or a.audio_clock_gcd_query)
     if gcd_enabled and (not a.original_gcd_query_pe or not a.audio_clock_gcd_query or not combined_resources):
         ap.error('NEW GCD/Clock requires both explicit flags and the complete original-resource/NC/I2C/Clock scope')
+    if a.wifi_cpu_ro_admission and (not gcd_enabled or a.wifi_npa_readonly_pe or a.wifi_rpmh_readonly_pe or
+        a.wifi_rpmh_private_client or a.wifi_power_transaction_pe or a.wifi_power_current_arc_read or
+        a.wifi_power_prepared_transaction or a.wifi_power_cmddb_capture_only or a.wifi_power_cmddb_bounded_gcd or
+        a.wifi_power_cmddb_staged_ro or a.wifi_power_cmddb_budget_admission or a.wifi_power_cmddb_first_node_stop):
+        ap.error('CPU RO qualification requires its independent GCD/Clock scope, never a private/READ/NPA/RPMh inventory scope')
     gcd_header=None;gcd_binding=None;gcd_pe_relative=None
     if gcd_enabled:
         try:
@@ -897,6 +903,7 @@ def main():
 #define EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE {int(a.wifi_power_prepared_transaction)}
 #define EFI_XNU_WIFI_ARC_READ_AVAILABLE {int(a.wifi_power_current_arc_read)}
 #define EFI_XNU_WIFI_ARC_READ_CAPTURE_ONLY 1
+#define EFI_XNU_WIFI_CPU_RO_ADMISSION {int(a.wifi_cpu_ro_admission)}
 #define EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE {int(cmddb_binding is not None)}
 #define EFI_XNU_AUDIO_CLOCK_GCD_QUERY_AVAILABLE {int(gcd_enabled)}
 #define EFI_XNU_AUDIO_CLOCK_QUERY_AVAILABLE {int(audio_clock_binding is not None)}
@@ -991,6 +998,8 @@ def main():
         inputs+=['shim/polaris/uefi-wifi-gcd-namespace.h','tools/polaris-wifi-gcd-namespace-identity.py']
     if cmddb_binding:inputs+=['shim/polaris/uefi-wifi-cmddb-budget.h','shim/polaris/uefi-wifi-cmddb-staged.h','shim/polaris/uefi-wifi-cmddb-prepared.h']
     if a.wifi_power_cmddb_staged_ro:inputs+=['shim/polaris/uefi-wifi-gcd-ro-owner.h']
+    if a.wifi_cpu_ro_admission:inputs+=['shim/polaris/uefi-wifi-cpu-readonly.h','shim/polaris/uefi-wifi-psci-affinity.h']
+    if cmddb_binding:inputs+=['shim/polaris/uefi-wifi-psci-affinity.h']
     if a.wifi_power_current_arc_read:inputs+=['shim/polaris/uefi-wifi-rsc-read-plan.h','tools/polaris-wifi-rsc-read.h']
     if rpmh_binding:
         inputs+=['shim/polaris/uefi-wifi-rpmh-readonly.h','tools/polaris-wifi-rpmh-identity.py',
@@ -1460,6 +1469,29 @@ def main():
             wifi_CPU0_power_current_ARC_CPU_refusal_requires_all_guard_returns_and_full_close=True,
             wifi_CPU0_power_current_ARC_CPU_refusal_never_masks_or_stores=True,
             wifi_CPU0_power_current_ARC_unsupported_or_unknown_CPU_state_quarantines=True)
+    if a.wifi_cpu_ro_admission:
+        manifest.update(wifi_CPU0_power_transaction=False,
+            wifi_CPU0_power_CPU_RO_admission=True,wifi_CPU0_power_CPU_RO_default_OFF=True,
+            wifi_CPU0_power_CPU_RO_execution_kind='INDEPENDENT_NORMAL_IRQ_SEVEN_AFFINITY_INFO64_CAPTURE_FULL_RETIRE_ONLY',
+            wifi_CPU0_power_CPU_RO_physical_body=not a.test_qemu,
+            wifi_CPU0_power_CPU_RO_physical_compiled_out=a.test_qemu,
+            wifi_CPU0_power_CPU_RO_raw_format='CPU_RO_ADMISSION_RAW_V1',wifi_CPU0_power_CPU_RO_raw_bytes=39344,
+            wifi_CPU0_power_CPU_RO_function_ID=0xc4000004,wifi_CPU0_power_CPU_RO_affinity_level=0,
+            wifi_CPU0_power_CPU_RO_targets=[0x100,0x200,0x300,0x400,0x500,0x600,0x700],
+            wifi_CPU0_power_CPU_RO_calls_max=7,wifi_CPU0_power_CPU_RO_original_GetMap_calls_max=2,
+            wifi_CPU0_power_CPU_RO_Core_checkpoints=16,wifi_CPU0_power_CPU_RO_hashes_per_checkpoint=5,
+            wifi_CPU0_power_CPU_RO_native_flag_reads_max=16,wifi_CPU0_power_CPU_RO_deadline_ticks=3840000,
+            wifi_CPU0_power_CPU_RO_final_ticket_never_opened_or_changed=True,
+            wifi_CPU0_power_CPU_RO_normal_IRQ_FP_arch_TPL_source_guards=True,
+            wifi_CPU0_power_CPU_RO_entire_raw_and_unknown_preserved=True,
+            wifi_CPU0_power_CPU_RO_all_states_raw_not_hardware_grant=True,
+            wifi_CPU0_power_CPU_RO_no_private_Create_Delete=True,wifi_CPU0_power_CPU_RO_no_mask_TCS_READ_or_vote=True,
+            wifi_CPU0_power_CPU_RO_nonreturning_SMC_walltime_bound_proven=False,
+            wifi_CPU0_power_CPU_RO_unknown_blocks_Clock_native_PON_receipt=True,
+            wifi_CPU0_power_CPU_RO_unknown_RAM_only_nonreturn_hold=True,
+            wifi_CPU0_power_CPU_RO_all_OFF_does_not_continue_private=True,
+            original_GCD_new_scope_RAM_log_capacity=1048576,
+            wifi_CPU0_resources_firmware_RAM_log_capacity=1048576)
     (out/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
     print(json.dumps({k:manifest[k] for k in ['artifact','sha256','bytes','QEMU_variant','device_execution_tested']}))
 
