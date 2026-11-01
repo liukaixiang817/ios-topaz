@@ -34,6 +34,46 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0174 OFFLINE FROZEN fixed-parent candidate complete; phone actual strictRO FASTBOOT12:26; access/Wi-Fi NOT DONE
+
+- FW e4b6f16dcebe528d8cf150fcc97691335089c3ad/HOST af07521b77e3272338790644f9b1e7b2d1856917
+  committed/pushed and independentlylsremote matched. Concreteparentcopyfix
+  preservesstrictmemorygate; newtwoASAN/UBSANrealouter-copycases+actualwhole
+  COFF/MachO|maxframe1024/literalbinding/noactualwriter/defaultOFF-QEMUpp pass.
+  Old309 executingPPidentical exceptunusedpreboot, checksproperlyreused.
+  TwoSERIAL19checknewmodels/90sameinputs passed, no unrelatednativeCI/tests.
+- Image6f083c3a8b86facb2dcec0f5da82a8a90dc877eed037cbe649d4edbf1db78d5c/
+  6027264B/drivercf3249a39d415ed4b693158fadd37677b70175e4dbd20d73b00577c7fc419749/
+  15924736B. Original81FW/SimpleInit/BootShim/DTB retained,unmodifiedEDK2
+  whole43406536B GetInfo/decode byteequal. GCD_CLOCK_0174 exact301PowerGCD+
+  94resource/90inputs/27oldenabled+DISABLED ASTunchanged/21hosttests+
+  actualnomockadmit. Sourcebugreproduced, actual0173solecauseNOTproven.
+- Independentfreeze /private/tmp/polaris-runtime-0174-frozen-0001 COPY866+
+  10COMMIT_ONLY/460committedsources/90inputs/nohardlinks, SHA
+  773e15f6c62a08aa67ac34f53589e743a0d53459cc004e26cb2794d510af3a0c,
+  defaultofflineONEhelperPASS. Helper0174/boot-fixed-memory-once-0001.py
+  directlybinds actualpersistenthuman same63cb authorization
+  research/polaris/immutable-native-payload-reuse-authorization-20261101.json
+  df995cae2d0989f029a79808b284657dc8b9c33d6302dd5524b2d15bf3c0db12.
+  No invented “userapproved0174once” record; don'taskagain. Eachneworiginal
+  sharedbootrecord once; no old0173replay/refreeze/policyedit/stripflags.
+- NecessaryNEW0174strictRO39 complete/normalumount/actualPolarisFASTBOOT
+  12:26:39.494192Z. review242b8b9d9d3d109c9b4196c71bf528c1b3b318941d3fda886a1b63400693c4db/
+  preflight9cf8f8162ceeb564ced19d284db00cfa3f833c63ab8772d6b1cdb3c879d14cc9.
+  two16GiB91515474/689a8cd1/maps142-182/marker/GPT/ESP102/journalmetadata/
+  currentNV3x8MiBbefore-local-after/FSC passed/four0600NVsame0172,norestore.
+  250sworkbudget/300swatchdog unchanged; wholejournalnotcaptured/noFShealth.
+  No intervaloutsidecontrolledFASTBOOT sinceaudit. AllworkersENDED/children
+  STOP/nopendingentityactionorpermission. Newimage/payloadnotyetsent.
+- NOWallnewcandidateadmissionpassed: proceedwithnewfrozenONEhelperfresh
+  actualproduct thenONEnewimage, frozen0174waitingpayloadstate, same63cb
+  payloadONCE usingEXACTnewcontroller/driver/image andORIGINALrepo0174/
+  phone-fixed-memory-runtime-0001/boot.json. Do notreuseoldcontroller/session.
+  ThenexportcompleteexistingobservationRAW beforeclaimingphysicalsuccess;
+  UNKNOWNACK: execENDED→solefrozenstate→soleexpected query, no blindretry/
+  cleanup/reset/rawfallback; actualcannotexitonlythenONCEphysicalrequest.
+  RealREAD/vote/MSS/NVserve/scan/join/data NOTDONE, sounds/cameraSTOP.
+
 ### CURRENT0174 actual strictRO FASTBOOT12:26; parent-copy fix verified OFFLINE; access/Wi-Fi NOT DONE
 
 - User again “请你参照小米8的实现Wi-Fi啊，已经1天了都没有实现”: realWiFi
