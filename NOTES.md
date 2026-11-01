@@ -34,6 +34,119 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0170 actual controlled FASTBOOT09:44; normal+masked seven-peer CPU and exact local restore/full RO retirement SUCCESS; Wi-Fi scan/join/data NOT DONE
+
+- NORMAL0170 exit89386 ENDED0 at2026-11-01T09:44:12.634775Z, nativecookie47181240865/
+  seq1/mode2/phase3/error0/epochs0/caps80000003. Fullappendraw/WLEXIT05/WLR5
+  independently redecoded final32records/error0/faultOR0rtOR1 onlyILIMbit0.
+  CPU50800B raw byte-identical in drainlog. Independentactualproductpolaris
+  09:44:25.515530Z/exit0. Phone now controlledFASTBOOT, NOTnativeLIVE; ACK alone
+  was not used as reset proof. No user approval or physicalrequest pending.
+  AllUSB/host/build/modelworkersENDED, childrenSTOP. ONLYWi-Fi; sound/cameraSTOP.
+- NEWphysicalCPU qualification COMPLETE: fresh SAME independent context normal7
+  and masked7 each MPIDR100..700 raw1OFF; maskDAIF0/G1on -> c0/off and exact
+  Group1on/DAIF0 restored, all typed writes/readbacks/FP/TPL4/CPU0/MMU/owner/
+  table/config/native47reads0/source160actualCorehashbytes valid.15masked
+  source checkpoints +postrestore source beforeoriginalGetMap; complete
+  maps2784B/stride48/key5897=5897/DS/config/lock unchanged. Resident spentonce
+  context finished/phase3/error0/unknown0/outstanding0/held0/restored1/retired1.
+  CompleteRAW_V1 50800B SHA7a6eeeef66510c80d538b1f292fe01c35045642114fedfa9a30695995bb9af17.
+  Independently typedCABI checks all MMU/register bytes and monotonic source/
+  call times. firstopen->lastlive50655.729167us NOT totalretirement. Initial
+  mapTPL UINT64_MAX isUNOBSERVED, finalmap4->4. No freshdeadline reset/rebase.
+  Independent finalClockGCD8getters/20actualCorehash/twoactualprestarts/error0/
+  key5898=5898 passed; Clock allocation is between closedCPU and unopenedfinal
+  contexts, notcrossphasekey equality. Fullraw same in laterUI/drain.
+- CPUproof0170/wifi/actual-CPU-masked-RO-0001/physical-masked-CPU-full-source-exact-restore-and-final-GCD-proof.json
+  SHA2bfddbab5dcb78ce5818e4ea9e64269b532c87a91ab81ff974ad126f83c0812a.
+  Do NOT repeat independentnormalCPU/maskedCPU/prep/client/NPA/cache inventory
+  boots. Success is THIS CPU-local interval only, NOT currentkernelCPUstate,
+  DRV2/EE/EL3/VMID/MPU grant, RSCREAD/vote or proof of0167/0168 failurecause.
+- Last actual UI09:43:37.571649Z current-ui-capture0003: seen7400wallpaper/
+  BatteryCharging overlay/homebar/leftblacksidebar. ActuallatestvalidFG3/SMB2
+  98%4287mVcharging0; invaliderror7/8 raw retained, icon notcharger sensor.
+  WLEDprefix26/error0/4issued=4completed/req2=ack2/module128/irq2/faultOR0rtOR1
+  raw preserved/no clearing. EarlyApplelogo is history, nofullrender/60Hz/AB/
+  opticalcycle claim. UTC0170 ONESET independentlyAPPLIED cookie46550742727/
+  seq1/status2/error0/count1/uncertainty2262us; NEVERSET0170again.
+- ONEnewimage9098 sent09:33:19.884288Z/image5ef8be4ac5fcc8a02bcd2e09507f5c8667e650d91def43913ceb91c482afa0e7/
+  5990400B; actualwaitingpayload09:33:46.429507Z. Auto-review twice rejected
+  old0145 storagepath of required63cb kernel BEFORE processcreation. User then
+  explicitlysaid “批准本次0170复用该内核一次”. ONEactualpayload85461 ENDED0
+  ACK09:37:17.402772Z/transfer32.957319500s/bootcall16.952373833s. No rename,
+  policyrelaxation or indirectworkaround. That approval applied ONLY0170once,
+  now consumed. Historical pending-pause section below is SUPERSEDED.
+- ORIGINAL0170/phone-CPU-masked-RO-runtime-0001/boot.json CONSUMED/sessionENDED;
+  noimage/payload/OEMboot/refreeze. Onlyused frozen0170 controller/driver/image
+  at/private/tmp/polaris-runtime-0170-frozen-0001 withORIGINALsharedrecord;
+  now cannot control new session. FreezeCOPY844+10COMMIT_ONLY/450sources/
+  64inputs SHA27d4be28cfd23320e87913f1bed787433357995d234a475e136ce3283cb36bda.
+  FWc95d2b302cf7b43d938082b0eb486675c007e05f/HOST24f73465b5fd3fbc798e27562d6384f445fc9650
+  pushed; exact107PowerGCD/94resource/64inputscope,252affectedASAN/UBSAN,
+  actualCOFF/MachO|maxframe1024/defaultOFF-QEMU,12hosttests/nomockadmit/twoSERIAL
+  new19checkterminalmodels/actualunmodifiedwhole29591240Bcodec/original81FW
+  allpassed. No nativechange/CI/download/ABI/performance tests.
+- Combinedactual/UI/normalexit proof
+  0170/wifi/actual-CPU-masked-RO-0001/physical-masked-CPU-current-UI-and-normal-exit-proof.json
+  SHAbb8b8c045d56effc1a583b6dde5fc879b9881f7f5021af8055f07885cf8cd270.
+  Exitreview43a0e43e8fb21a76bb317cb494390df9029cce84f22a33ae9c659c00012130e7.
+- FreshROOT/NV0169 strictRO39 -> controlled0169normalexit -> ONLY0170controlled
+  RO/RAMCOW +complete normalexit/actualFB: nextcandidate may reuse latest0169
+  qualification, no fullhash/recovery repeat. Unknown/Android/uncontrolled
+  intervals would requireNEWstrictRO at nextneededtransition. No userdatawrite.
+- NEXT0171 NOTREADY: CPU qualification nowphysicallyDONE; connect SAMEfresh
+  private/currentCmdDb namespace/fullcache/owner/DeviceNSR/WAT+actualCPUguard
+  interval to existing boundedthree single RSCREADs/completion/fulltouchedRW
+  restore/sourceCPU/namespace/knownDelete before unopenedfinalClockGCD. Audit
+  actual private workload against unchanged200ms; do not rebase/renewtickets,
+  treat priorOFF/retiredRO/raw384 as lease, fakecache/saved0/boolpermission or
+  restore UNKNOWN for USB. Preserve RAWresponse vs qualifiedARC perDRV saved
+  vote distinction. No more opaque fullboot based only on guess: use existing
+  source/lifetime components and provenCPU primitives. Only affectedchecks/
+  twoSERIALnewmodels/exactnewhostscope/originalcodec/freeze/ONEhelper after
+  sourcechange, no unchanged old3007/13models/nativeCI/opticalcycle.
+  Then realvote/completion/savedrestore + FOURWiFiVRM savedrestore BEFORE MSS
+  perpinnedMi8comparison, ownMSS/MSA/GLINK/RMTFS/WLFW/ath10k untilscan/join/data.
+  may_vote/MSS/NVserve/scan_join_data=false. No newcandidate ready, noUSBpolling.
+
+### HISTORICAL0170 approval pause (SUPERSEDED): actual waiting-payload09:33; payload NEVER STARTED, automatic approval refused twice / explicit user authorization pending; Wi-Fi NOT DONE
+
+- ONE0170 newimage9098 ENDED0 sent2026-11-01T09:33:19.884288+00:00, source24f73465b5fd3fbc798e27562d6384f445fc9650,
+  image5ef8be4ac5fcc8a02bcd2e09507f5c8667e650d91def43913ceb91c482afa0e7/
+  5990400B. Solefrozen actualstate ENDED0 at2026-11-01T09:33:46.429507+00:00:
+  polaris-uefi-diag/waiting-payload. Phone is NOTnativeLIVE or currentFASTBOOT.
+  ORIGINAL0170/phone-CPU-masked-RO-runtime-0001/boot.json image CONSUMED;
+  noimage/OEMboot replay/refreeze/oldcontroller. Payload has NOT been sent:
+  two auto-review rejections occurred BEFORE processcreation, resultdir absent.
+- Automaticreview treated frozen0145/physical-20F66-payload-0001.bin as old
+  consumedpayload. It remains the immutable63cb23956ff4b5a8d1981a52ae5a9beda4cea956b74686d54bff95f8e664ad96/
+  36459872B nativekernel explicitly required by NEW0170 exactmanifest; local
+  binding/newwaitingstate/unissuedcommand proof did not satisfy reviewer.
+  It required an explicit user exception. Async authorization requested ONCE
+  for this oneNEW0170 payload command. Await reply; DO NOT retry, rename/copy
+  to disguiseoldpath, changepolicy, rebuildkernel, or use indirectexecution.
+  No physicalkeys requested/needed; no newmaskedCPU/RSCraw has been exported.
+- ONLYcontroller /private/tmp/polaris-runtime-0170-frozen-0001/tools/polaris-uefi-wled-runtime.py
+  with frozen0170physical-runtime-driver0001/image0001 and ORIGINALrepo0170
+  sharedbootrecord. Old0169sessionENDED cannotcontrolthisimage. Approved
+  onepayload would use this same command, exact63cb and90sACK; execENDED first.
+  IfunknownACK, only matchingfrozenstate once thenindependentexpected once,
+  physicalrequestonlyifunsafeexit. No reset/cleanup/retry/rawfallback.
+- FWc95d2b302cf7b43d938082b0eb486675c007e05f/HOST24f73465b5fd3fbc798e27562d6384f445fc9650
+  bothpushed/independentlsremoteHEAD24f7346. 252affectedASAN/UBSAN cases,
+  actualparentCOFF/MachO|maxframe1024/defaultOFF-QEMUpp andtwoSERIAL19check
+  wholeEFI-XNU models passed; newexact107GCDPower+94resource/64inputpolicy,
+  12hosttests+actualnomockadmit; all23oldenabled literalAST untouched.
+  ActualunmodifiedEDK2whole29591240B decodeequal/original81FW preserved.
+  FreezeCOPY844+10COMMIT_ONLY/450currentcommittedsources/64inputs/nohardlinks,
+  SHA27d4be28cfd23320e87913f1bed787433357995d234a475e136ce3283cb36bda,
+  defaultofflineONEhelperPASS. No nativeCI/download/UTCSET/UI/opticaltest.
+- Physicalpauseproof0170/wifi/physical-image-waiting-payload-and-auto-review-pause-proof-0001.json
+  SHAff98b5a318b61cea36acf10949813f131075c7ec2d038178bdd1078af96df12a. PASS records state faithfully, notphysicalCPU/WiFi success.
+  Parentbodyremains no private/TCS/READ/vote/MSS/NVserve; may_vote/MSS/NVserve/
+  scan_join_data=false. ONLYWi-Fi, sound/cameraSTOP. AllworkersENDED/childSTOP.
+  Fresh0169strictRO+normaldrain remains latest qualification; no newROOTwrite.
+
 ### NEW0170 CPU-local masked path verified OFFLINE; phone remains actual controlled FASTBOOT0169/08:58
 
 - Default-OFF distinct masked CPU RO body now implemented and linked through
