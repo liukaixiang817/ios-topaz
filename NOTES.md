@@ -34,6 +34,84 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0164 native last actual05:24; real complete26-row RAM cache captured, ARC saved-vote PLAN safely refused; Wi-Fi grey/scan-join-data NOT DONE
+
+- User says Wi-Fi still cannot enable; correct and physically confirmed in
+  actual Settings/Wi-Fi screenshot05:24:37.182051Z: grey OFF switch/time4:24/
+  chargingicon. This is NOT networking success. ONLY Wi-Fi; sound/camera/
+  children STOP. FWf75534f97f77206c3a4c5e4edaaaae776f1e32da and HOST49aedc28560b
+  0554dd7da7172207db595a0d1079 pushed and independentremote matched. No new
+  native source/CI/download/performance or optical cycles.
+- ONE0164image sent05:16:56.455032Z/source49aedc2/image60c02e3d8553e464d59f5023
+  780d447a6eb778f70cf28ee4b54de524d32f57b0/6025216B. Actualwaitingpayload
+  05:17:06.484762Z -> ONE63cb payload20372 ENDED0 ACK05:18:10.520665Z,
+  transfer32.958642917s/bootcall17.438960792s. Originalrepo0164/phone-prepared-
+  power-runtime-0001/boot.json CONSUMED; NO replay image/payload/OEMboot/refreeze.
+- ONLY controller=/private/tmp/polaris-runtime-0164-frozen-0001/tools/polaris-
+  uefi-wled-runtime.py with SAME frozen0164 physical-runtime-driver-0001/
+  image-0001 plus ORIGINALrepo sharedconsumedbootrecord. Old0163/0161 or
+  editedcontroller cannot control this session. All USB/host/modelworkers
+  ENDED, no physical request pending. Current is kernel-entered/native,
+  NOT FASTBOOT. No further current-native inventory/polling is needed.
+- Corrected HAL binding passed on real phone: static/runtimecount1 versus
+  separatelogicalID2, uniqueinitializedDRV2/base179c0000/bank2/8TCS16cmd.
+  Complete RAM baseline117392B now succeeded:26sorted24Bcache rows,26x72B
+  DRV2states=1872B,5activeclients,4emptyqueueheaders each, one retired FREE
+  driver object, five driverqueues(onlyFREE count1), mode active mask15,
+  eight24B TCSRAM=192B. This is ONE complete RAM capture, not two-pass cache
+  stability/currenthardwareTCSidle/EE-EL3/VMID/MPU or rail evidence.
+- Actual cache contains40900..4240c and50000..500a8 resource rows; NONE for
+  currentDB ARC CX30000/MX30010/MSS30060. Therefore existing pwrpb_plan
+  correctly returned0 without publishing any saved/requested values.
+  Bodyerror4 PLAN/unknown0/knownrefusal1/retired1, clienterror0/unknown0/
+  held0/returned1/originalAPI2issued=2returned. Do NOT set missing ARC to0,
+  inject rows, vote top or relax planner/200ms/UNKNOWN. No Device getter/
+  physicalAT/PSCI/criticalmask/RSC write occurred; entire related recordsZERO.
+- Completepreparation1660544B SHAca0b644c21c2cf4da26a6d08bd30c29afbbc19fecd35cfce7c777218abc1eb47,
+  client227104B SHAca29bc6b3fa7d0e375c05076ab444121d7ae48f14247996cfcf00915315e46f9,
+  fullpower1892336B SHA89126bc112425ca826dac2900902d64a76002b19313cfb97a3c49fabfa878647.
+  All raw latercapture byte-for-byte same. Frozen C typedef decoder reused,
+  no new wire parser. Four independently retired complete RO phases plus
+  SAMEcurrent113x2namespace/3selectedpasses/source closure, knownCreate/
+  Delete and fullpool retirement verified. FinalGCD8getters/20Coreactual
+  digestbytes/twoactualprestarts/error0/key5899=5899 pass. Physicalcombined
+  proof8c9fd16658166ecfd7e5536f52fb2dc2e27d89fb80c3ffed5bbd9be3740c53bb
+  at0164/wifi/actual-prepared-power-0001/physical-cache-refusal-and-current-UI-proof.json.
+- Latest WLEDprefix26/error0/4issued=4completed/req2=ack2/module128/irq2/
+  faultOR1rtOR1 only allowedILIMbit0; ALLraw retained/no clear. Earlierlogo/
+  prefix2 was early sample, superseded by actualSettingsUI. Battery latest
+  valid97%/4278mV/charging0; icon not rawchargerstate, invalidraw retained.
+  UTC0164 ONESET independently APPLIEDcookie13535705487/seq1/status2/error0/
+  count1/uncertainty2261us; NEVER SET0164 again. Sidebar/tinyresidual remains;
+  no fullrender/60Hz/PCM/frame claim, current screen is Wi-Fi Settings.
+- Freeze0164 COPY838+10COMMIT_ONLY/427committedsources/86inputs, nohardlinks,
+  acd7558af957ee815c4730c5e5c12dd9693b0db002dd9061198ddd462884e8de;
+  defaultofflineONEhelper passed BEFORE consumedboot. Original81FW/
+  SimpleInit/BootShim/DTB and unmodifiedEDK2whole43350728B decode preserved.
+- NEXT must obtain a real restorable ARC baseline in the SAME qualified
+  APPSDRV2 interval, not rerun cache/prep/client-only/inventory boot. Current
+  generic upstream RSC READ uses response-request with WRITEbit clear and
+  returns CMD_RESP_DATA; that STATIC generic code is NOT own ARC per-voter
+  semantics/READ erratum/permission evidence. Original PE contains NO FREE
+  AMCS and PDC READ LIMIT WORKAROUND log strings; precise reachable read
+  path/limit still need audit, do not infer implementation from strings alone.
+  Pinned primary reference7acf90feab8b009fde7def08ff2c622d0f10e99f/drivers/soc/
+  qcom/rpmh-rsc.c (blobf881af35ecfc51d4dbcc7d2d3c32eea854210d5e), not run/copied.
+  Source-bound finite single-outstanding READ/completion/fullRWrestore can
+  extend existing engine+checkedaccess; keep append-only read evidence and
+  all currentRAM/Device/CPU0+7peer/fullDB/source/200ms/UNKNOWN qualification.
+  No fake cache/saved0/leasebool/original blockingSubmit/RETlock or rawfallback.
+  Only after actual response semantics+same interval qualification may plan
+  max(saved,index) and reverse savedrestore; keep physicalparent UNKNOWN gate,
+  sufficient raw/log capacity, newdefaultOFF/source/profile/freeze/models.
+  Then ownMSS/SMEM/GLINK/RMTFS and true scan/join/data; audio/camera remainSTOP.
+- Before ANY nextimage only frozen0164 normal VFS/GPU/CPUdrain +completefresh
+  appendraw/WLEXIT05/WLR5 receipt, then independent actualexpectedFASTBOOT.
+  ACK is not reset. UnknownACK corresponding actualstate ONCE then expected
+  productONCE after ENDED, no blindretry/reset/cleanup; keys only if necessary.
+  Fresh0160ROOT/NV reusable while this controlledRO/RAMCOW normally exits;
+  no fullhash/recovery now. No candidate0165 ready, no native CI or oldtest rerun.
+
 ### CURRENT0163 actual controlled FASTBOOT05:06; NEW0164 HAL count/ID fix full candidate verified OFFLINE, freeze/physical attempt NEXT
 
 - FWf75534f97f77206c3a4c5e4edaaaae776f1e32da pushed and independent remote
