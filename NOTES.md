@@ -34,12 +34,13 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0158 actual FASTBOOT02:14 after NEW0157 startup UNKNOWN; NEW FIRST RAW NODE planned-stop parent verified OFFLINE, two models + NEW exact host scope PASS; freshRO/image NOT READY
+### CURRENT0158 actual FASTBOOT02:27; FIRST RAW NODE image + freshRO ready, independent freeze pending
 
-- Human fulfilled the NEW0157 recovery request. Independent exact product at
-  2026-11-01T02:14:30.101621Z returned product:polaris/exit0. No pending physical
-  request. Current lastactualFASTBOOT, not nativeLIVE. No new boot/reset/UTC/
-  recovery after this query. AllUSB/host/model workers ENDED, allchildren STOP.
+- Human fulfilled the NEW0157 recovery request, independently confirmed actual
+  Polaris FASTBOOT02:14. No pending physical request. The next already-required
+  ONE0120 strictRO audit46426 ENDED0 now completed, actualumount then actual
+  FASTBOOT2026-11-01T02:27:40.590886Z. No0158 diagnostic image/payload/UTC sent
+  yet and not nativeLIVE. AllUSB/host/model workers ENDED, allchildren STOP.
 - NEW0157 was ONE image73279 ENDED0 sent02:10:15.754047Z sourced9b9c345/image
   ef36de984cddd3741ebfdbb486e7235f0bcefddbb5fd4d76edc3f0118eb43afb/5998592B.
   Actualwaiting-payload02:10:28.852290Z preceded ONE63cbpayload48188 ENDED1:
@@ -102,16 +103,23 @@ early samples only. On0029 the human already confirmed boot complete and said
   unchanged. Actual no-mock exact scope/newmodel matches passed, absent NEW
   post-recovery root review still correctly refuses full admit. Hostproof
   0158/wifi/first-node-new-host-scope-proof-0001.json SHA23019c808a7da25473472
-  ce8c8004155107791a6e9a9d908a04e7fb4a480ee68; host edits pending commit.
-  NEW image/freeze/helper and post-recovery strictRO audit remain absent:
-  candidate NOT READY.
+  ce8c8004155107791a6e9a9d908a04e7fb4a480ee68; HOST49b6059 committed/pushed.
+  NEW fresh0158 post-recovery fullRO now39checks passed: complete16GiB roots
+  91515474/689a8cd1, maps142/182, markerraw+8MiBpattern,6GPT/critical/ESP102/
+  journalmetadata/current3NV+FSC. Both rootSHA56.648/56.686s. Review6a3ef085640
+  54f9c94f70a38742e7b348b7e6d6efa55338691b1cf58f9ff7556/preflightd5989b73b63
+  f796d77b6b287fc7a398a3d026dc42264de0a6c84f6d4e99d8b83 now authoritative
+  within controlledRO/RAMCOW. NVbefore/local/after unchanged and match0157;
+  private0600 bytes, no storage/NV write. Wholejournal512MiB still not captured.
+  Actual no-mock fullhostadmit25014abb passed with these NEW reviews.
+  NEWimagef3b09e49a4673704aafe82e942742cbe9d160dae52f331e8d39361f333f44305
+  /5996544B retains original81/SimpleInit/BootShim/DTB. OriginalunmodifiedEDK2
+  GetInfo+whole39289032B decode matched. Independent sourcefreeze/ONEhelper
+  still pending; no diagnostic send until complete.
   No repeated old models/CI/inventory/client-only boot and no weakened bool
-  lease/time/reset/fallback. New0158 diagnostic candidate is NOT READY. This
-  latest physical recovery creates another uncontrolled interval: merge NEW
-  complete strictRO roots/maps/marker/GPT/ESP/journal/currentNV into the next
-  already-required transition, not an immediate inventory recovery. Fresh0157
-  reviewa830b4e3/preflight3d139252 was before this failure/recovery, not current
-  standalone authority. may_write_userdata=false, may_start_MSS=false,
+  lease/time/reset/fallback. New0158 diagnostic candidate is NOT READY. The
+  post-recovery NEWfullRO transition has now been completed above. Prior0157
+  reviewa830b4e3/preflight3d139252 remains historical, use fresh0158 qualification. may_write_userdata=false, may_start_MSS=false,
   may_serve_NV_to_remote=false, scan_join_data=false. Sound/camera STOP.
 
 ### HISTORY0157 bounded diagnostic was ready and consumed; no native ACK
