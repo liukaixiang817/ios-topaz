@@ -300,6 +300,25 @@ static void terminal_gop_evidence(void)
     }
     /* Numeric resident observations, never an inference from an unused zero.
      * The attempted/issued masks beside the errors distinguish UNOBSERVED. */
+#if EFI_XNU_WIFI_CPU_LIVE_DIAGNOSTICS
+    const struct pwrpc_live_diagnostic*d=&pwrpt_record.CPU.live_failure;
+    pwtg_line(r,0,"V2 HOLD",pwrpt_record.attempted,pwrpt_record.phase);
+    pwtg_line(r,1,"BODY CPU",pwrpt_record.error,pwrpt_record.CPU.error);
+    pwtg_line(r,2,"WHY CALL",d->reason,d->call);
+    pwtg_line(r,3,"MASK ARCH OK",d->masked,d->arch_callback_ok);
+    pwtg_line(r,4,"OPEN HI LO",(uint32_t)(d->opening_ticks>>32),(uint32_t)d->opening_ticks);
+    pwtg_line(r,5,"NORM HI LO",(uint32_t)(d->normal_ticks>>32),(uint32_t)d->normal_ticks);
+    pwtg_line(r,6,"FAIL HI LO",(uint32_t)(d->failed_ticks>>32),(uint32_t)d->failed_ticks);
+    pwtg_line(r,7,"LIMIT TICKS",0,PGCD_FRESH_TICKS);
+    pwtg_line(r,8,"ACC A E",pwrpt_record.access.attempted,pwrpt_record.access.error);
+    pwtg_line(r,9,"ACC U OUT",pwrpt_record.access.unknown,pwrpt_record.access.outstanding);
+    pwtg_line(r,10,"DB0 A BYTES",pwrpt_record.access.CmdDb[0].attempted,pwrpt_record.access.CmdDb[0].bytes);
+    pwtg_line(r,11,"DB1 A BYTES",pwrpt_record.access.CmdDb[1].attempted,pwrpt_record.access.CmdDb[1].bytes);
+    pwtg_line(r,12,"DB0 H FAIL",pwrpt_record.access.CmdDb[0].hash_count,pwrpt_record.access.CmdDb[0].hash_failed);
+    pwtg_line(r,13,"DB1 H FAIL",pwrpt_record.access.CmdDb[1].hash_count,pwrpt_record.access.CmdDb[1].hash_failed);
+    pwtg_line(r,14,"CPU H R",pwrpt_record.CPU.local_mask_held,pwrpt_record.CPU.local_restored);
+    pwtg_line(r,15,"NOT WIFI",pwrpt_record.read.io.attempted,pwrpt_record.transaction.attempted);
+#else
     pwtg_line(r,0,"V1 HOLD",pwrpt_record.attempted,pwrpt_record.phase);
     pwtg_line(r,1,"BODY E U",pwrpt_record.error,pwrpt_record.unknown);
     pwtg_line(r,2,"CLIENT E OUT",pwrcl_record.error,pwrcl_record.outstanding);
@@ -323,6 +342,7 @@ static void terminal_gop_evidence(void)
     pwtg_line(r,13,"CORE E PH",pwrcl_record.core.error,pwrcl_record.core.phase);
     pwtg_line(r,14,"GOP A MAP U",r->armed,terminal_gop.uncertain);
     pwtg_line(r,15,"NOT WIFI",pwrpt_record.read.io.attempted,pwrpt_record.transaction.attempted);
+#endif
     (void)pwtg_draw(r);terminal_gop_raw();
 }
 #endif
@@ -381,7 +401,11 @@ _Static_assert(sizeof(log_buffer)>=2*(PWCQ_RAW_BYTES+sizeof(pacgq_preboot_record
 #if EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
 #if EFI_XNU_WIFI_ARC_READ_AVAILABLE
 #if EFI_XNU_WIFI_PRE_MASK_ARGUMENTS
+#if EFI_XNU_WIFI_CPU_LIVE_DIAGNOSTICS
+_Static_assert(sizeof(struct pwrpt_result)==1969104,"complete original body plus live failure raw ABI");
+#else
 _Static_assert(sizeof(struct pwrpt_result)==1969056,"complete normal pre-mask argument body raw ABI");
+#endif
 _Static_assert(sizeof(struct pwrpa_result)==25216,"complete argument and page prefix raw ABI");
 #elif EFI_XNU_WIFI_ARC_READ_WORK_ADMISSION
 _Static_assert(sizeof(struct pwrpt_result)==1943840,"complete current ARC READ/work body raw ABI");
@@ -401,7 +425,11 @@ _Static_assert(sizeof(struct pwrpt_result)==1235200,"complete power raw ABI");
 #if !EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
 _Static_assert(sizeof(struct pwra_result)==399240,"complete checked access raw ABI");
 #endif
+#if EFI_XNU_WIFI_CPU_LIVE_DIAGNOSTICS
+_Static_assert(sizeof(struct pwrpc_result)==10096,"complete CPU-local plus first live failure raw ABI");
+#else
 _Static_assert(sizeof(struct pwrpc_result)==10048,"complete CPU-local raw ABI");
+#endif
 /* Includes both complete client/path records, NPA/RPMh, current Clock/I2C/GCD
  * records and 1MiB for earlier firmware evidence/labels. Native 4MiB ring is
  * stored separately in the already sizeof(log_buffer)-based snapshot. */

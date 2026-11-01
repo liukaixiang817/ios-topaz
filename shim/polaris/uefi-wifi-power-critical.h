@@ -6,6 +6,12 @@
  * Default OFF; the new parent scope requires an independent host policy. */
 #ifndef POLARIS_UEFI_WIFI_POWER_CRITICAL_H
 #define POLARIS_UEFI_WIFI_POWER_CRITICAL_H
+#ifndef EFI_XNU_WIFI_CPU_LIVE_DIAGNOSTICS
+#define EFI_XNU_WIFI_CPU_LIVE_DIAGNOSTICS 0
+#endif
+#if EFI_XNU_WIFI_CPU_LIVE_DIAGNOSTICS
+#include "uefi-wifi-cpu-live-diagnostics.h"
+#endif
 #if EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE && !defined(POLARIS_EFI_TEST_QEMU)
 #include "uefi-wifi-rsc-baseline.h"
 #include "uefi-wifi-psci-affinity.h"
@@ -41,6 +47,9 @@ struct pwrpc_result {
     uint32_t masked_issued,masked_returned,masked_unknown,local_quiescent;
     struct pwrpc_masked_psci masked_psci[7];
     struct pwrpc_source masked_source;struct pwrpc_context masked_source_context;
+#if EFI_XNU_WIFI_CPU_LIVE_DIAGNOSTICS
+    struct pwrpc_live_diagnostic live_failure;
+#endif
 };
 struct pwrpc_io {
     void *context;
@@ -61,12 +70,52 @@ static inline int pwrpc_live(struct pgcd_context *g,struct pwrpc_result *r,unsig
         return pwrpc_fail(r,PWRPC_SOURCE,r->local_mask_held!=0);
     if(r->error||r->unknown)return 0;
     struct pwrpc_context *sample=&r->last_context;*sample=(struct pwrpc_context){0};r->live_calls++;
+#if EFI_XNU_WIFI_CPU_LIVE_DIAGNOSTICS
+    if(!g->io.arch(g->io.opaque,&sample->arch)){
+        (void)pwrpc_live_capture(&r->live_failure,PWRPC_LIVE_ARCH_CALLBACK,r->live_calls,masked,
+            g->record->before.cpu.ticks,r->normal.cpu.ticks,0,0);
+        return pwrpc_fail(r,PWRPC_ARCH,r->local_mask_held!=0);
+    }
+#else
     if(!g->io.arch(g->io.opaque,&sample->arch))return pwrpc_fail(r,PWRPC_ARCH,r->local_mask_held!=0);
+#endif
     *a=sample->arch;
     if(!pgcd_owned(g,0,g->record->core+0x1b098,8))return pwrpc_fail(r,PWRPC_SOURCE,r->local_mask_held!=0);
     sample->TPL=pwfi_le((const void*)(uintptr_t)(g->record->core+0x1b098),8);
     sample->boot=(uintptr_t)g->io.system->boot;sample->tables=(uintptr_t)g->io.system->tables;sample->count=g->io.system->table_count;
     const struct pgcd_arch *n=&r->normal;const struct pwfc_arch *x=&a->cpu,*v=&n->cpu;
+#if EFI_XNU_WIFI_CPU_LIVE_DIAGNOSTICS
+    /* Preserve the exact original short-circuit order and single evaluation.
+     * In particular DS/owner readers are not called after an earlier failure.
+     * Capture the already returned sample, not a terminal-time observation. */
+#define PWRPC_LIVE_BAD(test,why) ((test)?pwrpc_live_capture(&r->live_failure,(why),r->live_calls,masked,g->record->before.cpu.ticks,v->ticks,x->ticks,1):0)
+    if(PWRPC_LIVE_BAD(x->el!=4,PWRPC_LIVE_EL)||
+       PWRPC_LIVE_BAD(x->mpidr&0xffffff,PWRPC_LIVE_MPIDR_LOCAL)||
+       PWRPC_LIVE_BAD(x->frequency!=19200000,PWRPC_LIVE_FREQUENCY)||
+       PWRPC_LIVE_BAD(x->el!=v->el,PWRPC_LIVE_EL_CHANGED)||
+       PWRPC_LIVE_BAD(x->mpidr!=v->mpidr,PWRPC_LIVE_MPIDR_CHANGED)||
+       PWRPC_LIVE_BAD(x->ttbr0!=v->ttbr0,PWRPC_LIVE_TTBR0)||
+       PWRPC_LIVE_BAD(x->ttbr1!=v->ttbr1,PWRPC_LIVE_TTBR1)||
+       PWRPC_LIVE_BAD(x->tcr!=v->tcr,PWRPC_LIVE_TCR)||
+       PWRPC_LIVE_BAD(x->sctlr!=v->sctlr,PWRPC_LIVE_SCTLR)||
+       PWRPC_LIVE_BAD(x->mair!=v->mair,PWRPC_LIVE_MAIR)||
+       PWRPC_LIVE_BAD(x->sre!=v->sre,PWRPC_LIVE_SRE)||
+       PWRPC_LIVE_BAD(x->daif!=(masked?0xc0:0),PWRPC_LIVE_DAIF)||
+       PWRPC_LIVE_BAD(x->group1!=(masked?0:1),PWRPC_LIVE_GROUP1)||
+       PWRPC_LIVE_BAD(a->cpacr!=n->cpacr,PWRPC_LIVE_CPACR)||
+       PWRPC_LIVE_BAD(x->ticks<v->ticks,PWRPC_LIVE_BEFORE_NORMAL)||
+       PWRPC_LIVE_BAD(x->ticks-v->ticks>PGCD_FRESH_TICKS,PWRPC_LIVE_NORMAL_AGE)||
+       PWRPC_LIVE_BAD(x->ticks<g->record->before.cpu.ticks,PWRPC_LIVE_BEFORE_OPENING)||
+       PWRPC_LIVE_BAD(x->ticks-g->record->before.cpu.ticks>PGCD_FRESH_TICKS,PWRPC_LIVE_OPENING_AGE)||
+       PWRPC_LIVE_BAD(sample->TPL!=g->record->TPL_initial,PWRPC_LIVE_TPL)||
+       PWRPC_LIVE_BAD(sample->boot!=g->record->core+0x1b800,PWRPC_LIVE_BOOT)||
+       PWRPC_LIVE_BAD(sample->tables!=g->record->config_pointer,PWRPC_LIVE_TABLES)||
+       PWRPC_LIVE_BAD(sample->count!=g->record->config_count,PWRPC_LIVE_TABLE_COUNT)||
+       PWRPC_LIVE_BAD(!pgcd_equal(g->record->DS_raw[0],(const void*)(uintptr_t)g->record->DS,168),PWRPC_LIVE_DS)||
+       PWRPC_LIVE_BAD(!pgcd_cached_owner_stable(g),PWRPC_LIVE_OWNER))
+        return pwrpc_fail(r,PWRPC_ARCH,r->local_mask_held!=0);
+#undef PWRPC_LIVE_BAD
+#else
     if(x->el!=4||(x->mpidr&0xffffff)||x->frequency!=19200000||x->el!=v->el||x->mpidr!=v->mpidr||
        x->ttbr0!=v->ttbr0||x->ttbr1!=v->ttbr1||x->tcr!=v->tcr||x->sctlr!=v->sctlr||x->mair!=v->mair||
        x->sre!=v->sre||x->daif!=(masked?0xc0:0)||x->group1!=(masked?0:1)||a->cpacr!=n->cpacr||
@@ -75,6 +124,7 @@ static inline int pwrpc_live(struct pgcd_context *g,struct pwrpc_result *r,unsig
        sample->boot!=g->record->core+0x1b800||sample->tables!=g->record->config_pointer||sample->count!=g->record->config_count||
        !pgcd_equal(g->record->DS_raw[0],(const void*)(uintptr_t)g->record->DS,168)||!pgcd_cached_owner_stable(g))
         return pwrpc_fail(r,PWRPC_ARCH,r->local_mask_held!=0);
+#endif
     sample->complete=1;r->live_valid++;return 1;
 }
 static inline int pwrpc_cpu_flag(const struct paic_io *memory,struct pwrcl_result *p,

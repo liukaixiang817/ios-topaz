@@ -115,7 +115,10 @@ static int run_critical(unsigned which)
     if(which==24)critical->masked_psci[0].complete=0;
     return pwrpc_end(&cpu_io,&memory,provider,rw,c,tx,during,post,critical);
 }
-int main(int argc,char **argv)
+#ifndef PWRPC_CRITICAL_TEST_MAIN
+#define PWRPC_CRITICAL_TEST_MAIN main
+#endif
+int PWRPC_CRITICAL_TEST_MAIN(int argc,char **argv)
 {
     assert(argc==4&&!posix_memalign((void**)&arena,4096,0x240000));
     original=malloc(PGCI_IMAGE_BYTES);npa_original=malloc(PWNPI_IMAGE_BYTES);rp_original=malloc(PWRPI_IMAGE_BYTES);assert(original&&npa_original&&rp_original);
