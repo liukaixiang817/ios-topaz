@@ -308,10 +308,17 @@ static void terminal_gop_evidence(void)
     pwtg_line(r,5,"CPU H R",pwrpt_record.CPU.local_mask_held,pwrpt_record.CPU.local_restored);
     pwtg_line(r,6,"ACC A E",pwrpt_record.access.attempted,pwrpt_record.access.error);
     pwtg_line(r,7,"ACC U OUT",pwrpt_record.access.unknown,pwrpt_record.access.outstanding);
+#if EFI_XNU_WIFI_PRE_MASK_ARGUMENTS
+    pwtg_line(r,8,"ARG A E",pwrpt_record.arguments.attempted,pwrpt_record.arguments.error);
+    pwtg_line(r,9,"ARG U OUT",pwrpt_record.arguments.unknown,pwrpt_record.arguments.outstanding);
+    pwtg_line(r,10,"ARG O P",pwrpt_record.arguments.objects,pwrpt_record.arguments.pages);
+    pwtg_line(r,11,"ARG FAIL",pwrpt_record.arguments.failed_object,pwrpt_record.arguments.failed_page);
+#else
     pwtg_line(r,8,"DB0 A BYTES",pwrpt_record.access.CmdDb[0].attempted,pwrpt_record.access.CmdDb[0].bytes);
     pwtg_line(r,9,"DB1 A BYTES",pwrpt_record.access.CmdDb[1].attempted,pwrpt_record.access.CmdDb[1].bytes);
     pwtg_line(r,10,"DB0 H FAIL",pwrpt_record.access.CmdDb[0].hash_count,pwrpt_record.access.CmdDb[0].hash_failed);
     pwtg_line(r,11,"DB1 H FAIL",pwrpt_record.access.CmdDb[1].hash_count,pwrpt_record.access.CmdDb[1].hash_failed);
+#endif
     pwtg_line(r,12,"ACC R W",pwrpt_record.access.reads,pwrpt_record.access.writes);
     pwtg_line(r,13,"CORE E PH",pwrcl_record.core.error,pwrcl_record.core.phase);
     pwtg_line(r,14,"GOP A MAP U",r->armed,terminal_gop.uncertain);
@@ -373,7 +380,10 @@ _Static_assert(sizeof(log_buffer)>=2*(PWCQ_RAW_BYTES+sizeof(pacgq_preboot_record
 #if EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE
 #if EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
 #if EFI_XNU_WIFI_ARC_READ_AVAILABLE
-#if EFI_XNU_WIFI_ARC_READ_WORK_ADMISSION
+#if EFI_XNU_WIFI_PRE_MASK_ARGUMENTS
+_Static_assert(sizeof(struct pwrpt_result)==1969056,"complete normal pre-mask argument body raw ABI");
+_Static_assert(sizeof(struct pwrpa_result)==25216,"complete argument and page prefix raw ABI");
+#elif EFI_XNU_WIFI_ARC_READ_WORK_ADMISSION
 _Static_assert(sizeof(struct pwrpt_result)==1943840,"complete current ARC READ/work body raw ABI");
 #else
 _Static_assert(sizeof(struct pwrpt_result)==1941984,"complete current ARC READ body raw ABI");

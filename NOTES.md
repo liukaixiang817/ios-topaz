@@ -34,6 +34,67 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0179 source/offline complete, physical NOT READY; phone last actual FASTBOOT17:39; 0178 numbers seen, error values UNKNOWN; Wi-Fi NOT DONE
+
+- Human answered the visibility question exactly“看到了数字，但没有记录”. This
+  establishes reportednumericvisibility for0178, NOTfullrendercompletion,
+  actualerrorvalues/predicate/CPU_ON/mask/DB/RSCcounts orWi-Fi success. Question
+  closed; no moreprompt/keysneeded. Original0178startupACKremainsUNKNOWN,
+  consumed/no replay; recoveryactualPolarisFB17:39:35.247057Z remainslatest
+  deviceobservation, NOTnativeLIVE. AllworkersENDED/allchildrenSTOP, onlyWi-Fi.
+  Humanfact0178/wifi/human-numeric-diagnostic-visibility-0001.json
+  SHA5975a8ccc55fe1f7d4a065ec71d5d953bbaf8de23168e47efba6cffe41d27106.
+- NEWdefaultOFF --wifi-power-pre-mask-arguments isimplemented, requiresfull
+  currentDBcheckpointdependencies butstops BEFORECPU/maskedDB/access/engines.
+  Newpurpose iscurrentprospectiveobjectmapping AFTERoriginalcurrentnamespace/
+  selectedCmdDb/normalcache/normalDevice/workadmission foreigncalls; theearlier
+  fullparentcheckpredates them. Tenactualtypedobjects/currentnormalBSCode-or-
+  BSData/self/disjoint/NSWBsamePA AT+PARrestore observed, cap512pages. No CPU
+  callbacks wired; CPU/access/read/write/context remainentirelyUNOBSERVED/zero.
+  NormalDevice70reads/3guardedoriginalqueries remain, nottotalMMIOzero.
+- Returnedunsupportednormalrange/map/translation onlydeclines andmuststill
+  fullyclosecurrentnamespace/selectedbytes/source/twoequalpools/exactknown
+  client+emptyqueues beforeknownDelete/USB. Evenadmitted stopsplannedreason16;
+  no boollease/fakeclientheld/laterREADpermission. Partial/PARrestore/source/
+  native/time/prefix/residual changesstayUNKNOWN; fullRAMappend/localDAIFall+
+  G1/optionalGOP/nonreturnWFEunchanged, noConsole/USB/Stall/reset/ACK/cleanup.
+  Outputrecordsarenotaddressauthority; localtypedinputs+completeprefix+zero
+  unusedtail checked. Original200ms/68slowest/READ50+25ms/IRQ/restore unchanged.
+- FinaldriverON0005 SHA21dd6660c528760dd077dd95e3f32acc0273b25422a42a98b6413c4e308d5d06/16064512B/93inputs.
+  FullparentRAW1969056B/newargument25216B, NEWdistinctPRE_MASK_ARGUMENT_RAW_V1,
+  allpreparation/client/otherrecords preserved, 10MiBFW/14MiB+128host/asserted
+  actualsnapshotsize. Actualcompilerdependency64repoheaders/sources+9generated
+  headers reviewed; newargumentheaderANDpreviousunboundinactiveCPUROheader
+  explicitlybound. No CPURO/MSS/radioenabled. 0001compilefailure/0002missing
+  dependency/0003pre-prefix-hardening/0004predependencycompletion arehistorical
+  only, NOTphysicalcandidates. Noimage/payload/USBsentfor0179.
+- Final201ASAN/UBSAN (checks0004) useactualouterreader-copy/privatecaller,
+  all306SOFTWAREnormalpages, 19objectboundaryfaulttargets, partial/fullreturned
+  unsupported/source/time/residual/prefix/argumentfailures. CPU/SMC/mask/engine
+  absentinphase. 478oldcases actualexecutingnonblankPPunchanged/NOTrerun.
+  OFFwholeEFIbyteequalactual0178. ActualwholemainCOFF/MachO/generalregs|maxframe
+  1024/fullcapacity/defaultOFF/QEMUpp/noCPUcallbackoractualaccessIOsymbols pass.
+  Initialoverwideeverypagefullfixture run wasINTERRUPTED130/notpass andexact
+  workerterminationverified; bounded201case finalrun14.514518834010232s passed.
+- FinaltwoSERIALnewwholeEFI-XNU models0003 each19checks/93sameinputs/
+  11resource+1battery literalint1/actualQEMUppnonewphysicalbodyrecords passed,
+  seconds38.71918524999637/39.34500879200641. Earliermodels0001/0002retained,
+  supersededbyfinal93-inputruns; notusedforcandidate. SoftwarePMIC/delay/
+  RAMUSB/ATpeers arenotphysical/guestreset/radio. No nativeCI/download/ABIchange.
+  Parentproof75a8703efb3ce1aa22da131499828f0a1581db633cd52fc5d722af9a3435391d,
+  modelproof96be9a592d79dcf64d0547f2efd787dcd4b5630232addaef106b24947a4df866,
+  sourceproof0179/wifi/pre-mask-arguments-source-and-offline-proof-0001.json
+  SHAf7a212ff6ba53f68be5eb2ec35a3d7e9cdf11c3003998598385944c5949946f9.
+- NEXT commit/pushFW thenNEWexacthostprofile (oldliteralsunchanged), affected
+  hostchecks+actualadmit/newimage/original81wholecodec/sourceaudit/independent
+  freeze/ONEhelper. Beforephysicalnewcandidateconvert mergeNEWfullstrictRO39
+  roots/maps/GPT/ESP/journal/currentNV; old0177qualificationhistoricalafter0178
+  UNKNOWNreset, neverreuseasfresh. No standaloneinventoryrecovery. ActualFB+
+  allnewgates allowsONEnewRAM/same63cb underbroadhumanpermissiondf995cae...
+  withoutaskingagain. CurrentlyNOTREADY; may_vote/MSS/NVserve/scan_join_data=false.
+  No old0178/77controller/session reuse, no manifest/policyedit/refreeze/replay.
+  Native20F66/wallpaper7400/timebattery/CPU-GPU/ca_vbl1/WLED/data allpreserved.
+
 ### CURRENT0178 startup ACK UNKNOWN; user physically recovered, actual Polaris FASTBOOT17:39; masked-DB/access/READ/Wi-Fi NOT DONE
 
 - User replied exactly“已到 FASTBOOT”, no diagnostictextsupplied. Independent

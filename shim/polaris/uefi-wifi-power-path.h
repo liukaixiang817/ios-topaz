@@ -14,6 +14,9 @@
 #ifndef EFI_XNU_WIFI_READ_ACCESS_CHECKPOINT
 #define EFI_XNU_WIFI_READ_ACCESS_CHECKPOINT 0
 #endif
+#ifndef EFI_XNU_WIFI_PRE_MASK_ARGUMENTS
+#define EFI_XNU_WIFI_PRE_MASK_ARGUMENTS 0
+#endif
 #include "uefi-wifi-rsc-access.h"
 #if EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE && !defined(POLARIS_EFI_TEST_QEMU)
 #if EFI_XNU_WIFI_ARC_READ_AVAILABLE && !EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
@@ -29,6 +32,12 @@
 #endif
 #if EFI_XNU_WIFI_READ_DB_CHECKPOINT && !EFI_XNU_WIFI_READ_ACCESS_CHECKPOINT
 #error Database checkpoint requires the complete same-private read observation dependencies
+#endif
+#if EFI_XNU_WIFI_PRE_MASK_ARGUMENTS
+#if !EFI_XNU_WIFI_READ_DB_CHECKPOINT
+#error Pre-mask arguments require the full current private database dependencies
+#endif
+#include "uefi-wifi-pre-mask-arguments.h"
 #endif
 #if EFI_XNU_WIFI_ARC_READ_WORK_ADMISSION
 #if !EFI_XNU_WIFI_ARC_READ_AVAILABLE || !EFI_XNU_WIFI_ARC_READ_CAPTURE_ONLY || !EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
@@ -74,8 +83,13 @@ struct pwrpt_result {
 #if EFI_XNU_WIFI_ARC_READ_WORK_ADMISSION
     struct pwrpt_work work;
 #endif
+#if EFI_XNU_WIFI_PRE_MASK_ARGUMENTS
+    struct pwrpa_result arguments;
+#endif
 };
-#if EFI_XNU_WIFI_ARC_READ_WORK_ADMISSION
+#if EFI_XNU_WIFI_PRE_MASK_ARGUMENTS
+_Static_assert(sizeof(struct pwrpt_result)==1943840+sizeof(struct pwrpa_result),"full pre-mask argument raw extent");
+#elif EFI_XNU_WIFI_ARC_READ_WORK_ADMISSION
 _Static_assert(sizeof(struct pwrpt_result)==1943840,"complete current ARC READ/work admission RAW V3");
 #elif EFI_XNU_WIFI_ARC_READ_AVAILABLE
 _Static_assert(sizeof(struct pwrpt_result)==1941984,"complete current ARC READ scope raw V1");
@@ -90,10 +104,16 @@ struct pwrpt_io {
 };
 enum pwrpt_error {PWRPT_OK,PWRPT_ARGUMENT,PWRPT_CMDDB,PWRPT_RAM,PWRPT_PLAN,PWRPT_DEVICE,
     PWRPT_CPU,PWRPT_ACCESS,PWRPT_TRANSACTION,PWRPT_RESTORE,PWRPT_NAMESPACE,PWRPT_READ_ONLY,PWRPT_WORK,PWRPT_CPU_CHECKPOINT,PWRPT_ACCESS_CHECKPOINT,PWRPT_DATABASE_CHECKPOINT};
+#if EFI_XNU_WIFI_PRE_MASK_ARGUMENTS
+#define PWRPT_ARGUMENT_CHECKPOINT 16u
+#endif
 static inline int pwrpt_unsafe(const struct pwrpt_result *r)
 {return r->unknown||pwcd_unknown(&r->cmd)||
 #if EFI_XNU_WIFI_ARC_READ_WORK_ADMISSION
     r->work.unknown||(r->work.attempted&&!r->work.complete)||
+#endif
+#if EFI_XNU_WIFI_PRE_MASK_ARGUMENTS
+    pwrpa_unsafe(&r->arguments)||
 #endif
 #if EFI_XNU_WIFI_ARC_READ_AVAILABLE
     (r->read.io.attempted&&!pwrr_retired(&r->read))||
@@ -303,6 +323,24 @@ static inline int pwrpt_body(void *context,const struct paic_io *memory,struct p
     if(!pwrpt_work_admit(memory,p,work,g,io->preparation,r))goto before_mask;
     if(!r->work.admitted){pwrpt_fail(r,PWRPT_WORK,0);goto before_mask;}
 #endif
+#if EFI_XNU_WIFI_PRE_MASK_ARGUMENTS
+    /* Exact prospective access objects, not a fabricated masked context.
+     * CPU, access and engines stay unobserved/zero. Even a complete match
+     * stops through the original current namespace/source/pool/client close. */
+    (void)resources;
+    const struct pwrpa_input arguments[PWRPA_OBJECTS]={
+        {&r->access_context,sizeof(r->access_context)},{p,sizeof(*p)},
+        {&r->CPU,sizeof(r->CPU)},{&r->prepared_cmd,sizeof(r->prepared_cmd)},
+        {&r->RAM[0],sizeof(r->RAM[0])},{&r->RAM[1],sizeof(r->RAM[1])},
+        {&r->device[0],sizeof(r->device[0])},{&r->read,sizeof(r->read)},
+        {&r->access,sizeof(r->access)},{&r->transaction,sizeof(r->transaction)}};
+    if(!pwra_zero(&r->CPU,sizeof(r->CPU))||!pwrpt_checkpoint_zero_engines(r)||
+       !pwrpa_run(memory,p,work,g,io->native_flag,arguments,io->cmd.namespace_io.context,
+           io->cmd.namespace_io.translate,&r->arguments))return pwrpt_fail(r,PWRPT_ARGUMENT,1);
+    if(pwrpa_unsafe(&r->arguments)||!r->arguments.complete||
+       !pwra_zero(&r->CPU,sizeof(r->CPU))||!pwrpt_checkpoint_zero_engines(r))return pwrpt_fail(r,PWRPT_ARGUMENT,1);
+    pwrpt_fail(r,PWRPT_ARGUMENT_CHECKPOINT,0);goto before_mask;
+#else
     r->phase=2;
     if(!pwrpc_begin(&io->CPU,memory,p,work,g,io->native_flag,&r->CPU)){
 #if EFI_XNU_WIFI_ARC_READ_AVAILABLE && EFI_XNU_WIFI_ARC_READ_CAPTURE_ONLY
@@ -444,6 +482,7 @@ power_retired:
 #endif
     paic_actual_order(0);return 1;
 #endif
+#endif /* This scope cannot enter CPU/masked access or an engine. */
 before_mask:
     /* A returned pre-mask refusal has issued no raw RSC write. The original
      * known-client retirement may proceed. Unknown, partial calls or a held
@@ -478,7 +517,11 @@ static inline void pwrpt_preboot(const struct paic_io *memory,const struct paic_
     struct pwrpt_io io={.cmd={.original=client.reader,.query=0,
         .namespace_io={&client.reader.memory,0,pgns_actual_translate}},
         .device={&client.reader.memory,0,pwrmd_actual_translate,pwrmd_actual_read},
+#if EFI_XNU_WIFI_PRE_MASK_ARGUMENTS
+        .CPU={0},
+#else
         .CPU={0,pwrpc_actual_affinity,pwrpc_actual_mask,pwrpc_actual_restore},
+#endif
 #if EFI_XNU_WIFI_READ_ACCESS_CHECKPOINT
         /* pwrcl_run_body passes its own copied reader.memory to the body.
          * Bind that exact live object; equal entry-copy contents are not
@@ -535,12 +578,17 @@ static inline void pwrpt_report(void (*append)(const char *))
 #if EFI_XNU_WIFI_ARC_READ_AVAILABLE
 #if EFI_XNU_WIFI_ARC_READ_CAPTURE_ONLY
 #if EFI_XNU_WIFI_READ_ACCESS_CHECKPOINT
+#if EFI_XNU_WIFI_PRE_MASK_ARGUMENTS
+    append("WIFI_CURRENT_PRIVATE_PRE_MASK_ARGUMENT_RAW_V1_BEGIN\r\n");pwrpt_raw_hex(append,&pwrpt_record,sizeof(pwrpt_record));
+    append("\r\nWIFI_CURRENT_PRIVATE_PRE_MASK_ARGUMENT_RAW_V1_END\r\n");
+#else
 #if EFI_XNU_WIFI_READ_DB_CHECKPOINT
     append("WIFI_CURRENT_PRIVATE_MASKED_DB_OBSERVATION_RAW_V1_BEGIN\r\n");pwrpt_raw_hex(append,&pwrpt_record,sizeof(pwrpt_record));
     append("\r\nWIFI_CURRENT_PRIVATE_MASKED_DB_OBSERVATION_RAW_V1_END\r\n");
 #else
     append("WIFI_CURRENT_PRIVATE_ACCESS_OBSERVATION_RAW_V1_BEGIN\r\n");pwrpt_raw_hex(append,&pwrpt_record,sizeof(pwrpt_record));
     append("\r\nWIFI_CURRENT_PRIVATE_ACCESS_OBSERVATION_RAW_V1_END\r\n");
+#endif
 #endif
 #elif EFI_XNU_WIFI_PRIVATE_CPU_CHECKPOINT
     append("WIFI_CURRENT_PRIVATE_CPU_CHECKPOINT_RAW_V1_BEGIN\r\n");pwrpt_raw_hex(append,&pwrpt_record,sizeof(pwrpt_record));

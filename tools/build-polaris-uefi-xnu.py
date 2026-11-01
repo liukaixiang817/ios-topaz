@@ -462,6 +462,7 @@ def main():
     ap.add_argument('--wifi-power-read-database-checkpoint',action='store_true',help='default-OFF two full current masked CmdDb RAM captures and complete CPU/private retirement BEFORE first masked RSC MMIO read; no access acquisition or engine state')
     ap.add_argument('--wifi-power-terminal-gop-diagnostics',action='store_true',help='default-OFF bounded numeric UNKNOWN evidence in the current GOP framebuffer, no firmware/GOP method or USB/reset/cleanup on the terminal path; requires the explicit masked database diagnostic')
     ap.add_argument('--wifi-power-terminal-gop-own-wt',action='store_true',help='default-OFF exact own GOP PAR attribute0xBA Normal WT admission; original literal framebuffer/header/NS/RW/PA/PAR/CPU/hold gates unchanged, no mapping or radio permission change')
+    ap.add_argument('--wifi-power-pre-mask-arguments',action='store_true',help='default-OFF normal-IRQ exact future access object ranges and full page AT/PAR evidence, complete current namespace/source/pool/client close and known Delete BEFORE CPU/masked access; no lease or subsequent READ permission')
     a=ap.parse_args();r=Path(__file__).resolve().parents[1]
     if a.wifi_power_read_access_checkpoint and not a.wifi_power_private_cpu_checkpoint:
         ap.error('read access checkpoint requires the complete same-private CPU checkpoint dependencies')
@@ -471,6 +472,8 @@ def main():
         ap.error('terminal GOP evidence requires the explicit current masked database diagnostic scope')
     if a.wifi_power_terminal_gop_own_wt and not a.wifi_power_terminal_gop_diagnostics:
         ap.error('own GOP WT admission requires explicit terminal GOP diagnostics')
+    if a.wifi_power_pre_mask_arguments and not a.wifi_power_read_database_checkpoint:
+        ap.error('pre-mask argument observation requires complete current private database dependencies')
     if a.wifi_power_private_cpu_checkpoint and not a.wifi_power_current_arc_read_work_admission:
         ap.error('private CPU checkpoint requires the full prepared/current source and unchanged READ work admission dependencies')
     if a.wifi_power_current_arc_read_work_admission and not a.wifi_power_current_arc_read:
@@ -930,6 +933,7 @@ def main():
 #define EFI_XNU_WIFI_READ_DB_CHECKPOINT {int(a.wifi_power_read_database_checkpoint)}
 #define EFI_XNU_WIFI_TERMINAL_GOP_DIAGNOSTICS {int(a.wifi_power_terminal_gop_diagnostics)}
 #define EFI_XNU_WIFI_TERMINAL_GOP_OWN_WT {int(a.wifi_power_terminal_gop_own_wt)}
+#define EFI_XNU_WIFI_PRE_MASK_ARGUMENTS {int(a.wifi_power_pre_mask_arguments)}
 #define EFI_XNU_WIFI_CPU_RO_ADMISSION {int(a.wifi_cpu_ro_admission)}
 #define EFI_XNU_WIFI_CPU_MASKED_RO_ADMISSION {int(a.wifi_cpu_masked_ro_admission)}
 #define EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE {int(cmddb_binding is not None)}
@@ -1004,6 +1008,8 @@ def main():
     inputs+=['tools/polaris_uefi_cpu_tree.py','tools/adt.py','tools/mkpayload.py']
     inputs.append('shim/polaris/runtime-marker.h')
     if a.wifi_power_terminal_gop_diagnostics:inputs.append('shim/polaris/uefi-wifi-terminal-gop.h')
+    if a.wifi_power_pre_mask_arguments:
+        inputs+=['shim/polaris/uefi-wifi-pre-mask-arguments.h','shim/polaris/uefi-wifi-cpu-readonly.h']
     if cache_binding:
         inputs+=['shim/polaris/uefi-wifi-cache-readonly.h','tools/polaris-wifi-firmware-identity.py',
                  'tools/polaris-wifi-firmware-identity.h',cache_pe_relative]
@@ -1599,6 +1605,43 @@ def main():
             wifi_CPU0_power_terminal_GOP_header_attr_bytes=[0xff],
             wifi_CPU0_power_terminal_GOP_own_WT_observed_PAR=0xba0000009d465b80,
             wifi_CPU0_power_terminal_GOP_no_MAIR_TTBR_or_mapping_change=True)
+    if a.wifi_power_pre_mask_arguments:
+        manifest.update(
+            wifi_CPU0_power_execution_kind='SAME_PRIVATE_NORMAL_ARGUMENT_RANGES_FULL_AT_CLOSE_NAMESPACE_SOURCE_POOLS_DELETE_BEFORE_CPU_MASKED_ACCESS',
+            wifi_CPU0_power_raw_format='CURRENT_PRIVATE_PRE_MASK_ARGUMENT_RAW_V1',
+            wifi_CPU0_power_current_ARC_raw_format='CURRENT_PRIVATE_PRE_MASK_ARGUMENT_RAW_V1',
+            wifi_CPU0_power_raw_bytes=1969056,
+            wifi_CPU0_power_CPUcritical_reachable=False,
+            wifi_CPU0_power_guarded_PSCI_calls_max=0,
+            wifi_CPU0_power_prepared_masked_FULL_DB_bytes_per_snapshot=0,
+            wifi_CPU0_power_prepared_masked_FULL_DB_snapshots=0,
+            wifi_CPU0_power_prepared_masked_fresh_NS_WB_PAR_restore_each_page=False,
+            wifi_CPU0_power_private_CPU_checkpoint_actual_Create_current_namespace_Device_CPU_restore_Delete=False,
+            wifi_CPU0_power_private_CPU_checkpoint_masked_normal_full_RAM_equal=False,
+            wifi_CPU0_power_private_CPU_checkpoint_all_Device_control_status_IRQ_bytes_unchanged=False,
+            wifi_CPU0_power_private_access_checkpoint_same_fresh_private_CPU_lifetime=False,
+            wifi_CPU0_power_private_access_checkpoint_full_current_masked_CmdDb_bytes_each=0,
+            wifi_CPU0_power_private_access_checkpoint_RAM_AT_per_capture=0,
+            wifi_CPU0_power_private_access_checkpoint_complete_retire_before_CPU_restore_USB=False,
+            wifi_CPU0_power_private_database_checkpoint_full_current_masked_CmdDb_bytes_each=0,
+            wifi_CPU0_power_private_database_checkpoint_RAM_AT_per_capture=0,
+            wifi_CPU0_power_private_database_checkpoint_complete_CPU_source_namespace_Delete_before_USB=False,
+            wifi_CPU0_power_pre_mask_arguments=True,
+            wifi_CPU0_power_pre_mask_arguments_default_OFF=True,
+            wifi_CPU0_power_pre_mask_arguments_objects=10,
+            wifi_CPU0_power_pre_mask_arguments_pages_max=512,
+            wifi_CPU0_power_pre_mask_arguments_CPU_callbacks_wired=False,
+            wifi_CPU0_power_pre_mask_arguments_normal_Device_captures=1,
+            wifi_CPU0_power_pre_mask_arguments_normal_Device_reads=70,
+            wifi_CPU0_power_pre_mask_arguments_normal_full_RAM_captures=1,
+            wifi_CPU0_power_pre_mask_arguments_raw_bytes=25216,
+            wifi_CPU0_power_pre_mask_arguments_planned_stop_error=16,
+            wifi_CPU0_power_pre_mask_arguments_full_returned_AT_PAR_prefix=True,
+            wifi_CPU0_power_pre_mask_arguments_CPU_access_engines_UNOBSERVED=True,
+            wifi_CPU0_power_pre_mask_arguments_known_returned_refusal_full_closure=True,
+            wifi_CPU0_power_pre_mask_arguments_partial_source_time_UNKNOWN_sticky=True,
+            wifi_CPU0_power_pre_mask_arguments_no_ticket_reset_or_later_lease=True,
+            wifi_CPU0_power_pre_mask_arguments_complete_namespace_source_pool_Delete_before_USB=True)
     if a.wifi_cpu_ro_admission:
         manifest.update(wifi_CPU0_power_transaction=False,
             wifi_CPU0_power_CPU_RO_admission=True,wifi_CPU0_power_CPU_RO_default_OFF=True,
