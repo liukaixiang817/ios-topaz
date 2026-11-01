@@ -71,8 +71,11 @@ early samples only. On0029 the human already confirmed boot complete and said
   modelproofb3fb8f42ba70628f1cdc6d9396d10417d1b492f5be703204f16186fff53dc936.
   SoftwarePMIC/delay/RAMUSB/pixel peers nothardware/guestreset/radio proof.
 - Sourceproof0178/wifi/own-WT-source-and-offline-proof-0001.json SHAf1396b9f94b0eee7e1aa5fccdee409d49947fa2f00e8ace81b239cf763160f0a.
-  NEXT commit/pushsource, newexacthostprofile with observedliteralattributes,
-  original81wholecodec/newimage/sourceaudit/independentfreeze/ONEhelper. Reuse
+  FWf28acd7a1fb5399f35c858a8880103266b1aa48f committed/pushed and independent
+  lsremote matched. NEW GCD_CLOCK_0178 exact332PowerGCD+94resource/91inputs;
+  all31oldenabled+DISABLED literalsAST unchanged.21hosttests+14actualmetadata
+  refusals and explicitmissingGOPflag CLIrefusal pass; existingoutputs unchanged.
+  NEXT original81wholecodec/newimage/sourceaudit/independentfreeze/ONEhelper. Reuse
   actualNEW0177strictRO39/rootNV qualification after controlledprestartreceipt
   and independentFB; doNOT fabricateNEW0178audit/copyoldreview undernewname or
   repeatfullhash/recovery merelyforinventory. Fulladmit/newcandidateNOTREADY.
