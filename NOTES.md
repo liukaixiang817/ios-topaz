@@ -34,6 +34,33 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0178 own-WT image fully admitted, freeze pending; phone last actual controlled FASTBOOT15:55; Wi-Fi NOT DONE
+
+- No0178image/payload/devicecommand sent. NewFWf28acd7a1fb5399f35c858a8880103266b1aa48f/
+  HOST695ce7f1a67931edac673f7d2e125adc38206479 committed/pushed/independent
+  lsremote matched. NewOWNWTdefaultOFF onlyaddsactualGOPpixelattrBA, allother
+  address/NS/RW/PAR/currentowner/CPU0/native0/bounds/timing/UNKNOWN gates intact.
+  Fullsource/526newWT+2054OFF+2054ON+1explicitOFFoldraw/478unchangedPP/actual
+  parent/twoSERIALnew19models/332metadata+94resource/91inputs/21hosttests/
+  14negative+missingGOPflagCLI checks complete (detailsbelow), nothardwarepass.
+- Actual no-mock fulladmit with realNEW0177 qualification succeeded. Newimage
+  01d077b0cc32aaabfb106a92067df71dafeb00fa1bb79d3b95e53353ee85add7/6033408B,
+  finaldriverb6f27adb.../16057856B/91inputs. Physical-driver0001independent
+  topfilescopy, nohardlinks orZigcache. Original81FW/SimpleInit/BootShim/DTB
+  preserved; unmodifiedoriginalEDK2whole43539656B GetInfo/fullDecode byteequal.
+- Controlreview0178/preboot-controlled-transition-review.json SHAc237beeff89449e6a0e1c39f0228eef38030901abeb07d8017e2fe15a50c6829
+  explicitlyREUSESactual0177strictRO39/e55bedb3.../8fead391... plus fullcontrolled
+  prestartreceipt/independentFB15:55. NOnew0178audit performedorclaimed, no
+  duplicate16GiBhash/recovery, no Android/uncontrolled interval. Actualoldroot
+  reviewfiles stay under0177paths and are bytebound, not copiedasfresh0178.
+- NEXT sourceaudit/independentfreeze/ONEofflinehelper +actualprebootidentity,
+  thenONEqualifiednewRAM under persistent same63cb broadpermission df995cae...
+  withoutnewpermissionquestion. CandidateNOTREADY until those gatesfinish.
+  DoNOTreuseold0177/76controller/session/image or editconsumedmanifest/policy.
+  LatestphoneactualcontrolledPolarisFB15:55:17.432118Z; no physicalactionpending,
+  allworkersENDED/allchildrenSTOP. No actualGOPdraw/privateDB/READ/vote/MSS/NV/
+  scan_join_data success yet. OnlyWi-Fi, sound/cameraSTOP; all data protected.
+
 ### CURRENT0178 own-GOP-WT compatibility offline complete, NOT READY; phone last controlled FASTBOOT15:55; Wi-Fi NOT DONE
 
 - Overrides olderCURRENT/READY/LIVE. No0178 image/payload/device commands yet.
