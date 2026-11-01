@@ -34,12 +34,13 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0157 actual FASTBOOT01:42; bounded CmdDb PARENT/LINK VERIFIED OFFLINE, two terminal models and NEW exact host scope PASS; freshRO/image NOT READY
+### CURRENT0157 actual FASTBOOT02:07; NEW bounded CmdDb image + freshRO READY, independent freeze pending
 
 - User answered the second physical recovery request; independent exact product
   2026-11-01T01:42:42.384037Z returned product:polaris/exit0. Nothing physical
-  pending. No USB/recovery/reset/UTC/image after that query. Only lastactual
-  FASTBOOT, not nativeLIVE. Both0155/0156 consumed artifacts/frozen manifests
+  pending. The next already-required transition now completed ONE0120 strictRO
+  audit below and independently returned FASTBOOT02:07. No new0157 diagnostic
+  image/payload/native start or UTC sent yet; not nativeLIVE. Both0155/0156 consumed artifacts/frozen manifests
   are unchanged and may never be replayed. No physical root cause isolated.
 - Component sourcec88ec2d is pushed: finite512node exact originalCore GCD RAM
   reader, source5hash/templateSHA, currentRAM/NSWB/PARrestore/loaded exclusion,
@@ -80,13 +81,21 @@ early samples only. On0029 the human already confirmed boot complete and said
   no-mock exact_scope and two model source checks passed, all11old literals
   unchanged; missing NEW post-recovery RO review correctly refuses full admit.
   Hostproof bounded-new-host-scope-proof-0001.json SHAa87f761d561eea86bb1b62
-  ea5afaed2aeb0b9f1404cd9df9618519920eda558b. Host edits pending commit.
-  Original81 wrapping/codec/sourceaudit/independent freeze/ONEhelper and NEW
-  strictRO audit still missing: candidate NOT READY.
-  No single inventory or client-only physical boot. Before the next already
-  needed transition merge NEW strictRO complete roots/map/GPT/ESP/journal+
-  currentNV after this untrusted interval; prior0156 de8f9289/1c62eacc predates
-  recovery and cannot independently qualify a new boot. No repair/replay/RW/
+  ea5afaed2aeb0b9f1404cd9df9618519920eda558b. Host776185b committed/pushed.
+  Actual no-mock full admit with NEW reviews now passed58943a92. Original81
+  wrapperimage ef36de984cddd3741ebfdbb486e7235f0bcefddbb5fd4d76edc3f0118eb43afb
+  /5998592B retains all81FW/SimpleInit/BootShim/DTB. Original unmodified EDK2
+  GetInfo+whole39295176B decode matched. Independent sourcefreeze/ONEhelper
+  still pending: not yet candidate READY for send.
+  No single inventory or client-only physical boot. NEW0157 strictRO audit47729
+  ENDED0: ONE0120boot02:05:10.790005Z, both whole16GiB SHA91515474/689a8cd1
+  matched56.548/56.519s, maps142/182/markerraw+8MiBpattern/6GPT/critical/ESP102/
+  journalmetadata/current3NV+FSC all39reviewchecks passed. Actualumount then
+  independent FASTBOOT2026-11-01T02:07:32.818238Z. Reviewa830b4e320847831214396c7
+  c744294d61e21568ba3586fa8e3a5f0882e91b77 / preflight3d139252c0cbf08fe28da5ba
+  938d61803fd98bf819c220f77d81a39279b6ae9f is latest controlledRO authority.
+  ThreeNV before/local/after match and same as0156; originals0600. Whole512MiB
+  journal remains uncaptured, no generalFShealth claim. No repair/replay/RW/
   NVrestore/root-copy. Only Wi-Fi; sound/camera/allchildren STOP.
 
 ### HISTORY0156 capture-only startup UNKNOWN; recovery request since fulfilled
