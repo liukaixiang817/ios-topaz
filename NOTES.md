@@ -34,6 +34,47 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0173 OFFLINE FROZEN candidate complete; phone remains controlled FASTBOOT0172/11:27; kernel reuse permission needed, Wi-Fi NOT DONE
+
+- New0173concretecandidate completedsource/affected309ASAN-UBSAN/actualwhole
+  parentCOFF-MachO|maxframe1024/noactualwrite symbol/twoSERIAL19checkmodels/
+  exacthost301PowerGCD+94resource/90inputs+21hosttests/actualnomockadmit/
+  original81wholecodec checks. FW7cb04c31612b78f660cee2f7407a458aead4004c/
+  HOSTbabaf81549903f70cc7dc23c2b6b08af134367b2 committed/pushed, independently
+  lsremote matched. Source/headerimplementations belowalreadyDONE; no repeat.
+- Actualnewimagef70e8040f78323733229bad19df545e7773a6d39db458586076111c750a753c6/
+  6027264B;driver6dd301a4f8ae1d77efcd6262e30ca90b8c1f9264cc737b2090d69df2c1194174/
+  15924736B. Original81FW/SimpleInit/BootShim/DTB preserved, wholeEDK2decode
+  43406536B byteequal. Independentfreeze
+  /private/tmp/polaris-runtime-0173-frozen-0001 COPY866+10COMMIT_ONLY/
+  458currentcommittedsources/90inputs/nohardlinks, SHA
+  f630032fe6319336610406798cbb37b1e97f5f4907cced3ba598f8a99bccb6d3;
+  defaultofflineONEhelperPASS. Matchingnewfrozencontroller+driver/image and
+  ORIGINALrepo0173/phone-read-access-checkpoint-runtime-0001/boot.json only
+  afterONEnewsend; noactual0173image/payloadsent/bootrecordyet.
+- Scope SAMEfreshprivateCPU/currentfullmaskedCmdDb32ATtwice/70checkedRSC
+  geometryreads/realobservationretirement/exactCPUrestore/fullRAM/Device/
+  currentnamespace/source/knownDelete. Literalwritecallbackstickyrejects,
+  NOactualstorefunction orRSCengine/READrequest/IRQACK, bothengineentireZERO
+  withoutfakedretirement. Full1943840B distinctobservationraw retained;
+  original200ms/fullREAD50ms+25msreserve/source/UNKNOWN gates unchanged.
+  Thisisnextunprovencheckedaccess segment, notREAD/vote/radio/hardwaregrant.
+- Phone remains0172actualcontrolledFASTBOOT11:27:43.315703Z, allworkersENDED/
+  childrenSTOP, nopendingentityaction/noUSBinventorypoll. Fresh0172strictRO39
+  +0172normaldrain/actualFB reused, no repeatedroot/NVhash/recovery.0172image/
+  payload/one-useexception consumed; do notusefrozen0172fornewsession.
+- BEFORE staging0173image obtainkernelreuseauthorization. Priorautomatic
+  review required explicitexception for immutable63cbpayloadold0145path;
+  0172permission wasonlyonceandspent. Concrete0173frozenready now: askcurrent
+  authorization beforephonewaitingpayload. Usermay explicitly authorize same
+  exactSHA forfutureNEWfullyreviewed+independentlyfrozen temporaryRAMsessions
+  (eachnewsessiononce,nooldreplay,nopartitionwrites)toavoidrepeatedprompts;
+  DO NOTassumebroadpermissionorcreateapprovalrecorduntilactualreply. Anyfuture
+  changedkernelSHAorunqualifiedcandidate remainsoutside thisspecificscope.
+- No actual0173API/SMC/AT/MMIO/UTC/UI/READ/vote/MSS/NVserve/scan/join/data.
+  UserWiFiunavailablecorrect. ContinueONLYWiFi→realnetworkthenaudio→camera;
+  originalnative7400/CPU/GPU/WLEDunchanged/noCI/download/opticalcycle/oldtests.
+
 ### CURRENT0173 SOURCE/OFFLINE only; phone remains actual controlled FASTBOOT0172/11:27; new access/READ/Wi-Fi NOT DONE
 
 - User “请你加快Wi-Fi开发”: moved directly fromphysicallydoneSAMEprivateCPU
