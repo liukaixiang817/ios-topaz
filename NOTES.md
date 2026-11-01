@@ -34,6 +34,81 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0171 startup ACK UNKNOWN; user physically recovered, actual Polaris FASTBOOT10:28; private CPU/READ/vote/Wi-Fi NOT DONE
+
+- ONE0171 newimage52264 ENDED0 sent2026-11-01T10:22:58.537042Z/source
+  bd600ea6f6b1247a40975622baf1cc8fbb36cde3/imageea2415f83e88501038f26bff86847fcb027995549b2e33e5b718b102300560ad/
+  6033408B. Solefrozen state actualwaitingpayload10:23:15.307786Z. User
+  explicitlyapproved “批准0171复用一次”. ONEpayload29483 ENDED1, transfer
+  32.953227042s/bootcall90.512372542s/response(-7)timeout, NO startup ACK.
+  No newprepared/client/work/CPU/READ/RSCraw was exported. Actual predicate,
+  nativeCPU_ON/WLED/mask/READ/store counts remainUNKNOWN, neverzero. Cannot
+  call this provenquarantine/panic/ARCfailure, budgetdecline orrootcause.
+- After29483ENDED, solefrozenstate60570 ENDED1/8s UEFI unavailable; sole
+  independentexpected88264 ENDED0/8stimeout at10:26:05.491345Z. Physicalkeys
+  requested ONCE; user replied “已到 FASTBOOT”. Independentactualproduct
+  polaris10:28:09.680946Z/exit0. Phone now actualFASTBOOT, NOTnativeLIVE.
+  No physicalrequest orauthorizationpending. AllUSB/host/build/modelworkers
+  ENDED/allchildrenSTOP. No furtherUSBpoll untilnewcandidate ready ornewfact.
+- Physicalproof0171/wifi/physical-start-ACK-unknown-and-recovered-FASTBOOT-proof-0001.json
+  SHAdd2a44f13973e5b189577588a9ebbab896247f36797c6424f6f32ee237890ad8. PASS faithfully preservesUNKNOWN/recovery only, NOTfunctionality.
+  ORIGINAL0171/phone-current-read-work-runtime-0001/boot.json CONSUMED, even
+  though its generic literalimage-ACKstate says RAM_boot_succeeded; this was
+  image send only, notpayload/native confirmation. Never replayimage/payload/
+  OEMboot/refreeze/oldpolicy/stripflags/oldmanifest. User0171 kernelreuse
+  exception was ONLYthisonce, now consumed; no rename/indirectbypass.
+- Onlyused /private/tmp/polaris-runtime-0171-frozen-0001/tools/polaris-uefi-wled-runtime.py
+  withfrozen0171driver0001/image0001 andORIGINALrepo sharedconsumedrecord.
+  SessionnowENDED; it/old0170/editedcontroller cannotcontrolnewsession.
+  FreezeCOPY861+10COMMIT_ONLY/454currentcommittedsources/90inputs/nohardlinks,
+  SHA3647e10ea0bb3342dabfe10a12cf6e045176bfa87c2816dd7fdcf4ebe2421350,
+  defaultofflineONEhelper passed beforeconsumption. Do notrerunspenthelper.
+- Offline source FWf57080485e745df36a301fdaede034d4e8b12ca2/HOSTbd600ea6f6b1247a40975622baf1cc8fbb36cde3
+  committed/pushed, independentlylsremote matchedHOST beforeONE. Fullcurrent
+  READpath has pre-maskworkgate from all68 retiredROtimings, slowest retained,
+  auditedtail Core4+pages/RPMh4/CmdDb3, weighted18+pages +fullREAD50ms +nonhash
+  25ms against ORIGINALremaining200ms. Old125ms/fullcapture policy notchanged.
+  It canreject only, nevergrant hardwarelease orrenewcontext. No actualgate
+  values/admission/decline are known thisboot. ResourceWRITE compiledout.
+  NewbodyRAW_V3 1943840B/work1856B, alllegacyraw/FW10MiB/host14MiB+128 kept.
+- Final83ASAN/UBSAN(23work+30fullREAD+30workOFF), actualwholeparentCOFF/MachO/
+  maxframe1024/defaultOFF-QEMUpp/fullEFI, finaltwoSERIALnew19checkterminal
+  models0003/90sameinputs/11resource+1battery literalint1/actualQEMUpp no
+  physicalbody/raw passed. First0001/0002 retained ashistorical pre-final
+  checks. NewexactGCD_CLOCK_0171 271PowerGCD+94resource/90inputs/24oldliteral
+  ASTs unchanged;21hosttests+actualnomockadmit. Driver0003e846f9b0a217bdc10f0fee94e37f6afbf074f90d99702d638473b99ad72c5e09/
+  15932928B;83committed+7privateDATA eachmatchFW. Original81/SimpleInit/
+  BootShim/DTB andwholeunmodifiedEDK2decode43414728B matched. No newnativeCI.
+  Those are SOFTWARE/offline evidence, notphysicalREAD orhardwarelease.
+- Latest completedphysical CPU-only qualification remains0170 normal+masked7
+  +exactrestore/fullsource/normalexit. Do NOTrepeat independentCPU/prep/NPA/
+  client/cacheinventoryboots. This0171 PRIVATE/READ call produced no newraw,
+  so standalone0170 success does notclear thisfailure ornameitscause.
+  No newUTCSET/UI/WLED/optical/performance evidence in0171; 0170UIishistory.
+- FreshROOT/NV0169 strictRO39 (reviewbc32c1ef.../preflight8f7737f6...) followed
+  controlled0170exit was valid BEFORE0171. Now0171UNKNOWN exit/physicalreset
+  makes it historical qualification. At next already-needed NEWcandidate
+  conversion combine NEWfullstrictRO roots/maps/GPT/ESP/journal/currentNV;
+  do notreuse0169/0170 toskip, and do notlaunchstandaloneTOC/NV recoverynow.
+  No restore/RW/rootcreate/append/erase/GPT/ESP permission. Journalwhole512MiB
+  stillnotcaptured, noFShealthclaim; MSSnotstartedbyus !=wholeDSPoff/ownership.
+- NEXT0172 NOTREADY/notimplemented: stop opaquefullREAD boots basedon guesses.
+  Audit sameprivate originalsource/current RAM/normal-vs-maskedCPU guard/time
+  transitions. Any diagnostic isolation must be newdefaultOFF/sourcebound,
+  retainfullraw and finish its own real client/namespace/CPU/fullrestore/
+  knownDelete BEFORE exporting toUSB; neverreturn heldmask/UNKNOWN toUsbFn,
+  clearerrors, fakeclientheld/leasebool orborrow/rebase spenttickets. Target
+  the unproven SAMEprivate CPU lifetime before firstTCSstore, notanother
+  standaloneCPU/clientavailabilityinventoryboot. If using segmented phases,
+  eachmust fullyretire beforehostreturn and any actualREAD mustreacquire all
+  currentownership/source/device/CPU checks in a NEWfreshowncontext; a prior
+  phase orreturnedbool is notpermission. Obtainactualevidence before naming
+  old0171 cause. may_vote/MSS/NVserve/scan_join_data=false. Then realbounded
+  READ/completion/restore andqualifiedsavedvote, fourVRMbeforeMSS/GLINK/RMTFS/
+  WLFW/ath10k realscan/join/data. Sounds/cameraSTOP. No nativechange/CI or
+  unchangedold3007/13models/opticalcycle rerun. Allsource changes need only
+  affectedchecks/twoSERIALnewmodels/newexactscope/codec/freeze/ONEhelper.
+
 ### CURRENT0170 remains controlled FASTBOOT09:44; NEW0171 exact host/image/codec verified OFFLINE; independent freeze pending
 
 - FWsource f57080485e745df36a301fdaede034d4e8b12ca2 committed/pushed;
