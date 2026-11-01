@@ -34,6 +34,38 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0177 NEW strictRO passed, actual FASTBOOT15:29; terminal-GOP image admitted, freeze pending; Wi-Fi NOT DONE
+
+- Overrides old CURRENT/READY/LIVE. No0177 Wi-Fi image or payload sent. New
+  necessary strictRO audit52585 ENDED0, independent39checks passed and actual
+  normalumount→PolarisFASTBOOT15:29:25.157270Z. Rootreviewe55bedb3090d75149a61226a2b45c3bf9737fd8f404848bd74048e9ee1352cb7/
+  preflight8fead3912b3380c42042892034cc40308c1bcf75cdb9a60c645456534c0fe9c5.
+  Twofull16GiB91515474/689a8cd1 hashes56.766895916/56.802987250s,142-182maps/
+  marker8MiBpattern+raw/GPT6critical/ESP102/journalmetadata/currentNV3x8MiB
+  before-local-after/FSC/4NV0600 all pass and fourwholeNV equal0176. No restore,
+  partitionwrites, journalreplay or FShealth claim; whole512MiBjournal notcaptured.
+  Host250/watchdog300 unmodified. This is NEW qualification after0176UNKNOWN,
+  not reuse of its stale audit. Currentnew controlled interval has no Android
+  or uncontrolled transition; nextONEcandidate may use this qualification.
+- FWc4e567402c31979d2b035696c8f9f0d408571694/HOST56712191d81df66995ed42c662b37b11c0711bfc
+  pushed and independentlylsremote matched. Existing broadsame63cb futureNEW
+  once-each authorization df995cae... applies; no new permission question.
+- Actual no-mock fulladmit with NEWrootreview passed. Image5d3b29afe05ff0592b37f0a23961dcfb01cbc5e51e1f5bf65e607e06d39ec8f3/
+  6033408B. Finaldriver0003c46a6a8.../16057856B/91inputs exact;
+  physical-driver0001 independentlycopiedtop-levelonly, noZigcache/hardlinks.
+  Original81FW/SimpleInit/BootShim/DTB preserved. ActualunmodifiedEDK2whole
+  43539656B GetInfo/fullDecode byteequal. Fullnewsource2054software/478exactPP
+  reused/actualmainCOFF-MachO|maxframe1024/twoSERIALnew19models/326metadata/
+  94resource/91inputs/21hosttests/8negativeadmission all complete (detailsbelow).
+- ONLY newpurpose is direct bounded numeric terminal RAM/GOP evidence for
+  unobservable failures. NoGOPmethod/Console/USB/SMC/Stall/reset/ACK/cleanup on
+  UNKNOWN, noRF/EE/EL3lease or private-ticket renewal. Existing power path and
+  all200ms/68slowest/READ50+25ms/restore gates unchanged. No actualGOPdraw,
+  privateDB, READ/vote/MSS/NVserve or Wi-Fi success yet. Newimage NOTREADY until
+  sourceaudit/independentfreeze/ONEofflinehelper and actualprebootidentity.
+  No old0176 replay/refreeze/policyedit; all oldsessions remain consumed.
+  AllUSB/host/build/modelworkers ENDED, allchildrenSTOP; only Wi-Fi.
+
 ### CURRENT0177 terminal-GOP diagnostic offline complete; NEW candidate NOT READY; phone last actual FASTBOOT14:23, Wi-Fi NOT DONE
 
 - Overrides older CURRENT/READY/LIVE. Phone has NOT received0177. Last actual
