@@ -34,7 +34,44 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0156 capture-only startup ACK UNKNOWN / UEFI unavailable / expected FASTBOOT timeout01:36; NEW physical recovery requested ONCE
+### CURRENT0157 actual FASTBOOT after second physical recovery01:42; bounded originalGCD RAM component VERIFIED OFFLINE, parent NOT READY
+
+- User answered the0156 recovery request; independent exact product at
+  2026-11-01T01:42:42.384037Z returned product:polaris/exit0. No physical
+  recovery request is now pending. No new boot/reset/UTC/recovery after this
+  query; current lastactualFASTBOOT, not nativeLIVE. Both0155/0156 consumed
+  images/payloads/frozen manifests remain unchanged and may never be replayed.
+- New OFFLINE component work only: tools/polaris-wifi-gcd-namespace-identity.py
+  binds exact ownCore61236b07, allocator80B at7f64/7f84, head1bd60/lock1bd48,
+  nodeLink+8/Base24/End32/Cap40/Attr48/Type56/IO60/handles64,72; actual original
+  template1bd70 has signaturegcdm and SHA4da525b8. Static original bytes/opcodes
+  checked, not currentRAM evidence. No original code executed.
+- shim/polaris/uefi-wifi-gcd-namespace.h defaultOFF now implements finite512node
+  raw two-pass originalCore namespace capture with source5hash/templatehash,
+  currentRAM/NSWB+PARreadback, loaded-image exclusion, signature/links/cycle/
+  ranges/head/lock checks and same original context/200ms gates. No original
+  GCD API/lock/TPL service/allocator/SMC/MMIO. A released lock observation is
+  NOT exclusivity. Captured descriptor lookup is pure and explicitly grants
+  no actual target read without a future caller's fresh source/context checks.
+  Component qualification0157/wifi/namespace-verified-0001/proof.json SHA
+  9b1cbef2d6571f5b291b618829fe3ee34069806b91f6b2319c24e26756307c87:
+  27ASAN/UBSAN cases plus actual AArch64COFF/MachO/maxframe1024 and defaultOFF/
+  QEMUcompiledout, sixchecks passed. RAW183064B retains all checkpoint/node AT
+  and partial bytes. SOFTWARE source data/AT/client callbacks are not actual
+  firmware execution. No parent/builder/profile integration yet and no actual
+  namespace. Next integrate its fresh target validation into the same focused
+  CmdDb capture diagnostic; never fallback to the original unbounded API.
+- Prior0156 failure remains UNKNOWN: no raw/currentstage/zero CPU-WLED-RSC/
+  boot/rootcause claims. Source narrowing alone is not physical completion.
+  SourceFW16f9158/HOSTda81d60/handoff0b99441 are pushed. Current new component
+  verified offline only; no new nativeCI/models or physical attempt.
+- Latest completed root/NV0156 de8f9289/preflight1c62eacc preceded the failed
+  trial. After this physical recovery, merge NEW fullstrictRO root/map/GPT/
+  ESP/journal/currentNV into the next already-required transition, not now
+  merely for old inventories. may_write_userdata=false, no root-copy/repair/
+  replay/RW/NVrestore. Only Wi-Fi; sound/camera/allchildren STOP.
+
+### HISTORY0156 capture-only startup UNKNOWN; recovery request since fulfilled
 
 - ONE newimage90595 ENDED0 sent2026-11-01T01:33:13.643697Z/source00588b5ec3c
   ad7be9a4f097bf36671f826da6b51/imagef5aeacb1/6000640B. Actual UEFI
@@ -55,7 +92,7 @@ early samples only. On0029 the human already confirmed boot complete and said
   changedmanifest are forbidden. One state read after unknown ACK has already
   been attempted; no blind retry/cleanup/genericreset/rawfallback. All USB/
   host/model workers ENDED. A NEW human power+volume-down FASTBOOT request
-  for0156 is pending; the earlier0155 request WAS fulfilled01:21. Don't repeat.
+  for0156 WAS fulfilled01:42; the earlier0155 request WAS fulfilled01:21. Do not repeat.
 - Actual failure evidence0156/physical-capture-start-ACK-unknown-proof-0001.json
   preserves complete host results, no successful diagnostic/boot claim. Source
   FW16f9158/HOSTda81d60 remains unchanged;24software/22host/2x19model passes
