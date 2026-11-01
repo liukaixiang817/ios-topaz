@@ -79,10 +79,16 @@ early samples only. On0029 the human already confirmed boot complete and said
   Earlierprototype driver0001/0002 and models0001 are HISTORICAL before final
   mapversion/residual hardening, not candidate evidence. SOFTWARE PMIC/delay/
   RAMUSB/AT are not physical display/power/guestreset/network proof.
+- FWc4e567402c31979d2b035696c8f9f0d408571694 committed/pushed and independent
+  lsremote matched. NEW GCD_CLOCK_0177 exact326PowerGCD+94resource/91inputs;
+  old30enabled+DISABLED literalAST unchanged.21hosttests and baseline plus8
+  actualmetadata-refusal checks pass. Negativeharness initially expectedFalse
+  but real refusalraisesValueError; corrected TEST ONLY, noFW/model change.
 - Sourceproof0177/wifi/terminal-GOP-source-and-offline-proof-0001.json SHA24421732236428bde1050274f524cabf4b0430940c16863a164cfc0ba8bfc6c8.
-  NEXT complete sourcecommit/push, NEW exacthostprofile/metadata admission,
-  original81 wholecodec/newimage/sourceaudit/independentfreeze/ONEofflinehelper
-  and NEWfullstrictRO39 at next necessary transition;0176audit is HISTORICAL
+  NEXT original81 wholecodec/newimage/sourceaudit/independentfreeze/ONEofflinehelper
+  and NEWfullstrictRO39 at next necessary transition; fulladmit/candidate still
+  NOTREADY. Existing persistent same63cb authorization stays valid.
+  The0176audit is HISTORICAL
   afterUNKNOWNphysicalreset. Only then actualcorrectFB permitsONEnewRAM using
   existing broadsame63cb authorization df995cae... (do not ask again). No old
   image/payload/session replay. Do not start opaque masked tests without the
