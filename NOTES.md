@@ -64,6 +64,16 @@ early samples only. On0029 the human already confirmed boot complete and said
   nofullrender/60Hz/opticalcycle/performanceAB. UTC0169ONESET independently
   APPLIED cookie7648565559/seq1/status2/error0/count1/uncertainty2277us;
   NEVERSET0169again. Bootrecordconsumed/sessionENDED; nooldcontrollerreuse.
+- Useragainexplicitlyrequests Mi8 Wi-Fi implementation. ActualpinnedC re-read
+  e930c26 mi8_rproc/glink/hostsvc/wlfw and lx_ath10k_bus/qmi, notscripts/prebuilt.
+  ReferenceMi8 calls fourVRM Wi-Fi suppliesON BEFORE MSS, then GLINK/QRTR69v1/
+  IND_REGISTER/HOST_CAP/MSA_INFO/assignedMSA/MSA_READY/CAP/FW_READY/WLAN_CFG/
+  MISSION/ath10k; configd/en0 isdownstream. OwnDT confirmsldoa5/7/17/25,
+  ICNSS18800000/8MiB/stream40/SPI414..425/logicalMSA1MiB. Separateallocated2MiB
+  MPUenvelope stillrequired. Fullchain anddifferences in REFERENCE_REPOS.md
+  section0169 and privateMi8-user-request-source-comparison-0001.json. Include
+  fourVRMrail savedrestore BEFOREMSS; do not onlyhandleCX/MX/MSS ARC. Never
+  copyfixedTCS/topCXMXvotes/3.3Vdisable/skipBDF/hostcapquirk/calibration/PA.
 - NEXT0170 NOTREADY: actualCPU-local masked seven-peer qualification plus
   exactDAIF/G1/FP/source readback/restoration, NO private/TCS/READ/vote in
   thatdiagnostic. Reuse existingtypedmask/restore and actualnormalcaller;

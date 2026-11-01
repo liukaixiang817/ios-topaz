@@ -1073,3 +1073,36 @@ identity and installation notices all pass. This supersedes the earlier
 permission-only inference. Genuine portrait callback, HEVC completion and
 wallpaper pixels still require their own subsequent physical observations.
 Private proof:0132/actual-media-exec-loading-and-exact-method-proof.json.
+
+## Explicit Mi 8 Wi-Fi source comparison (0169)
+
+On2026-11-01 the user again requested using the Mi8 Wi-Fi implementation.
+Re-read the actual added C in pinned e930c26, without running scripts/prebuilts:
+`patches/xnu-mi8.patch` (`mi8_rproc.c`, `mi8_glink.c`, `mi8_hostsvc.c`,
+`mi8_wlfw.c`) and `patches/hackios-kernel.patch` (`lx_ath10k_bus.c`,
+`lx_ath10k_qmi.c`). This is source correspondence, not Polaris radio success.
+
+| Reference source | Polaris correspondence and required integration |
+| --- | --- |
+| `mi8_rproc_init`, `wlan_power`: four Wi-Fi supplies ON before MSS for `mi8rp_wlfw=4` | Own0114DT `qcom,icnss@18800000` points to phandles140..143: `ldoa5/7/17/25`. Include these VRM rails and their saved-state restoration in the power path; CX/MX/MSS ARC alone is insufficient. This does not authorize a voltage/enable store. |
+| `mi8_wlfw.c:arrive`: IND_REGISTER → HOST_CAP → MSA_INFO → assign returned bounded regions → MSA_READY → CAP | Reuse the protocol structure after owned allocation/VMID/MPU/cache/remote-DMA lifecycle exists. The ownDT logical MSA request is1MiB; an independently allocated/aligned2MiB MPU envelope is a separate ownership requirement, not a new1MiB/2MiB claim on reserved memory. |
+| `mi8_glink.c`: descriptor478, TX479, RX480 | Own vendor transport correspondence was already checked; preserve cached-first lookup and bounded ownership. No blind SMEM allocation or failed-trylock unlock. |
+| `mi8_wlfw_process` and `mi8_wlfw_enable`: MSA_READY / board data → FW_READY → WLAN_CFG → MISSION | Polaris must use its own firmware/calibration and actual chip/board responses. Do not inherit `skip_bdf`, host-cap quirk or default CE configuration solely because Mi8 used them. |
+| `lx_ath10k_bus.c`, `lx_ath10k_qmi.c`: WCN3990 SNOC, 12 CE IRQs, WLFW bridge, mission-gated work/IRQ lifetime | OwnDT confirms18800000/8MiB, stream40, SPI414..425. This is the native driver/transport path to adapt after power, MSA and DMA ownership; firmware-ready and a driver object alone do not prove scan/join/data. |
+| `com.redwood.wifi.plist`: configd setup and wait for en0 address | Configuration is downstream of a real interface and association. Do not replace hardware/network bring-up with an icon or a forced Settings capability. |
+
+OwnDT voltage constraints remain authoritative: L7 is1.8V, L17 is1.3V;
+ICNSS requests its CX/MX supply at0.8V and CH0 within0x2f5d00..0x328980uV,
+while the L25 regulator has its own3.0V init/min and3.312V max. The reference's
+fixed3.3V/HPM/enable writes and unconditional disable are not a saved baseline.
+The exact current VRM addresses/units/cache requests and full touched-register
+restore must be qualified before using this sequence. Do not inherit Mi8's
+fixed TCS or permanent top CX/MX votes. The user explicitly requires complete
+restoration, actual completion and UNKNOWN retention.
+
+Actual0169 independently captured seven normal-IRQ PSCI OFF replies and
+completed its Core/source/map retirement. It does not establish a current
+maskedCPU/DRV2/EE/EL3/VMID/MPU lease. The next qualification remains the
+CPU-local masked interval and exact restoration, then the fresh source-bound
+bounded RSC path. Carry the complete Mi8 Wi-Fi chain above into subsequent
+VRM/MSS/GLINK/WLFW/ath10k integration; do not repeat completed inventory boots.
