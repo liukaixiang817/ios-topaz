@@ -34,7 +34,7 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0168 only last actual recovered FASTBOOT07:55; NEW0169 independent normal CPU RO parent/link verified OFFLINE; new host/admission NOT READY
+### CURRENT0168 only last actual recovered FASTBOOT07:55; NEW0169 independent normal CPU RO parent/link and exacthost verified OFFLINE; new root/image/freeze NOT READY
 
 - Phone's ONLY last actual state remains independentproductpolaris07:55:36Z
   after user physicalrecovery. No new USB/image/payload/actualfirmwareAPI/SMC/
@@ -79,8 +79,13 @@ early samples only. On0029 the human already confirmed boot complete and said
   parentproofa0d4fffa5a8a2d3bb08b7c9bf1e6a4171f1b9ade21775cd8ee864118c7f54466/
   modelproof99316c1ce29fbcc45d912b13d80f300422f46ca32520ddea0f45382be4063659/
   sourceproofe296d169ec484d8c03fcde3b65427cfd3c80d3083318b71a376fbe1730ea03b8.
-- NEXT NEW exacthostprofile for63inputs/CPUROmetadata/1MiB FW+6MiB+128 host,
-  affectedhostchecks/actualno-mockadmit; actualoldpolicy already refuses new
+- FW f6759e1285b7adfe667052873297dd78a4e8d2c5 committed/pushed/remote matched.
+  NEW GCD_CLOCK_0169 literal63inputs/89GCDPower+94resource/CPUROscope hash,
+  explicitinteger1 CPURO modelmarker and no private/TCS/mask grant.23targeted
+  hosttests PASS,22priorliteralAST unchanged. Default6MiB+128host capacity
+  covers actual1MiBFW+native4MiB+128snapshot; oldprofiles remain exact.
+- NEXT complete NEW strictRO39 qualification, packagedoriginal81image/codec
+  and actualno-mockadmit; actualoldpolicy already refuses new
   source/metadata. New host/admission/packagedimage/freeze/ONEhelper NOTREADY,
   noUSBquery/send before ready. Nextrequiredcandidate transition mergeNEW
   strictRO39 roots/maps/GPT/ESP/journalmetadata/currentNV due0168UNKNOWN; old
