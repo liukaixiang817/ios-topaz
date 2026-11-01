@@ -34,6 +34,33 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0181 independent freeze + ONEofflinehelper complete; source readiness push pending; no native0181 attempt; actual Polaris FASTBOOT23:33; Wi-Fi NOT DONE
+
+- Independentfreeze/private/tmp/polaris-runtime-0181-frozen-0001 COPY888+
+  10COMMIT_ONLY/476currentcommittedsources/94compiledinputs/newinodes/nohardlinks,
+  root0700/privateNV0600preserved/noZigcache. Manifest
+  5e5ddbcd0be4d58aa0761d4f44577895e5ba761b787d4ea6ffaf2b583bf61261;
+  originalcurrent-runtime-source-freeze-0001.json SHA794614ce1d54f759322ef8896aef9f82140953d62b8bfb216c926a2f78b21d1e.
+  ONEdefaultofflinefrozenhelperPASS, nodevicecommand. FreezeHOSTf18a2c8ec9d600de1ffd345225e8584c369b606b;
+  FWd5df7ff890ba0fea513ccc292fc118b71b777e7a/HOSTprofile2f4650f38d12feb5536c56dfe8afd342a81ed71a.
+- Nativehelper uniquely/private/tmp/polaris-runtime-0181-frozen-0001/research/
+  polaris/uefi-ios-0181/boot-cpu-live-diagnostics-once-0001.py. It directlybinds
+  actualbroadkernel df995cae... andfuturelikesourcepublication873635fc...;
+  nofake"approved0181once"/noauthrename/no morepermissionquestion. ActualNEW0181
+  fullstrictRO39/rootNV8df356b3.../0f806986... after0180reset, twoSERIALnewmodels/
+  newGCD370/94inputs/fullcodec/image7bf6730b.../6033408B allbound.
+  ExistingABI CPU10096/parent1969104/firstfailure48, original200ms/READ50+25/
+  all68/CPU/source/normalargument/DB/UNKNOWNrestoregatesremainunchanged.
+- NEXT source+readinessapprovedpush/independentlsremote, create0181/wifi/live-
+  diagnostic-source-and-physical-handoff-push-proof-0001.json withactualfuturelike
+  approvalrecord/path/hash+matchedHEAD+FW/HOST/image/freeze; onlythenfrozenhelper
+  --boot-oncechecksactualcorrectPolarisFB8sandatomicallyclaimsNEWORIGINAL
+  phone-cpu-live-diagnostics-runtime-0001/boot.jsonbeforeONEtemporaryimage.
+  Thatrecordstillabsent; no0181nativeimage/payloadsent. No oldsessionreplay/
+  refreeze/oldpolicy/manifestedit/stripflags. Phone lastactualFB23:33 after
+  completednormalstrictROumount. No humanphysical/authorizationanswerpending.
+  AllworkersENDED/allchildrenSTOP; ONLYWi-Fi, realnetwork/sound/cameraNOTDONE.
+
 ### CURRENT0181 NEWfull39 current ROOT/NV + actual image/full codec complete; independent freeze/helper pending NOTREADY; actual Polaris FASTBOOT23:33; Wi-Fi NOT DONE
 
 - ONEnecessaryNEW0181strictROaudit37589 ENDED0; normalumount andindependentactual
