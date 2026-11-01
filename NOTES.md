@@ -51,6 +51,17 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/join/data; sound/cameraSTOP. FWf28acd7a.../HOST695ce7f... unchanged,
   no repeatedmodels/nativeCI/optical/oldinventory. Prior0178frozencontroller
   sessionENDED, cannotcontrolnewsession or modifyoldmanifest/policy/refreeze.
+- Read-only sourceaudit traced actual pwrpt_preboot→pwrcl_run_body→pwrpt_body→
+  pwra_prepare_checked→pwra_cmddb_prepared and terminal_gop_arm/hold/draw.
+  Currentthreeembeddedreaderpointer/fivemember gates occurbeforeprepared/CPU;
+  maskedaccess checks tenresidentobjectranges/disjointness beforefullDB.
+  No newdeterministic sourcebug established bythisreview. ExistingSOFTWARE
+  fixtures and old0172data cannot prove0178executionpoint orcurrentpermission.
+  No sourcechange/test/model/CI/deviceaction performedfor thisreview.
+- Separate factualquestion pending: whether0178screen showed V1HOLD/BODY/CPU/DB0
+  numericdiagnostic beforekeys. User's“已到FASTBOOT”alone didnot answerthat.
+  No furtherphysicalkeyrequest needed. Do not assume missingtextmeansnodraw;
+  continueindependentanalysis, waitfor thatfactbeforechoosinganotherdiagnostic.
 - NEXT sourceaudit actualphysicalcaller/leaf/objectranges/source-time and
   normal-vs-masked admission/diagnosticvisibility BEFOREanothercandidate;
   no immediateopaqueboot. Existingstrictpointer/owner/currentbytes/200ms/
