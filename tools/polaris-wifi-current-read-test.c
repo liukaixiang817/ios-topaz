@@ -90,7 +90,10 @@ static int current_read_body(void *context,const struct paic_io *memory,struct p
         .access={.memory=memory,.context=&path->access_context,.translate=current_read_AT,.read=current_read_load,
             .write=current_read_store,.RAM_translate=current_read_RAM_AT},
         .enumeration=enumeration,.native_flag=(uintptr_t)native_on,.record=path,.preparation=prep};
-    return pwrpt_body(&io,memory,p,w,g);
+#ifndef PWRPT_READ_BODY
+#define PWRPT_READ_BODY pwrpt_body
+#endif
+    return PWRPT_READ_BODY(&io,memory,p,w,g);
 }
 static int execute_read(unsigned fault)
 {
@@ -111,6 +114,7 @@ static int execute_read(unsigned fault)
     const struct pwrcl_io io={{{s,0,path_memory_arch,path_identity,order},path_locate,current_read_map},client_create,client_drop,own_name};
     return pwrcl_run_body(&io,enumeration,2,c,early,cr,rw,current_read_body,0);
 }
+ #ifndef POLARIS_CURRENT_READ_FIXTURE_ONLY
 int main(int argc,char**argv)
 {
     assert(argc==5&&!posix_memalign((void**)&arena,4096,0x800000));
@@ -161,3 +165,5 @@ int main(int argc,char**argv)
     printf("{\"passed\":true,\"checks\":%u,\"body_bytes\":%zu,\"access_bytes\":%zu,\"read_bytes\":%zu,\"same_prepare_private_Device_CPU_READ_restore_Delete\":true,\"ARC_missing_cache_not_zero\":true,\"resource_WRITE_reachable\":false,\"READ_RAW_not_qualified_vote\":true,\"physical_executed\":false}\n",checks,sizeof(*path),sizeof(path->access),sizeof(path->read));
     free(original);free(npa_original);free(rp_original);free(cmd_original);free(arena);return 0;
 }
+
+#endif

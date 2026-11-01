@@ -298,7 +298,11 @@ _Static_assert(sizeof(log_buffer)>=2*(PWCQ_RAW_BYTES+sizeof(pacgq_preboot_record
 #if EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE
 #if EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
 #if EFI_XNU_WIFI_ARC_READ_AVAILABLE
+#if EFI_XNU_WIFI_ARC_READ_WORK_ADMISSION
+_Static_assert(sizeof(struct pwrpt_result)==1943840,"complete current ARC READ/work body raw ABI");
+#else
 _Static_assert(sizeof(struct pwrpt_result)==1941984,"complete current ARC READ body raw ABI");
+#endif
 _Static_assert(sizeof(struct pwra_result)==401936,"complete current ARC READ access raw ABI");
 #else
 _Static_assert(sizeof(struct pwrpt_result)==1892336,"complete prepared power body raw ABI");

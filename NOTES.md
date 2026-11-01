@@ -34,6 +34,49 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0170 remains controlled FASTBOOT09:44; NEW0171 same-private bounded READ work admission verified OFFLINE; host/freeze NOT READY
+
+- Phone remains actual0170controlledFASTBOOT09:44:25.515530Z, no newUSB/
+  firmwareAPI/PSCI/AT/MMIO/payload/UTC/UI/nativeCI in0171 work so far.
+  AllworkersENDED/allchildrenSTOP. Wi-Fi scan/join/data still NOTDONE.
+- NEWdefaultOFF --wifi-power-current-arc-read-work-admission runs SAMEfull
+  existing preparation/currentprivate/CPU/Device/threeREAD/restore/Delete
+  path. Before anymask/TCSstore it retains all68 already retiredRO target/
+  completeCorehash timing samples, uses slowest notaverage, audits remaining
+  Core4+selectedpages/RPMh4/CmdDb3 viaactual compilerentry instrumentation of
+  unchangedproductionfunctions insoftwarepeer. Smaller genericverifiers use
+  TWO Coreunits each:18+pages. FullREAD50ms+nonhash25ms reserve included and
+  compared to actualremaining original200ms, no old125ms policy change or
+  deadline/ticket reset/rebase. Estimate is not hardware grant/walltime proof.
+- Historical0164 frozenCABI shows firstopen->lastCorelive43.885260ms NOTtotal
+  retirement; currentpreparedbound36.243333ms/RAMcomplete36.765990ms,
+  namespace8.043542ms. This is old evidence, notnewphysical performance or
+  cause of0167/0168. No staleROcontext/clientheld/leasebool imported.
+- Time decline beforemask must fullclose currentCmdDb/namespace/pool/client
+  andknownDelete. Bad/partial/stale ROphase/source/hash/AT/clock/nativeflag,
+  reentry/residualUNKNOWN/counters stay sticky andblockClock/native/PON/
+  receipt. Initialworkrecord must be entirelyzero; partialfields retained,
+  error sticky; samplebounds checked. All old CPU/RSC/fullrestore/UNKNOWN
+  gates unchanged. ResourceWRITE compiledout; responsesRAW notsavedvotes.
+- NewfullbodyRAW_V3 1943840B including1856Bworkrecord; staged1660544/client
+  227104/access401936/CPU10048/READ49488 allcomplete. FW10MiB/host14MiB+128
+  andactualsnapshot unchanged/fullcapacityassert. Driver0003
+  SHAe846f9b0a217bdc10f0fee94e37f6afbf074f90d99702d638473b99ad72c5e09/
+  15932928B/90inputs. Previous0001/0002 are historical before final checks.
+- Final23newwork+30newfullREAD+30oldworkOFF=83ASAN/UBSAN PASS;
+  actualmainCOFF/MachO|maxframe1024/defaultOFF-QEMUpp/fullEFI PASS,
+  actualC functionentry audit tail[4+pages,4,3] matched. Parentproof0003
+  SHA0295c78fe1e84c9cccab87cabd61ecd7f944d0d0d3fb0a7e22a63ff6879f6dd5.
+  FinaltwoSERIALnewwholeEFI-XNU0003 each19checks/90sameinputs with11resource+
+  1battery literalint1/actualQEMUpp no physicalbody/raw passed. Prior model
+  revisions retained honestly; finaltwo run after lastsource changes.
+  See shim/polaris/uefi-wifi-read-work-scope.md. Newhostliteral/codec/freeze/
+  ONEhelper remain, candidateNOTREADY; no actualREAD orvote success claim.
+- User0170payload reuse exception was ONLY0170once andconsumed; prior auto
+  reviewer required explicit exception for old0145kernelpath. New0171candidate
+  must be concrete/reviewable before requesting any needed newexception;
+  do not stageimage first or rename/indirectlybypass/relaxoldpolicy.
+
 ### CURRENT0170 actual controlled FASTBOOT09:44; normal+masked seven-peer CPU and exact local restore/full RO retirement SUCCESS; Wi-Fi scan/join/data NOT DONE
 
 - NORMAL0170 exit89386 ENDED0 at2026-11-01T09:44:12.634775Z, nativecookie47181240865/

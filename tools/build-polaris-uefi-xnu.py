@@ -456,7 +456,10 @@ def main():
     ap.add_argument('--wifi-power-current-arc-read',action='store_true',help='default-OFF same qualified private/CPU/Device interval: three bounded single-command READs and full restoration; RAW responses only, resource WRITE compiled unreachable in this scope')
     ap.add_argument('--wifi-cpu-ro-admission',action='store_true',help='default-OFF independent normal-IRQ seven-peer AFFINITY_INFO64 raw capture and full source/map retirement; NO private client, mask, TCS or READ')
     ap.add_argument('--wifi-cpu-masked-ro-admission',action='store_true',help='default-OFF fresh normal and masked seven-peer CPU-local observations, exact DAIF/G1/FP/source restoration and full independent RO retirement; NO private client/TCS/READ/vote or hardware grant')
+    ap.add_argument('--wifi-power-current-arc-read-work-admission',action='store_true',help='default-OFF same complete private READ path; before mask compare all68 retired-RO timing samples, counted tail, full50ms READ and25ms reserve against remaining ORIGINAL200ms; estimate-only, no lease/deadline renewal')
     a=ap.parse_args();r=Path(__file__).resolve().parents[1]
+    if a.wifi_power_current_arc_read_work_admission and not a.wifi_power_current_arc_read:
+        ap.error('READ work admission requires the same full prepared/current capture-only READ scope')
     if a.wifi_cpu_masked_ro_admission and not a.wifi_cpu_ro_admission:
         ap.error('masked CPU RO requires the distinct independent CPU RO scope')
     if a.wifi_power_current_arc_read and not a.wifi_power_prepared_transaction:
@@ -906,6 +909,7 @@ def main():
 #define EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE {int(a.wifi_power_prepared_transaction)}
 #define EFI_XNU_WIFI_ARC_READ_AVAILABLE {int(a.wifi_power_current_arc_read)}
 #define EFI_XNU_WIFI_ARC_READ_CAPTURE_ONLY 1
+#define EFI_XNU_WIFI_ARC_READ_WORK_ADMISSION {int(a.wifi_power_current_arc_read_work_admission)}
 #define EFI_XNU_WIFI_CPU_RO_ADMISSION {int(a.wifi_cpu_ro_admission)}
 #define EFI_XNU_WIFI_CPU_MASKED_RO_ADMISSION {int(a.wifi_cpu_masked_ro_admission)}
 #define EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE {int(cmddb_binding is not None)}
@@ -1474,6 +1478,25 @@ def main():
             wifi_CPU0_power_current_ARC_CPU_refusal_requires_all_guard_returns_and_full_close=True,
             wifi_CPU0_power_current_ARC_CPU_refusal_never_masks_or_stores=True,
             wifi_CPU0_power_current_ARC_unsupported_or_unknown_CPU_state_quarantines=True)
+    if a.wifi_power_current_arc_read_work_admission:
+        manifest.update(wifi_CPU0_power_raw_format='CURRENT_ARC_READ_RAW_V3',wifi_CPU0_power_raw_bytes=1943840,
+            wifi_CPU0_power_current_ARC_raw_format='CURRENT_ARC_READ_RAW_V3',
+            wifi_CPU0_power_current_ARC_path_raw_bytes=1943840,
+            wifi_CPU0_power_current_ARC_work_admission=True,wifi_CPU0_power_current_ARC_work_default_OFF=True,
+            wifi_CPU0_power_current_ARC_work_before_any_CPU_mask_or_RSC_store=True,
+            wifi_CPU0_power_current_ARC_work_reuses_only_completed_RO_sample_evidence=True,
+            wifi_CPU0_power_current_ARC_work_all_samples_including_slowest=68,
+            wifi_CPU0_power_current_ARC_work_Core_count_tail='4+selected_pages',
+            wifi_CPU0_power_current_ARC_work_RPMh_count_tail=4,wifi_CPU0_power_current_ARC_work_CmdDb_count_tail=3,
+            wifi_CPU0_power_current_ARC_work_generic_verifier_Core_units_each=2,
+            wifi_CPU0_power_current_ARC_work_total_source_units='18+selected_pages',
+            wifi_CPU0_power_current_ARC_work_full_READ_reserve_ticks=960000,
+            wifi_CPU0_power_current_ARC_work_nonhash_reserve_ticks=480000,
+            wifi_CPU0_power_current_ARC_work_original_remaining_200ms_unchanged=True,
+            wifi_CPU0_power_current_ARC_work_no_new_or_rebased_ticket=True,
+            wifi_CPU0_power_current_ARC_work_decline_requires_full_namespace_pool_client_Delete_close=True,
+            wifi_CPU0_power_current_ARC_work_unknown_blocks_parent_native_PON_receipt=True,
+            wifi_CPU0_power_current_ARC_work_estimate_not_walltime_or_hardware_grant=True)
     if a.wifi_cpu_ro_admission:
         manifest.update(wifi_CPU0_power_transaction=False,
             wifi_CPU0_power_CPU_RO_admission=True,wifi_CPU0_power_CPU_RO_default_OFF=True,

@@ -5,6 +5,9 @@
  * never an ownership grant. Every raw component remains resident. */
 #ifndef POLARIS_UEFI_WIFI_POWER_PATH_H
 #define POLARIS_UEFI_WIFI_POWER_PATH_H
+#ifndef EFI_XNU_WIFI_ARC_READ_WORK_ADMISSION
+#define EFI_XNU_WIFI_ARC_READ_WORK_ADMISSION 0
+#endif
 #include "uefi-wifi-rsc-access.h"
 #if EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE && !defined(POLARIS_EFI_TEST_QEMU)
 #if EFI_XNU_WIFI_ARC_READ_AVAILABLE && !EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
@@ -12,6 +15,24 @@
 #endif
 #include "uefi-wifi-cmddb-budget.h"
 #include "uefi-wifi-cmddb-staged.h"
+#if EFI_XNU_WIFI_ARC_READ_WORK_ADMISSION
+#if !EFI_XNU_WIFI_ARC_READ_AVAILABLE || !EFI_XNU_WIFI_ARC_READ_CAPTURE_ONLY || !EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
+#error READ work admission belongs only to the full prepared/current capture-only READ path
+#endif
+/* Retired preparation timing is an estimate, never an authority or new lease.
+ * A complete source+head+lock+node+target guard includes a full Core hash.
+ * Keep every sample (including the slowest), no new timing context/ticket. */
+#define PWRPT_WORK_SAMPLES (PWSP_PHASES*(PWSP_PAGES+1u))
+#define PWRPT_WORK_RESERVE UINT64_C(480000) /*25ms for non-hash work, estimate only*/
+struct pwrpt_work_sample {uint64_t before,after,ticks;};
+struct pwrpt_work {
+    uint32_t attempted,error,unknown,complete,admitted,declined,samples,source_units;
+    uint64_t preparation,core,ticket,maximum_ticks,hash_ticks,READ_ticks,reserve_ticks;
+    uint64_t estimate_ticks,elapsed_ticks,remaining_ticks;
+    struct pgcd_arch current;uint32_t native_before,native_after;
+    struct pwrpt_work_sample sample[PWRPT_WORK_SAMPLES];
+};
+#endif
 struct pwrpt_refusal {
     uint32_t attempted,retired,hash_count[2],hash_failed[2];
     uint8_t before_global[0x110],before_hashes[2][5][32];
@@ -35,8 +56,13 @@ struct pwrpt_result {
     struct pwra_result access;
     struct pwra_context access_context;
     struct pwrpt_refusal refusal;
+#if EFI_XNU_WIFI_ARC_READ_WORK_ADMISSION
+    struct pwrpt_work work;
+#endif
 };
-#if EFI_XNU_WIFI_ARC_READ_AVAILABLE
+#if EFI_XNU_WIFI_ARC_READ_WORK_ADMISSION
+_Static_assert(sizeof(struct pwrpt_result)==1943840,"complete current ARC READ/work admission RAW V3");
+#elif EFI_XNU_WIFI_ARC_READ_AVAILABLE
 _Static_assert(sizeof(struct pwrpt_result)==1941984,"complete current ARC READ scope raw V1");
 #endif
 struct pwrpt_io {
@@ -48,9 +74,12 @@ struct pwrpt_io {
 #endif
 };
 enum pwrpt_error {PWRPT_OK,PWRPT_ARGUMENT,PWRPT_CMDDB,PWRPT_RAM,PWRPT_PLAN,PWRPT_DEVICE,
-    PWRPT_CPU,PWRPT_ACCESS,PWRPT_TRANSACTION,PWRPT_RESTORE,PWRPT_NAMESPACE,PWRPT_READ_ONLY};
+    PWRPT_CPU,PWRPT_ACCESS,PWRPT_TRANSACTION,PWRPT_RESTORE,PWRPT_NAMESPACE,PWRPT_READ_ONLY,PWRPT_WORK};
 static inline int pwrpt_unsafe(const struct pwrpt_result *r)
 {return r->unknown||pwcd_unknown(&r->cmd)||
+#if EFI_XNU_WIFI_ARC_READ_WORK_ADMISSION
+    r->work.unknown||(r->work.attempted&&!r->work.complete)||
+#endif
 #if EFI_XNU_WIFI_ARC_READ_AVAILABLE
     (r->read.io.attempted&&!pwrr_retired(&r->read))||
 #endif
@@ -106,6 +135,79 @@ static inline int pwrpt_cpu_returned_refusal(const struct pwrpt_result *r,struct
     return 1;
 }
 #endif
+#if EFI_XNU_WIFI_ARC_READ_WORK_ADMISSION
+static inline int pwrpt_work_fail(struct pwrpt_result *r,unsigned error)
+{if(!r->work.error)r->work.error=error;r->work.unknown=1;return pwrpt_fail(r,PWRPT_WORK,1);}
+/* This SAME private phase already revalidated current namespace, selected
+ * bytes, full provider RAM and actual Device mappings. Only reject planning
+ * work here. All CPU/READ/source/200ms gates still execute after admission.
+ * The counted tail is Core(4+pages), RPMh4, CmdDb3. Count both smaller generic
+ * scalar image verifiers as TWO Core units each: 18+pages total. The complete
+ * engine50ms and25ms non-hash reserve are included, never deducted or reset.
+ * Estimates cannot interrupt a nonreturning firmware service/SMC or prove a
+ * physical walltime bound; runtime freshness and UNKNOWN remain mandatory. */
+static inline int pwrpt_work_admit(const struct paic_io *memory,struct pwrcl_result *p,
+    const struct pwrph_work *w,struct pgcd_context *g,const struct pwsp_result *prepared,
+    struct pwrpt_result *r)
+{
+    struct pwrpt_work *b=&r->work;
+    if(!pwra_zero(b,sizeof(*b)))return pwrpt_work_fail(r,1);b->attempted=1;
+    b->preparation=(uintptr_t)prepared;b->core=(uintptr_t)g;b->ticket=(uintptr_t)(g?g->ticket:0);
+    if(!memory||!p||!w||!g||!prepared||g->record!=&p->core||g->ticket!=&p->core_ticket||
+       !pwrph_context_ready(g)||p->core_ticket.spent!=1||p->core_ticket.result!=(uintptr_t)&p->core||
+       !p->client_held||p->client_returned||p->retired||p->error||p->unknown||p->outstanding||
+       !pgcd_in_self(&p->core,(uintptr_t)b,sizeof(*b))||!pwrcl_owned(memory,p,w,(uintptr_t)b,sizeof(*b))||
+       !pgcd_in_self(&p->core,(uintptr_t)prepared,sizeof(*prepared))||!pwrcl_owned(memory,p,w,(uintptr_t)prepared,sizeof(*prepared))||
+       !pgcd_in_self(&p->core,r->native_flag,4)||!pwrcl_owned(memory,p,w,r->native_flag,4)||
+       r->CPU.attempted||!pwra_zero(&r->CPU,sizeof(r->CPU))||!pwra_zero(&r->read,sizeof(r->read))||
+       !pwra_zero(&r->transaction,sizeof(r->transaction))||!pwra_zero(&r->access,sizeof(r->access))||
+       !r->prepared_cmd.complete||!r->prepared_cmd.stable||pwcp_unsafe(&r->prepared_cmd)||
+       r->prepared_cmd.preparation!=(uintptr_t)prepared||!r->prepared_cmd.pages||r->prepared_cmd.pages>PWCP_PAGES||
+       !r->RAM[0].complete||r->RAM[0].error||!r->device[0].complete||r->device[0].unknown||r->device[0].error||
+       !prepared->complete||!prepared->retired||pwsp_unsafe(prepared)||prepared->parts!=4||
+       prepared->assembled[0]!=PWCD_DB_BYTES||prepared->assembled[1]!=PWCD_DB_BYTES||
+       !prepared->parsed[0]||!prepared->parsed[1])return pwrpt_work_fail(r,2);
+    b->native_before=*(const volatile uint32_t*)(uintptr_t)r->native_flag;
+    if(b->native_before)return pwrpt_work_fail(r,3);
+    for(unsigned phase=0;phase<PWSP_PHASES;phase++){
+        const struct pwsp_phase *s=&prepared->phase[phase];
+        if(!s->complete||!s->retired||!s->reader.closed||s->core.phase!=3||s->core.error||
+           s->core.TPL_initial!=4||s->core.TPL_final!=4||!s->context.finished||
+           s->after.cpu.ticks<s->core.before.cpu.ticks||s->after.cpu.ticks-s->core.before.cpu.ticks>PGCD_FRESH_TICKS||
+           !pwfc_arch_stable(&s->core.before.cpu,&s->after.cpu)||s->after.cpacr!=0x300000||
+           s->context.record!=&s->core||s->context.ticket!=&s->ticket||s->ticket.spent!=1||s->ticket.result!=(uintptr_t)&s->core||
+           s->after.cpu.ticks>g->record->before.cpu.ticks||s->native_before||s->native_after||s->native_last||
+           !s->native_before_valid||!s->native_after_valid)return pwrpt_work_fail(r,4);
+        for(unsigned k=0;k<PWSP_PAGES+1;k++){
+            const struct pgns_target *t=&s->target[k];
+            if(t->attempted!=1||t->complete!=1||t->hash_count!=5||t->hash_failed||
+               t->head_bytes!=16||t->lock_bytes!=24||t->node.bytes!=80||
+               t->target_AT.issued!=1||t->target_AT.returned!=1||t->target_AT.saved!=t->target_AT.restored||
+               t->target_AT.page!=t->page||t->target_AT.par!=(UINT64_C(0xff00000000000b80)|t->page)||
+               !pwfc_arch_stable(&s->core.before.cpu,&t->before.cpu)||!pwfc_arch_stable(&s->core.before.cpu,&t->after.cpu)||
+               t->before.cpacr!=0x300000||t->after.cpacr!=0x300000||
+               t->before.cpu.ticks<s->core.before.cpu.ticks||t->after.cpu.ticks<=t->before.cpu.ticks||
+               t->after.cpu.ticks>s->after.cpu.ticks)return pwrpt_work_fail(r,5);
+            for(unsigned h=0;h<5;h++)if(!pgcd_equal(t->source_hash[h],pgci_ranges[h].sha256,32))return pwrpt_work_fail(r,6);
+            if(b->samples>=PWRPT_WORK_SAMPLES)return pwrpt_work_fail(r,5);
+            struct pwrpt_work_sample *sample=&b->sample[b->samples++];
+            sample->before=t->before.cpu.ticks;sample->after=t->after.cpu.ticks;sample->ticks=sample->after-sample->before;
+            if(sample->ticks>b->maximum_ticks)b->maximum_ticks=sample->ticks;
+        }
+    }
+    if(b->samples!=PWRPT_WORK_SAMPLES||!b->maximum_ticks||!pgcd_live(g,&b->current,0)||
+       !pwrcl_fresh(memory,p)||!pgcd_cached_owner_stable(g))return pwrpt_work_fail(r,7);
+    b->native_after=*(const volatile uint32_t*)(uintptr_t)r->native_flag;
+    if(b->native_after||b->current.cpu.ticks<g->record->before.cpu.ticks)return pwrpt_work_fail(r,8);
+    b->source_units=18+r->prepared_cmd.pages;b->READ_ticks=PWRSC_DEADLINE;b->reserve_ticks=PWRPT_WORK_RESERVE;
+    if(b->maximum_ticks>(UINT64_MAX-b->READ_ticks-b->reserve_ticks)/b->source_units)return pwrpt_work_fail(r,9);
+    b->hash_ticks=b->maximum_ticks*b->source_units;b->estimate_ticks=b->hash_ticks+b->READ_ticks+b->reserve_ticks;
+    b->elapsed_ticks=b->current.cpu.ticks-g->record->before.cpu.ticks;
+    if(b->elapsed_ticks>PGCD_FRESH_TICKS)return pwrpt_work_fail(r,10);
+    b->remaining_ticks=PGCD_FRESH_TICKS-b->elapsed_ticks;
+    b->admitted=b->estimate_ticks<=b->remaining_ticks;b->declined=!b->admitted;b->complete=1;paic_actual_order(0);return 1;
+}
+#endif
 static inline int pwrpt_body(void *context,const struct paic_io *memory,struct pwrcl_result *p,
     struct pwrph_work *work,struct pgcd_context *g)
 {
@@ -153,6 +255,10 @@ static inline int pwrpt_body(void *context,const struct paic_io *memory,struct p
     if(!pwrmd_collect(&io->device,p,work,g,&r->RAM[0],&r->device[0])){
         pwrpt_fail(r,PWRPT_DEVICE,r->device[0].unknown||r->device[0].outstanding||pgcd_uncertain(g));goto before_mask;
     }
+#if EFI_XNU_WIFI_ARC_READ_WORK_ADMISSION
+    if(!pwrpt_work_admit(memory,p,work,g,io->preparation,r))goto before_mask;
+    if(!r->work.admitted){pwrpt_fail(r,PWRPT_WORK,0);goto before_mask;}
+#endif
     r->phase=2;
     if(!pwrpc_begin(&io->CPU,memory,p,work,g,io->native_flag,&r->CPU)){
 #if EFI_XNU_WIFI_ARC_READ_AVAILABLE && EFI_XNU_WIFI_ARC_READ_CAPTURE_ONLY
@@ -315,8 +421,13 @@ static inline void pwrpt_report(void (*append)(const char *))
     append("\r\nWIFI_POWER_CLIENT_RAW_V1_END\r\n");
 #if EFI_XNU_WIFI_ARC_READ_AVAILABLE
 #if EFI_XNU_WIFI_ARC_READ_CAPTURE_ONLY
+#if EFI_XNU_WIFI_ARC_READ_WORK_ADMISSION
+    append("WIFI_CURRENT_ARC_READ_RAW_V3_BEGIN\r\n");pwrpt_raw_hex(append,&pwrpt_record,sizeof(pwrpt_record));
+    append("\r\nWIFI_CURRENT_ARC_READ_RAW_V3_END\r\n");
+#else
     append("WIFI_CURRENT_ARC_READ_RAW_V2_BEGIN\r\n");pwrpt_raw_hex(append,&pwrpt_record,sizeof(pwrpt_record));
     append("\r\nWIFI_CURRENT_ARC_READ_RAW_V2_END\r\n");
+#endif
     append("WIFI_CURRENT_ARC_READ_SCOPE=THREE_SINGLE_COMMAND_READS_COMPLETE_TCS_RW_RESTORE_SOURCE_CPU_NAMESPACE_DELETE RAW_WORDS_ONLY_NO_RESOURCE_WRITE_NO_MSS_NO_NV_SERVE_NO_RADIO_PERMISSION\r\n");
 #else
     append("WIFI_CURRENT_ARC_POWER_RAW_V1_BEGIN\r\n");pwrpt_raw_hex(append,&pwrpt_record,sizeof(pwrpt_record));
