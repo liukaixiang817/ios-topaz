@@ -451,6 +451,7 @@ def main():
     ap.add_argument('--wifi-power-cmddb-bounded-gcd',action='store_true',help='default-OFF capture-only diagnostic using finite source-bound original Core RAM namespace; no original GCD query fallback')
     ap.add_argument('--wifi-power-cmddb-first-node-stop',action='store_true',help='default-OFF failure-isolation cutpoint: validate and retain first Core namespace node, then planned known-client retirement; NO database target load or full-namespace claim')
     ap.add_argument('--wifi-power-cmddb-budget-admission',action='store_true',help='default-OFF complete bounded capture with independent completed RO timing admission BEFORE private Create; estimate only, unchanged private/final 200ms and ownership gates')
+    ap.add_argument('--wifi-power-cmddb-staged-ro',action='store_true',help='default-OFF four independent completed RO phases capture64KiB each before ANY private client; full two-pass namespaces/immediate source+AT guards and original200ms per ticket retained')
     a=ap.parse_args();r=Path(__file__).resolve().parents[1]
     if a.test_wled_native_exit and (not a.wled_native_runtime_test or not a.test_qemu or
         a.test_ram_drain!='success' or a.test_wled_native_fault or a.test_wled_native_lifecycle or
@@ -519,6 +520,8 @@ def main():
     namespace_header=None;namespace_binding=None
     if a.wifi_power_cmddb_first_node_stop and not a.wifi_power_cmddb_bounded_gcd:
         ap.error('first-node planned stop requires the explicit bounded capture-only scope')
+    if a.wifi_power_cmddb_staged_ro and (not a.wifi_power_cmddb_bounded_gcd or a.wifi_power_cmddb_first_node_stop or a.wifi_power_cmddb_budget_admission):
+        ap.error('staged RO preparation requires its distinct full bounded capture, never an old first-node or budget scope')
     if a.wifi_power_cmddb_budget_admission and (not a.wifi_power_cmddb_bounded_gcd or a.wifi_power_cmddb_first_node_stop):
         ap.error('work admission requires the distinct full bounded capture, never first-node mode')
     if a.wifi_power_cmddb_bounded_gcd:
@@ -884,6 +887,7 @@ def main():
 #define EFI_XNU_WIFI_GCD_NAMESPACE_RO_AVAILABLE {int(a.wifi_power_cmddb_bounded_gcd)}
 #define EFI_XNU_WIFI_CMDDB_FIRST_NODE_STOP {int(a.wifi_power_cmddb_first_node_stop)}
 #define EFI_XNU_WIFI_CMDDB_BUDGET_ADMISSION {int(a.wifi_power_cmddb_budget_admission)}
+#define EFI_XNU_WIFI_CMDDB_STAGED_RO_AVAILABLE {int(a.wifi_power_cmddb_staged_ro)}
 #define EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE {int(cmddb_binding is not None)}
 #define EFI_XNU_AUDIO_CLOCK_GCD_QUERY_AVAILABLE {int(gcd_enabled)}
 #define EFI_XNU_AUDIO_CLOCK_QUERY_AVAILABLE {int(audio_clock_binding is not None)}
@@ -976,7 +980,8 @@ def main():
                  'tools/polaris-wifi-cmddb-identity.py',cmddb_pe_relative]
     if namespace_binding:
         inputs+=['shim/polaris/uefi-wifi-gcd-namespace.h','tools/polaris-wifi-gcd-namespace-identity.py']
-    if cmddb_binding:inputs+=['shim/polaris/uefi-wifi-cmddb-budget.h']
+    if cmddb_binding:inputs+=['shim/polaris/uefi-wifi-cmddb-budget.h','shim/polaris/uefi-wifi-cmddb-staged.h']
+    if a.wifi_power_cmddb_staged_ro:inputs+=['shim/polaris/uefi-wifi-gcd-ro-owner.h']
     if rpmh_binding:
         inputs+=['shim/polaris/uefi-wifi-rpmh-readonly.h','tools/polaris-wifi-rpmh-identity.py',
                  'tools/polaris-wifi-rpmh-identity.h',rpmh_pe_relative]
@@ -1330,6 +1335,44 @@ def main():
                     wifi_CPU0_power_CmdDb_work_admission_Core_hash_checkpoints=5,
                     wifi_CPU0_power_CmdDb_work_admission_original_fresh_ticks=3840000,
                     wifi_CPU0_power_CmdDb_work_admission_raw_bytes=31552)
+            if a.wifi_power_cmddb_staged_ro:
+                # The private-client/power flags are link dependencies only.
+                # Its actual parent selects this RO caller exclusively. Do
+                # not advertise inactive private/critical/writer effects.
+                manifest.update(wifi_CPU0_RPMh_RAM_readonly=True,
+                    wifi_CPU0_RPMh_client_or_vote=False,wifi_CPU0_RPMh_MMIO_or_SMC=False,
+                    wifi_CPU0_RPMh_provider_API_calls=0,wifi_CPU0_RPMh_private_client=False,
+                    wifi_CPU0_RPMh_private_compiled_dependency_only=True,
+                    wifi_CPU0_RPMh_private_physical_body=False,
+                    wifi_CPU0_RPMh_private_raw_bytes=0,wifi_CPU0_RPMh_private_API_calls_max=0,
+                    wifi_CPU0_RPMh_private_BS_LocateProtocol_calls_max=0,
+                    wifi_CPU0_RPMh_private_BS_GetMap_calls_max=0,
+                    wifi_CPU0_RPMh_private_direct_provider_RAM_body_only=False,
+                    wifi_CPU0_power_execution_kind='STAGED_CMDDB_RO_PREPARATION',
+                    wifi_CPU0_power_raw_format='STAGED_RO_RAW_V1',wifi_CPU0_power_raw_bytes=1660544,
+                    wifi_CPU0_power_client_raw_bytes=0,wifi_CPU0_power_access_raw_bytes=0,
+                    wifi_CPU0_power_CPU_raw_bytes=0,wifi_CPU0_power_guarded_PSCI_calls_max=0,
+                    wifi_CPU0_power_exact_local_restore_before_known_Delete=False,
+                    wifi_CPU0_power_CmdDb_planned_stop_error=None,
+                    wifi_CPU0_power_CmdDb_GCD_namespace_target_guard_count=68,
+                    wifi_CPU0_power_CmdDb_staged_RO_prepare=True,
+                    wifi_CPU0_power_CmdDb_staged_RO_default_OFF=True,
+                    wifi_CPU0_power_CmdDb_staged_RO_phases=4,
+                    wifi_CPU0_power_CmdDb_staged_RO_bytes_per_phase=65536,
+                    wifi_CPU0_power_CmdDb_staged_RO_phase_raw_bytes=349456,
+                    wifi_CPU0_power_CmdDb_staged_RO_original_fresh_ticks=3840000,
+                    wifi_CPU0_power_CmdDb_staged_RO_independent_resident_spent_once_tickets=True,
+                    wifi_CPU0_power_CmdDb_staged_RO_original_GetMap_calls_max=8,
+                    wifi_CPU0_power_CmdDb_staged_RO_original_LocateProtocol_calls_max=4,
+                    wifi_CPU0_power_CmdDb_staged_RO_full_namespace_passes=8,
+                    wifi_CPU0_power_CmdDb_staged_RO_full_database_copies=2,
+                    wifi_CPU0_power_CmdDb_staged_RO_before_any_private_client=True,
+                    wifi_CPU0_power_CmdDb_staged_RO_NO_deadline_reset_or_rebase=True,
+                    wifi_CPU0_power_CmdDb_staged_RO_final_native_flag_source_literal=True,
+                    wifi_CPU0_power_CmdDb_staged_RO_no_continuous_hardware_lease_claim=True,
+                    wifi_CPU0_power_CmdDb_staged_RO_all_loaded_headers_before_after=True,
+                    wifi_CPU0_power_CmdDb_staged_RO_cross_phase_namespace_map_source_equal=True,
+                    wifi_CPU0_power_CmdDb_staged_RO_original_ARC_decoder_reused=True)
     (out/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
     print(json.dumps({k:manifest[k] for k in ['artifact','sha256','bytes','QEMU_variant','device_execution_tested']}))
 

@@ -9,9 +9,17 @@
 #ifndef EFI_XNU_WIFI_CMDDB_FIRST_NODE_STOP
 #define EFI_XNU_WIFI_CMDDB_FIRST_NODE_STOP 0
 #endif
+#ifndef EFI_XNU_WIFI_CMDDB_STAGED_RO_AVAILABLE
+#define EFI_XNU_WIFI_CMDDB_STAGED_RO_AVAILABLE 0
+#endif
 #if EFI_XNU_WIFI_GCD_NAMESPACE_RO_AVAILABLE && !defined(POLARIS_EFI_TEST_QEMU)
 #include "uefi-wifi-rpmh-client.h"
 #include "uefi-wifi-gcd-namespace-binding.h"
+#if EFI_XNU_WIFI_CMDDB_STAGED_RO_AVAILABLE
+#include "uefi-wifi-gcd-ro-owner.h"
+#else
+struct pgns_ro_owner;
+#endif
 #define PGNS_NODES 512u
 struct pgns_translation {uint64_t page,saved,par,restored;uint32_t issued,returned;};
 struct pgns_node {uint64_t address;uint32_t bytes,pages;uint8_t raw[PGNS_NODE_BYTES];struct pgns_translation AT[2];};
@@ -44,13 +52,23 @@ static inline int pgns_live(struct pgcd_context *g,struct pgns_result *r,struct 
        !pgcd_equal(g->record->DS_raw[0],(const void*)(uintptr_t)g->record->DS,168))return pgns_fail(r,PGNS_CONTEXT,1);
     return 1;
 }
-static inline int pgns_copy(const struct pgns_io *io,struct pwrcl_result *p,const struct pwrph_work *w,
+static inline int pgns_read_owned(const struct pgns_io *io,struct pwrcl_result *p,const struct pwrph_work *w,
+    struct pgcd_context *g,struct pgns_ro_owner *ro,uint64_t at,uint32_t bytes,int heap)
+{
+    if(p){if(ro||!w)return 0;return heap?(!(at&7)&&pwrcl_heap(io->memory,p,w,at,bytes)):pwrcl_owned(io->memory,p,w,at,bytes);}
+#if EFI_XNU_WIFI_CMDDB_STAGED_RO_AVAILABLE
+    return io&&io->memory&&io->memory->system==g->io.system&&pgns_ro_owned(g,ro,at,bytes,heap);
+#else
+    (void)g;(void)ro;return 0;
+#endif
+}
+static inline int pgns_copy_as(const struct pgns_io *io,struct pwrcl_result *p,const struct pwrph_work *w,
     struct pgcd_context *g,struct pgns_result *r,void *out,uint64_t at,uint32_t bytes,uint32_t *done,
-    struct pgns_translation *trace,uint32_t *pages,int heap)
+    struct pgns_translation *trace,uint32_t *pages,int heap,struct pgns_ro_owner *ro)
 {
     struct pgcd_arch current;*done=0;
     if(!pgns_live(g,r,&current)||!bytes||at>UINT64_MAX-bytes||at+bytes>UINT64_MAX-4095||
-       (heap?((at&7)||!pwrcl_heap(io->memory,p,w,at,bytes)):!pwrcl_owned(io->memory,p,w,at,bytes)))
+       !pgns_read_owned(io,p,w,g,ro,at,bytes,heap))
         return pgns_fail(r,PGNS_RAM,1);
     unsigned k=0;
     for(uint64_t page=at&~UINT64_C(4095);page<at+bytes;page+=4096){
@@ -67,15 +85,15 @@ static inline int pgns_copy(const struct pgns_io *io,struct pwrcl_result *p,cons
     for(uint32_t k=0;k<bytes;k++){((uint8_t*)out)[k]=((const volatile uint8_t*)(uintptr_t)at)[k];*done=k+1;}
     paic_actual_order(0);r->outstanding=0;return pgns_live(g,r,&current);
 }
-static inline int pgns_checkpoint(const struct pgns_io *io,struct pwrcl_result *p,const struct pwrph_work *w,
-    struct pgcd_context *g,struct pgns_result *r,struct pgns_pass *s,unsigned slot)
+static inline int pgns_checkpoint_as(const struct pgns_io *io,struct pwrcl_result *p,const struct pwrph_work *w,
+    struct pgcd_context *g,struct pgns_result *r,struct pgns_pass *s,unsigned slot,struct pgns_ro_owner *ro)
 {
-    if(!pgns_live(g,r,&s->after)||!pwrcl_owned(io->memory,p,w,r->core,PGCI_IMAGE_BYTES)||
+    if(!pgns_live(g,r,&s->after)||!pgns_read_owned(io,p,w,g,ro,r->core,PGCI_IMAGE_BYTES,0)||
        !pgci_verify((const void*)(uintptr_t)r->core,r->core,PGCI_IMAGE_BYTES,
        s->source_hash[slot],&s->hash_failed[slot],&s->hash_count[slot]))return pgns_fail(r,PGNS_SOURCE,1);
-    if(!pgns_copy(io,p,w,g,r,s->template_raw[slot],r->core+PGNS_TEMPLATE_RVA,80,&s->template_bytes[slot],s->checkpoint_AT[slot][0],&s->checkpoint_pages[slot][0],0)||
-       !pgns_copy(io,p,w,g,r,s->lock_raw[slot],r->core+PGNS_LOCK_RVA,24,&s->lock_bytes[slot],s->checkpoint_AT[slot][1],&s->checkpoint_pages[slot][1],0)||
-       !pgns_copy(io,p,w,g,r,s->head_raw[slot],s->head,16,&s->head_bytes[slot],s->checkpoint_AT[slot][2],&s->checkpoint_pages[slot][2],0))return 0;
+    if(!pgns_copy_as(io,p,w,g,r,s->template_raw[slot],r->core+PGNS_TEMPLATE_RVA,80,&s->template_bytes[slot],s->checkpoint_AT[slot][0],&s->checkpoint_pages[slot][0],0,ro)||
+       !pgns_copy_as(io,p,w,g,r,s->lock_raw[slot],r->core+PGNS_LOCK_RVA,24,&s->lock_bytes[slot],s->checkpoint_AT[slot][1],&s->checkpoint_pages[slot][1],0,ro)||
+       !pgns_copy_as(io,p,w,g,r,s->head_raw[slot],s->head,16,&s->head_bytes[slot],s->checkpoint_AT[slot][2],&s->checkpoint_pages[slot][2],0,ro))return 0;
     struct pwfi_sha256 hash;pwfi_init(&hash);for(unsigned k=0;k<80;k++)pwfi_byte(&hash,s->template_raw[slot][k]);pwfi_final(&hash,s->template_hash[slot]);
     if(!pgcd_equal(s->template_hash[slot],pgns_template_SHA256,32))return pgns_fail(r,PGNS_SOURCE,1);
     /* Released1 is observed, never acquired or interpreted as exclusivity.
@@ -84,18 +102,26 @@ static inline int pgns_checkpoint(const struct pgns_io *io,struct pwrcl_result *
        pwfi_le(s->lock_raw[slot]+16,8)!=1)return pgns_fail(r,PGNS_LOCK,0);
     return pgns_live(g,r,&s->after);
 }
-static inline int pgns_collect(const struct pgns_io *io,struct pwrcl_result *p,const struct pwrph_work *w,
-    struct pgcd_context *g,struct pgns_result *r)
+static inline int pgns_collect_as(const struct pgns_io *io,struct pwrcl_result *p,const struct pwrph_work *w,
+    struct pgcd_context *g,struct pgns_result *r,struct pgns_ro_owner *ro)
 {
     if(!r)return 0;if(r->attempted)return pgns_fail(r,PGNS_REENTRY,1);r->attempted=1;
-    if(!io||!io->memory||!io->translate||!p||!w||!g||!g->record||g->record!=&p->core||
-       !p->client_held||p->client_returned||p->unknown||p->outstanding||!p->exclusion_count||p->exclusion_count>PAIC_HANDLES||
-       !pgcd_in_self(g->record,(uintptr_t)r,sizeof(*r))||!pwrcl_owned(io->memory,p,w,(uintptr_t)r,sizeof(*r)))
-        return pgns_fail(r,PGNS_ARGUMENT,0);
+    if(!io||!io->memory||!io->translate||!g||!g->record||
+       !pgcd_in_self(g->record,(uintptr_t)r,sizeof(*r)))return pgns_fail(r,PGNS_ARGUMENT,0);
+    if(p){
+        if(ro||!w||g->record!=&p->core||!p->client_held||p->client_returned||p->unknown||p->outstanding||
+           !p->exclusion_count||p->exclusion_count>PAIC_HANDLES)return pgns_fail(r,PGNS_ARGUMENT,0);
+    }
+#if EFI_XNU_WIFI_CMDDB_STAGED_RO_AVAILABLE
+    else if(!pgns_ro_ready(ro,g))return pgns_fail(r,PGNS_ARGUMENT,0);
+#else
+    else return pgns_fail(r,PGNS_ARGUMENT,0);
+#endif
+    if(!pgns_read_owned(io,p,w,g,ro,(uintptr_t)r,sizeof(*r),0))return pgns_fail(r,PGNS_ARGUMENT,0);
     r->core=g->record->core;
     for(unsigned pass=0;pass<2;pass++){
         struct pgns_pass *s=&r->pass[pass];s->attempted=1;s->head=r->core+PGNS_HEAD_RVA;r->phase=pass+1;
-        if(!pgns_live(g,r,&s->before)||!pgns_checkpoint(io,p,w,g,r,s,0))return 0;
+        if(!pgns_live(g,r,&s->before)||!pgns_checkpoint_as(io,p,w,g,r,s,0,ro))return 0;
         uint64_t cursor=pwfi_le(s->head_raw[0],8),previous=s->head,end=0;
         if(!cursor||!pwfi_le(s->head_raw[0]+8,8)||cursor==s->head)return pgns_fail(r,PGNS_LINK,0);
         while(cursor!=s->head){
@@ -104,14 +130,14 @@ static inline int pgns_collect(const struct pgns_io *io,struct pwrcl_result *p,c
             uint64_t address=cursor-8;
             for(unsigned k=0;k<s->count;k++)if(pwrcl_overlap(address,80,s->node[k].address,80))return pgns_fail(r,PGNS_CYCLE,1);
             struct pgns_node *n=&s->node[s->count];n->address=address;s->visited=s->count+1;
-            if(!pgns_copy(io,p,w,g,r,n->raw,address,80,&n->bytes,n->AT,&n->pages,1))return 0;
+            if(!pgns_copy_as(io,p,w,g,r,n->raw,address,80,&n->bytes,n->AT,&n->pages,1,ro))return 0;
 #if EFI_XNU_WIFI_CMDDB_FIRST_NODE_STOP
             /* Explicit raw-read cutpoint BEFORE interpreting node fields.
              * Owned RAM/exclusion/AT/PAR/source/context/time gates still cover
              * the entire80B. This partial record never admits the namespace
              * or any database load, even if its signature/fields differ. */
             s->count=1;
-            if(!pgns_checkpoint(io,p,w,g,r,s,1))return 0;
+            if(!pgns_checkpoint_as(io,p,w,g,r,s,1,ro))return 0;
             if(!pgcd_equal(s->head_raw[0],s->head_raw[1],16)||!pgcd_equal(s->lock_raw[0],s->lock_raw[1],24)||
                !pgcd_equal(s->template_raw[0],s->template_raw[1],80))return pgns_fail(r,PGNS_CHANGED,1);
             return pgns_fail(r,PGNS_FIRST_NODE_STOP,0);
@@ -123,7 +149,7 @@ static inline int pgns_collect(const struct pgns_io *io,struct pwrcl_result *p,c
             previous=cursor;cursor=pwfi_le(n->raw+8,8);end=last;s->count++;
 #endif
         }
-        if(previous!=pwfi_le(s->head_raw[0]+8,8)||end<UINT64_C(0x85ffffff)||!pgns_checkpoint(io,p,w,g,r,s,1))return pgns_fail(r,PGNS_LINK,1);
+        if(previous!=pwfi_le(s->head_raw[0]+8,8)||end<UINT64_C(0x85ffffff)||!pgns_checkpoint_as(io,p,w,g,r,s,1,ro))return pgns_fail(r,PGNS_LINK,1);
         if(!pgcd_equal(s->head_raw[0],s->head_raw[1],16)||!pgcd_equal(s->lock_raw[0],s->lock_raw[1],24)||
            !pgcd_equal(s->template_raw[0],s->template_raw[1],80))return pgns_fail(r,PGNS_CHANGED,1);
         s->complete=1;
@@ -133,6 +159,9 @@ static inline int pgns_collect(const struct pgns_io *io,struct pwrcl_result *p,c
     for(unsigned k=0;k<a->count;k++)if(a->node[k].address!=b->node[k].address||!pgcd_equal(a->node[k].raw,b->node[k].raw,80))return pgns_fail(r,PGNS_CHANGED,1);
     r->stable=r->returned=1;return 1;
 }
+static inline int pgns_collect(const struct pgns_io *io,struct pwrcl_result *p,const struct pwrph_work *w,
+    struct pgcd_context *g,struct pgns_result *r)
+{return pgns_collect_as(io,p,w,g,r,0);}
 static inline int pgns_first_node_stopped(const struct pgns_result *r)
 {
     const struct pgns_pass *s=&r->pass[0];
@@ -164,8 +193,8 @@ static inline int pgns_descriptor(const struct pgns_result *r,uint64_t page,stru
  * no descriptor status is invented and no Device/MMIO address is accepted.
  * The caller still checks its current map and fresh target NS/WB AT, and keeps
  * the original source hashes around the complete database copies. */
-static inline int pgns_target_guard(const struct pgns_io *io,struct pwrcl_result *p,const struct pwrph_work *w,
-    struct pgcd_context *g,struct pgns_result *r,uint64_t page,struct pgns_target *s,struct pgcd_descriptor *out)
+static inline int pgns_target_guard_as(const struct pgns_io *io,struct pwrcl_result *p,const struct pwrph_work *w,
+    struct pgcd_context *g,struct pgns_result *r,uint64_t page,struct pgns_target *s,struct pgcd_descriptor *out,struct pgns_ro_owner *ro)
 {
     if(!s||s->attempted||!pgns_descriptor(r,page,out))return pgns_fail(r,PGNS_ARGUMENT,1);
     s->attempted=1;s->page=page;
@@ -174,13 +203,13 @@ static inline int pgns_target_guard(const struct pgns_io *io,struct pwrcl_result
         if(pwfi_le(n->raw+24,8)==out->base)break;
     }
     if(s->index==r->pass[1].count||!pgns_live(g,r,&s->before))return pgns_fail(r,PGNS_CONTEXT,1);
-    if(!pwrcl_owned(io->memory,p,w,r->core,PGCI_IMAGE_BYTES)||
+    if(!pgns_read_owned(io,p,w,g,ro,r->core,PGCI_IMAGE_BYTES,0)||
        !pgci_verify((const void*)(uintptr_t)r->core,r->core,PGCI_IMAGE_BYTES,
         s->source_hash,&s->hash_failed,&s->hash_count))return pgns_fail(r,PGNS_SOURCE,1);
     s->node.address=r->pass[1].node[s->index].address;
-    if(!pgns_copy(io,p,w,g,r,s->head,r->core+PGNS_HEAD_RVA,16,&s->head_bytes,s->AT[0],&s->pages[0],0)||
-       !pgns_copy(io,p,w,g,r,s->lock,r->core+PGNS_LOCK_RVA,24,&s->lock_bytes,s->AT[1],&s->pages[1],0)||
-       !pgns_copy(io,p,w,g,r,s->node.raw,s->node.address,80,&s->node.bytes,s->node.AT,&s->node.pages,1))return 0;
+    if(!pgns_copy_as(io,p,w,g,r,s->head,r->core+PGNS_HEAD_RVA,16,&s->head_bytes,s->AT[0],&s->pages[0],0,ro)||
+       !pgns_copy_as(io,p,w,g,r,s->lock,r->core+PGNS_LOCK_RVA,24,&s->lock_bytes,s->AT[1],&s->pages[1],0,ro)||
+       !pgns_copy_as(io,p,w,g,r,s->node.raw,s->node.address,80,&s->node.bytes,s->node.AT,&s->node.pages,1,ro))return 0;
     if(!pgcd_equal(s->head,r->pass[1].head_raw[1],16)||!pgcd_equal(s->lock,r->pass[1].lock_raw[1],24)||
        !pgcd_equal(s->node.raw,r->pass[1].node[s->index].raw,80))return pgns_fail(r,PGNS_CHANGED,1);
     s->target_AT.page=page;r->outstanding=1;paic_actual_order(0);
@@ -191,6 +220,16 @@ static inline int pgns_target_guard(const struct pgns_io *io,struct pwrcl_result
     r->outstanding=0;
     if(!pgns_live(g,r,&s->after))return 0;s->complete=1;return 1;
 }
+static inline int pgns_target_guard(const struct pgns_io *io,struct pwrcl_result *p,const struct pwrph_work *w,
+    struct pgcd_context *g,struct pgns_result *r,uint64_t page,struct pgns_target *t,struct pgcd_descriptor *out)
+{return pgns_target_guard_as(io,p,w,g,r,page,t,out,0);}
+#if EFI_XNU_WIFI_CMDDB_STAGED_RO_AVAILABLE
+static inline int pgns_collect_ro(const struct pgns_io *io,struct pgcd_context *g,struct pgns_result *r,struct pgns_ro_owner *ro)
+{return pgns_collect_as(io,0,0,g,r,ro);}
+static inline int pgns_target_guard_ro(const struct pgns_io *io,struct pgcd_context *g,struct pgns_result *r,
+    uint64_t page,struct pgns_target *t,struct pgcd_descriptor *out,struct pgns_ro_owner *ro)
+{return pgns_target_guard_as(io,0,0,g,r,page,t,out,ro);}
+#endif
 static inline int pgns_actual_translate(void *context,struct pgns_translation *t)
 {
     (void)context;

@@ -8,6 +8,7 @@
 #include "uefi-wifi-rsc-access.h"
 #if EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE && !defined(POLARIS_EFI_TEST_QEMU)
 #include "uefi-wifi-cmddb-budget.h"
+#include "uefi-wifi-cmddb-staged.h"
 struct pwrpt_refusal {
     uint32_t attempted,retired,hash_count[2],hash_failed[2];
     uint8_t before_global[0x110],before_hashes[2][5][32];
@@ -122,10 +123,18 @@ before_mask:
 /* New parent uses this whole record, never the old ZERO_VOTE scope label. */
 static struct pwrpt_result pwrpt_record;
 static inline int pwrpt_parent_unsafe(void)
-{return pwbd_parent_unsafe()||pwrpt_unsafe(&pwrpt_record)||pwrcl_unsafe();}
+{return pwbd_parent_unsafe()||pwrpt_unsafe(&pwrpt_record)||pwrcl_unsafe()
+#if EFI_XNU_WIFI_CMDDB_STAGED_RO_AVAILABLE
+    ||pwsp_unsafe(&pwsp_record)
+#endif
+    ;}
 static inline void pwrpt_preboot(const struct paic_io *memory,const struct paic_result *enumeration,
     unsigned stage,struct pgcd_context *final,const volatile uint32_t *native_cpu_on)
 {
+#if EFI_XNU_WIFI_CMDDB_STAGED_RO_AVAILABLE
+    const struct pwsp_io staged={memory,0,pwrph_actual_locate,pgns_actual_translate};
+    (void)pwsp_run(&staged,enumeration,stage,final,native_cpu_on,&pwsp_record);
+#else
 #if EFI_XNU_WIFI_CMDDB_BUDGET_ADMISSION
     /* Never stage over an old/held client or reuse its context/ticket. A
      * clean budget decline is not permission to retry with another policy. */
@@ -148,6 +157,7 @@ static inline void pwrpt_preboot(const struct paic_io *memory,const struct paic_
         pwra_physical_io(memory,&pwrpt_record.access_context),enumeration,(uintptr_t)native_cpu_on,&pwrpt_record};
 #endif
     (void)pwrcl_run_body(&client,enumeration,stage,final,&pwrcl_early_context,&pwrcl_record,&pwrcl_work,pwrpt_body,&io);
+#endif
 }
 static inline void pwrpt_raw_hex(void (*append)(const char *),const void *raw,size_t bytes)
 {
@@ -158,6 +168,11 @@ static inline void pwrpt_raw_hex(void (*append)(const char *),const void *raw,si
 }
 static inline void pwrpt_report(void (*append)(const char *))
 {
+#if EFI_XNU_WIFI_CMDDB_STAGED_RO_AVAILABLE
+    append("WIFI_CMDDB_STAGED_RO_RAW_V1_BEGIN\r\n");pwrpt_raw_hex(append,&pwsp_record,sizeof(pwsp_record));
+    append("\r\nWIFI_CMDDB_STAGED_RO_RAW_V1_END\r\n");
+    append("WIFI_POWER_SCOPE=FOUR_COMPLETED_RO_PREPARATION_PHASES_TWO_FULL_DB_COPIES_NO_PRIVATE_CLIENT_NO_QUERY_NO_CRITICAL_PSCI_NO_RSC NOT_CONTINUOUS_HARDWARE_LEASE NO_MSS NO_NV_SERVE NO_RADIO_PERMISSION\r\n");
+#else
 #if EFI_XNU_WIFI_CMDDB_BUDGET_ADMISSION
     append("WIFI_CMDDB_WORK_ADMISSION_RAW_V1_BEGIN\r\n");pwrpt_raw_hex(append,&pwbd_record,sizeof(pwbd_record));
     append("\r\nWIFI_CMDDB_WORK_ADMISSION_RAW_V1_END\r\n");
@@ -184,6 +199,7 @@ static inline void pwrpt_report(void (*append)(const char *))
     append("WIFI_POWER_SCOPE=CMDDB_CAPTURE_ONLY_PLANNED_STOP_NO_QUERY_API_NO_CPU_CRITICAL_NO_RSC NO_MSS NO_NV_SERVE NO_RADIO_PERMISSION\r\n");
 #else
     append("WIFI_POWER_SCOPE=PRE_FINAL_GCD_PRIVATE_BOUNDED_ARC_FULL_RETIREMENT NO_MSS NO_NV_SERVE NO_RADIO_PERMISSION\r\n");
+#endif
 #endif
 #endif
 }

@@ -235,9 +235,9 @@ static inline int pwcd_database_same(const struct paic_io *io,struct pwcd_result
 }
 /* Validate the exact footprint the ORIGINAL query will follow, then select
  * only the three own ARC resources. No direct shared-memory stores exist. */
-static inline int pwcd_select(struct pwcd_result *r,unsigned pass)
+static inline int pwcd_select_bytes(const uint8_t b[PWCD_DB_BYTES],struct pwcd_resource resources[3])
 {
-    const uint8_t *b=r->database_raw[pass];unsigned found[3]={0,0,0};
+    unsigned found[3]={0,0,0};
     if(pwfi_le(b,4)!=1||pwfi_le(b+4,4)!=0x0c0330db)return 0;
     for(unsigned group=0;group<8;group++){
         const uint8_t *h=b+8+16*group;unsigned id=(unsigned)pwfi_le(h,2),off=(unsigned)pwfi_le(h+2,2),aux=(unsigned)pwfi_le(h+4,2),count=(unsigned)pwfi_le(h+6,2);
@@ -246,7 +246,7 @@ static inline int pwcd_select(struct pwcd_result *r,unsigned pass)
         for(unsigned i=0;i<count;i++){
             unsigned at=144+off+24*i;const uint8_t *e=b+at;
             for(unsigned k=0;k<3;k++)if(pgcd_equal(e,pwcd_names[k],8)){
-                struct pwcd_resource *x=&r->resources[pass][k];if(++found[k]!=1||id!=3)return 0;
+                struct pwcd_resource *x=&resources[k];if(++found[k]!=1||id!=3)return 0;
                 x->entry=at;x->aux_offset=144+aux+(unsigned)pwfi_le(e+22,2);x->address=(uint32_t)pwfi_le(e+16,4);
                 x->priority[0]=(uint32_t)pwfi_le(e+8,4);x->priority[1]=(uint32_t)pwfi_le(e+12,4);x->length=(unsigned)pwfi_le(e+20,2);x->version=(unsigned)pwfi_le(h+8,2);
                 pgcd_copy(x->entry_raw,e,24);
@@ -268,6 +268,8 @@ static inline int pwcd_select(struct pwcd_result *r,unsigned pass)
         }
     }return found[0]==1&&found[1]==1&&found[2]==1;
 }
+static inline int pwcd_select(struct pwcd_result *r,unsigned pass)
+{return pwcd_select_bytes(r->database_raw[pass],r->resources[pass]);}
 static inline int pwcd_collect(const struct pwcd_io *ops,const struct paic_result *enumeration,
     struct pgcd_context *g,struct pwcd_result *r,struct pwrph_work *w)
 {

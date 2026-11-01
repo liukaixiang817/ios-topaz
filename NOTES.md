@@ -34,6 +34,70 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0160 remains last actual controlled FASTBOOT03:34; NEW0161 four-stage full RO preparation/parent verified OFFLINE; NEW host admission/candidate NOT READY
+
+- Wi-Fi scan/join/data still false. ONLY Wi-Fi; sound/camera/allchildren STOP.
+  This update adds complete RO preparation, not networking. No phone USB,
+  firmware API/AT/PSCI/MMIO, new native CI or new image was sent in this work.
+  Phone's last actual observation remains controlled Polaris FASTBOOT0160
+  03:34:17.109772Z with full normal drain/receipt below. No physical action pending.
+- New default-OFF --wifi-power-cmddb-staged-ro selects a distinct parent branch
+  BEFORE any private client/Clock allocation/final GCD. Four64KiB phases, each
+  separate resident Core/map/context/spent-once ticket, original200ms, fully
+  retire before next. Never reset/rebase a private/final ticket or fake a held
+  client. Actual main literal &wln_cpu_on_issued remains the native admission.
+- New typed RO RAM classifier reads fresh LoadedImage headers from retained
+  enumeration addresses, excludes all current loaded images from namespace
+  heap reads; never follows freed handle array. Existing full two-pass bounded
+  namespace/source/template/head/released-lock/link/bounds/NSWB AT/PAR reader
+  is shared, old private wrappers preserved. Existing ARC parser extracted
+  unchanged for assembled byte arrays; original This/u32status/EFI64 not redone.
+- Each phase: guarded original Locate + twoGetMap, five original CmdDb hashes,
+  actual registered owner/72B relocated table/72B globals, full loaded headers,
+  two full namespace passes,16preliminary page descriptor/ATs and17immediate
+  five-Core-hash/head/lock/node/target guards. Final target/source/owner closure
+  follows last foreign GetMap. Four complete phases compare full maps/keys,
+  namespace, owner/loaded headers/table/globals; join two128KiB copies, compare
+  ALL bytes, parse both using existing raw384 ARC units. Observations across
+  completed RO intervals do NOT claim a continuous hardware lease.
+- No privateCreate/Delete/Query/criticalPSCI/RSC/MSS/NVserve in this branch.
+  Stable unsupported initial source/descriptor or fully captured unsupported
+  DB can decline only after full RO retirement. Later cross-phase changes
+  cannot hide behind a known refusal. Partial/UNKNOWN/late/counter regressions
+  remain sticky; explicit parent blocks Clock/native/PON/receipt and preserves
+  full RAM then local-mask/nonreturnWFE, no USB/Console/Stall/reset/ACK/cleanup.
+- Complete new STAGED_RO_RAW_V1=1660544B, four349456B resident phases, typedRO
+  owner53296B/source1344B. Full new raw labels, no old ZERO_VOTE/client/path
+  relabel. Actual whole parent log assert covers new raw+all existing NPA/
+  RPMh/Clock/I2C/GCD plus1MiB reserve; FW8MiB/host12MiB+128 unchanged.
+  Builder metadata explicitly marks private dependencies inactive and no
+  reachable Create/Delete/Query/critical/RSC; old literal policies unchanged.
+- New actual full physical-body EFI staged-driver-ON-0001 SHA8d518601f0457d22
+  559596c3fef15d0496baf778e56464177cdd116fd479d920/11588608B/85inputs.
+  Not wrapped/frozen/sent. 50new staged ASAN/UBSAN fault/complete cases plus
+  affected old17normal+37full+37first+24budget=165 all PASS. Actual whole parent
+  COFF/MachO/allwarnings/maxframe1024/defaultOFF/QEMU preprocessed main PASS,
+  15checks; proof0161/wifi/staged-parent-verified-0001/proof.json
+  SHAea3fc890a15cbc746fa45117b51dbebdf64662e058961f12d4ebcf4d4df95a3f.
+  New fault tests corrected repeated XOR injections to single persistent
+  mutations; no production guard weakened. Old scalar3007/hash proof reused.
+- Two SERIAL new wholeEFI/XNU terminal models19checks each/38.978103 and
+  39.553896s/85identical current compiled inputs PASS. Raw11resource/Power
+  literalint1 markers plus battery1, actual QEMU main has NO staged/power/
+  namespace bodies or records. Proof staged-two-terminal-models-0001-proof.json
+  SHA7d32495c87030efffba939a0e3b4c6edd13250cd04f38331f775f0a1a07f7492.
+  SOFTWARE PMIC/delay/RAMUSB only, not physical timing/API/guestreset/radio.
+  All verification/build/model workers ENDED. No unchanged tests need rerun.
+- NEXT ONLY Wi-Fi: NEW exact hostprofile/controller for85inputs and honest
+  staged metadata/raw capacity, source audit/original81 full codec/independent
+  freeze/default offlineONE helper before candidate. Old0160 profile/frozen/
+  consumed record remain immutable. Current fresh0160 ROOT/NV authority plus
+  normal drain/actualFASTBOOT can be reused; no repeated fullhash/recovery or
+  inventory/budget/client-only boot. Next actual candidate must advance full
+  namespace+DB capture. After actual capture, current ARC/cache/DRV2/TCS private
+  vote/completion/savedrestore and own MSS/MSA/MPU/VMID/SMEM/GLINK/RMTFS remain.
+  may_start_MSS/may_serve_NV_to_remote/scan_join_data=false.
+
 ### CURRENT0160 actual controlled FASTBOOT03:34; real RO work-admission DECLINED safely, full namespace/DB/Wi-Fi still NOT DONE
 
 - User “Wi-Fi还不行” remains correct: scan/join/data false. ONLY Wi-Fi,
