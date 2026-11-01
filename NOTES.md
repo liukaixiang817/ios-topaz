@@ -34,6 +34,76 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0175 startup ACK UNKNOWN; user physically recovered, actual Polaris FASTBOOT13:14; access/READ/vote/Wi-Fi NOT DONE
+
+- This overrides ALL older CURRENT/ACTIVE/READY/LIVE. All USB/host/build/model
+  workers ENDED/allchildrenSTOP, only Wi-Fi active. Real scan/join/data never
+  completed. No action/authorization pending; no repeated USB inventory query.
+  Current actualproductpolaris13:14:03.194602Z/exit0 after user physical recovery,
+  not nativeLIVE. Source checks/models and a complete payload are not Wi-Fi proof.
+- FW5b2ac82ee0b375034b6bc05623d52881f275e28a/HOST8d36bacd5899b2b18838563fa9fd182a885711bd
+  committed/pushed; independentlsremote matched. Actual source argument gates
+  bind all3readers to embedded caller and compare5originalmemorymembers before
+  prepared/CPU; runtime source/owner/200ms/UNKNOWN/restore untouched. Offline
+  157affected+wholeparent/maxframe1024/defaultOFF-QEMUpp passed; old162 executing
+  PP byteequal reused. Two SERIAL19checkmodels actual seconds[38.88224320899462, 39.349834541993914]
+  /90inputs/11resource+1batteryint1/QEMUpp no physicalbodyrecords passed.
+- ONEimage5027 ENDED0 sent13:06:34.475478Z/source8d36bac/image
+  cd67ba070cebb0baa788623b90455eb788ec4bead9da166343aa7ac4f33736b2/6027264B.
+  Actualsolefrozenwaitingpayload13:06:47.365447Z. ONE63cbpayload83446 ENDED1,
+  stage13:07:03.100399Z/complete transfer+validation32.967483250s,557chunks/
+  36459872B/validationACKtrue/validatedstatetrue. p.boot began13:07:36.068320Z,
+  90.505368s/INendpoint129(-7)/host0of64replybytes. No kernel-command ACK.
+  Those0replybytes DO NOT mean0CPU_ON/MMIO/READ/store; hardware counts/predicate
+  all UNKNOWN, no actual private/prep/CPU/access/CmdDb/RSCraw exported. Cannot
+  name power fault, ARGUMENT, budget refusal, panic or proven quarantine.
+- Only after83446 ENDED: sole frozenstate19408 ENDED1/8s no UEFI (started
+  13:09:36.726470Z); soleexpected3788 ENDED0/8stimeout13:10:00.664367Z. Entity
+  recovery asked ONCE; user 已到FASTBOOT; independentactualproduct as above.
+  No blind retry/cleanup/genericreset/rawfallback. NoUTCSET/UI/WLED/optical/CI.
+- Physicalproof0175/wifi/physical-start-ACK-unknown-and-recovered-FASTBOOT-proof-0001.json
+  SHA87039c11cb537109272b5e1713f58581610ffb5d858790ef22e10dbec2ab2928. PASS only faithfully
+  preserves UNKNOWN+recovery; not functional validation or a root-cause verdict.
+- ORIGINAL0175/phone-current-reader-runtime-0001/boot.json CONSUMED; literal
+  RAM_boot_succeeded is imageACK only. No replay image/payload/OEMboot/refreeze/
+  oldpolicy/stripflags/manifest edits. ONLY usedcontroller
+  /private/tmp/polaris-runtime-0175-frozen-0001/tools/polaris-uefi-wled-runtime.py
+  with frozen0175driver/image and that ORIGINAL sharedrecord. Session ENDED;
+  neither it nor old0174/editedcontroller can control a new session.
+- IndependentfreezeCOPY867+10COMMIT_ONLY/461currentcommittedsources/90inputs/
+  nohardlinks SHAb3d7f02e2c05c846e22d4e42aa5b8038bd8874799a5c1764787ae75e6ce18227,
+  defaultofflineONEhelper passed before consumption. driver77b1a3ed8fa3f144262a05b90c979b2d6644adf8dc7629161461d07a99e3382b/
+  15924736B; exactGCD_CLOCK_0175 304+94/90/28oldenabled+DISABLED AST unchanged/
+  21hosttests/actualnomockfulladmit/81FW+whole43406536B originalcodec passed.
+- Human persistent same63cb qualified-NEW-session authorization df995cae...
+  remains valid and must be bound directly, no repeat permission question; each
+  NEWsharedsession once, never reopens consumed0175/0174. No alteredSHA/out-of-
+  scope candidate permission is implied. No pending human authorization.
+- Latest NEWstrictRO0175audit37303 ENDED0 normalumount→actualFB13:03:00.488069Z,
+  reviewb2ace4d4871dc594b27ac46590580ed060f3e76d9d6944bc4517d0faa3a27313/
+  preflightbb598a5466193a285a81dc6e0e8070848f6cb415dc7566a4141a633ca6a24e19,
+  full39/two16GiB/maps/marker/GPT/ESP/journalmetadata/NV3x8MiBbefore-local-after/
+  FSC passed/no restore/4NV0600,watchdog300/work250. Following0175UNKNOWN/reset
+  makes this HISTORICAL now: merge NEWfullstrictRO at next already-needed NEW
+  candidate conversion, not immediate oldTOC/NV standalone recovery. Whole
+  512MiBjournal not captured, no FShealth/DSPoff/EElease assertion.
+- NEXT0176 NOTREADY, not implemented. Stop repeated opaque full access boots.
+  Need actual evidence at the normal-to-masked current source/CmdDb/checked-
+  access transition before naming any failed predicate. Recheck real physical
+  leaf/caller composition and narrow only a newly reviewed defaultOFF diagnostic
+  if necessary, with complete knownclient/currentnamespace/fullRAM/source/CPU
+  restore/retirement BEFORE USB; do not reuse retired contexts, fakeclientheld/
+  leasebool/rebase, clearUNKNOWN/heldmask for export or relax200ms/reserves.
+  0172sameprivateCPU/Device and0170standaloneCPU physically DONE, no repeat
+  those/prep/client/NPA/cache-only inventory boots. Actual0175execution remains
+  unknown despite source argument hardening. Existingpwrpt/pwra/pwrpc/pwrr/pwcp
+  components/parser must not be endlessly redesigned. Need actual boundedREAD+
+  NEWIRQ/allissuedcompleted/idle/fulltouchedRWrestore/sourceCPU/namespace/Delete,
+  then qualified perDRV savedARC/vote/reverse restore and FOURWiFiVRM before
+  ownMSS/MSA/GLINK/RMTFS/WLFW/ath10k real scan/join/data. may_vote/MSS/NVserve/
+  scan_join_data=false. Parent changes only affectedchecks+twoSERIALnewmodels;
+  no unrelated nativeCI/oldchecks/optical/scrolling, no blocking submit fallback.
+
 ### CURRENT0175 fresh strictRO actual FASTBOOT13:03; new current-reader candidate offline admitted; Wi-Fi NOT DONE
 
 - FW5b2ac82ee0b375034b6bc05623d52881f275e28a committed/pushed, independent
