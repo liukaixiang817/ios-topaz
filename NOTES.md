@@ -34,7 +34,60 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0157 actual FASTBOOT02:07; NEW bounded CmdDb diagnostic candidate READY for ONE RAM (not yet sent)
+### CURRENT0158 actual FASTBOOT02:14 after NEW0157 startup UNKNOWN; next source/gate audit IN PROGRESS, candidate NOT READY
+
+- Human fulfilled the NEW0157 recovery request. Independent exact product at
+  2026-11-01T02:14:30.101621Z returned product:polaris/exit0. No pending physical
+  request. Current lastactualFASTBOOT, not nativeLIVE. No new boot/reset/UTC/
+  recovery after this query. AllUSB/host/model workers ENDED, allchildren STOP.
+- NEW0157 was ONE image73279 ENDED0 sent02:10:15.754047Z sourced9b9c345/image
+  ef36de984cddd3741ebfdbb486e7235f0bcefddbb5fd4d76edc3f0118eb43afb/5998592B.
+  Actualwaiting-payload02:10:28.852290Z preceded ONE63cbpayload48188 ENDED1:
+  transfer32.966980625s/bootcall90.508756667s started02:11:15.386267Z, response
+  (-7)timeout, NO startupACK. Originalrepo0157/phone-CmdDb-bounded-runtime-0001/
+  boot.json is CONSUMED (its image-succeeded literal is not native completion).
+  After48188 ENDED, solefrozen0157 state45044 ENDED1/noUEFI8s, independent
+  expected22162 ENDED0/timeout8s02:13:12.960434Z. No client/namespace/pathraw
+  exported; actualstage/DBreads/CPU_ON/WLED/RSC writes/nativeboot all UNKNOWN,
+  not zero, not proven quarantine/panic/rootcause. No0157 UTC SET.
+- Failure0157/physical-bounded-start-ACK-unknown-proof-0001.json records actual
+  files/results and later physical recovery. Its PASS only means faithful
+  preservation, never scan/join/data or a successful diagnostic. Both old0155,
+  0156 and newest0157 image/payload/bootrecords/manifests remain consumed and
+  immutable; NEVER replay or edit their frozen/policy. No current live session
+  to control. Frozen0157 controller only belongs to that historical attempt;
+  its one post-UNKNOWN state has already been tried, no blind retry/cleanup/
+  genericreset/rawfallback. New candidate/profile/source required for any trial.
+- Verified offline work remains: FW220cdd5/HOST776185b; finite source-bound
+  Core512node twopass plus same-client full CmdDb capture RAW_V2/82inputs and
+  61ASAN/UBSAN, actual mainCOFF-MachO/fullEFI and twoSERIAL19check models passed.
+  New0157 removed the original GCD query from that body but still got no ACK.
+  Source exclusion is not physical execution evidence; do not name a runtime
+  cause or claim this failure reached the bounded reader. Preserve original
+  200ms/FP/arch/TPL/source/UNKNOWN/parent-quarantine and known-retirement gates.
+- Static0158/work-and-observability audit found NEW0157 full-success-path adds
+  74Core fivehash checkpoints/8500528B normalized hashing within the unchanged
+  private200ms interval (8namespace checkpoints+66targetguards). This is CODE
+  work only, not actual measured time/reachedstage/rootcause; no physicalraw.
+  Original map/locate/Create/Delete/laterClock services remain opaque.
+- NEXT ONLY Wi-Fi: defaultOFF/sourcebound FIRST NODE checkpoint planned-stop
+  diagnostic to export one currently unobserved safe stage before fullwalk or
+  any database load. Retain all source/hash/AT/partial/FP/arch/TPL/200ms/UNKNOWN
+  and complete known-client retirement, no arbitrary predicate/time weakening.
+  This is failure isolation, not a full namespace/inventory/Wi-Fi completion.
+  New implementation/builder/profile/wholeEFI/models not ready yet.
+  No repeated old models/CI/inventory/client-only boot and no weakened bool
+  lease/time/reset/fallback. New0158 diagnostic candidate is NOT READY. This
+  latest physical recovery creates another uncontrolled interval: merge NEW
+  complete strictRO roots/maps/marker/GPT/ESP/journal/currentNV into the next
+  already-required transition, not an immediate inventory recovery. Fresh0157
+  reviewa830b4e3/preflight3d139252 was before this failure/recovery, not current
+  standalone authority. may_write_userdata=false, may_start_MSS=false,
+  may_serve_NV_to_remote=false, scan_join_data=false. Sound/camera STOP.
+
+### HISTORY0157 bounded diagnostic was ready and consumed; no native ACK
+
+### HISTORICAL pre-send0157 actual FASTBOOT02:07; NEW bounded CmdDb diagnostic candidate READY for ONE RAM (not yet sent)
 
 - User answered the second physical recovery request; independent exact product
   2026-11-01T01:42:42.384037Z returned product:polaris/exit0. Nothing physical
