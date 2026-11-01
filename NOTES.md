@@ -34,6 +34,58 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0178 startup ACK UNKNOWN / UEFI unavailable / FASTBOOT query timeout16:48; physical recovery requested ONCE; Wi-Fi NOT DONE
+
+- Overrides all olderCURRENT/READY/LIVE. Phone current0178startupACKUNKNOWN,
+  neither nativeLIVE nor actualFASTBOOT. AllUSB/host/build/modelworkersENDED,
+  allchildrenSTOP. Physicalrecovery requestedONCE; user alsoasked to transcribe
+  numericterminaltext IFvisible before keys. No reply/terminalobservation yet.
+  Do not repeatrequest/polling/blindboot/cleanup/reset/rawfallback. ONLYWi-Fi;
+  scan/join/data nevercompleted, sound/cameraSTOP, all data protected.
+- ONEimage19611 ENDED0 sent2026-11-01T16:45:30.378263Z/source7e6ce84653adad2f1ee043583605a5eb28284cbe/
+  image01d077b0cc32aaabfb106a92067df71dafeb00fa1bb79d3b95e53353ee85add7/6033408B.
+  Solematchingstate actuallywaiting-payload16:45:44.195958Z. ONE63cbpayload
+  12281 ENDED1: stage16:46:00.141147Z; full557chunks/36459872B/validationACKtrue/
+  validatedtrue/32.958171334001236s. p.boot16:46:33.099516Z/90.51341754099121s,
+  lastUSBIN129(-7)/hostreply0of64/90000ms, no kernelcommandACK. Completepayload
+  is not native/Wi-Fi success; host0replybytes is not zeroCPU_ON/mask/writes.
+- OnlyAFTER12281ENDED, solefrozenstate92252 ENDED1/8sUEFIunavailable started
+  16:48:19.787618Z; soleindependentexpected6595 ENDED0/8stimeout actual16:48:54.175980Z.
+  No newGOP/preparation/client/CPU/maskedDB/access/READ/RSCraw exported; actual
+  predicate/CPU_ON/WLED/mask/AT/MMIO/TCS/countsUNKNOWN, not0. Cannot infer
+  BAadmissionpass/privateDBpass/panic/quarantine/rootcause or terminaldraw.
+  NoUTCSET/UI/WLED/optical/performance/nativeCI. Existingnativeunchanged.
+- Actualproof0178/wifi/physical-start-ACK-unknown-and-no-safe-remote-exit-proof-0001.json
+  SHA83657877b189caf6771b9663605120dc9031e207bd7b6a8fc73ba2c42e847c03.
+  PASS means faithfulUNKNOWNpreservation, not functionality. All original
+  result/record/freeze/authorizationbytes retained; no posthoccounterfabrication.
+- ORIGINAL0178/phone-own-WT-runtime-0001/boot.json CONSUMED. Literal
+  temporary_native_WLED_runtime_RAM_boot_succeeded is imageACKonly, NOTpayload
+  or native success. Neverreplay0178image/payload/OEMboot/refreeze/editpolicy/
+  stripflags/oldmanifest. ONLYusedcontroller /private/tmp/polaris-runtime-0178-frozen-0001/tools/polaris-uefi-wled-runtime.py
+  with frozen0178driver0001/image0001/originalsharedrecord; no edited/old0177
+  controller maycontrolthissession. UNKNOWNalreadyhadsoleactualstatequery.
+- Qualifiedfreeze2cbabc3fb25b53285202ca81f3e58c69700e71a1dfab793a26228413718e7bd1/
+  COPY879+10COMMIT_ONLY/468currentcommittedsources/91inputs/nohardlinks and
+  defaultofflineONEhelper passedbeforeconsumption. FWf28acd7a1fb5399f35c858a8880103266b1aa48f/
+  HOST695ce7f1a67931edac673f7d2e125adc38206479 and freezehandoff7e6ce846... pushed.
+  No unchangedchecks/models needrerun. Sourcebug/0177BArefusal does not identify
+  this0178actualpredicate. New0179NOTREADY; no furtheropaquevariantboot.
+- LatestcompletedROOT/NVfull39 audit is actual0177(e55bedb3.../8fead391...),
+  reused legitimatelyfor0178 aftercontrolled0177prestartreceipt/actualFB. NOW
+  uncontrolled0178UNKNOWN makes itHISTORICAL. After physicalrecovery, next
+  alreadyneededNEWcandidateconversion mustmergeNEWfullstrictRO roots/maps/
+  GPT/ESP/journal/currentNV; don't claimfresh0178audit or skip with0177/72,
+  don't performstandaloneTOC/NVinventoryrecovery. No partition/NV/ESP writes.
+- NEXT obtain actualterminaltext/recovery evidence, independentcorrectPolarisFB
+  onceafteractualreply, preserveUNKNOWN. Noerrorclearing/heldmaskcleanupforUSB.
+  If terminaltext unavailable, review physicalleaf/caller and actualdiagnostic
+  visibility before anothercandidate. Do not relaunchinventory/CPU/prep/client/
+  cacheboot or pretendmap/AT/pastOFF/RETlock/callbackbool grantslease. Full
+  source-owner-200ms/68slowest/READ50+25ms/IRQtype/appendraw/restore remain.
+  Qualifiednewsession mayreuse SAME63cb under actualbroadhumanpermissiondf995cae...
+  withoutaskingagain; permissionneverallowsreplay/changedSHA/unqualifiedboot.
+
 ### CURRENT0178 fully admitted and independently frozen; ONE new RAM pending, phone last controlled FASTBOOT15:55; Wi-Fi NOT DONE
 
 - New candidate offlineREADY, not a physical pass: independentfreeze0178
