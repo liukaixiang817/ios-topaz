@@ -34,6 +34,33 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0178 startup ACK UNKNOWN; user physically recovered, actual Polaris FASTBOOT17:39; masked-DB/access/READ/Wi-Fi NOT DONE
+
+- User replied exactly“已到 FASTBOOT”, no diagnostictextsupplied. Independent
+  expectedproductonce ENDED0 actual2026-11-01T17:39:35.247057Z/productpolaris.
+  Currentphone actualFASTBOOT, NOTnativeLIVE; no physicalrequestpending. No
+  repeatquery/keysneeded. 0178image/payload/OEMboot remainCONSUMED/no replay.
+- OriginalstartupACKremainsUNKNOWN. No newGOP/preparation/client/CPU/maskedDB/
+  access/READ/RSCraw. No numerictext supplied does NOTprove no terminaldraw,
+  BAadmissionfailure/pass, privateexecutionpoint, panic/quarantine/rootcause,
+  or zero hardwarecounts. Originalpendingproof83657877... preservedunchanged.
+  Newrecoveryproof0178/wifi/physical-start-ACK-unknown-and-recovered-FASTBOOT-proof-0001.json
+  SHAf8110412264d5222ee7136659ae6c8a7253e6aef465d550c87b2c544b2be04f1.
+  PASS onlyactualUNKNOWN+recoverypreservation, not Wi-Fi functionality.
+- AllUSB/host/build/modelworkersENDED/allchildrenSTOP. ONLYWi-Fi. Still no
+  scan/join/data; sound/cameraSTOP. FWf28acd7a.../HOST695ce7f... unchanged,
+  no repeatedmodels/nativeCI/optical/oldinventory. Prior0178frozencontroller
+  sessionENDED, cannotcontrolnewsession or modifyoldmanifest/policy/refreeze.
+- NEXT sourceaudit actualphysicalcaller/leaf/objectranges/source-time and
+  normal-vs-masked admission/diagnosticvisibility BEFOREanothercandidate;
+  no immediateopaqueboot. Existingstrictpointer/owner/currentbytes/200ms/
+  UNKNOWN/reserve/IRQ/fullrestore gates cannotbe loosened for output. New0179
+  NOTREADY, may_vote/MSS/NVserve/scan_join_data=false. FullNEWstrictRO39must
+  mergeinto nextalreadyneededcandidateconversion after0178uncontrolledreset;
+  historical0177qualificationcannotbe reused, no standaloneinventoryrecovery.
+  Same63cb persistenthumanpermissiondf995cae... still appliesONLYqualified
+  NEWsessionsonce, no repeatpermissionquestion and no oldstartup replay.
+
 ### CURRENT0178 startup ACK UNKNOWN / UEFI unavailable / FASTBOOT query timeout16:48; physical recovery requested ONCE; Wi-Fi NOT DONE
 
 - Overrides all olderCURRENT/READY/LIVE. Phone current0178startupACKUNKNOWN,
