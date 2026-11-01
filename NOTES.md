@@ -34,7 +34,7 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0168 only last actual recovered FASTBOOT07:55; NEW0169 independent normal CPU RO parent/link and exacthost verified OFFLINE; new root/image/freeze NOT READY
+### CURRENT0168 only last actual recovered FASTBOOT07:55; NEW0169 independent normal CPU RO parent/host/image verified OFFLINE; actual strictRO FASTBOOT08:31, freeze NOT READY
 
 - Phone's ONLY last actual state remains independentproductpolaris07:55:36Z
   after user physicalrecovery. No new USB/image/payload/actualfirmwareAPI/SMC/
@@ -81,11 +81,24 @@ early samples only. On0029 the human already confirmed boot complete and said
   sourceproofe296d169ec484d8c03fcde3b65427cfd3c80d3083318b71a376fbe1730ea03b8.
 - FW f6759e1285b7adfe667052873297dd78a4e8d2c5 committed/pushed/remote matched.
   NEW GCD_CLOCK_0169 literal63inputs/89GCDPower+94resource/CPUROscope hash,
-  explicitinteger1 CPURO modelmarker and no private/TCS/mask grant.23targeted
+  explicitinteger1 CPURO modelmarker and no private/TCS/mask grant.21targeted
   hosttests PASS,22priorliteralAST unchanged. Default6MiB+128host capacity
   covers actual1MiBFW+native4MiB+128snapshot; oldprofiles remain exact.
-- NEXT complete NEW strictRO39 qualification, packagedoriginal81image/codec
-  and actualno-mockadmit; actualoldpolicy already refuses new
+- HOST2451d2bc28aa2057eafc696124b38aa245347505 committed/pushed/remote matched.
+  Actualhosttest count is21 (earlier23 in the intermediate note was a count
+  error only, corrected here; no firmware/model change).
+- NEW0169 ONE0120 strictRO audit ENDED0,39independentchecks PASS, actualumount
+  ->actualPolarisFASTBOOT08:31:44.838734Z. Reviewbc32c1ef0628a2d2b48c69137e136ba498432fbc76173b486aef948249a49702/
+  preflight8f7737f6b9f526ecac14d3f52ae31614843fde6122426ff65d77a0997d799827.
+  Both whole16GiB/142-182maps/marker8MiBpattern/6GPT/critical/ESP102/journalmetadata/
+  currentNV3x8MiBbefore-local-after/FSC PASS. Four originalNV0600 same0168,
+  no restores/writes. Whole512MiBjournal notcaptured/noFShealthclaim. Fresh
+  audit replaces0168unobservedexit; not using old0168qualification alone.
+- Newpackagedimage31a95d951c471110770fd1b239954bb35b000a3b36e27b40a5d2cb42f0c821d7/
+  5988352B UNSENT. Original81FW/SimpleInit/BootShim/DTB preserved, fullunmodified
+  EDK2 GetInfo/decode29575880B exact. Actualno-mock completeadmit passed,
+  hostproofa2853047ba44ccee70e48932d665dcb8f5e5280136b1865d3baedb9ca64f317b.
+- NEXT independent sourceboundfreeze/ONEhelper; actualoldpolicy already refuses new
   source/metadata. New host/admission/packagedimage/freeze/ONEhelper NOTREADY,
   noUSBquery/send before ready. Nextrequiredcandidate transition mergeNEW
   strictRO39 roots/maps/GPT/ESP/journalmetadata/currentNV due0168UNKNOWN; old
