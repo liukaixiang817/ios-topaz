@@ -34,6 +34,40 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0180 frozen offline candidate complete; ONLY public source/notes publication approval missing; no0180device action; Wi-Fi NOT DONE
+
+- CompleteindependentfreezeCOPY889+10COMMIT_ONLY/473currentcommittedsources/
+  93inputs/newinodes/nohardlinks, frozenroot/private/tmp/polaris-runtime-0180-frozen-0001.
+  ManifestSHA31905bb96f3c20aa2af2d82d66d5a670dfa4820005c3ef03458c452512543a40.
+  FrozenONEhelperdefaultchecksPASS, explicitactual0180publicationproofrequired
+  BEFOREanydevicecommand. No publicationproofor0180originalbootrecordexists,
+  no0180phonequery/image/payload/SMC/MMIOexecuted. Offlinepassed isnotphysicalREADY
+  orWiFi. Kernelpayloadsame63cb/broadactualdf995permissionbound, notnewonceclaim.
+- SourceFW9b8cacfb9b4d5c19c1e02ce7915185a994ce7249/HOST5a50631730acde7909b74d32ef7f33f8f13b97c1,
+  freezeHOST2a41881d4e01791c4a965660276d4f2466c0a14f LOCALunpublished. FW461ASAN/
+  parentCOFF+MachO/generalregs/frame1024/fullrecords/defaultOFF/QEMU/twoSERIAL
+  models/360Power+94resourceexactprofile/21hosttests/20metadata+2deps+CLIrefusal/
+  no-mockfulladmit/original81FWwhole43570888Bcodec allcomplete. No sourcechanges
+  afterthosechecks; no repeatsneeded. Image61083d04a0203e6affc922892e58cdcb017a06e25ff6add6184a34413bf37ed1/6037504B.
+  Freezeproof0180/current-runtime-source-freeze-0001.json SHA96db55293fbf904d8eb191059ec3a2174fd2986a9d3ee49d91e29bdcf1ccceff.
+- 0179publicationwasapprovedandpushedthrough93c564a;0180sourcepushwasactually
+  rejectedbyautomaticapprovalasoutside0179-onlyconsent. No bypass/alternate
+  push. NEXT askONEconcretepublicbatchconfirmationfor0180source/HOST/NOTES,
+  optionallyfuturelikeupdatesexcludingfirmware/Apple/vendor/NV/backup/dump
+  bytes/serial/password. Do not fabricateapprovalorreuse0179consentfor0180.
+- Afteractualhumanpublicationapproval: recordactualwording/scope; normalpush
+  allapprovedsource+notes; independentlsremote; create0180/wifi/normal-masked-
+  source-and-physical-handoff-push-proof-0001.json withpassed/approved/remoteHEAD/
+  FW9b/HOST5a/image6108/freeze31905 andactualauthpath+SHA. Onlythen frozenhelper
+  --boot-once cancheckfreshcorrectproduct8s andONEnewRAM viaORIGINAL0180record.
+  KernelreusepermissionalreadyactualbroadsameSHA; no repeatedquestionneeded.
+- Lastactualphone remainscontrolledPolarisFASTBOOT2026-11-01T20:17:05.473503Z,
+  0179sessionENDED/consumed/noreplay. Root17full39+controllednativeexit/receipt
+  basisreusedtruthfully; nofake0180audit/newUSBpoll/fullhash. 0180publication
+  isonlyremainingexternalgate; no humanphysicalactionpending. AllworkersENDED/
+  allchildrenSTOP. ONLYWi-Fi; maskedDB/checkedaccess/READ/vote/rails/MSS/GLINK/
+  WLFW/ath10kreal scan/join/data stillNOTDONE, sound/cameraSTOP.
+
 ### CURRENT0180 new image fulladmitted/wholecodec done; freeze/helper pending, publication NOT approved; phone last actual Polaris FASTBOOT20:17; Wi-Fi NOT DONE
 
 - FW9b8cacfb9b4d5c19c1e02ce7915185a994ce7249/HOST5a50631730acde7909b74d32ef7f33f8f13b97c1
