@@ -34,6 +34,40 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0175 fresh strictRO actual FASTBOOT13:03; new current-reader candidate offline admitted; Wi-Fi NOT DONE
+
+- FW5b2ac82ee0b375034b6bc05623d52881f275e28a committed/pushed, independent
+  ls-remote matched. Actual same-private parent3reader pointer/5memorymember
+  admission beforeprepared/CPU strengthens source argument binding only; no
+  MMIO writer/engine request/vote/MSS/NV/network. All previous runtime200ms,
+  68slowest/fullREAD50ms+25msreserve/UNKNOWN/CPUrestore/source/Delete unchanged.
+- New exact GCD_CLOCK_0175 304PowerGCD+94resource/90inputs,28oldenabled+
+  DISABLED literalAST unchanged,21hosttests+actualno-mockfulladmit PASS.
+  New telemetryHOST035aa65 included, no transfer retry/deadline/chunk changes.
+- Imagecd67ba070cebb0baa788623b90455eb788ec4bead9da166343aa7ac4f33736b2/6027264B,
+  driver77b1a3ed8fa3f144262a05b90c979b2d6644adf8dc7629161461d07a99e3382b/
+  15924736B. Original81FW/SimpleInit/BootShim/DTB preserved; unmodifiedEDK2
+  whole43406536B GetInfo/decode byteequal. New helper directly binds actual
+  broad same63cb human authorization df995cae..., no repeated permission ask.
+- Necessary NEWstrictRO audit37303 ENDED0 normalumount→actualproductpolaris
+  13:03:00.488069Z. Independent39checks PASS: review
+  b2ace4d4871dc594b27ac46590580ed060f3e76d9d6944bc4517d0faa3a27313/
+  preflightbb598a5466193a285a81dc6e0e8070848f6cb415dc7566a4141a633ca6a24e19.
+  Both16GiB91515474/689a8cd1 55.742784375/55.769475333s/maps142-182/marker
+  8MiBpattern/GPTcritical/ESP102/journalmetadata/currentNV3x8MiBbefore-local-after/
+  FSC passed; no restore/writes. Watchdog300/work250 unchanged. Wholejournal
+  not captured/noFShealth. Only controlled FASTBOOT/offline work since audit.
+- Parentproof01afaffba3398d74a58b225909c2ed589d15a8b0b41dee102a96086b3ea5b7d7,
+  sourceproof091af959c0034f9f0e50966d2c5ddf9de39bc6ed2a86dbab266f8647c3a6f94e,
+  modelproofd7e7911d8053ef3853de9d8fc6ec71190c23b642f70ac0e2fbf632cd68b07df2.
+  157affected ASAN/UBSAN+actualwholemain/maxframe1024/noactualwriter/defaultOFF-
+  QEMUpp pass;162 unchangedoldcases exactPP reused. Two new SERIAL19check
+  wholeEFI-XNU/90inputs passed; models not physical/guestreset/radio proof.
+- Final source commit and independentfreeze/ONEofflinehelper remain before
+  USB. NEW0175 image/payload not sent yet, not nativeLIVE;0174 consumed immutable.
+  Same newcandidate+correct actualFB/fullnewadmission automatically ONE RAM under
+  existing broad authorization; no replay/oldcontroller or policy edits.
+
 ### CURRENT0175 source complete OFFLINE; phone last actual FASTBOOT12:39; same-private access/Wi-Fi NOT DONE
 
 - Only Wi-Fi, strict serial, all children STOP. No new USB/image/payload/UTC/UI
