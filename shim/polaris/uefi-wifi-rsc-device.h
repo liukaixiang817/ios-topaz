@@ -47,7 +47,12 @@ static inline int pwrmd_arch(const struct pwrmd_io *io,struct pwrcl_result *p,
 }
 static inline int pwrmd_exclude(const struct pwrph_work *w,uint64_t page)
 {
-    if(w->stride!=sizeof(struct efi_memory)||!w->bytes||w->bytes>sizeof(w->map)||w->bytes%w->stride)return 0;
+    /* GetMemoryMap DescriptorSize is a stride, not sizeof the known prefix.
+     * Actual0165 returned48 with a40B EFI_MEMORY_DESCRIPTOR prefix. Reuse
+     * the existing bounded/disjoint full-map validator; preserve padding
+     * and still require registered GCD+fresh NSDevice R/W AT afterwards. */
+    struct polaris_efi_memory checked;
+    if(!w||!polaris_efi_memory_check(w->map,w->bytes,sizeof(w->map),w->stride,&checked))return 0;
     for(uint64_t k=0;k<w->bytes;k+=w->stride){const struct efi_memory *d=(const void*)(w->map+k);
         if(d->pages>UINT64_MAX/4096||d->physical>UINT64_MAX-d->pages*4096)return 0;
         if(d->physical<page+4096&&page<d->physical+d->pages*4096&&

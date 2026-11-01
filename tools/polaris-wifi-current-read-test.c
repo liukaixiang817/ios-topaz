@@ -5,6 +5,17 @@
 #define POLARIS_CMDDB_PREPARED_FIXTURE_ONLY 1
 #include "polaris-wifi-cmddb-prepared-test.c"
 static unsigned read_fault;
+static int current_read_map(void *ctx,struct efi_system *sys,uint8_t *out,struct paic_map_sample *m)
+{
+    int ok=ns_map(ctx,sys,out,m);
+    if(ok&&read_fault==18){
+        uint8_t copy[4096];assert(m->stride==40&&m->bytes/40*48<=sizeof(copy));
+        uint64_t n=m->bytes/40;memset(copy,0xa5,sizeof(copy));
+        for(uint64_t k=0;k<n;k++)memcpy(copy+48*k,out+40*k,40);
+        memcpy(out,copy,sizeof(copy));m->bytes=n*48;m->stride=48;
+    }
+    return ok;
+}
 static int current_read_AT(void *context,struct pwrmd_translation *t)
 {
     int ok=path_AT(context,t);
@@ -58,7 +69,7 @@ static int current_read_body(void *context,const struct paic_io *memory,struct p
     struct pwrph_work *w,struct pgcd_context *g)
 {
     (void)context;ns=&path->prepared_cmd.namespace;ng=g;
-    struct pwrpt_io io={.cmd={.original={*memory,path_locate,ns_map},.query=0,.namespace_io={memory,0,current_AT}},
+    struct pwrpt_io io={.cmd={.original={*memory,path_locate,current_read_map},.query=0,.namespace_io={memory,0,current_AT}},
         .device={memory,0,current_read_AT,current_read_load},.CPU={0,path_affinity,path_mask,current_read_restore},
         .access={.memory=memory,.context=&path->access_context,.translate=current_read_AT,.read=current_read_load,
             .write=current_read_store,.RAM_translate=current_read_RAM_AT},
@@ -74,7 +85,7 @@ static int execute_read(unsigned fault)
     for(unsigned k=0;k<3;k++)put(links+0x3004+24*k,other[k],4);
     if(fault==14)jf=4;if(fault==15)jf=7;if(fault==16)jf=13;
     c->io.query=path_descriptor;
-    const struct pwrcl_io io={{{s,0,path_memory_arch,path_identity,order},path_locate,ns_map},client_create,client_drop,own_name};
+    const struct pwrcl_io io={{{s,0,path_memory_arch,path_identity,order},path_locate,current_read_map},client_create,client_drop,own_name};
     return pwrcl_run_body(&io,enumeration,2,c,early,cr,rw,current_read_body,0);
 }
 int main(int argc,char**argv)
@@ -84,7 +95,8 @@ int main(int argc,char**argv)
     uint8_t *data[]={original,npa_original,rp_original,cmd_original};size_t sizes[]={PGCI_IMAGE_BYTES,PWNPI_IMAGE_BYTES,PWRPI_IMAGE_BYTES,PWCDI_IMAGE_BYTES};
     for(unsigned k=0;k<4;k++){FILE*f=fopen(argv[k+1],"rb");assert(f&&fread(data[k],1,sizes[k],f)==sizes[k]&&!fclose(f));}
     unsigned checks=0;
-    for(unsigned fault=0;fault<=1;fault++){
+    for(unsigned sample=0;sample<3;sample++){
+        unsigned fault=sample==2?18:sample;
         int ok=execute_read(fault);
         if(!ok)fprintf(stderr,"READ path%u unknown%u phase%u client%u CPU%u access%u read%u events%u T/C/A%u/%u/%u RAM%u/%u/%u\n",path->error,path->unknown,path->phase,cr->error,path->CPU.error,path->access.error,path->read.io.error,path->read.io.events,path->read.io.triggers,path->read.io.completed,path->read.io.acknowledged,path->RAM[0].error,path->RAM[1].error,path->RAM[2].error);
         assert(ok&&path->retired&&path->known_refusal&&path->error==PWRPT_READ_ONLY&&!pwrpt_unsafe(path));

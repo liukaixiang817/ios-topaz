@@ -49,6 +49,15 @@ static int load_peer(void *ctx,uint64_t at,uint32_t *value)
 static int run_device(unsigned which)
 {
     struct paic_io memory=setup(0);device_fault=which;translations=loads=gcd_calls=0;
+    if(which==26){
+        /* Actual GetMemoryMap DescriptorSize48: the final8 bytes are opaque,
+         * nonzero padding, not a second descriptor or memory permission. */
+        uint8_t map[4096];uint64_t n=rw->bytes/rw->stride;
+        assert(rw->stride==sizeof(struct efi_memory)&&n*48<=sizeof(map));
+        memset(map,0xa5,sizeof(map));
+        for(uint64_t k=0;k<n;k++)memcpy(map+48*k,rw->map+rw->stride*k,sizeof(struct efi_memory));
+        memcpy(rw->map,map,sizeof(map));rw->bytes=n*48;rw->stride=48;
+    }
     assert(pwrpb_capture(&memory,provider,rw,&provider->pools[0][1],&reference,before));
     device=(void*)(arena+0xe0000);memset(device,0,sizeof(*device));assert(sizeof(*device)<0x10000);
     c->io.query=device_query;
@@ -69,6 +78,7 @@ int main(int argc,char **argv)
     assert(ok&&device->complete&&loads==70&&translations==70&&gcd_calls==3&&!device->unknown&&!device->outstanding&&saves==restores);checks++;
     const struct pwrmd_io io={0};assert(!pwrmd_collect(&io,provider,rw,c,before,device));checks++;
     assert(run_device(23)&&device->complete&&loads==70);checks++;
+    assert(run_device(26)&&device->complete&&loads==70&&translations==70&&gcd_calls==3);checks++;
     for(unsigned k=1;k<=25;k++){
         if(k==3||k==15||k==23)continue;
         ok=run_device(k);
@@ -82,6 +92,22 @@ int main(int argc,char **argv)
         checks++;
     }
     assert(!pwrmd_readable(0x179e0d08)&&!pwrmd_readable(0x179e0d0c)&&!pwrmd_readable(0x179e0d30)&&!pwrmd_readable(0x179e0d19)&&!pwrmd_readable(0xaf21c18));checks++;
+    struct pwrph_work padded={0};padded.stride=48;padded.bytes=48;
+    struct efi_memory *m=(void*)padded.map;*m=(struct efi_memory){11,0,0x179e0000,0,1,1};
+    memset(padded.map+40,0xa5,8);assert(pwrmd_exclude(&padded,0x179e0000));checks++;
+    m->type=4;assert(!pwrmd_exclude(&padded,0x179e0000));checks++;
+    m->type=0;assert(!pwrmd_exclude(&padded,0x179e0000));checks++;
+    m->type=11;m->virtual_address=0x179e0000;assert(!pwrmd_exclude(&padded,0x179e0000));checks++;
+    m->virtual_address=0;m->attributes=8;assert(!pwrmd_exclude(&padded,0x179e0000));checks++;
+    m->attributes=1;padded.stride=39;assert(!pwrmd_exclude(&padded,0x179e0000));checks++;
+    padded.stride=41;assert(!pwrmd_exclude(&padded,0x179e0000));checks++;
+    padded.stride=4097;assert(!pwrmd_exclude(&padded,0x179e0000));checks++;
+    padded.stride=48;padded.bytes=49;assert(!pwrmd_exclude(&padded,0x179e0000));checks++;
+    padded.bytes=48;m->pages=0;assert(!pwrmd_exclude(&padded,0x179e0000));checks++;
+    m->pages=1;m->physical=UINT64_MAX-4095;assert(!pwrmd_exclude(&padded,0x179e0000));checks++;
+    m->physical=0x179e0001;assert(!pwrmd_exclude(&padded,0x179e0000));checks++;
+    m->physical=0x179e0000;memcpy(padded.map+48,padded.map,48);padded.bytes=96;
+    assert(!pwrmd_exclude(&padded,0x179e0000));checks++;
     printf("{\"checks\":%u,\"raw_bytes\":%zu,\"event_bytes\":%zu,\"translation_bytes\":%zu,\"SOFTWARE_GCD_AT_MMIO\":true,\"real_MMIO_or_AT_executed\":false,\"write_callback_exposed\":false,\"hardware_lease_granted\":false}\n",checks,sizeof(*device),sizeof(struct pwrmd_event),sizeof(struct pwrmd_translation));
     free(original);free(npa_original);free(rp_original);free(arena);return 0;
 }

@@ -34,6 +34,51 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0165 actual controlled FASTBOOT06:26; NEW0166 real stride48 ABI fix verified OFFLINE; READ/vote/Wi-Fi NOT DONE
+
+- Wi-Fi is still not functional.0165 ONEimage56564 ENDED0; actual waiting-
+  payload06:21:44Z then ONE63cbpayload46449 ENDED0 ACK06:22:47.119724Z,
+  transfer32.955634s/bootcall17.445447s. Imagea892c90551dd98ce795c1bd4758c3824cf3787b1499a303dac872f7619934870/
+  6029312B, source2f53d2c17b95f85cb8e0c74acee795f036ff1b9f. Originalrepo0165/
+  phone-prepared-power-runtime-0001/boot.json CONSUMED; never replay/refreeze.
+  Frozen0165 COPY845+10COMMIT_ONLY/434sources/88inputs, independentnohardlinks,
+  freeze64691a18b821492e0744301f3d9c79a234b37eece2169867ce51743c9fb43467.
+- Actual completecapture26560 ENDED0 at06:23:12.104396Z/kernel-entered.
+  Preparation1660544B SHA53e47525401e86bdfcc559337e67e03f828f45a637dafc406d3d7abffb52bdf8,
+  client227104B SHA18a172d608a6a6f28e687723cc99efbdc375275623204510817d0aef80004de6,
+  newbody1941984B SHA0315e9211fe4951aad2ea3ea16f3952c17a03843c9fb0726d5b2c87c714aaee2.
+  Frozen C ABI actual113x2namespace/currentselectedbytes/26rowRAM/source/full
+  pool/knownCreateDelete again passed; do not inventory boot. New decisive
+  Deviceerror3 MAP/bodyerror5 DEVICE/unknown0/retired1/knownrefusal1, queries0/
+  AT0/MMIO0. CPU/READ/WRITE/access ENTIREZERO. No physical READ/vote occurred.
+- Actual GetMemoryMap stride48 versus known C prefix40, bytes2880 eachpass.
+  Old exact-size exclusion reproduced on these actual raw bytes; RSC pages
+  absent from map. This names0165 refusal only, not older UNKNOWN causes.
+  Missing mapping is not permission. Physicalproof9b666258c24e9f04c91e25e9c2b750102a08ab794482c5a8f0b67018cca2f0c8
+  at0165/wifi/actual-current-read-0001/physical-map-stride-refusal-and-final-GCD-proof.json.
+  Actual finalGCD8getters/20Coredigestbytes/twoactualprestarts/error0/key5899=5899.
+- Normal0165 drain35095 ENDED0, nativecookie5126703269/seq1mode2phase3error0/
+  epochs0/caps80000003. Complete fresh appendraw/WLEXIT05/WLR5 independently
+  decoded final32/error0/faultOR1rtOR0 onlyILIMbit0. Independentactualproduct
+  polaris06:26:58.469348Z. Exitreviewdf793a02c48e3c4fb0e535245a6b9a4179e7f7b935ce8576d12d5fa9e69a1fea.
+  CurrentPHONE FASTBOOT, not native. AllworkersENDED/no physical request.
+  No UTC SET0165, optical/performance/nativeCI or othercurrentUIclaims.
+- NEW0166 only replaces sizeof-exact rejection with existing full bounded
+  polaris_efi_memory_check, preserving opaque stride padding, overflow/nonzero/
+  pagealignment/disjointness/RAM-overlap exclusion. GCD+actual NSDevice R/W AT,
+  source/CPU/owner/200ms/UNKNOWN/read-onlycapture/fullrestore unchanged. New
+  wholechain stride48+nonzero-padding successcase; malformed maps refused.
+  Device40 +currentparent19 +affectedlegacy204 =263executedASAN/UBSANcases;
+  unchangedREAD555 reused only after exact dependencies matched, total818.
+  Jointproof8576a3f8a60108f53b0574b5f49a7db71b3bc86188ef42c6f3f1a99877a1e1db,
+  actual parentCOFF/MachO|maxframe1024/fullEFI/defaultOFF/QEMUpp pass. Two NEW
+  SERIAL wholeEFI-XNU models19checks/88sameinputs passed; no old3007 or nativeCI.
+- NEXT distinct0166 exact hostprofile/image/wholecodec/freeze/ONEhelper before
+  ONE new RAM.0165 no morecontrollercommands. FreshROOT/NV0165 +full normal0165
+  drain/independentFB qualifies nextcandidate; no repeatedfullhash/recovery.
+  Still no ARCresponse semantic qualification/currenthardwareTCS/lease/READ,
+  no resourceWRITE/MSS/NVserve/scan/join/data. ONLY Wi-Fi, sound/camera/children STOP.
+
 ### CURRENT0165 actual audited FASTBOOT06:18; NEW three-RAW-READ/full-restore candidate verified OFFLINE, no READ/vote/network executed yet
 
 - Phone last independently actualPolarisFASTBOOT06:18:56.545627Z after NEW0165

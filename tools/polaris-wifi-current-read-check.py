@@ -13,6 +13,8 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__)
     for name in ('driver', 'legacy-proof', 'bindings', 'off-bindings', 'out'):
         ap.add_argument('--' + name, type=Path, required=True)
+    ap.add_argument('--reuse-read-proof', type=Path,
+        help='Reuse only the unchanged READ core after exact compiler-dependency hashes match')
     a = ap.parse_args()
     driver, prior, bindings, off, out = [p.resolve() for p in
         (a.driver, a.legacy_proof, a.bindings, a.off_bindings, a.out)]
@@ -70,7 +72,25 @@ def main():
         'wifi_CPU0_RPMh_source_PE', 'wifi_CPU0_power_source_PE')]
     for name, source, count, arguments in (
             ('read-core', 'polaris-wifi-rsc-read-test.c', 555, []),
-            ('read-parent', 'polaris-wifi-current-read-test.c', 18, originals)):
+            ('read-parent', 'polaris-wifi-current-read-test.c', 19, originals)):
+        if name == 'read-core' and a.reuse_read_proof:
+            prior_path = a.reuse_read_proof.resolve()
+            prior_read = json.loads(prior_path.read_text())
+            assert prior_read['passed'] and prior_read['peers'][name]['checks'] == count
+            build = next(x for x in prior_read['checks'] if x['name'] == name + '-ASAN-UBSAN-build')
+            executed = next(x for x in prior_read['checks'] if x['name'] == name + '-run')
+            assert build['exit'] == executed['exit'] == 0
+            dep = Path(build['command'][build['command'].index('-MF') + 1])
+            for word in dep.read_text().replace('\\\n', ' ').split()[1:]:
+                source = Path(word).resolve()
+                if source.is_file() and source.is_relative_to(ROOT):
+                    relative = str(source.relative_to(ROOT))
+                    assert sha(source) == prior_read['sources'][relative], relative
+            deps(dep)
+            records.extend([dict(build, reused_unchanged_software=True),
+                dict(executed, reused_unchanged_software=True)])
+            peers[name] = prior_read['peers'][name]
+            continue
         dep = out / (name + '.d')
         run(name + '-ASAN-UBSAN-build', [*common, '-std=c11', '-D_POSIX_C_SOURCE=200112L',
             '-DEFI_XNU_GCD_MMIO_QUERY_AVAILABLE=1', '-O1', '-g', '-fsanitize=address,undefined',
