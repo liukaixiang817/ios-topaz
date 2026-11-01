@@ -34,6 +34,57 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0172 OFFLINE FROZEN candidate complete; phone controlled FASTBOOT11:07; NEW0172 payload reuse approval needed, Wi-Fi NOT DONE
+
+- NEW0172 specificcandidate sourceFWaf2d44923b8f3dcf8501df0d618b948b3eb00884/
+  HOSTc4fa399098e816e1ecf3c0926a4c500c7497f221 committed/pushed/independent
+  lsremote matchedHOST. Fullrealparent109new+30legacyREAD+23work ASAN/UBSAN,
+  actualCOFF/MachO|maxframe1024/CPP noaccesscallback/READWRITEengine, twoSERIAL
+  new19checkwholeEFI-XNU/90sameinputs pass. No newnativeCI/download.
+- Image50c31202d1836e2fc5f23a09ca25a5a004a7108ab7d952fece193b1be2191ab1/
+  6025216B, unwrappeddriver6dc906115db381ec96f8a79f2eeafafd4560bd0bb9ceff034d66cb5ef744bcb9/
+  15914496B. Original81FW/SimpleInit/BootShim/DTB preserved; unmodifiedEDK2
+  GetInfo/full43396296B decode byteequal. GCD_CLOCK_0172 exact288metadata+
+  94resource/90inputs/old25enabled+DISABLED literalAST unchanged;21hosttests
+  plusactualnomockcompleteadmit pass. Raw1943840B/newdistinctcheckpointlabel,
+  allfullprep/client/work/Device/CPU preserved, unusedengines entirelyzero.
+- Independentfreeze /private/tmp/polaris-runtime-0172-frozen-0001 COPY862+
+  10COMMIT_ONLY/456currentcommittedsources/90inputs/nohardlinks; freeze
+  389b469db948d4b036e4249390e6d40833f7148946c18281fc23cd4e42921a28,
+  defaultoffline ONEhelper passed. NewONLYhelper is
+  research/polaris/uefi-ios-0172/boot-private-CPU-checkpoint-once-0001.py;
+  matchingnewfrozencontroller +driver/image +ORIGINALrepo new
+  phone-private-CPU-checkpoint-runtime-0001/boot.json ONLY afterONEsend.
+  No bootrecord exists/noimage/payload sent sofar; no015x/016x/0171replay.
+- This narrows the unproven SAME private currentCPU/Device/fullrestore/Delete
+  lifetime BEFORE firstTCSaccess/store. NoaccessIOcallback, unusedengines
+  realallzero, typednormal7/masked7/exactrestore and original200ms/fullREAD
+  planningreserves/source/UNKNOWN/quarantine remain. It is NOTREAD/vote/
+  hardwaregrant orWiFifunctionality; actualnewCPUraw notyetobserved.0171
+  actualpredicate/mask/writecounts remainUNKNOWN, not0/namedrootcause.
+- NecessaryNEWstrictRO0001 was incomplete and safelystopped/unmounted/FB;
+  retained.0002withONLYhosttiming instrumentation completedall39independent
+  checks/twofull16GiB/142-182maps/marker/GPT/ESP/journalmetadata/currentNV;
+  actualPolarisFASTBOOT11:07:39.373498Z, allworkersENDED. Newreview
+  00db129180070edc2a2b39dbcbc85426efa8f96a9043eef0ff3c3de9c0ece619/
+  preflighte0f390773e3728a0c131041d2b01da33fd1b46c973fdc65b9f0493f32a3bf067.
+  No uncontrolledinterval sinceaudit. No partitionwrite/NVrestore/FShealth
+  claim/wholejournalcapture. No moreUSBinventoryquery untilONEstartready.
+- BEFORE image staging, obtain user explicit NEW0172 immutable63cbkernel
+  reuse once: priorautoreview required per-candidate exception for old0145
+  payload file; user0170/0171 permits were oneeach, bothconsumed. Do not
+  fabricate authorization/rename/copydisguise/alterpolicy/indirectbypass.
+  Concretecandidate is complete and remainsFASTBOOT whileawaitingapproval;
+  no waitingpayloadphone. Helper requires futureORIGINALworkspace
+  payload-reuse-authorization.json ONLYunder--boot-once, notofflinecheck.
+  Phone no entityactionneeded; userapproval oncepending afterrequest.
+- No new actual0172iOSUI/UTC/WLED/CPU/READ/vote/MSS/NVserve/scan/join/data.
+  Latestreal iOSUI remains0170history, phoneNOTnativeLIVE. Sound/cameraSTOP;
+  allchildrenSTOP/no newchild/parallel/duplicateautomation. WiFi stillgreyOFF
+  and no successfulscan/join/data has everbeenclaimed. Afterthischeckpoint,
+  useactualevidence tolocateprivategap; anylaterREAD needsNEWfreshcurrent
+  source/owner/cache/DeviceNSRWAT/CPU/ticket, neverborrowpastphase orfakelease.
+
 ### CURRENT0172 actual controlled strictRO FASTBOOT11:07; same-private CPU candidate OFFLINE only; READ/Wi-Fi NOT DONE
 
 - NEW0172 defaultOFF --wifi-power-private-cpu-checkpoint is implemented and
