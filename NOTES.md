@@ -34,6 +34,44 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0172 SOURCE/OFFLINE only; phone remains recovered Polaris FASTBOOT0171/10:28; same-private CPU/READ/Wi-Fi NOT DONE
+
+- NEW0172 defaultOFF --wifi-power-private-cpu-checkpoint is implemented and
+  OFFLINE verified. It narrows the SAME real known original private lifecycle:
+  completedRO preparation/currentnamespace+selectedCmdDb/fullRAM/Device ->
+  unchanged conservative0171 workgate -> normal7+masked7/exactCPUrestore ->
+  fullRAM/observedDevicebytes/currentCmdDb/source/namespace/knownDelete.
+  It stops BEFORE firstcheckedaccess/TCSstore: actualparent accessIO entirely
+  zero, READ/WRITE/accessengine calls CPPout, unusedengines must stay entirely
+  zero. No fake attempted/finished/retired flags orclientheld/leasebool.
+- Planned PWRPT_CPU_CHECKPOINT reason/rawlabel
+  WIFI_CURRENT_PRIVATE_CPU_CHECKPOINT_RAW_V1 distinguishes fullretirement from
+  READcompletion; body1943840B and allprep/client/work/Device/CPU bytes kept.
+  Original200ms/slowest68samples/fullREAD50ms+nonhash25ms reserve retained;
+  no budgetlowering/renew/rebase orborrowedROticket. UNKNOWN/heldmask/source/
+  time/restoration failure still blocksClock/native/PON/receipt, fullRAMappend
+  thenlocalmask/nonreturnWFE; neverheldinterval toUSB orclearerrorforexport.
+- 109new sameprivateCPU +30legacyREAD+23legacywork =162 ASAN/UBSAN cases pass;
+  actualwholeparent COFF/MachO allwarnings/maxframe1024/generalregs-only,
+  actualpreprocessedbody noaccessREADWRITEcalls, initializer .access={0},
+  actualMachO no pwra_actual_write symbol/defaultOFF+QEMUpp pass. Parentproof
+  31174268c365de6cb4a78ed261ed5e087f262c7383e56b5f88077eaab17c406a.
+  TwoSERIALnewwholeEFI-XNU each19checks/90sameinputs/11resource+1battery
+  literalint1/actualQEMUpp no physicalbodyrecords pass, modelproof
+  4831c396a6e28153bf70c5e0b5a0af2a37a1ef805acf3a009d7684eef4628b68.
+  Evidence-script result key corrected only; passedmodels notrerun.
+- Actualunwrappeddriver6dc906115db381ec96f8a79f2eeafafd4560bd0bb9ceff034d66cb5ef744bcb9/
+  15914496B/90inputs, allcurrentbytes matched. SOFTWAREpeer calls no physical
+  API/SMC/MMIO. No newnativeCI/download/USB/UI/UTC/optical/performance.
+- Phone remains independentactualPolarisFASTBOOT0171/10:28:09.680946Z;
+  0171UNKNOWN actualpredicate/writecounts remainUNKNOWN, no newrootcauseclaim.
+  Allthisturnworkers ENDED. NEW0172candidate stillNOTREADY: next exacthost
+  scope/necessary NEWstrictRO root+currentNV audit/original81wholecodec/
+  sourceaudit/independentfreeze/ONEhelper must pass first.0169audit historical
+  after0171UNKNOWN. User0171 kernelreuseexception consumed; ifnewexception
+  needed ask onconcretereviewablecandidate BEFORE staging image. No pending
+  useraction; noUSBinventorypoll. WiFi scan/join/data=false; sounds/cameraSTOP.
+
 ### CURRENT0171 startup ACK UNKNOWN; user physically recovered, actual Polaris FASTBOOT10:28; private CPU/READ/vote/Wi-Fi NOT DONE
 
 - ONE0171 newimage52264 ENDED0 sent2026-11-01T10:22:58.537042Z/source

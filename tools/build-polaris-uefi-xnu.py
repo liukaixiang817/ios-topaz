@@ -457,7 +457,10 @@ def main():
     ap.add_argument('--wifi-cpu-ro-admission',action='store_true',help='default-OFF independent normal-IRQ seven-peer AFFINITY_INFO64 raw capture and full source/map retirement; NO private client, mask, TCS or READ')
     ap.add_argument('--wifi-cpu-masked-ro-admission',action='store_true',help='default-OFF fresh normal and masked seven-peer CPU-local observations, exact DAIF/G1/FP/source restoration and full independent RO retirement; NO private client/TCS/READ/vote or hardware grant')
     ap.add_argument('--wifi-power-current-arc-read-work-admission',action='store_true',help='default-OFF same complete private READ path; before mask compare all68 retired-RO timing samples, counted tail, full50ms READ and25ms reserve against remaining ORIGINAL200ms; estimate-only, no lease/deadline renewal')
+    ap.add_argument('--wifi-power-private-cpu-checkpoint',action='store_true',help='default-OFF source-bound failure isolation: same real private/current namespace/fullRAM/Device/normal+masked CPU/complete restore/Delete before ANY RSC access/TCS store; no writer callback or fake engine retirement')
     a=ap.parse_args();r=Path(__file__).resolve().parents[1]
+    if a.wifi_power_private_cpu_checkpoint and not a.wifi_power_current_arc_read_work_admission:
+        ap.error('private CPU checkpoint requires the full prepared/current source and unchanged READ work admission dependencies')
     if a.wifi_power_current_arc_read_work_admission and not a.wifi_power_current_arc_read:
         ap.error('READ work admission requires the same full prepared/current capture-only READ scope')
     if a.wifi_cpu_masked_ro_admission and not a.wifi_cpu_ro_admission:
@@ -910,6 +913,7 @@ def main():
 #define EFI_XNU_WIFI_ARC_READ_AVAILABLE {int(a.wifi_power_current_arc_read)}
 #define EFI_XNU_WIFI_ARC_READ_CAPTURE_ONLY 1
 #define EFI_XNU_WIFI_ARC_READ_WORK_ADMISSION {int(a.wifi_power_current_arc_read_work_admission)}
+#define EFI_XNU_WIFI_PRIVATE_CPU_CHECKPOINT {int(a.wifi_power_private_cpu_checkpoint)}
 #define EFI_XNU_WIFI_CPU_RO_ADMISSION {int(a.wifi_cpu_ro_admission)}
 #define EFI_XNU_WIFI_CPU_MASKED_RO_ADMISSION {int(a.wifi_cpu_masked_ro_admission)}
 #define EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE {int(cmddb_binding is not None)}
@@ -1497,6 +1501,29 @@ def main():
             wifi_CPU0_power_current_ARC_work_decline_requires_full_namespace_pool_client_Delete_close=True,
             wifi_CPU0_power_current_ARC_work_unknown_blocks_parent_native_PON_receipt=True,
             wifi_CPU0_power_current_ARC_work_estimate_not_walltime_or_hardware_grant=True)
+    if a.wifi_power_private_cpu_checkpoint:
+        manifest.update(
+            wifi_CPU0_power_execution_kind='SAME_KNOWN_PRIVATE_CURRENT_RAM_DEVICE_MASKED_CPU_EXACT_RESTORE_DELETE_BEFORE_RSC_ACCESS',
+            wifi_CPU0_power_raw_format='CURRENT_PRIVATE_CPU_CHECKPOINT_RAW_V1',wifi_CPU0_power_raw_bytes=1943840,
+            wifi_CPU0_power_CPUcritical_and_RSC_reachable=False,wifi_CPU0_power_CPUcritical_reachable=True,
+            wifi_CPU0_power_RSC_reachable=False,wifi_CPU0_power_steps_max=0,wifi_CPU0_power_transaction_events_max=0,
+            wifi_CPU0_power_current_ARC_read=False,wifi_CPU0_power_current_ARC_compiled_dependency_only=True,
+            wifi_CPU0_power_current_ARC_read_requests_max=0,wifi_CPU0_power_current_ARC_commands_per_read=0,
+            wifi_CPU0_power_current_ARC_raw_format='CURRENT_PRIVATE_CPU_CHECKPOINT_RAW_V1',
+            wifi_CPU0_power_prepared_masked_FULL_DB_snapshots=0,
+            wifi_CPU0_power_private_CPU_checkpoint=True,wifi_CPU0_power_private_CPU_checkpoint_default_OFF=True,
+            wifi_CPU0_power_private_CPU_checkpoint_before_first_TCS_store=True,
+            wifi_CPU0_power_private_CPU_checkpoint_no_access_READ_ACK_or_writer_callback=True,
+            wifi_CPU0_power_private_CPU_checkpoint_unused_engines_entirely_zero=True,
+            wifi_CPU0_power_private_CPU_checkpoint_no_forged_engine_retirement=True,
+            wifi_CPU0_power_private_CPU_checkpoint_actual_Create_current_namespace_Device_CPU_restore_Delete=True,
+            wifi_CPU0_power_private_CPU_checkpoint_masked_normal_full_RAM_equal=True,
+            wifi_CPU0_power_private_CPU_checkpoint_all_Device_control_status_IRQ_bytes_unchanged=True,
+            wifi_CPU0_power_private_CPU_checkpoint_work_FULL_READ_reserve_retained=True,
+            wifi_CPU0_power_private_CPU_checkpoint_original_200ms_unchanged=True,
+            wifi_CPU0_power_private_CPU_checkpoint_held_UNKNOWN_blocks_USB_native_PON_receipt=True,
+            wifi_CPU0_power_private_CPU_checkpoint_complete_retire_before_USB_export=True,
+            wifi_CPU0_power_private_CPU_checkpoint_not_lease_or_later_READ_permission=True)
     if a.wifi_cpu_ro_admission:
         manifest.update(wifi_CPU0_power_transaction=False,
             wifi_CPU0_power_CPU_RO_admission=True,wifi_CPU0_power_CPU_RO_default_OFF=True,
