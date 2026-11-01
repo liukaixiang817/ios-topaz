@@ -13,6 +13,8 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__)
     for name in ('driver', 'normal-bindings', 'bounded-bindings', 'first-bindings', 'budget-bindings', 'staged-bindings', 'hash-proof', 'out'):
         ap.add_argument('--'+name, type=Path, required=True)
+    ap.add_argument('--firmware-log-mib',type=int,choices=(10,12),default=12)
+    ap.add_argument('--reuse-software-proof',type=Path)
     a = ap.parse_args()
     driver, normal, bounded, first, budget, staged, hp, out = [p.resolve() for p in
         (a.driver, a.normal_bindings, a.bounded_bindings, a.first_bindings, a.budget_bindings, a.staged_bindings, a.hash_proof, a.out)]
@@ -41,8 +43,8 @@ def main():
         assert d['wifi_CPU0_power_'+key] is True
     assert d['wifi_CPU0_power_CmdDb_capture_only'] is False
     assert d['wifi_CPU0_RPMh_private_client'] is True and d['wifi_CPU0_RPMh_private_API_calls_max'] == 2
-    assert d['original_GCD_new_scope_RAM_log_capacity'] == 12 << 20
-    assert d['wifi_CPU0_resources_firmware_RAM_log_capacity'] == 12 << 20
+    assert d['original_GCD_new_scope_RAM_log_capacity'] == a.firmware_log_mib << 20
+    assert d['wifi_CPU0_resources_firmware_RAM_log_capacity'] == a.firmware_log_mib << 20
     assert d['wifi_CPU0_power_CmdDb_original_Query_calls_max'] == 0
     h = json.loads(hp.read_text())
     assert h['passed'] and h['peer']['checks'] == 3007
@@ -83,6 +85,19 @@ def main():
             ('old-budget', budget, 'cmddb-budget', 24), ('old-staged', staged, 'cmddb-staged', 50),
             ('prepared-bind', staged, 'cmddb-prepared', 17), ('prepared-power', staged, 'prepared-power', 20)]:
         dep = out/(name+'.d')
+        if a.reuse_software_proof:
+            prior=json.loads(a.reuse_software_proof.read_text());assert prior['passed'] is True
+            build=next(x for x in prior['checks'] if x['name']==name+'-ASAN-UBSAN-build')
+            executed=next(x for x in prior['checks'] if x['name']==name+'-ASAN-UBSAN-run')
+            assert build['exit']==executed['exit']==0
+            olddep=Path(build['command'][build['command'].index('-MF')+1])
+            for word in olddep.read_text().replace('\\\n',' ').split()[1:]:
+                source=Path(word).resolve()
+                if source.is_file() and source.is_relative_to(ROOT):
+                    relative=str(source.relative_to(ROOT));assert sha(source)==prior['sources'][relative],relative
+            deps(olddep);records.extend([dict(build,reused_unchanged_software=True),dict(executed,reused_unchanged_software=True)])
+            peers[name]=prior['peers'][name];assert peers[name]['checks']==count
+            continue
         run(name+'-ASAN-UBSAN-build', [*common, '-std=c11', '-D_POSIX_C_SOURCE=200112L',
             '-DEFI_XNU_GCD_MMIO_QUERY_AVAILABLE=1', '-O1', '-g', '-fsanitize=address,undefined',
             '-MD', '-MF', dep, '-I'+str(config), '-I'+str(ROOT/'tools'), '-I'+str(ROOT/'shim/polaris'),

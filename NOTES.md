@@ -34,6 +34,38 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0161 remains actual controlled FASTBOOT04:14; NEW0163 full power candidate fits unchanged FFS after capacity-only fix; host profile/freeze NOT READY
+
+- User requests Wi-Fi quickly; ONLY Wi-Fi, sound/camera/children STOP. Next
+  attempt is the complete conditional power transaction, not inventory.
+  No USB/nativeCI/new physical API/MMIO in this change. Phone remains actual
+  controlled0161 FASTBOOT04:14:42.882308Z, no pending physical request.
+- Offline0162 packager rejected17966080B driver at unchanged normal24bitFFS
+  size bound BEFORE image creation or USB. No0162 bootrecord/image/payload
+  consumed. OriginalFV/FFS/81FW codec guards were NOT weakened or patched.
+- NEW0163 capacity-only source: FWlog10MiB, host14MiB+128. Actual typed raw
+  sum4348568B -> fullhex+1MiBreserve9745712B fits10485760B. Fullbody1892336/
+  prep1660544/client227104/current233520/access401800 all unchanged/retained.
+  No raw removal. NewPE15868928B fits ordinaryFFS including wrapper overhead.
+  Actualdriver055cfac94b5044df40c8aca52cd994cbe256b4f26682d1b16de9dab8576fc200,
+  86inputs; no packaged image sent. New FFSscope documents exact arithmetic.
+- Complete prepared/current/private/CPU/RSC/restore/Delete functions and ALL
+  original source/owner/200ms/UNKNOWN/Device/PSCI/runtime qualification gates
+  unchanged from0162.202already executed software cases reused only after
+  every actual per-case .d dependency SHA matches previousproof; changed
+  wholeparent freshlycompiledCOFF/MachO|maxframe1024/fullEFI/defaultOFF/QEMUpp,
+  proof5df0b03c8a47f84fb46960f4157118debe37968d333baa58360d7b6a234d5eca.
+  9boundedlogtests PASS, default/oldclients unchanged. No gratuitous202 rerun.
+- Two SERIAL newwholeEFI-XNU19check models38.791803/39.380736s with86same
+  currentinputs PASS; 11resourcePower+1battery literalint1 and actualQEMUpp
+  no prepared/current/private bodies/records. All model/buildworkers ENDED.
+  SOFTWARE PMIC/delay/RAMUSB not hardware/guestreset/radio. No kernel CI.
+- NEXT NEW exact0163hostprofile preserving old0162 and all olderliterals,
+  original81wholecodec/sourceaudit/independentfreeze/ONEhelper plus normal
+  0161drain/currentfresh0160ROOT-NV. Then actualexpectedFASTBOOT and ONE
+  conditional integrated power attempt. No blind votes or permission boolean;
+  all SAME runtime predicates still precede any store. MSS/NVserve/radio false.
+
 ### CURRENT0161 remains actual controlled FASTBOOT04:14; NEW0162 prepared/current/private bounded power parent verified OFFLINE; new exact admission/candidate NOT READY
 
 - ONLY Wi-Fi, scan/join/data false; sound/camera/allchildren STOP. User asks

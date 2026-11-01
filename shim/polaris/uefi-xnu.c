@@ -42,7 +42,7 @@ _Static_assert(sizeof(struct args)==736,"XNU boot args ABI");
 static struct efi_system *system_table;
 static efi_handle driver_image;
 #if EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
-static uint8_t log_buffer[12582912];static uint64_t log_bytes;
+static uint8_t log_buffer[10485760];static uint64_t log_bytes;
 static volatile uint32_t log_overflow;
 #elif EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE
 static uint8_t log_buffer[8388608];static uint64_t log_bytes;

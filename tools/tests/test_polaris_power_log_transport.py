@@ -53,6 +53,16 @@ class PowerLogTransport(unittest.TestCase):
         self.assertEqual(len(client.upload()), (16 << 20)+128)
         self.assertEqual(peer.writes, [b'upload'])
 
+    def test_complete_FFS_sized_prepared_log_bound(self):
+        client, peer = prepared((14 << 20)+128, 10 << 20)
+        self.assertEqual(len(client.upload()), (14 << 20)+128)
+        self.assertEqual(peer.writes, [b'upload'])
+
+    def test_FFS_sized_scope_overbound_refuses_without_body(self):
+        client, peer = prepared((14 << 20)+129, 10 << 20)
+        with self.assertRaises(ValueError):client.upload()
+        self.assertEqual(peer.body_reads, 0)
+
     def test_prepared_scope_overbound_refuses_without_body(self):
         client, peer = prepared((16 << 20)+129, 12 << 20)
         with self.assertRaises(ValueError):client.upload()

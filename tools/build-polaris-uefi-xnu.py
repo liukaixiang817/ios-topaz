@@ -1413,8 +1413,8 @@ def main():
             wifi_CPU0_power_prepared_original_private_deadline_ticks=3840000,
             wifi_CPU0_power_prepared_final_ticket_unopened_before_Clock=True,
             wifi_CPU0_power_prepared_both_raw_scopes_exported_complete=True,
-            original_GCD_new_scope_RAM_log_capacity=12582912,
-            wifi_CPU0_resources_firmware_RAM_log_capacity=12582912)
+            original_GCD_new_scope_RAM_log_capacity=10485760,
+            wifi_CPU0_resources_firmware_RAM_log_capacity=10485760)
     (out/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
     print(json.dumps({k:manifest[k] for k in ['artifact','sha256','bytes','QEMU_variant','device_execution_tested']}))
 

@@ -11,8 +11,8 @@ class WledRuntimeProtocol(KernelProtocol):
         # The manifest-bound controller performs exact image/source admission
         # BEFORE constructing this client. This parameter only bounds upload
         # length; it cannot grant a new command, physical scope or boot.
-        if firmware_log_capacity is not None and (type(firmware_log_capacity) is not int or firmware_log_capacity not in (8388608,12582912)):
-            raise ValueError('only the NEW explicit 8MiB/12MiB firmware log scopes are supported')
+        if firmware_log_capacity is not None and (type(firmware_log_capacity) is not int or firmware_log_capacity not in (8388608,10485760,12582912)):
+            raise ValueError('only the NEW explicit 8MiB/10MiB/12MiB firmware log scopes are supported')
         super().__init__(transport);self.exit_sent=False;self.actual_footer=b'';self.actual_reply=b''
         if firmware_log_capacity is not None:
             self.limits=dict(self.limits,logs=(4<<20)+firmware_log_capacity+128)
