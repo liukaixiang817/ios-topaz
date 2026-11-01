@@ -34,7 +34,78 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0158 actual FASTBOOT02:27; FIRST RAW NODE diagnostic READY for ONE RAM, not yet sent
+### CURRENT0158 nativeLIVE02:36 / actual FIRST raw Core node + known retirement SUCCESS; full namespace/DB/Wi-Fi NOT DONE
+
+- Lastactual current native capture84697 ENDED0 at02:36:15.019210Z, independently
+  kernel-entered. Actual HOME screen/wallpaper/calendarSunday1/analogclock and
+  chargingicon visible, not a lockscreen or fullrender/60Hz claim. ActualFG3/
+  SMB2 latest100%/4283mV/charging0 (full battery on USB, icon alone is not this
+  actual charger result). WLED completeprefix26/error0/issued4=completed4/
+  req2=ack2/module128/irq2/faultOR0/rtOR1; onlyILIMbit0 permitted, retainallraw,
+  no error clear or optical repeat. Earlyconsole/prefix2 is historical.
+- New ONEimage86663 ENDED0 sent02:30:29.546778Z/sourcede9bdf0/imagef3b09e49/
+  5996544B. Actualwaitingpayload02:30:50.704610Z -> ONE63cbpayload96013 ENDED0
+  ACK02:31:54.266829Z/transfer32.966886292s/bootcall17.015873625s. Originalrepo
+  phone-CmdDb-first-node-runtime-0001/boot.json now CONSUMED. ONLYcontroller=
+  /private/tmp/polaris-runtime-0158-frozen-0001/tools/polaris-uefi-wled-runtime.py
+  with frozen0158 driver0001/image0001 and shared originalrepo consumedrecord.
+  No old/editcontroller/policy/stripflags/refreeze/replay. Phone NOTFASTBOOT.
+- UTC0158 has ONESET and independentstatus ENDED0:cookie4942161685/seq1/status2/
+  error0/count1/uncertainty2242us. NEVER SET0158 again. AllUSB workers ended.
+- Real actual RAWclient227104B SHA87f0dfab62fe3cc3804ba8a2ce6efac29e579291f4d
+  7ad51cf5c990d7061c824 and pathRAW_V2 1656240B SHA51a2eb16ee99f8a7f1ae5b3a68
+  de1746a772b8ef2d9718e1b3a687e572f16a65 are COMPLETE atwifi/actual-first-node-
+  0001. Existing source typedef decoder there, do not build duplicate parsers.
+  ActualknownCreate/Delete status0, 4issued=4returned/provider2=2/retired1/
+  clientheld0/returned1; active/free4,0→5,0→4,1, originalkey5898→5899→5899.
+  CmdDbuniqueowner1/5hash match/current cached+platform85fe0000 reobserved,
+  original1Locate+1Map=2returned. No database target or originalQuery call.
+- Actualfirstnode address0x17fdff218/80B, signature0x6d646367,
+  rawBase0/rawEnd0xfffff/type0/IO0/cap0/attr0/back=head match source layout.
+  BothCore5hash checkpoints(10digests)+templateSHA match, one actualnodePAR
+  saved/restored+NSWB pass. Returned dedicatedPGNS/PWCDplannedstop14, count1/
+  complete0/stable0; deliberately BEFORE field interpretation or fullwalk.
+  Full namespace and targetDB remain NOT DONE, rawnode data is not hardware
+  permission. 30privateCore/RPMh hashes+5CmdDb+10nodeCore+20finalGCD hashes match;
+  reader4+client4+CmdDb2 originalFP/arch/TPL guards saved/restored1/TPL4→4.
+  FinalGCDerror0/8gettersreturned/5899=5899/twoactualprestarts complete. Final
+  ticket remained unopened duringprivatebody, neverreset/rebased.
+- Actualprivate interval49.696ms and firstnode checkpoint interval9.759ms
+  retained from original19.2MHz counter. Latter includes RAM/AT/guards plus
+  twohash checkpoints, NOT a pureSHA benchmark or earlierfailure rootcause.
+  No criticalPSCI/RSC/MMIO/MSS/NVserve. Physical combinedproof SHA019636cf11015d5e3c021c0f0128c28a114616ecbaa170ae79e2177bacecf32a
+  atwifi/actual-first-node-0001/physical-first-node-retirement-and-current-UI-
+  proof.json, PASS means this partialstage/retirement/UI only, NOT Wi-Fi.
+- NEXT ONLY Wi-Fi: preserve all source/hash/200ms/UNKNOWN/parent gates while
+  reducing repeated scalarCore hash work (same five digests, no permission
+  relaxation), then integrate full current bounded namespace+CmdDb read. No
+  more firstnode/client/inventory-only boots. Original0155/56/57 rootcause is
+  still unproved; firststage success narrows source work only. FullMSS power/
+  auth/MSA/VMID/MPU/SFPB/GLINK/RMTFS then realscan/join/data remain required.
+  Before a NEXT image ONLY frozen0158 nativeVFS/GPU/CPUdrain+completeappendraw/
+  WLEXIT05/WLR5 freshreadback/receipt then independentactualFASTBOOT. Unknown
+  ACK/state no blind resend/reset/cleanup/rawfallback. Fresh0158 fullRO review
+  6a3ef085/preflightd5989b73 now continuouscontrolledRO/RAMCOW authority; no new
+  fullhash/recovery if this controlled chain drains normally. Sound/cameraSTOP.
+
+- NEW0158 ONEimage86663 ENDED0 sent2026-11-01T02:30:29.546778+00:00/sourcede9bdf0622,
+  imagef3b09e49/5996544B; actualwaiting-payload02:30:50.704610Z preceded ONE
+  original63cbpayload96013 ENDED0 ACK02:31:54.266829Z, transfer32.966886292s/
+  bootcall17.015873625s. Shared originalrepo phone-CmdDb-first-node-runtime-
+  0001/boot.json is now CONSUMED. NEVER replay/refreeze or use oldcontroller.
+- Actualcapture47264 ENDED0 at02:32:15.979362Z independently read kernel-entered
+  and exported complete4963461B native.log, one completeclient227104B RAW_V1
+  SHA87f0dfab62fe3cc3804ba8a2ce6efac29e579291f4d7ad51cf5c990d7061c824,
+  and path1656240B RAW_V2 SHA51a2eb16ee99f8a7f1ae5b3a68de1746a772b8ef2d9718e
+  1b3a687e572f16a65. Physical typed decode is next; do not infer a completed
+  namespace or cause of0155/56/57 failures from successful export.
+- First actual frame is EARLY native console, not lockscreen/currentwallpaper
+  evidence. WLEDprefix2/error0/issued0=completed0/module128/irq2 at that capture;
+  this is an early sample, not claimed full26/preserved current UI proof. No
+  optical cycle/repeat performance test. No UTC SET yet in0158. ONLY controller
+  /private/tmp/polaris-runtime-0158-frozen-0001/tools/polaris-uefi-wled-runtime.py
+  with frozen0158 driver/image and originalrepo consumedrecord. No new exit/
+  audit/boot while this actual native session is running. Phone NOTFASTBOOT.
 
 - Human fulfilled the NEW0157 recovery request, independently confirmed actual
   Polaris FASTBOOT02:14. No pending physical request. The next already-required
