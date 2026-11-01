@@ -52,9 +52,11 @@ early samples only. On0029 the human already confirmed boot complete and said
   Freezeproof0180/current-runtime-source-freeze-0001.json SHA96db55293fbf904d8eb191059ec3a2174fd2986a9d3ee49d91e29bdcf1ccceff.
 - 0179publicationwasapprovedandpushedthrough93c564a;0180sourcepushwasactually
   rejectedbyautomaticapprovalasoutside0179-onlyconsent. No bypass/alternate
-  push. NEXT askONEconcretepublicbatchconfirmationfor0180source/HOST/NOTES,
-  optionallyfuturelikeupdatesexcludingfirmware/Apple/vendor/NV/backup/dump
-  bytes/serial/password. Do not fabricateapprovalorreuse0179consentfor0180.
+  push. ONEnewconcrete0180publicbatchquestion isNOWPENDING: 7source/notesfiles,
+  choicesapprove0180+futurelikeupdates / onlythis0180 / doNOTpublish0180.
+  Futurelike isstrictly sameproject/repo source+text, excludesfirmware/Apple/
+  vendor/NV/backup/dumpbytes/serial/password. Noanswerclaimed, doNOTreaskor
+  assumepermission. Sourceapprovalisnotkernel/partition/radioauthorization.
 - Afteractualhumanpublicationapproval: recordactualwording/scope; normalpush
   allapprovedsource+notes; independentlsremote; create0180/wifi/normal-masked-
   source-and-physical-handoff-push-proof-0001.json withpassed/approved/remoteHEAD/
