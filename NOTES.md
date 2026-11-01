@@ -34,6 +34,59 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0167 startup ACK UNKNOWN; user physically recovered, actualPolarisFASTBOOT07:20; READ/vote/Wi-Fi NOT DONE
+
+- NEW0167 startup did NOT return ACK. It cannot be called nativeLIVE or a
+  successful READ. ONEimage50483 ENDED0 sent2026-11-01T07:15:21.977093+00:00/
+  sourcead7ddec193937b45a7cd88e33834cab8ebf84c6b/image41a3dce2e95636975be457118ebfefad858703abf83d2e6e4b0507ea006cf725/
+  6029312B. Actualwaitingpayload07:15:33.780784Z -> ONE63cbpayload28903 ENDED1,
+  transfer32.961814s/bootcall90.484056s, response(-7) timeout, NO ACK.
+  Originalrepo0167/phone-prepared-power-runtime-0001/boot.json CONSUMED. Never
+  replay image/payload/OEMboot/refreeze or change oldpolicy/manifests/stripflags.
+- Sole actualstate13421 ENDED1 after28903ENDED, boundUEFI unavailable8s;
+  independentexpectedquery11019 ENDED0/timeout at07:18:27.609731Z. No new
+  client/path/CPU/RSC raw export, so actual predicate/CPU_ON/mask/READ/IRQ/
+  RSCwritecount UNKNOWN, not zero. No proof of quarantine/panic or rootcause.
+  Source's localmask/nonreturnUNKNOWN hold is one possibility, not observation.
+- Physical recovery requested ONCE; user replied 已到FASTBOOT. Independent
+  actualproductpolaris07:20:38.214019Z/exit0 confirms recoveredFASTBOOT. No
+  physical request pending, no normalexit/receipt, no morecurrent-native
+  commands. Current notnative. No blindretry/reset/cleanup/rawfallback was sent.
+  All USB/host/modelworkers ENDED/all children STOP. ONLY Wi-Fi; still no
+  scan/join/data. Sound/camera STOP; no fakecapability or successicon.
+- Full evidence0167/wifi/physical-start-ACK-unknown-and-recovered-FASTBOOT-proof-0001.json
+  SHA76a61dc4235d2909da16f187c6889ac97ef1800ffc5064769a6ab8db6bafa140.
+  PASS means faithful UNKNOWN/recovery evidence, not functionality. No UTCSET,
+  currentUI/optical/performance/nativeCI/download in0167.
+- FW53bb6d97fb0e227ff65b34d3420ceac5539de4d2/HOSTad7ddec193937b45a7cd88e33834cab8ebf84c6b
+  source and exact248PowerGCD+94resource/88inputs profile pushed, remote matched.
+  1388affectedsoftwarecases/29hostchecks/twoSERIAL19checkwholeEFI-XNU models/
+  actualno-mockadmit/fulloriginal81codec passed OFFLINE only. RAW_V2 body1941984/
+  access401936/READ49488,10MiBFW/14MiB+128host all retained. Source hardcodes
+  captureonly/resourceWRITE CPP-OUT, no originalblockingAPI/internalentry.
+  FreezeCOPY853+10COMMIT_ONLY/439sources/88inputs/nohardlinks,
+  cc3b74e7a973beea0487fae05550eec02f27c2ef3617bad7071f4a576abff583.
+  Onlyused /private/tmp/polaris-runtime-0167-frozen-0001/tools/polaris-uefi-wled-runtime.py
+  with matching0167 driver0001/image0001/originalsharedconsumedrecord. Now
+  ended; do not controlnewsession with old0166/editedcontroller.
+- NEXT preserve UNKNOWN and audit originalnormal/maskedPSCI/CPU/sourceguard/
+  trigger/retirement path. Without actualraw do not name a failing predicate
+  or relax200ms/UNKNOWN/lease/restore. A smaller diagnostic must be defaultOFF,
+  newsource/exactprofile and honestly scoped, integrated to meaningful new
+  qualification rather than repeatcompletedNPA/prep/client inventories. Safe
+  pre-private ROCPU work-admission could report all7normalPSCI results and
+  decline without creatingclient/masking/MMIO; only independently retired
+  allOFF admission could proceed to existing fullprivateREAD with ALLfresh
+  runtime guards, never borrow its ticket or treat OFF as hardwaregrant.
+  NEW0168 not implemented/NOTREADY. No newimage or stock/recovery boot now.
+- Since0167exit was unobserved, freshROOT/NV0165 is NOT current qualification.
+  At next already-needed newcandidate transition merge NEW strictRO complete
+  roots/maps/GPT/ESP/journalmetadata/currentNV audit; do not standaloneboot
+  recovery merely for oldTOC/NV. Preserve16GiB91515474/142map+RAMCOW/noUFSwrites,
+  Android/Windows/all data, marker/ESP/default/BootOrder/81FW. Never restore
+  historical NV. Whole512MiBjournal not captured, noFShealthclaim. ActualFB
+  already confirmed/no repeatinventorypolling while candidateNOTREADY.
+
 ### CURRENT0166 remains actual controlled FASTBOOT06:40; NEW0167 retired-latch RAW READ V2 verified OFFLINE; host/image verified OFFLINE, freeze NOT READY
 
 - Phone unchanged after NORMAL0166drain/independentPolarisFASTBOOT06:40:55Z.
