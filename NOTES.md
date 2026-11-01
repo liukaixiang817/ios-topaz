@@ -73,8 +73,13 @@ early samples only. On0029 the human already confirmed boot complete and said
   Jointproof8576a3f8a60108f53b0574b5f49a7db71b3bc86188ef42c6f3f1a99877a1e1db,
   actual parentCOFF/MachO|maxframe1024/fullEFI/defaultOFF/QEMUpp pass. Two NEW
   SERIAL wholeEFI-XNU models19checks/88sameinputs passed; no old3007 or nativeCI.
-- NEXT distinct0166 exact hostprofile/image/wholecodec/freeze/ONEhelper before
-  ONE new RAM.0165 no morecontrollercommands. FreshROOT/NV0165 +full normal0165
+- FW60f5dd16aff656b2b1c5b8629138b29e1099e05c pushed/independentremote matched.
+  NEW GCD_CLOCK_0166 exact242PowerGCD+94resource/88inputs preserves all19old
+  literalAST.24affectedhosttests and actualno-mockcompleteadmit pass.
+  Newimagee84f1173d4c97547fc3a520f56d6db52fb576dfdad4d044b91d86b83b5e27694/6029312B,
+  original81FW and complete43408584B unmodifiedEDK2 decode passed.
+  Hostproof5134a7260d93be22643626ce7ab0527fc2bdc8bebf152fca32328ecbfd5976e5.
+  NEXT independentfreeze/defaultofflineONEhelper before ONE new RAM.0165 no morecontrollercommands. FreshROOT/NV0165 +full normal0165
   drain/independentFB qualifies nextcandidate; no repeatedfullhash/recovery.
   Still no ARCresponse semantic qualification/currenthardwareTCS/lease/READ,
   no resourceWRITE/MSS/NVserve/scan/join/data. ONLY Wi-Fi, sound/camera/children STOP.
