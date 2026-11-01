@@ -34,7 +34,51 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0158 nativeLIVE02:36 / actual FIRST raw Core node + known retirement SUCCESS; full namespace/DB/Wi-Fi NOT DONE
+### CURRENT0158 remains ONLY last actual nativeLIVE02:36; NEW0159 scalar Core hash/full-parent link verified OFFLINE, timing/admission NOT READY
+
+- User latest “Wi-Fi还不行” is correct: real scan/join/data remain false.
+  ONLY Wi-Fi, sound/camera/allchildren STOP. Full namespace/current CmdDb
+  remain unread; firstnode/privateclient/compiler/model success is not Wi-Fi.
+- NEW0159 changed only own Core hash internals: exact<=64B normalization,
+  all intersecting original DIR64 bytes, ImageBase then DSCRC priority, scalar
+  SHA256 fixed loops unrolled by Clang. All five spans/full114872B/checkpoint
+  counts/length/padding/accepted domain retained; no digest cache/FP/SIMD/crypto
+  ISA/skipped bytes/200ms/owner/UNKNOWN relaxation. Shared firmware SHA header
+  unchanged; old0a7 reference verifier is HOSTTEST-only, never EFI fallback.
+- CURRENT proof scalar-hash-verified-0003/proof.json SHA
+  2f70f29ad92a6ae7b1bb5c0bfecee122c3d15c8ff9022fa878d583215e022249:3007 ASAN/UBSAN comparisons, all1952 relocation bytes,
+  514 random/zero/FF compressor states, chunk edges/canaries/partial/headerCRC/
+  mutable/invalid inputs and independent PythonSHA oracle. ActualCOFF/MachO
+  -O2/general-regs-only/maxframe1024 pass. HOST64iterations old38.248ms/new
+  25.342ms (~1.5093x) is not phone timing or earlier0155/56/57 rootcause proof.
+  Old0002 chunk-only2493 and unroll/ring experiments are historical; ring not
+  adopted. No firmware/Apple/vendor/NV bytes submitted toGit.
+- Same-current-source first-mode REGRESSION ONLY fullEFI0002 plus91affected
+  parent cases pass (normal17/oldfullbounded37/first37), proof414891673803ba924
+  af652ac91dbd2c2a9ba98aadcbe23fffb403b3e2fd25b82. Never send anotherfirstnode
+  candidate; oldregressiondriver0001 predates unrolledsource and is obsolete.
+- Full bounded capture driver scalar-full-bounded-driver-ON-0001 now linked
+  SHA3482a4d9e3c55ecc4e2620abd1b75b8d9a19acea337312d4cf38b2db20eda7bc,
+  11821568B/82current inputs. Actual fullmainCOFF/MachO/pp/maxframe1024 pass,
+  proofa7f0f3d706db3f87edfbb5bc6a04b4660c07ef614c96e8a489a8d63cff850960.
+  Full namespace+66 immediate page guards present; originalGCD/Query API,
+  criticalPSCI/Device/RSC bodies compiled out. RAW_V2 full1656240B retained.
+- Two SERIAL new terminal models each19checks,38.964181833/39.346923292s,
+  82same compiledinputs, actual11resource/Power+1battery int1 markers; actual
+  QEMU preprocessedmain excludes physical bodies/records. Prooff65eab6f42ff7
+  ec3ea6cfc8df5a82bfc0539e48edea3fd8b3a3f24d6d8ec1776. Evidence extractor
+  initially looked in wrong rawlog/format; corrected to actual typed raw_fields
+  and reused both completed runs, no modelrerun. SOFTWARE PMIC/delay/RAMUSB
+  is not physical PMIC/USB/guestreset/radio/phone timing. No nativeCI/download.
+- No USB/actual originalfirmware API/PSCI/AT/MMIO/phonechange in0159. Full
+  path still74 Core fivehash checkpoints/8500528B, original200ms intact.
+  Cannot qualify that total from host speedup. Before physicalcandidate,
+  resolve lifetime/work budget: if staged RO preparation is needed, use
+  distinct completed source-bound contexts/tickets before any private client
+  is held, never reset/rebase existing private/finalticket or fakeclientheld.
+  Then NEWexact hostprofile/sourceaudit/original81codec/independentfreeze/
+  fulladmission/ONEhelper. Not wrapped/frozen/admitted/sent; candidateNOTREADY.
+  Currentphone remains ONLY frozen0158, never editedworkspacecontroller.
 
 - Lastactual current native capture84697 ENDED0 at02:36:15.019210Z, independently
   kernel-entered. Actual HOME screen/wallpaper/calendarSunday1/analogclock and
