@@ -291,7 +291,7 @@ _Static_assert(sizeof(struct pwrpc_result)==10048,"complete CPU-local raw ABI");
 /* Includes both complete client/path records, NPA/RPMh, current Clock/I2C/GCD
  * records and 1MiB for earlier firmware evidence/labels. Native 4MiB ring is
  * stored separately in the already sizeof(log_buffer)-based snapshot. */
-_Static_assert(sizeof(log_buffer)>=2*(sizeof(pwrpt_record)+sizeof(pwrcl_record)+sizeof(pwnpa_record)+
+_Static_assert(sizeof(log_buffer)>=2*(PWBD_RAW_BYTES+sizeof(pwrpt_record)+sizeof(pwrcl_record)+sizeof(pwnpa_record)+
     sizeof(pwrph_record)+sizeof(pacgq_preboot_record)+sizeof(pacgq_preboot_i2c)+sizeof(pgcd_record))+1048576,
     "complete power/source raw records must fit without truncation");
 #endif

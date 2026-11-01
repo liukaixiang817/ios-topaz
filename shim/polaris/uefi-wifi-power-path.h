@@ -7,6 +7,7 @@
 #define POLARIS_UEFI_WIFI_POWER_PATH_H
 #include "uefi-wifi-rsc-access.h"
 #if EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE && !defined(POLARIS_EFI_TEST_QEMU)
+#include "uefi-wifi-cmddb-budget.h"
 struct pwrpt_refusal {
     uint32_t attempted,retired,hash_count[2],hash_failed[2];
     uint8_t before_global[0x110],before_hashes[2][5][32];
@@ -121,10 +122,18 @@ before_mask:
 /* New parent uses this whole record, never the old ZERO_VOTE scope label. */
 static struct pwrpt_result pwrpt_record;
 static inline int pwrpt_parent_unsafe(void)
-{return pwrpt_unsafe(&pwrpt_record)||pwrcl_unsafe();}
+{return pwbd_parent_unsafe()||pwrpt_unsafe(&pwrpt_record)||pwrcl_unsafe();}
 static inline void pwrpt_preboot(const struct paic_io *memory,const struct paic_result *enumeration,
     unsigned stage,struct pgcd_context *final,const volatile uint32_t *native_cpu_on)
 {
+#if EFI_XNU_WIFI_CMDDB_BUDGET_ADMISSION
+    /* Never stage over an old/held client or reuse its context/ticket. A
+     * clean budget decline is not permission to retry with another policy. */
+    if(pwrcl_record.attempted||pwrcl_unsafe()||pwrpt_record.attempted){
+        (void)pwbd_fail(&pwbd_record,PWBD_ARGUMENT);return;
+    }
+    if(!pwbd_run(final,stage,&pwbd_record)||!pwbd_record.admitted)return;
+#endif
     const struct pwrcl_io client={{*memory,pwrph_actual_locate,pwrph_actual_map},pwrcl_actual_create,pwrcl_actual_drop,pwrcl_name};
 #if EFI_XNU_WIFI_CMDDB_CAPTURE_ONLY
     struct pwrpt_io io={.cmd={.original={*memory,pwrph_actual_locate,pwrph_actual_map},.query=0},
@@ -149,6 +158,11 @@ static inline void pwrpt_raw_hex(void (*append)(const char *),const void *raw,si
 }
 static inline void pwrpt_report(void (*append)(const char *))
 {
+#if EFI_XNU_WIFI_CMDDB_BUDGET_ADMISSION
+    append("WIFI_CMDDB_WORK_ADMISSION_RAW_V1_BEGIN\r\n");pwrpt_raw_hex(append,&pwbd_record,sizeof(pwbd_record));
+    append("\r\nWIFI_CMDDB_WORK_ADMISSION_RAW_V1_END\r\n");
+    append("WIFI_CMDDB_WORK_ADMISSION_SCOPE=INDEPENDENT_COMPLETED_RO_CONTEXT_BEFORE_PRIVATE_CLIENT ESTIMATE_ONLY_NO_DEADLINE_RENEWAL_NO_OWNERSHIP_GRANT\r\n");
+#endif
     append("WIFI_POWER_CLIENT_RAW_V1_BEGIN\r\n");pwrpt_raw_hex(append,&pwrcl_record,sizeof(pwrcl_record));
     append("\r\nWIFI_POWER_CLIENT_RAW_V1_END\r\n");
 #if EFI_XNU_WIFI_GCD_NAMESPACE_RO_AVAILABLE

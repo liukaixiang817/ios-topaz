@@ -34,6 +34,56 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0158 remains ONLY last actual nativeLIVE02:36; NEW0160 independent RO work admission + full capture parent verified OFFLINE; NEW host/image NOT READY
+
+- ONLY Wi-Fi. User “Wi-Fi还不行” remains correct: scan/join/data false;
+  full physical namespace/DB unread, allchildren/audio/cameraSTOP. No USB,
+  currentphone/UTC/controller/consumed0158record/frozen0158 changes this work.
+- NEW0160 actual parent now runs defaultOFF --wifi-power-cmddb-budget-admission
+  only with FULL bounded capture, incompatible first-node stop. A distinct
+  source-bound RO context/31552B record/ticket completes BEFORE privateCreate.
+  Two original guardedGetMaps, five Core fivehash checkpoints (open/3samples/
+  closure), exact current source/config/mapkey/bytes/lock/TPL/owner restore;
+  NO descriptor/Query API, pool/client API, PSCI/MMIO/alloc or ownership grant.
+  Core phase3 explicitly RO-retired-no-getters, never oldeight-queryphase2.
+  Original private/final tickets stay unopened/spent-once, neverreset/rebased.
+- Conservative estimate80*maxmeasuredticks+480000(25ms), planlimit2400000
+  (125ms at required19.2MHz), originalprivate200ms still enforced. Samples
+  and estimate are NOT future-latency proof/lease or actual phone measurements.
+  All74 fullcapture source checkpoints remain. Clean estimate-decline only
+  after fullROretirement, before any client; no retry/policyfallback/DB claim.
+  Partial/source/map/clock/FP/TPL/reentry failure stickyunsafe -> existing
+  parentRAMquarantine/no USB/Console/Stall/PON/native/cleanup/reset/ACK.
+- Main includes pwbd_parent_unsafe in explicit parent gate; full31552B
+  WIFI_CMDDB_WORK_ADMISSION_RAW_V1 exported BESIDE unchanged clientRAWV1/
+  pathRAWV2, FW8MiB sizeof-capacity assert enlarged by actualsizeof record;
+  host12MiB+128 remains sufficient. No bytes stripped/ZERO_VOTE relabelling.
+- Actual physical-body fullEFI e4f7f1b943ca64a6c8a63a5e982c9477f2170ef1d6cf
+  84382e6553a2e29fcd2c/11857408B/83inputs, budget-full-driver-ON-0001.
+  115 ASAN/UBSAN cases (new24 samecontextbudget->fulltwoDBcopies->knownDelete,
+  timingboundary/refusal/partial/changedsource/map/FP/TPL/counter/reentry and
+  oldnormal17/full37/first37); actualmainCOFF/MachO/maxframe1024/defaultOFF/
+  QEMU pp proof351fbc9467c45136865fe4e5a27d433bef4e1a977bd501fcb7638838218baf75.
+  Evidence script initially missed explicitWLED variant defines in OFF/QEMU
+  preprocessing; corrected ONLYthose2commands, reused completed115/objects/pp.
+- Two SERIAL new terminalmodels each19checks/38.930202958/39.259519792s,
+  same83inputs/11resourcePower+1battery actualint1; actualQEMU pp excludes
+  power/budget/namespace functions AND resident records. Proof fafec89b614bf
+  3ae6e0270f035dad3414db35e9bf8480ef9a4f40f1ff285484e. SoftwarePMIC/delay/
+  RAMUSB != physicalPMIC/USB/guestreset/radio. No nativeCI/download. Prior0159
+  scalar3007/91/twomodels below are completed, no irrelevant reruns.
+- NEXT NEW exact0160hostprofile must bind83inputs/all workadmissionmetadata/
+  31552B scope/defaultOFF/200ms unchanged and honestestimate/no lease. Old13
+  literals/manifests neverchange. Then original81wholeEFIcodec/sourceaudit/
+  independentfreeze/newadmission/ONEhelper, ONLY after frozen0158 clean normal
+  nativeVFS/GPU/CPUdrain+completeappendraw/WLEXIT05/WLR5 receipt -> independent
+  actualFASTBOOT. Reuse fresh0158 fullRO within continuouscontrolled chain;
+  no newfullhash/recovery unless abnormal/uncontrolled. Current newcandidate
+  NOT wrapped/frozen/admitted/sent. No standalone inventory/client-only boot.
+  Actualcomplete namespace/currentCmdDb, actualsource/ARC/cache/DRV2/TCS then
+  MSS/MPU/MSA/GLINK/RMTFS -> true scan/join/data, then sound/camera. No guess
+  about previousUNKNOWN cause and no false currenttiming/permission claim.
+
 ### CURRENT0158 remains ONLY last actual nativeLIVE02:36; NEW0159 scalar Core hash/full-parent link verified OFFLINE, timing/admission NOT READY
 
 - User latest “Wi-Fi还不行” is correct: real scan/join/data remain false.

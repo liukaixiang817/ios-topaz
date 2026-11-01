@@ -450,6 +450,7 @@ def main():
     ap.add_argument('--wifi-power-cmddb-capture-only',action='store_true',help='default-OFF focused CmdDb namespace diagnostic; planned retirement before Query API, CPU critical admission or RSC access')
     ap.add_argument('--wifi-power-cmddb-bounded-gcd',action='store_true',help='default-OFF capture-only diagnostic using finite source-bound original Core RAM namespace; no original GCD query fallback')
     ap.add_argument('--wifi-power-cmddb-first-node-stop',action='store_true',help='default-OFF failure-isolation cutpoint: validate and retain first Core namespace node, then planned known-client retirement; NO database target load or full-namespace claim')
+    ap.add_argument('--wifi-power-cmddb-budget-admission',action='store_true',help='default-OFF complete bounded capture with independent completed RO timing admission BEFORE private Create; estimate only, unchanged private/final 200ms and ownership gates')
     a=ap.parse_args();r=Path(__file__).resolve().parents[1]
     if a.test_wled_native_exit and (not a.wled_native_runtime_test or not a.test_qemu or
         a.test_ram_drain!='success' or a.test_wled_native_fault or a.test_wled_native_lifecycle or
@@ -518,6 +519,8 @@ def main():
     namespace_header=None;namespace_binding=None
     if a.wifi_power_cmddb_first_node_stop and not a.wifi_power_cmddb_bounded_gcd:
         ap.error('first-node planned stop requires the explicit bounded capture-only scope')
+    if a.wifi_power_cmddb_budget_admission and (not a.wifi_power_cmddb_bounded_gcd or a.wifi_power_cmddb_first_node_stop):
+        ap.error('work admission requires the distinct full bounded capture, never first-node mode')
     if a.wifi_power_cmddb_bounded_gcd:
         if not a.wifi_power_cmddb_capture_only or not gcd_binding:
             ap.error('bounded GCD namespace requires explicit capture-only and exact original Core binding')
@@ -880,6 +883,7 @@ def main():
 #define EFI_XNU_WIFI_CMDDB_CAPTURE_ONLY {int(a.wifi_power_cmddb_capture_only)}
 #define EFI_XNU_WIFI_GCD_NAMESPACE_RO_AVAILABLE {int(a.wifi_power_cmddb_bounded_gcd)}
 #define EFI_XNU_WIFI_CMDDB_FIRST_NODE_STOP {int(a.wifi_power_cmddb_first_node_stop)}
+#define EFI_XNU_WIFI_CMDDB_BUDGET_ADMISSION {int(a.wifi_power_cmddb_budget_admission)}
 #define EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE {int(cmddb_binding is not None)}
 #define EFI_XNU_AUDIO_CLOCK_GCD_QUERY_AVAILABLE {int(gcd_enabled)}
 #define EFI_XNU_AUDIO_CLOCK_QUERY_AVAILABLE {int(audio_clock_binding is not None)}
@@ -972,6 +976,7 @@ def main():
                  'tools/polaris-wifi-cmddb-identity.py',cmddb_pe_relative]
     if namespace_binding:
         inputs+=['shim/polaris/uefi-wifi-gcd-namespace.h','tools/polaris-wifi-gcd-namespace-identity.py']
+    if cmddb_binding:inputs+=['shim/polaris/uefi-wifi-cmddb-budget.h']
     if rpmh_binding:
         inputs+=['shim/polaris/uefi-wifi-rpmh-readonly.h','tools/polaris-wifi-rpmh-identity.py',
                  'tools/polaris-wifi-rpmh-identity.h',rpmh_pe_relative]
@@ -1309,6 +1314,22 @@ def main():
                     wifi_CPU0_power_CmdDb_planned_stop_error=14,
                     wifi_CPU0_power_CmdDb_first_node_requires_both_source_checkpoints=True,
                     wifi_CPU0_power_CmdDb_first_node_no_UNKNOWN_clearing=True)
+            if a.wifi_power_cmddb_budget_admission:
+                manifest.update(wifi_CPU0_power_CmdDb_work_admission=True,
+                    wifi_CPU0_power_CmdDb_work_admission_default_OFF=True,
+                    wifi_CPU0_power_CmdDb_work_admission_samples=3,
+                    wifi_CPU0_power_CmdDb_work_admission_checkpoints=80,
+                    wifi_CPU0_power_CmdDb_work_admission_reserve_ticks=480000,
+                    wifi_CPU0_power_CmdDb_work_admission_plan_ticks=2400000,
+                    wifi_CPU0_power_CmdDb_work_admission_independent_RO_ticket=True,
+                    wifi_CPU0_power_CmdDb_work_admission_before_private_Create=True,
+                    wifi_CPU0_power_CmdDb_work_admission_no_deadline_renewal=True,
+                    wifi_CPU0_power_CmdDb_work_admission_estimate_not_hardware_authority=True,
+                    wifi_CPU0_power_CmdDb_work_admission_original_GetMap_calls_max=2,
+                    wifi_CPU0_power_CmdDb_work_admission_original_GCD_Query_calls=0,
+                    wifi_CPU0_power_CmdDb_work_admission_Core_hash_checkpoints=5,
+                    wifi_CPU0_power_CmdDb_work_admission_original_fresh_ticks=3840000,
+                    wifi_CPU0_power_CmdDb_work_admission_raw_bytes=31552)
     (out/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
     print(json.dumps({k:manifest[k] for k in ['artifact','sha256','bytes','QEMU_variant','device_execution_tested']}))
 
