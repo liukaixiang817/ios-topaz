@@ -9,6 +9,9 @@
 #include "uefi-memory.h"
 #include "runtime-marker.h"
 #include "uefi-xnu-config.h" /* exact payload bytes/CRC, symbol offsets, board */
+#if EFI_XNU_WIFI_REMOTE_MEMORY_AVAILABLE && (!EFI_XNU_WIFI_FOUR_VRM_AVAILABLE || !EFI_XNU_AUDIO_CLOCK_GCD_QUERY_AVAILABLE || !EFI_XNU_GCD_MMIO_QUERY_AVAILABLE || !EFI_XNU_WIFI_RESOURCES_AVAILABLE || EFI_XNU_WIFI_CPU_RO_ADMISSION || defined(POLARIS_EFI_TEST_QEMU))
+#error "Incoming parent map evidence requires the complete physical WiFi source scope"
+#endif
 #if defined(EFI_XNU_WLED_NATIVE_RUNTIME_TEST) || defined(EFI_XNU_WLED_NATIVE_RUNTIME_PHYSICAL)
 #define EFI_XNU_WLED_NATIVE_RUNTIME 1
 #endif
@@ -43,6 +46,9 @@ static struct efi_system *system_table;
 static efi_handle driver_image;
 #if EFI_XNU_WIFI_CPU_RO_ADMISSION
 static uint8_t log_buffer[1048576];static uint64_t log_bytes;
+static volatile uint32_t log_overflow;
+#elif EFI_XNU_WIFI_REMOTE_MEMORY_AVAILABLE
+static uint8_t log_buffer[11272192];static uint64_t log_bytes;
 static volatile uint32_t log_overflow;
 #elif EFI_XNU_WIFI_FOUR_VRM_AVAILABLE
 static uint8_t log_buffer[10747904];static uint64_t log_bytes;
@@ -254,6 +260,13 @@ static int shutdown_status(void *,const uint8_t **,uint64_t *);
 #if !defined(POLARIS_EFI_TEST_QEMU)
 /* Outer include gate removes every new physical/query/FP body from QEMU. */
 #include "uefi-gcd-mmio-readonly.h"
+#if EFI_XNU_WIFI_REMOTE_MEMORY_AVAILABLE
+#if !EFI_XNU_WIFI_FOUR_VRM_AVAILABLE || EFI_XNU_WIFI_CPU_RO_ADMISSION
+#error "Incoming parent map evidence requires the new physical full WiFi parent scope"
+#endif
+#include "uefi-wifi-remote-memory.h"
+static struct pwmc_parent_map incoming_parent_maps[2];
+#endif
 #include "uefi-audio-clock-gcd-query.h"
 #if EFI_XNU_WIFI_TERMINAL_GOP_DIAGNOSTICS
 #if !EFI_XNU_WIFI_READ_DB_CHECKPOINT && !EFI_XNU_WIFI_CURRENT_WORD_READ
@@ -415,6 +428,9 @@ static void terminal_gop_evidence(void)
 static int original_service_unknown;
 static int new_original_unknown(void)
 {return pwcq_parent_unsafe()||original_service_unknown||(pgcd_resident_context.record&&pgcd_uncertain(&pgcd_resident_context))||pacgq_preboot_record.uncertain||pacgq_preboot_record.outstanding||pacgq_ticket.outstanding
+#if EFI_XNU_WIFI_REMOTE_MEMORY_AVAILABLE
+    ||incoming_parent_maps[0].unknown||incoming_parent_maps[1].unknown
+#endif
 #if EFI_XNU_WIFI_TERMINAL_GOP_DIAGNOSTICS
     ||terminal_gop.uncertain
 #endif
@@ -512,6 +528,9 @@ _Static_assert(sizeof(log_buffer)>=2*(sizeof(pwsp_record)+sizeof(pwrpt_record)+s
     sizeof(pwrph_record)+sizeof(pacgq_preboot_record)+sizeof(pacgq_preboot_i2c)+sizeof(pgcd_record))+
 #if EFI_XNU_WIFI_TERMINAL_GOP_DIAGNOSTICS
     4*sizeof(terminal_gop)+
+#endif
+#if EFI_XNU_WIFI_REMOTE_MEMORY_AVAILABLE
+    3*sizeof(incoming_parent_maps)+
 #endif
     1048576,
     "complete preparation/client/power/source raw must fit without truncation");
@@ -1209,6 +1228,31 @@ static void reset(void *context,unsigned mode)
 #endif
 #endif
 }
+#if EFI_XNU_WIFI_REMOTE_MEMORY_AVAILABLE && !defined(POLARIS_EFI_TEST_QEMU)
+/* Wraps exactly the two existing incoming admission maps. This captures their
+ * genuine call/key/native/image evidence, without treating either pre-payload
+ * phase as a later current MSS map or opening an allocation context. */
+static efi_status incoming_parent_map_read(unsigned phase,const struct efi_loaded*image,
+    uint64_t*size,uint64_t*key,uint64_t*stride,uint32_t*version)
+{
+    if(phase<1||phase>2){original_service_unknown=1;power_unknown_hold();}
+    struct pwmc_parent_map*r=&incoming_parent_maps[phase-1];
+    const struct pwmc_parent_input input={.system=system_table,.image=image,.native_flag=&wln_cpu_on_issued,
+        .output=map_snapshot.data,.capacity=sizeof(map_snapshot.data),.image_handle=(uintptr_t)driver_image,
+        .phase=phase,.bank=POLARIS_RAM_BASE,.bank_bytes=POLARIS_RAM_SIZE,
+        .payload=(uintptr_t)payload,.payload_bytes=payload?EFI_XNU_PAYLOAD_BYTES:0,
+        .log_snapshot=(uintptr_t)log_snapshot,.log_snapshot_bytes=log_snapshot?sizeof(log_buffer)+128+EFI_XNU_LOG_SIZE:0};
+    const struct pgcd_io io={0,system_table,pgcd_actual_arch,pgcd_actual_map,pwfc_actual_identity,pgcd_actual_query,
+        pgcd_actual_fp_save,pgcd_actual_fp_restore,pwfc_actual_order};
+    int ok=pwmc_parent_map_read(r,&input,&io);
+    ram_report("INCOMING_PARENT_MAP_PHASE=",phase);ram_report("INCOMING_PARENT_MAP_CALL_ACCEPTED=",ok);
+    ram_report("INCOMING_PARENT_MAP_RAW_V1_BYTES=",sizeof(*r));
+    ram_text("INCOMING_PARENT_MAP_RAW_V1_BEGIN\r\n");ram_hex((const uint8_t*)r,sizeof(*r));
+    ram_text("INCOMING_PARENT_MAP_RAW_V1_END\r\n");
+    if(!ok){original_service_unknown=1;power_unknown_hold();}
+    *size=r->map.bytes;*key=r->map.key;*stride=r->map.stride;*version=r->map.version;return r->map.status;
+}
+#endif
 static efi_status admission(void)
 {
     uint64_t el,mpidr,sp;__asm__ volatile("mrs %0,CurrentEL":"=r"(el));__asm__ volatile("mrs %0,mpidr_el1":"=r"(mpidr));
@@ -1222,7 +1266,12 @@ static efi_status admission(void)
     if((s&EFI_ERROR)||!image||overlap((uintptr_t)image->base,image->bytes,POLARIS_RAM_BASE,POLARIS_RAM_SIZE)||
        overlap(sp,16,POLARIS_RAM_BASE,POLARIS_RAM_SIZE))return EFI_ERROR|3;
     uint64_t size=sizeof(map_snapshot.data),key=0,stride=0;uint32_t version=0;
-    s=system_table->boot->get_map(&size,map_snapshot.data,&key,&stride,&version);struct polaris_efi_memory check;
+#if EFI_XNU_WIFI_REMOTE_MEMORY_AVAILABLE && !defined(POLARIS_EFI_TEST_QEMU)
+    s=incoming_parent_map_read(1,image,&size,&key,&stride,&version);
+#else
+    s=system_table->boot->get_map(&size,map_snapshot.data,&key,&stride,&version);
+#endif
+    struct polaris_efi_memory check;
     report("EFI_MAP_STATUS=",s);report("EFI_MAP_BYTES=",size);report("EFI_MAP_STRIDE=",stride);
     if((s&EFI_ERROR)||!polaris_efi_memory_check(map_snapshot.data,size,sizeof(map_snapshot.data),stride,&check))return EFI_ERROR|3;
     if(!polaris_efi_range_owned(map_snapshot.data,size,stride,POLARIS_RAM_BASE,POLARIS_RAM_SIZE,7))return EFI_ERROR|9;
@@ -1232,7 +1281,11 @@ static efi_status admission(void)
     /* Re-read the map after claiming: success alone is not an ownership map.
      * Refuse gaps, runtime pages or a page still reported as free/firmware. */
     size=sizeof(map_snapshot.data);
+#if EFI_XNU_WIFI_REMOTE_MEMORY_AVAILABLE && !defined(POLARIS_EFI_TEST_QEMU)
+    s=incoming_parent_map_read(2,image,&size,&key,&stride,&version);
+#else
     s=system_table->boot->get_map(&size,map_snapshot.data,&key,&stride,&version);
+#endif
     if((s&EFI_ERROR)||!polaris_efi_memory_check(map_snapshot.data,size,sizeof(map_snapshot.data),stride,&check))return EFI_ERROR|3;
     if(!polaris_efi_range_owned(map_snapshot.data,size,stride,POLARIS_RAM_BASE,POLARIS_RAM_SIZE,2))return EFI_ERROR|9;
     report("XNU_BANK_OWNERSHIP=",1);

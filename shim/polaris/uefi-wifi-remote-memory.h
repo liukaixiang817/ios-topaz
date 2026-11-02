@@ -1320,9 +1320,8 @@ static inline int pwmc_release_local(struct pwmc_result*r,int(*translate)(struct
     if(r->call[1].status||!pwmc_map_delta(c->record,r->backing,r->backing_bytes,1))return pwmc_fail(r,PWMC_MAP,1);
     r->call[1].map_checked=1;r->held=0;r->released=1;c->finished=1;c->io.order(c->io.opaque);return 1;
 }
-/* Actual initializer is callable only from a future qualified parent. It
- * binds two independent Core source records to the same resident object.
- * No parent/CLI/build hook is added by this header. */
+/* Allocation initializer for a future qualified MSS parent. The incoming
+ * map-call witness below is separate and never opens these contexts. */
 static inline int pwmc_bind(struct pwmc_result*r,const struct efi_loaded*self,
     struct efi_system*system,const volatile uint32_t*native_flag,unsigned kind,const struct pgcd_io*io)
 {
@@ -1334,6 +1333,148 @@ static inline int pwmc_bind(struct pwmc_result*r,const struct efi_loaded*self,
         r->context[k]=(struct pgcd_context){.io=*io,.record=&r->source[k],.ticket=&r->ticket[k],.stage=2};
     }
     r->bound=1;return 1;
+}
+/* Actual incoming UEFI call evidence, not private MSS/bootstrap authority.
+ * These two phases describe the parent's existing maps around its kernel-bank
+ * claim. They explicitly precede payload allocation and cannot be renamed a
+ * later current map. No context/ticket/opened/owner permission is synthesized. */
+#define PWMC_PARENT_MAP_CAP 65536u
+struct pwmc_parent_input {
+    struct efi_system*system;const struct efi_loaded*image;
+    const volatile uint32_t*native_flag;void*output;
+    uint64_t capacity,image_handle,phase,bank,bank_bytes;
+    uint64_t payload,payload_bytes,log_snapshot,log_snapshot_bytes;
+};
+struct pwmc_parent_map {
+    struct pwmc_parent_input input;struct pgcd_io io;
+    struct efi_loaded image_before;
+    uint8_t BS_before[PWMC_BS_BYTES];uint64_t boot_address,entry;
+    struct pgcd_map map;struct pgcd_arch before,after;
+    struct pgcd_fp_guard fp;struct efi_loaded image_after;
+    uint8_t BS_after[PWMC_BS_BYTES];
+    uint32_t attempted,issued,returned,unknown,error,complete;
+    uint32_t native_values[5],native_issued,native_returned,arch_issued,arch_returned;
+    uint32_t fp_save_issued,fp_save_returned,fp_restore_issued,fp_restore_returned;
+    uint8_t data[PWMC_PARENT_MAP_CAP] __attribute__((aligned(8)));
+    uint8_t digest[32];
+};
+static inline int pwmc_parent_fail(struct pwmc_parent_map*r,unsigned error)
+{if(!r->error)r->error=error;r->unknown=1;return 0;}
+static inline void pwmc_parent_input_digest(const struct pwmc_parent_map*r,uint8_t out[32])
+{
+    struct pwfi_sha256 h;pwfi_init(&h);
+    for(size_t k=0;k<offsetof(struct pwmc_parent_map,map);k++)pwfi_byte(&h,((const uint8_t*)r)[k]);pwfi_final(&h,out);
+}
+static inline void pwmc_parent_intent_digest(const struct pwmc_parent_map*r,uint8_t out[32])
+{
+    struct pwfi_sha256 h;pwfi_init(&h);uint8_t input[32];pwmc_parent_input_digest(r,input);
+    const void*part[]={input,&r->before,&r->fp.cpacr_before,&r->fp.fpcr,&r->fp.saved,&r->native_values[0],&r->attempted,&r->fp_save_issued};
+    const size_t size[]={32,sizeof(r->before),8,16+sizeof(r->fp.q8_q15),4,4,4,8};
+    for(unsigned n=0;n<8;n++)for(size_t k=0;k<size[n];k++)pwfi_byte(&h,((const uint8_t*)part[n])[k]);pwfi_final(&h,out);
+}
+static inline uint32_t pwmc_parent_native(struct pwmc_parent_map*r,const volatile uint32_t*flag,unsigned slot)
+{r->native_issued|=1u<<slot;__asm__ volatile("":::"memory");r->native_values[slot]=*flag;__asm__ volatile("":::"memory");r->native_returned|=1u<<slot;return r->native_values[slot];}
+static inline void pwmc_parent_return_digest(const struct pwmc_parent_map*r,uint8_t out[32])
+{
+    struct pwfi_sha256 h;pwfi_init(&h);for(size_t k=0;k<sizeof(r->map);k++)pwfi_byte(&h,((const uint8_t*)&r->map)[k]);
+    for(size_t k=0;k<sizeof(r->data);k++)pwfi_byte(&h,r->data[k]);pwfi_final(&h,out);
+}
+static inline int pwmc_parent_in_image(const struct efi_loaded*i,uint64_t at,uint64_t bytes)
+{return bytes&&i->bytes>=bytes&&at>=(uintptr_t)i->base&&at-(uintptr_t)i->base<=i->bytes-bytes;}
+static inline int pwmc_parent_overlap(uint64_t a,uint64_t n,uint64_t b,uint64_t z)
+{return a<b+z&&b<a+n;}
+static inline int pwmc_parent_stable(const struct pwmc_parent_map*r,const struct pwmc_parent_input*input,
+    const struct pgcd_io*io,const struct pwmc_parent_input*saved,const struct pgcd_io*saved_io,const uint8_t seal[32])
+{
+    uint8_t digest[32];pwmc_parent_input_digest(r,digest);
+    if(!pgcd_equal(digest,seal,32)||!pgcd_equal(input,saved,sizeof(*saved))||!pgcd_equal(io,saved_io,sizeof(*io)))return 0;
+    return (uintptr_t)saved->system->boot==r->boot_address&&
+        pgcd_equal(saved->image,&r->image_before,sizeof(r->image_before))&&
+        pgcd_equal((const void*)(uintptr_t)r->boot_address,r->BS_before,PWMC_BS_BYTES);
+}
+static inline int pwmc_parent_controls(const struct pwmc_parent_map*r,unsigned arch_count,unsigned restored)
+{
+    unsigned mask=arch_count==1?3:restored?15:7;
+    return r->attempted==1&&r->issued==1&&r->returned==1&&r->unknown==1&&!r->error&&!r->complete&&
+        r->native_issued==mask&&r->native_returned==mask&&pwmc_zero(r->native_values,sizeof(r->native_values))&&
+        r->map.issued==1&&r->map.returned==1&&!r->map.valid&&!r->map.status&&
+        r->arch_issued==arch_count&&r->arch_returned==arch_count&&r->fp_save_issued==1&&r->fp_save_returned==1&&
+        r->fp_restore_issued==restored&&r->fp_restore_returned==restored;
+}
+static inline int pwmc_parent_map_valid(const struct pwmc_parent_map*r)
+{
+    struct polaris_efi_memory checked;return r->map.key&&r->map.version==1&&
+        polaris_efi_memory_check(r->data,r->map.bytes,PWMC_PARENT_MAP_CAP,r->map.stride,&checked)&&
+        polaris_efi_range_owned(r->data,r->map.bytes,r->map.stride,r->input.bank,r->input.bank_bytes,r->input.phase==1?7:2);
+}
+static inline int pwmc_parent_map_read(struct pwmc_parent_map*r,const struct pwmc_parent_input*input,const struct pgcd_io*io)
+{
+    if(!r||!input||!io||!pwmc_zero(r,sizeof(*r)))return 0;
+    struct pwmc_parent_input saved=*input;struct pgcd_io saved_io=*io;uint8_t seal[32],intent[32],actual[32],result[32];r->attempted=1;
+    if(!saved.system||!saved.image||!saved.native_flag||!saved.output||saved_io.system!=saved.system||
+       !saved_io.arch||!saved_io.map||!saved_io.fp_save||!saved_io.fp_restore||!saved_io.order||
+       saved.capacity!=PWMC_PARENT_MAP_CAP||!saved.image_handle||(saved.phase!=1&&saved.phase!=2)||
+       !saved.bank_bytes||(saved.bank&4095)||(saved.bank_bytes&4095)||saved.bank>UINT64_MAX-saved.bank_bytes||
+       saved.payload||saved.payload_bytes||saved.log_snapshot||saved.log_snapshot_bytes)return pwmc_parent_fail(r,PWMC_ARGUMENT);
+    r->input=saved;r->io=saved_io;r->image_before=*saved.image;
+    const struct efi_loaded*i=&r->image_before;uint64_t base=(uintptr_t)i->base;
+    if(i->revision!=0x1000||i->system!=saved.system||i->code_type!=3||i->data_type!=4||!base||!i->bytes||base>UINT64_MAX-i->bytes||
+       !pwmc_parent_in_image(i,(uintptr_t)r,sizeof(*r))||!pwmc_parent_in_image(i,(uintptr_t)saved.native_flag,4)||
+       !pwmc_parent_in_image(i,(uintptr_t)saved.output,saved.capacity)||
+       pwmc_parent_overlap((uintptr_t)r,sizeof(*r),(uintptr_t)saved.output,saved.capacity)||
+       pwmc_parent_overlap((uintptr_t)r,sizeof(*r),(uintptr_t)saved.native_flag,4)||
+       pwmc_parent_overlap((uintptr_t)saved.output,saved.capacity,(uintptr_t)saved.native_flag,4)||
+       pwmc_parent_overlap((uintptr_t)saved.output,saved.capacity,(uintptr_t)input,sizeof(*input))||
+       pwmc_parent_overlap((uintptr_t)saved.output,saved.capacity,(uintptr_t)io,sizeof(*io))||
+       pwmc_parent_overlap((uintptr_t)saved.output,saved.capacity,(uintptr_t)saved.image,sizeof(*saved.image))||
+       pwmc_parent_overlap((uintptr_t)saved.output,saved.capacity,(uintptr_t)saved.system,sizeof(*saved.system))||
+       pwmc_parent_overlap(base,i->bytes,saved.bank,saved.bank_bytes))return pwmc_parent_fail(r,PWMC_ARGUMENT);
+    r->boot_address=(uintptr_t)saved.system->boot;
+    if(r->boot_address<0x1b800||((r->boot_address-0x1b800)&4095))return pwmc_parent_fail(r,PWMC_SOURCE);
+    r->entry=(uintptr_t)saved.system->boot->get_map;
+    if(r->entry!=r->boot_address-0x1b800+0xd3ec||pwmc_parent_overlap((uintptr_t)saved.output,saved.capacity,r->boot_address,PWMC_BS_BYTES))return pwmc_parent_fail(r,PWMC_SOURCE);
+    pgcd_copy(r->BS_before,saved.system->boot,PWMC_BS_BYTES);pwmc_parent_input_digest(r,seal);
+    if(pwmc_parent_native(r,saved.native_flag,0))return pwmc_parent_fail(r,PWMC_CONTEXT);
+    r->arch_issued=1;int arch=saved_io.arch(saved_io.opaque,&r->before);r->arch_returned=arch?1:0;
+    if(!arch||!pwmc_parent_stable(r,input,io,&saved,&saved_io,seal)||!pwfc_arch_admitted(&r->before.cpu)||
+       r->before.cpu.mair!=UINT64_C(0xffbb4400)||r->before.cpu.daif||r->before.cpu.group1!=1||((r->before.cpacr>>20)&3)!=3||
+       r->attempted!=1||r->issued||r->returned||r->unknown||r->error||r->complete||r->arch_issued!=1||r->arch_returned!=1||
+       r->native_issued!=1||r->native_returned!=1||!pwmc_zero(r->native_values,sizeof(r->native_values))||
+       r->fp_save_issued||r->fp_save_returned||r->fp_restore_issued||r->fp_restore_returned||!pwmc_zero(&r->map,sizeof(r->map))||!pwmc_zero(&r->fp,sizeof(r->fp)))return pwmc_parent_fail(r,PWMC_CONTEXT);
+    r->fp_save_issued=1;int fp=saved_io.fp_save(saved_io.opaque,&r->fp);r->fp_save_returned=fp?1:0;
+    if(!fp||!pwmc_parent_stable(r,input,io,&saved,&saved_io,seal)||r->fp.saved!=1||r->fp.restored||r->fp.cpacr_before!=r->before.cpacr||
+       r->fp_save_issued!=1||r->fp_save_returned!=1||r->fp_restore_issued||r->fp_restore_returned||r->attempted!=1||r->issued||r->returned||r->unknown||r->error||r->complete)return pwmc_parent_fail(r,PWMC_CONTEXT);
+    r->map.bytes=saved.capacity;r->map.status=UINT64_MAX;pwmc_parent_intent_digest(r,intent);saved_io.order(saved_io.opaque);
+    pwmc_parent_intent_digest(r,actual);
+    if(!pwmc_parent_stable(r,input,io,&saved,&saved_io,seal)||pwmc_parent_native(r,saved.native_flag,1)||r->map.bytes!=saved.capacity||r->map.status!=UINT64_MAX||r->map.issued||r->map.returned||r->map.valid||r->map.key||r->map.stride||r->map.version||
+       !pgcd_equal(intent,actual,32)||r->fp.restored||r->issued||r->returned||r->unknown||r->error||r->complete||r->native_issued!=3||r->native_returned!=3||
+       !pwmc_zero(r->native_values,sizeof(r->native_values))||!pwmc_zero(r->data,sizeof(r->data)))return pwmc_parent_fail(r,PWMC_CONTEXT);
+    r->issued=r->map.issued=r->unknown=1;__asm__ volatile("":::"memory");
+    int returned=saved_io.map(saved_io.opaque,saved.system,&r->map,r->data);r->returned=r->map.returned=returned?1:0;
+    if(!returned||r->map.status)return pwmc_parent_fail(r,PWMC_SERVICE); /* No failure sampling or guessed FP restoration. */
+    pwmc_parent_intent_digest(r,actual);
+    if(!pgcd_equal(intent,actual,32)||!pwmc_parent_stable(r,input,io,&saved,&saved_io,seal)||!pwmc_parent_controls(r,1,0))return pwmc_parent_fail(r,PWMC_CONTEXT);
+    if(!pwmc_parent_map_valid(r))return pwmc_parent_fail(r,PWMC_MAP);
+    pwmc_parent_return_digest(r,result);
+    if(pwmc_parent_native(r,saved.native_flag,2))return pwmc_parent_fail(r,PWMC_CONTEXT);
+    r->arch_issued=2;arch=saved_io.arch(saved_io.opaque,&r->after);if(arch)r->arch_returned=2;
+    pwmc_parent_intent_digest(r,actual);
+    if(!arch||!pgcd_equal(intent,actual,32)||!pwmc_parent_stable(r,input,io,&saved,&saved_io,seal)||!pwmc_parent_controls(r,2,0)||!pwfc_arch_admitted(&r->after.cpu)||
+       !pwfc_arch_stable(&r->before.cpu,&r->after.cpu)||r->after.cpacr!=r->before.cpacr||
+       r->after.cpu.daif||r->after.cpu.group1!=1||r->after.cpu.ticks<r->before.cpu.ticks||
+       r->after.cpu.ticks-r->before.cpu.ticks>PGCD_FRESH_TICKS)return pwmc_parent_fail(r,PWMC_CONTEXT);
+    pwmc_parent_return_digest(r,actual);if(!pgcd_equal(result,actual,32))return pwmc_parent_fail(r,PWMC_CONTEXT);
+    if(pwmc_parent_native(r,saved.native_flag,3))return pwmc_parent_fail(r,PWMC_CONTEXT);
+    r->fp_restore_issued=1;fp=saved_io.fp_restore(saved_io.opaque,&r->fp);r->fp_restore_returned=fp?1:0;pwmc_parent_intent_digest(r,actual);
+    if(!fp||!pgcd_equal(intent,actual,32)||!pwmc_parent_stable(r,input,io,&saved,&saved_io,seal)||!pwmc_parent_controls(r,2,1)||r->fp.restored!=1||r->fp.cpacr_after!=r->before.cpacr)return pwmc_parent_fail(r,PWMC_CONTEXT);
+    pwmc_parent_return_digest(r,actual);if(!pgcd_equal(result,actual,32))return pwmc_parent_fail(r,PWMC_CONTEXT);
+    if(r->attempted!=1||r->issued!=1||r->returned!=1||r->unknown!=1||r->error||r->complete||r->arch_issued!=2||r->arch_returned!=2||
+       r->fp_save_issued!=1||r->fp_save_returned!=1||r->fp_restore_issued!=1||r->fp_restore_returned!=1||
+       pwmc_parent_native(r,saved.native_flag,4)||r->native_issued!=31||r->native_returned!=31)return pwmc_parent_fail(r,PWMC_CONTEXT);
+    if(!pwmc_parent_map_valid(r))return pwmc_parent_fail(r,PWMC_MAP);
+    pgcd_copy(r->BS_after,(const void*)(uintptr_t)r->boot_address,PWMC_BS_BYTES);r->image_after=*saved.image;
+    pgcd_copy(saved.output,r->data,r->map.bytes);r->map.valid=r->complete=1;r->unknown=0;
+    struct pwfi_sha256 hash;pwfi_init(&hash);for(size_t k=0;k<offsetof(struct pwmc_parent_map,digest);k++)pwfi_byte(&hash,((const uint8_t*)r)[k]);pwfi_final(&hash,r->digest);return 1;
 }
 #endif
 #endif
