@@ -19,6 +19,52 @@ static unsigned map_fault;
 static unsigned late_epoch;
 static uint64_t allocated_base,allocated_bytes;
 static uint64_t live_base[2],live_bytes[2];static unsigned live[2];
+static uint8_t*irq_original[3],*irq_image[3];static unsigned irq_fault,irq_ATs,irq_slot,irq_phase,irq_fired;
+static void irq_mutate(unsigned op)
+{
+    struct pwmc_irq_path*p=&mr->irq[op];irq_fired=1;
+    switch(irq_fault){
+    case 50:p->tables[0]+=8;break;case 51:p->handlers+=8;break;case 52:p->handler_count++;break;
+    case 53:p->image[0].base+=4096;break;case 54:p->image[0].bytes--;break;
+    case 55:p->image[0].AT[0].page+=4096;break;case 56:p->image[0].AT[0].returned=0;break;
+    case 57:p->image[0].hash_count[0]=0;break;case 58:p->image[0].hashes[0][0][0]^=1;break;
+    case 59:p->image[0].table[0]^=1;break;case 60:p->image[0].state[56]^=1;break;
+    case 61:mr->context[op].io.arch=0;break;case 62:mr->context[op].record=(void*)8;break;
+    case 63:p->complete=2;break;case 64:p->reserved=1;break;case 65:p->handler[18]++;break;
+    case 66:p->regs[0].frequency=0;break;case 67:p->image[1].AT_count=0;break;case 68:mr->kind^=1;break;default:assert(0);
+    }
+}
+static void irq_install(void)
+{
+    for(unsigned k=0;k<3;k++){
+        const struct pwmc_irq_binding*b=&pwmc_irq_bindings[k];irq_image[k]=arena+0x210000+0x10000*k;memcpy(irq_image[k],irq_original[k],b->bytes);
+        for(unsigned j=0;j<b->reloc_count;j++){unsigned at=b->relocations[j];put(irq_image[k]+at,pwfi_le(irq_image[k]+at,8)+(uintptr_t)irq_image[k],8);}
+        put(irq_image[k]+b->imagebase,(uintptr_t)irq_image[k],8);
+    }
+    uint64_t t=(uintptr_t)irq_image[0],g=(uintptr_t)irq_image[1],cpu=(uintptr_t)irq_image[2],handlers=(uintptr_t)arena+0x240100;
+    put(core+0x1cb80,t+0x2038,8);put(core+0x1c8f8,cpu+0x53d8,8);
+    put(irq_image[0]+0x2058,1,8);put(irq_image[0]+0x2068,(uintptr_t)core+0x1b800,8);put(irq_image[0]+0x2070,g+0x30e0,8);
+    put(irq_image[0]+0x2078,(uintptr_t)s,8);put(irq_image[0]+0x2088,(uintptr_t)core+0xcbf8,8);put(irq_image[0]+0x2090,10000,8);put(irq_image[0]+0x2098,19200,8);
+    put(irq_image[1]+0x3110,(uintptr_t)core+0x1b800,8);put(irq_image[1]+0x3120,handlers,8);put(irq_image[1]+0x3128,(uintptr_t)s,8);put(irq_image[1]+0x3150,64,8);
+    put(irq_image[2]+0x5420,(uintptr_t)core+0x1b800,8);put(irq_image[2]+0x5438,g+0x1acc,8);put(irq_image[2]+0x5450,(uintptr_t)s,8);
+    for(unsigned k=0;k<64;k++)put((void*)(uintptr_t)(handlers+8*k),(k==18||k==19||k==26||k==29)?t+0x10c8:0,8);
+}
+static int pwmc_test_irq_regs(struct pwmc_result*r,unsigned op,unsigned slot)
+{
+    assert(r==mr);struct pwmc_irq_regs*p=&r->irq[op].regs[slot];uint64_t values[]={4,(uintptr_t)irq_image[2]+0x4000,1,r->source[op].after.cpu.ticks+19201,19200000,r->source[op].after.cpu.ticks+1};
+    for(unsigned k=0;k<6;k++){p->issued|=1u<<k;if(slot==irq_slot&&irq_fault==k+1)return 0;((uint64_t*)p)[k]=values[k];p->returned|=1u<<k;}
+    if(slot==irq_slot){
+        switch(irq_fault){
+        case 10:p->el=8;break;case 11:p->vbar+=4;break;case 12:p->ctl=0;break;case 13:p->ctl=3;break;
+        case 14:p->ctl=8;break;case 15:p->frequency=0;break;case 16:p->ticks=0;break;
+        case 17:p->ticks=r->source[op].before.cpu.ticks+PGCD_FRESH_TICKS+1;break;
+        case 18:p->cval=UINT64_MAX;break;case 19:p->cval=UINT64_MAX-1;break;
+        case 40:irq_image[0][0x1000]^=1;irq_fired=1;break;
+        }
+        if(irq_phase==0&&irq_fault>=50&&irq_fault<=68)irq_mutate(op);
+    }
+    return 1;
+}
 static void tpl_mutate(struct pwmc_result*r,unsigned operation,unsigned restore)
 {
     struct pwmc_tpl_transition*t=&r->TPL[operation].transition[restore];
@@ -38,6 +84,15 @@ static void tpl_mutate(struct pwmc_result*r,unsigned operation,unsigned restore)
 static int memory_identity(void*p,uint64_t at,uint64_t bytes,uint64_t*where,uint64_t*par)
 {
     unsigned op=mr&&mr->source[1].attempted?1:0;
+    if(mr&&mr->irq[op].attempted&&!mr->irq[op].complete){
+        struct pwmc_irq_path*q=&mr->irq[op];unsigned pending=0;
+        for(unsigned image=0;image<3;image++)for(unsigned k=0;k<PWMC_IRQ_PAGES;k++){
+            const struct pwmc_irq_AT*a=&q->image[image].AT[k];if(a->issued&&!a->returned&&a->page==at&&bytes==4096)pending++;
+        }
+        for(unsigned k=0;k<2;k++){const struct pwmc_irq_AT*a=&q->table_AT[k];if(a->issued&&!a->returned&&a->page==at&&bytes==4096)pending++;}
+        for(unsigned k=0;k<3;k++){const struct pwmc_irq_AT*a=&q->array_AT[k];if(a->issued&&!a->returned&&a->page==at&&bytes==4096)pending++;}
+        if(pending){assert(pending==1);irq_ATs++;if(mf==39&&irq_ATs==mt)return 0;}
+    }
     if(mr&&mr->events[op].attempted&&!mr->events[op].complete&&mr->events[op].count<PWMC_EVENT_MAX&&
        mr->events[op].node[mr->events[op].count].issued){event_ATs++;if(mf==32&&event_ATs==mt)return 0;}
     if(mr&&mr->allocator[op].attempted&&!mr->allocator[op].complete){
@@ -79,6 +134,10 @@ static int memory_arch(void*p,struct pgcd_arch*a)
     if(mf==34&&!claims&&mr->allocator[0].complete)put(core+0x1cc08,1,8);
     if(mf==37){unsigned op=mr->source[1].attempted?1:0;if(mr->timers[op].complete&&!mr->call[op].issued)put(timer_base+176,1,8);}
     if(tf&&ts==2&&!fired&&mr->TPL[to].transition[td].returned&&mr->TPL[to].transition[td].unknown&&mr->TPL[to].transition[td].observed==127){fired=1;tpl_mutate(mr,to,td);}
+    unsigned op=mr&&mr->source[1].attempted?1:0;
+    if(mr&&!irq_fired&&irq_phase==1&&irq_fault>=50&&irq_fault<=68&&mr->irq[op].complete&&!mr->call[op].issued)irq_mutate(op);
+    if(mr&&!irq_fired&&irq_fault==70&&mr->irq[op].complete&&!mr->call[op].issued){irq_fired=1;irq_image[1][0x1000]^=1;}
+    if(mr&&!irq_fired&&irq_fault==71&&mr->irq[op].finalized==2&&mr->call[op].guard.left){irq_fired=1;irq_image[2][0x1000]^=1;}
     return ok;
 }
 static void memory_order(void*p)
@@ -90,6 +149,20 @@ static void memory_order(void*p)
     if(mf==35&&mr->call[0].issued&&!claims)put(core+0x1dc10,1,8);
     if(mf==38){unsigned op=mr->source[1].attempted?1:0;if(mr->call[op].issued&&!mr->call[op].returned)put(timer_base+176,1,8);}
     if(tf&&ts==1&&!fired&&mr->TPL[to].transition[td].issued&&!mr->TPL[to].transition[td].returned){fired=1;tpl_mutate(mr,to,td);}
+    unsigned op=mr&&mr->source[1].attempted?1:0;
+    if(mr&&!irq_fired&&irq_phase==2&&irq_fault>=50&&irq_fault<=68&&mr->TPL[op].transition[0].issued&&!mr->TPL[op].transition[0].returned)irq_mutate(op);
+}
+static int memory_fp_save(void*p,struct pgcd_fp_guard*g)
+{
+    int ok=fp_save(p,g);unsigned op=mr&&mr->source[1].attempted?1:0;
+    if(mr&&!irq_fired&&irq_phase==3&&irq_fault==62&&mr->irq[op].complete&&!mr->call[op].issued)irq_mutate(op);
+    return ok;
+}
+static int memory_fp_restore(void*p,struct pgcd_fp_guard*g)
+{
+    int ok=fp_restore(p,g);unsigned op=mr&&mr->source[1].attempted?1:0;
+    if(mr&&!irq_fired&&irq_phase==4&&irq_fault==62&&mr->call[op].returned&&!mr->call[op].guard.left)irq_mutate(op);
+    return ok;
 }
 static void descriptor(uint8_t*out,unsigned index,uint32_t type,uint64_t base,uint64_t pages,uint64_t attrs)
 {
@@ -100,7 +173,7 @@ static int memory_map(void*p,struct efi_system*sys,struct pgcd_map*m,void*out)
 {
     (void)p;assert(sys==s);maps++;assert(m->issued);
     memset(out,0,PGCD_MAP_CAP);descriptor(out,0,3,(uintptr_t)arena,0x100000/4096,8);
-    descriptor(out,1,4,(uintptr_t)arena+0x100000,0x100000/4096,8);
+    descriptor(out,1,4,(uintptr_t)arena+0x100000,0x200000/4096,8);
     unsigned n=2;uint64_t cursor=0xc0000000,hi=0xc2000000;
     for(unsigned step=0;step<2;step++){
         unsigned which=2;for(unsigned k=0;k<2;k++)if(live[k]&&live_base[k]>=cursor&&(which==2||live_base[k]<live_base[which]))which=k;
@@ -139,7 +212,7 @@ static void allocator_chain(unsigned list,const uint32_t*types,const uint64_t*ba
 }
 static void allocator_model(void)
 {
-    uint32_t types[8]={3,4};uint64_t bases[8]={(uintptr_t)arena,(uintptr_t)arena+0x100000},pages[8]={256,256};
+    uint32_t types[8]={3,4};uint64_t bases[8]={(uintptr_t)arena,(uintptr_t)arena+0x100000},pages[8]={256,512};
     unsigned n=2;uint64_t cursor=0xc0000000;
     for(unsigned step=0;step<2;step++){
         unsigned which=2;for(unsigned k=0;k<2;k++)if(live[k]&&live_base[k]>=cursor&&(which==2||live_base[k]<live_base[which]))which=k;
@@ -158,7 +231,7 @@ static void allocator_many(unsigned count,unsigned pool)
 {
     uint32_t types[PWMC_MAP_NODE_MAX+1]={3,4};
     uint64_t bases[PWMC_MAP_NODE_MAX+1]={(uintptr_t)arena,(uintptr_t)arena+0x100000};
-    uint64_t pages[PWMC_MAP_NODE_MAX+1]={256,256};
+    uint64_t pages[PWMC_MAP_NODE_MAX+1]={256,512};
     assert(count>=3&&count<=PWMC_MAP_NODE_MAX+1);
     for(unsigned k=2;k<count;k++){types[k]=7;bases[k]=UINT64_C(0xc0000000)+4096*(k-2);pages[k]=k+1==count?(UINT64_C(0xc2000000)-bases[k])/4096:1;}
     allocator_chain(0,types,bases,pages,count);allocator_chain(1,0,0,0,pool);
@@ -222,19 +295,21 @@ static int memory_AT(struct pwmc_translation*t)
 static void setup(unsigned kind,unsigned f)
 {
     mr=0;reset(0);mf=f;tf=td=to=ts=fired=map_fault=late_epoch=0;claims=drops=translations=physical_owned=event_ATs=allocator_ATs=0;allocated_base=allocated_bytes=0;
-    event_base=arena+0x110000;timer_base=arena+0x1a0000;timer_ATs=0;memset(arena+0x100000,0,0x100000);
+    event_base=arena+0x110000;timer_base=arena+0x1a0000;timer_ATs=irq_ATs=irq_fault=irq_slot=irq_phase=irq_fired=0;memset(arena+0x100000,0,0x200000);
     allocator_base=arena+0x130000;
     memset(live,0,sizeof(live));memset(live_base,0,sizeof(live_base));memset(live_bytes,0,sizeof(live_bytes));
     memset(raises,0,sizeof(raises));memset(TPL_restores,0,sizeof(TPL_restores));memset(page_TPL,0,sizeof(page_TPL));
-    self->bytes=0xf8000;mr=(void*)(arena+0x50000);assert((uint8_t*)mr+sizeof(*mr)<arena+0xf4000);
+    self->bytes=0xf8000;
     /* Keep the genuine firmware ConfigurationTable outside the enlarged
      * modeled loader image, as required by the original Core bootstrap. */
     struct pgcd_config previous=*cfg;cfg=(void*)(arena+0xf9000);*cfg=previous;s->tables=cfg;
+    mr=(void*)(arena+0x4b100);memset(mr,0,sizeof(*mr));assert((uint8_t*)mr+2*sizeof(*mr)<arena+0xf4000);
     put(core+0x1c368,(uintptr_t)core+0x1c368,8);put(core+0x1c370,(uintptr_t)core+0x1c368,8);
     put(core+0x1cbc8,0,8);put(core+0x1c3f0,(uintptr_t)core+0x1c3f0,8);put(core+0x1c3f8,(uintptr_t)core+0x1c3f0,8);
     for(unsigned level=0;level<32;level++){uint64_t head=(uintptr_t)core+0x1c928+16*level;put((void*)(uintptr_t)head,head,8);put((void*)(uintptr_t)(head+8),head,8);}
     allocator_model();
-    struct pgcd_io io={0,s,memory_arch,memory_map,memory_identity,query,fp_save,fp_restore,memory_order};
+    irq_install();
+    struct pgcd_io io={0,s,memory_arch,memory_map,memory_identity,query,memory_fp_save,memory_fp_restore,memory_order};
     assert(pwmc_bind(mr,self,s,(void*)(arena+0xf4000),kind,&io));
     if(f==1)put(core+0x1b828,(uintptr_t)core+PWMC_ALLOC_RVA+4,8);
     if(f==2)put(core+0x1cb78,(uintptr_t)core+0x1000,8);
@@ -315,8 +390,9 @@ static unsigned delta_oracle_cases(void)
 }
 int main(int argc,char**argv)
 {
-    assert((argc==2||argc==3)&&!posix_memalign((void**)&arena,4096,0x201000));original=malloc(PGCI_IMAGE_BYTES);assert(original);
+    assert((argc==5||argc==6)&&!posix_memalign((void**)&arena,4096,0x301000));original=malloc(PGCI_IMAGE_BYTES);assert(original);
     FILE*f=fopen(argv[1],"rb");assert(f&&fread(original,1,PGCI_IMAGE_BYTES,f)==PGCI_IMAGE_BYTES&&!fclose(f));unsigned cases=delta_oracle_cases();
+    for(unsigned k=0;k<3;k++){irq_original[k]=malloc(pwmc_irq_bindings[k].bytes);FILE*in=fopen(argv[2+k],"rb");assert(irq_original[k]&&in&&fread(irq_original[k],1,pwmc_irq_bindings[k].bytes,in)==pwmc_irq_bindings[k].bytes&&!fclose(in));}
     for(unsigned kind=0;kind<2;kind++){
         setup(kind,0);int ok=pwmc_claim(mr,memory_AT);
         if(!ok)fprintf(stderr,"claim kind%u error%u unknown%u source%u/%u maps%u calls%u pages%u translated%u\n",kind,mr->error,mr->unknown,mr->source[0].error,mr->source[0].uncertain,maps,claims,mr->pages,mr->translated);
@@ -331,12 +407,15 @@ int main(int argc,char**argv)
         assert(!pwmc_claim(mr,memory_AT)&&!pwmc_release_local(mr,memory_AT)&&claims==1&&drops==1);cases++;
         setup(kind,20);assert(pwmc_claim(mr,memory_AT)&&pwmc_release_local(mr,memory_AT));cases++;
     }
-    setup(0,0);assert(pwmc_claim(mr,memory_AT));struct pwmc_result*first=mr;mr=(void*)(arena+0xa0000);
-    struct pgcd_io pair_io={0,s,memory_arch,memory_map,memory_identity,query,fp_save,fp_restore,memory_order};
+    setup(0,0);assert(pwmc_claim(mr,memory_AT));struct pwmc_result*first=mr;mr=(void*)((uint8_t*)first+sizeof(*first));
+    struct pgcd_io pair_io={0,s,memory_arch,memory_map,memory_identity,query,memory_fp_save,memory_fp_restore,memory_order};
     assert(pwmc_bind(mr,self,s,(void*)(arena+0xf4000),PWMC_RMTFS,&pair_io)&&pwmc_claim(mr,memory_AT));
     struct pwmc_result*second=mr;assert(physical_owned==2&&first->backing!=second->backing&&first->backing_bytes!=second->backing_bytes);
     mr=first;assert(pwmc_release_local(mr,memory_AT)&&physical_owned==1);mr=second;
     assert(pwmc_release_local(mr,memory_AT)&&!physical_owned&&claims==2&&drops==2);cases++;
+#if defined(PWMC_PROVIDER_SMOKE_ONLY)
+    printf("{\"SOFTWARE_smoke_passed\":true,\"record_bytes\":%zu,\"provider_bytes\":%zu}\n",sizeof(*mr),sizeof(mr->irq[0]));return 0;
+#endif
     for(unsigned f=1;f<=26;f++){
         if(f==18||f==19||f==20||f==21)continue;setup(0,f);mt=256;
         int ok=pwmc_claim(mr,memory_AT);
@@ -467,7 +546,7 @@ int main(int argc,char**argv)
         else{
             /* Retain actual claimed type2 as the last internal entry; split
              * the preceding conventional region into the remaining nodes. */
-            uint32_t types[PWMC_MAP_NODE_MAX]={3,4};uint64_t bases[PWMC_MAP_NODE_MAX]={(uintptr_t)arena,(uintptr_t)arena+0x100000},pages[PWMC_MAP_NODE_MAX]={256,256};
+            uint32_t types[PWMC_MAP_NODE_MAX]={3,4};uint64_t bases[PWMC_MAP_NODE_MAX]={(uintptr_t)arena,(uintptr_t)arena+0x100000},pages[PWMC_MAP_NODE_MAX]={256,512};
             for(unsigned k=2;k<PWMC_MAP_NODE_MAX-1;k++){types[k]=7;bases[k]=UINT64_C(0xc0000000)+4096*(k-2);pages[k]=k+2==PWMC_MAP_NODE_MAX?(mr->backing-bases[k])/4096:1;}
             types[PWMC_MAP_NODE_MAX-1]=2;bases[PWMC_MAP_NODE_MAX-1]=mr->backing;pages[PWMC_MAP_NODE_MAX-1]=mr->pages;
             allocator_chain(0,types,bases,pages,PWMC_MAP_NODE_MAX);allocator_chain(1,0,0,0,2);
@@ -580,13 +659,86 @@ int main(int argc,char**argv)
             assert(!pwmc_release_local(mr,memory_AT)&&!drops);cases++;
         }
     }
-    setup(0,0);event_base+=0xfd8;timer_base+=0xf80;timer_list(3);assert(pwmc_claim(mr,memory_AT));
-    if(argc==3){FILE*out=fopen(argv[2],"wb");assert(out&&
+    for(unsigned variant=0;variant<2;variant++)for(unsigned n=0;n<5;n++){
+        const unsigned counts[]={32,64,256,512,1020};setup(0,0);put(irq_image[1]+0x3150,counts[n],8);
+        if(!variant){put(irq_image[0]+0x2070,(uintptr_t)irq_image[1]+0x30b8,8);put(irq_image[2]+0x5438,(uintptr_t)irq_image[1]+0x1294,8);}
+        assert(pwmc_claim(mr,memory_AT)&&pwmc_irq_replay(mr,0)&&mr->irq[0].handler_count==counts[n]);
+        assert(pwmc_release_local(mr,memory_AT)&&pwmc_irq_replay(mr,1));cases++;
+    }
+    for(unsigned op=0;op<2;op++)for(unsigned slot=0;slot<2;slot++)for(unsigned leaf=1;leaf<=6;leaf++){
+        setup(0,0);if(op)assert(pwmc_claim(mr,memory_AT));irq_slot=slot;irq_fault=leaf;
+        assert(!(op?pwmc_release_local(mr,memory_AT):pwmc_claim(mr,memory_AT))&&mr->unknown&&claims==op&&!drops);
+        struct pwmc_irq_regs*p=&mr->irq[op].regs[slot];assert(p->issued==(1u<<leaf)-1&&p->returned==(1u<<(leaf-1))-1);
+        for(unsigned k=leaf-1;k<6;k++)assert(!((uint64_t*)p)[k]);
+        unsigned stopped=maps+arches+claims+drops;assert(!pwmc_release_local(mr,memory_AT)&&stopped==maps+arches+claims+drops);cases++;
+    }
+    for(unsigned op=0;op<2;op++)for(unsigned slot=0;slot<2;slot++)for(unsigned bad=10;bad<=19;bad++){
+        setup(0,0);if(op)assert(pwmc_claim(mr,memory_AT));irq_slot=slot;irq_fault=bad;
+        assert(!(op?pwmc_release_local(mr,memory_AT):pwmc_claim(mr,memory_AT))&&mr->unknown&&claims==op&&!drops);cases++;
+    }
+    for(unsigned op=0;op<2;op++)for(unsigned phase=0;phase<3;phase++)for(unsigned bad=50;bad<=68;bad++){
+        unsigned slots=phase?1:2;
+        for(unsigned slot=0;slot<slots;slot++){
+            setup(0,0);if(op)assert(pwmc_claim(mr,memory_AT));irq_phase=phase;irq_slot=slot;irq_fault=bad;
+            assert(!(op?pwmc_release_local(mr,memory_AT):pwmc_claim(mr,memory_AT))&&irq_fired&&mr->unknown&&claims==op&&!drops);cases++;
+        }
+    }
+    for(unsigned op=0;op<2;op++)for(unsigned stage=0;stage<4;stage++){
+        setup(0,0);if(op)assert(pwmc_claim(mr,memory_AT));
+        if(stage<2){irq_slot=stage;irq_fault=40;}else irq_fault=stage==2?70:71;
+        assert(!(op?pwmc_release_local(mr,memory_AT):pwmc_claim(mr,memory_AT))&&irq_fired&&mr->unknown);
+        assert(claims==(op||stage==3)&&drops==(op&&stage==3));cases++;
+    }
+    for(unsigned op=0;op<2;op++)for(unsigned phase=3;phase<=4;phase++){
+        setup(0,0);if(op)assert(pwmc_claim(mr,memory_AT));irq_phase=phase;irq_fault=62;
+        assert(!(op?pwmc_release_local(mr,memory_AT):pwmc_claim(mr,memory_AT))&&irq_fired&&mr->unknown);
+        assert(claims==(op||phase==4)&&drops==(op&&phase==4));
+        unsigned stopped=maps+arches+claims+drops+saves+restores;
+        assert(!pwmc_release_local(mr,memory_AT)&&stopped==maps+arches+claims+drops+saves+restores);cases++;
+    }
+    for(unsigned op=0;op<2;op++)for(unsigned at=1;at<=22;at++){
+        setup(0,0);if(op)assert(pwmc_claim(mr,memory_AT));put(irq_image[1]+0x3150,1020,8);mf=39;mt=at;irq_ATs=0;
+        assert(!(op?pwmc_release_local(mr,memory_AT):pwmc_claim(mr,memory_AT))&&mr->unknown&&claims==op&&!drops&&irq_ATs==at);
+        unsigned stopped=maps+arches+claims+drops;assert(!pwmc_release_local(mr,memory_AT)&&stopped==maps+arches+claims+drops);cases++;
+    }
+    for(unsigned op=0;op<2;op++)for(unsigned bad=0;bad<26;bad++){
+        setup(0,0);if(op)assert(pwmc_claim(mr,memory_AT));
+        switch(bad){
+        case 0:put(core+0x1cb80,8,8);break;case 1:put(core+0x1c8f8,8,8);break;
+        case 2:put(irq_image[0]+0x2038,(uintptr_t)irq_image[0]+0x1004,8);break;
+        case 3:put(irq_image[0]+0x2070,UINT64_C(0xc0010000),8);break;
+        case 4:put(irq_image[1]+0x3150,0,8);break;case 5:put(irq_image[1]+0x3150,1021,8);break;
+        case 6:put(irq_image[1]+0x3120,(uintptr_t)mr,8);break;case 7:put(irq_image[1]+0x3120,UINT64_C(0xc0010000),8);break;
+        case 8:put(arena+0x240100+8*31,(uintptr_t)irq_image[0]+0x10c8,8);break;
+        case 9:put(arena+0x240100+8*18,0,8);break;
+        case 10:put(irq_image[2]+0x5430,8,8);break;case 11:put(irq_image[2]+0x5438,(uintptr_t)irq_image[1]+0x1294,8);break;
+        case 12:put(irq_image[0]+0x2088,(uintptr_t)core+0xcbfc,8);break;
+        case 13:put(irq_image[0]+0x2058,0,8);break;case 14:put(irq_image[0]+0x2090,0,8);break;
+        case 15:put(irq_image[0]+0x2098,0,8);break;case 16:put(irq_image[0]+0x2098,19201,8);break;
+        case 17:put(irq_image[0]+0x2090,UINT64_MAX,8);break;case 18:put(irq_image[0]+0x2058,UINT64_MAX,8);break;
+        case 19:put(core+0x1dc00,UINT64_MAX,8);break;case 20:put(irq_image[0]+0x2068,8,8);break;
+        case 21:put(irq_image[1]+0x3110,8,8);break;case 22:put(irq_image[2]+0x5420,8,8);break;
+        case 23:put(irq_image[0]+0x2078,8,8);break;case 24:put(irq_image[1]+0x3128,8,8);break;case 25:put(irq_image[2]+0x5450,8,8);break;
+        }
+        assert(!(op?pwmc_release_local(mr,memory_AT):pwmc_claim(mr,memory_AT))&&mr->unknown&&claims==op&&!drops&&!raises[op]);cases++;
+    }
+    for(unsigned op=0;op<2;op++)for(unsigned image=0;image<3;image++)for(unsigned range=0;range<pwmc_irq_bindings[image].range_count;range++)for(unsigned end=0;end<2;end++){
+        setup(0,0);if(op)assert(pwmc_claim(mr,memory_AT));const struct pgci_range*q=&pwmc_irq_bindings[image].ranges[range];
+        irq_image[image][q->rva+(end?q->bytes-1:0)]^=1;
+        assert(!(op?pwmc_release_local(mr,memory_AT):pwmc_claim(mr,memory_AT))&&mr->unknown&&claims==op&&!drops&&!raises[op]);cases++;
+    }
+    for(unsigned byte=0;byte<sizeof(struct pwmc_irq_path);byte+=17)for(unsigned expose=0;expose<2;expose++){
+        setup(0,0);assert(pwmc_claim(mr,memory_AT));((uint8_t*)&mr->irq[0])[byte]^=1;
+        assert(!(expose?pwmc_exposure_intent(mr):pwmc_release_local(mr,memory_AT))&&mr->unknown&&mr->held&&!drops);cases++;
+    }
+    setup(0,0);event_base+=0xfd8;timer_base+=0xf80;timer_list(3);put(irq_image[1]+0x3150,1020,8);assert(pwmc_claim(mr,memory_AT));
+    if(argc==6){FILE*out=fopen(argv[5],"wb");assert(out&&
         fwrite(&mr->events[0],1,sizeof(mr->events[0]),out)==sizeof(mr->events[0])&&
         fwrite(&mr->allocator[0],1,sizeof(mr->allocator[0]),out)==sizeof(mr->allocator[0])&&
         fwrite(&mr->TPL[0],1,sizeof(mr->TPL[0]),out)==sizeof(mr->TPL[0])&&
-        fwrite(&mr->timers[0],1,sizeof(mr->timers[0]),out)==sizeof(mr->timers[0])&&!fclose(out));}
+        fwrite(&mr->timers[0],1,sizeof(mr->timers[0]),out)==sizeof(mr->timers[0])&&
+        fwrite(&mr->irq[0],1,sizeof(mr->irq[0]),out)==sizeof(mr->irq[0])&&!fclose(out));}
     assert(pwmc_release_local(mr,memory_AT));cases++;
-    printf("{\"passed\":true,\"checks\":%u,\"record_bytes\":%zu,\"TPL_scope_bytes\":%zu,\"TPL_transition_bytes\":%zu,\"timer_path_bytes\":%zu,\"original_PE_executed\":false,\"SOFTWARE_BS_AT_only\":true,\"physical_allocator_or_VMID_grant\":false}\n",cases,sizeof(*mr),sizeof(mr->TPL[0]),sizeof(mr->TPL[0].transition[0]),sizeof(mr->timers[0]));
+    printf("{\"passed\":true,\"checks\":%u,\"record_bytes\":%zu,\"TPL_scope_bytes\":%zu,\"TPL_transition_bytes\":%zu,\"timer_path_bytes\":%zu,\"provider_path_bytes\":%zu,\"original_PE_executed\":false,\"SOFTWARE_BS_AT_only\":true,\"physical_allocator_or_VMID_grant\":false}\n",cases,sizeof(*mr),sizeof(mr->TPL[0]),sizeof(mr->TPL[0].transition[0]),sizeof(mr->timers[0]),sizeof(mr->irq[0]));
     free(original);free(arena);return 0;
 }
