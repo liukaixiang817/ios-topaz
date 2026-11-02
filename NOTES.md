@@ -34,7 +34,7 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0183 bounded3READ source/affected offline checks complete; exact host/image/freeze NOTREADY; actual Polaris FASTBOOT01:25
+### CURRENT0183 bounded3READ source/models/exact host complete; image/freeze NOTREADY; actual Polaris FASTBOOT01:25
 
 - NEW defaultOFF `--wifi-power-current-word-read` is a separate explicit
   capture-only READ scope. Requires fresh normal10typedobject/currentnamespace/
@@ -66,10 +66,16 @@ early samples only. On0029 the human already confirmed boot complete and said
   Two SERIAL wholeEFI-XNU models each19checks/94sameinputs/11resource+1battery
   literalint1 passed; modelproofc0258089b6d4e18d14752ffe26e121c180dd3e9663099d10ad9263817cfbb9fb.
   Models SOFTWARE PMIC/delay/RAMUSB, no physicalREAD/radio/actualguestreset.
+- FWbc9a15a571ac9d41bedd2b8f495801ac2618f8ee committed. NEW GCD_CLOCK_0183
+  exact338PowerGCD+94resource/94inputs; all37 oldenabled+DISABLED literalAST
+  unchanged. 21hosttests +37actualmetadata/type refusals +5missingdependencies
+  passed. Parent also recorded7actualCLI dependency/conflict refusals.
+  Hostproofdad55d1e6eb2c0ed12d0e43de178740ce43c122502454e942ae848b0bcc11308.
+  Host-only addition does not change compiledinputs; no model repeat needed.
 - Sourceproof0183/wifi/current-word-read-source-and-offline-proof-0001.json
   SHAad464f0fe79af96371892f0e9ae0c9bc983565f4db78b5990a6ba8f598ca483e.
-  Host exact0183 profile, originalwholecodec/image/independentfreeze/ONEhelper
-  remain unfinished; NEW0183 NOTREADY/no devicecommand/bootrecord. No source
+  Originalwholecodec/image/independentfreeze/ONEhelper remain unfinished;
+  NEW0183 NOTREADY/no devicecommand/bootrecord. No source
   unchanged oldmodels/CI/optical/CPU-prep-client inventory boot to repeat.
 - Phone last independent actualPolarisFASTBOOT2026-11-02T01:25:24.486991Z after
   full0182 controllednormaldrain; 0182 originalrecord CONSUMED/sessionENDED,
