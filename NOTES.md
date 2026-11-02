@@ -108,7 +108,74 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
-- NEW0189 CURRENT later-parent opening/retirement GetMap + payload/global/
+- NEW0189 CURRENT actual copied-IO parent dispatch correction (SOFTWARE only).
+  The previous e59f185 parent installed its map relay on the final resident
+  context before preparation, but pwsp_piece's four independent contexts and
+  pwrcl_run_body's client context inherit final->io. Its final-only dispatcher
+  would therefore reach terminal UNKNOWN on the FIRST preparation opening,
+  before entering the original Core map leaf. The previous final-context-only
+  generic fixture missed this composition. No phone ran this defaultOFF path;
+  physicalCURRENT0188/last actualFASTBOOT10:05/FW270052fb/HOST15e830b and the
+  consumed image/controller/freeze remain unchanged. This corrects software
+  integration; wireless firmware/driver/scan still have not run on hardware.
+- Actual parent now supplies a closed list of six exact source/context/ticket
+  objects: final resident, four distinct pwsp phases, private client. Selection
+  matches the original map AND buffer before following context record/ticket;
+  foreign/interior/mismatched/duplicate inputs have no fallback. Four original
+  RO closing maps require phase1/opened1/finished0/zero query/masks/prestarts;
+  they are not forced into final pgcd_finish's query/finished shape. The client
+  has only its existing opening; no client close is invented. Together these
+  are ELEVEN existing private map calls, not two and not extra GetMaps. Each
+  route keeps its own complete opening/closing frames and original spent-once
+  ticket/opening200ms. A closing route verifies its retained opening digest,
+  exact context/source/ticket and unchanged original opening, without renewal.
+- Current current-map headerb7009e2fd0f89a63e865f8d976553b0ed56c361945189e40b773157d994f0f40;
+  actual parenta7c8f7342d575e0d99776c9e702b1d10612984ef92823c0fad34b5c658babfc2;
+  existing current-map testb439e7f8da31c9ea31e1bf06c839f84a6e448604769f3e0677da51efd29f0b17;
+  new dispatch test3ec8d1e2f55741c2768fbfe5787678bb24c7c8391b990c94b8929928cf231fdc.
+  V2 frame remains356688B/old offsets, word285908 is now path0=query pair,
+  1=preparation pair,2=client opening. Six frame pairs total4280256B; client
+  closing frame stays zero. Distinct48B route-fault raw preserves incoming
+  pointer values without following them. Failure appends RAM then the existing
+  terminal UNKNOWN hold before generic post-failure sampling/restore/cleanup.
+  ON-only log26214400B/staticassert is NOT a qualified new resource/profile.
+- FINAL167 ASAN/UBSAN dispatch SOFTWARE checks PASS4.109338040987495s: six
+  independent copied-IO contexts, genuine generic opens, four RO closing-map
+  calls and final query/finish, exact selection matrix, poison record/ticket,
+  replay/retained opening/lifetime/mode/query/finished rejection. Original PE
+  is inert DATA and all BS/AT/FP/clock leaves are explicit SOFTWARE peers.
+  This does NOT execute the full pwsp_run/pwrcl_run_body power constructors;
+  those composed paths still need the required two serial whole models before
+  any candidate. Affected prior2341 checks reran PASS82.77827179199085s; old
+  8334 allocator/1452 incoming/5141 image-ledger code is unchanged and reused.
+  Independent Python struct/hashlib fully decodes4280256B: eleven complete
+  source/context/ticket/image/payload/map/AT/hash prefixes plus zero unused
+  client-close slot. No captured pointer or original instruction is executed.
+- Full actual parent/export COFF+MachO/generalregs/maxframe1024 PASS. Export
+  only writes exact saved PAR; no SMC/direct DAIF/CPACR/TTBR/TCR/SCTLR/VBAR/
+  CNTP writes. Whole parent retains previous explicit FP/terminal masks.
+  Entire parent OFF preprocessed644935B is byteequal to e90d17c; standalone
+  allocator header/test and image/incoming modules are unchanged. Initial
+  cross compile found one remaining old stop(slot) call; it was corrected,
+  with the original failure log retained. No production gate or test case was
+  removed. Private parent-map-dispatch-0001/proof.json
+  SHA91b69fc0557edb9939e507ff82d5c36483ce0c7572df40b191fbab2b3ae1b163.
+- NEXT: this fixes the concrete inherited callback rejection, not first-private
+  GetMap admission. Its complete dynamic80B GCD/type-policy/callback/source/
+  temporal/work prequalification is still missing, followed by actual two
+  independent MSA/RMTFS claims, cache/secureVMID/MPU/remoteDMAstop/handback and
+  full normal/UNKNOWN retirement. No source audit/reader/parser/service/empty
+  permission contract or stock observer/allocator boot is needed. No borrowed
+  closed context, rebase/renew or bool/key/AT/emptyqueue ownership claim.
+  Original20Core+70providerhash/200ms/ARC/VRM/readwork/fullrestore remain.
+  NEW0189 NOTREADY: no MSS allocator consumer/newbuilder/CLI/exactprofile/
+  resource/codec/model/freeze/image/helper or device action. No USB/native/
+  SMC/MMIO/CI/new GetMap/alloc/provider call occurred. WiFi cannot scan/join/
+  transfer data; no reliable completion date. Sound/camera STOP. No human
+  physical or authorization reply is pending. Source-only publication receipt
+  will be private parent-map-dispatch-source-and-handoff-push-proof-0001.json.
+
+- HISTORICAL0189 final-context-only later-parent opening/retirement GetMap + payload/global/
   source-frame wiring, sourcee59f185863647e1a0309e5ca3f7e73f53075d20f. Actual
   parent now relays its two EXISTING private GCD GetMap calls after payload/log
   allocation and records the real call/key/native/FP/context/source inputs.

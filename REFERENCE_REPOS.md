@@ -1402,3 +1402,33 @@ the limited scope. First private GetMap complete dynamic GCD/type-policy/
 callback/work qualification, whole-call temporalIRQ and real MSS memory/cache/
 secure/DMA lifecycle are still missing. NEW0189 NOTREADY; no physical action,
 reference audit, image/helper/model/codec/CI or radio/scan/join/data occurred.
+
+
+A subsequent actual-parent composition check found a concrete fail-closed bug
+in e59f185: four pwsp_piece contexts and pwrcl_run_body's private client inherit
+final->io, while its newly installed relay accepted only the final resident's
+map addresses. The first preparation opening would stop before the Core map
+leaf; no device ran this defaultOFF path. The parent now binds six exact
+source/context/ticket objects and retains their eleven EXISTING private maps:
+four readonly pairs, client opening only, final query/finish pair. No extra map
+or provider call, synthetic query mask/finished state or renewed ticket exists.
+Route selection rejects foreign/interior/mismatched map/buffer pointers before
+following context fields. A readonly close remains the original phase1 and
+zero-query shape; client closing is refused. Its retained opening digest and
+original lifetime are checked separately for every route.
+167 new ASAN/UBSAN SOFTWARE routing/composition checks and2341 affected prior
+checks pass; independent struct/hashlib verifies all eleven356688B V2 frames
+plus the zero unused client closing slot (4280256B total). These tests execute
+generic GCD opens/maps/queries/finish with explicit peers, not the whole power
+preparation/client constructors; full composed serial models remain required.
+Full parent/export COFF/MachO/generalregs/maxframe1024 and complete defaultOFF
+preprocessed byte equivalence pass. New48B dispatch fault raw and ON25MiB log
+are not a resource/profile qualification. Private proof
+91b69fc0557edb9939e507ff82d5c36483ce0c7572df40b191fbab2b3ae1b163
+records the limited scope; previous proofs and RAW are untouched. Existing
+allocator/incoming/image modules remain unchanged. No reference re-audit or
+physical action occurred. First private GetMap dynamic GCD/type-policy/source/
+callback/work/temporal admission and real MSS allocation/cache/secure/DMA
+lifecycle still block a necessary candidate. NEW0189 NOTREADY; WiFi firmware,
+driver and scan have not run physically, and there is no reliable usable-WiFi
+completion date.

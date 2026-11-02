@@ -12,6 +12,7 @@ static uint64_t*got,*count;static struct polaris_plan*boot_plan;static uint8_t*p
 static struct pcmp_result*integration_records[2];static unsigned integration_mode;
 static unsigned stage,mutation,mutbyte,triggered,which_fault,leaf_maps,leaf_arches,leaf_saves,leaf_restores,leaf_pages;
 static uint8_t enum_map[65536] __attribute__((aligned(8)));
+static uint64_t fixture_image_bytes=0x300000;
 static int inventory_page(struct ppli_at*a)
 {a->saved=a->restored=0x123400;a->par=UINT64_C(0xff00000000000b80)|a->page;a->issued=a->returned=1;return 1;}
 static void change(unsigned where)
@@ -37,7 +38,7 @@ static void current_order(void*o){(void)o;change(2);}
 static int current_map(void*o,struct efi_system*sys,struct pgcd_map*m,void*out)
 {
     (void)o;assert(sys==s);leaf_maps++;
-    struct efi_memory rows[5]={{3,0,(uintptr_t)arena,0,0x300,8},{2,0,0xc0000000,0,512,8},
+    struct efi_memory rows[5]={{3,0,(uintptr_t)arena,0,fixture_image_bytes/4096,8},{2,0,0xc0000000,0,512,8},
         {2,0,(uintptr_t)payload_data,0,1,8},{2,0,(uintptr_t)log_data,0,1,8},
         {6,0,(uintptr_t)cfg,0,1,UINT64_C(0x800000000000000f)}};
     for(unsigned n=0;n<5;n++){memcpy((uint8_t*)out+48*n,&rows[n],40);memset((uint8_t*)out+48*n+40,0x5a,8);}
@@ -56,8 +57,8 @@ static int current_identity(void*o,uint64_t at,uint64_t bytes,uint64_t*where,uin
 {(void)o;(void)bytes;*where=at;*par=UINT64_C(0xff00000000000b80)|(at&~UINT64_C(4095));return 1;}
 static void setup_current(unsigned slot)
 {
-    reset(0);memset(arena+0x100000,0,0x200000);self->bytes=0x300000;memset(r,0,sizeof(*r));assert(pgcd_bind(r,self));
-    struct pgcd_config old_config=cfg[0];cfg=(void*)(arena+0x300000);cfg[0]=old_config;s->tables=cfg;
+    reset(0);memset(arena+0x100000,0,0x200000);self->bytes=fixture_image_bytes;memset(r,0,sizeof(*r));assert(pgcd_bind(r,self));
+    struct pgcd_config old_config=cfg[0];cfg=(void*)(arena+fixture_image_bytes);cfg[0]=old_config;s->tables=cfg;
     cur=(void*)(arena+0x100000);binding=(void*)(arena+0x160000);images=(void*)(arena+0x170000);
     assert((uint8_t*)cur+sizeof(*cur)<(uint8_t*)binding);
     cpu_flag=(void*)(arena+0x1c0000);load_flag=cpu_flag+1;payload_slot=(void*)(cpu_flag+2);log_slot=payload_slot+1;
@@ -67,7 +68,7 @@ static void setup_current(unsigned slot)
     memset(payload_data,0,4096);struct polaris_payload*p=(void*)payload_data;
     memcpy(p->magic,"SWEETXNU",8);p->version=1;p->nsegs=1;p->phys_base=0xc0000000;p->mem_size=0x200000;
     strcpy(p->cmdline,"ufsrw=0 polarisramcow=1 polarisrammb=512");assert(pcmp_payload_bind(binding,payload_data,4096,boot_plan));
-    memset(enum_map,0,sizeof(enum_map));*(struct efi_memory*)enum_map=(struct efi_memory){3,0,(uintptr_t)arena,0,0x300,8};
+    memset(enum_map,0,sizeof(enum_map));*(struct efi_memory*)enum_map=(struct efi_memory){3,0,(uintptr_t)arena,0,fixture_image_bytes/4096,8};
     uint64_t*handle=(void*)(arena+0x1d0000);*handle=0x123;
     assert(ppli_bind(images,cpu_flag,0x123)&&ppli_start(images,(uintptr_t)s,(uintptr_t)handle,1,enum_map,40,40,12,100,inventory_page));
     assert(ppli_capture(images,0,0,*handle,(uintptr_t)self,inventory_page)&&ppli_second(images,enum_map,40,40,12,inventory_page));
@@ -89,6 +90,7 @@ static void setup_current(unsigned slot)
 }
 static int run_current(unsigned slot)
 {return fixture_relay(0,s,&r->map[slot],r->maps[slot]);}
+#ifndef POLARIS_CURRENT_MAP_FIXTURE_ONLY
 int main(int argc,char**argv)
 {
     assert((argc==2||argc==3)&&!posix_memalign((void**)&arena,4096,0x401000));
@@ -139,3 +141,4 @@ int main(int argc,char**argv)
     printf("{\"passed\":true,\"checks\":%u,\"record_bytes\":%zu,\"payload_binding_bytes\":%zu,\"input_bytes\":%zu,\"call_offset\":%zu,\"digest_offset\":%zu,\"SOFTWARE_only\":true,\"firmware_executed\":false}\n",checks,sizeof(*cur),sizeof(*binding),sizeof(current_input),offsetof(struct pcmp_result,call),offsetof(struct pcmp_result,digest));
     free(original);free(arena);free(payload_data);free(log_data);return 0;
 }
+#endif

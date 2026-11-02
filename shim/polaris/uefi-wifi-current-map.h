@@ -7,6 +7,8 @@
 #include "uefi-wifi-parent-images.h"
 #include "payload.h"
 #define PCMP_HEADER_CAP (sizeof(struct polaris_payload)+64*sizeof(struct polaris_segment))
+enum pcmp_path {PCMP_QUERY_PAIR,PCMP_PREPARATION_PAIR,PCMP_CLIENT_OPEN};
+#define PCMP_PARENT_CONTEXTS 6u
 struct pcmp_payload {
     uint64_t address,bytes,header_bytes;struct polaris_plan plan;
     uint32_t attempted,complete,unknown,reserved;
@@ -24,7 +26,7 @@ struct pcmp_result {
     struct pcmp_input input;struct pgcd_io original_io;
     struct pgcd_context context_before;struct pgcd_lifetime ticket_before;
     struct pgcd_result source_before;struct pcmp_payload payload_before;struct ppli_result images_before;
-    uint64_t payload,log,received,payload_count;uint32_t load_state,native,slot,reserved;
+    uint64_t payload,log,received,payload_count;uint32_t load_state,native,slot,path;
     struct polaris_plan plan;uint64_t boot_address;uint8_t BS_before[PWMC_BS_BYTES];struct efi_loaded image_before;
     uint8_t images_digest[32],binding_digest[32];
     struct pwmc_parent_map call;
@@ -151,8 +153,8 @@ static __attribute__((noinline)) int pcmp_post(struct pcmp_live*live,int(*page_r
     ppli_sha(&r->call,offsetof(struct pwmc_parent_map,digest),hash);if(!pgcd_equal(hash,call_digest,32))return pcmp_fail(r,6);
     return 1;
 }
-static inline int pcmp_read(struct pcmp_result*r,const struct pcmp_input*input,const struct pgcd_io*original_io,
-    struct pgcd_map*output,void*data,int(*page_read)(struct ppli_at*))
+static inline int pcmp_read_path(struct pcmp_result*r,const struct pcmp_input*input,const struct pgcd_io*original_io,
+    struct pgcd_map*output,void*data,int(*page_read)(struct ppli_at*),unsigned path)
 {
     if(!r||!input||!original_io||!pwmc_zero(r,sizeof(*r)))return 0;r->attempted=r->unknown=1;
     struct pcmp_input in=*input;struct pgcd_io io=*original_io;
@@ -169,18 +171,21 @@ static inline int pcmp_read(struct pcmp_result*r,const struct pcmp_input*input,c
     r->context_before=*c;r->ticket_before=*c->ticket;r->source_before=*c->record;
     struct pgcd_io expected=io;expected.map=c->io.map;
     unsigned slot=output==&c->record->map[0]?0:output==&c->record->map[1]?1:2;
-    if(slot>1||c->stage!=2||c->opened!=slot||c->finished!=slot||c->ticket->spent!=1||c->ticket->result!=(uintptr_t)c->record||
+    if(path>PCMP_CLIENT_OPEN||slot>1||(path==PCMP_CLIENT_OPEN&&slot)||c->stage!=2||c->opened!=slot||
+       c->finished!=(path==PCMP_QUERY_PAIR?slot:0)||c->ticket->spent!=1||c->ticket->result!=(uintptr_t)c->record||
        c->record->attempted!=1||c->record->uncertain||c->record->error||c->record->phase!=slot||!c->record->before.cpu.ticks||
        c->io.map==io.map||!pgcd_equal(&c->io,&expected,sizeof(expected))||c->record->self_bound!=1||
        c->record->self_owner_address!=(uintptr_t)in.image||!pgcd_equal(&c->record->self_owner,in.image,sizeof(*in.image))||
        c->record->outstanding!=0x20000u+slot||data!=c->record->maps[slot]||
        output->issued!=1||output->returned||output->valid||output->bytes!=PGCD_MAP_CAP||
        !c->record->map_guard[slot].entered||!c->record->map_guard[slot].unknown||!c->record->map_guard[slot].fp.saved||
-       (slot&&(c->record->pre_mask!=15||c->record->post_mask!=15||c->record->map[0].valid!=1||
+       (slot&&(c->record->pre_mask!=(path==PCMP_QUERY_PAIR?15u:0u)||c->record->post_mask!=(path==PCMP_QUERY_PAIR?15u:0u)||c->record->map[0].valid!=1||
         c->record->map[0].status||!c->record->map[0].key||c->record->map[0].version!=1||
         c->record->map[0].issued!=1||c->record->map[0].returned!=1)))return pcmp_fail(r,2);
     r->payload_before=*in.payload_binding;r->images_before=*in.images;r->payload=(uintptr_t)*in.payload_slot;r->log=(uintptr_t)*in.log_slot;
-    r->received=*in.received;r->payload_count=*in.payload_count;r->load_state=*in.load_state;r->native=*in.native_flag;r->plan=*in.plan;r->slot=slot;
+    if(path!=PCMP_QUERY_PAIR&&(c->record->pre_mask||c->record->post_mask||c->record->prestart_count||
+       !pwmc_zero(c->record->query,sizeof(c->record->query))))return pcmp_fail(r,2);
+    r->received=*in.received;r->payload_count=*in.payload_count;r->load_state=*in.load_state;r->native=*in.native_flag;r->plan=*in.plan;r->slot=slot;r->path=path;
     r->boot_address=(uintptr_t)io.system->boot;
     if(r->boot_address<0x1b800||((r->boot_address-0x1b800)&4095))return pcmp_fail(r,3);
     pgcd_copy(r->BS_before,io.system->boot,PWMC_BS_BYTES);r->image_before=*in.image;
@@ -207,5 +212,53 @@ static inline int pcmp_read(struct pcmp_result*r,const struct pcmp_input*input,c
     if(!pwmc_parent_map_call(&r->call,&call,&relay))return pcmp_fail(r,4);
     if(!pcmp_post(&live,page_read))return 0;
     *output=r->call.map;r->unknown=0;r->complete=1;ppli_sha(r,offsetof(struct pcmp_result,digest),r->digest);return 1;
+}
+static inline int pcmp_read(struct pcmp_result*r,const struct pcmp_input*input,const struct pgcd_io*original_io,
+    struct pgcd_map*output,void*data,int(*page_read)(struct ppli_at*))
+{return pcmp_read_path(r,input,original_io,output,data,page_read,PCMP_QUERY_PAIR);}
+/* The real preparation/client constructors copy final->io, but bind their own
+ * source and spent-once ticket. Select by the parent's closed object list BEFORE
+ * following context->record/ticket. A foreign map never selects a fallback. */
+struct pcmp_route {
+    struct pgcd_context*context;struct pgcd_result*source;struct pgcd_lifetime*ticket;
+    struct pcmp_result*frames;uint32_t path,reserved;
+};
+struct pcmp_route_fault {
+    uint64_t opaque,system,map,data;uint32_t attempted,unknown,index,slot;
+};
+_Static_assert(sizeof(struct pcmp_route)==40&&sizeof(struct pcmp_route_fault)==48,"complete parent dispatch layout");
+static inline int pcmp_select(const struct pcmp_route*routes,unsigned count,const struct pgcd_map*map,const void*data,
+    unsigned*index,unsigned*slot)
+{
+    if(!routes||count!=PCMP_PARENT_CONTEXTS||!index||!slot)return 0;
+    unsigned matches=0,chosen=0,part=0;
+    for(unsigned n=0;n<count;n++){
+        const struct pcmp_route*a=&routes[n];
+        if(!a->context||!a->source||!a->ticket||!a->frames||a->path>PCMP_CLIENT_OPEN||a->reserved)return 0;
+        for(unsigned j=0;j<n;j++)if(a->context==routes[j].context||a->source==routes[j].source||
+            a->ticket==routes[j].ticket||a->frames==routes[j].frames)return 0;
+        for(unsigned k=0;k<2;k++)if(map==&a->source->map[k]){matches++;chosen=n;part=k;}
+    }
+    if(matches!=1||data!=routes[chosen].source->maps[part]||(part&&routes[chosen].path==PCMP_CLIENT_OPEN))return 0;
+    *index=chosen;*slot=part;return 1;
+}
+static inline int pcmp_route_read(const struct pcmp_route*route,unsigned slot,const struct pcmp_input*common,
+    const struct pgcd_io*original_io,struct pgcd_map*map,void*data,int(*page_read)(struct ppli_at*))
+{
+    if(!route||!common||!original_io||slot>1)return 0;
+    struct pgcd_context*c=route->context;struct pgcd_result*s=route->source;
+    if(c->record!=s||c->ticket!=route->ticket||s->self_owner_address!=(uintptr_t)common->image||
+       map!=&s->map[slot]||data!=s->maps[slot]||route->path>PCMP_CLIENT_OPEN||route->reserved||
+       (route->path==PCMP_CLIENT_OPEN&&slot))return 0;
+    if(slot){
+        const struct pcmp_result*first=&route->frames[0];uint8_t hash[32];
+        ppli_sha(first,offsetof(struct pcmp_result,digest),hash);
+        if(first->attempted!=1||first->complete!=1||first->unknown||first->error||first->slot||first->path!=route->path||
+           !pgcd_equal(hash,first->digest,32)||first->input.context!=c||first->context_before.record!=s||
+           first->context_before.ticket!=route->ticket||!pgcd_equal(&first->ticket_before,route->ticket,sizeof(*route->ticket))||
+           !pgcd_equal(&first->source_before.before,&s->before,sizeof(s->before)))return 0;
+    }
+    struct pcmp_input input=*common;input.context=c;
+    return pcmp_read_path(&route->frames[slot],&input,original_io,map,data,page_read,route->path);
 }
 #endif
