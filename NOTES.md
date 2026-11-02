@@ -108,7 +108,91 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
-- NEW0189 CURRENT additional SOURCE result for the enabled nonzero poison-fill
+- NEW0189 CURRENT shared deferred-reader integration at the EXISTING actual
+  FreePool leaf; SOFTWARE only. The allocator's original12-head reader was
+  factored without changing its736B path or347280B allocator ABI; the actual
+  parent now reuses that reader for complete pre/post pending/counter and
+  all27 queue heads at levels5..31. It does not walk/clear/unlink queues,
+  dispatch callbacks, mask IRQs or write system registers. No BS/GetMap/
+  enumeration/allocation/provider/FreePool/AT/clock call was added.
+- New shim/polaris/uefi-wifi-cache-dispatch.h
+  SHA5462115ea2cd035a159d5cb53a50e4fa4ab6e6a24a0a7ce14a0862b00bd5f029;
+  release header73c7ab9ac4c8626838edacfc632404d8c6a01862ade0e50a30e694a2f4f53452;
+  shared common header35ae53d81fc764d9ae801344e876d85027ef5a706f693a271d5b70308760b7ba;
+  actual parent27867d14aa894b31841890051531ea771fd8f04c436551b27378df0907195505;
+  new dispatch testd048f879965d0a10e18fda9bc20d99bab733178accbac4db0e23385d4abd86a0;
+  reused release fixture test6300a892b40cadc0357e882c31761348f7996d5088959c8c0fa99faca7cc71ea.
+  Target/cache/GCD/current-map/PCLI headers and old RAW/schema remain unchanged.
+  Main only defaultOFF REMOTE_MEMORY; no consumer/builder/CLI/profile/resource.
+- New separate1488B record/input104B/actual live-frame360B/two464B samples;
+  old release596496B, allocator347280B and every earlier schema are unchanged.
+  This receives the actual enclosing pbhr_call stack frame, exact original
+  record and caller input through closed C arguments. Identities and full
+  service-boundary witness seal are checked BEFORE following source pointers;
+  rejected raw live frames survive. No fabricated context, opened/owner/ticket
+  flags or dump-pointer invocation. Full aux record and live frame are sealed
+  across the existing registered call, excluding only its real API output.
+  Source/BS/image/FP/input/caller/native changes fail before postqueue sampling.
+- Pending5+ or a nonempty/inconsistent head refuses before the real method,
+  or before post-arch/FPrestore on return. Complete prefix through first bad
+  head, both raw counters, issued/returned/partial masks and four additional
+  nativeflag RAM reads are retained. Guard return is distinct from actual
+  registered API status/issued/returned: an API may have returned while the
+  guard refuses. No failure sampling/FPrestore guess/free/retry/cleanup; full
+  new RAM raw is appended before the existing terminal hold/Console/USB.
+  After API, no target or GCD-page pointer is followed. Original cache200ms,
+  target-final monotonic guard,35 release hashes and every pageop20Core+
+  70providerhash/ARC/VRM/readwork/fullrestore are not reduced or renewed.
+- These are known-pending dispatch refusals, not complete callback/source/
+  work/temporal qualification. A deliberate SOFTWARE enqueue-shaped write
+  followed by restoration PASSES both snapshots, explicitly demonstrating
+  that equal pending/heads/counters cannot exclude intervening callbacks/ABA
+  or establish an IRQ/owner/lease. Timer/GIC/provider binding and genuinely
+  fresh post-release typed graph/source for six contexts remain unfinished.
+- FINAL646 ASAN/UBSAN SOFTWARE checks PASS205.79919320798945s: all27 levels x
+  pre/post x pending/forward/back faults,104 input bytes,360 saved-live bytes,
+  coupled BS/source/live/FP/native poison, closed-identity entry faults,
+  partial/noissue/error and replay, with no continuation after refusal. Normal
+  target plus GCD neighbor stay host PROT_NONE after the simulated method.
+  Original PE and provider images are DATA; service/AT/FP/clocks explicit peers.
+  No original instruction, whole cache/pwsp/client constructor or device runs.
+  Early638 and646 passes remain; review then closed entry identities before
+  pointer follow and retained rejected raw, keeping all final cases.
+- Affected771 release cases rerun PASS218.095424500003s and affected8334
+  allocator cases PASS173.43068641697755s, all old case loops/gates retained.
+  Allocator compile trace proves CURRENT shim header priority, excluding the
+  private frozen old header; raw schemas/prefixes unchanged. Unaffected474/
+  1564/1452/2341/167/5141 source bodies are reused without rerun. Independent
+  struct/hashlib fully decodes597984B paired raw (596496+1488), both576936B
+  archived/fresh bundles and112928B allocator prefixes, full live/FP intent/
+  inner-control/service-boundary seals, all queue/native/API raw and digests.
+  A reconstructed service-boundary buffer is a new derived artifact, not an
+  edit/relabel of the later final raw. Captured pointers are numeric DATA only.
+- Actual whole parent/new export COFF+MachO/generalregs/maxframe1024 PASS;
+  affected allocator exports also both targets PASS. Export MSR only exact
+  PAR restore/noSMC; whole-parent old FP/terminal masks are not zero-write.
+  OFF640972B remains same-command baseline equal; new header absent from OFF
+  include graph. ON log29360128B/staticassert covers the extra full raw only,
+  not resource/profile/model admission. No new source audit, model, CI, codec,
+  image, payload, helper, freeze, USB/native/MMIO/SMC/PE execution occurred.
+- Private cache-handle-dispatch-0001/proof.json
+  SHA1a914e7e0c8bcba8b148732a81df9c63d73d68d7ce1e946c38619371ef7bf214;
+  source/softwarea8a822077767202b6bc0746899dc0aadf5fa014abe8909b7140100ed052921c1.
+  NEXT remaining Timer/GIC/IRQ/callback source/work/whole-call temporal and
+  fresh post-release typed graph/policy/source admission for six actual
+  private contexts. Do not rebuild this reader/guard or repeat its checks
+  unchanged, and do not replace those inputs with empty snapshots/keys/tags/
+  counters/equal bytes/complete flags. Other release/backing geometries stay
+  unsupported. Then actual MSA/RMTFS claims/cache/secureVMID/MPU/DMAstop/
+  handback/full normalUNKNOWN retirement, two SERIAL whole constructor models/
+  new exact profile/resource/codec/transition/freeze/ONEhelper. NEW0189 NOTREADY;
+  no PA publish/MSS/NVserve/radio/scan/join/data. Physical0188 fullretire/last
+  actualFB10:05/consumed controller unchanged. All jobs ENDED, no human or
+  authorization answer pending. WiFi unavailable/no credible date; sound/
+  camera STOP. Publication receipt will be
+  cache-handle-dispatch-source-and-handoff-push-proof-0001.json.
+
+- COMPLETED0189 additional SOURCE result for the enabled nonzero poison-fill
   leaf; functional source remains bebea9d66137516e8957e9871afb7bf4c5e85880.
   Text milestone bed76fdc58f50c0eccafee255c19bcfea5278874 directpushed under
   actual standing source/text authorization; independent lsremote matched.
@@ -160,7 +244,7 @@ early samples only. On0029 the human already confirmed boot complete and said
   sound/camera STOP. New text-only publication receipt will be
   cache-release-poison-fill-source-handoff-push-proof-0001.json.
 
-- NEW0189 CURRENT restricted ordinary small-FreePool effects gate is now in
+- COMPLETED0189 restricted ordinary small-FreePool gate source snapshot:
   source bebea9d66137516e8957e9871afb7bf4c5e85880, directpushed under actual
   standing source/text consent; separate lsremote matched exactly. All jobs
   ENDED, physical/authorization answer pending=false. The gate is integrated in

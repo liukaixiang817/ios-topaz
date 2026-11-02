@@ -1646,3 +1646,27 @@ The poison-fill SOURCE text milestone bed76fdc58f50c0eccafee255c19bcfea5278874
 was directpushed under the actual same-project public text consent; independent
 lsremote matched. Only NOTES/REFERENCE_REPOS were published, with no runtime
 source change, private evidence disclosure or physical action.
+
+
+The actual parent now reuses a shared form of the allocator's existing deferred
+reader at its EXISTING FreePool leaf. Pre/post pending/counter and every queue
+head5..31 are retained in a separate1488B record, with the actual enclosing
+live frame and service-boundary witness seal checked before source pointers.
+Known pending/nonempty/inconsistent queues refuse; no queue traversal, clearing,
+callback dispatch, IRQ/register write or extra service/query/AT/clock call.
+The original allocator12-head/736B path and347280B ABI are preserved and all8334
+cases pass against the CURRENT header;771 release regressions and646 new ASAN/
+UBSAN composition cases also pass. Independent struct/hashlib checks the full
+597984B paired raw, both576936B bundles,112928B allocator prefixes and service-
+boundary/live/FP seals, without executing captured pointers. Actual parent/new
+export and allocator exports cross-compile for COFF/MachO with general registers
+and1024B frame limit; OFF baseline remains exact. No old proof or raw is edited.
+A SOFTWARE enqueue-shaped mutation followed by restoration deliberately passes:
+these snapshots cannot exclude intervening callbacks/ABA or grant IRQ ownership,
+whole-call time or a fresh typed graph. That remaining source/work/temporal and
+six-context current admission, MSS lifetime and new candidate qualification are
+still open. Private proof
+1a914e7e0c8bcba8b148732a81df9c63d73d68d7ce1e946c38619371ef7bf214
+limits this to SOFTWARE refusal evidence. No original provider/PE instruction,
+whole power constructor, model/CI/freeze/image/helper or device was executed.
+NEW0189 NOTREADY; WiFi firmware/driver/scan/join/data remain physically unrun.

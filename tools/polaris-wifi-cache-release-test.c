@@ -73,6 +73,7 @@ static void release_setup(void)
     release_calls=release_effect=inject_stage=inject_kind=inject_byte=release_hit=release_pages=0;release_mode=1;
 }
 static int release_run(void){return pbhr_call(release_record,&release_input);}
+#ifndef POLARIS_CACHE_RELEASE_FIXTURE_ONLY
 int main(int argc,char**argv)
 {
     assert(argc==3&&!posix_memalign((void**)&arena,4096,0x801000));
@@ -142,3 +143,4 @@ int main(int argc,char**argv)
     if(protected_page)assert(!mprotect(protected_page,protected_bytes,PROT_READ|PROT_WRITE));
     free(original);free(arena);free(payload_page);free(log_page);return 0;
 }
+#endif

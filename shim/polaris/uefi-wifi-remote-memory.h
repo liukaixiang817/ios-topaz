@@ -764,6 +764,22 @@ static inline int pwmc_irq_replay(const struct pwmc_result*r,unsigned op)
 }
 static inline void pwmc_deferred_digest(const struct pwmc_deferred_path*p,uint8_t out[32])
 {struct pwfi_sha256 h;pwfi_init(&h);for(size_t k=0;k<offsetof(struct pwmc_deferred_path,digest);k++)pwfi_byte(&h,((const uint8_t*)p)[k]);pwfi_final(&h,out);}
+/* Shared ordinary-RAM capture for already-qualified original Core pages.
+ * The caller supplies the current source/typed/native/FP/lifetime envelope.
+ * Preserve pending/counter and the complete prefix through the first bad head;
+ * never follow a queue link, clear it or dispatch a callback. */
+static inline int pwmc_deferred_read(uint64_t core,unsigned first,unsigned count,
+    uint64_t*pending,uint64_t*counter,uint64_t head[][2],uint32_t*captured)
+{
+    if(first<5||first>31||!count||count>32-first||*captured)return 0;
+    *pending=pwfi_le((const void*)(uintptr_t)(core+0x1dbc0),8);
+    *counter=pwfi_le((const void*)(uintptr_t)(core+0x1dc00),8);
+    if(*pending&~UINT64_C(31))return 0;
+    for(unsigned k=0;k<count;k++){
+        uint64_t address=core+0x1c928+16*(k+first);pgcd_copy(head[k],(const void*)(uintptr_t)address,16);*captured=k+1;
+        if(head[k][0]!=address||head[k][1]!=address)return 0;
+    }return 1;
+}
 /* In this original checker, SignalEvent ca90 skips c7f0 when Type.bit9 is
  * clear. Timer-only and NotifyWait events cannot enqueue their NotifyFn from
  * this path. A NotifySignal timer could queue arbitrary8/16 code, so refuse
@@ -801,12 +817,7 @@ static inline int pwmc_deferred_step(struct pwmc_result*r,unsigned op,unsigned s
     }else if(!pwmc_deferred_replay(r,op,stage))return pwmc_fail(r,PWMC_CONTEXT,1);
     if(!pwmc_deferred_timers(r,op,&bad)){p->refusal_timer=bad;return pwmc_fail(r,PWMC_CONTEXT,1);}
     struct pwmc_deferred_sample*q=&p->sample[stage];q->attempted=1;
-    q->pending=pwfi_le((const void*)(uintptr_t)(core+0x1dbc0),8);q->counter=pwfi_le((const void*)(uintptr_t)(core+0x1dc00),8);
-    if(q->pending&~UINT64_C(31))return pwmc_fail(r,PWMC_CONTEXT,1);
-    for(unsigned k=0;k<12;k++){
-        uint64_t head=core+0x1c928+16*(k+5);pgcd_copy(q->head[k],(const void*)(uintptr_t)head,16);q->head_count=k+1;
-        if(q->head[k][0]!=head||q->head[k][1]!=head)return pwmc_fail(r,PWMC_CONTEXT,1);
-    }
+    if(!pwmc_deferred_read(core,5,12,&q->pending,&q->counter,q->head,&q->head_count))return pwmc_fail(r,PWMC_CONTEXT,1);
     /* No clock, callback, firmware method or state-changing instruction
      * occurs between these final live equalities and the caller's ABI leaf. */
     if(pwfi_le((const void*)(uintptr_t)(core+0x1dbc0),8)!=q->pending||!pwmc_events_current(r,op)||!pwmc_timers_current(r,op)||!pwmc_irq_current(r,op))return pwmc_fail(r,PWMC_CONTEXT,1);

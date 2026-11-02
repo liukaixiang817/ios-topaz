@@ -183,7 +183,8 @@ static inline int pbhr_small_return(const struct pbhr_result*r)
         if(a->pool[k]!=expected)return 0;
     }return 1;
 }
-static __attribute__((noinline)) int pbhr_call(struct pbhr_result*r,const struct pbhr_input*input)
+static __attribute__((noinline)) int pbhr_call_guarded(struct pbhr_result*r,const struct pbhr_input*input,
+    int(*guarded_release)(struct pbhr_live*,struct pbhr_result*,const struct pbhr_input*,const uint8_t[32]))
 {
     if(!r||!input||!pwmc_zero(r,sizeof(*r)))return 0;
     r->attempted=r->unknown=1;r->input=*input;r->api.status=UINT64_MAX;struct pbhr_input in=*input;uint8_t hash[32];
@@ -231,7 +232,7 @@ static __attribute__((noinline)) int pbhr_call(struct pbhr_result*r,const struct
     if(!pbhr_native(&live,3))return pbhr_fail(r,4);
     if(!pgci_verify((const void*)(uintptr_t)live.core,live.core,PGCI_IMAGE_BYTES,r->hashes[1],&r->hash_failed[1],&r->hash_count[1])||!pbhr_stable(&live))return pbhr_fail(r,4);
     r->issued=1;pbhr_seal(r,&r->api,sizeof(r->api),before);
-    ok=in.release(in.io.opaque,in.system,live.entry,a->input.handles,&r->api);
+    ok=guarded_release?guarded_release(&live,r,input,before):in.release(in.io.opaque,in.system,live.entry,a->input.handles,&r->api);
     if(!ok)return pbhr_fail(r,5);pbhr_seal(r,&r->api,sizeof(r->api),after);
     /* Do not run the pre-call target/root comparison after this point. */
     live.after=1;
@@ -252,4 +253,6 @@ static __attribute__((noinline)) int pbhr_call(struct pbhr_result*r,const struct
     if(!pgci_verify((const void*)(uintptr_t)live.core,live.core,PGCI_IMAGE_BYTES,r->hashes[4],&r->hash_failed[4],&r->hash_count[4])||!pbhr_stable(&live))return pbhr_fail(r,7);
     r->complete=1;r->unknown=0;ppli_sha(r,offsetof(struct pbhr_result,digest),r->digest);return 1;
 }
+static inline int pbhr_call(struct pbhr_result*r,const struct pbhr_input*input)
+{return pbhr_call_guarded(r,input,0);}
 #endif
