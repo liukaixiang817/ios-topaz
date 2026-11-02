@@ -11,6 +11,7 @@
 static struct pwmc_result*mr;
 static unsigned mf,mt,claims,drops,translations,physical_owned,active_stride=48;
 static unsigned event_ATs;static uint8_t*event_base;
+static unsigned timer_ATs;static uint8_t*timer_base;
 static unsigned allocator_ATs;static uint8_t*allocator_base;
 static unsigned raises[2],TPL_restores[2],page_TPL[2];
 static unsigned tf,td,to,ts,fired;
@@ -43,6 +44,13 @@ static int memory_identity(void*p,uint64_t at,uint64_t bytes,uint64_t*where,uint
         for(unsigned list=0;list<2;list++)if(mr->allocator[op].count[list]<PWMC_MAP_NODE_MAX&&
            mr->allocator[op].node[list][mr->allocator[op].count[list]].issued){allocator_ATs++;if(mf==33&&allocator_ATs==mt)return 0;}
     }
+    if(mr&&mr->timers[op].attempted&&!mr->timers[op].complete){
+        struct pwmc_timer_path*t=&mr->timers[op];
+        if((t->checker_node.issued&&!t->checker_node.returned)||
+           (t->count<PWMC_TIMER_MAX&&t->node[t->count].issued&&!t->node[t->count].returned)){
+            timer_ATs++;if(mf==36&&timer_ATs==mt)return 0;
+        }
+    }
     int ok=identity(p,at,bytes,where,par);if(ok)*par|=UINT64_C(0xff00000000000b80);return ok;
 }
 static void corrupt_pending(void)
@@ -69,6 +77,7 @@ static int memory_arch(void*p,struct pgcd_arch*a)
     if(mf==29&&claims&&mr->call[0].returned&&!mr->call[0].guard.left)put(core+0x1b838,(uintptr_t)core+0xd3f0,8);
     if(mf==30&&!claims&&mr->events[0].complete)put(core+0x1dbc0,1,8);
     if(mf==34&&!claims&&mr->allocator[0].complete)put(core+0x1cc08,1,8);
+    if(mf==37){unsigned op=mr->source[1].attempted?1:0;if(mr->timers[op].complete&&!mr->call[op].issued)put(timer_base+176,1,8);}
     if(tf&&ts==2&&!fired&&mr->TPL[to].transition[td].returned&&mr->TPL[to].transition[td].unknown&&mr->TPL[to].transition[td].observed==127){fired=1;tpl_mutate(mr,to,td);}
     return ok;
 }
@@ -79,6 +88,7 @@ static void memory_order(void*p)
     if(mf==28&&mr->call[0].issued&&!claims)corrupt_pending();
     if(mf==31&&mr->call[0].issued&&!claims)put(core+0x1dbc0,1,8);
     if(mf==35&&mr->call[0].issued&&!claims)put(core+0x1dc10,1,8);
+    if(mf==38){unsigned op=mr->source[1].attempted?1:0;if(mr->call[op].issued&&!mr->call[op].returned)put(timer_base+176,1,8);}
     if(tf&&ts==1&&!fired&&mr->TPL[to].transition[td].issued&&!mr->TPL[to].transition[td].returned){fired=1;tpl_mutate(mr,to,td);}
 }
 static void descriptor(uint8_t*out,unsigned index,uint32_t type,uint64_t base,uint64_t pages,uint64_t attrs)
@@ -212,7 +222,7 @@ static int memory_AT(struct pwmc_translation*t)
 static void setup(unsigned kind,unsigned f)
 {
     mr=0;reset(0);mf=f;tf=td=to=ts=fired=map_fault=late_epoch=0;claims=drops=translations=physical_owned=event_ATs=allocator_ATs=0;allocated_base=allocated_bytes=0;
-    event_base=arena+0x110000;memset(arena+0x100000,0,0x100000);
+    event_base=arena+0x110000;timer_base=arena+0x1a0000;timer_ATs=0;memset(arena+0x100000,0,0x100000);
     allocator_base=arena+0x130000;
     memset(live,0,sizeof(live));memset(live_base,0,sizeof(live_base));memset(live_bytes,0,sizeof(live_bytes));
     memset(raises,0,sizeof(raises));memset(TPL_restores,0,sizeof(TPL_restores));memset(page_TPL,0,sizeof(page_TPL));
@@ -221,6 +231,7 @@ static void setup(unsigned kind,unsigned f)
      * modeled loader image, as required by the original Core bootstrap. */
     struct pgcd_config previous=*cfg;cfg=(void*)(arena+0xf9000);*cfg=previous;s->tables=cfg;
     put(core+0x1c368,(uintptr_t)core+0x1c368,8);put(core+0x1c370,(uintptr_t)core+0x1c368,8);
+    put(core+0x1cbc8,0,8);put(core+0x1c3f0,(uintptr_t)core+0x1c3f0,8);put(core+0x1c3f8,(uintptr_t)core+0x1c3f0,8);
     for(unsigned level=0;level<32;level++){uint64_t head=(uintptr_t)core+0x1c928+16*level;put((void*)(uintptr_t)head,head,8);put((void*)(uintptr_t)(head+8),head,8);}
     allocator_model();
     struct pgcd_io io={0,s,memory_arch,memory_map,memory_identity,query,fp_save,fp_restore,memory_order};
@@ -243,6 +254,20 @@ static void event_list(unsigned count,unsigned matching)
         previous=(uintptr_t)n+16;
     }
     put(core+0x1c368,count?(uintptr_t)event_base+16:head,8);put(core+0x1c370,previous,8);
+}
+static void timer_list(unsigned count)
+{
+    assert(count<=PWMC_TIMER_MAX+1);event_list(1,UINT32_MAX);
+    memset(event_base+88,0,184-88);put(event_base+32,30,8);put(event_base+40,(uintptr_t)core+0xcb24,8);
+    put(core+0x1cbc8,(uintptr_t)event_base,8);
+    uint64_t head=(uintptr_t)core+0x1c3f0,previous=head;
+    for(unsigned k=0;k<count;k++){
+        uint8_t*n=timer_base+256*k;memset(n,0,184);put(n,0x746e7665,8);put(n+8,UINT32_C(0x80000200),4);
+        put(n+32,k&1?16:8,8);put(n+40,0x12345678,8);
+        put(n+152,k+1<count?(uintptr_t)n+256+152:head,8);put(n+160,previous,8);put(n+168,10000+k,8);
+        previous=(uintptr_t)n+152;
+    }
+    put(core+0x1c3f0,count?(uintptr_t)timer_base+152:head,8);put(core+0x1c3f8,previous,8);
 }
 static unsigned delta_oracle_cases(void)
 {
@@ -505,12 +530,63 @@ int main(int argc,char**argv)
         assert(!(op?pwmc_release_local(mr,memory_AT):pwmc_claim(mr,memory_AT))&&mr->unknown&&mr->held&&TPL_restores[op]==1);
         assert(mr->call[op].guard.left&&mr->source[op].map[1].valid&&mr->TPL[op].map.valid);cases++;
     }
-    setup(0,0);event_base+=0xfd8;event_list(3,UINT32_MAX);assert(pwmc_claim(mr,memory_AT));
+    for(unsigned count=0;count<=PWMC_TIMER_MAX;count++){
+        setup(0,0);timer_list(count);assert(pwmc_claim(mr,memory_AT)&&mr->timers[0].count==count&&pwmc_timers_replay(mr,0));
+        assert(pwmc_release_local(mr,memory_AT)&&mr->timers[1].count==count&&drops==1);cases++;
+    }
+    for(unsigned type=0;type<3;type++){
+        setup(0,0);timer_list(1);put(timer_base+8,UINT32_C(0x80000000)+(type?type*0x100:0),4);
+        if(!type)memset(timer_base+32,0,24);
+        assert(pwmc_claim(mr,memory_AT)&&pwmc_release_local(mr,memory_AT));cases++;
+    }
+    for(unsigned wrong=0;wrong<26;wrong++){
+        setup(0,0);timer_list(2);
+        switch(wrong){
+        case 0:timer_list(PWMC_TIMER_MAX+1);break;case 1:put(core+0x1c3f0,0,8);break;
+        case 2:put(core+0x1c3f0,(uintptr_t)timer_base+153,8);break;case 3:put(timer_base+160,0,8);break;
+        case 4:put(timer_base+152,(uintptr_t)timer_base+152,8);break;case 5:put(timer_base,0,8);break;
+        case 6:put(timer_base+176,1,8);break;case 7:put(timer_base+176,UINT64_MAX,8);break;
+        case 8:put(timer_base+88,1,1);break;case 9:put(timer_base+32,30,8);break;
+        case 10:put(timer_base+8,0x200,4);break;case 11:put(timer_base+40,0,8);break;
+        case 12:put(timer_base+256+168,9999,8);break;case 13:put(core+0x1c3f8,(uintptr_t)timer_base+152,8);break;
+        case 14:put(core+0x1cbc8,0,8);break;case 15:put(event_base+40,(uintptr_t)core+0xcb28,8);break;
+        case 16:put(event_base+32,31,8);break;case 17:put(event_base+48,8,8);break;
+        case 18:put(event_base+88,1,1);break;case 19:put(core+0x1c3e8,2,4);break;
+        case 20:put(core+0x1c410,2,4);break;case 21:put(core+0x1c400,31,8);break;
+        case 22:put(core+0x1c3f0,(uintptr_t)mr+152,8);break;
+        case 23:put(core+0x1c3f0,UINT64_C(0xc0010098),8);break;
+        case 24:put(event_base+12,1,4);break;case 25:put(event_base+72,8,8);break;
+        }
+        assert(!pwmc_claim(mr,memory_AT)&&!claims&&!drops&&!raises[0]);cases++;
+    }
+    for(unsigned op=0;op<2;op++)for(unsigned phase=37;phase<=38;phase++){
+        setup(0,0);timer_list(2);if(op)assert(pwmc_claim(mr,memory_AT));mf=phase;
+        assert(!(op?pwmc_release_local(mr,memory_AT):pwmc_claim(mr,memory_AT))&&!drops&&claims==op);
+        assert(!pwmc_release_local(mr,memory_AT)&&!drops);cases++;
+    }
+    /* Every byte of both complete184B raw objects must remain binding for
+     * local release and exposure. No retained prefix is regenerated. */
+    for(unsigned checker=0;checker<2;checker++)for(unsigned byte=0;byte<184;byte++)for(unsigned expose=0;expose<2;expose++){
+        setup(0,0);timer_list(2);assert(pwmc_claim(mr,memory_AT));
+        uint8_t*b=checker?mr->timers[0].checker_node.raw:mr->timers[0].node[1].raw;b[byte]^=1;
+        assert(!(expose?pwmc_exposure_intent(mr):pwmc_release_local(mr,memory_AT))&&mr->unknown&&mr->held&&!drops);cases++;
+    }
+    for(unsigned op=0;op<2;op++)for(unsigned cross=0;cross<2;cross++){
+        unsigned total=cross?36:33;
+        for(unsigned at=1;at<=total;at++){
+            setup(0,0);if(cross){event_base+=0xfd8;timer_base+=0xf80;}timer_list(PWMC_TIMER_MAX);
+            if(op)assert(pwmc_claim(mr,memory_AT));mf=36;mt=at;timer_ATs=0;
+            assert(!(op?pwmc_release_local(mr,memory_AT):pwmc_claim(mr,memory_AT))&&mr->unknown&&claims==op&&!drops&&timer_ATs==at);
+            assert(!pwmc_release_local(mr,memory_AT)&&!drops);cases++;
+        }
+    }
+    setup(0,0);event_base+=0xfd8;timer_base+=0xf80;timer_list(3);assert(pwmc_claim(mr,memory_AT));
     if(argc==3){FILE*out=fopen(argv[2],"wb");assert(out&&
         fwrite(&mr->events[0],1,sizeof(mr->events[0]),out)==sizeof(mr->events[0])&&
         fwrite(&mr->allocator[0],1,sizeof(mr->allocator[0]),out)==sizeof(mr->allocator[0])&&
-        fwrite(&mr->TPL[0],1,sizeof(mr->TPL[0]),out)==sizeof(mr->TPL[0])&&!fclose(out));}
+        fwrite(&mr->TPL[0],1,sizeof(mr->TPL[0]),out)==sizeof(mr->TPL[0])&&
+        fwrite(&mr->timers[0],1,sizeof(mr->timers[0]),out)==sizeof(mr->timers[0])&&!fclose(out));}
     assert(pwmc_release_local(mr,memory_AT));cases++;
-    printf("{\"passed\":true,\"checks\":%u,\"record_bytes\":%zu,\"TPL_scope_bytes\":%zu,\"TPL_transition_bytes\":%zu,\"original_PE_executed\":false,\"SOFTWARE_BS_AT_only\":true,\"physical_allocator_or_VMID_grant\":false}\n",cases,sizeof(*mr),sizeof(mr->TPL[0]),sizeof(mr->TPL[0].transition[0]));
+    printf("{\"passed\":true,\"checks\":%u,\"record_bytes\":%zu,\"TPL_scope_bytes\":%zu,\"TPL_transition_bytes\":%zu,\"timer_path_bytes\":%zu,\"original_PE_executed\":false,\"SOFTWARE_BS_AT_only\":true,\"physical_allocator_or_VMID_grant\":false}\n",cases,sizeof(*mr),sizeof(mr->TPL[0]),sizeof(mr->TPL[0].transition[0]),sizeof(mr->timers[0]));
     free(original);free(arena);return 0;
 }
