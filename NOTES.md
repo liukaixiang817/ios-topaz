@@ -114,10 +114,47 @@ early samples only. On0029 the human already confirmed boot complete and said
   then sourcebound fullfreshVRM snapshot/orderedrails/savedrestore; no fixed
   HPM7/disable0 or mode2/4 store. No qualified0188candidate/image/helper yet.
 
+- NEW0188 now has an independent defaultOFF fourVRM execution component,
+  not a physical candidate: tools/polaris-wifi-vrm-transaction.h plus actual
+  outer SOFTWARE peer test. OwnICNSS c7cb fixedsource blob649d0ff9.../117567B/
+  SHAa055297eab401d8d1b3ccac78ade15e2baede98507ab65a27e5f5bb50f4866ea,
+  connectorcontent independently matchedGitHubAPI blob. Ownconsumer table and
+  exactDT two-cell overrides leave load_uA=0/settle_delay_us=0 for allfour:
+  voltage then enable in L5→L7→L17→L25 order; no set_load/mode call for zero
+  load, and no invented delay. Linux blanketdisable/load0/voltage0 cleanup
+  NOTcopied. OriginalHAL8610..8760 only serializes slave3bits+low16logicaladdr/
+  message/32bitdata; this is packet correspondence, not a resource/EEgrant.
+  Sourceconsumer/HALreview560eaf7a022c3775e26de5d2c0f7404e0b61a32edcd645fab1fa3ac28349c56d.
+- Newcomponent performs 4ordered voltage-before-enable launches then 4reverse
+  exactsaved enable-before-voltage restores, max(saved,target) only within
+  exactownDT constraints; no rawmode/headroom/IRQenable/type store. Dynamic
+  eligibleTCS/retainedhighlatch/lowreadback/exact8newedges/NEWIRQ+bothDONE/ACK/
+  fullTCSRWrestore/fullindependentreturnedprefix replay; dirty/consumedrecord
+  never reset. Everybackendentry rechecks typedaddress/mV/enable/mode inputs.
+  Original50ms/256steps1024events retained; futurephysicalparent MUST still
+  enforce SAMEfreshREAD+WRITE combined50ms and original200ms/all68/READ50+25,
+  freshCmdDb/owner/source/cache/Device/CPU and completeclose. No permissionbool.
+  Existingparent/CLI/hostprofiles/images unchanged; header OFF emits no body.
+- Final0188/wifi/four-VRM-component-0005:1952ASAN/UBSAN actualouter SOFTWARE
+  checks passed0.36779937500250526s: dynamicTCS/high+ordinary, everydelivered
+  event's issued/returned/unknown/phase/address mutations, eachstorevalue,
+  statusbit0 variants/unknownbits/missingDONE/IRQ/restore/time/partialfail,
+  inputchange-before-firststore and dirty/reusedrecord. Actual exportedcomponent
+  COFF/MachO/generalregs/maxframe1024/OFF compile pass; no physicalCPU/framework
+  or hardware tested. Proof976297e86c0f62ecfe5a033ddcb833eace93effe24dcfbaf9563c103c6d5a74d.
+  HeaderSHA7ac62fb5c18ce1d26e8c4132e0ed9da4a04381e67094d3f8c3a38bdfece0cce0;
+  testSHAfcbf994464ac6d4efe9f2323ea6b82cd4b0c431aa058ffbb14c4aac7c07b7e23.
+  Older0001..4 component artifacts are historical; no unchangedoldchecks or
+  parent/models/CI/device repeated. NEXT integrate exact freshVRMREADs and
+  source-bound access/CPU retirement into one meaningful powercaller, then
+  affectedchecks/newparent twoSERIALmodels/exacthostprofile/codec/newfreeze/
+  ONEhelper/publication/currentroot+actualFB admission. NEW0188 NOTREADY;
+  no deviceaction/image/payload/helper yet. Phone remains actualFB05:04.
+
 | WiFi stage | Verified on this phone / implemented | Remaining acceptance |
 | --- | --- | --- |
 | ARC dependency power |0187 fresh3READ6/3/0 → raise7/4/7 → reverse savedrestore, fullCPU/client retirement, controlledexit |Done for this temporary session; fresh requalification in later integrations |
-| Four WiFi VRMs |OwnDT/CmdDb ldoa5/7/17/25 mapped; no guessed saved0 |NEXT fresh voltage/enable/mode, orderedrails, exact savedrestore BEFORE MSS |
+| Four WiFi VRMs |OwnDT/CmdDb/consumer+units mapped; ordered voltage/enable and exactrestore component passes SOFTWARE only |NEXT freshVRMREAD/source-bound physicalaccess+CPU retirement, then actualrails BEFORE MSS |
 | MSS/MSA/GLINK/WLFW |OwnDT/vendor+Mi8sequence reviewed; volatile RMTFS software service implemented |Ownedaligned2MiBMPU/logical1MiBMSA/cache/DMAstop/VMIDhandback; realMSS+GLINK/QRTR/WLFW/ownBDF/FW_READY |
 | Native ath10k interface |Mi8XNU/Linuxath10kSNOC/QMI reference compared; ath11k event/memory/BDF comparison done |Actual nativeCE/WMI/HTT/netif and real scan results |
 | Usable network |No scan/join/data success |Scan/auth/join/IP/DNS/realdata + stop/recover; then sound, then camera |

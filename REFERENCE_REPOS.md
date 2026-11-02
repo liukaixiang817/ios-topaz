@@ -1160,3 +1160,33 @@ Primary source copies and original DT data remain private. Review proof:
 No source import, firmware change, phone command, model or test rerun occurred.
 Own ICNSS consumer load/settling sequence, original HAL offset scope, and
 fresh live snapshot/ordered supply/complete restoration remain to qualify.
+
+## Own ICNSS supply consumer and finite VRM component (0188)
+
+Pinned own [MiCode ICNSS consumer](https://github.com/MiCode/Xiaomi_Kernel_OpenSource/blob/c7cb50c18f812629b9620b2b8fa684bc40d82080/drivers/soc/qcom/icnss.c)
+blob649d0ff9a41d8b250f0951eba75a25f0a1c04e74 was independently matched to the
+GitHub Contents API. `icnss_get_vreg_info` takes min/max from the first two
+config cells; load and settle delay require separate third/fourth cells.
+Our original DT provides two cells for CX/MX and CH0, no override for XO/RFA;
+the resulting four load/delay entries stay zero. `icnss_vreg_on` sets voltage,
+conditionally requests nonzero load, enables, then conditionally delays, in
+L5/L7/L17/L25 order. Its Linux shutdown/unwind is not an exact saved baseline
+and is not copied into the temporary RAM scope.
+
+Own original HAL bank2 command serialization8610..8760 packs slave+logical
+address, operation/length and data into the already mapped TCS. It does not
+supply a permission grant or validate the supply consumers. No original
+routine, internal entry, RET lock, arbitrary MMIO or reset is called.
+Private source/representation proof560eaf7a022c3775e26de5d2c0f7404e0b61a32edcd645fab1fa3ac28349c56d.
+
+The new independent finite VRM component is default OFF and has no physical
+parent, builder option, host profile or boot helper. It implements four ordered
+voltage/enable requests and reverse exact saved restoration, preserving mode
+and headroom. Its complete returned journal must independently retire. OwnDT
+address/voltage/enable/raw-mode bounds are rechecked before backend entry;
+dirty or consumed records are rejected without resetting them. SOFTWARE
+ASAN/UBSAN1952checks and standalone COFF/MachO/generalregs/maxframe1024 compile
+pass. Component proof976297e86c0f62ecfe5a033ddcb833eace93effe24dcfbaf9563c103c6d5a74d.
+Physical integration still needs fresh current VRM READs, exact CmdDb/source/
+owner/cache/Device/CPU scope, the original combined deadlines, full retirement,
+and the complete new candidate admission. No supply or Wi-Fi success is claimed.
