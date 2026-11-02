@@ -34,6 +34,89 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0182 actual two full masked DB/CPU/source/private retirement + controlled Polaris FASTBOOT01:25; READ/Wi-Fi NOT DONE
+
+- Actual0182 source FWb1d8ec81b2594eca695e369e170b82792b9aac35/
+  HOSTd410d03e0413c9d1438820730c2834ddf15782eb/readinessdca25c933355d5e167ed0dddf2b4c71950662abf.
+  ONEimage59614 ENDED0 sent2026-11-02T01:08:17.403915+00:00/image78f5f633ab708d95747005d2912f2c3a1d98f14b573416ad1f5e3547ffde077d/
+  6035456B. Solematchingfrozenactualstatewaitingpayload01:09:31.288580Z/ENDED0.
+  ONEsame63cbpayload83596 ENDED0 stage01:10:23.113850Z/full557chunks36459872B/
+  validationACKtrue+validatedtrue/32.96023970798706s; p.boot01:10:56.074347Z/
+  17.49861549999332s/kernelcommandACKtrue. No0181UNKNOWN assumption/backfill.
+- Capture38796 ENDED0 actualkernel-entered/native.log9029565B/PPM6998417B.
+  NEWfullbinaryrecords independently extracted and decoded/asserted with EXACT
+  frozen0182 Ctypedef/config: staged1660544B SHA1cda9f3eaa8460137ed80b3d88122e1f1bfc4b8d0e78f1265ad4cb7ccff5131b;
+  client227104B SHA89d33f0a813835b3431406c7fe5c09bcb2e8d4259ea86be380143f0d26c79453;
+  parent1969216B SHA5dfca22853730c54520e46b786ee004b1f64ae88a5b3304b317401bb300f1ecb.
+  No firmware/dump pointer executed. Body15 plannedDBcheckpoint/phase5/retired1/
+  knownrefusal1/unknown0; privateerror0/held0/returned1/retired1/CreateDelete
+  issued2=returned2. PREMASKrefusalrecord unusedZERO, not the full-retire mechanism.
+- Both actualmasked128KiB complete, bit-equal to retained full preparedDB and
+  each other. Each actualwordissued16384=returned16384/compared131072/no pending/
+  failedbyteFFFFFFFF/lastvalid1/lastaddr85fffff8/lastword=rawtail; both complete
+  owner88/table72/globals72/5CmdDbsourcehash/no failures. New64maskedNSWB/samePA
+  ATissued=returned1/PARrestored exact. No oldnormal/RO ticket borrowed.
+- ActualCPUerror0/unknown0/held0/restored1/retired1; normal7/masked7 target100..700
+  OFFraw1/masks127=127, allFPguards/CPACR300000/DAIF0G1on→c0off→exact0on restored;
+  90validof90originalCPUlivechecks/no capturedARCHfailure. Newnormal10objects/
+  308pages/NSWB samePA/618nativeflagreads0/204unusedtailpageszero. Threecomplete
+  same26rowRAMcache/pools/emptyqueues; twoDevice70loads+3originalguardedqueries;
+  currentnamespace113x2/selectedCmdDb3pass/20CmdDbhash/30privateCoreRPMhhash+
+  30CPUCoreRPMhhash/currentowner/source/currentnamespace/knownDelete all verified.
+  READ+WRITE entire records remain unusedZERO/UNOBSERVED, unopened access lifetime;
+  actualresidentaccesscounts0/0 are not totalMMIOzero, normalDevice140 still exists.
+- Same originalopening→lastCPUactualsample93.323645833ms, CPU-normal→lastCPU
+  46.487916667ms. Not totalretire/READ time/hardwarelease or controlled A/B
+  speedup ratio. Original200ms/all68slowest61571ticks/units19/estimate2609849/
+  remaining3063884/READ50+25reserve retained, no rebase/renewal/gate relaxation.
+  Four independent completeROprep:460Core40CmdDbhash/73LI/113nodes, each retired.
+  All three whole exported RAW records byteequal in final native-drain log.
+  FinaloriginalGCD8getters/20hash/error0/key5899=5899/twofinalprestarts verified;
+  earlier30224Braw stays phase2/prestartcount1, second in separate624Bappend.
+  FirstGetMap TPL UNOBSERVED; laterguardTPL4/FP restored; no falsephase3rewrite.
+- OneUTCSETcookie20141658439/seq1 + independentAPPLIEDstatus2/error0/count1/
+  uncertainty2281us; noRTC/monotonicwrite ornetworktime claim. Normaldrain63669
+  ENDED0 actualnativephase3/cap80000003/error0/writeepoch0=flushedepoch0.
+  Full212BWLEXIT05+64BOKAYWLR5 independently decoded, prefix26→final32records,
+  issued4=completed4/request2=ack2, faultOR1/RTOR0 preserved verbatim, complete
+  savedstate restore receipt valid. No errorclear/extraopticalcycle/physicalkeys/
+  rawreset. ACK not reset: independentONE8s readonly actualproductPolaris
+  2026-11-02T01:25:24.486991Z/exit0/completed01:25:24.503423Z.
+- Actualproof0182/wifi/physical-full-masked-database-retirement-and-controlled-FASTBOOT-proof-0001.json
+  SHA55ce6a6aa751329faa560abbe73f19c76c93758eb13dfee38b0d82e7bbcd2969;
+  exitproof253d25a447316bf6cd5962f68eed78a74efc7472a64f4f2fa1434f353d887582.
+  PASS only actualfullmaskedDB/CPU/source/normalretire/controlledexit, not READ/
+  perDRV ARCvote/EE/EL3/VMID/MPUgrant/scan_join_data. Hostdecoder initial copied
+  wrongsame-name range and PREMASKbranch assumptions were corrected against
+  exactsource; onlyhostassertions changed, no FW/realrecords/models rerun.
+- ORIGINAL0182/phone-db-word-capture-runtime-0001/boot.json CONSUMED/sessionENDED.
+  Uniqueusedcontroller/private/tmp/polaris-runtime-0182-frozen-0001/tools/
+  polaris-uefi-wled-runtime.py with samefrozen0182driver/image andORIGINALrecord;
+  cannot controlnewsession. No replayimage/payload/OEMboot/refreeze/manifestedit/
+  oldpolicy/stripflags or continued retiredcontext/ticket. AllworkersENDED/
+  allchildrenSTOP. ActualFASTBOOT, no nativeLIVE/physical orauthorization待答;
+  no further0182USB/currentnative commands orinventorypoll needed.
+- ROOTNV full39 actualNEW0182 RO0002 c5bea83e.../b6d8b9bb... remains current
+  after ONLY this controllednormalnative drain/fullreceipt+independentFASTBOOT,
+  noAndroid/uncontrolledtransition. Nextnecessarynewcandidate may reuse integrity
+  qualification, not old18/17CPU/client/context/lease; do NOT redo fullhash/recovery
+  inventory. If actualuncontrolled/Android/anomaly, nextneededconversion NEWfull39.
+  ROOT immutable20F66/142map+512MiBRAMCOW/noownedmarker/ufsrw0/userdatawritefalse;
+  no hardwarelease/DSPoff orFShealth claimed. Sensitiveartifacts/photos neverGit.
+- NEXT onlyWi-Fi: NEW0183 notimplemented/NOTREADY. Audit actualbounded3singleREAD
+  caller/leaf/IRQenabletype/currentowner+namespace/CmdDb/fullRAMcache/DeviceNSRWAT/
+  CPU qualification with retained wordcapture/200ms/all68/READ50+25. New explicit
+  sourcebound/defaultOFF exactprofile, affectedchecks+parentchange twoSERIALnew
+  wholeEFI-XNU/codec/independentfreeze/ONEhelper, not stripping0182DBstopflag,
+  borrowingretiredticket, fakeclientheld/permissionbool/leasebool/rebase/renewal,
+  internalentry/unboundedsubmit/patch/fallback. ActualREAD only→NEWIRQ+allissued
+  completed+idle/fulltouchedRWrestore/fullRAMsourceCPU/namespace/knownDelete;
+  RAW not qualifiedperDRV ARC savedvote. Semanticqualification before max(saved,
+  index)CX→MX→MSS/reversesavedrestore, FOURownWiFiVRM BEFORE MSS/MSA/GLINK/RMTFS/
+  WLFW/ath10k true scan/join/data. may_vote/MSS/NVserve/scan_join_data=false.
+  Wi-Fi still cannot be used; sound/camera STOP. Both original broad sameSHA
+  kernelreuse and future sameproject source/text publicpush authorizations persist.
+
 ### CURRENT0182 independent freeze + ONEofflinehelper complete; NEWfullstrictRO39/codec DONE; source readiness publication proof then ONE NEW RAM session; actual Polaris FASTBOOT00:53; Wi-Fi NOT DONE
 
 - FWb1d8ec81b2594eca695e369e170b82792b9aac35/HOSTd410d03e0413c9d1438820730c2834ddf15782eb
