@@ -71,8 +71,8 @@ early samples only. On0029 the human already confirmed boot complete and said
   AST unchanged. 21hosttests/69actualmetadata-type refusals/5missingdeps pass,
   hostproof22ef335e5af4ce05b30f1a7259de1bd26cf31cba8e568a8b2193f72102eadbc8.
   TwoSERIALmodels38.84192487501423/39.57179458299652s; each19checks passed.
-  No model rerun for this host-only addition. NecessaryNEW0187 RO39 audit next,
-  not an inventoryboot; no iOS image/payload or ORIGINAL0187 native record yet.
+  No model rerun for this host-only addition. The subsequently completed
+  necessaryNEW0187 RO39 audit is recorded above; no native0187 boot record yet.
 - User asked for ath11k comparison and a clear WiFi progress plan. Upstream
   Linux ATH10K_SNOC explicitly supports WCN3990; ath11k is newer802.11ax.
   Actualath10k/ath11k QMI source was read, comparison saved inREFERENCE_REPOS;
@@ -118,14 +118,12 @@ early samples only. On0029 the human already confirmed boot complete and said
   TwoSERIALnew wholeEFI-XNU each19checks/94sameinputs/11resource+1batteryint1;
   model73e0cd42b393a0cbea8c0d17f000e225ad9c13bdb9930ba53e337dcb007a5b65.
   SOFTWARE/models NOT hardware/guestreset/radio. No nativeCI.
-- No0187USB/deviceaction/ORIGINALbootrecord. LastactualPolarisFASTBOOT04:26
-  from0186user recovery; no useraction/auth待答 and no inventorypoll. ROOTNV
-  qualificationHISTORICAL after0186heldUNKNOWNphysicalreset. Before needed
-  qualifiedNEW0187candidate, mergeNEWfullstrictRO39(dynamic sysfs/dev_t/3FIEMAP,
-  double16GiB/NV before-local-after/noRestore/250host300watchdog/normalumount),
-  never substitute0185 or replay oldsession. Hostexactprofile/currentrootNV/
-  originalwholecodec/sourceaudit/independentfreeze/ONEhelper/publicationproof
-  stillrequired; NOTREADY. All runtimeowner/client/source/CPU/READvalues fresh.
+- No0187nativeimage/payload/ORIGINALnativebootrecord. ActualNEW0187audit has
+  completed and normallyunmounted→PolarisFASTBOOT04:52 as above. CurrentROOTNV
+  full39 is fresh for this candidate, no laterAndroid/uncontrolledtransition
+  known. All future runtimeowner/client/source/CPU/READvalues mustfresh. Host/
+  codec/sourceaudit/freeze/ONEofflinehelper complete; exactreadinesspublication
+  proof stillrequired before devicecommand. No useraction/auth待答 orinventorypoll.
   WiFi real scan/join/data NOTDONE; soundcameraSTOP. Actualold0186photo/raw/
   sourceproofs/frozen/sharedrecord remain immutable and CONSUMED.
 
