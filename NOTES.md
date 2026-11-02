@@ -108,7 +108,65 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
-- NEW0189 CURRENT source-bound original Timer/GIC/CPU reader integrated into
+- NEW0189 CURRENT actual page/TPL call-body deferred-dispatch guard,
+  source79044854b70d3a0d7bf890360fc2428c5a3bb3fd. This supersedes the6582-check/
+  345808B component handoff below. PhysicalCURRENT0188, FW270052fb/HOST15e830b,
+  consumed0188 image/session/controller and last independently observed actual
+  FASTBOOT10:05 remain unchanged. No USB/image/payload/native action. DefaultOFF
+  standalone component only; parent/builder/CLI/exactprofile still not imported,
+  NEW0189 NOTREADY; no physical action or permission reply pending.
+- HeaderSHAf41b6b8a4ff82272773a4fc781af21b515a4ec13811156a0a61a7d77dc122666;
+  testSHA56b3882b352d2d7fee2903b1cdb563eb8afb0154c77474cfd9192b54395689ab.
+  Existing original-provider reader/generator/70 provider hashes and20 Core
+  hashes per operation are reused unchanged. No repeated provider/source audit,
+  models/codec/nativeCI/freeze/image/helper or inventory boot.
+- RestoreTPL4 at originalc6d4 can dispatch levels5..16 and indirectly call
+  event.NotifyFn atc7c8, not just the already checked17..31 queues. The actual
+  adapter now captures pending/counter/full12 queue heads before registered
+  RaiseTPL, before page API and before registered RestoreTPL. Pending bits5+
+  or any nonempty/inconsistent5..16 head refuse the corresponding call; all
+  raw values/counts/partial prefixes remain. No queue is cleared or walked,
+  callback invoked, event unlinked, IRQ masked or original state patched.
+- Originalca90 tests Type.bit9 beforec7f0: timer-only/NotifyWait timers do not
+  enqueue their NotifyFn through this SignalEvent path. Every NotifySignal
+  timer is now refused, regardless of trigger distance or signal count; an
+  unknown8/16 callback is not admitted from a future-time guess. Unrelated
+  unqueued signal subscribers remain covered by the exact existing source
+  paths; no invented blanket dependency. Periodic timers and map-change
+  subscribers remain refused. This does not prove future IRQ ownership or a
+  global wall-time bound. Original source proofs f5eca699.../3b00591b... reused.
+- FINAL8334 ASAN/UBSAN actual-adapter SOFTWARE checks PASS172.2742193339509s.
+  All6582 previous case loops remain; their one NotifySignal-timer positive
+  is now required to refuse.1752 added checks cover every32 timer position in
+  both operations, all12 pending/forward/backward queue mutations at all3 call
+  boundaries in both operations, and every byte of the complete736B retained
+  deferred prefix blocking localfree/exposure. No fewer checks. First full
+  iteration PASS. Actual COFF+MachO/generalregs/maxframe1024 and defaultOFF
+  zero-return export PASS; existing explicit FP guards and read/write ATs
+  retained, no SMC/direct control-register writes. Independent Python decodes
+  complete112928B six-prefix fixture, all3 deferred snapshots and old complete
+  provider/TPL/timer/allocator/event records and8192-page map oracle.
+- Current SOFTWARE CABI347280B/deferredpath736B/providerpath12400B; existing
+  TPL11616/transition1536/timer8048 remain. Never decode it with0188's2072064B
+  physical parent layout. Private0189/wifi/remote-memory-backend-0009/proof.json
+  SHA5c424a5919958c35422ffb2b102cec3027a75ba78135c84837caff962a8fefb8;
+  source/software4bc0c93b6071a64d27ef8515de35f8cd20f5bf91e66469e83328e736088ac544.
+- NEXT: this guards the paired page/TPL bodies, NOT the initial generic
+  GetMap/bootstrap or full physical parent. Bind actual parent native_cpu_on
+  and every current loaded-image/payload/root/source object in the fresh
+  admission, qualify the initial GetMap callback path and whole-call temporal
+  IRQ/work budget, then wire the two independent real claims into necessary
+  MSS/MSA/cache/secureVMID/MPU/DMAstop/handback and normal/UNKNOWN retirement.
+  Do not repeat the completed reader/deferred gate or build empty contracts,
+  parser/services, permission/lease booleans or allocator inventory boots.
+  Original200ms/ARC/VRM/readwork/fullrestore unchanged, no rebase/renewal. No
+  PA publication/MSS/NVserve/radio/boot before complete parent/affected checks/
+  two serial whole models/new exactprofile/codec/transition/freeze/ONEhelper.
+  WiFi scan/join/data NOT DONE, sound/camera STOP. Publish source/text only
+  under actual standing consent; private receipt will be
+  remote-memory-deferred-dispatch-source-and-handoff-push-proof-0001.json.
+
+- HISTORICAL0189 source-bound original Timer/GIC/CPU reader integrated into
   the actual standalone allocation adapter, source787d62df280e0eeeda6c6be3452af0a9142a1786.
   This supersedes the source-only815be8f/7702a1e handoff and4732-check/321008B
   component below. PhysicalCURRENT0188 is unchanged: its session is CONSUMED/

@@ -1314,3 +1314,21 @@ bounds, cache/secure assignment/DMA stop/handback still need qualification.
 No new candidate, model/codec, image/helper or device action follows; NEW0189
 remains defaultOFF and NOTREADY. Physical0188/last actual FASTBOOT10:05 is
 unchanged. The original source-only4732-check handoff above remains history.
+
+The actual adapter's next source79044854b70d3a0d7bf890360fc2428c5a3bb3fd
+adds the missing paired-return dispatch guard. Original RestoreTPLc6d4 may
+dispatch any pending level above saved4 and call event.NotifyFn atc7c8; the
+existing17..31 checks alone did not cover5..16. Complete pending/counter/twelve
+queue heads are now retained before Raise/page/Restore, with nonempty lower
+queues refused without walking or clearing them. Original SignalEventca90
+skipsc7f0 when Type.bit9 is clear: timer-only/NotifyWait paths remain finite,
+while every NotifySignal timer is refused pending actual callback source/bound
+qualification. Neither a far-future trigger nor an existing signal count is
+authority. This does not ban unrelated unqueued signal subscribers or imply
+future interrupt ownership. The existing exact original source proofs are
+reused; no provider inventory or source audit was repeated.8334 SOFTWARE
+checks and complete112928B independently decoded prefixes pass, as do actual
+COFF/MachO/defaultOFF exports. Private proof5c424a5919958c35422ffb2b102cec3027a75ba78135c84837caff962a8fefb8
+records the limited scope. Initial generic GetMap/bootstrap callback admission,
+whole-path budget and actual parent object/native bindings remain unqualified,
+along with real cache/secure/DMA handback. No physical action or candidate.
