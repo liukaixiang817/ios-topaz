@@ -34,6 +34,54 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0181 actual V2 original opening deadline: 203.532ms > 200ms, DB1 48KiB; user recovered actual Polaris FASTBOOT00:01; masked DB retirement/READ/Wi-Fi NOT DONE
+
+- Actual human supplied NEW0181 V2 photograph and “已到FASTBOOT”. Private original
+  SHA f6877bdc96795a23017595ffbd7cacbe17825cbac353e60b4dd7423f4241c264;
+  original photo/raw dump bytes MUST NOT be Git published. All16 visible rows
+  manually matched EXACT frozen0181 main/enum expressions. WHY CALL=13/42 hex
+  means PWRPC_LIVE_OPENING_AGE19 / call66; MASK ARCH OK=1/1. The original first
+  failed comparison is failedticks-originalprivateopening > PGCD_FRESH_TICKS,
+  not a fresh hold-time resample, changed register assertion or PSCI error.
+- Original OPEN=00000005:60DA0567, NORM=00000005:60E80DCB,
+  FAIL=00000005:6115A653, LIMIT=003A9800 ticks. Opening-to-failure3907820ticks,
+  limit3840000ticks; using19.2MHz inferred from the earlier passed frequency
+  predicate gives203.5322916667ms versus200ms. CPU-normal-to-failure155.63375ms;
+  excess3.5322916667ms. Neither is wholeboot/READ/totalretire/hardwarelease.
+  Later TPL/boot/config/DS/owner comparisons were not evaluated in this failed
+  call. No conclusion is backfilled into0180/78/76/75.
+- ACC attempted1/error2/unknown1/outstanding20001hex. DB0 bytes20000hex=128KiB,
+  DB1 bytesC000hex=48KiB/12pages; each CmdDb IMAGE/source hashcount5/failed0,
+  not wholeDBdigests or savedvotes. Frozen loop/callback source establishes the
+  next per-page livecheck failed before page12 AT/copy; no fullbinaryDB/CPU/access
+  raw exported. CPU held1/restored0; engineattempt0/0 is not totalMMIOzero.
+  Full DB retirement/READ/network remain NOT DONE. StartupUSB ACK remains UNKNOWN.
+- ONE independent readonly8s expectedproduct actually returned productpolaris,
+  started2026-11-02T00:01:37.883286Z/completed00:01:37.899662Z/exit0. ActualFASTBOOT
+  is now verified, nonativeLIVE. Physical recovery/request resolved; no physical
+  action or authorization pending, no furtherpoll/repeatedrequest. ORIGINAL0181
+  bootrecordCONSUMED/sessionENDED; image/payload/OEMboot neverreplay; no oldcontroller
+  controls anynewsession. AllworkersENDED/allchildrenSTOP.
+- Review0181/wifi/physical-terminal-photo-0001/transcription-clock-and-frozen-source-review.json
+  SHA82b84a951d4ab7c9412a6850f1c4130db813e3dfe222849aa69ab40cf14180c3;
+  proof0181/wifi/physical-V2-opening-deadline-and-recovered-FASTBOOT-proof-0001.json
+  SHAe4cc6778b5a07d714ad0b1dd84a5dc461fb3a840e1b63b29cd58ce606b410c01.
+  PASS only photographed original deadline + actual recovery. OldUNKNOWNproof
+  d16e2835... stays unchanged. NoUTCSET/UI/optical/nativeCI/newdeviceoperation.
+- FWd5df7ff890ba0fea513ccc292fc118b71b777e7a/HOST2f4650f38d12feb5536c56dfe8afd342a81ed71a
+  unchanged. Existing340checks/twoSERIALmodels/fullcodec not repeated. Persistent
+  kernelreuse df995cae... and sameproject publicsource/text873635fc... authorizations
+  remain answered; exclude all rawdump/photo/NV/backup/firmware/serial/passwordbytes.
+- NEXT concrete work: inspect/optimize actual FULL maskedCmdDb capture cost with
+  original200ms/all68/READ50+25/source/owner/namespace/NSWBAT/CPU/restore/UNKNOWN
+  retained. Photo does not establish any single copy/hash implementation as sole
+  cost. NEW0182 unimplemented/NOTREADY; no opaque retry, rebase, renewal, relaxed
+  gate, CPU/prep/client/cacheinventoryboot or new parser/service contract.
+  ActualNEW0181fullstrictRO39 is now HISTORICAL after UNKNOWN+physicalreset without
+  controlledreceipt; next necessary NEWcandidate transition MUST include NEWfull39
+  roots/maps/GPT/ESP/journal/currentNV. No standalone inventoryrecovery now.
+  Wi-Fi first; true scan/join/data NOT DONE; sound/camera STOP.
+
 ### CURRENT0181 startup ACK UNKNOWN / UEFI unavailable / FASTBOOT query timeout23:56; V2photo + physical recovery requested ONCE; Wi-Fi NOT DONE
 
 - FWd5df7ff890ba0fea513ccc292fc118b71b777e7a/HOST2f4650f38d12feb5536c56dfe8afd342a81ed71a/
