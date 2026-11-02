@@ -108,6 +108,55 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
+- NEW0189 CURRENT additional SOURCE result for the enabled nonzero poison-fill
+  leaf; functional source remains bebea9d66137516e8957e9871afb7bf4c5e85880.
+  All C/header/test/schema bytes and771/474/1564/1452/2341/167/8334/5141 results
+  remain unchanged and were NOT rerun. This answers the previously unqualified
+  fill-leaf footprint/work question, not another FreePool entry/bin/granule,
+  GetMap, timer/provider or queue audit. No runtime reader/gate/consumer added.
+- Independently decoded32 original PE words in the a824/171fc..172bc selected
+  leaf; the existing20-word result for enabled d824/0xaf fill is reused. DUP
+  and UMOV propagate0xaf to nonzero0xafafafafafafafaf. At17290, CCMP gives Z=0
+  both below and above Size256;17294 therefore never takes the zero-fill path
+  for this exact poison call. DCZID_EL0 read and DC ZVA are cold HERE, not a
+  claim about all zeroing/firmware code. No new DCZID dependency or register
+  sampling is needed for this leaf. V0/GPR operations and ordinary stores are
+  present; no provider/BS/allocation call or system-register write on this path.
+- Current real reader already requires actual Size48..2088 aligned8 and
+  target128 alignment; the restricted release gate keeps its whole class in
+  one4096B backing page. Independent ABSTRACT address-interval arithmetic covers
+  all256 permitted Sizes and5404 supported Size/backing-offset geometries.
+  Every store stays in [target,target+actual Size), full byte coverage is exact,
+  overlapping stores are retained. Long-fill loop <=32 iterations; maximum67
+  A64 store instructions/2128 overlapping logical byte writes/2088 distinct
+  bytes. Selected leaf <=144 architectural instructions; chain from15838
+  through a824 <=149, excluding caller/preemption/faults and memory latency.
+  These are SOURCE/ABSTRACT counts, NOT physical transactions, elapsed time,
+  execution of original instructions, a whole model or global-walltime proof.
+  The complete leaf span is already covered by the existing immutable Core
+  binding; original source hashes/20Core+70provider checks are unchanged.
+- New private own-Core-cache-release-poison-fill-work-0001/proof.json
+  SHAef5e331405b53d6a0ea42744397e9d603e4e52fdbee880ebe89b5f55b251412d;
+  first source verifier iteration PASS0.05719612498069182s. This walltime is
+  host source/arithmetic analysis only. No ASAN/cross/CI/twoSERIAL whole-model
+  rerun, device/provider/PE instruction execution, image/payload/helper/freeze,
+  SMC/MMIO or USB query occurred. The original RAW/proofs/timestamps/SHA stay
+  immutable and private, no official/firmware/private bytes are published.
+- NEXT remaining original unlock/RestoreTPL and asynchronous callback/source/
+  work/whole-call temporal qualification, then genuinely fresh post-release
+  typed graph/policy/source admission for the six actual private contexts.
+  Do not repeat this fill-leaf audit or replace current inputs with instruction
+  counts, equal keys/tags/full bytes, empty bins or an owner/lease bool. Other
+  release/backing geometries remain unsupported; do not assume the phone fits
+  the supported slice. Real MSA/RMTFS/cache/secureVMID/MPU/DMAstop/handback/full
+  normalUNKNOWN retirement, two SERIAL whole constructor models/newprofile/
+  resource/codec/transition/freeze/ONEhelper remain open. NEW0189 NOTREADY;
+  no PA publish/MSS/NVserve/radio/scan/join/data. Physical0188 full retirement,
+  last actualFB10:05 and used-up controller unchanged. All jobs ENDED; no
+  physical or authorization answer pending. WiFi unavailable/no credible date;
+  sound/camera STOP. New text-only publication receipt will be
+  cache-release-poison-fill-source-handoff-push-proof-0001.json.
+
 - NEW0189 CURRENT restricted ordinary small-FreePool effects gate is now in
   source bebea9d66137516e8957e9871afb7bf4c5e85880, directpushed under actual
   standing source/text consent; separate lsremote matched exactly. All jobs

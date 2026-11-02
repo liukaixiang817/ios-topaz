@@ -1620,3 +1620,24 @@ Restricted small-free source bebea9d66137516e8957e9871afb7bf4c5e85880 was
 published by the authorized same-repository direct push; independent lsremote
 matched exactly. Only the five reviewed source/text paths were published.
 All jobs ended and private evidence/physical0188 remain unchanged.
+
+
+A new narrow own-Core SOURCE result closes the enabled nonzero poison-fill
+leaf's address/work question, reusing the earlier entry/bin/granule results.
+32 independently decoded original words propagate0xaf to a nonzero64-bit
+pattern. CCMP at17290 leaves Z clear for every supported Size, so this call's
+DCZID/DC ZVA zero-fill branch is cold; this is not a global zeroing claim.
+Independent ABSTRACT interval arithmetic for256 actual Size values and5404
+supported backing offsets proves exact [target,target+Size) coverage, including
+overlapping writes: <=32 loop iterations,67 A64 store instructions,2128 summed
+logical bytes/2088 distinct bytes,144 leaf/149 fill-chain architectural
+instructions. None of these counts is hardware time, bus transactions, future
+IRQ authority or whole-call qualification. The immutable Core binding already
+covers the leaf; no source/runtime guard/hash budget is changed. Private proof
+ef5e331405b53d6a0ea42744397e9d603e4e52fdbee880ebe89b5f55b251412d
+is SOURCE DATA and arithmetic only, without original instruction execution or
+new host ASAN/cross/model/CI/device work. Functional source bebea9d and all prior
+raw/schema/software evidence remain unchanged. Remaining unlock/RestoreTPL/
+asynchronous callbacks, full temporal/work and fresh later typed/source graph
+inputs, MSS lifetime and new candidate qualification are still required.
+NEW0189 NOTREADY; physical WiFi firmware/driver/scan/join/data have not run.
