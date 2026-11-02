@@ -108,7 +108,72 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
-- NEW0189 CURRENT SOFTWARE complete nonperiodic timer-path milestone, source
+- NEW0189 CURRENT targeted provider-source handoff, comment-only source
+  815be8ffd286d13cd278fc6ca898580899a0a9c2. Original Timer/GIC/CPU providers
+  are now identified from the own original inventory and exact PE bytes;
+  this is a SOURCE milestone, not a new physical reader, parent or candidate.
+  The functional4732-check adapter stays identical to8d8ffdf. Only its legacy
+  field comment changed: current headerSHA641b7dcde16293bfa336ab3973d6dfa15a6c56c5f66d1cc349022e5a374c2071.
+  Complete enabled preprocessed C is byte-equal122792B to the actual tested
+  header, so4732 checks/CABI321008B/timerpath8048B are reused, not rerun.
+  Equivalenceproof25df7a1c645b740860700e83ad3e9f74aee5ab7815399ec5130eaeacb762952c.
+  Testsource04a86b8a... unchanged. No models/codec/nativeCI/freeze/image/helper,
+  USB or native actions. PhysicalCURRENT0188/lastactualFB10:05 unchanged;
+  defaultOFF/no parent import/NEW0189 NOTREADY/WiFi scan/join/data NOT DONE.
+- Own original provider PEs (private DATA only): ArmTimerDxe49ea041e...,
+  16384B SHAefbe4f1a52392752ea42decdcdcda9b8077330e67123b94f57b70344223a3052;
+  ArmGicDxede371f7c...,20480B
+  SHAadd88fe4fd7156fcc720f2ea3515cd92595508e8d22cc1b79de2d75ae3b19d53;
+  ArmCpuDxeb8d9777e...,36864B
+  SHA311318e64550b590592a1c2914ec5c0d382340459e5d342b746d4981e8ec48e0.
+  Static identity/transitive proof0189/wifi/own-original-timer-interrupt-provider-0001/proof.json
+  SHAa476bec7351539cfa7ff245742de4fc4707a33055992fafef773026dfc247b98.
+  These identities do NOT prove a currently installed instance or owner.
+- Exact static chain to bind afresh: Core1cb80's TimerArch descriptor points
+  to GUID26baccb3...; Timer table2038 has methods1000/1214/1034/1058. Timer2068
+  is BS,2070 HardwareInterrupt,2088 Core-notify callback,2090 period,2098 step,
+  2058 previous missed-count. Its IRQ10c8 raises registered TPL31, EOIs via
+  hardware-protocol slot32, checks CNTP_CTL, and at1130 indirectly calls the
+  registered notify with period*previous-missed-count. It then samples CNTPCT/
+  CVAL and loops114c..1158 adding step until the compare catches up. This loop
+  has NO built-in iteration/deadline bound: step0 and uint64 wrap can prevent
+  progress.7740 new independent ABSTRACT arithmetic cases confirm the exact
+  nonwrapping count; they are not firmware execution or a hardware time bound.
+  Literal default period10000 is not a fresh current period. Source registers
+  raw INTIDs19/26/29/18; no present enable/delivery state is inferred.
+- Core1c8f8 binds CPUArch GUID26baccb1.../ArmCpu table53d8. RegisterInterrupt-
+  Handler1208→11cc writes the four-entry table5430; IRQ slot5438 must match
+  the selected GIC handler. Original vector target is CPU+4000; current VBAR
+  is unobserved. GIC v2/v3 basic tables30b8/30e0 share Register1040; IRQ entry
+  1294/1acc uses dynamic handler-array3120 and count3150. Every current callback
+  needs source/owner/bound qualification; do not assume only timer handlers.
+  IRQ dispatcher/IAR/EOI paths are not readonly observer APIs and must not be
+  called for qualification. No original source instruction was executed.
+- Corrected old semantic label: Core1cb78 is SMM Base2, GUID
+  f4ccbfb7-f6e0-47fd-9dd4-10a8f150c191, descriptor1c190→GUID1b2a0. Its slot0
+  call17000 is InSmm; the CPU-enable path also consults it. The official
+  [SmmBase2 header](https://github.com/tianocore/edk2/blob/edk2-stable202402/MdePkg/Include/Protocol/SmmBase2.h)
+  and [MmBase GUID](https://github.com/tianocore/edk2/blob/edk2-stable202402/MdePkg/Include/Protocol/MmBase.h)
+  confirm that ABI; exact blobs04fb6b1587fd12cd88deacda1b96e87b6acfdcdf/
+  fa0310fce695a647b91674d1449a484d1ad5c234 independently Gitblob-verified.
+  Earlier `profile_hook` names are legacy RAW labels, NOT profiling evidence.
+  Preserve the field/layout and fresh-zero refusal; never invoke an unqualified
+  SMM protocol or reinterpret this as SMM/EL3/VMID permission. Historical proof
+  bytes remain untouched; no claim of the original firmware's exact build tag.
+- NEXT: implement the necessary fresh Timer/GIC/CPU source/registered-table/
+  RAM-state/complete-handler-array and readonly architectural-state capture
+  in the EXISTING real adapter/parent, with typed page/AT/source bounds BEFORE
+  any page API. Qualify step/debt/product/wrap/current callback effects within
+  the original200ms; no fixed default period/IRQ count, timer writes, interrupt
+  acknowledge, masking, fallback or inventory boot. The nonperiodic TPL30 gate
+  does not cover this TPL31 source path by itself. Then actual native_cpu_on/
+  all loaded images/payload/root/source bindings and secure/cache/DMA handback.
+  No current provider reader or physical admission has been implemented by
+  this source review. No entity/authorization question pending. Source/text
+  publication follows actual standing consent; private receipt:
+  0189/wifi/remote-memory-provider-identity-source-and-handoff-push-proof-0001.json.
+
+- HISTORICAL0189 SOFTWARE complete nonperiodic timer-path milestone, source
   8d8ffdfed8bf2dcccde410aa14ed5bff882dd9a7. This supersedes3792checks/304912B
   and the675ef81/d2c8525 component handoff below. PhysicalCURRENT0188 remains
   unchanged. No new USB/image/payload/native action, parent/builder/CLI/profile

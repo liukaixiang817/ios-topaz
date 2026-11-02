@@ -1268,3 +1268,27 @@ records the exact scope. Current physical TimerList/periodic timers, foreign
 IRQ rearm, deferred normal-TPL effects and timer/CPU interrupt-provider bindings
 remain unqualified; empty snapshots or finite one-shot paths are not a lease
 or a global execution-time guarantee. The physical parent is still not wired.
+
+The next own-original provider audit identifies exact ArmTimerDxe/ArmGicDxe/
+ArmCpuDxe PEs efbe4f1a.../add88fe4.../311318e6..., not a borrowed Mi8 driver.
+Core1cb80→TimerArch table2038, Timer2070→HardwareInterrupt, Core1c8f8→CPUArch
+table53d8 and CPU IRQ slot5438→the selected GIC IRQ entry1294/1acc form the
+fresh chain still to bind. GIC's full dynamic handler array3120/count3150 and
+current VBAR must be qualified, not inferred from image availability.
+TimerIRQ10c8 raises TPL31; its114c..1158 step-add/CVAL catch-up loop has no
+built-in iteration cap and zero-step/wrap hazards. Default period10000 is a
+literal, not current state.7740 independent ABSTRACT arithmetic cases and
+private proofa476bec7351539cfa7ff245742de4fc4707a33055992fafef773026dfc247b98
+record the exact source scope. No original PE, interrupt dispatcher, IAR/EOI,
+timer setter or hardware provider was called.
+
+The same own Core's1cb78 global was previously called a profiling hook. Its
+descriptor1c190 instead binds GUIDf4ccbfb7-f6e0-47fd-9dd4-10a8f150c191:
+[official SmmBase2 ABI](https://github.com/tianocore/edk2/blob/edk2-stable202402/MdePkg/Include/Protocol/SmmBase2.h)
+and [MmBase GUID](https://github.com/tianocore/edk2/blob/edk2-stable202402/MdePkg/Include/Protocol/MmBase.h)
+identify slot0 as InSmm. The exact official Git blobs were independently
+verified; this does not establish the original firmware's build tag. Current
+source815be8ffd286d13cd278fc6ca898580899a0a9c2 corrects only the legacy RAW
+field comment, keeping fresh-zero refusal and all behavior/layout unchanged.
+Full enabled preprocessed C equals the4732-tested source; unchanged tests were
+reused. No SMM protocol call, authority inference or physical admission follows.
