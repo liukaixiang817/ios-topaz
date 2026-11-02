@@ -34,8 +34,21 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0188 integrated four-VRM roundtrip SOFTWARE complete; exact host/models/freeze pending; actual last Polaris FASTBOOT05:04; Wi-Fi NOT DONE
+### CURRENT0188 integrated four-VRM roundtrip + exact host + two SERIAL models complete; codec/freeze pending; actual last Polaris FASTBOOT05:04; Wi-Fi NOT DONE
 
+- FW7d94b2b8f99c0f00cd04127e5102eba418d1914a is committed/pushed;
+  independent lsremote matched. Actual last physical FW/HOST remain0187
+  00490da1c13614db29a4502c50a5d0b9cce475ca/5e15ead2547a0b481fede47f9ec9279cebcec830.
+  NEW GCD_CLOCK_0188 exact375PowerGCD+94resource/98inputs passed21hosttests,
+  50actualmetadata/type mutations,9missingdependencies,hidden-disabled-source
+  rejection and existing12MiB→16MiB+128capacity binding. All42oldenabled+
+  DISABLED literalAST unchanged; no old policy edited or reused for new code.
+  Hostproof74c8a6722e8ac113fd8bb996da7efffd0361be416d06d9a00c3d5b61b321ee50.
+- Two SERIAL new wholeEFI-XNU terminal models each passed19checks/98sameinputs/
+  11resource+1battery literalint1. Delayedfooter39.198984332964756s and
+  lostreceiptrecovery39.57373279199237s; proof0a735f0a0ddd99ed1a97f76e0e934ef6359f739ef37e7139150777efe0df4705.
+  SOFTWARE PMIC/delay/RAMUSB only; all physical CPU/GOP/RSC/VRM bodies compiled
+  out. No physical4VRM, guestreset, radio or new nativeCI success claimed.
 - NEW0188 has now integrated the default-OFF `--wifi-power-four-vrm-roundtrip`
   parent and CLI. This supersedes the earlier component-only/parent-not-wired
   status below. No0188 phone query/image or payload transmission/SMC/MMIO
@@ -84,10 +97,9 @@ early samples only. On0029 the human already confirmed boot complete and said
   outerproof372d5945383f70fcd3d416592588c9273eb8b72d89d5725f76ab842c7d82b96a;
   READproof3bdb2529456d80198171c1659cee5e1bd33b21b52594199230579046299eadcc.
   Proofs/binaries/private bytes remain outside Git. No nativeCI/download.
-- NEXT: new exact host0188 metadata/source admission, two SERIAL new whole
-  EFI-XNU terminal models, original whole codec/source audit, new independent
-  freeze and ONE offline helper, current0187 integrity plus correct actual FB
-  at needed boot. Still NOTREADY; no boot until all passed. Do not rerun the
+- NEXT: original whole codec/source audit, new independent freeze and ONE
+  offline helper, current0187 integrity plus correct actual FB at needed boot.
+  Exact host0188 and both new wholeEFI-XNU models are complete; do not repeat. Still NOTREADY; no boot until all passed. Do not rerun the
   unchanged component/outer/old tests or invent an inventory-only boot. ROOTNV
   integrity remains current after only0187 controlled exit; runtime all fresh.
   Existing real kernel-reuse and same-repo source/text publication approvals
