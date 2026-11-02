@@ -34,7 +34,7 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0182 full masked DB word capture source + affected checks/two SERIAL models DONE; host profile/fresh rootNV/image/freeze NOTREADY; no0182phone action; Wi-Fi NOT DONE
+### CURRENT0182 full masked DB word capture source + host/affected checks/two SERIAL models DONE; fresh rootNV/image/freeze NOTREADY; no0182phone action; Wi-Fi NOT DONE
 
 - Actual0181 photograph established original opening3907820ticks>3840000ticks
   (203.532ms>200ms); second DB prefix48KiB, CPUheld1/restored0. Its source path
@@ -75,7 +75,12 @@ early samples only. On0029 the human already confirmed boot complete and said
   Sourceproof0182/wifi/word-capture-source-and-offline-proof-0001.json binds all.
   ON0001 missing main ABIassert compilefailure, ON0002 slowerprefix layout,
   checks0001/parent0001 are history; finalON0003/checks0002/parent0002 only.
-- NEXT newexacthostprofile/sourcecommit/fullsourceaudit/freshstrictRO39 combined
+- FWb1d8ec81b2594eca695e369e170b82792b9aac35 committed. New GCD_CLOCK_0182
+  exact380PowerGCD+94resource/94inputs binds that source; all36older enabled/
+  DISABLED literalAST unchanged. 21hosttests/35actualmetadata mutations/5missing
+  dependencies/3realCLI dependencyrefusals pass. Hostproof word-capture-host-
+  literal-and-refusals-0002.json; no FW/modelrerun after host-only change.
+- NEXT source+HOSTpublication/fullsourceaudit/freshstrictRO39 combined
   with nextneededcandidate conversion/originalwholecodec/image/independentfreeze/
   ONEofflinehelper before any0182phoneaction. Still NOTREADY; no oldboot replay,
   timer relaxation, fakeclientheld/grant or inventoryboot. Samekernel63cb... and
