@@ -1670,3 +1670,8 @@ still open. Private proof
 limits this to SOFTWARE refusal evidence. No original provider/PE instruction,
 whole power constructor, model/CI/freeze/image/helper or device was executed.
 NEW0189 NOTREADY; WiFi firmware/driver/scan/join/data remain physically unrun.
+
+Shared-dispatch integration source b0db3abe639c24217fef28df619d8a0cf4a35146
+was directpushed under actual same-project public source/text consent; separate
+lsremote matched. Exactly eight reviewed source/text paths were published;
+all private artifacts remain local, all jobs ended and physical0188 unchanged.

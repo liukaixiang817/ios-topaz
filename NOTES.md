@@ -109,7 +109,10 @@ early samples only. On0029 the human already confirmed boot complete and said
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
 - NEW0189 CURRENT shared deferred-reader integration at the EXISTING actual
-  FreePool leaf; SOFTWARE only. The allocator's original12-head reader was
+  FreePool leaf; SOFTWARE only. Source b0db3abe639c24217fef28df619d8a0cf4a35146
+  directpushed under actual standing public source/text consent; independent
+  lsremote matched exactly. All source/build/Git jobs ENDED, no physical or
+  authorization question pending. The allocator's original12-head reader was
   factored without changing its736B path or347280B allocator ABI; the actual
   parent now reuses that reader for complete pre/post pending/counter and
   all27 queue heads at levels5..31. It does not walk/clear/unlink queues,
