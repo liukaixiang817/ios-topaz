@@ -1368,3 +1368,19 @@ records the limited scope. No original PE or device action ran. The necessary
 later parent object/map and initial dynamic GCD/type-policy/callback work,
 MSS allocations/cache/secure/DMA handback and whole candidate qualification
 remain unfinished. No new model/codec/profile/image or firmware variant.
+
+The subsequent parent-only integration retains the existing complete LoadedImage
+handle enumeration and every96B metadata object twice (up to256), using the two
+existing cache maps and fresh metadata/array page AT/PAR/native records. No new
+GetMap/enumeration/allocation/provider call is added. It records loader/boot/
+runtime classifications without reading image code or treating runtime pages
+as reclaimable. Both snapshots precede the original handle-array FreePool;
+metadata is not full immutable-source or future image/IRQ ownership evidence.
+5141 new SOFTWARE checks and an independent252488B struct/hashlib decoder pass;
+actual full parent/export COFF/MachO/generalregs/maxframe1024 pass. DefaultOFF
+parent tokens and the old149831B enabled allocator remain equal; old8334/1452
+checks are reused. Private proofda5102581b1e9b8410fc35c18d66b2220095de3292aa4faf66f2b7ad9ecf1e71
+records the scope. No reference source review, firmware instruction or physical
+action was repeated. Payload/root/source frames, the necessary later private
+GetMap full dynamic GCD/type-policy/callback/work admission, real remote-memory
+and secure/DMA lifecycle remain unfinished. NEW0189 NOTREADY; no new candidate.

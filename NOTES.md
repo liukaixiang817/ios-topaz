@@ -108,7 +108,74 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
-- NEW0189 CURRENT real-parent incoming-map call/key/native/FP/image witness
+- NEW0189 CURRENT complete parent LoadedImage metadata pairs, source commit
+  recorded in the following publication handoff. The genuine parent now binds
+  actual driver_image and &wln_cpu_on_issued to its EXISTING complete image
+  enumeration, with no new enumeration/GetMap/allocator/provider call. This
+  supersedes the previous claim that only the parent's own image metadata is
+  retained. Actual physicalCURRENT0188, FASTBOOT10:05, firmware270052fb,
+  host15e830b and consumed0188 image/controller/freeze are unchanged. No USB,
+  native, PE instruction, SMC, MMIO, new image/helper/CI/freeze/model/codec ran.
+- New shim/polaris/uefi-wifi-parent-images.h
+  SHA5417cfe3f52ad63508ea13f7c3d2610776937a4b61f547043c1a6624fcfd7666;
+  existing cache header489d2a0aa5950000958b6a67cb6e29f67f3c28e04a7aee88838666c483cf7d95;
+  actual parent8fdf2c317a74acff9d8c3d133bdbf9418d0252a7f6a46dfd5a2a2601b90919d3;
+  new tools/polaris-wifi-parent-images-test.c
+  SHAa1e2e6a038cca53436a7ff5ce08a215b7086be2c95c357651d2782125f5805c0.
+  Parent-only preprocessor seam stays under defaultOFF REMOTE_MEMORY; the
+  allocator consumer, builder/CLI/new exactprofile/resource remain absent.
+  NEW0189 NOTREADY. Complete old allocator enabledC149831B remains equal,
+  incoming record67232B and allocator347280B are unchanged; old8334/1452 and
+  their exports are reused, not rerun. Whole parent OFF201444 tokens under
+  the current lexer equal its previous HEAD; final ON760712B preprocessed C
+  equals the actual cross-compiled body after the parent-only seam change.
+- Separate252488B parent-image raw retains up to256 handles, every full96B
+  LoadedImage twice, both complete65536B existing maps including raw tails,
+  real keys/geometry/digests, all metadata/handle-array pages' fresh readonly
+  NSWB samePA AT with saved/restored PAR, issued/returned/partial records and
+  native0 reads. Entire prefix/digests and unused slots are retained. Loader/
+  boot/runtime code/data classifications follow actual metadata/map types;
+  runtime bytes are not read or made reclaimable. No image method or metadata
+  pointer field is called/followed. The parent's own image must contain this
+  resident raw and actual native flag. No synthetic open/context/ticket exists.
+- Both snapshots belong to the original cache enumeration interval BEFORE
+  its handle-array FreePool; the closing clock is the original post-release
+  architecture sample. They are NOT a later MSS current map, full immutable
+  image/source identity or future ownership/IRQ lease. The original200ms from
+  cache opening is enforced without renewing; whole-call temporal/work and
+  asynchronous callback bounds remain unqualified. A known inventory failure
+  appends complete raw in RAM and reaches existing terminal UNKNOWN hold before
+  old cleanup/later callback/console. No unlink/repair/retry/foreign cleanup.
+- FINAL5141 ASAN/UBSAN SOFTWARE checks PASS10.41029404202709s:1..256 images,
+  normal/cross-page metadata, all256 positions x both passes x six partial/
+  native/AT faults, full retained populated-entry byte mutations, input poison,
+  handle-array faults, runtime metadata, map geometry/prefix changes and no
+  later sampling. Independent Python struct/hashlib decodes all252488B, both
+  full maps,3 complete paired images/12metadataAT/2arrayAT and zero tails.
+  Actual full parent and exported reader COFF+MachO/generalregs/maxframe1024
+  PASS; new leaf writes only exact PAR restore, no SMC/direct control writes.
+  Earlier compile-only missing include and indentation failures remain private;
+  earlier host iterations and original proofs/RAW were not edited. ON-only
+  log12320768B/staticassert includes the complete new raw, not a qualified
+  resource/profile. Private parent-loaded-images-0001/proof.json
+  SHAda5102581b1e9b8410fc35c18d66b2220095de3292aa4faf66f2b7ad9ecf1e71.
+- NEXT: reuse this full metadata collector and the two incoming call witnesses;
+  do not reimplement or rerun them unchanged. Bind actual payload/root/source
+  frames and a necessary later private-map call/key/native/FP/source witness,
+  then complete first private GetMap's dynamic80B GCD/type-policy/callback/
+  temporal/work qualification. Existing image metadata/cache maps cannot be
+  renamed later/current or become source/owner/permission/lease booleans.
+  Two independent real MSA/RMTFS claims, cache/secureVMID/MPU/DMAstop/handback
+  and normal/UNKNOWN retirement remain missing. Original20Core+70providerhash,
+  200ms and all ARC/VRM/readwork/fullrestore constraints remain unchanged. No
+  stock observer/allocator boot, closed ticket reuse, rebase or renewal.
+  Complete changed-parent checks/two serial models/new profile/resource/codec/
+  transition/freeze/ONEhelper remain necessary before any image or PA/MSS/NV/
+  radio/scan/join/data. WiFi NOT DONE; sound/camera STOP. No physical or
+  authorization reply pending. Publication proof will be
+  parent-loaded-images-source-and-handoff-push-proof-0001.json, private only.
+
+- HISTORICAL0189 real-parent incoming-map call/key/native/FP/image witness
   wiring, source06a37e60039c2dfe61711ab82d431abcbe2fdb06. This supersedes the
   source-only9a79f96/3cb02d5 handoff below. Actual parent code now wraps exactly
   its TWO existing admission GetMap calls when REMOTE_MEMORY is explicitly ON;

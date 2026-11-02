@@ -12,6 +12,9 @@
 #if EFI_XNU_WIFI_REMOTE_MEMORY_AVAILABLE && (!EFI_XNU_WIFI_FOUR_VRM_AVAILABLE || !EFI_XNU_AUDIO_CLOCK_GCD_QUERY_AVAILABLE || !EFI_XNU_GCD_MMIO_QUERY_AVAILABLE || !EFI_XNU_WIFI_RESOURCES_AVAILABLE || EFI_XNU_WIFI_CPU_RO_ADMISSION || defined(POLARIS_EFI_TEST_QEMU))
 #error "Incoming parent map evidence requires the complete physical WiFi source scope"
 #endif
+#if EFI_XNU_WIFI_REMOTE_MEMORY_AVAILABLE
+#define POLARIS_WIFI_PARENT_IMAGE_LEDGER 1
+#endif
 #if defined(EFI_XNU_WLED_NATIVE_RUNTIME_TEST) || defined(EFI_XNU_WLED_NATIVE_RUNTIME_PHYSICAL)
 #define EFI_XNU_WLED_NATIVE_RUNTIME 1
 #endif
@@ -48,7 +51,7 @@ static efi_handle driver_image;
 static uint8_t log_buffer[1048576];static uint64_t log_bytes;
 static volatile uint32_t log_overflow;
 #elif EFI_XNU_WIFI_REMOTE_MEMORY_AVAILABLE
-static uint8_t log_buffer[11272192];static uint64_t log_bytes;
+static uint8_t log_buffer[12320768];static uint64_t log_bytes;
 static volatile uint32_t log_overflow;
 #elif EFI_XNU_WIFI_FOUR_VRM_AVAILABLE
 static uint8_t log_buffer[10747904];static uint64_t log_bytes;
@@ -429,7 +432,7 @@ static int original_service_unknown;
 static int new_original_unknown(void)
 {return pwcq_parent_unsafe()||original_service_unknown||(pgcd_resident_context.record&&pgcd_uncertain(&pgcd_resident_context))||pacgq_preboot_record.uncertain||pacgq_preboot_record.outstanding||pacgq_ticket.outstanding
 #if EFI_XNU_WIFI_REMOTE_MEMORY_AVAILABLE
-    ||incoming_parent_maps[0].unknown||incoming_parent_maps[1].unknown
+    ||incoming_parent_maps[0].unknown||incoming_parent_maps[1].unknown||ppli_record.unknown
 #endif
 #if EFI_XNU_WIFI_TERMINAL_GOP_DIAGNOSTICS
     ||terminal_gop.uncertain
@@ -474,6 +477,18 @@ __attribute__((noreturn)) static void power_unknown_hold(void)
 #endif
     for(;;)__asm__ volatile("wfe":::"memory");
 }
+#if EFI_XNU_WIFI_REMOTE_MEMORY_AVAILABLE
+static void ppli_parent_raw(void)
+{
+    ram_report("PARENT_LOADED_IMAGES_RAW_V1_BYTES=",sizeof(ppli_record));
+    ram_text("PARENT_LOADED_IMAGES_RAW_V1_BEGIN\r\n");ram_hex((const uint8_t*)&ppli_record,sizeof(ppli_record));
+    ram_text("PARENT_LOADED_IMAGES_RAW_V1_END\r\n");
+}
+__attribute__((noreturn)) static void ppli_parent_stop(void)
+{
+    ppli_record.unknown=1;original_service_unknown=1;ppli_parent_raw();power_unknown_hold();
+}
+#endif
 #endif
 #if EFI_XNU_WIFI_CPU_RO_ADMISSION
 _Static_assert(sizeof(log_buffer)>=2*(PWCQ_RAW_BYTES+sizeof(pacgq_preboot_record)+sizeof(pacgq_preboot_i2c)+sizeof(pgcd_record))+65536,
@@ -530,7 +545,7 @@ _Static_assert(sizeof(log_buffer)>=2*(sizeof(pwsp_record)+sizeof(pwrpt_record)+s
     4*sizeof(terminal_gop)+
 #endif
 #if EFI_XNU_WIFI_REMOTE_MEMORY_AVAILABLE
-    3*sizeof(incoming_parent_maps)+
+    3*(sizeof(incoming_parent_maps)+sizeof(ppli_record))+
 #endif
     1048576,
     "complete preparation/client/power/source raw must fit without truncation");
@@ -636,6 +651,9 @@ static int disk_payload(void)
 static int prepare_boot(void *context)
 {
     (void)context;if(load_state!=2)return 0;
+#if EFI_XNU_WIFI_REMOTE_MEMORY_AVAILABLE
+    if(!ppli_bind(&ppli_record,&wln_cpu_on_issued,(uintptr_t)driver_image))ppli_parent_stop();
+#endif
 #if EFI_XNU_WIFI_TERMINAL_GOP_DIAGNOSTICS && !defined(POLARIS_EFI_TEST_QEMU)
     if(!terminal_gop_arm()){
         terminal_gop_raw();
@@ -720,6 +738,10 @@ static int prepare_boot(void *context)
     }
 #else
     pwfc_prepare(system_table,load_state);
+#endif
+#if EFI_XNU_WIFI_REMOTE_MEMORY_AVAILABLE
+    if(!ppli_record.complete||ppli_record.unknown)ppli_parent_stop();
+    ppli_parent_raw();
 #endif
 #endif
 #endif

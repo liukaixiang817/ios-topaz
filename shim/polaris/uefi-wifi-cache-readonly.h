@@ -7,6 +7,11 @@
 #define POLARIS_UEFI_WIFI_CACHE_READONLY_H
 #include "uefi-memory.h"
 #include "../../tools/polaris-wifi-firmware-identity.h"
+#if defined(POLARIS_WIFI_PARENT_IMAGE_LEDGER)
+#include "uefi-wifi-parent-images.h"
+static struct ppli_result ppli_record;
+__attribute__((noreturn)) static void ppli_parent_stop(void);
+#endif
 #define PWFC_CACHE_RVA 0x7118u
 #define PWFC_CACHE_BYTES 632u
 #define PWFC_HANDLES 256u
@@ -124,8 +129,15 @@ static inline int pwfc_collect(const struct pwfc_io *io,uint32_t stage,
     }
     if(!pwfc_map(bs,r,w,0)){r->error=PWFC_MAP;goto release;}
     if(!pwfc_owned(io,r,w,r->protocol,40)){r->error=PWFC_PROVENANCE;goto release;}
+#if defined(POLARIS_WIFI_PARENT_IMAGE_LEDGER)
+    if(!ppli_start(&ppli_record,(uintptr_t)io->system,r->handles,r->handle_count,w->map,
+        r->map_bytes,r->map_stride,r->map_key[0],r->before.ticks,ppli_actual_page))ppli_parent_stop();
+#endif
     for(unsigned n=0;n<r->handle_count;n++){
         if(!pwfc_owned(io,r,w,r->loaded_address[n],sizeof(struct efi_loaded))){r->error=PWFC_PROVENANCE;goto release;}
+#if defined(POLARIS_WIFI_PARENT_IMAGE_LEDGER)
+        if(!ppli_capture(&ppli_record,0,n,(uintptr_t)handles[n],r->loaded_address[n],ppli_actual_page))ppli_parent_stop();
+#endif
         const struct efi_loaded *image=w->loaded[n];uint64_t base=(uintptr_t)image->base;
         if(base>UINT64_MAX-0x7090||base+0x7090!=r->protocol)continue;
         r->owner_matches++;r->image=base;
@@ -159,6 +171,11 @@ static inline int pwfc_collect(const struct pwfc_io *io,uint32_t stage,
     if(r->map_key[0]!=r->map_key[1]||!pwfc_owned(io,r,w,r->image,PWFI_IMAGE_BYTES)){
         r->error=PWFC_CHANGED_MAP;goto release;
     }
+#if defined(POLARIS_WIFI_PARENT_IMAGE_LEDGER)
+    if(!ppli_second(&ppli_record,w->map,r->map_bytes,r->map_stride,r->map_key[1],ppli_actual_page))ppli_parent_stop();
+    for(unsigned n=0;n<r->handle_count;n++)
+        if(!ppli_capture(&ppli_record,1,n,(uintptr_t)handles[n],r->loaded_address[n],ppli_actual_page))ppli_parent_stop();
+#endif
     /* This copies an existing map DESCRIPTOR, not its physical memory. UC
      * classification is logged as such and never becomes read permission. */
     for(uint64_t at=0;at<r->map_bytes;at+=r->map_stride){
@@ -178,6 +195,11 @@ static inline int pwfc_collect(const struct pwfc_io *io,uint32_t stage,
     r->mpss_cached=pwfi_le(r->snapshot[0]+96,8)!=0;
     if(!r->cache_consistent){r->error=PWFC_CACHE;goto release;}
 release:
+#if defined(POLARIS_WIFI_PARENT_IMAGE_LEDGER)
+    /* An interrupted full inventory is retained before the old cleanup path.
+     * No FreePool, later architecture callback or console follows its failure. */
+    if(ppli_record.attempted&&(r->error||ppli_record.error||ppli_record.next[1]!=ppli_record.count))ppli_parent_stop();
+#endif
     /* Never free an unvalidated/unknown returned pointer. Failure retains its
      * raw value and consumes this one attempt; no arbitrary FreePool retry. */
     if(handles_owned){r->release_attempted=1;r->release_status=bs->free_pool(handles);}
@@ -185,6 +207,9 @@ release:
     if(!io->arch(io->context,&r->after)||!pwfc_arch_stable(&r->before,&r->after)){
         if(!r->error)r->error=PWFC_LIFETIME;
     }
+#if defined(POLARIS_WIFI_PARENT_IMAGE_LEDGER)
+    if(r->error||!ppli_finish(&ppli_record,r->after.ticks))ppli_parent_stop();
+#endif
     return r->error==PWFC_OK;
 }
 static inline int pwfc_actual_arch(void *context,struct pwfc_arch *a)
