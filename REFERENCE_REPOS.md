@@ -1588,3 +1588,30 @@ The first automatic disclosure rejection is preserved. Read-only verification
 of the actual future-consent record, exact origin and eight reviewed committed
 blobs resolved it; the same direct command succeeded without transport bypass
 or a new human question. Private artifacts remain local; physical0188 unchanged.
+
+
+The included real-parent FreePool body now admits a deliberately restricted
+ordinary type4 small-free path and checks its exact fixed provider-prefix
+effects. The class fits one backing page, a retained/currently compared GCD
+container occupies its base, the selected bin is empty, and the full class
+footprint avoids retained EFI-map/GCD nodes. Other valid geometries refuse before service.
+Twenty new original-word checks identify the granule-walk bypass and empty-bin
+insertion footprint; enabled0xaf target poisoning remains in the source path.
+No previous entry/provider/GetMap review was repeated. After return, only the
+actual Size subtraction and selected-head target links may differ in the full
+232B pool; roots/key/policy must match. No freed page or new node is followed.
+This conditional source slice and fixed-prefix check do not exclude callback
+ABA, establish a fresh typed graph or prove whole-call temporal/owner authority.
+771 ASAN/UBSAN SOFTWARE cases, affected474 cases, independent full596496B and
+two576936B bundle decoding, actual parent/export cross-compiles and same-command
+OFF baseline equality pass. Old535 loops remain with changed-key success now
+refused, plus232 prefix-byte faults and four unsupported geometries. The old
+61st AT fault remains in an independent cross-page fixture; its initial trigger
+failure is preserved. Header-invocation comparison failures are also preserved;
+new freestanding640972B equality does not replace old hosted644957B evidence.
+Private proof c3a434f79851d6736ae44af4619672f2bf87f1174c71896fa93009431d98aba9
+keeps this SOFTWARE scope. No original firmware instruction, device action or
+whole constructor model was executed. Full callbacks/work/temporal and later
+current source/typed admission remain required before actual MSS lifecycle and
+new candidate checks/profile/resource/codec/freeze/helper. NEW0189 NOTREADY;
+WiFi firmware/driver/scan/join/data still have not run physically.

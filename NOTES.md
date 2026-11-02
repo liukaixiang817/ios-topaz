@@ -108,7 +108,89 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
-- NEW0189 CURRENT actual EXISTING handle-array FreePool call witness integrated
+- NEW0189 CURRENT restricted ordinary small-FreePool effects gate is now in
+  the EXISTING real-parent release body; SOFTWARE only. No new reader, wrapper,
+  record, query, enumeration, allocation/provider/release/AT/clock call was
+  added. CABI596496B/input144B and every old RAW/schema stay unchanged. This
+  tightens the earlier call witness; it does NOT complete full release effects,
+  callbacks/work/temporal admission, a later current map, owner or MSS consumer.
+- Current release header e3f310db61f3de7115d1d6b2810187b7cc68bf9bc1e6718a7bc13b989c55d8be;
+  fixture target test492c36b563f7b5ef0144bbfcbcf3babf52dc8af50c49ef15b8e23698895cf0f1;
+  release testa0b0aa04edce0de92e624326e2bba40293db963d49b6954914b8ac2ab73b59cb.
+  Parent text48c03238c940f1ac9cf295437b7b07240dad8f343758c5b87855f0cb7169c46e,
+  target/cache/GCD/common/PCLI/current-map headers unchanged; actual parent
+  includes the changed release body and was fully cross-compiled. Main stays
+  defaultOFF REMOTE_MEMORY, no consumer/builder/CLI/profile/resource enabled.
+- Before the API, only an ordinary type4 small class128..2688,128-aligned and
+  entirely within one4096B page is supported. A full previously captured and
+  currently compared120B allocated GCD container must occupy the backing base,
+  the target's whole class footprint must avoid every retained EFI-map/GCD
+  node, and the selected class bin must be exactly empty. Unsupported valid
+  FreePool geometries hold UNKNOWN BEFORE FPsave/API, with no fallback/free.
+  This is a limited source-path precondition, NOT an active-object inventory,
+  reservation, exclusivity, secure grant or prediction of the phone's state.
+- The new exact source question was the granule-scan bypass and insertion
+  footprint, not another entry/GetMap/provider/timer/pool audit. Twenty newly
+  checked original PE words confirm head=descriptor+24+class*16; empty-bin
+  InsertHeadList writes target links and the Core head only; the allocated
+  backing-base signature branch skips both granule walks/reclamation on this
+  retained input state. Original d824 returns1, so0xaf target poison-fill
+  remains ENABLED via15838/a824/171fc, not an invented cold/no-fill path.
+  SOURCE proofc57b1812be0eb544354b751665875dbc1c11bcf045ac86c02ef238a66ea873e7
+  is DATA only. It does not execute the provider or prove complete work/IRQ time.
+- After successful API return, every root/key byte and720B policy must match,
+  while all232 pool bytes must equal the pre-call prefix except subtraction
+  of the actual declared allocation Size and selected-bin next/previous links
+  becoming target+8. No released target, fresh head or neighbor is followed.
+  Unexpected fixed effects hold UNKNOWN before post-arch/FPrestore. The old
+  blanket allowance for changed keys/pool is now refused in this supported
+  slice; equal prefixes still cannot exclude callback ABA or certify the full
+  post-release graph. Remaining callbacks/asynchronous work/wholecall temporal
+  inputs and every later current-context admission remain UNQUALIFIED.
+- FINAL771 ASAN/UBSAN SOFTWARE checks PASS216.31638149998616s, retaining the
+  original535 cases with the old key-change positive tightened to refusal;
+  232 new post-call pool-byte corruption cases plus four unsupported geometries
+  refuse with no continuation. Normal supported peer makes the target page
+  PROT_NONE, including its GCD neighbor, and passes with no post-free page read.
+  All61 inner AT fault positions remain: supported single-page geometry has60,
+  the61st stays in an independent unsupported cross-page fixture. First0001
+  assertion missed that changed fixture geometry; log/sources are preserved,
+  final0002 keeps all cases and does not weaken production guards. Affected474
+  target cases PASS58.13823845796287s. Old1564/1452/2341/167/8334/5141 unchanged
+  and reused, no rerun. All service/AT/clock/FP leaves explicitly simulated;
+  original PE, FreePool and whole cache/power constructors are NOT executed.
+- Independent struct/hashlib completely decodes the596496B record and both
+  576936B input bundles, all source/BS/image/FP/arch/native/API/raw/padding/
+  tails/digests, selected bin and class/backing/GCD geometry. Supported raw
+  has60 AT/63 clocks per target,65 AT/68 clocks in producer,8 PCLI AT and all
+  25+10 witness hashes. Existing producer/earlier target ten each and every
+  pageop20Core+70providerhash/200ms remain intact; no rebase/renew/reopen.
+  Actual whole parent/export COFF+MachO/generalregs/maxframe1024 PASS; export
+  only exactPAR MSR restore/noSMC and one compared registered slot72 call.
+  New same-invocation flagOFF640972B equals cbb8c3d baseline, changed header
+  absent from both OFF include graphs. Initial comparisons used different
+  target/hosted-vs-freestanding headers and failed; all outputs preserved.
+  Old644957B proof/SHA/invocation is not rewritten or treated as this command.
+  ON log29360128B remains raw capacity only, NOT resource/profile qualification.
+- Private cache-handle-small-release-0001/proof.json
+  SHAc3a434f79851d6736ae44af4619672f2bf87f1174c71896fa93009431d98aba9;
+  source/softwaref0c12740b43376c33b4cd890332f186799d42f6f4dd78ac4bee309a12bc4fc40.
+  NEXT remaining callback/source/work/whole-call temporal and fresh post-release
+  typed graph/policy/source admission for the six actual private contexts;
+  other release/backing geometries are unsupported and cannot be assumed to
+  match the phone. Do not treat this fixed-prefix check, GCD tag, equal key,
+  empty bin or complete bit as current owner/lease/ABA proof. No repeat small
+  gate/source audit/reader/parser/service/empty contract or inventory boot.
+  Then actual MSA/RMTFS claims/cache/secureVMID/MPU/remoteDMAstop/handback/full
+  normalUNKNOWN retirement, two SERIAL whole constructor models/newprofile/
+  resource/codec/transition/freeze/ONEhelper. NEW0189 NOTREADY; no PA publish/
+  MSS/NVserve/radio/scan/join/data. No USB/native/MMIO/SMC/PE execution/CI/model/
+  codec/image/payload/helper/freeze. Physical0188/last actualFB10:05/consumed
+  controller unchanged; all jobs ENDED, no human/authorization answer pending.
+  WiFi still unavailable with no credible completion date; sound/camera STOP.
+  Publication receipt will be cache-handle-small-release-source-and-handoff-push-proof-0001.json.
+
+- COMPLETED0189 actual EXISTING handle-array FreePool call witness integrated
   in the real parent; SOFTWARE only. Source dfa2692b076df9c68de89d0ea99c602bb50a50e0
   directpushed under the actual standing source/text authorization; independent
   lsremote matched exactly. Initial automatic disclosure rejection was resolved

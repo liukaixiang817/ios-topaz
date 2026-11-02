@@ -65,13 +65,14 @@ static int(*allocation_fixture_page)(struct ppli_at*)=page_peer;
 static int(*allocation_fixture_fp_save)(void*,struct pgcd_fp_guard*)=fp_save;
 static int(*allocation_fixture_fp_restore)(void*,struct pgcd_fp_guard*)=fp_restore;
 static void(*allocation_fixture_order)(void*)=order;
+static unsigned allocation_fixture_target_offset,allocation_fixture_GCD_offset=0x10000,allocation_fixture_empty_bins;
 static void setup(unsigned count,unsigned bytes,unsigned cross)
 {
     reset(0);memset(arena+0x80000,0,0x780000);pool=arena+0x80000;mode=0;
     self->base=arena+0x100000;self->bytes=0x600000;
     call=(void*)(arena+0x180000);seed=(void*)(arena+0x200000);images=(void*)(arena+0x280000);
     allocation=(void*)(arena+0x2d0000);native=(void*)(arena+0x170000);output=arena+0x100000;
-    block=pool+0x8000+(cross?0xf80:0);memset(block,0xa7,bytes);
+    block=pool+0x8000+allocation_fixture_target_offset+(cross?0xf80:0);memset(block,0xa7,bytes);
     put(block,0x30646870,4);put(block+8,4,4);put(block+16,bytes,8);
     put(block+bytes-16,0x6c617470,4);put(block+bytes-8,bytes,8);
     uint64_t*handles=(void*)(block+24);
@@ -84,13 +85,16 @@ static void setup(unsigned count,unsigned bytes,unsigned cross)
         put(b+16,k?(uintptr_t)(b-4096)+8:head,8);b[24]=1;put(b+28,type[k],4);put(b+32,low[k],8);put(b+40,low[k]+length[k]-1,8);put(b+56,8,8);
     }
     put(core+0x1b358,(uintptr_t)pool+8,8);put(core+0x1b360,(uintptr_t)pool+5*4096+8,8);
-    uint8_t*h=pool+0x10000,*g=h+24;head=(uintptr_t)core+0x1bd60;
+    uint8_t*h=pool+allocation_fixture_GCD_offset,*g=h+24;head=(uintptr_t)core+0x1bd60;
     put(h,0x30646870,4);put(h+8,4,4);put(h+16,120,8);put(g,0x6d646367,8);put(g+8,head,8);put(g+16,head,8);
     put(g+24,0,8);put(g+32,0xfffff,8);put(g+40,8,8);put(g+48,8,8);put(g+56,2,4);
     put(h+104,0x6c617470,4);put(h+112,120,8);put(core+0x1bd60,(uintptr_t)g+8,8);put(core+0x1bd68,(uintptr_t)g+8,8);
     for(unsigned k=0;k<3;k++){unsigned at=k==0?0x1b340:k==1?0x1bd48:0x1c1f8;put(core+at,16,8);put(core+at+8,4,8);put(core+at+16,1,4);}
     put(core+0x1cdb0,1234,8);put(core+0x1cc08,0,8);put(core+0x1dc10,0,8);put(core+0x1cb78,0,8);
     put(core+0x1d1a8,120+bytes,8);put(core+0x1d1b0,4,4);
+    if(allocation_fixture_empty_bins)for(unsigned k=0;k<12;k++){
+        uint64_t at=(uintptr_t)core+0x1d1a0+24+16*k;put((void*)(uintptr_t)at,at,8);put((void*)(uintptr_t)(at+8),at,8);
+    }
     struct pgcd_io io={.system=s,.arch=allocation_fixture_arch,.map=map_peer,.fp_save=allocation_fixture_fp_save,.fp_restore=allocation_fixture_fp_restore,.order=allocation_fixture_order};
     struct pwmc_parent_input ci={.system=s,.image=self,.native_flag=native,.output=output,.capacity=65536,.image_handle=0x123,
         .phase=4,.bank=0xc0000000,.bank_bytes=0x200000,.payload=(uintptr_t)payload_page,.payload_bytes=4096,.log_snapshot=(uintptr_t)log_page,.log_snapshot_bytes=4096};

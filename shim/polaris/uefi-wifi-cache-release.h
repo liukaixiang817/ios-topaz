@@ -137,6 +137,52 @@ static inline int pbhr_actual_release(void*opaque,struct efi_system*system,uint6
     (void)opaque;if(!system||!system->boot||(uintptr_t)system->boot->free_pool!=entry||!raw)return 0;
     raw->issued=1;raw->status=system->boot->free_pool((void*)(uintptr_t)handles);raw->returned=1;return 1;
 }
+/* A deliberately limited ordinary small-free path. The selected bin must be
+ * empty, so InsertHeadList writes only that Core head and the target. A known
+ * retained GCD container at the backing-page base has allocated signature;
+ * the original 3ae4..3aec test therefore skips both granule walks/reclamation.
+ * Its full existing typed/source/AT/current-byte checks still apply. This is
+ * a source-path restriction, never an allocated-address inventory or lease.
+ * Other valid FreePool paths remain unsupported and are refused before call. */
+static inline int pbhr_small_path(const struct pbhr_result*r,unsigned*index)
+{
+    static const uint16_t sizes[7]={128,256,384,640,1024,1664,2688};
+    const struct pbha_result*a=&r->before_target;const struct pbgi_result*s=&r->seed;
+    unsigned n=0;while(n<7&&a->bytes>sizes[n])n++;
+    if(n==7||!a->bytes||a->container&127)return 0;
+    uint64_t page=a->container&~UINT64_C(4095),end=a->container+sizes[n];
+    if(a->container==page||end>page+4096||end<a->container||pwfi_le(a->raw,4)!=0x30646870||pwfi_le(a->raw+8,4)!=4)return 0;
+    unsigned base=0;
+    for(unsigned list=0;list<2;list++)for(unsigned k=0;k<s->count[list];k++){
+        const struct pbgi_node*b=&s->node[list][k];
+        if(pwmc_parent_overlap(a->container,sizes[n],b->address,b->bytes))return 0;
+        if(list==1&&b->address==page&&b->bytes==120&&b->returned==1&&
+           pwfi_le(b->raw,4)==0x30646870&&pwfi_le(b->raw+8,4)==4&&pwfi_le(b->raw+16,8)==120)base++;
+    }
+    unsigned off=24+16*n;uint64_t head=r->core+0x1d1a0+off;
+    if(base!=1||!pgcd_equal(&r->source[0].roots,&s->roots,sizeof(s->roots))||
+       !pgcd_equal(r->source[0].pool,s->pool,sizeof(s->pool))||
+       !pgcd_equal(r->source[0].policy,s->type_policy,sizeof(s->type_policy))||
+       pwfi_le(r->source[0].pool+8,8)<a->bytes||
+       pwfi_le(r->source[0].pool+off,8)!=head||pwfi_le(r->source[0].pool+off+8,8)!=head)return 0;
+    *index=n;return 1;
+}
+/* Check the fixed provider prefix's exact effects for that restricted path.
+ * No released target/neighbor is read. Equal roots/key/prefixes do not exclude
+ * callback ABA or prove a fresh typed graph, full work, ownership or walltime. */
+static inline int pbhr_small_return(const struct pbhr_result*r)
+{
+    unsigned index;if(!pbhr_small_path(r,&index))return 0;
+    const struct pbhr_source*b=&r->source[0],*a=&r->source[1];
+    if(!pgcd_equal(&a->roots,&b->roots,sizeof(a->roots))||!pgcd_equal(a->policy,b->policy,sizeof(a->policy)))return 0;
+    uint64_t used=pwfi_le(b->pool+8,8)-r->before_target.bytes,link=r->before_target.container+8;
+    unsigned off=24+16*index;
+    for(unsigned k=0;k<sizeof(a->pool);k++){
+        uint8_t expected=k>=8&&k<16?(uint8_t)(used>>(8*(k-8))):
+            k>=off&&k<off+16?(uint8_t)(link>>(8*((k-off)&7))):b->pool[k];
+        if(a->pool[k]!=expected)return 0;
+    }return 1;
+}
 static __attribute__((noinline)) int pbhr_call(struct pbhr_result*r,const struct pbhr_input*input)
 {
     if(!r||!input||!pwmc_zero(r,sizeof(*r)))return 0;
@@ -173,6 +219,7 @@ static __attribute__((noinline)) int pbhr_call(struct pbhr_result*r,const struct
     if(!pgcd_equal(before,after,32)||!pbhr_stable(&live)||r->before_target.bytes!=a->bytes||
        !pgcd_equal(r->before_target.raw,a->raw,PBHA_BYTES)||!pbhr_native(&live,0)||!pbhr_arch(&live,0)||!pbhr_native(&live,1))return pbhr_fail(r,2);
     if(!pbhr_source(&live,0)||!pgci_verify((const void*)(uintptr_t)live.core,live.core,PGCI_IMAGE_BYTES,r->hashes[0],&r->hash_failed[0],&r->hash_count[0]))return pbhr_fail(r,3);
+    unsigned small_index;if(!pbhr_small_path(r,&small_index))return pbhr_fail(r,8);
     r->fp_save_issued=1;pbhr_seal(r,&r->fp,sizeof(r->fp),before);ok=in.io.fp_save(in.io.opaque,&r->fp);
     if(!ok)return pbhr_fail(r,4);pbhr_seal(r,&r->fp,sizeof(r->fp),after);
     r->fp_save_returned=1;
@@ -192,7 +239,7 @@ static __attribute__((noinline)) int pbhr_call(struct pbhr_result*r,const struct
     if(!pgcd_equal(before,after,32)||!pbhr_stable(&live)||r->api.issued!=1||r->api.returned!=1)return pbhr_fail(r,5);
     if(r->api.status||!pbhr_native(&live,4))return pbhr_fail(r,5);
     r->image[1]=*in.image;pgcd_copy(r->BS[1],(const void*)(uintptr_t)live.boot,PWMC_BS_BYTES);
-    if(!pbhr_source(&live,1)||!pgci_verify((const void*)(uintptr_t)live.core,live.core,PGCI_IMAGE_BYTES,r->hashes[2],&r->hash_failed[2],&r->hash_count[2]))return pbhr_fail(r,6);
+    if(!pbhr_source(&live,1)||!pbhr_small_return(r)||!pgci_verify((const void*)(uintptr_t)live.core,live.core,PGCI_IMAGE_BYTES,r->hashes[2],&r->hash_failed[2],&r->hash_count[2]))return pbhr_fail(r,6);
     live.post_bound=1;
     if(!pbhr_arch(&live,1)||!pbhr_native(&live,5))return pbhr_fail(r,6);
     if(!pgci_verify((const void*)(uintptr_t)live.core,live.core,PGCI_IMAGE_BYTES,r->hashes[3],&r->hash_failed[3],&r->hash_count[3])||!pbhr_stable(&live))return pbhr_fail(r,6);
