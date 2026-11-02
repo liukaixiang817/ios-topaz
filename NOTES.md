@@ -109,6 +109,10 @@ early samples only. On0029 the human already confirmed boot complete and said
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
 - NEW0189 CURRENT actual copied-IO parent dispatch correction (SOFTWARE only).
+  Source dddb6af10b038eb3c7114f049c458efb9e7f6716 directpushed; separate
+  readonly lsremote matched exactly. All host/build/Git jobs ENDED; source/
+  softwareproof25e1061f31dac6b80d1a70f81f52c789e75d34d9cbb2edee8b723db8e2324b91
+  remains private. No physical or permission request is pending.
   The previous e59f185 parent installed its map relay on the final resident
   context before preparation, but pwsp_piece's four independent contexts and
   pwrcl_run_body's client context inherit final->io. Its final-only dispatcher
