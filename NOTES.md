@@ -34,6 +34,80 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0188 actual sixteen VRM READs → four ordered raise → reverse saved restore and full retirement; controlled actual Polaris FASTBOOT10:05; MSS/radio/network NOT DONE
+
+- This supersedes all older CURRENT/READY/LIVE, connection/publication-pending,
+  no-image and0188-not-booted claims. Actual source publication1ab71ba pushed;
+  independent lsremote matched. Real new source consent a58a65a3f6dd367339058aca53b5c30f966a2489d574e358f1b48816b3a2ab72
+  supplements actual standing873635...; both current/future same-project public
+  source/text, never firmware/Apple/vendor/NV/backup/rawdump/photo/serial/password.
+  Preboot publication0003 SHA6051a36986ccfb763b07fd3198f8b4ebb3a88e1381f50c4baab06d8bcd6bc5cf
+  and current handoff5aa3cb15e2578bf75735ceaff32c0b8609e1f437f38e3f52c225131b75b983cd remain immutable.
+- Current guard complete original frozen/source/model/codec/root/auth +495source
+  qualification passed during FIRST transfer. ONE product query correctPolaris,
+  atomic ORIGINAL boot.json then ONEimage sent09:59:14.640863Z, imageexec ENDED0.
+  Matching frozen0188state once09:59:29.628037Z ENDED0:waiting-payload. ONE same
+  63cbpayload50411 ENDED0,557chunks/36459872B/32.96316012501484s,validationACK
+  and validatedstate true; p.boot10:00:23.589469Z/17.53325220802799s/ACKtrue.
+  Capture52094 ENDED0 actualkernel-entered/fullRAMlog9138914B+PPM+history.
+  Do not replay image/payload/OEMboot or reopen this consumed0188session.
+- Actual frozen C ABI independently decoded all RAW: staged1660544B
+  SHAb4231c00e66bcce89e0091cf1ca3ab0732aea47078da47f70b305661db6358cd,
+  client227104B SHAc10036d7700f86589ec94cb78d0291f41c2f7c7b7c49fd9432045b8e121fc139,
+  parent2072064B SHA2a866b3235409920b490e2834ed4f4d1391b3baf79563790914bb980bde9d323.
+  Bodyerror0/unknown0/phase5/retired1/knownrefusal0;clienterror0/held0/returned1/
+  retired1/CreateDelete2=2. No captured pointer or firmware service invoked by
+  the host verifier. Original RAW/proofs untouched; new evidence private only.
+- Four fresh HLOS/DRV2 VRM READs per rail returned sixteen raw0 words:
+  voltage/enable/mode/headroom all0 for each L5/L7/L17/L25. This is the local
+  saved vote, NOT aggregate physical voltage or proof that hardware was off.
+  READ trigger/completed/ACK16/16/16, WRITE8/8/8: voltage-before-enable four
+  ordered targets800/1800/1304/3104mV, reverse exact saved enable-before-voltage.
+  Complete pure engine replays and independent access replay PASS; samefresh
+  READ final entire snapshot equals WRITE initial; no MODE/HEADROOM/IRQenable/
+  type stores,8newhigh edges/8lowcontrol readbacks/no extra highrestorestore.
+  TCS0/IRQenable1/activeMask15, full RW/wait/saved enable restore, statusOR
+  0x10101/0x10101/0. Combined807858ticks=42.0759375ms/48steps/876engineevents,
+  access710reads+236protocolstores=946events/acquired1held0retired1error0.
+  Inherited original ARC READ/WRITE records entirely UNOBSERVED. No fake ARC
+  success, no totalMMIOzero, no persistent power service or radio grant.
+- Actual normal10objects320pages/642nativeflag0reads/NSWBsamePA/fullATPARrestore/
+  unused192tailzero; two complete131072BmaskedDB/each16384word/64AT/fullpending
+  byteprefix and all11selectedranges/current4VRMentries. Namespace113x2,20CmdDb
+  hashes+30privateCoreRPMh+30CPUCoreRPMh,three26rowRAMsame,two70Device3queries,
+  full knownemptyqueues/equalpools/Delete. CPU4730validlive/normal7masked7OFF/
+  FP/DAIF0G1on→c0off→exact0on/held0restored1retired1. All68samples/max63020/
+  estimate2637380/remaining3045238ticks/original200ms/READ50+25/combined50ms/
+  256steps1024events retained. Opening→lastCPU138.530625ms is NOT totalretire
+  or a hardware lease. Four ROstage460Core40CmdDbhash; finalGCD8getters20hash/
+  error0/maps5899=5899/two prestarts;raw30224Bphase2count1+624Bappend preserved.
+- Normal drain45025 ENDED0 nativephase3/cap80000003/error0/writeepoch0=flush0.
+  Full212BWLEXIT05+64BOKAYWLR5 independently manual struct/CRC decoded, then
+  compared with frozen pure parser; history2→26→30→32/fullsavedstate restored/
+  faultOR0RTOR1 retained. Three wholeWiFiRAW byteequal between capture/finaldrain.
+  ACK alone is not reset: independent ONE8s readonly actualPolarisFASTBOOT
+  2026-11-02T10:05:37.496860Z/exit0/completed10:05:37.513185Z.
+  PHONE now lastobserved actual FASTBOOT, nonnativeLIVE; allUSB/hostjobs ENDED.
+  No physical action, opticalcycle, UTCSET or permission question remains.
+- Private physicalproof0188/wifi/physical-four-VRM-raise-reverse-restore-retirement-and-controlled-FASTBOOT-proof-0001.json
+  SHA84ba9e9f4aeadc05eb55aea092a3afb83fb7f8e8105abc4b4ac0cc6ac574d9ad.
+  PASS ONLY four-VRM bounded vote roundtrip/fullretirement/controlledexit,
+  never MSS/MSA/EE/EL3/VMID/MPU/radio/scan/join/data. Actual0187 strictRO39 is
+  continued only across qualified controlled0187+0188 native exits; not a
+  NEW0188rootaudit. Next necessary candidate needs a new transition review,
+  fresh runtime ownership/source/client/context/CPU, never an old lease.
+- NEXT ONLY WiFi: no more CPU/prep/client/NPA/cache/READ/ARC/fourVRM inventory
+  boots or parser/service reimplementation. Advance actual own MSS/MSA memory
+  allocation/MPU/VMID/cache/remoteDMAstop/handback then GLINK/QRTR/WLFW/ath10k.
+  Existing four-VRM roundtrip restores its votes and ends; it is not a service
+  to extend/rebase/renew for a later MSS run. Build a necessary NEW defaultOFF
+  source-bound integrated candidate only after its lifetime/restore is proven.
+  MSS/MSA still need aligned owned2MiB envelope/logical1MiB request, own selfauth
+  path and full stop/handback; no blindPAS15/Reserved-as-free/fakepermission.
+  Own BDF/FW_READY/WLAN_CFG/MISSION/nativeCE/WMI/HTT/netif and actual
+  scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
+  currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
+
 ### CURRENT0188 actual current-and-future source publication approval received; unchanged candidate FIRST transfer pending current push; NO new USB/image/payload; Wi-Fi NOT DONE
 
 - User actually answered call_b274001c482049018b5e318eab1379f3/0:
