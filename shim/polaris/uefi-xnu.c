@@ -14,6 +14,7 @@
 #endif
 #if EFI_XNU_WIFI_REMOTE_MEMORY_AVAILABLE
 #define POLARIS_WIFI_PARENT_IMAGE_LEDGER 1
+#define POLARIS_WIFI_PARENT_GCD_BOOTSTRAP 1
 #endif
 #if defined(EFI_XNU_WLED_NATIVE_RUNTIME_TEST) || defined(EFI_XNU_WLED_NATIVE_RUNTIME_PHYSICAL)
 #define EFI_XNU_WLED_NATIVE_RUNTIME 1
@@ -51,7 +52,7 @@ static efi_handle driver_image;
 static uint8_t log_buffer[1048576];static uint64_t log_bytes;
 static volatile uint32_t log_overflow;
 #elif EFI_XNU_WIFI_REMOTE_MEMORY_AVAILABLE
-static uint8_t log_buffer[26214400];static uint64_t log_bytes;
+static uint8_t log_buffer[29360128];static uint64_t log_bytes;
 static volatile uint32_t log_overflow;
 #elif EFI_XNU_WIFI_FOUR_VRM_AVAILABLE
 static uint8_t log_buffer[10747904];static uint64_t log_bytes;
@@ -269,7 +270,11 @@ static int shutdown_status(void *,const uint8_t **,uint64_t *);
 #endif
 #include "uefi-wifi-remote-memory.h"
 #include "uefi-wifi-current-map.h"
+#include "uefi-wifi-gcd-bootstrap.h"
 static struct pwmc_parent_map incoming_parent_maps[2];
+static struct pwmc_parent_map pbgi_cache_call;
+static struct pbgi_result pbgi_seed;
+static uint64_t pbgi_cache_opening;
 static struct pcmp_payload current_payload_binding;
 static struct pcmp_result current_private_maps[PCMP_PARENT_CONTEXTS][2];
 static struct pcmp_route_fault current_private_fault;
@@ -449,7 +454,7 @@ static int new_original_unknown(void)
 {return pwcq_parent_unsafe()||original_service_unknown||(pgcd_resident_context.record&&pgcd_uncertain(&pgcd_resident_context))||pacgq_preboot_record.uncertain||pacgq_preboot_record.outstanding||pacgq_ticket.outstanding
 #if EFI_XNU_WIFI_REMOTE_MEMORY_AVAILABLE
     ||incoming_parent_maps[0].unknown||incoming_parent_maps[1].unknown||ppli_record.unknown||
-      current_payload_binding.unknown||current_private_unknown()
+      current_payload_binding.unknown||current_private_unknown()||pbgi_cache_call.unknown||pbgi_seed.unknown
 #endif
 #if EFI_XNU_WIFI_TERMINAL_GOP_DIAGNOSTICS
     ||terminal_gop.uncertain
@@ -504,6 +509,41 @@ static void ppli_parent_raw(void)
 __attribute__((noreturn)) static void ppli_parent_stop(void)
 {
     ppli_record.unknown=1;original_service_unknown=1;ppli_parent_raw();power_unknown_hold();
+}
+static void pbgi_parent_raw(void)
+{
+    ram_report("GCD_INPUT_PRODUCER_CACHE_OPENING=",pbgi_cache_opening);
+    ram_report("GCD_INPUT_PRODUCER_CALL_RAW_V1_BYTES=",sizeof(pbgi_cache_call));
+    ram_text("GCD_INPUT_PRODUCER_CALL_RAW_V1_BEGIN\r\n");ram_hex((const uint8_t*)&pbgi_cache_call,sizeof(pbgi_cache_call));
+    ram_text("GCD_INPUT_PRODUCER_CALL_RAW_V1_END\r\n");
+    ram_report("GCD_INPUT_PRODUCER_RAW_V1_BYTES=",sizeof(pbgi_seed));
+    ram_text("GCD_INPUT_PRODUCER_RAW_V1_BEGIN\r\n");ram_hex((const uint8_t*)&pbgi_seed,sizeof(pbgi_seed));
+    ram_text("GCD_INPUT_PRODUCER_RAW_V1_END\r\n");
+}
+__attribute__((noreturn)) static void pbgi_parent_stop(void)
+{original_service_unknown=1;pbgi_seed.unknown=1;pbgi_parent_raw();ppli_parent_stop();}
+static int pbgi_parent_cache_map(struct efi_boot*bs,struct pwfc_result*r,struct pwfc_workspace*w)
+{
+    if(bs!=system_table->boot||r!=&pwfc_record||w!=&pwfc_work||pbgi_cache_call.attempted||load_state!=2||
+       !pgcd_record.self_bound||!r->before.ticks)pbgi_parent_stop();
+    pbgi_cache_opening=r->before.ticks;
+    const struct pwmc_parent_input input={.system=system_table,.image=(const void*)(uintptr_t)pgcd_record.self_owner_address,
+        .native_flag=&wln_cpu_on_issued,.output=w->map,.capacity=sizeof(w->map),.image_handle=(uintptr_t)driver_image,
+        .phase=4,.bank=POLARIS_RAM_BASE,.bank_bytes=POLARIS_RAM_SIZE,.payload=(uintptr_t)payload,.payload_bytes=payload_count,
+        .log_snapshot=(uintptr_t)log_snapshot,.log_snapshot_bytes=sizeof(log_buffer)+128+EFI_XNU_LOG_SIZE};
+    const struct pgcd_io io={.system=system_table,.arch=pgcd_actual_arch,.map=pgcd_actual_map,
+        .identity=pwfc_actual_identity,.query=pgcd_actual_query,.fp_save=pgcd_actual_fp_save,
+        .fp_restore=pgcd_actual_fp_restore,.order=pwfc_actual_order};
+    if(!pwmc_parent_map_call_window(&pbgi_cache_call,&input,&io,pbgi_cache_opening))pbgi_parent_stop();
+    r->map_status=pbgi_cache_call.map.status;r->map_key[1]=pbgi_cache_call.map.key;
+    r->map_bytes=pbgi_cache_call.map.bytes;r->map_stride=pbgi_cache_call.map.stride;return 1;
+}
+static void pbgi_parent_capture(struct pwfc_result*r,struct pwfc_workspace*w)
+{
+    if(r!=&pwfc_record||w!=&pwfc_work||r->map_key[1]!=pbgi_cache_call.map.key||r->map_bytes!=pbgi_cache_call.map.bytes||
+       r->map_stride!=pbgi_cache_call.map.stride||!pgcd_equal(w->map,pbgi_cache_call.data,r->map_bytes))pbgi_parent_stop();
+    const struct pbgi_input input={.call=&pbgi_cache_call,.native=&wln_cpu_on_issued,.opening=pbgi_cache_opening,.io=pbgi_cache_call.io};
+    if(!pbgi_capture(&pbgi_seed,&input,ppli_actual_page))pbgi_parent_stop();
 }
 static void current_private_raw(unsigned index,unsigned slot)
 {
@@ -609,7 +649,7 @@ _Static_assert(sizeof(log_buffer)>=2*(sizeof(pwsp_record)+sizeof(pwrpt_record)+s
     4*sizeof(terminal_gop)+
 #endif
 #if EFI_XNU_WIFI_REMOTE_MEMORY_AVAILABLE
-    3*(sizeof(incoming_parent_maps)+sizeof(ppli_record)+sizeof(current_private_maps)+sizeof(current_payload_binding))+
+    3*(sizeof(incoming_parent_maps)+sizeof(ppli_record)+sizeof(current_private_maps)+sizeof(current_payload_binding)+sizeof(pbgi_cache_call)+sizeof(pbgi_seed))+
 #endif
     1048576,
     "complete preparation/client/power/source raw must fit without truncation");
@@ -808,7 +848,8 @@ static int prepare_boot(void *context)
 #endif
 #if EFI_XNU_WIFI_REMOTE_MEMORY_AVAILABLE
     if(!ppli_record.complete||ppli_record.unknown)ppli_parent_stop();
-    ppli_parent_raw();
+    if(!pbgi_seed.complete||pbgi_seed.unknown)pbgi_parent_stop();
+    ppli_parent_raw();pbgi_parent_raw();
 #endif
 #endif
 #endif

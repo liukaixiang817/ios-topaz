@@ -43,6 +43,10 @@ struct pwfc_workspace {
     uint8_t map[65536] __attribute__((aligned(8)));
     struct efi_loaded *loaded[PWFC_HANDLES];
 };
+#if defined(POLARIS_WIFI_PARENT_GCD_BOOTSTRAP)
+static int pbgi_parent_cache_map(struct efi_boot*,struct pwfc_result*,struct pwfc_workspace*);
+static void pbgi_parent_capture(struct pwfc_result*,struct pwfc_workspace*);
+#endif
 static inline int pwfc_equal(const uint8_t *a,const uint8_t *b,size_t n)
 {unsigned difference=0;for(size_t i=0;i<n;i++)difference|=a[i]^b[i];return !difference;}
 static inline int pwfc_owned(const struct pwfc_io *io,struct pwfc_result *r,
@@ -57,6 +61,9 @@ static inline int pwfc_owned(const struct pwfc_io *io,struct pwfc_result *r,
 }
 static inline int pwfc_map(struct efi_boot *bs,struct pwfc_result *r,struct pwfc_workspace *w,unsigned slot)
 {
+#if defined(POLARIS_WIFI_PARENT_GCD_BOOTSTRAP)
+    if(slot==1)return pbgi_parent_cache_map(bs,r,w);
+#endif
     uint64_t bytes=sizeof(w->map),key=0,stride=0;uint32_t version=0;
     r->map_status=bs->get_map(&bytes,w->map,&key,&stride,&version);
     struct polaris_efi_memory checked;
@@ -175,6 +182,11 @@ static inline int pwfc_collect(const struct pwfc_io *io,uint32_t stage,
     if(!ppli_second(&ppli_record,w->map,r->map_bytes,r->map_stride,r->map_key[1],ppli_actual_page))ppli_parent_stop();
     for(unsigned n=0;n<r->handle_count;n++)
         if(!ppli_capture(&ppli_record,1,n,(uintptr_t)handles[n],r->loaded_address[n],ppli_actual_page))ppli_parent_stop();
+#endif
+#if defined(POLARIS_WIFI_PARENT_GCD_BOOTSTRAP)
+    /* This precise interval still owns the just-returned map. Capture its
+     * dynamic inputs before the existing FreePool, never as a later lease. */
+    pbgi_parent_capture(r,w);
 #endif
     /* This copies an existing map DESCRIPTOR, not its physical memory. UC
      * classification is logged as such and never becomes read permission. */

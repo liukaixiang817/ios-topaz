@@ -108,7 +108,94 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
-- NEW0189 CURRENT targeted first-GetMap GCD-node allocation provenance SOURCE
+- NEW0189 CURRENT actual-parent GCD/type-policy input PRODUCER implemented;
+  SOFTWARE only, still NOT first-private GetMap admission or a candidate.
+  The real parent now relays its EXISTING final cache slot1 GetMap at the
+  original65536B capacity, and captures complete dynamic inputs while that
+  incoming-contract map is current, BEFORE handle-array FreePool. The cache
+  collector already has THREE map calls (two recorded by the image ledger);
+  this adds no GetMap, enumeration, allocation or provider call. Internal
+  phase4 is distinct from later phase3/8192B; public incoming phases1/2 still
+  refuse both3/4. The original cache opening/200ms is checked before FP save/
+  API and before FP restore, and throughout capture, without a new origin.
+- New producer headerb5e338fb72c7660a0bf62e900e1294170504ca016efa69948d9af78f285351a4;
+  cache headerda2faef63e4cbaac613a0c17d0d4137d3469b68d60f5269662c2c03cb50f3cd9;
+  common adaptere0d2fb6eeb267241f322fb77455912f17c526149ce326bf1d960f97ccff801af;
+  actual parent1235281c10f11dd914de970ab72ee1f5222c4ef2b48c8a242a22cc3ac68821a7;
+  new testf8c6870561d9426fd549ee0560d0e87ea21b7da2b4ec311f0cb5b66e341c4b74.
+  DefaultOFF REMOTE_MEMORY enables this parent hook only; the standalone
+  allocator consumer/builder/CLI/newexactprofile/resource remain absent.
+  Its separate raw record309664B/input96B/node256B/clock128B retains the full
+  original67232B map call, including all65536B output/unreturned tail. Old
+  allocator347280B/image252488B/private-frame356688B schemas remain distinct.
+- Producer reads complete current64B EFI-map and120B pool containers around
+  every80B GCD node (each chain max256), both bidirectional heads/links,
+  all15x48B type-policy bytes, full232B pool descriptor, three24B locks,
+  key/depth/busy/SMM Base2 global/TPL. Typed3/4 normal WB pages, fresh readonly
+  NSWB samePA AT/exact PAR restoration/native0 precede each followed page;
+  pool metadata outside Core requires type4, not a tag-only permission.
+  The key page is first, all57 Core pages and two sets of five complete
+  immutable-span hashes are retained. The full current runtime pool type
+  must be4; zero in source PE is still merely DATA, not runtime evidence.
+  Complete containers/tags/type/size/tail/alignment and the used-byte lower
+  accounting bound are integrity conditions, never an allocated-address
+  inventory, current owner, future lease, IRQ or remote-DMA permission.
+- Full typed input/call/previous raw/root/key/pool/policy prefixes are sealed
+  across each AT/arch callback, with only that callback output excluded.
+  Every issued/returned/partial AT and all clock/native prefixes survive;
+ 832 clock slots are retained. Live graph bytes and immutable Core spans are
+  rechecked after the last callback. Bad pointers/partial/native/key/source/
+  input or deadline changes stick UNKNOWN, with no failure sampling/retry/
+  guessed FP restore/free/cleanup. Parent writes complete RAM raw then the
+  existing nonreturn hold before FreePool/Console/USB. Normal raw emission
+  follows the existing completed cache interval. ON log29360128B/staticassert
+  is capacity evidence only, NOT a new resource/profile qualification.
+- FINAL1564 ASAN/UBSAN SOFTWARE checks PASS91.56142849999014s; original PE
+  remains inert DATA, all BS/AT/FP/clocks explicit simulated peers. Cases
+  include1/3/256 nodes, cross-page metadata, every73 AT position and partial/
+  native/PAR/key/source/lock faults,96 input bytes, full120/64/720 retained
+  prefixes, final-callback graph/code changes, foreign/cycle/overlong/bad
+  container geometry, public phase4 refusal and original-window expiry before
+  API/FP restore. First compile indentation failure and the early fixture's
+  incorrect discovery-time expectation for unqualified Core mutations remain
+  preserved; no production guard or original case loop was weakened.
+  Affected1452 incoming/2341 later-map/167 dispatch checks also pass serially
+  (1.0472736670053564s/82.70400970801711s/4.003694957995322s).
+  Unchanged8334 allocator and5141 image checks are reused; whole defaultOFF
+  parent and standalone enabled allocator prefix are byte-equivalent to
+  baseline40a3e59 with identical preprocessing invocations. No old proof or
+  RAW/timestamp/SHA is edited. No whole cache/power constructor model ran.
+- Independent Python struct/hashlib fully decodes normal3 and max256 SOFTWARE
+  records (two309664B): all call/map/root/pool/policy/64B/120B prefixes,
+ 73/326 ATs,76/329 clocks, ten source hashes, unused tails and final SHA.
+  No captured pointer or firmware instruction executes. Actual whole parent
+  and export COFF/MachO/generalregs/maxframe1024 compile PASS; exported reader
+  has readonly AT and exact PAR MSR restore, no SMC or direct control-register
+  writes. Whole-parent prior FP/terminal masking is not claimed zero-write.
+  Private parent-gcd-input-producer-0001/proof.json
+  SHA10f4853d3c47465d79d506527e4885c4510c95f70de44a27e90f5afb19c625ef;
+  source/software8861d03f36f0f54b401a46ea53a3f41b8eb0b3d8d8e481e2a89ee611cf1d73c6.
+- NEXT is the later first-private CONSUMER admission: the completed producer
+  is evidence of its own earlier interval only. Existing FreePool can change
+  key/pool state immediately; do not relabel this seed current, use its map
+  as its own pre-call proof, or invent owner/lease bools. Bind fresh complete
+  source/typed graph/policy/callback/work/temporal inputs to each of the six
+  actual contexts without reopening/rebasing/renewing old tickets. Finite
+  graph/source work and observed CNTVCT200ms are not whole-call walltime or
+  future IRQ exclusivity. Original per-operation20Core+70providerhash/200ms
+  and ARC/VRM/readwork/fullrestore are unchanged; these ten producer hashes
+  are additional. Then real independent MSA/RMTFS claims/cache/secureVMID/MPU/
+  remoteDMAstop/handback and full normal/UNKNOWN retirement. Full changed-parent
+  checks/two SERIAL whole constructor models/newexactprofile/resource/codec/
+  currenttransition/freeze/ONEhelper still precede a necessary MSS candidate.
+  NEW0189 NOTREADY; no PA publish/MSS/NVserve/radio/scan/join/data. No new CI,
+  model, codec, reference review, device/USB/MMIO/SMC, image/payload/helper or
+  freeze occurred. Physical0188/consumed controller/last actualFASTBOOT10:05
+  remain unchanged; no physical/permission reply is pending. WiFi remains
+  unavailable with no reliable completion date. Publication will use private
+  parent-gcd-input-producer-source-and-handoff-push-proof-0001.json.
+
+- HISTORICAL0189 targeted first-GetMap GCD-node allocation provenance SOURCE
   result; functional source remains dddb6af10b038eb3c7114f049c458efb9e7f6716.
   All adapter/parent/test bytes and167/2341/8334/1452/5141 SOFTWARE evidence
   below remain unchanged. No runtime reader/admission, candidate, extra map,

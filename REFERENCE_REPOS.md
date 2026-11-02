@@ -1458,3 +1458,35 @@ reviews are reused. Functional source dddb6af and all software tests remain
 unchanged, without ASAN/model/CI/crosscompile/device reruns. First private
 GetMap complete dynamic inputs/callback/work/temporal qualification still
 blocks real remote-memory lifecycle and a necessary NEW0189 candidate.
+
+
+The subsequent implementation adds a real parent input PRODUCER at the existing
+final cache slot1 GetMap, before handle-array FreePool. It does not add a map,
+enumeration, allocation or provider call. Internal phase4 preserves the original
+64KiB output/call witness and original cache opening200ms; public incoming
+phases1/2 still reject3/4. Complete64B current EFI-map nodes, full120B containers
+for80B GCD nodes (both chains max256),15x48B policy, full232B pool descriptor,
+three locks/heads/key/depth/busy/SMM/TPL and all typed/native/readonly NSWB AT/PAR
+prefixes are retained. Runtime pool type4 is checked separately from source
+DATA zero. Container geometry/tags/accounting are integrity conditions, never
+an active allocation inventory or owner/IRQ/secure/DMA lease.
+The new309664B SOFTWARE record/input96B/node256B/clock128B is distinct from all
+prior records.1564 new ASAN/UBSAN checks and affected1452/2341/167 serial checks
+pass. Independent struct/hashlib decodes two full normal3/max256 records, all
+73/326 ATs and76/329 clocks, ten full Core hashes, complete node/policy/map raw,
+unused tails and SHA. Actual parent/export COFF/MachO/generalregs/maxframe1024,
+export exact PAR restoration/noSMC, whole parent defaultOFF and standalone
+allocator-prefix equivalence pass. Old8334/5141 evidence is reused; no whole
+cache/power-constructor model, firmware instruction, new reference review or
+physical action was performed. Private producer proof
+10f4853d3c47465d79d506527e4885c4510c95f70de44a27e90f5afb19c625ef
+records the limited scope and preserves early compile/fixture failures.
+This producer uses its own incoming UEFI standardGetMap contract; it is NOT
+pre-call qualification of that same call. FreePool can change the graph/key
+before later private maps. Fresh exact-context consumer/source/callback/work/
+whole-call temporalIRQ admission still must be implemented; no old map/AT/key/
+tag/counter becomes permission. Real MSS allocation/cache/secureVMID/MPU/
+remoteDMAstop/handback and full retirement, two serial whole constructor models
+and new profile/resource/codec/transition/freeze/helper remain prerequisites.
+NEW0189 NOTREADY. WiFi firmware/driver/scan/join/data have not run physically;
+there is no reliable working-WiFi completion date. Sound and camera remain STOP.
