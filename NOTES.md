@@ -34,8 +34,37 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0183 bounded3READ source/models/exact host complete; image/freeze NOTREADY; actual Polaris FASTBOOT01:25
+### CURRENT0183 frozen offline bounded3READ candidate complete; no0183device action; actual last Polaris FASTBOOT01:25; Wi-Fi NOT DONE
 
+- PublishedFWbc9a15a571ac9d41bedd2b8f495801ac2618f8ee/
+  HOST891728880f1170280615fcece25f72df10091314 independently ls-remote matched.
+  Wholeimage94d8d4b02ccae45daa4528223a1c8c5af6126653784248cd68ec1e912b27a6e2/
+  6041600B; originalunmodifiedEDK2 actualGetInfo/fullDecode43585224B byteequal,
+  original81FW/SimpleInit/BootShim/DTB preserved. No nativeCI/download.
+  No-mockfulladmit passed against exact0183/newmodels/currentactual0182RO39.
+- IndependentNEWfreeze/private/tmp/polaris-runtime-0183-frozen-0001 complete:
+  COPY933+10COMMIT_ONLY/480currentcommittedsources/94inputs/newinodes/nohardlinks/
+  source modes/NV0600/root0700/noZigcache. ManifestSHAc761f5dcf62c84cd533c382a5eca3a618a2e3e1170bd43b84ac3359eabefc721;
+  current-runtime-source-freezeSHAb2e6592286ae98ecc4bc1b3bb956ec31560a0b2ddc1f1256c4f58ee0a837c0f1.
+  ONEdefaultofflinehelper PASS; do not refreeze/rerun defaulthelper. NEW0183
+  bootrecord nonexistent, noUSB/SMC/MMIO/image/payload sent. Activebody runtime
+  eligibility still must be NEWfresh; offline readiness is not READ success.
+- Prebootreviewf19e08443a36d9798542ea7976aa1779e3703aa3cf8b288bf9658f07c66affab
+  explicitly retains actualNEW0182 RO0002 full39 after ONLY0182 normalnativedrain
+  full212BWLEXIT05+64BWLR5/actualFB01:25 then offline. NoNEW0183audit claimed,
+  no oldretiredruntime context/ticket/CPU/EEgrant reused. Originalrootreview
+  c5bea83e.../preflightb6d8b9bb... preserved, nofullhash/recovery repetition.
+- NEXT only after this readiness handoff pushed and independentlsremote/pushproof
+  matchescurrentHEAD: frozen0183/boot-current-word-read-once-0001.py --boot-once,
+  helper exactlyONE8s expectedproductPolaris→NEWatomicORIGINAL0183record→ONEimage.
+  ImageexecENDED before frozenmatchingstate waitingpayloadONCE, then same63cb
+  payloadONCE bootACK90s; eachartifactonce. Onlymatchingfrozen0183controller/
+  driver/image/ORIGINALrecord, no oldcontroller or editedpolicy/stripflags.
+  OnACKtrue+kernelentered capturecompleteRAW once/exactfrozenCABI independent
+  decode; normaldrain/fullreceipt+independentactualFB. UNKNOWN only afterboot
+  ENDED matchingfrozenstate8sONCE+independentexpected8sONCE; no safeexit then
+  physicalrequestONCE with diagnosticphoto. No blindretry/cleanup/genericreset/
+  clearUNKNOWN/held forUSB. READRAW notperDRVvote ornetwork. No userquestion待答.
 - NEW defaultOFF `--wifi-power-current-word-read` is a separate explicit
   capture-only READ scope. Requires fresh normal10typedobject/currentnamespace/
   source/fullcache/Device/work/CPU/live-diagnostics/wordDB/GOP; oldCPU/access/DB
@@ -74,8 +103,8 @@ early samples only. On0029 the human already confirmed boot complete and said
   Host-only addition does not change compiledinputs; no model repeat needed.
 - Sourceproof0183/wifi/current-word-read-source-and-offline-proof-0001.json
   SHAad464f0fe79af96371892f0e9ae0c9bc983565f4db78b5990a6ba8f598ca483e.
-  Originalwholecodec/image/independentfreeze/ONEhelper remain unfinished;
-  NEW0183 NOTREADY/no devicecommand/bootrecord. No source
+  Extendedsourceproof425aa9423b8868d731a5a043fea48da9e1822a517e5327dc4a42c4f2756fb465
+  includes actualhost/mainlogs and modelresults; no devicecommand/bootrecord. No source
   unchanged oldmodels/CI/optical/CPU-prep-client inventory boot to repeat.
 - Phone last independent actualPolarisFASTBOOT2026-11-02T01:25:24.486991Z after
   full0182 controllednormaldrain; 0182 originalrecord CONSUMED/sessionENDED,
