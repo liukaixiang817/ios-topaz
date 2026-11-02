@@ -45,9 +45,9 @@ Two normal Device captures still perform 140 loads and six original queries;
 masked geometry, engine reads, launch stores and IRQ ACKs are additionally
 reachable here. No claim of total MMIO zero is made.
 
-The independent raw tag is `WIFI_CURRENT_PRIVATE_WORD_READ_RAW_V2`; the whole
+The independent raw tag is `WIFI_CURRENT_PRIVATE_WORD_READ_RAW_V3`; the whole
 parent record is 1,969,216 bytes, access402,048, CPU10,096, arguments25,216.
-V5's same 16-row GOP projection reads only existing resident diagnostics,
+V6's same 16-row GOP projection reads only existing resident diagnostics,
 access/engine issued/returned flags and pending address, original failure
 sample, database byte/word prefixes and CPU held/restored fields. It adds no
 failure-time clock/register/firmware read. Missing attempted/issued evidence
@@ -72,13 +72,14 @@ new triggers/completions/ACKs, all three responses, no final publication yet)
 retain each delivered CMD_STATUS as RAW observation. No bit is cleared,
 rewritten, masked from raw or used to claim completion/ownership. Other
 phases must be this engine's pending CMD0 in phase2/4/6 with exact matching
-trigger/completion/ACK counters. Its original 0x10100 mask, exact DONE
-equality, new IRQ, response, idle, readback and full independent journal
-retirement stay unchanged. The access aggregate status OR must equal the
+trigger/completion/ACK counters. Required issued/completed bits remain
+0x10100. Bit0 is the documented TRIGGERED field and may accompany those
+required bits; other bits remain UNKNOWN. A new IRQ, response, idle, readback
+and full independent journal retirement remain required. The access aggregate status OR must equal the
 OR of every corresponding delivered full-prefix engine status sample.
 Phase mismatch, malformed snapshot counters, partial/late read or any new
 issued status error remain sticky UNKNOWN. Resource WRITE stays unreachable.
-V5 projects the last already retained I/O value and command0 status OR when
+V6 projects the last already retained I/O value and command0 status OR when
 there is no CPU failure sample; CPU failures retain their original failed
 ticks. No new hardware or clock observer is added.
 
@@ -88,3 +89,31 @@ f881af35ecfc51d4dbcc7d2d3c32eea854210d5e (2.7 STATUS0x3c/RESP0x40,
 command20/TCS672). This is a generic source reference, not a Polaris secure
 grant; its interrupt-only completion behavior is not imported.
 https://code.googlesource.com/linux/torvalds/linux/%2B/7acf90feab8b009fde7def08ff2c622d0f10e99f/drivers/soc/qcom/rpmh-rsc.c
+
+0184's actual V5 photograph supplied CMD0_STATUS0x10101 after the first new
+trigger, at phase2 with completion0 and CPU held. The old 0x10100-only mask
+rejected bit0 before reading CMD_RESP_DATA. No response, completion, idle,
+ACK or retirement is inferred from that photograph. The session was consumed
+and physically recovered, and its evidence is retained unchanged.
+
+Own MiCode Polaris commit c7cb50c18f812629b9620b2b8fa684bc40d82080,
+drivers/mailbox/qcom-rpmh-mailbox.c blob
+00ebed9b4eeda5298e6fdbb4df2cb9f8babc7640 has the same STATUS0x3c,
+RESP0x40, command20/TCS672. Its IRQ handler checks ISSUED and required COMPL
+independently before the READ response path; it does not reject bit0.
+Qualcomm's authored register decoder explicitly names bit0 TRIGGERED,
+bit8 ISSUED and bit16 COMPL. This supports treating 0x10101 as known status,
+while requiring both completion bits and our own new IRQ and idle checks.
+No original unbounded submission, callback, cleanup or IRQ policy is copied.
+
+The current-word scope alone accepts 0x10100 or 0x10101 at pending completion.
+The full delivered word is retained in both journals and every OR field.
+The independent retirement verifier recomputes each request's pending status
+OR from its original samples and compares the summary exactly; changing bit0
+in only a sample or summary fails. The generic/write engine and flag-OFF
+READ paths retain their previous behavior. This source fix is not physical
+READ success or qualified ARC vote semantics. Source-only review artifacts
+remain private; the referenced mail is a register description, not a grant.
+
+https://github.com/MiCode/Xiaomi_Kernel_OpenSource/blob/c7cb50c18f812629b9620b2b8fa684bc40d82080/drivers/mailbox/qcom-rpmh-mailbox.c
+https://lists.openwall.net/linux-kernel/2026/10/05/508

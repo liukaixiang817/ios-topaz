@@ -2,11 +2,13 @@
  * The actual photographed0183 status value remains UNKNOWN. */
 #define POLARIS_CURRENT_WORD_READ_TEST_MAIN prior_current_word_read_main
 #include "polaris-wifi-current-word-read-test.c"
-static unsigned saved_command,own_target,own_bad_bit,prefix_mutation,prefix_phase,mutated;
+static unsigned saved_command,own_target,own_bad_bit,prefix_mutation,prefix_phase,mutated,own_triggered_mask;
 static uint32_t saved_status;
 static int saved_status_load(void *v,uint64_t at,uint32_t *value)
 {
  int ok=word_load(v,at,value);struct pwrsc_transaction *t=&path->read.io;
+ if(at==pwrsc_tcs(t)+0x3c&&(t->phase==2||t->phase==4||t->phase==6)&&
+    (own_triggered_mask&(1u<<(t->phase/2-1))))*value|=1;
  if(at==pwrsc_tcs(t)+0x3c&&t->phase==2*own_target&&own_target&&requests==own_target)
   *value^=UINT32_C(1)<<own_bad_bit;
  if(!mutated&&prefix_mutation&&t->attempted&&t->phase==prefix_phase&&at==pwrsc_tcs(t)+0x3c){
@@ -49,7 +51,10 @@ static void check_success(void)
  assert(!memcmp(hardware,initial,0x30)&&votes[0]==8&&votes[1]==2&&votes[2]==1);
  assert(pwra_zero(&path->transaction,sizeof(path->transaction))&&pwra_zero(path->saved,sizeof(path->saved)));
 }
-int main(int argc,char **argv)
+#ifndef POLARIS_SAVED_STATUS_READ_TEST_MAIN
+#define POLARIS_SAVED_STATUS_READ_TEST_MAIN main
+#endif
+int POLARIS_SAVED_STATUS_READ_TEST_MAIN(int argc,char **argv)
 {
  assert(prior_current_word_read_main(argc,argv)==0);
  assert(argc==5&&!posix_memalign((void**)&arena,4096,0x800000));
@@ -63,6 +68,7 @@ int main(int argc,char **argv)
  }
  saved_command=0;saved_status=UINT32_MAX;
  for(own_target=1;own_target<=3;own_target++)for(own_bad_bit=0;own_bad_bit<32;own_bad_bit++){
+  if(own_bad_bit==0)continue; /* bit0 is the documented TRIGGERED field. */
   assert(!execute_saved_status()&&pwrpt_unsafe(path)&&cr->client_held&&!delete_calls&&!unmask_calls);
   assert(requests==own_target&&acks==own_target-1&&path->read.io.completed==own_target-1);
   assert(path->access.history[path->access.events-1].io.value==(PWRSC_DONE^(UINT32_C(1)<<own_bad_bit)));
@@ -78,6 +84,6 @@ int main(int argc,char **argv)
   if(prefix_mutation<10)assert(path->access.error==PWRA_PREFIX);
   checks++;
  }
- printf("{\"passed\":true,\"checks\":%u,\"prior_current_word_outer\":238,\"saved_status_all32bits_each3commands\":true,\"own_pending_bad_bit_cases\":96,\"snapshots_RAW_not_completion_or_grant\":true,\"full_status_OR_bound_to_journal\":true,\"new_IRQ_DONE_idle_fullRW_CPU_source_Delete_unchanged\":true,\"synthetic_words_not_actual0183_status\":true,\"SOFTWARE_only\":true}\n",checks);
+ printf("{\"passed\":true,\"checks\":%u,\"prior_current_word_outer\":238,\"saved_status_all32bits_each3commands\":true,\"own_pending_bad_bit_cases\":93,\"snapshots_RAW_not_completion_or_grant\":true,\"full_status_OR_bound_to_journal\":true,\"new_IRQ_DONE_idle_fullRW_CPU_source_Delete_unchanged\":true,\"synthetic_words_not_actual0183_status\":true,\"SOFTWARE_only\":true}\n",checks);
  free(original);free(npa_original);free(rp_original);free(cmd_original);free(arena);return 0;
 }

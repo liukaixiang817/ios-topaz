@@ -705,8 +705,8 @@ static inline void pwrpt_report(void (*append)(const char *))
 #if EFI_XNU_WIFI_ARC_READ_AVAILABLE
 #if EFI_XNU_WIFI_ARC_READ_CAPTURE_ONLY
 #if EFI_XNU_WIFI_CURRENT_WORD_READ
-    append("WIFI_CURRENT_PRIVATE_WORD_READ_RAW_V2_BEGIN\r\n");pwrpt_raw_hex(append,&pwrpt_record,sizeof(pwrpt_record));
-    append("\r\nWIFI_CURRENT_PRIVATE_WORD_READ_RAW_V2_END\r\n");
+    append("WIFI_CURRENT_PRIVATE_WORD_READ_RAW_V3_BEGIN\r\n");pwrpt_raw_hex(append,&pwrpt_record,sizeof(pwrpt_record));
+    append("\r\nWIFI_CURRENT_PRIVATE_WORD_READ_RAW_V3_END\r\n");
 #elif EFI_XNU_WIFI_READ_ACCESS_CHECKPOINT
 #if EFI_XNU_WIFI_PRE_MASK_ARGUMENTS
 #if EFI_XNU_WIFI_DB_WORD_CAPTURE

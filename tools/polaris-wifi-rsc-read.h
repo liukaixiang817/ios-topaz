@@ -8,6 +8,17 @@
 #define POLARIS_WIFI_RSC_READ_H
 #include "polaris-wifi-rsc-transaction.h"
 #define PWRR_MESSAGE 0x108u
+#if EFI_XNU_WIFI_CURRENT_WORD_READ
+/* Own Polaris mailbox source tests ISSUED/COMPL independently. Qualcomm's
+ * CMD_STATUS description additionally names bit0 TRIGGERED. Preserve the
+ * entire delivered word: bit0 may accompany completion, every other bit
+ * outside ISSUED/COMPL remains unknown. This changes no write engine. */
+#define PWRR_STATUS_TRIGGERED UINT32_C(1)
+static inline int pwrr_pending_status_known(uint32_t value)
+{return !(value&~(PWRSC_DONE|PWRR_STATUS_TRIGGERED));}
+static inline int pwrr_pending_status_done(uint32_t value)
+{return pwrr_pending_status_known(value)&&(value&PWRSC_DONE)==PWRSC_DONE;}
+#endif
 struct pwrr_transaction {
     struct pwrsc_transaction io;
     uint32_t response[3],response_seen,valid,reserved;
@@ -131,7 +142,11 @@ static inline int pwrr_poll(const struct pwrsc_io *io,struct pwrr_transaction *q
     if(irq&~(1u<<r->tcs)){pwrsc_fail(r,PWRSC_CHANGED);return -1;}if(!irq)return 0;
     if(!pwrr_read(io,q,t+0x3c,&status))return -1;
     unsigned k=r->triggers-1;r->status_OR[k]|=status;
+#if EFI_XNU_WIFI_CURRENT_WORD_READ
+    if(!pwrr_pending_status_done(status)){pwrsc_fail(r,PWRSC_COMPLETION);return -1;}
+#else
     if(status!=PWRSC_DONE){pwrsc_fail(r,PWRSC_COMPLETION);return -1;}
+#endif
     if(!pwrr_read(io,q,t+0x40,&response)||!pwrr_read(io,q,t+0x18,&idle))return -1;
     r->response_OR[k]|=response;
     if((q->response_seen&(1u<<k))&&q->response[k]!=response){pwrsc_fail(r,PWRSC_CHANGED);return -1;}
@@ -195,7 +210,15 @@ static inline int pwrr_retired(const struct pwrr_transaction *q)
        q->valid!=7||q->response_seen!=7||q->reserved||!pwrr_saved_supported(&r->saved)||
        !(r->IRQ_enable&(1u<<r->tcs)))return 0;
     for(unsigned k=0;k<3;k++)if(r->address[k]||r->saved_vote[k]||r->raised_vote[k]||
-       r->status_OR[k]!=PWRSC_DONE||r->response_OR[k]!=q->response[k])return 0;
+#if EFI_XNU_WIFI_CURRENT_WORD_READ
+       !pwrr_pending_status_done(r->status_OR[k])||
+#else
+       r->status_OR[k]!=PWRSC_DONE||
+#endif
+       r->response_OR[k]!=q->response[k])return 0;
+#if EFI_XNU_WIFI_CURRENT_WORD_READ
+    uint32_t pending_status_OR[3]={0};
+#endif
     uint64_t t=pwrsc_tcs(r),last=r->started;
     uint32_t phase=0,writes=0,triggers=0,acks=0,pending=0,irq_seen=0,done=0,response=0,idle=0,arm_written=0,armed=0;
     uint32_t enable=UINT32_MAX,control=UINT32_MAX,wait=UINT32_MAX,last_irq=UINT32_MAX,irq_enable=UINT32_MAX;
@@ -278,7 +301,15 @@ static inline int pwrr_retired(const struct pwrr_transaction *q)
         for(unsigned k=0;k<3;k++)for(unsigned j=0;j<5;j++)if(e->address==t+0x30+20*k+4*j){
             if(j<3){values[k][j]=e->value;if(k==0)seen|=1u<<(4+j);}bit=4+5*k+j;
         }
-        if(e->address==t+0x3c&&pending&&complete&&irq_seen){if(e->value!=PWRSC_DONE)return 0;done=1;}
+        if(e->address==t+0x3c&&pending&&complete&&irq_seen){
+#if EFI_XNU_WIFI_CURRENT_WORD_READ
+            if(acks>=3||!pwrr_pending_status_done(e->value))return 0;
+            pending_status_OR[acks]|=e->value;
+#else
+            if(e->value!=PWRSC_DONE)return 0;
+#endif
+            done=1;
+        }
         if(e->address==t+0x40&&pending&&complete&&irq_seen&&done){
             if(acks>=3||e->value!=q->response[acks])return 0;response=1;
         }
@@ -297,6 +328,9 @@ static inline int pwrr_retired(const struct pwrr_transaction *q)
             }
         }
     }
+#if EFI_XNU_WIFI_CURRENT_WORD_READ
+    for(unsigned k=0;k<3;k++)if(pending_status_OR[k]!=r->status_OR[k])return 0;
+#endif
     return phase==7&&initial==524287u&&final==524287u&&final_global==3&&last==r->last&&writes==r->writes&&triggers==3&&acks==3&&
         !pending&&!last_irq&&!r->IRQ_status&&IRQ_OR==r->IRQ_OR&&irq_enable==r->IRQ_enable&&
         enable==r->saved.enable&&control==r->saved.control&&wait==r->saved.wait;

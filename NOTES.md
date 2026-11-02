@@ -34,6 +34,42 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0185 source fix for documented TRIGGERED status bit; offline parent/models passed, candidate NOTREADY; actual last Polaris FASTBOOT03:17; Wi-Fi NOT DONE
+
+- No0185deviceaction. Actual0184 physical recovery remains PolarisFASTBOOT
+  2026-11-02T03:17:42.259868Z/exit0; no new polling or physical question.
+  Used0184session ENDED/CONSUMED, never replay its image/payload/controller.
+  New0185candidate NOTREADY: exacthost/codec/freeze/helper/currentrootNV pending.
+- Actual0184photo supplied CMD_STATUS10101 after firsttrigger; no response or
+  completedREAD/retirement. OwnMiCode Polaris c7cb50c18f812629b9620b2b8fa684bc40d82080
+  drivers/mailbox/qcom-rpmh-mailbox.c blob00ebed9b4eeda5298e6fdbb4df2cb9f8babc7640
+  checks ISSUED8/COMPL16 independently after IRQ before READresponse; same
+  STATUS3c/RESP40/command20/TCS672. Qualcomm-authored2026-10-05 registerdecoder
+  explicitly names bit0 TRIGGERED. Privateprimaryreviewcb5578f0bb5c45ec5f52c2dfef2d452e80064c39ec308e0225e9a09e02015c8b;
+  rawvendor/mail files private, no firmware executed/rewritten.
+- DefaultOFF current-wordREAD composition now retains knownTRIGGERED bit0,
+  requires both10100 DONEbits and originalNEWIRQ/idle/fullrestore, rejects
+  every otherunknownbit. Full raw/OR preserved; independentretirement recomputes
+  eachpendingstatusOR fromoriginaljournal and requires exactsummary match.
+  GenericWRITE and flagOFFREAD unchanged; no extraMMIO/foreigncall/timer read,
+  no clearingUNKNOWN/held, deadline/rebase/IRQtype/permission change.
+  RawV3/V6 sameCABI/16rows, no newpostfailureobserver. No ARCvote/network claim.
+- 743ASAN/UBSAN actualouterSOFTWARE checks PASS/41.72887999998056s:
+  450affectedold +8TRIGGEREDcombinations +192independentjournal/summarymutations
+  +93missingDONE/unknownbitcases. proof4da779bbb238f2b08e10804cb08eda405f34825094650d845e2c30131a9e17ae.
+  ActualwholemainCOFF/MachO/generalregs/maxframe1024/fullCABI/wordLDR PASS,
+  old1403executingCtokens flagOFFsame/reused. Parent021c848c9370fe22f6ffe9d91fe3574b97de0cd095d12c2e4ba13bafe7edd266.
+  TwoSERIAL wholeEFI-XNU19checkseach/94sameinputs/11resource+1battery literalint1,
+  38.87228045798838 and39.25322729101754s; proof6fd8372f82f370bc29629ebc18212c9ad65775be0644eaf0d2ffc03f2cd6f1f2.
+  SOFTWAREPMIC/delay/RAMUSB nothardware/reset/radio. ON0001SHA1a397d787171459ef6c10ee82492948acb2ac3d0b3f8a8a4bc4665ad23910787/94inputs;
+  OFFwholeEFI b6f27adb... byteequal0184. Initialbuildreporter KeyError(size)
+  occurred AFTER ONbuildENDED0; corrected reporting only, ON notrebuilt.
+- ROOTNV0184full39 HISTORICAL afterheldUNKNOWNphysicalreset; nextnecessaryNEW
+  candidate conversion must includeNEWfullstrictRO39/currentNV. No inventory
+  recovery now, no oldticket or securegrant. Wi-Fi scan/join/data NOTDONE;
+  sound/camera STOP. Standing sameSHAkernel and samepublicreposource/text
+  authorizations unchanged; sensitivephoto/raw/vendor/NV excluded fromGit.
+
 ### CURRENT0184 actual V5: first READtrigger1, CMD_STATUS10101 extra bit0; recovered actual Polaris FASTBOOT03:17; READ completion/Wi-Fi NOT DONE
 
 - Human currentV5photo +本次“到FASTBOOT” received; physicalrequestONCE answered.

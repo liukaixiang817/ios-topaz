@@ -213,7 +213,7 @@ static inline int pwra_transfer(struct pwra_context *c,uint64_t at,uint32_t *val
                     if(k||!(t->phase==2||t->phase==4||t->phase==6)||t->triggers!=t->phase/2||
                        t->completed+1!=t->triggers||t->acknowledged!=t->completed)
                         return pwra_fail(c,PWRA_PREFIX,1);
-                    if(q->value&~PWRSC_DONE)return pwra_fail(c,PWRA_UNKNOWN_STATUS,1);
+                    if(!pwrr_pending_status_known(q->value))return pwra_fail(c,PWRA_UNKNOWN_STATUS,1);
                 }
             }else
 #endif

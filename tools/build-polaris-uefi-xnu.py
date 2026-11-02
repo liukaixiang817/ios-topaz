@@ -1728,8 +1728,8 @@ def main():
             wifi_CPU0_power_CPU_live_GOP_numeric_layout_version=3)
     if a.wifi_power_current_word_read:
         manifest.update(wifi_CPU0_power_execution_kind='SAME_FRESH_PRIVATE_NORMAL_ARGUMENTS_MASKED_WORD_DATABASE_THREE_BOUNDED_READ_FULL_RETIRE',
-            wifi_CPU0_power_raw_format='CURRENT_PRIVATE_WORD_READ_RAW_V2',
-            wifi_CPU0_power_current_ARC_raw_format='CURRENT_PRIVATE_WORD_READ_RAW_V2',
+            wifi_CPU0_power_raw_format='CURRENT_PRIVATE_WORD_READ_RAW_V3',
+            wifi_CPU0_power_current_ARC_raw_format='CURRENT_PRIVATE_WORD_READ_RAW_V3',
             wifi_CPU0_power_raw_bytes=1969216,wifi_CPU0_power_current_ARC_path_raw_bytes=1969216,
             wifi_CPU0_power_current_word_READ=True,wifi_CPU0_power_current_word_READ_default_OFF=True,
             wifi_CPU0_power_pre_mask_arguments=True,wifi_CPU0_power_pre_mask_arguments_default_OFF=True,
@@ -1758,11 +1758,14 @@ def main():
             wifi_CPU0_power_current_word_READ_saved_and_final_status_RAW=True,
             wifi_CPU0_power_current_word_READ_status_RAW_snapshot_phases=[0,7],
             wifi_CPU0_power_current_word_READ_status_snapshot_not_completion_or_grant=True,
-            wifi_CPU0_power_current_word_READ_own_pending_status_mask=0x10100,
+            wifi_CPU0_power_current_word_READ_own_pending_status_mask=0x10101,
+            wifi_CPU0_power_current_word_READ_own_pending_required_DONE_mask=0x10100,
+            wifi_CPU0_power_current_word_READ_own_pending_TRIGGERED_bit=0x1,
+            wifi_CPU0_power_current_word_READ_pending_status_OR_matches_pending_journal=True,
             wifi_CPU0_power_current_word_READ_own_pending_status_CMD0_only=True,
             wifi_CPU0_power_current_word_READ_full_status_OR_matches_entire_journal=True,
             wifi_CPU0_power_current_word_READ_no_RAW_bit_masking_or_UNKNOWN_clearing=True,
-            wifi_CPU0_power_CPU_live_GOP_numeric_layout_version=5)
+            wifi_CPU0_power_CPU_live_GOP_numeric_layout_version=6)
     if a.wifi_cpu_ro_admission:
         manifest.update(wifi_CPU0_power_transaction=False,
             wifi_CPU0_power_CPU_RO_admission=True,wifi_CPU0_power_CPU_RO_default_OFF=True,
