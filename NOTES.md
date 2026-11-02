@@ -108,7 +108,91 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
-- NEW0189 CURRENT complete parent LoadedImage metadata pairs, source
+- NEW0189 CURRENT later-parent opening/retirement GetMap + payload/global/
+  source-frame wiring; source commit is recorded in the next handoff. Actual
+  parent now relays its two EXISTING private GCD GetMap calls after payload/log
+  allocation and records the real call/key/native/FP/context/source inputs.
+  No additional GetMap, enumeration, allocator or provider call was added.
+  PhysicalCURRENT0188/last independently observed FASTBOOT10:05/consumed
+  image/controller/freeze/FW270052fb/HOST15e830b remain unchanged. No USB,
+  native, original PE instruction, SMC, MMIO, new image/helper/CI/freeze/model/
+  codec ran. Software wiring is not installed-provider or WiFi execution.
+- New shim/polaris/uefi-wifi-current-map.h
+  SHA1272fc6951fbd9cd7fb06042915d9c9566121da69c27470935f85af0e328189e;
+  common adapterf3c1530f38dacfa7a958ecb33b6cd11111d567166b9be7b968726eaff948dc3b;
+  actual parent69a55ec3add37ede541e204d1692eda5cd706c782d60ee9cad6a4c6cbd1c0cd2;
+  new tools/polaris-wifi-current-map-test.c
+  SHA8434dcbd39d4e31ec2cca1d4345cf117d3da9480d95d3f0b0174306f04d84598.
+  Each later raw356688B contains input120B, actual active context/ticket/full
+  source record, reused complete252488B LoadedImage record, validated2832B
+  payload-metadata binding and separate67232B call raw. Codecs must use this
+  new schema; never decode actual0188 parent2072064B with it. ABI/layout and
+  the one-page2728B maximum metadata prefix are compile-time asserted.
+- Actual finish() binds the fixed header/segment metadata and plan only AFTER
+  its existing full CRC/layout/command-line validation. The later calls bind
+  actual global slots &wln_cpu_on_issued/&load_state/&payload/&log_snapshot/
+  &received/&payload_count/&plan, own driver handle and current image metadata.
+  Returned map must classify the bank, whole payload and log allocation type2;
+  fresh readonly first-page NSWB samePA AT with exact saved PAR restore then
+  compares the metadata with the genuine validated finish binding. This does
+  NOT rehash the whole36MB payload or prove immutable/DMA ownership. Root
+  command-line bytes are metadata only; root/RAMCOW is not resident at this
+  point and no filesystem/NV health or remote-memory permission is inferred.
+- The relay installs only on the original fresh, unopened/unspent GCD context.
+  Its opening callback observes the naturally issued ticket/outstanding state;
+  the retirement callback requires the same legitimately active phase1 and
+  valid first map. No ticket/outstanding is cleared, reopened or renewed.
+  Common incoming public phases1/2 still reject phase3/nonzero payload/log and
+  retain65536B capacity; the distinct later phase3 uses the real8192B private
+  capacity. This is not phase2 renamed current. Full callback input/IO/context/
+  ticket/source/LoadedImage/payload/BS prefixes are checked before following a
+  possibly poisoned pointer. Actual map-leaf issued/returned is retained apart
+  from logical relay attempts. Error/partial/input corruption appends RAM and
+  reaches terminal UNKNOWN before generic failure sampling/FP guess/cleanup.
+- Every wrapped architecture sample uses the ORIGINAL context opening and
+  original200ms; expired/zero opening refuses before the map. Final samples
+  retain the same budget. This still is not a whole-call wall-time guarantee:
+  initial private GetMap's full dynamic80B GCD/type-policy/callback/temporal/
+  work admission remains unqualified. The earlier source audits/readers are
+  reused, not repeated. No ownership follows from call success, equal keys,
+  source hashes, metadata, empty queues or AT. No MSS allocation consumer,
+  builder/CLI/new exactprofile/resource or secure/cache/DMA lifecycle is added.
+- FINAL2341 ASAN/UBSAN SOFTWARE checks PASS82.62430616701022s, including genuine
+  generic pgcd_open/query/finish with explicit simulated IO leaves, both relay
+  slots, all120 input bytes at8 callback stages,24 mutation kinds including bad
+  context pointers/coupled BS poison, payload change/partial AT/EFI errors and
+  original-opening expiry. Affected incoming1452 checks reran PASS0.998562624969054s;
+  old8334 allocator and5141 image-ledger cases are unchanged and reused. Original
+  Core PE is only inert DATA. Independent struct/hashlib verifies the complete
+  713376B pair from the genuine generic SOFTWARE flow, all context/source/
+  ticket/LoadedImage/map/header/AT prefixes and raw tails; no dump pointer runs.
+  Full parent/export COFF+MachO/generalregs/maxframe1024 PASS. Export only PAR
+  restore/AT, no SMC or direct DAIF/CPACR/TTBR/TCR/SCTLR/VBAR/CNTP writes;
+  whole parent retains its existing explicit FP guards/terminal masks. Parent
+  OFF tokens and complete149831B allocator enabled C remain equal. New ON-only
+  log15466496B/staticassert is not a qualified new resource/profile.
+- The first generic-flow fixture correctly refused its synthetic configuration
+  table overlapping its expanded self image. The fixture now has a disjoint
+  explicit runtime6 table and matching NSWB identity; no production gate was
+  weakened. Volatile qualifier and private dumper macro compile failures were
+  corrected, original logs/RAW/iterations retained without fewer cases. Private
+  parent-current-map-0001/proof.json
+  SHA7dab11e0a047368836e84ae643b67aa0dc17831e043e992ab36e39baa8aaed91.
+- NEXT: reuse the now-wired incoming, full image and later-parent/payload-frame
+  collectors. Concentrate on first private GetMap full dynamic80B GCD/type-policy/
+  callbacks and whole-call temporalIRQ/work admission, then the actual two
+  independent MSA/RMTFS claims and cache/secureVMID/MPU/remoteDMAstop/handback/
+  complete normal/UNKNOWN retirement. Root/source/DMA ownership still cannot
+  come from fixed metadata. No new parser/service/empty permission contract or
+  stock observer/allocator boot. Original20Core+70providerhash/200ms/all ARC/
+  VRM/readwork/fullrestore constraints remain. NEW0189 NOTREADY: no PA/MSS/NV/
+  radio/image before full changed-parent checks/two serial models/new profile/
+  resource/codec/current transition/freeze/ONEhelper. WiFi still cannot scan,
+  join or transfer data; sound/camera STOP. No physical/authorization reply is
+  pending. Source-only publication receipt will be private
+  parent-current-map-source-and-handoff-push-proof-0001.json.
+
+- HISTORICAL0189 complete parent LoadedImage metadata pairs, source
   d4c0c300cfd83354c3383e485386c2c98790f389. The genuine parent now binds
   actual driver_image and &wln_cpu_on_issued to its EXISTING complete image
   enumeration, with no new enumeration/GetMap/allocator/provider call. This

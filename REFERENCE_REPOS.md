@@ -1384,3 +1384,21 @@ records the scope. No reference source review, firmware instruction or physical
 action was repeated. Payload/root/source frames, the necessary later private
 GetMap full dynamic GCD/type-policy/callback/work admission, real remote-memory
 and secure/DMA lifecycle remain unfinished. NEW0189 NOTREADY; no new candidate.
+
+The next real parent integration relays the existing opening/retirement GCD
+GetMap callbacks after payload/log allocation, with no extra map or provider
+call. It retains real active context/ticket/source, complete previous image
+metadata and global native/load/payload/plan bindings. The payload metadata is
+bound after the original successful finish CRC/layout validation and compared
+with a fresh typed-map/readonly AT read. Root policy bytes remain metadata;
+root/RAMCOW is not resident here and no disk/NV/remote-DMA authority is inferred.
+Both calls use the original context opening/200ms without reopening or renewal.
+The distinct later phase3/8192B relay cannot be entered through the incoming
+phase1/2/65536B public wrapper.2341 new SOFTWARE checks,1452 affected incoming
+checks, full parent/export COFF/MachO/generalregs/maxframe1024 and an independent
+713376B generic-flow pair decode pass; old8334/5141 are reused. Private proof
+7dab11e0a047368836e84ae643b67aa0dc17831e043e992ab36e39baa8aaed91 records
+the limited scope. First private GetMap complete dynamic GCD/type-policy/
+callback/work qualification, whole-call temporalIRQ and real MSS memory/cache/
+secure/DMA lifecycle are still missing. NEW0189 NOTREADY; no physical action,
+reference audit, image/helper/model/codec/CI or radio/scan/join/data occurred.
