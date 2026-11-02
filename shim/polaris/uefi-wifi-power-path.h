@@ -101,6 +101,9 @@ struct pwrpt_result {
     struct pwrr_transaction read;
 #endif
     struct pwrsc_transaction transaction;
+#if EFI_XNU_WIFI_FOUR_VRM_AVAILABLE
+    struct pwv_result VRM;
+#endif
     struct pwra_result access;
     struct pwra_context access_context;
     struct pwrpt_refusal refusal;
@@ -112,7 +115,9 @@ struct pwrpt_result {
 #endif
 };
 #if EFI_XNU_WIFI_PRE_MASK_ARGUMENTS
-#if EFI_XNU_WIFI_DB_WORD_CAPTURE
+#if EFI_XNU_WIFI_FOUR_VRM_AVAILABLE
+_Static_assert(sizeof(struct pwrpt_result)==1969216+2512+8+sizeof(struct pwv_result),"complete four-VRM parent extent");
+#elif EFI_XNU_WIFI_DB_WORD_CAPTURE
 _Static_assert(sizeof(struct pwrpt_result)==1969216,"complete word delivery and byte prefix body");
 #elif EFI_XNU_WIFI_CPU_LIVE_DIAGNOSTICS
 _Static_assert(sizeof(struct pwrpt_result)==1943840+sizeof(struct pwrpa_result)+48,"complete live-failure diagnostic body");
@@ -139,6 +144,9 @@ enum pwrpt_error {PWRPT_OK,PWRPT_ARGUMENT,PWRPT_CMDDB,PWRPT_RAM,PWRPT_PLAN,PWRPT
 #endif
 static inline int pwrpt_unsafe(const struct pwrpt_result *r)
 {return r->unknown||pwcd_unknown(&r->cmd)||
+#if EFI_XNU_WIFI_FOUR_VRM_AVAILABLE
+    r->VRM.unknown||(r->VRM.attempted&&(!r->VRM.engines_retired||!pwv_engine_prefix(&r->VRM)))||
+#endif
 #if EFI_XNU_WIFI_ARC_READ_WORK_ADMISSION
     r->work.unknown||(r->work.attempted&&!r->work.complete)||
 #endif
@@ -163,6 +171,9 @@ static inline int pwrpt_refuse_retired(const struct paic_io *memory,struct pwrcl
     struct pwrph_work *work,struct pwrpt_result *r)
 {
     struct pwrpt_refusal *s=&r->refusal;
+#if EFI_XNU_WIFI_FOUR_VRM_AVAILABLE
+    if(!pwra_zero(&r->VRM,sizeof(r->VRM)))return 0;
+#endif
     if(s->attempted||r->unknown||p->unknown||p->outstanding||!p->client_held||r->CPU.local_mask_held||r->transaction.writes)return 0;
     s->attempted=1;pgcd_copy(s->before_global,p->globals[1],sizeof(s->before_global));
     pgcd_copy(s->before_hashes,p->hashes[1],sizeof(s->before_hashes));
@@ -181,6 +192,9 @@ static inline int pwrpt_refuse_retired(const struct paic_io *memory,struct pwrcl
 static inline int pwrpt_cpu_returned_refusal(const struct pwrpt_result *r,struct pgcd_context *g)
 {
     const struct pwrpc_result *c=&r->CPU;
+#if EFI_XNU_WIFI_FOUR_VRM_AVAILABLE
+    if(!pwra_zero(&r->VRM,sizeof(r->VRM)))return 0;
+#endif
     if(c->attempted!=1||c->error!=PWRPC_PSCI||c->unknown||c->outstanding||c->retired!=1||
        c->local_mask_held||c->local_restored||c->masked_issued||c->masked_returned||c->masked_unknown||
        !pwrph_context_ready(g)||!c->source[0].complete||
@@ -312,7 +326,11 @@ static inline int pwrpt_work_retained(const struct pwsp_result *prepared,
  * stop or actual READ admission, keep every unopened lifetime byte zero. */
 static inline int pwrpt_checkpoint_zero_engines(const struct pwrpt_result *r)
 {
-    return pwra_zero(&r->read,sizeof(r->read))&&pwra_zero(&r->transaction,sizeof(r->transaction))&&
+    return
+#if EFI_XNU_WIFI_FOUR_VRM_AVAILABLE
+       pwra_zero(&r->VRM,sizeof(r->VRM))&&
+#endif
+       pwra_zero(&r->read,sizeof(r->read))&&pwra_zero(&r->transaction,sizeof(r->transaction))&&
        pwra_zero(&r->access,sizeof(r->access))&&pwra_zero(&r->access_context,sizeof(r->access_context));
 }
 #endif
@@ -420,7 +438,12 @@ static inline int pwrpt_body(void *context,const struct paic_io *memory,struct p
         {&r->access_context,sizeof(r->access_context)},{p,sizeof(*p)},
         {&r->CPU,sizeof(r->CPU)},{&r->prepared_cmd,sizeof(r->prepared_cmd)},
         {&r->RAM[0],sizeof(r->RAM[0])},{&r->RAM[1],sizeof(r->RAM[1])},
-        {&r->device[0],sizeof(r->device[0])},{&r->read,sizeof(r->read)},
+        {&r->device[0],sizeof(r->device[0])},
+#if EFI_XNU_WIFI_FOUR_VRM_AVAILABLE
+        {&r->VRM,sizeof(r->VRM)},
+#else
+        {&r->read,sizeof(r->read)},
+#endif
         {&r->access,sizeof(r->access)},{&r->transaction,sizeof(r->transaction)}};
     if(!pwra_zero(&r->CPU,sizeof(r->CPU))||!pwrpt_checkpoint_zero_engines(r)||
        !pwrpa_run(memory,p,work,g,io->native_flag,arguments,io->cmd.namespace_io.context,
@@ -499,6 +522,15 @@ static inline int pwrpt_body(void *context,const struct paic_io *memory,struct p
     r->phase=3;pwrpt_fail(r,PWRPT_CPU_CHECKPOINT,0);
 #endif
 #else
+#if EFI_XNU_WIFI_FOUR_VRM_AVAILABLE
+    if(!pwva_acquire(&r->access_context,&io->access,g,p,work,&r->CPU,&r->prepared_cmd,&r->RAM[0],&r->RAM[1],
+       &r->device[0],&r->VRM,&r->access))return pwrpt_fail(r,PWRPT_ACCESS,1);
+    if(!pwrpt_word_read_arguments(arguments,p,work,g,r,io->preparation,memory))return 0;
+    r->phase=3;
+    if(!pwva_execute(&r->access_context)||!pwva_retire(&r->access_context))return pwrpt_fail(r,PWRPT_TRANSACTION,1);
+    r->steps=r->VRM.read.io.steps+r->VRM.write.io.steps;
+    if(r->VRM.known_refusal)pwrpt_fail(r,PWRPT_PLAN,0);
+#else
 #if EFI_XNU_WIFI_ARC_READ_AVAILABLE
     if(!pwra_acquire_read(&r->access_context,&io->access,g,p,work,&r->CPU,&r->prepared_cmd,&r->RAM[0],&r->RAM[1],
        &r->device[0],&r->read,&r->transaction,&r->access))return pwrpt_fail(r,PWRPT_ACCESS,1);
@@ -550,13 +582,16 @@ static inline int pwrpt_body(void *context,const struct paic_io *memory,struct p
 #if EFI_XNU_WIFI_ARC_READ_AVAILABLE
 power_retired:
 #endif
+#endif /* Four VRM has its own typed engines, never fake completed ARC records. */
 #endif
 #if EFI_XNU_WIFI_CURRENT_WORD_READ
     if(!pwrpt_word_read_arguments(arguments,p,work,g,r,io->preparation,memory))return 0;
 #endif
     r->phase=4;
     if(!pwrpb_capture(memory,p,work,&p->pools[1][1],&masked,&r->RAM[2])||!pwrpb_equal(&r->RAM[1],&r->RAM[2])||
-#if EFI_XNU_WIFI_PRIVATE_CPU_CHECKPOINT
+#if EFI_XNU_WIFI_FOUR_VRM_AVAILABLE
+       !pwrpc_end_vrm(&io->CPU,memory,p,work,g,&r->VRM,&r->RAM[1],&r->RAM[2],&r->CPU))return pwrpt_fail(r,PWRPT_RESTORE,1);
+#elif EFI_XNU_WIFI_PRIVATE_CPU_CHECKPOINT
        !pwrpc_end_checked(&io->CPU,memory,p,work,g,&r->transaction,&r->RAM[1],&r->RAM[2],&r->CPU,0))
         return pwrpt_fail(r,PWRPT_RESTORE,1);
 #elif EFI_XNU_WIFI_ARC_READ_AVAILABLE
@@ -605,6 +640,15 @@ power_retired:
         return pwrpt_fail(r,PWRPT_ARGUMENT,1);
     if(!pwrpt_work_retained(io->preparation,g,r))return pwrpt_work_fail(r,11);
 #endif
+#if EFI_XNU_WIFI_FOUR_VRM_AVAILABLE
+    /* Normal source/namespace close has resident callbacks too. Keep both
+     * original engines, the access prefix and masked DB delivery intact
+     * after that close and before returning to the original known Delete. */
+    if(!r->VRM.engines_retired||!pwv_engine_prefix(&r->VRM)||!pwva_engine_prefixes(&r->access_context)||
+       !pwra_observed_databases_valid(&r->access_context,2)||!r->access.retired||r->access.local_held||
+       r->access.error||r->access.unknown||r->access.outstanding||
+       !pgcd_equal(r->VRM.resources[0],r->VRM.resources[2],sizeof(r->VRM.resources[0])))return pwrpt_fail(r,PWRPT_RESTORE,1);
+#endif
     r->phase=5;r->retired=1;
 #if EFI_XNU_WIFI_ARC_READ_AVAILABLE
     if(r->error==PWRPT_PLAN||r->error==PWRPT_READ_ONLY
@@ -623,6 +667,9 @@ power_retired:
 #endif
 #endif /* This scope cannot enter CPU/masked access or an engine. */
 before_mask:
+#if EFI_XNU_WIFI_FOUR_VRM_AVAILABLE
+    if(!pwra_zero(&r->VRM,sizeof(r->VRM)))return pwrpt_fail(r,PWRPT_RESTORE,1);
+#endif
     /* A returned pre-mask refusal has issued no raw RSC write. The original
      * known-client retirement may proceed. Unknown, partial calls or a held
      * mask never reach original Delete or native/PON/receipt. */
@@ -714,7 +761,11 @@ static inline void pwrpt_report(void (*append)(const char *))
 #if EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
     append("WIFI_POWER_CLIENT_RAW_V1_BEGIN\r\n");pwrpt_raw_hex(append,&pwrcl_record,sizeof(pwrcl_record));
     append("\r\nWIFI_POWER_CLIENT_RAW_V1_END\r\n");
-#if EFI_XNU_WIFI_ARC_READ_AVAILABLE
+#if EFI_XNU_WIFI_FOUR_VRM_AVAILABLE
+    append("WIFI_CURRENT_PRIVATE_FOUR_VRM_RAW_V1_BEGIN\r\n");pwrpt_raw_hex(append,&pwrpt_record,sizeof(pwrpt_record));
+    append("\r\nWIFI_CURRENT_PRIVATE_FOUR_VRM_RAW_V1_END\r\n");
+    append("WIFI_CURRENT_FOUR_VRM_SCOPE=SIXTEEN_FRESH_HLOS_DRV2_FIELDS_FOUR_ORDERED_VOLTAGE_ENABLE_RAISE_REVERSE_EXACT_SAVED_RESTORE_SAME_ORIGINAL_COMBINED_DEADLINE_FULL_CPU_SOURCE_NAMESPACE_DELETE_NO_MODE_HEADROOM_IRQ_ENABLE_TYPE_STORE_NO_ARC_MSS_NV_SERVE_RADIO\r\n");
+#elif EFI_XNU_WIFI_ARC_READ_AVAILABLE
 #if EFI_XNU_WIFI_ARC_READ_CAPTURE_ONLY
 #if EFI_XNU_WIFI_CURRENT_WORD_READ
     append("WIFI_CURRENT_PRIVATE_WORD_READ_RAW_V3_BEGIN\r\n");pwrpt_raw_hex(append,&pwrpt_record,sizeof(pwrpt_record));

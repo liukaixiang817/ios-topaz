@@ -296,6 +296,33 @@ static inline int pwrpc_end(const struct pwrpc_io *io,const struct paic_io *memo
     const struct pwrsc_transaction *transaction,const struct pwrpb_baseline *before,
     const struct pwrpb_baseline *after,struct pwrpc_result *r)
 {return pwrpc_end_checked(io,memory,p,w,g,transaction,before,after,r,0);}
+#if EFI_XNU_WIFI_FOUR_VRM_AVAILABLE
+/* This path receives the REAL VRM READ/WRITE records, never an unused zero
+ * ARC transaction relabelled as the completed hardware work. */
+static inline int pwrpc_end_vrm(const struct pwrpc_io *io,const struct paic_io *memory,
+    struct pwrcl_result *p,const struct pwrph_work *w,struct pgcd_context *g,
+    const struct pwv_result *vrm,const struct pwrpb_baseline *before,
+    const struct pwrpb_baseline *after,struct pwrpc_result *r)
+{
+    if(!pwrpc_local_held(r)||!vrm)return r?pwrpc_fail(r,PWRPC_PENDING,1):0;
+    if(!io||!io->restore||!memory||!memory->identity||!p||!w||!g)return pwrpc_fail(r,PWRPC_ARGUMENT,1);
+    if(!pgcd_in_self(&p->core,(uintptr_t)vrm,sizeof(*vrm))||
+       !pwrcl_owned(memory,p,w,(uintptr_t)vrm,sizeof(*vrm))||!vrm->engines_retired||
+       vrm->provider!=(uintptr_t)p||vrm->core!=(uintptr_t)g||!pwv_engine_prefix(vrm)||
+       !pwrpb_equal(before,after)||vrm->read.io.started<r->normal.cpu.ticks)return pwrpc_fail(r,PWRPC_PENDING,1);
+    if(!pwrpc_live(g,r,1,&r->after)||!pwrpc_cpu_flag(memory,p,w,r))return pwrpc_fail(r,PWRPC_ARCH,1);
+    uint64_t last=vrm->known_refusal?vrm->read.io.last:vrm->write.io.last;
+    if(last>r->after.cpu.ticks)return pwrpc_fail(r,PWRPC_PENDING,1);
+    if(!pwrpc_source_check(memory,p,w,g,r,1))return pwrpc_fail(r,PWRPC_SOURCE,1);
+    r->restore.target_daif=r->normal.cpu.daif;r->restore.target_group=r->normal.cpu.group1;
+    r->outstanding=9;paic_actual_order(0);
+    int returned=io->restore(io->context,&r->restore);r->restore.returned=returned?1:0;paic_actual_order(0);
+    if(!returned||r->restore.precondition_error||!r->restore.group_written||!r->restore.daif_written||
+       r->restore.daif_before!=0xc0||r->restore.group_before||!r->restore.group_observed||!r->restore.daif_observed||r->restore.daif_read||r->restore.group_read!=1||
+       !pwrpc_live(g,r,0,&r->after))return pwrpc_fail(r,PWRPC_RESTORE,1);
+    r->outstanding=r->local_mask_held=0;r->local_restored=r->retired=1;paic_actual_order(0);return 1;
+}
+#endif
 /* These are real AArch64 instructions, compiled as general-register-only
  * code. Host peers never execute them. No original EFI service is called. */
 

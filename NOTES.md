@@ -34,6 +34,65 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0188 integrated four-VRM roundtrip SOFTWARE complete; exact host/models/freeze pending; actual last Polaris FASTBOOT05:04; Wi-Fi NOT DONE
+
+- NEW0188 has now integrated the default-OFF `--wifi-power-four-vrm-roundtrip`
+  parent and CLI. This supersedes the earlier component-only/parent-not-wired
+  status below. No0188 phone query/image or payload transmission/SMC/MMIO
+  action or original boot record exists.
+  Actual last phone state remains the qualified0187 controlled FASTBOOT at
+  2026-11-02T05:04:53.412076Z;0187 CONSUMED/ENDED cannot be reused. No physical
+  action or authorization pending. WiFi scan/join/data still never completed.
+- NEW current namespace/source-selected ranges include four own VRM entries,
+  freshly compared in normal preparation and both complete masked128KiB word
+  copies. Ten prospective typed objects cover the entire new VRM record.
+  Actual normal/source/CPU/Device/AT gates remain; no normal pass is a lease.
+  Sixteen single CMD0 READs capture voltage/enable/raw-mode/headroom, then
+  same-fresh-READ full TCS snapshot binds four ordered voltage-before-enable
+  raises and four reverse exact saved enable-before-voltage restores.
+  Own request800/1800/1304/3104mV and max800/1800/1304/3312mV; mode/headroom/
+  IRQenable/type not stored. No ARC transaction, MSS/NVserve/radio invocation.
+- Both real new typed engines retire before the original CPU restore; complete
+  source/namespace/pool/client close still precedes known Delete. Prefixes
+  are checked again after normal source closure. All68/slowest/original200ms/
+  READ50+25ms and one firstREAD-to-lastWRITE50ms/256steps/1024events remain.
+  No old runtime context, fake client-held/permission/lease boolean, renewal,
+  held/UNKNOWN clearing or retry. UNKNOWN original nonreturn path unchanged.
+- NEW3737 READ ASAN/UBSAN SOFTWARE checks and462 actual outer-reader-copy
+  SOFTWARE checks passed; outer34.421210375003284s, actual modeled10objects/
+  320pages, READ530events+WRITE346events. Dynamic TCS0..3 ordinary/high latch,
+  all320normalATpartial/64maskedATpartial,16pendingstatus failures,19snapshot
+  changes,11+11word-prefix changes, combined timeout, source/input mutation,
+  post-CPU-restore corruption blocking Delete, and complete known declines
+  covered. These are SOFTWARE peers with original PEs as DATA, not hardware.
+  Existing1952writer cases unchanged/reused, not rerun. NewflagOFF executing
+  Ctokens of3239 prior cases exactly match frozen0187; not rerun.
+- Actual whole main COFF/MachO/generalregs/maxframe1024/fullCABI/one aligned
+  Normal-word LDR passed; QEMU CPP excludes all physical bodies. Seven actual
+  CLI missing-dependency/conflict refusals passed. Parent2072064B,
+  prepared236032B/VRM100328B/access402048B/CPU10096B/arguments25216B. New V9
+  retains16resident-only rows and full CURRENT_PRIVATE_FOUR_VRM_RAW_V1.
+- Final ON0003 wholeEFI SHA4ddbbaa19c1bd6b90fe3900c5be349beb86b0b8e052995aab200e7a97a46481e/
+  18334208B/98inputs. DefaultOFF0001 wholeEFI b6f27adb0427bc3d711c72c671bafaa7ba5cd670eb111fca8028c2a1a72b8b09/
+  16057856B/91inputs remains byteequal0187. Initial ON0001 rejected the old
+  raw ABI/log-capacity static assertions; ON0002 was intermediate11MiB.
+  Final12MiB keeps full raw reserve; existing host protocol already admits
+  its complete16MiB+128B firmware/native snapshot. No old controller changed.
+- Private source/buildproof0188/wifi/four-VRM-integration-source-and-build-proof-0001.json
+  SHA9a993fb0ec5237dfdadec2fccf9a2089c4bdadbd75b4efc51caea751c125ab43;
+  parentproofbbfd3b0be6c06525ff2834256da44856ff625964fb5ffd193d2a3e7e077d83ac;
+  outerproof372d5945383f70fcd3d416592588c9273eb8b72d89d5725f76ab842c7d82b96a;
+  READproof3bdb2529456d80198171c1659cee5e1bd33b21b52594199230579046299eadcc.
+  Proofs/binaries/private bytes remain outside Git. No nativeCI/download.
+- NEXT: new exact host0188 metadata/source admission, two SERIAL new whole
+  EFI-XNU terminal models, original whole codec/source audit, new independent
+  freeze and ONE offline helper, current0187 integrity plus correct actual FB
+  at needed boot. Still NOTREADY; no boot until all passed. Do not rerun the
+  unchanged component/outer/old tests or invent an inventory-only boot. ROOTNV
+  integrity remains current after only0187 controlled exit; runtime all fresh.
+  Existing real kernel-reuse and same-repo source/text publication approvals
+  remain valid. No sound/camera work until actual WiFi network succeeds.
+
 ### CURRENT0187 actual ARC READ6/3/0 → raise7/4/7 → reverse saved restore and full retirement; controlled actual Polaris FASTBOOT05:04; four WiFi VRMs/radio/network NOT DONE
 
 - ActualNEW0187 native succeeded, not just an image ACK: ONEimage74469 ENDED0

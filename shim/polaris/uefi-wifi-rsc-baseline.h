@@ -16,6 +16,9 @@
 #include "uefi-audio-i2c-cache.h"
 #include "uefi-wifi-rpmh-client.h"
 #include "uefi-wifi-cmddb-query.h"
+#if EFI_XNU_WIFI_FOUR_VRM_AVAILABLE
+#include "uefi-wifi-vrm-domain.h"
+#endif
 #define PWRPB_ROWS 128u
 #define PWRPB_STATES 4u
 struct pwrpb_state {uint64_t address;uint32_t bytes,reserved;uint8_t raw[72];};

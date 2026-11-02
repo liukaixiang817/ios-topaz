@@ -469,7 +469,10 @@ def main():
     ap.add_argument('--wifi-power-current-word-read',action='store_true',help='default-OFF separate fresh current private capture-only three bounded READs with normal argument admission, two complete masked word DBs, original CPU/time/IRQ/full restore and known Delete; RAW is not a qualified vote')
     ap.add_argument('--wifi-power-current-word-vote',action='store_true',help='default-OFF explicit fresh READ-derived HLOS/DRV2 ARC max(saved,target) raise and reverse saved restore, one combined READ+WRITE50ms interval, full touched-RW/CPU/source/namespace/Delete retirement; no MSS/NVserve/radio')
     ap.add_argument('--wifi-power-current-word-vote-latched',action='store_true',help='default-OFF same-fresh-retired-READ TCS completed high-latch ARC WRITE; low/readback before each of two new edges, retain final edge rather than write a third, preserve original IRQ enable/type and exact full retirement')
+    ap.add_argument('--wifi-power-four-vrm-roundtrip',action='store_true',help='default-OFF independent fresh sixteen-field own WiFi VRM READ, ordered voltage/enable raise and reverse exact saved restore; one original combined interval and full CPU/source/private retirement, no ARC transaction or MSS/radio')
     a=ap.parse_args();r=Path(__file__).resolve().parents[1]
+    if a.wifi_power_four_vrm_roundtrip and (not a.wifi_power_current_word_read or a.wifi_power_current_word_vote or a.wifi_power_current_word_vote_latched):
+        ap.error('four VRM roundtrip requires the complete fresh current word/argument/CPU/DB/work scope and forbids the independent ARC vote scopes')
     if a.wifi_power_current_word_vote and not a.wifi_power_current_word_read:
         ap.error('current word ARC vote requires the explicit complete current word READ dependencies')
     if a.wifi_power_current_word_vote_latched and not a.wifi_power_current_word_vote:
@@ -961,6 +964,7 @@ def main():
 #define EFI_XNU_WIFI_CURRENT_WORD_READ {int(a.wifi_power_current_word_read)}
 #define EFI_XNU_WIFI_CURRENT_WORD_VOTE {int(a.wifi_power_current_word_vote)}
 #define EFI_XNU_WIFI_CURRENT_WORD_VOTE_LATCHED {int(a.wifi_power_current_word_vote_latched)}
+#define EFI_XNU_WIFI_FOUR_VRM_AVAILABLE {int(a.wifi_power_four_vrm_roundtrip)}
 #define EFI_XNU_WIFI_CPU_RO_ADMISSION {int(a.wifi_cpu_ro_admission)}
 #define EFI_XNU_WIFI_CPU_MASKED_RO_ADMISSION {int(a.wifi_cpu_masked_ro_admission)}
 #define EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE {int(cmddb_binding is not None)}
@@ -1065,6 +1069,9 @@ def main():
     if cmddb_binding:inputs+=['shim/polaris/uefi-wifi-psci-affinity.h','shim/polaris/uefi-wifi-cpu-local-mask.h']
     if a.wifi_cpu_masked_ro_admission:inputs+=['shim/polaris/uefi-wifi-cpu-local-mask.h']
     if a.wifi_power_current_arc_read:inputs+=['shim/polaris/uefi-wifi-rsc-read-plan.h','tools/polaris-wifi-rsc-read.h']
+    if a.wifi_power_four_vrm_roundtrip:
+        inputs+=['shim/polaris/uefi-wifi-vrm-domain.h','shim/polaris/uefi-wifi-vrm-access.h',
+                 'tools/polaris-wifi-vrm-read.h','tools/polaris-wifi-vrm-transaction.h']
     if rpmh_binding:
         inputs+=['shim/polaris/uefi-wifi-rpmh-readonly.h','tools/polaris-wifi-rpmh-identity.py',
                  'tools/polaris-wifi-rpmh-identity.h',rpmh_pe_relative]
@@ -1813,6 +1820,45 @@ def main():
             wifi_CPU0_power_current_word_VOTE_dynamic_idle_untriggered_TCS=False,
             wifi_CPU0_power_current_word_VOTE_dynamic_idle_TCS_fresh_READ_latch_binding=True,
             wifi_CPU0_power_CPU_live_GOP_numeric_layout_version=8)
+    if a.wifi_power_four_vrm_roundtrip:
+        manifest.update(wifi_CPU0_power_execution_kind='SAME_FRESH_PRIVATE_SIXTEEN_VRM_READ_FOUR_ORDERED_RAISE_REVERSE_SAVED_RESTORE_FULL_RETIRE',
+            wifi_CPU0_power_raw_format='CURRENT_PRIVATE_FOUR_VRM_RAW_V1',
+            wifi_CPU0_power_current_ARC_raw_format='CURRENT_PRIVATE_FOUR_VRM_RAW_V1',
+            wifi_CPU0_power_raw_bytes=2072064,wifi_CPU0_power_current_ARC_path_raw_bytes=2072064,
+            wifi_CPU0_power_four_VRM_roundtrip=True,wifi_CPU0_power_four_VRM_default_OFF=True,
+            wifi_CPU0_power_four_VRM_bases=[0x40f00,0x41300,0x40c00,0x42000],
+            wifi_CPU0_power_four_VRM_fields=['voltage_mV','enable','raw_PMIC_mode','headroom_mV'],
+            wifi_CPU0_power_four_VRM_READ_requests=16,wifi_CPU0_power_four_VRM_WRITE_edges=8,
+            wifi_CPU0_power_four_VRM_WRITE_commands=16,
+            wifi_CPU0_power_four_VRM_min_mV=[800,1800,1304,3104],
+            wifi_CPU0_power_four_VRM_max_mV=[800,1800,1304,3312],
+            wifi_CPU0_power_four_VRM_raise_order=['ldoa5','ldoa7','ldoa17','ldoa25'],
+            wifi_CPU0_power_four_VRM_restore_order=['ldoa25','ldoa17','ldoa7','ldoa5'],
+            wifi_CPU0_power_four_VRM_fresh_current_CmdDb_entries=4,
+            wifi_CPU0_power_four_VRM_fresh_normal_selected_ranges=11,
+            wifi_CPU0_power_four_VRM_prepared_raw_bytes=236032,
+            wifi_CPU0_power_four_VRM_same_fresh_READ_full_snapshot_before_first_WRITE=True,
+            wifi_CPU0_power_four_VRM_voltage_before_enable_reverse_saved_enable_before_voltage=True,
+            wifi_CPU0_power_four_VRM_raise_max_saved_target=True,
+            wifi_CPU0_power_four_VRM_mode_headroom_IRQ_enable_type_stores=False,
+            wifi_CPU0_power_four_VRM_combined_READ_WRITE_ticks_max=960000,
+            wifi_CPU0_power_four_VRM_combined_steps_max=256,
+            wifi_CPU0_power_four_VRM_combined_events_max=1024,
+            wifi_CPU0_power_four_VRM_no_deadline_renewal_or_old_context=True,
+            wifi_CPU0_power_four_VRM_original_200ms_all68_READ50_reserve25_unchanged=True,
+            wifi_CPU0_power_four_VRM_full_CPU_namespace_source_pools_known_Delete=True,
+            wifi_CPU0_power_four_VRM_inherited_ARC_records_UNOBSERVED=True,
+            wifi_CPU0_power_four_VRM_no_MSS_NVserve_radio=True,
+            wifi_CPU0_power_four_VRM_EE_EL3_VMID_MPU_grant_claim=False,
+            wifi_CPU0_power_current_word_READ=False,
+            wifi_CPU0_power_current_word_READ_three_single_requests_max=0,
+            wifi_CPU0_power_current_word_READ_status_RAW_snapshot_phases=[0,33],
+            wifi_CPU0_power_current_ARC_read=False,
+            wifi_CPU0_power_current_ARC_resource_WRITE_reachable=False,
+            wifi_CPU0_power_current_ARC_resource_WRITE_commands_max=0,
+            original_GCD_new_scope_RAM_log_capacity=12582912,
+            wifi_CPU0_resources_firmware_RAM_log_capacity=12582912,
+            wifi_CPU0_power_CPU_live_GOP_numeric_layout_version=9)
     if a.wifi_cpu_ro_admission:
         manifest.update(wifi_CPU0_power_transaction=False,
             wifi_CPU0_power_CPU_RO_admission=True,wifi_CPU0_power_CPU_RO_default_OFF=True,

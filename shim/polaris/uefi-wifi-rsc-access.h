@@ -94,7 +94,15 @@ struct pwra_context {
     struct pwrr_transaction *read;
     struct pwrsc_transaction *write;
 #endif
+#if EFI_XNU_WIFI_FOUR_VRM_AVAILABLE
+    struct pwv_result *VRM;
+#endif
 };
+#if EFI_XNU_WIFI_FOUR_VRM_AVAILABLE
+static inline int pwva_transfer(struct pwra_context *,uint64_t,uint32_t *,unsigned,unsigned);
+static inline int pwva_clock(void *,uint64_t *,uint64_t *);
+static inline int pwva_writable(const struct pwra_context *,uint64_t,uint32_t);
+#endif
 enum pwra_error {PWRA_OK,PWRA_ARGUMENT,PWRA_SCOPE,PWRA_CLIENT,PWRA_SAVED,PWRA_CHANGED,
     PWRA_TRANSLATION,PWRA_IO,PWRA_TIME,PWRA_PREFIX,PWRA_HISTORY,PWRA_UNKNOWN_STATUS};
 #if EFI_XNU_WIFI_READ_ACCESS_CHECKPOINT
@@ -130,6 +138,9 @@ static inline int pwra_address(uint64_t at)
 }
 static inline int pwra_engine_writable(const struct pwra_context *c,uint64_t at,uint32_t value)
 {
+#if EFI_XNU_WIFI_FOUR_VRM_AVAILABLE
+    if(c&&c->VRM)return pwva_writable(c,at,value);
+#endif
 #if EFI_XNU_WIFI_ARC_READ_AVAILABLE
     if(c->read&&c->transaction==&c->read->io&&!c->record->write_bound)return pwrr_writable(c->read,at,value);
 #endif
@@ -137,6 +148,9 @@ static inline int pwra_engine_writable(const struct pwra_context *c,uint64_t at,
 }
 static inline int pwra_transfer(struct pwra_context *c,uint64_t at,uint32_t *value,unsigned write,unsigned engine)
 {
+#if EFI_XNU_WIFI_FOUR_VRM_AVAILABLE
+    if(c&&c->VRM)return pwva_transfer(c,at,value,write,engine);
+#endif
     struct pwra_result *r=c->record;struct pwrsc_transaction *t=c->transaction;
     if(r->unknown||r->error||r->outstanding||r->retired||r->events==PWRA_EVENTS||!pwra_address(at)||(!write&&at==PWRSC_BASE+8)||
        (write&&(!r->acquired||!r->local_held||!engine||!pwra_engine_writable(c,at,*value))))return pwra_fail(c,PWRA_SCOPE,write!=0);
@@ -427,6 +441,9 @@ static inline int pwra_prepare_checked(struct pwra_context *c,const struct pwra_
 #if EFI_XNU_WIFI_ARC_READ_AVAILABLE
         ,read,writer
 #endif
+#if EFI_XNU_WIFI_FOUR_VRM_AVAILABLE
+        ,0
+#endif
     };
 #if EFI_XNU_WIFI_ARC_READ_AVAILABLE
     if(read&&(!prepared||tx!=&read->io||!writer||writer==tx))return pwra_fail(c,PWRA_ARGUMENT,1);
@@ -587,6 +604,9 @@ static inline int pwra_write(void *context,uint64_t at,uint32_t value)
 {struct pwra_context *c=context;return c&&c->record->acquired?pwra_transfer(c,at,&value,1,1):0;}
 static inline int pwra_clock(void *context,uint64_t *ticks,uint64_t *frequency)
 {
+#if EFI_XNU_WIFI_FOUR_VRM_AVAILABLE
+    struct pwra_context *vrm_context=context;if(vrm_context&&vrm_context->VRM)return pwva_clock(context,ticks,frequency);
+#endif
     struct pwra_context *c=context;uint32_t native;c->record->clock_calls++;
     if(!pwra_live(c,&native,ticks))return 0;
 #if EFI_XNU_WIFI_ARC_READ_AVAILABLE
@@ -785,6 +805,9 @@ static inline struct pwra_io pwra_observation_io(const struct paic_io *memory,st
     pwrmd_actual_translate,pwra_actual_read,
 #endif
     pwra_reject_store,pgns_actual_translate};}
+#endif
+#if EFI_XNU_WIFI_FOUR_VRM_AVAILABLE
+#include "uefi-wifi-vrm-access.h"
 #endif
 #endif
 #endif

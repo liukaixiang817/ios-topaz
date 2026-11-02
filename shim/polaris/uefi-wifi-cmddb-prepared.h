@@ -13,7 +13,12 @@
 #if !EFI_XNU_WIFI_CMDDB_STAGED_RO_AVAILABLE || !EFI_XNU_WIFI_GCD_NAMESPACE_RO_AVAILABLE
 #error Prepared power requires complete staged RO preparation and bounded current namespace
 #endif
+#if EFI_XNU_WIFI_FOUR_VRM_AVAILABLE
+#include "uefi-wifi-vrm-domain.h"
+#define PWCP_RANGES 11u
+#else
 #define PWCP_RANGES 7u
+#endif
 #define PWCP_PAGES 13u
 struct pwcp_range {uint32_t offset,bytes,read[3];uint8_t raw[3][144];};
 struct pwcp_source {
@@ -31,8 +36,15 @@ struct pwcp_result {
     struct pgns_target target[4][PWCP_PAGES];
     struct pwcp_range range[PWCP_RANGES];
     struct pwcd_resource resources[2][3];
+#if EFI_XNU_WIFI_FOUR_VRM_AVAILABLE
+    struct pwcd_resource VRM[2][4];
+#endif
 };
+#if EFI_XNU_WIFI_FOUR_VRM_AVAILABLE
+_Static_assert(sizeof(struct pwcp_result)==236032,"complete current ARC plus four VRM binding ABI");
+#else
 _Static_assert(sizeof(struct pwcp_result)==233520,"complete current prepared binding ABI");
+#endif
 struct pwcp_io {const struct paic_io *memory;void *context;
     int (*locate)(void *,struct efi_system *,const efi_guid *,void **,uint64_t *);
     int (*translate)(void *,struct pgns_translation *);};
@@ -94,6 +106,9 @@ static inline int pwcp_preparation(const struct pwcp_io *io,struct pwrcl_result 
     }
     if(!pwcd_select_bytes(s->database[1],r->resources[0])||
        !pgcd_equal(s->resources[1],r->resources[0],sizeof(r->resources[0])))return pwcp_fail(r,PWCP_PREPARATION);
+#if EFI_XNU_WIFI_FOUR_VRM_AVAILABLE
+    if(!pwv_select_bytes(s->database[1],r->VRM[0]))return pwcp_fail(r,PWCP_PREPARATION);
+#endif
     r->preparation=(uintptr_t)s;return 1;
 }
 static inline int pwcp_targets(const struct pwcp_io *io,struct pwrcl_result *p,struct pwrph_work *w,
@@ -161,6 +176,9 @@ static inline int pwcp_collect(const struct pwcp_io *io,struct pwrcl_result *p,s
         r->range[1+2*k].offset=r->resources[0][k].entry;r->range[1+2*k].bytes=24;
         r->range[2+2*k].offset=r->resources[0][k].aux_offset;r->range[2+2*k].bytes=32;
     }
+#if EFI_XNU_WIFI_FOUR_VRM_AVAILABLE
+    for(unsigned k=0;k<4;k++){r->range[7+k].offset=r->VRM[0][k].entry;r->range[7+k].bytes=24;}
+#endif
     for(unsigned k=0;k<PWCP_RANGES;k++){
         const struct pwcp_range *q=&r->range[k];
         if(!q->bytes||q->bytes>144||q->offset>PWCD_DB_BYTES-q->bytes)return pwcp_fail(r,PWCP_TARGET);
@@ -184,7 +202,11 @@ static inline int pwcp_collect(const struct pwcp_io *io,struct pwrcl_result *p,s
         if(!pwcp_source(io,p,w,g,prepared,r,pass+1))return 0;
     }
     if(!pwcp_targets(io,p,w,g,r,2)||!pwcp_live(io,p,w,g,r))return 0;
-    pgcd_copy(r->resources[1],r->resources[0],sizeof(r->resources[0]));r->bound_after=r->after;r->stable=r->complete=1;paic_actual_order(0);return 1;
+    pgcd_copy(r->resources[1],r->resources[0],sizeof(r->resources[0]));r->bound_after=r->after;r->stable=r->complete=1;paic_actual_order(0);
+#if EFI_XNU_WIFI_FOUR_VRM_AVAILABLE
+    pgcd_copy(r->VRM[1],r->VRM[0],sizeof(r->VRM[0]));
+#endif
+    return 1;
 }
 static inline int pwcp_finish(const struct pwcp_io *io,struct pwrcl_result *p,struct pwrph_work *w,
     struct pgcd_context *g,const struct pwsp_result *prepared,struct pwcp_result *r)

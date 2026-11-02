@@ -44,6 +44,9 @@ static efi_handle driver_image;
 #if EFI_XNU_WIFI_CPU_RO_ADMISSION
 static uint8_t log_buffer[1048576];static uint64_t log_bytes;
 static volatile uint32_t log_overflow;
+#elif EFI_XNU_WIFI_FOUR_VRM_AVAILABLE
+static uint8_t log_buffer[12582912];static uint64_t log_bytes;
+static volatile uint32_t log_overflow;
 #elif EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
 static uint8_t log_buffer[10485760];static uint64_t log_bytes;
 static volatile uint32_t log_overflow;
@@ -307,7 +310,9 @@ static void terminal_gop_evidence(void)
      * clock, register or firmware call is made after the original failure. */
     const struct pwra_result*a=&pwrpt_record.access;
     const struct pwra_event*e=a->events&&a->events<=PWRA_EVENTS?&a->history[a->events-1]:0;
-#if EFI_XNU_WIFI_CURRENT_WORD_VOTE
+#if EFI_XNU_WIFI_FOUR_VRM_AVAILABLE
+    pwtg_line(r,0,"V9 HOLD",pwrpt_record.attempted,pwrpt_record.phase);
+#elif EFI_XNU_WIFI_CURRENT_WORD_VOTE
 #if EFI_XNU_WIFI_CURRENT_WORD_VOTE_LATCHED
     pwtg_line(r,0,"V8 HOLD",pwrpt_record.attempted,pwrpt_record.phase);
 #else
@@ -319,7 +324,9 @@ static void terminal_gop_evidence(void)
     pwtg_line(r,1,"BODY CPU",pwrpt_record.error,pwrpt_record.CPU.error);
     pwtg_line(r,2,"WHY CALL",d->reason,d->call);
     pwtg_line(r,3,"MASK ARCH OK",d->masked,d->arch_callback_ok);
-#if EFI_XNU_WIFI_CURRENT_WORD_VOTE_LATCHED
+#if EFI_XNU_WIFI_FOUR_VRM_AVAILABLE
+    pwtg_line(r,4,"TCS IRQ EN",pwrpt_record.VRM.read.io.tcs,pwrpt_record.VRM.read.io.IRQ_enable);
+#elif EFI_XNU_WIFI_CURRENT_WORD_VOTE_LATCHED
     pwtg_line(r,4,"TCS IRQ EN",pwrpt_record.transaction.tcs,pwrpt_record.transaction.IRQ_enable);
 #else
     pwtg_line(r,4,"OPEN HI LO",(uint32_t)(d->opening_ticks>>32),(uint32_t)d->opening_ticks);
@@ -330,7 +337,10 @@ static void terminal_gop_evidence(void)
     pwtg_line(r,7,"ACC U OUT",a->unknown,a->outstanding);
     pwtg_line(r,8,"IO OP FLAGS",e?e->operation:0,e?(e->io.issued|(e->io.returned<<8)|(e->io.unknown<<16)):0);
     pwtg_line(r,9,"IO ADDR L H",e?(uint32_t)e->io.address:0,e?(uint32_t)(e->io.address>>32):0);
-#if EFI_XNU_WIFI_CURRENT_WORD_VOTE
+#if EFI_XNU_WIFI_FOUR_VRM_AVAILABLE
+    pwtg_line(r,10,"VRM READ WRITE",pwrpt_record.VRM.read.io.phase,pwrpt_record.VRM.write.io.phase);
+    pwtg_line(r,11,"VRM TR DONE",pwrpt_record.VRM.write.io.triggers,pwrpt_record.VRM.write.io.completed);
+#elif EFI_XNU_WIFI_CURRENT_WORD_VOTE
     pwtg_line(r,10,"READ WRITE PH",pwrpt_record.read.io.phase,pwrpt_record.transaction.phase);
     pwtg_line(r,11,"WRITE TR DONE",pwrpt_record.transaction.triggers,pwrpt_record.transaction.completed);
 #else
@@ -340,7 +350,9 @@ static void terminal_gop_evidence(void)
     pwtg_line(r,12,"DB0 BYTE WR",a->CmdDb[0].bytes,a->CmdDb[0].word.returned);
     pwtg_line(r,13,"DB1 BYTE WR",a->CmdDb[1].bytes,a->CmdDb[1].word.returned);
     pwtg_line(r,14,"CPU H R",pwrpt_record.CPU.local_mask_held,pwrpt_record.CPU.local_restored);
-#if EFI_XNU_WIFI_CURRENT_WORD_VOTE
+#if EFI_XNU_WIFI_FOUR_VRM_AVAILABLE
+    pwtg_line(r,15,"VRM R W ERR",pwrpt_record.VRM.read.io.error,pwrpt_record.VRM.write.io.error);
+#elif EFI_XNU_WIFI_CURRENT_WORD_VOTE
     pwtg_line(r,15,"WRITE E U",pwrpt_record.transaction.error,pwrpt_record.transaction.unknown);
 #else
     pwtg_line(r,15,"READ E U",pwrpt_record.read.io.error,pwrpt_record.read.io.unknown);
@@ -455,7 +467,9 @@ _Static_assert(sizeof(log_buffer)>=2*(PWCQ_RAW_BYTES+sizeof(pacgq_preboot_record
 #if EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
 #if EFI_XNU_WIFI_ARC_READ_AVAILABLE
 #if EFI_XNU_WIFI_PRE_MASK_ARGUMENTS
-#if EFI_XNU_WIFI_DB_WORD_CAPTURE
+#if EFI_XNU_WIFI_FOUR_VRM_AVAILABLE
+_Static_assert(sizeof(struct pwrpt_result)==2072064,"complete four VRM body raw ABI");
+#elif EFI_XNU_WIFI_DB_WORD_CAPTURE
 _Static_assert(sizeof(struct pwrpt_result)==1969216,"complete word capture body raw ABI");
 #elif EFI_XNU_WIFI_CPU_LIVE_DIAGNOSTICS
 _Static_assert(sizeof(struct pwrpt_result)==1969104,"complete original body plus live failure raw ABI");
