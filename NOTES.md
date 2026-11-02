@@ -34,7 +34,99 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0186 frozen fresh READ-derived ARC round-trip candidate complete; no0186device action; Wi-Fi NOT DONE
+### CURRENT0186 photographed writer-start BUSY6 / READ phase8, no WRITE trigger; user recovered actual Polaris FASTBOOT04:26; ARC retirement/Wi-Fi NOT DONE
+
+- User provided current V7 photo and answered 已到FASTBOOT. Private original
+  0186/wifi/physical-terminal-photo-0001/original.jpg SHA325327cf403d613362e78bf31f5dddef02287ae6ef8b05e4f49dfd5ad821c54e/235364B, neverGit.
+  All16rows manually matched exactfrozen0186 uefi-xnu.c V7 expressions:
+  HOLD1/phase3; BODY8=PWRPT_TRANSACTION/CPU0; CPUfailureWHY/CALL/MASK/ARCH/OPEN
+  allzero onlyunusedfailurediagnostic, NOT realclock/registerzero. LastIO
+  value0/statusOR0=10101; ACCattempted1/error0/unknown0/outstanding0; IOread1/
+  flags101(issued1,returned1,unknown0)/address179e0d68; READphase8/WRITEphase0;
+  WRITEtrigger0/completed0; DB0bytes20000/words4000; DB1bytes0/words0;
+  CPUheld1/restored0; WRITEerror6=PWRSC_BUSY/unknown0.
+- Exactcaller/source-path inference: finite read-only pwrsc_begin returned
+  BUSY after initial TCS0 snapshot(last CMD2_RESP at+68), no eligible active+
+  IRQ-enabled idle/untriggered TCS selected. This differs from early IRQbusy
+  ending atbase+4. READ phase8 had already passed pure READ retirement/plan/
+  writebinding in exactcaller, but NO binaryprefix/READvalues/currentIRQmask/
+  times/fullCPU/access/DB-close/source/namespace/Delete retirement raw exists.
+  No writerlaunch; no globalzeroMMIO/writesclaim (READprotocol/GOP writesexist).
+  Not a CPU ARCH/time failure or WiFi rootcause. OriginalUSBstartupACKUNKNOWN
+  unchanged. Newphoto does not fabricate ACK/native/fullretirement success.
+- Additional exactfrozen0185 CABI decode of historical parentf4f67410... gives
+  activeMask15 but IRQ_enable1 in normal/read/finalaccess, selectedREADTCS0,
+  savedCONTROL1010000/ENABLE1. Historical0185 only, NOT current0186raw. Earlier
+  following-WRITE view0002 listedactiveMask15 but omitted IRQenable; software
+  0186success fixture used IRQenable15. Therefore those simulated freeIRQslots
+  do not qualify this phone. No fixedTCS1 or IRQenable/type write workaround.
+  Next sourceboundpurpose is exact owned completed-high-latch handling using
+  samefreshREAD/returnedidle/newedges/fullrestore, or safe complete refusal;
+  no blind opaque variant. NEW0187 notimplemented/NOTREADY.
+- Photo/source reviewSHA29bf45ad9495cf841e21c96e24c6092818ae9f41855a3f2b7dad22476abc4221;
+  actualphoto+recoveryproof0186/wifi/physical-terminal-BUSY-and-recovered-FASTBOOT-proof-0001.json
+  SHAe51e4a1d7c6816afb02491a396092cc87a818ff2beb99cfe7e21062f270230fe. PASS only faithfully
+  mappedphoto+actualrecovery, notpowerroundtrip/network. All originalrecords/
+  pendingproof223c016e.../frozenimage/sharedrecord remain immutable/CONSUMED.
+- IndependentONE8sreadonlyactualproductpolaris2026-11-02T04:26:59.692932Z/exit0,
+  completed04:26:59.708846Z. NowactualFASTBOOT, NOTnativeLIVE. Physicalquestion
+  closed; no useraction/auth待答, no repeatkeys/photo/USBpoll. Original0186session
+  ENDED; oldfrozencontroller cannot control any new session or replay boot.
+  ROOTNVfull39 remainsHISTORICAL after heldUNKNOWNreset; next alreadynecessary
+  newcandidate must mergeNEWfullstrictRO39(dynamic sysfs/dev_t/3FIEMAP), not now
+  inventoryrecovery. All futureowner/source/namespace/CPU/READs fresh, no old
+  context/ticket or lease rebase, 200ms/all68/combined50ms/READ50+25/IRQtype/full
+  restore unchanged. AllUSB/host/build/modeljobsENDED/allchildrenSTOP. WiFi NOTDONE.
+
+### 0186 original startup ACK UNKNOWN history (preserved, recovery now completed) startup ACK UNKNOWN / UEFI unavailable / FASTBOOT query timeout04:25; physical recovery requested ONCE; ARC retirement/Wi-Fi NOT DONE
+
+- ONEimage1793 ENDED0 sent2026-11-02T04:21:49.160623Z/source5c6f6b389481a767448b885120ee1da5200f3211/
+  imagead856d94ffd4b9e56a2cbcdd9d9ff6138bb91a55600b9d22947f4909312c7a00/6043648B.
+  Matchingsoleactualstatewaitingpayload04:22:08.249659Z/ENDED0. ONEsame63cbpayload
+  91982 ENDED1 stage04:22:31.646684Z/full557chunks36459872B/validationACKtrue+
+  validatedtrue/32.956225042027654s; p.boot04:23:04.603178Z/90.40718987502623s/
+  IN129(-7)/hostreply0of64/90000ms, NOkernelcommandACK. Full transfer does NOT
+  prove native/READ/vote/network. Actual hardware writes/counts/predicates all
+  UNKNOWN, notzero. No new binary prep/normal/CPU/DB/access/READ/WRITE records
+  orphoto. Do not claim reached ARC raise, a particular failure/predicate,
+  200ms timeout, panic/quarantine or rootcause. No UTCSET/UI/optical/nativeCI.
+- Only after91982ENDED: solematchingfrozenstate91817 ENDED1/8s unavailable,
+  started04:24:50.948958Z; then soleindependentexpected85848 ENDED0/8s timeout
+  started04:25:07.807552Z/completed04:25:15.813759Z. Currentphone UNKNOWN, NOT
+  nativeLIVE oractualFASTBOOT; prior03:42controlledFB nowhistorical. No safe
+  remote exit. ONEphysicalrequest already sent: capture current V7 numeric rows,
+  especially IO VALUE OR0/READ WRITE PH/WRITE TR DONE/WRITE E U, then power+
+  volume-down toFASTBOOT andreply. Await actualanswer, no repeatask/poll/capture/
+  cleanup/genericreset/rawfallback or UNKNOWN/held clearing. Afteractualreply
+  permitted ONE8sreadonlyexpectedproduct; no image/payload/OEMboot replay.
+- Original0186/phone-word-arc-vote-runtime-0001/boot.json CONSUMED/sessionENDED.
+  Literaltemporary_native_WLED_runtime_RAM_boot_succeeded is imageACK only.
+  Usedfrozen0186controller/driver/image/ORIGINAL cannotcontrolnewsession; no
+  refreeze/oldpolicy/manifestedit/stripflags. All USB/host/build/models/Git jobs
+  ENDED/allchildrenSTOP. No candidate0187implemented/READY. Source-qualified
+  ARC perDRV interpretation remains evidence, NOT proof of this attempt's
+  actual READ/vote/retirement; do not backfill old0185/84/83 raw or counts.
+- Newactualproof0186/wifi/physical-start-ACK-unknown-and-no-safe-remote-exit-proof-0001.json
+  SHA223c016e058217614ca5fcb22f4db3c5a8decb9c522855e667fe251093f1cdba; PASS only truthful
+  preservation of UNKNOWN/no safe remote exit, NOT functional success. Original
+  prebootpublicationproof641fb4e786fefd14a11c56853ff2ec911d85a4c78d017fa58d590b6ad4af77e8
+  and originalallrecords remain unmodified. WiFi real scan/join/data NOTDONE.
+- ROOTNVactualNEW0185full39 is nowHISTORICAL:0186UNKNOWN has no controlled
+  retirementreceipt. After recovery, next alreadynecessary NEWcandidate must
+  merge NEWfullstrictRO39 roots/maps/GPT/ESP/journal/currentNV with dynamic
+  sysfs/dev_t+3FIEMAP version. Do not substitute0185/72 or do inventoryrecovery
+  now. No partition/NV restore/write; whole512MiBjournal notcaptured and no
+  FShealth/DSPoff/EElease claim. Runtimeowner/source/namespace/AT/CPU/READvalues
+  alwaysfresh;200ms/all68/combined50ms/READ50+25/IRQtype/restore unchanged.
+- NEXT only WiFi: first preserve actualnewV7 numbers and actualrecovery. No
+  opaque WRITE/READ variant blindboot, CPU/prep/client/NPA/cache inventoryboot,
+  new parser/contracts or unchanged tests/models/CI. Any newpurpose must bind
+  actualphysicalleaf/caller/currentargument/owner/record/fullsource/AT/time and
+  originalfailure samples; no postfailure resampling pretending originalcause.
+  No user publicpush/kernelreuse permission pending; both standing approvals
+  remainvalid within exactscope. Current pending item is actualphysicalreply.
+
+### 0186 frozen offline readiness history (consumed above)
 
 - HOST9c33de37a8713744a18fcd60e90ecb4effd2377d and FW source pushed;
   independentlsremote matched9c33de3. All finaloffline gates complete, no USB.
