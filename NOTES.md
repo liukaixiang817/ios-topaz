@@ -34,8 +34,38 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0187 same fresh READ high-latch ARC round-trip source/offline checks complete; no0187device action; NEW root audit/host/freeze NOTREADY; Wi-Fi NOT DONE
+### CURRENT0187 frozen same-READ high-latch ARC candidate and NEW strictRO39 complete; no0187native image/payload; actual Polaris FASTBOOT04:52; Wi-Fi NOT DONE
 
+- ActualNEW0187 strictROaudit92969 ENDED0 then independentreview39/39PASS:
+  auditd0478d92b3ceb21bfc2460a0ba6a76f0a7987ab44248d54f0691969a2baceb01/
+  reviewer95eb94f137fba24415f8a11bce137e91dff0b1256f26c6ab58e5c90abe4f784b,
+  reversible epoch/mount/output/candidate/sourceproof bindings only from0185
+  dynamic sysfs/dev_t+3FIEMAP version. Doublefull16GiB91515474/689a8cd1,
+  56.769879083003616/56.707490542001324s, maps142/182/marker8MiB/GPT6critical5/
+  ESP102/journalmetadata/NV3x8MiBbefore-local-after/FSC/4NV0600/noRestore/
+  250host300watchdog. Normalumount→actualPolarisFB2026-11-02T04:52:28.735888Z.
+  NEWrootreviewc475a6fd6ee1073615ae1a7e2e5dd2b26ac534a3c78c7fc78b1384f389d8df05/
+  preflight196f46ac10015ddc3ca681b05ebf94ec94a40b61a33600a10f6bee0fddf7a4bc;
+  no old0185/86qualification substituted. Whole512MiBjournal NOTcaptured, no
+  FShealth/DSPoff/EElease claim. No iOS image/payload/nativeORIGINAL0187 yet.
+- HOST5e15ead2547a0b481fede47f9ec9279cebcec830+FWsource pushed, independent
+  lsremote matched. Physicaldriver6b0a8eaf... copied independently. Wholeimage
+  f48072c805be23ded553aa661c2c8e2f44074d041853b0b4cdcb43dc659f9909/6043648B,
+  actualunmodifiedEDK2 GetInfo/fullDecode43595464B byteequal/original81FW/
+  SimpleInit/BootShim/DTB retained. Fullactualadmit92a62019969eca3fdcd851cf65f62bc96b20a244a807f1499b586995e00c47a6,
+  freshprebootreview61ed45ddbe03aa43ccc43494d534c6c96ff8fb1c0f178eaaee82c0d8bbb4bae7,
+  extendedsource45d804b79662ea0dd61936b147d6adf4db8ddf9eb684bc5782c1e0a2e0ef2137.
+  Independentfreeze/private/tmp/polaris-runtime-0187-frozen-0001 COPY901+
+  10COMMIT_ONLY/486activecommittedsources/94inputs/newinodes/nohardlinks/NV0600/
+  root0700/noZigcache SHA938565ed34e4b99221edb77853c42edf3d90330c243faca0f1c6dcf7f93a1ebb.
+  ONEdefaultofflinehelper PASS, no refreeze/repeatdefaulthelper. Only after
+  thisexactreadinesspublication+independentremoteproof and ONE8s correctPolaris
+  check may matchingfrozen0187 boot-latched-word-vote-once-0001.py --boot-once
+  atomicallycreate NEWORIGINAL0187/phone-latched-word-vote-runtime-0001/boot.json
+  and ONEimage. Same63cbpayload once aftersolewaitingpayload; no oldcontroller
+  or oldsession/image/payload/OEMboot replay. ImageACK is notnative/ARC/WiFi.
+  ActualcompleteARCroundtrip/fullretirement stillUNOBSERVED; useraction/auth
+  notpending. Currentneeded item is exactreadinesspushproof before device.
 - FW00490da1c13614db29a4502c50a5d0b9cce475ca committed. NEW exact
   GCD_CLOCK_0187 binds370PowerGCD/94resource fields/94inputs; all41 oldliteral
   AST unchanged. 21hosttests/69actualmetadata-type refusals/5missingdeps pass,
@@ -54,7 +84,7 @@ early samples only. On0029 the human already confirmed boot complete and said
 | WiFi stage | Actually completed | Acceptance still required |
 | --- | --- | --- |
 | ARC readback |0185 three realREADs/fullraw/fullretirement/controlledexit; ARC HLOS/DRV2 semantics primary reviewed |Fresh values in every new session; no oldcontext/value reuse |
-| ARC raise/restore |0186 photo identified writer-startBUSY6; NEW0187 source fix and560affected SOFTWARE checks pass |NewfullstrictRO39/hostexactprofile/codec/freeze/helper then realraise/reversesavedrestore/fullretirement/controlledexit |
+| ARC raise/restore |0186 photo identified writer-startBUSY6; NEW0187 source fix and560affected SOFTWARE checks pass |Full39/host/models/codec/freeze/helper nowdone; realraise/reversesavedrestore/fullretirement/controlledexit pending |
 | Four own WiFi VRMs |OwnDT supplies and CmdDb ldoa5=40f00/7=41300/17=40c00/25=42000 identified |Fresh saved voltage/enable/mode semantics, orderedrails and exactrestore BEFORE MSS |
 | MSS/MSA/GLINK/WLFW |OwnDT/vendor and Mi8sequence correspondence; volatileRMTFS software service implemented |Ownedaligned2MiBMPU envelope/logical1MiB MSA/cache/DMAstop/VMIDhandback, actualMSS+GLINK/QRTR/provider/WLFW/ownBDF/FW_READY |
 | Native ath10k/interface |Mi8XNU/Linuxath10kSNOC/QMI source matched; ath11k comparison added |Actualnative transport/CE/WMI/HTT/netif and real scan results |
