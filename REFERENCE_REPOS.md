@@ -1350,3 +1350,21 @@ closed ticket, artificial opened/valid state, key match or AT alone supplies
 that authority. Comment-only source9a79f96c7ce2364f577d4486802d2cc23f6f9a3a
 preserves the entire enabled149831B preprocessed C byte-for-byte;8334 SOFTWARE
 checks/347280B component and exports are reused, not rerun. No physical action.
+
+Source06a37e60039c2dfe61711ab82d431abcbe2fdb06 now connects real incoming
+GetMap call evidence to the actual parent, under the defaultOFF remote-memory
+flag. Exactly its two existing admission calls are wrapped, with no added map
+query or allocator call. Independent67232B records retain actual entry/return/
+key/full output tail, loaded-image metadata/BS tables, real parent native flag and FP/
+architecture witnesses. Both phases still precede payload allocation and
+explicitly cannot be renamed a later current MSS map or private owner grant.
+Unknown/error/input corruption reaches RAM append then terminal hold before
+Console/USB/reset.1452 new SOFTWARE checks and independent complete struct/
+hashlib decode pass; full parent/wrapper COFF/MachO/generalregs/maxframe1024
+compile and QEMU refusal also pass. Original allocator149831B enabled C and
+old parent182485 OFF tokens are unchanged;8334 prior cases are reused.
+Private proofa56dae13dee48e68f8ef51098d18fb3557df6b5462e93ce6e57ff9ddb390cf3f
+records the limited scope. No original PE or device action ran. The necessary
+later parent object/map and initial dynamic GCD/type-policy/callback work,
+MSS allocations/cache/secure/DMA handback and whole candidate qualification
+remain unfinished. No new model/codec/profile/image or firmware variant.

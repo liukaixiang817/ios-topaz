@@ -108,7 +108,75 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
-- NEW0189 CURRENT initial-GetMap SOURCE/fresh-parent-map boundary,
+- NEW0189 CURRENT real-parent incoming-map call/key/native/FP/image witness
+  wiring, source06a37e60039c2dfe61711ab82d431abcbe2fdb06. This supersedes the
+  source-only9a79f96/3cb02d5 handoff below. Actual parent code now wraps exactly
+  its TWO existing admission GetMap calls when REMOTE_MEMORY is explicitly ON;
+  no additional GetMap refresh or allocation call was added. PhysicalCURRENT0188/
+  last actualFASTBOOT10:05/consumed image/session/controller remain unchanged.
+  No USB/native/provider/device action, new image/helper/freeze/CI/model/codec.
+  The MSS allocation consumer/builder/CLI/new exactprofile remain absent;
+  NEW0189 NOTREADY, no source/runtime owner or PA/MSS/NV/radio grant.
+- HeaderSHA274ac1f3992636baf2b067e699df487a0170b448c696fc0365f42bccd61740a0;
+  actual parent shim/polaris/uefi-xnu.c
+  SHA18806ab2588e77130060036a5bc9104decbc489b56f2d95080ff1c5ed30049e3;
+  new tools/polaris-wifi-parent-map-test.c
+  SHAab4a1dee2e40b8abe3590376e1dae19a6b0354ea7ee4056cce654e7aeb2a8a54.
+  Complete old allocator enabled C remains byte-equal149831B; its8334 cases/
+  exports/CABI347280B are reused, not rerun. Existing parent flag-OFF has all
+  182485 executing tokens equal to the previous parent. No old source review,
+  models/codec/nativeCI or original controller was rerun.
+- Two actual parent phases are explicit: before kernel-bank claim, then after
+  kernel-bank claim BEFORE payload allocation. Each new67232B record preserves
+  real registered GetMap entry/status/key/bytes/stride/version, full65536B
+  output including unreturned tail, full376B BS and96B loaded-image before/
+  after, actual driver handle and actual &wln_cpu_on_issued. Five native reads
+  have issued/returned masks; both architecture samples and FP save/restore
+  issued/returned/raw are retained. The clock is existing pgcd_actual_arch's
+  CNTVCT_EL0, not the separate provider's CNTPCT sample. Original200ms check
+  remains, without a global or full-bootstrap wall-time guarantee.
+- Full input/FP intent and returned-map digests bind callback returns before
+  later dereferences or restoration. Partial/error/changed input, native1,
+  BS-table/loaded-image metadata changes and invalid maps stop UNKNOWN without later
+  sampling, guessed FP restore, retry or cleanup. The genuine parent appends
+  complete raw in RAM then goes directly to its nonreturn terminal hold on
+  failure, before Console/USB/reset. Destination map_snapshot is copied only
+  after complete validation. Original raw tail is preserved, never zeroed.
+  There is no allocator context/ticket open and no private ownership boolean.
+- FINAL1452 new parent-wrapper ASAN/UBSAN SOFTWARE checks PASS0.9762960000080056s.
+  Full immutable input prefix mutations, callback/FP/native/returned-map
+  corruption, partial calls, map geometry/errors and no-failure-sampling cases
+  passed. Early host positives exposed missing explicit8-byte buffer alignment;
+  fixed without fewer checks, old logs preserved. Actual entire parent and
+  exported wrapper COFF+MachO/generalregs/maxframe1024 PASS. First full-parent
+  compile omitted its existing WLED_NATIVE_RUNTIME_PHYSICAL command define;
+  corrected command, no dependency removed. Physical-only QEMU refusal PASS.
+  Independent struct/hashlib decodes the entire67232B final software record;
+  no captured pointer or original PE instruction executed.
+- The new ON-only log buffer11272192B and static capacity include both full
+  parent raw records. This does not qualify a new resource/profile or image.
+  New parent-record CABI67232B is separate from allocator347280B and actual
+  physical0188 parent2072064B; do not mix decoders. Private
+  0189/wifi/parent-incoming-map-0001/proof.json
+  SHAa56dae13dee48e68f8ef51098d18fb3557df6b5462e93ce6e57ff9ddb390cf3f;
+  source/softwareb1394a7eb3e105d1982d11d7d23a6bcc0a3a202b83231700f43e5cdbd669e504.
+- NEXT: these are real incoming-UEFI call witnesses, NOT a later current MSS
+  map. They still precede payload/log allocations; phases reject nonzero
+  payload/log inputs. Build the necessary later fresh parent map and complete
+  current loaded-image/payload/root/source bindings, then first private
+  GetMap's full dynamic GCD80B/type-policy/callback/temporal-work qualification.
+  No blind refresh, copied phase2/current label, old closed context/ticket,
+  opened/valid forgery, matching-key/AT-only owner or lease/permission boolean.
+  Then the two real independent MSA/RMTFS claims, cache/secureVMID/MPU/DMAstop/
+  handback and full normal/UNKNOWN retirement. Original20Core+70provider hashes/
+  200ms/ARC/VRM/readwork/fullrestore unchanged. Complete changed-parent affected
+  checks/two serial models/new profile/resource/codec/transition/freeze/ONEhelper
+  are still required before any image or PA/MSS/NV/radio/scan/join/data. WiFi
+  NOT DONE; sound/camera STOP. No physical or authorization reply pending.
+  Source/text-only standing publication applies; private receipt will be
+  parent-incoming-map-source-and-handoff-push-proof-0001.json.
+
+- HISTORICAL0189 initial-GetMap SOURCE/fresh-parent-map boundary,
   comment-only source9a79f96c7ce2364f577d4486802d2cc23f6f9a3a. Functional
   source7904485/8334 checks/CABI347280B remain unchanged; no new bootstrap
   backend, physical parent, candidate or readiness claim. PhysicalCURRENT0188/
