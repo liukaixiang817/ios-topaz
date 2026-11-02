@@ -34,6 +34,50 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0183 bounded3READ source/affected offline checks complete; exact host/image/freeze NOTREADY; actual Polaris FASTBOOT01:25
+
+- NEW defaultOFF `--wifi-power-current-word-read` is a separate explicit
+  capture-only READ scope. Requires fresh normal10typedobject/currentnamespace/
+  source/fullcache/Device/work/CPU/live-diagnostics/wordDB/GOP; oldCPU/access/DB
+  checkpoints and normal-to-maskedDB stop are mutually exclusive. No oldcontext/
+  ticket/record is continued. New raw CURRENT_PRIVATE_WORD_READ_RAW_V1/1969216B.
+- Original three single READs/0x108/30000,30010,30060 are dynamically selected,
+  checked32-bit Device operations; no CMD_DATA/IRQenable/type/resourceWRITE.
+  NewIRQ/allissuedDONE/idle before ACK, all touchedRW/readback and full engine+
+  access prefix before CPU restore. Saved highTRIGGER is retained from the
+  third completed new edge, never written high as a fourth trigger. Full word
+  DB0 delivery prefix checked before acquired/READ; DB0+DB1 before accessclose.
+  Normalprefix/work retained beforemask/beforeREAD/afterREAD/beforeknownDelete.
+  Original200ms/all68/slowest/READ50ms+25ms/256steps1024events unchanged; no
+  rebase/renewal/permissionbool/IRQtype change or UNKNOWN/held clearing.
+- 238 ASAN/UBSAN actualouterreader-copy SOFTWARE cases passed (17.821439875s),
+  including success low/high savedlatch, normalAT/latebudget, all64maskedAT
+  partial/PAR, wordprefix preREAD11+postREAD11, deliveredword/firstbadbyte,
+  source/native/time/normalprefix/work/IRQ/completion/restore and initialbinding.
+  Late normal CmdDbsource-close failure retains already restored CPU, blocks
+  Delete/export UNKNOWN; no claim all failures occurred before CPUrestore.
+- FinaldriverON0001 c4266d464c85a7b7c551a7d972aaed4a41c387056340be244c586f7ae4ac2143/
+  16103424B/94inputs. OFF0001 b6f27adb.../16057856B/91inputs byteequal0182.
+  Wholemain actualCOFF/MachO/generalregs/maxframe1024/fullCABI and actualLDR
+  passed; V4 only resident pendingIO/READ phase/completion/DBprefix/CPU evidence,
+  no new failure-time hardware read. QEMU removes physical bodies. 1403 old
+  cases' executing Ctokens exact when newflagOFF, reused without rerunning.
+  Parentproof98ef61fb8785705efb970e48db435960dfac9a03068298c2472b0de3db6e39a0.
+  Two SERIAL wholeEFI-XNU models each19checks/94sameinputs/11resource+1battery
+  literalint1 passed; modelproofc0258089b6d4e18d14752ffe26e121c180dd3e9663099d10ad9263817cfbb9fb.
+  Models SOFTWARE PMIC/delay/RAMUSB, no physicalREAD/radio/actualguestreset.
+- Sourceproof0183/wifi/current-word-read-source-and-offline-proof-0001.json
+  SHAad464f0fe79af96371892f0e9ae0c9bc983565f4db78b5990a6ba8f598ca483e.
+  Host exact0183 profile, originalwholecodec/image/independentfreeze/ONEhelper
+  remain unfinished; NEW0183 NOTREADY/no devicecommand/bootrecord. No source
+  unchanged oldmodels/CI/optical/CPU-prep-client inventory boot to repeat.
+- Phone last independent actualPolarisFASTBOOT2026-11-02T01:25:24.486991Z after
+  full0182 controllednormaldrain; 0182 originalrecord CONSUMED/sessionENDED,
+  no further0182 USB/nativecommand or replay allowed. ROOTNV actualNEW0182
+  RO0002 full39 remains current after controlledexit; reuse integrity only,
+  no repeatfullhash/recovery. Every NEWREAD runtime owner/source/CPU/AT fresh.
+  No physical/auth待答, all workersENDED/allchildrenSTOP. Wi-Fi NOT DONE.
+
 ### CURRENT0182 actual two full masked DB/CPU/source/private retirement + controlled Polaris FASTBOOT01:25; READ/Wi-Fi NOT DONE
 
 - Actual0182 source FWb1d8ec81b2594eca695e369e170b82792b9aac35/

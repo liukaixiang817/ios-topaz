@@ -253,7 +253,7 @@ static int shutdown_status(void *,const uint8_t **,uint64_t *);
 #include "uefi-gcd-mmio-readonly.h"
 #include "uefi-audio-clock-gcd-query.h"
 #if EFI_XNU_WIFI_TERMINAL_GOP_DIAGNOSTICS
-#if !EFI_XNU_WIFI_READ_DB_CHECKPOINT
+#if !EFI_XNU_WIFI_READ_DB_CHECKPOINT && !EFI_XNU_WIFI_CURRENT_WORD_READ
 #error "Terminal GOP evidence requires its distinct masked database diagnostic"
 #endif
 #include "uefi-wifi-terminal-gop.h"
@@ -302,6 +302,28 @@ static void terminal_gop_evidence(void)
      * The attempted/issued masks beside the errors distinguish UNOBSERVED. */
 #if EFI_XNU_WIFI_CPU_LIVE_DIAGNOSTICS
     const struct pwrpc_live_diagnostic*d=&pwrpt_record.CPU.live_failure;
+#if EFI_XNU_WIFI_CURRENT_WORD_READ
+    /* Projection of resident issued/returned evidence only. No observer,
+     * clock, register or firmware call is made after the original failure. */
+    const struct pwra_result*a=&pwrpt_record.access;
+    const struct pwra_event*e=a->events&&a->events<=PWRA_EVENTS?&a->history[a->events-1]:0;
+    pwtg_line(r,0,"V4 HOLD",pwrpt_record.attempted,pwrpt_record.phase);
+    pwtg_line(r,1,"BODY CPU",pwrpt_record.error,pwrpt_record.CPU.error);
+    pwtg_line(r,2,"WHY CALL",d->reason,d->call);
+    pwtg_line(r,3,"MASK ARCH OK",d->masked,d->arch_callback_ok);
+    pwtg_line(r,4,"OPEN HI LO",(uint32_t)(d->opening_ticks>>32),(uint32_t)d->opening_ticks);
+    pwtg_line(r,5,"FAIL HI LO",(uint32_t)(d->failed_ticks>>32),(uint32_t)d->failed_ticks);
+    pwtg_line(r,6,"ACC A E",a->attempted,a->error);
+    pwtg_line(r,7,"ACC U OUT",a->unknown,a->outstanding);
+    pwtg_line(r,8,"IO OP FLAGS",e?e->operation:0,e?(e->io.issued|(e->io.returned<<8)|(e->io.unknown<<16)):0);
+    pwtg_line(r,9,"IO ADDR L H",e?(uint32_t)e->io.address:0,e?(uint32_t)(e->io.address>>32):0);
+    pwtg_line(r,10,"READ PH STEP",pwrpt_record.read.io.phase,pwrpt_record.read.io.steps);
+    pwtg_line(r,11,"READ TR DONE",pwrpt_record.read.io.triggers,pwrpt_record.read.io.completed);
+    pwtg_line(r,12,"DB0 BYTE WR",a->CmdDb[0].bytes,a->CmdDb[0].word.returned);
+    pwtg_line(r,13,"DB1 BYTE WR",a->CmdDb[1].bytes,a->CmdDb[1].word.returned);
+    pwtg_line(r,14,"CPU H R",pwrpt_record.CPU.local_mask_held,pwrpt_record.CPU.local_restored);
+    pwtg_line(r,15,"READ E U",pwrpt_record.read.io.error,pwrpt_record.read.io.unknown);
+#else
 #if EFI_XNU_WIFI_DB_WORD_CAPTURE
     pwtg_line(r,0,"V3 HOLD",pwrpt_record.attempted,pwrpt_record.phase);
 #else
@@ -327,6 +349,7 @@ static void terminal_gop_evidence(void)
 #endif
     pwtg_line(r,14,"CPU H R",pwrpt_record.CPU.local_mask_held,pwrpt_record.CPU.local_restored);
     pwtg_line(r,15,"NOT WIFI",pwrpt_record.read.io.attempted,pwrpt_record.transaction.attempted);
+#endif
 #else
     pwtg_line(r,0,"V1 HOLD",pwrpt_record.attempted,pwrpt_record.phase);
     pwtg_line(r,1,"BODY E U",pwrpt_record.error,pwrpt_record.unknown);

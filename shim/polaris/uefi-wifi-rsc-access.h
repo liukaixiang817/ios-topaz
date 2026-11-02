@@ -15,6 +15,9 @@
 #ifndef EFI_XNU_WIFI_DB_WORD_CAPTURE
 #define EFI_XNU_WIFI_DB_WORD_CAPTURE 0
 #endif
+#ifndef EFI_XNU_WIFI_CURRENT_WORD_READ
+#define EFI_XNU_WIFI_CURRENT_WORD_READ 0
+#endif
 #include "uefi-wifi-power-critical.h"
 #include "uefi-wifi-rsc-device.h"
 #include "uefi-wifi-cmddb-prepared.h"
@@ -22,7 +25,7 @@ struct pwcp_result;
 #if EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE && !defined(POLARIS_EFI_TEST_QEMU)
 #define PWRA_EVENTS (PWRSC_HISTORY+96u)
 #if EFI_XNU_WIFI_DB_WORD_CAPTURE
-#if !EFI_XNU_WIFI_CPU_LIVE_DIAGNOSTICS || !EFI_XNU_WIFI_NORMAL_TO_MASKED_DB || !EFI_XNU_WIFI_READ_DB_CHECKPOINT || !EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE || !EFI_XNU_WIFI_ARC_READ_AVAILABLE
+#if !EFI_XNU_WIFI_CPU_LIVE_DIAGNOSTICS || (!EFI_XNU_WIFI_NORMAL_TO_MASKED_DB && !EFI_XNU_WIFI_CURRENT_WORD_READ) || (!EFI_XNU_WIFI_READ_DB_CHECKPOINT && !EFI_XNU_WIFI_CURRENT_WORD_READ) || !EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE || !EFI_XNU_WIFI_ARC_READ_AVAILABLE
 #error Word capture requires the complete normal-to-masked database diagnostic scope
 #endif
 /* Only the already NS/WB/same-PA validated Normal RAM page below uses a
@@ -414,6 +417,9 @@ static inline int pwra_prepare_checked(struct pwra_context *c,const struct pwra_
     r->mask=masked->active_mask;
     return pwra_cmddb(c,0);
 }
+#if EFI_XNU_WIFI_CURRENT_WORD_READ
+static inline int pwra_observed_databases_valid(struct pwra_context *c,unsigned count);
+#endif
 static inline int pwra_acquire_checked(struct pwra_context *c,const struct pwra_io *io,struct pgcd_context *g,
     struct pwrcl_result *provider,const struct pwrph_work *w,struct pwrpc_result *critical,
     const struct pwcd_result *cmd,const struct pwrpb_baseline *normal,const struct pwrpb_baseline *masked,
@@ -422,6 +428,9 @@ static inline int pwra_acquire_checked(struct pwra_context *c,const struct pwra_
 {
     if(!pwra_prepare_checked(c,io,g,provider,w,critical,cmd,normal,masked,device,tx,r,prepared,read,writer)||
        !pwra_snapshot(c,0))return 0;
+#if EFI_XNU_WIFI_CURRENT_WORD_READ
+    if(!pwra_observed_databases_valid(c,1))return 0;
+#endif
     r->acquired=r->local_held=1;paic_actual_order(0);return 1;
 }
 static inline int pwra_acquire_as(struct pwra_context *c,const struct pwra_io *io,struct pgcd_context *g,
@@ -534,13 +543,25 @@ static inline int pwra_retire(struct pwra_context *c)
     for(unsigned k=0;k<r->events;k++)if(r->history[k].io.issued!=1||r->history[k].io.returned!=1||r->history[k].io.unknown||
        !pwrmd_translation_valid(&r->history[k].io.translation))return pwra_fail(c,PWRA_PREFIX,1);
     if(!pwra_cmddb(c,1)||!pwra_snapshot(c,1))return 0;
+#if EFI_XNU_WIFI_CURRENT_WORD_READ
+    if(!pwra_observed_databases_valid(c,2))return 0;
+#endif
     r->local_held=0;r->retired=1;paic_actual_order(0);return 1;
 }
-#if EFI_XNU_WIFI_READ_ACCESS_CHECKPOINT
-static inline int pwra_observed_databases_valid(struct pwra_context *c)
+#if EFI_XNU_WIFI_READ_ACCESS_CHECKPOINT || EFI_XNU_WIFI_CURRENT_WORD_READ
+static inline int pwra_observed_databases_valid(struct pwra_context *c
+#if EFI_XNU_WIFI_CURRENT_WORD_READ
+    ,unsigned count
+#endif
+    )
 {
     struct pwra_result *r=c->record;
+#if EFI_XNU_WIFI_CURRENT_WORD_READ
+    if(count!=1&&count!=2)return pwra_fail(c,PWRA_PREFIX,1);
+    for(unsigned slot=0;slot<count;slot++){
+#else
     for(unsigned slot=0;slot<2;slot++){
+#endif
         const struct pwra_cmd_snapshot *s=&r->CmdDb[slot];
         if(s->attempted!=1||s->complete!=1||s->bytes!=PWCD_DB_BYTES||s->hash_count!=5||s->hash_failed||
            s->owner_bytes!=sizeof(s->owner)||s->table_bytes!=72||s->global_bytes!=72||
@@ -563,6 +584,8 @@ static inline int pwra_observed_databases_valid(struct pwra_context *c)
         }
     }return 1;
 }
+#endif
+#if EFI_XNU_WIFI_READ_ACCESS_CHECKPOINT
 #if EFI_XNU_WIFI_READ_DB_CHECKPOINT
 /* Close the second full RAM capture, not an RSC acquisition. acquired,
  * local_held and retired stay ZERO because that lifetime never opened. The
