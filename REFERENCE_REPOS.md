@@ -1254,3 +1254,17 @@ and softwareproof8c5da01ff9156239d9836395431e6bd2fcee35fb2f01118d76e43b8bfd54841
 record this limit. Original firmware bytes were only inspected as private DATA.
 Physical parent/native/current-image bindings and cache/secure/DMA handback
 still must be qualified before any new integrated candidate or device action.
+
+The subsequent one-shot timer gate (source8d8ffdfed8bf2dcccde410aa14ed5bff882dd9a7)
+now binds the complete current TimerList (max32/full184B nodes) and complete
+checker object to those original paths. Nonperiodic period0 takes cbc4's
+skip-reinsert branch; with flag58=0, SignalEvent uses c7f0's fixed queue work,
+and notify8/16 callbacks defer atTPL16. Periodic cbf0 requeue and arithmetic
+wrap can defeat that bound, so all periodic timers are refused. No firmware
+timer is cancelled, rearmed or unlinked.1122 independent ABSTRACT branch cases
+max32 removals and4732 SOFTWARE adapter checks do not execute the original PE.
+Private sourceproof3b00591bd1d3e6e49a6676ff6661c3776e2766b0078c5f07327442284e5389b6
+records the exact scope. Current physical TimerList/periodic timers, foreign
+IRQ rearm, deferred normal-TPL effects and timer/CPU interrupt-provider bindings
+remain unqualified; empty snapshots or finite one-shot paths are not a lease
+or a global execution-time guarantee. The physical parent is still not wired.

@@ -108,7 +108,72 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
-- NEW0189 CURRENT SOFTWARE registered-TPL allocator milestone, source
+- NEW0189 CURRENT SOFTWARE complete nonperiodic timer-path milestone, source
+  8d8ffdfed8bf2dcccde410aa14ed5bff882dd9a7. This supersedes3792checks/304912B
+  and the675ef81/d2c8525 component handoff below. PhysicalCURRENT0188 remains
+  unchanged. No new USB/image/payload/native action, parent/builder/CLI/profile
+  import, model/codec/CI/freeze/helper/candidate. The actual page adapter is
+  still defaultOFF; NEW0189 NOTREADY. WiFi cannot be enabled and scan/join/data
+  have never succeeded. No physical action or authorization is pending.
+- HeaderSHA9efd3784ab2e2cd40faec5bcbb7a38aba0697aeb03b192383e249f130ce68e30;
+  testSHA04a86b8a952335cc99ff258b9d6560446c8c61eb6fe8428d91caa4251973881b.
+  A complete original TimerList is now part of the actual adapter admission:
+  at most32 nodes, each full184B with fresh per-page NSWB same-PA metadata ATs,
+  double links/ordered triggers/locks/heads/zero tail/full prefix SHA. The
+  current checker pointer1cbc8 binds its entire184B object to the existing
+  complete signal-event chain: exact type200/TPL30/Core+cb24/context0, idle
+  signal/NotifyLink and no group flag. Every other higher signal callback is
+  refused. If the checker is absent, only an empty TimerList with no higher
+  signal subscriber can pass; this does not claim the timer IRQ is stopped.
+- Current timer nodes accept only nonperiodic period0 and no group fanout,
+  with timer-only or notify-wait/signal at8/16. ANY periodic timer, unknown
+  higher callback, malformed/cyclic/foreign/overlong/overlapping/unsorted list or held
+  lock is refused. This adapter never cancels/rearms/unlinks a firmware timer
+  or edits IRQ masks. The full typed prefix/current metadata is checked after
+  clock/order callbacks before the registered TPL/page leaf; mutation or
+  partial metadata AT preserves UNKNOWN/held and cannot free/retry/cleanup.
+  Full retained timer history is also required before release/exposure.
+- New targeted source path: cb24 removes an expired nonperiodic node and
+  branchcbc4 skips reinsertion. SignalEventca90 with raw flag58=0 uses c7f0's
+  bounded queue update; the accepted notify levels defer callbacks atTPL16.
+  A periodic node can instead requeue the checker atcbf0, and arithmetic wrap
+  can prevent progress. The new gate refuses that branch rather than assuming
+  a periodic bound. Timer locks1c3d8/1c400 use31/30; their whole original state
+  is retained. Counter1dc00 is raw evidence, not a time conversion or lease.
+  Private0189/wifi/own-Core-nonperiodic-timer-path-0001/proof.json
+  SHA3b00591bd1d3e6e49a6676ff6661c3776e2766b0078c5f07327442284e5389b6.
+  Independent1122 ABSTRACT one-shot branch cases/max32 removals are not
+  original-firmware execution and do not prove foreign IRQs cannot rearm it.
+- FINAL4732 actual-adapter ASAN/UBSAN SOFTWARE checks passed in
+  60.58442341600312s. All previous3792 remain, plus0..32 complete timer lists,
+  timer/wait/signal types,26 malformed/periodic/group/checker/lock refusals,
+  clock/final-order changes for claim/release, all184 bytes of checker/timer
+  history changed before release/exposure, and every33 ordinary/36 cross-page
+  metadata-AT partial prefix for BOTH operations. Original Core only DATA;
+  BS/AT are explicit peers. Actual COFF+MachO/generalregs/maxframe1024 and
+  current defaultOFF-no-adapter-body PASS; AT read/write retained, no SMC or
+  direct DAIF/CPACR/TTBR/TCR/SCTLR write. Python struct/hashlib independently
+  verifies the full99792B four-prefix fixture, including whole timer objects,
+  all links/ATs/zero tails/digests/typed entries and the8192-page map oracle.
+  New componentCABI321008B/timerpath8048B are SOFTWARE only, not an0188 RAW ABI.
+  Private finalproof0189/wifi/remote-memory-backend-0007/proof.json
+  SHA3252a479b0d33a406b86a8d5258ba67f8e9925e4516869e5e30a104485bf2b56;
+  source/softwaref7e9081bce2c97250a7fbacd0c328b899755de9df63437bf328a68df5600ba90.
+- NEXT: actual phone TimerList, periodic timers, foreign IRQ rearm and deferred
+  normal-TPL callback bounds are still UNOBSERVED/unqualified. The one-shot
+  source bound does not prove global wall time or future ownership. Qualify
+  the original current timer/CPU interrupt provider and actual parent bindings
+  to native_cpu_on, every current loaded image/payload/root/source object and
+  both claims; do not repeat this same one-shot review or make an allocator
+  inventory boot. Real cache/secureVMID/MPU/remoteDMA stop/handback still missing.
+  Original20 Core hashes/200ms per operation and ALL ARC/VRM/read-work deadlines/
+  full restoration stay, no rebase/renew/old ticket. No PA publish/MSS/NVserve/
+  radio. ActualFW270052fb/HOST15e830b,0188CONSUMED/ENDED and lastFB10:05 unchanged.
+  Publication follows actual current/future a58a65... source/text consent;
+  private direct-push/independent-lsremote receipt:
+  0189/wifi/remote-memory-one-shot-timer-source-and-handoff-push-proof-0001.json.
+
+- HISTORICAL0189 SOFTWARE registered-TPL allocator milestone, source
   675ef81b89ccfca7722c3a3a2af27903c93a4b70. This supersedes the older proposed-
   only TPL bracket,3445checks/281600B and fcb1de9/cca4b3a component handoffs
   below. PhysicalCURRENT0188 above is unchanged: no new USB, image, payload,
