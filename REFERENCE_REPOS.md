@@ -328,6 +328,31 @@ remain in controlled UEFI without booting iOS. The actual key presses/HID/UI
 responses still have not passed a physical test. No PMIC configuration is
 written; only observer READ command words are emitted.
 
+### User-requested ath11k comparison, 2026-11-02
+
+The user asked whether ath11k can accelerate Polaris WiFi work. It is not
+running on the current iOS target. Our implementation/reference route remains
+own SDM845 ICNSS/SNOC and Mi8's WCN3990 ath10k/XNU integration; real association
+and traffic are still unfinished.
+
+[Linux ATH10K_SNOC Kconfig](https://github.com/torvalds/linux/blob/master/drivers/net/wireless/ath/ath10k/Kconfig)
+explicitly identifies WCN3990. [ath11k documentation](https://wireless.docs.kernel.org/en/latest/en/users/drivers/ath11k.html)
+describes its newer802.11ax device family. This is a hardware/transport mapping,
+not proof that a Linux module can run in XNU.
+
+The actual [ath10k QMI source](https://github.com/torvalds/linux/blob/master/drivers/net/wireless/ath/ath10k/qmi.c)
+provides the more direct MSA region-count/range checks, permission handover and
+IND_REGISTER/HOST_CAP/MSA_INFO/MSA_READY/CAP correspondence. The
+[ath11k QMI source](https://github.com/torvalds/linux/blob/master/drivers/net/wireless/ath/ath11k/qmi.c)
+is useful for comparing event-driven memory requests, board-data loading and
+firmware-ready/error lifetimes. Its different memory-request protocol, rings,
+chip constants and reset/calibration assumptions are not WCN3990 defaults.
+Retain own firmware/board identity and explicit bounded region/DMA ownership;
+do not copy a skip-hostcap/BDF, fixed-memory or coldboot reset quirk by analogy.
+Upstream master was read only for this comparison; any future imported code
+must first be pinned and matched to own vendor/DT evidence. This review changed
+no running firmware, radio state or device partition.
+
 Own Wi-Fi is ICNSS18800000/SNOC/stream40 with12CE interrupts, not Redwood's
 WCN6750/WPSS/ath11k. Original drivers/soc/qcom/icnss.c blob
 649d0ff9a41d8b250f0951eba75a25f0a1c04e74 is saved/verified privately. Actual

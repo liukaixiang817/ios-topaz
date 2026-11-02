@@ -1,7 +1,7 @@
-/* Actual outer reader-copy/current private lifecycle with explicit SOFTWARE
- * CPU/AT/Device peers. Original firmware images are inert fixture DATA. */
+#ifndef POLARIS_CURRENT_WORD_VOTE_TEST_MAIN
+#define POLARIS_CURRENT_WORD_VOTE_TEST_MAIN main
+#endif /* Actual outer lifecycle; SOFTWARE peers, inert original PE DATA. */
 #define EFI_XNU_WIFI_CURRENT_WORD_VOTE 1
-/* The shared fixture selects capture-only unless this explicit flag is ON. */
 #define POLARIS_CURRENT_WORD_READ_TEST_MAIN unused_word_read_main
 #include "polaris-wifi-current-word-read-test.c"
 static uint32_t vote_input[3]={6,3,0};
@@ -116,7 +116,7 @@ static void vote_success(void)
         vote_peak[k]==(vote_input[k]>path->desired[k]?vote_input[k]:path->desired[k]));
     assert(path->transaction.last-path->read.io.started<=PWRSC_DEADLINE);
 }
-int main(int argc,char **argv)
+int POLARIS_CURRENT_WORD_VOTE_TEST_MAIN(int argc,char **argv)
 {
     assert(argc==5&&!posix_memalign((void**)&arena,4096,0x800000));
     original=malloc(PGCI_IMAGE_BYTES);npa_original=malloc(PWNPI_IMAGE_BYTES);rp_original=malloc(PWRPI_IMAGE_BYTES);cmd_original=malloc(PWCDI_IMAGE_BYTES);

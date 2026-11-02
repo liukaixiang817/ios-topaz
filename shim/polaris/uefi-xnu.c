@@ -308,14 +308,22 @@ static void terminal_gop_evidence(void)
     const struct pwra_result*a=&pwrpt_record.access;
     const struct pwra_event*e=a->events&&a->events<=PWRA_EVENTS?&a->history[a->events-1]:0;
 #if EFI_XNU_WIFI_CURRENT_WORD_VOTE
+#if EFI_XNU_WIFI_CURRENT_WORD_VOTE_LATCHED
+    pwtg_line(r,0,"V8 HOLD",pwrpt_record.attempted,pwrpt_record.phase);
+#else
     pwtg_line(r,0,"V7 HOLD",pwrpt_record.attempted,pwrpt_record.phase);
+#endif
 #else
     pwtg_line(r,0,"V6 HOLD",pwrpt_record.attempted,pwrpt_record.phase);
 #endif
     pwtg_line(r,1,"BODY CPU",pwrpt_record.error,pwrpt_record.CPU.error);
     pwtg_line(r,2,"WHY CALL",d->reason,d->call);
     pwtg_line(r,3,"MASK ARCH OK",d->masked,d->arch_callback_ok);
+#if EFI_XNU_WIFI_CURRENT_WORD_VOTE_LATCHED
+    pwtg_line(r,4,"TCS IRQ EN",pwrpt_record.transaction.tcs,pwrpt_record.transaction.IRQ_enable);
+#else
     pwtg_line(r,4,"OPEN HI LO",(uint32_t)(d->opening_ticks>>32),(uint32_t)d->opening_ticks);
+#endif
     if(d->reason)pwtg_line(r,5,"FAIL HI LO",(uint32_t)(d->failed_ticks>>32),(uint32_t)d->failed_ticks);
     else pwtg_line(r,5,"IO VALUE OR0",e?e->io.value:0,a->command_status_OR[0]);
     pwtg_line(r,6,"ACC A E",a->attempted,a->error);

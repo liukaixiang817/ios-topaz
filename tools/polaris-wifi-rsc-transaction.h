@@ -15,6 +15,9 @@
 #ifndef EFI_XNU_WIFI_CURRENT_WORD_VOTE
 #define EFI_XNU_WIFI_CURRENT_WORD_VOTE 0
 #endif
+#ifndef EFI_XNU_WIFI_CURRENT_WORD_VOTE_LATCHED
+#define EFI_XNU_WIFI_CURRENT_WORD_VOTE_LATCHED 0
+#endif
 #define PWRSC_BASE UINT64_C(0x179e0d00)
 #define PWRSC_STRIDE 672u
 #define PWRSC_CMDS 3u
@@ -66,8 +69,20 @@ static inline int pwrsc_writable(const struct pwrsc_transaction *r,uint64_t at,u
     if(at==PWRSC_BASE+8)return value==(1u<<r->tcs);
     uint64_t t=PWRSC_BASE+(uint64_t)PWRSC_STRIDE*r->tcs;
     if(at==t+0x10)return value==r->saved.wait||value==(r->saved.wait|7u);
+#if EFI_XNU_WIFI_CURRENT_WORD_VOTE_LATCHED
+    if(at==t+0x14&&(r->saved.control&PWRSC_TRIGGER)){
+        uint32_t arm=(r->saved.control&~PWRSC_TRIGGER)|PWRSC_AMC;
+        /* Only a staged NEW launch may write high. ACK/restore cannot write
+         * the saved high latch and accidentally manufacture a third edge. */
+        return (r->phase==1||r->phase==3)&&(value==arm||value==(arm|PWRSC_TRIGGER));
+    }
+    if(at==t+0x14)return value==r->saved.control||value==(r->saved.control|PWRSC_AMC)||value==(r->saved.control|PWRSC_AMC|PWRSC_TRIGGER);
+    if(at==t+0x1c)return value==0||value==7||
+        (r->completed==2&&r->acknowledged==2&&value==r->saved.enable);
+#else
     if(at==t+0x14)return value==r->saved.control||value==(r->saved.control|PWRSC_AMC)||value==(r->saved.control|PWRSC_AMC|PWRSC_TRIGGER);
     if(at==t+0x1c)return value==0||value==7;
+#endif
     unsigned restoring=r->completed==2&&r->acknowledged==2;
     static const uint32_t address[3]={0x30000,0x30010,0x30060};
     for(unsigned k=0;k<3;k++)for(unsigned j=0;j<3;j++)if(at==t+0x30+20*k+4*j){
@@ -142,7 +157,13 @@ static inline int pwrsc_begin(const struct pwrsc_io *io,struct pwrsc_transaction
     for(unsigned k=0;k<8;k++)if((active_mask&r->IRQ_enable)&(1u<<k)){
         r->tcs=k;
         if(!pwrsc_snapshot(io,r,&r->observed))return 0;
+#if EFI_XNU_WIFI_CURRENT_WORD_VOTE_LATCHED
+        if(((r->observed.status&1)&&!r->observed.enable&&!(r->observed.control&PWRSC_TRIGGER))
+           ||(r->observed.status==1&&r->observed.control==(PWRSC_AMC|PWRSC_TRIGGER)&&r->observed.enable==1)
+          ){
+#else
         if((r->observed.status&1)&&!r->observed.enable&&!(r->observed.control&PWRSC_TRIGGER)){
+#endif
             r->saved=r->observed;found=1;break;
         }
     }
@@ -157,7 +178,19 @@ static inline int pwrsc_stage(const struct pwrsc_io *io,struct pwrsc_transaction
     uint64_t t=pwrsc_tcs(r);uint32_t irq,control,enable,status,irq_enabled;
     if(!pwrsc_irq(io,r,&irq)||!pwrsc_read(io,r,t+0x14,&control)||!pwrsc_read(io,r,t+0x1c,&enable)||
        !pwrsc_read(io,r,t+0x18,&status)||!pwrsc_read(io,r,PWRSC_BASE,&irq_enabled))return 0;
-    if(irq||control!=r->saved.control||enable||!(status&1)||irq_enabled!=r->IRQ_enable){pwrsc_fail(r,PWRSC_CHANGED);return 0;}
+    if(irq||control!=r->saved.control||
+#if EFI_XNU_WIFI_CURRENT_WORD_VOTE_LATCHED
+       enable!=(r->triggers?0:r->saved.enable)||
+#else
+       enable||
+#endif
+       !(status&1)||irq_enabled!=r->IRQ_enable){pwrsc_fail(r,PWRSC_CHANGED);return 0;}
+#if EFI_XNU_WIFI_CURRENT_WORD_VOTE_LATCHED
+    /* Own HAL7704..7734 and the physically retired READ protocol require a
+     * low/readback before touching commands and issuing the next NEW edge. */
+    uint32_t arm=(r->saved.control&~PWRSC_TRIGGER)|PWRSC_AMC;
+    if((r->saved.control&PWRSC_TRIGGER)&&!pwrsc_store(io,r,t+0x14,arm))return 0;
+#endif
     for(unsigned k=0;k<3;k++){
         /* Raise CX -> MX -> MSS; restore MSS -> MX -> CX. Never lower the
          * dependency rails ahead of restoring MSS' saved vote. */
@@ -166,8 +199,13 @@ static inline int pwrsc_stage(const struct pwrsc_io *io,struct pwrsc_transaction
            !pwrsc_store(io,r,t+0x38+20*k,restore?r->saved_vote[resource]:r->raised_vote[resource]))return 0;
     }
     if(!pwrsc_store(io,r,t+0x10,r->saved.wait|7u)||!pwrsc_store(io,r,t+0x1c,7u)||
+#if EFI_XNU_WIFI_CURRENT_WORD_VOTE_LATCHED
+       !pwrsc_store(io,r,t+0x14,arm))return 0;
+    uint32_t value=arm|PWRSC_TRIGGER;
+#else
        !pwrsc_store(io,r,t+0x14,r->saved.control|PWRSC_AMC))return 0;
     uint32_t value=r->saved.control|PWRSC_AMC|PWRSC_TRIGGER;
+#endif
     /* A trigger may complete before its readback and is self-changing. Its
      * delivery is recorded; completion comes only from NEW IRQ + all3 DONE. */
     if(!pwrsc_access(io,r,t+0x14,&value,1))return 0;
@@ -195,7 +233,16 @@ static inline int pwrsc_ack(const struct pwrsc_io *io,struct pwrsc_transaction *
 {
     if(r->completed!=r->triggers||r->acknowledged+1!=r->completed){pwrsc_fail(r,PWRSC_ARGUMENT);return 0;}
     uint64_t t=pwrsc_tcs(r);uint32_t irq,value=1u<<r->tcs;
+#if EFI_XNU_WIFI_CURRENT_WORD_VOTE_LATCHED
+    if(!pwrsc_store(io,r,t+0x1c,0))return 0;
+    if(r->saved.control&PWRSC_TRIGGER){
+        uint32_t control;if(!pwrsc_read(io,r,t+0x14,&control))return 0;
+        if(control!=r->saved.control){pwrsc_fail(r,PWRSC_CHANGED);return 0;}
+    }else
+    if(!pwrsc_store(io,r,t+0x14,r->saved.control))return 0;
+#else
     if(!pwrsc_store(io,r,t+0x1c,0)||!pwrsc_store(io,r,t+0x14,r->saved.control))return 0;
+#endif
     /* Never clear pending/unknown work. This is reached only after the fresh
      * selected IRQ and every command's issued+completed bits were observed. */
     if(!pwrsc_irq(io,r,&irq))return 0;
@@ -209,9 +256,18 @@ static inline int pwrsc_restore_registers(const struct pwrsc_io *io,struct pwrsc
     uint64_t t=pwrsc_tcs(r);uint32_t irq,enabled;
     for(unsigned k=0;k<3;k++)for(unsigned j=0;j<3;j++)
         if(!pwrsc_store(io,r,t+0x30+20*k+4*j,r->saved.command[k][j]))return 0;
-    if(!pwrsc_store(io,r,t+0x10,r->saved.wait)||!pwrsc_snapshot(io,r,&r->observed)||
+    if(!pwrsc_store(io,r,t+0x10,r->saved.wait)||
+#if EFI_XNU_WIFI_CURRENT_WORD_VOTE_LATCHED
+       (r->saved.enable&&!pwrsc_store(io,r,t+0x1c,r->saved.enable))||
+#endif
+       !pwrsc_snapshot(io,r,&r->observed)||
        !pwrsc_read(io,r,PWRSC_BASE,&enabled)||!pwrsc_irq(io,r,&irq))return 0;
-    if(enabled!=r->IRQ_enable||irq||r->observed.control!=r->saved.control||r->observed.enable||
+    if(enabled!=r->IRQ_enable||irq||r->observed.control!=r->saved.control||
+#if EFI_XNU_WIFI_CURRENT_WORD_VOTE_LATCHED
+       r->observed.enable!=r->saved.enable||
+#else
+       r->observed.enable||
+#endif
        r->observed.wait!=r->saved.wait||!(r->observed.status&1)){pwrsc_fail(r,PWRSC_RESTORE);return 0;}
     for(unsigned k=0;k<3;k++)for(unsigned j=0;j<3;j++)if(r->observed.command[k][j]!=r->saved.command[k][j]){
         pwrsc_fail(r,PWRSC_RESTORE);return 0;}
@@ -267,6 +323,10 @@ static inline int pwrsc_vote_prefix(const struct pwrsc_transaction *r)
         }
         if(e->phase==0&&((e->address==PWRSC_BASE&&e->value!=r->IRQ_enable)||
            (e->address==PWRSC_BASE+4&&e->value!=r->IRQ_status)))return 0;
+#if EFI_XNU_WIFI_CURRENT_WORD_VOTE_LATCHED
+        if((r->saved.control&PWRSC_TRIGGER)&&triggers>acks&&
+           (e->phase==2||e->phase==4)&&e->address==t+0x14&&e->value!=r->saved.control)return 0;
+#endif
         unsigned field=19;uint32_t old=0,observed=0;
         static const unsigned offsets[4]={0x14,0x1c,0x10,0x18};
         const uint32_t before[4]={r->saved.control,r->saved.enable,r->saved.wait,r->saved.status};
@@ -308,6 +368,11 @@ static inline int pwrsc_retired(const struct pwrsc_transaction *r)
        r->tcs>=8||!(r->active_mask&(1u<<r->tcs))||r->frequency!=19200000||r->last<r->started||
        r->last-r->started>PWRSC_DEADLINE||!r->events||r->events>PWRSC_HISTORY||!r->steps||r->steps>256||
        r->triggers!=2||r->completed!=2||r->acknowledged!=2)return 0;
+#if EFI_XNU_WIFI_CURRENT_WORD_VOTE_LATCHED
+    if(r->saved.control&PWRSC_TRIGGER){
+        if(r->saved.control!=(PWRSC_AMC|PWRSC_TRIGGER)||r->saved.enable!=1||r->saved.status!=1)return 0;
+    }else
+#endif
     if(r->saved.enable||!(r->saved.status&1)||(r->saved.control&PWRSC_TRIGGER))return 0;
     static const uint32_t canonical[3]={0x30000,0x30010,0x30060};
     for(unsigned k=0;k<3;k++)if(r->address[k]!=canonical[k]||r->saved_vote[k]>15||r->raised_vote[k]>15||r->raised_vote[k]<r->saved_vote[k])return 0;
@@ -316,6 +381,9 @@ static inline int pwrsc_retired(const struct pwrsc_transaction *r)
     uint32_t control=UINT32_MAX,enabled=UINT32_MAX,wait=UINT32_MAX,IRQ_enable=UINT32_MAX;
     uint32_t seen_values=0,seen_control=0,seen_enabled=0,seen_wait=0,prepared=0,last_phase=0;
     uint32_t values[3][3]={{0}};
+#if EFI_XNU_WIFI_CURRENT_WORD_VOTE_LATCHED
+    uint32_t arm=(r->saved.control&~PWRSC_TRIGGER)|PWRSC_AMC;
+#endif
     for(unsigned i=0;i<r->events;i++){
         const struct pwrsc_event *e=&r->history[i];
         if(e->issued!=1||e->returned!=1||e->unknown||(e->operation!=1&&e->operation!=2)||
@@ -327,12 +395,22 @@ static inline int pwrsc_retired(const struct pwrsc_transaction *r)
             unsigned allowed=e->address==PWRSC_BASE+8;
             if(e->address==t+0x14){
                 allowed=1;seen_control=0;
+#if EFI_XNU_WIFI_CURRENT_WORD_VOTE_LATCHED
+                if(e->value!=r->saved.control&&e->value!=arm&&e->value!=(arm|PWRSC_TRIGGER))return 0;
+                if((r->saved.control&PWRSC_TRIGGER)&&e->phase!=1&&e->phase!=3)return 0;
+#else
                 if(e->value!=r->saved.control&&e->value!=(r->saved.control|PWRSC_AMC)&&e->value!=(r->saved.control|PWRSC_AMC|PWRSC_TRIGGER))return 0;
+#endif
                 if((e->phase==2||e->phase==4)&&(!pending||!new_irq||done!=7||!idle))return 0;
             }
             if(e->address==t+0x10){allowed=1;seen_wait=0;if(e->value!=r->saved.wait&&e->value!=(r->saved.wait|7u))return 0;}
             if(e->address==t+0x1c){
-                allowed=1;seen_enabled=0;if(e->value!=0&&e->value!=7)return 0;
+                allowed=1;seen_enabled=0;
+#if EFI_XNU_WIFI_CURRENT_WORD_VOTE_LATCHED
+                if(e->value!=0&&e->value!=7&&!(count_ack==2&&e->value==r->saved.enable))return 0;
+#else
+                if(e->value!=0&&e->value!=7)return 0;
+#endif
                 if(!e->value&&(!pending||!new_irq||done!=7||!idle))return 0;
             }
             static const uint32_t address[3]={0x30000,0x30010,0x30060};
@@ -350,9 +428,15 @@ static inline int pwrsc_retired(const struct pwrsc_transaction *r)
             if(!allowed)return 0;
             if(e->address==t+0x14&&(e->value&PWRSC_TRIGGER)){
                 if(pending||last_irq||count_trigger>=2||count_ack!=count_trigger||e->phase!=(count_trigger?3u:1u)||
+#if EFI_XNU_WIFI_CURRENT_WORD_VOTE_LATCHED
+                   prepared!=0x1ff||control!=arm||enabled!=7||wait!=(r->saved.wait|7u)||
+                   IRQ_enable!=r->IRQ_enable||!(IRQ_enable&(1u<<r->tcs))||
+                   e->value!=(arm|PWRSC_TRIGGER))return 0;
+#else
                    prepared!=0x1ff||control!=(r->saved.control|PWRSC_AMC)||enabled!=7||wait!=(r->saved.wait|7u)||
                    IRQ_enable!=r->IRQ_enable||!(IRQ_enable&(1u<<r->tcs))||
                    e->value!=(r->saved.control|PWRSC_AMC|PWRSC_TRIGGER))return 0;
+#endif
                 count_trigger++;pending=1;new_irq=done=idle=prepared=0;
             }
             if(e->address==PWRSC_BASE+8){
@@ -383,7 +467,13 @@ static inline int pwrsc_retired(const struct pwrsc_transaction *r)
     }
     if(pending||count_trigger!=2||count_ack!=2||count_write!=r->writes||last_irq||IRQ_enable!=r->IRQ_enable||
        seen_values!=0x1ff||!seen_control||!seen_wait||!seen_enabled||
-       control!=r->saved.control||enabled||wait!=r->saved.wait||r->observed.control!=control||
+       control!=r->saved.control||
+#if EFI_XNU_WIFI_CURRENT_WORD_VOTE_LATCHED
+       enabled!=r->saved.enable||
+#else
+       enabled||
+#endif
+       wait!=r->saved.wait||r->observed.control!=control||
        r->observed.enable!=enabled||r->observed.wait!=wait||!(r->observed.status&1))return 0;
     for(unsigned k=0;k<3;k++)for(unsigned j=0;j<3;j++)
         if(values[k][j]!=r->saved.command[k][j]||r->observed.command[k][j]!=values[k][j])return 0;

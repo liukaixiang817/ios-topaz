@@ -168,6 +168,16 @@ static inline int pwra_transfer(struct pwra_context *c,uint64_t at,uint32_t *val
             uint32_t saved[3],requested[3];
             if(!r->write_bound||!pwrr_plan((const void*)(uintptr_t)r->masked_RAM,c->prepared->resources[1],c->read,saved,requested))return pwra_fail(c,PWRA_SAVED,1);
             for(unsigned k=0;k<3;k++)if(saved[k]!=r->saved[k]||requested[k]!=r->desired[k])return pwra_fail(c,PWRA_SAVED,1);
+#if EFI_XNU_WIFI_CURRENT_WORD_VOTE_LATCHED
+            /* A high-latch writer must be the exact same TCS just restored
+             * by this fresh, fully retired READ. Compare the entire retained
+             * initial snapshot, including RO fields; no permission boolean,
+             * historical TCS value or generic high-latch admission suffices. */
+            if((t->saved.control&PWRSC_TRIGGER)&&
+               (t->tcs!=c->read->io.tcs||t->IRQ_enable!=c->read->io.IRQ_enable||
+                t->active_mask!=c->read->io.active_mask||
+                !pgcd_equal(&t->saved,&c->read->io.observed,sizeof(t->saved))))return pwra_fail(c,PWRA_SAVED,1);
+#endif
         }
 #endif
     }else if(write||!pwrmd_readable(at))return pwra_fail(c,PWRA_SCOPE,1);
@@ -597,6 +607,12 @@ static inline int pwra_retire(struct pwra_context *c)
         writes=r->read_writes+(r->write_bound?c->transaction->writes:0);
         if(r->write_bound){
             uint32_t saved[3],requested[3];
+#if EFI_XNU_WIFI_CURRENT_WORD_VOTE_LATCHED
+            if((c->transaction->saved.control&PWRSC_TRIGGER)&&
+               (c->transaction->tcs!=c->read->io.tcs||c->transaction->IRQ_enable!=c->read->io.IRQ_enable||
+                c->transaction->active_mask!=c->read->io.active_mask||
+                !pgcd_equal(&c->transaction->saved,&c->read->io.observed,sizeof(c->transaction->saved))))return pwra_fail(c,PWRA_SAVED,1);
+#endif
 #if EFI_XNU_WIFI_CURRENT_WORD_VOTE
             /* One combined READ+WRITE interval; the writer's own counter
              * never renews the original READ deadline or step allowance. */

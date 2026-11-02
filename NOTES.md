@@ -34,7 +34,65 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0186 photographed writer-start BUSY6 / READ phase8, no WRITE trigger; user recovered actual Polaris FASTBOOT04:26; ARC retirement/Wi-Fi NOT DONE
+### CURRENT0187 same fresh READ high-latch ARC round-trip source/offline checks complete; no0187device action; NEW root audit/host/freeze NOTREADY; Wi-Fi NOT DONE
+
+- User asked for ath11k comparison and a clear WiFi progress plan. Upstream
+  Linux ATH10K_SNOC explicitly supports WCN3990; ath11k is newer802.11ax.
+  Actualath10k/ath11k QMI source was read, comparison saved inREFERENCE_REPOS;
+  neither driver has demonstrated real iOS traffic here. Reuse ownWCN3990
+  ath10k/Mi8XNU path and compare ath11k event/memory/BDF lifetimes, no newer-chip
+  register/firmware/ring or coldboot/reset/quirk transplant. No extra device
+  operation or firmware import for that review.
+
+| WiFi stage | Actually completed | Acceptance still required |
+| --- | --- | --- |
+| ARC readback |0185 three realREADs/fullraw/fullretirement/controlledexit; ARC HLOS/DRV2 semantics primary reviewed |Fresh values in every new session; no oldcontext/value reuse |
+| ARC raise/restore |0186 photo identified writer-startBUSY6; NEW0187 source fix and560affected SOFTWARE checks pass |NewfullstrictRO39/hostexactprofile/codec/freeze/helper then realraise/reversesavedrestore/fullretirement/controlledexit |
+| Four own WiFi VRMs |OwnDT supplies and CmdDb ldoa5=40f00/7=41300/17=40c00/25=42000 identified |Fresh saved voltage/enable/mode semantics, orderedrails and exactrestore BEFORE MSS |
+| MSS/MSA/GLINK/WLFW |OwnDT/vendor and Mi8sequence correspondence; volatileRMTFS software service implemented |Ownedaligned2MiBMPU envelope/logical1MiB MSA/cache/DMAstop/VMIDhandback, actualMSS+GLINK/QRTR/provider/WLFW/ownBDF/FW_READY |
+| Native ath10k/interface |Mi8XNU/Linuxath10kSNOC/QMI source matched; ath11k comparison added |Actualnative transport/CE/WMI/HTT/netif and real scan results |
+| Network verification |No actual scan/join/data PASS yet |Scan/auth/join/IP/DNS/realdata and stop/recover verification; no icon/capability substitute |
+
+- NewdefaultOFF --wifi-power-current-word-vote-latched requires complete
+  explicit current-word-vote/read/normalargs/CPU/DB/work/GOP dependencies.
+  PreciseidleSTATUS1/CONTROL1010000/ENABLE1 may qualify only through freshREAD
+  exact sameTCS/IRQenable/activeMask/entireREADfinalsnapshot. Beforefirstwrite
+  and atretirement checkedsourcebinds fullsaved fields. Each of exactly2NEW
+  WRITEedges haslow/readback before changingcommands; NEWIRQ/all3DONE/idle/ACK,
+  nohighstore inACK/restore, finalhigh retained from secondedge, fullcommandRW/
+  wait/savedenable restored. No fixedTCS, IRQenable/type writes, permissionbool,
+  rebase/renewal or originaldeadline/restore weakening. Same200ms/all68slowest/
+  combinedREAD+WRITE50ms/256steps1024events/READ50+25/FP/DAIF/G1 retained.
+  Fullinitial/final/pendingcontrol/IRQ/status/responseprefix and secondDB/source/
+  geometryclose retained. V8/WORD_LATCHED_ARC_VOTE_RAW_V1 same1969216B CABI,
+  16residentrows with TCS/IRQenable projection, no postfailure hardware sample.
+- Final560actualouterASAN/UBSAN checks0004 passed22.299487875017803s; explicit
+  SOFTWARE peer IRQenable1/highTCS0 plus dynamichighTCS2/3 and ordinaryidleTCS2,
+  exactly2edges/noextra highrestore/newIRQ/DONE/RW/CPU/source/Delete, 19initial
+  snapshot corruptions prevent backendstore, lateprefix/AT/native/deadlinefail.
+  OldflagOFF software exactlyreproduces photographedBUSY6 afterREADphase8,
+  writerphase0/trigger0/write0/heldCPU, noDelete. Old2679cases executingCtokens
+  identical withnewflagOFF, reused notrerun. ON0001/physicalcandidate driver
+  6b0a8eaf7d5effa72562a3c187c93b0f1094eb0620f9d063e0d93ba00be8d7bd/
+  16113664B/94inputs; OFFwholeEFI b6f27adb0427bc3d711c72c671bafaa7ba5cd670eb111fca8028c2a1a72b8b09
+  same16057856B/91inputs. ActualwholemainCOFF/MachO/generalregs/maxframe1024/
+  fullCABI/wordLDR/64compilerlocaldeps+9generated/CPPtruephysicalWRITE+QEMUout
+  passed; parent95c377d7de069e14a2a003ed08def3601779b98193b07904181720b3df68ea6e.
+  TwoSERIALnew wholeEFI-XNU each19checks/94sameinputs/11resource+1batteryint1;
+  model73e0cd42b393a0cbea8c0d17f000e225ad9c13bdb9930ba53e337dcb007a5b65.
+  SOFTWARE/models NOT hardware/guestreset/radio. No nativeCI.
+- No0187USB/deviceaction/ORIGINALbootrecord. LastactualPolarisFASTBOOT04:26
+  from0186user recovery; no useraction/auth待答 and no inventorypoll. ROOTNV
+  qualificationHISTORICAL after0186heldUNKNOWNphysicalreset. Before needed
+  qualifiedNEW0187candidate, mergeNEWfullstrictRO39(dynamic sysfs/dev_t/3FIEMAP,
+  double16GiB/NV before-local-after/noRestore/250host300watchdog/normalumount),
+  never substitute0185 or replay oldsession. Hostexactprofile/currentrootNV/
+  originalwholecodec/sourceaudit/independentfreeze/ONEhelper/publicationproof
+  stillrequired; NOTREADY. All runtimeowner/client/source/CPU/READvalues fresh.
+  WiFi real scan/join/data NOTDONE; soundcameraSTOP. Actualold0186photo/raw/
+  sourceproofs/frozen/sharedrecord remain immutable and CONSUMED.
+
+### 0186 actual photographed recovery history photographed writer-start BUSY6 / READ phase8, no WRITE trigger; user recovered actual Polaris FASTBOOT04:26; ARC retirement/Wi-Fi NOT DONE
 
 - User provided current V7 photo and answered 已到FASTBOOT. Private original
   0186/wifi/physical-terminal-photo-0001/original.jpg SHA325327cf403d613362e78bf31f5dddef02287ae6ef8b05e4f49dfd5ad821c54e/235364B, neverGit.

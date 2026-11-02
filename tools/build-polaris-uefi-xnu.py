@@ -468,9 +468,12 @@ def main():
     ap.add_argument('--wifi-power-db-word-capture',action='store_true',help='default-OFF aligned64-bit capture of the same two complete freshly NS/WB/PA/AT qualified Normal RAM databases; preserve every compared byte, delivered word and pending prefix, original200ms and full retirement; no Device/MMIO widening')
     ap.add_argument('--wifi-power-current-word-read',action='store_true',help='default-OFF separate fresh current private capture-only three bounded READs with normal argument admission, two complete masked word DBs, original CPU/time/IRQ/full restore and known Delete; RAW is not a qualified vote')
     ap.add_argument('--wifi-power-current-word-vote',action='store_true',help='default-OFF explicit fresh READ-derived HLOS/DRV2 ARC max(saved,target) raise and reverse saved restore, one combined READ+WRITE50ms interval, full touched-RW/CPU/source/namespace/Delete retirement; no MSS/NVserve/radio')
+    ap.add_argument('--wifi-power-current-word-vote-latched',action='store_true',help='default-OFF same-fresh-retired-READ TCS completed high-latch ARC WRITE; low/readback before each of two new edges, retain final edge rather than write a third, preserve original IRQ enable/type and exact full retirement')
     a=ap.parse_args();r=Path(__file__).resolve().parents[1]
     if a.wifi_power_current_word_vote and not a.wifi_power_current_word_read:
         ap.error('current word ARC vote requires the explicit complete current word READ dependencies')
+    if a.wifi_power_current_word_vote_latched and not a.wifi_power_current_word_vote:
+        ap.error('completed-latch ARC vote requires the explicit fresh READ-derived vote scope')
     if a.wifi_power_read_access_checkpoint and not a.wifi_power_private_cpu_checkpoint:
         ap.error('read access checkpoint requires the complete same-private CPU checkpoint dependencies')
     if a.wifi_power_read_database_checkpoint and not a.wifi_power_read_access_checkpoint:
@@ -957,6 +960,7 @@ def main():
 #define EFI_XNU_WIFI_DB_WORD_CAPTURE {int(a.wifi_power_db_word_capture)}
 #define EFI_XNU_WIFI_CURRENT_WORD_READ {int(a.wifi_power_current_word_read)}
 #define EFI_XNU_WIFI_CURRENT_WORD_VOTE {int(a.wifi_power_current_word_vote)}
+#define EFI_XNU_WIFI_CURRENT_WORD_VOTE_LATCHED {int(a.wifi_power_current_word_vote_latched)}
 #define EFI_XNU_WIFI_CPU_RO_ADMISSION {int(a.wifi_cpu_ro_admission)}
 #define EFI_XNU_WIFI_CPU_MASKED_RO_ADMISSION {int(a.wifi_cpu_masked_ro_admission)}
 #define EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE {int(cmddb_binding is not None)}
@@ -1795,6 +1799,20 @@ def main():
             wifi_CPU0_power_current_word_VOTE_no_irq_enable_type_CMD_status_write=True,
             wifi_CPU0_power_current_word_VOTE_no_VRM_MSS_NVserve_radio=True,
             wifi_CPU0_power_CPU_live_GOP_numeric_layout_version=7)
+    if a.wifi_power_current_word_vote_latched:
+        manifest.update(wifi_CPU0_power_execution_kind='SAME_FRESH_READ_TCS_COMPLETED_LATCH_ARC_RAISE_REVERSE_SAVED_RESTORE_FULL_RETIRE',
+            wifi_CPU0_power_raw_format='CURRENT_PRIVATE_WORD_LATCHED_ARC_VOTE_RAW_V1',
+            wifi_CPU0_power_current_ARC_raw_format='CURRENT_PRIVATE_WORD_LATCHED_ARC_VOTE_RAW_V1',
+            wifi_CPU0_power_current_word_VOTE_latched=True,
+            wifi_CPU0_power_current_word_VOTE_latched_default_OFF=True,
+            wifi_CPU0_power_current_word_VOTE_latched_same_fresh_retired_READ_TCS_full_snapshot=True,
+            wifi_CPU0_power_current_word_VOTE_latched_low_readback_before_commands=True,
+            wifi_CPU0_power_current_word_VOTE_latched_new_edges_exact=2,
+            wifi_CPU0_power_current_word_VOTE_latched_final_high_from_last_edge_no_restore_high_write=True,
+            wifi_CPU0_power_current_word_VOTE_latched_original_IRQ_enable_type_unchanged=True,
+            wifi_CPU0_power_current_word_VOTE_dynamic_idle_untriggered_TCS=False,
+            wifi_CPU0_power_current_word_VOTE_dynamic_idle_TCS_fresh_READ_latch_binding=True,
+            wifi_CPU0_power_CPU_live_GOP_numeric_layout_version=8)
     if a.wifi_cpu_ro_admission:
         manifest.update(wifi_CPU0_power_transaction=False,
             wifi_CPU0_power_CPU_RO_admission=True,wifi_CPU0_power_CPU_RO_default_OFF=True,
