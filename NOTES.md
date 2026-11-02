@@ -34,6 +34,57 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0184 actual V5: first READtrigger1, CMD_STATUS10101 extra bit0; recovered actual Polaris FASTBOOT03:17; READ completion/Wi-Fi NOT DONE
+
+- Human currentV5photo +本次“到FASTBOOT” received; physicalrequestONCE answered.
+  Privatephoto0184/wifi/physical-terminal-photo-0001/original.jpg SHA5495abcbfa7ddab990039a0d82740286b3416b2fefd0eeb7731a95a3d4113a36/229852B;
+  exactfrozenV5manual16rowreviewSHAd46fa03a877641f702e78d261cd9cf61989160d96aae4654be961b90627ee59d.
+  No photo/rawbytes Git. No furtherphysical/authorization待答 or USB polling.
+- Actualphoto: V5HOLD1/phase3/BODY8/CPUerror0; CPUfailureWHY/CALL/MASK/ARCH/
+  OPEN allunused0, not CPUticks0/no calls. IOVALUE10101/statusOR0=10101;
+  ACCattempted1/error0B=UNKNOWN_STATUS/unknown1/outstanding4E=78;
+  lastIOread/flags10101=issued1returned1unknown1/address179e0d3c;
+  READphase2/steps2/triggers1/completed0/error3=PWRSC_READ/unknown1;
+  DB0bytes20000/word4000 full128KiB/16384, DB1unused0/0; CPUheld1/restored0.
+- Genuine progress past0183 prelaunchsavedstatus rejection, not a successful
+  READ or controlledA/Btimingclaim. Exactsource inference:35geometry+21initial
+  engine snapshot+9stage reads+five stores/readbacks+newtrigger store+IRQread+
+  CMDstatusread=78. First READaddress30000/newIRQ beforestatus is sourcepath
+  inference, not fullbinaryraw proof. Six protocolstores inferred; not global
+  MMIO counter. CMD_STATUS10101 contains extra bit0 relative ownpendingmask10100.
+  This is NOT CMD_RESP_DATA/ARCvalue, which is UNOBSERVED. No completion/idle/
+  ACK/fullRWrestore/CPUrestore/source/knownDelete pass; bit0 semantics unknown,
+  don't ignore it or relax DONE/UNKNOWN/IRQtype/deadline based on generic Linux.
+- ONE0184image2219 ENDED0 sent2026-11-02T03:12:02.375522Z/sourceC8D94E6/image59f4d86b330dfa42cab2a02ea537c6df065fbf93e571fd31b96c5ef11732cf32/6041600B;
+  solewaitingpayload03:12:30.143574Z/ENDED0. ONE63cbpayload17327 ENDED1,
+  stage03:12:51.955478Z/full557chunks36459872B/validationACKtrue+validatedtrue/
+  32.957923875015695s; p.boot03:13:24.913612Z/90.5101046669879s/IN129(-7)/
+  host0of64/90000ms no kernelACK. Fulltransfer/photo do not backfill ACK/native
+  kernel entry or physicalzeroCPU/MMIOcounts. No binaryRAW/capture/UTC/UI/
+  optical/nativeCI. Residenttrigger1/completed0 photographed, othercountsunknown.
+- Only17327ENDED then solematchingstate30706 ENDED1/8s unavailable, started
+  03:15:34.500223Z; soleindependentexpected89598 ENDED0/8s timeout03:16:10.438661Z→
+  03:16:18.444346Z. PhysicalrequestONCE after confirmingnoexit, photoalready
+  retained/no recapture requested. Human到FASTBOOT; independentONE8s readonly
+  actualproductPolaris03:17:42.259868Z/exit0/completed03:17:42.277283Z.
+  CurrentactualFASTBOOT nonativeLIVE. AllUSB/host/build/modelsENDED/allchildrenSTOP.
+- Actualproof0184/wifi/physical-first-pending-status-10101-and-recovered-FASTBOOT-proof-0001.json
+  SHAef9def57a67885a5e15f258b6e12da9a596792c812f2a1ccdad2991853f09f9b. PASS only numeric/ACKUNKNOWN/
+  recovery evidence, not completedREAD/vote/permission/network. ORIGINAL0184/
+  phone-saved-status-read-runtime-0001/boot.json CONSUMED/sessionENDED; literal
+  temporary_native_WLED_runtime_RAM_boot_succeeded is imageACK only. Unique
+  frozen0184controller/driver/image/ORIGINALrecord used, never replay/rename/
+  refreeze/oldpolicy/manifestedit/stripflags or control a NEWsession with it.
+- ROOTNV actualNEW0184 strictRO39 nowHISTORICAL afterUNKNOWNheld+physicalreset,
+  no controllednativeexitreceipt. Next alreadynecessaryNEWcandidate conversion
+  must mergeNEWfullstrictRO39/currentNV; no old0184/18xx tickets/leases/fakebool,
+  no inventory-onlyrecovery now. NEW0185 notimplemented/NOTREADY; don't blind
+  accept10101, clearUNKNOWN/held or opaque-retry just becauseactualFASTBOOT.
+  NEXT independently review ownRpmh bank2/primary register semantics for bit0,
+  actualleaf/caller/status/READ-vs-WRITE/firstrequest/currentargument/time. Original
+  200ms/all68/READ50+25/IRQtype/fullrestore unchanged; no unboundedsubmit/patch/
+  internalentry/fallback. Wi-Fi stillnotworking, sound/cameraSTOP.
+
 ### CURRENT0184 saved-status fix frozen/offline complete + NEW strictRO39; no native0184boot yet; actual Polaris FASTBOOT03:06; Wi-Fi NOT DONE
 
 - FW e342b4f677002568726d592cf298f521023fb7fd/HOST0e0c6fa7881419cce9c977a6c2d023e5f2db71a3
