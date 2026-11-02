@@ -1581,3 +1581,10 @@ remain unfinished, followed by real MSS allocation/cache/secure/DMA retirement
 and the required new candidate checks/profile/resource/codec/freeze/helper.
 NEW0189 NOTREADY; no physical device/CI/model/image action or WiFi feature
 milestone occurred. No new reference/source audit was repeated this turn.
+
+Release-call source dfa2692b076df9c68de89d0ea99c602bb50a50e0 was directpushed
+under the actual standing public source/text consent; separate lsremote matched.
+The first automatic disclosure rejection is preserved. Read-only verification
+of the actual future-consent record, exact origin and eight reviewed committed
+blobs resolved it; the same direct command succeeded without transport bypass
+or a new human question. Private artifacts remain local; physical0188 unchanged.
