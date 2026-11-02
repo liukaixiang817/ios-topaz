@@ -34,6 +34,33 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0188 connection facts received; current FIRST-transfer host source committed; public push AUTO-REVIEW BLOCKED; NO new USB/image/payload; Wi-Fi NOT DONE
+
+- Actual human answers are now complete: “已到FASTBOOT” and “没有，只检查连接或进入 FASTBOOT”.
+  Do not repeat connection/OS-history questions or infer a later OS transition.
+  No independent new USB query has run; original0188 boot.json remains ABSENT.
+- Current host-only first-transfer guard+10 simulated tests+handoff were committed
+  as4604e4d0155be42747e7ba9780ad5ed920128a68. Firmware, models, codec, image,
+  frozen candidate and original timeout/publication proofs are unchanged.
+- Both direct git push attempts were rejected before execution by automatic
+  approval review. First reason: no explicit authority for this public source/
+  handoff push. After independently reading actual prior standing authorization
+  873635fcf90da43ff0a4fc102f9ee7d53526a29149e8b02ff68423825b1b9032,
+  reviewer again rejected, treating the local authorization record/tool output
+  as untrusted and requiring a current explicit user message for these files.
+  This does not erase the actual earlier consent; it is an automatic execution
+  block. No alternate transport/connector or indirect push will bypass it.
+- A specific current public-source approval question is required solely because
+  that automatic review rejected the authorized push. Source is concrete and
+  reviewable: NOTES.md, tools/polaris_uefi_first_transfer.py and its test only.
+  Sensitive firmware/Apple/vendor/NV/backup/rawdump/photo/serial/password are
+  excluded. No image, native payload, reset, partition or NV command was sent.
+- Waiting for that one answer; no more USB query/state/helper or unchanged
+  tests/models. After an actual answer, preserve old proofs, direct push then
+  independent lsremote and genuine current publication proof/host handoff;
+  only then unchanged first image via the new guard's ONE8s product check.
+  Same kernel/public-source standing authorizations otherwise remain recorded.
+
 ### CURRENT0188 actual connection and no-other-OS replies received; unchanged never-sent candidate; current host FIRST-transfer qualification; Wi-Fi NOT DONE
 
 - Human actually replied “已到FASTBOOT”, then “没有，只检查连接或进入 FASTBOOT”.
