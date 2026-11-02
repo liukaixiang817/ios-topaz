@@ -89,6 +89,17 @@ early samples only. On0029 the human already confirmed boot complete and said
   review of actualREAD6/3/0 ARCsemantics/perDRVscope; no directsavedvote or
   max(saved,index) untilqualified, no blindresourceWRITE. Thenown4WiFiVRM BEFORE
   MSS/MSA/GLINK/RMTFS/WLFW/ath10k realscan/join/data. Wi-Fi NOTDONE/soundcameraSTOP.
+- PostREAD independentreadonlysemanticreview09ef792b2869c66f240951109ed214562d5e994b2e7ff97898948efcf220e3ea
+  (0185/wifi/post-READ-ARC-semantics-readonly-review-0001/proof.json): actualRAW
+  6/3/0 indexfits capturedaux, mapsraw256/256/0, targetsindex7/4/7; APIoffset1
+  is notµV. ExactCABI confirmscurrent26rowRAM has0matchingARCrows for all3.
+  OwnMiCode c7cb50c1 regulatorblob1de08d474d26608f95706d52bbb4e1e455bb1e38
+  lines991..995 ARCgetter usescachedrequest; it does notspecify hardwareREAD
+  perDRVscope. Qualcomm2026-04-16 primarymail confirms singleCMD0response,
+  notPolarisARC savedvote ownership. Existinginactivepurepwrr_plan checksrange/
+  matchingrows ifpresent, cannot independentlyprove scope whenARCrowsabsent;
+  don't treat its boolean aspermission/semanticproof. No sourcechange/newdevice/
+  tests/models/CI/recovery. Actual6/3/0 remainsUNQUALIFIEDforresourceWRITE.
 
 ### 0185 frozen offline readiness history (consumed by actual session above)
 
