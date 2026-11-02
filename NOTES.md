@@ -126,6 +126,76 @@ early samples only. On0029 the human already confirmed boot complete and said
   not a new inventory boot or generic permission/lease contract. No firmware,
   test/model/CI/candidate/USB changed for this targeted source correspondence.
 
+
+- NEW0189 actual EFI allocation/free backend SOFTWARE implementation is now
+  complete as a standalone default-OFF component, superseding0189-source-only
+  wording above. shim/polaris/uefi-wifi-remote-memory.h
+  SHAbb7e3b221d550763c075b9e56dfbe68f73afcc1c6bdac4331eb165ea40293282;
+  tools/polaris-wifi-remote-memory-test.c
+  SHA820de98432ad29e7c9f3c2fc7c489c4d77d467a15df8ca4762de4539173285f8.
+  NO current parent/builder/CLI/exactprofile/model/freeze/image/helper or
+  native code was changed; current actual FW/HOST remain270052fb/15e830b.
+  This is NOT an admitted0189candidate or a physical allocation/VMID pass.
+- Actual original Core PE61236b079f66c1340bfb3e9e15e055ecfe9bdfa2e7eabed157832147bc8f3609
+  BS1b800/376B has AllocatePages slot40→c258 and FreePages slot48→c32c,
+  GetMapd3ec. New direct standard ABI adapters use AllocateAddress/EfiLoaderData,
+  no internalentry/patch/fallback. Entry/source proof
+  0189/wifi/own-Core-allocation-entry-0001/proof.json
+  SHAf486d2952371969e31bfaf23771c51870fa84171125827bc0db14bf6f0fc7b12.
+  Actual post-call helper16fd0 can BLR through Core+1cb78: backend requires a
+  fresh zero hook; never clears/patches it. Core+1dbc0 pendingevents are raw
+  retained, not a no-event grant. RestoreTPL can dispatch other original
+  events; complete transitive effects remain unqualified for a physical parent.
+- New backend dynamically selects current conventional7 pages below4GiB, then
+  requires the actual returned claim and complete postmap type2/precise address.
+  Whole-map comparisons allow only the exact owned interval/type change and
+  harmless descriptor split/merge/order, preserving attributes/virtual/padding/
+  extension bytes and all outside coverage. Changed mapkey is required. All
+  original ownDT20fixed-reg nodes/19unique ranges plus SMEM become20 exclusions,
+  independently checked with existingfdtget on originalf7762357... DT; five
+  size-only dynamic pools have no guessed PA. Exclusion proof96ed700a05f895b3af58e74dfd967f17bbf63cad443735c6278515af6af1be82.
+  MSA owned2MiB/aligned2MiB/logical1MiB and RMTFS0x202000backing/4KiB guards/
+  exposed+0x1000 length2MiB are separate claims. No default PA or reserved reuse.
+- Each allocate/local-free uses its own NEW resident Core/source/bootstrap/FP/
+  TPL/nativeflag0 context and original200ms window,15complete Core hashes each;
+  no closed old PGCD/power ticket is reopened/rebased/renewed. Exact own pending
+  guard is recognized only from its complete resident unissued prefix; no
+  outstanding/UNKNOWN is cleared. Before either API, and again after callbacks,
+  full BS/source/typed-input binding is checked. All pages get fresh read AND
+  write NS/WB same-PA ATs with complete PAR save/restore; claim and release
+  retain separate full514-entry arrays/partial prefixes/unused tails.
+- Full121344B record preserves issued/returned/status/BS tables/guards/maps/
+  all hashes/AT/native counts. Any uncertain or changed call/input/prefix
+  retains UNKNOWN/held; no postfailure sampling/free/retry. Local release is
+  permitted ONLY for a fully retained NEVER-exposed claim. Exposure intent
+  records a separate lifecycle state and veto flag; clearing the flag alone
+  cannot enable free. There is deliberately NO fake remote-retired boolean
+  or release path for exposed memory until a real secure/DMA handback provider.
+- FINAL1708ASAN/UBSAN checks passed in2.9439032079535536s, actual adapter
+  control flow, original Core PE inert DATA and explicit SOFTWARE BS/AT leaves.
+  Includes independent whole32-page map oracle;20exclusion selectors against
+  independent brute force; simultaneous distinct MSA+RMTFS claims/releases;
+  all514claim+514release partialAT positions;19own-pending guard corruptions
+  before/after last source callback;48retained-claim mutations; post-API BS
+  table change blocks the nextGetMap; exposure-veto clearing/UNKNOWN/no-cleanup.
+  Actual exported adapter COFF+MachO/generalregs/maxframe1024 and OFF-no-body
+  compiled. No unchanged old tests/models/CI/phone/optical cycles repeated.
+  0189/wifi/remote-memory-backend-0003/proof.json
+  SHA878320aaf8e4cf8bd248af33df7d91549a02569133eae5149304af0a18a4c980;
+  combined source/software proof61ca52173db9d65965e400e29b179d16fe33eebe4086591f81e290fdf91cf50a.
+  Previous0001/0002 logs/results are historical host iterations, not final or
+  physical successes. Initial own-pending guard rejection was fixed by exact
+  typed-prefix admission, never by clearing state or reducing original bounds.
+- NEXT physical parent integration, not another standalone contract/parser or
+  allocator inventory boot: bind actual native_cpu_on and complete current
+  loaded-image/runtime/root/payload exclusions, qualify actual original Core
+  callback/callee paths, wire both claims through a necessary MSS/MSA provider,
+  then actual cache maintenance/secure VMID assignment/remote DMA stop/handback.
+  No PA publication/MSS/radio yet. Only after changed parent affectedchecks,
+  two SERIAL whole models/newexactprofile/codec/currenttransition/freeze/helper
+  may a necessary NEW candidate run. All0188 artifacts/session remain CONSUMED;
+  actualphone lastFB10:05 unchanged and no new USB/user action/permission pending.
+
 ### CURRENT0188 actual current-and-future source publication approval received; unchanged candidate FIRST transfer pending current push; NO new USB/image/payload; Wi-Fi NOT DONE
 
 - User actually answered call_b274001c482049018b5e318eab1379f3/0:
