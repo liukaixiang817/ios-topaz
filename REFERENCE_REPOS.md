@@ -1131,3 +1131,32 @@ maskedCPU/DRV2/EE/EL3/VMID/MPU lease. The next qualification remains the
 CPU-local masked interval and exact restoration, then the fresh source-bound
 bounded RSC path. Carry the complete Mi8 Wi-Fi chain above into subsequent
 VRM/MSS/GLINK/WLFW/ath10k integration; do not repeat completed inventory boots.
+
+## Four Wi-Fi VRM encoding correspondence (0188, offline)
+
+The original Polaris DTB (f7762357...) was read with `fdtget`, including the
+properties which `dtc` renders as strings. Exact rail constraints are L5
+800000 uV, L7 1800000 uV, L17 **1304000 uV**, and L25 3000000..3312000 uV
+with 3000000 init; the ICNSS CH0 consumer requests 3104000..3312000 uV.
+Earlier “1.3 V” is a nominal description, not a 1300000 uV programming value.
+
+Each regulator declares `pmic4-ldo`, supported generic modes 2/4, init2, and
+active+sleep set3. The [family-aware Qualcomm driver](https://android.googlesource.com/kernel/msm/+/28f2b66a16e50693a0796b323d652ed1669115b1/drivers/regulator/rpmh-regulator.c)
+and its actual included
+[`qcom,rpmh-regulator-levels.h`](https://android.googlesource.com/kernel/msm/+/28f2b66a16e50693a0796b323d652ed1669115b1/include/dt-bindings/regulator/qcom,rpmh-regulator-levels.h)
+map generic LPM2/HPM4 to PMIC4 raw5/7. This matches the DT vocabulary; it does
+not identify the exact running Android kernel build. The older c7cb regulator
+source uses a direct raw-mode binding and cannot interpret those DT cells by
+itself. The similarly named `qcom,rpmh-regulator.h` at the newer commit is not
+included by that driver and must not supply its constants.
+
+Both source generations encode VRM voltage in mV; field offsets are voltage0,
+enable4, raw mode8, headroom12. A voltage request rounds its uV minimum upward
+to mV and checks the maximum. Linux getters return cached software requests.
+Absent init-enable and DT init voltage/mode do not supply a saved live vote.
+Primary source copies and original DT data remain private. Review proof:
+`0188/wifi/four-VRM-primary-semantics-0001/proof.json` SHA
+287084d662db5c872c261c1f8a36590170d9ea3340fff4b78a995351ee4066f8.
+No source import, firmware change, phone command, model or test rerun occurred.
+Own ICNSS consumer load/settling sequence, original HAL offset scope, and
+fresh live snapshot/ordered supply/complete restoration remain to qualify.

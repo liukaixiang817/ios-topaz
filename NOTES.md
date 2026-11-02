@@ -97,6 +97,23 @@ early samples only. On0029 the human already confirmed boot complete and said
   inventoryboot. NEW0188 notimplemented/NOTREADY; no phonekeys/auth pending.
   SourceFW00490da1.../HOST5e15ead... unchanged; no nativeCI/download.
 
+- NEW0188 offline fourVRM semantics review ONLY (noFWchange/device/tests/models):
+  original live.dtb SHA f7762357... decoded with existingfdtget, exactL5=800000uV,
+  L7=1800000uV, L17=1304000uV (nominal1.3V is not exact1300000), L25min/init
+  3000000uV/max3312000uV; ICNSS_CH0 min3104000/max3312000uV. Actualfour
+  pmic4-ldo DT modes2/4 and init2 are generic identifiers, not rawVRM2/4.
+  PrimaryQualcomm family-aware driver pinned AOSP28f2b66a16e50693a0796b323d652ed1669115b1,
+  actualincludedrpmh-regulator-levels.h maps genericLPM2/HPM4→PMIC4raw5/7;
+  oldc7cb directraw-modebinding must not be mixed with thisDT. This is source
+  correspondence, not a claim of exact runningAndroidkernel binary. Voltage
+  requestceil(uV/1000), fields+0mV/+4enable/+8rawmode/+12headroommV; getters
+  cachedrequest, DTinit and absentinit-enable are not current savedstate.
+  Privateproof0188/wifi/four-VRM-primary-semantics-0001/proof.json SHA
+  287084d662db5c872c261c1f8a36590170d9ea3340fff4b78a995351ee4066f8.
+  Next actualownICNSS consumer/load/delay + originalHAL resourceoffset scope,
+  then sourcebound fullfreshVRM snapshot/orderedrails/savedrestore; no fixed
+  HPM7/disable0 or mode2/4 store. No qualified0188candidate/image/helper yet.
+
 | WiFi stage | Verified on this phone / implemented | Remaining acceptance |
 | --- | --- | --- |
 | ARC dependency power |0187 fresh3READ6/3/0 → raise7/4/7 → reverse savedrestore, fullCPU/client retirement, controlledexit |Done for this temporary session; fresh requalification in later integrations |
