@@ -34,6 +34,27 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0188 actual current-and-future source publication approval received; unchanged candidate FIRST transfer pending current push; NO new USB/image/payload; Wi-Fi NOT DONE
+
+- User actually answered call_b274001c482049018b5e318eab1379f3/0:
+  “批准本次及后续同类公开推送”. Scope is current4604e4d+7c102e4 and future
+  same-project source/text to public liukaixiang817/ios-topaz only; excludes
+  firmware/images/Apple/vendor/NV/backup/rawdump/photo/serial/password.
+  Private current-public-source-human-reauthorization-0001.json preserves exact
+  question/answer. This resolves the missing current explicit message identified
+  by automatic review; no additional physical or permission question is pending.
+- No new USB command, image, payload, SMC or MMIO was attempted while waiting.
+  Original0188 sharedboot record remains absent. Candidate/frozen495sources/
+  image/kernel/controller/models/codec and old proofs are unchanged.
+- Next: direct source push and independent lsremote, then genuine current
+  publicationproof0003 and host handoff bound to actual connection/no-other-OS
+  facts. New current guard performs complete original frozen qualification
+  only as part of that FIRST transfer; sole8s product query→atomic original
+  record→ONE image. No preliminary USB poll or old helper main/manifest edit.
+  Frozen0188 matching state once/waiting-payload→same63cbpayload once/ACK90
+  only after prior exec ENDED. FourVRM real success/retirement still UNOBSERVED;
+  true scan/join/data NOT DONE. Preserve original UNKNOWN and fullrestore gates.
+
 ### CURRENT0188 connection facts received; current FIRST-transfer host source committed; public push AUTO-REVIEW BLOCKED; NO new USB/image/payload; Wi-Fi NOT DONE
 
 - Actual human answers are now complete: “已到FASTBOOT” and “没有，只检查连接或进入 FASTBOOT”.
