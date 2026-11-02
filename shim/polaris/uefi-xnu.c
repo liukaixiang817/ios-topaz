@@ -271,9 +271,11 @@ static int shutdown_status(void *,const uint8_t **,uint64_t *);
 #include "uefi-wifi-remote-memory.h"
 #include "uefi-wifi-current-map.h"
 #include "uefi-wifi-gcd-bootstrap.h"
+#include "uefi-wifi-cache-allocation.h"
 static struct pwmc_parent_map incoming_parent_maps[2];
 static struct pwmc_parent_map pbgi_cache_call;
 static struct pbgi_result pbgi_seed;
+static struct pbha_result pbha_handles;
 static uint64_t pbgi_cache_opening;
 static struct pcmp_payload current_payload_binding;
 static struct pcmp_result current_private_maps[PCMP_PARENT_CONTEXTS][2];
@@ -454,7 +456,7 @@ static int new_original_unknown(void)
 {return pwcq_parent_unsafe()||original_service_unknown||(pgcd_resident_context.record&&pgcd_uncertain(&pgcd_resident_context))||pacgq_preboot_record.uncertain||pacgq_preboot_record.outstanding||pacgq_ticket.outstanding
 #if EFI_XNU_WIFI_REMOTE_MEMORY_AVAILABLE
     ||incoming_parent_maps[0].unknown||incoming_parent_maps[1].unknown||ppli_record.unknown||
-      current_payload_binding.unknown||current_private_unknown()||pbgi_cache_call.unknown||pbgi_seed.unknown
+      current_payload_binding.unknown||current_private_unknown()||pbgi_cache_call.unknown||pbgi_seed.unknown||pbha_handles.unknown
 #endif
 #if EFI_XNU_WIFI_TERMINAL_GOP_DIAGNOSTICS
     ||terminal_gop.uncertain
@@ -522,6 +524,14 @@ static void pbgi_parent_raw(void)
 }
 __attribute__((noreturn)) static void pbgi_parent_stop(void)
 {original_service_unknown=1;pbgi_seed.unknown=1;pbgi_parent_raw();ppli_parent_stop();}
+static void pbha_parent_raw(void)
+{
+    ram_report("CACHE_HANDLE_ALLOCATION_RAW_V1_BYTES=",sizeof(pbha_handles));
+    ram_text("CACHE_HANDLE_ALLOCATION_RAW_V1_BEGIN\r\n");ram_hex((const uint8_t*)&pbha_handles,sizeof(pbha_handles));
+    ram_text("CACHE_HANDLE_ALLOCATION_RAW_V1_END\r\n");
+}
+__attribute__((noreturn)) static void pbha_parent_stop(void)
+{original_service_unknown=1;pbha_handles.unknown=1;pbha_parent_raw();pbgi_parent_raw();ppli_parent_stop();}
 static int pbgi_parent_cache_map(struct efi_boot*bs,struct pwfc_result*r,struct pwfc_workspace*w)
 {
     if(bs!=system_table->boot||r!=&pwfc_record||w!=&pwfc_work||pbgi_cache_call.attempted||load_state!=2||
@@ -544,6 +554,8 @@ static void pbgi_parent_capture(struct pwfc_result*r,struct pwfc_workspace*w)
        r->map_stride!=pbgi_cache_call.map.stride||!pgcd_equal(w->map,pbgi_cache_call.data,r->map_bytes))pbgi_parent_stop();
     const struct pbgi_input input={.call=&pbgi_cache_call,.native=&wln_cpu_on_issued,.opening=pbgi_cache_opening,.io=pbgi_cache_call.io};
     if(!pbgi_capture(&pbgi_seed,&input,ppli_actual_page))pbgi_parent_stop();
+    const struct pbha_input allocation={.seed=&pbgi_seed,.images=&ppli_record,.handles=r->handles,.count=r->handle_count,.page=ppli_actual_page};
+    if(!pbha_capture(&pbha_handles,&allocation))pbha_parent_stop();
 }
 static void current_private_raw(unsigned index,unsigned slot)
 {
@@ -649,7 +661,7 @@ _Static_assert(sizeof(log_buffer)>=2*(sizeof(pwsp_record)+sizeof(pwrpt_record)+s
     4*sizeof(terminal_gop)+
 #endif
 #if EFI_XNU_WIFI_REMOTE_MEMORY_AVAILABLE
-    3*(sizeof(incoming_parent_maps)+sizeof(ppli_record)+sizeof(current_private_maps)+sizeof(current_payload_binding)+sizeof(pbgi_cache_call)+sizeof(pbgi_seed))+
+    3*(sizeof(incoming_parent_maps)+sizeof(ppli_record)+sizeof(current_private_maps)+sizeof(current_payload_binding)+sizeof(pbgi_cache_call)+sizeof(pbgi_seed)+sizeof(pbha_handles))+
 #endif
     1048576,
     "complete preparation/client/power/source raw must fit without truncation");
@@ -849,7 +861,8 @@ static int prepare_boot(void *context)
 #if EFI_XNU_WIFI_REMOTE_MEMORY_AVAILABLE
     if(!ppli_record.complete||ppli_record.unknown)ppli_parent_stop();
     if(!pbgi_seed.complete||pbgi_seed.unknown)pbgi_parent_stop();
-    ppli_parent_raw();pbgi_parent_raw();
+    if(!pbha_handles.complete||pbha_handles.unknown)pbha_parent_stop();
+    ppli_parent_raw();pbgi_parent_raw();pbha_parent_raw();
 #endif
 #endif
 #endif

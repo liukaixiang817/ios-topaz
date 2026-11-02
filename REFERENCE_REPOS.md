@@ -1520,3 +1520,30 @@ instructions or firmware. Functional source3505113, all C/header/test/schema
 bytes and prior software results remain unchanged; no rerun/model/cross/CI,
 new query, inventory boot or device action occurred. NEW0189 NOTREADY; no
 WiFi firmware/driver/scan/join/data milestone or reliable completion date.
+
+
+The next actual-parent implementation reads the real returned handle-array's
+normal pool allocation container immediately after the GCD producer and both
+pending metadata prefixes, before the existing FreePool. It adds no GetMap,
+enumeration, allocation/provider/release call. Fresh typed4 readonly NSWB AT/
+PAR precedes header and container pages. Actual header.Size48..2088 must cover
+returned handles plus overhead, with full bytes/padding/tail preserved;
+Size-40 is declared payload bytes, not class slack or a count-derived size.
+The PCLI record retains unknown1/complete0/closing0 rather than a false early
+finish. Full old records are sealed at entry/retirement, every live decision
+prefix on callbacks, and the whole new record except exact outputs on each
+callback. Key/Core/BS/roots/pool/policy/known graph/native/original200ms are
+rechecked with ten additional hashes; no owner/IRQ/DMA or later map grant.
+474 new ASAN/UBSAN SOFTWARE checks, independent full14784+309664+252488-byte
+bundle decoding (two576936B artifacts), actual full parent/export COFF/MachO/
+generalregs/maxframe1024 and whole defaultOFF equivalence pass. Old modules/
+checks are reused, not rerun. Early compile, deliberate excessive-history-hash
+iteration stop and test selector failure are preserved; all final cases remain.
+No original20Core+70providerhash or raw evidence is reduced. Private proof
+b0ae4a357ccc54211f06708c7f640d7a1f532903719f52096accd6e3a23e6217
+records this narrow SOFTWARE scope. No original PE instruction, FreePool or
+whole cache/power constructor executes in these tests. The exact real release
+call/effects, post-release current source/typed/callback/work/temporal admission,
+real MSS/cache/secure/DMA lifecycle, full normalUNKNOWN retirement and necessary
+new candidate checks/profile/resource/codec/freeze/helper remain unfinished.
+NEW0189 NOTREADY; no device/CI/model/image action and no WiFi feature milestone.

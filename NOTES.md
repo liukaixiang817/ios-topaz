@@ -108,7 +108,92 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
-- NEW0189 CURRENT required cache-handle release transition SOURCE result;
+- NEW0189 CURRENT actual handle-allocation container reader integrated into
+  the real parent; SOFTWARE only, not release/current-consumer admission.
+  Immediately after the completed GCD producer and both pending image-prefix
+  snapshots, before the EXISTING FreePool, it binds the actual returned handle
+  pointer/count and reads the actual normal pool header.Size. No GetMap,
+  enumeration, allocation, provider or release call was added. PCLI stays its
+  genuine unknown1/complete0/closing0 phase; no early finish or flag clearing.
+- New header shim/polaris/uefi-wifi-cache-allocation.h
+  SHA42259e339574486d431ba51dac638e9bf0580d3b9403a95343e822e7e31c7184;
+  actual parent64042d30d9f687f8cf4401e129a70f28f3283ece1b98ca8c3d126baac1197f2a;
+  new test07e0facac4200ebefb4aee418229b523c55d88ac044c64b411857f56a2999c21.
+  Main still only defaultOFF REMOTE_MEMORY, no consumer/builder/CLI/profile.
+  New14784B/input40B record is separate from unchanged producer309664B,
+  pending PCLI252488B, allocator347280B and private-map356688B schemas.
+- Fresh typed4 WB/NSWB samePA readonly AT/PAR precedes the real24B header and
+  every declared container page. Header.Size must be aligned8 and48..2088,
+  cover returned8*count plus40B overhead, with type4/signature/tail/Size valid;
+  it is not derived as exactly8*count+40. Larger/unsupported containers refuse
+  before release. All declared bytes/padding and both actual handle-array
+  prefixes are preserved. Size-40 is declared payload bytes, NOT pool-class
+  slack/backing capacity. A SOFTWARE count3/Size2088 case explicitly exercises
+  this distinction; it is not a physical allocation-size observation.
+- It validates both full pending PCLI prefix/map digests and the completed
+  producer, then fresh key page/all57 Core pages, registered FreePool3be0
+  identity/fullBS, known graph/roots/pool/policy and native0. Target must be
+  disjoint from Core/parent and all retained map/GCD metadata. No newly changed
+  live link is followed. Every new-record byte except exact callback output
+  is sealed across callbacks. Old records retain full entry/final SHA checks;
+  every old decision prefix/used metadata/IO/last clock/returned-map byte is
+  sealed per callback. Unused old map/earlier-clock/unused-entry history never
+  supplies classification, pointers or methods, and any change still blocks
+  completion before FreePool. No original record is rewritten or renewed.
+- Original producer opening200ms and monotonic ticks remain; new cross-page
+  fixture records61 ATs/64 clocks and ten ADDITIONAL full Core hashes. All
+  issued/returned/partial/native/raw/tails survive. Source/input/clock/PAR/
+  native or pointer changes stick UNKNOWN, no failure sampling/FPrestore/
+  free/retry/cleanup. Parent appends complete new raw plus intact producer
+  raw then the old terminal hold, before FreePool/Console/USB. Normal raw
+  emission remains after the original completed cache interval. No future
+  owner/IRQ/global-walltime or remote-DMA authority is inferred from these
+  current pre-release inputs, tags, bytes, map key, counters or hashes.
+- FINAL474 ASAN/UBSAN SOFTWARE checks PASS57.625233291997574s:1/3/256 handles,
+  capacity greater than count, cross-page targets, all61 AT positions with
+  partial/native/PAR/key/seed-pointer faults,40 input bytes, caller/source/
+  PCLI pointer poison, retained header and historical-prefix corruption,
+  final-callback physical container/graph changes and bad Size/type/tail/
+  overlap/window inputs. Original PE stays DATA, every BS/AT/FP/clock peer is
+  simulated; FreePool and whole cache/power constructors are NOT executed.
+  Old1564/1452/2341/167/8334/5141 code/tests remain unchanged and are reused.
+  First compile indentation warning, iteration0002 deliberate ENDED130 for
+  excessive full-history hashing at every callback, and iteration0003 test
+  mutation-trigger/clock-error selector assertion are preserved. Final0004
+  keeps all cases; old history is still fully sealed at entry/retirement,
+  live decision inputs per callback, with no original20Core+70providerhash
+  reduction. The fixture selector fix did not weaken production guards.
+- Independent Python struct/hashlib fully decodes two576936B SOFTWARE bundles
+  (14784B new +309664B producer +252488B pending PCLI): all containers,
+  actual declared Size, maps/metadata/prefixes,61 new ATs/64 new clocks,
+  65 producer ATs/68 clocks,8/516 PCLI ATs, both source-hash sets, all padding/
+  tails/digests. Captured pointers are numeric DATA only. Actual parent/export
+  COFF/MachO/generalregs/maxframe1024 PASS; export only readonly AT and exact
+  PAR MSR restore/noSMC. Whole-parent old FP/terminal masks are not zero-write.
+  DefaultOFF whole parent is byte-equivalent to d3c4ad0; old modules unchanged.
+  ON log29360128B/staticassert still capacity only, NOT a qualified resource.
+  Private cache-handle-allocation-0001/proof.json
+  SHAb0ae4a357ccc54211f06708c7f640d7a1f532903719f52096accd6e3a23e6217;
+  source/software3995444d0a1bbb8bbd3dab98ebbe5fe675291463d0076bdcfd148c6948fbf7f2.
+- NEXT bind the EXISTING actual FreePool call's exact issued/returned ABI/
+  source/native/FP/status and full permitted pool/map/callback transition.
+  This reader only captures its pre-call target; it did not execute or witness
+  release, cannot predict a net UsedSize delta, and cannot make the old seed
+  an after-release/current owner. Then fresh typed/source/callback/work/
+  whole-call temporal admission for each of the six real private contexts.
+  No extra inventory query/boot, parser/service/empty permission contract,
+  bool grant, rebase/renew/reopen/oldclosedticket. Original20Core+70providerhash/
+  200ms, ARC/VRM/readwork/fullrestore stay intact; real MSS claims/cache/
+  secureVMID/MPU/DMAstop/handback/normalUNKNOWN retirement and two SERIAL whole
+  constructor models/newprofile/resource/codec/transition/freeze/ONEhelper
+  remain prerequisites. NEW0189 NOTREADY; no PA publish/MSS/NVserve/radio/
+  scan/join/data. No physicalUSB/native/MMIO/SMC/PE execution/CI/model/codec/
+  image/payload/helper/freeze occurred. Physical0188/last actualFASTBOOT10:05/
+  consumed controller unchanged; all jobs ENDED, no human action pending.
+  WiFi unavailable/no credible date; sound/camera STOP. Publication receipt
+  will be private cache-handle-allocation-source-and-handoff-push-proof-0001.json.
+
+- COMPLETED SOURCE0189 required cache-handle release transition result;
   functional source stays3505113548ff2ff97ec864ca37c648db42234569. No C/header/
   test bytes, schemas or1564/1452/2341/167/8334/5141 SOFTWARE results changed;
   none were rerun. The completed producer remains integrated but precedes the
@@ -161,7 +246,7 @@ early samples only. On0029 the human already confirmed boot complete and said
   unchanged; no physical or permission question is pending. Publication receipt
   will be private cache-handle-release-source-handoff-push-proof-0001.json.
 
-- IMPLEMENTED0189 actual-parent GCD/type-policy input PRODUCER;
+- HISTORICAL0189 producer integration snapshot (producer still reused);
   Source3505113548ff2ff97ec864ca37c648db42234569 directpushed under the
   actual standing consent; independent lsremote matched exactly. All software/
   crosscompile/Git jobs ENDED. No device or permission question is pending.
