@@ -1552,3 +1552,32 @@ Container-reader source dbe6416121b5626787d1c10ece8f9eb2b0af21c4 was directpushe
 under the actual standing source/text authorization, with independent lsremote
 match. Only the five reviewed source/text paths were published; all raw/private
 artifacts remain local and physical0188 status is unchanged.
+
+
+The actual parent now wraps its EXISTING registered handle-array FreePool with
+an ABI/source/return witness. The standard BS slot72 is compared with exact
+Core+3be0, actual API issued/returned/status is separate from logical relay
+markers, and no query/enumeration/allocation/provider/release call is added.
+It archives the original14784B target/309664B producer/252488B pending PCLI,
+recaptures the target through the same typed reader under the original200ms,
+and preserves full callback envelopes, native/FP/source inputs and25+10 extra
+Core hashes. It never reads a released target or follows new node/head pointers.
+Fixed Core provider-global snapshots after return are incoming-contract raw,
+not a current typed map, full allowed-effects proof, ownership or future lease.
+535 ASAN/UBSAN SOFTWARE cases pass, including a simulated peer making retired
+target host pages PROT_NONE; affected474 cases also pass with unchanged old case
+loops. Independent struct/hashlib decodes the full596496B record and both full
+576936B archived/fresh input bundles; actual wholeparent/export COFF/MachO/
+generalregs/maxframe1024 and flagOFF equivalence pass. The export calls the
+compared registered slot once and only writes PAR for exact restoration.
+The initial host-page fixture failure and COFF timestamp comparison failure
+are preserved; final evidence proves unchanged executing code without editing
+object timestamps. Original PE/BS/AT/clock peers remain explicit SOFTWARE DATA,
+not real FreePool or whole power constructor execution. Private proof
+4d8fc7cbe8d0de988c381e6e9d47003cccfa2c30945275f4b61c73628b4a060b
+limits this result to the call witness. Complete permitted pool/map/backing/
+callback effects and fresh later typed/source/work/whole-call temporal inputs
+remain unfinished, followed by real MSS allocation/cache/secure/DMA retirement
+and the required new candidate checks/profile/resource/codec/freeze/helper.
+NEW0189 NOTREADY; no physical device/CI/model/image action or WiFi feature
+milestone occurred. No new reference/source audit was repeated this turn.

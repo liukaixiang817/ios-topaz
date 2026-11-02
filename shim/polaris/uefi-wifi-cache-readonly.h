@@ -46,6 +46,7 @@ struct pwfc_workspace {
 #if defined(POLARIS_WIFI_PARENT_GCD_BOOTSTRAP)
 static int pbgi_parent_cache_map(struct efi_boot*,struct pwfc_result*,struct pwfc_workspace*);
 static void pbgi_parent_capture(struct pwfc_result*,struct pwfc_workspace*);
+static uint64_t pbhr_parent_release(struct efi_boot*,struct pwfc_result*,struct pwfc_workspace*,void*);
 #endif
 static inline int pwfc_equal(const uint8_t *a,const uint8_t *b,size_t n)
 {unsigned difference=0;for(size_t i=0;i<n;i++)difference|=a[i]^b[i];return !difference;}
@@ -214,7 +215,11 @@ release:
 #endif
     /* Never free an unvalidated/unknown returned pointer. Failure retains its
      * raw value and consumes this one attempt; no arbitrary FreePool retry. */
+#if defined(POLARIS_WIFI_PARENT_GCD_BOOTSTRAP)
+    if(handles_owned){r->release_attempted=1;r->release_status=pbhr_parent_release(bs,r,w,handles);}
+#else
     if(handles_owned){r->release_attempted=1;r->release_status=bs->free_pool(handles);}
+#endif
     if(r->release_status&&!r->error)r->error=PWFC_RELEASE;
     if(!io->arch(io->context,&r->after)||!pwfc_arch_stable(&r->before,&r->after)){
         if(!r->error)r->error=PWFC_LIFETIME;

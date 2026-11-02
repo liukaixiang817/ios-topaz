@@ -26,6 +26,7 @@ struct pbha_live {
     struct pbha_result*r;struct pbha_input in;const struct pbha_input*caller;
     uint8_t seed_seal[32],image_seal[32],seed_live[32],image_live[32];
     uint64_t map_bytes;unsigned node_count[2],last_clock,image_count,keyed,rooted;
+    int(*outer_guard)(void*);void*outer_context;
 };
 static inline int pbha_fail(struct pbha_result*r,unsigned error)
 {if(!r->error)r->error=error;r->unknown=1;return 0;}
@@ -58,6 +59,7 @@ static inline int pbha_image_inputs(const struct pbha_live*l,uint8_t out[32])
 static inline int pbha_stable(const struct pbha_live*l)
 {
     const struct pbha_result*r=l->r;uint8_t hash[32];
+    if(l->outer_guard&&!l->outer_guard(l->outer_context))return 0;
     if(!pgcd_equal(&r->input,&l->in,sizeof(l->in))||!pgcd_equal(l->caller,&l->in,sizeof(l->in)))return 0;
     if(!pbha_seed_inputs(l,hash)||!pgcd_equal(hash,l->seed_live,32)||
        !pbha_image_inputs(l,hash)||!pgcd_equal(hash,l->image_live,32))return 0;
@@ -109,7 +111,7 @@ static inline int pbha_page(struct pbha_live*l,struct ppli_at*a,uint64_t page)
     a->native_issued=3;a->native[1]=*s->input.native;a->native_returned=3;if(a->native[1])return 0;
     struct ppli_at saved=*a;return pbha_tick(l)&&pgcd_equal(a,&saved,sizeof(saved));
 }
-static __attribute__((noinline)) int pbha_capture(struct pbha_result*r,const struct pbha_input*input)
+static __attribute__((noinline)) int pbha_capture_guarded(struct pbha_result*r,const struct pbha_input*input,int(*outer_guard)(void*),void*outer_context)
 {
     if(!r||!input||!pwmc_zero(r,sizeof(*r)))return 0;
     r->attempted=r->unknown=1;r->input=*input;struct pbha_input in=*input;
@@ -135,7 +137,8 @@ static __attribute__((noinline)) int pbha_capture(struct pbha_result*r,const str
         ppli_map_digest(i,k,hash);if(!pgcd_equal(hash,i->map[k].digest,32))return pbha_fail(r,1);
     }
     struct pbha_live live={.r=r,.in=in,.caller=input,.map_bytes=s->call.map.bytes,
-        .node_count={s->count[0],s->count[1]},.last_clock=s->arch_returned-1,.image_count=(unsigned)in.count};
+        .node_count={s->count[0],s->count[1]},.last_clock=s->arch_returned-1,.image_count=(unsigned)in.count,
+        .outer_guard=outer_guard,.outer_context=outer_context};
     ppli_sha(s,sizeof(*s),live.seed_seal);ppli_sha(i,sizeof(*i),live.image_seal);
     if(!pbha_seed_inputs(&live,live.seed_live)||!pbha_image_inputs(&live,live.image_live))return pbha_fail(r,1);
     pgcd_copy(r->seed_digest,s->digest,32);pgcd_copy(r->images_digest,live.image_seal,32);r->core=s->core;
@@ -183,4 +186,6 @@ static __attribute__((noinline)) int pbha_capture(struct pbha_result*r,const str
     ppli_sha(i,sizeof(*i),hash);if(!pgcd_equal(hash,live.image_seal,32))return pbha_fail(r,5);
     r->unknown=0;r->complete=1;ppli_sha(r,offsetof(struct pbha_result,digest),r->digest);return 1;
 }
+static inline int pbha_capture(struct pbha_result*r,const struct pbha_input*input)
+{return pbha_capture_guarded(r,input,0,0);}
 #endif

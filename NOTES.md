@@ -108,11 +108,97 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
-- NEW0189 CURRENT actual handle-allocation container reader integrated into
-  Source dbe6416121b5626787d1c10ece8f9eb2b0af21c4 directpushed under the
-  actual standing authorization; independent lsremote matched exactly. All
-  host/build/Git jobs ENDED, no device or permission question is pending.
-  the real parent; SOFTWARE only, not release/current-consumer admission.
+- NEW0189 CURRENT actual EXISTING handle-array FreePool call witness integrated
+  in the real parent; SOFTWARE only. The registered standard FreePool slot72
+  is compared with the source-bound Core+3be0 entry and called once, with
+  separate actual API status/issued/returned and logical relay attempted/
+  issued/returned. No GetMap, enumeration, allocation, provider or FreePool
+  call was added. Main remains defaultOFF REMOTE_MEMORY; no allocator consumer,
+  builder/CLI/new exact profile/resource or physical candidate is enabled.
+- New shim/polaris/uefi-wifi-cache-release.h
+  SHA781b0c3ccd74d8bc219112121a3d697ce26bbbf300dc7b09fbc5074e7f35879a;
+  enclosing-guard target header a743dbd0e01952b3c0c8e1de60a8340836d74dc69402922c1f3077c83b53c8a0;
+  cache hook 9c38619ccc2298d0d9a1cd70829462f9c77c7b0446b5ec94ea72f2441a1b7650;
+  actual parent48c03238c940f1ac9cf295437b7b07240dad8f343758c5b87855f0cb7169c46e;
+  new release testbc32bb17f76c730ce4944c558fb4a02a46979903001e1c6a9f742b587fb4522a;
+  affected target testc4a1c16454b55ae468fff0536919fe16afd296d932a479394e61884ff2ecbe31.
+  New CABI596496B/input144B/source1096B, including archived target14784B,
+  producer309664B and pending PCLI252488B plus a fresh14784B target capture.
+  Old target/input40B and other CABI layouts remain unchanged, never relabeled.
+- Full archived copies preserve the genuine pending PCLI unknown1/complete0/
+  closing0 even after its original post-release finish updates the global.
+  The fresh target capture reuses the existing typed4/NSWB/AT/PAR reader and
+  original cache opening200ms, with an enclosing frame/caller/BS/image guard
+  at each callback. Its first clock must not move backwards from the previous
+  target's final clock. It does not renew/rebase/reopen any interval or ticket.
+  Full records, typed inputs, FP intent and exact callback outputs are sealed;
+  context/BS/source/native/clock/FP changes remain stickyUNKNOWN before more
+  hardware callbacks or guessed FPrestore. Actual partial/error status stays
+  raw, no postfailure sampling/free/retry/cleanup. Parent appends the complete
+  witness and intact earlier raw records then the existing terminal hold.
+- After the registered call, the adapter NEVER reads the freed target or
+  follows newly returned map/GCD head or node pointers. Two full fixed Core
+  provider snapshots retain locks/heads/key/depth/busy/SMM/TPL,232B pool and
+  720B policy as incoming-contract observations. Source after return is NOT a
+  new typed post-release map, permitted-effects proof, owner or future lease.
+  Key/pool may change; this is not a net UsedSize promise or ABA exclusion.
+  Five independent five-span immutable Core checkpoints plus the fresh target's
+  ten hashes add35 full hashes. Previous producer/target ten each and every
+  page operation's original20Core+70providerhash/200ms remain intact. Finite
+  work and observed CNTVCT intervals do not prove whole-call global walltime
+  or future asynchronous IRQ ownership. No permission/lease boolean was added.
+- FINAL535 ASAN/UBSAN SOFTWARE checks PASS142.4044871670194s: distinct relay/
+  actual API markers, simulated success with unchanged/changed key, partial/
+  EFIerror/no-issue, all144 typed input bytes at three callback stages, caller/
+  source/coupled BS poison, every61 inner AT boundary, native/FP/order/clock
+  rollback and late pool/code changes. The SOFTWARE peer makes returned target
+  host pages PROT_NONE; both normal flows pass without touching them again.
+  Host page protection is test-only, not a device free/cleanup technique.
+  Original PE is DATA; BS/AT/FP/clock leaves explicitly simulated. Whole cache/
+  pwsp/client constructors and original FreePool instructions were not run.
+  Affected474 target cases rerun PASS57.67738408403238s; all original cases
+  retained. Unchanged1564/1452/2341/167/8334/5141 are reused without rerun.
+- Independent Python struct/hashlib fully decodes the596496B record, every
+  archived/fresh576936B bundle, all source/BS/image/FP/arch/API/native/raw/
+  padding/tails/digests and25+10 hashes. It never executes captured pointers.
+  Actual whole parent/export COFF+MachO/generalregs/maxframe1024 PASS. Export
+  MSR is only exact PAR restore, noSMC; registered release leaf loads slot72,
+  compares entry and issues one BLR. Whole-parent old FP/terminal masks are not
+  zero-write. Final defaultOFF parent exactly matches85baf3a preprocessing.
+  ON log29360128B/staticassert covers raw capacity only, NOT new resources.
+  First host iteration's mprotect host-page alignment assertion is preserved;
+  fixed using actual host page size, no production guard/case removed. First
+  whole-object comparison failed on COFF TimeDateStamp only; explicit final
+  proof shows all other COFF bytes and entire MachO objects equal, originals
+  and timestamps untouched. All logs/failures/raw remain private and intact.
+- Private cache-handle-release-call-0001/proof.json
+  SHA4d8fc7cbe8d0de988c381e6e9d47003cccfa2c30945275f4b61c73628b4a060b;
+  source/software3d3dd17ab18fa0fbc24f2a54ac40fea79db4104cfd53080747fda07c221c6742.
+  NEXT qualify the complete permitted pool/map/backing/callback transition
+  of this existing release and fresh post-release typed/source/graph/policy/
+  work/whole-call temporal inputs for each of six exact private contexts.
+  The new witness.complete means only its narrow ABI/source/return recording
+  completed; it does NOT qualify these effects, later consumer, owner or lease.
+  Do not copy the old seed as current, use returned map to prove its own call,
+  infer ownership from keys/AT/tags/count/counters/bytes, or renew old context.
+  No repeat source audit/reader/wrapper/queuegate/parser/service/empty contract
+  or inventory query/boot. Actual two independent MSA/RMTFS claims/cache/
+  secureVMID/MPU/DMAstop/handback/full normalUNKNOWN retirement, two SERIAL
+  whole constructor models and new exact profile/resource/codec/transition/
+  freeze/ONEhelper remain required. NEW0189 NOTREADY; no PA publish/MSS/NVserve/
+  radio/scan/join/data. No physicalUSB/native/MMIO/SMC/PE execution/CI/model/
+  codec/image/payload/helper/freeze occurred. Physical0188 and last actualFB
+  10:05 remain historical observations, consumed controller stays used up.
+  All host/build/Git jobs ENDED, no physical or authorization answer pending.
+  WiFi unavailable/no credible completion date; sound/camera STOP. Publication
+  receipt will be cache-handle-release-call-source-and-handoff-push-proof-0001.json.
+
+- COMPLETED0189 handle-allocation container reader in the real parent,
+  source dbe6416121b5626787d1c10ece8f9eb2b0af21c4 directpushed under the
+  actual standing authorization; independent lsremote matched exactly. This
+  records its original SOFTWARE scope and immutable evidence. The newer
+  CURRENT release-call witness above supersedes its release-unimplemented NEXT;
+  complete permitted effects and later current-consumer admission remain open.
   Immediately after the completed GCD producer and both pending image-prefix
   snapshots, before the EXISTING FreePool, it binds the actual returned handle
   pointer/count and reads the actual normal pool header.Size. No GetMap,

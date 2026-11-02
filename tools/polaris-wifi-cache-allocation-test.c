@@ -58,6 +58,13 @@ static int map_peer(void*o,struct efi_system*sys,struct pgcd_map*m,void*out)
     for(unsigned k=0;k<6;k++){memcpy((uint8_t*)out+k*48,&row[k],40);memset((uint8_t*)out+k*48+40,0x5a,8);}
     m->status=0;m->bytes=288;m->key=1234;m->stride=48;m->version=1;return 1;
 }
+/* Test-only peer selection lets the release test use the same initial
+ * producer/metadata/target construction. Defaults keep every old case. */
+static int(*allocation_fixture_arch)(void*,struct pgcd_arch*)=clock_peer;
+static int(*allocation_fixture_page)(struct ppli_at*)=page_peer;
+static int(*allocation_fixture_fp_save)(void*,struct pgcd_fp_guard*)=fp_save;
+static int(*allocation_fixture_fp_restore)(void*,struct pgcd_fp_guard*)=fp_restore;
+static void(*allocation_fixture_order)(void*)=order;
 static void setup(unsigned count,unsigned bytes,unsigned cross)
 {
     reset(0);memset(arena+0x80000,0,0x780000);pool=arena+0x80000;mode=0;
@@ -84,7 +91,7 @@ static void setup(unsigned count,unsigned bytes,unsigned cross)
     for(unsigned k=0;k<3;k++){unsigned at=k==0?0x1b340:k==1?0x1bd48:0x1c1f8;put(core+at,16,8);put(core+at+8,4,8);put(core+at+16,1,4);}
     put(core+0x1cdb0,1234,8);put(core+0x1cc08,0,8);put(core+0x1dc10,0,8);put(core+0x1cb78,0,8);
     put(core+0x1d1a8,120+bytes,8);put(core+0x1d1b0,4,4);
-    struct pgcd_io io={.system=s,.arch=clock_peer,.map=map_peer,.fp_save=fp_save,.fp_restore=fp_restore,.order=order};
+    struct pgcd_io io={.system=s,.arch=allocation_fixture_arch,.map=map_peer,.fp_save=allocation_fixture_fp_save,.fp_restore=allocation_fixture_fp_restore,.order=allocation_fixture_order};
     struct pwmc_parent_input ci={.system=s,.image=self,.native_flag=native,.output=output,.capacity=65536,.image_handle=0x123,
         .phase=4,.bank=0xc0000000,.bank_bytes=0x200000,.payload=(uintptr_t)payload_page,.payload_bytes=4096,.log_snapshot=(uintptr_t)log_page,.log_snapshot_bytes=4096};
     FWmaps=0;assert(pwmc_parent_map_call_window(call,&ci,&io,1000)&&FWmaps==1);
@@ -98,7 +105,7 @@ static void setup(unsigned count,unsigned bytes,unsigned cross)
         }
     }
     struct pbgi_input si={.call=call,.native=native,.opening=1000,.io=io};assert(pbgi_capture(seed,&si,page_peer));
-    input=(struct pbha_input){seed,images,(uintptr_t)handles,count,page_peer};
+    input=(struct pbha_input){seed,images,(uintptr_t)handles,count,allocation_fixture_page};
     ATs=clocks=bad=at_fault=clock_fault=attack=attack_byte=triggered=0;mode=1;
 }
 static int run(void){return pbha_capture(allocation,&input);}
@@ -107,6 +114,7 @@ static void bundle(const char*name)
     FILE*out=fopen(name,"wb");assert(out&&fwrite(allocation,1,sizeof(*allocation),out)==sizeof(*allocation)&&
         fwrite(seed,1,sizeof(*seed),out)==sizeof(*seed)&&fwrite(images,1,sizeof(*images),out)==sizeof(*images)&&!fclose(out));
 }
+#ifndef POLARIS_CACHE_ALLOCATION_FIXTURE_ONLY
 int main(int argc,char**argv)
 {
     assert((argc==3||argc==4)&&!posix_memalign((void**)&arena,4096,0x801000));
@@ -156,3 +164,4 @@ int main(int argc,char**argv)
     printf("{\"passed\":true,\"checks\":%u,\"record_bytes\":%zu,\"input_bytes\":%zu,\"raw_offset\":%zu,\"clock_offset\":%zu,\"digest_offset\":%zu,\"normal_ATs\":%u,\"normal_clocks\":%u,\"SOFTWARE_only\":true,\"FreePool_executed\":false,\"later_consumer_admission\":false}\n",checks,sizeof(*allocation),sizeof(input),offsetof(struct pbha_result,raw),offsetof(struct pbha_result,clock),offsetof(struct pbha_result,digest),total,clock_total);
     free(original);free(arena);free(payload_page);free(log_page);return 0;
 }
+#endif
