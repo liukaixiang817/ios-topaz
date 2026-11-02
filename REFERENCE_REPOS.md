@@ -1495,3 +1495,28 @@ Producer source3505113548ff2ff97ec864ca37c648db42234569 was directpushed under
 the actual standing source/text authorization; independent lsremote matched.
 Only the seven reviewed source/text paths were published. Raw/private artifacts
 remain local, all jobs ended, and physical0188 status is unchanged.
+
+
+A new narrow original-Core SOURCE check addresses the EXISTING handle-array
+FreePool between that producer and later private maps. Registered
+LocateHandleBuffer2790 allocates bytes from its first sizing query through
+d8b4(type4)->d82c, while reporting count from the second query. Returned count
+alone therefore does not prove allocated capacity/header.Size. Registered
+FreePool3be0->3b7c locks1c1f8, calls38b0 and unlocks1f48. Its ordinary successful
+path loads actual header.Size and subtracts it from selected descriptor
+UsedSize+8 before free-bin/backing work. Small free rewrites the block header
+and free bin; a wholly free backing granule can enter3850->aec0->165d0(type7),
+changing map topology/key. This does not promise an exact net return delta:
+RestoreTPL and existing callbacks may perform further work. Matching later
+keys/tags/counters or bytes cannot exclude free/reuse or prove ownership;
+requiring the entire producer pool prefix unchanged would reject ordinary
+release rather than qualify a current consumer. The actual target/container
+and release transition need binding before later fresh source/typed/callback/
+work/temporal admission. No old source review or reference port was repeated.
+Private source-only proof
+454d9d62bf2c9adb43559a599249eac7de2adc4e0b0543ff0576206b7417ed68
+records45 independent PE-word/registered-slot decodes, without executing source
+instructions or firmware. Functional source3505113, all C/header/test/schema
+bytes and prior software results remain unchanged; no rerun/model/cross/CI,
+new query, inventory boot or device action occurred. NEW0189 NOTREADY; no
+WiFi firmware/driver/scan/join/data milestone or reliable completion date.

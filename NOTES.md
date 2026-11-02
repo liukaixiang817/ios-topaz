@@ -108,7 +108,60 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
-- NEW0189 CURRENT actual-parent GCD/type-policy input PRODUCER implemented;
+- NEW0189 CURRENT required cache-handle release transition SOURCE result;
+  functional source stays3505113548ff2ff97ec864ca37c648db42234569. No C/header/
+  test bytes, schemas or1564/1452/2341/167/8334/5141 SOFTWARE results changed;
+  none were rerun. The completed producer remains integrated but precedes the
+  existing handle-array FreePool. This new narrow source question addresses
+  that actual intervening release, not the already-completed allocation-pool,
+  GetMap, timer/provider or queue reviews. First-private consumer admission is
+  still UNIMPLEMENTED, and no candidate/hardware/firmware/scan progress follows.
+- Original registered LocateHandleBuffer is Core2790. Its first sizing query
+  supplies the request bytes to d8b4(type4)->d82c; its second query supplies
+  returned count by shifting returned bytes by3. Actual returned handle_count
+  alone does NOT prove allocation capacity or header.Size. A fresh full
+  target allocation/container witness is missing; do not derive that size
+  merely as8*count plus an assumed header/tail and call it observed.
+- Registered FreePool is Core3be0->3b7c: original pool lock1c1f8,38b0 release,
+  then1f48 unlock. On the ordinary successful path, it reads the actual
+  target header.Size, selects the header's type descriptor and subtracts
+  that size from descriptor UsedSize+8 at398c/3990/3994 BEFORE later free-bin/
+  backing work. A normal small free overwrites allocation signature/index
+  and links free bins; a completely free backing granule can enter3850->
+  aec0->165d0 with type7, changing public map topology/key. This is SOURCE
+  behavior only, not a new observed pool descriptor, target or page release.
+- The subtraction is an internal path effect, NOT a guaranteed net post-return
+  delta. Unlock/RestoreTPL and the previously identified notification/timer/
+  deferred paths can run other callbacks. The type4 post-success filter
+  returns without its optional type5/6 work; source c250 is a constant-return
+  post-success stub, not evidence that the unlock has no callbacks. Neither
+  unchanged key nor matching later tags/counters/full bytes can exclude
+  free/reuse or establish object identity/ownership. Conversely, demanding
+  the entire earlier pool prefix stay unchanged would reject ordinary release
+  itself; it is not an implementation of the required current consumer.
+- New private own-Core-cache-handle-release-0001/proof.json
+  SHA454d9d62bf2c9adb43559a599249eac7de2adc4e0b0543ff0576206b7417ed68
+  independently decodes45 original PE words/registered slots, first iteration
+  PASS. It only reads immutable local DATA; no source instruction/provider,
+  new runtime reader, pool method, model, ASAN, crosscompile, CI or device is
+  executed. All previous source/physical/software proofs and RAW remain intact.
+- NEXT remains actual later first-private consumer admission, now with this
+  concrete intervening mutation accounted for: bind the actual handle
+  allocation/container before the EXISTING FreePool and its exact original
+  release transition, then fresh current typed graph/policy/source/callback/
+  work/temporal evidence for every exact route. This does not authorize a new
+  inventory boot/query or let a release receipt become a future owner/lease
+  bool. Do not simply compare/relabel the old producer seed or re-open/renew/
+  rebase closed contexts. Original20Core+70providerhash/200ms and ARC/VRM/
+  readwork/fullrestore remain unchanged. MSS real claims/cache/secureVMID/MPU/
+  remoteDMAstop/handback/full normalUNKNOWN retirement and two SERIAL whole
+  constructor models/newprofile/resource/codec/transition/freeze/ONEhelper
+  remain prerequisites. NEW0189 NOTREADY, WiFi unavailable/no credible date,
+  sound/camera STOP. Physical0188/last actualFASTBOOT10:05/consumed controller
+  unchanged; no physical or permission question is pending. Publication receipt
+  will be private cache-handle-release-source-handoff-push-proof-0001.json.
+
+- IMPLEMENTED0189 actual-parent GCD/type-policy input PRODUCER;
   Source3505113548ff2ff97ec864ca37c648db42234569 directpushed under the
   actual standing consent; independent lsremote matched exactly. All software/
   crosscompile/Git jobs ENDED. No device or permission question is pending.
