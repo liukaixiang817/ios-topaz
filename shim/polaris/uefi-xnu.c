@@ -45,7 +45,7 @@ static efi_handle driver_image;
 static uint8_t log_buffer[1048576];static uint64_t log_bytes;
 static volatile uint32_t log_overflow;
 #elif EFI_XNU_WIFI_FOUR_VRM_AVAILABLE
-static uint8_t log_buffer[12582912];static uint64_t log_bytes;
+static uint8_t log_buffer[10747904];static uint64_t log_bytes;
 static volatile uint32_t log_overflow;
 #elif EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
 static uint8_t log_buffer[10485760];static uint64_t log_bytes;

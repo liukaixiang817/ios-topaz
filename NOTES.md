@@ -34,8 +34,37 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0188 integrated four-VRM roundtrip + exact host + two SERIAL models complete; codec/freeze pending; actual last Polaris FASTBOOT05:04; Wi-Fi NOT DONE
+### CURRENT0188 FFS-fit full-log revision + unmodified whole codec verified; new exact profile/models pending; no0188phone; Wi-Fi NOT DONE
 
+- FFS-fit ON0004 now wholeEFI SHA b5e40415a518a73df604e04c1ef84466048e8b585c4e6ad285b099cd7ad1757e/
+  16499200B/98inputs. Original packager accepted its original24-bit FFS format,
+  preserving all81originalFW files. Offline size-probe image6051840B SHA
+  0b656760be6b51b29da4232d686ae3c0c889ff7bc683c67bc30bd7deb68466af;
+  original unmodified EDK2 actualGetInfo/fullDecode43981000B byteequal,
+  proof6647d22f72787ec8313a6384f72da448485abb62c70132e90d756651fca3c1a2.
+  This probe is not an admitted boot image and cannot be sent. Official image
+  source/model/root admission, new exact profile and models remain pending.
+- Affected wholemain COFF/MachO/generalregs/maxframe1024 compiled again with
+  full original raw-capacity+1MiBreserve static assertions. Actual outerbody
+  PP is byteequal the462-case tested version; all engine/access/CPU/current
+  prepared sources unchanged. Only main log capacity and builder metadata
+  changed among98inputs. New parentproof712336cfd85b20c6d1f226a76041b5afad88aafa2ab9eae0ccdbef2ea18db233.
+  Reuse unchanged engine/outer cases and prior3239oldscope CPP evidence;
+  no tests/nativeCI/device repeated. All used0187sessions still ENDED.
+- Original packaging refused the12MiB build before any image was created:
+  EFI18334208B exceeds the original24-bit FFS body limit. This is an offline
+  packager refusal, not phone failure. Original packager/81FW/FFS format are
+  unchanged. Private refusal0188/wifi/four-VRM-original-FFS-size-refusal-0001.json
+  preserves the original error/output. No image/payload sent, no new USB.
+- A new bounded10.25MiB(10747904B) log revision retains the complete original
+  raw-capacity static assertion and1MiB reserve. The host now accepts only
+  that exact additional size, full14.25MiB+128 snapshot; four new capacity/
+  type/nearby-size/command-rejection tests passed. The former12MiB driver and
+  its two models/exact0188 policy are historical offline results, not this
+  revised candidate. Do not alter the old literal policy or frozen sessions.
+  New source/parent compile/profile/two SERIAL models/wholecodec/freeze are
+  required for the changed revision; unchanged462outer/3737READ/1952writer
+  engine bodies do not need repetition. Candidate remainsNOTREADY.
 - FW7d94b2b8f99c0f00cd04127e5102eba418d1914a is committed/pushed;
   independent lsremote matched. Actual last physical FW/HOST remain0187
   00490da1c13614db29a4502c50a5d0b9cce475ca/5e15ead2547a0b481fede47f9ec9279cebcec830.

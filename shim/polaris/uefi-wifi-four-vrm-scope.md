@@ -49,9 +49,11 @@ remain unused and UNOBSERVED. V9 projects the existing resident error,
 phase, TCS/IRQ, word-byte counts and mask state into the same sixteen rows;
 it performs no post-failure hardware or clock reads. UNKNOWN still follows
 the original append, local all-DAIF/G1 mask, optional GOP and nonreturn hold.
-The firmware log capacity is 12 MiB; the existing capacity-bound host reader
-already supports its full 16 MiB plus 128-byte firmware/native snapshot.
-The complete raw-capacity static assertion retains its original reserve.
+The firmware log capacity is 10.25 MiB; the manifest-bound host reader
+accepts that exact added size and its full 14.25 MiB plus 128-byte
+firmware/native snapshot. The complete raw-capacity static assertion retains
+its original reserve. This fits the original packager's 24-bit FFS size,
+without changing FFS format or removing any original firmware file.
 
 This is a temporary supply roundtrip before MSS. It provides no MSS/MSA,
 SMEM/DMA/MPU/VMID/EL3, remote NV, WLFW/ath10k or network permission. A new

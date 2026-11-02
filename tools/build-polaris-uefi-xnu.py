@@ -1856,8 +1856,8 @@ def main():
             wifi_CPU0_power_current_ARC_read=False,
             wifi_CPU0_power_current_ARC_resource_WRITE_reachable=False,
             wifi_CPU0_power_current_ARC_resource_WRITE_commands_max=0,
-            original_GCD_new_scope_RAM_log_capacity=12582912,
-            wifi_CPU0_resources_firmware_RAM_log_capacity=12582912,
+            original_GCD_new_scope_RAM_log_capacity=10747904,
+            wifi_CPU0_resources_firmware_RAM_log_capacity=10747904,
             wifi_CPU0_power_CPU_live_GOP_numeric_layout_version=9)
     if a.wifi_cpu_ro_admission:
         manifest.update(wifi_CPU0_power_transaction=False,
