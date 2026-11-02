@@ -40,6 +40,10 @@ early samples only. On0029 the human already confirmed boot complete and said
   2026-11-02T03:17:42.259868Z/exit0; no new polling or physical question.
   Used0184session ENDED/CONSUMED, never replay its image/payload/controller.
   New0185candidate NOTREADY: exacthost/codec/freeze/helper/currentrootNV pending.
+- FW713898bfbeb6bf1cb2d8d36892361390d68a53c9 committed. NewGCD_CLOCK_0185 exact
+  348PowerGCD+94resource/94inputs; all39previousliteralAST unchanged. 21hosttests,
+  47actualmetadata/type and5dependencyrefusals PASS; hostproofd20e98dc0eb4c88b9cf52e2673abab51f590d9b8cce2c5e1ef12ca5dde9863c8.
+  Exacthost complete; codec/freeze/helper/NEWrootNV stillpending, notbootready.
 - Actual0184photo supplied CMD_STATUS10101 after firsttrigger; no response or
   completedREAD/retirement. OwnMiCode Polaris c7cb50c18f812629b9620b2b8fa684bc40d82080
   drivers/mailbox/qcom-rpmh-mailbox.c blob00ebed9b4eeda5298e6fdbb4df2cb9f8babc7640
