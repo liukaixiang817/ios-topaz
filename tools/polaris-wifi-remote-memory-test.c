@@ -11,6 +11,7 @@
 static struct pwmc_result*mr;
 static unsigned mf,mt,claims,drops,translations,physical_owned,active_stride=48;
 static unsigned event_ATs;static uint8_t*event_base;
+static unsigned allocator_ATs;static uint8_t*allocator_base;
 static uint64_t allocated_base,allocated_bytes;
 static uint64_t live_base[2],live_bytes[2];static unsigned live[2];
 static int memory_identity(void*p,uint64_t at,uint64_t bytes,uint64_t*where,uint64_t*par)
@@ -18,6 +19,10 @@ static int memory_identity(void*p,uint64_t at,uint64_t bytes,uint64_t*where,uint
     unsigned op=mr&&mr->source[1].attempted?1:0;
     if(mr&&mr->events[op].attempted&&!mr->events[op].complete&&mr->events[op].count<PWMC_EVENT_MAX&&
        mr->events[op].node[mr->events[op].count].issued){event_ATs++;if(mf==32&&event_ATs==mt)return 0;}
+    if(mr&&mr->allocator[op].attempted&&!mr->allocator[op].complete){
+        for(unsigned list=0;list<2;list++)if(mr->allocator[op].count[list]<PWMC_MAP_NODE_MAX&&
+           mr->allocator[op].node[list][mr->allocator[op].count[list]].issued){allocator_ATs++;if(mf==33&&allocator_ATs==mt)return 0;}
+    }
     int ok=identity(p,at,bytes,where,par);if(ok)*par|=UINT64_C(0xff00000000000b80);return ok;
 }
 static void corrupt_pending(void)
@@ -43,6 +48,7 @@ static int memory_arch(void*p,struct pgcd_arch*a)
     if(mf==27&&!claims&&mr->call[0].guard.entered&&mr->call[0].entry)corrupt_pending();
     if(mf==29&&claims&&mr->call[0].returned&&!mr->call[0].guard.left)put(core+0x1b838,(uintptr_t)core+0xd3f0,8);
     if(mf==30&&!claims&&mr->events[0].complete)put(core+0x1dbc0,1,8);
+    if(mf==34&&!claims&&mr->allocator[0].complete)put(core+0x1cc08,1,8);
     return ok;
 }
 static void memory_order(void*p)
@@ -51,6 +57,7 @@ static void memory_order(void*p)
     if(mf==13&&mr->call[0].issued&&!claims)mr->call[0].pages++;
     if(mf==28&&mr->call[0].issued&&!claims)corrupt_pending();
     if(mf==31&&mr->call[0].issued&&!claims)put(core+0x1dbc0,1,8);
+    if(mf==35&&mr->call[0].issued&&!claims)put(core+0x1dc10,1,8);
 }
 static void descriptor(uint8_t*out,unsigned index,uint32_t type,uint64_t base,uint64_t pages,uint64_t attrs)
 {
@@ -73,6 +80,44 @@ static int memory_map(void*p,struct efi_system*sys,struct pgcd_map*m,void*out)
     if(mf==20){uint8_t copy[PGCD_MAP_CAP];memcpy(copy,out,n*active_stride);for(unsigned k=0;k<n;k++)memcpy((uint8_t*)out+k*active_stride,copy+(n-1-k)*active_stride,active_stride);}
     m->bytes=n*active_stride;m->stride=active_stride;m->version=1;m->key=1+claims+drops;m->status=0;return 1;
 }
+static void allocator_chain(unsigned list,const uint32_t*types,const uint64_t*bases,const uint64_t*pages,unsigned count)
+{
+    uint64_t head=(uintptr_t)core+(list?0x1bcc0:0x1b358),previous=head;uint8_t*base=allocator_base+list*0x20000;
+    assert(count<=PWMC_MAP_NODE_MAX+1);
+    for(unsigned k=0;k<count;k++){
+        uint8_t*n=base+128*k;memset(n,0,64);put(n,0x70616d6d,8);
+        put(n+8,k+1<count?(uintptr_t)n+128+8:head,8);put(n+16,previous,8);n[24]=1;
+        if(!list){put(n+28,types[k],4);put(n+32,bases[k],8);put(n+40,bases[k]+4096*pages[k]-1,8);put(n+56,8,8);}
+        previous=(uintptr_t)n+8;
+    }
+    put((void*)(uintptr_t)head,count?(uintptr_t)base+8:head,8);put((void*)(uintptr_t)(head+8),previous,8);
+}
+static void allocator_model(void)
+{
+    uint32_t types[8]={3,4};uint64_t bases[8]={(uintptr_t)arena,(uintptr_t)arena+0x100000},pages[8]={256,256};
+    unsigned n=2;uint64_t cursor=0xc0000000;
+    for(unsigned step=0;step<2;step++){
+        unsigned which=2;for(unsigned k=0;k<2;k++)if(live[k]&&live_base[k]>=cursor&&(which==2||live_base[k]<live_base[which]))which=k;
+        if(which==2)break;
+        if(cursor<live_base[which]){types[n]=7;bases[n]=cursor;pages[n++]=(live_base[which]-cursor)/4096;}
+        types[n]=2;bases[n]=live_base[which];pages[n++]=live_bytes[which]/4096;cursor=live_base[which]+live_bytes[which];
+    }
+    if(cursor<0xc2000000){types[n]=7;bases[n]=cursor;pages[n++]=(0xc2000000-cursor)/4096;}
+    allocator_chain(0,types,bases,pages,n);allocator_chain(1,0,0,0,8-2*physical_owned);
+    put(core+0x1cdb0,1+claims+drops,8);put(core+0x1cc08,0,8);put(core+0x1dc10,0,8);
+}
+/* The public GetMap peer coalesces adjacent conventional entries. Split its
+ * same physical span into many independent internal metadata nodes, keeping
+ * one sufficient final entry for the actual request. */
+static void allocator_many(unsigned count,unsigned pool)
+{
+    uint32_t types[PWMC_MAP_NODE_MAX+1]={3,4};
+    uint64_t bases[PWMC_MAP_NODE_MAX+1]={(uintptr_t)arena,(uintptr_t)arena+0x100000};
+    uint64_t pages[PWMC_MAP_NODE_MAX+1]={256,256};
+    assert(count>=3&&count<=PWMC_MAP_NODE_MAX+1);
+    for(unsigned k=2;k<count;k++){types[k]=7;bases[k]=UINT64_C(0xc0000000)+4096*(k-2);pages[k]=k+1==count?(UINT64_C(0xc2000000)-bases[k])/4096:1;}
+    allocator_chain(0,types,bases,pages,count);allocator_chain(1,0,0,0,pool);
+}
 static int pwmc_test_call(struct pwmc_result*r,unsigned op)
 {
     struct pwmc_call*q=&r->call[op];assert(r==mr&&q->issued&&q->unknown&&q->guard.entered&&!q->guard.left&&r->held);
@@ -88,7 +133,7 @@ static int pwmc_test_call(struct pwmc_result*r,unsigned op)
         unsigned which=live[0]?1:0;assert(!live[which]);for(unsigned k=0;k<2;k++)if(live[k])assert(allocated_base+allocated_bytes<=live_base[k]||live_base[k]+live_bytes[k]<=allocated_base);
         physical_owned++;live[which]=1;live_base[which]=allocated_base;live_bytes[which]=allocated_bytes;
         q->status=0;if(mf==4)return 0;if(mf==6)q->returned_address+=4096;
-    }return 1;
+    }allocator_model();return 1;
 }
 static int memory_AT(struct pwmc_translation*t)
 {
@@ -109,14 +154,16 @@ static int memory_AT(struct pwmc_translation*t)
 }
 static void setup(unsigned kind,unsigned f)
 {
-    mr=0;reset(0);mf=f;claims=drops=translations=physical_owned=event_ATs=0;allocated_base=allocated_bytes=0;
+    mr=0;reset(0);mf=f;claims=drops=translations=physical_owned=event_ATs=allocator_ATs=0;allocated_base=allocated_bytes=0;
     event_base=arena+0x110000;memset(arena+0x100000,0,0x100000);
+    allocator_base=arena+0x130000;
     memset(live,0,sizeof(live));memset(live_base,0,sizeof(live_base));memset(live_bytes,0,sizeof(live_bytes));
     self->bytes=0xf8000;mr=(void*)(arena+0x50000);assert((uint8_t*)mr+sizeof(*mr)<arena+0xf4000);
     /* Keep the genuine firmware ConfigurationTable outside the enlarged
      * modeled loader image, as required by the original Core bootstrap. */
     struct pgcd_config previous=*cfg;cfg=(void*)(arena+0xf9000);*cfg=previous;s->tables=cfg;
     put(core+0x1c368,(uintptr_t)core+0x1c368,8);put(core+0x1c370,(uintptr_t)core+0x1c368,8);
+    allocator_model();
     struct pgcd_io io={0,s,memory_arch,memory_map,memory_identity,query,fp_save,fp_restore,memory_order};
     assert(pwmc_bind(mr,self,s,(void*)(arena+0xf4000),kind,&io));
     if(f==1)put(core+0x1b828,(uintptr_t)core+PWMC_ALLOC_RVA+4,8);
@@ -198,8 +245,8 @@ int main(int argc,char**argv)
         assert(!pwmc_claim(mr,memory_AT)&&!pwmc_release_local(mr,memory_AT)&&claims==1&&drops==1);cases++;
         setup(kind,20);assert(pwmc_claim(mr,memory_AT)&&pwmc_release_local(mr,memory_AT));cases++;
     }
-    setup(0,0);assert(pwmc_claim(mr,memory_AT));struct pwmc_result*first=mr;mr=(void*)(arena+0x80000);
-    struct pgcd_io pair_io={0,s,memory_arch,memory_map,identity,query,fp_save,fp_restore,memory_order};
+    setup(0,0);assert(pwmc_claim(mr,memory_AT));struct pwmc_result*first=mr;mr=(void*)(arena+0xa0000);
+    struct pgcd_io pair_io={0,s,memory_arch,memory_map,memory_identity,query,fp_save,fp_restore,memory_order};
     assert(pwmc_bind(mr,self,s,(void*)(arena+0xf4000),PWMC_RMTFS,&pair_io)&&pwmc_claim(mr,memory_AT));
     struct pwmc_result*second=mr;assert(physical_owned==2&&first->backing!=second->backing&&first->backing_bytes!=second->backing_bytes);
     mr=first;assert(pwmc_release_local(mr,memory_AT)&&physical_owned==1);mr=second;
@@ -292,8 +339,62 @@ int main(int argc,char**argv)
         assert(!(op?pwmc_release_local(mr,memory_AT):pwmc_claim(mr,memory_AT))&&mr->unknown&&!drops&&claims==op);
         assert(mr->events[op].count==at-1&&mr->events[op].node[at-1].issued&&!mr->events[op].node[at-1].returned&&event_ATs==at);cases++;
     }
+    const unsigned boundary[]={2,3,4,63,64,255,256};
+    for(unsigned k=0;k<sizeof(boundary)/sizeof(boundary[0]);k++){
+        setup(0,0);allocator_many(boundary[k]<3?3:boundary[k],boundary[k]);
+        assert(pwmc_claim(mr,memory_AT)&&pwmc_release_local(mr,memory_AT));cases++;
+    }
+    for(unsigned pool=0;pool<2;pool++){
+        setup(0,0);allocator_many(3,pool);assert(!pwmc_claim(mr,memory_AT)&&!claims&&!drops&&!mr->unknown&&!mr->held);cases++;
+    }
+    for(unsigned wrong=0;wrong<19;wrong++){
+        setup(0,0);uint8_t*n=allocator_base;
+        switch(wrong){
+        case 0:allocator_many(PWMC_MAP_NODE_MAX+1,2);break;
+        case 1:allocator_many(3,PWMC_MAP_NODE_MAX+1);break;
+        case 2:put(core+0x1b358,0,8);break;case 3:put(core+0x1bcc0,0,8);break;
+        case 4:put(n+8,(uintptr_t)n+8,8);break;case 5:put(n+16,0,8);break;
+        case 6:put(n,0,8);break;case 7:put(core+0x1cdb0,2,8);break;
+        case 8:put(core+0x1cc08,1,8);break;case 9:put(core+0x1dc10,1,8);break;
+        case 10:put(core+0x1b350,2,4);break;case 11:put(core+0x1b340,31,8);break;
+        case 12:put(n+256+28,2,4);break;case 13:put(n+256+56,9,8);break;
+        case 14:put(n+256+48,4096,8);break;case 15:put(n+256+40,UINT64_MAX,8);break;
+        case 16:put(core+0x1bcc0,(uintptr_t)n+8,8);break;
+        case 17:put(core+0x1b358,(uintptr_t)mr+8,8);break;
+        case 18:put(n+128+32,(uintptr_t)arena,8);break;
+        }
+        assert(!pwmc_claim(mr,memory_AT)&&!claims&&!drops&&!mr->held);cases++;
+    }
+    for(unsigned phase=34;phase<=35;phase++){
+        setup(0,phase);assert(!pwmc_claim(mr,memory_AT)&&!claims&&!drops&&mr->unknown);cases++;
+    }
+    for(unsigned field=0;field<64;field++){
+        setup(0,0);assert(pwmc_claim(mr,memory_AT));mr->allocator[0].node[0][2].raw[field]^=1;
+        assert(!pwmc_release_local(mr,memory_AT)&&mr->unknown&&mr->held&&!drops);cases++;
+    }
+    /* All returned metadata-AT failure prefixes in both original lists.
+     * Existing claims remain held on a release refusal; no retry follows. */
+    for(unsigned op=0;op<2;op++)for(unsigned list=0;list<2;list++)for(unsigned at=1;at<=PWMC_MAP_NODE_MAX;at++){
+        setup(0,0);if(op)assert(pwmc_claim(mr,memory_AT));
+        if(!op)allocator_many(list?3:PWMC_MAP_NODE_MAX,list?PWMC_MAP_NODE_MAX:2);
+        else if(list)allocator_chain(1,0,0,0,PWMC_MAP_NODE_MAX);
+        else{
+            /* Retain actual claimed type2 as the last internal entry; split
+             * the preceding conventional region into the remaining nodes. */
+            uint32_t types[PWMC_MAP_NODE_MAX]={3,4};uint64_t bases[PWMC_MAP_NODE_MAX]={(uintptr_t)arena,(uintptr_t)arena+0x100000},pages[PWMC_MAP_NODE_MAX]={256,256};
+            for(unsigned k=2;k<PWMC_MAP_NODE_MAX-1;k++){types[k]=7;bases[k]=UINT64_C(0xc0000000)+4096*(k-2);pages[k]=k+2==PWMC_MAP_NODE_MAX?(mr->backing-bases[k])/4096:1;}
+            types[PWMC_MAP_NODE_MAX-1]=2;bases[PWMC_MAP_NODE_MAX-1]=mr->backing;pages[PWMC_MAP_NODE_MAX-1]=mr->pages;
+            allocator_chain(0,types,bases,pages,PWMC_MAP_NODE_MAX);allocator_chain(1,0,0,0,2);
+        }
+        mf=33;mt=(list?(op?4:3):0)+at;allocator_ATs=0;
+        assert(!(op?pwmc_release_local(mr,memory_AT):pwmc_claim(mr,memory_AT))&&mr->unknown&&!drops&&claims==op);
+        assert(mr->allocator[op].count[list]==at-1&&mr->allocator[op].node[list][at-1].issued&&!mr->allocator[op].node[list][at-1].returned&&allocator_ATs==mt);cases++;
+    }
+    setup(0,0);allocator_base+=0xfe0;allocator_model();assert(pwmc_claim(mr,memory_AT)&&mr->allocator[0].node[0][0].AT_count==2&&pwmc_release_local(mr,memory_AT));cases++;
     setup(0,0);event_base+=0xfd8;event_list(3,UINT32_MAX);assert(pwmc_claim(mr,memory_AT));
-    if(argc==3){FILE*out=fopen(argv[2],"wb");assert(out&&fwrite(&mr->events[0],1,sizeof(mr->events[0]),out)==sizeof(mr->events[0])&&!fclose(out));}
+    if(argc==3){FILE*out=fopen(argv[2],"wb");assert(out&&
+        fwrite(&mr->events[0],1,sizeof(mr->events[0]),out)==sizeof(mr->events[0])&&
+        fwrite(&mr->allocator[0],1,sizeof(mr->allocator[0]),out)==sizeof(mr->allocator[0])&&!fclose(out));}
     assert(pwmc_release_local(mr,memory_AT));cases++;
     printf("{\"passed\":true,\"checks\":%u,\"record_bytes\":%zu,\"original_PE_executed\":false,\"SOFTWARE_BS_AT_only\":true,\"physical_allocator_or_VMID_grant\":false}\n",cases,sizeof(*mr));
     free(original);free(arena);return 0;
