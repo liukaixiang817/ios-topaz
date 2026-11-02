@@ -94,7 +94,9 @@ struct pwrpt_result {
 #endif
 };
 #if EFI_XNU_WIFI_PRE_MASK_ARGUMENTS
-#if EFI_XNU_WIFI_CPU_LIVE_DIAGNOSTICS
+#if EFI_XNU_WIFI_DB_WORD_CAPTURE
+_Static_assert(sizeof(struct pwrpt_result)==1969216,"complete word delivery and byte prefix body");
+#elif EFI_XNU_WIFI_CPU_LIVE_DIAGNOSTICS
 _Static_assert(sizeof(struct pwrpt_result)==1943840+sizeof(struct pwrpa_result)+48,"complete live-failure diagnostic body");
 #else
 _Static_assert(sizeof(struct pwrpt_result)==1943840+sizeof(struct pwrpa_result),"full pre-mask argument raw extent");
@@ -668,7 +670,10 @@ static inline void pwrpt_report(void (*append)(const char *))
 #if EFI_XNU_WIFI_ARC_READ_CAPTURE_ONLY
 #if EFI_XNU_WIFI_READ_ACCESS_CHECKPOINT
 #if EFI_XNU_WIFI_PRE_MASK_ARGUMENTS
-#if EFI_XNU_WIFI_CPU_LIVE_DIAGNOSTICS
+#if EFI_XNU_WIFI_DB_WORD_CAPTURE
+    append("WIFI_CURRENT_PRIVATE_DB_WORD_CAPTURE_RAW_V1_BEGIN\r\n");pwrpt_raw_hex(append,&pwrpt_record,sizeof(pwrpt_record));
+    append("\r\nWIFI_CURRENT_PRIVATE_DB_WORD_CAPTURE_RAW_V1_END\r\n");
+#elif EFI_XNU_WIFI_CPU_LIVE_DIAGNOSTICS
     append("WIFI_CURRENT_PRIVATE_CPU_LIVE_DIAGNOSTIC_RAW_V1_BEGIN\r\n");pwrpt_raw_hex(append,&pwrpt_record,sizeof(pwrpt_record));
     append("\r\nWIFI_CURRENT_PRIVATE_CPU_LIVE_DIAGNOSTIC_RAW_V1_END\r\n");
 #elif EFI_XNU_WIFI_NORMAL_TO_MASKED_DB

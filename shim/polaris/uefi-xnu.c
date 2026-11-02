@@ -302,7 +302,11 @@ static void terminal_gop_evidence(void)
      * The attempted/issued masks beside the errors distinguish UNOBSERVED. */
 #if EFI_XNU_WIFI_CPU_LIVE_DIAGNOSTICS
     const struct pwrpc_live_diagnostic*d=&pwrpt_record.CPU.live_failure;
+#if EFI_XNU_WIFI_DB_WORD_CAPTURE
+    pwtg_line(r,0,"V3 HOLD",pwrpt_record.attempted,pwrpt_record.phase);
+#else
     pwtg_line(r,0,"V2 HOLD",pwrpt_record.attempted,pwrpt_record.phase);
+#endif
     pwtg_line(r,1,"BODY CPU",pwrpt_record.error,pwrpt_record.CPU.error);
     pwtg_line(r,2,"WHY CALL",d->reason,d->call);
     pwtg_line(r,3,"MASK ARCH OK",d->masked,d->arch_callback_ok);
@@ -314,8 +318,13 @@ static void terminal_gop_evidence(void)
     pwtg_line(r,9,"ACC U OUT",pwrpt_record.access.unknown,pwrpt_record.access.outstanding);
     pwtg_line(r,10,"DB0 A BYTES",pwrpt_record.access.CmdDb[0].attempted,pwrpt_record.access.CmdDb[0].bytes);
     pwtg_line(r,11,"DB1 A BYTES",pwrpt_record.access.CmdDb[1].attempted,pwrpt_record.access.CmdDb[1].bytes);
+#if EFI_XNU_WIFI_DB_WORD_CAPTURE
+    pwtg_line(r,12,"DB0 WORD I R",pwrpt_record.access.CmdDb[0].word.issued,pwrpt_record.access.CmdDb[0].word.returned);
+    pwtg_line(r,13,"DB1 WORD I R",pwrpt_record.access.CmdDb[1].word.issued,pwrpt_record.access.CmdDb[1].word.returned);
+#else
     pwtg_line(r,12,"DB0 H FAIL",pwrpt_record.access.CmdDb[0].hash_count,pwrpt_record.access.CmdDb[0].hash_failed);
     pwtg_line(r,13,"DB1 H FAIL",pwrpt_record.access.CmdDb[1].hash_count,pwrpt_record.access.CmdDb[1].hash_failed);
+#endif
     pwtg_line(r,14,"CPU H R",pwrpt_record.CPU.local_mask_held,pwrpt_record.CPU.local_restored);
     pwtg_line(r,15,"NOT WIFI",pwrpt_record.read.io.attempted,pwrpt_record.transaction.attempted);
 #else
@@ -401,7 +410,9 @@ _Static_assert(sizeof(log_buffer)>=2*(PWCQ_RAW_BYTES+sizeof(pacgq_preboot_record
 #if EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
 #if EFI_XNU_WIFI_ARC_READ_AVAILABLE
 #if EFI_XNU_WIFI_PRE_MASK_ARGUMENTS
-#if EFI_XNU_WIFI_CPU_LIVE_DIAGNOSTICS
+#if EFI_XNU_WIFI_DB_WORD_CAPTURE
+_Static_assert(sizeof(struct pwrpt_result)==1969216,"complete word capture body raw ABI");
+#elif EFI_XNU_WIFI_CPU_LIVE_DIAGNOSTICS
 _Static_assert(sizeof(struct pwrpt_result)==1969104,"complete original body plus live failure raw ABI");
 #else
 _Static_assert(sizeof(struct pwrpt_result)==1969056,"complete normal pre-mask argument body raw ABI");
@@ -412,7 +423,11 @@ _Static_assert(sizeof(struct pwrpt_result)==1943840,"complete current ARC READ/w
 #else
 _Static_assert(sizeof(struct pwrpt_result)==1941984,"complete current ARC READ body raw ABI");
 #endif
+#if EFI_XNU_WIFI_DB_WORD_CAPTURE
+_Static_assert(sizeof(struct pwra_result)==402048,"complete word capture access raw ABI");
+#else
 _Static_assert(sizeof(struct pwra_result)==401936,"complete current ARC READ access raw ABI");
+#endif
 #else
 _Static_assert(sizeof(struct pwrpt_result)==1892336,"complete prepared power body raw ABI");
 _Static_assert(sizeof(struct pwra_result)==401800,"complete prepared access raw ABI");

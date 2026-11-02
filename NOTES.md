@@ -34,6 +34,55 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0182 full masked DB word capture source + affected checks/two SERIAL models DONE; host profile/fresh rootNV/image/freeze NOTREADY; no0182phone action; Wi-Fi NOT DONE
+
+- Actual0181 photograph established original opening3907820ticks>3840000ticks
+  (203.532ms>200ms); second DB prefix48KiB, CPUheld1/restored0. Its source path
+  does not isolate copy cost. ActualrecoveryPolarisFASTBOOT00:01 verified once,
+  no pendingphysical/authanswer or additionalpoll; old0181recordCONSUMED/ENDED.
+- NEWdefaultOFF --wifi-power-db-word-capture requires explicit CPUlive diagnostics
+  and complete normal-to-masked DB/work/source/namespace/CPU/GOP dependencies.
+  Only already fresh per-page NS/WB/samePA qualified prepared Normal RAM DB uses
+  aligned64-bit source loads. Complete both128KiB snapshots/all64pageAT/all5source
+  hashes/currentowner+namespace/fullRAM/CPU/Device/FP/restore/knownDelete stay.
+  Original200ms/all68slowests/READ50+25reserve unchanged, no rebase/renewal.
+  No Device/MMIO widening, maskedRSC callbacks remainNULL/rejectstore, no access
+  acquisition/engine/READ/WRITE/vote/MSS/NVserve/scan_join_data.
+- Existing preparation baseline remains byte-wide. Equal8byte blocks compare
+  all bytes and use aligned ownRAM store/fullprefix once; mismatch retains exact
+  firstbadbyte+complete deliveredword. Two56B resident records retain issued/
+  returned/pending/address/value/comparedbyte/failedbyte; finalfullclosure rechecks
+  allfields/rawtails. Nativefault/nonreturn not intercepted; original UNKNOWN/
+  heldmask/WFE retained. Parent1969216/access402048/CPU10096/argument25216B,
+  new WIFI_CURRENT_PRIVATE_DB_WORD_CAPTURE_RAW_V1; boundedGOP V3 same16rows,
+  row12/13 DB0/DB1 wordissued/returned. Original WHY/ticks/limit/bytes/held retained.
+- Final464ASAN/UBSAN actualouterreader-copy cases (260prior undernewwordpath +
+  204new: success/128undeliveredpageboundaries/64firstbadbytes/11prefixcorruptions)
+  pass. SOFTWARE32768wordloads/262144fullDBbytes/64maskedAT, not actualspeedup.
+  Finalchecks word-capture-checks-0002/proof.json
+  SHA6f2c8da7d90cdc62af0a7f1d69dd5e7c9f2c2edbb879c923ac183189862d3776.
+- FinalON0003 SHA b518edf12c8394085933f38494597745ca304ae19f4ae6036a685bea190dd306,
+  94sameinputs; OFF0002 fullEFI SHA b6f27adb0427bc3d711c72c671bafaa7ba5cd670eb111fca8028c2a1a72b8b09
+  byteequal0178..0181. WholemainCOFF/MachO/generalregs/maxframe1024/fullCABI/
+  actualNormalLDR/equalblockSTR/defaultOFF/QEMU CPPout pass. All939otherwordOFF
+  executingPP reused (only hosted assertdiagnostic line numbers normalized for
+  three-line testentry macro); unchanged CPU/25reason source not rerun.
+  Parentproofe6f44eefcca9d91166c918894c88d070e4f816a83dad9e759cf6fa4e2b0ee697.
+- TwoSERIAL wholeEFI-XNU models each19checks/94sameinputs/11resource+1battery
+  literalint1, 38.932823417009786/39.347620584012475s; physicalbodies compiledOUT,
+  softwarePMIC/RAMUSB/delay not hardware/guestreset/radio. Modelproof
+  1b355c47269ceeebcbc4b973ae597adcfc74cb5a56f170fc4e626dfb7046782d.
+  Sourceproof0182/wifi/word-capture-source-and-offline-proof-0001.json binds all.
+  ON0001 missing main ABIassert compilefailure, ON0002 slowerprefix layout,
+  checks0001/parent0001 are history; finalON0003/checks0002/parent0002 only.
+- NEXT newexacthostprofile/sourcecommit/fullsourceaudit/freshstrictRO39 combined
+  with nextneededcandidate conversion/originalwholecodec/image/independentfreeze/
+  ONEofflinehelper before any0182phoneaction. Still NOTREADY; no oldboot replay,
+  timer relaxation, fakeclientheld/grant or inventoryboot. Samekernel63cb... and
+  sameproject source/text publication authorizations persist; no newquestion.
+  Wi-Fi actualscan/join/data NOT DONE; sound/camera STOP. Privatephotos/raw/NV/
+  firmware bytes neverGit. No0182USB/rootaudit/nativeCI/opticalactivity yet.
+
 ### CURRENT0181 actual V2 original opening deadline: 203.532ms > 200ms, DB1 48KiB; user recovered actual Polaris FASTBOOT00:01; masked DB retirement/READ/Wi-Fi NOT DONE
 
 - Actual human supplied NEW0181 V2 photograph and “已到FASTBOOT”. Private original

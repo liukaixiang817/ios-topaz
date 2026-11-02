@@ -12,17 +12,39 @@
 #ifndef EFI_XNU_WIFI_READ_DB_CHECKPOINT
 #define EFI_XNU_WIFI_READ_DB_CHECKPOINT 0
 #endif
+#ifndef EFI_XNU_WIFI_DB_WORD_CAPTURE
+#define EFI_XNU_WIFI_DB_WORD_CAPTURE 0
+#endif
 #include "uefi-wifi-power-critical.h"
 #include "uefi-wifi-rsc-device.h"
 #include "uefi-wifi-cmddb-prepared.h"
 struct pwcp_result;
 #if EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE && !defined(POLARIS_EFI_TEST_QEMU)
 #define PWRA_EVENTS (PWRSC_HISTORY+96u)
+#if EFI_XNU_WIFI_DB_WORD_CAPTURE
+#if !EFI_XNU_WIFI_CPU_LIVE_DIAGNOSTICS || !EFI_XNU_WIFI_NORMAL_TO_MASKED_DB || !EFI_XNU_WIFI_READ_DB_CHECKPOINT || !EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE || !EFI_XNU_WIFI_ARC_READ_AVAILABLE
+#error Word capture requires the complete normal-to-masked database diagnostic scope
+#endif
+/* Only the already NS/WB/same-PA validated Normal RAM page below uses a
+ * word load. This is resident delivery/prefix evidence, not an IO lease. */
+struct pwra_word_capture {
+    uint32_t issued,returned,load_pending,compare_pending;
+    uint32_t compared_bytes,failed_byte,last_valid,reserved;
+    uint64_t pending_address,last_address,last_word;
+};
+_Static_assert(sizeof(struct pwra_word_capture)==56,"full word capture prefix");
+#if defined(POLARIS_CMDDB_SOFTWARE_TEST)
+static int pwra_test_word_load(uint64_t,uint64_t *);
+#endif
+#endif
 struct pwra_event {
     struct pwrmd_event io;
     uint32_t operation,engine_event,native_before,native_after;
 };
 struct pwra_cmd_snapshot {
+#if EFI_XNU_WIFI_DB_WORD_CAPTURE
+    struct pwra_word_capture word;
+#endif
     uint32_t attempted,complete,owner_bytes,table_bytes,global_bytes,bytes;
     uint32_t hash_count,hash_failed,page_issued[PWCD_PAGES],page_returned[PWCD_PAGES];
     uint64_t where[PWCD_PAGES],par[PWCD_PAGES];
@@ -31,6 +53,9 @@ struct pwra_cmd_snapshot {
     struct pgns_translation current_AT[PWCD_PAGES];
 #endif
 };
+#if EFI_XNU_WIFI_DB_WORD_CAPTURE
+_Static_assert(__builtin_offsetof(struct pwra_cmd_snapshot,raw)%8==0,"aligned Normal RAM record word store");
+#endif
 struct pwra_result {
     uint32_t attempted,error,unknown,outstanding,local_held,retired,acquired;
     uint32_t events,reads,writes,clock_calls,clock_returned,pre_reads,post_reads;
@@ -200,7 +225,13 @@ static inline int pwra_cmddb_prepared(struct pwra_context *c,unsigned slot)
     const struct pwsp_result *prepared=(const void*)(uintptr_t)d->preparation;
     if(!prepared||!pgcd_in_self(&c->provider->core,(uintptr_t)prepared,sizeof(*prepared))||
        !prepared->complete||pwsp_unsafe(prepared)||!prepared->retired)return pwra_fail(c,PWRA_SCOPE,1);
+#if EFI_XNU_WIFI_DB_WORD_CAPTURE
+    if(!pwra_zero(&s->word,sizeof(s->word)))return pwra_fail(c,PWRA_PREFIX,1);
+#endif
     s->attempted=1;c->record->outstanding=0x20000u|slot;paic_actual_order(0);
+#if EFI_XNU_WIFI_DB_WORD_CAPTURE
+    s->word.failed_byte=UINT32_MAX;
+#endif
     const struct pwcp_source *prior=&d->source[2];struct pwrcl_result *p=c->provider;
     const struct paic_io *m=c->io.memory;uint32_t native;uint64_t ticks;
     if(!pwra_live(c,&native,&ticks)||!pwrcl_copy(m,p,c->work,&s->owner,d->owner_address,sizeof(s->owner),&s->owner_bytes)||
@@ -224,10 +255,50 @@ static inline int pwra_cmddb_prepared(struct pwra_context *c,unsigned slot)
         s->where[k]=t->page;s->par[k]=t->par;
         if(!returned||t->page!=page||t->issued!=1||t->returned!=1||t->saved!=t->restored||
            t->par!=(UINT64_C(0xff00000000000b80)|page))return pwra_fail(c,PWRA_TRANSLATION,1);
+#if EFI_XNU_WIFI_DB_WORD_CAPTURE
+        for(unsigned j=0;j<4096;j+=8){
+            unsigned offset=4096*k+j;uint64_t word;struct pwra_word_capture *q=&s->word;
+            q->issued++;q->load_pending=1;q->pending_address=page+j;
+            /* The compiler memory clobber publishes the prefix before the
+             * single aligned LDR. Existing per-page DSB/AT checks remain;
+             * no new barrier per word, foreign call, or Device reader. */
+#if defined(POLARIS_CMDDB_SOFTWARE_TEST)
+            if(!pwra_test_word_load(page+j,&word))return pwra_fail(c,PWRA_IO,1);
+#elif defined(__aarch64__) || defined(__arm64__)
+            __asm__ volatile("ldr %0,[%1]":"=r"(word):"r"(page+j):"memory");
+#else
+            return pwra_fail(c,PWRA_IO,1);
+#endif
+            q->last_word=word;q->last_address=page+j;q->last_valid=1;
+            q->returned++;q->load_pending=0;q->compare_pending=1;
+            /* Keep baseline accesses byte-wide as before. Native object
+             * representation compares all eight bytes without aliasing or
+             * endian assumptions. An equal block needs just one aligned own
+             * Normal RAM record store and one full byte-prefix update. */
+            uint64_t expected;uint8_t *old=(uint8_t*)&expected;
+            for(unsigned b=0;b<8;b++)old[b]=((const volatile uint8_t*)prepared->database[1])[offset+b];
+            if(word==expected){
+                __builtin_memcpy(__builtin_assume_aligned(s->raw+offset,8),&word,8);
+                s->bytes=offset+8;q->compared_bytes=offset+8;q->compare_pending=0;continue;
+            }
+            /* Preserve the FIRST mismatching byte and the complete delivered
+             * word; do not re-read the retained baseline sample on failure. */
+            const uint8_t *bytes=(const uint8_t*)&word;
+            for(unsigned b=0;b<8;b++){
+                s->raw[offset+b]=bytes[b];s->bytes=offset+b+1;
+                if(bytes[b]!=old[b]){
+                    q->failed_byte=offset+b;return pwra_fail(c,PWRA_CHANGED,1);
+                }
+                q->compared_bytes=offset+b+1;
+            }
+            q->compare_pending=0;
+        }
+#else
         for(unsigned j=0;j<4096;j++){
             unsigned offset=4096*k+j;s->raw[offset]=PWCD_LOAD(page+j);s->bytes=offset+1;
             if(s->raw[offset]!=prepared->database[1][offset])return pwra_fail(c,PWRA_CHANGED,1);
         }
+#endif
     }
     if(!pwra_live(c,&native,&ticks))return 0;s->complete=1;c->record->outstanding=0;paic_actual_order(0);return 1;
 }
@@ -477,6 +548,13 @@ static inline int pwra_observed_databases_valid(struct pwra_context *c)
            !pgcd_equal(s->table,r->CmdDb[0].table,72)||!pgcd_equal(s->globals,r->CmdDb[0].globals,72)||
            !pgcd_equal(&s->owner,&r->CmdDb[0].owner,sizeof(s->owner)))return pwra_fail(c,PWRA_CHANGED,1);
         for(unsigned h=0;h<5;h++)if(!pgcd_equal(s->hashes[h],pwcdi_spans[h].hash,32))return pwra_fail(c,PWRA_CHANGED,1);
+#if EFI_XNU_WIFI_DB_WORD_CAPTURE
+        const struct pwra_word_capture *q=&s->word;
+        if(q->issued!=PWCD_DB_BYTES/8||q->returned!=q->issued||q->load_pending||q->compare_pending||
+           q->compared_bytes!=PWCD_DB_BYTES||q->failed_byte!=UINT32_MAX||q->last_valid!=1||q->reserved||
+           q->pending_address!=PWCD_UEFI_DB_BASE+PWCD_DB_BYTES-8||q->last_address!=q->pending_address||
+           !pgcd_equal(&q->last_word,s->raw+PWCD_DB_BYTES-8,8))return pwra_fail(c,PWRA_PREFIX,1);
+#endif
         for(unsigned k=0;k<PWCD_PAGES;k++){
             const struct pgns_translation *t=&s->current_AT[k];uint64_t page=PWCD_UEFI_DB_BASE+4096u*k;
             if(s->page_issued[k]!=1||s->page_returned[k]!=1||s->where[k]!=page||

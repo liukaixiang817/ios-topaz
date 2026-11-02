@@ -140,7 +140,10 @@ static void no_engine(void)
 {assert(!requests&&!acks&&!modeled_stores&&!api_queries&&pwra_zero(&path->transaction,sizeof(path->transaction)));
  if(DB_fault==15)assert(path->read.io.finished==1); /* retain deliberate corruption */
  else assert(pwra_zero(&path->read,sizeof(path->read)));}
-int main(int argc,char**argv)
+#ifndef POLARIS_NORMAL_MASKED_TEST_MAIN
+#define POLARIS_NORMAL_MASKED_TEST_MAIN main
+#endif
+int POLARIS_NORMAL_MASKED_TEST_MAIN(int argc,char**argv)
 {
  assert(argc==5&&!posix_memalign((void**)&arena,4096,0x800000));
  original=malloc(PGCI_IMAGE_BYTES);npa_original=malloc(PWNPI_IMAGE_BYTES);rp_original=malloc(PWRPI_IMAGE_BYTES);cmd_original=malloc(PWCDI_IMAGE_BYTES);
