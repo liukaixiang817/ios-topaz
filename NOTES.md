@@ -34,6 +34,40 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0188 actual connection and no-other-OS replies received; unchanged never-sent candidate; current host FIRST-transfer qualification; Wi-Fi NOT DONE
+
+- Human actually replied “已到FASTBOOT”, then “没有，只检查连接或进入 FASTBOOT”.
+  Private actual-human-connection-return-0001.json preserves both question IDs
+  and exact answers; no reply timestamp invented. No physical/permission
+  question remains pending. Current independent product check is still due;
+  a human reply alone is not a measured USB result.
+- Same original0188 candidate/image/kernel and frozen controller remain
+  unconsumed. Original07:24 timeout/raw/proof and original publication0001
+  stay byte-for-byte intact. No candidate refreeze/rebuild or old helper edit.
+  Actual0187 strictRO39 integrity can be retained given the explicit no-other-OS
+  fact; no NEW0188 full audit or old runtime owner/context/ticket is claimed.
+- Current host tools/polaris_uefi_first_transfer.py independently binds actual
+  replies, current published HEAD/self+test sources, the original full frozen
+  source/model/codec/root/auth qualification and all495 original current sources.
+  Its only device path is ONE8s readonly correct-product query, then atomic
+  original shared boot.json and FIRST temporary RAM image. A second attempt
+  directory/consumed shared record refuses. No payload/reset/partition command.
+  Current-source host tests:10 PASS with simulated subprocesses, including stale
+  publication/types/facts, path escape, timeout/wrong product, input mutation,
+  atomic record-before-image and sanitized UNKNOWN/no-retry. This is SOFTWARE.
+- New current-source/publication proof must be written from a real push and
+  independent lsremote before that launcher executes. Preserve publication0001
+  and0002. Firmware/98input graph/two serial models/codec are unchanged and reused;
+  do not repeat them. Original frozen helper default/main is not rerun. Its
+  unchanged freeze() validator is used only inside this actual current first-
+  transfer qualification, never its stale HEAD/product/main path.
+- After image exec ENDED, only matching frozen0188 controller state once,
+  waiting-payload required, then same63cbpayload once/ACK90. Actual four-VRM
+  READ/raise/reverse saved restore and full CPU/source/Delete retirement remain
+  UNOBSERVED. Only actual kernel-entered+ACK permits capture. UNKNOWN remains
+  sticky with the original bounded once-only recovery rules. No MSS/radio/network
+  enabled; true scan/join/data are still NOT DONE.
+
 ### CURRENT0188 preboot expected-product timeout07:24; NO image/payload sent, boot record absent; connection/FASTBOOT reply pending; Wi-Fi NOT DONE
 
 - Actual frozen helper71513 ENDED2: ONE8s readonly expectedproduct started
