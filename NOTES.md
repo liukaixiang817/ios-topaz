@@ -34,7 +34,79 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0187 frozen same-READ high-latch ARC candidate and NEW strictRO39 complete; no0187native image/payload; actual Polaris FASTBOOT04:52; Wi-Fi NOT DONE
+### CURRENT0187 actual ARC READ6/3/0 → raise7/4/7 → reverse saved restore and full retirement; controlled actual Polaris FASTBOOT05:04; four WiFi VRMs/radio/network NOT DONE
+
+- ActualNEW0187 native succeeded, not just an image ACK: ONEimage74469 ENDED0
+  sent2026-11-02T04:57:30.173707Z/sourcee6d1f269d1491283b9d39b2bfc51e7641a072163/
+  imagef48072c805be23ded553aa661c2c8e2f44074d041853b0b4cdcb43dc659f9909/6043648B.
+  Solematchingwaitingpayload04:57:58.465239Z; ONEsame63cbpayload94486 ENDED0/
+  full557chunks36459872B/validationACKtrue+validatedtrue/32.95847879201756s;
+  p.boot04:58:38.172927Z/17.496474208019208s/IN4of64return0/kernelcommandACKtrue.
+  Onecapture60048 ENDED0 actualkernel-entered/fullnative.log/PPM/history.
+- Exactfrozen0187CABI independent decode and full assertions: bodyerror0/
+  unknown0/phase5/retired1/knownrefusal0; clienterror0/held0/returned1/retired1/
+  CreateDeleteissued2=returned2. Three realREAD30000/30010/30060 freshRAW6/3/0,
+  then qualifiedHLOS/DRV2 ARC raise7/4/7 in CX→MX→MSS order and savedrestore in
+  reverse order. READtrigger/completed/ACK3/3/3; WRITE2/2/2/phase5/finished1/
+  restored1/error0/unknown0. All original rawstatusOR10101 retained for both
+  engines. Fullindependentengine/access prefixes, samefreshREADfinal=writer
+  entireinitialsnapshot, actualTCS0/IRQenable1/activeMask15, exactly2newedges/
+  lowreadbackbeforecommands/noextra highrestorestore/fullcommandRW+wait+
+  savedenable1 restored. No IRQenable/type write or fixedTCS assumption.
+- CombinedREAD+WRITE246508ticks=12.838958333ms/16steps/302engineevents;
+  accessacquired1/held0/retired1/error0/301reads+71protocolstores=372events.
+  These include actual ARC resource WRITE; not totalMMIOzero and not four
+  WiFiVRM/MSS/firmware/network permission. 200ms/all68slowest/READ50+25/
+  combined50ms/256steps1024events/FP/DAIF/G1/fullsource/restore unchanged.
+- Actualnormal10objects308pages/618nativeflag0reads/NSWBsamePA/ATreturned+
+  PARrestore/204unusedtailpageszero; fulltwo128KiBmaskedDB/16384words each/
+  64AT/fullpendingbyteprefix. Namespace113x2/selectedCmdDb3pass/20hash/
+  30private+30CPUCoreRPMhhashes/three26RAMsame/two70Device3queries/source/
+  emptyqueues/equalpools/knownDelete verified. CPU1829validlive/normal7+
+  masked7OFF/FP+DAIF0G1on→c0off→exact0on/held0/restored1/retired1.
+  Workmax62514/units19/estimate2627766/remaining3065261ticks retained.
+  Opening→lastCPU106.296770833ms is not totalretire or a hardwarelease.
+  Four independentROstage460Core40CmdDbhashes; finalGCD8getters20hash/error0/
+  key5899=5899/twofinalprestarts passed. Original30224Braw remainsphase2/count1,
+  secondprestart is separate624B append; firstGetMap TPL UNOBSERVED.
+- OneUTCSET cookie7498614819/seq1 plus independentAPPLIED status2/error0/count1/
+  uncertainty2280us. No RTC/monotonic/networktimeclaim. Normaldrain43985 ENDED0
+  nativephase3/cap80000003/error0/writeepoch0=flushedepoch0; full212BWLEXIT05+
+  64BOKAYWLR5 independentlydecoded/prefix2→26→footer30→final32/faultOR0RTOR1
+  preserved/savedstate restored. AllthreewholeWiFiRAW byteequal finaldrainlog.
+  IndependentONE8sreadonly actualproductpolaris2026-11-02T05:04:53.412076Z/
+  exit0/completed05:04:53.428760Z. ACKisnotreset; now actualFASTBOOT, notnativeLIVE.
+  No keys/rawreset/errorclear/extraopticalcycle. ORIGINAL0187 CONSUMED/session
+  ENDED; matchingfrozen0187controller/image/payload/OEMboot must never replay.
+- ActualprivateRAW staged1660544B SHA869ee8d11d647545fe11e0fe09398f4b82c50f41729b216aaa39379c1ed76906/
+  client227104B SHA7a25fd942e96a978a039d4d480f713dfe325069b4d98d8194549adcbfed46199/parent1969216B SHAee9761d96a55995b4ba1a39b6981ad4ecc66b0cdf8a06ac0dc2eef624c52b251.
+  Actualproof0187/wifi/physical-ARC-raise-reverse-restore-retirement-and-controlled-FASTBOOT-proof-0001.json
+  SHA78995de416cbb749cef09e51d11b7a398476f5f9233004ff36b0ce933eab4608. PASS only ARC roundtrip/fullretirement/controlledexit.
+  Exacthostverifier corrections response[]/integercast/actualWRITE10101 were
+  host-only; no frozenFW change/rebuild/model/device rerun. Rawdump/PPM private.
+- ROOTNV actualNEW0187 strictRO39 reviewc475a6fd6ee1073615ae1a7e2e5dd2b26ac534a3c78c7fc78b1384f389d8df05/
+  preflight196f46ac10015ddc3ca681b05ebf94ec94a40b61a33600a10f6bee0fddf7a4bc
+  remainsCURRENT after only thiscontrollednativeexit+independentFB. Nextneeded
+  newcandidate may reuse integrity, not runtimeowner/client/context/ticket:
+  allfreshqualification required. No inventoryrecovery/fullhash repetition.
+  If laterAndroid/uncontrolled/abnormal transition then historical; nextneeded
+  candidate combinesNEWfull39. Whole512MiBjournal notcaptured, noFShealth/EElease.
+- User reports entering system but WiFi still cannot enable; consistent with
+  actual scope. Next ONLY fourownWiFiVRM fresh voltage/enable/mode semantics,
+  orderedrails+exactrestore BEFORE MSS. No further CPU/prep/client/READ/ARC
+  inventoryboot. NEW0188 notimplemented/NOTREADY; no phonekeys/auth pending.
+  SourceFW00490da1.../HOST5e15ead... unchanged; no nativeCI/download.
+
+| WiFi stage | Verified on this phone / implemented | Remaining acceptance |
+| --- | --- | --- |
+| ARC dependency power |0187 fresh3READ6/3/0 → raise7/4/7 → reverse savedrestore, fullCPU/client retirement, controlledexit |Done for this temporary session; fresh requalification in later integrations |
+| Four WiFi VRMs |OwnDT/CmdDb ldoa5/7/17/25 mapped; no guessed saved0 |NEXT fresh voltage/enable/mode, orderedrails, exact savedrestore BEFORE MSS |
+| MSS/MSA/GLINK/WLFW |OwnDT/vendor+Mi8sequence reviewed; volatile RMTFS software service implemented |Ownedaligned2MiBMPU/logical1MiBMSA/cache/DMAstop/VMIDhandback; realMSS+GLINK/QRTR/WLFW/ownBDF/FW_READY |
+| Native ath10k interface |Mi8XNU/Linuxath10kSNOC/QMI reference compared; ath11k event/memory/BDF comparison done |Actual nativeCE/WMI/HTT/netif and real scan results |
+| Usable network |No scan/join/data success |Scan/auth/join/IP/DNS/realdata + stop/recover; then sound, then camera |
+
+### HISTORICAL0187 preboot frozen readiness (consumed by actual result above; do not boot again)
+
 
 - ActualNEW0187 strictROaudit92969 ENDED0 then independentreview39/39PASS:
   auditd0478d92b3ceb21bfc2460a0ba6a76f0a7987ab44248d54f0691969a2baceb01/
