@@ -34,7 +34,7 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0184 saved-status lifetime fix + affected checks/models complete; host/root/image/freeze NOTREADY; actual Polaris FASTBOOT02:44; Wi-Fi NOT DONE
+### CURRENT0184 saved-status fix/source/models/exact host complete; NEWroot/image/freeze NOTREADY; actual Polaris FASTBOOT02:44; Wi-Fi NOT DONE
 
 - Corrected the specific photographed0183 boundary under existing defaultOFF
   current-word READ scope, not a new opaque retry. Initialphase0 saved and
@@ -70,7 +70,12 @@ early samples only. On0029 the human already confirmed boot complete and said
   only completion not ported and not ownEE/EL3/VMID/MPU grant. Actual0183photo
   and independent recovery02:44 remain newhardwarefacts below; USBACKUNKNOWN
   preserved, no binaryraw/READcompletion/network claimed. No further0183USB.
-- Hostexact0184, NEWfullstrictRO39 afterphysicalreset, fulloriginalcodec/image,
+- FW e342b4f677002568726d592cf298f521023fb7fd committed. ExactGCD_CLOCK_0184
+  345PowerGCD+94resource/94inputs/all38 older enabled+DISABLED literalAST
+  unchanged. 21hosttests+44actualmetadata/type refusals+5dependency refusals
+  passed. Hostproofe0de5c7c14a297a56141f60b3beb4aead5c0869485640606645cc010a745779f.
+  Host-only exactprofile not a compiledinput, no models repeat needed.
+- NEWfullstrictRO39 afterphysicalreset, fulloriginalcodec/image,
   independentfreeze/ONEhelper still required. NEW0184 NOTREADY/noimage/payload/
   bootrecord/devicecommand. ActualphonelastPolarisFASTBOOT02:44, notnativeLIVE;
   nophysical/auth待答. ROOTNV old0182HISTORICAL, don'tskipfresh39 ornowinventory.
