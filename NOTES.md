@@ -34,8 +34,27 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0188 final FFS-fit image/exact host/two SERIAL models/whole codec complete; independent freeze/helper pending; no0188phone; Wi-Fi NOT DONE
+### CURRENT0188 independently frozen FFS-fit four-VRM candidate complete; source publication proof before ONE boot; no0188phone; Wi-Fi NOT DONE
 
+- Final FW270052fb02e9b2e1455d8cd064e01b642d3fa315/HOST15e830b76b761b4570d9505e64f751bd885855bc.
+  Independent new freeze/private/tmp/polaris-runtime-0188-frozen-0001 completed:
+  COPY915+10COMMIT_ONLY/495currentcommittedsources/98inputs/newinodes/nohardlinks/
+  source modes retained/NV0600/root0700/noZigcache. Freeze manifest
+  0188/four-VRM-roundtrip-freeze-manifest-0001.json SHA60ec95a1cb2440912c07ec68db3838aeb1bccd702ddb96938a4d674480e780e3;
+  current-runtime-source-freeze-0001.json SHAb7e610e6cf2088d332cc4f58264088bc01a34f1e6e56dc44c4cffa73e11ff4c0.
+  ONE defaultofflinehelper passed; not rerun. No0188 original boot.json exists.
+- All source/tests/models/codec/current-integrity/freeze checks are complete.
+  Next actual source+handoff push and independent lsremote must bind this HEAD,
+  FW/HOST/image/freeze and real future-like publication authorization in new
+  0188/wifi/four-VRM-source-and-physical-handoff-push-proof-0001.json before
+  ANY device command. Permission itself is already answered, no question pending.
+  Only after that, unique frozen boot-four-VRM-roundtrip-once-0001.py --boot-once
+  performs ONE8s expectedproduct correctPolaris→atomicORIGINAL0188record→ONEimage.
+  No extra USB poll. ImageACK not native success; imageexec must END before sole
+  matching frozen0188controller state/waitingpayload, then same63cbpayload ONCE.
+  Controller requires physical-runtime-driver-0002/image-0001 and repo ORIGINAL
+  phone-four-VRM-roundtrip-runtime-0001/boot.json; never old/edited controllers.
+  Preserve all unknown/retirement/current ROOT boundaries, no partition/NV writes.
 - FINAL FFS revision FW270052fb02e9b2e1455d8cd064e01b642d3fa315;
   GCD_CLOCK_0188_FFS exact375PowerGCD+94resource/98inputs. All43previous
   enabled+DISABLED literalAST retained, including unused12MiB0188 policy.
