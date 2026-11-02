@@ -34,6 +34,46 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0183 actual photo: prelaunch saved CMD_STATUS wrongly checked as own completion; recovered actual Polaris FASTBOOT02:44; READ/Wi-Fi NOT DONE
+
+- Human supplied currentV4photo and answered本次“已到FASTBOOT”. Originalprivate
+  photo0183/wifi/physical-terminal-photo-0001/original.jpg SHAfd866f3bee4c1a0149319a6abf1d9b2ab12cb6cb4fbb6d9e1fed9ab51647cb75/263312B;
+  no photo/raw bytes Git. ExactfrozenV4 manual16row transcription/source review
+  SHAdfca27b42c7151830e76770024be6aa2ed7d18a5f6f8424ce51995883e03c075.
+- Actualphoto: V4HOLD1/phase3; BODY8=PWRPT_TRANSACTION/CPUerror0;
+  CPUfailureWHY/CALL/MASK/ARCH/OPEN/FAIL allunused0, not failedticks0 or noCPUcalls.
+  ACCattempted1/error0B=PWRA_UNKNOWN_STATUS/unknown1/outstanding2D=45;
+  lastIOread/flags10101=issued1returned1unknown1/address179e0d3c;
+  READphase0/steps0/triggers0/completed0/error3=PWRSC_READ/unknown1;
+  DB0bytes20000=128KiB/wordreturned4000=16384, DB1unused0/0;
+  CPUmaskheld1/restored0. No binaryraw/fullretirement/READresponse/IRQ pass.
+- Exactsource path inference: 35 access geometry reads then ten READ-engine
+  saved-snapshot reads; entry45 is candidateTCS0 CMD0_STATUS. pwrr_begin still
+  phase0 before saved-supported admission/newstaging/anynewrisingedge. Access
+  rejects returned snapshot bits outside PWRSC_DONE=10100 as if this were an
+  issued own completion. This is a concrete lifetime-classification bug in
+  the caller; actualstatusvalue/offendingbits remainUNKNOWN, not uniquehardware
+  rootcause or allWi-Fi cause. No totalMMIOzero claim; normalDevice/display
+  writes still exist. Normalargument/individualAT/source details only source
+  path inference, not new independentbinaryrawdecode. 0183USBACK staysUNKNOWN.
+- IndependentONE8s readonly actualproductPolaris2026-11-02T02:44:15.303215Z/
+  exit0/completed02:44:15.319738Z. Phone now actualFASTBOOT, nonativeLIVE.
+  Physicalrequest已答，不重复按键/诊断可见性/USB库存poll。0183ENDED/CONSUMED,
+  不重放image/payload/OEMboot，不拿旧controller重启或控制newsession。
+- Newactualproof0183/wifi/physical-terminal-prelaunch-status-evidence-and-recovered-FASTBOOT-proof-0001.json
+  SHA9bc69a8466ef2b68a7084be04634df10efb4d1eff87e7d9ddfa2a188972cc8b5. PASS only photo+recovery,
+  not completeREAD/source/CPUretirement/network. 原pendingUNKNOWNproof80d0b7...
+  保留原文件，不伪ACK。全部jobsENDED/allchildrenSTOP，无physical/auth待答。
+- NEXT correct RAW saved-status lifetime in NEW source-bound defaultOFF READ:
+  retain every snapshot bit and fullhistory, never use it as completion/grant;
+  own newlyissued status/newIRQ/allDONE/idle/fullRWrestore/UNKNOWN remain strict.
+  Preserve200ms/all68/READ50+25/IRQtype/256steps1024events. Reproduce frozen0183
+  failure in SOFTWARE with explicitly synthetic values (actualword unknown),
+  test strict own-issued badbits and full original retirement before candidate.
+  NEW0184 notyetimplemented/NOTREADY; no opaque retry. ROOTNV remainsHISTORICAL
+  afterphysicalreset: nextneededNEWcandidate requires NEWfullstrictRO39 using
+  dynamic sysfs+fiemap source, noinventory-onlyrecovery/no oldtickets/leases.
+
 ### CURRENT0183 startup ACK UNKNOWN / UEFI unavailable / FASTBOOT query timeout02:32; physical recovery requested ONCE; READ/Wi-Fi NOT DONE
 
 - FWbc9a15a571ac9d41bedd2b8f495801ac2618f8ee/HOST891728880f1170280615fcece25f72df10091314/
