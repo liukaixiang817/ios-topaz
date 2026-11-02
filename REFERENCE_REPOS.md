@@ -1436,3 +1436,25 @@ completion date.
 The correction is source dddb6af10b038eb3c7114f049c458efb9e7f6716, directpushed
 and independently lsremote matched. Source/software receipt25e1061f31dac6b80d1a70f81f52c789e75d34d9cbb2edee8b723db8e2324b91
 remains private; all jobs ended and the device status did not change.
+
+
+A new narrow own-Core SOURCE check addresses the separate80B GCD node's
+allocation provenance for first-GetMap admission. Split-node request80 reaches
+type4 AllocatePool via7f44/dab8/d880/d82c/4884; initial node copy uses
+9138/dd80/dd44/d82c. This differs from the existing64B allocator descriptors.
+The ordinary source path uses a24B header,80B payload and16B tail (120B),
+first128B pool class and8B slack. The original class geometry implies a
+single-page container for a surviving ordinary allocation; this is not a
+runtime node observation or an address/owner permission. Request type4 selects
+Core1d1a0, but its type field is zero in source DATA and runtime initialization
+is UNOBSERVED. Used-byte totals and free bins do not enumerate live allocated
+blocks; tags/type/size/tail/alignment can only be integrity conditions alongside
+current typed/page/source/native/AT/lifetime inputs. No old cache map, map key
+or pool snapshot becomes an owner lease. No pool method was called and no
+new runtime reader/admission was implemented. Private source-only proof
+ff8490e0f6baa362f4322bc7e53418a348abec8c3302ce7f38ebc1117260656d
+records36 independent word decodes and the limited inferences. Earlier source
+reviews are reused. Functional source dddb6af and all software tests remain
+unchanged, without ASAN/model/CI/crosscompile/device reruns. First private
+GetMap complete dynamic inputs/callback/work/temporal qualification still
+blocks real remote-memory lifecycle and a necessary NEW0189 candidate.

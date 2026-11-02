@@ -108,7 +108,62 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
-- NEW0189 CURRENT actual copied-IO parent dispatch correction (SOFTWARE only).
+- NEW0189 CURRENT targeted first-GetMap GCD-node allocation provenance SOURCE
+  result; functional source remains dddb6af10b038eb3c7114f049c458efb9e7f6716.
+  All adapter/parent/test bytes and167/2341/8334/1452/5141 SOFTWARE evidence
+  below remain unchanged. No runtime reader/admission, candidate, extra map,
+  pool API, model, test rerun, cross compile, CI or device operation was added.
+  The prior GetMap/provider/timer/allocator audits were reused. This new narrow
+  question was how the separate80B GCD nodes are constructed and backed,
+  before a first-call reader can safely follow them. It does not close the
+  initial GetMap dynamic-input/callback/work/temporal admission gap.
+- Exact own Core DATA shows two split-node request80 allocations at7f6c/7f88
+  through dab8/d880/d82c and registered AllocatePool4884; the initial node at
+  9138 copies its Core1bd70 template through dd80/dd44/d82c. Both request
+  type4, distinct from the existing64B allocator-map/free-descriptor nodes.
+  Pool lookup3684 selects Core1ce00+type*232, so request4 selects1d1a0; its
+  type field is ZERO in the source image, not an independently observed
+  initialized runtime4. Initial pool lock1c1f8 is16/4/1 DATA only. No current
+  descriptor, lock state, pool allocation, GCD node or ownership was observed.
+- This exact ordinary feature-cold request80 path has24B header/80B payload/
+  16B tail, total120B in the first128B class with8B slack. All twelve original
+  class sizes are multiples of128; ordinary type4 backing granule is4096.
+  Therefore header128-alignment and payload address mod128=24, with the full
+  120B container in one page, are SOURCE-path inferences for a surviving
+  ordinary allocation, not current address evidence or authorization to read
+  an arbitrary container. A runtime reader must reject other/unqualified
+  paths and validate fresh typed page/source/native/AT inputs before loads.
+  Local tags/type/size/tail/alignment alone cannot prove a live allocation:
+  FreePool changes small-block metadata, reuse can change object identity,
+  and the pool descriptor contains used-byte total/free bins, not a complete
+  active-allocation address inventory. No free-bin/used-size snapshot, cache
+  map, AT or key is promoted into current owner/lifetime/IRQ permission.
+- Private own-Core-GCD-node-pool-provenance-0001/proof.json
+  SHA ff8490e0f6baa362f4322bc7e53418a348abec8c3302ce7f38ebc1117260656d
+  binds36 independently decoded AArch64 source-word facts plus original DATA
+  geometry; no original instruction executes. The first verifier incorrectly
+  expected the ADRP/ADD destination register to match; the second incorrectly
+  expected the array type field already initialized4 in source DATA. Both
+  failures/scripts are preserved. Final0003 distinguishes request type from
+  UNOBSERVED runtime initialization; no production guard or test was changed.
+- NEXT stays first private GetMap: genuinely current typed/source-bound full
+  GCD80B/container and15x48B type-policy inputs, then complete callback/work/
+  temporal admission, without borrowing the already returned map as its own
+  pre-call proof. Pool tags are an additional integrity condition, not an
+  owner shortcut or new permission bool. Reuse the six exact parent routes
+  and completed incoming/image/payload witnesses; do not re-audit this source
+  or make a pool/observer inventory boot. Real MSA/RMTFS claims and cache/
+  secureVMID/MPU/remoteDMAstop/handback, full normal/UNKNOWN retirement and two
+  SERIAL whole models/newprofile/resource/codec/transition/freeze/ONEhelper
+  still precede any necessary candidate. Original200ms/20Core+70providerhash/
+  ARC/VRM/readwork/fullrestore remain unchanged. NEW0189 NOTREADY, no MSS/NV/
+  radio/scan/join/data. PhysicalCURRENT0188/last actualFASTBOOT10:05 and all
+  consumed-controller/data-protection/standing-consent facts remain valid.
+  No physical/permission reply is pending. WiFi has no reliable completion
+  date; no feature progress is inferred from this source result. Publication
+  receipt will be private gcd-node-pool-source-handoff-push-proof-0001.json.
+
+- HISTORICAL0189 actual copied-IO parent dispatch correction (SOFTWARE only).
   Source dddb6af10b038eb3c7114f049c458efb9e7f6716 directpushed; separate
   readonly lsremote matched exactly. All host/build/Git jobs ENDED; source/
   softwareproof25e1061f31dac6b80d1a70f81f52c789e75d34d9cbb2edee8b723db8e2324b91
