@@ -34,6 +34,45 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0182 source/HOST/models DONE; fresh RO0001 stopped at fixed runtime-device gate, controlled FASTBOOT00:42; reviewed dynamic identity RO0002 next; NO native0182 boot; Wi-Fi NOT DONE
+
+- FWb1d8ec81b2594eca695e369e170b82792b9aac35/HOSTd410d03e0413c9d1438820730c2834ddf15782eb
+  already published/independentremote matched. Native word-capture source and
+  464checks/twoSERIALmodels/exact380metadata remain unchanged; no rerun needed.
+- NEW0182 strictROaudit57103 ENDED0 but result state stopped_for_review:
+  sixGPT/critical5/ESP102 passed, partial3NV+FSC read, mount actually ro,norecovery.
+  No new/oldroot fullhash or complete39/NVafter validation; may_boot_iOS=false.
+  Saved call order locates fixed runtime dev_t allowlist259:6/259:7 refusal before
+  its readlink branch. The actual dev_t value was not saved: UNOBSERVED, no guessed
+  minor number or changed-UFS assertion. This is not Wi-Fi/DB/native failure.
+- Normalcleanup actualumount/none left mounted, no partitionwrite/repair/replay/
+  NVrestore. IndependentactualFASTBOOT verified by audit at
+  2026-11-02T00:42:28.047088Z; 60.93176420801319s host elapsed. No physical action
+  pending or furtherpoll needed. Native0182 ORIGINAL bootrecord still nonexistent;
+  0181 remainsCONSUMED/ENDED; neverreplay. Partialaudit0001 and allfiles unchanged.
+  Proof strict-RO-first-attempt-device-identity-gate-and-controlled-FASTBOOT-proof-0001.json
+  SHAee0dacdc866aa16f5bcdd63d18a5684242a7a8f7aa13bc83f5eafc1a0752e83e
+  PASSonly preserves partialaudit+controlledFASTBOOT; ROOTNV qualification HISTORICAL.
+- New private audit-fresh-roots-readonly-0002.py/review-fresh-roots-readonly-0002.py
+  bind the same necessary NEW0182 candidate and a NEWaudit0002 record. Current
+  sysfs dev_t must resolve to sda22, match actual onlyROmount source and each of
+  three FIEMAP file device identities; actualmount source must be literal sda22/
+  ext4. Both IDs sampled unchanged after fullhashes.
+  Both session-local major/minor compared with current kernel objects, not old
+  boot numbers. All other persistent identity/generation/flags/142-182maps/marker/
+  full16GiBhashes/GPT/ESP/journal/currentNV before-local-after/no-write gates stay.
+  Prior device calls unchanged except epoch/RAMmountname; added two RO sysfs
+  reads after wholehashes. Same39 checks/250s host/300s watchdog. Actual fresh
+  qualification still NOT observed. 18 focused host-only identity acceptance/
+  rejection cases pass; not physical substitutes.
+- RO0002 finalsource-review 353a1f80069c3482e35b85997488b865279142aa9ff38e5d12d32de9cc4ca235;
+  audit b7360739ae151bc5264f813e2a1d933287c464c4ae6aea71f8afbe2ea3478489,
+  reviewer58653a4c5296e909e7893cbec79f33b3af4439a3497f7dc0c04140e0e0e333bd.
+  No generic newparser/service/contract or whitelist expansion; actual values
+  preserved before gate failures. Need actual NEWfull39 then wholecodec/image/
+  independentfreeze/ONEhelper/publishproof before ONE new nativeimage/payload.
+  No native0182 image/record yet; nativecandidate NOTREADY, sound/camera STOP.
+
 ### CURRENT0182 full masked DB word capture source + host/affected checks/two SERIAL models DONE; fresh rootNV/image/freeze NOTREADY; no0182phone action; Wi-Fi NOT DONE
 
 - Actual0181 photograph established original opening3907820ticks>3840000ticks
