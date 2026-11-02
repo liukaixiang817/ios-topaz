@@ -54,6 +54,18 @@ struct pwmc_irq_path {
     uint64_t handler[PWMC_IRQ_HANDLERS];
     uint8_t digest[32];
 };
+/* RestoreTPL(4) dispatches pending levels5..16 too. Preserve those queues
+ * before Raise/page/Restore, without walking, clearing or calling them. */
+struct pwmc_deferred_sample {
+    uint64_t pending,counter,head[12][2];
+    uint32_t attempted,complete,head_count,reserved;
+};
+struct pwmc_deferred_path {
+    uint64_t restore_entry,checker;
+    uint32_t attempted,complete,checks,refusal_timer;
+    struct pwmc_deferred_sample sample[3];
+    uint8_t digest[32];
+};
 struct pwmc_timer_node {
     uint64_t address,AT_page[2],AT_raw[2];
     uint32_t issued,returned,AT_count,reserved;
@@ -165,11 +177,12 @@ struct pwmc_result {
     struct pwmc_tpl_scope TPL[2];
     struct pwmc_timer_path timers[2];
     struct pwmc_irq_path irq[2];
+    struct pwmc_deferred_path deferred[2];
     struct pgcd_io bound_io;
 };
 _Static_assert(sizeof(struct pwmc_translation)==56,"both returned PAR translations and exact restore");
 _Static_assert(sizeof(struct pwmc_map_node)==120,"complete64B original descriptor plus returned translations");
-_Static_assert(sizeof(struct pwmc_result)==((121344+2*sizeof(struct pwmc_event_path)+2*sizeof(struct pwmc_allocator_path)+2*sizeof(struct pwmc_tpl_scope)+2*sizeof(struct pwmc_timer_path)+2*sizeof(struct pwmc_irq_path)+sizeof(struct pgcd_io)+15)&~15u),"complete allocation, release, notification, allocator, TPL, timer and original IRQ provider evidence");
+_Static_assert(sizeof(struct pwmc_result)==((121344+2*sizeof(struct pwmc_event_path)+2*sizeof(struct pwmc_allocator_path)+2*sizeof(struct pwmc_tpl_scope)+2*sizeof(struct pwmc_timer_path)+2*sizeof(struct pwmc_irq_path)+2*sizeof(struct pwmc_deferred_path)+sizeof(struct pgcd_io)+15)&~15u),"complete allocation, release, notification, allocator, TPL, timer, IRQ and deferred dispatch evidence");
 static inline int pwmc_fail(struct pwmc_result*r,unsigned error,unsigned unknown)
 {if(!r->error)r->error=error;if(unknown)r->unknown=1;return 0;}
 static inline int pwmc_zero(const void*p,size_t n)
@@ -749,6 +762,57 @@ static inline int pwmc_irq_replay(const struct pwmc_result*r,unsigned op)
         p->core_advance_bound==pwfi_le(p->image[0].state+56,8)*(pwfi_le(p->image[0].state,8)+steps+2)&&
         p->raise_ticks>=p->regs[0].ticks&&p->raise_ticks<=end&&p->final_ticks>=p->regs[1].ticks&&p->final_ticks<=end;
 }
+static inline void pwmc_deferred_digest(const struct pwmc_deferred_path*p,uint8_t out[32])
+{struct pwfi_sha256 h;pwfi_init(&h);for(size_t k=0;k<offsetof(struct pwmc_deferred_path,digest);k++)pwfi_byte(&h,((const uint8_t*)p)[k]);pwfi_final(&h,out);}
+/* In this original checker, SignalEvent ca90 skips c7f0 when Type.bit9 is
+ * clear. Timer-only and NotifyWait events cannot enqueue their NotifyFn from
+ * this path. A NotifySignal timer could queue arbitrary8/16 code, so refuse
+ * it irrespective of its current trigger/count: a future-time guess is not
+ * callback authority. Unrelated unqueued signal subscribers are not called
+ * by this source path; the existing map-change fanout refusal stays exact. */
+static inline int pwmc_deferred_timers(const struct pwmc_result*r,unsigned op,unsigned*bad)
+{
+    if(!pwmc_timers_replay(r,op)||!pwmc_irq_bindings_valid(r,op))return 0;
+    const struct pwmc_timer_path*t=&r->timers[op];
+    for(unsigned k=0;k<t->count;k++)if(pwfi_le(t->node[k].raw+8,4)&0x200){*bad=k+1;return 0;}
+    return 1;
+}
+static inline int pwmc_deferred_replay(const struct pwmc_result*r,unsigned op,unsigned count)
+{
+    const struct pwmc_deferred_path*p=&r->deferred[op];uint64_t core=r->source[op].core;uint8_t digest[32];unsigned bad=0;
+    if(count>3||p->attempted!=1||p->checks!=count||p->complete!=(count==3)||p->refusal_timer||
+       p->restore_entry!=core+PWMC_RESTORE_RVA||p->checker!=r->timers[op].checker||!pwmc_deferred_timers(r,op,&bad))return 0;
+    for(unsigned s=0;s<count;s++){
+        const struct pwmc_deferred_sample*q=&p->sample[s];
+        if(q->attempted!=1||q->complete!=1||q->head_count!=12||q->reserved||(q->pending&~UINT64_C(31)))return 0;
+        for(unsigned k=0;k<12;k++){uint64_t head=core+0x1c928+16*(k+5);if(q->head[k][0]!=head||q->head[k][1]!=head)return 0;}
+    }
+    if(!pwmc_zero(p->sample+count,(3-count)*sizeof(p->sample[0])))return 0;
+    pwmc_deferred_digest(p,digest);return pgcd_equal(digest,p->digest,32);
+}
+static inline int pwmc_deferred_step(struct pwmc_result*r,unsigned op,unsigned stage)
+{
+    struct pwmc_deferred_path*p=&r->deferred[op];uint64_t core=r->source[op].core;unsigned bad=0;
+    if(stage>2||!pwmc_context_intact(r,op)||!pwmc_parameters(r)||!pwmc_call_guard_valid(r,op)||
+       !pwmc_events_current(r,op)||!pwmc_timers_current(r,op)||!pwmc_irq_current(r,op))return pwmc_fail(r,PWMC_CONTEXT,1);
+    if(!stage){
+        if(!pwmc_zero(p,sizeof(*p)))return pwmc_fail(r,PWMC_REUSED,1);
+        p->attempted=1;p->restore_entry=core+PWMC_RESTORE_RVA;p->checker=r->timers[op].checker;
+    }else if(!pwmc_deferred_replay(r,op,stage))return pwmc_fail(r,PWMC_CONTEXT,1);
+    if(!pwmc_deferred_timers(r,op,&bad)){p->refusal_timer=bad;return pwmc_fail(r,PWMC_CONTEXT,1);}
+    struct pwmc_deferred_sample*q=&p->sample[stage];q->attempted=1;
+    q->pending=pwfi_le((const void*)(uintptr_t)(core+0x1dbc0),8);q->counter=pwfi_le((const void*)(uintptr_t)(core+0x1dc00),8);
+    if(q->pending&~UINT64_C(31))return pwmc_fail(r,PWMC_CONTEXT,1);
+    for(unsigned k=0;k<12;k++){
+        uint64_t head=core+0x1c928+16*(k+5);pgcd_copy(q->head[k],(const void*)(uintptr_t)head,16);q->head_count=k+1;
+        if(q->head[k][0]!=head||q->head[k][1]!=head)return pwmc_fail(r,PWMC_CONTEXT,1);
+    }
+    /* No clock, callback, firmware method or state-changing instruction
+     * occurs between these final live equalities and the caller's ABI leaf. */
+    if(pwfi_le((const void*)(uintptr_t)(core+0x1dbc0),8)!=q->pending||!pwmc_events_current(r,op)||!pwmc_timers_current(r,op)||!pwmc_irq_current(r,op))return pwmc_fail(r,PWMC_CONTEXT,1);
+    for(unsigned k=0;k<12;k++){uint64_t head=core+0x1c928+16*(k+5);if(!pgcd_equal(q->head[k],(const void*)(uintptr_t)head,16))return pwmc_fail(r,PWMC_CONTEXT,1);}
+    q->complete=1;p->checks=stage+1;p->complete=stage==2;pwmc_deferred_digest(p,p->digest);return 1;
+}
 static inline int pwmc_irq_seal_raise(struct pwmc_result*r,unsigned op)
 {
     struct pwmc_irq_path*p=&r->irq[op];uint8_t digest[32];uint64_t end,steps,notify;pwmc_irq_digest(p,digest);
@@ -760,7 +824,7 @@ static inline int pwmc_irq_seal_raise(struct pwmc_result*r,unsigned op)
     __asm__ volatile("mrs %0,CNTPCT_EL0":"=r"(p->raise_ticks));
 #endif
     if(!pwmc_context_intact(r,op)||!pwmc_parameters(r)||!pwmc_call_guard_valid(r,op)||!pwmc_irq_current(r,op)||p->raise_ticks<p->regs[0].ticks||p->raise_ticks>end)return pwmc_fail(r,PWMC_CONTEXT,1);
-    pwmc_irq_digest(p,p->digest);return 1;
+    pwmc_irq_digest(p,p->digest);return pwmc_deferred_step(r,op,0);
 }
 static inline int pwmc_irq_finalize(struct pwmc_result*r,unsigned op)
 {
@@ -781,7 +845,7 @@ static inline int pwmc_irq_finalize(struct pwmc_result*r,unsigned op)
 #endif
     if(!pwmc_context_intact(r,op)||!pwmc_parameters(r)||!pwmc_call_guard_valid(r,op)||
        !pwmc_irq_current(r,op)||p->final_ticks<p->regs[1].ticks||p->final_ticks>end)return pwmc_fail(r,PWMC_CONTEXT,1);
-    pwmc_irq_digest(p,p->digest);return 1;
+    pwmc_irq_digest(p,p->digest);return pwmc_deferred_step(r,op,1);
 }
 static inline int pwmc_irq_retire(struct pwmc_result*r,unsigned op)
 {
@@ -992,6 +1056,7 @@ static inline int pwmc_tpl_actual(struct pwmc_result*r,unsigned operation,unsign
            p->hash_count!=5||p->hash_failed)return 0;
         for(unsigned k=0;k<5;k++)if(!pgcd_equal(p->hashes[k],pgci_ranges[k].sha256,32))return 0;
         if(!pwmc_maps_delta(&c->record->map[0],c->record->maps[0],&p->map,p->maps,r->backing,r->backing_bytes,operation))return 0;
+        if(!pwmc_deferred_step(r,operation,2))return 0;
     }else if(q->issued||q->returned||q->unknown||p->transition[1].issued||p->map.issued)return 0;
 #if defined(POLARIS_WIFI_MEMORY_SOFTWARE_PEER)
     return pwmc_test_TPL(r,operation,restore);
@@ -1139,7 +1204,7 @@ static inline int pwmc_invoke(struct pwmc_result*r,unsigned operation)
     if(!pwmc_service_leave(r,operation,returned)||q->native_after||
        !pgcd_equal(q->BS_before,c->io.system->boot,PWMC_BS_BYTES)||!pwmc_close_source(r,operation)||!pwmc_irq_retire(r,operation))return pwmc_fail(r,PWMC_SERVICE,1);
     p->held=0;p->completed=1;pwmc_tpl_digest(p,p->digest);
-    if(!pwmc_tpl_replay(r,operation))return pwmc_fail(r,PWMC_CONTEXT,1);
+    if(!pwmc_tpl_replay(r,operation)||!pwmc_deferred_replay(r,operation,3))return pwmc_fail(r,PWMC_CONTEXT,1);
     q->unknown=0;c->io.order(c->io.opaque);return 1;
 }
 static inline int pwmc_translation_valid(const struct pwmc_translation*t)
@@ -1162,7 +1227,7 @@ static inline int pwmc_retained_claim(const struct pwmc_result*r)
        r->ticket[0].spent!=1||r->ticket[0].result!=(uintptr_t)s||s->attempted!=1||s->error||s->uncertain||s->outstanding||
        s->hash_count[0]!=5||s->hash_count[1]!=5||s->hash_failed[0]||s->hash_failed[1]||
        r->final_hash_count[0]!=5||r->final_hash_failed[0]||!r->native_reads[0]||r->native_last[0]||
-       !pgcd_equal(q->BS_before,q->BS_after,PWMC_BS_BYTES)||!pwmc_events_replay(r,0)||!pwmc_allocator_replay(r,0)||!pwmc_tpl_replay(r,0)||!pwmc_timers_replay(r,0)||!pwmc_irq_replay(r,0)||!pwmc_map_delta(s,r->backing,r->backing_bytes,0))return 0;
+       !pgcd_equal(q->BS_before,q->BS_after,PWMC_BS_BYTES)||!pwmc_events_replay(r,0)||!pwmc_allocator_replay(r,0)||!pwmc_tpl_replay(r,0)||!pwmc_timers_replay(r,0)||!pwmc_irq_replay(r,0)||!pwmc_deferred_replay(r,0,3)||!pwmc_map_delta(s,r->backing,r->backing_bytes,0))return 0;
     for(unsigned k=0;k<5;k++)if(!pgcd_equal(s->hashes[0][k],pgci_ranges[k].sha256,32)||
        !pgcd_equal(s->hashes[1][k],pgci_ranges[k].sha256,32)||!pgcd_equal(r->final_hashes[0][k],pgci_ranges[k].sha256,32))return 0;
     for(unsigned k=0;k<r->pages;k++)if(r->AT[k].page!=r->backing+4096*k||!pwmc_translation_valid(&r->AT[k]))return 0;

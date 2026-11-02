@@ -20,6 +20,7 @@ static unsigned late_epoch;
 static uint64_t allocated_base,allocated_bytes;
 static uint64_t live_base[2],live_bytes[2];static unsigned live[2];
 static uint8_t*irq_original[3],*irq_image[3];static unsigned irq_fault,irq_ATs,irq_slot,irq_phase,irq_fired;
+static unsigned deferred_fault,deferred_stage,deferred_level,deferred_fired;
 static void irq_mutate(unsigned op)
 {
     struct pwmc_irq_path*p=&mr->irq[op];irq_fired=1;
@@ -151,6 +152,15 @@ static void memory_order(void*p)
     if(tf&&ts==1&&!fired&&mr->TPL[to].transition[td].issued&&!mr->TPL[to].transition[td].returned){fired=1;tpl_mutate(mr,to,td);}
     unsigned op=mr&&mr->source[1].attempted?1:0;
     if(mr&&!irq_fired&&irq_phase==2&&irq_fault>=50&&irq_fault<=68&&mr->TPL[op].transition[0].issued&&!mr->TPL[op].transition[0].returned)irq_mutate(op);
+    if(mr&&deferred_fault&&!deferred_fired){
+        unsigned at=deferred_stage==1?(mr->call[op].issued&&!mr->call[op].returned):
+            (mr->TPL[op].transition[deferred_stage==2].issued&&!mr->TPL[op].transition[deferred_stage==2].returned);
+        if(at){
+            deferred_fired=1;uint64_t head=(uintptr_t)core+0x1c928+16*deferred_level;
+            if(deferred_fault==1)put(core+0x1dbc0,UINT64_C(1)<<deferred_level,8);
+            else put((void*)(uintptr_t)(head+8*(deferred_fault==3)),head+8,8);
+        }
+    }
 }
 static int memory_fp_save(void*p,struct pgcd_fp_guard*g)
 {
@@ -248,7 +258,7 @@ static int pwmc_test_TPL(struct pwmc_result*r,unsigned operation,unsigned restor
         if(mf==40)return 0;
         if(mf==41){if(restore)put(core+0x1b098,8,8);else t->value=8;}
         if(mf==42)put(core+0x1b098,31,8);
-        if(mf==43)put(arena+0xf4000,1,4);
+        if(mf==43)put(arena+0xf7000,1,4);
         if(mf==44)put(core+0x1b838,(uintptr_t)core+0xd3f0,8);
         if(mf==45)arches+=50000;
         if(mf==46)core[0x1000]^=1;
@@ -295,7 +305,8 @@ static int memory_AT(struct pwmc_translation*t)
 static void setup(unsigned kind,unsigned f)
 {
     mr=0;reset(0);mf=f;tf=td=to=ts=fired=map_fault=late_epoch=0;claims=drops=translations=physical_owned=event_ATs=allocator_ATs=0;allocated_base=allocated_bytes=0;
-    event_base=arena+0x110000;timer_base=arena+0x1a0000;timer_ATs=irq_ATs=irq_fault=irq_slot=irq_phase=irq_fired=0;memset(arena+0x100000,0,0x200000);
+    event_base=arena+0x110000;timer_base=arena+0x1a0000;timer_ATs=irq_ATs=irq_fault=irq_slot=irq_phase=irq_fired=0;
+    deferred_fault=deferred_stage=deferred_level=deferred_fired=0;memset(arena+0x100000,0,0x200000);
     allocator_base=arena+0x130000;
     memset(live,0,sizeof(live));memset(live_base,0,sizeof(live_base));memset(live_bytes,0,sizeof(live_bytes));
     memset(raises,0,sizeof(raises));memset(TPL_restores,0,sizeof(TPL_restores));memset(page_TPL,0,sizeof(page_TPL));
@@ -303,17 +314,17 @@ static void setup(unsigned kind,unsigned f)
     /* Keep the genuine firmware ConfigurationTable outside the enlarged
      * modeled loader image, as required by the original Core bootstrap. */
     struct pgcd_config previous=*cfg;cfg=(void*)(arena+0xf9000);*cfg=previous;s->tables=cfg;
-    mr=(void*)(arena+0x4b100);memset(mr,0,sizeof(*mr));assert((uint8_t*)mr+2*sizeof(*mr)<arena+0xf4000);
+    mr=(void*)(arena+0x4b100);memset(mr,0,sizeof(*mr));assert((uint8_t*)mr+2*sizeof(*mr)<arena+0xf7000);
     put(core+0x1c368,(uintptr_t)core+0x1c368,8);put(core+0x1c370,(uintptr_t)core+0x1c368,8);
     put(core+0x1cbc8,0,8);put(core+0x1c3f0,(uintptr_t)core+0x1c3f0,8);put(core+0x1c3f8,(uintptr_t)core+0x1c3f0,8);
     for(unsigned level=0;level<32;level++){uint64_t head=(uintptr_t)core+0x1c928+16*level;put((void*)(uintptr_t)head,head,8);put((void*)(uintptr_t)(head+8),head,8);}
     allocator_model();
     irq_install();
     struct pgcd_io io={0,s,memory_arch,memory_map,memory_identity,query,memory_fp_save,memory_fp_restore,memory_order};
-    assert(pwmc_bind(mr,self,s,(void*)(arena+0xf4000),kind,&io));
+    assert(pwmc_bind(mr,self,s,(void*)(arena+0xf7000),kind,&io));
     if(f==1)put(core+0x1b828,(uintptr_t)core+PWMC_ALLOC_RVA+4,8);
     if(f==2)put(core+0x1cb78,(uintptr_t)core+0x1000,8);
-    if(f==3)put(arena+0xf4000,1,4);
+    if(f==3)put(arena+0xf7000,1,4);
 }
 /* Original notification metadata is SOFTWARE RAM, outside the modeled
  * loader image. No notification function is called by this peer. */
@@ -337,7 +348,7 @@ static void timer_list(unsigned count)
     put(core+0x1cbc8,(uintptr_t)event_base,8);
     uint64_t head=(uintptr_t)core+0x1c3f0,previous=head;
     for(unsigned k=0;k<count;k++){
-        uint8_t*n=timer_base+256*k;memset(n,0,184);put(n,0x746e7665,8);put(n+8,UINT32_C(0x80000200),4);
+        uint8_t*n=timer_base+256*k;memset(n,0,184);put(n,0x746e7665,8);put(n+8,UINT32_C(0x80000100),4);
         put(n+32,k&1?16:8,8);put(n+40,0x12345678,8);
         put(n+152,k+1<count?(uintptr_t)n+256+152:head,8);put(n+160,previous,8);put(n+168,10000+k,8);
         previous=(uintptr_t)n+152;
@@ -396,7 +407,7 @@ int main(int argc,char**argv)
     for(unsigned kind=0;kind<2;kind++){
         setup(kind,0);int ok=pwmc_claim(mr,memory_AT);
         if(!ok)fprintf(stderr,"claim kind%u error%u unknown%u source%u/%u maps%u calls%u pages%u translated%u\n",kind,mr->error,mr->unknown,mr->source[0].error,mr->source[0].uncertain,maps,claims,mr->pages,mr->translated);
-        if(!ok){uint64_t selected=0;int sel=pwmc_select(&mr->source[0],mr->kind,&selected);fprintf(stderr,"layout%d params%d select%d expected%llx actual%llx native%u kind%u/%u hook%llx alloc%llx expected%llx BS%zu\n",pwmc_layout(mr),pwmc_parameters(mr),sel,(unsigned long long)selected,(unsigned long long)mr->backing,*(uint32_t*)(arena+0xf4000),mr->kind,mr->bound_kind,(unsigned long long)pwfi_le(core+0x1cb78,8),(unsigned long long)(uintptr_t)s->boot->allocate_pages,(unsigned long long)((uintptr_t)core+PWMC_ALLOC_RVA),sizeof(struct efi_boot));}
+        if(!ok){uint64_t selected=0;int sel=pwmc_select(&mr->source[0],mr->kind,&selected);fprintf(stderr,"layout%d params%d select%d expected%llx actual%llx native%u kind%u/%u hook%llx alloc%llx expected%llx BS%zu\n",pwmc_layout(mr),pwmc_parameters(mr),sel,(unsigned long long)selected,(unsigned long long)mr->backing,*(uint32_t*)(arena+0xf7000),mr->kind,mr->bound_kind,(unsigned long long)pwfi_le(core+0x1cb78,8),(unsigned long long)(uintptr_t)s->boot->allocate_pages,(unsigned long long)((uintptr_t)core+PWMC_ALLOC_RVA),sizeof(struct efi_boot));}
         assert(ok&&claims==1&&!drops&&mr->held&&mr->allocated&&!mr->unknown);
         assert(raises[0]==1&&TPL_restores[0]==1&&page_TPL[0]==16&&pwmc_tpl_replay(mr,0)&&pwfi_le(core+0x1b098,8)==4);
         assert(mr->pages==(kind?514:512)&&mr->exposed==mr->backing+(kind?4096:0)&&mr->exposed_bytes==(kind?0x200000:0x100000));
@@ -409,7 +420,7 @@ int main(int argc,char**argv)
     }
     setup(0,0);assert(pwmc_claim(mr,memory_AT));struct pwmc_result*first=mr;mr=(void*)((uint8_t*)first+sizeof(*first));
     struct pgcd_io pair_io={0,s,memory_arch,memory_map,memory_identity,query,memory_fp_save,memory_fp_restore,memory_order};
-    assert(pwmc_bind(mr,self,s,(void*)(arena+0xf4000),PWMC_RMTFS,&pair_io)&&pwmc_claim(mr,memory_AT));
+    assert(pwmc_bind(mr,self,s,(void*)(arena+0xf7000),PWMC_RMTFS,&pair_io)&&pwmc_claim(mr,memory_AT));
     struct pwmc_result*second=mr;assert(physical_owned==2&&first->backing!=second->backing&&first->backing_bytes!=second->backing_bytes);
     mr=first;assert(pwmc_release_local(mr,memory_AT)&&physical_owned==1);mr=second;
     assert(pwmc_release_local(mr,memory_AT)&&!physical_owned&&claims==2&&drops==2);cases++;
@@ -616,7 +627,8 @@ int main(int argc,char**argv)
     for(unsigned type=0;type<3;type++){
         setup(0,0);timer_list(1);put(timer_base+8,UINT32_C(0x80000000)+(type?type*0x100:0),4);
         if(!type)memset(timer_base+32,0,24);
-        assert(pwmc_claim(mr,memory_AT)&&pwmc_release_local(mr,memory_AT));cases++;
+        if(type==2)assert(!pwmc_claim(mr,memory_AT)&&mr->deferred[0].refusal_timer==1&&mr->unknown&&!claims&&!raises[0]);
+        else assert(pwmc_claim(mr,memory_AT)&&pwmc_release_local(mr,memory_AT));cases++;
     }
     for(unsigned wrong=0;wrong<26;wrong++){
         setup(0,0);timer_list(2);
@@ -731,14 +743,32 @@ int main(int argc,char**argv)
         setup(0,0);assert(pwmc_claim(mr,memory_AT));((uint8_t*)&mr->irq[0])[byte]^=1;
         assert(!(expose?pwmc_exposure_intent(mr):pwmc_release_local(mr,memory_AT))&&mr->unknown&&mr->held&&!drops);cases++;
     }
+    for(unsigned op=0;op<2;op++)for(unsigned slot=0;slot<PWMC_TIMER_MAX;slot++){
+        setup(0,0);timer_list(PWMC_TIMER_MAX);if(op)assert(pwmc_claim(mr,memory_AT));
+        put(timer_base+256*slot+8,UINT32_C(0x80000200),4);
+        assert(!(op?pwmc_release_local(mr,memory_AT):pwmc_claim(mr,memory_AT))&&mr->unknown&&claims==op&&!drops&&!raises[op]);
+        assert(mr->deferred[op].refusal_timer==slot+1);cases++;
+    }
+    for(unsigned op=0;op<2;op++)for(unsigned stage=0;stage<3;stage++)for(unsigned level=5;level<=16;level++)for(unsigned fault=1;fault<=3;fault++){
+        setup(0,0);if(op)assert(pwmc_claim(mr,memory_AT));deferred_stage=stage;deferred_level=level;deferred_fault=fault;
+        assert(!(op?pwmc_release_local(mr,memory_AT):pwmc_claim(mr,memory_AT))&&deferred_fired&&mr->unknown);
+        assert(claims==(op||stage==2)&&drops==(op&&stage==2));
+        assert(TPL_restores[op]==0);unsigned stopped=maps+arches+claims+drops;
+        assert(!pwmc_release_local(mr,memory_AT)&&stopped==maps+arches+claims+drops);cases++;
+    }
+    for(unsigned byte=0;byte<sizeof(struct pwmc_deferred_path);byte++)for(unsigned expose=0;expose<2;expose++){
+        setup(0,0);assert(pwmc_claim(mr,memory_AT));((uint8_t*)&mr->deferred[0])[byte]^=1;
+        assert(!(expose?pwmc_exposure_intent(mr):pwmc_release_local(mr,memory_AT))&&mr->unknown&&mr->held&&!drops);cases++;
+    }
     setup(0,0);event_base+=0xfd8;timer_base+=0xf80;timer_list(3);put(irq_image[1]+0x3150,1020,8);assert(pwmc_claim(mr,memory_AT));
     if(argc==6){FILE*out=fopen(argv[5],"wb");assert(out&&
         fwrite(&mr->events[0],1,sizeof(mr->events[0]),out)==sizeof(mr->events[0])&&
         fwrite(&mr->allocator[0],1,sizeof(mr->allocator[0]),out)==sizeof(mr->allocator[0])&&
         fwrite(&mr->TPL[0],1,sizeof(mr->TPL[0]),out)==sizeof(mr->TPL[0])&&
         fwrite(&mr->timers[0],1,sizeof(mr->timers[0]),out)==sizeof(mr->timers[0])&&
-        fwrite(&mr->irq[0],1,sizeof(mr->irq[0]),out)==sizeof(mr->irq[0])&&!fclose(out));}
+        fwrite(&mr->irq[0],1,sizeof(mr->irq[0]),out)==sizeof(mr->irq[0])&&
+        fwrite(&mr->deferred[0],1,sizeof(mr->deferred[0]),out)==sizeof(mr->deferred[0])&&!fclose(out));}
     assert(pwmc_release_local(mr,memory_AT));cases++;
-    printf("{\"passed\":true,\"checks\":%u,\"record_bytes\":%zu,\"TPL_scope_bytes\":%zu,\"TPL_transition_bytes\":%zu,\"timer_path_bytes\":%zu,\"provider_path_bytes\":%zu,\"original_PE_executed\":false,\"SOFTWARE_BS_AT_only\":true,\"physical_allocator_or_VMID_grant\":false}\n",cases,sizeof(*mr),sizeof(mr->TPL[0]),sizeof(mr->TPL[0].transition[0]),sizeof(mr->timers[0]),sizeof(mr->irq[0]));
+    printf("{\"passed\":true,\"checks\":%u,\"record_bytes\":%zu,\"TPL_scope_bytes\":%zu,\"TPL_transition_bytes\":%zu,\"timer_path_bytes\":%zu,\"provider_path_bytes\":%zu,\"deferred_path_bytes\":%zu,\"original_PE_executed\":false,\"SOFTWARE_BS_AT_only\":true,\"physical_allocator_or_VMID_grant\":false}\n",cases,sizeof(*mr),sizeof(mr->TPL[0]),sizeof(mr->TPL[0].transition[0]),sizeof(mr->timers[0]),sizeof(mr->irq[0]),sizeof(mr->deferred[0]));
     free(original);free(arena);return 0;
 }
