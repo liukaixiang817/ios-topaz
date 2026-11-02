@@ -17,6 +17,25 @@
 #define PWMC_BS_BYTES 376u
 #define PWMC_ALLOC_RVA UINT64_C(0xc258)
 #define PWMC_FREE_RVA UINT64_C(0xc32c)
+#define PWMC_EVENT_MAX 128u
+/* Actual Core ca2c scans GroupLink at +0x10 and compares the GUID at
+ * +0x38; c7f0 queues NotifyLink at +0x48. The standard memory-map-change
+ * group must have no subscribers before either mutating page service.
+ * Never invoke a callback, unlink an event or suppress firmware dispatch. */
+static const efi_guid pwmc_map_change_group={0x78bee926,0x692f,0x48fd,
+    {0x9e,0xdb,0x01,0x42,0x2e,0xf0,0xd7,0xab}};
+struct pwmc_event_node {
+    uint64_t address,AT_page[2],AT_raw[2];
+    uint32_t issued,returned,AT_count,reserved;
+    uint8_t raw[88];
+};
+struct pwmc_event_path {
+    uint64_t head[2],pending;
+    uint8_t lock[24],group[16];
+    uint32_t attempted,count,complete,reserved;
+    struct pwmc_event_node node[PWMC_EVENT_MAX];
+    uint8_t digest[32]; /* returned-prefix integrity, never callback authority */
+};
 enum pwmc_kind {PWMC_MSA,PWMC_RMTFS};
 enum pwmc_error {PWMC_OK,PWMC_ARGUMENT,PWMC_REUSED,PWMC_SOURCE,PWMC_RANGE,
     PWMC_CONTEXT,PWMC_SERVICE,PWMC_MAP,PWMC_TRANSLATION,PWMC_EXPOSED};
@@ -56,9 +75,10 @@ struct pwmc_result {
     struct pwmc_call call[2];
     struct pwmc_translation AT[PWMC_PAGES],release_AT[PWMC_PAGES];
     uint8_t final_hashes[2][PGCI_RANGE_COUNT][32];
+    struct pwmc_event_path events[2];
 };
 _Static_assert(sizeof(struct pwmc_translation)==56,"both returned PAR translations and exact restore");
-_Static_assert(sizeof(struct pwmc_result)==121344,"complete independent allocation and release evidence");
+_Static_assert(sizeof(struct pwmc_result)==((121344+2*sizeof(struct pwmc_event_path)+15)&~15u),"complete allocation, release and original notification evidence");
 static inline int pwmc_fail(struct pwmc_result*r,unsigned error,unsigned unknown)
 {if(!r->error)r->error=error;if(unknown)r->unknown=1;return 0;}
 static inline int pwmc_zero(const void*p,size_t n)
@@ -194,6 +214,92 @@ static inline int pwmc_source(struct pwmc_result*r,unsigned operation)
     if(r->native_last[operation])return pwmc_fail(r,PWMC_CONTEXT,operation||r->held);
     return 1;
 }
+/* Pure replay of the complete returned notification prefix. A local page
+ * operation must not newly queue the memory-map-change callback fanout.
+ * This does not make asynchronous firmware interrupts or other callbacks
+ * ours; the caller still needs the normal original-service qualification. */
+static inline void pwmc_events_digest(const struct pwmc_event_path*p,uint8_t out[32])
+{
+    struct pwfi_sha256 hash;pwfi_init(&hash);const uint8_t*bytes=(const void*)p;
+    for(size_t k=0;k<offsetof(struct pwmc_event_path,digest);k++)pwfi_byte(&hash,bytes[k]);
+    pwfi_final(&hash,out);
+}
+static inline int pwmc_events_replay(const struct pwmc_result*r,unsigned operation)
+{
+    const struct pwmc_event_path*p=&r->events[operation];const struct pgcd_result*s=&r->source[operation];
+    uint64_t head=s->core+0x1c368,previous=head;uint8_t digest[32];pwmc_events_digest(p,digest);
+    if(p->attempted!=1||p->complete!=1||p->reserved||p->count>PWMC_EVENT_MAX||p->pending||
+       pwfi_le(p->lock,8)!=31||pwfi_le(p->lock+16,4)!=1||
+       !pgcd_equal(p->group,&pwmc_map_change_group,16)||!pgcd_equal(p->digest,digest,32))return 0;
+    for(unsigned k=0;k<p->count;k++){
+        const struct pwmc_event_node*n=&p->node[k];uint64_t first=n->address&~UINT64_C(4095);
+        unsigned pages=(unsigned)(((n->address+sizeof(n->raw)-1)&~UINT64_C(4095))-first)/4096+1;
+        if(!n->address||(n->address&7)||n->address>UINT64_MAX-sizeof(n->raw)||
+           pgcd_in_self(s,n->address,sizeof(n->raw))||n->issued!=1||n->returned!=1||n->reserved||
+           pwfi_le(n->raw,8)!=UINT64_C(0x746e7665)||pages>2||n->AT_count!=pages||
+           pwfi_le(n->raw+24,8)!=previous||
+           (k?pwfi_le(p->node[k-1].raw+16,8):p->head[0])!=n->address+16||
+           pgcd_equal(n->raw+56,&pwmc_map_change_group,16))return 0;
+        for(unsigned j=0;j<pages;j++)if(n->AT_page[j]!=first+4096*j||
+           n->AT_raw[j]!=(UINT64_C(0xff00000000000b80)|n->AT_page[j])||
+           (!polaris_efi_range_owned(s->maps[0],s->map[0].bytes,s->map[0].stride,n->AT_page[j],4096,3)&&
+            !polaris_efi_range_owned(s->maps[0],s->map[0].bytes,s->map[0].stride,n->AT_page[j],4096,4)))return 0;
+        if(pages==1&&(n->AT_page[1]||n->AT_raw[1]))return 0;
+        for(unsigned j=0;j<k;j++)if(p->node[j].address==n->address)return 0;
+        previous=n->address+16;
+    }
+    if(p->head[1]!=previous||(p->count?pwfi_le(p->node[p->count-1].raw+16,8):p->head[0])!=head)return 0;
+    return pwmc_zero(p->node+p->count,(PWMC_EVENT_MAX-p->count)*sizeof(p->node[0]));
+}
+/* No callback follows the last equality check on the physical path: the
+ * ordinary source checks run first, then these RAM comparisons, then only
+ * the source-bound ABI leaf. The software peer can mutate at order/clock
+ * boundaries and must be refused before the first allocator call. */
+static inline int pwmc_events_current(const struct pwmc_result*r,unsigned operation)
+{
+    const struct pwmc_event_path*p=&r->events[operation];uint64_t core=r->source[operation].core;
+    if(!pwmc_events_replay(r,operation)||
+       !pgcd_equal(p->lock,(const void*)(uintptr_t)(core+0x1c350),24)||
+       !pgcd_equal(p->head,(const void*)(uintptr_t)(core+0x1c368),16)||
+       pwfi_le((const void*)(uintptr_t)(core+0x1dbc0),8))return 0;
+    for(unsigned k=0;k<p->count;k++)if(!pgcd_equal(p->node[k].raw,
+        (const void*)(uintptr_t)p->node[k].address,sizeof(p->node[k].raw)))return 0;
+    return 1;
+}
+static inline int pwmc_events_capture(struct pwmc_result*r,unsigned operation)
+{
+    struct pwmc_event_path*p=&r->events[operation];struct pgcd_context*c=&r->context[operation];
+    uint64_t core=c->record->core,head=core+0x1c368,previous=head,next;
+    if(!pwmc_zero(p,sizeof(*p))||!pwmc_source(r,operation))return pwmc_fail(r,PWMC_CONTEXT,operation||r->held);
+    p->attempted=1;pgcd_copy(p->lock,(const void*)(uintptr_t)(core+0x1c350),24);
+    pgcd_copy(p->head,(const void*)(uintptr_t)head,16);pgcd_copy(p->group,(const void*)(uintptr_t)(core+0x1b130),16);
+    p->pending=pwfi_le((const void*)(uintptr_t)(core+0x1dbc0),8);next=p->head[0];
+    if(pwfi_le(p->lock,8)!=31||pwfi_le(p->lock+16,4)!=1||p->pending||
+       !pgcd_equal(p->group,&pwmc_map_change_group,16))return pwmc_fail(r,PWMC_CONTEXT,operation||r->held);
+    while(next!=head){
+        if(p->count==PWMC_EVENT_MAX||next<16||(next&7))return pwmc_fail(r,PWMC_CONTEXT,operation||r->held);
+        struct pwmc_event_node*n=&p->node[p->count];n->address=next-16;
+        if(n->address>UINT64_MAX-sizeof(n->raw)||pgcd_in_self(c->record,n->address,sizeof(n->raw)))return pwmc_fail(r,PWMC_CONTEXT,operation||r->held);
+        for(unsigned k=0;k<p->count;k++)if(p->node[k].address==n->address)return pwmc_fail(r,PWMC_CONTEXT,operation||r->held);
+        uint64_t first=n->address&~UINT64_C(4095),end=n->address+sizeof(n->raw);
+        n->issued=1;
+        for(uint64_t at=first;at<end;at+=4096){
+            if(n->AT_count==2||(!polaris_efi_range_owned(c->record->maps[0],c->record->map[0].bytes,c->record->map[0].stride,at,4096,3)&&
+               !polaris_efi_range_owned(c->record->maps[0],c->record->map[0].bytes,c->record->map[0].stride,at,4096,4)))return pwmc_fail(r,PWMC_CONTEXT,operation||r->held);
+            unsigned k=n->AT_count;uint64_t where=0;n->AT_page[k]=at;
+            if(!c->io.identity(c->io.opaque,at,4096,&where,&n->AT_raw[k])||where!=at||
+               n->AT_raw[k]!=(UINT64_C(0xff00000000000b80)|at))return pwmc_fail(r,PWMC_TRANSLATION,1);
+            n->AT_count=k+1;
+        }
+        pgcd_copy(n->raw,(const void*)(uintptr_t)n->address,sizeof(n->raw));n->returned=1;p->count++;
+        if(pwfi_le(n->raw,8)!=UINT64_C(0x746e7665)||pwfi_le(n->raw+24,8)!=previous||
+           pgcd_equal(n->raw+56,&pwmc_map_change_group,16))return pwmc_fail(r,PWMC_CONTEXT,operation||r->held);
+        previous=next;next=pwfi_le(n->raw+16,8);
+    }
+    p->complete=1;pwmc_events_digest(p,p->digest);
+    if(!pwmc_source(r,operation)||!pwmc_events_current(r,operation))return pwmc_fail(r,PWMC_CONTEXT,1);
+    return 1;
+}
 /* No mutable lookup is executed: actual source-bound ABI entries only.
  * The software peer replaces only these two call leaves in hosted tests. */
 #if defined(POLARIS_WIFI_MEMORY_SOFTWARE_PEER)
@@ -209,7 +315,7 @@ static inline int pwmc_actual_call(struct pwmc_result*r,unsigned operation)
     if(!pwmc_parameters(r)||q->requested!=r->backing||q->returned_address!=r->backing||q->pages!=r->pages||
        q->native_address!=r->bound_native_flag||q->entry!=r->source[operation].core+(operation?PWMC_FREE_RVA:PWMC_ALLOC_RVA)||
        q->issued!=1||q->returned||q->unknown!=1||q->guard.entered!=1||q->guard.left||q->guard.unknown!=1||
-       !pwmc_call_guard_valid(r,operation)||(operation&&!pwmc_retained_claim(r)))return 0;
+       !pwmc_call_guard_valid(r,operation)||!pwmc_events_current(r,operation)||(operation&&!pwmc_retained_claim(r)))return 0;
 #if defined(POLARIS_WIFI_MEMORY_SOFTWARE_PEER)
     return pwmc_test_call(r,operation);
 #else
@@ -232,7 +338,7 @@ static inline int pwmc_close_source(struct pwmc_result*r,unsigned operation)
 static inline int pwmc_invoke(struct pwmc_result*r,unsigned operation)
 {
     struct pgcd_context*c=&r->context[operation];struct pgcd_result*s=c->record;struct pwmc_call*q=&r->call[operation];
-    if(!pwmc_source(r,operation)||!pgcd_service_enter(c,&q->guard))return pwmc_fail(r,PWMC_CONTEXT,operation||r->held);
+    if(!pwmc_events_capture(r,operation)||!pgcd_service_enter(c,&q->guard))return pwmc_fail(r,PWMC_CONTEXT,operation||r->held);
     q->entry=s->core+(operation?PWMC_FREE_RVA:PWMC_ALLOC_RVA);q->pages=r->pages;
     q->requested=q->returned_address=r->backing;q->status=UINT64_MAX;q->native_address=r->native_flag;
     q->native_before=*(const volatile uint32_t*)(uintptr_t)r->native_flag;
@@ -269,7 +375,7 @@ static inline int pwmc_retained_claim(const struct pwmc_result*r)
        r->ticket[0].spent!=1||r->ticket[0].result!=(uintptr_t)s||s->attempted!=1||s->error||s->uncertain||s->outstanding||
        s->hash_count[0]!=5||s->hash_count[1]!=5||s->hash_failed[0]||s->hash_failed[1]||
        r->final_hash_count[0]!=5||r->final_hash_failed[0]||!r->native_reads[0]||r->native_last[0]||
-       !pgcd_equal(q->BS_before,q->BS_after,PWMC_BS_BYTES)||!pwmc_map_delta(s,r->backing,r->backing_bytes,0))return 0;
+       !pgcd_equal(q->BS_before,q->BS_after,PWMC_BS_BYTES)||!pwmc_events_replay(r,0)||!pwmc_map_delta(s,r->backing,r->backing_bytes,0))return 0;
     for(unsigned k=0;k<5;k++)if(!pgcd_equal(s->hashes[0][k],pgci_ranges[k].sha256,32)||
        !pgcd_equal(s->hashes[1][k],pgci_ranges[k].sha256,32)||!pgcd_equal(r->final_hashes[0][k],pgci_ranges[k].sha256,32))return 0;
     for(unsigned k=0;k<r->pages;k++)if(r->AT[k].page!=r->backing+4096*k||!pwmc_translation_valid(&r->AT[k]))return 0;
