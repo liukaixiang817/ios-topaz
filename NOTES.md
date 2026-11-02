@@ -34,8 +34,36 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0188 FFS-fit full-log revision + unmodified whole codec verified; new exact profile/models pending; no0188phone; Wi-Fi NOT DONE
+### CURRENT0188 final FFS-fit image/exact host/two SERIAL models/whole codec complete; independent freeze/helper pending; no0188phone; Wi-Fi NOT DONE
 
+- FINAL FFS revision FW270052fb02e9b2e1455d8cd064e01b642d3fa315;
+  GCD_CLOCK_0188_FFS exact375PowerGCD+94resource/98inputs. All43previous
+  enabled+DISABLED literalAST retained, including unused12MiB0188 policy.
+  New25hosttests(including4capacity tests),50metadata/type refusals,9missing
+  dependencies and hidden-disabled-source rejection passed. Hostproof
+  30025301b469139be0382f99e4ac7d6a69589e43faa2a8b0dd1c8e7a41d00220.
+- FINAL two SERIAL wholeEFI-XNU models0002 each19checks/98sameinputs/
+  11resource+1battery literalint1,39.1814923749771s/39.55893729196396s;
+  proofc14e511033bf43b5ec7b404d7f603d38d3087eea181f8da52441513cc682e1bf.
+  Prior0001 models are historical12MiB results. SOFTWARE PMIC/delay/RAMUSB;
+  physical CPU/GOP/RSC/VRM compiled out, not guestreset or radio success.
+- FINAL independent physical-driver-0002 (0001 is the preserved unused12MiB
+  copy), SHA b5e40415a518a73df604e04c1ef84466048e8b585c4e6ad285b099cd7ad1757e/
+  16499200B/98inputs. Official image-0001 full source/models/root admission
+  succeeded: SHA0b656760be6b51b29da4232d686ae3c0c889ff7bc683c67bc30bd7deb68466af/
+  6051840B. Actual whole bytes equal the original-packager/codec-tested probe;
+  codecproofe3d414692459c3d37c4e8d7da1a93a50e95a19980eb95ee7785e8a5ea6dc1465.
+  No-mock fulladmit37747cebb851bdad35139c2d49d2636ea90b1476254716c8fbc31a3bac16d3b3.
+- New transitionreview485a98ee83459cb2e2c0350da8b47db237da024de83ed3a406e5d95a6bbf1b0e
+  explicitly reuses actualNEW0187 strictRO39 only through its complete native
+  drain+actualFASTBOOT; NEW0188_root_audit_claimed=false. No new root/NV audit
+  or old runtime/lease claim. A host assertion used expected_present rather
+  than the actual expected_polaris key; corrected only that new host assertion,
+  original0187 file untouched; no FW/tests/models/device repeat required.
+- Sourceaudit0188/wifi/four-VRM-source-and-offline-proof-0002.json
+  SHAe4fd746eac1c6ce7294c745f75c656ba4b860cc82d614941eea20d96398c5e8d. Freeze/helper/publication proof
+  are still pending; NOTREADY and no0188phone action. Do not repeat completed
+  source/semantic/component/parent/host/models/codec checks without a change.
 - FFS-fit ON0004 now wholeEFI SHA b5e40415a518a73df604e04c1ef84466048e8b585c4e6ad285b099cd7ad1757e/
   16499200B/98inputs. Original packager accepted its original24-bit FFS format,
   preserving all81originalFW files. Offline size-probe image6051840B SHA
