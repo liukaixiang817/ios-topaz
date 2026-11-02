@@ -109,6 +109,9 @@ early samples only. On0029 the human already confirmed boot complete and said
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
 - NEW0189 CURRENT restricted ordinary small-FreePool effects gate is now in
+  source bebea9d66137516e8957e9871afb7bf4c5e85880, directpushed under actual
+  standing source/text consent; separate lsremote matched exactly. All jobs
+  ENDED, physical/authorization answer pending=false. The gate is integrated in
   the EXISTING real-parent release body; SOFTWARE only. No new reader, wrapper,
   record, query, enumeration, allocation/provider/release/AT/clock call was
   added. CABI596496B/input144B and every old RAW/schema stay unchanged. This
