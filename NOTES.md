@@ -108,7 +108,82 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
-- NEW0189 CURRENT targeted provider-source handoff, comment-only source
+- NEW0189 CURRENT source-bound original Timer/GIC/CPU reader integrated into
+  the actual standalone allocation adapter, source787d62df280e0eeeda6c6be3452af0a9142a1786.
+  This supersedes the source-only815be8f/7702a1e handoff and4732-check/321008B
+  component below. PhysicalCURRENT0188 is unchanged: its session is CONSUMED/
+  ENDED, last independent actualPolarisFASTBOOT10:05, no later USB/image/payload/
+  native action. The new component remains defaultOFF, not imported by the
+  parent/builder/CLI/exactprofile. NEW0189 NOTREADY; WiFi scan/join/data NOT DONE.
+- Current headerSHA4956f4dca047e221efd812c6ad40751f5069fe726593bf6f8716fd02eb747e84;
+  testSHA13078629219416afc4078588c8aa1bdf355c48bc42a1d4c13a67780b5e5cb766;
+  new digest/RVA-only generator tools/polaris-uefi-irq-provider-identity.py
+  SHA1f68cc2634f3954e05e7c856e4f6a1160327d2b7ccdb1eeae88d037dc059b30d.
+  The three original provider PEs stay private inert DATA. The generator binds
+  their exact whole SHAs and only emits offsets, DIR64 relocation lists and
+  immutable-span digests; nine changed/truncated source refusals PASS.
+- The actual reader follows fresh Core1cb80/1c8f8, Timer2070 and the registered
+  HWI/CPU tables, first validating full current image mappings and per-page
+  NSWB same-PA metadata ATs. It captures three complete selected mutable state
+  windows80/104/80B, all registered tables and the complete dynamic handler
+  array (32..1020 entries, every unused slot zero). Only the four source-bound
+  timer callbacks18/19/26/29 are admitted, every other handler must be zero;
+  CPU's IRQ slot must match the selected original GIC v2/v3 entry. Every
+  immutable span is hashed at five checkpoints: capture, after callbacks,
+  before registered RaiseTPL, before page API, and retirement. This adds70
+  provider-span hashes per operation to the original20 Core hashes. CPU BSS/
+  exception-stack bytes outside the selected state window are explicitly
+  excluded from immutable hashes; no full mutable-RAM or IRQ-owner grant.
+- Two read-only six-field architectural samples preserve complete issued/
+  returned masks and partial prefixes for CurrentEL/VBAR_EL1/CNTP_CTL_EL0/
+  CNTP_CVAL_EL0/CNTFRQ_EL0/CNTPCT_EL0. Fresh provider period/step/missed-count,
+  counter debt, multiplication and CVAL/Core-counter wrap must fit derived
+  bounds within the SAME original200ms operation; no default period, renewal,
+  timer/IRQ register write, dispatcher/IAR/EOI/SMM/provider-protocol call.
+  Derived arithmetic is not a global wall-time, future callback or ownership
+  guarantee. Historical0188 CNTPCT/CNTFRQ reads are not new-session evidence.
+- Software fault injection exposed an unsafe generic guard dereference after
+  a clock callback poisoned context.record. The adapter now uses its own
+  source-bound live/service guard, checking returned context before further
+  dereference or FP restoration. Clock/order/architectural/FP mutation cases
+  stop UNKNOWN with no subsequent sampling/free/retry/cleanup. The original
+  generic bootstrap was not changed or claimed fully qualified. Iteration1
+  ASAN failure and iteration2 partial-AT fixture counting failure are retained;
+  the latter counted unrelated native-state identity checks and was corrected
+  without fewer checks. No device was involved.
+- FINAL6582 ASAN/UBSAN actual-adapter SOFTWARE checks PASS110.61833516700426s,
+  retaining all old4732 checks. Includes both original GIC variants and five
+  array lengths, every provider-page partial AT, both six-MRS partial prefixes,
+  source-code changes at all new checkpoints, input changes at clock/order/
+  architectural returns, poisoned FP-return contexts, all immutable-span
+  boundaries and retained provider-prefix mutation blocking release/exposure.
+  Actual exported COFF+MachO/generalregs/maxframe1024 and OFF-only zero-return
+  fixture PASS. Independent Python struct/hashlib decodes the full112192B
+  five-prefix fixture, all70 provider hashes/22 metadata pages/1020 handlers/
+  architectural bounds and the existing8192-page map oracle. No captured
+  pointer or original PE instruction is executed by these host checks.
+- New SOFTWARE CABI345808B/providerpath12400B (TPL11616/transition1536 and
+  timerpath8048 unchanged), never the0188 physicalparent2072064B layout.
+  Private0189/wifi/remote-memory-backend-0008/proof.json
+  SHAbaa868f0b3ca0dff46052ebe19e021221c9115c6adbbcd4a3914bb2f45f17e50;
+  source/software0e82c4536ca9f05182bd94e7ee8f7f4e8091bbe18b031150605f473c803f3720.
+  No new models/codec/nativeCI/freeze/image/helper/device action; original
+  firmware/host/0188 consumed artifacts and all historical proofs unchanged.
+- NEXT: physical parent integration still needs actual native_cpu_on and all
+  current loaded-image/payload/root/source-object bindings, whole-call work
+  budgeting plus bounded normal-TPL deferred callbacks and temporal interrupt
+  qualification. The current reader is SOFTWARE verified, not an installed
+  provider/physical permission. Keep original200ms/ARC/VRM/readwork/fullrestore;
+  never rebase or renew. Then real cache/secureVMID/MPU/DMAstop/handback and
+  two distinct real claims in the necessary MSS/MSA parent. No new empty
+  contract/parser/service or allocator inventory boot. Before complete changed
+  parent/affected checks/two serial whole models/new exactprofile/codec/current
+  transition/freeze/ONEhelper: no PA publication/MSS/NVserve/radio/boot. No
+  physical action or authorization question pending. Commit/push only source
+  and text under the actual current/future consent; private push receipt will
+  be remote-memory-provider-reader-source-and-handoff-push-proof-0001.json.
+
+- HISTORICAL0189 targeted provider-source handoff, comment-only source
   815be8ffd286d13cd278fc6ca898580899a0a9c2. Original Timer/GIC/CPU providers
   are now identified from the own original inventory and exact PE bytes;
   this is a SOURCE milestone, not a new physical reader, parent or candidate.

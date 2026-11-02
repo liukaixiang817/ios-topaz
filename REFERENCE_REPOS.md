@@ -1292,3 +1292,25 @@ source815be8ffd286d13cd278fc6ca898580899a0a9c2 corrects only the legacy RAW
 field comment, keeping fresh-zero refusal and all behavior/layout unchanged.
 Full enabled preprocessed C equals the4732-tested source; unchanged tests were
 reused. No SMM protocol call, authority inference or physical admission follows.
+
+The subsequent actual adapter source787d62df280e0eeeda6c6be3452af0a9142a1786
+implements the fresh original Timer/GIC/CPU reader, retaining the three PEs as
+private inert DATA. The digest/RVA-only generator binds exact full input SHAs;
+five complete immutable-span checkpoints add70 provider hashes per operation.
+All three image maps/per-page NSWB ATs, registered tables, selected mutable
+state windows and complete32..1020-entry handler array are retained. Only the
+four original timer callbacks and matching CPU/GIC vector chain are admitted.
+Two read-only CurrentEL/VBAR/CTL/CVAL/frequency/counter samples and checked
+period/step/debt/product/wrap arithmetic use the original operation's200ms.
+No interrupt acknowledge, provider call, register write or original firmware
+instruction runs in the6582 SOFTWARE checks. Complete112192B fixture prefixes
+are independently decoded; actual COFF/MachO/defaultOFF exports also pass.
+Private softwareproofbaa868f0b3ca0dff46052ebe19e021221c9115c6adbbcd4a3914bb2f45f17e50
+records the exact scope. CPU mutable BSS/exception stack is not an immutable
+image span. This reader does not establish an installed physical provider,
+future interrupt ownership or a global execution deadline. Physical parent
+native/current-image/root bindings, whole-path work and deferred callback
+bounds, cache/secure assignment/DMA stop/handback still need qualification.
+No new candidate, model/codec, image/helper or device action follows; NEW0189
+remains defaultOFF and NOTREADY. Physical0188/last actual FASTBOOT10:05 is
+unchanged. The original source-only4732-check handoff above remains history.
