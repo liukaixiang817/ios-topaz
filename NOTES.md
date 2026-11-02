@@ -109,7 +109,7 @@ early samples only. On0029 the human already confirmed boot complete and said
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
 - NEW0189 CURRENT later-parent opening/retirement GetMap + payload/global/
-  source-frame wiring; source commit is recorded in the next handoff. Actual
+  source-frame wiring, sourcee59f185863647e1a0309e5ca3f7e73f53075d20f. Actual
   parent now relays its two EXISTING private GCD GetMap calls after payload/log
   allocation and records the real call/key/native/FP/context/source inputs.
   No additional GetMap, enumeration, allocator or provider call was added.
@@ -178,6 +178,7 @@ early samples only. On0029 the human already confirmed boot complete and said
   corrected, original logs/RAW/iterations retained without fewer cases. Private
   parent-current-map-0001/proof.json
   SHA7dab11e0a047368836e84ae643b67aa0dc17831e043e992ab36e39baa8aaed91.
+  Source/softwarea01a9840f9c5336b59619ba6d7b358f931ef402768399afd4131a1bf02a22c77.
 - NEXT: reuse the now-wired incoming, full image and later-parent/payload-frame
   collectors. Concentrate on first private GetMap full dynamic80B GCD/type-policy/
   callbacks and whole-call temporalIRQ/work admission, then the actual two
