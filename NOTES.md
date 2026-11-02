@@ -108,7 +108,79 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
-- NEW0189 CURRENT SOFTWARE internal allocator admission milestone, source
+- NEW0189 CURRENT SOFTWARE registered-TPL allocator milestone, source
+  675ef81b89ccfca7722c3a3a2af27903c93a4b70. This supersedes the older proposed-
+  only TPL bracket,3445checks/281600B and fcb1de9/cca4b3a component handoffs
+  below. PhysicalCURRENT0188 above is unchanged: no new USB, image, payload,
+  native action, candidate, helper, freeze or CI. The two component files
+  remain standalone defaultOFF; parent/builder/CLI/exactprofile do not import
+  them. NEW0189 NOTREADY. WiFi still cannot be enabled; scan/join/data NEVER
+  succeeded. No physical action or human authorization is pending.
+- HeaderSHAa374d13f581b1e5fbb44f9e1b733eccc71a161ee5efc3b712b1304a848c7c47d;
+  testSHAb8f6f5c17a951448215e1f2eb1d185cf47d8ea0839cb28eba8ad68f311f0bfc0.
+  The actual adapter now calls registered RaiseTPL16 (slot24/Core+a2c8),
+  validates actual returned saved4, executes the page API at16, retains a
+  separate complete post-page GetMap at16, then calls registered RestoreTPL
+  with that saved4 (slot32/Core+c6d4). It verifies exact4 before closing the
+  original service guard, and requires the subsequent normal-TPL full map
+  to equal the protected map, including key/stride/extension bytes. A delayed
+  callback changing the map/key becomes UNKNOWN rather than a rebased map.
+  Neither original Core global TPL nor interrupt masks are directly written.
+- Both transitions retain full issued/returned/partial/unknown prefixes,
+  observed0x1ff, raw CPU0EL1/DAIF0/G1on/FP, native0, complete376B BS before/
+  after, and pending bits plus all15 queue heads for levels17..31. Complete
+  bound IO/current context/ticket/guard and768B intended-input SHA are checked
+  across final order, foreign return and clock callbacks. Post-page checks add
+  five full Core hashes to the original15:20 per operation, within the SAME
+  original200ms, no renewal/rebase/old ticket. Any partial/error/input/source/
+  time change preserves UNKNOWN/held without post-failure sampling, guessed
+  TPL restoration, FreePages, retry or cleanup. The raw saved4 raise result
+  is distinct from void RestoreTPL's retained UINT64_MAX value.
+- FINAL3792 actual-adapter ASAN/UBSAN SOFTWARE checks passed in
+  43.77786450000713s. Includes19 transition mutations at order/foreign-return/
+  clock for claim/release and both TPL calls; partial/bad-level/native/table/
+  timeout/source/high-queue cases;10 protected GetMap faults per operation;
+  all higher17..31 pending/head failures;31 retained-history mutations veto
+  release/exposure; bound-IO refusal before the first map/API; deferred
+  RestoreTPL mapkey/outside-attribute changes; and all prior3445 checks.
+  Original PE remains inert DATA; BS/AT leaves are explicit SOFTWARE peers.
+  Actual exported COFF+MachO/generalregs/maxframe1024 PASS; current defaultOFF
+  contains only the zero-return fixture, no adapter body. AT read/write
+  instructions retained; no SMC or direct DAIF/CPACR/TTBR/TCR/SCTLR write.
+- Python struct/hashlib independently verifies the entire91744B fixture:
+  three cross-page event nodes, all three-map/eight-free-node allocator links/
+  ATs/hashes/zero tails, both complete TPL transitions/intended-input digests,
+  all registered BS entries, five Core hashes and an8192-page map oracle.
+  New componentCABI304912B/TPLscope11616B/transition1536B are SOFTWARE only,
+  never the consumed0188 physical parent2072064B layout. Private finalproof
+  0189/wifi/remote-memory-backend-0006/proof.json
+  SHA8c5da01ff9156239d9836395431e6bd2fcee35fb2f01118d76e43b8bfd548413;
+  source/software5893fadac62082dab383346f6cdeb851d61ee79105330a6d574c8778d3a6cbf2.
+  All older proofs/raw/iteration logs remain unchanged.
+- New targeted original-Core source fact: public CreateEventEx restricts
+  standard notify TPL4/8/16, but internal dad4 permits5..30. Actual call99a0
+  creates a TPL30 checker atcb24, pointerglobal1cbc8. Timer IRQcbf8 updates
+  counter1dc00 and signals it; checker walks TimerList1c3f0, uses locks1c400/
+  1c3d8 and event offsets98/a8/b0, signalsca90 and may reinsert/requeue via
+  a5e4. It has no direct allocation call, but its complete bounded current
+  list/transitive effects are NOT yet qualified. Static proof
+  0189/wifi/own-Core-TPL-bracket-0001/proof.json
+  SHAf5eca699a1b8653cd02501276bb16a230a013e60fec06883d4e035d0fb4cdb6f.
+  Empty higher-queue snapshots do NOT prove future absence or ownership.
+- NEXT: qualify that bounded current TPL30 timer/checker path and physical
+  parent bindings to actual native_cpu_on, every loaded image/payload/root/
+  source object and both real claims, with complete normal/UNKNOWN retirement.
+  Registered-TPL software success does not qualify a physical BS call or
+  close every asynchronous firmware path. Real cache maintenance/VMID/MPU/
+  remote-DMA stop/secure handback remain missing. Do not create another empty
+  contract/parser/service or allocator-only inventory boot. No PA publication,
+  MSS/NVserve/radio. Original ARC/VRM/read deadlines and exact restore stay;
+  physicalFW270052fb/HOST15e830b,0188CONSUMED/ENDED and lastactualFB10:05 stay.
+  Source/text publication uses the actual current/future a58a65... consent;
+  private final direct-push/independent-lsremote receipt is
+  0189/wifi/remote-memory-registered-TPL-source-and-handoff-push-proof-0001.json.
+
+- HISTORICAL0189 SOFTWARE internal allocator admission milestone, source
   fcb1de902552a74a5886a56793d2810662e51c2d. This supersedes older2326checks/
   158432B as the current component result; physicalCURRENT0188 above stays
   unchanged. HeaderSHA0314d51e66c67e43bafc90ada1871dda18d10b68c1ce415af4d6e111dd331f96,

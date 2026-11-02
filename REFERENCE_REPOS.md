@@ -1233,3 +1233,24 @@ registered TPL16 bracket is a proposed next step, with exact saved-TPL/FP/CPU
 restoration and higher-priority firmware paths still to qualify. No direct
 global write, masked-CPU BS call, secure/DMA grant, parent hook or new boot
 is authorized by this source correspondence.
+
+The later registered-TPL SOFTWARE implementation supersedes that proposal-only
+state: source675ef81b89ccfca7722c3a3a2af27903c93a4b70 now brackets the actual
+page adapter at4→16→saved4, retains a complete protected post-page map and
+requires the normal-TPL map to match it exactly.3792 ASAN/UBSAN checks and
+independent full-prefix decoding passed; this is still standalone defaultOFF,
+with no parent/builder/profile import or physical API admission.
+
+Targeted original-Core inspection also found a higher-priority path that the
+public CreateEvent TPL4/8/16 restriction does not cover. Internal dad4 accepts
+notify levels5..30; actual call99a0 creates a TPL30 checker atcb24, stored in
+1cbc8. Timer IRQcbf8 updates1dc00 and signals that checker. It walks current
+TimerList1c3f0 under locks1c400/1c3d8, uses event TimerLink98/triggera8/periodb0,
+signalsca90 and can reinsert/requeue viaa5e4. No direct AllocatePages call was
+found in that checker; its complete current list and transitive runtime bound
+remain unqualified. Empty17..31 queue snapshots are not a future lease. Private
+sourceprooff5eca699a1b8653cd02501276bb16a230a013e60fec06883d4e035d0fb4cdb6f
+and softwareproof8c5da01ff9156239d9836395431e6bd2fcee35fb2f01118d76e43b8bfd548413
+record this limit. Original firmware bytes were only inspected as private DATA.
+Physical parent/native/current-image bindings and cache/secure/DMA handback
+still must be qualified before any new integrated candidate or device action.
