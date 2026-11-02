@@ -34,8 +34,34 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0188 independently frozen FFS-fit four-VRM candidate complete; source publication proof before ONE boot; no0188phone; Wi-Fi NOT DONE
+### CURRENT0188 preboot expected-product timeout07:24; NO image/payload sent, boot record absent; connection/FASTBOOT reply pending; Wi-Fi NOT DONE
 
+- Actual frozen helper71513 ENDED2: ONE8s readonly expectedproduct started
+  2026-11-02T07:24:39.752816Z, expected-product timeout. No confirmed current
+  Polaris FASTBOOT. Original0188 boot.json remains ABSENT: NO image, payload,
+  native, SMC or MMIO attempt. This is NOT startupACKUNKNOWN or a consumed
+  native session. All0188hardware records remain UNOBSERVED. Actual last
+  independent PolarisFB05:04 is now historical observation, not currentUSB.
+- Phone-state/USB question sent ONCE: checkUSB and stop at FASTBOOT, reply,
+  also state whether Android/Windows booted since the last controlled exit.
+  Current missing fact is connection/actual phone state, not public permission.
+  No more USB poll/state/oldcontroller/reset/physical requests while waiting.
+  Do not infer a CPU/driver fault, Android transition or corrupted data from
+  this timeout. Integrity lastqualifiedNEW0187; if Android/uncontrolled later
+  confirmed, next necessary candidate combinesNEWfull39; no inventory audit now.
+- Private gateproof0188/wifi/physical-preboot-product-timeout-no-image-sent-proof-0001.json
+  SHA8db452df55c06a95c8c9579d840bfaacb23e8d0e3ba469b862ec60351305797e. Original product JSON preserved plus
+  byteequal immutable timeout copy, no existing proof/raw rewritten. All
+  build/model/USB/Git workers are ENDED. Image and payload have not been used.
+- Frozen0188helper is not to be blindly retried: its original publication
+  proof is pinned to e346f12; this new truthful handoff changes GitHEAD.
+  Preserve that proof and freeze. After the human supplies actual connection/
+  transition facts, first reconcile current integrity and a genuine current
+  source/publication/one-shot host handoff before any FIRST image transfer.
+  Do not edit old proof/manifest/helper, checkout oldHEAD, rename to bypass a
+  gate, or represent this timeout as an image/payload use. All completed
+  unchanged firmware, models, semantics and codec evidence remains reusable;
+  no new hardware boot or opaque variant is justified just by this timeout.
 - Final FW270052fb02e9b2e1455d8cd064e01b642d3fa315/HOST15e830b76b761b4570d9505e64f751bd885855bc.
   Independent new freeze/private/tmp/polaris-runtime-0188-frozen-0001 completed:
   COPY915+10COMMIT_ONLY/495currentcommittedsources/98inputs/newinodes/nohardlinks/
