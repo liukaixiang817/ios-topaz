@@ -36,6 +36,13 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### CURRENT0187 same fresh READ high-latch ARC round-trip source/offline checks complete; no0187device action; NEW root audit/host/freeze NOTREADY; Wi-Fi NOT DONE
 
+- FW00490da1c13614db29a4502c50a5d0b9cce475ca committed. NEW exact
+  GCD_CLOCK_0187 binds370PowerGCD/94resource fields/94inputs; all41 oldliteral
+  AST unchanged. 21hosttests/69actualmetadata-type refusals/5missingdeps pass,
+  hostproof22ef335e5af4ce05b30f1a7259de1bd26cf31cba8e568a8b2193f72102eadbc8.
+  TwoSERIALmodels38.84192487501423/39.57179458299652s; each19checks passed.
+  No model rerun for this host-only addition. NecessaryNEW0187 RO39 audit next,
+  not an inventoryboot; no iOS image/payload or ORIGINAL0187 native record yet.
 - User asked for ath11k comparison and a clear WiFi progress plan. Upstream
   Linux ATH10K_SNOC explicitly supports WCN3990; ath11k is newer802.11ax.
   Actualath10k/ath11k QMI source was read, comparison saved inREFERENCE_REPOS;
