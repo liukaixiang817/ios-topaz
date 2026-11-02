@@ -36,6 +36,11 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### CURRENT0186 bounded ARC round-trip source/offline checks complete; host profile/freeze NOTREADY; no0186device action; Wi-Fi NOT DONE
 
+- FWb51dbbe1a421a83b77111bc42744c35bcf55aeb1 committed. NEW exact
+  GCD_CLOCK_0186 binds362PowerGCD/94resource fields/94inputs; all40 old literal
+  ASTs unchanged. 21hosttests/61actualmetadata-type refusals/5missingdependencies
+  passed; hostproofc26e00c921ae7998731ec348a4d0b6eb60a2eddcadb6509439396ffee5d86916.
+  No repeated models or device commands for this host-only profile addition.
 - NEW ARC-specific primary: Qualcomm Maulik Shah direct2025-10-23 reply
   https://lkml.iu.edu/hypermail/linux/kernel/2510.2/06910.html explicitly says
   ARC/BCM/VRM READ returns HLOS/DRV2 votes, not aggregate across DRVs; thread
