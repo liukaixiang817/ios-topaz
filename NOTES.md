@@ -34,7 +34,63 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0185 frozen offline TRIGGERED-status candidate complete + NEW strictRO39; no0185nativeboot; actual Polaris FASTBOOT03:35; Wi-Fi NOT DONE
+### CURRENT0185 actual three bounded READs RAW6/3/0 + full retirement; controlled actual Polaris FASTBOOT03:42; qualified ARC votes/Wi-Fi NOT DONE
+
+- ActualNEW0185 ONEimage12419 ENDED0 sent2026-11-02T03:38:05.205292Z/source
+  ff2a06dcb1b6d46b8fbe01087b3c97ceca188e59/image34c022955d6ed10d20cc7a5fed664288066ef247be31c7ba71cee67d930267b5/6041600B.
+  Matchingsole0185statewaitingpayload03:38:22.721670Z/ENDED0. ONEsame63cbpayload
+  55274 ENDED0/full557chunks36459872B/validationACKtrue+validatedtrue/32.95436145900749s;
+  p.boot03:39:14.543685Z/17.478279167000437s/IN4of64/return0/kernelcommandACKtrue.
+  Onecapture27929 ENDED0 actualkernel-entered/native.log8910821B/PPM6998417B.
+  No opaqueUNKNOWN thissession. This does not backfill old0184/83 ACKs.
+- NEWactualRAWstaged1660544B SHA94a27b385f4a0a7d64964b5db70a48a745674075090899ef74a7d5d1c75dd7a4/
+  client227104B SHAe201c5d1e1824223f23a2799f2b55e2e0403bb0f6f9ce282fa2350c87b7840cf/
+  parent1969216B SHAf4f67410559d68471edd2d8a721be0d5820d0c27b6830c24fee90158f60e2219.
+  Exactfrozen0185 CABI independentlydecoded/asserted; no dump-pointer/FWcall.
+  Body11plannedREADONLY/unknown0/phase5/retired1/knownrefusal1; clienterror0/
+  held0/returned1/retired1/CreateDeleteissued2=returned2. Real READthreeaddresses
+  30000/30010/30060, newtrigger3/completed3/ACK3/valid7/responseSeen7/phase8/
+  finished1/restored1/error0/unknown0; purefullengineprefix and independent
+  access-engine everyevent/value/time/translation/native/statusOR checks pass.
+  AllthreeCMDstatusOR10101 preserved; CMD_RESP_DATA RAW6/3/0, NOT qualified
+  perDRV ARC savedvotes, µV, permission or rails. No resourceWRITE/MSS/NVserve.
+  Accessacquired1/held0/retired1/error0/182reads/28protocolstores/210events;
+  unusedWRITErecordentireZERO onlyUNOBSERVED, totalMMIO NOTzero.
+- Realnormal10objects308pages/NSWBsamePA/ATreturned/PARrestore/fullprefix and
+  204unusedtailpageszero; normalnativeflag0/618reads. Bothmasked128KiB/16384
+  wordloads each/all64AT/fullhash/rawbytes/pendingprefixes, fullcurrentnamespace
+  113x2/selectedCmdDb3pass/20CmdDbhash/30privateCoreRPMhhash/30CPUCoreRPMhhash/
+  three26rowRAMsame/twoDevice70loads3queries/fullsource/emptyqueues/equalpools/
+  knownDelete verified. CPUlive1007=1007/normal7+masked7OFF/FP/DAIF0G1on→c0off→
+  exact0on/held0/restored1/retired1. No EE/EL3/VMID/MPUgrant inferred.
+  All68work/max62610/units19/estimate2629590/remaining3063922ticks unchanged;
+  READ84339ticks=4.39265625ms; opening→lastCPUsample99.915ms is NOTtotalretire
+  orhardwarelease. Original200ms/READ50+25/IRQtype/256steps1024events unchanged.
+- Fourindependentstagedphases/460Core40CmdDbhash/73loadedimages verified.
+  FinaloriginalGCD8getters/20hash/error0/key5899=5899/twofinalprestarts pass;
+  original30224Braw remainsphase2/count1, second in624Bappend, notrewritten.
+  OneUTCSET cookie4732285563/seq1 thenindependentAPPLIEDstatus2/error0/count1/
+  uncertainty2276us; noRTC/monotonic/networktimeclaim. Normaldrain94573 ENDED0,
+  nativephase3/cap80000003/error0/writeepoch0=flushed0. Full212BWLEXIT05+
+  64BOKAYWLR5 independentlyredecoded; prefix2→sealed6→final8, originalfaultOR1/
+  RTOR1 retained, fullsavedstate restored. Noerrorclear/extraopticalcycle/keys.
+  IndependentONE8s readonlyactualPolarisFASTBOOT2026-11-02T03:42:32.192636Z/exit0.
+- Actualproof0185/wifi/physical-three-bounded-READ-retirement-and-controlled-FASTBOOT-proof-0001.json
+  SHA08a2c04119b70556e7781d8a28a12a856b2e0fca1dac1565300a523bca8d23a8;
+  PASS onlyrealREAD/fullretirement/controlledexit, NOTqualifiedARCvote/network.
+  AllthreewholeWiFiRAW byteequalfinalnativedrain log. Original0185bootrecord
+  CONSUMED/sessionENDED; usedfrozen0185controller/driver/image/sharedrecord
+  cannotcontrolNEWsession orreplay image/payload/OEMboot/refreeze/editpolicy.
+  AllUSB/host/build/modelsENDED/allchildrenSTOP. No useraction/auth待答 orpoll.
+- ROOTNVactualNEW0185strictRO39 remainscurrent afterONLYthis qualifiedcontrolled
+  nativeexit/fullreceipt/actualFB. NextnecessaryNEWcandidate mayreuseintegrity,
+  nofullhash/inventoryrecovery repeat; actualruntimeowner/client/CPUcontext
+  retired and alwaysNEWfresh. NEW0186 notimplemented/NOTREADY. NEXTsourcebound
+  review of actualREAD6/3/0 ARCsemantics/perDRVscope; no directsavedvote or
+  max(saved,index) untilqualified, no blindresourceWRITE. Thenown4WiFiVRM BEFORE
+  MSS/MSA/GLINK/RMTFS/WLFW/ath10k realscan/join/data. Wi-Fi NOTDONE/soundcameraSTOP.
+
+### 0185 frozen offline readiness history (consumed by actual session above)
 
 - FW713898bfbeb6bf1cb2d8d36892361390d68a53c9/HOST8a2672f094af5c488a7aeea9bcac1d6824051fbf
   committed/pushed and independentlsremote matched. No publication/auth待答.
