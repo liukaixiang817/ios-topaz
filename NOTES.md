@@ -108,7 +108,54 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
-- NEW0189 CURRENT actual page/TPL call-body deferred-dispatch guard,
+- NEW0189 CURRENT initial-GetMap SOURCE/fresh-parent-map boundary,
+  comment-only source9a79f96c7ce2364f577d4486802d2cc23f6f9a3a. Functional
+  source7904485/8334 checks/CABI347280B remain unchanged; no new bootstrap
+  backend, physical parent, candidate or readiness claim. PhysicalCURRENT0188/
+  last actualFASTBOOT10:05/consumed session unchanged; no USB/native actions.
+  HeaderSHA2aa4d8cfd301a82ade18879fe8d8d77fefb53fa49d71b68806b01e77aa839bb8.
+  Complete enabled preprocessed C149831B is byte-equal to the actual8334-tested
+  header; proof02e38bbb0a781a4474a536c4a06aa73ad15bcfee6457beffd0d8341784ec0406.
+  Test56b3882b... and generator1f68cc26... unchanged; no repeated ASAN/model/
+  codec/CI/export builds. This targeted first-GetMap transitive-work check is
+  complete; do not repeat the provider identity/reader/deferred/source reviews.
+- New exact original GetMapd3ec source facts: GCD lock1bd48/head1bd60 is a
+  distinct80B-node list (Link+8/rawtype+56), not the64B memory-map1b358/free
+  descriptor1bcc0 lists already captured by the allocator adapter. It first
+  traverses GCD entries, traverses the original memory list, uses15x48B memory
+  type-policy rows1be68, then merges/compacts output via154a8/1dc0. Output
+  capacity/descriptor count does not bound skipped GCD nodes. Original mutable
+  mapkey1cdb0 is returned. Both locks release through1f48/RestoreTPL, so paired
+  page-call queue checks do not qualify the initial map call retroactively.
+  Complete current GCD inputs and transitive work remain UNOBSERVED/unqualified.
+- Do not invent extra dependencies from cold branches: exact originalaf90
+  tails toaf88 RET0. Feature16's gap path in1dc0 and feature19's debug-provider
+  branch inb1e0 are unreachable for these pinned instructions. No debug,
+  memory-test, allocator or provider operation was executed by this source
+  inspection.17 BL sites and exact targets were independently decoded from
+  inert PE words; source proof0189/wifi/own-Core-initial-GetMap-work-0001/proof.json
+  SHAe8f68be097ce6cd4434aad8b731a56cca747571e1249297f818c5783957aece1.
+- Actual parent admission() has two incoming standard GetMap calls around
+  the kernel-bank claim, then allocates payload pages. Its map_snapshot stores
+  magic/bytes/stride/version/data but NOT the local key or a call witness.
+  Therefore that snapshot is not a current MSS bootstrap map. Do not rename
+  it current, borrow a closed GCD ticket, set opened/valid to bypass admission,
+  or infer owner/callback authority from a matching key or NSWB AT alone.
+- NEXT: implement the actual fresh parent map/call/key/native/loaded-image/
+  payload/root/source evidence and initial GetMap's complete dynamic GCD/
+  memory-policy/callback work qualification in the necessary MSS/MSA path.
+  The incoming UEFI BS contract remains the existing bootstrap basis; it
+  does not become a private MSS/power/IRQ lease. Retain NEW source/context/
+  ticket and original200ms, with whole work budget and normal/UNKNOWN exit.
+  No empty permission contract/parser, duplicate reader, blind map refresh,
+  observer/allocator inventory boot or old controller. Then two independent
+  real claims/cache/secureVMID/MPU/DMAstop/handback. Parent/builder/CLI/profile
+  still absent, NEW0189 NOTREADY, PA/MSS/NV/radio/scan/join/data not permitted.
+  Existing8334 software/deferred gate proofs stay immutable. Source/text only
+  publication follows actual standing consent; private receipt will be
+  remote-memory-bootstrap-source-and-handoff-push-proof-0001.json.
+
+- HISTORICAL0189 actual page/TPL call-body deferred-dispatch guard,
   source79044854b70d3a0d7bf890360fc2428c5a3bb3fd. This supersedes the6582-check/
   345808B component handoff below. PhysicalCURRENT0188, FW270052fb/HOST15e830b,
   consumed0188 image/session/controller and last independently observed actual

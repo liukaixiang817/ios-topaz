@@ -1332,3 +1332,21 @@ COFF/MachO/defaultOFF exports. Private proof5c424a5919958c35422ffb2b102cec3027a7
 records the limited scope. Initial generic GetMap/bootstrap callback admission,
 whole-path budget and actual parent object/native bindings remain unqualified,
 along with real cache/secure/DMA handback. No physical action or candidate.
+
+The subsequent targeted initial-GetMap source check identifies a separate
+dynamic dependency of originald3ec: GCD lock1bd48/list1bd60 uses80B nodes,
+whereas the existing allocator captures64B map/free nodes at1b358/1bcc0.
+GetMap also reads15x48B type-policy rows1be68 and uses154a8/1dc0 for output
+merging/compaction. Returned-map capacity cannot bound skipped GCD entries.
+The exact originalaf90→af88 RET0 makes the feature16 gap path and feature19
+debug-provider branch cold; no new debug or memory-test dependency is inferred.
+Private sourceproofe8f68be097ce6cd4434aad8b731a56cca747571e1249297f818c5783957aece1
+records17 independently decoded direct BL targets, without executing PE code.
+The actual parent's map_snapshot omits GetMap's local key/call witness and its
+admission maps precede a later payload allocation, so it cannot be relabeled
+current for MSS bootstrap. A fresh real parent call/map/object/source binding
+and complete initial transitive work qualification are still required; no
+closed ticket, artificial opened/valid state, key match or AT alone supplies
+that authority. Comment-only source9a79f96c7ce2364f577d4486802d2cc23f6f9a3a
+preserves the entire enabled149831B preprocessed C byte-for-byte;8334 SOFTWARE
+checks/347280B component and exports are reused, not rerun. No physical action.
