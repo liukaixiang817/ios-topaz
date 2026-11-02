@@ -1261,6 +1261,13 @@ static inline int pwmc_claim(struct pwmc_result*r,int(*translate)(struct pwmc_tr
        r->context[0].opened||r->context[0].finished||r->ticket[0].spent||r->source[0].attempted)return pwmc_fail(r,PWMC_ARGUMENT,0);
     struct pgcd_context*c=&r->context[0];
     if(c->record!=&r->source[0]||c->ticket!=&r->ticket[0]||!pgcd_equal(&c->io,&r->bound_io,sizeof(c->io)))return pwmc_fail(r,PWMC_ARGUMENT,0);
+    /* This first pgcd_open still uses the incoming UEFI GetMap contract;
+     * the later paired-page gates do not qualify its bootstrap. Original
+     * GetMap also walks the distinct80B GCD list at Core+1bd60 and uses the
+     *15x48B memory-type policy, not just our64B allocator lists. The actual
+     * parent's map_snapshot omits its local map key and precedes subsequent
+     * payload allocation. Never treat that snapshot, a closed GCD context or
+     * an unobserved native flag as fresh bootstrap/callback authority. */
     if(!pgcd_open(c)||!pwmc_source(r,0))return pwmc_fail(r,PWMC_SOURCE,pgcd_uncertain(c));
     if(!pwmc_select(c->record,r->kind,&r->backing))return pwmc_fail(r,PWMC_RANGE,0);
     r->backing_bytes=pwmc_bytes(r->kind);r->pages=(uint32_t)(r->backing_bytes/4096);
