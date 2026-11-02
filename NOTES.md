@@ -108,6 +108,63 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
+- NEW0189 current page-adapter notification qualification SOFTWARE milestone:
+  source commit60f30c5838ab1792752dd0c8ce14db4de2406017 supersedes the1708-check
+  component as the current source/software result. Header
+  shim/polaris/uefi-wifi-remote-memory.h
+  SHA46580c02a356f85bbb491267d965ac67c9e6f9b8a0171e6ebf6bf2ad83e3137d;
+  test tools/polaris-wifi-remote-memory-test.c
+  SHA10697d45025f453aad82b3424eaeab62d2f397b9ef0e55a0b0fa18e57a1a96e6.
+  This modifies the actual BS adapter, not a new parser/service/permission
+  contract. Still defaultOFF/no physical parent, builder or CLI import;
+  actualFW270052fb/HOST15e830b and consumed0188 remain unchanged.
+- New actual original Core source finding: AllocatePages/FreePages map changes
+  reach165d0→9e34→ca2c→c7f0, which queues memory-map-change group subscribers;
+  RestoreTPL c6d4 can then BLR through event+0x28 atc7c8. A zero profiling hook
+  alone does not exclude this separate callback fanout. Original group GUID
+  at1b130 is78bee926-692f-48fd-9edb-01422ef0d7ab; event lock1c350 initial
+  words31/4/1, group head1c368, pendingmask1dbc0. Actual type2 avoids4864's
+  runtime5/6 protection branch; af88 returns0. None is a VMID/MPU grant.
+  Private sourceproof0189/wifi/own-Core-allocation-notification-0001/proof.json
+  SHA661f35c6788e5ad51ac0672bd7d9b7012df27fb99b7b1e669a353b149382b69f.
+- Before either page API the adapter now retains the complete bounded current
+  group chain, up to128 nodes, full88B prefixes, bidirectional links, raw
+  callback fields, per-page fresh NS/WB same-PA metadata ATs, lock/head/pending
+  and a full-prefix SHA256. Any matching map-change subscriber, pending bit,
+  malformed/cyclic/unowned/overlong chain refuses before that API. After the
+  final clock/order callbacks it rechecks the complete resident prefix and
+  actual current lock/head/nodes immediately before the ABI leaf. No event
+  unlink, callback call, mask/IRQ write, patch or error clearing. This guards
+  synchronous map-change fanout; it does not claim asynchronous firmware
+  interrupts/callbacks are absent or owned. Changed/partial inputs remain
+  stickyUNKNOWN; held claims cannot be freed or retried after uncertainty.
+- FINAL2326 ASAN/UBSAN actual-adapter SOFTWARE checks passed in
+  5.795162417052779s; original Core PE remains inert DATA. Includes every chain
+  length0..128, every128 subscriber position, malformed/cyclic/foreign links,
+  clock/order pending races, all88 returned-node byte corruptions, cross-page
+  metadata, every128 claim+128 release partial metadata-AT prefix, plus the
+  prior allocation/map-delta/514+514 page-AT/exposure-veto cases. Independent
+  Python hashlib/struct replay verifies a complete returned three-node cross-
+  page prefix, links, ATs, GUID exclusion and full zero tail. Actual adapter
+  COFF+MachO/generalregs/maxframe1024 and defaultOFF-no-body compile PASS.
+  New standalone C ABI158432B; it is not an0188 physical RAW decoder layout.
+  Final0189/wifi/remote-memory-backend-0004/proof.json
+  SHAd5fb0d500773bf6e8b08cf0b3258e78d9a85acf521ce7e1d24b9ee4c4fa77c80;
+  source/software52d440b72ca17d6539ac4f860205c2992ce9c4609b5dcf929a4b89724e2e2a3e.
+  Earlier0001..0003 remain immutable historical SOFTWARE evidence. No old
+  models/nativeCI/codec/freeze/helper or any USB/phone cycle was repeated.
+- NEXT remains physical integration of the necessary MSS/MSA provider. Do not
+  repeat the now-resolved notification-path review or create an allocator
+  inventory boot. The original internal memory-map/descriptor-pool path can
+  recursively allocate a descriptor page (b2a8→c16c); its complete qualification
+  and asynchronous original normal-TPL callbacks are still open. Then bind
+  actual native_cpu_on, all current loaded images/payload/root/source objects,
+  both distinct MSA/RMTFS claims and complete normal/UNKNOWN retirement in the
+  physical parent. Actual cache/secure VMID/MPU/DMA-stop/handback still missing;
+  no PA publication/MSS/NVserve/radio or0189candidate admission. All original
+  power deadlines/guards/restore stay unchanged. Last phone observation is
+  still controlled FASTBOOT10:05, no new user/physical/permission request.
+
 - NEW0189 targeted physical-memory-provider prerequisite only (offline): exact
   own pinned c7cb50c1 sharedmem-uio sources and Git blobs now checked once,
   private0189/wifi/own-sharedmem-primary-0001/proof.json SHA64e86ddd8904ea924f833b2376daaa766fdfc38b48825bc6331099257b89019c.
