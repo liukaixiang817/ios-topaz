@@ -34,6 +34,49 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### CURRENT0184 saved-status lifetime fix + affected checks/models complete; host/root/image/freeze NOTREADY; actual Polaris FASTBOOT02:44; Wi-Fi NOT DONE
+
+- Corrected the specific photographed0183 boundary under existing defaultOFF
+  current-word READ scope, not a new opaque retry. Initialphase0 saved and
+  finalphase7 RO CMD_STATUS retain all rawbits; no completion/grant inferred.
+  Only valid snapshot counters accepted. PendingCMD0 phase2/4/6 still uses
+  original10100mask/exactDONE/newIRQ/allissuedDONE/idle and fullRWrestore.
+  Fullaccess statusOR must match every corresponding complete journal sample.
+  OriginalCPU/READcore/200ms/all68/READ50+25/IRQtype/256steps1024events unchanged;
+  no bitmaskedfromraw/UNKNOWNclear/heldclear/resourceWRITE or permissionbool.
+  NEW independent rawCURRENT_PRIVATE_WORD_READ_RAW_V2/same1969216B/access402048/
+  CPU10096/arguments25216; V5 projects alreadyretainedIOvalue+OR0 when noCPU
+  failure, originalfailedticks otherwise. No extra failure-timehardware read.
+- EXACTfrozen0183 syntheticstatus1 reproduces samephysicalboundary entry45/
+  179e0d3c/phase0/0newrequests/errorPWRA_UNKNOWN_STATUS. Testword explicitly
+  synthetic, actual0183statusword/offendingbits stillUNKNOWN. Oldfrozen files
+  untouched, only privatefixture entrypoint renamed to compose originalouter.
+  New453ASAN/UBSAN=238affectedcurrent-word tests+215new passed34.308781542s:
+  all32savedbits/threecommands+allbits raw,96ownpendingbadbits stillfatal,
+  malformedphase/counters/ORprefix fail. FullrealouternewIRQ/DONE/idle/RW/CPU/
+  source/knownDelete/softwarepeers, not physicalresponse or securegrant.
+- ON0001 e7b07fa82005bb022d330380814c64f1be42f2d843f6e3cf5b0c427ce8b3b116/
+  16105472B/94inputs; OFF0001 b6f27adb.../16057856B/91inputs byteequalold.
+  ActualwholemainCOFF/MachO/generalregs/maxframe1024/fullCABI/LDR/QEMUphysicalout
+  passed; old1403cases newflagOFF executing Ctokens exact, not rerun. Unchanged
+  CLI dependencies7 refusals reused via exactbuilder prefix, not rerun.
+  Parentproofc3e7811b980de57d33eaaf70aaf18df8bec219ad88ff00d752dfa73a43fbea28;
+  twoSERIALwholeEFI-XNU each19checks/94sameinputs/11resource+1battery literalint1
+  passed, modelproofc79213f663a9f18035ea701b4eb8036f27cde3ed25f4cc1023a68645f3066ca0.
+  Models SOFTWARE PMIC/delay/RAMUSB, noactualguestreset/radio/READ claim.
+- Sourceproof0184/wifi/saved-status-read-source-and-offline-proof-0001.json
+  SHAbddf170867b984f88b8bd1322c99cc75f7b0f9a63d745dff443a20499764a733. PinnedLinuxprimary7acf90fe.../
+  rpmh-rsc.c blobf881af35... checked for2.7 registercorrespondence; generic IRQ
+  only completion not ported and not ownEE/EL3/VMID/MPU grant. Actual0183photo
+  and independent recovery02:44 remain newhardwarefacts below; USBACKUNKNOWN
+  preserved, no binaryraw/READcompletion/network claimed. No further0183USB.
+- Hostexact0184, NEWfullstrictRO39 afterphysicalreset, fulloriginalcodec/image,
+  independentfreeze/ONEhelper still required. NEW0184 NOTREADY/noimage/payload/
+  bootrecord/devicecommand. ActualphonelastPolarisFASTBOOT02:44, notnativeLIVE;
+  nophysical/auth待答. ROOTNV old0182HISTORICAL, don'tskipfresh39 ornowinventory.
+  Userasks加快修Wi-Fi; continue this concrete fix qualification, not prep/CPU/
+  client/cacheinventoryboot/parsercontract or unboundedoriginalsubmit/fallback.
+
 ### CURRENT0183 actual photo: prelaunch saved CMD_STATUS wrongly checked as own completion; recovered actual Polaris FASTBOOT02:44; READ/Wi-Fi NOT DONE
 
 - Human supplied currentV4photo and answered本次“已到FASTBOOT”. Originalprivate

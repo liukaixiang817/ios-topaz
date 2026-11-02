@@ -1,4 +1,4 @@
-# Current private word-capture READ scope (0183)
+# Current private word-capture READ scope (0184 saved-status fix)
 
 Default OFF: `--wifi-power-current-word-read` is an explicit new composition.
 It requires prepared current capture-only ARC READ, unchanged all-68 work
@@ -45,9 +45,9 @@ Two normal Device captures still perform 140 loads and six original queries;
 masked geometry, engine reads, launch stores and IRQ ACKs are additionally
 reachable here. No claim of total MMIO zero is made.
 
-The independent raw tag is `WIFI_CURRENT_PRIVATE_WORD_READ_RAW_V1`; the whole
+The independent raw tag is `WIFI_CURRENT_PRIVATE_WORD_READ_RAW_V2`; the whole
 parent record is 1,969,216 bytes, access402,048, CPU10,096, arguments25,216.
-V4's same 16-row GOP projection reads only existing resident diagnostics,
+V5's same 16-row GOP projection reads only existing resident diagnostics,
 access/engine issued/returned flags and pending address, original failure
 sample, database byte/word prefixes and CPU held/restored fields. It adds no
 failure-time clock/register/firmware read. Missing attempted/issued evidence
@@ -59,3 +59,32 @@ RAW responses do not establish qualified per-DRV ARC saved votes. Resource
 WRITE, CX/MX/MSS/WiFi rail votes, MSS/MSA/GLINK/remote NV, WLFW, ath10k and
 scan/join/data remain disabled. Software peers and QEMU do not prove hardware
 READ, interrupt ownership, secure grants or Wi-Fi functionality.
+
+0183's physical photograph located a returned saved CMD0_STATUS read at
+0x179e0d3c, engine phase0, before any new request. The checked access layer
+had applied its new-issued completion mask to this initial RO snapshot.
+The status word itself was not projected and remains unknown; synthetic
+software values used to reproduce the boundary are not that physical word.
+
+For this default-OFF current-word READ composition, initial phase0 (zero
+write/trigger/completion/ACK/step/response state) and final phase7 (three
+new triggers/completions/ACKs, all three responses, no final publication yet)
+retain each delivered CMD_STATUS as RAW observation. No bit is cleared,
+rewritten, masked from raw or used to claim completion/ownership. Other
+phases must be this engine's pending CMD0 in phase2/4/6 with exact matching
+trigger/completion/ACK counters. Its original 0x10100 mask, exact DONE
+equality, new IRQ, response, idle, readback and full independent journal
+retirement stay unchanged. The access aggregate status OR must equal the
+OR of every corresponding delivered full-prefix engine status sample.
+Phase mismatch, malformed snapshot counters, partial/late read or any new
+issued status error remain sticky UNKNOWN. Resource WRITE stays unreachable.
+V5 projects the last already retained I/O value and command0 status OR when
+there is no CPU failure sample; CPU failures retain their original failed
+ticks. No new hardware or clock observer is added.
+
+Primary register correspondence was checked against pinned Linux commit
+7acf90feab8b009fde7def08ff2c622d0f10e99f, rpmh-rsc.c blob
+f881af35ecfc51d4dbcc7d2d3c32eea854210d5e (2.7 STATUS0x3c/RESP0x40,
+command20/TCS672). This is a generic source reference, not a Polaris secure
+grant; its interrupt-only completion behavior is not imported.
+https://code.googlesource.com/linux/torvalds/linux/%2B/7acf90feab8b009fde7def08ff2c622d0f10e99f/drivers/soc/qcom/rpmh-rsc.c

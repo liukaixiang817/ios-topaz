@@ -113,7 +113,10 @@ static int execute_word_read(unsigned rf,unsigned nf,unsigned nt,unsigned df,uns
     }
     return pwrcl_run_body(&client,enumeration,2,c,early,cr,rw,word_body,&io);
 }
-int main(int argc,char **argv)
+#ifndef POLARIS_CURRENT_WORD_READ_TEST_MAIN
+#define POLARIS_CURRENT_WORD_READ_TEST_MAIN main
+#endif
+int POLARIS_CURRENT_WORD_READ_TEST_MAIN(int argc,char **argv)
 {
     assert(argc==5&&!posix_memalign((void**)&arena,4096,0x800000));
     original=malloc(PGCI_IMAGE_BYTES);npa_original=malloc(PWNPI_IMAGE_BYTES);

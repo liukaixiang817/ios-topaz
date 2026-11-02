@@ -150,6 +150,9 @@ static inline int pwra_transfer(struct pwra_context *c,uint64_t at,uint32_t *val
         if(c->read&&!read_engine&&c->read->io.events+t->events>PWRSC_HISTORY)return pwra_fail(c,PWRA_HISTORY,1);
 #endif
         const struct pwrsc_event *e=&t->history[t->outstanding-1];
+#if EFI_XNU_WIFI_CURRENT_WORD_READ
+        if(read_engine&&e->phase!=t->phase)return pwra_fail(c,PWRA_PREFIX,1);
+#endif
         if(e->address!=at||e->operation!=(write?2u:1u)||!e->issued||!e->unknown||
            (write&&e->value!=*value)||t->active_mask!=r->mask)return pwra_fail(c,PWRA_PREFIX,1);
         for(unsigned k=0;k<3;k++){
@@ -191,6 +194,29 @@ static inline int pwra_transfer(struct pwra_context *c,uint64_t at,uint32_t *val
         uint64_t tcs=pwrsc_tcs(t);
         for(unsigned k=0;k<3;k++)if(at==tcs+0x3c+20*k){
             r->command_status_OR[k]|=q->value;
+#if EFI_XNU_WIFI_CURRENT_WORD_READ
+            if(read_engine){
+                /* A delivered RO snapshot is retained RAW, not interpreted
+                 * as completion of a request that has not been issued (or
+                 * has already been acknowledged). No bit is masked away.
+                 * The independent full engine prefix still binds every
+                 * initial/final sample and every NEW IRQ/DONE/idle/restore. */
+                if(t->phase==0){
+                    if(t->writes||t->triggers||t->completed||t->acknowledged||t->steps||
+                       c->read->response_seen||c->read->valid||c->read->reserved)
+                        return pwra_fail(c,PWRA_PREFIX,1);
+                }else if(t->phase==7){
+                    if(t->triggers!=3||t->completed!=3||t->acknowledged!=3||
+                       c->read->response_seen!=7||c->read->valid||c->read->reserved)
+                        return pwra_fail(c,PWRA_PREFIX,1);
+                }else{
+                    if(k||!(t->phase==2||t->phase==4||t->phase==6)||t->triggers!=t->phase/2||
+                       t->completed+1!=t->triggers||t->acknowledged!=t->completed)
+                        return pwra_fail(c,PWRA_PREFIX,1);
+                    if(q->value&~PWRSC_DONE)return pwra_fail(c,PWRA_UNKNOWN_STATUS,1);
+                }
+            }else
+#endif
             if(q->value&~PWRSC_DONE)return pwra_fail(c,PWRA_UNKNOWN_STATUS,1);
         }
     }
@@ -486,6 +512,9 @@ static inline int pwra_bind_write(struct pwra_context *c)
 static inline int pwra_engine_prefixes(const struct pwra_context *c)
 {
     const struct pwra_result *r=c->record;unsigned read_seen=0,write_seen=0;
+#if EFI_XNU_WIFI_CURRENT_WORD_READ
+    uint32_t status_OR[3]={0};
+#endif
     for(unsigned k=0;k<r->events;k++){
         const struct pwra_event *a=&r->history[k];
         if(!a->engine_event){if(a->operation!=1||!pwrmd_readable(a->io.address))return 0;continue;}
@@ -500,7 +529,14 @@ static inline int pwra_engine_prefixes(const struct pwra_context *c)
         if(a->operation!=e->operation||a->io.address!=e->address||a->io.value!=e->value||
            a->io.before<e->before||a->io.after<a->io.before||a->io.after>e->after||
            a->native_before||a->native_after)return 0;
+#if EFI_XNU_WIFI_CURRENT_WORD_READ
+        if(is_read&&a->operation==1)for(unsigned j=0;j<3;j++)
+            if(a->io.address==pwrsc_tcs(engine)+0x3c+20*j)status_OR[j]|=a->io.value;
+#endif
     }
+#if EFI_XNU_WIFI_CURRENT_WORD_READ
+    if(c->read&&!pgcd_equal(status_OR,r->command_status_OR,sizeof(status_OR)))return 0;
+#endif
     if(c->read&&read_seen!=c->read->io.events)return 0;
     return write_seen==(c->read&&!r->write_bound?0:c->transaction->events);
 }
