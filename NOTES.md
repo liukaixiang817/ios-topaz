@@ -110,6 +110,9 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 - NEW0189 CURRENT additional SOURCE result for the enabled nonzero poison-fill
   leaf; functional source remains bebea9d66137516e8957e9871afb7bf4c5e85880.
+  Text milestone bed76fdc58f50c0eccafee255c19bcfea5278874 directpushed under
+  actual standing source/text authorization; independent lsremote matched.
+  Only NOTES/REFERENCE_REPOS text published, all private evidence stays local.
   All C/header/test/schema bytes and771/474/1564/1452/2341/167/8334/5141 results
   remain unchanged and were NOT rerun. This answers the previously unqualified
   fill-leaf footprint/work question, not another FreePool entry/bin/granule,

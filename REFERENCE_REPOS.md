@@ -1641,3 +1641,8 @@ raw/schema/software evidence remain unchanged. Remaining unlock/RestoreTPL/
 asynchronous callbacks, full temporal/work and fresh later typed/source graph
 inputs, MSS lifetime and new candidate qualification are still required.
 NEW0189 NOTREADY; physical WiFi firmware/driver/scan/join/data have not run.
+
+The poison-fill SOURCE text milestone bed76fdc58f50c0eccafee255c19bcfea5278874
+was directpushed under the actual same-project public text consent; independent
+lsremote matched. Only NOTES/REFERENCE_REPOS were published, with no runtime
+source change, private evidence disclosure or physical action.
