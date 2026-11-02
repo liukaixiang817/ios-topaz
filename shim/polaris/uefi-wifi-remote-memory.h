@@ -108,6 +108,10 @@ struct pwmc_translation {
     uint32_t read_issued,read_returned,write_issued,write_returned;
 };
 struct pwmc_call {
+    /* Legacy RAW field name profile_hook: Core+1cb78 actually binds SMM
+     * Base2.InSmm (GUID f4ccbfb7-f6e0-47fd-9dd4-10a8f150c191), not a
+     * profiler. Keep the RAW layout and the fresh-zero refusal unchanged;
+     * this adapter never invokes an unqualified SMM protocol. */
     uint64_t requested,returned_address,pages,status,entry,profile_hook,pending_events;
     uint64_t native_address;uint32_t native_before,native_after;
     uint32_t issued,returned,unknown,map_checked;
