@@ -34,7 +34,41 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0185 source fix for documented TRIGGERED status bit; offline parent/models passed, candidate NOTREADY; actual last Polaris FASTBOOT03:17; Wi-Fi NOT DONE
+### CURRENT0185 frozen offline TRIGGERED-status candidate complete + NEW strictRO39; no0185nativeboot; actual Polaris FASTBOOT03:35; Wi-Fi NOT DONE
+
+- FW713898bfbeb6bf1cb2d8d36892361390d68a53c9/HOST8a2672f094af5c488a7aeea9bcac1d6824051fbf
+  committed/pushed and independentlsremote matched. No publication/auth待答.
+  New0185nativeimage/payload notsent; ORIGINAL0185bootrecord notcreated.
+- NecessaryNEW0185 strictROaudit68611 ENDED0 after0184heldUNKNOWNreset; source
+  01cd2a70bf06e99bb3b2ae4892b974c53fef838d5feac7d2b8e47de5dae00421/reviewer
+  4523496836b6931cf13a235115038045cc0f2cc47e65d6a8b712d5acbfcc1458. Only
+  epoch/mount/output/candidate/sourceproof bindings changed, reversiblybyteequal
+  to0184dynamic sysfs/dev_t+3FIEMAP audit; no additionaldevicecommand or weakergate.
+  Independent39checks PASS; doublefull16GiB91515474/689a8cd1/56.476068040996324
+  and56.492652958026156s/maps142/182/wholemarker8MiB/GPT6/5critical/ESP102/
+  journalmetadata/NV3x8MiBbefore-local-after/FSC/4NV0600/noRestore. Normalumount→
+  actualPolarisFASTBOOT2026-11-02T03:35:28.840447Z. Rootreview2766c068a84f76670a63f5cd78333176be94121f782d12449c64e5f301b49053/
+  preflighta5acbc24fc6b249122b3618c598558f194065ceecd478120e381379ea42be519;
+  whole512MiBjournal notcaptured/notFShealth/DSPoff/EElease. SinceauditONLYoffline.
+- DriverON0001/independentphysical0001 SHA1a397d787171459ef6c10ee82492948acb2ac3d0b3f8a8a4bc4665ad23910787/
+  94inputs; image34c022955d6ed10d20cc7a5fed664288066ef247be31c7ba71cee67d930267b5/6041600B.
+  OriginalunmodifiedEDK2 actualGetInfo/fullDecode43587272B byteequal,81FW/
+  SimpleInit/BootShim/DTB retained. No nativeCI/download. No-mockfullexactadmitPASS.
+  Prebootreviewc94840abfdf681a77b986afa363fba78ce475e0f799c7f3f72bc6a46df4bfa15
+  explicitlyNEW0185full39/no historical0184 qualification. Extendedsourceproof
+  275a2c17df5e836e0eb18b3326ebdbf49dff512c9e0c6904fe58a42de0080e0b.
+- NEWindependentfreeze /private/tmp/polaris-runtime-0185-frozen-0001 COPY923+
+  10COMMIT_ONLY/482currentcommittedsources/94inputs/newinodes/nohardlinks/
+  source modes/NV0600/root0700/noZigcache. Manifest24a7cd55c4954c3193a554a354f09980790ae12f2e88d2bfd3ee5c3435f6400e;
+  ONEdefaultofflinehelper PASS/56explicitmetadataexpectations. Don'trefreeze/
+  repeathelper. Genuinebroadkernelreuse + samepublicsource/text approvalsbound.
+  NEXT exactpublishedcurrentHEAD proof then frozen0185boothelper--boot-once:
+  ONE8s expectedPolaris→atomicNEWORIGINALrecord→ONEimage, then execENDED/
+  matching0185stateONCE/waitingpayload→ONEsame63cbpayload. NoextraUSBpoll.
+  No old0184controller/session/image/payload replay. AllworkersENDED/allchildrenSTOP.
+  Wi-Fi realREADcompletion/qualifiedARCvote/scan/join/data NOTDONE; sound/cameraSTOP.
+
+### 0185 completed source/parent/model qualification history
 
 - No0185deviceaction. Actual0184 physical recovery remains PolarisFASTBOOT
   2026-11-02T03:17:42.259868Z/exit0; no new polling or physical question.
