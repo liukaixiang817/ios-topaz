@@ -108,6 +108,66 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
+- NEW0189 CURRENT SOFTWARE internal allocator admission milestone, source
+  fcb1de902552a74a5886a56793d2810662e51c2d. This supersedes older2326checks/
+  158432B as the current component result; physicalCURRENT0188 above stays
+  unchanged. HeaderSHA0314d51e66c67e43bafc90ada1871dda18d10b68c1ce415af4d6e111dd331f96,
+  testSHAd947a64854d8c451319e860a8a53fcfe5dcc9fc3675360913b0ac46cddeddbe8.
+  Still standalone defaultOFF and not imported by parent/builder/CLI/profile.
+  No0189candidate, new image/helper/freeze/nativeCI or USB action exists.
+- New original Core allocator qualification inputs: full memory-map list
+  head1b358 and free-descriptor head1bcc0, memorylock1b340, actual mapkey1cdb0,
+  stackdepth1cc08 and flushbusy1dc10. Each64B original entry has Link+8,
+  FromPages+24/Type+28/Start+32/inclusiveEnd+40/Virtual+48/Attributes+56.
+  With a request entirely inside one original entry and initial stackdepth0,
+  165d0 needs at most2 temporary nodes. If the free list empties, b2a8→c16c
+  recursively allocates a type4 descriptor page, changing memory outside the
+  requested claim. Its source and independent abstract partition oracle
+  (11968 geometries, max2) are private0189/wifi/own-Core-descriptor-pool-0001/
+  proof.json SHAe17898461cd1c2abef4a439d818fddde50e57b2200c75f09ffc6e65f49bf9aa4.
+- The actual adapter now retains BOTH complete bounded lists, up to256 nodes
+  each, raw64B/links/signatures/per-page NSWB metadata ATs/full prefix hashes;
+  it binds the internal key to the complete current GetMap record. It refuses
+  overlapping/cyclic/foreign/overlong nodes, bad type/attributes/virtual spans,
+  nonzero depth/flushbusy, or fewer than2 free nodes before the page API.
+  The full selected request must fit one original entry of type7 on claim or
+  type2 on local release, with identical public-map attributes. Neither list
+  is edited and no node is reserved; observed capacity is NOT a future lease.
+  After final callbacks all retained inputs and current original nodes/heads/
+  keys/locks are checked again. Partial ATs and changed held claims preserve
+  UNKNOWN and cannot invoke FreePages/retry/cleanup.
+- FINAL3445 actual-adapter ASAN/UBSAN SOFTWARE checks passed in
+  16.42966487503145s. Covers simultaneous MSA/RMTFS, list boundary counts and
+  exhaustion, overlap/cycle/foreign nodes, all64 returned-entry byte changes,
+  clock/order mutations, cross-page metadata and all256 positions in each
+  of two lists for BOTH claim/release partial metadata-AT prefixes. The earlier
+  source/map-delta/514+514 page-AT/notification/exposure-veto coverage remains.
+  Python hashlib/struct independently replays the returned three-map/eight-
+  free-node prefix, all links/ATs/ranges/key/zero tails. Actual COFF+MachO/
+  generalregs/maxframe1024 and defaultOFF-no-body PASS. New componentCABI281600B
+  is NOT an0188 physical RAW layout. Finalproof0189/wifi/remote-memory-backend-0005/proof.json
+  SHA9d9888456fbdac1c1ee051f1ce8a4eb7f3cf72b05648cd1148cb978f68370efc;
+  source/software90860c9669761a47d771965a908170d1802a2733001ad9fabdbaf7e0452dd10c.
+  Initial pair-fixture failure used the old plain-PA identity peer; fixed to
+  the same NSWB metadata peer as the first claim, without weakening admission.
+  Historical logs/proofs0001..0004 and0005iterations remain untouched.
+- IMPORTANT NEXT: the TPL4 check-to-API asynchronous-callback window remains
+  OPEN; the new capacity precheck alone does not close it. Do not enable this
+  component physically or make another allocator inventory boot. Actual BS
+  slots24/32 bind RaiseTPL a2c8/RestoreTPL c6d4; original4→16 RaiseTPL bypasses
+  its interrupt-disable branch. [UEFI2.10 Boot Services](https://uefi.org/specs/UEFI/2.10/07_Services_Boot_Services.html?highlight=exitbootservice)
+  permits memory allocation services at or below TPL_NOTIFY; a matching
+  RaiseTPL/RestoreTPL pair defers standard notifications. This only supports
+  a future source-qualified registered TPL16 bracket, NOT an implemented or
+  admitted path, no direct Core-global write or permission/MPU grant. Qualify
+  higher-priority original firmware paths, full FP/DAIF0/G1on/native0/TPL/raw
+  prefixes and exact saved4 restoration within each original200ms operation;
+  no BS/SCM while DAIF masked or SFPB-held. Then actual parent bindings to all
+  current loaded images/payload/root/source objects and both distinct claims,
+  secure cache/VMID/MPU/DMA stop/handback. All existing power deadlines and
+  restore requirements remain. No PA publication/MSS/NVserve/radio/scan yet;
+  actualFW270052fb/HOST15e830b, consumed0188 and lastFB10:05 are unchanged.
+
 - NEW0189 current page-adapter notification qualification SOFTWARE milestone:
   source commit60f30c5838ab1792752dd0c8ce14db4de2406017 supersedes the1708-check
   component as the current source/software result. Header

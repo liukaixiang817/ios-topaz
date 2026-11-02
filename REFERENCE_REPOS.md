@@ -1217,3 +1217,19 @@ RMTFS0x14/v1/1. Neither an actual RFSA request nor a need for this route has
 been observed on the phone; keep that distinction when implementing the real
 shared-memory provider, without recreating the finished RMTFS service. All
 reference bytes remain private; no vendor initialization code was imported.
+
+The original own Core allocator's descriptor-pool path was checked separately:
+a request inside one original entry needs at most two temporary descriptors;
+an empty free list can cause a recursive type4 page allocation. Current
+adapter checks retain both complete original lists, key/depth/lock/prefixes,
+but do not close asynchronous mutation between a TPL4 check and the API.
+Private sourceproofe17898461cd1c2abef4a439d818fddde50e57b2200c75f09ffc6e65f49bf9aa4
+and SOFTWARE3445checks are prerequisites, not physical admission.
+
+[UEFI2.10 Boot Services, TPL restrictions and RaiseTPL/RestoreTPL](https://uefi.org/specs/UEFI/2.10/07_Services_Boot_Services.html?highlight=exitbootservice)
+places memory allocation services at or below TPL_NOTIFY. Own Core BS
+slots24/32 are a2c8/c6d4; its4→16 raise skips interrupt disable. A qualified
+registered TPL16 bracket is a proposed next step, with exact saved-TPL/FP/CPU
+restoration and higher-priority firmware paths still to qualify. No direct
+global write, masked-CPU BS call, secure/DMA grant, parent hook or new boot
+is authorized by this source correspondence.
