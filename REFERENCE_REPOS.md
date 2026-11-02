@@ -1190,3 +1190,30 @@ pass. Component proof976297e86c0f62ecfe5a033ddcb833eace93effe24dcfbaf9563c103c6d
 Physical integration still needs fresh current VRM READs, exact CmdDb/source/
 owner/cache/Device/CPU scope, the original combined deadlines, full retirement,
 and the complete new candidate admission. No supply or Wi-Fi success is claimed.
+
+
+## Polaris remote-memory allocation correspondence (2026-11-02 local)
+
+The own pinned c7cb50c18f812629b9620b2b8fa684bc40d82080
+[sharedmem-uio allocator](https://github.com/MiCode/Xiaomi_Kernel_OpenSource/blob/c7cb50c18f812629b9620b2b8fa684bc40d82080/drivers/uio/msm_sharedmem/msm_sharedmem.c)
+was newly inspected for the missing physical RMTFS provider. Its exact Git blob
+is8be3e36f72783c37a520477430b0d50d9cfd38d2,6709B. Own DT client1 has a dynamic
+2MiB region plus guard-memory: backing is0x202000B, with one4KiB guard at each
+end; the exposed address is backing+0x1000 and its size remains0x200000. This is
+separate from WLFW MSA's logical1MiB and independently owned/aligned2MiB envelope.
+The source requests HLOS and MSS_MSA read/write access to the exposed interior.
+Its permission error is only logged and its remove path has no secure handback;
+our provider must retain UNKNOWN/ownership and require actual DMA stop/handback.
+This correspondence does not establish current VMIDs, secure permission, free
+reserved memory, an allocation or the exact Android kernel build.
+
+The same source family's
+[RFSA provider](https://github.com/MiCode/Xiaomi_Kernel_OpenSource/blob/c7cb50c18f812629b9620b2b8fa684bc40d82080/drivers/uio/msm_sharedmem/sharedmem_qmi.c)
+and [wire header](https://github.com/MiCode/Xiaomi_Kernel_OpenSource/blob/c7cb50c18f812629b9620b2b8fa684bc40d82080/drivers/uio/msm_sharedmem/remote_filesystem_access_v01.h)
+are blobsfd95deeb6133201824a8a1d5e335d570153bc2fb/11857B and
+7ea8ce66a5bfc9e9c69fac6667f49068d150ba5d/1291B. RFSA uses0x1c/v1/instance1,
+GET_BUFF_ADDR0x23 and a nonzero client-bounded size. It is distinct from existing
+RMTFS0x14/v1/1. Neither an actual RFSA request nor a need for this route has
+been observed on the phone; keep that distinction when implementing the real
+shared-memory provider, without recreating the finished RMTFS service. All
+reference bytes remain private; no vendor initialization code was imported.

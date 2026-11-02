@@ -108,6 +108,24 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
+- NEW0189 targeted physical-memory-provider prerequisite only (offline): exact
+  own pinned c7cb50c1 sharedmem-uio sources and Git blobs now checked once,
+  private0189/wifi/own-sharedmem-primary-0001/proof.json SHA64e86ddd8904ea924f833b2376daaa766fdfc38b48825bc6331099257b89019c.
+  This is a newly resolved allocation-layout gap, not another rail/DT/ARC audit:
+  own RMTFS client1 dynamic2MiB with guard-memory means4KiB before+4KiB after,
+  allocate0x202000 backing/expose base+0x1000 length0x200000. It is separate from
+  MSA's logical1MiB/independent aligned2MiB envelope; do not merge/guess alignment.
+  Primary uses HLOS→HLOS+MSS_MSA RW for only the interior. Its void permissions
+  helper logs a failure then still publishes, and remove lacks secure handback:
+  do not port those error/retirement shortcuts. NumericVMID/SCM owner not proven.
+  It also has distinct RFSA0x1c/v1/instance1 GET_BUFF_ADDR0x23; existing RMTFS
+  0x14/v1/1 does not automatically answer it. No actual RFSA request observed,
+  so do not invent a hardware dependency or rebuild the finished RMTFS parser.
+  NEXT implement actual source-bound EFI allocation/map-delta/cache/guard backend,
+  with two distinct owned regions, then real secure/remote handback provider;
+  not a new inventory boot or generic permission/lease contract. No firmware,
+  test/model/CI/candidate/USB changed for this targeted source correspondence.
+
 ### CURRENT0188 actual current-and-future source publication approval received; unchanged candidate FIRST transfer pending current push; NO new USB/image/payload; Wi-Fi NOT DONE
 
 - User actually answered call_b274001c482049018b5e318eab1379f3/0:
