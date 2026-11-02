@@ -307,7 +307,11 @@ static void terminal_gop_evidence(void)
      * clock, register or firmware call is made after the original failure. */
     const struct pwra_result*a=&pwrpt_record.access;
     const struct pwra_event*e=a->events&&a->events<=PWRA_EVENTS?&a->history[a->events-1]:0;
+#if EFI_XNU_WIFI_CURRENT_WORD_VOTE
+    pwtg_line(r,0,"V7 HOLD",pwrpt_record.attempted,pwrpt_record.phase);
+#else
     pwtg_line(r,0,"V6 HOLD",pwrpt_record.attempted,pwrpt_record.phase);
+#endif
     pwtg_line(r,1,"BODY CPU",pwrpt_record.error,pwrpt_record.CPU.error);
     pwtg_line(r,2,"WHY CALL",d->reason,d->call);
     pwtg_line(r,3,"MASK ARCH OK",d->masked,d->arch_callback_ok);
@@ -318,12 +322,21 @@ static void terminal_gop_evidence(void)
     pwtg_line(r,7,"ACC U OUT",a->unknown,a->outstanding);
     pwtg_line(r,8,"IO OP FLAGS",e?e->operation:0,e?(e->io.issued|(e->io.returned<<8)|(e->io.unknown<<16)):0);
     pwtg_line(r,9,"IO ADDR L H",e?(uint32_t)e->io.address:0,e?(uint32_t)(e->io.address>>32):0);
+#if EFI_XNU_WIFI_CURRENT_WORD_VOTE
+    pwtg_line(r,10,"READ WRITE PH",pwrpt_record.read.io.phase,pwrpt_record.transaction.phase);
+    pwtg_line(r,11,"WRITE TR DONE",pwrpt_record.transaction.triggers,pwrpt_record.transaction.completed);
+#else
     pwtg_line(r,10,"READ PH STEP",pwrpt_record.read.io.phase,pwrpt_record.read.io.steps);
     pwtg_line(r,11,"READ TR DONE",pwrpt_record.read.io.triggers,pwrpt_record.read.io.completed);
+#endif
     pwtg_line(r,12,"DB0 BYTE WR",a->CmdDb[0].bytes,a->CmdDb[0].word.returned);
     pwtg_line(r,13,"DB1 BYTE WR",a->CmdDb[1].bytes,a->CmdDb[1].word.returned);
     pwtg_line(r,14,"CPU H R",pwrpt_record.CPU.local_mask_held,pwrpt_record.CPU.local_restored);
+#if EFI_XNU_WIFI_CURRENT_WORD_VOTE
+    pwtg_line(r,15,"WRITE E U",pwrpt_record.transaction.error,pwrpt_record.transaction.unknown);
+#else
     pwtg_line(r,15,"READ E U",pwrpt_record.read.io.error,pwrpt_record.read.io.unknown);
+#endif
 #else
 #if EFI_XNU_WIFI_DB_WORD_CAPTURE
     pwtg_line(r,0,"V3 HOLD",pwrpt_record.attempted,pwrpt_record.phase);

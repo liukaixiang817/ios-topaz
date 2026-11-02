@@ -157,13 +157,16 @@ static inline int pwrmd_collect(const struct pwrmd_io *io,struct pwrcl_result *p
             if(!pwrmd_load(io,p,w,g,r,UINT64_C(0x179e0d00)+672*k+offset[j],&r->tcs[pass][k][j]))return 0;
         for(unsigned k=0;k<8;k++)if(b->active_mask&(1u<<k)){
             if(!(r->tcs[pass][k][2]&1))return pwrmd_fail(r,PWRMD_BUSY,0);
-#if EFI_XNU_WIFI_ARC_READ_AVAILABLE && EFI_XNU_WIFI_ARC_READ_CAPTURE_ONLY
+#if EFI_XNU_WIFI_ARC_READ_AVAILABLE && (EFI_XNU_WIFI_ARC_READ_CAPTURE_ONLY || EFI_XNU_WIFI_CURRENT_WORD_VOTE)
             /* Original HAL7704..7734 raises a new edge after clearing the
              * previous latch. Actual0166 FREE/no-request TCS0 retained
              * CONTROL01010000/CMD_ENABLE1 with STATUS1/IRQ0. Support only
              * that source-bound completed single-command shape, not every
              * asserted trigger or programmed command. READ will deassert
              * before staging and never store saved TRIGGER1 on restoration. */
+            /* The explicit fresh-READ vote path preserves this exact READ
+             * admission. Its writer independently requires a DIFFERENT
+             * eligible idle/untriggered TCS; no high-latch WRITE admission. */
             uint32_t control=r->tcs[pass][k][1],enabled=r->tcs[pass][k][3];
             const uint8_t *t=b->tcs+24*k;
             if(r->tcs[pass][k][2]!=1||pwfi_le(t,4)!=k||pwfi_le(t+4,4)||pwfi_le(t+16,8)||

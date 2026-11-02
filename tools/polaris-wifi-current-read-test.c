@@ -1,7 +1,7 @@
 /* Same complete preparation/private/source/Device/CPU/READ/restore/Delete
  * path, explicit SOFTWARE peers only. Original PE bytes are DATA. */
 #define EFI_XNU_WIFI_ARC_READ_AVAILABLE 1
-#define EFI_XNU_WIFI_ARC_READ_CAPTURE_ONLY 1
+#define EFI_XNU_WIFI_ARC_READ_CAPTURE_ONLY (!EFI_XNU_WIFI_CURRENT_WORD_VOTE)
 #define POLARIS_CMDDB_PREPARED_FIXTURE_ONLY 1
 #include "polaris-wifi-cmddb-prepared-test.c"
 static unsigned read_fault;

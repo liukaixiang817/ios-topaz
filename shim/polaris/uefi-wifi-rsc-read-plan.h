@@ -1,4 +1,9 @@
-/* Default-OFF typed READ evidence to ARC plan. No hardware authority is
+/* Default-OFF typed READ evidence to ARC plan. Qualcomm's Maulik Shah
+ * explicitly confirms ARC/BCM/VRM READs return HLOS/DRV2 votes, not the
+ * aggregate across DRVs (2025-10-23, LKML 2510.2/06910). The physical vote
+ * flag binds that interpretation to its fresh own DRV2/CmdDb/READ path;
+ * absence of an ARC cache row is never synthesized as a saved zero.
+ * No hardware authority is
  * supplied by this pure function. The physical parent separately requires
  * current known-client/source/RAM/Device/CPU admission and checked I/O. */
 #ifndef POLARIS_UEFI_WIFI_RSC_READ_PLAN_H

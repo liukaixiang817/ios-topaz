@@ -34,7 +34,56 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0185 actual three bounded READs RAW6/3/0 + full retirement; controlled actual Polaris FASTBOOT03:42; qualified ARC votes/Wi-Fi NOT DONE
+### CURRENT0186 bounded ARC round-trip source/offline checks complete; host profile/freeze NOTREADY; no0186device action; Wi-Fi NOT DONE
+
+- NEW ARC-specific primary: Qualcomm Maulik Shah direct2025-10-23 reply
+  https://lkml.iu.edu/hypermail/linux/kernel/2510.2/06910.html explicitly says
+  ARC/BCM/VRM READ returns HLOS/DRV2 votes, not aggregate across DRVs; thread
+  identifies SDM845 support. Private originalhtml85ea79fb807282a41f67d18fddcc0c87a43d14dd3c30263cf668584535f1f9fa.
+  NEW0186/wifi/ARC-DRV2-primary-semantics-0001/proof.json
+  SHA0b980fbd23266dabe07966fe57c4589e501676ba5c2c272b3dc77ba175a53267
+  binds ownDRV2/bank2/TCS geometry and historical0185 READ/CmdDb. Resolves the
+  old aggregate-versus-own-vote question, NOT EE/EL3/VMID/MPU/radio permission.
+  Old0185 physical/semantic proofs stay immutable; no new session reuses6/3/0.
+- NewdefaultOFF --wifi-power-current-word-vote requires complete explicit
+  fresh current-word READ/normalarguments/CPU/fullwordDB/source/namespace/work.
+  Three freshREADs -> max(saved,target) CX/MX/MSS -> exact saved MSS/MX/CX ->
+  full touchedRW/CPU/RAM/source/Device/namespace/pools/knownDelete retirement.
+  Dynamic writer chooses eligible idle/untriggered TCS, never fixedTCS1 or
+  inherited-high-latch WRITE. Two newIRQs/all3DONE/idle/ACK; documentedbit0 RAW
+  retained, unknown pending bits sticky. Full initial/final snapshots and
+  status/response/IRQ OR independently bound to originaljournal, both engine
+  and access prefixes rechecked after second fullDB/geometry before releasing
+  access/CPU. OriginalcombinedREAD+WRITE50ms/256steps/1024events, opening200ms,
+  all68slowest/hashestimate/READ50+25/FP/DAIF/G1/fullrestore unchanged; no renewal.
+  Existing CPU live and READ engines unchanged. NewV7/WORD_ARC_VOTE_RAW_V1 uses
+  same1969216B CABI/resident16rows, no postfailure hardware/clock sampling.
+- Final533 actualouter ASAN/UBSAN SOFTWARE checks0003 passed21.554291666980134s:
+  full raise/restore/Delete, dynamic TCS2/3, unknown/missingDONE, combined deadline,
+  full64maskedAT partial, native/prefix late corruption, safe normalrefusals.
+  Initial debug fixtures were corrected; only final0003 is current. Full actual
+  main COFF/MachO/generalregs/maxframe1024/CABI/wordLDR/dependency coverage pass.
+  Old2146 cases actualexecutingCtokens byteequal with flagOFF, reused notrerun.
+  OFFwholeEFI b6f27adb0427bc3d711c72c671bafaa7ba5cd670eb111fca8028c2a1a72b8b09
+  unchanged. ON0002 498aece93adb555af7438da511a3a45047997de588f4779817191ee7e5e1127f/
+  16113664B/94inputs. Parentproof2ca6f8e96f2fc10e08b0980030b6bff30301ad6a21eed4b9b5db0d82f12e478a.
+  TwoSERIALnew wholeEFI-XNU each19checks/94sameinputs/11resource+1batteryint1;
+  modelproofc9348d225f8d115a7f9b6337012fc097d056217fe8ff6ec72b7ac26240f624a0.
+  Models/software peers NOT physical vote/guestreset/network. No nativeCI.
+- No0186device command/image/payload/ORIGINALrecord. Phone lastactual0185
+  controlledPolarisFASTBOOT03:42 remains current integrity history; no poll or
+  keys required. ActualNEW0185fullstrictRO39 plus full controllednativedrain
+  receipt permits reuse of integrity at next needed qualified candidate; all
+  runtime owner/source/client/CPU/tickets MUST fresh, never old runtime context.
+  NEW0186 hostexactprofile/originalwholecodec/sourceaudit/newfreeze/ONEhelper/
+  sourcepushproof still required, NOTREADY. ResourceWRITE physical UNOBSERVED;
+  WiFi scan/join/data NOTDONE. No VRM/MSS/NVserve/radio reached. Next four own
+  WiFiVRMs BEFORE MSS/GLINK/RMTFS/WLFW/ath10k only after qualified ARC roundtrip.
+  Two standing authorizations already answered; no user action/auth pending.
+
+### 0185 actual physical history (retired; only integrity continuity remains current)
+
+### actual three bounded READs RAW6/3/0 + full retirement; controlled actual Polaris FASTBOOT03:42; qualified ARC votes/Wi-Fi NOT DONE
 
 - ActualNEW0185 ONEimage12419 ENDED0 sent2026-11-02T03:38:05.205292Z/source
   ff2a06dcb1b6d46b8fbe01087b3c97ceca188e59/image34c022955d6ed10d20cc7a5fed664288066ef247be31c7ba71cee67d930267b5/6041600B.

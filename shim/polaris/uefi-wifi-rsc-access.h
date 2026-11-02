@@ -151,7 +151,11 @@ static inline int pwra_transfer(struct pwra_context *c,uint64_t at,uint32_t *val
 #endif
         const struct pwrsc_event *e=&t->history[t->outstanding-1];
 #if EFI_XNU_WIFI_CURRENT_WORD_READ
+#if EFI_XNU_WIFI_CURRENT_WORD_VOTE
+        if(e->phase!=t->phase)return pwra_fail(c,PWRA_PREFIX,1);
+#else
         if(read_engine&&e->phase!=t->phase)return pwra_fail(c,PWRA_PREFIX,1);
+#endif
 #endif
         if(e->address!=at||e->operation!=(write?2u:1u)||!e->issued||!e->unknown||
            (write&&e->value!=*value)||t->active_mask!=r->mask)return pwra_fail(c,PWRA_PREFIX,1);
@@ -216,8 +220,30 @@ static inline int pwra_transfer(struct pwra_context *c,uint64_t at,uint32_t *val
                     if(!pwrr_pending_status_known(q->value))return pwra_fail(c,PWRA_UNKNOWN_STATUS,1);
                 }
             }else
-#endif
+#if EFI_XNU_WIFI_CURRENT_WORD_VOTE
+            {
+                /* Initial/final RO fields are retained verbatim. They do
+                 * not complete a request. Only a pending command interprets
+                 * the documented TRIGGERED/ISSUED/COMPLETED fields. */
+                if(t->phase==0){
+                    if(t->writes||t->triggers||t->completed||t->acknowledged||t->steps)
+                        return pwra_fail(c,PWRA_PREFIX,1);
+                }else if(t->phase==4&&t->triggers==2&&t->completed==2&&t->acknowledged==2){
+                    /* Full touched-register restoration is independently
+                     * reconstructed from the append-only WRITE prefix. */
+                }else{
+                    if(!(t->phase==2||t->phase==4)||t->triggers!=t->phase/2||
+                       t->completed+1!=t->triggers||t->acknowledged!=t->completed)
+                        return pwra_fail(c,PWRA_PREFIX,1);
+                    if(!pwrr_pending_status_known(q->value))return pwra_fail(c,PWRA_UNKNOWN_STATUS,1);
+                }
+            }
+#else
             if(q->value&~PWRSC_DONE)return pwra_fail(c,PWRA_UNKNOWN_STATUS,1);
+#endif
+#else
+            if(q->value&~PWRSC_DONE)return pwra_fail(c,PWRA_UNKNOWN_STATUS,1);
+#endif
         }
     }
     if(!pwra_live(c,&event->native_after,&q->after))return 0;
@@ -530,7 +556,11 @@ static inline int pwra_engine_prefixes(const struct pwra_context *c)
            a->io.before<e->before||a->io.after<a->io.before||a->io.after>e->after||
            a->native_before||a->native_after)return 0;
 #if EFI_XNU_WIFI_CURRENT_WORD_READ
+#if EFI_XNU_WIFI_CURRENT_WORD_VOTE
+        if(a->operation==1)for(unsigned j=0;j<3;j++)
+#else
         if(is_read&&a->operation==1)for(unsigned j=0;j<3;j++)
+#endif
             if(a->io.address==pwrsc_tcs(engine)+0x3c+20*j)status_OR[j]|=a->io.value;
 #endif
     }
@@ -567,6 +597,13 @@ static inline int pwra_retire(struct pwra_context *c)
         writes=r->read_writes+(r->write_bound?c->transaction->writes:0);
         if(r->write_bound){
             uint32_t saved[3],requested[3];
+#if EFI_XNU_WIFI_CURRENT_WORD_VOTE
+            /* One combined READ+WRITE interval; the writer's own counter
+             * never renews the original READ deadline or step allowance. */
+            if(c->transaction->started<c->read->io.last||c->transaction->last<c->read->io.started||
+               c->transaction->last-c->read->io.started>PWRSC_DEADLINE||
+               c->read->io.steps+c->transaction->steps>256)return pwra_fail(c,PWRA_TIME,1);
+#endif
             if(!pwrr_plan((const void*)(uintptr_t)r->masked_RAM,c->prepared->resources[1],c->read,saved,requested))return pwra_fail(c,PWRA_SAVED,1);
             for(unsigned k=0;k<3;k++)if(saved[k]!=r->saved[k]||requested[k]!=r->desired[k]||
                c->transaction->saved_vote[k]!=saved[k]||c->transaction->raised_vote[k]!=(saved[k]>requested[k]?saved[k]:requested[k]))return pwra_fail(c,PWRA_SAVED,1);
@@ -581,6 +618,13 @@ static inline int pwra_retire(struct pwra_context *c)
     if(!pwra_cmddb(c,1)||!pwra_snapshot(c,1))return 0;
 #if EFI_XNU_WIFI_CURRENT_WORD_READ
     if(!pwra_observed_databases_valid(c,2))return 0;
+#endif
+#if EFI_XNU_WIFI_CURRENT_WORD_VOTE
+    /* The final full DB/source capture also has resident callbacks. Bind
+     * both immutable engine prefixes again AFTER that capture and before
+     * releasing this access lifetime or restoring CPU interrupt state. */
+    if(!pwrr_retired(c->read)||!pwra_engine_prefixes(c)||
+       (r->write_bound&&!pwrsc_retired(c->transaction)))return pwra_fail(c,PWRA_PREFIX,1);
 #endif
     r->local_held=0;r->retired=1;paic_actual_order(0);return 1;
 }

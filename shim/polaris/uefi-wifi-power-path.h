@@ -23,6 +23,9 @@
 #ifndef EFI_XNU_WIFI_CURRENT_WORD_READ
 #define EFI_XNU_WIFI_CURRENT_WORD_READ 0
 #endif
+#ifndef EFI_XNU_WIFI_CURRENT_WORD_VOTE
+#define EFI_XNU_WIFI_CURRENT_WORD_VOTE 0
+#endif
 #include "uefi-wifi-rsc-access.h"
 #if EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE && !defined(POLARIS_EFI_TEST_QEMU)
 #if EFI_XNU_WIFI_ARC_READ_AVAILABLE && !EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
@@ -48,12 +51,15 @@
 #if EFI_XNU_WIFI_NORMAL_TO_MASKED_DB && (!EFI_XNU_WIFI_PRE_MASK_ARGUMENTS || !EFI_XNU_WIFI_READ_DB_CHECKPOINT)
 #error Normal-to-masked database observation requires fresh normal arguments and full database dependencies
 #endif
-#if EFI_XNU_WIFI_CURRENT_WORD_READ && (!EFI_XNU_WIFI_ARC_READ_AVAILABLE || !EFI_XNU_WIFI_ARC_READ_CAPTURE_ONLY || !EFI_XNU_WIFI_ARC_READ_WORK_ADMISSION || !EFI_XNU_WIFI_PRE_MASK_ARGUMENTS || !EFI_XNU_WIFI_DB_WORD_CAPTURE || !EFI_XNU_WIFI_CPU_LIVE_DIAGNOSTICS || EFI_XNU_WIFI_PRIVATE_CPU_CHECKPOINT || EFI_XNU_WIFI_READ_ACCESS_CHECKPOINT || EFI_XNU_WIFI_READ_DB_CHECKPOINT || EFI_XNU_WIFI_NORMAL_TO_MASKED_DB)
-#error Current word READ is a separate complete capture-only READ scope, not an override of a checkpoint
+#if EFI_XNU_WIFI_CURRENT_WORD_VOTE && (!EFI_XNU_WIFI_CURRENT_WORD_READ || EFI_XNU_WIFI_ARC_READ_CAPTURE_ONLY)
+#error Current word ARC vote requires its explicit fresh READ dependencies and bounded WRITE path
+#endif
+#if EFI_XNU_WIFI_CURRENT_WORD_READ && (!EFI_XNU_WIFI_ARC_READ_AVAILABLE || (!EFI_XNU_WIFI_ARC_READ_CAPTURE_ONLY && !EFI_XNU_WIFI_CURRENT_WORD_VOTE) || !EFI_XNU_WIFI_ARC_READ_WORK_ADMISSION || !EFI_XNU_WIFI_PRE_MASK_ARGUMENTS || !EFI_XNU_WIFI_DB_WORD_CAPTURE || !EFI_XNU_WIFI_CPU_LIVE_DIAGNOSTICS || EFI_XNU_WIFI_PRIVATE_CPU_CHECKPOINT || EFI_XNU_WIFI_READ_ACCESS_CHECKPOINT || EFI_XNU_WIFI_READ_DB_CHECKPOINT || EFI_XNU_WIFI_NORMAL_TO_MASKED_DB)
+#error Current word READ requires its complete independent dependencies, not an override of a checkpoint
 #endif
 #if EFI_XNU_WIFI_ARC_READ_WORK_ADMISSION
-#if !EFI_XNU_WIFI_ARC_READ_AVAILABLE || !EFI_XNU_WIFI_ARC_READ_CAPTURE_ONLY || !EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
-#error READ work admission belongs only to the full prepared/current capture-only READ path
+#if !EFI_XNU_WIFI_ARC_READ_AVAILABLE || (!EFI_XNU_WIFI_ARC_READ_CAPTURE_ONLY && !EFI_XNU_WIFI_CURRENT_WORD_VOTE) || !EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE
+#error READ work admission requires the full prepared/current READ path
 #endif
 /* Retired preparation timing is an estimate, never an authority or new lease.
  * A complete source+head+lock+node+target guard includes a full Core hash.
@@ -162,7 +168,7 @@ static inline int pwrpt_refuse_retired(const struct paic_io *memory,struct pwrcl
        !pgcd_equal(&s->client,&p->created,sizeof(s->client)))return pwrpt_fail(r,PWRPT_RESTORE,1);
     s->retired=r->known_refusal=r->retired=1;paic_actual_order(0);return 1;
 }
-#if EFI_XNU_WIFI_ARC_READ_AVAILABLE && EFI_XNU_WIFI_ARC_READ_CAPTURE_ONLY
+#if EFI_XNU_WIFI_ARC_READ_AVAILABLE && (EFI_XNU_WIFI_ARC_READ_CAPTURE_ONLY || EFI_XNU_WIFI_CURRENT_WORD_VOTE)
 /* This permits ONLY retiring a fully returned normal-IRQ ON/ON_PENDING
  * refusal. It never admits READ, masks a CPU, grants a lease or clears an
  * UNKNOWN. Source/pool/client/namespace must still close in before_mask. */
@@ -442,7 +448,7 @@ static inline int pwrpt_body(void *context,const struct paic_io *memory,struct p
 #if !EFI_XNU_WIFI_PRE_MASK_ARGUMENTS || EFI_XNU_WIFI_NORMAL_TO_MASKED_DB || EFI_XNU_WIFI_CURRENT_WORD_READ
     r->phase=2;
     if(!pwrpc_begin(&io->CPU,memory,p,work,g,io->native_flag,&r->CPU)){
-#if EFI_XNU_WIFI_ARC_READ_AVAILABLE && EFI_XNU_WIFI_ARC_READ_CAPTURE_ONLY
+#if EFI_XNU_WIFI_ARC_READ_AVAILABLE && (EFI_XNU_WIFI_ARC_READ_CAPTURE_ONLY || EFI_XNU_WIFI_CURRENT_WORD_VOTE)
         if(pwrpt_cpu_returned_refusal(r,g)){
             pwrpt_fail(r,PWRPT_CPU,0);goto before_mask;
         }
@@ -755,8 +761,14 @@ static inline void pwrpt_report(void (*append)(const char *))
     append("WIFI_CURRENT_ARC_READ_SCOPE=THREE_SINGLE_COMMAND_READS_COMPLETE_TCS_RW_RESTORE_SOURCE_CPU_NAMESPACE_DELETE RAW_WORDS_ONLY_NO_RESOURCE_WRITE_NO_MSS_NO_NV_SERVE_NO_RADIO_PERMISSION\r\n");
 #endif
 #else
+#if EFI_XNU_WIFI_CURRENT_WORD_VOTE
+    append("WIFI_CURRENT_PRIVATE_WORD_ARC_VOTE_RAW_V1_BEGIN\r\n");pwrpt_raw_hex(append,&pwrpt_record,sizeof(pwrpt_record));
+    append("\r\nWIFI_CURRENT_PRIVATE_WORD_ARC_VOTE_RAW_V1_END\r\n");
+    append("WIFI_CURRENT_WORD_ARC_VOTE_SCOPE=FRESH_HLOS_DRV2_READ_MAX_SAVED_TARGET_CX_MX_MSS_REVERSE_SAVED_RESTORE_COMBINED50MS_FULL_RW_CPU_SOURCE_NAMESPACE_DELETE_NO_VRM_MSS_NV_SERVE_RADIO_GRANT\r\n");
+#else
     append("WIFI_CURRENT_ARC_POWER_RAW_V1_BEGIN\r\n");pwrpt_raw_hex(append,&pwrpt_record,sizeof(pwrpt_record));
     append("\r\nWIFI_CURRENT_ARC_POWER_RAW_V1_END\r\n");
+#endif
 #endif
 #else
     append("WIFI_PREPARED_POWER_RAW_V1_BEGIN\r\n");pwrpt_raw_hex(append,&pwrpt_record,sizeof(pwrpt_record));

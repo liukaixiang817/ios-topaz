@@ -467,7 +467,10 @@ def main():
     ap.add_argument('--wifi-power-cpu-live-diagnostics',action='store_true',help='default-OFF first failing original CPU live predicate and already returned tick sample; same fresh normal-to-masked DB scope and terminal GOP, no extra hardware reader, deadline or permission change')
     ap.add_argument('--wifi-power-db-word-capture',action='store_true',help='default-OFF aligned64-bit capture of the same two complete freshly NS/WB/PA/AT qualified Normal RAM databases; preserve every compared byte, delivered word and pending prefix, original200ms and full retirement; no Device/MMIO widening')
     ap.add_argument('--wifi-power-current-word-read',action='store_true',help='default-OFF separate fresh current private capture-only three bounded READs with normal argument admission, two complete masked word DBs, original CPU/time/IRQ/full restore and known Delete; RAW is not a qualified vote')
+    ap.add_argument('--wifi-power-current-word-vote',action='store_true',help='default-OFF explicit fresh READ-derived HLOS/DRV2 ARC max(saved,target) raise and reverse saved restore, one combined READ+WRITE50ms interval, full touched-RW/CPU/source/namespace/Delete retirement; no MSS/NVserve/radio')
     a=ap.parse_args();r=Path(__file__).resolve().parents[1]
+    if a.wifi_power_current_word_vote and not a.wifi_power_current_word_read:
+        ap.error('current word ARC vote requires the explicit complete current word READ dependencies')
     if a.wifi_power_read_access_checkpoint and not a.wifi_power_private_cpu_checkpoint:
         ap.error('read access checkpoint requires the complete same-private CPU checkpoint dependencies')
     if a.wifi_power_read_database_checkpoint and not a.wifi_power_read_access_checkpoint:
@@ -941,7 +944,7 @@ def main():
 #define EFI_XNU_WIFI_CMDDB_STAGED_RO_AVAILABLE {int(a.wifi_power_cmddb_staged_ro)}
 #define EFI_XNU_WIFI_PREPARED_POWER_AVAILABLE {int(a.wifi_power_prepared_transaction)}
 #define EFI_XNU_WIFI_ARC_READ_AVAILABLE {int(a.wifi_power_current_arc_read)}
-#define EFI_XNU_WIFI_ARC_READ_CAPTURE_ONLY 1
+#define EFI_XNU_WIFI_ARC_READ_CAPTURE_ONLY {1-int(a.wifi_power_current_word_vote)}
 #define EFI_XNU_WIFI_ARC_READ_WORK_ADMISSION {int(a.wifi_power_current_arc_read_work_admission)}
 #define EFI_XNU_WIFI_PRIVATE_CPU_CHECKPOINT {int(a.wifi_power_private_cpu_checkpoint)}
 #define EFI_XNU_WIFI_READ_ACCESS_CHECKPOINT {int(a.wifi_power_read_access_checkpoint)}
@@ -953,6 +956,7 @@ def main():
 #define EFI_XNU_WIFI_CPU_LIVE_DIAGNOSTICS {int(a.wifi_power_cpu_live_diagnostics)}
 #define EFI_XNU_WIFI_DB_WORD_CAPTURE {int(a.wifi_power_db_word_capture)}
 #define EFI_XNU_WIFI_CURRENT_WORD_READ {int(a.wifi_power_current_word_read)}
+#define EFI_XNU_WIFI_CURRENT_WORD_VOTE {int(a.wifi_power_current_word_vote)}
 #define EFI_XNU_WIFI_CPU_RO_ADMISSION {int(a.wifi_cpu_ro_admission)}
 #define EFI_XNU_WIFI_CPU_MASKED_RO_ADMISSION {int(a.wifi_cpu_masked_ro_admission)}
 #define EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE {int(cmddb_binding is not None)}
@@ -1766,6 +1770,31 @@ def main():
             wifi_CPU0_power_current_word_READ_full_status_OR_matches_entire_journal=True,
             wifi_CPU0_power_current_word_READ_no_RAW_bit_masking_or_UNKNOWN_clearing=True,
             wifi_CPU0_power_CPU_live_GOP_numeric_layout_version=6)
+    if a.wifi_power_current_word_vote:
+        manifest.update(wifi_CPU0_power_execution_kind='SAME_FRESH_PRIVATE_WORD_READ_DERIVED_DRV2_ARC_RAISE_REVERSE_SAVED_RESTORE_FULL_RETIRE',
+            wifi_CPU0_power_raw_format='CURRENT_PRIVATE_WORD_ARC_VOTE_RAW_V1',
+            wifi_CPU0_power_current_ARC_raw_format='CURRENT_PRIVATE_WORD_ARC_VOTE_RAW_V1',
+            wifi_CPU0_power_current_word_VOTE=True,wifi_CPU0_power_current_word_VOTE_default_OFF=True,
+            wifi_CPU0_power_current_word_READ_resource_WRITE_reachable=True,
+            wifi_CPU0_power_current_ARC_read_capture_only=False,
+            wifi_CPU0_power_current_ARC_resource_WRITE_reachable=True,
+            wifi_CPU0_power_current_ARC_resource_WRITE_commands_max=6,
+            wifi_CPU0_power_current_ARC_read_RAW_not_qualified_vote=False,
+            wifi_CPU0_power_current_ARC_read_qualified_response_semantics_proven=True,
+            wifi_CPU0_power_current_word_READ_RAW_not_qualified_per_DRV_vote=False,
+            wifi_CPU0_power_current_word_VOTE_semantics_primary='https://lkml.iu.edu/hypermail/linux/kernel/2510.2/06910.html',
+            wifi_CPU0_power_current_word_VOTE_READ_HLOS_DRV2_not_aggregate=True,
+            wifi_CPU0_power_current_word_VOTE_saved_values_from_same_fresh_READ=True,
+            wifi_CPU0_power_current_word_VOTE_raise_order=['CX','MX','MSS'],
+            wifi_CPU0_power_current_word_VOTE_restore_order=['MSS','MX','CX'],
+            wifi_CPU0_power_current_word_VOTE_raise_max_saved_target=True,
+            wifi_CPU0_power_current_word_VOTE_combined_READ_WRITE_ticks_max=960000,
+            wifi_CPU0_power_current_word_VOTE_combined_steps_max=256,
+            wifi_CPU0_power_current_word_VOTE_initial_final_full_prefix_status_response_IRQ_OR=True,
+            wifi_CPU0_power_current_word_VOTE_dynamic_idle_untriggered_TCS=True,
+            wifi_CPU0_power_current_word_VOTE_no_irq_enable_type_CMD_status_write=True,
+            wifi_CPU0_power_current_word_VOTE_no_VRM_MSS_NVserve_radio=True,
+            wifi_CPU0_power_CPU_live_GOP_numeric_layout_version=7)
     if a.wifi_cpu_ro_admission:
         manifest.update(wifi_CPU0_power_transaction=False,
             wifi_CPU0_power_CPU_RO_admission=True,wifi_CPU0_power_CPU_RO_default_OFF=True,

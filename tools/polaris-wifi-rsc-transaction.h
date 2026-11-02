@@ -12,6 +12,9 @@
 #ifndef POLARIS_WIFI_RSC_TRANSACTION_H
 #define POLARIS_WIFI_RSC_TRANSACTION_H
 #include <stdint.h>
+#ifndef EFI_XNU_WIFI_CURRENT_WORD_VOTE
+#define EFI_XNU_WIFI_CURRENT_WORD_VOTE 0
+#endif
 #define PWRSC_BASE UINT64_C(0x179e0d00)
 #define PWRSC_STRIDE 672u
 #define PWRSC_CMDS 3u
@@ -235,6 +238,68 @@ static inline int pwrsc_step(const struct pwrsc_io *io,struct pwrsc_transaction 
     }
     pwrsc_fail(r,PWRSC_ARGUMENT);return -1;
 }
+#if EFI_XNU_WIFI_CURRENT_WORD_VOTE
+/* Independent reconstruction for the explicit READ-derived ARC round trip.
+ * No live access, sampling, permission flag or cleanup is performed here.
+ * Both complete RO snapshots and pending status/response/IRQ summaries must
+ * agree with the original events, including TRIGGERED bit0 without masking. */
+static inline int pwrsc_vote_prefix(const struct pwrsc_transaction *r)
+{
+    uint64_t t=pwrsc_tcs(r);
+    uint32_t initial=0,final=0,triggers=0,acks=0,new_irq=0,status=0,response=0,irq_OR=0;
+    uint32_t status_OR[3]={0},response_OR[3]={0};
+    for(unsigned n=0;n<r->events;n++){
+        const struct pwrsc_event *e=&r->history[n];
+        if(e->operation==2){
+            if(e->address==t+0x14&&(e->value&PWRSC_TRIGGER)){
+                if(initial!=0x7ffffu||triggers!=acks)return 0;
+                triggers++;new_irq=status=response=0;
+            }
+            if(e->address==PWRSC_BASE+8){
+                if(triggers!=acks+1||!new_irq||status!=7||response!=7)return 0;
+                acks++;
+            }
+            continue;
+        }
+        if(e->address==PWRSC_BASE+4){
+            irq_OR|=e->value;
+            if(triggers>acks&&e->value==(1u<<r->tcs))new_irq=1;
+        }
+        if(e->phase==0&&((e->address==PWRSC_BASE&&e->value!=r->IRQ_enable)||
+           (e->address==PWRSC_BASE+4&&e->value!=r->IRQ_status)))return 0;
+        unsigned field=19;uint32_t old=0,observed=0;
+        static const unsigned offsets[4]={0x14,0x1c,0x10,0x18};
+        const uint32_t before[4]={r->saved.control,r->saved.enable,r->saved.wait,r->saved.status};
+        const uint32_t after[4]={r->observed.control,r->observed.enable,r->observed.wait,r->observed.status};
+        for(unsigned j=0;j<4;j++)if(e->address==t+offsets[j]){field=j;old=before[j];observed=after[j];}
+        for(unsigned k=0;k<3;k++)for(unsigned j=0;j<5;j++)if(e->address==t+0x30+20*k+4*j){
+            field=4+5*k+j;old=r->saved.command[k][j];observed=r->observed.command[k][j];
+        }
+        if(field<19&&e->phase==0){
+            if((initial&(1u<<field))||e->value!=old)return 0;initial|=1u<<field;
+        }
+        /* After ACK2 only complete final snapshot reads count here; the
+         * preceding RW store/readbacks are checked by pwrsc_retired. Each
+         * final field may be observed again, but must equal its summary. */
+        if(field<19&&acks==2&&e->phase==4){
+            if(e->value!=observed)return 0;final|=1u<<field;
+        }
+        for(unsigned k=0;k<3;k++)if(triggers>acks&&new_irq){
+            if(e->address==t+0x3c+20*k){
+                if((e->value&~0x10101u)||(e->value&PWRSC_DONE)!=PWRSC_DONE)return 0;
+                status_OR[k]|=e->value;status|=1u<<k;
+            }
+            if(e->address==t+0x40+20*k){
+                if(!(status&(1u<<k)))return 0;
+                response_OR[k]|=e->value;response|=1u<<k;
+            }
+        }
+    }
+    if(initial!=0x7ffffu||final!=0x7ffffu||triggers!=2||acks!=2||irq_OR!=r->IRQ_OR)return 0;
+    for(unsigned k=0;k<3;k++)if(status_OR[k]!=r->status_OR[k]||response_OR[k]!=r->response_OR[k])return 0;
+    return 1;
+}
+#endif
 /* Retirement is checked from the full append-only prefix, not a callback's
  * success boolean or the summary counters. Required before IRQ re-enable. */
 static inline int pwrsc_retired(const struct pwrsc_transaction *r)
@@ -322,6 +387,9 @@ static inline int pwrsc_retired(const struct pwrsc_transaction *r)
        r->observed.enable!=enabled||r->observed.wait!=wait||!(r->observed.status&1))return 0;
     for(unsigned k=0;k<3;k++)for(unsigned j=0;j<3;j++)
         if(values[k][j]!=r->saved.command[k][j]||r->observed.command[k][j]!=values[k][j])return 0;
+#if EFI_XNU_WIFI_CURRENT_WORD_VOTE
+    if(!pwrsc_vote_prefix(r))return 0;
+#endif
     return 1;
 }
 #endif
