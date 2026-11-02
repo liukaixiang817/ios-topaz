@@ -108,8 +108,8 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
-- NEW0189 CURRENT complete parent LoadedImage metadata pairs, source commit
-  recorded in the following publication handoff. The genuine parent now binds
+- NEW0189 CURRENT complete parent LoadedImage metadata pairs, source
+  d4c0c300cfd83354c3383e485386c2c98790f389. The genuine parent now binds
   actual driver_image and &wln_cpu_on_issued to its EXISTING complete image
   enumeration, with no new enumeration/GetMap/allocator/provider call. This
   supersedes the previous claim that only the parent's own image metadata is
@@ -159,6 +159,7 @@ early samples only. On0029 the human already confirmed boot complete and said
   log12320768B/staticassert includes the complete new raw, not a qualified
   resource/profile. Private parent-loaded-images-0001/proof.json
   SHAda5102581b1e9b8410fc35c18d66b2220095de3292aa4faf66f2b7ad9ecf1e71.
+  Source/software4f55cc959b6ebe4c5e4d5cfd230548709c38571746b1884ecc61151de10fc73a.
 - NEXT: reuse this full metadata collector and the two incoming call witnesses;
   do not reimplement or rerun them unchanged. Bind actual payload/root/source
   frames and a necessary later private-map call/key/native/FP/source witness,
@@ -174,6 +175,11 @@ early samples only. On0029 the human already confirmed boot complete and said
   radio/scan/join/data. WiFi NOT DONE; sound/camera STOP. No physical or
   authorization reply pending. Publication proof will be
   parent-loaded-images-source-and-handoff-push-proof-0001.json, private only.
+  The user asked when WiFi will work because this has taken a long time. No
+  reliable completion date is known: wireless firmware/driver/scan have not
+  run. Report actual firmware-start/scan/join/data milestones clearly; software
+  check counts do not measure proximity to working WiFi. This status question
+  supplies no new physical observation or change to the existing permissions.
 
 - HISTORICAL0189 real-parent incoming-map call/key/native/FP/image witness
   wiring, source06a37e60039c2dfe61711ab82d431abcbe2fdb06. This supersedes the
