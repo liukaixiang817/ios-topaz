@@ -34,8 +34,27 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### CURRENT0186 bounded ARC round-trip source/offline checks complete; host profile/freeze NOTREADY; no0186device action; Wi-Fi NOT DONE
+### CURRENT0186 frozen fresh READ-derived ARC round-trip candidate complete; no0186device action; Wi-Fi NOT DONE
 
+- HOST9c33de37a8713744a18fcd60e90ecb4effd2377d and FW source pushed;
+  independentlsremote matched9c33de3. All finaloffline gates complete, no USB.
+  Wholeimagead856d94ffd4b9e56a2cbcdd9d9ff6138bb91a55600b9d22947f4909312c7a00/
+  6043648B; originalunmodifiedEDK2 GetInfo/fullDecode43595464B byteequal, original
+  81FW/SimpleInit/BootShim/DTB retained. no-mockfulladmitdf5d346a7d8103f2a8735527ce2316a5fedaf8c7b9f137e082243a6314066f16.
+  Newcontrolledtransitionreviewba4926d0b6f3f7d14a3a316b0a496b84321b2fc422d07ca4ef08b25a18a2dab7
+  reuses actualNEW0185full39 plus qualified0185controlledexit/full212+64receipt/
+  independentactualFB; NOT NEW0186audit, no repeatedfullhash/recovery.
+  Sourceprooffe5db57224a1d8ca5d8e59a12204a846eee9675b9cd348a57bbd6f5deb1a206f.
+  Independentfreeze/private/tmp/polaris-runtime-0186-frozen-0001 COPY939+
+  10COMMIT_ONLY/484activecommittedsources/94inputs/newinodes/nohardlinks/NV0600/
+  root0700/noZigcache; SHA567baf628c0a00fb4b374fe003a8cea9066b14f86388b5fdc56a5587c5d5e1b3.
+  ONEdefaultofflinehelper actuallyPASS, do not refreeze/repeatdefaulthelper.
+  ORIGINAL0186/phone-word-arc-vote-runtime-0001/boot.json notcreated. After this
+  exactreadinesspublication+independentlsremote/proof, ONLY matchingfrozen0186
+  boot-word-arc-vote-once-0001.py --boot-once may atomicallymake newORIGINAL and
+  ONEimage afteritsONE8sreadonlycorrectPolarisproduct. Same63cbpayload once;
+  imageACK is notnative. No oldcontroller/image/payload/OEMboot/session replay.
+  Futurephysicalruntime must allfresh; software success is notphysicalvote/network.
 - FWb51dbbe1a421a83b77111bc42744c35bcf55aeb1 committed. NEW exact
   GCD_CLOCK_0186 binds362PowerGCD/94resource fields/94inputs; all40 old literal
   ASTs unchanged. 21hosttests/61actualmetadata-type refusals/5missingdependencies
@@ -80,8 +99,8 @@ early samples only. On0029 the human already confirmed boot complete and said
   keys required. ActualNEW0185fullstrictRO39 plus full controllednativedrain
   receipt permits reuse of integrity at next needed qualified candidate; all
   runtime owner/source/client/CPU/tickets MUST fresh, never old runtime context.
-  NEW0186 hostexactprofile/originalwholecodec/sourceaudit/newfreeze/ONEhelper/
-  sourcepushproof still required, NOTREADY. ResourceWRITE physical UNOBSERVED;
+  NEW0186 exactprofile/codec/sourceaudit/freeze/ONEofflinehelper complete;
+  exactreadinesssourcepushproof still required before devicecommand. ResourceWRITE physical UNOBSERVED;
   WiFi scan/join/data NOTDONE. No VRM/MSS/NVserve/radio reached. Next four own
   WiFiVRMs BEFORE MSS/GLINK/RMTFS/WLFW/ath10k only after qualified ARC roundtrip.
   Two standing authorizations already answered; no user action/auth pending.
