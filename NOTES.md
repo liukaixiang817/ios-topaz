@@ -100,6 +100,14 @@ early samples only. On0029 the human already confirmed boot complete and said
   matchingrows ifpresent, cannot independentlyprove scope whenARCrowsabsent;
   don't treat its boolean aspermission/semanticproof. No sourcechange/newdevice/
   tests/models/CI/recovery. Actual6/3/0 remainsUNQUALIFIEDforresourceWRITE.
+- AdditionalNEWprimaryauthorreview0185/wifi/ARC-READ-primary-subsystem-review-0001/proof.json
+  SHAebd7e838d84215b3990012af863599109e9e4d616ca379679910791843cf4c82:
+  Qualcommauthor2025regulatorREAD thread distinguishesAPPS requestedstate from
+  DSPvote and assigned-subsystem bootinitialization exception. Actualpatch
+  implementsVRM voltage/enable/mode, notARC get-level/perDRV savedvote mapping;
+  this narrows the remaining question but doesNOTqualify PolarisARC byanalogy.
+  NoFWchange/devicecommand/tests/models/CI/newcandidate. Next ARC-specific
+  primarysemantics orown originalreadback mapping, no repeatedREAD/inventoryboot.
 
 ### 0185 frozen offline readiness history (consumed by actual session above)
 
