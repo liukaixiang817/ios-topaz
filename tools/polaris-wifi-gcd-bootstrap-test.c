@@ -33,7 +33,11 @@ static int seed_arch(void*o,struct pgcd_arch*a)
 {
     clock_calls++;int ok=arch(o,a);
     if(clock_fault==clock_calls){if(scenario==10)a->cpu.ticks=1000+PGCD_FRESH_TICKS+1;
-        else if(scenario==11)return 0;else if(scenario==12)a->cpu.daif=0x80;else if(scenario==13)*nflag=1;else assert(0);}
+        else if(scenario==11)return 0;else if(scenario==12)a->cpu.daif=0x80;else if(scenario==13)*nflag=1;
+        else if(scenario>=14&&scenario<=16){assert(clock_calls>1);
+            uint64_t previous=seed->clock[clock_calls-2].raw.cpu.ticks;
+            a->cpu.ticks=scenario==14?previous-1:scenario==15?previous:producer->after.cpu.ticks;}
+        else assert(0);}
     if(mutation&&at_fault==0&&(!mut_clock||clock_calls==mut_clock))inject();return ok;
 }
 static int seed_page(struct ppli_at*a)
@@ -106,6 +110,24 @@ int main(int argc,char**argv)
     }
     for(unsigned bad=10;bad<=13;bad++)for(unsigned prefix=1;prefix<=3;prefix++){
         fixture(3,1);scenario=bad;clock_fault=prefix;assert(!run_seed()&&seed->unknown&&clock_calls==prefix&&FWmaps==1);checks++;
+    }
+    /* Same CNTVCT domain throughout. An old-but-in-window sample must not
+     * become current just because it is newer than GetMap's closing sample.
+     * Equality remains valid. Exercise every actual producer clock boundary. */
+    const unsigned normal_clocks=total+3;
+    for(unsigned bad=14;bad<=16;bad++)for(unsigned prefix=2;prefix<=normal_clocks;prefix++){
+        fixture(3,1);scenario=bad;clock_fault=prefix;
+        unsigned old_saves=saves,old_restores=restores;int ok=run_seed();
+        assert(FWmaps==1&&saves==old_saves&&restores==old_restores);
+        const struct pbgi_clock*sample=&seed->clock[prefix-1];
+        if(bad==15){assert(ok&&seed->complete&&!seed->unknown&&clock_calls==normal_clocks);
+            assert(sample->raw.cpu.ticks==seed->clock[prefix-2].raw.cpu.ticks);}
+        else {assert(!ok&&seed->unknown&&!seed->complete&&clock_calls==prefix&&seed->arch_issued==prefix&&seed->arch_returned==prefix);
+            assert(sample->raw.cpu.ticks>=producer->after.cpu.ticks&&sample->raw.cpu.ticks<seed->clock[prefix-2].raw.cpu.ticks);
+            assert(sample->issued==1&&sample->returned==1&&sample->native_issued==1&&sample->native_returned==1);
+            if(bad==14&&prefix==2){char name[4096];int n=snprintf(name,sizeof(name),"%s.rollback",argv[2]);assert(n>0&&(size_t)n<sizeof(name));
+                FILE*raw=fopen(name,"wb");assert(raw&&fwrite(seed,1,sizeof(*seed),raw)==sizeof(*seed)&&!fclose(raw));}}
+        checks++;
     }
     for(unsigned byte=0;byte<sizeof(seed_input);byte++){
         fixture(3,1);mutation=1;mutbyte=byte;assert(!run_seed()&&triggered&&seed->unknown&&!ATs);checks++;

@@ -1961,3 +1961,35 @@ ce8ce4fd, excluding all firmware/private/sensitive bytes. Private source receipt
 SHAbda8bc2774423fa92b9b15e18e5e2b109c12262104a5241af7d966e4327eb1d2. This subsequent publication handoff
 edits only NOTES/REFERENCE_REPOS, no source/test/RAW/schema/proof change or
 repeated checks. Conservative geometry/full-candidate/WiFi scope stays NOTREADY.
+
+## Polaris0189 producer clock sequence before DATA-walk reuse
+
+The actual existing phase4 producer now rejects same-CNTVCT rollback against
+its preceding retained sample, preserving the original map-closing check and
+opening200ms. A constructed original-code baseline accepted1200→1300→1299.
+No new reader/service/contract/context, IO, hardware write or schema is added;
+this does not establish fresh later maps, wholecall time, source lifetime or
+IRQ/ownership/ABA. Failure preserves raw and stops before native-after/further
+sampling, with no cleanup/restore/free guess. Equality remains valid.
+
+FINAL1789 ASAN/UBSAN SOFTWARE PASS109.20405841700267s=all1564+225 cases at75
+actual subsequent clock positions. Eight fresh normal target fixtures compare
+all309664 old/new producer bytes within each invocation; all equal. Actual
+target/release/dispatch exports equal in MachO and COFF excluding typed
+TimeDateStamp. Their unchanged474/771/2885 suites and unaffected checks/models/
+CI were not repeated or claimed as new wholeconstructor qualification. Four
+affected parent/producer and four comparison builds PASS both ARM64 formats,
+generalregs/maxframe1024. Producer writes only exactPARrestore/noSMC; whole
+parent old FP/terminalmask is not zero-write. OFF640972/640999 pairs equal.
+Independent numeric struct/hashlib checks four full309664B records and builds
+every refused byte in a new buffer; no captured pointer/PE execution or RAW edit.
+
+Private0189/wifi/map-graph-clock-order-0001/proof.json
+SHA74b6036b2234b16bae0412a6db71d2cc4f0869f7405258d5c35dbab5b78a575e;
+source/softwareb601728c026e63de012b2859dd1ecd21e7cea5e242ebeff5c609367f87524c1a.
+Fresh postrelease graph integration remains missing. Later relay IO contains
+an expired pcmp_live stack pointer after its caller returns; completed records
+must never supply future executable IO. Bind existing DATA readers to genuine
+active callers/six NEW contexts, original opening and real source closures.
+No physicalUSB/native/firmware/WiFi run, new candidate/codec/image/helper/freeze
+or completion date. All old proofs/RAW/schema/SHA/timestamps keep their scope.

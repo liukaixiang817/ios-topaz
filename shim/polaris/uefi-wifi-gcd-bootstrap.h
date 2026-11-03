@@ -112,7 +112,13 @@ static inline int pbgi_stable(const struct pbgi_live*l)
 static inline int pbgi_tick(struct pbgi_live*l)
 {
     struct pbgi_result*r=l->r;if(!pbgi_stable(l))return 0;
-    unsigned k=r->arch_issued;if(k==PBGI_CLOCKS)return 0;
+    unsigned k=r->arch_issued;if(k>=PBGI_CLOCKS||r->arch_returned!=k)return 0;
+    /* Every retained sample is CNTVCT. Keep the original opening window,
+     * and also refuse rollback from the immediately preceding sample. The
+     * map's closing sample alone is not the most recent observed counter. */
+    uint64_t minimum=k?r->clock[k-1].raw.cpu.ticks:r->call.after.cpu.ticks;
+    if(k&&(r->clock[k-1].issued!=1||r->clock[k-1].returned!=1||
+       r->clock[k-1].native_issued!=3||r->clock[k-1].native_returned!=3))return 0;
     struct pbgi_clock*c=&r->clock[k];if(!pwmc_zero(c,sizeof(*c)))return 0;
     c->native_issued=1;c->native[0]=*l->in.native;c->native_returned=1;if(c->native[0])return 0;
     uint32_t issued=k+1,returned=r->arch_returned;r->arch_issued=issued;c->issued=1;
@@ -123,7 +129,7 @@ static inline int pbgi_tick(struct pbgi_live*l)
        !pbgi_stable(l)||r->arch_issued!=issued||r->arch_returned!=returned)return 0;
     c->returned=1;r->arch_returned=issued;
     if(!pwfc_arch_stable(&r->call.after.cpu,&c->raw.cpu)||c->raw.cpacr!=r->call.after.cpacr||
-       c->raw.cpu.daif||c->raw.cpu.group1!=1||c->raw.cpu.ticks<l->in.opening||
+       c->raw.cpu.daif||c->raw.cpu.group1!=1||c->raw.cpu.ticks<minimum||c->raw.cpu.ticks<l->in.opening||
        c->raw.cpu.ticks-l->in.opening>PGCD_FRESH_TICKS)return 0;
     c->native_issued=3;c->native[1]=*l->in.native;c->native_returned=3;
     return !c->native[1];

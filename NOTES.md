@@ -108,6 +108,77 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
+- NEW0189 CURRENT producer CNTVCT sequence ordering, SOURCE/SOFTWARE only.
+  This new scope supersedes older CURRENT/source/check statements only where
+  affected. Fresh postrelease graph integration remains unfinished; this is
+  a required correction found while preparing reuse of the existing DATA walk.
+  No new reader/wrapper/service/context/ticket/owner or permission boolean.
+- Constructed baseline using original producerb5e338fb accepted map closing1200
+  then producer1300→1299, completing all76 SOFTWARE clocks/73 ATs. The old
+  producer checked each sample against map closing, not the previous sample.
+  This is a SOFTWARE input/control-flow defect, not a phone counter, offset,
+  CNTVOFF or physical deadline observation. Original baseline source/log/raw
+  remain private and immutable; old proofs are not retroactively requalified.
+- The real pbgi_tick now closes issued/returned count and the preceding clock's
+  completed native/read flags before entering another sample, then compares
+  CNTVCT against that preceding retained CNTVCT. Equality remains valid. A
+  rollback refuses before that sample's second nativeflag read or any further
+  AT/clock/hash/node work. Raw issued/returned and partial prefix are preserved,
+  failure remains stickyUNKNOWN; no cleanup, guessed restore, retry or free.
+  Original map-closing checks, all source/control/typed/AT/node/hash checks and
+  opening200ms remain. No clock/AT/MRS/nativeflag/BS/GetMap/provider/API call
+  added or removed, no systemreg/MMIO write or raw/schema/offset change. Extra
+  RAM comparisons are work, not a zero-work or global-time/owner/IRQ/ABA grant.
+  No CNTPCT/CVAL mixing, renewed/rebased/reopened window or borrowed closed PGCD.
+- FINAL1789 ASAN/UBSAN SOFTWARE PASS109.20405841700267s=all old1564+225 cases:
+  every75 subsequent clock positions tests previous-1, old map-closing value
+  and accepted equality. Old partial/source/control/overflow/geometry cases
+  remain; no guard weakened. Normal73 AT/76 clocks and max256-GCD326 AT/329
+  clocks remain. Explicit map/AT/FP/clock peers, original PE inert DATA; no
+  original firmware/native or whole pwfc/pwsp/client constructor execution.
+- Eight fresh normal target fixtures compare all309664 producer bytes from
+  old/new code within the same invocation, with identical inputs/clock state;
+  all equal. Actual target/release/dispatch native exports also equal: MachO
+  byte-for-byte, COFF except its typed TimeDateStamp. Their474/771/2885 suites
+  were not rerun or represented as fresh whole-constructor qualification.
+  Unaffected8487/1452/2341/167/5141/models/CI likewise not repeated. Four affected
+  wholeparent/producer-export COFF+MachO/generalregs/maxframe1024 builds PASS;
+  four comparison export builds also PASS. Producer MSR only exactPARrestore,
+  no SMC; whole parent old FP/terminalmask is not zero-write. Parent.c unchanged
+  but ON object changes. OFF640972/640999 same-invocation pairs equal and new
+  producer header absent from OFF graph. CURRENT absolute shim FIRST/-H verified.
+- Independent Python struct/hashlib checks four complete309664B records:
+  normal/max256/baseline/refused. Every refused byte is reconstructed in a NEW
+  buffer: map1200/first1300/second1299, error2/unknown1/complete0, clocks2/2,
+  keyAT complete but initial_key/CoreAT/nodes/hashes/digest still unobserved and
+  second sample native-after unissued. Captured pointers only numeric; no RAW
+  edits, renamed old seed, pointer or PE execution. Producer remains phase4
+  capacity65536; its existing returned map is not later/current/precall proof.
+- Current producer6fe87015300663666b32e476d22b1fc2ada76af49ff15f3b9b21da387c538585;
+  testcd6a98a876be1d25d52abb1f064190546c330fe30f4b8a14f2ae5f4e559c46b2.
+  Private0189/wifi/map-graph-clock-order-0001/proof.json
+  SHA74b6036b2234b16bae0412a6db71d2cc4f0869f7405258d5c35dbab5b78a575e;
+  source/softwareb601728c026e63de012b2859dd1ecd21e7cea5e242ebeff5c609367f87524c1a.
+  All host/build jobs ENDED. No physicalUSB/native/MMIO/SMC/PE execution, new
+  model/CI/codec/image/payload/helper/freeze. Main REMOTE_MEMORY defaultOFF;
+  consumer/builder/CLI/new exact profile/resource remain disconnected.
+- NEXT is still actual transitive callback/source/effects/work/wholecall time
+  and fresh postrelease typed graph/policy/source at six NEW actual contexts'
+  11 existing later map boundaries. All three cache maps precede FreePool.
+  Do not reuse a completed pcmp record's captured relay IO: its opaque points
+  to the then-active pcmp_live stack and expires on return; no captured pointer
+  execution or fake future context/ticket. Reuse DATA readers inside a genuine
+  active caller, retaining original opening and immediate caller/source closure
+  across callbacks. Returned map cannot qualify its own pre-call; no blind Map,
+  inventory boot, old seed rename or lifetime inferred from equal snapshots.
+  Then real MSA/RMTFS secure/cache/VMID/MPU/DMA stop/handback/normal+UNKNOWN
+  retirement and full new candidate qualification. NOTREADY/no publishPA/MSS/
+  NVserve/radio/device run. WiFi firmware/driver/scan/join/IP/DNS/data never
+  succeeded physically; no credible date. Phone only last independently seen
+  PolarisFASTBOOT2026-11-02T10:05:37Z after0188 fullretire. Sound/camera STOP.
+  No human or authorization question pending. Do not repeat this correction,
+  its cases/decoder or unchanged audits/tests/models/boots.
+
 - NEW0189 latest PUBLIC functional source
   7f2c0add37552cec4a05d594b369efb6211f7ffb is pushed by the SAME directpush under actual
   current/future source/text consentce8ce4fd. Independent readonly lsremote
