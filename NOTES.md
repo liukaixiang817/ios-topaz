@@ -108,6 +108,81 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
+- NEW0189 CURRENT actual-parent physical-timer register inputs at the EXISTING
+  FreePool interval are now connected; SOFTWARE only. The allocator's existing
+  six readonly MRS operations are factored unchanged into a shared native leaf,
+  then called before and after the same registered release. No fabricated
+  pgcd/pwmc context, reopened ticket, provider method or replacement service.
+  No new GetMap/enumeration/allocation/provider/FreePool/AT/virtual-arch call.
+  There are12 additional readonly MRS instructions and4 nativeflag RAM reads
+  in the actual parent path, not12 physical observations in this software run.
+- Current common header900f289fa96ab66800bd80aba635a359ae2c0677ec1e4d879082a1252950e9d8;
+  dispatch headera2f196d104ba404ec471feda5cd7e09712c0af94b2d35b7cd5e411d7adfa3aab;
+  actual parent11d75b8ebaa81f6efe42a6a9fec5f0f7ff2f9a122949b383b5613cbc162290f3;
+  dispatch test83399601562d89cd488a019d463cecb796703ae47430ee6405a3c5b468ef03ec.
+  Release/target/cache/producer/current-map/PCLI and old8487 test source unchanged.
+  Main remains defaultOFF REMOTE_MEMORY; no consumer/builder/CLI/new profile/resource.
+- New separate312B timer record/input104B/two56B samples preserves actual
+  CurrentEL/VBAR/CNTP_CTL/CNTP_CVAL/CNTFRQ/CNTPCT, per-instruction issued/returned,
+  nativeflag prefixes, exact real caller/witness/source seal and original
+  opening/earlier virtual arch sample. The original1488B queue and596496B release
+  schemas are unchanged. Output storage is closed to the parent image and
+  disjoint from record/caller/seed/PCLI/native/system/image inputs before writes.
+  Both full records are sealed across the existing service; only exact register
+  output is exempted during its readonly leaf. Source/control/API/FP poison
+  refuses before another native sample or postqueue read. A real API may have
+  returned while the guard refuses; actual API markers remain separate.
+- Failed/partial native-input stages hold UNKNOWN before original postarch/
+  FPrestore, never retry/free/guess restoration/cleanup. New full RAM raw is
+  exported with the existing raw before terminal hold/Console/USB. No released
+  target/GCD page or VBAR pointer is followed after the service. Native register
+  snapshots and equal VBAR/physical monotonicity are additional integrity only,
+  not full Timer/GIC/provider bindings, typed postrelease map, owner/IRQ/ABA
+  exclusion or whole-call temporal admission. The old enqueue-shaped ABA
+  SOFTWARE fixture still PASSES both snapshots. CVAL is raw, not a time grant.
+  Original virtual200ms and every35 release/producer10/earlier-target10 and
+  allocator20Core+70provider hash/ARC/VRM/readwork/fullrestore remain intact.
+- FINAL1725 ASAN/UBSAN SOFTWARE checks PASS567.9088062910014s: all old646 retained
+  plus1079 partial six-MRS/pre/post register/caller/input/control/API/FP/native
+  faults, every non-output timer-record byte at both leaves, full312B service
+  tampering, physical rollback/VBAR change and foreign/overlap/replay rejection.
+  The peer keeps released target plus GCD neighbor host PROT_NONE; no postread.
+  PE stays DATA; service/AT/FP/arch/MRS leaves are explicit peers, not original
+  instructions or native runtime. Printed native_MRS_samples counts modeled
+  slots only. Whole pwfc_collect/pwsp_run/pwrcl_run_body models were not executed.
+- Original allocator8487 is reused without rerun: its entire optimized SOFTWARE
+  peer LLVM IR is byte-identical1772245B, native allocator MachO whole-byte equal
+  and COFF equal except typed TimeDateStamp. No object/timestamp was changed.
+  Unaffected771/474/1564/1452/2341/167/5141/model/CI checks were NOT repeated.
+  All six actual parent/dispatch/allocator export COFF+MachO/generalregs/
+  maxframe1024 cross-compiles PASS. Dispatch export MSR remains exactPARrestore
+  only/noSMC; whole-parent old FP/terminalmask is not a zero-write claim.
+  OFF640972B same-command equal. ONlog29360128B plus staticassert only covers
+  new raw capacity, not new resource/profile/candidate qualification.
+- Independent struct/hashlib fully verifies598296B=596496+1488+312 and both
+ 576936B archived/fresh bundles, complete FP/control/service-boundary seals,
+  original sources/native/API/queue raw, separate physical/virtual epochs and
+  all digests/padding. Reconstructed boundary is a NEW derived buffer; no old
+  RAW edited/relabelled and no captured pointer executed. Private
+  cache-handle-timer-inputs-0001/proof.json
+  SHA2b1ea2f23b6679293b7317770e648fa241ca140ac535e8d10bf92455029862d3;
+  source/software2d608ee256f7e10955222966c57345f329f2462f119302b82aa053143d096d1c.
+- NEXT remains full bootstrap Timer/GIC/provider images/tables/handler/current
+  timer binding, transitive callback/source/work/wholecall temporal and fresh
+  postrelease typed graph/policy/source for six actual private contexts. This
+  current-register input step completes none of those larger admissions. Reuse
+  existing readers/guards; no duplicate source audits, inventory boots, blind
+  map refresh, old seed renamed current, returned-map self-proof or ticket
+  reopening/rebase/renewal. Other release/backing geometries stay unsupported.
+  Then real two MSA/RMTFS claims/cache/secureVMID/MPU/DMAstop/handback/full normal/
+  UNKNOWN retire and two SERIAL whole constructor models/new exact profile/
+  resource/codec/current transition/freeze/ONEhelper remain. NEW0189 NOTREADY:
+  no PA publish/MSS/NVserve/radio/scan/join/data. No new phone/USB/native/MMIO/
+  SMC/PE execution, model, CI, codec, image, payload, helper or freeze. Physical
+ 0188 fullretire/10:05lastactualFB/consumed controller unchanged. WiFi unavailable,
+  no credible date; sound/camera STOP. All jobs ENDED, no human/authorization
+  question pending. Actual standing source/text consentce8ce4fd remains current.
+
 - NEW0189 CURRENT publication RESOLVED by the actual new human reply:
   “批准本次及后续同类源码/文字公开推送”, questionItemId
   call_868184b064aa4c6c8b7f5db205cb2c06. Private actual authorization record

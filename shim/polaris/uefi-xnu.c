@@ -280,6 +280,7 @@ static struct pbgi_result pbgi_seed;
 static struct pbha_result pbha_handles;
 static struct pbhr_result pbhr_handles;
 static struct pbhd_result pbhd_handles;
+static struct pbhd_timer_result pbhd_timer_handles;
 static uint64_t pbgi_cache_opening;
 static struct pcmp_payload current_payload_binding;
 static struct pcmp_result current_private_maps[PCMP_PARENT_CONTEXTS][2];
@@ -460,7 +461,7 @@ static int new_original_unknown(void)
 {return pwcq_parent_unsafe()||original_service_unknown||(pgcd_resident_context.record&&pgcd_uncertain(&pgcd_resident_context))||pacgq_preboot_record.uncertain||pacgq_preboot_record.outstanding||pacgq_ticket.outstanding
 #if EFI_XNU_WIFI_REMOTE_MEMORY_AVAILABLE
     ||incoming_parent_maps[0].unknown||incoming_parent_maps[1].unknown||ppli_record.unknown||
-      current_payload_binding.unknown||current_private_unknown()||pbgi_cache_call.unknown||pbgi_seed.unknown||pbha_handles.unknown||pbhr_handles.unknown||pbhd_handles.unknown
+      current_payload_binding.unknown||current_private_unknown()||pbgi_cache_call.unknown||pbgi_seed.unknown||pbha_handles.unknown||pbhr_handles.unknown||pbhd_handles.unknown||pbhd_timer_handles.unknown
 #endif
 #if EFI_XNU_WIFI_TERMINAL_GOP_DIAGNOSTICS
     ||terminal_gop.uncertain
@@ -547,9 +548,12 @@ static void pbhd_parent_raw(void)
     ram_report("CACHE_HANDLE_DISPATCH_RAW_V1_BYTES=",sizeof(pbhd_handles));
     ram_text("CACHE_HANDLE_DISPATCH_RAW_V1_BEGIN\r\n");ram_hex((const uint8_t*)&pbhd_handles,sizeof(pbhd_handles));
     ram_text("CACHE_HANDLE_DISPATCH_RAW_V1_END\r\n");
+    ram_report("CACHE_HANDLE_TIMER_RAW_V1_BYTES=",sizeof(pbhd_timer_handles));
+    ram_text("CACHE_HANDLE_TIMER_RAW_V1_BEGIN\r\n");ram_hex((const uint8_t*)&pbhd_timer_handles,sizeof(pbhd_timer_handles));
+    ram_text("CACHE_HANDLE_TIMER_RAW_V1_END\r\n");
 }
 static int pbhd_parent_leaf(struct pbhr_live*live,struct pbhr_result*witness,const struct pbhr_input*input,const uint8_t seal[32])
-{return witness==&pbhr_handles&&pbhd_call(&pbhd_handles,live,witness,input,seal);}
+{return witness==&pbhr_handles&&pbhd_call(&pbhd_handles,&pbhd_timer_handles,live,witness,input,seal);}
 __attribute__((noreturn)) static void pbhr_parent_stop(void)
 {original_service_unknown=1;pbhr_handles.unknown=1;pbhd_parent_raw();pbhr_parent_raw();pbha_parent_raw();pbgi_parent_raw();ppli_parent_stop();}
 static uint64_t pbhr_parent_release(struct efi_boot*bs,struct pwfc_result*r,struct pwfc_workspace*w,void*handles)
@@ -690,7 +694,7 @@ _Static_assert(sizeof(log_buffer)>=2*(sizeof(pwsp_record)+sizeof(pwrpt_record)+s
     4*sizeof(terminal_gop)+
 #endif
 #if EFI_XNU_WIFI_REMOTE_MEMORY_AVAILABLE
-    3*(sizeof(incoming_parent_maps)+sizeof(ppli_record)+sizeof(current_private_maps)+sizeof(current_payload_binding)+sizeof(pbgi_cache_call)+sizeof(pbgi_seed)+sizeof(pbha_handles)+sizeof(pbhr_handles)+sizeof(pbhd_handles))+
+    3*(sizeof(incoming_parent_maps)+sizeof(ppli_record)+sizeof(current_private_maps)+sizeof(current_payload_binding)+sizeof(pbgi_cache_call)+sizeof(pbgi_seed)+sizeof(pbha_handles)+sizeof(pbhr_handles)+sizeof(pbhd_handles)+sizeof(pbhd_timer_handles))+
 #endif
     1048576,
     "complete preparation/client/power/source raw must fit without truncation");
@@ -892,7 +896,7 @@ static int prepare_boot(void *context)
     if(!pbgi_seed.complete||pbgi_seed.unknown)pbgi_parent_stop();
     if(!pbha_handles.complete||pbha_handles.unknown)pbha_parent_stop();
     if(!pbhr_handles.complete||pbhr_handles.unknown)pbhr_parent_stop();
-    if(!pbhd_handles.complete||pbhd_handles.unknown)pbhr_parent_stop();
+    if(!pbhd_handles.complete||pbhd_handles.unknown||!pbhd_timer_handles.complete||pbhd_timer_handles.unknown)pbhr_parent_stop();
     ppli_parent_raw();pbgi_parent_raw();pbha_parent_raw();pbhr_parent_raw();pbhd_parent_raw();
 #endif
 #endif

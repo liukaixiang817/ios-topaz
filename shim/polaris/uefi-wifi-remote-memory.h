@@ -646,20 +646,30 @@ static inline int pwmc_irq_image_capture(struct pwmc_result*r,unsigned op,unsign
     if(!pwmc_source(r,op)||p->base!=base||p->bytes!=b->bytes)return pwmc_fail(r,PWMC_SOURCE,1);
     pgcd_copy(p->state,(const void*)(uintptr_t)(base+b->state),b->state_bytes);p->complete=1;return 1;
 }
-static inline int pwmc_irq_regs_read(struct pwmc_result*r,unsigned op,unsigned slot)
+/* Same original six readonly MRS operations, shared by the allocator and
+ * the incoming-contract bootstrap caller. Callers retain their own source,
+ * typed-page/native/FP/callback envelopes; this leaf grants none of those. */
+static inline int pwmc_irq_regs_native(struct pwmc_irq_regs*p)
 {
-    struct pwmc_irq_regs*p=&r->irq[op].regs[slot];if(!pwmc_zero(p,sizeof(*p))||!pwmc_source(r,op))return pwmc_fail(r,PWMC_CONTEXT,1);
-#if defined(POLARIS_WIFI_MEMORY_SOFTWARE_PEER)
-    int returned=pwmc_test_irq_regs(r,op,slot);
-#elif defined(__aarch64__) || defined(__arm64__)
+#if (defined(__aarch64__) || defined(__arm64__)) && !defined(POLARIS_WIFI_MEMORY_SOFTWARE_PEER) && !defined(POLARIS_WIFI_CACHE_TIMER_SOFTWARE_PEER)
     p->issued|=1;__asm__ volatile("mrs %0,CurrentEL":"=r"(p->el)::"memory");__asm__ volatile("":::"memory");p->returned|=1;
     p->issued|=2;__asm__ volatile("mrs %0,VBAR_EL1":"=r"(p->vbar)::"memory");__asm__ volatile("":::"memory");p->returned|=2;
     p->issued|=4;__asm__ volatile("mrs %0,CNTP_CTL_EL0":"=r"(p->ctl)::"memory");__asm__ volatile("":::"memory");p->returned|=4;
     p->issued|=8;__asm__ volatile("mrs %0,CNTP_CVAL_EL0":"=r"(p->cval)::"memory");__asm__ volatile("":::"memory");p->returned|=8;
     p->issued|=16;__asm__ volatile("mrs %0,CNTFRQ_EL0":"=r"(p->frequency)::"memory");__asm__ volatile("":::"memory");p->returned|=16;
-    p->issued|=32;__asm__ volatile("mrs %0,CNTPCT_EL0":"=r"(p->ticks)::"memory");__asm__ volatile("":::"memory");p->returned|=32;int returned=1;
+    p->issued|=32;__asm__ volatile("mrs %0,CNTPCT_EL0":"=r"(p->ticks)::"memory");__asm__ volatile("":::"memory");p->returned|=32;
+    return 1;
 #else
-    int returned=0;
+    (void)p;return 0;
+#endif
+}
+static inline int pwmc_irq_regs_read(struct pwmc_result*r,unsigned op,unsigned slot)
+{
+    struct pwmc_irq_regs*p=&r->irq[op].regs[slot];if(!pwmc_zero(p,sizeof(*p))||!pwmc_source(r,op))return pwmc_fail(r,PWMC_CONTEXT,1);
+#if defined(POLARIS_WIFI_MEMORY_SOFTWARE_PEER)
+    int returned=pwmc_test_irq_regs(r,op,slot);
+#else
+    int returned=pwmc_irq_regs_native(p);
 #endif
     if(!returned||!pwmc_context_intact(r,op)||!pwmc_parameters(r)||p->issued!=63||p->returned!=63)return pwmc_fail(r,PWMC_CONTEXT,1);return 1;
 }

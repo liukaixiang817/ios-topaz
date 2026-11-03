@@ -1720,3 +1720,25 @@ immutable history, no longer a pending question. This publication correction
 changes only two text documents; no source/test changes or reruns, reference
 porting, device/USB/native/CI/model/image/helper/freeze action. All remaining
 bootstrap/current-input/typed/callback/temporal and secure/DMA gates are unchanged.
+
+0189 reuses the allocator's exact existing six readonly native MRS operations in
+the actual parent before/after its EXISTING registered handle-array FreePool.
+This adds a separate312B current-register input bound to real caller/witness/
+source/FP/native envelopes, without a fake allocator context or new service/map/
+allocation call. The original1488B queue and596496B release schemas remain.
+VBAR is retained as numeric raw, never followed; physical epochs stay separate
+from the original virtual200ms. Snapshots do not establish provider identity,
+postrelease typed ownership, ABA exclusion or whole-call temporal admission.
+
+All1725 ASAN/UBSAN SOFTWARE cases pass (old646 plus1079 new register/partial/
+callback/service-record/foreign-storage cases); released target plus GCD page
+remain host PROT_NONE. All leaves including MRS are peers, not native execution.
+Independent struct/hashlib verifies full598296B and both576936B bundles. The old
+allocator8487 suite is reused: full optimized peer LLVM IR and native MachO are
+byte-identical, COFF only differs in typed timestamp. Six actual parent/export/
+allocator cross-compiles pass, dispatch MSR only exactPARrestore/noSMC and OFF
+640972B matches. Private evidence:0189/wifi/cache-handle-timer-inputs-0001. No
+reference port, source opcode audit, model/CI/device/image/helper/freeze run.
+Full bootstrap provider/current-source/callback/work/temporal/fresh postrelease
+graph and secure/DMA lifecycle remain unfinished. NEW0189 NOTREADY; no WiFi
+firmware/driver/scan/join/data milestone or reliable time estimate.
