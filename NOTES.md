@@ -108,6 +108,20 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
+- NEW0189 latest PUBLIC functional source
+  572aa4ab925f36a1da79c6d6ad7705f534032960 is published by the SAME original
+  directpush under actual continuing source/text consentce8ce4fd. Push ENDED0;
+  subsequent independent readonly lsremote matches572aa4a. Exact four own UTF8
+  paths: NOTES/REFERENCE_REPOS/current-provider header/current-provider test.
+  No firmware/Apple/vendor/NV/backup/RAW/photo/serial/password/private bytes.
+  Private later-provider-graph-padding-0001/authorized-source-push-0001.json
+  SHAcba3db6a08893fa63941d9e8e71429e88aa7b689e118adc56debfdd58e243968.
+  This subsequent handoff changes only two text files, no C/test/RAW/schema or
+  repeated checks. All older CURRENT/latest/qualification statements retain
+  only their original source/version scopes. No alternate connector/HTTP/
+  indirect push/force/newbranch, no new permission or physical question.
+  Source lifetime/owner/wholecall/secureDMA/new candidate and WiFi NOTREADY.
+
 - NEW0189 latest SOURCE/SOFTWARE: close the previously unguarded trailing
   graph8/provider4 RAW bytes in the real later-provider interval and completed
   scalar handoff. Baseline original f3ac787 source accepted each graph byte
