@@ -15,6 +15,10 @@ static unsigned graph_mode,graph_point,graph_fault,graph_byte,graph_hit,graph_st
 static unsigned graph_entry_fault;
 static unsigned graph_temporal_fault,graph_temporal_slot,graph_temporal_hit,graph_handoff_fault,graph_handoff_hit,graph_handoff_arches;
 static uint64_t graph_clock_floor;
+#if defined(POLARIS_CURRENT_PROVIDER_FIXTURE)
+static int fixture_provider_capture(struct pcmp_live*,int(*)(struct ppli_at*));
+static int fixture_provider_minimum(const struct pgcd_context*,unsigned,uint64_t*);
+#endif
 static jmp_buf graph_terminal;
 static int graph_mutate(struct ppli_at*at,struct pgcd_arch*clock)
 {
@@ -82,7 +86,12 @@ static int graph_map(void*o,struct efi_system*system,struct pgcd_map*m,void*out)
 }
 static int pcmp_parent_graph(struct pcmp_live*parent,int(*read_page)(struct ppli_at*))
 {
-    assert(read_page==graph_page);graph_calls++;graph_running=1;graph_ATs=graph_clocks=0;
+#if defined(POLARIS_CURRENT_PROVIDER_FIXTURE)
+    assert(read_page==current_fixture_page);
+#else
+    assert(read_page==graph_page);
+#endif
+    graph_calls++;graph_running=1;graph_ATs=graph_clocks=0;
     active_parent=parent;active_graph=&graphs[active_route][parent->r->slot];
     struct pcmp_route entry_routes[PCMP_PARENT_CONTEXTS];memcpy(entry_routes,routes,sizeof(entry_routes));
     struct pcmg_result(*output)[2]=graphs;unsigned count=PCMP_PARENT_CONTEXTS;
@@ -97,7 +106,11 @@ static int pcmp_parent_graph(struct pcmp_live*parent,int(*read_page)(struct ppli
     default:assert(0);
     }
     int ok=pcmg_route_capture(entry_routes,count,output,parent,read_page);
-    graph_running=0;return ok;
+    graph_running=0;
+#if defined(POLARIS_CURRENT_PROVIDER_FIXTURE)
+    if(ok)ok=fixture_provider_capture(parent,read_page);
+#endif
+    return ok;
 }
 static int pgcd_parent_map_minimum(const struct pgcd_context*caller,unsigned slot,uint64_t*out)
 {
@@ -119,7 +132,11 @@ static int pgcd_parent_map_minimum(const struct pgcd_context*caller,unsigned slo
         }
         if(graph_handoff_fault<13)ppli_sha(g,offsetof(struct pcmg_result,digest),g->digest);
     }
+#if defined(POLARIS_CURRENT_PROVIDER_FIXTURE)
+    return fixture_provider_minimum(caller,slot,out);
+#else
     return pcmg_route_minimum(routes,PCMP_PARENT_CONTEXTS,graphs,caller,slot,out);
+#endif
 }
 /* The actual parent appends raw then never returns a rejected callback.
  * This SOFTWARE terminal peer unwinds only the host test, without invoking
@@ -180,6 +197,7 @@ static int graph_temporal_run(unsigned index,unsigned slot)
     for(unsigned k=0;k<4;k++){const struct pgcd_observation*observation=0;if(!pgcd_query_page(c,pgcd_pages[k],&observation))return 0;}
     return pgcd_finish(c);
 }
+#ifndef POLARIS_CURRENT_GRAPH_FIXTURE_ONLY
 int main(int argc,char**argv)
 {
     assert(argc==3&&!posix_memalign((void**)&arena,4096,0x1001000));
@@ -332,3 +350,4 @@ int main(int argc,char**argv)
     printf("{\"passed\":true,\"scope\":\"%s\",\"checks\":%u,\"SOFTWARE_only\":true,\"contexts\":6,\"existing_maps\":11,\"stored_graphs\":12,\"graph_bytes\":%zu,\"normal_ATs\":66,\"normal_clocks\":69,\"max256_ATs\":321,\"max256_clocks\":324,\"whole_power_constructor_executed\":false,\"ownership_or_first_call_qualification\":false}\n",scope,checks,sizeof(struct pcmg_result));
     free(original);free(arena);free(payload_data);free(log_data);free(graph_core);free(graph_pool);return 0;
 }
+#endif

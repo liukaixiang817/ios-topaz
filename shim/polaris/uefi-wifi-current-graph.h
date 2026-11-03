@@ -9,10 +9,10 @@ _Static_assert(sizeof(struct pcmg_result)==310480&&offsetof(struct pcmg_result,g
     offsetof(struct pcmg_result,parent_after)==310112&&offsetof(struct pcmg_result,digest)==310440,"separate post-map graph INPUT raw ABI v3");
 static inline int pcmg_fail(struct pcmg_result*r,unsigned error)
 {if(!r->error)r->error=error;r->unknown=1;return 0;}
-static inline int pcmg_storage(const struct pcmg_result*r,const struct pcmp_live*p)
+static inline int pcmg_output_storage(const void*r,uint64_t bytes,const struct pcmp_live*p)
 {
     const struct pcmp_input*i=&p->input;const struct pcmp_result*s=p->r;
-    if(!pcmp_in_self(i->image,r,sizeof(*r)))return 0;
+    if(!pcmp_in_self(i->image,r,bytes))return 0;
     const struct {const volatile void*address;uint64_t bytes;} source[]={
         {p,sizeof(*p)},{s,sizeof(*s)},{p->caller_input,sizeof(*p->caller_input)},{p->caller_io,sizeof(*p->caller_io)},
         {i->context,sizeof(*i->context)},{i->context->record,sizeof(*i->context->record)},
@@ -23,9 +23,11 @@ static inline int pcmg_storage(const struct pcmg_result*r,const struct pcmp_live
         {(const void*)(uintptr_t)s->payload,s->payload_count},{(const void*)(uintptr_t)s->log,i->log_bytes}
     };
     for(unsigned k=0;k<sizeof(source)/sizeof(source[0]);k++)
-        if(pwmc_parent_overlap((uintptr_t)r,sizeof(*r),(uintptr_t)source[k].address,source[k].bytes))return 0;
+        if(pwmc_parent_overlap((uintptr_t)r,bytes,(uintptr_t)source[k].address,source[k].bytes))return 0;
     return 1;
 }
+static inline int pcmg_storage(const struct pcmg_result*r,const struct pcmp_live*p)
+{return pcmg_output_storage(r,sizeof(*r),p);}
 static __attribute__((noinline)) int pcmg_capture(struct pcmg_result*r,struct pcmp_live*parent,
     const struct pcmp_route*route,unsigned index,unsigned slot,int(*read_page)(struct ppli_at*))
 {
@@ -78,10 +80,10 @@ static __attribute__((noinline)) int pcmg_capture(struct pcmg_result*r,struct pc
 /* Closed actual frame selection before following any route source pointer.
  * The real parent supplies its six resident objects; foreign/interior frames
  * and the absent client-closing slot have no fallback. */
-static inline int pcmg_route_capture(const struct pcmp_route*routes,unsigned count,
-    struct pcmg_result frames[PCMP_PARENT_CONTEXTS][2],struct pcmp_live*parent,int(*read_page)(struct ppli_at*))
+static inline int pcmg_active_route(const struct pcmp_route*routes,unsigned count,const struct pcmp_live*parent,
+    unsigned*chosen,unsigned*part)
 {
-    if(!routes||count!=PCMP_PARENT_CONTEXTS||!frames||!parent||!read_page)return 0;
+    if(!routes||count!=PCMP_PARENT_CONTEXTS||!parent||!chosen||!part)return 0;
     unsigned matches=0,index=0,slot=0;
     for(unsigned n=0;n<count;n++){
         const struct pcmp_route*a=&routes[n];
@@ -94,7 +96,14 @@ static inline int pcmg_route_capture(const struct pcmp_route*routes,unsigned cou
        parent->r->attempted!=1||parent->r->complete||parent->r->unknown!=1||parent->r->error||
        parent->r->path!=routes[index].path||parent->r->slot!=slot||
        parent->r->context_before.record!=routes[index].source||parent->r->context_before.ticket!=routes[index].ticket)return 0;
-    if(!pcmp_source_stable(parent)||!pcmp_in_self(parent->input.image,frames,PCMP_PARENT_CONTEXTS*sizeof(*frames)))return 0;
+    *chosen=index;*part=slot;return 1;
+}
+static inline int pcmg_route_capture(const struct pcmp_route*routes,unsigned count,
+    struct pcmg_result frames[PCMP_PARENT_CONTEXTS][2],struct pcmp_live*parent,int(*read_page)(struct ppli_at*))
+{
+    if(!frames||!read_page)return 0;unsigned index=0,slot=0;
+    if(!pcmg_active_route(routes,count,parent,&index,&slot)||!pcmp_source_stable(parent)||
+       !pcmp_in_self(parent->input.image,frames,PCMP_PARENT_CONTEXTS*sizeof(*frames)))return 0;
     const struct pcmg_result*out=&frames[index][slot];
     if(pwmc_parent_overlap((uintptr_t)out,sizeof(*out),(uintptr_t)routes,count*sizeof(*routes)))return 0;
     for(unsigned n=0;n<count;n++){

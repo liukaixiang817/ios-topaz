@@ -1477,6 +1477,48 @@ static inline int pwmc_parent_stable(const struct pwmc_parent_map*r,const struct
         pgcd_equal(saved->image,&r->image_before,sizeof(r->image_before))&&
         pgcd_equal((const void*)(uintptr_t)r->boot_address,r->BS_before,PWMC_BS_BYTES);
 }
+/* Shared existing incoming-provider DATA walk. The real caller supplies its
+ * qualified page/source readers; this never creates an allocator context or
+ * invokes an original provider method. Stage callbacks only retain progress. */
+struct pwmc_irq_input_reader {
+    void*opaque;
+    int(*range)(const void*,uint64_t,uint64_t);
+    int(*pages)(void*,uint64_t,uint64_t,struct pwmc_irq_AT*,unsigned,uint32_t*);
+    int(*source)(const void*);
+    int(*image)(void*,unsigned,uint64_t);
+    void(*rooted)(void*);void(*handlers)(void*);
+};
+static inline int pwmc_irq_image_input(struct pwmc_irq_path*p,unsigned image,uint64_t base,
+    const struct pwmc_irq_input_reader*reader)
+{
+    struct pwmc_irq_image*i=&p->image[image];const struct pwmc_irq_binding*b=&pwmc_irq_bindings[image];
+    if(!base||(base&4095)||base>UINT64_MAX-b->bytes||!pwmc_zero(i,sizeof(*i))||!reader->range(reader->opaque,base,b->bytes))return 0;
+    for(unsigned k=0;k<image;k++)if(pwmc_parent_overlap(base,b->bytes,p->image[k].base,p->image[k].bytes))return 0;
+    if(image==1&&p->tables[1]!=base+0x30b8&&p->tables[1]!=base+0x30e0)return 0;
+    i->base=base;i->bytes=b->bytes;i->attempted=1;
+    if(!reader->pages(reader->opaque,base,b->bytes,i->AT,PWMC_IRQ_PAGES,&i->AT_count)||
+       !pwmc_irq_hash_image(i,image,0)||!reader->source(reader->opaque))return 0;
+    pgcd_copy(i->state,(const void*)(uintptr_t)(base+b->state),b->state_bytes);
+    pgcd_copy(i->table,(const void*)(uintptr_t)p->tables[image],b->table_bytes);i->complete=1;return 1;
+}
+static inline unsigned pwmc_irq_provider_input(struct pwmc_irq_path*p,uint64_t core,
+    const struct pwmc_irq_input_reader*reader)
+{
+    p->attempted=1;
+    p->tables[0]=pwfi_le((const void*)(uintptr_t)(core+0x1cb80),8);p->tables[2]=pwfi_le((const void*)(uintptr_t)(core+0x1c8f8),8);
+    reader->rooted(reader->opaque);
+    if(p->tables[0]<0x2038||p->tables[2]<0x53d8||!reader->image(reader->opaque,0,p->tables[0]-0x2038))return 2;
+    p->tables[1]=pwfi_le(p->image[0].state+24,8);
+    if(!reader->pages(reader->opaque,p->tables[1],40,p->table_AT,2,&p->table_AT_count))return 3;
+    pgcd_copy(p->unbound_hardware_table,(const void*)(uintptr_t)p->tables[1],40);uint64_t entry=pwfi_le(p->unbound_hardware_table,8);
+    if(entry<0x1040||!reader->image(reader->opaque,1,entry-0x1040)||!reader->image(reader->opaque,2,p->tables[2]-0x53d8))return 3;
+    p->handlers=pwfi_le(p->image[1].state+24,8);p->handler_count=pwfi_le(p->image[1].state+72,8);
+    if(p->handler_count<32||p->handler_count>1020)return 4;
+    for(unsigned k=0;k<3;k++)if(pwmc_parent_overlap(p->handlers,p->handler_count*8,p->image[k].base,p->image[k].bytes))return 4;
+    if(!reader->pages(reader->opaque,p->handlers,p->handler_count*8,p->array_AT,3,&p->array_AT_count))return 4;
+    pgcd_copy(p->handler,(const void*)(uintptr_t)p->handlers,p->handler_count*8);reader->handlers(reader->opaque);return 0;
+}
+
 static inline int pwmc_parent_controls(const struct pwmc_parent_map*r,unsigned arch_count,unsigned restored)
 {
     unsigned mask=arch_count==1?3:restored?15:7;

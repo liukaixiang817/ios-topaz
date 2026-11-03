@@ -2116,3 +2116,60 @@ receipt SHAe6841a56db1d74ed84513ec407f36bc5f414f73130d3380b27b69e3b506d0093.
 This subsequent handoff changes only NOTES/REFERENCE_REPOS, with no code/test/
 RAW/schema/proof changes or repeated checks. Wholecall/owner/secureDMA/new
 candidate and physical WiFi remain NOTREADY. No new human action is needed.
+
+
+### 0189 fresh later Timer/GIC/CPU provider INPUT, source/SOFTWARE only
+
+Actual six parent routes/11 EXISTING later Maps now reuse the original
+incoming-provider DATA walk after each fresh Core/EFI/GCD/policy graph, while
+the genuine caller remains active. Old pbhi source/context/page/range guards
+and error stages remain. No fake opened context/ticket/owner, expired relay
+execution or new original firmware service. Fresh graph classification plus
+AT qualifies subsequent DATA reads only; it does not qualify prior GetMap,
+release-backing lifetime, inventory/IRQ/owner/ABA or a future lease.
+
+Separate provider RAW V1=20456B/binding400/live408/path12400; all old RAW schemas
+unchanged. Full original image hashes/states/tables/selected GICv2/v3/all32..1020
+handlers, actual caller/PCMP/graph and all control/output bytes close across
+callbacks before pointer follow. Final immutable hashes follow the last foreign
+callback. New normal20AT/23virtualarch, max22AT/25arch for1020 handlers/3pages;
+10 Core+28 provider hashes. Generic arch contains readonly MRS; AT restores
+exact PAR. Path.finalized0/regs/math/raise/final unobserved. Original window
+never renews/mixes counter epochs. New last CNTVCT feeds existing outer guard;
+partial/poisoned raw remains before terminalhold, no guessed restore/cleanup.
+Log48MiB is RAW capacity only, not resource/profile qualification.
+
+Full new1124 ASAN/UBSAN SOFTWARE PASS1644.5910789580084s and affected old graph
+4553 PASS1492.8020886249724s; all original graph cases/guards retained. Earlier
+14/264/34 runs only their saved source scope. All services/AT/FP/arch peers,
+original PE inert DATA, no originalFW/native/whole power/client constructors.
+Allocator optimized peer IR1780275B byte-equal; producer/cache only3/5 typed asm
+source locations differ in NEW derived comparisons, metadata scope verified.
+Their8487/1789/2885 and unaffected checks/models/CI not rerun. Native cache
+exports actually differ (COFF82210/81388, MachO110656/109824), not called equal.
+Six final actualparent/provider/cache exports COFF/MachO PASS generalregs/
+maxframe1024; MSR only exactPARrestore/noSMC, whole parent not zero-write.
+OFF preprocessed640972/640999 same-command pairs equal; ON changes.
+
+Independent struct/hashlib verifies8432832B normal archive plus seven717848B
+bundles,18 new provider records. Full normal/max/partial new records rebuilt
+bytewise from original DATA/relocations/source hashes, states/tables/handlers/
+AT/clocks/control/source seals/unused/padding/digest; original canonical5+5+4
+provider ranges verified. Paired failed outer/PCMP/graph and zero handoff also
+reconstructed in NEW buffers; no captured pointer execution or old RAW/proof/
+object/timestamp edits. SOURCE failures preserve actual bad caller/graph raw;
+SOFTWARE10600->10599 refuses before outerFP, equal10600 succeeds, original Map
+API0/1/1 remains. Private declaration-order error and temporal peer scope error
+retained; no production guard lowered.
+Private0189/wifi/later-provider-inputs-0001/proof.json
+SHA4ffa2118fdfe71c19df7f610a72e5f5bf4e24eed1c8d1b372a871f46ca0eb831;
+source/software7e43c140426c265dc8ba8f05743195f0333d64845d7e2bdd8f95dbb0aca01599.
+
+Next actual current physical timer/deferred/event/transitive callback source/
+effects/work, postsource/release-backing lifetimes and wholecall time/owner/
+IRQ/ABA/precall qualification remain. Then real MSA/RMTFS secure/cache/DMAstop/
+handback/full normal+UNKNOWN retirement and complete new candidate admission.
+Main defaultOFF, no builder/consumer/CLI/profile/resource or device admission,
+physical WiFi success or credible date. All host/build jobs ENDED; no new USB/
+native/MMIO/SMC/model/CI/codec admission/image/payload/helper/freeze. Sound/camera
+STOP. Own existing DATA lifecycle reused; no new external/vendor/FW audit needed.

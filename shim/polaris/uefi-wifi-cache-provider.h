@@ -146,17 +146,19 @@ static __attribute__((noinline)) int pbhi_pages(struct pbhi_live*l,uint64_t addr
         if(!pbhi_tick(l,0))return 0;
     }return 1;
 }
-static inline int pbhi_image(struct pbhi_live*l,unsigned image,uint64_t base)
+static inline int pbhi_input_range(const void*opaque,uint64_t at,uint64_t bytes)
+{return pbhi_range(opaque,at,bytes);}
+static inline int pbhi_input_pages(void*opaque,uint64_t at,uint64_t bytes,struct pwmc_irq_AT*out,unsigned cap,uint32_t*count)
+{return pbhi_pages(opaque,at,bytes,out,cap,count);}
+static inline int pbhi_input_source(const void*opaque)
+{return pbhi_source(opaque,0);}
+static inline int pbhi_input_image(void*opaque,unsigned image,uint64_t base)
 {
-    struct pwmc_irq_path*p=&l->r->path;struct pwmc_irq_image*i=&p->image[image];const struct pwmc_irq_binding*b=&pwmc_irq_bindings[image];
-    if(!base||(base&4095)||base>UINT64_MAX-b->bytes||!pwmc_zero(i,sizeof(*i))||!pbhi_range(l,base,b->bytes))return 0;
-    for(unsigned k=0;k<image;k++)if(pwmc_parent_overlap(base,b->bytes,p->image[k].base,p->image[k].bytes))return 0;
-    if(image==1&&p->tables[1]!=base+0x30b8&&p->tables[1]!=base+0x30e0)return 0;
-    i->base=base;i->bytes=b->bytes;i->attempted=1;
-    if(!pbhi_pages(l,base,b->bytes,i->AT,PWMC_IRQ_PAGES,&i->AT_count)||!pwmc_irq_hash_image(i,image,0)||!pbhi_source(l,0))return 0;
-    pgcd_copy(i->state,(const void*)(uintptr_t)(base+b->state),b->state_bytes);
-    pgcd_copy(i->table,(const void*)(uintptr_t)p->tables[image],b->table_bytes);i->complete=1;l->table_mask|=1u<<image;return 1;
+    struct pbhi_live*l=opaque;const struct pwmc_irq_input_reader reader={l,pbhi_input_range,pbhi_input_pages,pbhi_input_source,0,0,0};
+    if(!pwmc_irq_image_input(&l->r->path,image,base,&reader))return 0;l->table_mask|=1u<<image;return 1;
 }
+static inline void pbhi_input_rooted(void*opaque){((struct pbhi_live*)opaque)->rooted=1;}
+static inline void pbhi_input_handlers(void*opaque){((struct pbhi_live*)opaque)->handlers=1;}
 static inline int pbhi_graph_node(struct pbhi_live*l,uint64_t address,size_t bytes,
     uint64_t pages[2],uint64_t raw[2],uint32_t*count)
 {
@@ -270,18 +272,9 @@ static __attribute__((noinline)) int pbhi_capture(struct pbhi_result*r,struct pb
     pgcd_copy(g->input.service_seal,seal,32);g->live_before=*frame;g->opening=r->opening;g->virtual_before=r->virtual_before;g->attempted=g->unknown=1;
     live.graph=g;live.r=r;live.in=r->input;live.core=frame->core;live.boot=frame->boot;live.opening=r->opening;live.before=r->virtual_before;
     if(!pbhi_tick(&live,0)||!pgci_verify((const void*)(uintptr_t)live.core,live.core,PGCI_IMAGE_BYTES,r->Core_hash[0],&r->hash_failed[0],&r->hash_count[0]))return pbhi_fail(r,1);
-    struct pwmc_irq_path*p=&r->path;p->attempted=1;
-    p->tables[0]=pwfi_le((const void*)(uintptr_t)(live.core+0x1cb80),8);p->tables[2]=pwfi_le((const void*)(uintptr_t)(live.core+0x1c8f8),8);live.rooted=1;
-    if(p->tables[0]<0x2038||p->tables[2]<0x53d8||!pbhi_image(&live,0,p->tables[0]-0x2038))return pbhi_fail(r,2);
-    p->tables[1]=pwfi_le(p->image[0].state+24,8);
-    if(!pbhi_pages(&live,p->tables[1],40,p->table_AT,2,&p->table_AT_count))return pbhi_fail(r,3);
-    pgcd_copy(p->unbound_hardware_table,(const void*)(uintptr_t)p->tables[1],40);uint64_t entry=pwfi_le(p->unbound_hardware_table,8);
-    if(entry<0x1040||!pbhi_image(&live,1,entry-0x1040)||!pbhi_image(&live,2,p->tables[2]-0x53d8))return pbhi_fail(r,3);
-    p->handlers=pwfi_le(p->image[1].state+24,8);p->handler_count=pwfi_le(p->image[1].state+72,8);
-    if(p->handler_count<32||p->handler_count>1020)return pbhi_fail(r,4);
-    for(unsigned k=0;k<3;k++)if(pwmc_parent_overlap(p->handlers,p->handler_count*8,p->image[k].base,p->image[k].bytes))return pbhi_fail(r,4);
-    if(!pbhi_pages(&live,p->handlers,p->handler_count*8,p->array_AT,3,&p->array_AT_count))return pbhi_fail(r,4);
-    pgcd_copy(p->handler,(const void*)(uintptr_t)p->handlers,p->handler_count*8);live.handlers=1;
+    struct pwmc_irq_path*p=&r->path;
+    const struct pwmc_irq_input_reader reader={&live,pbhi_input_range,pbhi_input_pages,pbhi_input_source,pbhi_input_image,pbhi_input_rooted,pbhi_input_handlers};
+    unsigned provider_error=pwmc_irq_provider_input(p,live.core,&reader);if(provider_error)return pbhi_fail(r,provider_error);
     if(!pbhi_graph_capture(&live)){if(!g->error)g->error=1;g->unknown=1;return pbhi_fail(r,7);}
     if(!pbhi_tick(&live,0))return pbhi_fail(r,5);
     if(!pgci_verify((const void*)(uintptr_t)live.core,live.core,PGCI_IMAGE_BYTES,r->Core_hash[1],&r->hash_failed[1],&r->hash_count[1]))return pbhi_fail(r,5);
