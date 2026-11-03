@@ -2001,3 +2001,53 @@ all firmware/private/sensitive bytes excluded. Private authorized source receipt
 SHA6ec2db7ad6046a2450e52073a2670d20f69502da9e5b8adb217af2a8e76085c9. This subsequent handoff
 changes only NOTES/REFERENCE_REPOS; no source/test/RAW/schema/proof edits or
 repeated checks. Fresh graph/full candidate and physical WiFi remain NOTREADY.
+
+
+### 0189 later Core/EFI/GCD/policy graph INPUT, source/SOFTWARE only
+
+Own existing bounded DATA walk now runs inside the actual active later-map
+caller across six parent routes and11 EXISTING Map boundaries. It uses that
+caller's original IO/context/source/ticket/opening; captured relay IO is never
+executed after its stack expires. Three cache Maps remain before FreePool.
+Old producer phase4/cap65536 and232B DATA view remain; separate288B active
+controls support genuine phase3/cap8192 caller input. No extra firmware Map,
+allocator/provider method, fabricated context or ownership grant. No new
+external reference audit or vendor/Apple/firmware publication was needed.
+
+New versioned graph RAW V3 is310480B, binding408/live304 around unchanged
+309664B producer. All356688B older PCMP bytes are covered by original freshly
+rechecked prefix/call hashes plus3104 uncovered seal bytes; no hash phase or
+guard removed. Native flag reads are recorded by shared walk; old pcmp native
+read retains its position. Full raw, poisoned flags and partial API results
+remain before UNKNOWN terminalhold; no guessed restore/free/retry/cleanup.
+Log48MiB is RAW capacity, not candidate resource/profile qualification.
+
+FINAL4463 ASAN/UBSAN SOFTWARE PASS1323.4109002909972s; affected producer1789
+PASS109.46323541703168s, current2341 PASS84.66187058400828s, dispatch167
+PASS4.136711708037183s. Six final actual parent/producer/graph ARM64 COFF/MachO
+cross builds PASS generalregs/maxframe1024. Exports write only exactPARrestore,
+noSMC; whole parent old FP/terminalmask is not zero-write. Eight full309664B
+same-invocation normal seed comparisons equal with actual peer target reads;
+target/release/dispatch MachO equal, COFF only typed TimeDateStamp differs.
+OFF preprocessed640972/640999 pairs equal with changed headers excluded.
+Unchanged474/771/2885/8487/1452/5141/models/CI not repeated. All original PE is
+inert DATA; no original firmware/native/whole power constructor execution.
+
+Independent struct/hashlib verifies8006016B normal archive and five667168B
+max/refused bundles,16 records, full source/frame seals and every failed aux
+byte in new expected buffers. Old RAW/proof/schema/timestamps remain untouched;
+V1/V2 artifacts keep their own source/version scope, never reinterpreted asV3.
+Private0189/wifi/later-map-graph-inputs-0001/proof.json
+SHA70bfdcfbe412dafceb1e43ef45aa06e1a84151a431e09fcdf8933be7acc9a46e;
+source/softwarec509ba35e9b8e609399bd4b2e3911f1ee6da9a776d9a179491bc382f5f034417.
+
+This closes later graph INPUT snapshots, not precall/postprovider lifetime,
+owner/ABA/futureIRQ or wholecall timing. Graph last CNTVCT is later than old
+pcmp.final_arch; enclosing temporal handoff remains unfinished. Bind remaining
+transitive Timer/GIC/provider/currenttimer/deferred source/effects/work and
+lifetime qualification to six NEW contexts without renewing original opening.
+Then actual MSA/RMTFS secure/cache/DMAstop/handback and full new candidate
+qualification. Main REMOTE_MEMORY defaultOFF; no consumer/builder/CLI/profile/
+resource connected, no device or physical WiFi success/credible date. Sound
+and camera STOP. All host/build jobs ENDED; no new USB/native/MMIO/SMC/model/
+CI/codec admission/image/payload/helper/freeze.

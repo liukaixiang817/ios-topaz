@@ -51,8 +51,9 @@ static int current_map(void*o,struct efi_system*sys,struct pgcd_map*m,void*out)
 }
 static int current_page(struct ppli_at*a)
 {leaf_pages++;int ok=inventory_page(a);if(which_fault==6)a->returned=0;change(6);return ok;}
+static int(*current_fixture_page)(struct ppli_at*)=current_page;
 static int fixture_relay(void*o,struct efi_system*sys,struct pgcd_map*m,void*data)
-{assert(!o&&sys==s);if(integration_mode){unsigned slot=m==&r->map[0]?0:1;cur=integration_records[slot];}return pcmp_read(cur,&current_input,&original_io,m,data,current_page);}
+{assert(!o&&sys==s);if(integration_mode){unsigned slot=m==&r->map[0]?0:1;cur=integration_records[slot];}return pcmp_read(cur,&current_input,&original_io,m,data,current_fixture_page);}
 static int current_identity(void*o,uint64_t at,uint64_t bytes,uint64_t*where,uint64_t*par)
 {(void)o;(void)bytes;*where=at;*par=UINT64_C(0xff00000000000b80)|(at&~UINT64_C(4095));return 1;}
 static void setup_current(unsigned slot)

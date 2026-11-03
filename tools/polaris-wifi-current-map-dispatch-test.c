@@ -10,7 +10,7 @@ static int dispatch_relay(void*o,struct efi_system*sys,struct pgcd_map*m,void*da
     assert(!o&&sys==s);unsigned n=99,k=99;
     assert(pcmp_select(routes,PCMP_PARENT_CONTEXTS,m,data,&n,&k)&&n==active_route);
     cur=&routes[n].frames[k];
-    return pcmp_route_read(&routes[n],k,&current_input,&original_io,m,data,current_page);
+    return pcmp_route_read(&routes[n],k,&current_input,&original_io,m,data,current_fixture_page);
 }
 static void dispatch_fixture(void)
 {
@@ -37,6 +37,7 @@ static void dispatch_fixture(void)
 }
 static void activate(unsigned n)
 {active_route=n;c=routes[n].context;r=routes[n].source;ticket=routes[n].ticket;cur=routes[n].frames;queries=0;}
+#ifndef POLARIS_CURRENT_MAP_DISPATCH_FIXTURE_ONLY
 int main(int argc,char**argv)
 {
     assert(argc==3&&!posix_memalign((void**)&arena,4096,0x1001000));
@@ -103,3 +104,4 @@ int main(int argc,char**argv)
     printf("{\"passed\":true,\"checks\":%u,\"contexts\":6,\"existing_private_maps\":11,\"stored_frames\":12,\"frame_bytes\":%zu,\"fault_bytes\":%zu,\"SOFTWARE_only\":true,\"whole_power_constructor_executed\":false}\n",checks,sizeof(struct pcmp_result),sizeof(struct pcmp_route_fault));
     free(original);free(arena);free(payload_data);free(log_data);return 0;
 }
+#endif

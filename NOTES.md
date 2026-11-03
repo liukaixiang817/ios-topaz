@@ -108,6 +108,94 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
+- NEW0189 latest SOURCE/SOFTWARE milestone: fresh later Core/EFI/GCD/policy
+  graph INPUT is integrated into the actual six parent routes and11 EXISTING
+  later Maps, while each original pcmp_live caller is ACTIVE. All three cache
+  Maps remain BEFORE handle FreePool. No extra BS/GetMap/enum/alloc/FreePool/
+  provider-method call, fabricated opened context/ticket/owner/permission or
+  completed-record relay execution. call.io.opaque is an expired stack after
+  return; capture uses the real ACTIVE parent's original_io and original
+  source/context/ticket/opening. Returned Map does not qualify its own precall.
+  Public baseline is627b04a/b179429 until the publication receipt below.
+- Reuse the existing bounded producer DATA walk:57 Core AT pages, complete
+  64B EFI/120B GCD-container chains each max256, pool232/policy720/roots/three
+  locks/key/depth/busy/SMM/TPL/Core10 canonical hashes. Old public producer
+  phase4/cap65536 contract and232B DATA view stay intact; separate288B active
+  controls bind the genuine phase3/cap8192 caller. Every AT/arch callback seals
+  all active controls and own output, then closes source/caller before pointer
+  follow. New native flag reads are recorded in shared walk raw; old pcmp flag
+  read stays at its original position. New ordinary RAM/hash/read work exists.
+- Separate CURRENT_PARENT_GRAPH_INPUT_RAW_V3=310480B, binding408/live304,
+  inner producer309664; old PCMP356688/PCLI252488 and all old RAW schemas stay
+  unchanged. Full original PCMP coverage composes its two EXISTING freshly
+  rehashed prefix/call digests with3104 uncovered seal bytes, including ALL
+  older final_arch, unissued digests and padding. No original hash phase or
+  guard removed. V1/310448 and V2/310480 retain their historical version/source
+  scope. Output first qualifies parentimage/disjoint records/callers/context/
+  images/system/native; cold exact route selection rejects foreign/interior
+  and absent client-close slots before stale caller pointers are followed.
+- Actual parent appends full new raw beside original raw before terminalhold/
+  Console/USB, including zero/unentered and poisoned outputs. StickyUNKNOWN
+  preserves actual API status/issued/returned and partial raw; poisoned complete
+  or reserved bytes are not cleared into success. No postfailure hardware
+  sample/guessed restore/free/retry/cleanup. The inner Map FP restore may already
+  have happened; new failure prevents the enclosing Map guard's FP restore.
+  Log50331648 and staticassert add RAW capacity only, NOT resource/profile
+  qualification. Main REMOTE_MEMORY defaultOFF; consumer/builder/CLI/new exact
+  profile/resource not connected.
+- FINAL4463 ASAN/UBSAN SOFTWARE PASS1323.4109002909972s, final source/test equal
+  full-iteration0002 snapshots. Six genuine peer pgcd open/query/finish/read
+  contexts,11 existing Maps,12 stored slots with client-close zero; normal
+  graph66AT/69virtualclocks, max256GCD321AT/324clocks,257th refused before follow.
+  Partial/native/control/source/foreign/overlap/replay/expiry/rollback, all304
+  active caller bytes, all aux boundary bytes and148 old-frame fields twice
+  covered. SOFTWARE pool ABA still PASSES: snapshots do not establish owner.
+  All service/AT/FP/arch leaves are peers; PE inert DATA. Terminal longjmp peer
+  models a nonreturning stop, NOT physical retirement or whole constructors.
+- Affected1789 producer PASS109.46323541703168s; affected2341 current-map
+  PASS84.66187058400828s and167 dispatch PASS4.136711708037183s, their source/
+  header bytes unchanged since those passes and traces exclude producerheader.
+  CURRENT absolute shim FIRST/-H, private old comparison headers never current
+  qualification. Six final wholeparent/producer/graph COFF+MachO/generalregs/
+  maxframe1024 builds PASS. Producer/graph exports only exactPARrestore MSR,
+  noSMC; parent old FP/terminalmask is not zero-write. Eight same-invocation
+  full309664B normal old/new seeds equal plus actual normal target reads;
+  target/release/dispatch MachO equal, COFF only typed TimeDateStamp differs.
+  OFF PREPROCESSED pairs same-command equal MachO640972/COFF640999, changed
+  headers excluded. Unchanged474/771/2885/8487/1452/5141/models/CI not rerun.
+- Independent Python struct/hashlib checks full8006016B normal archive plus
+  five667168B max/refused bundles:16 records,12 successful graphs/120 Core
+  hashes/1047AT/1083virtualclocks, all raw/partial/unused/padding/digests and
+  full frame seals. Every byte of four failed aux records reconstructed in NEW
+  expected buffers; original RAW untouched, captured pointers numeric only.
+  Peer native-flag refusal records actual0->1 before first graph AT, preserving
+  existing API0/1/1 and outer error7/no outer FP restore; no native execution.
+  Private later-map-graph-inputs-0001/proof.json
+  SHA70bfdcfbe412dafceb1e43ef45aa06e1a84151a431e09fcdf8933be7acc9a46e;
+  source/softwarec509ba35e9b8e609399bd4b2e3911f1ee6da9a776d9a179491bc382f5f034417.
+  Earlier smoke alignment/macro/include errors,232B-view compatibility finding
+  and V1/V2 evidence retained. No production guard/frame limit lowered.
+- NEXT: bind remaining actual transitive Timer/GIC/provider/currenttimer/
+  deferred callback source/effects/work and postsource lifetimes, plus wholecall
+  time, to six NEW actual contexts. Graph's last CNTVCT is LATER than the old
+  pcmp.final_arch header sample; enclosing latest-counter handoff and wholecall
+  preemption/fault/latency qualification are NOT done. Original opening200ms
+  never renew/rebase/reopen; no cross physical/virtual epoch math or closedPGCD
+  lease. New INPUT/fullbytes/count/key/tag/emptyqueues/complete cannot establish
+  active inventory/owner/ABA/futureIRQ. Other release/backing geometry remains
+  unsupported; do not guess the phone matches. Do not repeat this walk/wrapper/
+  seal/tests/decoder/old source audits or blind GetMap/inventory boot.
+  Then actual independent MSA/RMTFS claims/cache/secureVMID/MPU/remoteDMAstop/
+  handback/normal+UNKNOWN retirement; full changedparent/affected checks/two
+  SERIAL wholeconstructormodels/new exact profile/resource/codec/transition/
+  freeze/ONEhelper before device. NOTREADY: no publishPA/MSS/NVserve/radio/device.
+  All host/build jobs ENDED; no new physicalUSB/native/MMIO/SMC/original PE/
+  model/CI/codec admission/image/payload/helper/freeze. PHONE still only0188
+  fullretire then independent actual Polaris FASTBOOT2026-11-02T10:05:37.496860Z,
+  not current LIVE. WiFi firmware/driver/scan/join/IP/DNS/data never physically
+  successful; no credible date. Sound/camera STOP. No physical/authorization
+  question pending; consumed controller and all stable data boundaries remain.
+
 - NEW0189 latest PUBLIC functional source
   627b04a364e495104520c04d3eaeafcb239472af is pushed through the SAME directpush
   under actual current/future source/text consentce8ce4fd. Independent readonly

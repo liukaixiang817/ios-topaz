@@ -56,6 +56,10 @@ struct pcmp_live {
     const struct pcmp_input*caller_input;const struct pgcd_io*caller_io;
     uint8_t seal[32],call_digest[32];unsigned map_copied,map_issued,map_returned,header_started,header_copied;
 };
+#if defined(POLARIS_WIFI_CURRENT_GRAPH_INPUT)
+/* Defined by the actual parent, while this caller's stack is still active. */
+static int pcmp_parent_graph(struct pcmp_live*,int(*)(struct ppli_at*));
+#endif
 static inline int pcmp_source_equal(const struct pcmp_live*l)
 {
     const struct pgcd_result*now=l->input.context->record,*old=&l->r->source_before;
@@ -68,7 +72,11 @@ static inline int pcmp_source_equal(const struct pcmp_live*l)
 }
 /* Compare typed pointer bytes before following a context potentially changed
  * by a callback. Local copies select the original pointers and function ABI. */
-static inline int pcmp_stable(const struct pcmp_live*l)
+/* DATA closure is shared with the later graph. Native admission remains
+ * at the original guarded reader: pcmp_stable samples its original flag;
+ * the graph records the shared walk's own pre/post native reads instead of
+ * silently adding unrecorded native samples at every DATA comparison. */
+static inline int pcmp_source_prefix(const struct pcmp_live*l)
 {
     const struct pcmp_input*i=&l->input;struct pcmp_result*r=l->r;uint8_t actual[32];
     ppli_sha(r,offsetof(struct pcmp_result,binding_digest),actual);
@@ -79,7 +87,13 @@ static inline int pcmp_stable(const struct pcmp_live*l)
     if(l->map_copied){ppli_sha(&r->call,offsetof(struct pwmc_parent_map,digest),actual);if(!pgcd_equal(actual,l->call_digest,32))return 0;}
     if(!pgcd_equal(i->context->ticket,&r->ticket_before,sizeof(r->ticket_before))||!pcmp_source_equal(l)||
        !pgcd_equal(i->payload_binding,&r->payload_before,sizeof(r->payload_before))||
-       !pgcd_equal(i->images,&r->images_before,sizeof(r->images_before))||*i->native_flag||*i->load_state!=r->load_state||
+       !pgcd_equal(i->images,&r->images_before,sizeof(r->images_before)))return 0;
+    return 1;
+}
+static inline int pcmp_source_suffix(const struct pcmp_live*l)
+{
+    const struct pcmp_input*i=&l->input;const struct pcmp_result*r=l->r;
+    if(*i->load_state!=r->load_state||
        (uintptr_t)*i->payload_slot!=r->payload||(uintptr_t)*i->log_slot!=r->log||
        *i->received!=r->received||*i->payload_count!=r->payload_count||!pgcd_equal(i->plan,&r->plan,sizeof(r->plan)))return 0;
     if((uintptr_t)l->original_io.system->boot!=r->boot_address||
@@ -96,6 +110,10 @@ static inline int pcmp_stable(const struct pcmp_live*l)
         !pwmc_zero(r->header_AT.native,sizeof(r->header_AT.native)))return 0;
     return r->attempted==1&&r->unknown==1&&!r->complete&&!r->error&&r->map_issued==l->map_issued&&r->map_returned==l->map_returned;
 }
+static inline int pcmp_source_stable(const struct pcmp_live*l)
+{return pcmp_source_prefix(l)&&pcmp_source_suffix(l);}
+static inline int pcmp_stable(const struct pcmp_live*l)
+{return pcmp_source_prefix(l)&&!*l->input.native_flag&&pcmp_source_suffix(l);}
 static inline int pcmp_arch(void*opaque,struct pgcd_arch*a)
 {
     struct pcmp_live*l=opaque;if(!pcmp_stable(l))return 0;int ok=l->original_io.arch(l->original_io.opaque,a);
@@ -151,6 +169,9 @@ static __attribute__((noinline)) int pcmp_post(struct pcmp_live*live,int(*page_r
     if(!pgcd_equal(hash,header_digest,32)||r->header_bytes!=r->payload_before.header_bytes||r->arch_issued!=1||r->arch_returned!=1)return pcmp_fail(r,6);
     ppli_sha(in.images,offsetof(struct ppli_result,digest),hash);if(!pgcd_equal(hash,r->images_digest,32))return pcmp_fail(r,6);
     ppli_sha(&r->call,offsetof(struct pwmc_parent_map,digest),hash);if(!pgcd_equal(hash,call_digest,32))return pcmp_fail(r,6);
+#if defined(POLARIS_WIFI_CURRENT_GRAPH_INPUT)
+    if(!pcmp_parent_graph(live,page_read))return pcmp_fail(r,7);
+#endif
     return 1;
 }
 static inline int pcmp_read_path(struct pcmp_result*r,const struct pcmp_input*input,const struct pgcd_io*original_io,

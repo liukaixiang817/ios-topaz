@@ -32,10 +32,46 @@ struct pbgi_result {
 _Static_assert(sizeof(struct pbgi_node)==256&&sizeof(struct pbgi_roots)==144,"full original map/GCD container and roots");
 _Static_assert(sizeof(struct pbgi_input)==96&&sizeof(struct pbgi_clock)==128&&sizeof(struct pbgi_result)==309664,"complete producer raw ABI, separate from private-call frames");
 _Static_assert(offsetof(struct pbgi_result,call)==96&&offsetof(struct pbgi_result,node)==71688&&offsetof(struct pbgi_result,clock)==203096&&offsetof(struct pbgi_result,digest)==309628,"independent producer decoder offsets");
+/* Separate later-map INPUT evidence. The producer ABI above is unchanged;
+ * this binding contains the real, still-active later caller, never a future
+ * executable IO context reconstructed from a completed capture. */
+struct pcmg_binding {
+    uint64_t parent_address;struct pcmp_live parent;struct pcmp_route route;
+    uint32_t index,slot;uint64_t opening,minimum;uint8_t frame_seal[32];
+};
+struct pcmg_result {
+    struct pcmg_binding binding;uint8_t binding_digest[32];struct pbgi_result graph;
+    struct pcmp_live parent_after;
+    uint32_t attempted,complete,unknown,error,parent_copied,reserved;uint8_t digest[32];
+};
 struct pbgi_live {
     struct pbgi_result*r;struct pbgi_input in;const struct pbgi_input*caller;
     uint64_t core,bytes;uint8_t call_seal[32],full_call_seal[32],root_seal[32];unsigned keyed,rooted;
 };
+struct pbgi_active {
+    struct pbgi_live source;
+    uint64_t minimum;const struct pcmp_live*parent;const struct pcmg_result*current;uint8_t current_seal[32];
+};
+_Static_assert(sizeof(struct pbgi_live)==232&&sizeof(struct pbgi_active)==288&&
+    offsetof(struct pbgi_active,minimum)==232,"unchanged DATA view; separate active-caller controls");
+/* pcmp_source_prefix independently rehashes the actual binding prefix and
+ * full call at every use. Bind their protected expected digests plus EVERY
+ * remaining frame byte, including digest fields and padding. This covers
+ * the whole frame without duplicating its large existing hash work. */
+static inline void pbgi_parent_frame_seal(const struct pcmp_live*p,uint8_t out[32])
+{
+    const struct pcmp_result*r=p->r;struct pwfi_sha256 h;pwfi_init(&h);
+    for(unsigned k=0;k<32;k++)pwfi_byte(&h,p->seal[k]);
+    for(unsigned k=0;k<32;k++)pwfi_byte(&h,p->call_digest[k]);
+    for(size_t k=offsetof(struct pcmp_result,binding_digest);k<offsetof(struct pcmp_result,call);k++)pwfi_byte(&h,((const uint8_t*)r)[k]);
+    for(size_t k=offsetof(struct pwmc_parent_map,digest);k<sizeof(r->call);k++)pwfi_byte(&h,((const uint8_t*)&r->call)[k]);
+    for(size_t k=offsetof(struct pcmp_result,header_AT);k<sizeof(*r);k++)pwfi_byte(&h,((const uint8_t*)r)[k]);
+    pwfi_final(&h,out);
+}
+_Static_assert(offsetof(struct pcmp_result,call)+sizeof(struct pwmc_parent_map)==offsetof(struct pcmp_result,header_AT)&&
+    64+offsetof(struct pcmp_result,call)-offsetof(struct pcmp_result,binding_digest)+
+    sizeof(struct pwmc_parent_map)-offsetof(struct pwmc_parent_map,digest)+
+    sizeof(struct pcmp_result)-offsetof(struct pcmp_result,header_AT)==3104,"complete caller coverage with3104 extra seal bytes");
 static inline int pbgi_fail(struct pbgi_result*r,unsigned e)
 {if(!r->error)r->error=e;r->unknown=1;return 0;}
 static inline void pbgi_call_seal(const struct pwmc_parent_map*r,uint64_t bytes,uint8_t out[32])
@@ -50,11 +86,16 @@ static inline void pbgi_hash_part(struct pwfi_sha256*h,const void*p,size_t bytes
  * unreturned tail cannot affect address qualification and is verified against
  * the original full-call SHA before completion, without hashing64KiB of dead
  * output at every AT. No field is erased after an error. */
-static inline int pbgi_envelope(const struct pbgi_live*l,const void*skip,size_t skip_bytes,uint8_t out[32])
+static inline int pbgi_envelope(const struct pbgi_active*active,const void*skip,size_t skip_bytes,uint8_t out[32])
 {
+    const struct pbgi_live*l=&active->source;
     const struct pbgi_result*r=l->r;
     if(r->core_pages>PBGI_CORE_PAGES||r->count[0]>PBGI_NODES||r->count[1]>PBGI_NODES||r->arch_issued>PBGI_CLOCKS)return 0;
     struct pwfi_sha256 h;pwfi_init(&h);
+    if(active->current){
+        pbgi_hash_part(&h,active->current,offsetof(struct pcmg_result,graph),skip,skip_bytes);
+        pbgi_hash_part(&h,&active->current->parent_after,sizeof(*active->current)-offsetof(struct pcmg_result,parent_after),skip,skip_bytes);
+    }
     pbgi_hash_part(&h,r,offsetof(struct pbgi_result,call)+offsetof(struct pwmc_parent_map,data)+(size_t)l->bytes,skip,skip_bytes);
     const uint8_t*after=r->call.digest;
     pbgi_hash_part(&h,after,(const uint8_t*)r->Core_AT-after,skip,skip_bytes);
@@ -97,9 +138,21 @@ static inline int pbgi_roots_current(const struct pbgi_live*l)
         pgcd_equal(r->pool,(const void*)(uintptr_t)(l->core+0x1d1a0),sizeof(r->pool))&&
         pgcd_equal(r->type_policy,(const void*)(uintptr_t)(l->core+0x1be68),sizeof(r->type_policy));
 }
-static inline int pbgi_stable(const struct pbgi_live*l)
+static inline int pbgi_stable(const struct pbgi_active*active)
 {
+    const struct pbgi_live*l=&active->source;
     const struct pbgi_result*r=l->r;uint8_t hash[32];
+    if(active->current){
+        const struct pcmg_result*c=active->current;
+        ppli_sha(&c->binding,sizeof(c->binding),hash);
+        if(!active->parent||&c->graph!=r||!pgcd_equal(hash,active->current_seal,32)||
+           !pgcd_equal(c->binding_digest,active->current_seal,32)||c->binding.parent_address!=(uintptr_t)active->parent||
+           !pgcd_equal(active->parent,&c->binding.parent,sizeof(*active->parent))||
+           c->attempted!=1||c->complete||c->unknown!=1||c->error||c->parent_copied||c->reserved||
+           !pwmc_zero(&c->parent_after,sizeof(c->parent_after))||!pwmc_zero(c->digest,sizeof(c->digest)))return 0;
+        pbgi_parent_frame_seal(active->parent,hash);
+        if(!pgcd_equal(hash,c->binding.frame_seal,32)||!pcmp_source_stable(active->parent))return 0;
+    }else if(active->parent)return 0;
     if(!pgcd_equal(&r->input,&l->in,sizeof(l->in))||!pgcd_equal(l->caller,&l->in,sizeof(l->in))||
        r->core!=l->core||r->call.map.bytes!=l->bytes||l->in.call->map.bytes!=l->bytes)return 0;
     pbgi_call_seal(&r->call,l->bytes,hash);if(!pgcd_equal(hash,l->call_seal,32))return 0;
@@ -109,24 +162,27 @@ static inline int pbgi_stable(const struct pbgi_live*l)
     if(l->keyed&&(r->initial_key!=r->call.map.key||pwfi_le((const void*)(uintptr_t)(l->core+0x1cdb0),8)!=r->initial_key))return 0;
     return !l->rooted||pbgi_roots_current(l);
 }
-static inline int pbgi_tick(struct pbgi_live*l)
+static inline int pbgi_tick(struct pbgi_active*active)
 {
-    struct pbgi_result*r=l->r;if(!pbgi_stable(l))return 0;
+    struct pbgi_live*l=&active->source;
+    struct pbgi_result*r=l->r;if(!pbgi_stable(active))return 0;
     unsigned k=r->arch_issued;if(k>=PBGI_CLOCKS||r->arch_returned!=k)return 0;
     /* Every retained sample is CNTVCT. Keep the original opening window,
      * and also refuse rollback from the immediately preceding sample. The
      * map's closing sample alone is not the most recent observed counter. */
-    uint64_t minimum=k?r->clock[k-1].raw.cpu.ticks:r->call.after.cpu.ticks;
+    uint64_t minimum=k?r->clock[k-1].raw.cpu.ticks:active->minimum;
     if(k&&(r->clock[k-1].issued!=1||r->clock[k-1].returned!=1||
        r->clock[k-1].native_issued!=3||r->clock[k-1].native_returned!=3))return 0;
     struct pbgi_clock*c=&r->clock[k];if(!pwmc_zero(c,sizeof(*c)))return 0;
     c->native_issued=1;c->native[0]=*l->in.native;c->native_returned=1;if(c->native[0])return 0;
     uint32_t issued=k+1,returned=r->arch_returned;r->arch_issued=issued;c->issued=1;
-    uint8_t before[32],after[32];if(!pbgi_envelope(l,&c->raw,sizeof(c->raw),before))return 0;
+    uint8_t before[32],after[32];if(!pbgi_envelope(active,&c->raw,sizeof(c->raw),before))return 0;
+    uint8_t control[32],actual_control[32];ppli_sha(active,sizeof(*active),control);
     int ok=l->in.io.arch(l->in.io.opaque,&c->raw);
-    if(!ok)return 0;
-    if(!pbgi_envelope(l,&c->raw,sizeof(c->raw),after)||!pgcd_equal(before,after,32)||
-       !pbgi_stable(l)||r->arch_issued!=issued||r->arch_returned!=returned)return 0;
+    ppli_sha(active,sizeof(*active),actual_control);
+    if(!pgcd_equal(control,actual_control,32)||!ok)return 0;
+    if(!pbgi_envelope(active,&c->raw,sizeof(c->raw),after)||!pgcd_equal(before,after,32)||
+       !pbgi_stable(active)||r->arch_issued!=issued||r->arch_returned!=returned)return 0;
     c->returned=1;r->arch_returned=issued;
     if(!pwfc_arch_stable(&r->call.after.cpu,&c->raw.cpu)||c->raw.cpacr!=r->call.after.cpacr||
        c->raw.cpu.daif||c->raw.cpu.group1!=1||c->raw.cpu.ticks<minimum||c->raw.cpu.ticks<l->in.opening||
@@ -150,54 +206,49 @@ static inline int pbgi_RAM(const struct pbgi_live*l,uint64_t address,uint64_t by
         }if(found!=1)return 0;
     }return 1;
 }
-static inline int pbgi_page(struct pbgi_live*l,struct ppli_at*a,uint64_t page,int(*read_page)(struct ppli_at*))
+static inline int pbgi_page(struct pbgi_active*active,struct ppli_at*a,uint64_t page,int(*read_page)(struct ppli_at*))
 {
-    if(!pwmc_zero(a,sizeof(*a))||!pbgi_stable(l)||!pbgi_RAM(l,page,4096))return 0;
+    struct pbgi_live*l=&active->source;
+    if(!pwmc_zero(a,sizeof(*a))||!pbgi_stable(active)||!pbgi_RAM(l,page,4096))return 0;
     a->page=page;a->native_issued=1;a->native[0]=*l->in.native;a->native_returned=1;if(a->native[0])return 0;
-    uint8_t before[32],after[32];if(!pbgi_envelope(l,a,sizeof(*a),before))return 0;
+    uint8_t before[32],after[32];if(!pbgi_envelope(active,a,sizeof(*a),before))return 0;
+    uint8_t control[32],actual_control[32];ppli_sha(active,sizeof(*active),control);
     int ok=read_page(a);
-    if(!ok||!pbgi_envelope(l,a,sizeof(*a),after)||!pgcd_equal(before,after,32)||!pbgi_stable(l)||
+    ppli_sha(active,sizeof(*active),actual_control);
+    if(!pgcd_equal(control,actual_control,32)||!ok||!pbgi_envelope(active,a,sizeof(*a),after)||!pgcd_equal(before,after,32)||!pbgi_stable(active)||
        a->page!=page||a->issued!=1||a->returned!=1||a->saved!=a->restored||
        a->par!=(UINT64_C(0xff00000000000b80)|page)||a->native_issued!=1||a->native_returned!=1||
        !pwmc_zero(a->native,sizeof(a->native)))return 0;
     a->native_issued=3;a->native[1]=*l->in.native;a->native_returned=3;
     if(a->native[1])return 0;struct ppli_at saved=*a;
-    if(!pbgi_tick(l)||!pgcd_equal(a,&saved,sizeof(saved)))return 0;return 1;
+    if(!pbgi_tick(active)||!pgcd_equal(a,&saved,sizeof(saved)))return 0;return 1;
 }
-static inline int pbgi_load(struct pbgi_live*l,struct pbgi_node*n,uint64_t address,unsigned bytes,int(*read_page)(struct ppli_at*))
+static inline int pbgi_load(struct pbgi_active*active,struct pbgi_node*n,uint64_t address,unsigned bytes,int(*read_page)(struct ppli_at*))
 {
+    struct pbgi_live*l=&active->source;
     if(!pwmc_zero(n,sizeof(*n))||(bytes!=64&&bytes!=120)||!pbgi_RAM(l,address,bytes))return 0;
     n->address=address;n->bytes=bytes;n->issued=1;
     for(uint64_t page=address&~UINT64_C(4095);page<address+bytes;page+=4096){
-        unsigned k=n->pages;if(k==2||!pbgi_page(l,&n->AT[k],page,read_page)||
+        unsigned k=n->pages;if(k==2||!pbgi_page(active,&n->AT[k],page,read_page)||
            n->address!=address||n->bytes!=bytes||n->issued!=1||n->returned||n->pages!=k||
            !pwmc_zero(n->raw,sizeof(n->raw)))return 0;
         n->pages=k+1;
     }
     pgcd_copy(n->raw,(const void*)(uintptr_t)address,bytes);n->returned=1;return 1;
 }
-static __attribute__((noinline)) int pbgi_capture(struct pbgi_result*r,const struct pbgi_input*input,int(*read_page)(struct ppli_at*))
+/* The same bounded DATA walk is used only inside a qualified active caller.
+ * The public producer below retains its exact phase4/capacity contract. */
+static __attribute__((noinline)) int pbgi_walk(struct pbgi_active*active,int(*read_page)(struct ppli_at*))
 {
-    if(!r||!input||!read_page||!pwmc_zero(r,sizeof(*r)))return 0;r->attempted=r->unknown=1;r->input=*input;
-    struct pbgi_input in=*input;
-    if(!in.call||!in.native||!in.opening||!in.io.system||!in.io.arch)return pbgi_fail(r,1);
-    r->call=*in.call;uint8_t hash[32];ppli_sha(&r->call,offsetof(struct pwmc_parent_map,digest),hash);
-    if(r->call.input.phase!=4||r->call.input.capacity!=PWMC_PARENT_MAP_CAP||r->call.input.native_flag!=in.native||
-       r->call.input.system!=in.io.system||!pgcd_equal(&in.io,&r->call.io,sizeof(in.io))||r->call.complete!=1||r->call.unknown||r->call.error||
-       in.opening>r->call.before.cpu.ticks||r->call.after.cpu.ticks<in.opening||r->call.after.cpu.ticks-in.opening>PGCD_FRESH_TICKS||
-       r->call.map.bytes>PGCD_MAP_CAP||!pwmc_parent_map_valid(&r->call)||!pgcd_equal(hash,r->call.digest,32)||
-       !pwmc_parent_in_image(&r->call.image_after,(uintptr_t)r,sizeof(*r)))return pbgi_fail(r,1);
-    r->core=r->call.boot_address-0x1b800;
-    struct pbgi_live live={.r=r,.in=in,.caller=input,.core=r->core,.bytes=r->call.map.bytes};
-    pbgi_call_seal(&r->call,live.bytes,live.call_seal);
-    pgcd_copy(live.full_call_seal,hash,32);
-    if(!pbgi_tick(&live)||!pbgi_RAM(&live,r->core,PGCI_IMAGE_BYTES))return pbgi_fail(r,2);
+    struct pbgi_live*l=&active->source;
+    struct pbgi_result*r=l->r;uint8_t hash[32];
+    if(!pbgi_tick(active)||!pbgi_RAM(l,r->core,PGCI_IMAGE_BYTES))return pbgi_fail(r,2);
     if(pwmc_parent_overlap(r->core,PGCI_IMAGE_BYTES,(uintptr_t)r->call.image_after.base,r->call.image_after.bytes)||
-       !pbgi_page(&live,&r->key_AT,(r->core+0x1cdb0)&~UINT64_C(4095),read_page))return pbgi_fail(r,2);
+       !pbgi_page(active,&r->key_AT,(r->core+0x1cdb0)&~UINT64_C(4095),read_page))return pbgi_fail(r,2);
     r->initial_key=pwfi_le((const void*)(uintptr_t)(r->core+0x1cdb0),8);
-    if(r->initial_key!=r->call.map.key)return pbgi_fail(r,2);live.keyed=1;
+    if(r->initial_key!=r->call.map.key)return pbgi_fail(r,2);l->keyed=1;
     for(unsigned k=0;k<PBGI_CORE_PAGES;k++){
-        if(!pbgi_page(&live,&r->Core_AT[k],r->core+4096*k,read_page)||r->core_pages!=k)return pbgi_fail(r,2);r->core_pages=k+1;
+        if(!pbgi_page(active,&r->Core_AT[k],r->core+4096*k,read_page)||r->core_pages!=k)return pbgi_fail(r,2);r->core_pages=k+1;
     }
     if(!pgci_verify((const void*)(uintptr_t)r->core,r->core,PGCI_IMAGE_BYTES,r->hashes[0],&r->hash_failed[0],&r->hash_count[0]))return pbgi_fail(r,3);
     const uint32_t locks[3]={0x1b340,0x1bd48,0x1c1f8};
@@ -211,7 +262,7 @@ static __attribute__((noinline)) int pbgi_capture(struct pbgi_result*r,const str
     pgcd_copy(r->pool,(const void*)(uintptr_t)(r->core+0x1d1a0),sizeof(r->pool));
     pgcd_copy(r->type_policy,(const void*)(uintptr_t)(r->core+0x1be68),sizeof(r->type_policy));
     if(r->roots.key!=r->call.map.key||r->roots.depth||r->roots.busy||r->roots.smm||r->roots.TPL!=4||pwfi_le(r->pool+16,4)!=4)return pbgi_fail(r,3);
-    pbgi_root_seal(r,live.root_seal);live.rooted=1;
+    pbgi_root_seal(r,l->root_seal);l->rooted=1;
     for(unsigned list=0;list<2;list++){
         uint64_t head=r->core+(list?0x1bd60:0x1b358),prior=head,next=r->roots.head[list][0];
         while(next!=head){
@@ -227,7 +278,7 @@ static __attribute__((noinline)) int pbgi_capture(struct pbgi_result*r,const str
             for(unsigned a=0;a<=list;a++)for(unsigned j=0;j<(a==list?k:r->count[a]);j++)
                 if(pwmc_parent_overlap(address,bytes,r->node[a][j].address,r->node[a][j].bytes))return pbgi_fail(r,4);
             struct pbgi_node*n=&r->node[list][k];
-            if(!pbgi_load(&live,n,address,bytes,read_page)||r->count[list]!=k)return pbgi_fail(r,4);
+            if(!pbgi_load(active,n,address,bytes,read_page)||r->count[list]!=k)return pbgi_fail(r,4);
             const uint8_t*b=n->raw+(list?24:0);
             if(pwfi_le(b,8)!=(list?UINT64_C(0x6d646367):UINT64_C(0x70616d6d))||pwfi_le(b+16,8)!=prior)return pbgi_fail(r,4);
             if(list){
@@ -247,21 +298,38 @@ static __attribute__((noinline)) int pbgi_capture(struct pbgi_result*r,const str
     /* A lower accounting bound is only consistency, never a list of active
      * allocations or permission to borrow anything from the pool. */
     if(pwfi_le(r->pool+8,8)<UINT64_C(120)*r->count[1])return pbgi_fail(r,4);
-    if(!pbgi_tick(&live))return pbgi_fail(r,5);
+    if(!pbgi_tick(active))return pbgi_fail(r,5);
     for(unsigned list=0;list<2;list++)for(unsigned k=0;k<r->count[list];k++){
         const struct pbgi_node*n=&r->node[list][k];
         if(!pgcd_equal(n->raw,(const void*)(uintptr_t)n->address,n->bytes)||!pwmc_zero(n->raw+n->bytes,120-n->bytes))return pbgi_fail(r,5);
     }
-    if(!pbgi_tick(&live))return pbgi_fail(r,5);
+    if(!pbgi_tick(active))return pbgi_fail(r,5);
     for(unsigned list=0;list<2;list++)for(unsigned k=0;k<r->count[list];k++){
         const struct pbgi_node*n=&r->node[list][k];if(!pgcd_equal(n->raw,(const void*)(uintptr_t)n->address,n->bytes))return pbgi_fail(r,5);
     }
     if(!pgci_verify((const void*)(uintptr_t)r->core,r->core,PGCI_IMAGE_BYTES,r->hashes[1],&r->hash_failed[1],&r->hash_count[1])||
-       !pbgi_stable(&live))return pbgi_fail(r,5);
+       !pbgi_stable(active))return pbgi_fail(r,5);
     ppli_sha(&r->call,offsetof(struct pwmc_parent_map,digest),hash);
-    if(!pgcd_equal(hash,live.full_call_seal,32)||!pgcd_equal(r->call.digest,live.full_call_seal,32))return pbgi_fail(r,5);
-    ppli_sha(in.call,offsetof(struct pwmc_parent_map,digest),hash);
-    if(!pgcd_equal(hash,live.full_call_seal,32)||!pgcd_equal(in.call->digest,live.full_call_seal,32))return pbgi_fail(r,5);
+    if(!pgcd_equal(hash,l->full_call_seal,32)||!pgcd_equal(r->call.digest,l->full_call_seal,32))return pbgi_fail(r,5);
+    ppli_sha(l->in.call,offsetof(struct pwmc_parent_map,digest),hash);
+    if(!pgcd_equal(hash,l->full_call_seal,32)||!pgcd_equal(l->in.call->digest,l->full_call_seal,32))return pbgi_fail(r,5);
     r->unknown=0;r->complete=1;ppli_sha(r,offsetof(struct pbgi_result,digest),r->digest);return 1;
+}
+static __attribute__((noinline)) int pbgi_capture(struct pbgi_result*r,const struct pbgi_input*input,int(*read_page)(struct ppli_at*))
+{
+    if(!r||!input||!read_page||!pwmc_zero(r,sizeof(*r)))return 0;r->attempted=r->unknown=1;r->input=*input;
+    struct pbgi_input in=*input;
+    if(!in.call||!in.native||!in.opening||!in.io.system||!in.io.arch)return pbgi_fail(r,1);
+    r->call=*in.call;uint8_t hash[32];ppli_sha(&r->call,offsetof(struct pwmc_parent_map,digest),hash);
+    if(r->call.input.phase!=4||r->call.input.capacity!=PWMC_PARENT_MAP_CAP||r->call.input.native_flag!=in.native||
+       r->call.input.system!=in.io.system||!pgcd_equal(&in.io,&r->call.io,sizeof(in.io))||r->call.complete!=1||r->call.unknown||r->call.error||
+       in.opening>r->call.before.cpu.ticks||r->call.after.cpu.ticks<in.opening||r->call.after.cpu.ticks-in.opening>PGCD_FRESH_TICKS||
+       r->call.map.bytes>PGCD_MAP_CAP||!pwmc_parent_map_valid(&r->call)||!pgcd_equal(hash,r->call.digest,32)||
+       !pwmc_parent_in_image(&r->call.image_after,(uintptr_t)r,sizeof(*r)))return pbgi_fail(r,1);
+    r->core=r->call.boot_address-0x1b800;
+    struct pbgi_active live={.source={.r=r,.in=in,.caller=input,.core=r->core,.bytes=r->call.map.bytes},.minimum=r->call.after.cpu.ticks};
+    pbgi_call_seal(&r->call,live.source.bytes,live.source.call_seal);
+    pgcd_copy(live.source.full_call_seal,hash,32);
+    return pbgi_walk(&live,read_page);
 }
 #endif
