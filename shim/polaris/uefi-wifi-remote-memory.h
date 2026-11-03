@@ -398,16 +398,16 @@ static inline int pwmc_service_leave(struct pwmc_result*r,unsigned op,int return
  * operation must not newly queue the memory-map-change callback fanout.
  * This does not make asynchronous firmware interrupts or other callbacks
  * ours; the caller still needs the normal original-service qualification. */
+struct pwmc_irq_map_view {const uint8_t*data;uint64_t bytes,stride,self_base,self_bytes;};
 static inline void pwmc_events_digest(const struct pwmc_event_path*p,uint8_t out[32])
 {
     struct pwfi_sha256 hash;pwfi_init(&hash);const uint8_t*bytes=(const void*)p;
     for(size_t k=0;k<offsetof(struct pwmc_event_path,digest);k++)pwfi_byte(&hash,bytes[k]);
     pwfi_final(&hash,out);
 }
-static inline int pwmc_events_replay(const struct pwmc_result*r,unsigned operation)
+static inline int pwmc_events_replay_map(const struct pwmc_event_path*p,uint64_t core,const struct pwmc_irq_map_view*m)
 {
-    const struct pwmc_event_path*p=&r->events[operation];const struct pgcd_result*s=&r->source[operation];
-    uint64_t head=s->core+0x1c368,previous=head;uint8_t digest[32];pwmc_events_digest(p,digest);
+    uint64_t head=core+0x1c368,previous=head;uint8_t digest[32];pwmc_events_digest(p,digest);
     if(p->attempted!=1||p->complete!=1||p->reserved||p->count>PWMC_EVENT_MAX||p->pending||
        pwfi_le(p->lock,8)!=31||pwfi_le(p->lock+16,4)!=1||
        !pgcd_equal(p->group,&pwmc_map_change_group,16)||!pgcd_equal(p->digest,digest,32))return 0;
@@ -415,15 +415,15 @@ static inline int pwmc_events_replay(const struct pwmc_result*r,unsigned operati
         const struct pwmc_event_node*n=&p->node[k];uint64_t first=n->address&~UINT64_C(4095);
         unsigned pages=(unsigned)(((n->address+sizeof(n->raw)-1)&~UINT64_C(4095))-first)/4096+1;
         if(!n->address||(n->address&7)||n->address>UINT64_MAX-sizeof(n->raw)||
-           pgcd_in_self(s,n->address,sizeof(n->raw))||n->issued!=1||n->returned!=1||n->reserved||
+           (m->self_bytes>=sizeof(n->raw)&&n->address>=m->self_base&&n->address-m->self_base<=m->self_bytes-sizeof(n->raw))||n->issued!=1||n->returned!=1||n->reserved||
            pwfi_le(n->raw,8)!=UINT64_C(0x746e7665)||pages>2||n->AT_count!=pages||
            pwfi_le(n->raw+24,8)!=previous||
            (k?pwfi_le(p->node[k-1].raw+16,8):p->head[0])!=n->address+16||
            pgcd_equal(n->raw+56,&pwmc_map_change_group,16))return 0;
         for(unsigned j=0;j<pages;j++)if(n->AT_page[j]!=first+4096*j||
            n->AT_raw[j]!=(UINT64_C(0xff00000000000b80)|n->AT_page[j])||
-           (!polaris_efi_range_owned(s->maps[0],s->map[0].bytes,s->map[0].stride,n->AT_page[j],4096,3)&&
-            !polaris_efi_range_owned(s->maps[0],s->map[0].bytes,s->map[0].stride,n->AT_page[j],4096,4)))return 0;
+           (!polaris_efi_range_owned(m->data,m->bytes,m->stride,n->AT_page[j],4096,3)&&
+            !polaris_efi_range_owned(m->data,m->bytes,m->stride,n->AT_page[j],4096,4)))return 0;
         if(pages==1&&(n->AT_page[1]||n->AT_raw[1]))return 0;
         for(unsigned j=0;j<k;j++)if(p->node[j].address==n->address)return 0;
         previous=n->address+16;
@@ -431,14 +431,15 @@ static inline int pwmc_events_replay(const struct pwmc_result*r,unsigned operati
     if(p->head[1]!=previous||(p->count?pwfi_le(p->node[p->count-1].raw+16,8):p->head[0])!=head)return 0;
     return pwmc_zero(p->node+p->count,(PWMC_EVENT_MAX-p->count)*sizeof(p->node[0]));
 }
+static inline int pwmc_events_replay(const struct pwmc_result*r,unsigned operation)
+{const struct pgcd_result*s=&r->source[operation];const struct pwmc_irq_map_view m={s->maps[0],s->map[0].bytes,s->map[0].stride,s->self_base,s->self_bytes};return pwmc_events_replay_map(&r->events[operation],s->core,&m);}
 /* No callback follows the last equality check on the physical path: the
  * ordinary source checks run first, then these RAM comparisons, then only
  * the source-bound ABI leaf. The software peer can mutate at order/clock
  * boundaries and must be refused before the first allocator call. */
-static inline int pwmc_events_current(const struct pwmc_result*r,unsigned operation)
+static inline int pwmc_events_current_map(const struct pwmc_event_path*p,uint64_t core,const struct pwmc_irq_map_view*m)
 {
-    const struct pwmc_event_path*p=&r->events[operation];uint64_t core=r->source[operation].core;
-    if(!pwmc_events_replay(r,operation)||
+    if(!pwmc_events_replay_map(p,core,m)||
        !pgcd_equal(p->lock,(const void*)(uintptr_t)(core+0x1c350),24)||
        !pgcd_equal(p->head,(const void*)(uintptr_t)(core+0x1c368),16)||
        pwfi_le((const void*)(uintptr_t)(core+0x1dbc0),8))return 0;
@@ -446,64 +447,79 @@ static inline int pwmc_events_current(const struct pwmc_result*r,unsigned operat
         (const void*)(uintptr_t)p->node[k].address,sizeof(p->node[k].raw)))return 0;
     return 1;
 }
-static inline int pwmc_events_capture(struct pwmc_result*r,unsigned operation)
+static inline int pwmc_events_current(const struct pwmc_result*r,unsigned operation)
+{const struct pgcd_result*s=&r->source[operation];const struct pwmc_irq_map_view m={s->maps[0],s->map[0].bytes,s->map[0].stride,s->self_base,s->self_bytes};return pwmc_events_current_map(&r->events[operation],s->core,&m);}
+struct pwmc_capture_context {struct pwmc_result*r;unsigned operation;};
+static inline int pwmc_event_capture_node(void*opaque,struct pwmc_event_node*n,uint64_t address)
 {
-    struct pwmc_event_path*p=&r->events[operation];struct pgcd_context*c=&r->context[operation];
-    uint64_t core=c->record->core,head=core+0x1c368,previous=head,next;
-    if(!pwmc_zero(p,sizeof(*p))||!pwmc_source(r,operation))return pwmc_fail(r,PWMC_CONTEXT,operation||r->held);
+    const struct pwmc_capture_context*x=opaque;struct pwmc_result*r=x->r;unsigned operation=x->operation;struct pgcd_context*c=&r->context[operation];
+    n->address=address;
+    if(address>UINT64_MAX-sizeof(n->raw)||pgcd_in_self(c->record,address,sizeof(n->raw)))return pwmc_fail(r,PWMC_CONTEXT,operation||r->held);
+    uint64_t end=address+sizeof(n->raw);n->issued=1;
+    for(uint64_t at=address&~UINT64_C(4095);at<end;at+=4096){
+        if(n->AT_count==2||(!polaris_efi_range_owned(c->record->maps[0],c->record->map[0].bytes,c->record->map[0].stride,at,4096,3)&&
+           !polaris_efi_range_owned(c->record->maps[0],c->record->map[0].bytes,c->record->map[0].stride,at,4096,4)))return pwmc_fail(r,PWMC_CONTEXT,operation||r->held);
+        unsigned k=n->AT_count;uint64_t where=0;n->AT_page[k]=at;
+        if(!pwmc_context_intact(r,operation)||!pwmc_parameters(r)||
+           !c->io.identity(c->io.opaque,at,4096,&where,&n->AT_raw[k])||!pwmc_context_intact(r,operation)||!pwmc_parameters(r)||
+           n->address!=address||n->AT_page[k]!=at||where!=at||
+           n->AT_raw[k]!=(UINT64_C(0xff00000000000b80)|at))return pwmc_fail(r,PWMC_TRANSLATION,1);
+        n->AT_count=k+1;
+    }
+    pgcd_copy(n->raw,(const void*)(uintptr_t)address,sizeof(n->raw));n->returned=1;return 1;
+}
+/* Same bounded DATA walk, shared with the actual incoming-contract caller.
+ * read_node qualifies each real node before any pointer is followed. */
+static inline int pwmc_events_read(struct pwmc_event_path*p,uint64_t core,void*opaque,
+    int(*read_node)(void*,struct pwmc_event_node*,uint64_t))
+{
+    uint64_t head=core+0x1c368,previous=head,next;
+    if(!pwmc_zero(p,sizeof(*p))||!read_node)return 0;
     p->attempted=1;pgcd_copy(p->lock,(const void*)(uintptr_t)(core+0x1c350),24);
     pgcd_copy(p->head,(const void*)(uintptr_t)head,16);pgcd_copy(p->group,(const void*)(uintptr_t)(core+0x1b130),16);
     p->pending=pwfi_le((const void*)(uintptr_t)(core+0x1dbc0),8);next=p->head[0];
-    if(pwfi_le(p->lock,8)!=31||pwfi_le(p->lock+16,4)!=1||p->pending||
-       !pgcd_equal(p->group,&pwmc_map_change_group,16))return pwmc_fail(r,PWMC_CONTEXT,operation||r->held);
+    if(pwfi_le(p->lock,8)!=31||pwfi_le(p->lock+16,4)!=1||p->pending||!pgcd_equal(p->group,&pwmc_map_change_group,16))return 0;
     while(next!=head){
-        if(p->count==PWMC_EVENT_MAX||next<16||(next&7))return pwmc_fail(r,PWMC_CONTEXT,operation||r->held);
-        struct pwmc_event_node*n=&p->node[p->count];n->address=next-16;
-        if(n->address>UINT64_MAX-sizeof(n->raw)||pgcd_in_self(c->record,n->address,sizeof(n->raw)))return pwmc_fail(r,PWMC_CONTEXT,operation||r->held);
-        for(unsigned k=0;k<p->count;k++)if(p->node[k].address==n->address)return pwmc_fail(r,PWMC_CONTEXT,operation||r->held);
-        uint64_t first=n->address&~UINT64_C(4095),end=n->address+sizeof(n->raw);
-        n->issued=1;
-        for(uint64_t at=first;at<end;at+=4096){
-            if(n->AT_count==2||(!polaris_efi_range_owned(c->record->maps[0],c->record->map[0].bytes,c->record->map[0].stride,at,4096,3)&&
-               !polaris_efi_range_owned(c->record->maps[0],c->record->map[0].bytes,c->record->map[0].stride,at,4096,4)))return pwmc_fail(r,PWMC_CONTEXT,operation||r->held);
-            unsigned k=n->AT_count;uint64_t where=0;n->AT_page[k]=at;
-            if(!pwmc_context_intact(r,operation)||!pwmc_parameters(r)||
-               !c->io.identity(c->io.opaque,at,4096,&where,&n->AT_raw[k])||!pwmc_context_intact(r,operation)||!pwmc_parameters(r)||
-               n->address!=next-16||n->AT_page[k]!=at||where!=at||
-               n->AT_raw[k]!=(UINT64_C(0xff00000000000b80)|at))return pwmc_fail(r,PWMC_TRANSLATION,1);
-            n->AT_count=k+1;
-        }
-        pgcd_copy(n->raw,(const void*)(uintptr_t)n->address,sizeof(n->raw));n->returned=1;p->count++;
-        if(pwfi_le(n->raw,8)!=UINT64_C(0x746e7665)||pwfi_le(n->raw+24,8)!=previous||
-           pgcd_equal(n->raw+56,&pwmc_map_change_group,16))return pwmc_fail(r,PWMC_CONTEXT,operation||r->held);
+        unsigned index=p->count;if(index>=PWMC_EVENT_MAX||next<16||(next&7))return 0;
+        struct pwmc_event_node*n=&p->node[index];uint64_t address=next-16;
+        if(address>UINT64_MAX-sizeof(n->raw))return 0;
+        for(unsigned k=0;k<index;k++)if(p->node[k].address==address)return 0;
+        if(!read_node(opaque,n,address)||p->count!=index||n->address!=address||n->issued!=1||n->returned!=1)return 0;p->count=index+1;
+        if(pwfi_le(n->raw,8)!=UINT64_C(0x746e7665)||pwfi_le(n->raw+24,8)!=previous||pgcd_equal(n->raw+56,&pwmc_map_change_group,16))return 0;
         previous=next;next=pwfi_le(n->raw+16,8);
     }
-    p->complete=1;pwmc_events_digest(p,p->digest);
-    if(!pwmc_source(r,operation)||!pwmc_events_current(r,operation))return pwmc_fail(r,PWMC_CONTEXT,1);
-    return 1;
+    p->complete=1;pwmc_events_digest(p,p->digest);return 1;
+}
+static inline int pwmc_events_capture(struct pwmc_result*r,unsigned operation)
+{
+    struct pwmc_event_path*p=&r->events[operation];
+    if(!pwmc_zero(p,sizeof(*p))||!pwmc_source(r,operation))return pwmc_fail(r,PWMC_CONTEXT,operation||r->held);
+    struct pwmc_capture_context context={r,operation};
+    if(!pwmc_events_read(p,r->source[operation].core,&context,pwmc_event_capture_node))return pwmc_fail(r,PWMC_CONTEXT,operation||r->held);
+    if(!pwmc_source(r,operation)||!pwmc_events_current(r,operation))return pwmc_fail(r,PWMC_CONTEXT,1);return 1;
 }
 static inline void pwmc_timers_digest(const struct pwmc_timer_path*p,uint8_t out[32])
 {
     struct pwfi_sha256 hash;pwfi_init(&hash);const uint8_t*b=(const void*)p;
     for(size_t k=0;k<offsetof(struct pwmc_timer_path,digest);k++)pwfi_byte(&hash,b[k]);pwfi_final(&hash,out);
 }
-static inline int pwmc_timer_metadata(const struct pwmc_result*r,unsigned operation,const struct pwmc_timer_node*n)
+static inline int pwmc_timer_metadata_map(const struct pwmc_timer_node*n,const struct pwmc_irq_map_view*m)
 {
-    const struct pgcd_result*s=&r->source[operation];
-    if(!n->address||(n->address&7)||n->address>UINT64_MAX-sizeof(n->raw)||pgcd_in_self(s,n->address,sizeof(n->raw))||
+    if(!n->address||(n->address&7)||n->address>UINT64_MAX-sizeof(n->raw)||(m->self_bytes>=sizeof(n->raw)&&n->address>=m->self_base&&n->address-m->self_base<=m->self_bytes-sizeof(n->raw))||
        n->issued!=1||n->returned!=1||n->reserved)return 0;
     uint64_t first=n->address&~UINT64_C(4095);unsigned pages=(unsigned)(((n->address+sizeof(n->raw)-1)&~UINT64_C(4095))-first)/4096+1;
     if(pages>2||n->AT_count!=pages)return 0;
     for(unsigned k=0;k<pages;k++)if(n->AT_page[k]!=first+4096*k||n->AT_raw[k]!=(UINT64_C(0xff00000000000b80)|n->AT_page[k])||
-       (!polaris_efi_range_owned(s->maps[0],s->map[0].bytes,s->map[0].stride,n->AT_page[k],4096,3)&&
-        !polaris_efi_range_owned(s->maps[0],s->map[0].bytes,s->map[0].stride,n->AT_page[k],4096,4)))return 0;
+       (!polaris_efi_range_owned(m->data,m->bytes,m->stride,n->AT_page[k],4096,3)&&
+        !polaris_efi_range_owned(m->data,m->bytes,m->stride,n->AT_page[k],4096,4)))return 0;
     return pages==2||(!n->AT_page[1]&&!n->AT_raw[1]);
 }
-static inline int pwmc_timers_replay(const struct pwmc_result*r,unsigned operation)
+static inline int pwmc_timer_metadata(const struct pwmc_result*r,unsigned operation,const struct pwmc_timer_node*n)
+{const struct pgcd_result*s=&r->source[operation];const struct pwmc_irq_map_view m={s->maps[0],s->map[0].bytes,s->map[0].stride,s->self_base,s->self_bytes};return pwmc_timer_metadata_map(n,&m);}
+static inline int pwmc_timers_replay_map(const struct pwmc_timer_path*p,const struct pwmc_event_path*e,uint64_t core,const struct pwmc_irq_map_view*m)
 {
-    const struct pwmc_timer_path*p=&r->timers[operation];const struct pwmc_event_path*e=&r->events[operation];
-    uint64_t core=r->source[operation].core,head=core+0x1c3f0,prior=head,last=0;uint8_t digest[32];pwmc_timers_digest(p,digest);
-    if(!pwmc_events_replay(r,operation)||p->attempted!=1||p->complete!=1||p->reserved||p->count>PWMC_TIMER_MAX||!pgcd_equal(digest,p->digest,32)||
+    uint64_t head=core+0x1c3f0,prior=head,last=0;uint8_t digest[32];pwmc_timers_digest(p,digest);
+    if(!pwmc_events_replay_map(e,core,m)||p->attempted!=1||p->complete!=1||p->reserved||p->count>PWMC_TIMER_MAX||!pgcd_equal(digest,p->digest,32)||
        pwfi_le(p->lock[0],8)!=31||pwfi_le(p->lock[1],8)!=30||pwfi_le(p->lock[0]+16,4)!=1||pwfi_le(p->lock[1]+16,4)!=1)return 0;
     unsigned checker_seen=0;
     for(unsigned k=0;k<e->count;k++){
@@ -514,14 +530,14 @@ static inline int pwmc_timers_replay(const struct pwmc_result*r,unsigned operati
     }
     if(p->checker){
         const struct pwmc_timer_node*n=&p->checker_node;const uint8_t*b=n->raw;
-        if(checker_seen!=1||n->address!=p->checker||!pwmc_timer_metadata(r,operation,n)||pwfi_le(b,8)!=UINT64_C(0x746e7665)||
+        if(checker_seen!=1||n->address!=p->checker||!pwmc_timer_metadata_map(n,m)||pwfi_le(b,8)!=UINT64_C(0x746e7665)||
            pwfi_le(b+8,4)!=0x200||pwfi_le(b+12,4)||pwfi_le(b+32,8)!=30||pwfi_le(b+40,8)!=core+0xcb24||
            pwfi_le(b+48,8)||pwfi_le(b+72,8)||b[88]||pwfi_le(b+152,8)||pwfi_le(b+176,8))return 0;
         for(unsigned k=0;k<e->count;k++)if(e->node[k].address==p->checker&&!pgcd_equal(e->node[k].raw,b,88))return 0;
     }else if(p->count||!pwmc_zero(&p->checker_node,sizeof(p->checker_node)))return 0;
     for(unsigned k=0;k<p->count;k++){
         const struct pwmc_timer_node*n=&p->node[k];const uint8_t*b=n->raw;uint32_t type=(uint32_t)pwfi_le(b+8,4);uint64_t when=pwfi_le(b+168,8);
-        if(!pwmc_timer_metadata(r,operation,n)||pwfi_le(b,8)!=UINT64_C(0x746e7665)||b[88]||pwfi_le(b+176,8)||
+        if(!pwmc_timer_metadata_map(n,m)||pwfi_le(b,8)!=UINT64_C(0x746e7665)||b[88]||pwfi_le(b+176,8)||
            (type!=UINT32_C(0x80000000)&&type!=UINT32_C(0x80000100)&&type!=UINT32_C(0x80000200))||
            pwfi_le(b+160,8)!=prior||(k?pwfi_le(p->node[k-1].raw+152,8):p->head[0])!=n->address+152||(k&&when<last))return 0;
         if(type&0x300){uint64_t level=pwfi_le(b+32,8);if((level!=8&&level!=16)||!pwfi_le(b+40,8))return 0;}
@@ -534,10 +550,11 @@ static inline int pwmc_timers_replay(const struct pwmc_result*r,unsigned operati
        !pwmc_zero(p->node+p->count,(PWMC_TIMER_MAX-p->count)*sizeof(p->node[0])))return 0;
     return 1;
 }
-static inline int pwmc_timers_current(const struct pwmc_result*r,unsigned operation)
+static inline int pwmc_timers_replay(const struct pwmc_result*r,unsigned operation)
+{const struct pgcd_result*s=&r->source[operation];const struct pwmc_irq_map_view m={s->maps[0],s->map[0].bytes,s->map[0].stride,s->self_base,s->self_bytes};return pwmc_timers_replay_map(&r->timers[operation],&r->events[operation],s->core,&m);}
+static inline int pwmc_timers_current_map(const struct pwmc_timer_path*p,const struct pwmc_event_path*e,uint64_t core,const struct pwmc_irq_map_view*m)
 {
-    const struct pwmc_timer_path*p=&r->timers[operation];uint64_t core=r->source[operation].core;
-    if(!pwmc_timers_replay(r,operation)||pwfi_le((const void*)(uintptr_t)(core+0x1cbc8),8)!=p->checker||
+    if(!pwmc_timers_replay_map(p,e,core,m)||pwfi_le((const void*)(uintptr_t)(core+0x1cbc8),8)!=p->checker||
        !pgcd_equal(p->head,(const void*)(uintptr_t)(core+0x1c3f0),16)||
        !pgcd_equal(p->lock[0],(const void*)(uintptr_t)(core+0x1c3d8),24)||
        !pgcd_equal(p->lock[1],(const void*)(uintptr_t)(core+0x1c400),24))return 0;
@@ -545,6 +562,8 @@ static inline int pwmc_timers_current(const struct pwmc_result*r,unsigned operat
     for(unsigned k=0;k<p->count;k++)if(!pgcd_equal(p->node[k].raw,(const void*)(uintptr_t)p->node[k].address,184))return 0;
     return 1;
 }
+static inline int pwmc_timers_current(const struct pwmc_result*r,unsigned operation)
+{const struct pgcd_result*s=&r->source[operation];const struct pwmc_irq_map_view m={s->maps[0],s->map[0].bytes,s->map[0].stride,s->self_base,s->self_bytes};return pwmc_timers_current_map(&r->timers[operation],&r->events[operation],s->core,&m);}
 static inline int pwmc_timer_capture_node(struct pwmc_result*r,unsigned operation,struct pwmc_timer_node*n,uint64_t address)
 {
     struct pgcd_context*c=&r->context[operation];
@@ -562,26 +581,33 @@ static inline int pwmc_timer_capture_node(struct pwmc_result*r,unsigned operatio
     }
     pgcd_copy(n->raw,(const void*)(uintptr_t)address,184);n->returned=1;return 1;
 }
-static inline int pwmc_timers_capture(struct pwmc_result*r,unsigned operation)
+static inline int pwmc_timer_capture_bridge(void*opaque,struct pwmc_timer_node*n,uint64_t address)
+{const struct pwmc_capture_context*x=opaque;return pwmc_timer_capture_node(x->r,x->operation,n,address);}
+static inline int pwmc_timers_read(struct pwmc_timer_path*p,uint64_t core,void*opaque,
+    int(*read_node)(void*,struct pwmc_timer_node*,uint64_t))
 {
-    struct pwmc_timer_path*p=&r->timers[operation];struct pgcd_context*c=&r->context[operation];uint64_t core=c->record->core;
-    if(!pwmc_zero(p,sizeof(*p))||!pwmc_source(r,operation))return pwmc_fail(r,PWMC_CONTEXT,operation||r->held);
+    if(!pwmc_zero(p,sizeof(*p))||!read_node)return 0;
     p->attempted=1;p->checker=pwfi_le((const void*)(uintptr_t)(core+0x1cbc8),8);p->counter=pwfi_le((const void*)(uintptr_t)(core+0x1dc00),8);
     pgcd_copy(p->head,(const void*)(uintptr_t)(core+0x1c3f0),16);pgcd_copy(p->lock[0],(const void*)(uintptr_t)(core+0x1c3d8),24);pgcd_copy(p->lock[1],(const void*)(uintptr_t)(core+0x1c400),24);
-    if(p->checker&&!pwmc_timer_capture_node(r,operation,&p->checker_node,p->checker))return 0;
+    if(p->checker&&!read_node(opaque,&p->checker_node,p->checker))return 0;
     uint64_t head=core+0x1c3f0,next=p->head[0],prior=head;
     while(next!=head){
-        if(p->count==PWMC_TIMER_MAX||next<152||(next&7))return pwmc_fail(r,PWMC_CONTEXT,operation||r->held);
-        struct pwmc_timer_node*n=&p->node[p->count];uint64_t address=next-152;
-        if(p->checker&&address<p->checker+184&&p->checker<address+184)return pwmc_fail(r,PWMC_CONTEXT,operation||r->held);
-        for(unsigned k=0;k<p->count;k++)if(address<p->node[k].address+184&&p->node[k].address<address+184)return pwmc_fail(r,PWMC_CONTEXT,operation||r->held);
-        if(!pwmc_timer_capture_node(r,operation,n,address))return 0;p->count++;
-        if(pwfi_le(n->raw+160,8)!=prior)return pwmc_fail(r,PWMC_CONTEXT,operation||r->held);
-        prior=next;next=pwfi_le(n->raw+152,8);
+        unsigned index=p->count;if(index>=PWMC_TIMER_MAX||next<152||(next&7))return 0;
+        struct pwmc_timer_node*n=&p->node[index];uint64_t address=next-152;
+        if(p->checker&&address<p->checker+184&&p->checker<address+184)return 0;
+        for(unsigned k=0;k<index;k++)if(address<p->node[k].address+184&&p->node[k].address<address+184)return 0;
+        if(!read_node(opaque,n,address)||p->count!=index)return 0;p->count=index+1;
+        if(pwfi_le(n->raw+160,8)!=prior)return 0;prior=next;next=pwfi_le(n->raw+152,8);
     }
-    p->complete=1;pwmc_timers_digest(p,p->digest);
-    if(!pwmc_timers_replay(r,operation)||!pwmc_source(r,operation)||!pwmc_timers_current(r,operation))return pwmc_fail(r,PWMC_CONTEXT,1);
-    return 1;
+    p->complete=1;pwmc_timers_digest(p,p->digest);return 1;
+}
+static inline int pwmc_timers_capture(struct pwmc_result*r,unsigned operation)
+{
+    struct pwmc_timer_path*p=&r->timers[operation];
+    if(!pwmc_zero(p,sizeof(*p))||!pwmc_source(r,operation))return pwmc_fail(r,PWMC_CONTEXT,operation||r->held);
+    struct pwmc_capture_context context={r,operation};
+    if(!pwmc_timers_read(p,r->source[operation].core,&context,pwmc_timer_capture_bridge))return pwmc_fail(r,PWMC_CONTEXT,operation||r->held);
+    if(!pwmc_timers_replay(r,operation)||!pwmc_source(r,operation)||!pwmc_timers_current(r,operation))return pwmc_fail(r,PWMC_CONTEXT,1);return 1;
 }
 #if defined(POLARIS_WIFI_MEMORY_SOFTWARE_PEER)
 #if !__STDC_HOSTED__
@@ -592,7 +618,6 @@ static uint64_t pwmc_test_irq_ticks(struct pwmc_result*,unsigned,unsigned);
 #endif
 /* Retained typed-map DATA, never an opened context or ownership lease.
  * Real callers retain their own current source/native/callback interval. */
-struct pwmc_irq_map_view {const uint8_t*data;uint64_t bytes,stride,self_base,self_bytes;};
 static inline int pwmc_irq_AT_view(const struct pwmc_irq_map_view*m,uint64_t address,uint64_t bytes,
     const struct pwmc_irq_AT*AT,unsigned capacity,unsigned count)
 {
@@ -827,13 +852,10 @@ static inline int pwmc_deferred_read(uint64_t core,unsigned first,unsigned count
  * it irrespective of its current trigger/count: a future-time guess is not
  * callback authority. Unrelated unqueued signal subscribers are not called
  * by this source path; the existing map-change fanout refusal stays exact. */
+static inline int pwmc_timer_signal_refusal(const struct pwmc_timer_path*t,unsigned*bad)
+{for(unsigned k=0;k<t->count;k++)if(pwfi_le(t->node[k].raw+8,4)&0x200){*bad=k+1;return 0;}return 1;}
 static inline int pwmc_deferred_timers(const struct pwmc_result*r,unsigned op,unsigned*bad)
-{
-    if(!pwmc_timers_replay(r,op)||!pwmc_irq_bindings_valid(r,op))return 0;
-    const struct pwmc_timer_path*t=&r->timers[op];
-    for(unsigned k=0;k<t->count;k++)if(pwfi_le(t->node[k].raw+8,4)&0x200){*bad=k+1;return 0;}
-    return 1;
-}
+{if(!pwmc_timers_replay(r,op)||!pwmc_irq_bindings_valid(r,op))return 0;return pwmc_timer_signal_refusal(&r->timers[op],bad);}
 static inline int pwmc_deferred_replay(const struct pwmc_result*r,unsigned op,unsigned count)
 {
     const struct pwmc_deferred_path*p=&r->deferred[op];uint64_t core=r->source[op].core;uint8_t digest[32];unsigned bad=0;

@@ -282,6 +282,7 @@ static struct pbhr_result pbhr_handles;
 static struct pbhd_result pbhd_handles;
 static struct pbhd_timer_result pbhd_timer_handles;
 static struct pbhi_result pbhi_handles;
+static struct pbht_result pbht_handles;
 static uint64_t pbgi_cache_opening;
 static struct pcmp_payload current_payload_binding;
 static struct pcmp_result current_private_maps[PCMP_PARENT_CONTEXTS][2];
@@ -462,7 +463,7 @@ static int new_original_unknown(void)
 {return pwcq_parent_unsafe()||original_service_unknown||(pgcd_resident_context.record&&pgcd_uncertain(&pgcd_resident_context))||pacgq_preboot_record.uncertain||pacgq_preboot_record.outstanding||pacgq_ticket.outstanding
 #if EFI_XNU_WIFI_REMOTE_MEMORY_AVAILABLE
     ||incoming_parent_maps[0].unknown||incoming_parent_maps[1].unknown||ppli_record.unknown||
-      current_payload_binding.unknown||current_private_unknown()||pbgi_cache_call.unknown||pbgi_seed.unknown||pbha_handles.unknown||pbhr_handles.unknown||pbhd_handles.unknown||pbhd_timer_handles.unknown||pbhi_handles.unknown
+      current_payload_binding.unknown||current_private_unknown()||pbgi_cache_call.unknown||pbgi_seed.unknown||pbha_handles.unknown||pbhr_handles.unknown||pbhd_handles.unknown||pbhd_timer_handles.unknown||pbhi_handles.unknown||pbht_handles.unknown
 #endif
 #if EFI_XNU_WIFI_TERMINAL_GOP_DIAGNOSTICS
     ||terminal_gop.uncertain
@@ -549,6 +550,9 @@ static void pbhd_parent_raw(void)
     ram_report("CACHE_HANDLE_DISPATCH_RAW_V1_BYTES=",sizeof(pbhd_handles));
     ram_text("CACHE_HANDLE_DISPATCH_RAW_V1_BEGIN\r\n");ram_hex((const uint8_t*)&pbhd_handles,sizeof(pbhd_handles));
     ram_text("CACHE_HANDLE_DISPATCH_RAW_V1_END\r\n");
+    ram_report("CACHE_HANDLE_TIMER_GRAPH_INPUT_RAW_V1_BYTES=",sizeof(pbht_handles));
+    ram_text("CACHE_HANDLE_TIMER_GRAPH_INPUT_RAW_V1_BEGIN\r\n");ram_hex((const uint8_t*)&pbht_handles,sizeof(pbht_handles));
+    ram_text("\r\nCACHE_HANDLE_TIMER_GRAPH_INPUT_RAW_V1_END\r\n");
     ram_report("CACHE_HANDLE_PROVIDER_INPUT_RAW_V1_BYTES=",sizeof(pbhi_handles));
     ram_text("CACHE_HANDLE_PROVIDER_INPUT_RAW_V1_BEGIN\r\n");ram_hex((const uint8_t*)&pbhi_handles,sizeof(pbhi_handles));
     ram_text("\r\nCACHE_HANDLE_PROVIDER_INPUT_RAW_V1_END\r\n");
@@ -558,9 +562,9 @@ static void pbhd_parent_raw(void)
 }
 static int pbhd_parent_leaf(struct pbhr_live*live,struct pbhr_result*witness,const struct pbhr_input*input,const uint8_t seal[32],uint64_t*closing_ticks)
 {
-    if(!closing_ticks||witness!=&pbhr_handles||!pbhd_call(&pbhd_handles,&pbhd_timer_handles,&pbhi_handles,live,witness,input,seal))return 0;
+    if(!closing_ticks||witness!=&pbhr_handles||!pbhd_call(&pbhd_handles,&pbhd_timer_handles,&pbhi_handles,&pbht_handles,live,witness,input,seal))return 0;
     if(!pbhi_handles.arch_returned||pbhi_handles.arch_returned>PBHI_CLOCK_MAX||
-       pbhi_handles.arch_returned!=pbhi_handles.arch_issued||!pbhi_handles.closed||!pbhi_handles.complete||pbhi_handles.unknown)return 0;
+       pbhi_handles.arch_returned!=pbhi_handles.arch_issued||!pbhi_handles.closed||!pbhi_handles.complete||pbhi_handles.unknown||pbht_handles.unknown)return 0;
     *closing_ticks=pbhi_handles.clock[pbhi_handles.arch_returned-1].raw.cpu.ticks;return 1;
 }
 __attribute__((noreturn)) static void pbhr_parent_stop(void)
@@ -703,7 +707,7 @@ _Static_assert(sizeof(log_buffer)>=2*(sizeof(pwsp_record)+sizeof(pwrpt_record)+s
     4*sizeof(terminal_gop)+
 #endif
 #if EFI_XNU_WIFI_REMOTE_MEMORY_AVAILABLE
-    3*(sizeof(incoming_parent_maps)+sizeof(ppli_record)+sizeof(current_private_maps)+sizeof(current_payload_binding)+sizeof(pbgi_cache_call)+sizeof(pbgi_seed)+sizeof(pbha_handles)+sizeof(pbhr_handles)+sizeof(pbhd_handles)+sizeof(pbhd_timer_handles)+sizeof(pbhi_handles))+
+    3*(sizeof(incoming_parent_maps)+sizeof(ppli_record)+sizeof(current_private_maps)+sizeof(current_payload_binding)+sizeof(pbgi_cache_call)+sizeof(pbgi_seed)+sizeof(pbha_handles)+sizeof(pbhr_handles)+sizeof(pbhd_handles)+sizeof(pbhd_timer_handles)+sizeof(pbhi_handles)+sizeof(pbht_handles))+
 #endif
     1048576,
     "complete preparation/client/power/source raw must fit without truncation");
@@ -905,7 +909,7 @@ static int prepare_boot(void *context)
     if(!pbgi_seed.complete||pbgi_seed.unknown)pbgi_parent_stop();
     if(!pbha_handles.complete||pbha_handles.unknown)pbha_parent_stop();
     if(!pbhr_handles.complete||pbhr_handles.unknown)pbhr_parent_stop();
-    if(!pbhd_handles.complete||pbhd_handles.unknown||!pbhd_timer_handles.complete||pbhd_timer_handles.unknown||!pbhi_handles.complete||!pbhi_handles.closed||pbhi_handles.unknown)pbhr_parent_stop();
+    if(!pbhd_handles.complete||pbhd_handles.unknown||!pbhd_timer_handles.complete||pbhd_timer_handles.unknown||!pbhi_handles.complete||!pbhi_handles.closed||pbhi_handles.unknown||!pbht_handles.complete||pbht_handles.unknown)pbhr_parent_stop();
     ppli_parent_raw();pbgi_parent_raw();pbha_parent_raw();pbhr_parent_raw();pbhd_parent_raw();
 #endif
 #endif

@@ -108,6 +108,102 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
+- NEW0189 CURRENT pre-FreePool event/timer graph INPUT, SOURCE/SOFTWARE only.
+  This completed local source supersedes older CURRENT source/check claims
+  below within its changed files; publication is not yet claimed here. Last
+  published functional9e985718/textf18cdb5 remain historical at their sources.
+  No old proof, RAW, schema, SHA or timestamp was edited or requalified.
+- The actual parent's EXISTING guarded registered-FreePool interval now
+  captures the current Core event graph, timer checker and nonperiodic timer
+  list by reusing the original bounded DATA walks. Old allocator wrappers
+  retain their genuine source/context callbacks; no opened pwmc/pgcd/context,
+  owner/ticket/permission flag, replacement service or firmware callback was
+  manufactured. Both shared engines retain their original metadata/link/
+  AT/typed/source/native checks and now close the count across node callbacks.
+  No event is dispatched, signalled, unlinked, cleared or rearmed.
+- New separate graph86616B/input80B stores full18544B event and8048B timer
+  paths, every88B event/184B checker/timer, partial prefixes,322 full AT slots,
+  324 virtual-clock slots, original360B caller/source/control/service seal,
+  issued/returned/native flags, unused tails and digest. Output storage is
+  qualified and disjoint before writes. Existing queue1488/timer312/provider
+  20344/release596496/allocator347280 and all old C ABI offsets are unchanged.
+- Each graph node is classified by the retained seed DATA map plus fresh
+  NSWBsamePA/AT with exact PAR restore, then read. The retained map is NOT a
+  new current typed map or owner inventory. Whole provider/queue/timer/graph
+  records and actual caller/control remain sealed across each AT/arch leaf
+  and across the original service. No new BS/GetMap/enum/allocator/provider
+  method/FreePool/IRQdispatcher/IAR/EOI/timerSet/IRQmask/configuration write.
+  Normal SOFTWARE adds9 AT leaves and11 virtual-arch samples plus nativeflag
+  RAM reads; existing provider20 AT/23 virtual samples,28 pre-provider hashes,
+  two six-MRS slots and15 additional Core hashes retain their original scope.
+  Extra virtual-arch samples are real source calls, never a zero-MRS claim.
+- All NotifySignal timers refuse; NotifyWait-only, nonperiodic source paths
+  remain restricted. New graph failure holds stickyUNKNOWN before service
+  or FP restore, with no postfailure sampling, guessed restore/free/retry/
+  cleanup. Full new RAM RAW is appended before terminalhold/Console/USB.
+  After service no graph/provider/handler/released target/GCD node is followed;
+  original Core/source/control and virtual close only. A positive SOFTWARE
+  fixture makes all graph and provider pages PROT_NONE after API return and
+  still closes; this explicitly does NOT qualify postrelease graph/source.
+- FINAL2863 ASAN/UBSAN SOFTWARE checks PASS3261.4731801670277s: all2364 old
+  cases retained plus499 graph faults/bounds. Covers node/link/source/control/
+  record mutations across9 AT and11 arch leaves, full-record service/MRS seals,
+  foreign/overlap/replay, all pending bits, max128 events/32 timers and rejection
+  BEFORE following a129th/33rd node. Maximum fixture uses161 AT/163 virtual
+  samples. Host elapsed time is not firmware latency or a physical lease.
+  Pre pending5..31 now refuses earlier in the new event reader: actual pending
+  raw is saved while the original queue/counter sample stays unentered/zero.
+  Original nonempty-head and postpending paths/tests remain; no guard lowered.
+  Service/AT/FP/arch/MRS remain explicit SOFTWARE peers and PE images inert DATA;
+  no original firmware or whole pwfc/pwsp/client constructor was executed.
+  Old enqueue-shaped ABA fixture still PASSES: equality does not exclude ABA.
+- Affected allocator8487 PASS171.63756125001237s and release771
+  PASS219.76547491701785s, all old cases retained; CURRENT absolute shim FIRST/-H
+  excludes private frozen old common headers. Other474/1564/1452/2341/167/5141,
+  models and CI were not repeated. Six actual parent/export/allocator COFF+
+  MachO/generalregs/maxframe1024 builds PASS. Export MSR is exact PAR restore,
+  noSMC; whole parent's old FP/terminal-mask writes are not called zero-write.
+  OFF same-invocation pairs equal: MachO640972B and COFF640999B. First OFF
+  assertion incorrectly applied the historical MachO size to the equal COFF
+  pair; both original outputs are retained and matching targets now verified.
+  ON29360128B log/staticassert only covers added RAW, not profile/resource.
+- Independent Python struct/hashlib verifies normal705256B and refused705256B,
+  maximum86616B, both576936B archive/fresh bundles and112928B old six prefixes.
+  Every graph byte/node/AT/clock/tail/flag/digest and full failed record is
+  reconstructed in NEW derived buffers. Graph close23900 → provider24100 →
+  outer24200, refused outer24099 retains APIstatus0/issued1/returned1 and no
+  FP restoration. All comparisons use the original virtual opening1000 and
+  limit3841000; physical CNTPCT/CVAL remains separate. No pointer is executed.
+  Initial copied prefix decoder used one-wrong-depth root paths in its new
+  derived subdirectory; scripts/errors retained,0002 corrects paths only.
+  Early498 graph-only debug printed an unconditional temporal12 line despite
+  skipping those cases; final output is scoped and all12 ran in FINAL2863.
+- Private0189/wifi/cache-handle-timer-graph-inputs-0001/proof.json
+  SHAc90033ffca102d2cfc1c72410089f659ac3df242e907201f1ec8324cfc347ab1;
+  source/software2e6094ddbbf7a50a7113b2b7f474fe8a4c51b36f8b493be6a0abba08cc7759ee.
+  All host/build jobs ENDED. No physicalUSB/native/MMIO/SMC/PE execution,
+  new model/CI/codec/image/payload/helper/freeze. Main REMOTE_MEMORY defaultOFF,
+  consumer/builder/CLI/new exact profile/resource remain disconnected.
+- NEXT: compose these real pre-inputs with the remaining transitive callback
+  source/effects/work and wholecall temporal qualification, then fresh
+  postrelease typed graph/policy/source in all six NEW actual private contexts.
+  Do not recreate these readers, graph record, AT/clock leaves, queue guard,
+  temporal handoff, wrappers or empty contracts; do not repeat old SOURCE
+  audits/checks/inventory boots/unchecked GetMap refreshes. Snapshots, counts,
+  keys, tags, fullbytes and complete cannot exclude ABA/futureIRQ/owner; no
+  oldseed renamed current, no returnedmap self-precall proof, no opening
+  renewed/rebased/reopened or closed PGCD borrowed. Other release/backing
+  geometry remains unsupported, never assume the phone fits this slice.
+  Then implement actual independent MSA/RMTFS claims/cache/secureVMID/MPU/
+  remoteDMAstop/handback/full normal and UNKNOWN retirement. Whole changed
+  parent/affected checks/two SERIAL wholeconstructor models/new exact profile/
+  resource/codec/current transition/freeze/ONEhelper precede any device run.
+  NOTREADY: never publishPA/startMSS/NVserve/radio or boot this source yet.
+  Phone remains only last observed actualPolarisFASTBOOT2026-11-02T10:05:37Z
+  after0188 fullretire, never current LIVE. WiFi firmware/driver/scan/join/IP/
+  DNS/data have never succeeded physically; no credible completion date.
+  Sound/camera STOP. No authorization or physical-action question pending.
+
 - NEW0189 latest PUBLIC functional source
   9e985718bd2b91233d485abb1cab3974b1752cd4 is now pushed by the SAME directpush
   under actual current/future source/text consentce8ce4fd. Independent readonly

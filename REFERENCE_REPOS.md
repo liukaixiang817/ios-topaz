@@ -1827,3 +1827,43 @@ paths, excluding all firmware/private/sensitive bytes. Private source receipt
 SHA90fb2ade01a0fad411c5d4046b217da8de8552da0a54cd027bb68ae5fb2a1b9a. Subsequent handoff changes only
 NOTES/REFERENCE_REPOS, no code/test/RAW/schema edit or repeated checks. This is
 a SOFTWARE temporal fix; full physical WiFi/candidate admission stays NOTREADY.
+
+## Polaris0189 actual pre-release event/timer graph input integration
+
+The existing bounded event/timer DATA walkers are shared with the actual
+parent's guarded registered-FreePool interval. Genuine allocator context
+callbacks remain intact; no fabricated opened context, owner/ticket, firmware
+callback or new service. Separate86616B graph RAW retains full event/checker/
+nonperiodic timer nodes, partial prefixes,322 AT and324 virtual-clock slots,
+real caller/control/service seals and all unused bytes. Old record schemas
+remain unchanged. Normal SOFTWARE adds9 fresh AT leaves/11 virtual samples;
+old provider20 AT/23 virtual samples/two six-MRS slots retain their scope.
+All NotifySignal timers refuse. Failure is stickyUNKNOWN with no guessed
+restore/cleanup. Postservice graph/provider pages are never followed; full
+PROT_NONE positive explicitly demonstrates the unsupported postsource scope.
+
+FINAL2863 ASAN/UBSAN SOFTWARE PASS3261.4731801670277s=all2364+499 graph cases,
+including128 events/32 timers, refusing excess before following another node.
+Affected allocator8487 PASS171.63756125001237s; release771
+PASS219.76547491701785s; current shim FIRST/-H. Six parent/export/allocator
+COFF/MachO/generalregs/maxframe1024 PASS. OFF pairs equal within each target:
+MachO640972B/COFF640999B. Export MSR only exactPARrestore/noSMC; parent old FP/
+terminalmask not zero-write. Other checks/models/CI were not repeated.
+Independent numeric struct/hashlib checks normal/refused705256B, max86616B,
+full archived/fresh bundles and old112928B prefixes without executing pointers.
+Initial derived decoder path-depth and OFF expected-target-size mistakes are
+retained privately and corrected in new evidence; no production guard lowered.
+Pre pending refusal now occurs earlier in the new event reader; every original
+fault case remains, and untouched queue samples remain truthfully unobserved.
+
+Private0189/wifi/cache-handle-timer-graph-inputs-0001/proof.json
+SHAc90033ffca102d2cfc1c72410089f659ac3df242e907201f1ec8324cfc347ab1;
+source/software2e6094ddbbf7a50a7113b2b7f474fe8a4c51b36f8b493be6a0abba08cc7759ee.
+This is retained-map/fresh-AT/source INPUT, not full transitive callbacks/work,
+wholecall temporal, postrelease typed graph/source, future IRQ/owner or ABA
+qualification. Original200ms is not renewed. Remaining six NEW context
+composition and actual MSA/RMTFS secure/cache/DMA lifecycle/full candidate
+qualification stay NOTREADY. No physical run, new kernel/image/helper/freeze,
+WiFi firmware/scan/join/data success, human action pending or credible date.
+Older reference/current/source results above retain only their historical
+source scope; all original private RAW/proofs/schema/SHA/timestamps remain.
