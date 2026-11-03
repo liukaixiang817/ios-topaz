@@ -1867,3 +1867,11 @@ qualification stay NOTREADY. No physical run, new kernel/image/helper/freeze,
 WiFi firmware/scan/join/data success, human action pending or credible date.
 Older reference/current/source results above retain only their historical
 source scope; all original private RAW/proofs/schema/SHA/timestamps remain.
+
+Graph-input functional source37cc382c8f41226d744070e9c4ccbc5d19f1119b is now published
+through the original directpush with independent lsremote matching37cc382.
+Exact eight own UTF8 source/text paths under actual current/future consent
+ce8ce4fd; all sensitive/private/firmware bytes excluded. Private source receipt
+SHAc3af456827709f77dfed6313074d67b5b13a173eef219e9abf0c1159e5f26748. This publication handoff edits only
+NOTES/REFERENCE_REPOS, no code/test/RAW/proof/schema change or repeated checks;
+full physical WiFi/candidate admission remains NOTREADY.
