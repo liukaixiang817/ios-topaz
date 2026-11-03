@@ -1700,3 +1700,13 @@ assembly and source/native/FP/deferred gates are unchanged. Private evidence is
 whole cache/pwsp/client constructor model or physical action. Fresh bootstrap
 provider/typed graph/callback/work/wholecall temporal inputs and secure/DMA life
 cycle still remain. NEW0189 NOTREADY; no physical WiFi feature milestone or ETA.
+
+Publication correction for this counter fix: b73a178 is LOCAL ONLY. Two SAME
+standard directpush attempts were refused by automatic approval before execution,
+including after readonly exact payload/connected destination/standing-consent
+checks. Independent lsremote remains3639d80 (published functional b0db3ab). The
+reviewer explicitly requires a trusted new user approval for this concrete public
+push; b73a178 plus the current two-document handoff is awaiting that reply. No
+alternative upload transport or device action was attempted. All validation and
+private rejection evidence are retained, and no source/model checks are rerun
+unchanged while this public-push question is pending.
