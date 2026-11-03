@@ -17,6 +17,7 @@ static unsigned graph_fault,graph_stage,graph_mode,graph_byte,graph_ATs,graph_cl
 static unsigned graph_maximum;
 static unsigned temporal_case;
 static unsigned work_case;
+static unsigned alias_case;
 static void graph_mutate(void);
 static struct pbhr_live*dispatch_live;
 static uint8_t*provider_original[3],*provider_image[3];
@@ -73,6 +74,23 @@ static void graph_max_install(unsigned overflow)
 }
 static int inside(const void*value,const void*base,size_t bytes)
 {return (uintptr_t)value>=(uintptr_t)base&&(uintptr_t)value-(uintptr_t)base<bytes;}
+static void alias_install(const struct pbhr_result*w)
+{
+    const struct pbha_result*a=&w->before_target;uint64_t page=a->container&~UINT64_C(4095);
+    uint8_t*alias=(void*)(uintptr_t)(a->container+a->bytes+8);
+    if(alias_case==1){
+        memcpy(alias,arena+0x40fe0,184);put(core+0x1c368,(uintptr_t)alias+16,8);
+        put(core+0x1c370,(uintptr_t)alias+16,8);put(core+0x1cbc8,(uintptr_t)alias,8);
+    }else if(alias_case==2){
+        memcpy(alias,arena+0x43fc0,184);put(core+0x1c3f0,(uintptr_t)alias+152,8);
+        put(arena+0x45fc0+160,(uintptr_t)alias+152,8);
+    }else{
+        if(alias_case==4)alias=(void*)(uintptr_t)(page+4096);
+        if(alias_case==5)alias=(void*)(uintptr_t)(page-4096);
+        put(provider_image[1]+0x3120,(uintptr_t)alias,8);
+        for(unsigned k=0;k<64;k++)put(alias+8*k,(k==18||k==19||k==26||k==29)?(uintptr_t)provider_image[0]+0x10c8:0,8);
+    }
+}
 static void graph_mutate(void)
 {
     graph_hit=1;
@@ -269,6 +287,7 @@ static int dispatch_guard(struct pbhr_live*l,struct pbhr_result*w,const struct p
             for(unsigned k=0;k<1020;k++)put(arena+0x7a100+8*k,(k==18||k==19||k==26||k==29)?(uintptr_t)provider_image[0]+0x10c8:0,8);}
     }
     struct pbht_result*g=graph_record;
+    if(alias_case)alias_install(w);
     uint8_t*state=provider_image[0]+0x2058;
     switch(work_case){
     case 1:put(state,0,8);break;
@@ -305,7 +324,7 @@ static void dispatch_setup(void)
 {
     if(graph_protected){assert(!mprotect(arena+0x40000,0x8000,PROT_READ|PROT_WRITE));graph_protected=0;}
     if(provider_protected){assert(!mprotect(arena+0x50000,0x30000,PROT_READ|PROT_WRITE));provider_protected=0;}
-    provider_record=0;graph_record=0;temporal_case=work_case=0;release_geometry=0;release_setup();dispatch_record=(void*)(arena+0x480000);
+    provider_record=0;graph_record=0;temporal_case=work_case=alias_case=0;release_geometry=0;release_setup();dispatch_record=(void*)(arena+0x480000);
     provider_record=0;provider_fault=provider_stage=provider_at=provider_clocks=provider_hit=provider_byte=provider_mode=provider_variant=provider_protect=0;
     provider_install();graph_install();provider_record=(void*)(arena+0x490000);
     graph_record=(void*)(arena+0x4b0000);graph_fault=graph_stage=graph_mode=graph_byte=graph_ATs=graph_clocks=graph_hit=graph_protect=graph_maximum=0;
@@ -339,7 +358,7 @@ int main(int argc,char**argv)
     if(protected_page)assert(!mprotect(protected_page,protected_bytes,PROT_READ|PROT_WRITE));
     free(original);free(arena);free(payload_page);free(log_page);return 0;
 #endif
-#if !defined(PBHD_WORK_ONLY)
+#if !defined(PBHD_WORK_ONLY) && !defined(PBHI_ALIAS_ONLY)
 #if !defined(PBHI_NEW_CASES_ONLY) && !defined(PBHR_TEMPORAL_ONLY) && !defined(PBHT_GRAPH_ONLY)
     for(unsigned post=0;post<2;post++)for(unsigned level=5;level<=31;level++)for(unsigned fault=1;fault<=3;fault++){
         dispatch_setup();dispatch_attack=fault;dispatch_level=level;dispatch_post=post;
@@ -522,6 +541,7 @@ int main(int argc,char**argv)
         checks++;
     }
 #endif
+#if !defined(PBHI_ALIAS_ONLY)
     const unsigned work_cases[]={1,2,3,4,5,6,7,8,9,10,20,21,22,23,24,25,26};
     for(unsigned k=0;k<sizeof(work_cases)/sizeof(work_cases[0]);k++){
         unsigned n=work_cases[k];dispatch_setup();work_case=n;int returned=dispatch_run();
@@ -541,11 +561,36 @@ int main(int argc,char**argv)
         }
         checks++;
     }
+#endif
+    for(unsigned n=1;n<=5;n++){
+        dispatch_setup();alias_case=n;int returned=dispatch_run();
+#if defined(PBHI_ALIAS_BASELINE)
+        int expected=1;
+#else
+        int expected=n>=4;
+#endif
+        if(returned!=expected)fprintf(stderr,"alias unexpected%u return%d errors%u/%u graph%u\n",n,returned,dispatch_record->error,provider_record->error,graph_record->error);
+        assert(returned==expected&&graph_record->complete&&!graph_record->unknown);
+        if(expected)assert(release_calls==1&&release_record->fp_restore_returned==1);
+        else assert(!release_calls&&!release_record->fp_restore_issued&&!timer_reads&&provider_record->error==8&&dispatch_record->error==7);
+        if(n==3){
+            char file[4096];assert(snprintf(file,sizeof(file),"%s.alias-3",argv[5])>0);
+            FILE*out=fopen(file,"wb");assert(out&&fwrite(release_record,1,sizeof(*release_record),out)==sizeof(*release_record)&&
+                fwrite(dispatch_record,1,sizeof(*dispatch_record),out)==sizeof(*dispatch_record)&&
+                fwrite(timer_record,1,sizeof(*timer_record),out)==sizeof(*timer_record)&&
+                fwrite(provider_record,1,sizeof(*provider_record),out)==sizeof(*provider_record)&&
+                fwrite(graph_record,1,sizeof(*graph_record),out)==sizeof(*graph_record)&&!fclose(out));
+        }
+        checks++;
+    }
     printf("{\"graph_input_bytes\":%zu,\"node_ATs\":9,\"graph_virtual_samples\":11,\"graph_SOFTWARE_only\":true,\"post_graph_rewalk\":false}\n",sizeof(*graph_record));
-#if !defined(PBHT_GRAPH_ONLY) && !defined(PBHD_WORK_ONLY)
+#if !defined(PBHT_GRAPH_ONLY) && !defined(PBHD_WORK_ONLY) && !defined(PBHI_ALIAS_ONLY)
     printf("{\"temporal_handoff_cases\":12,\"same_virtual_domain\":true,\"no_new_clock_call\":true,\"wholecall_qualified\":false}\n");
 #endif
+#if !defined(PBHI_ALIAS_ONLY)
     printf("{\"actual_timer_work_composition_cases\":17,\"new_hardware_calls\":0,\"wholecall_qualified\":false}\n");
+#endif
+    printf("{\"source_release_page_cases\":5,\"SOFTWARE_only\":true,\"owner_qualified\":false}\n");
     printf("{\"provider_input_bytes\":%zu,\"pre_source_bound_only\":true,\"post_provider_rewalk\":false,\"wholecall_qualified\":false}\n",sizeof(*provider_record));
     printf("{\"timer_input_bytes\":%zu,\"native_MRS_samples\":2,\"MRS_software_peer\":true,\"full_provider_and_wholecall_qualified\":false}\n",sizeof(*timer_record));
     printf("{\"passed\":true,\"checks\":%u,\"dispatch_bytes\":%zu,\"input_bytes\":%zu,\"live_bytes\":%zu,\"sample_bytes\":%zu,\"sample_offset\":%zu,\"API_offset\":%zu,\"digest_offset\":%zu,\"witness_bytes\":%zu,\"SOFTWARE_only\":true,\"original_FW_executed\":false,\"ABA_excluded\":false,\"wholecall_qualified\":false}\n",checks,sizeof(*dispatch_record),sizeof(dispatch_record->input),sizeof(dispatch_record->live_before),sizeof(dispatch_record->sample[0]),offsetof(struct pbhd_result,sample),offsetof(struct pbhd_result,api),offsetof(struct pbhd_result,digest),sizeof(*release_record));

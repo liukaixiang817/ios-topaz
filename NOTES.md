@@ -108,6 +108,88 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
+- NEW0189 CURRENT release/source page disjointness in the real guarded
+  FreePool caller, SOURCE/SOFTWARE only. Completed local source; publication
+  not claimed in this paragraph. Older303f790/d93a5ce and prior current/check
+  statements retain their own source scope; old proofs/RAW/schema/SHA/timestamps
+  remain immutable. No phone alias or original firmware execution was observed.
+- Reused the genuine witness's supported small-free geometry and existing
+  identity-AT DATA. Before marking provider capture complete, the actual parent
+  now refuses a release backing4K page intersecting its own complete image,
+  any57 Core AT pages, any captured Timer/GIC/CPU/hardware-table/handler-array
+  AT page, or any event/checker/timer AT page. Parent extent addition and page
+  arithmetic are checked, counts bounded32/322. No node, captured function
+  pointer or firmware is followed by the new comparison. It adds at most411
+  AT-page comparisons plus the original bounded small-free DATA checks, not
+  a new reader/service/wrapper/context/ticket/permission or ownership boolean.
+- This deliberately forbids whole-page sharing, more conservative than byte
+  overlap; even otherwise valid co-page objects remain unsupported. Never
+  assume the phone satisfies this slice. It only excludes a known captured
+  source/release conflict; it does not establish source allocation lifetime,
+  future remapping/aliases/IRQ/owner/ABA or full transitive callback effects.
+  No new AT/arch/MRS/nativeflag/BS/GetMap/FreePool/provider call, MMIO/sysreg
+  write, source hash phase or record/schema. Generic arch samples already
+  contain readonly MRS; no total-MRS-zero or zero-work claim is made.
+- Constructed SOFTWARE baseline at unchanged303f790 production headers accepted
+  checker/event, timer and64-handler-array sources in the released class's
+  slack on that page, issuing mock API and FP restore. These are deliberately
+  composed RAM inputs, NOT a phone bug or proof of legitimate allocations.
+  The new source refuses all three before the two physical-timer six-MRS slots,
+  queue snapshots or API: providererror8/dispatch7/outer5, API0/0, FP restore0/0.
+  Complete graph input is retained, provider capture/path/digest truthfully
+  incomplete. Already observed22 provider/11 graph virtual samples remain raw;
+  rejection does not erase them or claim no earlier register reads.
+  Exactly adjacent previous/next4K handler-array pages still pass.
+- FINAL2885 ASAN/UBSAN SOFTWARE checks PASS3263.3984556670184s=all2880+5 geometry
+  cases; baseline7 and new-subset7 are separately scoped normal/replay/5 cases.
+  No cases or old guards removed; source/control/record/partial/foreign/replay/
+  graph bounds,17 timer-work/12 temporal, PROT_NONE and ABA limits all remain.
+  All service/AT/FP/arch/MRS are explicit peers, PE inert DATA; no whole
+  pwfc/pwsp/client constructor, original firmware or native run. Host elapsed
+  time is not a physical deadline/lease. Failure stays stickyUNKNOWN with no
+  later sampling, guessed FP restore, free/retry/cleanup; normal IO counts
+  and original virtual200ms/physical-work-only scope are unchanged.
+- Four affected actual parent/export COFF+MachO/generalregs/maxframe1024 builds
+  PASS; no limit relaxed. Export MSR only exactPARrestore/noSMC; whole parent
+  old FP/terminalmask is not zero-write. OFF same-invocation MachO640972 and
+  COFF640999 pairs equal, changed provider header excluded. Parent.c/common/
+  dispatch/release/graph and old allocator/release fixture bytes stay exactd93;
+  ON parent object changes through the included guard. Allocator8487/default
+  release771/allocator crosses and other checks/models/CI were not rerun:
+  their bodies/dependencies are unchanged and do not include the provider header.
+- Independent struct/hashlib verifies seven complete705256B current/baseline/
+  refused bundles, max86616B and four576936B archive/fresh bundles. Every
+  baseline-alias and current-refused byte is derived in NEW buffers. The
+  handler512B lies beyond declared2088B but inside class2688B, with retained
+  typed4 plus fresh NSWBsamePA AT. Old API0/1/1 and FP1/1 versus new APImax/0/0,
+  no physical-timer slots/queue/API/FP and full graph prefix are independently
+  confirmed. No original RAW was edited or renamed current; no captured pointer
+  or PE instruction executes in the verifier. Unaffected112928B allocator
+  prefix evidence is reused, not redecoded as new source execution.
+- Private0189/wifi/cache-handle-release-source-alias-0001/proof.json
+  SHA2dbb2e5f5f51ad5a95e41b857e76cd6c03f6bfe2b1d11134e2c1b19928cf82fd;
+  source/softwarea6f435906d99a02b274e3ff03afc877fdf1fa1f4147dd1bb701f37fda8e68330.
+  All host/build jobs ENDED, no physicalUSB/native/MMIO/SMC/PE execution,
+  new model/CI/codec/image/payload/helper/freeze. Main REMOTE_MEMORY defaultOFF;
+  consumer/builder/CLI/new exact profile/resource remain disconnected.
+- NEXT remains full transitive callback/source/effects/work/wholecall temporal
+  and fresh postrelease typed graph/policy/source in six NEW actual contexts.
+  All three cache GetMap calls precede handle FreePool; do not relabel the last
+  cache map or old seed as postrelease/current. Bind later inputs to the six
+  routes'11 EXISTING later map boundaries, with each genuine source/context/
+  ticket and original opening; returned maps cannot prove their own pre-call
+  qualification. No new blind GetMap/inventory boot/borrowed closed PGCD or
+  opening renewal. Do not recreate this geometry guard/readers/math/queue/
+  temporal/wrappers/contracts or repeat unchanged tests/audits/models.
+  Then actual MSA/RMTFS independent claims/cache/secureVMID/MPU/remoteDMAstop/
+  handback/full normal and UNKNOWN retirement and complete changed-parent/
+  affected checks/two SERIAL wholeconstructor models/new exact profile/resource/
+  codec/current transition/freeze/ONEhelper. NOTREADY: no publishPA/MSS/NVserve/
+  radio/device run. Last actual phone observation remains PolarisFASTBOOT
+  2026-11-02T10:05:37Z after0188 fullretire, not currentLIVE. WiFi firmware/
+  driver/scan/join/IP/DNS/data never succeeded physically; no credible date.
+  Sound/camera STOP. No human/authorization question pending.
+
 - NEW0189 latest PUBLIC functional source
   303f790799b7d625ebd50811ff693331160a9a3b is pushed by the SAME directpush under actual
   current/future source/text consentce8ce4fd. Independent readonly lsremote

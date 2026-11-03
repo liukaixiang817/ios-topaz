@@ -228,6 +228,24 @@ static inline int pbhi_storage(const struct efi_loaded*i,const struct pbhr_live*
         !pwmc_parent_overlap(a,bytes,(uintptr_t)l->in.system,sizeof(*l->in.system))&&
         !pwmc_parent_overlap(a,bytes,(uintptr_t)l->in.image,sizeof(*l->in.image));
 }
+/* Supported release/source geometry only: never free a block on a page used
+ * by the already captured asynchronous source. This is deliberately stricter
+ * than byte overlap; co-page objects remain unsupported, not owner-qualified.
+ * Every address is retained identity-AT DATA. No node or firmware is followed. */
+static inline int pbhi_release_disjoint(const struct pbhi_live*l)
+{
+    const struct pbhi_result*r=l->r;const struct pbht_result*g=l->graph;
+    const struct pbhr_result*w=l->in.witness;const struct pbha_result*a=&w->before_target;
+    const struct efi_loaded*self=&w->image[0];unsigned index;
+    uint64_t page=a->container&~UINT64_C(4095),base=(uintptr_t)self->base;
+    if(!pbhr_small_path(w,&index)||!page||page>UINT64_MAX-4096||!base||!self->bytes||
+       self->bytes>UINT64_MAX-base||pwmc_parent_overlap(page,4096,base,self->bytes)||
+       a->core_pages!=PBGI_CORE_PAGES||r->AT_count>PBHI_AT_MAX||g->AT_count>PBHT_AT_MAX)return 0;
+    for(unsigned k=0;k<PBGI_CORE_PAGES;k++)if(a->Core_AT[k].page==page)return 0;
+    for(unsigned k=0;k<r->AT_count;k++)if(r->AT[k].page==page)return 0;
+    for(unsigned k=0;k<g->AT_count;k++)if(g->AT[k].page==page)return 0;
+    return 1;
+}
 static __attribute__((noinline)) int pbhi_capture(struct pbhi_result*r,struct pbhr_live*caller,
     struct pbhr_result*witness,const struct pbhr_input*original,const uint8_t seal[32],const void*deferred,const void*timer,struct pbht_result*g)
 {
@@ -270,6 +288,7 @@ static __attribute__((noinline)) int pbhi_capture(struct pbhi_result*r,struct pb
     for(unsigned k=0;k<3;k++)if(!pwmc_irq_hash_image(&p->image[k],k,1))return pbhi_fail(r,5);
     struct pwmc_irq_map_view map=pbhi_map(r);
     if(!pbhi_source(&live,0)||!pwmc_irq_bindings_map(p,live.core,(uintptr_t)frame->in.system,&map))return pbhi_fail(r,5);
+    if(!pbhi_release_disjoint(&live))return pbhi_fail(r,8);
     p->complete=1;pwmc_irq_digest(p,p->digest);r->captured=1;ppli_sha(r,offsetof(struct pbhi_result,digest),r->digest);return 1;
 }
 static inline int pbhi_pre_current(const struct pbhi_result*r,const struct pbht_result*g)

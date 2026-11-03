@@ -1921,3 +1921,35 @@ ce8ce4fd, excluding all firmware/private/sensitive bytes. Private source receipt
 SHAaac79f46bc18df9b7de44bce18fec7c18c842dc46bc2d6076fc57b8dcdeb92cd. This subsequent publication handoff
 edits only NOTES/REFERENCE_REPOS, with no source/test/RAW/schema/proof edit or
 repeated checks. Full physical WiFi/candidate admission remains NOTREADY.
+
+## Polaris0189 source/release page disjointness at the real FreePool caller
+
+The existing parent witness, supported small-free geometry and captured
+identity-AT pages now refuse release-page sharing with the parent image/Core/
+Timer/GIC/CPU/handler/event/checker/timer source. No new reader, service,
+record, hardware call or ownership flag. Whole-page sharing is deliberately
+unsupported, even when byte geometry could otherwise be valid; this does
+not prove source lifetime, full callbacks/wholecall time, futureIRQ/owner/ABA
+or the phone's geometry. Original200ms is unchanged; no lease is renewed.
+
+Constructed SOFTWARE baseline with303f790 production headers accepted three
+same-page sources in class slack. New source refuses them before physical-
+timer six-MRS slots/queues/API/FP, retaining graph and partial provider raw.
+Adjacent previous/next4K pages pass. FINAL2885 ASAN/UBSAN SOFTWARE
+PASS3263.3984556670184s=all2880+5 cases. Four affected parent/export COFF/MachO/
+generalregs/maxframe1024 builds PASS; export onlyPARrestore/noSMC. OFF640972/
+640999 same-command pairs equal. Unaffected allocator8487/release771/other
+checks/models/CI were not repeated; changed provider header is not in their
+body/include graph. No original firmware/native/wholeconstructor execution.
+Independent numeric struct/hashlib checks seven full705256B bundles, max86616B,
+four archived/fresh bundles and reconstructs every baseline/refused byte in
+new buffers, without editing RAW or executing captured pointers.
+
+Private0189/wifi/cache-handle-release-source-alias-0001/proof.json
+SHA2dbb2e5f5f51ad5a95e41b857e76cd6c03f6bfe2b1d11134e2c1b19928cf82fd;
+source/softwarea6f435906d99a02b274e3ff03afc877fdf1fa1f4147dd1bb701f37fda8e68330.
+Full transitive effects/work/wholecall temporal and six-context fresh later
+map/source/typed/policy qualification plus secure/cache/DMA lifecycle remain
+NOTREADY. All three cache maps precede FreePool; later11 existing calls are
+later boundaries, never self-precall proof. No physical WiFi run or credible
+date. All original private proof/RAW/schema/SHA/timestamps retain their scope.
