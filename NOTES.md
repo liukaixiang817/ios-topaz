@@ -108,6 +108,21 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
+- NEW0189 latest PUBLIC functional source
+  98ef301f7877f99ede6473210ef3f933523e0387 is published by the SAME original
+  directpush under actual continuing source/text consentce8ce4fd. Push ENDED0,
+  subsequent independent readonly lsremote matches98ef301. Exact six own UTF8
+  paths: NOTES/REFERENCE_REPOS/gcd-readonly header/current-graph header/actual
+  parent/current-graph test. All firmware/Apple/vendor/NV/backup/RAW/photo/
+  serial/password/private bytes excluded. Private later-map-temporal-handoff-0001/
+  authorized-source-push-0001.json
+  SHAe6841a56db1d74ed84513ec407f36bc5f414f73130d3380b27b69e3b506d0093.
+  This subsequent handoff edits only two text files; no source/test/RAW/schema/
+  proof edits or repeated checks. No alternate channel/force/newbranch. No new
+  authorization/physical question pending. Wholecall/owner/secureDMA/new
+  candidate and physical WiFi remain NOTREADY; previous pending/rejection
+  language retains its historical scope only.
+
 - NEW0189 latest SOURCE/SOFTWARE milestone: real later-graph CNTVCT handoff
   to the enclosing Map guard. Baseline7867 source actually accepts SOFTWARE
   opening1100/header1400/graphlast8300/outer8299 and restores outerFP. Original
