@@ -108,6 +108,18 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
+- NEW0189 latest PUBLIC functional source
+  303f790799b7d625ebd50811ff693331160a9a3b is pushed by the SAME directpush under actual
+  current/future source/text consentce8ce4fd. Independent readonly lsremote
+  matches303f790. Exact five reviewed own UTF8 source/text paths; every firmware/
+  Apple/vendor/NV/backup/RAW/photo/serial/password/private byte excluded. Private
+  cache-handle-timer-work-inputs-0001/authorized-source-push-0001.json
+  SHAaac79f46bc18df9b7de44bce18fec7c18c842dc46bc2d6076fc57b8dcdeb92cd. This subsequent handoff
+  edits only NOTES/REFERENCE_REPOS, with no source/test/RAW/proof/schema edit
+  or repeated checks. Scope below remains input consistency/SOFTWARE/NOTREADY;
+  full wholecall/postsource/physical WiFi admission is not claimed. Older
+  publication/current statements apply only at their original sources.
+
 - NEW0189 CURRENT finite timer-work INPUT consistency in the real bootstrap
   caller, SOURCE/SOFTWARE only. Completed local source; publication is not
   claimed in this paragraph. Older37cc382/42d5a4d/current/check statements
