@@ -28,6 +28,12 @@ _Static_assert(sizeof(struct pcmi_binding)==400&&sizeof(struct pcmi_live)==408&&
 _Static_assert(offsetof(struct pcmi_result,path)==432&&offsetof(struct pcmi_result,AT)==12832&&
     offsetof(struct pcmi_result,clock)==14624&&offsetof(struct pcmi_result,parent_after)==20080&&
     offsetof(struct pcmi_result,digest)==20420,"independent later provider INPUT decoder offsets");
+/* The graph digest covers its prefix; its aligned RAW object also retains
+ * eight trailing padding bytes. Close those bytes separately without changing
+ * the old graph schema or reinterpreting its historical prefix digest. */
+static inline int pcmi_graph_tail(const struct pcmg_result*g)
+{return pwmc_zero((const uint8_t*)g+offsetof(struct pcmg_result,digest)+sizeof(g->digest),
+    sizeof(*g)-offsetof(struct pcmg_result,digest)-sizeof(g->digest));}
 static inline int pcmi_fail(struct pcmi_result*r,unsigned error)
 {if(!r->error)r->error=error;r->unknown=1;return 0;}
 static inline int pcmi_known(const struct pcmi_live*l)
@@ -53,7 +59,8 @@ static inline int pcmi_source(const struct pcmi_live*l)
        !pwmc_zero(r->digest,sizeof(r->digest))||r->AT_count>PCMI_AT_MAX||
        r->arch_issued>PCMI_CLOCK_MAX||r->arch_returned>r->arch_issued)return 0;
     ppli_sha(l->graph,offsetof(struct pcmg_result,digest),hash);
-    if(!pgcd_equal(hash,r->binding.graph_seal,32)||!pgcd_equal(l->graph->digest,r->binding.graph_seal,32))return 0;
+    if(!pgcd_equal(hash,r->binding.graph_seal,32)||!pgcd_equal(l->graph->digest,r->binding.graph_seal,32)||
+       !pcmi_graph_tail(l->graph))return 0;
     pbgi_parent_frame_seal(l->parent,hash);
     if(!pgcd_equal(hash,r->binding.frame_seal,32)||!pcmp_source_stable(l->parent))return 0;
     /* Qualified DATA view only, never a fabricated opened/live context. The
@@ -137,7 +144,7 @@ static __attribute__((noinline)) int pcmi_capture(struct pcmi_result*r,struct pc
        pwmc_parent_overlap((uintptr_t)r,sizeof(*r),(uintptr_t)graph,sizeof(*graph))||!pwmc_zero(r,sizeof(*r)))return 0;
     uint8_t hash[32];ppli_sha(graph,offsetof(struct pcmg_result,digest),hash);
     if(graph->attempted!=1||graph->complete!=1||graph->unknown||graph->error||graph->parent_copied!=1||
-       !pgcd_equal(hash,graph->digest,32)||!pgcd_equal(&graph->binding.parent,parent,sizeof(*parent))||
+       !pgcd_equal(hash,graph->digest,32)||!pcmi_graph_tail(graph)||!pgcd_equal(&graph->binding.parent,parent,sizeof(*parent))||
        !pgcd_equal(&graph->parent_after,parent,sizeof(*parent))||graph->binding.parent_address!=(uintptr_t)parent||
        graph->graph.core_pages!=PBGI_CORE_PAGES||graph->graph.count[0]>PBGI_NODES||graph->graph.count[1]>PBGI_NODES||
        !graph->graph.arch_returned||graph->graph.arch_returned>PBGI_CLOCKS||graph->graph.arch_issued!=graph->graph.arch_returned)return 0;
@@ -204,7 +211,9 @@ static inline int pcmi_route_minimum(const struct pcmp_route*routes,unsigned cou
     if(!frames||!pcmg_route_minimum(routes,count,graphs,c,slot,out))return 0;
     unsigned index=0;for(;index<count;index++)if(routes[index].context==c)break;if(index==count)return 0;
     const struct pcmi_result*r=&frames[index][slot];const struct pcmg_result*g=&graphs[index][slot];uint8_t hash[32];
-    if(r->attempted!=1||r->complete!=1||r->unknown||r->error||r->reserved||r->parent_copied!=1||
+    if(!pcmi_graph_tail(g)||!pwmc_zero((const uint8_t*)r+offsetof(struct pcmi_result,digest)+sizeof(r->digest),
+       sizeof(*r)-offsetof(struct pcmi_result,digest)-sizeof(r->digest))||
+       r->attempted!=1||r->complete!=1||r->unknown||r->error||r->reserved||r->parent_copied!=1||
        r->path.attempted!=1||r->path.complete!=1||r->path.finalized||r->AT_count>PCMI_AT_MAX||
        r->hash_count[0]!=5||r->hash_count[1]!=5||r->hash_failed[0]||r->hash_failed[1]||
        r->binding.graph!=g||r->binding.parent_address!=g->binding.parent_address||

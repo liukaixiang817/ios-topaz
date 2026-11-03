@@ -108,6 +108,91 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
+- NEW0189 latest SOURCE/SOFTWARE: close the previously unguarded trailing
+  graph8/provider4 RAW bytes in the real later-provider interval and completed
+  scalar handoff. Baseline original f3ac787 source accepted each graph byte
+  310472..310479 changed at the final provider clock, with its prefix digest
+  still valid and outer FP restored. After the graph-only fix, the intermediate
+  source likewise accepted each provider byte20452..20455 changed at completed
+  handoff. These are actual constructed SOFTWARE C executions, never phone
+  corruption/counter/IRQ/owner/lifetime or physical observations. Original
+  source/log/RAW/proofs are retained at their exact historical scopes.
+- Actual pcmi entry and each existing source closure now require the graph's
+  trailing8 bytes to remain zero; the actual six-route minimum also checks
+  these8 and the provider's trailing4. The own provider's complete object was
+  already sealed across active callbacks; its completed handoff now retains
+  this zero-padding requirement too. Original graph prefix SHA0:310440 and
+  digest310440:310472, provider prefix SHA0:20420 and digest20420:20452 retain
+  their historical meanings. No RAW size/offset/version/hash reinterpretation,
+  zeroing damaged bytes, new reader/service/context/ticket/permission/owner,
+  extra hash/AT/clock/MRS/nativeflag/BS/GetMap/FreePool/provider/MMIO/SMC call or
+  sysreg store. Extra ordinary RAM padding comparisons are real work.
+- Cold malformed graph refuses before provider attempt/AT/clock. Active
+  corruption refuses before the next native RAM sample or any later callback;
+  the actual returned leaf data and partial prefix remain recorded. Completed
+  graph/provider corruption refuses before the next outer arch and outer FP
+  restore. Preserve actual API0/1/1, dirty full RAW and completed inner records;
+  nested complete/map-valid never overrides outer UNKNOWN. No postfailure
+  sampling/guessed restore/free/retry/cleanup. Original virtual200ms opening
+  and existing latest-counter handoff remain unchanged, no renew/reopen/rebase
+  or physical/virtual epoch comparison. Old path.finalized0 and unobserved
+  regs/math/raise/final still grant no allocator/current-physicaltimer lease.
+- FINAL1488 ASAN/UBSAN SOFTWARE PASS2155.333568541042s: all old1124
+  preserved plus364 (8graph bytes x43 actual AT/arch stages=344,8cold entry,
+  8completed graph handoff,4completed provider handoff). Six genuine generic
+  contexts/11 existing Maps, old foreign/partial/control/expiry/max256GCD/
+  GICv2/v3/1020handler3page/temporal/ABA cases retained. Normal20AT/23generic
+  virtualarch and max22/25 unchanged; generic arch still contains MRS and AT
+  still exactPARrestore. All services/AT/FP/arch are SOFTWARE peers and original
+  PE inert DATA; no originalFW/native/whole pwfc/pwsp/client constructor
+  execution. Terminal longjmp peer is not physical retirement;2155s not lease.
+- Four final actualwholeparent/current-provider export COFF+MachO builds PASS,
+  generalregs/maxframe1024 unchanged. Export MSR only exactPARrestore/noSMC;
+  parent old FP/terminalmask not zero-write. Parent C body still f3ac787 bytes,
+  ON objects change through the included guards. OFF not rerun: unchanged
+  parent body and changed header absent from qualified OFF include graph,
+  previous OFF preprocessed results only retain that source scope. Unaffected
+  4553/8487/1789/2885/771/474/1452/2341/167/5141/models/CI not rerun; old graph
+  include trace excludes this changed provider header. Current absolute shim
+  FIRST/-H, no private frozen header substituted for CURRENT qualification.
+- Independent Python struct/hashlib reuses the unchanged V3/provider decoder
+  functions and original binding metadata: full8432832B normal archive plus
+  22x717848B baseline/current bundles,33provider records. New expected buffers
+  reconstruct complete provider/graph bytes, all source/control/AT/clock/hash/
+  unused/padding/digest and new failed outer/PCMP bytes, including preserved
+  nonzero padding with authentic prefix digests. Numeric captured pointers and
+  original PE DATA never executed. Original RAW/proofs/objects/timestamps not
+  edited or renamed. Earlier54 subset and1484 full passes qualify only their
+  intermediate snapshots. First private baseline-probe0001 failed on nested
+  main macro redefinition;0002 only renamed the private copied literal main,
+  original source/error retained, no production guard lowered.
+- Final provider f6833e7626d093ef1e42c5d4a8960a06ce7ae3ffdbd19e6666d0cf5754ab4a60,
+  test 6be9f21a1c6686710204666273817b523968b22fd4adfd7b171e47d684b8f4bb;
+  common/preprovider/currentgraph/actualparent/oldgraphtest bytes unchanged
+  from f3ac787. Final seven C/test files match full-0002 and applicable
+  cross-0001 snapshots exactly. All old schemas and physical IO counts remain.
+  Private0189/wifi/later-provider-graph-padding-0001/proof.json
+  SHAdd23e1135baeeb60a913405d0521cf6711f78e99e25e99cd11763e1853a7cbfb;
+  source/software8ad4b9f20e356d99674e568a8ffc44c610b899ea1e4884dd48487f39b88d7d07.
+  All host/build jobs ENDED; no physicalUSB/native/MMIO/SMC/originalPE/newmodel/
+  CI/operational codec/image/payload/helper/freeze or new human question.
+- NEXT: padding closure is DONE; do not repeat this fix/probe/1488/decoder,
+  existing readers/walks/RAW/seals/minimum/math or unaffected old checks/models/
+  inventory boot/blind GetMap. Still bind actual current physicaltimer/deferred/
+  event and transitive callback source/effects/work, fresh postsource/release
+  backing lifetimes/active allocation exclusion, wholecall preemption/fault/
+  latency/owner/IRQ/ABA/precall. Fullbytes/keys/tags/count/emptyqueue/complete/
+  monotonic counter grant none of them; no expired relay or closed context
+  reuse. Other release geometry unsupported. Then independent MSA/RMTFS
+  claims/cache/secureVMID/MPU/remoteDMAstop/handback/full normal+UNKNOWN
+  retirement and full changedparent/two SERIAL wholeconstructor models/new
+  profile/resource/codec/transition/freeze/ONEhelper before device. Main
+  REMOTE_MEMORY defaultOFF, consumer/builder/CLI/profile/resource unconnected.
+  NOTREADY/no publishPA/MSS/NVserve/radio/device. PHONE only last independent
+  actual Polaris FASTBOOT2026-11-02T10:05:37.496860Z after0188 fullretire, not
+  current LIVE. WiFi firmware/scan/join/IP/DNS/data never physically successful,
+  no credible date; sound/camera STOP. No physical/authorization issue pending.
+
 - NEW0189 latest PUBLIC functional source
   63dcecc7ff377699ba56a4cf5541454024357a13 is published by the SAME original
   directpush under actual continuing source/text consentce8ce4fd. Push ENDED0;

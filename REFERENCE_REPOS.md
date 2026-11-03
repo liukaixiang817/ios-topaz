@@ -2182,3 +2182,33 @@ source receipt SHA75bf99189fcb8352ee995162c51ad210c55c8e1b4f058c436c80d90784566e
 This subsequent handoff changes only NOTES/REFERENCE_REPOS, no code/test/RAW/
 schema/proof changes or repeated checks. Lifetimes/wholecall/owner/secureDMA/
 new candidate/physical WiFi remain NOTREADY. No new human action is needed.
+
+### Own0189 later-provider trailing RAW padding closure
+
+The actual later-provider reader now retains all graph8 trailing padding bytes
+at entry and across its existing leaves; its actual completed scalar handoff
+also requires those8 and own-provider4 padding bytes to remain zero. The old
+prefix digests/schemas keep their exact historical meanings. Original f3ac787
+SOFTWARE accepted all8 graph byte faults with outer FP restored; the subsequent
+graph-only intermediate source accepted all4 own-provider handoff byte faults.
+No phone corruption or physical/owner/lifetime result is implied. No reference
+scripts/prebuilts or original firmware code executed, no new hardware call.
+
+Final1488 ASAN/UBSAN SOFTWARE PASS2155.333568541042s preserves1124 old cases
+and adds364 actual composition faults. Four current wholeparent/provider export
+COFF+MachO/generalregs/maxframe1024 builds PASS; source snapshots match current.
+Independent struct/hashlib reconstructs33 provider records from8432832B normal
+archive plus22x717848B baseline/current bundles in NEW expected buffers, preserving
+dirty padding and every original RAW/proof/offset/timestamp. Native export MSR
+only exactPARrestore/noSMC; wholeparent old FP/terminalmask not zero-write.
+Current provider f6833e7626d093ef1e42c5d4a8960a06ce7ae3ffdbd19e6666d0cf5754ab4a60;
+test 6be9f21a1c6686710204666273817b523968b22fd4adfd7b171e47d684b8f4bb.
+Private later-provider-graph-padding-0001/proof.json
+SHAdd23e1135baeeb60a913405d0521cf6711f78e99e25e99cd11763e1853a7cbfb;
+source/software8ad4b9f20e356d99674e568a8ffc44c610b899ea1e4884dd48487f39b88d7d07.
+
+These are DATA integrity checks. Actual physicaltimer/deferred/event/transitive
+callback effects/work, postsource/release-backing lifetimes/active allocation,
+wholecall walltime/IRQ/owner/ABA/precall and secure-DMA handback/new candidate
+admission remain open. No repeated old audits/models/boot/USB; WiFi physically
+never scanned/joined/networked, no credible date; audio/camera STOP.

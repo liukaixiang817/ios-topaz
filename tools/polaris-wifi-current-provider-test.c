@@ -34,6 +34,7 @@ static int provider_mutate(struct ppli_at*at,struct pgcd_arch*clock)
     case 21:((uint8_t*)provider_parent)[provider_byte]^=1;break;
     case 22:((uint8_t*)active_provider)[provider_byte]^=1;break;
     case 23:put(core+0x1d1a8,pwfi_le(core+0x1d1a8,8)^16,8);put(core+0x1d1a8,pwfi_le(core+0x1d1a8,8)^16,8);break;
+    case 24:((uint8_t*)active_graph)[provider_byte]^=1;break;
     default:assert(0);
     }return 1;
 }
@@ -68,7 +69,8 @@ static int fixture_provider_capture(struct pcmp_live*parent,int(*read_page)(stru
     case 5:out=(void*)((uintptr_t)cpu_flag-active_route*sizeof(*providers));break;
     case 6:selected[active_route].context=(void*)8;break;case 7:selected[active_route].source=(void*)8;break;
     case 8:active_graph->complete=0;break;case 9:active_graph->digest[0]^=1;break;
-    case 10:active_provider->reserved=1;break;default:assert(0);
+    case 10:active_provider->reserved=1;break;
+    case 11:((uint8_t*)active_graph)[provider_byte]=1;break;default:assert(0);
     }
     int ok=pcmi_route_capture(selected,count,out,graphs,parent,read_page);provider_running=0;return ok;
 }
@@ -88,7 +90,9 @@ static int fixture_provider_minimum(const struct pgcd_context*caller,unsigned sl
         case 15:last->raw.cpu.ticks=p->binding.minimum-1;break;
         case 16:last->raw.cpu.ticks=p->binding.opening+PGCD_FRESH_TICKS+1;break;
         case 17:last->raw.cpu.ticks=UINT64_MAX;break;case 18:p->binding.graph=(void*)8;break;
-        case 19:p->parent_after.r=(void*)8;break;case 20:p->digest[0]^=1;break;default:assert(0);
+        case 19:p->parent_after.r=(void*)8;break;case 20:p->digest[0]^=1;break;
+        case 21:((uint8_t*)active_graph)[provider_byte]^=1;break;
+        case 22:((uint8_t*)p)[provider_byte]^=1;break;default:assert(0);
         }
         if(provider_handoff_fault<20)ppli_sha(p,offsetof(struct pcmi_result,digest),p->digest);
     }
@@ -161,6 +165,53 @@ int main(int argc,char**argv)
         provider_pair_raw(argv[5],v3?".max-v3":".max-v2");
     }
 #if !defined(PCMI_NORMAL_ONLY) && !defined(PCMI_HANDOFF_ONLY)
+    /* The old graph prefix digest excludes aligned trailing RAW padding.
+     * Exercise every such byte at every real provider leaf, and cold entry.
+     * Preserve the damaged graph; never clear it to obtain logical success. */
+    const unsigned tail_start=offsetof(struct pcmg_result,digest)+sizeof(active_graph->digest);
+    assert(tail_start==310472&&sizeof(*active_graph)-tail_start==8);
+    for(unsigned byte=tail_start;byte<sizeof(*active_graph);byte++){
+        provider_fixture(1,64,1);activate(1);provider_entry=11;provider_byte=byte;
+        assert(!graph_open()&&graph_stopped&&cur->error==7&&((uint8_t*)active_graph)[byte]==1&&
+            !active_provider->attempted&&!provider_ATs&&!provider_clocks&&!r->map_guard[0].fp.restored);checks++;
+        for(unsigned mode=1;mode<=2;mode++)for(unsigned point=1;point<=(mode==1?20u:23u);point++){
+#if defined(PCMI_GRAPH_TAIL_SUBSET)
+            if(point!=1&&point!=(mode==1?20u:23u))continue;
+#endif
+            provider_fixture(1,64,1);activate(1);provider_mode=mode;provider_point=point;provider_fault=24;provider_byte=byte;
+            assert(!graph_open()&&provider_hit&&graph_stopped&&cur->error==7&&active_provider->unknown&&
+                !active_provider->complete&&!r->map_guard[0].fp.restored&&((uint8_t*)active_graph)[byte]==1&&
+                cur->call.map.status==0&&cur->call.map.issued==1&&cur->call.map.returned==1);
+            uint8_t hash[32];ppli_sha(active_graph,offsetof(struct pcmg_result,digest),hash);
+            assert(pgcd_equal(hash,active_graph->digest,32));
+            if(mode==1){const struct ppli_at*a=&active_provider->AT[point-1];
+                assert(provider_ATs==point&&active_provider->AT_count==point-1&&a->issued==1&&a->returned==1&&
+                    a->native_issued==1&&a->native_returned==1);}
+            else {const struct pbgi_clock*a=&active_provider->clock[point-1];
+                assert(provider_clocks==point&&active_provider->arch_issued==point&&active_provider->arch_returned==point-1&&
+                    a->issued==1&&!a->returned&&a->native_issued==1&&a->native_returned==1);}
+            if(mode==2&&point==1&&byte==tail_start)provider_pair_raw(argv[5],".graph-tail-refused");
+            checks++;
+        }
+        provider_fixture(1,64,1);activate(1);provider_handoff_fault=21;provider_byte=byte;
+        assert(!graph_open()&&provider_handoff_hit&&leaf_arches==provider_handoff_arches&&active_provider->complete&&
+            active_graph->complete&&((uint8_t*)active_graph)[byte]==1&&r->uncertain&&!r->map_guard[0].fp.restored&&
+            !r->map_guard[0].left&&r->map[0].status==0&&r->map[0].issued==1&&r->map[0].returned==1);
+        if(byte==tail_start)provider_pair_raw(argv[5],".graph-tail-handoff");checks++;
+    }
+    /* Own provider padding was already sealed across active callbacks. It
+     * must remain closed when the completed DATA minimum is handed out too. */
+    const unsigned own_tail=offsetof(struct pcmi_result,digest)+sizeof(active_provider->digest);
+    assert(own_tail==20452&&sizeof(*active_provider)-own_tail==4);
+    for(unsigned byte=own_tail;byte<sizeof(*active_provider);byte++){
+        provider_fixture(1,64,1);activate(1);provider_handoff_fault=22;provider_byte=byte;
+        assert(!graph_open()&&provider_handoff_hit&&leaf_arches==provider_handoff_arches&&active_provider->complete&&
+            ((uint8_t*)active_provider)[byte]==1&&r->uncertain&&!r->map_guard[0].fp.restored&&!r->map_guard[0].left&&
+            r->map[0].status==0&&r->map[0].issued==1&&r->map[0].returned==1);
+        if(byte==own_tail)provider_pair_raw(argv[5],".provider-tail-handoff");checks++;
+    }
+#endif
+#if !defined(PCMI_NORMAL_ONLY) && !defined(PCMI_HANDOFF_ONLY) && !defined(PCMI_GRAPH_TAIL_ONLY)
     for(unsigned bad=1;bad<=10;bad++){
         provider_fixture(1,64,1);activate(1);provider_entry=bad;
         assert(!graph_open()&&graph_stopped&&cur->error==7&&!r->map_guard[0].fp.restored&&!provider_ATs&&!provider_clocks);
@@ -214,7 +265,7 @@ int main(int argc,char**argv)
     provider_fixture(1,64,1);activate(1);provider_mode=2;provider_point=23;provider_fault=23;
     assert(graph_open()&&provider_hit&&active_provider->complete&&!active_provider->unknown);checks++;
 #endif
-#if !defined(PCMI_NORMAL_ONLY)
+#if !defined(PCMI_NORMAL_ONLY) && !defined(PCMI_GRAPH_TAIL_ONLY)
     for(unsigned bad=1;bad<=20;bad++){
         provider_fixture(1,64,1);activate(1);provider_handoff_fault=bad;
         assert(!graph_open()&&provider_handoff_hit&&leaf_arches==provider_handoff_arches&&r->uncertain&&
