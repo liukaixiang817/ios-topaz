@@ -108,6 +108,97 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
+- NEW0189 latest SOURCE/SOFTWARE milestone: real later-graph CNTVCT handoff
+  to the enclosing Map guard. Baseline7867 source actually accepts SOFTWARE
+  opening1100/header1400/graphlast8300/outer8299 and restores outerFP. Original
+  baseline source/log/full697392B RAW retained. This is constructed SOFTWARE,
+  not phone counter/CNTVOFF/offset/physical time/lease evidence.
+- Actual pgcd_map_read under existing CURRENT_GRAPH_INPUT now obtains a local
+  uint64 minimum from the actual six resident routes' completed PCMP/graph
+  records before its EXISTING next arch sample. Exact closed selection precedes
+  selected context/source/frame follow; actual pending Map boundary, original
+  context/ticket/opening, full PCMP/graph SHA and last complete clock/native
+  sample are checked. No completed caller/relay pointer is executed or followed
+  as future IO. Missing/zero/backward/outwindow/MAX/partial/corrupt input refuses
+  before that next arch sample. The EXISTING sample must be at least this last
+  nested CNTVCT; rollback or arch refusal is stickyUNKNOWN BEFORE outerFP
+  restore. Equal is legal. Actual API status/issued/returned and both complete
+  nested raw records remain even when outer admission fails. No postfailure
+  hardware sample/guessed restore/free/retry/cleanup. Raw map.valid alone is
+  not outer success when guard remains UNKNOWN.
+- Only own numeric/control/DATA hash/comparison work added, including full
+  PCMP/graph hashes. Normal arch/AT/MRS/nativeflag/BS/GetMap/FreePool/provider
+  calls unchanged; no new service/wrapper/context/ticket/owner/permissionbool
+  or systemreg/MMIO store. Registered Map and pgcd_io ABI unchanged. Original
+  pcmap.final_arch remains the EARLIER header sample, not renamed latest.
+  No RAW/schema/offset change: outer30224/PCMP356688/newgraphV3 310480 plus all
+  existing producer/release/allocator/provider/queue/timer records unchanged.
+  Original virtual opening200ms is never renewed/reopened/rebased/latest+200ms;
+  no physicalCNTPCT/CVAL epoch comparison, offset or globaldeadline inferred.
+- FINAL4553 ASAN/UBSAN SOFTWARE PASS1470.98928441701s=all old4463 retained+90:
+  11 actual Map boundaries times7 outer samples (latest-1,oldheader,equal,+1,
+  originaldeadline,expired,MAX) plus13 actual completed-DATA shape/digest/zero/
+  native/control handoff refusals before next arch. Normal/max/temporal115
+  subset PASS160.04176454199478s was only a subset. All old source/partial/
+  foreign/overlap/replay/graphmax and ABA limitation
+  cases remain; no production guard lowered. All service/AT/FP/arch leaves peer,
+  PE inert DATA, no originalFW/native/whole power/client constructor executed.
+  Terminal longjmp peer is not physical retirement. Software seconds are not
+  hardware time/lease. Final source/test equal fulliteration0001 snapshots.
+- Six actualwholeparent/producer/graph COFF+MachO/generalregs/maxframe1024
+  builds PASS, five production files equal final cross snapshots. Exports MSR
+  only exactPARrestore/noSMC; parent old FP/terminalmask not zero-write. Normal
+  graph66AT/69virtualclock and max256GCD321AT/324clock unchanged. Default
+  producer/current-map/dispatch/allocator full SOFTWARE preprocessed outputs
+  are actually same-invocation byte-equal with old header; baseline -H proves
+  old header selected only in comparison and actual shim FIRST for current.
+  Their1789/2341/167/8487 plus771/474/1452/5141/2885/models/CI not rerun.
+  Unchanged release/dispatch exports MachO equal, COFF only typed TimeDateStamp
+  differs; original objects untouched. OFF PREPROCESSED same-command pairs
+  equal MachO640972/COFF640999. Actual ON parent object changes with new guard;
+  source changes are not claimed binary-equal or new profile qualification.
+- Independent Python struct/hashlib verifies full8006016B normal archive,
+  four667168B max/old-refusal bundles, baseline plus four697392B new outer
+  bundles:20 records with complete PCMP/graph seals/raw/unused/padding/digests.
+  Every byte of three failed30224B outer records is reconstructed in NEW
+  expected buffers from independently verified pre-source and actual outputs;
+  zero-handoff310480B aux similarly reconstructed. Original RAW/proofs/objects
+  untouched, captured pointers numeric only. Refused outer8299<graph8300 keeps
+  API0/1/1, error5/uncertain1/guardunknown1/left0/FPunrestored; equal8300 restores
+  normally; expired3841101 refuses under original1100..3841100 window.
+  Private later-map-temporal-handoff-0001/proof.json
+  SHAe1e1fc4f7860a6cb0f553aa5792619dd82ffc97a154db57bda7eb10d079c94dc;
+  source/software1da9a54e2f639a72293e336e5a675a6736b0854b01b206a32d11c05b5b6e878f.
+  First private probe's upstream main-macro error and first subset's too-narrow
+  MAX error expectation retained. Old arch stability correctly refuses MAX as
+  PGCD_ARCH before clock check; only test expectation corrected, no guard drop.
+- Current gcdheaderb1b7db6e2ae7fa4560537af6037e382f4b5da8c47b441dd58678cafe1e3871a2,
+  currentgraph aac53d162bcd961e1055da1d97f90c05af0e92b4254ad7643bb0e2fc9a437967,
+  actualparent df0f57739e25bd84c95d23c65bda6b7b321a88df39890fc6535e3ae0c7fbd618,
+  graphtest f7ca426aedbf73d4a031d61be614d6aef15d023b4198b972f93f978601fdc60c.
+  Producer/current-map/preprovider/pregraph/common/dispatch/release/oldfixtures
+  unchanged from03b7382; all older evidence keeps its own source/version scope.
+- NEXT: this later-graph to outer-sample monotonic handoff is done, not full
+  wholecall walltime/preemption/fault/latency/IRQ/owner qualification. Bind
+  remaining transitive Timer/GIC/provider/currenttimer/deferred callback source/
+  effects/work and postsource lifetimes to six NEW actual contexts, preserving
+  original opening and avoiding expired relay/closedPGCD. Returned map still
+  cannot self-qualify precall; snapshots/fullbytes/key/tag/count/complete do not
+  exclude ABA/futureIRQ or establish inventory/owner/lease. Unsupported release/
+  backing geometry stays unsupported; do not guess phone matches. Do not redo
+  this temporal probe/handoff/reader/helper/wrapper/seal/4553/decoder or old
+  source audits/checks/models/blind GetMap/inventory boot. Then independent
+  actual MSA/RMTFS claims/cache/secureVMID/MPU/remoteDMAstop/handback/full normal
+  and UNKNOWN retirement; full changedparent/two SERIAL wholeconstructormodels/
+  new exact profile/resource/codec/transition/freeze/ONEhelper before device.
+  Main REMOTE_MEMORY defaultOFF; consumer/builder/CLI/profile/resource not
+  connected, NOTREADY/no publishPA/MSS/NVserve/radio/device. All host/build
+  jobs ENDED; no new physicalUSB/native/MMIO/SMC/originalPE/model/CI/codec
+  admission/image/payload/helper/freeze. PHONE remains only0188 fullretire then
+  last independent actual Polaris FASTBOOT2026-11-02T10:05:37.496860Z, not LIVE.
+  WiFi firmware/driver/scan/join/IP/DNS/data never physically successful, no
+  credible date; sound/camera STOP. No authorization/physical question pending.
+
 - NEW0189 latest PUBLIC functional source
   7867f376ee2ac1ef1b08acae444b602c67a176a8 is pushed through the SAME original
   directpush under actual current/future source/text consentce8ce4fd. Push

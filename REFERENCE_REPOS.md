@@ -2061,3 +2061,49 @@ SHA50c064f33991fd2e9e6c71f7fd24815a864022a5589bbd088579fea2bb941ee5. This subseq
 changes only NOTES/REFERENCE_REPOS, with no source/test/RAW/schema/proof changes
 or repeated tests. Wholecall/owner/secureDMA/new candidate and physical WiFi
 remain NOTREADY; no additional authorization or physical action is pending.
+
+
+### 0189 later-graph to enclosing Map CNTVCT handoff, SOFTWARE only
+
+Baseline7867 actually accepts constructed opening1100/header1400/graphlast8300/
+outer8299 with outer FP restored. Current actual pgcd_map_read obtains the
+already observed last CNTVCT from the exact six-route completed PCMP/graph
+DATA into a local uint64 before its next existing arch sample. Full records,
+original context/ticket/opening and pending boundary are checked; captured
+caller/relay pointers stay numeric DATA. Invalid/zero/corrupt handoff refuses
+before next arch; rollback/arch refusal stops before outer FP restore. Equal
+is legal. Actual API status and partial/raw results remain. No new firmware
+service/clock/AT/MRS/nativeflag call or RAW/ABI change; ordinary DATA/hash work
+is added. Original window never renews or mixes physical/virtual epochs.
+
+FINAL4553 ASAN/UBSAN SOFTWARE PASS1470.98928441701s=old4463+90;115 earlier was
+only normal/max/new temporal subset. Six actual Map routes/11 existing calls,
+77 outer sample cases and13 completed-DATA refusals. All original cases/guards
+remain, including known ABA limitations; no originalFW/native/whole power or
+client constructor execution. Six final actual parent/producer/graph COFF and
+MachO builds PASS generalregs/maxframe1024. Export MSR only exactPARrestore,
+noSMC; whole parent old FP/terminalmask is not zero-write. Default producer/
+current/dispatch/allocator full preprocessed outputs are same-invocation byte
+equal with the old header, so1789/2341/167/8487 and other unaffected suites/models/
+CI not repeated. Unchanged release/dispatch native MachO equal, COFF only typed
+TimeDateStamp differs. OFF preprocessed640972/640999 pairs equal; ON changes.
+
+Independent struct/hashlib checks8006016B normal archive, four667168B old-shape
+max/refused and five697392B baseline/new outer bundles. Every failed30224B
+outer record byte and zero-handoff310480B aux byte reconstructed in NEW buffers;
+original RAW/version/proof/objects untouched, pointers numeric. Refused8299
+preserves API0/1/1 with outer error5/unknown/no FP restore; equal8300 succeeds.
+Original1100..3841100 expiry remains. Private probe main macro error and early
+MAX first-error test expectation are preserved; production guard unchanged.
+Private0189/wifi/later-map-temporal-handoff-0001/proof.json
+SHAe1e1fc4f7860a6cb0f553aa5792619dd82ffc97a154db57bda7eb10d079c94dc;
+source/software1da9a54e2f639a72293e336e5a675a6736b0854b01b206a32d11c05b5b6e878f.
+
+This closes same-counter stage ordering, not wholecall walltime/preemption/
+fault/latency or remaining Timer/GIC/provider/deferred source/effects/work/
+lifetimes, precall/owner/ABA/IRQ/lease or secureDMA retirement. These and actual
+MSA/RMTFS claims/cache/secureVMID/MPU/DMAstop/handback/full new candidate remain.
+Main defaultOFF; no builder/consumer/CLI/profile/resource admission, no device,
+physical WiFi success or credible date. All host/build jobs ENDED; no physical
+USB/native/MMIO/SMC/originalPE/model/CI/codec admission/image/payload/helper/freeze.
+Sound and camera STOP. No new external reference/vendor/firmware audit needed.

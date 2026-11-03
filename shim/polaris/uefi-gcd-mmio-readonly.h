@@ -118,6 +118,11 @@ static inline int pgcd_owned(struct pgcd_context *c,unsigned slot,uint64_t at,ui
         if(!polaris_efi_range_owned(r->maps[slot],m->bytes,m->stride,p,4096,3)&&!polaris_efi_range_owned(r->maps[slot],m->bytes,m->stride,p,4096,4))return 0;
     return c->io.identity(c->io.opaque,at,bytes,&r->last_identity_address,&r->last_identity_par);
 }
+#if defined(POLARIS_WIFI_CURRENT_GRAPH_INPUT)
+/* Own parent DATA only: the completed nested input's last CNTVCT, never
+ * executable captured IO, a renewed window or a physical-counter value. */
+static int pgcd_parent_map_minimum(const struct pgcd_context*,unsigned,uint64_t*);
+#endif
 static inline int pgcd_map_read(struct pgcd_context *c,unsigned slot)
 {
     struct pgcd_result *r=c->record;struct pgcd_map *m=&r->map[slot];struct pgcd_service_guard *g=&r->map_guard[slot];
@@ -131,7 +136,15 @@ static inline int pgcd_map_read(struct pgcd_context *c,unsigned slot)
     g->entered=1;g->unknown=1;m->bytes=PGCD_MAP_CAP;m->issued=1;r->outstanding=0x20000u+slot;
     c->io.order(c->io.opaque);int returned=c->io.map(c->io.opaque,c->io.system,m,r->maps[slot]);
     m->returned=returned?1u:0u;g->foreign_returned=m->returned;
+#if defined(POLARIS_WIFI_CURRENT_GRAPH_INPUT)
+    uint64_t minimum=0;
+    if(!returned||!pgcd_parent_map_minimum(c,slot,&minimum)||!minimum){pgcd_fail(c,PGCD_CLOCK,1);return 0;}
+    int arch=pgcd_live(c,&g->after,1);
+    if(!arch||g->after.cpu.ticks<minimum){pgcd_fail(c,PGCD_CLOCK,1);return 0;}
+    int fp=c->io.fp_restore(c->io.opaque,&g->fp);
+#else
     int arch=pgcd_live(c,&g->after,1);int fp=c->io.fp_restore(c->io.opaque,&g->fp);
+#endif
     g->boot_after=(uintptr_t)c->io.system->boot;g->tables_after=(uintptr_t)c->io.system->tables;g->count_after=c->io.system->table_count;
     if(slot)g->TPL_after=pwfi_le((const void*)(uintptr_t)(r->core+0x1b098),8);g->left=1;c->io.order(c->io.opaque);
     if(!returned||!arch||!fp||!g->fp.restored||g->TPL_before!=g->TPL_after||g->boot_before!=g->boot_after||g->tables_before!=g->tables_after||g->count_before!=g->count_after){pgcd_fail(c,PGCD_UNKNOWN,1);return 0;}

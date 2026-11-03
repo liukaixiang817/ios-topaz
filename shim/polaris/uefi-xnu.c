@@ -628,6 +628,8 @@ static void current_private_raw(unsigned index,unsigned slot)
 }
 static int pcmp_parent_graph(struct pcmp_live*parent,int(*read_page)(struct ppli_at*))
 {return pcmg_route_capture(current_private_routes,PCMP_PARENT_CONTEXTS,current_private_graphs,parent,read_page);}
+static int pgcd_parent_map_minimum(const struct pgcd_context*c,unsigned slot,uint64_t*out)
+{return pcmg_route_minimum(current_private_routes,PCMP_PARENT_CONTEXTS,current_private_graphs,c,slot,out);}
 __attribute__((noreturn)) static void current_private_stop(void)
 {
     original_service_unknown=1;current_private_fault.attempted=current_private_fault.unknown=1;

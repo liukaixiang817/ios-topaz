@@ -107,4 +107,46 @@ static inline int pcmg_route_capture(const struct pcmp_route*routes,unsigned cou
     }
     return pcmg_capture(&frames[index][slot],parent,&routes[index],index,slot,read_page);
 }
+/* Hand an already observed numeric minimum to the still-active outer Map
+ * guard. All pointers in completed caller captures remain DATA. Close the
+ * actual six resident objects before following the selected source/frame. */
+static inline int pcmg_route_minimum(const struct pcmp_route*routes,unsigned count,
+    const struct pcmg_result frames[PCMP_PARENT_CONTEXTS][2],const struct pgcd_context*c,unsigned slot,uint64_t*out)
+{
+    if(!routes||count!=PCMP_PARENT_CONTEXTS||!frames||!c||slot>1||!out)return 0;
+    *out=0;unsigned matches=0,index=0;
+    for(unsigned n=0;n<count;n++){
+        const struct pcmp_route*a=&routes[n];
+        if(!a->context||!a->source||!a->ticket||!a->frames||a->path>PCMP_CLIENT_OPEN||a->reserved)return 0;
+        for(unsigned j=0;j<n;j++)if(a->context==routes[j].context||a->source==routes[j].source||
+            a->ticket==routes[j].ticket||a->frames==routes[j].frames)return 0;
+        if(c==a->context){matches++;index=n;}
+    }
+    if(matches!=1||(index==5&&slot))return 0;
+    const struct pcmp_route*a=&routes[index];const struct pcmp_result*m=&a->frames[slot];
+    const struct pcmg_result*g=&frames[index][slot];
+    if(c->record!=a->source||c->ticket!=a->ticket||!pgcd_equal(c,&m->context_before,sizeof(*c))||
+       a->source->outstanding!=0x20000u+slot||a->source->map[slot].issued!=1||a->source->map[slot].returned!=1||
+       a->source->map_guard[slot].entered!=1||a->source->map_guard[slot].unknown!=1||a->source->map_guard[slot].left||
+       a->source->map_guard[slot].fp.saved!=1||a->source->map_guard[slot].fp.restored||
+       m->attempted!=1||m->complete!=1||m->unknown||m->error||m->path!=a->path||m->slot!=slot||
+       m->map_issued!=1||m->map_returned!=1||m->input.context!=c||
+       g->attempted!=1||g->complete!=1||g->unknown||g->error||g->reserved||g->parent_copied!=1||
+       g->binding.index!=index||g->binding.slot!=slot||!pgcd_equal(&g->binding.route,a,sizeof(*a))||
+       g->binding.parent.r!=m||g->binding.parent.input.context!=c||
+       !pgcd_equal(&g->binding.parent,&g->parent_after,sizeof(g->parent_after))||
+       g->binding.opening!=a->source->before.cpu.ticks||g->binding.minimum!=m->final_arch.cpu.ticks||
+       g->graph.attempted!=1||g->graph.complete!=1||g->graph.unknown||g->graph.error||
+       g->graph.input.call!=&m->call||g->graph.input.opening!=g->binding.opening||
+       !g->graph.arch_returned||g->graph.arch_returned>PBGI_CLOCKS||g->graph.arch_issued!=g->graph.arch_returned)return 0;
+    uint8_t hash[32];ppli_sha(m,offsetof(struct pcmp_result,digest),hash);
+    if(!pgcd_equal(hash,m->digest,32))return 0;
+    ppli_sha(g,offsetof(struct pcmg_result,digest),hash);if(!pgcd_equal(hash,g->digest,32))return 0;
+    const struct pbgi_clock*last=&g->graph.clock[g->graph.arch_returned-1];uint64_t ticks=last->raw.cpu.ticks;
+    if(last->issued!=1||last->returned!=1||last->native_issued!=3||last->native_returned!=3||
+       last->native[0]||last->native[1]||!g->binding.opening||!ticks||ticks==UINT64_MAX||
+       ticks<g->binding.minimum||ticks<a->source->after.cpu.ticks||ticks<g->binding.opening||
+       ticks-g->binding.opening>PGCD_FRESH_TICKS)return 0;
+    *out=ticks;return 1;
+}
 #endif

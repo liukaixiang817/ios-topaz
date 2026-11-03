@@ -13,6 +13,8 @@ static uint8_t*graph_core,*graph_pool;
 static unsigned graph_running,graph_ATs,graph_clocks,graph_calls;
 static unsigned graph_mode,graph_point,graph_fault,graph_byte,graph_hit,graph_stopped,graph_gcd_count;
 static unsigned graph_entry_fault;
+static unsigned graph_temporal_fault,graph_temporal_slot,graph_temporal_hit,graph_handoff_fault,graph_handoff_hit,graph_handoff_arches;
+static uint64_t graph_clock_floor;
 static jmp_buf graph_terminal;
 static int graph_mutate(struct ppli_at*at,struct pgcd_arch*clock)
 {
@@ -46,7 +48,25 @@ static int graph_mutate(struct ppli_at*at,struct pgcd_arch*clock)
 static int graph_page(struct ppli_at*a)
 {int ok=current_page(a);if(graph_running){graph_ATs++;if(!graph_mutate(a,0))return 0;}return ok;}
 static int graph_arch(void*o,struct pgcd_arch*a)
-{int ok=current_arch(o,a);if(graph_running){graph_clocks++;if(!graph_mutate(0,a))return 0;}return ok;}
+{
+    int ok=current_arch(o,a);if(a->cpu.ticks<graph_clock_floor)a->cpu.ticks=graph_clock_floor;
+    if(graph_running){graph_clocks++;if(!graph_mutate(0,a))return 0;}
+    else if(graph_temporal_fault&&!graph_temporal_hit&&active_graph&&active_graph->complete&&
+        active_graph->binding.slot==graph_temporal_slot){
+        const struct pbgi_result*g=&active_graph->graph;uint64_t latest=g->clock[g->arch_returned-1].raw.cpu.ticks;
+        graph_temporal_hit=1;
+        switch(graph_temporal_fault){
+        case 1:a->cpu.ticks=latest-1;break;
+        case 2:a->cpu.ticks=cur->final_arch.cpu.ticks;break;
+        case 3:a->cpu.ticks=latest;break;
+        case 4:a->cpu.ticks=latest+1;break;
+        case 5:graph_clock_floor=a->cpu.ticks=active_graph->binding.opening+PGCD_FRESH_TICKS;break;
+        case 6:a->cpu.ticks=active_graph->binding.opening+PGCD_FRESH_TICKS+1;break;
+        case 7:a->cpu.ticks=UINT64_MAX;break;
+        default:assert(0);
+        }
+    }return ok;
+}
 static int graph_map(void*o,struct efi_system*system,struct pgcd_map*m,void*out)
 {
     (void)o;assert(system==s);leaf_maps++;
@@ -78,6 +98,28 @@ static int pcmp_parent_graph(struct pcmp_live*parent,int(*read_page)(struct ppli
     }
     int ok=pcmg_route_capture(entry_routes,count,output,parent,read_page);
     graph_running=0;return ok;
+}
+static int pgcd_parent_map_minimum(const struct pgcd_context*caller,unsigned slot,uint64_t*out)
+{
+    if(graph_handoff_fault&&!graph_handoff_hit){
+        struct pcmg_result*g=&graphs[active_route][slot];struct pbgi_clock*last=&g->graph.clock[g->graph.arch_returned-1];
+        graph_handoff_hit=1;graph_handoff_arches=leaf_arches;
+        /* Explicit SOFTWARE mutations of already completed DATA. Rehashing
+         * here exercises shape/arithmetic refusal as well as digest refusal;
+         * it never manufactures an opened context or a firmware observation. */
+        switch(graph_handoff_fault){
+        case 1:g->complete=0;break;case 2:g->unknown=1;break;
+        case 3:g->graph.arch_returned=0;break;case 4:g->graph.arch_returned=PBGI_CLOCKS+1;break;
+        case 5:g->graph.arch_issued--;break;case 6:last->returned=0;break;case 7:last->native[1]=1;break;
+        case 8:last->raw.cpu.ticks=0;break;case 9:last->raw.cpu.ticks=g->binding.minimum-1;break;
+        case 10:last->raw.cpu.ticks=g->binding.opening+PGCD_FRESH_TICKS+1;break;
+        case 11:last->raw.cpu.ticks=UINT64_MAX;break;
+        case 12:cur->digest[0]^=1;break;case 13:g->digest[0]^=1;break;
+        default:assert(0);
+        }
+        if(graph_handoff_fault<13)ppli_sha(g,offsetof(struct pcmg_result,digest),g->digest);
+    }
+    return pcmg_route_minimum(routes,PCMP_PARENT_CONTEXTS,graphs,caller,slot,out);
 }
 /* The actual parent appends raw then never returns a rejected callback.
  * This SOFTWARE terminal peer unwinds only the host test, without invoking
@@ -117,6 +159,8 @@ static void graph_fixture(unsigned gcd_count)
     graph_running=graph_calls=graph_ATs=graph_clocks=0;active_graph=0;active_parent=0;
     graph_mode=graph_point=graph_fault=graph_byte=graph_hit=graph_stopped=0;graph_gcd_count=gcd_count;
     graph_entry_fault=0;
+    graph_temporal_fault=graph_temporal_slot=graph_temporal_hit=graph_handoff_fault=graph_handoff_hit=graph_handoff_arches=0;
+    graph_clock_floor=0;
 }
 static void graph_raw(const char*base,const char*suffix,const void*data,size_t bytes)
 {char name[4096];int n=snprintf(name,sizeof(name),"%s%s",base,suffix);assert(n>0&&(size_t)n<sizeof(name));
@@ -125,6 +169,17 @@ static void graph_pair_raw(const char*base,const char*suffix)
 {char name[4096];int n=snprintf(name,sizeof(name),"%s%s",base,suffix);assert(n>0&&(size_t)n<sizeof(name));
  FILE*f=fopen(name,"wb");assert(f&&fwrite(cur,1,sizeof(*cur),f)==sizeof(*cur)&&
      fwrite(active_graph,1,sizeof(*active_graph),f)==sizeof(*active_graph)&&!fclose(f));}
+static void graph_temporal_raw(const char*base,const char*suffix)
+{char name[4096];int n=snprintf(name,sizeof(name),"%s%s",base,suffix);assert(n>0&&(size_t)n<sizeof(name));
+ FILE*f=fopen(name,"wb");assert(f&&fwrite(r,1,sizeof(*r),f)==sizeof(*r)&&fwrite(cur,1,sizeof(*cur),f)==sizeof(*cur)&&
+     fwrite(active_graph,1,sizeof(*active_graph),f)==sizeof(*active_graph)&&!fclose(f));}
+static int graph_temporal_run(unsigned index,unsigned slot)
+{
+    if(!slot)return graph_open();
+    if(index){if(!graph_open())return 0;return pgcd_map_read(c,1);}
+    for(unsigned k=0;k<4;k++){const struct pgcd_observation*observation=0;if(!pgcd_query_page(c,pgcd_pages[k],&observation))return 0;}
+    return pgcd_finish(c);
+}
 int main(int argc,char**argv)
 {
     assert(argc==3&&!posix_memalign((void**)&arena,4096,0x1001000));
@@ -166,7 +221,7 @@ int main(int argc,char**argv)
     graph_fixture(256);activate(1);assert(graph_open()&&active_graph->graph.count[1]==256&&graph_ATs==321&&graph_clocks==324);
     graph_pair_raw(argv[2],".max");checks++;
     graph_fixture(257);activate(1);assert(!graph_open()&&graph_stopped&&active_graph->graph.count[1]==256&&active_graph->graph.error==4&&graph_ATs==321&&graph_clocks==322);checks++;
-#if !defined(PCMG_NORMAL_ONLY)
+#if !defined(PCMG_NORMAL_ONLY) && !defined(PCMG_TEMPORAL_ONLY)
     for(unsigned bad=1;bad<=12;bad++){
         graph_fixture(1);activate(1);graph_entry_fault=bad;
         assert(!graph_open()&&graph_stopped&&cur->error==7&&leaf_maps==1&&graph_calls==1&&!graph_ATs&&!graph_clocks);
@@ -245,10 +300,32 @@ int main(int argc,char**argv)
     graph_fixture(1);activate(1);graph_mode=2;graph_point=69;graph_fault=18;
     assert(graph_open()&&graph_hit&&active_graph->complete&&!active_graph->unknown);checks++;
 #endif
+#if !defined(PCMG_NORMAL_ONLY)
+    for(unsigned n=0;n<6;n++)for(unsigned slot=0;slot<(n==5?1u:2u);slot++)for(unsigned bad=1;bad<=7;bad++){
+        graph_fixture(1);activate(n);graph_temporal_fault=bad;graph_temporal_slot=slot;
+        int ok=graph_temporal_run(n,slot);int expected=bad>=3&&bad<=5;
+        assert(ok==expected&&graph_temporal_hit&&active_graph->complete&&!active_graph->unknown&&cur->complete&&!cur->unknown);
+        const struct pgcd_service_guard*g=&r->map_guard[slot];
+        if(expected){assert(g->fp.restored&&g->left&&!g->unknown&&!r->uncertain);}
+        else {assert(!g->fp.restored&&!g->left&&g->unknown&&r->uncertain&&r->error==(bad==7?PGCD_ARCH:PGCD_CLOCK)&&
+            r->map[slot].status==0&&r->map[slot].issued==1&&r->map[slot].returned==1);}
+        if(n==1&&!slot&&(bad==1||bad==3||bad==6))graph_temporal_raw(argv[2],bad==1?".temporal-refused":bad==3?".temporal-equal":".temporal-expired");
+        checks++;
+    }
+    for(unsigned bad=1;bad<=13;bad++){
+        graph_fixture(1);activate(1);graph_handoff_fault=bad;
+        assert(!graph_open()&&graph_handoff_hit&&r->uncertain&&r->error==PGCD_CLOCK&&
+            leaf_arches==graph_handoff_arches&&!r->map_guard[0].fp.restored&&!r->map_guard[0].left&&
+            r->map_guard[0].unknown&&r->map[0].status==0&&r->map[0].issued==1&&r->map[0].returned==1);
+        if(bad==8)graph_temporal_raw(argv[2],".handoff-zero");checks++;
+    }
+#endif
 #if defined(PCMG_SUBSET_ONLY)
     const char*scope="subset";
 #elif defined(PCMG_NORMAL_ONLY)
     const char*scope="normal_and_max";
+#elif defined(PCMG_TEMPORAL_ONLY)
+    const char*scope="normal_max_and_temporal";
 #else
     const char*scope="full";
 #endif
