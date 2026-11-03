@@ -108,6 +108,18 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
+- NEW0189 latest PUBLIC functional source
+  9e985718bd2b91233d485abb1cab3974b1752cd4 is now pushed by the SAME directpush
+  under actual current/future source/text consentce8ce4fd. Independent readonly
+  lsremote matches9e98571 exactly. Exact five reviewed UTF8 source/text paths;
+  all firmware/Apple/vendor/NV/backup/RAW/photo/serial/password/private bytes
+  excluded. Private cache-handle-temporal-handoff-0001/authorized-source-push-0001.json
+  SHA90fb2ade01a0fad411c5d4046b217da8de8552da0a54cd027bb68ae5fb2a1b9a. This subsequent publication handoff
+  changes only NOTES/REFERENCE_REPOS, no C/header/test/RAW/proof/schema change
+  or check/cross/model/CI rerun. Actual temporal-fix scope is the following
+  section; complete wholecall/currentmap/radio admission remains NOTREADY.
+  All jobs ENDED, no authorization/physical question pending.
+
 - NEW0189 CURRENT same-virtual-counter temporal handoff FIX, source/SOFTWARE
   only. While composing existing input reads, found a real gap: outer closing
   arch compared only with its older pre-call sample, not the newer nested

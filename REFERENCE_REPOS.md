@@ -1819,3 +1819,11 @@ This fixes only temporal composition. Full callback/work/wholecall temporal,
 fresh postrelease typed graph/source across six new contexts and real remote
 secure/DMA lifecycle/full candidate qualification are still NOTREADY. No
 physical WiFi, scan/join/data, new boot/helper or credible completion date.
+
+Temporal-handoff functional source9e985718bd2b91233d485abb1cab3974b1752cd4
+is published through the same directpush under actual source/text consent
+ce8ce4fd; independent lsremote matches9e98571. Exact five UTF8 own source/text
+paths, excluding all firmware/private/sensitive bytes. Private source receipt
+SHA90fb2ade01a0fad411c5d4046b217da8de8552da0a54cd027bb68ae5fb2a1b9a. Subsequent handoff changes only
+NOTES/REFERENCE_REPOS, no code/test/RAW/schema edit or repeated checks. This is
+a SOFTWARE temporal fix; full physical WiFi/candidate admission stays NOTREADY.
