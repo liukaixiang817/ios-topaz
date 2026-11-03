@@ -108,6 +108,22 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
+- NEW0189 latest PUBLIC functional source
+  5684bd08ce18a6db0193413f8dae239c4240e6e1 is published by the SAME original
+  directpush under actual continuing source/text consentce8ce4fd. Push ENDED0;
+  subsequent independent readonly lsremote matches5684bd0. Exact ten own UTF8
+  source/text paths: NOTES/REFERENCE_REPOS/common/current-provider/current-timer/
+  new current-events headers/actual parent/provider fixture/timer fixture/new
+  event test. All FW/Apple/vendor/NV/backup/RAW/photo/serial/password/private
+  bytes excluded. Private later-current-event-graph-inputs-0001/
+  authorized-source-push-0001.json
+  SHA97e7b55f685f2af654cbbfffe2aa4e51a62ba4d942731a8251a14b6cf78d6d4e.
+  This later handoff changes only two text files, no repeated tests/schema/RAW
+  or source changes. No alternate connector/HTTP/indirect upload/force/newbranch.
+  Remaining lifetime/owner/wholecall/secureDMA/new candidate and actual WiFi
+  NOTREADY; no physical or permission question pending. Prior latest/CURRENT
+  statements remain only in their original source/version scope.
+
 - NEW0189 latest SOURCE/SOFTWARE: fresh later event/checker/nonperiodic-timer
   graph INPUT now runs in the genuine ACTIVE pcmp caller, after the completed
   later provider/physical-timer inputs. Six real routes/11 EXISTING later Maps;
