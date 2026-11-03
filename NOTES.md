@@ -108,6 +108,22 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
+- NEW0189 latest PUBLIC functional source
+  dafb101605da07e4e168fd90e53eb6d48a31f6a9 is published by the SAME original
+  directpush under actual continuing source/text consentce8ce4fd. Push ENDED0;
+  subsequent independent readonly lsremote matchesdafb101. Exact seven own
+  UTF8 paths: NOTES/REFERENCE_REPOS/current-provider header/new current-timer
+  header/actual parent/current-provider fixture/new current-timer test. All
+  firmware/Apple/vendor/NV/backup/RAW/photo/serial/password/private bytes
+  excluded. Private later-current-timer-deferred-inputs-0001/
+  authorized-source-push-0001.json
+  SHA55283b617da4075aff46125dc5f2214c429df480311fab487cbb461cd33b8b86.
+  This later handoff changes only two text files, no source/test/RAW/schema
+  changes or repeated checks. Older CURRENT/latest statements keep their
+  original source/version scope. No alternate connector/HTTP/indirect upload/
+  force/newbranch. No physical or permission question pending. Lifetime/owner/
+  wholecall/secureDMA/new candidate and physical WiFi remain NOTREADY.
+
 - NEW0189 latest SOURCE/SOFTWARE: actual current physical-timer/deferred
   INPUT now runs inside the genuine ACTIVE pcmi_live, after its shared
   provider DATA walk and before its two original closing virtual arch samples.
