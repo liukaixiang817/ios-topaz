@@ -1782,3 +1782,11 @@ typed graph/source in six actual contexts, real MSA/RMTFS/secure/DMA lifecycle
 and full candidate qualification remain NOTREADY. WiFi firmware/driver/scan/
 join/data have never succeeded physically; no credible completion date.
 No new USB/physical run, no pending human/authorization issue.
+
+Provider-input functional source6e5f58dc2128cf847aeaf1f1798b5cb180fca289 is
+now published by the same directpush under actual current/future source/text
+consentce8ce4fd; independent lsremote matches6e5f58d. Exact eight own UTF8
+source/text paths only, all sensitive/private/firmware bytes excluded. Private
+source receipt SHA434af65f09f21a3c9be6e1ad48a6c944b60356dd760bd9e857f206a6ea00dc87. This
+subsequent handoff edits only NOTES/REFERENCE_REPOS; no code/test/RAW/proof edit
+or repeated checks. The provider INPUT scope above stays SOFTWARE/NOTREADY.

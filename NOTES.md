@@ -108,6 +108,18 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
+- NEW0189 latest PUBLIC functional source is now
+  6e5f58dc2128cf847aeaf1f1798b5cb180fca289. SAME directpush ENDED0 under the
+  actual current/future source/text consentce8ce4fd; independent readonly
+  lsremote exactly matches6e5f58d. Exact eight reviewed UTF8 own source/text
+  paths, no firmware/Apple/vendor/NV/backup/RAW/photo/serial/password/private
+  bytes. Private source receipt cache-handle-provider-inputs-0001/
+  authorized-source-push-0001.json SHA434af65f09f21a3c9be6e1ad48a6c944b60356dd760bd9e857f206a6ea00dc87.
+  This subsequent publication handoff changes ONLY NOTES/REFERENCE_REPOS;
+  no C/header/test/proof/RAW/schema edits or check/model/cross/CI reruns.
+  Source/software INPUT scope remains the following paragraph, not physical
+  readiness. All jobs ENDED; no pending human/authorization/physical question.
+
 - NEW0189 CURRENT source/software provider INPUT milestone at the actual parent's
   EXISTING registered FreePool interval. Reused the existing canonical image
   hash, typed-AT replay and exact binding reader as DATA leaves. Their original
