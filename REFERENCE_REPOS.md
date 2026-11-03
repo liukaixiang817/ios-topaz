@@ -2222,3 +2222,49 @@ callback effects/work, postsource/release-backing lifetimes/active allocation,
 wholecall walltime/IRQ/owner/ABA/precall and secure-DMA handback/new candidate
 admission remain open. No repeated old audits/models/boot/USB; WiFi physically
 never scanned/joined/networked, no credible date; audio/camera STOP.
+
+### Own0189 current physical-timer/deferred INPUT in the active later caller
+
+The actual six-route/11-existing-Map parent now reuses the original readonly
+six-MRS leaf twice and bounded levels5..31 deferred-head reader inside the
+genuine ACTIVE provider caller. Its new2136B RAW/binding496 records both
+physical inputs, full/prefix27-head samples, four native flags, two post-leaf
+Core counters and complete before/after448B active control. Old RAW schemas
+and the timer-disabled408B control remain unchanged. New physical inputs do
+not finalize the old allocator path or synthesize RaiseTPL/context/owner.
+
+Control/provider-snapshot seals close before pointer follow. Known invalid
+physical DATA refuses before new Core/provider/graph RAM follow; bad EL with
+entire host Core/provider/graph source mappings PROT_NONE still refuses.
+The actual old closing virtual samples preserve the first200ms window;
+physicalfirst+3840000 only bounds DATA work consistency, never a new lease,
+precall proof, IRQ/ABA/lifetime/wholecall walltime grant. No reference scripts,
+prebuilts, firmware methods or original PE code executed; MRS are SOFTWARE
+peers in the host checks. No new BS/GetMap/allocator/provider/IRQ-dispatch/
+IAR/EOI/timerSet/mask/MMIO/SMC/sysreg write, extra AT or generic arch sample.
+
+Final336 ASAN/UBSAN SOFTWARE PASS582.7755754169775s, four actualwholeparent/
+timer-export COFF+MachO/generalregs/maxframe1024 builds PASS. Native timer
+export is six readonly MRS/no MSR/SMC; wholeparent old FP/PAR/mask not zero-write.
+OFF is same-command matchingtarget PREPROCESSED pairs640999/640972, not binaries.
+The timer-disabled default provider host MachO objects155976B are original
+byte-equal with old/new headers; IR only five typed source offsets and one
+proven identical PHI predecessor/value permutation in NEW derived buffers.
+Other old tests/models/CI not repeated or promoted to wholeconstructor results.
+
+Independent struct/hashlib/arbitrary precision reuses the existing decoder
+functions:8458464B normal archive plus16x719984B paired bundles,27 complete/
+partial new records and linked source/failed bytes rebuilt in NEW buffers.
+Captured stack/function pointers remain numeric inputs only. All original
+RAW/proofs/schemas/offsets/objects/timestamps unchanged. Private
+later-current-timer-deferred-inputs-0001/proof.json
+SHA5b8a315a4f8a158ab5724c5fb17a141ca580e723bfcf17242ee4abf8625645cd;
+source/softwarea0b23cc9a33db279ef5e89130e9975b5a520510084a457dfa4d7b8f891ae52ef.
+
+Fresh event/checker/nonperiodic timer and transitive callback effects/work,
+postsource/release-backing/active allocation lifetimes, wholecall/IRQ-owner/
+ABA/precall, secure-DMA handback and new candidate admission still precede
+device execution. Main REMOTE_MEMORY defaultOFF, no new allocator consumer/
+builder/CLI/profile/resource. No USB/device/newCI/model/image/payload/helper/
+freeze. WiFi never physically scanned/joined/networked, no credible date;
+audio/camera STOP.

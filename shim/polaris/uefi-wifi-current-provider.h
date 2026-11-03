@@ -6,6 +6,7 @@
 #include "uefi-wifi-current-graph.h"
 #define PCMI_AT_MAX (PWMC_IRQ_IMAGES*PWMC_IRQ_PAGES+5u)
 #define PCMI_CLOCK_MAX 40u
+struct pcmt_result;
 struct pcmi_binding {
     uint64_t parent_address;struct pcmp_live parent;const struct pcmg_result*graph;
     uint64_t opening,minimum;uint8_t frame_seal[32],graph_seal[32];
@@ -22,8 +23,19 @@ struct pcmi_live {
     struct pcmi_result*r;struct pcmp_live*parent;const struct pcmg_result*graph;
     struct pcmp_live frame;int(*page)(struct ppli_at*);
     uint64_t core,opening,minimum;uint8_t binding_seal[32];unsigned rooted,table_mask,handlers;
+#if defined(POLARIS_WIFI_CURRENT_TIMER_INPUT)
+    const struct pcmt_result*timer;uint8_t timer_seal[32];
+#endif
 };
-_Static_assert(sizeof(struct pcmi_binding)==400&&sizeof(struct pcmi_live)==408&&sizeof(struct pcmi_result)==20456,
+#if defined(POLARIS_WIFI_CURRENT_TIMER_INPUT)
+#define PCMI_LIVE_BYTES 448u
+static const struct pcmt_result*pcmi_parent_timer(struct pcmi_live*);
+static inline int pcmi_timer_attach(struct pcmi_live*,const struct pcmt_result*);
+static inline int pcmi_timer_retained(const struct pcmi_live*);
+#else
+#define PCMI_LIVE_BYTES 408u
+#endif
+_Static_assert(sizeof(struct pcmi_binding)==400&&sizeof(struct pcmi_live)==PCMI_LIVE_BYTES&&sizeof(struct pcmi_result)==20456,
     "separate complete later provider INPUT raw ABI v1");
 _Static_assert(offsetof(struct pcmi_result,path)==432&&offsetof(struct pcmi_result,AT)==12832&&
     offsetof(struct pcmi_result,clock)==14624&&offsetof(struct pcmi_result,parent_after)==20080&&
@@ -72,7 +84,11 @@ static inline int pcmi_source(const struct pcmi_live*l)
         const struct pbgi_node*n=&g->node[list][k];
         if(!pgcd_equal(n->raw,(const void*)(uintptr_t)n->address,n->bytes))return 0;
     }
-    return pcmi_known(l);
+    if(!pcmi_known(l))return 0;
+#if defined(POLARIS_WIFI_CURRENT_TIMER_INPUT)
+    if(l->timer&&!pcmi_timer_retained(l))return 0;
+#endif
+    return 1;
 }
 static inline void pcmi_seal(const struct pcmi_result*r,const void*skip,size_t bytes,uint8_t out[32])
 {struct pwfi_sha256 h;pwfi_init(&h);pbgi_hash_part(&h,r,sizeof(*r),skip,bytes);pwfi_final(&h,out);}
@@ -164,9 +180,13 @@ static __attribute__((noinline)) int pcmi_capture(struct pcmi_result*r,struct pc
         error=pwmc_irq_provider_input(&r->path,live.core,&reader);
         if(!error){
             error=5;
+#if defined(POLARIS_WIFI_CURRENT_TIMER_INPUT)
+            const struct pcmt_result*timer=pcmi_parent_timer(&live);
+            if(!pcmi_timer_attach(&live,timer))error=7;
+#endif
             /* Close immutable source bytes AFTER the last foreign callback;
              * no further callback follows these final hashes and DATA checks. */
-            if(pcmi_tick(&live)&&pcmi_tick(&live)&&
+            if(error==5&&pcmi_tick(&live)&&pcmi_tick(&live)&&
                pgci_verify((const void*)(uintptr_t)live.core,live.core,PGCI_IMAGE_BYTES,r->Core_hash[1],&r->hash_failed[1],&r->hash_count[1])){
                 int hashes=1;for(unsigned k=0;k<3;k++)if(!pwmc_irq_hash_image(&r->path.image[k],k,1)){hashes=0;break;}
                 if(hashes&&pcmi_source(&live)){
@@ -227,4 +247,7 @@ static inline int pcmi_route_minimum(const struct pcmp_route*routes,unsigned cou
        !ticks||ticks==UINT64_MAX||ticks<*out||ticks<r->binding.opening||ticks-r->binding.opening>PGCD_FRESH_TICKS)return 0;
     *out=ticks;return 1;
 }
+#if defined(POLARIS_WIFI_CURRENT_TIMER_INPUT)
+#include "uefi-wifi-current-timer.h"
+#endif
 #endif

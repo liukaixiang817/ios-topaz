@@ -12,6 +12,9 @@ static unsigned provider_mode,provider_point,provider_fault,provider_byte,provid
 static unsigned provider_temporal,provider_temporal_slot,provider_temporal_hit;
 static unsigned provider_handoff_fault,provider_handoff_hit,provider_handoff_arches;
 static uint64_t provider_floor;
+#if defined(POLARIS_CURRENT_TIMER_FIXTURE)
+static int fixture_timer_minimum(const struct pgcd_context*,unsigned,uint64_t*);
+#endif
 static int provider_mutate(struct ppli_at*at,struct pgcd_arch*clock)
 {
     unsigned point=at?provider_ATs:provider_clocks;
@@ -96,7 +99,11 @@ static int fixture_provider_minimum(const struct pgcd_context*caller,unsigned sl
         }
         if(provider_handoff_fault<20)ppli_sha(p,offsetof(struct pcmi_result,digest),p->digest);
     }
+#if defined(POLARIS_CURRENT_TIMER_FIXTURE)
+    return fixture_timer_minimum(caller,slot,out);
+#else
     return pcmi_route_minimum(routes,6,graphs,providers,caller,slot,out);
+#endif
 }
 static void provider_fixture(unsigned gcd_count,unsigned handlers,unsigned v3)
 {
@@ -131,6 +138,7 @@ static void provider_pair_raw(const char*base,const char*suffix)
 {char name[4096];int n=snprintf(name,sizeof(name),"%s%s",base,suffix);assert(n>0&&(size_t)n<sizeof(name));FILE*f=fopen(name,"wb");
  assert(f&&fwrite(r,1,sizeof(*r),f)==sizeof(*r)&&fwrite(cur,1,sizeof(*cur),f)==sizeof(*cur)&&
  fwrite(active_graph,1,sizeof(*active_graph),f)==sizeof(*active_graph)&&fwrite(active_provider,1,sizeof(*active_provider),f)==sizeof(*active_provider)&&!fclose(f));}
+#ifndef POLARIS_CURRENT_PROVIDER_FIXTURE_ONLY
 int main(int argc,char**argv)
 {
     assert(argc==6&&!posix_memalign((void**)&arena,4096,0x1001000));
@@ -276,3 +284,4 @@ int main(int argc,char**argv)
     printf("{\"passed\":true,\"checks\":%u,\"SOFTWARE_only\":true,\"contexts\":6,\"existing_maps\":11,\"provider_bytes\":%zu,\"binding_bytes\":%zu,\"live_bytes\":%zu,\"path_offset\":%zu,\"AT_offset\":%zu,\"clock_offset\":%zu,\"parent_after_offset\":%zu,\"digest_offset\":%zu,\"normal_ATs\":20,\"normal_clocks\":23,\"max_ATs\":22,\"max_clocks\":25,\"original_PE_or_whole_constructor_executed\":false,\"owner_IRQ_ABA_or_lease_qualification\":false}\n",checks,sizeof(struct pcmi_result),sizeof(struct pcmi_binding),sizeof(struct pcmi_live),offsetof(struct pcmi_result,path),offsetof(struct pcmi_result,AT),offsetof(struct pcmi_result,clock),offsetof(struct pcmi_result,parent_after),offsetof(struct pcmi_result,digest));
     return 0;
 }
+#endif

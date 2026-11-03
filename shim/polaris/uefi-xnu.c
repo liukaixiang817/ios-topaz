@@ -16,6 +16,7 @@
 #define POLARIS_WIFI_PARENT_IMAGE_LEDGER 1
 #define POLARIS_WIFI_PARENT_GCD_BOOTSTRAP 1
 #define POLARIS_WIFI_CURRENT_GRAPH_INPUT 1
+#define POLARIS_WIFI_CURRENT_TIMER_INPUT 1
 #endif
 #if defined(EFI_XNU_WLED_NATIVE_RUNTIME_TEST) || defined(EFI_XNU_WLED_NATIVE_RUNTIME_PHYSICAL)
 #define EFI_XNU_WLED_NATIVE_RUNTIME 1
@@ -291,6 +292,7 @@ static struct pcmp_payload current_payload_binding;
 static struct pcmp_result current_private_maps[PCMP_PARENT_CONTEXTS][2];
 static struct pcmg_result current_private_graphs[PCMP_PARENT_CONTEXTS][2];
 static struct pcmi_result current_private_providers[PCMP_PARENT_CONTEXTS][2];
+static struct pcmt_result current_private_timers[PCMP_PARENT_CONTEXTS][2];
 static struct pcmp_route_fault current_private_fault;
 static struct pgcd_io current_private_original_io;
 #endif
@@ -311,7 +313,8 @@ static int current_private_unknown(void)
 {
     if(current_private_fault.unknown)return 1;
     for(unsigned n=0;n<PCMP_PARENT_CONTEXTS;n++)for(unsigned k=0;k<2;k++)
-        if(current_private_maps[n][k].unknown||current_private_graphs[n][k].unknown||current_private_providers[n][k].unknown)return 1;
+        if(current_private_maps[n][k].unknown||current_private_graphs[n][k].unknown||current_private_providers[n][k].unknown||
+           current_private_timers[n][k].unknown)return 1;
     return 0;
 }
 #endif
@@ -631,12 +634,20 @@ static void current_private_raw(unsigned index,unsigned slot)
     ram_text("CURRENT_PARENT_PROVIDER_INPUT_RAW_V1_BEGIN\r\n");
     ram_hex((const uint8_t*)&current_private_providers[index][slot],sizeof(current_private_providers[index][slot]));
     ram_text("CURRENT_PARENT_PROVIDER_INPUT_RAW_V1_END\r\n");
+    ram_report("CURRENT_PARENT_TIMER_DEFERRED_INPUT_RAW_V1_BYTES=",sizeof(current_private_timers[index][slot]));
+    ram_text("CURRENT_PARENT_TIMER_DEFERRED_INPUT_RAW_V1_BEGIN\r\n");
+    ram_hex((const uint8_t*)&current_private_timers[index][slot],sizeof(current_private_timers[index][slot]));
+    ram_text("CURRENT_PARENT_TIMER_DEFERRED_INPUT_RAW_V1_END\r\n");
 }
+static const struct pcmt_result*pcmi_parent_timer(struct pcmi_live*caller)
+{return pcmt_route_capture(current_private_routes,PCMP_PARENT_CONTEXTS,current_private_timers,
+    current_private_providers,current_private_graphs,caller);}
 static int pcmp_parent_graph(struct pcmp_live*parent,int(*read_page)(struct ppli_at*))
 {return pcmg_route_capture(current_private_routes,PCMP_PARENT_CONTEXTS,current_private_graphs,parent,read_page)&&
     pcmi_route_capture(current_private_routes,PCMP_PARENT_CONTEXTS,current_private_providers,current_private_graphs,parent,read_page);}
 static int pgcd_parent_map_minimum(const struct pgcd_context*c,unsigned slot,uint64_t*out)
-{return pcmi_route_minimum(current_private_routes,PCMP_PARENT_CONTEXTS,current_private_graphs,current_private_providers,c,slot,out);}
+{return pcmt_route_minimum(current_private_routes,PCMP_PARENT_CONTEXTS,current_private_graphs,current_private_providers,
+    current_private_timers,c,slot,out);}
 __attribute__((noreturn)) static void current_private_stop(void)
 {
     original_service_unknown=1;current_private_fault.attempted=current_private_fault.unknown=1;
@@ -646,7 +657,8 @@ __attribute__((noreturn)) static void current_private_stop(void)
     for(unsigned n=0;n<PCMP_PARENT_CONTEXTS;n++)for(unsigned k=0;k<2;k++)
         if(current_private_maps[n][k].attempted||current_private_maps[n][k].unknown||
            current_private_graphs[n][k].attempted||current_private_graphs[n][k].unknown||
-           current_private_providers[n][k].attempted||current_private_providers[n][k].unknown)current_private_raw(n,k);
+           current_private_providers[n][k].attempted||current_private_providers[n][k].unknown||
+           current_private_timers[n][k].attempted||current_private_timers[n][k].unknown)current_private_raw(n,k);
     ram_report("CURRENT_PARENT_PAYLOAD_RAW_V1_BYTES=",sizeof(current_payload_binding));
     ram_text("CURRENT_PARENT_PAYLOAD_RAW_V1_BEGIN\r\n");ram_hex((const uint8_t*)&current_payload_binding,sizeof(current_payload_binding));
     ram_text("CURRENT_PARENT_PAYLOAD_RAW_V1_END\r\n");power_unknown_hold();
@@ -731,7 +743,7 @@ _Static_assert(sizeof(log_buffer)>=2*(sizeof(pwsp_record)+sizeof(pwrpt_record)+s
 #endif
 #if EFI_XNU_WIFI_REMOTE_MEMORY_AVAILABLE
     3*(sizeof(incoming_parent_maps)+sizeof(ppli_record)+sizeof(current_private_maps)+sizeof(current_payload_binding)+sizeof(pbgi_cache_call)+sizeof(pbgi_seed)+sizeof(pbha_handles)+sizeof(pbhr_handles)+sizeof(pbhd_handles)+sizeof(pbhd_timer_handles)+sizeof(pbhi_handles)+sizeof(pbht_handles))+
-    5*(sizeof(current_private_graphs)+sizeof(current_private_providers))+
+    5*(sizeof(current_private_graphs)+sizeof(current_private_providers)+sizeof(current_private_timers))+
 #endif
     1048576,
     "complete preparation/client/power/source raw must fit without truncation");
