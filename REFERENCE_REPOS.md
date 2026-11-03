@@ -1710,3 +1710,13 @@ push; b73a178 plus the current two-document handoff is awaiting that reply. No
 alternative upload transport or device action was attempted. All validation and
 private rejection evidence are retained, and no source/model checks are rerun
 unchanged while this public-push question is pending.
+
+Publication is now resolved by the actual new human response to questionItemId
+call_868184b064aa4c6c8b7f5db205cb2c06, explicitly approving this and future similar
+source/text public pushes (private authorization SHAce8ce4fd0c92c7f3e295289969531be7dfde562c1acac53c7adbc19eab8f37e3).
+SAME directpush completed0 and independent lsremote matches9cca708, publishing
+b73a178 and its two-document handoff. Earlier rejection/pending records are
+immutable history, no longer a pending question. This publication correction
+changes only two text documents; no source/test changes or reruns, reference
+porting, device/USB/native/CI/model/image/helper/freeze action. All remaining
+bootstrap/current-input/typed/callback/temporal and secure/DMA gates are unchanged.

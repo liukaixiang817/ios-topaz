@@ -108,6 +108,45 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
+- NEW0189 CURRENT publication RESOLVED by the actual new human reply:
+  “批准本次及后续同类源码/文字公开推送”, questionItemId
+  call_868184b064aa4c6c8b7f5db205cb2c06. Private actual authorization record
+  allocator-counter-domain-0001/actual-public-source-human-reauthorization-0001.json
+  SHAce8ce4fd0c92c7f3e295289969531be7dfde562c1acac53c7adbc19eab8f37e3.
+  This authorizes these and future same-project source/text public pushes to
+  liukaixiang817/ios-topaz, excluding all firmware/Apple/vendor/NV/backup/RAW/
+  photos/serial/password/private bytes; no wider kernel/partition/radio grant.
+- SAME standard directpush now ENDED0: source
+  b73a17818d5ba679a1ed11eb5d09cbd8ab26d47d and text handoff
+  9cca708b395026c9075dc1bfb42534df762c3f08 are published. Independent readonly
+  lsremote matches9cca708 exactly. The former two automatic rejections and
+  pending receipt0001 are preserved unchanged as history, not a live blocker.
+  No alternate connector/HTTP/indirect upload, forcepush or new branch was used.
+  No permission or physical-action question remains pending; do not ask again.
+- This turn changes only NOTES/REFERENCE_REPOS publication handoff. Functional
+  header25c22e72616b992c2581711dc5b8f5a946087ea002270ce235665ef721b68dcd
+  and test86dbbb09b0424898a163f0cbe0d08e95dbac8948b77c1ac57e586033fb758686
+  still match the verified8487 SOFTWARE iteration; no tests/models/cross/CI were
+  repeated. No new native/device/USB/MMIO/SMC/PE execution, codec/image/payload/
+  helper/freeze. The counter-domain work ceiling remains extra conservative
+  physical arithmetic, not a renewed original virtual200ms or global lease.
+- NEXT unchanged: actual bootstrap Timer/GIC/provider/current timer inputs,
+  transitive callback/work/wholecall temporal and fresh postrelease typed graph/
+  policy/source for six real private contexts remain UNQUALIFIED. Reuse the
+  existing readers/guards and preserve all source/native/FP/20Core+70provider/
+  original200ms/ARC/VRM/readwork/fullrestore checks. No old seed/current-map
+  relabel, returned-map self-proof, owner/ABA claims from snapshots/keys/tags/
+  counters/fullbytes/complete, or closed-ticket renewal. Other release/backing
+  geometries stay unsupported. Real MSA/RMTFS/secureVMID/MPU/DMAstop/handback/
+  retirement, two SERIAL whole constructor models/new exact profile/resource/
+  codec/current transition/freeze/ONEhelper remain before any necessary NEW
+  candidate. NEW0189 NOTREADY; no PA publish/MSS/NVserve/radio/scan/join/data.
+  Physical0188 fullretire and last independent actualFASTBOOT10:05 are unchanged;
+  consumed controller remains forbidden. WiFi unavailable/no credible date,
+  sound/camera STOP. Successful source+text publication receipt will be
+  allocator-counter-domain-source-and-handoff-push-proof-0002.json; original
+  proof/RAW/timestamps/SHA remain immutable.
+
 - NEW0189 PUBLICATION PENDING after the counter-domain fix below: local source
   commit b73a17818d5ba679a1ed11eb5d09cbd8ab26d47d is complete and committed;
   it has NOT been published. Both attempts of the SAME directpush were rejected
