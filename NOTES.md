@@ -108,6 +108,22 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
+- NEW0189 latest PUBLIC functional source
+  63dcecc7ff377699ba56a4cf5541454024357a13 is published by the SAME original
+  directpush under actual continuing source/text consentce8ce4fd. Push ENDED0;
+  subsequent independent readonly lsremote matches63dcecc. Exact nine own
+  UTF8 paths: NOTES/REFERENCE_REPOS/common header/preprovider header/current
+  graph header/new current-provider header/actual parent/current-graph test/
+  new provider test. All firmware/Apple/vendor/NV/backup/RAW/photo/serial/
+  password/private bytes excluded. Private later-provider-inputs-0001/
+  authorized-source-push-0001.json
+  SHA75bf99189fcb8352ee995162c51ad210c55c8e1b4f058c436c80d90784566eb2.
+  This subsequent handoff edits only two text files; no source/test/RAW/schema/
+  proof changes or repeated checks. No alternate channel/force/newbranch.
+  Fresh postsource/release-backing lifetime/wholecall/owner/secureDMA/new
+  candidate/physical WiFi remain NOTREADY. No authorization or physical
+  question pending; old rejection/pending language is historical only.
+
 - NEW0189 latest SOURCE/SOFTWARE milestone: fresh later Timer/GIC/CPU
   provider INPUT is integrated into the actual six parent routes/11 EXISTING
   later Maps, AFTER each fresh Core/EFI/GCD/policy graph while the genuine
