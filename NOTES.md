@@ -108,6 +108,25 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
+- NEW0189 latest source publication
+  1d9e56153de8cf868d2e990760bc90059f75d106 directpush ENDED0 under actual
+  current/future source/text consentce8ce4fd; independent lsremote matches1d9e561.
+  Exact six public source/text paths only; no firmware/Apple/vendor/NV/backup/
+  RAW/photo/serial/password/private bytes. The following timer-input milestone
+  is the current source scope; all prior b73/7f8003d facts remain historical at
+  their exact commits. This subsequent handoff changes only NOTES/REFERENCE_REPOS,
+  no code/test/RAW/schema/proof edits or reruns. All jobs ENDED; no new physical
+  or authorization question. Successful private source/text push receipt will
+  be cache-handle-timer-inputs-source-and-handoff-push-proof-0001.json.
+- User asked progress/distance to physical testing and whether this first
+  admission group is what we are currently doing. Answer: yes, current work is
+  in that group; this step completes the physical-register INPUT producer in
+  source/software only. Full service/provider binding, callback effects,
+  whole-call temporal and fresh postrelease memory admission are not complete.
+  Real MSA/RMTFS/secure/DMA lifecycle and complete candidate checks follow; no
+  credible hour/day estimate or physical WiFi success. Do not describe this
+  code/input milestone as radio firmware start, scan/join/data or near-ready.
+
 - NEW0189 CURRENT actual-parent physical-timer register inputs at the EXISTING
   FreePool interval are now connected; SOFTWARE only. The allocator's existing
   six readonly MRS operations are factored unchanged into a shared native leaf,
