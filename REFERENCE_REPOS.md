@@ -1749,3 +1749,36 @@ This later handoff is two text documents only, with no source/test/schema/RAW
 change or repeated checks. Current work remains the first bootstrap admission
 group, not physical WiFi. Full provider/callback/temporal/postrelease input and
 secure/DMA lifecycle gates still block a necessary candidate; no reliable ETA.
+
+## Polaris0189 existing-release provider INPUT binding (latest source scope)
+
+The actual parent now reuses the original Timer/GIC/CPU immutable-image, AT
+replay and binding leaves at its existing registered FreePool interval. The
+new separate20344B record preserves actual source roots, three complete image
+states/method tables, selected GICv2/v3 table and full32..1020 handlers, with
+real caller/witness/source closure. Existing timer MRS inputs bind VBAR as a
+numeric retained CPU-image offset. No provider method or new BS service runs.
+
+This is pre-input source binding against the retained typed map with fresh
+AT, not a fresh postrelease map, owner/IRQ/ABA exclusion or wholecall deadline.
+Post work deliberately never follows provider/handler or released target/GCD
+pages; a SOFTWARE PROT_NONE case checks that boundary. Main stays defaultOFF;
+no consumer/builder/CLI/new profile/resource/model/codec/helper/phone candidate.
+
+FINAL2352 ASAN/UBSAN SOFTWARE cases PASS1725.4419106669957s, old1725 plus627.
+Shared-helper factoring changed allocator objects/IR, so affected8487 reran
+PASS173.2350442079478s; default release fixture771 PASS217.98769291699864s.
+Whole parent/dispatch/allocator COFF+MachO/generalregs/maxframe1024 PASS; final
+parent complete/closed guard checked on both targets. OFF640972B equal.
+Independent numeric struct/hashlib verifies full618640B paired raw, both
+576936B archived/fresh bundles and112928B six-prefix fixture; no PE or captured
+pointer execution. All old RAW/proofs/timestamps remain untouched privately.
+
+Private evidence:0189/wifi/cache-handle-provider-inputs-0001/proof.json
+SHA ccb051c679ee42cac2e842f9770e0c74bee8f7e3df2600e8f313212fc75d8c70;
+source/software b7ebe2bf4facf1f87973d3dae0007c74ade56825448bfd33a4ca98bf9511ba46.
+Remaining transitive callback/work/wholecall temporal and fresh postrelease
+typed graph/source in six actual contexts, real MSA/RMTFS/secure/DMA lifecycle
+and full candidate qualification remain NOTREADY. WiFi firmware/driver/scan/
+join/data have never succeeded physically; no credible completion date.
+No new USB/physical run, no pending human/authorization issue.

@@ -58,10 +58,18 @@ static int free_peer(void*o,struct efi_system*system,uint64_t entry,uint64_t han
     protected_bytes=(((uintptr_t)block+2088-(uintptr_t)protected_page)+host_page-1)&~(host_page-1);
     assert(!mprotect(protected_page,protected_bytes,PROT_NONE));mutate(4);return 1;
 }
+/* Optional SOFTWARE fixture leaves are selected before the producer seed,
+ * so the retained source and every later caller bind the same functions. */
+#ifndef PBHR_FIXTURE_ARCH
+#define PBHR_FIXTURE_ARCH release_arch
+#endif
+#ifndef PBHR_FIXTURE_PAGE
+#define PBHR_FIXTURE_PAGE release_page
+#endif
 static void release_setup(void)
 {
     if(protected_page){assert(!mprotect(protected_page,protected_bytes,PROT_READ|PROT_WRITE));protected_page=0;}
-    release_mode=0;allocation_fixture_arch=release_arch;allocation_fixture_page=release_page;
+    release_mode=0;allocation_fixture_arch=PBHR_FIXTURE_ARCH;allocation_fixture_page=PBHR_FIXTURE_PAGE;
     allocation_fixture_fp_save=release_save;allocation_fixture_fp_restore=release_restore;allocation_fixture_order=release_order;
     allocation_fixture_target_offset=release_geometry==1||release_geometry==4?0:128;
     allocation_fixture_GCD_offset=release_geometry==1||release_geometry==2?0x10000:0x8000;
@@ -69,7 +77,7 @@ static void release_setup(void)
     setup(3,2088,release_geometry==4);assert(run());release_record=(void*)(arena+0x300000);
     assert((uint8_t*)release_record+sizeof(*release_record)<arena+0x700000);
     release_input=(struct pbhr_input){.allocation=allocation,.seed=seed,.images=images,.system=s,.image=self,.native=native,
-        .opening=1000,.io=seed->input.io,.page=release_page,.release=free_peer};
+        .opening=1000,.io=seed->input.io,.page=PBHR_FIXTURE_PAGE,.release=free_peer};
     release_calls=release_effect=inject_stage=inject_kind=inject_byte=release_hit=release_pages=0;release_mode=1;
 }
 static int release_run(void){return pbhr_call(release_record,&release_input);}

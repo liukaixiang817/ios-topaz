@@ -590,16 +590,25 @@ static inline int pwmc_timers_capture(struct pwmc_result*r,unsigned operation)
 static int pwmc_test_irq_regs(struct pwmc_result*,unsigned,unsigned);
 static uint64_t pwmc_test_irq_ticks(struct pwmc_result*,unsigned,unsigned);
 #endif
-static inline int pwmc_irq_AT_replay(const struct pgcd_result*s,uint64_t address,uint64_t bytes,
+/* Retained typed-map DATA, never an opened context or ownership lease.
+ * Real callers retain their own current source/native/callback interval. */
+struct pwmc_irq_map_view {const uint8_t*data;uint64_t bytes,stride,self_base,self_bytes;};
+static inline int pwmc_irq_AT_view(const struct pwmc_irq_map_view*m,uint64_t address,uint64_t bytes,
     const struct pwmc_irq_AT*AT,unsigned capacity,unsigned count)
 {
-    if(!address||!bytes||address>UINT64_MAX-bytes||address+bytes>UINT64_MAX-4095||pgcd_in_self(s,address,bytes))return 0;
+    if(!address||!bytes||address>UINT64_MAX-bytes||address+bytes>UINT64_MAX-4095||(m->self_bytes>=bytes&&address>=m->self_base&&address-m->self_base<=m->self_bytes-bytes))return 0;
     uint64_t first=address&~UINT64_C(4095);unsigned pages=(unsigned)(((address+bytes-1)&~UINT64_C(4095))-first)/4096+1;
     if(pages>capacity||count!=pages)return 0;
     for(unsigned k=0;k<count;k++)if(AT[k].page!=first+4096*k||AT[k].raw!=(UINT64_C(0xff00000000000b80)|AT[k].page)||AT[k].issued!=1||AT[k].returned!=1||
-       (!polaris_efi_range_owned(s->maps[0],s->map[0].bytes,s->map[0].stride,AT[k].page,4096,3)&&
-        !polaris_efi_range_owned(s->maps[0],s->map[0].bytes,s->map[0].stride,AT[k].page,4096,4)))return 0;
+       (!polaris_efi_range_owned(m->data,m->bytes,m->stride,AT[k].page,4096,3)&&
+        !polaris_efi_range_owned(m->data,m->bytes,m->stride,AT[k].page,4096,4)))return 0;
     return pwmc_zero(AT+count,(capacity-count)*sizeof(*AT));
+}
+static inline int pwmc_irq_AT_replay(const struct pgcd_result*s,uint64_t address,uint64_t bytes,
+    const struct pwmc_irq_AT*AT,unsigned capacity,unsigned count)
+{
+    const struct pwmc_irq_map_view m={s->maps[0],s->map[0].bytes,s->map[0].stride,s->self_base,s->self_bytes};
+    return pwmc_irq_AT_view(&m,address,bytes,AT,capacity,count);
 }
 static inline int pwmc_irq_owned(struct pwmc_result*r,unsigned op,uint64_t address,uint64_t bytes,
     struct pwmc_irq_AT*AT,unsigned capacity,uint32_t*count)
@@ -616,12 +625,14 @@ static inline int pwmc_irq_owned(struct pwmc_result*r,unsigned op,uint64_t addre
         *count=k+1;
     }return 1;
 }
-static inline int pwmc_irq_hash(struct pwmc_result*r,unsigned op,unsigned image,unsigned phase)
+/* Original canonical immutable-image hash leaf, after the caller's genuine
+ * page/translation/source qualification. It reads DATA and invokes no method. */
+static inline int pwmc_irq_hash_image(struct pwmc_irq_image*p,unsigned image,unsigned phase)
 {
-    struct pwmc_irq_image*p=&r->irq[op].image[image];const struct pwmc_irq_binding*b=&pwmc_irq_bindings[image];const uint8_t*data=(const void*)(uintptr_t)p->base;
-    if(phase>4||p->hash_count[phase]||p->hash_failed[phase]||!pwmc_zero(p->hashes[phase],sizeof(p->hashes[phase]))||p->bytes!=b->bytes||
-       !pwmc_irq_AT_replay(&r->source[op],p->base,p->bytes,p->AT,PWMC_IRQ_PAGES,p->AT_count))return pwmc_fail(r,PWMC_SOURCE,1);
-    uint64_t original=pwfi_le(data+b->imagebase,8);if(original&&original!=p->base)return pwmc_fail(r,PWMC_SOURCE,1);
+    if(image>=PWMC_IRQ_IMAGES||phase>4)return 0;
+    const struct pwmc_irq_binding*b=&pwmc_irq_bindings[image];const uint8_t*data=(const void*)(uintptr_t)p->base;
+    if(p->hash_count[phase]||p->hash_failed[phase]||!pwmc_zero(p->hashes[phase],sizeof(p->hashes[phase]))||p->bytes!=b->bytes)return 0;
+    uint64_t original=pwfi_le(data+b->imagebase,8);if(original&&original!=p->base)return 0;
     for(unsigned span=0;span<b->range_count;span++){
         const struct pgci_range*q=&b->ranges[span];struct pwfi_sha256 hash;pwfi_init(&hash);
         for(uint32_t first=q->rva;first<q->rva+q->bytes;){
@@ -632,8 +643,15 @@ static inline int pwmc_irq_hash(struct pwmc_result*r,unsigned op,unsigned image,
             if(take==64){pgci_transform_blocks(&hash,chunk);hash.bytes+=64;}else for(unsigned k=0;k<take;k++)pwfi_byte(&hash,chunk[k]);first+=take;
         }
         pwfi_final(&hash,p->hashes[phase][span]);p->hash_count[phase]=span+1;
-        if(!pgcd_equal(p->hashes[phase][span],q->sha256,32)){p->hash_failed[phase]=span+1;return pwmc_fail(r,PWMC_SOURCE,1);}
+        if(!pgcd_equal(p->hashes[phase][span],q->sha256,32)){p->hash_failed[phase]=span+1;return 0;}
     }return 1;
+}
+static inline int pwmc_irq_hash(struct pwmc_result*r,unsigned op,unsigned image,unsigned phase)
+{
+    struct pwmc_irq_image*p=&r->irq[op].image[image];const struct pwmc_irq_binding*b=&pwmc_irq_bindings[image];
+    if(phase>4||p->hash_count[phase]||p->hash_failed[phase]||!pwmc_zero(p->hashes[phase],sizeof(p->hashes[phase]))||p->bytes!=b->bytes||
+       !pwmc_irq_AT_replay(&r->source[op],p->base,p->bytes,p->AT,PWMC_IRQ_PAGES,p->AT_count))return pwmc_fail(r,PWMC_SOURCE,1);
+    if(!pwmc_irq_hash_image(p,image,phase))return pwmc_fail(r,PWMC_SOURCE,1);return 1;
 }
 static inline int pwmc_irq_image_capture(struct pwmc_result*r,unsigned op,unsigned image,uint64_t base)
 {
@@ -681,13 +699,13 @@ static inline void pwmc_irq_input_digest(const struct pwmc_irq_path*p,unsigned s
     size_t first=offsetof(struct pwmc_irq_path,regs)+slot*sizeof(struct pwmc_irq_regs),end=first+sizeof(struct pwmc_irq_regs);
     for(size_t k=0;k<offsetof(struct pwmc_irq_path,digest);k++)if(k<first||k>=end)pwfi_byte(&hash,b[k]);pwfi_final(&hash,out);
 }
-static inline int pwmc_irq_bindings_valid(const struct pwmc_result*r,unsigned op)
+static inline int pwmc_irq_bindings_map(const struct pwmc_irq_path*p,uint64_t core,uint64_t system,
+    const struct pwmc_irq_map_view*m)
 {
-    const struct pwmc_irq_path*p=&r->irq[op];uint64_t core=r->source[op].core;
     if(p->attempted!=1||p->reserved)return 0;
     for(unsigned image=0;image<3;image++){
         const struct pwmc_irq_image*i=&p->image[image];const struct pwmc_irq_binding*b=&pwmc_irq_bindings[image];
-        if(i->attempted!=1||i->complete!=1||i->reserved||i->bytes!=b->bytes||!pwmc_irq_AT_replay(&r->source[op],i->base,i->bytes,i->AT,PWMC_IRQ_PAGES,i->AT_count)||
+        if(i->attempted!=1||i->complete!=1||i->reserved||i->bytes!=b->bytes||!pwmc_irq_AT_view(m,i->base,i->bytes,i->AT,PWMC_IRQ_PAGES,i->AT_count)||
            !pwmc_zero(i->table+b->table_bytes,sizeof(i->table)-b->table_bytes)||!pwmc_zero(i->state+b->state_bytes,sizeof(i->state)-b->state_bytes))return 0;
         if(p->finalized>3)return 0;
         for(unsigned phase=0;phase<2+p->finalized;phase++){
@@ -704,15 +722,21 @@ static inline int pwmc_irq_bindings_valid(const struct pwmc_result*r,unsigned op
     for(unsigned k=0;k<5;k++)if(pwfi_le(g+8*k,8)!=gic+gm[v3][k])return 0;
     for(unsigned k=0;k<8;k++)if(pwfi_le(c+8*k,8)!=cpu+cm[k])return 0;
     const uint8_t*ts=p->image[0].state,*gs=p->image[1].state,*cs=p->image[2].state;
-    if(pwfi_le(ts+16,8)!=core+0x1b800||pwfi_le(ts+24,8)!=p->tables[1]||pwfi_le(ts+32,8)!=(uintptr_t)r->bound_io.system||pwfi_le(ts+48,8)!=core+0xcbf8||
-       pwfi_le(gs+8,8)!=core+0x1b800||pwfi_le(gs+24,8)!=p->handlers||pwfi_le(gs+32,8)!=(uintptr_t)r->bound_io.system||pwfi_le(gs+72,8)!=p->handler_count||
-       pwfi_le(cs,8)!=core+0x1b800||pwfi_le(cs+16,8)||pwfi_le(cs+24,8)!=gic+(v3?0x1acc:0x1294)||pwfi_le(cs+32,8)||pwfi_le(cs+40,8)||pwfi_le(cs+48,8)!=(uintptr_t)r->bound_io.system)return 0;
-    if(p->handler_count<32||p->handler_count>1020||!pwmc_irq_AT_replay(&r->source[op],p->handlers,p->handler_count*8,p->array_AT,3,p->array_AT_count)||
-       !pwmc_irq_AT_replay(&r->source[op],p->tables[1],40,p->table_AT,2,p->table_AT_count))return 0;
+    if(pwfi_le(ts+16,8)!=core+0x1b800||pwfi_le(ts+24,8)!=p->tables[1]||pwfi_le(ts+32,8)!=system||pwfi_le(ts+48,8)!=core+0xcbf8||
+       pwfi_le(gs+8,8)!=core+0x1b800||pwfi_le(gs+24,8)!=p->handlers||pwfi_le(gs+32,8)!=system||pwfi_le(gs+72,8)!=p->handler_count||
+       pwfi_le(cs,8)!=core+0x1b800||pwfi_le(cs+16,8)||pwfi_le(cs+24,8)!=gic+(v3?0x1acc:0x1294)||pwfi_le(cs+32,8)||pwfi_le(cs+40,8)||pwfi_le(cs+48,8)!=system)return 0;
+    if(p->handler_count<32||p->handler_count>1020||!pwmc_irq_AT_view(m,p->handlers,p->handler_count*8,p->array_AT,3,p->array_AT_count)||
+       !pwmc_irq_AT_view(m,p->tables[1],40,p->table_AT,2,p->table_AT_count))return 0;
     if(p->handlers<core+PGCI_IMAGE_BYTES&&core<p->handlers+p->handler_count*8)return 0;
     for(unsigned k=0;k<3;k++)if(p->handlers<p->image[k].base+p->image[k].bytes&&p->image[k].base<p->handlers+p->handler_count*8)return 0;
     for(unsigned k=0;k<p->handler_count;k++)if(p->handler[k]!=((k==18||k==19||k==26||k==29)?timer+0x10c8:0))return 0;
     return pwmc_zero(p->handler+p->handler_count,(PWMC_IRQ_HANDLERS-p->handler_count)*8);
+}
+static inline int pwmc_irq_bindings_valid(const struct pwmc_result*r,unsigned op)
+{
+    const struct pgcd_result*s=&r->source[op];
+    const struct pwmc_irq_map_view m={s->maps[0],s->map[0].bytes,s->map[0].stride,s->self_base,s->self_bytes};
+    return pwmc_irq_bindings_map(&r->irq[op],s->core,(uintptr_t)r->bound_io.system,&m);
 }
 static inline int pwmc_irq_current(const struct pwmc_result*r,unsigned op)
 {

@@ -108,6 +108,102 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
+- NEW0189 CURRENT source/software provider INPUT milestone at the actual parent's
+  EXISTING registered FreePool interval. Reused the existing canonical image
+  hash, typed-AT replay and exact binding reader as DATA leaves. Their original
+  allocator wrappers retain their genuine source/context guards; no opened
+  pwmc/pgcd context, owner flag, ticket or replacement service was fabricated.
+  This supersedes earlier CURRENT source/input/test hashes only at this scope;
+  every original proof/RAW/schema/timestamp remains unchanged.
+- New `uefi-wifi-cache-provider.h` captures actual retained Core Timer/CPU roots,
+  all three source-bound Timer/GIC/CPU images, full mutable states/method tables,
+  selected GICv2/v3 hardware table and all32..1020 handler entries. Existing
+  six-MRS pre/post inputs now compare VBAR numerically to the retained source
+  CPU image+0x4000. No provider method, IRQ dispatcher/IAR/EOI/timerSet, IRQmask,
+  new BS/GetMap/enumeration/allocator/FreePool call or IRQ/timer configuration
+  store. AT leaves retain exact PAR restoration. Added AT/PAR-read/restore and virtual-arch input leaves; the normal
+  SOFTWARE fixture records20 ATs/23 virtual samples,28 pre-provider hashes and
+  15 additional Core hashes. Those are modeled input counts, not phone reads
+  or hardware time. Original35 release/producer10/earlier-target10 and every
+  allocator20Core+70provider/ARC/VRM/readwork/fullrestore guard remain intact.
+- Separate provider20344B/input72B/path12400B retains full real enclosing360B
+  caller, original service-boundary witness seal, all partial AT/native/clock
+  prefixes, tables/state/handler bytes, hashes and digest. It is parent-image
+  storage, disjoint from original records/caller/source/native/system inputs
+  before writes. Whole provider/queue/timer records are sealed across each new
+  callback and the original service; only the exact AT/arch output is exempt.
+  Original596496B release/1488B queue/312B timer and347280B allocator schemas
+  stay unchanged. Full new raw is appended before the existing terminal hold,
+  before Console/USB, and normal parent checks complete/closed/unknown.
+- Capture uses the original retained typed-map classification plus fresh
+  NSWBsamePA/AT and source closure. It does NOT rename the seed current, prove
+  active ownership, or supply a fresh postrelease typed map. Pre-input path
+  finalized stays0; its arithmetic/MRS/raise/final fields stay unobserved.
+  After the API, close reads only original Core/source/control and virtual
+  architecture; no provider/handler, released target or GCD page is followed.
+  API status/issued/returned remain distinct from guard success. Failure holds
+  stickyUNKNOWN before original postarch/FPrestore, no retry/free/cleanup or
+  guessed restore. Original virtual opening200ms is not renewed/rebased, and
+  these samples grant no wholecall/global deadline, future IRQ/owner lease or
+  ABA exclusion. Other release/backing geometries remain unsupported.
+- FINAL2352 ASAN/UBSAN SOFTWARE cases PASS1725.4419106669957s: old1725 retained
+  plus627 actual new input composition faults/partial AT/native/clock/source/
+  control/output/foreign/overlap/replay cases, GICv2/v3 and max1020 handlers.
+  Target+GCD neighbor remain hostPROT_NONE after mock release. A separate case
+  makes ALL provider/handler pages hostPROT_NONE across post work and PASSES:
+  post provider source remains unqualified, not an inferred immutable lease.
+  Original enqueue-shaped SOFTWARE ABA case also still PASSES. All PE bytes
+  are inert DATA; BS/AT/FP/arch/MRS are peers, no original FW or physical run,
+  no whole pwfc_collect/pwsp_run/pwrcl_run_body constructor execution.
+- Shared-helper refactoring changes allocator native objects/optimized peer IR;
+  no byte-equivalence reuse is claimed. Affected8487 rerun PASS173.2350442079478s
+  with current shim FIRST/-H, excluding private frozen old common header.
+  Default release fixture now chooses optional peer leaves BEFORE producer
+  binding; standalone771 rerun PASS217.98769291699864s. Same-command -H trace
+  confirms current shim common header, excludes private incoming old copy.
+  Unaffected474/1564/1452/2341/167/5141/models/CI were not repeated.
+- Whole parent/dispatch/allocator COFF+MachO/generalregs/maxframe1024 PASS;
+  final parent's extra complete/closed guard was cross-checked on both targets.
+  Initial export1040B frame was rejected; removed duplicate360B stack copy,
+  retained1024 and every guard. Export MSR only exactPARrestore/noSMC; whole
+  parent retains old FP/terminalmask writes, never a zero-write claim.
+  OFF640972B same-command equal; ONlog29360128B/staticassert only raw capacity,
+  no new exact profile/resource/consumer/builder/CLI/candidate admission.
+- Independent Python struct/hashlib decodes full618640B paired raw, both
+  576936B archives/fresh bundles, all20344B new record and112928B allocator six
+  prefixes,28 pre-provider hashes and original70 hashes in that old fixture.
+  Source/FP/control/service-boundary seals, full states/tables/handler tail,
+  all AT/virtual-vs-physical samples/padding/digests checked; pointers numeric
+  only. New derived buffers do not modify/relabel original RAW. Early smoke
+  fixture binding error, unsupported post-provider test expectation, frame
+  rejection and relative-path decoder assertion are preserved privately;
+  no production guard was weakened to obtain PASS.
+- Current common902aeb9e3fbb541f705050c883d4b409361677f573b8a0f06b24ae3e7e9312a7;
+  provider e6e30e130a7ef181ccfbd0231e1ed92a7aee3172388fa6c38b1c0791d63e7aa1;
+  dispatch422bfb2b4ce986966d6528cf263e097a9b6637b50a93f21a0215b3b24e2362d2;
+  parent e26ac371c46ac197b9480915ce908d4207b2edde4a5f1a311aed94fbbc63f8a1;
+  dispatch-test8ac13dc7b28da181e9cbe826f5e0869857f467975a3f3effefd5016445291421;
+  release-fixture6b76897df6604c39bbade73abe6dbf59397e18c55f9ae4b355daa945f916674e.
+  Private cache-handle-provider-inputs-0001/proof.json
+  SHA ccb051c679ee42cac2e842f9770e0c74bee8f7e3df2600e8f313212fc75d8c70;
+  source/software b7ebe2bf4facf1f87973d3dae0007c74ade56825448bfd33a4ca98bf9511ba46.
+- NEXT reuse these qualified source INPUT readers, not rebuild them. Remaining
+  actual timer/deferred/event dependency and transitive callback/source/work,
+  wholecall temporal, and fresh postrelease typed graph/policy/source must
+  bind six genuinely new private contexts. Then two actual independent
+  MSA/RMTFS claims/cache/secureVMID/MPU/remoteDMAstop/handback/full normal and
+  UNKNOWN retirement, full changed-parent/affected checks/two SERIAL whole
+  constructor models/new exact profile/resource/codec/current transition/
+  freeze/ONE helper are required. No repeated2352/8487/771 or old audits with
+  unchanged source, no inventory boot/blind map refresh/closed ticket loan.
+  NEW0189 NOTREADY: no PA publish/MSS/NVserve/radio/scan/join/data or phone run.
+  Physical remains0188 fullretire and last independent actualPolarisFASTBOOT
+  2026-11-02T10:05:37.496860Z; consumed controller/old helper ban unchanged.
+  WiFi unavailable/no credible date, sound/camera STOP. No USB/native/MMIO/SMC/
+  PE execution/model/CI/codec/image/payload/helper/freeze this milestone.
+  All jobs ENDED; no human/authorization question. Current/future source/text
+  consentce8ce4fd is valid; completed source/text publication follows normally.
+
 - NEW0189 latest source publication
   1d9e56153de8cf868d2e990760bc90059f75d106 directpush ENDED0 under actual
   current/future source/text consentce8ce4fd; independent lsremote matches1d9e561.
