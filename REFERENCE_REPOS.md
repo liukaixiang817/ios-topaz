@@ -1993,3 +1993,11 @@ must never supply future executable IO. Bind existing DATA readers to genuine
 active callers/six NEW contexts, original opening and real source closures.
 No physicalUSB/native/firmware/WiFi run, new candidate/codec/image/helper/freeze
 or completion date. All old proofs/RAW/schema/SHA/timestamps keep their scope.
+
+Producer clock-order functional source627b04a364e495104520c04d3eaeafcb239472af is now
+published by the original directpush under actual standing source/text consent;
+independent lsremote matches627b04a. Exact four own UTF8 source/text paths;
+all firmware/private/sensitive bytes excluded. Private authorized source receipt
+SHA6ec2db7ad6046a2450e52073a2670d20f69502da9e5b8adb217af2a8e76085c9. This subsequent handoff
+changes only NOTES/REFERENCE_REPOS; no source/test/RAW/schema/proof edits or
+repeated checks. Fresh graph/full candidate and physical WiFi remain NOTREADY.

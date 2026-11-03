@@ -108,6 +108,18 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
+- NEW0189 latest PUBLIC functional source
+  627b04a364e495104520c04d3eaeafcb239472af is pushed through the SAME directpush
+  under actual current/future source/text consentce8ce4fd. Independent readonly
+  lsremote matches627b04a. Exact four own UTF8 paths: NOTES/REFERENCE_REPOS/
+  producer header/producer test. All firmware/Apple/vendor/NV/backup/RAW/photo/
+  serial/password/private bytes excluded. Private map-graph-clock-order-0001/
+  authorized-source-push-0001.json SHA6ec2db7ad6046a2450e52073a2670d20f69502da9e5b8adb217af2a8e76085c9.
+  This subsequent handoff edits only the two text files, with no source/test/
+  RAW/schema/proof change or repeated checks. Scope remains producer ordering
+  INPUT/SOFTWARE, not fresh postrelease graph/wholecall/owner or physical WiFi.
+  Older CURRENT/publication statements retain only their original scope.
+
 - NEW0189 CURRENT producer CNTVCT sequence ordering, SOURCE/SOFTWARE only.
   This new scope supersedes older CURRENT/source/check statements only where
   affected. Fresh postrelease graph integration remains unfinished; this is
