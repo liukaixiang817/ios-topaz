@@ -108,6 +108,18 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
+- NEW0189 latest PUBLIC functional source
+  7f2c0add37552cec4a05d594b369efb6211f7ffb is pushed by the SAME directpush under actual
+  current/future source/text consentce8ce4fd. Independent readonly lsremote
+  matches7f2c0ad. Exact four reviewed own UTF8 source/text paths; every firmware/
+  Apple/vendor/NV/backup/RAW/photo/serial/password/private byte excluded. Private
+  cache-handle-release-source-alias-0001/authorized-source-push-0001.json
+  SHAbda8bc2774423fa92b9b15e18e5e2b109c12262104a5241af7d966e4327eb1d2. This subsequent handoff
+  edits only NOTES/REFERENCE_REPOS, no source/test/RAW/schema/proof edit or
+  repeated checks. Scope remains conservative source/release geometry, not
+  source lifetime, wholecall/postmap/owner or physical WiFi qualification.
+  Older publication/current statements apply only at their original sources.
+
 - NEW0189 CURRENT release/source page disjointness in the real guarded
   FreePool caller, SOURCE/SOFTWARE only. Completed local source; publication
   not claimed in this paragraph. Older303f790/d93a5ce and prior current/check

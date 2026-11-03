@@ -1953,3 +1953,11 @@ map/source/typed/policy qualification plus secure/cache/DMA lifecycle remain
 NOTREADY. All three cache maps precede FreePool; later11 existing calls are
 later boundaries, never self-precall proof. No physical WiFi run or credible
 date. All original private proof/RAW/schema/SHA/timestamps retain their scope.
+
+Source/release geometry functional source7f2c0add37552cec4a05d594b369efb6211f7ffb is now
+published through the original directpush; independent lsremote matches7f2c0ad.
+Exact four own UTF8 source/text paths under actual current/future consent
+ce8ce4fd, excluding all firmware/private/sensitive bytes. Private source receipt
+SHAbda8bc2774423fa92b9b15e18e5e2b109c12262104a5241af7d966e4327eb1d2. This subsequent publication handoff
+edits only NOTES/REFERENCE_REPOS, no source/test/RAW/schema/proof change or
+repeated checks. Conservative geometry/full-candidate/WiFi scope stays NOTREADY.
