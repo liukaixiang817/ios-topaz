@@ -108,6 +108,74 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
+- NEW0189 CURRENT counter-domain bug corrected in the existing standalone
+  allocator before reusing its Timer/GIC/provider path at bootstrap. The actual
+  generic arch leaf reads CNTVCT, while provider regs/raise/final leaves read
+  CNTPCT and CNTP_CVAL. Old pwmc_irq_math compared/subtracted those epochs as
+  though equal. Its old equal-epoch peers missed this. A constructed arithmetic
+  probe with virtual opening1000000/physical sample1100000/CVAL4840001 returned
+  bound1 before this fix versus6 for the physical conservative horizon. This
+  is SOFTWARE arithmetic evidence, not a runtime offset or phone observation.
+- Current shared header25c22e72616b992c2581711dc5b8f5a946087ea002270ce235665ef721b68dcd;
+  allocator test86dbbb09b0424898a163f0cbe0d08e95dbac8948b77c1ac57e586033fb758686.
+  No actual parent/dispatch/release/target/cache/GCD/current-map/PCLI body changed.
+  Main remains defaultOFF REMOTE_MEMORY, with no allocator consumer/builder/CLI/
+  new exact profile/resource. Previous b0db3ab/3639d80 results remain historical
+  at their exact source; old proof/RAW/timestamps/SHA/schema are never rewritten.
+- Physical work now uses first retained CNTPCT+3840000 as a conservative ceiling,
+  with physical monotonicity/raise order/overflow checks. All CVAL arithmetic and
+  physical raise/final comparisons stay in that domain. Existing scope_end_ticks
+  field now denotes that physical work ceiling; offsets/CABI remain unchanged.
+  Do not reinterpret old RAW with this new semantic rule. The original virtual
+  opening and every pwmc_live/source200ms check remain byte-for-byte unchanged.
+  This is extra work overestimation, NOT a fresh admission window, renewal,
+  inferred CNTVOFF, global walltime bound, IRQ owner or future hardware lease.
+  No native clock/AT/BS/provider call or register write was added. Native inline
+  asm is unchanged; only SOFTWARE counter leaves now model independent epochs.
+- FINAL8487 ASAN/UBSAN SOFTWARE checks PASS169.77392520796275s: all original8334
+  cases retained plus135 independent128-bit arithmetic/epoch-translation cases
+  and18 actual allocator claim/release compositions. Large independent virtual/
+  physical epochs, physical rollback/raise order/ceiling/overflow and original
+  virtual expiry all exercise stickyUNKNOWN without another API/cleanup. Old
+  expiry fixture17 now injects physical overflow or the physical work ceiling,
+  rather than treating a different first physical epoch as an expired lease.
+  Zero/partial/native/FP/source/timer/deferred/allocator gates are not reduced.
+  These run pwmc_claim/release SOFTWARE constructors, never original firmware
+  or whole pwfc_collect/pwsp_run/pwrcl_run_body constructors. Unaffected646/771/
+  474/1564/1452/2341/167/5141 checks and old models/CI were NOT rerun.
+- Independent struct/hashlib verification fully decodes112928B six-prefix RAW
+  and three full347280B independent-epoch records (1041840B), six full12400B
+  provider prefixes/all420 source hashes, both physical samples/CVAL/work math
+  and separate original virtual intervals. All captured pointers stay numeric.
+  First decoder had a wrong relative path; second expected max-handler3 array
+  pages in a normal64-handler fixture. Correct0003 verifies its actual1 page;
+  all failed scripts/errors are preserved, no production guards/cases lowered.
+- Actual whole parent and affected allocator exports COFF+MachO/generalregs/
+  maxframe1024 PASS. Parent MachO is byte-identical to3639d80; COFF differs only
+  its typed TimeDateStamp bytes. No objects/timestamps were edited. Allocator
+  export has only existing PAR/FPCR/FPSR MSR restores and noSMC; whole-parent old
+  FP/terminal masks are not a zero-write claim. OFF640972B same invocation is
+  byte-identical. CABI347280/provider12400/TPL11616/timer8048/deferred736 remain.
+  Current shim header is first in compiler trace, frozen old header excluded.
+- Private allocator-counter-domain-0001/proof.json
+  SHA74dcf28f15380734c896a91a43aba3945a6650009bcdf1e7b332f07db3d70fdf;
+  source/software2aa5a34b3d5dc163f86c5c6156d1a84f9e60be8c158b60219c24bcc4dd52533b.
+  This fixes a prerequisite's actual arithmetic bug; bootstrap Timer/GIC/provider
+  current inputs, transitive callbacks/work/whole-call temporal and fresh
+  postrelease typed graph/policy/source for six actual private contexts remain
+  UNQUALIFIED. Do not recreate completed readers/guards/audits or infer owner/
+  ABA exclusion from snapshots/keys/tags/counters/fullbytes/complete. No old seed
+  renamed current, returned-map self-proof, reopening/rebase/renewal/closed ticket.
+  Other release/backing geometries remain unsupported. Then real independent
+  MSA/RMTFS claims/cache/secureVMID/MPU/DMAstop/handback/full normalUNKNOWN retire,
+  two SERIAL whole constructor models/new exact profile/resource/codec/current
+  transition/freeze/ONEhelper are still required. NEW0189 NOTREADY: no PA publish/
+  MSS/NVserve/radio/scan/join/data. No new USB/native/MMIO/SMC/PE execution, model,
+  CI, codec, image, payload, helper or freeze. Physical0188 fullretire/10:05lastFB/
+  consumed controller unchanged. WiFi unavailable/no credible date, sound/camera
+  STOP. All jobs ENDED; no human/authorization answer pending. Public receipt
+  will be allocator-counter-domain-source-and-handoff-push-proof-0001.json.
+
 - NEW0189 CURRENT shared deferred-reader integration at the EXISTING actual
   FreePool leaf; SOFTWARE only. Source b0db3abe639c24217fef28df619d8a0cf4a35146
   directpushed under actual standing public source/text consent; independent

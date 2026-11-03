@@ -1675,3 +1675,28 @@ Shared-dispatch integration source b0db3abe639c24217fef28df619d8a0cf4a35146
 was directpushed under actual same-project public source/text consent; separate
 lsremote matched. Exactly eight reviewed source/text paths were published;
 all private artifacts remain local, all jobs ended and physical0188 unchanged.
+
+0189 corrects a concrete counter-domain bug in the existing own-source allocator
+before reusing its Timer/GIC/provider path at bootstrap. Its generic actual arch
+uses CNTVCT, but physical timer CVAL/regs/raise/final use CNTPCT. The previous math
+mixed their epochs; equal-epoch peers missed it. A constructed arithmetic probe
+returned bound1 before the fix versus6 through the physical conservative horizon.
+No phone counter offset or hardware behavior was observed. The physical ceiling
+now derives from the first physical sample plus one full duration, with checked
+monotonicity/order/overflow. The unchanged original virtual opening200ms still
+controls admission. scope_end_ticks retains its offset but now describes this
+physical work ceiling, never a renewed lease or whole-call walltime bound. Old
+RAW/proofs retain their old source semantics; no CNTVOFF assumption/reader added.
+
+The affected standalone suite passes8487 ASAN/UBSAN SOFTWARE checks (old8334 plus
+135 independent128-bit/domain cases and18 allocator compositions), including
+widely different counter epochs and original virtual expiry. Independent numeric
+struct/hashlib decoding verifies112928B prefixes and three full347280B records,
+six complete provider prefixes and420 source hashes. Actual whole parent/allocator
+exports cross-compile for both COFF/MachO; parent MachO and OFF640972B are equal to
+the same-command baseline, COFF differs only its typed timestamp. Native inline
+assembly and source/native/FP/deferred gates are unchanged. Private evidence is
+0189/wifi/allocator-counter-domain-0001; no reference port code, firmware execution,
+whole cache/pwsp/client constructor model or physical action. Fresh bootstrap
+provider/typed graph/callback/work/wholecall temporal inputs and secure/DMA life
+cycle still remain. NEW0189 NOTREADY; no physical WiFi feature milestone or ETA.

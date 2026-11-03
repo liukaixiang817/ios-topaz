@@ -588,6 +588,7 @@ static inline int pwmc_timers_capture(struct pwmc_result*r,unsigned operation)
 #error Software IRQ register leaves must never enter physical firmware
 #endif
 static int pwmc_test_irq_regs(struct pwmc_result*,unsigned,unsigned);
+static uint64_t pwmc_test_irq_ticks(struct pwmc_result*,unsigned,unsigned);
 #endif
 static inline int pwmc_irq_AT_replay(const struct pgcd_result*s,uint64_t address,uint64_t bytes,
     const struct pwmc_irq_AT*AT,unsigned capacity,unsigned count)
@@ -735,18 +736,24 @@ static inline int pwmc_irq_capture(struct pwmc_result*r,unsigned op)
     if(!pwmc_irq_current(r,op)||!pwmc_irq_math(r,op,0,&end,&steps,&notify))return pwmc_fail(r,PWMC_SOURCE,1);
     p->complete=1;pwmc_irq_digest(p,p->digest);return 1;
 }
-/* Derived arithmetic bounds, not a hardware-time or interrupt ownership grant.
- * Remaining work still belongs to the original source operation's200ms. */
+/* CNTP_CVAL/CNTPCT use the physical counter. The original source opening uses
+ * CNTVCT; their epochs need not agree. Bound work conservatively through one
+ * full duration AFTER the first physical sample, without deriving an offset.
+ * This ceiling is not an admission deadline: pwmc_live still enforces the
+ * unchanged original virtual opening's200ms. Neither grants interrupt ownership
+ * or bounds preemption, faults, memory latency or whole-call wall time. */
 static inline int pwmc_irq_math(const struct pwmc_result*r,unsigned op,unsigned slot,
     uint64_t*end,uint64_t*steps,uint64_t*notify)
 {
-    const struct pwmc_irq_path*p=&r->irq[op];const struct pwmc_irq_regs*a=&p->regs[slot];const uint8_t*t=p->image[0].state;
+    if(slot>1)return 0;
+    const struct pwmc_irq_path*p=&r->irq[op];const struct pwmc_irq_regs*a=&p->regs[slot],*first=&p->regs[0];const uint8_t*t=p->image[0].state;
     uint64_t period=pwfi_le(t+56,8),step=pwfi_le(t+64,8),missed=pwfi_le(t,8),frequency=r->source[op].before.cpu.frequency;
     if(a->issued!=63||a->returned!=63||a->el!=4||a->vbar!=p->image[2].base+0x4000||a->ctl>7||(a->ctl&3)!=1||
        a->frequency!=frequency||frequency!=19200000||!period||!step||!missed||period>UINT64_MAX/frequency||
-       period*frequency/10000000!=step||period>UINT64_MAX/missed||r->source[op].before.cpu.ticks>UINT64_MAX-PGCD_FRESH_TICKS)return 0;
-    *end=r->source[op].before.cpu.ticks+PGCD_FRESH_TICKS;
-    if(a->ticks<r->source[op].before.cpu.ticks||a->ticks>*end)return 0;
+       period*frequency/10000000!=step||period>UINT64_MAX/missed||r->source[op].before.cpu.ticks>UINT64_MAX-PGCD_FRESH_TICKS||
+       first->issued!=63||first->returned!=63||!first->ticks||first->ticks>UINT64_MAX-PGCD_FRESH_TICKS)return 0;
+    *end=first->ticks+PGCD_FRESH_TICKS;
+    if(a->ticks<first->ticks||a->ticks>*end||(slot&&a->ticks<p->raise_ticks))return 0;
     uint64_t debt=*end>a->cval?*end-a->cval:0;*steps=debt/step+(debt%step!=0);if(!*steps)*steps=1;
     *notify=period*missed;
     if(*steps>(UINT64_MAX-a->cval)/step||*steps>UINT64_MAX-2||missed>UINT64_MAX-*steps-2)return 0;
@@ -830,7 +837,7 @@ static inline int pwmc_irq_seal_raise(struct pwmc_result*r,unsigned op)
     if(p->complete!=1||p->finalized||p->raise_ticks||!pgcd_equal(p->digest,digest,32)||!pwmc_irq_current(r,op)||!pwmc_irq_math(r,op,0,&end,&steps,&notify))return pwmc_fail(r,PWMC_SOURCE,1);
     for(unsigned k=0;k<3;k++)if(!pwmc_irq_hash(r,op,k,2))return 0;p->finalized=1;
 #if defined(POLARIS_WIFI_MEMORY_SOFTWARE_PEER)
-    p->raise_ticks=r->source[op].after.cpu.ticks+1;
+    p->raise_ticks=pwmc_test_irq_ticks(r,op,0);
 #elif defined(__aarch64__) || defined(__arm64__)
     __asm__ volatile("mrs %0,CNTPCT_EL0":"=r"(p->raise_ticks));
 #endif
@@ -850,7 +857,7 @@ static inline int pwmc_irq_finalize(struct pwmc_result*r,unsigned op)
      * final complete immutable-source hashes. No callback follows them. */
     for(unsigned k=0;k<3;k++)if(!pwmc_irq_hash(r,op,k,3))return 0;p->finalized=2;
 #if defined(POLARIS_WIFI_MEMORY_SOFTWARE_PEER)
-    p->final_ticks=p->regs[1].ticks+1; /* Explicit hosted counter leaf only. */
+    p->final_ticks=pwmc_test_irq_ticks(r,op,1); /* Explicit hosted physical counter leaf only. */
 #elif defined(__aarch64__) || defined(__arm64__)
     __asm__ volatile("mrs %0,CNTPCT_EL0":"=r"(p->final_ticks));
 #endif

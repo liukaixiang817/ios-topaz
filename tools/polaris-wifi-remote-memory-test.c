@@ -20,6 +20,7 @@ static unsigned late_epoch;
 static uint64_t allocated_base,allocated_bytes;
 static uint64_t live_base[2],live_bytes[2];static unsigned live[2];
 static uint8_t*irq_original[3],*irq_image[3];static unsigned irq_fault,irq_ATs,irq_slot,irq_phase,irq_fired;
+static uint64_t virtual_epoch,physical_epoch;static unsigned counter_fault;
 static unsigned deferred_fault,deferred_stage,deferred_level,deferred_fired;
 static void irq_mutate(unsigned op)
 {
@@ -50,16 +51,27 @@ static void irq_install(void)
     put(irq_image[2]+0x5420,(uintptr_t)core+0x1b800,8);put(irq_image[2]+0x5438,g+0x1acc,8);put(irq_image[2]+0x5450,(uintptr_t)s,8);
     for(unsigned k=0;k<64;k++)put((void*)(uintptr_t)(handlers+8*k),(k==18||k==19||k==26||k==29)?t+0x10c8:0,8);
 }
+static uint64_t pwmc_test_irq_ticks(struct pwmc_result*r,unsigned op,unsigned closing)
+{
+    uint64_t ticks=r->source[op].after.cpu.ticks-virtual_epoch+physical_epoch+1+closing;
+    if(counter_fault==2&&!closing)return 0;
+    if(counter_fault==3&&closing)return r->irq[op].regs[1].ticks-1;
+    if(counter_fault==4&&!closing)return r->irq[op].regs[0].ticks+PGCD_FRESH_TICKS+1;
+    return ticks;
+}
 static int pwmc_test_irq_regs(struct pwmc_result*r,unsigned op,unsigned slot)
 {
-    assert(r==mr);struct pwmc_irq_regs*p=&r->irq[op].regs[slot];uint64_t values[]={4,(uintptr_t)irq_image[2]+0x4000,1,r->source[op].after.cpu.ticks+19201,19200000,r->source[op].after.cpu.ticks+1};
+    assert(r==mr);struct pwmc_irq_regs*p=&r->irq[op].regs[slot];uint64_t ticks=r->source[op].after.cpu.ticks-virtual_epoch+physical_epoch+1;
+    uint64_t values[]={4,(uintptr_t)irq_image[2]+0x4000,1,ticks+19200,19200000,ticks};
     for(unsigned k=0;k<6;k++){p->issued|=1u<<k;if(slot==irq_slot&&irq_fault==k+1)return 0;((uint64_t*)p)[k]=values[k];p->returned|=1u<<k;}
     if(slot==irq_slot){
         switch(irq_fault){
         case 10:p->el=8;break;case 11:p->vbar+=4;break;case 12:p->ctl=0;break;case 13:p->ctl=3;break;
         case 14:p->ctl=8;break;case 15:p->frequency=0;break;case 16:p->ticks=0;break;
-        case 17:p->ticks=r->source[op].before.cpu.ticks+PGCD_FRESH_TICKS+1;break;
+        case 17:p->ticks=slot?r->irq[op].regs[0].ticks+PGCD_FRESH_TICKS+1:UINT64_MAX;break;
         case 18:p->cval=UINT64_MAX;break;case 19:p->cval=UINT64_MAX-1;break;
+        case 20:p->ticks=r->irq[op].regs[0].ticks-1;break;
+        case 21:p->ticks=r->irq[op].raise_ticks-1;break;
         case 40:irq_image[0][0x1000]^=1;irq_fired=1;break;
         }
         if(irq_phase==0&&irq_fault>=50&&irq_fault<=68)irq_mutate(op);
@@ -126,7 +138,7 @@ static void corrupt_pending(void)
 }
 static int memory_arch(void*p,struct pgcd_arch*a)
 {
-    int ok=arch(p,a);
+    int ok=arch(p,a);a->cpu.ticks+=virtual_epoch;
     if(mf==14&&claims)a->cpu.daif=0x80;
     if(mf==22&&!claims&&mr->call[0].guard.entered)mr->kind^=1;
     if(mf==27&&!claims&&mr->call[0].guard.entered&&mr->call[0].entry)corrupt_pending();
@@ -136,6 +148,8 @@ static int memory_arch(void*p,struct pgcd_arch*a)
     if(mf==37){unsigned op=mr->source[1].attempted?1:0;if(mr->timers[op].complete&&!mr->call[op].issued)put(timer_base+176,1,8);}
     if(tf&&ts==2&&!fired&&mr->TPL[to].transition[td].returned&&mr->TPL[to].transition[td].unknown&&mr->TPL[to].transition[td].observed==127){fired=1;tpl_mutate(mr,to,td);}
     unsigned op=mr&&mr->source[1].attempted?1:0;
+    if(mr&&counter_fault==1&&mr->irq[op].complete&&!mr->call[op].issued)
+        a->cpu.ticks=mr->source[op].before.cpu.ticks+PGCD_FRESH_TICKS+1;
     if(mr&&!irq_fired&&irq_phase==1&&irq_fault>=50&&irq_fault<=68&&mr->irq[op].complete&&!mr->call[op].issued)irq_mutate(op);
     if(mr&&!irq_fired&&irq_fault==70&&mr->irq[op].complete&&!mr->call[op].issued){irq_fired=1;irq_image[1][0x1000]^=1;}
     if(mr&&!irq_fired&&irq_fault==71&&mr->irq[op].finalized==2&&mr->call[op].guard.left){irq_fired=1;irq_image[2][0x1000]^=1;}
@@ -306,6 +320,7 @@ static void setup(unsigned kind,unsigned f)
 {
     mr=0;reset(0);mf=f;tf=td=to=ts=fired=map_fault=late_epoch=0;claims=drops=translations=physical_owned=event_ATs=allocator_ATs=0;allocated_base=allocated_bytes=0;
     event_base=arena+0x110000;timer_base=arena+0x1a0000;timer_ATs=irq_ATs=irq_fault=irq_slot=irq_phase=irq_fired=0;
+    virtual_epoch=physical_epoch=counter_fault=0;
     deferred_fault=deferred_stage=deferred_level=deferred_fired=0;memset(arena+0x100000,0,0x200000);
     allocator_base=arena+0x130000;
     memset(live,0,sizeof(live));memset(live_base,0,sizeof(live_base));memset(live_bytes,0,sizeof(live_bytes));
@@ -399,10 +414,54 @@ static unsigned delta_oracle_cases(void)
     }
     free(p);active_stride=48;return count;
 }
+/* Independent 128-bit debt oracle and translation invariance: changing either
+ * counter epoch must not change physical timer work or renew the virtual window.
+ * This exercises arithmetic on constructed RAM, not firmware or elapsed time. */
+static unsigned counter_math_cases(void)
+{
+    struct pwmc_result*r=calloc(1,sizeof(*r));assert(r);struct pwmc_irq_path*p=&r->irq[0];unsigned cases=0;
+    const uint64_t virtuals[]={1,UINT64_C(1)<<32,UINT64_C(1)<<56};
+    const uint64_t physicals[]={1,100000,UINT64_C(1)<<48};
+    const uint64_t cvals[]={0,1,19199,19200,PGCD_FRESH_TICKS-1,PGCD_FRESH_TICKS,PGCD_FRESH_TICKS+1};
+    p->image[2].base=0x100000;r->source[0].before.cpu.frequency=19200000;
+    put(p->image[0].state,1,8);put(p->image[0].state+56,10000,8);put(p->image[0].state+64,19200,8);
+    for(unsigned v=0;v<3;v++)for(unsigned b=0;b<3;b++)for(unsigned c=0;c<7;c++)for(unsigned slot=0;slot<2;slot++){
+        uint64_t base=physicals[b],end=0,steps=0,notify=0;r->source[0].before.cpu.ticks=virtuals[v];
+        for(unsigned k=0;k<2;k++)p->regs[k]=(struct pwmc_irq_regs){4,0x104000,1,base+cvals[c],19200000,base+64*k,63,63};
+        p->raise_ticks=base+32;
+        __uint128_t debt=cvals[c]<PGCD_FRESH_TICKS?PGCD_FRESH_TICKS-cvals[c]:0;
+        uint64_t expected=(uint64_t)((debt+19199)/19200);if(!expected)expected=1;
+        assert(pwmc_irq_math(r,0,slot,&end,&steps,&notify)&&end==base+PGCD_FRESH_TICKS&&steps==expected&&notify==10000);
+        for(unsigned fraction=0;fraction<3;fraction++){
+            __uint128_t actual_end=(__uint128_t)base+PGCD_FRESH_TICKS*fraction/2;
+            __uint128_t remaining=actual_end>p->regs[slot].cval?actual_end-p->regs[slot].cval:0;
+            assert((remaining+19199)/19200<=steps);
+        }
+        cases++;
+    }
+    uint64_t end,steps,notify;
+    for(unsigned bad=0;bad<9;bad++){
+        r->source[0].before.cpu.ticks=1000;
+        for(unsigned k=0;k<2;k++)p->regs[k]=(struct pwmc_irq_regs){4,0x104000,1,20000,19200000,10000+64*k,63,63};
+        p->raise_ticks=10032;unsigned slot=1;
+        switch(bad){
+        case 0:p->regs[0].ticks=0;break;case 1:p->regs[0].ticks=UINT64_MAX-PGCD_FRESH_TICKS+1;break;
+        case 2:p->regs[1].ticks=9999;break;case 3:p->regs[1].ticks=10031;break;
+        case 4:p->regs[1].ticks=10000+PGCD_FRESH_TICKS+1;break;case 5:p->regs[1].cval=UINT64_MAX;break;
+        case 6:r->source[0].before.cpu.ticks=UINT64_MAX-PGCD_FRESH_TICKS+1;break;
+        case 7:p->regs[0].returned=31;break;case 8:slot=2;break;
+        }
+        assert(!pwmc_irq_math(r,0,slot,&end,&steps,&notify));cases++;
+    }
+    free(r);return cases;
+}
 int main(int argc,char**argv)
 {
+#if defined(PWMC_COUNTER_MATH_ONLY)
+    (void)argc;(void)argv;printf("{\"SOFTWARE_counter_math_checks\":%u}\n",counter_math_cases());return 0;
+#endif
     assert((argc==5||argc==6)&&!posix_memalign((void**)&arena,4096,0x301000));original=malloc(PGCI_IMAGE_BYTES);assert(original);
-    FILE*f=fopen(argv[1],"rb");assert(f&&fread(original,1,PGCI_IMAGE_BYTES,f)==PGCI_IMAGE_BYTES&&!fclose(f));unsigned cases=delta_oracle_cases();
+    FILE*f=fopen(argv[1],"rb");assert(f&&fread(original,1,PGCI_IMAGE_BYTES,f)==PGCI_IMAGE_BYTES&&!fclose(f));unsigned cases=delta_oracle_cases()+counter_math_cases();
     for(unsigned k=0;k<3;k++){irq_original[k]=malloc(pwmc_irq_bindings[k].bytes);FILE*in=fopen(argv[2+k],"rb");assert(irq_original[k]&&in&&fread(irq_original[k],1,pwmc_irq_bindings[k].bytes,in)==pwmc_irq_bindings[k].bytes&&!fclose(in));}
     for(unsigned kind=0;kind<2;kind++){
         setup(kind,0);int ok=pwmc_claim(mr,memory_AT);
@@ -676,6 +735,23 @@ int main(int argc,char**argv)
         if(!variant){put(irq_image[0]+0x2070,(uintptr_t)irq_image[1]+0x30b8,8);put(irq_image[2]+0x5438,(uintptr_t)irq_image[1]+0x1294,8);}
         assert(pwmc_claim(mr,memory_AT)&&pwmc_irq_replay(mr,0)&&mr->irq[0].handler_count==counts[n]);
         assert(pwmc_release_local(mr,memory_AT)&&pwmc_irq_replay(mr,1));cases++;
+    }
+    for(unsigned kind=0;kind<2;kind++)for(unsigned domain=0;domain<3;domain++){
+        setup(kind,0);virtual_epoch=domain?UINT64_C(1)<<56:0;physical_epoch=domain==1?0:UINT64_C(1)<<40;
+        assert(pwmc_claim(mr,memory_AT)&&pwmc_irq_replay(mr,0)&&pwmc_release_local(mr,memory_AT)&&pwmc_irq_replay(mr,1));
+        for(unsigned op=0;op<2;op++){
+            assert(mr->irq[op].scope_end_ticks==mr->irq[op].regs[0].ticks+PGCD_FRESH_TICKS);
+            assert(mr->source[op].after.cpu.ticks>=mr->source[op].before.cpu.ticks&&
+                mr->source[op].after.cpu.ticks-mr->source[op].before.cpu.ticks<=PGCD_FRESH_TICKS);
+        }
+        cases++;
+    }
+    for(unsigned op=0;op<2;op++)for(unsigned bad=1;bad<=6;bad++){
+        setup(0,0);virtual_epoch=UINT64_C(1)<<56;physical_epoch=UINT64_C(1)<<40;
+        if(op)assert(pwmc_claim(mr,memory_AT));
+        if(bad<=4)counter_fault=bad;else{irq_slot=1;irq_fault=bad==5?20:21;}
+        assert(!(op?pwmc_release_local(mr,memory_AT):pwmc_claim(mr,memory_AT))&&mr->unknown&&claims==op&&!drops);
+        unsigned stopped=maps+arches+claims+drops;assert(!pwmc_release_local(mr,memory_AT)&&stopped==maps+arches+claims+drops);cases++;
     }
     for(unsigned op=0;op<2;op++)for(unsigned slot=0;slot<2;slot++)for(unsigned leaf=1;leaf<=6;leaf++){
         setup(0,0);if(op)assert(pwmc_claim(mr,memory_AT));irq_slot=slot;irq_fault=leaf;
