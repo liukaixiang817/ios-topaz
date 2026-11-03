@@ -188,22 +188,18 @@ static inline const struct pcmt_result*pcmt_route_capture(const struct pcmp_rout
 }
 /* Completed captures are DATA only. In particular caller and before.parent
  * are now expired stack addresses: compare their numbers, never follow them. */
-static inline int pcmt_route_minimum(const struct pcmp_route*routes,unsigned count,
-    const struct pcmg_result graphs[PCMP_PARENT_CONTEXTS][2],const struct pcmi_result providers[PCMP_PARENT_CONTEXTS][2],
-    const struct pcmt_result timers[PCMP_PARENT_CONTEXTS][2],const struct pgcd_context*c,unsigned slot,uint64_t*out)
+static inline int pcmt_input_retained(const struct pcmt_result*r,const struct pcmi_result*p,
+    const struct pcmg_result*graph,const struct pcmp_result*map)
 {
-    if(!timers||!pcmi_route_minimum(routes,count,graphs,providers,c,slot,out))return 0;
-    unsigned index=0;for(;index<count;index++)if(routes[index].context==c)break;if(index==count)return 0;
-    const struct pcmi_result*p=&providers[index][slot];const struct pcmt_result*r=&timers[index][slot];
     const struct pcmi_live*b=&r->binding.before;uint8_t hash[32];
     if(r->attempted!=1||r->complete!=1||r->unknown||r->error||r->reserved||r->copied!=1||
        r->issued!=3||r->returned!=3||r->leaf_status[0]!=1||r->leaf_status[1]!=1||
        r->counter_issued!=3||r->counter_returned!=3||
        r->native_issued!=15||r->native_returned!=15||!pwmc_zero(r->native,sizeof(r->native))||
        !r->binding.caller||!pgcd_equal(&r->caller_after,b,sizeof(*b))||b->timer||!pwmc_zero(b->timer_seal,32)||
-       b->r!=p||b->parent!=(const void*)(uintptr_t)p->binding.parent_address||b->graph!=&graphs[index][slot]||
+       b->r!=p||b->parent!=(const void*)(uintptr_t)p->binding.parent_address||b->graph!=graph||
        !pgcd_equal(&b->frame,&p->binding.parent,sizeof(b->frame))||!b->page||
-       b->core!=graphs[index][slot].graph.core||b->opening!=p->binding.opening||b->minimum!=p->binding.minimum||
+       b->core!=graph->graph.core||b->opening!=p->binding.opening||b->minimum!=p->binding.minimum||
        !pgcd_equal(b->binding_seal,p->binding_digest,32)||b->rooted!=1||b->table_mask!=7||b->handlers!=1||
        p->arch_returned<3||r->binding.virtual_before!=p->clock[p->arch_returned-3].raw.cpu.ticks)return 0;
     const struct pbgi_clock*virtual=&p->clock[p->arch_returned-3];
@@ -217,9 +213,9 @@ static inline int pcmt_route_minimum(const struct pcmp_route*routes,unsigned cou
         const struct pcmt_sample*s=&r->sample[n];uint64_t end,steps,notify;
         if(s->attempted!=1||s->complete!=1||s->reserved||s->head_count!=27||(s->pending&~UINT64_C(31))||
            !pwmc_irq_work_math(&p->path,&r->regs[0],&r->regs[n],r->binding.virtual_before,
-            routes[index].frames[slot].call.after.cpu.frequency,s->counter,r->regs[0].ticks,&end,&steps,&notify)||
+            map->call.after.cpu.frequency,s->counter,r->regs[0].ticks,&end,&steps,&notify)||
            r->counter_after[n]<s->counter||!pwmc_irq_work_math(&p->path,&r->regs[0],&r->regs[n],r->binding.virtual_before,
-            routes[index].frames[slot].call.after.cpu.frequency,r->counter_after[n],r->regs[0].ticks,&end,&steps,&notify))return 0;
+            map->call.after.cpu.frequency,r->counter_after[n],r->regs[0].ticks,&end,&steps,&notify))return 0;
         for(unsigned k=0;k<27;k++){uint64_t at=b->core+0x1c928+16*(k+5);
             if(s->head[k][0]!=at||s->head[k][1]!=at)return 0;}
         if(!n)first_steps=steps;
@@ -229,5 +225,14 @@ static inline int pcmt_route_minimum(const struct pcmp_route*routes,unsigned cou
         r->sample[1].counter>=r->counter_after[0]&&r->counter_after[1]>=r->counter_after[0]&&
         r->counter_after[0]-r->sample[0].counter<=period*(missed+first_steps+2)&&
         r->counter_after[1]-r->sample[0].counter<=period*(missed+first_steps+2);
+}
+static inline int pcmt_route_minimum(const struct pcmp_route*routes,unsigned count,
+    const struct pcmg_result graphs[PCMP_PARENT_CONTEXTS][2],const struct pcmi_result providers[PCMP_PARENT_CONTEXTS][2],
+    const struct pcmt_result timers[PCMP_PARENT_CONTEXTS][2],const struct pgcd_context*c,unsigned slot,uint64_t*out)
+{
+    if(!timers||!pcmi_route_minimum(routes,count,graphs,providers,c,slot,out))return 0;
+    unsigned index=0;for(;index<count;index++)if(routes[index].context==c)break;if(index==count)return 0;
+    const struct pcmi_result*p=&providers[index][slot];const struct pcmt_result*r=&timers[index][slot];
+    return pcmt_input_retained(r,p,&graphs[index][slot],&routes[index].frames[slot]);
 }
 #endif

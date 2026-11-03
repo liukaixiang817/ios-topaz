@@ -115,6 +115,7 @@ static void timer_pair_raw(const char*base,const char*suffix)
  assert(f&&fwrite(r,1,sizeof(*r),f)==sizeof(*r)&&fwrite(cur,1,sizeof(*cur),f)==sizeof(*cur)&&
  fwrite(active_graph,1,sizeof(*active_graph),f)==sizeof(*active_graph)&&fwrite(active_provider,1,sizeof(*active_provider),f)==sizeof(*active_provider)&&
  fwrite(active_timer,1,sizeof(*active_timer),f)==sizeof(*active_timer)&&!fclose(f));}
+#ifndef POLARIS_CURRENT_TIMER_FIXTURE_ONLY
 int main(int argc,char**argv)
 {
     assert(argc==6);timer_memory();
@@ -225,3 +226,4 @@ int main(int argc,char**argv)
     printf("{\"passed\":true,\"checks\":%u,\"SOFTWARE_only\":true,\"existing_maps\":11,\"bytes\":%zu,\"binding\":%zu,\"provider_live\":%zu,\"two_six_MRS_leaves\":true,\"extra_AT_or_arch\":false,\"whole_constructor_or_physical_execution\":false,\"owner_IRQ_lifetime_qualification\":false}\n",checks,sizeof(struct pcmt_result),sizeof(struct pcmt_binding),sizeof(struct pcmi_live));
     return 0;
 }
+#endif

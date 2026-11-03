@@ -652,11 +652,12 @@ static inline int pwmc_irq_owned(struct pwmc_result*r,unsigned op,uint64_t addre
 }
 /* Original canonical immutable-image hash leaf, after the caller's genuine
  * page/translation/source qualification. It reads DATA and invokes no method. */
-static inline int pwmc_irq_hash_image(struct pwmc_irq_image*p,unsigned image,unsigned phase)
+static inline int pwmc_irq_image_hash_data(const struct pwmc_irq_image*p,unsigned image,
+    uint8_t hashes[5][32],uint32_t*count,uint32_t*failed)
 {
-    if(image>=PWMC_IRQ_IMAGES||phase>4)return 0;
+    if(image>=PWMC_IRQ_IMAGES)return 0;
     const struct pwmc_irq_binding*b=&pwmc_irq_bindings[image];const uint8_t*data=(const void*)(uintptr_t)p->base;
-    if(p->hash_count[phase]||p->hash_failed[phase]||!pwmc_zero(p->hashes[phase],sizeof(p->hashes[phase]))||p->bytes!=b->bytes)return 0;
+    if(*count||*failed||!pwmc_zero(hashes,5*32)||p->bytes!=b->bytes)return 0;
     uint64_t original=pwfi_le(data+b->imagebase,8);if(original&&original!=p->base)return 0;
     for(unsigned span=0;span<b->range_count;span++){
         const struct pgci_range*q=&b->ranges[span];struct pwfi_sha256 hash;pwfi_init(&hash);
@@ -667,10 +668,12 @@ static inline int pwmc_irq_hash_image(struct pwmc_irq_image*p,unsigned image,uns
             pgci_patch_chunk(chunk,first,take,b->imagebase,8,0);
             if(take==64){pgci_transform_blocks(&hash,chunk);hash.bytes+=64;}else for(unsigned k=0;k<take;k++)pwfi_byte(&hash,chunk[k]);first+=take;
         }
-        pwfi_final(&hash,p->hashes[phase][span]);p->hash_count[phase]=span+1;
-        if(!pgcd_equal(p->hashes[phase][span],q->sha256,32)){p->hash_failed[phase]=span+1;return 0;}
+        pwfi_final(&hash,hashes[span]);*count=span+1;
+        if(!pgcd_equal(hashes[span],q->sha256,32)){*failed=span+1;return 0;}
     }return 1;
 }
+static inline int pwmc_irq_hash_image(struct pwmc_irq_image*p,unsigned image,unsigned phase)
+{return image<PWMC_IRQ_IMAGES&&phase<=4&&pwmc_irq_image_hash_data(p,image,p->hashes[phase],&p->hash_count[phase],&p->hash_failed[phase]);}
 static inline int pwmc_irq_hash(struct pwmc_result*r,unsigned op,unsigned image,unsigned phase)
 {
     struct pwmc_irq_image*p=&r->irq[op].image[image];const struct pwmc_irq_binding*b=&pwmc_irq_bindings[image];

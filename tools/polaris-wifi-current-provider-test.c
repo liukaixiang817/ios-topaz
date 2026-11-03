@@ -15,6 +15,10 @@ static uint64_t provider_floor;
 #if defined(POLARIS_CURRENT_TIMER_FIXTURE)
 static int fixture_timer_minimum(const struct pgcd_context*,unsigned,uint64_t*);
 #endif
+#if defined(POLARIS_CURRENT_EVENT_FIXTURE)
+static int fixture_event_capture(struct pcmp_live*,int(*)(struct ppli_at*));
+static int fixture_event_minimum(const struct pgcd_context*,unsigned,uint64_t*);
+#endif
 static int provider_mutate(struct ppli_at*at,struct pgcd_arch*clock)
 {
     unsigned point=at?provider_ATs:provider_clocks;
@@ -75,7 +79,11 @@ static int fixture_provider_capture(struct pcmp_live*parent,int(*read_page)(stru
     case 10:active_provider->reserved=1;break;
     case 11:((uint8_t*)active_graph)[provider_byte]=1;break;default:assert(0);
     }
-    int ok=pcmi_route_capture(selected,count,out,graphs,parent,read_page);provider_running=0;return ok;
+    int ok=pcmi_route_capture(selected,count,out,graphs,parent,read_page);provider_running=0;
+#if defined(POLARIS_CURRENT_EVENT_FIXTURE)
+    if(ok)ok=fixture_event_capture(parent,read_page);
+#endif
+    return ok;
 }
 static int fixture_provider_minimum(const struct pgcd_context*caller,unsigned slot,uint64_t*out)
 {
@@ -99,7 +107,9 @@ static int fixture_provider_minimum(const struct pgcd_context*caller,unsigned sl
         }
         if(provider_handoff_fault<20)ppli_sha(p,offsetof(struct pcmi_result,digest),p->digest);
     }
-#if defined(POLARIS_CURRENT_TIMER_FIXTURE)
+#if defined(POLARIS_CURRENT_EVENT_FIXTURE)
+    return fixture_event_minimum(caller,slot,out);
+#elif defined(POLARIS_CURRENT_TIMER_FIXTURE)
     return fixture_timer_minimum(caller,slot,out);
 #else
     return pcmi_route_minimum(routes,6,graphs,providers,caller,slot,out);

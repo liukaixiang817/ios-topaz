@@ -2279,3 +2279,55 @@ device execution. Main REMOTE_MEMORY defaultOFF, no new allocator consumer/
 builder/CLI/profile/resource. No USB/device/newCI/model/image/payload/helper/
 freeze. WiFi never physically scanned/joined/networked, no credible date;
 audio/camera STOP.
+
+### Own0189 fresh later event/checker/nonperiodic-timer graph INPUT
+
+The actual ACTIVE pcmp caller now reuses existing bounded event/timer DATA
+walks after completed fresh provider/physical inputs, on the same six real
+routes/11 EXISTING later Maps. No additional GetMap, NotifyFn, timer/provider
+method, IRQ dispatch, fake opened context/ticket or expired relay execution.
+Fresh later RAM classification plus fresh AT/NSWBsamePA/PAR restore precedes
+each node copy. Full552B control/304B actual parent/full PCMP and complete
+graph/provider/timer/new output seals close across callbacks before pointers
+are followed. Before/after10Core+28provider hashes finish after the last foreign
+callback. Existing pending/128event/32timer/all NotifySignal-timer refusals stay.
+
+Separate V2 RAW91488B/binding488/live552 retains full events18544/timers8048,
+AT322/clock324 capacity, actual C bool statuses/issued/returned/native/partial/
+after-control/unused/digests. Unpublished draft V1=88896B remains historical;
+old RAW schemas unchanged. Normal new stage7AT/9virtual samples; max fixture
+163AT/165samples. Generic arch contains MRS, AT restores PAR; added RAM/hash/
+read work is not zero-work or wholecall/IRQ/owner/lifetime qualification.
+The original first200ms window is not renewed/rebased/reopened; completed
+known resident route DATA provides a local latest minimum to existing outer
+arch, with no captured LoadedImage descriptor or expired stack/relay follow.
+
+Full capture1274 ASAN/UBSAN SOFTWARE PASS2494.268533415976s at full3 source.
+Final narrow completion/old argument-guard ordering changes are qualified by
+byteequal capture prefix and ORIGINAL capture-only export objects both targets,
+plus final118 closing cases PASS352.5490578750032s; counts overlap. Current eight
+source/test files equal closing snapshot. Four affected suites run SERIAL:
+8487/336/1488/2885 PASS172.83276320795994/583.8131137079909/2151.833943250007/
+3271.0076306660194s. Old graph/release original whole objects equal,4553/771
+not rerun; other unmodified tests/models/CI not promoted to new qualification.
+Four final wholeparent/events exports COFF+MachO/generalregs/maxframe1024 PASS;
+export old six readonly MRS/no MSR/SMC, wholeparent old PAR/FP/mask not zero-write.
+OFF PREPROCESSED matchingtarget pairs640999/640972 equal, not binary equality.
+
+Independent Python rebuilds every new byte of35 records (two9556320B normal
+archives plus13x811472B pairs) and linked inner DATA/selected failed outer/PCMP;
+normal outer only restore boundary checked. Original PE is inert DATA, captured
+pointers numeric, original RAW/proofs/objects/timestamps preserved. Services/
+AT/FP/arch/physical MRS are peers; no original firmware/native/wholeconstructor
+execution. SOFTWARE head-shaped ABA still PASSES; terminal longjmp not physical
+retirement. Private later-current-event-graph-inputs-0001/proof.json
+SHA1c37f846c6e5463c1213a663e69d41f065437cf3caa6ba8caf45578ff2cdd693;
+source/software21c8af8640decded49b81721e527761c1eebaedfd1f55972813ee70925bfa6c4.
+
+Transitive callback effects/work, postsource/release-backing and true active
+allocation lifetimes, wholecall walltime/preemption/fault/latency/IRQowner/ABA/
+precall, independent MSA/RMTFS/secure-DMA stop/handback and full new candidate
+admission remain. REMOTE_MEMORY defaultOFF, allocator consumer/builder/CLI/
+profile/resource unconnected; no PA publish/MSS/NVserve/radio/device. No new
+reference review/script/prebuilt/model/CI/operational codec/image/helper/freeze.
+WiFi never physically scanned/joined/networked, no credible date; audio/camera STOP.

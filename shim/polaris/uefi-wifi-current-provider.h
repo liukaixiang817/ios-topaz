@@ -48,18 +48,20 @@ static inline int pcmi_graph_tail(const struct pcmg_result*g)
     sizeof(*g)-offsetof(struct pcmg_result,digest)-sizeof(g->digest));}
 static inline int pcmi_fail(struct pcmi_result*r,unsigned error)
 {if(!r->error)r->error=error;r->unknown=1;return 0;}
-static inline int pcmi_known(const struct pcmi_live*l)
+static inline int pcmi_known_input(const struct pwmc_irq_path*p,uint64_t core,
+    unsigned rooted,unsigned table_mask,unsigned handlers)
 {
-    const struct pwmc_irq_path*p=&l->r->path;
-    if(l->rooted&&(pwfi_le((const void*)(uintptr_t)(l->core+0x1cb80),8)!=p->tables[0]||
-       pwfi_le((const void*)(uintptr_t)(l->core+0x1c8f8),8)!=p->tables[2]))return 0;
+    if(rooted&&(pwfi_le((const void*)(uintptr_t)(core+0x1cb80),8)!=p->tables[0]||
+       pwfi_le((const void*)(uintptr_t)(core+0x1c8f8),8)!=p->tables[2]))return 0;
     for(unsigned k=0;k<3;k++)if(p->image[k].complete){
         const struct pwmc_irq_image*i=&p->image[k];const struct pwmc_irq_binding*b=&pwmc_irq_bindings[k];
         if(!pgcd_equal(i->state,(const void*)(uintptr_t)(i->base+b->state),b->state_bytes)||
-           ((l->table_mask&(1u<<k))&&!pgcd_equal(i->table,(const void*)(uintptr_t)p->tables[k],b->table_bytes)))return 0;
+           ((table_mask&(1u<<k))&&!pgcd_equal(i->table,(const void*)(uintptr_t)p->tables[k],b->table_bytes)))return 0;
     }
-    return !l->handlers||pgcd_equal(p->handler,(const void*)(uintptr_t)p->handlers,p->handler_count*8);
+    return !handlers||pgcd_equal(p->handler,(const void*)(uintptr_t)p->handlers,p->handler_count*8);
 }
+static inline int pcmi_known(const struct pcmi_live*l)
+{return pcmi_known_input(&l->r->path,l->core,l->rooted,l->table_mask,l->handlers);}
 static inline int pcmi_source(const struct pcmi_live*l)
 {
     const struct pcmi_result*r=l->r;uint8_t hash[32];ppli_sha(&r->binding,sizeof(r->binding),hash);
