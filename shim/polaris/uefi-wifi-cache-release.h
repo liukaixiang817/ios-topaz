@@ -98,7 +98,7 @@ static inline int pbhr_native(struct pbhr_live*l,unsigned slot)
     if(slot>=8)return 0;struct pbhr_result*r=l->r;r->native_issued|=1u<<slot;
     r->native[slot]=*l->in.native;r->native_returned|=1u<<slot;return !r->native[slot];
 }
-static inline int pbhr_arch(struct pbhr_live*l,unsigned slot)
+static inline int pbhr_arch(struct pbhr_live*l,unsigned slot,uint64_t minimum_ticks)
 {
     struct pbhr_result*r=l->r;if(slot>1||r->arch_issued!=slot||r->arch_returned!=slot||!pbhr_stable(l))return 0;
     r->arch_issued=slot+1;uint8_t before[32],after[32];pbhr_seal(r,&r->arch[slot],sizeof(r->arch[slot]),before);
@@ -108,6 +108,7 @@ static inline int pbhr_arch(struct pbhr_live*l,unsigned slot)
     if(!pgcd_equal(before,after,32)||!pbhr_stable(l)||r->arch_issued!=slot+1)return 0;
     const struct pgcd_arch*a=&r->arch[slot];
     uint64_t previous=slot?r->arch[0].cpu.ticks:r->before_target.clock[r->before_target.arch_returned-1].raw.cpu.ticks;
+    if(previous<minimum_ticks)previous=minimum_ticks;
     return pwfc_arch_stable(&l->in.seed->call.after.cpu,&a->cpu)&&a->cpacr==l->in.seed->call.after.cpacr&&
         !a->cpu.daif&&a->cpu.group1==1&&a->cpu.ticks>=previous&&a->cpu.ticks>=l->in.opening&&
         a->cpu.ticks-l->in.opening<=PGCD_FRESH_TICKS;
@@ -184,7 +185,7 @@ static inline int pbhr_small_return(const struct pbhr_result*r)
     }return 1;
 }
 static __attribute__((noinline)) int pbhr_call_guarded(struct pbhr_result*r,const struct pbhr_input*input,
-    int(*guarded_release)(struct pbhr_live*,struct pbhr_result*,const struct pbhr_input*,const uint8_t[32]))
+    int(*guarded_release)(struct pbhr_live*,struct pbhr_result*,const struct pbhr_input*,const uint8_t[32],uint64_t*))
 {
     if(!r||!input||!pwmc_zero(r,sizeof(*r)))return 0;
     r->attempted=r->unknown=1;r->input=*input;r->api.status=UINT64_MAX;struct pbhr_input in=*input;uint8_t hash[32];
@@ -218,7 +219,7 @@ static __attribute__((noinline)) int pbhr_call_guarded(struct pbhr_result*r,cons
     int ok=pbha_capture_guarded(&r->before_target,&target,pbhr_inner_guard,&live);
     if(!ok)return pbhr_fail(r,2);pbhr_seal(r,&r->before_target,sizeof(r->before_target),after);
     if(!pgcd_equal(before,after,32)||!pbhr_stable(&live)||r->before_target.bytes!=a->bytes||
-       !pgcd_equal(r->before_target.raw,a->raw,PBHA_BYTES)||!pbhr_native(&live,0)||!pbhr_arch(&live,0)||!pbhr_native(&live,1))return pbhr_fail(r,2);
+       !pgcd_equal(r->before_target.raw,a->raw,PBHA_BYTES)||!pbhr_native(&live,0)||!pbhr_arch(&live,0,0)||!pbhr_native(&live,1))return pbhr_fail(r,2);
     if(!pbhr_source(&live,0)||!pgci_verify((const void*)(uintptr_t)live.core,live.core,PGCI_IMAGE_BYTES,r->hashes[0],&r->hash_failed[0],&r->hash_count[0]))return pbhr_fail(r,3);
     unsigned small_index;if(!pbhr_small_path(r,&small_index))return pbhr_fail(r,8);
     r->fp_save_issued=1;pbhr_seal(r,&r->fp,sizeof(r->fp),before);ok=in.io.fp_save(in.io.opaque,&r->fp);
@@ -231,18 +232,24 @@ static __attribute__((noinline)) int pbhr_call_guarded(struct pbhr_result*r,cons
     if(!pgcd_equal(before,after,32)||!pbhr_stable(&live))return pbhr_fail(r,4);
     if(!pbhr_native(&live,3))return pbhr_fail(r,4);
     if(!pgci_verify((const void*)(uintptr_t)live.core,live.core,PGCI_IMAGE_BYTES,r->hashes[1],&r->hash_failed[1],&r->hash_count[1])||!pbhr_stable(&live))return pbhr_fail(r,4);
+    /* The real nested guard returns its latest CNTVCT-domain sample through
+     * this local scalar. It changes no raw ABI and grants no new interval.
+     * A guarded callback must produce it; zero is never a fallback. */
+    uint64_t closing_ticks=0;
     r->issued=1;pbhr_seal(r,&r->api,sizeof(r->api),before);
-    ok=guarded_release?guarded_release(&live,r,input,before):in.release(in.io.opaque,in.system,live.entry,a->input.handles,&r->api);
+    ok=guarded_release?guarded_release(&live,r,input,before,&closing_ticks):in.release(in.io.opaque,in.system,live.entry,a->input.handles,&r->api);
     if(!ok)return pbhr_fail(r,5);pbhr_seal(r,&r->api,sizeof(r->api),after);
     /* Do not run the pre-call target/root comparison after this point. */
     live.after=1;
     r->returned=1;
-    if(!pgcd_equal(before,after,32)||!pbhr_stable(&live)||r->api.issued!=1||r->api.returned!=1)return pbhr_fail(r,5);
+    if(!pgcd_equal(before,after,32)||!pbhr_stable(&live)||r->api.issued!=1||r->api.returned!=1||
+       (guarded_release&&(!closing_ticks||closing_ticks<r->arch[0].cpu.ticks||closing_ticks<in.opening||
+        closing_ticks-in.opening>PGCD_FRESH_TICKS)))return pbhr_fail(r,5);
     if(r->api.status||!pbhr_native(&live,4))return pbhr_fail(r,5);
     r->image[1]=*in.image;pgcd_copy(r->BS[1],(const void*)(uintptr_t)live.boot,PWMC_BS_BYTES);
     if(!pbhr_source(&live,1)||!pbhr_small_return(r)||!pgci_verify((const void*)(uintptr_t)live.core,live.core,PGCI_IMAGE_BYTES,r->hashes[2],&r->hash_failed[2],&r->hash_count[2]))return pbhr_fail(r,6);
     live.post_bound=1;
-    if(!pbhr_arch(&live,1)||!pbhr_native(&live,5))return pbhr_fail(r,6);
+    if(!pbhr_arch(&live,1,closing_ticks)||!pbhr_native(&live,5))return pbhr_fail(r,6);
     if(!pgci_verify((const void*)(uintptr_t)live.core,live.core,PGCI_IMAGE_BYTES,r->hashes[3],&r->hash_failed[3],&r->hash_count[3])||!pbhr_stable(&live))return pbhr_fail(r,6);
     r->fp_restore_issued=1;pbhr_seal(r,&r->fp,sizeof(r->fp),before);ok=in.io.fp_restore(in.io.opaque,&r->fp);
     if(!ok)return pbhr_fail(r,7);pbhr_seal(r,&r->fp,sizeof(r->fp),after);pbhr_fp_intent(&r->fp,hash);

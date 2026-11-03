@@ -556,8 +556,13 @@ static void pbhd_parent_raw(void)
     ram_text("CACHE_HANDLE_TIMER_RAW_V1_BEGIN\r\n");ram_hex((const uint8_t*)&pbhd_timer_handles,sizeof(pbhd_timer_handles));
     ram_text("CACHE_HANDLE_TIMER_RAW_V1_END\r\n");
 }
-static int pbhd_parent_leaf(struct pbhr_live*live,struct pbhr_result*witness,const struct pbhr_input*input,const uint8_t seal[32])
-{return witness==&pbhr_handles&&pbhd_call(&pbhd_handles,&pbhd_timer_handles,&pbhi_handles,live,witness,input,seal);}
+static int pbhd_parent_leaf(struct pbhr_live*live,struct pbhr_result*witness,const struct pbhr_input*input,const uint8_t seal[32],uint64_t*closing_ticks)
+{
+    if(!closing_ticks||witness!=&pbhr_handles||!pbhd_call(&pbhd_handles,&pbhd_timer_handles,&pbhi_handles,live,witness,input,seal))return 0;
+    if(!pbhi_handles.arch_returned||pbhi_handles.arch_returned>PBHI_CLOCK_MAX||
+       pbhi_handles.arch_returned!=pbhi_handles.arch_issued||!pbhi_handles.closed||!pbhi_handles.complete||pbhi_handles.unknown)return 0;
+    *closing_ticks=pbhi_handles.clock[pbhi_handles.arch_returned-1].raw.cpu.ticks;return 1;
+}
 __attribute__((noreturn)) static void pbhr_parent_stop(void)
 {original_service_unknown=1;pbhr_handles.unknown=1;pbhd_parent_raw();pbhr_parent_raw();pbha_parent_raw();pbgi_parent_raw();ppli_parent_stop();}
 static uint64_t pbhr_parent_release(struct efi_boot*bs,struct pwfc_result*r,struct pwfc_workspace*w,void*handles)

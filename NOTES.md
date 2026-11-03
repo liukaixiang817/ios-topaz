@@ -108,6 +108,76 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
+- NEW0189 CURRENT same-virtual-counter temporal handoff FIX, source/SOFTWARE
+  only. While composing existing input reads, found a real gap: outer closing
+  arch compared only with its older pre-call sample, not the newer nested
+  provider close. Baseline original6e5f58d C accepted constructed virtual
+  before20700 → nested close23000 → final22999 and issued FP restoration.
+  This is SOFTWARE arithmetic/control flow, not a phone counter observation,
+  CNTVOFF inference, physical time or hardware lease. Baseline source/RAW/log
+  is retained privately; earlier proofs remain exactly at their own sources.
+- Existing own guarded-release callback now returns its genuine latest
+  provider virtual-clock sample through a local uint64 output. Actual parent
+  derives it from the completed/closed, count-bounded provider record. The
+  existing outer arch leaf uses that same-domain value as an additional lower
+  bound before FP restoration. Guarded missing/zero/backward/out-of-original-
+  window output refuses; there is no zero/stale fallback for that callback.
+  Standard unguarded FreePool path retains its original lower bound.
+  No new wrapper/service/permission/owner/ticket or input reader was created.
+- No new clock/MRS/AT/nativeflag/BS/GetMap/provider/FreePool call or hardware
+  store; no first opening renewed/rebased, no latest+200ms deadline, no mixing
+  CNTPCT/CVAL with CNTVCT. Original opening200ms still bounds observed virtual
+  samples. This closes ONLY cross-stage monotonicity, not wholecall walltime,
+  preemption/fault/latency, future IRQ/owner/ABA or fresh postrelease typed map.
+  Old360B live.old_ticks remains its historical target sample. Record C ABI
+  596496/1488/312/20344/347280 and offsets are unchanged; own internal C callback
+  gains a scalar output, original firmware FreePool ABI is unchanged. Never
+  reinterpret old RAW as evidence of this new source guard.
+- FINAL2364 ASAN/UBSAN SOFTWARE cases PASS1718.9069488330279s: all2352 preserved
+  plus12 real temporal composition cases. Latest-1/older-before samples now
+  hold UNKNOWN before FP restore, with actual APIstatus0/issued1/returned1,
+  actual final raw retained, error6/native31/31 and no later native/hash/FP
+  cleanup. Equal/latest+1/original-deadline samples pass; expiry, missing/zero,
+  backward/out-of-window/UINT64_MAX/wrong physical-epoch scalar outputs refuse.
+  These deliberately constructed epoch values say nothing about phone offset.
+  Target+GCD neighbor and post provider/handler PROT_NONE boundaries and old ABA
+  limit case all retain their prior checks; no production guard was reduced.
+- Affected standalone default release771 PASS218.90741966699716s with CURRENT
+  absolute shim FIRST/-H, excluding private oldcommon. Common/provider/dispatch/
+  release-fixture/allocator source and dependency bodies are unchanged; old
+ 8487 and474/1564/1452/2341/167/5141/models/CI are reused without rerun.
+  Actual wholeparent plus affected release/dispatch export COFF+MachO/generalregs/
+  maxframe1024 PASS. OFF640972B same-invocation equal, new release header absent
+  from OFF includes. Export MSR remains exactPARrestore/noSMC; wholeparent old
+  FP/terminal mask is not zero-write. No new exactprofile/resource/builder/CLI.
+- Independent struct/hashlib fully decodes normal618640B and refused618640B,
+  original baseline616840B, full provider/timer/queue/source/FP/control/seals and
+  two576936B archived/fresh bundles. Refused auxiliary records are byte-equal
+  to normal; a NEW derived buffer accounts for every failed-record byte:
+  final22999<retained latest23000, APIstatus0/1/1, error6/unknown1/complete0,
+  FP restore0/0, no later hashes/digest. Original normal/refused/baseline RAW
+  untouched and captured pointers numeric only, never executed.
+- Current releaseheader f8393fcf553c68da5dca760cea4474778caa972a4b4976f2c2800ab1381e6070;
+  actualparent8ec583db4b49e0369a5bf9e4124fe2cdcd31fd81399402da980a64296aa403db;
+  dispatchtest9b0ee5ddb44876e88b9e9c200022829edd924d4504ebde81609db51debe1ca63.
+  Common/provider/dispatch remain exactly the prior6e5f58d versions below.
+  Private cache-handle-temporal-handoff-0001/proof.json
+  SHA7a1e6feb0cf155865a4d02a37c151ce25d583791d5ca75258ad2dbc9b90165a9;
+  source/software5724781acacc3a41dd61153d90e81e52684e9c77de7d2e9b2aff7abd656ee283.
+- NEXT is still actual currenttimer/deferred/event transitive callback/source/
+  work and wholecall temporal, then fresh postrelease typedgraph/policy/source
+  for six NEW private contexts; reuse existing readers. Do not redo this
+  temporal fix/probe or2364/771/old reviews with unchanged source. Still need
+  real two MSA/RMTFS claims/cache/secureVMID/MPU/remoteDMAstop/handback/full normal
+  andUNKNOWN retire, full changedparent/affected checks/two SERIAL wholeconstructor
+  models/new exactprofile/resource/codec/currenttransition/freeze/ONEhelper.
+  Main defaultOFF REMOTE_MEMORY, NOTREADY: no PA publish/MSS/NVserve/radio/phone
+  run. No physicalUSB/native/MMIO/SMC/PE execution/model/CI/codec/image/payload/
+  helper/freeze this milestone. All jobs ENDED; no human or authorization issue.
+  Physical0188 fullretire/10:05lastactualFB and consumed-controller ban unchanged;
+  WiFi firmware/driver/scan/join/data never physically succeeded/no credible
+  date, sound/camera STOP. Source/text standing consentce8ce4fd remains current.
+
 - NEW0189 latest PUBLIC functional source is now
   6e5f58dc2128cf847aeaf1f1798b5cb180fca289. SAME directpush ENDED0 under the
   actual current/future source/text consentce8ce4fd; independent readonly

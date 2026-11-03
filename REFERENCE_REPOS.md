@@ -1790,3 +1790,32 @@ source/text paths only, all sensitive/private/firmware bytes excluded. Private
 source receipt SHA434af65f09f21a3c9be6e1ad48a6c944b60356dd760bd9e857f206a6ea00dc87. This
 subsequent handoff edits only NOTES/REFERENCE_REPOS; no code/test/RAW/proof edit
 or repeated checks. The provider INPUT scope above stays SOFTWARE/NOTREADY.
+
+## Polaris0189 virtual-clock handoff between existing nested and outer release
+
+The source-only provider composition exposed a real software temporal gap:
+old C accepted before20700 → nested virtual close23000 → outer final22999 and
+restored FP. The existing guarded-release callback now produces its actual
+latest virtual sample into a local scalar; the outer existing arch guard
+requires a same-domain nondecreasing close before FP restore. Zero/missing or
+out-of-original-window guarded output refuses. No new clock/service/reader/
+wrapper/owner grant, no rebased200ms, no physical-counter epoch conversion.
+Record schemas remain unchanged; the original firmware FreePool ABI is intact.
+
+FINAL2364 ASAN/UBSAN SOFTWARE cases PASS1718.9069488330279s=all2352+12 temporal
+cases. Affected standalone release771 PASS218.90741966699716s, current shim
+FIRST/-H. Wholeparent/affected export COFF+MachO/generalregs/maxframe1024 PASS;
+OFF640972B equal, export MSR only PAR restore/noSMC. Unaffected allocator8487,
+other checks/models/CI were not repeated. Independent numeric struct/hashlib
+verifies normal/refused full618640B and baseline616840B plus full archives and
+all source/FP/control seals. The refused raw retains actual APIstatus0/1/1,
+unknown/error6 and no FP restore/later sampling; every byte is accounted for
+using a new derived buffer, never editing original RAW or executing pointers.
+
+Private0189/wifi/cache-handle-temporal-handoff-0001/proof.json
+SHA7a1e6feb0cf155865a4d02a37c151ce25d583791d5ca75258ad2dbc9b90165a9;
+source/software5724781acacc3a41dd61153d90e81e52684e9c77de7d2e9b2aff7abd656ee283.
+This fixes only temporal composition. Full callback/work/wholecall temporal,
+fresh postrelease typed graph/source across six new contexts and real remote
+secure/DMA lifecycle/full candidate qualification are still NOTREADY. No
+physical WiFi, scan/join/data, new boot/helper or credible completion date.

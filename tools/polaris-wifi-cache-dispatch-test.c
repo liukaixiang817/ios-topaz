@@ -12,6 +12,7 @@ static int provider_page_peer(struct ppli_at*);
 static struct pbhd_result*dispatch_record;
 static struct pbhd_timer_result*timer_record;
 static struct pbhi_result*provider_record;
+static unsigned temporal_case;
 static struct pbhr_live*dispatch_live;
 static uint8_t*provider_original[3],*provider_image[3];
 static unsigned provider_fault,provider_stage,provider_at,provider_clocks,provider_hit,provider_byte,provider_mode,provider_variant,provider_protect,provider_protected;
@@ -52,6 +53,15 @@ static void provider_mutate(void)
 static int provider_arch_peer(void*o,struct pgcd_arch*a)
 {
     int ok=release_arch(o,a);
+    if(temporal_case&&provider_record&&provider_record->closed&&a==&release_record->arch[1]){
+        uint64_t floor=provider_record->clock[provider_record->arch_returned-1].raw.cpu.ticks;
+        if(temporal_case==1)a->cpu.ticks=floor-1;
+        if(temporal_case==2)a->cpu.ticks=release_record->arch[0].cpu.ticks;
+        if(temporal_case==3)a->cpu.ticks=floor;
+        if(temporal_case==4)a->cpu.ticks=floor+1;
+        if(temporal_case==5)a->cpu.ticks=1000+PGCD_FRESH_TICKS;
+        if(temporal_case==6)a->cpu.ticks=1000+PGCD_FRESH_TICKS+1;
+    }
     if(provider_record&&provider_record->attempted){
         provider_clocks++;
         if(provider_mode==1&&provider_clocks==provider_stage){
@@ -138,7 +148,7 @@ static int dispatch_service(void*o,struct efi_system*system,uint64_t entry,uint6
     }
     return ok;
 }
-static int dispatch_guard(struct pbhr_live*l,struct pbhr_result*w,const struct pbhr_input*i,const uint8_t seal[32])
+static int dispatch_guard(struct pbhr_live*l,struct pbhr_result*w,const struct pbhr_input*i,const uint8_t seal[32],uint64_t*closing_ticks)
 {
     dispatch_live=l;
     if(dispatch_attack==17)l->r=(void*)8;
@@ -167,12 +177,20 @@ static int dispatch_guard(struct pbhr_live*l,struct pbhr_result*w,const struct p
         if(provider_variant==2){put(provider_image[1]+0x3120,(uintptr_t)arena+0x7a100,8);put(provider_image[1]+0x3150,1020,8);
             for(unsigned k=0;k<1020;k++)put(arena+0x7a100+8*k,(k==18||k==19||k==26||k==29)?(uintptr_t)provider_image[0]+0x10c8:0,8);}
     }
-    return pbhd_call(dispatch_record,t,p,l,w,i,seal);
+    if(!pbhd_call(dispatch_record,t,p,l,w,i,seal))return 0;
+    assert(p->closed&&p->complete&&!p->unknown&&p->arch_returned&&p->arch_returned<=PBHI_CLOCK_MAX);
+    if(temporal_case!=14)*closing_ticks=p->clock[p->arch_returned-1].raw.cpu.ticks;
+    if(temporal_case==10)*closing_ticks=0;
+    if(temporal_case==11)*closing_ticks=w->arch[0].cpu.ticks-1;
+    if(temporal_case==12)*closing_ticks=UINT64_MAX;
+    if(temporal_case==13)*closing_ticks=1000+PGCD_FRESH_TICKS+1;
+    if(temporal_case==15)*closing_ticks=timer_record->regs[1].ticks;
+    return 1;
 }
 static void dispatch_setup(void)
 {
     if(provider_protected){assert(!mprotect(arena+0x50000,0x30000,PROT_READ|PROT_WRITE));provider_protected=0;}
-    provider_record=0;release_geometry=0;release_setup();dispatch_record=(void*)(arena+0x480000);
+    provider_record=0;temporal_case=0;release_geometry=0;release_setup();dispatch_record=(void*)(arena+0x480000);
     provider_record=0;provider_fault=provider_stage=provider_at=provider_clocks=provider_hit=provider_byte=provider_mode=provider_variant=provider_protect=0;
     provider_install();provider_record=(void*)(arena+0x490000);
     timer_record=(void*)(arena+0x482000);timer_fault=timer_slot=timer_byte=timer_reads=0;
@@ -205,7 +223,7 @@ int main(int argc,char**argv)
     if(protected_page)assert(!mprotect(protected_page,protected_bytes,PROT_READ|PROT_WRITE));
     free(original);free(arena);free(payload_page);free(log_page);return 0;
 #endif
-#if !defined(PBHI_NEW_CASES_ONLY)
+#if !defined(PBHI_NEW_CASES_ONLY) && !defined(PBHR_TEMPORAL_ONLY)
     for(unsigned post=0;post<2;post++)for(unsigned level=5;level<=31;level++)for(unsigned fault=1;fault<=3;fault++){
         dispatch_setup();dispatch_attack=fault;dispatch_level=level;dispatch_post=post;
         if(!post)queue_fault();
@@ -274,6 +292,7 @@ int main(int argc,char**argv)
     }
 #endif
     fprintf(stderr,"PROGRESS old composition cases retained: %u\n",checks);
+#if !defined(PBHR_TEMPORAL_ONLY)
     /* New mandatory provider-input composition, keeping every old1725 case.
      * These are host RAM/AT/clock/service peers, never original FW execution. */
     for(unsigned variant=1;variant<=2;variant++){
@@ -313,6 +332,29 @@ int main(int argc,char**argv)
         dispatch_setup();provider_mode=3;provider_fault=fault;
         assert(!dispatch_run()&&provider_hit&&!release_calls&&!provider_at&&!timer_reads&&!release_record->fp_restore_issued);checks++;
     }
+#endif
+    const unsigned temporal_cases[]={1,2,3,4,5,6,10,11,12,13,14,15};
+    for(unsigned k=0;k<sizeof(temporal_cases)/sizeof(temporal_cases[0]);k++){
+        unsigned n=temporal_cases[k];dispatch_setup();temporal_case=n;int returned=dispatch_run();
+        int expected=n==3||n==4||n==5;
+        assert(returned==expected&&release_calls==1&&release_record->api.issued==1&&release_record->api.returned==1);
+        if(expected)assert(release_record->complete&&release_record->fp_restore_returned==1);
+        else assert(release_record->unknown&&!release_record->complete&&!release_record->fp_restore_issued&&timer_reads==2);
+        if(n==1||n==2){
+            uint64_t floor=provider_record->clock[provider_record->arch_returned-1].raw.cpu.ticks;
+            assert(release_record->arch[1].cpu.ticks<floor&&release_record->arch[1].cpu.ticks>=release_record->arch[0].cpu.ticks);
+            assert(release_record->arch_issued==2&&release_record->arch_returned==2&&release_record->error==6);
+        }
+        if(n==1){
+            char rejected[4096];assert(snprintf(rejected,sizeof(rejected),"%s.rejected",argv[5])>0);
+            FILE*bad=fopen(rejected,"wb");assert(bad&&fwrite(release_record,1,sizeof(*release_record),bad)==sizeof(*release_record)&&
+                fwrite(dispatch_record,1,sizeof(*dispatch_record),bad)==sizeof(*dispatch_record)&&
+                fwrite(timer_record,1,sizeof(*timer_record),bad)==sizeof(*timer_record)&&
+                fwrite(provider_record,1,sizeof(*provider_record),bad)==sizeof(*provider_record)&&!fclose(bad));
+        }
+        checks++;
+    }
+    printf("{\"temporal_handoff_cases\":12,\"same_virtual_domain\":true,\"no_new_clock_call\":true,\"wholecall_qualified\":false}\n");
     printf("{\"provider_input_bytes\":%zu,\"pre_source_bound_only\":true,\"post_provider_rewalk\":false,\"wholecall_qualified\":false}\n",sizeof(*provider_record));
     printf("{\"timer_input_bytes\":%zu,\"native_MRS_samples\":2,\"MRS_software_peer\":true,\"full_provider_and_wholecall_qualified\":false}\n",sizeof(*timer_record));
     printf("{\"passed\":true,\"checks\":%u,\"dispatch_bytes\":%zu,\"input_bytes\":%zu,\"live_bytes\":%zu,\"sample_bytes\":%zu,\"sample_offset\":%zu,\"API_offset\":%zu,\"digest_offset\":%zu,\"witness_bytes\":%zu,\"SOFTWARE_only\":true,\"original_FW_executed\":false,\"ABA_excluded\":false,\"wholecall_qualified\":false}\n",checks,sizeof(*dispatch_record),sizeof(dispatch_record->input),sizeof(dispatch_record->live_before),sizeof(dispatch_record->sample[0]),offsetof(struct pbhd_result,sample),offsetof(struct pbhd_result,api),offsetof(struct pbhd_result,digest),sizeof(*release_record));
