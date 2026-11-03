@@ -108,6 +108,93 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
+- NEW0189 CURRENT finite timer-work INPUT consistency in the real bootstrap
+  caller, SOURCE/SOFTWARE only. Completed local source; publication is not
+  claimed in this paragraph. Older37cc382/42d5a4d/current/check statements
+  below retain their own source scope. All old proofs/RAW/schema/SHA/timestamps
+  stay immutable; this does not retroactively qualify an older capture.
+- Reused the existing timer-work arithmetic with explicit retained DATA inputs:
+  actual pre-provider Timer state, actual pre-call Core timer counter and the
+  existing two physical six-MRS samples around the original registered
+  FreePool. Old allocator wrapper still passes its genuine source/context,
+  virtual-before/frequency, timer counter, first/current physical samples and
+  real raise minimum. Bootstrap supplies its actual first sample as minimum,
+  never a fabricated RaiseTPL result, opened context or finalized IRQ path.
+  Provider path.finalized remains0; no old flags are manufactured as authority.
+- Actual pre/post timer sampling now refuses zero/inconsistent period/step/
+  missed state, frequency mismatch, first-physical+3840000 overflow, physical
+  rollback/beyond-ceiling, CVAL catchup/next-CVAL overflow, period*missed and
+  Core-counter finite-advance overflow before the next nativeflag read.
+  End/steps/notify outputs are local numbers; complete original inputs remain
+  in the existing RAW and are independently derivable. No new record/schema,
+  field reinterpretation, service/wrapper/permission/owner bool or hardware
+  call. No new AT/arch/MRS/nativeflag/BS/GetMap/FreePool/provider operation or
+  register/MMIO write. Existing PAR restoration and all prior guards remain.
+- First physical+200ms is only a conservative finite-work ceiling. Original
+  virtual opening200ms is unchanged, never renewed/rebased/reopened; no
+  physical/virtual epoch subtraction or inferred CNTVOFF/global deadline.
+  Post math reads retained own DATA only, not released graph/provider pages.
+  This does NOT establish current post-provider period/state lifetime, total
+  service walltime/preemption/fault/latency, transitive callback effects or
+  future IRQ/owner/ABA authority. Full admission remains NOTREADY.
+- FINAL2880 ASAN/UBSAN SOFTWARE checks PASS3290.1226351660443s=all2863+17 actual
+  composition cases, covering period/step/missed/counter/catchup arithmetic,
+  physical horizon, exact boundary and independent small/large physical
+  epochs. No separate old arithmetic probe or135-case oracle was recreated.
+  All original graph/source/foreign/partial/replay/PROT_NONE/ABA and temporal
+  cases remain. Calls still SOFTWARE peers; PE is inert DATA, no original
+  firmware/native or whole pwfc/pwsp/client constructor execution. Host time
+  is never physical latency/lease. Rejections remain stickyUNKNOWN, no later
+  sampling/FP restore/free/retry/cleanup; actual API result remains separate.
+- Common DATA factoring changed allocator objects, not called byteequal:
+  affected8487 rerun PASS172.88610024994705s, all guards/cases retained, current
+  absolute shim FIRST/-H excludes private frozen common. Default release771
+  body is unchanged and was not rerun: full optimized SOFTWARE LLVM IR has
+  identical instructions and differs only five typed !srcloc source-offset
+  values; NEW derived comparison buffers exclude exactly those, originals
+  untouched. Initial forced-baseline include preceded fixture enabling and
+  blocked types; failed compiler trace retained, comparison0002 restores the
+  genuine include order,0003 proves the five source-location-only differences.
+  Other474/1564/1452/2341/167/5141/models/CI remain unrepeated.
+- Six actual parent/export/allocator COFF+MachO/generalregs/maxframe1024 builds
+  PASS. Export MSR only exactPARrestore/noSMC; whole parent old FP/terminalmask
+  not zero-write. OFF same-invocation MachO640972/COFF640999 pairs equal; new
+  headers excluded. Parent.c/provider/graph/release headers, old allocator and
+  release fixtures remain exact42d5a4d bytes; actual ON parent changes through
+  included guards. RAW schemas596496/1488/312/20344/86616/347280 and others
+  unchanged; normal source/AT/clock/native/MRS/API counts are not reduced.
+- Independent arbitrary-precision Python/struct/hashlib verifies four full
+  705256B normal/temporal-refused/period0/physical-ceiling-refused bundles,
+  max86616B, both576936B archived/fresh bundles and112928B six prefixes.
+  Normal SOFTWARE physical first1000000000/end1003840000/catchup200/notify10000/
+  Core advance2030000 are DATA arithmetic, not phone observations. Period0
+  refuses before API0/0. Post physical1003840001 retains APIstatus0/1/1 but
+  outer arch remains1/1, FP restore0/0 and all later outputs unobserved. Every
+  failed byte is reconstructed in NEW buffers; original RAW/pointers never
+  edited, relabelled current or executed. Original virtual1000..3841000 remains.
+- Private0189/wifi/cache-handle-timer-work-inputs-0001/proof.json
+  SHA76eb16680790359c4893e20ec87ea25f758e1d414f7a748cb131914ffbbc33e8;
+  source/software927ee2b8ff9ebee9e20daada907bd030825cadb88fb0dc1e0d2dabe55c8d696c.
+  All host/build jobs ENDED, no physicalUSB/native/MMIO/SMC/PE execution or new
+  model/CI/codec/image/payload/helper/freeze. Main REMOTE_MEMORY defaultOFF;
+  consumer/builder/CLI/new exact profile/resource remain disconnected.
+- NEXT: full transitive callback/source/effects/work and wholecall temporal,
+  plus fresh postrelease typed graph/policy/source into six NEW actual private
+  contexts. Do not recreate this finite-work arithmetic/guard, graph/provider/
+  register readers, wrappers, permission contracts or old SOURCE audits; no
+  unchanged checks/models/inventory boot/unchecked GetMap refresh. Never treat
+  finite work, empty snapshots, keys/tags/counters/fullbytes/complete as owner,
+  ABA exclusion or a future lease; no oldseed renamed current, returnedmap
+  self-precall proof, opening renewal or borrowed closed PGCD. Unsupported
+  release/backing geometry stays unsupported. Then actual independent MSA/
+  RMTFS claims/cache/secureVMID/MPU/remoteDMAstop/handback/full normal and UNKNOWN
+  retirement, full changed-parent/affected checks/two SERIAL wholeconstructor
+  models/new exact profile/resource/codec/current transition/freeze/ONEhelper.
+  NOTREADY: no publishPA/MSS/NVserve/radio/device run. Phone only last observed
+  actualPolarisFASTBOOT2026-11-02T10:05:37Z after0188 fullretire, not currentLIVE.
+  WiFi firmware/driver/scan/join/IP/DNS/data never succeeded physically; no
+  credible date. Sound/camera STOP. No human/authorization action pending.
+
 - NEW0189 latest PUBLIC functional source
   37cc382c8f41226d744070e9c4ccbc5d19f1119b is pushed by the SAME directpush under actual
   source/text consentce8ce4fd. Independent readonly lsremote matches37cc382.

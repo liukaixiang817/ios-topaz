@@ -801,23 +801,34 @@ static inline int pwmc_irq_capture(struct pwmc_result*r,unsigned op)
  * This ceiling is not an admission deadline: pwmc_live still enforces the
  * unchanged original virtual opening's200ms. Neither grants interrupt ownership
  * or bounds preemption, faults, memory latency or whole-call wall time. */
-static inline int pwmc_irq_math(const struct pwmc_result*r,unsigned op,unsigned slot,
+/* Shared finite-work arithmetic over already qualified DATA. Physical ticks
+ * and CVAL stay in their own domain; virtual_before is only overflow-checked.
+ * The first physical sample plus200ms overestimates work, never renews a lease. */
+static inline int pwmc_irq_work_math(const struct pwmc_irq_path*p,
+    const struct pwmc_irq_regs*first,const struct pwmc_irq_regs*a,uint64_t virtual_before,
+    uint64_t frequency,uint64_t counter,uint64_t minimum,
     uint64_t*end,uint64_t*steps,uint64_t*notify)
 {
-    if(slot>1)return 0;
-    const struct pwmc_irq_path*p=&r->irq[op];const struct pwmc_irq_regs*a=&p->regs[slot],*first=&p->regs[0];const uint8_t*t=p->image[0].state;
-    uint64_t period=pwfi_le(t+56,8),step=pwfi_le(t+64,8),missed=pwfi_le(t,8),frequency=r->source[op].before.cpu.frequency;
+    const uint8_t*t=p->image[0].state;
+    uint64_t period=pwfi_le(t+56,8),step=pwfi_le(t+64,8),missed=pwfi_le(t,8);
     if(a->issued!=63||a->returned!=63||a->el!=4||a->vbar!=p->image[2].base+0x4000||a->ctl>7||(a->ctl&3)!=1||
        a->frequency!=frequency||frequency!=19200000||!period||!step||!missed||period>UINT64_MAX/frequency||
-       period*frequency/10000000!=step||period>UINT64_MAX/missed||r->source[op].before.cpu.ticks>UINT64_MAX-PGCD_FRESH_TICKS||
+       period*frequency/10000000!=step||period>UINT64_MAX/missed||virtual_before>UINT64_MAX-PGCD_FRESH_TICKS||
        first->issued!=63||first->returned!=63||!first->ticks||first->ticks>UINT64_MAX-PGCD_FRESH_TICKS)return 0;
     *end=first->ticks+PGCD_FRESH_TICKS;
-    if(a->ticks<first->ticks||a->ticks>*end||(slot&&a->ticks<p->raise_ticks))return 0;
+    if(a->ticks<first->ticks||a->ticks>*end||a->ticks<minimum)return 0;
     uint64_t debt=*end>a->cval?*end-a->cval:0;*steps=debt/step+(debt%step!=0);if(!*steps)*steps=1;
     *notify=period*missed;
     if(*steps>(UINT64_MAX-a->cval)/step||*steps>UINT64_MAX-2||missed>UINT64_MAX-*steps-2)return 0;
     uint64_t count=missed+*steps+2;if(period>UINT64_MAX/count)return 0;
-    return r->timers[op].counter<=UINT64_MAX-period*count;
+    return counter<=UINT64_MAX-period*count;
+}
+static inline int pwmc_irq_math(const struct pwmc_result*r,unsigned op,unsigned slot,
+    uint64_t*end,uint64_t*steps,uint64_t*notify)
+{
+    if(slot>1)return 0;const struct pwmc_irq_path*p=&r->irq[op];
+    return pwmc_irq_work_math(p,&p->regs[0],&p->regs[slot],r->source[op].before.cpu.ticks,
+        r->source[op].before.cpu.frequency,r->timers[op].counter,slot?p->raise_ticks:0,end,steps,notify);
 }
 static inline int pwmc_irq_replay(const struct pwmc_result*r,unsigned op)
 {

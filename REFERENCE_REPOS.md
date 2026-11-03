@@ -1875,3 +1875,41 @@ ce8ce4fd; all sensitive/private/firmware bytes excluded. Private source receipt
 SHAc3af456827709f77dfed6313074d67b5b13a173eef219e9abf0c1159e5f26748. This publication handoff edits only
 NOTES/REFERENCE_REPOS, no code/test/RAW/proof/schema change or repeated checks;
 full physical WiFi/candidate admission remains NOTREADY.
+
+## Polaris0189 actual finite timer-work input consistency
+
+The original finite timer-work DATA arithmetic now receives the actual
+bootstrap's retained pre-provider state, pre-call timer counter and existing
+two physical-register samples around registered FreePool. The old allocator
+wrapper retains its real source/context/raise inputs. No fabricated opened or
+finalized IRQ path, new service/permission/owner boolean, record or hardware
+call. Invalid period/step/missed/counter/catchup arithmetic and a physical
+sample beyond first+3840000 refuse before the next native flag read. The
+original virtual200ms stays fixed, with no cross-epoch arithmetic or new lease.
+Post math uses retained DATA and does not establish post-provider lifetime,
+wholecall walltime, callbacks, futureIRQ/owner or ABA qualification.
+
+FINAL2880 ASAN/UBSAN SOFTWARE PASS3290.1226351660443s=all2863+17 real composition
+cases. Affected allocator8487 PASS172.88610024994705s. Default release771 body
+reused without rerun: optimized SOFTWARE LLVM instructions unchanged, exactly
+five typed !srcloc offsets differ; NEW derived comparison excludes only those,
+original IR intact. Initial forced-baseline include ordering failure retained;
+comparison0002 restores the genuine include order. Six parent/export/allocator
+COFF/MachO/generalregs/maxframe1024 builds PASS. Export onlyPARrestore/noSMC;
+OFF MachO640972/COFF640999 equal within each same-command pair. Other checks,
+models and CI were not repeated, all source guards/cases remain.
+Independent numeric struct/hashlib/arbitrary-precision decode checks four
+705256B bundles, max86616B, both archived/fresh bundles and old112928B prefixes.
+Period0 refuses before API; post physical-ceiling refusal preserves real mock
+APIstatus0/1/1 with no outer closing sample/FP restore. Every refused byte is
+reconstructed in new buffers; no original RAW, pointer or PE execution.
+
+Private0189/wifi/cache-handle-timer-work-inputs-0001/proof.json
+SHA76eb16680790359c4893e20ec87ea25f758e1d414f7a748cb131914ffbbc33e8;
+source/software927ee2b8ff9ebee9e20daada907bd030825cadb88fb0dc1e0d2dabe55c8d696c.
+This is SOURCE/SOFTWARE input consistency, not full transitive source/effects/
+work/wholecall temporal or postrelease typed graph/source admission. Six NEW
+contexts, real MSA/RMTFS secure/cache/DMA lifecycle and full new candidate
+qualification stay NOTREADY. No physicalUSB, new kernel/image/helper/freeze,
+WiFi firmware/scan/join/data success or credible completion date. All old
+private proof/RAW/schema/SHA/timestamps retain only their original scope.

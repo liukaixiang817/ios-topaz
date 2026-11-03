@@ -98,6 +98,14 @@ static inline int pbhd_timer_sample(struct pbhd_result*r,struct pbhd_timer_resul
        q->issued!=63||q->returned!=63||q->el!=4||q->frequency!=19200000||
        q->ctl>7||(q->ctl&3)!=1||!q->ticks||q->vbar!=p->path.image[2].base+0x4000||
        (slot&&(q->ticks<t->regs[0].ticks||q->vbar!=t->regs[0].vbar)))return 0;
+    /* Reuse the original finite timer-work bound with the genuine captured
+     * provider state, pre-call timer counter and these physical samples.
+     * No synthetic finalized allocator path or RaiseTPL observation is made.
+     * Post uses retained DATA only, without following released graph nodes. */
+    uint64_t physical_end,catchup,notify;
+    if(!pwmc_irq_work_math(&p->path,&t->regs[0],q,in->witness->arch[0].cpu.ticks,
+       in->witness->arch[0].cpu.frequency,g->timers.counter,t->regs[0].ticks,
+       &physical_end,&catchup,&notify))return 0;
     if(!slot&&!pbhi_pre_current(p,g))return 0;
     t->native_issued|=1u<<(first+1);t->native[first+1]=*in->native;t->native_returned|=1u<<(first+1);
     return !t->native[first+1];

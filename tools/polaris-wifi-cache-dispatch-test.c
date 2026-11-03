@@ -16,6 +16,7 @@ static struct pbht_result*graph_record;
 static unsigned graph_fault,graph_stage,graph_mode,graph_byte,graph_ATs,graph_clocks,graph_hit,graph_protect,graph_protected;
 static unsigned graph_maximum;
 static unsigned temporal_case;
+static unsigned work_case;
 static void graph_mutate(void);
 static struct pbhr_live*dispatch_live;
 static uint8_t*provider_original[3],*provider_image[3];
@@ -173,6 +174,13 @@ static int pbhd_test_timer_regs(struct pwmc_irq_regs*p,unsigned slot)
     if(graph_mode==3&&slot==graph_stage&&graph_fault)graph_mutate();
     timer_reads++;uint64_t values[]={4,(uintptr_t)provider_image[2]+0x4000,1,UINT64_C(1000001000)+100*slot,19200000,UINT64_C(1000000000)+100*slot};
     for(unsigned k=0;k<6;k++){p->issued|=1u<<k;if(slot==timer_slot&&timer_fault==k+1)return 0;((uint64_t*)p)[k]=values[k];p->returned|=1u<<k;}
+    if((work_case==20&&!slot)||(work_case==21&&slot))p->cval=UINT64_MAX;
+    if(work_case==22&&!slot)p->ticks=UINT64_MAX-PGCD_FRESH_TICKS+1;
+    if(work_case==23&&slot)p->ticks=timer_record->regs[0].ticks+PGCD_FRESH_TICKS+1;
+    if(work_case==24&&slot)p->ticks=timer_record->regs[0].ticks+PGCD_FRESH_TICKS;
+    if(work_case==25||work_case==26){
+        p->ticks=(work_case==25?UINT64_C(100):UINT64_C(0x8000000000000000))+100*slot;p->cval=p->ticks+1000;
+    }
     if(slot==timer_slot){
         if(timer_fault==10)p->el=8;
         if(timer_fault==11)p->frequency=0;
@@ -261,6 +269,19 @@ static int dispatch_guard(struct pbhr_live*l,struct pbhr_result*w,const struct p
             for(unsigned k=0;k<1020;k++)put(arena+0x7a100+8*k,(k==18||k==19||k==26||k==29)?(uintptr_t)provider_image[0]+0x10c8:0,8);}
     }
     struct pbht_result*g=graph_record;
+    uint8_t*state=provider_image[0]+0x2058;
+    switch(work_case){
+    case 1:put(state,0,8);break;
+    case 2:put(state+56,0,8);break;
+    case 3:put(state+64,0,8);break;
+    case 4:put(state+56,UINT64_MAX,8);break;
+    case 5:put(state+64,19201,8);break;
+    case 6:put(state,UINT64_MAX,8);break;
+    case 7:put(core+0x1dc00,UINT64_MAX,8);break;
+    case 8:put(state,UINT64_MAX/10000,8);break;
+    case 9:put(core+0x1dc00,UINT64_MAX-2030000+1,8);break;
+    case 10:put(core+0x1dc00,UINT64_MAX-2030000,8);break;
+    }
     if(graph_maximum)graph_max_install(graph_maximum);
     if(graph_mode==5){graph_hit=1;
         switch(graph_fault){
@@ -284,7 +305,7 @@ static void dispatch_setup(void)
 {
     if(graph_protected){assert(!mprotect(arena+0x40000,0x8000,PROT_READ|PROT_WRITE));graph_protected=0;}
     if(provider_protected){assert(!mprotect(arena+0x50000,0x30000,PROT_READ|PROT_WRITE));provider_protected=0;}
-    provider_record=0;graph_record=0;temporal_case=0;release_geometry=0;release_setup();dispatch_record=(void*)(arena+0x480000);
+    provider_record=0;graph_record=0;temporal_case=work_case=0;release_geometry=0;release_setup();dispatch_record=(void*)(arena+0x480000);
     provider_record=0;provider_fault=provider_stage=provider_at=provider_clocks=provider_hit=provider_byte=provider_mode=provider_variant=provider_protect=0;
     provider_install();graph_install();provider_record=(void*)(arena+0x490000);
     graph_record=(void*)(arena+0x4b0000);graph_fault=graph_stage=graph_mode=graph_byte=graph_ATs=graph_clocks=graph_hit=graph_protect=graph_maximum=0;
@@ -318,6 +339,7 @@ int main(int argc,char**argv)
     if(protected_page)assert(!mprotect(protected_page,protected_bytes,PROT_READ|PROT_WRITE));
     free(original);free(arena);free(payload_page);free(log_page);return 0;
 #endif
+#if !defined(PBHD_WORK_ONLY)
 #if !defined(PBHI_NEW_CASES_ONLY) && !defined(PBHR_TEMPORAL_ONLY) && !defined(PBHT_GRAPH_ONLY)
     for(unsigned post=0;post<2;post++)for(unsigned level=5;level<=31;level++)for(unsigned fault=1;fault<=3;fault++){
         dispatch_setup();dispatch_attack=fault;dispatch_level=level;dispatch_post=post;
@@ -499,10 +521,31 @@ int main(int argc,char**argv)
         }
         checks++;
     }
+#endif
+    const unsigned work_cases[]={1,2,3,4,5,6,7,8,9,10,20,21,22,23,24,25,26};
+    for(unsigned k=0;k<sizeof(work_cases)/sizeof(work_cases[0]);k++){
+        unsigned n=work_cases[k];dispatch_setup();work_case=n;int returned=dispatch_run();
+        int expected=n==10||n==24||n==25||n==26;
+        unsigned post=n==21||n==23;
+        assert(returned==expected&&release_calls==(expected||post?1u:0u));
+        if(expected)assert(release_record->complete&&release_record->fp_restore_returned==1);
+        else assert(dispatch_record->unknown&&!dispatch_record->complete&&!release_record->fp_restore_issued&&
+            timer_record->regs[post].issued==63&&timer_record->regs[post].returned==63);
+        if(n==2||n==23){
+            char file[4096];assert(snprintf(file,sizeof(file),"%s.work-%u",argv[5],n)>0);
+            FILE*bad=fopen(file,"wb");assert(bad&&fwrite(release_record,1,sizeof(*release_record),bad)==sizeof(*release_record)&&
+                fwrite(dispatch_record,1,sizeof(*dispatch_record),bad)==sizeof(*dispatch_record)&&
+                fwrite(timer_record,1,sizeof(*timer_record),bad)==sizeof(*timer_record)&&
+                fwrite(provider_record,1,sizeof(*provider_record),bad)==sizeof(*provider_record)&&
+                fwrite(graph_record,1,sizeof(*graph_record),bad)==sizeof(*graph_record)&&!fclose(bad));
+        }
+        checks++;
+    }
     printf("{\"graph_input_bytes\":%zu,\"node_ATs\":9,\"graph_virtual_samples\":11,\"graph_SOFTWARE_only\":true,\"post_graph_rewalk\":false}\n",sizeof(*graph_record));
-#if !defined(PBHT_GRAPH_ONLY)
+#if !defined(PBHT_GRAPH_ONLY) && !defined(PBHD_WORK_ONLY)
     printf("{\"temporal_handoff_cases\":12,\"same_virtual_domain\":true,\"no_new_clock_call\":true,\"wholecall_qualified\":false}\n");
 #endif
+    printf("{\"actual_timer_work_composition_cases\":17,\"new_hardware_calls\":0,\"wholecall_qualified\":false}\n");
     printf("{\"provider_input_bytes\":%zu,\"pre_source_bound_only\":true,\"post_provider_rewalk\":false,\"wholecall_qualified\":false}\n",sizeof(*provider_record));
     printf("{\"timer_input_bytes\":%zu,\"native_MRS_samples\":2,\"MRS_software_peer\":true,\"full_provider_and_wholecall_qualified\":false}\n",sizeof(*timer_record));
     printf("{\"passed\":true,\"checks\":%u,\"dispatch_bytes\":%zu,\"input_bytes\":%zu,\"live_bytes\":%zu,\"sample_bytes\":%zu,\"sample_offset\":%zu,\"API_offset\":%zu,\"digest_offset\":%zu,\"witness_bytes\":%zu,\"SOFTWARE_only\":true,\"original_FW_executed\":false,\"ABA_excluded\":false,\"wholecall_qualified\":false}\n",checks,sizeof(*dispatch_record),sizeof(dispatch_record->input),sizeof(dispatch_record->live_before),sizeof(dispatch_record->sample[0]),offsetof(struct pbhd_result,sample),offsetof(struct pbhd_result,api),offsetof(struct pbhd_result,digest),sizeof(*release_record));
