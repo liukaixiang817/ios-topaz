@@ -19,10 +19,23 @@ static struct pman_delivery*aop_records;
 static uint8_t*aop_memory,*aop_original;
 static unsigned aop_fault,aop_trigger,aop_reads,aop_writes,aop_orders,aop_doorbells,aop_pending,aop_remote_reads,aop_scenarios;
 static int aop_selected(void){return aop_owner&&aop_owner->pending&&aop_owner->pending==aop_trigger;}
-static void aop_arch_hook(struct pmni_arch*a){if(aop_selected()&&aop_fault==3)a->ttbr0^=4096;}
-static void aop_at_hook(struct pmni_translation*t){if(aop_selected()&&aop_fault==2)t->restored++;}
+static void aop_arch_hook(struct pmni_arch*a){
+#ifdef PMAN_TEST_ARCH_HOOK
+    PMAN_TEST_ARCH_HOOK(a);
+#endif
+    if(aop_selected()&&aop_fault==3)a->ttbr0^=4096;
+}
+static void aop_at_hook(struct pmni_translation*t){
+#ifdef PMAN_TEST_AT_HOOK
+    PMAN_TEST_AT_HOOK(t);
+#endif
+    if(aop_selected()&&aop_fault==2)t->restored++;
+}
 static int aop_raw_hook(const struct pmni_command*c,unsigned*v)
 {
+#ifdef PMAN_TEST_RAW_HOOK
+    int handled=PMAN_TEST_RAW_HOOK(c,v);if(handled>=0)return handled;
+#endif
     if(!aop_owner||!aop_owner->pending)return -1;
     CHECK(!clock_owner->pending&&!power->pending);
     if(c->kind==PMNI_READ)aop_reads++;else if(c->kind==PMNI_WRITE)aop_writes++;else aop_orders++;
@@ -81,7 +94,7 @@ static int aop_cycle(void)
     CHECK(pman_finish(aop_owner)&&aop_doorbells==2&&!aop_pending&&!memcmp(aop_memory,aop_original,0x100000));
     CHECK(owner->held&&(owner->effects&PMSC_REMOTE)&&(owner->effects&PMSC_POWER)&&!pmsc_close_unused(owner));return 1;
 }
-int main(int argc,char**argv)
+static void aop_test_open(int argc,char**argv)
 {
     CHECK(argc==5);CHECK(!posix_memalign((void**)&arena,0x4000,PMMN_TEST_ARENA_BYTES));
     original=malloc(PGCI_IMAGE_BYTES);rp_original=malloc(PWRPI_IMAGE_BYTES);cd_original=malloc(PWCDI_IMAGE_BYTES);
@@ -94,6 +107,18 @@ int main(int argc,char**argv)
     shadow=shadow_mapping+host_page;CHECK(!mprotect(shadow,0x104000,PROT_READ|PROT_WRITE));
     heap_mapping=mmap(0,0x100000+2*host_page,PROT_NONE,MAP_PRIVATE|MAP_ANON,-1,0);CHECK(heap_mapping!=MAP_FAILED);
     image_heap=heap_mapping+host_page;CHECK(!mprotect(image_heap,0x100000,PROT_READ|PROT_WRITE));db_map_attr=8;
+}
+static void aop_test_close(void)
+{
+    CHECK(!munmap(heap_mapping,0x100000+2*host_page)&&!munmap(shadow_mapping,0x104000+2*host_page));
+    free(original);free(rp_original);free(cd_original);free(database);free(db_original);free(aop_memory);free(aop_original);free(arena);
+}
+#ifndef PMAN_TEST_ENTRY
+#define PMAN_TEST_ENTRY main
+#endif
+int PMAN_TEST_ENTRY(int argc,char**argv)
+{
+    aop_test_open(argc,argv);
     aop_setup();CHECK(aop_cycle());unsigned total=aop_owner->deliveries,on=aop_owner->completed[0];
     unsigned locations[8]={1,0,0,0,0,0,on,total};
     for(unsigned n=0;n<on;n++){
@@ -118,7 +143,6 @@ int main(int argc,char**argv)
         aop_setup();put(aop_memory+(malformed==0?0:malformed==1?0x1000:0x2000),4,4);
         CHECK(!aop_drive()&&aop_owner->unknown&&!aop_writes&&!aop_doorbells&&!owner->effects);
     }
-    CHECK(!munmap(heap_mapping,0x100000+2*host_page)&&!munmap(shadow_mapping,0x104000+2*host_page));
-    free(original);free(rp_original);free(cd_original);free(database);free(db_original);free(aop_memory);free(aop_original);free(arena);
+    aop_test_close();
     printf("PASS %u owned native AOP checks, %u scenarios, %u software stop checks; no hardware/provider/USB\n",checks,aop_scenarios,retirement_checks);return 0;
 }

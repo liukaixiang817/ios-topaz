@@ -9,7 +9,10 @@ void text(const char *s){(void)s;}void report(const char *s,uint64_t v){(void)s;
 #include "uefi-gcd-mmio-readonly.h"
 static uint8_t *arena,*original,*core;static struct pgcd_result *r;static struct pgcd_context *c;static struct pgcd_lifetime *ticket;static struct efi_system *s;static struct efi_loaded *self;static struct pgcd_config *cfg;static unsigned fault,queries,maps,arches,orders,saves,restores;
 static void put(void *p,uint64_t v,unsigned n){for(unsigned k=0;k<n;k++)((uint8_t*)p)[k]=(uint8_t)(v>>(8*k));}
-static int arch(void *p,struct pgcd_arch *a){(void)p;arches++;*a=(struct pgcd_arch){.cpu={.el=4,.mpidr=0x81000000,.ttbr0=0x180000001,.tcr=0x80803520,.sctlr=0x30d00801,.mair=0xffbb4400,.sre=1,.group1=1,.frequency=19200000,.ticks=1000+100*arches},.cpacr=0x300000};if(fault==1)a->cpu.el=8;if(fault==2)a->cpacr=0;if(fault==16&&queries)a->cpacr=0;if(fault==17&&queries)a->cpu.daif=0x80;if(fault==18&&queries)a->cpu.ticks=5000000;if(fault==23&&r->prestart_count)a->cpacr=0;return !(fault==24&&r->prestart_count);}
+#ifndef PGCD_TEST_ARCH_TICK_STEP
+#define PGCD_TEST_ARCH_TICK_STEP 100u
+#endif
+static int arch(void *p,struct pgcd_arch *a){(void)p;arches++;*a=(struct pgcd_arch){.cpu={.el=4,.mpidr=0x81000000,.ttbr0=0x180000001,.tcr=0x80803520,.sctlr=0x30d00801,.mair=0xffbb4400,.sre=1,.group1=1,.frequency=19200000,.ticks=1000+PGCD_TEST_ARCH_TICK_STEP*arches},.cpacr=0x300000};if(fault==1)a->cpu.el=8;if(fault==2)a->cpacr=0;if(fault==16&&queries)a->cpacr=0;if(fault==17&&queries)a->cpu.daif=0x80;if(fault==18&&queries)a->cpu.ticks=5000000;if(fault==23&&r->prestart_count)a->cpacr=0;return !(fault==24&&r->prestart_count);}
 static int identity(void *p,uint64_t at,uint64_t z,uint64_t *where,uint64_t *par){(void)p;(void)z;*where=at;*par=at&~UINT64_C(4095);return fault!=3;}
 static int map(void *p,struct efi_system *sys,struct pgcd_map *m,void *out){(void)p;assert(sys==s);maps++;assert(m->issued&&r->outstanding&&r->map_guard[maps-1].unknown);struct efi_memory d={fault==4?7:3,0,(uintptr_t)arena,0,0x100000/4096,8};memcpy(out,&d,sizeof(d));m->status=fault==5?0x8000000000000005ULL:0;m->bytes=fault==6?8193:sizeof(d);m->key=fault==20&&maps==2?2:1;m->stride=sizeof(d);m->version=1;return fault!=7;}
 static int fp_save(void *p,struct pgcd_fp_guard *g){(void)p;saves++;g->cpacr_before=0x300000;g->saved=fault==8?0:1;return g->saved;}

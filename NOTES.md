@@ -44,6 +44,32 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): owned native MBA startup
+
+- Native AOP is commit6fa2d96. New default-OFF/unregistered pmbn consumes
+  actual AOP ON, persistent supply/proxy/clock and independently staged/assigned
+  MBA producers. It executes typed DEBUG/reset/MBA address/SLEEP/FSM/PBL/MBA
+  accesses with fresh GCD/Device-AT/CPU observations retained per delivery.
+  Writes mark REMOTE; errors poison the shared power context without cleanup.
+- MBA-ready consumer seals both lifecycle and full delivery records. Startup
+  never reads the assigned MBA region; its host shadow remains PROT_NONE.
+  Actual composed software producers pass34 native deliveries with delayed
+  polls and both legal ready1/2. Negative/unexpected statuses, altered source/
+  held-clock state, log tampering and raw/AT/CPU/time/GCD/command faults refuse.
+- Initial inherited SOFTWARE counter100 ticks/read exhausted the own200us
+  SLEEP limit on the second poll (5200ticks); the correct refusal was retained.
+  New test counter1 tick/read models fast responses; a separate2000ticks/raw
+  delivery case MUST refuse at SLEEP with PMBA_TIME. Production timeouts are
+  unchanged; neither fixture is a physical throughput/latency measurement.
+- ASan/UBSan PASS21 scenarios/2598157 checks. Full native COFF/MachO exports
+  PASS generalregs/frame1024. Evidence:mss-boot-native-0001/proof-0001.json.
+  No real MBA execution, modem authentication, scan, device/USB query, CI/push
+  or boot. Resources/CPU/MBA allocation remain held at this component boundary.
+- NEXT native metadata/modem authentication plus continuous typed secure
+  assignment and actual modem copy, then whole-parent integration/retirement.
+  Execution2/5: finish this step and3 following steps. Latest15min20:52Z/
+ 07:52 Melbourne; next21:07Z/08:07. Goal ACTIVE; continue without a stop.
+
 ### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): native AOP on/off composition
 
 - PRNG/six-clock native owner is commit6502560. New default-OFF/unregistered
