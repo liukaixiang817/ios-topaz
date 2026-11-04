@@ -34,6 +34,42 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-04: self-auth MBA startup sequence
+
+- Clock/native IO milestone is commit275c135. New pmba protocol consumes the
+  actual typed six-clock HELD and completed HLOS3->MSS15 RW assignment records
+  for an independent4KiB-aligned1MiB MBA allocation below4GiB. It never reads
+  MBA target RAM after assignment and never treats a reserved DT span as free.
+  Native allocation/staging/image provenance and the combined owner are still
+  missing; these sequencing records alone cannot grant physical access.
+- Own qdsp6v65-1-0 path: save DEBUG4080018, source reset pulse, restore DEBUG,
+  RMB MBA address, zero absent-debug-policy fields, ordered SLEEP bit0/CLK_OFF,
+  BOOT_CORE_START4080400=1, full barrier, BOOT_CMD4080404=1, MSS_STATUS4180040
+  bit0, PBL status1, MBA status1 or2. Explicit vendor offsets outside the small
+  DT spans must be admitted by the new parent. No v55 ACC/PLL/PAS15 fallback.
+- Own minidump-id is present, so PBL and MBA each use3s, not the vendor default
+ 1s. Finite SLEEP200 polls/>=1us and200us; FSM1001 polls/>=10us and10ms;
+  PBL/MBA201 polls/>=15ms and3s each. Whole protocol7s is NOT an extension of
+  any old200ms firmware/CPU context. Native leaf's10ms operation check remains
+  unchanged; a real long-lived parent must establish its actual execution and
+  resource ownership, not rebase an expired ticket to bypass this distinction.
+- Default-OFF native adapter binds each exact pending MBA/reset command and
+  actual MMIO whitelist/AT/CPU leaves.63161 software checks PASS (46502 boot
+  sequencing +16659 native adapter), including every30 command's failed return
+  or altered request, all poll timeouts and wrong clock/permission inputs.
+  Existing389737 clock/stop/native checks rerun against expanded whitelist PASS.
+  Both actual MBA COFF/MachO exports pass generalregs/frame1024. Test fixture
+  nested-main macro naming was corrected before the final passing runs.
+  No privileged instruction, firmware image or phone operation was executed.
+  Evidence: research/polaris/uefi-ios-0189/wifi/mss-mba-boot-0001/proof-0001.json.
+- NEXT continue own metadata/segment authentication and actual parent lifetime.
+  Own peripheral-loader.c orders MBA+metadata auth before sharing modem region
+  HLOS+MSS RW, loading/verifying each segment, reclaiming it to MSS-only, then
+  final auth status4. Metadata and MBA have distinct completion/return points.
+  Existing MP_ASSIGN encoder's2MiB cap must not silently become a120MiB grant.
+  No operational image/helper/CI/USB or whole-gate completion; five gates and
+  real Wi-Fi scan/join/IP/DNS/data remain unfinished. Continuous goal ACTIVE.
+
 ### Continuous Wi-Fi milestone — 2026-11-04: MSS active clocks and native IO leaves
 
 - Reset sequence is commit0253f1a. New persistent six-clock engine follows

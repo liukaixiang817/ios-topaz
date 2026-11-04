@@ -14,6 +14,16 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+## Own self-auth MBA boot (0189, 2026-11-04)
+
+Own pil-msa.c/pil-q6v5.c and live DT select qdsp6v65-1-0, DEBUG preservation,
+reset pulse, RMB image publication and SLEEP/BOOT FSM/PBL/MBA status ordering.
+The present minidump-id makes PBL/MBA timeouts3s each. New finite protocol and
+default-OFF native adapter pass63161 software checks and both native exports;
+existing389737 checks also pass. Dipper's generic staged remoteproc approach
+was consulted, but no reserved allocation, inherited power, PAS ID or guessed
+permission is adopted. MBA-ready is not authenticated modem or WLAN-ready.
+
 ## Own MSS active-clock lifetime and native leaves (0189, 2026-11-04)
 
 Pinned own gcc-sdm845.c, clk-branch.c/h, clk-regmap.c and sdm845.dtsi establish

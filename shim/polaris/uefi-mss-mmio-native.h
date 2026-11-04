@@ -10,7 +10,7 @@
 #define EFI_XNU_MSS_NATIVE_IO_AVAILABLE 0
 #endif
 #if EFI_XNU_MSS_NATIVE_IO_AVAILABLE && !defined(POLARIS_EFI_TEST_QEMU)
-#include "../../tools/polaris-mss-clocks.h"
+#include "../../tools/polaris-mss-mba-boot.h"
 enum pmni_kind {PMNI_READ=1,PMNI_WRITE,PMNI_STORE_ORDER,PMNI_FULL_ORDER};
 struct pmni_command {uint64_t address;uint32_t kind,value;};
 struct pmni_arch {
@@ -93,6 +93,11 @@ static inline int pmni_allowed(const struct pmni_command*c)
     }
     if(c->address==PMSR_PDC)return 1;
     if(c->address==PMSR_ALT||c->address==PMSR_RESTART)return c->kind==PMNI_WRITE&&c->value<=1;
+    if(c->address==UINT64_C(0x4080018)||c->address==UINT64_C(0x408003c))return 1;
+    if(c->address==UINT64_C(0x4080400)||c->address==UINT64_C(0x4080404))return c->kind==PMNI_WRITE&&c->value==1;
+    if(c->address==UINT64_C(0x4180000))return c->kind==PMNI_WRITE&&!(c->value&4095)&&c->value>=0x80000000&&c->value<=0xfff00000;
+    if(c->address==UINT64_C(0x4180014)||c->address==UINT64_C(0x4180018))return c->kind==PMNI_WRITE&&!c->value;
+    if(c->address==UINT64_C(0x4180040)||c->address==UINT64_C(0x4180004)||c->address==UINT64_C(0x418000c))return c->kind==PMNI_READ;
     for(unsigned port=0;port<3;port++){
         uint64_t base=pmh_base(port);
         if(c->address==base)return c->kind==PMNI_READ||c->value==1;
@@ -157,6 +162,20 @@ static inline int pmni_halt(const struct pmsd_shutdown*s,const struct pmsd_comma
            &s->stop.halt.event[s->stop.halt.events-1].command,sizeof(struct pmh_command)))return 0;
     const struct pmh_command*c=&command->command.stop.command.halt;
     struct pmni_command access={c->address,c->write?PMNI_WRITE:PMNI_READ,c->value};return pmni_access(opening,&access,r);
+}
+static inline int pmni_mba(const struct pmba_boot*b,const struct pmba_command*c,
+    const struct pmni_arch*opening,struct pmni_result*r)
+{
+    if(!b||!c||!r||!pmsr_disjoint(b,sizeof(*b),r,sizeof(*r))||b->unknown||b->error||b->pending!=1||
+       !pmsr_equal(c,&b->command,sizeof(*c))||c->phase!=b->phase)return 0;
+    struct pmni_command access={c->address,c->kind,c->value};
+    if(b->phase==2){
+        if(b->reset.unknown||b->reset.error||!b->reset.pending||b->reset.pending!=b->reset.events||
+           b->reset.events>PMSR_EVENTS||!pmsr_equal(&c->reset,&b->reset.event[b->reset.events-1].command,sizeof(c->reset)))return 0;
+        access=(struct pmni_command){c->reset.address,c->reset.kind,c->reset.value};
+    }else if((b->phase!=1&&b->phase!=3)||!b->events||b->events>PMBA_EVENTS||
+        !pmsr_equal(c,&b->event[b->events-1].command,sizeof(*c)))return 0;
+    return pmni_access(opening,&access,r);
 }
 #endif
 #endif
