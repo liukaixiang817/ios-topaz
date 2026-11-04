@@ -34,6 +34,38 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-04: native RMTFS sharing caller
+
+- Retained-memory milestone is commitde85bed. Added default-OFF native
+  pwsr_share consuming the actual early->retained records, exact digest,
+  current map/Core/architecture and resident disjoint storage. This is callable
+  code with real native leaves, not yet registered in a parent boot profile:
+  MSS lifecycle/retirement is still missing, so no physical enable is allowed.
+- Saves FP, masks IRQ/FIQ+Group1, checks seven peers OFF, zeroes only the inner
+  RMTFS2MiB with per-page fresh R/W AT,512 actual volatile zero/readback words
+  and completed CIVAC per page. Guard pages stay outside every target access.
+  Then runs existing finite descriptor/SMC/continuation/IVAC protocol for own
+  HLOS3 -> HLOS3+MSS15 RW6. Rechecks seven peers, Core, retained records,
+  descriptor bytes, restores FP and exact CPU mask.200ms returned-scope budget;
+  no promise a secure/cache access returns. Partial/UNKNOWN never cleans up.
+- Final66 software scenarios /60178 assertions PASS, including actual C zero
+  loops on a guarded RAM shadow, failures at first/middle/last pages, each of14
+  peer calls, partial cache/SMC,0..3 continuations, continuation exhaustion,
+  FP save/restore, control mutation and no replay. Real PROT_NONE proves the
+  actual runner does not read descriptor memory during secure pending or
+  continuation phases, including errors before invalidation. Initial protection
+  fixture failed because macOS page size is16KiB; aligned its isolated test
+  descriptor to host granularity, leaving the native4KiB ABI unchanged.
+- Both actual wholeparent+native-export COFF/MachO objects pass generalregs/
+  frame1024. Actual cache/SMC/PSCI/mask instructions were NOT executed on host
+  or phone; only software leaves and ordinary allocated host RAM stores ran.
+  Evidence: research/polaris/uefi-ios-0189/wifi/rmtfs-native-share-0001/.
+- No address publication, MSS start, handback/free, image/helper/CI/USB or
+  whole-gate completion. Assignment-return-zero is retained evidence, not a
+  DMA-stop result. NEXT integrate own MSS post-ACK/AXI reset and complete
+  retirement/secure return before enabling any combined operational parent.
+  MSA still requires real WLFW regions. Wi-Fi scan/join/IP/DNS/data unfinished.
+
 ### Continuous Wi-Fi milestone — 2026-11-04: retained claims in actual prepare_boot
 
 - After terminal GOP admission and before Wi-Fi/power/native work, actual

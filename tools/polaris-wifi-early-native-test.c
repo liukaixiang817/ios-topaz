@@ -20,12 +20,14 @@ static void early_order(void*);
 #include "uefi-wifi-early-native.h"
 static struct pwea_native*early;
 static unsigned checks,efault,trigger,api_calls,alloc_calls,map_calls,at_calls,core_at_calls;
+static uint64_t early_sctlr_extra;
 static volatile uint32_t*native_flag;
 #define CHECK(x) do{assert(x);checks++;}while(0)
 _Static_assert(sizeof(struct pwea_native)<0x30000,"fixture resident bounds");
 static int early_arch(void*p,struct pgcd_arch*a)
 {
     int ok=arch(p,a);
+    a->cpu.sctlr|=early_sctlr_extra;
     if(efault==30&&api_calls==trigger)a->cpu.daif=0x80;
     if(efault==31&&api_calls==trigger)a->cpu.ticks+=PGCD_FRESH_TICKS+1;
     if(efault==32&&at_calls==1026)a->cpu.ttbr0^=4096;

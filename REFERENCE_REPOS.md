@@ -14,6 +14,17 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+## Own RMTFS native secure caller (0189, 2026-11-04)
+
+The own sharedmem consumer's client1 HLOS+MSS RW request is now implemented
+by a default-OFF native caller over the actual early/retained allocation.
+It zeros/cache-cleans the inner2MiB, excludes both guards, retains descriptor
+storage and every interrupted secure result, then restores CPU/FP exactly.
+66 software scenarios (60178 assertions), real host guard/protection tests and
+two native exports pass. No reference reserved address or owner assumption was
+ported. No physical enable, remote lifecycle or handback is established.
+Own ICNSS MSA uses remote-provided secure/nonsecure regions and remains separate.
+
 ## Incoming UEFI independent claims (0189, 2026-11-04)
 
 New default-OFF producer uses original UEFI allocation services before payload
