@@ -18,6 +18,12 @@
 #ifndef EFI_XNU_MSS_STAGING_AVAILABLE
 #define EFI_XNU_MSS_STAGING_AVAILABLE 0
 #endif
+#ifndef EFI_XNU_MSS_MBA_SHARE_AVAILABLE
+#define EFI_XNU_MSS_MBA_SHARE_AVAILABLE 0
+#endif
+#if EFI_XNU_MSS_MBA_SHARE_AVAILABLE && !EFI_XNU_MSS_STAGING_AVAILABLE
+#error "MBA assignment requires the actual staging parent"
+#endif
 #if EFI_XNU_MSS_STAGING_AVAILABLE && !EFI_XNU_MSS_MEMORY_AVAILABLE
 #error "MSS staging requires actual MSS allocations"
 #endif
@@ -307,6 +313,10 @@ static uint32_t mss_retained_attempted,mss_retained_ok;
 #include "uefi-mss-stage.h"
 #include "uefi-mss-firmware-binding.h"
 static struct pmsi_result mss_stage;
+#if EFI_XNU_MSS_MBA_SHARE_AVAILABLE
+#include "uefi-mss-mba-share.h"
+static struct pmsb_result mss_mba_share;
+#endif
 #endif
 #endif
 #endif
@@ -444,6 +454,13 @@ static void mss_memory_gop_evidence(void)
         pwtg_line(r,1,"PAGE ASSET",mss_stage.pages,mss_stage.assets_complete);
         pwtg_line(r,12,"SOURCE PAGE",mss_stage.source_pages[0],mss_stage.source_pages[1]);
     }
+#if EFI_XNU_MSS_MBA_SHARE_AVAILABLE
+    if(mss_mba_share.unknown){
+        pwtg_line(r,0,"MBA SHARE",mss_mba_share.assignment_issued,mss_mba_share.error);
+        pwtg_line(r,1,"ROUND ERROR",mss_mba_share.transaction.rounds,mss_mba_share.transaction.error);
+        pwtg_line(r,12,"MASK RESTORE",mss_mba_share.cpu_held,mss_mba_share.restore_issued);
+    }
+#endif
 #endif
     (void)pwtg_draw(r);early_wifi_gop_raw();
 }
@@ -624,6 +641,9 @@ static int new_original_unknown(void)
 #if EFI_XNU_MSS_STAGING_AVAILABLE
     ||mss_stage.unknown
 #endif
+#if EFI_XNU_MSS_MBA_SHARE_AVAILABLE
+    ||mss_mba_share.unknown||mss_mba_share.cpu_held
+#endif
 #if EFI_XNU_WIFI_TERMINAL_GOP_DIAGNOSTICS
     ||terminal_gop.uncertain
 #endif
@@ -666,6 +686,10 @@ __attribute__((noreturn)) static void power_unknown_hold(void)
 #if EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE
 #if EFI_XNU_MSS_MEMORY_AVAILABLE
 #if EFI_XNU_MSS_STAGING_AVAILABLE
+#if EFI_XNU_MSS_MBA_SHARE_AVAILABLE
+    if(mss_mba_share.unknown||mss_mba_share.cpu_held)mss_memory_gop_evidence();
+    else
+#endif
     if(mss_stage.unknown)mss_memory_gop_evidence();
     else
 #endif
@@ -915,6 +939,9 @@ _Static_assert(sizeof(log_buffer)>=2*(sizeof(pwsp_record)+sizeof(pwrpt_record)+s
 #if EFI_XNU_MSS_STAGING_AVAILABLE
     2*sizeof(mss_stage)+
 #endif
+#if EFI_XNU_MSS_MBA_SHARE_AVAILABLE
+    2*PMSB_RAW_BYTES+
+#endif
     1048576,
     "complete preparation/client/power/source raw must fit without truncation");
 #elif EFI_XNU_WIFI_CMDDB_STAGED_RO_AVAILABLE
@@ -1058,6 +1085,14 @@ static int prepare_boot(void *context)
     ram_text("MSS_STAGE_RAW_V1_BEGIN\r\n");ram_hex((const void*)&mss_stage,sizeof(mss_stage));
     ram_text("MSS_STAGE_RAW_V1_END\r\n");
     if(!stage_ok){original_service_unknown=1;power_unknown_hold();}
+#if EFI_XNU_MSS_MBA_SHARE_AVAILABLE
+    int mba_share_ok=pmsb_share(&mss_mba_share,&mss_stage);
+    ram_report("MSS_MBA_SHARE_ACCEPTED=",mba_share_ok);
+    ram_report("MSS_MBA_SHARE_RAW_V1_BYTES=",PMSB_RAW_BYTES);
+    ram_text("MSS_MBA_SHARE_RAW_V1_BEGIN\r\n");ram_hex((const void*)&mss_mba_share,PMSB_RAW_BYTES);
+    ram_text("MSS_MBA_SHARE_RAW_V1_END\r\n");
+    if(!mba_share_ok){original_service_unknown=1;power_unknown_hold();}
+#endif
 #endif
 #endif
 #endif

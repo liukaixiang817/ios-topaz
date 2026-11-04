@@ -14,6 +14,16 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+## Own MBA secure assignment caller (0189, 2026-11-04)
+
+Own pil_mss_reset_load_mba copies/assigns the independent MBA before reset.
+The actual UEFI parent now optionally consumes its own staged record and
+performs the HLOS3->MSS15 RW request with retained descriptor/continuations,
+CPU0/peer/FP/source checks and descriptor-free UNKNOWN logging.69 software
+scenarios,101 ABI/85 corruption checks and both full native formats pass.
+No reference memory pointer/PAS identity, privileged execution or DMA handback
+is inferred. Persistent power and actual MSS startup remain next; see NOTES.
+
 ## Own staged MBA and metadata (0189, 2026-11-04)
 
 Own pil_mss_reset_load_mba copies MBA before HLOS3->MSS15 RW and reset;

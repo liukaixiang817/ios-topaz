@@ -10,6 +10,16 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-27 (Asia/Shanghai)
 
+**Continuous Wi-Fi reporting, human clarified 2026-11-05:** every15min report
+the current execution step1..5 and estimate remaining steps, alongside concrete
+results/running work. Fixed execution sequence:1 own hardware/resources/firmware
+confirmation;2 independent memory, staging, secure assignment, persistent
+power and MSS start;3 native WLAN control channel and scan;4 join/IP/DNS;
+5 real data communication/stability. Currently step2/5: step2 remains plus
+steps3..5. These execution steps do not replace the separate five safety/
+integration gates; those remain unfinished until their actual evidence exists.
+Continue work; no milestone is permission to stop before real Wi-Fi works.
+
 **FASTBOOT workflow, clarified by the user: after a build/image is ready,
 first check the connected phone with a read-only FASTBOOT query. If the
 expected polaris is already present, continue the authorized preflight and
@@ -33,6 +43,44 @@ arrives. End using a human-confirmation marker bound to that boot's sent_utc;
 stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
+
+### Continuous Wi-Fi milestone — 2026-11-04: actual staged MBA secure caller
+
+- Staging milestone is commit8d378f2. New default-OFF --mss-mba-share reaches
+  pmsb_share from the actual parent after retained allocation and native MBA/
+  metadata staging. Exact own MBA1MiB HLOS3->MSS15 RW6 request, independent
+  retained descriptor, source/CPU/FP checks, local CPU0 mask and all7 peers OFF
+  before/after. No MBA target read/write/cache after assignment starts.
+- Reuses the finite MP_ASSIGN continuation/cache protocol: at most4 secure
+  rounds,100ms returned-step bound,200ms local caller bound. Descriptor is
+  cleaned once, remains inaccessible to C across interrupted continuations,
+  and is invalidated before comparison. Success restores CPU/FP while retaining
+  the assigned MBA; UNKNOWN retains everything without cleanup/retry/free.
+- Actual parent exports ONLY12288B MSS_MBA_SHARE_RAW_V1 prefix, never the
+  actual descriptor page. Prefix retains expected descriptor and every returned
+  event. Host PROT_NONE checks demonstrate that success and UNKNOWN logging
+  do not read the assigned MBA or still-inaccessible descriptor. Qualified
+  local GOP reports the existing assignment/round/mask fields on UNKNOWN.
+- 69 software scenarios /77278 assertions PASS through actual software early,
+  retained and staging producers. Includes0..3 interrupted continuations,
+  fourth-interruption refusal, all14 peer faults, both cache steps, negative/
+  missing secure returns, altered state/source, CPU/time/FP/mask/restore faults,
+  rejected staging and no replay. No SMC/privileged instruction ran on hardware.
+  Independent prefix codec101 C layout and85 corruption checks PASS.
+- Actual whole driver-0002 COFF and MachO builds pass generalregs/frame1024,
+ 83956736B SHA80cc6f724891f8617b71986aa51c5c953f9ba14010a1a6d48f088df3fbf7ee55;
+  all152 source/build input hashes match. Evidence:
+  research/polaris/uefi-ios-0189/wifi/mss-mba-share-0001/proof-0001.json.
+  Driver is not an operational image: FFS size/resource/admission/session/
+  freeze/helper and two final whole models remain required. No phone/CI/boot.
+- NEXT persistent power/owner and actual MSS start. Own source places MBA
+  assignment before reset; metadata secure call belongs after MBA-ready.
+  Investigating persistent original provider ownership versus native retained
+  rail requests; do not extend the old200ms/50ms roundtrip or copy a reference
+  power/VMID assumption. No additional inventory/roundtrip-only boots.
+  Execution step2/5; current step plus3..5 remain. Safety/integration five gates
+  and real scan/join/IP/DNS/data unfinished. Goal ACTIVE. Last15min report
+ 17:06Z (04:06 Australia/Melbourne), next17:21Z (04:21 local).
 
 ### Continuous Wi-Fi milestone — 2026-11-04: actual MBA/metadata staging
 

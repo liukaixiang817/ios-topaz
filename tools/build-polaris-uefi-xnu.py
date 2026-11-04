@@ -474,12 +474,15 @@ def main():
     ap.add_argument('--wifi-early-memory',action='store_true',help='default-OFF incoming UEFI independent retained MSA/RMTFS claims; original Core checks, no late remote-memory path, secure assignment or radio startup')
     ap.add_argument('--mss-memory',action='store_true',help='default-OFF independent modem120MiB, MBA1MiB and own metadata12KiB allocations after early MSA/RMTFS; retains all claims, no target access or remote startup')
     ap.add_argument('--mss-firmware-directory',type=Path,help='default-OFF embed already extracted verified own firmware and stage MBA/metadata into actual independent allocations; no secure assignment or remote start')
+    ap.add_argument('--mss-mba-share',action='store_true',help='default-OFF native HLOS3 to MSS15 RW assignment of the actual staged MBA1MiB, retained descriptor/continuations and CPU restoration; no reset, power, free or remote start')
     ap.add_argument('--wifi-irq-provider-directory',type=Path,help='exact original Timer/GIC/CPU PEs for the explicit early-memory profile; inert binding input')
     a=ap.parse_args();r=Path(__file__).resolve().parents[1]
     if a.mss_memory and not a.wifi_early_memory:
         ap.error('MSS memory requires the physical --wifi-early-memory parent')
     if a.mss_firmware_directory and not a.mss_memory:
         ap.error('MSS firmware staging requires --mss-memory')
+    if a.mss_mba_share and not a.mss_firmware_directory:
+        ap.error('MBA secure assignment requires the actual verified own firmware staging parent')
     if bool(a.wifi_irq_provider_directory)!=a.wifi_early_memory or (a.wifi_early_memory and
         (not a.wifi_power_four_vrm_roundtrip or a.test_qemu)):
         ap.error('early memory requires the full physical four-VRM scope and exact original IRQ-provider directory; no QEMU substitution')
@@ -1003,6 +1006,8 @@ def main():
 #define EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE {int(a.wifi_early_memory)}
 #define EFI_XNU_MSS_MEMORY_AVAILABLE {int(a.mss_memory)}
 #define EFI_XNU_MSS_STAGING_AVAILABLE {int(bool(a.mss_firmware_directory))}
+#define EFI_XNU_MSS_MBA_SHARE_AVAILABLE {int(a.mss_mba_share)}
+#define EFI_XNU_WIFI_MEM_ASSIGN_AVAILABLE {int(a.mss_mba_share)}
 #define EFI_XNU_MSS_METADATA_BYTES 8412u
 #define EFI_XNU_WIFI_CPU_RO_ADMISSION {int(a.wifi_cpu_ro_admission)}
 #define EFI_XNU_WIFI_CPU_MASKED_RO_ADMISSION {int(a.wifi_cpu_masked_ro_admission)}
@@ -1142,6 +1147,7 @@ def main():
     if shutdown_bridge:inputs.append('shim/polaris/runtime-quiesce.h')
     objects=[]
     if a.mss_memory:inputs+=['tools/polaris-mss-memory-codec.py']
+    if a.mss_mba_share:inputs+=['tools/polaris-mss-mba-share-codec.py']
     if mss_firmware:
         inputs+=mss_inputs
         flags+=['-I'+str(out/'mss-firmware'),'-I'+str(r/'shim/polaris')]
@@ -2002,6 +2008,13 @@ def main():
             mss_memory_target_access=True,mss_stage_physical_candidate_ready=False,
             original_GCD_new_scope_RAM_log_capacity=13631488,
             wifi_CPU0_resources_firmware_RAM_log_capacity=13631488)
+    if a.mss_mba_share:
+        manifest.update(mss_MBA_share=True,mss_MBA_share_default_OFF=True,mss_MBA_share_bytes=0x100000,
+            mss_MBA_share_source_VMIDs=[3],mss_MBA_share_destination_VMIDs=[15],mss_MBA_share_permissions=6,
+            mss_MBA_share_raw_format='MSS_MBA_SHARE_RAW_V1',mss_MBA_share_raw_bytes=12288,mss_MBA_share_raw_excludes_descriptor_page=True,
+            mss_MBA_share_max_secure_rounds=4,mss_MBA_share_descriptor_retained=True,
+            mss_MBA_share_target_never_read_after_assignment=True,mss_MBA_share_remote_start=False,
+            mss_MBA_share_physical_candidate_ready=False)
     (out/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
     print(json.dumps({k:manifest[k] for k in ['artifact','sha256','bytes','QEMU_variant','device_execution_tested']}))
 
