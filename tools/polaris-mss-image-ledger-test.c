@@ -18,11 +18,16 @@ static unsigned image_fault,image_trigger,image_ats;
 static unsigned runtime_image;
 static void image_extra_map(struct pwea_map*m)
 {
-    if(!runtime_image){emit_descriptor(m->data+360,4,(uintptr_t)image_heap,0x100000);m->map.bytes=400;return;}
-    emit_descriptor(m->data+360,4,(uintptr_t)image_heap,0x80000);
-    emit_descriptor(m->data+400,5,(uintptr_t)image_heap+0x80000,4096);
-    ((struct efi_memory*)(m->data+400))->attributes=UINT64_C(0x8000000000000008);
-    emit_descriptor(m->data+440,4,(uintptr_t)image_heap+0x81000,0x7f000);m->map.bytes=480;
+    if(!runtime_image){emit_descriptor(m->data+360,4,(uintptr_t)image_heap,0x100000);m->map.bytes=400;}
+    else{
+        emit_descriptor(m->data+360,4,(uintptr_t)image_heap,0x80000);
+        emit_descriptor(m->data+400,5,(uintptr_t)image_heap+0x80000,4096);
+        ((struct efi_memory*)(m->data+400))->attributes=UINT64_C(0x8000000000000008);
+        emit_descriptor(m->data+440,4,(uintptr_t)image_heap+0x81000,0x7f000);m->map.bytes=480;
+    }
+#if defined(PMLI_TEST_MAP_HOOK)
+    PMLI_TEST_MAP_HOOK(m);
+#endif
 }
 static int image_at(struct pwmc_translation*t)
 {
@@ -36,7 +41,11 @@ static int image_at(struct pwmc_translation*t)
         if(image_fault==6)put(core+PMLI_LOCK+16,2,8);
         if(image_fault==7)put(core+PMLI_HEAD,(uintptr_t)image_heap+0x208,8);
         if(image_fault==8)put(image_heap+0x100+24,0xdead,8);
-    }return ok;
+    }
+#if defined(PMLI_TEST_AT_HOOK)
+    PMLI_TEST_AT_HOOK();
+#endif
+    return ok;
 }
 static void image_setup(void)
 {
@@ -65,7 +74,10 @@ static void image_setup(void)
     image_fault=image_trigger=image_ats=0;CHECK(owner_begin());
 }
 static int image_run(void){return pmli_capture(ledger,owner);}
-int main(int argc,char**argv)
+#ifndef PMLI_TEST_ENTRY
+#define PMLI_TEST_ENTRY main
+#endif
+int PMLI_TEST_ENTRY(int argc,char**argv)
 {
     CHECK(argc==2);CHECK(!posix_memalign((void**)&arena,0x4000,PMMN_TEST_ARENA_BYTES));original=malloc(PGCI_IMAGE_BYTES);CHECK(original);
     FILE*f=fopen(argv[1],"rb");CHECK(f&&fread(original,1,PGCI_IMAGE_BYTES,f)==PGCI_IMAGE_BYTES&&!fclose(f));

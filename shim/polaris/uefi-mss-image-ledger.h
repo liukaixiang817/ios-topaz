@@ -169,7 +169,7 @@ static inline int pmli_current(struct pmli_ledger*r,struct pmsc_owner*o)
     if(!r||!o||r->owner!=(uintptr_t)o||r->complete!=1||r->unknown||r->error||
        r->pass[0].complete!=1||r->pass[1].complete!=1)return 0;
     uint8_t hash[32];pweh_digest(r,offsetof(struct pmli_ledger,digest),hash);
-    return pgcd_equal(hash,r->digest,32)&&pmli_live(r);
+    return pgcd_equal(hash,r->digest,32)&&pmsc_bound(o)&&pmli_live(r);
 }
 #endif
 #endif

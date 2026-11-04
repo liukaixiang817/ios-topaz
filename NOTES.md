@@ -44,6 +44,34 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): current MSS GCD namespace
+
+- Current image ledger is commit58530b6. New default-OFF pmrg uses the actual
+  held CPU owner and full current pmli ledger to traverse the own Core GCD
+  list twice. Rechecks head/lock/template/current map and exact source-bound
+ 80B nodes, contiguous ranges, links, cycles, complete matching passes and
+  fresh per-node RAM AT. Excludes heap nodes from every loaded image BEFORE
+  reading them. Own GCD layout reverified with10 original opcodes.
+- Independent from old CmdDb-only pgns: only272 pages covering own MSS clocks,
+  Q6/RMB/reset, three AXI ports including vendor IDLE+8, DRV2 and AOP are eligible.
+  Current target check requires GCD MMIO3/UC capability/attributes0or1, current
+  EFI map excluding ordinary RAM, fresh readback of the exact captured node.
+  An actual namespace change poisons the result. It never reads a Device page,
+  invents an original getter status, or supplies DRV2/QMP/VMID/DMA ownership.
+- pmli_current now also rechecks the CPU owner's immutable retained/stage/MBA
+  record bindings; a changed cached memory map cannot bypass exclusions.
+ 200 software scenarios/229901 checks PASS ASan/UBSan: all18 GCD read positions
+  across translation/root/lock failures, changed between-pass list, malformed
+  nodes, all272 targets, source mutation, image overlap and EFI RAM/UC/virtual
+  mapping boundaries. Full COFF/MachO exports PASS generalregs/frame1024.
+  Evidence:mss-resource-owner-0001/{own-gcd-layout,resource-proof-0001}.json.
+- NEXT current RpmhDxe/DRV2 configuration, client/driver queues and TCS state,
+  persistent resource caller, secure assignment caller and registered MSS
+  parent/retirement. Existing pwrph/pwrpb layouts are source references only;
+  do not fabricate their old200ms/private-client scopes. Still OFF/unregistered,
+  no phone/USB/CI/image/whole models. Execution2/5, this step plus3..5 remain.
+  Goal ACTIVE. Last15min19:05Z (06:05 Australia/Melbourne), next19:20Z (06:20).
+
 ### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): current image ledger
 
 - Actual modem copy/cache is commit7893442. New default-OFF pmli traverses
