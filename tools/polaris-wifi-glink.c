@@ -29,7 +29,9 @@ SOFTWARE.
  */
 #include "polaris-wifi-glink.h"
 
-#ifdef POLARIS_WIFI_GLINK_HOST_TEST
+#if defined(POLARIS_WIFI_GLINK_FREESTANDING)
+#include "polaris-wifi-glink-freestanding.h"
+#elif defined(POLARIS_WIFI_GLINK_HOST_TEST)
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
@@ -126,6 +128,8 @@ struct polaris_wifi_glink {
 	struct polaris_wifi_qrtr_port ports[PORTS];
 	struct polaris_wifi_qrtr_server servers[SERVERS];
 	bool present[SERVERS];
+	/* Each admitted callback depth owns its snapshot; keep native stack bounded. */
+	struct polaris_wifi_qrtr_server snapshots[4][SERVERS];
 };
 static struct polaris_wifi_glink *instances[INSTANCES];
 static void pump(struct polaris_wifi_glink *);
@@ -925,12 +929,13 @@ lookup_port(struct polaris_wifi_qrtr_port *p, uint32_t service, uint32_t version
 {
 	struct polaris_wifi_glink *g;
 	struct lookup *l = NULL;
-	struct polaris_wifi_qrtr_server snapshot[SERVERS];
+	struct polaris_wifi_qrtr_server *snapshot;
 	unsigned i, count = 0;
 	uint32_t generation;
 	if (!p || version > 255 || instance > 0xffffff) return EINVAL;
 	g = p->g; if (!enter(g)) return EBUSY;
 	if (!p->live || !g->up || g->broken) { leave(g); return ENOTCONN; }
+	snapshot = g->snapshots[g->depth - 1];
 	for (i = 0; i < LOOKUPS; i++) {
 		if (!p->lookups[i].used) { if (!l) l = &p->lookups[i]; continue; }
 		if (p->lookups[i].service == service && p->lookups[i].version == version && p->lookups[i].instance == instance) {
@@ -1036,9 +1041,11 @@ polaris_wifi_glink_start(struct polaris_wifi_glink *g)
 	int error = 0;
 	if (g->up || g->started || g->stop_requested) { error = EALREADY; goto out; }
 	if (!scope(g) || !marks(g, true, &th, &tt) || !marks(g, false, &rh, &rt)) { error = EIO; goto out; }
-	/* Never reset FIFO indices. An existing nonempty channel needs its previous
-	 * owner/SSR protocol; no candidate may discard remote data to make room. */
-	if (th != tt || rh != rt) { fault(g, PWF_PENDING, 0, false); error = EBUSY; goto out; }
+	/* Never reset FIFO indices. A new authenticated epoch may consume queued
+	 * remote startup messages only with its still-zero APPS indices. Generic
+	 * callers retain the conservative empty-queue requirement. */
+	if (th != tt || (g->cfg.receive_startup && (th || tt || rt)) ||
+	    (rh != rt && !g->cfg.receive_startup)) { fault(g, PWF_PENDING, 0, false); error = EBUSY; goto out; }
 	g->up = true; g->features = 1; g->next_port = 0x3fff;
 	say(g, VERSION, 1, g->features, NULL, 0);
 	if (g->broken) error = EIO;

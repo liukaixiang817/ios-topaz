@@ -25,6 +25,9 @@ enum polaris_wifi_fault {
 struct polaris_wifi_glink_cfg {
     uint64_t epoch, smem_phys;
     uint32_t smem_bytes, local_node;
+    /* Scope additionally proves fresh local descriptor/TX for this modem reset.
+     * Accept already queued RX startup messages at consumer0; never reset it. */
+    bool receive_startup;
     struct polaris_glink_layout layout;
     /* Mandatory native lifetime/ownership gate. Must establish an existing own
      * DT mapping of SMEM 0x86000000/2MiB, MPU access, exclusive APPS TX producer /

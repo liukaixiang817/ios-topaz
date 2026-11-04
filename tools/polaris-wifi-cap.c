@@ -1,6 +1,8 @@
 /* Original Polaris client using own MiCode CAP wire definition. */
 #include "polaris-wifi-cap.h"
-#ifdef POLARIS_WIFI_GLINK_HOST_TEST
+#if defined(POLARIS_WIFI_GLINK_FREESTANDING)
+#include "polaris-wifi-glink-freestanding.h"
+#elif defined(POLARIS_WIFI_GLINK_HOST_TEST)
 #include <errno.h>
 #include <string.h>
 #else

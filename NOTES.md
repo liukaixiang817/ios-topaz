@@ -44,6 +44,37 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): native GLINK/QRTR/WLFW CAP
+
+- SMP2P is commit48a6e27. New default-OFF pmsg binds the actual native channel
+  to existing GLINK/QRTR C and WLFW CAP in separate freestanding translation
+  units. One bounded4MiB private pool, actual CPU owner identity/counter/order,
+  no original EFI timer/allocation or kernel services during the interval.
+- Read-only current RX480 discovery admits own partition/cacheline, exact local
+  allocation headers and current remote SMP2P/RX headers. Scope rereads selected
+  headers and partition TOC identity. Unaligned reads use only covering words
+  within admitted items, retaining actual Normal-NC AT/GCD checks. Cached heap
+  is allocation geometry; it does not authorize unsafe cache instructions.
+- Remote may send VERSION before APPS starts. New authenticated epochs now
+  consume these queued startup messages with local indices still0; no index
+  reset/drop. Default generic transport retains its empty-queue requirement.
+  Lookup callback snapshots moved into four separate admitted-depth slots,
+  preserving reentrancy while meeting the native1024B frame limit.
+- ASan/UBSan complete native producer chain PASS6 scenarios/2095624 checks:
+  both RX heaps, remote-first handshake, actual service69 discovery, one CAP
+  request/parsed identity, cross-page/unaligned RX, fatal/metadata/TOC changes,
+  nonfresh consumer, missing RX timeout, pool exhaustion/reuse and forbidden
+  remote-index write. Full adapter/protocol/CAP COFF and MachO PASS generalregs/
+  frame1024; existing transport regression PASS. Evidence:
+  mss-glink-native-0001/proof-0001.json. All privileged leaves/remote SOFTWARE.
+- NEXT real RMTFS native backing: continuous2MiB guarded sharing, fresh own-NV
+  read-only boot input producer, dedicated RAM shadows and service publication;
+  then WLFW activation/CE and whole-parent handoff/retirement. Existing0145 NV
+  snapshots alone must not be relabelled fresh current-device provenance.
+  No phone/USB query, CI/push or boot; no physical scan/join/IP/data. Execution
+ 2/5; finish current step plus3 following. Last15min22:07Z/09:07 Melbourne;
+  next22:22Z/09:22. Goal ACTIVE; keep working.
+
 ### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): native SMP2P negotiation
 
 - Native channel is commit50e0034. New pmsy consumes its unique epoch, checks

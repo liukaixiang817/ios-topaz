@@ -13,6 +13,9 @@ static struct pmsy_state*negotiation;
 static unsigned remote_at,remote_samples,remote_mode,remote_flags,remote_rings,smp_scenarios;
 static void smp_peer_ring(const struct pmni_command*c)
 {
+#ifdef PMSY_TEST_GLINK_RING
+    PMSY_TEST_GLINK_RING(c);
+#endif
     if(!negotiation||c->value!=0x4000)return;remote_rings++;
     const uint8_t*out=sm_shadow+channel->item[0].data;
     CHECK(pms_u32(out)==0x504d5324&&pms_u32(out+4)==0x101&&pms_u32(out+8)==0x10000);
@@ -51,7 +54,10 @@ static int smp_drive(void)
         advance_to(negotiation->next_poll);
     }return 1;
 }
-int main(int argc,char**argv)
+#ifndef PMSY_TEST_ENTRY
+#define PMSY_TEST_ENTRY main
+#endif
+int PMSY_TEST_ENTRY(int argc,char**argv)
 {
     CHECK(argc==7);sm_original=malloc(PWFI_IMAGE_BYTES);sm_shadow=malloc(PMSQ_BYTES);CHECK(sm_original&&sm_shadow);
     FILE*f=fopen(argv[6],"rb");CHECK(f&&fread(sm_original,1,PWFI_IMAGE_BYTES,f)==PWFI_IMAGE_BYTES&&!fclose(f));auth_test_open(6,argv);
