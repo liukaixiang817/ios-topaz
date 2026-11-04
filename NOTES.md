@@ -34,6 +34,37 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-04: secure descriptor transaction
+
+- Implemented the finite descriptor-cache/MP_ASSIGN transaction: whole-page
+  CIVAC+DSB, at most4 SMC rounds (same-request continuations only) preserving
+  all x0..x6, zero return, whole-page IVAC+DSB and exact4096-byte comparison.
+  No busy retry, re-encode, target-region access, owner flag, free or handback.
+  Pending/unknown retains every input and raw result, including partial-cache
+  failure.100ms is a returned-step DATA budget, not a secure-call walltime bound.
+- Default-OFF native descriptor cache leaf derives local CTR line size16..4096,
+  accesses only whole page lines, requiresEL1/MMU/cache and records completion.
+  Its future caller must establish CPU0/peer/cache ownership, mappings, secure
+  serialization, full FP/execution envelope and allocation lifetime. No parent
+  calls it; REMOTE_MEMORY remains OFF. No device operation or CI run.
+- Final501 ASAN/UBSAN checks PASS. A real host PROT_NONE mapping proves the
+  protocol does not read descriptors during pending/interrupted SMC steps or
+  before post-SMC invalidation. Six COFF/MachO ON/OFF/QEMU objects and assemblies
+  PASS; each ON has one SMC/CIVAC/IVAC instruction site; OFF/QEMU have none.
+  Own pinned cache.S/assembler.h Git blobs verified, private reference only.
+  Evidence: research/polaris/uefi-ios-0189/wifi/secure-assignment-transaction-0001/.
+- MSS AXI halt milestone is commit d5f8e6f. Five whole gates still incomplete;
+  protocol/cache work advances part of gate3, not physical Wi-Fi or safe startup.
+- Bootstrap finding: original ArmCpuDxe EnableInterrupt clears both DAIF I/F;
+  it leaves Group1 unchanged, but Group1 masking alone does not establish
+  Group0/FIQ exclusion (Arm GIC DAI0492v3 pp15-16). This design is unqualified;
+  no mask extension, route addition, minimum bypass or old context reuse.
+- NEXT connect the missing remote-stop acknowledgment protocol to the halt
+  prerequisite, then resolve genuine independent allocations/first-call source
+  and integrate secure lifecycle. Existing transports remain unconnected.
+  Active goal continues; no pending user question. Preserve the pre-existing
+  pwmc_invoke context diff and .DS_Store outside these commits.
+
 ### Continuous Wi-Fi milestone — 2026-11-04: MSS AXI halt protocol
 
 - Implemented the missing finite own three-port halt sequence at own DT bases

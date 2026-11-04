@@ -14,6 +14,18 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+## Own secure descriptor cache and continuation (0189, 2026-11-04)
+
+Pinned own cache.S/assembler.h confirm CTR DminLine and whole-line CIVAC/IVAC
+plus DSB SY. New default-OFF leaf processes one exclusive retained descriptor
+page; a finite protocol preserves interrupted x0..x6 and compares4096 immutable
+bytes only after post-return invalidation.501 sanitizer checks and six native
+compile/assembly variants pass; no hardware, owner update or release. Dipper
+uses a descriptor-page CIVAC loop; its guessed owner/reserved spans remain
+excluded. Original CPU EnableInterrupt clears I/F; Arm DAI0492v3 pp15-16 means
+Group1 alone cannot be called complete interrupt exclusion. The first-allocation
+bootstrap remains unqualified; no bypass or new operational route was added.
+
 ## Own secure memory assignment ABI (0189, 2026-11-04)
 
 Pinned MiCode c7cb50c1 secure_buffer.h/c and scm.h/c Git blobs were verified
