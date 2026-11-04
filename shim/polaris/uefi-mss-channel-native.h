@@ -6,6 +6,9 @@
 #ifndef EFI_XNU_MSS_CHANNEL_NATIVE_AVAILABLE
 #define EFI_XNU_MSS_CHANNEL_NATIVE_AVAILABLE 0
 #endif
+#ifndef EFI_XNU_MSS_SMP2P_NATIVE_AVAILABLE
+#define EFI_XNU_MSS_SMP2P_NATIVE_AVAILABLE 0
+#endif
 #if EFI_XNU_MSS_CHANNEL_NATIVE_AVAILABLE
 #if !EFI_XNU_MSS_AUTH_NATIVE_AVAILABLE || !EFI_XNU_MSS_SMEM_NATIVE_AVAILABLE || !EFI_XNU_MSS_SFPB_IO_AVAILABLE
 #error Native channel requires actual modem authentication and locked allocations
@@ -17,12 +20,24 @@ struct pmsx_word {
     struct pmli_read node[2];struct pmni_translation AT[2];
 };
 struct pmsx_state {
-    uint64_t auth,allocation,smem,owner,opening;
+    uint64_t auth,allocation,smem,owner,opening,negotiation;
     uint8_t auth_digest[32],allocation_digest[32],smem_digest[32];
     struct pmsa_item item[PMSA_ITEMS];
     uint32_t attempted,ready,unknown,error,pending,writes,rings,negotiated;
     struct pmsx_word word;struct pmsl_delivery ring[4];uint8_t history[32];
 };
+#if EFI_XNU_MSS_SMP2P_NATIVE_AVAILABLE
+struct pmsy_state;
+static inline int pmsy_current(struct pmsy_state*,struct pmsx_state*);
+#endif
+static inline int pmsx_negotiated(struct pmsx_state*s)
+{
+#if EFI_XNU_MSS_SMP2P_NATIVE_AVAILABLE
+    return s->negotiated==1&&s->negotiation&&pmsy_current((void*)(uintptr_t)s->negotiation,s);
+#else
+    (void)s;return 0;
+#endif
+}
 #if defined(POLARIS_MSS_CHANNEL_SOFTWARE_PEER)
 static int pmsx_store(uint64_t,uint32_t,uint32_t*);
 #else
@@ -76,7 +91,7 @@ static inline int pmsx_write(struct pmsx_state*s,unsigned item,unsigned offset,u
     if(!s||s->pending||s->writes==65536||item>=PMSA_ITEMS||(offset&3))return 0;
     if(!pmsx_live(s))return pmsx_fail(s,3);
     const struct pmsa_item*i=&s->item[item];
-    if(offset>i->bytes||4>i->bytes-offset||(item&&s->negotiated!=1)||(item==1&&offset!=4&&offset!=8))return 0;
+    if(offset>i->bytes||4>i->bytes-offset||(item&&!pmsx_negotiated(s))||(item==1&&offset!=4&&offset!=8))return 0;
     struct pmsx_word*r=&s->word;for(unsigned n=0;n<sizeof(*r);n++)((uint8_t*)r)[n]=0;
     r->address=PMSQ_BASE+i->data+offset;r->value=value;r->attempted=1;s->pending=1;
     struct pmsq_state*q=(void*)(uintptr_t)s->smem;struct pmsc_owner*o=(void*)(uintptr_t)s->owner;uint64_t page=r->address&~UINT64_C(4095);
@@ -97,7 +112,7 @@ static inline const uint8_t*pmsx_read(struct pmsx_state*s,unsigned offset,unsign
 }
 static inline int pmsx_ring(struct pmsx_state*s,unsigned glink)
 {
-    if(!s||s->pending||s->rings==65536||glink>1||(glink&&s->negotiated!=1))return 0;
+    if(!s||s->pending||s->rings==65536||glink>1||(glink&&!pmsx_negotiated(s)))return 0;
     if(!pmsx_live(s))return pmsx_fail(s,3);
     struct pmsn_state*a=(void*)(uintptr_t)s->auth;struct pmpn_state*p=(void*)(uintptr_t)a->power;
     struct pmsc_owner*o=(void*)(uintptr_t)s->owner;
@@ -112,5 +127,8 @@ static inline int pmsx_ring(struct pmsx_state*s,unsigned glink)
     }
     s->rings++;s->pending=0;pmsx_history(s,s->ring,sizeof(s->ring));return 1;
 }
+#if EFI_XNU_MSS_SMP2P_NATIVE_AVAILABLE
+#include "uefi-mss-smp2p-native.h"
+#endif
 #endif
 #endif

@@ -44,6 +44,30 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): native SMP2P negotiation
+
+- Native channel is commit50e0034. New pmsy consumes its unique epoch, checks
+  fresh zeroed APPS428, writes own version1/features1 with version last, rings
+  SMP2P4000, discovers uncached remote435/340B, checks stable named remote
+  entry, publishes local master-kernel/valid count and matching SSR ACK.
+- GLINK now consumes actual pmsy_current, not a caller-ready boolean. It checks
+  the sealed handshake and current full local/remote items, selected name/index,
+  fatal/STOP and SSR flags before GLINK writes/rings. Changed local bytes or
+  remote fatal/restart stops the channel. Version matching is protocol evidence,
+  not independent remote execution/nonce proof; native MSS reset/auth supplies
+  its epoch. ERROR_READY bit1 is deliberately not a startup prerequisite;
+  later readiness2 is accepted so GLINK/RMTFS can serve modem initialization.
+- Actual complete native producer chain ASan/UBSan PASS6 scenarios/1542657
+  checks: delayed version-last publication, both initial restart-done values,
+  GLINK ownership gate, bad features/name, unmatched restart ACK timeout and
+  nonzero local reuse refuse. Full COFF/MachO PASS generalregs/frame1024.
+  Evidence:mss-smp2p-native-0001/proof-0001.json. Privileged leaves software;
+  no actual protocol peer, firmware execution, phone/USB query, CI/push or boot.
+- NEXT connect existing GLINK/QRTR C implementation to this native backend,
+  current remote RX discovery, then WLFW/RMTFS and whole-parent integration/
+  handoff/retirement. Execution2/5, finish this step plus3 following. Last15min
+ 22:07Z/09:07 Melbourne; next22:22Z/09:22. Goal ACTIVE; keep working.
+
 ### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): authenticated native channel access
 
 - Locked allocator is commitee20961. New default-OFF/unregistered pmsx binds

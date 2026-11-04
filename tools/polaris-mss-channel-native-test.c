@@ -83,13 +83,23 @@ static int channel_raw(const struct pmni_command*c,unsigned*out)
     if(c->kind==PMNI_FULL_ORDER)return 1;
     if(channel&&channel->pending==2&&c->address==PMS_DOORBELL){
         CHECK(c->kind==PMNI_WRITE&&(c->value==0x4000||c->value==0x1000||!c->value));channel_raw_calls++;
-        if(channel_fault==5)return 0;if(c->value)channel_rings++;return 1;
+        if(channel_fault==5)return 0;if(c->value)channel_rings++;
+#ifdef PMSX_TEST_RING_HOOK
+        PMSX_TEST_RING_HOOK(c);
+#endif
+        return 1;
     }
     return -1;
 }
 static void pmsq_order(void){}
 static int pmsq_word(uint64_t at,uint32_t*out)
-{CHECK(at>=PMSQ_BASE&&at<PMSQ_BASE+PMSQ_BYTES&&!(at&3));memcpy(out,sm_shadow+at-PMSQ_BASE,4);return 1;}
+{
+    CHECK(at>=PMSQ_BASE&&at<PMSQ_BASE+PMSQ_BYTES&&!(at&3));
+#ifdef PMSX_TEST_WORD_HOOK
+    PMSX_TEST_WORD_HOOK(at);
+#endif
+    memcpy(out,sm_shadow+at-PMSQ_BASE,4);return 1;
+}
 static int pmsa_store(uint64_t at,uint32_t value,uint32_t*out)
 {CHECK(token==1&&at>=PMSQ_BASE&&at<PMSQ_BASE+PMSQ_BYTES);put(sm_shadow+at-PMSQ_BASE,value,4);*out=value;return 1;}
 static int pmsx_store(uint64_t at,uint32_t value,uint32_t*out)
@@ -122,7 +132,10 @@ static void channel_setup(void)
     CHECK(pmsa_prepare(channel_allocation,channel_lock)&&pmsa_publish(channel_allocation)&&pmsl_release(channel_lock)&&pmsa_current(channel_allocation));
     channel=(void*)(arena+0x7780000);memset(channel,0,sizeof(*channel));CHECK(pmsx_begin(channel,auth_owner,channel_allocation));
 }
-int main(int argc,char**argv)
+#ifndef PMSX_TEST_ENTRY
+#define PMSX_TEST_ENTRY main
+#endif
+int PMSX_TEST_ENTRY(int argc,char**argv)
 {
     CHECK(argc==7);sm_original=malloc(PWFI_IMAGE_BYTES);sm_shadow=malloc(PMSQ_BYTES);CHECK(sm_original&&sm_shadow);
     FILE*f=fopen(argv[6],"rb");CHECK(f&&fread(sm_original,1,PWFI_IMAGE_BYTES,f)==PWFI_IMAGE_BYTES&&!fclose(f));auth_test_open(6,argv);
