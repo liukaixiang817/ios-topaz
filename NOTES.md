@@ -34,6 +34,31 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-04: ordered MSS shutdown reset pulse
+
+- Native RMTFS share is commitaa8d3e9. New pmsd composition now continues the
+  existing fresh SMP2P ACK -> three AXI halts into own pil-msa.c reset order:
+  PDC bit9 RMW, ALT1, RESTART1,200us hold, RESTART0,200us hold, ALT0, PDC bit9
+  clear. Each write is followed by its source barrier and >=2us;19.2MHz2us
+  rounds UP to39 ticks. Later PDC read preserves the latest unrelated bits.
+  ALT/RESTART are write-only in this implementation: no guessed readback.
+- The finite10ms reset scope retains all14 operations and raw return/error
+  values. Sticky UNKNOWN never clears STOP/AXI or retries/reset-cleans. A
+  complete pulse is not full DMA retirement, clock/power release or permission
+  handback. No native MMIO backend or operational parent is enabled by it.
+- Serial ASAN/UBSAN:17440 new checks +2506 existing stop checks =19946 PASS.
+  Covers every26 stop/AXI failures before reset; each14 reset operations has
+  failed return, changed command, reentry, backward clock and timeout cases;
+  verifies2us/200us boundaries, PDC foreign state, aliases and final delay.
+  Both full-composition COFF/MachO exports pass generalregs/frame1024.
+  Evidence: research/polaris/uefi-ios-0189/wifi/mss-shutdown-reset-0001/.
+- NEXT attach the real source-bound MSS clock/power/MMIO lifecycle; keep
+  memory retained until actual stop/reset, clock retirement and secure return.
+  Own peripheral-loader.c pil_reclaim_mem provides HLOS+MSS -> HLOS RWX ABI,
+  but neither a pulse nor that ABI alone proves this RMTFS region is retired.
+  No phone command, CI, boot image/helper or whole-gate completion. Five gates
+  remain incomplete; actual scan/join/IP/DNS/data remain unimplemented.
+
 ### Continuous Wi-Fi milestone — 2026-11-04: native RMTFS sharing caller
 
 - Retained-memory milestone is commitde85bed. Added default-OFF native

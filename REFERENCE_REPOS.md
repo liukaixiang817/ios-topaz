@@ -14,6 +14,15 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+## Own MSS shutdown reset sequence (0189, 2026-11-04)
+
+Own c7cb50c1 pil-msa.c and current phone DT establish PDC b2e0100 bit9,
+ALT4180044, RESTARTc2b0000, ordering and2us/200us delays. The new finite
+composition follows fresh stop ACK and all three AXI halts; it does not copy
+Dipper power assumptions or invent ALT/RESTART reads.19946 software checks
+and two native exports pass. A reset pulse is not complete DMA retirement or
+permission return; real native clock/power/MMIO ownership remains required.
+
 ## Own RMTFS native secure caller (0189, 2026-11-04)
 
 The own sharedmem consumer's client1 HLOS+MSS RW request is now implemented
