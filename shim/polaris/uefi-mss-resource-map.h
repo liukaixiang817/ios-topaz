@@ -108,6 +108,9 @@ static inline int pmrg_current(struct pmrg_map*r)
 static inline int pmrg_device_page(uint64_t page)
 {
     if(page&4095)return 0;
+#if defined(EFI_XNU_MSS_SFPB_IO_AVAILABLE) && EFI_XNU_MSS_SFPB_IO_AVAILABLE
+    if(page==UINT64_C(0x1f43000))return 1;
+#endif
     if(page>=0xc300000&&page<0xc400000)return 1;
     const uint64_t pages[]={0x134000,0x138000,0x152000,0x18a000,0x1f63000,0x1f64000,0x1f65000,
         0x4080000,0x4084000,0x4180000,0xb2e0000,0xc2b0000,0x17990000,0x179e0000,0x179e1000,0x179e2000};

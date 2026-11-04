@@ -24,6 +24,12 @@
 #ifndef EFI_XNU_MSS_RSC_STATE_AVAILABLE
 #define EFI_XNU_MSS_RSC_STATE_AVAILABLE 0
 #endif
+#ifndef EFI_XNU_MSS_SFPB_IO_AVAILABLE
+#define EFI_XNU_MSS_SFPB_IO_AVAILABLE 0
+#endif
+#if EFI_XNU_MSS_SFPB_IO_AVAILABLE && !EFI_XNU_MSS_NATIVE_IO_AVAILABLE
+#error SFPB leaves require native MMIO and the separate current SMEM owner
+#endif
 #if EFI_XNU_MSS_MODEM_IO_AVAILABLE && !EFI_XNU_MSS_NATIVE_IO_AVAILABLE
 #error MSS modem authentication requires the separate native MMIO leaves
 #endif
@@ -123,6 +129,11 @@ static inline int pmni_allowed(const struct pmni_command*c)
     if(c->kind==PMNI_STORE_ORDER||c->kind==PMNI_FULL_ORDER)return !c->address&&!c->value;
     if(c->kind!=PMNI_READ&&c->kind!=PMNI_WRITE)return 0;
     if(c->kind==PMNI_READ&&c->value)return 0;
+#if EFI_XNU_MSS_SFPB_IO_AVAILABLE
+    /* Own DT lock3 only. The typed lock owner below the parent decides when
+     * acquisition/release is valid; this is merely the exact native leaf. */
+    if(c->address==UINT64_C(0x1f43000))return c->kind==PMNI_READ||c->value<=1;
+#endif
 #if EFI_XNU_MSS_MODEM_IO_AVAILABLE
     if(c->address==0x4180018)return c->kind==PMNI_READ||c->value<=0x7800000;
     if(c->address==0x4180014)return c->kind==PMNI_WRITE&&(!c->value||

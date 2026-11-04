@@ -44,6 +44,38 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): native SMEM source/read and SFPB lock
+
+- Continuous modem authentication is commitee06aac. New default-OFF pmsq
+  consumes actual current CPU/image/GCD producers, walks current SmemDxe
+  protocol/LoadedImage RAM, verifies own4 immutable ranges and two632-byte
+  constructor snapshots. No old diagnostic ticket or original Get/Alloc.
+- Native bounded Normal-NC reads require exact own2MiB reserved EFI UC span,
+  current GCD reserved/system UC node and exact ATTR44/NS/OuterShareable AT
+  before/after each touched page. Last full observation plus history hash is
+  retained. These reads are NOT external-abort contained or MPU programming.
+- New pmsl binds the current SMEM source and own SFPB lock3 at1f43000, with
+  APPS token1. Exactly one acquire attempt; keeps acquired lock for allocator;
+  explicit release checks current owner before zero and verifies afterward.
+  Busy/foreign/unknown lock is never cleared. Native writes mark REMOTE and
+  CPU cannot close_unused afterward. MMIO/GCD expansion is default-OFF and
+  limited to this one lock page/address, not the full SFPB bank.
+- ASan/UBSan PASS reader12 scenarios/14154 checks and lock21/24753 checks;
+  raw/AT/CPU/source/GCD/timing/record corruption, competing/busy lock and lost
+  ownership refuse. Final full COFF/MachO exports PASS generalregs/frame1024.
+  Evidence:mss-smem-native-0001/proof-0001.json. All privileged leaves software;
+  no physical SMEM read/write, lock, device/USB query, CI/push or boot.
+- Own0096 msm_smem.c/GLINK and0189 msm_smp2p.c consulted: allocations use
+  host1 private partition under remote lock; descriptor478/32B, TX479/16KiB,
+  APPS SMP2P428/340B. Own cache pins lock3. HackiOS kernel remoteproc interface
+  leaves native start to platform; userland password test supplies no MSS/SMEM
+  implementation. Neither reference address nor foreign carveout is imported.
+- NEXT actual locked private allocation/publication, SMP2P/GLINK/WLFW, then
+  whole-parent registration and retirement/handoff. Execution2/5, finish this
+  step plus3 following. Latest15min21:37Z/08:37 Melbourne; next21:52Z/08:52.
+  Goal ACTIVE; continue. Native AOP/STOP shared-doorbell shadowing still TODO
+  with native STOP composition. Unowned remote-memory.h hunk/.DS_Store intact.
+
 ### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): continuous native modem authentication
 
 - MBA startup is commit7f94812. New default-OFF/unregistered pmsn consumes
