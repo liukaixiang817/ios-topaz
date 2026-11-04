@@ -58,7 +58,7 @@ static void resource_complete(void)
 static int pmni_raw(const struct pmni_command*c,uint32_t*v)
 {
 #ifdef PMPN_TEST_RAW_HOOK
-    if(c->address<UINT64_C(0x10000000))return PMPN_TEST_RAW_HOOK(c,v);
+    if(c->address<UINT64_C(0x179e0000))return PMPN_TEST_RAW_HOOK(c,v);
 #endif
     if(c->kind==PMNI_READ)native_reads++;else native_writes++;
     if(selected_fault()){
@@ -106,8 +106,10 @@ static void power_setup(void)
     CHECK(0x800000+sizeof(*power)<0x1000000&&0x1000000+sizeof(*requests)*PMPN_REQUESTS<PMMN_TEST_IMAGE_BYTES);
     memset(power,0,sizeof(*power));memset(requests,0,sizeof(*requests)*PMPN_REQUESTS);
     CHECK(pmpn_begin(power,requests,device,database_state,state,resource_map));
+#ifndef PMPN_TEST_DEFER_SUPPLY
     uint32_t minimum[3];for(unsigned n=0;n<3;n++)minimum[n]=database_state->pass[1].resource[n].minimum;
     CHECK(pmsp_begin(supplies,owner->opening,minimum,power_now(),19200000)==PMSP_WAIT);
+#endif
 }
 static int supply_drive(unsigned limit)
 {

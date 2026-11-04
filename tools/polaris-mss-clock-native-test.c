@@ -23,11 +23,24 @@ static const uint64_t clock_addresses[]={0x18a000,0x18a154,0x152004,0x138004,0x1
 static unsigned clock_fault,clock_trigger,clock_reads,clock_writes,clock_orders,clock_scenarios;
 static int clock_selected(void){return clock_owner&&clock_owner->pending&&clock_owner->pending==clock_trigger;}
 static void clock_arch_hook(struct pmni_arch*a)
-{if(clock_selected()&&clock_fault==3)a->ttbr0^=4096;}
+{
+#ifdef PMCN_TEST_ARCH_HOOK
+    PMCN_TEST_ARCH_HOOK(a);
+#endif
+    if(clock_selected()&&clock_fault==3)a->ttbr0^=4096;
+}
 static int clock_at_hook(struct pmni_translation*t)
-{if(clock_selected()&&clock_fault==2)t->restored++;return 1;}
+{
+#ifdef PMCN_TEST_AT_HOOK
+    PMCN_TEST_AT_HOOK(t);
+#endif
+    if(clock_selected()&&clock_fault==2)t->restored++;return 1;
+}
 static int clock_raw_hook(const struct pmni_command*c,unsigned*v)
 {
+#ifdef PMCN_TEST_RAW_HOOK
+    int handled=PMCN_TEST_RAW_HOOK(c,v);if(handled>=0)return handled;
+#endif
     CHECK(clock_owner&&clock_owner->pending&&power->pending==0);
     if(c->kind==PMNI_WRITE)clock_writes++;else if(c->kind==PMNI_READ)clock_reads++;else clock_orders++;
     if(clock_selected()){
@@ -103,7 +116,10 @@ static int native_cycle(void)
     CHECK(owner->held&&!pmsc_close_unused(owner)&&clock_orders&&clock_reads&&clock_owner->deliveries==clock_owner->proxy_calls+clock_owner->clock_calls);
     return 1;
 }
-int main(int argc,char**argv)
+#ifndef PMCN_TEST_ENTRY
+#define PMCN_TEST_ENTRY main
+#endif
+int PMCN_TEST_ENTRY(int argc,char**argv)
 {
     CHECK(argc==5);CHECK(!posix_memalign((void**)&arena,0x4000,PMMN_TEST_ARENA_BYTES));
     original=malloc(PGCI_IMAGE_BYTES);rp_original=malloc(PWRPI_IMAGE_BYTES);cd_original=malloc(PWCDI_IMAGE_BYTES);

@@ -44,6 +44,32 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): native AOP on/off composition
+
+- PRNG/six-clock native owner is commit6502560. New default-OFF/unregistered
+  pman consumes actual power/clock contexts and runs exact pmaq commands
+  through pmni_aop. Each delivery retains full CPU/Device-AT/GCD/native
+  observations; writes first mark REMOTE. Only an existing connected idle
+  channel is admitted; no takeover, RX drain or automatic UNKNOWN cleanup.
+- Native AOP ON -> actual persistent supply/XO/PRNG/six-clock path -> software
+  STOP producer -> native clock/PRNG/XO/supply restore -> native AOP OFF passes.
+  OFF requires sealed actual power/clock retirement and immutable original ON;
+  supplies/proxy must start after ON consumption. Independent mailbox peer
+  verifies exact96-byte messages, delayed consumption and original TX recovery.
+- ASan/UBSan PASS17 scenarios/1227695 checks plus232 software STOP checks.
+  Normal cycle494 AOP deliveries. Faults before/within publication, doorbell,
+  consumption/restoration, AT/CPU/time/GCD/pending-command changes and malformed
+  descriptor/RX-busy/TX-busy refuse, retain UNKNOWN and stop later accesses.
+  Full COFF/MachO exports PASS generalregs/frame1024. Evidence:
+  mss-aop-native-0001/proof-0001.json. No actual AOP/phone/provider execution,
+  CI/push, USB query or boot. CPU effect bits remain held; no secure/DMA claim.
+- Own0142 pil-msa.c/peripheral-loader.c re-read: metadata15->3 RWX follows
+  status3; MBA15->3 RWX follows final auth; modem allocation return is separate
+  from shutdown. NEXT owned native MBA/metadata/modem IO plus continuous
+  typed secure caller, then registered whole parent. Execution2/5: this step
+  plus3 following steps. Last15min20:37Z/07:37; next20:52Z/07:52 Melbourne.
+  Goal ACTIVE, continue rather than stop at the milestone.
+
 ### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): native PRNG and six-clock owner
 
 - Persistent supplies/XO is commit9330e6b. New default-OFF/unregistered pmcn
