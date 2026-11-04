@@ -1,4 +1,6 @@
-/* One qualified, retained, exclusive descriptor page only. The caller must
+/* One qualified, retained, exclusive page. The descriptor transaction and
+ * explicit MSS staging callers each establish their own target scope first.
+ * The caller must
  * prove normal writable mappings, allocation lifetime, cache ownership and
  * the complete execution envelope. This leaf does not establish those facts.
  * INVALIDATE is allowed by the protocol only after a completed secure return;
@@ -8,7 +10,7 @@
 #ifndef EFI_XNU_WIFI_MEM_ASSIGN_AVAILABLE
 #define EFI_XNU_WIFI_MEM_ASSIGN_AVAILABLE 0
 #endif
-#if EFI_XNU_WIFI_MEM_ASSIGN_AVAILABLE && defined(__aarch64__) && !defined(POLARIS_EFI_TEST_QEMU)
+#if (EFI_XNU_WIFI_MEM_ASSIGN_AVAILABLE || (defined(EFI_XNU_MSS_STAGING_AVAILABLE) && EFI_XNU_MSS_STAGING_AVAILABLE)) && defined(__aarch64__) && !defined(POLARIS_EFI_TEST_QEMU)
 #include "../../tools/polaris-wifi-mem-cache.h"
 static inline int pwma_actual_cache_page(struct pwma_page*page,unsigned operation,struct pwmk_record*r)
 {

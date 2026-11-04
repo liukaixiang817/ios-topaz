@@ -34,6 +34,49 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-04: actual MBA/metadata staging
+
+- Independent allocation milestone is commit3e445d8. New private packager
+  reuses the already extracted own30 files, verifies all sizes/hashes against
+  the existing own-backup/0096 evidence and validates own ELF32/QDSP MDT,
+ 28 relocatable ordered non-overlapping loadable segments,120MiB span and
+ 1MiB first alignment. Metadata must equal own b00+b01. No firmware download,
+  extraction or execution. Proprietary bytes/generated bindings stay ignored.
+- Default-OFF --mss-firmware-directory embeds a private64061440B data bundle
+  and reaches pmsi_stage through the ACTUAL prepare_boot after fresh retained
+  memory checks. Only MBA238304B and metadata8412B are staged, into their
+  independent1MiB/12288B allocations.259 target pages are fully initialized;
+  modem segments and WLAN firmware are resident source data but not loaded.
+- Both source assets get fresh normal/WB/NS/identity/PAR-restored R/W AT and
+  SHA verification BEFORE any target write. Each target page and any copied
+  source page get fresh AT, exact volatile64-bit writes/readback, zero tail,
+  whole-page CIVAC/DSB and current CPU/time checks. Copied source hashes must
+  still match. Original Core pre/post, allocation/retained digest and current
+  binding are checked. No firmware service, secure assignment, remote address
+  publication, power, free or modem start.200ms local staging scope, not an
+  extended old power lifetime.91656B raw; qualified local GOP on UNKNOWN.
+- 88 software success/fault scenarios PASS, including actual own MBA/metadata
+  bytes;858200 assertions include many per-byte zero checks, not independent
+  hardware tests. Real host RAM shadows/PROT_NONE guards test writes, not
+  privileged instructions. Independent stage codec57 C layout checks and126
+  corruption checks PASS; MDT parser128 refusal/geometry checks PASS.
+- Whole actual driver-0002 COFF and MachO builds pass generalregs/frame1024.
+ 83926016B SHA2e579cf16daa434ce5102cde7263e4432b69df7370d71d0cf9c8bf2024cbafe8.
+  All148 source/build inputs rehashed and match. macOS dataless old inputs
+  temporarily blocked verification/compilation; exact Git blobs and the new
+  private bundle/original decoded FV restored identical data. No new firmware
+  source or device operation was used; see private filesystem-repair records.
+  Evidence: research/polaris/uefi-ios-0189/wifi/mss-stage-0001/proof-0001.json.
+  This is a driver build, NOT a qualified FFS/image/helper: enlarged bundled
+  data still needs real packaging/resource-limit review before any boot.
+- NEXT actual MBA secure assignment over the staged allocation, then the
+  persistent owner/power/MSS path. Own pil_mss_reset_load_mba assigns HLOS3
+  ->MSS15 RW before pil_mss_reset; metadata assignment follows MBA-ready.
+  Own proxy needs CX/MX/MSS corner0x181, XO/PRNG, AOP and active clocks;
+  four Wi-Fi VRMs are a separate lifetime. Do not rebase old200ms/50ms scopes.
+  No CI/USB/boot/session or partition write. Five gates and scan/join/IP/DNS/
+  data unfinished; goal ACTIVE. Last15min update16:51Z, next17:06Z.
+
 ### Continuous Wi-Fi milestone — 2026-11-04: actual independent MSS allocations
 
 - Metadata milestone is commit89414ed. New pmme/pmmn uses the actual incoming

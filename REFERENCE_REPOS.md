@@ -14,6 +14,18 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+## Own staged MBA and metadata (0189, 2026-11-04)
+
+Own pil_mss_reset_load_mba copies MBA before HLOS3->MSS15 RW and reset;
+own metadata authentication uses separate page-rounded storage. The actual
+UEFI parent now optionally copies verified own MBA/MDT into its new retained
+allocations with per-page AT/readback/CIVAC, before any secure or power action.
+Own firmware parser and private data bundle preserve all28 relocatable modem
+segments for the next loader; no borrowed carveout/firmware/DT pointer is used.
+88 software scenarios, independent codec and both native parent formats pass.
+References remain comparative only; physical packaging, secure/power lifetime
+and MSS/GLINK/WLFW are not established by staging. See current NOTES/evidence.
+
 ## Own independent MSS allocations (0189, 2026-11-04)
 
 Own MDT has28 relocatable loadable segments, span120MiB, first alignment1MiB.

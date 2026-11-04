@@ -15,6 +15,12 @@
 #ifndef EFI_XNU_MSS_MEMORY_AVAILABLE
 #define EFI_XNU_MSS_MEMORY_AVAILABLE 0
 #endif
+#ifndef EFI_XNU_MSS_STAGING_AVAILABLE
+#define EFI_XNU_MSS_STAGING_AVAILABLE 0
+#endif
+#if EFI_XNU_MSS_STAGING_AVAILABLE && !EFI_XNU_MSS_MEMORY_AVAILABLE
+#error "MSS staging requires actual MSS allocations"
+#endif
 #if EFI_XNU_MSS_MEMORY_AVAILABLE && !EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE
 #error "MSS memory requires the actual early memory parent"
 #endif
@@ -67,6 +73,9 @@ static uint8_t log_buffer[1048576];static uint64_t log_bytes;
 static volatile uint32_t log_overflow;
 #elif EFI_XNU_WIFI_REMOTE_MEMORY_AVAILABLE
 static uint8_t log_buffer[58720256];static uint64_t log_bytes;
+static volatile uint32_t log_overflow;
+#elif EFI_XNU_MSS_STAGING_AVAILABLE
+static uint8_t log_buffer[13631488];static uint64_t log_bytes;
 static volatile uint32_t log_overflow;
 #elif EFI_XNU_MSS_MEMORY_AVAILABLE
 static uint8_t log_buffer[12582912];static uint64_t log_bytes;
@@ -294,6 +303,11 @@ static struct pweh_result retained_wifi_memory;
 static struct pmmn_native mss_memory;
 static uint8_t mss_memory_digest[32];
 static uint32_t mss_retained_attempted,mss_retained_ok;
+#if EFI_XNU_MSS_STAGING_AVAILABLE
+#include "uefi-mss-stage.h"
+#include "uefi-mss-firmware-binding.h"
+static struct pmsi_result mss_stage;
+#endif
 #endif
 #endif
 #if EFI_XNU_WIFI_REMOTE_MEMORY_AVAILABLE
@@ -424,6 +438,13 @@ static void mss_memory_gop_evidence(void)
     pwtg_line(r,13,"MBA BASE",(uint32_t)(m->claim[1].requested>>32),(uint32_t)m->claim[1].requested);
     pwtg_line(r,14,"MDT BASE",(uint32_t)(m->claim[2].requested>>32),(uint32_t)m->claim[2].requested);
     pwtg_line(r,15,"RETAINED",mss_retained_attempted,mss_retained_ok);
+#if EFI_XNU_MSS_STAGING_AVAILABLE
+    if(mss_stage.unknown){
+        pwtg_line(r,0,"STAGE HOLD",mss_stage.attempted,mss_stage.error);
+        pwtg_line(r,1,"PAGE ASSET",mss_stage.pages,mss_stage.assets_complete);
+        pwtg_line(r,12,"SOURCE PAGE",mss_stage.source_pages[0],mss_stage.source_pages[1]);
+    }
+#endif
     (void)pwtg_draw(r);early_wifi_gop_raw();
 }
 #endif
@@ -600,6 +621,9 @@ static int new_original_unknown(void)
 #if EFI_XNU_MSS_MEMORY_AVAILABLE
     ||mss_memory.unknown||mss_memory.memory.unknown||(mss_retained_attempted&&!mss_retained_ok)
 #endif
+#if EFI_XNU_MSS_STAGING_AVAILABLE
+    ||mss_stage.unknown
+#endif
 #if EFI_XNU_WIFI_TERMINAL_GOP_DIAGNOSTICS
     ||terminal_gop.uncertain
 #endif
@@ -641,6 +665,10 @@ __attribute__((noreturn)) static void power_unknown_hold(void)
      * foreign method, cleanup, response or CPU/private restoration follows. */
 #if EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE
 #if EFI_XNU_MSS_MEMORY_AVAILABLE
+#if EFI_XNU_MSS_STAGING_AVAILABLE
+    if(mss_stage.unknown)mss_memory_gop_evidence();
+    else
+#endif
     if(mss_memory.unknown||mss_memory.memory.unknown||(mss_retained_attempted&&!mss_retained_ok))mss_memory_gop_evidence();
     else
 #endif
@@ -884,6 +912,9 @@ _Static_assert(sizeof(log_buffer)>=2*(sizeof(pwsp_record)+sizeof(pwrpt_record)+s
 #if EFI_XNU_MSS_MEMORY_AVAILABLE
     2*sizeof(mss_memory)+
 #endif
+#if EFI_XNU_MSS_STAGING_AVAILABLE
+    2*sizeof(mss_stage)+
+#endif
     1048576,
     "complete preparation/client/power/source raw must fit without truncation");
 #elif EFI_XNU_WIFI_CMDDB_STAGED_RO_AVAILABLE
@@ -1019,6 +1050,15 @@ static int prepare_boot(void *context)
     mss_retained_ok=pmmn_retained(&mss_memory,mss_memory_digest,&retained_wifi_memory);
     ram_report("RETAINED_MSS_MEMORY_ACCEPTED=",mss_retained_ok);
     if(!mss_retained_ok){original_service_unknown=1;power_unknown_hold();}
+#if EFI_XNU_MSS_STAGING_AVAILABLE
+    int stage_ok=pmsi_stage(&mss_stage,&mss_memory,mss_memory_digest,&retained_wifi_memory,
+        pmsf_blob,PMSF_BLOB_BYTES,pmsf_assets,PMSF_ASSETS);
+    ram_report("MSS_STAGE_ACCEPTED=",stage_ok);
+    ram_report("MSS_STAGE_RAW_V1_BYTES=",sizeof(mss_stage));
+    ram_text("MSS_STAGE_RAW_V1_BEGIN\r\n");ram_hex((const void*)&mss_stage,sizeof(mss_stage));
+    ram_text("MSS_STAGE_RAW_V1_END\r\n");
+    if(!stage_ok){original_service_unknown=1;power_unknown_hold();}
+#endif
 #endif
 #endif
 #if EFI_XNU_WIFI_CACHE_AVAILABLE

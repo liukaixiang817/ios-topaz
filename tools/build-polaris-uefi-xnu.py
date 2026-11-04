@@ -473,10 +473,13 @@ def main():
     ap.add_argument('--wifi-power-four-vrm-roundtrip',action='store_true',help='default-OFF independent fresh sixteen-field own WiFi VRM READ, ordered voltage/enable raise and reverse exact saved restore; one original combined interval and full CPU/source/private retirement, no ARC transaction or MSS/radio')
     ap.add_argument('--wifi-early-memory',action='store_true',help='default-OFF incoming UEFI independent retained MSA/RMTFS claims; original Core checks, no late remote-memory path, secure assignment or radio startup')
     ap.add_argument('--mss-memory',action='store_true',help='default-OFF independent modem120MiB, MBA1MiB and own metadata12KiB allocations after early MSA/RMTFS; retains all claims, no target access or remote startup')
+    ap.add_argument('--mss-firmware-directory',type=Path,help='default-OFF embed already extracted verified own firmware and stage MBA/metadata into actual independent allocations; no secure assignment or remote start')
     ap.add_argument('--wifi-irq-provider-directory',type=Path,help='exact original Timer/GIC/CPU PEs for the explicit early-memory profile; inert binding input')
     a=ap.parse_args();r=Path(__file__).resolve().parents[1]
     if a.mss_memory and not a.wifi_early_memory:
         ap.error('MSS memory requires the physical --wifi-early-memory parent')
+    if a.mss_firmware_directory and not a.mss_memory:
+        ap.error('MSS firmware staging requires --mss-memory')
     if bool(a.wifi_irq_provider_directory)!=a.wifi_early_memory or (a.wifi_early_memory and
         (not a.wifi_power_four_vrm_roundtrip or a.test_qemu)):
         ap.error('early memory requires the full physical four-VRM scope and exact original IRQ-provider directory; no QEMU substitution')
@@ -760,6 +763,14 @@ def main():
         ap.error('selected application requires a complete disk identity')
     if a.chain_app_manifest and (not a.disk_guid or a.efi_application):ap.error('chain wrapper requires disk identity and no --efi-application')
     out=a.output.resolve();out.mkdir(parents=True,exist_ok=False)
+    mss_firmware=None;mss_inputs=[]
+    if a.mss_firmware_directory:
+        spec=importlib.util.spec_from_file_location('polaris_mss_firmware',r/'tools/polaris-mss-firmware.py')
+        module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+        mss_firmware=module.package(a.mss_firmware_directory,out/'mss-firmware')
+        mss_inputs=['tools/polaris-mss-firmware.py','tools/polaris-mss-memory-codec.py','tools/polaris-mss-stage-codec.py',
+                    str((a.mss_firmware_directory.resolve()/'proof.json').relative_to(r))]
+        mss_inputs += [str((a.mss_firmware_directory.resolve()/name).relative_to(r)) for name in mss_firmware['source_files']]
     if early_irq_header:
         (out/'uefi-wifi-irq-source-binding.h').write_text(early_irq_header)
         (out/'wifi-irq-provider-binding.json').write_text(json.dumps(early_irq_metadata,indent=2)+'\n')
@@ -991,6 +1002,7 @@ def main():
 #define EFI_XNU_WIFI_REMOTE_MEMORY_AVAILABLE 0
 #define EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE {int(a.wifi_early_memory)}
 #define EFI_XNU_MSS_MEMORY_AVAILABLE {int(a.mss_memory)}
+#define EFI_XNU_MSS_STAGING_AVAILABLE {int(bool(a.mss_firmware_directory))}
 #define EFI_XNU_MSS_METADATA_BYTES 8412u
 #define EFI_XNU_WIFI_CPU_RO_ADMISSION {int(a.wifi_cpu_ro_admission)}
 #define EFI_XNU_WIFI_CPU_MASKED_RO_ADMISSION {int(a.wifi_cpu_masked_ro_admission)}
@@ -1129,6 +1141,10 @@ def main():
                  'tools/polaris-wled-mailbox.h']
     if shutdown_bridge:inputs.append('shim/polaris/runtime-quiesce.h')
     objects=[]
+    if a.mss_memory:inputs+=['tools/polaris-mss-memory-codec.py']
+    if mss_firmware:
+        inputs+=mss_inputs
+        flags+=['-I'+str(out/'mss-firmware'),'-I'+str(r/'shim/polaris')]
     if a.wifi_early_memory:
         inputs+=['tools/polaris-uefi-irq-provider-identity.py','tools/polaris-wifi-early-codec.py',*early_irq_inputs]
     for source in sources:
@@ -1144,6 +1160,12 @@ def main():
                 if path.is_relative_to(out):continue # generated bindings recorded separately
                 if not path.is_relative_to(r):raise ValueError('untracked external early-profile source: '+str(path))
                 inputs.append(str(path.relative_to(r)))
+    if mss_firmware:
+        obj=out/'mss-firmware.obj'
+        p=subprocess.run(['/usr/bin/clang','--target=aarch64-unknown-windows','-c',str(out/'mss-firmware/mss-firmware.S'),'-o',str(obj)],capture_output=True)
+        (out/'mss-firmware-compile.log').write_bytes(p.stdout+p.stderr)
+        if p.returncode:raise RuntimeError('own firmware data object compile failed')
+        objects.append(str(obj))
     application=a.test_qemu or a.efi_application
     image=out/('PolarisXnuTest.efi' if a.test_qemu else 'PolarisIos.efi' if application else 'PolarisChainDxe.efi' if chain else 'PolarisXnuDxe.efi')
     env=dict(os.environ,ZIG_GLOBAL_CACHE_DIR=str(out/'zig-global'),ZIG_LOCAL_CACHE_DIR=str(out/'zig-local'))
@@ -1970,6 +1992,16 @@ def main():
             mss_memory_physical_candidate_ready=False,
             original_GCD_new_scope_RAM_log_capacity=12582912,
             wifi_CPU0_resources_firmware_RAM_log_capacity=12582912)
+    if mss_firmware:
+        manifest.update(mss_staging=True,mss_staging_default_OFF=True,mss_firmware=mss_firmware,
+            mss_firmware_generated_inputs={p.name:sha(p) for p in (out/'mss-firmware').iterdir()},
+            mss_stage_assets=['MBA','metadata'],mss_stage_target_pages=259,
+            mss_stage_raw_format='MSS_STAGE_RAW_V1',mss_stage_raw_bytes=91656,
+            mss_stage_source_AT_hash_before_target_write=True,mss_stage_per_page_AT_readback_CIVAC=True,
+            mss_stage_secure_assignment=False,mss_stage_modem_segments_loaded=False,mss_stage_remote_start=False,
+            mss_memory_target_access=True,mss_stage_physical_candidate_ready=False,
+            original_GCD_new_scope_RAM_log_capacity=13631488,
+            wifi_CPU0_resources_firmware_RAM_log_capacity=13631488)
     (out/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
     print(json.dumps({k:manifest[k] for k in ['artifact','sha256','bytes','QEMU_variant','device_execution_tested']}))
 

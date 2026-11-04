@@ -18,6 +18,12 @@ static int mss_restore(void*,struct pgcd_fp_guard*);
 static struct pmmn_native*mss;
 static struct pweh_result*held;
 static struct pweh_input held_input;
+#ifndef PMMN_TEST_ARENA_BYTES
+#define PMMN_TEST_ARENA_BYTES 0x100000
+#endif
+#ifndef PMMN_TEST_IMAGE_BYTES
+#define PMMN_TEST_IMAGE_BYTES 0x80000
+#endif
 static uint8_t*mss_digest;
 static unsigned mss_fault,mss_trigger,mss_calls,mss_maps,mss_allocs,mss_stride;
 _Static_assert(sizeof(struct pmmn_native)<0x1e000,"fixture bounds before digest/native flag");
@@ -61,7 +67,7 @@ static void mss_emit(struct pwea_map*m,unsigned*count,unsigned type,uint64_t bas
 static efi_status pmmn_test_map(struct efi_system*system,struct pwea_map*m)
 {
     CHECK(system==s&&m==&mss->memory.map[mss_maps]);mss_calls++;mss_maps++;
-    unsigned count=0;mss_emit(m,&count,3,(uintptr_t)arena,0x100000);
+    unsigned count=0;mss_emit(m,&count,3,(uintptr_t)arena,PMMN_TEST_ARENA_BYTES);
     mss_emit(m,&count,2,UINT64_C(0x180000000),0x10000000);
     struct pwmc_range range[5];unsigned ranges=2+mss_allocs;
     for(unsigned k=0;k<2;k++)range[k]=(struct pwmc_range){early->memory.claim[k].requested,early->memory.claim[k].bytes};
@@ -99,7 +105,7 @@ static efi_status pmmn_test_allocate(struct efi_system*system,uint64_t pages,uin
 static efi_status pweh_test_map(struct efi_system*system,struct pwea_map*m)
 {
     CHECK(system==s&&m==&held->map);
-    emit_descriptor(m->data,3,(uintptr_t)arena,0x100000);
+    emit_descriptor(m->data,3,(uintptr_t)arena,PMMN_TEST_ARENA_BYTES);
     emit_descriptor(m->data+40,2,UINT64_C(0x180000000),0x10000000);
     for(unsigned k=0;k<2;k++)emit_descriptor(m->data+80+40*k,2,early->memory.claim[k].requested,early->memory.claim[k].bytes);
     for(unsigned k=0;k<3;k++)emit_descriptor(m->data+160+40*k,2,mss->memory.claim[k].requested,mss->memory.claim[k].bytes);
@@ -109,7 +115,7 @@ static efi_status pweh_test_map(struct efi_system*system,struct pwea_map*m)
 }
 static void mss_setup(unsigned f,unsigned at,unsigned stride)
 {
-    setup(0,0);self->bytes=0x80000;CHECK(run());mss=(void*)(arena+0x60000);mss_digest=arena+0x7e000;
+    setup(0,0);self->bytes=PMMN_TEST_IMAGE_BYTES;CHECK(run());mss=(void*)(arena+0x60000);mss_digest=arena+0x7e000;
     pweh_digest(early,sizeof(*early),mss_digest);
     mss_fault=f;mss_trigger=at;mss_calls=mss_maps=mss_allocs=0;mss_stride=stride;
 }
