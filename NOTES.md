@@ -44,6 +44,33 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): continuous CPU interval
+
+- Modem RMB authentication milestone is commita314cce. New default-OFF pmsc
+  consumes the actual retained map, allocation, staging and completed MBA
+  assignment records; independent180s whole interval, never the old200ms
+  private-owner ticket. Normal entry must still match the fresh retained map.
+- Saves FP, masks own IRQ/FIQ/Group1, checks seven peers OFF, verifies own Core
+  source and binds records. Every live check requires the current Core map key,
+  TPL4, SMM/depth/busy0 and all three released locks, stable CPU/translation
+  registers and input slots. A map change between normal entry and masking
+  refuses before the first peer call. No original provider executes while held.
+- Only an UNUSED interval can close: second seven-peer/source check then exact
+  FP/mask restoration. Any power/secure/remote/DMA effect permanently forbids
+  this unused-close path. Full typed retirement and current DRV2/GCD/QMP
+  ownership remain required; CPU exclusion does not supply those permissions.
+-147 software scenarios/167975 checks PASS ASan/UBSan, protected MBA/descriptor,
+  all14 peer fault positions, architecture faults, map/root changes, stale or
+  expired entry, checkpoint capacity and effect cleanup refusal. Allocation
+  fixture now updates own Core map key like its software GetMap producer;
+ 7256 allocation checks PASS. Full native COFF/MachO exports PASS, generalregs
+  and frame1024. Evidence:mss-cpu-owner-0001/proof-0001.json.
+- NEXT real modem segment copy/cache and continuous source/resource qualifier,
+  actual parent registration/retirement, then native WLAN. This module is OFF
+  and unregistered. No phone query, USB, CI, image or whole-model run.
+  Execution2/5; this step plus3..5 remain. Goal ACTIVE. Last15min18:35Z
+  (05:35 Australia/Melbourne), next18:50Z (05:50 local).
+
 ### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): modem RMB authentication
 
 - Whole modem assignment profile is commit4ece64e. New pmim consumes actual

@@ -117,7 +117,8 @@ static efi_status pweh_test_map(struct efi_system*system,struct pwea_map*m)
     for(unsigned k=0;k<3;k++)emit_descriptor(m->data+160+40*k,2,mss->memory.claim[k].requested,mss->memory.claim[k].bytes);
     emit_descriptor(m->data+280,2,held->payload,held->payload_bytes);
     emit_descriptor(m->data+320,2,held->log,held_input.log_bytes);
-    m->map.bytes=360;m->map.stride=40;m->map.key=100;m->map.version=1;return 0;
+    m->map.bytes=360;m->map.stride=40;m->map.key=100;m->map.version=1;
+    put(core+0x1cdb0,m->map.key,8);return 0;
 }
 static void mss_setup(unsigned f,unsigned at,unsigned stride)
 {
