@@ -72,12 +72,18 @@ static int channel_read_at(struct pmrd_at*t)
 }
 static void channel_write_at(struct pmni_translation*t)
 {
+#ifdef PMSX_TEST_AT_HOOK
+    PMSX_TEST_AT_HOOK(t);
+#endif
     if(t->page<PMSQ_BASE||t->page>=PMSQ_BASE+PMSQ_BYTES)return;
     t->read_par=t->write_par=UINT64_C(0x4400000000000b00)|t->page;
     if(channel&&channel->pending&&channel_fault==2)t->write_par|=1;
 }
 static int channel_raw(const struct pmni_command*c,unsigned*out)
 {
+#ifdef PMSX_TEST_RAW_HOOK
+    int handled=PMSX_TEST_RAW_HOOK(c,out);if(handled>=0)return handled;
+#endif
     if(!channel_lock)return -1;
     if(c->address==PMSL_ADDRESS){
         if(c->kind==PMNI_READ)*out=token;

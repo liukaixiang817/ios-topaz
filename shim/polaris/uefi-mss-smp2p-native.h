@@ -15,7 +15,11 @@ struct pmsy_state {
     uint8_t header[16],out[340],in[340],again[340];
     uint32_t attempted,unknown,error,phase,polls,complete;
     uint8_t digest[32];uint8_t current_out[340],current_in[340];uint32_t checks;
+    uint64_t stopping; /* Actual later shutdown owner, outside negotiation digest. */
 };
+#if defined(EFI_XNU_MSS_SHUTDOWN_NATIVE_AVAILABLE) && EFI_XNU_MSS_SHUTDOWN_NATIVE_AVAILABLE
+static inline int pmsy_stop_current(struct pmsy_state*,struct pmsx_state*);
+#endif
 static inline int pmsy_fail(struct pmsy_state*s,unsigned error)
 {s->unknown=1;if(!s->error)s->error=error;if(s->channel)pmsx_fail((void*)(uintptr_t)s->channel,5);return 0;}
 static inline int pmsy_live(struct pmsy_state*s)
@@ -112,6 +116,13 @@ static inline int pmsy_current(struct pmsy_state*s,struct pmsx_state*x)
     uint8_t hash[32];pweh_digest(s,offsetof(struct pmsy_state,digest),hash);
     if(!pgcd_equal(hash,s->digest,32)||!pmsy_read(s,x->item[0].data,s->current_out,340)||
        !pmsy_read(s,s->in_offset,s->current_in,340))return pmsy_fail(s,5);
+    if(s->stopping){
+#if defined(EFI_XNU_MSS_SHUTDOWN_NATIVE_AVAILABLE) && EFI_XNU_MSS_SHUTDOWN_NATIVE_AVAILABLE
+        if(!pmsy_stop_current(s,x))return pmsy_fail(s,5);s->checks++;return 1;
+#else
+        return pmsy_fail(s,5);
+#endif
+    }
     struct pms_view in;
     if(!pgcd_equal(s->current_out,s->out,340)||!pms_parse(s->current_in,1,&in)||in.index!=s->in_index||
        in.flags!=s->in_flags||(in.value&9))return pmsy_fail(s,5);

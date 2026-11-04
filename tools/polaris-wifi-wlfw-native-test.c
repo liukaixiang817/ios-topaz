@@ -90,7 +90,10 @@ static void wlan_setup(unsigned fault)
     wlan_fault=fault;wlan_zeroes=wlan_requests=wlan_ready_requests=wlan_rounds[0]=wlan_rounds[1]=0;wlan_scenarios++;
     CHECK(pmwa_begin(wlan,service));
 }
-int main(int argc,char**argv)
+#ifndef PMWA_TEST_ENTRY
+#define PMWA_TEST_ENTRY main
+#endif
+int PMWA_TEST_ENTRY(int argc,char**argv)
 {
     CHECK(argc==8);sm_original=malloc(PWFI_IMAGE_BYTES);sm_shadow=malloc(PMSQ_BYTES);rmtfs_shadow=malloc(0x202000);
     memory=aligned_alloc(4096,PNV_BYTES);CHECK(sm_original&&sm_shadow&&rmtfs_shadow&&memory);

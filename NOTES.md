@@ -44,6 +44,30 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): native normal STOP/ACK/halt/reset
+
+- WLFW/MSA startup is commit3eeb504. New default-OFF pmnd consumes that actual
+  ready client plus the same native SMP2P/channel/CPU epoch. It requires fresh
+  ERROR_READY without stale STOP ACK, issues actual STOP/readback/doorbell,
+  then observes ACK before three AXI halts and the own14-event reset pulse.
+- SMP2P now admits a unique typed stopping owner. Only its actual issued STOP
+  word and original named entries may change; RMTFS remains live while waiting
+  for ACK, then transport is frozen. No original provider, replay, CPU return,
+  clock/power retirement, DMA-retired claim, VMID handback or free is implied.
+- Complete actual startup plus stop composition ASan/UBSan PASS7 scenarios /
+  8969985 checks: normal path with RMTFS request during ACK wait, ACK timeout,
+  nonidle AXI, uncertain reset store, AT failure, remote name mutation and stale
+  initial ACK. Failures retain owner/exposure and refuse retry. Initial fixture
+  reused a poisoned stale-ACK epoch; corrected by giving it a separate startup,
+  preserving the production refusal. Full native COFF/MachO generalregs/frame
+  1024 PASS; WLFW native regression5/5723102 PASS. Evidence:
+  mss-shutdown-native-0001/proof-0001.json. No phone/USB/CI/push/boot performed.
+- NEXT actual resource-retirement continuation (six clocks/proxy/supplies/AOP),
+  secure permission return and whole-parent/runtime handoff, then CE/ath10k.
+  Unregistered new adapters are not a boot candidate. Execution2/5: finish
+  current step plus3 following. Last15min23:34Z/10:34 Melbourne; next23:49Z/10:49.
+  Goal ACTIVE; continue until actual scan/join/IP/DNS/data work.
+
 ### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): native WLFW/MSA activation
 
 - Native RMTFS is commit7ea48c9. New own WLFW client follows ICNSS register20,
