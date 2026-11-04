@@ -9,8 +9,14 @@
 #ifndef EFI_XNU_MSS_NATIVE_IO_AVAILABLE
 #define EFI_XNU_MSS_NATIVE_IO_AVAILABLE 0
 #endif
+#ifndef EFI_XNU_MSS_RAIL_IO_AVAILABLE
+#define EFI_XNU_MSS_RAIL_IO_AVAILABLE 0
+#endif
 #if EFI_XNU_MSS_NATIVE_IO_AVAILABLE && !defined(POLARIS_EFI_TEST_QEMU)
 #include "../../tools/polaris-mss-metadata.h"
+#if EFI_XNU_MSS_RAIL_IO_AVAILABLE
+#include "../../tools/polaris-mss-rail-request.h"
+#endif
 enum pmni_kind {PMNI_READ=1,PMNI_WRITE,PMNI_STORE_ORDER,PMNI_FULL_ORDER};
 struct pmni_command {uint64_t address;uint32_t kind,value;};
 struct pmni_arch {
@@ -87,6 +93,17 @@ static inline int pmni_allowed(const struct pmni_command*c)
     if(c->kind==PMNI_STORE_ORDER||c->kind==PMNI_FULL_ORDER)return !c->address&&!c->value;
     if(c->kind!=PMNI_READ&&c->kind!=PMNI_WRITE)return 0;
     if(c->kind==PMNI_READ&&c->value)return 0;
+#if EFI_XNU_MSS_RAIL_IO_AVAILABLE
+    /* Separate retained-request adapter below further restricts this to its
+     * exact pending event and selected TCS. IRQ enable/type are never writes. */
+    if(c->kind==PMNI_READ&&pwrr_readable(c->address))return 1;
+    if(c->address==PWRSC_BASE+8)return c->kind==PMNI_WRITE&&c->value&&
+        c->value<=128&&!(c->value&(c->value-1));
+    if(c->address>=PWRSC_BASE&&c->address<PWRSC_BASE+8*PWRSC_STRIDE&&!(c->address&3)){
+        unsigned off=(unsigned)(c->address-PWRSC_BASE)%PWRSC_STRIDE;
+        if(c->kind==PMNI_WRITE&&(off==0x10||off==0x14||off==0x1c||off==0x30||off==0x34||off==0x38))return 1;
+    }
+#endif
     for(unsigned n=0;n<PMCK_CLOCKS;n++){
         struct pmck_clock clock=pmck_clock(n);
         if(c->address==clock.enable||(c->kind==PMNI_READ&&clock.status&&c->address==clock.status))return 1;
@@ -187,5 +204,22 @@ static inline int pmni_metadata(const struct pmmd_metadata*m,const struct pmmd_c
        !pmsr_equal(c,&m->event[m->events-1].command,sizeof(*c)))return 0;
     struct pmni_command access={c->address,c->kind,c->value};return pmni_access(opening,&access,r);
 }
+#if EFI_XNU_MSS_RAIL_IO_AVAILABLE
+static inline int pmni_rail(const struct pmrv_request*q,const struct pwrsc_event*e,
+    const struct pmni_arch*opening,struct pmni_result*r)
+{
+    if(!q||!e||!r||!pmsr_disjoint(q,sizeof(*q),r,sizeof(*r))||!q->epoch||
+       !pmrv_input(q->resource,q->write,q->value)||q->io.error||q->io.unknown||q->io.finished||
+       !q->io.events||q->io.events>PWRSC_HISTORY||q->io.outstanding!=q->io.events||
+       !pmsr_equal(e,&q->io.history[q->io.events-1],sizeof(*e))||e->issued!=1||e->returned||e->unknown!=1||
+       e->phase!=q->io.phase||q->io.tcs>=8||!(q->io.active_mask&(1u<<q->io.tcs)))return 0;
+    uint64_t t=pwrsc_tcs(&q->io);
+    if(e->operation==2){if(!pmrv_writable(q,e->address,e->value))return 0;}
+    else if(e->operation!=1||!pwrr_readable(e->address)||
+        (e->address!=PWRSC_BASE&&e->address!=PWRSC_BASE+4&&(e->address<t||e->address>=t+PWRSC_STRIDE)))return 0;
+    struct pmni_command access={e->address,e->operation==2?PMNI_WRITE:PMNI_READ,e->operation==2?e->value:0};
+    return pmni_access(opening,&access,r);
+}
+#endif
 #endif
 #endif

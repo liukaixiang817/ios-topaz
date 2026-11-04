@@ -44,6 +44,47 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): retained supplies
+
+- MBA secure caller milestone is commit291e608. New pmrv single-request
+  engine completes one READ or WRITE with a fresh edge/IRQ/CMD0 completion,
+  ACK and full TCS RW restoration, while retaining the resource vote. Only
+  three own ARC and sixteen own VRM fields are readable; writes exclude
+  mode/headroom. No IRQ enable/type or extra restore trigger. Each request
+  retains its existing50ms finite bound; no old owner lifetime is renewed.
+- New pmsp lifecycle samples all19 saved fields, raises MX/MSS/CX and four
+  ICNSS voltage-before-enable requests, reads back each write, then HELD.
+  Saved higher requests stay higher. Only same-epoch completed stop/AXI/reset
+  and restoration of all6 active clocks admits return. Recheck all19 held
+  values before reverse writes, read back each, then verify all19 saved values.
+  Full cycle101 requests,22 resource writes. UNKNOWN never unwinds. Each
+  consumed complete request gets a scalar SHA256 evidence digest.
+- Separate default-OFF EFI_XNU_MSS_RAIL_IO_AVAILABLE native adapter admits
+  only the exact pending request event/selected TCS. Uses existing fresh
+  Device R/W AT/PAR restoration and per-access CPU0 masked architecture
+  checks; peer exclusion remains a parent prerequisite. Does NOT create a persistent owner or
+  register a parent/builder path. XO/PRNG/AOP remain mandatory missing inputs.
+- Sanitizer software tests PASS: request937 scenarios/2361653 checks;
+  supplies148 scenarios/967659 checks plus46960 actual software clock/stop
+  producer checks; native adapter2304 scenarios/615317 checks. Fail every
+  read/write delivery and every higher-level request; reject stale epoch,
+  incomplete ACK, unsupported saved values, changed held vote and early
+  release. Old MBA/native regression63161 checks PASS. COFF and MachO real
+  native exports pass generalregs/frame1024. No physical privileged operation.
+- Rechecked original NPA/RPMh interfaces against own PE and pinned public
+  QTI reference. Existing0188 snapshot has189 nodes; CX/MX/XO are unresolved
+  placeholders. RPMh resource+DRV updates overwrite, not per-client max
+  aggregation: a new firmware client alone does not hold a minimum voltage.
+  These are source/historical observations, never a current permission grant.
+  Private evidence: research/polaris/uefi-ios-0189/wifi/mss-power-0001/
+  proof-0001.json and provider-source-0001.json. Proprietary files stay ignored.
+- NEXT continuous native source/CPU/DRV2 owner plus XO/PRNG/AOP and actual
+  parent MSS startup. No new CI/USB/boot/session/helper or whole-model run.
+  FFS size/resource/admission/codec/full integration and all five safety gates
+  remain unfinished. Execution step2/5; finish this step, then3..5 remain.
+  Goal ACTIVE. Last15min17:21Z (04:21 local), next17:36Z (04:36 local).
+  Preserve old unowned remote-memory context_before hunk and .DS_Store.
+
 ### Continuous Wi-Fi milestone — 2026-11-04: actual staged MBA secure caller
 
 - Staging milestone is commit8d378f2. New default-OFF --mss-mba-share reaches
