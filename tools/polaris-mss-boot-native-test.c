@@ -21,10 +21,23 @@ static unsigned boot_fault,boot_trigger,boot_calls,boot_scenarios,boot_status,bo
 static uint32_t boot_debug,boot_sleep,boot_pdc,boot_alt,boot_restart,boot_image,boot_core,boot_command;
 static unsigned sleep_reads,fsm_reads,pbl_reads,mba_reads;
 static int boot_selected(void){return boot_owner&&boot_owner->pending&&boot_owner->pending==boot_trigger;}
-static void boot_arch_hook(struct pmni_arch*a){if(boot_selected()&&boot_fault==3)a->ttbr0^=4096;}
-static void boot_at_hook(struct pmni_translation*t){if(boot_selected()&&boot_fault==2)t->restored++;}
+static void boot_arch_hook(struct pmni_arch*a){
+#ifdef PMBN_TEST_ARCH_HOOK
+    PMBN_TEST_ARCH_HOOK(a);
+#endif
+    if(boot_selected()&&boot_fault==3)a->ttbr0^=4096;
+}
+static void boot_at_hook(struct pmni_translation*t){
+#ifdef PMBN_TEST_AT_HOOK
+    PMBN_TEST_AT_HOOK(t);
+#endif
+    if(boot_selected()&&boot_fault==2)t->restored++;
+}
 static int boot_raw_hook(const struct pmni_command*c,unsigned*v)
 {
+#ifdef PMBN_TEST_RAW_HOOK
+    int handled=PMBN_TEST_RAW_HOOK(c,v);if(handled>=0)return handled;
+#endif
     if(!boot_owner||!boot_owner->pending)return -1;
     CHECK(!aop_owner->pending&&!clock_owner->pending&&!power->pending&&target_protected);boot_calls++;
     owner_delay+=boot_raw_delay;
@@ -84,7 +97,10 @@ static int boot_drive(void)
         uint64_t at=b->phase==2?b->reset.not_before:b->next_poll;advance_to(at);
     }CHECK(0);return 0;
 }
-int main(int argc,char**argv)
+#ifndef PMBN_TEST_ENTRY
+#define PMBN_TEST_ENTRY main
+#endif
+int PMBN_TEST_ENTRY(int argc,char**argv)
 {
     aop_test_open(argc,argv);boot_setup();CHECK(pmbn_begin(boot_owner,boot_records,aop_owner));
     int ready=boot_drive();if(!ready)fprintf(stderr,"boot refusal: error=%u phase=%u step=%u child_error=%u deliveries=%u raw=%u power=%u owner=%u\n",

@@ -44,6 +44,37 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): continuous native modem authentication
+
+- MBA startup is commit7f94812. New default-OFF/unregistered pmsn consumes
+  actual native MBA/power/clock producers, staged own metadata and all28 own
+  modem segments. Five private exact MP_ASSIGN profiles cover metadata out/
+  back, modem shared/exclusive and MBA return only after final auth4.
+- Actual native RMB metadata/auth IO, full120MiB copy/readback/zero/CIVAC and
+  protocol publication now compose in one continuous CPU owner. Each secure
+  continuation retains returned registers and current AT/CPU/peer evidence;
+  descriptor granules are excluded from all parent seals even after success.
+  Unknown paths retain CPU/resources and stop; no automatic cleanup/free.
+- ASan/UBSan PASS25 scenarios/3714654 checks: two full normal paths including
+  all5 four-round protected continuations, raw/cache/peer/source/CPU/time/
+  namespace/copy/status faults. Entire120MiB contents independently compared
+  before exclusive assignment. All30720 pages copied; assigned shadows denied.
+  First full-suite final output was lost in tool truncation; repeated once
+  with durable log, exit0. Full native COFF/MachO exports PASS generalregs/
+  frame1024. Evidence:mss-auth-native-0001/proof-0001.json.
+- Own retained BSS exceeds64MiB. Image ledger admits up to128MiB ONLY for
+  exact bound self LoadedImage, preserving64MiB foreign limit and exact self
+  metadata equality. ASan/UBSan ledger PASS203 scenarios/232670 checks,
+  including both added oversized foreign-image refusals.
+- These are software privileged leaves, not phone authentication or timing.
+  Actual100ms secure/120s auth/180s owner limits unchanged. Parent registration,
+  native SMEM/SFPB/GLINK/WLFW and full retirement/handoff still pending.
+  No device/USB query, CI/push or boot. Execution2/5: finish this step plus
+  steps3..5. Last15min21:22Z/08:22 Melbourne; next21:37Z/08:37. Goal ACTIVE.
+- NEXT integrate native shared-memory channel and exact SFPB ownership;
+  fix AOP/STOP shared-doorbell whitelist shadowing when native STOP is wired.
+  Keep unowned remote-memory.h context-before hunk and .DS_Store untouched.
+
 ### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): owned native MBA startup
 
 - Native AOP is commit6fa2d96. New default-OFF/unregistered pmbn consumes

@@ -1,7 +1,11 @@
 /* Actual current producers and actual native resource caller. Device/SMC
  * leaves remain software; original firmware/DB are inert fixture DATA. */
+#ifndef PMMN_TEST_ARENA_BYTES
 #define PMMN_TEST_ARENA_BYTES 0x4000000
+#endif
+#ifndef PMMN_TEST_IMAGE_BYTES
 #define PMMN_TEST_IMAGE_BYTES 0x3fc0000
+#endif
 #define PMDC_TEST_ENTRY unused_cmddb_suite
 #include "polaris-mss-cmddb-test.c"
 #define EFI_XNU_MSS_NATIVE_IO_AVAILABLE 1

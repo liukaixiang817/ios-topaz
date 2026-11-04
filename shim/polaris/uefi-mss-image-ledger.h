@@ -139,7 +139,11 @@ static inline int pmli_capture(struct pmli_ledger*r,struct pmsc_owner*o)
             for(unsigned j=0;j<p->images;j++)if(i->handle.address==p->image[j].handle.address||
                 i->loaded.address==p->image[j].loaded.address)return pmli_fail(r,5);
             struct efi_loaded image;pgcd_copy(&image,i->loaded.raw,sizeof(image));uint64_t base=(uintptr_t)image.base;
-            if(image.revision!=0x1000||(uintptr_t)image.system!=e->system||!image.bytes||image.bytes>0x4000000||(base&4095)||
+            /* Full MSS retained journals/copy evidence can grow our own BSS.
+             * Only the exact already-bound self LoadedImage gets128MiB;
+             * foreign images keep64MiB and self equality remains mandatory. */
+            uint64_t limit=i->loaded.address==e->image_address?UINT64_C(0x8000000):UINT64_C(0x4000000);
+            if(image.revision!=0x1000||(uintptr_t)image.system!=e->system||!image.bytes||image.bytes>limit||(base&4095)||
                (image.code_type!=1&&image.code_type!=3&&image.code_type!=5)||
                (image.data_type!=2&&image.data_type!=4&&image.data_type!=6)||
                !pmli_range(h,base,image.bytes,image.code_type,image.data_type))return pmli_fail(r,6);

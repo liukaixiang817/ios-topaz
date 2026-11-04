@@ -101,7 +101,7 @@ int PMLI_TEST_ENTRY(int argc,char**argv)
     }
     image_setup();image_fault=8;image_trigger=native_count/2+1;
     CHECK(!image_run()&&ledger->unknown&&!ledger->complete);
-    for(unsigned fault=0;fault<16;fault++){
+    for(unsigned fault=0;fault<18;fault++){
         image_setup();
         switch(fault){
         case 0:put(image_heap+0x100,0,8);break;
@@ -120,6 +120,8 @@ int PMLI_TEST_ENTRY(int argc,char**argv)
         case 13:put(image_heap+0x1018,(uintptr_t)image_heap+0x1300,8);break;
         case 14:put(image_heap+0x1038,mss->memory.claim[1].requested,8);break;
         case 15:owner->effects=1;break;
+        case 16:put(image_heap+0x1580+72,0x4001000,8);break;
+        case 17:put(image_heap+0x1580+72,0x8000000,8);break;
         }
         CHECK(!image_run()&&ledger->unknown&&!ledger->complete);
     }
