@@ -108,6 +108,123 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
+- NEW0189 latest OWN-RESULT EFFECTS milestone, 2026-11-04: published e4b4
+  SOFTWARE original Map peer wrote data[8192], outside declared8192B capacity
+  but inside retained65536B RAW, then completed PCMP/fresh graph/outer FP.
+  Original697392B baseline/source/log preserved. Constructed SOFTWARE only,
+  not a phone firmware overrun/UAF/owner or original-FW execution observation.
+  This new block supersedes older0189 latest/current claims only for its own
+  source. No old proof/RAW/schema/SHA/timestamp is edited or requalified.
+- Real ACTIVE pcmp_arch/save/restore/map/order/headerAT now seal all356688B
+  of their own resident result except the actual leaf output object(s), at
+  the same8 existing callback returns. Original304B control hash is compared
+  FIRST, before own-result comparison and any returned-source pointer follow.
+  Arch permits only the actual before/after/final104B argument; FP the actual
+ 176B guard object, AT the actual56B object, order no result output. Existing
+  semantic FP/AT/arch guards still validate these objects. Map is bound to
+  the real own map/data pointers, permits ONLY36B status/bytes/key/stride/
+  version plus8192B data; issued/returned/valid and65536B backing tail remain
+  sealed. No returned capacity or record completion self-qualifies the call.
+- New own-result mismatch sets error9/UNKNOWN via cached real result, after
+  existing control error8 priority. Void order uses the existing sticky
+  common-record failure path, which already stops before source/native reads.
+  No ABI/RAW/version/new failure-record, callback/service/reader/context/
+  owner/permission flag. Current common is exact published5449fcbe; six genuine
+  routes/11 existing Maps and three cache Maps before FreePool remain. No
+  client close Map. Old guarded-relay booleans retain original semantics;
+  these are not new original-service C-return records. Actual leaf bytes,
+  partial state, already performed inner FP restore and poison are retained.
+  Outer FP is not guessed/restored after refusal; no postfailure sampling,
+  cleanup/free/retry. A write outside this own record or equal-after change
+  can escape this comparison: external effects, ABA/IRQ/owner/lifetime/precall
+  and wholecall qualification are still absent.
+- FINAL2292 ASAN/UBSAN SOFTWARE PASS377.83335879200604s: all11 genuine Maps,
+  8 boundaries x five disallowed shapes x11; selected object edges and every
+ 4096B boundary across356688B; leaf false returns, control-first priority,
+  all8 changed-result returns with host Core+graphpool PROT_NONE. No later
+  leaf counts or outer FP restore after refusal. Actual8KiB last-byte output
+  succeeds; changed-then-restored outside byte still PASSES, not physical ABA
+  evidence. All service/AT/FP/arch are peers; PE inert DATA. No originalFW,
+  native whole PWFC/PWSP/clientconstructor executes. Longjmp only models a
+  nonreturning terminal stop, not physical retirement. Host seconds are not
+  phone time or a lease. Final3 source/test bytes equal full0002/direct/
+  native/transitive snapshots where present; CURRENT absolute shim FIRST/-H.
+- New affected FULL ASAN/UBSAN, strictly SERIAL and all ENDED0:
+  current-map2341 PASS139.36040841700742s; dispatch167 PASS6.476757833035663s;
+  old control2879 PASS188.10994504200062s; timer336 PASS598.1336763750296s;
+  graph4553 PASS1687.7019128749962s; provider1488 PASS2266.2050583329983s;
+  events1275 PASS2564.995210666966s; cache-dispatch2885
+  PASS3320.805036500038s. Original cases and guards retained; do not add these
+  overlapping counts as unique cases or call them wholeconstructor models.
+- Unchanged common means allocator8487/producer1789/release771/images5141/
+  parentmap1452 default host ORIGINAL whole objects equal published e4b4
+  baseline under matching commands; no full rerun for these.474/models/CI
+  likewise not rerun. Explicit baseline-only VFS comparison does not replace
+  CURRENT headers; all current test/native invocations have no VFS overlay.
+  Four actualwholeparent/relay COFF+MachO/generalregs/maxframe1024 compiles
+  PASS. Relay export emits the new DATA hash and no MRS/MSR/SMC/AT; wholeparent
+  retains old PAR/FP/terminalmask stores and is not zero-write. OFF paired
+  matchingtarget PREPROCESSED bytes equal COFF640999/MachO640972, changed
+  header absent OFF include graph; no OFF binary or ON equality claim.
+- Independent Python struct/hashlib0004 checks8187360B normalarchive11 Maps
+  and42 x1100992B paired bundles. Every after-record byte OUTSIDE permitted
+  leaf outputs is rebuilt from before+explicit mutation; observed leaf output
+  spans are input DATA, not independently predicted firmware behavior. All40
+  failed complete356688B PCMP buffers rebuilt in NEW buffers; two successful
+  final PCMP and11normal/graph records checked for hashes/boundaries, not
+  every-byte normal/outer reconstruction. Both304B controls and failure leaf
+  counts compared; captured pointers are numeric DATA, never followed or
+  executed after return. Original RAW/objects/proofs/timestamps untouched.
+  Private decoder001 wrong unchanged capacity offset,002 overbroad positive
+  leafcount expectation,003 double inside-output mutation all remain;004
+  corrects only NEW expected-buffer assertions. Production guard unchanged.
+- Original full0001 fixture failed on graph_page identity before completion;
+  new explicit effects-fixture macro expects its actual current page relay.
+  Old default/provider fixture guards and production remain; full0002 passed.
+  Earlier outer common check and RAW remain their intermediate scope; the
+  near-leaf-tail-only draft was never executed. New final hash work is
+ 5689112 own-record input bytes/normalMap plus old4864B control hashes and
+  RAM branches; no new AT/arch/MRS/nativeflag/BS/GetMap/FreePool/provider/
+  IRQ/MMIO/SMC/sysreg call. No zero-work or wholecall walltime/hardware-fit
+  claim. FIRST virtual200ms, latestminimum, physical finitework, ARC/VRM/
+  release/producer/provider checks and full restore are not reduced, renewed,
+  reopened or rebased; no physical/virtual epoch mixing or IRQowner grant.
+- Private later-map-output-extent-0001/proof.json
+  SHAe8989422917c74890a7280dc89a0a993e32d680e2e1afc0ddb2e8a718e000ebc;
+  source-and-software-proof.json
+  SHAe653388a50014d194b1194e8572dfbfc02fea06dad0727a433376132bbf37c50.
+  Current map4a599f4faac041dbcc9bd35d6e14ce15ee8dc29f81688e400324f17f4c930514/
+  graphfixturecc1c7200a2a5ab528803c5af163a33e1d382039d7494cafb781468339571525f/
+  newtest517c4884f24bcd51aef131b97271f4f2e894059d59a237b76a6573a5d5075ed0.
+  Parent body remains ecdc5eb8; common/provider/timer/events production bodies
+  unchanged. All old schemas/offsets remain. Main REMOTE_MEMORY defaultOFF;
+  allocation consumer/builder/CLI/newexactprofile/resource remain unconnected.
+  All host/build/test jobs ENDED, no USB/native/originalPE/MMIO/SMC/newmodel/
+  CI/operationalcodec/image/payload/helper/freeze. NOTREADY; sound/camera STOP.
+- 最新真人汇报要求：每次定时任务回复都注明五关中完成了哪一关；保持
+  编号固定，列“已完成整关 / 本次推进 / 未完成”，局部测试或提交不算整关。
+  当前已完成整关：暂无；本次：第1关局部 own-result effects；第1—5关均未完成。
+  1=回调外部影响及调用前后来源验证；2=活跃分配/backing生命周期与MSA、RMTFS
+  两个独立内存claim；3=secure VMID/MPU、缓存、DMA停止交还及正常/UNKNOWN退出；
+  4=真实父流程/builder/codec/资源配置、受影响检查及两次串行整流程模型；
+  5=全新会话准入、冻结和新启动助手，达到下一次临时启动条件。
+  本轮回归仅支持第1关局部修复，不构成第4关完成。没有可信上机/WiFi日期。
+- NEXT: own-result8-return effect closure is DONE for this exact source;
+  do not recreate it,2292/42-pair decoder/affected checks/native/OFF or any
+  completed input walks/control304 seals. Continue real remaining external
+  callback source/effects/work, fresh postsource/release-backing lifetimes,
+  actual activeallocation exclusion and wholecall/preemption/fault/latency/
+  IRQowner/ABA/futurelease/precall. Full bytes/hash/emptyqueues/finitework grant
+  none of these. Keep six NEW actual source/caller/context/ticket/FIRSTopening;
+  no fake opened context, oldseed renamed current, expired relay, closedPGCD
+  borrowing or geometry guess. Then independent actual MSA/RMTFS claims,
+  cache/secureVMID/MPU/remoteDMAstop/handback/full normal+UNKNOWN retirement,
+  full changedparent/twoSERIAL wholeconstructormodels/newexactprofile/resource/
+  codec/currenttransition/freeze/ONEhelper before any PA publish/MSS/NVserve/
+  radio/device startup. PHONE remains only last independent0188 FASTBOOT
+  2026-11-02T10:05:37.496860Z, not current LIVE. No USB poll or human action
+  pending. Standing same-repo own source/text consent remains valid.
+
 - NEW0189 latest PUBLIC functional source
   a9c3d42b7b22250fec9435b8bfe1ef94d80462e7 is published by the SAME original
   directpush under actual continuing source/text consentce8ce4fd. Push ENDED0;

@@ -86,7 +86,7 @@ static int graph_map(void*o,struct efi_system*system,struct pgcd_map*m,void*out)
 }
 static int pcmp_parent_graph(struct pcmp_live*parent,int(*read_page)(struct ppli_at*))
 {
-#if defined(POLARIS_CURRENT_PROVIDER_FIXTURE)
+#if defined(POLARIS_CURRENT_PROVIDER_FIXTURE) || defined(POLARIS_CURRENT_RELAY_EFFECTS_FIXTURE)
     assert(read_page==current_fixture_page);
 #else
     assert(read_page==graph_page);

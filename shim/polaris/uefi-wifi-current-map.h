@@ -116,12 +116,35 @@ static inline int pcmp_stable(const struct pcmp_live*l)
 {return pcmp_source_prefix(l)&&!*l->input.native_flag&&pcmp_source_suffix(l);}
 /* The actual relay control is still on this caller's stack. Compare its
  * complete bytes after a callback before following any pointer it contains. */
+/* Hash only this resident result's bytes outside the exact output objects
+ * passed to one leaf. This closes own-record effects, not external RAM,
+ * callback source/lifetime, IRQ exclusion, ABA or future execution. */
+static __attribute__((noinline)) int pcmp_effect_digest(const struct pcmp_result*r,
+    size_t first,size_t first_bytes,size_t second,size_t second_bytes,uint8_t out[32])
+{
+    const size_t bytes=sizeof(*r);
+    if(first>bytes||first_bytes>bytes-first)return 0;
+    size_t end=first+first_bytes;
+    if(second<end||second>bytes||second_bytes>bytes-second)return 0;
+    const uint8_t*data=(const uint8_t*)r;struct pwfi_sha256 hash;pwfi_init(&hash);
+    for(size_t n=0;n<first;n++)pwfi_byte(&hash,data[n]);
+    for(size_t n=end;n<second;n++)pwfi_byte(&hash,data[n]);
+    for(size_t n=second+second_bytes;n<bytes;n++)pwfi_byte(&hash,data[n]);
+    pwfi_final(&hash,out);return 1;
+}
 static inline int pcmp_arch(void*opaque,struct pgcd_arch*a)
 {
     struct pcmp_live*l=opaque;if(!pcmp_stable(l))return 0;
-    struct pcmp_result*r=l->r;uint8_t before[32],after[32];ppli_sha(l,sizeof(*l),before);
-    int ok=l->original_io.arch(l->original_io.opaque,a);
+    struct pcmp_result*r=l->r;size_t offset;
+    if(a==&r->call.before)offset=offsetof(struct pcmp_result,call)+offsetof(struct pwmc_parent_map,before);
+    else if(a==&r->call.after)offset=offsetof(struct pcmp_result,call)+offsetof(struct pwmc_parent_map,after);
+    else if(a==&r->final_arch)offset=offsetof(struct pcmp_result,final_arch);
+    else return pcmp_fail(r,9);
+    uint8_t before[32],after[32],effects[32],effects_after[32];
+    if(!pcmp_effect_digest(r,offset,sizeof(*a),sizeof(*r),0,effects))return pcmp_fail(r,9);
+    ppli_sha(l,sizeof(*l),before);int ok=l->original_io.arch(l->original_io.opaque,a);
     ppli_sha(l,sizeof(*l),after);if(!pgcd_equal(before,after,32))return pcmp_fail(r,8);
+    if(!pcmp_effect_digest(r,offset,sizeof(*a),sizeof(*r),0,effects_after)||!pgcd_equal(effects,effects_after,32))return pcmp_fail(r,9);
     if(!pcmp_stable(l)||!ok)return 0;
     uint64_t opening=l->r->source_before.before.cpu.ticks;
     return opening&&a->cpu.ticks>=opening&&a->cpu.ticks-opening<=PGCD_FRESH_TICKS;
@@ -129,36 +152,56 @@ static inline int pcmp_arch(void*opaque,struct pgcd_arch*a)
 static inline int pcmp_save(void*opaque,struct pgcd_fp_guard*g)
 {
     struct pcmp_live*l=opaque;if(!pcmp_stable(l))return 0;
-    struct pcmp_result*r=l->r;uint8_t before[32],after[32];ppli_sha(l,sizeof(*l),before);
-    int ok=l->original_io.fp_save(l->original_io.opaque,g);
+    struct pcmp_result*r=l->r;if(g!=&r->call.fp)return pcmp_fail(r,9);
+    const size_t offset=offsetof(struct pcmp_result,call)+offsetof(struct pwmc_parent_map,fp);
+    uint8_t before[32],after[32],effects[32],effects_after[32];
+    if(!pcmp_effect_digest(r,offset,sizeof(*g),sizeof(*r),0,effects))return pcmp_fail(r,9);
+    ppli_sha(l,sizeof(*l),before);int ok=l->original_io.fp_save(l->original_io.opaque,g);
     ppli_sha(l,sizeof(*l),after);if(!pgcd_equal(before,after,32))return pcmp_fail(r,8);
+    if(!pcmp_effect_digest(r,offset,sizeof(*g),sizeof(*r),0,effects_after)||!pgcd_equal(effects,effects_after,32))return pcmp_fail(r,9);
     return pcmp_stable(l)&&ok;
 }
 static inline int pcmp_restore(void*opaque,struct pgcd_fp_guard*g)
 {
     struct pcmp_live*l=opaque;if(!pcmp_stable(l))return 0;
-    struct pcmp_result*r=l->r;uint8_t before[32],after[32];ppli_sha(l,sizeof(*l),before);
-    int ok=l->original_io.fp_restore(l->original_io.opaque,g);
+    struct pcmp_result*r=l->r;if(g!=&r->call.fp)return pcmp_fail(r,9);
+    const size_t offset=offsetof(struct pcmp_result,call)+offsetof(struct pwmc_parent_map,fp);
+    uint8_t before[32],after[32],effects[32],effects_after[32];
+    if(!pcmp_effect_digest(r,offset,sizeof(*g),sizeof(*r),0,effects))return pcmp_fail(r,9);
+    ppli_sha(l,sizeof(*l),before);int ok=l->original_io.fp_restore(l->original_io.opaque,g);
     ppli_sha(l,sizeof(*l),after);if(!pgcd_equal(before,after,32))return pcmp_fail(r,8);
+    if(!pcmp_effect_digest(r,offset,sizeof(*g),sizeof(*r),0,effects_after)||!pgcd_equal(effects,effects_after,32))return pcmp_fail(r,9);
     return pcmp_stable(l)&&ok;
 }
 static inline int pcmp_map(void*opaque,struct efi_system*s,struct pgcd_map*m,void*data)
 {
     struct pcmp_live*l=opaque;if(!pcmp_stable(l)||l->map_issued)return 0;
-    l->map_issued=l->r->map_issued=1;
-    struct pcmp_result*r=l->r;uint8_t before[32],after[32];ppli_sha(l,sizeof(*l),before);
-    int ok=l->original_io.map(l->original_io.opaque,s,m,data);
+    struct pcmp_result*r=l->r;if(m!=&r->call.map||data!=r->call.data)return pcmp_fail(r,9);
+    l->map_issued=r->map_issued=1;
+    const size_t first=offsetof(struct pcmp_result,call)+offsetof(struct pwmc_parent_map,map);
+    const size_t second=offsetof(struct pcmp_result,call)+offsetof(struct pwmc_parent_map,data);
+    uint8_t before[32],after[32],effects[32],effects_after[32];
+    /* The real phase3 leaf receives 8KiB in a retained 64KiB DATA object.
+     * Only its five metadata outputs and those 8KiB are leaf outputs; even
+     * issued/returned/valid and all unissued/padding/digest bytes stay sealed. */
+    if(!pcmp_effect_digest(r,first,offsetof(struct pgcd_map,issued),second,PGCD_MAP_CAP,effects))return pcmp_fail(r,9);
+    ppli_sha(l,sizeof(*l),before);int ok=l->original_io.map(l->original_io.opaque,s,m,data);
     ppli_sha(l,sizeof(*l),after);if(!pgcd_equal(before,after,32))return pcmp_fail(r,8);
-    if(!pcmp_stable(l))return 0;l->map_returned=l->r->map_returned=ok?1:0;return pcmp_stable(l)&&ok;
+    if(!pcmp_effect_digest(r,first,offsetof(struct pgcd_map,issued),second,PGCD_MAP_CAP,effects_after)||
+       !pgcd_equal(effects,effects_after,32))return pcmp_fail(r,9);
+    if(!pcmp_stable(l))return 0;l->map_returned=r->map_returned=ok?1:0;return pcmp_stable(l)&&ok;
 }
 static inline void pcmp_order(void*opaque)
 {
     struct pcmp_live*l=opaque;if(!pcmp_stable(l))return;
-    struct pcmp_result*r=l->r;uint8_t before[32],after[32];ppli_sha(l,sizeof(*l),before);
-    l->original_io.order(l->original_io.opaque);ppli_sha(l,sizeof(*l),after);
-    if(!pgcd_equal(before,after,32)){
-        (void)pcmp_fail(r,8);(void)pwmc_parent_fail(&r->call,PWMC_CONTEXT);
+    struct pcmp_result*r=l->r;uint8_t before[32],after[32],effects[32],effects_after[32];
+    if(!pcmp_effect_digest(r,0,0,sizeof(*r),0,effects)){
+        (void)pcmp_fail(r,9);(void)pwmc_parent_fail(&r->call,PWMC_CONTEXT);return;
     }
+    ppli_sha(l,sizeof(*l),before);l->original_io.order(l->original_io.opaque);ppli_sha(l,sizeof(*l),after);
+    unsigned error=!pgcd_equal(before,after,32)?8:
+        !pcmp_effect_digest(r,0,0,sizeof(*r),0,effects_after)||!pgcd_equal(effects,effects_after,32)?9:0;
+    if(error){(void)pcmp_fail(r,error);(void)pwmc_parent_fail(&r->call,PWMC_CONTEXT);}
 }
 static inline int pcmp_in_self(const struct efi_loaded*self,const volatile void*p,uint64_t bytes)
 {return pwmc_parent_in_image(self,(uintptr_t)p,bytes);}
@@ -174,9 +217,12 @@ static __attribute__((noinline)) int pcmp_post(struct pcmp_live*live,int(*page_r
     if(!pgcd_equal(call_digest,r->call.digest,32))return pcmp_fail(r,4);
     live->header_started=1;r->header_AT=(struct ppli_at){.page=r->payload,.native_issued=1,.native_returned=1};
     r->header_AT.native[0]=*in.native_flag;if(r->header_AT.native[0])return pcmp_fail(r,5);
-    uint8_t control[32],control_after[32];ppli_sha(live,sizeof(*live),control);
-    int translated=page_read(&r->header_AT);
+    uint8_t control[32],control_after[32],effects[32],effects_after[32];
+    if(!pcmp_effect_digest(r,offsetof(struct pcmp_result,header_AT),sizeof(r->header_AT),sizeof(*r),0,effects))return pcmp_fail(r,9);
+    ppli_sha(live,sizeof(*live),control);int translated=page_read(&r->header_AT);
     ppli_sha(live,sizeof(*live),control_after);if(!pgcd_equal(control,control_after,32))return pcmp_fail(r,8);
+    if(!pcmp_effect_digest(r,offsetof(struct pcmp_result,header_AT),sizeof(r->header_AT),sizeof(*r),0,effects_after)||
+       !pgcd_equal(effects,effects_after,32))return pcmp_fail(r,9);
     if(!pcmp_stable(live)||!translated||r->header_AT.page!=r->payload||r->header_AT.saved!=r->header_AT.restored||
        r->header_AT.issued!=1||r->header_AT.returned!=1||r->header_AT.par!=(UINT64_C(0xff00000000000b80)|r->payload)||
        r->header_AT.native_issued!=1||r->header_AT.native_returned!=1||r->header_AT.native[0]||r->header_AT.native[1]||

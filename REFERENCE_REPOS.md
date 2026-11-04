@@ -14,6 +14,35 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+## Own Polaris current-relay result effects (0189, 2026-11-04)
+
+The original published e4b4 SOFTWARE Map peer wrote the first byte beyond its
+8192-byte declared capacity inside the retained65536-byte RAW and was accepted
+through fresh graph/outer FP. This is a constructed peer observation, not phone
+firmware behavior. The active relay now closes the resident356688-byte result
+outside actual leaf output objects at its eight existing return boundaries,
+after its original304-byte control seal and before source follow. Map permits
+only36-byte metadata plus8192-byte DATA; no ABI or runtime RAW layout changed.
+
+2292 new ASAN/UBSAN cases and all affected2341/167/2879/336/4553/1488/1275/2885
+full suites passed strictly serially. Unaffected allocator/producer/release/
+images/parentmap original whole host objects equal published e4b4; four parent/
+relay native exports compile and OFF matchingtarget preprocessed pairs equal.
+Independent DATA0004 rebuilds the40 full failed PCMP records, taking actual
+leaf output spans as observed input and rebuilding every other after byte.
+The42 paired bundles/11 normal records do not qualify external effects,
+IRQ/ABA/owner/lifetime/precall or wholecall timing. Added own-record hash input
+is5689112 bytes per normalMap; old4864-byte controls and existing work remain.
+
+Private proof:0189/wifi/later-map-output-extent-0001/proof.json
+SHAe8989422917c74890a7280dc89a0a993e32d680e2e1afc0ddb2e8a718e000ebc;
+source/software SHAe653388a50014d194b1194e8572dfbfc02fea06dad0727a433376132bbf37c50.
+No reference clone, vendor/firmware byte or original PE executed or published.
+Main REMOTE_MEMORY defaultOFF, no new model/CI/codec/helper/freeze/USB/native
+startup. Five-gate reporting is now required: completed whole gates NONE;
+this is partial gate1 work, with gates1–5 still incomplete. Wi-Fi remains
+physically unstarted; sound/camera wait for real scan/join/IP/DNS/data.
+
 ## Dipper / SDM845 comparison (0109)
 
 The human requested this reference for display, touch, GPU, networking and its
