@@ -1,8 +1,18 @@
 /* Actual allocation -> retained -> stage control flow, software architecture
  * and cache leaves, real volatile writes/readback to guarded host RAM shadows. */
 #define PMMN_TEST_ENTRY unused_mss_memory_suite
+#ifndef PMMN_TEST_ARENA_BYTES
 #define PMMN_TEST_ARENA_BYTES 0x200000
+#endif
+#ifndef PMMN_TEST_IMAGE_BYTES
 #define PMMN_TEST_IMAGE_BYTES 0x180000
+#endif
+#ifndef PMSI_TEST_BLOB_BYTES
+#define PMSI_TEST_BLOB_BYTES 0x3e000
+#endif
+#ifndef PMSI_TEST_ASSETS
+#define PMSI_TEST_ASSETS 2
+#endif
 #include "polaris-mss-memory-test.c"
 #include <sys/mman.h>
 #include <unistd.h>
@@ -83,9 +93,12 @@ static void stage_setup(unsigned f,unsigned trigger_at)
     }
     memset(shadow,0xa5,0x104000);
     stage_fault=f;stage_at_trigger=trigger_at;stage_ats=stage_writes=stage_caches=stage_arches=0;
+#if defined(PMSI_TEST_PREPARE)
+    PMSI_TEST_PREPARE();
+#endif
 }
 static int stage_run(void)
-{return pmsi_stage(stage,mss,allocation_digest,held,blob,0x3e000,assets,2);}
+{return pmsi_stage(stage,mss,allocation_digest,held,blob,PMSI_TEST_BLOB_BYTES,assets,PMSI_TEST_ASSETS);}
 #ifndef PMSI_TEST_ENTRY
 #define PMSI_TEST_ENTRY main
 #endif

@@ -44,6 +44,36 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): actual modem copy/cache
+
+- Continuous CPU interval is commit880c4f6. New default-OFF pmlc consumes that
+  held interval, actual allocation/stage/MBA records, the fresh retained map,
+  pmim request and completed shared120MiB transaction. Validates all28 segments,
+  ordered25 modem assets, source hashes, live CPU/map key and transaction seals.
+  An older stage snapshot may remain immutable while a NEW retained snapshot
+  supplies current source/target ownership. No old owner lifetime is extended.
+- Authenticates all14687 source pages before any target store. Each of30720
+  target pages gets fresh R/W AT, actual volatile stores/readbacks, CIVAC/DSB
+  and CPU checks. Entire120MiB is initialized exactly once: filesz copied,
+  memsz tails and inter-segment holes zeroed. Per-segment copied SHA and full
+  bindings precede pmim_publish; advertised sum remains124977057, not bank span.
+-29 software scenarios/65883059 assertions PASS ASan/UBSan (most assertions
+  are individual zero-byte checks). Own private firmware used only as DATA.
+  Actual allocation/stage/MBA/CPU producers and real shared transaction policy
+  run with software privileged leaves; metadata/clock-ready inputs are explicit
+  fixtures, not a complete native-parent claim. MBA stays inaccessible; modem
+  is inaccessible before assignment/after exclusive, descriptor during SMC.
+  Translation/write/cache/source corruption, changed bindings, pending protocol,
+  post-exclusive entry and global deadlines refuse without segment publication.
+- Full COFF/MachO exports PASS generalregs/frame1024; existing payload staging
+ 857415 checks PASS after parameterizing only software fixture capacity/assets.
+  Evidence:mss-modem-copy-0001/proof-0001.json. Module is OFF/unregistered and
+  does not perform MMIO/SMC, final auth, MBA return or retirement.
+- NEXT continuous current GCD/DRV2/QMP resource qualification and native secure
+  caller/real parent integration, then WLAN. No phone/USB/CI/image/whole models.
+  Execution2/5; this step plus3..5 remain. Goal ACTIVE. Last15min18:35Z,
+  next18:50Z (05:50 Australia/Melbourne).
+
 ### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): continuous CPU interval
 
 - Modem RMB authentication milestone is commita314cce. New default-OFF pmsc
