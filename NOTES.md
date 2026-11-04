@@ -34,6 +34,34 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-04: early independent claims
+
+- Added a new default-OFF incoming-UEFI allocation producer and actual parent
+  call before payload/log allocation or native/radio startup. Five original
+  calls: Map, AllocateAddress MSA, Map, AllocateAddress RMTFS, Map. Independent
+  below4GiB claims retain2MiB MSA backing and2MiB+two4KiB RMTFS guards. Existing
+  own-DT exclusions and full semantic map delta checks apply. No FreePages,
+  secure assignment, remote exposure or owner flag. Last map replaces the
+  parent's older map snapshot so later consumers see both retained claims.
+- This deliberately changes the first-call architecture: first Map relies on
+  the true incoming UEFI Boot Services contract, like existing admission. It
+  does not borrow a closed PGCD context or retroactively qualify that call
+  using returned hashes. Later calls check fresh Core translations/hashes,
+  TPL/SMM, real BS/image bindings, CPU/FP state and full record integrity.
+  Complete early allocation is not proof of callback absence, secure VMID
+  ownership, remote lifetime or DMA safety. Physical candidate still disabled.
+-1110 ASAN/UBSAN protocol checks and708 actual-caller software-peer checks PASS;
+  original Core PE is inert hash input only. Six wholeparent COFF/MachO
+  EARLY_ON/REMOTE_ON/OFF compiles PASS; final caller changes recompiled both ON
+  targets successfully. OFF MachO objects equal previous payload milestone;
+  COFF differences are timestamp bytes only. No hardware execution or CI run.
+- Evidence: research/polaris/uefi-ios-0189/wifi/early-uefi-memory-0001/.
+  Previous milestone commit b0f081d. Five whole gates remain incomplete.
+  NEXT integrate explicit builder profile and independent RAW codec/layout,
+  then retained-claim consumer, resource checks and two serial affected models.
+  Wi-Fi scan/join/IP/data still unimplemented; active continuous goal remains.
+  Preserve unrelated pwmc_invoke context hunk and .DS_Store outside commits.
+
 ### Continuous Wi-Fi milestone — 2026-11-04: MSS stop ACK before AXI
 
 - Implemented existing-item SMP2P stop for own APPS428/MSS435: full340-byte

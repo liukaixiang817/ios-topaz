@@ -9,6 +9,12 @@
 #include "uefi-memory.h"
 #include "runtime-marker.h"
 #include "uefi-xnu-config.h" /* exact payload bytes/CRC, symbol offsets, board */
+#ifndef EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE
+#define EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE 0
+#endif
+#if EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE && (!EFI_XNU_WIFI_REMOTE_MEMORY_AVAILABLE || defined(POLARIS_EFI_TEST_QEMU))
+#error "Early WiFi memory needs its own qualified physical incoming-UEFI profile"
+#endif
 #if EFI_XNU_WIFI_REMOTE_MEMORY_AVAILABLE && (!EFI_XNU_WIFI_FOUR_VRM_AVAILABLE || !EFI_XNU_AUDIO_CLOCK_GCD_QUERY_AVAILABLE || !EFI_XNU_GCD_MMIO_QUERY_AVAILABLE || !EFI_XNU_WIFI_RESOURCES_AVAILABLE || EFI_XNU_WIFI_CPU_RO_ADMISSION || defined(POLARIS_EFI_TEST_QEMU))
 #error "Incoming parent map evidence requires the complete physical WiFi source scope"
 #endif
@@ -271,6 +277,10 @@ static int shutdown_status(void *,const uint8_t **,uint64_t *);
 #error "Incoming parent map evidence requires the new physical full WiFi parent scope"
 #endif
 #include "uefi-wifi-remote-memory.h"
+#include "uefi-wifi-early-native.h"
+#if EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE
+static struct pwea_native early_wifi_memory;
+#endif
 #include "uefi-wifi-current-map.h"
 #include "uefi-wifi-gcd-bootstrap.h"
 #include "uefi-wifi-current-graph.h"
@@ -483,6 +493,9 @@ static int new_original_unknown(void)
 #if EFI_XNU_WIFI_REMOTE_MEMORY_AVAILABLE
     ||incoming_parent_maps[0].unknown||incoming_parent_maps[1].unknown||ppli_record.unknown||
       current_payload_binding.unknown||current_private_unknown()||pbgi_cache_call.unknown||pbgi_seed.unknown||pbha_handles.unknown||pbhr_handles.unknown||pbhd_handles.unknown||pbhd_timer_handles.unknown||pbhi_handles.unknown||pbht_handles.unknown
+#endif
+#if EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE
+    ||early_wifi_memory.unknown||early_wifi_memory.memory.unknown
 #endif
 #if EFI_XNU_WIFI_TERMINAL_GOP_DIAGNOSTICS
     ||terminal_gop.uncertain
@@ -753,6 +766,9 @@ _Static_assert(sizeof(log_buffer)>=2*(sizeof(pwsp_record)+sizeof(pwrpt_record)+s
 #if EFI_XNU_WIFI_REMOTE_MEMORY_AVAILABLE
     3*(sizeof(incoming_parent_maps)+sizeof(ppli_record)+sizeof(current_private_maps)+sizeof(current_payload_binding)+sizeof(pbgi_cache_call)+sizeof(pbgi_seed)+sizeof(pbha_handles)+sizeof(pbhr_handles)+sizeof(pbhd_handles)+sizeof(pbhd_timer_handles)+sizeof(pbhi_handles)+sizeof(pbht_handles))+
     5*(sizeof(current_private_graphs)+sizeof(current_private_providers)+sizeof(current_private_timers)+sizeof(current_private_events))+
+#endif
+#if EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE
+    2*sizeof(early_wifi_memory)+
 #endif
     1048576,
     "complete preparation/client/power/source raw must fit without truncation");
@@ -1554,6 +1570,22 @@ static efi_status admission(void)
      * explicitly so subsequent firmware allocations cannot alias its pixels. */
     address=UINT64_C(0x9d400000);s=system_table->boot->allocate_pages(2,2,0x2400000/4096,&address);
     if((s&EFI_ERROR)||address!=UINT64_C(0x9d400000))return EFI_ERROR|9;
+#endif
+#if EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE
+    /* A new incoming allocation producer, not a later PGCD context. The
+     * ordinary bank is already claimed; payload/native/radio are not started.
+     * Its retained pages remain excluded by all later complete EFI maps. */
+    if(load_state||received||payload_count||payload||log_snapshot||wln_cpu_on_issued)return EFI_ERROR|3;
+    int early_ok=pwea_native_run(&early_wifi_memory,system_table,image,&wln_cpu_on_issued,POLARIS_RAM_BASE,POLARIS_RAM_SIZE);
+    ram_report("EARLY_WIFI_MEMORY_ACCEPTED=",early_ok);
+    ram_report("EARLY_WIFI_MEMORY_RAW_V1_BYTES=",sizeof(early_wifi_memory));
+    ram_text("EARLY_WIFI_MEMORY_RAW_V1_BEGIN\r\n");ram_hex((const uint8_t*)&early_wifi_memory,sizeof(early_wifi_memory));
+    ram_text("EARLY_WIFI_MEMORY_RAW_V1_END\r\n");
+    if(!early_ok){original_service_unknown=1;power_unknown_hold();}
+    const struct pwea_map*early_map=&early_wifi_memory.memory.map[2];
+    bytes_copy(map_snapshot.data,early_map->data,early_map->map.bytes);
+    map_snapshot.bytes=early_map->map.bytes;map_snapshot.stride=early_map->map.stride;
+    map_snapshot.version=early_map->map.version;map_bytes=32+early_map->map.bytes;
 #endif
     const uint64_t payload_pages=(EFI_XNU_PAYLOAD_BYTES+4095)/4096;
     address=POLARIS_RAM_BASE-1;s=system_table->boot->allocate_pages(1,2,payload_pages,&address);

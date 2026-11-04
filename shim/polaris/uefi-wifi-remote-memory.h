@@ -246,13 +246,15 @@ static inline int pwmc_maps_delta(const struct pgcd_map*a,const uint8_t*raw_a,
 }
 static inline int pwmc_map_delta(const struct pgcd_result*s,uint64_t base,uint64_t bytes,unsigned release)
 {return pwmc_maps_delta(&s->map[0],s->maps[0],&s->map[1],s->maps[1],base,bytes,release);}
-static inline int pwmc_select(const struct pgcd_result*s,unsigned kind,uint64_t*out)
+/* Selection from a current map is pure DATA arithmetic. It does not create a
+ * PGCD context or transfer any incoming/closed caller's execution authority. */
+static inline int pwmc_select_map(const struct pgcd_map*m,const uint8_t*raw,unsigned kind,uint64_t*out)
 {
-    struct polaris_efi_memory checked;const struct pgcd_map*m=&s->map[0];uint64_t bytes=pwmc_bytes(kind);
+    struct polaris_efi_memory checked;uint64_t bytes=pwmc_bytes(kind);
     uint64_t alignment=kind==PWMC_MSA?UINT64_C(0x200000):4096;
-    if(!out||!bytes||!m->valid||!polaris_efi_memory_check(s->maps[0],m->bytes,PGCD_MAP_CAP,m->stride,&checked))return 0;
+    if(!m||!out||!bytes||!m->valid||!polaris_efi_memory_check(raw,m->bytes,PGCD_MAP_CAP,m->stride,&checked))return 0;
     uint64_t best=0;
-    for(uint64_t at=0;at<m->bytes;at+=m->stride){const struct efi_memory*d=(const void*)(s->maps[0]+at);
+    for(uint64_t at=0;at<m->bytes;at+=m->stride){const struct efi_memory*d=(const void*)(raw+at);
         if(d->type!=7||d->attributes>>63||d->virtual_address)continue;
         uint64_t lo=d->physical<UINT64_C(0x80000000)?UINT64_C(0x80000000):d->physical;
         uint64_t hi=d->physical+d->pages*4096;if(hi>UINT64_C(0x100000000))hi=UINT64_C(0x100000000);
@@ -274,6 +276,8 @@ static inline int pwmc_select(const struct pgcd_result*s,unsigned kind,uint64_t*
     }
     if(!best)return 0;*out=best;return 1;
 }
+static inline int pwmc_select(const struct pgcd_result*s,unsigned kind,uint64_t*out)
+{return s&&pwmc_select_map(&s->map[0],s->maps[0],kind,out);}
 static inline int pwmc_layout(const struct pwmc_result*r)
 {
     uint64_t bytes=pwmc_bytes(r->kind);return bytes&&r->backing_bytes==bytes&&r->pages==bytes/4096&&
