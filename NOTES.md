@@ -44,6 +44,30 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): actual native resource retirement
+
+- Native STOP/ACK/halt/reset is commitcf106cb. Default-OFF pmnr now consumes
+  that completed actual producer, uniquely claims its continuation, then
+  restores six clocks, PRNG/XO proxy,19 supply resource votes and AOP load_state
+  in the same CPU/GCD epoch. Original live-startup predicates remain strict:
+  they reject once active clocks leave HELD; retirement has its own typed
+  continuation and frozen stop/auth/WLFW evidence. No owner/timer renewal.
+- Complete chain ASan/UBSan PASS6 scenarios/7765980: startup through actual
+  native STOP then all resources restored to original snapshots; failed barrier
+  after clock write, proxy request failure, AOP-off failure, changed stop evidence
+  and expired CPU owner retain state/refuse retry. CPU, VMIDs and backing remain
+  held. COFF/MachO generalregs/frame1024 PASS. Evidence:
+  mss-retirement-native-0001/proof-0001.json. All hardware/modem leaves SOFTWARE.
+- Integration exposed a fixture bug: channel_raw consumed all FULL_ORDER
+  operations even when another adapter owned them, masking a clock fault.
+  It now handles only its pending channel/lock barriers; complete chain retested.
+- NEXT exact inverse native VMID assignments for returned MSA regions, RMTFS
+  shared interval and120MiB modem bank, with separate protected descriptors.
+  Then whole-parent/runtime CPU handoff and CE/ath10k. No original-provider
+  resumption, free, boot registration, phone/USB/CI/push/boot in this milestone.
+  Execution2/5: current step remains plus3 following. Last15min23:49Z/10:49
+  Melbourne; next00:04Z/11:04. Goal ACTIVE; continue until real Wi-Fi works.
+
 ### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): native normal STOP/ACK/halt/reset
 
 - WLFW/MSA startup is commit3eeb504. New default-OFF pmnd consumes that actual

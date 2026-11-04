@@ -89,7 +89,7 @@ static int channel_raw(const struct pmni_command*c,unsigned*out)
         if(c->kind==PMNI_READ)*out=token;
         else{CHECK(c->kind==PMNI_WRITE&&c->value<=1);if(c->value)CHECK(!token);else CHECK(token==1);token=c->value;}return 1;
     }
-    if(c->kind==PMNI_FULL_ORDER)return 1;
+    if(c->kind==PMNI_FULL_ORDER&&(channel_lock->pending||(channel&&channel->pending)))return 1;
     if(channel&&channel->pending==2&&c->address==PMS_DOORBELL){
         CHECK(c->kind==PMNI_WRITE&&(c->value==0x4000||c->value==0x1000||!c->value));channel_raw_calls++;
         if(channel_fault==5)return 0;if(c->value)channel_rings++;

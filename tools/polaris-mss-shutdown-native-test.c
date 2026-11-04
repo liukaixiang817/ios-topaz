@@ -75,7 +75,10 @@ static void shutdown_setup(unsigned fault)
     if(fault==6){put(sm_shadow+remote_at+36,10,4);CHECK(!pmnd_begin(shutdown_owner,shutdown_records,wlan)&&!negotiation->stopping);return;}
     CHECK(pmnd_begin(shutdown_owner,shutdown_records,wlan));
 }
-int main(int argc,char**argv)
+#ifndef PMND_TEST_ENTRY
+#define PMND_TEST_ENTRY main
+#endif
+int PMND_TEST_ENTRY(int argc,char**argv)
 {
     CHECK(argc==8);sm_original=malloc(PWFI_IMAGE_BYTES);sm_shadow=malloc(PMSQ_BYTES);rmtfs_shadow=malloc(0x202000);
     memory=aligned_alloc(4096,PNV_BYTES);CHECK(sm_original&&sm_shadow&&rmtfs_shadow&&memory);

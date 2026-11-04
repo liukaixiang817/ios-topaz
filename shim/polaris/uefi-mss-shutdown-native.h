@@ -21,6 +21,7 @@ struct pmnd_state {
     struct pmsd_shutdown shutdown;struct pwea_core source[2];struct pms_sample sample;
     uint32_t attempted,ready,unknown,error,pending,deliveries,quiesced,complete;
     uint8_t records_digest[32],digest[32];
+    uint64_t retirement; /* Unique later continuation; excluded from stop seal. */
 };
 static inline int pmnd_fail(struct pmnd_state*s,unsigned error)
 {s->unknown=1;if(!s->error)s->error=error;return 0;}
