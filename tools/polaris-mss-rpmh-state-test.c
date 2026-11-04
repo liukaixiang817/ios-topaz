@@ -1,8 +1,12 @@
 /* Original firmware is inert data. Actual current-owner/image/GCD producers
  * feed the RAM reader; no firmware API, MMIO, vote or secure call executes. */
 static void rpmh_prepare(void);
+#ifndef PMMN_TEST_ARENA_BYTES
 #define PMMN_TEST_ARENA_BYTES 0x800000
+#endif
+#ifndef PMMN_TEST_IMAGE_BYTES
 #define PMMN_TEST_IMAGE_BYTES 0x7c0000
+#endif
 #define PMRG_TEST_PREPARE rpmh_prepare
 #define PMRG_TEST_ENTRY unused_resource_suite
 #include "polaris-mss-resource-map-test.c"

@@ -69,7 +69,10 @@ static void cmddb_setup(void)
     database_state=(void*)(arena+0x500000);CHECK(0x500000+sizeof(*database_state)<PMMN_TEST_IMAGE_BYTES);memset(database_state,0,sizeof(*database_state));
 }
 static int cmddb_run(void){return pmdc_capture(database_state,resource_map);}
-int main(int argc,char**argv)
+#ifndef PMDC_TEST_ENTRY
+#define PMDC_TEST_ENTRY main
+#endif
+int PMDC_TEST_ENTRY(int argc,char**argv)
 {
     CHECK(argc==5);CHECK(!posix_memalign((void**)&arena,0x4000,PMMN_TEST_ARENA_BYTES));
     original=malloc(PGCI_IMAGE_BYTES);rp_original=malloc(PWRPI_IMAGE_BYTES);cd_original=malloc(PWCDI_IMAGE_BYTES);

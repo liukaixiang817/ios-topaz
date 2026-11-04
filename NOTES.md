@@ -44,6 +44,36 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): persistent native resource caller
+
+- Current CmdDb is commitf314b78. New default-OFF/unregistered pmpn consumes
+  actual pmrs/pmdc/pmrd/pmrg producers, one continuous CPU epoch and107
+  retained request slots:101 supplies+6 XO. Exact typed pending commands
+  drive actual pmrv and pmni_rail; each write first marks PMSC_POWER.
+- Full source checkpoints re-read own Core, RPMh provider RAM and complete
+ 128KiB CmdDb at phase boundaries. Read-only pmdc_live permits revalidation
+  within the same owner after effects; initial capture still requires none.
+  Fresh selected GCD node and Device translations precede/follow EVERY native
+  delivery. Full proxy prechecks occur BEFORE its200ms transition starts;
+  CPU180s and each finite request retain their original deadlines.
+- All successful native/namespace observations retain variable fields and a
+  full-record hash. Host decoder reconstructed EVERY full record in the107
+  request cycle and matched its hash. Failed last delivery retains complete
+  scratch; UNKNOWN stops subsequent IO, with no automatic unwind.
+- ASan/UBSan PASS115 scenarios/7824406 checks +441 actual software
+  clock/STOP/halt/reset retirement checks. Complete rise/hold/return restores
+  all20 resource votes; injected delivery, AT, CPU, time, source, GCD and
+  minimum faults refuse. Resource finish does NOT clear CPU effects or
+  return VMID/DMA ownership. PRNG/clock/STOP leaves in this test are explicitly
+  SOFTWARE peers. This is not physical MSS/WLAN startup evidence.
+- Full native COFF/MachO exports PASS general-regs-only/frame1024.
+  Evidence:mss-power-native-0001/proof-0001.json. No provider execution,
+  CI/push, USB/device query or boot. Existing unowned remote-memory hunk stays
+  unstaged. NEXT owned native PRNG/active-clock/MMIO composition, typed secure
+  caller and actual full startup/retirement parent. Execution2/5: this step
+  plus3 following steps remain. Latest15min20:22Z/07:22 Melbourne;
+  next20:37Z/07:37. Goal ACTIVE; milestone is not permission to stop.
+
 ### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): current complete CmdDb
 
 - DRV2 reader is commitfe810ee. New default-OFF/unregistered pmdc consumes

@@ -41,8 +41,10 @@ static inline int pmdc_fail(struct pmdc_state*r,unsigned error)
 {r->unknown=1;if(!r->error)r->error=error;return 0;}
 static inline int pmdc_live(struct pmdc_state*r)
 {
-    struct pmrg_map*g=(void*)(uintptr_t)r->namespace;struct pmsc_owner*o=(void*)(uintptr_t)r->owner;
-    return !o->effects&&g->complete==1&&!g->unknown&&!g->error&&g->owner==r->owner&&g->images==r->images&&
+    /* Read-only revalidation remains usable while our continuous parent
+     * holds power. A new initial capture still explicitly requires effects0. */
+    struct pmrg_map*g=(void*)(uintptr_t)r->namespace;
+    return g->complete==1&&!g->unknown&&!g->error&&g->owner==r->owner&&g->images==r->images&&
         g->opening==r->opening&&pgcd_equal(g->digest,r->namespace_digest,32)&&pmrg_live(g);
 }
 static inline int pmdc_at(struct pmdc_state*r,struct pmrd_at*t,uint64_t page)
