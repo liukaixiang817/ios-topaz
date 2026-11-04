@@ -44,6 +44,34 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): native locked SMEM allocation
+
+- Current SMEM/SFPB producer is commit0ac9686. New pmsa consumes its actual
+  held lock, inventories own host1 private partition, and creates ONLY fresh
+  APPS428/340B, GLINK478/32B, TX479/16KiB. Existing IDs in either cached or
+  uncached heaps refuse; no takeover, RX allocation or common-heap fallback.
+- Actual Normal-NC R/W AT, current GCD and actual SFPB token reads bracket
+  every write page. All3 data regions (including padding) are zeroed/readback;
+  exact allocation headers follow; one final4-byte frontier publishes them.
+  Explicit caller unlock then sealed pmsa_current. Uncertain stores poison
+  both allocator and lock, preventing later writes/blind release.
+- Full2MiB independent software shadow comparisons PASS, preserving all old
+  allocations/remote RX, including header crossing a4KiB page. Each success
+  has4203 actual store/readback leaf calls. ASan/UBSan PASS17 scenarios/96830
+  checks; duplicate/full/changed frontier/plan, partial publication/raw/readback/
+  AT/source/time/lost-token faults refuse. Lock regression PASS21/24753.
+  Full native COFF/MachO exports PASS generalregs/frame1024. Evidence:
+  mss-smem-native-0001/allocation-proof-0001.json. No hardware execution.
+- Integration exposed an old generic SMEM parser bug: it imposed v11's8400B
+  legacy table on v12, rejecting own common partition at0x1000. Own SmemDxe
+  constructor cache and own0096 msm_smem.c common-v12 branch confirm distinct
+  layout. v12 now reserves the first4096B, v11 keeps8400B. Both SMEM/GLINK
+  inventory regression suites PASS, with explicit v12/v11 boundary cases.
+- NEXT native SMP2P negotiation and GLINK/WLFW transport over these allocations,
+  full parent registration/retirement and actual device validation. No query,
+  USB, CI/push or boot. Execution2/5: finish current step plus3 following;
+  latest15min21:37Z/08:37 Melbourne, next21:52Z/08:52. Goal ACTIVE; continue.
+
 ### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): native SMEM source/read and SFPB lock
 
 - Continuous modem authentication is commitee06aac. New default-OFF pmsq

@@ -37,11 +37,11 @@ static inline void pmsl_seal(const struct pmsl_lock*l,const void*out,size_t byte
     pwfi_final(&h,digest);
 }
 /* Private caller supplies only the next hardcoded lock transaction. */
-static inline int pmsl_io(struct pmsl_lock*l,unsigned kind,unsigned value)
+static inline int pmsl_run(struct pmsl_lock*l,struct pmsl_delivery*r,unsigned kind,unsigned value)
 {
-    if(!pmsl_live(l)||l->pending||l->events==PMSL_RECORDS)return pmsl_fail(l,2);
+    if(!pmsl_live(l))return pmsl_fail(l,2);
     struct pmsq_state*s=(void*)(uintptr_t)l->smem;struct pmrg_map*g=(void*)(uintptr_t)s->namespace;
-    struct pmsc_owner*o=(void*)(uintptr_t)l->owner;struct pmsl_delivery*r=&l->record[l->events++];l->pending=l->events;
+    struct pmsc_owner*o=(void*)(uintptr_t)l->owner;
     struct pmni_command command={kind==PMNI_FULL_ORDER?0:PMSL_ADDRESS,kind,value};
     if(!pwmc_zero(r,sizeof(*r))||(kind!=PMNI_FULL_ORDER&&!pmrg_target_now(g,PMSL_ADDRESS,&r->target[0]))||!pmsl_arch(l,&r->opening))goto fail;
     if(kind==PMNI_WRITE&&!pmsc_mark_effect(o,PMSC_REMOTE))goto fail;
@@ -51,8 +51,14 @@ static inline int pmsl_io(struct pmsl_lock*l,unsigned kind,unsigned value)
     pmsl_seal(l,&r->native,sizeof(r->native),after);pmsc_seal(o,0,0,owner_after);
     if(!returned||!pgcd_equal(before,after,32)||!pgcd_equal(owner_before,owner_after,32)||(kind!=PMNI_FULL_ORDER&&
        (!pmrg_target_now(g,PMSL_ADDRESS,&r->target[1])||r->target[0].index!=r->target[1].index))||!pmsl_live(l))goto fail;
-    l->pending=0;return 1;
+    return 1;
 fail:return pmsl_fail(l,2);
+}
+static inline int pmsl_io(struct pmsl_lock*l,unsigned kind,unsigned value)
+{
+    if(!pmsl_live(l)||l->pending||l->events==PMSL_RECORDS)return pmsl_fail(l,2);
+    struct pmsl_delivery*r=&l->record[l->events++];l->pending=l->events;
+    if(!pmsl_run(l,r,kind,value))return 0;l->pending=0;return 1;
 }
 static inline int pmsl_acquire(struct pmsl_lock*l,struct pmsq_state*s)
 {
@@ -74,6 +80,13 @@ static inline int pmsl_held(struct pmsl_lock*l)
 {
     if(!pmsl_live(l)||l->held!=1||l->events!=4||l->pending)return 0;
     uint8_t hash[32];pweh_digest(l,offsetof(struct pmsl_lock,digest),hash);return pgcd_equal(hash,l->digest,32);
+}
+/* Fresh actual token read around each allocator page. The caller owns the
+ * external retained delivery; this never changes the sealed acquire record. */
+static inline int pmsl_check(struct pmsl_lock*l,struct pmsl_delivery*r)
+{
+    if(!pmsl_held(l)||!pmsl_run(l,r,PMNI_READ,0)||r->native.value!=1||!pmsl_held(l))return pmsl_fail(l,7);
+    return 1;
 }
 static inline int pmsl_release(struct pmsl_lock*l)
 {

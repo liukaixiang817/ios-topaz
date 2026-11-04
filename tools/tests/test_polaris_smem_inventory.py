@@ -34,7 +34,10 @@ int main(void){static struct polaris_smem_workspace work;struct polaris_smem_inv
  for(unsigned n=3;n<=operations;n++){setup();race=n;out=sentinel;assert(!polaris_smem_inventory(&r,&out,&work));assert(!memcmp(&out,&sentinel,sizeof(out)));}
  setup();change_after_first_partition=1;out=sentinel;assert(!polaris_smem_inventory(&r,&out,&work));assert(!memcmp(&out,&sentinel,sizeof(out)));
  setup();put(65536-4096+32+48+12,10u<<16);assert(!polaris_smem_inventory(&r,&out,&work));
- setup();put(65536-4096+32+48,8192);assert(!polaris_smem_inventory(&r,&out,&work)); /* legacy TOC is not a partition */
+ setup();put(92,0xb0000);put(65536-4096+32+48,8192);assert(!polaris_smem_inventory(&r,&out,&work)); /* v11 legacy TOC */
+ setup();part(0,4096,4096,0xfffefffe);assert(polaris_smem_inventory(&r,&out,&work));assert(out.parts[0].offset==4096);
+ put(92,0xb0000);assert(!polaris_smem_inventory(&r,&out,&work)); /* identical placement invalid for v11 */
+ setup();part(0,2048,4096,0xfffefffe);assert(!polaris_smem_inventory(&r,&out,&work)); /* v12 first page reserved */
  setup();put(92,0xb0000);assert(polaris_smem_inventory(&r,&out,&work));
  setup();put(65536-4088,PSM_MAX_PARTS+1);assert(!polaris_smem_inventory(&r,&out,&work));
  setup();put(65536-4096+32+48,0xfffffff0);assert(!polaris_smem_inventory(&r,&out,&work));

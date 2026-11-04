@@ -70,7 +70,12 @@ static inline bool polaris_smem_inventory(const struct polaris_smem_reader *r,
         p->host0=psm_u16(e+12);p->host1=psm_u16(e+14);p->cacheline=psm_u32(e+16);
         for(unsigned n=0;n<4;n++)p->exclusions[n]=psm_u32(e+32+n*4);
         if(!p->offset&&!p->bytes)continue; /* Empty TOC slot is not a partition. */
-        if(p->offset<PSM_LEGACY_BYTES||!p->bytes||p->bytes<32||p->offset>toc||p->bytes>toc-p->offset)return false;
+        /* v12 uses a common partition instead of the v11 legacy allocation
+         * table. Own SmemDxe's common partition begins at0x1000; requiring
+         * the obsolete8400-byte table here rejects that real layout. Keep
+         * the entire initial page reserved for v12, and the full table v11. */
+        uint32_t first=version==0xc0000?4096u:PSM_LEGACY_BYTES;
+        if(p->offset<first||!p->bytes||p->bytes<32||p->offset>toc||p->bytes>toc-p->offset)return false;
         for(uint32_t j=0;j<i;j++) {
             const struct polaris_smem_part *q=&inventory->parts[j];
             if(q->bytes&&p->offset<q->offset+q->bytes&&q->offset<p->offset+p->bytes)return false;

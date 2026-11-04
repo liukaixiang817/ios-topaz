@@ -16,6 +16,9 @@ static int pmni_arch_read(struct pmni_arch*a)
 }
 static int pmni_translate(struct pmni_translation*t)
 {
+#ifdef PMSL_TEST_TRANSLATE
+    int result=PMSL_TEST_TRANSLATE(t);if(result>=0)return result;
+#endif
     CHECK(t->page==PMSL_ADDRESS);t->saved=t->restored=0x123;
     t->read_par=t->write_par=t->page|0xb00;
     t->read_issued=t->read_returned=t->write_issued=t->write_returned=t->restore_issued=t->restore_returned=1;
@@ -23,6 +26,9 @@ static int pmni_translate(struct pmni_translation*t)
 }
 static int pmni_raw(const struct pmni_command*c,uint32_t*out)
 {
+#ifdef PMSL_TEST_RAW_GUARD
+    int handled=PMSL_TEST_RAW_GUARD(c,out);if(handled>=0)return handled;
+#endif
     CHECK(lock&&lock->pending&&owner->held&&local_mask);lock_calls++;
     if(lock_selected()){
         if(lock_fault==1)return 0;
@@ -44,7 +50,10 @@ static void lock_setup(void)
     lock=0;smem_setup();lock=(void*)(arena+0x500000);CHECK(0x500000+sizeof(*lock)<PMMN_TEST_IMAGE_BYTES);
     memset(lock,0,sizeof(*lock));lock_value=lock_writes=lock_reads=lock_calls=lock_fault=lock_trigger=lock_race=0;lock_scenarios++;
 }
-int main(int argc,char**argv)
+#ifndef PMSL_TEST_ENTRY
+#define PMSL_TEST_ENTRY main
+#endif
+int PMSL_TEST_ENTRY(int argc,char**argv)
 {
     smem_test_open(argc,argv);lock_setup();CHECK(pmsl_acquire(lock,sm)&&pmsl_held(lock));
     CHECK(lock_value==1&&lock_writes==1&&lock->events==4&&pmsq_read(sm,0,32));
