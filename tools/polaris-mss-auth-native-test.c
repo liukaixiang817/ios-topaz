@@ -46,7 +46,12 @@ static unsigned auth_bad_status;
 static int auth_io_selected(void){return auth_owner&&auth_owner->pending&&auth_owner->deliveries==auth_io_trigger&&
     (auth_owner->phase==PMSN_MD_IO||auth_owner->phase==PMSN_PUBLISH||auth_owner->phase==PMSN_AUTH);}
 static void auth_arch_hook(struct pmni_arch*a){if(auth_io_selected()&&auth_io_fault==3)a->ttbr0^=4096;}
-static void auth_at_hook(struct pmni_translation*t){if(auth_io_selected()&&auth_io_fault==2)t->restored++;}
+static void auth_at_hook(struct pmni_translation*t){
+#ifdef PMSN_TEST_AT_HOOK
+    PMSN_TEST_AT_HOOK(t);
+#endif
+    if(auth_io_selected()&&auth_io_fault==2)t->restored++;
+}
 static void auth_assets(void){memcpy(blob,auth_firmware,PMSF_BLOB_BYTES);memcpy(assets,pmsf_assets,sizeof(pmsf_assets));}
 static int auth_translate(struct pwmc_translation*t){return early_translate(t);}
 static int pmlc_write(uint64_t to,uint64_t from,unsigned bytes,struct pwfi_sha256*h,struct pmsi_page*p)
@@ -135,6 +140,9 @@ static int pmsn_round(struct pwma_registers*r)
 }
 static int auth_raw_hook(const struct pmni_command*c,unsigned*v)
 {
+#ifdef PMSN_TEST_RAW_HOOK
+    int handled=PMSN_TEST_RAW_HOOK(c,v);if(handled>=0)return handled;
+#endif
     if(!auth_owner||!auth_owner->pending)return -1;
     CHECK(!boot_owner->pending&&!aop_owner->pending&&!clock_owner->pending&&!power->pending);auth_io_calls++;
     if(auth_io_selected()){
@@ -216,12 +224,23 @@ static void auth_success(void)
     CHECK(!memcmp(shadow,auth_firmware,238304)&&!memcmp(shadow+0x100000,auth_firmware+pmsf_assets[1].offset,8412));
     CHECK(!pmsc_close_unused(owner));for(unsigned n=0;n<5;n++)CHECK(auth_rounds[n]==auth_continuations+1&&!auth_protected[n]&&auth_caches[n]==2);
 }
-int main(int argc,char**argv)
+static void auth_test_open(int argc,char**argv)
 {
     CHECK(argc==6);CHECK(!posix_memalign((void**)&auth_payload,0x4000,PMMN_TEST_PAYLOAD_BYTES));auth_firmware=malloc(PMSF_BLOB_BYTES);CHECK(auth_firmware);
     FILE*f=fopen(argv[5],"rb");CHECK(f&&fread(auth_firmware,1,PMSF_BLOB_BYTES,f)==PMSF_BLOB_BYTES&&!fclose(f));
     aop_test_open(5,argv);auth_modem_mapping=mmap(0,0x7800000+2*host_page,PROT_NONE,MAP_PRIVATE|MAP_ANON,-1,0);CHECK(auth_modem_mapping!=MAP_FAILED);
     auth_modem=auth_modem_mapping+host_page;
+}
+static void auth_test_close(void)
+{
+    auth_unprotect_fixture();CHECK(!munmap(auth_modem_mapping,0x7800000+2*host_page));aop_test_close();free(auth_firmware);free(auth_payload);
+}
+#ifndef PMSN_TEST_ENTRY
+#define PMSN_TEST_ENTRY main
+#endif
+int PMSN_TEST_ENTRY(int argc,char**argv)
+{
+    auth_test_open(argc,argv);
     auth_setup(0);auth_success();fprintf(stderr,"native metadata/full modem copy/5 secure transitions PASS; checking protected continuations\n");
     auth_records[0].native.value^=1;CHECK(!pmsn_current(auth_owner));auth_records[0].native.value^=1;
     auth_setup(3);auth_success();fprintf(stderr,"all5 four-round descriptor-protected continuations PASS; checking failures\n");
@@ -241,6 +260,6 @@ int main(int argc,char**argv)
     for(unsigned status=1;status<=3;status++){
         auth_setup(0);auth_bad_status=status;CHECK(!auth_drive()&&auth_owner->unknown&&!auth_owner->complete);
     }
-    auth_unprotect_fixture();CHECK(!munmap(auth_modem_mapping,0x7800000+2*host_page));aop_test_close();free(auth_firmware);free(auth_payload);
+    auth_test_close();
     printf("PASS %u complete native MSS auth checks, %u scenarios; software privileged leaves, no hardware/provider/USB\n",checks,auth_scenarios);return 0;
 }

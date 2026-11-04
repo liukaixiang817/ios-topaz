@@ -62,6 +62,9 @@ static void rpmh_prepare(void)
 }
 static int pmrd_translate(struct pmrd_at*t)
 {
+#ifdef PMRD_TEST_TRANSLATE
+    int handled=PMRD_TEST_TRANSLATE(t);if(handled>=0)return handled;
+#endif
     rp_ats++;t->saved=0x123;t->restored=t->saved;t->par=UINT64_C(0xff00000000000b80)|t->page;t->issued=t->returned=1;
     if(rp_ats==rp_trigger){
         if(rp_fault==1)return 0;

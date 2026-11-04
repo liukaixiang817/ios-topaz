@@ -27,6 +27,9 @@
 #ifndef EFI_XNU_MSS_SFPB_IO_AVAILABLE
 #define EFI_XNU_MSS_SFPB_IO_AVAILABLE 0
 #endif
+#ifndef EFI_XNU_MSS_CHANNEL_NATIVE_AVAILABLE
+#define EFI_XNU_MSS_CHANNEL_NATIVE_AVAILABLE 0
+#endif
 #if EFI_XNU_MSS_SFPB_IO_AVAILABLE && !EFI_XNU_MSS_NATIVE_IO_AVAILABLE
 #error SFPB leaves require native MMIO and the separate current SMEM owner
 #endif
@@ -141,7 +144,9 @@ static inline int pmni_allowed(const struct pmni_command*c)
     if(c->address==0x4180008)return c->kind==PMNI_WRITE&&(c->value==1||c->value==2);
 #endif
 #if EFI_XNU_MSS_AOP_IO_AVAILABLE
-    if(c->address==PMAQ_IRQ)return c->kind==PMNI_WRITE&&c->value==1;
+    /* APCS shares this address with SMP2P/GLINK; admit this exact AOP bit,
+     * then let the other explicit profiles below inspect their own masks. */
+    if(c->address==PMAQ_IRQ&&c->kind==PMNI_WRITE&&c->value==1)return 1;
     if(!(c->address&3)&&c->address>=PMAQ_BASE&&c->address<PMAQ_BASE+PMAQ_BYTES)
         return c->kind==PMNI_READ||c->address>=PMAQ_BASE+64;
 #endif
@@ -180,6 +185,9 @@ static inline int pmni_allowed(const struct pmni_command*c)
         if(c->address==base)return c->kind==PMNI_READ||c->value==1;
         if(c->address==base+4||c->address==base+8)return c->kind==PMNI_READ;
     }
+#if EFI_XNU_MSS_CHANNEL_NATIVE_AVAILABLE
+    if(c->address==PMS_DOORBELL&&c->kind==PMNI_WRITE&&c->value==0x1000)return 1;
+#endif
     return c->address==PMS_DOORBELL&&c->kind==PMNI_WRITE&&(c->value==PMS_DOORBELL_MASK||!c->value);
 }
 /* Low-level access only; current parent qualification is deliberately NOT

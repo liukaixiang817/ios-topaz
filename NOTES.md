@@ -44,6 +44,33 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): authenticated native channel access
+
+- Locked allocator is commitee20961. New default-OFF/unregistered pmsx binds
+  actual pmsn auth completion and pmsa allocation/unlock to the same CPU epoch.
+  One caller consumes pmsq.channel; it is never cleared after failure. Writes
+  are restricted to APPS SMP2P, GLINK TX FIFO and local producer/consumer words.
+  GLINK writes/rings are currently blocked awaiting the actual SMP2P producer;
+  the negotiated field is not yet connected to that proof. Do not register.
+- Composed SOFTWARE test runs actual AOP/supplies/proxy/clocks/MBA/MD/full120MiB
+  copy/auth, current own SmemDxe source, SFPB allocation and release before
+  channel access. PASS6 scenarios/1523026 ASan/UBSan checks. SMP2P word/read/
+  doorbell pass; duplicate caller, unnegotiated GLINK and range errors refuse;
+  partial store/AT/source/time/doorbell failures poison and prevent later IO.
+  Full native COFF/MachO exports PASS generalregs/frame1024. Evidence:
+  mss-channel-native-0001/proof-0001.json. Neither protocol handshake exists yet.
+- Shared APCS address1799000c bug fixed: AOP bit1 no longer prematurely rejects
+  other exact masks. Existing STOP/SMP2P4000 now works with AOP enabled; GLINK
+ 1000 is admitted only with new channel flag. Own0096 GLINK and0189 SMP2P both
+  order data, set their mask, then write0. Channel performs order/set/clear/order.
+- NEXT native SMP2P version/features/name publication and remote entry/SSR
+  validation; connect its concrete proof to GLINK gate, then native transport/
+  WLFW/RMTFS and whole parent. Startup must not wait for ERROR_READY bit1
+  before providing GLINK/RMTFS: own Linux registers those services before MSS
+  completion. Observe fatal/SSR/STOP but avoid this potential bootstrap cycle.
+  No physical IO, device/USB query, CI/push or boot. Execution2/5, this step
+  plus3 following; last15min21:52Z/08:52 Melbourne; next22:07Z/09:07. ACTIVE.
+
 ### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): native locked SMEM allocation
 
 - Current SMEM/SFPB producer is commit0ac9686. New pmsa consumes its actual

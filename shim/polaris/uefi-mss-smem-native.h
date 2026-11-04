@@ -33,6 +33,7 @@ struct pmsq_state {
     uint32_t protocol_index,loaded_index,attempted,unknown,error,complete;
     struct pmsq_pass pass[2];struct pwea_core core[2];uint8_t binding_digest[32];
     struct pmsq_access access;uint32_t reads,pending;uint8_t history[32];
+    uint64_t channel; /* One continuous channel caller; never cleared on error. */
 };
 #if defined(POLARIS_MSS_SMEM_SOFTWARE_PEER)
 static int pmsq_word(uint64_t,uint32_t*);

@@ -18,6 +18,9 @@ static void cmddb_extra_map(struct pwea_map*m)
     struct efi_memory*d=(void*)(m->data+m->map.bytes);
     emit_descriptor((void*)d,db_map_type,PMDC_BASE,PMDC_BYTES);d->attributes=db_map_attr;
     d->virtual_address=db_map_virtual?PMDC_BASE:0;m->map.bytes+=40;
+#ifdef PMDC_TEST_EXTRA_MAP
+    PMDC_TEST_EXTRA_MAP(m);
+#endif
 }
 static void cmddb_prepare(void)
 {
@@ -49,6 +52,9 @@ static void cmddb_prepare(void)
         put(q+24,n?PMDC_BASE+PMDC_BYTES:PMDC_BASE,8);put(q+32,n?UINT64_MAX:PMDC_BASE+PMDC_BYTES-1,8);
         put(q+40,n?1:8,8);put(q+48,n?1:8,8);put(q+56,n?3:2,4);
     }
+#ifdef PMDC_TEST_PREPARE
+    PMDC_TEST_PREPARE();
+#endif
 }
 static int pmdc_word(uint64_t at,uint64_t*out)
 {
