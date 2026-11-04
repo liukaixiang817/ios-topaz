@@ -44,6 +44,36 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): current-NV collector
+
+- Continuous shared grant is commit58ec110. New pnv collector enumerates only
+  UEFI BlockIO, matches exact private GPT partition GUID/start/size/number and
+  parent device-path prefix separately for two UFS LUNs. It exposes no callable
+  block write/reset/flush operation. Each read checks current protocol/media
+  identity, exact4096B blocks, aligned bounded outputs and bounded read count.
+- Private plan generator verifies own backup manifest, both GPT header CRCs,
+  whole partition tables/copies and four exact NV sizes. Generated GUIDs and
+  metadata stay ignored under nv-inputs-0001/plan-0001. This plan identifies
+  expected GPTs only; it never supplies historical NV as current data.
+- Collector rereads both full current GPT header/table copies before, between
+  and after two complete NV passes. First pass retains25,427,968B; second hashes
+  independently through64KiB scratch. Media/GPT/content changes or failed reads
+  remain UNKNOWN. Dedicated layout reserves28MiB for future RAM shadows, kept
+  untouched by collector. Whole claim size0x3450000; no allocation ownership is
+  inferred from its input address. Actual native allocation/retention remains NEXT.
+- Own GPT metadata + synthetic NV/UEFI ASan/UBSan PASS9 scenarios/54791150
+  assertions (mostly full byte comparisons); independent CommonCrypto hashes,
+  two LUNs, duplicate/wrong identity, changed GPT/NV/media/protocol and release/
+  read errors. Full native COFF/MachO generalregs/frame1024 PASS. Evidence:
+  nv-inputs-0001/proof-0001.json. No current physical GPT/NV/device read occurred.
+- NEXT wrap collector in actual pre-native independent AllocatePages/GetMap/
+  translation/retention producer, consuming the existing early parent. Keep
+  original UEFI reads BEFORE the continuous CPU interval. Bind new retained
+  input/shadow claim to later pmsc/pmtf/GLINK epoch, then native shared access
+  and RMTFS service, WLFW/CE and whole-parent handoff. No phone/USB query, CI/
+  push or boot. Execution2/5; finish current step plus3 following. Last15min
+ 22:37Z/09:37 Melbourne; next22:52Z/09:52. Goal ACTIVE; continue.
+
 ### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): continuous RMTFS memory grant
 
 - GLINK/QRTR/CAP is commit7e5c890. New default-OFF pmtf consumes actual native
