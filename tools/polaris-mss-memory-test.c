@@ -118,6 +118,9 @@ static efi_status pweh_test_map(struct efi_system*system,struct pwea_map*m)
     emit_descriptor(m->data+280,2,held->payload,held->payload_bytes);
     emit_descriptor(m->data+320,2,held->log,held_input.log_bytes);
     m->map.bytes=360;m->map.stride=40;m->map.key=100;m->map.version=1;
+#if defined(PMMN_TEST_RETAINED_MAP_EXTRA)
+    PMMN_TEST_RETAINED_MAP_EXTRA(m);
+#endif
     put(core+0x1cdb0,m->map.key,8);return 0;
 }
 static void mss_setup(unsigned f,unsigned at,unsigned stride)

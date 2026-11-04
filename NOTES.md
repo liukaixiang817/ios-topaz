@@ -44,6 +44,34 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): current image ledger
+
+- Actual modem copy/cache is commit7893442. New default-OFF pmli traverses
+  the own Core CURRENT protocol database and full LoadedImage instance list,
+  twice, under the continuous CPU interval before any new power effect. No
+  original LocateHandleBuffer/HandleProtocol, allocation, lock or TPL service.
+  Exact Core SHA plus36 checked own opcodes establish72B protocol,88B interface,
+ 56B handle layouts, protocol head1c210/lock1b3f8 and mutable keys1cb28/1cbd0.
+- Every graph read requires current map/type/WB, fresh R/W AT and unchanged
+  CPU/keys/root/released lock. Bounded full linked-list traversal refuses
+  overlaps/cycles/duplicate loaded protocol or image handles; complete lists
+  must contain own driver and Core. Full metadata/links match across passes.
+  Boot and runtime image extents are checked with correct EFI runtime bit.
+  After enumeration all heap nodes are excluded from EVERY loaded image.
+  This ledger provides exclusions, not GCD/DRV2/QMP/VMID/DMA permission.
+-201 software scenarios/230378 checks PASS ASan/UBSan: all26 native-read
+  positions x7 failures/changes, changed graph between passes, invalid lists,
+  invalid/duplicate metadata, image-overlapping heap nodes, protected MBA
+  address and effect/replay/closed-owner/digest refusals. Actual memory/stage/
+  MBA/CPU producers feed a software heap graph; no own firmware executes.
+  Full COFF/MachO native exports PASS generalregs/frame1024. Evidence:
+  mss-resource-owner-0001/{own-image-layout,image-proof-0001}.json.
+- NEXT use this CURRENT complete ledger for native GCD/resource qualification,
+  DRV2/QMP ownership, secure caller and full MSS parent/retirement. Module stays
+  OFF/unregistered; still no physical scan/join/IP/data. No phone/USB/CI/image/
+  whole-model run. Execution2/5, this step plus3..5 remain. Goal ACTIVE.
+  Last15min18:50Z (05:50 Australia/Melbourne), next19:05Z (06:05 local).
+
 ### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): actual modem copy/cache
 
 - Continuous CPU interval is commit880c4f6. New default-OFF pmlc consumes that
