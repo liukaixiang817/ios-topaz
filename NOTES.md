@@ -44,6 +44,34 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): continuous RMTFS memory grant
+
+- GLINK/QRTR/CAP is commit7e5c890. New default-OFF pmtf consumes actual native
+  MSS authentication and the existing guarded retained client1 allocation.
+  Exactly512 inner pages are zeroed/readback/CIVAC with fresh WB R/W AT before/
+  after each page. Both4KiB guards stay outside the2MiB HLOS3+MSS15 RW grant.
+- One rmtfs caller slot is claimed in pmsn; this later mutable pointer alone
+  is excluded from the authentication seal and never cleared on failure.
+  Secure descriptor/tail are excluded from every seal while inaccessible.
+  Actual Core checks, unchanged180s CPU owner, peer-OFF checks, <=4 preserved
+  secure rounds and explicit IVAC completion remain required. No second mask
+  interval, original EFI calls, free/handback or address publication is added.
+- ASan/UBSan PASS12/5644319: full native MSS producer, exact2MiB/guards,
+  protected1/4-round continuations, duplicate caller and ten sticky faults.
+  Full COFF/MachO generalregs/frame1024 PASS. Updated authentication regression
+  PASS25/3714654; updated native GLINK/QRTR/CAP regression PASS6/2095624.
+  Evidence:mss-rmtfs-native-0001/proof-0001.json. Privileged leaves SOFTWARE;
+  own msm_sharedmem.c client1 HLOS/MSS RW and guard rule rechecked locally.
+- NEXT fresh NV input producer before entering the continuous native interval:
+  read-only UEFI BlockIO, own exact GPT partition/device identities, current
+  whole modemst1/modemst2/fsg/fsc, independent retained RAM input/shadow buffers.
+ 0145 whole-NV files are historical fixtures only. Actual own backup places
+  fsg on sde, other3 on sdf (all4096B blocks); do not assume one UFS LUN.
+  Then native shared access/RMTFS service and WLFW/CE, whole-parent integration/
+  handoff/retirement. No phone/USB query, CI/push or boot. Execution2/5; this
+  step plus3 following. Last15min22:22Z/09:22 Melbourne; next22:37Z/09:37.
+  Goal ACTIVE; continue toward real scan/join/IP/data.
+
 ### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): native GLINK/QRTR/WLFW CAP
 
 - SMP2P is commit48a6e27. New default-OFF pmsg binds the actual native channel

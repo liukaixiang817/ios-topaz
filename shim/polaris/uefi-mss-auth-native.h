@@ -45,6 +45,7 @@ struct pmsn_state {
     struct pmsn_assignment assignment[PMSN_ASSIGNMENTS];
     uint32_t attempted,ready,unknown,error,phase,pending,deliveries,assignments,complete,reserved;
     uint8_t records_digest[32],copy_digest[32],digest[32];
+    uint64_t rmtfs; /* One later shared-memory owner, excluded from auth seal. */
 };
 #if defined(POLARIS_MSS_AUTH_SOFTWARE_PEER)
 static int pmsn_cache(struct pwma_page*,unsigned,struct pwmk_record*);
@@ -70,7 +71,7 @@ static inline void pmsn_seal(const struct pmsn_state*s,const void*out,size_t byt
 {
     struct pwfi_sha256 hash;pwfi_init(&hash);uintptr_t a=(uintptr_t)out,b=a+bytes;
     for(size_t n=0;n<sizeof(*s);n++){
-        uintptr_t p=(uintptr_t)s+n;if(p>=a&&p<b)continue;unsigned skip=0;
+        uintptr_t p=(uintptr_t)s+n;if((p>=a&&p<b)||(n>=offsetof(struct pmsn_state,rmtfs)&&n<offsetof(struct pmsn_state,rmtfs)+8))continue;unsigned skip=0;
         for(unsigned k=0;k<PMSN_ASSIGNMENTS;k++){
             uintptr_t start=(uintptr_t)&s->assignment[k].page,end=(uintptr_t)(&s->assignment[k]+1);
             if(p>=start&&p<end){skip=1;break;}
