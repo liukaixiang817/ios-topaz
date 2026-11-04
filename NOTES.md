@@ -44,6 +44,30 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): current DRV2 device-state reader
+
+- RPMh RAM reader is commitd8cf834. New default-OFF/unregistered pmrs consumes
+  that actual current record and the complete GCD namespace, then performs
+  two35-word native read sequences: own DRV2 geometry, IRQ enable/status and
+  WAIT/CONTROL/STATUS/ENABLE for all8 TCS slots. Every read uses current GCD
+  node readback, fresh Device R/W AT and the same held CPU owner. No writes.
+- Checks own HAL count8/NCPT16, IRQ0 and active slot idle/supported completed
+  latch shapes. Selects an IRQ-enabled active slot. A second complete actual
+  RPMh RAM capture follows the device reads; all objects must match the
+  earlier capture. Before-first-effect consumer checks full result hashes,
+  both RPMh bindings/current namespace and the still-held CPU interval.
+- Software ASan/UBSan PASS509 scenarios/604570 checks: all70 deliveries under
+  seven failure classes, geometry/IRQ/busy/latch changes, between-pass device
+  changes, post-read provider RAM/code/map changes and consumer tampering.
+  Full COFF/MachO native exports PASS generalregs/frame1024. Evidence:
+  mss-rsc-state-0001/proof-0001.json. Privileged/Device leaves are software;
+  no original firmware execution, real MMIO, vote, USB/device query or boot.
+- NEXT finish/test new current CmdDb reader and eight-resource selector
+  drafts, then persistent native supply/secure callers and full registered
+  MSS parent/retirement. Those CmdDb drafts are not tested/compiled yet.
+  Execution remains2/5: this step plus3 following steps. Latest15min report
+ 19:52Z/06:52 Melbourne; next20:07Z/07:07. Continue toward actual scan/join/data.
+
 ### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): current RPMh RAM state
 
 - Previous current GCD namespace milestone is commit5b87b97. New default-OFF,

@@ -21,6 +21,9 @@
 #ifndef EFI_XNU_MSS_MODEM_IO_AVAILABLE
 #define EFI_XNU_MSS_MODEM_IO_AVAILABLE 0
 #endif
+#ifndef EFI_XNU_MSS_RSC_STATE_AVAILABLE
+#define EFI_XNU_MSS_RSC_STATE_AVAILABLE 0
+#endif
 #if EFI_XNU_MSS_MODEM_IO_AVAILABLE && !EFI_XNU_MSS_NATIVE_IO_AVAILABLE
 #error MSS modem authentication requires the separate native MMIO leaves
 #endif
@@ -137,6 +140,9 @@ static inline int pmni_allowed(const struct pmni_command*c)
 #if EFI_XNU_MSS_RAIL_IO_AVAILABLE
     /* Separate retained-request adapter below further restricts this to its
      * exact pending event and selected TCS. IRQ enable/type are never writes. */
+#if EFI_XNU_MSS_RSC_STATE_AVAILABLE
+    if(c->address==0x179e000c)return c->kind==PMNI_READ;
+#endif
     if(c->kind==PMNI_READ&&pwrr_readable(c->address))return 1;
     if(c->address==PWRSC_BASE+8)return c->kind==PMNI_WRITE&&c->value&&
         c->value<=128&&!(c->value&(c->value-1));

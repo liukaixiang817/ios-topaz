@@ -74,7 +74,10 @@ static void rpmh_setup(void)
     state=(void*)(arena+0x400000);CHECK(0x400000+sizeof(*state)<PMMN_TEST_IMAGE_BYTES);memset(state,0,sizeof(*state));
 }
 static int rpmh_run(void){return pmrd_capture(state,resource_map);}
-int main(int argc,char**argv)
+#ifndef PMRD_TEST_ENTRY
+#define PMRD_TEST_ENTRY main
+#endif
+int PMRD_TEST_ENTRY(int argc,char**argv)
 {
     CHECK(argc==3);CHECK(!posix_memalign((void**)&arena,0x4000,PMMN_TEST_ARENA_BYTES));
     original=malloc(PGCI_IMAGE_BYTES);rp_original=malloc(PWRPI_IMAGE_BYTES);CHECK(original&&rp_original);
