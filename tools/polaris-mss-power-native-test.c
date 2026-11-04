@@ -24,6 +24,9 @@ static int pmni_arch_read(struct pmni_arch*a)
     struct pgcd_arch q;if(!owner_arch(0,&q))return 0;const struct pwfc_arch*c=&q.cpu;
     *a=(struct pmni_arch){c->el,c->mpidr,c->ttbr0,c->ttbr1,c->tcr,c->sctlr,c->mair,c->daif,c->sre,c->group1,q.cpacr,c->frequency,c->ticks};
     if(peer_fault==5&&power&&power->pending==peer_request&&requests[power->pending-1].request.io.events==peer_trigger)a->ttbr0^=4096;
+#ifdef PMPN_TEST_ARCH_HOOK
+    PMPN_TEST_ARCH_HOOK(a);
+#endif
     return 1;
 }
 static int selected_fault(void)
@@ -36,7 +39,12 @@ static int pmni_translate(struct pmni_translation*t)
         if(peer_fault==2)return 0;
         if(peer_fault==3)t->write_par^=4096;
         if(peer_fault==4)t->restored++;
-    }return 1;
+    }
+#ifdef PMPN_TEST_AT_HOOK
+    return PMPN_TEST_AT_HOOK(t);
+#else
+    return 1;
+#endif
 }
 static void resource_complete(void)
 {
@@ -49,6 +57,9 @@ static void resource_complete(void)
 }
 static int pmni_raw(const struct pmni_command*c,uint32_t*v)
 {
+#ifdef PMPN_TEST_RAW_HOOK
+    if(c->address<UINT64_C(0x10000000))return PMPN_TEST_RAW_HOOK(c,v);
+#endif
     if(c->kind==PMNI_READ)native_reads++;else native_writes++;
     if(selected_fault()){
         if(peer_fault==1)return 0;
@@ -153,7 +164,10 @@ static void verify_delivery(const struct pmpn_request*r,unsigned n)
     for(unsigned part=0;part<3;part++)for(size_t j=0;j<sizes[part];j++)pwfi_byte(&hash,((const uint8_t*)parts[part])[j]);
     uint8_t digest[32];pwfi_final(&hash,digest);CHECK(d->complete&&pgcd_equal(digest,d->leaf_digest,32));
 }
-int main(int argc,char**argv)
+#ifndef PMPN_TEST_ENTRY
+#define PMPN_TEST_ENTRY main
+#endif
+int PMPN_TEST_ENTRY(int argc,char**argv)
 {
     CHECK(argc==5);CHECK(!posix_memalign((void**)&arena,0x4000,PMMN_TEST_ARENA_BYTES));
     original=malloc(PGCI_IMAGE_BYTES);rp_original=malloc(PWRPI_IMAGE_BYTES);cd_original=malloc(PWCDI_IMAGE_BYTES);

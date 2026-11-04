@@ -44,6 +44,30 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): native PRNG and six-clock owner
+
+- Persistent supplies/XO is commit9330e6b. New default-OFF/unregistered pmcn
+  consumes that actual power owner and exact pending PRNG/clock commands.
+  Native pmni_proxy/pmni_clock now perform register operations and barriers,
+  with fresh current GCD node/Device AT/CPU observations around each delivery.
+  Full records remain resident, writes mark POWER first, failure poisons both
+  contexts and prevents later IO. No provider calls or timeout extensions.
+- Actual composed supply -> XO/PRNG -> six active clocks -> STOP producer ->
+  clock restore -> PRNG/XO restore -> supply return PASS.64 native PRNG/clock
+  deliveries in normal cycle, borrowed/all-on and mixed/HWCG cases preserve
+  unrelated register bits and restore originals. Both failed raw delivery and
+  AT/CPU/time/GCD/pending-command mutations refuse. STOP/halt/reset leaves
+  remain explicitly software in this suite, not a hardware retirement proof.
+- ASan/UBSan PASS16 scenarios/2305656 checks plus812 software stop checks.
+  Full native COFF/MachO exports PASS generalregs/frame1024. Evidence:
+  mss-clock-native-0001/proof-0001.json. CPU remains held with effects after
+  resource retirement; no secure/DMA return or physical Wi-Fi claim follows.
+- NEXT connect AOP on/off and remaining typed native MBA/metadata/modem IO,
+  continuous secure assignment, and registered whole startup/retirement.
+  No phone/USB query, CI/push or boot. Execution2/5: this step plus3 following
+  steps remain. Latest15min20:37Z/07:37 Melbourne; next20:52Z/07:52.
+  Goal ACTIVE; continue without stopping at this milestone.
+
 ### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): persistent native resource caller
 
 - Current CmdDb is commitf314b78. New default-OFF/unregistered pmpn consumes
