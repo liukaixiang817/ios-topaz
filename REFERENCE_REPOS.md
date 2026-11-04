@@ -14,6 +14,19 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+## Own secure memory assignment ABI (0189, 2026-11-04)
+
+Pinned MiCode c7cb50c1 secure_buffer.h/c and scm.h/c Git blobs were verified
+from Contents API. Together with the existing own ICNSS and sharedmem consumer
+sources they establish MP_ASSIGN0x16/service0xc, SCM64 argument info0x1117,
+VMIDs HLOS3/MSS_MSA15/WLAN24/WLAN_CE25 and24-byte destination entries.
+Own RMTFS shares RW with HLOS+MSS; own MSA secure/nonsecure destinations differ
+by WLAN_CE. Dipper's ABI agrees, but its camera-region allocation and initial
+owner assumptions remain excluded. No vendor implementation was imported.
+The independent encoder and default-OFF one-round leaf are unconnected;
+4150 SOFTWARE checks, five full-byte comparisons and six native compiles are
+not a secure handback, allocation lifetime or physical Wi-Fi result.
+
 ## Own payload page exclusion follow-up (0189, 2026-11-04)
 
 Later parent and graph checks now exclude the full rounded payload allocation,

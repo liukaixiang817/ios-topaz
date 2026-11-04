@@ -34,6 +34,37 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Latest continuous Wi-Fi work — 2026-11-04: secure assignment ABI
+
+- User explicitly requests continuous work until Wi-Fi works, with actual
+  progress every15 minutes. Active Codex goal tracks scan/join/IP/DNS/data;
+  do not end work at a local milestone. Existing unrelated-thread heartbeat
+  uefi-ios remains PAUSED; do not create a competing task for this goal.
+- New own-source MP_ASSIGN buffer encoder and default-OFF one-round native
+  leaf implement SCM64 0x42000c16/arginfo0x1117, source4B/region16B/destination24B,
+  seven64-bit extended arguments. NumericVMIDs3/15/24/25 and RW6/RWX7 verified
+  against pinned own secure_buffer/scm, own ICNSS and RMTFS consumers/DT.
+  Reference Dipper encoding agrees; its reserved camera addresses and guessed
+  owner state were not ported. Downloaded vendor sources remain private.
+- Descriptor page retained separately from transferred interval; inputs reject
+  alias, duplicate/unknown VMIDs, bad permissions, dirty/reused storage, wrap,
+  alignment and >2MiB region. Logical return classifier retains interrupted
+  x1..x6 and all UNKNOWN errors; no busy resubmit. Single native SMC has no
+  walltime bound, buffer lifetime/cache/serialization/FP guard or parent caller
+  yet. Source VMID arrays are proposed protocol inputs, never observed owners.
+- ASAN/UBSAN4150 PASS; independent Python matches all20,760 bytes of5 complete
+  encoded requests (RMTFS share, MSA secure/nonsecure and both MSA returns).
+  Six COFF/MachO ON/OFF/QEMU export compiles PASS, frame80; both ON leaf
+  assemblies preserve x0..x6 and contain exactly oneSMC, no loop or cleanup.
+  No firmware/SMC/device execution, no new image or CI. Private
+  research/polaris/uefi-ios-0189/wifi/secure-assignment-abi-0001/proof.json.
+- Completed whole gates NONE; this milestone advances gate3 protocol/backend
+  only. Gates1–5 still incomplete; first allocation bootstrap, actual cache,
+  secure ownership, remoteDMAstop/handback and operational integration remain.
+  Continue with the next necessary memory/remote-lifecycle implementation;
+  do not repeat completed payload-tail or first-map dependency discovery.
+  Pre-existing dirty pwmc_invoke context change remains untouched/uncommitted.
+
 ### Latest Wi-Fi work — 2026-11-04: full payload page exclusions
 
 - Local implementation commit: `d16d9fcd18737b3e8b8033c0eb4808dbcbe4cfce`. Not pushed in this turn.
