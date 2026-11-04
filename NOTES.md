@@ -34,6 +34,36 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-04: retained claims in actual prepare_boot
+
+- After terminal GOP admission and before Wi-Fi/power/native work, actual
+  prepare_boot now performs one fresh GetMemoryMap and rechecks both retained
+  early claims, the full rounded payload, log allocation and bank. It rejects
+  overlap, missing/type-changed pages, prior-record/control mutation, altered
+  original Core/TPL/SMM/FP/CPU state and every partial translation. All1026
+  claim pages receive fresh R/W AT with exact PAR restoration. No allocation,
+  free, target memory access, secure assignment or remote publication occurs.
+- A SHA256 captured immediately after the real early producer binds its entire
+ 100848B record to this current call. The early map classifies the persistent
+  original Boot Services Core before the fresh call; incoming UEFI lifetime
+  remains the explicit contract, not an old map transferred as ownership or
+  a closed PGCD context. No absence of indirect firmware effects is claimed.
+- Final361 sanitizer caller checks PASS, plus original708 producer checks
+  after Core-check helper extraction. Both wholeparent native targets compile
+  with generalregs/frame1024. Independent decoder186 ABI fields match;148
+  early+retained corruption/truncation checks pass, including hostile counts.
+  Paired early/retained RAW digest and full claim/map/translation checks pass.
+- Full driver-0004 links17,598,976B SHA
+  52fc3b49e32d159fb23c0d9880c193e962601d9ac5cd5961bc15dc3581d22b9f;
+  all107 current inputs match. Retained RAW69584B; actual parent reports it and
+  its UNKNOWN display. No phone/CI/session/image. Prior milestone0c9d5fb;
+  previous two whole models are not evidence for this newest changed parent.
+- NEXT connect the retained claim to the actual secure transaction caller:
+  RMTFS needs whole-target zero/CIVAC before HLOS+MSS RW sharing, exclusive
+  CPU/FP/descriptor lifetime and complete UNKNOWN retention. MSA permissions
+  must follow real WLFW region boundaries. No allocator-only boot. All five
+  whole gates and actual scan/join/IP/DNS/data remain incomplete.
+
 ### Continuous Wi-Fi milestone — 2026-11-04: early failure visibility
 
 - Builder/codec commit02c6fdd now followed by an independent early GOP binding.

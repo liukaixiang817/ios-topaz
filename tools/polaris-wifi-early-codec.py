@@ -77,6 +77,12 @@ LAYOUTS = dict(pwea_input=INPUT, pwea_command=COMMAND, pgcd_map=MAP_HEADER, pwea
                pgcd_fp_guard=FP, pwmc_irq_AT=CORE_AT, pwea_core=CORE,
                pwea_native_call=CALL, efi_loaded=IMAGE, pwmc_translation=TRANSLATION,
                pwea_native=NATIVE)
+HOLD_INPUT = Layout(fields(8,'early digest payload_slot log_slot state received count logical_bytes log_bytes'))
+HOLD = Layout([('input',HOLD_INPUT,1)] + fields(8,'payload payload_bytes log') +
+              [('early_digest',1,32),('map',MAP,1),('source',CORE,2),('before',ARCH,1),
+               ('after',ARCH,1),('final',ARCH,1),('fp',FP,1),('AT',TRANSLATION,1028)] +
+              fields(4,'attempted issued returned unknown error complete') + [('translated',4,2)])
+LAYOUTS.update(pweh_input=HOLD_INPUT,pweh_result=HOLD)
 
 
 def descriptors(item):
@@ -184,9 +190,47 @@ def decode(raw):
                 source_identity_reverified=False,physical_wifi_proven=False,record=record)
 
 
-def extract(text):
-    begin=b'EARLY_WIFI_MEMORY_RAW_V1_BEGIN\r\n'
-    end=b'EARLY_WIFI_MEMORY_RAW_V1_END\r\n'
+def decode_retained(raw,early_raw):
+    if len(raw)!=HOLD.size:raise ValueError(f'retained RAW needs exactly {HOLD.size} bytes')
+    early=decode(early_raw);e=early['record'];h=HOLD.decode(raw);issues=[]
+    def require(ok,label):
+        if not ok:issues.append(label)
+    require(early['local_completion_consistent'],'early completion')
+    require(h['early_digest']==hashlib.sha256(early_raw).hexdigest(),'early record binding')
+    require(tuple(h[k] for k in ('attempted','issued','returned','unknown','error','complete'))==(1,1,1,0,0,1),'retained completion')
+    require(h['payload_bytes']==(h['input']['logical_bytes']+4095)//4096*4096 and h['payload']%4096==0,'full payload allocation')
+    require(h['fp']['saved']==h['fp']['restored']==1,'FP restoration')
+    m=h['map']['map']
+    require(tuple(m[k] for k in ('status','version','issued','returned','valid'))==(0,1,1,1,1) and m['key']>0,'fresh map completion')
+    try:
+        ds=descriptors(h['map'])
+        ranges=[(h['payload'],h['payload_bytes']),(h['log'],h['input']['log_bytes']),
+                (e['memory']['input']['bank'],e['memory']['input']['bank_bytes'])]
+        ranges += [(q['requested'],q['bytes']) for q in e['memory']['claim']]
+        require(all(n>0 and b+n<1<<64 and owned(ds,b,n,2) for b,n in ranges),'retained allocated ranges')
+        require(all(a+n<=b or b+m<=a for k,(a,n) in enumerate(ranges) for b,m in ranges[k+1:]),'retained range overlap')
+        for kind,q in enumerate(e['memory']['claim']):
+            pages=(512,514)[kind]
+            require(h['translated'][kind]==q['pages']==pages,'translated claim count')
+            for k in range(pages):
+                at=h['AT'][kind*514+k];page=q['requested']+4096*k
+                require(at['page']==page and at['read_par']==at['write_par']==(0xff00000000000b80|page) and
+                        at['saved']==at['restored'] and all(at[x]==1 for x in
+                        ('read_issued','read_returned','write_issued','write_returned')),f'claim {kind} AT {k}')
+    except ValueError as error:issues.append(str(error))
+    for n,source in enumerate(h['source']):
+        require((source['pages'],source['hash_count'],source['complete'],source['TPL'],source['smm'])==(57,5,1,4,0),f'Core {n} completion')
+        require(source['hashes']==e['call'][4]['source'][1]['hashes'],f'Core {n} unchanged normalized hashes')
+        require(all(at['page']==e['core']+4096*k and at['raw']==(0xff00000000000b80|at['page']) and
+                    at['issued']==at['returned']==1 for k,at in enumerate(source['AT'])),f'Core {n} translations')
+    return dict(format='RETAINED_WIFI_MEMORY_RAW_V1',bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest(),
+                local_completion_consistent=not issues,issues=issues,secure_ownership_proven=False,
+                source_identity_reverified=False,physical_wifi_proven=False,record=h)
+
+
+def extract(text,tag=b'EARLY_WIFI_MEMORY_RAW_V1'):
+    begin=tag+b'_BEGIN\r\n'
+    end=tag+b'_END\r\n'
     if text.count(begin)!=1 or text.count(end)!=1:
         raise ValueError('requires one complete early RAW record')
     body=text.split(begin,1)[1].split(end,1)[0]
@@ -199,11 +243,12 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('input',type=Path)
     parser.add_argument('--ram-log',action='store_true')
+    parser.add_argument('--retained-with',type=Path,help='decode retained RAW paired with the original early RAW file')
     parser.add_argument('--output',type=Path,required=True)
     args=parser.parse_args()
     raw=args.input.read_bytes()
-    if args.ram_log:raw=extract(raw)
-    result=decode(raw)
+    if args.ram_log:raw=extract(raw,b'RETAINED_WIFI_MEMORY_RAW_V1' if args.retained_with else b'EARLY_WIFI_MEMORY_RAW_V1')
+    result=decode_retained(raw,args.retained_with.read_bytes()) if args.retained_with else decode(raw)
     args.output.write_text(json.dumps(result,indent=2)+'\n')
     print(json.dumps({k:v for k,v in result.items() if k!='record'}))
 

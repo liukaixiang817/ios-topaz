@@ -58,9 +58,8 @@ static inline int pwea_native_binding(const struct pwea_native*r)
         pgcd_equal((const void*)(uintptr_t)r->image_address,&r->image,sizeof(r->image))&&
         !*(const volatile uint32_t*)(uintptr_t)r->native_address;
 }
-static inline int pwea_native_source(struct pwea_native*r,unsigned call,unsigned phase,unsigned map)
+static inline int pwea_core_check(const struct pwea_native*r,struct pwea_core*q,const struct pwea_map*m)
 {
-    struct pwea_core*q=&r->call[call].source[phase];const struct pwea_map*m=&r->memory.map[map];
     if(!m->map.valid||!pwmc_zero(q,sizeof(*q))||!pwea_native_binding(r))return 0;
     for(unsigned k=0;k<PWEA_CORE_PAGES;k++){
         struct pwmc_irq_AT*a=&q->AT[k];a->page=r->core+4096*k;
@@ -75,6 +74,8 @@ static inline int pwea_native_source(struct pwea_native*r,unsigned call,unsigned
     q->smm=pwfi_le((const void*)(uintptr_t)(r->core+0x1cb78),8);
     if(q->TPL!=4||q->smm||!pwea_native_binding(r))return 0;q->complete=1;return 1;
 }
+static inline int pwea_native_source(struct pwea_native*r,unsigned call,unsigned phase,unsigned map)
+{return pwea_core_check(r,&r->call[call].source[phase],&r->memory.map[map]);}
 static inline void pwea_native_guard_seal(const struct pwea_native*r,unsigned call,uint8_t out[32])
 {
     struct pwfi_sha256 h;pwfi_init(&h);

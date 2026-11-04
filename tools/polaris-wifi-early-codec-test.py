@@ -10,6 +10,7 @@ import struct
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('raw',type=Path)
+    parser.add_argument('--retained',type=Path)
     args=parser.parse_args()
     spec=importlib.util.spec_from_file_location('codec',Path(__file__).with_name('polaris-wifi-early-codec.py'))
     c=importlib.util.module_from_spec(spec);spec.loader.exec_module(c)
@@ -66,6 +67,28 @@ def main():
         try:c.extract(invalid)
         except ValueError:check(True)
         else:check(False)
+    if args.retained:
+        retained=args.retained.read_bytes();check(c.decode_retained(retained,raw)['local_completion_consistent'])
+        mutations=[]
+        for key in ('attempted','issued','returned','complete','error','unknown'):
+            mutations.append((c.HOLD.fields[key][0],4,1 if key in ('error','unknown') else 0))
+        mutations += [(c.HOLD.fields['early_digest'][0],4,0),
+                      (c.HOLD.fields['payload_bytes'][0],8,4096),
+                      (c.HOLD.fields['translated'][0],4,1)]
+        for phase in range(2):
+            base=c.HOLD.fields['source'][0]+phase*c.CORE.size
+            mutations += [(base+c.CORE.fields['pages'][0],4,0),(base+c.CORE.fields['hashes'][0],4,0),
+                          (base+c.CORE.fields['AT'][0]+c.CORE_AT.fields['raw'][0],8,0)]
+        base=c.HOLD.fields['map'][0]+c.MAP.fields['data'][0]
+        mutations += [(base+40*k,4,7) for k in range(1,6)]
+        for k in (0,511,514,1027):
+            mutations.append((c.HOLD.fields['AT'][0]+k*c.TRANSLATION.size+c.TRANSLATION.fields['write_par'][0],8,0))
+        for at,size,value in mutations:
+            changed=bytearray(retained);struct.pack_into('<'+('Q' if size==8 else 'I'),changed,at,value)
+            check(not c.decode_retained(changed,raw)['local_completion_consistent'])
+        huge=bytearray(raw)
+        struct.pack_into('<Q',huge,offset(('memory',0),('claim',0),('pages',0)),(1<<64)-1)
+        check(not c.decode_retained(retained,huge)['local_completion_consistent'])
     print(json.dumps(dict(passed=True,checks=checks,raw_bytes=len(raw),hardware=False)))
 
 

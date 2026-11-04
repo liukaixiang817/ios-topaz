@@ -276,8 +276,10 @@ static int shutdown_status(void *,const uint8_t **,uint64_t *);
 /* Outer include gate removes every new physical/query/FP body from QEMU. */
 #include "uefi-gcd-mmio-readonly.h"
 #if EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE
-#include "uefi-wifi-early-native.h"
+#include "uefi-wifi-retained-memory.h"
 static struct pwea_native early_wifi_memory;
+static uint8_t early_wifi_digest[32];
+static struct pweh_result retained_wifi_memory;
 #endif
 #if EFI_XNU_WIFI_REMOTE_MEMORY_AVAILABLE
 #if !EFI_XNU_WIFI_FOUR_VRM_AVAILABLE || EFI_XNU_WIFI_CPU_RO_ADMISSION
@@ -423,6 +425,19 @@ static void terminal_gop_evidence(void)
        r->self_bytes!=pgcd_record.self_bytes||r->headers.address[0]!=(uintptr_t)gop){
         (void)pwtg_fail(r,PWTG_ARGUMENT);terminal_gop_raw();return;
     }
+#if EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE
+    if(retained_wifi_memory.unknown){
+        const struct pweh_result*h=&retained_wifi_memory;
+        pwtg_line(r,0,"RETAIN HOLD",h->attempted,h->error);
+        pwtg_line(r,1,"MAP IR",h->issued,h->returned);
+        pwtg_line(r,2,"MAP S LO",(uint32_t)(h->map.map.status>>32),(uint32_t)h->map.map.status);
+        pwtg_line(r,3,"FP S R",h->fp.saved,h->fp.restored);
+        pwtg_line(r,4,"CORE PRE",h->source[0].pages,h->source[0].complete);
+        pwtg_line(r,5,"CORE POST",h->source[1].pages,h->source[1].complete);
+        pwtg_line(r,6,"AT0 AT1",h->translated[0],h->translated[1]);
+        (void)pwtg_draw(r);terminal_gop_raw();return;
+    }
+#endif
     /* Numeric resident observations, never an inference from an unused zero.
      * The attempted/issued masks beside the errors distinguish UNOBSERVED. */
 #if EFI_XNU_WIFI_CPU_LIVE_DIAGNOSTICS
@@ -542,7 +557,7 @@ static int new_original_unknown(void)
       current_payload_binding.unknown||current_private_unknown()||pbgi_cache_call.unknown||pbgi_seed.unknown||pbha_handles.unknown||pbhr_handles.unknown||pbhd_handles.unknown||pbhd_timer_handles.unknown||pbhi_handles.unknown||pbht_handles.unknown
 #endif
 #if EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE
-    ||early_wifi_memory.unknown||early_wifi_memory.memory.unknown
+    ||early_wifi_memory.unknown||early_wifi_memory.memory.unknown||retained_wifi_memory.unknown
 #endif
 #if EFI_XNU_WIFI_TERMINAL_GOP_DIAGNOSTICS
     ||terminal_gop.uncertain
@@ -819,7 +834,7 @@ _Static_assert(sizeof(log_buffer)>=2*(sizeof(pwsp_record)+sizeof(pwrpt_record)+s
     5*(sizeof(current_private_graphs)+sizeof(current_private_providers)+sizeof(current_private_timers)+sizeof(current_private_events))+
 #endif
 #if EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE
-    2*sizeof(early_wifi_memory)+4*sizeof(early_wifi_gop)+
+    2*sizeof(early_wifi_memory)+4*sizeof(early_wifi_gop)+2*sizeof(retained_wifi_memory)+
 #endif
     1048576,
     "complete preparation/client/power/source raw must fit without truncation");
@@ -940,6 +955,17 @@ static int prepare_boot(void *context)
          * power test. Reentry cannot open a second admission. */
         return 0;
     }
+#endif
+#if EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE
+    const struct pweh_input retained_input={.early=&early_wifi_memory,.digest=early_wifi_digest,
+        .payload_slot=&payload,.log_slot=&log_snapshot,.state=&load_state,.received=&received,.count=&payload_count,
+        .logical_bytes=EFI_XNU_PAYLOAD_BYTES,.log_bytes=sizeof(log_buffer)+128+EFI_XNU_LOG_SIZE};
+    int retained_ok=pweh_run(&retained_wifi_memory,&retained_input);
+    ram_report("RETAINED_WIFI_MEMORY_ACCEPTED=",retained_ok);
+    ram_report("RETAINED_WIFI_MEMORY_RAW_V1_BYTES=",sizeof(retained_wifi_memory));
+    ram_text("RETAINED_WIFI_MEMORY_RAW_V1_BEGIN\r\n");ram_hex((const void*)&retained_wifi_memory,sizeof(retained_wifi_memory));
+    ram_text("RETAINED_WIFI_MEMORY_RAW_V1_END\r\n");
+    if(!retained_ok){original_service_unknown=1;power_unknown_hold();}
 #endif
 #if EFI_XNU_WIFI_CACHE_AVAILABLE
 #if defined(POLARIS_EFI_TEST_QEMU)
@@ -1648,6 +1674,7 @@ static efi_status admission(void)
     ram_text("EARLY_WIFI_MEMORY_RAW_V1_BEGIN\r\n");ram_hex((const uint8_t*)&early_wifi_memory,sizeof(early_wifi_memory));
     ram_text("EARLY_WIFI_MEMORY_RAW_V1_END\r\n");
     if(!early_ok){original_service_unknown=1;power_unknown_hold();}
+    pweh_digest(&early_wifi_memory,sizeof(early_wifi_memory),early_wifi_digest);
     const struct pwea_map*early_map=&early_wifi_memory.memory.map[2];
     bytes_copy(map_snapshot.data,early_map->data,early_map->map.bytes);
     map_snapshot.bytes=early_map->map.bytes;map_snapshot.stride=early_map->map.stride;
