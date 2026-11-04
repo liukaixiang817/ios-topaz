@@ -36,6 +36,7 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Latest Wi-Fi work — 2026-11-04: full payload page exclusions
 
+- Local implementation commit: `d16d9fcd18737b3e8b8033c0eb4808dbcbe4cfce`. Not pushed in this turn.
 - User reports phone in FASTBOOT and requests Wi-Fi as soon as possible.
   No new image is ready; no USB query, temporary boot, partition write or CI
   run occurred in this turn. Actual scan/join/IP/DNS/data remain unimplemented.
