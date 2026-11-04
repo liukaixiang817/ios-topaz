@@ -44,6 +44,40 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): own AOP notification
+
+- XO/PRNG milestone is commit5ea1238. New pmaq sends own PIL96B modem
+  load_state on/off over an explicitly CURRENT connected/idle QMP channel.
+  Full64B descriptor twice, own magic/version/features, all link/channel ACKs,
+  aligned bounded disjoint RX/TX buffers in DT c300000/1MiB. No guessed offset,
+  link/channel takeover or draining another message; unready/busy refuses.
+- Saves TX96B, writes/reads back zero-padded exact message, rechecks descriptor
+  and empty RX/TX before publishing length96, full barrier, doorbell1799000c
+  mask1. Finite own1s TX/2s whole notification/101 polls. Remote clearing TX
+  length is transport consumption, not proof of MSS startup. After consumption,
+  restore all original TX payload words/readbacks and recheck descriptor/idle.
+  No host length0 write, IRQ configuration, RX consumption or timeout cleanup.
+- OFF requires this epoch's completed ON plus actual proxy and supply restored
+  records following stop/AXI/reset/active-clock restoration. UNKNOWN cannot
+  send OFF. Default-OFF EFI_XNU_MSS_AOP_IO_AVAILABLE native adapter accepts
+  exact pending event/expected message or restoration word and uses existing
+  fresh masked CPU/Device AT/PAR checks. Still no real parent registration.
+- 226 software native-adapter scenarios/71482 checks plus587 actual software
+  clock/stop checks PASS with ASan/UBSan. ON->real software power/proxy/stop/
+  restore->OFF composition passes; all211 native event failures, busy RX/TX,
+  changed descriptor/readback, invalid geometry, wrong CPU/AT, no ACK and
+  invalid OFF dependencies refuse without automatic cleanup. Both native
+  COFF/MachO exports pass generalregs/frame1024. Evidence:
+  research/polaris/uefi-ios-0189/wifi/mss-power-0001/aop-proof-0001.json.
+- NEXT continuous current source/CPU/DRV2/QMP owner and real parent MSS path.
+  Existing pre-CPU_ON normal-service/200ms owner cannot be rebased into a
+  persistent owner. New path must exclude original providers for the whole
+  MSS/scan/join interval, independently bind resource and memory lifetimes,
+  then perform full stop/return before normal firmware resumes. Actual image
+  packaging/codec/admission/session/freeze/helper and final2 serial whole
+  models remain. No phone/CI/USB/boot. Execution2/5; this step plus3..5 remain.
+  Last15min17:36Z (04:36 local), next17:51Z (04:51 local). Goal ACTIVE.
+
 ### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): XO/PRNG proxy
 
 - Retained supplies milestone is commita4b4731. New pmpx consumes that

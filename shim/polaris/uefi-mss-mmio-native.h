@@ -15,6 +15,12 @@
 #ifndef EFI_XNU_MSS_PROXY_IO_AVAILABLE
 #define EFI_XNU_MSS_PROXY_IO_AVAILABLE 0
 #endif
+#ifndef EFI_XNU_MSS_AOP_IO_AVAILABLE
+#define EFI_XNU_MSS_AOP_IO_AVAILABLE 0
+#endif
+#if EFI_XNU_MSS_AOP_IO_AVAILABLE && !EFI_XNU_MSS_NATIVE_IO_AVAILABLE
+#error MSS AOP leaves require the separate native MMIO leaves
+#endif
 #if EFI_XNU_MSS_PROXY_IO_AVAILABLE && (!EFI_XNU_MSS_NATIVE_IO_AVAILABLE || !EFI_XNU_MSS_RAIL_IO_AVAILABLE)
 #error MSS proxy leaves require the separate native MMIO and retained rail leaves
 #endif
@@ -25,6 +31,9 @@
 #endif
 #if EFI_XNU_MSS_PROXY_IO_AVAILABLE
 #include "../../tools/polaris-mss-proxy.h"
+#endif
+#if EFI_XNU_MSS_AOP_IO_AVAILABLE
+#include "../../tools/polaris-mss-aop.h"
 #endif
 enum pmni_kind {PMNI_READ=1,PMNI_WRITE,PMNI_STORE_ORDER,PMNI_FULL_ORDER};
 struct pmni_command {uint64_t address;uint32_t kind,value;};
@@ -102,6 +111,11 @@ static inline int pmni_allowed(const struct pmni_command*c)
     if(c->kind==PMNI_STORE_ORDER||c->kind==PMNI_FULL_ORDER)return !c->address&&!c->value;
     if(c->kind!=PMNI_READ&&c->kind!=PMNI_WRITE)return 0;
     if(c->kind==PMNI_READ&&c->value)return 0;
+#if EFI_XNU_MSS_AOP_IO_AVAILABLE
+    if(c->address==PMAQ_IRQ)return c->kind==PMNI_WRITE&&c->value==1;
+    if(!(c->address&3)&&c->address>=PMAQ_BASE&&c->address<PMAQ_BASE+PMAQ_BYTES)
+        return c->kind==PMNI_READ||c->address>=PMAQ_BASE+64;
+#endif
 #if EFI_XNU_MSS_PROXY_IO_AVAILABLE
     if(c->address==0x134004)return c->kind==PMNI_READ;
 #endif
@@ -242,6 +256,28 @@ static inline int pmni_proxy(const struct pmpx_lifecycle*p,const struct pmpx_com
        !pmsr_equal(c,&p->event[p->events-1].command,sizeof(*c))||c->step!=p->step||
        c->kind==PMPX_RAIL||c->kind<PMPX_READ||c->kind>PMPX_ORDER)return 0;
     struct pmni_command access={c->address,c->kind==PMPX_ORDER?PMNI_FULL_ORDER:c->kind,c->value};
+    return pmni_access(opening,&access,r);
+}
+#endif
+#if EFI_XNU_MSS_AOP_IO_AVAILABLE
+static inline int pmni_aop(const struct pmaq_notify*q,const struct pmaq_command*c,
+    const struct pmni_arch*opening,struct pmni_result*r)
+{
+    if(!q||!c||!r||!pmsr_disjoint(q,sizeof(*q),r,sizeof(*r))||q->unknown||q->error||q->complete||
+       !q->pending||q->pending!=q->events||q->events>PMAQ_EVENTS||
+       !pmsr_equal(c,&q->event[q->events-1].command,sizeof(*c))||c->step!=q->step||c->index!=q->index||
+       c->kind<PMAQ_READ||c->kind>PMAQ_FULL_ORDER)return 0;
+    if(c->kind==PMAQ_WRITE32){
+        if(!pmaq_geometry(q->descriptor))return 0;
+        uint64_t tx=PMAQ_BASE+q->descriptor[14];
+        if(c->step==PMAQ_DOORBELL){if(c->address!=PMAQ_IRQ||c->value!=1)return 0;}
+        else if(c->step==PMAQ_LENGTH){if(c->address!=tx||c->value!=96)return 0;}
+        else if(c->step==PMAQ_WRITE||c->step==PMAQ_RESTORE){
+            if(c->index>=24||c->address!=tx+4+4*c->index||
+               c->value!=(c->step==PMAQ_WRITE?pmaq_word(q->on,c->index):q->saved[c->index]))return 0;
+        }else return 0;
+    }
+    struct pmni_command access={c->address,c->kind==PMAQ_FULL_ORDER?PMNI_FULL_ORDER:c->kind,c->value};
     return pmni_access(opening,&access,r);
 }
 #endif

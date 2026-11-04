@@ -23,10 +23,11 @@
 static struct pmsp_lifecycle supply,held_copy;
 static struct pmck_lifecycle returned_clocks;
 static unsigned supply_cases,logical_writes;
+static uint64_t supply_start=1000;
 static const uint32_t levels[3]={7,4,7};
 static void supply_fixture(void)
 {
-    reset(2,1,0,0);memset(&supply,0,sizeof(supply));logical_writes=0;supply_cases++;
+    reset(2,1,0,0);tick=supply_start;memset(&supply,0,sizeof(supply));logical_writes=0;supply_cases++;
     votes[0]=2;votes[1]=6;votes[2]=0;
     static const uint32_t mv[4]={0,1800,0,3200};
     for(unsigned k=0;k<4;k++){
