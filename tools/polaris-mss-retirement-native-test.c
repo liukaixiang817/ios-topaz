@@ -30,7 +30,10 @@ static int retire_drive(void)
         if(next)advance_to(next);
     }return 1;
 }
-int main(int argc,char**argv)
+#ifndef PMNR_TEST_ENTRY
+#define PMNR_TEST_ENTRY main
+#endif
+int PMNR_TEST_ENTRY(int argc,char**argv)
 {
     CHECK(argc==8);sm_original=malloc(PWFI_IMAGE_BYTES);sm_shadow=malloc(PMSQ_BYTES);rmtfs_shadow=malloc(0x202000);
     memory=aligned_alloc(4096,PNV_BYTES);CHECK(sm_original&&sm_shadow&&rmtfs_shadow&&memory);

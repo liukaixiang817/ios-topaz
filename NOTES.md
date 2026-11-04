@@ -44,6 +44,35 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): native exact VMID return
+
+- Actual native resource retirement is commit7dce0bb. Default-OFF pmvb uniquely
+  consumes that completed continuation, keeps frozen startup evidence and
+  returns only exact forward-assigned MSA regions (MSS15/WLAN24/optionalCE25),
+  RMTFS inner2MiB (HLOS3+MSS15), then120MiB modem bank (MSS15), to HLOS3 RWX.
+  Every inverse request is matched to the actual successful forward descriptor.
+  A separate strict modem-return wire profile leaves the startup-only profile
+  unchanged. Own ICNSS permission lists / pil_assign_mem_to_linux were checked.
+- Complete native composition ASan/UBSan PASS6/8183994: four4-round transactions
+  with real host PROT_NONE descriptors, partial second return, invalidation
+  failure after secure zero, peer unexpectedly ON, owner expiry and changed
+  region reject further actions. Returned targets remain unread/inaccessible
+  in the host fixture; CPU remains held, buffers resident, no automatic retry.
+- Generalregs/frame1024 COFF/MachO PASS; new return protocol520 checks,
+  startup profile1070 and generic encoder4150 PASS. Evidence:
+  mss-vmid-return-native-0001/proof-0001.json. Hardware/UEFI/modem are SOFTWARE.
+  This is the pre-CE bootstrap lifetime; CE activation/drain/runtime ownership
+  must be composed before any final image. No DMA-retired shortcut, CPU restore,
+  original provider, free, phone/USB/CI/push/boot or parent registration.
+- NEXT native WLAN CE/data path plus whole-parent/kernel runtime handoff. The
+  reference Dipper build script contains unresolved driver/mac80211 stubs, so
+  it cannot itself prove working traffic. Official Linux v7.0.14 tag resolved
+  to458c6079fc1d41d564c37679c8ace02cd83ee817 (tag objectb38d6c0b6e7f406a7feb7d46f184ec3edaac8c3b);
+  primary ath10k source download/individual Git-blob verification in progress
+  under ath10k-source-0001. No foreign build script/prebuilt is executed.
+  Execution2/5, current step plus3 remain. Last15min23:49Z/10:49 Melbourne;
+  next00:04Z/11:04. Goal ACTIVE; continue until physical Wi-Fi works.
+
 ### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): actual native resource retirement
 
 - Native STOP/ACK/halt/reset is commitcf106cb. Default-OFF pmnr now consumes

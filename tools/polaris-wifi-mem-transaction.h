@@ -59,6 +59,9 @@ static inline int pwmt_begin(struct pwmt_transaction*t,struct pwma_page*page,
 static inline int pwmt_begin_modem(struct pwmt_transaction*t,struct pwma_page*page,
     const struct pwma_spec*spec,uint64_t now,uint64_t frequency)
 {return pwmt_begin_profile(t,page,spec,now,frequency,1);}
+static inline int pwmt_begin_modem_return(struct pwmt_transaction*t,struct pwma_page*page,
+    const struct pwma_spec*spec,uint64_t now,uint64_t frequency)
+{return pwmt_begin_profile(t,page,spec,now,frequency,2);}
 static inline int pwmt_page_equal(const struct pwmt_transaction*t)
 {return pwmt_equal(t->expected,(const void*)(uintptr_t)t->page,4096);}
 /* Reading descriptor bytes before CLEAN or the FIRST SMC does not dirty them.

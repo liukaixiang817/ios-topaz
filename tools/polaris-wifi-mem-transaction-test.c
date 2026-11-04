@@ -21,6 +21,10 @@ static struct pwma_spec input(void)
         s.destination[1]=(struct pwma_destination){0};
     }
 #endif
+#if defined(PWMT_TEST_MODEM_RETURN)
+    s.region_pa=0xf8300000;s.region_bytes=0x7800000;s.source[0]=PWMA_MSS_MSA;s.destinations=1;
+    s.destination[0]=(struct pwma_destination){PWMA_HLOS,PWMA_RWX};s.destination[1]=(struct pwma_destination){0};
+#endif
     return s;
 }
 static void begin(void)

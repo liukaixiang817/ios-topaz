@@ -17,6 +17,7 @@ struct pmnr_state {
     uint8_t shutdown_digest[32],wlan_digest[32],auth_digest[32];
     uint32_t attempted,ready,unknown,error,phase,pending,complete,reserved;
     uint8_t digest[32];
+    uint64_t handback; /* Unique later permission-return owner, outside seal. */
 };
 static inline int pmnr_fail(struct pmnr_state*s,unsigned error)
 {s->unknown=1;if(!s->error)s->error=error;return 0;}

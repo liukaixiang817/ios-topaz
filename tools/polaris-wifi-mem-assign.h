@@ -53,15 +53,18 @@ static inline int pwma_encode_profile(struct pwma_page*page,struct pwma_register
     /* Own hyp_assign_phys uses ONE scatterlist entry. Its batch loop takes
      * that first entry whole before considering the 2MiB aggregation limit.
      * A separate profile admits only the own120MiB/1MiB-aligned modem bank
-     * and its two startup transitions, never arbitrary large WLAN regions. */
+     * and its two startup transitions (profile1), or its exact MSS->HLOS
+     * return (profile2), never arbitrary large WLAN regions. */
     if(modem){
-        if(modem!=1||s.region_bytes!=0x7800000||(s.region_pa&0xfffff))return 0;
+        if(modem>2||s.region_bytes!=0x7800000||(s.region_pa&0xfffff))return 0;
         unsigned share=s.sources==1&&s.source[0]==PWMA_HLOS&&s.destinations==2&&
             s.destination[0].vmid==PWMA_HLOS&&s.destination[0].permissions==PWMA_RW&&
             s.destination[1].vmid==PWMA_MSS_MSA&&s.destination[1].permissions==PWMA_RW;
         unsigned exclusive=s.sources==2&&s.source[0]==PWMA_HLOS&&s.source[1]==PWMA_MSS_MSA&&
             s.destinations==1&&s.destination[0].vmid==PWMA_MSS_MSA&&s.destination[0].permissions==PWMA_RW;
-        if(!share&&!exclusive)return 0;
+        unsigned handback=s.sources==1&&s.source[0]==PWMA_MSS_MSA&&s.destinations==1&&
+            s.destination[0].vmid==PWMA_HLOS&&s.destination[0].permissions==PWMA_RWX;
+        if(modem==1?(!share&&!exclusive):!handback)return 0;
     }
     if((s.descriptor_pa&4095)||!pwma_span(s.descriptor_pa,sizeof(*page))||
        (s.region_pa&4095)||(s.region_bytes&4095)||!s.region_bytes||(!modem&&s.region_bytes>0x200000)||
@@ -105,6 +108,8 @@ static inline int pwma_encode(struct pwma_page*page,struct pwma_registers*regs,c
 {return pwma_encode_profile(page,regs,input,0);}
 static inline int pwma_encode_modem(struct pwma_page*page,struct pwma_registers*regs,const struct pwma_spec*input)
 {return pwma_encode_profile(page,regs,input,1);}
+static inline int pwma_encode_modem_return(struct pwma_page*page,struct pwma_registers*regs,const struct pwma_spec*input)
+{return pwma_encode_profile(page,regs,input,2);}
 enum pwma_return {PWMA_RETURN_UNKNOWN,PWMA_RETURN_INTERRUPTED,PWMA_RETURN_ZERO};
 /* Preserve all returned registers separately. x0==1 continues the SAME
  * request with returned x1..x6, never a new request or busy resubmission.

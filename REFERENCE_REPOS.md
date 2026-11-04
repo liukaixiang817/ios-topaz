@@ -14,6 +14,17 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+## Own native shutdown and permission return (0189, 2026-11-05)
+
+Own pil-msa shutdown/reset/clock ordering and ICNSS HLOS_ALL permission lists
+were compared to the retained reference. Actual native composition now covers
+fresh STOP ACK, AXI halt/reset, clock/proxy/supply/AOP retirement and exact inverse
+MSA/RMTFS/modem grants, with software privileged leaves. This remains pre-CE,
+unregistered, CPU-held and not physical Wi-Fi. Dipper's ath10k build explicitly
+stubs missing driver/mac80211 symbols; its object is not a complete traffic
+implementation. Primary Linux stable v7.0.14 commit458c6079fc1d41d564c37679c8ace02cd83ee817
+is being retained for own CE/ath10k comparison without executing foreign scripts.
+
 ## Own WLFW/MSA startup (0189, 2026-11-05)
 
 Compared HackiOS redwood_wlfw (WCN6750/ath11k), the retained Dipper ath10k
