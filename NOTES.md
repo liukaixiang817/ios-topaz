@@ -108,6 +108,20 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
+- NEW0189 latest PUBLIC functional source
+  a9c3d42b7b22250fec9435b8bfe1ef94d80462e7 is published by the SAME original
+  directpush under actual continuing source/text consentce8ce4fd. Push ENDED0;
+  subsequent independent readonly lsremote matchesa9c3d42. Exact five own UTF8
+  paths: NOTES/REFERENCE_REPOS/current-map header/common header/new relay-control
+  test. All FW/Apple/vendor/NV/backup/RAW/photo/serial/password/private bytes
+  excluded. Private later-map-relay-control-0001/authorized-source-push-0001.json
+  SHA77901b21710bb407df13b4ca08a4bca9291af078835523ec85570bd3958fe5d3.
+  This later handoff changes only two text files, no source/RAW/schema changes
+  or repeated checks. No alternate connector/HTTP/indirect upload/force/newbranch.
+  All old CURRENT/check/proof claims retain original source/version scope;
+  lifetime/owner/wholecall/secureDMA/new candidate/actual WiFi still NOTREADY.
+  No physical or permission question pending.
+
 - NEW0189 latest SOURCE/SOFTWARE: the EARLIER active Map relay now closes its
   complete304B pcmp_live control across eight existing callback boundaries:
   three arch returns, FP save/restore, original Map, order and header AT. This

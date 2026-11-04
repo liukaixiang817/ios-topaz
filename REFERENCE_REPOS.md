@@ -2381,3 +2381,10 @@ so source lifetime/ABA/IRQ/wholecall/precall/secure-DMA qualification remains.
 No reference review/script/prebuilt/USB/native/originalPE/newmodel/CI/codec/image/
 payload/helper/freeze. REMOTE_MEMORY defaultOFF and consumer/profile unconnected.
 No PA publish/MSS/NVserve/radio or physical WiFi success; audio/camera STOP.
+
+The relay-control functional source `a9c3d42b7b22250fec9435b8bfe1ef94d80462e7` is published:
+same original direct push ENDED0, subsequent independent lsremote matched.
+Exact five own UTF8 source/text paths only under standing consentce8ce4fd,
+sensitive/private bytes excluded. Private authorized-source-push-0001.json
+SHA77901b21710bb407df13b4ca08a4bca9291af078835523ec85570bd3958fe5d3. This later handoff edits only
+NOTES/REFERENCE_REPOS; no repeated checks or new hardware/owner permission.
