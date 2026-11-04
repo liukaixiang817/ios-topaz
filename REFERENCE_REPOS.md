@@ -14,6 +14,25 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+## Own parent log allocation result refusal (0189, 2026-11-04)
+
+The actual parent now refuses a successful AllocatePool result with NULL
+log_snapshot before GOP/normal service use. This is one source predicate,
+not new lifetime/ownership qualification or a callback wrapper. Existing
+EFI error propagation and admission-refused static-buffer rescue remain.
+Four actual wholeparent COFF/MachO REMOTE_ON/DEFAULT_OFF compiles pass with
+generalregs/frame1024; original and new LLVM IR confirm the new refusal edge.
+No runtime test, original firmware/native execution, old suites/models/CI or
+operational image/helper/device action. Prior OFF equality is historical.
+
+Private log-snapshot-null-result-refusal-0001/proof.json
+SHA1a03e1462eb24e73d232666953819a2243cfdf1f5332c5c683c7ecde91ea493f.
+Parent SHA9b83788a2c730cf237c2c6874e2310da0f998c8cbf64b5d6a473af3faa6c810d.
+The matching log address/length bindings already exist and were not rebuilt.
+Earlier callsite discovery's 0x9d400000 AllocatePages is QEMU-only, not a real
+Polaris allocation; old records stay unmodified. Whole gates complete NONE,
+this is partial gate2 only; WiFi and safe startup remain NOTREADY.
+
 ## Own Polaris current-relay result effects (0189, 2026-11-04)
 
 Published own source/text a7dff4cce2249968f41974c8f42d1102616ac8d9 through the

@@ -108,6 +108,52 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
+- NEW0189 latest SOURCE milestone, 2026-11-04: actual parent admission
+  now rejects AllocatePool EFI_SUCCESS with NULL log_snapshot, before GOP or
+  later normal service use. Original code only checked EFI error. One actual
+  source predicate was added; original EFI errors return unchanged, nonnull
+  success continues, and no allocation/free/retry/cleanup was introduced.
+  Existing non-QEMU admission-refused rescue uses static log_buffer via
+  rescue_logs, not the log_snapshot-based normal logs callback. This is a
+  SOURCE/compiled-control-flow finding, not an observed firmware fault or
+  physical allocation/lifetime/retirement proof.
+- Focused validation only: actual wholeparent COFF+MachO each REMOTE_ON and
+  DEFAULT_OFF compile PASS, generalregs/maxframe1024. Preserved ORIGINAL old
+  and new wholeparent LLVM IR with noinline/O1: old admission has no returned
+  log_snapshot NULL check, new NULL edge returns EFI_ERROR|9 before GOP, and
+  allocation EFI-error edge preserves its actual result. Four native objects
+  are compile artifacts, not native execution. No host runtime test, old suite,
+  model/CI, codec/image/payload/helper/freeze/USB/MMIO/SMC/originalPE execution.
+  No ABI/RAW/version/context/wrapper/permission/owner change. DefaultOFF body
+  also changed; do not extend prior OFF-equality or0188/native qualification.
+- Current parent SHA9b83788a2c730cf237c2c6874e2310da0f998c8cbf64b5d6a473af3faa6c810d.
+  Private0189/wifi/log-snapshot-null-result-refusal-0001/proof.json
+  SHA1a03e1462eb24e73d232666953819a2243cfdf1f5332c5c683c7ecde91ea493f.
+  All original source/IR/RAW/proof/timestamps remain, no normalization or old
+  qualification widened. Earlier guard/source/header suites retain exact
+  a7dff4c scope, not new wholeparent execution evidence.
+- The named log_snapshot trace is complete: single retained global producer,
+  no explicit log_snapshot free/reassignment in the targeted source references,
+  allocated length equals current phase4/current/incoming bindings; these
+  existing bindings were not rebuilt. This establishes only own source flow,
+  not external liveness or a complete active-allocation inventory.
+  CORRECTION to earlier allocation-callsite discovery: 0x9d400000 AllocatePages
+  at original uefi-xnu.c:1555 is POLARIS_EFI_TEST_QEMU-only; it is not a physical
+  Polaris allocation. Earlier discovery files remain unchanged historical
+  artifacts; exclude that QEMU call from any real active inventory.
+- Five-gate status: completed whole gates NONE; this is partial gate2 producer
+  result checking; gates1–5 remain incomplete. Human has again confirmed phone
+  waiting in FASTBOOT, not a new independent USB observation. No phone action
+  requested/performed, MSS/radio/scan/join/IP/DNS/data remain physically undone.
+  NEXT: do not repeat log_snapshot trace, this predicate/native/IR check or
+  completed ownresult/input/source-page guards. Continue genuine remaining
+  fresh bootstrap/source and active-allocation lifetime prerequisites for the
+  actual independent MSA/RMTFS consumer. No incoming phases1/2 or closed PGCD
+  reuse, fake owner/permission, live claims from snapshots, or blind wiring.
+  Wholecall/external-effects/IRQ/ABA/lifetime/precall and secureDMA handback
+  remain unqualified. Main REMOTE_MEMORY defaultOFF, no operational consumer/
+  builder/profile/resource/startup admission. Sound/camera STOP.
+
 - LATEST HUMAN WORK/REPORTING REQUIREMENT, 2026-11-04: the user asks that
   the same15-minute task actively start/continue a concrete unfinished work
   item and report what actually happened in the preceding15 minutes, results,

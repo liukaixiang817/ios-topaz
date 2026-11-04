@@ -1559,6 +1559,7 @@ static efi_status admission(void)
     if((s&EFI_ERROR)||address<UINT64_C(0x80000000)||address+EFI_XNU_PAYLOAD_BYTES>POLARIS_RAM_BASE)return EFI_ERROR|9;
     payload=(void*)(uintptr_t)address;
     s=system_table->boot->allocate_pool(2,sizeof(log_buffer)+128+EFI_XNU_LOG_SIZE,(void**)&log_snapshot);if(s&EFI_ERROR)return s;
+    if(!log_snapshot)return EFI_ERROR|9;
     static const efi_guid graphics={0x9042a9de,0x23dc,0x4a38,{0x96,0xfb,0x7a,0xde,0xd0,0x80,0x51,0x6a}};
     s=system_table->boot->locate_protocol(&graphics,0,(void**)&gop);
 #if !defined(POLARIS_EFI_TEST_QEMU)
