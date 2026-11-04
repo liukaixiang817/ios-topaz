@@ -10,7 +10,7 @@
 #define EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE 0
 #endif
 #if EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE
-#if !EFI_XNU_WIFI_REMOTE_MEMORY_AVAILABLE || defined(POLARIS_EFI_TEST_QEMU)
+#if defined(POLARIS_EFI_TEST_QEMU)
 #error "Early WiFi allocation requires a separately qualified physical incoming-UEFI profile"
 #endif
 #include "uefi-wifi-early-memory.h"
@@ -33,6 +33,7 @@ struct pwea_native {
     struct pgcd_arch final;
     uint32_t translated[2],attempted,complete,error,unknown;
 };
+_Static_assert(sizeof(struct pwea_native)==100848,"EARLY_WIFI_MEMORY_RAW_V1 ABI");
 #if defined(POLARIS_WIFI_EARLY_SOFTWARE_PEER)
 static int pwea_test_core_at(struct pwmc_irq_AT*);
 static efi_status pwea_test_map(struct efi_system*,struct pwea_map*);

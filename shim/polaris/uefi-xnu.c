@@ -12,7 +12,7 @@
 #ifndef EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE
 #define EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE 0
 #endif
-#if EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE && (!EFI_XNU_WIFI_REMOTE_MEMORY_AVAILABLE || defined(POLARIS_EFI_TEST_QEMU))
+#if EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE && (!EFI_XNU_WIFI_FOUR_VRM_AVAILABLE || !EFI_XNU_AUDIO_CLOCK_GCD_QUERY_AVAILABLE || !EFI_XNU_GCD_MMIO_QUERY_AVAILABLE || !EFI_XNU_WIFI_RESOURCES_AVAILABLE || EFI_XNU_WIFI_CPU_RO_ADMISSION || defined(POLARIS_EFI_TEST_QEMU))
 #error "Early WiFi memory needs its own qualified physical incoming-UEFI profile"
 #endif
 #if EFI_XNU_WIFI_REMOTE_MEMORY_AVAILABLE && (!EFI_XNU_WIFI_FOUR_VRM_AVAILABLE || !EFI_XNU_AUDIO_CLOCK_GCD_QUERY_AVAILABLE || !EFI_XNU_GCD_MMIO_QUERY_AVAILABLE || !EFI_XNU_WIFI_RESOURCES_AVAILABLE || EFI_XNU_WIFI_CPU_RO_ADMISSION || defined(POLARIS_EFI_TEST_QEMU))
@@ -61,6 +61,9 @@ static uint8_t log_buffer[1048576];static uint64_t log_bytes;
 static volatile uint32_t log_overflow;
 #elif EFI_XNU_WIFI_REMOTE_MEMORY_AVAILABLE
 static uint8_t log_buffer[58720256];static uint64_t log_bytes;
+static volatile uint32_t log_overflow;
+#elif EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE
+static uint8_t log_buffer[11010048];static uint64_t log_bytes;
 static volatile uint32_t log_overflow;
 #elif EFI_XNU_WIFI_FOUR_VRM_AVAILABLE
 static uint8_t log_buffer[10747904];static uint64_t log_bytes;
@@ -272,15 +275,15 @@ static int shutdown_status(void *,const uint8_t **,uint64_t *);
 #if !defined(POLARIS_EFI_TEST_QEMU)
 /* Outer include gate removes every new physical/query/FP body from QEMU. */
 #include "uefi-gcd-mmio-readonly.h"
+#if EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE
+#include "uefi-wifi-early-native.h"
+static struct pwea_native early_wifi_memory;
+#endif
 #if EFI_XNU_WIFI_REMOTE_MEMORY_AVAILABLE
 #if !EFI_XNU_WIFI_FOUR_VRM_AVAILABLE || EFI_XNU_WIFI_CPU_RO_ADMISSION
 #error "Incoming parent map evidence requires the new physical full WiFi parent scope"
 #endif
 #include "uefi-wifi-remote-memory.h"
-#include "uefi-wifi-early-native.h"
-#if EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE
-static struct pwea_native early_wifi_memory;
-#endif
 #include "uefi-wifi-current-map.h"
 #include "uefi-wifi-gcd-bootstrap.h"
 #include "uefi-wifi-current-graph.h"

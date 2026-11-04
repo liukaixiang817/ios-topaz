@@ -10,6 +10,7 @@ import hashlib
 import importlib.util
 import json
 import os
+import shlex
 from pathlib import Path
 import struct
 import subprocess
@@ -470,7 +471,23 @@ def main():
     ap.add_argument('--wifi-power-current-word-vote',action='store_true',help='default-OFF explicit fresh READ-derived HLOS/DRV2 ARC max(saved,target) raise and reverse saved restore, one combined READ+WRITE50ms interval, full touched-RW/CPU/source/namespace/Delete retirement; no MSS/NVserve/radio')
     ap.add_argument('--wifi-power-current-word-vote-latched',action='store_true',help='default-OFF same-fresh-retired-READ TCS completed high-latch ARC WRITE; low/readback before each of two new edges, retain final edge rather than write a third, preserve original IRQ enable/type and exact full retirement')
     ap.add_argument('--wifi-power-four-vrm-roundtrip',action='store_true',help='default-OFF independent fresh sixteen-field own WiFi VRM READ, ordered voltage/enable raise and reverse exact saved restore; one original combined interval and full CPU/source/private retirement, no ARC transaction or MSS/radio')
+    ap.add_argument('--wifi-early-memory',action='store_true',help='default-OFF incoming UEFI independent retained MSA/RMTFS claims; original Core checks, no late remote-memory path, secure assignment or radio startup')
+    ap.add_argument('--wifi-irq-provider-directory',type=Path,help='exact original Timer/GIC/CPU PEs for the explicit early-memory profile; inert binding input')
     a=ap.parse_args();r=Path(__file__).resolve().parents[1]
+    if bool(a.wifi_irq_provider_directory)!=a.wifi_early_memory or (a.wifi_early_memory and
+        (not a.wifi_power_four_vrm_roundtrip or a.test_qemu)):
+        ap.error('early memory requires the full physical four-VRM scope and exact original IRQ-provider directory; no QEMU substitution')
+    early_irq_header=None;early_irq_metadata=None;early_irq_inputs=[]
+    if a.wifi_early_memory:
+        try:
+            directory=a.wifi_irq_provider_directory.resolve(strict=True)
+            directory.relative_to(r)
+            spec=importlib.util.spec_from_file_location('polaris_irq_identity',r/'tools/polaris-uefi-irq-provider-identity.py')
+            module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+            early_irq_header,early_irq_metadata=module.binding(directory)
+            early_irq_inputs=[str((directory/item['file']).relative_to(r)) for item in early_irq_metadata]
+        except (OSError,ValueError) as error:
+            ap.error('early memory needs exact project-local original providers: '+str(error))
     if a.wifi_power_four_vrm_roundtrip and (not a.wifi_power_current_word_read or a.wifi_power_current_word_vote or a.wifi_power_current_word_vote_latched):
         ap.error('four VRM roundtrip requires the complete fresh current word/argument/CPU/DB/work scope and forbids the independent ARC vote scopes')
     if a.wifi_power_current_word_vote and not a.wifi_power_current_word_read:
@@ -740,6 +757,9 @@ def main():
         ap.error('selected application requires a complete disk identity')
     if a.chain_app_manifest and (not a.disk_guid or a.efi_application):ap.error('chain wrapper requires disk identity and no --efi-application')
     out=a.output.resolve();out.mkdir(parents=True,exist_ok=False)
+    if early_irq_header:
+        (out/'uefi-wifi-irq-source-binding.h').write_text(early_irq_header)
+        (out/'wifi-irq-provider-binding.json').write_text(json.dumps(early_irq_metadata,indent=2)+'\n')
     if cache_binding:
         (out/'uefi-wifi-cache-binding.h').write_text(cache_header)
         (out/'wifi-firmware-cache-binding.json').write_text(json.dumps(cache_binding,indent=2)+'\n')
@@ -965,6 +985,8 @@ def main():
 #define EFI_XNU_WIFI_CURRENT_WORD_VOTE {int(a.wifi_power_current_word_vote)}
 #define EFI_XNU_WIFI_CURRENT_WORD_VOTE_LATCHED {int(a.wifi_power_current_word_vote_latched)}
 #define EFI_XNU_WIFI_FOUR_VRM_AVAILABLE {int(a.wifi_power_four_vrm_roundtrip)}
+#define EFI_XNU_WIFI_REMOTE_MEMORY_AVAILABLE 0
+#define EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE {int(a.wifi_early_memory)}
 #define EFI_XNU_WIFI_CPU_RO_ADMISSION {int(a.wifi_cpu_ro_admission)}
 #define EFI_XNU_WIFI_CPU_MASKED_RO_ADMISSION {int(a.wifi_cpu_masked_ro_admission)}
 #define EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE {int(cmddb_binding is not None)}
@@ -1102,11 +1124,21 @@ def main():
                  'tools/polaris-wled-mailbox.h']
     if shutdown_bridge:inputs.append('shim/polaris/runtime-quiesce.h')
     objects=[]
+    if a.wifi_early_memory:
+        inputs+=['tools/polaris-uefi-irq-provider-identity.py','tools/polaris-wifi-early-codec.py',*early_irq_inputs]
     for source in sources:
         obj=out/(Path(source).stem+'.obj');objects.append(str(obj))
         cmd=['/usr/bin/clang','--target=aarch64-unknown-windows','-ffreestanding','-fno-builtin','-fno-stack-protector','-fshort-wchar','-mgeneral-regs-only','-O2','-Wall','-Wextra','-Werror',*flags,'-I'+str(out),'-c',str(r/'shim/polaris'/source),'-o',str(obj)]
+        if a.wifi_early_memory:cmd+=['-Wframe-larger-than=1024','-MMD','-MF',str(obj.with_suffix('.d'))]
         p=subprocess.run(cmd,capture_output=True);(out/(source+'.log')).write_bytes(p.stdout+p.stderr)
         if p.returncode:raise RuntimeError('EFI module compile failed: '+source)
+        if a.wifi_early_memory:
+            dependencies=obj.with_suffix('.d').read_text().replace('\\\n',' ')
+            for name in shlex.split(dependencies.split(':',1)[1]):
+                path=Path(name).resolve()
+                if path.is_relative_to(out):continue # generated bindings recorded separately
+                if not path.is_relative_to(r):raise ValueError('untracked external early-profile source: '+str(path))
+                inputs.append(str(path.relative_to(r)))
     application=a.test_qemu or a.efi_application
     image=out/('PolarisXnuTest.efi' if a.test_qemu else 'PolarisIos.efi' if application else 'PolarisChainDxe.efi' if chain else 'PolarisXnuDxe.efi')
     env=dict(os.environ,ZIG_GLOBAL_CACHE_DIR=str(out/'zig-global'),ZIG_LOCAL_CACHE_DIR=str(out/'zig-local'))
@@ -1903,6 +1935,21 @@ def main():
             wifi_CPU0_power_CPU_MASKED_RO_no_IRQ_contract_relaxation=True,
             wifi_CPU0_power_CPU_MASKED_RO_no_DRV_EE_EL3_VMID_MPU_grant=True,
             wifi_CPU0_power_CPU_MASKED_RO_same_fresh_spentonce_200ms_not_rebased=True)
+    if a.wifi_early_memory:
+        manifest.update(wifi_early_memory=True,wifi_early_memory_default_OFF=True,
+            wifi_early_memory_original_calls=['GetMemoryMap','AllocateAddress MSA','GetMemoryMap','AllocateAddress RMTFS','GetMemoryMap'],
+            wifi_early_memory_bootstrap_authority='incoming UEFI Boot Services contract; first call has no retrospective qualification',
+            wifi_early_memory_backing_bytes=[0x200000,0x202000],
+            wifi_early_memory_exposed_bytes=[0x100000,0x200000],
+            wifi_early_memory_raw_format='EARLY_WIFI_MEMORY_RAW_V1',
+            wifi_early_memory_raw_bytes=100848,
+            wifi_early_memory_retained_no_free=True,wifi_early_memory_secure_assignment=False,
+            wifi_early_memory_remote_start=False,wifi_early_memory_physical_candidate_ready=False,
+            wifi_early_memory_IRQ_bindings=early_irq_metadata,
+            wifi_early_memory_generated_inputs={p.name:sha(p) for p in out.glob('*.h')},
+            wifi_current_parent_sources=False,wifi_current_parent_source_scope_default_OFF=True,
+            original_GCD_new_scope_RAM_log_capacity=11010048,
+            wifi_CPU0_resources_firmware_RAM_log_capacity=11010048)
     (out/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
     print(json.dumps({k:manifest[k] for k in ['artifact','sha256','bytes','QEMU_variant','device_execution_tested']}))
 

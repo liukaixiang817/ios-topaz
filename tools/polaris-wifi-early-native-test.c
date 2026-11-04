@@ -107,13 +107,17 @@ static void setup(unsigned f,unsigned t)
 }
 static int run(void)
 {return pwea_native_run(early,s,self,native_flag,UINT64_C(0x180000000),0x10000000);}
-int main(int argc,char**argv)
+#ifndef PWEA_TEST_ENTRY
+#define PWEA_TEST_ENTRY main
+#endif
+int PWEA_TEST_ENTRY(int argc,char**argv)
 {
-    assert(argc==2);CHECK(!posix_memalign((void**)&arena,4096,0x100000));original=malloc(PGCI_IMAGE_BYTES);assert(original);
+    assert(argc==2||argc==3);CHECK(!posix_memalign((void**)&arena,4096,0x100000));original=malloc(PGCI_IMAGE_BYTES);assert(original);
     FILE*f=fopen(argv[1],"rb");assert(f&&fread(original,1,PGCI_IMAGE_BYTES,f)==PGCI_IMAGE_BYTES&&!fclose(f));
     setup(0,0);CHECK(run());CHECK(early->complete&&!early->unknown&&api_calls==5&&map_calls==3&&alloc_calls==2);
     CHECK(saves==5&&restores==5&&at_calls==1026&&early->translated[0]==512&&early->translated[1]==514);
     CHECK(core_at_calls==9*PWEA_CORE_PAGES&&early->final.cpu.ticks>early->call[4].after.cpu.ticks);
+    if(argc==3){FILE*out=fopen(argv[2],"wb");assert(out&&fwrite(early,1,sizeof(*early),out)==sizeof(*early)&&!fclose(out));}
     CHECK(!run()&&api_calls==5); /* No replay of a completed producer. */
     for(unsigned n=1;n<=5;n++)for(unsigned kind=1;kind<=13;kind++){
         if(kind==3&&n==5)continue; /* current map capacity is allowed output */

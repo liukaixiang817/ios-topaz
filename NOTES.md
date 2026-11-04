@@ -34,6 +34,33 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-04: early builder and RAW codec
+
+- Producer commit39e5de0 is now integrated into an explicit builder flag with
+  fresh exact original IRQ-provider binding generation. Early claims and the
+  unfinished late parent-map path have separate switches: early ON, late OFF.
+  Default and QEMU profiles keep early OFF. The first combined experimental
+  link was75,601,920B; the separated final driver-0002 is16,870,912B, SHA
+  82327a7efce888135fa1d5fcb8bb2aa52273a41e2ae65ecacd94f14b246b264e.
+  It is an offline driver, not an admitted temporary boot image.
+- Complete106 current inputs match; dependency files capture the actual
+  preprocessed source closure, generated binding hashes recorded separately.
+  EARLY RAW ABI100848B independently matches154 C sizes/alignments/offsets.
+  Independent Python decoder checks full map partition deltas and retained
+  claims, preserves raw tails/partial records;122 damaged/truncated cases pass.
+  Decoder does not reverify source hashes or grant secure/radio ownership.
+- Two NEW SERIAL wholeEFI/XNU terminal models PASS: delayed-footer39.414s,
+  lost-receipt-recovery39.368s. Physical allocation is deliberately compiled
+  out in QEMU;708 caller-software checks cover that separate control flow.
+  No CI run, phone query/boot, partition or NV action. Existing dirty invoke
+  remains uncommitted. Evidence remains early-uefi-memory-0001/.
+- NEXT before hardware, fix early failure visibility: existing terminal GOP
+  is armed only in prepare_boot, after admission. Early UNKNOWN currently
+  keeps RAW in resident RAM but cannot export USB or draw an armed diagnostic.
+  Bind an independent early GOP record before the allocator, preserving the
+  later power diagnostic and UNKNOWN hold. Then fresh candidate checks and
+  retained-claim secure lifecycle. All five whole gates and Wi-Fi incomplete.
+
 ### Continuous Wi-Fi milestone — 2026-11-04: early independent claims
 
 - Added a new default-OFF incoming-UEFI allocation producer and actual parent
