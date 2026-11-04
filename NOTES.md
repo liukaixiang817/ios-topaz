@@ -34,6 +34,36 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-04: MSS AXI halt protocol
+
+- Implemented the missing finite own three-port halt sequence at own DT bases
+  1f63000/1f65000/1f64000, vendor order Q6/modem/NC. Every port reads initial
+  request0, writes1, reads back1, polls ACK, requires nonzeroIDLE and final
+  request1. All requests remain asserted; no timeout cleanup/clear/reset/free.
+  Partial accesses, stale/reentrant completions, malformed return, changed
+  control, time regression/overrun and work-limit failures retain UNKNOWN.
+- Own vendor declares req/ack/idle offsets0/4/8; own DT declares8B per window.
+  The +8 access therefore requires explicit later parent mapping admission;
+  this code does not create a mapping or perform MMIO. HALT observations do
+  not replace SMP2P stop ACK, ICNSS/CE drain, reset, clocks or secure handback.
+- Final102 ASAN/UBSAN checks PASS;18-event normal chain; two AArch64 COFF/MachO
+  exports compile PASS. Initial test wrongly used !FAILED for enum-1, fixed
+  to exact comparison; initial binary retained. Private evidence
+  research/polaris/uefi-ios-0189/wifi/mss-axi-halt-0001/proof.json.
+  100ms/port,300ms global at19.2MHz are upper DATA deadlines;64 ACK reads/port
+  can refuse sooner. No promise that an external access returns within them.
+- Previous secure-assignment milestone is local commit d72b1da. No USB, CI,
+  native hardware or working Wi-Fi in either milestone. Whole gates complete
+  NONE; this advances gate3 required stop protocol only. Continue active goal.
+- NEXT examine a concrete noncircular bootstrap design: independently fresh
+  own Core/DRAM/AT inputs under existing CPU0/peer-OFF plus GIC Group1 exclusion.
+  Original RestoreTPL unconditionally re-enables IRQ for low TPL even with
+  pending0, so DAIF masking alone cannot protect a firmware Map call. Need
+  prove actual registered IRQ-enable provider leaves Group1 disabled and all
+  synchronous pending/callback paths refuse before any new Map. This is an
+  unqualified design investigation, not permission to extend old masks/leases,
+  change six-route minimum or wire first allocator. Do not repeat old audits.
+
 ### Latest continuous Wi-Fi work — 2026-11-04: secure assignment ABI
 
 - User explicitly requests continuous work until Wi-Fi works, with actual
