@@ -1471,6 +1471,15 @@ static inline int pwmc_parent_in_image(const struct efi_loaded*i,uint64_t at,uin
 {return bytes&&i->bytes>=bytes&&at>=(uintptr_t)i->base&&at-(uintptr_t)i->base<=i->bytes-bytes;}
 static inline int pwmc_parent_overlap(uint64_t a,uint64_t n,uint64_t b,uint64_t z)
 {return a<b+z&&b<a+n;}
+/* The parent allocates whole pages even when the payload file ends mid-page.
+ * Keep logical byte counts in RAW; use the full allocation for exclusions.
+ * This arithmetic does not establish an allocation's current lifetime. */
+static inline uint64_t pwmc_parent_payload_extent(uint64_t address,uint64_t bytes)
+{
+    if(!address||(address&4095)||!bytes||bytes>UINT64_MAX-4095)return 0;
+    uint64_t extent=(bytes+4095)&~UINT64_C(4095);
+    return address<=UINT64_MAX-extent?extent:0;
+}
 static inline int pwmc_parent_stable(const struct pwmc_parent_map*r,const struct pwmc_parent_input*input,
     const struct pgcd_io*io,const struct pwmc_parent_input*saved,const struct pgcd_io*saved_io,const uint8_t seal[32])
 {
@@ -1533,11 +1542,12 @@ static inline int pwmc_parent_controls(const struct pwmc_parent_map*r,unsigned a
 }
 static inline int pwmc_parent_map_valid(const struct pwmc_parent_map*r)
 {
+    uint64_t payload_extent=pwmc_parent_payload_extent(r->input.payload,r->input.payload_bytes);
     struct polaris_efi_memory checked;return r->map.key&&r->map.version==1&&
         polaris_efi_memory_check(r->data,r->map.bytes,r->input.capacity,r->map.stride,&checked)&&
         polaris_efi_range_owned(r->data,r->map.bytes,r->map.stride,r->input.bank,r->input.bank_bytes,r->input.phase==1?7:2)&&
         (r->input.phase<3||
-         (polaris_efi_range_owned(r->data,r->map.bytes,r->map.stride,r->input.payload,r->input.payload_bytes,2)&&
+         (payload_extent&&polaris_efi_range_owned(r->data,r->map.bytes,r->map.stride,r->input.payload,payload_extent,2)&&
           polaris_efi_range_owned(r->data,r->map.bytes,r->map.stride,r->input.log_snapshot,r->input.log_snapshot_bytes,2)));
 }
 /* Private common relay. Phase3 is a separate later-parent caller below, not
@@ -1549,6 +1559,7 @@ static inline int pwmc_parent_map_call_window(struct pwmc_parent_map*r,const str
 {
     if(!r||!input||!io||!pwmc_zero(r,sizeof(*r)))return 0;
     struct pwmc_parent_input saved=*input;struct pgcd_io saved_io=*io;uint8_t seal[32],intent[32],actual[32],result[32];r->attempted=1;
+    uint64_t payload_extent=pwmc_parent_payload_extent(saved.payload,saved.payload_bytes);
     if(!saved.system||!saved.image||!saved.native_flag||!saved.output||saved_io.system!=saved.system||
        !saved_io.arch||!saved_io.map||!saved_io.fp_save||!saved_io.fp_restore||!saved_io.order||
        !saved.image_handle||
@@ -1557,11 +1568,11 @@ static inline int pwmc_parent_map_call_window(struct pwmc_parent_map*r,const str
           ((saved.phase==3||saved.phase==4)&&saved.capacity==(saved.phase==3?PGCD_MAP_CAP:PWMC_PARENT_MAP_CAP)&&
            saved.payload&&saved.payload_bytes&&saved.log_snapshot&&saved.log_snapshot_bytes))||
        !saved.bank_bytes||(saved.bank&4095)||(saved.bank_bytes&4095)||saved.bank>UINT64_MAX-saved.bank_bytes||
-       (saved.phase>=3&&((saved.payload&4095)||saved.payload>UINT64_MAX-saved.payload_bytes||
+       (saved.phase>=3&&(!payload_extent||
         saved.log_snapshot>UINT64_MAX-saved.log_snapshot_bytes||
-        pwmc_parent_overlap(saved.payload,saved.payload_bytes,saved.bank,saved.bank_bytes)||
+        pwmc_parent_overlap(saved.payload,payload_extent,saved.bank,saved.bank_bytes)||
         pwmc_parent_overlap(saved.log_snapshot,saved.log_snapshot_bytes,saved.bank,saved.bank_bytes)||
-        pwmc_parent_overlap(saved.payload,saved.payload_bytes,saved.log_snapshot,saved.log_snapshot_bytes))))return pwmc_parent_fail(r,PWMC_ARGUMENT);
+        pwmc_parent_overlap(saved.payload,payload_extent,saved.log_snapshot,saved.log_snapshot_bytes))))return pwmc_parent_fail(r,PWMC_ARGUMENT);
     r->input=saved;r->io=saved_io;r->image_before=*saved.image;
     const struct efi_loaded*i=&r->image_before;uint64_t base=(uintptr_t)i->base;
     if(i->revision!=0x1000||i->system!=saved.system||i->code_type!=3||i->data_type!=4||!base||!i->bytes||base>UINT64_MAX-i->bytes||
@@ -1575,7 +1586,7 @@ static inline int pwmc_parent_map_call_window(struct pwmc_parent_map*r,const str
        pwmc_parent_overlap((uintptr_t)saved.output,saved.capacity,(uintptr_t)saved.image,sizeof(*saved.image))||
        pwmc_parent_overlap((uintptr_t)saved.output,saved.capacity,(uintptr_t)saved.system,sizeof(*saved.system))||
        pwmc_parent_overlap(base,i->bytes,saved.bank,saved.bank_bytes)||
-       (saved.phase>=3&&(pwmc_parent_overlap(base,i->bytes,saved.payload,saved.payload_bytes)||
+       (saved.phase>=3&&(pwmc_parent_overlap(base,i->bytes,saved.payload,payload_extent)||
         pwmc_parent_overlap(base,i->bytes,saved.log_snapshot,saved.log_snapshot_bytes))))return pwmc_parent_fail(r,PWMC_ARGUMENT);
     r->boot_address=(uintptr_t)saved.system->boot;
     if(r->boot_address<0x1b800||((r->boot_address-0x1b800)&4095))return pwmc_parent_fail(r,PWMC_SOURCE);

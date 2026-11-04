@@ -14,6 +14,19 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+## Own payload page exclusion follow-up (0189, 2026-11-04)
+
+Later parent and graph checks now exclude the full rounded payload allocation,
+including its 2,720-byte tail, with overflow refusal and unchanged logical RAW
+lengths. SOFTWARE baseline16/new34 and existing parent1452/current-map2341
+checks pass; four wholeparent native compiles pass. No physical Wi-Fi claim.
+The local HackiOS kernel loader excludes its complete fixed payload reservation;
+our Polaris parent instead allocates pages dynamically and begin requires the
+exact compiled payload length. No reference constants, scripts or binaries were
+ported. Userland README confirms loader ownership belongs to the kernel tree.
+No DT/vendor hardware mappings changed. See the latest NOTES handoff and private
+payload-page-exclusion-0001 proof for scope and outstanding lifetime/bootstrap.
+
 ## Own parent payload allocation returned span (0189, 2026-11-04)
 
 The actual parent now checks page alignment and the full returned payload

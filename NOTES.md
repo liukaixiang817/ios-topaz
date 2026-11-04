@@ -34,6 +34,38 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Latest Wi-Fi work — 2026-11-04: full payload page exclusions
+
+- User reports phone in FASTBOOT and requests Wi-Fi as soon as possible.
+  No new image is ready; no USB query, temporary boot, partition write or CI
+  run occurred in this turn. Actual scan/join/IP/DNS/data remain unimplemented.
+- Fixed a concrete SOURCE exclusion gap: admission allocates 8,902 pages
+  (36,462,592 bytes) for the 36,459,872-byte payload, but later parent/graph
+  overlap checks used only the logical file size, omitting 2,720 tail bytes.
+  Phase3/4 parent admission, map range validation and graph output exclusions
+  now use an overflow-checked full page extent. RAW retains logical lengths;
+  no new allocation/free/callback, ABI, owner flag or hardware access was added.
+- SOFTWARE baseline witness confirms old log/image/output tail acceptance
+  (16 checks); new ASAN/UBSAN boundary suite passes34 checks. Existing incoming
+  parent1452 and later current-map2341 regressions PASS, latter141.671425s.
+  Four actual wholeparent COFF/MachO REMOTE_ON/defaultOFF compiles PASS.
+  These are source/software/compile results, not a phone firmware fault or
+  current allocation lifetime/ownership proof. No full hardware-flow model run.
+- Private evidence: research/polaris/uefi-ios-0189/wifi/payload-page-exclusion-0001/
+  proof.json, validation.json and focused-validation.json. The pre-existing
+  uncommitted pwmc_invoke context closure is preserved and excluded from this
+  change; builds used that worktree header, tests do not invoke pwmc_invoke.
+- Own source trace: payload has one retained assignment; begin enforces exact
+  compiled file length; no explicit payload free/reassignment in uefi-xnu.c.
+  This does not establish external liveness or a complete allocation inventory.
+- Completed whole gates: NONE. This turn advances only gate2 exclusion bounds;
+  gates1–5 remain incomplete. Main REMOTE_MEMORY stays defaultOFF.
+  NEXT: resolve the actual first pwmc_claim/pgcd_open bootstrap input cycle
+  without borrowing closed contexts or asserting a lifetime from a map snapshot;
+  then establish independent MSA/RMTFS allocations and secure DMA stop/handback.
+  The page-tail defect is fixed; do not repeat this audit or baseline tests.
+  All commands in this turn ended; sound/camera remain deferred.
+
 ### CURRENT0188 actual sixteen VRM READs → four ordered raise → reverse saved restore and full retirement; controlled actual Polaris FASTBOOT10:05; MSS/radio/network NOT DONE
 
 - This supersedes all older CURRENT/READY/LIVE, connection/publication-pending,

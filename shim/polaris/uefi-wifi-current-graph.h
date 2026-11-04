@@ -12,7 +12,8 @@ static inline int pcmg_fail(struct pcmg_result*r,unsigned error)
 static inline int pcmg_output_storage(const void*r,uint64_t bytes,const struct pcmp_live*p)
 {
     const struct pcmp_input*i=&p->input;const struct pcmp_result*s=p->r;
-    if(!pcmp_in_self(i->image,r,bytes))return 0;
+    uint64_t payload_extent=pwmc_parent_payload_extent(s->payload,s->payload_count);
+    if(!payload_extent||!pcmp_in_self(i->image,r,bytes))return 0;
     const struct {const volatile void*address;uint64_t bytes;} source[]={
         {p,sizeof(*p)},{s,sizeof(*s)},{p->caller_input,sizeof(*p->caller_input)},{p->caller_io,sizeof(*p->caller_io)},
         {i->context,sizeof(*i->context)},{i->context->record,sizeof(*i->context->record)},
@@ -20,7 +21,7 @@ static inline int pcmg_output_storage(const void*r,uint64_t bytes,const struct p
         {i->payload_binding,sizeof(*i->payload_binding)},{i->native_flag,4},{i->load_state,4},
         {i->payload_slot,8},{i->log_slot,8},{i->received,8},{i->payload_count,8},{i->plan,sizeof(*i->plan)},
         {p->original_io.system,sizeof(*p->original_io.system)},{p->original_io.system->boot,PWMC_BS_BYTES},
-        {(const void*)(uintptr_t)s->payload,s->payload_count},{(const void*)(uintptr_t)s->log,i->log_bytes}
+        {(const void*)(uintptr_t)s->payload,payload_extent},{(const void*)(uintptr_t)s->log,i->log_bytes}
     };
     for(unsigned k=0;k<sizeof(source)/sizeof(source[0]);k++)
         if(pwmc_parent_overlap((uintptr_t)r,bytes,(uintptr_t)source[k].address,source[k].bytes))return 0;
