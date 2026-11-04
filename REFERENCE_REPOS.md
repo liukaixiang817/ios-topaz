@@ -2339,3 +2339,45 @@ or firmware/Apple/vendor/NV/backup/RAW/photo/serial/password bytes excluded.
 Private authorized-source-push-0001.json SHA97e7b55f685f2af654cbbfffe2aa4e51a62ba4d942731a8251a14b6cf78d6d4e.
 This subsequent handoff edits only NOTES/REFERENCE_REPOS; no repeated checks,
 new device grant or completed WiFi claim. No pending physical/auth question.
+
+### Own0189 earlier active Map relay control closure
+
+The actual existing pcmp relay now hashes all304 active control bytes across
+three arch returns, FP save/restore, Map, order and header AT, comparing before
+following returned control pointers. Original e4fd SOFTWARE accepted equal-DATA
+caller_input pointer substitution at all8 boundaries and restored outer FP.
+New pcmp error8/UNKNOWN refuses; void order uses existing sticky records and
+the parent call checks them before source/native reads or further callbacks.
+No new wrapper/service/reader/context/ticket/permission/owner flag or RAW ABI.
+Private SOFTWARE copies controls while ACTIVE; retired pointers remain numeric.
+
+New2879 ASAN/UBSAN PASS110.35326879099011s, actual six generic contexts/11 Maps,
+all304 bytes/8 boundaries and every actual route/slot, aliases/bad pointers/
+PROT_NONE. Direct2341/167/1452 PASS83.5345797080081/4.152791750035249/
+1.178030916955322s. Seven affected full suites SERIAL:1789/771/336/4553/1488/
+1275/2885 PASS107.93301258300198/218.91298979200656/586.3587330839946/
+1489.2254830840393/2154.6439244170324/2478.577342582983/3276.919940916996s.
+Original cases/guards retained. Earlier normal/max subsets are not wholemodels.
+8487/5141 original whole host objects equal baseline, not rerun;474/models/CI
+not rerun. Initial graph-export comparison exposed emitted address-taken changed
+relay functions, so no object-equality claim; full affected suites followed.
+
+Four actualwholeparent/relay COFF+MachO/generalregs/maxframe1024 builds PASS.
+Relay export has no MRS/MSR/SMC/AT, IO remains callbacks; wholeparent old PAR/
+FP/mask not zero-write. OFF PREPROCESSED pairs640999/640972 equal, not binaries.
+Independent DATA verifier checks43records/32 reconstructed304B control copies,
+binding/full-complete digests and partial native/FP/phase fields. Not every
+failed PCMP/outer byte reconstructed; outer restore/UNKNOWN boundaries only.
+Original RAW/proofs/objects/timestamps remain intact, pointers numeric, PE DATA.
+Private later-map-relay-control-0001/proof.json
+SHA88ac513008f7362f1911be3d91380643a0a814e40bad0366b33a2adf7a97e913;
+source/software6b6bcad49ee5d46bb064843bf93ce51e24e1bdfdda40ba50a40ec7d252780a90.
+
+Extra4864B control hashing per Map is real work, with no additional hardware
+calls/reads or renewed200ms window. Inner FP may already have restored before
+the refusal; outer FP is retained UNKNOWN. Old guarded-return flags are not
+relabeled original service-return evidence. Equal-after control still passes,
+so source lifetime/ABA/IRQ/wholecall/precall/secure-DMA qualification remains.
+No reference review/script/prebuilt/USB/native/originalPE/newmodel/CI/codec/image/
+payload/helper/freeze. REMOTE_MEMORY defaultOFF and consumer/profile unconnected.
+No PA publish/MSS/NVserve/radio or physical WiFi success; audio/camera STOP.

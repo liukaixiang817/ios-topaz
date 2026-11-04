@@ -114,25 +114,52 @@ static inline int pcmp_source_stable(const struct pcmp_live*l)
 {return pcmp_source_prefix(l)&&pcmp_source_suffix(l);}
 static inline int pcmp_stable(const struct pcmp_live*l)
 {return pcmp_source_prefix(l)&&!*l->input.native_flag&&pcmp_source_suffix(l);}
+/* The actual relay control is still on this caller's stack. Compare its
+ * complete bytes after a callback before following any pointer it contains. */
 static inline int pcmp_arch(void*opaque,struct pgcd_arch*a)
 {
-    struct pcmp_live*l=opaque;if(!pcmp_stable(l))return 0;int ok=l->original_io.arch(l->original_io.opaque,a);
+    struct pcmp_live*l=opaque;if(!pcmp_stable(l))return 0;
+    struct pcmp_result*r=l->r;uint8_t before[32],after[32];ppli_sha(l,sizeof(*l),before);
+    int ok=l->original_io.arch(l->original_io.opaque,a);
+    ppli_sha(l,sizeof(*l),after);if(!pgcd_equal(before,after,32))return pcmp_fail(r,8);
     if(!pcmp_stable(l)||!ok)return 0;
     uint64_t opening=l->r->source_before.before.cpu.ticks;
     return opening&&a->cpu.ticks>=opening&&a->cpu.ticks-opening<=PGCD_FRESH_TICKS;
 }
 static inline int pcmp_save(void*opaque,struct pgcd_fp_guard*g)
-{struct pcmp_live*l=opaque;if(!pcmp_stable(l))return 0;int ok=l->original_io.fp_save(l->original_io.opaque,g);return pcmp_stable(l)&&ok;}
+{
+    struct pcmp_live*l=opaque;if(!pcmp_stable(l))return 0;
+    struct pcmp_result*r=l->r;uint8_t before[32],after[32];ppli_sha(l,sizeof(*l),before);
+    int ok=l->original_io.fp_save(l->original_io.opaque,g);
+    ppli_sha(l,sizeof(*l),after);if(!pgcd_equal(before,after,32))return pcmp_fail(r,8);
+    return pcmp_stable(l)&&ok;
+}
 static inline int pcmp_restore(void*opaque,struct pgcd_fp_guard*g)
-{struct pcmp_live*l=opaque;if(!pcmp_stable(l))return 0;int ok=l->original_io.fp_restore(l->original_io.opaque,g);return pcmp_stable(l)&&ok;}
+{
+    struct pcmp_live*l=opaque;if(!pcmp_stable(l))return 0;
+    struct pcmp_result*r=l->r;uint8_t before[32],after[32];ppli_sha(l,sizeof(*l),before);
+    int ok=l->original_io.fp_restore(l->original_io.opaque,g);
+    ppli_sha(l,sizeof(*l),after);if(!pgcd_equal(before,after,32))return pcmp_fail(r,8);
+    return pcmp_stable(l)&&ok;
+}
 static inline int pcmp_map(void*opaque,struct efi_system*s,struct pgcd_map*m,void*data)
 {
     struct pcmp_live*l=opaque;if(!pcmp_stable(l)||l->map_issued)return 0;
-    l->map_issued=l->r->map_issued=1;int ok=l->original_io.map(l->original_io.opaque,s,m,data);
+    l->map_issued=l->r->map_issued=1;
+    struct pcmp_result*r=l->r;uint8_t before[32],after[32];ppli_sha(l,sizeof(*l),before);
+    int ok=l->original_io.map(l->original_io.opaque,s,m,data);
+    ppli_sha(l,sizeof(*l),after);if(!pgcd_equal(before,after,32))return pcmp_fail(r,8);
     if(!pcmp_stable(l))return 0;l->map_returned=l->r->map_returned=ok?1:0;return pcmp_stable(l)&&ok;
 }
 static inline void pcmp_order(void*opaque)
-{struct pcmp_live*l=opaque;if(pcmp_stable(l))l->original_io.order(l->original_io.opaque);}
+{
+    struct pcmp_live*l=opaque;if(!pcmp_stable(l))return;
+    struct pcmp_result*r=l->r;uint8_t before[32],after[32];ppli_sha(l,sizeof(*l),before);
+    l->original_io.order(l->original_io.opaque);ppli_sha(l,sizeof(*l),after);
+    if(!pgcd_equal(before,after,32)){
+        (void)pcmp_fail(r,8);(void)pwmc_parent_fail(&r->call,PWMC_CONTEXT);
+    }
+}
 static inline int pcmp_in_self(const struct efi_loaded*self,const volatile void*p,uint64_t bytes)
 {return pwmc_parent_in_image(self,(uintptr_t)p,bytes);}
 static __attribute__((noinline)) int pcmp_post(struct pcmp_live*live,int(*page_read)(struct ppli_at*))
@@ -147,7 +174,9 @@ static __attribute__((noinline)) int pcmp_post(struct pcmp_live*live,int(*page_r
     if(!pgcd_equal(call_digest,r->call.digest,32))return pcmp_fail(r,4);
     live->header_started=1;r->header_AT=(struct ppli_at){.page=r->payload,.native_issued=1,.native_returned=1};
     r->header_AT.native[0]=*in.native_flag;if(r->header_AT.native[0])return pcmp_fail(r,5);
+    uint8_t control[32],control_after[32];ppli_sha(live,sizeof(*live),control);
     int translated=page_read(&r->header_AT);
+    ppli_sha(live,sizeof(*live),control_after);if(!pgcd_equal(control,control_after,32))return pcmp_fail(r,8);
     if(!pcmp_stable(live)||!translated||r->header_AT.page!=r->payload||r->header_AT.saved!=r->header_AT.restored||
        r->header_AT.issued!=1||r->header_AT.returned!=1||r->header_AT.par!=(UINT64_C(0xff00000000000b80)|r->payload)||
        r->header_AT.native_issued!=1||r->header_AT.native_returned!=1||r->header_AT.native[0]||r->header_AT.native[1]||

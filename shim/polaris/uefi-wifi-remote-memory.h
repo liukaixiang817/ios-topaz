@@ -1594,6 +1594,9 @@ static inline int pwmc_parent_map_call_window(struct pwmc_parent_map*r,const str
     if(!fp||!pwmc_parent_stable(r,input,io,&saved,&saved_io,seal)||r->fp.saved!=1||r->fp.restored||r->fp.cpacr_before!=r->before.cpacr||
        r->fp_save_issued!=1||r->fp_save_returned!=1||r->fp_restore_issued||r->fp_restore_returned||r->attempted!=1||r->issued||r->returned||r->unknown||r->error||r->complete)return pwmc_parent_fail(r,PWMC_CONTEXT);
     r->map.bytes=saved.capacity;r->map.status=UINT64_MAX;pwmc_parent_intent_digest(r,intent);saved_io.order(saved_io.opaque);
+    /* A void order relay can report a known failure through this existing
+     * record. Stop before source/native reads or another callback. */
+    if(r->error||r->unknown)return pwmc_parent_fail(r,PWMC_CONTEXT);
     pwmc_parent_intent_digest(r,actual);
     if(!pwmc_parent_stable(r,input,io,&saved,&saved_io,seal)||pwmc_parent_native(r,saved.native_flag,1)||r->map.bytes!=saved.capacity||r->map.status!=UINT64_MAX||r->map.issued||r->map.returned||r->map.valid||r->map.key||r->map.stride||r->map.version||
        !pgcd_equal(intent,actual,32)||r->fp.restored||r->issued||r->returned||r->unknown||r->error||r->complete||r->native_issued!=3||r->native_returned!=3||

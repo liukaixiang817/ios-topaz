@@ -108,6 +108,100 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
+- NEW0189 latest SOURCE/SOFTWARE: the EARLIER active Map relay now closes its
+  complete304B pcmp_live control across eight existing callback boundaries:
+  three arch returns, FP save/restore, original Map, order and header AT. This
+  is distinct from the already completed later graph/provider/timer/event
+  input seals. Original e4fd source actually accepted changing caller_input
+  to a different equal-DATA alias at all eight boundaries, then completed the
+  inner record and restored outer FP. Original baseline source/log/full3100160B
+  RAW preserved. Constructed SOFTWARE peer behavior only, not a phone pointer,
+  UAF, IRQ, ownership or firmware-execution observation.
+- Each existing relay hashes its own real active control before/after the
+  callback, comparing before following its pointers again. Changed control
+  sets new pcmp error8/UNKNOWN through its cached original result pointer;
+  no bad control is repaired/cleared or followed. The void order relay reports
+  through existing sticky records; the actual shared parent call immediately
+  rejects that error/unknown BEFORE later intent/source/native reads or another
+  callback. Original positive-path source/hash/FP/temporal checks all remain.
+  No new wrapper/reader/service/context/ticket/owner/permission flag or firmware
+  call. No ABI/RAW layout/version change or runtime control-failure RAW added;
+  private tests copy controls only while the real caller is ACTIVE. Completed
+  caller/relay pointers are numeric DATA, never followed/executed afterwards.
+- FINAL2879 ASAN/UBSAN SOFTWARE PASS110.35326879099011s: six genuine generic
+  contexts/11 EXISTING Maps; five fault shapes at all11x8 boundaries, all304
+  own control bytes at each of8 boundaries, equal-DATA caller aliases, bad
+  pointers and host PROT_NONE. Failures stop without any later leaf count or
+  outer FP restore. Inner Map/FP may already have completed/restored, including
+  before header AT/final arch failures. Equal-after control still PASSES: this
+  does not exclude ABA/IRQ/future lease. Existing guarded-relay boolean return
+  fields are NOT newly relabeled actual original service C-return evidence.
+  Actual earlier leaf output bytes/partial/native/FP flags remain as observed.
+  No postfailure hardware/source sampling/guessed restore/free/retry/cleanup.
+- Direct affected full ASAN/UBSAN suites:2341 current-map PASS83.5345797080081s,
+  167 six-route dispatch PASS4.152791750035249s,1452 parent-map
+  PASS1.178030916955322s. Because shared guard/address-taken callbacks alter
+  actual code generation, seven further full suites ran STRICTLY SERIAL:
+  producer1789 PASS107.93301258300198s; release771 PASS218.91298979200656s;
+  timer336 PASS586.3587330839946s; graph4553 PASS1489.2254830840393s;
+  provider1488 PASS2154.6439244170324s; events1275 PASS2478.577342582983s;
+  cache-dispatch2885 PASS3276.919940916996s. Original cases/guards retained.
+  Events1275 includes the final descriptor DATA-only positive; old1274 was
+  its earlier full3 source. Normal/max graph25/provider14/timer14/events14 are
+  earlier subsets, not new wholemodels or additive unique totals. CURRENT
+  absolute shim FIRST/-H, no private baseline header substituting CURRENT.
+- Allocator8487/images5141 ORIGINAL whole host objects equal the published
+  baseline in same-invocation target/command comparisons, so not rerun.474 and
+  models/CI also not rerun. Producer/release/cache objects differ and were
+  retested. An initial graph-export equality assumption actually failed:
+  the graph compares expected relay function addresses, emitting the changed
+  callbacks too. Original error/objects retained; no equality/IR-normalization
+  claim, and all affected full graph/provider/timer/events suites were rerun.
+- Four actual wholeparent/relay native builds PASS COFF+MachO/generalregs/
+  maxframe1024 (COFF in cross0001, MachO in cross0002). Relay export contains no
+  MRS/MSR/SMC/AT instruction; its IO leaves are caller callbacks. Wholeparent
+  old PAR/FP/terminalmask is not zero-write. OFF PREPROCESSED original pairs
+  COFF640999/MachO640972 equal, changed headers absent from OFF include graph,
+  not OFF binary equality. Parent.c body remains ecdc5eb8; ON object changes
+  through included guards. No profile/resource/candidate qualification follows.
+- Independent Python struct/hashlib checks43 records:11 normal inner records,
+  8 original accepted baselines and24 new refusals. All304 after-control bytes
+  for32 cases rebuilt in NEW buffers, all PCMP binding/complete call/complete
+  PCMP digests and partial phase/native/issued/FP fields checked. Full4461600B
+  normal archive+24x387616B failure bundles and original baseline intact. This
+  does NOT reconstruct every failed PCMP/outer byte; outer restore/UNKNOWN
+  boundaries only. Captured addresses numeric, PE not executed. Decoder0001
+  mistook AT native sample offsets40/44 for issued/returned32/36; new0002 only
+  corrects that assertion/new proof filename. No production/RAW/guard change.
+- Private later-map-relay-control-0001/proof.json
+  SHA88ac513008f7362f1911be3d91380643a0a814e40bad0366b33a2adf7a97e913;
+  source/software6b6bcad49ee5d46bb064843bf93ce51e24e1bdfdda40ba50a40ec7d252780a90.
+  Current map headera80ffcda8b8eb6bac7bdfb8b9978d0b708d302ce69476125692202150af9ac33,
+  common5449fcbed2bb4c3135a70a36062c7702f533f67a09941603def9fde3f6012a09,
+  newtest55bf39773a496e9222ccb2b27b641755e0c5be8da086f8c6ff81a31ed2b68fca.
+  Final source/test bytes match full/new/affected/native snapshots. All old RAW
+  schemas/offsets/proofs/SHA/timestamps unchanged. Added16 SHA304B=4864B own
+  control hashing per normal Map plus RAM checks; not zero-work. No extra
+  AT/arch/MRS/native-flag/BS/GetMap/FreePool/provider/IRQ/MMIO/SMC/sysreg calls
+  or stores. Existing FIRST200ms/minimum/physical-work rules unchanged; no
+  reopen/rebase/renew/CNTVOFF/physical-virtual epoch/globaldeadline inference.
+- NEXT: this earlier relay-control fix DONE; do not recreate it/probes/2879/
+  affected suites/native/OFF/decoder or completed later INPUT modules. Remaining
+  transitive callback source/effects/work, fresh postsource/release-backing/true
+  active allocation lifetimes, wholecall walltime/preemption/fault/latency/
+  IRQowner/ABA/precall still UNQUALIFIED. Fullbytes/hash/key/tag/count/counter/
+  emptyqueue/complete/monotonic/finitework grant none of them. Actual independent
+  MSA/RMTFS claims/cache/secureVMID/MPU/remoteDMAstop/handback/full normal+UNKNOWN
+  retirement and complete NEW candidate/two SERIAL wholemodels/exact profile/
+  resource/codec/transition/freeze/ONEhelper still precede any device work.
+  REMOTE_MEMORY defaultOFF, consumer/builder/CLI/profile/resource unconnected;
+  no PA publish/MSS/NVserve/radio. All host/build/test jobs ENDED. No USB/native/
+  originalPE/MMIO/SMC/newmodel/CI/operationalcodec/image/payload/helper/freeze.
+  WiFi never physically started/scanned/joined/IP/DNS/data, no credible date.
+  Only last actual phone observation remains0188 fullretire FASTBOOT Nov2
+  10:05:37.496860Z, not current LIVE. Sound/camera STOP; no physical/auth question.
+  Publication of this new source is recorded separately after actual push.
+
 - NEW0189 latest PUBLIC functional source
   5684bd08ce18a6db0193413f8dae239c4240e6e1 is published by the SAME original
   directpush under actual continuing source/text consentce8ce4fd. Push ENDED0;
