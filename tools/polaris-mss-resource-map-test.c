@@ -41,12 +41,18 @@ static void resource_setup(void)
         put(p+8,n==2?head:(uintptr_t)p+4104,8);put(p+16,n?(uintptr_t)p-4088:head,8);
         put(p+24,start[n],8);put(p+32,end[n],8);put(p+40,1,8);put(p+48,1,8);put(p+56,3,4);
     }
+#if defined(PMRG_TEST_PREPARE)
+    PMRG_TEST_PREPARE();
+#endif
     CHECK(image_run()&&pmli_current(ledger,owner));
 }
 static int resource_run(void){return pmrg_capture(resource_map,ledger,owner);}
 static int resource_page(uint64_t page)
 {memset(resource_target,0,sizeof(*resource_target));return pmrg_target_now(resource_map,page,resource_target);}
-int main(int argc,char**argv)
+#ifndef PMRG_TEST_ENTRY
+#define PMRG_TEST_ENTRY main
+#endif
+int PMRG_TEST_ENTRY(int argc,char**argv)
 {
     CHECK(argc==2);CHECK(!posix_memalign((void**)&arena,0x4000,PMMN_TEST_ARENA_BYTES));original=malloc(PGCI_IMAGE_BYTES);CHECK(original);
     FILE*f=fopen(argv[1],"rb");CHECK(f&&fread(original,1,PGCI_IMAGE_BYTES,f)==PGCI_IMAGE_BYTES&&!fclose(f));

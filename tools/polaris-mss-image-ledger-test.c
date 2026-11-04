@@ -3,8 +3,12 @@
 struct pwea_map;
 static void image_extra_map(struct pwea_map*);
 #define PMMN_TEST_RETAINED_MAP_EXTRA image_extra_map
+#ifndef PMMN_TEST_ARENA_BYTES
 #define PMMN_TEST_ARENA_BYTES 0x400000
+#endif
+#ifndef PMMN_TEST_IMAGE_BYTES
 #define PMMN_TEST_IMAGE_BYTES 0x3c0000
+#endif
 #define PMSC_TEST_ENTRY unused_cpu_suite
 #include "polaris-mss-cpu-owner-test.c"
 static int image_at(struct pwmc_translation*);

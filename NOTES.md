@@ -44,6 +44,35 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): current RPMh RAM state
+
+- Previous current GCD namespace milestone is commit5b87b97. New default-OFF,
+  unregistered pmrd consumes the actual continuous CPU owner, current image
+  ledger and complete GCD namespace. Follows the unique registered RpmhDxe
+  interface to its current LoadedImage, normalizes relocations and checks all
+  five own immutable spans before AND after each of two complete RAM passes.
+- Reads runtime DRV2 HAL configuration, five driver queues, retired requests,
+  all eight TCS records, both client lists, client queue headers and the full
+  ordered resource cache. Own heap objects may be4mod8; byte reads with fresh
+  read-only AT preserve the original size-prefix allocator ABI. Excludes
+  every loaded image before heap reads; rejects overlapping objects, cycles,
+  pending clients/requests, non-idle TCS RAM and changed complete snapshots.
+- Host ASan/UBSan PASS979 scenarios/1125878 checks:49 reads/pass,158 AT/capture;
+  every AT position tested across six failure classes, plus changed source,
+  between-pass state, aliases, queue activity, HAL mismatch and record/map
+  tampering. Own Core/RPMh binaries are inert test DATA; no MMIO, provider
+  execution, vote, USB/device query or boot occurred. Full COFF/MachO native
+  exports PASS with generalregs/frame1024; evidence:mss-rpmh-state-0001/proof-0001.json.
+- This is RAM state evidence only, not hardware TCS/EE ownership or Wi-Fi.
+  NEXT bind current hardware TCS/IRQ/geometry and full CmdDb, then the native
+  persistent supply/secure callers and registered MSS parent/retirement.
+  Execution remains2/5; this step plus3 following steps remain. Latest formal
+ 15min report19:37Z/06:37 Melbourne; next due19:52Z/06:52. New pmrs hardware
+  observation draft is not yet tested, compiled or connected; do not use it.
+- Host files briefly reported compressed,dataless; clang waited in pread,
+  then reads recovered without source replacement or process termination.
+  A test-only PMSC_LIMIT typo was corrected to PMSC_TOTAL before the PASS.
+
 ### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): current MSS GCD namespace
 
 - Current image ledger is commit58530b6. New default-OFF pmrg uses the actual
