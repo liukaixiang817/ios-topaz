@@ -1,9 +1,12 @@
 /* Software peers only. Hardware addresses remain integers. */
+#pragma push_macro("main")
+#undef main
 #define main legacy_stop_test
 #include "polaris-mss-stop-test.c"
-#undef main
+#pragma pop_macro("main")
 #include "polaris-mss-shutdown.h"
 static struct pmsd_shutdown shutdown_state;
+static uint64_t shutdown_start=100;
 static const uint64_t expected_address[14]={
     0xb2e0100,0xb2e0100,0,0x4180044,0,0xc2b0000,0,
     0xc2b0000,0,0x4180044,0,0xb2e0100,0xb2e0100,0};
@@ -13,7 +16,7 @@ static const uint64_t expected_delay[14]={0,0,39,0,39,0,3879,0,3879,0,39,0,0,39}
 static uint64_t shutdown_begin(void)
 {
     fixture();memset(&shutdown_state,0,sizeof(shutdown_state));struct pms_config c=config();
-    CHECK(pmsd_begin(&shutdown_state,&c,100,19200000)==PMSD_WAIT);return 101;
+    CHECK(pmsd_begin(&shutdown_state,&c,shutdown_start,19200000)==PMSD_WAIT);return shutdown_start+1;
 }
 static struct pmsd_command shutdown_next(uint64_t now)
 {

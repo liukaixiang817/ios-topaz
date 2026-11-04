@@ -34,6 +34,43 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-04: MSS active clocks and native IO leaves
+
+- Reset sequence is commit0253f1a. New persistent six-clock engine follows
+  own named DTS/pil order: CFG AHB, Q6 MEMNOC AXI, BOOT ROM AHB, GPLL0 DIV,
+  SNOC AXI, MFAB AXIS. Saved enable bits remain held for MSS operation; only
+  this epoch's completed stop/AXI/reset record permits the reverse transition.
+  Previously enabled votes are borrowed and preserved; only newly set bits
+  are cleared. No original ClockDxe reference count is fabricated or modified.
+- Source-bound algorithm facts: preserve unrelated RMW bits, HWCG-aware halt
+  checks,500us GPLL gate delay,10us voted-disable delay, finite500 status polls
+  with >=1us/20tick spacing.10ms each transition is a timeout, not a renewed
+  hardware lease. Parent exclusivity, proxy XO/PRNG/AOP and rail lifetime are
+  still required; the prior four-VRM roundtrip remains separate and expired.
+- Default-OFF native clock/halt/reset leaves now contain actual LDR32/STR32,
+  DSB ST/SY, fresh S1E1R/S1E1W and exact PAR restoration. Accept only explicit
+  own addresses and masked CPU0EL1/NS Device mappings; recheck architecture
+  immediately before and after access. ALT/RESTART reads and SMEM accesses
+  are refused. AXI IDLE+8 is explicit own-source scope despite DT's8B window.
+  These leaves are NOT an operational parent or a GCD/resource owner grant.
+- Serial ASAN/UBSAN final389737 assertions PASS:19946 previous stop/reset,
+ 334733 clock tests (64 saved-enable x8 HWCG cases plus fault sweeps),35058
+  native-leaf caller checks using SOFTWARE CPU/AT/register substitutes. All32
+  AXI/reset native-adapter accesses have injected raw failures. Initial nested
+  test-main macro collision and a fault-family/5th-CPU-sample collision were
+  fixture defects, fixed and rerun. Both actual COFF/MachO exports compile with
+  generalregs/frame1024. Native privileged instructions were never executed.
+- Pinned c7cb50c1 gcc-sdm845.c/clk-regmap.c/clk-branch.h and DTS retrieved and
+  Git-blob verified; existing clk-branch.c source verified likewise. Named DTS
+  mapping was checked because live DT numeric clock IDs differ from the old
+  vendor header. No numeric-ID substitution. Private evidence and downloads:
+  research/polaris/uefi-ios-0189/wifi/mss-clock-lifecycle-0001/proof-0001.json.
+- NEXT implement the actual combined MSS owner/namespace and startup/retire
+  caller; connect secure return only to that complete lifetime, not merely
+  these protocol states. MBA/metadata/firmware ownership, persistent power,
+  native SMP2P/GLINK and WLFW/CE runtime remain necessary. No phone/CI/image/
+  helper or whole-gate completion. Actual scan/join/IP/DNS/data unfinished.
+
 ### Continuous Wi-Fi milestone — 2026-11-04: ordered MSS shutdown reset pulse
 
 - Native RMTFS share is commitaa8d3e9. New pmsd composition now continues the

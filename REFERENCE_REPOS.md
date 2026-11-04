@@ -14,6 +14,17 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+## Own MSS active-clock lifetime and native leaves (0189, 2026-11-04)
+
+Pinned own gcc-sdm845.c, clk-branch.c/h, clk-regmap.c and sdm845.dtsi establish
+the named six-clock order and HWCG/voted/gate delays. Dipper's register table
+was compared, but its staging order and inherited power assumptions were not
+adopted. Live DT numeric IDs differ from this vendor header; named clock/DTS
+correspondence, not numeric-ID casting, is used. New persistent clock protocol
+and default-OFF actual MMIO/AT leaves pass389737 software assertions and two
+native exports. Parent GCD/source/exclusive lifecycle, proxy power and actual
+hardware are still unqualified. No software result grants secure handback.
+
 ## Own MSS shutdown reset sequence (0189, 2026-11-04)
 
 Own c7cb50c1 pil-msa.c and current phone DT establish PDC b2e0100 bit9,
