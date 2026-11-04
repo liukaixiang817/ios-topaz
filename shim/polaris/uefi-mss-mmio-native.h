@@ -1,5 +1,5 @@
-/* Unconnected default-OFF native leaves for the own MSS clock/halt/reset
- * protocols. These check current CPU and Device translations, not ownership.
+/* Unconnected default-OFF native leaves for own MSS clocks/halt/reset and
+ * MBA/metadata protocols. These check CPU and Device translations, not ownership.
  * The real parent must first bind current GCD/source/resource lifetime, retain
  * all records, exclude competing CPUs/firmware/resetters and publish UNKNOWN.
  * No startup hook, GCD guess, SMEM allocation, power or handback is supplied.
@@ -10,7 +10,7 @@
 #define EFI_XNU_MSS_NATIVE_IO_AVAILABLE 0
 #endif
 #if EFI_XNU_MSS_NATIVE_IO_AVAILABLE && !defined(POLARIS_EFI_TEST_QEMU)
-#include "../../tools/polaris-mss-mba-boot.h"
+#include "../../tools/polaris-mss-metadata.h"
 enum pmni_kind {PMNI_READ=1,PMNI_WRITE,PMNI_STORE_ORDER,PMNI_FULL_ORDER};
 struct pmni_command {uint64_t address;uint32_t kind,value;};
 struct pmni_arch {
@@ -98,6 +98,8 @@ static inline int pmni_allowed(const struct pmni_command*c)
     if(c->address==UINT64_C(0x4180000))return c->kind==PMNI_WRITE&&!(c->value&4095)&&c->value>=0x80000000&&c->value<=0xfff00000;
     if(c->address==UINT64_C(0x4180014)||c->address==UINT64_C(0x4180018))return c->kind==PMNI_WRITE&&!c->value;
     if(c->address==UINT64_C(0x4180040)||c->address==UINT64_C(0x4180004)||c->address==UINT64_C(0x418000c))return c->kind==PMNI_READ;
+    if(c->address==UINT64_C(0x4180010))return c->kind==PMNI_WRITE&&!(c->value&4095)&&c->value>=0x80000000;
+    if(c->address==UINT64_C(0x4180008))return c->kind==PMNI_WRITE&&c->value==1;
     for(unsigned port=0;port<3;port++){
         uint64_t base=pmh_base(port);
         if(c->address==base)return c->kind==PMNI_READ||c->value==1;
@@ -176,6 +178,14 @@ static inline int pmni_mba(const struct pmba_boot*b,const struct pmba_command*c,
     }else if((b->phase!=1&&b->phase!=3)||!b->events||b->events>PMBA_EVENTS||
         !pmsr_equal(c,&b->event[b->events-1].command,sizeof(*c)))return 0;
     return pmni_access(opening,&access,r);
+}
+static inline int pmni_metadata(const struct pmmd_metadata*m,const struct pmmd_command*c,
+    const struct pmni_arch*opening,struct pmni_result*r)
+{
+    if(!m||!c||!r||!pmsr_disjoint(m,sizeof(*m),r,sizeof(*r))||m->unknown||m->error||m->phase!=1||
+       !m->pending||m->pending!=m->events||m->events>PMMD_EVENTS||
+       !pmsr_equal(c,&m->event[m->events-1].command,sizeof(*c)))return 0;
+    struct pmni_command access={c->address,c->kind,c->value};return pmni_access(opening,&access,r);
 }
 #endif
 #endif

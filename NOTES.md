@@ -34,6 +34,36 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-04: metadata auth and secure-return sequencing
+
+- MBA milestone is commite776c19. New pmmd consumes the same epoch's held
+  clocks, MBA-ready record and subsequent HLOS3->MSS15 RW assignment for a
+  separate page-rounded metadata allocation (bounded64KiB, own MDT8412B /
+ 12288B backing). It rejects MBA overlap, wrong region/owner and stale order.
+- Emits code-length0, metadata PA, MBA command1, full order, then status poll.
+  Status0..2 waits,3 authenticates, negative or unexpected later state retains
+  UNKNOWN. Own10s auth timeout, finite501 polls with20ms spacing (>=50us).
+  Only authenticated state admits a distinct completed MSS15->HLOS3 RWX secure
+  return transaction for the exact allocation, starting after authentication.
+  Neither result frees memory or supplies missing target-cache/native ownership.
+- Default-OFF native adapter uses the exact pending command and explicit RMB
+  addresses, the same current Device AT/PAR/CPU checks.20883 sanitizer checks
+  PASS with actual software clock/MBA/secure producers and native leaf control
+  flow: every command failure/mutation, statuses/timeouts, stale epoch, wrong
+  assignments and wrong/early/reused-descriptor secure return. Both actual
+  COFF/MachO exports pass generalregs/frame1024. Existing389737 clock/stop IO
+  and63161 MBA checks rerun against this expanded whitelist PASS; these suites
+  share fixtures and are not additive unique test counts or hardware results.
+  Evidence: research/polaris/uefi-ios-0189/wifi/mss-metadata-0001/proof-0001.json.
+- NEXT actual segment-loading/authentication and integrated allocation/power/
+  owner. Reuse the already extracted30 own files and verified MDT; no new
+  firmware extraction/inventory boot. Own loader sorts segments by PA, copies
+  exact file bytes, zeroes BSS, verifies each full memsz, then removes HLOS from
+  the shared modem region before final status4. Actual native target cache,
+  ownership lifetime and independent MBA/metadata/modem allocations are still
+  missing. No phone/CI/image/helper or whole-gate completion. Five gates and
+  real scan/join/IP/DNS/data unfinished; goal remains ACTIVE.
+
 ### Continuous Wi-Fi milestone — 2026-11-04: self-auth MBA startup sequence
 
 - Clock/native IO milestone is commit275c135. New pmba protocol consumes the

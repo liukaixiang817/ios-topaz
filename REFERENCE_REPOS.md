@@ -14,6 +14,15 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+## Own metadata authentication and return (0189, 2026-11-04)
+
+Own pil_msa_auth_modem_mdt and pil_assign_mem_to_linux establish the separate
+metadata allocation, RMB length/address/command1, status3/negative-error and
+MSS15->HLOS3 RWX return order. The new finite protocol and default-OFF native
+adapter use this own path, not a reference PAS ID or fixed reserved pointer.
+20883 software checks and two native exports pass; parent staging/cache and
+complete lifetime remain unimplemented, so no free or hardware claim follows.
+
 ## Own self-auth MBA boot (0189, 2026-11-04)
 
 Own pil-msa.c/pil-q6v5.c and live DT select qdsp6v65-1-0, DEBUG preservation,
