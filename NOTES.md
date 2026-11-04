@@ -108,6 +108,61 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
+- NEW0189 latest PAYLOAD ALLOCATION SPAN milestone, 2026-11-04: actual
+  physical parent AllocateMaxAddress returned-address check used unsigned
+  address+payload_bytes, accepting a near-UINT64_MAX aligned wrapped result
+  and ordinary unaligned results in integer SOURCE analysis. No firmware
+  returned-address fault was physically observed. Now preserve the actual
+  page argument in one local payload_pages and refuse zero pages, unaligned
+  address, address below0x80000000 or above bank, and a full rounded allocation
+  larger than (bank-address)/4096, with address bounded before subtraction.
+  Refusal remains EFI_ERROR|9 before retaining global payload or log/GOP use;
+  no allocation/free/retry/cleanup/callback/ABI/RAW/context/owner flag was added.
+- Four changed actual wholeparent COFF/MachO REMOTE_ON/DEFAULT_OFF compiles
+  PASS, generalregs/maxframe1024, strict SERIAL. One new wholeparent O1/noinline
+  LLVM IR preserves actual branch DATA; prior8bf IR reused only after exact
+  original-source equality, not a redundant baseline build. Pure integer
+  decoding of the original IR returned-address branches against independent
+  arbitrary-precision full-span intervals passed5151 addresses with success
+  and EFI-error statuses. This does not execute LLVM/native/FW or addresses.
+  Actual compiled physical bank0x180000000, payload36459872B/8902pages;
+  valid full-page spans remain allowed and malformed wrapped/unaligned spans
+  refuse. Existing log NULL refusal/error handling remains. No host runtime
+  test, old guard suites/models/CI, USB/native/MMIO/SMC/originalPE, operational
+  codec/image/payload/helper/freeze. Prior OFF/fullparent qualifications are
+  historical; neither code compilation nor integer DATA grants lifetime.
+- Current parent SHA14fb822b1f43c41037529caf76872ecab7261badabc39f23d641ec0b7425d43b.
+  Private payload-allocation-returned-span-0001/proof.json
+  SHA39d5ceceace97a97ebd61f2b3f7e86dce70fae83e5873455f0daebd8dbf01291.
+  Initial plan arithmetic used QEMU bank0x130000000 only as abstract DATA;
+  corrected actual physical bank above is established by source and IR.
+  First derived function regex was too broad, retained unchanged; exact
+  *-function-0002 extracts supersede it. Original IR/proofs/RAW unchanged.
+- FIRST allocation bootstrap dependency ledger is now exact SOURCE work:
+  first-allocation-bootstrap-inputs-0001/result.json
+  SHAe34a902ed94bfa6c905bbbedd17b978409dceb4fd0670874a7171917a139f5d0.
+  Genuine parent can provide real self/system/linked IO/native/load/payload/
+  log scalars and fresh bound contexts, but Core/config/TPL are validated
+  after first Map; later graph needs its returned Map/key, provider needs
+  graph, timer needs provider, events needs all three. Those outputs cannot
+  supply their own first-call preconditions. Existing six-route selection
+  excludes pwmc contexts; direct original IO also cannot pass the selected
+  completed-input minimum. No routes added or callbacks invoked. No incoming
+  phase1/2/closed-context/expired-relay reuse, minimum bypass, fake opens,
+  new reader/seal/RAW/empty permission contract. This noncircular-input
+  blocker remains, not a reason to call first Map blindly.
+- Whole gates complete NONE; partial gate2 producer-span validation only,
+  gates1–5 incomplete. Human FASTBOOT report acknowledged, no phone query or
+  hardware action; WiFi firmware/scan/join/IP/DNS/data physically unstarted.
+  NEXT bounded package: actual payload backing lifetime and full rounded
+  allocation extent versus current payload_count-based exclusion spans.
+  Find a concrete missing delta without repeating metadata/header/hash or
+  completed log trace, bootstrap ledger, returned-span compiles/IR checks,
+  old readers/seals/suites/models or stock boots. Real active inventory,
+  external effects/postsource/IRQ/ABA/wholecall and DMA handback remain
+  unqualified. Do not wire consumer until actual noncircular qualification;
+  main REMOTE_MEMORY remains defaultOFF, sound/camera STOP.
+
 - NEW0189 latest SOURCE milestone, 2026-11-04: actual parent admission
   now rejects AllocatePool EFI_SUCCESS with NULL log_snapshot, before GOP or
   later normal service use. Original code only checked EFI error. One actual

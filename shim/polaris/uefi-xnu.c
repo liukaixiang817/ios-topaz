@@ -1555,8 +1555,12 @@ static efi_status admission(void)
     address=UINT64_C(0x9d400000);s=system_table->boot->allocate_pages(2,2,0x2400000/4096,&address);
     if((s&EFI_ERROR)||address!=UINT64_C(0x9d400000))return EFI_ERROR|9;
 #endif
-    address=POLARIS_RAM_BASE-1;s=system_table->boot->allocate_pages(1,2,(EFI_XNU_PAYLOAD_BYTES+4095)/4096,&address);
-    if((s&EFI_ERROR)||address<UINT64_C(0x80000000)||address+EFI_XNU_PAYLOAD_BYTES>POLARIS_RAM_BASE)return EFI_ERROR|9;
+    const uint64_t payload_pages=(EFI_XNU_PAYLOAD_BYTES+4095)/4096;
+    address=POLARIS_RAM_BASE-1;s=system_table->boot->allocate_pages(1,2,payload_pages,&address);
+    /* Check the entire returned page allocation before retaining its address.
+     * Compare against the remaining span only after bounding the base. */
+    if((s&EFI_ERROR)||!payload_pages||(address&4095)||address<UINT64_C(0x80000000)||address>POLARIS_RAM_BASE||
+       payload_pages>(POLARIS_RAM_BASE-address)/4096)return EFI_ERROR|9;
     payload=(void*)(uintptr_t)address;
     s=system_table->boot->allocate_pool(2,sizeof(log_buffer)+128+EFI_XNU_LOG_SIZE,(void**)&log_snapshot);if(s&EFI_ERROR)return s;
     if(!log_snapshot)return EFI_ERROR|9;
