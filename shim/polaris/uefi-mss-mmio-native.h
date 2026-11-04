@@ -12,10 +12,19 @@
 #ifndef EFI_XNU_MSS_RAIL_IO_AVAILABLE
 #define EFI_XNU_MSS_RAIL_IO_AVAILABLE 0
 #endif
+#ifndef EFI_XNU_MSS_PROXY_IO_AVAILABLE
+#define EFI_XNU_MSS_PROXY_IO_AVAILABLE 0
+#endif
+#if EFI_XNU_MSS_PROXY_IO_AVAILABLE && (!EFI_XNU_MSS_NATIVE_IO_AVAILABLE || !EFI_XNU_MSS_RAIL_IO_AVAILABLE)
+#error MSS proxy leaves require the separate native MMIO and retained rail leaves
+#endif
 #if EFI_XNU_MSS_NATIVE_IO_AVAILABLE && !defined(POLARIS_EFI_TEST_QEMU)
 #include "../../tools/polaris-mss-metadata.h"
 #if EFI_XNU_MSS_RAIL_IO_AVAILABLE
 #include "../../tools/polaris-mss-rail-request.h"
+#endif
+#if EFI_XNU_MSS_PROXY_IO_AVAILABLE
+#include "../../tools/polaris-mss-proxy.h"
 #endif
 enum pmni_kind {PMNI_READ=1,PMNI_WRITE,PMNI_STORE_ORDER,PMNI_FULL_ORDER};
 struct pmni_command {uint64_t address;uint32_t kind,value;};
@@ -93,6 +102,9 @@ static inline int pmni_allowed(const struct pmni_command*c)
     if(c->kind==PMNI_STORE_ORDER||c->kind==PMNI_FULL_ORDER)return !c->address&&!c->value;
     if(c->kind!=PMNI_READ&&c->kind!=PMNI_WRITE)return 0;
     if(c->kind==PMNI_READ&&c->value)return 0;
+#if EFI_XNU_MSS_PROXY_IO_AVAILABLE
+    if(c->address==0x134004)return c->kind==PMNI_READ;
+#endif
 #if EFI_XNU_MSS_RAIL_IO_AVAILABLE
     /* Separate retained-request adapter below further restricts this to its
      * exact pending event and selected TCS. IRQ enable/type are never writes. */
@@ -218,6 +230,18 @@ static inline int pmni_rail(const struct pmrv_request*q,const struct pwrsc_event
     else if(e->operation!=1||!pwrr_readable(e->address)||
         (e->address!=PWRSC_BASE&&e->address!=PWRSC_BASE+4&&(e->address<t||e->address>=t+PWRSC_STRIDE)))return 0;
     struct pmni_command access={e->address,e->operation==2?PMNI_WRITE:PMNI_READ,e->operation==2?e->value:0};
+    return pmni_access(opening,&access,r);
+}
+#endif
+#if EFI_XNU_MSS_PROXY_IO_AVAILABLE
+static inline int pmni_proxy(const struct pmpx_lifecycle*p,const struct pmpx_command*c,
+    const struct pmni_arch*opening,struct pmni_result*r)
+{
+    if(!p||!c||!r||!pmsr_disjoint(p,sizeof(*p),r,sizeof(*r))||p->unknown||p->error||
+       !p->pending||p->pending!=p->events||p->events>PMPX_EVENTS||
+       !pmsr_equal(c,&p->event[p->events-1].command,sizeof(*c))||c->step!=p->step||
+       c->kind==PMPX_RAIL||c->kind<PMPX_READ||c->kind>PMPX_ORDER)return 0;
+    struct pmni_command access={c->address,c->kind==PMPX_ORDER?PMNI_FULL_ORDER:c->kind,c->value};
     return pmni_access(opening,&access,r);
 }
 #endif

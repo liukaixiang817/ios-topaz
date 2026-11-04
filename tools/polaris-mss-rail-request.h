@@ -12,7 +12,8 @@
 #ifndef POLARIS_MSS_RAIL_REQUEST_H
 #define POLARIS_MSS_RAIL_REQUEST_H
 #include "polaris-wifi-rsc-read.h"
-#define PMRV_RESOURCES 19u
+#define PMRV_RESOURCES 20u
+#define PMRV_XO 19u
 struct pmrv_request {
     struct pwrsc_transaction io;
     uint64_t epoch;
@@ -22,7 +23,7 @@ static inline uint32_t pmrv_address(unsigned resource)
 {
     const uint32_t address[PMRV_RESOURCES]={0x30000,0x30010,0x30060,
         0x40f00,0x40f04,0x40f08,0x40f0c,0x41300,0x41304,0x41308,0x4130c,
-        0x40c00,0x40c04,0x40c08,0x40c0c,0x42000,0x42004,0x42008,0x4200c};
+        0x40c00,0x40c04,0x40c08,0x40c0c,0x42000,0x42004,0x42008,0x4200c,0x30080};
     return resource<PMRV_RESOURCES?address[resource]:0;
 }
 static inline int pmrv_input(unsigned resource,unsigned write,uint32_t value)
@@ -30,6 +31,7 @@ static inline int pmrv_input(unsigned resource,unsigned write,uint32_t value)
     if(resource>=PMRV_RESOURCES||write>1)return 0;
     if(!write)return value==0;
     if(resource<3)return value<=15;
+    if(resource==PMRV_XO)return value<=3;
     unsigned field=(resource-3)%4;
     /* Mode/headroom are observation-only. No arbitrary PMIC write path. */
     return field==0?value<=8191:field==1?value<=1:0;

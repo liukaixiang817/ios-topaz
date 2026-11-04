@@ -10,6 +10,7 @@
 #include "polaris-mss-rail-request.h"
 #include "polaris-mss-clocks.h"
 #include "polaris-wifi-firmware-identity.h"
+#define PMSP_RESOURCES 19u
 #define PMSP_EVENTS 101u /*19 sample +22 raise +19 verify +22 return +19 final*/
 #define PMSP_TRANSITION UINT64_C(38400000) /*2s finite returned-request phase*/
 enum pmsp_result {PMSP_FAILED=-1,PMSP_WAIT,PMSP_REQUEST,PMSP_HELD,PMSP_RESTORED};
@@ -22,7 +23,7 @@ struct pmsp_event {
 struct pmsp_lifecycle {
     uint64_t epoch,opening,last,transition,held_at,release_at,reset_at,clocks_returned_at;
     uint32_t phase,index,pending,events,error,unknown,held,restored;
-    uint32_t minimum[3],saved[PMRV_RESOURCES],target[PMRV_RESOURCES];
+    uint32_t minimum[3],saved[PMSP_RESOURCES],target[PMSP_RESOURCES];
     struct pmsp_event event[PMSP_EVENTS];
 };
 static inline int pmsp_fail(struct pmsp_lifecycle*s,unsigned error)
@@ -64,7 +65,7 @@ static inline unsigned pmsp_write_resource(unsigned n,unsigned release)
      * enable. Reverse release preserves dependency rails until MSS returns. */
     static const unsigned up[11]={1,2,0,3,4,7,8,11,12,15,16};
     static const unsigned down[11]={16,15,12,11,8,7,4,3,0,2,1};
-    return n<11?(release?down[n]:up[n]):PMRV_RESOURCES;
+    return n<11?(release?down[n]:up[n]):PMSP_RESOURCES;
 }
 static inline int pmsp_next(struct pmsp_lifecycle*s,uint64_t now,struct pmsp_command*out)
 {
@@ -79,7 +80,7 @@ static inline int pmsp_next(struct pmsp_lifecycle*s,uint64_t now,struct pmsp_com
         if(s->index>=22)return pmsp_fail(s,PMSP_ARGUMENT);
         c.resource=pmsp_write_resource(s->index/2,s->phase==5);c.write=!(s->index&1);
         if(c.write)c.value=s->phase==2?s->target[c.resource]:s->saved[c.resource];
-    }else{if(s->index>=PMRV_RESOURCES)return pmsp_fail(s,PMSP_ARGUMENT);c.resource=s->index;}
+    }else{if(s->index>=PMSP_RESOURCES)return pmsp_fail(s,PMSP_ARGUMENT);c.resource=s->index;}
     struct pmsp_event*e=&s->event[s->events++];e->command=c;e->issued=now;s->pending=c.sequence;*out=c;return PMSP_REQUEST;
 }
 static inline int pmsp_complete(struct pmsp_lifecycle*s,const struct pmsp_command*c,
@@ -103,7 +104,7 @@ static inline int pmsp_complete(struct pmsp_lifecycle*s,const struct pmsp_comman
         if(q->response!=expected)return pmsp_fail(s,PMSP_VALUE);
     }
     s->pending=0;s->index++;
-    if((s->phase==1||s->phase==4||s->phase==6)&&s->index==PMRV_RESOURCES){
+    if((s->phase==1||s->phase==4||s->phase==6)&&s->index==PMSP_RESOURCES){
         if(s->phase==1&&!pmsp_values(s))return pmsp_fail(s,PMSP_VALUE);
         if(s->phase==6){s->phase=7;s->restored=1;return PMSP_RESTORED;}
         s->phase++;s->index=0;

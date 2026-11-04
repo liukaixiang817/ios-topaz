@@ -4,7 +4,7 @@
 #include <string.h>
 #include "polaris-mss-rail-request.h"
 static struct pmrv_request q;
-static uint32_t reg[0x3000/4],initial[0x3000/4],votes[19],before_votes[19];
+static uint32_t reg[0x3000/4],initial[0x3000/4],votes[20],before_votes[20];
 static unsigned slot,actions,fail_at,mode,edges,acks,pending,checks,cases;
 static uint64_t tick;
 #define CHECK(x) do{checks++;assert(x);}while(0)
@@ -14,10 +14,10 @@ static void complete(void)
 {
     unsigned t=slot*PWRSC_STRIDE;uint32_t address=reg[(t+0x34)/4],msg=reg[(t+0x30)/4];
     /* Explicit independent address table: no engine helper supplies effects. */
-    static const uint32_t address_table[19]={0x30000,0x30010,0x30060,
+    static const uint32_t address_table[20]={0x30000,0x30010,0x30060,
         0x40f00,0x40f04,0x40f08,0x40f0c,0x41300,0x41304,0x41308,0x4130c,
-        0x40c00,0x40c04,0x40c08,0x40c0c,0x42000,0x42004,0x42008,0x4200c};
-    unsigned n=0;while(n<19&&address_table[n]!=address)n++;CHECK(n<19);
+        0x40c00,0x40c04,0x40c08,0x40c0c,0x42000,0x42004,0x42008,0x4200c,0x30080};
+    unsigned n=0;while(n<20&&address_table[n]!=address)n++;CHECK(n<20);
     CHECK(reg[(t+0x1c)/4]==1);CHECK(msg==0x108||msg==0x10108);
     if(msg==0x10108)votes[n]=reg[(t+0x38)/4];
     reg[(t+0x40)/4]=votes[n];reg[(t+0x3c)/4]=mode==2?0x10000:mode==3?0x10105:0x10101;
@@ -68,7 +68,7 @@ static void reset(unsigned s,unsigned high,unsigned f,unsigned m)
         reg[(t+0x18)/4]=1;reg[(t+0x1c)/4]=high==1?1:0;reg[(t+0x10)/4]=0x80;
         for(unsigned n=0;n<3;n++)for(unsigned j=0;j<5;j++)reg[(t+0x30+20*n+4*j)/4]=0x100+k*20+n*5+j;
     }
-    for(unsigned k=0;k<19;k++)votes[k]=before_votes[k]=k<3?2:k%4==0?1:37;
+    for(unsigned k=0;k<20;k++)votes[k]=before_votes[k]=k<3?2:k%4==0?1:37;
     memcpy(initial,reg,sizeof(reg));cases++;
 }
 static int run(unsigned resource,unsigned write,uint32_t value)
@@ -82,7 +82,7 @@ static void good(unsigned resource,unsigned write,uint32_t value)
     CHECK(q.io.finished&&q.io.restored&&!q.io.error&&!q.io.unknown&&!q.io.outstanding);
     CHECK(edges==1&&acks==1&&q.io.triggers==1&&q.io.completed==1&&q.io.acknowledged==1);
     CHECK(q.response==votes[resource]);
-    for(unsigned n=0;n<19;n++)CHECK(votes[n]==(n==resource&&write?value:before_votes[n]));
+    for(unsigned n=0;n<20;n++)CHECK(votes[n]==(n==resource&&write?value:before_votes[n]));
     unsigned t=slot*PWRSC_STRIDE;
     for(unsigned n=0;n<sizeof(reg)/4;n++){
         unsigned at=n*4;if(at==8||at==t+0x3c||at==t+0x40)continue;
@@ -118,10 +118,13 @@ int main(void)
     for(unsigned n=0;n<19;n++)if(n>=3&&(n-3)%4>=2){
         reset(0,0,0,0);CHECK(run(n,1,0)==-1);CHECK(!actions);
     }
-    reset(0,0,0,0);CHECK(run(19,0,0)==-1);CHECK(!actions);
+    reset(0,0,0,0);CHECK(run(20,0,0)==-1);CHECK(!actions);
     reset(0,0,0,0);CHECK(run(0,1,16)==-1);CHECK(!actions);
     reset(0,0,0,0);CHECK(run(3,1,8192)==-1);CHECK(!actions);
     reset(0,0,0,0);CHECK(run(4,1,2)==-1);CHECK(!actions);
     reset(0,0,0,0);CHECK(run(0,0,1)==-1);CHECK(!actions);
+    reset(0,1,0,0);good(19,0,0);
+    reset(0,1,0,0);good(19,1,3);
+    reset(0,1,0,0);CHECK(run(19,1,4)==-1);CHECK(!actions);
     printf("MSS finite retained-vote request: %u scenarios / %u checks PASS; no hardware\n",cases,checks);return 0;
 }

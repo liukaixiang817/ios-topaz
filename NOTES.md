@@ -44,6 +44,39 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): XO/PRNG proxy
+
+- Retained supplies milestone is commita4b4731. New pmpx consumes that
+  same epoch's HELD supplies: read own xo.lvl saved index, request3, verify;
+  save PRNG152004 bit13, set only if missing, barrier/readback/status134004.
+  Borrowed bit is preserved. Retain both across MSS use. Only same-epoch
+  completed6-clock restoration after stop/AXI/reset admits PRNG/XO return;
+  supplies must still be HELD. Full original register/value checks, voted
+ 10us return delay, exact XO readback. No cleanup after UNKNOWN.
+- Own pinned c7cb50c1 clk-rpmh.c and gcc-sdm845.c/DT establish these values.
+  Historical0188 masked CmdDb also contains xo.lvl30080, aux0/32/80/128.
+  Actual native parent must freshly bind that entry; historical capture is
+  not an owner. Single-request API adds only this20th resource, index0..3.
+  Existing19-supply protocol and101-request cycle stay separate and unchanged.
+- Default-OFF EFI_XNU_MSS_PROXY_IO_AVAILABLE adds only PRNG status READ and
+  exact pending proxy MMIO adapter; requires separate rail/native flags.
+ 44 proxy software scenarios/313370 checks plus13501 real software clock/
+  stop producer checks PASS with sanitizers. Includes borrowed/new votes,
+  every failed returned operation, native CPU/AT failures,500-poll exhaustion,
+  wrong XO value/epoch, changed shared GCC bits and premature release.
+  Request regression940 scenarios/2368881 checks; supplies148/967659 plus
+ 46960 clock/stop; native rail2304/615317 all PASS. Both actual native export
+  formats pass generalregs/frame1024. Evidence:mss-power-0001/proxy-proof-0001.json.
+- NEXT own AOP QMP load_state notification, then continuous native owner and
+  actual parent MSS integration. Own msm_qmp.c uses64B descriptor in DT
+  c300000/1MiB, doorbell1799000c mask1; payload96B modem on/off from own PIL,
+ 1s TX completion when remote clears length. Never overwrite pending TX or
+  infer delivery from elapsed time. The fixed source blob is
+  d6e41ae5d88db0f91e1c6fd13f1005dbb5e56481, private reference only.
+  No physical/CI/USB/session/helper/whole models. Driver/image packaging and
+  all safety gates remain unfinished. Execution2/5; this step plus3..5 remain.
+  Goal ACTIVE. Last15min17:36Z (04:36 local), next17:51Z (04:51 local).
+
 ### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): retained supplies
 
 - MBA secure caller milestone is commit291e608. New pmrv single-request

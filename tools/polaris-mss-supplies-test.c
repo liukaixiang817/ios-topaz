@@ -1,5 +1,7 @@
 /* Actual software RSC request, clock and stop/reset producers compose here.
  * No native instruction, firmware service, MMIO or phone is used. */
+#pragma push_macro("main")
+#undef main
 #define main legacy_clocks_test
 #define checks clock_checks
 #define initial clock_initial
@@ -9,10 +11,14 @@
 #undef initial
 #undef checks
 #undef main
+#pragma pop_macro("main")
 #undef CHECK
+#pragma push_macro("main")
+#undef main
 #define main legacy_request_test
 #include "polaris-mss-rail-request-test.c"
 #undef main
+#pragma pop_macro("main")
 #include "polaris-mss-supplies.h"
 static struct pmsp_lifecycle supply,held_copy;
 static struct pmck_lifecycle returned_clocks;
