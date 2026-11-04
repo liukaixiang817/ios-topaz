@@ -14,6 +14,16 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+## Own MSS stop acknowledgment and AXI order (0189, 2026-11-04)
+
+Own pinned msm_smp2p/private/smem sources and own DT establish APPS428/MSS435,
+master-kernel STOP0/slave-kernel ACK3 and distinct SMP2P0x4000 pulse at1799000c.
+The protocol keeps STOP asserted and starts the existing three-port AXI halt
+only after a fresh ACK.2506 sanitizer checks and two native exports pass.
+Dipper's request pattern was compared; its ADSP identity, reserved allocation
+and unconditional request-clear were not copied. No native backend, hardware
+retirement grant or whole-gate completion. See latest NOTES and private proof.
+
 ## Own secure descriptor cache and continuation (0189, 2026-11-04)
 
 Pinned own cache.S/assembler.h confirm CTR DminLine and whole-line CIVAC/IVAC

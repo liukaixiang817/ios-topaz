@@ -34,6 +34,33 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-04: MSS stop ACK before AXI
+
+- Implemented existing-item SMP2P stop for own APPS428/MSS435: full340-byte
+  item snapshots, master-kernel bit0 and slave-kernel bit3. Requires negotiated
+  v1/SSR-ACK feature, settled restart flags, initial STOP0/ACK0/READY1/FATAL0.
+  Valid entry count is not a populated-prefix boundary; scans all16 entries.
+  No item allocation, name creation, remote header update or native backend.
+- Exact sequence: preserve other APPS bits; setSTOP, barrier, readback; own
+  APCS0x1799000c mask0x4000 then0 pulse, barrier; sample for new ACK. GLINK's
+  mask0x1000 is not used. Changed headers/entries/SSR flags, fatal, stale ACK,
+  partial access, time or work limit retain UNKNOWN and leave requests held.
+- Composed actual protocol engines: only fresh stop ACK starts the three-port
+  AXI halt. Final2506 ASAN/UBSAN checks PASS, including failure at every AXI
+  access after ACK; two AArch64 COFF/MachO exports pass generalregs/frame1024.
+  Own pinned SMP2P/SMEM Git blobs verified and private; evidence under
+  research/polaris/uefi-ios-0189/wifi/mss-smp2p-stop-0001/proof.json.
+- 1s/128 paired snapshots and8ms polling are bounded returned-step DATA, not a
+  guarantee an access returns. Existing metadata/config epoch does not grant
+  hardware ownership or prove no remote restart/ABA. STOP+AXI is not full CE/
+  ICNSS DMA retirement, reset, clock drop or secure memory handback. No USB/CI.
+- Secure descriptor transaction milestone is commit5552e04. All five whole
+  gates remain incomplete; physical scan/join/IP/data not implemented. Continue
+  active goal. NEXT assess relocating independent allocations into true UEFI
+  admission, rather than attempting late initial Map under a borrowed context.
+  This is a new design under review, not existing incoming-map lifetime reuse
+  or permission to enable hardware. Existing dirty pwmc_invoke remains intact.
+
 ### Continuous Wi-Fi milestone — 2026-11-04: secure descriptor transaction
 
 - Implemented the finite descriptor-cache/MP_ASSIGN transaction: whole-page
