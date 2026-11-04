@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Validate own MDT parser refusals without executing or modifying firmware."""
 import argparse
+import hashlib
 import importlib.util
 import json
 from pathlib import Path
@@ -28,6 +29,24 @@ def main():
         try:f.parse_mdt(changed)
         except ValueError:checks+=1
         else:raise AssertionError('length')
+    # The tail is outside the ADT and must have an exact extent and identity.
+    bundle=bytes(range(256))*16;payload=bytearray(4096)+bundle
+    payload[:8]=b'SWEETXNU';struct.pack_into('<I',payload,8,1)
+    struct.pack_into('<QQ',payload,32,0x2a8,8)
+    manifest=dict(bytes=len(bundle),sha256=hashlib.sha256(bundle).hexdigest())
+    transport=f.payload_transport(payload,manifest)
+    assert transport['offset']==4096 and transport['payload_bytes']==8192;checks+=1
+    mutations=[(0,'Q',0),(8,'I',2),(32,'Q',0),(32,'Q',1<<63),
+               (40,'Q',7),(40,'Q',0x100001),(4095,'B',1),(8191,'B',0)]
+    for at,kind,value in mutations:
+        changed=bytearray(payload);struct.pack_into('<'+kind,changed,at,value)
+        try:f.payload_transport(changed,manifest)
+        except ValueError:checks+=1
+        else:raise AssertionError(('payload',at))
+    for changed in (b'',payload[:-1],payload+b'\0'):
+        try:f.payload_transport(changed,manifest)
+        except ValueError:checks+=1
+        else:raise AssertionError('payload length')
     print(json.dumps(dict(passed=True,checks=checks,firmware_executed=False)))
 
 

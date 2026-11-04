@@ -44,6 +44,38 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): payload firmware and virtual BSS
+
+- AOP milestone is commit98375f0. Verified own64061440B firmware bundle now
+  optionally occupies the exact4096-aligned ADT tail of the existing RAM
+  payload. Offset36462592, total100524032B, below128MiB transport maximum.
+  BaseADT must end exactly at old EOF; zero padding, exact length and whole
+  bundle SHA are required. Existing C payload validator accepts the combined
+  payload; no protocol/ABI change or new partition/storage operation.
+- Actual pmsi consumes the retained type2 payload extent, exact generated
+  offset/length, fresh memory map, per-asset SHA and per-page AT before the
+  original259 target-page writes/cache operations. Generated descriptors stay
+  image resident. Host staging and MBA-share codecs require matching transport
+  manifest; absent/wrong transport refuses an external-payload source.
+- Native UEFI .mssbss keeps19460757B zero storage virtual rather than serializing
+  it through Zig's .bss/.rdata merge. Linked PE is untouched; builder checks
+  one writable/non-executable zero-raw section within SizeOfImage. Full driver
+ 430592B, SHA637774862c013aa3a75f6ba378d20fe4abf60ed5250a0f899d4e806e90bd6c95;
+ 152 current inputs checked. Both full COFF/MachO parents pass generalregs and
+  frame1024. This removes the16MiB FFS file-size blocker; final packaging and
+  own-loader integrated boot evidence still remain.
+- Sanitized actual payload staging858525 checks and payload MBA-share77278
+  checks PASS. Independent codec57 ABI/131 corrupt and101 ABI/85 corrupt
+  checks PASS; embedded staging57/126 regression PASS. MDT/transport140 checks
+  PASS. Separate tiny EDK2/QEMU probe verifies20MiB virtual BSS zero-fill,
+  writable pages and relocated pointer;2560B file,5.96s. This is not a whole
+  parent model or Qualcomm hardware result. Evidence:mss-payload-0001/proof-0001.json.
+- NEXT continuous current source/CPU/DRV2/QMP owner and real parent MSS path,
+  then full modem loading/authentication and WLAN. No phone query, USB, CI,
+  physical boot or full-model rerun. All five safety/integration gates remain
+  unfinished overall. Execution2/5; this step plus3..5 remain. Goal ACTIVE.
+  Last15min18:06Z (05:06 local), next18:21Z (05:21 local).
+
 ### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): own AOP notification
 
 - XO/PRNG milestone is commit5ea1238. New pmaq sends own PIL96B modem

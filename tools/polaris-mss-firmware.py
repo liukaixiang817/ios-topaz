@@ -69,6 +69,39 @@ def verified_files(directory):
     return files,proof
 
 
+def payload_transport(raw,manifest):
+    """Validate an exact padded ADT end + own firmware tail; no ABI changes."""
+    if len(raw)<0x2a8 or raw[:8]!=b'SWEETXNU' or struct.unpack_from('<I',raw,8)[0]!=1:
+        raise ValueError('requires a version1 kernel payload')
+    off,size=struct.unpack_from('<QQ',raw,32);end=off+size
+    offset=(end+4095)&~4095
+    if off<0x2a8 or size<8 or size>0x100000 or end>len(raw) or offset>128*1024*1024:
+        raise ValueError('payload ADT extent')
+    if len(raw)!=offset+manifest['bytes'] or len(raw)>128*1024*1024 or any(raw[end:offset]):
+        raise ValueError('exact aligned firmware tail and transport limit required')
+    if digest(raw[offset:])!=manifest['sha256']:
+        raise ValueError('payload firmware tail differs from verified own bundle')
+    return dict(mode='payload-tail',offset=offset,base_bytes=end,base_sha256=digest(raw[:end]),
+                payload_bytes=len(raw),payload_sha256=digest(raw))
+
+
+def combine_payload(payload,output,manifest):
+    root=Path(__file__).resolve().parents[1];research=(root/'research').resolve()
+    payload=payload.resolve(strict=True);output=output.resolve()
+    if not payload.is_relative_to(research) or not output.is_relative_to(research) or output.exists():
+        raise ValueError('new combined payload must remain private and not overwrite an input')
+    raw=payload.read_bytes()
+    if len(raw)<0x2a8 or raw[:8]!=b'SWEETXNU':raise ValueError('kernel payload header')
+    off,size=struct.unpack_from('<QQ',raw,32)
+    if off+size!=len(raw):raise ValueError('base kernel payload must end exactly at ADT')
+    bundle=(output.parent/'mss-firmware.bin').read_bytes()
+    if len(bundle)!=manifest['bytes'] or digest(bundle)!=manifest['sha256']:raise ValueError('bundle changed')
+    combined=raw+bytes((-len(raw))%4096)+bundle
+    transport=payload_transport(combined,manifest);output.write_bytes(combined)
+    (output.parent/'payload-transport.json').write_text(json.dumps(transport,indent=2)+'\n')
+    return transport
+
+
 def package(directory,output):
     root=Path(__file__).resolve().parents[1];research=(root/'research').resolve()
     directory=directory.resolve(strict=True);output=output.resolve()
@@ -123,7 +156,10 @@ def package(directory,output):
 
 def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('directory',type=Path)
-    p.add_argument('--output',type=Path,required=True);a=p.parse_args();m=package(a.directory,a.output)
+    p.add_argument('--output',type=Path,required=True)
+    p.add_argument('--payload',type=Path,help='append verified firmware to this private kernel payload; emits payload.bin for the existing RAM protocol')
+    a=p.parse_args();m=package(a.directory,a.output)
+    if a.payload:combine_payload(a.payload,a.output/'payload.bin',m)
     print(json.dumps({k:m[k] for k in ('bytes','sha256','firmware_executed','physical_wifi_proven')}))
 
 

@@ -48,9 +48,9 @@ def transition(t,restore):
             t['precondition_error']==0 and all(t[k]==1 for k in ('returned','daif_written','daif_observed','group_written','group_observed')))
 
 
-def decode(raw,sraw,mraw,eraw,hraw):
+def decode(raw,sraw,mraw,eraw,hraw,firmware=None):
     if len(raw)!=PREFIX.size:raise ValueError(f'MSS_MBA_SHARE_RAW_V1 prefix needs exactly {PREFIX.size} bytes')
-    r=PREFIX.decode(raw);s=stage.decode(sraw,mraw,eraw,hraw);e=early.NATIVE.decode(eraw);m=stage.memory.NATIVE.decode(mraw);issues=[]
+    r=PREFIX.decode(raw);s=stage.decode(sraw,mraw,eraw,hraw,firmware);e=early.NATIVE.decode(eraw);m=stage.memory.NATIVE.decode(mraw);issues=[]
     def require(ok,label):
         if not ok:issues.append(label)
     require(s['local_completion_consistent'],'actual staging completion');s=s['record']
@@ -112,8 +112,9 @@ def decode(raw,sraw,mraw,eraw,hraw):
 
 def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('raw',type=Path)
-    p.add_argument('--output',type=Path,required=True);a=p.parse_args()
-    result=decode(a.raw.read_bytes(),*[Path(str(a.raw)+suffix).read_bytes() for suffix in ('.stage','.memory','.early','.retained')])
+    p.add_argument('--output',type=Path,required=True);p.add_argument('--firmware-manifest',type=Path);a=p.parse_args()
+    result=decode(a.raw.read_bytes(),*[Path(str(a.raw)+suffix).read_bytes() for suffix in ('.stage','.memory','.early','.retained')],
+                  firmware=json.loads(a.firmware_manifest.read_text()) if a.firmware_manifest else None)
     a.output.write_text(json.dumps(result,indent=2)+'\n');print(json.dumps({k:v for k,v in result.items() if k!='record'}))
 
 

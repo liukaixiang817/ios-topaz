@@ -8,6 +8,9 @@
 #ifndef EFI_XNU_MSS_STAGING_AVAILABLE
 #define EFI_XNU_MSS_STAGING_AVAILABLE 0
 #endif
+#ifndef EFI_XNU_MSS_PAYLOAD_FIRMWARE_AVAILABLE
+#define EFI_XNU_MSS_PAYLOAD_FIRMWARE_AVAILABLE 0
+#endif
 #if EFI_XNU_MSS_STAGING_AVAILABLE
 #if !EFI_XNU_MSS_MEMORY_AVAILABLE || defined(POLARIS_EFI_TEST_QEMU)
 #error "MSS staging needs the actual independent physical allocation producer"
@@ -37,13 +40,24 @@ static inline int pmsi_arch(const struct pmsi_result*r,struct pgcd_arch*a)
 {return pgcd_actual_arch(0,a)&&pwea_native_arch_valid(a)&&(a->cpu.sctlr&5)==5&&
     pwfc_arch_stable(&r->entry.cpu,&a->cpu)&&a->cpacr==r->entry.cpacr&&
     a->cpu.ticks-r->entry.cpu.ticks<=PGCD_FRESH_TICKS;}
+static inline int pmsi_blob_owned(const struct pweh_result*h,uint64_t blob,uint64_t bytes)
+{
+#if EFI_XNU_MSS_PAYLOAD_FIRMWARE_AVAILABLE
+    if(!bytes||bytes!=EFI_XNU_MSS_PAYLOAD_FW_BYTES||!EFI_XNU_MSS_FIRMWARE_OFFSET||
+       (EFI_XNU_MSS_FIRMWARE_OFFSET&4095)||h->input.logical_bytes!=EFI_XNU_MSS_FIRMWARE_OFFSET+bytes||
+       h->payload>UINT64_MAX-h->input.logical_bytes||blob!=h->payload+EFI_XNU_MSS_FIRMWARE_OFFSET)return 0;
+    return polaris_efi_range_owned(h->map.data,h->map.map.bytes,h->map.map.stride,blob,bytes,2);
+#else
+    return pwmc_parent_in_image(&h->input.early->image,blob,bytes);
+#endif
+}
 static inline int pmsi_binding(const struct pmsi_result*r)
 {
     const struct pmmn_native*m=(const void*)(uintptr_t)r->memory;
     const struct pweh_result*h=(const void*)(uintptr_t)r->retained;uint8_t digest[32];
     pweh_digest(h,sizeof(*h),digest);
     return pgcd_equal(digest,r->retained_digest,32)&&pmmn_retained(m,r->memory_digest,h)&&
-        pgcd_equal((const void*)(uintptr_t)r->assets,r->asset,sizeof(r->asset));
+        pgcd_equal((const void*)(uintptr_t)r->assets,r->asset,sizeof(r->asset))&&pmsi_blob_owned(h,r->blob,r->blob_bytes);
 }
 /* Shared with the software peer on guarded RAM shadows. All source accesses
  * stop at filesz; complete destination pages are initialized, including tails. */
@@ -79,6 +93,17 @@ static inline int pmsi_image_range(const struct pwea_native*e,const struct pwea_
            !polaris_efi_range_owned(map->data,map->map.bytes,map->map.stride,p,4096,4))return 0;
     return 1;
 }
+static inline int pmsi_source_range(const struct pweh_result*h,uint64_t at,uint64_t bytes)
+{
+#if EFI_XNU_MSS_PAYLOAD_FIRMWARE_AVAILABLE
+    if(!bytes||at<h->payload||at-h->payload>h->input.logical_bytes||bytes>h->input.logical_bytes-(at-h->payload))return 0;
+    if(at>UINT64_MAX-bytes||at+bytes>UINT64_MAX-4095)return 0;
+    uint64_t page=at&~UINT64_C(4095),end=(at+bytes+4095)&~UINT64_C(4095);
+    return polaris_efi_range_owned(h->map.data,h->map.map.bytes,h->map.map.stride,page,end-page,2);
+#else
+    return pmsi_image_range(h->input.early,&h->map,at,bytes);
+#endif
+}
 static inline int pmsi_stage(struct pmsi_result*r,const struct pmmn_native*m,const uint8_t digest[32],
     const struct pweh_result*h,const uint8_t*blob,uint64_t blob_bytes,const struct pmsf_asset*assets,unsigned count)
 {
@@ -87,7 +112,7 @@ static inline int pmsi_stage(struct pmsi_result*r,const struct pmmn_native*m,con
     if(!e||count<2||count>32||!blob_bytes||blob_bytes>0x4000000||((uintptr_t)blob&4095)||
        !pmmn_retained(m,digest,h)||!pmsi_image_range(e,&h->map,(uintptr_t)r,sizeof(*r))||
        !pmsi_image_range(e,&h->map,(uintptr_t)assets,count*sizeof(*assets))||
-       !pwmc_parent_in_image(&e->image,(uintptr_t)blob,blob_bytes))return pmsi_fail(r,1);
+       !pmsi_blob_owned(h,(uintptr_t)blob,blob_bytes))return pmsi_fail(r,1);
     const uint64_t bases[]={(uintptr_t)m,(uintptr_t)h,(uintptr_t)e,(uintptr_t)digest,(uintptr_t)blob,(uintptr_t)assets,
         e->native_address,e->image_address,(uintptr_t)h->input.digest,(uintptr_t)h->input.payload_slot,
         (uintptr_t)h->input.log_slot,(uintptr_t)h->input.state,(uintptr_t)h->input.received,(uintptr_t)h->input.count};
@@ -103,7 +128,7 @@ static inline int pmsi_stage(struct pmsi_result*r,const struct pmmn_native*m,con
         const struct pmsf_asset*a=&r->asset[kind];const struct pwea_claim*q=&m->memory.claim[kind+1];
         if(a->bytes!=(kind?8412u:238304u)||(a->offset&4095)||a->offset>blob_bytes||a->bytes>blob_bytes-a->offset||
            q->bytes!=(kind?12288u:0x100000u)||q->exposed_bytes!=(kind?8412u:0x100000u)||
-           !pmsi_image_range(e,&h->map,(uintptr_t)blob+a->offset,a->bytes))return pmsi_fail(r,2);
+           !pmsi_source_range(h,(uintptr_t)blob+a->offset,a->bytes))return pmsi_fail(r,2);
     }
     if(!pwea_disjoint((uintptr_t)blob+r->asset[0].offset,r->asset[0].bytes,(uintptr_t)blob+r->asset[1].offset,r->asset[1].bytes)||
        !pgcd_actual_arch(0,&r->entry)||!pwea_native_arch_valid(&r->entry)||(r->entry.cpu.sctlr&5)!=5||

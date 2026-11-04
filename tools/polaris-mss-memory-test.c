@@ -24,6 +24,12 @@ static struct pweh_input held_input;
 #ifndef PMMN_TEST_IMAGE_BYTES
 #define PMMN_TEST_IMAGE_BYTES 0x80000
 #endif
+#ifndef PMMN_TEST_PAYLOAD_BASE
+#define PMMN_TEST_PAYLOAD_BASE UINT64_C(0xd0000000)
+#endif
+#ifndef PMMN_TEST_PAYLOAD_BYTES
+#define PMMN_TEST_PAYLOAD_BYTES 5000
+#endif
 static uint8_t*mss_digest;
 static unsigned mss_fault,mss_trigger,mss_calls,mss_maps,mss_allocs,mss_stride;
 _Static_assert(sizeof(struct pmmn_native)<0x1e000,"fixture bounds before digest/native flag");
@@ -124,8 +130,8 @@ static void retained_setup(void)
 {
     mss_setup(0,0,40);CHECK(mss_run());held=(void*)(arena+0xa0000);
     held_input=(struct pweh_input){.early=early,.digest=mss_digest,.payload_slot=(void*)(arena+0x7f008),.log_slot=(void*)(arena+0x7f010),
-        .state=(void*)(arena+0x7f018),.received=(void*)(arena+0x7f020),.count=(void*)(arena+0x7f028),.logical_bytes=5000,.log_bytes=16384};
-    *(uint8_t**)(uintptr_t)held_input.payload_slot=(void*)UINT64_C(0xd0000000);
+        .state=(void*)(arena+0x7f018),.received=(void*)(arena+0x7f020),.count=(void*)(arena+0x7f028),.logical_bytes=PMMN_TEST_PAYLOAD_BYTES,.log_bytes=16384};
+    *(uint8_t**)(uintptr_t)held_input.payload_slot=(void*)PMMN_TEST_PAYLOAD_BASE;
     *(uint8_t**)(uintptr_t)held_input.log_slot=(void*)UINT64_C(0xd1000000);
     *(uint32_t*)(uintptr_t)held_input.state=2;
     *(uint64_t*)(uintptr_t)held_input.received=*(uint64_t*)(uintptr_t)held_input.count=held_input.logical_bytes;

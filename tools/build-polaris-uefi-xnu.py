@@ -22,6 +22,28 @@ import zlib
 def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
 
 
+def mss_zero_storage(image):
+    """Require linker-emitted virtual BSS; never rewrite the linked PE."""
+    raw=image.read_bytes();pe=struct.unpack_from('<I',raw,60)[0]
+    machine,count=struct.unpack_from('<HH',raw,pe+4)
+    optional=pe+24;size=struct.unpack_from('<H',raw,pe+20)[0]
+    image_bytes=struct.unpack_from('<I',raw,optional+56)[0]
+    if raw[pe:pe+4]!=b'PE\0\0' or machine!=0xaa64 or size!=240 or count>32:
+        raise ValueError('MSS PE geometry')
+    matches=[]
+    for n in range(count):
+        at=optional+size+40*n
+        if raw[at:at+8]!=b'.mssbss\0':continue
+        virtual,rva,file_bytes,file_offset=struct.unpack_from('<IIII',raw,at+8)
+        flags=struct.unpack_from('<I',raw,at+36)[0]
+        if not (virtual>=13631488 and rva%4096==0 and rva+virtual<=image_bytes and
+                file_bytes==file_offset==0 and flags==0xc0000080):
+            raise ValueError('MSS storage must be writable non-executable virtual BSS')
+        matches.append(dict(section='.mssbss',rva=rva,virtual_bytes=virtual,file_bytes=0,image_bytes=image_bytes))
+    if len(matches)!=1:raise ValueError('one MSS virtual BSS section required')
+    return matches[0]
+
+
 def gcd_clock_metadata(enabled,qemu,core_binding,core_pe):
     # Explicit NEW scope; the previous Device/BSmap-only policy is unchanged.
     e=bool(enabled);physical=bool(e and not qemu)
@@ -474,9 +496,12 @@ def main():
     ap.add_argument('--wifi-early-memory',action='store_true',help='default-OFF incoming UEFI independent retained MSA/RMTFS claims; original Core checks, no late remote-memory path, secure assignment or radio startup')
     ap.add_argument('--mss-memory',action='store_true',help='default-OFF independent modem120MiB, MBA1MiB and own metadata12KiB allocations after early MSA/RMTFS; retains all claims, no target access or remote startup')
     ap.add_argument('--mss-firmware-directory',type=Path,help='default-OFF embed already extracted verified own firmware and stage MBA/metadata into actual independent allocations; no secure assignment or remote start')
+    ap.add_argument('--mss-firmware-in-payload',action='store_true',help='source verified own firmware from the exact appended RAM payload tail instead of embedding its bytes in EFI')
     ap.add_argument('--mss-mba-share',action='store_true',help='default-OFF native HLOS3 to MSS15 RW assignment of the actual staged MBA1MiB, retained descriptor/continuations and CPU restoration; no reset, power, free or remote start')
     ap.add_argument('--wifi-irq-provider-directory',type=Path,help='exact original Timer/GIC/CPU PEs for the explicit early-memory profile; inert binding input')
     a=ap.parse_args();r=Path(__file__).resolve().parents[1]
+    if a.mss_firmware_in_payload and not a.mss_firmware_directory:
+        ap.error('--mss-firmware-in-payload requires verified own firmware directory')
     if a.mss_memory and not a.wifi_early_memory:
         ap.error('MSS memory requires the physical --wifi-early-memory parent')
     if a.mss_firmware_directory and not a.mss_memory:
@@ -769,8 +794,8 @@ def main():
     mss_firmware=None;mss_inputs=[]
     if a.mss_firmware_directory:
         spec=importlib.util.spec_from_file_location('polaris_mss_firmware',r/'tools/polaris-mss-firmware.py')
-        module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
-        mss_firmware=module.package(a.mss_firmware_directory,out/'mss-firmware')
+        mss_packager=importlib.util.module_from_spec(spec);spec.loader.exec_module(mss_packager)
+        mss_firmware=mss_packager.package(a.mss_firmware_directory,out/'mss-firmware')
         mss_inputs=['tools/polaris-mss-firmware.py','tools/polaris-mss-memory-codec.py','tools/polaris-mss-stage-codec.py',
                     str((a.mss_firmware_directory.resolve()/'proof.json').relative_to(r))]
         mss_inputs += [str((a.mss_firmware_directory.resolve()/name).relative_to(r)) for name in mss_firmware['source_files']]
@@ -802,6 +827,11 @@ def main():
         (out/'uefi-wifi-gcd-namespace-binding.h').write_text(namespace_header)
         (out/'wifi-gcd-namespace-binding.json').write_text(json.dumps(namespace_binding,indent=2)+'\n')
     raw=a.payload.read_bytes();k=a.kernel.read_bytes()
+    mss_payload_transport=None
+    if a.mss_firmware_in_payload:
+        mss_payload_transport=mss_packager.payload_transport(raw,mss_firmware)
+        mss_firmware['payload_transport']=mss_payload_transport
+        (out/'mss-firmware/manifest.json').write_text(json.dumps(mss_firmware,indent=2)+'\n')
     sys.path.insert(0,str(r/'tools'));import mkpayload
     tokens=raw[0x48:0x2a8].split(b'\0',1)[0].split()
     if any(t.startswith(b'polarisdurableguard=') for t in tokens):
@@ -1006,6 +1036,9 @@ def main():
 #define EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE {int(a.wifi_early_memory)}
 #define EFI_XNU_MSS_MEMORY_AVAILABLE {int(a.mss_memory)}
 #define EFI_XNU_MSS_STAGING_AVAILABLE {int(bool(a.mss_firmware_directory))}
+#define EFI_XNU_MSS_PAYLOAD_FIRMWARE_AVAILABLE {int(a.mss_firmware_in_payload)}
+#define EFI_XNU_MSS_FIRMWARE_OFFSET {mss_payload_transport['offset'] if mss_payload_transport else 0}u
+#define EFI_XNU_MSS_PAYLOAD_FW_BYTES {mss_firmware['bytes'] if mss_payload_transport else 0}u
 #define EFI_XNU_MSS_MBA_SHARE_AVAILABLE {int(a.mss_mba_share)}
 #define EFI_XNU_WIFI_MEM_ASSIGN_AVAILABLE {int(a.mss_mba_share)}
 #define EFI_XNU_MSS_METADATA_BYTES 8412u
@@ -1166,7 +1199,7 @@ def main():
                 if path.is_relative_to(out):continue # generated bindings recorded separately
                 if not path.is_relative_to(r):raise ValueError('untracked external early-profile source: '+str(path))
                 inputs.append(str(path.relative_to(r)))
-    if mss_firmware:
+    if mss_firmware and not a.mss_firmware_in_payload:
         obj=out/'mss-firmware.obj'
         p=subprocess.run(['/usr/bin/clang','--target=aarch64-unknown-windows','-c',str(out/'mss-firmware/mss-firmware.S'),'-o',str(obj)],capture_output=True)
         (out/'mss-firmware-compile.log').write_bytes(p.stdout+p.stderr)
@@ -1178,6 +1211,7 @@ def main():
     p=subprocess.run([str(a.zig.resolve()),'build-exe',*objects,'-target','aarch64-uefi','--subsystem','efi_application' if application else 'efi_boot_service_driver','-O','ReleaseSmall','-femit-bin='+str(image)],env=env,capture_output=True)
     (out/'link.log').write_bytes(p.stdout+p.stderr)
     if p.returncode:raise RuntimeError('EFI link failed')
+    mss_bss=mss_zero_storage(image) if a.mss_firmware_in_payload else None
     manifest=dict(artifact=image.name,sha256=sha(image),bytes=image.stat().st_size,
                   kernel_sha256=sha(a.kernel),payload_sha256=sha(a.payload),payload_bytes=len(raw),
                   payload_crc32=zlib.crc32(raw),payload_C_admission=True,rebased_kernel_bytes_match=True,
@@ -2000,6 +2034,8 @@ def main():
             wifi_CPU0_resources_firmware_RAM_log_capacity=12582912)
     if mss_firmware:
         manifest.update(mss_staging=True,mss_staging_default_OFF=True,mss_firmware=mss_firmware,
+            mss_firmware_in_payload=a.mss_firmware_in_payload,mss_firmware_embedded=not a.mss_firmware_in_payload,
+            mss_virtual_zero_storage=mss_bss,
             mss_firmware_generated_inputs={p.name:sha(p) for p in (out/'mss-firmware').iterdir()},
             mss_stage_assets=['MBA','metadata'],mss_stage_target_pages=259,
             mss_stage_raw_format='MSS_STAGE_RAW_V1',mss_stage_raw_bytes=91656,

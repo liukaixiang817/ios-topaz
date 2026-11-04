@@ -45,8 +45,16 @@ def decode(raw,mraw,eraw,hraw,firmware=None):
     require(r['source_pages']==[59,3],'source page counts')
     require(r['blob']%4096==0 and 0<r['blob_bytes']<=0x4000000 and 2<=r['asset_count']<=32,'source blob geometry')
     ib=e['image']['base'];ie=ib+e['image']['bytes']
-    require(ib<=r['blob']<ie and r['blob']+r['blob_bytes']<=ie and
-            ib<=r['assets']<ie and r['assets']+40*r['asset_count']<=ie,'resident source image')
+    require(ib<=r['assets']<ie and r['assets']+40*r['asset_count']<=ie,'resident source descriptors')
+    transport=firmware.get('payload_transport') if firmware else None
+    if transport:
+        offset=transport['offset']
+        require(transport['mode']=='payload-tail' and offset>0 and offset%4096==0 and
+                r['blob']==h['payload']+offset and offset+r['blob_bytes']==h['input']['logical_bytes'] and
+                transport['payload_bytes']==h['input']['logical_bytes'] and
+                early.owned(early.descriptors(h['map']),r['blob'],r['blob_bytes'],2),'retained payload source')
+    else:
+        require(ib<=r['blob']<ie and r['blob']+r['blob_bytes']<=ie,'resident source image')
     require(memory.stable(h['final'],r['entry']) and memory.stable(r['entry'],r['final'],3840000),'stage CPU/time')
     if firmware:
         require(r['blob_bytes']==firmware['bytes'] and r['asset_count']==len(firmware['assets']),'generated bundle geometry')
@@ -77,6 +85,7 @@ def decode(raw,mraw,eraw,hraw,firmware=None):
                     a['issued']==a['returned']==1 for k,a in enumerate(s['AT'])),f'Core {n} AT')
     return dict(format='MSS_STAGE_RAW_V1',bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest(),
                 local_completion_consistent=not issues,issues=issues,physical_wifi_proven=False,
+                source_mode='payload-tail' if transport else 'embedded',
                 secure_ownership_proven=False,remote_started=False,record=r)
 
 

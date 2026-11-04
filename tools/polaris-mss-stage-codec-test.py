@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Check C layout and independently reject corrupt native staging evidence."""
 import argparse
+import copy
 import importlib.util
 import json
 from pathlib import Path
@@ -10,7 +11,8 @@ import subprocess
 
 def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('raw',type=Path)
-    p.add_argument('--output-directory',type=Path,required=True);a=p.parse_args()
+    p.add_argument('--output-directory',type=Path,required=True)
+    p.add_argument('--firmware-manifest',type=Path);a=p.parse_args()
     root=Path(__file__).resolve().parents[1];out=a.output_directory;out.mkdir(parents=True,exist_ok=True)
     spec=importlib.util.spec_from_file_location('stage_codec',Path(__file__).with_name('polaris-mss-stage-codec.py'))
     c=importlib.util.module_from_spec(spec);spec.loader.exec_module(c)
@@ -31,7 +33,13 @@ def main():
     def check(ok):
         nonlocal checks
         checks+=1;assert ok,checks
-    baseline=c.decode(raw,mraw,eraw,hraw);check(baseline['local_completion_consistent'])
+    firmware=json.loads(a.firmware_manifest.read_text()) if a.firmware_manifest else None
+    baseline=c.decode(raw,mraw,eraw,hraw,firmware);check(baseline['local_completion_consistent'])
+    if firmware and firmware.get('payload_transport'):
+        check(not c.decode(raw,mraw,eraw,hraw)['local_completion_consistent'])
+        for field,value in [('mode','embedded'),('offset',0),('offset',8192),('payload_bytes',1)]:
+            changed=copy.deepcopy(firmware);changed['payload_transport'][field]=value
+            check(not c.decode(raw,mraw,eraw,hraw,changed)['local_completion_consistent'])
     def offset(*path):
         at=0;layout=c.NATIVE
         for key,index in path:
@@ -64,7 +72,7 @@ def main():
                     (offset(('core',n),('AT',56),('raw',0)),8,0)]
     for at,size,value in changes:
         changed=bytearray(raw);struct.pack_into('<'+('Q' if size==8 else 'I'),changed,at,value)
-        check(not c.decode(changed,mraw,eraw,hraw)['local_completion_consistent'])
+        check(not c.decode(changed,mraw,eraw,hraw,firmware)['local_completion_consistent'])
     for length in (0,1,len(raw)-1,len(raw)+1):
         try:c.decode((raw+b'\0')[:length],mraw,eraw,hraw)
         except ValueError:check(True)

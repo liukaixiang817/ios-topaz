@@ -9,6 +9,11 @@
 #include "uefi-memory.h"
 #include "runtime-marker.h"
 #include "uefi-xnu-config.h" /* exact payload bytes/CRC, symbol offsets, board */
+#if defined(_WIN32) && EFI_XNU_MSS_PAYLOAD_FIRMWARE_AVAILABLE
+/* Keep resident zero-initialized storage virtual. The UEFI linker merges
+ * ordinary .bss into .data before .rdata, otherwise serializing the zeros. */
+#pragma clang section bss=".mssbss"
+#endif
 #ifndef EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE
 #define EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE 0
 #endif
@@ -1078,8 +1083,13 @@ static int prepare_boot(void *context)
     ram_report("RETAINED_MSS_MEMORY_ACCEPTED=",mss_retained_ok);
     if(!mss_retained_ok){original_service_unknown=1;power_unknown_hold();}
 #if EFI_XNU_MSS_STAGING_AVAILABLE
+#if EFI_XNU_MSS_PAYLOAD_FIRMWARE_AVAILABLE
+    const uint8_t*mss_firmware_source=payload+EFI_XNU_MSS_FIRMWARE_OFFSET;
+#else
+    const uint8_t*mss_firmware_source=pmsf_blob;
+#endif
     int stage_ok=pmsi_stage(&mss_stage,&mss_memory,mss_memory_digest,&retained_wifi_memory,
-        pmsf_blob,PMSF_BLOB_BYTES,pmsf_assets,PMSF_ASSETS);
+        mss_firmware_source,PMSF_BLOB_BYTES,pmsf_assets,PMSF_ASSETS);
     ram_report("MSS_STAGE_ACCEPTED=",stage_ok);
     ram_report("MSS_STAGE_RAW_V1_BYTES=",sizeof(mss_stage));
     ram_text("MSS_STAGE_RAW_V1_BEGIN\r\n");ram_hex((const void*)&mss_stage,sizeof(mss_stage));

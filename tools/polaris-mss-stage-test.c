@@ -72,6 +72,9 @@ static void stage_setup(unsigned f,unsigned trigger_at)
     memset(arena+0x100000,0,0x100000);
     stage=(void*)(arena+0xc0000);memset(stage,0,sizeof(*stage));
     assets=(void*)(arena+0x100000);blob=arena+0x110000;
+#if EFI_XNU_MSS_PAYLOAD_FIRMWARE_AVAILABLE
+    blob=(void*)(uintptr_t)(held->payload+EFI_XNU_MSS_FIRMWARE_OFFSET);
+#endif
     assets[0]=(struct pmsf_asset){.offset=0,.bytes=238304};
     assets[1]=(struct pmsf_asset){.offset=0x3b000,.bytes=8412};
     for(unsigned k=0;k<2;k++){
@@ -148,6 +151,17 @@ int PMSI_TEST_ENTRY(int argc,char**argv)
         else assets[0].offset++;
         CHECK(!stage_run()&&stage->unknown&&!stage_writes);
     }
+#if EFI_XNU_MSS_PAYLOAD_FIRMWARE_AVAILABLE
+    for(unsigned kind=0;kind<5;kind++){
+        stage_setup(0,0);
+        if(kind==0)blob+=4096;
+        if(kind==1)held->input.logical_bytes--;
+        if(kind==2)held->map.data[280]=3;
+        if(kind==3)*(uint8_t**)(uintptr_t)held_input.payload_slot+=4096;
+        if(kind==4)held->payload=UINT64_MAX-4095;
+        CHECK(!stage_run()&&stage->unknown&&!stage_writes);
+    }
+#endif
     CHECK(!munmap(shadow_mapping,0x104000+2*host_page));free(original);free(arena);
     printf("PASS %u staging checks; software architecture/cache, real guarded RAM writes only\n",checks);return 0;
 }

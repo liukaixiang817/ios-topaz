@@ -10,7 +10,8 @@ import subprocess
 
 def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('raw',type=Path)
-    p.add_argument('--output-directory',type=Path,required=True);a=p.parse_args()
+    p.add_argument('--output-directory',type=Path,required=True)
+    p.add_argument('--firmware-manifest',type=Path);a=p.parse_args()
     root=Path(__file__).resolve().parents[1];out=a.output_directory;out.mkdir(parents=True,exist_ok=True)
     spec=importlib.util.spec_from_file_location('share_codec',Path(__file__).with_name('polaris-mss-mba-share-codec.py'))
     c=importlib.util.module_from_spec(spec);spec.loader.exec_module(c)
@@ -28,12 +29,13 @@ def main():
     actual=dict(line.split('=') for line in subprocess.check_output([str(out/'layout')],text=True).splitlines())
     assert {k:int(v) for k,v in actual.items()}==expected
     raw=a.raw.read_bytes();paired=[Path(str(a.raw)+suffix).read_bytes() for suffix in ('.stage','.memory','.early','.retained')];checks=0
+    firmware=json.loads(a.firmware_manifest.read_text()) if a.firmware_manifest else None
     def check(ok):
         nonlocal checks
         checks+=1;assert ok,checks
-    check(c.decode(raw,*paired)['local_completion_consistent'])
+    check(c.decode(raw,*paired,firmware=firmware)['local_completion_consistent'])
     check(not c.decode(Path(str(a.raw)+'.unknown').read_bytes(),*[Path(str(a.raw)+'.unknown'+suffix).read_bytes()
-        for suffix in ('.stage','.memory','.early','.retained')])['local_completion_consistent'])
+        for suffix in ('.stage','.memory','.early','.retained')],firmware=firmware)['local_completion_consistent'])
     def offset(*path):
         at=0;layout=c.PREFIX
         for key,index in path:
@@ -66,7 +68,7 @@ def main():
     for n in range(2):changes += [(offset(('source',n),('hash_count',0)),4,0),(offset(('source',n),('hashes',0)),8,0)]
     for at,size,value in changes:
         changed=bytearray(raw);struct.pack_into('<'+('Q' if size==8 else 'I'),changed,at,value)
-        check(not c.decode(changed,*paired)['local_completion_consistent'])
+        check(not c.decode(changed,*paired,firmware=firmware)['local_completion_consistent'])
     for length in (0,1,len(raw)-1,len(raw)+1,len(raw)+4096):
         try:c.decode((raw+bytes(4096))[:length],*paired)
         except ValueError:check(True)
