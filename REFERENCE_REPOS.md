@@ -14,6 +14,16 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+## Own independent MSS allocations (0189, 2026-11-04)
+
+Own MDT has28 relocatable loadable segments, span120MiB, first alignment1MiB.
+Own loader sorts by PA, copies exact filesz, zeros BSS, verifies full memsz.
+The real UEFI parent now optionally allocates separate modem/MBA/metadata
+from current conventional memory; no HackiOS fixed bank or Dipper camera
+reservation is reused.7261 software checks, independent codec and two whole
+parent native formats pass. Staging/VMID/persistent power are still required;
+the driver is not a new physical boot candidate. See latest NOTES/evidence.
+
 ## Own metadata authentication and return (0189, 2026-11-04)
 
 Own pil_msa_auth_modem_mdt and pil_assign_mem_to_linux establish the separate

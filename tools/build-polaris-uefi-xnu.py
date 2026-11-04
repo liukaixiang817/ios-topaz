@@ -472,8 +472,11 @@ def main():
     ap.add_argument('--wifi-power-current-word-vote-latched',action='store_true',help='default-OFF same-fresh-retired-READ TCS completed high-latch ARC WRITE; low/readback before each of two new edges, retain final edge rather than write a third, preserve original IRQ enable/type and exact full retirement')
     ap.add_argument('--wifi-power-four-vrm-roundtrip',action='store_true',help='default-OFF independent fresh sixteen-field own WiFi VRM READ, ordered voltage/enable raise and reverse exact saved restore; one original combined interval and full CPU/source/private retirement, no ARC transaction or MSS/radio')
     ap.add_argument('--wifi-early-memory',action='store_true',help='default-OFF incoming UEFI independent retained MSA/RMTFS claims; original Core checks, no late remote-memory path, secure assignment or radio startup')
+    ap.add_argument('--mss-memory',action='store_true',help='default-OFF independent modem120MiB, MBA1MiB and own metadata12KiB allocations after early MSA/RMTFS; retains all claims, no target access or remote startup')
     ap.add_argument('--wifi-irq-provider-directory',type=Path,help='exact original Timer/GIC/CPU PEs for the explicit early-memory profile; inert binding input')
     a=ap.parse_args();r=Path(__file__).resolve().parents[1]
+    if a.mss_memory and not a.wifi_early_memory:
+        ap.error('MSS memory requires the physical --wifi-early-memory parent')
     if bool(a.wifi_irq_provider_directory)!=a.wifi_early_memory or (a.wifi_early_memory and
         (not a.wifi_power_four_vrm_roundtrip or a.test_qemu)):
         ap.error('early memory requires the full physical four-VRM scope and exact original IRQ-provider directory; no QEMU substitution')
@@ -987,6 +990,8 @@ def main():
 #define EFI_XNU_WIFI_FOUR_VRM_AVAILABLE {int(a.wifi_power_four_vrm_roundtrip)}
 #define EFI_XNU_WIFI_REMOTE_MEMORY_AVAILABLE 0
 #define EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE {int(a.wifi_early_memory)}
+#define EFI_XNU_MSS_MEMORY_AVAILABLE {int(a.mss_memory)}
+#define EFI_XNU_MSS_METADATA_BYTES 8412u
 #define EFI_XNU_WIFI_CPU_RO_ADMISSION {int(a.wifi_cpu_ro_admission)}
 #define EFI_XNU_WIFI_CPU_MASKED_RO_ADMISSION {int(a.wifi_cpu_masked_ro_admission)}
 #define EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE {int(cmddb_binding is not None)}
@@ -1956,6 +1961,15 @@ def main():
             wifi_current_parent_sources=False,wifi_current_parent_source_scope_default_OFF=True,
             original_GCD_new_scope_RAM_log_capacity=11534336,
             wifi_CPU0_resources_firmware_RAM_log_capacity=11534336)
+    if a.mss_memory:
+        manifest.update(mss_memory=True,mss_memory_default_OFF=True,
+            mss_memory_backing_bytes=[0x7800000,0x100000,0x3000],mss_metadata_bytes=8412,
+            mss_memory_raw_format='MSS_MEMORY_RAW_V1',mss_memory_raw_bytes=58240,mss_memory_retained_no_free=True,
+            mss_memory_preboot_current_map_revalidation=True,mss_memory_target_access=False,
+            mss_memory_secure_assignment=False,mss_memory_remote_start=False,
+            mss_memory_physical_candidate_ready=False,
+            original_GCD_new_scope_RAM_log_capacity=12582912,
+            wifi_CPU0_resources_firmware_RAM_log_capacity=12582912)
     (out/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
     print(json.dumps({k:manifest[k] for k in ['artifact','sha256','bytes','QEMU_variant','device_execution_tested']}))
 

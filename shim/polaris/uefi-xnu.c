@@ -12,6 +12,12 @@
 #ifndef EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE
 #define EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE 0
 #endif
+#ifndef EFI_XNU_MSS_MEMORY_AVAILABLE
+#define EFI_XNU_MSS_MEMORY_AVAILABLE 0
+#endif
+#if EFI_XNU_MSS_MEMORY_AVAILABLE && !EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE
+#error "MSS memory requires the actual early memory parent"
+#endif
 #if EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE && (!EFI_XNU_WIFI_FOUR_VRM_AVAILABLE || !EFI_XNU_WIFI_TERMINAL_GOP_DIAGNOSTICS || !EFI_XNU_AUDIO_CLOCK_GCD_QUERY_AVAILABLE || !EFI_XNU_GCD_MMIO_QUERY_AVAILABLE || !EFI_XNU_WIFI_RESOURCES_AVAILABLE || EFI_XNU_WIFI_CPU_RO_ADMISSION || defined(POLARIS_EFI_TEST_QEMU))
 #error "Early WiFi memory needs its own qualified physical incoming-UEFI profile"
 #endif
@@ -61,6 +67,9 @@ static uint8_t log_buffer[1048576];static uint64_t log_bytes;
 static volatile uint32_t log_overflow;
 #elif EFI_XNU_WIFI_REMOTE_MEMORY_AVAILABLE
 static uint8_t log_buffer[58720256];static uint64_t log_bytes;
+static volatile uint32_t log_overflow;
+#elif EFI_XNU_MSS_MEMORY_AVAILABLE
+static uint8_t log_buffer[12582912];static uint64_t log_bytes;
 static volatile uint32_t log_overflow;
 #elif EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE
 static uint8_t log_buffer[11534336];static uint64_t log_bytes;
@@ -280,6 +289,12 @@ static int shutdown_status(void *,const uint8_t **,uint64_t *);
 static struct pwea_native early_wifi_memory;
 static uint8_t early_wifi_digest[32];
 static struct pweh_result retained_wifi_memory;
+#if EFI_XNU_MSS_MEMORY_AVAILABLE
+#include "uefi-mss-memory.h"
+static struct pmmn_native mss_memory;
+static uint8_t mss_memory_digest[32];
+static uint32_t mss_retained_attempted,mss_retained_ok;
+#endif
 #endif
 #if EFI_XNU_WIFI_REMOTE_MEMORY_AVAILABLE
 #if !EFI_XNU_WIFI_FOUR_VRM_AVAILABLE || EFI_XNU_WIFI_CPU_RO_ADMISSION
@@ -389,6 +404,29 @@ static void early_wifi_gop_evidence(void)
     pwtg_line(r,15,"NO RADIO",m->claim[0].retained,m->claim[1].retained);
     (void)pwtg_draw(r);early_wifi_gop_raw();
 }
+#if EFI_XNU_MSS_MEMORY_AVAILABLE
+static void mss_memory_gop_evidence(void)
+{
+    struct pwtg_result*r=&early_wifi_gop;const struct pmme_memory*m=&mss_memory.memory;
+    if(r->native_address!=(uintptr_t)&wln_cpu_on_issued||r->self_base!=pgcd_record.self_base||
+       r->self_bytes!=pgcd_record.self_bytes||r->headers.address[0]!=(uintptr_t)gop){
+        (void)pwtg_fail(r,PWTG_ARGUMENT);early_wifi_gop_raw();return;
+    }
+    pwtg_line(r,0,"MSS HOLD",mss_memory.attempted,mss_memory.error);
+    pwtg_line(r,1,"MEM CALL E",m->calls,m->error);
+    for(unsigned n=0;n<3;n++)pwtg_line(r,2+n,"CLAIM S LO",(uint32_t)(m->claim[n].status>>32),(uint32_t)m->claim[n].status);
+    for(unsigned n=0;n<7;n++){
+        const struct pwea_native_call*c=&mss_memory.call[n];
+        pwtg_line(r,5+n,"CALL IR CU",(c->issued<<24)|(c->returned<<16)|(c->complete<<8)|c->unknown,
+            (c->fp.saved<<24)|(c->fp.restored<<16)|(c->source[0].complete<<8)|c->source[1].complete);
+    }
+    pwtg_line(r,12,"MODEM BASE",(uint32_t)(m->claim[0].requested>>32),(uint32_t)m->claim[0].requested);
+    pwtg_line(r,13,"MBA BASE",(uint32_t)(m->claim[1].requested>>32),(uint32_t)m->claim[1].requested);
+    pwtg_line(r,14,"MDT BASE",(uint32_t)(m->claim[2].requested>>32),(uint32_t)m->claim[2].requested);
+    pwtg_line(r,15,"RETAINED",mss_retained_attempted,mss_retained_ok);
+    (void)pwtg_draw(r);early_wifi_gop_raw();
+}
+#endif
 #endif
 static void terminal_gop_raw(void)
 {
@@ -559,6 +597,9 @@ static int new_original_unknown(void)
 #if EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE
     ||early_wifi_memory.unknown||early_wifi_memory.memory.unknown||retained_wifi_memory.unknown
 #endif
+#if EFI_XNU_MSS_MEMORY_AVAILABLE
+    ||mss_memory.unknown||mss_memory.memory.unknown||(mss_retained_attempted&&!mss_retained_ok)
+#endif
 #if EFI_XNU_WIFI_TERMINAL_GOP_DIAGNOSTICS
     ||terminal_gop.uncertain
 #endif
@@ -599,6 +640,10 @@ __attribute__((noreturn)) static void power_unknown_hold(void)
     /* Remains terminal even if this local draw fails or is partial. No
      * foreign method, cleanup, response or CPU/private restoration follows. */
 #if EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE
+#if EFI_XNU_MSS_MEMORY_AVAILABLE
+    if(mss_memory.unknown||mss_memory.memory.unknown||(mss_retained_attempted&&!mss_retained_ok))mss_memory_gop_evidence();
+    else
+#endif
     if(early_wifi_memory.unknown||early_wifi_memory.memory.unknown)early_wifi_gop_evidence();
     else
 #endif
@@ -836,6 +881,9 @@ _Static_assert(sizeof(log_buffer)>=2*(sizeof(pwsp_record)+sizeof(pwrpt_record)+s
 #if EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE
     2*sizeof(early_wifi_memory)+4*sizeof(early_wifi_gop)+2*sizeof(retained_wifi_memory)+
 #endif
+#if EFI_XNU_MSS_MEMORY_AVAILABLE
+    2*sizeof(mss_memory)+
+#endif
     1048576,
     "complete preparation/client/power/source raw must fit without truncation");
 #elif EFI_XNU_WIFI_CMDDB_STAGED_RO_AVAILABLE
@@ -966,6 +1014,12 @@ static int prepare_boot(void *context)
     ram_text("RETAINED_WIFI_MEMORY_RAW_V1_BEGIN\r\n");ram_hex((const void*)&retained_wifi_memory,sizeof(retained_wifi_memory));
     ram_text("RETAINED_WIFI_MEMORY_RAW_V1_END\r\n");
     if(!retained_ok){original_service_unknown=1;power_unknown_hold();}
+#if EFI_XNU_MSS_MEMORY_AVAILABLE
+    mss_retained_attempted=1;
+    mss_retained_ok=pmmn_retained(&mss_memory,mss_memory_digest,&retained_wifi_memory);
+    ram_report("RETAINED_MSS_MEMORY_ACCEPTED=",mss_retained_ok);
+    if(!mss_retained_ok){original_service_unknown=1;power_unknown_hold();}
+#endif
 #endif
 #if EFI_XNU_WIFI_CACHE_AVAILABLE
 #if defined(POLARIS_EFI_TEST_QEMU)
@@ -1676,6 +1730,16 @@ static efi_status admission(void)
     if(!early_ok){original_service_unknown=1;power_unknown_hold();}
     pweh_digest(&early_wifi_memory,sizeof(early_wifi_memory),early_wifi_digest);
     const struct pwea_map*early_map=&early_wifi_memory.memory.map[2];
+#if EFI_XNU_MSS_MEMORY_AVAILABLE
+    int mss_ok=pmmn_run(&mss_memory,&early_wifi_memory,early_wifi_digest,EFI_XNU_MSS_METADATA_BYTES);
+    ram_report("MSS_MEMORY_ACCEPTED=",mss_ok);
+    ram_report("MSS_MEMORY_RAW_V1_BYTES=",sizeof(mss_memory));
+    ram_text("MSS_MEMORY_RAW_V1_BEGIN\r\n");ram_hex((const void*)&mss_memory,sizeof(mss_memory));
+    ram_text("MSS_MEMORY_RAW_V1_END\r\n");
+    if(!mss_ok){original_service_unknown=1;power_unknown_hold();}
+    pweh_digest(&mss_memory,sizeof(mss_memory),mss_memory_digest);
+    early_map=&mss_memory.memory.map[3];
+#endif
     bytes_copy(map_snapshot.data,early_map->data,early_map->map.bytes);
     map_snapshot.bytes=early_map->map.bytes;map_snapshot.stride=early_map->map.stride;
     map_snapshot.version=early_map->map.version;map_bytes=32+early_map->map.bytes;

@@ -34,6 +34,41 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-04: actual independent MSS allocations
+
+- Metadata milestone is commit89414ed. New pmme/pmmn uses the actual incoming
+  UEFI caller after early MSA/RMTFS and before payload/log: four GetMemoryMap
+  and three AllocateAddress(type2) calls for own relocatable modem120MiB /
+ 1MiB alignment, MBA1MiB, MDT8412B /12288B backing. Select only current type7
+  below4GiB, excluding own DT/SMEM, image, bank and all earlier claims. Full
+  bidirectional semantic deltas preserve every unrelated descriptor byte.
+  The old2MiB MSA/RMTFS policy and secure encoder bounds are unchanged.
+- Actual original Core/BS identity, normal incoming CPU, FP, per-call seals,
+  post-source and native flag checks surround every call. UNKNOWN retains all
+  pages. No target RAM is touched or ATed by this allocator: source staging
+  must freshly qualify/cache every target page. EFI type2 is not a VMID grant.
+- Default-OFF --mss-memory now reaches uefi-xnu.c through the real early
+  entry, independently displays UNKNOWN with qualified local GOP, exports
+ 58240B MSS_MEMORY_RAW_V1, and uses the last new map. Actual post-payload
+  retained producer supplies a fresh map; pmmn checks its ordering, original
+  record digest, all three allocations and payload/log disjointness before
+  continuing. Does not register clocks/MBA/radio or create a physical image.
+- 7261 sanitizer caller checks PASS; include actual software early + retained
+  producers, failed/wrong allocations, whole-map changes, mutated state,
+  Core/TPL/SMM/AT/FP/CPU failures, no replay and post-payload loss/overlap/stale
+  order. Independent codec33 C layout checks and172 corruption checks PASS.
+  Full physical driver-0002 COFF build and actual whole-parent MachO compile
+  pass generalregs/frame1024.18714624B, SHA49ac69f379b3471d98aaad397439d04abe9be19bdf498b6b209976f437bc19e3;
+  all109 compiler/build inputs verified unchanged. Evidence and source hashes:
+  research/polaris/uefi-ios-0189/wifi/mss-memory-0001/proof-0001.json.
+- NEXT integrate verified own firmware source, native staging/cache and the
+  persistent power/secure/MSS owner. Do not boot this allocation-only driver.
+  No new CI/USB/helper/boot/session, no partition writes; no new whole-model
+  runs until integrated sources settle. Five gates and real scan/join/IP/DNS/
+  data remain unfinished. Goal ACTIVE; last15min update16:21Z, next16:36Z.
+  Existing dirty context_before hunk in remote-memory header remains unowned
+  and must be preserved unstaged, as must untracked .DS_Store.
+
 ### Continuous Wi-Fi milestone — 2026-11-04: metadata auth and secure-return sequencing
 
 - MBA milestone is commite776c19. New pmmd consumes the same epoch's held
