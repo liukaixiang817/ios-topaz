@@ -23,6 +23,9 @@ static int pmni_translate(struct pmni_translation*t)
 }
 static int pmni_raw(const struct pmni_command*c,uint32_t*value)
 {
+#if defined(PMIM_TEST_ROUTER)
+    if(modem_testing)return modem_raw(c,value);
+#endif
     raw_count++;if(raw_failure)return 0;
     const uint64_t addresses[5]={0x4180018,0x4180010,0x4180008,0,0x418000c};
     const unsigned kinds[5]={2,2,2,4,1},values[5]={0,0x90200000,1,0,0};

@@ -18,6 +18,12 @@
 #ifndef EFI_XNU_MSS_AOP_IO_AVAILABLE
 #define EFI_XNU_MSS_AOP_IO_AVAILABLE 0
 #endif
+#ifndef EFI_XNU_MSS_MODEM_IO_AVAILABLE
+#define EFI_XNU_MSS_MODEM_IO_AVAILABLE 0
+#endif
+#if EFI_XNU_MSS_MODEM_IO_AVAILABLE && !EFI_XNU_MSS_NATIVE_IO_AVAILABLE
+#error MSS modem authentication requires the separate native MMIO leaves
+#endif
 #if EFI_XNU_MSS_AOP_IO_AVAILABLE && !EFI_XNU_MSS_NATIVE_IO_AVAILABLE
 #error MSS AOP leaves require the separate native MMIO leaves
 #endif
@@ -26,6 +32,9 @@
 #endif
 #if EFI_XNU_MSS_NATIVE_IO_AVAILABLE && !defined(POLARIS_EFI_TEST_QEMU)
 #include "../../tools/polaris-mss-metadata.h"
+#if EFI_XNU_MSS_MODEM_IO_AVAILABLE
+#include "../../tools/polaris-mss-modem-auth.h"
+#endif
 #if EFI_XNU_MSS_RAIL_IO_AVAILABLE
 #include "../../tools/polaris-mss-rail-request.h"
 #endif
@@ -111,6 +120,12 @@ static inline int pmni_allowed(const struct pmni_command*c)
     if(c->kind==PMNI_STORE_ORDER||c->kind==PMNI_FULL_ORDER)return !c->address&&!c->value;
     if(c->kind!=PMNI_READ&&c->kind!=PMNI_WRITE)return 0;
     if(c->kind==PMNI_READ&&c->value)return 0;
+#if EFI_XNU_MSS_MODEM_IO_AVAILABLE
+    if(c->address==0x4180018)return c->kind==PMNI_READ||c->value<=0x7800000;
+    if(c->address==0x4180014)return c->kind==PMNI_WRITE&&(!c->value||
+        (!(c->value&0xfffff)&&c->value>=0x80000000&&c->value<=0xf8800000));
+    if(c->address==0x4180008)return c->kind==PMNI_WRITE&&(c->value==1||c->value==2);
+#endif
 #if EFI_XNU_MSS_AOP_IO_AVAILABLE
     if(c->address==PMAQ_IRQ)return c->kind==PMNI_WRITE&&c->value==1;
     if(!(c->address&3)&&c->address>=PMAQ_BASE&&c->address<PMAQ_BASE+PMAQ_BYTES)
@@ -230,6 +245,17 @@ static inline int pmni_metadata(const struct pmmd_metadata*m,const struct pmmd_c
        !pmsr_equal(c,&m->event[m->events-1].command,sizeof(*c)))return 0;
     struct pmni_command access={c->address,c->kind,c->value};return pmni_access(opening,&access,r);
 }
+#if EFI_XNU_MSS_MODEM_IO_AVAILABLE
+static inline int pmni_modem(const struct pmim_auth*m,const struct pmim_command*c,
+    const struct pmni_arch*opening,struct pmni_result*r)
+{
+    if(!m||!c||!r||!pmsr_disjoint(m,sizeof(*m),r,sizeof(*r))||m->unknown||m->error||
+       (m->phase!=2&&m->phase!=4)||!m->pending||m->pending!=m->events||m->events>PMIM_EVENTS||
+       !pmsr_equal(c,&m->event[m->events-1].command,sizeof(*c))||c->step!=m->step||c->segment!=m->segment||
+       c->kind<PMSR_READ||c->kind>PMSR_FULL_ORDER)return 0;
+    struct pmni_command access={c->address,c->kind,c->value};return pmni_access(opening,&access,r);
+}
+#endif
 #if EFI_XNU_MSS_RAIL_IO_AVAILABLE
 static inline int pmni_rail(const struct pmrv_request*q,const struct pwrsc_event*e,
     const struct pmni_arch*opening,struct pmni_result*r)

@@ -44,6 +44,33 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): modem RMB authentication
+
+- Whole modem assignment profile is commit4ece64e. New pmim consumes actual
+  software metadata-return/held-clock/shared120MiB transaction producers and
+  the own28-segment geometry. Publication remains an explicit REAL parent
+  copy/cache boundary: this module never invents a copied-success receipt.
+- For each segment, read RMB code_length and require exact prior cumulative
+  memsz. Only first segment publishes code_start and CMD_LOAD_READY2. Write
+  cumulative memsz, full barrier and sample MBA status; negative/unexpected
+  status refuses. After all28, require a separate completed3+15->15 RW whole
+  bank transaction before final status4 polling. No target RAM access after
+  exclusive handoff.120s whole returned-step budget includes the future copy
+  work; final own10s/501 polls/20ms interval. This does not extend any owner.
+- Default-OFF EFI_XNU_MSS_MODEM_IO_AVAILABLE adds the exact pending native
+  RMB adapter with existing CPU/AT/PAR checks. Own firmware table yields
+ 124977057 cumulative bytes and115 normal events.157 software scenarios/
+ 107187 checks PASS ASan/UBSan: all115 native access failures, negative and
+  unexpected status, wrong counter, timeout, premature/wrong/old exclusive
+  assignment, malformed segment geometry and changed pending commands.
+  Existing metadata20883 checks PASS; native COFF/MachO generalregs/frame1024
+  exports PASS. Evidence:mss-modem-0001/auth-proof-0001.json.
+- NEXT actual current continuous native owner and registered parent, real
+  segment copy/cache evidence, MBA return after status4, then native WLAN.
+  Still no physical scan/join/IP/data, no phone/CI/image/whole-model work.
+  Execution2/5; this step plus3..5 remain. Goal ACTIVE. Last15min18:06Z,
+  next18:21Z (05:21 Australia/Melbourne).
+
 ### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): whole modem assignment profile
 
 - Payload/virtual-BSS milestone is commitaf65c91. Own pinned secure_buffer.c
