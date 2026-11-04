@@ -61,6 +61,9 @@ static void service_map(struct pwea_map*m)
 static int service_qrtr(const uint8_t*q,unsigned bytes)
 {
     CHECK(bytes>=32&&pms_u32(q+20)<=bytes-32);
+#if defined(PMRF_TEST_QRTR_HOOK)
+    if(PMRF_TEST_QRTR_HOOK(q,bytes))return 1;
+#endif
     if(pms_u32(q+4)==4){
         CHECK(pms_u32(q+20)==20&&pms_u32(q+32)==4&&pms_u32(q+36)==14&&pms_u32(q+40)==0x101&&pms_u32(q+44)==1);
         service_port=pms_u32(q+48);CHECK(service_port&&service_port<0xfffffffe);return 1;
@@ -117,7 +120,10 @@ static unsigned qrw(uint8_t*q,unsigned txn,unsigned handle,unsigned dir,unsigned
     unsigned n=qheader(q,txn,3);qfield(q,&n,1,handle,4);qfield(q,&n,2,dir,1);
     q[n]=3;put(q+n+1,13,2);q[n+3]=1;put(q+n+4,0,4);put(q+n+8,rmtfs->base,4);put(q+n+12,sectors,4);return n+16;
 }
-int main(int argc,char**argv)
+#ifndef PMRF_TEST_ENTRY
+#define PMRF_TEST_ENTRY main
+#endif
+int PMRF_TEST_ENTRY(int argc,char**argv)
 {
     CHECK(argc==8);sm_original=malloc(PWFI_IMAGE_BYTES);sm_shadow=malloc(PMSQ_BYTES);rmtfs_shadow=malloc(0x202000);
     memory=aligned_alloc(4096,PNV_BYTES);CHECK(sm_original&&sm_shadow&&rmtfs_shadow&&memory);

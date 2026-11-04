@@ -44,6 +44,43 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): native WLFW/MSA activation
+
+- Native RMTFS is commit7ea48c9. New own WLFW client follows ICNSS register20,
+  MSA-info2d, actual assignment, MSA-ready2e, existing CAP24 decoder and real
+  FW_READY21 indication. Requests/responses retained; selected live service
+  disappearance, malformed/repeated reply, partial assignment and time reversal/
+  timeout remain sticky. fw_status bits are recorded, never substituted for
+  this startup's actual memory grant/ready indication. No restart/free API.
+- Default-OFF pmwa consumes actual RMTFS plus its continuous CPU owner. It
+  zeroes/readbacks/CIVACs exactly the retained2MiB MSA backing with fresh WB
+  R/W AT, advertises only own DT1MiB logical interval, then assigns exact
+  page-aligned/nonoverlapping returned regions: secure ->MSS15/WLAN24 RW;
+  nonsecure additionally WLAN_CE25 RW. No HLOS destination, rounding or guessed
+  partition. Original Core, peers-OFF, descriptor lifetime and preserved SMC
+  continuations remain checked. Unique RMTFS wlan consumer stays claimed.
+- Actual complete producer composition ASan/UBSan PASS5 scenarios/5723102:
+  secure+nonsecure regions,4+4 continuation rounds, PROT_NONE descriptors and
+  transferred backing, FW_READY/CAP, concurrent RMTFS OPEN; failed second grant,
+  invalidation failure, out-of-range response and expired owner refuse further
+  startup. Failed second grant retains first exposure. No target reads after
+  transfer. No actual remote retirement or runtime CPU handoff is implemented.
+- Integration initially exhausted the existing65536 SMEM read budget by
+  polling RMTFS once per4KiB zero page (observed reads65536, CPU owner valid).
+  Native10ms counter cadence fixes that artificial polling burst; it does not
+  raise read/write limits or renew the180s owner. Long-lived kernel/CE/runtime
+  ownership and budgets still need explicit implementation before a real image.
+- Wire client19 scenarios, updated RMTFS native4/3254668 and existing transport/
+  RMTFS regressions PASS. Full adapter and separate WLFW TU COFF/MachO PASS
+  generalregs/frame1024. Evidence:wlfw-native-0001/proof-0001.json. Hardware/
+  UEFI/modem leaves SOFTWARE; own sources/DT inert. No phone/USB/CI/push/boot.
+- NEXT complete actual whole-parent/runtime handoff and retirement alongside
+  CE/ath10k integration. Current loader's CPU_ON and original USB/WLED service
+  flow cannot simply resume with this continuous MSS owner. New activation
+  remains unregistered; no old or partial boot candidate. Execution2/5, finish
+  current step plus3 following. Last15min23:19Z/10:19 Melbourne; next23:34Z/10:34.
+  Goal ACTIVE; continue until actual scan/join/IP/DNS/data work.
+
 ### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): native RMTFS service
 
 - NV producer is commit0bf474f. New default-OFF pmrf consumes actual pnnv,

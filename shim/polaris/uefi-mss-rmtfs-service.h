@@ -20,7 +20,7 @@ struct pmrf_access {
     struct pwmc_translation shared_AT[2],private_AT[2];struct pwmk_record cache[2];
 };
 struct pmrf_state {
-    uint64_t glink,grant,nv,owner,opening,base,pool;
+    uint64_t glink,grant,nv,owner,opening,base,pool,wlan;
     uint8_t nv_digest[32],grant_digest[32];
     uint32_t node,attempted,ready,unknown,error,allocations,frees,accesses;
     uint16_t units[PMRF_UNITS];struct pwmc_translation AT;

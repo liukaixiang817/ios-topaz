@@ -78,6 +78,7 @@ static void peer(struct model *m)
                 put32(service+8,1);put32(service+12,3);put32(service+16,77);
                 remote_qrtr(m,Q_DATA,get32(p+12),service,20);
             }
+#if !defined(POLARIS_TEST_CUSTOM_QMI)
             if(get32(p+4)==Q_DATA&&get32(p+28)==77&&get32(p+20)==7) {
                 const uint8_t *q=p+32;
                 assert(q[0]==0&&pw_le16(q+3)==PW_CAP_MESSAGE);
@@ -88,6 +89,7 @@ static void peer(struct model *m)
                 remote_qrtr(m,Q_DATA,get32(p+12),reply,sizeof(reply));
                 m->data_sent++;
             }
+#endif
         } else if(cmd==CLOSE) {
             remote_frame(m,CLOSE_ACK,1,0,NULL,0);
             remote_frame(m,CLOSE,7,0,NULL,0);
