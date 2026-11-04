@@ -38,6 +38,9 @@ static void glink_peer_ring(const struct pmni_command*c)
         else if(cmd==5){if(!local_intent)local_intent=pms_u32(packet+12);}
         else if(cmd==9){
             CHECK(!arg&&!pms_u32(packet+12));rx_frame(14,7,0,0,0);const uint8_t*q=packet+16;
+#if defined(PMSG_TEST_QRTR_HOOK)
+            if(PMSG_TEST_QRTR_HOOK(q,pms_u32(packet+8))){}else
+#endif
             if(pms_u32(q+4)==10){
                 CHECK(pms_u32(q+36)==69&&pms_u32(q+40)==1);uint8_t service[20]={0};
                 put(service,4,4);put(service+4,69,4);put(service+8,1,4);put(service+12,3,4);put(service+16,77,4);
@@ -65,7 +68,10 @@ static void glink_setup(unsigned cached)
     put(sm_shadow+header,0xa5a5|(480u<<16),4);put(sm_shadow+header+4,16384,4);put(sm_shadow+header+8,cached?0x100000:0,4);put(sm_shadow+header+12,0,4);
     memset(sm_shadow+rx_offset,0,16384);CHECK(pmsg_begin(glink,channel));
 }
-int main(int argc,char**argv)
+#ifndef PMSG_TEST_ENTRY
+#define PMSG_TEST_ENTRY main
+#endif
+int PMSG_TEST_ENTRY(int argc,char**argv)
 {
     CHECK(argc==7);sm_original=malloc(PWFI_IMAGE_BYTES);sm_shadow=malloc(PMSQ_BYTES);CHECK(sm_original&&sm_shadow);
     FILE*f=fopen(argv[6],"rb");CHECK(f&&fread(sm_original,1,PWFI_IMAGE_BYTES,f)==PWFI_IMAGE_BYTES&&!fclose(f));auth_test_open(6,argv);

@@ -1,9 +1,13 @@
 /* Native full MSS authentication then continuous guarded RMTFS sharing.
  * Only privileged leaves are replaced. Own firmware stays inert host DATA. */
+#ifndef PMTF_TEST_EXISTING_AUTH
 #define PMSN_TEST_ENTRY unused_auth_suite
+#endif
 #define EFI_XNU_MSS_RMTFS_NATIVE_AVAILABLE 1
 #define POLARIS_MSS_RMTFS_SOFTWARE_PEER 1
+#ifndef PMTF_TEST_EXISTING_AUTH
 #include "polaris-mss-auth-native-test.c"
+#endif
 #include "uefi-mss-rmtfs-native.h"
 static struct pmtf_state*rmtfs;
 static uint8_t*rmtfs_shadow;
@@ -53,7 +57,10 @@ static void rmtfs_setup(unsigned continuation,unsigned fault)
 }
 static int rmtfs_drive(void)
 {for(unsigned n=0;n<514;n++){int result=pmtf_step(rmtfs);if(result!=1)return result;}return 1;}
-int main(int argc,char**argv)
+#ifndef PMTF_TEST_ENTRY
+#define PMTF_TEST_ENTRY main
+#endif
+int PMTF_TEST_ENTRY(int argc,char**argv)
 {
     auth_test_open(argc,argv);rmtfs_shadow=malloc(0x202000);CHECK(rmtfs_shadow);
     for(unsigned continuation=0;continuation<=3;continuation+=3){

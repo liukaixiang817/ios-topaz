@@ -1157,3 +1157,14 @@ polaris_wifi_glink_qrtr_servers(struct polaris_wifi_glink *g, struct polaris_wif
 	leave(g);
 	return (int)count;
 }
+
+int
+polaris_wifi_glink_qrtr_peer(struct polaris_wifi_glink *g, uint32_t *node)
+{
+    if (!g || !node) return EINVAL;
+    if (!enter(g)) return EBUSY;
+    int error = 0;
+    if (!g->up || g->broken || !g->opened || !g->hello || g->stop_requested || !scope(g)) error = ENOTCONN;
+    else *node = g->peer;
+    leave(g); return error;
+}

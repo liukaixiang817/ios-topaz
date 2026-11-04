@@ -21,6 +21,7 @@ struct pmtf_state {
     uint8_t auth_digest[32];struct pmtf_zero zero[512];
     uint32_t attempted,ready,unknown,error,pending,pages,complete,reserved;
     uint8_t digest[32];
+    uint64_t service; /* Later unique consumer, excluded from grant seal. */
 };
 #if defined(POLARIS_MSS_RMTFS_SOFTWARE_PEER)
 static int pmtf_write_zero(uint64_t,struct pmtf_zero*);
@@ -55,7 +56,8 @@ static inline void pmtf_seal(struct pmtf_state*s,const void*out,size_t bytes,uin
 {
     struct pwfi_sha256 h;pwfi_init(&h);uintptr_t from=(uintptr_t)out,end=from+bytes;
     for(size_t n=0;n<sizeof(*s);n++){
-        if(n>=PMSN_ASSIGNMENT_RAW&&n<sizeof(struct pmsn_assignment))continue;
+        if((n>=PMSN_ASSIGNMENT_RAW&&n<sizeof(struct pmsn_assignment))||
+           (n>=offsetof(struct pmtf_state,service)&&n<offsetof(struct pmtf_state,service)+8))continue;
         uintptr_t p=(uintptr_t)s+n;if(p>=from&&p<end)continue;pwfi_byte(&h,*(const uint8_t*)p);
     }pwfi_final(&h,digest);
 }

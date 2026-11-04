@@ -29,6 +29,9 @@ static unsigned token,channel_fault,channel_stores,channel_rings,channel_read_at
 static void channel_map(struct pwea_map*m)
 {
     struct efi_memory*d=(void*)(m->data+m->map.bytes);emit_descriptor((void*)d,0,PMSQ_BASE,PMSQ_BYTES);d->attributes=1;m->map.bytes+=40;
+#if defined(PMSX_TEST_MAP_EXTRA)
+    PMSX_TEST_MAP_EXTRA(m);
+#endif
 }
 static void channel_prepare(void)
 {

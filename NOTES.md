@@ -44,6 +44,36 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): native RMTFS service
+
+- NV producer is commit0bf474f. New default-OFF pmrf consumes actual pnnv,
+  current retained LoaderData claim, pmtf guarded grant and pmsg GLINK owner.
+  Unique NV/grant consumer pointers remain claimed on failure. A new QRTR
+  peer API reads the first live HELLO node, allowing service14 before WLFW69
+  exists; no guessed node or WLFW-bootstrap dependency is introduced.
+- Dedicated28MiB allocator uses only the retained NV shadow portion. Actual
+  private WB R/W AT/zero/readback precede allocations; original UEFI services
+  are never called. Shared transfers check both pages before/after, IVAC before
+  copy, CIVAC after whole-cacheline writes and DSB. Cross-page chunks preserve
+  exact offsets; original fresh inputs remain immutable. No disk writes/free.
+- Existing RMTFS C now supports separate freestanding compilation and refuses
+  owner0. Actual full producer composition ASan/UBSan PASS4 scenarios/3254668
+  checks: service14 publication before any WLFW lookup, OPEN/ALLOCATE,8KiB
+  bidirectional transfer, replay, volatile SYNC, no retirement/free; partial
+  copy/cache failure and expired CPU owner refuse success/retry/release.
+  Producer/claim corruption also refuses before consuming either unique slot.
+- Native NV regression13/4614, continuous grant12/5644319 and existing full
+  RMTFS/transport suites PASS. Full adapter plus three separate protocol TUs
+  pass COFF/MachO generalregs/frame1024. Evidence:rmtfs-service-native-0001/
+  proof-0001.json. All architectural/UEFI/remote leaves SOFTWARE; own Core/GPT
+  metadata inert. No real phone NV/service/scan claim and no bootable parent yet.
+- NEXT actual WLFW indication registration/MSA information, fresh own returned
+  region boundaries+secure flags, native MSA assignment/ready and capability;
+  then CE/ath10k, whole-parent runtime handoff and actual retirement. Own ICNSS
+  sequence rechecked; HackiOS redwood uses WCN6750/ath11k and is comparative only.
+  No phone/USB query, CI/push or boot. Execution2/5; finish this step plus3
+  following. Last15min23:04Z/10:04 Melbourne; next23:19Z/10:19. Goal ACTIVE.
+
 ### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): native NV RAM producer
 
 - Collector is commitb7e6da1. New default-OFF pnnv consumes actual completed

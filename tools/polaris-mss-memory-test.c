@@ -87,6 +87,9 @@ static efi_status pmmn_test_map(struct efi_system*system,struct pwea_map*m)
     }
     mss_emit(m,&count,7,cursor,UINT64_C(0x100000000)-cursor);
     m->map.bytes=count*mss_stride;m->map.key=20+mss_maps;m->map.stride=mss_stride;m->map.version=1;
+#if defined(PMMN_TEST_MAP_EXTRA)
+    PMMN_TEST_MAP_EXTRA(m);
+#endif
     if(mss_calls==mss_trigger){
         if(mss_fault==20)m->map.bytes=8193;
         if(mss_fault==21)m->map.key=0;
@@ -125,7 +128,15 @@ static efi_status pweh_test_map(struct efi_system*system,struct pwea_map*m)
 }
 static void mss_setup(unsigned f,unsigned at,unsigned stride)
 {
-    setup(0,0);self->bytes=PMMN_TEST_IMAGE_BYTES;CHECK(run());mss=(void*)(arena+0x60000);mss_digest=arena+0x7e000;
+    setup(0,0);self->bytes=PMMN_TEST_IMAGE_BYTES;
+#if defined(PMMN_TEST_BEFORE_EARLY)
+    PMMN_TEST_BEFORE_EARLY();
+#endif
+    CHECK(run());
+#if defined(PMMN_TEST_AFTER_EARLY)
+    PMMN_TEST_AFTER_EARLY();
+#endif
+    mss=(void*)(arena+0x60000);mss_digest=arena+0x7e000;
     pweh_digest(early,sizeof(*early),mss_digest);
     mss_fault=f;mss_trigger=at;mss_calls=mss_maps=mss_allocs=0;mss_stride=stride;
 }

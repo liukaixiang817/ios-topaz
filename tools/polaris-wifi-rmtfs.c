@@ -27,7 +27,9 @@ SOFTWARE.
  * reads, retained replay responses and UNKNOWN until real remote retirement.
  */
 #include "polaris-wifi-rmtfs.h"
-#ifdef POLARIS_WIFI_GLINK_HOST_TEST
+#if defined(POLARIS_WIFI_GLINK_FREESTANDING)
+#include "polaris-wifi-rmtfs-freestanding.h"
+#elif defined(POLARIS_WIFI_GLINK_HOST_TEST)
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
@@ -107,6 +109,7 @@ static bool pwr_enter(struct polaris_rmtfs *s)
 {
     if(!s) return false;
     uintptr_t me=PWR_THREAD(), expected=0;
+    if(!me) return false;
     if(__atomic_compare_exchange_n(&s->owner,&expected,me,false,__ATOMIC_ACQ_REL,__ATOMIC_ACQUIRE)) {
         s->depth=1; return true;
     }
@@ -140,6 +143,9 @@ static int pwr_transport(struct polaris_rmtfs *s)
 }
 static bool pwr_hash(const void *p, uint32_t n, const uint8_t expected[32])
 {
+#if defined(POLARIS_WIFI_GLINK_FREESTANDING)
+    return pwfr_hash(p,n,expected);
+#else
     uint8_t h[32];
 #ifdef POLARIS_WIFI_GLINK_HOST_TEST
 #pragma clang diagnostic push
@@ -153,6 +159,7 @@ static bool pwr_hash(const void *p, uint32_t n, const uint8_t expected[32])
     ccdigest_di_clear(di,context);
 #endif
     return !memcmp(h,expected,sizeof(h));
+#endif
 }
 static void pwr_free_unexposed(struct polaris_rmtfs *s)
 {

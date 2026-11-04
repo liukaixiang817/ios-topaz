@@ -15,13 +15,14 @@
 #define PNNV_CALLS 5u
 #define PNNV_TICKS UINT64_C(2304000000)
 struct pnnv_state {
-    uint64_t early;uint8_t early_digest[32];struct pnv_plan plan;
+    uint64_t early,self;uint8_t early_digest[32];struct pnv_plan plan;
     struct pwea_map map[3];struct pwea_native_call call[PNNV_CALLS];
     struct {uint64_t address,status;} allocation;
     struct pnv_result inputs;struct pwmc_translation AT;uint8_t AT_history[32];
     struct pgcd_arch entry,current;
     uint32_t attempted,unknown,error,pending,calls,allocated,translated[2],complete,reserved;
     uint8_t digest[32];
+    uint64_t consumer; /* One later native RAM-shadow owner; outside producer digest. */
 };
 #if defined(POLARIS_WIFI_NV_SOFTWARE_PEER)
 static efi_status pnnv_map(struct efi_system*,struct pwea_map*);
@@ -41,7 +42,7 @@ static inline void pnnv_seal(struct pnnv_state*r,const void*out,size_t bytes,uin
 }
 static inline int pnnv_bound(struct pnnv_state*r)
 {
-    if(!r||!r->attempted||r->unknown||r->error)return 0;
+    if(!r||r->self!=(uintptr_t)r||!r->attempted||r->unknown||r->error)return 0;
     const struct pwea_native*e=(const void*)(uintptr_t)r->early;uint8_t hash[32];pnv_hash(e,sizeof(*e),hash);
     return pnv_equal(hash,r->early_digest,32)&&e->complete==1&&!e->unknown&&!e->error&&pwea_native_binding(e);
 }
@@ -101,7 +102,7 @@ static inline int pnnv_run(struct pnnv_state*r,const struct pwea_native*e,const 
     if(!r||!e||!plan||!pnv_zero(r,sizeof(*r))||e->complete!=1||e->unknown||e->error||!pwea_native_binding(e)||
        !pwmc_parent_in_image(&e->image,(uintptr_t)r,sizeof(*r))||!pwmc_parent_in_image(&e->image,(uintptr_t)plan,sizeof(*plan))||
        !pwea_disjoint((uintptr_t)r,sizeof(*r),(uintptr_t)e,sizeof(*e))||!pwea_disjoint((uintptr_t)r,sizeof(*r),(uintptr_t)plan,sizeof(*plan)))return 0;
-    r->early=(uintptr_t)e;r->plan=*plan;pnv_hash(e,sizeof(*e),r->early_digest);r->attempted=1;
+    r->early=(uintptr_t)e;r->self=(uintptr_t)r;r->plan=*plan;pnv_hash(e,sizeof(*e),r->early_digest);r->attempted=1;
     if(!pnv_plan_valid(plan)||!pgcd_actual_arch(0,&r->entry)||!pwea_native_arch_valid(&r->entry)||!pnnv_bound(r))return pnnv_fail(r,1);
     if(!pnnv_call(r,0)||!pnnv_call(r,1))return 0;
     uint64_t at=r->allocation.address;

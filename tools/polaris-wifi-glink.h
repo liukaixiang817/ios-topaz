@@ -70,6 +70,9 @@ int polaris_wifi_glink_stop(struct polaris_wifi_glink *);
 int polaris_wifi_glink_destroy(struct polaris_wifi_glink *);
 const struct polaris_wifi_qrtr_ops *polaris_wifi_glink_qrtr_ops(struct polaris_wifi_glink *);
 int polaris_wifi_glink_qrtr_servers(struct polaris_wifi_glink *, struct polaris_wifi_qrtr_server *, unsigned);
+/* Actual first HELLO on this admitted edge. Does not wait for WLFW service;
+ * RMTFS may be required before modem initialization can publish WLFW. */
+int polaris_wifi_glink_qrtr_peer(struct polaris_wifi_glink *, uint32_t *);
 int polaris_wifi_glink_qrtr_publish(struct polaris_wifi_glink *, struct polaris_wifi_qrtr_port *, uint32_t, uint32_t, uint32_t);
 /* API/callback gate is a bounded try gate. Callbacks may send/lookup/close,
  * nesting <=4; never wait for another caller. Lifecycle outside callbacks.
