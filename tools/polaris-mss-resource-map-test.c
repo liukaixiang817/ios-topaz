@@ -14,6 +14,9 @@ static unsigned resource_fault,resource_trigger;
 static unsigned resource_map_type,resource_map_attribute,resource_map_virtual;
 static void resource_extra_map(struct pwea_map*m)
 {
+#if defined(PMRG_TEST_MAP_EXTRA)
+    PMRG_TEST_MAP_EXTRA(m);
+#endif
     if(!resource_map_type)return;
     struct efi_memory*d=(void*)(m->data+m->map.bytes);
     emit_descriptor((void*)d,resource_map_type,0x179e0000,4096);

@@ -44,6 +44,40 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): current complete CmdDb
+
+- DRV2 reader is commitfe810ee. New default-OFF/unregistered pmdc consumes
+  the actual continuous CPU/image/GCD producers, follows the unique current
+  CmdDb protocol/LoadedImage and verifies all five own immutable spans before
+  and after BOTH complete128KiB database reads. Both cached and platform
+  pointers must currently equal the own85fe0000 singleton; no original API.
+- A separate Normal-WB path requires current GCD type2/capWB/attr8, EFI type0
+  or4/attr8/virtual0, all-image and retained/MSS/payload/log exclusions, fresh
+  read-only NS/WB AT and exact selected GCD node readback before/after EVERY
+  page. It does not widen the Device or old CmdDb diagnostic scopes. Reads
+ 512 words/page; complete raw buffers, provider RAM and resources must match.
+- New pure eight-resource selector validates CX/MX/MSS level384 indices,
+  four own VRM address entries and xo.lvl30080 with aux0/32/80/128 and zeros.
+  Scheduling priorities are preserved as data, never ownership. Historical
+ 0188 DB is ONLY fixture data; the native path reads current RAM every time.
+- ASan/UBSan PASS272 native capture scenarios/4541726 checks plus16 pure
+  table mutations included in that check count.106 AT/capture,128 fresh GCD
+  reads,32768 word reads: every AT/GCD delivery failure, boundary CPU/time/
+  PAR faults, in-read source/table/pointer changes, invalid EFI/GCD attributes,
+  altered resources and consumer tampering. Full COFF/MachO exports PASS
+  generalregs/frame1024. Evidence:mss-cmddb-0001/proof-0001.json. No provider
+  execution, actual hardware, vote, USB/device query or boot. The original
+  CmdDb fixture briefly waited for host dataless retrieval; recovered SHA is
+ 22c4c5ec932eee82a6d3fba1404dee7f2c5a656ecdccf1cd332907945d6fd22b.
+- NEXT native persistent request caller using these current producers, then
+  typed secure assignment and registered full MSS startup/retirement. Keep
+  per-access GCD readbacks fresh without repeatedly hashing entire megabyte
+  records inside the50ms request budget; full bindings belong at phase entry/
+  exit and native leaves cannot mutate them. No timeout extensions. Audit
+  PMSC_CHECKPOINTS16 against the final parent sequence before registering it.
+  Execution remains2/5: this step plus3 following steps. Latest15min report
+ 19:52Z/06:52 Melbourne; next20:07Z/07:07. Goal ACTIVE; no milestone is a stop.
+
 ### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): current DRV2 device-state reader
 
 - RPMh RAM reader is commitd8cf834. New default-OFF/unregistered pmrs consumes

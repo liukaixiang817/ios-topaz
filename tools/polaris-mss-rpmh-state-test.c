@@ -52,6 +52,9 @@ static void rpmh_prepare(void)
         put(q,addresses[n],4);put(q+8,(uintptr_t)s,8);put(s,2,4);put(s+8,4,4);put(s+12,values[n],4);
         put(s+16,1,1);put(s+24,values[n],4);put(s+28,1,1);
     }
+#if defined(PMRD_TEST_PREPARE)
+    PMRD_TEST_PREPARE();
+#endif
 }
 static int pmrd_translate(struct pmrd_at*t)
 {
