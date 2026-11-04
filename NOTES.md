@@ -108,6 +108,37 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
+- LATEST HUMAN WORK/REPORTING REQUIREMENT, 2026-11-04: the user asks that
+  the same15-minute task actively start/continue a concrete unfinished work
+  item and report what actually happened in the preceding15 minutes, results,
+  any still-running command, five-gate status and the next immediate action.
+  No actual work must be reported as no actual work; do not call rereading
+  notes “advancing gate1”, recycle older成果 into the new window or imply
+  continuous execution between wakeups without a real running command.
+  This latest reporting request takes priority over older generic no-progress
+  reporting text. Parent-only SERIAL and every device/data/admission boundary
+  remain. Do not manufacture activity by repeating completed audits/tests.
+- Human now reports the phone has continuously waited in FASTBOOT. This is
+  a HUMAN statement, not a fresh independent USB observation, native ownership,
+  MSS/radio permission or a reason to poll. No phone action was performed.
+- Current actual work is source-level integration/lifetime discovery, not a
+  functional WiFi change: allocation-consumer-callsite-next-delta-0001 found
+  pwmc_claim's genuine first pgcd_open still needs bootstrap qualification;
+  incoming parent phases1/2 cannot supply it. No actual-parent bind/claim/
+  release-local consumer callsite exists in the bounded search. Original
+  static Timer/GIC/CPU transitive source scope was found already complete and
+  skipped. actual-parent-active-allocation-trace-0001 records true Allocate/
+  Free callers for bank/reservation/payload/log/temporary chain source; none
+  grants a live inventory. No source edit/test/build/model/USB/native/PE/MMIO/
+  SMC/newcodec/helper/freeze was done for these discoveries. Whole gates done
+  NONE, gates1–5 incomplete; this discovery is partial gate2 and gate4 planning,
+  not completion. NEXT concrete work: trace actual log_snapshot AllocatePool
+  at uefi-xnu.c:1561 through its retained lifetime/current binding inputs;
+  identify a missing necessary lifetime binding without recreating completed
+  source-page exclusions or asserting an owner/permission flag. Previous
+  external Map destination triage found no new delta; do not repeat it.
+  Source publication a7dff4c and functional qualification below stay unchanged.
+
 - NEW0189 latest PUBLIC functional source
   a7dff4cce2249968f41974c8f42d1102616ac8d9 published by the SAME original
   directpush under actual continuing source/text consentce8ce4fd. Push ENDED0;
