@@ -44,6 +44,32 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): native NV RAM producer
+
+- Collector is commitb7e6da1. New default-OFF pnnv consumes actual completed
+  early parent while its native flag remains0. Five original phases: GetMap,
+  AllocateAnyPages(LoaderData,0x3450000), GetMap, read-only NV collector, GetMap.
+  Exact conventional7->LoaderData2 map delta is required. Image/kernel bank/
+  early claims cannot overlap. No FreePages, remote sharing or address publish.
+- Core source/CPU/FP and output-excluding state guards bracket all5 phases.
+  Full allocation has two actual WB R/W AT passes, one before current BlockIO
+  reads and another after final map; rolling AT records retained. One120s
+  pre-native total bound does not renew the later continuous CPU owner's180s.
+  Result/input/shadow buffers remain retained; actual prepare_boot registration
+  and native service consumption remain unfinished, so this is not a boot image.
+- ASan/UBSan actual early->native wrapper PASS13 scenarios/4614 checks; wrong
+  allocation delta, lost final ownership, parent/source mutation, failed map/
+  allocation, changed CPU/time/AT and changed NV refuse with no retry/free.
+  Collector regression PASS9/54791150. Full native COFF/MachO generalregs/
+  frame1024 PASS. Evidence:nv-inputs-0001/native-proof-0001.json. SOFTWARE
+  UEFI/AT/FP and synthetic NV; own Core/GPT files used only as inert metadata.
+- NEXT bind pnnv result/new claim to pmsc retained map and pmtf shared grant/
+  pmsg GLINK epoch. Provide dedicated28MiB shadow allocator, native checked
+  shared read/write/cache and freestanding RMTFS C/SHA; publish real service.
+  Then WLFW/CE and complete parent/runtime handoff/retirement. No phone/USB
+  query, CI/push or boot. Execution2/5; current step plus3 following. Last15min
+ 22:37Z/09:37 Melbourne; next22:52Z/09:52. Goal ACTIVE; continue.
+
 ### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): current-NV collector
 
 - Continuous shared grant is commit58ec110. New pnv collector enumerates only

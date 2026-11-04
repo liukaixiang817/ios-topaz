@@ -7,8 +7,11 @@
 #include <CommonCrypto/CommonDigest.h>
 #include "uefi-wifi-nv-inputs.h"
 #include "own-nv-plan.h"
-static unsigned checks,scenario,mode,reads,freed,part_reads[4];
-#define CHECK(x) do{assert(x);checks++;}while(0)
+static unsigned nv_checks,scenario,mode,reads,freed,part_reads[4];
+#ifdef CHECK
+#undef CHECK
+#endif
+#define CHECK(x) do{assert(x);nv_checks++;}while(0)
 struct device {struct pnv_block io;struct pnv_media media;uint8_t path[128];unsigned index;};
 static struct device device[6];static efi_handle handles[7];static struct efi_boot boot;
 static struct pnv_result*result;static uint8_t*memory;static uint8_t headers[2][2][4096],tables[2][65536];
@@ -37,7 +40,7 @@ static efi_status locate(uint32_t how,const efi_guid*guid,void*key,uint64_t*coun
 static efi_status handle(efi_handle h,const efi_guid*guid,void**out)
 {struct device*d=h;CHECK(d>=device&&d<device+6);if(guid->a==0x9576e91)*out=d->path;else{CHECK(guid->a==0x964e5b21);*out=&d->io;}return 0;}
 static efi_status release(void*p){CHECK(p==handles&&!freed);freed++;return mode==8?EFI_ERROR|7:0;}
-static void setup(unsigned fault)
+static void nv_setup(unsigned fault)
 {
     scenario++;mode=fault;reads=freed=0;memset(part_reads,0,sizeof(part_reads));memset(result,0,sizeof(*result));
     memset(memory,0xa5,PNV_BYTES);memset(device,0,sizeof(device));boot=(struct efi_boot){.locate_buffer=locate,.handle_protocol=handle,.free_pool=release};
@@ -57,12 +60,15 @@ static void setup(unsigned fault)
 }
 static void load(const char*dir,const char*name,void*out,unsigned bytes)
 {char path[4096];CHECK(snprintf(path,sizeof(path),"%s/%s",dir,name)>0);FILE*f=fopen(path,"rb");CHECK(f&&fread(out,1,bytes,f)==bytes&&fgetc(f)==EOF&&!fclose(f));}
-int main(int argc,char**argv)
+#ifndef PNV_TEST_ENTRY
+#define PNV_TEST_ENTRY main
+#endif
+int PNV_TEST_ENTRY(int argc,char**argv)
 {
     CHECK(argc==2);result=calloc(1,sizeof(*result));memory=aligned_alloc(4096,PNV_BYTES);CHECK(result&&memory);
     load(argv[1],"gpt0-primary.bin",headers[0][0],4096);load(argv[1],"gpt0-backup.bin",headers[0][1],4096);load(argv[1],"gpt0-table.bin",tables[0],polaris_nv_plan.disk[0].table_bytes);
     load(argv[1],"gpt1-primary.bin",headers[1][0],4096);load(argv[1],"gpt1-backup.bin",headers[1][1],4096);load(argv[1],"gpt1-table.bin",tables[1],polaris_nv_plan.disk[1].table_bytes);
-    setup(0);CHECK(pnv_collect(&boot,&polaris_nv_plan,(uintptr_t)memory,result)&&result->complete&&result->passes==2&&freed==1&&result->reads==reads&&result->reads==result->returned);
+    nv_setup(0);CHECK(pnv_collect(&boot,&polaris_nv_plan,(uintptr_t)memory,result)&&result->complete&&result->passes==2&&freed==1&&result->reads==reads&&result->reads==result->returned);
     for(unsigned part=0;part<4;part++){
         uint8_t*input=memory+pnv_part_offset(part),digest[32];
         for(unsigned n=0;n<pnv_part_bytes(part);n++)CHECK(input[n]==nv_byte(part,n));
@@ -74,6 +80,6 @@ int main(int argc,char**argv)
     }
     for(unsigned n=PNV_INPUT_BYTES;n<PNV_SCRATCH;n++)CHECK(memory[n]==0xa5);
     CHECK(!pnv_collect(&boot,&polaris_nv_plan,(uintptr_t)memory,result));
-    for(unsigned fault=1;fault<=8;fault++){setup(fault);CHECK(!pnv_collect(&boot,&polaris_nv_plan,(uintptr_t)memory,result)&&result->unknown&&!result->complete&&freed==1);}
-    free(memory);free(result);printf("PASS %u NV input checks, %u scenarios; own GPT fixtures/synthetic NV/UEFI, no device\n",checks,scenario);return 0;
+    for(unsigned fault=1;fault<=8;fault++){nv_setup(fault);CHECK(!pnv_collect(&boot,&polaris_nv_plan,(uintptr_t)memory,result)&&result->unknown&&!result->complete&&freed==1);}
+    free(memory);free(result);printf("PASS %u NV input checks, %u scenarios; own GPT fixtures/synthetic NV/UEFI, no device\n",nv_checks,scenario);return 0;
 }
