@@ -44,6 +44,31 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): whole modem assignment profile
+
+- Payload/virtual-BSS milestone is commitaf65c91. Own pinned secure_buffer.c
+  git blob1c8bc511225698397a053c957698447ac9e2bbac reverified: hyp_assign_phys
+  creates one SG entry for the whole extent. hyp_assign_table always takes
+  the first entry whole; BATCH_MAX_SIZE2MiB limits adding further entries,
+  not splitting this first entry. Own peripheral-loader requests the whole
+  modem region once for3->3+15 RW before loading, then3+15->15 RW before auth.
+- Added explicit modem encoder/transaction entry points admitting ONLY own
+ 120MiB,1MiB alignment, below4GiB, those two ordered VMID transitions and
+  disjoint descriptor. Existing small-region entry point stays capped2MiB.
+  No implicit chunking, handback, physical call, ownership or DMA claim.
+  Existing wire and transaction record layouts stay unchanged.
+- Protected continuation suite runs both transitions with inaccessible
+  descriptors while pending:1070 modem checks PASS ASan/UBSan. Existing small
+  encoder4150 and transaction501 checks PASS. Both new/old entry points pass
+  full COFF/MachO generalregs/frame1024 exports. Evidence:
+  mss-modem-0001/assignment-proof-0001.json.
+- NEXT actual continuous native owner and MSS parent; modem segment copy,
+  RMB incremental authentication, exclusive handoff and final status4 also
+  remain. Source correction resolves the earlier whole-region-vs60chunks
+  question; it does not establish MPU ownership. No device/CI/whole models.
+  Execution2/5; this step plus3..5 remain. Goal ACTIVE. Last15min18:06Z,
+  next18:21Z (05:21 Australia/Melbourne).
+
 ### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): payload firmware and virtual BSS
 
 - AOP milestone is commit98375f0. Verified own64061440B firmware bundle now

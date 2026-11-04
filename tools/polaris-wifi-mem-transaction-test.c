@@ -10,9 +10,18 @@ static unsigned checks;
 #define CHECK(x) do{assert(x);checks++;}while(0)
 static struct pwma_spec input(void)
 {
-    return (struct pwma_spec){.descriptor_pa=UINT64_C(0x17e000000),
+    struct pwma_spec s={.descriptor_pa=UINT64_C(0x17e000000),
         .region_pa=0x90001000,.region_bytes=0x200000,.sources=1,.destinations=2,
         .source={PWMA_HLOS},.destination={{PWMA_HLOS,PWMA_RW},{PWMA_MSS_MSA,PWMA_RW}}};
+#if defined(PWMT_TEST_MODEM)
+    s.region_pa=0xf8300000;s.region_bytes=0x7800000;
+    if(modem_exclusive){
+        s.sources=2;s.source[1]=PWMA_MSS_MSA;s.destinations=1;
+        s.destination[0]=(struct pwma_destination){PWMA_MSS_MSA,PWMA_RW};
+        s.destination[1]=(struct pwma_destination){0};
+    }
+#endif
+    return s;
 }
 static void begin(void)
 {

@@ -40,8 +40,8 @@ static inline int pwma_overlap(uint64_t a,uint64_t n,uint64_t b,uint64_t m)
  * The caller retains this page outside the transferred interval for the whole
  * secure call, including every interrupted continuation. No silent rounding,
  * arbitrary VMIDs, default physical address, no-op owner inference or retry. */
-static inline int pwma_encode(struct pwma_page*page,struct pwma_registers*regs,
-    const struct pwma_spec*input)
+static inline int pwma_encode_profile(struct pwma_page*page,struct pwma_registers*regs,
+    const struct pwma_spec*input,unsigned modem)
 {
     if(!page||!regs||!input||((uintptr_t)page&4095)||
        !pwma_span((uintptr_t)page,sizeof(*page))||!pwma_span((uintptr_t)regs,sizeof(*regs))||
@@ -50,8 +50,21 @@ static inline int pwma_encode(struct pwma_page*page,struct pwma_registers*regs,
        pwma_overlap((uintptr_t)page,sizeof(*page),(uintptr_t)input,sizeof(*input))||
        pwma_overlap((uintptr_t)regs,sizeof(*regs),(uintptr_t)input,sizeof(*input)))return 0;
     struct pwma_spec s=*input;
+    /* Own hyp_assign_phys uses ONE scatterlist entry. Its batch loop takes
+     * that first entry whole before considering the 2MiB aggregation limit.
+     * A separate profile admits only the own120MiB/1MiB-aligned modem bank
+     * and its two startup transitions, never arbitrary large WLAN regions. */
+    if(modem){
+        if(modem!=1||s.region_bytes!=0x7800000||(s.region_pa&0xfffff))return 0;
+        unsigned share=s.sources==1&&s.source[0]==PWMA_HLOS&&s.destinations==2&&
+            s.destination[0].vmid==PWMA_HLOS&&s.destination[0].permissions==PWMA_RW&&
+            s.destination[1].vmid==PWMA_MSS_MSA&&s.destination[1].permissions==PWMA_RW;
+        unsigned exclusive=s.sources==2&&s.source[0]==PWMA_HLOS&&s.source[1]==PWMA_MSS_MSA&&
+            s.destinations==1&&s.destination[0].vmid==PWMA_MSS_MSA&&s.destination[0].permissions==PWMA_RW;
+        if(!share&&!exclusive)return 0;
+    }
     if((s.descriptor_pa&4095)||!pwma_span(s.descriptor_pa,sizeof(*page))||
-       (s.region_pa&4095)||(s.region_bytes&4095)||!s.region_bytes||s.region_bytes>0x200000||
+       (s.region_pa&4095)||(s.region_bytes&4095)||!s.region_bytes||(!modem&&s.region_bytes>0x200000)||
        s.region_pa<UINT64_C(0x80000000)||s.region_pa>=UINT64_C(0x100000000)||
        s.region_bytes>UINT64_C(0x100000000)-s.region_pa||
        pwma_overlap(s.descriptor_pa,sizeof(*page),s.region_pa,s.region_bytes)||
@@ -88,6 +101,10 @@ static inline int pwma_encode(struct pwma_page*page,struct pwma_registers*regs,
     regs->x[4]=s.descriptor_pa+PWMA_SOURCE_OFFSET;regs->x[5]=s.descriptor_pa+PWMA_EXTRA_OFFSET;
     return 1;
 }
+static inline int pwma_encode(struct pwma_page*page,struct pwma_registers*regs,const struct pwma_spec*input)
+{return pwma_encode_profile(page,regs,input,0);}
+static inline int pwma_encode_modem(struct pwma_page*page,struct pwma_registers*regs,const struct pwma_spec*input)
+{return pwma_encode_profile(page,regs,input,1);}
 enum pwma_return {PWMA_RETURN_UNKNOWN,PWMA_RETURN_INTERRUPTED,PWMA_RETURN_ZERO};
 /* Preserve all returned registers separately. x0==1 continues the SAME
  * request with returned x1..x6, never a new request or busy resubmission.

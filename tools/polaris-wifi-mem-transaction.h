@@ -41,18 +41,24 @@ static inline int pwmt_time(struct pwmt_transaction*t,uint64_t now)
     if(!now||now<t->last||now<t->opening||now-t->opening>PWMT_TICKS)return pwmt_fail(t,PWMT_TIME);
     t->last=now;return 1;
 }
-static inline int pwmt_begin(struct pwmt_transaction*t,struct pwma_page*page,
-    const struct pwma_spec*spec,uint64_t now,uint64_t frequency)
+static inline int pwmt_begin_profile(struct pwmt_transaction*t,struct pwma_page*page,
+    const struct pwma_spec*spec,uint64_t now,uint64_t frequency,unsigned modem)
 {
     if(!t||!page||!spec||!now||frequency!=19200000||
        !pwmt_disjoint((uintptr_t)t,sizeof(*t),(uintptr_t)page,sizeof(*page))||
        !pwmt_disjoint((uintptr_t)t,sizeof(*t),(uintptr_t)spec,sizeof(*spec))||
        !pwmt_zero(t,sizeof(*t)))return PWMT_FAILED;
-    if(!pwma_encode(page,&t->initial,spec))return PWMT_FAILED;
+    if(!pwma_encode_profile(page,&t->initial,spec,modem))return PWMT_FAILED;
     t->page=(uintptr_t)page;t->spec=*spec;t->next=t->initial;
     for(unsigned k=0;k<4096;k++)t->expected[k]=page->data[k];
     t->started=1;t->opening=t->last=now;t->step=PWMT_CLEAN;return PWMT_WAIT;
 }
+static inline int pwmt_begin(struct pwmt_transaction*t,struct pwma_page*page,
+    const struct pwma_spec*spec,uint64_t now,uint64_t frequency)
+{return pwmt_begin_profile(t,page,spec,now,frequency,0);}
+static inline int pwmt_begin_modem(struct pwmt_transaction*t,struct pwma_page*page,
+    const struct pwma_spec*spec,uint64_t now,uint64_t frequency)
+{return pwmt_begin_profile(t,page,spec,now,frequency,1);}
 static inline int pwmt_page_equal(const struct pwmt_transaction*t)
 {return pwmt_equal(t->expected,(const void*)(uintptr_t)t->page,4096);}
 /* Reading descriptor bytes before CLEAN or the FIRST SMC does not dirty them.
