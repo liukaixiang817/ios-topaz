@@ -1945,11 +1945,13 @@ def main():
             wifi_early_memory_raw_bytes=100848,
             wifi_early_memory_retained_no_free=True,wifi_early_memory_secure_assignment=False,
             wifi_early_memory_remote_start=False,wifi_early_memory_physical_candidate_ready=False,
+            wifi_early_memory_independent_GOP_before_first_call=True,
+            wifi_early_memory_UNKNOWN_display_no_firmware_call=True,
             wifi_early_memory_IRQ_bindings=early_irq_metadata,
             wifi_early_memory_generated_inputs={p.name:sha(p) for p in out.glob('*.h')},
             wifi_current_parent_sources=False,wifi_current_parent_source_scope_default_OFF=True,
-            original_GCD_new_scope_RAM_log_capacity=11010048,
-            wifi_CPU0_resources_firmware_RAM_log_capacity=11010048)
+            original_GCD_new_scope_RAM_log_capacity=11534336,
+            wifi_CPU0_resources_firmware_RAM_log_capacity=11534336)
     (out/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
     print(json.dumps({k:manifest[k] for k in ['artifact','sha256','bytes','QEMU_variant','device_execution_tested']}))
 

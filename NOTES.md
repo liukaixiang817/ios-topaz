@@ -34,6 +34,29 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-04: early failure visibility
+
+- Builder/codec commit02c6fdd now followed by an independent early GOP binding.
+  The original GOP locate moves before early allocation only in the new scope;
+  the already validated post-bank map supplies header classification, and
+  actual current AT/architecture checks bind405 framebuffer pages. The later
+  power diagnostic still arms its separate record in prepare_boot.
+- Early UNKNOWN draws only local bounded numeric memory/call/FP/source/map/
+  claim/translation evidence after the existing terminal mask. No firmware,
+  USB, reset or cleanup follows UNKNOWN. Exact125664B GOP RAW retained;11MiB
+  log has compile-time capacity for both early records and existing power RAW.
+- Full physical driver-0003 links:17,523,200B SHA
+  8bc8875ca75ae13c2f273d3359d4a7605e5c4551a818ae4849537c23b8c8f2d8.
+  Actual parent MachO/generalregs/frame1024 compile PASS. Existing framebuffer
+  sanitizer2054checks PASS. No device/CI/image/session action. Previous two
+  serial terminal models cover02c6fdd; final changed parent needs new models
+  when the integrated candidate source is settled, not a recycled proof.
+- NEXT actual parent revalidation of retained claims after payload/log
+  allocations, before secure sharing. Own ICNSS requires WLFW-returned region
+  boundaries and secure flags, not blanket MSA sharing. RMTFS separate HLOS+
+  MSS RW sharing follows own sharedmem consumer. Do not boot allocator-only.
+  Five whole gates remain incomplete; scan/join/IP/DNS/data not implemented.
+
 ### Continuous Wi-Fi milestone — 2026-11-04: early builder and RAW codec
 
 - Producer commit39e5de0 is now integrated into an explicit builder flag with

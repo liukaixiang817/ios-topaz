@@ -12,7 +12,7 @@
 #ifndef EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE
 #define EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE 0
 #endif
-#if EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE && (!EFI_XNU_WIFI_FOUR_VRM_AVAILABLE || !EFI_XNU_AUDIO_CLOCK_GCD_QUERY_AVAILABLE || !EFI_XNU_GCD_MMIO_QUERY_AVAILABLE || !EFI_XNU_WIFI_RESOURCES_AVAILABLE || EFI_XNU_WIFI_CPU_RO_ADMISSION || defined(POLARIS_EFI_TEST_QEMU))
+#if EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE && (!EFI_XNU_WIFI_FOUR_VRM_AVAILABLE || !EFI_XNU_WIFI_TERMINAL_GOP_DIAGNOSTICS || !EFI_XNU_AUDIO_CLOCK_GCD_QUERY_AVAILABLE || !EFI_XNU_GCD_MMIO_QUERY_AVAILABLE || !EFI_XNU_WIFI_RESOURCES_AVAILABLE || EFI_XNU_WIFI_CPU_RO_ADMISSION || defined(POLARIS_EFI_TEST_QEMU))
 #error "Early WiFi memory needs its own qualified physical incoming-UEFI profile"
 #endif
 #if EFI_XNU_WIFI_REMOTE_MEMORY_AVAILABLE && (!EFI_XNU_WIFI_FOUR_VRM_AVAILABLE || !EFI_XNU_AUDIO_CLOCK_GCD_QUERY_AVAILABLE || !EFI_XNU_GCD_MMIO_QUERY_AVAILABLE || !EFI_XNU_WIFI_RESOURCES_AVAILABLE || EFI_XNU_WIFI_CPU_RO_ADMISSION || defined(POLARIS_EFI_TEST_QEMU))
@@ -63,7 +63,7 @@ static volatile uint32_t log_overflow;
 static uint8_t log_buffer[58720256];static uint64_t log_bytes;
 static volatile uint32_t log_overflow;
 #elif EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE
-static uint8_t log_buffer[11010048];static uint64_t log_bytes;
+static uint8_t log_buffer[11534336];static uint64_t log_bytes;
 static volatile uint32_t log_overflow;
 #elif EFI_XNU_WIFI_FOUR_VRM_AVAILABLE
 static uint8_t log_buffer[10747904];static uint64_t log_bytes;
@@ -344,6 +344,50 @@ struct terminal_gop_result {
     uint64_t map_function;uint32_t map_issued,map_returned,uncertain;
 };
 static struct terminal_gop_result terminal_gop;
+#if EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE
+/* Independent incoming GOP binding: early allocation precedes prepare_boot,
+ * where the later power diagnostic obtains its own fresh map and binding. */
+static struct pwtg_result early_wifi_gop;
+static void early_wifi_gop_raw(void)
+{
+    ram_report("EARLY_WIFI_GOP_RAW_V1_BYTES=",sizeof(early_wifi_gop));
+    ram_text("EARLY_WIFI_GOP_RAW_V1_BEGIN\r\n");ram_hex((const void*)&early_wifi_gop,sizeof(early_wifi_gop));
+    ram_text("EARLY_WIFI_GOP_RAW_V1_END\r\n");
+}
+static int early_wifi_gop_bind(const struct efi_loaded*image,uint64_t key)
+{
+    struct pwtg_result*r=&early_wifi_gop;
+    if(r->attempted||!key||!image||!pgcd_record.self_bound||
+       pgcd_record.self_base!=(uintptr_t)image->base||pgcd_record.self_bytes!=image->bytes||
+       !map_snapshot.bytes||map_snapshot.bytes>sizeof(r->map))return 0;
+    r->map_key=key;r->map_bytes=map_snapshot.bytes;r->map_stride=map_snapshot.stride;r->map_version=map_snapshot.version;
+    bytes_copy(r->map,map_snapshot.data,map_snapshot.bytes);
+    return pwtg_arm(r,(uintptr_t)gop,(uintptr_t)&wln_cpu_on_issued,(uintptr_t)image->base,image->bytes);
+}
+static void early_wifi_gop_evidence(void)
+{
+    struct pwtg_result*r=&early_wifi_gop;const struct pwea_memory*m=&early_wifi_memory.memory;
+    if(r->native_address!=(uintptr_t)&wln_cpu_on_issued||r->self_base!=pgcd_record.self_base||
+       r->self_bytes!=pgcd_record.self_bytes||r->headers.address[0]!=(uintptr_t)gop){
+        (void)pwtg_fail(r,PWTG_ARGUMENT);early_wifi_gop_raw();return;
+    }
+    pwtg_line(r,0,"EARLY HOLD",early_wifi_memory.attempted,early_wifi_memory.error);
+    pwtg_line(r,1,"MEM CALL E",m->calls,m->error);
+    pwtg_line(r,2,"CLAIM0 S LO",(uint32_t)(m->claim[0].status>>32),(uint32_t)m->claim[0].status);
+    pwtg_line(r,3,"CLAIM1 S LO",(uint32_t)(m->claim[1].status>>32),(uint32_t)m->claim[1].status);
+    for(unsigned n=0;n<5;n++){
+        const struct pwea_native_call*c=&early_wifi_memory.call[n];
+        pwtg_line(r,4+n,"CALL IR CU",(c->issued<<24)|(c->returned<<16)|(c->complete<<8)|c->unknown,
+            (c->fp.saved<<24)|(c->fp.restored<<16)|(c->source[0].complete<<8)|c->source[1].complete);
+    }
+    for(unsigned n=0;n<3;n++)pwtg_line(r,9+n,"MAP S LO",(uint32_t)(m->map[n].map.status>>32),(uint32_t)m->map[n].map.status);
+    pwtg_line(r,12,"AT0 AT1",early_wifi_memory.translated[0],early_wifi_memory.translated[1]);
+    pwtg_line(r,13,"MSA BASE",(uint32_t)(m->claim[0].requested>>32),(uint32_t)m->claim[0].requested);
+    pwtg_line(r,14,"RMTFS BASE",(uint32_t)(m->claim[1].requested>>32),(uint32_t)m->claim[1].requested);
+    pwtg_line(r,15,"NO RADIO",m->claim[0].retained,m->claim[1].retained);
+    (void)pwtg_draw(r);early_wifi_gop_raw();
+}
+#endif
 static void terminal_gop_raw(void)
 {
     ram_report("WIFI_TERMINAL_GOP_RAW_V1_BYTES=",sizeof(terminal_gop));
@@ -539,6 +583,10 @@ __attribute__((noreturn)) static void power_unknown_hold(void)
 #if EFI_XNU_WIFI_TERMINAL_GOP_DIAGNOSTICS
     /* Remains terminal even if this local draw fails or is partial. No
      * foreign method, cleanup, response or CPU/private restoration follows. */
+#if EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE
+    if(early_wifi_memory.unknown||early_wifi_memory.memory.unknown)early_wifi_gop_evidence();
+    else
+#endif
     terminal_gop_evidence();
 #endif
     for(;;)__asm__ volatile("wfe":::"memory");
@@ -771,7 +819,7 @@ _Static_assert(sizeof(log_buffer)>=2*(sizeof(pwsp_record)+sizeof(pwrpt_record)+s
     5*(sizeof(current_private_graphs)+sizeof(current_private_providers)+sizeof(current_private_timers)+sizeof(current_private_events))+
 #endif
 #if EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE
-    2*sizeof(early_wifi_memory)+
+    2*sizeof(early_wifi_memory)+4*sizeof(early_wifi_gop)+
 #endif
     1048576,
     "complete preparation/client/power/source raw must fit without truncation");
@@ -1516,6 +1564,19 @@ static efi_status incoming_parent_map_read(unsigned phase,const struct efi_loade
     *size=r->map.bytes;*key=r->map.key;*stride=r->map.stride;*version=r->map.version;return r->map.status;
 }
 #endif
+static efi_status admission_gop(void)
+{
+    static const efi_guid graphics={0x9042a9de,0x23dc,0x4a38,{0x96,0xfb,0x7a,0xde,0xd0,0x80,0x51,0x6a}};
+    efi_status s=system_table->boot->locate_protocol(&graphics,0,(void**)&gop);
+#if !defined(POLARIS_EFI_TEST_QEMU)
+    if((s&EFI_ERROR)||!gop||!gop->mode||!gop->mode->info)return EFI_ERROR|3;
+    struct polaris_gop_mode *m=gop->mode;struct polaris_gop_info *i=m->info;
+    if(m->base!=UINT64_C(0x9d400000)||i->width!=1080||i->height!=2160||i->stride!=1080||i->format>1||m->bytes<UINT64_C(9331200))return EFI_ERROR|3;
+#else
+    (void)s;
+#endif
+    return 0;
+}
 static efi_status admission(void)
 {
     uint64_t el,mpidr,sp;__asm__ volatile("mrs %0,CurrentEL":"=r"(el));__asm__ volatile("mrs %0,mpidr_el1":"=r"(mpidr));
@@ -1579,6 +1640,8 @@ static efi_status admission(void)
      * ordinary bank is already claimed; payload/native/radio are not started.
      * Its retained pages remain excluded by all later complete EFI maps. */
     if(load_state||received||payload_count||payload||log_snapshot||wln_cpu_on_issued)return EFI_ERROR|3;
+    s=admission_gop();if(s&EFI_ERROR)return s;
+    if(!early_wifi_gop_bind(image,key)){early_wifi_gop_raw();return EFI_ERROR|3;}
     int early_ok=pwea_native_run(&early_wifi_memory,system_table,image,&wln_cpu_on_issued,POLARIS_RAM_BASE,POLARIS_RAM_SIZE);
     ram_report("EARLY_WIFI_MEMORY_ACCEPTED=",early_ok);
     ram_report("EARLY_WIFI_MEMORY_RAW_V1_BYTES=",sizeof(early_wifi_memory));
@@ -1599,12 +1662,8 @@ static efi_status admission(void)
     payload=(void*)(uintptr_t)address;
     s=system_table->boot->allocate_pool(2,sizeof(log_buffer)+128+EFI_XNU_LOG_SIZE,(void**)&log_snapshot);if(s&EFI_ERROR)return s;
     if(!log_snapshot)return EFI_ERROR|9;
-    static const efi_guid graphics={0x9042a9de,0x23dc,0x4a38,{0x96,0xfb,0x7a,0xde,0xd0,0x80,0x51,0x6a}};
-    s=system_table->boot->locate_protocol(&graphics,0,(void**)&gop);
-#if !defined(POLARIS_EFI_TEST_QEMU)
-    if((s&EFI_ERROR)||!gop||!gop->mode||!gop->mode->info)return EFI_ERROR|3;
-    struct polaris_gop_mode *m=gop->mode;struct polaris_gop_info *i=m->info;
-    if(m->base!=UINT64_C(0x9d400000)||i->width!=1080||i->height!=2160||i->stride!=1080||i->format>1||m->bytes<UINT64_C(9331200))return EFI_ERROR|3;
+#if !EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE
+    s=admission_gop();if(s&EFI_ERROR)return s;
 #endif
     return 0;
 }
