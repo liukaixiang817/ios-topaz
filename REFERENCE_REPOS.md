@@ -16,6 +16,12 @@ their build/setup scripts or prebuilts has been executed.
 
 ## Own Polaris current-relay result effects (0189, 2026-11-04)
 
+Published own source/text a7dff4cce2249968f41974c8f42d1102616ac8d9 through the
+same original directpush, ENDED0, with subsequent independent lsremote match.
+Exact five source/text paths exclude all private/device/firmware bytes. Receipt
+SHA2c8977076b99500a7a73d986dbcecaf0e3ea069998fc7b0593a06d080da3eac3.
+This handoff edits only NOTES and this reference index; no repeated tests.
+
 The original published e4b4 SOFTWARE Map peer wrote the first byte beyond its
 8192-byte declared capacity inside the retained65536-byte RAW and was accepted
 through fresh graph/outer FP. This is a constructed peer observation, not phone

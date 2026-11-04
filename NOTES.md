@@ -108,6 +108,20 @@ early samples only. On0029 the human already confirmed boot complete and said
   scan/auth/join/IP/DNS/data remain UNIMPLEMENTED physically. WiFi cannot
   currently be enabled. Sound/camera STOP. No extra USB poll or oldcontroller.
 
+- NEW0189 latest PUBLIC functional source
+  a7dff4cce2249968f41974c8f42d1102616ac8d9 published by the SAME original
+  directpush under actual continuing source/text consentce8ce4fd. Push ENDED0;
+  subsequent independent readonly lsremote matchesa7dff4c. Exact five own UTF8
+  paths: NOTES/REFERENCE_REPOS/current-map header/graph fixture/new relay-effects
+  test. FW/Apple/vendor/NV/backup/RAW/photo/serial/password/private bytes all
+  excluded. Private later-map-output-extent-0001/authorized-source-push-0001.json
+  SHA2c8977076b99500a7a73d986dbcecaf0e3ea069998fc7b0593a06d080da3eac3.
+  This later handoff changes only two text files, no source/RAW/schema change
+  or repeated checks. No alternate connector/HTTP/indirect upload/force/newbranch.
+  Whole gates complete NONE; current work remains partial gate1, gates1–5
+  incomplete. No physical or authorization question pending. Earlier published
+  a9c/e4b and all older source/check/proof claims keep original source scopes.
+
 - NEW0189 latest OWN-RESULT EFFECTS milestone, 2026-11-04: published e4b4
   SOFTWARE original Map peer wrote data[8192], outside declared8192B capacity
   but inside retained65536B RAW, then completed PCMP/fresh graph/outer FP.
