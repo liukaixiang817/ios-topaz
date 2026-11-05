@@ -54,6 +54,28 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: diagnostic image sent; full210s discovery failed
+
+- Source/handoff9d30caa pushed. New diagnostic imageef7c7edd... actually sent
+  ONCE23:50:23.279025Z: send OKAY0.146s, boot OKAY0.091s,total0.238s.
+  New nonce consumed durably before send. This candidate/pool is now SPENT;
+  never resend it or reuse its frozen trial review for another boot.
+- Native helper72582 ended exit1 at23:53:53.705845Z after full210s service
+  discovery. No matching UEFI service, zero RAM payload bytes, no OEM native
+  start command, no kernel/scan proof. stopped_no_retry; no reset/retry/observer.
+  Evidence: native-memory-display-0001/phone-native-0001/{boot.json,fastboot.log}
+  and sibling log/native-boot-command.json. Longer host wait alone did not fix
+  this attempt. It does NOT identify the failing native memory producer.
+- Asked user for the CURRENT diagnostic screen/NATIVE MEM HOLD and ERROR/CALL/
+  PEND values, or confirmation it still matches the old photo. Reply pending.
+  Prior photo belongs to the earlier848fa442... attempt and must not be used
+  as evidence of this diagnostic attempt's stage. Keep current screen intact.
+- All relevant build/test/device/push jobs ended. Root40-check evidence is
+  now historical for just before this attempt; no later continuity inferred.
+  Next action is interpret new screen, then target any further fix/new nonce
+  build and candidate audit. No repeat storage audit or blind reboot now.
+  Still2/5, current plus3 remain; no scan/JOIN/IP/DNS/data. Current report23:54Z.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: photo located admission; current candidate audit passed
 
 - User supplied current screen, then explicitly confirmed return to FASTBOOT.
