@@ -14,6 +14,18 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+## Own userland launch probe (0189, 2026-11-06)
+
+Reviewed the retained HackiOS userland build.sh (same a79ff077 reference,
+SHA71e311d72936b92c2643bf8141f4ddb1cdbe3e6b880e2388b139c46a15754427):
+its lines538/624 distinguish job-directory selection from the existing iOS
+xpc/launchd.plist cache. Our existing20F66 init already edits that real cache
+in RAM COW; the new optional root probe adds one job there and preserves the
+Apple jobs. It calls our own polaris en0 control channel backed by the phone's
+DT/firmware/AU implementation, not a reference radio. No DHCP implementation
+or persistent root change is added. Software plist/ioctl and signed compile
+results remain distinct from physical scan/networking.
+
 ## Own userland DHCP control (0189, 2026-11-05)
 
 Compared HackiOS userland net_test.m at the pinned a79ff077 reference with

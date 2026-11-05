@@ -13,6 +13,9 @@
 #if defined(PGPU_USERLAND_20F66)
 #include <CoreFoundation/CoreFoundation.h>
 #include <stdlib.h>
+#if defined(POLARIS_WIFI_BOOT_PROBE)
+#include "../wifi/polaris-wifi-launch.h"
+#endif
 #if defined(POLARIS_POSTER_ASSETS)
 #include "polaris-poster-assets.h"
 #endif
@@ -122,6 +125,9 @@ static int poster_console(const char *root)
     /* The second exact original job retains UserName, MachServices and every
      * Apple argument. Publish neither change if this validation fails. */
     if(media_environment(jobs))goto done;
+#if defined(POLARIS_WIFI_BOOT_PROBE)
+    if(polaris_wifi_launch_job((CFMutableDictionaryRef)jobs))goto done;
+#endif
     encoded=CFPropertyListCreateData(NULL,plist,kCFPropertyListBinaryFormat_v1_0,0,NULL);
     if(!encoded || CFDataGetLength(encoded)<=0 || CFDataGetLength(encoded)>2*1024*1024)goto done;
     out=open(temporary,O_WRONLY|O_CREAT|O_EXCL|O_NOFOLLOW,0600);
@@ -147,6 +153,9 @@ done:
     free(bytes);
     printf("POLARIS POSTER CONFIG: %s; Apple argv retained, RAM COW only\n",result?"unmodified (unavailable)":"console + scoped exec preview prepared");
     printf("POLARIS MEDIA CONFIG: %s; Apple services/user/argv retained, RAM COW only\n",result?"unmodified (unavailable)":"original Program/stdio + scoped environment prepared");
+#if defined(POLARIS_WIFI_BOOT_PROBE)
+    printf("POLARIS WIFI JOB: %s; RAM COW only\n",result?"not installed":"one launchd scan probe installed");
+#endif
     return result;
 }
 
@@ -217,6 +226,14 @@ int main(int argc,char **argv)
     (void)argc;(void)argv;
 #if defined(PGPU_USERLAND_20F66)
     if(getpid()!=1) {
+#if defined(POLARIS_WIFI_BOOT_PROBE)
+        if(argc>=2&&argv&&argv[1]&&(!strcmp(argv[1],"--wifi-probe")||!strcmp(argv[1],"--wifi-control"))){
+            if(geteuid()!=0)return 125;
+            setvbuf(stdout,NULL,_IONBF,0);setvbuf(stderr,NULL,_IONBF,0);
+            if(!strcmp(argv[1],"--wifi-probe"))return argc==2?polaris_wifi_probe():125;
+            return polaris_wifi_control_main(argc-1,argv+1);
+        }
+#endif
         const char *flag=getenv("POLARIS_POSTER_PREVIEW");
         if(argc!=1 || !argv || !argv[0] ||
            strcmp(argv[0],"/Applications/PosterBoard.app/PosterBoard") ||

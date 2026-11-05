@@ -34,6 +34,11 @@ int check(const void *v,size_t n,const void *h){return pgpu_build_matches(v,n,h)
             for i in range(32):
                 broken = bytearray(digest); broken[i] ^= 1
                 self.assertEqual(lib.check(b'20F66\0', 6, bytes(broken)), 0)
+            wifi = bytes.fromhex('c3e456d210507c089de56c821080ccb88ef1e7a59ad95f7cb8b55e6f50e5e5ec')
+            self.assertEqual(lib.check(b'20F66\0', 6, wifi), 1)
+            for i in range(32):
+                broken = bytearray(wifi); broken[i] ^= 1
+                self.assertEqual(lib.check(b'20F66\0', 6, bytes(broken)), 0)
             self.assertEqual(lib.check(None, 6, digest), 0)
             self.assertEqual(lib.check(b'20F66\0', 6, None), 0)
 

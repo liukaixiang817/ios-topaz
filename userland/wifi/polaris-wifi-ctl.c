@@ -106,8 +106,69 @@ done:
     if(stopped)raise(stopped);
     return ok?0:-1;
 }
-int main(int argc,char**argv)
+/* The caller owns the socket and freshly queried status. All command input
+ * is cleared immediately after submission, including JOIN secrets. */
+static int exchange(int fd,unsigned op,uint64_t deadline)
 {
+    uint64_t before=pwmb_u64(output+16),started=now_ms();
+    if(!started||before==UINT64_MAX){errno=EIO;return -1;}
+    if(deadline&&started>=deadline){errno=ETIMEDOUT;return -1;}
+    if(!pwif_request_valid(input)||control(fd,1,input))return -1;
+    pwmb_clear(input,sizeof(input));
+    for(;;){
+        uint64_t now=now_ms();
+        if(now<started||now-started>60000||(deadline&&now>=deadline)){errno=ETIMEDOUT;return -1;}
+        if(control(fd,0,output))return -1;
+        if(pwmb_u64(output+16)!=before+1){errno=EBUSY;return -1;}
+        if(pwmb_u64(output+24)==before+1){
+            if(result(output+64,pwmb_u32(output+12),op)){return -1;}
+            status(output);return 0;
+        }
+        if(pwmb_u32(output+4)&12){errno=ENETDOWN;return -1;}
+        struct timespec pause={0,20000000};nanosleep(&pause,NULL);
+    }
+}
+/* Explicit boot probe: one bounded scan and its returned entries. Uses the
+ * same real BSD control channel as the interactive tool, never a fake SSID,
+ * guessed link, DHCP invocation or implicit JOIN. The launchd job is opt-in. */
+int polaris_wifi_probe(void)
+{
+    int fd=-1,result_code=1,error=0;
+    pwmb_clear(input,sizeof(input));pwmb_clear(output,sizeof(output));
+    if(geteuid()!=0){errno=EPERM;goto done;}
+    uint64_t started=now_ms();if(!started||started>UINT64_MAX-120000){errno=EIO;goto done;}
+    uint64_t deadline=started+120000;
+    fd=socket(AF_INET,SOCK_DGRAM,0);if(fd<0)goto done;
+    puts("POLARIS WIFI PROBE: waiting for native radio; one scan, no join");
+    for(;;){
+        if(!control(fd,0,output)){
+            unsigned flags=pwmb_u32(output+4);
+            if(flags&12){errno=ENETDOWN;goto done;}
+            if((flags&33)==33)break;
+        }else if(errno!=ENXIO&&errno!=ENODEV&&errno!=ENETDOWN)goto done;
+        uint64_t now=now_ms();if(now<started||now>=deadline){errno=ETIMEDOUT;goto done;}
+        struct timespec pause={0,20000000};nanosleep(&pause,NULL);
+    }
+    for(unsigned step=0,count=0;step<count+2;step++){
+        unsigned op=step==0?PWMB_SCAN:step==1?PWMB_STATE:PWMB_SCAN_ENTRY;
+        pwmb_clear(input,sizeof(input));pwmb_put32(input,PWIF_VERSION);pwmb_put32(input+4,op);
+        if(step>=2){pwmb_put32(input+8,4);pwmb_put32(input+64,step-2);}
+        if(control(fd,0,output)||exchange(fd,op,deadline))goto done;
+        if(step==1){count=pwmb_u32(output+64+16+8);if(count>32){errno=EPROTO;goto done;}}
+    }
+    puts("POLARIS WIFI PROBE: scan and returned entries complete; networking not verified");result_code=0;
+done:
+    error=errno;if(fd>=0)close(fd);pwmb_clear(input,sizeof(input));pwmb_clear(output,sizeof(output));
+    if(result_code)fprintf(stderr,"POLARIS WIFI PROBE: failed: %s (%d)\n",strerror(error?error:EIO),error?error:EIO);
+    return result_code;
+}
+#ifndef POLARIS_WIFI_CONTROL_ENTRY
+#define POLARIS_WIFI_CONTROL_ENTRY main
+#endif
+int POLARIS_WIFI_CONTROL_ENTRY(int argc,char**argv)
+{
+    pwmb_clear(input,sizeof(input));pwmb_clear(output,sizeof(output));
+    if(argc==2&&!strcmp(argv[1],"probe"))return polaris_wifi_probe();
     unsigned op=0;
     if(argc==2&&!strcmp(argv[1],"status"))op=0;
     else if(argc==2&&!strcmp(argv[1],"state"))op=PWMB_STATE;
@@ -134,22 +195,10 @@ int main(int argc,char**argv)
         int error=errno;close(fd);if(done){errno=error;goto failed;}return 0;
     }
     if(!op){status(output);close(fd);return 0;}
-    uint64_t before=pwmb_u64(output+16),started=now_ms();
-    if(!started||before==UINT64_MAX||!pwif_request_valid(input)||control(fd,1,input)){close(fd);goto failed;}
-    pwmb_clear(input,sizeof(input));
-    for(;;){
-        if(control(fd,0,output)){close(fd);goto failed;}
-        if(pwmb_u64(output+16)!=before+1){errno=EBUSY;close(fd);goto failed;}
-        if(pwmb_u64(output+24)==before+1){
-            if(result(output+64,pwmb_u32(output+12),op)){close(fd);goto failed;}
-            status(output);close(fd);return 0;
-        }
-        if(pwmb_u32(output+4)&12){errno=ENETDOWN;close(fd);goto failed;}
-        uint64_t now=now_ms();if(now<started||now-started>60000){errno=ETIMEDOUT;close(fd);goto failed;}
-        struct timespec pause={0,20000000};nanosleep(&pause,NULL);
-    }
+    if(exchange(fd,op,0)){int error=errno;close(fd);errno=error;goto failed;}
+    close(fd);return 0;
 usage:
-    fprintf(stderr,"usage: polaris-wifi-ctl status|state|scan|entry INDEX|join SSID|disconnect|dhcp|ip|power-off\nJOIN reads one passphrase line from stdin.\npower-off requests shutdown of the entire phone.\n");
+    fprintf(stderr,"usage: polaris-wifi-ctl probe|status|state|scan|entry INDEX|join SSID|disconnect|dhcp|ip|power-off\nJOIN reads one passphrase line from stdin.\npower-off requests shutdown of the entire phone.\n");
     pwmb_clear(input,sizeof(input));return 2;
 failed:
     {int error=errno?errno:EIO;pwmb_clear(input,sizeof(input));pwmb_clear(output,sizeof(output));

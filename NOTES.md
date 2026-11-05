@@ -54,6 +54,49 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: launchd scan probe and new bundle
+
+- Previous native UI source3f86350 committed/pushed to approved own branch;
+  ten owned files synchronized to original workspace after comparingbbb8481
+  bytes. Stable clone remains authoritative. Original Git metadata untouched.
+- Added an explicit two-minute boot probe to the actual BSD control client:
+  waits for native en0 radio/attachment, submits one SCAN, queries STATE and
+  retrieves only returned entries. Failures/timeouts stop without retry/JOIN.
+  General CLI retained; extracted exchange preserves command sequence/response
+  checks and clears secrets. Added shared deadline check before submission.
+- Optional POLARIS_WIFI_BOOT_PROBE init registers one root RunAtLoad launchd
+  job with KeepAlive=false in its existing RAM-COW cached plist transaction.
+  New --wifi-probe and --wifi-control dispatch require root/non-PID1. Unrelated
+  Apple jobs retained; existing conflicting job leaves original plist bytes
+  unchanged. No filesystem installation or phone/root write performed by host.
+- Source builder builds only the new init, linking the real client/configd IPC.
+  Exact retained private wallpaper header2377b197... and unchanged wallpaper/
+  Melbourne code retained. The original cloud header read stalled; the exact
+  existing0188 frozen copy verified18169085B and supplied the build, so NO new
+  user download needed. Original cloud read5749/recursive reference read2901
+  remain pending and are not build/device jobs. Reference build.sh read from
+  exact frozen copy, SHA71e311d7..., confirms actual launchd cache distinction.
+- iOS16.5 full client and init builds/sign/strict verify PASS. New bundle
+ 19093328B SHAc3e456d210507c089de56c821080ccb88ef1e7a59ad95f7cb8b55e6f50e5e5ec;
+  five graphics binaries byte-identical to original f790 bundle, only init
+  replaced. New header/mkpayload/0899 native patch admit this exact second hash;
+  original f790 remains accepted. Native patch applies and exact function equals
+  tested host header. This kernel change REQUIRES new full CI/artifact binding.
+-927 control/wire checks PASS; real secret bounds/no echo/three-signal terminal
+  restoration PASS. Actual CoreFoundation job test PASS, actual init plist
+  publication/conflict plus PID1 rollback tests PASS, two C bundle/admission
+  tests PASS. A --help call to positional-only control-test.py failed without
+  running tests; correct binary argument then completed successfully.
+  Logs/manifests/source-validation.json under stable clone
+  research/polaris/uefi-ios-0189/wifi/userland-probe-0001. Builds/tests ended.
+- NEXT push this source/0899 change and follow its automatic kernel CI; bind
+  exact new kernel + userland payload, update full loader build, then finish
+  actual EFI/XNU/new-image admission and root preflight. Userland probe has not
+  run on iOS/phone; no actual scan/JOIN/IP/DNS/data. Execution2/5,current plus3
+  remain, whole admission gates unfinished. Last formal18:35Z,next18:50Z;
+  goal ACTIVE, no user input/download pending. Unowned remote-memory hunk stays
+  uncommitted; no old image/nonce or historical root qualification reused.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: native keys/display integration
 
 - Native loader now prepares actual keys/WLED before CPU_ON and services them

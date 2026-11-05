@@ -4,6 +4,13 @@
 #include <unistd.h>
 #include <stdarg.h>
 #include <assert.h>
+#include <time.h>
+static uid_t test_euid(void);
+static int test_clock(clockid_t,struct timespec*);
+static int test_sleep(const struct timespec*,struct timespec*);
+#define geteuid test_euid
+#define clock_gettime test_clock
+#define nanosleep test_sleep
 static int test_socket(int,int,int);
 static int test_close(int);
 static int test_ioctl(int,unsigned long,...);
@@ -16,7 +23,16 @@ static int test_ioctl(int,unsigned long,...);
 #undef ioctl
 #undef close
 #undef socket
-static unsigned mode,sets,queries,operation,checks;
+#undef geteuid
+#undef clock_gettime
+#undef nanosleep
+static unsigned mode,sets,queries,operation,checks,entry_index;
+static uint64_t time_ms;
+static uid_t test_euid(void){return mode==9?501:0;}
+static int test_clock(clockid_t id,struct timespec*t)
+{assert(id==CLOCK_MONOTONIC);time_ms+=mode==8?60001:1;t->tv_sec=time_ms/1000;t->tv_nsec=(time_ms%1000)*1000000;return 0;}
+static int test_sleep(const struct timespec*t,struct timespec*r)
+{assert(t&&t->tv_sec==0&&t->tv_nsec==20000000&&!r);return 0;}
 #define CHECK(x) do{checks++;assert(x);}while(0)
 static unsigned ip_calls;
 int polaris_wifi_dhcp(int fd,unsigned flags)
@@ -30,24 +46,24 @@ static int test_ioctl(int fd,unsigned long command,...)
     va_list ap;va_start(ap,command);struct pwctl_driver*d=va_arg(ap,struct pwctl_driver*);va_end(ap);
     CHECK(fd==42&&!strcmp(d->name,"en0")&&d->command==PWIF_COMMAND&&d->bytes==PWIF_BYTES);
     uint8_t*p=(void*)(uintptr_t)d->pointer;
-    if(command==PWCTL_SET){CHECK(pwif_request_valid(p));sets++;operation=pwmb_u32(p+4);return 0;}
+    if(command==PWCTL_SET){CHECK(pwif_request_valid(p));sets++;operation=pwmb_u32(p+4);entry_index=pwmb_u32(p+64);return 0;}
     CHECK(command==PWCTL_GET);queries++;pwmb_clear(p,PWIF_BYTES);pwmb_put32(p,PWIF_VERSION);
-    pwmb_put32(p+4,33);pwmb_put64(p+16,8+sets+(sets&&mode==1));
+    pwmb_put32(p+4,(mode==6&&queries<3)||mode==8?32:mode==7?37:33);pwmb_put64(p+16,8+sets+(sets&&mode==1));
     if(!sets)return 0;
     if(mode==4){pwmb_put32(p+4,37);return 0;}
-    pwmb_put64(p+24,9);uint8_t*r=p+64;
+    pwmb_put64(p+24,8+sets);uint8_t*r=p+64;
     pwmb_put64(r,1);pwmb_put32(r+8,operation);unsigned n=16;
     if(mode==2)pwmb_put32(r+8,PWMB_JOIN);
-    if(operation==PWMB_STATE){n+=56;pwmb_put32(r+16,1);if(mode==3)pwmb_put32(r+16,2);}
+    if(operation==PWMB_STATE){n+=56;pwmb_put32(r+16,1);if(mode==3)pwmb_put32(r+16,2);if(mode==6)pwmb_put32(r+24,2);}
     if(operation==PWMB_SCAN_ENTRY){
-        n+=66;uint8_t*b=r+16;pwmb_put32(b+4,2412);pwmb_put32(b+8,(uint32_t)-7);
+        n+=66;uint8_t*b=r+16;pwmb_put32(b,entry_index);pwmb_put32(b+4,2412);pwmb_put32(b+8,(uint32_t)-7);
         pwmb_put32(b+12,1);pwcb_put16(b+20,2);b[25]=2;b[26]=1;
     }
     if(mode==5){pwmb_put32(r+12,EACCES);n=16;}
     pwmb_put32(p+12,n);return 0;
 }
 static void reset(unsigned selected)
-{mode=selected;sets=queries=operation=0;pwmb_clear(input,sizeof(input));pwmb_clear(output,sizeof(output));}
+{mode=selected;sets=queries=operation=entry_index=0;time_ms=100;pwmb_clear(input,sizeof(input));pwmb_clear(output,sizeof(output));}
 int main(int argc,char**argv)
 {
     if(argc==2&&!strcmp(argv[1],"--secret")){
@@ -65,6 +81,10 @@ int main(int argc,char**argv)
     reset(0);CHECK(client_main(2,dhcp)==1&&ip_calls==1&&!sets&&queries==1);
     reset(0);CHECK(!client_main(2,ip)&&ip_calls==2&&!sets&&queries==1);
     for(unsigned m=1;m<=5;m++){reset(m);CHECK(client_main(2,state)==1&&sets==1&&pwmb_zero(input,sizeof(input)));}
+    char*probe[]={"ctl","probe",NULL};
+    reset(6);CHECK(!client_main(2,probe)&&sets==4&&entry_index==1&&pwmb_zero(input,sizeof(input))&&pwmb_zero(output,sizeof(output)));
+    for(unsigned m=7;m<=9;m++){reset(m);CHECK(client_main(2,probe)==1&&!sets);}
+    reset(5);CHECK(client_main(2,probe)==1&&sets==1); /* Refused SCAN, no retry. */
     uint8_t b[PWCB_BSS_HEADER+PWCB_IES]={0};
     pwmb_put32(b+4,2412);pwmb_put32(b+12,1);b[25]=2;
     CHECK(pwcb_bss_valid(b,64));b[24]=33;CHECK(!pwcb_bss_valid(b,64));b[24]=0;
