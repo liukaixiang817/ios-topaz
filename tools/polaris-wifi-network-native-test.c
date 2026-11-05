@@ -1,0 +1,117 @@
+static void network_target_keys(unsigned,const unsigned char*,unsigned),network_target_data(unsigned,const unsigned char*,unsigned);
+static void network_association(const unsigned char*,unsigned);
+#define EFI_XNU_WIFI_NETWORK_NATIVE_AVAILABLE 1
+#define EFI_XNU_WIFI_KEYS_NATIVE_AVAILABLE 1
+#define PMST_TEST_ENTRY unused_station_suite
+#define PMST_TEST_WMI_HOOK network_target_keys
+#define PMST_TEST_DATA_HOOK network_target_data
+#define PMST_TEST_ASSOC_HOOK network_association
+#include "polaris-wifi-station-native-test.c"
+#include "uefi-wifi-network-native.h"
+static struct pmwn_state*network;
+static unsigned net_fault,net_scenarios,key_commands,eapol_commands,ethernet_commands,rx_next;
+static uint8_t pmk_vector[32],nonce_vector[32],ptk_vector[48],gtk_vector[16],messages[9][640],held_assoc[192];
+static unsigned lengths[9],held_bytes;
+static void network_receive(unsigned type,const uint8_t*payload,unsigned length,unsigned encrypted,unsigned group,uint64_t pn)
+{
+    unsigned slot=rx_next++;CHECK(slot<2047&&length<=1500&&data->rings.rx_owner[slot]==1);
+    uint8_t*r=htt_device+htt->layout.receive+2048u*slot;memset(r,0,2048);
+    pwmi_put(r+4,(1u<<31)|(1u<<6)|(group?4u:1u<<25));pwmi_put(r+16,17|0x800|(encrypted?0x2000:0)|((encrypted?6u:7u)<<28));
+    for(unsigned n=0;n<6;n++)r[20+n]=(uint8_t)(pn>>(8*n));pwmi_put(r+36,1u<<8);pwmi_put(r+64,0xc000);
+    uint8_t*h=r+296,*p=r+360;h[0]=8;h[1]=(uint8_t)(2|(encrypted?64:0));
+    if(group)memset(h+4,255,6);else memcpy(h+4,wmi->client.mac,6);memcpy(h+10,ap,6);memcpy(h+16,ap,6);
+    if(type!=0x888e)h[21]=66;memcpy(p,h,24);p[1]&=~64u;
+    if(encrypted){h[24]=(uint8_t)pn;h[25]=(uint8_t)(pn>>8);h[27]=(uint8_t)(0x20|(group?64:0));r[52]=h[27];for(unsigned n=0;n<4;n++)h[28+n]=(uint8_t)(pn>>(16+8*n));}
+    const uint8_t snap[6]={170,170,3,0,0,0};memcpy(p+24,snap,6);pwpa_put16(p+30,type);memcpy(p+32,payload,length);
+    uint8_t indication[20]={0x12,0,17,0,0,0,1,0};phtt_put64(indication+8,HTT_ALLOCATION+htt->layout.receive+2048u*slot);phtt_put16(indication+16,32+length);
+    station_htt_event(indication,20);
+}
+static void network_association(const unsigned char*r,unsigned bytes)
+{
+    CHECK(network&&bytes<=sizeof(held_assoc));memcpy(held_assoc,r,bytes);held_bytes=bytes;
+    /* The AP accepted association but its management event is delayed. M1
+     * really arrives through HTT before the host observes that association. */
+    network_receive(0x888e,messages[0],lengths[0],0,0,0);
+}
+static void network_target_data(unsigned pipe,const unsigned char*f,unsigned bytes)
+{
+    CHECK(network&&pmwn_live(network)&&pipe==4&&f[0]==htc->client.htt);const uint8_t*p=f+8;
+    unsigned id=phtr_u16(p+6),length=phtr_u16(p+4);CHECK(id==data->rings.tx_id&&data->rings.tx_owner[id]==1&&p[0]==1&&((phtr_u16(p+2)>>6)&31)==16);
+    uint64_t desc=phtr_u64(p+8);CHECK(desc==HTT_ALLOCATION+htt->layout.fragments+72u*id);
+    const uint8_t*fragment=htt_device+desc-HTT_ALLOCATION;uint64_t address=pwmi_get(fragment+24)|((uint64_t)phtr_u16(fragment+28)<<32);
+    CHECK(address==HTT_ALLOCATION+htt->layout.transmit+2048u*id&&phtr_u16(fragment+30)==length&&bytes==28+((length<50?length:50)+3u&~3u));
+    const uint8_t*packet=htt_device+address-HTT_ALLOCATION;CHECK(!memcmp(packet+6,wmi->client.mac,6));
+    uint8_t completion[8]={7,0,1,0,0,0,255,255};phtt_put16(completion+4,id);station_htt_event(completion,8);
+    if(pwpa_be16(packet+12)==0x888e){
+        CHECK(p[1]==0x44&&!memcmp(packet,ap,6));eapol_commands++;unsigned index=eapol_commands==1?1:3;
+        CHECK(length==14+lengths[index]&&!memcmp(packet+14,messages[index],lengths[index]));
+        CHECK(station->client.up_published);
+        if(eapol_commands==1){
+            if(net_fault==2){transport_fault=3;return;}
+            uint8_t invalid[640];memcpy(invalid,messages[2],lengths[2]);invalid[81]^=1;
+            network_receive(0x888e,invalid,lengths[2],0,0,0);
+            if(net_fault!=3)network_receive(0x888e,messages[2],lengths[2],0,0,0);
+        }else CHECK(eapol_commands<=3);
+    }else{
+        CHECK(p[1]==0x40&&network->ethernet.authorized&&network->keys.completed&&length==114&&pwpa_be16(packet+12)==0x800);
+        for(unsigned n=14;n<114;n++)CHECK(packet[n]==(uint8_t)n);ethernet_commands++;
+    }
+}
+static void network_target_keys(unsigned pipe,const unsigned char*f,unsigned bytes)
+{
+    CHECK(network&&pmky_live(&network->keys)&&pipe==3);key_commands++;CHECK(key_commands<=3);const uint8_t*p=f+8;
+    if(key_commands==3){CHECK(bytes==36&&pwmi_get(p)==0x6004&&pwmi_get(p+20)==3&&pwmi_get(p+24)==1&&!network->ethernet.authorized);wmi_frame(f,0,2);return;}
+    unsigned group=key_commands==2;CHECK(bytes==128&&pwmi_get(p)==0x5009&&pwmi_get(p+24)==group&&!memcmp(p+104,group?gtk_vector:ptk_vector+32,16));
+    CHECK(eapol_commands==2&&!network->ethernet.authorized);wmi_frame(f,0,2);
+    uint8_t security[28]={11,0,17,0};security[1]=(uint8_t)((group?0:128)|6);station_htt_event(security,28);
+}
+static int network_poll(void){advance_to(owner->last+19200);return pmwn_step(network);}
+int main(int argc,char**argv)
+{
+    CHECK(argc==9);station_test_open(8,argv);FILE*f=fopen(argv[8],"rb");CHECK(f);uint8_t magic[8];
+    CHECK(fread(magic,1,8,f)==8&&!memcmp(magic,"PWPA001",8));
+    CHECK(fread(pmk_vector,1,32,f)==32&&fread(nonce_vector,1,32,f)==32&&fread(ptk_vector,1,48,f)==48&&fread(gtk_vector,1,16,f)==16);
+    for(unsigned n=0;n<9;n++){uint8_t b[4];CHECK(fread(b,1,4,f)==4);lengths[n]=pwmi_get(b);CHECK(lengths[n]<=640&&fread(messages[n],1,lengths[n],f)==lengths[n]);}CHECK(fgetc(f)==EOF&&!fclose(f));
+    for(unsigned kind=0;kind<4;kind++){
+        network=0;station_test_setup(0);network=(void*)(arena+0x73e0000);CHECK(sizeof(*network)<0x20000);memset(network,0,sizeof(*network));
+        net_fault=kind;key_commands=eapol_commands=ethernet_commands=rx_next=held_bytes=0;net_scenarios++;
+        CHECK(pmwn_begin(network,station,pmk_vector,nonce_vector));int result=1;unsigned saw_early=0;
+        for(unsigned n=0;n<400&&result==1;n++){
+            if(kind==1&&held_bytes)htt_fault=2;
+            result=network_poll();
+            if(network->early_ready&&held_bytes){
+                CHECK(!network->wpa.opened&&!station->client.station.associated&&!data->frame_ready&&data->rings.rx_owner[0]==1);
+                saw_early=1;wmi_frame(held_assoc,held_bytes,1);held_bytes=0;
+            }
+            if(kind==3&&network->wpa.bad){CHECK(!network->keys.ready&&!network->ethernet.authorized);advance_to(network->wpa.deadline+1);}
+        }
+        if(!kind){
+            if(result!=5)fprintf(stderr,"network result%d err%u key%u station%u WPAphase%u pending%u M%u K%u\n",result,network->error,network->keys.error,station->error,network->wpa.phase,network->wpa.pending,eapol_commands,key_commands);
+            CHECK(result==5&&saw_early&&key_commands==3&&eapol_commands==2&&network->wpa.bad==1&&network->ethernet.authorized&&network->keys.completed);
+            CHECK(!pwpa_nonzero(network->pmk,32)&&!pwpa_nonzero(network->nonce,32));
+            /* Authenticated retry through actual encrypted RX, no reinstall. */
+            network_receive(0x888e,messages[2],lengths[2],1,0,1);
+            for(unsigned n=0;n<60&&(eapol_commands<3||network->tx_wait);n++)CHECK(network_poll()==5);
+            CHECK(eapol_commands==3&&key_commands==3&&network->ethernet.pn[0]==1&&network->wpa.retries==1);
+            uint8_t payload[100];for(unsigned n=0;n<100;n++)payload[n]=(uint8_t)(n+14);
+            network_receive(0x800,payload,100,1,0,2);result=5;
+            for(unsigned n=0;n<40&&result==5;n++)result=network_poll();
+            CHECK(result==3&&network->ethernet.rx_bytes==114&&!memcmp(network->ethernet.receive+14,payload,100)&&!data->frame_ready&&pmwn_ack(network));
+            network_receive(0x800,payload,100,1,0,2);network_receive(0x806,payload,100,1,1,1);network_receive(0x806,payload,100,1,1,2);result=5;
+            for(unsigned n=0;n<60&&result==5;n++)result=network_poll();
+            CHECK(result==3&&network->ethernet.replayed==2&&network->ethernet.pn[1]==2&&pmwn_ack(network));
+            uint8_t outgoing[114];memset(outgoing,255,6);memcpy(outgoing+6,wmi->client.mac,6);outgoing[12]=8;outgoing[13]=0;memcpy(outgoing+14,payload,100);
+            CHECK(pmwn_send(network,outgoing,114));
+            for(unsigned n=0;n<40&&(!ethernet_commands||network->tx_wait);n++)CHECK(network_poll()==5);
+            CHECK(ethernet_commands==1&&!network->tx_wait&&network->tx_completed==4);
+            uint8_t unmap[4]={4,0,17,0};station_htt_event(unmap,4);result=5;for(unsigned n=0;n<30&&result==5;n++)result=network_poll();
+            CHECK(result==4&&network->closed&&!network->ethernet.authorized&&!pwpa_nonzero(network->wpa.kck,16)&&!pmwn_send(network,outgoing,114));
+            fprintf(stderr,"native network:early M1 DMA, exact M2/M4, CCMP confirmations/authorize, encrypted retry no reinstall, RX PN floor/replay, encrypted TX, disconnect PASS\n");
+        }else if(kind==3){CHECK(result==4&&network->closed&&!network->unknown&&!key_commands&&!network->ethernet.authorized);}
+        else{
+            CHECK(result==-1&&network->unknown&&network->error&&!network->ethernet.authorized&&owner->held);
+            unsigned calls=htt_copies+htt_caches+transport_writes;CHECK(pmwn_step(network)==-1&&calls==htt_copies+htt_caches+transport_writes);
+        }
+    }
+    station_test_close();printf("PASS %u native network checks, %u scenarios; SOFTWARE target/cache/MMIO/UEFI, no phone Wi-Fi or IP success\n",checks+nv_checks,net_scenarios);return 0;
+}

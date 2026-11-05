@@ -44,6 +44,37 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05: native EAPOL and controlled data port
+
+- Firmware authorization correction committed458406f. New pwen checks own
+  WCN3990 v2 single legacy/non-QoS MSDU descriptors, FromDS/address/LLC/CCMP
+  decryption, key identity and strictly increasing48-bit PN including GTK RSC
+  floor. No fragmented/QoS/A-MSDU/offload path silently inherits authentication.
+- New default-OFF pmwn consumes station, actual HTT DMA RX/TX and native keys.
+  Early M1 before host association event is retained privately while physical
+  buffer is reposted; no control-queue deadlock. M2/M4 are committed only on
+  actual CE publication, their buffers freed only after HTT completion. Key
+  owner takes explicit station-consumer handoff. Port opens only after both
+  security indications and WMI PEER_AUTHORIZE publication. Later unread data
+  cannot block control traffic; later packets may be dropped until app ACK.
+- Native ASan/UBSan4/10019865 PASS: complete early-M1/M2/M3/M4/keys/authorize,
+  wrong MIC dropped, encrypted M3 retry without reinstall, unicast/group PN
+  replay/floor, actual encrypted-mode Ethernet TX, disconnect; RX cache fault,
+  M2 publication-barrier fault, handshake timeout. Protocol50 and both native/
+  protocol COFF/MachO generalregs/frame1024 PASS. Public vectors, software
+  target/cache/MMIO/UEFI only. Evidence:network-native-0001/proof-0001.json.
+  First fixture assertion expected incorrect Ethernet flag45; corrected to44
+  (Ethernet+NO_ENCRYPT, without native-WiFi MAC-header flag), rerun passed.
+- PMK/SNonce are still supplied inputs, not qualified entropy. Located exact
+  own msm_rng.c (underscore, blobfdcef1de...) matching qcom,msm-rng DT793000;
+  no-qrng-config forbids assuming config access; clock/bus vote still needed.
+  Hyphenated msm-rng.c has different compatible and is not the own driver.
+- NEXT service76 WMI management transport, group rekey, actual entropy/
+  regulatory, whole parent/persistent runtime/post-CE exit, then new image.
+  No phone/USB/CI/push/boot or parent registration. Still execution2/5,current
+  step plus3 remain. Last15min02:36Z/13:36,next02:51Z/13:51 Melbourne.
+  Goal ACTIVE; continue through actual scan/join/IP/DNS/data.
+
 ### Continuous Wi-Fi milestone — 2026-11-05: firmware peer authorization correction
 
 - Previous key transport is commit cdbab58. Primary mac.c also requires

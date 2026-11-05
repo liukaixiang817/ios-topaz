@@ -55,6 +55,9 @@ static void station_target_wmi(unsigned pipe,const unsigned char*f,unsigned byte
 }
 static void station_target_data(unsigned pipe,const unsigned char*f,unsigned bytes)
 {
+#ifdef PMST_TEST_DATA_HOOK
+    if(bytes>=28&&((f[9]>>5)&7)==2){PMST_TEST_DATA_HOOK(pipe,f,bytes);return;}
+#endif
     CHECK(station&&pmst_live(station)&&pipe==4&&f[0]==htc->client.htt);mgmt_commands++;
     const uint8_t*p=f+8;unsigned id=phtr_u16(p+6),length=phtr_u16(p+4);
     CHECK(id==data->rings.tx_id&&data->rings.tx_owner[id]==1&&p[0]==1&&p[1]==0x65&&((phtr_u16(p+2)>>6)&31)==17);
@@ -68,7 +71,11 @@ static void station_target_data(unsigned pipe,const unsigned char*f,unsigned byt
         CHECK(mgmt_commands==2&&!packet[0]&&length==75);b[0]=0x10;psta_put16(b+24,0x431);psta_put16(b+28,0xc123);
         const uint8_t rates[]={1,8,0x82,0x84,0x8b,0x96,12,18,24,36,50,4,48,72,96,108};memcpy(b+30,rates,sizeof(rates));received=30+sizeof(rates);
     }
-    pwmi_put(r+24,received);pwmi_header(r+48,17,received);wmi_frame(r,52+received,1);
+    pwmi_put(r+24,received);pwmi_header(r+48,17,received);
+#ifdef PMST_TEST_ASSOC_HOOK
+    if(mgmt_commands==2){PMST_TEST_ASSOC_HOOK(r,52+received);return;}
+#endif
+    wmi_frame(r,52+received,1);
 }
 static void station_test_open(int argc,char**argv)
 {

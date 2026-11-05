@@ -23,9 +23,9 @@ static inline int pmky_live(struct pmky_state*s)
     struct pmst_state*p=(void*)(uintptr_t)s->station;struct pwpa_state*w=(void*)(uintptr_t)s->wpa;
     return p->consumer==(uintptr_t)s&&p->owner==s->owner&&p->opening==s->opening&&w->epoch==s->opening&&!w->unknown&&!w->error&&pmst_live(p);
 }
-static inline int pmky_begin(struct pmky_state*s,struct pmst_state*p,struct pwpa_state*w)
+static inline int pmky_begin_owned(struct pmky_state*s,struct pmst_state*p,struct pwpa_state*w,uint64_t previous_consumer)
 {
-    if(!s||!p||!w||!pwmc_zero(s,sizeof(*s))||p->consumer||!pmst_live(p)||!p->client.up_published||!p->client.peer_valid||
+    if(!s||!p||!w||!pwmc_zero(s,sizeof(*s))||p->consumer!=previous_consumer||!pmst_live(p)||!p->client.up_published||!p->client.peer_valid||
        w->epoch!=p->opening||!psta_equal(w->peer,p->client.station.target.bssid,6)||!psta_equal(w->own,p->client.station.own,6)||
        w->phase!=3||!w->keys_ready||w->pending||w->unknown||w->error||w->install_issued||w->installed)return 0;
     struct pmhd_state*d=(void*)(uintptr_t)p->data;struct pmht_state*t=(void*)(uintptr_t)d->parent;
@@ -38,8 +38,10 @@ static inline int pmky_begin(struct pmky_state*s,struct pmst_state*p,struct pwpa
     if(!pwpa_install(w,o->last)||!pwki_open(&s->client,w,p->client.peer_id,o->last))return 0;
     s->station=(uintptr_t)p;s->wpa=(uintptr_t)w;s->owner=p->owner;s->opening=p->opening;s->attempted=s->ready=1;p->consumer=(uintptr_t)s;return pmky_live(s);
 }
+static inline int pmky_begin(struct pmky_state*s,struct pmst_state*p,struct pwpa_state*w)
+{return pmky_begin_owned(s,p,w,0);}
 /*1=progress/wait,2=other retained event,3=private data,4=disconnected,
- *5=both keys confirmed by target. Data still needs per-frame security checks.*/
+ *5=both keys confirmed and peer authorization published. Data still needs per-frame security checks.*/
 static inline int pmky_step(struct pmky_state*s)
 {
     if(!pmky_live(s))return -1;struct pmst_state*p=(void*)(uintptr_t)s->station;
