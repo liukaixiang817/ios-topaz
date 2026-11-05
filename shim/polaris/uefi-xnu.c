@@ -19,6 +19,9 @@
 #if !defined(EFI_XNU_WIFI_MAILBOX_VA) || !defined(EFI_XNU_WIFI_COUNTRY) || EFI_XNU_WIFI_COUNTRY != 36 || EFI_XNU_CPU != 0x700
 #error "Native radio runtime requires the linked mailbox symbol, explicit AU profile and CPU700"
 #endif
+#if !EFI_XNU_WIFI_UI_NATIVE_AVAILABLE
+#error "Native radio runtime requires serialized keys/display and terminal restoration"
+#endif
 #if !EFI_XNU_WIFI_SYSTEM_OFF_NATIVE_AVAILABLE || !defined(EFI_XNU_WIFI_SHUTDOWN_VA) || !EFI_XNU_SHUTDOWN_BRIDGE
 #error "Native radio runtime requires its terminal continuation and linked kernel shutdown slot"
 #endif
@@ -165,6 +168,9 @@ static int new_original_unknown(void);
 #endif
 static struct polaris_efi_ram_lease ram_lease;
 static int64_t cpu_status;
+#if EFI_XNU_WIFI_NATIVE_RUNTIME_AVAILABLE
+static uint32_t wifi_native_boot_phase;
+#endif
 static uint8_t ap_stack[131072] __attribute__((aligned(128)));
 struct polaris_efi_ap polaris_efi_ap_state __attribute__((aligned(128)));
 static void bytes_copy(void *dest,const void *source,uint64_t n)
@@ -183,6 +189,9 @@ static void text(const char *s)
     }
     wide[at]=0;
     if(load_state<4 && system_table&&system_table->out
+#if EFI_XNU_WIFI_NATIVE_RUNTIME_AVAILABLE
+        &&!wifi_native_boot_phase /* Native staging/UI diagnostics are RAM-only. */
+#endif
 #if (EFI_XNU_WIFI_POWER_TRANSACTION_AVAILABLE || EFI_XNU_WIFI_CPU_RO_ADMISSION) && !defined(POLARIS_EFI_TEST_QEMU)
         &&!new_original_unknown()
 #endif
@@ -1025,7 +1034,30 @@ _Static_assert(sizeof(log_buffer)>=2*(PWBD_RAW_BYTES+sizeof(pwrpt_record)+sizeof
 static struct pwns_parent wifi_native_parent;
 static struct pwwn_state wifi_native_worker;
 static struct pwno_state wifi_native_terminal;
-static uint32_t wifi_native_prepared,wifi_native_boot_phase;
+static uint32_t wifi_native_prepared;
+#include "uefi-wifi-ui-window.h"
+static struct pwnu_state wifi_native_ui;
+static uint64_t wifi_native_ui_last;
+static int wifi_native_ui_healthy(void)
+{return !buttons_terminal&&!wln_power.error&&!wln_power.uncertain&&!wln_runtime.error&&!wln_firmware.error&&!log_overflow;}
+static int pwnu_service(unsigned operation,uint64_t cookie,uint32_t sequence)
+{
+    if(operation==PWNU_PREPARE)return buttons_prepare()&&wln_begin()&&wifi_native_ui_healthy();
+    if(operation==PWNU_SEAL)return wifi_native_ui_healthy()&&wln_reset_ready(cookie,sequence,2);
+    if(operation==PWNU_CLOSE&&!wln_close(2))return 0;
+    buttons_poll();wln_poll();
+#if EFI_XNU_BATTERY_AVAILABLE
+    if(operation==PWNU_POLL)pb_runtime_poll();
+#endif
+    if(!wifi_native_ui_healthy())return 0;
+    return operation==PWNU_CLOSE&&wln_runtime.closing&&!wln_runtime.pending&&
+        !wln_firmware.pending&&wln_power.actual_on?2:1;
+}
+static int pwno_ui_ready(const struct polaris_shutdown_status*status)
+{
+    return status&&status->phase==POLARIS_Q_SEALED&&status->mode==2&&
+        pwnu_run(&wifi_native_ui,&wifi_native_parent.owner,PWNU_SEAL,status->cookie,status->sequence)==1;
+}
 #endif
 static int64_t psci(uint64_t function,uint64_t a,uint64_t b,uint64_t c)
 {
@@ -1388,12 +1420,6 @@ static int prepare_boot(void *context)
 /* Keep staging/owner acquisition out of the persistent service stack frame. */
 __attribute__((noinline)) static void wifi_native_startup(void)
 {
-#if EFI_XNU_BUTTONS_AVAILABLE
-    (void)buttons_prepare; /* Existing3c0 input owner is not a c0 runtime grant. */
-#endif
-#if defined(EFI_XNU_WLED_NATIVE_RUNTIME)
-    (void)wln_begin; /* Native display/input integration remains separately qualified. */
-#endif
     if(load_state!=2||wifi_native_prepared!=1||wifi_native_boot_phase)power_unknown_hold();
     wifi_native_boot_phase=1;ram_lease.active=0;
 #if defined(EFI_XNU_DURABLE_GUARD)
@@ -1442,14 +1468,32 @@ __attribute__((noreturn)) static void wifi_native_boot(void)
     for(;;){int result=wifi_native_startup_step();if(result<0)power_unknown_hold();if(result==2)break;}
     /* READY is rechecked by the actual handoff, not inferred from phase++ . */
     wifi_native_boot_phase=6;
+    if(pwnu_run(&wifi_native_ui,&wifi_native_parent.owner,PWNU_PREPARE,0,0)!=1)power_unknown_hold();
+    wln_cpu_on_issued=1; /* Publish before even an uncertain CPU_ON result. */
     if(pwkr_begin(&wifi_native_parent,&wifi_native_kernel_copy,&polaris_efi_ap_state,
         (uintptr_t)polaris_efi_ap_entry,(uintptr_t)ap_stack,sizeof(ap_stack),&plan,EFI_XNU_WIFI_MAILBOX_VA)!=1)power_unknown_hold();
     for(;;){int result=pwkr_poll(&wifi_native_parent);if(result!=1&&result!=2)power_unknown_hold();if(result==2)break;}
     cpu_status=wifi_native_parent.owner.runtime.result;wifi_native_boot_phase=7;
     if(!pwwn_begin(&wifi_native_worker,&wifi_native_parent,EFI_XNU_WIFI_COUNTRY))power_unknown_hold();
     wifi_native_boot_phase=8;
-    for(;;){int result=pwwn_step(&wifi_native_worker);if(result!=1&&result!=2)power_unknown_hold();if(result==2)break;}
+    for(;;){
+        int result=pwwn_step(&wifi_native_worker);if(result!=1&&result!=2)power_unknown_hold();
+        uint64_t now=wifi_native_parent.owner.last;
+        if(now<wifi_native_ui_last)power_unknown_hold();
+        if(now-wifi_native_ui_last>=192000){
+            unsigned operation=wifi_native_worker.terminal_requested?PWNU_CLOSE:PWNU_POLL;
+            if(!pwnu_run(&wifi_native_ui,&wifi_native_parent.owner,operation,0,0))power_unknown_hold();
+            wifi_native_ui_last=wifi_native_parent.owner.last;
+        }
+        if(result==2)break;
+    }
     if(!wifi_native_worker.terminal_requested)power_unknown_hold();
+    for(;;){
+        if(wifi_native_parent.owner.last>wifi_native_worker.close_deadline)power_unknown_hold();
+        int result=pwnu_run(&wifi_native_ui,&wifi_native_parent.owner,PWNU_CLOSE,0,0);
+        if(!result||wifi_native_parent.owner.last>wifi_native_worker.close_deadline)power_unknown_hold();
+        if(result==2)break;
+    }
     wifi_native_boot_phase=9;
     if(pwno_begin(&wifi_native_terminal,&wifi_native_worker,EFI_XNU_WIFI_SHUTDOWN_VA)!=1)power_unknown_hold();
     wifi_native_boot_phase=10;

@@ -2126,7 +2126,8 @@ def main():
             wifi_native_runtime_header_sha256=sha(out/'uefi-wifi-native-runtime-config.h'),
             wifi_native_NV_generated_inputs={p.name:sha(p) for p in (out/'wifi-nv').iterdir()},
             wifi_native_extra_sources=list(wifi_runtime_packager.SOURCES),
-            wifi_host_nonce_native_enabled=True,wifi_native_display_input_integrated=False,
+            wifi_host_nonce_native_enabled=True,wifi_native_display_input_integrated=True,
+            wifi_native_display_input_qualification=wifi_runtime_metadata["display_input_qualification"],
             wifi_native_physical_candidate_ready=False,wifi_native_boot_admission=False)
     (out/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
     print(json.dumps({k:manifest[k] for k in ['artifact','sha256','bytes','QEMU_variant','device_execution_tested']}))

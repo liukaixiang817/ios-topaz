@@ -9,7 +9,7 @@ from pathlib import Path
 
 
 FEATURES = (
-    'WIFI_SYSTEM_OFF_NATIVE', 'WIFI_NATIVE_RUNTIME', 'WIFI_WORKER_NATIVE',
+    'WIFI_SYSTEM_OFF_NATIVE', 'WIFI_NATIVE_RUNTIME', 'WIFI_UI_NATIVE', 'WIFI_WORKER_NATIVE',
     'WIFI_MAILBOX_NATIVE', 'WIFI_RUNTIME_HANDOFF', 'WIFI_NATIVE_MEMORY',
     'WIFI_NONCE_NATIVE', 'WIFI_STARTUP_PARENT', 'WIFI_NETWORK_NATIVE',
     'WIFI_KEYS_NATIVE', 'WIFI_STATION_NATIVE', 'WIFI_SCAN_NATIVE',
@@ -45,5 +45,6 @@ def binding(kernel, base, span, other_spans, country):
     return '\n'.join(lines)+'\n', dict(mailbox=mailbox, shutdown=shutdown,
         country='AU', country_code=36, features=list(FEATURES),
         terminal_exit='retained whole-system SYSTEM_OFF',
-        per_device_DMA_retirement=False, display_input_integrated=False,
+        per_device_DMA_retirement=False, display_input_integrated=True,
+        display_input_qualification="source wiring; SOFTWARE tests, no physical qualification",
         physical_networking_verified=False, boot_admission=False)

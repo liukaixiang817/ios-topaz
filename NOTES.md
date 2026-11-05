@@ -54,6 +54,50 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: native keys/display integration
+
+- Native loader now prepares actual keys/WLED before CPU_ON and services them
+  in its continuous CPU0 loop. New fixed UI window checks the actual retained
+  owner, image containment and unchanged CPU/owner state around C0 ->3C0 ->C0,
+  with Group1 disabled throughout. Existing PMIC ownership checks remain;
+  no new original-provider calls, IRQ enable, PMIC permission override or retry.
+  Any uncertain window remains held. Native staging diagnostics are RAM-only
+  from the first phase, including pre-CPU_ON messages.
+- Terminal requests close/restore actual WLED under the original worker limit.
+  SYSTEM_OFF now requires matching kernel SEALED cookie/sequence, WLED seal,
+  another actual kernel status read, and the original terminal deadline. A
+  returned SYSTEM_OFF, including zero, remains retained UNKNOWN. Source wiring
+  is integrated; physical qualification and boot admission are still FALSE.
+- SERIAL checks: CPU-owner/handoff UI window12817 ASan/UBSan checks PASS;
+  extracted actual loader1354 checks PASS, including close-deadline overrun.
+  Three actual loader-service + WLED-runtime/mailbox tests PASS with SOFTWARE
+  PMIC, covering all power phases, pending request, unknown write and fault.
+  Initial fault test wrongly combined the fixture's pulse toggle with its
+  static injected fault; corrected that fixture only, no production relaxation.
+- Full native startup/worker/terminal compositions PASS: normal2889178,
+  delayed2896578; UI refusal2889173, post-UI kernel mutation2889175,
+  post-UI deadline expiry2889178. Each ran serially about39s; actual UI callback
+  is a SOFTWARE leaf in these complete models, with actual WLED/window tested
+  separately above. They are not EFI/XNU whole-phone execution or physical proof.
+- Final driver-0002 full UEFI compile/link PASS, same-config MachO PASS with
+  generalregs and unchanged1024B frame limit:828 functions, maximum816B.
+  Driver804864B SHA102eacc0f8deaa6c61ab684a9c1039bc5ab6cf56e148e5a6197b6b9f9bb770af.
+  ARM64 boot-service driver11, no imports, executable/nonwritable entry;
+  .mssbss88926709 virtual bytes/file0. All257 manifest input hashes rechecked.
+  Private commands/logs/build-proof-0002.json in stable clone
+  research/polaris/uefi-ios-0189/wifi/ui-native-0001. All jobs ended successfully.
+  Same exact CI42071258166 kernel and new payload from previous milestone;
+  no kernel change requiring another CI. Unowned remote-memory hunk preserved.
+- NEXT: complete new native-runtime image admission/package, including actual
+  EFI/XNU integration and current root preflight. Existing WLED-only packager
+  has an older pinned kernel/scope and cannot qualify this new runtime as-is.
+  Also wire the signed client into a RAM-only userland launch/control path:
+  a compiled helper is not installed or executing. Existing fixed six-file
+  GPU bundle and polaris-init RAM-COW activation are candidate integration
+  mechanisms, not yet changed. No phone query/boot/scan/join/IP/DNS/data.
+  Execution2/5,current plus3 remain; whole admission gates remain incomplete.
+  Last formal report18:20Z,next18:35Z. Goal ACTIVE, no user download pending.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: actual native loader build
 
 - Human downloaded the three missing iCloud records, resumed the goal, then

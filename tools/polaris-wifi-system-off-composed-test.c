@@ -7,18 +7,19 @@ static int off_cache(uint64_t,uint64_t,unsigned);
 #define PWRUNTIME_AFTER_TRAFFIC off_drive
 #define PWRUNTIME_OTHER_CACHE off_cache
 #define EFI_XNU_WIFI_SYSTEM_OFF_NATIVE_AVAILABLE 1
+#define EFI_XNU_WIFI_UI_NATIVE_AVAILABLE 1
 #define POLARIS_WIFI_SYSTEM_OFF_SOFTWARE_PEER 1
 #include "polaris-wifi-runtime-composed-test.c"
 #include "uefi-wifi-system-off-native.h"
 static struct polaris_shutdown_slot *off_slot,off_kernel;
 static struct pwno_state *off_state;
-static unsigned off_calls,off_requests,off_reads,off_fault;
+static unsigned off_calls,off_requests,off_reads,off_fault,off_ui_calls;
 static void off_prepare(void)
 {
     off_slot=(void*)(kernel_memory+0x2000);memset(&off_kernel,0,sizeof(off_kernel));
     off_kernel.kernel.cookie=UINT64_C(0x1020304050607080);
     off_kernel.kernel.phase=POLARIS_Q_RUNNING;off_kernel.kernel.capabilities=POLARIS_Q_RAM_CONFIG;
-    const char*p=getenv("POLARIS_OFF_TEST_FAULT");off_fault=p?(unsigned)strtoul(p,0,10):0;CHECK(off_fault<=4);
+    const char*p=getenv("POLARIS_OFF_TEST_FAULT");off_fault=p?(unsigned)strtoul(p,0,10):0;CHECK(off_fault<=7);
 }
 static int off_cache(uint64_t address,uint64_t bytes,unsigned clean)
 {
@@ -39,6 +40,17 @@ static int off_cache(uint64_t address,uint64_t bytes,unsigned clean)
         memcpy((uint8_t*)off_slot+at,(uint8_t*)&off_kernel+at,128);
     }return 1;
 }
+/* Fixed SOFTWARE UI leaf: actual UI/WLED and CPU-window tests are separate.
+ * The terminal must re-read the kernel after this call, before any SYSTEM_OFF. */
+static int pwno_ui_ready(const struct polaris_shutdown_status*status)
+{
+    CHECK(status==&off_state->sample&&status->phase==POLARIS_Q_SEALED&&status->mode==2);
+    CHECK(status->cookie==off_kernel.kernel.cookie&&status->sequence==1&&off_calls==9);
+    CHECK(!off_state->off_issued&&owner->held&&pmsc_persistent(owner));off_ui_calls++;
+    if(off_fault==6)off_kernel.kernel.error=7;
+    if(off_fault==7)advance_to(off_state->policy.opening+PWOF_LIMIT+1);
+    return off_fault!=5;
+}
 static int64_t pwno_smc(uint64_t function,uint64_t argument)
 {
     CHECK(off_state&&off_state->pending&&off_state->command.function==function&&off_state->command.argument==argument);
@@ -50,7 +62,7 @@ static int64_t pwno_smc(uint64_t function,uint64_t argument)
     CHECK(off_requests==1&&off_kernel.kernel.phase==POLARIS_Q_SEALED&&!off_kernel.kernel.error);
     if(function==0xc4000004){CHECK(argument>=0x100&&argument<=0x700&&!(argument&255));
         if(off_fault==3&&argument==0x600)return 0;return argument==0x700?0:1;}
-    CHECK(function==0x84000008&&!argument&&off_calls==10&&off_state->off_issued==1);
+    CHECK(function==0x84000008&&!argument&&off_calls==10&&off_state->off_issued==1&&off_ui_calls==1);
     return 0; /* A returned zero must be retained failure, never completion. */
 }
 static void off_drive(void)
@@ -75,6 +87,8 @@ static void off_drive(void)
     CHECK(status==-1&&off_state->unknown&&off_state->error&&owner->held&&worker->retirement==(uintptr_t)off_state);
     if(!off_fault)CHECK(off_state->off_issued==1&&off_state->off_returned==1&&off_state->policy.error==9&&off_calls==10);
     else CHECK(!off_state->off_issued&&!off_state->off_returned);
+    CHECK(off_ui_calls==(!off_fault||off_fault>=5?1u:0u));
+    if(off_fault>=5)CHECK(off_state->error==8&&off_calls==9);
     unsigned calls=off_calls;CHECK(pwno_step(off_state)==-1&&off_calls==calls);
     printf("actual terminal continuation fault=%u calls=%u retained PASS; SOFTWARE kernel/PSCI, no physical power-off\n",off_fault,off_calls);
 }

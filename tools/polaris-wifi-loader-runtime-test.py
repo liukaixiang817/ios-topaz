@@ -48,7 +48,9 @@ typedef _Bool bool;
 #define false 0
 #define true 1
 static unsigned checks,calls,fail_at,failed,completed,unexpected,turns,polls,steps;
-static unsigned terminal_mode,terminal_steps,wifi_native_terminal;
+static unsigned terminal_mode,terminal_steps,close_calls,wifi_native_terminal,wifi_native_ui,wln_cpu_on_issued;
+static uint64_t wifi_native_ui_last;
+enum {PWNU_PREPARE=1,PWNU_POLL,PWNU_CLOSE,PWNU_SEAL};
 static unsigned events[64],states[64];static jmp_buf terminal;
 #define CHECK(x) do{checks++;if(!(x)){fprintf(stderr,"line%d: %s\n",__LINE__,#x);exit(1);}}while(0)
 static unsigned load_state,wifi_native_prepared,wifi_native_boot_phase,log_overflow;
@@ -59,10 +61,10 @@ static uint8_t polaris_wifi_image_nonces[2128],polaris_wifi_image_nonce_sha256[3
 static uint64_t received=1024,payload_count=1024;
 static unsigned mss_retained_attempted,mss_retained_ok,pgcd_resident_context;
 static unsigned wifi_native_nv,wifi_native_ce_memory,wifi_native_htt_memory,polaris_efi_ap_state;
-static struct {unsigned terminal_requested;}wifi_native_worker;
+static struct {unsigned terminal_requested;uint64_t close_deadline;}wifi_native_worker;
 static int64_t cpu_status;
 static struct {unsigned active;}ram_lease;
-static struct {struct {struct {int64_t result;}runtime;}owner;}wifi_native_parent;
+static struct {struct {struct {int64_t result;}runtime;uint64_t last;}owner;}wifi_native_parent;
 struct args {char cmdline[608];};static struct args arguments;
 static struct {uint64_t args_pa;}plan;
 struct pweh_input {
@@ -71,8 +73,14 @@ struct pweh_input {
 };
 static int record(unsigned id)
 {CHECK(calls<64);states[calls]=load_state;events[calls++]=id;if(calls==fail_at){failed=1;return 0;}return 1;}
-static void buttons_prepare(void){unexpected++;}
-static void wln_begin(void){unexpected++;}
+static int pwnu_run(void*s,void*o,unsigned operation,uint64_t cookie,unsigned sequence)
+{CHECK(s==&wifi_native_ui&&o==&wifi_native_parent.owner&&!cookie&&!sequence);
+ CHECK(operation>=PWNU_PREPARE&&operation<=PWNU_CLOSE);
+ CHECK(load_state==(operation==PWNU_PREPARE?2u:4u));
+ if(!record(17+operation))return 0;
+ if(operation==PWNU_CLOSE&&++close_calls==2&&terminal_mode==5)
+  wifi_native_parent.owner.last=wifi_native_worker.close_deadline+1;
+ return operation==PWNU_CLOSE?2:1;}
 static void polaris_efi_ap_entry(void){unexpected++;}
 __attribute__((noreturn)) static void power_unknown_hold(void){longjmp(terminal,1);}
 static int polaris_marker_append_guard(char*p,size_t n,bool physical)
@@ -97,12 +105,12 @@ static int pwns_step(void*p){CHECK(p==&wifi_native_parent&&load_state==2);if(!re
 static int pwkr_begin(void*p,const void*k,void*a,uint64_t e,uint64_t b,uint64_t z,const void*q,uint64_t va);
 static unsigned wifi_native_kernel_copy;
 static int pwkr_begin(void*p,const void*k,void*a,uint64_t e,uint64_t b,uint64_t z,const void*q,uint64_t va)
-{CHECK(p==&wifi_native_parent&&k==&wifi_native_kernel_copy&&a==&polaris_efi_ap_state&&e==(uintptr_t)polaris_efi_ap_entry&&b==(uintptr_t)ap_stack&&z==sizeof(ap_stack)&&q==&plan&&va==EFI_XNU_WIFI_MAILBOX_VA&&turns==3&&load_state==2);if(!record(12))return -1;load_state=4;return 1;}
+{CHECK(p==&wifi_native_parent&&k==&wifi_native_kernel_copy&&a==&polaris_efi_ap_state&&e==(uintptr_t)polaris_efi_ap_entry&&b==(uintptr_t)ap_stack&&z==sizeof(ap_stack)&&q==&plan&&va==EFI_XNU_WIFI_MAILBOX_VA&&turns==3&&load_state==2&&wln_cpu_on_issued==1);if(!record(12))return -1;load_state=4;return 1;}
 static int pwkr_poll(void*p){CHECK(p==&wifi_native_parent&&load_state==4);if(!record(13))return 0;return ++polls==2?2:1;}
 static int pwwn_begin(void*w,void*p,unsigned country)
 {CHECK(w==&wifi_native_worker&&p==&wifi_native_parent&&country==36&&polls==2);return record(14);}
 static int pwwn_step(void*w)
-{CHECK(w==&wifi_native_worker&&load_state==4);if(!record(15))return -1;if(++steps==3){
+{CHECK(w==&wifi_native_worker&&load_state==4);wifi_native_parent.owner.last+=192000;if(!record(15))return -1;if(++steps==3){
  if(terminal_mode){wifi_native_worker.terminal_requested=terminal_mode!=2;return terminal_mode==3?3:2;}
  completed=1;longjmp(terminal,2);}return 1;}
 static int pwno_begin(void*s,void*w,uint64_t va)
@@ -113,15 +121,15 @@ static int pwno_step(void*s)
 '''
 suffix = r'''
 static void reset(void)
-{calls=failed=completed=unexpected=turns=polls=steps=terminal_mode=terminal_steps=0;wifi_native_worker.terminal_requested=0;load_state=2;wifi_native_prepared=1;wifi_native_boot_phase=log_overflow=0;ram_lease.active=1;plan.args_pa=(uintptr_t)&arguments;memset(events,0,sizeof(events));memset(log_buffer,0,sizeof(log_buffer));}
+{calls=failed=completed=unexpected=turns=polls=steps=terminal_mode=terminal_steps=close_calls=0;wifi_native_worker.terminal_requested=0;load_state=2;wifi_native_prepared=1;wifi_native_boot_phase=log_overflow=0;ram_lease.active=1;wifi_native_parent.owner.last=wifi_native_ui_last=wln_cpu_on_issued=0;wifi_native_worker.close_deadline=19200000;plan.args_pa=(uintptr_t)&arguments;memset(events,0,sizeof(events));memset(log_buffer,0,sizeof(log_buffer));}
 int main(void)
 {
  reset();fail_at=0;int r=setjmp(terminal);if(!r)wifi_native_boot();
  CHECK(r==2&&completed&&!failed&&!unexpected&&!ram_lease.active&&wifi_native_boot_phase==8&&load_state==4);
- const unsigned expected[]={1,2,3,4,5,6,7,8,9,10,11,11,11,12,13,13,14,15,15,15};
- CHECK(calls==20&&!memcmp(events,expected,sizeof(expected)));
- for(unsigned n=0;n<20;n++)CHECK(states[n]==(n<14?2u:4u));
- for(unsigned fail=1;fail<=20;fail++){
+ const unsigned expected[]={1,2,3,4,5,6,7,8,9,10,11,11,11,18,12,13,13,14,15,19,15,19,15};
+ CHECK(calls==23&&!memcmp(events,expected,sizeof(expected)));
+ for(unsigned n=0;n<23;n++)CHECK(states[n]==(n<15?2u:4u));
+ for(unsigned fail=1;fail<=23;fail++){
    if(fail==2||fail==5)continue; /* Non-failing native RAM helpers. */
    reset();fail_at=fail;r=setjmp(terminal);if(!r)wifi_native_boot();
    CHECK(r==1&&failed&&!completed&&!unexpected&&calls==fail&&!ram_lease.active);
@@ -131,15 +139,15 @@ int main(void)
    r=setjmp(terminal);if(!r)wifi_native_boot();CHECK(r==1&&!completed&&!unexpected&&calls==(invalid==3?2u:0u));
  }
  reset();terminal_mode=1;fail_at=0;r=setjmp(terminal);if(!r)wifi_native_boot();
- CHECK(r==3&&completed&&!failed&&!unexpected&&wifi_native_boot_phase==10&&calls==23);
- CHECK(!memcmp(events,expected,sizeof(expected))&&events[20]==16&&events[21]==17&&events[22]==17);
- for(unsigned fail=21;fail<=23;fail++){
+ CHECK(r==3&&completed&&!failed&&!unexpected&&wifi_native_boot_phase==10&&calls==28);
+ CHECK(!memcmp(events,expected,sizeof(expected))&&events[23]==20&&events[24]==20&&events[25]==16&&events[26]==17&&events[27]==17);
+ for(unsigned fail=24;fail<=28;fail++){
    reset();terminal_mode=1;fail_at=fail;r=setjmp(terminal);if(!r)wifi_native_boot();
    CHECK(r==1&&failed&&!completed&&!unexpected&&calls==fail);
  }
- for(unsigned mode=2;mode<=4;mode++){
+ for(unsigned mode=2;mode<=5;mode++){
    reset();terminal_mode=mode;fail_at=0;r=setjmp(terminal);if(!r)wifi_native_boot();
-   CHECK(r==1&&!completed&&!unexpected&&calls==(mode==4?22u:20u));
+   CHECK(r==1&&!completed&&!unexpected&&calls==(mode==5?25u:mode==4?27u:mode==2?24u:23u));
  }
  printf("PASS %u extracted native loader call-order checks; SOFTWARE leaves, no full parent/CPU/DMA\n",checks);return 0;
 }

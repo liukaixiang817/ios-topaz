@@ -12,6 +12,9 @@
 #if !EFI_XNU_WIFI_WORKER_NATIVE_AVAILABLE
 #error Terminal SYSTEM_OFF requires the actual native worker
 #endif
+#if EFI_XNU_WIFI_UI_NATIVE_AVAILABLE
+static int pwno_ui_ready(const struct polaris_shutdown_status*);
+#endif
 struct pwno_state {
     uint64_t worker,parent,owner,slot,opening;
     struct pwof_state policy;struct polaris_shutdown_status sample;
@@ -117,6 +120,11 @@ static inline int pwno_step(struct pwno_state*s)
         if(!pwno_live(s))return pwno_fail(s,4);
         uint8_t before[32],after[32],owner_before[32],owner_after[32];
         if(c->kind==PWOF_POWER_OFF){
+#if EFI_XNU_WIFI_UI_NATIVE_AVAILABLE
+            if(!pwno_ui_ready(&s->sample)||!pwno_read_status(s)||
+               !pwof_same(&s->sample,&s->policy.drained,sizeof(s->sample))||
+               !pwof_time(&s->policy,o->last))return pwno_fail(s,8);
+#endif
             /* All memory/VMID/power ownership remains retained. Success is
              * terminal power-off, not a returned cleanup/handback grant. */
             s->off_issued=1;pwno_seal(s,before);pmsc_seal(o,0,0,owner_before);
