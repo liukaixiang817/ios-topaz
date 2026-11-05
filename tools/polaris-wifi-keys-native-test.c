@@ -11,8 +11,13 @@ static uint8_t test_pmk[32],test_nonce[32],test_ptk[48],test_gtk[16],test_messag
 static unsigned test_length[9];
 static void keys_target_tx(unsigned pipe,const unsigned char*f,unsigned bytes)
 {
-    CHECK(keys&&pmky_live(keys)&&pipe==3&&bytes==128);key_commands++;CHECK(key_commands<=2);
+    CHECK(keys&&pmky_live(keys)&&pipe==3);key_commands++;CHECK(key_commands<=3);
     const uint8_t*p=f+8;unsigned group=key_commands==2;
+    if(key_commands==3){
+        CHECK(bytes==36&&pwmi_get(p)==0x6004&&pwmi_get(p+4)==0x00640014&&pwmi_get(p+20)==3&&pwmi_get(p+24)==1);
+        CHECK(keys->client.confirmed==3&&!handshake->authorized);wmi_frame(f,0,2);if(key_fault==4)transport_fault=3;return;
+    }
+    CHECK(bytes==128);
     CHECK(pwmi_get(p)==0x5009&&pwmi_get(p+4)==0x0060005c&&!memcmp(p+12,ap,6)&&pwmi_get(p+24)==group&&pwmi_get(p+28)==4&&pwmi_get(p+88)==16);
     CHECK(!memcmp(p+104,group?test_gtk:test_ptk+32,16));wmi_frame(f,0,2);
     if(key_fault==2)return;
@@ -37,7 +42,7 @@ int main(int argc,char**argv)
     CHECK(fread(test_pmk,1,32,f)==32&&fread(test_nonce,1,32,f)==32&&fread(test_ptk,1,48,f)==48&&fread(test_gtk,1,16,f)==16);
     for(unsigned n=0;n<9;n++){uint8_t b[4];CHECK(fread(b,1,4,f)==4);test_length[n]=pwmi_get(b);CHECK(test_length[n]<=640&&fread(test_message[n],1,test_length[n],f)==test_length[n]);}
     CHECK(fgetc(f)==EOF&&!fclose(f));
-    for(unsigned kind=0;kind<4;kind++){
+    for(unsigned kind=0;kind<5;kind++){
         keys=0;station_test_setup(0);int result=1;
         for(unsigned n=0;n<160&&result==1;n++){advance_to(owner->last+19200);result=pmst_step(station);}CHECK(result==5);
         for(unsigned n=0;n<20&&station->mgmt_wait;n++){advance_to(owner->last+19200);CHECK(pmst_step(station)==5);}CHECK(!station->mgmt_wait);
@@ -47,16 +52,17 @@ int main(int argc,char**argv)
             advance_to(owner->last+19200);
             if(kind==2&&keys->client.phase==1)advance_to(keys->client.deadline+1);
             if(kind==3)transport_fault=3;
+            if(kind==4&&keys->client.phase==4)transport_fault=3;
             result=pmky_step(keys);
         }
         if(!kind){
             if(result!=5)fprintf(stderr,"keys result%d err%u wire%u phase%u sent%u parent%u\n",result,keys->error,keys->client.error,keys->client.phase,key_commands,station->error);
-            CHECK(result==5&&keys->completed&&keys->client.confirmed==3&&key_commands==2&&keys->client.ignored==1&&handshake->authorized&&handshake->installed);
+            CHECK(result==5&&keys->completed&&keys->client.confirmed==3&&key_commands==3&&keys->client.ignored==1&&handshake->authorized&&handshake->installed);
             CHECK(!pwpa_nonzero(keys->client.tk,16)&&!pwpa_nonzero(keys->client.gtk,16)&&keys->client.group_floor[0]==1);
             uint8_t unmap[4]={4,0,17,0};station_htt_event(unmap,4);result=5;
             for(unsigned n=0;n<20&&result==5;n++){advance_to(owner->last+19200);result=pmky_step(keys);}
             CHECK(result==4&&!handshake->authorized&&handshake->phase==5&&!pwpa_nonzero(handshake->tk,16)&&!pwpa_nonzero(handshake->kck,16));
-            fprintf(stderr,"native keys:2 actual WMI installs -> matching HTT security indications, duplicate ignored, unmap closes port/wipes keys PASS\n");
+            fprintf(stderr,"native keys:2 WMI installs -> matching HTT security -> peer AUTHORIZE, duplicate ignored, unmap closes port/wipes keys PASS\n");
         }else{
             CHECK(result==-1&&keys->unknown&&keys->error&&!handshake->authorized&&owner->held);
             unsigned writes=transport_writes;CHECK(pmky_step(keys)==-1&&writes==transport_writes);

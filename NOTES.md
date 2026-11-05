@@ -44,6 +44,20 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05: firmware peer authorization correction
+
+- Previous key transport is commit cdbab58. Primary mac.c also requires
+  WMI PEER_AUTHORIZE(param3=1). Both HTT key confirmations alone were not the
+  full transmit-permission boundary. Added WMI6004/TLV100 body20 after both
+  confirmations; controlled port opens only after its actual publication.
+- Native ASan/UBSan5/12493242 PASS, including authorization publication barrier
+  failure; protocol1003 PASS. Native/protocol COFF and MachO generalregs,
+  frame1024 PASS. Updated keys-native-0001/proof-0001.json binds current hashes.
+- Ethernet decapsulation/controlled-port/CCMP replay code is WIP and untested
+  at this handoff. Still needs native EAPOL RX/TX, group rekey, entropy/regulatory,
+  full parent/runtime ownership/post-CE exit and new image before actual boot.
+- No phone/USB/CI/push/boot. Still execution2/5, current step plus3 remain.
+
 ### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): native key installation
 
 - Four-way protocol is commite7c5e20. New pwki emits actual WMI5009/TLV96,

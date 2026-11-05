@@ -32,7 +32,7 @@ static void station_target_wmi(unsigned pipe,const unsigned char*f,unsigned byte
 {
     CHECK(pipe==3&&f[0]==htc->client.wmi);const uint8_t*p=f+8;unsigned cmd=pwmi_get(p);
 #ifdef PMST_TEST_WMI_HOOK
-    if(cmd==0x5009){PMST_TEST_WMI_HOOK(pipe,f,bytes);return;}
+    if(cmd==0x5009||cmd==0x6004){PMST_TEST_WMI_HOOK(pipe,f,bytes);return;}
 #endif
     if(!station){
         CHECK(scan&&pmwsn_live(scan));scan_commands++;

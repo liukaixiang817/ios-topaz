@@ -24,6 +24,9 @@ int main(int argc,char**argv)
         CHECK(pwki_htt(&keys,packet,bytes,++ticks)==1&&keys.phase==2+2*group); /* duplicate */
     }
     CHECK(keys.confirmed==3&&keys.group_floor[0]==1&&!pwpa_nonzero(keys.tk,16)&&!pwpa_nonzero(keys.gtk,16));
+    CHECK(pwki_next(&keys,++ticks)==1&&keys.tx_bytes==28&&pwmi_get(keys.tx)==0x6004&&pwmi_get(keys.tx+4)==0x00640014);
+    CHECK(!memcmp(keys.tx+12,wpa.peer,6)&&pwmi_get(keys.tx+20)==3&&pwmi_get(keys.tx+24)==1&&!wpa.authorized);
+    CHECK(pwki_sent(&keys,++ticks,1)==1&&keys.phase==5&&!pwki_next(&keys,++ticks));
     CHECK(pwpa_installed(&wpa,++ticks,1)==1&&wpa.authorized);
     for(unsigned fault=0;fault<7;fault++){
         ready();CHECK(pwki_next(&keys,++ticks)==1);

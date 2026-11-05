@@ -58,11 +58,11 @@ static inline int pmky_step(struct pmky_state*s)
         int used=pwki_htt(&s->client,frame,bytes,o->last);if(used<0)return pmky_fail(s,4);if(!used)return 2;
         if(!pmhc_ack(h))return pmky_fail(s,4);
     }
-    if(s->client.phase==4&&!s->completed){if(s->client.confirmed!=3||pwpa_installed(w,o->last,1)!=1)return pmky_fail(s,5);s->completed=1;}
+    if(s->client.phase==5&&!s->completed){if(s->client.confirmed!=3||pwpa_installed(w,o->last,1)!=1)return pmky_fail(s,5);s->completed=1;}
     if(result==3)return 3;
     if(!s->client.pending&&pwki_next(&s->client,o->last)<0)return pmky_fail(s,6);
     if(s->client.pending&&!s->submitted&&!h->client.pending){
-        int sent=pmhc_send(h,h->client.wmi,s->client.tx,sizeof(s->client.tx));if(sent<0)return pmky_fail(s,7);
+        int sent=pmhc_send(h,h->client.wmi,s->client.tx,s->client.tx_bytes);if(sent<0)return pmky_fail(s,7);
         if(sent){s->submitted=1;if(!h->client.pending){if(pwki_sent(&s->client,o->last,1)!=1)return pmky_fail(s,2);s->submitted=0;}}
     }return s->completed?5:1;
 }

@@ -7,7 +7,7 @@
 #include "polaris-wifi-wpa.h"
 #define PWKI_WAIT UINT64_C(57600000) /*3s per actual publication*/
 struct pwki_state {
-    uint64_t epoch,last,deadline;uint32_t opened,unknown,error,phase,pending,peer,gtk_id,confirmed,ignored;
+    uint64_t epoch,last,deadline;uint32_t opened,unknown,error,phase,pending,peer,gtk_id,confirmed,ignored,tx_bytes;
     uint8_t mac[6],tk[16],gtk[16],group_floor[8],tx[120];
 };
 static inline int pwki_fail(struct pwki_state*s,unsigned error)
@@ -28,16 +28,22 @@ static inline int pwki_open(struct pwki_state*s,const struct pwpa_state*w,unsign
 }
 static inline int pwki_next(struct pwki_state*s,uint64_t now)
 {
-    if(!pwki_live(s,now)||s->pending)return -1;if(s->phase!=0&&s->phase!=2)return 0;
+    if(!pwki_live(s,now)||s->pending)return -1;if(s->phase!=0&&s->phase!=2&&s->phase!=4)return 0;
     pwch_wipe(s->tx,sizeof(s->tx));uint8_t*p=s->tx;unsigned group=s->phase==2;
+    if(s->phase==4){
+        /* mac.c authorizes the peer after pairwise key installation. Delay
+         * until both keys are confirmed; still before opening our data port. */
+        pwmi_put(p,0x6004);pwmi_header(p+4,100,20);pwch_copy(p+12,s->mac,6);pwmi_put(p+20,3);pwmi_put(p+24,1);
+        s->tx_bytes=28;s->pending=1;return 1;
+    }
     pwmi_put(p,0x5009);pwmi_header(p+4,96,92);pwch_copy(p+12,s->mac,6);
     pwmi_put(p+20,group?s->gtk_id:0);pwmi_put(p+24,group?1:0);pwmi_put(p+28,4);pwmi_put(p+88,16);
-    pwmi_header(p+100,17,16);pwch_copy(p+104,group?s->gtk:s->tk,16);s->pending=1;return 1;
+    pwmi_header(p+100,17,16);pwch_copy(p+104,group?s->gtk:s->tk,16);s->tx_bytes=120;s->pending=1;return 1;
 }
 static inline int pwki_sent(struct pwki_state*s,uint64_t now,int published)
 {
-    if(!pwki_live(s,now)||!s->pending||(s->phase!=0&&s->phase!=2))return -1;
-    if(published!=1)return pwki_fail(s,2);s->pending=0;s->phase++;s->deadline=now+PWKI_WAIT;pwch_wipe(s->tx,sizeof(s->tx));return 1;
+    if(!pwki_live(s,now)||!s->pending||(s->phase!=0&&s->phase!=2&&s->phase!=4))return -1;
+    if(published!=1)return pwki_fail(s,2);s->pending=0;s->phase++;s->deadline=now+PWKI_WAIT;pwch_wipe(s->tx,sizeof(s->tx));s->tx_bytes=0;return 1;
 }
 /*1=consumed,0=other peer/event,-1=inconsistent own security state. A duplicate
  * already-confirmed indication cannot acknowledge the other key or reset PN.
