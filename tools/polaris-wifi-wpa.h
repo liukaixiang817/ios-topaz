@@ -14,6 +14,7 @@ struct pwpa_state {
     uint32_t derived,have_m3,keys_ready,install_issued,installed,authorized,gtk_id;
     uint8_t own[6],peer[6],pmk[32],snonce[32],anonce[32],kck[16],kek[16],tk[16],gtk[16],rsc[8];
     uint8_t replay1[8],replay3[8],m3_digest[20],own_rsn[22],ap_rsn[257];uint32_t ap_rsn_bytes;
+    uint32_t unwrap_group,group_ready,group_issued,group_generation,group_id;uint8_t group_key[16],group_rsc[8];
     uint8_t rx[PWPA_MESSAGE],reply[128];struct pwch_unwrap unwrap;
 };
 static inline unsigned pwpa_be16(const uint8_t*p){return ((unsigned)p[0]<<8)|p[1];}
@@ -62,7 +63,7 @@ static inline void pwpa_mic(const struct pwpa_state*s,const uint8_t*p,unsigned b
 static inline void pwpa_reply(struct pwpa_state*s,const uint8_t*p,unsigned kind)
 {
     pwch_wipe(s->reply,sizeof(s->reply));uint8_t*q=s->reply;unsigned data=kind==2?22:0;
-    q[0]=p[0];q[1]=3;pwpa_put16(q+2,95+data);q[4]=2;pwpa_put16(q+5,kind==2?0x10a:0x30a);
+    q[0]=p[0];q[1]=3;pwpa_put16(q+2,95+data);q[4]=2;pwpa_put16(q+5,kind==2?0x10a:kind==6?0x302:0x30a);
     pwch_copy(q+9,p+9,8);if(kind==2){pwch_copy(q+17,s->snonce,32);pwch_copy(q+99,s->own_rsn,22);}
     pwpa_put16(q+97,data);s->reply_bytes=99+data;pwpa_mic(s,q,s->reply_bytes,q+81);s->pending=kind;
 }
@@ -73,7 +74,7 @@ static inline void pwpa_reply(struct pwpa_state*s,const uint8_t*p,unsigned kind)
 static inline int pwpa_receive(struct pwpa_state*s,const uint8_t*p,unsigned bytes,uint64_t now)
 {
     if(!pwpa_time(s,now))return s&&s->phase==5?0:-1;
-    if(s->pending||s->phase==2)return 0;
+    if(s->pending||s->phase==2||s->group_ready||s->group_issued)return 0;
     if(!p||bytes<4||p[1]!=3)return 0;
     unsigned length=4+pwpa_be16(p+2);
     if((p[0]!=1&&p[0]!=2)||length<99||length>PWPA_MESSAGE||length>bytes||p[4]!=2||pwpa_be16(p+97)!=length-99)return s->bad++,1;
@@ -87,8 +88,10 @@ static inline int pwpa_receive(struct pwpa_state*s,const uint8_t*p,unsigned byte
         }else{pwch_copy(s->anonce,p+17,32);pwpa_derive(s);}
         pwch_copy(s->replay1,p+9,8);pwpa_reply(s,p,2);return 1;
     }
-    if(info!=0x13ca)return s->ignored++,1; /* group rekey has its own future state */
-    if(!s->derived||pwpa_be16(p+7)!=16||!psta_equal(p+17,s->anonce,32)||data<24||data>520||(data&7)||
+    unsigned group=info==0x1382;
+    if(info!=0x13ca&&!group)return s->ignored++,1;
+    if(group&&!s->authorized)return s->ignored++,1;
+    if(!s->derived||pwpa_be16(p+7)!=16||(!group&&!psta_equal(p+17,s->anonce,32))||data<24||data>520||(data&7)||
        pwpa_compare(p+9,s->replay1,8)<=0||p[71]||p[72])return s->bad++,1;
     uint8_t mic[16];pwpa_mic(s,p,length,mic);int valid=psta_equal(mic,p+81,16);pwch_wipe(mic,16);
     if(!valid)return s->bad++,1;
@@ -98,9 +101,9 @@ static inline int pwpa_receive(struct pwpa_state*s,const uint8_t*p,unsigned byte
          * counter must unwrap and verify the same GTK, without reinstalling. */
         struct pwch_sha1 sha;uint8_t digest[20];pwch_sha_init(&sha);pwch_sha_add(&sha,p,length);pwch_sha_final(&sha,digest);
         valid=psta_equal(digest,s->m3_digest,20);pwch_wipe(digest,20);
-        if(!order){if(!valid)return s->bad++,1;s->retries++;pwpa_reply(s,p,4);return 1;}
+        if(!order){if(!valid)return s->bad++,1;s->retries++;pwpa_reply(s,p,group?6:4);return 1;}
     }
-    pwch_copy(s->rx,p,length);s->rx_bytes=length;pwch_wipe(&s->unwrap,sizeof(s->unwrap));
+    pwch_copy(s->rx,p,length);s->rx_bytes=length;s->unwrap_group=group;pwch_wipe(&s->unwrap,sizeof(s->unwrap));
     if(!pwch_unwrap_open(&s->unwrap,s->kek,p+99,data))return pwpa_fail(s,2);s->phase=2;return 1;
 }
 /* Verify the AP's RSN binding and exact16-byte GTK KDE before exposing keys.
@@ -119,12 +122,18 @@ static inline int pwpa_keys(struct pwpa_state*s)
             if(gtk++||length!=22||(p[at+6]&~7u)||p[at+7])return 0;key_at=at+8;key_id=p[at+6]&3;
         }at+=2+length;
     }
-    if(!rsn||!gtk)return 0;
+    if((!s->unwrap_group&&!rsn)||!gtk)return 0;
+    if(s->unwrap_group){
+        if(psta_equal(s->gtk,p+key_at,16))return s->gtk_id==key_id; /* no reinstall/PN reset, even under another index */
+        if(s->group_generation==UINT32_MAX)return 0;
+        pwch_copy(s->group_key,p+key_at,16);pwch_copy(s->group_rsc,s->rx+65,8);s->group_id=key_id;s->group_ready=1;return 1;
+    }
     if(s->have_m3)return s->gtk_id==key_id&&psta_equal(s->gtk,p+key_at,16);
     pwch_copy(s->gtk,p+key_at,16);s->gtk_id=key_id;pwch_copy(s->rsc,s->rx+65,8);return 1;
 }
 /*1=progress/wait,2=reply pending,3=keys ready for one native installation,
- *4=authorized by explicit native completion,0=timeout/rejected,-1=unknown. */
+ *4=authorized by explicit native completion,5=group key awaiting installation,
+ *0=timeout/rejected,-1=unknown. */
 static inline int pwpa_step(struct pwpa_state*s,uint64_t now)
 {
     if(!pwpa_time(s,now))return s&&s->phase==5?0:-1;
@@ -138,12 +147,17 @@ static inline int pwpa_step(struct pwpa_state*s,uint64_t now)
         if(result==2){
             struct pwch_sha1 sha;pwch_sha_init(&sha);pwch_sha_add(&sha,s->rx,s->rx_bytes);pwch_sha_final(&sha,s->m3_digest);
             pwch_copy(s->replay3,s->rx+9,8);
-            if(s->have_m3)s->retries++;else s->have_m3=s->keys_ready=1;
-            s->phase=s->installed?4:3;pwpa_reply(s,s->rx,4);
-            pwch_wipe(&s->unwrap,sizeof(s->unwrap));pwch_wipe(s->rx,sizeof(s->rx));pwch_wipe(s->pmk,32);
+            if(s->unwrap_group){
+                if(s->group_ready)s->phase=6; /* wait actual GTK installation before group M2 */
+                else{s->phase=4;s->retries++;pwpa_reply(s,s->rx,6);}
+            }else{
+                if(s->have_m3)s->retries++;else s->have_m3=s->keys_ready=1;
+                s->phase=s->installed?4:3;pwpa_reply(s,s->rx,4);
+            }
+            pwch_wipe(&s->unwrap,sizeof(s->unwrap));if(!s->group_ready)pwch_wipe(s->rx,sizeof(s->rx));pwch_wipe(s->pmk,32);
         }
     }
-    return s->pending?2:s->authorized?4:s->keys_ready?3:1;
+    return s->pending?2:s->group_ready?5:s->authorized?4:s->keys_ready?3:1;
 }
 static inline int pwpa_sent(struct pwpa_state*s,uint64_t now,int published)
 {
@@ -163,10 +177,23 @@ static inline int pwpa_installed(struct pwpa_state*s,uint64_t now,int complete)
     if(!pwpa_time(s,now)||!s->install_issued||s->installed||!s->have_m3||(s->phase!=3&&s->phase!=2))return -1;
     if(complete!=1)return pwpa_fail(s,4);s->installed=s->authorized=1;s->keys_ready=0;if(s->phase!=2)s->phase=4;return 1;
 }
+static inline int pwpa_group_install(struct pwpa_state*s,uint64_t now)
+{
+    if(!pwpa_time(s,now)||!s->authorized||!s->installed||s->phase!=6||!s->group_ready||s->group_issued||s->pending)return 0;
+    s->group_issued=1;return 1;
+}
+static inline int pwpa_group_installed(struct pwpa_state*s,uint64_t now,int complete)
+{
+    if(!pwpa_time(s,now)||!s->authorized||!s->installed||s->phase!=6||!s->group_ready||!s->group_issued)return -1;
+    if(complete!=1)return pwpa_fail(s,5);
+    pwch_copy(s->gtk,s->group_key,16);pwch_copy(s->rsc,s->group_rsc,8);s->gtk_id=s->group_id;
+    s->group_generation++;s->group_ready=s->group_issued=0;s->phase=4;pwpa_reply(s,s->rx,6);
+    pwch_wipe(s->group_key,16);pwch_wipe(s->group_rsc,8);pwch_wipe(s->rx,sizeof(s->rx));return 1;
+}
 static inline void pwpa_stop(struct pwpa_state*s)
 {
-    if(!s)return;s->authorized=s->keys_ready=s->pending=s->reply_bytes=0;s->phase=5;
+    if(!s)return;s->authorized=s->keys_ready=s->pending=s->reply_bytes=s->group_ready=s->group_issued=0;s->phase=5;
     pwch_wipe(s->pmk,32);pwch_wipe(s->snonce,32);pwch_wipe(s->anonce,32);pwch_wipe(s->kck,16);pwch_wipe(s->kek,16);
-    pwch_wipe(s->tk,16);pwch_wipe(s->gtk,16);pwch_wipe(s->rx,sizeof(s->rx));pwch_wipe(s->reply,sizeof(s->reply));pwch_wipe(&s->unwrap,sizeof(s->unwrap));
+    pwch_wipe(s->tk,16);pwch_wipe(s->gtk,16);pwch_wipe(s->group_key,16);pwch_wipe(s->group_rsc,8);pwch_wipe(s->rx,sizeof(s->rx));pwch_wipe(s->reply,sizeof(s->reply));pwch_wipe(&s->unwrap,sizeof(s->unwrap));
 }
 #endif

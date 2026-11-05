@@ -44,6 +44,37 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05: native GTK renewal
+
+- WMI management committede30b73e. WPA now handles authenticated group1/2,
+  validates encrypted GTK KDE/replay/MIC and waits native GTK installation
+  before sending group2/2. Same current key and index, including higher
+  authenticated replay counter, never reinstall/reset RSC; same key under a
+  different index rejected. Group counter shares the four-way replay boundary.
+- Native key owner issues only GTK + peer authorization for renewal, keeping
+  PTK installed. Multicast RX blocked during change; after actual HTT confirmation
+  and authorization publication, only multicast PN floor changes once. Unicast
+  remains bound to its existing key/PN. Timeout closes port, retains DMA/owner.
+  This is single-current-GTK support; old-key traffic during rotation may drop.
+  Pairwise rekey/roaming/reconnection remain separate unfinished work.
+- Independent Python HMAC/OpenSSL vectors:685 protocol checks PASS, including
+  second new GTK at same index, malformed KDE/wrap, exact/higher retry and
+  prior counter rejection. Native ASan/UBSan8/20092486 PASS through both WMI
+  and HTT management, renewal/retries/no PN reset and renewal-confirmation
+  timeout. Native/protocol COFF+MachO generalregs/frame1024 PASS. Evidence:
+  network-group-native-0001/proof-0001.json. Initial fixture compiler warning
+  in an invalid-call assertion was corrected to explicit ==-1 before tests.
+- NEXT actual nonce input producer. Consider host CSPRNG per-new-temporary-boot
+  finite nonce pool, bound to fresh candidate and atomically consumed BEFORE
+  boot; each entry once per association, exhaustion refuses instead of reuse.
+  This is NOT implemented yet and must not be called device entropy. It can
+  avoid borrowing unqualified QRNG bus/config; persistent/replayed image use
+  needs genuine fresh device entropy. Current nonce tests remain public inputs.
+- Still need actual regulatory source, whole parent/persistent runtime/post-CE
+  retirement and new integrated image. No phone/USB/CI/push/boot or registration.
+  Execution2/5,current step plus3 remain. Last15min03:06Z/14:06,next03:21Z/14:21
+  Melbourne. Goal ACTIVE; continue toward actual scan/join/IP/DNS/data.
+
 ### Continuous Wi-Fi milestone — 2026-11-05: service76 WMI management transport
 
 - Native EAPOL/data is commit022c0de. Native station now chooses actual advertised

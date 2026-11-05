@@ -93,7 +93,11 @@ static inline int pmwn_step(struct pmwn_state*s)
            !pwen_open(&s->ethernet,&p->client.station,p->client.peer_id))return pmwn_fail(s,5);
         pwch_wipe(s->pmk,32);pwch_wipe(s->nonce,32);
     }
-    if(s->keys.ready&&!pwen_keys(&s->ethernet,&s->keys.client,&s->wpa))return pmwn_fail(s,6);
+    if(s->keys.ready&&!s->ethernet.authorized&&!pwen_keys(&s->ethernet,&s->keys.client,&s->wpa))return pmwn_fail(s,6);
+    if(s->keys.group_generation>s->ethernet.group_generation){
+        if(!s->keys.group_completed||!pwen_group(&s->ethernet,&s->keys.group_client,&s->wpa))return pmwn_fail(s,6);
+    }
+    s->ethernet.group_blocked=s->wpa.group_ready||s->wpa.group_issued;
     if(s->early_ready&&s->wpa.opened){
         if(pmwn_rx(s,s->early,s->early_bytes,s->early_peer,s->early_vdev,s->early_info)<0)return -1;
         pwch_wipe(s->early,sizeof(s->early));s->early_ready=0;
@@ -120,7 +124,7 @@ static inline int pmwn_step(struct pmwn_state*s)
         if(!pmky_begin_owned(&s->keys,p,&s->wpa,(uintptr_t)s))return pmwn_fail(s,9);
     }
     if(s->ethernet.tx_bytes&&!s->submitted&&!s->tx_wait&&p->client.up_published&&!p->submitted&&
-       !p->mgmt_wait&&!h->client.pending&&!d->submitted&&(!s->keys.ready||s->keys.completed)){
+       !p->mgmt_wait&&!h->client.pending&&!d->submitted&&(!s->keys.ready||(s->keys.completed&&!s->wpa.group_issued))){
         pwch_copy(d->send,s->ethernet.transmit,s->ethernet.tx_bytes);
         int sent=pmhd_send(d,s->ethernet.tx_bytes,2,0,16,s->ethernet.tx_plain);if(sent<0)return pmwn_fail(s,10);
         if(sent){s->tx_id=d->rings.tx_id;s->tx_wait=s->submitted=1;if(pmwn_commit(s)<0)return -1;}

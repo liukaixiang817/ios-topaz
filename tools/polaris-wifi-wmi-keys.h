@@ -26,6 +26,15 @@ static inline int pwki_open(struct pwki_state*s,const struct pwpa_state*w,unsign
     s->epoch=w->epoch;s->last=now;s->deadline=now+PWKI_WAIT;s->peer=peer;s->gtk_id=w->gtk_id;
     pwch_copy(s->mac,w->peer,6);pwch_copy(s->tk,w->tk,16);pwch_copy(s->gtk,w->gtk,16);pwch_copy(s->group_floor,w->rsc,8);s->opened=1;return 1;
 }
+static inline int pwki_group_open(struct pwki_state*s,const struct pwpa_state*w,unsigned peer,uint64_t now)
+{
+    if(!s||!w||peer>=2048||!w->opened||w->unknown||w->error||w->phase!=6||!w->authorized||!w->installed||
+       !w->group_ready||!w->group_issued||w->pending||w->group_id>3||now<w->last||now>UINT64_MAX-PWKI_WAIT)return 0;
+    for(unsigned n=0;n<sizeof(*s);n++)if(((const uint8_t*)s)[n])return 0;
+    s->epoch=w->epoch;s->last=now;s->deadline=now+PWKI_WAIT;s->peer=peer;s->gtk_id=w->group_id;
+    s->phase=2;s->confirmed=1; /* existing PTK remains installed; do not send it again */
+    pwch_copy(s->mac,w->peer,6);pwch_copy(s->gtk,w->group_key,16);pwch_copy(s->group_floor,w->group_rsc,8);s->opened=1;return 1;
+}
 static inline int pwki_next(struct pwki_state*s,uint64_t now)
 {
     if(!pwki_live(s,now)||s->pending)return -1;if(s->phase!=0&&s->phase!=2&&s->phase!=4)return 0;

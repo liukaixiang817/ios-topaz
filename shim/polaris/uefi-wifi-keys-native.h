@@ -12,8 +12,8 @@
 #error Native keys require actual native station
 #endif
 struct pmky_state {
-    uint64_t station,wpa,owner,opening;struct pwki_state client;
-    uint32_t attempted,ready,unknown,error,submitted,completed;
+    uint64_t station,wpa,owner,opening;struct pwki_state client,group_client;
+    uint32_t attempted,ready,unknown,error,submitted,completed,group_active,group_submitted,group_completed,group_generation;
 };
 static inline int pmky_fail(struct pmky_state*s,unsigned error)
 {s->unknown=1;if(!s->error)s->error=error;pwpa_stop((void*)(uintptr_t)s->wpa);return -1;}
@@ -50,22 +50,32 @@ static inline int pmky_step(struct pmky_state*s)
     struct pmct_state*c=(void*)(uintptr_t)h->transport;struct pmsc_owner*o=(void*)(uintptr_t)s->owner;
     int result=pmst_step(p);if(result<0)return pmky_fail(s,1);
     if(result==4){pwpa_stop(w);return 4;}
-    if(s->submitted&&!h->client.pending){if(pwki_sent(&s->client,o->last,1)!=1)return pmky_fail(s,2);s->submitted=0;}
-    if(!pwki_live(&s->client,o->last))return pmky_fail(s,3);
+    if(s->completed&&w->group_ready&&!w->group_issued&&(!s->group_active||s->group_completed)&&!h->client.pending&&!h->frame_kind){
+        pwch_wipe(&s->group_client,sizeof(s->group_client));s->group_completed=0;
+        if(!pwpa_group_install(w,o->last)||!pwki_group_open(&s->group_client,w,p->client.peer_id,o->last))return pmky_fail(s,8);
+        s->group_active=1;
+    }
+    struct pwki_state*k=s->group_active?&s->group_client:&s->client;
+    unsigned*submitted=s->group_active?&s->group_submitted:&s->submitted;
+    if(*submitted&&!h->client.pending){if(pwki_sent(k,o->last,1)!=1)return pmky_fail(s,2);*submitted=0;}
+    if(!pwki_live(k,o->last))return pmky_fail(s,3);
     if(result==2){
         const uint8_t*frame;unsigned bytes;
         if(h->frame_kind==1&&h->client.rx_eid==h->client.htt){frame=h->client.rx;bytes=h->client.rx_bytes;}
         else if(h->frame_kind==2&&h->raw_pipe==5&&c->rx_bytes>=9){frame=c->receive+8;bytes=c->rx_bytes-8;}
         else return 2;
-        int used=pwki_htt(&s->client,frame,bytes,o->last);if(used<0)return pmky_fail(s,4);if(!used)return 2;
+        int used=pwki_htt(k,frame,bytes,o->last);if(used<0)return pmky_fail(s,4);if(!used)return 2;
         if(!pmhc_ack(h))return pmky_fail(s,4);
     }
-    if(s->client.phase==5&&!s->completed){if(s->client.confirmed!=3||pwpa_installed(w,o->last,1)!=1)return pmky_fail(s,5);s->completed=1;}
+    if(k->phase==5&&!(s->group_active?s->group_completed:s->completed)){
+        if(k->confirmed!=3||(s->group_active?pwpa_group_installed(w,o->last,1):pwpa_installed(w,o->last,1))!=1)return pmky_fail(s,5);
+        if(s->group_active){s->group_completed=1;s->group_generation=w->group_generation;}else s->completed=1;
+    }
     if(result==3)return 3;
-    if(!s->client.pending&&pwki_next(&s->client,o->last)<0)return pmky_fail(s,6);
-    if(s->client.pending&&!s->submitted&&!h->client.pending){
-        int sent=pmhc_send(h,h->client.wmi,s->client.tx,s->client.tx_bytes);if(sent<0)return pmky_fail(s,7);
-        if(sent){s->submitted=1;if(!h->client.pending){if(pwki_sent(&s->client,o->last,1)!=1)return pmky_fail(s,2);s->submitted=0;}}
+    if(!k->pending&&pwki_next(k,o->last)<0)return pmky_fail(s,6);
+    if(k->pending&&!*submitted&&!h->client.pending){
+        int sent=pmhc_send(h,h->client.wmi,k->tx,k->tx_bytes);if(sent<0)return pmky_fail(s,7);
+        if(sent){*submitted=1;if(!h->client.pending){if(pwki_sent(k,o->last,1)!=1)return pmky_fail(s,2);*submitted=0;}}
     }return s->completed?5:1;
 }
 #endif

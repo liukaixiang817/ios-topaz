@@ -9,7 +9,7 @@
 struct pwen_state {
     uint64_t epoch,pn[2],group_floor;
     uint32_t opened,closed,peer,security,keys_seen,authorized,gtk_id,rx_ready,rx_bytes,rx_kind,tx_bytes,tx_plain;
-    uint64_t dropped,replayed,received,sent;
+    uint64_t dropped,replayed,received,sent;uint32_t group_generation,group_blocked;
     uint8_t own[6],ap[6],receive[PWEN_FRAME],transmit[PWEN_FRAME];
 };
 static inline uint64_t pwen_pn(const uint8_t*p)
@@ -38,6 +38,16 @@ static inline int pwen_keys(struct pwen_state*s,const struct pwki_state*k,const 
     }
     s->authorized=w->authorized&&w->installed&&s->keys_seen==3;return 1;
 }
+/* A new confirmed GTK resets only its own receive floor. Duplicate EAPOL
+ * messages never call this boundary; the native installer supplies generation. */
+static inline int pwen_group(struct pwen_state*s,const struct pwki_state*k,const struct pwpa_state*w)
+{
+    if(!s||!s->opened||s->closed||!s->authorized||s->keys_seen!=3||!k||!w||k->unknown||k->error||k->phase!=5||k->confirmed!=3||
+       k->epoch!=s->epoch||k->peer!=s->peer||!psta_equal(k->mac,s->ap,6)||!w->authorized||!w->installed||w->unknown||w->error||
+       w->epoch!=s->epoch||!w->group_generation||w->group_generation!=s->group_generation+1||k->gtk_id!=w->gtk_id||k->gtk_id>3||
+       !psta_equal(k->group_floor,w->rsc,8)||w->rsc[6]||w->rsc[7])return 0;
+    s->gtk_id=k->gtk_id;s->group_floor=s->pn[1]=pwen_pn(k->group_floor);s->group_generation=w->group_generation;s->group_blocked=0;return 1;
+}
 /* Raw is the private2048-byte copy made by the native HTT transport. bytes is
  * the in-order indication's payload length, not an untrusted Ethernet length.
  *1=Ethernet data,2=EAPOL,0=dropped,-1=invalid caller/backpressure.
@@ -60,7 +70,7 @@ static inline int pwen_receive(struct pwen_state*s,const uint8_t*raw,unsigned ra
     unsigned eapol=type==0x888e,encrypted=(mpdu>>13)&1;
     if(encrypted!=((original[1]>>6)&1)||((mpdu>>11)&3)!=1)return s->dropped++,0;
     if(eapol){if(group||!psta_equal(original+16,s->ap,6))return s->dropped++,0;}
-    else if(!s->authorized||(attention&(1u<<24)))return s->dropped++,0;
+    else if(!s->authorized||(group&&s->group_blocked)||(attention&(1u<<24)))return s->dropped++,0;
     uint64_t pn=0;
     if(encrypted){
         unsigned which=group?1:0;if(s->security!=2||!(s->keys_seen&(1u<<which))||(mpdu>>28)!=6)return s->dropped++,0;
