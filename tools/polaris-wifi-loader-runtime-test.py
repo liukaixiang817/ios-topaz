@@ -20,7 +20,8 @@ end = opening + 1
 while depth:
     depth += (source[end] == "{") - (source[end] == "}")
     end += 1
-body = source[start:end]
+startup = source.index("__attribute__((noinline)) static void wifi_native_startup(void)")
+body = source[startup:end]
 prefix = r'''
 #include <stdint.h>
 #include <stddef.h>

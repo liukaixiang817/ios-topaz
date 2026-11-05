@@ -499,8 +499,17 @@ def main():
     ap.add_argument('--mss-firmware-in-payload',action='store_true',help='source verified own firmware from the exact appended RAM payload tail instead of embedding its bytes in EFI')
     ap.add_argument('--mss-mba-share',action='store_true',help='default-OFF native HLOS3 to MSS15 RW assignment of the actual staged MBA1MiB, retained descriptor/continuations and CPU restoration; no reset, power, free or remote start')
     ap.add_argument('--wifi-host-nonce-pool',action='store_true',help='generate a fresh private host-CSPRNG nonce input for this new temporary-boot candidate; requires digest-wide consumption before send; does not enable native WLAN')
+    ap.add_argument('--wifi-native-runtime',action='store_true',help='build the complete native radio/runtime and retained terminal path; does not grant physical boot admission')
+    ap.add_argument('--wifi-nv-backup-directory',type=Path,help='private own GPT backup used only to generate expected identities; current NV is reread on each boot')
+    ap.add_argument('--wifi-country',choices=['AU'],help='explicit country for the currently implemented native radio profile')
     ap.add_argument('--wifi-irq-provider-directory',type=Path,help='exact original Timer/GIC/CPU PEs for the explicit early-memory profile; inert binding input')
     a=ap.parse_args();r=Path(__file__).resolve().parents[1]
+    if bool(a.wifi_nv_backup_directory)!=a.wifi_native_runtime or bool(a.wifi_country)!=a.wifi_native_runtime:
+        ap.error('native runtime, own GPT backup and explicit country must be selected together')
+    if a.wifi_native_runtime and (a.test_qemu or a.chain_app_manifest or a.physical_owned_marker or
+        a.kernel_core!=7 or a.kernel_cpus!=4 or not all((a.mss_mba_share,a.mss_firmware_in_payload,a.wifi_host_nonce_pool,
+            a.ram_shutdown_bridge,a.wled_native_runtime,a.physical_buttons,a.wifi_readonly))):
+        ap.error('native Wi-Fi requires the complete physical RAM-only CPU700/MSS/nonce/shutdown/display/input profile')
     if a.mss_firmware_in_payload and not a.mss_firmware_directory:
         ap.error('--mss-firmware-in-payload requires verified own firmware directory')
     if a.mss_memory and not a.wifi_early_memory:
@@ -794,6 +803,17 @@ def main():
         ap.error('selected application requires a complete disk identity')
     if a.chain_app_manifest and (not a.disk_guid or a.efi_application):ap.error('chain wrapper requires disk identity and no --efi-application')
     out=a.output.resolve();out.mkdir(parents=True,exist_ok=False)
+    wifi_runtime_header=None;wifi_runtime_metadata=None;wifi_runtime_inputs=[]
+    if a.wifi_native_runtime:
+        backup=a.wifi_nv_backup_directory.resolve(strict=True)
+        backup.relative_to(r)
+        spec=importlib.util.spec_from_file_location('polaris_nv_plan',r/'tools/polaris-nv-plan.py')
+        nv_packager=importlib.util.module_from_spec(spec);spec.loader.exec_module(nv_packager)
+        nv_packager.build(backup,out/'wifi-nv')
+        wifi_runtime_inputs=['tools/polaris-nv-plan.py','tools/polaris-wifi-runtime-config.py',
+            'tools/polaris-wifi-kernel-binding.py']
+        wifi_runtime_inputs += [str((backup/name).relative_to(r)) for name in
+            ('layout.json','manifest.json','sde.head.bin','sde.tail.bin','sdf.head.bin','sdf.tail.bin')]
     wifi_nonce_metadata=None
     if a.wifi_host_nonce_pool:
         spec=importlib.util.spec_from_file_location('polaris_wifi_nonce',r/'tools/polaris-wifi-nonce-pool.py')
@@ -844,6 +864,8 @@ def main():
         (out/'mss-firmware/manifest.json').write_text(json.dumps(mss_firmware,indent=2)+'\n')
     sys.path.insert(0,str(r/'tools'));import mkpayload
     tokens=raw[0x48:0x2a8].split(b'\0',1)[0].split()
+    if [t for t in tokens if t.startswith(b'polariswifi=')]!=([b'polariswifi=1'] if a.wifi_native_runtime else []):
+        raise ValueError('native Wi-Fi boot token must match the explicit complete runtime build')
     if any(t.startswith(b'polarisdurableguard=') for t in tokens):
         raise ValueError('durable guard must be produced by live resident firmware')
     if (a.physical_owned_marker or a.test_qemu_owned) and len(raw[0x48:0x2a8].split(b'\0',1)[0])+32>=608:
@@ -986,6 +1008,16 @@ def main():
     if a.battery_readonly:
         clock_span=[(syms['_polaris_uefi_clock']-va,256)] if '_polaris_uefi_clock' in syms else []
         battery_binding=battery_mailbox_binding(k,syms,va,end,reserved+clock_span)
+    if a.wifi_native_runtime:
+        spec=importlib.util.spec_from_file_location('polaris_wifi_runtime_config',r/'tools/polaris-wifi-runtime-config.py')
+        wifi_runtime_packager=importlib.util.module_from_spec(spec);spec.loader.exec_module(wifi_runtime_packager)
+        runtime_reserved=[(input_offset,256),(buttons_offset,256),(wled_offset,256),(log,4<<20),(total,8)]
+        runtime_reserved += [(syms[name]-va,256) for name in ('_polaris_uefi_clock','_polaris_uefi_battery') if name in syms]
+        wifi_runtime_header,wifi_runtime_metadata=wifi_runtime_packager.binding(k,va,end,runtime_reserved,a.wifi_country)
+        if wifi_runtime_metadata['shutdown']['offset']!=shutdown_offset:
+            raise ValueError('native terminal binding differs from the actual shutdown symbol')
+        (out/'uefi-wifi-native-runtime-config.h').write_text(wifi_runtime_header)
+        (out/'wifi-native-runtime-binding.json').write_text(json.dumps(wifi_runtime_metadata,indent=2)+'\n')
     # Run the exact C copy-plan admission function before emitting an EFI image.
     lib=out/'payload-validator.dylib';flags=['-DPOLARIS_EFI_TEST_QEMU=1'] if a.test_qemu else []
     subprocess.run(['/usr/bin/clang','-shared','-fPIC',*flags,str(r/'shim/polaris/payload.c'),'-o',str(lib)],check=True)
@@ -1074,6 +1106,8 @@ def main():
             if a.test_qemu_owned:f.write('#define EFI_XNU_OWNED_TEST 1\n')
             if a.test_omit_durable_guard:f.write('#define EFI_XNU_TEST_OMIT_OWNED_GUARD 1\n')
             if a.physical_owned_marker:f.write('#define EFI_XNU_PHYSICAL_MARKER 1\n')
+    if a.wifi_native_runtime:
+        with config.open('a') as f:f.write('#include "uefi-wifi-native-runtime-config.h"\n')
     disk_path=None
     if a.disk_guid:
         disk_path='\\EFI\\Polaris\\'+a.disk_version+'\\PAYLOAD.BIN'
@@ -1193,6 +1227,10 @@ def main():
     if a.mss_memory:inputs+=['tools/polaris-mss-memory-codec.py']
     if a.mss_mba_share:inputs+=['tools/polaris-mss-mba-share-codec.py']
     if a.wifi_host_nonce_pool:inputs+=['tools/polaris-wifi-nonce-pool.py']
+    if a.wifi_native_runtime:
+        inputs+=wifi_runtime_inputs
+        flags+=['-DPOLARIS_WIFI_GLINK_FREESTANDING=1','-I'+str(out/'wifi-nv'),
+            '-I'+str(r/'tools'),'-I'+str(r/'shim/polaris')]
     if mss_firmware:
         inputs+=mss_inputs
         flags+=['-I'+str(out/'mss-firmware'),'-I'+str(r/'shim/polaris')]
@@ -1210,6 +1248,21 @@ def main():
                 path=Path(name).resolve()
                 if path.is_relative_to(out):continue # generated bindings recorded separately
                 if not path.is_relative_to(r):raise ValueError('untracked external early-profile source: '+str(path))
+                inputs.append(str(path.relative_to(r)))
+    if a.wifi_native_runtime:
+        for name in wifi_runtime_packager.SOURCES:
+            source=r/'tools'/name;obj=out/(source.stem+'.obj');objects.append(str(obj));inputs.append(str(source.relative_to(r)))
+            cmd=['/usr/bin/clang','--target=aarch64-unknown-windows','-ffreestanding','-fno-builtin',
+                '-fno-stack-protector','-fshort-wchar','-mgeneral-regs-only','-O2','-Wall','-Wextra','-Werror',
+                '-Wframe-larger-than=1024',*flags,'-I'+str(out),'-MMD','-MF',str(obj.with_suffix('.d')),
+                '-c',str(source),'-o',str(obj)]
+            p=subprocess.run(cmd,capture_output=True);(out/(name+'.log')).write_bytes(p.stdout+p.stderr)
+            if p.returncode:raise RuntimeError('native Wi-Fi module compile failed: '+name)
+            dependencies=obj.with_suffix('.d').read_text().replace('\\\n',' ')
+            for dependency in shlex.split(dependencies.split(':',1)[1]):
+                path=Path(dependency).resolve()
+                if path.is_relative_to(out):continue
+                if not path.is_relative_to(r):raise ValueError('untracked external Wi-Fi source: '+str(path))
                 inputs.append(str(path.relative_to(r)))
     if mss_firmware and not a.mss_firmware_in_payload:
         obj=out/'mss-firmware.obj'
@@ -2067,6 +2120,14 @@ def main():
         manifest.update(wifi_host_nonce_pool=wifi_nonce_metadata,
             wifi_host_nonce_header_sha256=sha(out/'uefi-wifi-image-nonce-pool.h'),
             wifi_host_nonce_native_enabled=False,wifi_host_nonce_physical_candidate_ready=False)
+    if a.wifi_native_runtime:
+        manifest.update(wifi_native_runtime_enabled=True,wifi_native_runtime_default_OFF=True,
+            wifi_native_runtime_binding=wifi_runtime_metadata,
+            wifi_native_runtime_header_sha256=sha(out/'uefi-wifi-native-runtime-config.h'),
+            wifi_native_NV_generated_inputs={p.name:sha(p) for p in (out/'wifi-nv').iterdir()},
+            wifi_native_extra_sources=list(wifi_runtime_packager.SOURCES),
+            wifi_host_nonce_native_enabled=True,wifi_native_display_input_integrated=False,
+            wifi_native_physical_candidate_ready=False,wifi_native_boot_admission=False)
     (out/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
     print(json.dumps({k:manifest[k] for k in ['artifact','sha256','bytes','QEMU_variant','device_execution_tested']}))
 

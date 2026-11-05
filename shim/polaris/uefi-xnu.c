@@ -1385,7 +1385,8 @@ static int prepare_boot(void *context)
  * After entering this function, failures hold and never return to UsbFn or
  * an original provider. Full post-CE retirement is still required before the
  * builder may admit this feature into a physical candidate. */
-__attribute__((noreturn)) static void wifi_native_boot(void)
+/* Keep staging/owner acquisition out of the persistent service stack frame. */
+__attribute__((noinline)) static void wifi_native_startup(void)
 {
 #if EFI_XNU_BUTTONS_AVAILABLE
     (void)buttons_prepare; /* Existing3c0 input owner is not a c0 runtime grant. */
@@ -1430,8 +1431,15 @@ __attribute__((noreturn)) static void wifi_native_boot(void)
     if(!pwns_begin(&wifi_native_parent,&retained_wifi_memory,&mss_memory,mss_memory_digest,&mss_mba_share,
         &wifi_native_nv,&wifi_native_ce_memory,&wifi_native_htt_memory,pmsf_segments,
         polaris_wifi_image_nonces,polaris_wifi_image_nonce_sha256))power_unknown_hold();
+}
+/* The staged producer switch has its own bounded temporary storage. */
+__attribute__((noinline)) static int wifi_native_startup_step(void)
+{return pwns_step(&wifi_native_parent);}
+__attribute__((noreturn)) static void wifi_native_boot(void)
+{
+    wifi_native_startup();
     wifi_native_boot_phase=5;
-    for(;;){int result=pwns_step(&wifi_native_parent);if(result<0)power_unknown_hold();if(result==2)break;}
+    for(;;){int result=wifi_native_startup_step();if(result<0)power_unknown_hold();if(result==2)break;}
     /* READY is rechecked by the actual handoff, not inferred from phase++ . */
     wifi_native_boot_phase=6;
     if(pwkr_begin(&wifi_native_parent,&wifi_native_kernel_copy,&polaris_efi_ap_state,
