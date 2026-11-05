@@ -54,6 +54,37 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05: precise IIG cache repair and control client
+
+- e3097b16021c1abbcd928c0d5e30e4aa8ae5b310 committed/pushed; CI41971165789,
+  job127059524945 SUCCESS, including final linked mailbox/symbol checks.
+  Artifact download is running; independent local artifact binding still pending. CI41970138332 failed because four added private
+  BSD headers lacked exact cache bindings. All three Wi-Fi patches DID apply.
+  Added only their shipped hashes. Original header/IDL identity remains strict.
+  Three cache tests PASS; the old host-source comparison now distinguishes
+  later native-only SMEM/GLINK revisions from their older hash-bound kernel copies.
+- Uncommitted tools/polaris-wifi-control-wire.h and userland/wifi/polaris-wifi-ctl.c
+  implement typed STATE/BSS replies and root-only private ioctl client. JOIN
+  reads stdin with byte reads (no stdio secret buffer), hides terminal echo,
+  uses signal-masked pselect and restores terminal state before redelivery.
+  ASan/UBSan850 control/wire checks,6 secret length/input cases and actual
+  terminal restoration on SIGINT/TERM/HUP PASS after CI completed. Standalone
+  iOS16 arm64 build/signature verification PASS:51344B, SHA
+  6f22acb7bf792856f78d15210005f0f2ac9df71afe364fc10f63ea6d35af29ed.
+  Evidence control-client-0001/proof-0001.json and ios16/manifest.json.
+  No host en0/device ioctl has been issued. Client installation remains pending.
+- Uncommitted uefi-wifi-startup-parent.h now sequences the actual native
+  power/MSS/SMEM/GLINK/WLFW/CE/HTC/WMI/HTT/nonce producers with retained
+  per-phase failures. Native COFF/MachO generalregs/frame1024 compiles PASS
+  (startup-parent-0001/native-results.json). Whole parent simulation/callsite,
+  early NV/CE/HTT allocation integration and persistent handoff remain pending.
+  This is not boot admission or a completed native runtime.
+- Continued runtime audit: pmsc_arch's state2/native-flag0/180s startup contract
+  plus pmni DAIF0xc0 and CE/HTT/GLINK finite counters all need an actual qualified
+  CPU0-to-XNU handoff. No timeout-only change, physical readiness or scan claimed.
+  Current step2/5; current plus3 remain. Last15min05:07Z/16:07 Melbourne,
+  next05:22Z/16:22. No new phone boot or USB observation; goal remains ACTIVE.
+
 ### Continuous Wi-Fi milestone — 2026-11-05: BSD interface and actual CI omission fixed
 
 - Committed345dfe0edfc9f0d198155df1a3a0fc51e0aa24cc and pushed successfully;
