@@ -83,7 +83,10 @@ static struct pmnp_state*nonce_source;
 static uint8_t nonce_bundle[PWNP_BYTES],nonce_digest[32];
 #endif
 static int network_poll(void){advance_to(owner->last+19200);return pmwn_step(network);}
-int main(int argc,char**argv)
+#ifndef PMWN_TEST_ENTRY
+#define PMWN_TEST_ENTRY main
+#endif
+int PMWN_TEST_ENTRY(int argc,char**argv)
 {
 #if defined(POLARIS_WIFI_NETWORK_NONCE_TEST)
     CHECK(argc==12);

@@ -58,12 +58,16 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 - e3097b16021c1abbcd928c0d5e30e4aa8ae5b310 committed/pushed; CI41971165789,
   job127059524945 SUCCESS, including final linked mailbox/symbol checks.
-  Artifact download is running; independent local artifact binding still pending. CI41970138332 failed because four added private
+  Artifact13390391234 downloaded and independently verified:17358024B kernel
+  SHA1229425ea56e66a9a0d4ecc542d3b6f4ebf25fc228be06bf985889efbb1f46b2;
+  actual initialized DATA page16KiB at offset0xc00000; interface start/seal
+  and mailbox attach symbols present. Profile/SHA256SUMS match e3097b1.
+  Evidence kernel-interface-0001/ci-native-binding-0001.json. Boot admission false. CI41970138332 failed because four added private
   BSD headers lacked exact cache bindings. All three Wi-Fi patches DID apply.
   Added only their shipped hashes. Original header/IDL identity remains strict.
   Three cache tests PASS; the old host-source comparison now distinguishes
   later native-only SMEM/GLINK revisions from their older hash-bound kernel copies.
-- Uncommitted tools/polaris-wifi-control-wire.h and userland/wifi/polaris-wifi-ctl.c
+- Committed/pushed395fe60: tools/polaris-wifi-control-wire.h and userland/wifi/polaris-wifi-ctl.c
   implement typed STATE/BSS replies and root-only private ioctl client. JOIN
   reads stdin with byte reads (no stdio secret buffer), hides terminal echo,
   uses signal-masked pselect and restores terminal state before redelivery.
@@ -73,10 +77,14 @@ early samples only. On0029 the human already confirmed boot complete and said
   6f22acb7bf792856f78d15210005f0f2ac9df71afe364fc10f63ea6d35af29ed.
   Evidence control-client-0001/proof-0001.json and ios16/manifest.json.
   No host en0/device ioctl has been issued. Client installation remains pending.
-- Uncommitted uefi-wifi-startup-parent.h now sequences the actual native
+- New uefi-wifi-startup-parent.h now sequences the actual native
   power/MSS/SMEM/GLINK/WLFW/CE/HTC/WMI/HTT/nonce producers with retained
   per-phase failures. Native COFF/MachO generalregs/frame1024 compiles PASS
-  (startup-parent-0001/native-results.json). Whole parent simulation/callsite,
+  (startup-parent-0001/native-results.json).149 actual orchestration checks
+  with SOFTWARE stage outcomes PASS (WAIT stays put; failure retains phase,
+  closes reentry and keeps CPU ownership). Size0x4212000; check only private
+  metadata before the fresh owner admission, each actual producer still
+  checks its zero state. Whole native parent composition/callsite,
   early NV/CE/HTT allocation integration and persistent handoff remain pending.
   This is not boot admission or a completed native runtime.
 - Continued runtime audit: pmsc_arch's state2/native-flag0/180s startup contract
