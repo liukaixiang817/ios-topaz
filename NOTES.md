@@ -54,6 +54,20 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05: loader handoff refusal dispatch
+
+- Complete-startup/QRTR sourcec8be4c1 committed/pushed. Runtime review found
+  pwkr_poll returns0 on sticky refusal, while the loader checked only<0 and
+  would spin indefinitely in that loop. Caller now accepts only WAIT1/READY2
+  and enters the retained terminal handler for any other result. Corrected
+  the software test peer to return the actual0 failure ABI instead of-1.
+-529 actual extracted loader-body checks and four whole native ON/OFF
+  COFF/MachO exports PASS, generalregs/frame1024. Private evidence
+  loader-poll-failure-0001. No phone/image/kernel-CI operation. NEXT compose
+  full startup with copied payload/runtime/mailbox worker, then finish exit/
+  builder/physical steps. Last15min07:22Z,next07:37Z. Step2/5,current plus3 remain.
+  All incomplete physical gates remain incomplete. Goal ACTIVE.
+
 ### Continuous Wi-Fi milestone — 2026-11-05: complete startup parent and QRTR fix
 
 - Host-quiescence source5e5803e committed/pushed. New composed test executes

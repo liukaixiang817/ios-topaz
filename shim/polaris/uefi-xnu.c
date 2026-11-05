@@ -1431,7 +1431,7 @@ __attribute__((noreturn)) static void wifi_native_boot(void)
     wifi_native_boot_phase=6;
     if(pwkr_begin(&wifi_native_parent,&wifi_native_kernel_copy,&polaris_efi_ap_state,
         (uintptr_t)polaris_efi_ap_entry,(uintptr_t)ap_stack,sizeof(ap_stack),&plan,EFI_XNU_WIFI_MAILBOX_VA)!=1)power_unknown_hold();
-    for(;;){int result=pwkr_poll(&wifi_native_parent);if(result<0)power_unknown_hold();if(result==2)break;}
+    for(;;){int result=pwkr_poll(&wifi_native_parent);if(result!=1&&result!=2)power_unknown_hold();if(result==2)break;}
     cpu_status=wifi_native_parent.owner.runtime.result;wifi_native_boot_phase=7;
     if(!pwwn_begin(&wifi_native_worker,&wifi_native_parent,EFI_XNU_WIFI_COUNTRY))power_unknown_hold();
     wifi_native_boot_phase=8;

@@ -94,7 +94,7 @@ static int pwkr_begin(void*p,const void*k,void*a,uint64_t e,uint64_t b,uint64_t 
 static unsigned wifi_native_kernel_copy;
 static int pwkr_begin(void*p,const void*k,void*a,uint64_t e,uint64_t b,uint64_t z,const void*q,uint64_t va)
 {CHECK(p==&wifi_native_parent&&k==&wifi_native_kernel_copy&&a==&polaris_efi_ap_state&&e==(uintptr_t)polaris_efi_ap_entry&&b==(uintptr_t)ap_stack&&z==sizeof(ap_stack)&&q==&plan&&va==EFI_XNU_WIFI_MAILBOX_VA&&turns==3&&load_state==2);if(!record(12))return -1;load_state=4;return 1;}
-static int pwkr_poll(void*p){CHECK(p==&wifi_native_parent&&load_state==4);if(!record(13))return -1;return ++polls==2?2:1;}
+static int pwkr_poll(void*p){CHECK(p==&wifi_native_parent&&load_state==4);if(!record(13))return 0;return ++polls==2?2:1;}
 static int pwwn_begin(void*w,void*p,unsigned country)
 {CHECK(w==&wifi_native_worker&&p==&wifi_native_parent&&country==36&&polls==2);return record(14);}
 static int pwwn_step(void*w)
