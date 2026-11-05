@@ -14,7 +14,7 @@
 struct pmhc_state {
     uint64_t transport,owner,opening,next_poll;struct phtc_state client;
     uint32_t attempted,ready,unknown,error,initial_pipe,opened,poll_pipe,frame_kind,raw_pipe,raw_bytes;
-    uint64_t consumer;
+    uint64_t consumer,data_consumer;
 };
 static inline int pmhc_fail(struct pmhc_state*s,unsigned error)
 {s->unknown=1;if(!s->error)s->error=error;return -1;}

@@ -16,6 +16,9 @@ static uint8_t*device_at(uint64_t at,unsigned bytes)
 {CHECK(at>=CE_ALLOCATION&&bytes<=PWDM_BYTES-(at-CE_ALLOCATION));return device_memory+at-CE_ALLOCATION;}
 static int pccl_actual(uint64_t at,unsigned bytes,unsigned operation,struct pccl_record*r)
 {
+#ifdef PMCT_TEST_CACHE_HOOK
+    int handled=PMCT_TEST_CACHE_HOOK(at,bytes,operation,r);if(handled>=0)return handled;
+#endif
     CHECK(transport&&transport->busy&&local_mask&&owner->held&&!(at&63)&&bytes&&!(bytes&63)&&bytes<=8192);
     transport_caches++;uint8_t*d=device_at(at,bytes),*cpu=ce_shadow+at-CE_ALLOCATION;
     if(operation==PWMK_CLEAN_INVALIDATE){

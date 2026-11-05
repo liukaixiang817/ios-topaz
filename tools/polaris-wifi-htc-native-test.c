@@ -39,6 +39,9 @@ static void htc_tx(unsigned pipe,unsigned slot,const uint8_t*desc)
     const uint8_t*frame=device_at(pwcr_get(desc,8),bytes);CHECK(bytes>=8&&phtc_u16(frame+2)+8==bytes);
     unsigned eid=frame[0];CHECK(pwcr_get(desc+10,2)==(uint64_t)(eid<<4));
     if(eid){
+#ifdef PMHC_TEST_DATA_HOOK
+        if(eid==htc->client.htt){PMHC_TEST_DATA_HOOK(pipe,frame,bytes);return;}
+#endif
 #ifdef PMHC_TEST_WMI_HOOK
         PMHC_TEST_WMI_HOOK(pipe,frame,bytes);return;
 #endif

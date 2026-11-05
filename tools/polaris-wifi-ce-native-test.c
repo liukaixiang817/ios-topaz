@@ -24,6 +24,9 @@ static uint32_t ce_regs[13][1024];
 #define CE_ALLOCATION UINT64_C(0xb0200000)
 static efi_status pcdm_map(struct efi_system*system,struct pwea_map*m)
 {
+#ifdef PMCE_TEST_SECOND_MAP
+    if(ce_maps==2)return PMCE_TEST_SECOND_MAP(system,m);
+#endif
     CHECK(system==s&&ce_maps<2&&m==&ce_memory->map[ce_maps]);ce_maps++;
     unsigned n=0;emit_descriptor(m->data+40*n++,3,(uintptr_t)arena,PMMN_TEST_ARENA_BYTES);
     emit_descriptor(m->data+40*n++,2,0x180000000,0x10000000);
@@ -33,14 +36,27 @@ static efi_status pcdm_map(struct efi_system*system,struct pwea_map*m)
     m->map.bytes=40*n;m->map.stride=40;m->map.version=1;m->map.key=80+ce_maps;return 0;
 }
 static efi_status pcdm_allocate(struct efi_system*system,uint64_t*at)
-{CHECK(system==s&&!ce_allocations&&*at==PWDM_LIMIT-1);ce_allocations++;*at=CE_ALLOCATION;return 0;}
+{
+#ifdef PMCE_TEST_SECOND_ALLOCATE
+    if(ce_allocations)return PMCE_TEST_SECOND_ALLOCATE(system,at);
+#endif
+    CHECK(system==s&&!ce_allocations&&*at==PWDM_LIMIT-1);ce_allocations++;*at=CE_ALLOCATION;return 0;
+}
 static void ce_pre_native(void)
 {
     ce_memory=(void*)(arena+0x7fc0000);CHECK(sizeof(*ce_memory)<0x40000);memset(ce_memory,0,sizeof(*ce_memory));ce_maps=ce_allocations=0;
     CHECK(pcdm_run(ce_memory,early)&&ce_memory->complete&&ce_maps==2&&ce_allocations==1);
+#ifdef PMCE_TEST_SECOND_PREPARE
+    PMCE_TEST_SECOND_PREPARE();
+#endif
 }
 static void ce_map_extra(struct pwea_map*m)
-{CHECK(ce_memory->complete&&m->map.bytes+40<=sizeof(m->data));emit_descriptor(m->data+m->map.bytes,2,CE_ALLOCATION,PWDM_BYTES);m->map.bytes+=40;}
+{
+    CHECK(ce_memory->complete&&m->map.bytes+40<=sizeof(m->data));emit_descriptor(m->data+m->map.bytes,2,CE_ALLOCATION,PWDM_BYTES);m->map.bytes+=40;
+#ifdef PMCE_TEST_SECOND_RETAIN
+    PMCE_TEST_SECOND_RETAIN(m);
+#endif
+}
 static void ce_at(struct pmni_translation*t)
 {if(ce&&ce->pending&&ce->phase==3&&ce_fault==4&&t->page==PWCE_BASE)t->write_par|=1;}
 static int ce_raw(const struct pmni_command*c,unsigned*out)

@@ -44,6 +44,34 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): native HTT setup
+
+- Native passive scan is commite16601e. Default-OFF pmht consumes WMI READY
+  plus a SECOND actual pcdm pre-native8MiB+guards allocation, independently
+  retained in the final map and disjoint CE/WMI/NV/modem/kernel/image claims.
+  Unique HTC data consumer and producer consumer preserve this bank's lifetime.
+- Native per-operation WB translations/copy/readback/CIVAC zero2050 pages,
+  fill2047 of2048 RX addresses, publish alloc-index last, then perform actual
+  HTT VERSION ->64-bit fragment bank ->64-bit RX ring ->AGGR.1056 TX slots,
+  72-byte fragment descriptors,2048-byte RX/TX buffers. Version2/3 accepted;
+  no setup reply is invented for commands that have none. Parent CPU owner,
+  finite CE/GLINK budgets and resident DMA backing remain unchanged.
+- Independently compiled pinned rx_desc.h and HTT v2 struct confirm byte
+  offsets: hdr296,payload360,PPDU108/148,MPDU16/104,MSDU28/48,attention4,frag8.
+  Private source/offset tool:htt-layout-0001; no foreign build script execution.
+- Full native ASan/UBSan PASS5/12417268: normal second allocation/zero/index/
+  target setup, partial zero, cache failure, unsupported version and timeout.
+  Protocol52 PASS, both full native and protocol COFF/MachO generalregs/frame1024
+  PASS. Evidence:htt-native-0001/proof-0001.json. All target/privileged leaves
+  SOFTWARE. No actual radio data, phone/USB/CI/push/boot or parent registration.
+- NEXT native HTT TX/RX ownership and packet delivery. New pure protocol WIP
+  passes18120 checks incl3000 ring wraps/recycles, retained TX completions,
+  peer maps, duplicate/invalid completion and RX address rejection. Needs
+  actual native memory/cache/CE composition. Then station join/key/IP/DNS and
+  whole-parent/runtime plus post-CE DMA retirement, before a new boot image.
+  Still execution2/5: current step plus3 remain. Last15min01:20Z/12:20,
+  next01:35Z/12:35 Melbourne. Goal ACTIVE; continue until real Wi-Fi works.
+
 ### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): native passive scan
 
 - WMI bootstrap is commit59b85a6. Default-OFF pmwsn consumes its actual READY
