@@ -44,6 +44,31 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): WPA2 four-way protocol
+
+- Crypto primitives are commit813686d. New pwpa binds the associated AP RSN,
+  supplied PMK/fresh SNonce and actual EAPOL messages. Derives48-byte PTK,
+  validates descriptor/flags/length/MIC/ANonce/replay/RSC, incrementally unwraps
+  and checks exact AP RSN plus16-byte GTK KDE before exposing installable keys.
+- Exact M3 retry replies M4 without reinstall; higher authenticated counter
+  unwraps and requires identical GTK before replying, preserving original RSC
+  and installed state. Lower counter, modified RSN/KDE, bad MIC and bad unwrap
+  never authorize data. Late M1 cannot replace live keys.20s handshake bound,
+  explicit one-shot installer start/completion required to authorize the port.
+- ASan/UBSan594 checks PASS, COFF/MachO generalregs/frame1024 PASS. Independent
+  Python hashlib/HMAC/OpenSSL encryptor generates public test exchange and
+  authenticated malformed variants; evidence:wpa-0001/proof-0001.json.
+  First test exposed a progress return during authorized M3 retry; fixed to
+  continue unwrap before reporting readiness. No actual credentials used.
+- NEXT native frame/EAPOL consumer and key installer, group rekey (not yet
+  supported), actual regulatory/entropy and whole-parent/runtime/post-CE exit.
+  IMPORTANT primary ath10k mac.c install_key waits3s for HTT SEC_IND, not WMI
+  INSTALL_KEY_COMPLETE (that WMI handler only logs). HTT indication includes
+  peer16, cipher7bit/unicastbit,8Michael+16WAPI bytes; exact matching must gate
+  installation. WMI cipherCCMP4, HTT cipherCCMP6. Own key cmd body92 bytes.
+- No phone/USB/CI/push/boot or parent registration; still execution2/5, current
+  step plus3 remain. Last15min02:06Z, next02:21Z/13:21 Melbourne. Goal ACTIVE.
+
 ### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): WPA2 crypto primitives
 
 - Native station association is commit7da14b1. New original pwch implements
