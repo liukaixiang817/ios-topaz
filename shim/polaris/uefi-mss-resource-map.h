@@ -108,6 +108,9 @@ static inline int pmrg_current(struct pmrg_map*r)
 static inline int pmrg_device_page(uint64_t page)
 {
     if(page&4095)return 0;
+#if defined(EFI_XNU_WIFI_SMMU_NATIVE_AVAILABLE) && EFI_XNU_WIFI_SMMU_NATIVE_AVAILABLE
+    if(page==0x15000000||page==0x15001000||(page>=0x15040000&&page<0x15080000))return 1;
+#endif
 #if defined(EFI_XNU_MSS_SFPB_IO_AVAILABLE) && EFI_XNU_MSS_SFPB_IO_AVAILABLE
     if(page==UINT64_C(0x1f43000))return 1;
 #endif

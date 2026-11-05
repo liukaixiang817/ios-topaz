@@ -44,6 +44,26 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): current read-only WLAN SMMU route
+
+- WLFW CFG/MISSION/OFF is commit631ec99. Default-OFF pmws now consumes that
+  actual startup owner and reads APPS SMMU SID40/41 routing in two complete
+  passes. Own arm-smmu.c and DT determine the register geometry. Requires one
+  matching stream entry per SID; accepts direct bypass or vendor S1-bypass
+  context with SCTLR.M clear, no FSR or pending TLB sync. All snapshots must
+  agree, including unrelated stream entries. No SMMU write or CB adoption.
+- Full actual startup composition ASan/UBSan PASS8/9785063: vendor TRANS/CB7
+  route, direct bypass, duplicate match, translation enabled, context fault,
+  inter-pass change, failed current AT and disabled client. Normal path reads
+  544 registers; no writes. Completed snapshot expires after200ms; unchanged
+  CPU/resource owner remains required. COFF/MachO generalregs/frame1024 PASS.
+  Evidence:wlan-smmu-native-0001/proof-0001.json. Hardware/UEFI leaves SOFTWARE.
+- NEXT independent CE DMA allocation, native rings/HTC, whole-parent/kernel
+  runtime handoff. This route is pre-enable admission only, not runtime DMA
+  authority. No phone/USB/CI/push/boot or parent registration. Execution2/5:
+  this step plus3 remain. Last15min00:19Z/11:19; next00:34Z/11:34 Melbourne.
+  Goal ACTIVE; continue to actual scan/join/IP/DNS/data.
+
 ### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): WLFW CE configuration / mission / off
 
 - Exact native VMID return is commit225d318. WLFW client now retains CFG23,
