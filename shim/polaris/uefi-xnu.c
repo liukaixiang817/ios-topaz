@@ -341,9 +341,11 @@ static struct pmsb_result mss_mba_share;
 #if EFI_XNU_WIFI_NATIVE_MEMORY_AVAILABLE
 #include "uefi-wifi-nv-native.h"
 #include "uefi-wifi-ce-memory-native.h"
+#include "uefi-wifi-kernel-stage.h"
 #include "own-nv-plan.h" /* private generated GPT geometry; no NV contents */
 static struct pnnv_state wifi_native_nv;
 static struct pcdm_state wifi_native_ce_memory,wifi_native_htt_memory;
+static struct pwks_image wifi_native_kernel_copy;
 #endif
 #endif
 #endif
@@ -1309,10 +1311,16 @@ static int prepare_boot(void *context)
         const struct polaris_segment *s=&p->segs[i];
         if(!identity_range(p->phys_base+s->vmaddr-p->virt_base,s->vmsize))return 0;
     }
+#if EFI_XNU_WIFI_NATIVE_MEMORY_AVAILABLE
+    if(!pwks_begin(&wifi_native_kernel_copy,p,payload_count))return 0;
+#endif
     for(uint32_t i=0;i<p->nsegs;i++){
         const struct polaris_segment *s=&p->segs[i];uint64_t dest=p->phys_base+s->vmaddr-p->virt_base;
         bytes_copy((void*)(uintptr_t)dest,payload+s->file_off,s->file_size);
         bytes_zero((void*)(uintptr_t)(dest+s->file_size),s->vmsize-s->file_size);clean(dest,s->vmsize);
+#if EFI_XNU_WIFI_NATIVE_MEMORY_AVAILABLE
+        if(!pwks_verify(&wifi_native_kernel_copy,i))return 0;
+#endif
     }
 #if EFI_XNU_HOST_UTC_AVAILABLE
     /* Exact file-backed native DATA symbol; after all copy/zero, before CPU_ON.

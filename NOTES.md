@@ -54,6 +54,23 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05: actual kernel copy readback
+
+- Actual loader copy loop now verifies every initialized and zero-fill byte
+  before later intentional DATA mailbox changes, with immutable payload-header
+  binding and a rolling copied-image digest. Segment order follows the admitted
+  payload (including nonmonotonic nonoverlapping segments); wrong verification
+  order or changed metadata permanently closes the record. Default native
+  memory feature remains OFF; this record does not start a CPU or admit runtime.
+- ASan/UBSan4396 actual host-memory checks PASS: every first-segment file/BSS
+  byte corruption, every header byte, overlap/range/overflow and ordering.
+  Initial test pointer expression triggered UBSan before correction; final run
+  uses no-sanitize-recover and exits cleanly. Actual whole parent native COFF
+  and MachO compiles PASS, generalregs/frame1024. Evidence kernel-stage-0001/
+  proof-0001.json. No hardware or new boot. Next: qualified CPU_ON/runtime
+  authority, native mailbox producer and complete parent/post-CE retirement.
+  Step2/5,current plus3 remain. Last15min05:37Z,next05:52Z. Goal ACTIVE.
+
 ### Continuous Wi-Fi milestone — 2026-11-05: real loader allocations and lifecycle bindings
 
 - Startup orchestration committed/pushed60718c2 (149 SOFTWARE stage checks,
