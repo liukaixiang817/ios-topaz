@@ -51,16 +51,20 @@ static inline int pwea_core_at(struct pwmc_irq_AT*a)
 }
 static inline int pwea_native_fail(struct pwea_native*r,unsigned error)
 {if(!r->error)r->error=error;r->unknown=1;return 0;}
-static inline int pwea_native_binding(const struct pwea_native*r)
+/* Exact image/source identity at an explicit lifecycle state; this alone
+ * grants no CPU, radio, DMA or runtime permission. Startup remains flag0. */
+static inline int pwea_native_binding_at(const struct pwea_native*r,unsigned native)
 {
     const struct efi_system*s=(const void*)(uintptr_t)r->system;
-    return (uintptr_t)s->boot==r->boot&&pgcd_equal(s->boot,r->BS,sizeof(r->BS))&&
+    return native<=1&&(uintptr_t)s->boot==r->boot&&pgcd_equal(s->boot,r->BS,sizeof(r->BS))&&
         pgcd_equal((const void*)(uintptr_t)r->image_address,&r->image,sizeof(r->image))&&
-        !*(const volatile uint32_t*)(uintptr_t)r->native_address;
+        *(const volatile uint32_t*)(uintptr_t)r->native_address==native;
 }
-static inline int pwea_core_check(const struct pwea_native*r,struct pwea_core*q,const struct pwea_map*m)
+static inline int pwea_native_binding(const struct pwea_native*r)
+{return pwea_native_binding_at(r,0);}
+static inline int pwea_core_check_at(const struct pwea_native*r,struct pwea_core*q,const struct pwea_map*m,unsigned native)
 {
-    if(!m->map.valid||!pwmc_zero(q,sizeof(*q))||!pwea_native_binding(r))return 0;
+    if(!m->map.valid||!pwmc_zero(q,sizeof(*q))||!pwea_native_binding_at(r,native))return 0;
     for(unsigned k=0;k<PWEA_CORE_PAGES;k++){
         struct pwmc_irq_AT*a=&q->AT[k];a->page=r->core+4096*k;
         if(!polaris_efi_range_owned(m->data,m->map.bytes,m->map.stride,a->page,4096,3)&&
@@ -72,8 +76,10 @@ static inline int pwea_core_check(const struct pwea_native*r,struct pwea_core*q,
     if(!pgci_verify((const void*)(uintptr_t)r->core,r->core,PGCI_IMAGE_BYTES,q->hashes,&q->hash_failed,&q->hash_count))return 0;
     q->TPL=pwfi_le((const void*)(uintptr_t)(r->core+0x1b098),8);
     q->smm=pwfi_le((const void*)(uintptr_t)(r->core+0x1cb78),8);
-    if(q->TPL!=4||q->smm||!pwea_native_binding(r))return 0;q->complete=1;return 1;
+    if(q->TPL!=4||q->smm||!pwea_native_binding_at(r,native))return 0;q->complete=1;return 1;
 }
+static inline int pwea_core_check(const struct pwea_native*r,struct pwea_core*q,const struct pwea_map*m)
+{return pwea_core_check_at(r,q,m,0);}
 static inline int pwea_native_source(struct pwea_native*r,unsigned call,unsigned phase,unsigned map)
 {return pwea_core_check(r,&r->call[call].source[phase],&r->memory.map[map]);}
 static inline void pwea_native_guard_seal(const struct pwea_native*r,unsigned call,uint8_t out[32])

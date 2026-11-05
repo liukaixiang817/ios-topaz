@@ -51,14 +51,16 @@ static inline int pmsi_blob_owned(const struct pweh_result*h,uint64_t blob,uint6
     return pwmc_parent_in_image(&h->input.early->image,blob,bytes);
 #endif
 }
-static inline int pmsi_binding(const struct pmsi_result*r)
+static inline int pmsi_binding_at(const struct pmsi_result*r,unsigned native,unsigned state)
 {
     const struct pmmn_native*m=(const void*)(uintptr_t)r->memory;
     const struct pweh_result*h=(const void*)(uintptr_t)r->retained;uint8_t digest[32];
     pweh_digest(h,sizeof(*h),digest);
-    return pgcd_equal(digest,r->retained_digest,32)&&pmmn_retained(m,r->memory_digest,h)&&
+    return pgcd_equal(digest,r->retained_digest,32)&&pmmn_retained_at(m,r->memory_digest,h,native,state)&&
         pgcd_equal((const void*)(uintptr_t)r->assets,r->asset,sizeof(r->asset))&&pmsi_blob_owned(h,r->blob,r->blob_bytes);
 }
+static inline int pmsi_binding(const struct pmsi_result*r)
+{return pmsi_binding_at(r,0,2);}
 /* Shared with the software peer on guarded RAM shadows. All source accesses
  * stop at filesz; complete destination pages are initialized, including tails. */
 static inline int pmsi_words(uint64_t destination,uint64_t source,unsigned bytes,struct pwfi_sha256*hash,struct pmsi_page*p)

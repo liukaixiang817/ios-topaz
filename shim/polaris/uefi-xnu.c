@@ -9,6 +9,14 @@
 #include "uefi-memory.h"
 #include "runtime-marker.h"
 #include "uefi-xnu-config.h" /* exact payload bytes/CRC, symbol offsets, board */
+#ifndef EFI_XNU_WIFI_NATIVE_MEMORY_AVAILABLE
+#define EFI_XNU_WIFI_NATIVE_MEMORY_AVAILABLE 0
+#endif
+#if EFI_XNU_WIFI_NATIVE_MEMORY_AVAILABLE
+#if !EFI_XNU_MSS_MBA_SHARE_AVAILABLE || !EFI_XNU_WIFI_NV_NATIVE_AVAILABLE || !EFI_XNU_WIFI_CE_MEMORY_AVAILABLE
+#error "Native radio memory requires the actual independent MSS, fresh NV and DMA producers"
+#endif
+#endif
 #ifndef EFI_XNU_WIFI_NONCE_POOL_AVAILABLE
 #define EFI_XNU_WIFI_NONCE_POOL_AVAILABLE 0
 #endif
@@ -330,6 +338,13 @@ static struct pmsi_result mss_stage;
 #if EFI_XNU_MSS_MBA_SHARE_AVAILABLE
 #include "uefi-mss-mba-share.h"
 static struct pmsb_result mss_mba_share;
+#if EFI_XNU_WIFI_NATIVE_MEMORY_AVAILABLE
+#include "uefi-wifi-nv-native.h"
+#include "uefi-wifi-ce-memory-native.h"
+#include "own-nv-plan.h" /* private generated GPT geometry; no NV contents */
+static struct pnnv_state wifi_native_nv;
+static struct pcdm_state wifi_native_ce_memory,wifi_native_htt_memory;
+#endif
 #endif
 #endif
 #endif
@@ -1844,6 +1859,30 @@ static efi_status admission(void)
     if(!mss_ok){original_service_unknown=1;power_unknown_hold();}
     pweh_digest(&mss_memory,sizeof(mss_memory),mss_memory_digest);
     early_map=&mss_memory.memory.map[3];
+#endif
+#if EFI_XNU_WIFI_NATIVE_MEMORY_AVAILABLE
+    /* All original BlockIO reads and independent allocations finish before
+     * the final retained map and before CPU0 takes continuous ownership.
+     * The NV reader has no write/reset/flush callback. These three retained
+     * banks are never inferred from firmware pointers or borrowed memory. */
+    int nv_ok=pnnv_run(&wifi_native_nv,&early_wifi_memory,&polaris_nv_plan);
+    ram_report("WIFI_NATIVE_FRESH_NV_ACCEPTED=",nv_ok);
+    if(!nv_ok){original_service_unknown=1;power_unknown_hold();}
+    int ce_memory_ok=pcdm_run(&wifi_native_ce_memory,&early_wifi_memory);
+    ram_report("WIFI_NATIVE_CE_MEMORY_ACCEPTED=",ce_memory_ok);
+    if(!ce_memory_ok){original_service_unknown=1;power_unknown_hold();}
+    int htt_memory_ok=pcdm_run(&wifi_native_htt_memory,&early_wifi_memory);
+    ram_report("WIFI_NATIVE_HTT_MEMORY_ACCEPTED=",htt_memory_ok);
+    if(!htt_memory_ok){original_service_unknown=1;power_unknown_hold();}
+    if(!pwea_disjoint(wifi_native_ce_memory.allocation.address,PWDM_BYTES,
+                     wifi_native_htt_memory.allocation.address,PWDM_BYTES)||
+       !pwea_disjoint(wifi_native_nv.allocation.address,PNV_BYTES,
+                     wifi_native_ce_memory.allocation.address,PWDM_BYTES)||
+       !pwea_disjoint(wifi_native_nv.allocation.address,PNV_BYTES,
+                     wifi_native_htt_memory.allocation.address,PWDM_BYTES)){
+        original_service_unknown=1;power_unknown_hold();
+    }
+    early_map=&wifi_native_htt_memory.map[1];
 #endif
     bytes_copy(map_snapshot.data,early_map->data,early_map->map.bytes);
     map_snapshot.bytes=early_map->map.bytes;map_snapshot.stride=early_map->map.stride;

@@ -54,6 +54,30 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05: real loader allocations and lifecycle bindings
+
+- Startup orchestration committed/pushed60718c2 (149 SOFTWARE stage checks,
+  two native formats); control client committed/pushed395fe60. Full kernel
+  CI41971165789 and its actual artifact binding PASS as recorded below.
+- Actual uefi-xnu.c incoming loader now has a default-OFF native-memory hook:
+  fresh own NV read-only collection, independent CE and HTT allocations,
+  explicit pairwise bank exclusions, and the latest resulting map snapshot.
+  No NV writes/reset/flush callbacks. Private own-nv-plan.h contains only own
+  GPT geometry and stays out of git. Builder enablement is not yet exposed.
+  Seven extracted actual-callsite scenarios PASS with software allocation
+  leaves, covering each failed call/overlap and preventing later operations.
+- Added explicit lifecycle source-binding helpers for native flag1/load_state4.
+  Exact Core/image/BootServices, early/retained/MSS/stage/MBA hashes and memory
+  geometry remain checked. Existing startup wrappers still require flag0/state2;
+  they reject flag1/state4. These helpers do NOT create runtime CPU authority.
+  ASan/UBSan1169 source checks plus167975 original CPU-owner regression checks
+  PASS. New loader hook and helpers compile in whole actual native parent as
+  COFF/MachO, generalregs/frame1024 PASS. Evidence runtime-source-0001/proof-0001.json.
+- NEXT actual native runtime handoff record/CPU_ON, fixed mailbox native producer,
+  complete parent model+builder/callsite and post-CE retirement. No new phone
+  boot, USB observer or real WLAN observation. Step2/5,current plus3 remain.
+  Last15min05:22Z/16:22 Melbourne,next05:37Z/16:37. Goal ACTIVE, continue.
+
 ### Continuous Wi-Fi milestone — 2026-11-05: precise IIG cache repair and control client
 
 - e3097b16021c1abbcd928c0d5e30e4aa8ae5b310 committed/pushed; CI41971165789,

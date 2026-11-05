@@ -60,12 +60,14 @@ static inline int pmsb_arch(const struct pmsb_result*r,struct pgcd_arch*out,unsi
         b->daif==(masked?0xc0:0)&&b->group1==(masked?0:1)&&out->cpacr==r->entry.cpacr&&
         b->ticks>=a->ticks&&b->ticks-a->ticks<=PGCD_FRESH_TICKS;
 }
-static inline int pmsb_binding(const struct pmsb_result*r)
+static inline int pmsb_binding_at(const struct pmsb_result*r,unsigned native,unsigned state)
 {
     const struct pmsi_result*s=(const void*)(uintptr_t)r->stage;uint8_t hash[32];
     pweh_digest(s,sizeof(*s),hash);
-    return pgcd_equal(hash,r->stage_digest,32)&&pmsi_binding(s);
+    return pgcd_equal(hash,r->stage_digest,32)&&pmsi_binding_at(s,native,state);
 }
+static inline int pmsb_binding(const struct pmsb_result*r)
+{return pmsb_binding_at(r,0,2);}
 static inline void pmsb_seal(const struct pmsb_result*r,const void*output,size_t bytes,uint8_t digest[32])
 {
     struct pwfi_sha256 h;pwfi_init(&h);uintptr_t a=(uintptr_t)output,b=a+bytes;

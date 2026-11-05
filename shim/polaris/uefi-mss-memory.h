@@ -27,12 +27,14 @@ static efi_status pmmn_test_allocate(struct efi_system*,uint64_t,uint64_t*);
 #endif
 static inline int pmmn_fail(struct pmmn_native*r,unsigned error)
 {r->unknown=1;if(!r->error)r->error=error;return 0;}
-static inline int pmmn_binding(const struct pmmn_native*r)
+static inline int pmmn_binding_at(const struct pmmn_native*r,unsigned native)
 {
     const struct pwea_native*e=(const void*)(uintptr_t)r->early;uint8_t digest[32];
     pweh_digest(e,sizeof(*e),digest);
-    return pgcd_equal(digest,r->early_digest,32)&&pgcd_equal((const void*)(uintptr_t)r->digest,r->early_digest,32)&&pwea_native_binding(e);
+    return pgcd_equal(digest,r->early_digest,32)&&pgcd_equal((const void*)(uintptr_t)r->digest,r->early_digest,32)&&pwea_native_binding_at(e,native);
 }
+static inline int pmmn_binding(const struct pmmn_native*r)
+{return pmmn_binding_at(r,0);}
 static inline void pmmn_guard(const struct pmmn_native*r,uint8_t out[32])
 {pweh_digest((const uint8_t*)r+sizeof(r->memory),sizeof(*r)-sizeof(r->memory),out);}
 static inline int pmmn_owned(const struct pmmn_native*r,const struct pwea_map*m)
@@ -109,7 +111,7 @@ static inline int pmmn_run(struct pmmn_native*r,const struct pwea_native*e,const
 }
 /* Immediate caller of the actual post-payload GetMap producer only. This
  * retains allocations; it is not a CPU mapping/cache or remote-access grant. */
-static inline int pmmn_retained(const struct pmmn_native*r,const uint8_t digest[32],const struct pweh_result*h)
+static inline int pmmn_retained_at(const struct pmmn_native*r,const uint8_t digest[32],const struct pweh_result*h,unsigned native,unsigned state)
 {
     uint8_t current[32];
     if(!r||!digest||!h||r->complete!=1||r->unknown||r->error||r->memory.complete!=1||
@@ -117,7 +119,7 @@ static inline int pmmn_retained(const struct pmmn_native*r,const uint8_t digest[
        (uintptr_t)h->input.early!=r->early||h->input.digest!=(const void*)(uintptr_t)r->digest||
        h->before.cpu.ticks<r->final.cpu.ticks)return 0;
     pweh_digest(r,sizeof(*r),current);
-    if(!pgcd_equal(current,digest,32)||!pmmn_binding(r)||!pweh_binding(h)||!pmmn_owned(r,&h->map))return 0;
+    if(!pgcd_equal(current,digest,32)||!pmmn_binding_at(r,native)||!pweh_binding_at(h,native,state)||!pmmn_owned(r,&h->map))return 0;
     const struct pwea_map*m=&h->map;struct polaris_efi_memory checked;
     if(m->map.status||m->map.valid!=1||!m->map.key||m->map.version!=1||
        !polaris_efi_memory_check(m->data,m->map.bytes,PGCD_MAP_CAP,m->map.stride,&checked))return 0;
@@ -130,5 +132,7 @@ static inline int pmmn_retained(const struct pmmn_native*r,const uint8_t digest[
            !pwea_disjoint(q->requested,q->bytes,h->log,h->input.log_bytes))return 0;
     }return 1;
 }
+static inline int pmmn_retained(const struct pmmn_native*r,const uint8_t digest[32],const struct pweh_result*h)
+{return pmmn_retained_at(r,digest,h,0,2);}
 #endif
 #endif

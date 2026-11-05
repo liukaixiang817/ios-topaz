@@ -28,14 +28,16 @@ static inline void pweh_digest(const void*data,size_t bytes,uint8_t out[32])
 {struct pwfi_sha256 h;pwfi_init(&h);for(size_t k=0;k<bytes;k++)pwfi_byte(&h,((const uint8_t*)data)[k]);pwfi_final(&h,out);}
 static inline int pweh_fail(struct pweh_result*r,unsigned error)
 {if(!r->error)r->error=error;r->unknown=1;return 0;}
-static inline int pweh_binding(const struct pweh_result*r)
+static inline int pweh_binding_at(const struct pweh_result*r,unsigned native,unsigned state)
 {
     const struct pweh_input*i=&r->input;const struct pwea_native*e=i->early;uint8_t digest[32];
     pweh_digest(e,sizeof(*e),digest);
-    return pgcd_equal(digest,r->early_digest,32)&&pgcd_equal(i->digest,r->early_digest,32)&&
-        pwea_native_binding(e)&&*i->state==2&&*i->received==i->logical_bytes&&*i->count==i->logical_bytes&&
+    return ((native==0&&state==2)||(native==1&&state==4))&&pgcd_equal(digest,r->early_digest,32)&&pgcd_equal(i->digest,r->early_digest,32)&&
+        pwea_native_binding_at(e,native)&&*i->state==state&&*i->received==i->logical_bytes&&*i->count==i->logical_bytes&&
         (uintptr_t)*i->payload_slot==r->payload&&(uintptr_t)*i->log_slot==r->log;
 }
+static inline int pweh_binding(const struct pweh_result*r)
+{return pweh_binding_at(r,0,2);}
 static inline void pweh_seal(const struct pweh_result*r,uint8_t out[32])
 {
     uintptr_t a=(uintptr_t)&r->map.map,b=a+offsetof(struct pgcd_map,issued);
