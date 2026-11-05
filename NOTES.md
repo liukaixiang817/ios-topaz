@@ -56,6 +56,14 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: pre-USB diagnostic fix built; phone feedback pending
 
+- Source8fba52e committed/pushed to the authorized repository; seven owned
+  changed files synchronized byte-exact to the original workspace, preserving
+  its Git metadata and existing unrelated changes. Fresh image offline root-
+  audit validation PASS with no device command. Compared all257 driver inputs:
+  only uefi-xnu.c changed from the spent candidate; kernel/payload unchanged.
+  candidate-delta.json and root-audit-offline-command.json retain the next
+  prepared action. Payload directory points to the exact existing payload;
+  no historical root review was relabelled as current/new-candidate evidence.
 - The original30s host wait was shorter than the existing pre-USB NV120s plus
   CE30s/HTT30s producer bounds. Host discovery now210s; no device deadline,
   lease, call retry, reset or nonce policy changes. The spent first image is
