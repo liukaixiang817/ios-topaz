@@ -1,0 +1,481 @@
+Polaris resident Wi-Fi mailbox storage and kernel transport only.
+No ifnet/station registration, native firmware runtime or radio enable is implied.
+
+diff --git a/bsd/conf/files b/bsd/conf/files
+--- a/bsd/conf/files
++++ b/bsd/conf/files
+@@ -1,2 +1,3 @@
+ bsd/dev/polaris_wifi_native_ro.c		standard
+ bsd/dev/polaris_wifi_scm_info.c		standard
++bsd/dev/polaris_wifi_mailbox.c		standard
+diff --git a/bsd/dev/polaris_wifi_mailbox.c b/bsd/dev/polaris_wifi_mailbox.c
+new file mode 100644
+--- /dev/null
++++ b/bsd/dev/polaris_wifi_mailbox.c
+@@ -0,0 +1,181 @@
++/* Polaris kernel side of the fixed CPU0 mailbox. No radio MMIO, DMA address,
++ * firmware service call, allocation or wait occurs here. The actual station/
++ * ifnet frontend and firmware runtime owner are separate required components.
++ * These source bytes are intended for the Polaris kernel profile, not Topaz. */
++#include "polaris-wifi-kernel-mailbox.h"
++#include "polaris-wifi-mailbox-transport.h"
++#if defined(POLARIS_WIFI_KERNEL_MAILBOX_SOFTWARE)
++#include <errno.h>
++#include <stdbool.h>
++static void pwk_preempt_disable(void),pwk_preempt_enable(void);
++static uint64_t pwk_cpu(void);
++static int pwk_platform(void),pwk_shutdown(void),pwk_cache_leaf(unsigned,unsigned,unsigned);
++#else
++#include <sys/errno.h>
++#include <kern/cpu_data.h>
++#include <pexpert/pexpert.h>
++extern bool polaris_ram_overlay_allowed(void);
++extern int polaris_uefi_shutdown_pending(void);
++static void pwk_preempt_disable(void){disable_preemption();}
++static void pwk_preempt_enable(void){enable_preemption();}
++static uint64_t pwk_cpu(void){uint64_t n;__asm__ volatile("mrs %0,mpidr_el1":"=r"(n));return n&UINT64_C(0xffffff);}
++static int pwk_platform(void)
++{
++    uint32_t wifi=0,mode=0,cpu=0,count=0;
++    PE_parse_boot_argn("polariswifi",&wifi,sizeof(wifi));PE_parse_boot_argn("polarisuefi",&mode,sizeof(mode));
++    PE_parse_boot_argn("polarisbootcpu",&cpu,sizeof(cpu));PE_parse_boot_argn("cpus",&count,sizeof(count));
++    return wifi==1&&mode==1&&cpu==0x700&&count==4&&polaris_ram_overlay_allowed();
++}
++static int pwk_shutdown(void){return polaris_uefi_shutdown_pending();}
++static int pwk_cache_leaf(unsigned offset,unsigned bytes,unsigned clean)
++{
++    uint64_t ctr;__asm__ volatile("mrs %0,ctr_el0":"=r"(ctr));
++    if((4u<<((ctr>>16)&15))!=64)return 0;
++    for(unsigned n=0;n<bytes;n+=64){
++        uintptr_t at=(uintptr_t)polaris_wifi_mailbox_page+offset+n;
++        if(clean)__asm__ volatile("dc civac,%0"::"r"(at):"memory");
++        else __asm__ volatile("dc ivac,%0"::"r"(at):"memory");
++    }
++    __asm__ volatile("dsb sy":::"memory");return 1;
++}
++#endif
++/* Nonzero initialized DATA, not kernel startup zero-fill. Firmware must
++ * validate the built symbol and prepare this complete reserved page before
++ * CPU_ON. Initial source bytes deliberately do not form a valid bootstrap. */
++__attribute__((used,aligned(16384))) uint8_t polaris_wifi_mailbox_page[PWMB_BYTES]={0x50,0x57};
++static struct {
++    struct pwmb_link lane[PWMB_LANES];struct pwmb_identity identity;
++    uint8_t bootstrap[PWMB_LINE];uint64_t cpu,control_sequence;
++    uint32_t gate,initialized,radio,link,fault,sealed,seal_requested,control_pending,control_operation;
++} pwk;
++static int pwk_enter(void)
++{
++    pwk_preempt_disable();
++    if(__atomic_exchange_n(&pwk.gate,1,__ATOMIC_ACQUIRE)){pwk_preempt_enable();return EBUSY;}
++    pwk.cpu=pwk_cpu();
++    if(pwk.cpu<0x400||pwk.cpu>0x700||(pwk.cpu&255)){
++        __atomic_store_n(&pwk.gate,0,__ATOMIC_RELEASE);pwk_preempt_enable();return ENXIO;
++    }return 0;
++}
++static void pwk_exit(void)
++{__atomic_store_n(&pwk.gate,0,__ATOMIC_RELEASE);pwk_preempt_enable();}
++static int pwk_live(void*context)
++{
++    return context==&pwk&&pwk.gate==1&&pwk.initialized&&!pwk.fault&&!pwk.sealed&&
++        !__atomic_load_n(&pwk.seal_requested,__ATOMIC_ACQUIRE)&&pwk_cpu()==pwk.cpu&&!pwk_shutdown();
++}
++static int pwk_copy(void*context,unsigned offset,void*private,unsigned bytes,unsigned write)
++{
++    if(context!=&pwk||!private||!bytes||offset>=PWMB_BYTES||bytes>PWMB_BYTES-offset||write>1)return 0;
++    volatile uint8_t*p=polaris_wifi_mailbox_page+offset;uint8_t*q=private;
++    for(unsigned n=0;n<bytes;n++){if(write)p[n]=q[n];else q[n]=p[n];}return 1;
++}
++static int pwk_cache(void*context,unsigned offset,unsigned bytes,unsigned clean)
++{
++    return context==&pwk&&bytes&&offset<PWMB_BYTES&&bytes<=PWMB_BYTES-offset&&
++        !(offset%PWMB_LINE)&&!(bytes%PWMB_LINE)&&clean<=1&&pwk_cache_leaf(offset,bytes,clean);
++}
++static int pwk_sequence(void*context,unsigned offset,uint64_t*value,unsigned write)
++{
++    if(context!=&pwk||!value||(offset&7)||offset>PWMB_BYTES-8||write>1)return 0;
++    uint64_t*p=(void*)(polaris_wifi_mailbox_page+offset);
++    if(write)__atomic_store_n(p,*value,__ATOMIC_RELEASE);else *value=__atomic_load_n(p,__ATOMIC_ACQUIRE);return 1;
++}
++static const struct pwmb_bus pwk_bus={&pwk,pwk_live,pwk_copy,pwk_cache,pwk_sequence};
++static int pwk_bootstrap(uint8_t*out)
++{
++    uint8_t second[PWMB_LINE];unsigned base=PWMB_BOOTSTRAP_OFFSET;
++    if(!pwk_cache(&pwk,base,PWMB_LINE,0)||!pwk_copy(&pwk,base,out,PWMB_LINE,0)||
++       !pwk_cache(&pwk,base,PWMB_LINE,0)||!pwk_copy(&pwk,base,second,PWMB_LINE,0))return 0;
++    for(unsigned n=0;n<PWMB_LINE;n++)if(out[n]!=second[n])return 0;return 1;
++}
++static int pwk_fault(void){pwk.fault=1;pwk.radio=pwk.link=0;return EIO;}
++static int pwk_current(void)
++{
++    uint8_t current[PWMB_LINE];
++    if(!pwk_live(&pwk))return 0;
++    if(!pwk_bootstrap(current)){pwk_fault();return 0;}
++    for(unsigned n=0;n<PWMB_LINE;n++)if(current[n]!=pwk.bootstrap[n]){pwk_fault();return 0;}return 1;
++}
++int polaris_wifi_mailbox_attach(struct pwmb_identity*out)
++{
++    if(!out||!pwk_platform())return ENXIO;int error=pwk_enter();if(error)return error;
++    if(pwk.fault||pwk.sealed||__atomic_load_n(&pwk.seal_requested,__ATOMIC_ACQUIRE)||pwk_shutdown()){pwk_exit();return ENXIO;}
++    if(!pwk.initialized){
++        if(!pwk_bootstrap(pwk.bootstrap)||!pwmb_bootstrap_parse(pwk.bootstrap,&pwk.identity)){pwk_exit();return EAGAIN;}
++        for(unsigned n=0;n<PWMB_LANES;n++)if(!pwmb_link_open(&pwk.lane[n],n,n==PWMB_CONTROL||n==PWMB_TX?PWMB_PRODUCER:PWMB_CONSUMER,pwk.identity.epoch)){
++            error=pwk_fault();pwk_exit();return error;
++        }
++        pwk.initialized=1;
++    }else if(!pwk_current()){pwk_exit();return EIO;}
++    *out=pwk.identity;pwk_exit();return 0;
++}
++static int pwk_send_locked(unsigned lane,unsigned operation,const uint8_t*p,unsigned bytes,uint64_t*sequence)
++{
++    if(!pwk_current())return ENXIO;struct pwmb_link*s=&pwk.lane[lane];
++    if(s->state.stage==2){int done=pwmb_send_ack_poll(s,&pwk_bus);if(done<0)return pwk_fault();if(!done)return EWOULDBLOCK;}
++    uint64_t number=s->state.next;int result=pwmb_send(s,&pwk_bus,operation,p,bytes);
++    if(result<0)return pwk_fault();if(!result)return EINVAL;if(sequence)*sequence=number;return 0;
++}
++int polaris_wifi_mailbox_request(unsigned operation,const uint8_t*p,unsigned bytes,uint64_t*sequence)
++{
++    if(!sequence||!pwmb_payload(PWMB_CONTROL,operation,p,bytes))return EINVAL;
++    int error=pwk_enter();if(error)return error;
++    if(pwk.control_pending)error=EWOULDBLOCK;
++    else error=!pwk.radio&&operation!=PWMB_STATE?EAGAIN:pwk_send_locked(PWMB_CONTROL,operation,p,bytes,sequence);
++    if(!error){pwk.control_pending=1;pwk.control_sequence=*sequence;pwk.control_operation=operation;}
++    pwk_exit();return error;
++}
++int polaris_wifi_mailbox_transmit(const uint8_t*p,unsigned bytes)
++{
++    if(!pwmb_payload(PWMB_TX,PWMB_ETHERNET_TX,p,bytes))return EINVAL;int error=pwk_enter();if(error)return error;
++    error=pwk.link?pwk_send_locked(PWMB_TX,PWMB_ETHERNET_TX,p,bytes,0):ENETDOWN;pwk_exit();return error;
++}
++int polaris_wifi_mailbox_poll(unsigned lane,struct pwmb_message*out)
++{
++    if(!out||(lane!=PWMB_REPLY&&lane!=PWMB_RX&&lane!=PWMB_EVENT))return -EINVAL;
++    int error=pwk_enter();if(error)return -error;
++    if(!pwk_current()){pwk_exit();return -ENXIO;}
++    /* Transport ACK is only buffer consumption, never association success
++     * or an upper control response. Keep that request pending separately. */
++    for(unsigned n=0;n<2;n++){
++        struct pwmb_link*s=&pwk.lane[n?PWMB_TX:PWMB_CONTROL];
++        if(s->state.stage==2&&pwmb_send_ack_poll(s,&pwk_bus)<0){error=pwk_fault();pwk_exit();return -error;}
++    }
++    int result=pwmb_receive_poll(&pwk.lane[lane],&pwk_bus,out);
++    if(result<0){error=pwk_fault();pwk_exit();return -error;}
++    if(result==1){
++        if(lane==PWMB_REPLY&&(!pwk.control_pending||pwmb_u64(out->data)!=pwk.control_sequence||pwmb_u32(out->data+8)!=pwk.control_operation)){
++            error=pwk_fault();pwmb_clear(out,sizeof(*out));pwk_exit();return -error;
++        }
++        if(lane==PWMB_EVENT&&pwmb_u32(out->data)==3&&(!pwk.radio||pwmb_u32(out->data+4)||pwmb_u64(out->data+8)!=1)){
++            error=pwk_fault();pwmb_clear(out,sizeof(*out));pwk_exit();return -error;
++        }
++        if(pwmb_receive_complete(&pwk.lane[lane],&pwk_bus)!=1){error=pwk_fault();pwmb_clear(out,sizeof(*out));pwk_exit();return -error;}
++        if(lane==PWMB_REPLY)pwk.control_pending=0;
++        if(lane==PWMB_RX&&!pwk.link){pwmb_clear(out,sizeof(*out));result=0;}
++        if(lane==PWMB_EVENT){
++            unsigned event=pwmb_u32(out->data),status=pwmb_u32(out->data+4);
++            if(event==1){if(status)pwk_fault();else pwk.radio=1;}
++            if(event==3)pwk.link=1;
++            if(event==4)pwk.link=0;
++            if(event==5)pwk_fault();
++        }
++    }
++    pwk_exit();return result;
++}
++unsigned polaris_wifi_mailbox_status(void)
++{
++    if(pwk_enter())return 16;
++    unsigned result=pwk.radio|(pwk.link<<1)|(pwk.fault<<2)|((pwk.sealed||__atomic_load_n(&pwk.seal_requested,__ATOMIC_ACQUIRE))<<3);
++    if(!pwk.initialized||pwk_shutdown())result|=16;pwk_exit();return result;
++}
++int polaris_wifi_mailbox_seal(void)
++{
++    __atomic_store_n(&pwk.seal_requested,1,__ATOMIC_RELEASE);
++    int error=pwk_enter();if(error)return error;pwk.sealed=1;pwk.radio=pwk.link=0;
++    for(unsigned n=0;n<PWMB_LANES;n++)pwmb_clear(pwk.lane[n].wire,sizeof(pwk.lane[n].wire));
++    /* Shared producer bytes can still be owned by firmware until its ACK.
++     * Seal private input only; never reclaim or zero a peer-owned message. */
++    pwk_exit();return 0;
++}
+diff --git a/bsd/dev/polaris-wifi-kernel-mailbox.h b/bsd/dev/polaris-wifi-kernel-mailbox.h
+new file mode 100644
+--- /dev/null
++++ b/bsd/dev/polaris-wifi-kernel-mailbox.h
+@@ -0,0 +1,14 @@
++/* XNU-facing resident Wi-Fi transport. The station/ifnet adapter must poll
++ * responses/events, and only report link up after the native LINK event. */
++#ifndef POLARIS_WIFI_KERNEL_MAILBOX_H
++#define POLARIS_WIFI_KERNEL_MAILBOX_H
++#include "polaris-wifi-mailbox.h"
++extern uint8_t polaris_wifi_mailbox_page[PWMB_BYTES];
++int polaris_wifi_mailbox_attach(struct pwmb_identity*);
++int polaris_wifi_mailbox_request(unsigned,const uint8_t*,unsigned,uint64_t*);
++int polaris_wifi_mailbox_transmit(const uint8_t*,unsigned);
++/* poll returns1 for a private message,0 for idle,-errno on failure. */
++int polaris_wifi_mailbox_poll(unsigned,struct pwmb_message*);
++unsigned polaris_wifi_mailbox_status(void); /* bit0 radio ready,bit1 link,bit2 fault,bit3 sealed,bit4 unavailable */
++int polaris_wifi_mailbox_seal(void); /* closes new work immediately; retry EBUSY until private wipe completes */
++#endif
+diff --git a/bsd/dev/polaris-wifi-mailbox.h b/bsd/dev/polaris-wifi-mailbox.h
+new file mode 100644
+--- /dev/null
++++ b/bsd/dev/polaris-wifi-mailbox.h
+@@ -0,0 +1,141 @@
++/* Fixed CPU0/XNU message boundary. These are private-copy wire/state helpers;
++ * they do not map memory, publish cache lines, start a CPU or extend the MSS
++ * startup owner. The native runtime and kernel adapters must supply those
++ * operations. No message contains a caller-selected address or DMA pointer. */
++#ifndef POLARIS_WIFI_MAILBOX_H
++#define POLARIS_WIFI_MAILBOX_H
++#include <stdint.h>
++#include <stddef.h>
++#define PWMB_VERSION 1u
++#define PWMB_LINE 128u
++#define PWMB_DATA 1536u
++#define PWMB_RECORD (PWMB_LINE+PWMB_DATA)
++#define PWMB_ACK_OFFSET PWMB_RECORD
++#define PWMB_SLOT 2048u
++#define PWMB_BYTES 16384u
++#define PWMB_LANES 5u
++#define PWMB_BOOTSTRAP_OFFSET (5u*PWMB_SLOT)
++enum pwmb_lane {PWMB_CONTROL=0,PWMB_REPLY=1,PWMB_TX=2,PWMB_RX=3,PWMB_EVENT=4};
++enum pwmb_operation {PWMB_STATE=1,PWMB_SCAN=2,PWMB_SCAN_ENTRY=3,PWMB_JOIN=4,
++    PWMB_DISCONNECT=5,PWMB_ETHERNET_TX=6,PWMB_ETHERNET_RX=7,PWMB_NOTIFY=8,PWMB_RESPONSE=9};
++enum pwmb_role {PWMB_PRODUCER=1,PWMB_CONSUMER=2};
++struct pwmb_identity {uint64_t epoch;uint8_t mac[6];};
++struct pwmb_state {uint64_t epoch,next;uint32_t lane,role,opened,stage,unknown,error;};
++struct pwmb_message {uint64_t sequence;uint32_t operation,bytes;uint8_t data[PWMB_DATA];};
++_Static_assert(PWMB_RECORD%PWMB_LINE==0&&PWMB_ACK_OFFSET+PWMB_LINE<=PWMB_SLOT,"separate producer and ACK cache lines");
++_Static_assert(PWMB_SLOT*8==PWMB_BYTES,"one reserved XNU16KiB page");
++static inline uint32_t pwmb_u32(const uint8_t*p)
++{return p[0]|((uint32_t)p[1]<<8)|((uint32_t)p[2]<<16)|((uint32_t)p[3]<<24);}
++static inline uint64_t pwmb_u64(const uint8_t*p)
++{return pwmb_u32(p)|((uint64_t)pwmb_u32(p+4)<<32);}
++static inline void pwmb_put32(uint8_t*p,uint32_t n)
++{for(unsigned k=0;k<4;k++)p[k]=(uint8_t)(n>>(8*k));}
++static inline void pwmb_put64(uint8_t*p,uint64_t n)
++{for(unsigned k=0;k<8;k++)p[k]=(uint8_t)(n>>(8*k));}
++static inline int pwmb_zero(const void*p,unsigned n)
++{const uint8_t*b=p;for(unsigned k=0;k<n;k++)if(b[k])return 0;return 1;}
++static inline void pwmb_clear(void*p,unsigned n)
++{volatile uint8_t*b=p;for(unsigned k=0;k<n;k++)b[k]=0;}
++/* Immutable bootstrap input, prepared BEFORE the kernel is started. Parsing
++ * this header is wire validation only, not proof of native runtime readiness. */
++static inline int pwmb_identity_valid(const struct pwmb_identity*i)
++{
++    return i&&i->epoch&&!(i->mac[0]&1)&&!pwmb_zero(i->mac,6);
++}
++static inline int pwmb_bootstrap_make(const struct pwmb_identity*i,uint8_t*out)
++{
++    if(!pwmb_identity_valid(i)||!out)return 0;pwmb_clear(out,PWMB_LINE);
++    pwmb_put64(out,UINT64_C(0x3130304946495750));pwmb_put32(out+8,PWMB_VERSION);
++    pwmb_put32(out+12,PWMB_BYTES);pwmb_put64(out+16,i->epoch);pwmb_put32(out+24,PWMB_LANES);
++    for(unsigned n=0;n<6;n++)out[32+n]=i->mac[n];return 1;
++}
++static inline int pwmb_bootstrap_parse(const uint8_t*p,struct pwmb_identity*out)
++{
++    if(!p||!out||pwmb_u64(p)!=UINT64_C(0x3130304946495750)||pwmb_u32(p+8)!=PWMB_VERSION||
++       pwmb_u32(p+12)!=PWMB_BYTES||pwmb_u32(p+24)!=PWMB_LANES||pwmb_u32(p+28)||!pwmb_zero(p+38,90))return 0;
++    struct pwmb_identity i={0};i.epoch=pwmb_u64(p+16);for(unsigned n=0;n<6;n++)i.mac[n]=p[32+n];
++    if(!pwmb_identity_valid(&i))return 0;*out=i;return 1;
++}
++static inline int pwmb_fail(struct pwmb_state*s,unsigned error)
++{s->unknown=1;if(!s->error)s->error=error;return -1;}
++static inline int pwmb_live(const struct pwmb_state*s,unsigned role)
++{return s&&s->opened==1&&!s->unknown&&!s->error&&s->epoch&&s->next&&s->next<UINT64_MAX&&s->lane<PWMB_LANES&&s->role==role;}
++static inline int pwmb_open(struct pwmb_state*s,unsigned lane,unsigned role,uint64_t epoch)
++{
++    if(!s||!pwmb_zero(s,sizeof(*s))||lane>=PWMB_LANES||(role!=PWMB_PRODUCER&&role!=PWMB_CONSUMER)||!epoch)return 0;
++    s->epoch=epoch;s->next=1;s->lane=lane;s->role=role;s->opened=1;return 1;
++}
++/* JOIN112B: security u32=2, SSID length, secret length, secret kind(1 ASCII
++ * passphrase/2 PMK), zero; BSSID6 or zero, zero2; SSID32; secret64. Never log
++ * this payload. Both native and kernel adapters wipe their private copy after
++ * consumption; only the producer may wipe/reuse its shared payload after ACK. */
++static inline int pwmb_payload(unsigned lane,unsigned operation,const uint8_t*p,unsigned n)
++{
++    if(n>PWMB_DATA||(n&&!p))return 0;
++    if(lane==PWMB_CONTROL){
++        if(operation==PWMB_STATE||operation==PWMB_SCAN||operation==PWMB_DISCONNECT)return !n;
++        if(operation==PWMB_SCAN_ENTRY)return n==4&&pwmb_u32(p)<32;
++        if(operation!=PWMB_JOIN||n!=112||pwmb_u32(p)!=2||!p[4]||p[4]>32||p[7]||p[14]||p[15]||
++           (p[8]&1)||!pwmb_zero(p+16+p[4],32-p[4]))return 0;
++        if(p[6]==1){if(p[5]<8||p[5]>63)return 0;for(unsigned k=0;k<p[5];k++)if(p[48+k]<32||p[48+k]>126)return 0;}
++        else if(p[6]==2){if(p[5]!=32)return 0;}else return 0;
++        return pwmb_zero(p+48+p[5],64-p[5]);
++    }
++    /* RESPONSE: request sequence u64, request operation u32, errno u32,
++     * operation-specific body. The upper adapter validates that body's ABI. */
++    if(lane==PWMB_REPLY)return operation==PWMB_RESPONSE&&n>=16&&pwmb_u64(p)&&pwmb_u64(p)<UINT64_MAX&&
++        pwmb_u32(p+8)>=PWMB_STATE&&pwmb_u32(p+8)<=PWMB_DISCONNECT&&pwmb_u32(p+12)<=4095;
++    if(lane==PWMB_TX||lane==PWMB_RX)return operation==(lane==PWMB_TX?PWMB_ETHERNET_TX:PWMB_ETHERNET_RX)&&n>=14&&n<=1514;
++    /* NOTIFY: event1..5 (ready/scan/link/disconnect/fault), errno, detail u64. */
++    if(lane==PWMB_EVENT)return operation==PWMB_NOTIFY&&n==16&&pwmb_u32(p)>=1&&pwmb_u32(p)<=5&&pwmb_u32(p+4)<=4095;
++    return 0;
++}
++/* Encode into PRIVATE memory. Publish shared payload/header first, clean/order,
++ * then sequence at offset24 LAST, clean/order, then call tx_published. */
++static inline int pwmb_prepare(struct pwmb_state*s,unsigned operation,const uint8_t*p,unsigned n,uint8_t*out)
++{
++    if(!pwmb_live(s,PWMB_PRODUCER)||s->stage||!out||!pwmb_payload(s->lane,operation,p,n))return 0;
++    pwmb_clear(out,PWMB_RECORD);pwmb_put32(out,UINT32_C(0x31425750));pwmb_put32(out+4,PWMB_VERSION);
++    pwmb_put32(out+8,s->lane);pwmb_put32(out+12,operation);pwmb_put64(out+16,s->epoch);pwmb_put64(out+24,s->next);pwmb_put32(out+32,n);
++    for(unsigned k=0;k<n;k++)out[128+k]=p[k];s->stage=1;return 1;
++}
++static inline int pwmb_tx_published(struct pwmb_state*s,uint64_t sequence,int complete)
++{
++    if(!pwmb_live(s,PWMB_PRODUCER)||s->stage!=1||sequence!=s->next)return -1;
++    if(complete!=1)return pwmb_fail(s,1);s->stage=2;return 1;
++}
++/* before/after are independently observed publication sequence values around
++ * the copied record, with native invalidate/order at each boundary. An old
++ * slot remains visible after ACK; it is idle, not another delivery. */
++static inline int pwmb_receive(struct pwmb_state*s,const uint8_t*p,uint64_t before,uint64_t after,struct pwmb_message*out)
++{
++    if(!pwmb_live(s,PWMB_CONSUMER)||!p||!out)return -1;
++    if(s->stage||before!=after||before==s->next-1)return 0;
++    if(before!=s->next||pwmb_u64(p+24)!=before||pwmb_u64(p+16)!=s->epoch||
++       pwmb_u32(p)!=UINT32_C(0x31425750)||pwmb_u32(p+4)!=PWMB_VERSION||pwmb_u32(p+8)!=s->lane||!pwmb_zero(p+36,92))return pwmb_fail(s,2);
++    unsigned n=pwmb_u32(p+32),op=pwmb_u32(p+12);
++    if(!pwmb_payload(s->lane,op,p+128,n)||!pwmb_zero(p+128+n,PWMB_DATA-n))return pwmb_fail(s,3);
++    pwmb_clear(out,sizeof(*out));out->sequence=before;out->operation=op;out->bytes=n;
++    for(unsigned k=0;k<n;k++)out->data[k]=p[128+k];s->stage=2;return 1;
++}
++static inline int pwmb_ack_prepare(struct pwmb_state*s,uint8_t*out)
++{
++    if(!pwmb_live(s,PWMB_CONSUMER)||s->stage!=2||!out)return 0;
++    pwmb_clear(out,PWMB_LINE);pwmb_put32(out,UINT32_C(0x41425750));pwmb_put32(out+4,PWMB_VERSION);
++    pwmb_put32(out+8,s->lane);pwmb_put64(out+16,s->epoch);pwmb_put64(out+24,s->next);return 1;
++}
++/* ACK has the same sequence-last publication rule, on consumer-owned lines. */
++static inline int pwmb_rx_ack_published(struct pwmb_state*s,uint64_t sequence,int complete)
++{
++    if(!pwmb_live(s,PWMB_CONSUMER)||s->stage!=2||sequence!=s->next)return -1;
++    if(complete!=1)return pwmb_fail(s,4);s->stage=0;s->next++;return 1;
++}
++static inline int pwmb_ack(struct pwmb_state*s,const uint8_t*p,uint64_t before,uint64_t after)
++{
++    if(!pwmb_live(s,PWMB_PRODUCER)||s->stage!=2||!p)return -1;
++    if(before!=after||before==s->next-1)return 0;
++    if(before!=s->next||pwmb_u64(p+24)!=before||pwmb_u64(p+16)!=s->epoch||pwmb_u32(p)!=UINT32_C(0x41425750)||
++       pwmb_u32(p+4)!=PWMB_VERSION||pwmb_u32(p+8)!=s->lane||pwmb_u32(p+12)||!pwmb_zero(p+32,96))return pwmb_fail(s,5);
++    s->stage=0;s->next++;return 1;
++}
++#endif
+diff --git a/bsd/dev/polaris-wifi-mailbox-transport.h b/bsd/dev/polaris-wifi-mailbox-transport.h
+new file mode 100644
+--- /dev/null
++++ b/bsd/dev/polaris-wifi-mailbox-transport.h
+@@ -0,0 +1,115 @@
++/* Cache/publication protocol over a separately qualified fixed mailbox page.
++ * Bus callbacks are privileged leaves supplied by the actual native/kernel
++ * adapter; this module supplies no address mapping or runtime authority. */
++#ifndef POLARIS_WIFI_MAILBOX_TRANSPORT_H
++#define POLARIS_WIFI_MAILBOX_TRANSPORT_H
++#include "polaris-wifi-mailbox.h"
++struct pwmb_bus {
++    void*context;
++    int (*live)(void*);
++    int (*copy)(void*,unsigned,void*,unsigned,unsigned); /* offset, private, bytes, write */
++    int (*cache)(void*,unsigned,unsigned,unsigned); /* offset, bytes, clean(1)/invalidate(0), completed DSB */
++    int (*sequence)(void*,unsigned,uint64_t*,unsigned); /* ONE aligned64 load/store, not byte copies */
++};
++struct pwmb_effect {uint32_t kind,offset,bytes,write,issued,returned;};
++struct pwmb_link {
++    struct pwmb_state state;
++    uint8_t wire[PWMB_RECORD],ack[PWMB_LINE];
++    struct pwmb_effect effect[16];
++    uint32_t effects,busy,complete,reserved;
++};
++static inline int pwmb_link_open(struct pwmb_link*s,unsigned lane,unsigned role,uint64_t epoch)
++{return s&&pwmb_zero(s,sizeof(*s))&&pwmb_open(&s->state,lane,role,epoch);}
++static inline int pwmb_bus_live(struct pwmb_link*s,const struct pwmb_bus*b)
++{
++    return s&&b&&b->live&&b->copy&&b->cache&&b->sequence&&
++        pwmb_live(&s->state,s->state.role)&&b->live(b->context)==1;
++}
++static inline int pwmb_begin_io(struct pwmb_link*s,const struct pwmb_bus*b)
++{
++    if(!pwmb_bus_live(s,b)||s->busy)return 0;
++    pwmb_clear(s->effect,sizeof(s->effect));s->effects=0;s->complete=0;s->busy=1;return 1;
++}
++static inline int pwmb_effect(struct pwmb_link*s,const struct pwmb_bus*b,unsigned kind,unsigned offset,void*p,unsigned n,unsigned write)
++{
++    if(!pwmb_bus_live(s,b)||!s->busy||s->effects>=16)return pwmb_fail(&s->state,6);
++    unsigned base=s->state.lane*PWMB_SLOT;
++    if(offset<base||offset-base>=PWMB_SLOT||!n||n>PWMB_SLOT-(offset-base)||write>1)return pwmb_fail(&s->state,6);
++    unsigned is_ack=offset-base>=PWMB_ACK_OFFSET;
++    unsigned bound=is_ack?PWMB_ACK_OFFSET+PWMB_LINE:PWMB_RECORD;
++    if(offset-base+n>bound||
++       (write&&((s->state.role==PWMB_PRODUCER)==is_ack)))return pwmb_fail(&s->state,6);
++    if(kind==2&&((offset%PWMB_LINE)||(n%PWMB_LINE)))return pwmb_fail(&s->state,6);
++    if(kind==3&&(n!=8||offset-base!=(is_ack?PWMB_ACK_OFFSET:0)+24))return pwmb_fail(&s->state,6);
++    struct pwmb_effect*e=&s->effect[s->effects++];*e=(struct pwmb_effect){kind,offset,n,write,1,0};
++    int ok=kind==1?b->copy(b->context,offset,p,n,write):kind==2?b->cache(b->context,offset,n,write):
++        kind==3?b->sequence(b->context,offset,p,write):0;
++    if(ok!=1||!pwmb_bus_live(s,b))return pwmb_fail(&s->state,7);
++    e->returned=1;return 1;
++}
++static inline int pwmb_end_io(struct pwmb_link*s)
++{if(s->state.unknown)return -1;s->busy=0;s->complete=1;return 1;}
++/* All mutations precede the final atomic sequence store. Cleaning the first
++ * pass publishes only the old sequence, which the peer treats as idle. */
++static inline int pwmb_publish(struct pwmb_link*s,const struct pwmb_bus*b,unsigned base,uint8_t*p,unsigned bytes,uint64_t sequence)
++{
++    if(pwmb_effect(s,b,1,base,p,24,1)!=1||pwmb_effect(s,b,1,base+32,p+32,bytes-32,1)!=1||
++       pwmb_effect(s,b,2,base,0,bytes,1)!=1||pwmb_effect(s,b,3,base+24,&sequence,8,1)!=1||
++       pwmb_effect(s,b,2,base,0,PWMB_LINE,1)!=1)return -1;
++    return 1;
++}
++static inline int pwmb_send(struct pwmb_link*s,const struct pwmb_bus*b,unsigned op,const uint8_t*p,unsigned n)
++{
++    if(!s||!pwmb_live(&s->state,PWMB_PRODUCER)||s->state.stage||!pwmb_payload(s->state.lane,op,p,n))return 0;
++    if(!pwmb_begin_io(s,b))return pwmb_fail(&s->state,6);
++    if(!pwmb_prepare(&s->state,op,p,n,s->wire))return pwmb_fail(&s->state,6);
++    int complete=pwmb_publish(s,b,s->state.lane*PWMB_SLOT,s->wire,PWMB_RECORD,s->state.next)==1;
++    if(pwmb_tx_published(&s->state,s->state.next,complete)!=1)return -1;
++    return pwmb_end_io(s);
++}
++static inline int pwmb_receive_poll(struct pwmb_link*s,const struct pwmb_bus*b,struct pwmb_message*out)
++{
++    if(!s||!out||!pwmb_live(&s->state,PWMB_CONSUMER))return -1;if(s->state.stage)return 0;
++    if(!pwmb_begin_io(s,b))return pwmb_fail(&s->state,6);
++    unsigned base=s->state.lane*PWMB_SLOT;uint64_t before=0,after=0;
++    if(pwmb_effect(s,b,2,base,0,PWMB_LINE,0)!=1||pwmb_effect(s,b,3,base+24,&before,8,0)!=1)return -1;
++    if(before==s->state.next-1){pwmb_end_io(s);return 0;}
++    if(pwmb_effect(s,b,2,base,0,PWMB_RECORD,0)!=1||pwmb_effect(s,b,1,base,s->wire,PWMB_RECORD,0)!=1||
++       pwmb_effect(s,b,2,base,0,PWMB_LINE,0)!=1||pwmb_effect(s,b,3,base+24,&after,8,0)!=1)return -1;
++    int result=pwmb_receive(&s->state,s->wire,before,after,out);
++    if(result<0)return -1;pwmb_end_io(s);return result;
++}
++/* Complete only after the upper consumer has retained/processed the message. */
++static inline int pwmb_receive_complete(struct pwmb_link*s,const struct pwmb_bus*b)
++{
++    if(!s||!pwmb_live(&s->state,PWMB_CONSUMER)||s->state.stage!=2)return -1;
++    if(!pwmb_begin_io(s,b)||!pwmb_ack_prepare(&s->state,s->ack))return pwmb_fail(&s->state,6);
++    unsigned base=s->state.lane*PWMB_SLOT+PWMB_ACK_OFFSET;
++    int complete=pwmb_publish(s,b,base,s->ack,PWMB_LINE,s->state.next)==1;
++    if(pwmb_rx_ack_published(&s->state,s->state.next,complete)!=1)return -1;
++    pwmb_clear(s->wire,sizeof(s->wire));return pwmb_end_io(s);
++}
++static inline int pwmb_send_ack_poll(struct pwmb_link*s,const struct pwmb_bus*b)
++{
++    if(!s||!pwmb_live(&s->state,PWMB_PRODUCER)||s->state.stage!=2)return -1;
++    if(!pwmb_begin_io(s,b))return pwmb_fail(&s->state,6);
++    unsigned base=s->state.lane*PWMB_SLOT+PWMB_ACK_OFFSET;uint64_t before=0,after=0;
++    if(pwmb_effect(s,b,2,base,0,PWMB_LINE,0)!=1||pwmb_effect(s,b,3,base+24,&before,8,0)!=1)return -1;
++    if(before==s->state.next-1){pwmb_end_io(s);return 0;}
++    if(pwmb_effect(s,b,1,base,s->ack,PWMB_LINE,0)!=1||pwmb_effect(s,b,2,base,0,PWMB_LINE,0)!=1||
++       pwmb_effect(s,b,3,base+24,&after,8,0)!=1)return -1;
++    int result=pwmb_ack(&s->state,s->ack,before,after);if(result<0)return -1;
++    if(result==1){
++        if(s->state.lane==PWMB_CONTROL&&pwmb_u32(s->wire+12)==PWMB_JOIN){
++            /* After peer ACK, erase credentials from producer-owned shared
++             * payload lines too. Preserve the old published sequence: zeroing
++             * it would look like a rollback to the receiver's next poll. */
++            unsigned payload=s->state.lane*PWMB_SLOT+PWMB_LINE;
++            pwmb_clear(s->wire+PWMB_LINE,PWMB_DATA);
++            if(pwmb_effect(s,b,1,payload,s->wire+PWMB_LINE,PWMB_DATA,1)!=1||
++               pwmb_effect(s,b,2,payload,0,PWMB_DATA,1)!=1)return -1;
++        }
++        pwmb_clear(s->wire,sizeof(s->wire));
++    }pwmb_end_io(s);return result;
++}
++#endif

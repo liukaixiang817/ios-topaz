@@ -63,6 +63,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Verify resident Wi-Fi mailbox sources
+        if: env.TARGET_PLATFORM == 'polaris'
+        run: python3 tools/polaris-wifi-kernel-mailbox-patch.py
+
       - name: Locate compatible interface cache
         if: env.TARGET_PLATFORM == 'polaris'
         id: iig-cache

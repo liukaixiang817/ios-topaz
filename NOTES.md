@@ -44,6 +44,42 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05: actual XNU mailbox storage/adapter
+
+- Fixed mailbox committed00683cb. New tools/polaris-wifi-kernel-mailbox.c uses
+  real XNU preemption/boot-argument/shutdown interfaces and native ARM64 cache/
+  atomic sequence instructions. Separate aligned16KiB initialized DATA symbol
+  polaris_wifi_mailbox_page is explicitly retained, never startup BSS zero-fill.
+  Opt-in requires polariswifi=1, resident mode1,target700,cpus4 and actual RAM
+  overlay admission. Each operation runs on400/500/600/700 with preemption
+  disabled and a nonwaiting gate; no radio MMIO, allocation or firmware calls.
+- Radio READY, authenticated LINK and transport ACK are separate states. New
+  control requests wait for both consumption and matching response; unsolicited/
+  mismatched responses close the adapter. Early RX is dropped until LINK, and
+  TX refuses while disconnected. Exact bootstrap remains immutable after attach.
+  Seal closes new work immediately, returns EBUSY until private wiping completes,
+  and never clears a still-peer-owned shared payload. Actual shutdown call-site
+  integration remains required with the future registered station frontend.
+- JOIN ACK now erases the consumed producer-owned shared credential payload
+  as well as the private copy, preserving its old published sequence.385 actual
+  adapter tests PASS with SOFTWARE CPU/preemption/cache/boot leaves; cached
+  transport regression9113 PASS. Native source compiled with actual retained
+  XNU BSD flags/headers and no verification stubs, generalregs/frame1024 PASS;
+  kernel-native-0003.json records command/cwd. Header compatibility warnings
+  remain (pre-C11/pre-C99 and existing kernel headers), no compile errors.
+  Initial compile lacked generated meta_features.h because cwd was wrong;
+  using the actual BSD DEVELOPMENT build directory resolved it.
+- Polaris-only0914 patch embeds four exact tested sources and adds the real
+  BSD compilation entry. Patch binding checked, focused apply/source comparison
+  PASS; whole-profile application/link remains CI. Workflow checks source/patch
+  identity before the build. No Topaz hardware driver was adopted. Evidence:
+  kernel-mailbox-0001/proof-0001.json. Complete kernel CI is NEXT/pending here.
+- This is not yet registered ifnet/Apple80211 or physical Wi-Fi. Native CPU0
+  mailbox producer, persistent ownership, complete parent, regulatory/credentials,
+  post-CE exit and full new image remain. No phone/USB/boot. Execution2/5,
+  current step plus3 remain. Last15min04:07Z/15:07 Melbourne,next04:22Z/15:22.
+  Goal ACTIVE; continue through actual scan/join/IP/DNS/data.
+
 ### Continuous Wi-Fi milestone — 2026-11-05: fixed kernel/CPU0 message boundary
 
 - Nonce input/build binding committedde82958. Persistent-runtime investigation

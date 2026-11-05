@@ -99,6 +99,17 @@ static inline int pwmb_send_ack_poll(struct pwmb_link*s,const struct pwmb_bus*b)
     if(pwmb_effect(s,b,1,base,s->ack,PWMB_LINE,0)!=1||pwmb_effect(s,b,2,base,0,PWMB_LINE,0)!=1||
        pwmb_effect(s,b,3,base+24,&after,8,0)!=1)return -1;
     int result=pwmb_ack(&s->state,s->ack,before,after);if(result<0)return -1;
-    if(result==1)pwmb_clear(s->wire,sizeof(s->wire));pwmb_end_io(s);return result;
+    if(result==1){
+        if(s->state.lane==PWMB_CONTROL&&pwmb_u32(s->wire+12)==PWMB_JOIN){
+            /* After peer ACK, erase credentials from producer-owned shared
+             * payload lines too. Preserve the old published sequence: zeroing
+             * it would look like a rollback to the receiver's next poll. */
+            unsigned payload=s->state.lane*PWMB_SLOT+PWMB_LINE;
+            pwmb_clear(s->wire+PWMB_LINE,PWMB_DATA);
+            if(pwmb_effect(s,b,1,payload,s->wire+PWMB_LINE,PWMB_DATA,1)!=1||
+               pwmb_effect(s,b,2,payload,0,PWMB_DATA,1)!=1)return -1;
+        }
+        pwmb_clear(s->wire,sizeof(s->wire));
+    }pwmb_end_io(s);return result;
 }
 #endif
