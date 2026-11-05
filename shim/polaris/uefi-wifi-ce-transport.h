@@ -23,8 +23,8 @@ struct pmct_state {
     uint64_t parent,owner,opening,power,base,next_poll;uint8_t parent_digest[32];
     struct pwcr_state rings;struct pmct_io io;uint8_t history[32];
     uint8_t send[2048],receive[2048],scratch[64];
-    uint32_t attempted,ready,unknown,error,busy,operations,frame_ready,rx_pipe,rx_bytes;
-    uint64_t sends,receives,posts;
+    uint32_t attempted,ready,unknown,error,busy,frame_ready,rx_pipe,rx_bytes;
+    uint64_t sends,receives,posts,operations;
     uint64_t protocol; /* One current upper protocol on this worker. */
 };
 #if defined(POLARIS_WIFI_CE_TRANSPORT_SOFTWARE_PEER)
@@ -40,7 +40,7 @@ static inline int pmct_fail(struct pmct_state*s,unsigned error)
 {s->unknown=1;if(!s->error)s->error=error;return -1;}
 static inline int pmct_live(struct pmct_state*s)
 {
-    if(!s||s->ready!=1||s->unknown||s->error||s->operations>PMCT_OPERATIONS||s->rings.unknown||s->rings.error)return 0;
+    if(!s||s->ready!=1||s->unknown||s->error||!pmsc_count_valid((const void*)(uintptr_t)s->owner,s->operations,PMCT_OPERATIONS)||s->rings.unknown||s->rings.error)return 0;
     struct pmce_state*p=(void*)(uintptr_t)s->parent;
     return p->transport==(uintptr_t)s&&p->owner==s->owner&&p->opening==s->opening&&p->power==s->power&&p->base==s->base&&
         p->complete==1&&!p->pending&&pgcd_equal(p->digest,s->parent_digest,32)&&pmce_live(p);
@@ -62,7 +62,7 @@ static inline int pmct_begin(struct pmct_state*s,struct pmce_state*p)
 }
 static inline int pmct_record(struct pmct_state*s,unsigned kind)
 {
-    if(!pmct_live(s)||s->operations==PMCT_OPERATIONS)return 0;
+    if(!pmct_live(s)||!pmsc_count_available((const void*)(uintptr_t)s->owner,s->operations,PMCT_OPERATIONS))return 0;
     for(unsigned n=0;n<sizeof(s->io);n++)((uint8_t*)&s->io)[n]=0;
     s->io.kind=kind;s->io.unknown=1;s->operations++;return 1;
 }

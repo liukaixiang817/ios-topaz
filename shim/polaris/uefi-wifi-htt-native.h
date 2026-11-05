@@ -15,8 +15,8 @@ struct pmht_state {
     uint64_t wmi,memory,owner,opening,base;uint8_t memory_digest[32];
     struct phtt_state client;struct phtm_layout layout;struct pmct_io io;
     struct pwea_core source[2];uint8_t history[32],page[4096];
-    uint32_t attempted,ready,unknown,error,busy,operations,zeroed,ring_pages,prepared,submitted;
-    uint64_t consumer;
+    uint32_t attempted,ready,unknown,error,busy,zeroed,ring_pages,prepared,submitted;
+    uint64_t consumer,operations;
 };
 #if defined(POLARIS_WIFI_HTT_SOFTWARE_PEER)
 static int pmht_copy(uint64_t,void*,unsigned,unsigned,struct pmct_memory*);
@@ -31,7 +31,7 @@ static inline int pmht_fail(struct pmht_state*s,unsigned error)
 {s->unknown=1;if(!s->error)s->error=error;return -1;}
 static inline int pmht_live(struct pmht_state*s)
 {
-    if(!s||s->ready!=1||s->unknown||s->error||s->operations>16384||s->client.unknown||s->client.error)return 0;
+    if(!s||s->ready!=1||s->unknown||s->error||!pmsc_count_valid((const void*)(uintptr_t)s->owner,s->operations,16384)||s->client.unknown||s->client.error)return 0;
     struct pmwi_state*w=(void*)(uintptr_t)s->wmi;struct pmhc_state*h=(void*)(uintptr_t)w->htc;
     struct pcdm_state*m=(void*)(uintptr_t)s->memory;
     return h->data_consumer==(uintptr_t)s&&w->owner==s->owner&&w->opening==s->opening&&w->client.phase==4&&
@@ -75,7 +75,7 @@ static inline int pmht_at(struct pmht_state*s,uint64_t at,unsigned bytes,unsigne
 }
 static inline int pmht_io_begin(struct pmht_state*s,unsigned kind)
 {
-    if(!pmht_live(s)||!s->busy||s->operations==16384)return 0;
+    if(!pmht_live(s)||!s->busy||!pmsc_count_available((const void*)(uintptr_t)s->owner,s->operations,16384))return 0;
     for(unsigned n=0;n<sizeof(s->io);n++)((uint8_t*)&s->io)[n]=0;s->io.kind=kind;s->io.unknown=1;s->operations++;return 1;
 }
 static inline int pmht_io_end(struct pmht_state*s)

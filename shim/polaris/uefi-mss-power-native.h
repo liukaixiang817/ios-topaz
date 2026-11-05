@@ -105,7 +105,7 @@ static inline int pmpn_arch(struct pmpn_state*s,struct pmni_arch*a)
     return a->el==b->el&&a->mpidr==b->mpidr&&a->ttbr0==b->ttbr0&&a->ttbr1==b->ttbr1&&a->tcr==b->tcr&&
         a->sctlr==b->sctlr&&a->mair==b->mair&&a->daif==b->daif&&a->sre==b->sre&&a->group1==b->group1&&
         a->cpacr==o->current.cpacr&&a->frequency==b->frequency&&a->ticks>=o->last&&
-        a->ticks-s->opening<=PMSC_TOTAL&&pmpn_live(s);
+        pmsc_time(o,a->ticks)&&pmpn_live(s);
 }
 static inline int pmpn_begin(struct pmpn_state*s,struct pmpn_request*records,
     struct pmrs_state*d,struct pmdc_state*c,struct pmrd_state*p,struct pmrg_map*g)

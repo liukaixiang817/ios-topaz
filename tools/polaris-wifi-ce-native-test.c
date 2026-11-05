@@ -124,7 +124,7 @@ int PMCE_TEST_ENTRY(int argc,char**argv)
         ce_setup(fault_kind);int done=1;
         for(unsigned n=0;n<4000&&done==1;n++){done=pmce_step(ce);if(done==1&&ce->phase==2)advance_to(owner->last+192000);}
         if(!fault_kind){
-            if(done!=2)fprintf(stderr,"CE result=%d err=%u phase=%u pages=%u events=%u init=%u smmu=%u client=%u owner=%u reads=%u elapsed=%llu\n",done,ce->error,ce->phase,ce->pages,ce->events,ce->init.error,smmu_owner->error,wlan->client.error,owner->error,sm->reads,(unsigned long long)(owner->last-owner->opening));
+            if(done!=2)fprintf(stderr,"CE result=%d err=%u phase=%u pages=%u events=%u init=%u smmu=%u client=%u owner=%u reads=%llu elapsed=%llu\n",done,ce->error,ce->phase,ce->pages,ce->events,ce->init.error,smmu_owner->error,wlan->client.error,owner->error,(unsigned long long)sm->reads,(unsigned long long)(owner->last-owner->opening));
             CHECK(done==2&&ce->complete&&ce->init.complete&&wlan->client.enabled&&wlan_requests==6&&ce_writes&&ce_orders==ce_writes&&smmu_reads==544);
             CHECK(pwmc_zero(ce_shadow,PWDM_BYTES)&&ce_memory->consumer==(uintptr_t)ce&&owner->held);
             CHECK(ce_regs[12][1]==CE_ALLOCATION+ce_memory->layout.rri&&ce_regs[12][2]==0);

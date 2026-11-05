@@ -108,7 +108,7 @@ int PMWA_TEST_ENTRY(int argc,char**argv)
         wlan_setup(fault);int done=1;for(unsigned j=0;j<550&&done==1;j++){done=pmwa_step(wlan);if(done==1&&wlan->pages==512)advance_to(wlan->next_poll);}
         if(!fault){
             if(done!=2)fprintf(stderr,"WLFW step=%d native=%u phase=%u client=%u requests=%u assignments=%u pending=%u\\n",done,wlan->error,wlan->client.phase,wlan->client.error,wlan_requests,wlan->assignments,wlan->pending);
-            if(done!=2)fprintf(stderr,"source reads=%u error=%u channel=%u glink=%u owner=%u checks=%u elapsed=%llu\n",sm->reads,sm->error,channel->error,glink->error,owner->error,owner->live_checks,(unsigned long long)(owner->last-owner->opening));
+            if(done!=2)fprintf(stderr,"source reads=%llu error=%u channel=%u glink=%u owner=%u checks=%u elapsed=%llu\n",(unsigned long long)sm->reads,sm->error,channel->error,glink->error,owner->error,owner->live_checks,(unsigned long long)(owner->last-owner->opening));
             CHECK(done==2&&pmwa_current(wlan)&&wlan->client.ready&&wlan_requests==4&&wlan_ready_requests==1&&wlan_rounds[0]==4&&wlan_rounds[1]==4);
             CHECK(response_bytes==21&&responses==1&&pms_u32(response+17)&&wlan_memory_mask==3&&!wlan_descriptor_mask);
             CHECK(pwmc_zero(msa_shadow+0x100000,0x100000)); /* Unpublished allocation envelope remains host-owned. */

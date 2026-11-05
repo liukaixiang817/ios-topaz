@@ -77,10 +77,10 @@ int PMSG_TEST_ENTRY(int argc,char**argv)
     FILE*f=fopen(argv[6],"rb");CHECK(f&&fread(sm_original,1,PWFI_IMAGE_BYTES,f)==PWFI_IMAGE_BYTES&&!fclose(f));auth_test_open(6,argv);
     for(unsigned cached=0;cached<2;cached++){
         glink_setup(cached);rx_frame(0,1,1,0,0); /* Remote-first startup must be consumed, never reset. */
-        int result=pmsg_step(glink);if(result!=2)fprintf(stderr,"GLINK step=%d error=%u channel=%u source=%u reads=%u\n",result,glink->error,channel->error,sm->error,sm->reads);
+        int result=pmsg_step(glink);if(result!=2)fprintf(stderr,"GLINK step=%d error=%u channel=%u source=%u reads=%llu\n",result,glink->error,channel->error,sm->error,(unsigned long long)sm->reads);
         CHECK(result==2);const struct polaris_wifi_qrtr_ops*ops=polaris_wifi_glink_qrtr_ops(glink->transport);CHECK(ops);
         struct polaris_wifi_qrtr_port*port=ops->open(0,server,glink);CHECK(port);CHECK(!ops->lookup(port,69,1,0));
-        for(unsigned n=0;n<20&&!server_seen;n++){int error=polaris_wifi_glink_poll_once(glink->transport);if(error)fprintf(stderr,"poll error=%d native=%u reads=%u\n",error,glink->error,sm->reads);CHECK(!error);}
+        for(unsigned n=0;n<20&&!server_seen;n++){int error=polaris_wifi_glink_poll_once(glink->transport);if(error)fprintf(stderr,"poll error=%d native=%u reads=%llu\n",error,glink->error,(unsigned long long)sm->reads);CHECK(!error);}
         CHECK(server_seen==1&&peer_ready);struct polaris_wifi_glink_status status;CHECK(!polaris_wifi_glink_status(glink->transport,&status)&&status.opened&&status.peer_seen&&!status.first_error);
         CHECK(!polaris_wifi_cap_open(&glink->identity,glink->transport,pmsg_now(glink)));
         for(unsigned n=0;n<10&&!glink->identity.discovered;n++)(void)polaris_wifi_cap_poll(&glink->identity,pmsg_now(glink));
@@ -92,7 +92,7 @@ int PMSG_TEST_ENTRY(int argc,char**argv)
         uint8_t cross[211];for(unsigned n=0;n<sizeof(cross);n++)sm_shadow[rx_offset+4095+n]=(uint8_t)n;
         CHECK(pmsg_read(glink,rx_offset+4095,cross,sizeof(cross)));for(unsigned n=0;n<sizeof(cross);n++)CHECK(cross[n]==(uint8_t)n);
         uint8_t bytes[9];memcpy(sm_shadow+rx_offset+100,"unaligned",9);CHECK(pmsg_read(glink,rx_offset+101,bytes,7)&&!memcmp(bytes,"naligne",7));
-        fprintf(stderr,"native GLINK cached=%u service69 discovered; reads=%u writes=%u allocations=%u\n",cached,sm->reads,channel->writes,glink->allocations);
+        fprintf(stderr,"native GLINK cached=%u service69 discovered; reads=%llu writes=%llu allocations=%u\n",cached,(unsigned long long)sm->reads,(unsigned long long)channel->writes,glink->allocations);
         if(cached)sm_shadow[glink->selected[4].offset+4]^=8;else put(sm_shadow+remote_at+36,1,4);
         unsigned writes=channel_stores;CHECK(polaris_wifi_glink_poll_once(glink->transport)&&channel_stores==writes&&glink->unknown);
     }

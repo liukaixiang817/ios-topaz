@@ -76,6 +76,9 @@ static void htt_target_tx(unsigned pipe,const unsigned char*frame,unsigned bytes
 #ifndef PMHT_TEST_ENTRY
 #define PMHT_TEST_ENTRY main
 #endif
+#ifndef PMHT_TEST_CASES
+#define PMHT_TEST_CASES 5
+#endif
 int PMHT_TEST_ENTRY(int argc,char**argv)
 {
     CHECK(argc==8);sm_original=malloc(PWFI_IMAGE_BYTES);sm_shadow=malloc(PMSQ_BYTES);rmtfs_shadow=malloc(0x202000);
@@ -86,7 +89,7 @@ int PMHT_TEST_ENTRY(int argc,char**argv)
     CHECK(!posix_memalign((void**)&msa_shadow,host_page,0x200000));
     load(argv[7],"gpt0-primary.bin",headers[0][0],4096);load(argv[7],"gpt0-backup.bin",headers[0][1],4096);load(argv[7],"gpt0-table.bin",tables[0],polaris_nv_plan.disk[0].table_bytes);
     load(argv[7],"gpt1-primary.bin",headers[1][0],4096);load(argv[7],"gpt1-backup.bin",headers[1][1],4096);load(argv[7],"gpt1-table.bin",tables[1],polaris_nv_plan.disk[1].table_bytes);
-    for(unsigned kind=0;kind<5;kind++){
+    for(unsigned kind=0;kind<PMHT_TEST_CASES;kind++){
         htt=0;wmi=0;htc_setup(0);wmi=(void*)(arena+0x7340000);memset(wmi,0,sizeof(*wmi));wmi_fault=wmi_requests=0;CHECK(pmwi_begin(wmi,htc));
         for(unsigned n=0;n<40&&htc->client.phase!=8;n++){CHECK(pmwi_step(wmi)==1);advance_to(owner->last+19200);}
         CHECK(htc->client.phase==8);wmi_service();int result=1;
@@ -102,6 +105,9 @@ int PMHT_TEST_ENTRY(int argc,char**argv)
             CHECK(result==3&&pmht_live(htt)&&htt_commands==4&&htt->zeroed==2050&&htt->ring_pages==4&&htt_memory->consumer==(uintptr_t)htt&&ce_memory->consumer==(uintptr_t)ce);
             CHECK(htt->client.major==3&&htt->client.minor==4&&owner->held);
             fprintf(stderr,"native HTT: distinct actual allocation, zero/CIVAC,2047 RX addresses/index, VERSION/FRAG/RX/AGGR PASS\n");
+#ifdef PMHT_TEST_READY_HOOK
+            PMHT_TEST_READY_HOOK();
+#endif
         }else{
             CHECK(result==-1&&htt->unknown&&htt->error&&owner->held);CHECK(htt_commands==(kind<3?0u:1u));
             unsigned calls=htt_copies+htt_caches+transport_writes;CHECK(pmht_step(htt)==-1&&calls==htt_copies+htt_caches+transport_writes);

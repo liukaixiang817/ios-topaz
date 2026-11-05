@@ -32,7 +32,7 @@ struct pmsq_state {
     uint64_t namespace,images,owner,opening,image;uint8_t namespace_digest[32];
     uint32_t protocol_index,loaded_index,attempted,unknown,error,complete;
     struct pmsq_pass pass[2];struct pwea_core core[2];uint8_t binding_digest[32];
-    struct pmsq_access access;uint32_t reads,pending;uint8_t history[32];
+    struct pmsq_access access;uint64_t reads;uint32_t pending;uint8_t history[32];
     uint64_t channel; /* One continuous channel caller; never cleared on error. */
 };
 #if defined(POLARIS_MSS_SMEM_SOFTWARE_PEER)
@@ -160,7 +160,7 @@ static inline int pmsq_target(struct pmsq_state*r,struct pmli_read*q,uint64_t pa
  * Keep last full observation plus chained history instead of unbounded BSS. */
 static inline const uint8_t*pmsq_read(struct pmsq_state*r,unsigned offset,unsigned bytes)
 {
-    if(!r||r->pending||r->reads==65536||!bytes||bytes>PMSQ_CHUNK||((offset|bytes)&3)||
+    if(!r||r->pending||!pmsc_count_available((const void*)(uintptr_t)r->owner,r->reads,65536)||!bytes||bytes>PMSQ_CHUNK||((offset|bytes)&3)||
        offset>=PMSQ_BYTES||bytes>PMSQ_BYTES-offset)return 0;
     if(!pmsq_current(r)){pmsq_fail(r,4);return 0;}
     struct pmsq_access*a=&r->access;for(unsigned n=0;n<sizeof(*a);n++)((uint8_t*)a)[n]=0;

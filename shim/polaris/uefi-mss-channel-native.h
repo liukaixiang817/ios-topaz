@@ -23,7 +23,7 @@ struct pmsx_state {
     uint64_t auth,allocation,smem,owner,opening,negotiation;
     uint8_t auth_digest[32],allocation_digest[32],smem_digest[32];
     struct pmsa_item item[PMSA_ITEMS];
-    uint32_t attempted,ready,unknown,error,pending,writes,rings,negotiated;
+    uint32_t attempted,ready,unknown,error,pending,negotiated;uint64_t writes,rings;
     struct pmsx_word word;struct pmsl_delivery ring[4];uint8_t history[32];
 };
 #if EFI_XNU_MSS_SMP2P_NATIVE_AVAILABLE
@@ -88,7 +88,7 @@ static inline void pmsx_history(struct pmsx_state*s,const void*record,size_t byt
  * GLINK words additionally require the forthcoming actual negotiation result. */
 static inline int pmsx_write(struct pmsx_state*s,unsigned item,unsigned offset,uint32_t value)
 {
-    if(!s||s->pending||s->writes==65536||item>=PMSA_ITEMS||(offset&3))return 0;
+    if(!s||s->pending||!pmsc_count_available((const void*)(uintptr_t)s->owner,s->writes,65536)||item>=PMSA_ITEMS||(offset&3))return 0;
     if(!pmsx_live(s))return pmsx_fail(s,3);
     const struct pmsa_item*i=&s->item[item];
     if(offset>i->bytes||4>i->bytes-offset||(item&&!pmsx_negotiated(s))||(item==1&&offset!=4&&offset!=8))return 0;
@@ -112,7 +112,7 @@ static inline const uint8_t*pmsx_read(struct pmsx_state*s,unsigned offset,unsign
 }
 static inline int pmsx_ring(struct pmsx_state*s,unsigned glink)
 {
-    if(!s||s->pending||s->rings==65536||glink>1||(glink&&!pmsx_negotiated(s)))return 0;
+    if(!s||s->pending||!pmsc_count_available((const void*)(uintptr_t)s->owner,s->rings,65536)||glink>1||(glink&&!pmsx_negotiated(s)))return 0;
     if(!pmsx_live(s))return pmsx_fail(s,3);
     struct pmsn_state*a=(void*)(uintptr_t)s->auth;struct pmpn_state*p=(void*)(uintptr_t)a->power;
     struct pmsc_owner*o=(void*)(uintptr_t)s->owner;

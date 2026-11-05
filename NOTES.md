@@ -54,6 +54,43 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05: qualified runtime handoff source and transport continuity
+
+- Kernel-copy milestone6b26ade committed/pushed. New default-OFF
+  uefi-wifi-runtime-handoff.h validates actual parent READY, copied payload,
+  initialized linked16KiB DATA page, AP/context/stack and identity translations.
+  It creates the bootstrap from actual WMI MAC/owner epoch, checks all7 peers
+  OFF, publishes flag1/state4 before exactly one native CPU_ON700, retains
+  unknown/failed returns and observes AP stage1/MPIDR700 before persistent mode.
+  Copy/AP/bootstrap bindings remain checked. No original provider/USB calls.
+- pmsc retains original180s/state2/flag0 startup behavior. Qualified runtime
+  requires returned-zero CPU_ON and observed AP; no startup deadline renewal.
+  Current Core key/locks/BS/image/arch checks remain. SMEM reads, GLINK writes/
+  rings, CE and HTT operation counters are64-bit, retaining startup limits and
+  refusing wrap; only qualified runtime crosses those limits. Power native
+  calls use the same lifecycle-aware time check. CPU0 currently remains DAIFc0;
+  existing WLED/buttons3c0 integration and full retirement are still pending.
+- Final ASan/UBSan21768 real-owner checks with SYNTHETIC transition records,
+  22012 actual handoff-body checks with SOFTWARE radio predicate/privileged
+  leaves PASS. Native COFF/MachO ON and OFF compiles PASS, generalregs/frame1024.
+  Original167975 owner checks PASS; CE14804504/6scenarios and HTT12417268/
+  5scenarios regressions PASS serially. A separate actual SMEM/GLINK/CE/HTT
+  graph with injected transition crosses180s/count caps and rejects UINT64_MAX:
+  2491518/1scenario PASS. These are software results, NOT physical CPU/radio.
+  Initial test fixed-address mapping failed on macOS; host mappings now use
+  actual returned addresses. Counter diagnostic formats updated to64-bit.
+- Evidence runtime-handoff-0001/final-results.json, proof-0001.json and child
+  regression logs. Whole test sources unchanged while their builds/runs active.
+  Existing unowned uefi-wifi-remote-memory.h changes remain uncommitted/preserved.
+- Still no actual loader callsite/runtime worker/builder enablement or new boot.
+  NEXT native mailbox producer/control/station/regulatory glue, loader ordering,
+  complete parent model and WCN3990 post-CE retirement. Primary ath10k hw.c's
+  WCN3990 table has no qcax_cmd_halt mapping; do not import another chip's halt
+  register. CE polling already services RMTFS. All original five admission
+  gates remain required. User was asked asynchronously for test2.4GHz SSID and
+  country/region (no password); answer pending. Step2/5,current plus3 remain.
+  Last15min05:52Z,next06:07Z. Goal ACTIVE; continue to actual Wi-Fi.
+
 ### Continuous Wi-Fi milestone — 2026-11-05: actual kernel copy readback
 
 - Actual loader copy loop now verifies every initialized and zero-fill byte
