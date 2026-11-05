@@ -54,6 +54,46 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: explicit terminal request and loader
+
+- Sourced970e2b18842b9a379166f2010ea59891c554303 committed/pushed. Added explicit
+  root-only power-off control opcode10; DISCONNECT remains unsupported and is
+  never interpreted as power-off. Native worker accepts terminal drain only
+  from IDLE/SCANNED/LINK, stops new control requests, and waits for the kernel
+  to ACK its accepted reply before closing. Missing ACK shares the original
+  ten-second drain limit; no manufactured delivery or renewed deadline.
+- Actual loader dispatches CLOSED only with terminal_requested, then invokes
+  bound pwno_begin/step and retains every unexpected return. Native runtime
+  now requires terminal enable, shutdown bridge and explicit linked shutdown
+  VA at compile time. Test VAfffffe0006002000 is SOFTWARE-only and must never
+  become a physical candidate binding. Builder/display/input remain unfinished.
+- Serial sanitizer checks PASS: actual loader853, mailbox845471, BSD interface340,
+  userland870, kernel adapter385, worker3909/disabled3795, native mailbox1312.
+  Full normal2889172 and delayed2896572 compositions PASS through real CONTROL
+  receipt/ACK/native drain/terminal continuation, with SOFTWARE hardware and
+  kernel leaves. Both whole ARM64 COFF/MachO exports PASS generalregs/frame1024.
+  iOS16 client compiled/signed/verified; SHA256
+  2ca7eba29b716c4b7b927438e93119837680ed8a335dbf4178de900798ee1c57.
+- Regenerated0914/0915 exactly from tested sources. CI42069228077, job127392125996,
+  headd970e2b is actively in Build; completion/artifact not yet observed.
+  https://github.com/liukaixiang817/ios-topaz/actions/runs/42069228077
+  Private commands/logs/proof in stable clone wifi/terminal-request-0001.
+  One test-command link failure retained: removed unrelated GLINK/RMTFS sources
+  from the isolated native-mailbox command, then it passed; no code bypass.
+- iCloud also evicted gh. Downloaded same official2.103.0 archive, verified
+  published checksum, extracted only executable to
+  /private/tmp/polaris-gh-2.103.0-local/gh. Use this gh for CI. Original delayed
+  read-only gh/Git-index/fetch handles may still be live; inspect before restart.
+  Fifteen committed files atomically synced back after comparing prior bytes.
+  The unowned remote-memory hunk remains untouched; original Git HEAD/index
+  sync is not yet confirmed. Stable clone is authoritative for source commits.
+- NEXT finish CI/artifact binding, then native builder configuration/input
+  bindings, display/input and complete candidate gates. Uncommitted stable-only
+  WIP: tools/polaris-wifi-kernel-binding.py and its test extend exact symbol
+  validation to the256B shutdown BSS slot; not tested or copied back yet.
+  No new physical image/query/boot/shutdown/scan/join/IP/DNS/data observation.
+  Last15min16:53Z,next17:08Z. Execution2/5,current plus3 remain. Goal ACTIVE.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: retained terminal composition
 
 - Source402d364 and handoffa37a1ac pushed successfully to the approved branch.
