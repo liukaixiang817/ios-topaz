@@ -163,5 +163,21 @@ static inline int pmsg_step(struct pmsg_state*s)
     s->transport=polaris_wifi_glink_create(&s->cfg);
     if(!s->transport||polaris_wifi_glink_start(s->transport))return pmsg_fail(s,8);return 2;
 }
+/* Creating/starting GLINK is not a completed QRTR HELLO. RMTFS/WLFW need
+ * the actual remote node. Use the original discovery window and poll budget,
+ * without renewing either when the transport object becomes available. */
+static inline int pmsg_peer_step(struct pmsg_state*s)
+{
+    if(!s||!pmsg_scope(s,s->opening,&s->layout))return 0;
+    struct pmsc_owner*o=(void*)(uintptr_t)s->owner;uint32_t node=0;
+    if(o->last<s->started||o->last-s->started>PMSY_TOTAL)return pmsg_fail(s,9);
+    if(!polaris_wifi_glink_qrtr_peer(s->transport,&node))
+        return node&&node<0xfffffffe?2:pmsg_fail(s,9);
+    if(o->last<s->next_poll)return 1;
+    if(s->polls++>=1024)return pmsg_fail(s,9);s->next_poll=o->last+PMSY_POLL;
+    if(polaris_wifi_glink_poll_once(s->transport)||!pmsg_scope(s,s->opening,&s->layout))return pmsg_fail(s,9);
+    if(polaris_wifi_glink_qrtr_peer(s->transport,&node))return 1;
+    return node&&node<0xfffffffe?2:pmsg_fail(s,9);
+}
 #endif
 #endif

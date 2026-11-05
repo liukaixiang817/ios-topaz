@@ -54,6 +54,39 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05: complete startup parent and QRTR fix
+
+- Host-quiescence source5e5803e committed/pushed. New composed test executes
+  actual incoming allocations/staging/MBA then actual pwns_begin/step and every
+  native child producer using their SOFTWARE privileged/cache/firmware peers.
+  It exposed a real missing phase: GLINK object creation was followed directly
+  by RMTFS start, before QRTR HELLO supplied a remote node. Added bounded
+  pmsg_peer_step and PWNS_QRTR, sharing the original10s discovery window and
+ 1024-poll budget; timeout retains CPU/resource ownership and refuses services.
+- Two serial full native startup runs PASS: normal2855461 checks, delayed-HELLO
+ 2862861 checks. Timeout638145 checks PASS before RMTFS/WLAN/CE admission.
+  Both positive runs reach actual READY through native memory, power, auth,
+  SMEM/GLINK/QRTR, WLFW/SMMU/CE/HTC/WMI/HTT/data/nonce.153 dispatch checks and
+  four whole actual native exports ON/OFF COFF/MachO PASS generalregs/frame1024.
+  Evidence parent-composed-0001/proof-0001.json. Parent size69279744 bytes.
+- Earlier fixture failures retained in logs: memory digest outside modeled
+  image fixed by copying input to modeled image; macOS16KiB mprotect cannot
+  protect embedded4KiB descriptors, so this composed fixture tracks descriptor
+  protection/return8pairs while dedicated producer suites retain real aligned
+  descriptor mprotect. Firmware backing remains actually protected. Artificial
+ 10ms wait after every zero page exhausted startup SMEM reads; model now polls
+  the deadline only once pages complete, matching actual producer usage.
+  No production timeout/count/source guard was relaxed. An initial conditional
+  fixture indentation warning was corrected before final compile/runs.
+- This closes the complete STARTUP software composition gap, not whole-system
+  runtime/normal-exit/physical gates. NEXT compose actual copied kernel/handoff/
+  mailbox worker, finish post-CE exit, display/input and builder/new candidate.
+  Own live DT confirms SID40/41's TBU150c5000 spans0..3ff; it is not WLAN-only,
+  so no global/TBU halt is introduced as a shortcut to CE DMA retirement.
+  Existing unowned remote-memory context hunk remains preserved/uncommitted;
+  its digest is included in the private proof. No FASTBOOT/image/boot or new CI.
+  Step2/5,current plus3 remain. Last15min07:07Z,next07:22Z. Goal ACTIVE.
+
 ### Continuous Wi-Fi milestone — 2026-11-05: host submission quiescence
 
 - Loader source5869516 committed/pushed. Added native worker host-quiesce API:

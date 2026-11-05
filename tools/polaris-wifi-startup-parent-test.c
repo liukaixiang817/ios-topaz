@@ -48,6 +48,7 @@ static unsigned parent_live=1,parent_mode,parent_calls;
 #define pmsy_step(a0) ((void)(a0),parent_probe("pmsy_step"))
 #define pmsg_begin(a0,a1) ((void)(a0),(void)(a1),parent_probe("pmsg_begin"))
 #define pmsg_step(a0) ((void)(a0),parent_probe("pmsg_step"))
+#define pmsg_peer_step(a0) ((void)(a0),parent_probe("pmsg_peer_step"))
 #define pmrf_begin(a0,a1,a2,a3) ((void)(a0),(void)(a1),(void)(a2),(void)(a3),parent_probe("pmrf_begin"))
 #define pmwa_begin(a0,a1) ((void)(a0),(void)(a1),parent_probe("pmwa_begin"))
 #define pmwa_step(a0) ((void)(a0),parent_probe("pmwa_step"))
@@ -89,7 +90,7 @@ int main(void)
         CHECK(pwns_step(s)==-1&&parent_calls==1);s->unknown=s->error=0;
     }
     const unsigned waiting[]={PWNS_AOP,PWNS_SUPPLY,PWNS_PROXY,PWNS_CLOCK,PWNS_BOOT,PWNS_AUTH,
-        PWNS_RMTFS,PWNS_SMP,PWNS_GLINK,PWNS_WLAN,PWNS_CE,PWNS_WMI,PWNS_HTT};
+        PWNS_RMTFS,PWNS_SMP,PWNS_GLINK,PWNS_QRTR,PWNS_WLAN,PWNS_CE,PWNS_WMI,PWNS_HTT};
     parent_mode=2;
     for(unsigned n=0;n<sizeof(waiting)/sizeof(waiting[0]);n++){
         s->phase=waiting[n];parent_calls=0;CHECK(pwns_step(s)==1&&s->phase==waiting[n]&&!s->unknown&&parent_calls==1);

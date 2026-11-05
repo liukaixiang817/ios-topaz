@@ -54,7 +54,13 @@ static void glink_peer_ring(const struct pmni_command*c)
         }
         at=(at+((bytes+7)&~7u))%16384;put(sm_shadow+desc,at,4);
     }
-    if(local_intent&&!peer_ready){uint8_t intent[8]={0},hello[20]={2};put(intent,65536,4);rx_frame(5,7,1,intent,8);rx_qrtr(2,0xfffffffe,hello,20);peer_ready=1;}
+    if(local_intent&&!peer_ready){uint8_t intent[8]={0},hello[20]={2};put(intent,65536,4);rx_frame(5,7,1,intent,8);
+#ifdef PMSG_TEST_HOLD_HELLO
+        if(!PMSG_TEST_HOLD_HELLO){rx_qrtr(2,0xfffffffe,hello,20);}
+#else
+        rx_qrtr(2,0xfffffffe,hello,20);
+#endif
+        peer_ready=1;}
 }
 static void server(void*ctx,bool arrived,uint32_t service,uint32_t version,uint32_t instance,uint32_t node,uint32_t port)
 {CHECK(ctx==glink&&arrived&&service==69&&version==1&&!instance&&node==3&&port==77);server_seen++;}

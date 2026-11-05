@@ -75,7 +75,10 @@ static void image_setup(void)
             .bytes=n?4096:PGCI_IMAGE_BYTES,.code_type=n&&runtime_image?5:3,.data_type=n&&runtime_image?6:4};
             memcpy(loaded_at,&image,sizeof(image));}
     }
-    image_fault=image_trigger=image_ats=0;CHECK(owner_begin());
+    image_fault=image_trigger=image_ats=0;
+#ifndef PWNS_TEST_PREPARE_ONLY
+    CHECK(owner_begin());
+#endif
 }
 static int image_run(void){return pmli_capture(ledger,owner);}
 #ifndef PMLI_TEST_ENTRY

@@ -18,7 +18,7 @@ enum pwns_phase {
     PWNS_PROXY_BEGIN,PWNS_PROXY,PWNS_CLOCK_BEGIN,PWNS_CLOCK,PWNS_BOOT_BEGIN,
     PWNS_BOOT,PWNS_AUTH_BEGIN,PWNS_AUTH,PWNS_RMTFS_BEGIN,PWNS_RMTFS,
     PWNS_SMEM,PWNS_LOCK,PWNS_ALLOCATE,PWNS_PUBLISH,PWNS_UNLOCK,
-    PWNS_CHANNEL,PWNS_SMP_BEGIN,PWNS_SMP,PWNS_GLINK_BEGIN,PWNS_GLINK,
+    PWNS_CHANNEL,PWNS_SMP_BEGIN,PWNS_SMP,PWNS_GLINK_BEGIN,PWNS_GLINK,PWNS_QRTR,
     PWNS_SERVICE,PWNS_WLAN_BEGIN,PWNS_WLAN,PWNS_CE_BEGIN,PWNS_CE,
     PWNS_TRANSPORT,PWNS_HTC,PWNS_WMI_BEGIN,PWNS_WMI,PWNS_HTT_BEGIN,PWNS_HTT,
     PWNS_DATA,PWNS_NONCE,PWNS_READY
@@ -124,6 +124,7 @@ static inline int pwns_step(struct pwns_parent*s)
     case PWNS_SMP:result=pmsy_step(&s->smp);if(result==1)return 1;ok=result==2;break;
     case PWNS_GLINK_BEGIN:ok=pmsg_begin(&s->glink,&s->channel);break;
     case PWNS_GLINK:result=pmsg_step(&s->glink);if(result==1)return 1;ok=result==2;break;
+    case PWNS_QRTR:result=pmsg_peer_step(&s->glink);if(result==1)return 1;ok=result==2;break;
     case PWNS_SERVICE:ok=pmrf_begin(&s->service,&s->glink,&s->rmtfs,(void*)(uintptr_t)s->nv_memory);break;
     case PWNS_WLAN_BEGIN:ok=pmwa_begin(&s->wlan,&s->service);break;
     case PWNS_WLAN:result=pmwa_step(&s->wlan);if(result==1)return 1;ok=result==2;break;

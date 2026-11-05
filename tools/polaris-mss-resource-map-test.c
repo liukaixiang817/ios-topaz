@@ -47,7 +47,9 @@ static void resource_setup(void)
 #if defined(PMRG_TEST_PREPARE)
     PMRG_TEST_PREPARE();
 #endif
+#ifndef PWNS_TEST_PREPARE_ONLY
     CHECK(image_run()&&pmli_current(ledger,owner));
+#endif
 }
 static int resource_run(void){return pmrg_capture(resource_map,ledger,owner);}
 static int resource_page(uint64_t page)
