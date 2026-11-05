@@ -23,6 +23,7 @@ struct pmce_state {
     struct pwce_init init;struct pwea_core source[2];
     uint32_t attempted,ready,unknown,error,pending,pages,phase,events,admitted,complete;
     uint8_t memory_digest[32],zero_digest[32],smmu_digest[32],records_digest[32],digest[32];
+    uint64_t transport; /* Unique later transport; outside startup digest. */
 };
 #if defined(POLARIS_WIFI_CE_SOFTWARE_PEER)
 static int pmce_zero(uint64_t,struct pmtf_zero*);
@@ -82,6 +83,11 @@ static inline int pmce_begin(struct pmce_state*s,struct pcdm_state*m,struct pmwa
 }
 static inline int pmce_at(struct pmce_state*s,struct pwmc_translation*t,uint64_t page)
 {t->page=page;return pmce_live(s)&&pwmc_actual_translate(t)&&pwmc_translation_valid(t)&&t->page==page&&pmce_live(s);}
+static inline int pmce_current(struct pmce_state*s)
+{
+    if(!pmce_live(s)||s->complete!=1||s->pending||s->phase!=3||s->admitted!=1||s->init.complete!=1||s->init.unknown||s->init.error||s->events!=s->init.events)return 0;
+    uint8_t hash[32];pweh_digest(s,offsetof(struct pmce_state,digest),hash);return pgcd_equal(hash,s->digest,32)&&pmce_live(s);
+}
 /* One page, one route read, one WLFW poll or one MMIO command each turn. */
 static inline int pmce_step(struct pmce_state*s)
 {

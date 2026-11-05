@@ -44,6 +44,33 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): native CE polled RX/TX
+
+- Native CE startup is commit61ab00b. Default-OFF pmct uniquely consumes that
+  completed owner and performs exact native WB memory/cache/MMIO operations.
+  TX uses own ICNSS18832000+4*pipe shadows, DSB SY, ordinary WI readback and
+  source completion from DDR RRI. RX invalidates descriptor/payload, copies
+  into retained private frame storage, then returns ownership to the ring.
+- RX publication/recycling owns complete64-byte descriptor lines: four slots
+  per batch, at least one full line left empty, no clean over any neighbouring
+  device-owned descriptor. CE7's optional two-entry diagnostic RX stays empty.
+  Whole-page clean is not used on live rings. Data buffers retain exact host
+  table strides. Parent180s ownership and new65536-operation budget are finite;
+  no renewal, original service, CPU restart, free or retirement claim.
+- Full native ASan/UBSan PASS6/14804483 using separate CPU cache/device RAM
+  views:20 shadow TX/RRI completions,80 RX including ring wrap, RMTFS polling,
+  cache failure before publication, partial RX copy, barrier failure after
+  published TX, oversized descriptor and expired original owner. Faults retain
+  pending ownership and prohibit further IO. Ring protocol64010 PASS; full
+  COFF/MachO generalregs/frame1024 PASS. Evidence:ce-transport-native-0001/proof-0001.json.
+  Expiry fixture uses owner_delay rather than live-only advance_to helper.
+- NEXT integrate HTC with actual native CE, then WMI service-ready/init/scan and
+  whole-parent/kernel runtime handoff. Pure HTC READY/HTT/WMI/setup/pktlog plus
+  credit/data framing currently WIP,201 checks and both native formats PASS.
+  No phone/USB/CI/push/boot/parent registration or actual radio traffic.
+  Execution2/5: this step plus3 remain. Last15min00:49Z/11:49, next01:04Z/12:04
+  Melbourne. Goal ACTIVE; keep going until actual Wi-Fi works.
+
 ### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): native CE activation and empty rings
 
 - Independent CE backing is commit489cdba. Default-OFF pmce consumes the actual

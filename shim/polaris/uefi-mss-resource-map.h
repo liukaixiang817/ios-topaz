@@ -114,6 +114,9 @@ static inline int pmrg_device_page(uint64_t page)
 #if defined(EFI_XNU_WIFI_CE_NATIVE_AVAILABLE) && EFI_XNU_WIFI_CE_NATIVE_AVAILABLE
     if(page>=UINT64_C(0x18a40000)&&page<=UINT64_C(0x18a4c000))return 1;
 #endif
+#if defined(EFI_XNU_WIFI_CE_TRANSPORT_AVAILABLE) && EFI_XNU_WIFI_CE_TRANSPORT_AVAILABLE
+    if(page==UINT64_C(0x18832000))return 1;
+#endif
 #if defined(EFI_XNU_MSS_SFPB_IO_AVAILABLE) && EFI_XNU_MSS_SFPB_IO_AVAILABLE
     if(page==UINT64_C(0x1f43000))return 1;
 #endif

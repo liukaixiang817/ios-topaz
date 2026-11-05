@@ -45,6 +45,9 @@ static void ce_at(struct pmni_translation*t)
 {if(ce&&ce->pending&&ce->phase==3&&ce_fault==4&&t->page==PWCE_BASE)t->write_par|=1;}
 static int ce_raw(const struct pmni_command*c,unsigned*out)
 {
+#if defined(PMCE_TEST_RAW_HOOK)
+    int handled=PMCE_TEST_RAW_HOOK(c,out);if(handled>=0)return handled;
+#endif
     if(!ce||!ce->pending||ce->phase!=3)return -1;
     CHECK(local_mask&&owner->held&&wlan->client.enabled&&ce->admitted&&ce_zeroes==PWDM_BYTES/4096&&(owner->effects&PMSC_DMA));
     if(c->kind==PMNI_FULL_ORDER){ce_orders++;return ce_fault!=7;}
@@ -90,7 +93,10 @@ static void ce_setup(unsigned fault_kind)
     for(unsigned n=0;n<12;n++)ce_regs[n][0x18/4]=0x40e0000,ce_regs[n][0x2c/4]=0x8000001f,ce_regs[n][0x34/4]=0x800003e0;
     CHECK(pmce_begin(ce,ce_memory,wlan,smmu_owner,smmu_records));
 }
-int main(int argc,char**argv)
+#ifndef PMCE_TEST_ENTRY
+#define PMCE_TEST_ENTRY main
+#endif
+int PMCE_TEST_ENTRY(int argc,char**argv)
 {
     CHECK(argc==8);sm_original=malloc(PWFI_IMAGE_BYTES);sm_shadow=malloc(PMSQ_BYTES);rmtfs_shadow=malloc(0x202000);
     memory=aligned_alloc(4096,PNV_BYTES);ce_shadow=aligned_alloc(4096,PWDM_BYTES);CHECK(sm_original&&sm_shadow&&rmtfs_shadow&&memory&&ce_shadow);
