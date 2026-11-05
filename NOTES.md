@@ -54,6 +54,41 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: retained terminal composition
+
+- Source402d364: new default-OFF native SYSTEM_OFF continuation binds the
+  quiesced actual worker, copied kernel shutdown slot, persistent CPU owner
+  and retained memory. Existing kernel RAM-drain protocol precedes PSCI
+  discovery/peer checks. All DMA backing/mappings/VMID grants/power stay held;
+  any returned SYSTEM_OFF, including zero, is UNKNOWN. This is not per-device
+  DMA retirement, a loader callsite, a completed admission gate or a boot image.
+- Actual full runtime composition exposed a drain bug: cached CE source posted
+  counts could remain nonzero after the last WMI send, because HTC normally
+  reaps completion before a subsequent send. Quiescence now reads actual RRI
+  via pmct_reap; no completion is fabricated and failed reads retain failure.
+  Worker3597 sanitizer checks PASS. Full serial ASan/UBSan normal2888990 and
+  delayed2896390 checks PASS; four failure compositions also PASS (unsupported
+  SYSTEM_OFF, kernel drain error, CPU600 still ON, SMC state mutation).
+  Pure policy15976 checks and both complete ON COFF/MachO exports PASS with
+  generalregs/frame1024. SOFTWARE kernel/PSCI/radio/cache leaves throughout.
+- Private exact commands/logs/source hashes: stable clone
+  /private/tmp/polaris-wifi-local-9286b3c/research/polaris/uefi-ios-0189/wifi/system-off-native-0001/proof-0001.json.
+  Initial indentation compile failure, cloud-blocked run and two failed drain
+  runs retained. iCloud evicted SmemDxe; used existing0188 frozen firmware
+  copies with unchanged production identity checks; hashes/provenance retained.
+  Do not upload those private inputs. Unowned remote-memory hunk preserved.
+- Human asked why DHCP/IP was manually implemented. Confirmed source4f0ed6b
+  only requests existing configd DHCP and queries en0; it does not implement
+  DHCP/IP/DNS protocols. Compiling/signing is not installed service or acquired
+  IP evidence. System Wi-Fi management/UI integration remains unfinished;
+  command-line bring-up is not the final user experience.
+- No new kernel CI, phone query, image, boot, scan/join/IP/DNS/data or physical
+  shutdown. Last kernel CI41971165789 at e3097b1 remains the recorded success.
+  NEXT integrate an explicit terminal request/loader callsite and linked-slot
+  builder checks, then display/input and new candidate admission; do not route
+  DISCONNECT to power-off or bypass outstanding retirement/integration gates.
+  Last15min16:38Z,next16:53Z. Execution2/5,current plus3 remain. Goal ACTIVE.
+
 ### Continuous Wi-Fi milestone — 2026-11-05: DHCP userland and stable local build
 
 - Runtime compositionf6a246e and handoff9286b3c pushed successfully. Added
