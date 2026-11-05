@@ -12,7 +12,7 @@
 #error Native scan requires actual WMI READY
 #endif
 struct pmwsn_state {
-    uint64_t wmi,owner,opening;struct pwsc_state client;
+    uint64_t wmi,owner,opening,consumer;struct pwsc_state client;
     uint32_t attempted,ready,unknown,error,submitted;
 };
 static inline int pmwsn_fail(struct pmwsn_state*s,unsigned error)

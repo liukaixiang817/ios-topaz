@@ -44,6 +44,34 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): native station association
+
+- Station MAC is commit9181c36. New pwst orders qualified active channel list,
+  VDEV_START/actual matching START response, BSS PEER_CREATE/actual HTT MAP,
+  management auth/assoc, PEER_ASSOC and VDEV_UP. Primary ath10k declarations
+  independently compiled: start72/create16/assoc76/up16 and all field/tag offsets
+  match. Actual association-response capability retained for PEER_ASSOC.
+- Default-OFF pmst uniquely consumes completed native scan plus native HTT data
+  from the SAME WMI/owner. Management is copied/CIVACed into actual HTT DMA bank
+  and published with MGMT mode3/TID17; waits actual CE commit before protocol
+  advance. Explicit HTT completion frees each management buffer; peer unmap or
+  deauth/disassoc revokes association. VDEV_UP publication is not WPA/IP success.
+- This initial native adapter supports HTT3 management only; explicitly refuses
+  service76 MGMT_TX_WMI instead of choosing a wrong path. Channel values remain
+  explicit parent regulatory inputs; no native regulatory producer exists yet.
+  Whole-parent must supply that, not infer a TX power grant from beacon data.
+- Native ASan/UBSan5/12469052 PASS: actual scan+HTT bank, normal start/map/auth/
+  assoc/up/unmap, START failure, map timeout, auth rejection, TX cache failure.
+  Protocol811 PASS, full native and protocol COFF/MachO generalregs/frame1024
+  PASS. Evidence:station-native-0001/proof-0001.json and wmi-station-0001/layout.c.
+- NEXT WPA2 crypto/EAPOL/key installation and MGMT_TX_WMI if advertised, source
+  regulatory/entropy, whole-parent/runtime/kernel interface and post-CE exit.
+  New independent WPA crypto WIP is not compiled into native tests yet. Own DT
+  qrng793000/1000 has no-qrng-config; PRNG clock retained, but read protocol and
+  resource mapping still need own source verification. No guessed MMIO reads.
+- No phone/USB/CI/push/boot/registration; execution2/5, current step plus3 remain.
+  Last15min01:51Z/12:51, next02:06Z/13:06 Melbourne. Goal ACTIVE, continue work.
+
 ### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): station MAC protocol
 
 - HTT data ownership is commitcc0fd5c. New psta uses an explicitly selected

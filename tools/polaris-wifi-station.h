@@ -11,7 +11,7 @@
 struct psta_state {
     uint64_t epoch,last,deadline,opening;
     uint32_t opened,error,unknown,phase,pending,attempts,security,tx_bytes;
-    uint32_t associated,rejected,reason,aid,dropped,ignored,sequence,dtim,rate_count,rsn_bytes;
+    uint32_t associated,rejected,reason,aid,dropped,ignored,sequence,dtim,rate_count,rsn_bytes,assoc_caps;
     uint8_t own[6],rates[12],rsn[22],ap_rsn[257],tx[256];
     struct pwsc_bss target;
 };
@@ -158,7 +158,7 @@ static inline int psta_frame(struct psta_state*s,const uint8_t*p,unsigned bytes,
     unsigned aid=psta_u16(p+28),caps=psta_u16(p+24);
     if((aid&0xc000)!=0xc000||!(aid&0x3fff)||(aid&0x3fff)>2007||!(caps&1)||(caps&2)||
        (!!(caps&16)!=(s->security==2))||!psta_rates(s,p+30,bytes-30))return s->dropped++,1;
-    s->aid=aid&0x3fff;s->phase=4;s->associated=1;return 1;
+    s->aid=aid&0x3fff;s->assoc_caps=caps;s->phase=4;s->associated=1;return 1;
 }
 static inline int psta_wmi(struct psta_state*s,const uint8_t*p,unsigned bytes,uint64_t now)
 {

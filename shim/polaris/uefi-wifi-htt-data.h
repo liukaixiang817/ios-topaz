@@ -13,7 +13,7 @@
 #error Native HTT data requires actual initialized HTT
 #endif
 struct pmhd_state {
-    uint64_t parent,owner,opening;struct phtr_state rings;
+    uint64_t parent,owner,opening,consumer;struct phtr_state rings;
     uint8_t send[2048],receive[2048];
     uint32_t attempted,ready,unknown,error,submitted,frame_ready,rx_slot,rx_bytes,rx_offset,rx_format,rx_attention,rx_bad;
 };
