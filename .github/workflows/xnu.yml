@@ -65,7 +65,9 @@ jobs:
 
       - name: Verify resident Wi-Fi mailbox sources
         if: env.TARGET_PLATFORM == 'polaris'
-        run: python3 tools/polaris-wifi-kernel-mailbox-patch.py
+        run: |
+          python3 tools/polaris-wifi-kernel-mailbox-patch.py
+          python3 tools/polaris-wifi-interface-patch.py
 
       - name: Locate compatible interface cache
         if: env.TARGET_PLATFORM == 'polaris'
@@ -117,6 +119,9 @@ jobs:
           git -C dxb checkout -q FETCH_HEAD
           # 12.5-14.3 use the top-level patches dir; ours go next to blacktop's
           python3 tools/stage-kernel-patches.py --platform "$TARGET_PLATFORM" --destination dxb/patches
+          if [ "$TARGET_PLATFORM" = polaris ]; then
+            python3 tools/polaris-kernel-required-patches.py dxb/build.sh
+          fi
           # libfirehose_kernel is built arm64e-only; the SWEET kernel is plain arm64.
           # topaz: Cortex-A53/A73 (ARMv8.0), so the same -mcpu as the kernel
           # (clang's apple-m1 default emits LSE atomics and LDAPR)
@@ -180,6 +185,18 @@ jobs:
           bash build.sh
           ccache -s
 
+      - name: Verify linked resident Wi-Fi page
+        if: env.TARGET_PLATFORM == 'polaris'
+        run: |
+          configuration=$(printf '%s' "$KERNEL_CONFIG" | tr '[:upper:]' '[:lower:]')
+          machine=$(printf '%s' "$MACHINE_CONFIG" | tr '[:upper:]' '[:lower:]')
+          kernel="dxb/fakeroot/System/Library/Kernels/kernel.${configuration}.${machine}"
+          python3 tools/polaris-wifi-kernel-binding.py "$kernel" > resident-wifi-page.json
+          nm -gU "$kernel" > resident-wifi-symbols.txt
+          for symbol in _polaris_wifi_interface_start _polaris_wifi_interface_seal _polaris_wifi_mailbox_attach; do
+            grep -Eq "[[:space:]]${symbol}$" resident-wifi-symbols.txt
+          done
+
       - name: Package build tree for local compiles
         if: always()
         run: |
@@ -224,6 +241,7 @@ jobs:
         if: always()
         run: |
           mkdir -p out
+          if [ -f resident-wifi-page.json ]; then cp resident-wifi-page.json out/; fi
           printf 'target_platform=%s\nmachine_config=%s\ncommit=%s\n' "$TARGET_PLATFORM" "$MACHINE_CONFIG" "$GITHUB_SHA" > out/build-profile.txt
           cp -R dxb/fakeroot/System/Library/Kernels/. out/ 2>/dev/null || true
           ls -la out

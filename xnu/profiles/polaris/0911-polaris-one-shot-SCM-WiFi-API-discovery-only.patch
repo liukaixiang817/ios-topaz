@@ -157,7 +157,9 @@ diff --git a/bsd/dev/polaris_wifi_native_ro.c b/bsd/dev/polaris_wifi_native_ro.c
 diff --git a/bsd/conf/files b/bsd/conf/files
 --- a/bsd/conf/files
 +++ b/bsd/conf/files
-@@ -1,2 +1,3 @@
+@@ -109,4 +109,5 @@
+ bsd/dev/polaris_wifi_cap.c		standard
  bsd/dev/polaris_wifi_smem_probe.c		standard
  bsd/dev/polaris_wifi_native_ro.c		standard
 +bsd/dev/polaris_wifi_scm_info.c		standard
+ bsd/dev/sweet_sample.c			standard

@@ -16,6 +16,12 @@ their build/setup scripts or prebuilts has been executed.
 
 ## Own native CE startup (0189, 2026-11-05)
 
+The later BSD endpoint compares HackiOS redwood_net's XNU ether/ifnet API use
+with retained actual8796 kpi_interface/kpi_mbuf/if.c sources. Polaris's own
+fixed mailbox supplies all radio frames/events; no reference radio driver,
+firmware address, capabilities, connected-state assumption or Topaz provider
+is adopted. Private root-only bring-up control remains separate from wifid.
+
 Compared primary WCN3990 ce.c/hw.c/snoc.c with own ICNSS18800000 DT aperture,
 35-bit DMA limit, SID40/41 and S1-bypass implementation. Independent CE allocation,
 current native zero/cache/SMMU/CFG/MISSION and empty host ring initialization

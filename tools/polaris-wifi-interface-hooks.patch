@@ -1,0 +1,41 @@
+--- a/bsd/dev/polaris_touch.c
++++ b/bsd/dev/polaris_touch.c
+@@ -42,6 +42,7 @@
+ extern int polaris_uefi_stop_secondaries(void);
+ extern bool polaris_ram_overlay_allowed(void);
+ #include "polaris_clock.h"
++#include "polaris-wifi-interface.h"
+ extern void polaris_wifi_readonly_poll(void);
+ 
+ static struct {
+@@ -649,7 +650,8 @@
+             ps_publish(POLARIS_Q_RUNNING,0);
+             printf("POLARIS UEFI DRAIN: RAM-only mailbox ready after BSD initialization\n");
+         }
+-    } else if (phase!=POLARIS_Q_RUNNING) { return false; }
++    } else if (phase==POLARIS_Q_REQUESTED) { return true; } /* Retry a busy Wi-Fi seal. */
++    else if (phase!=POLARIS_Q_RUNNING) { return false; }
+     pi_cache((uintptr_t)&slot->firmware,false);
+     uint32_t sequence=__atomic_load_n(&slot->firmware.sequence,__ATOMIC_ACQUIRE);
+     if (!sequence) { return false; }
+@@ -670,6 +672,12 @@
+     struct polaris_shutdown_slot *slot=&polaris_uefi_shutdown;
+     if (!polaris_uefi_shutdown_pending()) { return; }
+     polaris_clock_seal(); /* Same thread; no UTC work survives native drain. */
++    static unsigned wifi_seal_attempts;
++    int wifi_error=polaris_wifi_interface_seal();
++    if (wifi_error==EBUSY && ++wifi_seal_attempts<=500) { return; }
++    if (wifi_error) {
++        ps_publish(POLARIS_Q_FAILED,wifi_error==EBUSY?ETIMEDOUT:wifi_error);return;
++    }
+     printf("POLARIS UEFI DRAIN: accepted seq=%u mode=%u; calling reboot_kernel sync path\n",
+         slot->kernel.sequence,slot->kernel.mode);
+     int error=reboot_kernel(0,NULL);
+@@ -778,6 +786,7 @@
+ void polaris_touch_init(void)
+ {
+     pi_start();
++    polaris_wifi_interface_start();
+     thread_t t;
+     if (!PE_parse_boot_argn("polaristouch", &pt.mode, sizeof(pt.mode)) || !pt.mode) { return; }
+     if ((pt.mode != 1 && pt.mode != 2) || !pt_board_gate()) {

@@ -10,6 +10,16 @@ iOS adaptation. No erase/format/resize/GPT or Windows write is approved.
 
 ## Current handoff, 2026-10-27 (Asia/Shanghai)
 
+**Source publication approval, human 2026-11-05:** user explicitly approved
+the push through218a4d4 to their liukaixiang817/ios-topaz repository, then said
+“我批准你接下来所有的源码提交推送到我自己的仓库”. This authorizes subsequent
+project source commits/pushes to that repository without repeated confirmation.
+Keep device dumps, serials, private firmware and downloaded Apple artifacts out
+of git. The earlier auto-review push rejection was resolved by this direct
+approval; push cdb0669..218a4d4 succeeded. Kernel CI41966748964, job127045403123,
+head218a4d4844c2a6e42b9a75b10bb1252a4a6d48e7 reported success, but final artifact
+binding rejected it; see the latest omission/fix milestone below.
+
 **Continuous Wi-Fi reporting, human clarified 2026-11-05:** every15min report
 the current execution step1..5 and estimate remaining steps, alongside concrete
 results/running work. Fixed execution sequence:1 own hardware/resources/firmware
@@ -43,6 +53,47 @@ arrives. End using a human-confirmation marker bound to that boot's sent_utc;
 stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
+
+### Continuous Wi-Fi milestone — 2026-11-05: BSD interface and actual CI omission fixed
+
+- CI41966748964/job127045403123 on218a4d4 reported success, but the downloaded
+  kernel has NO polaris_wifi_mailbox_page symbol (nor object in its archive).
+  Kernel17307080B SHA14380b9f76ca46c096a359b3f1cf6266171e6717f8af0cfa1ca7c9426eb1ddf4;
+  artifact13388720109/profile/SHA256SUMS verified. It is REJECTED, not bootable
+  Wi-Fi evidence. Native object retention did not prove final kernel inclusion.
+- Pinned DXB script skips any git apply --check failure. Reproduced0911 failure
+  against COMPLETE retained bsd/conf/files: its @@ -1 hunk cannot match the real
+  line110.0914 repeated that mistake and depends on0911. Fixed actual context/
+  position;0911+0914+0915 now apply in order to complete files and exact embedded
+  sources/hooks compare equal. Earlier two-line-only fixture missed this bug.
+  New CI guard makes ALL0800..0999 Polaris overlay failures fatal. Final linked
+  kernel must pass actual16KiB DATA/symbol/initializer validation and contain
+  interface start/seal/mailbox attach symbols. No successful CI claim substitutes
+  for those checks.59 backing/8 actual shell guard checks PASS; profile3 PASS.
+- New opt-in actual BSD en0 frontend uses XNU ether/ifnet KPI and the mailbox,
+  fixed16-packet TX queue, RX mbufs and root-only fixed1600B private control
+  ioctl. READY permits attach; LINK alone permits data. Backpressure retains
+  queued frames; disconnect erases old queued frames. JOIN input is wiped after
+  submission; GET cannot echo JOIN input and JOIN replies require no body.
+  This is a bring-up control API, not Apple80211/wifid or successful networking.
+- Actual polaris_touch_init starts its worker; actual shutdown closes new
+  submissions, waits for active worker/mailbox operations, wipes private input,
+  then permits existing VFS drain. ps_poll now retries REQUESTED;500 busy turns
+  allowed, then FAILED/ETIMEDOUT, never reboot on a failed seal. Opt-out is inert.
+  No radio/DMA retirement or secure return is inferred from kernel sealing.
+- ASan/UBSan299 actual frontend checks and6 extracted actual shutdown-function
+  scenarios PASS. Interface, patched touch and previously skipped SCM-info all
+  compile with retained REAL XNU headers/generalregs/frame1024; header/style
+  warnings remain. Initial missing thread declarations/header search paths and
+  fixture type/identifier-length failures corrected before final passes.
+  Evidence kernel-interface-0001/proof-0001.json; rejected artifact evidence
+  kernel-mailbox-0001/ci-native-binding-rejected-0001.json. Whole new CI NEXT.
+  One initial57-check host binding test ran while earlier CI was active; later
+  tests/builds were serial. CI source inputs were unchanged during that run.
+- NEXT actual CPU0 persistent authority, native mailbox producer and control/
+  station/credential/regulatory glue, complete parent/post-CE exit/new image.
+  No phone/USB/boot. Execution2/5,current step plus3 remain. Last15min04:37Z/
+  15:37 Melbourne,next04:52Z/15:52. Goal ACTIVE; continue to physical Wi-Fi.
 
 ### Continuous Wi-Fi milestone — 2026-11-05: actual XNU mailbox storage/adapter
 

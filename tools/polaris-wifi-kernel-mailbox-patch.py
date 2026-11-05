@@ -18,10 +18,11 @@ def expected():
               'No ifnet/station registration, native firmware runtime or radio enable is implied.\n\n',
               'diff --git a/bsd/conf/files b/bsd/conf/files\n',
               '--- a/bsd/conf/files\n+++ b/bsd/conf/files\n',
-              '@@ -1,2 +1,3 @@\n',
+              '@@ -111,3 +111,4 @@\n',
               ' bsd/dev/polaris_wifi_native_ro.c\t\tstandard\n',
               ' bsd/dev/polaris_wifi_scm_info.c\t\tstandard\n',
-              '+bsd/dev/polaris_wifi_mailbox.c\t\tstandard\n']
+              '+bsd/dev/polaris_wifi_mailbox.c\t\tstandard\n',
+              ' bsd/dev/sweet_sample.c\t\t\tstandard\n']
     for destination, source in FILES.items():
         lines = (ROOT / source).read_text().splitlines(keepends=True)
         if not lines or not lines[-1].endswith('\n'):
