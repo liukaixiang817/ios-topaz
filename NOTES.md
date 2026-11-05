@@ -54,6 +54,32 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: photo located admission; current candidate audit passed
+
+- User supplied current screen, then explicitly confirmed return to FASTBOOT.
+  Photo last visible line WLED_NATIVE_ARCHIVE_OWNED=1. It proves ReadyToBoot,
+  code/stack identity, XNU bank claim/ownership and archive ownership passed.
+  Displayed image size0x5596000 exactly equals sent driver's PE SizeOfImage.
+  Driver-not-loaded hypothesis excluded. Exact subsequent stopped instruction
+  remains unknown: resident binding/GOP/early/MSS/NV/CE/HTT stages were silent.
+  No kernel/radio success inferred. Private photo/evidence retained under
+  wifi/native-memory-display-0001; no photo or device identifiers in Git.
+- Current candidate's ONE readonly recovery audit64919 completed exit0:
+  start23:47:07Z; both16GiB roots matched in56.827/56.700s; six GPT, five critical
+  partitions, ESP and24MiB NV before/local/after matched. Actual unmount and
+  expected FASTBOOT returned23:49:30.563759Z. Independent review PASS40 checks.
+- Diagnostic imageef7c7edd..., driver40eba510..., current kernel CI42091724671
+  and payload904f5a71... unchanged. New limited trial frozen361 inputs, with
+  diagnostic24 sanitizer cases, arm64 stack limit, full EFI and original codec
+  evidence. Full startup models retain SOFTWARE hardware/kernel/UI leaves;
+  actual runtime maps and radio execution still require phone evidence.
+  Offline once-only boot validation PASS, fresh nonce unused, image not sent.
+- NEXT execute bound diagnostic temporary boot once with210s service wait;
+  obtain new screen if host connection still absent. No replay/reset/observer.
+  Execution remains2/5, four including current remain. Last current report
+ 23:47Z,next00:02Z. Previous physical-feedback blocker resolved; active work
+  resumed by user, although goal API still reports its prior BLOCKED status.
+
 ### Continuous Wi-Fi blocked audit — 2026-11-06 Melbourne: physical screen/device access required
 
 - Third consecutive goal turn with the same genuine blocker. Final bounded
