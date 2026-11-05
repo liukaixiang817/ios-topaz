@@ -102,8 +102,10 @@ early samples only. On0029 the human already confirmed boot complete and said
   actual PMIC ownership and terminal restoration to the retained shutdown path,
   then repeat complete composition/candidate gates and build a NEW boot image.
   No new phone query/boot/scan/join/IP/DNS/data. Execution2/5,current plus3 remain;
-  none of the five whole admission gates is newly complete. Last formal report
- 17:38Z before pause; resumed17:50Z,next18:05Z. Goal ACTIVE.
+  none of the five whole admission gates is newly complete. Source7a8bc08 and
+  handoffe56fd7d pushed; four owned sources plus NOTES atomically synced to the
+  original workspace after checking prior bytes. Last formal report18:05Z,
+  next18:20Z. Goal ACTIVE; both sets of downloaded files are already verified.
 
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: verified kernel and shutdown binding
 
