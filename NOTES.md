@@ -54,6 +54,38 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05: complete runtime mailbox/radio model
+
+- Sourcef6a246e committed after loader fix3359232. Added actual complete startup,
+  copied payload, native CPU handoff and native mailbox/worker composition.
+  CPU/cache/kernel/radio leaves remain SOFTWARE. Actual SCAN and raw-PMK JOIN
+  traverse CONTROL; actual station/WPA/key/HTT deliver link event, encrypted RX
+  to kernel lane and kernel TX through firmware completion. Owner continues
+  after180s. No production owner/deadline guards overridden by the model.
+- Two serial ASan/UBSan passes: normal2888761 checks/41.46s, delayed QRTR HELLO
+ 2896161/44.19s. Shared-network regression20092486 checks/8 scenarios and parent
+  timeout638145 checks PASS. Exact source/log evidence runtime-composed-0001/
+  proof-0001.json. Scan fixture echoes actual IDs; optional SET_REGDOMAIN peer.
+  Earlier fixture tail-placement and pointer-grouping failures are retained;
+  actual firmware-tail and native memory predicates were not relaxed.
+- iCloud evicted clean NOTES/network fixture to dataless placeholders. Local
+  hydration request accepted but reads/compile remained blocked. Stopped only
+  our stuck compile/edit/search; preserved placeholders and restored identical
+  fixed3359232 Git blobs. Notes blobc1fd501745bce116a204af0d26baf1310878f337,
+  network blobfcc8718648081613bc4e40f48f4bdb5d222d4e65. Recompile/timeout passed.
+  An asynchronous hydration later replaced the first handoff update with old
+  content; detected after commit and this handoff is being reapplied atomically.
+- No phone scan/JOIN/IP/DNS/data, original XNU execution or DMA retirement is
+  established by software. No new image/FASTBOOT/boot/observer/kernel CI.
+  Existing unowned remote-memory hunk remains preserved/uncommitted.
+- NEXT userland IP configuration, native post-CE exit/display/input, builder
+  admission/new candidate and actual phone tests. DHCP source is in progress:
+  generated Mach IPC accepted/denied/wrong-ID/short-reply/timeout5 cases PASS,
+  control861 checks PASS; iOS SDK omits MiG defs, host ARM64 generation plus
+  actual iOS ABI assertions used for the current compile. No host networking
+  configuration executed. Last15min07:52Z,next08:07Z. Execution2/5,current plus3
+  remain; incomplete full gates remain incomplete. Goal ACTIVE.
+
 ### Continuous Wi-Fi milestone — 2026-11-05: loader handoff refusal dispatch
 
 - Complete-startup/QRTR sourcec8be4c1 committed/pushed. Runtime review found
