@@ -126,10 +126,18 @@ int main(void)
     CHECK(pwmb_receive_poll(&kernel_lanes[PWMB_RX],&model_bus,&output)==1&&!memcmp(output.data,ethernet,60));
     CHECK(pwmb_receive_complete(&kernel_lanes[PWMB_RX],&model_bus)==1&&pwwn_step(&worker)==1&&rx_acked==2);
     control(PWMB_DISCONNECT,0,0,45);CHECK(worker.phase==PWWN_LINK); /* Explicitly unsupported, not false completion. */
-    net_result=4;CHECK(pwwn_step(&worker)==1&&worker.phase==PWWN_CLOSED);
+    CHECK(pwwn_quiesce_begin(&worker)&&!pwwn_quiesce_begin(&worker));
+    model_parent.transport.rings.source[3].posted=1;CHECK(pwwn_step(&worker)==1&&worker.closing==1&&!worker.network.closed);
+    model_parent.transport.rings.source[3].posted=0;model_parent.data.rings.tx_owner[4]=2;
+    CHECK(pwwn_step(&worker)==1&&worker.closing==1);model_parent.data.rings.tx_owner[4]=0;
+    CHECK(pwwn_step(&worker)==2&&worker.closing==2&&worker.network.closed&&worker.phase==PWWN_CLOSED);
+    before=radio_polls;CHECK(pwwn_step(&worker)==2&&radio_polls==before); /* No new post after drain. */
     memset(worker.pmk,0x5a,32);qualified=0;before=radio_polls;
     CHECK(pwwn_step(&worker)==-1&&worker.unknown&&pwmb_zero(worker.pmk,32)&&radio_polls==before);
     worker_setup();worker.turns=UINT64_MAX;CHECK(pwwn_step(&worker)==-1&&worker.unknown);
     worker_setup();force_fault=1;memset(worker.request.data,0x33,112);CHECK(pwwn_step(&worker)==-1&&worker.unknown&&pwmb_zero(&worker.request,sizeof(worker.request)));
+    worker_setup();force_fault=0;worker.phase=PWWN_LINK;worker.network.ready=1;net_result=5;
+    CHECK(pwwn_quiesce_begin(&worker));model_parent.owner.last=worker.close_deadline+1;
+    CHECK(pwwn_step(&worker)==-1&&worker.unknown&&worker.error==15);
     printf("PASS %u worker checks; actual wire/crypto, SOFTWARE radio/runtime\n",checks+nv_checks);return 0;
 }

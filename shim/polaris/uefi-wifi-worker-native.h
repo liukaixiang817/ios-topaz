@@ -20,8 +20,8 @@ struct pwwn_state {
     struct pwrg_profile regulatory;struct pwch_pmk derivation;struct pwst_channel channel;
     struct pwmb_message request,packet;
     uint8_t reply[16+PWCB_BSS_HEADER+PWCB_IES],pmk[32],event[16];
-    uint64_t turns,ignored,tx_dropped,rx_dropped;
-    uint32_t ready,unknown,error,phase,scan_id,index,reply_bytes,event_pending,tx_pending,reg_submitted,reg_published,country;
+    uint64_t turns,ignored,tx_dropped,rx_dropped,close_deadline,retirement;
+    uint32_t ready,unknown,error,phase,scan_id,index,reply_bytes,event_pending,tx_pending,reg_submitted,reg_published,country,closing;
 };
 static inline struct pwns_parent*pwwn_parent(struct pwwn_state*s)
 {return (void*)(uintptr_t)s->mailbox.parent;}
@@ -33,7 +33,7 @@ static inline int pwwn_fail(struct pwwn_state*s,unsigned error)
     if(s->network.ready)pmwn_close(&s->network);return -1;
 }
 static inline int pwwn_live(struct pwwn_state*s)
-{return s&&s->ready&&!s->unknown&&!s->error&&pwmn_current(&s->mailbox);}
+{return s&&s->ready&&!s->unknown&&!s->error&&!s->retirement&&pwmn_current(&s->mailbox);}
 static inline void pwwn_event(struct pwwn_state*s,unsigned event,unsigned error,uint64_t detail)
 {
     /* One pending event is bounded. Link-down/fault supersedes an unread scan
@@ -52,6 +52,29 @@ static inline int pwwn_begin(struct pwwn_state*s,struct pwns_parent*p,unsigned c
     for(unsigned n=0;n<7;n++)if(!pwea_disjoint((uintptr_t)s,sizeof(*s),at[n],bytes[n]))return 0;
     if(p->wmi.consumer||p->data.consumer||!pmhd_live(&p->data)||!pmnp_live(&p->nonce)||!pwmn_begin(&s->mailbox,p))return 0;
     s->country=country;s->ready=1;pwwn_event(s,1,0,0);return pwwn_live(s);
+}
+/* Normal host quiescence for the later radio OFF continuation. Stop new BSD
+ * TX first, but keep servicing submitted HTT/WMI and handshake completions.
+ * This API neither sends OFF nor deletes peers nor retires remote DMA. */
+static inline int pwwn_quiesce_begin(struct pwwn_state*s)
+{
+    if(!pwwn_live(s)||s->closing||s->phase!=PWWN_LINK)return 0;
+    uint64_t now=pwwn_parent(s)->owner.last;if(now>UINT64_MAX-192000000)return 0;
+    s->close_deadline=now+192000000;s->closing=1;return 1;
+}
+static inline int pwwn_quiesce_poll(struct pwwn_state*s)
+{
+    if(!s->closing)return 1;if(s->closing==2)return 2;
+    struct pwns_parent*p=pwwn_parent(s);
+    if(p->owner.last>s->close_deadline)return pwwn_fail(s,15);
+    if(s->network.closed)return pwwn_fail(s,15); /* Unexpected loss is not normal drain. */
+    if(s->network.submitted||s->network.tx_wait||s->network.ethernet.tx_bytes||
+       s->network.wpa.pending||s->network.wpa.group_ready||s->network.wpa.group_issued||
+       s->station.submitted||s->station.mgmt_wait||p->htc.client.pending||p->htc.frame_kind||
+       p->data.submitted||p->data.frame_ready||p->data.rings.busy||p->transport.busy||p->transport.rings.busy)return 1;
+    for(unsigned n=0;n<PHTM_TX;n++)if(p->data.rings.tx_owner[n])return 1;
+    for(unsigned n=0;n<12;n++)if(p->transport.rings.source[n].posted)return 1;
+    pmwn_close(&s->network);s->phase=PWWN_CLOSED;s->closing=2;pwwn_event(s,4,0,0);return 2;
 }
 static inline void pwwn_state_body(struct pwwn_state*s,uint8_t*out)
 {
@@ -81,7 +104,8 @@ static inline int pwwn_control(struct pwwn_state*s)
     struct pwns_parent*p=pwwn_parent(s);struct pwmb_message*q=&s->request;
     unsigned error=0,bytes=16;pwmb_clear(s->reply,sizeof(s->reply));
     pwmb_put64(s->reply,q->sequence);pwmb_put32(s->reply+8,q->operation);
-    if(q->operation==PWMB_STATE){pwwn_state_body(s,s->reply+16);bytes+=PWCB_STATE_BYTES;}
+    if(s->closing&&q->operation!=PWMB_STATE&&q->operation!=PWMB_SCAN_ENTRY)error=16;
+    else if(q->operation==PWMB_STATE){pwwn_state_body(s,s->reply+16);bytes+=PWCB_STATE_BYTES;}
     else if(q->operation==PWMB_SCAN_ENTRY){
         unsigned n=pwwn_bss(s,pwmb_u32(q->data),s->reply+16);if(!n)error=2;else bytes+=n;
     }else if(q->operation==PWMB_SCAN){
@@ -130,7 +154,10 @@ static inline int pwwn_radio(struct pwwn_state*s)
         if(result==2&&!pwwn_other(s))return pwwn_fail(s,3);
         if(result==4){s->phase=PWWN_CLOSED;pwwn_event(s,4,0,0);return 1;}
         if(s->network.ethernet.authorized&&s->phase!=PWWN_LINK){s->phase=PWWN_LINK;pwwn_event(s,3,0,0);}
-        if(result==3){int sent=pwmn_send(&s->mailbox,PWMB_RX,PWMB_ETHERNET_RX,s->network.ethernet.receive,s->network.ethernet.rx_bytes);
+        if(result==3){
+            int sent;
+            if(s->closing){if(s->rx_dropped==UINT64_MAX)return pwwn_fail(s,4);s->rx_dropped++;sent=1;}
+            else sent=pwmn_send(&s->mailbox,PWMB_RX,PWMB_ETHERNET_RX,s->network.ethernet.receive,s->network.ethernet.rx_bytes);
             if(sent<0)return pwwn_fail(s,4);if(sent&&!pmwn_ack(&s->network))return pwwn_fail(s,4);}
         return 1;
     }
@@ -162,10 +189,12 @@ static inline int pwwn_radio(struct pwwn_state*s)
     }return 1;
 }
 /* One bounded service turn; no wait loop for a peer, PBKDF2 or firmware event.
- * The caller continues polling even if the kernel isn't draining its lanes. */
+ *1=continue,2=normal host quiescence: caller must immediately advance radio
+ * retirement. It must not resume this worker to refill/post another CE ring. */
 static inline int pwwn_step(struct pwwn_state*s)
 {
     if(!pwwn_live(s))return s?pwwn_fail(s,10):-1;
+    if(s->closing==2)return 2;
     if(s->turns==UINT64_MAX)return pwwn_fail(s,10);s->turns++;
     if(pwwn_radio(s)<0)return -1;
     if(s->event_pending){int result=pwmn_send(&s->mailbox,PWMB_EVENT,PWMB_NOTIFY,s->event,16);
@@ -182,10 +211,10 @@ static inline int pwwn_step(struct pwwn_state*s)
         const uint8_t*frame=s->packet.data;unsigned bytes=s->packet.bytes;
         unsigned valid=bytes>=15&&bytes<=1514&&psta_equal(frame+6,pwwn_parent(s)->wmi.client.mac,6)&&
             pwpa_nonzero(frame,6)&&pwpa_be16(frame+12)>=1536&&pwpa_be16(frame+12)!=0x888e;
-        if(s->phase==PWWN_LINK&&valid)done=pmwn_send(&s->network,frame,bytes);
+        if(s->phase==PWWN_LINK&&!s->closing&&valid)done=pmwn_send(&s->network,frame,bytes);
         else{if(s->tx_dropped==UINT64_MAX)return pwwn_fail(s,14);s->tx_dropped++;done=1;}
         if(done){pwch_wipe(&s->packet,sizeof(s->packet));s->tx_pending=0;if(pwmn_complete(&s->mailbox,PWMB_TX)!=1)return pwwn_fail(s,14);}
-    }return 1;
+    }return pwwn_quiesce_poll(s);
 }
 #endif
 #endif

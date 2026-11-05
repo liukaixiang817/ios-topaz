@@ -54,6 +54,32 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05: host submission quiescence
+
+- Loader source5869516 committed/pushed. Added native worker host-quiesce API:
+  rejects new work, drops/ACKs incoming BSD TX and delivered RX while servicing
+  existing HTT/WMI/handshake completions; waits for all host CE/HTT TX owners,
+  then closes the controlled port and returns2 without further radio polling.
+  Ten-second drain timeout is sticky UNKNOWN. Public DISCONNECT remains
+  unsupported; no native OFF/cleanup caller or memory release is implied.
+- Worker3575 ASan/UBSan checks PASS. Separate software-only CE register cleanup
+  model1963364 checks/344 actions PASS, with owned-register readback and fault
+  injection. Four whole actual native exports ON/OFF COFF/MachO PASS with
+  generalregs/frame1024, including new host-quiesce and register-model exports.
+  Evidence post-ce-exit-0001/proof-0001.json. These are not hardware results.
+- Critical unresolved prerequisite: own ICNSS OFF only synchronously sends
+  WLFWMODEOFF; host TX drain does not establish outstanding RX/RRI completion.
+  WCN3990 has no qcax HALT entry. CE address-clearing model therefore remains
+  explicitly SOFTWARE ONLY, not connected to MMIO. Keep all backing resident.
+  Own SMMU global/TBU halt is not proven WLAN-exclusive and is not adopted.
+  Pinned own icnss.c blob649d0ff9a41d8b250f0951eba75a25f0a1c04e74 retained
+  under post-ce-exit-0001; baseline power restoration also is not full DMA stop.
+- NEXT complete parent model and post-CE quiescence/retirement qualification,
+  display/input, builder/new candidate and physical scan/join/IP/DNS/data.
+  No phone operation or new kernel CI. Step2/5,current plus3 remain; none of
+  the separate five complete admission gates is newly closed. Last15min06:52Z,
+  next07:07Z. Existing unowned remote-memory hunk preserved. Goal ACTIVE.
+
 ### Continuous Wi-Fi milestone — 2026-11-05: actual native loader callsite
 
 - Worker/regulatory source713528c committed/pushed. Added default-OFF
