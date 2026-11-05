@@ -44,6 +44,29 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): station MAC protocol
+
+- HTT data ownership is commitcc0fd5c. New psta uses an explicitly selected
+  completed-scan BSS and actual firmware MAC, bounded SSID/rates/RSN parser,
+  open-system authentication and association request/response with three bounded
+  same-sequence retries. Both explicit open and WPA2-PSK/CCMP supported; rejects
+  incompatible mandatory rates, PMF-required, TKIP-only, SAE-only and downgrade.
+- Frames validate own destination/AP source/BSSID/channel, fragments/protection,
+  status/AID and response rates. Deauth/disassoc revokes association. Association
+  alone grants NO WPA/data/IP success. RSN AP IE retained for handshake checking.
+  Native caller must first establish channel/TX permission and actual BSS peer;
+  this component itself does not do so and remains unregistered.
+- ASan/UBSan634 checks PASS, ARM64 COFF/MachO generalregs/frame1024 PASS.
+  Evidence:station-0001/proof-0001.json. Primary WMI start/up/peer/create/assoc,
+  rates/crypto flags and HackiOS lx_80211/lx_wpa were compared, no foreign code
+  executed. Primary ath10k TLV does not implement PEER_ASSOC_CONF parsing despite
+  defining its IDs, so do not invent a mandatory response for that command.
+- NEXT WMI station/native composition, WPA key exchange, whole-parent/runtime
+  and post-CE retirement. Current180s CPU owner cannot become permanent by
+  merely changing its timeout; original CPU_ON/load_state still conflict.
+  No USB/phone/CI/push/boot; execution2/5, current step plus3 remain.
+  Goal ACTIVE. Last formal15min01:36Z; next01:51Z/12:51 Melbourne.
+
 ### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): native HTT data ownership
 
 - Native HTT setup is commit5980ed2. Default-OFF pmhd uniquely consumes it;
