@@ -1,0 +1,33 @@
+--- a/iokit/Kernel/arm/SweetFramebuffer.cpp
++++ b/iokit/Kernel/arm/SweetFramebuffer.cpp
+@@ -448,9 +448,13 @@
+ extern "C" uint32_t polaris_gpu_crash_line(unsigned,char *,uint32_t);
+ extern "C" uint32_t polaris_usb_diagnostic_line(unsigned, char *, uint32_t);
+ extern "C" uint32_t polaris_a630_diagnostic_line(unsigned, char *, uint32_t);
++extern "C" uint32_t polaris_wifi_status_line(unsigned, char *, uint32_t);
+ static void polaris_status_bar(AppleCLCD *fb)
+ {
+     char text[12][136];unsigned lines=0;
++    if(polaris_wifi_status_line(0,text[0],sizeof(text[0]))){
++        lines=1;for(unsigned i=1;i<3;i++)if(polaris_wifi_status_line(i,text[lines],sizeof(text[0])))lines++;
++    }else{
+     polaris_usb_status(text[lines++],sizeof(text[0]));
+     polaris_gpu_client_line(text[lines++],sizeof(text[0]));
+     snprintf(text[lines++],sizeof(text[0]),"FD P%u C%u J%u D%u",
+@@ -463,6 +467,7 @@
+         if(polaris_gpu_fault_line(i,text[lines],sizeof(text[0])))lines++;
+     for(unsigned i=0;i<3;i++)
+         if(polaris_gpu_crash_line(i,text[lines],sizeof(text[0])))lines++;
++    }
+     if(lines>fb->fHeight/32)lines=fb->fHeight/32;
+     /* Six rows normally, eleven only with BOTH hardware and process faults.
+      * Saved RAM only: never poll MMIO or sample CPU statistics here. */
+@@ -627,6 +632,8 @@
+     unsigned debug = 0;
+     PE_parse_boot_argn("polarisdebug", &debug, sizeof(debug));
+     fDebugStatus = debug == 1;
++    unsigned wifi_status=0;PE_parse_boot_argn("polariswifi",&wifi_status,sizeof(wifi_status));
++    if(wifi_status==1)fDebugStatus=true; /* Three cached Wi-Fi rows during bring-up. */
+     this->retain();
+     __atomic_store_n(&polaris_debug_fb, this, __ATOMIC_RELEASE);
+ #endif

@@ -56,6 +56,7 @@ static unsigned mock_stat_sent,mock_stat_errors,mock_platform=1,mock_gate=1;
 static uint8_t mock_input[2048];static unsigned mock_input_bytes;
 static struct test_ifnet mock_interface;
 static void lck_mtx_lock(int*p){(void)p;assert(!mock_locked);mock_locked=1;}
+static int lck_mtx_try_lock(int*p){(void)p;if(mock_locked)return 0;mock_locked=1;return 1;}
 static void lck_mtx_unlock(int*p){(void)p;assert(mock_locked);mock_locked=0;}
 static void*kalloc_data(size_t n,unsigned flags){(void)flags;return mock_alloc_failure?NULL:calloc(1,n);}
 static void kfree_data(void*p,size_t n){assert(pwmb_zero(p,(unsigned)n));free(p);}

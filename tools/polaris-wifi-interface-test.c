@@ -137,5 +137,28 @@ int main(void)
         reply(PWMB_POWER_OFF,length);CHECK(turn()==(length==16?0:EIO));
         CHECK(pwif.completed==(length==16?1u:0u));
     }
+    /* Screen text comes from real accepted replies, never JOIN input. */
+    setup();char line[136];pwif.started=0;CHECK(!polaris_wifi_status_line(0,line,sizeof(line))&&!line[0]);
+    pwif.started=1;CHECK(polaris_wifi_status_line(0,line,sizeof(line))&&strstr(line,"starting"));
+    mock_locked=1;CHECK(polaris_wifi_status_line(0,line,sizeof(line))&&strstr(line,"busy")&&mock_locked);mock_locked=0;
+    event(1);CHECK(!turn());request(record,PWMB_SCAN);CHECK(!ioctl_record(SIOCSDRVSPEC64,record));
+    CHECK(polaris_wifi_status_line(1,line,sizeof(line))&&strstr(line,"in progress"));
+    CHECK(!turn());reply(PWMB_SCAN,16);CHECK(!turn()&&pwif.scan_completed);
+    request(record,PWMB_STATE);CHECK(!ioctl_record(SIOCSDRVSPEC64,record)&&!turn());
+    reply(PWMB_STATE,72);pwmb_put32(incoming[PWMB_REPLY].data+16,1);pwmb_put32(incoming[PWMB_REPLY].data+24,2);
+    CHECK(!turn()&&pwif.scan_count==2);
+    CHECK(polaris_wifi_status_line(1,line,sizeof(line))&&strstr(line,"2 networks, 0 entries"));
+    request(record,PWMB_SCAN_ENTRY);pwmb_put32(record+8,4);CHECK(!ioctl_record(SIOCSDRVSPEC64,record)&&!turn());
+    reply(PWMB_SCAN_ENTRY,80);uint8_t*b=incoming[PWMB_REPLY].data+16;
+    pwmb_put32(b+4,2412);pwmb_put32(b+12,1);b[24]=5;b[25]=2;memcpy(b+32,"Cafe\n",5);
+    CHECK(!turn()&&pwif.entry_mask==1&&!strcmp(pwif.last_ssid,"Cafe."));
+    CHECK(polaris_wifi_status_line(2,line,sizeof(line))&&strstr(line,"Cafe."));
+    request(record,PWMB_SCAN_ENTRY);pwmb_put32(record+8,4);CHECK(!ioctl_record(SIOCSDRVSPEC64,record)&&!turn());
+    reply(PWMB_SCAN_ENTRY,80);incoming[PWMB_REPLY].data[40]=33;CHECK(!turn()&&pwif.entry_mask==1&&!strcmp(pwif.last_ssid,"Cafe."));
+    request(record,PWMB_SCAN);CHECK(!ioctl_record(SIOCSDRVSPEC64,record)&&!turn()&&!pwif.scan_completed&&!pwif.entry_mask);
+    reply(PWMB_SCAN,16);pwmb_put32(incoming[PWMB_REPLY].data+12,EACCES);CHECK(!turn()&&pwif.scan_error==EACCES);
+    CHECK(polaris_wifi_status_line(1,line,sizeof(line))&&strstr(line,"Scan failed"));
+    line[0]='x';CHECK(polaris_wifi_status_line(0,line,1)&&!line[0]);
+    CHECK(!polaris_wifi_status_line(0,NULL,100)&&!polaris_wifi_status_line(0,line,0)&&!polaris_wifi_status_line(3,line,sizeof(line)));
     printf("PASS %u actual BSD interface checks; SOFTWARE KPI/mailbox, no phone or IP success\n",checks);return 0;
 }

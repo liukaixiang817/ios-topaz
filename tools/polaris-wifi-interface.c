@@ -6,6 +6,7 @@
  */
 #include "polaris-wifi-interface.h"
 #include "polaris-wifi-kernel-mailbox.h"
+#include "polaris-wifi-control-wire.h"
 #if defined(POLARIS_WIFI_INTERFACE_SOFTWARE)
 #include "polaris-wifi-interface-test-kpi.h"
 #else
@@ -46,7 +47,46 @@ static struct {
     unsigned control_operation,control_bytes,pending,submitted,response_bytes,last_error;
     uint64_t request,completed,wire_sequence,sent,received,tx_drops,rx_drops;
     uint32_t started,worker_active;
+    unsigned scan_requested,scan_completed,scan_error,scan_count,entry_mask;
+    char last_ssid[33];
 } pwif;
+
+/* Display reads cached replies only. Never waits for the network mutex,
+ * initiates I/O, samples the radio or exposes JOIN/passphrase bytes. */
+uint32_t polaris_wifi_status_line(unsigned line,char*out,uint32_t size)
+{
+    if(!out||!size||line>2)return 0;out[0]=0;
+    if(!__atomic_load_n(&pwif.started,__ATOMIC_ACQUIRE))return 0;
+    if(!lck_mtx_try_lock(&pwif_lock))return (uint32_t)snprintf(out,size,"Wi-Fi: status busy");
+    unsigned radio=pwif.radio,link=pwif.link,fault=pwif.fault,sealed=pwif.sealed,error=pwif.last_error;
+    unsigned requested=pwif.scan_requested,done=pwif.scan_completed,scan_error=pwif.scan_error,count=pwif.scan_count;
+    unsigned entries=(unsigned)__builtin_popcount(pwif.entry_mask);
+    uint64_t sent=pwif.sent,received=pwif.received;char ssid[33];memcpy(ssid,pwif.last_ssid,sizeof(ssid));
+    lck_mtx_unlock(&pwif_lock);
+    if(!line)return (uint32_t)snprintf(out,size,"Wi-Fi: %s  error=%u",
+        sealed?"stopping":fault?"fault":link?"linked":radio?"ready":"starting",error);
+    if(line==1){
+        if(scan_error)return (uint32_t)snprintf(out,size,"Scan failed: %u",scan_error);
+        if(!done)return (uint32_t)snprintf(out,size,"Scan: %s",requested?"in progress":"not requested");
+        return (uint32_t)snprintf(out,size,"Scan: %u networks, %u entries",count,entries);
+    }
+    if(link)return (uint32_t)snprintf(out,size,"Packets: TX %llu  RX %llu",(unsigned long long)sent,(unsigned long long)received);
+    return (uint32_t)snprintf(out,size,"Last network: %s",ssid[0]?ssid:"(none)");
+}
+static void pwif_scan_reply(const uint8_t*p,unsigned bytes)
+{
+    /* Caller holds pwif_lock; only a matching validated mailbox reply arrives. */
+    if(!pwcb_reply_valid(p,bytes))return;
+    unsigned op=pwmb_u32(p+8),error=pwmb_u32(p+12);const uint8_t*b=p+16;
+    if(op==PWMB_SCAN){pwif.scan_error=error;pwif.scan_completed=!error;return;}
+    if(error||!pwif.scan_completed)return;
+    if(op==PWMB_STATE)pwif.scan_count=pwmb_u32(b+8);
+    if(op==PWMB_SCAN_ENTRY&&pwmb_u32(b)<pwif.scan_count){
+        pwif.entry_mask|=1u<<pwmb_u32(b);unsigned n=b[24];
+        for(unsigned k=0;k<n;k++)pwif.last_ssid[k]=b[32+k]>=32&&b[32+k]<127?(char)b[32+k]:'.';
+        pwif.last_ssid[n]=0;
+    }
+}
 
 static void pwif_link_event(ifnet_t interface,unsigned up)
 {
@@ -96,6 +136,10 @@ static int pwif_control(u_long command,void*data)
                 pwif.control_operation=pwmb_u32(record+4);pwif.control_bytes=pwmb_u32(record+8);
                 pwmb_clear(pwif.control,sizeof(pwif.control));
                 memcpy(pwif.control,record+64,pwif.control_bytes);
+                if(pwif.control_operation==PWMB_SCAN){
+                    pwif.scan_requested=1;pwif.scan_completed=pwif.scan_error=pwif.scan_count=pwif.entry_mask=0;
+                    pwmb_clear(pwif.last_ssid,sizeof(pwif.last_ssid));
+                }
                 pwif.request++;pwif.pending=1;pwif.submitted=0;pwif.last_error=0;
                 pwif.response_bytes=0;pwmb_clear(pwif.response,sizeof(pwif.response));
             }
@@ -209,6 +253,7 @@ static int pwif_turn(void)
         int valid=pwif.pending&&pwif.submitted&&pwmb_u64(m->data)==pwif.wire_sequence&&pwmb_u32(m->data+8)==pwif.control_operation&&
             ((pwif.control_operation!=PWMB_JOIN&&pwif.control_operation!=PWMB_SCAN&&pwif.control_operation!=PWMB_DISCONNECT&&pwif.control_operation!=PWMB_POWER_OFF)||m->bytes==16);
         if(valid){pwif.last_error=pwmb_u32(m->data+12);pwif.response_bytes=m->bytes;memcpy(pwif.response,m->data,m->bytes);
+            pwif_scan_reply(m->data,m->bytes);
             pwif.completed=pwif.request;pwif.pending=pwif.submitted=0;}
         lck_mtx_unlock(&pwif_lock);if(!valid)return EIO;
     }

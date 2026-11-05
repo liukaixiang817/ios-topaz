@@ -9,6 +9,7 @@
 #define PWIF_BYTES 1600u
 void polaris_wifi_interface_start(void);
 int polaris_wifi_interface_seal(void);
+uint32_t polaris_wifi_status_line(unsigned,char*,uint32_t);
 /* SET: version32@0, operation32@4, bytes32@8, zero32@12, then payload@64.
  * bytes16..63 and all unused payload bytes must be zero.
  * GET: version32, current flags32, last errno32, response bytes32, local

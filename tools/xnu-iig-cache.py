@@ -32,7 +32,10 @@ EXTRA_PRIVATE_HEADER_SHA={
     'bsd/dev/polaris-wifi-mailbox-transport.h':
     '5209b5edde581c39dcc5a1d923b3f5b2595d51446e55d31a10030d1cedec7c6f',
     'bsd/dev/polaris-wifi-interface.h':
-    '06f643226326e09bd4f654a69bdad6e556f70365473f4dfecd8c423560f5a7ab',
+    'dd3516c1ee79e39fa007db62164f07358d8ff02f7f4386ae64514572bbdb4c91',
+    # Validated private control replies used by the cached Wi-Fi display.
+    'bsd/dev/polaris-wifi-control-wire.h':
+    '41802b320db387b283e8fc6799b41ed0e4471deff7b25a0fa42981df72ee8365',
     # Private GPU/display ownership implementation, included only by the two
     # native .cpp files; no DriverKit interface/layout or IDL change.
     'iokit/Kernel/arm/polaris_surface_access.h':

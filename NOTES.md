@@ -54,6 +54,33 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: cached scan display
+
+- Source220f183 pushed; complete kernel CI42087555347/job127456633601 SUCCESS.
+  Exact head220f183dd1d18466c47edfe014308589610c01e4. Downloaded official
+  xnu-kernel artifact13443528016,67186736B ZIP SHA1e1ea369ded34b3894d14109559ee426809db3e29dc61663794ae648f0feb027.
+  Archive/profile/SHA256SUMS verified; kernel17358064B
+  SHAcf281983dbc3ad06a6b64d6bc49c8bcfee7e2abd012287b22ff2b24956587192.
+  Private download-proof.json under userland-probe-0001/ci-42087555347.
+- Added three cached Wi-Fi status rows to actual framebuffer when polariswifi=1.
+  Only accepted mailbox replies update scan state/count/SSID; strict operation
+  body validation, bounded printable SSID, no passwords. Renderer uses try-lock
+  snapshots, never initiates network/MMIO work. Existing diagnostic path remains
+  when Wi-Fi is inactive. These rows provide phone-visible scan evidence where
+  old returned-UEFI USB logging cannot be assumed for the persistent CPU0 loop.
+- Actual interface412 ASan/UBSan checks PASS. Actual patched framebuffer painter
+ 36 sanitizer routing/bounds cases PASS, covering width/height and stride guards.
+  Ordered profile patches through0913 reconstructed outside the Git worktree;
+  new display patch applies byte-exact to that source. Initial handcrafted hunk
+  failed; regenerated from real final source.0915 generated-source match and two
+  exact private IIG header hashes PASS. Software tests are not panel/radio proof.
+- NEXT commit/push these kernel changes and follow new CI; use its exact kernel
+  with c3e456d2 userland bundle for final payload/UEFI/new temporary image.
+  Native EFI/XNU candidate admission/root preflight remain unfinished; no phone
+  query/boot/scan/JOIN/IP/DNS/data this session. Execution2/5, current plus3 steps
+  remain. Goal ACTIVE; no pending downloads/user input. Existing unowned
+  remote-memory hunk preserved and excluded. Last formal19:05Z,next19:20Z.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: launchd scan probe and new bundle
 
 - Previous native UI source3f86350 committed/pushed to approved own branch;

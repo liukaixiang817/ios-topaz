@@ -17,8 +17,10 @@ def expected():
             '+bsd/dev/polaris_wifi_interface.c\t\tstandard\n',
             ' bsd/dev/sweet_sample.c\t\t\tstandard\n']
     text.append((ROOT/'tools/polaris-wifi-interface-hooks.patch').read_text())
+    text.append((ROOT/'tools/polaris-wifi-display-hooks.patch').read_text())
     for source, destination in [('polaris-wifi-interface.c','polaris_wifi_interface.c'),
-                                ('polaris-wifi-interface.h','polaris-wifi-interface.h')]:
+                                ('polaris-wifi-interface.h','polaris-wifi-interface.h'),
+                                ('polaris-wifi-control-wire.h','polaris-wifi-control-wire.h')]:
         lines = (ROOT/'tools'/source).read_text().splitlines(True)
         if not lines or not lines[-1].endswith('\n'):
             raise ValueError('source requires a final newline')

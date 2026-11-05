@@ -49,9 +49,42 @@ Native CPU0 radio/runtime remains a separate required implementation.
      thread_t t;
      if (!PE_parse_boot_argn("polaristouch", &pt.mode, sizeof(pt.mode)) || !pt.mode) { return; }
      if ((pt.mode != 1 && pt.mode != 2) || !pt_board_gate()) {
+--- a/iokit/Kernel/arm/SweetFramebuffer.cpp
++++ b/iokit/Kernel/arm/SweetFramebuffer.cpp
+@@ -448,9 +448,13 @@
+ extern "C" uint32_t polaris_gpu_crash_line(unsigned,char *,uint32_t);
+ extern "C" uint32_t polaris_usb_diagnostic_line(unsigned, char *, uint32_t);
+ extern "C" uint32_t polaris_a630_diagnostic_line(unsigned, char *, uint32_t);
++extern "C" uint32_t polaris_wifi_status_line(unsigned, char *, uint32_t);
+ static void polaris_status_bar(AppleCLCD *fb)
+ {
+     char text[12][136];unsigned lines=0;
++    if(polaris_wifi_status_line(0,text[0],sizeof(text[0]))){
++        lines=1;for(unsigned i=1;i<3;i++)if(polaris_wifi_status_line(i,text[lines],sizeof(text[0])))lines++;
++    }else{
+     polaris_usb_status(text[lines++],sizeof(text[0]));
+     polaris_gpu_client_line(text[lines++],sizeof(text[0]));
+     snprintf(text[lines++],sizeof(text[0]),"FD P%u C%u J%u D%u",
+@@ -463,6 +467,7 @@
+         if(polaris_gpu_fault_line(i,text[lines],sizeof(text[0])))lines++;
+     for(unsigned i=0;i<3;i++)
+         if(polaris_gpu_crash_line(i,text[lines],sizeof(text[0])))lines++;
++    }
+     if(lines>fb->fHeight/32)lines=fb->fHeight/32;
+     /* Six rows normally, eleven only with BOTH hardware and process faults.
+      * Saved RAM only: never poll MMIO or sample CPU statistics here. */
+@@ -627,6 +632,8 @@
+     unsigned debug = 0;
+     PE_parse_boot_argn("polarisdebug", &debug, sizeof(debug));
+     fDebugStatus = debug == 1;
++    unsigned wifi_status=0;PE_parse_boot_argn("polariswifi",&wifi_status,sizeof(wifi_status));
++    if(wifi_status==1)fDebugStatus=true; /* Three cached Wi-Fi rows during bring-up. */
+     this->retain();
+     __atomic_store_n(&polaris_debug_fb, this, __ATOMIC_RELEASE);
+ #endif
 --- /dev/null
 +++ b/bsd/dev/polaris_wifi_interface.c
-@@ -0,0 +1,260 @@
+@@ -0,0 +1,305 @@
 +/* Polaris BSD Ethernet endpoint for the independently qualified CPU0 radio.
 + * Follows XNU's own ether/ifnet KPI (also used by the pinned HackiOS reference),
 + * with no Topaz hardware/provider code. All radio operations use the fixed
@@ -60,6 +93,7 @@ Native CPU0 radio/runtime remains a separate required implementation.
 + */
 +#include "polaris-wifi-interface.h"
 +#include "polaris-wifi-kernel-mailbox.h"
++#include "polaris-wifi-control-wire.h"
 +#if defined(POLARIS_WIFI_INTERFACE_SOFTWARE)
 +#include "polaris-wifi-interface-test-kpi.h"
 +#else
@@ -100,7 +134,46 @@ Native CPU0 radio/runtime remains a separate required implementation.
 +    unsigned control_operation,control_bytes,pending,submitted,response_bytes,last_error;
 +    uint64_t request,completed,wire_sequence,sent,received,tx_drops,rx_drops;
 +    uint32_t started,worker_active;
++    unsigned scan_requested,scan_completed,scan_error,scan_count,entry_mask;
++    char last_ssid[33];
 +} pwif;
++
++/* Display reads cached replies only. Never waits for the network mutex,
++ * initiates I/O, samples the radio or exposes JOIN/passphrase bytes. */
++uint32_t polaris_wifi_status_line(unsigned line,char*out,uint32_t size)
++{
++    if(!out||!size||line>2)return 0;out[0]=0;
++    if(!__atomic_load_n(&pwif.started,__ATOMIC_ACQUIRE))return 0;
++    if(!lck_mtx_try_lock(&pwif_lock))return (uint32_t)snprintf(out,size,"Wi-Fi: status busy");
++    unsigned radio=pwif.radio,link=pwif.link,fault=pwif.fault,sealed=pwif.sealed,error=pwif.last_error;
++    unsigned requested=pwif.scan_requested,done=pwif.scan_completed,scan_error=pwif.scan_error,count=pwif.scan_count;
++    unsigned entries=(unsigned)__builtin_popcount(pwif.entry_mask);
++    uint64_t sent=pwif.sent,received=pwif.received;char ssid[33];memcpy(ssid,pwif.last_ssid,sizeof(ssid));
++    lck_mtx_unlock(&pwif_lock);
++    if(!line)return (uint32_t)snprintf(out,size,"Wi-Fi: %s  error=%u",
++        sealed?"stopping":fault?"fault":link?"linked":radio?"ready":"starting",error);
++    if(line==1){
++        if(scan_error)return (uint32_t)snprintf(out,size,"Scan failed: %u",scan_error);
++        if(!done)return (uint32_t)snprintf(out,size,"Scan: %s",requested?"in progress":"not requested");
++        return (uint32_t)snprintf(out,size,"Scan: %u networks, %u entries",count,entries);
++    }
++    if(link)return (uint32_t)snprintf(out,size,"Packets: TX %llu  RX %llu",(unsigned long long)sent,(unsigned long long)received);
++    return (uint32_t)snprintf(out,size,"Last network: %s",ssid[0]?ssid:"(none)");
++}
++static void pwif_scan_reply(const uint8_t*p,unsigned bytes)
++{
++    /* Caller holds pwif_lock; only a matching validated mailbox reply arrives. */
++    if(!pwcb_reply_valid(p,bytes))return;
++    unsigned op=pwmb_u32(p+8),error=pwmb_u32(p+12);const uint8_t*b=p+16;
++    if(op==PWMB_SCAN){pwif.scan_error=error;pwif.scan_completed=!error;return;}
++    if(error||!pwif.scan_completed)return;
++    if(op==PWMB_STATE)pwif.scan_count=pwmb_u32(b+8);
++    if(op==PWMB_SCAN_ENTRY&&pwmb_u32(b)<pwif.scan_count){
++        pwif.entry_mask|=1u<<pwmb_u32(b);unsigned n=b[24];
++        for(unsigned k=0;k<n;k++)pwif.last_ssid[k]=b[32+k]>=32&&b[32+k]<127?(char)b[32+k]:'.';
++        pwif.last_ssid[n]=0;
++    }
++}
 +
 +static void pwif_link_event(ifnet_t interface,unsigned up)
 +{
@@ -150,6 +223,10 @@ Native CPU0 radio/runtime remains a separate required implementation.
 +                pwif.control_operation=pwmb_u32(record+4);pwif.control_bytes=pwmb_u32(record+8);
 +                pwmb_clear(pwif.control,sizeof(pwif.control));
 +                memcpy(pwif.control,record+64,pwif.control_bytes);
++                if(pwif.control_operation==PWMB_SCAN){
++                    pwif.scan_requested=1;pwif.scan_completed=pwif.scan_error=pwif.scan_count=pwif.entry_mask=0;
++                    pwmb_clear(pwif.last_ssid,sizeof(pwif.last_ssid));
++                }
 +                pwif.request++;pwif.pending=1;pwif.submitted=0;pwif.last_error=0;
 +                pwif.response_bytes=0;pwmb_clear(pwif.response,sizeof(pwif.response));
 +            }
@@ -263,6 +340,7 @@ Native CPU0 radio/runtime remains a separate required implementation.
 +        int valid=pwif.pending&&pwif.submitted&&pwmb_u64(m->data)==pwif.wire_sequence&&pwmb_u32(m->data+8)==pwif.control_operation&&
 +            ((pwif.control_operation!=PWMB_JOIN&&pwif.control_operation!=PWMB_SCAN&&pwif.control_operation!=PWMB_DISCONNECT&&pwif.control_operation!=PWMB_POWER_OFF)||m->bytes==16);
 +        if(valid){pwif.last_error=pwmb_u32(m->data+12);pwif.response_bytes=m->bytes;memcpy(pwif.response,m->data,m->bytes);
++            pwif_scan_reply(m->data,m->bytes);
 +            pwif.completed=pwif.request;pwif.pending=pwif.submitted=0;}
 +        lck_mtx_unlock(&pwif_lock);if(!valid)return EIO;
 +    }
@@ -314,7 +392,7 @@ Native CPU0 radio/runtime remains a separate required implementation.
 +}
 --- /dev/null
 +++ b/bsd/dev/polaris-wifi-interface.h
-@@ -0,0 +1,28 @@
+@@ -0,0 +1,29 @@
 +/* Fixed private bring-up ioctl, transported by SIOC{G,S}DRVSPEC64 on en0.
 + * Only a privileged local process may use it. No kernel/firmware address is
 + * accepted in this wire record. Apple80211/wifid integration is separate. */
@@ -326,6 +404,7 @@ Native CPU0 radio/runtime remains a separate required implementation.
 +#define PWIF_BYTES 1600u
 +void polaris_wifi_interface_start(void);
 +int polaris_wifi_interface_seal(void);
++uint32_t polaris_wifi_status_line(unsigned,char*,uint32_t);
 +/* SET: version32@0, operation32@4, bytes32@8, zero32@12, then payload@64.
 + * bytes16..63 and all unused payload bytes must be zero.
 + * GET: version32, current flags32, last errno32, response bytes32, local
@@ -341,5 +420,52 @@ Native CPU0 radio/runtime remains a separate required implementation.
 +    if(!p||pwmb_u32(p)!=PWIF_VERSION||pwmb_u32(p+12)||!pwmb_zero(p+16,48))return 0;
 +    unsigned op=pwmb_u32(p+4),bytes=pwmb_u32(p+8);
 +    return pwmb_payload(PWMB_CONTROL,op,p+64,bytes)&&pwmb_zero(p+64+bytes,PWMB_DATA-bytes);
++}
++#endif
+--- /dev/null
++++ b/bsd/dev/polaris-wifi-control-wire.h
+@@ -0,0 +1,44 @@
++/* Operation-specific, address-free mailbox reply bodies. RSSI is not guessed
++ * from the WMI SNR observation. All lengths refer to the actual private copy. */
++#ifndef POLARIS_WIFI_CONTROL_WIRE_H
++#define POLARIS_WIFI_CONTROL_WIRE_H
++#include "polaris-wifi-mailbox.h"
++#define PWCB_STATE_BYTES 56u
++#define PWCB_BSS_HEADER 64u
++#define PWCB_IES 768u
++static inline unsigned pwcb_u16(const uint8_t*p){return p[0]|((unsigned)p[1]<<8);}
++static inline void pwcb_put16(uint8_t*p,unsigned n){p[0]=(uint8_t)n;p[1]=(uint8_t)(n>>8);}
++static inline int pwcb_frequency(unsigned n){return n>=2412&&n<=2462&&(n-2412)%5==0;}
++/* STATE56: flags(ready1,link2,fault4,scanning8,joining16,closed32), errno,
++ * scan count, frequency; BSSID6, SSID length, zero; SSID32. */
++static inline int pwcb_state_valid(const uint8_t*p,unsigned bytes)
++{
++    if(!p||bytes!=PWCB_STATE_BYTES)return 0;
++    unsigned flags=pwmb_u32(p),frequency=pwmb_u32(p+12);
++    return !(flags&~63u)&&(!(flags&2)||((flags&1)&&!(flags&60)))&&pwmb_u32(p+4)<=4095&&
++        pwmb_u32(p+8)<=32&&(!frequency||pwcb_frequency(frequency))&&p[22]<=32&&!p[23]&&
++        !(p[16]&1)&&(!(flags&2)||(frequency&&!pwmb_zero(p+16,6)&&p[22]))&&
++        pwmb_zero(p+24+p[22],32-p[22]);
++}
++/* BSS64+IEs: index, frequency, signed SNR, observation count; capability16,
++ * beacon interval16, IE length16, zero16; SSID length8, BSSID6, zero8;
++ * SSID32; exact received information elements (<=768). */
++static inline int pwcb_bss_valid(const uint8_t*p,unsigned bytes)
++{
++    if(!p||bytes<PWCB_BSS_HEADER||bytes>PWCB_BSS_HEADER+PWCB_IES||pwmb_u32(p)>=32||
++       !pwcb_frequency(pwmb_u32(p+4))||!pwmb_u32(p+12)||pwcb_u16(p+20)!=bytes-PWCB_BSS_HEADER||
++       pwcb_u16(p+22)||p[24]>32||(p[25]&1)||pwmb_zero(p+25,6)||p[31]||!pwmb_zero(p+32+p[24],32-p[24]))return 0;
++    unsigned at=PWCB_BSS_HEADER;
++    while(at<bytes){if(bytes-at<2||p[at+1]>bytes-at-2)return 0;at+=2+p[at+1];}
++    return 1;
++}
++static inline int pwcb_reply_valid(const uint8_t*p,unsigned bytes)
++{
++    if(!pwmb_payload(PWMB_REPLY,PWMB_RESPONSE,p,bytes))return 0;
++    unsigned op=pwmb_u32(p+8);
++    if(pwmb_u32(p+12))return bytes==16;
++    if(op==PWMB_STATE)return pwcb_state_valid(p+16,bytes-16);
++    if(op==PWMB_SCAN_ENTRY)return pwcb_bss_valid(p+16,bytes-16);
++    return bytes==16;
 +}
 +#endif
