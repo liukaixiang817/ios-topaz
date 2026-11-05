@@ -26,8 +26,9 @@ EXTRA_PRIVATE_HEADER_SHA={
     # Private BSD resident Wi-Fi implementation, outside DriverKit's IDL graph.
     'bsd/dev/polaris-wifi-kernel-mailbox.h':
     'f11cc70269ccc32f28fe0a31f29e52d005babdfeeb33de2bcc5bdf8e72baa5d3',
+    # Adds explicit whole-system opcode10; no IDL/include-graph or layout change.
     'bsd/dev/polaris-wifi-mailbox.h':
-    '505b66a39fa6e9ba16cc2e5239b9f7f7efef2f9eca96a1a00668945f60a18677',
+    '4ee547fbc225a85082bf2913c3b11fb40086f6e57a2985cf4ad8800a41f16fa0',
     'bsd/dev/polaris-wifi-mailbox-transport.h':
     '5209b5edde581c39dcc5a1d923b3f5b2595d51446e55d31a10030d1cedec7c6f',
     'bsd/dev/polaris-wifi-interface.h':
