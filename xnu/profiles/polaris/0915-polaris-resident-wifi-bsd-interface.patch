@@ -261,7 +261,7 @@ Native CPU0 radio/runtime remains a separate required implementation.
 +    if(result==1){
 +        lck_mtx_lock(&pwif_lock);
 +        int valid=pwif.pending&&pwif.submitted&&pwmb_u64(m->data)==pwif.wire_sequence&&pwmb_u32(m->data+8)==pwif.control_operation&&
-+            ((pwif.control_operation!=PWMB_JOIN&&pwif.control_operation!=PWMB_SCAN&&pwif.control_operation!=PWMB_DISCONNECT)||m->bytes==16);
++            ((pwif.control_operation!=PWMB_JOIN&&pwif.control_operation!=PWMB_SCAN&&pwif.control_operation!=PWMB_DISCONNECT&&pwif.control_operation!=PWMB_POWER_OFF)||m->bytes==16);
 +        if(valid){pwif.last_error=pwmb_u32(m->data+12);pwif.response_bytes=m->bytes;memcpy(pwif.response,m->data,m->bytes);
 +            pwif.completed=pwif.request;pwif.pending=pwif.submitted=0;}
 +        lck_mtx_unlock(&pwif_lock);if(!valid)return EIO;

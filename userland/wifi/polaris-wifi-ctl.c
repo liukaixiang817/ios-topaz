@@ -61,7 +61,7 @@ static int result(const uint8_t*p,unsigned n,unsigned op)
         printf("index=%u frequency=%u snr=%d observations=%u capability=0x%04x beacon_interval=%u ie_bytes=%u ssid=",
             pwmb_u32(p),pwmb_u32(p+4),(int32_t)pwmb_u32(p+8),pwmb_u32(p+12),pwcb_u16(p+16),pwcb_u16(p+18),pwcb_u16(p+20));
         escaped(p+32,p[24]);putchar('\n');
-    }
+    }else if(op==PWMB_POWER_OFF)puts("Whole-system power-off request accepted; shutdown completion is not confirmed.");
     return 0;
 }
 static int secret(uint8_t*out,unsigned*bytes)
@@ -113,6 +113,7 @@ int main(int argc,char**argv)
     else if(argc==2&&!strcmp(argv[1],"state"))op=PWMB_STATE;
     else if(argc==2&&!strcmp(argv[1],"scan"))op=PWMB_SCAN;
     else if(argc==2&&!strcmp(argv[1],"disconnect"))op=PWMB_DISCONNECT;
+    else if(argc==2&&!strcmp(argv[1],"power-off"))op=PWMB_POWER_OFF;
     else if(argc==2&&!strcmp(argv[1],"dhcp"))op=256;
     else if(argc==2&&!strcmp(argv[1],"ip"))op=257;
     else if(argc==3&&!strcmp(argv[1],"entry")){
@@ -148,7 +149,7 @@ int main(int argc,char**argv)
         struct timespec pause={0,20000000};nanosleep(&pause,NULL);
     }
 usage:
-    fprintf(stderr,"usage: polaris-wifi-ctl status|state|scan|entry INDEX|join SSID|disconnect|dhcp|ip\nJOIN reads one passphrase line from stdin.\n");
+    fprintf(stderr,"usage: polaris-wifi-ctl status|state|scan|entry INDEX|join SSID|disconnect|dhcp|ip|power-off\nJOIN reads one passphrase line from stdin.\npower-off requests shutdown of the entire phone.\n");
     pwmb_clear(input,sizeof(input));return 2;
 failed:
     {int error=errno?errno:EIO;pwmb_clear(input,sizeof(input));pwmb_clear(output,sizeof(output));

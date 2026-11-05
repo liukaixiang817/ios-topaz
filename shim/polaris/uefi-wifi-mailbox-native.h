@@ -94,6 +94,16 @@ static inline int pwmn_send(struct pwmn_state*s,unsigned lane,unsigned op,const 
     if(l->state.stage==2){int done=pwmb_send_ack_poll(l,&s->bus);if(done<0)return pwmn_fail(s,3);if(!done)return 0;}
     int result=pwmb_send(l,&s->bus,op,p,bytes);return result<0?pwmn_fail(s,3):result;
 }
+/* Poll delivery of the last producer record without publishing another one. */
+static inline int pwmn_sent(struct pwmn_state*s,unsigned lane)
+{
+    if(!s||lane>=PWMB_LANES||!pwmn_producer(lane))return -1;
+    if(!pwmn_current(s))return pwmn_fail(s,2);
+    struct pwmb_link*l=&s->lane[lane];
+    if(!l->state.stage)return 1;
+    if(l->state.stage!=2)return pwmn_fail(s,3);
+    int result=pwmb_send_ack_poll(l,&s->bus);return result<0?pwmn_fail(s,3):result;
+}
 static inline int pwmn_receive(struct pwmn_state*s,unsigned lane,struct pwmb_message*out)
 {
     if(!s||!out||lane>=PWMB_LANES||pwmn_producer(lane))return -1;

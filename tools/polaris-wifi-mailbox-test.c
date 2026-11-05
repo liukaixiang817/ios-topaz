@@ -49,7 +49,7 @@ int main(void)
     open_lane(PWMB_RX);exchange(PWMB_ETHERNET_RX,packet,1514);
     CHECK(!pwmb_prepare(&tx,PWMB_ETHERNET_RX,packet,1515,record)&&!tx.stage);
     CHECK(!pwmb_prepare(&tx,PWMB_ETHERNET_TX,packet,1514,record)&&!tx.stage);
-    open_lane(PWMB_CONTROL);exchange(PWMB_STATE,0,0);exchange(PWMB_SCAN,0,0);exchange(PWMB_DISCONNECT,0,0);
+    open_lane(PWMB_CONTROL);exchange(PWMB_STATE,0,0);exchange(PWMB_SCAN,0,0);exchange(PWMB_DISCONNECT,0,0);exchange(PWMB_POWER_OFF,0,0);
     uint8_t index[4]={31};exchange(PWMB_SCAN_ENTRY,index,4);index[0]=32;CHECK(!pwmb_prepare(&tx,PWMB_SCAN_ENTRY,index,4,record));
     pwmb_put32(join,2);join[4]=4;join[5]=8;join[6]=1;memcpy(join+16,"test",4);memcpy(join+48,"password",8);
     exchange(PWMB_JOIN,join,112);

@@ -2,6 +2,9 @@
  * responses/runtime qualification. This is not the whole native parent test. */
 #define EFI_XNU_WIFI_RUNTIME_HANDOFF_AVAILABLE 1
 #define EFI_XNU_WIFI_STARTUP_PARENT_AVAILABLE 1
+#ifndef EFI_XNU_WIFI_SYSTEM_OFF_NATIVE_AVAILABLE
+#define EFI_XNU_WIFI_SYSTEM_OFF_NATIVE_AVAILABLE 1
+#endif
 #define POLARIS_WIFI_NETWORK_NONCE_TEST 1
 #define PMWN_TEST_ENTRY unused_network_suite
 #include "polaris-wifi-network-native-test.c"
@@ -34,6 +37,11 @@ static int model_receive(struct pwmn_state*s,unsigned lane,struct pwmb_message*m
 {CHECK(model_current(s));return pwmb_receive_poll(&native_lanes[lane],&model_bus,m);}
 static int model_complete(struct pwmn_state*s,unsigned lane)
 {CHECK(model_current(s));return pwmb_receive_complete(&native_lanes[lane],&model_bus);}
+static int model_sent(struct pwmn_state*s,unsigned lane)
+{
+    CHECK(model_current(s)&&lane==PWMB_REPLY);struct pwmb_link*l=&native_lanes[lane];
+    return l->state.stage?pwmb_send_ack_poll(l,&model_bus):1;
+}
 static int model_scan_begin(struct pmwsn_state*s,struct pmwi_state*w,unsigned id)
 {s->ready=1;return pwsc_open(&s->client,&w->client,id,model_parent.owner.last);}
 static int model_scan_restart(struct pmwsn_state*s,unsigned id)
@@ -62,6 +70,7 @@ static int model_reap(struct pmct_state*t,unsigned pipe)
 #define pwmn_send model_send
 #define pwmn_receive model_receive
 #define pwmn_complete model_complete
+#define pwmn_sent model_sent
 #define pmwsn_begin model_scan_begin
 #define pmwsn_restart model_scan_restart
 #define pmwsn_step model_scan_step
@@ -151,5 +160,21 @@ int main(void)
     worker_setup();worker.phase=PWWN_LINK;worker.network.ready=1;net_result=5;reap_fault=1;
     model_parent.transport.rings.source[3].posted=1;CHECK(pwwn_quiesce_begin(&worker));
     CHECK(pwwn_step(&worker)==-1&&worker.error==15&&worker.closing==1&&reap_calls==1);
+    for(unsigned which=0;which<3;which++){
+        worker_setup();worker.phase=which==0?PWWN_IDLE:which==1?PWWN_SCANNED:PWWN_LINK;
+        worker.network.ready=which==2;net_result=5;
+#if EFI_XNU_WIFI_SYSTEM_OFF_NATIVE_AVAILABLE
+        CHECK(pwmb_send(&kernel_lanes[PWMB_CONTROL],&model_bus,PWMB_POWER_OFF,0,0)==1);
+        CHECK(pwwn_step(&worker)==1&&worker.terminal_requested&&worker.closing==1);
+        CHECK(pwmb_send_ack_poll(&kernel_lanes[PWMB_CONTROL],&model_bus)==1);
+        for(unsigned n=0;n<5;n++)CHECK(pwwn_step(&worker)==1&&!worker.network.closed&&worker.closing==1);
+        CHECK(pwmb_receive_poll(&kernel_lanes[PWMB_REPLY],&model_bus,&output)==1);
+        CHECK(output.bytes==16&&pwmb_u32(output.data+8)==PWMB_POWER_OFF&&!pwmb_u32(output.data+12));
+        CHECK(pwmb_receive_complete(&kernel_lanes[PWMB_REPLY],&model_bus)==1);
+        CHECK(pwwn_step(&worker)==2&&worker.network.closed&&worker.closing==2);
+#else
+        control(PWMB_POWER_OFF,0,0,45);CHECK(!worker.terminal_requested&&!worker.closing);
+#endif
+    }
     printf("PASS %u worker checks; actual wire/crypto, SOFTWARE radio/runtime\n",checks+nv_checks);return 0;
 }

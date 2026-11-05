@@ -7,6 +7,9 @@
 #ifndef EFI_XNU_WIFI_WORKER_NATIVE_AVAILABLE
 #define EFI_XNU_WIFI_WORKER_NATIVE_AVAILABLE 0
 #endif
+#ifndef EFI_XNU_WIFI_SYSTEM_OFF_NATIVE_AVAILABLE
+#define EFI_XNU_WIFI_SYSTEM_OFF_NATIVE_AVAILABLE 0
+#endif
 #if EFI_XNU_WIFI_WORKER_NATIVE_AVAILABLE
 #include "uefi-wifi-mailbox-native.h"
 #include "../../tools/polaris-wifi-control-wire.h"
@@ -21,7 +24,7 @@ struct pwwn_state {
     struct pwmb_message request,packet;
     uint8_t reply[16+PWCB_BSS_HEADER+PWCB_IES],pmk[32],event[16];
     uint64_t turns,ignored,tx_dropped,rx_dropped,close_deadline,retirement;
-    uint32_t ready,unknown,error,phase,scan_id,index,reply_bytes,event_pending,tx_pending,reg_submitted,reg_published,country,closing;
+    uint32_t ready,unknown,error,phase,scan_id,index,reply_bytes,event_pending,tx_pending,reg_submitted,reg_published,country,closing,terminal_requested;
 };
 static inline struct pwns_parent*pwwn_parent(struct pwwn_state*s)
 {return (void*)(uintptr_t)s->mailbox.parent;}
@@ -58,7 +61,8 @@ static inline int pwwn_begin(struct pwwn_state*s,struct pwns_parent*p,unsigned c
  * This API neither sends OFF nor deletes peers nor retires remote DMA. */
 static inline int pwwn_quiesce_begin(struct pwwn_state*s)
 {
-    if(!pwwn_live(s)||s->closing||s->phase!=PWWN_LINK)return 0;
+    if(!pwwn_live(s)||s->closing||
+       (s->phase!=PWWN_LINK&&s->phase!=PWWN_IDLE&&s->phase!=PWWN_SCANNED))return 0;
     uint64_t now=pwwn_parent(s)->owner.last;if(now>UINT64_MAX-192000000)return 0;
     s->close_deadline=now+192000000;s->closing=1;return 1;
 }
@@ -67,6 +71,11 @@ static inline int pwwn_quiesce_poll(struct pwwn_state*s)
     if(!s->closing)return 1;if(s->closing==2)return 2;
     struct pwns_parent*p=pwwn_parent(s);
     if(p->owner.last>s->close_deadline)return pwwn_fail(s,15);
+    if(s->terminal_requested){
+        if(s->reply_bytes)return 1;
+        int delivered=pwmn_sent(&s->mailbox,PWMB_REPLY);
+        if(delivered<0)return pwwn_fail(s,15);if(!delivered)return 1;
+    }
     if(s->network.closed)return pwwn_fail(s,15); /* Unexpected loss is not normal drain. */
     if(s->network.submitted||s->network.tx_wait||s->network.ethernet.tx_bytes||
        s->network.wpa.pending||s->network.wpa.group_ready||s->network.wpa.group_issued||
@@ -134,6 +143,12 @@ static inline int pwwn_control(struct pwwn_state*s)
                 else{s->index=chosen;if(q->data[6]==2){pwch_copy(s->pmk,q->data+48,32);s->phase=PWWN_REGULATORY;}else s->phase=PWWN_PMK;}
             }
         }
+    }else if(q->operation==PWMB_POWER_OFF){
+#if EFI_XNU_WIFI_SYSTEM_OFF_NATIVE_AVAILABLE
+        if(!pwwn_quiesce_begin(s))error=16;else s->terminal_requested=1;
+#else
+        error=45;
+#endif
     }else if(q->operation==PWMB_DISCONNECT)error=45; /* No false retirement/reconnect claim. */
     else error=22;
     pwmb_put32(s->reply+12,error);s->reply_bytes=bytes;
@@ -207,7 +222,7 @@ static inline int pwwn_step(struct pwwn_state*s)
         if(result<0)return pwwn_fail(s,11);if(result)s->event_pending=0;}
     if(s->reply_bytes){int result=pwmn_send(&s->mailbox,PWMB_REPLY,PWMB_RESPONSE,s->reply,s->reply_bytes);
         if(result<0)return pwwn_fail(s,12);if(result){pwmb_clear(s->reply,sizeof(s->reply));s->reply_bytes=0;}}
-    if(!s->reply_bytes){int result=pwmn_receive(&s->mailbox,PWMB_CONTROL,&s->request);
+    if(!s->reply_bytes&&!s->terminal_requested){int result=pwmn_receive(&s->mailbox,PWMB_CONTROL,&s->request);
         if(result<0)return pwwn_fail(s,13);
         if(result&&(pwwn_control(s)<0||pwmn_complete(&s->mailbox,PWMB_CONTROL)!=1))return pwwn_fail(s,13);}
     if(!s->tx_pending){int result=pwmn_receive(&s->mailbox,PWMB_TX,&s->packet);

@@ -58,7 +58,8 @@ static void off_drive(void)
     unsigned posted=0;
     for(unsigned n=0;n<12;n++)posted+=parent->transport.rings.source[n].posted;
     CHECK(posted>0); /* Last control command still needs its real RRI reap. */
-    CHECK(pwwn_quiesce_begin(worker));int status=1;
+    runtime_control(PWMB_POWER_OFF,0,0);
+    CHECK(worker->terminal_requested&&worker->closing==1);int status=1;
     for(unsigned n=0;n<100&&status==1;n++){advance_to(owner->last+19200);status=pwwn_step(worker);}
     if(status!=2)fprintf(stderr,"quiesce status=%d phase=%u closing=%u worker_error=%u owner_error=%u network_closed=%u network_error=%u submitted=%u tx_wait=%u ethernet_tx=%u wpa_pending=%u group=%u/%u station=%u/%u htc=%u/%u data=%u/%u busy=%u/%u/%u\n",
         status,worker->phase,worker->closing,worker->error,owner->error,network->closed,network->error,

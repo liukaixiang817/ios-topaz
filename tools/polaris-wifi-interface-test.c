@@ -129,5 +129,13 @@ int main(void)
     setup();event(1);CHECK(!turn());mock_shutdown=1;
     request(record,PWMB_JOIN);CHECK(ioctl_record(SIOCSDRVSPEC64,record)==EINVAL);
     request(record,PWMB_STATE);CHECK(ioctl_record(SIOCSDRVSPEC64,record)==ENXIO);
+    for(unsigned length=16;length<=17;length++){
+        setup();event(1);CHECK(!turn());request(record,PWMB_POWER_OFF);
+        mock_superuser=0;CHECK(ioctl_record(SIOCSDRVSPEC64,record)==EPERM&&!pwif.pending);mock_superuser=1;
+        CHECK(!ioctl_record(SIOCSDRVSPEC64,record)&&pwif.pending);
+        CHECK(!turn()&&pwif.submitted&&pwif.control_operation==PWMB_POWER_OFF);
+        reply(PWMB_POWER_OFF,length);CHECK(turn()==(length==16?0:EIO));
+        CHECK(pwif.completed==(length==16?1u:0u));
+    }
     printf("PASS %u actual BSD interface checks; SOFTWARE KPI/mailbox, no phone or IP success\n",checks);return 0;
 }

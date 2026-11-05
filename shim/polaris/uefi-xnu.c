@@ -19,6 +19,9 @@
 #if !defined(EFI_XNU_WIFI_MAILBOX_VA) || !defined(EFI_XNU_WIFI_COUNTRY) || EFI_XNU_WIFI_COUNTRY != 36 || EFI_XNU_CPU != 0x700
 #error "Native radio runtime requires the linked mailbox symbol, explicit AU profile and CPU700"
 #endif
+#if !EFI_XNU_WIFI_SYSTEM_OFF_NATIVE_AVAILABLE || !defined(EFI_XNU_WIFI_SHUTDOWN_VA) || !EFI_XNU_SHUTDOWN_BRIDGE
+#error "Native radio runtime requires its terminal continuation and linked kernel shutdown slot"
+#endif
 #endif
 #ifndef EFI_XNU_WIFI_NATIVE_MEMORY_AVAILABLE
 #define EFI_XNU_WIFI_NATIVE_MEMORY_AVAILABLE 0
@@ -1018,8 +1021,10 @@ _Static_assert(sizeof(log_buffer)>=2*(PWBD_RAW_BYTES+sizeof(pwrpt_record)+sizeof
 #endif
 #if EFI_XNU_WIFI_NATIVE_RUNTIME_AVAILABLE
 #include "uefi-wifi-worker-native.h"
+#include "uefi-wifi-system-off-native.h"
 static struct pwns_parent wifi_native_parent;
 static struct pwwn_state wifi_native_worker;
+static struct pwno_state wifi_native_terminal;
 static uint32_t wifi_native_prepared,wifi_native_boot_phase;
 #endif
 static int64_t psci(uint64_t function,uint64_t a,uint64_t b,uint64_t c)
@@ -1435,7 +1440,12 @@ __attribute__((noreturn)) static void wifi_native_boot(void)
     cpu_status=wifi_native_parent.owner.runtime.result;wifi_native_boot_phase=7;
     if(!pwwn_begin(&wifi_native_worker,&wifi_native_parent,EFI_XNU_WIFI_COUNTRY))power_unknown_hold();
     wifi_native_boot_phase=8;
-    for(;;)if(pwwn_step(&wifi_native_worker)<0)power_unknown_hold();
+    for(;;){int result=pwwn_step(&wifi_native_worker);if(result!=1&&result!=2)power_unknown_hold();if(result==2)break;}
+    if(!wifi_native_worker.terminal_requested)power_unknown_hold();
+    wifi_native_boot_phase=9;
+    if(pwno_begin(&wifi_native_terminal,&wifi_native_worker,EFI_XNU_WIFI_SHUTDOWN_VA)!=1)power_unknown_hold();
+    wifi_native_boot_phase=10;
+    for(;;)if(pwno_step(&wifi_native_terminal)!=1)power_unknown_hold();
 }
 #endif
 static void boot_kernel(void *context)

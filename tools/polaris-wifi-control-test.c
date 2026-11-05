@@ -59,6 +59,8 @@ int main(int argc,char**argv)
     reset(0);CHECK(!client_main(2,state)&&sets==1&&queries==2);
     reset(0);CHECK(!client_main(2,scan)&&sets==1&&queries==2);
     reset(0);CHECK(!client_main(3,entry)&&sets==1&&queries==2);
+    char*power_off[]={"ctl","power-off",NULL};
+    reset(0);CHECK(!client_main(2,power_off)&&operation==PWMB_POWER_OFF&&sets==1&&queries==2);
     char*dhcp[]={"ctl","dhcp",NULL},*ip[]={"ctl","ip",NULL};
     reset(0);CHECK(client_main(2,dhcp)==1&&ip_calls==1&&!sets&&queries==1);
     reset(0);CHECK(!client_main(2,ip)&&ip_calls==2&&!sets&&queries==1);

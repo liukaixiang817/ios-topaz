@@ -17,7 +17,8 @@
 #define PWMB_BOOTSTRAP_OFFSET (5u*PWMB_SLOT)
 enum pwmb_lane {PWMB_CONTROL=0,PWMB_REPLY=1,PWMB_TX=2,PWMB_RX=3,PWMB_EVENT=4};
 enum pwmb_operation {PWMB_STATE=1,PWMB_SCAN=2,PWMB_SCAN_ENTRY=3,PWMB_JOIN=4,
-    PWMB_DISCONNECT=5,PWMB_ETHERNET_TX=6,PWMB_ETHERNET_RX=7,PWMB_NOTIFY=8,PWMB_RESPONSE=9};
+    PWMB_DISCONNECT=5,PWMB_ETHERNET_TX=6,PWMB_ETHERNET_RX=7,PWMB_NOTIFY=8,PWMB_RESPONSE=9,
+    PWMB_POWER_OFF=10}; /* Explicit whole-system terminal request, not disconnect. */
 enum pwmb_role {PWMB_PRODUCER=1,PWMB_CONSUMER=2};
 struct pwmb_identity {uint64_t epoch;uint8_t mac[6];};
 struct pwmb_state {uint64_t epoch,next;uint32_t lane,role,opened,stage,unknown,error;};
@@ -73,7 +74,7 @@ static inline int pwmb_payload(unsigned lane,unsigned operation,const uint8_t*p,
 {
     if(n>PWMB_DATA||(n&&!p))return 0;
     if(lane==PWMB_CONTROL){
-        if(operation==PWMB_STATE||operation==PWMB_SCAN||operation==PWMB_DISCONNECT)return !n;
+        if(operation==PWMB_STATE||operation==PWMB_SCAN||operation==PWMB_DISCONNECT||operation==PWMB_POWER_OFF)return !n;
         if(operation==PWMB_SCAN_ENTRY)return n==4&&pwmb_u32(p)<32;
         if(operation!=PWMB_JOIN||n!=112||pwmb_u32(p)!=2||!p[4]||p[4]>32||p[7]||p[14]||p[15]||
            (p[8]&1)||!pwmb_zero(p+16+p[4],32-p[4]))return 0;
@@ -84,7 +85,7 @@ static inline int pwmb_payload(unsigned lane,unsigned operation,const uint8_t*p,
     /* RESPONSE: request sequence u64, request operation u32, errno u32,
      * operation-specific body. The upper adapter validates that body's ABI. */
     if(lane==PWMB_REPLY)return operation==PWMB_RESPONSE&&n>=16&&pwmb_u64(p)&&pwmb_u64(p)<UINT64_MAX&&
-        pwmb_u32(p+8)>=PWMB_STATE&&pwmb_u32(p+8)<=PWMB_DISCONNECT&&pwmb_u32(p+12)<=4095;
+        ((pwmb_u32(p+8)>=PWMB_STATE&&pwmb_u32(p+8)<=PWMB_DISCONNECT)||pwmb_u32(p+8)==PWMB_POWER_OFF)&&pwmb_u32(p+12)<=4095;
     if(lane==PWMB_TX||lane==PWMB_RX)return operation==(lane==PWMB_TX?PWMB_ETHERNET_TX:PWMB_ETHERNET_RX)&&n>=14&&n<=1514;
     /* NOTIFY: event1..5 (ready/scan/link/disconnect/fault), errno, detail u64. */
     if(lane==PWMB_EVENT)return operation==PWMB_NOTIFY&&n==16&&pwmb_u32(p)>=1&&pwmb_u32(p)<=5&&pwmb_u32(p+4)<=4095;

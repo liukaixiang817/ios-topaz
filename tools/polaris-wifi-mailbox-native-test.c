@@ -32,9 +32,11 @@ int main(int argc,char**argv)
     for(unsigned k=0;k<PWMB_LANES;k++)CHECK(pwmb_link_open(&peer[k],k,pwmn_producer(k)?PWMB_CONSUMER:PWMB_PRODUCER,owner->opening));
     uint8_t ready[16]={1},data[64]={0};struct pwmb_message message;uint64_t number=1;
     CHECK(pwmn_send(native,PWMB_EVENT,PWMB_NOTIFY,ready,16)==1);
+    CHECK(pwmn_sent(native,PWMB_EVENT)==0&&pwmn_sent(native,PWMB_CONTROL)==-1);
     CHECK(pwmn_send(native,PWMB_EVENT,PWMB_NOTIFY,ready,16)==0);
     CHECK(pwmb_receive_poll(&peer[PWMB_EVENT],&bus,&message)==1&&message.operation==PWMB_NOTIFY&&message.sequence==1);
     CHECK(pwmb_receive_complete(&peer[PWMB_EVENT],&bus)==1);
+    CHECK(pwmn_sent(native,PWMB_EVENT)==1&&pwmn_sent(native,PWMB_EVENT)==1);
     CHECK(pwmn_send(native,PWMB_EVENT,PWMB_NOTIFY,ready,16)==1&&native->lane[PWMB_EVENT].state.next==2);
     CHECK(pwmn_receive(native,PWMB_CONTROL,&message)==0);
     CHECK(pwmb_send(&peer[PWMB_CONTROL],&bus,PWMB_STATE,0,0)==1);
