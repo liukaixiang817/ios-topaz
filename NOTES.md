@@ -54,6 +54,51 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: new native image built
+
+- Screen sourced052dc6 pushed/synchronized10 owned files. Complete kernel
+  CI42091724671/job127471196838 SUCCESS; exact source
+  d052dc61428114fd81abc1f7b90c544e9e7d78d0. Official artifact13445524374
+  ZIP67193706B SHAb305a33ffe0529c6ec4c15fff858fd269ecd43dce3f8121302f49f37588618ff;
+  archive/profile/SHA256SUMS verified. New kernel17358112B
+  SHA6241bdc31a583ae87940e7a45e0ee25ca96c4cafb05085b466c4a8e447dc406c.
+- Serial exact new kernel+c3e456d2 signed userland+own firmware payload build
+  PASS. Payload100593664B SHA904f5a71aeeac9196fed8edbe81b1d862b6983cbbe93e10b97070b11a7c2c2cc.
+  Final UEFI compile/link/C payload admission/rebased kernel/input hashes PASS.
+  Driver804864B SHAc3e1cc614e86d2b27d94db2bf12dd20baedef70eeb535c85e19533ca9123cdf3;
+  manifest SHA f04933914f099c2266c87ca2888fca29dab481fd409f58f52a7943a6bdc21031.
+- Added separate offline native Wi-Fi packager: exact artifacts/source inputs,
+  native scope/protection tokens and unspent nonce checked; original81 FW,
+  BootShim/DTB/ramdisk preserved. Exact existing EDK2 decoder executed and entire
+  decoded stream byte-matched. One iCloud-dataless public7zTypes.h recovered from
+  its recorded pinned official URL/hash; no user download needed. Eight unsafe/
+  incompatible scope mutations rejected before output. Legacy WLED admission
+  unchanged; new image explicitly NOT boot-admitted and no physical claim.
+- NEW image6225920B SHA848fa442b2b198fc9e2f19d07c8739a16a1bdf780eee07dc6de00d141c19b604.
+  Private artifacts/commands/proofs at stable clone
+  research/polaris/uefi-ios-0189/wifi/native-image-0001 (driver-0001,image-0001).
+  All builds/tests/CI/downloads above ENDED successfully. Full runtime producer
+  model sources unchanged from ui-native-0001; of257 inputs only mkpayload.py
+  changed for the already committed exact new userland bundle admission.
+- Actual readonly FASTBOOT query2026-11-05T19:29:09Z: exactly one device,
+  product polaris, exit0. Identity stored privately without printed serial.
+  No image sent. Local platform-tools37.0.1 restored from retained ZIP; CRC
+  checked and adb byte-matched original. Path
+  /private/tmp/polaris-platform-tools-37.0.1-local/platform-tools/fastboot.
+- Preparing current strict-RO root preflight: existing watchdog recovery/tools,
+  original GPT/ESP and root/marker maps copied to stable clone, no device action.
+  Original193109 layout/cmdline are dataless: use already verified own205328
+  layout and newly observed private device selection, documenting provenance;
+  do not fabricate193109 file copies. Old codec-copy63511 remains blocked on
+  original cloud7zTypes.h but required bytes now independently available.
+- NEXT finish current candidate/source/model review and bounded readonly root
+  audit before NEW integrated one-use temporary boot. Native start consumes the
+  existing RAM payload protocol; after native CPU0 starts no returned USB polling
+  is promised. Screen displays actual cached scan status. No physical scan/join/
+  IP/DNS/data yet. Execution2/5, current plus3 remain; admission gates pending.
+  Last formal19:20Z,next19:35Z. Goal ACTIVE, no pending user download/question.
+  Unowned remote-memory hunk remains uncommitted and preserved in exact builds.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: cached scan display
 
 - Source220f183 pushed; complete kernel CI42087555347/job127456633601 SUCCESS.

@@ -1,0 +1,129 @@
+#!/usr/bin/env python3
+"""Package a native Wi-Fi RAM image offline; never authorize or send a boot.
+
+The persistent CPU0 runtime has different shutdown/USB semantics from the old
+WLED-only trial. Preserve that trial's admission policy and package this scope
+separately. Source/model review, current device/root preflight and one-use nonce
+consumption remain mandatory before any device command.
+"""
+import argparse
+import hashlib
+import importlib.util
+import json
+from pathlib import Path
+import subprocess
+
+ROOT = Path(__file__).resolve().parents[1]
+ORIGINAL = '8588a9a5218d407dd3169ec1f340097db689b3d046f3d38189514e09f3944336'
+DECODER = 'd5d093974957a376e6fcc83ac3e42f7364c14d94001e88a7728f7c261eb26bc0'
+
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def require(condition, message):
+    if not condition:
+        raise ValueError(message)
+
+
+def module(name):
+    spec = importlib.util.spec_from_file_location(name, ROOT/'tools'/f'{name}.py')
+    result = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(result)
+    return result
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    for name in ('original', 'driver-manifest', 'kernel', 'payload', 'codec-directory', 'output'):
+        parser.add_argument('--'+name, required=True, type=Path)
+    args = parser.parse_args()
+    output = args.output.resolve()
+    require(output.is_relative_to(ROOT/'research') and not output.exists(),
+            'new private research output required')
+    manifest = json.loads(args.driver_manifest.read_text())
+    for key, expected in {
+        'wifi_native_runtime_enabled': True, 'wifi_native_display_input_integrated': True,
+        'RAM_only_XNU_loader': True, 'payload_C_admission': True,
+        'rebased_kernel_bytes_match': True, 'kernel_handoff': True,
+        'storage_write_api': False, 'NVRAM_write_api': False, 'QEMU_variant': False,
+        'physical_owned_marker_test': False, 'RAM_native_shutdown_bridge': True,
+        'kernel_CPU_affinity': 0x700, 'kernel_CPU_count': 4,
+        'mss_firmware_in_payload': True, 'wifi_host_nonce_native_enabled': True,
+        'wifi_native_boot_admission': False,
+    }.items():
+        require(type(manifest.get(key)) is type(expected) and manifest[key] == expected,
+                'wrong native runtime scope: '+key)
+    artifact = manifest['artifact']
+    require(Path(artifact).name == artifact and artifact not in ('', '.', '..'), 'driver path')
+    driver = args.driver_manifest.parent/artifact
+    require(sha(driver) == manifest['sha256'] and driver.stat().st_size == manifest['bytes'],
+            'driver changed')
+    require(sha(args.kernel) == manifest['kernel_sha256'], 'kernel changed')
+    require(sha(args.payload) == manifest['payload_sha256'] and
+            args.payload.stat().st_size == manifest['payload_bytes'], 'payload changed')
+    require(sha(args.original) == ORIGINAL, 'wrong original firmware')
+    evidence = {}
+    for name, digest in manifest['inputs'].items():
+        path = (ROOT/name).resolve()
+        require(path.is_relative_to(ROOT) and sha(path) == digest, 'source/input changed: '+name)
+        evidence[name] = digest
+    module('polaris-wifi-nonce-candidate').verify(args.driver_manifest, sha(args.driver_manifest))
+    binding = manifest['wifi_native_runtime_binding']
+    require(binding['country'] == 'AU' and binding['country_code'] == 36 and
+            binding['terminal_exit'] == 'retained whole-system SYSTEM_OFF' and
+            binding['per_device_DMA_retirement'] is False, 'native terminal/country scope changed')
+    # Exact unique protection tokens, independently of descriptive manifest flags.
+    payload = args.payload.read_bytes()
+    require(payload[:8] == b'SWEETXNU', 'payload header')
+    tokens = payload[0x48:0x2a8].split(b'\0', 1)[0].split()
+    for token in (b'polariswifi=1', b'polarisramcow=1', b'ufsrw=0',
+                  b'polarisfileroot=1', b'polarisquiesce=1', b'polariswled=1', b'cpus=4'):
+        prefix = token.split(b'=')[0]+b'='
+        require([x for x in tokens if x.startswith(prefix)] == [token], 'payload protection token')
+    codec = args.codec_directory.resolve()
+    require(sha(codec/'verify') == DECODER, 'original decoder executable changed')
+    for item in json.loads((codec/'sources.json').read_text()):
+        path = (codec/item['path']).resolve()
+        require(path.is_relative_to(codec) and sha(path) == item['sha256'], 'original codec source changed')
+    firmware = module('polaris-uefi-firmware')
+    image, record = firmware.package(args.original.read_bytes(), driver.read_bytes(),
+                                    label='Polaris RAM resident iOS loader')
+    require(record['original_inner_files'] == record['unchanged_inner_files'] == 81,
+            'original firmware preservation')
+    _, decoded, _, _ = firmware.unpack_android(image)
+    _, _, files = firmware.files(decoded[0x8000:])
+    encoded = []
+    for _, raw in files:
+        if raw[18] == 0x0b:
+            sections = list(firmware.sections(raw[24:]))
+            require(len(sections) == 1 and sections[0][0] == 2, 'compressed section layout')
+            encoded.append(sections[0][2][24:])
+    require(len(encoded) == 1, 'one compressed firmware volume required')
+    output.mkdir()
+    (output/'whole.lzma').write_bytes(encoded[0])
+    process = subprocess.run([str(codec/'verify'), str(output/'whole.lzma'),
+                              str(output/'whole.decoded')], capture_output=True, timeout=30)
+    (output/'codec.log').write_bytes(process.stdout+process.stderr)
+    require(process.returncode == 0 and
+            (output/'whole.decoded').read_bytes() == firmware.decode_edk2_lzma(encoded[0]),
+            'actual original decoder round trip failed')
+    target = output/'polaris-native-wifi.img'
+    target.write_bytes(image)
+    record.update(scope='native_WiFi_retained_CPU0_RO_RAMCOW', artifact=target.name,
+        sha256=sha(target), bytes=len(image), driver_sha256=sha(driver),
+        driver_manifest_sha256=sha(args.driver_manifest), kernel_sha256=sha(args.kernel),
+        payload_sha256=sha(args.payload), kernel_handoff=True,
+        original_decoder_sha256=DECODER, original_codec_round_trip=True,
+        source_inputs=evidence, packager_sha256=sha(Path(__file__)),
+        boot_admission=False, physical_networking_verified=False,
+        may_write_userdata=False, immutable_root_RAMCOW_only=True,
+        post_start_USB_service=False, nonce_consumed=False,
+        terminal_exit=binding['terminal_exit'], device_command_executed=False)
+    (output/'manifest.json').write_text(json.dumps(record, indent=2)+'\n')
+    print('Native Wi-Fi image packaged and original codec verified; no boot admission or device action')
+
+
+if __name__ == '__main__':
+    main()
