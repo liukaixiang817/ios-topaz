@@ -54,6 +54,25 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: current readonly preflight prepared
+
+- Native image packager/source records committed/pushed d300759. Added new
+  candidate-bound readonly audit and independent result review tools. Audit
+  default offline PASS against the concrete new image/driver/source inputs.
+  Device-call body exactly equals the proven0187 audit except mount namespace
+  and own205328 backup layout path. ro,noload/nodev/nosuid/noexec,250s host
+  budget,300s recovery watchdog, one-shot unmount and FASTBOOT cleanup preserved.
+- Review retains all39 previous evidence checks and adds current-image binding.
+  Historical0124 root/preflight baselines copied and pinned hashes matched.
+  Recovery image/tools,26 original baseline inputs and two owner pages copied;
+  original193109 dataless layout/cmdline not read or reconstructed. Existing
+ 205328 layout and actual unique FASTBOOT selection provide explicit inputs.
+- NEXT execute one current readonly recovery audit, independently review actual
+  captures, then finish native-runtime candidate admission/one-use boot. This
+  milestone itself has NOT booted recovery or iOS and has NOT changed phone
+  storage. Whole Wi-Fi admission remains separate from root integrity. Current
+  step2/5; no actual scan/JOIN/IP/DNS/data. Last formal19:20Z,next19:35Z.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: new native image built
 
 - Screen sourced052dc6 pushed/synchronized10 owned files. Complete kernel
