@@ -54,6 +54,32 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: FIRST native image sent; pre-payload service unavailable
+
+- Source4d00936 pushed. ONE new native image848fa442... sent at19:42:39Z;
+  fastboot send OKAY0.144s, boot OKAY0.091s,total0.236s. Exact native nonce pool
+  consumed durably BEFORE transfer. This image/pool is spent: DO NOT resend.
+- Host native-start helper86489 ENDED exit1 at19:43:10Z: no matching synthetic
+  UEFI service within30s. No payload byte sent, no OEM native-start command,
+  no iOS/scan evidence. boot.json state stopped_no_retry; no reset/retry was
+  issued. This is a real new image attempt, not a network-success milestone.
+  Records in native-image-0001/phone-native-0001 plus its sibling log.
+- One passive host USB registry diagnostic: sandbox attempt returned exit1
+  (not absence evidence); host-access attempt19:44:52Z returned exit0 and no
+  Google/Qualcomm/Xiaomi vendor entry. No observer or continuous polling started.
+  This does not locate the firmware failure or prove phone disconnection cause.
+- Asked user asynchronously to describe current screen text/numbers/blackness
+  and keep it unchanged, no restart. Reply pending. Continue offline diagnosis
+  of admission before USB: incoming maps, early/MSS/NV/CE/HTT allocations and
+  initial driver/ReadyToBoot behavior. NV producer itself has120s bound, whereas
+  helper discovery was30s; timeout alone does not prove native producer failure.
+  No hypothesis is currently established by phone logs/screen evidence.
+- Full40-check fresh storage audit remains historical evidence for the interval
+  immediately before this attempt. Current phone outcome is unknown; do not
+  assume later root continuity or late native execution. Execution remains2/5,
+  current plus3 remain; no actual scan/JOIN/IP/DNS/data. Goal ACTIVE. Last formal
+ 19:35Z,next19:50Z. All build/CI/test/device jobs ended; no active USB command.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: actual current root passed; one trial frozen
 
 - Source e3bedd3 pushed. ONE trusted readonly recovery boot executed for the
