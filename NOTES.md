@@ -56,6 +56,11 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: retained terminal composition
 
+- Source402d364 and handoffa37a1ac pushed successfully to the approved branch.
+  Stable clone contains all committed sources; eight owned source/document files
+  atomically synced to the original workspace after checking their prior bytes.
+  Original HEAD was4f0ed6b; Git-index read/local fetch are still cloud-delayed,
+  so do not reset its index before proving it has no independent staged work.
 - Source402d364: new default-OFF native SYSTEM_OFF continuation binds the
   quiesced actual worker, copied kernel shutdown slot, persistent CPU owner
   and retained memory. Existing kernel RAM-drain protocol precedes PSCI
