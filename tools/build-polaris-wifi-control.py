@@ -16,8 +16,22 @@ def main():
     a=p.parse_args();sdk=a.sdk.resolve(strict=True);out=a.output.resolve()
     out.mkdir(parents=True,exist_ok=False)
     target=out/'polaris-wifi-ctl';source=ROOT/'userland/wifi/polaris-wifi-ctl.c'
+    # The retained iOS SDK has C Mach headers but omits MiG .defs. Generate
+    # the ARM64 wire stub with the host SDK; the actual iOS compile checks
+    # request/reply sizes and uses only the supplied iOS headers/libraries.
+    mig_sdk=sdk
+    if not (sdk/'usr/include/mach/std_types.defs').is_file():
+        mig_sdk=Path(subprocess.check_output(['/usr/bin/xcrun','--sdk','macosx','--show-sdk-path'],text=True).strip())
+    mig=['/usr/bin/mig','-arch','arm64','-isysroot',str(mig_sdk),
+         '-I'+str(source.parent),'-header',str(out/'polaris-ipconfig.h'),
+         '-user',str(out/'polaris-ipconfig.c'),'-server','/dev/null',
+         str(source.parent/'polaris-ipconfig.defs')]
+    with (out/'mig.log').open('w') as log:
+        subprocess.run(mig,check=True,stdout=log,stderr=subprocess.STDOUT)
     command=['/usr/bin/clang','-target','arm64-apple-ios16.0','-isysroot',str(sdk),
-             '-std=c11','-O2','-Wall','-Wextra','-Werror',str(source),'-o',str(target)]
+             '-std=c11','-O2','-Wall','-Wextra','-Werror','-I'+str(out),'-I'+str(source.parent),
+             str(source),str(source.parent/'polaris-wifi-ip.c'),str(out/'polaris-ipconfig.c'),
+             '-framework','CoreFoundation','-o',str(target)]
     with (out/'build.log').open('w') as log:
         subprocess.run(command,check=True,stdout=log,stderr=subprocess.STDOUT)
     subprocess.run(['codesign','--force','--sign','-','--timestamp=none',
@@ -30,8 +44,10 @@ def main():
     (out/'dependencies.txt').write_text(dependencies)
     inputs=['userland/wifi/polaris-wifi-ctl.c','tools/polaris-wifi-interface.h',
             'tools/polaris-wifi-mailbox.h','tools/polaris-wifi-control-wire.h',
-            'tools/build-polaris-wifi-control.py']
-    manifest=dict(format=1,target='arm64-apple-ios16.0',command=command,
+            'tools/build-polaris-wifi-control.py','userland/wifi/polaris-wifi-ip.c',
+            'userland/wifi/polaris-wifi-ip.h','userland/wifi/polaris-ipconfig.defs',
+            'userland/wifi/polaris-ipconfig-types.h']
+    manifest=dict(format=1,target='arm64-apple-ios16.0',command=command,mig_command=mig,
                   binary_sha256=sha(target),binary_bytes=len(raw),
                   sources={n:sha(ROOT/n) for n in inputs},
                   installed=False,physical_wifi_verified=False)

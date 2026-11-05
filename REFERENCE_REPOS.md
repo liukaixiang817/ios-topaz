@@ -14,6 +14,17 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+## Own userland DHCP control (0189, 2026-11-05)
+
+Compared HackiOS userland net_test.m at the pinned a79ff077 reference with
+Apple bootp bootplib/ipconfig.defs blob6bc2246f4e3559481779792664bf07473979be3d
+and ipconfig_types.h blob389f6416413a6a28b388d2bf1f5824866b8409ae. Our existing
+BSD en0 has no reference IOKit radio implementation; its private native status
+must report an authorized link before requesting configd DHCP. A generated
+bounded Mach client preserves set_service ID20011 and uses real CF plist.
+No reference driver, guessed IP, DHCP lease or DNS state is adopted. Software
+IPC/helper tests and signed iOS16 compile do not prove physical networking.
+
 ## Native regulatory/control integration (0189, 2026-11-05)
 
 Compared ath/regd.c, regd.h and regd_common.h at the same primary Linux commit

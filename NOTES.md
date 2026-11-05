@@ -54,6 +54,39 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05: DHCP userland and stable local build
+
+- Runtime compositionf6a246e and handoff9286b3c pushed successfully. Added
+  polaris-wifi-ctl dhcp/ip. DHCP requires root and actual radio+authorized link+
+  attached/no-fault/no-seal status, enables en0 and asks existing configd via
+  set_service20011. Reply acceptance is not DHCP/IP/DNS success. ip reports
+  current en0 IPv4 and excludes down/zero/loopback/link-local/multicast/reserved
+  addresses. No persistent SystemConfiguration preference or password write.
+- Compared pinned HackiOS net_test.m with Apple bootp/ipconfig.defs blob
+ 6bc2246f4e3559481779792664bf07473979be3d. MiG generates bounded5s send/receive
+  and validates replies; resource consumption on send timeout enabled. Actual
+  local Mach IPC5 cases PASS (accepted/denied/wrong ID/short reply/timeout),
+  actual helper256 ASan/UBSan checks PASS with private OS peers/real CF plist,
+  control861 checks PASS. iOS16 ARM64 binary compiled, ad-hoc signed and verified.
+  The iOS SDK omits MiG defs/bootstrap.h; host ARM64 MiG plus iOS compile-time
+  ABI checks and verified exported bootstrap_look_up declaration resolve that.
+- Build environment: iCloud repeatedly evicted even .git metadata and new WIP.
+  Stable clone /private/tmp/polaris-wifi-local-9286b3c is at pushed9286b3c plus
+  this milestone WIP. Fixed theos/sdks0222fd5413cf4b9af096f37b4621afa2688572f7
+  archive downloaded/extracted under /private/tmp/polaris-sdk-local-0222fd;
+  only iPhoneOS16.5.sdk extracted. This matches the previous SDK source commit.
+  Original blocked build/read processes stopped; unrelated jobs untouched.
+  Source edits in stable clone are being copied back; existing unowned remote-
+  memory hunk and .DS_Store stay untouched. Private proof ip-config-local-0001
+  in stable clone; iOS artifact /private/tmp/polaris-wifi-ip-ios16-0004.
+- No host networking configuration, phone operation, image, FASTBOOT, kernel CI
+  or installed DHCP client. Physical Wi-Fi/IP/DNS/data remain unverified.
+  Investigating retained-memory SYSTEM_OFF as a terminal exit: own DT declares
+  arm,psci-1.0/smc; Arm DEN0022D sections5.10/5.15 define discovery/whole-system
+  shutdown. NOT an implemented path, permission return or cleared boot gate.
+  NEXT native exit/display/input and builder/new candidate, then actual tests.
+  Last15min08:07Z,next08:22Z. Execution2/5,current plus3 remain. Goal ACTIVE.
+
 ### Continuous Wi-Fi milestone — 2026-11-05: complete runtime mailbox/radio model
 
 - Sourcef6a246e committed after loader fix3359232. Added actual complete startup,

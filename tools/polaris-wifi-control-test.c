@@ -18,6 +18,10 @@ static int test_ioctl(int,unsigned long,...);
 #undef socket
 static unsigned mode,sets,queries,operation,checks;
 #define CHECK(x) do{checks++;assert(x);}while(0)
+static unsigned ip_calls;
+int polaris_wifi_dhcp(int fd,unsigned flags)
+{CHECK(fd==42&&flags==33);ip_calls++;errno=ENETDOWN;return -1;}
+int polaris_wifi_addresses(void){ip_calls++;return 0;}
 static int test_socket(int domain,int type,int protocol)
 {CHECK(domain==AF_INET&&type==SOCK_DGRAM&&!protocol);return 42;}
 static int test_close(int fd){CHECK(fd==42);return 0;}
@@ -55,6 +59,9 @@ int main(int argc,char**argv)
     reset(0);CHECK(!client_main(2,state)&&sets==1&&queries==2);
     reset(0);CHECK(!client_main(2,scan)&&sets==1&&queries==2);
     reset(0);CHECK(!client_main(3,entry)&&sets==1&&queries==2);
+    char*dhcp[]={"ctl","dhcp",NULL},*ip[]={"ctl","ip",NULL};
+    reset(0);CHECK(client_main(2,dhcp)==1&&ip_calls==1&&!sets&&queries==1);
+    reset(0);CHECK(!client_main(2,ip)&&ip_calls==2&&!sets&&queries==1);
     for(unsigned m=1;m<=5;m++){reset(m);CHECK(client_main(2,state)==1&&sets==1&&pwmb_zero(input,sizeof(input)));}
     uint8_t b[PWCB_BSS_HEADER+PWCB_IES]={0};
     pwmb_put32(b+4,2412);pwmb_put32(b+12,1);b[25]=2;

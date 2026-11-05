@@ -1,0 +1,16 @@
+/* Wire subset of Apple bootp's bootplib/ipconfig.defs, blob
+ * 6bc2246f4e3559481779792664bf07473979be3d. Generate for the ARM64 Mach ABI.
+ * The eleven reserved slots preserve set_service's existing message ID.
+ * No copied implementation or service preference mutation. */
+#include <mach/std_types.defs>
+subsystem polaris_ipconfig 20000;
+waittime 5000;
+ConsumeOnSendError Timeout;
+import "polaris-ipconfig-types.h";
+type interface_name = array[16] of char ctype: pwip_ifname;
+type service_id = array[128] of char ctype: pwip_service;
+type method_data = ^ array[] of MACH_MSG_TYPE_BYTE ctype: pwip_data;
+skip; skip; skip; skip; skip; skip; skip; skip; skip; skip; skip;
+routine polaris_ipconfig_set_service(server: mach_port_t;
+    name: interface_name; method: method_data;
+    out service: service_id; out status: int);

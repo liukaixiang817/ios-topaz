@@ -3,6 +3,7 @@
  * from stdin (one ASCII line), never accepted in argv or printed. */
 #include "../../tools/polaris-wifi-interface.h"
 #include "../../tools/polaris-wifi-control-wire.h"
+#include "polaris-wifi-ip.h"
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
@@ -112,6 +113,8 @@ int main(int argc,char**argv)
     else if(argc==2&&!strcmp(argv[1],"state"))op=PWMB_STATE;
     else if(argc==2&&!strcmp(argv[1],"scan"))op=PWMB_SCAN;
     else if(argc==2&&!strcmp(argv[1],"disconnect"))op=PWMB_DISCONNECT;
+    else if(argc==2&&!strcmp(argv[1],"dhcp"))op=256;
+    else if(argc==2&&!strcmp(argv[1],"ip"))op=257;
     else if(argc==3&&!strcmp(argv[1],"entry")){
         char*end=NULL;errno=0;unsigned long n=strtoul(argv[2],&end,10);
         if(errno||!argv[2][0]||!end||*end||n>=32)goto usage;
@@ -125,6 +128,10 @@ int main(int argc,char**argv)
     pwmb_put32(input,PWIF_VERSION);pwmb_put32(input+4,op);
     int fd=socket(AF_INET,SOCK_DGRAM,0);if(fd<0)goto failed;
     if(control(fd,0,output)){close(fd);goto failed;}
+    if(op>=256){
+        int done=op==256?polaris_wifi_dhcp(fd,pwmb_u32(output+4)):polaris_wifi_addresses();
+        int error=errno;close(fd);if(done){errno=error;goto failed;}return 0;
+    }
     if(!op){status(output);close(fd);return 0;}
     uint64_t before=pwmb_u64(output+16),started=now_ms();
     if(!started||before==UINT64_MAX||!pwif_request_valid(input)||control(fd,1,input)){close(fd);goto failed;}
@@ -141,7 +148,7 @@ int main(int argc,char**argv)
         struct timespec pause={0,20000000};nanosleep(&pause,NULL);
     }
 usage:
-    fprintf(stderr,"usage: polaris-wifi-ctl status|state|scan|entry INDEX|join SSID|disconnect\nJOIN reads one passphrase line from stdin.\n");
+    fprintf(stderr,"usage: polaris-wifi-ctl status|state|scan|entry INDEX|join SSID|disconnect|dhcp|ip\nJOIN reads one passphrase line from stdin.\n");
     pwmb_clear(input,sizeof(input));return 2;
 failed:
     {int error=errno?errno:EIO;pwmb_clear(input,sizeof(input));pwmb_clear(output,sizeof(output));
