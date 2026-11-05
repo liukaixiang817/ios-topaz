@@ -44,6 +44,42 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): native HTT data ownership
+
+- Native HTT setup is commit5980ed2. Default-OFF pmhd uniquely consumes it;
+  TX payload/72-byte fragment is copied and CIVACed before HTC/CE publication.
+  CE completion never frees MSDU: only matching HTT TX completion marks it
+  available for an explicit consumer ACK. Status retains ACK/discard/no-ACK.
+- Actual RX in-order64-bit address indications are checked against2048 allocated
+  buffers and ownership before mutation. IVAC and copy full private2048B frame,
+  require MSDU_DONE for descriptor format, retain attention/decap/errors and
+  offload metadata. Explicit ACK zero/CIVACs that buffer, writes/cleans ring
+  entry, then publishes alloc-index last. Native parent keeps same finite
+  owner/operation budget. No buffer free or DMA retirement is implied.
+- CE5 fast-path primary SNOC callback strips8-byte HTC prefix before HTT; new
+  typed data consumer does this while normal CE1/9/10 uses HTC endpoint decode.
+  Other events remain retained. TX is backpressured while a private RX packet
+  or batch awaits consumption, preventing queued-TX/RX-return deadlock.
+- Full native ASan/UBSan PASS5/12462566:6 actual TX/completion/RX/recycle cycles
+  incl CE5 and offload metadata, cache failure before TX, barrier failure after
+  publication, incomplete RX and failure during recycle. Protocol18120 PASS
+  incl3000 wraps/recycles, peer maps, duplicate/out-of-range completions and
+  invalid RX addresses. Both full native and protocol COFF/MachO generalregs/
+  frame1024 PASS. Evidence:htt-data-native-0001/proof-0001.json. SOFTWARE only.
+- NEXT station/connection authentication plus whole-parent/native runtime and
+  kernel interface integration. Current startup authority is still180s and
+  requires load_state2/old tables; pmpn_arch separately enforces180s. Original
+  USB/WLED/button/CPU_ON calls cannot simply run inside it. Explicit long-lived
+  runtime transfer and post-CE exit remain necessary before a real image.
+- References re-read: HackiOS lx_wpa.c/h contains standalone SHA1/PBKDF2/AES-
+  unwrap/EAPOL code; userland wifipw_test exercises MobileWiFi/keychain only.
+  Not copied/executed; nonce generation, replay/retransmission and reinstall
+  handling need review before reuse. Primary ath10k WMI vdev start/up, peer
+  create/assoc and management TX source now identified for own WCN3990 port.
+- No phone/USB/CI/push/boot/parent registration; still execution2/5, current
+  step plus3 remain. Last15min01:36Z/12:36, next01:51Z/12:51 Melbourne.
+  Goal ACTIVE; keep progressing to real scan/join/IP/DNS/data.
+
 ### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): native HTT setup
 
 - Native passive scan is commite16601e. Default-OFF pmht consumes WMI READY

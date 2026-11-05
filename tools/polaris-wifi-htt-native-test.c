@@ -55,6 +55,9 @@ static int htt_cache(uint64_t at,unsigned bytes,unsigned op,struct pccl_record*r
 }
 static void htt_target_tx(unsigned pipe,const unsigned char*frame,unsigned bytes)
 {
+#ifdef PMHT_TEST_TX_HOOK
+    if(frame[8]==1){PMHT_TEST_TX_HOOK(pipe,frame,bytes);return;}
+#endif
     CHECK(htt&&pmht_live(htt)&&pipe==4&&frame[0]==htc->client.htt&&htt->prepared);htt_commands++;
     const uint8_t*p=frame+8;
     if(htt_commands==1){
@@ -70,7 +73,10 @@ static void htt_target_tx(unsigned pipe,const unsigned char*frame,unsigned bytes
     }
     CHECK(htt_commands==4&&bytes==12&&pwmi_get(p)==0x00034005);
 }
-int main(int argc,char**argv)
+#ifndef PMHT_TEST_ENTRY
+#define PMHT_TEST_ENTRY main
+#endif
+int PMHT_TEST_ENTRY(int argc,char**argv)
 {
     CHECK(argc==8);sm_original=malloc(PWFI_IMAGE_BYTES);sm_shadow=malloc(PMSQ_BYTES);rmtfs_shadow=malloc(0x202000);
     memory=aligned_alloc(4096,PNV_BYTES);ce_shadow=aligned_alloc(4096,PWDM_BYTES);device_memory=aligned_alloc(4096,PWDM_BYTES);

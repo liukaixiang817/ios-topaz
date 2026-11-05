@@ -16,6 +16,7 @@ struct pmht_state {
     struct phtt_state client;struct phtm_layout layout;struct pmct_io io;
     struct pwea_core source[2];uint8_t history[32],page[4096];
     uint32_t attempted,ready,unknown,error,busy,operations,zeroed,ring_pages,prepared,submitted;
+    uint64_t consumer;
 };
 #if defined(POLARIS_WIFI_HTT_SOFTWARE_PEER)
 static int pmht_copy(uint64_t,void*,unsigned,unsigned,struct pmct_memory*);
