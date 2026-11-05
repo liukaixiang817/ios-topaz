@@ -44,6 +44,32 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): WPA2 crypto primitives
+
+- Native station association is commit7da14b1. New original pwch implements
+  SHA1/HMAC/PBKDF2-4096 PMK, AES128 inverse and RFC3394 unwrap without copying
+  the reference's code. PBKDF2 does at most32 HMACs per step; unwrap at most4
+  AES blocks, allowing the native caller to service RMTFS/transport between
+  steps. AES substitutions use fixed arithmetic without secret-indexed tables;
+  this is not a whole-system side-channel audit.
+- Secret workspaces use volatile wiping. AES plaintext remains private until
+  unwrap integrity succeeds; failed integrity wipes all plaintext and schedule.
+  Caller still needs real fresh entropy, EAPOL replay/MIC/state logic, key install
+  ACKs and controlled-port gating. These primitives are NOT WPA completion.
+- ASan/UBSan49928 checks/43 independent vectors PASS; COFF/MachO generalregs/
+  frame1024 PASS. Reproducible tools/polaris-wifi-wpa-crypto-check.py uses Python
+  hashlib/hmac and local OpenSSL AES encryption; public RFC3394/FIPS197 vectors
+  anchor the independent forward reference, RFC6070 PBKDF2 vector also checked.
+  OpenSSL enc refuses streaming wrap, so reference uses its AES ECB per RFC
+  forward round. No real credentials or foreign build scripts used.
+- Evidence:wpa-crypto-0001/proof-0001.json. Standards consulted:
+  https://www.rfc-editor.org/rfc/rfc3394 and /rfc/rfc6070.
+- NEXT EAPOL four-way/group handshake with replay/retransmission/no-reinstall,
+  WMI key install plus management-WMI transport when service76 is advertised,
+  regulatory/entropy source and whole-parent/runtime/post-CE exit. No phone/USB/
+  CI/push/boot. Execution2/5; current step plus3 remain. Last15min02:06Z/13:06,
+  next02:21Z/13:21 Melbourne. Goal ACTIVE; continue to actual Wi-Fi.
+
 ### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): native station association
 
 - Station MAC is commit9181c36. New pwst orders qualified active channel list,
