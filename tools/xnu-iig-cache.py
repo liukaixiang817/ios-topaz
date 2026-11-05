@@ -23,6 +23,15 @@ EXTRA_PRIVATE_HEADERS={'iokit/Kernel/arm/polaris_uefi_cpu.h','bsd/dev/polaris_ue
 # outside DriverKit's interface include graph. Bind their reviewed bytes; adding them
 # must not weaken the original IDL/header checks or admit arbitrary headers.
 EXTRA_PRIVATE_HEADER_SHA={
+    # Private BSD resident Wi-Fi implementation, outside DriverKit's IDL graph.
+    'bsd/dev/polaris-wifi-kernel-mailbox.h':
+    'f11cc70269ccc32f28fe0a31f29e52d005babdfeeb33de2bcc5bdf8e72baa5d3',
+    'bsd/dev/polaris-wifi-mailbox.h':
+    '505b66a39fa6e9ba16cc2e5239b9f7f7efef2f9eca96a1a00668945f60a18677',
+    'bsd/dev/polaris-wifi-mailbox-transport.h':
+    '5209b5edde581c39dcc5a1d923b3f5b2595d51446e55d31a10030d1cedec7c6f',
+    'bsd/dev/polaris-wifi-interface.h':
+    '06f643226326e09bd4f654a69bdad6e556f70365473f4dfecd8c423560f5a7ab',
     # Private GPU/display ownership implementation, included only by the two
     # native .cpp files; no DriverKit interface/layout or IDL change.
     'iokit/Kernel/arm/polaris_surface_access.h':
@@ -172,8 +181,9 @@ def replay(cache,args):
     root=source.parents[2]
     present={str(p.relative_to(root)):p for p in root.rglob('*') if p.is_file() and p.suffix in ['.h','.iig']}
     expected=manifest['source_inputs']
-    if set(present)-set(expected)-EXTRA_PRIVATE_HEADERS-set(EXTRA_PRIVATE_HEADER_SHA):
-        raise ValueError('unreviewed added source headers/IDL')
+    added=set(present)-set(expected)-EXTRA_PRIVATE_HEADERS-set(EXTRA_PRIVATE_HEADER_SHA)
+    if added:
+        raise ValueError('unreviewed added source headers/IDL: '+', '.join(sorted(added)))
     for name,want in EXTRA_PRIVATE_HEADER_SHA.items():
         if name in present and sha(present[name])!=want:
             raise ValueError('reviewed private header changed: '+name)

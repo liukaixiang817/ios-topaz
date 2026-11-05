@@ -56,6 +56,23 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Continuous Wi-Fi milestone — 2026-11-05: BSD interface and actual CI omission fixed
 
+- Committed345dfe0edfc9f0d198155df1a3a0fc51e0aa24cc and pushed successfully;
+  new strict CI41970138332/job127056202417 FAILED at IIG validation: four
+  new private Wi-Fi headers were not yet hash-bound. Log confirms0911/0914/
+  0915 actually applied. Added their exact shipped hashes without changing
+  original DriverKit checks;3 cache tests PASS. Test comparison corrected for
+  native-only SMEM/GLINK updates; their kernel patch hashes remain enforced.
+  Failed log:kernel-interface-0001/ci-failed.log. Retrying whole CI next. Local git commit/push stalled on
+  macOS dataless metadata: preserved COMMIT_EDITMSG as
+  .git/COMMIT_EDITMSG.polaris-preserved-20261105T0445, retried commit, then
+  stopped only its stuck auto-maintenance and unsent push. Read-only stack
+  sampling confirmed the wait in old refs. Same commit was pushed via a fresh
+  temporary bare Git directory with original object alternates and ONLY this
+  branch; no old references were removed. Private source-push-directory.json
+  records that directory. Original origin tracking may still show218a4d4;
+  remote push218a4d4..345dfe0 and new CI head were directly verified. Prior CI
+  log downloads failed HTTP/2 CANCEL then HTTP/1 EOF; no missing log claim.
+
 - CI41966748964/job127045403123 on218a4d4 reported success, but the downloaded
   kernel has NO polaris_wifi_mailbox_page symbol (nor object in its archive).
   Kernel17307080B SHA14380b9f76ca46c096a359b3f1cf6266171e6717f8af0cfa1ca7c9426eb1ddf4;
@@ -92,8 +109,8 @@ early samples only. On0029 the human already confirmed boot complete and said
   tests/builds were serial. CI source inputs were unchanged during that run.
 - NEXT actual CPU0 persistent authority, native mailbox producer and control/
   station/credential/regulatory glue, complete parent/post-CE exit/new image.
-  No phone/USB/boot. Execution2/5,current step plus3 remain. Last15min04:37Z/
-  15:37 Melbourne,next04:52Z/15:52. Goal ACTIVE; continue to physical Wi-Fi.
+  No phone/USB/boot. Execution2/5,current step plus3 remain. Last15min04:52Z/
+  15:52 Melbourne,next05:07Z/16:07. Goal ACTIVE; continue to physical Wi-Fi.
 
 ### Continuous Wi-Fi milestone — 2026-11-05: actual XNU mailbox storage/adapter
 

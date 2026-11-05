@@ -30,7 +30,12 @@ class PrivateHeaderBinding(unittest.TestCase):
             self.assertEqual(len(bodies),1,name)
             self.assertEqual(hashlib.sha256(bodies[0]).hexdigest(),want,name)
             source=ROOT/'tools'/Path(name).name.replace('_','-')
-            if source.exists():
+            # ee20961 changed native SMEM for v12 common partitions; 7ea48c9
+            # changed native GLINK for the continuous MSS owner. The older
+            # read-only kernel profile retains its hash-bound implementations.
+            native_only_updates={'bsd/dev/polaris-smem-inventory.h',
+                                 'bsd/dev/polaris-wifi-glink.h'}
+            if source.exists() and name not in native_only_updates:
                 raw=source.read_bytes().replace(b'"polaris-a630-post.h"',b'"polaris_a630_post.h"')
                 if name=='iokit/Kernel/arm/polaris_wled_native.h':
                     raw=raw.replace(b'"polaris-wled-mailbox.h"',b'"polaris_wled_mailbox.h"')
