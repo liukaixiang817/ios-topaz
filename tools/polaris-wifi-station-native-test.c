@@ -11,6 +11,8 @@ static struct pmwsn_state*scan;
 static struct pmhd_state*data;
 static struct pmst_state*station;
 static unsigned station_fault,station_scenarios,scan_commands,station_commands,mgmt_commands;
+static void station_target_management(const uint8_t*,unsigned);
+static unsigned station_wmi_fault;
 static const uint8_t ap[6]={2,0,0,0,0,9};
 static void station_htt_event(const uint8_t*p,unsigned bytes)
 {
@@ -34,6 +36,20 @@ static void station_target_wmi(unsigned pipe,const unsigned char*f,unsigned byte
 #ifdef PMST_TEST_WMI_HOOK
     if(cmd==0x5009||cmd==0x6004){PMST_TEST_WMI_HOOK(pipe,f,bytes);return;}
 #endif
+    if(cmd==0x7008){
+        CHECK(station&&station->management_wmi&&pmst_live(station));
+        unsigned length=pwmi_get(p+28),prefix=pwmi_get(p+32),id=pwmi_get(p+12);uint64_t address=phtr_u64(p+20);
+        CHECK(bytes==48+prefix&&pwmi_get(p+4)==0x01a6001c&&id==station->management.id&&address==HTT_ALLOCATION+htt->layout.management&&length<=256);
+        const uint8_t*packet=htt_device+address-HTT_ALLOCATION;CHECK(!memcmp(p+40,packet,length<64?length:64));
+        if(!station_wmi_fault){
+            uint8_t completion[40]={0};
+            if(!mgmt_commands){pwmi_put(completion,0x7006);pwmi_header(completion+4,423,16);pwmi_put(completion+8,id);wmi_frame(completion,24,2);}
+            else{pwmi_put(completion,0x7007);pwmi_header(completion+4,552,4);pwmi_put(completion+8,1);pwmi_header(completion+12,16,4);pwmi_put(completion+16,id);pwmi_header(completion+20,16,4);wmi_frame(completion,28,2);}
+        }else wmi_frame(f,0,2);
+        if(station_wmi_fault==2){transport_fault=3;return;}
+        if(station_wmi_fault==1)return;
+        station_target_management(packet,length);return;
+    }
     if(!station){
         CHECK(scan&&pmwsn_live(scan));scan_commands++;
         if(scan_commands==1){CHECK(cmd==0x5001);wmi_frame(f,0,2);return;}
@@ -58,12 +74,17 @@ static void station_target_data(unsigned pipe,const unsigned char*f,unsigned byt
 #ifdef PMST_TEST_DATA_HOOK
     if(bytes>=28&&((f[9]>>5)&7)==2){PMST_TEST_DATA_HOOK(pipe,f,bytes);return;}
 #endif
-    CHECK(station&&pmst_live(station)&&pipe==4&&f[0]==htc->client.htt);mgmt_commands++;
+    CHECK(station&&pmst_live(station)&&pipe==4&&f[0]==htc->client.htt);
     const uint8_t*p=f+8;unsigned id=phtr_u16(p+6),length=phtr_u16(p+4);
     CHECK(id==data->rings.tx_id&&data->rings.tx_owner[id]==1&&p[0]==1&&p[1]==0x65&&((phtr_u16(p+2)>>6)&31)==17);
     uint64_t at=phtr_u64(p+8);CHECK(at==HTT_ALLOCATION+htt->layout.transmit+2048u*id&&length<=256&&bytes==28+((length<50?length:50)+3u&~3u));
     const uint8_t*packet=htt_device+at-HTT_ALLOCATION;CHECK(!memcmp(packet+4,ap,6)&&!memcmp(packet+10,wmi->client.mac,6)&&!memcmp(packet+16,ap,6));
     uint8_t completion[8]={7,0,1,0,0,0,255,255};phtt_put16(completion+4,id);station_htt_event(completion,8);
+    station_target_management(packet,length);
+}
+static void station_target_management(const uint8_t*packet,unsigned length)
+{
+    mgmt_commands++;CHECK(!memcmp(packet+4,ap,6)&&!memcmp(packet+10,wmi->client.mac,6)&&!memcmp(packet+16,ap,6));
     uint8_t r[160]={0};pwmi_put(r,0x7001);pwmi_header(r+4,44,40);pwmi_put(r+8,6);uint8_t*b=r+52;
     memcpy(b+4,wmi->client.mac,6);memcpy(b+10,ap,6);memcpy(b+16,ap,6);unsigned received;
     if(mgmt_commands==1){CHECK(packet[0]==0xb0&&length==30);b[0]=0xb0;b[26]=2;if(station_fault==3)b[28]=13;received=30;}

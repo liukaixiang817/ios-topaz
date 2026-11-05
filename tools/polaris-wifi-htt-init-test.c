@@ -15,9 +15,9 @@ static void start(void)
 }
 int main(void)
 {
-    start();uint32_t offsets[]={memory.index,memory.ring,memory.fragments,memory.receive,memory.transmit};
-    uint32_t sizes[]={4096,8*PHTM_RX,PHTM_TX*72,PHTM_RX*2048,PHTM_TX*2048};
-    for(unsigned n=0;n<5;n++){
+    start();uint32_t offsets[]={memory.index,memory.ring,memory.fragments,memory.receive,memory.transmit,memory.management};
+    uint32_t sizes[]={4096,8*PHTM_RX,PHTM_TX*72,PHTM_RX*2048,PHTM_TX*2048,4096};
+    for(unsigned n=0;n<6;n++){
         CHECK(!(offsets[n]&4095)&&offsets[n]>=4096&&offsets[n]+sizes[n]<=PHTM_BYTES-4096);
         for(unsigned j=0;j<n;j++)CHECK(offsets[j]+sizes[j]<=offsets[n]);
     }

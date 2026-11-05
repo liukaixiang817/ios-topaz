@@ -72,12 +72,13 @@ int main(int argc,char**argv)
     CHECK(fread(magic,1,8,f)==8&&!memcmp(magic,"PWPA001",8));
     CHECK(fread(pmk_vector,1,32,f)==32&&fread(nonce_vector,1,32,f)==32&&fread(ptk_vector,1,48,f)==48&&fread(gtk_vector,1,16,f)==16);
     for(unsigned n=0;n<9;n++){uint8_t b[4];CHECK(fread(b,1,4,f)==4);lengths[n]=pwmi_get(b);CHECK(lengths[n]<=640&&fread(messages[n],1,lengths[n],f)==lengths[n]);}CHECK(fgetc(f)==EOF&&!fclose(f));
-    for(unsigned kind=0;kind<4;kind++){
-        network=0;station_test_setup(0);network=(void*)(arena+0x73e0000);CHECK(sizeof(*network)<0x20000);memset(network,0,sizeof(*network));
+    for(unsigned kind=0;kind<7;kind++){
+        network=0;wmi_management_service=kind>=4;station_wmi_fault=kind==5?1:kind==6?2:0;station_test_setup(0);network=(void*)(arena+0x73e0000);CHECK(sizeof(*network)<0x20000);memset(network,0,sizeof(*network));
         net_fault=kind;key_commands=eapol_commands=ethernet_commands=rx_next=held_bytes=0;net_scenarios++;
         CHECK(pmwn_begin(network,station,pmk_vector,nonce_vector));int result=1;unsigned saw_early=0;
         for(unsigned n=0;n<400&&result==1;n++){
             if(kind==1&&held_bytes)htt_fault=2;
+            if(kind==5&&station->management.phase==2)advance_to(station->management.deadline+1);
             result=network_poll();
             if(network->early_ready&&held_bytes){
                 CHECK(!network->wpa.opened&&!station->client.station.associated&&!data->frame_ready&&data->rings.rx_owner[0]==1);
@@ -85,8 +86,9 @@ int main(int argc,char**argv)
             }
             if(kind==3&&network->wpa.bad){CHECK(!network->keys.ready&&!network->ethernet.authorized);advance_to(network->wpa.deadline+1);}
         }
-        if(!kind){
+        if(!kind||kind==4){
             if(result!=5)fprintf(stderr,"network result%d err%u key%u station%u WPAphase%u pending%u M%u K%u\n",result,network->error,network->keys.error,station->error,network->wpa.phase,network->wpa.pending,eapol_commands,key_commands);
+            CHECK(station->management_wmi==(kind==4));
             CHECK(result==5&&saw_early&&key_commands==3&&eapol_commands==2&&network->wpa.bad==1&&network->ethernet.authorized&&network->keys.completed);
             CHECK(!pwpa_nonzero(network->pmk,32)&&!pwpa_nonzero(network->nonce,32));
             /* Authenticated retry through actual encrypted RX, no reinstall. */

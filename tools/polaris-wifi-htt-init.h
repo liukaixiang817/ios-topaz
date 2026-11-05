@@ -11,7 +11,7 @@
 #define PHTM_FRAGMENT 72u
 #define PHTT_WAIT UINT64_C(57600000)
 struct phtm_layout {
-    uint64_t allocation;uint32_t bytes,used,index,ring,fragments,receive,transmit,reserved;
+    uint64_t allocation;uint32_t bytes,used,index,ring,fragments,receive,transmit,management;
 };
 static inline int phtm_region(struct phtm_layout*l,unsigned bytes,uint32_t*out)
 {
@@ -26,7 +26,8 @@ static inline int phtm_plan(struct phtm_layout*l,uint64_t allocation)
     l->allocation=allocation;l->bytes=PHTM_BYTES;l->used=4096;
     return phtm_region(l,4096,&l->index)&&phtm_region(l,8*PHTM_RX,&l->ring)&&
         phtm_region(l,PHTM_FRAGMENT*PHTM_TX,&l->fragments)&&
-        phtm_region(l,PHTM_BUFFER*PHTM_RX,&l->receive)&&phtm_region(l,PHTM_BUFFER*PHTM_TX,&l->transmit);
+        phtm_region(l,PHTM_BUFFER*PHTM_RX,&l->receive)&&phtm_region(l,PHTM_BUFFER*PHTM_TX,&l->transmit)&&
+        phtm_region(l,4096,&l->management);
 }
 static inline void phtt_put16(uint8_t*p,unsigned value)
 {p[0]=(uint8_t)value;p[1]=(uint8_t)(value>>8);}

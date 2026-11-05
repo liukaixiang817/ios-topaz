@@ -33,12 +33,14 @@ static void wmi_target_tx(unsigned pipe,const unsigned char*frame,unsigned bytes
     uint8_t ready[44]={0};pwmi_put(ready,2);pwmi_header(ready+4,35,36);wmi_abi(ready+8);ready[32]=2;ready[37]=7;
     if(wmi_fault==3)pwmi_put(ready+40,9);wmi_frame(ready,sizeof(ready),2);
 }
+static unsigned wmi_management_service;
 static void wmi_service(void)
 {
     uint8_t p[512]={0};unsigned count=wmi_fault==5?0:2;pwmi_put(p,1);pwmi_header(p+4,32,104);wmi_abi(p+12);pwmi_put(p+44,2);pwmi_put(p+80,count);
     pwmi_header(p+112,33,36);pwmi_put(p+116,0x64);pwmi_header(p+152,16,128);pwmi_put(p+156+64,2);
     pwmi_header(p+284,18,20*count);
     for(unsigned n=0;n<count;n++){uint8_t*q=p+288+20*n;pwmi_header(q,34,16);pwmi_put(q+4,n+1);pwmi_put(q+8,wmi_fault==1?UINT32_MAX:17);pwmi_put(q+12,n?2:1);pwmi_put(q+16,123);}
+    if(wmi_management_service)pwmi_put(p+156+4*(76/4),1u<<(76%4));
     wmi_frame(p,288+20*count,3);
 }
 #ifndef PMWI_TEST_ENTRY

@@ -1,4 +1,4 @@
-/* Native WMI + HTT3 station. Requires a completed actual scan and an initialized
+/* Native station with advertised WMI-management or HTT3 management. Requires a completed actual scan and an initialized
  * independent HTT bank. Channel inputs must come from the parent radio's
  * regulatory configuration; this module does not infer TX permission from AP
  * beacons. Default OFF, not registered in the whole-device parent yet. */
@@ -7,6 +7,7 @@
 #include "uefi-wifi-scan-native.h"
 #include "uefi-wifi-htt-data.h"
 #include "../../tools/polaris-wifi-wmi-station.h"
+#include "../../tools/polaris-wifi-wmi-management.h"
 #ifndef EFI_XNU_WIFI_STATION_NATIVE_AVAILABLE
 #define EFI_XNU_WIFI_STATION_NATIVE_AVAILABLE 0
 #endif
@@ -15,8 +16,8 @@
 #error Native station requires native scan and HTT data
 #endif
 struct pmst_state {
-    uint64_t scan,data,owner,opening,consumer;struct pwst_state client;
-    uint32_t attempted,ready,unknown,error,submitted,mgmt_wait,mgmt_id,mgmt_status,mgmt_completed;
+    uint64_t scan,data,owner,opening,consumer;struct pwst_state client;struct pwmg_state management;
+    uint32_t attempted,ready,unknown,error,submitted,mgmt_wait,mgmt_id,mgmt_status,mgmt_completed,management_wmi;
 };
 static inline int pmst_fail(struct pmst_state*s,unsigned error)
 {s->unknown=1;if(!s->error)s->error=error;return -1;}
@@ -35,10 +36,8 @@ static inline int pmst_begin(struct pmst_state*s,struct pmwsn_state*q,struct pmh
        !pmwsn_live(q)||!pmhd_live(d)||q->owner!=d->owner||q->opening!=d->opening||d->frame_ready||d->submitted)return 0;
     struct pmht_state*t=(void*)(uintptr_t)d->parent;struct pmwi_state*w=(void*)(uintptr_t)q->wmi;
     struct pmhc_state*h=(void*)(uintptr_t)w->htc;struct pmsc_owner*o=(void*)(uintptr_t)q->owner;
-    /* Primary mac.c selects WMI management when service76 is present. This
-     * implementation supports the alternative HTT3 path only, never silently
-     * sends management through the wrong advertised transport. */
-    if(t->wmi!=q->wmi||d->rings.major<3||pwmi_service(&w->client,76)||h->client.pending||h->frame_kind)return 0;
+    unsigned management_wmi=pwmi_service(&w->client,76);
+    if(t->wmi!=q->wmi||(!management_wmi&&d->rings.major<3)||h->client.pending||h->frame_kind)return 0;
     const uint64_t address[]={q->wmi,(uintptr_t)q,(uintptr_t)d,(uintptr_t)t,t->memory};
     const uint64_t size[]={sizeof(*w),sizeof(*q),sizeof(*d),sizeof(*t),sizeof(struct pcdm_state)};
     if(!pmwi_child(h,(uintptr_t)s,sizeof(*s)))return 0;
@@ -49,6 +48,8 @@ static inline int pmst_begin(struct pmst_state*s,struct pmwsn_state*q,struct pmh
     unsigned low=pwmi_get(w->client.regulatory+20),high=pwmi_get(w->client.regulatory+24);
     if((low&&channel->frequency<low)||(high&&channel->frequency>high)||
        !pwst_open(&s->client,&q->client,index,security,channel,o->last))return 0;
+    if(management_wmi&&!pwmg_open(&s->management,&t->layout,q->opening,o->last))return 0;
+    s->management_wmi=management_wmi;
     s->scan=(uintptr_t)q;s->data=(uintptr_t)d;s->owner=q->owner;s->opening=q->opening;s->attempted=s->ready=1;
     q->consumer=d->consumer=(uintptr_t)s;return pmst_live(s);
 }
@@ -57,11 +58,16 @@ static inline int pmst_commit(struct pmst_state*s)
     struct pmhd_state*d=(void*)(uintptr_t)s->data;struct pmht_state*t=(void*)(uintptr_t)d->parent;
     struct pmwi_state*w=(void*)(uintptr_t)t->wmi;struct pmhc_state*h=(void*)(uintptr_t)w->htc;
     struct pmsc_owner*o=(void*)(uintptr_t)s->owner;
-    if(s->submitted&&!(s->submitted==1?h->client.pending:d->submitted)){
+    if(s->submitted&&!(s->submitted==2?d->submitted:h->client.pending)){
         if(s->submitted==2&&d->rings.tx_owner[s->mgmt_id]!=2&&d->rings.tx_owner[s->mgmt_id]!=3)return pmst_fail(s,1);
+        if(s->submitted==3&&pwmg_sent(&s->management,o->last,1)!=1)return pmst_fail(s,1);
         if(pwst_sent(&s->client,o->last,1)!=1)return pmst_fail(s,1);s->submitted=0;
     }
-    if(s->mgmt_wait&&d->rings.tx_owner[s->mgmt_id]==3){
+    if(s->mgmt_wait&&s->management_wmi&&s->management.phase==3){
+        s->mgmt_status=s->management.status;if(!pwmg_ack(&s->management,o->last))return pmst_fail(s,1);
+        s->mgmt_wait=0;s->mgmt_completed++;
+    }
+    if(s->mgmt_wait&&!s->management_wmi&&d->rings.tx_owner[s->mgmt_id]==3){
         if(!pmhd_tx_ack(d,s->mgmt_id,&s->mgmt_status))return pmst_fail(s,1);
         s->mgmt_wait=0;s->mgmt_completed++;
     }return 1;
@@ -75,11 +81,12 @@ static inline int pmst_step(struct pmst_state*s)
     struct pmht_state*t=(void*)(uintptr_t)d->parent;struct pmwi_state*w=(void*)(uintptr_t)t->wmi;
     struct pmhc_state*h=(void*)(uintptr_t)w->htc;struct pmsc_owner*o=(void*)(uintptr_t)s->owner;
     int result=pmhd_poll(d);if(result<0||pmst_commit(s)<0)return pmst_fail(s,2);
-    if(!pwst_live(&s->client,o->last))return pmst_fail(s,3);
+    if(!pwst_live(&s->client,o->last)||(s->management_wmi&&!pwmg_live(&s->management,o->last)))return pmst_fail(s,3);
     if(result==2){
         if(h->frame_kind!=1||h->client.rx_eid!=h->client.wmi)return 2;
-        int used=pwst_wmi(&s->client,h->client.rx,h->client.rx_bytes,o->last);
-        if(used<0)return pmst_fail(s,4);if(!used)return 2;if(!pmhc_ack(h))return pmst_fail(s,4);
+        int used=s->management_wmi?pwmg_event(&s->management,h->client.rx,h->client.rx_bytes,o->last):0;
+        if(!used)used=pwst_wmi(&s->client,h->client.rx,h->client.rx_bytes,o->last);
+        if(used<0)return pmst_fail(s,4);if(!used)return 2;if(!pmhc_ack(h)||pmst_commit(s)<0)return pmst_fail(s,4);
     }
     if(s->client.phase==4){
         for(unsigned n=0;n<66;n++){
@@ -99,7 +106,16 @@ static inline int pmst_step(struct pmst_state*s)
     if(!s->client.pending&&pwst_next(&s->client,o->last)<0)return pmst_fail(s,6);
     if(s->client.pending&&!s->submitted&&!h->client.pending){
         if(s->client.kind==2){
-            if(!s->mgmt_wait){
+            if(!s->mgmt_wait&&s->management_wmi){
+                if(t->busy||pwmg_prepare(&s->management,s->client.tx,s->client.tx_bytes,o->last)!=1)return pmst_fail(s,7);
+                t->busy=1;for(unsigned n=0;n<4096;n++)t->page[n]=0;
+                pwmi_copy(t->page,s->client.tx,s->client.tx_bytes);
+                if(pmht_memory(t,s->management.buffer,t->page,4096,1)<0||
+                   pmht_cache(t,s->management.buffer,4096,PWMK_CLEAN_INVALIDATE)<0)return pmst_fail(s,7);
+                t->busy=0;
+                if(pmhc_send(h,h->client.wmi,s->management.tx,s->management.tx_bytes)!=1)return pmst_fail(s,7);
+                s->mgmt_wait=1;s->submitted=3;
+            }else if(!s->mgmt_wait){
                 pwmi_copy(d->send,s->client.tx,s->client.tx_bytes);
                 int sent=pmhd_send(d,s->client.tx_bytes,3,0,17,1);if(sent<0)return pmst_fail(s,7);
                 if(sent){s->mgmt_id=d->rings.tx_id;s->mgmt_wait=1;s->submitted=2;}

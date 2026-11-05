@@ -44,6 +44,30 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05: service76 WMI management transport
+
+- Native EAPOL/data is commit022c0de. Native station now chooses actual advertised
+  service76 WMI management, or HTT3 when absent. WMI7008/TLV422 body28 uses
+  exact64-bit DMA PA and up-to64-byte inline prefix, per compiled primary layout.
+  One separate4KiB page after HTT transmit bank, inside the same independent
+  allocated/zeroed/cached bank; never an RX slot or HTT completion-owned MSDU.
+- Matching WMI7006/tag423 single or7007/tag552 bundle completion alone releases
+  that page.3s timeout/unknown retains backing. Malformed/foreign completions
+  cannot release it. No new allocation or borrowed MMIO/backing introduced.
+- Full native ASan/UBSan7/17528511 PASS: old HTT3 and new WMI paths both through
+  early-M1, four-way/keys/authorize, encrypted data/replay/PN floor/disconnect;
+  old RX/M2 faults/timeout plus WMI completion timeout and publication barrier.
+  Protocol39, updated HTT layout58, native/protocol COFF+MachO generalregs/
+  frame1024 PASS. Evidence:wmi-management-0001/proof-0001.json and full logs.
+  Tests select service76 in actual produced SERVICE_READY bytes, not by
+  patching the admitted WMI client after startup.
+- NEXT group key renewal, actual entropy/regulatory, complete parent/runtime
+  ownership/post-CE exit, new integrated image. Current finite owner still180s
+  and load_state2/all peer CPUs OFF; cannot be relabeled a persistent kernel
+  runtime or reused after original helpers/CPU_ON. No hardware success inferred.
+- No phone/USB/CI/push/boot or parent registration. Execution2/5,current step
+  plus3 remain. Last15min02:51Z/13:51,next03:06Z/14:06 Melbourne. Goal ACTIVE.
+
 ### Continuous Wi-Fi milestone — 2026-11-05: native EAPOL and controlled data port
 
 - Firmware authorization correction committed458406f. New pwen checks own
