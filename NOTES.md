@@ -54,6 +54,40 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: actual current root passed; one trial frozen
+
+- Source e3bedd3 pushed. ONE trusted readonly recovery boot executed for the
+  new image: started19:33:51Z, all work ended143.64s later. Both16GiB root hashes
+  matched (56.66/56.69s); six GPT, five critical partitions/ESP102file binding,
+  maps/marker/raw metadata and own24MiB NV before/local/after checks passed.
+  Actual unmount and returned polaris FASTBOOT19:36:15.081775Z confirmed.
+  Independent review PASS40 checks; no storage writes/replay/repair. Details in
+  native-image-0001/phone-root-audit-0001 and fresh20F66 review/preflight files.
+- New one-use boot helper validates frozen inputs, repeats expected FASTBOOT,
+  consumes nonce BEFORE possible image transfer, then uses existing exact RAM
+  protocol and OEM start. Failure never resets/retries; accepted OEM ACK is NOT
+  native/scan proof. Three host tests (success/default and four failure stages)
+  pass. First fixture failed due unresolved /var vs/private/var temp alias;
+  resolved fixture root, no production guard change. No USB observer added.
+- Explicit limited-trial review frozen349 source/artifact/evidence inputs in
+  native-image-0001/trial-review-0001.json. Five preboot review categories now
+  pass for ONE read-only RAMCOW trial: callback/context source checks; retained
+  independent memory; secure/cache path with RETAINED whole-system-off rather
+  than per-device DMA handback; final builder/codec and two serial complete
+  producer models plus separate real loader/UI tests; current root/fresh nonce/
+  frozen once-only helper. Offline helper validation PASS, nonce NOT consumed.
+- Scope distinction: full compositions use SOFTWARE kernel/hardware/UI leaves.
+  No whole linked EFI+XNU+radio execution or physical Wi-Fi success is claimed.
+  Current compiled runtime sources match tested ui-native-0001 exactly; only
+  mkpayload.py changed to admit the exact new bundle. Runtime safety checks must
+  still succeed on the phone. No old WLED-only admission was weakened/reused.
+  Existing unowned context-snapshot hunk preserved, included in tested/build
+  hashes and private frozen diff, never silently committed or removed.
+- NEXT push helper and execute the bound NEW image/payload once. Current phone
+  back in FASTBOOT; no native Wi-Fi image sent yet. Execution2/5, current plus3
+  remain; network success requires actual scan/JOIN/IP/DNS/data. Last formal
+ 19:35Z,next19:50Z. Goal ACTIVE. All local builds/tests/audit jobs ended.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: current readonly preflight prepared
 
 - Native image packager/source records committed/pushed d300759. Added new
