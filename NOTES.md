@@ -54,6 +54,34 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05: actual native loader callsite
+
+- Worker/regulatory source713528c committed/pushed. Added default-OFF
+  EFI_XNU_WIFI_NATIVE_RUNTIME_AVAILABLE actual uefi-xnu.c path. Kernel/ADT/args
+  copy and all original queries finish first; prepare remains state2/flag0.
+  New native boot takes a fresh retained map, validates candidate nonce input,
+  stages and shares MBA, calls real complete startup parent, qualified CPU700
+  handoff, then native mailbox/radio worker forever. No state3->2 rewrite,
+  generic legacy CPU_ON or return into original UsbFn after native entry.
+- No full-record dumps between retained GetMap/stage/MBA/owner; original200ms
+  freshness and180s startup guards remain. Actual time under these limits is
+  still unproven. Every native failure remains terminal with retained resources;
+  this does not claim normal DMA retirement or reclaim any memory/permissions.
+- Four full actual native exports ON/OFF COFF/MachO PASS generalregs/frame1024.
+ 529 ASan/UBSan extracted actual native-boot body checks PASS with SOFTWARE
+  producer leaves: exact20-call successful sequence, each fallible boundary,
+  WAIT loops, invalid/reentry state, no legacy input/WLED start or return.
+  Test is call ordering, not complete parent execution. First compile found
+  unused legacy buttons_prepare/wln_begin in the new path; explicitly retained
+  their references without calling their incompatible3c0 startup owner.
+  Evidence loader-runtime-0001/proof-0001.json; compile nonce fixture deliberately
+  invalid zeros. No physical candidate/boot or new kernel CI is implied.
+- NEXT full post-CE retirement, native display/input integration, complete
+  parent/model and builder admission plus new nonces/image; then physical scan,
+  join/IP/DNS/data. Worker disconnect still explicitly unsupported. All actual
+  boot gates remain open. No FASTBOOT/USB observer/phone operation. Step2/5,
+  current plus3 remain. Last15min06:37Z,next06:52Z. Goal ACTIVE; keep working.
+
 ### Continuous Wi-Fi milestone — 2026-11-05: native request/radio worker
 
 - Previous mailbox source a4f27dc committed/pushed. Added default-OFF native

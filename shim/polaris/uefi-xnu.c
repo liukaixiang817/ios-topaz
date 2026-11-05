@@ -9,6 +9,17 @@
 #include "uefi-memory.h"
 #include "runtime-marker.h"
 #include "uefi-xnu-config.h" /* exact payload bytes/CRC, symbol offsets, board */
+#ifndef EFI_XNU_WIFI_NATIVE_RUNTIME_AVAILABLE
+#define EFI_XNU_WIFI_NATIVE_RUNTIME_AVAILABLE 0
+#endif
+#if EFI_XNU_WIFI_NATIVE_RUNTIME_AVAILABLE
+#if !EFI_XNU_WIFI_NATIVE_MEMORY_AVAILABLE || !EFI_XNU_WIFI_WORKER_NATIVE_AVAILABLE || !EFI_XNU_WIFI_NONCE_POOL_AVAILABLE
+#error "Native radio runtime requires independent memory, worker and candidate nonce inputs"
+#endif
+#if !defined(EFI_XNU_WIFI_MAILBOX_VA) || !defined(EFI_XNU_WIFI_COUNTRY) || EFI_XNU_WIFI_COUNTRY != 36 || EFI_XNU_CPU != 0x700
+#error "Native radio runtime requires the linked mailbox symbol, explicit AU profile and CPU700"
+#endif
+#endif
 #ifndef EFI_XNU_WIFI_NATIVE_MEMORY_AVAILABLE
 #define EFI_XNU_WIFI_NATIVE_MEMORY_AVAILABLE 0
 #endif
@@ -1005,6 +1016,12 @@ _Static_assert(sizeof(log_buffer)>=2*(PWBD_RAW_BYTES+sizeof(pwrpt_record)+sizeof
 #if EFI_XNU_WIFI_FIRSTREAD_AVAILABLE && !EFI_XNU_WIFI_CACHE_AVAILABLE
 #error "CPU0 first-read requires its exact original firmware cache witness"
 #endif
+#if EFI_XNU_WIFI_NATIVE_RUNTIME_AVAILABLE
+#include "uefi-wifi-worker-native.h"
+static struct pwns_parent wifi_native_parent;
+static struct pwwn_state wifi_native_worker;
+static uint32_t wifi_native_prepared,wifi_native_boot_phase;
+#endif
 static int64_t psci(uint64_t function,uint64_t a,uint64_t b,uint64_t c)
 {
     register uint64_t x0 __asm__("x0")=function,x1 __asm__("x1")=a,x2 __asm__("x2")=b,x3 __asm__("x3")=c;
@@ -1080,6 +1097,9 @@ static int disk_payload(void)
 static int prepare_boot(void *context)
 {
     (void)context;if(load_state!=2)return 0;
+#if EFI_XNU_WIFI_NATIVE_RUNTIME_AVAILABLE
+    if(wifi_native_prepared||wifi_native_boot_phase)return 0;
+#endif
 #if EFI_XNU_WIFI_REMOTE_MEMORY_AVAILABLE
     if(!ppli_bind(&ppli_record,&wln_cpu_on_issued,(uintptr_t)driver_image))ppli_parent_stop();
 #endif
@@ -1093,7 +1113,7 @@ static int prepare_boot(void *context)
         return 0;
     }
 #endif
-#if EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE
+#if EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE && !EFI_XNU_WIFI_NATIVE_RUNTIME_AVAILABLE
     const struct pweh_input retained_input={.early=&early_wifi_memory,.digest=early_wifi_digest,
         .payload_slot=&payload,.log_slot=&log_snapshot,.state=&load_state,.received=&received,.count=&payload_count,
         .logical_bytes=EFI_XNU_PAYLOAD_BYTES,.log_bytes=sizeof(log_buffer)+128+EFI_XNU_LOG_SIZE};
@@ -1345,10 +1365,84 @@ static int prepare_boot(void *context)
     ap->entry=plan.entry_pa;ap->args=plan.args_pa;ap->stack=(uintptr_t)ap_stack+sizeof(ap_stack);
     __asm__ volatile("mrs %0,sctlr_el1":"=r"(ap->sctlr));__asm__ volatile("mrs %0,cpacr_el1":"=r"(ap->cpacr));
     clean((uintptr_t)ap,sizeof(*ap));clean((uintptr_t)ap_stack,sizeof(ap_stack));
-    clean((uintptr_t)polaris_efi_ap_entry,4096);load_state=3;report("KERNEL_PREPARED_ENTRY=",plan.entry_pa);return 1;
+    clean((uintptr_t)polaris_efi_ap_entry,4096);
+#if EFI_XNU_WIFI_NATIVE_RUNTIME_AVAILABLE
+    /* Keep state2/flag0 through fresh retained/MBA/CPU-owner admission. No
+     * state3->2 rewrite or false completed runtime appears in the records. */
+    wifi_native_prepared=1;
+#else
+    load_state=3;
+#endif
+    report("KERNEL_PREPARED_ENTRY=",plan.entry_pa);return 1;
 }
+#if EFI_XNU_WIFI_NATIVE_RUNTIME_AVAILABLE
+/* Every original provider/query and all kernel/ADT/args copying has finished.
+ * After entering this function, failures hold and never return to UsbFn or
+ * an original provider. Full post-CE retirement is still required before the
+ * builder may admit this feature into a physical candidate. */
+__attribute__((noreturn)) static void wifi_native_boot(void)
+{
+#if EFI_XNU_BUTTONS_AVAILABLE
+    (void)buttons_prepare; /* Existing3c0 input owner is not a c0 runtime grant. */
+#endif
+#if defined(EFI_XNU_WLED_NATIVE_RUNTIME)
+    (void)wln_begin; /* Native display/input integration remains separately qualified. */
+#endif
+    if(load_state!=2||wifi_native_prepared!=1||wifi_native_boot_phase)power_unknown_hold();
+    wifi_native_boot_phase=1;ram_lease.active=0;
+#if defined(EFI_XNU_DURABLE_GUARD)
+    struct args*a=(void*)(uintptr_t)plan.args_pa;bool physical=false;
+#if defined(EFI_XNU_PHYSICAL_MARKER)
+    physical=true;
+#endif
+    if(!polaris_marker_append_guard(a->cmdline,sizeof(a->cmdline),physical))power_unknown_hold();
+    clean(plan.args_pa,sizeof(*a));
+#endif
+#if EFI_XNU_GCD_MMIO_QUERY_AVAILABLE && !defined(POLARIS_EFI_TEST_QEMU)
+    if(new_original_unknown()||log_overflow||!pacgq_prestart_checkpoint(&pgcd_resident_context))power_unknown_hold();
+#endif
+    const struct pweh_input input={.early=&early_wifi_memory,.digest=early_wifi_digest,
+        .payload_slot=&payload,.log_slot=&log_snapshot,.state=&load_state,.received=&received,.count=&payload_count,
+        .logical_bytes=EFI_XNU_PAYLOAD_BYTES,.log_bytes=sizeof(log_buffer)+128+EFI_XNU_LOG_SIZE};
+    if(!pweh_run(&retained_wifi_memory,&input))power_unknown_hold();
+    wifi_native_boot_phase=2;
+    uint8_t hash[32];pweh_digest(polaris_wifi_image_nonces,POLARIS_WIFI_IMAGE_NONCE_BYTES,hash);
+    if(!pgcd_equal(hash,polaris_wifi_image_nonce_sha256,32))power_unknown_hold();
+    mss_retained_attempted=1;mss_retained_ok=pmmn_retained(&mss_memory,mss_memory_digest,&retained_wifi_memory);
+    if(!mss_retained_ok)power_unknown_hold();
+#if EFI_XNU_MSS_PAYLOAD_FIRMWARE_AVAILABLE
+    const uint8_t*firmware=payload+EFI_XNU_MSS_FIRMWARE_OFFSET;
+#else
+    const uint8_t*firmware=pmsf_blob;
+#endif
+    if(!pmsi_stage(&mss_stage,&mss_memory,mss_memory_digest,&retained_wifi_memory,
+        firmware,PMSF_BLOB_BYTES,pmsf_assets,PMSF_ASSETS))power_unknown_hold();
+    wifi_native_boot_phase=3;
+    if(!pmsb_share(&mss_mba_share,&mss_stage))power_unknown_hold();
+    wifi_native_boot_phase=4;
+    /* No full-record RAM dumps or unrelated calls consume the fresh source
+     * interval between final GetMap, staging/assignment and CPU exclusion. */
+    if(!pwns_begin(&wifi_native_parent,&retained_wifi_memory,&mss_memory,mss_memory_digest,&mss_mba_share,
+        &wifi_native_nv,&wifi_native_ce_memory,&wifi_native_htt_memory,pmsf_segments,
+        polaris_wifi_image_nonces,polaris_wifi_image_nonce_sha256))power_unknown_hold();
+    wifi_native_boot_phase=5;
+    for(;;){int result=pwns_step(&wifi_native_parent);if(result<0)power_unknown_hold();if(result==2)break;}
+    /* READY is rechecked by the actual handoff, not inferred from phase++ . */
+    wifi_native_boot_phase=6;
+    if(pwkr_begin(&wifi_native_parent,&wifi_native_kernel_copy,&polaris_efi_ap_state,
+        (uintptr_t)polaris_efi_ap_entry,(uintptr_t)ap_stack,sizeof(ap_stack),&plan,EFI_XNU_WIFI_MAILBOX_VA)!=1)power_unknown_hold();
+    for(;;){int result=pwkr_poll(&wifi_native_parent);if(result<0)power_unknown_hold();if(result==2)break;}
+    cpu_status=wifi_native_parent.owner.runtime.result;wifi_native_boot_phase=7;
+    if(!pwwn_begin(&wifi_native_worker,&wifi_native_parent,EFI_XNU_WIFI_COUNTRY))power_unknown_hold();
+    wifi_native_boot_phase=8;
+    for(;;)if(pwwn_step(&wifi_native_worker)<0)power_unknown_hold();
+}
+#endif
 static void boot_kernel(void *context)
 {
+#if EFI_XNU_WIFI_NATIVE_RUNTIME_AVAILABLE
+    (void)context;wifi_native_boot();
+#else
     (void)context;if(load_state!=3)return;
     report("KERNEL_PSCI_TARGET=",EFI_XNU_CPU);load_state=4;
     uint64_t now;__asm__ volatile("mrs %0,cntvct_el0":"=r"(now));
@@ -1438,6 +1532,7 @@ static void boot_kernel(void *context)
 #endif
     cpu_status=psci(UINT64_C(0xc4000003),EFI_XNU_CPU,(uintptr_t)polaris_efi_ap_entry,(uintptr_t)&polaris_efi_ap_state);
     report("KERNEL_PSCI_STATUS=",(uint64_t)cpu_status);
+#endif
 #endif
 }
 static int running(void *context){(void)context;return load_state>=4;}
