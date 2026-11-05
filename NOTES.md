@@ -54,6 +54,23 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi continuation — 2026-11-06 Melbourne: late service absent, physical state required
+
+- Re-read current handoff/worktree. Previous turn made concrete progress:
+  diagnostic correction8fba52e and readiness handoff2dba91d both pushed; fresh
+  image remains unsent. Only the preserved unowned remote-memory hunk is dirty.
+- At19:59:33Z, one host-access read-only synthetic-UEFI discovery returned
+  service_found=false. This checks whether service appeared after the old30s
+  timeout; no product/log request, payload, start, reset or observer issued.
+  Record native-memory-display-0001/late-service-readonly-0001/result.json.
+  This is current absence at that instant, not proof of a specific failure.
+- Same genuine blocker persists for a second consecutive goal turn: no phone
+  service available and current physical screen unknown; user feedback remains
+  pending. No active build/test/device handle to wait on. Offline next candidate
+  and audit are prepared; a blind reboot/reused nonce is not the next action.
+  Goal remains ACTIVE, not complete/blocked yet. Step2/5; current plus3 remain.
+  No scan/JOIN/IP/DNS/data evidence. Last formal19:50Z,next20:05Z.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: pre-USB diagnostic fix built; phone feedback pending
 
 - Source8fba52e committed/pushed to the authorized repository; seven owned
