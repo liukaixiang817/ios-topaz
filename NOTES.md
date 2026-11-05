@@ -54,6 +54,27 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05: native fixed-page adapter
+
+- Runtime handoff48d2b54 committed/pushed; preceding6b26ade also published.
+  Added default-OFF uefi-wifi-mailbox-native.h: one CPU0 adapter bound to the
+  qualified runtime owner/page, opposite kernel lane roles, independent
+  record/ACK ownership checks, sequence-only atomic64 publication, bootstrap
+  checks and peer backpressure. A runtime record binds its sole mailbox owner;
+  no message-supplied address or firmware callbacks. AP/stack/copy/MBA/source
+  records cannot be reused as mailbox state. No loader/worker registration yet.
+- ASan/UBSan1303 host checks PASS with real native adapter/handoff body and
+  shared host page, SOFTWARE CPU/cache/radio predicate: READY and control
+  exchange, duplicate-owner refusal, pending event backpressure, JOIN private
+  wire/shared producer credential wipe after ACK, cross-lane/copy-sequence/
+  bootstrap write rejection and changed bootstrap failure. Initial fixture
+  accidentally overlapped the MBA record; moved test storage, kept exclusion.
+  Two actual whole native export compiles COFF/MachO PASS, generalregs/frame1024.
+  Evidence mailbox-native-0001/proof-0001.json. This is not physical networking.
+- NEXT native control/scan/station/regulatory worker, complete loader ordering,
+  builder/model and post-CE retirement. No new image/FASTBOOT/USB observer/boot.
+  Step2/5,current plus3 remain. Last15min06:07Z,next06:22Z. Goal ACTIVE.
+
 ### Continuous Wi-Fi milestone — 2026-11-05: qualified runtime handoff source and transport continuity
 
 - Kernel-copy milestone6b26ade committed/pushed. New default-OFF

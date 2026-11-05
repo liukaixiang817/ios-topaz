@@ -68,7 +68,10 @@ static void handoff_setup(void)
 }
 static int launch(void)
 {return pwkr_begin(parent,copied,boot_ap,(uintptr_t)arena+0x175000,(uintptr_t)arena+0x176000,0x4000,&boot_plan,boot_payload->virt_base+0x4000);}
-int main(int argc,char**argv)
+#ifndef PWKR_TEST_ENTRY
+#define PWKR_TEST_ENTRY main
+#endif
+int PWKR_TEST_ENTRY(int argc,char**argv)
 {
     CHECK(argc==2);CHECK(!posix_memalign((void**)&arena,0x4000,0x200000));original=malloc(PGCI_IMAGE_BYTES);CHECK(original);
     FILE*f=fopen(argv[1],"rb");CHECK(f&&fread(original,1,PGCI_IMAGE_BYTES,f)==PGCI_IMAGE_BYTES&&!fclose(f));

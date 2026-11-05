@@ -26,7 +26,7 @@
 #if EFI_XNU_WIFI_RUNTIME_HANDOFF_AVAILABLE
 /* Written only by the complete native parent handoff, never by a mailbox. */
 struct pmsc_runtime {
-    uint64_t parent,copy,entry,context,stack,stack_bytes,mailbox,started,last,live_checks;
+    uint64_t parent,copy,entry,context,stack,stack_bytes,mailbox,started,last,live_checks,mailbox_owner;
     uint8_t copy_digest[32],ap_digest[32],bootstrap[128];
     struct pmsb_peer peer[7];int64_t result;
     uint32_t attempted,issued,returned,observed,complete,unknown;
