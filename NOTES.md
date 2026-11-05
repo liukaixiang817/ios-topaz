@@ -44,6 +44,36 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): native HTC services
+
+- Native CE transport is commit85d4648. Default-OFF pmhc uniquely consumes the
+  fresh actual transport, posts one complete RX line to each7 non-diagnostic
+  receive rings, then drives actual CE-delivered READY -> HTT300 -> WMI100 ->
+  SETUP5 -> pktlog600. Endpoints come only from matching successful replies.
+  WCN3990 initial WMI credit1 follows primary use_fw_tx_credits=false; returned
+  trailer credits, size limits, sequence numbers and typed CE routes retained.
+- Control pipe2 is prioritized; other receive pipes are polled on the same
+  worker, with10ms RMTFS service and1ms HTC cadence. CE9/10 are HTT HTC routes
+  per primary SNOC callbacks. CE5 fast-path and CE8 target/uMC retain raw bytes
+  for a later typed consumer. Upper payload requires explicit acknowledgement;
+  no fake WMI-ready/scan or silent interpretation of raw data as control.
+- Full native ASan/UBSan PASS6/14812024: complete handshake + WMI shadow TX,
+  received WMI payload/credit return, READY timeout, service rejection, cache
+  failure before control TX, invalid READY and raw CE5 delivery. Protocol203
+  PASS incl CE1/9/10 HTT routing; both full native and protocol COFF/MachO
+  generalregs/frame1024 PASS. Evidence:htc-native-0001/proof-0001.json.
+- NEXT WMI TLV SERVICE_READY/INIT/READY, actual requested host memory, then
+  vdev/channel/scan, followed by whole-parent/kernel runtime handoff. Primary
+  wmi-tlv.c/h and wmi.c/h were read: ABIver0=01000000,ver1=53,namespace
+  5f414351/4c4d/0/0; service-ready104B, HALreg36B, max16 host mem requests16B
+  each; request units depend on vdev/peer counts and4-byte rounded unit sizes.
+  INIT config44u32,28B ABI/count,16B chunk descriptors incl optional ptr_high.
+  Do not guess memory sizes or truncate35-bit pointers without actual service
+  support. Existing CE independent arena tail is unassigned; no WMI bank yet.
+- No phone/USB/CI/push/boot/parent registration or actual scan. Execution2/5:
+  this step plus3 remain. Last15min00:49Z/11:49, next01:04Z/12:04 Melbourne.
+  Goal ACTIVE; continue to actual Wi-Fi scan/join/IP/DNS/data.
+
 ### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): native CE polled RX/TX
 
 - Native CE startup is commit61ab00b. Default-OFF pmct uniquely consumes that

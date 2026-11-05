@@ -38,7 +38,11 @@ static int pmct_copy(uint64_t at,void*private,unsigned bytes,unsigned write,stru
     for(unsigned n=0;n<bytes;n++){
         r->issued++;if(write)shared[n]=p[n];else p[n]=shared[n];r->returned++;
         if(transport_fault==2&&private==transport->receive&&n==7)return 0;
-    }return 1;
+    }
+#if defined(PMCT_TEST_COPY_DONE_HOOK)
+    PMCT_TEST_COPY_DONE_HOOK(at,private,bytes,write);
+#endif
+    return 1;
 }
 static int transport_raw(const struct pmni_command*c,unsigned*out)
 {
@@ -55,7 +59,12 @@ static int transport_raw(const struct pmni_command*c,unsigned*out)
         unsigned old=ce_regs[pipe][0x3c/4];CHECK(c->value==((old+1)&(p->sources-1)));
         uint8_t*desc=device_at(CE_ALLOCATION+p->source+16*old,16);unsigned bytes=(unsigned)pwcr_get(desc+8,2);
         uint64_t buffer=CE_ALLOCATION+p->source_buffers+(uint64_t)p->buffer_bytes*old;
-        CHECK(pwcr_get(desc,8)==buffer&&bytes==31&&pwcr_get(desc+10,2)==0x120);
+        CHECK(pwcr_get(desc,8)==buffer);
+#if defined(PMCT_TEST_TX_HOOK)
+        PMCT_TEST_TX_HOOK(pipe,old,desc);
+#else
+        CHECK(bytes==31&&pwcr_get(desc+10,2)==0x120);
+#endif
         CHECK(!memcmp(device_at(buffer,bytes),transport->send,bytes));
         ce_regs[pipe][0x3c/4]=c->value;put(device_at(CE_ALLOCATION+transport->rings.layout.rri+4*pipe,4),c->value,4);
     }else{
@@ -67,6 +76,9 @@ static int transport_raw(const struct pmni_command*c,unsigned*out)
             CHECK(pwcr_get(desc,8)==CE_ALLOCATION+p->destination_buffers+(uint64_t)p->buffer_bytes*slot);owned[pipe][slot]=1;
         }
         ce_regs[pipe][0x40/4]=c->value;
+#if defined(PMCT_TEST_POST_HOOK)
+        PMCT_TEST_POST_HOOK(pipe);
+#endif
     }return 1;
 }
 static void device_receive(unsigned pipe,unsigned sequence)
@@ -86,7 +98,10 @@ static void transport_setup(unsigned kind)
     CHECK(pmct_begin(transport,ce)&&pmct_live(transport));transport_fault=kind;
     for(unsigned n=0;n<31;n++)transport->send[n]=(uint8_t)(0x80+n);
 }
-int main(int argc,char**argv)
+#ifndef PMCT_TEST_ENTRY
+#define PMCT_TEST_ENTRY main
+#endif
+int PMCT_TEST_ENTRY(int argc,char**argv)
 {
     CHECK(argc==8);sm_original=malloc(PWFI_IMAGE_BYTES);sm_shadow=malloc(PMSQ_BYTES);rmtfs_shadow=malloc(0x202000);
     memory=aligned_alloc(4096,PNV_BYTES);ce_shadow=aligned_alloc(4096,PWDM_BYTES);device_memory=aligned_alloc(4096,PWDM_BYTES);

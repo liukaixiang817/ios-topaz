@@ -25,6 +25,7 @@ struct pmct_state {
     uint8_t send[2048],receive[2048],scratch[64];
     uint32_t attempted,ready,unknown,error,busy,operations,frame_ready,rx_pipe,rx_bytes;
     uint64_t sends,receives,posts;
+    uint64_t protocol; /* One current upper protocol on this worker. */
 };
 #if defined(POLARIS_WIFI_CE_TRANSPORT_SOFTWARE_PEER)
 static int pmct_copy(uint64_t,void*,unsigned,unsigned,struct pmct_memory*);
