@@ -12,6 +12,9 @@ static uint8_t*msa_shadow;
 static unsigned wlan_fault,wlan_zeroes,wlan_requests,wlan_ready_requests,wlan_rounds[2],wlan_descriptor_mask,wlan_memory_mask,wlan_scenarios;
 static int wlan_peer(const uint8_t*p,unsigned size)
 {
+#if defined(PMWA_TEST_QRTR_HOOK)
+    if(PMWA_TEST_QRTR_HOOK(p,size))return 1;
+#endif
     if(pms_u32(p+4)!=1||pms_u32(p+28)!=77||p[32]!=0)return 0;
     CHECK(wlan&&size>=39);const uint8_t*q=p+32;unsigned bytes=pms_u32(p+20),msg=psm_u16(q+3);wlan_requests++;
     const unsigned expected[]={0x20,0x2d,0x2e,0x24};CHECK(wlan_requests<=4&&msg==expected[wlan_requests-1]&&psm_u16(q+1)==wlan_requests);

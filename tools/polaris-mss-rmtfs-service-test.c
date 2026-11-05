@@ -26,6 +26,9 @@ static int service_qrtr(const unsigned char*,unsigned);
 #define EFI_XNU_WIFI_NV_NATIVE_AVAILABLE 1
 #define POLARIS_WIFI_NV_SOFTWARE_PEER 1
 #include "uefi-wifi-nv-native.h"
+#if defined(PMRF_TEST_CE_MEMORY)
+#include "uefi-wifi-ce-memory-native.h"
+#endif
 #undef pgcd_actual_arch
 #define pgcd_actual_arch owner_arch
 #define EFI_XNU_MSS_RMTFS_SERVICE_AVAILABLE 1
@@ -55,9 +58,19 @@ static void service_before_early(void)
     s->boot->locate_buffer=boot.locate_buffer;s->boot->handle_protocol=boot.handle_protocol;s->boot->free_pool=boot.free_pool;
 }
 static void service_after_early(void)
-{CHECK(pnnv_run(native_nv,early,native_plan)&&native_nv->complete&&nv_maps==3&&nv_allocations==1);}
+{
+    CHECK(pnnv_run(native_nv,early,native_plan)&&native_nv->complete&&nv_maps==3&&nv_allocations==1);
+#if defined(PMRF_TEST_PRE_NATIVE)
+    PMRF_TEST_PRE_NATIVE();
+#endif
+}
 static void service_map(struct pwea_map*m)
-{CHECK(native_nv->complete&&m->map.bytes+40<=sizeof(m->data));emit_descriptor(m->data+m->map.bytes,2,(uintptr_t)memory,PNV_BYTES);m->map.bytes+=m->map.stride;}
+{
+    CHECK(native_nv->complete&&m->map.bytes+40<=sizeof(m->data));emit_descriptor(m->data+m->map.bytes,2,(uintptr_t)memory,PNV_BYTES);m->map.bytes+=m->map.stride;
+#if defined(PMRF_TEST_MAP_EXTRA)
+    PMRF_TEST_MAP_EXTRA(m);
+#endif
+}
 static int service_qrtr(const uint8_t*q,unsigned bytes)
 {
     CHECK(bytes>=32&&pms_u32(q+20)<=bytes-32);

@@ -19,6 +19,7 @@ struct pmwa_state {
     struct pmtf_zero zero[512];uint8_t zero_digest[32],wire_digest[32];
     struct polaris_wifi_wlfw client;
     uint64_t smmu; /* Unique current native SMMU observation before CE. */
+    uint64_t ce; /* Retained CE owner; requires its own DMA retirement. */
 };
 #if defined(POLARIS_WIFI_WLFW_SOFTWARE_PEER)
 static int pmwa_zero(uint64_t,struct pmtf_zero*);

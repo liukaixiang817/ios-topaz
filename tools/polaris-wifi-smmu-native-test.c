@@ -13,9 +13,17 @@ static struct pmws_state*smmu_owner;
 static struct pmws_delivery*smmu_records;
 static unsigned smmu_fault,smmu_reads,smmu_scenarios;
 static void smmu_at(struct pmni_translation*t)
-{if(smmu_owner&&smmu_owner->pending&&smmu_fault==6&&t->page==PWSU_BASE)t->write_par|=1;}
+{
+#if defined(PMWS_TEST_AT_HOOK)
+    PMWS_TEST_AT_HOOK(t);
+#endif
+    if(smmu_owner&&smmu_owner->pending&&smmu_fault==6&&t->page==PWSU_BASE)t->write_par|=1;
+}
 static int smmu_raw(const struct pmni_command*c,unsigned*out)
 {
+#if defined(PMWS_TEST_RAW_HOOK)
+    int hooked=PMWS_TEST_RAW_HOOK(c,out);if(hooked>=0)return hooked;
+#endif
     if(!smmu_owner||!smmu_owner->pending)return -1;
     CHECK(c->kind==PMNI_READ&&pwsu_readable(c->address)&&local_mask&&owner->held);smmu_reads++;
     unsigned at=(unsigned)(c->address-PWSU_BASE);*out=0;
@@ -48,7 +56,10 @@ static void smmu_setup(unsigned fault)
     memset(smmu_owner,0,sizeof(*smmu_owner));memset(smmu_records,0,sizeof(*smmu_records)*PWSU_READS);
     smmu_fault=fault;smmu_reads=0;smmu_scenarios++;CHECK(pmws_begin(smmu_owner,smmu_records,wlan));
 }
-int main(int argc,char**argv)
+#ifndef PMWS_TEST_ENTRY
+#define PMWS_TEST_ENTRY main
+#endif
+int PMWS_TEST_ENTRY(int argc,char**argv)
 {
     CHECK(argc==8);sm_original=malloc(PWFI_IMAGE_BYTES);sm_shadow=malloc(PMSQ_BYTES);rmtfs_shadow=malloc(0x202000);
     memory=aligned_alloc(4096,PNV_BYTES);CHECK(sm_original&&sm_shadow&&rmtfs_shadow&&memory);

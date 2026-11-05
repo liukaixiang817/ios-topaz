@@ -14,6 +14,16 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+## Own native CE startup (0189, 2026-11-05)
+
+Compared primary WCN3990 ce.c/hw.c/snoc.c with own ICNSS18800000 DT aperture,
+35-bit DMA limit, SID40/41 and S1-bypass implementation. Independent CE allocation,
+current native zero/cache/SMMU/CFG/MISSION and empty host ring initialization
+now pass full software composition. Firmware opposite rings remain untouched;
+source WI publication must use ICNSS+32000+4*pipe shadows, and source completion
+uses DDR RRI. RX descriptors require cache-line ownership for safe recycling
+on current WB CPU mapping. No hardware DMA, scan, runtime handoff or data yet.
+
 ## Own WLAN configuration and SMMU prerequisite (0189, 2026-11-05)
 
 Official Linux v7.0.14 ath10k62 source files are retained with Git-blob verification

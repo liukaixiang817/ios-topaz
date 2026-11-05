@@ -30,7 +30,7 @@ static void glink_peer_ring(const struct pmni_command*c)
     unsigned desc=channel->item[1].data,tx=channel->item[2].data;
     unsigned at=pms_u32(sm_shadow+desc),end=pms_u32(sm_shadow+desc+4);
     while(at!=end){
-        uint8_t packet[256];for(unsigned n=0;n<sizeof(packet);n++)packet[n]=sm_shadow[tx+(at+n)%16384];
+        uint8_t packet[1024];for(unsigned n=0;n<sizeof(packet);n++)packet[n]=sm_shadow[tx+(at+n)%16384];
         unsigned cmd=psm_u16(packet),cid=psm_u16(packet+2),arg=pms_u32(packet+4),bytes=8;
         if(cmd==2)bytes+=arg;if(cmd==5)bytes+=arg*8;if(cmd==9||cmd==12)bytes=16+pms_u32(packet+8);CHECK(bytes<=sizeof(packet));
         if(cmd==0){rx_frame(1,1,1,0,0);rx_frame(2,7,7,(const uint8_t*)"IPCRTR",7);}

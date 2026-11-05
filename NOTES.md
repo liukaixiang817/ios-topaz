@@ -44,6 +44,33 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): native CE activation and empty rings
+
+- Independent CE backing is commit489cdba. Default-OFF pmce consumes the actual
+  completed pre-native allocation and current WLFW owner. Zero/readback/CIVAC
+  all2050 pages with fresh WB translations; observe current SID40/41 route;
+  admit that fresh snapshot under the same uninterrupted owner; issue actual
+  CFG/MISSION; only then initialize empty host CE rings. RMTFS keeps polling.
+- CE protocol observes all host ring sides before any store, rejects nonempty
+  bases/sizes, index mismatch or existing error. RRI, IRQ masks, preserved CTRL1
+  fields, base/size/watermarks follow WCN3990 primary ce.c/hw.c. Every store has
+  DSB SY then exact readback. Firmware-owned opposite rings remain unchanged.
+  No RX descriptor is posted yet. Marked DMA lifetime stays resident/CPU-held;
+  old pre-CE stop/VMID-return path rejects any w->ce owner, even after OFF ACK.
+- Full native ASan/UBSan PASS8/17052806: normal chain, partial zero, cache
+  failure, duplicate SMMU route, current CE AT failure, MISSION rejection,
+  readback mismatch and ordering failure after first store. Protocol9/998
+  PASS; generalregs/frame1024 COFF/MachO PASS. Evidence:ce-native-0001/proof-0001.json.
+  Fixed SOFTWARE peer dispatch for CE addresses above RPMh aperture; increased
+  test GLINK packet buffer for559-byte CFG; corrected fixture MODE length14.
+- NEXT native RX/TX publication, HTC/WMI and actual scan, whole-parent/kernel
+  runtime handoff. New ring protocol/cache-line helpers are WIP. RX descriptor
+  lines need whole64-byte ownership before clean; no whole-page writeback over
+  neighbouring device-owned descriptors. Source shadow WI is own ICNSS+32000
+  plus4*pipe (primary ce.c), not the ordinary source WI register.
+- No phone/USB/CI/push/boot/parent registration. Execution2/5: this step plus3
+  remain. Last15min00:34Z/11:34, next00:49Z/11:49 Melbourne. Goal ACTIVE.
+
 ### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): independent CE memory producer
 
 - Current read-only SMMU route is commit7f9dfb8. Default-OFF pcdm uses actual

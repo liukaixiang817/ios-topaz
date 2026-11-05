@@ -62,7 +62,7 @@ static void resource_complete(void)
 static int pmni_raw(const struct pmni_command*c,uint32_t*v)
 {
 #ifdef PMPN_TEST_RAW_HOOK
-    if(c->address<UINT64_C(0x179e0000))return PMPN_TEST_RAW_HOOK(c,v);
+    if(c->address<UINT64_C(0x179e0000)||c->address>=PWRSC_BASE+sizeof(hardware))return PMPN_TEST_RAW_HOOK(c,v);
 #endif
     if(c->kind==PMNI_READ)native_reads++;else native_writes++;
     if(selected_fault()){
