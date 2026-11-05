@@ -44,6 +44,36 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): native key installation
+
+- Four-way protocol is commite7c5e20. New pwki emits actual WMI5009/TLV96,
+  body92 +16-byte CCMP key, serialized PTK then GTK, and waits actual HTT0xb
+  SEC_IND with exact peer/cipher6/unicast vs multicast,3s per publication.
+  Duplicate prior-key confirmation cannot advance the other key or reset PN.
+  Primary declarations independently compile to expected92-byte body/offsets.
+- Default-OFF pmky uniquely consumes native pmst and bound pwpa state, uses
+  actual WMI/HTC/CE publication, accepts HTT security from normal/CE5 path,
+  and authorizes only after both confirmations. Disconnect closes controlled
+  port and wipes WPA secrets; unknown failure retains DMA/backing and owner.
+- WMI seq fields follow primary generator's zeros. Actual AP GTK RSC retained
+  as group_floor; forthcoming RX consumer MUST enforce that floor. Confirmation
+  alone does not authenticate arbitrary received frames. EAPOL publication in
+  this fixture is still pure SOFTWARE, not native RX/TX yet.
+- Native ASan/UBSan4/9993979 PASS:2 installs with duplicate confirmation, wrong
+  cipher, timeout, CE barrier failure; unmap closes port/wipes keys. Protocol
+  1000 PASS (includes594 handshake checks). Native and protocol COFF/MachO
+  generalregs/frame1024 PASS. Evidence:keys-native-0001/proof-0001.json.
+  Station fixture now has reusable open/setup/close and key-command hook.
+- NEXT native Ethernet/EAPOL RX/TX consumer, PN/decap/decryption validation and
+  group rekey, entropy/regulatory, MGMT_TX_WMI, whole-parent/runtime/post-CE exit.
+  Primary WCN3990 descriptor: MPDUinfo16/PN20..25,MSDUendkeyoctet52/info64,
+  original802.11header296,decappedpayload360. Initial legacy/non-QoS profile
+  must reject fragmented/A-MSDU/offload metadata lacking complete security
+  evidence; do not silently treat decapped bytes as authenticated IP traffic.
+- No phone/USB/CI/push/boot or parent registration. Still execution2/5,current
+  step plus3 remain. Last15min02:21Z/13:21,next02:36Z/13:36 Melbourne.
+  Goal ACTIVE; continue through real scan/join/IP/DNS/data.
+
 ### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): WPA2 four-way protocol
 
 - Crypto primitives are commit813686d. New pwpa binds the associated AP RSN,

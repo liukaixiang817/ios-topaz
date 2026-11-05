@@ -31,6 +31,9 @@ static void station_beacon(void)
 static void station_target_wmi(unsigned pipe,const unsigned char*f,unsigned bytes)
 {
     CHECK(pipe==3&&f[0]==htc->client.wmi);const uint8_t*p=f+8;unsigned cmd=pwmi_get(p);
+#ifdef PMST_TEST_WMI_HOOK
+    if(cmd==0x5009){PMST_TEST_WMI_HOOK(pipe,f,bytes);return;}
+#endif
     if(!station){
         CHECK(scan&&pmwsn_live(scan));scan_commands++;
         if(scan_commands==1){CHECK(cmd==0x5001);wmi_frame(f,0,2);return;}
@@ -67,7 +70,7 @@ static void station_target_data(unsigned pipe,const unsigned char*f,unsigned byt
     }
     pwmi_put(r+24,received);pwmi_header(r+48,17,received);wmi_frame(r,52+received,1);
 }
-int main(int argc,char**argv)
+static void station_test_open(int argc,char**argv)
 {
     CHECK(argc==8);sm_original=malloc(PWFI_IMAGE_BYTES);sm_shadow=malloc(PMSQ_BYTES);rmtfs_shadow=malloc(0x202000);
     memory=aligned_alloc(4096,PNV_BYTES);ce_shadow=aligned_alloc(4096,PWDM_BYTES);device_memory=aligned_alloc(4096,PWDM_BYTES);
@@ -77,7 +80,9 @@ int main(int argc,char**argv)
     CHECK(!posix_memalign((void**)&msa_shadow,host_page,0x200000));
     load(argv[7],"gpt0-primary.bin",headers[0][0],4096);load(argv[7],"gpt0-backup.bin",headers[0][1],4096);load(argv[7],"gpt0-table.bin",tables[0],polaris_nv_plan.disk[0].table_bytes);
     load(argv[7],"gpt1-primary.bin",headers[1][0],4096);load(argv[7],"gpt1-backup.bin",headers[1][1],4096);load(argv[7],"gpt1-table.bin",tables[1],polaris_nv_plan.disk[1].table_bytes);
-    for(unsigned kind=0;kind<5;kind++){
+}
+static void station_test_setup(unsigned kind)
+{
         station=0;scan=0;data=0;htt=0;wmi=0;htc_setup(0);wmi=(void*)(arena+0x7340000);memset(wmi,0,sizeof(*wmi));wmi_fault=wmi_requests=0;CHECK(pmwi_begin(wmi,htc));
         for(unsigned n=0;n<40&&htc->client.phase!=8;n++){CHECK(pmwi_step(wmi)==1);advance_to(owner->last+19200);}
         CHECK(htc->client.phase==8);wmi_service();int result=1;
@@ -91,6 +96,19 @@ int main(int argc,char**argv)
         station=(void*)(arena+0x73c0000);CHECK(sizeof(*station)<0x20000);memset(station,0,sizeof(*station));station_fault=kind;station_commands=mgmt_commands=0;station_scenarios++;
         struct pwst_channel c={2437,0,20,30,0,0,0}; /* explicit SOFTWARE regulatory input */
         CHECK(pmst_begin(station,scan,data,0,2,&c));result=1;
+}
+static void station_test_close(void)
+{
+    wlan_unprotect();free(htt_cpu);free(htt_device);free(msa_shadow);free(device_memory);free(ce_shadow);free(memory);free(rmtfs_shadow);free(sm_shadow);free(sm_original);auth_test_close();
+}
+#ifndef PMST_TEST_ENTRY
+#define PMST_TEST_ENTRY main
+#endif
+int PMST_TEST_ENTRY(int argc,char**argv)
+{
+    station_test_open(argc,argv);
+    for(unsigned kind=0;kind<5;kind++){
+        station_test_setup(kind);int result=1;
         for(unsigned n=0;n<160&&result==1;n++){
             advance_to(owner->last+19200);
             if(kind==2&&station->client.phase==4)advance_to(station->client.deadline+1);
@@ -112,6 +130,6 @@ int main(int argc,char**argv)
             unsigned calls=htt_copies+htt_caches+transport_writes;CHECK(pmst_step(station)==-1&&calls==htt_copies+htt_caches+transport_writes);
         }
     }
-    wlan_unprotect();free(htt_cpu);free(htt_device);free(msa_shadow);free(device_memory);free(ce_shadow);free(memory);free(rmtfs_shadow);free(sm_shadow);free(sm_original);auth_test_close();
+    station_test_close();
     printf("PASS %u native station checks, %u scenarios; SOFTWARE target/cache/MMIO/UEFI, no actual association or WPA success\n",checks+nv_checks,station_scenarios);return 0;
 }

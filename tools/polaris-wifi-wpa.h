@@ -163,4 +163,10 @@ static inline int pwpa_installed(struct pwpa_state*s,uint64_t now,int complete)
     if(!pwpa_time(s,now)||!s->install_issued||s->installed||!s->have_m3||(s->phase!=3&&s->phase!=2))return -1;
     if(complete!=1)return pwpa_fail(s,4);s->installed=s->authorized=1;s->keys_ready=0;if(s->phase!=2)s->phase=4;return 1;
 }
+static inline void pwpa_stop(struct pwpa_state*s)
+{
+    if(!s)return;s->authorized=s->keys_ready=s->pending=s->reply_bytes=0;s->phase=5;
+    pwch_wipe(s->pmk,32);pwch_wipe(s->snonce,32);pwch_wipe(s->anonce,32);pwch_wipe(s->kck,16);pwch_wipe(s->kek,16);
+    pwch_wipe(s->tk,16);pwch_wipe(s->gtk,16);pwch_wipe(s->rx,sizeof(s->rx));pwch_wipe(s->reply,sizeof(s->reply));pwch_wipe(&s->unwrap,sizeof(s->unwrap));
+}
 #endif

@@ -15,7 +15,7 @@
 #error Native station requires native scan and HTT data
 #endif
 struct pmst_state {
-    uint64_t scan,data,owner,opening;struct pwst_state client;
+    uint64_t scan,data,owner,opening,consumer;struct pwst_state client;
     uint32_t attempted,ready,unknown,error,submitted,mgmt_wait,mgmt_id,mgmt_status,mgmt_completed;
 };
 static inline int pmst_fail(struct pmst_state*s,unsigned error)
