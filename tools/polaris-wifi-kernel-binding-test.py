@@ -94,4 +94,41 @@ struct.pack_into('<II', real_shape, 16, 4, 320)
 assert module.layout(real_shape) == (BASE-PAGE, 2*PAGE)
 assert module.binding(real_shape, *module.layout(real_shape))['offset'] == PAGE
 checks += 2
-print(f'PASS {checks} kernel mailbox backing checks; synthetic Mach-O, no boot admission')
+# The shutdown object is a different, zero-fill BSS symbol, not a file page.
+shutdown_name = b'_polaris_uefi_shutdown'
+bss = kernel()
+struct.pack_into('<Q', bss, 64, PAGE+256)
+struct.pack_into('<16s16sQQ8I', bss, 104, b'__bss', b'__DATA', BASE+PAGE, 256, 0, 7, 0, 0, 1, 0, 0, 0)
+struct.pack_into('<Q', bss, 2*PAGE+8, BASE+PAGE)
+struct.pack_into('<I', bss, 204, len(shutdown_name)+2)
+bss[2*PAGE+32:2*PAGE+34+len(shutdown_name)] = b'\0'+shutdown_name+b'\0'
+answer = module.shutdown_binding(bss, BASE, PAGE+256, ((0, PAGE),))
+assert answer['BSS'] and answer['file_offset'] is None and answer['offset'] == PAGE
+assert answer['bytes'] == 256 and answer['alignment'] == 128 and not answer['boot_admission']
+checks += 1
+
+def reject_shutdown(raw, **kwargs):
+    global checks
+    try:
+        module.shutdown_binding(raw, BASE, kwargs.get('span', PAGE+256), kwargs.get('other_spans', ()))
+    except ValueError:
+        checks += 1
+    else:
+        raise AssertionError('accepted malformed shutdown backing')
+
+common = bytearray(bss)
+struct.pack_into('<16s', common, 104, b'__common')
+assert module.shutdown_binding(common, BASE, PAGE+256)['section'] == '__common'
+checks += 1
+for at, fmt, value in ((64, 'Q', PAGE+255), (80, 'Q', PAGE+1), (92, 'I', 1),
+        (92, 'I', 7), (136, 'Q', BASE+PAGE-128), (144, 'Q', 255),
+        (152, 'I', 1), (168, 'I', 0), (168, 'I', 2),
+        (2*PAGE+8, 'Q', BASE+PAGE+1)):
+    bad = bytearray(bss);struct.pack_into('<'+fmt, bad, at, value);reject_shutdown(bad)
+for at in (104, 120, 2*PAGE+33):
+    bad = bytearray(bss);bad[at] ^= 1;reject_shutdown(bad)
+reject_shutdown(bss, other_spans=((PAGE, 128),))
+reject_shutdown(bss, span=PAGE+255)
+reject_shutdown(good)
+reject(bss)
+print(f'PASS {checks} kernel mailbox/shutdown backing checks; synthetic Mach-O, no boot admission')

@@ -42,7 +42,11 @@ def layout(raw):
     return bases[0], max(segments)-bases[0]
 
 
-def binding(raw, base, span, other_spans=()):
+def _binding(raw, base, span, other_spans, shutdown):
+    symbol = b'_polaris_uefi_shutdown' if shutdown else NAME
+    target_bytes = 256 if shutdown else BYTES
+    alignment = 128 if shutdown else BYTES
+    initial = bytes(256) if shutdown else INITIAL
     if len(raw) < 32:
         raise ValueError('truncated kernel')
     magic, cpu, _, filetype, count, command_bytes, _, _ = struct.unpack_from('<8I', raw)
@@ -98,7 +102,7 @@ def binding(raw, base, span, other_spans=()):
         stop = raw.find(b'\0', strings+name, strings+string_bytes)
         if stop < 0:
             raise ValueError('unterminated symbol name')
-        if raw[strings+name:stop] == NAME:
+        if raw[strings+name:stop] == symbol:
             if kind != 0x0f or not 0 < section <= len(sections):
                 raise ValueError('mailbox must be a defined external section symbol')
             found.append((value, section))
@@ -106,35 +110,52 @@ def binding(raw, base, span, other_spans=()):
         raise ValueError('requires exactly one mailbox symbol')
     address, index = found[0]
     offset = address - base
-    if address % BYTES or offset % BYTES or not 0 <= offset <= span-BYTES:
+    if address % alignment or offset % alignment or not 0 <= offset <= span-target_bytes:
         raise ValueError('mailbox page alignment or kernel ownership')
     for start, length in other_spans:
         if start < 0 or length <= 0 or start > span-length:
             raise ValueError('invalid excluded channel span')
-        if offset < start+length and start < offset+BYTES:
+        if offset < start+length and start < offset+target_bytes:
             raise ValueError('mailbox overlaps another live channel')
     s = sections[index-1]
-    if (s['segment'] != b'__DATA' or s['owner'] != b'__DATA' or s['section'] != b'__data' or
-            s['flags'] & 0xff or s['protection'] != 3 or s['stored'] > s['memory'] or
+    if (s['segment'] != b'__DATA' or s['owner'] != b'__DATA' or
+            s['protection'] != 3 or s['stored'] > s['memory'] or
             not s['vm'] <= s['address'] <= address or
             s['length'] > s['memory']-(s['address']-s['vm']) or
+            not 0 <= address-s['address'] <= s['length']-target_bytes):
+        raise ValueError('mailbox is not writable DATA in its actual symbol section')
+    if shutdown:
+        # This XNU links the tentative global shutdown object into __common.
+        # Both standard zero-fill sections retain the same backing checks.
+        if (s['section'] not in (b'__bss', b'__common') or s['flags'] & 0xff != 1 or s['fileoff'] or
+                s['address'] < s['vm']+s['stored']):
+            raise ValueError('shutdown slot must have unambiguous zero-fill BSS backing')
+    elif (s['section'] != b'__data' or s['flags'] & 0xff or
             s['length'] > s['stored']-(s['address']-s['vm']) or
-            not 0 <= address-s['address'] <= s['length']-BYTES or
             s['fileoff'] != s['source']+s['address']-s['vm']):
         raise ValueError('mailbox is not writable file-backed DATA in its actual symbol section')
     for i, other in enumerate(sections):
-        if i != index-1 and address < other['address']+other['length'] and other['address'] < address+BYTES:
+        if i != index-1 and address < other['address']+other['length'] and other['address'] < address+target_bytes:
             raise ValueError('ambiguous overlapping kernel sections')
-    containing = [v for v in segments if address < v[0]+v[1] and v[0] < address+BYTES]
+    containing = [v for v in segments if address < v[0]+v[1] and v[0] < address+target_bytes]
     if len(containing) != 1:
         raise ValueError('ambiguous overlapping kernel segments')
-    source = s['fileoff']+address-s['address']
-    if source > len(raw) or BYTES > len(raw)-source or raw[source:source+BYTES] != INITIAL:
+    source = None if shutdown else s['fileoff']+address-s['address']
+    if not shutdown and (source > len(raw) or target_bytes > len(raw)-source or
+                         raw[source:source+target_bytes] != initial):
         raise ValueError('mailbox native initializer differs or is truncated')
-    return dict(symbol=NAME.decode(), offset=offset, bytes=BYTES, alignment=BYTES,
-        segment='__DATA', section='__data', file_offset=source, BSS=False,
+    return dict(symbol=symbol.decode(), offset=offset, bytes=target_bytes, alignment=alignment,
+        segment='__DATA', section=s['section'].decode(), file_offset=source, BSS=shutdown,
         kernel_sha256=hashlib.sha256(raw).hexdigest(),
-        initial_sha256=hashlib.sha256(INITIAL).hexdigest(), boot_admission=False)
+        initial_sha256=hashlib.sha256(initial).hexdigest(), boot_admission=False)
+
+
+def binding(raw, base, span, other_spans=()):
+    return _binding(raw, base, span, other_spans, False)
+
+
+def shutdown_binding(raw, base, span, other_spans=()):
+    return _binding(raw, base, span, other_spans, True)
 
 
 def main():
