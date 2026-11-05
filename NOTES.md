@@ -54,6 +54,57 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: actual native loader build
+
+- Human downloaded the three missing iCloud records, resumed the goal, then
+  downloaded the three referenced GPU/CPU baseline files. All six are readable;
+  extraction proof matches originalfa7373c707e84513bfaab1c1a27a3855e77165f1f53a2ca0794459f18fb6edb8.
+ 49 private firmware/backup/inventory inputs copied byte-for-byte into stable
+  clone, plus original GPU/CPU logs/boot evidence checked against their existing
+  hashes. No reconstructed/made-up proof or weakened source check. Old copier
+ 84082 ended with an assertion on the intentionally changed builder source;
+  corrected copy only handles private input paths. Read82790 and copy90290
+  completed. All build processes below ended; no active build/device operation.
+- Source7a8bc08 adds explicit native-runtime builder selection, AU, own NV backup
+  identities, fresh nonce, full producer chain and four extra C modules. Exact
+  new CI kernel channels and shutdown BSS are bound; payload's rebased segments
+  must equal that kernel. Generated config/input hashes are in the manifest.
+  Physical admission/display-input fields remain FALSE until integrated.
+- Actual full builder first failed on missing baseline log, then on boot frame
+ 1248B. Split staging/owner acquisition and the inlined startup-producer switch
+  into noinline boundaries; did not change any operation order/return handling
+  or1024-byte limit. Final driver-0005 full UEFI compile/link PASS, elapsed11.04s.
+  Extracted actual loader853 sanitizer call-order checks PASS. Actual same-config
+  Mach-O compile PASS generalregs/frame1024;780 functions, maximum816B. Frames:
+  boot368B, startup816B, startup_step80B. Earlier failed attempts retained.
+- New UEFI driver769536B SHA8c0021e51d41c22dcb9f598dcf41deebade19f779bb79574872d48bf3a9b3e3a.
+  ARM64 boot-service driver, no imports, entry in nonwritable executable section.
+  Virtual BSS88917352B/file0, image89702400B. All256 manifest input hashes checked.
+  Private commands/logs/build-proof-0001.json under stable clone
+  research/polaris/uefi-ios-0189/wifi/native-builder-0001. This is a built driver,
+  NOT a complete temporary-boot image or device qualification.
+- New kernel593a13ff... remains CI42071258166/8bcbb68, not rebuilt unnecessarily.
+  New combined payload100573184B SHAbe886663adc422853327820aebd87c1567af1c088ae53c8b71b40ce3d84c60fc.
+  Payload C admission and byte-exact rebased-kernel matching PASS. Verified own
+  firmware bundle unchanged06543d17c283e6b26d5b68175272843a1811ece6cb9ad5ff08f43325146ee5b1.
+  Bootline595B: added polariswifi=1 and removed only -enable_kprintf_spam.
+  Apple8796.141.3 pexpert/arm/pe_kprintf.c confirms this is DEVELOPMENT extra
+  kprintf serial output; serial=3/debug=0xc, IOLog, RAM log and all functional/
+  data guards retained. Original602B and exact change recorded privately in
+  payload-source-proof.json. No truncation and no storage/phone operations.
+- Unowned9-line remote-memory context snapshot hunk remains present, tested as
+  an input, and UNCOMMITTED. New sources must not erase or silently publish it.
+  Stable clone remains authoritative; original Git metadata sync still unproven.
+- NEXT integrate display/buttons with the native continuous CPU0 C0/Group1-off
+  owner. Legacy prepare requires3c0; native boot currently only references those
+  functions and never starts/polls them. Do not simply relax the mask check.
+  Also ensure pre-CPU_ON diagnostics cannot enter original OutputString, bind
+  actual PMIC ownership and terminal restoration to the retained shutdown path,
+  then repeat complete composition/candidate gates and build a NEW boot image.
+  No new phone query/boot/scan/join/IP/DNS/data. Execution2/5,current plus3 remain;
+  none of the five whole admission gates is newly complete. Last formal report
+ 17:38Z before pause; resumed17:50Z,next18:05Z. Goal ACTIVE.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: verified kernel and shutdown binding
 
 - CI42069228077/job127392125996 failed at the reviewed private-header hash in
