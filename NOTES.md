@@ -54,6 +54,52 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: verified kernel and shutdown binding
+
+- CI42069228077/job127392125996 failed at the reviewed private-header hash in
+  tools/xnu-iig-cache.py, before a kernel compilation result. Source8bcbb68
+  updates the exact mailbox-header binding; other cache guards stayed unchanged.
+  Replacement CI42071258166/job127399476800 at8bcbb68 succeeded. Official artifact
+  13436107649 downloaded and its ZIP digest verified:
+  df03208446bfbb13961e98b1e4afd8675ded31b6f6a3266ccc4ae480e1f5d82a.
+  Kernel SHA256593a13fffd9ebcabd337e0eb8a8fb0946188241b15d60a84345cbd4563be9864
+  matches SHA256SUMS and build-profile records the exact8bcbb68 commit.
+  https://github.com/liukaixiang817/ios-topaz/actions/runs/42071258166
+- Source6cb01b1 validates the separate256-byte shutdown zero-fill object against
+  its actual Mach-O section/symbol and excludes other live channels. Both
+  standard __bss and actual XNU __common are checked; file-backed/overlapping
+  aliases refuse.78 synthetic checks PASS. Actual new CI kernel binding also
+  PASS: mailbox offset29376512, shutdown offset35321472 relative to payload's
+  32MiB-aligned VA base, not the different __TEXT base. Private evidence under
+  stable clone wifi/native-builder-0001/actual-ci-binding.json. No boot grant.
+- Stable-only unfinished builder work: tools/build-polaris-uefi-xnu.py and new
+  tools/polaris-wifi-runtime-config.py select the full default-OFF producer chain,
+  exact linked channels, own private NV plan, AU and fresh nonce. Four additional
+  C modules cross-compiled for UEFI with generalregs/frame1024 limits, but the
+  full builder/link has NOT run. Actual runtime header binding passed above.
+  Display/input integration and complete candidate gates remain unfinished.
+- New payload prep verified the previous private payload and extracted its ADT
+  and exact GPU bundle. Repacking stopped before output because old602-byte
+  boot line plus polariswifi=1 exceeds607 bytes. No flag was removed/truncated.
+  polarisdebug=0 and polarisusb=0 are explicit loader requirements; do not remove
+  them merely because their kernel defaults are zero. Serial console/kprintf
+  flags also have real effects. Resolve capacity with reviewed source evidence.
+- Stable local Zig0.15.2 copied from the retained archive and byte-verified at
+  /private/tmp/polaris-zig-local-0.15.2/zig-aarch64-macos-0.15.2/zig. Private-input
+  copy session84082 remains pending reading original own-modem proof before its
+  copy loop; check before starting duplicate writes. Artifact download46536 is
+  finished successfully. Original cloud-delayed Git-index/fetch/gh/inspection
+  sessions24757/94114/90489/82486 are not confirmed completed. Preserve the
+  unowned remote-memory hunk; do not reset original Git metadata blindly.
+- Reconfirmed for the user's DHCP question: polaris-wifi-ip.c only asks iOS's
+  existing IPConfiguration/configd service to enable DHCP, then queries en0.
+  It is a temporary bring-up tool, not a new DHCP/IP/DNS implementation. Native
+  Wi-Fi management/UI remains unfinished. Compile/sign success is not networking.
+- NEXT finish private input hydration, reviewed boot-line capacity and actual
+  builder/link, then display/input/candidate gates and authorized temporary boot.
+  No phone query/boot/scan/join/IP/DNS/data observed. Execution2/5,current plus3
+  remain. Last15min17:23Z,next17:38Z. Goal ACTIVE; no completion claim.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: explicit terminal request and loader
 
 - Sourced970e2b18842b9a379166f2010ea59891c554303 committed/pushed. Added explicit
