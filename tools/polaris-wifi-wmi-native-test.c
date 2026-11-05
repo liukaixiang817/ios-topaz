@@ -18,6 +18,9 @@ static void wmi_abi(uint8_t*p)
 {pwmi_put(p,0x01000000);pwmi_put(p+4,53);pwmi_put(p+8,0x5f414351);pwmi_put(p+12,0x4c4d);}
 static void wmi_target_tx(unsigned pipe,const unsigned char*frame,unsigned bytes)
 {
+#ifdef PMWI_TEST_TX_HOOK
+    if(pwmi_get(frame+8)!=1){PMWI_TEST_TX_HOOK(pipe,frame,bytes);return;}
+#endif
     CHECK(wmi&&pipe==3&&frame[0]==htc->client.wmi&&pwmi_get(frame+8)==1);wmi_requests++;
     unsigned count=wmi_fault==5?0:2;CHECK(bytes==228+20*count&&pwmi_get(frame+40)==count);
     for(unsigned n=0;n<count;n++){
@@ -38,7 +41,10 @@ static void wmi_service(void)
     for(unsigned n=0;n<count;n++){uint8_t*q=p+288+20*n;pwmi_header(q,34,16);pwmi_put(q+4,n+1);pwmi_put(q+8,wmi_fault==1?UINT32_MAX:17);pwmi_put(q+12,n?2:1);pwmi_put(q+16,123);}
     wmi_frame(p,288+20*count,3);
 }
-int main(int argc,char**argv)
+#ifndef PMWI_TEST_ENTRY
+#define PMWI_TEST_ENTRY main
+#endif
+int PMWI_TEST_ENTRY(int argc,char**argv)
 {
     CHECK(argc==8);sm_original=malloc(PWFI_IMAGE_BYTES);sm_shadow=malloc(PMSQ_BYTES);rmtfs_shadow=malloc(0x202000);
     memory=aligned_alloc(4096,PNV_BYTES);ce_shadow=aligned_alloc(4096,PWDM_BYTES);device_memory=aligned_alloc(4096,PWDM_BYTES);

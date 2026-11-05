@@ -44,6 +44,34 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): native passive scan
+
+- WMI bootstrap is commit59b85a6. Default-OFF pmwsn consumes its actual READY
+  owner. Publishes station vdev0 with firmware MAC, passive channel1..11 list,
+  then passive scan via native HTC/CE. Only matching request/vdev/scan events
+  establish STARTED/COMPLETED; command publication alone does not prove success.
+- WMI management RX parser retains bounded BSSID/SSID/channel/SNR/capability,
+  beacon interval and up to768 IE bytes for32 BSS entries. Deduplicates BSSID+
+  frequency; hidden beacon does not erase learned SSID. CRC/protected/malformed
+  beacon and mismatched DS channel are dropped; unrelated management events
+  remain for a future station consumer. Empty completed scan stays distinct
+  from actual AP discovery. This receive-only2.4GHz profile grants no TX power
+  or association regulatory configuration.
+- Full native ASan/UBSan PASS6/14877226: normal AP, stale scan ID, malformed
+  beacon, START_FAILED, scan timeout and empty completion. All traverse actual
+  native WMI startup and CE command publication. Protocol252 PASS; both native
+  and protocol COFF/MachO generalregs/frame1024 PASS. Evidence:
+  scan-native-0001/proof-0001.json. All target/privileged leaves SOFTWARE.
+- NEXT HTT version/fragment bank/RX-ring initialization, independent HTT backing
+  and real packet ownership, whole-parent/kernel runtime and DMA retirement.
+  Primary WCN3990 needs2048 RX slots (2047 initially filled),2048-byte buffers,
+  1056 TX descriptors; existing CE/WMI tail cannot hold the full data bank.
+  Reuse actual pre-native independent allocation producer for a distinct8MiB
+  bank, with an explicitly separate native HTT consumer; do not borrow live CE
+  or WMI memory. Primary64-bit HTT setup and RX descriptor definitions read.
+- No phone/USB/CI/push/boot/parent registration. Execution2/5: this step plus3
+  remain; last15min01:20Z/12:20, next01:35Z/12:35 Melbourne. Goal ACTIVE.
+
 ### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): native WMI initialization
 
 - Native HTC is commitc892b15. New default-OFF pmwi uniquely consumes the actual

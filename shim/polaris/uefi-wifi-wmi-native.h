@@ -15,6 +15,7 @@ struct pmwi_state {
     uint64_t htc,owner,opening,zeroed;struct pwmi_state client;
     uint32_t attempted,ready,unknown,error,opened,submitted;
     uint8_t zero[4096];
+    uint64_t consumer;
 };
 static inline int pmwi_fail(struct pmwi_state*s,unsigned error)
 {s->unknown=1;if(!s->error)s->error=error;return -1;}
@@ -24,16 +25,21 @@ static inline int pmwi_live(struct pmwi_state*s)
     struct pmhc_state*h=(void*)(uintptr_t)s->htc;
     return h->consumer==(uintptr_t)s&&h->owner==s->owner&&h->opening==s->opening&&pmhc_live(h);
 }
-static inline int pmwi_begin(struct pmwi_state*s,struct pmhc_state*h)
+static inline int pmwi_child(struct pmhc_state*h,uint64_t child,uint64_t size)
 {
-    if(!s||!h||!pwmc_zero(s,sizeof(*s))||h->consumer||h->frame_kind||!pmhc_live(h))return 0;
+    if(!h||!pmhc_live(h))return 0;
     struct pmct_state*t=(void*)(uintptr_t)h->transport;struct pmce_state*p=(void*)(uintptr_t)t->parent;
     struct pmwa_state*w=(void*)(uintptr_t)p->wlan;struct pmsn_state*a=(void*)(uintptr_t)w->auth;
     struct pmrf_state*f=(void*)(uintptr_t)w->service;struct pmsg_state*g=(void*)(uintptr_t)f->glink;struct pmsx_state*x=(void*)(uintptr_t)g->channel;
     const uint64_t at[]={(uintptr_t)h,(uintptr_t)t,(uintptr_t)p,p->memory,p->smmu,p->smmu_records,p->wlan,(uintptr_t)f,f->grant,f->nv,f->glink,g->channel,x->negotiation,x->smem,x->allocation,(uintptr_t)a,a->records,a->copy,a->segments};
     const uint64_t bytes[]={sizeof(*h),sizeof(*t),sizeof(*p),sizeof(struct pcdm_state),sizeof(struct pmws_state),sizeof(struct pmws_delivery)*PWSU_READS,sizeof(*w),sizeof(*f),sizeof(struct pmtf_state),sizeof(struct pnnv_state),sizeof(*g),sizeof(*x),sizeof(struct pmsy_state),sizeof(struct pmsq_state),sizeof(struct pmsa_state),sizeof(*a),sizeof(struct pmsn_delivery)*PMSN_RECORDS,sizeof(struct pmlc_copy),sizeof(struct pmsf_segment)*PMIM_SEGMENTS};
-    if(!pmsn_child(a,(uintptr_t)s,sizeof(*s)))return 0;
-    for(unsigned n=0;n<19;n++)if(!pwea_disjoint((uintptr_t)s,sizeof(*s),at[n],bytes[n]))return 0;
+    if(!pmsn_child(a,child,size))return 0;
+    for(unsigned n=0;n<19;n++)if(!pwea_disjoint(child,size,at[n],bytes[n]))return 0;
+    return 1;
+}
+static inline int pmwi_begin(struct pmwi_state*s,struct pmhc_state*h)
+{
+    if(!s||!h||!pwmc_zero(s,sizeof(*s))||h->consumer||h->frame_kind||!pmwi_child(h,(uintptr_t)s,sizeof(*s)))return 0;
     s->htc=(uintptr_t)h;s->owner=h->owner;s->opening=h->opening;s->attempted=s->ready=1;h->consumer=(uintptr_t)s;return pmwi_live(s);
 }
 /* 1=progress/wait, 2=unconsumed typed upper payload, 3=unified WMI READY.
