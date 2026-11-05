@@ -369,6 +369,7 @@ static struct pmsb_result mss_mba_share;
 static struct pnnv_state wifi_native_nv;
 static struct pcdm_state wifi_native_ce_memory,wifi_native_htt_memory;
 static struct pwks_image wifi_native_kernel_copy;
+static uint32_t wifi_native_memory_stage;
 #endif
 #endif
 #endif
@@ -482,6 +483,37 @@ static void early_wifi_gop_evidence(void)
     pwtg_line(r,15,"NO RADIO",m->claim[0].retained,m->claim[1].retained);
     (void)pwtg_draw(r);early_wifi_gop_raw();
 }
+#if EFI_XNU_WIFI_NATIVE_MEMORY_AVAILABLE
+/* These producers run before prepare_boot arms terminal_gop. Their terminal
+ * evidence must use the already admitted early GOP, with all original draw
+ * guards intact. Cached counters only; no service, retry or cleanup here. */
+static void wifi_native_memory_gop_evidence(void)
+{
+    struct pwtg_result*r=&early_wifi_gop;
+    if(wln_cpu_on_issued||r->native_address!=(uintptr_t)&wln_cpu_on_issued||
+       r->self_base!=pgcd_record.self_base||r->self_bytes!=pgcd_record.self_bytes||
+       r->headers.address[0]!=(uintptr_t)gop){
+        (void)pwtg_fail(r,PWTG_ARGUMENT);early_wifi_gop_raw();return;
+    }
+    pwtg_line(r,0,"NATIVE MEM HOLD",wifi_native_memory_stage,load_state);
+    pwtg_line(r,1,"NV ERROR CALL",wifi_native_nv.error,wifi_native_nv.calls);
+    pwtg_line(r,2,"NV PEND DONE",wifi_native_nv.pending,wifi_native_nv.complete);
+    pwtg_line(r,3,"NV AT0 AT1",wifi_native_nv.translated[0],wifi_native_nv.translated[1]);
+    pwtg_line(r,4,"NV INPUT E U",wifi_native_nv.inputs.error,wifi_native_nv.inputs.unknown);
+    pwtg_line(r,5,"NV UNKNOWN",wifi_native_nv.unknown,wifi_native_nv.allocated);
+    pwtg_line(r,6,"CE ERROR CALL",wifi_native_ce_memory.error,wifi_native_ce_memory.calls);
+    pwtg_line(r,7,"CE PEND DONE",wifi_native_ce_memory.pending,wifi_native_ce_memory.complete);
+    pwtg_line(r,8,"HTT ERROR CALL",wifi_native_htt_memory.error,wifi_native_htt_memory.calls);
+    pwtg_line(r,9,"HTT PEND DONE",wifi_native_htt_memory.pending,wifi_native_htt_memory.complete);
+    for(unsigned n=0;n<PNNV_CALLS;n++){
+        const struct pwea_native_call*c=&wifi_native_nv.call[n];
+        pwtg_line(r,10+n,"NV CALL IR CU",(c->issued<<24)|(c->returned<<16)|(c->complete<<8)|c->unknown,
+            (c->fp.saved<<24)|(c->fp.restored<<16)|(c->source[0].complete<<8)|c->source[1].complete);
+    }
+    pwtg_line(r,15,"NO RADIO",wln_cpu_on_issued,0);
+    (void)pwtg_draw(r);early_wifi_gop_raw();
+}
+#endif
 #if EFI_XNU_MSS_MEMORY_AVAILABLE
 static void mss_memory_gop_evidence(void)
 {
@@ -738,6 +770,10 @@ __attribute__((noreturn)) static void power_unknown_hold(void)
     /* Remains terminal even if this local draw fails or is partial. No
      * foreign method, cleanup, response or CPU/private restoration follows. */
 #if EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE
+#if EFI_XNU_WIFI_NATIVE_MEMORY_AVAILABLE
+    if(wifi_native_memory_stage>=1&&wifi_native_memory_stage<=4)wifi_native_memory_gop_evidence();
+    else
+#endif
 #if EFI_XNU_MSS_MEMORY_AVAILABLE
 #if EFI_XNU_MSS_STAGING_AVAILABLE
 #if EFI_XNU_MSS_MBA_SHARE_AVAILABLE
@@ -2030,15 +2066,19 @@ static efi_status admission(void)
      * the final retained map and before CPU0 takes continuous ownership.
      * The NV reader has no write/reset/flush callback. These three retained
      * banks are never inferred from firmware pointers or borrowed memory. */
+    wifi_native_memory_stage=1;
     int nv_ok=pnnv_run(&wifi_native_nv,&early_wifi_memory,&polaris_nv_plan);
     ram_report("WIFI_NATIVE_FRESH_NV_ACCEPTED=",nv_ok);
     if(!nv_ok){original_service_unknown=1;power_unknown_hold();}
+    wifi_native_memory_stage=2;
     int ce_memory_ok=pcdm_run(&wifi_native_ce_memory,&early_wifi_memory);
     ram_report("WIFI_NATIVE_CE_MEMORY_ACCEPTED=",ce_memory_ok);
     if(!ce_memory_ok){original_service_unknown=1;power_unknown_hold();}
+    wifi_native_memory_stage=3;
     int htt_memory_ok=pcdm_run(&wifi_native_htt_memory,&early_wifi_memory);
     ram_report("WIFI_NATIVE_HTT_MEMORY_ACCEPTED=",htt_memory_ok);
     if(!htt_memory_ok){original_service_unknown=1;power_unknown_hold();}
+    wifi_native_memory_stage=4;
     if(!pwea_disjoint(wifi_native_ce_memory.allocation.address,PWDM_BYTES,
                      wifi_native_htt_memory.allocation.address,PWDM_BYTES)||
        !pwea_disjoint(wifi_native_nv.allocation.address,PNV_BYTES,
@@ -2047,6 +2087,7 @@ static efi_status admission(void)
                      wifi_native_htt_memory.allocation.address,PWDM_BYTES)){
         original_service_unknown=1;power_unknown_hold();
     }
+    wifi_native_memory_stage=5;
     early_map=&wifi_native_htt_memory.map[1];
 #endif
     bytes_copy(map_snapshot.data,early_map->data,early_map->map.bytes);

@@ -54,6 +54,40 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: pre-USB diagnostic fix built; phone feedback pending
+
+- The original30s host wait was shorter than the existing pre-USB NV120s plus
+  CE30s/HTT30s producer bounds. Host discovery now210s; no device deadline,
+  lease, call retry, reset or nonce policy changes. The spent first image is
+  never reused. This timing mismatch is established; its causality on the
+  phone is NOT established.
+- Fixed a diagnostic gap: native NV/CE/HTT admission fails before terminal_gop
+  is armed. Stages1..4 now render cached producer error/call counters through
+  the already admitted early GOP; stage5 restores existing later routing.
+  Original GOP/native/image guards remain. No opaque provider calls added.
+- Actual extracted diagnostic24 ASan/UBSan guard/routing cases PASS (SOFTWARE
+  draw leaf). Full EFI build1852 PASS; same-config actual arm64 loader compile
+  PASS,830 functions,max stack816B under1024B limit. Boot helper3 tests PASS,
+  covering default/no-action, ordered success and four stop/no-replay failures.
+  These host tests are not phone boot/network evidence.
+- Fresh diagnostic driver806912B SHA256
+  40eba5100fd1dff4426cf665d544c9230054861707c070ecabc4ff0b610fc6b7;
+  fresh image6227968B SHA256
+  ef7c7edd7a1bcb5e6950585ee536176b30d55c569a50eecd31651fd675ef6d4c.
+  Full original decoder roundtrip PASS, all81 original firmware files preserved.
+  Same successful CI42091724671 kernel6241bdc3... and payload904f5a71... used.
+  Fresh nonce remains unused. Image is only packaged, NOT admitted or sent.
+  Records: wifi/native-memory-display-0001/{driver-0001,image-0001}, build/test
+  logs and exact commands. Existing unowned remote-memory context hunk remains
+  preserved/included in build hashes, not committed.
+- One bounded read-only expected-device FASTBOOT query19:55:03Z timed out5s;
+  no restart/image/partition action. Current physical screen remains unknown;
+  prior asynchronous screen question remains pending. No USB observer running.
+  NEXT resolve current screen, then diagnose/recover deliberately and review a
+  fresh trial. Do not reset unknown state or reuse spent trial-review/nonce.
+  Current2/5, four steps including current remain; no scan/JOIN/IP/DNS/data.
+  Last formal19:50Z,next20:05Z. Goal ACTIVE. No build/test/device job running.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: FIRST native image sent; pre-payload service unavailable
 
 - Source4d00936 pushed. ONE new native image848fa442... sent at19:42:39Z;

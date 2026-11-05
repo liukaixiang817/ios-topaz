@@ -18,6 +18,10 @@ from polaris_fastboot_identity import expected_polaris_fastboot
 from polaris_uefi_usb_transport import KernelProtocol, LibusbTransport
 
 ROOT = Path(__file__).resolve().parents[1]
+# Admission precedes USB: NV has a 120s producer limit and the independent
+# CE/HTT producers each have 30s. Allow these existing device limits plus entry
+# overhead; this host wait neither renews a device lease nor retries a call.
+INITIAL_SERVICE_WAIT_SECONDS = 210
 
 
 def sha(path):
@@ -134,7 +138,7 @@ def main():
                 return result
 
         transport = ProgressTransport(args.libusb)
-        deadline = time.monotonic()+30
+        deadline = time.monotonic()+INITIAL_SERVICE_WAIT_SECONDS
         while not transport.open_target():
             require(time.monotonic() < deadline, 'new UEFI service unavailable; no reset/retry')
             time.sleep(.2)
