@@ -1,3 +1,6 @@
+#if defined(POLARIS_WIFI_NETWORK_NONCE_TEST)
+#define EFI_XNU_WIFI_NONCE_NATIVE_AVAILABLE 1
+#endif
 static void network_target_keys(unsigned,const unsigned char*,unsigned),network_target_data(unsigned,const unsigned char*,unsigned);
 static void network_association(const unsigned char*,unsigned);
 #define EFI_XNU_WIFI_NETWORK_NATIVE_AVAILABLE 1
@@ -75,20 +78,48 @@ static void network_target_keys(unsigned pipe,const unsigned char*f,unsigned byt
     CHECK(eapol_commands==2&&!network->ethernet.authorized);wmi_frame(f,0,2);
     uint8_t security[28]={11,0,17,0};security[1]=(uint8_t)((group?0:128)|6);station_htt_event(security,28);
 }
+#if defined(POLARIS_WIFI_NETWORK_NONCE_TEST)
+static struct pmnp_state*nonce_source;
+static uint8_t nonce_bundle[PWNP_BYTES],nonce_digest[32];
+#endif
 static int network_poll(void){advance_to(owner->last+19200);return pmwn_step(network);}
 int main(int argc,char**argv)
 {
-    CHECK(argc==10);station_test_open(8,argv);FILE*f=fopen(argv[8],"rb");CHECK(f);uint8_t magic[8];
+#if defined(POLARIS_WIFI_NETWORK_NONCE_TEST)
+    CHECK(argc==12);
+#else
+    CHECK(argc==10);
+#endif
+    station_test_open(8,argv);FILE*f=fopen(argv[8],"rb");CHECK(f);uint8_t magic[8];
     CHECK(fread(magic,1,8,f)==8&&!memcmp(magic,"PWPA001",8));
     CHECK(fread(pmk_vector,1,32,f)==32&&fread(nonce_vector,1,32,f)==32&&fread(ptk_vector,1,48,f)==48&&fread(gtk_vector,1,16,f)==16);
     for(unsigned n=0;n<9;n++){uint8_t b[4];CHECK(fread(b,1,4,f)==4);lengths[n]=pwmi_get(b);CHECK(lengths[n]<=640&&fread(messages[n],1,lengths[n],f)==lengths[n]);}CHECK(fgetc(f)==EOF&&!fclose(f));
     f=fopen(argv[9],"rb");CHECK(f);CHECK(fread(magic,1,8,f)==8&&!memcmp(magic,"PWPG001",8));
     CHECK(fread(new_gtk,1,16,f)==16&&fread(next_gtk,1,16,f)==16);
     for(unsigned n=0;n<9;n++){uint8_t b[4];CHECK(fread(b,1,4,f)==4);group_lengths[n]=pwmi_get(b);CHECK(group_lengths[n]<=640&&fread(group_messages[n],1,group_lengths[n],f)==group_lengths[n]);}CHECK(fgetc(f)==EOF&&!fclose(f));
-    for(unsigned kind=0;kind<8;kind++){
+    unsigned scenarios=8,first=0;
+#if defined(POLARIS_WIFI_NETWORK_NONCE_TEST)
+    f=fopen(argv[10],"rb");CHECK(f&&fread(nonce_bundle,1,PWNP_BYTES,f)==PWNP_BYTES&&fread(nonce_digest,1,32,f)==32&&fgetc(f)==EOF&&!fclose(f));
+    /* Fault cases deliberately retain owners. Run each nonce scenario in a
+     * fresh process, rather than exhausting the eight live GLINK slots or
+     * inventing teardown after an unqualified DMA failure. */
+    CHECK(argv[11][0]>='0'&&argv[11][0]<='8'&&!argv[11][1]);first=(unsigned)(argv[11][0]-'0');scenarios=first+1;
+#endif
+    for(unsigned kind=first;kind<scenarios;kind++){
         network=0;wmi_management_service=kind>=4;station_wmi_fault=kind==5?1:kind==6?2:0;station_test_setup(0);network=(void*)(arena+0x73e0000);CHECK(sizeof(*network)<0x20000);memset(network,0,sizeof(*network));
         net_fault=kind;key_commands=eapol_commands=ethernet_commands=rx_next=held_bytes=0;net_scenarios++;
-        CHECK(pmwn_begin(network,station,pmk_vector,nonce_vector));int result=1;unsigned saw_early=0;
+#if defined(POLARIS_WIFI_NETWORK_NONCE_TEST)
+        nonce_source=(void*)(arena+0x73b0000);CHECK(sizeof(*nonce_source)<0x4000);memset(nonce_source,0,sizeof(*nonce_source));
+        uint8_t*source=arena+0x73b4000,*digest=arena+0x73b5000;memcpy(source,nonce_bundle,PWNP_BYTES);memcpy(digest,nonce_digest,32);
+        if(kind==8)digest[0]^=1;
+        int opened=pmnp_begin(nonce_source,wmi,source,digest);
+        if(kind==8){CHECK(!opened&&nonce_source->unknown&&wmi->nonce==(uintptr_t)nonce_source&&!network->ready&&owner->held);continue;}
+        CHECK(opened&&nonce_source->pages==1&&!nonce_source->pool.used&&!pmnp_begin(nonce_source,wmi,source,digest));
+        CHECK(pmwn_begin_pool(network,station,pmk_vector,nonce_source)&&nonce_source->pool.used==1&&!pwnp_nonzero(nonce_source->pool.nonce[0],32));
+#else
+        CHECK(pmwn_begin(network,station,pmk_vector,nonce_vector));
+#endif
+        int result=1;unsigned saw_early=0;
         for(unsigned n=0;n<400&&result==1;n++){
             if(kind==1&&held_bytes)htt_fault=2;
             if(kind==5&&station->management.phase==2)advance_to(station->management.deadline+1);
@@ -135,6 +166,11 @@ int main(int argc,char**argv)
             CHECK(ethernet_commands==1&&!network->tx_wait&&network->tx_completed==7);
             uint8_t unmap[4]={4,0,17,0};station_htt_event(unmap,4);result=5;for(unsigned n=0;n<30&&result==5;n++)result=network_poll();
             CHECK(result==4&&network->closed&&!network->ethernet.authorized&&!pwpa_nonzero(network->wpa.kck,16)&&!pmwn_send(network,outgoing,114));
+#if defined(POLARIS_WIFI_NETWORK_NONCE_TEST)
+            uint8_t emitted[32];for(unsigned n=1;n<PWNP_COUNT;n++)CHECK(pmnp_take(nonce_source,emitted)&&!memcmp(emitted,nonce_bundle+PWNP_HEADER+32*n,32));
+            CHECK(!pmnp_take(nonce_source,emitted)&&nonce_source->pool.used==PWNP_COUNT);
+            struct pmnp_state*replacement=(void*)(arena+0x73b8000);memset(replacement,0,sizeof(*replacement));CHECK(!pmnp_begin(replacement,wmi,source,digest));
+#endif
             fprintf(stderr,"native network:early M1 DMA, exact M2/M4, CCMP confirmations/authorize, encrypted retry no reinstall, RX PN floor/replay, encrypted TX, GTK renewal/retries/no PN reset, disconnect PASS\n");
         }else if(kind==3){CHECK(result==4&&network->closed&&!network->unknown&&!key_commands&&!network->ethernet.authorized);}
         else{

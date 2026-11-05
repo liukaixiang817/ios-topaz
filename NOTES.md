@@ -44,6 +44,43 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05: candidate-bound native SNonce input
+
+- GTK renewal committed59d27b8. New host OS CSPRNG generator creates64 distinct
+  nonzero32-byte SNonces for each NEW temporary-boot build. Private generated
+  header/file stay in ignored research. Native producer verifies actual image
+  ranges, source-page translation and external SHA256/body SHA256, claims one
+  WMI owner before reading, burns/wipes each entry before association and
+  refuses exhaustion/reinitialization. This is host input, not device entropy
+  or permission to replay a persistent image. No unqualified QRNG access added.
+- Host digest-wide O_EXCL/fsynced ledger prevents copied-directory reuse and
+  two-process races; aborted/failed sends burn the input.25 host checks and78
+  pure consumer checks PASS. Native ASan/UBSan9 serial isolated scenarios /
+  22583029 checks PASS through actual network composition, both management
+  paths, failure cases, exhaustion and external-digest corruption. Initial
+  ninth in-process scenario exhausted8 retained GLINK slots; tests now use
+  separate serial processes instead of inventing teardown after DMA failure.
+  Native COFF/MachO generalregs/frame1024 PASS. Evidence:nonce-native-0001/
+  proof-0001.json. Public fixtures contain synthetic test inputs only.
+- Builder --wifi-host-nonce-pool creates the fresh private input; actual
+  prepare_boot hashes it after retained-memory admission. Linked EFI433152B,
+  SHA4f535ed7a1ca49e64b9edfb2a93c9da009f21212574626f1d8324e7f933a5b41,
+  contains one exact pool and external digest. SizeOfImage19906560;153 inputs.
+  This driver still has no registered full WLAN startup/runtime; not bootable
+  as a qualified Wi-Fi candidate. Input-only actual EFI evidence:nonce-image-0001.
+- New nonce-candidate tool binds a frozen driver manifest, exact artifact/hash,
+  generated header and embedded bytes before digest-wide consumption.9 boundary
+  checks PASS; actual linked build verified/consumed once and repeated consume
+  refused. That build is now BURNED and must never be sent. This tool executes
+  no USB command and grants no boot admission; the eventual complete new boot
+  helper must call it after all other checks and before sending its packed image.
+- NEXT focus actual persistent runtime/parent/kernel interface and post-CE
+  retirement. Startup's180s/all-peers-OFF/load_state2 owner is unchanged and
+  cannot survive original helpers or CPU_ON. Regulatory configuration and
+  native credential input remain unfinished. No phone/USB/CI/push/boot.
+  Execution2/5,current step plus3 remain. Last15min03:22Z/14:22 Melbourne,
+  next03:37Z/14:37. Goal ACTIVE; do not stop at this software milestone.
+
 ### Continuous Wi-Fi milestone — 2026-11-05: native GTK renewal
 
 - WMI management committede30b73e. WPA now handles authenticated group1/2,

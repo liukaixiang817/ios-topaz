@@ -9,6 +9,15 @@
 #include "uefi-memory.h"
 #include "runtime-marker.h"
 #include "uefi-xnu-config.h" /* exact payload bytes/CRC, symbol offsets, board */
+#ifndef EFI_XNU_WIFI_NONCE_POOL_AVAILABLE
+#define EFI_XNU_WIFI_NONCE_POOL_AVAILABLE 0
+#endif
+#if EFI_XNU_WIFI_NONCE_POOL_AVAILABLE
+#if !EFI_XNU_MSS_MBA_SHARE_AVAILABLE
+#error "Nonce input requires the actual independent MSS staging parent"
+#endif
+#include "uefi-wifi-image-nonce-pool.h" /* private per-candidate generated input */
+#endif
 #if defined(_WIN32) && EFI_XNU_MSS_PAYLOAD_FIRMWARE_AVAILABLE
 /* Keep resident zero-initialized storage virtual. The UEFI linker merges
  * ordinary .bss into .data before .rdata, otherwise serializing the zeros. */
@@ -1077,6 +1086,17 @@ static int prepare_boot(void *context)
     ram_text("RETAINED_WIFI_MEMORY_RAW_V1_BEGIN\r\n");ram_hex((const void*)&retained_wifi_memory,sizeof(retained_wifi_memory));
     ram_text("RETAINED_WIFI_MEMORY_RAW_V1_END\r\n");
     if(!retained_ok){original_service_unknown=1;power_unknown_hold();}
+#if EFI_XNU_WIFI_NONCE_POOL_AVAILABLE
+    /* Keep this candidate's input in the linked image and check it before
+     * any new staging/assignment. The later native producer still performs
+     * its own fresh source translation and single-owner consumption. This
+     * input check neither starts WLAN nor authorizes replaying the image. */
+    uint8_t nonce_hash[32];
+    pweh_digest(polaris_wifi_image_nonces,POLARIS_WIFI_IMAGE_NONCE_BYTES,nonce_hash);
+    int nonce_input_ok=pgcd_equal(nonce_hash,polaris_wifi_image_nonce_sha256,32);
+    ram_report("WIFI_HOST_NONCE_INPUT_ACCEPTED=",nonce_input_ok);
+    if(!nonce_input_ok){original_service_unknown=1;power_unknown_hold();}
+#endif
 #if EFI_XNU_MSS_MEMORY_AVAILABLE
     mss_retained_attempted=1;
     mss_retained_ok=pmmn_retained(&mss_memory,mss_memory_digest,&retained_wifi_memory);

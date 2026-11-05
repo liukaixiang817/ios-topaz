@@ -498,6 +498,7 @@ def main():
     ap.add_argument('--mss-firmware-directory',type=Path,help='default-OFF embed already extracted verified own firmware and stage MBA/metadata into actual independent allocations; no secure assignment or remote start')
     ap.add_argument('--mss-firmware-in-payload',action='store_true',help='source verified own firmware from the exact appended RAM payload tail instead of embedding its bytes in EFI')
     ap.add_argument('--mss-mba-share',action='store_true',help='default-OFF native HLOS3 to MSS15 RW assignment of the actual staged MBA1MiB, retained descriptor/continuations and CPU restoration; no reset, power, free or remote start')
+    ap.add_argument('--wifi-host-nonce-pool',action='store_true',help='generate a fresh private host-CSPRNG nonce input for this new temporary-boot candidate; requires digest-wide consumption before send; does not enable native WLAN')
     ap.add_argument('--wifi-irq-provider-directory',type=Path,help='exact original Timer/GIC/CPU PEs for the explicit early-memory profile; inert binding input')
     a=ap.parse_args();r=Path(__file__).resolve().parents[1]
     if a.mss_firmware_in_payload and not a.mss_firmware_directory:
@@ -508,6 +509,8 @@ def main():
         ap.error('MSS firmware staging requires --mss-memory')
     if a.mss_mba_share and not a.mss_firmware_directory:
         ap.error('MBA secure assignment requires the actual verified own firmware staging parent')
+    if a.wifi_host_nonce_pool and not a.mss_mba_share:
+        ap.error('Wi-Fi nonce input requires the actual independent MBA staging/assignment parent')
     if bool(a.wifi_irq_provider_directory)!=a.wifi_early_memory or (a.wifi_early_memory and
         (not a.wifi_power_four_vrm_roundtrip or a.test_qemu)):
         ap.error('early memory requires the full physical four-VRM scope and exact original IRQ-provider directory; no QEMU substitution')
@@ -791,6 +794,13 @@ def main():
         ap.error('selected application requires a complete disk identity')
     if a.chain_app_manifest and (not a.disk_guid or a.efi_application):ap.error('chain wrapper requires disk identity and no --efi-application')
     out=a.output.resolve();out.mkdir(parents=True,exist_ok=False)
+    wifi_nonce_metadata=None
+    if a.wifi_host_nonce_pool:
+        spec=importlib.util.spec_from_file_location('polaris_wifi_nonce',r/'tools/polaris-wifi-nonce-pool.py')
+        nonce_packager=importlib.util.module_from_spec(spec);spec.loader.exec_module(nonce_packager)
+        nonce_packager.create(out/'wifi-nonce')
+        nonce_header,wifi_nonce_metadata=nonce_packager.binding(out/'wifi-nonce')
+        nonce_packager.write_exclusive(out/'uefi-wifi-image-nonce-pool.h',nonce_header.encode())
     mss_firmware=None;mss_inputs=[]
     if a.mss_firmware_directory:
         spec=importlib.util.spec_from_file_location('polaris_mss_firmware',r/'tools/polaris-mss-firmware.py')
@@ -1040,6 +1050,7 @@ def main():
 #define EFI_XNU_MSS_FIRMWARE_OFFSET {mss_payload_transport['offset'] if mss_payload_transport else 0}u
 #define EFI_XNU_MSS_PAYLOAD_FW_BYTES {mss_firmware['bytes'] if mss_payload_transport else 0}u
 #define EFI_XNU_MSS_MBA_SHARE_AVAILABLE {int(a.mss_mba_share)}
+#define EFI_XNU_WIFI_NONCE_POOL_AVAILABLE {int(a.wifi_host_nonce_pool)}
 #define EFI_XNU_WIFI_MEM_ASSIGN_AVAILABLE {int(a.mss_mba_share)}
 #define EFI_XNU_MSS_METADATA_BYTES 8412u
 #define EFI_XNU_WIFI_CPU_RO_ADMISSION {int(a.wifi_cpu_ro_admission)}
@@ -1181,6 +1192,7 @@ def main():
     objects=[]
     if a.mss_memory:inputs+=['tools/polaris-mss-memory-codec.py']
     if a.mss_mba_share:inputs+=['tools/polaris-mss-mba-share-codec.py']
+    if a.wifi_host_nonce_pool:inputs+=['tools/polaris-wifi-nonce-pool.py']
     if mss_firmware:
         inputs+=mss_inputs
         flags+=['-I'+str(out/'mss-firmware'),'-I'+str(r/'shim/polaris')]
@@ -2051,6 +2063,10 @@ def main():
             mss_MBA_share_max_secure_rounds=4,mss_MBA_share_descriptor_retained=True,
             mss_MBA_share_target_never_read_after_assignment=True,mss_MBA_share_remote_start=False,
             mss_MBA_share_physical_candidate_ready=False)
+    if wifi_nonce_metadata:
+        manifest.update(wifi_host_nonce_pool=wifi_nonce_metadata,
+            wifi_host_nonce_header_sha256=sha(out/'uefi-wifi-image-nonce-pool.h'),
+            wifi_host_nonce_native_enabled=False,wifi_host_nonce_physical_candidate_ready=False)
     (out/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
     print(json.dumps({k:manifest[k] for k in ['artifact','sha256','bytes','QEMU_variant','device_execution_tested']}))
 

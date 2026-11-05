@@ -4,6 +4,7 @@
 #ifndef POLARIS_UEFI_WIFI_NETWORK_NATIVE_H
 #define POLARIS_UEFI_WIFI_NETWORK_NATIVE_H
 #include "uefi-wifi-keys-native.h"
+#include "uefi-wifi-nonce-native.h"
 #include "../../tools/polaris-wifi-ethernet.h"
 #ifndef EFI_XNU_WIFI_NETWORK_NATIVE_AVAILABLE
 #define EFI_XNU_WIFI_NETWORK_NATIVE_AVAILABLE 0
@@ -48,6 +49,16 @@ static inline int pmwn_begin(struct pmwn_state*s,struct pmst_state*p,const uint8
     s->station=(uintptr_t)p;s->owner=p->owner;s->opening=p->opening;
     pwch_copy(s->pmk,pmk,32);pwch_copy(s->nonce,nonce,32);s->ready=1;p->consumer=(uintptr_t)s;return pmwn_live(s);
 }
+#if EFI_XNU_WIFI_NONCE_NATIVE_AVAILABLE
+static inline int pmwn_begin_pool(struct pmwn_state*s,struct pmst_state*p,const uint8_t pmk[32],struct pmnp_state*n)
+{
+    if(!s||!p||!n||!pmnp_live(n)||!pmst_live(p)||n->owner!=p->owner||n->opening!=p->opening)return 0;
+    struct pmhd_state*d=(void*)(uintptr_t)p->data;struct pmht_state*t=(void*)(uintptr_t)d->parent;
+    if(n->wmi!=t->wmi||!pwea_disjoint((uintptr_t)s,sizeof(*s),(uintptr_t)n,sizeof(*n)))return 0;
+    uint8_t nonce[32]={0};int available=pmnp_take(n,nonce);
+    int result=available?pmwn_begin(s,p,pmk,nonce):0;pwch_wipe(nonce,32);return result;
+}
+#endif
 static inline int pmwn_commit(struct pmwn_state*s)
 {
     struct pmst_state*p=(void*)(uintptr_t)s->station;struct pmhd_state*d=(void*)(uintptr_t)p->data;

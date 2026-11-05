@@ -15,7 +15,7 @@ struct pmwi_state {
     uint64_t htc,owner,opening,zeroed;struct pwmi_state client;
     uint32_t attempted,ready,unknown,error,opened,submitted;
     uint8_t zero[4096];
-    uint64_t consumer;
+    uint64_t consumer,nonce;
 };
 static inline int pmwi_fail(struct pmwi_state*s,unsigned error)
 {s->unknown=1;if(!s->error)s->error=error;return -1;}
