@@ -54,6 +54,24 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi blocked audit — 2026-11-06 Melbourne: physical screen/device access required
+
+- Third consecutive goal turn with the same genuine blocker. Final bounded
+  host-access check20:00:30Z: synthetic UEFI absent, expected-device FASTBOOT
+  query timed out5s. No reset, image transfer, partition write or observer.
+  Exact record: native-memory-display-0001/blocked-audit-current-connection.json.
+- Prior turn supplied a current late-service absence observation, not network
+  progress or a live-process wait. All relevant build/test/device/push handles
+  have ended. No user screen reply arrived; offline diagnostic candidate and
+  next audit are ready. Further boot diagnosis now requires physical feedback
+  or restored device access; repeated identical checks cannot resolve it.
+- Blocked audit threshold satisfied; goal is to be marked BLOCKED, not complete
+  or user-paused. Wi-Fi still2/5; four steps including current remain. No actual
+  scan, join, IP, DNS or data proof. Preserve current phone screen and spent
+  nonce; resume from new candidate only after current state is understood.
+  Source8fba52e and previous handoff8926a46 pushed; current kernel CI42091724671
+  successful. No additional kernel CI is needed for the diagnostic-only fix.
+
 ### Continuous Wi-Fi continuation — 2026-11-06 Melbourne: late service absent, physical state required
 
 - Re-read current handoff/worktree. Previous turn made concrete progress:
