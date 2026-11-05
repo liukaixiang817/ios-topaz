@@ -39,6 +39,9 @@ static void htc_tx(unsigned pipe,unsigned slot,const uint8_t*desc)
     const uint8_t*frame=device_at(pwcr_get(desc,8),bytes);CHECK(bytes>=8&&phtc_u16(frame+2)+8==bytes);
     unsigned eid=frame[0];CHECK(pwcr_get(desc+10,2)==(uint64_t)(eid<<4));
     if(eid){
+#ifdef PMHC_TEST_WMI_HOOK
+        PMHC_TEST_WMI_HOOK(pipe,frame,bytes);return;
+#endif
         CHECK(htc->client.phase==8&&eid==htc->client.wmi&&pipe==3&&bytes==40&&frame[1]==1);htc_wmi_messages++;
         for(unsigned n=0;n<32;n++)CHECK(frame[8+n]==(uint8_t)(0xa0+n));
         uint8_t reply[]={2,2,12,0,8,0,0,0,0x56,0x34,0x12,0,1,4,0,0,2,1,0,0};target_frame(2,reply,sizeof(reply));return;
@@ -60,7 +63,10 @@ static void htc_setup(unsigned kind)
     CHECK(htc->opened&&htc_ready_posted&&transport->posts==28);
     if(kind==3)transport_fault=1;
 }
-int main(int argc,char**argv)
+#ifndef PMHC_TEST_ENTRY
+#define PMHC_TEST_ENTRY main
+#endif
+int PMHC_TEST_ENTRY(int argc,char**argv)
 {
     CHECK(argc==8);sm_original=malloc(PWFI_IMAGE_BYTES);sm_shadow=malloc(PMSQ_BYTES);rmtfs_shadow=malloc(0x202000);
     memory=aligned_alloc(4096,PNV_BYTES);ce_shadow=aligned_alloc(4096,PWDM_BYTES);device_memory=aligned_alloc(4096,PWDM_BYTES);

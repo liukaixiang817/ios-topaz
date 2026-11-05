@@ -44,6 +44,33 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): native WMI initialization
+
+- Native HTC is commitc892b15. New default-OFF pmwi uniquely consumes the actual
+  HTC worker. Parses SERVICE_AVAILABLE/SERVICE_READY, exact compatible ABI,
+  HAL regulatory fields and up to16 unique host memory requests; peer/vdev
+  counts determine requested units, with checked rounding/size arithmetic.
+- WMI host memory uses only the independent CE bank's unassigned page-aligned
+  tail. Explicit extended-address service179 permits35-bit pointers; otherwise
+  all addresses must fit32bits. Never truncate. Actual pmct WB translation,
+  zero/readback and CIVAC run under its busy lock before INIT publication.
+  Target-owned chunks remain resident under the original finite CPU owner.
+- INIT contains primary WCN3990 SNOC config44u32 and actual chunk descriptors.
+  Publication waits for real CE acceptance; READY checks ABI, status and actual
+  unicast MAC. Unknown upper events remain retained for the next typed consumer.
+  Primary SUPPORT_EXTEND_ADDRESS comes from separate SERVICE_AVAILABLE bitmap,
+  not a reinterpretation of the base four-bits-per-word service bitmap.
+- Full native ASan/UBSan PASS6/14840561: two requested chunks, zero requests,
+  invalid memory request, cache failure, READY rejection and timeout, plus
+  retained unrelated events. Protocol34134 PASS with every event truncation,
+  bounded malformed TLVs, ABI/size/address/count/duplicate checks. Both full
+  native and protocol COFF/MachO generalregs/frame1024 PASS. Evidence:
+  wmi-native-0001/proof-0001.json. SOFTWARE target/cache/MMIO/UEFI only.
+- NEXT native passive scan/BSS collection (new protocol WIP), HTT setup and
+  whole-parent/kernel runtime handoff. No phone/USB/CI/push/boot/registration.
+  Still execution2/5; current step plus3 remain. Last15min01:05Z/12:05,
+  next01:20Z/12:20 Melbourne. Goal ACTIVE; continue until actual Wi-Fi works.
+
 ### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): native HTC services
 
 - Native CE transport is commit85d4648. Default-OFF pmhc uniquely consumes the
