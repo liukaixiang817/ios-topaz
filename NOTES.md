@@ -44,6 +44,39 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05: fixed kernel/CPU0 message boundary
+
+- Nonce input/build binding committedde82958. Persistent-runtime investigation
+  confirms current pmsc_arch requires load_state2/native CPU_ON flag0/180s;
+  pweh/pmmn/pmsi bindings also retain those startup-only predicates. Merely
+  extending one deadline or invoking old boot_kernel cannot transfer ownership.
+  Actual kernel profile is xnu/profiles/polaris (latest0913), NOT Topaz's0900
+  network patch. Own kernel CPU declaration selects700/600/500/400 for4 CPUs,
+  preserving firmwareCPU0. HackiOS resident-loader/network approaches reviewed.
+- New fixed16KiB message ABI has five2048B lanes: request, response, TX, RX,
+  event; immutable bootstrap at lane5. Producer header/data and consumer ACK
+  occupy separate128B cache lines. Only bounded messages: state, scan/entry,
+  WPA2 join(passphrase or PMK), disconnect and1514B Ethernet. No caller-selected
+  pointers/physical addresses. One outstanding sequence per lane, epoch binding,
+  exact ACK before reuse, no duplicate delivery or wrap/reopen. Private JOIN
+  copies must be wiped by the caller; transport buffers wipe after valid ACK.
+- Cache transport writes data/header excluding sequence, synchronizes, then
+  publishes one atomic64-bit sequence last. Consumer invalidates/copies/rechecks
+  publication before delivery, and similarly publishes ACK last after processing.
+  Bounded per-operation effect records preserve partial/unknown progress. Bus
+  callbacks still require actual native/kernel authority and mapping; no such
+  authority is claimed by a well-formed message or callback result alone.
+- ASan/UBSan845459 wire checks and9113 independent CPU/peer-cache checks PASS,
+  including70000 exchanges, corruption, torn snapshots, each partial IO/cache
+  failure, ACK backpressure and dead-owner refusal. COFF/MachO generalregs/
+  frame1024 PASS. Evidence:mailbox-0001/proof-0001.json. These are software
+  interfaces only, not a registered kernel interface or persistent device owner.
+- NEXT actual kernel mailbox storage/adapter and native handoff/owner, whole
+  parent/persistent/post-CE integration. Rechecked own ICNSS and primary SNOC:
+  MODE OFF response/software cleanup alone is not a hardware CE-halt observation.
+  No phone/USB/CI/push/boot. Execution2/5,current step plus3 remain.
+  Last15min03:52Z/14:52 Melbourne,next04:07Z/15:07. Goal ACTIVE; continue.
+
 ### Continuous Wi-Fi milestone — 2026-11-05: candidate-bound native SNonce input
 
 - GTK renewal committed59d27b8. New host OS CSPRNG generator creates64 distinct
