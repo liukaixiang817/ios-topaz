@@ -44,6 +44,26 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): independent CE memory producer
+
+- Current read-only SMMU route is commit7f9dfb8. Default-OFF pcdm uses actual
+  early parent, original GetMap/AllocateMaxAddress(LoaderData)/GetMap before
+  native ownership. Allocates8MiB plus two guard pages below35-bit DMA limit;
+  exact bidirectional Conventional->LoaderData map delta, disjoint existing
+  image/kernel/early claims, Core/FP identity and two complete WB AT passes.
+- WCN3990 layout retains separate source/destination rings and buffer pools
+  for12 pipes,16-byte descriptors, one RRI page and no host CE6 ring. Source
+  CE4 has2048 entries; all ring/pool offsets page aligned/nonoverlapping and
+  avoid both guards. It does not zero/publish buffers or infer SMMU authority.
+- ASan/UBSan PASS13/540 includes split-map allocation, altered unrelated map,
+  source mutation, over35-bit/unaligned return, allocation/AT failures and
+  exact upper-bound acceptance. Generalregs/frame1024 COFF/MachO PASS.
+  Evidence:ce-memory-native-0001/proof-0001.json. All UEFI/AT leaves SOFTWARE.
+- NEXT compose current owner with retained CE backing, zero/cache publication,
+  WLFW activation and CE rings/HTC, then whole-parent/kernel handoff. No
+  phone/USB/CI/push/boot/parent registration. Execution2/5; this step plus3
+  remain. Last15min00:19Z/11:19, next00:34Z/11:34. Goal ACTIVE.
+
 ### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): current read-only WLAN SMMU route
 
 - WLFW CFG/MISSION/OFF is commit631ec99. Default-OFF pmws now consumes that
