@@ -49,7 +49,12 @@ static int pwkr_cache(uint64_t address,uint64_t bytes,unsigned clean)
     }else if(address==(uintptr_t)runtime_ap){
         CHECK(bytes==sizeof(*runtime_ap));
         if(clean)peer_ap=*runtime_ap;else *runtime_ap=peer_ap;
-    }else CHECK(clean&&(address==(uintptr_t)arena+0x1f30000||address==(uintptr_t)arena+0x1f40000));
+    }else{
+#ifdef PWRUNTIME_OTHER_CACHE
+        if(PWRUNTIME_OTHER_CACHE(address,bytes,clean))return 1;
+#endif
+        CHECK(clean&&(address==(uintptr_t)arena+0x1f30000||address==(uintptr_t)arena+0x1f40000));
+    }
     return 1;
 }
 static int64_t pwkr_cpu_on(uint64_t entry,uint64_t context)
@@ -79,6 +84,9 @@ static void runtime_prepare(void)
     memcpy(mailbox_memory,auth_payload+source+0x4000,0x4000);CHECK(pwks_verify(runtime_copy,1));
     runtime_plan=(struct polaris_plan){(uintptr_t)kernel_memory+0x8000,(uintptr_t)kernel_memory+0xc000,(uintptr_t)kernel_memory+0x10000,(uintptr_t)kernel_memory};
     runtime_ap=(void*)(arena+0x1f20000);memset(runtime_ap,0,sizeof(*runtime_ap));
+#ifdef PWRUNTIME_AFTER_PREPARE
+    PWRUNTIME_AFTER_PREPARE();
+#endif
 }
 static int kernel_live(void*p){return p==kernel_page&&pmsc_persistent(owner);}
 static int kernel_copy(void*p,unsigned at,void*q,unsigned bytes,unsigned write)
@@ -145,4 +153,7 @@ static void runtime_drive(void)
     advance_to(owner->opening+PMSC_TOTAL+19200);runtime_control(PWMB_STATE,0,0);
     CHECK(pmsc_persistent(owner)&&worker->phase==PWWN_LINK&&runtime_cpu_calls==1&&pwmb_u32(reply.data+16)==3);
     fprintf(stderr,"complete startup/runtime worker scan/PMK JOIN/keys/mailbox RX+TX and beyond180s PASS; SOFTWARE CPU/kernel/radio, no IP or physical claim\n");
+#ifdef PWRUNTIME_AFTER_TRAFFIC
+    PWRUNTIME_AFTER_TRAFFIC();
+#endif
 }

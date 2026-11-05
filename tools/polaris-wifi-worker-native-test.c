@@ -14,7 +14,7 @@ static struct pwns_parent model_parent;
 static uint8_t page[PWMB_BYTES];
 static struct pwmb_link native_lanes[PWMB_LANES],kernel_lanes[PWMB_LANES];
 static unsigned qualified=1,radio_polls,scan_result=1,net_result=1,tx_busy=1,tx_accepted,rx_acked,reg_commands,station_begins;
-static unsigned force_fault;
+static unsigned force_fault,reap_calls,reap_index,reap_fault;
 static int bus_live(void*p){return p==page;}
 static int bus_copy(void*p,unsigned at,void*q,unsigned bytes,unsigned write)
 {CHECK(p==page&&at<PWMB_BYTES&&bytes<=PWMB_BYTES-at);if(write)memcpy(page+at,q,bytes);else memcpy(q,page+at,bytes);return 1;}
@@ -53,6 +53,11 @@ static int model_network_step(struct pmwn_state*s)
 static int model_network_send(struct pmwn_state*s,const uint8_t*p,unsigned n)
 {CHECK(s->ethernet.authorized&&n==60&&pwmb_u32(p+14)==0x12345678);if(tx_busy)return 0;tx_accepted++;return 1;}
 static int model_network_ack(struct pmwn_state*s){CHECK(s->ethernet.rx_ready);s->ethernet.rx_ready=0;rx_acked++;net_result=5;return 1;}
+static int model_reap(struct pmct_state*t,unsigned pipe)
+{
+    CHECK(t==&model_parent.transport&&pipe==3&&t->rings.source[pipe].posted);
+    reap_calls++;return reap_fault?-1:pwcr_complete_tx(&t->rings,pipe,reap_index);
+}
 #define pwmn_current model_current
 #define pwmn_send model_send
 #define pwmn_receive model_receive
@@ -67,6 +72,7 @@ static int model_network_ack(struct pmwn_state*s){CHECK(s->ethernet.rx_ready);s-
 #define pmwn_step model_network_step
 #define pmwn_send model_network_send
 #define pmwn_ack model_network_ack
+#define pmct_reap model_reap
 #define EFI_XNU_WIFI_WORKER_NATIVE_AVAILABLE 1
 #include "uefi-wifi-worker-native.h"
 static struct pwwn_state worker;
@@ -74,7 +80,7 @@ static void worker_setup(void)
 {
     memset(&worker,0,sizeof(worker));memset(&model_parent,0,sizeof(model_parent));memset(page,0,sizeof(page));
     memset(native_lanes,0,sizeof(native_lanes));memset(kernel_lanes,0,sizeof(kernel_lanes));
-    qualified=1;force_fault=0;worker.ready=1;worker.country=36;worker.mailbox.parent=(uintptr_t)&model_parent;
+    qualified=1;force_fault=0;reap_calls=reap_index=reap_fault=0;worker.ready=1;worker.country=36;worker.mailbox.parent=(uintptr_t)&model_parent;
     model_parent.owner.last=100;model_parent.wmi.client.phase=4;model_parent.wmi.client.epoch=77;model_parent.wmi.client.mac[0]=2;
     pwmi_put(model_parent.wmi.client.regulatory,0x60);model_parent.htc.client.wmi=1;
     for(unsigned n=0;n<PWMB_LANES;n++){
@@ -127,10 +133,13 @@ int main(void)
     CHECK(pwmb_receive_complete(&kernel_lanes[PWMB_RX],&model_bus)==1&&pwwn_step(&worker)==1&&rx_acked==2);
     control(PWMB_DISCONNECT,0,0,45);CHECK(worker.phase==PWWN_LINK); /* Explicitly unsupported, not false completion. */
     CHECK(pwwn_quiesce_begin(&worker)&&!pwwn_quiesce_begin(&worker));
-    model_parent.transport.rings.source[3].posted=1;CHECK(pwwn_step(&worker)==1&&worker.closing==1&&!worker.network.closed);
-    model_parent.transport.rings.source[3].posted=0;model_parent.data.rings.tx_owner[4]=2;
+    model_parent.transport.rings.started=1;
+    model_parent.transport.rings.source[3]=(struct pwcr_ring){.entries=32,.write=1,.posted=1};
+    CHECK(pwwn_step(&worker)==1&&worker.closing==1&&!worker.network.closed&&reap_calls==1);
+    reap_index=1;model_parent.data.rings.tx_owner[4]=2;
     CHECK(pwwn_step(&worker)==1&&worker.closing==1);model_parent.data.rings.tx_owner[4]=0;
     CHECK(pwwn_step(&worker)==2&&worker.closing==2&&worker.network.closed&&worker.phase==PWWN_CLOSED);
+    CHECK(reap_calls==2&&!model_parent.transport.rings.source[3].posted&&model_parent.transport.rings.source[3].completed==1);
     before=radio_polls;CHECK(pwwn_step(&worker)==2&&radio_polls==before); /* No new post after drain. */
     memset(worker.pmk,0x5a,32);qualified=0;before=radio_polls;
     CHECK(pwwn_step(&worker)==-1&&worker.unknown&&pwmb_zero(worker.pmk,32)&&radio_polls==before);
@@ -139,5 +148,8 @@ int main(void)
     worker_setup();force_fault=0;worker.phase=PWWN_LINK;worker.network.ready=1;net_result=5;
     CHECK(pwwn_quiesce_begin(&worker));model_parent.owner.last=worker.close_deadline+1;
     CHECK(pwwn_step(&worker)==-1&&worker.unknown&&worker.error==15);
+    worker_setup();worker.phase=PWWN_LINK;worker.network.ready=1;net_result=5;reap_fault=1;
+    model_parent.transport.rings.source[3].posted=1;CHECK(pwwn_quiesce_begin(&worker));
+    CHECK(pwwn_step(&worker)==-1&&worker.error==15&&worker.closing==1&&reap_calls==1);
     printf("PASS %u worker checks; actual wire/crypto, SOFTWARE radio/runtime\n",checks+nv_checks);return 0;
 }

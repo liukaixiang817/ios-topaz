@@ -73,7 +73,13 @@ static inline int pwwn_quiesce_poll(struct pwwn_state*s)
        s->station.submitted||s->station.mgmt_wait||p->htc.client.pending||p->htc.frame_kind||
        p->data.submitted||p->data.frame_ready||p->data.rings.busy||p->transport.busy||p->transport.rings.busy)return 1;
     for(unsigned n=0;n<PHTM_TX;n++)if(p->data.rings.tx_owner[n])return 1;
-    for(unsigned n=0;n<12;n++)if(p->transport.rings.source[n].posted)return 1;
+    /* The last HTC/WMI command may have no subsequent send to reap its CE
+     * completion. Refresh actual hardware RRI ownership while draining;
+     * waiting only on the cached posted count can never finish that case. */
+    for(unsigned n=0;n<12;n++)if(p->transport.rings.source[n].posted){
+        if(pmct_reap(&p->transport,n)<0)return pwwn_fail(s,15);
+        if(p->transport.rings.source[n].posted)return 1;
+    }
     pmwn_close(&s->network);s->phase=PWWN_CLOSED;s->closing=2;pwwn_event(s,4,0,0);return 2;
 }
 static inline void pwwn_state_body(struct pwwn_state*s,uint8_t*out)
