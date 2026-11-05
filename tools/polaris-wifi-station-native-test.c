@@ -13,6 +13,7 @@ static struct pmst_state*station;
 static unsigned station_fault,station_scenarios,scan_commands,station_commands,mgmt_commands;
 static void station_target_management(const uint8_t*,unsigned);
 static unsigned station_wmi_fault;
+static unsigned scan_wire_id,scan_wire_request;
 static const uint8_t ap[6]={2,0,0,0,0,9};
 static void station_htt_event(const uint8_t*p,unsigned bytes)
 {
@@ -20,7 +21,7 @@ static void station_htt_event(const uint8_t*p,unsigned bytes)
 }
 static void scan_event(unsigned type)
 {
-    uint8_t p[32]={0};pwmi_put(p,0x3001);pwmi_header(p+4,36,24);pwmi_put(p+8,type);pwmi_put(p+16,2437);pwmi_put(p+20,0xa001);pwmi_put(p+24,0xa007);wmi_frame(p,32,2);
+    uint8_t p[32]={0};pwmi_put(p,0x3001);pwmi_header(p+4,36,24);pwmi_put(p+8,type);pwmi_put(p+16,2437);pwmi_put(p+20,scan_wire_request);pwmi_put(p+24,scan_wire_id);wmi_frame(p,32,2);
 }
 static void station_beacon(void)
 {
@@ -33,6 +34,9 @@ static void station_beacon(void)
 static void station_target_wmi(unsigned pipe,const unsigned char*f,unsigned bytes)
 {
     CHECK(pipe==3&&f[0]==htc->client.wmi);const uint8_t*p=f+8;unsigned cmd=pwmi_get(p);
+#ifdef PMST_TEST_OTHER_WMI
+    if(PMST_TEST_OTHER_WMI(pipe,f,bytes))return;
+#endif
 #ifdef PMST_TEST_WMI_HOOK
     if(cmd==0x5009||cmd==0x6004){PMST_TEST_WMI_HOOK(pipe,f,bytes);return;}
 #endif
@@ -54,7 +58,8 @@ static void station_target_wmi(unsigned pipe,const unsigned char*f,unsigned byte
         CHECK(scan&&pmwsn_live(scan));scan_commands++;
         if(scan_commands==1){CHECK(cmd==0x5001);wmi_frame(f,0,2);return;}
         if(scan_commands==2){CHECK(cmd==0x3003);wmi_frame(f,0,2);return;}
-        CHECK(scan_commands==3&&cmd==0x3001);scan_event(1);station_beacon();scan_event(2);return;
+        CHECK(scan_commands==3&&cmd==0x3001);scan_wire_id=pwmi_get(p+8);scan_wire_request=pwmi_get(p+12);
+        scan_event(1);station_beacon();scan_event(2);return;
     }
     CHECK(pmst_live(station));station_commands++;
     if(station_commands==1){CHECK(cmd==0x3003&&bytes==52&&pwmi_get(p+8)==1&&pwmi_get(p+32)==1);wmi_frame(f,0,2);return;}

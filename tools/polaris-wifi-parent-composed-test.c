@@ -112,7 +112,11 @@ static void parent_wait(void)
 int main(int argc,char**argv)
 {
     CHECK(argc==9||argc==10);unsigned mode=argc==10?(unsigned)strtoul(argv[9],0,10):0;CHECK(mode<=2);
-    parent_hold_hello=mode!=0;station_test_open(8,argv);parent_prepare();
+    parent_hold_hello=mode!=0;station_test_open(8,argv);
+#ifdef PWNS_TEST_BEFORE_PREPARE
+    PWNS_TEST_BEFORE_PREPARE();
+#endif
+    parent_prepare();
     FILE*f=fopen(argv[8],"rb");CHECK(f&&fread(parent_nonces,1,PWNP_BYTES,f)==PWNP_BYTES&&fread(parent_nonce_hash,1,32,f)==32&&fgetc(f)==EOF&&!fclose(f));
     fprintf(stderr,"parent bytes=%zu auth page=%lx rmtfs page=%lx wlan page=%lx host_page=%zu\n",sizeof(*parent),(unsigned long)(uintptr_t)&auth_owner->assignment[0].page,(unsigned long)(uintptr_t)&rmtfs->assignment.page,(unsigned long)(uintptr_t)&wlan->assignment[0].page,host_page);
     uint8_t *memory_hash=arena+0x1e12000;memcpy(memory_hash,allocation_digest,32);
@@ -142,5 +146,8 @@ int main(int argc,char**argv)
     if(status!=2)return 1;
     CHECK(parent->phase==PWNS_READY&&pmhd_live(data)&&pmnp_live(&parent->nonce));
     CHECK(descriptor_protections==descriptor_restores&&descriptor_protections==8);
+#ifdef PWNS_TEST_AFTER_READY
+    PWNS_TEST_AFTER_READY();
+#endif
     printf("PASS %u full native startup parent checks; SOFTWARE hardware/firmware leaves, no physical claim\n",checks+nv_checks);return 0;
 }
