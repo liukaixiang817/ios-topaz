@@ -55,7 +55,8 @@ static inline int pmsy_stop_current(struct pmsy_state*y,struct pmsx_state*x)
 static inline int pmnd_begin(struct pmnd_state*s,struct pmnd_delivery*records,struct pmwa_state*w)
 {
     if(!s||!records||!w||!pwmc_zero(s,sizeof(*s))||!pwmc_zero(records,sizeof(*records)*PMND_RECORDS)||
-       !pmwa_current(w)||!w->client.ready||!w->assigned||w->pending)return 0;
+       !pmwa_current(w)||!w->client.ready||!w->assigned||w->pending||
+       (w->client.enable_requested&&!w->client.disabled))return 0;
     struct pmrf_state*r=(void*)(uintptr_t)w->service;struct pmsg_state*g=(void*)(uintptr_t)r->glink;
     struct pmsx_state*x=(void*)(uintptr_t)g->channel;struct pmsy_state*y=(void*)(uintptr_t)x->negotiation;
     struct pmsn_state*a=(void*)(uintptr_t)x->auth;struct pmsc_owner*o=(void*)(uintptr_t)x->owner;

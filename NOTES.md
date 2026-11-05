@@ -44,6 +44,38 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): WLFW CE configuration / mission / off
+
+- Exact native VMID return is commit225d318. WLFW client now retains CFG23,
+  MISSION22 and OFF22 requests/responses after actual startup FW_READY/CAP.
+  Own c7cb50c1 IDL provides20-byte target,12-byte service,4-byte shadow arrays,
+  one-byte counts and TLVs11/12/13. Config is copied/validated before use;
+  current scope, unique sequencing, callbacks-only retention,10s reply timeout,
+  exact transaction/message/result checks and sticky failure remain enforced.
+- Maximum643-byte configuration and actual559-byte WCN3990 SNOC plan pass
+  over real GLINK/QRTR. Primary Linux62 source files downloaded and individually
+  Git-blob verified at458c6079fc1d41d564c37679c8ace02cd83ee817; retained in
+  ath10k-source-0001/manifest.json.12 target pipes,21 service entries including
+  final zero sentinel,12 shadows and separate host ring sizes retained as
+  protocol data with ISC source notices. No foreign scripts/prebuilts executed.
+- Final10 activation/failure scenarios +19 startup scenarios PASS ASan/UBSan;
+  whole native startup/stop/resource/VMID regression6/8183994 PASS after state
+  expansion. Both full native exports and separate client COFF/MachO PASS
+  generalregs/frame1024. Evidence:wlfw-enable-0001/proof-0001.json. No actual
+  activation caller or CE memory/rings yet; OFF response does not prove DMA
+  drain. Native normal stop now refuses an enabled client until OFF accepted.
+- Own live DT confirms APPS SMMU15000000/80000, WLAN SID0x40/mask1 and
+  qcom,smmu-s1-bypass. Own icnss_smmu_init explicitly sets DOMAIN_ATTR_S1_BYPASS
+  then attaches. Own pinned arm-smmu.c (continuation-0033/vendor) uses S2CR
+  TRANS to a stage1/S2-bypass context with SCTLR.M clear, not an assumption that
+  all S2CRs are bypass. Need current matching route/CB evidence before CE DMA.
+  Kernel tree lacks bundled qcacld under drivers/staging; ICNSS/IDL/DT and the
+  own SMMU implementation remain authoritative platform comparisons.
+- NEXT establish CE DMA backing/current SMMU route, native ring/HTC data path,
+  whole-parent/kernel runtime handoff. No phone/USB/CI/push/boot or registration.
+  Execution2/5: current step plus3 remain. Last15min00:04Z/11:04 Melbourne;
+  next00:19Z/11:19. Goal ACTIVE; continue until actual Wi-Fi works.
+
 ### Continuous Wi-Fi milestone — 2026-11-05 (Australia/Melbourne): native exact VMID return
 
 - Actual native resource retirement is commit7dce0bb. Default-OFF pmvb uniquely

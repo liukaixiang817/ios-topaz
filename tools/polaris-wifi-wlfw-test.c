@@ -75,7 +75,10 @@ static int wf_drive(struct wf_fixture*f)
         f->m->now+=1000000;
     }assert(0);return 0;
 }
-int main(void)
+#ifndef PWFW_TEST_ENTRY
+#define PWFW_TEST_ENTRY main
+#endif
+int PWFW_TEST_ENTRY(void)
 {
     unsigned scenarios=0;
     for(unsigned fault=0;fault<=18;fault++){

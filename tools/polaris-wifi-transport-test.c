@@ -47,7 +47,7 @@ static void peer(struct model *m)
     if (!m->responding) return;
     uint32_t at = get32(m->mem+DESC), end = get32(m->mem+DESC+4);
     while(at != end) {
-        uint8_t h[16], body[512];
+        uint8_t h[16], body[1024]; /* Includes the643-byte maximum WLFW CE plan. */
         for(unsigned i=0;i<8;i++) h[i]=m->mem[TX+(at+i)%FSIZE];
         uint32_t cmd=get16(h), cid=get16(h+2), arg=get32(h+4), n=8;
         if(cmd==OPEN) n+=arg;

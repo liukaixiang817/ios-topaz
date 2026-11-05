@@ -60,7 +60,7 @@ static void pwfw_receive(void*ctx,uint32_t node,uint32_t port,const void*data,si
         else pwfw_fail(c,EPROTO); /* No rejuvenation/restart or dynamic-memory protocol is admitted. */
         return;
     }
-    if(c->phase>=4){pwfw_fail(c,EPROTO);return;}struct pwfw_exchange*x=&c->exchange[c->phase];
+    if(c->phase>=7||(c->phase>=4&&!c->enable_requested)||(c->phase==6&&!c->disable_requested)){pwfw_fail(c,EPROTO);return;}struct pwfw_exchange*x=&c->exchange[c->phase];
     if(!x->requested||x->received||!pwfw_packet(p,n,2,x->message)||pw_le16(p+1)!=x->transaction){pwfw_fail(c,EPROTO);return;}
     memcpy(x->response,p,n);x->response_bytes=(uint32_t)n;x->received=true;
 }
@@ -89,13 +89,29 @@ static bool pwfw_accept(struct polaris_wifi_wlfw*c,struct pwfw_exchange*x)
         at+=len;
     }return result&&(x->message!=0x2d||regions);
 }
+static bool pwfw_ce_valid(const struct pwfw_ce_config*);
 static int pwfw_send(struct polaris_wifi_wlfw*c,uint64_t now)
 {
-    static const uint16_t messages[4]={0x20,0x2d,0x2e,PW_CAP_MESSAGE};struct pwfw_exchange*x=&c->exchange[c->phase];
+    if(c->phase>=7||(c->phase==4&&!pwfw_ce_valid(&c->ce)))return pwfw_fail(c,EPROTO);
+    static const uint16_t messages[7]={0x20,0x2d,0x2e,PW_CAP_MESSAGE,0x23,0x22,0x22};struct pwfw_exchange*x=&c->exchange[c->phase];
     x->message=messages[c->phase];x->transaction=(uint16_t)(c->phase+1);uint8_t*p=x->request;unsigned bytes=7;
     pwfw_put(p+1,x->transaction,2);pwfw_put(p+3,x->message,2);
     if(!c->phase){pwfw_field(p,&bytes,0x10,1,1);pwfw_field(p,&bytes,0x13,1,1);pwfw_field(p,&bytes,0x14,1,1);pwfw_field(p,&bytes,0x15,0x4b4e454c,4);}
     else if(c->phase==1){pwfw_field(p,&bytes,1,c->cfg.msa,8);pwfw_field(p,&bytes,2,c->cfg.bytes,4);}
+    else if(c->phase==4){
+        const struct pwfw_ce_config*q=&c->ce;
+        p[bytes++]=0x11;pwfw_put(p+bytes,1+20*q->targets,2);bytes+=2;p[bytes++]=(uint8_t)q->targets;
+        for(unsigned n=0;n<q->targets;n++){
+            const struct pwfw_ce_target*t=&q->target[n];const uint32_t v[]={t->pipe,t->direction,t->entries,t->bytes,t->flags};
+            for(unsigned j=0;j<5;j++){pwfw_put(p+bytes,v[j],4);bytes+=4;}
+        }
+        p[bytes++]=0x12;pwfw_put(p+bytes,1+12*q->services,2);bytes+=2;p[bytes++]=(uint8_t)q->services;
+        for(unsigned n=0;n<q->services;n++){
+            const struct pwfw_ce_service*t=&q->service[n];pwfw_put(p+bytes,t->service,4);pwfw_put(p+bytes+4,t->direction,4);pwfw_put(p+bytes+8,t->pipe,4);bytes+=12;
+        }
+        if(q->shadows){p[bytes++]=0x13;pwfw_put(p+bytes,1+4*q->shadows,2);bytes+=2;p[bytes++]=(uint8_t)q->shadows;
+            for(unsigned n=0;n<q->shadows;n++){pwfw_put(p+bytes,q->shadow[n].pipe,2);pwfw_put(p+bytes+2,q->shadow[n].offset,2);bytes+=4;}}
+    }else if(c->phase==5||c->phase==6)pwfw_field(p,&bytes,1,c->phase==5?0:4,4);
     pwfw_put(p+5,bytes-7,2);x->request_bytes=bytes;x->issued=now;x->requested=true;
     int error=c->ops->send(c->port,c->node,c->service_port,p,bytes);if(error)return pwfw_fail(c,(unsigned)error);return (int)c->error;
 }
@@ -117,7 +133,7 @@ int polaris_wifi_wlfw_poll(struct polaris_wifi_wlfw*c,uint64_t now)
     if(now<c->last_us||(!c->ready&&now-c->opening>=PWFW_TOTAL)){error=pwfw_fail(c,ETIMEDOUT);goto out;}c->last_us=now;
     if((error=polaris_wifi_glink_poll_once(c->cfg.transport))){error=pwfw_fail(c,(unsigned)error);goto out;}
     if((error=pwfw_scope(c)))goto out;if(!c->discovered){error=EAGAIN;goto out;}
-    if(c->phase<4){
+    if(c->phase<4||(c->enable_requested&&c->phase<6)||(c->disable_requested&&c->phase==6)){
         struct pwfw_exchange*x=&c->exchange[c->phase];
         if(!x->requested){error=pwfw_send(c,now);if(!error)error=EAGAIN;goto out;}
         if(!x->received){error=now-x->issued>=PWFW_TIMEOUT?pwfw_fail(c,ETIMEDOUT):EAGAIN;goto out;}
@@ -127,7 +143,46 @@ int polaris_wifi_wlfw_poll(struct polaris_wifi_wlfw*c,uint64_t now)
             if(!c->cfg.assign(c->cfg.ctx,c->region,c->regions)){error=pwfw_fail(c,EIO);goto out;}c->assigned=true;
             if((error=pwfw_scope(c)))goto out;
         }
-        c->phase++;error=EAGAIN;
+        c->phase++;
+        if(c->phase==6)c->enabled=true;
+        if(c->phase==7){c->enabled=false;c->disabled=true;}
+        error=EAGAIN;
     }else{c->ready=c->assigned&&c->fw_ready&&c->exchange[2].accepted&&c->exchange[3].accepted;error=c->ready?0:EAGAIN;}
  out:c->busy=false;return error;
+}
+static bool pwfw_ce_valid(const struct pwfw_ce_config*q)
+{
+    if(!q||!q->targets||q->targets>12||!q->services||q->services>24||q->shadows>24)return false;
+    uint32_t pipes=0;unsigned directions[12]={0};
+    for(unsigned n=0;n<q->targets;n++){
+        const struct pwfw_ce_target*t=&q->target[n];
+        if(t->pipe>=12||!t->direction||t->direction>4||(pipes&(1u<<t->pipe))||(t->flags&~8u)||
+           (t->direction==4?(t->entries||t->bytes):(!t->entries||t->entries>4096||(t->entries&(t->entries-1))||!t->bytes||t->bytes>65535)))return false;
+        pipes|=1u<<t->pipe;directions[t->pipe]=t->direction;
+    }
+    for(unsigned n=0;n<q->services;n++){
+        const struct pwfw_ce_service*t=&q->service[n];
+        if(!t->service&&!t->direction&&!t->pipe&&n+1==q->services)continue; /* SNOC's final sentinel. */
+        if(t->pipe>=12||!(pipes&(1u<<t->pipe))||t->direction<1||t->direction>2||
+           !(directions[t->pipe]&t->direction))return false;
+        for(unsigned j=0;j<n;j++)if(t->service==q->service[j].service&&t->direction==q->service[j].direction&&t->pipe==q->service[j].pipe)return false;
+    }
+    for(unsigned n=0;n<q->shadows;n++){
+        const struct pwfw_ce_shadow*t=&q->shadow[n];
+        if(t->pipe>=12||!(pipes&(1u<<t->pipe))||(t->offset!=0x3c&&t->offset!=0x40))return false;
+        for(unsigned j=0;j<n;j++)if(t->pipe==q->shadow[j].pipe&&t->offset==q->shadow[j].offset)return false;
+    }return true;
+}
+int polaris_wifi_wlfw_enable(struct polaris_wifi_wlfw*c,const struct pwfw_ce_config*q)
+{
+    if(!c||!q||!c->port)return EINVAL;if(c->busy)return EBUSY;
+    if(!c->ready||c->phase!=4||c->enable_requested)return EALREADY;
+    if(!pwfw_ce_valid(q))return EINVAL;c->busy=true;int error=pwfw_scope(c);
+    if(!error){c->ce=*q;c->enable_requested=true;}c->busy=false;return error;
+}
+int polaris_wifi_wlfw_disable(struct polaris_wifi_wlfw*c)
+{
+    if(!c||!c->port)return EINVAL;if(c->busy)return EBUSY;
+    if(!c->enabled||c->phase!=6||c->disable_requested)return EALREADY;
+    c->busy=true;int error=pwfw_scope(c);if(!error)c->disable_requested=true;c->busy=false;return error;
 }
