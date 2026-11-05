@@ -31,6 +31,13 @@ static inline int pmwsn_begin(struct pmwsn_state*s,struct pmwi_state*w,unsigned 
        !pmwi_child(h,(uintptr_t)s,sizeof(*s))||!pwsc_open(&s->client,&w->client,scan_id,o->last))return 0;
     s->wmi=(uintptr_t)w;s->owner=w->owner;s->opening=w->opening;s->attempted=s->ready=1;w->consumer=(uintptr_t)s;return pmwsn_live(s);
 }
+static inline int pmwsn_restart(struct pmwsn_state*s,unsigned scan_id)
+{
+    if(!pmwsn_live(s)||s->consumer||s->submitted)return 0;
+    struct pmwi_state*w=(void*)(uintptr_t)s->wmi;struct pmhc_state*h=(void*)(uintptr_t)w->htc;
+    struct pmsc_owner*o=(void*)(uintptr_t)s->owner;
+    return !h->client.pending&&!h->frame_kind&&pwsc_restart(&s->client,scan_id,o->last);
+}
 /* 1=progress/wait,2=retained other payload,3=scan COMPLETED received.
  * count==0 is a completed empty scan, never a successful AP discovery. */
 static inline int pmwsn_step(struct pmwsn_state*s)

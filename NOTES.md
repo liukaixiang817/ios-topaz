@@ -54,6 +54,33 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-05: native request/radio worker
+
+- Previous mailbox source a4f27dc committed/pushed. Added default-OFF native
+  worker connecting fixed-page CONTROL/REPLY/TX/RX/EVENT to scan, station,
+  incremental PBKDF2, nonce pool, WPA/key and Ethernet workers. Accepted replies
+  do not claim completion: scan COMPLETED / authorized controlled port produce
+  actual progress events. Radio polling continues under mailbox backpressure;
+  invalid BSD EAPOL/source frames are dropped, secrets wiped after consumption.
+- Human supplied the test SSID and Australia. Private target is recorded in
+  worker-native-0001/user-network.json, no password received or stored. Explicit
+  AU profile intersects channels1..11/20MHz/20dBm with firmware frequency bounds
+  and supported factory domain/CTL mappings. Unknown domains refuse JOIN.
+  SET_REGDOMAIN must reach actual CE publication before station startup. No
+  claim of firmware response exists for this response-less WMI command.
+- ASan/UBSan3535 worker checks PASS with real worker/wire/PBKDF2 but SOFTWARE
+  radio/runtime peers.71801 regulatory cases and284 scan cases PASS; repeated
+  scans reuse the live vdev instead of issuing duplicate VDEV_CREATE. Two
+  actual whole native exports COFF/MachO PASS, generalregs/frame1024. Initial
+  test helper name collided with an included fixture; fixed. First worker
+  success printed the wrong counter0; corrected total3535 on clean rerun.
+  Evidence worker-native-0001/proof-0001.json and logs. No physical radio claim.
+- Disconnect command explicitly returns EOPNOTSUPP until real retirement is
+  integrated; it does not pretend software key erasure stops hardware. Actual
+  loader/runtime callsite, full parent model, post-CE exit, builder/new candidate
+  and IP/DNS userland remain. No new FASTBOOT query/image/boot or USB observer.
+  Step2/5,current plus3 remain. Last15min06:22Z,next06:37Z. Goal ACTIVE.
+
 ### Continuous Wi-Fi milestone — 2026-11-05: native fixed-page adapter
 
 - Runtime handoff48d2b54 committed/pushed; preceding6b26ade also published.

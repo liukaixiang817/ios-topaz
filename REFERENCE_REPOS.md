@@ -14,6 +14,19 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+## Native regulatory/control integration (0189, 2026-11-05)
+
+Compared ath/regd.c, regd.h and regd_common.h at the same primary Linux commit
+458c6079fc1d41d564c37679c8ace02cd83ee817 (Git blobs independently verified) with
+ath10k TLV SET_REGDOMAIN and half-dBm channel encoders. Pinned upstream
+wireless-regdb db.txt at40095bd16e53d5c5682fd6e7e3dbbbfaf0fe5410 from
+https://kernel.googlesource.com/pub/scm/linux/kernel/git/wens/wireless-regdb
+supplies the explicitly human-selected AU rule. Own narrower20MHz/20dBm,
+channels1..11 profile keeps factory CTL limits and firmware frequency bounds.
+Unsupported EEPROM mappings refuse; no beacon/host-locale country inference.
+Private source/provenance: ath-regulatory-source-0001. Native worker and source
+checks remain software/compile evidence, not completed physical networking.
+
 ## Own native CE startup (0189, 2026-11-05)
 
 The later BSD endpoint compares HackiOS redwood_net's XNU ether/ifnet API use

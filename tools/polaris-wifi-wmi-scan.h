@@ -31,6 +31,17 @@ static inline int pwsc_open(struct pwsc_state*s,const struct pwmi_state*w,unsign
     s->epoch=w->epoch;s->last=now;s->deadline=now+PWSC_WAIT;s->scan_id=0xa000|scan;s->request_id=0xa001;
     pwmi_copy(s->mac,w->mac,6);s->opened=1;return 1;
 }
+/* The same live vdev may scan again after COMPLETED; never issue another
+ * VDEV_CREATE. The native caller must exclude a station/other consumer. */
+static inline int pwsc_restart(struct pwsc_state*s,unsigned scan,uint64_t now)
+{
+    if(!s||!s->completed||s->phase!=5||s->pending||!scan||scan>4095||
+       (0xa000u|scan)==s->scan_id||!pwsc_time(s,now))return 0;
+    uint64_t epoch=s->epoch;uint8_t mac[6];pwmi_copy(mac,s->mac,6);
+    for(unsigned n=0;n<sizeof(*s);n++)((uint8_t*)s)[n]=0;
+    s->epoch=epoch;s->last=now;s->deadline=now+PWSC_WAIT;s->scan_id=0xa000|scan;s->request_id=0xa001;
+    pwmi_copy(s->mac,mac,6);s->opened=1;s->phase=1;return 1;
+}
 /* Commands are serialized: own-MAC station vdev0, passive channel list,
  * passive scan. Acceptance of VDEV_CREATE is established by later scan events,
  * not invented from a command's publication (there is no create reply here). */

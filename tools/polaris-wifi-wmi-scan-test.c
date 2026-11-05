@@ -75,5 +75,16 @@ int main(void)
     CHECK(scan.dropped==16);
     /* Unrelated management frames remain available for the station state machine. */
     bytes=beacon(1,4);packet[52]=0xb0;CHECK(!pwsc_receive(&scan,packet,bytes,++ticks));
+    start();CHECK(!pwsc_restart(&scan,8,++ticks));commands();
+    bytes=event(1,0,0xa007);CHECK(pwsc_receive(&scan,packet,bytes,++ticks)==1);
+    bytes=event(2,0,0xa007);CHECK(pwsc_receive(&scan,packet,bytes,++ticks)==1&&scan.completed);
+    CHECK(!pwsc_restart(&scan,7,++ticks));CHECK(!pwsc_restart(&scan,0,++ticks));
+    CHECK(pwsc_restart(&scan,8,++ticks)&&scan.phase==1&&!scan.completed&&!scan.count&&scan.epoch==wmi.epoch&&!memcmp(scan.mac,wmi.mac,6));
+    CHECK(pwsc_next(&scan,++ticks)==1&&pwmi_get(scan.tx)==0x3003); /* Same vdev, no duplicate CREATE. */
+    CHECK(pwsc_sent(&scan,++ticks,1)==1&&pwsc_next(&scan,++ticks)==1&&pwmi_get(scan.tx)==0x3001&&pwmi_get(scan.tx+8)==0xa008);
+    CHECK(pwsc_sent(&scan,++ticks,1)==1);
+    bytes=event(2,0,0xa007);CHECK(pwsc_receive(&scan,packet,bytes,++ticks)==1&&!scan.completed&&scan.ignored==1);
+    bytes=event(1,0,0xa008);CHECK(pwsc_receive(&scan,packet,bytes,++ticks)==1);
+    bytes=event(2,0,0xa008);CHECK(pwsc_receive(&scan,packet,bytes,++ticks)==1&&scan.completed);
     printf("PASS %u passive scan/BSS checks; SOFTWARE only\n",checks);return 0;
 }
