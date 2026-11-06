@@ -54,6 +54,31 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: post-check diagnostic image sent once; current screen pending
+
+- Sourcebe0e577 pushed and four owned files synchronized. Current candidate
+  audit35193 ended0: new/old root whole hashes55.490/55.445s, six GPT/five
+  critical partitions/ESP/current NV matched. Actual unmount and returned
+  polaris FASTBOOT01:55:06.773981Z; independent40-check review PASS.
+- Current diagnostic trial frozen393 files; offline one-use validation PASS.
+  New image42960357... sent ONCE01:55:50.333371Z, send OKAY0.151s,
+  boot OKAY0.091s,total0.243s. Nonce consumed before send; image/pool now
+  SPENT, no retry/replay. Expected UEFI verified, payload started01:55:59.422760Z.
+ 100593664 bytes/1535 chunks completed, device validation ACK and queried
+  validated state true. Native-start sent01:57:30.377361Z; ACK01:57:49.851254Z.
+  Host44904 ended0. No post-native observer, reset or retry issued.
+- This new ACK establishes prepare_boot/command acceptance only. The user
+  photo with MBA SHARE1/B belongs to the prior mba-timing-0001 image, not
+  this fresh diagnostic image. Asked asynchronously for current MBA SHARE,
+  CHECK DETAIL, ENTRY/CHECK TICKS and POST PEER values/new interface; pending.
+  Post-native USB intentionally stops, so current screen is required for
+  actual subcheck outcome. Do not guess timeout or relax a check from old B.
+- Current evidence: mba-post-check-0001/phone-native-0001/{boot.json,fastboot.log},
+  sibling log, frozen review and current readonly audit. All host build/test/
+  device jobs ended. Next decode current subcheck and fix evidenced cause,
+  continue MSS/WLAN scan and Cyberpunk AU join/IP/DNS/data/stability.
+  Execution2/5/current plus3 subsequent steps. No physical networking claimed.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: physical MBA transaction returned zero; expose failed post-check
 
 - New user photo for mba-timing-0001 image20c0c93d... shows MBA SHARE1/0xB,
