@@ -74,6 +74,10 @@ early samples only. On0029 the human already confirmed boot complete and said
   dependency is FIRST occurrence. Goal ACTIVE, not complete; do not inherit
   older blocked counts or poll terminal host handles. Kernel CI42091724671
   and payload unchanged. Unowned remote-memory header remains excluded.
+- Continuation07:23Z: previous turn made source/test/physical-trial progress.
+  Current result remains terminal0/native_start_ACK; no new descriptors or
+  feedback record exists. Same physical-screen dependency, occurrence2. No
+  live job to poll or justified mapping repair yet; goal remains active.
 - Execution2/5,current plus3steps remain; register/MBA/modem/WLAN scan,
   Cyberpunk AU join/IP/DNS/data/stability unproven. Last report07:15Z,
   next07:30Z while active. Preserve Android/Windows/backups/private artifacts.
