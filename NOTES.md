@@ -54,6 +54,29 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: PDC repair sent once; actual screen pending
+
+- Source62a6b45 pushed/synchronized. New pdc-page-map-0001 strict-readonly
+  audit46251 ended0; independent40checks PASS, actual returned FASTBOOT
+  08:02:58.693914Z. Roots/GPT/critical/ESP/NV unchanged.617files frozen and
+  offline native admission PASS. Kernel CI42091724671/payload unchanged.
+- Image824292112760392b2665591aa0d463956428974d1fb31e24639857be6ffdd872 sent
+  ONCE08:03:44.166514Z, fastboot0. Full100593664B/1535chunks, validation_ACK
+  and independently queried validated_state true. Native-start08:05:24.186275Z,
+  ACK08:05:43.669764Z; host5803 ended0 at08:05:43.738040Z. All jobs terminal.
+- Image/nonce SPENT; no replay/reset/post-native USB observer/partition write.
+  ACK proves acceptance only; actual PDC map/reset/MBA/auth/WLAN unproven.
+  Requested current heading and PDC PAGE HOLD error/walk/desc2/after0 if that
+  page appears, otherwise actual error rows. Keep current screen. A0343D90
+  belongs to PREVIOUS QDSP/RMB fix; never label it as this PDC trial result.
+- Current-screen dependency is FIRST occurrence for this candidate. Prior
+  screen/FASTBOOT dependencies resolved; goal ACTIVE, not complete. No live
+  command/terminal handle to poll. Next action is interpret actual PDC result
+  and continue the evidenced failure, keeping own DT/vendor/owner/AT bounds.
+- Execution2/5,current plus3remaining. Real scan/Cyberpunk AU join/IP/DNS/data/
+  stability remain unproven. Last formal08:00Z,next08:15Z while active. The
+  unowned remote-memory9line hunk remains preserved and outside commits.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: QDSP DEBUG passed; own PDC page repair verified, audit running
 
 - HumanA0343D90 from spent mss-page-map-0001 shows MBA MAP HOLD for0b2e0000,
