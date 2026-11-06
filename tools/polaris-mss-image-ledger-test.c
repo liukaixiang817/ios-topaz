@@ -20,9 +20,10 @@ static uint8_t*image_heap,*heap_mapping;
 static struct pmli_ledger*ledger;
 static unsigned image_fault,image_trigger,image_ats;
 static unsigned runtime_image;
-static uint64_t image_heap_attributes=8;
+static uint64_t image_heap_attributes=8,image_core_attributes=8;
 static void image_extra_map(struct pwea_map*m)
 {
+    ((struct efi_memory*)m->data)->attributes=image_core_attributes;
     if(!runtime_image){emit_descriptor(m->data+360,4,(uintptr_t)image_heap,0x100000);
         ((struct efi_memory*)(m->data+360))->attributes=image_heap_attributes;m->map.bytes=400;}
     else{
@@ -47,6 +48,8 @@ static int image_at(struct pwmc_translation*t)
         if(image_fault==6)put(core+PMLI_LOCK+16,2,8);
         if(image_fault==7)put(core+PMLI_HEAD,(uintptr_t)image_heap+0x208,8);
         if(image_fault==8)put(image_heap+0x100+24,0xdead,8);
+        if(image_fault==9)t->read_par=t->write_par=t->page|UINT64_C(0x4400000000000b80);
+        if(image_fault==10)t->read_par=t->write_par=t->page|UINT64_C(0x0000000000000b80);
     }
 #if defined(PMLI_TEST_AT_HOOK)
     PMLI_TEST_AT_HOOK();
@@ -101,9 +104,18 @@ int PMLI_TEST_ENTRY(int argc,char**argv)
     runtime_image=0;image_setup();CHECK(image_run()&&pmli_current(ledger,owner));
     CHECK(pwmc_zero(&ledger->failure,sizeof(ledger->failure)));
     CHECK(pmsc_close_unused(owner)&&!pmli_current(ledger,owner));
+    /* GetMemoryMap attributes advertise capabilities, not active cache mode.
+     * Exercise Core root, heap traversal and complete image spans together. */
+    for(uint64_t attr=8;attr<16;attr++){
+        image_core_attributes=image_heap_attributes=attr;image_setup();
+        CHECK(image_run()&&pmli_current(ledger,owner)&&image_ats==native_count);
+        CHECK(pwmc_zero(&ledger->failure,sizeof(ledger->failure)));
+        CHECK(pmsc_close_unused(owner));
+    }
+    image_core_attributes=8;
     /* Record admission failures without translating or reading the rejected
      * heap node. Full producer hashes bind each synthetic saved-map variant. */
-    const uint64_t attributes[]={0,1,2,4,15};
+    const uint64_t attributes[]={0,1,2,3,4,5,6,7};
     for(unsigned n=0;n<sizeof(attributes)/sizeof(attributes[0]);n++){
         image_heap_attributes=attributes[n];image_setup();
         CHECK(!image_run()&&ledger->error==2&&ledger->failure.reason==5);
@@ -114,7 +126,14 @@ int PMLI_TEST_ENTRY(int argc,char**argv)
         CHECK(ledger->failure.base==(uintptr_t)image_heap&&ledger->failure.pages==256);
         CHECK(ledger->failure.page==((uintptr_t)image_heap&~UINT64_C(4095)));
     }
-    image_heap_attributes=8;
+    /* Capability acceptance must never replace live WB translation proof. */
+    image_core_attributes=image_heap_attributes=15;
+    for(unsigned fault=9;fault<=10;fault++){
+        image_setup();image_fault=fault;image_trigger=1;
+        CHECK(!image_run()&&ledger->error==3&&ledger->unknown&&!ledger->complete);
+        CHECK(image_ats==1&&!ledger->pass[0].root[0].returned);
+    }
+    image_core_attributes=image_heap_attributes=8;
     for(unsigned fault=1;fault<=7;fault++)for(unsigned at=1;at<=native_count;at++){
         image_setup();image_fault=fault;image_trigger=at;
         CHECK(!image_run()&&ledger->unknown&&!ledger->complete&&image_ats==at);

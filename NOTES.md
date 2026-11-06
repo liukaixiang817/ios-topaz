@@ -54,6 +54,35 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: physical Core read reveals cache-capability mismatch; fixed candidate ready
+
+- New current photo for image-read-admission-0001 shows NATIVE HOLD5/4,
+  owner error0/phase2/checks3/25, IMAGE WHY5/BYTES16, slot0x50, type3,
+  unique descriptor and attributes0xf. Read0x13c99a210 is Core0x13c97e000
+  +0x1c210 protocol head; map pages0x34, both enumeration counts0.
+  Therefore first Core read was rejected before target AT/read by exact
+  cache-mask==8, not a missing image or failed CPU admission. No radio proof.
+- UEFI2.10A7.2.3 Attribute defines capabilities, not necessarily active cache
+  settings (https://uefi.org/specs/UEFI/2.10_A/07_Services_Boot_Services.html).
+  pmli_range_checked now requires WB bit8, preserving type/runtime/range and
+  unique accepted mapping. Actual RAM reads still demand exact WB read/write
+  PAR, identity translation and CPU/source lifetime checks. Reviewed shared
+  CMDDB/RPMh/SMEM callers; live source translations remain. No cache/MMU change.
+- Old source fails new capability regression. Fixed actual ledger253429 ASan/
+  UBSan checks PASS: full Core/heap/image masks8..15, missing-WB masks0..7 and
+  non-WB/device PAR refusal before RAM read. Full normal native startup/runtime/
+  terminal2889178 PASS SOFTWARE leaves; EFI/arm64 compile831 functions,max
+  stack816B; original codec/81 files PASS. Existing132 GOP tests reused
+  unchanged. Driver809984B SHAd9e6036a30771649a5256701489bd5fd875de77fb6dcdb5fdbdfd5e62c0aa31e.
+- Private new case image-wb-capability-0001 contains commands/results, prior
+  photo transcription, normative source note and fresh unsent image/nonce.
+  All build/test jobs ended0. Exact polaris FASTBOOT confirmed02:44:21Z;
+  proceed fresh readonly root/NV audit then current40-check review/freeze.
+  No new kernel CI required;42091724671 kernel/payload unchanged.
+- Execution2/5, remaining current plus3 steps. Physical repaired traversal,
+  MSS/WLAN scan/Cyberpunk AU join/IP/DNS/data/stability remain. Preserve unowned
+  remote-memory9-line hunk. No replay of prior spent image; no observer restart.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: image-read diagnostic sent once; current physical rejection pending
 
 - Sourcede679fb pushed and four owned files synchronized. Current candidate

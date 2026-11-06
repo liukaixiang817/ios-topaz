@@ -62,7 +62,10 @@ static inline int pmli_range_checked(const struct pweh_result*h,uint64_t at,uint
             const struct efi_memory*d=(const void*)(h->map.data+off);
             if(page>=d->physical&&page-d->physical<d->pages*4096){matches++;if(!first)first=d;}
             if(page>=d->physical&&page-d->physical<d->pages*4096&&(d->type==code||d->type==data)&&
-               (d->attributes>>63)==(d->type==5||d->type==6)&&(d->attributes&15)==8)found++;
+               /* UEFI GetMemoryMap Attribute is a capability bitmask,
+                * not the active cache setting. Live RAM reads still require
+                * exact WB read/write PAR evidence in pwmc_translation_valid. */
+               (d->attributes>>63)==(d->type==5||d->type==6)&&(d->attributes&8))found++;
         }
         if(found!=1){
             if(f){f->page=page;f->matches=matches;
