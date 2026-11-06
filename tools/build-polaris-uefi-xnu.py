@@ -500,6 +500,7 @@ def main():
     ap.add_argument('--mss-mba-share',action='store_true',help='default-OFF native HLOS3 to MSS15 RW assignment of the actual staged MBA1MiB, retained descriptor/continuations and CPU restoration; no reset, power, free or remote start')
     ap.add_argument('--wifi-host-nonce-pool',action='store_true',help='generate a fresh private host-CSPRNG nonce input for this new temporary-boot candidate; requires digest-wide consumption before send; does not enable native WLAN')
     ap.add_argument('--wifi-native-auth-metadata-checkpoint',nargs='?',const='assigned',choices=['assigned','returned','copied','copy-ready'],help='default-OFF terminal hold after metadata assignment/return, authenticated copy admission, or full copy before final publication; never resume or call CPU_ON')
+    ap.add_argument('--wifi-firmware-diagnostic-only',action='store_true',help='separate default-OFF RAM firmware diagnostic with mandatory authentication checkpoint and unconditional terminal hold before XNU/CPU_ON; USB payload only')
     ap.add_argument('--wifi-native-runtime',action='store_true',help='build the complete native radio/runtime and retained terminal path; does not grant physical boot admission')
     ap.add_argument('--wifi-nv-backup-directory',type=Path,help='private own GPT backup used only to generate expected identities; current NV is reread on each boot')
     ap.add_argument('--wifi-country',choices=['AU'],help='explicit country for the currently implemented native radio profile')
@@ -507,6 +508,9 @@ def main():
     a=ap.parse_args();r=Path(__file__).resolve().parents[1]
     if a.wifi_native_auth_metadata_checkpoint and not (a.wifi_native_runtime and a.wifi_power_terminal_gop_diagnostics):
         ap.error('auth metadata checkpoint requires native runtime and terminal GOP evidence')
+    if a.wifi_firmware_diagnostic_only and (not a.wifi_native_auth_metadata_checkpoint or
+        not a.wifi_native_runtime or not a.wifi_power_terminal_gop_diagnostics or a.disk_guid):
+        ap.error('firmware-only diagnostic requires native runtime, authentication checkpoint, terminal GOP and USB RAM payload')
     if bool(a.wifi_nv_backup_directory)!=a.wifi_native_runtime or bool(a.wifi_country)!=a.wifi_native_runtime:
         ap.error('native runtime, own GPT backup and explicit country must be selected together')
     if a.wifi_native_runtime and (a.test_qemu or a.chain_app_manifest or a.physical_owned_marker or
@@ -1112,6 +1116,8 @@ def main():
     if a.wifi_native_auth_metadata_checkpoint:
         auth_checkpoint_mode={'assigned':1,'returned':2,'copied':3,'copy-ready':4}[a.wifi_native_auth_metadata_checkpoint]
         with config.open('a') as f:f.write(f'#define EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT {auth_checkpoint_mode}\n')
+    if a.wifi_firmware_diagnostic_only:
+        with config.open('a') as f:f.write('#define EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY 1\n')
     if a.wifi_native_runtime:
         with config.open('a') as f:f.write('#include "uefi-wifi-native-runtime-config.h"\n')
     disk_path=None
@@ -1286,7 +1292,7 @@ def main():
     manifest=dict(artifact=image.name,sha256=sha(image),bytes=image.stat().st_size,
                   kernel_sha256=sha(a.kernel),payload_sha256=sha(a.payload),payload_bytes=len(raw),
                   payload_crc32=zlib.crc32(raw),payload_C_admission=True,rebased_kernel_bytes_match=True,
-                  RAM_only_XNU_loader=not a.physical_owned_marker,kernel_handoff=not wled_hold,storage_write_api=False,NVRAM_write_api=False,
+                  RAM_only_XNU_loader=not a.physical_owned_marker,kernel_handoff=not (wled_hold or a.wifi_firmware_diagnostic_only),storage_write_api=False,NVRAM_write_api=False,
                   WLED_readonly_inventory_only=a.wled_inventory_only,controlled_WLED_read_refusal=a.test_wled_read_failure,
                   WLED_readonly_fault_watch=a.wled_fault_watch,controlled_WLED_fault_pulse=a.test_wled_fault_pulse,
                   WLED_power_cycle_only=a.wled_power_cycle_only,controlled_WLED_write_timeout=a.test_wled_write_timeout,
@@ -2137,6 +2143,10 @@ def main():
             wifi_host_nonce_native_enabled=True,wifi_native_display_input_integrated=True,
             wifi_native_display_input_qualification=wifi_runtime_metadata["display_input_qualification"],
             wifi_native_physical_candidate_ready=False,wifi_native_boot_admission=False)
+    if a.wifi_firmware_diagnostic_only:
+        manifest.update(wifi_firmware_diagnostic_only=True,XNU_execution_forbidden=True,
+            firmware_diagnostic_terminal='unconditional hold before kernel runtime handoff',
+            userdata_access_api=False)
     (out/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
     print(json.dumps({k:manifest[k] for k in ['artifact','sha256','bytes','QEMU_variant','device_execution_tested']}))
 

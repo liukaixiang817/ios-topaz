@@ -54,6 +54,83 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: separate firmware-only diagnostic qualified; not sent
+
+- Freshcase firmware-copy-ready-checkpoint-0002 built successfully. Driver
+  714240B fc3ade61c39df46204a704ee21402097b8a724d9be5ff9ff9d8c3ae87e55303d;
+  image6189056B 2a0c4f8295041dedb07e776d41e95e51e9e2c7ea69b1417ca1fb3390ab74bc5b.
+  Original81firmware files codec roundtrip unchanged. Kernel/payload unchanged;
+  no new kernelCI required (42091724671 retained). CandidateUNUSED/UNSENT.
+- Actual COFF+MachO entry disassembly has ONLY three branch relocations:
+  wifi_native_startup, wifi_native_startup_step, power_unknown_hold. Both boot
+  callbacks call only this diagnostic entry; no indirect/return in it. Neither
+  object contains pwkr_/pwwn_/pwno_ runtime symbols. Actual704frames/max816B.
+  Normal root validator AST exactly51a5754; shared transport AST identical
+  except diagnostic record fields. Full40root gate unchanged, stillREFUSED.
+- Exact final source1040whole-function terminal tests/7unit testsPASS12:08:10Z.
+  Default MachO exact old bytes; COFF every byte except TimeDateStamp equal.
+  Actual invalid no-checkpoint/disk profiles and default full-runtime packager
+  reject this separate diagnostic. Physical firmware-copy readiness UNPROVEN.
+- Initialcase0001 compile refused3unused worker/terminal/UI-last variables after
+  branch exclusion. Kept failure/unused nonce; explicitly excluded those globals
+  only in diagnostic build. Post-fix native probe and fresh0002 full buildsPASS.
+  No failure is a phone result; no image/nonce from0001 was sent/consumed.
+- One-time current product query12:09:00.461945Z exactpolaris/return0. No observer,
+  new root audit, storage repair, GPT/Windows write or native replay. Next:
+  commit/sync/push completed source; freeze separate5gate diagnostic review and
+  actual code proof/generated config/objects, validate offline and consume/send
+  once. NEVER use this scope to start iOS or treat38/40 as a root admission.
+- GoalACTIVE,execution2/5,four including current;1done,3..5unverified. Next formal
+  report12:13Z whileactive. No pending human action. Old6dd809fcopy-ready unused;
+  last completed sync/push51a5754; current source/documentation commit pending.
+
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: root remains refused; separate firmware-only diagnostic building
+
+- Actual strictROaudit49904/phone-root-audit-0003 ended0 at11:43:30.439606Z,
+  actualpolarisFASTBOOT11:43:30.427799Z. Independent review11:43:53Z remains
+  38/40REFUSED: outer_geometry_clean_no_recovery_or_orphans and journal_superblock_
+  no_pending_start_or_errno. Both whole16GiB roots, maps/marker/GPT/critical/ESP/
+  freshNV matched. Runtime svc reboot is NOT a verified clean-exit solution.
+  Old copy-ready6dd809f candidate remainsUNUSED/UNSENT; no root review/freeze.
+- Original Android normal boot11:46:31Z/read-only shutdown settings then runtime
+  exit11:48:30Z -> actualFASTBOOT11:48:39Z. RAM pstore capture33487 used pinned
+  existing watchdog image, actual init/watchdog hashes/root/identity/unmounted
+  storage and transient blockRO checked. Only RAM pstore mountedro, thenunmounted;
+  userdata header4096B identical. One144B pmsg record, NO console record, so
+  shutdown cause remainsunknown. Host0/actualFASTBOOT11:49:32Z. No repair/replay/
+  persistent mount/flash/observer or old native nonce reuse. All hostjobs terminal.
+- New scope INPROGRESS, not a root-gate exception: separate firmware-only RAM
+  diagnostic has explicit checkpoint1..4, USB payload only, unconditional
+  noreturn hold BEFORE XNU/UI/kernel-worker/CPU_ON even if checkpoint is missed.
+  The XNU bytes remain inert RAM data; no kernel/root consumer executes. Native
+  firmware initialization and all producers/protocol/order/limits unchanged.
+  Normal iOS helper still requires40/40root; new image/review scope is distinct
+  and cannot be used with it. New diagnostic helper shares one-use transport
+  only after its own explicit code/artifact review. No networking success claim.
+- Actual extracted full wifi_native_boot tests:1040 ASAN/UBSAN cases across4
+  checkpoint modes, including READY fallback/negative results; no declarations
+  for excluded kernel/UI/worker branch, so references would fail compilation.
+  Compileguard rejects missing/out-of-range checkpoint, nonnative and disk
+  inputs. Seven unit testsPASS incl normal root dirty/incomplete/writable refusal,
+  review scope separation and original transport consume-before-send/no retry.
+- Current new privatecase firmware-copy-ready-checkpoint-0001. Default MachO
+  whole object byteidentical to6dd809f; default COFF differs ONLY TimeDateStamp
+  bytes4/5, every other byte equal. Original artifacts preserved; initial naive
+  wholeCOFF comparison refusal retained, precise comparison0002 records rule.
+  Invalid builder no-checkpoint/disk profiles rejected before output creation.
+  Actual driverbuild63517 RUNNING; then MachO, normal-packager refusal and new
+  explicit diagnostic packaging. No new device boot/admission/nonce consumption.
+- Source edits not committed yet (C/builder/packager/sharedtransport/new helper/
+  tests); source publication standing approval applies. Last committed/synced/
+  pushed51a5754. Keep unowned remote-memory9line hunk unchanged/uncommitted.
+  Local HackiOS kernel redwood_wifi and userland wifipw_test/init consulted in
+  ORIGINAL research/reference-repos (not stable clone). Redwood WCN6750/SM7325
+  addresses/protocol NOT imported; ownSDM845 DT/vendor/native sources unchanged.
+- GoalACTIVE,step2/5,four including current;1done,3..5unverified. Formal11:58Z
+  delivered,next12:13Z whileactive. Observerpaused. Phone lastverifiedFASTBOOT;
+  no pending physical-action request. Finishcode proof/build/freeze before any
+  firmware diagnostic trial; normal iOS root boot remains REFUSED.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: FASTBOOT recovered; actual Android mount and runtime exit captured
 
 - One-time direct libusb read-only product query11:36:25Z timed out bulkOUT

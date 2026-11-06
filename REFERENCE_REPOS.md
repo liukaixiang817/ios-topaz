@@ -14,6 +14,32 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+## Separate pre-kernel firmware diagnostic (0189, 2026-11-06)
+
+Third actual strictROreview remains38/40REFUSED after runtime power-service exit.
+Normal iOS/native-runtime root admission is unchanged. A separate default-OFF
+firmware-only build compiles an unconditional terminal hold before XNU CPU_ON/
+UI/kernel-worker; explicit checkpoints and USB RAM payload are mandatory. Kernel
+bytes may be prepared in RAM but never execute or consume the UFS root map.
+Its image/review/helper scope differs from the ordinary full runtime. This is
+not evidence of completed modem/WLAN/networking or permission for root boot.
+
+Actual1040whole-function boundary cases and seven source/transport/root-refusal/
+scope-isolation tests pass. Actual COFF/MachO entry branches only to startup,
+step and terminal hold; boot callback has only that target, no kernel/worker
+runtime symbols. Native704frames/max816B and original81file codec pass. Full
+freeze/device trial still pending. Default MachO object exactly matches prior
+6dd809f, COFF differs only build TimeDateStamp bytes. Normal root-validator AST
+is exact51a5754; shared transport differs only diagnostic record fields.
+Existing producers, hardware resource policy, cryptographic hashes, timing and
+radio initialization order are unchanged. No manual repair/journal replay.
+
+Consulted local original clones redwood_wifi.c (WCN6750/WPSS step diagnostics),
+userland wifipw_test.c (MobileWiFi/keychain), init.c (mounted OS/launchd). Their
+userland APIs depend on the running Darwin/iOS system and are not usable in
+pre-kernel diagnostics; no other phone's addresses/firmware/protocol imported.
+Own Polaris DT/vendor resource proofs below remain authoritative.
+
 ## Normal Android exit and journal admission (0189, 2026-11-06)
 
 Ordinary Android sync/adb reboot bootloader also left the next actual capture

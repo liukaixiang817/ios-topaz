@@ -12,6 +12,17 @@
 #ifndef EFI_XNU_WIFI_NATIVE_RUNTIME_AVAILABLE
 #define EFI_XNU_WIFI_NATIVE_RUNTIME_AVAILABLE 0
 #endif
+#ifndef EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY
+#define EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY 0
+#endif
+#if EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY
+#if !EFI_XNU_WIFI_NATIVE_RUNTIME_AVAILABLE || !defined(EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT) || EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT < 1 || EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT > 4
+#error "Firmware-only diagnostic requires native runtime and an explicit authentication checkpoint"
+#endif
+#if defined(EFI_XNU_DISK_GUID)
+#error "Firmware-only diagnostic requires USB RAM payload, never a disk payload"
+#endif
+#endif
 #if EFI_XNU_WIFI_NATIVE_RUNTIME_AVAILABLE
 #if !EFI_XNU_WIFI_NATIVE_MEMORY_AVAILABLE || !EFI_XNU_WIFI_WORKER_NATIVE_AVAILABLE || !EFI_XNU_WIFI_NONCE_POOL_AVAILABLE
 #error "Native radio runtime requires independent memory, worker and candidate nonce inputs"
@@ -1557,12 +1568,16 @@ static void wifi_native_startup_gop_evidence(void)
     (void)pwtg_draw(r);early_wifi_gop_raw();
 }
 #endif
+#if !EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY
 static struct pwwn_state wifi_native_worker;
 static struct pwno_state wifi_native_terminal;
+#endif
 static uint32_t wifi_native_prepared;
 #include "uefi-wifi-ui-window.h"
 static struct pwnu_state wifi_native_ui;
+#if !EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY
 static uint64_t wifi_native_ui_last;
+#endif
 static int wifi_native_ui_healthy(void)
 {return !buttons_terminal&&!wln_power.error&&!wln_power.uncertain&&!wln_runtime.error&&!wln_firmware.error&&!log_overflow;}
 static int pwnu_service(unsigned operation,uint64_t cookie,uint32_t sequence)
@@ -1991,6 +2006,11 @@ __attribute__((noreturn)) static void wifi_native_boot(void)
     wifi_native_startup();
     wifi_native_boot_phase=5;
     for(;;){int result=wifi_native_startup_step();if(result<0)power_unknown_hold();if(result==2)break;}
+#if EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY
+    /* Even if a checkpoint predicate never matches, this separate diagnostic
+     * cannot enter XNU, consume its root map, or start its kernel worker. */
+    power_unknown_hold();
+#else
     /* READY is rechecked by the actual handoff, not inferred from phase++ . */
     wifi_native_boot_phase=6;
     if(pwnu_run(&wifi_native_ui,&wifi_native_parent.owner,PWNU_PREPARE,0,0)!=1)power_unknown_hold();
@@ -2023,6 +2043,7 @@ __attribute__((noreturn)) static void wifi_native_boot(void)
     if(pwno_begin(&wifi_native_terminal,&wifi_native_worker,EFI_XNU_WIFI_SHUTDOWN_VA)!=1)power_unknown_hold();
     wifi_native_boot_phase=10;
     for(;;)if(pwno_step(&wifi_native_terminal)!=1)power_unknown_hold();
+#endif
 }
 #endif
 static void boot_kernel(void *context)

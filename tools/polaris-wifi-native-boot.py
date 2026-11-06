@@ -81,13 +81,8 @@ def validate(review_path):
     return review, case, image, driver, nonce
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    for name in ('review', 'serial-file', 'fastboot', 'libusb', 'output'):
-        parser.add_argument('--'+name, type=Path, required=True)
-    parser.add_argument('--boot-once', action='store_true')
-    args = parser.parse_args()
-    review, case, image, driver, nonce = validate(args.review)
+def run_trial(args, review, case, image, driver, nonce):
+    """Transport for a separately validated scope; no admission policy here."""
     output = args.output.resolve()
     require(output.is_relative_to(ROOT/'research') and not output.exists(), 'new private output required')
     serial = args.serial_file.read_text().strip()
@@ -102,6 +97,9 @@ def main():
                   driver_sha256=driver['sha256'], review_sha256=sha(args.review),
                   phone_partition_writes=False, physical_networking_verified=False,
                   post_start_USB_observer=False)
+    if review.get('XNU_execution_forbidden') is True:
+        record.update(scope=review['scope'], XNU_execution_forbidden=True,
+                      userdata_access_api=False)
 
     def save():
         record['updated_utc'] = now()
@@ -168,6 +166,15 @@ def main():
         save()
         if transport:
             transport.close()
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    for name in ('review', 'serial-file', 'fastboot', 'libusb', 'output'):
+        parser.add_argument('--'+name, type=Path, required=True)
+    parser.add_argument('--boot-once', action='store_true')
+    args = parser.parse_args()
+    run_trial(args, *validate(args.review))
 
 
 if __name__ == '__main__':

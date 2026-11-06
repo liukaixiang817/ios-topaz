@@ -38,6 +38,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     for name in ('original', 'driver-manifest', 'kernel', 'payload', 'codec-directory', 'output'):
         parser.add_argument('--'+name, required=True, type=Path)
+    parser.add_argument('--firmware-diagnostic-only', action='store_true',
+                        help='package only the separate terminal firmware diagnostic; XNU execution forbidden')
     args = parser.parse_args()
     output = args.output.resolve()
     require(output.is_relative_to(ROOT/'research') and not output.exists(),
@@ -46,7 +48,7 @@ def main():
     for key, expected in {
         'wifi_native_runtime_enabled': True, 'wifi_native_display_input_integrated': True,
         'RAM_only_XNU_loader': True, 'payload_C_admission': True,
-        'rebased_kernel_bytes_match': True, 'kernel_handoff': True,
+        'rebased_kernel_bytes_match': True, 'kernel_handoff': not args.firmware_diagnostic_only,
         'storage_write_api': False, 'NVRAM_write_api': False, 'QEMU_variant': False,
         'physical_owned_marker_test': False, 'RAM_native_shutdown_bridge': True,
         'kernel_CPU_affinity': 0x700, 'kernel_CPU_count': 4,
@@ -55,6 +57,14 @@ def main():
     }.items():
         require(type(manifest.get(key)) is type(expected) and manifest[key] == expected,
                 'wrong native runtime scope: '+key)
+    require(manifest.get('wifi_firmware_diagnostic_only', False) is args.firmware_diagnostic_only,
+            'firmware diagnostic scope mismatch')
+    if args.firmware_diagnostic_only:
+        require(manifest.get('XNU_execution_forbidden') is True and
+                manifest.get('userdata_access_api') is False and
+                manifest.get('disk_payload_path') is None and
+                manifest.get('wifi_native_auth_metadata_checkpoint_phase') in
+                ('assigned', 'returned', 'copied', 'copy-ready'), 'firmware diagnostic is not terminal RAM-only')
     artifact = manifest['artifact']
     require(Path(artifact).name == artifact and artifact not in ('', '.', '..'), 'driver path')
     driver = args.driver_manifest.parent/artifact
@@ -111,16 +121,20 @@ def main():
             'actual original decoder round trip failed')
     target = output/'polaris-native-wifi.img'
     target.write_bytes(image)
-    record.update(scope='native_WiFi_retained_CPU0_RO_RAMCOW', artifact=target.name,
+    scope = 'native_WiFi_firmware_diagnostic_RAM_only' if args.firmware_diagnostic_only else 'native_WiFi_retained_CPU0_RO_RAMCOW'
+    record.update(scope=scope, artifact=target.name,
         sha256=sha(target), bytes=len(image), driver_sha256=sha(driver),
         driver_manifest_sha256=sha(args.driver_manifest), kernel_sha256=sha(args.kernel),
-        payload_sha256=sha(args.payload), kernel_handoff=True,
+        payload_sha256=sha(args.payload), kernel_handoff=not args.firmware_diagnostic_only,
         original_decoder_sha256=DECODER, original_codec_round_trip=True,
         source_inputs=evidence, packager_sha256=sha(Path(__file__)),
         boot_admission=False, physical_networking_verified=False,
-        may_write_userdata=False, immutable_root_RAMCOW_only=True,
+        may_write_userdata=False, immutable_root_RAMCOW_only=not args.firmware_diagnostic_only,
         post_start_USB_service=False, nonce_consumed=False,
         terminal_exit=binding['terminal_exit'], device_command_executed=False)
+    if args.firmware_diagnostic_only:
+        record.update(wifi_firmware_diagnostic_only=True, XNU_execution_forbidden=True,
+            userdata_access_api=False, terminal_exit='RAM terminal hold before XNU')
     (output/'manifest.json').write_text(json.dumps(record, indent=2)+'\n')
     print('Native Wi-Fi image packaged and original codec verified; no boot admission or device action')
 
