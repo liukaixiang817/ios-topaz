@@ -54,6 +54,26 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: resumed actual FASTBOOT; return-checkpoint audit running
+
+- User resumed goal ACTIVE and supplied EABC6FDE: same prior AUTH CHECKPOINT1/2,
+  metadata phase1/events0, complete1/error0, events3/round1, DONE4/pending0 and
+  owner held1. This corroborates completed first metadata assignment before
+  any RMB auth write; it is not the returned-mode candidate result.
+- Fresh ready-image/source/test bindings verified without repeating passed
+  tests. Actual readonly query10:02:14.878459Z now finds expected FASTBOOT.
+  Previous physical-FASTBOOT blocker RESOLVED. Fresh root-audit33606 RUNNING
+  for auth-metadata-return-checkpoint-0001 into phone-root-audit-0001 with
+  bounded350s host/300s watchdog; no native send or nonce consumption yet.
+- Sourceb99a539 plus handoffs through90bba02 pushed and owned files synced.
+  Next independent40check root review, prepared freeze helper
+  /private/tmp/polaris-freeze-auth-return-checkpoint.py, offline verification,
+  once-only fresh native trial, then actual screen. Do not replay either spent
+  prior candidate; leave USB observer paused. No new kernelCI/source changes.
+- GoalACTIVE,execution2/5,four steps including current. Recovery progress
+  update10:02Z delivered,next15min report10:17Z while active. The full native
+  metadata auth/return, modem/WLAN scan/Cyberpunk AU/IP/DNS/data remain unproven.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: actual metadata assignment complete; return checkpoint ready
 
 - THIRD consecutive current physical-FASTBOOT dependency audit09:55:38.959601Z:
