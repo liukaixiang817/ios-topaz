@@ -72,6 +72,12 @@ early samples only. On0029 the human already confirmed boot complete and said
   phone VIDs18d1/05c6/2717. Saved only filtered VID/PID/name fields, no serials.
   This does not distinguish cable/boot/USB initialization causes. No continuous
   observer, replay, reset, partition write or second trial. All host jobs ended.
+- Connection follow-up04:27:42Z: one selected-device readonly FASTBOOT
+  product query reached its8s timeout; expected polaris still not found. Query
+  host29491 ended0 after recording the timeout. No new screen/cable reply.
+  This is the second consecutive resumed-run turn with the same external
+  connection/screen blocker. No physical Wi-Fi progress; goal remains ACTIVE
+  pending already-requested input, no live build/boot/query job remains.
 - Async request pending: confirm both USB ends connected and describe current
   phone screen; preserve it before reboot. Need this external evidence before
   choosing the next action. First occurrence of this resumed-run connection/
