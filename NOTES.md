@@ -54,6 +54,33 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: image-read diagnostic sent once; current physical rejection pending
+
+- Sourcede679fb pushed and four owned files synchronized. Current candidate
+  image-read-admission-0001 audit37122 ended0; new/old root hashes56.719/56.700s,
+  six GPT/five critical partitions/ESP/current NV unchanged. Actual unmount
+  and returned FASTBOOT02:31:18.831682Z; independent40 checks PASS. Trial froze
+ 410 source/artifact/evidence files; offline one-use admission PASS.
+- Imagec4a7a280... sent ONCE02:31:53.514602Z, send OKAY0.144s,
+  boot OKAY0.091s,total0.237s. Nonce consumed before send; image/pool SPENT.
+  Expected synthetic UEFI verified, payload staging02:32:02.619463Z (~9s).
+ 100593664 bytes/1535 chunks completed, device validation ACK and independently
+  queried validated state true. Native-start sent02:33:33.551750Z;
+  ACK02:33:53.014414Z. Host82209 ended0; no native retry/reset/observer issued.
+- Latest supplied NATIVE HOLD5/4/IMAGES2 photo is for previous window-fix
+  imagef5b509f5..., and proves MBA/CPU admission progress there. Current fresh
+  diagnostic boot acceptance alone does not prove its native/radio outcome.
+  Asked asynchronously for IMAGE WHY BYTES/READ ADDR/MAP TYPE MATCH/MAP ATTR
+  or changed title; reply pending. Post-native USB intentionally stops; require
+  current physical screen before selecting a cache/type/address fix.
+- Current evidence: image-read-admission-0001/phone-native-0001/{boot.json,
+  fastboot.log}, sibling log, frozen review and actual readonly review. All host
+  build/test/device jobs ended. Next exact read rejection, then remaining
+  native MSS/WLAN scan/Cyberpunk AU join/IP/DNS/data/stability. Goal ACTIVE and
+  unfinished, execution2/5/current plus3 steps. Last15min report02:33Z; next
+  due02:48Z if ongoing. Preserve unowned remote-memory hunk; private materials
+  remain excluded from git.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: physical MBA/CPU admission passed; diagnose image-ledger read rejection
 
 - New photo for mba-window-0002/f5b509f5... shows NATIVE HOLD5/4,
