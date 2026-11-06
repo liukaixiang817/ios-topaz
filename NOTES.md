@@ -54,6 +54,20 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi continuation — 2026-11-06 Melbourne: current selection detail still required
+
+- Previous goal turn made progress: c89243b diagnostic/test implementation,
+  actual new image trial and committed/pushed handoff583a16d. Current sources
+  remain unchanged except preserved unowned remote-memory hunk.
+- One current host-access UEFI discovery00:12:07.923314Z returned no service;
+  no request, payload, reset, retry or observer. Private record:
+  nv-selection-0001/late-service-readonly-0001/result.json. Relevant jobs ended;
+  this is not a live-process wait. No current screen reply arrived.
+- Second consecutive resumed goal turn with the same physical-feedback
+  dependency. New diagnostic values are needed to choose the actual fix;
+  prior image values cannot substitute. Goal remains ACTIVE, step2/5 with
+  four including current remaining; no network success claimed. Preserve screen.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: NV selection diagnostic sent; current screen pending
 
 - Sourcec89243b pushed and all four owned files synchronized to original
