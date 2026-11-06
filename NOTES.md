@@ -54,6 +54,34 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: diagnostic USB transfer failed before native-start; fresh candidate ready
+
+- Source612c007 pushed/synchronized. mba-at-diagnostic-0001 readonly audit
+  host17952 ended0; independent40checks PASS, FASTBOOT06:49:28.817981Z.
+  Frozen569 files and offline admission PASS. Image4aecdccd... sent ONCE
+  06:49:53.197218Z, fastboot0. RAM transfer failed06:50:40.894126Z:
+  libusb endpoint01 return-1, host completion0/65536. Completed659chunks/
+  43188224B of100593664B; validation_ACK/validated_state bothfalse.
+  Host67014 ended1. NO native-start command/ACK, no new AT diagnostic result.
+  Image/nonce SPENT; no resume/replay/reset. This is transport failure, not
+  evidence of register/MBA/WLAN behavior. All failure records preserved.
+- Bounded readonly FASTBOOT check06:51:46.370459Z did not find expected phone.
+  Async text request asks user to secure USB and power+volume-down to FASTBOOT.
+  This new physical-reboot dependency is FIRST occurrence; earlier screen
+  dependency was resolved by0AE46346. Continuous USB observer remains paused.
+- Fresh mba-at-diagnostic-0002 candidate built with unchanged compiled sources
+  and verified NEW nonce header/pool. All6 build/test/offline commands exit0;
+  same867+140 diagnostic tests, original codec81unchanged files. Candidate
+  driver828416B SHA37784e90d19b9ba76787b136f745f6b59f6dfa67fbc93e4e09f4253a0b2f7c93.
+  Image6238208B SHA9875bea87d9a638da3b4a1252291a78e1dac7891cb5f5d69e1d95a0d851d43b9.
+  No device command for0002. Next actual FASTBOOT confirmation, new readonly
+  audit/review, /private/tmp/polaris-freeze-mba-at-diagnostic-0002.py, offline
+  admission and ONE new boot. Do not reuse0001audit/review/nonce/partial data.
+- All current jobs terminal, no live handle to poll. Preserve unowned header,
+  Android/Windows/backups and private artifacts. CI42091724671/payload same.
+  Execution2/5,current plus3steps remain; register access/MBA/modem/WLAN scan/
+  Cyberpunk AU join/IP/DNS/data/stability unproven. Last report06:45Z,next07:00Z.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: first MSS target passes; native translation rejection isolated
 
 - New0AE46346 photo of SPENT mss-dt-pages-0001 resolves prior feedback blocker;
