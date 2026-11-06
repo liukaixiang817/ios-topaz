@@ -54,6 +54,32 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: own-DT AOP resource candidate sent once; actual translation/protocol pending
+
+- Source11e1523 pushed and four owned paths synchronized. Current
+  aop-own-resource-0001 readonly audit9432 ended0; independent40 checks PASS,
+  roots/GPT/critical/ESP/current NV unchanged. Unmounted/FASTBOOT
+ 03:37:35.055306Z. Frozen448 inputs and offline one-use admission PASS.
+- Image9bf433aa2ec111dda5f47b4a397fd3d6e00cde716bb66aa43d16fe36ff5da0a0
+  (6234112B) sent ONCE03:37:57.188276Z, fastboot exit0. Nonce consumed before
+  send; image/pool SPENT. Expected UEFI;100593664B/1535 chunks fully sent,
+  device validation ACK and independent validated-state true. Native-start
+ 03:39:37.189529Z; ACK03:39:56.667617Z. Host47161 ended0. No post-native
+  retry/reset/USB observer. No kernel/scan/networking proof follows ACK.
+- Prior supplied photo is aop-delivery-0001, proving pre-target refusal before
+  AT/MMIO at c300000. Current own-resource Device translation/AOP descriptor
+  unknown. Async request for WHY EVENT/KIND ERROR/PAR/PROTO ERROR or DESC rows
+  pending; preserve screen. Old post-native USB intentionally stops.
+- Current evidence: aop-own-resource-0001/phone-native-0001/{boot.json,
+  fastboot.log}, sibling log and current readonly/frozen reviews. All host
+  build/test/device jobs ended. Rechecked private own-msm_qmp source link/ch
+  UP/CONNECTED=ffff versus DOWN/DISCONNECTED=ffff0000, for interpreting next
+  actual descriptor only; no handshake/time/mapping change inferred in advance.
+- Next actual AOP result, then MSS/WLAN scan/Cyberpunk AU join/IP/DNS/data/
+  stability. Execution2/5/current plus3 steps; goal ACTIVE unfinished. Last
+ 15min report03:33Z,next03:48Z if active. Preserve unowned remote-memory9-line
+  hunk and private exclusions; do not replay spent candidate.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: first AOP access refused by absent UEFI registration; own-DT path ready
 
 - New aop-delivery-0001 photo: native phase9, WHY1/EVENT1, step0/index0/read1,
