@@ -72,6 +72,12 @@ early samples only. On0029 the human already confirmed boot complete and said
   phone VIDs18d1/05c6/2717. Saved only filtered VID/PID/name fields, no serials.
   This does not distinguish cable/boot/USB initialization causes. No continuous
   observer, replay, reset, partition write or second trial. All host jobs ended.
+- Third resumed-run blocker audit04:28Z: no new screen/connection feedback;
+  terminal boot failure and bounded negative FASTBOOT query unchanged. Previous
+  follow-up made no physical progress; there is no live process to wait on.
+  Goal now BLOCKED, not complete. Resume with current phone screen and restored
+  USB connection evidence. Do not replay this spent pool or infer a power fix
+  from the unexecuted diagnostic. Work/source are saved through a403196.
 - Connection follow-up04:27:42Z: one selected-device readonly FASTBOOT
   product query reached its8s timeout; expected polaris still not found. Query
   host29491 ended0 after recording the timeout. No new screen/cable reply.
