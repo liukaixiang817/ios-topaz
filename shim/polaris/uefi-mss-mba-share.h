@@ -51,6 +51,10 @@ static inline int pmsb_round(struct pwma_registers*r){pwma_actual_round(r);retur
 #endif
 static inline int pmsb_fail(struct pmsb_result*r,unsigned error)
 {if(!r->error)r->error=error;r->unknown=1;return 0;}
+/* Failure-only detail in the existing reserved word: phase/index/reason.
+ * Zero on success preserves the exported V1 layout and completion contract. */
+static inline int pmsb_detail(struct pmsb_result*r,unsigned phase,unsigned index,unsigned reason)
+{if(!r->reserved)r->reserved=(phase<<24)|(index<<16)|reason;return 0;}
 static inline int pmsb_arch(const struct pmsb_result*r,struct pgcd_arch*out,unsigned masked)
 {
     if(!pgcd_actual_arch(0,out))return 0;
@@ -84,8 +88,13 @@ static inline int pmsb_peers(struct pmsb_result*r,unsigned phase)
         uint8_t before[32],after[32];pmsb_seal(r,&p->raw,sizeof(p->raw),before);
         int returned=pmsb_affinity(p->target,&p->raw);
         pmsb_seal(r,&p->raw,sizeof(p->raw),after);
-        if(!pgcd_equal(before,after,32)||returned!=1||!pmsb_binding(r))return 0;p->returned=1;
-        struct pgcd_arch now;if(p->raw!=1||!pmsb_arch(r,&now,1))return 0;
+        if(!pgcd_equal(before,after,32))return pmsb_detail(r,phase+1,n+1,1);
+        if(returned!=1)return pmsb_detail(r,phase+1,n+1,2);
+        if(!pmsb_binding(r))return pmsb_detail(r,phase+1,n+1,3);
+        p->returned=1;
+        if(p->raw!=1)return pmsb_detail(r,phase+1,n+1,4);
+        struct pgcd_arch now={0};
+        if(!pmsb_arch(r,&now,1)){r->assigned=now;return pmsb_detail(r,phase+1,n+1,5);}
     }return 1;
 }
 static inline int pmsb_share(struct pmsb_result*r,const struct pmsi_result*s)
@@ -154,8 +163,15 @@ static inline int pmsb_share(struct pmsb_result*r,const struct pmsi_result*s)
     }
     if(!r->transaction.complete||r->transaction.unknown||r->transaction.error||!pmsb_binding(r))return pmsb_fail(r,10);
     r->assignment_returned_zero=1;
-    if(!pmsb_peers(r,1)||!pwmt_page_equal(&r->transaction)||!pwea_core_check(e,&r->source[1],&h->map)||
-       !pmsb_arch(r,&r->assigned,1)||!pmsb_binding(r)||!pgcd_actual_fp_restore(0,&r->fp)||r->fp.restored!=1)return pmsb_fail(r,11);
+    if(!pmsb_peers(r,1))return pmsb_fail(r,11);
+    unsigned detail=0;
+    if(!pwmt_page_equal(&r->transaction))detail=1;
+    else if(!pwea_core_check(e,&r->source[1],&h->map))detail=2;
+    else if(!pmsb_arch(r,&r->assigned,1))detail=3;
+    else if(!pmsb_binding(r))detail=4;
+    else if(!pgcd_actual_fp_restore(0,&r->fp))detail=5;
+    else if(r->fp.restored!=1)detail=6;
+    if(detail){pmsb_detail(r,3,0,detail);return pmsb_fail(r,11);}
     r->restore.target_group=1;r->restore_issued=1;r->restore.returned=pmsb_restore(&r->restore);
     if(r->restore.returned!=1||r->restore.precondition_error||r->restore.daif_before!=0xc0||r->restore.group_before||
        r->restore.daif_written!=1||r->restore.daif_observed!=1||r->restore.daif_read||

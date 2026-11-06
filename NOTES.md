@@ -54,6 +54,40 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: physical MBA transaction returned zero; expose failed post-check
+
+- New user photo for mba-timing-0001 image20c0c93d... shows MBA SHARE1/0xB,
+  ROUND ERROR1/0, TX STEP EVENTS4/3 and MASK RESTORE1/0. Exact path proves
+  one completed zero-return secure assignment transaction, descriptor clean/
+  invalidate/equality, and the final binding check passed. Previous timer fix
+  passed physically. Error11 is a subsequent post-peer/source/architecture/
+  FP check; photo does NOT identify which. No kernel/MSS/radio success inferred.
+- Preserve every check/evaluation order and100ms transaction/200ms caller
+  limits. Add failure-only phase/index/reason to existing reserved word,
+  unchanged12288B V1 prefix/zero on success. Peer failure phases1(before) or
+ 2(after), index1..7, reasons1 seal/2 return/3 binding/4 raw affinity/5 arch.
+  Final phase3/index0 reasons1 page/2 core/3 arch/4 binding/5 FP return/6 FP flag.
+  Failed peer architecture sample retained in assigned (failure only). GOP now
+  shows CHECK DETAIL, ENTRY/CHECK TICKS, actual7 POST PEER IR RAW and mask state.
+  This is diagnostic localization, not an assumed timeout fix or relaxed guard.
+- Software actual share87438 assertions PASS, including post-peer time/CPU/
+  source faults and FP restore; independent101 layout/85 corruption checks
+  PASS.180 extracted actual GOP timing/post-check/bounds/guard cases PASS.
+  Recompiled full normal startup/runtime/terminal composition2889178 PASS;
+  SOFTWARE CPU/kernel/radio only. Full EFI/arm64830 functions,max stack816B
+  PASS; original codec/81 original files unchanged. Kernel CI42091724671 and
+  payload unchanged. New driver807424B SHA4d8ffdf0991e812e0d8f8fa6d0def8aee8b8fda8e781fae8b684b35898922beb;
+  image6227968B SHA4296035722a1871a513e8912bd3435e7035d12bacc5b1c8c51f50980764e6c86.
+- Private evidence: research/polaris/uefi-ios-0189/wifi/mba-post-check-0001.
+  All source builds/tests ended; current query confirmed polaris FASTBOOT
+ 01:52:31.536244Z. Fresh readonly candidate audit35193 running; require current
+ 40-check independent review and frozen one-use admission before new send.
+  New diagnostic image has NOT been sent. Previous image/pool remain SPENT.
+- Next current native post-check outcome, then actual MSS/WLAN scan and
+  Cyberpunk AU join/IP/DNS/data/stability. Execution2/5/current plus3 subsequent
+  steps. Last step report01:49Z. Keep unowned remote-memory9-line hunk intact
+  and out of commits; it remains part of tested/frozen build inputs.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: MBA timer candidate sent once; full payload/start ACK
 
 - Source7719066 pushed to codex/polaris-preflight; all four owned files synced

@@ -571,13 +571,21 @@ static void mss_memory_gop_evidence(void)
         pwtg_line(r,2,"TX STEP EVENTS",t->step,t->events);
         pwtg_line(r,3,"TX OPEN TICKS",(uint32_t)(t->opening>>32),(uint32_t)t->opening);
         pwtg_line(r,4,"TX LAST TICKS",(uint32_t)(t->last>>32),(uint32_t)t->last);
+        pwtg_line(r,5,"CHECK DETAIL",mss_mba_share.reserved,mss_mba_share.assignment_returned_zero);
+        uint64_t entry=mss_mba_share.entry.cpu.ticks,checked=mss_mba_share.assigned.cpu.ticks;
+        pwtg_line(r,6,"ENTRY TICKS",(uint32_t)(entry>>32),(uint32_t)entry);
+        pwtg_line(r,7,"CHECK TICKS",(uint32_t)(checked>>32),(uint32_t)checked);
+        for(unsigned n=0;n<7;n++){
+            const struct pmsb_peer*p=&mss_mba_share.peer[1][n];
+            pwtg_line(r,8+n,"POST PEER IR RAW",(n<<16)|(p->issued<<8)|p->returned,(uint32_t)p->raw);
+        }
         if(mss_mba_share.error==7&&t->error==PWMT_TIME&&t->events<PWMT_EVENTS){
             uint64_t ticks=mss_mba_share.step[t->events].cpu.ticks;
-            pwtg_line(r,5,"TX CHECK TICKS",(uint32_t)(ticks>>32),(uint32_t)ticks);
+            pwtg_line(r,7,"TX CHECK TICKS",(uint32_t)(ticks>>32),(uint32_t)ticks);
             uint64_t delta=ticks>=t->opening?ticks-t->opening:UINT64_MAX;
             pwtg_line(r,6,"TX DELTA TICKS",(uint32_t)(delta>>32),(uint32_t)delta);
         }
-        pwtg_line(r,12,"MASK RESTORE",mss_mba_share.cpu_held,mss_mba_share.restore_issued);
+        pwtg_line(r,15,"MASK RESTORE",mss_mba_share.cpu_held,mss_mba_share.restore_issued);
     }
 #endif
 #endif

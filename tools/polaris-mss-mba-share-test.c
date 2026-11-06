@@ -24,6 +24,7 @@ static int share_arch(void*p,struct pgcd_arch*a)
     a->cpu.ticks+=share_clock_delay;
     if(share_fault==20&&share->transaction.started&&!share->transaction.events)a->cpu.ticks+=PWMT_TICKS+1;
     if(share_fault==23&&share->transaction.started&&!share->transaction.events)a->cpu.ticks=share->transaction.opening-1;
+    if(share_fault==25&&peers==8)a->cpu.ttbr0^=4096;
     if(smcs==share_trigger){if(share_fault==14)a->cpu.ttbr0^=4096;if(share_fault==15)a->cpu.ticks+=PGCD_FRESH_TICKS+1;}
     return ok;
 }
@@ -36,6 +37,8 @@ static int pmsb_affinity(uint64_t target,int64_t*raw)
     CHECK(local_mask&&target==0x100*(peers%7+1));peers++;*raw=1;
     if(peers==7&&(share_fault==18||share_fault==22))
         share_clock_delay=share_fault==18?PWMT_TICKS+192000:PGCD_FRESH_TICKS+1;
+    if(peers==8&&share_fault==24)share_clock_delay=PGCD_FRESH_TICKS+1;
+    if(peers==8&&share_fault==26)stage->copied_hash[0][0]^=1;
     if(peers==share_trigger){
         if(share_fault==1)*raw=0;
         if(share_fault==2)share->fp.q8_q15[0]^=1;
@@ -119,6 +122,7 @@ int PMSB_TEST_ENTRY(int argc,char**argv)
     for(unsigned n=0;n<4;n++){
         share_setup(0,0,n);CHECK(pmsb_share(share,stage));
         CHECK(share->complete&&!share->unknown&&!share->cpu_held&&!local_mask&&share->assignment_returned_zero);
+        CHECK(!share->reserved);
         CHECK(peers==14&&cache_count==2&&smcs==n+1&&!descriptor_protected&&target_protected);
         if(n==3&&argc==3)write_records(argv[2],"");
         CHECK(!pmsb_share(share,stage)&&smcs==n+1);
@@ -132,7 +136,10 @@ int PMSB_TEST_ENTRY(int argc,char**argv)
     for(unsigned kind=19;kind<=23;kind++){
         share_setup(kind,0,0);CHECK(!pmsb_share(share,stage)&&share->unknown&&!share->complete);
         CHECK(!share->restore_issued&&local_mask);
-        if(kind==22)CHECK(!share->transaction.started&&!smcs&&share->error==5);
+        if(kind==22){
+            CHECK(!share->transaction.started&&!smcs&&share->error==5);
+            CHECK(share->reserved==0x01070005&&share->assigned.cpu.ticks-share->entry.cpu.ticks>PGCD_FRESH_TICKS);
+        }
         else{
             CHECK(share->transaction.error==PWMT_TIME&&smcs==(kind==21));
             if(kind==20||kind==23){
@@ -144,6 +151,15 @@ int PMSB_TEST_ENTRY(int argc,char**argv)
     }
     for(unsigned kind=1;kind<=3;kind++)for(unsigned n=1;n<=14;n++){
         share_setup(kind,n,0);CHECK(!pmsb_share(share,stage)&&share->unknown&&!share->complete&&peers==n);
+        unsigned reason=kind==1?4:kind==2?1:2;
+        CHECK(share->reserved==(((n<=7?1u:2u)<<24)|(((n-1)%7+1)<<16)|reason));
+    }
+    for(unsigned kind=24;kind<=26;kind++){
+        share_setup(kind,0,0);CHECK(!pmsb_share(share,stage)&&share->error==11&&share->unknown);
+        CHECK(share->assignment_returned_zero&&share->transaction.complete&&!share->transaction.error&&smcs==1);
+        CHECK(share->reserved==(kind==26?0x02010003u:0x02010005u)&&peers==8&&!share->restore_issued&&local_mask);
+        if(kind==24)CHECK(share->assigned.cpu.ticks-share->entry.cpu.ticks>PGCD_FRESH_TICKS);
+        if(kind==25)CHECK(share->assigned.cpu.ttbr0!=share->entry.cpu.ttbr0);
     }
     for(unsigned kind=6;kind<=7;kind++)for(unsigned n=1;n<=2;n++){
         share_setup(kind,n,0);CHECK(!pmsb_share(share,stage)&&share->unknown&&!share->complete&&cache_count==n);
@@ -151,6 +167,7 @@ int PMSB_TEST_ENTRY(int argc,char**argv)
     for(unsigned kind=4;kind<=17;kind++){
         if(kind==6||kind==7)continue;
         share_setup(kind,1,0);CHECK(!pmsb_share(share,stage)&&share->unknown&&!share->complete);
+        if(kind==17)CHECK(share->reserved==0x03000005&&share->error==11);
     }
     share_setup(0,0,4);CHECK(!pmsb_share(share,stage)&&share->unknown&&!share->complete&&smcs==4&&descriptor_protected&&target_protected);
     /* The actual RAM-log prefix remains safe while both areas are unreadable. */
