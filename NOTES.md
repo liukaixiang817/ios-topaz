@@ -54,6 +54,31 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: CmdDb target candidate sent once; current physical result pending
+
+- Sourcefc0eaa4 pushed and four owned paths synchronized. Candidate
+  cmddb-target-0001 actual readonly audit80397 ended0; independent40 checks
+  PASS, roots/GPT/critical/ESP/current NV unchanged. Unmounted/returned
+  FASTBOOT03:03:52.660066Z. Frozen425 inputs; offline one-use admission PASS.
+- Imagebce1b6f994d62c06c27c9ac6aa1e3e60ef47dfdcca360918623f9de05dfc3b2d
+  (6230016B) sent ONCE03:04:17.311348Z; fastboot exit0. Nonce consumed before
+  send; image/pool SPENT. Expected UEFI, RAM staging03:04:26.495847Z.
+ 100593664B/1535 chunks complete; device validation ACK and independently
+  queried validated-state true. Native-start03:05:57.424427Z; command ACK
+ 03:06:16.877021Z. Host90657 ended0. No post-native retry/reset/USB observer.
+- This is transfer/prepare_boot/command acceptance, not kernel/radio proof.
+  Last supplied native phase4/CmdDb5 photo belongs to previous capability-fix
+  candidate and proves image/GCD/RPMh progress there. Current CmdDb outcome
+  unknown; async request for current title/CMDDB WHY SLOT/EFI/GCD/PAR rows
+  pending. Detailed reasons saved in cmddb-target-0001/target-reasons.json.
+  Post-native old USB intentionally stops; physical screen needed next.
+- Evidence: cmddb-target-0001/phone-native-0001/{boot.json,fastboot.log}, sibling
+  log, current readonly/frozen reviews. All host build/test/device jobs ended.
+  Source/tests complete; preserve current screen and do not replay spent image.
+  Execution2/5/current plus3 steps remain: MSS startup, scan, Cyberpunk AU
+  join/IP/DNS and data/stability. Goal ACTIVE unfinished. Last15min report03:03Z,
+  next03:18Z if active. Unowned remote-memory9-line hunk remains uncommitted.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: physical image/GCD/RPMh captures passed; CmdDb target diagnostic ready
 
 - New photo for image-wb-capability-0001 shows NATIVE HOLD5/4, parent phase4,
