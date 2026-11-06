@@ -54,6 +54,34 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: own QMP handshake candidate sent once; current physical result pending
+
+- Source5e14e4f pushed; seven owned source/test/record paths synchronized.
+  Candidate aop-handshake-0001 readonly audit28175 ended0; independent40
+  checks PASS, current roots/GPT/critical/ESP/NV unchanged. Actual unmount/
+  FASTBOOT04:05:15.519995Z. Frozen456 files; offline one-use admission PASS.
+- Imagead8344771a64130989b13147d0bd9ef22e870cfb1ba549f4a80aee83edb4c5bc
+  (6232064B) sent ONCE04:05:47.693287Z, fastboot exit0. Nonce consumed before
+  send; image/pool SPENT. Expected UEFI;100593664B/1535 chunks fully sent,
+  validation ACK and independently queried validated-state true. Native-start
+ 04:07:27.798784Z; ACK04:07:47.293548Z. Host64200 ended0. No post-native
+  retry/reset/USB observer. ACK does not prove kernel/AOP handshake/scan.
+- Previous human photo51E41FC2 is own-resource candidate: descriptor readable,
+  pristine link/channel state unconnected. Current handshake result unknown.
+  Async text request for current HOLD/PARENT/CLOCK AOP or WHY/STEP/PROTO rows
+  pending; preserve screen/USB. Post-native observation intentionally remains
+  paused; need current actual screen before dependent physical diagnosis.
+- Current proof: aop-handshake-0001/phone-native-0001/{boot.json,fastboot.log},
+  sibling log, readonly/frozen reviews and handshake-source/photo-evidence.
+  All build/test/push/device jobs ended; no hidden background watcher. Final
+  handshake2991902 checks/48 scenarios/30 injected new delivery failures,
+  connected AOP1227959/17, resource787852/12, full parent2889178 all PASS
+  SOFTWARE leaves; stack837 functions/max816B, codec81 original files PASS.
+- Next actual AOP negotiation result, then MSS/WLAN scan/Cyberpunk AU join/
+  IP/DNS/data/stability. Execution2/5/current plus3 steps remain; goal ACTIVE
+  unfinished. Last15min report04:03Z,next04:18Z if active. Preserve unowned
+  remote-memory9-line hunk, Android/Windows/backups and private exclusions.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: actual AOP descriptor read; implement own QMP handshake
 
 - Latest human photo51E41FC2 belongs to spent aop-own-resource-0001: first16
