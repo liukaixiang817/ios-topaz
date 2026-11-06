@@ -16,7 +16,7 @@ spec.loader.exec_module(boot)
 
 
 class NativeBootOrder(unittest.TestCase):
-    def scenario(self, fault='', execute=True):
+    def scenario(self, fault='', execute=True, watchdog=False):
         calls = []
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory).resolve()
@@ -28,6 +28,7 @@ class NativeBootOrder(unittest.TestCase):
             output = case/'attempt'
             image = dict(sha256='image', artifact='image.bin')
             driver = dict(sha256='driver')
+            if watchdog:driver.update(UEFI_watchdog_status_before_native_required=True,RAM_idle_reboot_enabled=False)
             review = dict(fastboot_sha256='hash', libusb_sha256='hash')
 
             def consume(*_):
@@ -66,6 +67,16 @@ class NativeBootOrder(unittest.TestCase):
                         raise RuntimeError('software stage failure')
                     self.payload_stage = dict(validation_ACK=True)
 
+                def stage(self, what):
+                    calls.append('prestart-logs')
+                    assert what=='logs'
+
+                def upload(self):
+                    calls.append('upload')
+                    status=7 if fault=='watchdog' else 0
+                    return (f'UEFI_WATCHDOG_DISABLE_STATUS=0x{status:016x}\r\n'
+                            'RAM_IDLE_AUTO_RESET_SECONDS=0x0000000000000000\r\n').encode()
+
                 def boot(self, **_):
                     calls.append('start')
                     if fault == 'start':
@@ -98,6 +109,15 @@ class NativeBootOrder(unittest.TestCase):
 
     def test_burn_before_send_then_validate_before_start(self):
         self.assertEqual(self.scenario(), ['product', 'consume', 'send', 'transport', 'UEFI-product', 'stage', 'start', 'close'])
+
+    def test_watchdog_is_confirmed_before_native_start(self):
+        calls=self.scenario(watchdog=True)
+        self.assertEqual(calls,['product','consume','send','transport','UEFI-product','stage',
+                                'prestart-logs','upload','start','close'])
+        calls=self.scenario(fault='watchdog',watchdog=True)
+        self.assertNotIn('start',calls)
+        self.assertEqual(calls.count('consume'),1)
+        self.assertEqual(calls.count('send'),1)
 
     def test_each_failure_stops_without_replay(self):
         for fault, forbidden in [('product', 'consume'), ('send', 'transport'), ('stage', 'start'), ('start', 'reset')]:

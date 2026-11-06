@@ -54,6 +54,54 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Active user priority — 2026-11-07 Melbourne: keep idle screen; no automatic Android return
+
+- Humanreports prefix14spontaneouslyreturnedAndroid; exactexitstageunknown,
+  briefprefixcheckpointbeforeexitNOTexcluded. Privatehumanresultboundtospent
+  imagee7859851.../sent14:18:00.113098Z. DoNOTclaimcopy14wasneverreached.
+- Newexplicitrequest: longinactivitymuststayput,insteadofreturningAndroid.
+  ThissteersongoingWiFigoal, notcancelsorpausesit. ReadonlyactualAndroidquery
+  15:31:19recordclockfromhostreportedreboot/reboot,PMICwarm/hardreset; itdoesNOT
+  identifywatchdog/copycause. Expectedpolaris/boot_completed1/surootdmesgverified.
+  Rawproperties/dmesgprivateunderprefix14case; no partition/settingswrite.
+- PhysicaldefaultPOLARIS_RAM_LEASE_SECONDS now0 andactualidle_guard recovery
+  branchcompiledout; regularpollingcontinues. Legacy1800sleaseonlyexplicit
+  QEMU lifecyclefixture. ExistingnativeWiFiphasealreadydisabledoldlease,so
+  old30minpathisNOTprovenreasonforprefix14reset. Operationdeadlinesunchanged.
+- Readycallback nowrecordsactualUEFIWatchdogDisable(0)returnandidlepolicy.
+  Newnativehelpercapturesboundlogs BEFOREnativecommand,requiresbothstatus0/
+  idle0,else stopswithoutstart/replay. No post-nativeUSBservice/observer.
+  UEFIofficial2.10A sec7.5.1 supportsTimeout0disable; actualsuccessstillneeds
+  phoneevidence. Prioruncheckedcallandterminalspinwerenotproof oflonghold.
+- Newexplicitfirmware-only idle-hold checkpoint8 skipsallnative/MSS/kernel
+  producers, retainsperimagenoncepool+digest withaddress-onlyasm, thenlocal
+  IRQmask/GOP/WFEforever. IDLE HOLD rowsincludeIDLE AUTO RESET0,UEFIWATCHDOG
+  rawstatus,MSS STARTED0. BothactualentryobjectsONLYpower_unknown_hold, whose
+  onlycallisownGOP; noreset/watchdog/providercall. 360frames/max736B.
+- Alsofixedprefix28timestampmodel: lastcopyhasanactualCPUcheckpointbefore
+  publication,so finalpublicationcanfollowcopyfinish; requirem.lastmatches
+  finalpublication. ThisisNOTidentifiedcauseofprefix14reset. Prefix1..27
+  equalityandallpreviousSTATUSchecksremain. Sourcehardwareproducersunchanged.
+- Newcase firmware-idle-hold-0001 actual3buildsPASS,driver440832B
+  3b872c43b6501a5ad222396ed09fb34698734aa8a2801b9d5c725f1023bc6156; image6074368B
+  a1f733eaaf667149b75d939c7861598c75980304558a8ff81eaf25ab416e098c. Original81filescodecequal.
+  Public11testsPASS14.984s/session43177,10141actualterminalcases(39oldprofiles
+  plusoneidleentry). Physicalidlecallbacktest10000pollswithNOresetdeclarations,
+  legacy1800testretained. Actualprojection41configsPASS,old12countsunchanged,
+  prefix1..28gain7m.lastfaultcases(each),prefix287559; idle21status/guardcases.
+  Publicfixtureindent/idle0fixturebounds/unusedfunctions/unembeddednoncepool
+  thenunembeddeddigest refusals preserved; allfixed,neverdevice-sent. One-use
+  verifierunchanged; bothpoolanddigestnowuniquelyembedded. Normalrootvalidator
+  ASTunchanged;sharedtransportchangedonlypre-nativeidle-statuscapture/order,
+  coveredbytests. Normaldefaultobjectidentityno longerclaimed: idlepolicyand
+  statusloggingwereexplicitlyrequested. Kernel/payload/CI42091724671unchanged.
+- CandidateUNSENT/nonceunused; freeze/offlinenext,thenone-timeFASTBOOTcheck;
+  ifabsentbutoriginalAndroidready,usealready-authorizednormalpower-manager
+  rebootbootloader afteridentitycheck. No manualjournalrepair/storageconsumer.
+- GoalACTIVE,execution2/5,fourincludingcurrent. Formal15:30Zreportdelivered,
+  next15:45Zwhileactive. RealWiFiscan/join/IP/DNS/data/stabilityunproven.
+  Preserveunownedremote-memory9linehunk7215a3786b3b9226aa4f839648bbecc80d9c575f3fd3fb00250481dd91786a01.
+
 ### Current blocking handoff — 2026-11-07 Melbourne: prefix14 physical screen result required
 
 - Freshcurrenttrial dependency persistedTHREEgoalturns: actualprefix14trial

@@ -64,7 +64,7 @@ def main():
                 manifest.get('userdata_access_api') is False and
                 manifest.get('disk_payload_path') is None and
                 manifest.get('wifi_native_auth_metadata_checkpoint_phase') in
-                ('assigned', 'returned', 'copied', 'copy-ready', 'first-copy', 'first-rmb', 'copy-prefix'), 'firmware diagnostic is not terminal RAM-only')
+                ('assigned', 'returned', 'copied', 'copy-ready', 'first-copy', 'first-rmb', 'copy-prefix', 'idle-hold'), 'firmware diagnostic is not terminal RAM-only')
         events = manifest.get('wifi_native_first_rmb_events')
         require((type(events) is int and 1 <= events <= 6) if
                 manifest['wifi_native_auth_metadata_checkpoint_phase'] == 'first-rmb' else events is None,

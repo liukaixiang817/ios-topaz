@@ -50,7 +50,7 @@ def validate(review_path):
             driver['QEMU_variant'] is False and driver['storage_write_api'] is False and
             driver['NVRAM_write_api'] is False and driver.get('disk_payload_path') is None and
             driver['wifi_native_auth_metadata_checkpoint_phase'] in
-            ('assigned', 'returned', 'copied', 'copy-ready', 'first-copy', 'first-rmb', 'copy-prefix'), 'firmware diagnostic scope changed')
+            ('assigned', 'returned', 'copied', 'copy-ready', 'first-copy', 'first-rmb', 'copy-prefix', 'idle-hold'), 'firmware diagnostic scope changed')
     require(image['sha256'] == review['image_sha256'] and
             image['driver_manifest_sha256'] == sha(driver_manifest) and
             image['driver_sha256'] == driver['sha256'] and
@@ -63,7 +63,7 @@ def validate(review_path):
     require(review['files'].get(str(config_path.relative_to(ROOT))) == sha(config_path),
             'diagnostic compiler configuration not frozen')
     config = config_path.read_text().splitlines()
-    mode = {'assigned': 1, 'returned': 2, 'copied': 3, 'copy-ready': 4, 'first-copy': 5, 'first-rmb': 6, 'copy-prefix': 7}[driver['wifi_native_auth_metadata_checkpoint_phase']]
+    mode = {'assigned': 1, 'returned': 2, 'copied': 3, 'copy-ready': 4, 'first-copy': 5, 'first-rmb': 6, 'copy-prefix': 7, 'idle-hold': 8}[driver['wifi_native_auth_metadata_checkpoint_phase']]
     require(config.count('#define EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY 1') == 1 and
             config.count(f'#define EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT {mode}') == 1 and
             not any(x.startswith('#define EFI_XNU_DISK_GUID') for x in config),
@@ -76,6 +76,8 @@ def validate(review_path):
     else:
         require(events is None and not any(x.startswith('#define EFI_XNU_WIFI_FIRST_RMB_EVENTS') for x in config),
                 'unexpected first RMB completion count')
+    require(driver.get('RAM_idle_reboot_enabled') is False and
+            driver.get('UEFI_watchdog_status_before_native_required') is True, 'idle/watchdog policy missing')
     segments = driver.get('wifi_native_copy_segments')
     if mode == 7:
         require(type(segments) is int and 1 <= segments <= 28 and
@@ -94,13 +96,13 @@ def validate(review_path):
     require(proof.get('passed') is True and
             proof.get('source_sha256') == sha(ROOT/'shim/polaris/uefi-xnu.c') and
             proof.get('builder_sha256') == sha(ROOT/'tools/build-polaris-uefi-xnu.py') and
-            proof.get('default_loader_code_and_data_unchanged') is True and
-            proof.get('default_MachO_byte_identical') is True and
-            proof.get('default_COFF_timestamp_only_difference') is True and
+            proof.get('idle_reboot_disabled_default') is True and
+            proof.get('watchdog_disable_status_recorded') is True and
+            proof.get('idle_policy_actual_function_tested') is True and
             proof.get('terminal_guard_actual_function_tested') is True and
-            proof.get('terminal_guard_case_count') == 10140 and
+            proof.get('terminal_guard_case_count') == 10141 and
             proof.get('normal_root_validator_AST_identical') is True and
-            proof.get('shared_transport_AST_identical_except_diagnostic_record_fields') is True and
+            proof.get('shared_transport_one_use_order_with_pre_start_idle_status') is True and
             proof.get('diagnostic_has_no_kernel_handoff_references') is True,
             'actual firmware-only code qualification missing')
     require(set(proof['qualified_objects']) == {'driver-0001/uefi-xnu.obj', 'actual-loader-macho.obj'},

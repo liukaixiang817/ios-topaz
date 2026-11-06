@@ -45,12 +45,21 @@ class FirmwareOnlyTests(unittest.TestCase):
 static jmp_buf stop;
 static unsigned wifi_native_boot_phase, starts, steps, holds, prefix;
 static int terminal;
+#if EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 8
+static const unsigned char polaris_wifi_image_nonces[32]={1};
+static const unsigned char polaris_wifi_image_nonce_sha256[32]={2};
+#endif
 static void wifi_native_startup(void){starts++;}
 static int wifi_native_startup_step(void){return ++steps<=prefix?1:terminal;}
 __attribute__((noreturn)) static void power_unknown_hold(void){holds++;longjmp(stop,1);}
 '''
         main = r'''
 int main(void){
+#if EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 8
+ if(!setjmp(stop))wifi_native_boot();
+ assert(!starts&&!steps&&holds==1&&wifi_native_boot_phase==5);
+ puts("PASS 1 idle firmware-only terminal case");return 0;
+#else
  unsigned cases=0;const int values[]={2,-1,-7,INT_MIN};
  for(prefix=0;prefix<=64;prefix++)for(unsigned n=0;n<4;n++){
   terminal=values[n];starts=steps=holds=wifi_native_boot_phase=0;
@@ -60,13 +69,14 @@ int main(void){
  }
  printf("PASS %u actual firmware-only terminal cases\n",cases);
  return cases==260?0:1;
+#endif
 }
 '''
         with tempfile.TemporaryDirectory() as directory:
             folder = Path(directory)
             profiles = ([(n, None, None) for n in range(1, 6)] +
                         [(6, n, None) for n in range(1, 7)] +
-                        [(7, None, n) for n in range(1, 29)])
+                        [(7, None, n) for n in range(1, 29)] + [(8, None, None)])
             for checkpoint, events, segments in profiles:
                 source = folder/f'checkpoint-{checkpoint}-{events}-{segments}.c'
                 source.write_text('#define EFI_XNU_WIFI_NATIVE_RUNTIME_AVAILABLE 1\n'
@@ -80,17 +90,18 @@ int main(void){
                                 '-fsanitize=address,undefined', '-fno-sanitize-recover=all',
                                 str(source), '-o', str(binary)], check=True, capture_output=True)
                 result = subprocess.run([str(binary)], check=True, capture_output=True, text=True)
-                self.assertIn('PASS 260 actual firmware-only terminal cases', result.stdout)
+                self.assertIn('PASS 1 idle firmware-only terminal case' if checkpoint==8 else 'PASS 260 actual firmware-only terminal cases', result.stdout)
 
     def test_actual_compile_guard_rejects_unbounded_or_disk_profiles(self):
-        profiles = ((0, 1, False, None, None), (8, 1, False, None, None),
+        profiles = ((0, 1, False, None, None), (9, 1, False, None, None),
                     (4, 0, False, None, None), (4, 1, True, None, None),
                     (6, 1, False, None, None), (6, 1, False, 0, None),
                     (6, 1, False, 7, None), (5, 1, False, 1, None),
                     (7, 1, False, None, None), (7, 1, False, None, 0),
                     (7, 1, False, None, 29), (7, 1, False, None, -1),
                     (7, 0, False, None, 14), (7, 1, True, None, 14),
-                    (6, 1, False, 1, 14), (5, 1, False, None, 14))
+                    (6, 1, False, 1, 14), (5, 1, False, None, 14),
+                    (8, 0, False, None, None), (8, 1, True, None, None))
         for checkpoint, runtime, disk, events, segments in profiles:
             with self.subTest(checkpoint=checkpoint, runtime=runtime, disk=disk, events=events, segments=segments):
                 text = ('#define EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY 1\n'

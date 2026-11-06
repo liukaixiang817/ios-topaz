@@ -147,6 +147,18 @@ def run_trial(args, review, case, image, driver, nonce):
         protocol.stage_payload((case/'payload-0001/payload.bin').read_bytes(), driver)
         record.update(state='RAM_payload_validated', payload_stage=protocol.payload_stage)
         save()
+        if driver.get('UEFI_watchdog_status_before_native_required') is True:
+            require(driver.get('RAM_idle_reboot_enabled') is False, 'idle reboot must be disabled')
+            protocol.stage('logs')
+            logs = protocol.upload()
+            (output/'pre-native-idle-watchdog.log').write_bytes(logs)
+            statuses = re.findall(rb'UEFI_WATCHDOG_DISABLE_STATUS=0x([0-9a-fA-F]{16})', logs)
+            idle = re.findall(rb'RAM_IDLE_AUTO_RESET_SECONDS=0x([0-9a-fA-F]{16})', logs)
+            record['pre_native_idle_status'] = dict(log_sha256=hashlib.sha256(logs).hexdigest(),
+                watchdog_status=[int(x,16) for x in statuses], idle_recovery_seconds=[int(x,16) for x in idle])
+            save()
+            require(statuses and all(int(x,16)==0 for x in statuses) and
+                    idle and all(int(x,16)==0 for x in idle), 'watchdog/idle hold not confirmed; native start refused')
         record.update(state='native_start_attempted', native_start_utc=now())
         save()
         protocol.boot(ack_seconds=90)

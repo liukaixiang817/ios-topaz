@@ -14,6 +14,26 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+## Idle hold policy and watchdog evidence (0189, 2026-11-07 Melbourne)
+
+Humanexplicitlyrequireslongidletostayonscreen. Physicaldefault1800sRAM
+host-lossrecoveryisnowdisabledandcompiledout; finiteactive-operationdeadlines
+remain. NativeMSSalreadydisabledthatoldlease,soitdoesnotexplainthereported
+prefix14reset. Androidreadonlybootreasonreboot/PMICwarmhardresetisnonspecific.
+
+[UEFI2.10A section7.5.1](https://uefi.org/sites/default/files/resources/UEFI_Spec_2_10_A_Aug8.pdf)
+statesTimeout0disablestheboot-servicewatchdog. Readycallbacknowrecordsactual
+return;pre-nativeboundedlogcapturemustshowstatus0andidle0. Idle-onlymode8
+callsnoMSS/kernelproducer;actualCOFF/MachOentryonlyterminalhold,thenownGOP/WFE.
+Noexception-vector,hardwarewatchdogMMIO,NVRAMorpartitionchangeswereintroduced.
+11publictests/10141entrycases,41projectionconfigs/21idlecases,actual360frames/
+max736B and81originalfilecodecPASS; physicallong-idlestillpending.
+
+Actualpmlc_next_segment performsCPUcheckpointAFTERlastsegmentcopyfinish and
+BEFOREresidentpublication. Prefix28diagnosticnowacceptsthiscoherentgapand
+requiresm.last==lastpublication; softwaremodelincludesnonzerogap. Thisdoesnot
+attributeN14resettothatN28-onlypredicatebug. Noforeignprotocolwasported.
+
 ## First STATUS3 and bounded copy-prefix boundary (0189, 2026-11-07 Melbourne)
 
 PhysicalBCB6D6A3: initialsixRMBoperationsreturned,events6/6,value3,step5/5,

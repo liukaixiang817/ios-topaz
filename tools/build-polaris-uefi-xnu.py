@@ -499,7 +499,7 @@ def main():
     ap.add_argument('--mss-firmware-in-payload',action='store_true',help='source verified own firmware from the exact appended RAM payload tail instead of embedding its bytes in EFI')
     ap.add_argument('--mss-mba-share',action='store_true',help='default-OFF native HLOS3 to MSS15 RW assignment of the actual staged MBA1MiB, retained descriptor/continuations and CPU restoration; no reset, power, free or remote start')
     ap.add_argument('--wifi-host-nonce-pool',action='store_true',help='generate a fresh private host-CSPRNG nonce input for this new temporary-boot candidate; requires digest-wide consumption before send; does not enable native WLAN')
-    ap.add_argument('--wifi-native-auth-metadata-checkpoint',nargs='?',const='assigned',choices=['assigned','returned','copied','copy-ready','first-copy','first-rmb','copy-prefix'],help='default-OFF terminal hold at an explicit metadata/copy/first-RMB boundary; never resume or call CPU_ON')
+    ap.add_argument('--wifi-native-auth-metadata-checkpoint',nargs='?',const='assigned',choices=['assigned','returned','copied','copy-ready','first-copy','first-rmb','copy-prefix','idle-hold'],help='default-OFF terminal hold at an explicit metadata/copy/first-RMB boundary; never resume or call CPU_ON')
     ap.add_argument('--wifi-native-first-rmb-events',type=int,choices=range(1,7),help='first-rmb checkpoint only: terminal hold after exactly1..6 completed initial RMB operations; no retry/resume')
     ap.add_argument('--wifi-native-copy-segments',type=int,choices=range(1,29),help='copy-prefix checkpoint only: terminal hold after exactly1..28 copied segments, before the last segment RMB operation')
     ap.add_argument('--wifi-firmware-diagnostic-only',action='store_true',help='separate default-OFF RAM firmware diagnostic with mandatory authentication checkpoint and unconditional terminal hold before XNU/CPU_ON; USB payload only')
@@ -1120,7 +1120,7 @@ def main():
             if a.test_omit_durable_guard:f.write('#define EFI_XNU_TEST_OMIT_OWNED_GUARD 1\n')
             if a.physical_owned_marker:f.write('#define EFI_XNU_PHYSICAL_MARKER 1\n')
     if a.wifi_native_auth_metadata_checkpoint:
-        auth_checkpoint_mode={'assigned':1,'returned':2,'copied':3,'copy-ready':4,'first-copy':5,'first-rmb':6,'copy-prefix':7}[a.wifi_native_auth_metadata_checkpoint]
+        auth_checkpoint_mode={'assigned':1,'returned':2,'copied':3,'copy-ready':4,'first-copy':5,'first-rmb':6,'copy-prefix':7,'idle-hold':8}[a.wifi_native_auth_metadata_checkpoint]
         with config.open('a') as f:f.write(f'#define EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT {auth_checkpoint_mode}\n')
     if a.wifi_native_first_rmb_events is not None:
         with config.open('a') as f:f.write(f'#define EFI_XNU_WIFI_FIRST_RMB_EVENTS {a.wifi_native_first_rmb_events}\n')
@@ -1179,6 +1179,7 @@ def main():
     if a.test_wled_write_timeout:flags.append('-DEFI_XNU_TEST_WLED_WRITE_TIMEOUT=1')
     if a.test_wled_read_failure:flags.append('-DEFI_XNU_TEST_WLED_READ_FAILURE=1')
     sources=['uefi-xnu.c','uefi-xnu-ap.S','uefi-xnu-crc.c','payload.c','uefi-usb.c','uefi-usb-command.c','uefi-usb-control.c']
+    if a.test_wled_native_lifecycle=='lease':flags.append('-DPOLARIS_RAM_LEASE_SECONDS=1800u')
     inputs=['shim/polaris/'+n for n in sources]+['shim/polaris/uefi.h','shim/polaris/uefi-xnu.h','shim/polaris/uefi-usb.h','shim/polaris/uefi-memory.h','shim/polaris/uefi-reset.h','shim/polaris/uefi-file.h','shim/polaris/uefi-boot-options.h','shim/polaris/uefi-ram-lease.h','shim/polaris/payload.h','tools/build-polaris-uefi-xnu.py','tools/polaris-uefi-input.h']
     inputs+=['tools/polaris_uefi_cpu_tree.py','tools/adt.py','tools/mkpayload.py']
     inputs.append('shim/polaris/runtime-marker.h')
@@ -1333,7 +1334,9 @@ def main():
                   probe_only=wled_hold,holds_before_OS_start=wled_hold,
                   original_root_writes_volatile=True,physical_small_file_write_test=a.physical_owned_marker,
                   reset_commands=True,reset_commands_hardware_tested=False,ready_to_boot_driver=not application,
-                  RAM_host_idle_recovery_seconds=None if (a.test_qemu_owned or a.physical_owned_marker) else 1800,
+                  RAM_host_idle_recovery_seconds=1800 if a.test_wled_native_lifecycle=='lease' else None,
+                  RAM_idle_reboot_enabled=a.test_wled_native_lifecycle=='lease',
+                  UEFI_watchdog_status_before_native_required=a.wifi_native_runtime,
                   selected_application=a.efi_application,disk_payload_read_only=bool(a.disk_guid),
                   disk_guid=str(a.disk_guid) if a.disk_guid else None,disk_start_lba=a.disk_start_lba,
                   disk_blocks=a.disk_blocks,disk_payload_path=disk_path,

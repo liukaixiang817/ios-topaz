@@ -28,7 +28,7 @@
 #error "Firmware-only diagnostic requires copy count1..28 only for checkpoint7"
 #endif
 #if EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY
-#if !EFI_XNU_WIFI_NATIVE_RUNTIME_AVAILABLE || !defined(EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT) || EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT < 1 || EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT > 7
+#if !EFI_XNU_WIFI_NATIVE_RUNTIME_AVAILABLE || !defined(EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT) || EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT < 1 || EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT > 8
 #error "Firmware-only diagnostic requires native runtime and an explicit authentication checkpoint"
 #endif
 #if defined(EFI_XNU_DISK_GUID)
@@ -190,6 +190,7 @@ static uint32_t load_state;
 static int new_original_unknown(void);
 #endif
 static struct polaris_efi_ram_lease ram_lease;
+static efi_status uefi_watchdog_disable_status=EFI_ERROR|3;
 static int64_t cpu_status;
 #if EFI_XNU_WIFI_NATIVE_RUNTIME_AVAILABLE
 static uint32_t wifi_native_boot_phase;
@@ -858,6 +859,10 @@ __attribute__((noreturn)) static void power_unknown_hold(void)
 #if EFI_XNU_WIFI_TERMINAL_GOP_DIAGNOSTICS
     /* Remains terminal even if this local draw fails or is partial. No
      * foreign method, cleanup, response or CPU/private restoration follows. */
+#if EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY && EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 8
+    if(1){wifi_native_startup_gop_evidence();}else
+#endif
+    {
 #if EFI_XNU_WIFI_EARLY_MEMORY_AVAILABLE
 #if EFI_XNU_WIFI_NATIVE_MEMORY_AVAILABLE
     if(wifi_native_memory_stage>=1&&wifi_native_memory_stage<=4)wifi_native_memory_gop_evidence();
@@ -883,6 +888,7 @@ __attribute__((noreturn)) static void power_unknown_hold(void)
     else
 #endif
     terminal_gop_evidence();
+    }
 #endif
     for(;;)__asm__ volatile("wfe":::"memory");
 }
@@ -1168,7 +1174,7 @@ static struct pwns_parent wifi_native_parent;
  * the transferred metadata or descriptor. No resume path is provided. */
 static int wifi_native_auth_metadata_checkpoint(void)
 {
-#if EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT
+#if EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT && EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT != 8
     const struct pwns_parent*s=&wifi_native_parent;const struct pmsn_state*a=&s->auth;
 #if EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 1
     const unsigned index=0,phase=PMSN_MD_IO;
@@ -1194,7 +1200,7 @@ static int wifi_native_auth_metadata_checkpoint(void)
        !c->source_pages||c->source_pages>PMLC_SOURCE_PAGES||c->segments!=count||
        m->phase!=2||m->segment!=count-1||m->submitted!=count||m->step!=PMIM_LENGTH_READ||
        m->events!=(count==1?0u:6u+4u*(count-2))||m->pending||m->unknown||m->error||
-       m->exclusive_at||m->exclusive_page||m->authenticated_at)return 0;
+       m->exclusive_at||m->exclusive_page||m->authenticated_at||m->last!=m->publication[count-1])return 0;
     uint64_t pages=0,length=0,finished=0;
     for(unsigned k=0;k<count;k++){
         const struct pmsf_segment*g=&c->geometry[k];const struct pmlc_segment*copied=&c->segment[k];
@@ -1204,7 +1210,8 @@ static int wifi_native_auth_metadata_checkpoint(void)
         uint64_t end=((uint64_t)g->target_offset+g->memsz+4095)/4096;
         if(end<=pages||end>PMLC_PAGES||copied->first_page!=pages||copied->pages!=end-pages||
            copied->complete!=1||copied->published!=1||!copied->opening||copied->opening<finished||
-           copied->finished<copied->opening||m->publication[k]!=copied->finished)return 0;
+           copied->finished<copied->opening||
+           (k==PMIM_SEGMENTS-1?m->publication[k]<copied->finished:m->publication[k]!=copied->finished))return 0;
         if(k){
             const unsigned sequence=6+4*(k-1);const struct pmim_event*event=&m->event[sequence-1];
             if(event->command.sequence!=sequence||event->command.segment!=k-1||
@@ -1632,6 +1639,12 @@ static void wifi_native_startup_gop_evidence(void)
         pwtg_line(r,14,"SUP LAST TICK",(uint32_t)(v->last>>32),(uint32_t)v->last);
         pwtg_line(r,15,"SUP START TICK",(uint32_t)(v->transition>>32),(uint32_t)v->transition);
     }
+#if EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY && EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 8
+    pwtg_line(r,0,"IDLE HOLD",0,0);
+    pwtg_line(r,1,"IDLE AUTO RESET",0,0);
+    pwtg_line(r,2,"UEFI WATCHDOG",(uint32_t)(uefi_watchdog_disable_status>>32),(uint32_t)uefi_watchdog_disable_status);
+    pwtg_line(r,3,"MSS STARTED",s->attempted,s->owner.attempted);
+#endif
     (void)pwtg_draw(r);early_wifi_gop_raw();
 }
 #endif
@@ -2070,6 +2083,11 @@ __attribute__((noinline)) static int wifi_native_startup_step(void)
 {if(wifi_native_auth_metadata_checkpoint())power_unknown_hold();return pwns_step(&wifi_native_parent);}
 __attribute__((noreturn)) static void wifi_native_boot(void)
 {
+#if EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY && EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 8
+    (void)wifi_native_startup;(void)wifi_native_startup_step;
+    __asm__ volatile(""::"r"(polaris_wifi_image_nonces),"r"(polaris_wifi_image_nonce_sha256):"memory");
+    wifi_native_boot_phase=5;power_unknown_hold();
+#else
     wifi_native_startup();
     wifi_native_boot_phase=5;
     for(;;){int result=wifi_native_startup_step();if(result<0)power_unknown_hold();if(result==2)break;}
@@ -2110,6 +2128,7 @@ __attribute__((noreturn)) static void wifi_native_boot(void)
     if(pwno_begin(&wifi_native_terminal,&wifi_native_worker,EFI_XNU_WIFI_SHUTDOWN_VA)!=1)power_unknown_hold();
     wifi_native_boot_phase=10;
     for(;;)if(pwno_step(&wifi_native_terminal)!=1)power_unknown_hold();
+#endif
 #endif
 }
 #endif
@@ -2721,6 +2740,9 @@ static void idle_guard(void *context)
 #if defined(EFI_XNU_DURABLE_GUARD)
     if(load_state>=4)return;
 #endif
+#if POLARIS_RAM_LEASE_SECONDS == 0
+    (void)context;return;
+#else
     uint64_t now,frequency;__asm__ volatile("mrs %0,cntvct_el0":"=r"(now));
     __asm__ volatile("mrs %0,cntfrq_el0":"=r"(frequency));
     int lease_recovering=polaris_efi_ram_lease_expired(&ram_lease,now,frequency);
@@ -2758,6 +2780,7 @@ static void idle_guard(void *context)
             reset(context,2);
         }
     }
+#endif
 }
 #if EFI_XNU_GCD_MMIO_QUERY_AVAILABLE && !defined(POLARIS_EFI_TEST_QEMU)
 static int new_guarded_reset_receipt(void *context,unsigned mode,const uint8_t **data,uint64_t *bytes)
@@ -3277,7 +3300,10 @@ static void rescue_service(void)
 static void ready(void *event,void *context)
 {
     (void)event;(void)context;system_table->boot->restore_tpl(4);
-    text("POLARIS UEFI XNU: RAM-only resident bridge\r\n");system_table->boot->watchdog(0,0,0,0);
+    text("POLARIS UEFI XNU: RAM-only resident bridge\r\n");
+    uefi_watchdog_disable_status=system_table->boot->watchdog?system_table->boot->watchdog(0,0,0,0):EFI_ERROR|3;
+    report("UEFI_WATCHDOG_DISABLE_STATUS=",uefi_watchdog_disable_status);
+    report("RAM_IDLE_AUTO_RESET_SECONDS=",POLARIS_RAM_LEASE_SECONDS);
 #if defined(POLARIS_EFI_CHAIN_APP)
     efi_status chain=chain_disk_application();report("CHAIN_APP_RETURN=",chain);
 #if !defined(POLARIS_EFI_TEST_QEMU)
