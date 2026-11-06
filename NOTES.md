@@ -54,6 +54,31 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: complete supply-value screen sent; physical values pending
+
+- Sourcef43828b pushed/synchronized. supply-values-0001 fresh readonly audit
+ 64674 ended0; independent40 checks PASS, current roots/GPT/critical/ESP/NV
+  unchanged; FASTBOOT05:09:12.360583Z. Frozen512 files and offline one-use
+  admission PASS. Only diagnostic display changed; all request/value policies
+  and electrical behavior preserved.
+- Image4facee8ce7ab5542e2597b0e44854ee3dcb530547e4d977a88659fd86d6ec816 sent ONCE
+ 05:09:41.878704Z, fastboot0. All100593664B/1535 chunks sent, validation ACK
+  and independently queried validated state. Native-start05:11:21.964971Z,
+  ACK05:11:41.433148Z. Host9903 ended0. Pool/image SPENT. No post-native retry,
+  reset, USB observer or partition write. No live build/test/device job remains.
+- Current physical feedback is pending: if it again reaches the same baseline
+  rejection, screen now lists all19 saved ARC/VRM fields and3 CmdDb minimums.
+  Need those actual values before changing voltage/range/mode/encoding policy;
+  previous photo only proves PMSP_VALUE after19 reads and cannot identify the
+  bad field. Async text request sent. This is the first occurrence of this
+  candidate's screen dependency; goal ACTIVE, not complete/blocked.
+- Earlier actual AOP ON completion and passage through early MSS allocation
+  remain established. Wi-Fi supplies held/MSS boot/scan/Cyberpunk AU join/IP/
+  DNS/real traffic/stability remain unfinished. Execution2/5/current plus3
+  steps remain. Last15min05:03Z,next05:18Z while active. Kernel CI42091724671
+  unchanged. Preserve unowned remote-memory hunk, private data and all existing
+  Android/Windows/backups. Do not replay any prior one-use candidate.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: early allocation passes; supply baseline value rejection isolated
 
 - Source00c3170 pushed/synchronized. Corrected mss-map-heap-0001 readonly
