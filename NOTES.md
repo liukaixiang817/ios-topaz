@@ -54,6 +54,38 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: first MSS target passes; native translation rejection isolated
+
+- New0AE46346 photo of SPENT mss-dt-pages-0001 resolves prior feedback blocker;
+  user explicitly resumed goal ACTIVE. MBA HOLD5/parent17, wrapper3/inner0,
+  phase1/step0, pending/deliveries/events1, polls0, first DEBUG READ04080018.
+  First target complete1, second0; native error3 with issued/returned/complete0,
+  delivery error3. First namespace correction therefore passes on hardware;
+  pmni_access rejects its AT evidence before raw MMIO. No register value,
+  MBA-ready or authentication observed. Window/total2243; absent IO/reset
+  timestamps remain sentinel values. Read PAR digits are visually uncertain;
+  read/write equality, restored PAR and complete flags are not yet displayed.
+- Add failure-only saved translation projection when target0 complete/native
+  attempted/error3/unissued: full page/read-PAR/write-PAR/saved-PAR/restored-PAR,
+  all six AT issue/return flags, prior MAIR, command/error/phase and target
+  completion. Existing retained-record bounds and CPU_ON/GOP guards remain.
+  No repeated AT, MMIO, permission, map, timing, voltage or protocol change.
+- mba-at-diagnostic-0001 exact extracted diagnostic passes867 previous and140
+  new sanitizer scenarios, including nested reset/last delivery/bad bounds/
+  partial flags/high bits/CPU_ON, with input state unchanged. All6 build/test/
+  offline commands exit0. EFI and arm64843 functions/max816B; original codec
+  roundtrip81 unchanged files PASS. Only compiled change uefi-xnu.c.
+  Driver828416B SHA5762ebdd43784ddd08d05e0ce087145d9ae4a48cc58839c04dfc6022a3df26ca.
+  Image6238208B SHA4aecdccd1e3a47648469eecac7da4cff44595214cb7725e1c68d3c0786fba670.
+  Existing full composed/DT-page tests remain hash-bound; kernel/payload same
+  CI42091724671. Unowned remote-memory header unchanged and excluded from commit.
+- Expected FASTBOOT06:46:53.737131Z. Fresh readonly audit host17952 running;
+  next40check independent review/freeze/admission and ONE temporary boot.
+  Candidate not sent. Prior feedback blocker resolved; fresh blocked audit.
+  Execution2/5,current plus3steps remain; MBA/modem/WLAN scan/Cyberpunk AU
+  join/IP/DNS/data/stability unproven. Report06:45Z,next07:00Z while working.
+  Preserve Android/Windows/backups/private data; no replay/reset/USB observer.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: own-DT MSS page correction sent once; physical access result pending
 
 - Sourceeed889c pushed/synchronized. mss-dt-pages-0001 fresh readonly audit

@@ -1303,6 +1303,24 @@ static void wifi_native_startup_gop_evidence(void)
             pwtg_line(r,12,"MBA TARGETS",d->target[0].complete,d->target[1].complete);
             pwtg_line(r,13,"MBA ACCESS PAR",(uint32_t)(par>>32),(uint32_t)par);
             pwtg_line(r,14,"MBA IO AGE",(uint32_t)(age>>32),(uint32_t)age);
+            /* Translation rejection before MMIO: expose the full retained
+             * R/W and PAR restoration evidence, without repeating any AT. */
+            if(d->target[0].complete&&d->native.attempted&&d->native.error==3&&!d->native.issued){
+                const struct pmni_translation*t=&d->native.AT;
+                pwtg_line(r,0,"MBA AT HOLD",wifi_native_boot_phase,s->phase);
+                pwtg_line(r,3,"MBA ADDRESS",(uint32_t)(address>>32),(uint32_t)address);
+                pwtg_line(r,4,"AT PAGE",(uint32_t)(t->page>>32),(uint32_t)t->page);
+                pwtg_line(r,5,"AT READ PAR",(uint32_t)(t->read_par>>32),(uint32_t)t->read_par);
+                pwtg_line(r,6,"AT WRITE PAR",(uint32_t)(t->write_par>>32),(uint32_t)t->write_par);
+                pwtg_line(r,7,"AT SAVED PAR",(uint32_t)(t->saved>>32),(uint32_t)t->saved);
+                pwtg_line(r,8,"AT RESTORED PAR",(uint32_t)(t->restored>>32),(uint32_t)t->restored);
+                pwtg_line(r,9,"AT READ FLAGS",t->read_issued,t->read_returned);
+                pwtg_line(r,10,"AT WRITE FLAGS",t->write_issued,t->write_returned);
+                pwtg_line(r,11,"AT REST FLAGS",t->restore_issued,t->restore_returned);
+                pwtg_line(r,13,"AT MAIR",(uint32_t)(d->native.before.mair>>32),(uint32_t)d->native.before.mair);
+                pwtg_line(r,14,"AT ERROR IO",d->native.error,d->native.issued|(d->native.returned<<8)|(d->native.complete<<16));
+                pwtg_line(r,15,"MBA KIND ERROR",kind,d->error);
+            }
             /* A failed first namespace check precedes any native access.
              * Inspect only already captured GCD/EFI records for that page. */
             if(!d->target[0].complete&&!d->native.attempted){
