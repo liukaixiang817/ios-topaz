@@ -76,6 +76,12 @@ early samples only. On0029 the human already confirmed boot complete and said
   Current host result is terminal0 at06:26:09Z; no new device result exists.
   Same new-screen dependency, occurrence2 including the initiating turn. No
   live job remains to poll; no retry or USB observer. Goal remains active.
+- Continuation06:28Z: previous turn was no progress toward networking (only
+  dependency bookkeeping). Authoritative host result remains terminal and
+  no new screen/result exists. Same dependency occurrence3; goal tool now
+  reports BLOCKED, not complete. Resume when current screen/physical evidence
+  arrives; reset this blocked audit on resumed work. No independent meaningful
+  hardware change is justified before the first-access result is known.
 - Execution2/5,current plus3steps remain. MBA-ready/modem-auth/WLAN scan,
   Cyberpunk AU join/IP/DNS/data/stability remain unproven. Last15min06:15Z,
   next06:30Z while active. Kernel CI42091724671/payload unchanged. Unowned
