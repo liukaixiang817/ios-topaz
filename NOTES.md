@@ -54,6 +54,29 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: existing-PDC-L3 repair sent once; new physical result pending
+
+- Sourcef8d0029 pushed/synchronized. Fresh pdc-leaf-map-0001 audit42669 ended0
+  at08:20:53.847985Z; independent40checks PASS and actual returned FASTBOOT
+  08:20:53.821212Z. Roots/GPT/critical/ESP/NV unchanged.634files frozen, offline
+  native admission PASS. Kernel CI42091724671 and exact payload unchanged.
+- Imageb2ff71f94d626060d94375630f6d90773d325947f42caa583e2903467fe9e382 sent
+  ONCE08:21:26.753894Z, fastboot0. Full100593664B payload, validation_ACK and
+  independently queried validated_state true. Native-start08:23:06.784123Z,
+  ACK08:23:26.236422Z; host90793 ended0 at08:23:26.306858Z. All jobs terminal.
+- Candidate image/nonce SPENT. No replay/reset/post-native USB observer or
+  partition writes. Host acceptance proves neither actual leaf publication nor
+  PDC reset/MBA/auth/WLAN. Human945DC9B8 is the PREVIOUS candidate's L3-refusal
+  photo, not a result of this new repair. Keep trial identities separate.
+- Asked current heading; if PDC PAGE HOLD, PAGE ERROR FLAGS/WALK FLAGS/DESC3/
+  AFTER0, otherwise new heading/error rows. Current-screen dependency FIRST
+  occurrence; previous one resolved by945DC9B8. Goal ACTIVE, not complete.
+  Next action interpret actual result and continue evidenced failure under
+  existing own-resource/owner/AT bounds. No live host handle remains to poll.
+- Execution2/5,current plus3remaining. Actual scan/Cyberpunk AU join/IP/DNS/
+  data/stability unproven. Formal08:15 report delivered08:17Z; next08:30Z if
+  active. Unowned remote-memory9line hunk preserved/excluded from all commits.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: PDC existing-L3 leaf repair verified; fresh audit running
 
 - Human945DC9B8 from spent pdc-page-map-0001 shows PDC PAGE HOLD5/phase16,
