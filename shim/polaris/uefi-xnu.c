@@ -21,8 +21,14 @@
 #if EFI_XNU_WIFI_FIRST_RMB_EVENTS < 0 || EFI_XNU_WIFI_FIRST_RMB_EVENTS > 6 || ((EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 6) != (EFI_XNU_WIFI_FIRST_RMB_EVENTS != 0))
 #error "Firmware-only diagnostic requires first RMB count1..6 only for checkpoint6"
 #endif
+#ifndef EFI_XNU_WIFI_COPY_SEGMENTS
+#define EFI_XNU_WIFI_COPY_SEGMENTS 0
+#endif
+#if EFI_XNU_WIFI_COPY_SEGMENTS < 0 || EFI_XNU_WIFI_COPY_SEGMENTS > 28 || ((EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 7) != (EFI_XNU_WIFI_COPY_SEGMENTS != 0))
+#error "Firmware-only diagnostic requires copy count1..28 only for checkpoint7"
+#endif
 #if EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY
-#if !EFI_XNU_WIFI_NATIVE_RUNTIME_AVAILABLE || !defined(EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT) || EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT < 1 || EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT > 6
+#if !EFI_XNU_WIFI_NATIVE_RUNTIME_AVAILABLE || !defined(EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT) || EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT < 1 || EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT > 7
 #error "Firmware-only diagnostic requires native runtime and an explicit authentication checkpoint"
 #endif
 #if defined(EFI_XNU_DISK_GUID)
@@ -1167,7 +1173,7 @@ static int wifi_native_auth_metadata_checkpoint(void)
 #if EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 1
     const unsigned index=0,phase=PMSN_MD_IO;
     if(a->metadata.phase!=1||a->metadata.events)return 0;
-#elif EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT >= 2 && EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT <= 6
+#elif EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT >= 2 && EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT <= 7
     const unsigned index=EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT>=3?2:1;
     const unsigned phase=(EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT==4||(EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT==6&&EFI_XNU_WIFI_FIRST_RMB_EVENTS==6))?PMSN_COPY:EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT>=3?PMSN_PUBLISH:PMSN_MODEM_SHARE;
     if(a->metadata.phase!=3||!a->metadata.events||!a->metadata.authenticated_at||
@@ -1180,6 +1186,36 @@ static int wifi_native_auth_metadata_checkpoint(void)
     if(c->ready!=1||c->complete!=1||c->unknown||c->error||c->pages!=PMLC_PAGES||c->segments!=PMIM_SEGMENTS||
        m->phase!=2||m->segment!=PMIM_SEGMENTS-1||m->submitted!=PMIM_SEGMENTS||m->step!=PMIM_LENGTH_READ||
        m->pending||m->unknown||m->error||m->exclusive_at||m->authenticated_at)return 0;
+#elif EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 7
+    /* Stop after exactly the selected copied prefix, before its last RMB
+     * operation. Inspect only embedded geometry/copy/publication records. */
+    const unsigned count=EFI_XNU_WIFI_COPY_SEGMENTS;
+    if(c->ready!=1||c->complete!=(count==PMIM_SEGMENTS)||c->unknown||c->error||
+       !c->source_pages||c->source_pages>PMLC_SOURCE_PAGES||c->segments!=count||
+       m->phase!=2||m->segment!=count-1||m->submitted!=count||m->step!=PMIM_LENGTH_READ||
+       m->events!=(count==1?0u:6u+4u*(count-2))||m->pending||m->unknown||m->error||
+       m->exclusive_at||m->exclusive_page||m->authenticated_at)return 0;
+    uint64_t pages=0,length=0,finished=0;
+    for(unsigned k=0;k<count;k++){
+        const struct pmsf_segment*g=&c->geometry[k];const struct pmlc_segment*copied=&c->segment[k];
+        if(g->index!=k+2||(g->target_offset&4095)||g->target_offset<pages*4096||
+           (!k&&g->target_offset)||!g->memsz||g->target_offset>=0x7800000||
+           g->memsz>0x7800000-g->target_offset)return 0;
+        uint64_t end=((uint64_t)g->target_offset+g->memsz+4095)/4096;
+        if(end<=pages||end>PMLC_PAGES||copied->first_page!=pages||copied->pages!=end-pages||
+           copied->complete!=1||copied->published!=1||!copied->opening||copied->opening<finished||
+           copied->finished<copied->opening||m->publication[k]!=copied->finished)return 0;
+        if(k){
+            const unsigned sequence=6+4*(k-1);const struct pmim_event*event=&m->event[sequence-1];
+            if(event->command.sequence!=sequence||event->command.segment!=k-1||
+               event->command.step!=PMIM_STATUS||event->command.kind!=PMSR_READ||
+               event->command.address!=0x418000c||!event->before||event->before<finished||
+               event->after<event->before||event->after>copied->opening||event->issued!=1||
+               event->returned!=1||event->return_raw!=1||event->value>4)return 0;
+        }
+        pages=end;finished=copied->finished;if(k+1<count)length+=g->memsz;
+    }
+    if(c->pages!=pages||m->length!=length||(count==PMIM_SEGMENTS&&pages!=PMLC_PAGES))return 0;
 #elif EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 5 || EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 6
     /* First segment copy/readback/CIVAC is complete. pmim_publish has only
      * prepared resident state; its first RMB read/write has not been issued. */
@@ -1529,7 +1565,7 @@ static void wifi_native_startup_gop_evidence(void)
     if(wifi_native_auth_metadata_checkpoint()){
         const struct pmsn_state*a=&s->auth;const struct pwmt_transaction*t=&a->assignment[a->assignments-1].transaction;
         uint64_t age=t->last>=t->opening?t->last-t->opening:UINT64_MAX;
-        pwtg_line(r,0,EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT==6?"FIRST RMB STOP":EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT==5?"MODEM FIRST COPY":EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT==4?"MODEM COPY READY":EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT==3?"MODEM COPY STOP":EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT==2?"AUTH RETURN STOP":"AUTH CHECKPOINT",a->assignments,a->phase);
+        pwtg_line(r,0,EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT==7?"COPY PREFIX STOP":EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT==6?"FIRST RMB STOP":EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT==5?"MODEM FIRST COPY":EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT==4?"MODEM COPY READY":EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT==3?"MODEM COPY STOP":EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT==2?"AUTH RETURN STOP":"AUTH CHECKPOINT",a->assignments,a->phase);
         pwtg_line(r,1,"META PH EVENTS",a->metadata.phase,a->metadata.events);
         pwtg_line(r,2,"TX DONE ERR",t->complete,t->error);
         pwtg_line(r,3,"TX EVENTS ROUNDS",t->events,t->rounds);
@@ -1537,8 +1573,8 @@ static void wifi_native_startup_gop_evidence(void)
         pwtg_line(r,5,"TX STEP PEND",t->step,t->pending);
         pwtg_line(r,6,"AUTH ERR PEND",a->error,a->pending);
         pwtg_line(r,7,"OWNER ERR HELD",o->error,o->held);
-        pwtg_line(r,8,EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT==6?"FIRST RMB EVENTS":EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT==5?"BEFORE FIRST IO":EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT==4?"BEFORE COPY":EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT==3?"BEFORE LAST LEN":EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT==2?"BEFORE MODEM":"BEFORE META IO",
-            EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT==6?a->modem.events:1,EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT==6?EFI_XNU_WIFI_FIRST_RMB_EVENTS:0);
+        pwtg_line(r,8,EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT==7?"COPY PREFIX CNT":EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT==6?"FIRST RMB EVENTS":EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT==5?"BEFORE FIRST IO":EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT==4?"BEFORE COPY":EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT==3?"BEFORE LAST LEN":EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT==2?"BEFORE MODEM":"BEFORE META IO",
+            EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT==7?s->copy.segments:EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT==6?a->modem.events:1,EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT==7?EFI_XNU_WIFI_COPY_SEGMENTS:EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT==6?EFI_XNU_WIFI_FIRST_RMB_EVENTS:0);
         for(unsigned n=9;n<16;n++)pwtg_line(r,n,"",0,0);
 #if EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT >= 3
         pwtg_line(r,9,"COPY DONE ERR",s->copy.complete,s->copy.error);

@@ -499,8 +499,9 @@ def main():
     ap.add_argument('--mss-firmware-in-payload',action='store_true',help='source verified own firmware from the exact appended RAM payload tail instead of embedding its bytes in EFI')
     ap.add_argument('--mss-mba-share',action='store_true',help='default-OFF native HLOS3 to MSS15 RW assignment of the actual staged MBA1MiB, retained descriptor/continuations and CPU restoration; no reset, power, free or remote start')
     ap.add_argument('--wifi-host-nonce-pool',action='store_true',help='generate a fresh private host-CSPRNG nonce input for this new temporary-boot candidate; requires digest-wide consumption before send; does not enable native WLAN')
-    ap.add_argument('--wifi-native-auth-metadata-checkpoint',nargs='?',const='assigned',choices=['assigned','returned','copied','copy-ready','first-copy','first-rmb'],help='default-OFF terminal hold at an explicit metadata/copy/first-RMB boundary; never resume or call CPU_ON')
+    ap.add_argument('--wifi-native-auth-metadata-checkpoint',nargs='?',const='assigned',choices=['assigned','returned','copied','copy-ready','first-copy','first-rmb','copy-prefix'],help='default-OFF terminal hold at an explicit metadata/copy/first-RMB boundary; never resume or call CPU_ON')
     ap.add_argument('--wifi-native-first-rmb-events',type=int,choices=range(1,7),help='first-rmb checkpoint only: terminal hold after exactly1..6 completed initial RMB operations; no retry/resume')
+    ap.add_argument('--wifi-native-copy-segments',type=int,choices=range(1,29),help='copy-prefix checkpoint only: terminal hold after exactly1..28 copied segments, before the last segment RMB operation')
     ap.add_argument('--wifi-firmware-diagnostic-only',action='store_true',help='separate default-OFF RAM firmware diagnostic with mandatory authentication checkpoint and unconditional terminal hold before XNU/CPU_ON; USB payload only')
     ap.add_argument('--wifi-native-runtime',action='store_true',help='build the complete native radio/runtime and retained terminal path; does not grant physical boot admission')
     ap.add_argument('--wifi-nv-backup-directory',type=Path,help='private own GPT backup used only to generate expected identities; current NV is reread on each boot')
@@ -511,6 +512,8 @@ def main():
         ap.error('auth metadata checkpoint requires native runtime and terminal GOP evidence')
     if (a.wifi_native_auth_metadata_checkpoint=='first-rmb')!=(a.wifi_native_first_rmb_events is not None):
         ap.error('first-rmb checkpoint and explicit1..6 first RMB events must be selected together')
+    if (a.wifi_native_auth_metadata_checkpoint=='copy-prefix')!=(a.wifi_native_copy_segments is not None):
+        ap.error('copy-prefix checkpoint and explicit1..28 copy segments must be selected together')
     if a.wifi_firmware_diagnostic_only and (not a.wifi_native_auth_metadata_checkpoint or
         not a.wifi_native_runtime or not a.wifi_power_terminal_gop_diagnostics or a.disk_guid):
         ap.error('firmware-only diagnostic requires native runtime, authentication checkpoint, terminal GOP and USB RAM payload')
@@ -1117,10 +1120,12 @@ def main():
             if a.test_omit_durable_guard:f.write('#define EFI_XNU_TEST_OMIT_OWNED_GUARD 1\n')
             if a.physical_owned_marker:f.write('#define EFI_XNU_PHYSICAL_MARKER 1\n')
     if a.wifi_native_auth_metadata_checkpoint:
-        auth_checkpoint_mode={'assigned':1,'returned':2,'copied':3,'copy-ready':4,'first-copy':5,'first-rmb':6}[a.wifi_native_auth_metadata_checkpoint]
+        auth_checkpoint_mode={'assigned':1,'returned':2,'copied':3,'copy-ready':4,'first-copy':5,'first-rmb':6,'copy-prefix':7}[a.wifi_native_auth_metadata_checkpoint]
         with config.open('a') as f:f.write(f'#define EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT {auth_checkpoint_mode}\n')
     if a.wifi_native_first_rmb_events is not None:
         with config.open('a') as f:f.write(f'#define EFI_XNU_WIFI_FIRST_RMB_EVENTS {a.wifi_native_first_rmb_events}\n')
+    if a.wifi_native_copy_segments is not None:
+        with config.open('a') as f:f.write(f'#define EFI_XNU_WIFI_COPY_SEGMENTS {a.wifi_native_copy_segments}\n')
     if a.wifi_firmware_diagnostic_only:
         with config.open('a') as f:f.write('#define EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY 1\n')
     if a.wifi_native_runtime:
@@ -2142,6 +2147,7 @@ def main():
             wifi_native_auth_metadata_checkpoint=bool(a.wifi_native_auth_metadata_checkpoint),
             wifi_native_auth_metadata_checkpoint_phase=a.wifi_native_auth_metadata_checkpoint,
             wifi_native_first_rmb_events=a.wifi_native_first_rmb_events,
+            wifi_native_copy_segments=a.wifi_native_copy_segments,
             wifi_native_runtime_binding=wifi_runtime_metadata,
             wifi_native_runtime_header_sha256=sha(out/'uefi-wifi-native-runtime-config.h'),
             wifi_native_NV_generated_inputs={p.name:sha(p) for p in (out/'wifi-nv').iterdir()},

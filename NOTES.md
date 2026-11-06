@@ -54,6 +54,41 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Active Wi-Fi milestone — 2026-11-07 Melbourne: physical first STATUS3; copied-prefix14 qualified
+
+- UserphotoBCB6D6A3 provescurrentN6 FIRST RMB STOP: events6/6,readvalue3/command0,
+  step5/5,copy2pages/1segment,error0,ready/unknown1/0,modemphase/segment1/1,
+  submitted/events1/6. FirstinitialsixRMBoperationsphysicallyreturned. STATUS3
+  isNOTwholemodemAUTH_COMPLETE4; fullbank/auth/WLAN remainunproven. Photo/decoded
+  bindingssavedprivately. HumanthenconfirmsFASTBOOT andgoalACTIVE; priorblocked
+  conditionresolved,newaudit. No spontaneous-resetclaim forthisN6trial.
+- Added explicitdefaultOFF copy-prefix checkpoint7, mandatorycompilecount1..28.
+  Stopafterselectedactualcopy/readback/CIVAC andresidentpublication,beforeits
+  firstRMB. Requiresprefixgeometry/pageextents/allcopycomplete/publicationtimes,
+  exactmodemphase2/segmentN-1/submittedN/stepREAD/events0or6+4*(N-2)/priorlength,
+  everyearlierSTATUSrecord'saddress/kind/sequence/segment/step/returnedflags/
+  nonerrorvalue/coherenttimestamps. No target/sourcepointerfollow orhardware IO.
+  Sourceoutsidepredicate/GOP/compileguards EXACT94cec0b; producerheaders,
+  normalrootvalidator/sharedtransport unchanged. Kernelentryalwayscompiledclosed.
+- Newcase firmware-copy-prefix14-0001 chooses14:1915pages,end7843840B,
+  priorlength6984988,events54. Stopsbeforebigsegment15 memsz36143104B. This
+  localizesknownfullcopyreset; doesnotrepeatoldSPENTfullcopycandidate.
+- Public7testsPASS15.007s/session83427,39profiles/10140actualentryterminalcases.
+  Actualprojection40configsPASS:all12oldcountsunchanged,newprefix1..28 counts
+  2260..7552,increments196; selected14 has4808 inclold1602+210savedfailures.
+  BothactualobjectsONLYstartup/step/hold,704frames/max816B;81originalfilescodec
+  equal. DefaultMachOexact;COFFtimestamp-only. Buildermissing/unused/outofrange/
+  pairedcount/disk andnormalpackager refusalsPASS. Allsessionscollected.
+- Actualdriver714240B 056cdebbb96e315dd1ccb3bb466283002b7c850281513af6ec5dfcbfcd4c7d91;
+  image6189056B e78598519e6fff72048d18708c5dd17c8f0303d6d0eb61ba97996e0bee7a1df7.
+  QualifiedUNSENT, freshnonceunused; fullreviewfreeze/offline stillnext. User
+  alreadyFASTBOOT; singleinventory14:15:39.556071Z selectedpresent. Afterfreeze,
+  commonhelperrechecksactualproduct beforeconsume/send; no repeatedkeyrequest.
+- GoalACTIVE,step2/5,fourincludingcurrent. Formal14:15Zwindowdelivered,next14:30Z.
+  No newkernelCI (42091724671/kernel/payloadunchanged), no storage/GPT/Windows
+  write/repair orobserver. Normalroot38/40remainsREFUSED; noXNU indiagnostics.
+  Preserveunownedremote-memory9linehunk7215a3786b3b9226aa4f839648bbecc80d9c575f3fd3fb00250481dd91786a01.
+
 ### Current blocking handoff — 2026-11-07 Melbourne: N6 physical screen result required
 
 - Fresh resumed audit nowTHREEconsecutivegoalturns forsameN6screen dependency:

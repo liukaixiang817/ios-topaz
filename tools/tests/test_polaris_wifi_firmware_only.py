@@ -64,12 +64,16 @@ int main(void){
 '''
         with tempfile.TemporaryDirectory() as directory:
             folder = Path(directory)
-            for checkpoint, events in [(n, None) for n in range(1, 6)]+[(6, n) for n in range(1, 7)]:
-                source = folder/f'checkpoint-{checkpoint}-{events}.c'
+            profiles = ([(n, None, None) for n in range(1, 6)] +
+                        [(6, n, None) for n in range(1, 7)] +
+                        [(7, None, n) for n in range(1, 29)])
+            for checkpoint, events, segments in profiles:
+                source = folder/f'checkpoint-{checkpoint}-{events}-{segments}.c'
                 source.write_text('#define EFI_XNU_WIFI_NATIVE_RUNTIME_AVAILABLE 1\n'
                                   '#define EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY 1\n'
                                   f'#define EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT {checkpoint}\n'
                                   + (f'#define EFI_XNU_WIFI_FIRST_RMB_EVENTS {events}\n' if events is not None else '')
+                                  + (f'#define EFI_XNU_WIFI_COPY_SEGMENTS {segments}\n' if segments is not None else '')
                                   + GUARD+'\n'+peer+ACTUAL+'\n'+main)
                 binary = source.with_suffix('')
                 subprocess.run(['clang', '-std=c11', '-O1', '-g', '-Wall', '-Wextra', '-Werror',
@@ -79,13 +83,21 @@ int main(void){
                 self.assertIn('PASS 260 actual firmware-only terminal cases', result.stdout)
 
     def test_actual_compile_guard_rejects_unbounded_or_disk_profiles(self):
-        for checkpoint, runtime, disk, events in ((0, 1, False, None), (7, 1, False, None), (4, 0, False, None), (4, 1, True, None),
-                                                 (6, 1, False, None), (6, 1, False, 0), (6, 1, False, 7), (5, 1, False, 1)):
-            with self.subTest(checkpoint=checkpoint, runtime=runtime, disk=disk, events=events):
+        profiles = ((0, 1, False, None, None), (8, 1, False, None, None),
+                    (4, 0, False, None, None), (4, 1, True, None, None),
+                    (6, 1, False, None, None), (6, 1, False, 0, None),
+                    (6, 1, False, 7, None), (5, 1, False, 1, None),
+                    (7, 1, False, None, None), (7, 1, False, None, 0),
+                    (7, 1, False, None, 29), (7, 1, False, None, -1),
+                    (7, 0, False, None, 14), (7, 1, True, None, 14),
+                    (6, 1, False, 1, 14), (5, 1, False, None, 14))
+        for checkpoint, runtime, disk, events, segments in profiles:
+            with self.subTest(checkpoint=checkpoint, runtime=runtime, disk=disk, events=events, segments=segments):
                 text = ('#define EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY 1\n'
                         f'#define EFI_XNU_WIFI_NATIVE_RUNTIME_AVAILABLE {runtime}\n'
                         f'#define EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT {checkpoint}\n'
                         + (f'#define EFI_XNU_WIFI_FIRST_RMB_EVENTS {events}\n' if events is not None else '')
+                        + (f'#define EFI_XNU_WIFI_COPY_SEGMENTS {segments}\n' if segments is not None else '')
                         + ('#define EFI_XNU_DISK_GUID 1\n' if disk else '') + GUARD)
                 result = subprocess.run(['clang', '-x', 'c', '-fsyntax-only', '-'],
                                         input=text, capture_output=True, text=True)

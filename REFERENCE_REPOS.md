@@ -14,6 +14,21 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+## First STATUS3 and bounded copy-prefix boundary (0189, 2026-11-07 Melbourne)
+
+PhysicalBCB6D6A3: initialsixRMBoperationsreturned,events6/6,value3,step5/5,
+modemphase1/segment1,copy2pages/1segment. Ownpil-msa.c868..891 acceptsnonnegative
+statusduringincrementalpublishing; finalauthstillrequires4. Fullbank/WLANunknown.
+
+NewdefaultOFFterminalprefix1..28 inspectsresidentgeometry/copy/publication and
+allprecedingSTATUSrecords; nohardwareoperation/reader/order/timingchanges.
+Selected14stopsat1915pages before36143104Bsegment15. Exactoutside-diagnosticC
+andallproducers match94cec0b. LocalHackiOSredwoodstage anduserlandMobileWiFi
+references consulted; noforeignaddresses/firmware/protocol imported. Actual
+7publictests/10140terminalcases,40projectionconfigs including4808selectedprefix
+cases,bothobjects/max816B,81originalfilecodec anddefaultobjectcomparisonPASS.
+Normalroot38/40refusal unchanged; physicalprefix14 remainsunproven.
+
 ## Initial START return and first STATUS boundary (0189, 2026-11-07 Melbourne)
 
 CurrentN2human FIRST RMB STOP title isbound toitsnewonce-onlyimage. Exact
