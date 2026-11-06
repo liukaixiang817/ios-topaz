@@ -54,6 +54,34 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: auth seal optimization sent once; physical timing/result pending
+
+- Source60ee899 pushed/synchronized. Fresh auth-seal-spans-0001 audit12021
+  ended0 at08:57:48.379678Z; independent40checks PASS, actual return FASTBOOT
+  08:57:48.353807Z. Roots/GPT/critical/ESP/NV unchanged.664files frozen and
+  offline native admission PASS. Freeze helper initially had a result-name
+  mismatch and local-variable collision; corrected bookkeeping then passed,
+  no device action on either failure. Kernel CI42091724671/payload unchanged.
+- Imagea4437b331558fda11f6e7dc0f7e02646ee72b1a7d95bbcfe5a28220c49e02910 sent
+  ONCE08:58:57.131322Z, fastboot0. Full100593664B payload validation_ACK and
+  independently queried validated_state true. Native-start09:00:36.514344Z,
+  ACK09:00:55.472004Z; host17579 ended0 at09:00:55.524543Z. All jobs terminal.
+- Image/nonce SPENT; no replay/reset/postnative USB observer/partition writes.
+  Host acceptance does NOT prove improved phone timing or completed secure
+  ownership/authentication. Human15DBE1CF is the PREVIOUS diagnostic result,
+  not the result of this seal optimization. Keep trial identities separate.
+- Asked current heading; if AUTH HOLD, AUTH INDEX PEND/TX ERR STEP/TX EVENTS
+  ROUNDS/TX CHECK AGE/SMC X0, otherwise new title/error rows. Current-screen
+  dependency FIRST occurrence for this candidate; prior waits resolved.
+  Goal ACTIVE, not complete. No live host handle remains. Next interpret actual
+  timing/assignment progress; preserve original100ms budget and all state/
+  ownership/descriptor protections unless evidence warrants a reasoned change.
+- Execution2/5,current plus3remaining. Native MBA ready proved by prior actual
+  control flow; authenticated modem/native scan/Cyberpunk AU join/IP/DNS/data/
+  stability unproven. Formal09:00 report delivered,next09:15Z while active.
+  Unowned9line remote-memory hunk preserved/excluded; all source tests/builds
+  and actual send evidence recorded. No broad claim from host speed benchmark.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: auth returned-step timeout; equivalent seal spans verified
 
 - Human15DBE1CF resolves the diagnostic wait: AUTH HOLD2/phase1, assignment0,
