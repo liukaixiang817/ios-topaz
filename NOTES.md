@@ -54,6 +54,39 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-07 Melbourne: N2 title confirmed; first segment STATUS diagnostic qualified
+
+- User confirms currentN2 FIRST RMB STOP. Rawtwoevent/step rows NOTindependently
+  supplied. Currentquestion isbound tosent13:33:59.400066Z/image2e36d2d4...;
+  source-checkedN2predicate permits title ONLYafter two returned operations,
+  exactphase/step/events and noerrors. Accept guardedtitle asboundarywitness;
+  doNOTinventnumericrows. Freeformnumericrequest remainsoptional supplementary.
+  New prior-current-checkpoint-title-admission.json records this inference.
+- New firmware-first-rmb-status-0001 selectsN6 on SAME94cec0bsource. Thisruns
+  existingLENGTH_READ/START/COMMAND/LENGTH_WRITE/ORDER/STATUS andstopsbefore
+  secondcopy, requiringphase1/segment1/stepSTATUS/length8192/events6 andvalid
+  lastreturnedrecord. Nohardwareoperation/order/timing/permissionchange.
+- ThreefreshbuildsPASS13:44:51..13:45:17Z,81originalfilescodecequal,bothactual
+  objectentrychains inspected ONLYstartup/step/hold;704frames/max816B. Driver
+  714240Bb00574797dccd3316d9918516b31fc69191f2229dcd6eb211ef478ab854afdbf;
+  image6189056Bed4f0f2ddc69ec0c744e4ac5f19afffaba857ffab1c74cf9d01b5280eda250f0.
+  Prior2860terminal/2358N6projectiontests reused underexactsource/builderhashes;
+  no newtestrunclaim. Review0001 freezes857inputs; offline34185TERMINAL0; UNSENT.
+- Newimageready, one-timeinventory13:46:21.463250Z findsFASTBOOTabsent. Asked
+  physicalpower+volumedown reentryonce; awaitactualreply, doNOTassume elapsed
+  time meansentry. Noobserver/post-nativeUSBcommand ornewboot issued.
+- Independentofflineaudit verified currentpayloadcontains exact19,093,328B
+  c3e456d2... sixfileuserlandbundle; allembeddedfiledigests and10current source
+  hashesmatch. Initlaunchdprobe/scanclient andiOSconfigdDHCPIPC present. Thisis
+  inertRAMdata inthisdiagnostic, notexecution/networkproof. Savedprivateaudit.
+  InitialnaivePGPUsearch hitkernelconstant, correctedtosegmenttable/extents
+  beforeactualbundlecomparison; noinput/outputbinarymodified.
+- Normalfullroot40checkpolicy remains38/40REFUSED. KernelCI42091724671 unchanged,
+  no newkernelbuildneeded forloaderconfigonly. Unownedremote-memory9linehunk
+  unchanged/uncommitted. No scan/join/IP/DNS/data orstabilityproof.
+- GoalACTIVE,step2/5,fourincludingcurrent. Formal13:45Zreportdelivered,next14:00Z.
+  PhysicalFASTBOOTreentrypending; currentN2result makesnextactionconcrete.
+
 ### Continuous Wi-Fi milestone — 2026-11-07 Melbourne: physical first RMB length read returned
 
 - Source94cec0b committed, pushed and synced. N1 diagnostic review0001 froze845
