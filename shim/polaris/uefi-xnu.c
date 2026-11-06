@@ -1147,10 +1147,20 @@ static int wifi_native_auth_metadata_checkpoint(void)
 {
 #if EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT
     const struct pwns_parent*s=&wifi_native_parent;const struct pmsn_state*a=&s->auth;
-    const struct pmsn_assignment*q=&a->assignment[0];const struct pwmt_transaction*t=&q->transaction;
+#if EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 1
+    const unsigned index=0,phase=PMSN_MD_IO;
+    if(a->metadata.phase!=1||a->metadata.events)return 0;
+#elif EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 2
+    const unsigned index=1,phase=PMSN_MODEM_SHARE;
+    if(a->metadata.phase!=3||!a->metadata.events||!a->metadata.authenticated_at||
+       a->metadata.returned_at<a->metadata.authenticated_at)return 0;
+#else
+#error Unsupported metadata checkpoint
+#endif
+    const struct pmsn_assignment*q=&a->assignment[index];const struct pwmt_transaction*t=&q->transaction;
     return wifi_native_boot_phase==5&&!wln_cpu_on_issued&&s->phase==PWNS_AUTH&&!s->error&&!s->unknown&&
-        a->ready==1&&!a->error&&!a->unknown&&a->phase==PMSN_MD_IO&&a->assignments==1&&!a->pending&&
-        a->metadata.phase==1&&!a->metadata.events&&!a->metadata.pending&&
+        a->ready==1&&!a->error&&!a->unknown&&a->phase==phase&&a->assignments==index+1&&!a->pending&&
+        !a->metadata.pending&&!a->metadata.error&&!a->metadata.unknown&&
         q->complete==1&&!q->error&&!q->unknown&&t->complete==1&&t->step==PWMT_DONE&&!t->error&&!t->unknown&&!t->pending;
 #else
     return 0;
@@ -1463,9 +1473,9 @@ static void wifi_native_startup_gop_evidence(void)
         pwtg_line(r,15,"SOURCE TPL",(uint32_t)q->source[0].TPL,(uint32_t)q->source[1].TPL);
     }
     if(wifi_native_auth_metadata_checkpoint()){
-        const struct pmsn_state*a=&s->auth;const struct pwmt_transaction*t=&a->assignment[0].transaction;
+        const struct pmsn_state*a=&s->auth;const struct pwmt_transaction*t=&a->assignment[a->assignments-1].transaction;
         uint64_t age=t->last>=t->opening?t->last-t->opening:UINT64_MAX;
-        pwtg_line(r,0,"AUTH CHECKPOINT",a->assignments,a->phase);
+        pwtg_line(r,0,EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT==2?"AUTH RETURN STOP":"AUTH CHECKPOINT",a->assignments,a->phase);
         pwtg_line(r,1,"META PH EVENTS",a->metadata.phase,a->metadata.events);
         pwtg_line(r,2,"TX DONE ERR",t->complete,t->error);
         pwtg_line(r,3,"TX EVENTS ROUNDS",t->events,t->rounds);
@@ -1473,7 +1483,7 @@ static void wifi_native_startup_gop_evidence(void)
         pwtg_line(r,5,"TX STEP PEND",t->step,t->pending);
         pwtg_line(r,6,"AUTH ERR PEND",a->error,a->pending);
         pwtg_line(r,7,"OWNER ERR HELD",o->error,o->held);
-        pwtg_line(r,8,"BEFORE META IO",1,0);
+        pwtg_line(r,8,EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT==2?"BEFORE MODEM":"BEFORE META IO",1,0);
         for(unsigned n=9;n<16;n++)pwtg_line(r,n,"",0,0);
     }
     /* All19 reads returned before the phase1 value check. Display the actual

@@ -499,7 +499,7 @@ def main():
     ap.add_argument('--mss-firmware-in-payload',action='store_true',help='source verified own firmware from the exact appended RAM payload tail instead of embedding its bytes in EFI')
     ap.add_argument('--mss-mba-share',action='store_true',help='default-OFF native HLOS3 to MSS15 RW assignment of the actual staged MBA1MiB, retained descriptor/continuations and CPU restoration; no reset, power, free or remote start')
     ap.add_argument('--wifi-host-nonce-pool',action='store_true',help='generate a fresh private host-CSPRNG nonce input for this new temporary-boot candidate; requires digest-wide consumption before send; does not enable native WLAN')
-    ap.add_argument('--wifi-native-auth-metadata-checkpoint',action='store_true',help='default-OFF terminal hold after completed metadata assignment, before the first RMB authentication write; never resume or call CPU_ON')
+    ap.add_argument('--wifi-native-auth-metadata-checkpoint',nargs='?',const='assigned',choices=['assigned','returned'],help='default-OFF terminal hold after metadata assignment or after metadata authentication/return; never resume or call CPU_ON')
     ap.add_argument('--wifi-native-runtime',action='store_true',help='build the complete native radio/runtime and retained terminal path; does not grant physical boot admission')
     ap.add_argument('--wifi-nv-backup-directory',type=Path,help='private own GPT backup used only to generate expected identities; current NV is reread on each boot')
     ap.add_argument('--wifi-country',choices=['AU'],help='explicit country for the currently implemented native radio profile')
@@ -1110,7 +1110,7 @@ def main():
             if a.test_omit_durable_guard:f.write('#define EFI_XNU_TEST_OMIT_OWNED_GUARD 1\n')
             if a.physical_owned_marker:f.write('#define EFI_XNU_PHYSICAL_MARKER 1\n')
     if a.wifi_native_auth_metadata_checkpoint:
-        with config.open('a') as f:f.write('#define EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT 1\n')
+        with config.open('a') as f:f.write(f'#define EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT {1 if a.wifi_native_auth_metadata_checkpoint=="assigned" else 2}\n')
     if a.wifi_native_runtime:
         with config.open('a') as f:f.write('#include "uefi-wifi-native-runtime-config.h"\n')
     disk_path=None
@@ -2128,6 +2128,7 @@ def main():
     if a.wifi_native_runtime:
         manifest.update(wifi_native_runtime_enabled=True,wifi_native_runtime_default_OFF=True,
             wifi_native_auth_metadata_checkpoint=bool(a.wifi_native_auth_metadata_checkpoint),
+            wifi_native_auth_metadata_checkpoint_phase=a.wifi_native_auth_metadata_checkpoint,
             wifi_native_runtime_binding=wifi_runtime_metadata,
             wifi_native_runtime_header_sha256=sha(out/'uefi-wifi-native-runtime-config.h'),
             wifi_native_NV_generated_inputs={p.name:sha(p) for p in (out/'wifi-nv').iterdir()},

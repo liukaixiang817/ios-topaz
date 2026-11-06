@@ -54,6 +54,32 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: actual metadata assignment complete; return checkpoint ready
+
+- Human F732A128 resolves current screen wait: AUTH CHECKPOINT1/2,
+  META PH EVENTS1/0, TX DONE ERR1/0, TX EVENTS ROUNDS3/1, TX STEP PEND4/0,
+  AUTH ERR PEND0/0, OWNER ERR HELD0/1. This is actual completion of assignment0
+  including post-SMC invalidation/equality, followed by intentional terminal
+  hold before ANY metadata RMB IO. Prior reset is not reproduced before this
+  boundary; later metadata authentication/return/modem/WLAN remain unproven.
+- New auth-metadata-return-checkpoint-0001 uses explicit flag value returned
+  (bare flag remains assigned; omitted staysOFF). Terminal boundary after
+  authenticated metadata and completed return transaction1, metadata phase3,
+  auth phaseMODEM_SHARE4/assignments2, before modem-bank secure sharing/copy.
+  No native protocol/timing/permissions/header changes. Saved-control-only
+  display title AUTH RETURN STOP; no resume/cleanup/CPU_ON/target access.
+- Extracted actual predicate/dispatch/GOP passes OFF1777/assigned1777/returned1791
+  cases, with positive nonreturning stop, invalid error/unknown/pending/phase/
+  count/time guards and all1602prior cases. Builder incompatible profile refused.
+  EFI/MachO/image/offline PASS;854functions/max816B,81originalfiles unchanged.
+  Driver837120B SHA667e76351ca0d8590e39ca4330e6c2763218274af47b4ca4734473107ef8086c;
+  image6242304B SHA0243e4974ee6fe92c9020d9e4e3d1ba6c9ecaa23061ac9b8b7a28ca395b95952.
+- ReadonlyFASTBOOT query09:50:57.091473Z timed out, no device action. Asked
+  direct power+volume-down from current temporary AUTH CHECKPOINT hold,
+  avoiding Android boot. Await physical FASTBOOT; no fresh root audit/freeze/
+  native send for this new unused candidate yet. GoalACTIVE,2/5,four steps
+  including current. Formal09:45,next10:00Z. No kernelCI change; unownedhunk intact.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: checkpoint trial ACK, current physical screen pending
 
 - Explicit normal system-menu shutdown resolved pending journal: audit71827

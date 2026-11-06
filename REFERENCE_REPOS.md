@@ -14,6 +14,25 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+## Actual metadata assignment completed; returned checkpoint (0189, 2026-11-06)
+
+Physical F732A128 shows AUTH CHECKPOINT1/2, metadata phase1/events0,
+transaction complete1/error0, events3/round1, DONE4/pending0 and owner held1.
+This proves the first native secure assignment, post-return invalidation and
+descriptor comparison completed; no RMB metadata command had been issued.
+It does not prove later authentication, VMID return, modem readiness or Wi-Fi.
+
+The same default-OFF diagnostic now supports assigned (bare flag compatible)
+and returned modes. Returned requires metadata authenticated_at nonzero,
+returned_at not earlier, metadata phase3/nonzero events/no pending/error/unknown,
+auth phaseMODEM_SHARE/assignments2, and completed unambiguous transaction1.
+The exact parent boundary terminal-holds before modem sharing/copy, displaying
+AUTH RETURN STOP from saved control only. No native authentication or secure
+protocol implementation changes. Actual extraction tests OFF1777/assigned1777/
+returned1791 cases pass; EFI/MachO854functions/max816B and81original firmware
+file roundtrip pass. Existing own DT/vendor metadata flow remains the basis;
+no foreign firmware or hardware addresses imported.
+
 ## Metadata assignment terminal checkpoint after reported reboot (0189, 2026-11-06)
 
 Human reports auth-owner-seal-spans-0001 returned to MIX then booted Android;
