@@ -54,6 +54,51 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-07 Melbourne: physical first segment copied; first RMB read diagnostic qualified
+
+- First-copy host90347 TERMINAL0 ended2026-11-06T12:53:14.211342Z; sentONCE
+  12:51:14.533345Z/native-start12:52:54.665575Z/ACK record12:53:14.144145Z,
+  full100593664B validationACK/queriedvalidated_state true. Image/nonceSPENT.
+- Human photoE7770EC6 shows MODEM FIRST COPY,auth3/6,metadata3/6,copycomplete/
+  error0/0,pages/segments2/1,ready/unknown1/0,modemphase/segment2/0,submitted/
+  events1/0,length/error0/0,pending/step0/0. Own MDTfirstsegment memsz8192,
+  filesz6872,alignment1MiB. Thus first8KiBcopy/readback/CIVAC physically complete
+  before first RMB, NOT full bank/network proof. Human explicitly confirms
+  manually entering FASTBOOT afterwards; hold duration not measured. Saved
+  photo/decoded fields/manual-exit record privately. No spontaneous-exit claim.
+- New explicit first-rmb checkpoint6 plus mandatory compile-time completed-event
+  count1..6. Each selected boundary requires first-segment records and exact
+  modem phase/segment/step/length/event count, last event sequence/segment/step/
+  issued/returned/raw-success and coherent timestamps, no pending/error/unknown/
+  exclusive/auth state. N6stops before second copy; N1..5before next RMB step.
+  FIRST RMB STOP projects resident value/expected and last/nextstep. No new
+  hardware operation/reader/callback/permission/time change. Sourceoutside
+  predicate/GOP/compileguard EXACT7f8a479; normal native root-validator/shared
+  transport WHOLEFILE exactb7a5224. Ordinary root38/40 remainsREFUSED.
+- Newcase firmware-first-rmb-read-0001 SELECTSN1only (initial length read);
+  driver714240B 72aa885abfce26822bf454a8e1e04da71eae2f8bbc9f9f75e4c1d740281f793d;
+  image6189056B a9b30013403d7ed5e0fbfe336d3ae8f361252d00d3c00af1cdccc40d7a1c5cf9.
+  Build/codecPASS81originalfiles; bothactualentry chains ONLYstartup/step/hold;
+ 704frames/max816B. Default MachO exact; COFFtimestamp-onlydiff4/5. Candidate
+  UNUSED/UNSENT; reviewfreeze not yetcreated. Kernel/payload unchanged,no newCI.
+- Sevenpublictests PASS2860actualterminal cases (fiveold modes plus sixNvariants).
+  Twelve actualprojection configsPASS1987/1987/2001/2141/2169/2295 +2358eachN1..6,
+  including everyoldcase and210savedfailure cases perconfig. Initialmode6test
+  refused new41line drawcallcount in oldsoftwareleaf; updated ONLY privateleaf
+  allowedcount for twointentional overrides, retained failureinput/log/binary,
+  thenall12PASS. Production source unchanged by fixturefix. CLI missing/unpaired/
+  out-of-rangeN, missingcheckpoint/disk and normalpackager reject as expected.
+- New image ready, one-time inventory13:13:10.352613Z selectedFASTBOOTpresent;
+  human confirms manual entry, so no new key request. Commonhelper must still
+  validate exactproduct immediately before consumption/send. No observer or
+  post-native USB query. No manual repair/replay/GPT/Windows/userdata write.
+- Next commit/sync/push source, freeze exactcurrenthelper/config/proof/objects/
+  nonce and actualfirstcopy evidence, offline then one fresh temporaryN1trial.
+  Preserve all priorSPENT candidates and unownedremote-memory9linehunk.
+- GoalACTIVE,step2/5,four including current;1done,3..5unverified. Formal13:15Z
+  window delivered,next13:30Z whileactive. No pending physical action or live
+  hostprocess. Wi-Fi still not scanned/joined/networked.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: isolated copied-mode reset; first-segment diagnostic qualified
 
 - Human confirms current copied-mode trial spontaneously returned MIX/Android.

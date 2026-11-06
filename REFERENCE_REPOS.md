@@ -14,6 +14,25 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+## Physical first copy and exact initial RMB return boundaries (0189, 2026-11-07 Melbourne)
+
+ActualE7770EC6 confirms first segment:2pages/1segment,copyerror0,modemevents0.
+Own MDTmemsz8192/filesz6872/alignment1MiB matches the8KiBpage count. Human then
+manually enteredFASTBOOT. Full copy/notification/mainauth/WLAN remain unproven.
+
+Own pmim_next/complete sequence is LENGTH_READ,START,COMMAND,LENGTH_WRITE,ORDER,
+STATUS. Completed STATUS leaves phase1/segment1/stepSTATUS before next copy.
+New terminal checkpoint6 selects exactly1..6 completed initial operations,
+checks their resident phase/length/return record and stops BEFORE the next
+operation/copy. Newcase selects1 only. Existing producer/order/permissions/
+cache/time unchanged; ordinaryroot40checks remainrefused. No source from a
+foreign radio or outside firmware execution path is imported.
+
+Sevenpublictests/2860actualterminal cases and12actualprojection configs pass;
+newstate cases2358perRMBcount retain alloldcases. Native704frames/max816B,
+exact default MachO/COFFtimestamp-only and81originalfile codec pass. Physical
+firstRMBread is still pending; no WLAN or IP/DNS/data success follows.
+
 ## First-segment copy boundary after isolated reset (0189, 2026-11-06)
 
 Separate copied-mode trial still spontaneously reset with XNU compiled out.
