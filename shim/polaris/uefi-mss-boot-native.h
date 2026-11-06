@@ -92,13 +92,23 @@ static inline int pmbm_prepare(struct pmbn_state*s,struct pmbm_state*m,uint64_t 
     m->table=((uintptr_t)m->storage+4095)&~UINT64_C(4095);
     struct pmbm_reader reader={s,m};
     (void)pmpt_collect(&m->walk,m->architecture.ttbr0,m->architecture.tcr,base,pmbm_read,&reader);
-    if(!pmbm_hole(&m->walk,m->table)||!pmbn_child(s,m->table,4096)||!pwmc_zero((void*)(uintptr_t)m->table,4096))return 0;
-    m->error=3;m->storage_AT.page=m->table;
-    if(!pwmc_actual_translate(&m->storage_AT)||!pwmc_translation_valid(&m->storage_AT)||m->storage_AT.page!=m->table)return 0;
-    uint64_t*t=(void*)(uintptr_t)m->table;for(unsigned n=0;n<512;n++)t[n]=pmbm_leaf(base,n);
-    m->entry=m->walk.entry[2];m->value=m->table|3;
+    m->level=pmbm_hole(&m->walk,m->table);if(!m->level)return 0;
+    m->error=3;
+    if(m->level==2){
+        if(!pmbn_child(s,m->table,4096)||!pwmc_zero((void*)(uintptr_t)m->table,4096))return 0;
+        m->storage_AT.page=m->table;
+        if(!pwmc_actual_translate(&m->storage_AT)||!pwmc_translation_valid(&m->storage_AT)||m->storage_AT.page!=m->table)return 0;
+        uint64_t*t=(void*)(uintptr_t)m->table;for(unsigned n=0;n<512;n++)t[n]=pmbm_leaf(base,n);
+        m->value=m->table|3;
+    }else{
+        /* The existing RAM reader qualified this exact writable WB L3 source
+         * twice, outside loaded images. Its other511 entries remain untouched. */
+        m->table=m->walk.descriptor[2]&UINT64_C(0x0000fffffffff000);
+        m->value=base|PMBM_LEAF_FLAGS;
+    }
+    m->entry=m->walk.entry[m->level];
     if(!pmni_arch_read(&m->final_architecture)||!pmni_arch_same(&m->architecture,&m->final_architecture,m->architecture.ticks)||!pmbn_live(s))return 0;
-    for(unsigned n=0;n<3;n++)if(*(const volatile uint64_t*)(uintptr_t)m->walk.entry[n]!=m->walk.descriptor[n])return 0;
+    for(unsigned n=0;n<=m->level;n++)if(*(const volatile uint64_t*)(uintptr_t)m->walk.entry[n]!=m->walk.descriptor[n])return 0;
     /* Power effects already retain the exclusive CPU owner on any failure.
      * The map is permanent for this RAM-only parent lifetime, never undone. */
     m->error=4;if(!pmbm_publish(m))return 0;

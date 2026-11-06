@@ -14,6 +14,26 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+## Own PDC existing-L3 empty leaf (0189, 2026-11-06)
+
+Physical945DC9B8 reports PDC PAGE HOLD, error2/no publication, walk error3,
+levels4/stable1, reader error0, BEFORE0=80f, and a nonzero L2 table pointer.
+Its DESC3 was not displayed. Therefore an invalid L3 descriptor is observed;
+exact zero must be proved at runtime, not assumed from the photograph.
+
+The same own PDC preparation now accepts a four-level stable walk ONLY when
+its last descriptor is exactly zero and all ancestors are unrestricted table
+entries. The existing loaded-image-excluding/writable-WB RAM reader qualifies
+that precise8byte source twice. One zero-only exclusive store installs only
+0b2e0000 as Device/EL1-RW/PXN/UXN, preserving every neighboring L3 entry.
+No new table is allocated/copied/published on this path. Cache/TLB ordering,
+strict post-AT, retained ancestor/leaf checks and no-retry/held-owner failure
+semantics are unchanged. Nonzero invalid and valid leaves both refuse.
+QDSP/RMB keeps its separately verified invalid-L2-only path. The diagnostic
+now shows PDC DESC3 explicitly. This is not permission to map arbitrary holes.
+Primary Arm/EDK2 insertion references and own DT/vendor proof remain those
+listed below; this adds no foreign address or reset sequence.
+
 ## Own PDC namespace and conditional mapping (0189, 2026-11-06)
 
 PhysicalA0343D90 from mss-page-map-0001 reaches MBA MAP HOLD for0b2e0000,

@@ -1182,7 +1182,8 @@ static void wifi_native_startup_gop_evidence(void)
         pwtg_line(r,10,"PAGE BEFORE0",(uint32_t)(m->before[0].read_par>>32),(uint32_t)m->before[0].read_par);
         pwtg_line(r,11,"PAGE BEFORE1",(uint32_t)(m->before[1].read_par>>32),(uint32_t)m->before[1].read_par);
         pwtg_line(r,12,"PAGE AFTER0",(uint32_t)(m->after[0].read_par>>32),(uint32_t)m->after[0].read_par);
-        pwtg_line(r,13,"PAGE AFTER1",(uint32_t)(m->after[1].read_par>>32),(uint32_t)m->after[1].read_par);
+        if(m==&s->boot.pdc_mapping)pwtg_line(r,13,"PAGE DESC3",(uint32_t)(m->walk.descriptor[3]>>32),(uint32_t)m->walk.descriptor[3]);
+        else pwtg_line(r,13,"PAGE AFTER1",(uint32_t)(m->after[1].read_par>>32),(uint32_t)m->after[1].read_par);
         pwtg_line(r,14,"PAGE STORAGE PAR",(uint32_t)(m->storage_AT.read_par>>32),(uint32_t)m->storage_AT.read_par);
         pwtg_line(r,15,"PAGE READ ERROR",m->read_error,s->images.failure.reason);
     }

@@ -33,7 +33,8 @@ static void map_at(struct pmni_translation*t)
 static int pmbm_publish(struct pmbm_state*m)
 {
     publishes++;CHECK(pmbn_live(boot_owner)&&!boot_calls&&owner->held&&owner->effects);
-    for(unsigned n=0;n<512;n++)CHECK(((uint64_t*)(uintptr_t)m->table)[n]==pmbm_leaf(m->base,n));
+    if(m->level==2)for(unsigned n=0;n<512;n++)CHECK(((uint64_t*)(uintptr_t)m->table)[n]==pmbm_leaf(m->base,n));
+    else CHECK(m->level==3&&m->base==0xb2e0000&&m->entry==m->table+224*8&&m->value==(m->base|PMBM_LEAF_FLAGS));
     if(map_fault==5)put((void*)(uintptr_t)m->entry,0x123,8);
     m->issued=m->returned=1;
     if(*(uint64_t*)(uintptr_t)m->entry)return 0;
@@ -75,6 +76,32 @@ int main(int argc,char**argv)
     map_setup(0,2);CHECK(pmbn_begin(boot_owner,boot_records,aop_owner));
     CHECK(publishes==2&&boot_owner->mapping.installed&&boot_owner->pdc_mapping.installed);
     CHECK(boot_owner->mapping.table!=boot_owner->pdc_mapping.table&&boot_drive()&&pmbn_current(boot_owner));cases++;
+    for(unsigned f=0;f<13;f++){
+        unsigned fault=f==4?5:f==5?6:f==6?13:f==11?11:f==12?16:0;
+        map_setup(fault,f==10?0:1);
+        uintptr_t leaf=table_base+(f==8?0x20000:0x3000),slot=table_base+8192+(f==10?0x100:0x2c8);
+        uint64_t expected[512];for(unsigned n=0;n<512;n++)expected[n]=n==224?0:(UINT64_C(0x80000000)+n*4096+0x703);
+        if(f==10)expected[128]=expected[384]=0;
+        for(unsigned n=0;n<512;n++)put((void*)(leaf+8*n),expected[n],8);
+        put((void*)slot,leaf+3,8);
+        if(f==1)put((void*)(leaf+224*8),2,8);
+        if(f==2)put((void*)(leaf+224*8),UINT64_C(0xb2f0000)|PMBM_LEAF_FLAGS,8);
+        if(f==3)put((void*)slot,(leaf+3)|(UINT64_C(1)<<59),8);
+        int ok=pmbn_begin(boot_owner,boot_records,aop_owner);
+        struct pmbm_state*m=f==10?&boot_owner->mapping:&boot_owner->pdc_mapping;
+        if(f==0||f==7||f==9||f==12){
+            CHECK(ok&&publishes==1&&m->level==3&&m->installed&&m->complete&&pmbm_current(m));
+            if(f==7){put((void*)(leaf+224*8),0,8);CHECK(!pmbm_current(m)&&!boot_drive()&&!boot_calls);}
+            else if(f==9){put((void*)(table_base+4096),0,8);CHECK(!pmbm_current(m)&&!boot_drive()&&!boot_calls);}
+            else CHECK(boot_drive()&&pmbn_current(boot_owner)&&boot_calls);
+        }else{
+            CHECK(!ok&&boot_owner->error==4&&!boot_calls&&!m->complete);
+            CHECK(publishes==(f==4||f==5)&&m->installed==(f==5));
+            CHECK(!pmbn_begin(boot_owner,boot_records,aop_owner)&&!boot_drive()&&!boot_calls);
+        }
+        for(unsigned n=0;n<512;n++)if(n!=224)CHECK(*(uint64_t*)(leaf+8*n)==expected[n]);
+        cases++;
+    }
     CHECK(!pmbm_pages(0xb2e1000)&&!pmbm_pages(0x4081000)&&!pmbm_leaf(0xb2e1000,224));
-    aop_test_close();printf("PASS %u MSS/PDC page mapping scenarios / %u checks; SOFTWARE only\n",cases,checks);return 0;
+    aop_test_close();printf("PASS %u MSS/PDC L2/L3 mapping scenarios / %u checks; SOFTWARE only\n",cases,checks);return 0;
 }

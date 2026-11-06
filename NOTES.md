@@ -54,6 +54,42 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: PDC existing-L3 leaf repair verified; fresh audit running
+
+- Human945DC9B8 from spent pdc-page-map-0001 shows PDC PAGE HOLD5/phase16,
+  error2/flags0, walkerror3/flags104: stable invalid L3, DESC2=13fec7003.
+  Earlier mapper only accepted empty L2 and stopped before any publication.
+  Last DESC3 was not displayed: photo does NOT prove its value zero. Previous
+  screen dependency resolved; new code checks exact zero at runtime, and new
+  PDC diagnostic displays DESC3 in place of unused AFTER1.
+- Narrow existing-L3 path only for own DT PDC0b2e0000: twice-qualified writable
+  WB identity source outside loaded images, unrestricted stable ancestors,
+  unchanged architecture/exclusive owner, one zero-only exclusive store of
+  exact Device/EL1-RW/PXN/UXN leaf, cache/TLB barriers and strict post R/W AT.
+  No other511entry touched or new table initialized. Existing QDSP/RMB L2 path
+  unchanged. Nonzero invalid and already-valid foreign leaf are refused.
+- PASS:51 actual composed mapping scenarios/6320463checks, incl preservation
+  of all511neighbors and failures before/after publication;103 namespace/
+  negative scenarios/865645checks; full normal2889178, gap+VRM2889180 both
+  result2/phase46;1217 extracted production display cases. Software peers only.
+- EFI/MachO/image/offline root admission PASS.852functions/max816B MachO stack.
+  Actual target COFF disassembly confirms level3 skips table-clean loop and
+  contains one ldxr/conditional stxr/clrex plus dc/dsb/tlbi/dsb/isb. MachO is
+  compile/stack diagnostic only: Apple assembler treats inline semicolons as
+  comments, so that object is NOT executable validation or the loaded artifact.
+  Original81firmware files roundtrip unchanged. Driver835072B SHA
+  e653a607bc20d910660f21365b579a33e94f6224da6a41d1924f44b82ab62304;
+  image6240256B SHAb2ff71f94d626060d94375630f6d90773d325947f42caa583e2903467fe9e382.
+- Decoded readonly query confirmed FASTBOOT08:18:14.753912Z, no human keys
+  needed. Fresh pdc-leaf-map-0001 readonly audit host42669 started08:18:29.974598Z;
+  still running at this milestone. All build/test jobs ended0. No native send
+  yet. Next review40checks, freeze new image/proofs, offline admission, send
+  once. Kernel CI42091724671/payload unchanged; no postnative USB observer.
+- Goal ACTIVE, execution2/5,current plus3remaining. Actual PDC mapping/reset/
+  MBA/native scan/Cyberpunk AU join/IP/DNS/data/stability remain unproven.
+  Formal08:15 report delivered08:17Z; next08:30Z. Unowned9line remote-memory
+  hunk SHA7215a378... preserved, excluded from commit. No partition writes.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: PDC repair sent once; actual screen pending
 
 - Source62a6b45 pushed/synchronized. New pdc-page-map-0001 strict-readonly
