@@ -77,8 +77,17 @@ early samples only. On0029 the human already confirmed boot complete and said
   so continueauthorizedonce-onlyN2trialwithoutkeyrequest. Commonhelper still
   checksactualproduct beforedurableconsume/send. Continuousobserverremainspaused.
   Normalfullrootadmission stays38/40REFUSED; noXNU/storageconsumer indiagnostics.
+- Documentationf70e59e committed/pushed/synced; source94cec0b unchanged. N2host
+  55564 started13:33:58.966176Z,actualsentONCE13:33:59.400066Z afterproduct and
+  durablenonceconsume. Full100593664B validationACK/queriedvalidated_state true;
+  native-start13:35:39.489391Z/ACKrecord13:35:58.978588Z,TERMINAL0 ended
+  13:35:59.017853Z andcollected. NewcandidateSPENT; no replay/observer.
+- N2physicalresult PENDING. Askedactualtitle andFIRST RMB EVENTS/RMB STEP NEXT
+  (expected2/2,1/2); holdscreen. HostACKisnotwritecompletionproof. DoNOTquery
+  post-nativeUSB, sendanotherimage orinferexitwithoutphysicalresult. No live
+  deviceprocess. ThisisfirstpendingdependencyaftermajorphysicalN1progress.
 - GoalACTIVE,step2/5,four includingcurrent. Formal13:30Zwindow delivered,
-  next13:45Z whileactive. No pending humanrequest or livehostjob. Unowned9line
+  next13:45Z whileactive. HumanN2screenrequestpending; no livehostjob. Unowned9line
   remote-memoryhunk untouched. No scan/join/IP/DNS/data success yet.
 
 ### Continuous Wi-Fi milestone — 2026-11-07 Melbourne: physical first segment copied; first RMB read diagnostic qualified
