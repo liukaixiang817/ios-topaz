@@ -54,6 +54,37 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: physical CmdDb/RSC passed; diagnose AOP delivery4 without relaxing access
+
+- New cmddb-target-0001 photo shows native HOLD5/4, parent phase9, owner0/2,
+  IMAGES/MAP/RPMh/CmdDb0 and CLOCK AOP0/4. Therefore CmdDb and RSC captures,
+  persistent power/clock owner admission and AOP begin passed. Actual supply/
+  clock votes, MSS boot and radio are not proven. AOP delivery4 combines target,
+  architecture, native MMIO and protocol completion; exact subcondition unknown.
+- Existing pman_delivery.reserved now records first failing stage1..10 only
+  on failure; size/ABI, error4/UNKNOWN, predicate order and native operations
+  unchanged. Source call timeout/Device mapping/protocol acceptance unchanged.
+  Bounded pre-CPU_ON GOP reads only directly bound resident AOP delivery,
+  protocol, GCD and own retained EFI records; no new MMIO/AT/provider call.
+  Shows failure/event/step/index/kind/native error/address/targets/PAR/protocol
+  error; geometry error5 shows all16 captured descriptor words. Other errors
+  show issued/returned/value, saved GCD/EFI attributes and protocol/owner ticks.
+- Actual AOP on/off/power/six-clock sanitizer suite1227959 checks,17 scenarios,
+ 232 software stop checks PASS;494 normal deliveries keep reserved0. Fault
+  stage assertions pass. Initial test expected injected timeout at post-target;
+  source pmni_arch_same actually rejects it earlier in native leaf(error5).
+  Corrected test expectation with explicit native.error5, not production limit.
+  Initial failure log retained privately. Actual extracted GOP330 cases PASS;
+  full parent/runtime/terminal2889178 PASS SOFTWARE hardware/firmware leaves.
+- Complete EFI/arm64 compile832 functions,max stack816B; codec/original81 files
+  PASS. Driver814592B SHAfcb868eba0b878534d979cf8a8125253ec94d2f66dab8292f3a722d1faf277f0.
+  Private candidate aop-delivery-0001, fresh unsent nonce/image. Kernel CI42091724671
+  and payload unchanged. Build/test jobs ended0. Exact polaris FASTBOOT03:16:18Z;
+  fresh candidate readonly audit started. Require40-check review/freeze before
+  sending once. Preserve spent prior image, unowned remote-memory hunk and USB
+  observer pause. Execution2/5/current plus3 steps; Wi-Fi scan/join/IP/DNS/data/
+  stability remain. Goal ACTIVE unfinished, next15min report03:18Z.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: CmdDb target candidate sent once; current physical result pending
 
 - Sourcefc0eaa4 pushed and four owned paths synchronized. Candidate

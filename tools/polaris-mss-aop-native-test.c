@@ -122,7 +122,7 @@ int PMAN_TEST_ENTRY(int argc,char**argv)
     aop_setup();CHECK(aop_cycle());unsigned total=aop_owner->deliveries,on=aop_owner->completed[0];
     unsigned locations[8]={1,0,0,0,0,0,on,total};
     for(unsigned n=0;n<on;n++){
-        const struct pman_delivery*r=&aop_records[n];
+        const struct pman_delivery*r=&aop_records[n];CHECK(!r->reserved);
         if(r->command.step==PMAQ_WRITE&&!locations[1])locations[1]=n+1;
         if(r->command.step==PMAQ_LENGTH&&!locations[2])locations[2]=n+1;
         if(r->command.step==PMAQ_DOORBELL&&!locations[3])locations[3]=n+1;
@@ -133,15 +133,23 @@ int PMAN_TEST_ENTRY(int argc,char**argv)
     for(unsigned n=0;n<8;n++){
         CHECK(locations[n]);aop_setup();aop_fault=1;aop_trigger=locations[n];CHECK(!aop_cycle());
         CHECK(aop_owner->unknown&&power->unknown&&aop_owner->pending==aop_trigger&&!aop_owner->restored&&owner->held);
+        CHECK(aop_records[aop_owner->pending-1].reserved==5);
         unsigned prior=aop_reads+aop_writes+aop_orders;CHECK(pman_step(aop_owner)==PMAQ_FAILED&&prior==aop_reads+aop_writes+aop_orders);
     }
     for(unsigned fault=2;fault<=6;fault++){
         aop_setup();aop_fault=fault;aop_trigger=locations[1];CHECK(!aop_cycle());
         CHECK(aop_owner->unknown&&power->unknown&&!aop_owner->restored&&owner->held);
+        /* The delayed raw leaf is rejected by pmni_arch_same's PMCK_LIMIT
+         * before the post-target lifetime check, so fault4 is leaf stage5. */
+        static const unsigned reasons[]={0,0,5,2,5,6,10};
+        const struct pman_delivery*d=&aop_records[aop_owner->pending-1];
+        if(d->reserved!=reasons[fault])fprintf(stderr,"AOP fault%u stage%u native%u expected%u\n",fault,d->reserved,d->native.error,reasons[fault]);
+        CHECK(d->reserved==reasons[fault]);if(fault==4)CHECK(d->native.error==5);
     }
     for(unsigned malformed=0;malformed<3;malformed++){
         aop_setup();put(aop_memory+(malformed==0?0:malformed==1?0x1000:0x2000),4,4);
         CHECK(!aop_drive()&&aop_owner->unknown&&!aop_writes&&!aop_doorbells&&!owner->effects);
+        CHECK(aop_records[aop_owner->pending-1].reserved==10);
     }
     aop_test_close();
     printf("PASS %u owned native AOP checks, %u scenarios, %u software stop checks; no hardware/provider/USB\n",checks,aop_scenarios,retirement_checks);return 0;

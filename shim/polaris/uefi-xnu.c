@@ -1168,6 +1168,53 @@ static void wifi_native_startup_gop_evidence(void)
         pwtg_line(r,14,"CMDDB READS",s->cmddb.pass[0].reads,s->cmddb.pass[1].reads);
         pwtg_line(r,15,"CMDDB PAGES",s->cmddb.pass[0].pages,s->cmddb.pass[1].pages);
     }
+    if(s->aop.error==4&&s->aop.pending&&s->aop.pending<=PMAN_RECORDS&&
+       s->aop.pending==s->aop.deliveries&&s->aop.records==(uintptr_t)s->aop_records&&
+       s->aop.phase>=1&&s->aop.phase<=2){
+        const struct pman_delivery*d=&s->aop_records[s->aop.pending-1];
+        const struct pmaq_notify*q=&s->aop.notify[s->aop.phase-1];
+        pwtg_line(r,0,"AOP HOLD",wifi_native_boot_phase,s->phase);
+        pwtg_line(r,1,"AOP WHY EVENT",d->reserved,s->aop.deliveries);
+        pwtg_line(r,2,"AOP STEP INDEX",d->command.step,d->command.index);
+        pwtg_line(r,3,"AOP KIND ERROR",d->command.kind,d->native.error);
+        pwtg_line(r,4,"AOP ADDRESS",(uint32_t)(d->command.address>>32),(uint32_t)d->command.address);
+        pwtg_line(r,5,"AOP TARGETS",d->target[0].complete,d->target[1].complete);
+        pwtg_line(r,6,"AOP PAR",(uint32_t)(d->native.AT.read_par>>32),(uint32_t)d->native.AT.read_par);
+        pwtg_line(r,7,"AOP PROTO ERROR",q->error,q->step);
+        if(q->error==5){
+            static const char labels[8][16]={"AOP DESC 00 01","AOP DESC 02 03","AOP DESC 04 05","AOP DESC 06 07",
+                "AOP DESC 08 09","AOP DESC 10 11","AOP DESC 12 13","AOP DESC 14 15"};
+            for(unsigned n=0;n<8;n++)pwtg_line(r,8+n,labels[n],q->descriptor[2*n],q->descriptor[2*n+1]);
+        }else{
+            pwtg_line(r,8,"AOP IO VALUE",d->native.issued|(d->native.returned<<8),d->native.value);
+            pwtg_line(r,9,"AOP PENDING",q->pending,q->events);
+            pwtg_line(r,10,"AOP GCD TYPE CAP",0,0);pwtg_line(r,11,"AOP GCD ATTR",0,0);
+
+            uint64_t page=d->command.address&~UINT64_C(4095);
+            if(s->map.pass[1].nodes<=PMRG_NODES)for(unsigned n=0;n<s->map.pass[1].nodes;n++){
+                const uint8_t*v=s->map.pass[1].node[n].raw;uint64_t base=pwfi_le(v+24,8),end=pwfi_le(v+32,8);
+                if(base>page||end<page||end-page<4095)continue;
+                uint64_t attr=pwfi_le(v+48,8);
+                pwtg_line(r,10,"AOP GCD TYPE CAP",(uint32_t)pwfi_le(v+56,4),(uint32_t)pwfi_le(v+40,8));
+                pwtg_line(r,11,"AOP GCD ATTR",(uint32_t)(attr>>32),(uint32_t)attr);
+                break;
+            }
+            const struct pwea_map*m=&retained_wifi_memory.map;unsigned type=0,matches=0;uint64_t attr=0;
+            if(o->retained==(uintptr_t)&retained_wifi_memory&&m->map.stride>=sizeof(struct efi_memory)&&
+               !(m->map.stride&7)&&m->map.bytes<=sizeof(m->data)&&!(m->map.bytes%m->map.stride)){
+                for(uint64_t off=0;off<m->map.bytes;off+=m->map.stride){
+                    const struct efi_memory*v=(const void*)(m->data+off);
+                    if(page>=v->physical&&(page-v->physical)/4096<v->pages){
+                        if(!matches){type=v->type;attr=v->attributes;}matches++;
+                    }
+                }
+            }
+            pwtg_line(r,12,"AOP EFI TYPE N",type,matches);
+            pwtg_line(r,13,"AOP EFI ATTR",(uint32_t)(attr>>32),(uint32_t)attr);
+            pwtg_line(r,14,"AOP OPEN TICK",(uint32_t)(q->opening>>32),(uint32_t)q->opening);
+            pwtg_line(r,15,"OWNER LAST TICK",(uint32_t)(o->last>>32),(uint32_t)o->last);
+        }
+    }
     (void)pwtg_draw(r);early_wifi_gop_raw();
 }
 #endif

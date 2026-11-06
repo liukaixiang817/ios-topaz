@@ -69,19 +69,23 @@ static inline int pman_step(struct pman_state*s)
     struct pman_delivery*r=(struct pman_delivery*)(uintptr_t)s->records+s->deliveries;
     if(!pwmc_zero(r,sizeof(*r)))return pman_fail(s,3);
     r->side=side;r->command=command;r->attempted=r->unknown=1;s->pending=++s->deliveries;
-    unsigned memory=command.kind!=PMAQ_FULL_ORDER;
-    if((memory&&!pmpn_target(p,command.address&~UINT64_C(4095),&r->target[0]))||
-       !pmpn_arch(p,&r->opening)||!pgcd_equal(&r->opening,&p->architecture,offsetof(struct pmni_arch,ticks)))goto fail;
-    if(command.kind==PMAQ_WRITE32&&!pmsc_mark_effect(o,PMSC_REMOTE))goto fail;
-    if(!pmni_aop(q,&r->command,&r->opening,&r->native)||
-       (memory&&(!pmpn_target(p,command.address&~UINT64_C(4095),&r->target[1])||r->target[0].index!=r->target[1].index))||
-       !pman_live(s)||!pgcd_equal(&command,&r->command,sizeof(command)))goto fail;
-    result=pmaq_complete(q,&r->command,o->last,1,r->native.value);if(result<0)goto fail;
+    unsigned memory=command.kind!=PMAQ_FULL_ORDER,failure=1;
+    if(memory&&!pmpn_target(p,command.address&~UINT64_C(4095),&r->target[0]))goto fail;
+    failure=2;if(!pmpn_arch(p,&r->opening))goto fail;
+    failure=3;if(!pgcd_equal(&r->opening,&p->architecture,offsetof(struct pmni_arch,ticks)))goto fail;
+    failure=4;if(command.kind==PMAQ_WRITE32&&!pmsc_mark_effect(o,PMSC_REMOTE))goto fail;
+    failure=5;if(!pmni_aop(q,&r->command,&r->opening,&r->native))goto fail;
+    failure=6;if(memory&&!pmpn_target(p,command.address&~UINT64_C(4095),&r->target[1]))goto fail;
+    failure=7;if(memory&&r->target[0].index!=r->target[1].index)goto fail;
+    failure=8;if(!pman_live(s))goto fail;
+    failure=9;if(!pgcd_equal(&command,&r->command,sizeof(command)))goto fail;
+    failure=10;result=pmaq_complete(q,&r->command,o->last,1,r->native.value);if(result<0)goto fail;
     r->unknown=0;r->complete=1;pweh_digest(r,offsetof(struct pman_delivery,digest),r->digest);
     s->completed[side]++;s->pending=0;
     if(result==PMAQ_CONSUMED&&!side)pweh_digest(q,sizeof(*q),s->on_digest);
     return result;
-fail:r->error=4;return pman_fail(s,4);
+/* Keep the existing ABI/UNKNOWN behavior; reserved is failure-only detail. */
+fail:r->reserved=failure;r->error=4;return pman_fail(s,4);
 }
 /* Only AOP transport/resource completion; CPU and secure/remote allocations
  * stay retained. No original firmware calls are re-enabled here. */
