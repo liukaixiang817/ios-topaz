@@ -162,7 +162,7 @@ static inline int pmlc_next_segment(struct pmlc_copy*r)
     unsigned end=(g->target_offset+g->memsz+4095)/4096;
     if(end>PMLC_PAGES||end<=r->pages)return pmlc_fail(r,6);
     while(r->pages<end){
-#if EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 9
+#if EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 9 && !EFI_XNU_WIFI_COPY_PAGE_AFTER_WRITE
         /* Stop before even translating the selected next target page. The
          * ordinary producer has no callback or branch when this is OFF. */
         if(r->pages==EFI_XNU_WIFI_COPY_PAGE_BEFORE)pmlc_page_checkpoint(r);
@@ -181,6 +181,11 @@ static inline int pmlc_next_segment(struct pmlc_copy*r)
             return pmlc_fail(r,8);
         if(!pmlc_write(to,from,bytes,&hash,p)||p->bytes!=bytes||p->words_issued!=512||p->words_returned!=512||!pmlc_live(r))
             return pmlc_fail(r,9);
+#if EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 9 && EFI_XNU_WIFI_COPY_PAGE_AFTER_WRITE
+        /* Original write/readback and its live check returned; cache and
+         * completion/publication have not been issued for this page. */
+        if(r->pages==EFI_XNU_WIFI_COPY_PAGE_BEFORE)pmlc_page_checkpoint(r);
+#endif
         if(!pmlc_cache(to,&p->cache)||!pwmk_record_valid(&p->cache,to,PWMK_CLEAN_INVALIDATE)||!pmlc_live(r))
             return pmlc_fail(r,10);
         p->after=o->current;p->complete=1;r->pages++;s->pages++;

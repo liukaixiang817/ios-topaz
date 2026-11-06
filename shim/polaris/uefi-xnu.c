@@ -39,6 +39,12 @@
 #if EFI_XNU_WIFI_COPY_PAGE_PROBE < 0 || EFI_XNU_WIFI_COPY_PAGE_PROBE > 1 || (EFI_XNU_WIFI_COPY_PAGE_PROBE && (EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT != 9 || !EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY))
 #error "Firmware-only diagnostic requires checkpoint9 for the page translation probe"
 #endif
+#ifndef EFI_XNU_WIFI_COPY_PAGE_AFTER_WRITE
+#define EFI_XNU_WIFI_COPY_PAGE_AFTER_WRITE 0
+#endif
+#if EFI_XNU_WIFI_COPY_PAGE_AFTER_WRITE < 0 || EFI_XNU_WIFI_COPY_PAGE_AFTER_WRITE > 1 || (EFI_XNU_WIFI_COPY_PAGE_AFTER_WRITE && (EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT != 9 || !EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY || EFI_XNU_WIFI_COPY_PAGE_PROBE))
+#error "Firmware-only diagnostic requires checkpoint9 without AT-only probe for the after-write hold"
+#endif
 #if EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY
 #if !EFI_XNU_WIFI_NATIVE_RUNTIME_AVAILABLE || !defined(EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT) || EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT < 1 || EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT > 9
 #error "Firmware-only diagnostic requires native runtime and an explicit authentication checkpoint"
@@ -1212,6 +1218,16 @@ __attribute__((noinline,noreturn)) static void pmlc_page_checkpoint(struct pmlc_
         }
     }
 #endif
+#if EFI_XNU_WIFI_COPY_PAGE_AFTER_WRITE
+    if(wifi_native_copy_page_seen==1){
+        const struct pmsi_page*p=&c->page[EFI_XNU_WIFI_COPY_PAGE_BEFORE];
+        if(c->base!=a->modem.base||c->base<UINT64_C(0x80000000)||
+           c->base>UINT64_C(0xf8800000)||(c->base&UINT64_C(0xfffff))||
+           p->target.page!=c->base+4096*(uint64_t)c->pages||!pwmc_translation_valid(&p->target)||
+           p->bytes>4096||p->words_issued!=512||p->words_returned!=512||p->complete||
+           !pwmc_zero(&p->cache,sizeof(p->cache)))wifi_native_copy_page_seen=2;
+    }
+#endif
     power_unknown_hold();
 }
 #endif
@@ -1718,6 +1734,14 @@ static void wifi_native_startup_gop_evidence(void)
     pwtg_line(r,11,"HOOK AT RESULT",wifi_native_copy_page_seen,wifi_native_copy_page_probe_result);
     pwtg_line(r,14,"AT READ PAR",(uint32_t)(wifi_native_copy_page_AT.read_par>>32),(uint32_t)wifi_native_copy_page_AT.read_par);
     pwtg_line(r,15,"AT WRITE PAR",(uint32_t)(wifi_native_copy_page_AT.write_par>>32),(uint32_t)wifi_native_copy_page_AT.write_par);
+#endif
+#if EFI_XNU_WIFI_COPY_PAGE_AFTER_WRITE
+    const struct pmsi_page*p=&c->page[EFI_XNU_WIFI_COPY_PAGE_BEFORE];
+    if(wifi_native_copy_page_seen==1)pwtg_line(r,0,"PAGE WRITE HOLD",c->pages,EFI_XNU_WIFI_COPY_PAGE_BEFORE);
+    pwtg_line(r,8,"PAGE WORDS",p->words_issued,p->words_returned);
+    pwtg_line(r,11,"HOOK WRITE BYTES",wifi_native_copy_page_seen,p->bytes);
+    pwtg_line(r,14,"PAGE CACHE",p->cache.attempted,p->cache.complete);
+    pwtg_line(r,15,"PAGE COMPLETE",p->complete,0);
 #endif
 #endif
     (void)pwtg_draw(r);early_wifi_gop_raw();

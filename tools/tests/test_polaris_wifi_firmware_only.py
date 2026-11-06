@@ -309,6 +309,66 @@ int main(void){
             self.assertNotEqual(result.returncode, 0)
             self.assertIn('page translation probe', result.stderr)
 
+    def test_after_write_callback_requires_returned_words_and_unissued_cache(self):
+        def function(source, signature):
+            start=source.index(signature);end=source.index('{',start)+1;depth=1
+            while depth:
+                depth+=(source[end]=='{')-(source[end]=='}');end+=1
+            return source[start:end]
+        callback=function(SOURCE,'__attribute__((noinline,noreturn)) static void pmlc_page_checkpoint(struct pmlc_copy*c)')
+        header=(ROOT/'shim/polaris/uefi-wifi-remote-memory.h').read_text()
+        valid=function(header,'static inline int pwmc_translation_valid(')
+        peer=r'''
+#include <assert.h>
+#include <setjmp.h>
+#include <stdint.h>
+#include <string.h>
+#define EFI_XNU_WIFI_COPY_PAGE_AFTER_WRITE 1
+#define EFI_XNU_WIFI_COPY_PAGE_BEFORE 223
+#define PMIM_SEGMENTS 28
+#define PWNS_AUTH 19
+#define PMSN_COPY 5
+struct pwmc_translation {uint64_t page,saved,read_par,write_par,restored;uint32_t read_issued,read_returned,write_issued,write_returned;};
+struct pmsi_page {struct pwmc_translation target;struct {unsigned attempted,complete;} cache;unsigned bytes,words_issued,words_returned,complete;};
+struct pmlc_copy {unsigned ready,unknown,error,complete,pages,segments;uint64_t base;struct pmsi_page page[224];};
+struct pmsn_state {unsigned phase,ready,pending,error,unknown,assignments;struct {uint64_t base;} modem;};
+struct pwns_parent {unsigned phase,error,unknown;struct pmsn_state auth;struct pmlc_copy copy;struct {unsigned held,error,unknown;} owner;};
+static struct pwns_parent wifi_native_parent;
+static unsigned wifi_native_boot_phase,wln_cpu_on_issued,wifi_native_copy_page_seen,holds;
+static jmp_buf stop;
+__attribute__((noreturn)) static void power_unknown_hold(void){holds++;longjmp(stop,1);}
+static int pwmc_zero(const void*p,unsigned n){const uint8_t*b=p;for(unsigned j=0;j<n;j++)if(b[j])return 0;return 1;}
+'''
+        main=r'''
+int main(void){for(unsigned fault=0;fault<17;fault++){
+ struct pwns_parent*s=&wifi_native_parent;memset(s,0,sizeof(*s));
+ s->phase=PWNS_AUTH;s->auth.phase=PMSN_COPY;s->auth.ready=1;s->auth.assignments=3;s->owner.held=1;
+ struct pmlc_copy*c=&s->copy;c->ready=c->unknown=1;c->pages=223;c->segments=8;c->base=s->auth.modem.base=0xf8100000;
+ struct pmsi_page*p=&c->page[223];p->target.page=0xf81df000;
+ p->target.read_par=p->target.write_par=UINT64_C(0xff000000f81dfb80);
+ p->target.read_issued=p->target.read_returned=p->target.write_issued=p->target.write_returned=1;
+ p->words_issued=p->words_returned=512;
+ wifi_native_boot_phase=5;wln_cpu_on_issued=wifi_native_copy_page_seen=holds=0;
+ switch(fault){
+ case 1:c=(void*)1;break;case 2:wifi_native_boot_phase=4;break;
+ case 3:s->copy.base+=0x100000;break;case 4:s->copy.base=s->auth.modem.base=0x70000000;break;
+ case 5:s->copy.base=s->auth.modem.base=0xf8101000;break;case 6:p->target.page+=4096;break;
+ case 7:p->target.read_par=0x10f;break;case 8:p->words_issued--;break;case 9:p->words_returned--;break;
+ case 10:p->complete=1;break;case 11:p->cache.attempted=1;break;case 12:p->cache.complete=1;break;
+ case 13:p->bytes=4097;break;case 14:p->target.restored=1;break;
+ case 15:p->target.write_par=0x10f;break;case 16:s->owner.error=1;break;
+ }
+ struct pwns_parent saved=*s;if(!setjmp(stop))pmlc_page_checkpoint(c);
+ assert(holds==1&&wifi_native_copy_page_seen==(fault?2u:1u));assert(!memcmp(&saved,s,sizeof(saved)));
+}return 0;}
+'''
+        with tempfile.TemporaryDirectory() as directory:
+            source=Path(directory)/'page-write.c';source.write_text(peer+valid+callback+main)
+            binary=source.with_suffix('')
+            subprocess.run(['clang','-std=c11','-O1','-g','-Wall','-Wextra','-Werror',
+                            '-fsanitize=address,undefined','-fno-sanitize-recover=all',str(source),'-o',str(binary)],check=True,capture_output=True)
+            subprocess.run([str(binary)],check=True,capture_output=True)
+
 
 if __name__ == '__main__':
     unittest.main()

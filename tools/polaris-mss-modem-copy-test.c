@@ -8,6 +8,9 @@
 #define EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT 9
 #define EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY 1
 #define EFI_XNU_WIFI_COPY_PAGE_BEFORE PMLC_TEST_PAGE_BEFORE
+#if defined(PMLC_TEST_AFTER_WRITE)
+#define EFI_XNU_WIFI_COPY_PAGE_AFTER_WRITE 1
+#endif
 static jmp_buf page_checkpoint_jump;
 static unsigned page_checkpoint_hits,page_checkpoint_target_AT;
 #endif
@@ -43,8 +46,16 @@ static unsigned fresh_retained;
 __attribute__((noreturn)) static void pmlc_page_checkpoint(struct pmlc_copy*r)
 {
     CHECK(r==copy_record&&r->pages==PMLC_TEST_PAGE_BEFORE);
+#if defined(PMLC_TEST_AFTER_WRITE)
+    CHECK(copy_writes==PMLC_TEST_PAGE_BEFORE+1&&copy_caches==PMLC_TEST_PAGE_BEFORE);
+    CHECK(page_checkpoint_target_AT==1);
+    const struct pmsi_page*p=&r->page[PMLC_TEST_PAGE_BEFORE];
+    CHECK(p->words_issued==512&&p->words_returned==512&&!p->complete&&pwmc_zero(&p->cache,sizeof(p->cache)));
+#else
     CHECK(copy_writes==PMLC_TEST_PAGE_BEFORE&&copy_caches==copy_writes);
-    CHECK(!page_checkpoint_target_AT&&r->unknown==1&&!r->error&&!r->complete);
+    CHECK(!page_checkpoint_target_AT);
+#endif
+    CHECK(r->unknown==1&&!r->error&&!r->complete);
     page_checkpoint_hits++;longjmp(page_checkpoint_jump,1);
 }
 #endif
@@ -152,11 +163,23 @@ int main(int argc,char**argv)
         for(unsigned k=0;k<28;k++){CHECK(pmlc_next_segment(copy_record));copy_publish_io();}
         CHECK(0);
     }
-    CHECK(page_checkpoint_hits==1&&!page_checkpoint_target_AT);
-    CHECK(copy_writes==PMLC_TEST_PAGE_BEFORE&&copy_record->pages==copy_writes);
+    CHECK(page_checkpoint_hits==1&&copy_record->pages==PMLC_TEST_PAGE_BEFORE);
     CHECK(!copy_record->segment[copy_record->segments].complete&&!copy_record->segment[copy_record->segments].published);
+#if defined(PMLC_TEST_AFTER_WRITE)
+    CHECK(page_checkpoint_target_AT==1&&copy_writes==PMLC_TEST_PAGE_BEFORE+1&&copy_caches==PMLC_TEST_PAGE_BEFORE);
+    const struct pmsf_segment*g=&copy_record->geometry[copy_record->segments];unsigned offset=4096*PMLC_TEST_PAGE_BEFORE;
+    for(unsigned j=0;j<4096;j++){
+        unsigned position=offset+j;uint8_t expected=0;
+        if(g->filesz&&position>=g->target_offset&&position-g->target_offset<g->filesz)
+            expected=firmware[pmsf_assets[g->asset].offset+position-g->target_offset];
+        CHECK(modem_shadow[position]==expected);
+    }
+    printf("PASS page%u original write/readback returned; selected cache/completion/publication not issued; %u source translations\n",PMLC_TEST_PAGE_BEFORE,first_ats);
+#else
+    CHECK(!page_checkpoint_target_AT&&copy_writes==PMLC_TEST_PAGE_BEFORE&&copy_caches==copy_writes);
     CHECK(modem_shadow[4096*(uint64_t)PMLC_TEST_PAGE_BEFORE]==0xa5);
     printf("PASS page%u held before target AT/write/cache; %u authenticated source translations\n",PMLC_TEST_PAGE_BEFORE,first_ats);
+#endif
     goto cleanup;
 #endif
     for(unsigned k=0;k<28;k++){

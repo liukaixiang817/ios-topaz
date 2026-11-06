@@ -99,6 +99,11 @@ def validate(review_path):
     require(type(probe) is bool and (not probe or mode == 9) and
             probe_config == (['#define EFI_XNU_WIFI_COPY_PAGE_PROBE 1'] if probe else []),
             'copy page translation probe not frozen')
+    after_write = driver.get('wifi_native_copy_page_after_write', False)
+    after_config = [x for x in config if x.startswith('#define EFI_XNU_WIFI_COPY_PAGE_AFTER_WRITE')]
+    require(type(after_write) is bool and (not after_write or (mode == 9 and not probe)) and
+            after_config == (['#define EFI_XNU_WIFI_COPY_PAGE_AFTER_WRITE 1'] if after_write else []),
+            'copy page after-write hold not frozen')
     for name, digest in driver['inputs'].items():
         path = (ROOT/name).resolve()
         require(path.is_relative_to(ROOT) and review['files'].get(name) == digest and sha(path) == digest,
@@ -119,15 +124,22 @@ def validate(review_path):
             proof.get('diagnostic_has_no_kernel_handoff_references') is True,
             'actual firmware-only code qualification missing')
     if mode == 9:
-        require(proof.get('page_hook_before_translation_tested') is True and
-                proof.get('page_hook_context_and_GOP_tested') is True and
+        require(proof.get('page_hook_context_and_GOP_tested') is True and
                 proof.get('non_page_objects_identical') is True,
                 'page checkpoint qualification missing')
+        if not after_write:
+            require(proof.get('page_hook_before_translation_tested') is True,
+                    'before-page checkpoint qualification missing')
     if probe:
         require(proof.get('page_translation_probe_tested') is True and
                 proof.get('page_translation_probe_target_access') is False and
                 proof.get('probe_disabled_page_objects_identical') is True,
                 'page translation probe qualification missing')
+    if after_write:
+        require(proof.get('page_after_write_hold_tested') is True and
+                proof.get('selected_page_cache_issued') is False and
+                proof.get('after_write_OFF_objects_identical') is True,
+                'page after-write qualification missing')
     require(set(proof['qualified_objects']) == {'driver-0001/uefi-xnu.obj', 'actual-loader-macho.obj'},
             'both actual diagnostic object formats required')
     for name, digest in proof['qualified_objects'].items():

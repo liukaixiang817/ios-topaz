@@ -504,6 +504,7 @@ def main():
     ap.add_argument('--wifi-native-copy-segments',type=int,choices=range(1,29),help='copy-prefix checkpoint only: terminal hold after exactly1..28 copied segments, before the last segment RMB operation')
     ap.add_argument('--wifi-native-copy-page-before',type=int,help='copy-page firmware diagnostic only: hold before translating/writing target page1..30719; no resume')
     ap.add_argument('--wifi-native-copy-page-probe',action='store_true',help='copy-page firmware diagnostic only: issue read/write AT for the selected page without reading or writing it, then hold')
+    ap.add_argument('--wifi-native-copy-page-after-write',action='store_true',help='copy-page firmware diagnostic only: hold after the original page write/readback and before cache; incompatible with AT-only probe')
     ap.add_argument('--wifi-firmware-diagnostic-only',action='store_true',help='separate default-OFF RAM firmware diagnostic with mandatory authentication checkpoint and unconditional terminal hold before XNU/CPU_ON; USB payload only')
     ap.add_argument('--wifi-native-runtime',action='store_true',help='build the complete native radio/runtime and retained terminal path; does not grant physical boot admission')
     ap.add_argument('--wifi-nv-backup-directory',type=Path,help='private own GPT backup used only to generate expected identities; current NV is reread on each boot')
@@ -522,6 +523,8 @@ def main():
         ap.error('copy-page checkpoint requires the terminal firmware-only diagnostic')
     if a.wifi_native_copy_page_probe and (a.wifi_native_auth_metadata_checkpoint!='copy-page' or not a.wifi_firmware_diagnostic_only):
         ap.error('copy-page translation probe requires the terminal copy-page diagnostic')
+    if a.wifi_native_copy_page_after_write and (a.wifi_native_auth_metadata_checkpoint!='copy-page' or not a.wifi_firmware_diagnostic_only or a.wifi_native_copy_page_probe):
+        ap.error('after-write hold requires terminal copy-page diagnostic without AT-only probe')
     if a.wifi_firmware_diagnostic_only and (not a.wifi_native_auth_metadata_checkpoint or
         not a.wifi_native_runtime or not a.wifi_power_terminal_gop_diagnostics or a.disk_guid):
         ap.error('firmware-only diagnostic requires native runtime, authentication checkpoint, terminal GOP and USB RAM payload')
@@ -1138,6 +1141,8 @@ def main():
         with config.open('a') as f:f.write(f'#define EFI_XNU_WIFI_COPY_PAGE_BEFORE {a.wifi_native_copy_page_before}\n')
     if a.wifi_native_copy_page_probe:
         with config.open('a') as f:f.write('#define EFI_XNU_WIFI_COPY_PAGE_PROBE 1\n')
+    if a.wifi_native_copy_page_after_write:
+        with config.open('a') as f:f.write('#define EFI_XNU_WIFI_COPY_PAGE_AFTER_WRITE 1\n')
     if a.wifi_firmware_diagnostic_only:
         with config.open('a') as f:f.write('#define EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY 1\n')
     if a.wifi_native_runtime:
@@ -2165,6 +2170,7 @@ def main():
             wifi_native_copy_segments=a.wifi_native_copy_segments,
             wifi_native_copy_page_before=a.wifi_native_copy_page_before,
             wifi_native_copy_page_probe=a.wifi_native_copy_page_probe,
+            wifi_native_copy_page_after_write=a.wifi_native_copy_page_after_write,
             wifi_native_runtime_binding=wifi_runtime_metadata,
             wifi_native_runtime_header_sha256=sha(out/'uefi-wifi-native-runtime-config.h'),
             wifi_native_NV_generated_inputs={p.name:sha(p) for p in (out/'wifi-nv').iterdir()},

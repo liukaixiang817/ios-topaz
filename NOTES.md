@@ -54,7 +54,7 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### Current Wi-Fi handoff — 2026-11-07 Melbourne: physical page223 checkpoint; AT-only probe qualified
+### Current Wi-Fi handoff — 2026-11-07 Melbourne: page223 AT PASS; next isolate actual page write/cache
 
 - Goal ACTIVE, execution2/5; four remain including current. Scan3,join/IP/DNS4,
   data/stability5 unproven. Long idle testing remains USER-PAUSED; Wi-Fi is active.
@@ -86,7 +86,7 @@ early samples only. On0029 the human already confirmed boot complete and said
   collected. Page223 native17:22:45.222334Z/ACK17:23:04.679059Z; user B69414E8
   explicitly reports manual return to FASTBOOT. No current phone trial running.
   Page220 candidate local build54216 passed but is unused/unselected.
-- New default-OFF --wifi-native-copy-page-probe is implemented and locally built
+- Source5d45cbe committed/pushed/synced the default-OFF --wifi-native-copy-page-probe; locally built
   in firmware-copy-page223-AT-probe-0001. It requires firmware-only page mode9;
   guards selected copy/auth context and exact aligned modem bank before issuing
   AT S1E1R/W with PAR restore. It uses a separate resident record, does NOT
@@ -98,8 +98,32 @@ early samples only. On0029 the human already confirmed boot complete and said
   all42 prior display profiles token-identical with probe OFF. Both actual
   objects695frames/max816B; probe-OFF page and non-page MachO are exact and
   COFF differ only by timestamp. Four invalid builder/packager profiles refused.
-  Exact candidate freeze is next, before the first selected probe send. Do not
-  claim physical AT or any networking proof from software tests.
+  Frozen2139/offlinePASS; image75c616f51ef1...,sentONCE17:46:04.028039Z,
+  native17:47:44.319643Z,ACK17:48:03.775151Z;host8979 TERMINAL0 collected.
+  PhotoB24DDA59 now physically proves PAGE AT PASS,hook1/result1,
+  read/write PAR ff000000f81dfb80 at DF/DF and nextF81DF000. This proves only
+  EL1 address translations/PAR restoration, not actual target access or cache.
+  Human explicitly manually returned FASTBOOT. Probe image/nonce now SPENT.
+  Next terminal checkpoint will stop after original page223 write/readback,
+  before its original cache operation, to separate these stages. No reset
+  cause or networking success is claimed.
+- Fresh firmware-copy-page223-after-write-0001 is built. New default-OFF
+  --wifi-native-copy-page-after-write moves only the selected diagnostic hold:
+  original target AT/write/readback/live check return, then terminal hold BEFORE
+  cache and before count/completion/publication. It cannot combine with AT-only
+  probe. Callback requires valid exact target translation,512/512 words,byte
+  count<=4096,uncompleted page and all-zero cache record. GOP shows PAGE WRITE
+  HOLD,PAGE WORDS,HOOK WRITE BYTES,PAGE CACHE,PAGE COMPLETE. No copy/cache or
+  hardware protocol operation is reordered/added, and no reset cause inferred.
+- Real producer software peer page223 passes14687 authenticated source
+  translations and6333 checks; selected write/readback complete,cache0,
+  completion/publication0 and full4096 target shadow bytes match expected.
+  Actual callback17 valid/refusal cases,public15 tests,default and after-write
+  GOP504 cases pass. Existing42 projections equivalent when OFF. Display peer
+  initially refused its new37th line; only private fixture admissible line
+  count corrected and failed log retained. Both actual objects695frames/max816B;
+  OFF page/non-page MachO exact,COFF timestamp-only. Eight malformed profiles
+  refused. Candidate still unused; finish freeze and send fresh once next.
 - Own original peripheral-loader.c source pinned to MiCode c7cb50c18f812629b9620b2b8fa684bc40d82080
   is saved in modem-copy-gap-source-audit-0001. Normal vendor load copies filesz
   and zeros memsz-filesz; our loader also zeros inter-segment holes/page padding.
@@ -108,8 +132,8 @@ early samples only. On0029 the human already confirmed boot complete and said
   found in static audit. Local HackiOS references remain indexed below and in
   REFERENCE_REPOS.md; no foreign address, firmware or provider imported.
 - Kernel/payload and CI42091724671 unchanged; loader-only work needs no new
-  kernel CI. Next: finish exact probe freeze, check expected FASTBOOT once,
-  temporary-boot fresh probe once, obtain PAGE AT PASS/FAIL and raw PAR rows.
+  kernel CI. Next: qualify a fresh before-cache checkpoint for page223, check
+  expected FASTBOOT once and temporary boot once; never replay the AT probe.
   Preserve unowned remote-memory9-line hunk SHA
   7215a3786b3b9226aa4f839648bbecc80d9c575f3fd3fb00250481dd91786a01.
 

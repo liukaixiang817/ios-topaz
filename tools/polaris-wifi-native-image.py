@@ -81,6 +81,10 @@ def main():
         require(type(probe) is bool and (not probe or
                 manifest['wifi_native_auth_metadata_checkpoint_phase'] == 'copy-page'),
                 'copy page probe/profile mismatch')
+        after_write = manifest.get('wifi_native_copy_page_after_write', False)
+        require(type(after_write) is bool and (not after_write or
+                (manifest['wifi_native_auth_metadata_checkpoint_phase'] == 'copy-page' and not probe)),
+                'copy page after-write/profile mismatch')
     artifact = manifest['artifact']
     require(Path(artifact).name == artifact and artifact not in ('', '.', '..'), 'driver path')
     driver = args.driver_manifest.parent/artifact

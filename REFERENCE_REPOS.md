@@ -33,7 +33,11 @@ loader copies filesz and zeros BSS; our extra gap/page-padding zeroing is only
 an audit difference, not a proven reset cause. New terminal AT-only diagnostic
 checks selected page223 read/write PAR without target access, uses the existing
 own translation primitive and separate resident record. No imported approach
-or changed copy/ownership/power protocol; physical probe result still pending.
+or changed copy/ownership/power protocol. PhotoB24DDA59 physically proves
+PAGE AT PASS,read/write PAR ff000000f81dfb80 for page223. User manually returned
+FASTBOOT. New explicit terminal after-write hold isolates original write/readback
+from original cache; real producer software peer223 passes with cache/completion/
+publication unissued. Physical after-write result remains pending.
 
 ## Idle hold policy and watchdog evidence (0189, 2026-11-07 Melbourne)
 
