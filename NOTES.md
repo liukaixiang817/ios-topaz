@@ -54,6 +54,30 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: restart-page repair sent once; actual next stage pending
+
+- Sourcecfb9388 pushed/synchronized. Fresh restart-page-map-0001 audit67656
+  ended0; independent40checks PASS, returned FASTBOOT08:32:33.743626Z.
+  Roots/GPT/critical/ESP/NV unchanged.651files frozen; offline native admission
+  PASS. No kernel changes: CI42091724671/payload unchanged.
+- Imagecf637b326584bf1912e0b899c7c76a96c101d634536cc6f91946f43eee18cf44 sent
+  ONCE08:34:18.516910Z, fastboot0. Full100593664B payload validation_ACK and
+  independently queried validated_state true. Native-start08:35:58.556937Z,
+  ACK08:36:18.017908Z; host94619 ended0 at08:36:18.052227Z. All jobs terminal.
+- Image/nonce SPENT; no replay/reset/post-native USB observer/partition write.
+  ACK means command acceptance only, not actual restart-page insertion or
+  MSS reset/MBA/WLAN success. Human406C0C17 belongs to the PREVIOUS PDC leaf
+  repair; do not label it as this new restart-page trial result.
+- Asked current heading; if RESET PAGE HOLD, PAGE ERROR FLAGS/WALK FLAGS/
+  DESC3/AFTER0; otherwise actual heading/error rows. Current-screen dependency
+  FIRST occurrence for this candidate; prior dependency resolved. Goal ACTIVE,
+  not complete. No live host handle remains. Next action is interpret the new
+  physical result and continue the evidenced failure with own-resource checks.
+- Execution2/5,current plus3remaining. Actual scan/Cyberpunk AU join/IP/DNS/data/
+  stability unproven. Last formal08:30Z,next08:45Z while active. Unowned9line
+  remote-memory hunk preserved and excluded. Sources/test results/build/trial
+  recorded; do not repeat passing tests or spend another nonce without cause.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: PDC passed to restart target; exact restart-page repair ready
 
 - Human406C0C17 resolves the prior screen dependency before blocked status.
