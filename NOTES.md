@@ -54,6 +54,35 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: MBA timer candidate sent once; full payload/start ACK
+
+- Source7719066 pushed to codex/polaris-preflight; all four owned files synced
+  to original workspace, unowned remote-memory hunk retained. Fresh candidate
+  audit76390 ended0: new/old root whole hashes56.617/56.614s, six GPT/five
+  critical partitions/ESP/current NV unchanged. Actual unmount/return to
+  polaris FASTBOOT01:42:13.263014Z; independent40-check review PASS.
+- Candidate-specific trial froze392 source/artifact/evidence files. All driver
+  inputs match; only production differences from prior candidate are MBA
+  sharing timer and GOP diagnostics. Offline one-use validation PASS.
+- New image20c0c93d... sent ONCE01:42:42.947095Z, send OKAY0.141s,
+  boot OKAY0.091s,total0.233s. Fresh nonce consumed before send: image/pool
+  now SPENT, never retry/replay. Synthetic UEFI verified and payload stage
+  began01:42:52.043545Z (~9s after send). Actual100593664 bytes/1535 chunks
+  completed, validation ACK and queried validated state true.
+- Native-start command sent01:44:22.977504Z; ACK recorded01:44:42.433013Z.
+  Host helper36756 ended0. This proves prepare_boot/command acceptance only:
+  native startup runs after ACK, and CPU_ON/kernel/radio remain unverified.
+  No post-native USB observer, reset or retry issued.
+- User asked via async text for CURRENT top screen title/values, specifically
+  MBA SHARE/ROUND ERROR/TX STEP EVENTS or a new interface. Reply pending.
+  Need current post-fix physical outcome; the supplied prior error photo
+  belongs to nv-revision-0001 and cannot diagnose this fresh attempt.
+- Evidence: mba-timing-0001/phone-native-0001/{boot.json,fastboot.log}, sibling
+  log, trial-review-0001.json, fresh readonly review. All host build/test/device
+  jobs ended. Next decode current physical screen, continue native MSS/WLAN
+  scan then Cyberpunk AU join/IP/DNS/data/stability. Execution2/5, current
+  plus3 subsequent steps. Goal unfinished; no physical Wi-Fi success claimed.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: physical MBA share timer hold; fresh transaction opening fixed
 
 - New photo after nv-revision-0001 start ACK shows MBA SHARE0/7,
