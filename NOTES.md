@@ -54,6 +54,31 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: checkpoint trial ACK, current physical screen pending
+
+- Explicit normal system-menu shutdown resolved pending journal: audit71827
+  phone-root-audit-0003 ended0 at09:43:02.741604Z; independent40/40PASS,
+  actualFASTBOOT09:43:02.707955Z. First two failed38/40audits are preserved;
+  no manual journal replay/repair/storage write was performed. Original
+  Android performed its own normal shutdown. Root/maps/GPT/critical/ESP/NV pass.
+- Source505c30e plus handoffs through3a770fa published/synchronized. Fresh
+  auth-metadata-checkpoint-0001 freezes695files and offline native admission
+  PASS. Freeze helper initially matched diagnostic .dSYM directory as file;
+  restricted to actual regular files then passed before any device send.
+- Image74b86d126432622ed86156d09722dd451d1ba2ebdcb5d2c8df817462f3af32a9 sentONCE
+  09:43:39.383714Z,fastboot0. Full100593664B payload validation_ACK and independently
+  queried validated_state true. Native-start09:45:19.466945Z,ACK09:45:38.958623Z;
+  host57442 ended0 at09:45:39.008085Z. All jobs terminal; no live handle remains.
+  Candidate image/nonce SPENT; no replay. Asked actual screen checkpoint/other
+  diagnostic/reboot. Current-screen dependency FIRST occurrence for this trial;
+  previous Android shutdown dependency resolved. Deliberate AUTH CHECKPOINT means
+  first metadata permission assignment fully finished before any RMB metadata
+  auth write, NOT modem auth or Wi-Fi completion. If reboot again, last stage
+  remains unproven without screen. No postnative USB observer.
+- GoalACTIVE,execution2/5,four steps including current. Formal09:45,next10:00Z.
+  Tests already passed, no reruns/new kernelCI. Only unowned remote-memory
+  nine-line hunk remains uncommitted outside owned handoff changes.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: checkpoint source ready, fresh root journal check repeated
 
 - Source505c30e pushed/synchronized. auth-metadata-checkpoint-0001 image is
@@ -79,6 +104,13 @@ early samples only. On0029 the human already confirmed boot complete and said
   Candidate image/nonce remains UNSENT/UNUSED; no40check review or trial freeze
   exists yet. No live host job remains. This current user-action dependency
   is first occurrence after explicit clarification, not a live-process wait.
+- Human now explicitly replied 系统菜单关机后已到FASTBOOT. New readonly query
+ 09:40:41.016717Z confirms expectedPolaris; actual audit71827 is RUNNING into
+ phone-root-audit-0003. Earlier user-action wait resolved. Next wait bounded
+ host completion, independently review0003; if40/40PASS run prepared freeze
+ /private/tmp/polaris-freeze-auth-checkpoint.py then native once. Current
+ sourceHEAD3a770fa, source505c30e; original owned files synchronized. No native
+ checkpoint image/nonce consumption yet.
 - GoalACTIVE, execution2/5,four steps including current. No new physical auth
   completion or scan/join/IP/DNS/data proof. Formal09:30,next09:45Z. All tests
   already passed; do not repeat them without a new change/failure.
