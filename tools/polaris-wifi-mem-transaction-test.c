@@ -185,11 +185,40 @@ static void control_failures(void)
     CHECK(pwmt_begin(&transaction,page,(void*)page,100,19200000)==PWMT_FAILED);
     CHECK(pwmt_begin(&transaction,(void*)&transaction,&spec,100,19200000)==PWMT_FAILED);
 }
+static void auth_budget(void)
+{
+    struct pwmt_command c;struct pwmk_record clean_record=cache_record(PWMK_CLEAN_INVALIDATE,4);
+    struct pwmk_record invalidate_record=cache_record(PWMK_INVALIDATE,4);struct pwma_registers response={{0}};
+    /* Exact1s end allowed, all three issued steps each no more than100ms. */
+    begin();CHECK(pwmt_auth_next(&transaction,100,&c)==PWMT_IO);
+    CHECK(pwmt_auth_complete(&transaction,&c,100+PWMT_TICKS,1,NULL,&clean_record)==PWMT_WAIT);
+    CHECK(pwmt_auth_next(&transaction,100+3*PWMT_TICKS,&c)==PWMT_IO);
+    CHECK(!mprotect(page,4096,PROT_NONE));
+    CHECK(pwmt_auth_complete(&transaction,&c,100+4*PWMT_TICKS,1,&response,NULL)==PWMT_WAIT);
+    CHECK(pwmt_auth_next(&transaction,100+9*PWMT_TICKS,&c)==PWMT_IO);
+    CHECK(!mprotect(page,4096,PROT_READ|PROT_WRITE));
+    CHECK(pwmt_auth_complete(&transaction,&c,100+PWMT_AUTH_TICKS,1,NULL,&invalidate_record)==PWMT_ZERO);
+    for(unsigned kind=0;kind<4;kind++){
+        begin();uint64_t issue=kind==3?100+PWMT_AUTH_TICKS:100;
+        CHECK(pwmt_auth_next(&transaction,issue,&c)==PWMT_IO);
+        uint64_t done=kind==0?99:kind==1?100+PWMT_TICKS+1:kind==2?100+PWMT_AUTH_TICKS+1:issue+1;
+        CHECK(pwmt_auth_complete(&transaction,&c,done,1,NULL,&clean_record)==PWMT_FAILED);
+        CHECK(transaction.error==PWMT_TIME&&transaction.unknown&&!transaction.complete);
+    }
+    begin();CHECK(pwmt_auth_next(&transaction,101+PWMT_AUTH_TICKS,&c)==PWMT_FAILED);
+    CHECK(transaction.events==0&&transaction.error==PWMT_TIME);
+    /* A delayed SMC must still fail after its saved raw response is captured. */
+    begin();clean();CHECK(pwmt_auth_next(&transaction,103,&c)==PWMT_IO);
+    CHECK(!mprotect(page,4096,PROT_NONE));
+    CHECK(pwmt_auth_complete(&transaction,&c,104+PWMT_TICKS,1,&response,NULL)==PWMT_FAILED);
+    CHECK(transaction.error==PWMT_TIME&&transaction.pending==2&&transaction.event[1].returned);
+    CHECK(!mprotect(page,4096,PROT_READ|PROT_WRITE));
+}
 int main(void)
 {
     page=mmap(NULL,4096,PROT_READ|PROT_WRITE,MAP_PRIVATE|MAP_ANONYMOUS,-1,0);
     assert(page!=MAP_FAILED);
     for(unsigned rounds=1;rounds<=PWMT_ROUNDS;rounds++)success(rounds);
-    cache_failures();changed_pages();smc_failures();control_failures();
+    cache_failures();changed_pages();smc_failures();control_failures();auth_budget();
     CHECK(!munmap(page,4096));printf("PASS %u secure memory transaction checks (software only)\n",checks);return 0;
 }

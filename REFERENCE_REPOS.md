@@ -14,6 +14,39 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+## Auth inter-step CPU budget after accepted SMC (0189, 2026-11-06)
+
+Physical FC72DB1B from auth-seal-spans-0001 reports transaction error3,
+step3 INVALIDATE, events2/round1, pending0, saved SMC response zero. Source
+control flow proves the SMC completion's time/classification passed, then
+pwmt_next rejected the elapsed total BEFORE issuing invalidation. The seven
+sealed post-SMC peer checks run in this interval. Their fourteen auth/owner
+seal pairs cover approximately2.65MiB. No completed permission transaction
+or real networking is inferred. Display CHECK AGE selects the last returned
+SMC timestamp, not the later failed next-call timestamp.
+
+The original PWMT100ms limit was a software whole-transaction policy, despite
+its returned-step comment; it is not an ownDT/vendor deadline. Own pil-msa
+metadata/MP_ASSIGN protocol, VMIDs, descriptors and ordering stay unchanged.
+Auth now selects an absolute1s transaction ceiling (never renews opening),
+with an explicit100ms ceiling for EACH issued cache/SMC step, including its
+local validation work. Maximum4SMC rounds/6operations and the outer180s owner
+ceiling remain. All other callers still use100ms total. No retry, cleanup,
+permission assumption or descriptor read is added. This policy change allows
+CPU-only inter-step verification without accepting an overlong issued step.
+
+The auth-only scalar SHA compression groups eight rounds using rotated local
+register names; no vector/crypto extension or CPU-state change. Auth owner
+seals use the same exact readable-byte stream as their original function.
+Independent old-transform/chaining-word, excluded-range and inaccessible
+16KiB descriptor tests compare exact hashes. No other subsystem's hash code
+changes.240 auth/195owner/1024arbitrary-chain cases PASS; actual COFF emitted
+hash functions use scalar instructions.538 transaction checks and27 full
+auth scenarios/4086159checks include issued-step100ms and absolute1s failures,
+protected descriptors, four-round CPU-overhead success, and no retry. Host speed measurements are not phone timing or authentication proof.
+No foreign firmware, kernel approach or hardware address is imported; the
+existing own DT/vendor and HackiOS reference review remains applicable.
+
 ## Auth seal span equivalence after a returned-step timeout (0189, 2026-11-06)
 
 Physical15DBE1CF identifies metadata assignment0/phase1, transaction error3

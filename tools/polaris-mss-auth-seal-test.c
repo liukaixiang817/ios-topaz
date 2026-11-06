@@ -44,6 +44,32 @@ int main(void)
     /* Included control mutation must still change the seal; rmtfs remains excluded. */
     pmsn_seal(s,0,0,expected);s->attempted^=1;pmsn_seal(s,0,0,actual);CHECK(memcmp(expected,actual,32));s->attempted^=1;
     s->rmtfs^=1;pmsn_seal(s,0,0,actual);CHECK(!memcmp(expected,actual,32));s->rmtfs^=1;
+    /* CPU owner coverage and all exclusion edge cases match its old seal. */
+    struct pmsc_owner*owner=malloc(sizeof(*owner));CHECK(owner);
+    for(size_t n=0;n<sizeof(*owner);n++){rng^=rng<<13;rng^=rng>>17;rng^=rng<<5;((uint8_t*)owner)[n]=(uint8_t)rng;}
+    unsigned owner_cases=0;
+    uintptr_t owner_boundary[]={0,UINTPTR_MAX-8,(uintptr_t)owner,(uintptr_t)owner+sizeof(*owner),
+        (uintptr_t)&owner->peer[0][0].raw,(uintptr_t)&owner->source[8],(uintptr_t)&owner->effects};
+    for(unsigned n=0;n<7;n++)for(unsigned w=0;w<5;w++){
+        size_t bytes=w==0?0:w==1?1:w==2?8:w==3?65:sizeof(*owner);
+        pmsc_seal(owner,(void*)owner_boundary[n],bytes,expected);
+        pmsn_owner_seal(owner,(void*)owner_boundary[n],bytes,actual);CHECK(!memcmp(expected,actual,32));owner_cases++;
+    }
+    for(unsigned n=0;n<160;n++){
+        rng^=rng<<13;rng^=rng>>17;rng^=rng<<5;uintptr_t out=(uintptr_t)owner-128+rng%(sizeof(*owner)+256);
+        rng^=rng<<13;rng^=rng>>17;rng^=rng<<5;size_t bytes=rng%(sizeof(*owner)+128);
+        pmsc_seal(owner,(void*)out,bytes,expected);pmsn_owner_seal(owner,(void*)out,bytes,actual);CHECK(!memcmp(expected,actual,32));owner_cases++;
+    }
+    pmsn_owner_seal(owner,0,0,expected);owner->effects^=1;pmsn_owner_seal(owner,0,0,actual);CHECK(memcmp(expected,actual,32));
+    /* Arbitrary chaining words catch transform errors beyond the standard IV. */
+    unsigned transform_cases=0;uint8_t block[65];
+    for(unsigned n=0;n<1024;n++){
+        struct pwfi_sha256 ref,got;pwfi_init(&ref);
+        for(unsigned j=0;j<8;j++){rng^=rng<<13;rng^=rng>>17;rng^=rng<<5;ref.h[j]=rng;}
+        for(unsigned j=0;j<sizeof(block);j++){rng^=rng<<13;rng^=rng>>17;rng^=rng<<5;block[j]=(uint8_t)rng;}
+        got=ref;pwfi_transform(&ref,block+(n&1));pmsn_hash_transform(&got,block+(n&1));CHECK(!memcmp(ref.h,got.h,sizeof(ref.h)));transform_cases++;
+    }
+    printf("PASS %u owner seal and %u arbitrary-chain SHA compression differential cases; owner=%zu\n",owner_cases,transform_cases,sizeof(*owner));free(owner);
     double start=seconds();for(unsigned n=0;n<100;n++)reference_seal(s,0,0,expected);double original=seconds()-start;
     start=seconds();for(unsigned n=0;n<100;n++)pmsn_seal(s,0,0,actual);double revised=seconds()-start;CHECK(!memcmp(expected,actual,32));
     printf("PASS %u auth seal reference/guarded-granule cases; state=%zu; host100 original=%.6fs spans=%.6fs ratio=%.3f; not phone timing\n",cases,sizeof(*s),original,revised,original/revised);

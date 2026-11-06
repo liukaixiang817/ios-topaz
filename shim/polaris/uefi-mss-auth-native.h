@@ -65,12 +65,50 @@ static inline int pmsn_live(struct pmsn_state*s)
     return b->owner==s->owner&&b->power==s->power&&b->clocks==s->clocks&&b->opening==s->opening&&
         b->complete==1&&o->opening==s->opening&&(o->effects&(PMSC_POWER|PMSC_REMOTE))==(PMSC_POWER|PMSC_REMOTE)&&pmbn_live(b);
 }
+static inline void pmsn_hash_transform(struct pwfi_sha256 *s,const uint8_t *p)
+{
+    static const uint32_t k[64]={
+        0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+        0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+        0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+        0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+        0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+        0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+        0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+        0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2};
+    uint32_t w[64];
+    for(unsigned i=0;i<16;i++)w[i]=(uint32_t)p[4*i]<<24|(uint32_t)p[4*i+1]<<16|(uint32_t)p[4*i+2]<<8|p[4*i+3];
+    for(unsigned i=16;i<64;i++){
+        uint32_t a=w[i-15],b=w[i-2];
+        w[i]=w[i-16]+(pwfi_ror(a,7)^pwfi_ror(a,18)^(a>>3))+w[i-7]+(pwfi_ror(b,17)^pwfi_ror(b,19)^(b>>10));
+    }
+    uint32_t a=s->h[0],b=s->h[1],c=s->h[2],d=s->h[3],e=s->h[4],f=s->h[5],g=s->h[6],h=s->h[7];
+    /* Eight rounds rotate register names instead of moving all eight working
+     * words each round. Scalar integer operations only; same SHA256 rounds. */
+#define PMSN_SHA_ROUND(A,B,C,D,E,F,G,H,I) do { \
+    uint32_t t=(H)+(pwfi_ror((E),6)^pwfi_ror((E),11)^pwfi_ror((E),25))+(((E)&(F))^(~(E)&(G)))+k[(I)]+w[(I)]; \
+    uint32_t u=(pwfi_ror((A),2)^pwfi_ror((A),13)^pwfi_ror((A),22))+(((A)&(B))^((A)&(C))^((B)&(C))); \
+    (D)+=t;(H)=t+u; \
+} while(0)
+    for(unsigned i=0;i<64;i+=8){
+        PMSN_SHA_ROUND(a,b,c,d,e,f,g,h,i);
+        PMSN_SHA_ROUND(h,a,b,c,d,e,f,g,i+1);
+        PMSN_SHA_ROUND(g,h,a,b,c,d,e,f,i+2);
+        PMSN_SHA_ROUND(f,g,h,a,b,c,d,e,i+3);
+        PMSN_SHA_ROUND(e,f,g,h,a,b,c,d,i+4);
+        PMSN_SHA_ROUND(d,e,f,g,h,a,b,c,i+5);
+        PMSN_SHA_ROUND(c,d,e,f,g,h,a,b,i+6);
+        PMSN_SHA_ROUND(b,c,d,e,f,g,h,a,i+7);
+    }
+#undef PMSN_SHA_ROUND
+    s->h[0]+=a;s->h[1]+=b;s->h[2]+=c;s->h[3]+=d;s->h[4]+=e;s->h[5]+=f;s->h[6]+=g;s->h[7]+=h;
+}
 /* Feed exactly the selected readable range, preserving SHA byte order while
  * processing full blocks directly. No read crosses a range boundary. */
 static inline void pmsn_hash_bytes(struct pwfi_sha256*h,const uint8_t*p,size_t bytes)
 {
     while(bytes&&h->used){pwfi_byte(h,*p++);bytes--;}
-    while(bytes>=64){pwfi_transform(h,p);h->bytes+=64;p+=64;bytes-=64;}
+    while(bytes>=64){pmsn_hash_transform(h,p);h->bytes+=64;p+=64;bytes-=64;}
     while(bytes){pwfi_byte(h,*p++);bytes--;}
 }
 static inline void pmsn_hash_range(struct pwfi_sha256*h,uintptr_t first,uintptr_t last,uintptr_t a,uintptr_t b)
@@ -94,6 +132,13 @@ static inline void pmsn_seal(const struct pmsn_state*s,const void*out,size_t byt
     pmsn_hash_range(&hash,cursor,(uintptr_t)&s->rmtfs,a,b);
     pmsn_hash_range(&hash,(uintptr_t)&s->rmtfs+sizeof(s->rmtfs),(uintptr_t)s+sizeof(*s),a,b);
     pwfi_final(&hash,digest);
+}
+/* The auth call sites also seal the whole CPU owner. Preserve its exact
+ * output exclusion while avoiding byte-at-a-time input for complete blocks. */
+static inline void pmsn_owner_seal(const struct pmsc_owner*o,const void*out,size_t bytes,uint8_t digest[32])
+{
+    struct pwfi_sha256 h;pwfi_init(&h);uintptr_t a=(uintptr_t)out;
+    pmsn_hash_range(&h,(uintptr_t)o,(uintptr_t)o+sizeof(*o),a,a+bytes);pwfi_final(&h,digest);
 }
 static inline int pmsn_bound(struct pmsn_state*s)
 {
@@ -134,9 +179,9 @@ static inline int pmsn_peers(struct pmsn_state*s,struct pmsn_assignment*q,unsign
     for(unsigned n=0;n<7;n++){
         struct pmsb_peer*p=&q->peer[phase][n];if(!pwmc_zero(p,sizeof(*p))||!pmsn_live(s))return 0;
         p->target=(n+1)*0x100;p->issued=1;uint8_t before[32],after[32],owner_before[32],owner_after[32];
-        pmsn_seal(s,&p->raw,sizeof(p->raw),before);pmsc_seal(o,0,0,owner_before);
+        pmsn_seal(s,&p->raw,sizeof(p->raw),before);pmsn_owner_seal(o,0,0,owner_before);
         int returned=pmsn_affinity(p->target,&p->raw);
-        pmsn_seal(s,&p->raw,sizeof(p->raw),after);pmsc_seal(o,0,0,owner_after);
+        pmsn_seal(s,&p->raw,sizeof(p->raw),after);pmsn_owner_seal(o,0,0,owner_after);
         if(returned!=1||!pgcd_equal(before,after,32)||!pgcd_equal(owner_before,owner_after,32)||p->raw!=1||!pmsn_live(s))return 0;
         p->returned=1;
     }return 1;
@@ -177,24 +222,24 @@ static inline int pmsn_secure(struct pmsn_state*s,unsigned index)
     if(!pmsn_peers(s,q,0)||!pmsn_live(s)||pwmt_begin_profile(&q->transaction,&q->page,&spec,o->last,o->current.cpu.frequency,claim==0)<0)goto fail;
     for(unsigned k=0;k<PWMT_EVENTS;k++){
         struct pwmt_command command;if(!pmsn_live(s))goto fail;
-        int next=pwmt_next(&q->transaction,o->last,&command);if(next==PWMT_ZERO)break;if(next!=PWMT_IO)goto fail;
+        int next=pwmt_auth_next(&q->transaction,o->last,&command);if(next==PWMT_ZERO)break;if(next!=PWMT_IO)goto fail;
         struct pwmc_translation*t=&q->descriptor_AT[k];t->page=(uintptr_t)&q->page;
         if(!pwmc_actual_translate(t)||!pwmc_translation_valid(t)||t->page!=(uintptr_t)&q->page||!pmsn_live(s))goto fail;
         uint8_t before[32],after[32],owner_before[32],owner_after[32];int returned;
         if(command.operation==PWMT_SMC){
             q->response[k]=command.registers;if(!pmsc_mark_effect(o,PMSC_SECURE))goto fail;
-            pmsn_seal(s,&q->response[k],sizeof(q->response[k]),before);pmsc_seal(o,0,0,owner_before);
+            pmsn_seal(s,&q->response[k],sizeof(q->response[k]),before);pmsn_owner_seal(o,0,0,owner_before);
             returned=pmsn_round(&q->response[k]);
-            pmsn_seal(s,&q->response[k],sizeof(q->response[k]),after);pmsc_seal(o,0,0,owner_after);
+            pmsn_seal(s,&q->response[k],sizeof(q->response[k]),after);pmsn_owner_seal(o,0,0,owner_after);
         }else{
             unsigned operation=command.operation==PWMT_CLEAN?PWMK_CLEAN_INVALIDATE:PWMK_INVALIDATE;
-            pmsn_seal(s,&q->cache[k],sizeof(q->cache[k]),before);pmsc_seal(o,0,0,owner_before);
+            pmsn_seal(s,&q->cache[k],sizeof(q->cache[k]),before);pmsn_owner_seal(o,0,0,owner_before);
             returned=pmsn_cache(&q->page,operation,&q->cache[k]);
-            pmsn_seal(s,&q->cache[k],sizeof(q->cache[k]),after);pmsc_seal(o,0,0,owner_after);
+            pmsn_seal(s,&q->cache[k],sizeof(q->cache[k]),after);pmsn_owner_seal(o,0,0,owner_after);
         }
         if(!pgcd_equal(before,after,32)||!pgcd_equal(owner_before,owner_after,32)||!pmsn_live(s)||!pmsn_bound(s))goto fail;
         q->after[k]=o->current;
-        if(pwmt_complete(&q->transaction,&command,o->last,returned,command.operation==PWMT_SMC?&q->response[k]:0,
+        if(pwmt_auth_complete(&q->transaction,&command,o->last,returned,command.operation==PWMT_SMC?&q->response[k]:0,
             command.operation==PWMT_SMC?0:&q->cache[k])<0)goto fail;
         if(command.operation==PWMT_SMC&&!pmsn_peers(s,q,q->transaction.rounds))goto fail;
     }

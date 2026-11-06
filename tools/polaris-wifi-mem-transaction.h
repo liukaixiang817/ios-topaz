@@ -8,7 +8,11 @@
 #include "polaris-wifi-mem-cache.h"
 #define PWMT_ROUNDS 4u
 #define PWMT_EVENTS (PWMT_ROUNDS+2u)
-#define PWMT_TICKS UINT64_C(1920000) /*100ms returned-step budget,19.2MHz*/
+#define PWMT_TICKS UINT64_C(1920000) /*100ms legacy total AND per-issued-step ceiling,19.2MHz*/
+/* Auth performs seven sealed peer checks after every returned SMC. Account
+ * for that CPU work in a separate, absolute1s total; never renew opening.
+ * Legacy callers retain100ms total. Both profiles retain100ms per step. */
+#define PWMT_AUTH_TICKS UINT64_C(19200000)
 enum pwmt_result {PWMT_FAILED=-1,PWMT_WAIT,PWMT_IO,PWMT_ZERO};
 enum pwmt_operation {PWMT_CLEAN=1,PWMT_SMC,PWMT_INVALIDATE,PWMT_DONE};
 enum pwmt_error {PWMT_OK,PWMT_ARGUMENT,PWMT_REENTRY,PWMT_TIME,PWMT_CACHE,
@@ -36,11 +40,13 @@ static inline int pwmt_fail(struct pwmt_transaction*t,unsigned error)
 {if(t){if(!t->error)t->error=error;t->unknown=1;}return PWMT_FAILED;}
 static inline int pwmt_disjoint(uint64_t a,unsigned n,uint64_t b,unsigned m)
 {return pwma_span(a,n)&&pwma_span(b,m)&&!pwma_overlap(a,n,b,m);}
-static inline int pwmt_time(struct pwmt_transaction*t,uint64_t now)
+static inline int pwmt_time_limit(struct pwmt_transaction*t,uint64_t now,uint64_t limit)
 {
-    if(!now||now<t->last||now<t->opening||now-t->opening>PWMT_TICKS)return pwmt_fail(t,PWMT_TIME);
+    if(!now||now<t->last||now<t->opening||now-t->opening>limit)return pwmt_fail(t,PWMT_TIME);
     t->last=now;return 1;
 }
+static inline int pwmt_time(struct pwmt_transaction*t,uint64_t now)
+{return pwmt_time_limit(t,now,PWMT_TICKS);}
 static inline int pwmt_begin_profile(struct pwmt_transaction*t,struct pwma_page*page,
     const struct pwma_spec*spec,uint64_t now,uint64_t frequency,unsigned modem)
 {
@@ -67,7 +73,7 @@ static inline int pwmt_page_equal(const struct pwmt_transaction*t)
 /* Reading descriptor bytes before CLEAN or the FIRST SMC does not dirty them.
  * No descriptor read occurs after issuing SMC until post-return invalidation.
  * In particular an interrupted continuation never re-cleans or re-encodes it. */
-static inline int pwmt_next(struct pwmt_transaction*t,uint64_t now,struct pwmt_command*out)
+static inline int pwmt_next_limit(struct pwmt_transaction*t,uint64_t now,struct pwmt_command*out,uint64_t limit)
 {
     if(!t||!out||!t->started)return PWMT_FAILED;
     if(!pwmt_disjoint((uintptr_t)t,sizeof(*t),(uintptr_t)out,sizeof(*out))||
@@ -77,7 +83,7 @@ static inline int pwmt_next(struct pwmt_transaction*t,uint64_t now,struct pwmt_c
     if(t->complete)return t->complete==1&&t->step==PWMT_DONE?PWMT_ZERO:pwmt_fail(t,PWMT_REENTRY);
     if(t->step<PWMT_CLEAN||t->step>PWMT_INVALIDATE||t->events>=PWMT_EVENTS||t->rounds>PWMT_ROUNDS)
         return pwmt_fail(t,PWMT_REENTRY);
-    if(pwmt_time(t,now)<0)return PWMT_FAILED;
+    if(pwmt_time_limit(t,now,limit)<0)return PWMT_FAILED;
     if((t->step==PWMT_CLEAN||(t->step==PWMT_SMC&&!t->rounds))&&!pwmt_page_equal(t))
         return pwmt_fail(t,PWMT_CHANGED_PAGE);
     if(t->step==PWMT_SMC&&t->rounds==PWMT_ROUNDS)return pwmt_fail(t,PWMT_LIMIT);
@@ -86,11 +92,15 @@ static inline int pwmt_next(struct pwmt_transaction*t,uint64_t now,struct pwmt_c
     struct pwmt_event*e=&t->event[t->events++];e->command=command;e->before=now;e->issued=1;
     t->pending=command.sequence;*out=command;return PWMT_IO;
 }
+static inline int pwmt_next(struct pwmt_transaction*t,uint64_t now,struct pwmt_command*out)
+{return pwmt_next_limit(t,now,out,PWMT_TICKS);}
+static inline int pwmt_auth_next(struct pwmt_transaction*t,uint64_t now,struct pwmt_command*out)
+{return pwmt_next_limit(t,now,out,PWMT_AUTH_TICKS);}
 /* Completion receives exactly one typed cache/SMC result. Control matching is
  * checked before storing raw outputs. Caller execution and source envelopes
  * remain a separate obligation, not a callback bool supplied to this engine. */
-static inline int pwmt_complete(struct pwmt_transaction*t,const struct pwmt_command*command,
-    uint64_t now,int returned,const struct pwma_registers*response,const struct pwmk_record*cache)
+static inline int pwmt_complete_limit(struct pwmt_transaction*t,const struct pwmt_command*command,
+    uint64_t now,int returned,const struct pwma_registers*response,const struct pwmk_record*cache,uint64_t limit)
 {
     if(!t||!command||!t->started||t->unknown||t->error)return PWMT_FAILED;
     if((response&&(!pwmt_disjoint((uintptr_t)t,sizeof(*t),(uintptr_t)response,sizeof(*response))||
@@ -110,7 +120,8 @@ static inline int pwmt_complete(struct pwmt_transaction*t,const struct pwmt_comm
         if(!cache||response)return pwmt_fail(t,PWMT_ARGUMENT);e->cache=*cache;
     }
     if(returned!=1)return pwmt_fail(t,PWMT_RETURN);
-    if(pwmt_time(t,now)<0)return PWMT_FAILED;
+    if(pwmt_time_limit(t,now,limit)<0)return PWMT_FAILED;
+    if(now<e->before||now-e->before>PWMT_TICKS)return pwmt_fail(t,PWMT_TIME);
     if(t->step==PWMT_SMC){
         enum pwma_return result=pwma_classify(&e->response);
         if(result==PWMA_RETURN_UNKNOWN)return pwmt_fail(t,PWMT_TRANSPORT);
@@ -127,4 +138,10 @@ static inline int pwmt_complete(struct pwmt_transaction*t,const struct pwmt_comm
     }
     t->pending=0;return t->complete?PWMT_ZERO:PWMT_WAIT;
 }
+static inline int pwmt_complete(struct pwmt_transaction*t,const struct pwmt_command*c,
+    uint64_t now,int returned,const struct pwma_registers*r,const struct pwmk_record*k)
+{return pwmt_complete_limit(t,c,now,returned,r,k,PWMT_TICKS);}
+static inline int pwmt_auth_complete(struct pwmt_transaction*t,const struct pwmt_command*c,
+    uint64_t now,int returned,const struct pwma_registers*r,const struct pwmk_record*k)
+{return pwmt_complete_limit(t,c,now,returned,r,k,PWMT_AUTH_TICKS);}
 #endif

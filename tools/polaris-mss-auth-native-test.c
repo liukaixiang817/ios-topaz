@@ -47,6 +47,7 @@ static unsigned auth_fault,auth_fault_assignment,auth_io_fault,auth_io_trigger,a
 static unsigned metadata_owner,modem_owner,peer_segments,metadata_polls,final_polls,full_bank_verified;
 static uint32_t rmb_length,rmb_metadata,rmb_start,rmb_command;
 static unsigned auth_bad_status;
+static uint64_t auth_peer_delay;
 static int auth_io_selected(void){return auth_owner&&auth_owner->pending&&auth_owner->deliveries==auth_io_trigger&&
     (auth_owner->phase==PMSN_MD_IO||auth_owner->phase==PMSN_PUBLISH||auth_owner->phase==PMSN_AUTH);}
 static void auth_arch_hook(struct pmni_arch*a){if(auth_io_selected()&&auth_io_fault==3)a->ttbr0^=4096;}
@@ -88,6 +89,7 @@ static void verify_modem_bank(void)
 static int pmsn_affinity(uint64_t target,int64_t*raw)
 {
     CHECK(local_mask&&owner->held&&target==0x100*(auth_peers%7+1));auth_peers++;*raw=1;
+    if(auth_owner->pending&&auth_rounds[auth_owner->pending-1])owner_delay+=auth_peer_delay;
     if(auth_fault==4&&auth_owner->pending==auth_fault_assignment+1)*raw=0;return 1;
 }
 static int pmsn_cache(struct pwma_page*p,unsigned operation,struct pwmk_record*r)
@@ -195,7 +197,7 @@ static void auth_setup(unsigned continuations)
     auth_unprotect_fixture();auth_owner=0;auth_continuations=continuations;auth_scenarios++;
     memset(auth_rounds,0,sizeof(auth_rounds));memset(auth_caches,0,sizeof(auth_caches));memset(auth_protected,0,sizeof(auth_protected));
     auth_fault=auth_fault_assignment=auth_io_fault=auth_io_trigger=auth_io_calls=auth_copy_fault=auth_copies=auth_cache_pages=auth_peers=0;
-    auth_bad_status=peer_segments=metadata_polls=final_polls=full_bank_verified=0;metadata_owner=modem_owner=3;
+    auth_peer_delay=0;auth_bad_status=peer_segments=metadata_polls=final_polls=full_bank_verified=0;metadata_owner=modem_owner=3;
     rmb_length=rmb_metadata=rmb_start=rmb_command=0;CHECK(!mprotect(auth_modem,0x7800000,PROT_NONE));
     boot_setup();CHECK(pmbn_begin(boot_owner,boot_records,aop_owner)&&boot_drive());
     uintptr_t at=(uintptr_t)arena+0x4000000;
@@ -264,6 +266,13 @@ int PMSN_TEST_ENTRY(int argc,char**argv)
     for(unsigned status=1;status<=3;status++){
         auth_setup(0);auth_bad_status=status;CHECK(!auth_drive()&&auth_owner->unknown&&!auth_owner->complete);
     }
+    /* CPU-only post-SMC checks can exceed the legacy total while every issued
+     * operation remains short. Four rounds still complete under1s absolute. */
+    auth_setup(3);auth_peer_delay=192000;auth_success();
+    CHECK(auth_owner->assignment[0].transaction.last-auth_owner->assignment[0].transaction.opening>PWMT_TICKS);
+    auth_setup(3);auth_peer_delay=960000;CHECK(!auth_drive()&&auth_owner->unknown&&!auth_owner->complete&&owner->held);
+    CHECK(auth_owner->assignment[0].transaction.error==PWMT_TIME&&auth_protected[0]);
+    unsigned before=auth_io_calls+auth_copies+auth_peers;CHECK(!pmsn_step(auth_owner)&&before==auth_io_calls+auth_copies+auth_peers);
     auth_test_close();
     printf("PASS %u complete native MSS auth checks, %u scenarios; software privileged leaves, no hardware/provider/USB\n",checks,auth_scenarios);return 0;
 }

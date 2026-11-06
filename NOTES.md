@@ -54,6 +54,46 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: optimized SMC accepted, next invalidate issue timed out
+
+- Human FC72DB1B resolves the current-screen dependency for auth-seal-spans-0001.
+  AUTH HOLD2/phase1, assignment0/pending1; TX error3/step3 INVALIDATE,
+  events2/round1, transaction pending0/flags101, saved event SMC2/returned101,
+  x0/x1 zero. Unlike15DBE1CF, pwmt_complete accepted SMC time/classification
+  and cleared pending. Next pwmt_next failed its time check before event3;
+  seven post-SMC peer checks lie between these points. Invalidation/equality
+  and completed permission assignment remain UNPROVEN. No Wi-Fi scan/join.
+- TX CHECK AGE still selects last returned event.after for a later next-step
+  failure; do not call this the failing elapsed time. Exact failed interval
+  is not stored. Evaluate equivalent CPU-cost reduction, not a timeout bypass.
+- Goal ACTIVE; previous waiting audit resolved, no current external blocker.
+  All earlier device jobs terminal; spent image/nonce never replayed. Current
+  work implements auth-only scalar seal optimization and separates the issued
+  step100ms bound from absolute whole-auth-transaction1s bound. The old100ms
+  WHOLE total rejected local post-SMC peer verification; it was our software
+  policy, not a vendor hardware deadline. Legacy callers remain100ms total,
+  each auth issued step still100ms, max4SMC rounds and outer180s unchanged.
+  This changes a policy deliberately based on the actual inter-step refusal;
+  it is not evidence of permission completion. Verification PASS:538 secure
+  transaction checks; auth27scenarios/4086159checks, including4round success
+  with280ms CPU-only peer delay and failure of cumulative>1s peer delay,
+  preserved issued-SMC>100ms failure and no retry after refusal. Seal240
+  protected-granule cases +195 owner exclusion cases +1024 arbitrary-chain
+  compression cases. Full composed normal2889178/gap2889181 pass.
+- Host-O2/general-regs200 paired seals: oldspans167283000ns/new150555000ns,
+  about1.111x; not phone timing. Sanitized benchmark remains separately saved.
+  Actual EFI COFF hash functions scalar;853MachO stack entries,max816B.
+  Driver835072B SHA9fbae6648d8cf6019fe2ea5b96b536dd724584f810e0f4ce2e14ba35623b4d87;
+  image6242304B SHAb76f491d2bcc4644513b7975276df66b20d68b5aaa74da9ea7062be0718915f2.
+  Original81innerfiles unchanged. Offline root admission initially missed
+  the candidate-local payload copy; copied existing byte-identical payload,
+  then PASS. No device command was sent on that failure. KernelCI42091724671
+  reused unchanged; no kernel source changes.
+- Fresh readonly FASTBOOT query09:16:22.841731Z found expected Polaris;
+  authorized root-audit96580 RUNNING with bounded350s host/300s watchdog.
+  No native candidate sent yet. Formal09:15 report delivered,next09:30Z.
+  Execution2/5, four steps including current remain. Next formal09:15Z.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: auth seal optimization sent once; physical timing/result pending
 
 - Continuation audit09:02:11Z: previous goal turn made concrete progress
