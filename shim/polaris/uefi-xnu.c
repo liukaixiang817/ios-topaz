@@ -1303,6 +1303,52 @@ static void wifi_native_startup_gop_evidence(void)
             pwtg_line(r,12,"MBA TARGETS",d->target[0].complete,d->target[1].complete);
             pwtg_line(r,13,"MBA ACCESS PAR",(uint32_t)(par>>32),(uint32_t)par);
             pwtg_line(r,14,"MBA IO AGE",(uint32_t)(age>>32),(uint32_t)age);
+            /* A failed first namespace check precedes any native access.
+             * Inspect only already captured GCD/EFI records for that page. */
+            if(!d->target[0].complete&&!d->native.attempted){
+                const struct pmrg_target*t=&d->target[0];uint64_t page=address&~UINT64_C(4095);
+                pwtg_line(r,0,"MBA MAP HOLD",wifi_native_boot_phase,s->phase);
+                pwtg_line(r,2,"TARGET NODE IO",t->attempted|(t->unknown<<8),t->node.issued|(t->node.returned<<8));
+                pwtg_line(r,3,"MBA TARGET PAGE",(uint32_t)(page>>32),(uint32_t)page);
+                pwtg_line(r,4,"GCD TYPE MATCH",0,0);pwtg_line(r,5,"GCD CAP",0,0);
+                pwtg_line(r,6,"GCD ATTR",0,0);pwtg_line(r,7,"GCD BASE",0,0);pwtg_line(r,8,"GCD END",0,0);
+                unsigned matches=0,selected=0;uint32_t type=0;
+                if(s->map.pass[1].nodes<=PMRG_NODES)for(unsigned n=0;n<s->map.pass[1].nodes;n++){
+                    const uint8_t*v=s->map.pass[1].node[n].raw;uint64_t base=pwfi_le(v+24,8),end=pwfi_le(v+32,8);
+                    if(base>page||end<page||end-page<4095)continue;
+                    if(!matches){
+                        selected=n;type=(uint32_t)pwfi_le(v+56,4);uint64_t cap=pwfi_le(v+40,8),attr=pwfi_le(v+48,8);
+                        pwtg_line(r,5,"GCD CAP",(uint32_t)(cap>>32),(uint32_t)cap);
+                        pwtg_line(r,6,"GCD ATTR",(uint32_t)(attr>>32),(uint32_t)attr);
+                        pwtg_line(r,7,"GCD BASE",(uint32_t)(base>>32),(uint32_t)base);
+                        pwtg_line(r,8,"GCD END",(uint32_t)(end>>32),(uint32_t)end);
+                    }matches++;
+                }
+                pwtg_line(r,4,"GCD TYPE MATCH",type,matches);
+                pwtg_line(r,9,"EFI VIRT",0,0);
+                pwtg_line(r,10,"EFI TYPE MATCH",0,0);pwtg_line(r,11,"EFI ATTR",0,0);
+                pwtg_line(r,12,"EFI BASE",0,0);pwtg_line(r,13,"EFI PAGES",0,0);
+                const struct pwea_map*map=&retained_wifi_memory.map;unsigned count=0,bad=0;type=0;
+                if(page<=UINT64_MAX-4096&&o->retained==(uintptr_t)&retained_wifi_memory&&map->map.stride>=sizeof(struct efi_memory)&&
+                   !(map->map.stride&7)&&map->map.bytes<=sizeof(map->data)&&!(map->map.bytes%map->map.stride)){
+                    for(uint64_t off=0;off<map->map.bytes;off+=map->map.stride){
+                        const struct efi_memory*v=(const void*)(map->data+off);
+                        if(!v->pages||v->pages>UINT64_MAX/4096||v->physical>UINT64_MAX-v->pages*4096||
+                           v->physical>=page+4096||page>=v->physical+v->pages*4096)continue;
+                        unsigned invalid=v->type!=11||v->virtual_address||(v->attributes!=0&&v->attributes!=1);
+                        if(!count||(!bad&&invalid)){
+                            type=v->type;
+                            pwtg_line(r,9,"EFI VIRT",(uint32_t)(v->virtual_address>>32),(uint32_t)v->virtual_address);
+                            pwtg_line(r,11,"EFI ATTR",(uint32_t)(v->attributes>>32),(uint32_t)v->attributes);
+                            pwtg_line(r,12,"EFI BASE",(uint32_t)(v->physical>>32),(uint32_t)v->physical);
+                            pwtg_line(r,13,"EFI PAGES",(uint32_t)(v->pages>>32),(uint32_t)v->pages);
+                        }count++;bad+=invalid;
+                    }
+                }
+                pwtg_line(r,10,"EFI TYPE MATCH",type,count);
+                pwtg_line(r,14,"MAP ERR NODES",s->map.error,s->map.pass[1].nodes);
+                pwtg_line(r,15,"GCD INDEX EFIERR",selected,bad);
+            }
         }
     }
     /* All19 reads returned before the phase1 value check. Display the actual

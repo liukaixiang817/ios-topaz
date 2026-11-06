@@ -54,6 +54,41 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: first MBA DEBUG read rejected before access; target-map diagnostic built
+
+- New photo307E018C of SPENT mba-boot-diagnostic-0001: boot3/inner MBA0,
+  phase1/step0, pending/deliveries/events1, polls0, reset error/step0. DEBUG
+  READ4080018, first target incomplete, native error/value/issued/returned0,
+  delivery error3, PAR0; window/total0x1f8c ticks. IO/reset ages UINT64_MAX are
+  absent-timestamp sentinels, NOT enormous elapsed times. pmbn_step fails its
+  FIRST pmpn_target before any native access; no MBA timeout, reset or firmware
+  authentication occurred. Supplied target page is explicitly whitelisted,
+  but the current GCD/EFI rejection predicate is still absent from the photo.
+- Add only nested failure display when target0 incomplete/native not attempted:
+  target/node flags, effective page, saved GCD type/matches/capabilities/attrs/
+  bounds/index, saved EFI type/overlap count/VA/attrs/base/pages and invalid
+  overlap count. Bounded map/node walks; prefer first invalid EFI overlap and
+  guard missing owner/bad stride/size/overflow. No target read, map acceptance,
+  allocation, protocol/timer/voltage/ABI or electrical change.
+- Exact extracted display sanitizer133 new cases plus734 previous cases PASS,
+  including missing/duplicate GCD entries, type/cap/attr, multiple EFI overlaps,
+  virtual addresses, missing owner/invalid bounds, CPU_ON and partial delivery.
+  Input state/maps unchanged. First private fixture compile had signed count
+  warning, then expected draw count was off by4; corrected test fixture only;
+  original failed logs retained. No failed build was sent to the device.
+- mba-target-diagnostic-0001 full EFI/arm64841 functions/max816B and original
+  codec81 unchanged files PASS. Driver825856B SHA
+  d5b0e693fd5909af86caaa43a36c1b138b8993420a51ebc5789efae6d74a4d40.
+  Image6236160B SHA2bfc18595ddcc7c7c847fee7fa243a889889dba3549679d279c8a415de68df92.
+  Changed compiled input exactly shim/polaris/uefi-xnu.c. Other sources/kernel
+  CI42091724671/payload unchanged; no unowned header edits or extra CI required.
+- Expected FASTBOOT06:00:26.155601Z; fresh readonly audit host39416 running.
+  Next independent40checks/freeze/admission and ONE new temporary boot. This
+  candidate not yet sent. Physical feedback resolves previous dependency;
+  future blocking audit starts anew. Execution2/5,current plus3steps remain.
+  Last15min05:57Z,next06:12Z. No post-native observer/replay/reset/partition
+  write; preserve existing Android/Windows/backups and private device data.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: MBA inner-failure diagnostic sent once; new screen needed
 
 - Sourcec40240d pushed/synchronized. mba-boot-diagnostic-0001 fresh readonly
