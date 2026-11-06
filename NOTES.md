@@ -54,6 +54,44 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: raw VRM response metadata decoded; fresh trial preparing
+
+- New physical A342627C photo of SPENT supply-values-0001 resolves the pending
+  values: supply5/phase1, all19 reads retired, ARC6/3/0 and minimum7/4/7.
+  Four VRMs each voltage/enable0x80000000, mode/headroom0. Old pmsp_values
+  compared raw words as regulator values; phase2 voltage/enable raises did
+  not occur. This is response-format rejection, not request timeout.
+- Primary Qualcomm vote-table header at pinned SDM670 reference20bb8ae defines
+  bit31 RESP_REQ separately from voltage13/enable1/mode3/headroom9 payload
+  bits. Own PMIC4 DT/vendor offsets/units and observed pattern agree; do NOT
+  claim exact running firmware identity or import foreign addresses. Source
+  blob/hash/own-DT correspondence retained privately and REFERENCE_REPOS updated.
+- Decode only retired supply READs; preserve raw q response, event response,
+  complete request/hash and transport history. Baseline/read-after-write/held/
+  restoration use logical fields. Reject every other reserved bit and ARC31;
+  no response metadata in regulator CMD_DATA. Existing voltage/mode/order/
+  timers/transport unchanged; headroom bound corrected to its9bit field.
+- Sanitizer499 scenarios/2018242 checks PASS, including all data values,
+  actual-photo baseline, all field metadata patterns, every reserved bit,
+  HELD drift rejection and101event raise/stop/restore with22 logical writes.
+  Existing148 supply scenarios/961192 checks plus46960 clock/stop checks PASS.
+  Full composed normal and raw-metadata peers each2889178 checks PASS. Software
+  only; no physical supply/MSS/WLAN claim. Initial unit compile missed generated
+  include directory; corrected fixture command before PASS, failure log retained.
+- vrm-read-format-0001 full EFI/arm64841 functions/max816B PASS; original
+  image codec81 unchanged files. Driver823296B SHA
+  9263face90fc8b507ce49ce2ada3693b297ba314845d20f0a9e0baa004e762f8.
+  Image6240256B SHA4ed4da12395ab4b760eb4fde271d73b31e231364feb3236588d7fd32939f5e9a.
+  Compiled input change exactly tools/polaris-mss-supplies.h; input set/ABI
+  unchanged. Kernel CI42091724671/payload unchanged, no kernel rebuild needed.
+- FASTBOOT confirmed05:26:35.701910Z. Fresh readonly root audit host28807
+  running; next independent40checks, freeze/admission and ONE temporary boot.
+  Candidate not yet sent. Earlier actual AOP ON/early MSS allocation established;
+  physical supply readiness/MSS/scan/Cyberpunk AU join/IP/DNS/data/stability
+  unfinished. Goal ACTIVE, execution2/5,4 remaining INCLUDING current.
+  Last15min05:22Z,next05:37Z. No continuous USB observer or partition writes.
+  Preserve unowned remote-memory hunk, Android/Windows/backups and private data.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: complete supply-value screen sent; physical values pending
 
 - Sourcef43828b pushed/synchronized. supply-values-0001 fresh readonly audit

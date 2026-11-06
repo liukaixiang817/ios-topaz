@@ -14,6 +14,25 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+## VRM read-response fields (0189, 2026-11-06)
+
+Physical supply-values screen shows all19 baseline reads retired: ARC6/3/0,
+minimum7/4/7; four VRMs each raw voltage/enable0x80000000 and mode/headroom0.
+The [Qualcomm VRM vote-table header](https://github.com/Rivko/android-firmware-qti-sdm670/blob/20bb8ae36c93fc16bbadda0e0a83f930c0c8a271/aop_proc/core/pmic/vrm/target/670/hwio/vrm_votetable_hwio.h)
+(blob eb2ae240f06f2d160555aca82787413e49d1c029) defines bit31 RESP_REQ separately
+from voltage13/enable1/mode3/headroom9 data bits. Its HAL uses field offsets
+0/4/8/c. This agrees with own PMIC4 DT/vendor correspondence below and the
+observed response pattern. Reference SDM670 firmware is NOT the exact running
+Polaris build; no foreign addresses or firmware binaries are imported.
+
+The supply consumer now retains raw responses/hashes in request/event evidence
+and separately decodes logical READ values for baseline, verification and
+restoration. Reject other reserved bits and ARC bit31; never replay response
+metadata as regulator CMD_DATA. Own voltage/mode/order/time constraints remain.
+Private source provenance/photo/software proof: vrm-read-format-0001. This is
+not proof of physical voltage readiness, MSS start or WLAN operation. The local
+HackiOS references do not replace own DT/vendor semantics for this hardware.
+
 ## Own MSS descriptor-page allocation (0189, 2026-11-06)
 
 Physical delta shows one conventional page at0x17017b000 becoming type4 outside

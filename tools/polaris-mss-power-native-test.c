@@ -57,7 +57,13 @@ static void resource_complete(void)
     unsigned n=0;while(n<20&&addresses[n]!=hardware[0x34/4])n++;CHECK(n<20);
     CHECK(hardware[0x1c/4]==1&&(hardware[0x30/4]==0x108||hardware[0x30/4]==0x10108));
     if(hardware[0x30/4]==0x10108)votes[n]=hardware[0x38/4];
-    hardware[0x40/4]=votes[n];hardware[0x3c/4]=0x10101;hardware[0x18/4]=1;hardware[1]|=1;pending=0;
+    hardware[0x40/4]=votes[n];
+#ifdef PMPN_TEST_VRM_RESP_REQ
+    /* Independent peer exposes VRM response metadata on READ, never on the
+     * logical vote or CMD_DATA written by the caller. */
+    if(n>=3&&n<19&&hardware[0x30/4]==0x108)hardware[0x40/4]|=UINT32_C(0x80000000);
+#endif
+    hardware[0x3c/4]=0x10101;hardware[0x18/4]=1;hardware[1]|=1;pending=0;
 }
 static int pmni_raw(const struct pmni_command*c,uint32_t*v)
 {

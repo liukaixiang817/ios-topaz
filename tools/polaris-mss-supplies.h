@@ -44,6 +44,21 @@ static inline int pmsp_begin(struct pmsp_lifecycle*s,uint64_t epoch,const uint32
     for(unsigned k=0;k<3;k++)s->minimum[k]=minimum[k];
     s->epoch=epoch;s->opening=s->last=s->transition=now;s->phase=1;return PMSP_WAIT;
 }
+/* VRM vote readback includes RESP_REQ bit31 separately from payload.
+ * Own PMIC4 fields: mV13, enable1, mode3, headroom9 bits. Keep the raw word
+ * in request/event evidence; never send this metadata as a regulator value.
+ * ARC indices have no such allowance. Unknown/reserved bits still refuse. */
+static inline int pmsp_response_value(unsigned resource,uint32_t raw,uint32_t*out)
+{
+    if(!out||resource>=PMSP_RESOURCES)return 0;
+    uint32_t mask=15,metadata=0;
+    if(resource>=3){
+        static const uint32_t fields[4]={0x1fff,1,7,0x1ff};
+        mask=fields[(resource-3)%4];metadata=UINT32_C(0x80000000);
+    }
+    if(raw&~(mask|metadata))return 0;
+    *out=raw&mask;return 1;
+}
 static inline int pmsp_values(struct pmsp_lifecycle*s)
 {
     static const uint32_t low[4]={800,1800,1304,3104},high[4]={800,1800,1304,3312};
@@ -53,7 +68,7 @@ static inline int pmsp_values(struct pmsp_lifecycle*s)
     }
     for(unsigned k=0;k<4;k++){
         unsigned n=3+4*k;uint32_t mode=s->saved[n+2];
-        if(s->saved[n]>high[k]||s->saved[n+1]>1||(mode!=0&&mode!=4&&mode!=5&&mode!=7)||s->saved[n+3]>8191)return 0;
+        if(s->saved[n]>high[k]||s->saved[n+1]>1||(mode!=0&&mode!=4&&mode!=5&&mode!=7)||s->saved[n+3]>511)return 0;
         s->target[n]=s->saved[n]>low[k]?s->saved[n]:low[k];s->target[n+1]=1;
         s->target[n+2]=mode;s->target[n+3]=s->saved[n+3];
     }
@@ -98,10 +113,12 @@ static inline int pmsp_complete(struct pmsp_lifecycle*s,const struct pmsp_comman
     struct pwfi_sha256 hash;pwfi_init(&hash);const uint8_t*raw=(const void*)q;
     for(unsigned n=0;n<sizeof(*q);n++)pwfi_byte(&hash,raw[n]);pwfi_final(&hash,e->request_sha256);
     e->consumed=now;e->returned=1;
-    if(s->phase==1)s->saved[c->resource]=q->response;
+    uint32_t response=q->response;
+    if(!c->write&&!pmsp_response_value(c->resource,q->response,&response))return pmsp_fail(s,PMSP_VALUE);
+    if(s->phase==1)s->saved[c->resource]=response;
     else if(!c->write){
         uint32_t expected=(s->phase==2||s->phase==4)?s->target[c->resource]:s->saved[c->resource];
-        if(q->response!=expected)return pmsp_fail(s,PMSP_VALUE);
+        if(response!=expected)return pmsp_fail(s,PMSP_VALUE);
     }
     s->pending=0;s->index++;
     if((s->phase==1||s->phase==4||s->phase==6)&&s->index==PMSP_RESOURCES){
