@@ -54,6 +54,31 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: MBA inner-failure diagnostic sent once; new screen needed
+
+- Sourcec40240d pushed/synchronized. mba-boot-diagnostic-0001 fresh readonly
+  audit14860 ended0; independent40checks PASS, roots/GPT/critical/ESP/NV intact;
+  FASTBOOT05:49:55.022825Z. Frozen540 files, one-use offline admission PASS.
+- Image d170b86acb00bcf520cd10b20f7ee2e6a9958370e323bc67922bdb5206169ebb sent
+  ONCE05:50:23.678998Z, fastboot0. Full100593664B/1535RAM chunks, validation ACK
+  and independently queried validated state. Native-start05:52:03.711312Z,
+  ACK05:52:23.206668Z. Host20307 ended0; all build/test/device tasks terminal.
+  Pool/image SPENT. No replay/reset/post-native USB observer or partition write.
+- New MBA HOLD screen is now needed: MBA ERRORS/PHASE STEP/RESET ERR STEP,
+  KIND STEP/IO ERR VALUE, effective address/targets/PAR and saved time deltas.
+  Async text question sent.30373E68 is the PREVIOUS VRM correction's result;
+  it establishes progress to native MBA startup, not this diagnostic result.
+  Host ACK remains command acceptance only. No inner failure cause inferred.
+- Prior physical-feedback blocker was resolved by30373E68 and new work completed;
+  this candidate's screen dependency is its FIRST occurrence in the resumed
+  run, not a continuation of the old three-turn audit. No safe next electrical/
+  protocol change can be selected until the screen locates the failed operation.
+- Execution2/5, current plus3steps remaining. Supply/proxy/active-clock stages
+  completed before MBA; MBA-ready/modem-auth/WLAN scan/join/IP/DNS/data/stability
+  unproven. Last15min05:42Z,next05:57Z while working. Kernel CI42091724671 and
+  payload unchanged. Preserve unowned remote-memory header and Android/Windows/
+  backups; photos, vendor/Apple artifacts and device records stay out of git.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: supply correction passes; MBA delivery failure isolated
 
 - New user photo30373E68 resolves the prior physical-feedback blocker and
