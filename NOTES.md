@@ -54,6 +54,30 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: VRM response correction sent once; new physical result pending
+
+- Source6c21c1a pushed/synchronized. vrm-read-format-0001 readonly audit28807
+  ended0, independent40checks PASS; roots/GPT/critical/ESP/NV unchanged and
+  FASTBOOT05:29:13.571460Z. Frozen534 files; offline one-use admission PASS.
+- Image4ed4da12395ab4b760eb4fde271d73b31e231364feb3236588d7fd32939f5e9a sent
+  ONCE05:29:41.203898Z, fastboot0. Complete100593664B/1535RAM chunks, validation
+  ACK and independently queried validated state. Native-start05:31:21.265743Z,
+  ACK05:31:40.719720Z; host24216 ended0. Pool/image SPENT. No replay/retry/reset,
+  post-native USB observer or partition write. All build/test/device jobs ended.
+- A342627C is the PREVIOUS spent supply-values image, not feedback for this new
+  correction. Current phone screen is required to establish passage beyond
+  supply sampling/raising or identify the next physical failure. Async text
+  question asks new heading/initial rows or actual iOS desktop arrival. Native
+  ACK does NOT prove the correction, kernel boot, supply readiness or Wi-Fi.
+  This is the first occurrence of this candidate's physical-feedback dependency;
+  goal ACTIVE, not complete/blocked. Do not boot another variant without result.
+- Earlier actual AOP ON/early MSS allocation remain established; MSS startup,
+  WLAN control/scan/Cyberpunk AU join/IP/DNS/real data/stability remain unproven.
+  Execution2/5;4 steps remaining INCLUDING current. Last15min05:22Z,next05:37Z
+  while active. Kernel CI42091724671/payload unchanged. Preserve unowned remote-
+  memory header SHA7215a3786b3b9226aa4f839648bbecc80d9c575f3fd3fb00250481dd91786a01,
+  all existing Android/Windows/backups and private artifacts. No live job left.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: raw VRM response metadata decoded; fresh trial preparing
 
 - New physical A342627C photo of SPENT supply-values-0001 resolves the pending
