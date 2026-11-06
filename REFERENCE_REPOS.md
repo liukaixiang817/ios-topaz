@@ -16,6 +16,14 @@ their build/setup scripts or prebuilts has been executed.
 
 ## Idle hold policy and watchdog evidence (0189, 2026-11-07 Melbourne)
 
+Physical update: source95993eb temporary idle-only boot recorded actual watchdog
+status0 and idle0, then photo9DED59AD/human reply proved IDLE HOLD with MSS0.
+User paused the long stationary window and manually returned FASTBOOT, so long
+idle remains unverified. Wi-Fi continues with fresh copy-prefix7 diagnostic;
+actual704 frames/max816B, original81-file codec and1978 frozen inputs passed.
+No native producer or foreign protocol change; existing source qualification
+reused under exact source hashes. No new kernel build was required.
+
 Humanexplicitlyrequireslongidletostayonscreen. Physicaldefault1800sRAM
 host-lossrecoveryisnowdisabledandcompiledout; finiteactive-operationdeadlines
 remain. NativeMSSalreadydisabledthatoldlease,soitdoesnotexplainthereported

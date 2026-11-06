@@ -54,55 +54,54 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### Active user priority — 2026-11-07 Melbourne: keep idle screen; no automatic Android return
+### Current Wi-Fi handoff — 2026-11-07 Melbourne: idle entry proven; long test paused; prefix7 running
 
-- Humanreports prefix14spontaneouslyreturnedAndroid; exactexitstageunknown,
-  briefprefixcheckpointbeforeexitNOTexcluded. Privatehumanresultboundtospent
-  imagee7859851.../sent14:18:00.113098Z. DoNOTclaimcopy14wasneverreached.
-- Newexplicitrequest: longinactivitymuststayput,insteadofreturningAndroid.
-  ThissteersongoingWiFigoal, notcancelsorpausesit. ReadonlyactualAndroidquery
-  15:31:19recordclockfromhostreportedreboot/reboot,PMICwarm/hardreset; itdoesNOT
-  identifywatchdog/copycause. Expectedpolaris/boot_completed1/surootdmesgverified.
-  Rawproperties/dmesgprivateunderprefix14case; no partition/settingswrite.
-- PhysicaldefaultPOLARIS_RAM_LEASE_SECONDS now0 andactualidle_guard recovery
-  branchcompiledout; regularpollingcontinues. Legacy1800sleaseonlyexplicit
-  QEMU lifecyclefixture. ExistingnativeWiFiphasealreadydisabledoldlease,so
-  old30minpathisNOTprovenreasonforprefix14reset. Operationdeadlinesunchanged.
-- Readycallback nowrecordsactualUEFIWatchdogDisable(0)returnandidlepolicy.
-  Newnativehelpercapturesboundlogs BEFOREnativecommand,requiresbothstatus0/
-  idle0,else stopswithoutstart/replay. No post-nativeUSBservice/observer.
-  UEFIofficial2.10A sec7.5.1 supportsTimeout0disable; actualsuccessstillneeds
-  phoneevidence. Prioruncheckedcallandterminalspinwerenotproof oflonghold.
-- Newexplicitfirmware-only idle-hold checkpoint8 skipsallnative/MSS/kernel
-  producers, retainsperimagenoncepool+digest withaddress-onlyasm, thenlocal
-  IRQmask/GOP/WFEforever. IDLE HOLD rowsincludeIDLE AUTO RESET0,UEFIWATCHDOG
-  rawstatus,MSS STARTED0. BothactualentryobjectsONLYpower_unknown_hold, whose
-  onlycallisownGOP; noreset/watchdog/providercall. 360frames/max736B.
-- Alsofixedprefix28timestampmodel: lastcopyhasanactualCPUcheckpointbefore
-  publication,so finalpublicationcanfollowcopyfinish; requirem.lastmatches
-  finalpublication. ThisisNOTidentifiedcauseofprefix14reset. Prefix1..27
-  equalityandallpreviousSTATUSchecksremain. Sourcehardwareproducersunchanged.
-- Newcase firmware-idle-hold-0001 actual3buildsPASS,driver440832B
-  3b872c43b6501a5ad222396ed09fb34698734aa8a2801b9d5c725f1023bc6156; image6074368B
-  a1f733eaaf667149b75d939c7861598c75980304558a8ff81eaf25ab416e098c. Original81filescodecequal.
-  Public11testsPASS14.984s/session43177,10141actualterminalcases(39oldprofiles
-  plusoneidleentry). Physicalidlecallbacktest10000pollswithNOresetdeclarations,
-  legacy1800testretained. Actualprojection41configsPASS,old12countsunchanged,
-  prefix1..28gain7m.lastfaultcases(each),prefix287559; idle21status/guardcases.
-  Publicfixtureindent/idle0fixturebounds/unusedfunctions/unembeddednoncepool
-  thenunembeddeddigest refusals preserved; allfixed,neverdevice-sent. One-use
-  verifierunchanged; bothpoolanddigestnowuniquelyembedded. Normalrootvalidator
-  ASTunchanged;sharedtransportchangedonlypre-nativeidle-statuscapture/order,
-  coveredbytests. Normaldefaultobjectidentityno longerclaimed: idlepolicyand
-  statusloggingwereexplicitlyrequested. Kernel/payload/CI42091724671unchanged.
-- CandidateUNSENT/nonceunused; freeze/offlinenext,thenone-timeFASTBOOTcheck;
-  ifabsentbutoriginalAndroidready,usealready-authorizednormalpower-manager
-  rebootbootloader afteridentitycheck. No manualjournalrepair/storageconsumer.
-- GoalACTIVE,execution2/5,fourincludingcurrent. Formal15:30Zreportdelivered,
-  next15:45Zwhileactive. RealWiFiscan/join/IP/DNS/data/stabilityunproven.
-  Preserveunownedremote-memory9linehunk7215a3786b3b9226aa4f839648bbecc80d9c575f3fd3fb00250481dd91786a01.
+- User requested no automatic Android return on inactivity. Source 95993eb was
+  committed, pushed and synced: physical default RAM idle recovery is zero,
+  idle_guard recovery branch compiled out, normal polls retained. Finite 1800s
+  lease remains only for the explicit QEMU lifecycle fixture. Native MSS had
+  already disabled the old lease, so it is not the proven prefix14 reset cause.
+- Ready callback records actual UEFI watchdog-disable status. Shared host
+  transport now requires actual status0 and idle0 before native start, otherwise
+  refuses without replay. Normal full-runtime root validator AST is unchanged;
+  normal root admission remains 38/40 REFUSED, with no journal repair.
+- firmware-idle-hold-0001 image a1f733ea... / driver 3b872c43... froze1968 inputs,
+  offline review passed, temporary boot sent ONCE15:39:04.531353Z. Actual logs
+  prove watchdog status0/idle0. Native ACK15:41:04.114179Z; host1577 TERMINAL0
+  ended15:41:04.139839Z. Photo9DED59AD plus human reply prove IDLE HOLD and all
+  first four rows0/0 (including MSS STARTED). Independent no-MSS/kernel entry
+  and nonce are SPENT; never replay. This is initial hold proof, not long idle.
+- Human then explicitly paused the stationary test, prioritized Wi-Fi, and
+  manually returned FASTBOOT. Local timer50222 stopped130; no spontaneous reset
+  reported for this idle trial. Long-window stability is UNVERIFIED/PAUSED BY
+  USER. Wi-Fi goal remains ACTIVE; do not pause the overall goal or resume the
+  idle test without steering. No post-native USB observer was started.
+- Current firmware-copy-prefix7-idle-policy-0001 retains source95993eb and its
+  idle policy. Midpoint7 narrows prior prefix14 spontaneous reset at unknown
+  stage; a briefly displayed prefix14 title remains possible. Previous physical
+  first-segment STATUS3/events6/6 is the known lower bound, not full auth4.
+  New driver690d4a97... / image27716654...; actual704 frames/max816B, entry only
+  startup/step/hold in both formats, no kernel runtime symbols, original81-file
+  codec equal. Frozen1978 inputs/offline PASS. Same exact source qualification:
+  11 public tests,10141 terminal entry cases and41 projection configs; selected
+  prefix7 has1631 prefix cases plus prior/saved failure cases. No repeat tests
+  needed without source changes. Prefix28 publication timing correction and
+  m.last coherence checks are diagnostic-only, not a prefix14 reset explanation.
+- Exact Polaris FASTBOOT was checked after human manual return. Host42128 is
+  RUNNING: once-only boot sent15:46:19.794660Z, payload staging in progress.
+  Next collect this exact handle and read its private boot result; require
+  watchdog0/idle0 before native command. Then request CURRENT phone title/rows.
+  Expected COPY PREFIX STOP: count7/7, pages000000DC/segments7, prior length
+  733432/error0, modem phase2/segment6/submitted7/26events before seventh RMB.
+  Do not infer physical copy completion from host ACK or reuse a spent image.
+- Kernel/payload and CI42091724671 unchanged; no new kernel CI required for
+  loader-only changes. No flash, root-reader, XNU, userdata/Windows write,
+  observer or manual fsck/journal replay. Preserve unowned9-line remote-memory
+  hunk7215a3786b3b9226aa4f839648bbecc80d9c575f3fd3fb00250481dd91786a01.
+- Execution2/5; four steps remain including current. Formal15:45Z report sent;
+  next16:00Z while active. Scan/join/IP/DNS/real data/stability still unproven.
 
-### Current blocking handoff — 2026-11-07 Melbourne: prefix14 physical screen result required
+### Historical blocked handoff — resolved by reported prefix14 reset and new idle request
 
 - Freshcurrenttrial dependency persistedTHREEgoalturns: actualprefix14trial
   ACK14:19:59Z,14:22:04Z and14:23:17.430318Zrevalidations. No newcurrenttitle/
