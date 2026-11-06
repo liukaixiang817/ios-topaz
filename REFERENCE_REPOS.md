@@ -14,6 +14,29 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+## Auth seal span equivalence after a returned-step timeout (0189, 2026-11-06)
+
+Physical15DBE1CF identifies metadata assignment0/phase1, transaction error3
+PWMT_TIME, step2/SMC, events2/round1 and returned event flags101, with saved
+SMC x0/x1 zero. This is not a completed permission transaction: post-return
+invalidation/equality did not finish. Previous TX AGE displayed t.last, the
+last successful clock check, not the failing event.after. New TX CHECK AGE
+uses that recorded returned event timestamp, preserving underflow indication.
+
+The auth seal previously iterated every byte of the241664B state and tested
+five descriptor/tail exclusions per byte. It now traverses the exact control
+spans, subtracts the same permitted output interval, excludes the same rmtfs
+field, and feeds the same SHA256 in byte order with direct complete blocks.
+No block crosses a readable span.240 differential cases match the old function
+with all five descriptor granules PROT_NONE, including zero/wrapping/disjoint/
+cross-boundary outputs and included/excluded mutations. Host100-call timing
+0.241264s vs0.076768s (3.143x) is only host evidence, not phone performance.
+All authentication checks/order/100ms bound/4round bound and private owner
+retention remain unchanged.25 actual full auth scenarios/3714654checks and
+both full software parents pass. This is a concrete CPU-cost reduction;
+remaining actual secure-call duration and real auth success require a trial.
+No foreign secure ABI, reference firmware or guessed permissions were imported.
+
 ## Auth assignment control evidence after native MBA readiness (0189, 2026-11-06)
 
 Physical992D5165 from restart-page-map-0001 reaches PWNS_AUTH19 with boot0,

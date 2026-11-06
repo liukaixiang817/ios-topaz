@@ -65,19 +65,35 @@ static inline int pmsn_live(struct pmsn_state*s)
     return b->owner==s->owner&&b->power==s->power&&b->clocks==s->clocks&&b->opening==s->opening&&
         b->complete==1&&o->opening==s->opening&&(o->effects&(PMSC_POWER|PMSC_REMOTE))==(PMSC_POWER|PMSC_REMOTE)&&pmbn_live(b);
 }
+/* Feed exactly the selected readable range, preserving SHA byte order while
+ * processing full blocks directly. No read crosses a range boundary. */
+static inline void pmsn_hash_bytes(struct pwfi_sha256*h,const uint8_t*p,size_t bytes)
+{
+    while(bytes&&h->used){pwfi_byte(h,*p++);bytes--;}
+    while(bytes>=64){pwfi_transform(h,p);h->bytes+=64;p+=64;bytes-=64;}
+    while(bytes){pwfi_byte(h,*p++);bytes--;}
+}
+static inline void pmsn_hash_range(struct pwfi_sha256*h,uintptr_t first,uintptr_t last,uintptr_t a,uintptr_t b)
+{
+    if(a<b&&a<last&&first<b){
+        uintptr_t left=a>first?a:first,right=b<last?b:last;
+        pmsn_hash_bytes(h,(const void*)first,left-first);
+        pmsn_hash_bytes(h,(const void*)right,last-right);
+    }else pmsn_hash_bytes(h,(const void*)first,last-first);
+}
 /* Never touch any descriptor or its protection-granule tail, even after a
- * completed transition. This is also the only valid raw-state seal/export. */
+ * completed transition. Walk the same control spans directly instead of
+ * checking every excluded byte against all five descriptor intervals. */
 static inline void pmsn_seal(const struct pmsn_state*s,const void*out,size_t bytes,uint8_t digest[32])
 {
-    struct pwfi_sha256 hash;pwfi_init(&hash);uintptr_t a=(uintptr_t)out,b=a+bytes;
-    for(size_t n=0;n<sizeof(*s);n++){
-        uintptr_t p=(uintptr_t)s+n;if((p>=a&&p<b)||(n>=offsetof(struct pmsn_state,rmtfs)&&n<offsetof(struct pmsn_state,rmtfs)+8))continue;unsigned skip=0;
-        for(unsigned k=0;k<PMSN_ASSIGNMENTS;k++){
-            uintptr_t start=(uintptr_t)&s->assignment[k].page,end=(uintptr_t)(&s->assignment[k]+1);
-            if(p>=start&&p<end){skip=1;break;}
-        }
-        if(!skip)pwfi_byte(&hash,*(const uint8_t*)p);
-    }pwfi_final(&hash,digest);
+    struct pwfi_sha256 hash;pwfi_init(&hash);uintptr_t a=(uintptr_t)out,b=a+bytes,cursor=(uintptr_t)s;
+    for(unsigned k=0;k<PMSN_ASSIGNMENTS;k++){
+        pmsn_hash_range(&hash,cursor,(uintptr_t)&s->assignment[k].page,a,b);
+        cursor=(uintptr_t)(&s->assignment[k]+1);
+    }
+    pmsn_hash_range(&hash,cursor,(uintptr_t)&s->rmtfs,a,b);
+    pmsn_hash_range(&hash,(uintptr_t)&s->rmtfs+sizeof(s->rmtfs),(uintptr_t)s+sizeof(*s),a,b);
+    pwfi_final(&hash,digest);
 }
 static inline int pmsn_bound(struct pmsn_state*s)
 {

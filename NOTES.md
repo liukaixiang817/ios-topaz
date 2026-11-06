@@ -54,6 +54,40 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: auth returned-step timeout; equivalent seal spans verified
+
+- Human15DBE1CF resolves the diagnostic wait: AUTH HOLD2/phase1, assignment0,
+  pending1, transaction error3 PWMT_TIME/step2 SMC, events2/round1/pending2,
+  returned eventflags101, saved SMC x0/x1 zero. No completed permission grant:
+  descriptor post-return invalidation/equality still incomplete. TX AGE was
+  t.last (last successful time), not failing event.after; do not derive the
+  failed interval from it. New TX CHECK AGE uses recorded event.after.
+- Auth seal optimization changes traversal, not data or permission policy:
+  exact included control spans in241664B state, same output subtraction and
+  rmtfs exclusion, same SHA byte order, direct complete64B blocks only inside
+  each span. Descriptor pages/tails remain unread. Other auth code, evaluation
+  order,100ms transaction/4round limits, state/owner guards unchanged. No retry.
+- PASS240 old-reference differential cases with all5descriptor granules
+  PROT_NONE, boundary/wrapping/disjoint outputs and control/excluded mutations.
+  Host100calls original0.241264s vs0.076768s,3.143x; NOT phone timing. Full
+  actual native auth25scenarios/3714654checks including4round continuations,
+  corruption/CPU/cache/SMC/IO/copy faults and original >100ms rejection PASS.
+  Both full startup parents normal2889178/gap2889181 and1602 actual display
+  cases PASS. Initial independent-suite link omitted power-retirement peer;
+  commands corrected, failed logs retained, both then passed. All tests ended.
+- EFI/MachO/image/offline root admission PASS,857functions/max832B stack;
+  original81innerfiles roundtrip unchanged. Driver841216B SHA
+  3416ff80808666a9e03126ead8a06ae1fd305349e9a48329717dd3b2e1965724;
+  image6244352B SHAa4437b331558fda11f6e7dc0f7e02646ee72b1a7d95bbcfe5a28220c49e02910.
+- New auth-seal-spans-0001 query confirmed FASTBOOT08:55:09.779323Z. Fresh
+  readonly audit12021 started08:55:25.548170Z and is running; native not sent.
+  Next independent40check review, source push/freeze/offline check, one trial.
+  Kernel CI42091724671/payload unchanged; no partition writes or USB observer.
+- Goal ACTIVE execution2/5,current plus3remaining. Actual timing/auth/modem/
+  scan/Cyberpunk AU join/IP/DNS/data/stability unproven. Formal08:45Z delivered,
+  next09:00Z. Unowned9line remote-memory hunk preserved/excluded. Prior screen
+  dependency resolved; no old blocked count carries forward.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: auth control diagnostic sent once; exact failure evidence pending
 
 - Source8ee53fb pushed/synchronized. Fresh auth-assignment-diagnostic-0001

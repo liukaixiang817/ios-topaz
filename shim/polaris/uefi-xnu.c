@@ -1419,14 +1419,15 @@ static void wifi_native_startup_gop_evidence(void)
         const struct pmsn_assignment*q=&a->assignment[a->assignments];
         const struct pwmt_transaction*t=&q->transaction;
         unsigned valid=t->events>0&&t->events<=PWMT_EVENTS,k=valid?t->events-1:0;
-        uint64_t age=t->last>=t->opening?t->last-t->opening:UINT64_MAX;
+        uint64_t check=valid&&t->event[k].returned?t->event[k].after:t->last;
+        uint64_t age=check>=t->opening?check-t->opening:UINT64_MAX;
         pwtg_line(r,0,"AUTH HOLD",a->error,a->phase);
         pwtg_line(r,1,"AUTH INDEX PEND",a->assignments,a->pending);
         pwtg_line(r,2,"ASSIGN ERR FLAGS",q->error,q->attempted|(q->unknown<<8)|(q->complete<<16));
         pwtg_line(r,3,"TX ERR STEP",t->error,t->step);
         pwtg_line(r,4,"TX EVENTS ROUNDS",t->events,t->rounds);
         pwtg_line(r,5,"TX PEND FLAGS",t->pending,t->started|(t->unknown<<8)|(t->complete<<16));
-        pwtg_line(r,6,"TX AGE",(uint32_t)(age>>32),(uint32_t)age);
+        pwtg_line(r,6,"TX CHECK AGE",(uint32_t)(age>>32),(uint32_t)age);
         for(unsigned n=0;n<2;n++)pwtg_line(r,7+n,n?"SOURCE1 STAGE":"SOURCE0 STAGE",
             q->source[n].pages|(q->source[n].hash_count<<16),q->source[n].complete|(q->source[n].hash_failed<<8));
         uint64_t read=valid?q->descriptor_AT[k].read_par:0,write=valid?q->descriptor_AT[k].write_par:0;
