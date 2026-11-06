@@ -20,9 +20,11 @@ static uint8_t*image_heap,*heap_mapping;
 static struct pmli_ledger*ledger;
 static unsigned image_fault,image_trigger,image_ats;
 static unsigned runtime_image;
+static uint64_t image_heap_attributes=8;
 static void image_extra_map(struct pwea_map*m)
 {
-    if(!runtime_image){emit_descriptor(m->data+360,4,(uintptr_t)image_heap,0x100000);m->map.bytes=400;}
+    if(!runtime_image){emit_descriptor(m->data+360,4,(uintptr_t)image_heap,0x100000);
+        ((struct efi_memory*)(m->data+360))->attributes=image_heap_attributes;m->map.bytes=400;}
     else{
         emit_descriptor(m->data+360,4,(uintptr_t)image_heap,0x80000);
         emit_descriptor(m->data+400,5,(uintptr_t)image_heap+0x80000,4096);
@@ -97,7 +99,22 @@ int PMLI_TEST_ENTRY(int argc,char**argv)
     CHECK(pmli_current(ledger,owner));ledger->pass[1].image[0].loaded.raw[0]^=1;CHECK(!pmli_current(ledger,owner));
     unsigned native_count=image_ats;CHECK(native_count==26);CHECK(!image_run());CHECK(pmsc_close_unused(owner));
     runtime_image=0;image_setup();CHECK(image_run()&&pmli_current(ledger,owner));
+    CHECK(pwmc_zero(&ledger->failure,sizeof(ledger->failure)));
     CHECK(pmsc_close_unused(owner)&&!pmli_current(ledger,owner));
+    /* Record admission failures without translating or reading the rejected
+     * heap node. Full producer hashes bind each synthetic saved-map variant. */
+    const uint64_t attributes[]={0,1,2,4,15};
+    for(unsigned n=0;n<sizeof(attributes)/sizeof(attributes[0]);n++){
+        image_heap_attributes=attributes[n];image_setup();
+        CHECK(!image_run()&&ledger->error==2&&ledger->failure.reason==5);
+        CHECK(image_ats==1&&!ledger->pass[0].protocol[0].issued&&!ledger->pass[0].protocol[0].returned);
+        CHECK(ledger->failure.address==(uintptr_t)image_heap+0x100&&ledger->failure.bytes==72);
+        CHECK(ledger->failure.record_offset==offsetof(struct pmli_ledger,pass[0].protocol[0]));
+        CHECK(ledger->failure.type==4&&ledger->failure.matches==1&&ledger->failure.attributes==attributes[n]);
+        CHECK(ledger->failure.base==(uintptr_t)image_heap&&ledger->failure.pages==256);
+        CHECK(ledger->failure.page==((uintptr_t)image_heap&~UINT64_C(4095)));
+    }
+    image_heap_attributes=8;
     for(unsigned fault=1;fault<=7;fault++)for(unsigned at=1;at<=native_count;at++){
         image_setup();image_fault=fault;image_trigger=at;
         CHECK(!image_run()&&ledger->unknown&&!ledger->complete&&image_ats==at);

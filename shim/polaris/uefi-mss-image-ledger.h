@@ -29,9 +29,16 @@ struct pmli_pass {
     struct pmli_read protocol[PMLI_PROTOCOLS];struct pmli_image image[PMLI_IMAGES];
     uint32_t protocols,images,selected,own_matches,core_matches,complete;
 };
+/* Failure evidence describes the requested read and the saved map only.
+ * It never dereferences a rejected target or relaxes admission. */
+struct pmli_failure {
+    uint64_t address,bytes,record_offset,page,base,pages,attributes;
+    uint32_t reason,type,matches,reserved;
+};
 struct pmli_ledger {
     uint64_t owner,opening,core,key,locate;uint8_t lock[24],head[16];
     struct pmli_pass pass[2];
+    struct pmli_failure failure;
     uint32_t attempted,unknown,error,complete;uint8_t digest[32];
 };
 static inline int pmli_fail(struct pmli_ledger*r,unsigned e)
@@ -45,30 +52,47 @@ static inline int pmli_live(struct pmli_ledger*r)
         r->key==pwfi_le((const void*)(uintptr_t)(r->core+PMLI_HANDLE_KEY),8)&&
         r->locate==pwfi_le((const void*)(uintptr_t)(r->core+PMLI_LOCATE_KEY),8);
 }
-static inline int pmli_range(const struct pweh_result*h,uint64_t at,uint64_t bytes,unsigned code,unsigned data)
+static inline int pmli_range_checked(const struct pweh_result*h,uint64_t at,uint64_t bytes,unsigned code,unsigned data,
+    struct pmli_failure*f)
 {
     if(!at||!bytes||at>UINT64_MAX-bytes||at+bytes>UINT64_MAX-4095)return 0;
     for(uint64_t page=at&~UINT64_C(4095);page<at+bytes;page+=4096){
-        unsigned found=0;
+        unsigned found=0,matches=0;const struct efi_memory*first=0;
         for(uint64_t off=0;off<h->map.map.bytes;off+=h->map.map.stride){
             const struct efi_memory*d=(const void*)(h->map.data+off);
+            if(page>=d->physical&&page-d->physical<d->pages*4096){matches++;if(!first)first=d;}
             if(page>=d->physical&&page-d->physical<d->pages*4096&&(d->type==code||d->type==data)&&
                (d->attributes>>63)==(d->type==5||d->type==6)&&(d->attributes&15)==8)found++;
         }
-        if(found!=1)return 0;
+        if(found!=1){
+            if(f){f->page=page;f->matches=matches;
+                if(first){f->type=first->type;f->base=first->physical;f->pages=first->pages;f->attributes=first->attributes;}}
+            return 0;
+        }
     }
     return 1;
+}
+static inline int pmli_range(const struct pweh_result*h,uint64_t at,uint64_t bytes,unsigned code,unsigned data)
+{return pmli_range_checked(h,at,bytes,code,data,0);}
+static inline int pmli_read_error(struct pmli_ledger*r,const struct pmli_read*q,uint64_t at,unsigned bytes,unsigned reason,unsigned error)
+{
+    if(!r->failure.reason){r->failure.reason=reason;r->failure.address=at;r->failure.bytes=bytes;
+        r->failure.record_offset=(uintptr_t)q-(uintptr_t)r;}
+    return pmli_fail(r,error);
 }
 static inline int pmli_read_ram(struct pmli_ledger*r,struct pmli_read*q,uint64_t at,unsigned bytes,unsigned heap)
 {
     struct pmsc_owner*o=(void*)(uintptr_t)r->owner;
     const struct pweh_result*h=(const void*)(uintptr_t)o->retained;const struct pwea_native*e=h->input.early;
-    if(!pwmc_zero(q,sizeof(*q))||!bytes||bytes>sizeof(q->raw)||(at&7)||!pmli_live(r)||
-       !pmli_range(h,at,bytes,heap?4:3,4)||
-       !pwea_disjoint(at,bytes,(uintptr_t)r,sizeof(*r))||!pwea_disjoint(at,bytes,(uintptr_t)o,sizeof(*o)))
-        return pmli_fail(r,2);
-    if(heap&&(!pwea_disjoint(at,bytes,r->core,PGCI_IMAGE_BYTES)||
-       !pwea_disjoint(at,bytes,(uintptr_t)e->image.base,e->image.bytes)))return pmli_fail(r,2);
+    if(!pwmc_zero(q,sizeof(*q)))return pmli_read_error(r,q,at,bytes,1,2);
+    if(!bytes||bytes>sizeof(q->raw))return pmli_read_error(r,q,at,bytes,2,2);
+    if(at&7)return pmli_read_error(r,q,at,bytes,3,2);
+    if(!pmli_live(r))return pmli_read_error(r,q,at,bytes,4,2);
+    if(!pmli_range_checked(h,at,bytes,heap?4:3,4,&r->failure))return pmli_read_error(r,q,at,bytes,5,2);
+    if(!pwea_disjoint(at,bytes,(uintptr_t)r,sizeof(*r)))return pmli_read_error(r,q,at,bytes,6,2);
+    if(!pwea_disjoint(at,bytes,(uintptr_t)o,sizeof(*o)))return pmli_read_error(r,q,at,bytes,7,2);
+    if(heap&&!pwea_disjoint(at,bytes,r->core,PGCI_IMAGE_BYTES))return pmli_read_error(r,q,at,bytes,8,2);
+    if(heap&&!pwea_disjoint(at,bytes,(uintptr_t)e->image.base,e->image.bytes))return pmli_read_error(r,q,at,bytes,9,2);
     q->address=at;q->issued=1;
     for(uint64_t page=at&~UINT64_C(4095);page<at+bytes;page+=4096){
         if(q->pages>=2)return pmli_fail(r,2);struct pwmc_translation*t=&q->AT[q->pages++];t->page=page;

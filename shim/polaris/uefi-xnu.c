@@ -1144,6 +1144,18 @@ static void wifi_native_startup_gop_evidence(void)
     pwtg_line(r,13,"WLAN SMMU ERR",s->wlan.error,s->smmu.error);
     pwtg_line(r,14,"CE WMI ERR",s->ce.error,s->wmi.error);
     pwtg_line(r,15,"HTT NONCE ERR",s->htt.error,s->nonce.error);
+    if(s->images.error==2){
+        const struct pmli_failure*f=&s->images.failure;
+        pwtg_line(r,7,"IMAGE WHY BYTES",f->reason,(uint32_t)f->bytes);
+        pwtg_line(r,8,"IMAGE READ ADDR",(uint32_t)(f->address>>32),(uint32_t)f->address);
+        pwtg_line(r,9,"IMAGE READ SLOT",(uint32_t)(f->record_offset>>32),(uint32_t)f->record_offset);
+        pwtg_line(r,10,"MAP TYPE MATCH",f->type,f->matches);
+        pwtg_line(r,11,"MAP ATTR",(uint32_t)(f->attributes>>32),(uint32_t)f->attributes);
+        pwtg_line(r,12,"MAP BASE",(uint32_t)(f->base>>32),(uint32_t)f->base);
+        pwtg_line(r,13,"MAP PAGES",(uint32_t)(f->pages>>32),(uint32_t)f->pages);
+        pwtg_line(r,14,"IMAGE COUNTS",s->images.pass[0].protocols,s->images.pass[0].images);
+        pwtg_line(r,15,"IMAGE PASS2",s->images.pass[1].protocols,s->images.pass[1].images);
+    }
     (void)pwtg_draw(r);early_wifi_gop_raw();
 }
 #endif

@@ -54,6 +54,42 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: physical MBA/CPU admission passed; diagnose image-ledger read rejection
+
+- New photo for mba-window-0002/f5b509f5... shows NATIVE HOLD5/4,
+  PARENT PH FLAGS1/0x101, OWNER ERR PHASE0/2, OWNER HELD MASK1/1,
+  OWNER CHECKS3/0x19 and IMAGES MAP ERR2/0. Thus complete MBA caller and
+  continuous CPU admission passed physically. Parent first producer(IMAGES)
+  failed pmli_read_ram admission; no owner error, new power/radio or kernel
+  execution proven. Error2 combines requested-span/type/cache/exclusion checks;
+  photo does not identify failed address or predicate. Do not infer bad RAM
+  or change cache admission without that evidence.
+- Add failure-only pmli_failure record: reason/request address/length/record
+  offset and saved-map first rejected page/type/matches/base/pages/attributes.
+  Split existing short-circuit read predicates in the same order, retain all
+  acceptance tests. pmli_range wrapper preserves all external users; optional
+  diagnostics inspect only the already saved map. Never dereference rejected
+  target, issue extra AT, call firmware, free or retry. Ledger grows72B, so
+  complete parent layout is rebuilt. Native HOLD replaces lower rows with
+  IMAGE WHY BYTES/READ ADDR/READ SLOT/MAP TYPE MATCH/ATTR/BASE/PAGES/counts
+  when image error2; source/CPU_ON guards remain unchanged.
+- Actual ledger238431 assertions PASS ASan/UBSan, including five synthetic
+  cache-attribute refusals before target AT/read and exact failure evidence.
+ 132 extracted actual startup/image diagnostic cases PASS. Full rebuilt normal
+  parent/runtime/terminal2889178 PASS SOFTWARE hardware/firmware. Full EFI/
+  arm64 compile831 functions,max stack816B PASS; original codec/81 files PASS.
+  New driver809984B SHA468629dd90b514caffa7c12ccd61f76f62f8ab6e898ef83ecfe65d4d9935d2bf;
+  image6230016B SHAc4a7a280c03fed149789b520ccffb996d5c1ae76c1934ee90b947c92711b639c.
+- Private evidence: image-read-admission-0001. Kernel CI42091724671/payload
+  unchanged. All build/test jobs ended; FASTBOOT polaris confirmed02:28:54Z,
+  fresh current readonly audit37122 running. Require current40-check review/
+  frozen admission before sending this new one-use image. Candidate not sent.
+- User explicitly set goal ACTIVE during this turn; actual Wi-Fi remains the
+  objective. Execution2/5/current plus3 subsequent steps; last step report
+ 02:28Z. Next exact physical read rejection, then remaining native startup,
+  scan/Cyberpunk AU join/IP/DNS/data/stability. Preserve unowned remote-memory
+  nine-line hunk and keep private device artifacts out of git.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: final bounded-window candidate sent once; native-start ACK
 
 - Final source7252513 pushed/synchronized (includes efcf353 timing repair).
