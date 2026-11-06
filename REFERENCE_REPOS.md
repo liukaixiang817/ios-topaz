@@ -14,6 +14,22 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+## Own MSS descriptor-page allocation (0189, 2026-11-06)
+
+Physical delta shows one conventional page at0x17017b000 becoming type4 outside
+our below4GiB metadata claim. Exact original DxeCore SHA61236b079f66c1340bfb3e9e15e055ecfe9bdfa2e7eabed157832147bc8f3609
+has free-entry replenishment b3a8..b3b8: type4/pages1/alignment4096/guard0 to
+c16c, followed by64 entries. Compare primary
+https://github.com/tianocore/edk2/blob/edk2-stable202411/MdeModulePkg/Core/Dxe/Mem/Page.c
+AllocateMemoryMapEntry/CoreFreeMemoryMapStack (retained source SHA
+d3ae3b2141f3459520b71f02bfd66dda6748cd297d1f186dee29c59b4992486b).
+This supports one firmware-owned auxiliary page; it grants no caller ownership
+or radio permission. MSS-only policy accepts at most4096 type7->4 bytes above
+4GiB outside own DT/image/bank/retained/claim exclusions, with all remaining
+map bytes and coverage exact. Early allocation policy unchanged. No HackiOS
+radio/allocator or foreign hardware mapping is ported. Private source/photo/
+software evidence: mss-map-heap-0001; actual fix still requires temporary boot.
+
 ## Own AOP QMP connection (0189, 2026-11-06)
 
 The own msm_qmp.c blob d6e41ae5d88db0f91e1c6fd13f1005dbb5e56481

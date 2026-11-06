@@ -10,10 +10,10 @@ struct pmmd_difference {
 };
 /* Maps are completely validated before any descriptor walk. Reproduce the
  * existing comparison in both directions and retain its first mismatch. */
-static inline int pmmd_direction(const struct pwea_map*a,const struct pwea_map*b,
+static inline int pmmd_direction(const struct pmme_memory*r,unsigned kind,const struct pwea_map*a,const struct pwea_map*b,
     uint64_t base,uint64_t bytes,unsigned direction,struct pmmd_difference*out)
 {
-    unsigned stride=(unsigned)a->map.stride;
+    unsigned stride=(unsigned)a->map.stride;uint64_t heap_bytes=0;
     for(uint64_t at=0;at<a->map.bytes;at+=stride){
         const struct efi_memory*d=(const void*)(a->data+at);uint64_t cursor=d->physical,end=cursor+d->pages*4096;
         while(cursor<end){
@@ -22,7 +22,10 @@ static inline int pmmd_direction(const struct pwea_map*a,const struct pwea_map*b
                 const struct efi_memory*e=(const void*)(b->data+bt);uint64_t stop=e->physical+e->pages*4096;
                 if(e->physical>cursor||cursor>=stop)continue;found++;
                 unsigned inside=cursor>=base&&cursor<base+bytes;
-                if(!pwmc_descriptor_equal(a->data+at,b->data+bt,stride,direction?2:7,direction?7:2,inside)){
+                if(stop<next)next=stop;
+                if(cursor<base&&base<next)next=base;
+                if(cursor<base+bytes&&base+bytes<next)next=base+bytes;
+                if(!pmme_segment_equal(r,kind,a->data+at,b->data+bt,stride,cursor,next,direction,&heap_bytes)){
                     out->reason=6;out->direction=direction;out->address=cursor;
                     out->old_index=(uint32_t)(direction?bt:at)/stride;out->new_index=(uint32_t)(direction?at:bt)/stride;
                     const uint8_t*old=direction?b->data+bt:a->data+at;
@@ -62,7 +65,7 @@ static inline void pmmd_capture(const struct pmme_memory*r,struct pmmd_differenc
        !polaris_efi_memory_check(b->data,b->map.bytes,PGCD_MAP_CAP,b->map.stride,&checked)){out->reason=3;return;}
     if(!polaris_efi_range_owned(a->data,a->map.bytes,a->map.stride,base,bytes,7)){out->reason=4;return;}
     if(!polaris_efi_range_owned(b->data,b->map.bytes,b->map.stride,base,bytes,2)){out->reason=5;return;}
-    if(!pmmd_direction(a,b,base,bytes,0,out)||!pmmd_direction(b,a,base,bytes,1,out))return;
+    if(!pmmd_direction(r,kind,a,b,base,bytes,0,out)||!pmmd_direction(r,kind,b,a,base,bytes,1,out))return;
     for(unsigned k=0;k<r->command.index;k++)
         if(r->claim[k].retained!=1||!polaris_efi_range_owned(b->data,b->map.bytes,b->map.stride,r->claim[k].requested,r->claim[k].bytes,2)){
             out->reason=8;out->old_index=k;return;

@@ -54,6 +54,50 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: observed descriptor-page allocation corrected; fresh trial preparing
+
+- Source87da3e0 pushed/synchronized. Its mss-map-diagnostic-0001 audit81345
+  ended0, independent40 checks PASS; FASTBOOT04:42:05.555318Z. Frozen475 files,
+  offline one-use admission PASS. Image48586d1c56ce0ec1011c0ae0d433b3608e7bab89ba8130a4ab2b73577c04e079
+  sent ONCE04:42:36.508962Z, fastboot0. Host96509 ended1 at04:46:06.878817Z:
+  UEFI service unavailable after210s; no payload/validation/native command.
+  Pool SPENT; never replay. New user photoD9E95EB8 resolves the failure:
+  MSS delta6/direction0, call7/kind2, byte0, type7->4 at0x17017b000 (one
+  before-page); metadata claim0xfff95000/0x3000. This is an unrelated map type
+  change, not corruption of the requested metadata and not a Wi-Fi result.
+- Exact original DxeCore SHA61236b079f66c1340bfb3e9e15e055ecfe9bdfa2e7eabed157832147bc8f3609
+  disassembly b3a8..b3b8 passes type4/pages1/alignment4096/guard0 to c16c when
+  free map-entry list1bcc0 is empty, then populates64 entries. This matches
+  primary EDK2 AllocateMemoryMapEntry/CoreFreeMemoryMapStack. Photo and code
+  are consistent with descriptor replenishment; live list pointers were NOT
+  read. Exact instruction proof and source retained privately in new case.
+- Correct MSS-only delta policy: permit at most one new BootServicesData page
+  above4GiB per allocation, outside own DT/image/bank/all retained/current
+  claim exclusions. Preserve complete bidirectional interval coverage, every
+  other type, padding/VA/attribute/extension byte and exact type7->2 requested
+  ownership. No ownership/access/free/VMID permission for firmware page; no
+  extra service, retry, timer, voltage, radio or partition change. Early Wi-Fi
+  allocator and unowned remote-memory hunk unchanged. Diagnostic uses the same
+  segment predicate; independent Python codec partitions both maps separately.
+- Sanitizer81 actual producer scenarios/4956 checks PASS, including merged
+  descriptors at each allocation, two pages, wrong type, reversed transition,
+  attributes/VA/padding/extensions, below4GiB, balanced second change and owner
+  exclusions. Existing actual MSS7261 checks, diagnostic250/39, independent
+  new codec43 and existing codec33 layout/172 corruptions PASS. Full composed
+ 2889178 checks PASS; its first attempt omitted WPA test-vector environment,
+  corrected and rerun (failed log preserved). Software evidence only.
+- New mss-map-heap-0001 full EFI/arm64841 functions/max816B and original
+  codec81 unchanged files PASS. Driver821248B SHA f8307a358d2cdcce65f6701283705cb921140b345e99059923bb73d57dde1bef.
+  Image6234112B SHA2bd0e59bfc5f10a837f7c3f16e0522ef2735439517ad99488aa763838eedd027.
+  Compiled input change exactly MSS policy, diagnostic header and MSS codec;
+  input set/ABI unchanged. Kernel CI42091724671/payload unchanged.
+- Expected FASTBOOT04:56:32.227900Z; fresh readonly audit host35656 running.
+  Next40-check review/freeze/admission and single temporary boot. New candidate
+  not yet sent. Actual AOP ON completed earlier; supply6/MSS/scan/join/IP/DNS/
+  data/stability unfinished. Goal ACTIVE, execution2/5/current plus3 remaining.
+  Last15min04:48Z,next05:03Z. No continuous USB observer. Preserve existing
+  Android/Windows/backups and keep firmware/photos/dumps/serials private.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: early MSS final-map rejection identified; exact difference diagnostic built
 
 - New physical photo3C2FBC30 supersedes the previous USB/cable uncertainty:

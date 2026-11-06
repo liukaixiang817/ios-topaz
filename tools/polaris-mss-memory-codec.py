@@ -49,6 +49,33 @@ def stable(a, b, limit=38400000):
             0 <= b['cpu']['ticks']-a['cpu']['ticks'] <= limit)
 
 
+def allocation_delta(before, after, base, size, exclusions):
+    """Independently partition both maps, including one firmware-owned page.
+
+    Own DxeCore replenishes map entries with type4/pages1. This MSS profile
+    permits at most4096 new type4 bytes above4GiB, outside all protected ranges.
+    This does not confer ownership of that page on the loader or modem.
+    """
+    if not early.owned(before,base,size,7) or not early.owned(after,base,size,2):return False
+    boundaries = sorted({base,base+size,*[x for d in before+after for x in d[:2]]})
+    heap_bytes = 0
+    for start,end in zip(boundaries,boundaries[1:]):
+        a = next((d for d in before if d[0] <= start < d[1]),None)
+        b = next((d for d in after if d[0] <= start < d[1]),None)
+        if a is None or b is None:
+            if a != b:return False
+            continue
+        if base <= start < base+size:
+            if (a[2],b[2]) != (7,2):return False
+        elif a[2] != b[2]:
+            heap_bytes += end-start
+            if ((a[2],b[2]) != (7,4) or start < 1<<32 or heap_bytes > 4096 or
+                not a[3]&8 or a[3]>>63 or int.from_bytes(a[4][16:24],'little') or
+                any(not disjoint(start,end-start,p,n) for p,n in exclusions)):return False
+        if a[4][4:8]+a[4][16:24]+a[4][32:] != b[4][4:8]+b[4][16:24]+b[4][32:]:return False
+    return True
+
+
 def decode(raw, early_raw, retained_raw=None):
     if len(raw) != NATIVE.size:
         raise ValueError(f'MSS_MEMORY_RAW_V1 needs exactly {NATIVE.size} bytes')
@@ -91,7 +118,7 @@ def decode(raw, early_raw, retained_raw=None):
         for n,q in enumerate(m['claim']):
             a,b = m['map'][n]['map'],m['map'][n+1]['map']
             require(a['key'] != b['key'] and a['stride'] == b['stride'] and
-                    early.allocation_delta(maps[n],maps[n+1],q['requested'],q['bytes']), f'claim {n} whole delta')
+                    allocation_delta(maps[n],maps[n+1],q['requested'],q['bytes'],exclusions), f'claim {n} whole delta')
             require(all(early.owned(ds,q['requested'],q['bytes'],2) for ds in maps[n+1:]), f'claim {n} retained')
     except ValueError as error: issues.append(str(error))
     opening = r['call'][0]['before']

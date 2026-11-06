@@ -65,6 +65,54 @@ static inline int pmme_select(const struct pmme_memory*r,const struct pwea_map*m
         }
     }if(!best)return 0;*out=best;return 1;
 }
+/* Original DxeCore b3a8..b3b8 replenishes its descriptor list with ONE
+ * BootServicesData page (type4/pages1/alignment4096), via c16c. This may occur
+ * inside AllocatePages. Account for that firmware-owned page separately from
+ * our type2 claim; never expose, map, write or free it. This observed profile
+ * permits it only above4GiB and outside every caller/DT/retained exclusion.
+ * All other descriptor bytes and all other transitions remain exact. */
+static inline int pmme_segment_equal(const struct pmme_memory*r,unsigned kind,
+    const uint8_t*a,const uint8_t*b,unsigned stride,uint64_t start,uint64_t end,
+    unsigned reverse,uint64_t*heap_bytes)
+{
+    uint64_t base=r->claim[kind].requested,bytes=pmme_bytes(r,kind);
+    unsigned inside=start>=base&&start<base+bytes;
+    if(pwmc_descriptor_equal(a,b,stride,reverse?2:7,reverse?7:2,inside))return 1;
+    const struct efi_memory*before=(const void*)(reverse?b:a);
+    if(inside||start<UINT64_C(0x100000000)||end<=start||end-start>4096||
+       *heap_bytes>4096-(end-start)||before->virtual_address||
+       !(before->attributes&8)||before->attributes>>63||
+       !pwmc_descriptor_equal(a,b,stride,reverse?4:7,reverse?7:4,1))return 0;
+    for(unsigned k=0;k<pmme_exclusion_count(kind+1);k++){
+        struct pwmc_range x=pmme_exclusion(r,k);
+        if(!pwea_disjoint(start,end-start,x.base,x.bytes))return 0;
+    }
+    *heap_bytes+=end-start;return 1;
+}
+static inline int pmme_delta_direction(const struct pmme_memory*r,unsigned kind,
+    const struct pwea_map*a,const struct pwea_map*b,unsigned reverse)
+{
+    uint64_t base=r->claim[kind].requested,bytes=pmme_bytes(r,kind),heap_bytes=0;
+    unsigned stride=(unsigned)a->map.stride;
+    for(uint64_t at=0;at<a->map.bytes;at+=stride){
+        const struct efi_memory*d=(const void*)(a->data+at);
+        uint64_t cursor=d->physical,end=cursor+d->pages*4096;
+        while(cursor<end){
+            unsigned found=0;uint64_t next=end;
+            for(uint64_t bt=0;bt<b->map.bytes;bt+=stride){
+                const struct efi_memory*e=(const void*)(b->data+bt);
+                uint64_t stop=e->physical+e->pages*4096;
+                if(e->physical>cursor||cursor>=stop)continue;found++;
+                if(stop<next)next=stop;
+                if(cursor<base&&base<next)next=base;
+                if(cursor<base+bytes&&base+bytes<next)next=base+bytes;
+                if(!pmme_segment_equal(r,kind,a->data+at,b->data+bt,stride,cursor,next,reverse,&heap_bytes))return 0;
+            }
+            if(found!=1||next<=cursor)return 0;
+            cursor=next;
+        }
+    }return 1;
+}
 static inline int pmme_delta(const struct pmme_memory*r,unsigned kind,const struct pwea_map*a,const struct pwea_map*b)
 {
     if(!r||!a||!b||kind>=PMME_CLAIMS)return 0;
@@ -75,8 +123,7 @@ static inline int pmme_delta(const struct pmme_memory*r,unsigned kind,const stru
        !polaris_efi_memory_check(b->data,b->map.bytes,PGCD_MAP_CAP,b->map.stride,&checked)||
        !polaris_efi_range_owned(a->data,a->map.bytes,a->map.stride,base,bytes,7)||
        !polaris_efi_range_owned(b->data,b->map.bytes,b->map.stride,base,bytes,2))return 0;
-    return pwmc_delta_direction(a->data,a->map.bytes,b->data,b->map.bytes,(unsigned)a->map.stride,base,bytes,7,2)&&
-        pwmc_delta_direction(b->data,b->map.bytes,a->data,a->map.bytes,(unsigned)a->map.stride,base,bytes,2,7);
+    return pmme_delta_direction(r,kind,a,b,0)&&pmme_delta_direction(r,kind,b,a,1);
 }
 static inline int pmme_fail(struct pmme_memory*r,unsigned error)
 {if(r){r->unknown=1;if(!r->error)r->error=error;}return PWEA_FAILED;}
