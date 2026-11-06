@@ -56,6 +56,15 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: returned checkpoint native ACK; actual screen pending
 
+- Continuation audit10:09Z: previous goal turn made real progress (fresh root
+  audit and actual once-only returned-mode trial). This turn only revalidated
+  and is NO PROGRESS, not a live-process wait. Authoritative host result stays
+  terminal0 at10:07:14.278113Z/native ACK; current candidate has no physical
+  result files or new human feedback. SECOND consecutive current-screen
+  dependency. Keep goalACTIVE pending actual screen; do not use old assigned
+  photos as returned success, replay image/nonce, repeat passing tests, start
+  USB observation or guess a new protocol change. No live host task remains.
+
 - User resumed goal ACTIVE. EABC6FDE corroborates PRIOR assigned-mode checkpoint:
   AUTH CHECKPOINT1/2, metadata1/0, complete1/error0, events3/round1, DONE4/pending0,
   owner held1. It proves first metadata assignment before RMB IO, not a result
