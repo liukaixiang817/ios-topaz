@@ -82,6 +82,13 @@ early samples only. On0029 the human already confirmed boot complete and said
 - Newimageready, one-timeinventory13:46:21.463250Z findsFASTBOOTabsent. Asked
   physicalpower+volumedown reentryonce; awaitactualreply, doNOTassume elapsed
   time meansentry. Noobserver/post-nativeUSBcommand ornewboot issued.
+- Goalcontinuation revalidated13:50:29.242160Z: selectedFASTBOOT stillabsent,
+  return0; singleboundeddeviceinventory, noobserver. N6stillUNSENT/nohostwrapper.
+  Currentphysicalkeyrequest remainspending, nohumanFASTBOOTreply. Allindependent
+  build/codeproof/payload-sourceaudit complete; nojustifiedproducerfix identified.
+  Samephysicalreentrydependency nowsecondconsecutivegoalturn (originalpending
+  turnplusonecontinuation). ThisturnisNO_PROGRESS, notverifiedwait; no live
+  devicejobexists. LeaveACTIVE; ifsameactualimpasse recursonthirdturn,setBLOCKED.
 - Independentofflineaudit verified currentpayloadcontains exact19,093,328B
   c3e456d2... sixfileuserlandbundle; allembeddedfiledigests and10current source
   hashesmatch. Initlaunchdprobe/scanclient andiOSconfigdDHCPIPC present. Thisis
