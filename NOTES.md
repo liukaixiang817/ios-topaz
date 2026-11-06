@@ -54,6 +54,34 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: supply diagnostic boot sent once; pre-payload USB service absent
+
+- Source4bff22c pushed/synchronized. Current supply-diagnostic-0001 readonly
+  audit26490 ended0; independent40 checks PASS, roots/GPT/critical/ESP/NV
+  unchanged, unmounted/FASTBOOT04:20:37.106287Z. Frozen462 files and offline
+  one-use admission PASS. No acceptance/protocol/timer/electrical change.
+- Imagebcff52bf1c8f456cc2a6ec3d1d162f3696598de3121974af31ce808bb0d2b888 sent ONCE
+ 2026-11-06T04:21:01.093035+00:00, fastboot exit0. Nonce consumed before send;
+  image/pool SPENT. Host98749 ended1 after existing210s UEFI-service wait:
+  ValueError: new UEFI service unavailable; no reset/retry. No RAM payload
+  transfer, validation or native-start command occurred in this candidate.
+  This is NOT a measured supply diagnostic result and not proof the code
+  caused the connection loss. Earlier handshake photo still proves AOP ON
+  completion and supply-stage power6; exact supply failure remains unknown.
+- One bounded readonly ioreg snapshot04:25:13Z found no nodes with expected
+  phone VIDs18d1/05c6/2717. Saved only filtered VID/PID/name fields, no serials.
+  This does not distinguish cable/boot/USB initialization causes. No continuous
+  observer, replay, reset, partition write or second trial. All host jobs ended.
+- Async request pending: confirm both USB ends connected and describe current
+  phone screen; preserve it before reboot. Need this external evidence before
+  choosing the next action. First occurrence of this resumed-run connection/
+  screen blocker; goal ACTIVE, not achieved. Work resumed after prior photo.
+- Evidence: supply-diagnostic-0001/phone-native-0001/{boot.json,fastboot.log},
+  sibling log, usb-after-timeout.json and current frozen/readonly reviews.
+  Execution2/5/current plus3 steps; MSS/WLAN scan/Cyberpunk AU join/IP/DNS/
+  real traffic/stability unfinished. Last15min report04:18Z,next04:33Z if active.
+  Preserve unowned remote-memory hunk and Android/Windows/backups/private data.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: physical AOP completed; expose supply/checkpoint failure6
 
 - New photoAB6E2923 is the spent aop-handshake-0001 candidate: NATIVE5/4,
