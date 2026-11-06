@@ -16,6 +16,15 @@ their build/setup scripts or prebuilts has been executed.
 
 ## Idle hold policy and watchdog evidence (0189, 2026-11-07 Melbourne)
 
+Current localization: N11 later returned Android spontaneously despite actual
+pre-native watchdog0/idle0. Exact reset stage and brief checkpoint unknown;
+bootreason reboot, pstore empty and PMIC warm/hard reset are nonspecific.
+Own MDT geometry puts the first target1MiB crossing inside segment9; current
+N8 stops before that crossing (221pages) to test the hypothesis. No mapping/
+permission/timing producer change is justified yet. Both fresh formats704frames/
+max816B and81-file codec pass; N8 temporary RAM trial is running. Fresh N14
+variant remains unused and is not selected after N11 reset.
+
 Latest physical copy proof: photoFF7C1E2D shows prefix7/7,220pages,copy/modem
 errors0, modemphase2/segment6/submitted7/events26 and priorlength733432. This
 validates the first seven own-geometry segments and preceding STATUS records;

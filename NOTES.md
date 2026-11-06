@@ -54,7 +54,7 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### Current Wi-Fi handoff — 2026-11-07 Melbourne: idle entry proven; long test paused; prefix7 proven, prefix11 running
+### Current Wi-Fi handoff — 2026-11-07 Melbourne: idle entry proven; long test paused; prefix7 proven; prefix11 reset; prefix8 running
 
 - User requested no automatic Android return on inactivity. Source 95993eb was
   committed, pushed and synced: physical default RAM idle recovery is zero,
@@ -91,21 +91,37 @@ early samples only. On0029 the human already confirmed boot complete and said
   7segments, ready1/error0, modemphase2/segment6/submitted7/events26,
   priorlength733432/error0 and pending0/step0. This advances actual copy proof
   beyond first segment; full bank/auth/WLAN remain unproven. N7 image is SPENT.
-- Current firmware-copy-prefix11-idle-policy-0001 is fresh under exact same
-  source qualification: driver3b138229... / image9f973a50...,704 frames/max816B,
-  81 original files codec equal; selected11 projection2415 plus prior/saved
-  cases. Frozen1984 inputs/offline PASS. Exact Polaris FASTBOOT found15:50:36Z
-  after N7 photo; return reason not reported (do not infer spontaneous reset).
-  Host69087 RUNNING, once-only sent2026-11-06T15:52:19.600683+00:00.
-  Next collect this exact handle and current phone screen. Expected prefix11/11,
-  copy1650pages(hex0672)/11segments, priorlength4822300(hex0049951C)/error0,
-  modemphase2/segment10/submitted11/events42, before eleventh RMB. No replay.
+- N11 firmware-copy-prefix11-idle-policy-0001 / image9f973a50... is SPENT.
+  Host69087 finished0 at2026-11-06T15:54:19.319118+00:00. User reports spontaneous Android
+  return within a few minutes. Exact stage UNKNOWN; a brief prefix checkpoint
+  before exit remains possible. Current title-before-exit question is pending.
+  Actual pre-native watchdog0/idle0 did NOT prevent this reset; do not describe
+  no-idle policy as a fix for it. No physical N11 copy/auth completion claim.
+- Read-only original Android exactidentity/boot_completed1/root verified after
+  this reset. Boot props reboot/reboot/reboot, pstore empty, PMIC warm/hard reset
+  recorded. Power-off key reason may be latched from earlier manual actions;
+  do not attribute this spontaneous event to a key or a specific watchdog.
+  Raw logs and explicit non-attribution saved privately under N11 case.
+- Own geometry shows segments1..8 stay below target offset1MiB; segment9 spans
+  it. This is a localization hypothesis, not a proven mapping/security fault.
+  Current firmware-copy-prefix8-idle-policy-0001 is fresh: driver143443b6f7d0b6582691276593cf88c96a2b5dc2f9101be93c152d18e4fcb241
+  and image159c384976e8973a0b203c695de51da8d4baf5794f2fc06a1cf877be029c0b77; bothactual704frames/max816B,81original files codec
+  equal. Same current exact-source tests/projections reused; frozen1994 inputs/
+  offline PASS. Original Android normal power-service rebootbootloader used
+  after exact identity check. No manual journal repair or forced runtime reset.
+- Host77004 RUNNING: once-only sent2026-11-06T16:02:13.899264+00:00.
+  Next collect exact handle and current phone screen. Expected prefix8/8,
+  copy221pages(hexDD)/8segments, priorlength852216(hex000D00F8)/error0,
+  modemphase2/segment7/submitted8/events30 before eighth RMB. N8 is not yet
+  physically proven. Fresh N14 variant0002 was built locally during N11 wait,
+  but is UNUSED/nonceunspent and not selected after the N11 reset. Do not boot
+  it now; never replay any SPENT trial.
 - Kernel/payload and CI42091724671 unchanged; no new kernel CI required for
   loader-only changes. No flash, root-reader, XNU, userdata/Windows write,
   observer or manual fsck/journal replay. Preserve unowned9-line remote-memory
   hunk7215a3786b3b9226aa4f839648bbecc80d9c575f3fd3fb00250481dd91786a01.
-- Execution2/5; four steps remain including current. Formal15:45Z report sent;
-  next16:00Z while active. Scan/join/IP/DNS/real data/stability still unproven.
+- Execution2/5; four steps remain including current. Formal16:00Z report sent;
+  next16:15Z while active. Scan/join/IP/DNS/real data/stability still unproven.
 
 ### Historical blocked handoff — resolved by reported prefix14 reset and new idle request
 
