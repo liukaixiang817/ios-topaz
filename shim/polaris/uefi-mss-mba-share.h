@@ -126,12 +126,18 @@ static inline int pmsb_share(struct pmsb_result*r,const struct pmsi_result*s)
        !pmsb_arch(r,&r->masked,1)||!pmsb_peers(r,0))return pmsb_fail(r,5);
     struct pwma_spec spec={.descriptor_pa=(uintptr_t)&r->page,.region_pa=r->base,.region_bytes=r->bytes,
         .sources=1,.source={PWMA_HLOS},.destinations=1,.destination={{PWMA_MSS_MSA,PWMA_RW}}};
-    if(!pmsb_binding(r)||pwmt_begin(&r->transaction,&r->page,&spec,r->masked.cpu.ticks,r->entry.cpu.frequency)<0)return pmsb_fail(r,6);
+    /* Peer/source validation belongs to the unchanged whole-caller budget.
+     * Start the separate secure transaction budget only after that work;
+     * masked is the earlier mask witness, not a transaction timestamp. */
+    struct pgcd_arch now;
+    if(!pmsb_binding(r)||!pmsb_arch(r,&now,1)||
+       pwmt_begin(&r->transaction,&r->page,&spec,now.cpu.ticks,r->entry.cpu.frequency)<0)return pmsb_fail(r,6);
     for(unsigned k=0;k<PWMT_EVENTS;k++){
-        struct pwmt_command command;struct pgcd_arch now;
+        struct pwmt_command command;
         if(!pmsb_arch(r,&now,1))return pmsb_fail(r,7);
         int next=pwmt_next(&r->transaction,now.cpu.ticks,&command);
-        if(next==PWMT_ZERO)break;if(next!=PWMT_IO)return pmsb_fail(r,7);
+        if(next==PWMT_ZERO)break;
+        if(next!=PWMT_IO){r->step[k]=now;return pmsb_fail(r,7);}
         uint8_t before[32],after[32];int returned;
         if(command.operation==PWMT_SMC){
             r->response[k]=command.registers;r->assignment_issued=1;

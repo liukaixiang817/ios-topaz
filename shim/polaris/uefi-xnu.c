@@ -567,6 +567,16 @@ static void mss_memory_gop_evidence(void)
     if(mss_mba_share.unknown){
         pwtg_line(r,0,"MBA SHARE",mss_mba_share.assignment_issued,mss_mba_share.error);
         pwtg_line(r,1,"ROUND ERROR",mss_mba_share.transaction.rounds,mss_mba_share.transaction.error);
+        const struct pwmt_transaction*t=&mss_mba_share.transaction;
+        pwtg_line(r,2,"TX STEP EVENTS",t->step,t->events);
+        pwtg_line(r,3,"TX OPEN TICKS",(uint32_t)(t->opening>>32),(uint32_t)t->opening);
+        pwtg_line(r,4,"TX LAST TICKS",(uint32_t)(t->last>>32),(uint32_t)t->last);
+        if(mss_mba_share.error==7&&t->error==PWMT_TIME&&t->events<PWMT_EVENTS){
+            uint64_t ticks=mss_mba_share.step[t->events].cpu.ticks;
+            pwtg_line(r,5,"TX CHECK TICKS",(uint32_t)(ticks>>32),(uint32_t)ticks);
+            uint64_t delta=ticks>=t->opening?ticks-t->opening:UINT64_MAX;
+            pwtg_line(r,6,"TX DELTA TICKS",(uint32_t)(delta>>32),(uint32_t)delta);
+        }
         pwtg_line(r,12,"MASK RESTORE",mss_mba_share.cpu_held,mss_mba_share.restore_issued);
     }
 #endif

@@ -17,9 +17,13 @@ static int share_restore_fp(void*,struct pgcd_fp_guard*);
 #include "uefi-mss-mba-share.h"
 static struct pmsb_result*share;
 static unsigned local_mask,share_fault,share_trigger,peers,cache_count,smcs,continuations,descriptor_protected,target_protected;
+static uint64_t share_clock_delay;
 static int share_arch(void*p,struct pgcd_arch*a)
 {
     int ok=early_arch(p,a);a->cpu.daif=local_mask?0xc0:0;a->cpu.group1=local_mask?0:1;
+    a->cpu.ticks+=share_clock_delay;
+    if(share_fault==20&&share->transaction.started&&!share->transaction.events)a->cpu.ticks+=PWMT_TICKS+1;
+    if(share_fault==23&&share->transaction.started&&!share->transaction.events)a->cpu.ticks=share->transaction.opening-1;
     if(smcs==share_trigger){if(share_fault==14)a->cpu.ttbr0^=4096;if(share_fault==15)a->cpu.ticks+=PGCD_FRESH_TICKS+1;}
     return ok;
 }
@@ -30,6 +34,8 @@ static int share_restore_fp(void*p,struct pgcd_fp_guard*f)
 static int pmsb_affinity(uint64_t target,int64_t*raw)
 {
     CHECK(local_mask&&target==0x100*(peers%7+1));peers++;*raw=1;
+    if(peers==7&&(share_fault==18||share_fault==22))
+        share_clock_delay=share_fault==18?PWMT_TICKS+192000:PGCD_FRESH_TICKS+1;
     if(peers==share_trigger){
         if(share_fault==1)*raw=0;
         if(share_fault==2)share->fp.q8_q15[0]^=1;
@@ -51,6 +57,7 @@ static int pmsb_restore(struct pwrpc_transition*t)
 static int pmsb_cache(struct pwma_page*p,unsigned op,struct pwmk_record*r)
 {
     CHECK(local_mask&&p==&share->page);cache_count++;
+    if(share_fault==19&&cache_count==1)share_clock_delay+=PWMT_TICKS+1;
     CHECK((cache_count==1&&op==PWMK_CLEAN_INVALIDATE)||(cache_count==2&&op==PWMK_INVALIDATE));
     *r=(struct pwmk_record){.address=(uintptr_t)p,.ctr_before=4u<<16,.ctr_after=4u<<16,.el=4,.sctlr=5,
         .operation=op,.line_bytes=64,.lines_issued=64,.lines_returned=64,.attempted=1,
@@ -63,6 +70,7 @@ static int pmsb_cache(struct pwma_page*p,unsigned op,struct pwmk_record*r)
 static int pmsb_round(struct pwma_registers*r)
 {
     CHECK(local_mask&&peers==7&&cache_count==1&&stage_writes==259);smcs++;
+    if(share_fault==21&&smcs==1)share_clock_delay+=PWMT_TICKS+1;
     if(smcs==1){
         CHECK(r->x[0]==PWMA_FN&&r->x[1]==PWMA_ARGS);
         CHECK(pwfi_le(share->page.data+PWMA_REGION_OFFSET,8)==mss->memory.claim[1].requested);
@@ -86,7 +94,7 @@ static void share_setup(unsigned f,unsigned trigger_at,unsigned interrupted)
     stage_setup(0,0);CHECK(stage_run());
     uintptr_t at=(uintptr_t)arena+0x180000;at+=(-(at+offsetof(struct pmsb_result,page)))&(host_page-1);
     share=(void*)at;CHECK(at+sizeof(*share)+host_page<=(uintptr_t)arena+0x1c0000);memset(share,0,sizeof(*share));
-    local_mask=peers=cache_count=smcs=0;share_fault=f;share_trigger=trigger_at;continuations=interrupted;
+    local_mask=peers=cache_count=smcs=0;share_clock_delay=0;share_fault=f;share_trigger=trigger_at;continuations=interrupted;
 }
 static void write_records(const char*path,const char*tag)
 {
@@ -114,6 +122,25 @@ int PMSB_TEST_ENTRY(int argc,char**argv)
         CHECK(peers==14&&cache_count==2&&smcs==n+1&&!descriptor_protected&&target_protected);
         if(n==3&&argc==3)write_records(argv[2],"");
         CHECK(!pmsb_share(share,stage)&&smcs==n+1);
+    }
+    /* A 110ms preparation phase must not backdate the 100ms transaction.
+     * The complete caller still has its original 200ms upper bound. */
+    share_setup(18,0,0);CHECK(pmsb_share(share,stage));
+    CHECK(share->transaction.opening-share->masked.cpu.ticks>PWMT_TICKS);
+    CHECK(share->transaction.last-share->transaction.opening<=PWMT_TICKS);
+    CHECK(share->restored.cpu.ticks-share->entry.cpu.ticks<=PGCD_FRESH_TICKS);
+    for(unsigned kind=19;kind<=23;kind++){
+        share_setup(kind,0,0);CHECK(!pmsb_share(share,stage)&&share->unknown&&!share->complete);
+        CHECK(!share->restore_issued&&local_mask);
+        if(kind==22)CHECK(!share->transaction.started&&!smcs&&share->error==5);
+        else{
+            CHECK(share->transaction.error==PWMT_TIME&&smcs==(kind==21));
+            if(kind==20||kind==23){
+                CHECK(share->error==7&&!cache_count&&!share->transaction.events);
+                uint64_t ticks=share->step[0].cpu.ticks;
+                CHECK(kind==20?ticks-share->transaction.opening>PWMT_TICKS:ticks<share->transaction.opening);
+            }else CHECK(share->error==9);
+        }
     }
     for(unsigned kind=1;kind<=3;kind++)for(unsigned n=1;n<=14;n++){
         share_setup(kind,n,0);CHECK(!pmsb_share(share,stage)&&share->unknown&&!share->complete&&peers==n);

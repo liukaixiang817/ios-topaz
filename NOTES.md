@@ -54,6 +54,44 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: physical MBA share timer hold; fresh transaction opening fixed
+
+- New photo after nv-revision-0001 start ACK shows MBA SHARE0/7,
+  ROUND ERROR0/3, MASK RESTORE1/0 and RETAINED1/1. Exact code mapping:
+  pmsb_share failed at pwmt_next with PWMT_TIME, before any assignment SMC.
+  The prepared-kernel footer is not CPU_ON/kernel/radio evidence. The photo
+  does not expose event count or elapsed/backward-clock distinction.
+- Found a concrete timer defect: pwmt_begin reused the mask timestamp from
+  before seven affinity/source checks. It now samples/checks architecture
+  after all preparation and opens the transaction from that fresh sample.
+  Original100ms transaction and200ms whole-caller bounds remain unchanged.
+  Failed next-step clock samples are retained in the existing step slot;
+  local GOP displays transaction step/events/open/last/check/delta ticks.
+  No descriptor/target access, resource release or retry was added.
+- Regression: actual share caller with110ms preparation fails the old header
+  and passes the fix.84001 software assertions PASS, including real guarded
+  host RAM, continuation/cache/source faults, >100ms transaction, backward
+  clock and >200ms caller rejection. Prefix ABI unchanged12288B; independent
+ 101 layout/85 corruption checks PASS. Actual extracted GOP90 cases PASS.
+- Full new driver/arm64 compile PASS,830 functions,max stack816B/1024 limit.
+  Recompiled complete startup/runtime/terminal normal composition2889178
+  assertions PASS; SOFTWARE CPU/kernel/radio, not physical scan/join/data.
+  New driver807424B SHA5b620c1b4a4062dd05485a83d990020a5a959cbb87edfc4a8f4174b5e3c3e424.
+  New image6227968B SHA20c0c93d002bdf9b065f2801dc7242fc8d5aad64e69433cf032777881d825966;
+  original codec roundtrip/81 original files unchanged. Existing successful
+  kernel CI42091724671 and100593664B payload unchanged; no new kernel CI needed.
+- Private case: research/polaris/uefi-ios-0189/wifi/mba-timing-0001.
+  Legacy codec test needed current generated-binding CPATH, then passed;
+  private screen harness indentation corrected before successful run.
+  All production builds/tests ended. Readonly query confirmed polaris FASTBOOT
+ 01:39:32Z; no physical-key request needed. Fresh candidate root audit76390
+  now running, serially before any new native trial. Candidate has NOT been
+  sent; require successful current40-check review and frozen input validation.
+- Next finish actual readonly audit, freeze/review, send fresh one-use image,
+  observe current native outcome, then WLAN scan/Cyberpunk AU join/IP/DNS/data.
+  Execution2/5 remains; current plus3 subsequent steps. Unowned nine-line
+  remote-memory WIP preserved/included in tests but excluded from commits.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: revision fix passed physical pre-USB admission; full payload/start ACK
 
 - Source6d2ad40 pushed and all three owned files synchronized to original
