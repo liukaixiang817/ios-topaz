@@ -54,6 +54,32 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: NV selection diagnostic sent; current screen pending
+
+- Sourcec89243b pushed and all four owned files synchronized to original
+  workspace. New candidate readonly audit90925 PASS: boot00:04:37Z, roots
+ 56.595/56.559s, six GPT/five critical partitions/ESP/current NV all matched,
+  actual unmount and returned FASTBOOT00:07:01.144725Z. Independent review40
+  checks PASS. Limited trial frozen374 current files; offline helper PASS.
+- Imagea1a07c0e... actually sent ONCE00:07:25.702544Z; send OKAY0.150s,
+  boot OKAY0.091s,total0.242s. New nonce consumed BEFORE transfer; candidate
+  and pool now SPENT, never resend. Kernel CI42091724671 remains unchanged.
+- Helper14282 ended exit1 after210s: no matching UEFI service, zero payload
+  bytes and no OEM native start. stopped_no_retry; no reset/retry/observer.
+  Evidence: nv-selection-0001/phone-native-0001/{boot.json,fastboot.log} plus
+  sibling log. New host timeout does not locate the selection failure.
+- Asked user for CURRENT NV SELECT HOLD / SELECT STEP IDX, PART MATCH0/1,
+  PART MATCH2/3, DISK MATCH0/1 and media rows if step3/9. Reply still pending.
+  Previous photo established earlier NV error2; do not attribute its numbers
+  to this newer attempt. Keep current phone screen unchanged. Next interpret
+  new selection detail, implement evidence-based fix, build fresh nonce.
+- All relevant build/test/device jobs ended. Original broad read-only file-list
+  search66203 may remain blocked by iCloud; not a device/build/observer job and
+  not required. Current root evidence is historical immediately before attempt.
+  Execution remains2/5, four steps including current remain. No scan/JOIN/IP/
+  DNS/data proof. Goal ACTIVE; current physical-screen dependency is new since
+  last resumed work, not the prior three-turn blocked audit. Last report00:11Z.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: physical NV selection failure located; detailed diagnostic ready
 
 - New user photo from diagnostic imageef7c7edd... shows stage1/load0,
