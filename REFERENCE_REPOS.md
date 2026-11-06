@@ -37,7 +37,10 @@ or changed copy/ownership/power protocol. PhotoB24DDA59 physically proves
 PAGE AT PASS,read/write PAR ff000000f81dfb80 for page223. User manually returned
 FASTBOOT. New explicit terminal after-write hold isolates original write/readback
 from original cache; real producer software peer223 passes with cache/completion/
-publication unissued. Physical after-write result remains pending.
+publication unissued. Photo275FC56B now proves original page223 write/readback
+returned512/512 words,bytes0,cache0/complete0. Human manually FASTBOOT. Fresh
+before224-0002 under unchanged848d878 source will isolate original page223
+cache and completion; earlier224 exit stage remains unknown.
 
 ## Idle hold policy and watchdog evidence (0189, 2026-11-07 Melbourne)
 

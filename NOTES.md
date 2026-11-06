@@ -123,7 +123,24 @@ early samples only. On0029 the human already confirmed boot complete and said
   initially refused its new37th line; only private fixture admissible line
   count corrected and failed log retained. Both actual objects695frames/max816B;
   OFF page/non-page MachO exact,COFF timestamp-only. Eight malformed profiles
-  refused. Candidate still unused; finish freeze and send fresh once next.
+  refused. Source848d878 committed/pushed/synced; frozen2165/offlinePASS.
+  Fresh imageab4e52140bbc... sentONCE2026-11-06T17:57:17.855288+00:00;
+  native2026-11-06T17:58:58.055175+00:00/ACK2026-11-06T17:59:17.511416+00:00.
+  Host25928 TERMINAL0 collected; selected image/nonce now SPENT. Physical
+  Photo275FC56B physically confirms PAGE WRITE HOLD,DF/DF,PAGE WORDS200/200hex
+  (512/512),HOOK WRITE BYTES1/0,PAGE CACHE0/0,PAGE COMPLETE0/0. Original zero-page
+  write/readback/live check returned; selected cache NOT issued. Human manually
+  returned FASTBOOT. This does not yet prove DDR writeback/cache or networking.
+  Next fresh before224 variant will add exactly original page223 cache plus
+  completion before holding; existing source can be used without another change.
+- New firmware-copy-page-before224-0002 is built under unchanged848d878 code.
+  Fresh GOP504 and real producer peer224 pass; selected next target224 receives
+  no AT/write/cache. Both actual object entry/callback/hold closure verified,
+ 695frames/max816B; original81-file codec equal. Reuses exact current source
+  public15 tests and OFF equivalence; no kernel CI rerun. Next freeze, verify
+  FASTBOOT and send fresh once. Expected E0/E0,completed8/error0,currentfirstDD/
+  partial3,nextF81E0000; reaching it proves original page223 cache returned and
+  page223 completion advanced. Current selected trial has not been sent yet.
 - Own original peripheral-loader.c source pinned to MiCode c7cb50c18f812629b9620b2b8fa684bc40d82080
   is saved in modem-copy-gap-source-audit-0001. Normal vendor load copies filesz
   and zeros memsz-filesz; our loader also zeros inter-segment holes/page padding.
@@ -132,8 +149,9 @@ early samples only. On0029 the human already confirmed boot complete and said
   found in static audit. Local HackiOS references remain indexed below and in
   REFERENCE_REPOS.md; no foreign address, firmware or provider imported.
 - Kernel/payload and CI42091724671 unchanged; loader-only work needs no new
-  kernel CI. Next: qualify a fresh before-cache checkpoint for page223, check
-  expected FASTBOOT once and temporary boot once; never replay the AT probe.
+  kernel CI. Next: build/qualify/send new firmware-copy-page-before224-0002
+  once under unchanged848d878 source. Never replay any spent image. If Android
+  exits recur, use standing normal-service FASTBOOT authorization.
   Preserve unowned remote-memory9-line hunk SHA
   7215a3786b3b9226aa4f839648bbecc80d9c575f3fd3fb00250481dd91786a01.
 
