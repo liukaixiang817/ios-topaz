@@ -74,8 +74,11 @@ early samples only. On0029 the human already confirmed boot complete and said
   auditmustnotcarryover. No livehostprocessremainsonceterminalcollected.
 - GoalACTIVE,step2/5,fourincludingcurrentremain. Source94cec0bunchanged,
   kernelCI42091724671unchanged; no newbuild/testsneeded. Source/docshead371bf8f
-  beforethisrecord. Unownedremote-memory9linehunk preserved. Lastformal13:45Z,
-  next14:00Z whileactive. No physicalactionrequestedwhilecurrenttesttransfers.
+  beforethisrecord. Unownedremote-memory9linehunk preserved. Formal14:00Zwindow
+  reportdelivered(13:59:44Zclock); next14:15Z whileactive. Hostterminalcollected;
+  currentfreeformscreenrequestpending, no restartrequested. No newphysical
+  resultorindependent sourcefix justified sinceACK. Newpendingauditcount1;
+  preserveACTIVEuntilactualreply orfresh3turnblockedthreshold.
 
 ### Current blocking handoff — 2026-11-07 Melbourne: physical FASTBOOT reentry required
 
