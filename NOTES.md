@@ -54,6 +54,30 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: cache-capability fix sent once; await current physical result
+
+- Source54933a8 pushed/synchronized. Fresh image-wb-capability-0001 audit36684
+  ended0; independent40 checks PASS, original systems/GPT/critical/ESP/current
+  NV unchanged. Actual unmount/FASTBOOT02:47:22.796996Z. Frozen416 inputs and
+  offline one-use admission PASS. No destructive writes or observer restart.
+- Candidate image4ccb9af891cd49cbac4b578fee222033504a1ace75450a9783f4753679531593
+  (6230016B) sent ONCE02:47:53.946881Z; fastboot exit0. Nonce consumed before
+  send; image/pool SPENT. Expected UEFI and RAM staging02:48:03.138883Z.
+ 100593664B/1535 chunks complete; device validation ACK and independently
+  queried validated-state true. Native-start02:49:34.087028Z; command ACK
+ 02:49:53.551765Z. Host13328 ended0. No post-native retry/reset/USB observer.
+- This proves transfer/prepare_boot/command acceptance only. Latest supplied
+  photo belongs to previous image-read-admission-0001 and establishes the
+  reason5/cache-capability0xf defect fixed in this candidate. Current traversal,
+  MSS/radio and kernel outcome require latest physical screen; asked async for
+  title/NATIVE HOLD/IMAGES/OWNER rows, pending. No current physical Wi-Fi claim.
+- Evidence: image-wb-capability-0001/phone-native-0001/{boot.json,fastboot.log},
+  sibling log, actual readonly review and trial-review-0001.json. All host jobs
+  ended; source fixes/tests complete. Keep current screen, do not replay image.
+  Execution2/5/current plus3 steps remain: native startup, scan, Cyberpunk AU
+  join/IP/DNS, data/stability. Goal ACTIVE unfinished. Last15min report02:48Z,
+  next03:03Z if active. Preserve unowned remote-memory hunk/private exclusions.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: physical Core read reveals cache-capability mismatch; fixed candidate ready
 
 - New current photo for image-read-admission-0001 shows NATIVE HOLD5/4,
