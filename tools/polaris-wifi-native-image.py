@@ -64,7 +64,7 @@ def main():
                 manifest.get('userdata_access_api') is False and
                 manifest.get('disk_payload_path') is None and
                 manifest.get('wifi_native_auth_metadata_checkpoint_phase') in
-                ('assigned', 'returned', 'copied', 'copy-ready'), 'firmware diagnostic is not terminal RAM-only')
+                ('assigned', 'returned', 'copied', 'copy-ready', 'first-copy'), 'firmware diagnostic is not terminal RAM-only')
     artifact = manifest['artifact']
     require(Path(artifact).name == artifact and artifact not in ('', '.', '..'), 'driver path')
     driver = args.driver_manifest.parent/artifact

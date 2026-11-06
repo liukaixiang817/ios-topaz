@@ -64,7 +64,7 @@ int main(void){
 '''
         with tempfile.TemporaryDirectory() as directory:
             folder = Path(directory)
-            for checkpoint in (1, 2, 3, 4):
+            for checkpoint in (1, 2, 3, 4, 5):
                 source = folder/f'checkpoint-{checkpoint}.c'
                 source.write_text('#define EFI_XNU_WIFI_NATIVE_RUNTIME_AVAILABLE 1\n'
                                   '#define EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY 1\n'
@@ -78,7 +78,7 @@ int main(void){
                 self.assertIn('PASS 260 actual firmware-only terminal cases', result.stdout)
 
     def test_actual_compile_guard_rejects_unbounded_or_disk_profiles(self):
-        for checkpoint, runtime, disk in ((0, 1, False), (5, 1, False), (4, 0, False), (4, 1, True)):
+        for checkpoint, runtime, disk in ((0, 1, False), (6, 1, False), (4, 0, False), (4, 1, True)):
             with self.subTest(checkpoint=checkpoint, runtime=runtime, disk=disk):
                 text = ('#define EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY 1\n'
                         f'#define EFI_XNU_WIFI_NATIVE_RUNTIME_AVAILABLE {runtime}\n'

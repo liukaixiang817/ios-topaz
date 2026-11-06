@@ -14,6 +14,23 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+## First-segment copy boundary after isolated reset (0189, 2026-11-06)
+
+Separate copied-mode trial still spontaneously reset with XNU compiled out.
+Exact phase, including a briefly rendered checkpoint, remains unknown. Existing
+own pmlc_next_segment does per-page copy/readback/CIVAC, then pmim_publish records
+only resident phase2; actual RMB operations occur on later PMSN_PUBLISH steps.
+Explicit checkpoint5 requires first segment records/page geometry complete and
+no modem events/length/transaction, then terminal-holds BEFORE first RMB IO.
+No target read, source pointer follow or hardware permission/time change.
+C outside predicate/GOP/compileguard and every producer remain exactb7a5224.
+
+Seven public tests/1300actual entry-terminal cases plus six actual projection
+configurations1987/1987/2001/2141/2169/2295PASS. Native704frames/max816B, two
+object entry chains closed before XNU,81originalfiles codecPASS; default
+MachO exact and COFF timestamp-only difference. Physical first-copy is pending,
+ordinary40check root admission remainsrefused. No new foreign hardware port.
+
 ## Physical copy-admission boundary (0189, 2026-11-06)
 
 Human confirms MODEM COPY READY on the once-only separate firmware diagnostic.

@@ -16,7 +16,7 @@
 #define EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY 0
 #endif
 #if EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY
-#if !EFI_XNU_WIFI_NATIVE_RUNTIME_AVAILABLE || !defined(EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT) || EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT < 1 || EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT > 4
+#if !EFI_XNU_WIFI_NATIVE_RUNTIME_AVAILABLE || !defined(EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT) || EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT < 1 || EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT > 5
 #error "Firmware-only diagnostic requires native runtime and an explicit authentication checkpoint"
 #endif
 #if defined(EFI_XNU_DISK_GUID)
@@ -1161,9 +1161,9 @@ static int wifi_native_auth_metadata_checkpoint(void)
 #if EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 1
     const unsigned index=0,phase=PMSN_MD_IO;
     if(a->metadata.phase!=1||a->metadata.events)return 0;
-#elif EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT >= 2 && EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT <= 4
+#elif EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT >= 2 && EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT <= 5
     const unsigned index=EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT>=3?2:1;
-    const unsigned phase=EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT==4?PMSN_COPY:EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT==3?PMSN_PUBLISH:PMSN_MODEM_SHARE;
+    const unsigned phase=EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT==4?PMSN_COPY:EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT>=3?PMSN_PUBLISH:PMSN_MODEM_SHARE;
     if(a->metadata.phase!=3||!a->metadata.events||!a->metadata.authenticated_at||
        a->metadata.returned_at<a->metadata.authenticated_at)return 0;
 #if EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT >= 3
@@ -1174,6 +1174,16 @@ static int wifi_native_auth_metadata_checkpoint(void)
     if(c->ready!=1||c->complete!=1||c->unknown||c->error||c->pages!=PMLC_PAGES||c->segments!=PMIM_SEGMENTS||
        m->phase!=2||m->segment!=PMIM_SEGMENTS-1||m->submitted!=PMIM_SEGMENTS||m->step!=PMIM_LENGTH_READ||
        m->pending||m->unknown||m->error||m->exclusive_at||m->authenticated_at)return 0;
+#elif EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 5
+    /* First segment copy/readback/CIVAC is complete. pmim_publish has only
+     * prepared resident state; its first RMB read/write has not been issued. */
+    const struct pmsf_segment*g=&c->geometry[0];const struct pmlc_segment*first=&c->segment[0];
+    if(c->ready!=1||c->complete||c->unknown||c->error||!c->pages||c->pages>=PMLC_PAGES||c->segments!=1||
+       !c->source_pages||c->source_pages>PMLC_SOURCE_PAGES||g->index!=2||g->target_offset||!g->memsz||
+       g->memsz>0x7800000||c->pages!=((uint64_t)g->memsz+4095)/4096||first->first_page||
+       first->pages!=c->pages||first->complete!=1||first->published!=1||!first->opening||first->finished<first->opening||
+       m->phase!=2||m->segment||m->submitted!=1||m->step!=PMIM_LENGTH_READ||m->events||m->length||
+       m->pending||m->unknown||m->error||m->exclusive_at||m->exclusive_page||m->authenticated_at)return 0;
 #else
     /* Native shared-bank assignment and all source hashes are complete,
      * before the first target store or modem RMB code-load command. */
@@ -1504,7 +1514,7 @@ static void wifi_native_startup_gop_evidence(void)
     if(wifi_native_auth_metadata_checkpoint()){
         const struct pmsn_state*a=&s->auth;const struct pwmt_transaction*t=&a->assignment[a->assignments-1].transaction;
         uint64_t age=t->last>=t->opening?t->last-t->opening:UINT64_MAX;
-        pwtg_line(r,0,EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT==4?"MODEM COPY READY":EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT==3?"MODEM COPY STOP":EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT==2?"AUTH RETURN STOP":"AUTH CHECKPOINT",a->assignments,a->phase);
+        pwtg_line(r,0,EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT==5?"MODEM FIRST COPY":EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT==4?"MODEM COPY READY":EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT==3?"MODEM COPY STOP":EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT==2?"AUTH RETURN STOP":"AUTH CHECKPOINT",a->assignments,a->phase);
         pwtg_line(r,1,"META PH EVENTS",a->metadata.phase,a->metadata.events);
         pwtg_line(r,2,"TX DONE ERR",t->complete,t->error);
         pwtg_line(r,3,"TX EVENTS ROUNDS",t->events,t->rounds);
@@ -1512,7 +1522,7 @@ static void wifi_native_startup_gop_evidence(void)
         pwtg_line(r,5,"TX STEP PEND",t->step,t->pending);
         pwtg_line(r,6,"AUTH ERR PEND",a->error,a->pending);
         pwtg_line(r,7,"OWNER ERR HELD",o->error,o->held);
-        pwtg_line(r,8,EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT==4?"BEFORE COPY":EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT==3?"BEFORE LAST LEN":EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT==2?"BEFORE MODEM":"BEFORE META IO",1,0);
+        pwtg_line(r,8,EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT==5?"BEFORE FIRST IO":EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT==4?"BEFORE COPY":EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT==3?"BEFORE LAST LEN":EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT==2?"BEFORE MODEM":"BEFORE META IO",1,0);
         for(unsigned n=9;n<16;n++)pwtg_line(r,n,"",0,0);
 #if EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT >= 3
         pwtg_line(r,9,"COPY DONE ERR",s->copy.complete,s->copy.error);

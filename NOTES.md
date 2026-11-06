@@ -54,6 +54,84 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: isolated copied-mode reset; first-segment diagnostic qualified
+
+- Human confirms current copied-mode trial spontaneously returned MIX/Android.
+  Bound human-spontaneous-reboot-result.json to12:30:00.467786Z/image4983ebea...
+  Exact reset stage UNKNOWN; a briefly reached checkpoint before reset is NOT
+  excluded. Qualified compilation forbids XNU execution, so our kernel-entry
+  fallthrough is excluded for this trial. No full copy or WLAN proof follows.
+- Added explicit default-OFF first-copy checkpoint5. It requires authPUBLISH6/
+  assignments3, copyREADY1/COMPLETE0/segments1, valid first embedded geometry
+  and exact rounded page count, first segment copied/cache-complete/resident-
+  published with coherent timestamps; modemphase2/segment0/submitted1/step0,
+  no modem event/length/pending/error/unknown/exclusive/authenticated state.
+  pmim_publish only changes resident state; first hardware RMB operation waits
+  for PMSN_PUBLISH next step. MODEM FIRST COPY / BEFORE FIRST IO terminal-holds
+  here. Reads only embedded resident geometry/records, no target/pointer follow.
+- Producers/copy algorithm/secure assignment/mappings/cache/timing unchanged.
+  C outside predicate/GOP/compileguard EXACTb7a5224; normal root validator/shared
+  transport whole file EXACTb7a5224. Ordinary iOS boot remains38/40REFUSED.
+  Firmware-only guard now permits explicit checkpoints1..5 and still closes
+  every path before XNU. No original firmware/provider protocol or access grant.
+- New privatecase firmware-first-copy-checkpoint-0001 builds/codecPASS. Driver
+  714240B 0d7c975d002929ac09ec5174c4694c99cdb43bb6a74a55b61b7eb6cf979357c7;
+  image6189056B a31db04def5b5dd57a4c0f2c634f78fda949309f9962e65045f583e54c37273b.
+  Both actual object entry chains ONLYstartup/step/hold;704frames/max816B.
+  Default MachO exact prior bytes; COFF differs ONLY TimeDateStamp bytes4/5.
+- Sevenpublic unit testsPASS,1300actualterminal cases acrossfive modes. Actual
+  extracted projection0..5 PASS1987/1987/2001/2141/2169/2295, all prior1602 and
+  210saved-auth-failure cases retained perconfig, newfirst483prefix state cases.
+  Builder missing-checkpoint/disk and normal-packager mixing refuse. Kernel/
+  payload unchanged, no newCI. CandidateUNUSED/UNSENT; fullfreeze not yetdone.
+- New image ready, initial FASTBOOT absent. Actual original Android exactpolaris/
+  boot_completed1; normal runtime reboot12:45:36.680031Z returnedADB255 on
+  disconnect, independent actualpolarisFASTBOOT12:45:46.089274Z. No manual
+  fsck/replay/repair/storage write or user key action; no root audit repeated.
+- Next commit/sync/push completed source, freeze current helper/proof/objects/
+  config and one-use newnonce, offline then one temporary trial. No reuse of
+  either spent firmware candidate. Unownedremote-memory9line hunk unchanged.
+- GoalACTIVE,step2/5,four including current;1done,3..5unverified. Formal report
+  ACTUALLY sent12:44Z,next12:59Z whileactive. No pending human request/live
+  device job; phone lastverifiedFASTBOOT. Wi-Fi still not scanning/networked.
+
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: new copied-mode diagnostic native ACK; physical result pending
+
+- Human photoCB20BFDE independently confirms predecessor MODEM COPY READY:
+  assignments/phase3/5,metadata3/6,TXdone/error1/0,DONE/pending4/0,
+  copycomplete/error0/0,pages/segments0/0,ready/unknown1/0,modemphase/segment1/0.
+  Private photo + decoded JSON saved in firmware-copy-ready-checkpoint-0002.
+  Human then confirmed FASTBOOT. Predecessor remainsSPENT, no replay.
+- Fresh firmware-modem-copy-checkpoint-0001 sourceb7a5224/sourceinputs EXACT
+  prior diagnostic; only configcheckpoint3copied/newnonce differ. Driver712192B
+  513cdde957ebd2cde424c74fbf2ad4e99896cd468262343d3609350ec7b67ff1;
+  image6189056B 4983ebea31a7ba52cbc910933d207f833fe374ddd9866ea55d6c898c6a044ec7.
+  All3buildsPASS,81originalfiles codecPASS,704frames/max816B, actual2entry paths
+  onlystartup/step/hold, no kernel-runtime symbols. Existing four-mode1040guard
+  tests reused under exactsame C/builder hashes, not rerun or relabeled new.
+- Separate review0001 freezes758inputs incl predecessor physical confirmation
+  and actualcurrentobjects/config/proof; offlinePASS. Same unconditional pre-XNU
+  hold; ordinary40root review remains38/40REFUSED. Source/doc0887780 pushed/synced
+  before trial, sourceb7a5224 remains unchanged. Unownedhunk preserved/uncommitted.
+- Actual host96312 started12:30:00.049163Z, image sentONCE12:30:00.467786Z after
+  durable nonce consumption and exactpolarisproduct. Full100593664B validation
+  ACK + queried validated_state true. Native-start12:31:40.592917Z,ACK record
+  12:32:00.051202Z. HostTERMINAL0 ended12:32:00.120627Z. New candidateSPENT.
+- Physical current result PENDING. Asked actual title plus COPY PAGES SEGS and
+  COPY DONE ERR if MODEM COPY STOP; otherwise error rows or spontaneous reset.
+  Do not infer full copy from hostACK, replay, query post-native USB or start
+  another boot. No observer. This is FIRST pending-result dependency after a
+  substantive successful physical-copy-admission and new trial turn.
+- Relevant unchanged source read: pmlc_next_segment performs one entire segment
+  (per-page translate/copy/readback/CIVAC), then pmim_publish updates resident
+  auth state; PMSN_PUBLISH issues RMB on subsequent steps. If physical reset
+  repeats, next useful diagnostic is first-segment/PUBLISH before first RMB;
+  that is a conditional proposal, NOT implemented or proven cause. No guessing
+  at target mappings, secure permissions, timing or data repair is warranted.
+- GoalACTIVE,execution2/5,four including current;1done,3..5unverified. Formal12:28Z
+  window reported,next12:43Z whileactive. No live device hostjob; existing human
+  screen request remainspending. Normal iOS root access remainsunadmitted.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: physical MODEM COPY READY confirmed; copied-mode diagnostic building
 
 - Human explicitly reports MODEM COPY READY for current firmware-copy-ready-

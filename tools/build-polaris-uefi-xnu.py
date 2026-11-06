@@ -499,7 +499,7 @@ def main():
     ap.add_argument('--mss-firmware-in-payload',action='store_true',help='source verified own firmware from the exact appended RAM payload tail instead of embedding its bytes in EFI')
     ap.add_argument('--mss-mba-share',action='store_true',help='default-OFF native HLOS3 to MSS15 RW assignment of the actual staged MBA1MiB, retained descriptor/continuations and CPU restoration; no reset, power, free or remote start')
     ap.add_argument('--wifi-host-nonce-pool',action='store_true',help='generate a fresh private host-CSPRNG nonce input for this new temporary-boot candidate; requires digest-wide consumption before send; does not enable native WLAN')
-    ap.add_argument('--wifi-native-auth-metadata-checkpoint',nargs='?',const='assigned',choices=['assigned','returned','copied','copy-ready'],help='default-OFF terminal hold after metadata assignment/return, authenticated copy admission, or full copy before final publication; never resume or call CPU_ON')
+    ap.add_argument('--wifi-native-auth-metadata-checkpoint',nargs='?',const='assigned',choices=['assigned','returned','copied','copy-ready','first-copy'],help='default-OFF terminal hold after metadata assignment/return, copy admission, first segment before first RMB, or full copy before final publication; never resume or call CPU_ON')
     ap.add_argument('--wifi-firmware-diagnostic-only',action='store_true',help='separate default-OFF RAM firmware diagnostic with mandatory authentication checkpoint and unconditional terminal hold before XNU/CPU_ON; USB payload only')
     ap.add_argument('--wifi-native-runtime',action='store_true',help='build the complete native radio/runtime and retained terminal path; does not grant physical boot admission')
     ap.add_argument('--wifi-nv-backup-directory',type=Path,help='private own GPT backup used only to generate expected identities; current NV is reread on each boot')
@@ -1114,7 +1114,7 @@ def main():
             if a.test_omit_durable_guard:f.write('#define EFI_XNU_TEST_OMIT_OWNED_GUARD 1\n')
             if a.physical_owned_marker:f.write('#define EFI_XNU_PHYSICAL_MARKER 1\n')
     if a.wifi_native_auth_metadata_checkpoint:
-        auth_checkpoint_mode={'assigned':1,'returned':2,'copied':3,'copy-ready':4}[a.wifi_native_auth_metadata_checkpoint]
+        auth_checkpoint_mode={'assigned':1,'returned':2,'copied':3,'copy-ready':4,'first-copy':5}[a.wifi_native_auth_metadata_checkpoint]
         with config.open('a') as f:f.write(f'#define EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT {auth_checkpoint_mode}\n')
     if a.wifi_firmware_diagnostic_only:
         with config.open('a') as f:f.write('#define EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY 1\n')
