@@ -50,7 +50,7 @@ def validate(review_path):
             driver['QEMU_variant'] is False and driver['storage_write_api'] is False and
             driver['NVRAM_write_api'] is False and driver.get('disk_payload_path') is None and
             driver['wifi_native_auth_metadata_checkpoint_phase'] in
-            ('assigned', 'returned', 'copied', 'copy-ready', 'first-copy', 'first-rmb', 'copy-prefix', 'idle-hold'), 'firmware diagnostic scope changed')
+            ('assigned', 'returned', 'copied', 'copy-ready', 'first-copy', 'first-rmb', 'copy-prefix', 'idle-hold', 'copy-page'), 'firmware diagnostic scope changed')
     require(image['sha256'] == review['image_sha256'] and
             image['driver_manifest_sha256'] == sha(driver_manifest) and
             image['driver_sha256'] == driver['sha256'] and
@@ -63,7 +63,7 @@ def validate(review_path):
     require(review['files'].get(str(config_path.relative_to(ROOT))) == sha(config_path),
             'diagnostic compiler configuration not frozen')
     config = config_path.read_text().splitlines()
-    mode = {'assigned': 1, 'returned': 2, 'copied': 3, 'copy-ready': 4, 'first-copy': 5, 'first-rmb': 6, 'copy-prefix': 7, 'idle-hold': 8}[driver['wifi_native_auth_metadata_checkpoint_phase']]
+    mode = {'assigned': 1, 'returned': 2, 'copied': 3, 'copy-ready': 4, 'first-copy': 5, 'first-rmb': 6, 'copy-prefix': 7, 'idle-hold': 8, 'copy-page': 9}[driver['wifi_native_auth_metadata_checkpoint_phase']]
     require(config.count('#define EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY 1') == 1 and
             config.count(f'#define EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT {mode}') == 1 and
             not any(x.startswith('#define EFI_XNU_DISK_GUID') for x in config),
@@ -86,6 +86,14 @@ def validate(review_path):
     else:
         require(segments is None and not any(x.startswith('#define EFI_XNU_WIFI_COPY_SEGMENTS') for x in config),
                 'unexpected copy prefix count')
+    page = driver.get('wifi_native_copy_page_before')
+    if mode == 9:
+        require(type(page) is int and 1 <= page < 30720 and
+                config.count(f'#define EFI_XNU_WIFI_COPY_PAGE_BEFORE {page}') == 1,
+                'copy page not frozen')
+    else:
+        require(page is None and not any(x.startswith('#define EFI_XNU_WIFI_COPY_PAGE_BEFORE') for x in config),
+                'unexpected copy page')
     for name, digest in driver['inputs'].items():
         path = (ROOT/name).resolve()
         require(path.is_relative_to(ROOT) and review['files'].get(name) == digest and sha(path) == digest,
@@ -100,11 +108,16 @@ def validate(review_path):
             proof.get('watchdog_disable_status_recorded') is True and
             proof.get('idle_policy_actual_function_tested') is True and
             proof.get('terminal_guard_actual_function_tested') is True and
-            proof.get('terminal_guard_case_count') == 10141 and
+            proof.get('terminal_guard_case_count') == 11181 and
             proof.get('normal_root_validator_AST_identical') is True and
             proof.get('shared_transport_one_use_order_with_pre_start_idle_status') is True and
             proof.get('diagnostic_has_no_kernel_handoff_references') is True,
             'actual firmware-only code qualification missing')
+    if mode == 9:
+        require(proof.get('page_hook_before_translation_tested') is True and
+                proof.get('page_hook_context_and_GOP_tested') is True and
+                proof.get('non_page_objects_identical') is True,
+                'page checkpoint qualification missing')
     require(set(proof['qualified_objects']) == {'driver-0001/uefi-xnu.obj', 'actual-loader-macho.obj'},
             'both actual diagnostic object formats required')
     for name, digest in proof['qualified_objects'].items():

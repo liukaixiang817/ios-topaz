@@ -32,6 +32,12 @@ struct pmlc_copy {
     struct pmsi_page page[PMLC_PAGES];
     uint32_t attempted,unknown,error,ready,complete,source_pages,pages,segments;
 };
+#if EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 9
+#if !EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY || EFI_XNU_WIFI_COPY_PAGE_BEFORE < 1 || EFI_XNU_WIFI_COPY_PAGE_BEFORE >= PMLC_PAGES
+#error "Page checkpoint requires the explicit terminal firmware diagnostic and page1..30719"
+#endif
+__attribute__((noinline,noreturn)) static void pmlc_page_checkpoint(struct pmlc_copy*);
+#endif
 static inline int pmlc_fail(struct pmlc_copy*r,unsigned error)
 {r->unknown=1;if(!r->error)r->error=error;return 0;}
 static inline int pmlc_live(struct pmlc_copy*r)
@@ -156,6 +162,11 @@ static inline int pmlc_next_segment(struct pmlc_copy*r)
     unsigned end=(g->target_offset+g->memsz+4095)/4096;
     if(end>PMLC_PAGES||end<=r->pages)return pmlc_fail(r,6);
     while(r->pages<end){
+#if EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 9
+        /* Stop before even translating the selected next target page. The
+         * ordinary producer has no callback or branch when this is OFF. */
+        if(r->pages==EFI_XNU_WIFI_COPY_PAGE_BEFORE)pmlc_page_checkpoint(r);
+#endif
         struct pmsi_page*p=&r->page[r->pages];uint64_t to=r->base+4096*r->pages,from=0;unsigned bytes=0;
         unsigned offset=4096*r->pages;
         if(f&&offset>=g->target_offset&&offset-g->target_offset<g->filesz){

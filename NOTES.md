@@ -54,90 +54,66 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### Current Wi-Fi handoff — 2026-11-07 Melbourne: idle entry proven; long test paused; prefix7 proven; prefix11 reset; prefix8 manually exited; prefix9 running
+### Current Wi-Fi handoff — 2026-11-07 Melbourne: page256 diagnostic qualified, not yet sent
 
-- User requested no automatic Android return on inactivity. Source 95993eb was
-  committed, pushed and synced: physical default RAM idle recovery is zero,
-  idle_guard recovery branch compiled out, normal polls retained. Finite 1800s
-  lease remains only for the explicit QEMU lifecycle fixture. Native MSS had
-  already disabled the old lease, so it is not the proven prefix14 reset cause.
-- Ready callback records actual UEFI watchdog-disable status. Shared host
-  transport now requires actual status0 and idle0 before native start, otherwise
-  refuses without replay. Normal full-runtime root validator AST is unchanged;
-  normal root admission remains 38/40 REFUSED, with no journal repair.
-- firmware-idle-hold-0001 image a1f733ea... / driver 3b872c43... froze1968 inputs,
-  offline review passed, temporary boot sent ONCE15:39:04.531353Z. Actual logs
-  prove watchdog status0/idle0. Native ACK15:41:04.114179Z; host1577 TERMINAL0
-  ended15:41:04.139839Z. Photo9DED59AD plus human reply prove IDLE HOLD and all
-  first four rows0/0 (including MSS STARTED). Independent no-MSS/kernel entry
-  and nonce are SPENT; never replay. This is initial hold proof, not long idle.
-- Human then explicitly paused the stationary test, prioritized Wi-Fi, and
-  manually returned FASTBOOT. Local timer50222 stopped130; no spontaneous reset
-  reported for this idle trial. Long-window stability is UNVERIFIED/PAUSED BY
-  USER. Wi-Fi goal remains ACTIVE; do not pause the overall goal or resume the
-  idle test without steering. No post-native USB observer was started.
-- Current firmware-copy-prefix7-idle-policy-0001 retains source95993eb and its
-  idle policy. Midpoint7 narrows prior prefix14 spontaneous reset at unknown
-  stage; a briefly displayed prefix14 title remains possible. Previous physical
-  first-segment STATUS3/events6/6 is the known lower bound, not full auth4.
-  New driver690d4a97... / image27716654...; actual704 frames/max816B, entry only
-  startup/step/hold in both formats, no kernel runtime symbols, original81-file
-  codec equal. Frozen1978 inputs/offline PASS. Same exact source qualification:
-  11 public tests,10141 terminal entry cases and41 projection configs; selected
-  prefix7 has1631 prefix cases plus prior/saved failure cases. No repeat tests
-  needed without source changes. Prefix28 publication timing correction and
-  m.last coherence checks are diagnostic-only, not a prefix14 reset explanation.
-- Host42128 finished0 at2026-11-06T15:48:19.500983+00:00. Current photoFF7C1E2D proves prefix7/7, copy220pages/
-  7segments, ready1/error0, modemphase2/segment6/submitted7/events26,
-  priorlength733432/error0 and pending0/step0. This advances actual copy proof
-  beyond first segment; full bank/auth/WLAN remain unproven. N7 image is SPENT.
-- N11 firmware-copy-prefix11-idle-policy-0001 / image9f973a50... is SPENT.
-  Host69087 finished0 at2026-11-06T15:54:19.319118+00:00. User reports spontaneous Android
-  return within a few minutes. Exact stage UNKNOWN; a brief prefix checkpoint
-  before exit remains possible. Human later said the prior title was not noticed.
-  Actual pre-native watchdog0/idle0 did NOT prevent this reset; do not describe
-  no-idle policy as a fix for it. No physical N11 copy/auth completion claim.
-- Read-only original Android exactidentity/boot_completed1/root verified after
-  this reset. Boot props reboot/reboot/reboot, pstore empty, PMIC warm/hard reset
-  recorded. Power-off key reason may be latched from earlier manual actions;
-  do not attribute this spontaneous event to a key or a specific watchdog.
-  Raw logs and explicit non-attribution saved privately under N11 case.
-- Own geometry shows segments1..8 stay below target offset1MiB; segment9 spans
-  it. This is a localization hypothesis, not a proven mapping/security fault.
-  Current firmware-copy-prefix8-idle-policy-0001 is fresh: driver143443b6f7d0b6582691276593cf88c96a2b5dc2f9101be93c152d18e4fcb241
-  and image159c384976e8973a0b203c695de51da8d4baf5794f2fc06a1cf877be029c0b77; bothactual704frames/max816B,81original files codec
-  equal. Same current exact-source tests/projections reused; frozen1994 inputs/
-  offline PASS. Original Android normal power-service rebootbootloader used
-  after exact identity check. No manual journal repair or forced runtime reset.
-- N8 host77004 TERMINAL0 collected, sent16:02:13.899264Z/ACK16:04:13.674643Z.
-  Human now explicitly reports manual return to FASTBOOT, not a spontaneous
-  N8 reset. Numeric/title completion UNREPORTED: do not claim N8 passed.
-  Prior current-screen dependency is resolved by manual exit; no stale pending
-  screen can be retrieved. N11 human says prior title not noticed, so a brief
-  checkpoint before its spontaneous reset still cannot be excluded.
-- Current firmware-copy-prefix9-idle-policy-0001 is selected between physically
-  proven7 and unproven11. Own segment9 crosses target1MiB; do not treat this as
-  a proven fault cause or require unsupported N8 success to proceed. Both new
-  objects onlystartup/step/hold,704frames/max816B,81originalfilecodec PASS;
-  exact current-source tests/projections reused. Full review2002 frozen inputs
-  includes N8 manual exit/N11 not-noticed/current selection; offline PASS.
-- Exact Polaris FASTBOOT checked after human manual return. Host98076 RUNNING,
-  once-only sent2026-11-06T16:12:28.419361+00:00; payload staging. Next collect exact handle
-  then current N9 title/rows/error/reset. Expected prefix9/9,874pages(hex036A)/
-  9segments, priorlength853276(hex000D051C)/error0, modemphase2/segment8/
-  submitted9/events34 before ninth RMB. Do not infer physical completion from
-  host ACK. Current image/nonce will be SPENT upon transfer; never replay.
-- Fresh N14 variant0002 remains UNUSED and not selected after N11 reset. No
-  source evidence yet justifies mapping/permission/timing producer changes.
-  Overall Wi-Fi goal ACTIVE; long idle test remains paused by user. Current
-  pending physical dependency is new after this selected N9 trial, not a
-  continuation of the resolved N8 manual-exit question.
-- Kernel/payload and CI42091724671 unchanged; no new kernel CI required for
-  loader-only changes. No flash, root-reader, XNU, userdata/Windows write,
-  observer or manual fsck/journal replay. Preserve unowned9-line remote-memory
-  hunk7215a3786b3b9226aa4f839648bbecc80d9c575f3fd3fb00250481dd91786a01.
-- Execution2/5; four steps remain including current. Formal16:00Z report sent;
-  next16:15Z while active. Scan/join/IP/DNS/real data/stability still unproven.
+- Goal ACTIVE, execution2/5; four steps remain including current. Hardware1
+  confirmed; MSS/copy/auth2 ongoing; scan3,join/IP/DNS4,data/stability5 unproven.
+  Last formal16:30Z report; next16:45Z. Long stationary subtest PAUSED BY USER;
+  this does not pause Wi-Fi. Initial idle-only photo9DED59AD proved IDLE HOLD,
+  watchdog0/idle0/MSS0, not long stability. Timer50222 was stopped130.
+- Physical lower bound is N7 photoFF7C1E2D:7/7,220pages,copy/modem errors0,
+  phase2/segment6/submitted7/events26,length733432. N8 human reports MANUAL
+  FASTBOOT exit without numeric/title completion. Do not claim N8 passed.
+- N11 image9f973a50... and N9 imagee1a117a5... both returned Android
+  spontaneously within minutes, despite actual pre-native watchdog0/idle0.
+  Their precise exit stage is UNKNOWN; brief checkpoints before exit not
+  excluded. Human did not notice N11 prior title. N9 sent16:12:28.419361Z,
+  native16:14:08.671908Z/ACK16:14:28.139746Z,host98076 TERMINAL0 collected.
+  Prior N11 original Android RO logs: reboot/reboot/reboot,pstore empty,PMIC
+  warm/hard reset; not a specific watchdog/key/copy-fault diagnosis. Preserve
+  all SPENT images/nonces; never replay. N14 variant0002 is unused/unselected.
+- Latest explicit user instruction: phone manually back to FASTBOOT; if later
+  detected in Android, operate it back to FASTBOOT. This is standing approval
+  for bounded selected-device checks, exact Polaris/boot_completed1/root check,
+  then normal `su -c 'svc power reboot bootloader'`. No repeated manual-return
+  question. Continuous USB observer remains paused; no automatic restart of
+  that collector. No flash, erase, userdata/Windows write or journal repair.
+- Own geometry places first target1MiB crossing inside segment9; this is a
+  hypothesis, not a proven fault cause. Existing prefix checks run only after
+  an entire segment. New explicit terminal copy-page mode9 accepts page1..30719
+  and requires firmware-only scope. Header hook stops BEFORE selected target
+  AT/write/cache, reports partial copy progress; it does not publish/complete
+  the partial segment. Default-OFF path has no new call/branch. Invalid hook
+  context is also terminal (PAGE GUARD HOLD), never resumes target work.
+- New case firmware-copy-page-checkpoint-0001, page256: driveredef90ea...
+  (702464B),image1a9b5ea5...(6189056B). Expected COPY PAGE HOLD pages0100/0100,
+  complete segments8/error0,current firstpageDD/pages23hex(35),nexttarget
+  F8200000,modemphase1/segment8/submitted8/events22hex(34),length000D051C/
+  error0,step5; ready1/unknown1 is expected mid-copy, not complete segment9.
+  PAGE EARLY HOLD means the hook was not reached; preserve raw errors/title.
+- Actual COFF/MachO entry onlystartup/step/terminalhold; hook only calls
+  power_unknown_hold (compiler has multiple equivalent terminal call sites),
+  hold only own GOP/WFE; no runtime kernel symbols. 695frames/max816B.
+  Original81-file codec equal. Same old N9 config: MachO bytes EXACT, COFF
+  timestamp-only; these comparison objects are NEVER phone-sent. Actual driver
+  source/input hashes current. Kernel/payload/CI42091724671 unchanged.
+- Public12tests PASS18.651s/session18520,11181 terminal-entry cases including
+  four page profiles. Actual copy producer page1/221/256/257 trials PASS under
+  ASan/UBSan with14687 authenticated source translations each: selected page
+  has NO target AT/write/cache, next shadow byte remains0xA5. Actual callback
+  22 valid/invalid contexts terminal;504 actual GOP bounds/CPU_ON/guard cases
+  PASS. All41 earlier projection configs preprocessed token-identical after
+  normalizing assertion diagnostic line numbers only, so old runtime evidence
+  reused; new projection makes42. Eleven builder/packager scope/range refusals
+  PASS. Initial CPP line-metadata mismatch and private fixture indentation
+  warning fixed without changing the device producer. No phone send yet.
+- Ordinary full-runtime root validator and shared transport unchanged; full
+  root admission38/40 remains REFUSED. Firmware mode9 compiles kernel/root
+  reader closed. Freeze/offline next, then bounded FASTBOOT check and one-use
+  RAM send; use authorized normal Android service if needed. Current source
+  changes and this handoff are committed together; record new commit and exact
+  physical send/result next. Preserve unowned remote-memory9-line hunk SHA
+  7215a3786b3b9226aa4f839648bbecc80d9c575f3fd3fb00250481dd91786a01.
 
 ### Historical blocked handoff — resolved by reported prefix14 reset and new idle request
 

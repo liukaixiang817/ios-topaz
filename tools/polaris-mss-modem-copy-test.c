@@ -3,6 +3,14 @@
  * receipts. Shared-bank transactions use the real protocol with software SMC.
  * Own private firmware is DATA. MBA and in-flight descriptor are inaccessible. */
 #include <stdint.h>
+#if defined(PMLC_TEST_PAGE_BEFORE)
+#include <setjmp.h>
+#define EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT 9
+#define EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY 1
+#define EFI_XNU_WIFI_COPY_PAGE_BEFORE PMLC_TEST_PAGE_BEFORE
+static jmp_buf page_checkpoint_jump;
+static unsigned page_checkpoint_hits,page_checkpoint_target_AT;
+#endif
 static uint8_t*copy_payload,*firmware;
 static void copy_prepare_assets(void);
 #define PMMN_TEST_ARENA_BYTES 0x1000000
@@ -31,12 +39,25 @@ static struct pwma_page*copy_descriptor;
 static uint8_t*modem_shadow,*modem_mapping;
 static unsigned copy_fault,copy_at,copy_ats,copy_writes,copy_caches,copy_source_changed;
 static unsigned fresh_retained;
+#if defined(PMLC_TEST_PAGE_BEFORE)
+__attribute__((noreturn)) static void pmlc_page_checkpoint(struct pmlc_copy*r)
+{
+    CHECK(r==copy_record&&r->pages==PMLC_TEST_PAGE_BEFORE);
+    CHECK(copy_writes==PMLC_TEST_PAGE_BEFORE&&copy_caches==copy_writes);
+    CHECK(!page_checkpoint_target_AT&&r->unknown==1&&!r->error&&!r->complete);
+    page_checkpoint_hits++;longjmp(page_checkpoint_jump,1);
+}
+#endif
 static void copy_prepare_assets(void)
 {
     memcpy(blob,firmware,PMSF_BLOB_BYTES);memcpy(assets,pmsf_assets,sizeof(pmsf_assets));
 }
 static int copy_translate(struct pwmc_translation*t)
 {
+#if defined(PMLC_TEST_PAGE_BEFORE)
+    if(copy_record&&copy_record->ready&&t->page==copy_auth->base+4096*(uint64_t)PMLC_TEST_PAGE_BEFORE)
+        page_checkpoint_target_AT++;
+#endif
     copy_ats++;int ok=early_translate(t);
     if(copy_ats==copy_at){
         if(copy_fault==1)return 0;if(copy_fault==2)t->write_par|=1;
@@ -126,6 +147,18 @@ int main(int argc,char**argv)
     modem_shadow=modem_mapping+host_page;
     fresh_retained=1;copy_setup();CHECK(copy_begin());CHECK(copy_record->ready&&!copy_writes&&!copy_auth->submitted);
     unsigned first_ats=copy_ats;
+#if defined(PMLC_TEST_PAGE_BEFORE)
+    if(!setjmp(page_checkpoint_jump)){
+        for(unsigned k=0;k<28;k++){CHECK(pmlc_next_segment(copy_record));copy_publish_io();}
+        CHECK(0);
+    }
+    CHECK(page_checkpoint_hits==1&&!page_checkpoint_target_AT);
+    CHECK(copy_writes==PMLC_TEST_PAGE_BEFORE&&copy_record->pages==copy_writes);
+    CHECK(!copy_record->segment[copy_record->segments].complete&&!copy_record->segment[copy_record->segments].published);
+    CHECK(modem_shadow[4096*(uint64_t)PMLC_TEST_PAGE_BEFORE]==0xa5);
+    printf("PASS page%u held before target AT/write/cache; %u authenticated source translations\n",PMLC_TEST_PAGE_BEFORE,first_ats);
+    goto cleanup;
+#endif
     for(unsigned k=0;k<28;k++){
         CHECK(pmlc_next_segment(copy_record));CHECK(copy_record->segment[k].complete&&copy_record->segment[k].published);
         CHECK(copy_auth->submitted==k+1);
@@ -176,6 +209,9 @@ int main(int argc,char**argv)
         if(fault==5)owner_delay=PMIM_TOTAL+1;
         CHECK(!pmlc_next_segment(copy_record)&&copy_record->unknown&&!copy_writes&&!copy_auth->submitted);
     }
+#if defined(PMLC_TEST_PAGE_BEFORE)
+cleanup:
+#endif
     CHECK(!munmap(modem_mapping,0x7800000+2*host_page));
     CHECK(!munmap(shadow_mapping,0x104000+2*host_page));free(original);free(firmware);free(copy_payload);free(arena);
     printf("PASS %u modem copy checks; software only, no physical execution\n",checks);return 0;

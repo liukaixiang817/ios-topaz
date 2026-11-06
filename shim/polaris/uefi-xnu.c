@@ -27,8 +27,14 @@
 #if EFI_XNU_WIFI_COPY_SEGMENTS < 0 || EFI_XNU_WIFI_COPY_SEGMENTS > 28 || ((EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 7) != (EFI_XNU_WIFI_COPY_SEGMENTS != 0))
 #error "Firmware-only diagnostic requires copy count1..28 only for checkpoint7"
 #endif
+#ifndef EFI_XNU_WIFI_COPY_PAGE_BEFORE
+#define EFI_XNU_WIFI_COPY_PAGE_BEFORE 0
+#endif
+#if EFI_XNU_WIFI_COPY_PAGE_BEFORE < 0 || EFI_XNU_WIFI_COPY_PAGE_BEFORE >= 30720 || ((EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 9) != (EFI_XNU_WIFI_COPY_PAGE_BEFORE != 0)) || (EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 9 && !EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY)
+#error "Firmware-only diagnostic requires page1..30719 only for checkpoint9"
+#endif
 #if EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY
-#if !EFI_XNU_WIFI_NATIVE_RUNTIME_AVAILABLE || !defined(EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT) || EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT < 1 || EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT > 8
+#if !EFI_XNU_WIFI_NATIVE_RUNTIME_AVAILABLE || !defined(EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT) || EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT < 1 || EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT > 9
 #error "Firmware-only diagnostic requires native runtime and an explicit authentication checkpoint"
 #endif
 #if defined(EFI_XNU_DISK_GUID)
@@ -194,6 +200,9 @@ static efi_status uefi_watchdog_disable_status=EFI_ERROR|3;
 static int64_t cpu_status;
 #if EFI_XNU_WIFI_NATIVE_RUNTIME_AVAILABLE
 static uint32_t wifi_native_boot_phase;
+#if EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 9
+static unsigned wifi_native_copy_page_seen;
+#endif
 #if EFI_XNU_WIFI_TERMINAL_GOP_DIAGNOSTICS
 static void wifi_native_startup_gop_evidence(void);
 #endif
@@ -859,7 +868,7 @@ __attribute__((noreturn)) static void power_unknown_hold(void)
 #if EFI_XNU_WIFI_TERMINAL_GOP_DIAGNOSTICS
     /* Remains terminal even if this local draw fails or is partial. No
      * foreign method, cleanup, response or CPU/private restoration follows. */
-#if EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY && EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 8
+#if EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY && (EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 8 || EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 9)
     if(1){wifi_native_startup_gop_evidence();}else
 #endif
     {
@@ -1167,6 +1176,22 @@ _Static_assert(sizeof(log_buffer)>=2*(PWBD_RAW_BYTES+sizeof(pwrpt_record)+sizeof
 #include "uefi-wifi-worker-native.h"
 #include "uefi-wifi-system-off-native.h"
 static struct pwns_parent wifi_native_parent;
+#if EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 9
+/* A terminal observation, not a publication or a completed segment. Guard
+ * failures also stop; they never allow the selected target page to be touched. */
+__attribute__((noinline,noreturn)) static void pmlc_page_checkpoint(struct pmlc_copy*c)
+{
+    const struct pwns_parent*s=&wifi_native_parent;const struct pmsn_state*a=&s->auth;
+    wifi_native_copy_page_seen=1;
+    if(c!=&s->copy||wifi_native_boot_phase!=5||wln_cpu_on_issued||
+       s->phase!=PWNS_AUTH||s->error||s->unknown||a->phase!=PMSN_COPY||
+       a->ready!=1||a->pending||a->error||a->unknown||a->assignments!=3||
+       c->ready!=1||c->unknown!=1||c->error||c->complete||
+       c->pages!=EFI_XNU_WIFI_COPY_PAGE_BEFORE||c->segments>=PMIM_SEGMENTS||
+       s->owner.held!=1||s->owner.error||s->owner.unknown)wifi_native_copy_page_seen=2;
+    power_unknown_hold();
+}
+#endif
 #ifndef EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT
 #define EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT 0
 #endif
@@ -1174,7 +1199,7 @@ static struct pwns_parent wifi_native_parent;
  * the transferred metadata or descriptor. No resume path is provided. */
 static int wifi_native_auth_metadata_checkpoint(void)
 {
-#if EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT && EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT != 8
+#if EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT && EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT != 8 && EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT != 9
     const struct pwns_parent*s=&wifi_native_parent;const struct pmsn_state*a=&s->auth;
 #if EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 1
     const unsigned index=0,phase=PMSN_MD_IO;
@@ -1644,6 +1669,27 @@ static void wifi_native_startup_gop_evidence(void)
     pwtg_line(r,1,"IDLE AUTO RESET",0,0);
     pwtg_line(r,2,"UEFI WATCHDOG",(uint32_t)(uefi_watchdog_disable_status>>32),(uint32_t)uefi_watchdog_disable_status);
     pwtg_line(r,3,"MSS STARTED",s->attempted,s->owner.attempted);
+#endif
+#if EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY && EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 9
+    const struct pmlc_copy*c=&s->copy;const struct pmim_auth*m=&s->auth.modem;
+    unsigned k=c->segments<PMIM_SEGMENTS?c->segments:0;
+    const struct pmlc_segment*part=&c->segment[k];uint64_t target=c->base+4096*(uint64_t)c->pages;
+    pwtg_line(r,0,wifi_native_copy_page_seen==1?"COPY PAGE HOLD":wifi_native_copy_page_seen==2?"PAGE GUARD HOLD":"PAGE EARLY HOLD",c->pages,EFI_XNU_WIFI_COPY_PAGE_BEFORE);
+    pwtg_line(r,1,"COPY SEG ERROR",c->segments,c->error);
+    pwtg_line(r,2,"CUR FIRST PAGES",part->first_page,part->pages);
+    pwtg_line(r,3,"COPY READY FLAGS",c->ready,c->unknown);
+    pwtg_line(r,4,"TARGET NEXT",(uint32_t)(target>>32),(uint32_t)target);
+    pwtg_line(r,5,"MODEM PH SEG",m->phase,m->segment);
+    pwtg_line(r,6,"MODEM SUB EV",m->submitted,m->events);
+    pwtg_line(r,7,"MODEM LEN ERR",m->length,m->error);
+    pwtg_line(r,8,"COPY LAST TICK",(uint32_t)(c->last>>32),(uint32_t)c->last);
+    pwtg_line(r,9,"PARENT AUTH PH",s->phase,s->auth.phase);
+    pwtg_line(r,10,"OWNER ERR HELD",s->owner.error,s->owner.held);
+    pwtg_line(r,11,"HOOK HIT",wifi_native_copy_page_seen,0);
+    pwtg_line(r,12,"CUR DONE PUB",part->complete,part->published);
+    pwtg_line(r,13,"MODEM PEND STEP",m->pending,m->step);
+    pwtg_line(r,14,"COPY DONE",c->complete,0);
+    pwtg_line(r,15,"UEFI WATCHDOG",(uint32_t)(uefi_watchdog_disable_status>>32),(uint32_t)uefi_watchdog_disable_status);
 #endif
     (void)pwtg_draw(r);early_wifi_gop_raw();
 }

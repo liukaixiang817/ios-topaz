@@ -74,16 +74,18 @@ int main(void){
 '''
         with tempfile.TemporaryDirectory() as directory:
             folder = Path(directory)
-            profiles = ([(n, None, None) for n in range(1, 6)] +
-                        [(6, n, None) for n in range(1, 7)] +
-                        [(7, None, n) for n in range(1, 29)] + [(8, None, None)])
-            for checkpoint, events, segments in profiles:
-                source = folder/f'checkpoint-{checkpoint}-{events}-{segments}.c'
+            profiles = ([(n, None, None, None) for n in range(1, 6)] +
+                        [(6, n, None, None) for n in range(1, 7)] +
+                        [(7, None, n, None) for n in range(1, 29)] + [(8, None, None, None)] +
+                        [(9, None, None, n) for n in (1, 221, 256, 30719)])
+            for checkpoint, events, segments, page in profiles:
+                source = folder/f'checkpoint-{checkpoint}-{events}-{segments}-{page}.c'
                 source.write_text('#define EFI_XNU_WIFI_NATIVE_RUNTIME_AVAILABLE 1\n'
                                   '#define EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY 1\n'
                                   f'#define EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT {checkpoint}\n'
                                   + (f'#define EFI_XNU_WIFI_FIRST_RMB_EVENTS {events}\n' if events is not None else '')
                                   + (f'#define EFI_XNU_WIFI_COPY_SEGMENTS {segments}\n' if segments is not None else '')
+                                  + (f'#define EFI_XNU_WIFI_COPY_PAGE_BEFORE {page}\n' if page is not None else '')
                                   + GUARD+'\n'+peer+ACTUAL+'\n'+main)
                 binary = source.with_suffix('')
                 subprocess.run(['clang', '-std=c11', '-O1', '-g', '-Wall', '-Wextra', '-Werror',
@@ -102,13 +104,20 @@ int main(void){
                     (7, 0, False, None, 14), (7, 1, True, None, 14),
                     (6, 1, False, 1, 14), (5, 1, False, None, 14),
                     (8, 0, False, None, None), (8, 1, True, None, None))
-        for checkpoint, runtime, disk, events, segments in profiles:
-            with self.subTest(checkpoint=checkpoint, runtime=runtime, disk=disk, events=events, segments=segments):
+        profiles = tuple((*p, None) for p in profiles) + (
+            (10, 1, False, None, None, None),
+            (9, 1, False, None, None, 0), (9, 1, False, None, None, -1),
+            (9, 1, False, None, None, 30720), (9, 0, False, None, None, 256),
+            (9, 1, True, None, None, 256), (9, 1, False, 1, None, 256),
+            (9, 1, False, None, 9, 256), (7, 1, False, None, 9, 256))
+        for checkpoint, runtime, disk, events, segments, page in profiles:
+            with self.subTest(checkpoint=checkpoint, runtime=runtime, disk=disk, events=events, segments=segments, page=page):
                 text = ('#define EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY 1\n'
                         f'#define EFI_XNU_WIFI_NATIVE_RUNTIME_AVAILABLE {runtime}\n'
                         f'#define EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT {checkpoint}\n'
                         + (f'#define EFI_XNU_WIFI_FIRST_RMB_EVENTS {events}\n' if events is not None else '')
                         + (f'#define EFI_XNU_WIFI_COPY_SEGMENTS {segments}\n' if segments is not None else '')
+                        + (f'#define EFI_XNU_WIFI_COPY_PAGE_BEFORE {page}\n' if page is not None else '')
                         + ('#define EFI_XNU_DISK_GUID 1\n' if disk else '') + GUARD)
                 result = subprocess.run(['clang', '-x', 'c', '-fsyntax-only', '-'],
                                         input=text, capture_output=True, text=True)
@@ -138,6 +147,62 @@ int main(void){
                      patch.object(native, 'ROOT', root), patch.object(native, 'sha', return_value='hash'), \
                      self.assertRaisesRegex(ValueError, 'current readonly root review incomplete'):
                     native.validate(path)
+
+    def test_actual_page_callback_is_terminal_for_valid_and_invalid_contexts(self):
+        start = SOURCE.index('__attribute__((noinline,noreturn)) static void pmlc_page_checkpoint(struct pmlc_copy*c)')
+        brace = SOURCE.index('{', start)
+        depth, end = 1, brace+1
+        while depth:
+            depth += (SOURCE[end] == '{') - (SOURCE[end] == '}')
+            end += 1
+        actual = SOURCE[start:end]
+        peer = r'''
+#include <assert.h>
+#include <setjmp.h>
+#include <string.h>
+#define EFI_XNU_WIFI_COPY_PAGE_BEFORE 256
+#define PMIM_SEGMENTS 28
+#define PWNS_AUTH 9
+#define PMSN_COPY 5
+struct pmlc_copy {unsigned ready,unknown,error,complete,pages,segments;};
+struct pmsn_state {unsigned phase,ready,pending,error,unknown,assignments;};
+struct pwns_parent {unsigned phase,error,unknown;struct pmsn_state auth;
+ struct pmlc_copy copy;struct {unsigned held,error,unknown;} owner;};
+static struct pwns_parent wifi_native_parent;
+static unsigned wifi_native_boot_phase,wln_cpu_on_issued,wifi_native_copy_page_seen,holds;
+static jmp_buf stop;
+__attribute__((noreturn)) static void power_unknown_hold(void){holds++;longjmp(stop,1);}
+'''
+        faults = ('c=(void*)1', 'wifi_native_boot_phase=4', 'wln_cpu_on_issued=1',
+                  's->phase=8', 's->error=1', 's->unknown=1', 's->auth.phase=6',
+                  's->auth.ready=0', 's->auth.pending=1', 's->auth.error=1',
+                  's->auth.unknown=1', 's->auth.assignments=2', 's->copy.ready=0',
+                  's->copy.unknown=0', 's->copy.error=1', 's->copy.complete=1',
+                  's->copy.pages=255', 's->copy.segments=28', 's->owner.held=0',
+                  's->owner.error=1', 's->owner.unknown=1')
+        switches = ''.join(f'case {n}: {code};break;\n' for n, code in enumerate(faults, 1))
+        main = r'''
+int main(void){
+ for(unsigned fault=0;fault<=FAULTS;fault++){
+  struct pwns_parent*s=&wifi_native_parent;memset(s,0,sizeof(*s));
+  s->phase=PWNS_AUTH;s->auth.phase=PMSN_COPY;s->auth.ready=1;s->auth.assignments=3;
+  s->copy.ready=s->copy.unknown=1;s->copy.pages=256;s->copy.segments=8;s->owner.held=1;
+  wifi_native_boot_phase=5;wln_cpu_on_issued=wifi_native_copy_page_seen=holds=0;
+  struct pmlc_copy*c=&s->copy;switch(fault){SWITCHES}
+  if(!setjmp(stop))pmlc_page_checkpoint(c);
+  assert(holds==1&&wifi_native_copy_page_seen==(fault?2u:1u));
+ }
+ return 0;
+}
+'''.replace('FAULTS', str(len(faults))).replace('SWITCHES', switches)
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory)/'page-callback.c'
+            source.write_text(peer+actual+main)
+            binary = source.with_suffix('')
+            subprocess.run(['clang', '-std=c11', '-O1', '-g', '-Wall', '-Wextra', '-Werror',
+                            '-fsanitize=address,undefined', '-fno-sanitize-recover=all',
+                            str(source), '-o', str(binary)], check=True, capture_output=True)
+            subprocess.run([str(binary)], check=True, capture_output=True)
 
     def test_reviews_cannot_be_used_with_the_other_scope(self):
         with tempfile.TemporaryDirectory() as directory:

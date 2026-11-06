@@ -14,6 +14,18 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+## Terminal page checkpoint localization (0189, 2026-11-07 Melbourne)
+
+Own uefi-mss-modem-copy.h and generated own MDT geometry show segment9 crosses
+first target1MiB. N7 physically passed; N8 manual exit is unconfirmed; N9/N11
+spontaneous resets do not identify the exact stage. No foreign address, firmware,
+provider or exception vector was introduced. New firmware-only mode9 stops
+before a selected target page AT/write/cache and reports partial resident state.
+Default-OFF existing N9 MachO exact/COFF timestamp-only. Actual producer trials
+page1/221/256/257,22 callback contexts,504 GOP scenarios and12 public tests pass;
+695frames/max816B,81 original file codec equal. Long idle remains user-paused;
+watchdog0/idle0 did not prevent N9/N11 reset, so no reset cure is claimed.
+
 ## Idle hold policy and watchdog evidence (0189, 2026-11-07 Melbourne)
 
 Current localization: N11 later returned Android spontaneously despite actual
