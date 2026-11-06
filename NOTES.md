@@ -92,6 +92,12 @@ early samples only. On0029 the human already confirmed boot complete and said
   no restartrequested. HostACKisnotcopyprefix/auth/networkproof. No livehostjob,
   post-nativeUSBquery orobserver. ThisisFIRSTpendingdependencyaftermajornew
   physicalN6proof/source/build/trialprogress; previousblocked auditsresolved.
+- Revalidated14:22:04Z: host31489TERMINAL0collected; no currentprefix14human/
+  physicalrecord/title/error/resetreport. Allindependentqualificationcomplete;
+  no evidencejustifiesproducerfix ornewtrial. No devicequery/reboot/replay.
+  CurrentturnNO_PROGRESS, notverifiedwait. Samecurrent-screen dependency now
+  count2(originalnewtrialturnplusonecontinuation); previousN6/FASTBOOTblocked
+  auditsresolvedandNOTcarriedover. LeaveACTIVE; thirdsameactualimpasse=>BLOCKED.
 - GoalACTIVE,step2/5,fourincludingcurrent. Formal14:15Zwindowdelivered,next14:30Z.
   No newkernelCI (42091724671/kernel/payloadunchanged), no storage/GPT/Windows
   write/repair orobserver. Normalroot38/40remainsREFUSED; noXNU indiagnostics.
