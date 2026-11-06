@@ -54,6 +54,41 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: early allocation passes; supply baseline value rejection isolated
+
+- Source00c3170 pushed/synchronized. Corrected mss-map-heap-0001 readonly
+  audit35656 ended0 and40 checks PASS; FASTBOOT04:59:03.968413Z. Frozen506
+  files/offline admission PASS. Image2bd0e59bfc5f10a837f7c3f16e0522ef2735439517ad99488aa763838eedd027
+  sent ONCE04:59:32.667658Z, fastboot0. USB appeared; all100593664B/1535 RAM
+  chunks transferred with validation ACK and independently queried validated
+  state. Native command05:01:12.741785Z, ACK05:01:32.223548Z; host43749 ended0.
+  This run passed early MSS allocation; a new raw map record has not proved
+  whether the auxiliary-page branch was exercised. Pool SPENT, no replay.
+- Physical photo84AF3EB7 confirms parent11/PWNS_SUPPLY, power6/calls18,
+  supply.error5/PMSP_VALUE, phase1, index/events19, pending0, requests19.
+  Last request resource18, response0, valid1/error0/phase4. Source increments
+  index after consuming every baseline sample, then rejects in pmsp_values.
+  Therefore all19 reads retired; this is baseline validation, NOT timeout or
+  evidence resource18 is the bad value. Phase2 voltage/enable raises did not
+  start. AOP ON complete; rail readiness/MSS/WLAN still unproven.
+- Add only failure-only pre-CPU_ON GOP projection of all19 saved ARC/VRM words
+  and3 current CmdDb minimums, guarded by power6/value5/phase1/index19/events19/
+  pending0. No provider/target read, voltage/mode/value-policy/timer change.
+  Exact extracted function594 old +42 new value/partial-state/binding/CPU_ON
+  cases PASS (636 total). Initial private fixture used a wrong mock global
+  name; fixed fixture only before PASS; failed compile log retained privately.
+- supply-values-0001 full EFI/arm64841 functions/max816B and original codec81
+  unchanged files PASS. Driver823296B SHA b214c3c78d73bcf5ea2cf259e2c0226de82555e8ae4a1d008c5610f3220ccd5a.
+  Image6240256B SHA4facee8ce7ab5542e2597b0e44854ee3dcb530547e4d977a88659fd86d6ec816.
+  Only compiled source change uefi-xnu.c. Earlier unchanged allocation/native/
+  protocol/composed tests reused via source hashes; kernel CI42091724671 and
+  payload unchanged. All software build/test jobs ended0.
+- Expected FASTBOOT05:06:34.624429Z; fresh readonly audit host64674 running.
+  Next40-check review/freeze/admission and single temporary trial. New values
+  candidate not yet sent. Goal ACTIVE; step2/5, current plus3 steps remain.
+  Last15min05:03Z,next05:18Z. Preserve unowned remote-memory hunk and all
+  Android/Windows/backups. USB observer paused; no private artifacts in git.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: observed descriptor-page allocation corrected; fresh trial preparing
 
 - Source87da3e0 pushed/synchronized. Its mss-map-diagnostic-0001 audit81345

@@ -1268,6 +1268,27 @@ static void wifi_native_startup_gop_evidence(void)
             pwtg_line(r,15,"REQ AGE TICKS",(uint32_t)(age>>32),(uint32_t)age);
         }
     }
+    /* All19 reads returned before the phase1 value check. Display the actual
+     * saved inputs; this does not recompute, relax or retry the vote policy. */
+    if(s->power.error==6&&s->supply.error==PMSP_VALUE&&s->supply.phase==1&&
+       s->supply.index==PMSP_RESOURCES&&s->supply.events==PMSP_RESOURCES&&!s->supply.pending){
+        const struct pmsp_lifecycle*v=&s->supply;
+        static const char*const voltage[4]={"VRM0 MV EN","VRM1 MV EN","VRM2 MV EN","VRM3 MV EN"};
+        static const char*const mode[4]={"VRM0 MODE HR","VRM1 MODE HR","VRM2 MODE HR","VRM3 MODE HR"};
+        pwtg_line(r,0,"SUP VALUES",v->error,v->phase);
+        pwtg_line(r,1,"ARC CX MX",v->saved[0],v->saved[1]);
+        pwtg_line(r,2,"ARC MSS MIN",v->saved[2],v->minimum[2]);
+        pwtg_line(r,3,"MIN CX MX",v->minimum[0],v->minimum[1]);
+        for(unsigned k=0;k<4;k++){
+            unsigned n=3+4*k;
+            pwtg_line(r,4+2*k,voltage[k],v->saved[n],v->saved[n+1]);
+            pwtg_line(r,5+2*k,mode[k],v->saved[n+2],v->saved[n+3]);
+        }
+        pwtg_line(r,12,"SUP INDEX EVENTS",v->index,v->events);
+        pwtg_line(r,13,"PWR CALLS REQS",s->power.supply_calls,s->power.requests);
+        pwtg_line(r,14,"SUP LAST TICK",(uint32_t)(v->last>>32),(uint32_t)v->last);
+        pwtg_line(r,15,"SUP START TICK",(uint32_t)(v->transition>>32),(uint32_t)v->transition);
+    }
     (void)pwtg_draw(r);early_wifi_gop_raw();
 }
 #endif
