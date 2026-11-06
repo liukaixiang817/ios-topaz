@@ -54,6 +54,30 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: own-DT MSS page correction sent once; physical access result pending
+
+- Sourceeed889c pushed/synchronized. mss-dt-pages-0001 fresh readonly audit
+  host80929 ended0; independent40checks PASS, roots/GPT/critical/ESP/NV
+  unchanged. Returned FASTBOOT06:23:42.766390Z; frozen563 files, offline
+  admission PASS. Exact two own-DT pages only; native Device AT still required.
+- Image1bb7499ae445d9ff97b1483527b8626dc710f4a41655622a3e75d96824ccc60b sent
+  ONCE06:24:09.730991Z, fastboot0. Complete100593664B/1535 RAM chunks,
+  validation ACK and independently queried validated state. Native-start
+  06:25:49.710285Z, ACK06:26:09.197869Z. Host22604 ended0. All builds/tests/
+  device jobs terminal; image/nonce SPENT. No replay/reset/post-native USB
+  observer or partition write. Host ACK is not physical register/MBA success.
+- Need new screen after this trial to locate first actual target/translation/
+  MMIO result or later MBA stage.468560A1 is the PREVIOUS target diagnostic;
+  it justified this change but cannot prove the new candidate succeeds.
+  Async text question requested current heading/error/phase/step/address.
+  Prior feedback dependency resolved; this is the first occurrence of the
+  new candidate's physical-feedback dependency. Do not inherit old blocked count.
+- Execution2/5,current plus3steps remain. MBA-ready/modem-auth/WLAN scan,
+  Cyberpunk AU join/IP/DNS/data/stability remain unproven. Last15min06:15Z,
+  next06:30Z while active. Kernel CI42091724671/payload unchanged. Unowned
+  remote-memory header preserved; Android/Windows/backups unchanged. Keep
+  photos, vendor/Apple files, serials and private trial records outside git.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: own-DT MSS pages admitted without fabricating GCD MMIO; physical trial prepared
 
 - New468560A1 photo of SPENT mba-target-diagnostic-0001 resolves the prior
