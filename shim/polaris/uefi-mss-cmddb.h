@@ -26,10 +26,16 @@ struct pmdc_pass {
     struct pmdc_identity source[2];struct pmrd_read read[PMDC_READS];struct pmdc_page page[PMDC_PAGES];
     uint32_t reads,pages,complete,reserved;uint8_t raw[PMDC_BYTES];struct pmdc_resource resource[PMDC_RESOURCES];
 };
+/* Target refusal evidence is copied only from retained map/GCD/AT records.
+ * No rejected target read, extra translation, provider call or retry. */
+struct pmdc_failure {
+    uint64_t address,map_attributes,gcd_base,gcd_end,gcd_capabilities,gcd_attributes,par;
+    uint32_t reason,slot,map_type,map_matches,gcd_type,reserved;
+};
 struct pmdc_state {
     uint64_t namespace,images,owner,opening,image;uint8_t namespace_digest[32];
     uint32_t protocol_index,loaded_index,attempted,unknown,error,complete;
-    struct pmdc_pass pass[2];uint8_t digest[32];
+    struct pmdc_pass pass[2];struct pmdc_failure failure;uint8_t digest[32];
 };
 #if defined(POLARIS_MSS_CMDDB_SOFTWARE_PEER)
 static int pmdc_word(uint64_t,uint64_t*);
@@ -106,34 +112,58 @@ static inline int pmdc_provider(struct pmdc_state*r,struct pmdc_pass*p)
     const uint8_t*globals=pmdc_read(r,p,r->image+0x5158,72,0);
     return globals&&pwfi_le(globals,8)==PMDC_BASE&&pwfi_le(globals+64,8)==PMDC_BASE?1:pmdc_fail(r,4);
 }
-static inline int pmdc_ram(struct pmdc_state*r,uint64_t at)
+static inline int pmdc_target_note(struct pmdc_state*r,unsigned reason,uint64_t at,unsigned slot,
+    const struct pmli_read*q,const struct pmrd_at*t)
+{
+    struct pmdc_failure*f=&r->failure;if(f->reason)return 0;
+    f->reason=reason;f->address=at;f->slot=slot;
+    const struct pmsc_owner*o=(const void*)(uintptr_t)r->owner;
+    const struct pweh_result*h=(const void*)(uintptr_t)o->retained;
+    for(uint64_t off=0;off<h->map.map.bytes;off+=h->map.map.stride){
+        const struct efi_memory*d=(const void*)(h->map.data+off);
+        if(at>=d->physical&&at-d->physical<d->pages*4096){
+            if(!f->map_matches){f->map_type=d->type;f->map_attributes=d->attributes;}f->map_matches++;
+        }
+    }
+    if(q){f->gcd_base=pwfi_le(q->raw+24,8);f->gcd_end=pwfi_le(q->raw+32,8);
+        f->gcd_capabilities=pwfi_le(q->raw+40,8);f->gcd_attributes=pwfi_le(q->raw+48,8);f->gcd_type=pwfi_le(q->raw+56,4);}
+    if(t)f->par=t->par;return 0;
+}
+static inline int pmdc_ram(struct pmdc_state*r,uint64_t at,unsigned slot)
 {
     struct pmsc_owner*o=(void*)(uintptr_t)r->owner;struct pmli_ledger*l=(void*)(uintptr_t)r->images;
     const struct pweh_result*h=(const void*)(uintptr_t)o->retained;const struct pwea_native*e=h->input.early;
     const struct pmmn_native*m=(const void*)(uintptr_t)o->memory;
-    if(at<PMDC_BASE||at>=PMDC_BASE+PMDC_BYTES||(at&4095)||!pmli_range(h,at,4096,0,4)||
-       !pmli_heap_excluded(&l->pass[1],at,4096)||!pwea_disjoint(at,4096,h->payload,h->payload_bytes)||
-       !pwea_disjoint(at,4096,h->log,h->input.log_bytes))return 0;
+    if(at<PMDC_BASE||at>=PMDC_BASE+PMDC_BYTES||(at&4095))return pmdc_target_note(r,2,at,slot,0,0);
+    if(!pmli_range(h,at,4096,0,4))return pmdc_target_note(r,3,at,slot,0,0);
+    if(!pmli_heap_excluded(&l->pass[1],at,4096)||!pwea_disjoint(at,4096,h->payload,h->payload_bytes)||
+       !pwea_disjoint(at,4096,h->log,h->input.log_bytes))return pmdc_target_note(r,4,at,slot,0,0);
     for(uint64_t off=0;off<h->map.map.bytes;off+=h->map.map.stride){
         const struct efi_memory*d=(const void*)(h->map.data+off);
         if(d->physical<at+4096&&at<d->physical+d->pages*4096&&
-           ((d->type!=0&&d->type!=4)||d->virtual_address||d->attributes!=8))return 0;
+           /* GetMemoryMap cache bits are capabilities; GCD active attrs and
+            * fresh PAR below still require WB. Other flags remain refused. */
+           ((d->type!=0&&d->type!=4)||d->virtual_address||!(d->attributes&8)||
+            (d->attributes&~UINT64_C(15))))return pmdc_target_note(r,5,at,slot,0,0);
     }
-    for(unsigned n=0;n<2;n++)if(!pwea_disjoint(at,4096,e->memory.claim[n].requested,e->memory.claim[n].bytes))return 0;
-    for(unsigned n=0;n<PMME_CLAIMS;n++)if(!pwea_disjoint(at,4096,m->memory.claim[n].requested,m->memory.claim[n].bytes))return 0;
-    return pmdc_live(r);
+    for(unsigned n=0;n<2;n++)if(!pwea_disjoint(at,4096,e->memory.claim[n].requested,e->memory.claim[n].bytes))return pmdc_target_note(r,6,at,slot,0,0);
+    for(unsigned n=0;n<PMME_CLAIMS;n++)if(!pwea_disjoint(at,4096,m->memory.claim[n].requested,m->memory.claim[n].bytes))return pmdc_target_note(r,6,at,slot,0,0);
+    return pmdc_live(r)?1:pmdc_target_note(r,7,at,slot,0,0);
 }
 static inline int pmdc_target(struct pmdc_state*r,struct pmdc_page*p,uint64_t at,unsigned slot)
 {
     struct pmrg_map*g=(void*)(uintptr_t)r->namespace;
-    if(slot>1||!pmdc_ram(r,at))return pmdc_fail(r,5);
+    if(slot>1){pmdc_target_note(r,1,at,slot,0,0);return pmdc_fail(r,5);}
+    if(!pmdc_ram(r,at,slot))return pmdc_fail(r,5);
     for(unsigned n=0;n<g->pass[1].nodes;n++){
         const struct pmli_read*q=&g->pass[1].node[n];uint64_t base=pwfi_le(q->raw+24,8),end=pwfi_le(q->raw+32,8);
         if(base>at||end<at+4095)continue;
-        if((slot&&p->index!=n)||end-base==UINT64_MAX||pwfi_le(q->raw+56,4)!=2||
-           !(pwfi_le(q->raw+40,8)&8)||pwfi_le(q->raw+48,8)!=8||!pmrg_read(g,&p->node[slot],q->address,80,1))return pmdc_fail(r,5);
-        if(!pmli_read_equal(q,&p->node[slot])){pmrg_fail(g,5);return pmdc_fail(r,5);}p->index=n;return 1;
-    }return pmdc_fail(r,5);
+        unsigned reason=slot&&p->index!=n?9:end-base==UINT64_MAX?10:pwfi_le(q->raw+56,4)!=2?11:
+            !(pwfi_le(q->raw+40,8)&8)?12:pwfi_le(q->raw+48,8)!=8?13:0;
+        if(reason){pmdc_target_note(r,reason,at,slot,q,0);return pmdc_fail(r,5);}
+        if(!pmrg_read(g,&p->node[slot],q->address,80,1)){pmdc_target_note(r,14,at,slot,q,0);return pmdc_fail(r,5);}
+        if(!pmli_read_equal(q,&p->node[slot])){pmdc_target_note(r,15,at,slot,q,0);pmrg_fail(g,5);return pmdc_fail(r,5);}p->index=n;return 1;
+    }pmdc_target_note(r,8,at,slot,0,0);return pmdc_fail(r,5);
 }
 static inline int pmdc_capture(struct pmdc_state*r,struct pmrg_map*g)
 {
@@ -154,7 +184,8 @@ static inline int pmdc_capture(struct pmdc_state*r,struct pmrg_map*g)
         struct pmdc_pass*p=&r->pass[pass];if(!pmdc_provider(r,p))return 0;
         for(unsigned n=0;n<PMDC_PAGES;n++){
             struct pmdc_page*q=&p->page[n];uint64_t at=PMDC_BASE+4096*n;
-            if(!pmdc_target(r,q,at,0)||!pmdc_at(r,&q->AT,at))return pmdc_fail(r,5);
+            if(!pmdc_target(r,q,at,0))return pmdc_fail(r,5);
+            if(!pmdc_at(r,&q->AT,at)){pmdc_target_note(r,16,at,0,&q->node[0],&q->AT);return pmdc_fail(r,5);}
             for(unsigned j=0;j<512;j++){
                 uint64_t word;if(!pmdc_word(at+8*j,&word))return pmdc_fail(r,6);
                 pgcd_copy(p->raw+4096*n+8*j,&word,8);q->words++;

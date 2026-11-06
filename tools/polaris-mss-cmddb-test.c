@@ -13,6 +13,7 @@ static void cmddb_prepare(void);
 static uint8_t*cd_original,*cd_image,*database,*db_original;
 static struct pmdc_state*database_state;
 static unsigned db_map_type,db_map_attr,db_map_virtual,db_words,db_fault,db_trigger;
+static unsigned db_gcd_type=2,db_gcd_cap=8,db_gcd_attr=8;
 static void cmddb_extra_map(struct pwea_map*m)
 {
     struct efi_memory*d=(void*)(m->data+m->map.bytes);
@@ -50,7 +51,7 @@ static void cmddb_prepare(void)
         put(q+8,n?(uintptr_t)core+PMRG_HEAD:(uintptr_t)image_heap+0x9008,8);
         put(q+16,(uintptr_t)image_heap+(n?0x8008:0x5008),8);
         put(q+24,n?PMDC_BASE+PMDC_BYTES:PMDC_BASE,8);put(q+32,n?UINT64_MAX:PMDC_BASE+PMDC_BYTES-1,8);
-        put(q+40,n?1:8,8);put(q+48,n?1:8,8);put(q+56,n?3:2,4);
+        put(q+40,n?1:db_gcd_cap,8);put(q+48,n?1:db_gcd_attr,8);put(q+56,n?3:db_gcd_type,4);
     }
 #ifdef PMDC_TEST_PREPARE
     PMDC_TEST_PREPARE();
@@ -97,9 +98,40 @@ int PMDC_TEST_ENTRY(int argc,char**argv)
     for(unsigned n=0;n<3;n++)CHECK(database_state->pass[1].resource[n].minimum>0&&database_state->pass[1].resource[n].minimum<=15);
     CHECK(database_state->pass[1].resource[7].minimum==3&&database_state->pass[1].resource[7].address==0x30080);
     CHECK(!cmddb_run());CHECK(pmsc_close_unused(owner)&&!pmdc_current(database_state,resource_map));
+    /* EFI capability combinations do not alter active GCD WB requirements. */
+    const unsigned cache_caps[]={8,9,10,12,15};
+    for(unsigned type=0;type<=4;type+=4)for(unsigned n=0;n<5;n++){
+        db_map_type=type;db_map_attr=cache_caps[n];cmddb_setup();
+        CHECK(cmddb_run()&&pmdc_current(database_state,resource_map)&&db_words==32768);
+        CHECK(pwmc_zero(&database_state->failure,sizeof(database_state->failure)));
+        CHECK(pmsc_close_unused(owner));
+    }
+    db_map_type=0;
+    const unsigned rejected_caps[]={0,1,2,4,7,0x1008};
+    for(unsigned n=0;n<6;n++){
+        db_map_attr=rejected_caps[n];cmddb_setup();
+        CHECK(!cmddb_run()&&database_state->error==5&&!db_words);
+        const struct pmdc_failure*f=&database_state->failure;
+        CHECK(f->reason==(n==5?5:3)&&f->address==PMDC_BASE&&!f->slot);
+        CHECK(!f->map_type&&f->map_matches==1&&f->map_attributes==rejected_caps[n]);
+        CHECK(!f->par&&!database_state->pass[0].page[0].AT.issued);
+    }
+    db_map_attr=15;
+    for(unsigned kind=0;kind<3;kind++){
+        db_gcd_type=kind==0?3:2;db_gcd_cap=kind==1?1:8;db_gcd_attr=kind==2?1:8;cmddb_setup();
+        CHECK(!cmddb_run()&&database_state->error==5&&!db_words);
+        const struct pmdc_failure*f=&database_state->failure;
+        CHECK(f->reason==11+kind&&f->address==PMDC_BASE&&!f->slot&&f->map_attributes==15);
+        CHECK(f->gcd_type==db_gcd_type&&f->gcd_capabilities==db_gcd_cap&&f->gcd_attributes==db_gcd_attr);
+        CHECK(f->gcd_base==PMDC_BASE&&f->gcd_end==PMDC_BASE+PMDC_BYTES-1&&!f->par);
+    }
+    db_gcd_type=2;db_gcd_cap=15;db_gcd_attr=8;cmddb_setup();
+    CHECK(cmddb_run()&&pmdc_current(database_state,resource_map)&&db_words==32768);
+    CHECK(pmsc_close_unused(owner));db_gcd_cap=db_map_attr=8;
     fprintf(stderr,"normal current CmdDb PASS: %u AT, %u GCD reads; starting failure checks\n",ats,nodes);
     for(unsigned at=1;at<=ats;at++){
         cmddb_setup();rp_fault=2;rp_trigger=at;CHECK(!cmddb_run()&&database_state->unknown&&!database_state->complete&&rp_ats==at);
+        if(database_state->error==5){CHECK(database_state->failure.reason==16);CHECK(database_state->failure.address>=PMDC_BASE&&database_state->failure.address<PMDC_BASE+PMDC_BYTES);CHECK(database_state->failure.par&1);}
     }
     for(unsigned fault=1;fault<=6;fault++)if(fault!=2)for(unsigned edge=0;edge<4;edge++){
         cmddb_setup();rp_fault=fault;rp_trigger=edge==0?1:edge==1?ats/2:edge==2?ats/2+1:ats;

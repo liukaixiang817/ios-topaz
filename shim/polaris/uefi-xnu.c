@@ -1156,6 +1156,18 @@ static void wifi_native_startup_gop_evidence(void)
         pwtg_line(r,14,"IMAGE COUNTS",s->images.pass[0].protocols,s->images.pass[0].images);
         pwtg_line(r,15,"IMAGE PASS2",s->images.pass[1].protocols,s->images.pass[1].images);
     }
+    if(s->cmddb.error==5){
+        const struct pmdc_failure*f=&s->cmddb.failure;
+        pwtg_line(r,7,"CMDDB WHY SLOT",f->reason,f->slot);
+        pwtg_line(r,8,"CMDDB PAGE ADDR",(uint32_t)(f->address>>32),(uint32_t)f->address);
+        pwtg_line(r,9,"EFI TYPE MATCH",f->map_type,f->map_matches);
+        pwtg_line(r,10,"EFI CAP",(uint32_t)(f->map_attributes>>32),(uint32_t)f->map_attributes);
+        pwtg_line(r,11,"GCD TYPE CAPS",f->gcd_type,(uint32_t)f->gcd_capabilities);
+        pwtg_line(r,12,"GCD ATTR",(uint32_t)(f->gcd_attributes>>32),(uint32_t)f->gcd_attributes);
+        pwtg_line(r,13,"TARGET PAR",(uint32_t)(f->par>>32),(uint32_t)f->par);
+        pwtg_line(r,14,"CMDDB READS",s->cmddb.pass[0].reads,s->cmddb.pass[1].reads);
+        pwtg_line(r,15,"CMDDB PAGES",s->cmddb.pass[0].pages,s->cmddb.pass[1].pages);
+    }
     (void)pwtg_draw(r);early_wifi_gop_raw();
 }
 #endif

@@ -54,6 +54,39 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: physical image/GCD/RPMh captures passed; CmdDb target diagnostic ready
+
+- New photo for image-wb-capability-0001 shows NATIVE HOLD5/4, parent phase4,
+  owner0/2, IMAGES MAP ERR0/0 and RPMH CMDDB ERR0/5. Thus prior cache fix
+  physically passed complete image enumeration, GCD capture and RPMh capture;
+  next CmdDb target admission/translation stopped(error5). Exact subcondition
+  unknown; do not claim EFI attributes caused this particular stop yet.
+- Correct remaining pmdc_ram EFI cache-capability equality: accept masks8..15
+  while retaining other flags refusal, type0/4, virtual0, image/allocation
+  exclusions. Active GCD attribute remains exactly8 and fresh read PAR remains
+  exact WB; no MMU/cache change. Add first-failure-only80B pmdc_failure with
+  reason/slot/address and saved-map/GCD/AT fields. Reasons distinguish range,
+  mapping/exclusion/flags/lifetime, GCD shape/type/capability/current attribute,
+  fresh node read/change and actual target translation. No rejected target
+  read or extra privileged/provider call. Existing error5/UNKNOWN unchanged.
+- Failure-only pre-CPU_ON GOP shows CMDDB WHY SLOT/PAGE ADDR, EFI TYPE MATCH/
+  CAP, GCD TYPE CAPS/ATTR, TARGET PAR and completed reads/pages. Actual extracted
+  function198 phase/guard/CPU_ON/mapping cases PASS. Actual CmdDb sanitizer suite
+ 4925522 assertions/292 capture scenarios PASS126.829s, including type0/4 with
+  masks8/9/10/12/15, missing-WB/extra-flags refusal, distinct GCD type/capability/
+  active-attribute refusals before DB words, all106 AT positions and128 fresh
+  GCD reads. Full normal parent/runtime/terminal2889178 PASS SOFTWARE leaves.
+- Complete EFI/arm64 compile832 functions,max stack816B; original codec/81
+  files PASS. Driver812032B SHAe5990d695bffaff951c7ee2e4f1850e977469b81fbde6ce8bd9246aff086db57.
+  Private case cmddb-target-0001, fresh unsent candidate/nonce. Kernel CI42091724671
+  and100593664B payload unchanged. All build/test jobs ended0; exact polaris
+  FASTBOOT03:00:55Z, current readonly root/NV audit started. Require fresh40
+  checks and frozen review before one-use trial. Prior image/pool SPENT.
+- Execution2/5/current plus3 steps remain: native MSS startup, WLAN scan,
+  Cyberpunk AU join/IP/DNS/data/stability. Physical Wi-Fi unverified. Keep
+  unowned remote-memory9-line hunk, source-only push permission and USB observer
+  pause. Last15min report02:48Z, next03:03Z. Goal ACTIVE unfinished.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: cache-capability fix sent once; await current physical result
 
 - Source54933a8 pushed/synchronized. Fresh image-wb-capability-0001 audit36684
