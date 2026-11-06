@@ -54,6 +54,33 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: physical AOP completed; expose supply/checkpoint failure6
+
+- New photoAB6E2923 is the spent aop-handshake-0001 candidate: NATIVE5/4,
+  parent0x0B/0x101, owner0/2, RSC/POWER0/6, CLOCK/AOP0/0. PWNS_SUPPLY11 is
+  reachable only after AOP ON completion. Actual link/channel handshake and
+  remote ON consumption therefore progressed; supply/clock votes and MSS/WLAN
+  remain unproven. User supplied required feedback and explicitly reactivated
+  goal; prior feedback blocker cleared. Execution2/5/current plus3 steps.
+- Power6 conflates phase checkpoint, minimum/command validation and supply
+  completion failures. Existing screen omits supply.error/phase and request
+  timing, so no electrical/timeout diagnosis is claimed. Only add failure-only
+  pre-CPU_ON GOP projection for power6: embedded supply state/times, bounded
+  checkpoint/read/page progress, and pointer/count-guarded last resource request
+  valid/error/phase/events/response/elapsed ticks. No hardware/provider access,
+  retry, voltage/protocol/timer/acceptance change or request ABI change.
+- Exact extracted function594 mapping/CPU_ON/guard/bounded-record cases PASS.
+  Full EFI and arm64 build837 functions/max stack816B, original codec81 files
+  PASS. Driver818688B SHA525c6ea25b1ccc102722f2dd0d591d9b10eb82b59e989ac4501d9de8eae02cfd.
+  New imagebcff52bf1c8f456cc2a6ec3d1d162f3696598de3121974af31ce808bb0d2b888 (6232064B),
+  private case supply-diagnostic-0001. Compiled input diff ONLY uefi-xnu.c;
+  unchanged AOP/native/resource/full-parent tests reused from aop-handshake-0001,
+  not rerun. Kernel CI42091724671 and payload unchanged. All build jobs ended0.
+- Exact polaris FASTBOOT04:17:11Z. Next fresh readonly40-check review/frozen
+  admission, then one-use temporary trial. Current diagnostic not yet sent.
+  Preserve unowned remote-memory hunk, Android/Windows/backups and private
+  exclusions. Last15min report04:03Z,next04:18Z; USB observer remains paused.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: own QMP handshake candidate sent once; current physical result pending
 
 - Source5e14e4f pushed; seven owned source/test/record paths synchronized.

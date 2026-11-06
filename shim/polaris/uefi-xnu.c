@@ -1215,6 +1215,37 @@ static void wifi_native_startup_gop_evidence(void)
             pwtg_line(r,15,"OWNER LAST TICK",(uint32_t)(o->last>>32),(uint32_t)o->last);
         }
     }
+    /* Failure-only supply/checkpoint evidence. Read embedded resident records;
+     * no power request, provider, retry, timer or hardware observation here. */
+    if(s->power.error==6){
+        const struct pmpn_state*p=&s->power;const struct pmsp_lifecycle*v=&s->supply;
+        pwtg_line(r,0,"PWR HOLD",wifi_native_boot_phase,s->phase);
+        pwtg_line(r,1,"PWR ERR CALLS",p->error,p->supply_calls);
+        pwtg_line(r,2,"SUP ERR PHASE",v->error,v->phase);
+        pwtg_line(r,3,"SUP INDEX EVENTS",v->index,v->events);
+        pwtg_line(r,4,"SUP PEND REQUEST",v->pending,p->requests);
+        pwtg_line(r,5,"SUP TRANS TICK",(uint32_t)(v->transition>>32),(uint32_t)v->transition);
+        pwtg_line(r,6,"SUP LAST TICK",(uint32_t)(v->last>>32),(uint32_t)v->last);
+        pwtg_line(r,7,"OWNER LAST TICK",(uint32_t)(o->last>>32),(uint32_t)o->last);
+        pwtg_line(r,8,"CHECKS PHASE",p->checkpoints,p->supply_phase);
+        pwtg_line(r,9,"CHECK STATUS",0,0);pwtg_line(r,10,"CHECK RPMH DB",0,0);pwtg_line(r,11,"CHECK DB PAGES",0,0);
+        if(p->checkpoints&&p->checkpoints<=PMPN_CHECKPOINTS){
+            const struct pmpn_checkpoint*c=&p->checkpoint[p->checkpoints-1];
+            pwtg_line(r,9,"CHECK STATUS",c->attempted,c->complete);
+            pwtg_line(r,10,"CHECK RPMH DB",c->rpmh.reads,c->cmddb.reads);
+            pwtg_line(r,11,"CHECK DB PAGES",c->cmddb.pages,c->cmddb.complete);
+        }
+        pwtg_line(r,12,"REQ VALID ERROR",0,0);pwtg_line(r,13,"REQ PH EVENTS",0,0);
+        pwtg_line(r,14,"REQ RES RESPONSE",0,0);pwtg_line(r,15,"REQ AGE TICKS",0,0);
+        if(p->records==(uintptr_t)s->power_records&&p->pending&&p->pending<=PMPN_REQUESTS&&p->pending==p->requests){
+            const struct pmrv_request*q=&s->power_records[p->pending-1].request;
+            pwtg_line(r,12,"REQ VALID ERROR",q->valid,q->io.error);
+            pwtg_line(r,13,"REQ PH EVENTS",q->io.phase,q->io.events);
+            pwtg_line(r,14,"REQ RES RESPONSE",q->resource,q->response);
+            uint64_t age=q->io.last>=q->io.started?q->io.last-q->io.started:UINT64_MAX;
+            pwtg_line(r,15,"REQ AGE TICKS",(uint32_t)(age>>32),(uint32_t)age);
+        }
+    }
     (void)pwtg_draw(r);early_wifi_gop_raw();
 }
 #endif
