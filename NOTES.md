@@ -66,6 +66,15 @@ early samples only. On0029 the human already confirmed boot complete and said
   validation ACK and independently queried validated-state true. Native-start
  04:07:27.798784Z; ACK04:07:47.293548Z. Host64200 ended0. No post-native
   retry/reset/USB observer. ACK does not prove kernel/AOP handshake/scan.
+- Third consecutive physical-feedback audit04:11Z: same terminal ACK record,
+  no current screen supplied and no live host/device job to wait on. Previous
+  follow-up was no physical progress, not a verified live-process wait. Goal
+  status now BLOCKED, not complete: cannot choose the next physical fix without
+  current screen evidence while post-native USB observation remains paused.
+  Resume on new HOLD/PARENT/AOP diagnostic values or current screen image;
+  preserve this spent trial, do not replay it. Execution remains2/5, with the
+  current step and3 later steps incomplete. Source5e14e4f and handoff047156e
+  were pushed; only the unowned remote-memory hunk remains outside commits.
 - Follow-up physical-feedback audit04:10Z: current checkout remains d2d1a66
   with only the preserved unowned hunk dirty. Host log is terminal; boot record
   still ends at04:07:47 native ACK with kernel/scan/networking unproven. No new
