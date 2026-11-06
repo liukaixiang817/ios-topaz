@@ -170,6 +170,9 @@ static struct polaris_efi_ram_lease ram_lease;
 static int64_t cpu_status;
 #if EFI_XNU_WIFI_NATIVE_RUNTIME_AVAILABLE
 static uint32_t wifi_native_boot_phase;
+#if EFI_XNU_WIFI_TERMINAL_GOP_DIAGNOSTICS
+static void wifi_native_startup_gop_evidence(void);
+#endif
 #endif
 static uint8_t ap_stack[131072] __attribute__((aligned(128)));
 struct polaris_efi_ap polaris_efi_ap_state __attribute__((aligned(128)));
@@ -830,6 +833,10 @@ __attribute__((noreturn)) static void power_unknown_hold(void)
     if(early_wifi_memory.unknown||early_wifi_memory.memory.unknown)early_wifi_gop_evidence();
     else
 #endif
+#if EFI_XNU_WIFI_NATIVE_RUNTIME_AVAILABLE
+    if(wifi_native_boot_phase>=4&&!wln_cpu_on_issued)wifi_native_startup_gop_evidence();
+    else
+#endif
     terminal_gop_evidence();
 #endif
     for(;;)__asm__ volatile("wfe":::"memory");
@@ -1109,6 +1116,37 @@ _Static_assert(sizeof(log_buffer)>=2*(PWBD_RAW_BYTES+sizeof(pwrpt_record)+sizeof
 #include "uefi-wifi-worker-native.h"
 #include "uefi-wifi-system-off-native.h"
 static struct pwns_parent wifi_native_parent;
+#if EFI_XNU_WIFI_TERMINAL_GOP_DIAGNOSTICS
+/* Failure-only projection of resident startup records. Use the already armed
+ * early GOP before CPU_ON; never poll a provider or draw after CPU_ON here. */
+static void wifi_native_startup_gop_evidence(void)
+{
+    struct pwtg_result*r=&early_wifi_gop;const struct pwns_parent*s=&wifi_native_parent;
+    const struct pmsc_owner*o=&s->owner;
+    if(wln_cpu_on_issued||wifi_native_boot_phase<4||
+       r->native_address!=(uintptr_t)&wln_cpu_on_issued||r->self_base!=pgcd_record.self_base||
+       r->self_bytes!=pgcd_record.self_bytes||r->headers.address[0]!=(uintptr_t)gop){
+        (void)pwtg_fail(r,PWTG_ARGUMENT);early_wifi_gop_raw();return;
+    }
+    pwtg_line(r,0,"NATIVE HOLD",wifi_native_boot_phase,s->error);
+    pwtg_line(r,1,"PARENT PH FLAGS",s->phase,s->attempted|(s->unknown<<8));
+    pwtg_line(r,2,"OWNER ERR PHASE",o->error,o->phase);
+    pwtg_line(r,3,"OWNER HELD MASK",o->held,o->mask_issued);
+    pwtg_line(r,4,"OWNER LAST TICK",(uint32_t)(o->last>>32),(uint32_t)o->last);
+    pwtg_line(r,5,"OWNER ENTRY TICK",(uint32_t)(o->entry.cpu.ticks>>32),(uint32_t)o->entry.cpu.ticks);
+    pwtg_line(r,6,"OWNER CHECKS",o->checkpoints,o->live_checks);
+    pwtg_line(r,7,"IMAGES MAP ERR",s->images.error,s->map.error);
+    pwtg_line(r,8,"RPMH CMDDB ERR",s->rpmh.error,s->cmddb.error);
+    pwtg_line(r,9,"RSC POWER ERR",s->rsc.error,s->power.error);
+    pwtg_line(r,10,"CLOCK AOP ERR",s->clocks.error,s->aop.error);
+    pwtg_line(r,11,"BOOT AUTH ERR",s->boot.error,s->auth.error);
+    pwtg_line(r,12,"SMEM RMTFS ERR",s->smem.error,s->rmtfs.error);
+    pwtg_line(r,13,"WLAN SMMU ERR",s->wlan.error,s->smmu.error);
+    pwtg_line(r,14,"CE WMI ERR",s->ce.error,s->wmi.error);
+    pwtg_line(r,15,"HTT NONCE ERR",s->htt.error,s->nonce.error);
+    (void)pwtg_draw(r);early_wifi_gop_raw();
+}
+#endif
 static struct pwwn_state wifi_native_worker;
 static struct pwno_state wifi_native_terminal;
 static uint32_t wifi_native_prepared;

@@ -54,6 +54,34 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: cover native startup diagnostics before sending final window fix
+
+- efcf353 pushed and seven owned files synchronized. mba-window-0001 audit
+ 88913 completed0/current40-check review PASS and returned FASTBOOT02:10:03Z;
+  its imagefe978bac... was NOT sent and nonce NOT consumed. Superseded that
+  candidate after source review found later native startup failures fell through
+  to legacy power diagnostics, which could leave the old screen unchanged.
+- Add terminal-only wifi_native_startup_gop_evidence for boot phase>=4 before
+  CPU_ON. It uses the already armed early GOP, preserves source/self/native
+  guards, projects resident parent phase/error/flags, CPU owner error/phase/
+  timing/checkpoints and18 child module errors. No provider/USB/clock poll or
+  ordinary-progress draw; no call to this drawer after CPU_ON. Existing MBA
+  diagnostics/guards remain unchanged. Actual extracted function66 phase/
+  CPU_ON/mapping/guard cases PASS under ASan/UBSan.
+- Final candidate mba-window-0002 full EFI/arm64 compile PASS,831 functions,
+  max stack816B. Recompiled normal full composition2889178 PASS. Same tested
+ 88589 MBA/172548 owner/101 ABI/89 codec evidence from window-0001 applies
+  to unchanged caller sources. Original81 firmware files and codec roundtrip
+  PASS. Final driver809984B SHA92f7f8674697c053ec367da07e56d513e9b5e9156ca8e76831d8e5ed03378177;
+  image6230016B SHAf5b509f5a3edc7e79ae6edaf3f35adb6e39074f4e470ecef9e1cf103d186c079.
+- FASTBOOT polaris confirmed02:13:54.433707Z. Final candidate-bound readonly
+  audit13450 running after all builds/tests ended; require current40-check
+  review and frozen admission before its one fresh send. No new native image
+  sent yet. These remain software results, not physical owner/radio success.
+- Next final window-fix physical outcome and precise native startup failure
+  if any, then actual scan/Cyberpunk AU join/IP/DNS/data/stability. Execution2/5,
+  current plus3 steps. All private artifacts remain ignored; unowned WIP intact.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: measured219ms post-peer timeout; separate finite phase windows
 
 - Current photo for mba-post-check-0001 image42960357... shows DETAIL02010005/1:
