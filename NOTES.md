@@ -54,6 +54,44 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: first AOP access refused by absent UEFI registration; own-DT path ready
+
+- New aop-delivery-0001 photo: native phase9, WHY1/EVENT1, step0/index0/read1,
+  address0xc300000, targets0/0, PAR0, native IO0 and protocol error0. GCD
+  type/cap/attr0 and EFI descriptor matches0. Thus pre-target admission refused
+  before any AOP AT/MMIO; no protocol descriptor or hardware failure observed.
+- Rechecked own live.dts node reg=c300000/1MiB, IRQ1799000c/mask1/descriptor0,
+  own msm_qmp.c blobd6e41ae5d88db0f91e1c6fd13f1005dbb5e56481 (Git-blob verified)
+  maps these named resources noncacheable. UEFI PI GCD registration is distinct
+  from actual mapping; absence alone is NOT a resource/permission proof.
+- Add pman_target only for own AOP message aperture. Generic/doorbell targets
+  retain pmpn_target. An unregistered path requires whole aperture covered by
+  current GCD type0 with zero cap/attr/owner handles, no EFI descriptor overlap
+  anywhere in the aperture, no loaded image, fresh unchanged selected GCD node
+  before/after each access, and continuous exclusive CPU/source ownership.
+  Journal preserves actual GCD type0. Actual pmni_aop still requires identity
+  NS Device read/write PAR before MMIO; WB/NC or fault fails. No GCD/table/cache
+  mutation, generic absent-range grant, firmware provider call or retry added.
+- Old deployed header reproduces rejection in same software namespace. New
+  actual resource suite787852 checks/12 scenarios PASS: full AOP on/off, original
+  generic rejection, adjacent/unaligned refusal, reserved/RAM/cap/attr/handle/
+  EFI-overlap/partial-aperture refusals, fresh GCD mutation and both bad AT
+  restore and WB-RAM translation rejected before AOP words. Existing native AOP
+ 1227959 checks/17 scenarios PASS. Full normal parent/runtime/terminal2889178
+  PASS SOFTWARE leaves. Unchanged330 diagnostic tests reused, not rerun.
+- Full EFI/arm64 compile833 functions,max stack816B; original codec/81 files
+  PASS. Driver814592B SHAa50f00a641b0ba91ffab4ff33b0204655324c1f5026d099b9eae7a46bd586875.
+  Private aop-own-resource-0001 carries source/DT proof and fresh unsent image/
+  nonce. Kernel CI42091724671/payload unchanged. All build/test jobs ended0;
+  polaris FASTBOOT03:34:34Z; fresh readonly audit started. Require40 checks and
+  frozen admission before one-use trial. Current physical Device translation/
+  AOP descriptor/protocol remain unproven. Old image/pool SPENT.
+- Execution2/5/current plus3 steps remain: MSS/WLAN scan/Cyberpunk AU join/IP/
+  DNS/data/stability. Goal ACTIVE unfinished. Last15min report03:33Z,next03:48Z.
+  Preserve unowned remote-memory hunk, Android/Windows/backups, USB observer
+  pause and source-only publication. Broad original-tree listing97453 ended130
+  intentionally; no background file enumeration remains.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: AOP delivery diagnostic sent once; awaiting detailed physical failure
 
 - Sourceb11dd49 pushed and four owned paths synchronized. Candidate

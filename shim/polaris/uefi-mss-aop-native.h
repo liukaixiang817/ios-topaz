@@ -54,6 +54,38 @@ static inline int pman_off(struct pman_state*s)
        (const void*)(uintptr_t)p->supplies,((struct pmsc_owner*)(uintptr_t)p->owner)->last)<0){pman_fail(s,2);return 0;}
     s->phase=2;return 1;
 }
+/* Own live DT qcom,qmp-aop@c300000 binds this exact 1MiB message RAM.
+ * The original UEFI need not register that peripheral in its GCD/EFI maps.
+ * Admit only this DT resource when its complete aperture has no EFI/image
+ * backing and the current GCD node is unallocated NonExistent with zero
+ * attributes/capabilities/handles. Preserve that actual type0 in the record;
+ * never relabel the namespace, alter page tables or grant generic MMIO.
+ * pmni_aop still proves identity Device R/W translations before each access. */
+static inline int pman_target(struct pmpn_state*s,uint64_t page,struct pmrg_target*t)
+{
+    if(page<PMAQ_BASE||page>=PMAQ_BASE+PMAQ_BYTES)return pmpn_target(s,page,t);
+    if((page&4095)||!pwmc_zero(t,sizeof(*t))||!pmpn_live(s))return 0;
+    struct pmrg_map*g=(void*)(uintptr_t)s->namespace;struct pmsc_owner*o=(void*)(uintptr_t)s->owner;
+    const struct pweh_result*h=(const void*)(uintptr_t)o->retained;
+    for(unsigned n=0;n<g->pass[1].nodes;n++){
+        const struct pmli_read*q=&g->pass[1].node[n];uint64_t base=pwfi_le(q->raw+24,8),end=pwfi_le(q->raw+32,8);
+        if(base>page||end<page+4095)continue;
+        if(pwfi_le(q->raw+56,4)==3)return pmpn_target(s,page,t);
+        t->attempted=t->unknown=1;t->page=page;t->before=o->last;t->index=n;
+        if(base>PMAQ_BASE||end<PMAQ_BASE+PMAQ_BYTES-1||end-base==UINT64_MAX||
+           pwfi_le(q->raw+56,4)||pwfi_le(q->raw+40,8)||pwfi_le(q->raw+48,8)||
+           pwfi_le(q->raw+64,8)||pwfi_le(q->raw+72,8))return 0;
+        for(uint64_t off=0;off<h->map.map.bytes;off+=h->map.map.stride){
+            const struct efi_memory*d=(const void*)(h->map.data+off);
+            if(d->physical<PMAQ_BASE+PMAQ_BYTES&&PMAQ_BASE<d->physical+d->pages*4096)return 0;
+        }
+        if(!pmli_heap_excluded(&((struct pmli_ledger*)(uintptr_t)g->images)->pass[1],PMAQ_BASE,PMAQ_BYTES)||
+           !pmrg_read(g,&t->node,q->address,80,1))return 0;
+        if(!pmli_read_equal(q,&t->node)){pmrg_fail(g,5);return 0;}
+        t->descriptor=(struct pgcd_descriptor){base,end-base+1,0,0,0,0,0,0};
+        t->after=o->last;t->unknown=0;t->complete=1;return pmpn_live(s);
+    }return 0;
+}
 /* One actual pending command per call; WAIT also covers the protocol's own
  * polling delay. The caller must use the continuous counter, never synthesize
  * elapsed time or restart the phase after an uncertain return. */
@@ -70,12 +102,12 @@ static inline int pman_step(struct pman_state*s)
     if(!pwmc_zero(r,sizeof(*r)))return pman_fail(s,3);
     r->side=side;r->command=command;r->attempted=r->unknown=1;s->pending=++s->deliveries;
     unsigned memory=command.kind!=PMAQ_FULL_ORDER,failure=1;
-    if(memory&&!pmpn_target(p,command.address&~UINT64_C(4095),&r->target[0]))goto fail;
+    if(memory&&!pman_target(p,command.address&~UINT64_C(4095),&r->target[0]))goto fail;
     failure=2;if(!pmpn_arch(p,&r->opening))goto fail;
     failure=3;if(!pgcd_equal(&r->opening,&p->architecture,offsetof(struct pmni_arch,ticks)))goto fail;
     failure=4;if(command.kind==PMAQ_WRITE32&&!pmsc_mark_effect(o,PMSC_REMOTE))goto fail;
     failure=5;if(!pmni_aop(q,&r->command,&r->opening,&r->native))goto fail;
-    failure=6;if(memory&&!pmpn_target(p,command.address&~UINT64_C(4095),&r->target[1]))goto fail;
+    failure=6;if(memory&&!pman_target(p,command.address&~UINT64_C(4095),&r->target[1]))goto fail;
     failure=7;if(memory&&r->target[0].index!=r->target[1].index)goto fail;
     failure=8;if(!pman_live(s))goto fail;
     failure=9;if(!pgcd_equal(&command,&r->command,sizeof(command)))goto fail;

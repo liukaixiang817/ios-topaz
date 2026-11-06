@@ -14,6 +14,21 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+## Own AOP message-RAM resource (0189, 2026-11-06)
+
+Rechecked own live.dts qcom,qmp-aop@c300000: message RAM c300000/1MiB,
+IRQ1799000c/mask1 and descriptor offset0. Own msm_qmp.c Git blob
+ d6e41ae5d88db0f91e1c6fd13f1005dbb5e56481 obtains those named DT resources
+and maps them noncacheable. UEFI PI1.9 GCD service definitions distinguish
+resource registration from CPU translation. The observed UEFI GCD type0/zero
+attributes and absent EFI descriptor alone supply no hardware permission.
+Our native AOP path uses the exact own-DT resource, requires no EFI/image
+backing and a current zero/unallocated whole-aperture GCD node, then unchanged
+identity Device R/W translations before each access. Actual type0 is retained;
+no generic MMIO acceptance, GCD/page-table mutation or foreign mapping is used.
+Private source/DT provenance: aop-own-resource-0001. Physical access/protocol
+and Wi-Fi remain unverified until current device evidence exists.
+
 ## Own userland launch probe (0189, 2026-11-06)
 
 Reviewed the retained HackiOS userland build.sh (same a79ff077 reference,
