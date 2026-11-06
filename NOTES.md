@@ -69,8 +69,12 @@ early samples only. On0029 the human already confirmed boot complete and said
   supply sampling/raising or identify the next physical failure. Async text
   question asks new heading/initial rows or actual iOS desktop arrival. Native
   ACK does NOT prove the correction, kernel boot, supply readiness or Wi-Fi.
-  This is the first occurrence of this candidate's physical-feedback dependency;
-  goal ACTIVE, not complete/blocked. Do not boot another variant without result.
+  Revalidated05:34Z on first automatic continuation: same host terminal result,
+  no new physical screen. This dependency has occurred in2 consecutive goal
+  turns (original plus continuation); prior turn made source/trial progress,
+  current turn has no technical progress and is NOT a verified live-job wait.
+  Goal ACTIVE; blocked threshold not met. Do not boot another variant without
+  the result. Private physical-feedback-blocker-audit.json records this audit.
 - Earlier actual AOP ON/early MSS allocation remain established; MSS startup,
   WLAN control/scan/Cyberpunk AU join/IP/DNS/real data/stability remain unproven.
   Execution2/5;4 steps remaining INCLUDING current. Last15min05:22Z,next05:37Z
