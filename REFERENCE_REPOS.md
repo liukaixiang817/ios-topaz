@@ -14,6 +14,31 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+## Own MSS pages absent from firmware resource enumeration (0189, 2026-11-06)
+
+Physical468560A1 shows QDSP page04080000 inside one GCD type0 record with
+capabilities/attributes0, no EFI overlap; initial DEBUG load never issued.
+The [PI GCD definitions](https://uefi.org/specs/PI/1.9/V2_Services_DXE_Services.html)
+call type0 NonExistent. That record is not a CPU mapping, device permission,
+or proof of real MMIO accessibility. Preserve its actual type in evidence.
+
+Independent own live DT SHAebdff5c2c30ccb69b5f9f35684cbc968e150d34e2aacead1a4f5aff8ca47c7b1
+lines5570..5593 names qdsp6_base04080000/100, rmb_base04180000/20,
+alt_reset04180044/4 and qdsp6v65-1-0. Own pil-msa.c SHAde6fab1d... and
+pil-q6v5.c SHAa15e83d2... specify DEBUG18/SLEEP3c/CORE400/CMD404 and RMB
+status40, including explicit offsets beyond the short DT spans, all within
+the same two4KiB pages. No HackiOS/other phone addresses or inherited power
+assumptions substitute for these own resources. Source/photo proof remains
+private in mss-dt-pages-0001.
+
+Only these two pages may use a type0 GCD record with zero cap/attr/padding/
+image-owner/device-owner and NO EFI overlap. Fresh node equality, current
+exclusive owner, typed exact command and native Device read/write identity
+AT checks remain mandatory; failed translation cannot issue a Device load or
+store. No GCD/page-table mutation or firmware service call. Other pages,
+including adjacent04084000, keep the existing registered-MMIO requirement.
+Physical Device accessibility, MBA-ready and Wi-Fi still require actual proof.
+
 ## VRM read-response fields (0189, 2026-11-06)
 
 Physical supply-values screen shows all19 baseline reads retired: ARC6/3/0,

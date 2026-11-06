@@ -30,6 +30,20 @@ static void resource_fault_hook(void)
     if(resource_fault==3)put(core+PMRG_LOCK+8,8,8);
     if(resource_fault==4)put(image_heap+0x3000+48,0,8);
 }
+/* Model the observed original-firmware gap without labeling it MMIO. */
+static inline void resource_unregistered_mss(void)
+{
+    uint8_t*first=image_heap+0x3000,*gap=image_heap+0x70000,*tail=image_heap+0x71000;
+    uint64_t next=pwfi_le(first+8,8),end=pwfi_le(first+32,8);
+    CHECK(!pwfi_le(first+24,8)&&end>0x50fffff&&next==(uintptr_t)image_heap+0x4008);
+    memcpy(gap,first,80);memcpy(tail,first,80);
+    put(first+8,(uintptr_t)gap+8,8);put(first+32,0x3ffffff,8);
+    put(gap+8,(uintptr_t)tail+8,8);put(gap+16,(uintptr_t)first+8,8);
+    put(gap+24,0x4000000,8);put(gap+32,0x50fffff,8);
+    put(gap+40,0,8);put(gap+48,0,8);put(gap+56,0,4);
+    put(tail+8,next,8);put(tail+16,(uintptr_t)gap+8,8);put(tail+24,0x5100000,8);put(tail+32,end,8);
+    put((void*)(uintptr_t)(next+8),(uintptr_t)tail+8,8);
+}
 static void resource_setup(void)
 {
     resource_fault=resource_trigger=0;image_setup();
@@ -46,6 +60,9 @@ static void resource_setup(void)
     }
 #if defined(PMRG_TEST_PREPARE)
     PMRG_TEST_PREPARE();
+#endif
+#ifdef PMRG_TEST_UNREGISTERED_MSS
+    resource_unregistered_mss();
 #endif
 #ifndef PWNS_TEST_PREPARE_ONLY
     CHECK(image_run()&&pmli_current(ledger,owner));

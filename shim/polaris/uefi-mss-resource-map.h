@@ -133,6 +133,34 @@ static inline int pmrg_map_excludes(const struct pweh_result*h,uint64_t page)
            (d->type!=11||d->virtual_address||(d->attributes!=0&&d->attributes!=1)))return 0;
     }return 1;
 }
+/* The original Core leaves the own QDSP/RMB pages in a NonExistent GCD
+ * gap. Own live DT qdsp6_base/rmb_base and qdsp6v65 vendor offsets identify
+ * ONLY these two pages. A gap is not an MMIO or CPU permission grant: retain
+ * its actual type0 record, fresh node equality, exclusive owner and the
+ * exact pending command's Device R/W AT checks before any target access.
+ * No foreign/unallocated RAM, other device page or EFI overlap is admitted. */
+static inline int pmrg_efi_absent(const struct pweh_result*h,uint64_t page)
+{
+    if(!h||(page&4095)||page>UINT64_MAX-4096)return 0;
+    const struct pwea_map*m=&h->map;
+    if(!m->map.bytes||m->map.stride<sizeof(struct efi_memory)||(m->map.stride&7)||
+       m->map.bytes>sizeof(m->data)||(m->map.bytes%m->map.stride))return 0;
+    for(uint64_t off=0;off<m->map.bytes;off+=m->map.stride){
+        const struct efi_memory*d=(const void*)(m->data+off);
+        if(!d->pages||d->pages>UINT64_MAX/4096||d->physical>UINT64_MAX-d->pages*4096)return 0;
+        if(d->physical<page+4096&&page<d->physical+d->pages*4096)return 0;
+    }return 1;
+}
+static inline int pmrg_device_descriptor(const struct pweh_result*h,uint64_t page,const uint8_t*raw)
+{
+    if(!raw||(page&4095))return 0;
+    uint64_t base=pwfi_le(raw+24,8),end=pwfi_le(raw+32,8);
+    if(base>page||end<page||end-page<4095||end-base==UINT64_MAX)return 0;
+    uint64_t cap=pwfi_le(raw+40,8),attr=pwfi_le(raw+48,8);unsigned type=(unsigned)pwfi_le(raw+56,4);
+    if(type==3)return (cap&1)&&attr<=1;
+    return (page==UINT64_C(0x4080000)||page==UINT64_C(0x4180000))&&
+        !type&&!cap&&!attr&&!pwfi_le(raw+60,4)&&!pwfi_le(raw+64,8)&&!pwfi_le(raw+72,8)&&pmrg_efi_absent(h,page);
+}
 /* Current namespace comparison only. No Device address is dereferenced here;
  * the eventual native access must still perform exact Device R/W AT and bind
  * a typed pending command plus the persistent resource owner. */
@@ -150,11 +178,10 @@ static inline int pmrg_target_now(struct pmrg_map*r,uint64_t page,struct pmrg_ta
     for(unsigned n=0;n<r->pass[1].nodes;n++){
         const struct pmli_read*q=&r->pass[1].node[n];uint64_t base=pwfi_le(q->raw+24,8),end=pwfi_le(q->raw+32,8);
         if(base>page||end<page+4095)continue;t->index=n;
-        if(end-base==UINT64_MAX||pwfi_le(q->raw+56,4)!=3||!(pwfi_le(q->raw+40,8)&1)||
-           pwfi_le(q->raw+48,8)>1||!pmrg_read(r,&t->node,q->address,80,1))return 0;
+        if(!pmrg_device_descriptor(h,page,q->raw)||!pmrg_read(r,&t->node,q->address,80,1))return 0;
         if(!pmli_read_equal(&t->node,q))return pmrg_fail(r,5);
         t->descriptor=(struct pgcd_descriptor){base,end-base+1,pwfi_le(q->raw+40,8),pwfi_le(q->raw+48,8),
-            3,0,pwfi_le(q->raw+64,8),pwfi_le(q->raw+72,8)};
+            (unsigned)pwfi_le(q->raw+56,4),0,pwfi_le(q->raw+64,8),pwfi_le(q->raw+72,8)};
         t->after=o->last;t->unknown=0;t->complete=1;return 1;
     }return 0;
 }

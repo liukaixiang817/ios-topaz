@@ -54,6 +54,40 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: own-DT MSS pages admitted without fabricating GCD MMIO; physical trial prepared
+
+- New468560A1 photo of SPENT mba-target-diagnostic-0001 resolves the prior
+  feedback dependency. First requested page04080000: target/node101/0,
+  GCD type0/matches1/cap0/attr0, base04000000; no EFI overlap or invalid EFI
+  entries, map error0/nodes73/index18. GCD end is visually uncertain and is
+  NOT used as authority. First DEBUG04080018 access still unissued.
+- Own live DT qcom,mss@4080000 and own pil-msa/pil-q6v5 vendor offsets identify
+  ONLY QDSP04080000 and RMB04180000 pages. pmrg_device_descriptor admits those
+  exact two pages when the original GCD gap has zero cap/attr/padding/owners
+  and no EFI overlap; retains actual type0. Fresh node equality, current
+  exclusive owner, exact pending command and actual Device identity R/W AT
+  remain mandatory. No permission from type0 alone, broad-gap grant, GCD/page-
+  table mutation, original-firmware call, timing/voltage/operation change.
+- New DT-page tests PASS71 scenarios/865588 checks, including EFI overlaps,
+  malformed maps, neighboring-page refusal, five bad AT outcomes, changed
+  current node and sticky no-replay. Normal full composition PASS2889178;
+  simultaneous unregistered-MSS/VRM-response flags PASS2889179, phase46.
+  All are SOFTWARE results; no hardware access or networking claim.
+- mss-dt-pages-0001 full EFI/arm64843 functions/max816B; original codec81
+  unchanged files PASS. All6 test commands and4 build/offline commands exit0.
+  Driver825856B SHA6ba5bfe77add8a67384c9990280d27eeeae60549e306c5c072d2ffc6228545a5.
+  Image6236160B SHA1bb7499ae445d9ff97b1483527b8626dc710f4a41655622a3e75d96824ccc60b.
+  Exactly two compiled headers changed: uefi-mss-resource-map.h and
+  uefi-mss-power-native.h. Kernel CI42091724671 and payload unchanged.
+- Expected FASTBOOT06:21:06.080304Z. Fresh readonly audit host80929 running;
+  next independent40checks, frozen admission, ONE temporary boot. This
+  candidate is NOT yet sent. New physical-feedback dependency starts fresh.
+  Preserve unowned remote-memory header SHA7215a3786b3b9226aa4f839648bbecc80d9c575f3fd3fb00250481dd91786a01.
+- Execution2/5,current plus3steps remain. MBA-ready/modem-auth/WLAN scan,
+  Cyberpunk AU join/IP/DNS/data/stability remain unproven. Last15min06:15Z,
+  next06:30Z while working. No USB observer, replay, reset or partition write;
+  preserve Android/Windows/backups. Private photos/vendor/device data excluded.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: MBA target-map diagnostic sent once; actual descriptor fields pending
 
 - Source484dd56 pushed/synchronized. mba-target-diagnostic-0001 fresh readonly

@@ -139,10 +139,9 @@ static inline int pmpn_target(struct pmpn_state*s,uint64_t page,struct pmrg_targ
     for(unsigned n=0;n<g->pass[1].nodes;n++){
         const struct pmli_read*q=&g->pass[1].node[n];uint64_t base=pwfi_le(q->raw+24,8),end=pwfi_le(q->raw+32,8);
         if(base>page||end<page+4095)continue;t->index=n;
-        if(end-base==UINT64_MAX||pwfi_le(q->raw+56,4)!=3||!(pwfi_le(q->raw+40,8)&1)||pwfi_le(q->raw+48,8)>1||
-           !pmrg_read(g,&t->node,q->address,80,1))return 0;
+        if(!pmrg_device_descriptor(h,page,q->raw)||!pmrg_read(g,&t->node,q->address,80,1))return 0;
         if(!pmli_read_equal(q,&t->node)){pmrg_fail(g,5);return 0;}
-        t->descriptor=(struct pgcd_descriptor){base,end-base+1,pwfi_le(q->raw+40,8),pwfi_le(q->raw+48,8),3,0,pwfi_le(q->raw+64,8),pwfi_le(q->raw+72,8)};
+        t->descriptor=(struct pgcd_descriptor){base,end-base+1,pwfi_le(q->raw+40,8),pwfi_le(q->raw+48,8),(unsigned)pwfi_le(q->raw+56,4),0,pwfi_le(q->raw+64,8),pwfi_le(q->raw+72,8)};
         t->after=o->last;t->unknown=0;t->complete=1;return pmpn_live(s);
     }return 0;
 }
