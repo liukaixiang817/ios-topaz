@@ -19,6 +19,8 @@ their build/setup scripts or prebuilts has been executed.
 CurrentN2human FIRST RMB STOP title isbound toitsnewonce-onlyimage. Exact
 compiler-boundpredicate requires two returned initialoperations withnoerror;
 accepttitle fornextboundary, whileindependentnumericrowsremainunreported.
+Supplementaryphoto3D2B261C independentlyconfirms2/2events,1/2step andzeroerror.
+WRITEreturnslot0 isnotreadback ofcommandvalueF8100000.
 NewN6variantuses samecode/order andstops after STATUS, beforesecondcopy.
 Ownpil-msa.c868..891 confirms LENGTH_READ -> START -> LOAD_READY -> LENGTH_WRITE
 -> STATUS; currentnativefullorder also retained. No foreignprotocol imported.

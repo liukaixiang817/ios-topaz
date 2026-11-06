@@ -62,6 +62,13 @@ early samples only. On0029 the human already confirmed boot complete and said
   exactphase/step/events and noerrors. Accept guardedtitle asboundarywitness;
   doNOTinventnumericrows. Freeformnumericrequest remainsoptional supplementary.
   New prior-current-checkpoint-title-admission.json records this inference.
+- Supplementaryphoto3D2B261C nowindependently verifies N2events2/2,step1/2,
+  copy2pages/1segment,error0,ready/unknown1/0,modemphase/segment2/0,submitted/
+  events1/2. WRITEreturnslot0/commandvalueF8100000 isNOTMMIOreadback. First
+  STARTwritephysicallyreturned; fullbank/authentication/network stillunproven.
+  Savedboundprivatephoto/JSON; freeformnumericrequestfulfilled. Newreview0002
+  includesphysicalevidence, freezes862inputs andofflineTERMINAL0. Oldreview0001
+  andcommands preserved. Use native-boot-command-0002.json fornewonce-onlytrial.
 - New firmware-first-rmb-status-0001 selectsN6 on SAME94cec0bsource. Thisruns
   existingLENGTH_READ/START/COMMAND/LENGTH_WRITE/ORDER/STATUS andstopsbefore
   secondcopy, requiringphase1/segment1/stepSTATUS/length8192/events6 andvalid
