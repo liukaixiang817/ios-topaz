@@ -54,6 +54,31 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Current blocking handoff — 2026-11-07 Melbourne: N6 physical screen result required
+
+- Fresh resumed audit nowTHREEconsecutivegoalturns forsameN6screen dependency:
+  actualN6trial13:55:04.672733Z/terminalACK13:57:04Z, then14:01:09Z and
+  14:02:46.742399Zrevalidations. No newN6title/photo/numeric/error/reset report.
+  PriorFASTBOOT3turnaudit isNOTcarriedover. LastturnNO_PROGRESS, notverifiedwait.
+- Host45286TERMINAL0collected, no livejob orpost-startUSBreader. Allindependent
+  source/build/object/default/codec/payload-userlandaudit complete. No evidence
+  justifiesa newproducerfix oranothertrial beforethisactualoutcome. Markgoal
+  BLOCKED afterpublishinghandoff; objective remainsUNACHIEVED, notuserpaused.
+- Askonlyforcurrentphone title + FIRST RMB EVENTS/RMB VALUE EXPECT/RMB STEP NEXT
+  (orcurrenttopdiagnosticphoto),保持画面. No restartrequested. ExpectedN6events6/6,
+  last/nextstep5/5; statusvalue mustbeinterpreted asactualMBAreply, notassumed0.
+  FIRST RMB STOPcurrenttitle isguardedbycompiler-boundN6conditions; independently
+  reportednumbersstrengthenwitness. Actualerror/reset determinesnextdiagnostic.
+- Case firmware-first-rmb-status-0001,review0002/imageed4f0f2d.../driverb0057479...
+  SPENT; NEVERreplay/resetnonce. OldN1/N2alsoSPENT. N2photo3D2B261C isolder2event
+  result, notN6proof. No post-nativeUSBquery, observer, partition/GPT/Windows
+  write, manualjournalrepair orXNUexecution. Normalfullroot38/40remainsREFUSED.
+- Source94cec0bunchanged; latestdocsparent2fd538b. Unownedremote-memory9linehunk
+  SHA7215a3786b3b9226aa4f839648bbecc80d9c575f3fd3fb00250481dd91786a01 preserved.
+  Currentexecution2/5,fourincludingcurrentremain; scan/join/IP/DNS/data/stability
+  unproven. Lastformal14:00Zwindow; resume15mincadence withactualcontinuation.
+  Nextuserresume startsfreshblocked audit; inspectactualnewresult beforeacting.
+
 ### Active resumed handoff — 2026-11-07 Melbourne: first segment STATUS diagnostic sent ONCE
 
 - User confirmsFASTBOOT andexplicitlyresumesgoalACTIVE. Prior3turnblocked audit
