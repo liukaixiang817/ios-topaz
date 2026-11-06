@@ -54,25 +54,34 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: resumed actual FASTBOOT; return-checkpoint audit running
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: returned checkpoint native ACK; actual screen pending
 
-- User resumed goal ACTIVE and supplied EABC6FDE: same prior AUTH CHECKPOINT1/2,
-  metadata phase1/events0, complete1/error0, events3/round1, DONE4/pending0 and
-  owner held1. This corroborates completed first metadata assignment before
-  any RMB auth write; it is not the returned-mode candidate result.
-- Fresh ready-image/source/test bindings verified without repeating passed
-  tests. Actual readonly query10:02:14.878459Z now finds expected FASTBOOT.
-  Previous physical-FASTBOOT blocker RESOLVED. Fresh root-audit33606 RUNNING
-  for auth-metadata-return-checkpoint-0001 into phone-root-audit-0001 with
-  bounded350s host/300s watchdog; no native send or nonce consumption yet.
-- Sourceb99a539 plus handoffs through90bba02 pushed and owned files synced.
-  Next independent40check root review, prepared freeze helper
-  /private/tmp/polaris-freeze-auth-return-checkpoint.py, offline verification,
-  once-only fresh native trial, then actual screen. Do not replay either spent
-  prior candidate; leave USB observer paused. No new kernelCI/source changes.
-- GoalACTIVE,execution2/5,four steps including current. Recovery progress
-  update10:02Z delivered,next15min report10:17Z while active. The full native
-  metadata auth/return, modem/WLAN scan/Cyberpunk AU/IP/DNS/data remain unproven.
+- User resumed goal ACTIVE. EABC6FDE corroborates PRIOR assigned-mode checkpoint:
+  AUTH CHECKPOINT1/2, metadata1/0, complete1/error0, events3/round1, DONE4/pending0,
+  owner held1. It proves first metadata assignment before RMB IO, not a result
+  of this new returned-mode candidate. Photo and control transcription saved
+  privately beside prior F732A128 evidence. Previous physical-FASTBOOT blocker
+  resolved by actual readonly query10:02:14.878459Z finding expectedPolaris.
+- New auth-metadata-return-checkpoint-0001 image/source/test bindings match;
+  sourceb99a539 plus handoffs throughe0d1679 pushed/synchronized. No source edit
+  or repeated test needed. Fresh root-audit33606 ended0 at10:04:38.866256Z;
+  independent40/40PASS, actualFASTBOOT10:04:38.846256Z.701files frozen and
+  native offline admission PASS. Root/maps/GPT/critical/ESP/NV checked readonly.
+- Image0243e4974ee6fe92c9020d9e4e3d1ba6c9ecaa23061ac9b8b7a28ca395b95952 sent
+  ONCE10:05:14.674133Z,fastboot0. Full100593664B payload validation_ACK and
+  independently queried validated_state true. Native-start10:06:54.771541Z,
+  ACK10:07:14.254116Z; host21178 ended0 at10:07:14.278113Z. All jobs terminal;
+  no live host handle remains. Image/nonce SPENT, never replay.
+- Asked actual new AUTH RETURN STOP/other diagnostic/reboot and key control
+  rows. Current-screen dependency FIRST occurrence after resumed trial. Host
+  ACK is not metadata authentication/return or networking proof. AUTH RETURN
+  STOP would establish completed metadata authentication/secure return before
+  modem-bank sharing/copy. Do not infer it from the older assigned-mode photos.
+- GoalACTIVE,execution2/5,four steps including current. Recovery progress10:02Z,
+  next15min report10:17Z while active. Metadata auth/return/modem/WLAN scan/
+  Cyberpunk AU join/IP/DNS/data remain unproven. No kernelCI/source changes,
+  partition writes, USB observer or old candidate replay. Unowned9line remote-
+  memory hunk preserved/uncommitted. Next interpret actual current screen.
 
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: actual metadata assignment complete; return checkpoint ready
 
