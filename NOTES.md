@@ -54,6 +54,32 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: MBA target-map diagnostic sent once; actual descriptor fields pending
+
+- Source484dd56 pushed/synchronized. mba-target-diagnostic-0001 fresh readonly
+  audit39416 ended0; independent40checks PASS, current roots/GPT/critical/ESP/NV
+  unchanged; returned FASTBOOT06:03:00.514874Z. Frozen546 files and offline
+  one-use admission PASS. No target/map admission or electrical-policy change.
+- Image2bfc18595ddcc7c7c847fee7fa243a889889dba3549679d279c8a415de68df92 sent
+  ONCE06:03:44.177895Z, fastboot0. Full100593664B/1535RAM chunks, validation ACK
+  and independently queried validated state. Native-start06:05:24.200813Z,
+  ACK06:05:43.685823Z. Host65910 ended0; all builds/tests/device jobs terminal.
+  Pool/image SPENT. No retry/replay/reset/post-native observer/partition write.
+- New MBA MAP HOLD screen is required to identify actual first-target rejection:
+  target/node flags, GCD type/matches/cap/attr, EFI type/matches/attr/VA and
+  invalid-overlap count. Async text question sent.307E018C belongs to the
+  PREVIOUS MBA diagnostic and proves admission fails before first DEBUG MMIO;
+  it does not reveal GCD/EFI values or prove this candidate's runtime result.
+- This new physical-feedback dependency is the first occurrence after prior
+  feedback unblocked investigation. Do not inherit the older blocked count;
+  no meaningful map-policy correction is justified without these descriptors.
+  No active host handle remains; waiting for the screen is not a live-job poll.
+- Execution2/5,current plus3steps remain. Earlier supply/proxy/clock completion
+  stands; MBA-ready/modem-auth/WLAN scan/Cyberpunk AU join/IP/DNS/data/stability
+  unproven. Last15min05:57Z,next06:12Z while working. CI42091724671/payload
+  unchanged. Preserve unowned remote-memory header and Android/Windows/backups;
+  photos/vendor/Apple artifacts and private device records stay out of git.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: first MBA DEBUG read rejected before access; target-map diagnostic built
 
 - New photo307E018C of SPENT mba-boot-diagnostic-0001: boot3/inner MBA0,
