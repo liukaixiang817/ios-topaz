@@ -14,6 +14,38 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+## Own MSS invalid-L2 mapping repair (0189, 2026-11-06)
+
+Physical8C01476D shows three stable table descriptors: two tables followed by
+zero at L2 for04080000. Reader error0, issued/returned1, bytes8. This is an
+unmapped region, not a valid mapping to physical0. The TCR low digit in the
+photo is ambiguous; use the actual retained register, never a guessed digit.
+
+Own DT/vendor resources above remain the authority for exactly04080000 and
+04180000. Both lie inside the same invalid2MiB L2 slot. The complete native
+parent may now install one resident BSS L3 table containing ONLY these two
+4KiB Device-nGnRnE/EL1-RW/PXN/UXN entries; the other510 entries stay zero.
+The helper requires the observed4KiB/WBWA/inner-shareable/40bit-PA TCR format
+with root level0 (T0SZ16..24), stable zero L2 and unrestricted ancestors,
+qualified writable WB source/table RAM and the still-exclusive CPU0 owner.
+Already-valid Device mappings need no mutation. Mixed, occupied, malformed,
+changed or unsupported walks are refused. One zero-only exclusive store;
+cache/TLB synchronization; both read/write AT must then independently match
+the exact identity Device pages. Every later MBA owner check retains all
+ancestor/leaf entries. No allocation, firmware callback, valid-entry overwrite,
+MMIO policy bypass, failure retry or partition write. Table lifetime matches
+the retained parent; there is no generic mapping/unmapping service.
+
+TianoCore primary references reviewed:
+[ArmMmuLibCore.c](https://github.com/tianocore/edk2/blob/edk2-stable202411/ArmPkg/Library/ArmMmuLib/AArch64/ArmMmuLibCore.c)
+ReplaceTableEntry distinguishes invalid from live-block replacement;
+[ArmLibSupport.S](https://github.com/tianocore/edk2/blob/edk2-stable202411/ArmPkg/Library/ArmLib/AArch64/ArmLibSupport.S)
+orders table writes and TLB invalidation. This implementation performs a
+stronger broadcast invalidation while all seven peer CPUs are held OFF.
+Neither reference nor HackiOS supplies hardware addresses or replaces this
+phone's actual descriptor/DT/CPU-owner evidence. Private source hashes and
+physical evidence reside in mss-page-map-0001 and mba-table-diagnostic-0001.
+
 ## MSS translation evidence after first target admission (0189, 2026-11-06)
 
 Own06A68979 physical screen reports both read/write PAR output PA zero for

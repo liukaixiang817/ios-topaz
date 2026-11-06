@@ -54,6 +54,47 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: actual invalid L2 proven; two-page repair built, fresh audit running
+
+- Human8C01476D physical MBA PT HOLD resolves the previous screen dependency.
+  TTBR13ffe8000, descriptors13ffe7003/13ffd9003/0, last entry13ffd9100;
+  error3, levels3, stable1, read-refusal0, source issued/returned1 and8bytes.
+  Invalid L2 is observed; decodedPA0 is NOT a valid PA-zero mapping. TCR low
+  digit visually0/8 ambiguous: code uses actual retained TCR, not photo guess.
+- New MSS_PAGE_MAP in complete native runtime only: both own MSS4KiB pages
+  04080000/04180000, one existing invalid L2 slot and resident BSS L3 with
+  exactly2 Device/EL1-RW/PXN/UXN leaves,510zeros. Fresh owner/namespace,
+  writableWB RAM and stable table proof precede one zero-only exclusive store;
+  publish/cache/TLB synchronization then strict identity Device read/write AT.
+  Every later MBA live check rechecks ancestors/all512entries. No firmware
+  callback, allocation, valid-entry overwrite, raw MMIO bypass or rollback.
+  Original individual MMIO predicate extracted unchanged into shared helper.
+- Software PASS:19 native composed mapping scenarios/2352654checks; full
+  startup normal2889178 and gap+VRM2889179 bothphase46/result2; exact extracted
+  display1119prior+49new=1168cases. Negative cases include occupied/cyclic/
+  restricted/changed tables, failed/restoration AT, partial mapping, bad source
+  or storage RAM, image overlap, TCR geometry and post-publication changes.
+  Initial overstrict comparison to old power timestamp failed before write;
+  corrected to existing fresh pmpn_arch plus unchanged architecture fields.
+  Test hook macro collision fixed in fixture; failed logs retained privately.
+- EFI + MachO compile PASS,852functions/max816B stack; generated publish has
+  one ldxr/conditional stxr, clrex on occupied entry, dc/dsb/tlbi/dsb/isb.
+  Original81firmware files codec-roundtrip unchanged. Driver833024B SHA
+  d8c89dfedfcc47bb4ea6a0501f7e21e4d87124fd60a027f049ff3a1a461303c4;
+  image6242304B SHA045cca91ecdaedb161ecef7e522d8b51ecfc81d3e16be5d61149046f96bbbda2.
+  New case mss-page-map-0001. Offline root admission PASS after supplying
+  unchanged local payload links; initial missing-link failure sent nothing.
+- Human replied FASTBOOT. Two ad-hoc host checks incorrectly supplied bytes
+  to str-only identity helper, so their false results do NOT prove absence.
+  Fixed decoded query confirmed expected FASTBOOT07:42:52.977488Z. Fresh
+  authorized strict-readonly audit host99783 now running; no native image sent
+  yet. USB observer remains paused. Freeze/review/commit precede native trial.
+- Goal active; earlier blocker resolved, no inherited blocked count. Actual
+  map publication/MBA-ready/auth/WLAN/scan/network unproven. Execution2/5,
+  current plus3remaining. Last formal report07:30Z, next07:45Z while active.
+  Kernel CI42091724671 and100593664B payload unchanged. Unowned9line
+  uefi-wifi-remote-memory.h hunk preserved/excluded, no device data in git.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: readonly table diagnostic sent once; actual descriptors pending
 
 - Source02fea48 pushed/synchronized. mba-table-diagnostic-0001 fresh readonly

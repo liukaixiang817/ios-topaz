@@ -13,6 +13,7 @@
 #endif
 #include "uefi-mss-aop-native.h"
 #include "../../tools/polaris-arm64-table-walk.h"
+#include "uefi-mss-page-map.h"
 #define PMBN_RECORDS (PMBA_EVENTS+PMSR_EVENTS)
 struct pmbn_delivery {
     struct pmba_command command;struct pmrg_target target[2];
@@ -24,6 +25,9 @@ struct pmbn_state {
     uint64_t aop,power,clocks,owner,records,opening;struct pmba_boot mba;
     uint32_t attempted,ready,unknown,error,pending,deliveries,complete,reserved;
     struct pmbn_walk translation;
+#if EFI_XNU_MSS_PAGE_MAP_AVAILABLE
+    struct pmbm_state mapping;
+#endif
     uint8_t records_digest[32],digest[32];
 };
 static inline int pmbn_fail(struct pmbn_state*s,unsigned error)
@@ -31,6 +35,9 @@ static inline int pmbn_fail(struct pmbn_state*s,unsigned error)
 static inline int pmbn_live(struct pmbn_state*s)
 {
     if(!s||s->ready!=1||s->unknown||s->error||s->deliveries>PMBN_RECORDS)return 0;
+#if EFI_XNU_MSS_PAGE_MAP_AVAILABLE
+    if(s->mapping.complete&&!pmbm_current(&s->mapping))return 0;
+#endif
     struct pmpn_state*p=(void*)(uintptr_t)s->power;struct pmcn_state*c=(void*)(uintptr_t)s->clocks;
     struct pman_state*a=(void*)(uintptr_t)s->aop;
     const struct pmck_lifecycle*clock=(const void*)(uintptr_t)c->clocks;
@@ -46,6 +53,57 @@ static inline int pmbn_child(struct pmbn_state*s,uint64_t at,uint64_t bytes)
         pwea_disjoint(at,bytes,a->records,sizeof(struct pman_delivery)*PMAN_RECORDS)&&
         pwea_disjoint(at,bytes,c->clocks,sizeof(struct pmck_lifecycle));
 }
+#if EFI_XNU_MSS_PAGE_MAP_AVAILABLE
+static inline int pmbm_read(void*context,unsigned pass,unsigned index,uint64_t at,uint64_t*value)
+{
+    struct pmbn_state*s=context;struct pmbm_state*m=&s->mapping;
+    if(pass>1||index>=4||!pmbn_live(s)){m->read_error=1;return 0;}
+    struct pmpn_state*p=(void*)(uintptr_t)s->power;struct pmrg_map*g=(void*)(uintptr_t)p->namespace;
+    struct pmli_ledger*l=(void*)(uintptr_t)g->images;struct pmli_read*q=&m->source[pass][index];
+    if(!pmli_heap_excluded(&l->pass[1],at,8)){m->read_error=2;return 0;}
+    if(!pmli_read_ram(l,q,at,8,1)){m->read_error=3;return 0;}
+    if(!pmbn_live(s)){m->read_error=4;return 0;}*value=pwfi_le(q->raw,8);return 1;
+}
+static inline int pmbm_prepare(struct pmbn_state*s)
+{
+    struct pmbm_state*m=&s->mapping;struct pmpn_state*p=(void*)(uintptr_t)s->power;
+    if(!pwmc_zero(m,sizeof(*m))||!pmbn_live(s))return 0;m->attempted=1;m->error=1;
+    m->error=10;if(!pmpn_arch(p,&m->architecture)||!pgcd_equal(&p->architecture,&m->architecture,offsetof(struct pmni_arch,ticks)))return 0;
+    unsigned ready=0;
+    for(unsigned n=0;n<2;n++){
+        uint64_t page=n?UINT64_C(0x4180000):UINT64_C(0x4080000);m->before[n].page=page;
+        m->error=11+3*n;if(!pmpn_target(p,page,&m->target[n]))return 0;
+        m->error=12+3*n;struct pmni_translation*t=&m->before[n];
+        if(!pmni_translate(t)||t->page!=page||t->read_issued!=1||t->read_returned!=1||
+           t->write_issued!=1||t->write_returned!=1||t->restore_issued!=1||t->restore_returned!=1||
+           t->saved!=t->restored||t->read_par!=t->write_par)return 0;
+        m->error=13+3*n;if(!pmbn_live(s))return 0;
+        ready+=pmni_device_translation(&m->before[n],page);
+    }
+    /* Already valid firmware mappings need no table reads or mutation. */
+    if(ready==2){m->error=0;m->complete=1;return 1;}
+    m->error=2;if(ready)return 0;
+    m->table=((uintptr_t)m->storage+4095)&~UINT64_C(4095);
+    (void)pmpt_collect(&m->walk,m->architecture.ttbr0,m->architecture.tcr,UINT64_C(0x4080000),pmbm_read,s);
+    if(!pmbm_hole(&m->walk,m->table)||!pmbn_child(s,m->table,4096)||!pwmc_zero((void*)(uintptr_t)m->table,4096))return 0;
+    m->error=3;m->storage_AT.page=m->table;
+    if(!pwmc_actual_translate(&m->storage_AT)||!pwmc_translation_valid(&m->storage_AT)||m->storage_AT.page!=m->table)return 0;
+    uint64_t*t=(void*)(uintptr_t)m->table;for(unsigned n=0;n<512;n++)t[n]=pmbm_leaf(n);
+    m->entry=m->walk.entry[2];m->value=m->table|3;
+    if(!pmni_arch_read(&m->final_architecture)||!pmni_arch_same(&m->architecture,&m->final_architecture,m->architecture.ticks)||!pmbn_live(s))return 0;
+    for(unsigned n=0;n<3;n++)if(*(const volatile uint64_t*)(uintptr_t)m->walk.entry[n]!=m->walk.descriptor[n])return 0;
+    /* Power effects already retain the exclusive CPU owner on any failure.
+     * The map is permanent for this RAM-only parent lifetime, never undone. */
+    m->error=4;if(!pmbm_publish(m))return 0;
+    m->error=5;
+    for(unsigned n=0;n<2;n++){
+        m->after[n].page=m->before[n].page;
+        if(!pmni_translate(&m->after[n])||!pmni_device_translation(&m->after[n],m->before[n].page))return 0;
+    }
+    if(!pmni_arch_read(&m->final_architecture)||!pmni_arch_same(&m->architecture,&m->final_architecture,m->architecture.ticks)||!pmbn_live(s))return 0;
+    m->error=0;m->complete=1;if(!pmbm_current(m)){m->complete=0;m->error=6;return 0;}return 1;
+}
+#endif
 static inline int pmbn_begin(struct pmbn_state*s,struct pmbn_delivery*r,struct pman_state*a)
 {
     if(!s||!r||!a||!pwmc_zero(s,sizeof(*s)))return 0;s->attempted=1;
@@ -60,6 +118,9 @@ static inline int pmbn_begin(struct pmbn_state*s,struct pmbn_delivery*r,struct p
     uint8_t hash[32];pweh_digest(&a->notify[0],sizeof(a->notify[0]),hash);
     if(!pgcd_equal(hash,a->on_digest,32)||!pmsc_bound(o)||!pmrg_current((void*)(uintptr_t)p->namespace))return 0;
     s->records=(uintptr_t)r;s->ready=1;
+#if EFI_XNU_MSS_PAGE_MAP_AVAILABLE
+    if(!pmbm_prepare(s)){pmbn_fail(s,4);return 0;}
+#endif
     if(!pmbn_live(s)||pmba_begin(&s->mba,(const void*)(uintptr_t)c->clocks,&b->transaction,stage->asset[0].bytes,o->last)<0){pmbn_fail(s,1);return 0;}
     return 1;
 }

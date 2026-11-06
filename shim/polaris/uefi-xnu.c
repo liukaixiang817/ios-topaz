@@ -1166,6 +1166,27 @@ static void wifi_native_startup_gop_evidence(void)
     pwtg_line(r,13,"WLAN SMMU ERR",s->wlan.error,s->smmu.error);
     pwtg_line(r,14,"CE WMI ERR",s->ce.error,s->wmi.error);
     pwtg_line(r,15,"HTT NONCE ERR",s->htt.error,s->nonce.error);
+#if EFI_XNU_MSS_PAGE_MAP_AVAILABLE
+    if(s->boot.error==4&&s->boot.mapping.attempted){
+        const struct pmbm_state*m=&s->boot.mapping;
+        pwtg_line(r,0,"MSS PAGE HOLD",wifi_native_boot_phase,s->phase);
+        pwtg_line(r,1,"PAGE ERROR FLAGS",m->error,m->issued|(m->returned<<8)|(m->installed<<16)|(m->complete<<24));
+        pwtg_line(r,2,"PAGE WALK FLAGS",m->walk.error,m->walk.levels|(m->walk.stable<<8));
+        pwtg_line(r,3,"PAGE TTBR0",(uint32_t)(m->walk.ttbr>>32),(uint32_t)m->walk.ttbr);
+        pwtg_line(r,4,"PAGE TCR",(uint32_t)(m->walk.tcr>>32),(uint32_t)m->walk.tcr);
+        pwtg_line(r,5,"PAGE SLOT",(uint32_t)(m->entry>>32),(uint32_t)m->entry);
+        pwtg_line(r,6,"PAGE TABLE",(uint32_t)(m->table>>32),(uint32_t)m->table);
+        pwtg_line(r,7,"PAGE DESC0",(uint32_t)(m->walk.descriptor[0]>>32),(uint32_t)m->walk.descriptor[0]);
+        pwtg_line(r,8,"PAGE DESC1",(uint32_t)(m->walk.descriptor[1]>>32),(uint32_t)m->walk.descriptor[1]);
+        pwtg_line(r,9,"PAGE DESC2",(uint32_t)(m->walk.descriptor[2]>>32),(uint32_t)m->walk.descriptor[2]);
+        pwtg_line(r,10,"PAGE BEFORE0",(uint32_t)(m->before[0].read_par>>32),(uint32_t)m->before[0].read_par);
+        pwtg_line(r,11,"PAGE BEFORE1",(uint32_t)(m->before[1].read_par>>32),(uint32_t)m->before[1].read_par);
+        pwtg_line(r,12,"PAGE AFTER0",(uint32_t)(m->after[0].read_par>>32),(uint32_t)m->after[0].read_par);
+        pwtg_line(r,13,"PAGE AFTER1",(uint32_t)(m->after[1].read_par>>32),(uint32_t)m->after[1].read_par);
+        pwtg_line(r,14,"PAGE STORAGE PAR",(uint32_t)(m->storage_AT.read_par>>32),(uint32_t)m->storage_AT.read_par);
+        pwtg_line(r,15,"PAGE READ ERROR",m->read_error,s->images.failure.reason);
+    }
+#endif
     if(s->images.error==2){
         const struct pmli_failure*f=&s->images.failure;
         pwtg_line(r,7,"IMAGE WHY BYTES",f->reason,(uint32_t)f->bytes);

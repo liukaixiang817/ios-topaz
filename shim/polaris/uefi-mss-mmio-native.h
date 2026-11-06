@@ -217,6 +217,16 @@ static inline int pmni_allowed(const struct pmni_command*c)
 #endif
     return c->address==PMS_DOORBELL&&c->kind==PMNI_WRITE&&(c->value==PMS_DOORBELL_MASK||!c->value);
 }
+/* Shared AT evidence predicate; mapping preparation does not weaken the
+ * predicate used immediately before every real MMIO instruction. */
+static inline int pmni_device_translation(const struct pmni_translation*t,uint64_t page)
+{
+    uint64_t par=t->read_par;
+    return t->page==page&&t->read_issued==1&&t->read_returned==1&&
+        t->write_issued==1&&t->write_returned==1&&t->restore_issued==1&&t->restore_returned==1&&
+        t->saved==t->restored&&par==t->write_par&&!(par&1)&&(par&0x200)&&
+        ((par>>56)==0||(par>>56)==4)&&(par&UINT64_C(0x0000fffffffff000))==page;
+}
 /* Low-level access only; current parent qualification is deliberately NOT
  * replaced by a callback success, descriptor pointer or ready=true argument. */
 static inline int pmni_access(const struct pmni_arch*opening,const struct pmni_command*command,struct pmni_result*r)
@@ -229,11 +239,7 @@ static inline int pmni_access(const struct pmni_arch*opening,const struct pmni_c
     if(command->kind==PMNI_READ||command->kind==PMNI_WRITE){
         r->AT.page=command->address&~UINT64_C(4095);
         if(!pmni_translate(&r->AT))return pmni_fail(r,2);
-        const struct pmni_translation*t=&r->AT;uint64_t par=t->read_par;
-        if(t->page!=(command->address&~UINT64_C(4095))||t->read_issued!=1||t->read_returned!=1||
-           t->write_issued!=1||t->write_returned!=1||t->restore_issued!=1||t->restore_returned!=1||
-           t->saved!=t->restored||par!=t->write_par||(par&1)||!(par&0x200)||
-           ((par>>56)!=0&&(par>>56)!=4)||(par&UINT64_C(0x0000fffffffff000))!=t->page)return pmni_fail(r,3);
+        if(!pmni_device_translation(&r->AT,command->address&~UINT64_C(4095)))return pmni_fail(r,3);
     }
     if(!pmsr_equal(opening,&reference,sizeof(reference))||!pmsr_equal(command,&r->command,sizeof(*command))||
        !pmni_arch_read(&r->translated)||!pmni_arch_same(&reference,&r->translated,r->before.ticks))return pmni_fail(r,4);
