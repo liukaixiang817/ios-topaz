@@ -54,6 +54,24 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: checkpoint source ready, fresh root journal check repeated
+
+- Source505c30e pushed/synchronized. auth-metadata-checkpoint-0001 image is
+  built/verified but UNSENT, nonce unused. Root-audit62352 ended0 at09:32:46.648078Z,
+  actualFASTBOOT09:32:46.587498Z; independent review38/40PASS, REFUSED two
+  checks: outer needs_recovery bit4 set (incompat10046), journal_start1.
+  Outer state1/last_orphan0/journal_errno0. All remaining root/maps/GPT/critical/
+  ESP/NV checks pass. This is pending journal, NOT proof of corruption.
+- No native send/freeze was admitted after that refusal. No replay/repair/
+  partition write. Requested normal Android system-menu shutdown then FASTBOOT;
+  user replied 已到FASTBOOT. Do not assume clean from the reply: new readonly
+  query09:34:52.136173Z confirms expectedFASTBOOT; audit11470 now runs into
+  phone-root-audit-0002, retaining0001failed evidence. Next independently review
+  actual0002; only40/40PASS permits freeze/once native checkpoint send.
+- GoalACTIVE, execution2/5,four steps including current. No new physical auth
+  completion or scan/join/IP/DNS/data proof. Formal09:30,next09:45Z. All tests
+  already passed; do not repeat them without a new change/failure.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: native ACK followed by reported reboot to Android
 
 - auth-owner-seal-spans-0001 source51f36b3 pushed. SentONCE09:20:34.990143Z,
