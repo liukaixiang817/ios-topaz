@@ -54,6 +54,41 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: QDSP DEBUG passed; own PDC page repair verified, audit running
+
+- HumanA0343D90 from spent mss-page-map-0001 shows MBA MAP HOLD for0b2e0000,
+  wrapperboot3/inner0, target unissued, GCD cap/attr0, base0b2a0000/end0b48ffff,
+  no EFI overlap. Human explicitly confirms GCD TYPE MATCH=00000000/00000001.
+  By actual producer order, reaching the PDC reset command means prior
+  QDSP/RMB mapping preparation and initial04080018 DEBUG read passed. This
+  is a control-flow inference, not a dump of installed PTEs or MBA-ready.
+  Earlier current-screen dependency resolved. No old blocked count applies.
+- Own DT5572..5573 identifies pdc_sync0b2e0100/4; DT5594 bit9. Own pil-msa
+  201..216 and264..281 confirms RMW mask/order/reset sequencing. Add ONLY
+  PDC page0b2e0000 to empty-type0/noEFI namespace policy. Native preparation
+  first keeps a valid identity Device page unchanged; only stable invalid L2
+  permits a separate resident one-leaf(index224)/511zero table with identical
+  owner/RAM/zero-exclusive-store/cache/TLB/postAT checks. QDSP/RMB pair remains
+  separate, all mapping lifetimes retained. No generic mapper or adjacent grant.
+- PASS:38 actual composed MSS/PDC mapping scenarios/4706573checks, including
+  simultaneous separate maps, both root geometries and failures before/after
+  publication;103 namespace/native-negative scenarios/865645checks; full
+  normal2889178 and QDSP+PDC-gap/VRM2889180 bothresult2/phase46. Extracted
+  display1168prior+49PDC=1217cases. All software hardware/firmware leaves.
+- EFI/MachO/image/offline root admission PASS.852functions/max816B stack;
+  one generated exclusive publication site and broadcastTLBI site. Original
+  codec81files unchanged. New pdc-page-map-0001 driver835072B SHA
+  1716003a970135a4347bd4edfd1433c5204c4b5775fe50fa35d455af1ebf3f4f;
+  image6240256B SHA824292112760392b2665591aa0d463956428974d1fb31e24639857be6ffdd872.
+- Readonly decoded query confirmed actual FASTBOOT08:00:20.175882Z without
+  another human prompt. Fresh strict-readonly audit host46251 running; new
+  native candidate not sent yet. Freeze/review/source commit before trial.
+  No phone partition writes or observer. Original USB pause remains respected.
+- Goal active, execution2/5,current plus3remaining; PDC/reset/MBA/auth/native
+  scan/Cyberpunk AU join/IP/DNS/data/stability unproven. Last formal08:00Z,
+  next08:15Z while active. Kernel CI42091724671 and payload unchanged.
+  Unowned9line remote-memory header SHA7215a378... preserved/excluded.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: MSS two-page repair sent once; new physical result pending
 
 - Sourcee6952d6 pushed/synchronized. New mss-page-map-0001 strict-readonly

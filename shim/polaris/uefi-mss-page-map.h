@@ -1,4 +1,4 @@
-/* Only the two own-DT/vendor MSS pages in a previously invalid L2 slot.
+/* Own-DT/vendor QDSP/RMB pair or PDC page in a previously invalid L2 slot.
  * CPU0 exclusion and source qualification belong to the composed owner.
  * No allocation, firmware service, MMIO, valid-mapping replacement or undo.
  * The linked writable BSS table remains resident with the native parent. */
@@ -15,16 +15,22 @@ struct pmbm_state {
     struct pwmc_translation storage_AT;
     struct pmni_arch architecture,final_architecture;
     struct pmrg_target target[2];
-    uint64_t table,entry,value;
+    uint64_t table,entry,value,base;
     uint32_t attempted,error,issued,returned,installed,complete,read_error,reserved;
     uint8_t storage[8191];
 };
 #define PMBM_LEAF_FLAGS UINT64_C(0x0060000000000603) /* PXN/UXN, AF, outer SH, Device0, EL1 RW */
-static inline uint64_t pmbm_leaf(unsigned index)
-{return index==128?(UINT64_C(0x4080000)|PMBM_LEAF_FLAGS):index==384?(UINT64_C(0x4180000)|PMBM_LEAF_FLAGS):0;}
+static inline unsigned pmbm_pages(uint64_t base)
+{return base==UINT64_C(0x4080000)?2:base==UINT64_C(0xb2e0000)?1:0;}
+static inline uint64_t pmbm_leaf(uint64_t base,unsigned index)
+{
+    if(base==UINT64_C(0xb2e0000))return index==224?(base|PMBM_LEAF_FLAGS):0;
+    if(base!=UINT64_C(0x4080000))return 0;
+    return index==128?(base|PMBM_LEAF_FLAGS):index==384?(UINT64_C(0x4180000)|PMBM_LEAF_FLAGS):0;
+}
 static inline int pmbm_hole(const struct pmpt_walk*w,uint64_t table)
 {
-    if((w->tcr&~UINT64_C(63))!=UINT64_C(0x280803500)||(w->tcr&63)<16||(w->tcr&63)>24||w->address!=UINT64_C(0x4080000)||
+    if((w->tcr&~UINT64_C(63))!=UINT64_C(0x280803500)||(w->tcr&63)<16||(w->tcr&63)>24||!pmbm_pages(w->address)||
        w->attempted!=1||w->first||w->levels!=3||w->error!=3||w->stable!=1||w->complete||
        w->descriptor[2]||!table||(table&4095)||(table>>40))return 0;
     for(unsigned n=0;n<2;n++)if(w->descriptor[n]!=(w->descriptor[n]&UINT64_C(0x0000fffffffff000))+3)return 0;
@@ -33,12 +39,12 @@ static inline int pmbm_hole(const struct pmpt_walk*w,uint64_t table)
 }
 static inline int pmbm_current(const struct pmbm_state*m)
 {
-    if(!m->complete||m->error)return 0;
+    if(!m->complete||m->error||!pmbm_pages(m->base))return 0;
     if(!m->installed)return !m->issued;
     if(m->installed!=1||m->issued!=1||m->returned!=1||m->value!=(m->table|3))return 0;
     for(unsigned n=0;n<3;n++)if(*(const volatile uint64_t*)(uintptr_t)m->walk.entry[n]!=(n==2?m->value:m->walk.descriptor[n]))return 0;
     const volatile uint64_t*t=(const void*)(uintptr_t)m->table;
-    for(unsigned n=0;n<512;n++)if(t[n]!=pmbm_leaf(n))return 0;
+    for(unsigned n=0;n<512;n++)if(t[n]!=pmbm_leaf(m->base,n))return 0;
     return 1;
 }
 #if defined(POLARIS_MSS_PAGE_MAP_SOFTWARE_PEER)

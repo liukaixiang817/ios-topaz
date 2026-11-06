@@ -44,6 +44,20 @@ static inline void resource_unregistered_mss(void)
     put(tail+8,next,8);put(tail+16,(uintptr_t)gap+8,8);put(tail+24,0x5100000,8);put(tail+32,end,8);
     put((void*)(uintptr_t)(next+8),(uintptr_t)tail+8,8);
 }
+/* Own physical PDC gap, independent of the QDSP/RMB gap. */
+static inline void resource_unregistered_pdc(void)
+{
+    uint8_t*first=image_heap+0x71000,*gap=image_heap+0x75000,*tail=image_heap+0x76000;
+    uint64_t next=pwfi_le(first+8,8),end=pwfi_le(first+32,8);
+    CHECK(pwfi_le(first+24,8)==0x5100000&&end>0xb48ffff);
+    memcpy(gap,first,80);memcpy(tail,first,80);
+    put(first+8,(uintptr_t)gap+8,8);put(first+32,0xb29ffff,8);
+    put(gap+8,(uintptr_t)tail+8,8);put(gap+16,(uintptr_t)first+8,8);
+    put(gap+24,0xb2a0000,8);put(gap+32,0xb48ffff,8);
+    put(gap+40,0,8);put(gap+48,0,8);put(gap+56,0,4);
+    put(tail+8,next,8);put(tail+16,(uintptr_t)gap+8,8);put(tail+24,0xb490000,8);
+    put((void*)(uintptr_t)(next+8),(uintptr_t)tail+8,8);
+}
 static void resource_setup(void)
 {
     resource_fault=resource_trigger=0;image_setup();
@@ -63,6 +77,9 @@ static void resource_setup(void)
 #endif
 #ifdef PMRG_TEST_UNREGISTERED_MSS
     resource_unregistered_mss();
+#ifdef PMRG_TEST_UNREGISTERED_PDC
+    resource_unregistered_pdc();
+#endif
 #endif
 #ifndef PWNS_TEST_PREPARE_ONLY
     CHECK(image_run()&&pmli_current(ledger,owner));

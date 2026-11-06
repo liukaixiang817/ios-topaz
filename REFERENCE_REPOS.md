@@ -14,6 +14,26 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+## Own PDC namespace and conditional mapping (0189, 2026-11-06)
+
+PhysicalA0343D90 from mss-page-map-0001 reaches MBA MAP HOLD for0b2e0000,
+GCD0/matches1 (explicitly confirmed by human), cap/attr0, no EFI overlap.
+Reaching this command after mapping preparation implies QDSP/RMB translation
+checks and the initial QDSP DEBUG read passed; it does not prove MBA ready.
+Own live DT lines5572..5573 names pdc_sync=0b2e0100/4 and line5594 sets bit9.
+Own pil-msa.c lines201..216 read-modify-write only that mask, ordering and2us
+wait; reset ordering is264..281. No foreign PDC register or mask imported.
+
+Namespace policy now permits the same strictly empty type0 record for ONLY
+this additional page0b2e0000. Active Device identity R/W AT still gates every
+real access. Preparation keeps an already-valid page untouched; otherwise
+it requires a stable invalid L2 and uses a separate resident one-leaf table
+(index224, other511zero), the same exclusive CPU owner/RAM qualification/
+zero-only publication/post-AT checks as the QDSP/RMB pair. There is no
+adjacent-page grant, valid block split or generic mapper. PDC table lifetime
+is retained with both existing MSS pages. Unexpected table geometry refuses
+without guessing. Physical PDC publication/reset success still needs a trial.
+
 ## Own MSS invalid-L2 mapping repair (0189, 2026-11-06)
 
 Physical8C01476D shows three stable table descriptors: two tables followed by

@@ -26,7 +26,7 @@ struct pmbn_state {
     uint32_t attempted,ready,unknown,error,pending,deliveries,complete,reserved;
     struct pmbn_walk translation;
 #if EFI_XNU_MSS_PAGE_MAP_AVAILABLE
-    struct pmbm_state mapping;
+    struct pmbm_state mapping,pdc_mapping;
 #endif
     uint8_t records_digest[32],digest[32];
 };
@@ -36,7 +36,8 @@ static inline int pmbn_live(struct pmbn_state*s)
 {
     if(!s||s->ready!=1||s->unknown||s->error||s->deliveries>PMBN_RECORDS)return 0;
 #if EFI_XNU_MSS_PAGE_MAP_AVAILABLE
-    if(s->mapping.complete&&!pmbm_current(&s->mapping))return 0;
+    if((s->mapping.complete&&!pmbm_current(&s->mapping))||
+       (s->pdc_mapping.complete&&!pmbm_current(&s->pdc_mapping)))return 0;
 #endif
     struct pmpn_state*p=(void*)(uintptr_t)s->power;struct pmcn_state*c=(void*)(uintptr_t)s->clocks;
     struct pman_state*a=(void*)(uintptr_t)s->aop;
@@ -54,9 +55,11 @@ static inline int pmbn_child(struct pmbn_state*s,uint64_t at,uint64_t bytes)
         pwea_disjoint(at,bytes,c->clocks,sizeof(struct pmck_lifecycle));
 }
 #if EFI_XNU_MSS_PAGE_MAP_AVAILABLE
+struct pmbm_reader {struct pmbn_state*owner;struct pmbm_state*map;};
 static inline int pmbm_read(void*context,unsigned pass,unsigned index,uint64_t at,uint64_t*value)
 {
-    struct pmbn_state*s=context;struct pmbm_state*m=&s->mapping;
+    struct pmbm_reader*c=context;struct pmbn_state*s=c->owner;struct pmbm_state*m=c->map;
+    if(m!=&s->mapping&&m!=&s->pdc_mapping)return 0;
     if(pass>1||index>=4||!pmbn_live(s)){m->read_error=1;return 0;}
     struct pmpn_state*p=(void*)(uintptr_t)s->power;struct pmrg_map*g=(void*)(uintptr_t)p->namespace;
     struct pmli_ledger*l=(void*)(uintptr_t)g->images;struct pmli_read*q=&m->source[pass][index];
@@ -64,14 +67,17 @@ static inline int pmbm_read(void*context,unsigned pass,unsigned index,uint64_t a
     if(!pmli_read_ram(l,q,at,8,1)){m->read_error=3;return 0;}
     if(!pmbn_live(s)){m->read_error=4;return 0;}*value=pwfi_le(q->raw,8);return 1;
 }
-static inline int pmbm_prepare(struct pmbn_state*s)
+static inline int pmbm_prepare(struct pmbn_state*s,struct pmbm_state*m,uint64_t base)
 {
-    struct pmbm_state*m=&s->mapping;struct pmpn_state*p=(void*)(uintptr_t)s->power;
-    if(!pwmc_zero(m,sizeof(*m))||!pmbn_live(s))return 0;m->attempted=1;m->error=1;
+    struct pmpn_state*p=(void*)(uintptr_t)s->power;
+    unsigned count=pmbm_pages(base);
+    if(!count||(base==UINT64_C(0x4080000)?m!=&s->mapping:m!=&s->pdc_mapping)||
+       !pwmc_zero(m,sizeof(*m))||!pmbn_live(s))return 0;
+    m->attempted=1;m->error=1;m->base=base;
     m->error=10;if(!pmpn_arch(p,&m->architecture)||!pgcd_equal(&p->architecture,&m->architecture,offsetof(struct pmni_arch,ticks)))return 0;
     unsigned ready=0;
-    for(unsigned n=0;n<2;n++){
-        uint64_t page=n?UINT64_C(0x4180000):UINT64_C(0x4080000);m->before[n].page=page;
+    for(unsigned n=0;n<count;n++){
+        uint64_t page=base+n*UINT64_C(0x100000);m->before[n].page=page;
         m->error=11+3*n;if(!pmpn_target(p,page,&m->target[n]))return 0;
         m->error=12+3*n;struct pmni_translation*t=&m->before[n];
         if(!pmni_translate(t)||t->page!=page||t->read_issued!=1||t->read_returned!=1||
@@ -81,14 +87,15 @@ static inline int pmbm_prepare(struct pmbn_state*s)
         ready+=pmni_device_translation(&m->before[n],page);
     }
     /* Already valid firmware mappings need no table reads or mutation. */
-    if(ready==2){m->error=0;m->complete=1;return 1;}
+    if(ready==count){m->error=0;m->complete=1;return 1;}
     m->error=2;if(ready)return 0;
     m->table=((uintptr_t)m->storage+4095)&~UINT64_C(4095);
-    (void)pmpt_collect(&m->walk,m->architecture.ttbr0,m->architecture.tcr,UINT64_C(0x4080000),pmbm_read,s);
+    struct pmbm_reader reader={s,m};
+    (void)pmpt_collect(&m->walk,m->architecture.ttbr0,m->architecture.tcr,base,pmbm_read,&reader);
     if(!pmbm_hole(&m->walk,m->table)||!pmbn_child(s,m->table,4096)||!pwmc_zero((void*)(uintptr_t)m->table,4096))return 0;
     m->error=3;m->storage_AT.page=m->table;
     if(!pwmc_actual_translate(&m->storage_AT)||!pwmc_translation_valid(&m->storage_AT)||m->storage_AT.page!=m->table)return 0;
-    uint64_t*t=(void*)(uintptr_t)m->table;for(unsigned n=0;n<512;n++)t[n]=pmbm_leaf(n);
+    uint64_t*t=(void*)(uintptr_t)m->table;for(unsigned n=0;n<512;n++)t[n]=pmbm_leaf(base,n);
     m->entry=m->walk.entry[2];m->value=m->table|3;
     if(!pmni_arch_read(&m->final_architecture)||!pmni_arch_same(&m->architecture,&m->final_architecture,m->architecture.ticks)||!pmbn_live(s))return 0;
     for(unsigned n=0;n<3;n++)if(*(const volatile uint64_t*)(uintptr_t)m->walk.entry[n]!=m->walk.descriptor[n])return 0;
@@ -96,7 +103,7 @@ static inline int pmbm_prepare(struct pmbn_state*s)
      * The map is permanent for this RAM-only parent lifetime, never undone. */
     m->error=4;if(!pmbm_publish(m))return 0;
     m->error=5;
-    for(unsigned n=0;n<2;n++){
+    for(unsigned n=0;n<count;n++){
         m->after[n].page=m->before[n].page;
         if(!pmni_translate(&m->after[n])||!pmni_device_translation(&m->after[n],m->before[n].page))return 0;
     }
@@ -119,7 +126,8 @@ static inline int pmbn_begin(struct pmbn_state*s,struct pmbn_delivery*r,struct p
     if(!pgcd_equal(hash,a->on_digest,32)||!pmsc_bound(o)||!pmrg_current((void*)(uintptr_t)p->namespace))return 0;
     s->records=(uintptr_t)r;s->ready=1;
 #if EFI_XNU_MSS_PAGE_MAP_AVAILABLE
-    if(!pmbm_prepare(s)){pmbn_fail(s,4);return 0;}
+    if(!pmbm_prepare(s,&s->mapping,UINT64_C(0x4080000))||
+       !pmbm_prepare(s,&s->pdc_mapping,UINT64_C(0xb2e0000))){pmbn_fail(s,4);return 0;}
 #endif
     if(!pmbn_live(s)||pmba_begin(&s->mba,(const void*)(uintptr_t)c->clocks,&b->transaction,stage->asset[0].bytes,o->last)<0){pmbn_fail(s,1);return 0;}
     return 1;
