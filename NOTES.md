@@ -81,9 +81,17 @@ early samples only. On0029 the human already confirmed boot complete and said
   pairedcount/disk andnormalpackager refusalsPASS. Allsessionscollected.
 - Actualdriver714240B 056cdebbb96e315dd1ccb3bb466283002b7c850281513af6ec5dfcbfcd4c7d91;
   image6189056B e78598519e6fff72048d18708c5dd17c8f0303d6d0eb61ba97996e0bee7a1df7.
-  QualifiedUNSENT, freshnonceunused; fullreviewfreeze/offline stillnext. User
-  alreadyFASTBOOT; singleinventory14:15:39.556071Z selectedpresent. Afterfreeze,
-  commonhelperrechecksactualproduct beforeconsume/send; no repeatedkeyrequest.
+  Review0001 froze1095inputs/offline62805TERMINAL0; source3f437c2committed,
+  pushedandsynced. UseralreadyFASTBOOT;singleinventory14:15:39.556071Zpresent.
+  Host31489 started14:17:59.649897Z; actualpolarisproduct0,sentONCE
+  14:18:00.113098Z afterdurablenonceconsume. Full100593664B validationACK/
+  queriedvalidated_state true; native-start14:19:40.171569Z,ACK14:19:59.627423Z,
+  TERMINAL0 ended14:19:59.703207Z/collected. Image/nonceSPENT; no replay/reset.
+- Physicalprefix14resultPENDING. Askedcurrenttitle/COPY PREFIX CNT/COPY PAGES
+  SEGS/MODEM LEN ERR (expectedhex0E/0E,077B/0E,length6984988/error0). Holdscreen,
+  no restartrequested. HostACKisnotcopyprefix/auth/networkproof. No livehostjob,
+  post-nativeUSBquery orobserver. ThisisFIRSTpendingdependencyaftermajornew
+  physicalN6proof/source/build/trialprogress; previousblocked auditsresolved.
 - GoalACTIVE,step2/5,fourincludingcurrent. Formal14:15Zwindowdelivered,next14:30Z.
   No newkernelCI (42091724671/kernel/payloadunchanged), no storage/GPT/Windows
   write/repair orobserver. Normalroot38/40remainsREFUSED; noXNU indiagnostics.
