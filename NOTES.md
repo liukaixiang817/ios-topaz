@@ -54,6 +54,30 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: auth control diagnostic sent once; exact failure evidence pending
+
+- Source8ee53fb pushed/synchronized. Fresh auth-assignment-diagnostic-0001
+  audit53843 ended0 at08:44:41.489998Z; independent40checks PASS and actual
+  return FASTBOOT08:44:41.414336Z. Roots/GPT/critical/ESP/NV unchanged.651files
+  frozen; offline native admission PASS. Kernel CI42091724671/payload unchanged.
+- Image854d41e02ed9e2472b038a3a6b318861afab94bc5cdfa9ed56f9e0f66dfac8b7 sent
+  ONCE08:45:22.520904Z, fastboot0. Full100593664B payload with validation_ACK
+  and independently queried validated_state true. Native-start08:47:02.582905Z,
+  ACK08:47:22.042919Z; host68787 ended0 at08:47:22.068269Z. All jobs terminal.
+- Image/nonce SPENT. No replay/reset/postnative USB observer/partition writes.
+  Host acceptance does not identify or repair the authentication failure.
+  Human992D5165 is the PREVIOUS restart-page trial evidence, not this diagnostic.
+- Asked current heading and, if AUTH HOLD, AUTH INDEX PEND/TX ERR STEP/
+  TX EVENTS ROUNDS/TX AGE/SOURCE0 STAGE/SMC X0. Keep current screen. This is
+  FIRST current-screen dependency for this candidate; prior one resolved.
+  Goal ACTIVE, not complete. No live host handle remains. Next action decode
+  actual assignment/transaction/source/AT/SMC evidence, then fix only the
+  evidenced cause while preserving ownership/timeout/retention guarantees.
+- Execution2/5,current plus3remaining. Native MBA readiness has physical
+  control-flow evidence; authenticated modem/native scan/Cyberpunk AU join/
+  IP/DNS/data/stability remain unproven. Formal08:45Z delivered,next09:00Z
+  while active. Unowned9line remote-memory hunk preserved and uncommitted.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: native MBA reached auth; saved assignment diagnostic built
 
 - Human992D5165 from spent restart-page-map-0001 resolves the screen wait.
