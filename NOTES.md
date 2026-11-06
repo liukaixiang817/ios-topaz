@@ -54,7 +54,56 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: user resumed; actual modem-copy result pending
+
+- User explicitly resumed goalACTIVE. Previous substantive turn made progress:
+  actual metadata authentication/return evidence, new copied-mode diagnostic,
+  software/native builds and once-only phone trial. Resume audit revalidated
+  terminal host21846 return0/native ACK; no live host job or physical result.
+  Asked MODEM COPY STOP/AUTH STAGE HOLD/other/reboot with key saved rows.
+  Current physical-result dependency FIRST occurrence on this resumed run;
+  do not infer completion or replay this spent trial. USB observer still paused.
+- Source225542e already pushed; fresh root40/40PASS and711file freeze/offline
+  verification passed before image09b185023f958acea7bb7706de6ac1ac21aa7b84c8e4d8306095d233d554069b
+  sentONCE10:28:28.172181Z. Full100593664B payload validation_ACK/queried
+  validated_state bothtrue. Native-start10:30:08.335164Z,ACK10:30:27.794998Z;
+  host ended0 at10:30:27.870889Z. Actual full copy/modem auth/WLAN remains
+  unproven. Prior37B693C3 proves metadata return only. No new boot/query/reset.
+- All completed source/tests/builds and pause records preserved. Current
+  next action is interpret actual phone result; a new software/permission/
+  timeout change is not justified without it. Preserve Android/Windows/data,
+  no partition writes or old nonce reuse. Unowned remote-memory hunk retained.
+- Execution2/5,four steps including current. Formal10:33Z report delivered,
+  next10:48Z while active. Five-step status:1done,2inprogress,3..5unverified.
+  GoalACTIVE,not complete. Progress now blocked on this missing external input.
+
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: user PAUSED after copied-mode native ACK
+
+- User explicitly set goalPAUSED during the current trial. Goal tool returned
+  PAUSED; stop work. No new device command or USB observation on pause.
+- Current modem-copy-checkpoint-0001 source225542e already pushed. Host21846
+  is TERMINAL with returncode0, ended2026-11-06T10:30:27.870889+00:00.
+  Native statenative_start_ACK, native-start2026-11-06T10:30:08.335164+00:00,
+  ACK2026-11-06T10:30:27.794998+00:00. Full payload verification belongs to this candidate;
+  actual phone result NOT YET supplied. Image/nonce SPENT, never replay.
+- A cleanup process-scan attempt was denied by sandbox before any signal;
+  collected the existing completed handle instead. No live job remains. No
+  further software/device action required to honor pause. Private pause record
+  saved. Do not treat host ACK as full copy/modem authentication/network proof.
+- Current objective uncompleted,execution2/5,four steps including current.
+  On explicit resume, inspect current phone screen (MODEM COPY STOP/AUTH STAGE
+  HOLD/other/reboot) and authoritative records before next action. Preserve
+  current phone state; source/owned files synced, unownedhunk retained.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: actual metadata authenticated/returned; modem-copy checkpoint building
+
+- Source225542e pushed/synchronized. Fresh root-audit69145 ended0 at
+  10:27:37.497008Z; independent40/40PASS, actualFASTBOOT10:27:37.461354Z.
+  711files frozen, native offline admission PASS. Host21846 nowRUNNING for
+  once-only new copied-mode trial; image sent at2026-11-06T10:28:28.172181+00:00,
+  payload staging in progress. This image/nonce isSPENT; never replay. Next
+  authoritative host completion then actual MODEM COPY STOP/AUTH STAGE HOLD/
+  other/reboot result. USB observer remains paused, no partition writes.
 
 - Human37B693C3 resolves returned-mode screen wait: AUTH RETURN STOP2/4,
   metadata phase3/events6, transaction DONE1/error0, events3/round1,
