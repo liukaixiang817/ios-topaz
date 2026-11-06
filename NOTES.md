@@ -77,8 +77,14 @@ early samples only. On0029 the human already confirmed boot complete and said
   beforethisrecord. Unownedremote-memory9linehunk preserved. Formal14:00Zwindow
   reportdelivered(13:59:44Zclock); next14:15Z whileactive. Hostterminalcollected;
   currentfreeformscreenrequestpending, no restartrequested. No newphysical
-  resultorindependent sourcefix justified sinceACK. Newpendingauditcount1;
-  preserveACTIVEuntilactualreply orfresh3turnblockedthreshold.
+  resultorindependent sourcefix justified sinceACK. Revalidation14:01:09Z:
+  hoststillTERMINAL0,collected; onlyhumanFASTBOOTrecordexists, noN6physical
+  result/title/numericrows. No liveprocessorpost-startUSBreader exists inthis
+  diagnostic. No phonequery/reboot/newtrialissued. ThisturnNO_PROGRESS; fresh
+  same-screen-dependencycount2(originalresumedturnplusonecontinuation).
+  PreserveACTIVE; ifsameimpasse recursinthirdturn,setBLOCKED. Readactualscreen
+  first; confirmedN6wouldpermitnextcopy-localization, error/resetrequiresexact
+  fields. NeverinferfromoldN2photo/hostACK, replayedimage orelapsedtime.
 
 ### Current blocking handoff — 2026-11-07 Melbourne: physical FASTBOOT reentry required
 
