@@ -56,6 +56,20 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: journal still pending; FASTBOOT interface unresponsive
 
+- Human confirmed FASTBOOT and unplugged/replugged USB. Fresh identity query
+  11:23:33.467750Z still timed out; guarded normal OS reboot NOT sent. Verbose
+  read-only query11:25:25.727100Z also timed out with empty partial output.
+  Host console read11:27:36.433460Z returned one console record with no explicit
+  lock field; lock state not established and no security setting changed.
+  No stale fastboot job; original adb server left alone.
+- Asked physical power+volume-down ~10s to restart current FASTBOOT, then
+  release keys/keepUSB/reply 已重新进入FASTBOOT. This is the next required
+  external recovery action; no new temp image has been sent. Once responsive,
+  inspect Android mounts before planning another exit/root audit. No blind
+  repeat of the same failed audit, no flash or journal/metadata writes.
+- Formal11:28Z report delivered,next11:43Z while active. GoalACTIVE,2/5,
+  four including current;1done,3..5unverified. Copy-ready candidate UNUSED.
+
 - Second readonly audit12115/phone-root-audit-0002 ended0 at11:00:02.293463Z;
   independent review again38/40REFUSED the same recovery-bit/journal-start
   checks. Successful ordinary Android sync/reboot return DID NOT prove clean
