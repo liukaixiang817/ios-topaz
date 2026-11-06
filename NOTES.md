@@ -54,6 +54,30 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: readonly table diagnostic sent once; actual descriptors pending
+
+- Source02fea48 pushed/synchronized. mba-table-diagnostic-0001 fresh readonly
+  audit24036 ended0; independent40checks PASS, roots/GPT/critical/ESP/NV
+  unchanged, FASTBOOT07:19:45.714059Z. Frozen587files/offline admission PASS.
+- Imageb6e3b954b1aa4d4efe865824216b4fe039e3fa612491cff58090178160161638 sent
+  ONCE07:20:15.164722Z, fastboot0. Full100593664B/1535RAM chunks, validation
+  ACK and independently queried validated state. Native-start07:21:55.263723Z,
+  ACK07:22:14.739719Z; host26842 ended0. All build/test/device jobs terminal.
+  Image/nonce SPENT; no replay/reset/USB observer/partition write. Host ACK
+  does not prove page-table collection, actual register read or networking.
+- New MBA PT HOLD screen needed: TTBR0/TCR/VA, PT ERR FLAGS, four descriptors,
+  last source address/PAR/flags, decodedPA, first/leaf and read-refusal/type.
+  Async text question requested these values.06A68979 belongs to PREVIOUS
+  AT diagnostic and proves zero returned PA but not current table contents.
+  No PTE repair or access-policy change justified until actual source evidence.
+- Prior feedback/USB blockers resolved; this candidate's descriptor-screen
+  dependency is FIRST occurrence. Goal ACTIVE, not complete; do not inherit
+  older blocked counts or poll terminal host handles. Kernel CI42091724671
+  and payload unchanged. Unowned remote-memory header remains excluded.
+- Execution2/5,current plus3steps remain; register/MBA/modem/WLAN scan,
+  Cyberpunk AU join/IP/DNS/data/stability unproven. Last report07:15Z,
+  next07:30Z while active. Preserve Android/Windows/backups/private artifacts.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: bounded readonly table diagnostic verified and ready for physical trial
 
 - New failure-only diagnostic uses retained TTBR0/TCR and existing live RAM
