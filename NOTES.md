@@ -54,6 +54,29 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Current blocking handoff — 2026-11-07 Melbourne: physical FASTBOOT reentry required
+
+- Three consecutive goalturns share the same external dependency: phone has
+  notreturnedFASTBOOT afterphysicalkeyrequest. Actualsinglebounded inventories
+  13:46:21.463250Z,13:50:29.242160Z and13:52:11.238665Z allselectedabsent/return0.
+  No newhumanreentryreply. LastturnNO_PROGRESS; no livejob/verifiedwait.
+- Blocked audit satisfied; markgoalBLOCKED afterpublishingthishandoff, NOT
+  complete oruserpaused. Allindependentbuild/codeproof/source-payloadaudit
+  complete. Furtherhardwareprogress requiresphysicalreentry; no unprovenfix,
+  replay, observer, post-nativeUSBservice ornewdevicecommand isjustified.
+- ReadyunusedN6case firmware-first-rmb-status-0001, review0002 freezes862inputs
+  andofflinePASS; use native-boot-command-0002.json ONLYonceafterFASTBOOT.
+  Commonhelper checksactualpolarisproduct beforedurablenonceconsume/send.
+  No phone-native-0001/boot.json orhostwrapperexists; N6image/nonceUNSPENT.
+  PreviousN1/N2candidatesSPENT; N2photo3D2B261C confirms2/2events,1/2step.
+- Source94cec0b unchanged, latestdocsparentcaf183b; sharedownedfiles synced.
+  Preserveunownedremote-memory9linehunk SHA7215a3786b3b9226aa4f839648bbecc80d9c575f3fd3fb00250481dd91786a01.
+  Normalfullroot38/40remainsREFUSED; no storage/GPT/Windows write orrepair.
+- Execution2/5,fourincludingcurrentremain. No scan/join/IP/DNS/data/stability
+  proof. Lastformalreport13:45Z; resume15minreportcadence onactualcontinuation.
+  Whenuserresumes, revalidatecurrentstate andstartfreshblocked audit, notinherit
+  these3turns. IfFASTBOOTisnowpresent, proceedauthorizedtrialwithoutreasking.
+
 ### Continuous Wi-Fi milestone — 2026-11-07 Melbourne: N2 title confirmed; first segment STATUS diagnostic qualified
 
 - User confirms currentN2 FIRST RMB STOP. Rawtwoevent/step rows NOTindependently
