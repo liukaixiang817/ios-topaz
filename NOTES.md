@@ -54,6 +54,24 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi blocked audit — 2026-11-06 Melbourne: detailed selection screen required
+
+- Third consecutive goal turn with the same current physical-feedback blocker.
+  Final host-access readonly discovery00:13:00.391011Z found no UEFI service;
+  no payload/reset/boot/observer. Current record:
+  nv-selection-0001/blocked-audit-current-connection.json. Previous turn added
+  no implementation/network progress and was not a live-process wait.
+- No current detailed screen reply, no relevant live job, no unsent candidate.
+  New diagnostic is installed only in this spent temporary boot; its actual
+  SELECT STEP IDX/PART MATCH/DISK MATCH values are required to choose a fix.
+  Reusing an older photo, changing acceptance checks without evidence or
+  repeatedly rebooting would not resolve that missing observation.
+- Three-turn blocked audit satisfied; marking goal BLOCKED, not complete or
+  user-paused. Resume upon new photo/values or meaningful access restoration.
+  Keep current screen, never resend spent imagea1a07c0e.../nonce. Sourcec89243b
+  and handoff1254333 pushed/synchronized. Still2/5; four including current
+  remain. No scan/JOIN/IP/DNS/data proof. All authorized independent work ready.
+
 ### Continuous Wi-Fi continuation — 2026-11-06 Melbourne: current selection detail still required
 
 - Previous goal turn made progress: c89243b diagnostic/test implementation,
