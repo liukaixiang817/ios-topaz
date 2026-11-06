@@ -26,6 +26,15 @@ page1/221/256/257,22 callback contexts,504 GOP scenarios and12 public tests pass
 695frames/max816B,81 original file codec equal. Long idle remains user-paused;
 watchdog0/idle0 did not prevent N9/N11 reset, so no reset cure is claimed.
 
+Physical update: page221/222/223 checkpoints now seen; page223 photoB69414E8
+shows completed8,error0,partial2,nextF81DF000. Page224/256 Android exits have
+unknown exact stages. Own cache loop stays below4096. Own pinned peripheral
+loader copies filesz and zeros BSS; our extra gap/page-padding zeroing is only
+an audit difference, not a proven reset cause. New terminal AT-only diagnostic
+checks selected page223 read/write PAR without target access, uses the existing
+own translation primitive and separate resident record. No imported approach
+or changed copy/ownership/power protocol; physical probe result still pending.
+
 ## Idle hold policy and watchdog evidence (0189, 2026-11-07 Melbourne)
 
 Current localization: N11 later returned Android spontaneously despite actual

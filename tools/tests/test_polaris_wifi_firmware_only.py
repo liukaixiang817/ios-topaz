@@ -214,6 +214,101 @@ int main(void){
                 with self.subTest(scope=scope), self.assertRaisesRegex(ValueError, message):
                     validator(path)
 
+    def test_page_translation_probe_holds_without_target_access(self):
+        def actual_function(source, signature):
+            start = source.index(signature)
+            brace = source.index('{', start)
+            depth, end = 1, brace+1
+            while depth:
+                depth += (source[end] == '{') - (source[end] == '}')
+                end += 1
+            return source[start:end]
+
+        callback = actual_function(SOURCE, '__attribute__((noinline,noreturn)) static void pmlc_page_checkpoint(struct pmlc_copy*c)')
+        header = (ROOT/'shim/polaris/uefi-wifi-remote-memory.h').read_text()
+        valid = actual_function(header, 'static inline int pwmc_translation_valid(')
+        peer = r'''
+#include <assert.h>
+#include <setjmp.h>
+#include <stdint.h>
+#include <string.h>
+#define EFI_XNU_WIFI_COPY_PAGE_PROBE 1
+#define EFI_XNU_WIFI_COPY_PAGE_BEFORE 223
+#define PMIM_SEGMENTS 28
+#define PWNS_AUTH 19
+#define PMSN_COPY 5
+struct pwmc_translation {
+ uint64_t page,saved,read_par,write_par,restored;
+ uint32_t read_issued,read_returned,write_issued,write_returned;
+};
+struct pmlc_copy {unsigned ready,unknown,error,complete,pages,segments;uint64_t base;};
+struct pmsn_state {unsigned phase,ready,pending,error,unknown,assignments;struct {uint64_t base;} modem;};
+struct pwns_parent {unsigned phase,error,unknown;struct pmsn_state auth;
+ struct pmlc_copy copy;struct {unsigned held,error,unknown;} owner;};
+static struct pwns_parent wifi_native_parent;
+static struct pwmc_translation wifi_native_copy_page_AT;
+static unsigned wifi_native_boot_phase,wln_cpu_on_issued,wifi_native_copy_page_seen;
+static unsigned wifi_native_copy_page_probe_result,holds,calls,failure;
+static jmp_buf stop;
+__attribute__((noreturn)) static void power_unknown_hold(void){holds++;longjmp(stop,1);}
+static int pwmc_actual_translate(struct pwmc_translation*t){
+ calls++;assert(t==&wifi_native_copy_page_AT&&t->page==UINT64_C(0xf81df000));
+ t->saved=t->restored=0x1234;t->read_issued=t->read_returned=t->write_issued=t->write_returned=1;
+ t->read_par=t->write_par=UINT64_C(0xff00000000000b80)|t->page;
+ if(failure==7)t->read_par=0x10f;
+ if(failure==8)t->write_par=0x10f;
+ if(failure==9)t->restored++;
+ if(failure==10)t->read_returned=0;
+ if(failure==11)t->write_returned=0;
+ return failure!=6;
+}
+'''
+        main = r'''
+int main(void){
+ for(failure=0;failure<12;failure++){
+  struct pwns_parent*s=&wifi_native_parent;memset(s,0,sizeof(*s));
+  memset(&wifi_native_copy_page_AT,0,sizeof(wifi_native_copy_page_AT));
+  s->phase=PWNS_AUTH;s->auth.phase=PMSN_COPY;s->auth.ready=1;s->auth.assignments=3;
+  s->copy.ready=s->copy.unknown=1;s->copy.pages=223;s->copy.segments=8;s->owner.held=1;
+  s->copy.base=s->auth.modem.base=UINT64_C(0xf8100000);
+  wifi_native_boot_phase=5;wln_cpu_on_issued=wifi_native_copy_page_seen=0;
+  wifi_native_copy_page_probe_result=holds=calls=0;
+  struct pmlc_copy*c=&s->copy;
+  if(failure==1)c=(void*)1;
+  if(failure==2)s->copy.base+=0x100000;
+  if(failure==3)s->copy.base=s->auth.modem.base=0x70000000;
+  if(failure==4)s->copy.base=s->auth.modem.base=0xf8101000;
+  if(failure==5)s->copy.base=s->auth.modem.base=UINT64_C(0x100000000);
+  if(!setjmp(stop))pmlc_page_checkpoint(c);
+  assert(holds==1);
+  if(failure>=1&&failure<=5){assert(wifi_native_copy_page_seen==2&&!calls&&!wifi_native_copy_page_probe_result);}
+  else{assert(wifi_native_copy_page_seen==1&&calls==1&&wifi_native_copy_page_probe_result==(failure?2u:1u));}
+  assert(!s->copy.complete&&s->copy.pages==223&&s->copy.segments==8);
+ }
+ return 0;
+}
+'''
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory)/'page-at.c'
+            source.write_text(peer+valid+callback+main)
+            binary = source.with_suffix('')
+            subprocess.run(['clang', '-std=c11', '-O1', '-g', '-Wall', '-Wextra', '-Werror',
+                            '-fsanitize=address,undefined', '-fno-sanitize-recover=all',
+                            str(source), '-o', str(binary)], check=True, capture_output=True)
+            subprocess.run([str(binary)], check=True, capture_output=True)
+
+    def test_probe_compile_guard_rejects_other_profiles(self):
+        for mode, enabled in ((8, 1), (9, -1), (9, 2)):
+            text = ('#define EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY 1\n'
+                    '#define EFI_XNU_WIFI_NATIVE_RUNTIME_AVAILABLE 1\n'
+                    f'#define EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT {mode}\n'
+                    f'#define EFI_XNU_WIFI_COPY_PAGE_PROBE {enabled}\n'
+                    + ('#define EFI_XNU_WIFI_COPY_PAGE_BEFORE 223\n' if mode==9 else '') + GUARD)
+            result = subprocess.run(['clang', '-x', 'c', '-fsyntax-only', '-'],
+                                    input=text, capture_output=True, text=True)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn('page translation probe', result.stderr)
+
 
 if __name__ == '__main__':
     unittest.main()

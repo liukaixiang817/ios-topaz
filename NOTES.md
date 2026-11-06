@@ -54,81 +54,63 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### Current Wi-Fi handoff — 2026-11-07 Melbourne: page221 running after page256 black-screen reset
+### Current Wi-Fi handoff — 2026-11-07 Melbourne: physical page223 checkpoint; AT-only probe qualified
 
-- Goal ACTIVE, execution2/5; four steps remain including current. Hardware1
-  confirmed; MSS/copy/auth2 ongoing; scan3,join/IP/DNS4,data/stability5 unproven.
-  Last formal16:45Z report; next17:00Z. Long stationary subtest PAUSED BY USER;
-  this does not pause Wi-Fi. Initial idle-only photo9DED59AD proved IDLE HOLD,
-  watchdog0/idle0/MSS0, not long stability. Timer50222 was stopped130.
-- Physical lower bound is N7 photoFF7C1E2D:7/7,220pages,copy/modem errors0,
-  phase2/segment6/submitted7/events26,length733432. N8 human reports MANUAL
-  FASTBOOT exit without numeric/title completion. Do not claim N8 passed.
-- N11 image9f973a50... and N9 imagee1a117a5... both returned Android
-  spontaneously within minutes, despite actual pre-native watchdog0/idle0.
-  Their precise exit stage is UNKNOWN; brief checkpoints before exit not
-  excluded. Human did not notice N11 prior title. N9 sent16:12:28.419361Z,
-  native16:14:08.671908Z/ACK16:14:28.139746Z,host98076 TERMINAL0 collected.
-  Prior N11 original Android RO logs: reboot/reboot/reboot,pstore empty,PMIC
-  warm/hard reset; not a specific watchdog/key/copy-fault diagnosis. Preserve
-  all SPENT images/nonces; never replay. N14 variant0002 is unused/unselected.
-- Latest explicit user instruction: phone manually back to FASTBOOT; if later
-  detected in Android, operate it back to FASTBOOT. This is standing approval
-  for bounded selected-device checks, exact Polaris/boot_completed1/root check,
-  then normal `su -c 'svc power reboot bootloader'`. No repeated manual-return
-  question. Continuous USB observer remains paused; no automatic restart of
-  that collector. No flash, erase, userdata/Windows write or journal repair.
-- Own geometry places first target1MiB crossing inside segment9; this is a
-  hypothesis, not a proven fault cause. Existing prefix checks run only after
-  an entire segment. New explicit terminal copy-page mode9 accepts page1..30719
-  and requires firmware-only scope. Header hook stops BEFORE selected target
-  AT/write/cache, reports partial copy progress; it does not publish/complete
-  the partial segment. Default-OFF path has no new call/branch. Invalid hook
-  context is also terminal (PAGE GUARD HOLD), never resumes target work.
-- Page checkpoint source57aad40 committed/pushed/synced. First page256 case
-  firmware-copy-page-checkpoint-0001 / driveredef90ea... / image1a9b5ea5... was
-  frozen2069/offlinePASS,sentONCE16:43:52.075366Z,native16:45:32.343653Z,
-  ACK16:45:51.798029Z;host77360 TERMINAL0 collected,SPENT. Human closely observed
-  UEFI -> BLACK -> Android and no new top diagnostic title. Page256 checkpoint
-  UNPROVEN; do not claim it was reached or identify a target fault yet.
-- Standing authorization used: exact original Polaris Android boot_completed1/
-  root verified, normal power service returned phone to bootloader (host33732
-  terminal0,adbdisconnect255). Actual FASTBOOT product checked before nextboot.
-  User does not need another manual-return request when Android service works.
-- Current firmware-copy-page-before221-0001 uses EXACT same committed source.
-  Fresh bothactual objects695frames/max816B,81-filecodec; fresh parameter221
-  GOP504cases PASS,all other source-bound tests reused. Frozen2076/offlinePASS.
-  Host23772 RUNNING,one-use sent2026-11-06T16:52:48.006123+00:00; payload staging.
-  Next collect exact handle promptly and ask CURRENT title/first five rows.
-  Expected COPY PAGE HOLD pagesDD/DD,completeSegments8/error0,currentfirstDD/
-  partialpages0,nexttargetF81DD000 (if bank remainsF8100000),ready1/unknown1,
-  modemphase1/segment8/submitted8/events22hex(34),length000D051C/error0,step5.
-  This observes before segment9's first target AT/write; partialsegment9 not
-  complete/published. PAGE EARLY HOLD means hook was not reached; preserve errors.
-- Conditional page220 candidate is being built locally (session54216) only;
-  not selected or device-sent. Do not overwrite/replay any spent image. Use
-  actual page221 result to select next action. No physical networking proof.
-- Actual COFF/MachO entry onlystartup/step/terminalhold; hook only calls
-  power_unknown_hold (compiler has multiple equivalent terminal call sites),
-  hold only own GOP/WFE; no runtime kernel symbols. 695frames/max816B.
-  Original81-file codec equal. Same old N9 config: MachO bytes EXACT, COFF
-  timestamp-only; these comparison objects are NEVER phone-sent. Actual driver
-  source/input hashes current. Kernel/payload/CI42091724671 unchanged.
-- Public12tests PASS18.651s/session18520,11181 terminal-entry cases including
-  four page profiles. Actual copy producer page1/221/256/257 trials PASS under
-  ASan/UBSan with14687 authenticated source translations each: selected page
-  has NO target AT/write/cache, next shadow byte remains0xA5. Actual callback
-  22 valid/invalid contexts terminal;504 actual GOP bounds/CPU_ON/guard cases
-  PASS. All41 earlier projection configs preprocessed token-identical after
-  normalizing assertion diagnostic line numbers only, so old runtime evidence
-  reused; new projection makes42. Eleven builder/packager scope/range refusals
-  PASS. Initial CPP line-metadata mismatch and private fixture indentation
-  warning fixed without changing the device producer. Initial software qualification preceded both physical sends above.
-- Ordinary full-runtime root validator and shared transport unchanged; full
-  root admission38/40 remains REFUSED. Firmware mode9 compiles kernel/root
-  reader closed. Page221 is the current selected physical trial; use authorized normal Android
-  service if it returns Android. Page source57aad40 is already published;
-  update the exact phone result and source handoff after each milestone. Preserve unowned remote-memory9-line hunk SHA
+- Goal ACTIVE, execution2/5; four remain including current. Scan3,join/IP/DNS4,
+  data/stability5 unproven. Long idle testing remains USER-PAUSED; Wi-Fi is active.
+  Standing own-source commit/push approval applies. Continuous USB observer is
+  paused. Firmware diagnostics never execute XNU or the root reader. Normal
+  full-root review remains REFUSED38/40; no repair, flash, GPT or Windows writes.
+- Source57aad40 introduced default-OFF terminal page checkpoints;1432a86 is the
+  previous published handoff. Fresh same-source page221,222,223 trials reached
+  their checkpoints physically. Photos7767BBDF,5B559DE8,B69414E8 and decoded
+  records are private under research/polaris/uefi-ios-0189/wifi respective
+  firmware-copy-page-before221/222/223-0001 cases. Page223 photo proves DF/DF,
+  completed8/error0,currentfirstDD/partial2,nextF81DF000,modemphase1/segment8,
+  submitted8/events22hex,length000D051C/error0,parentAUTH13hex/copy5,hook1,
+  partial segment NOT complete/published,watchdog0. Pages221 and222 target
+  write/readback/cache returned; target page223 remains UNPROVEN.
+- The initial page221 private JSON used wrong parent enum18. Its immutable
+  physical-page221-parent-phase-correction.json binds the original SHA and
+  correct actual PWNS_AUTH19/0x13. Later222/223 records already use19.
+- Page256 host77360/sent16:43:52.075366Z/ACK16:45:51.798029Z returned Android;
+  human observed UEFI->black->Android without new top title. Page224 host27758
+  sent17:11:16.667325Z/ACK17:13:16.336458Z also returned Android, prior titles
+  unreported. Neither exact exit stage nor watchdog/fault cause is proven.
+  Keep all SPENT nonce pools intact. Do not replay any of these images.
+- Standing user authorization: bounded exact original Polaris Android identity,
+  boot_completed1/root verification, then normal power service reboot bootloader.
+  Used after224 at17:17:23.888899Z;host96065 terminal0,adb disconnect255.
+  Do not ask for manual keys if the authorized service works; no full observer.
+- Page221 host23772,222 host56101,224 host27758,223 host85918 are all TERMINAL0
+  collected. Page223 native17:22:45.222334Z/ACK17:23:04.679059Z; user B69414E8
+  explicitly reports manual return to FASTBOOT. No current phone trial running.
+  Page220 candidate local build54216 passed but is unused/unselected.
+- New default-OFF --wifi-native-copy-page-probe is implemented and locally built
+  in firmware-copy-page223-AT-probe-0001. It requires firmware-only page mode9;
+  guards selected copy/auth context and exact aligned modem bank before issuing
+  AT S1E1R/W with PAR restore. It uses a separate resident record, does NOT
+  dereference/write/cache the target, publish partial copy, call SMC or resume.
+  Terminal PAGE AT PASS/FAIL shows raw read/write PAR; invalid context stays
+  terminal PAGE GUARD HOLD. Actual object callback has only hold call targets.
+- Probe actual callback12 success/refusal cases and default22 contexts passed;
+  public14 tests passed (session80515). Both probe/OFF GOP504 scenarios passed;
+  all42 prior display profiles token-identical with probe OFF. Both actual
+  objects695frames/max816B; probe-OFF page and non-page MachO are exact and
+  COFF differ only by timestamp. Four invalid builder/packager profiles refused.
+  Exact candidate freeze is next, before the first selected probe send. Do not
+  claim physical AT or any networking proof from software tests.
+- Own original peripheral-loader.c source pinned to MiCode c7cb50c18f812629b9620b2b8fa684bc40d82080
+  is saved in modem-copy-gap-source-audit-0001. Normal vendor load copies filesz
+  and zeros memsz-filesz; our loader also zeros inter-segment holes/page padding.
+  This difference is NOT a proven cause and no producer change is made. The
+  own cache loop offsets stay strictly below4096; no next-page cache overrun
+  found in static audit. Local HackiOS references remain indexed below and in
+  REFERENCE_REPOS.md; no foreign address, firmware or provider imported.
+- Kernel/payload and CI42091724671 unchanged; loader-only work needs no new
+  kernel CI. Next: finish exact probe freeze, check expected FASTBOOT once,
+  temporary-boot fresh probe once, obtain PAGE AT PASS/FAIL and raw PAR rows.
+  Preserve unowned remote-memory9-line hunk SHA
   7215a3786b3b9226aa4f839648bbecc80d9c575f3fd3fb00250481dd91786a01.
 
 ### Historical blocked handoff — resolved by reported prefix14 reset and new idle request

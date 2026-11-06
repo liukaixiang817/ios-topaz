@@ -77,6 +77,10 @@ def main():
         require((type(page) is int and 1 <= page < 30720) if
                 manifest['wifi_native_auth_metadata_checkpoint_phase'] == 'copy-page' else page is None,
                 'copy page/profile mismatch')
+        probe = manifest.get('wifi_native_copy_page_probe', False)
+        require(type(probe) is bool and (not probe or
+                manifest['wifi_native_auth_metadata_checkpoint_phase'] == 'copy-page'),
+                'copy page probe/profile mismatch')
     artifact = manifest['artifact']
     require(Path(artifact).name == artifact and artifact not in ('', '.', '..'), 'driver path')
     driver = args.driver_manifest.parent/artifact

@@ -94,6 +94,11 @@ def validate(review_path):
     else:
         require(page is None and not any(x.startswith('#define EFI_XNU_WIFI_COPY_PAGE_BEFORE') for x in config),
                 'unexpected copy page')
+    probe = driver.get('wifi_native_copy_page_probe', False)
+    probe_config = [x for x in config if x.startswith('#define EFI_XNU_WIFI_COPY_PAGE_PROBE')]
+    require(type(probe) is bool and (not probe or mode == 9) and
+            probe_config == (['#define EFI_XNU_WIFI_COPY_PAGE_PROBE 1'] if probe else []),
+            'copy page translation probe not frozen')
     for name, digest in driver['inputs'].items():
         path = (ROOT/name).resolve()
         require(path.is_relative_to(ROOT) and review['files'].get(name) == digest and sha(path) == digest,
@@ -118,6 +123,11 @@ def validate(review_path):
                 proof.get('page_hook_context_and_GOP_tested') is True and
                 proof.get('non_page_objects_identical') is True,
                 'page checkpoint qualification missing')
+    if probe:
+        require(proof.get('page_translation_probe_tested') is True and
+                proof.get('page_translation_probe_target_access') is False and
+                proof.get('probe_disabled_page_objects_identical') is True,
+                'page translation probe qualification missing')
     require(set(proof['qualified_objects']) == {'driver-0001/uefi-xnu.obj', 'actual-loader-macho.obj'},
             'both actual diagnostic object formats required')
     for name, digest in proof['qualified_objects'].items():

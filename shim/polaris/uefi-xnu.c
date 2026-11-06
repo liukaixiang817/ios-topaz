@@ -33,6 +33,12 @@
 #if EFI_XNU_WIFI_COPY_PAGE_BEFORE < 0 || EFI_XNU_WIFI_COPY_PAGE_BEFORE >= 30720 || ((EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 9) != (EFI_XNU_WIFI_COPY_PAGE_BEFORE != 0)) || (EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 9 && !EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY)
 #error "Firmware-only diagnostic requires page1..30719 only for checkpoint9"
 #endif
+#ifndef EFI_XNU_WIFI_COPY_PAGE_PROBE
+#define EFI_XNU_WIFI_COPY_PAGE_PROBE 0
+#endif
+#if EFI_XNU_WIFI_COPY_PAGE_PROBE < 0 || EFI_XNU_WIFI_COPY_PAGE_PROBE > 1 || (EFI_XNU_WIFI_COPY_PAGE_PROBE && (EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT != 9 || !EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY))
+#error "Firmware-only diagnostic requires checkpoint9 for the page translation probe"
+#endif
 #if EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY
 #if !EFI_XNU_WIFI_NATIVE_RUNTIME_AVAILABLE || !defined(EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT) || EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT < 1 || EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT > 9
 #error "Firmware-only diagnostic requires native runtime and an explicit authentication checkpoint"
@@ -1177,6 +1183,10 @@ _Static_assert(sizeof(log_buffer)>=2*(PWBD_RAW_BYTES+sizeof(pwrpt_record)+sizeof
 #include "uefi-wifi-system-off-native.h"
 static struct pwns_parent wifi_native_parent;
 #if EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 9
+#if EFI_XNU_WIFI_COPY_PAGE_PROBE
+static struct pwmc_translation wifi_native_copy_page_AT;
+static unsigned wifi_native_copy_page_probe_result;
+#endif
 /* A terminal observation, not a publication or a completed segment. Guard
  * failures also stop; they never allow the selected target page to be touched. */
 __attribute__((noinline,noreturn)) static void pmlc_page_checkpoint(struct pmlc_copy*c)
@@ -1189,6 +1199,19 @@ __attribute__((noinline,noreturn)) static void pmlc_page_checkpoint(struct pmlc_
        c->ready!=1||c->unknown!=1||c->error||c->complete||
        c->pages!=EFI_XNU_WIFI_COPY_PAGE_BEFORE||c->segments>=PMIM_SEGMENTS||
        s->owner.held!=1||s->owner.error||s->owner.unknown)wifi_native_copy_page_seen=2;
+#if EFI_XNU_WIFI_COPY_PAGE_PROBE
+    if(wifi_native_copy_page_seen==1){
+        /* AT checks permissions without loading from or storing to the target.
+         * Keep its record separate from the producer's unissued page record. */
+        if(c->base!=a->modem.base||c->base<UINT64_C(0x80000000)||
+           c->base>UINT64_C(0xf8800000)||(c->base&UINT64_C(0xfffff)))wifi_native_copy_page_seen=2;
+        else{
+            struct pwmc_translation*t=&wifi_native_copy_page_AT;
+            t->page=c->base+4096*(uint64_t)c->pages;
+            wifi_native_copy_page_probe_result=pwmc_actual_translate(t)&&pwmc_translation_valid(t)?1:2;
+        }
+    }
+#endif
     power_unknown_hold();
 }
 #endif
@@ -1690,6 +1713,12 @@ static void wifi_native_startup_gop_evidence(void)
     pwtg_line(r,13,"MODEM PEND STEP",m->pending,m->step);
     pwtg_line(r,14,"COPY DONE",c->complete,0);
     pwtg_line(r,15,"UEFI WATCHDOG",(uint32_t)(uefi_watchdog_disable_status>>32),(uint32_t)uefi_watchdog_disable_status);
+#if EFI_XNU_WIFI_COPY_PAGE_PROBE
+    if(wifi_native_copy_page_seen==1)pwtg_line(r,0,wifi_native_copy_page_probe_result==1?"PAGE AT PASS":"PAGE AT FAIL",c->pages,EFI_XNU_WIFI_COPY_PAGE_BEFORE);
+    pwtg_line(r,11,"HOOK AT RESULT",wifi_native_copy_page_seen,wifi_native_copy_page_probe_result);
+    pwtg_line(r,14,"AT READ PAR",(uint32_t)(wifi_native_copy_page_AT.read_par>>32),(uint32_t)wifi_native_copy_page_AT.read_par);
+    pwtg_line(r,15,"AT WRITE PAR",(uint32_t)(wifi_native_copy_page_AT.write_par>>32),(uint32_t)wifi_native_copy_page_AT.write_par);
+#endif
 #endif
     (void)pwtg_draw(r);early_wifi_gop_raw();
 }
