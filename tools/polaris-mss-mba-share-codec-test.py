@@ -34,6 +34,13 @@ def main():
         nonlocal checks
         checks+=1;assert ok,checks
     check(c.decode(raw,*paired,firmware=firmware)['local_completion_consistent'])
+    photo=Path(str(a.raw)+'.photo')
+    if photo.exists():
+        decoded=c.decode(photo.read_bytes(),*[Path(str(photo)+suffix).read_bytes()
+            for suffix in ('.stage','.memory','.early','.retained')],firmware=firmware)
+        check(decoded['local_completion_consistent'])
+        observed=c.PREFIX.decode(photo.read_bytes())
+        check(3840000<observed['restored']['cpu']['ticks']-observed['entry']['cpu']['ticks']<=9600000)
     check(not c.decode(Path(str(a.raw)+'.unknown').read_bytes(),*[Path(str(a.raw)+'.unknown'+suffix).read_bytes()
         for suffix in ('.stage','.memory','.early','.retained')],firmware=firmware)['local_completion_consistent'])
     def offset(*path):
@@ -43,6 +50,9 @@ def main():
             at+=off+index*(kind.size if isinstance(kind,c.Layout) else kind);layout=kind
         return at
     changes=[]
+    entry=c.PREFIX.decode(raw)['entry']['cpu']['ticks']
+    for key in ('assigned','restored'):
+        changes.append((offset((key,0),('cpu',0),('ticks',0)),8,entry+9600001))
     for key in ('attempted','unknown','error','mask_issued','cpu_held','assignment_issued','assignment_returned_zero','restore_issued','complete'):
         changes.append((offset((key,0)),4,1 if key in ('unknown','error','cpu_held') else 0))
     changes += [(offset(('stage_digest',0)),8,0),(offset(('base',0)),8,1),(offset(('bytes',0)),8,0x200000),

@@ -54,6 +54,45 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: measured219ms post-peer timeout; separate finite phase windows
+
+- Current photo for mba-post-check-0001 image42960357... shows DETAIL02010005/1:
+  phase2/post peer1, architecture/time failure, assignment returned zero.
+  Peer1 issued/returned/OFF; remaining post peers not attempted. Visual ticks
+  ENTRY BE9D4296, OPEN BEC5F14E, LAST BED4C2A6, CHECK BEDD6CC8 give approximately
+ 139ms preparation,51ms transaction,219ms total. This definitely exceeds the
+  old200ms complete-caller check. Other architecture registers are not shown;
+  no claim that time is the only possible mismatch. The transaction is complete.
+- MBA caller incorrectly reused single-GCD-call PGCD_FRESH_TICKS for two
+  seven-peer/source passes plus secure work. Give it a separate finite500ms
+  PMSB_TOTAL_TICKS, including all existing checks and restore. Secure transaction
+  remains100ms/4 rounds. Independent prefix codec uses the same new caller
+  ceiling and still rejects >500ms records; ABI remains12288B.
+- Audited immediate successor: pmsc_begin measured freshness from pre-staging
+  retained GetMap, inevitably stale after a checked long MBA. Fresh handoff
+  now requires <=200ms since successful MBA restore, with previous timestamp
+  monotonicity and full binding/source/current map key/Core/lock checks.
+  Owner phase1 gets its own nonrenewable500ms admission window from opening;
+ 180s startup bound remains unchanged. No omitted predicate, renewal, retry,
+  free/cleanup or ownership inference.500ms budgets cover remaining peer/source
+  work while staying finite; actual phone completion remains to be tested.
+- Old MBA and old owner headers each fail the new photo-timed regression;
+  fixed actual callers pass88589 MBA and172548 owner assertions under ASan/
+  UBSan, including >100ms transaction, >500ms caller/admission, backward clock,
+  stale >200ms handoff, changed CPU/map/source and protected target/descriptor.
+  Independent101 layout/89 codec checks include accepted long caller and
+  rejected >500ms snapshots. Full software startup/runtime/terminal2889178
+  PASS. Full EFI/arm64830 functions/max stack816B and original81-file codec PASS.
+- New driver807424B SHA8225c84239db5e8800414d55d9da19f41b28395547536ca0b51bc1a1cfefd7fa;
+  image6227968B SHAfe978bac209a37ce27d78e59631b2c5ab53e75fe5e4cd9dd1e911e21bfb033eb.
+  Kernel CI42091724671/payload unchanged. Private case mba-window-0001.
+  FASTBOOT polaris confirmed02:07:25.965728Z; current readonly audit88913
+  running after all build/test jobs ended. New candidate not yet sent; current
+ 40-check review/frozen input admission required first. Prior image/pool SPENT.
+- Next physical MBA/owner completion, then MSS/WLAN scan/Cyberpunk AU join/
+  IP/DNS/data/stability. Execution2/5/current plus3 subsequent steps; last step
+  report02:03Z. Preserve unowned remote-memory9-line hunk; tested but not committed.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: post-check diagnostic image sent once; current screen pending
 
 - Sourcebe0e577 pushed and four owned files synchronized. Current candidate

@@ -14,6 +14,11 @@
 #include "uefi-mss-stage.h"
 #include "uefi-wifi-cpu-local-mask.h"
 #include "../../tools/polaris-wifi-mem-transaction.h"
+/* Whole caller includes two seven-peer/source-validation passes as well as
+ * the separately bounded 100ms secure transaction. Physical post-check
+ * evidence already reaches 219ms at the first returning peer. Keep a finite
+ * 500ms caller ceiling; do not reuse the unrelated 200ms GCD call budget. */
+#define PMSB_TOTAL_TICKS UINT64_C(9600000)
 struct pmsb_peer {uint64_t target;int64_t raw;uint32_t issued,returned;};
 struct pmsb_result {
     uint64_t stage,base,bytes;uint8_t stage_digest[32];
@@ -62,7 +67,7 @@ static inline int pmsb_arch(const struct pmsb_result*r,struct pgcd_arch*out,unsi
     return b->el==a->el&&b->mpidr==a->mpidr&&b->ttbr0==a->ttbr0&&b->ttbr1==a->ttbr1&&
         b->tcr==a->tcr&&b->sctlr==a->sctlr&&b->mair==a->mair&&b->sre==a->sre&&b->frequency==a->frequency&&
         b->daif==(masked?0xc0:0)&&b->group1==(masked?0:1)&&out->cpacr==r->entry.cpacr&&
-        b->ticks>=a->ticks&&b->ticks-a->ticks<=PGCD_FRESH_TICKS;
+        b->ticks>=a->ticks&&b->ticks-a->ticks<=PMSB_TOTAL_TICKS;
 }
 static inline int pmsb_binding_at(const struct pmsb_result*r,unsigned native,unsigned state)
 {

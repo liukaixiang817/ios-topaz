@@ -19,6 +19,7 @@
 #endif
 #include "uefi-mss-mba-share.h"
 #define PMSC_TOTAL UINT64_C(3456000000) /*180s whole interval, never renewable*/
+#define PMSC_ADMISSION_TICKS UINT64_C(9600000) /*500ms own source/peer admission*/
 #define PMSC_CHECKPOINTS 16u
 #ifndef EFI_XNU_WIFI_RUNTIME_HANDOFF_AVAILABLE
 #define EFI_XNU_WIFI_RUNTIME_HANDOFF_AVAILABLE 0
@@ -115,7 +116,7 @@ static inline int pmsc_arch(struct pmsc_owner*r,struct pgcd_arch*out,unsigned ma
        b->sctlr!=a->sctlr||b->mair!=a->mair||b->sre!=a->sre||b->frequency!=a->frequency||out->cpacr!=r->entry.cpacr||
        b->daif!=(masked?0xc0:0)||b->group1!=(masked?0:1)||b->ticks<r->last||b->ticks<r->opening||
        !pmsc_time(r,b->ticks)||
-       (r->phase==1&&(b->ticks<h->final.cpu.ticks||b->ticks-h->final.cpu.ticks>PGCD_FRESH_TICKS))||
+       (r->phase==1&&b->ticks-r->opening>PMSC_ADMISSION_TICKS)||
        r->current_map_key!=h->map.map.key||!pwea_native_binding_at(h->input.early,native)||
        pwfi_le((const void*)(uintptr_t)(core+0x1b098),8)!=4||
        pwfi_le((const void*)(uintptr_t)(core+0x1cb78),8)||
@@ -189,8 +190,13 @@ static inline int pmsc_begin(struct pmsc_owner*r,const struct pweh_result*h,cons
     pweh_digest(h,sizeof(*h),r->retained_digest);pweh_digest(m,sizeof(*m),r->memory_digest);pweh_digest(b,PMSB_RAW_BYTES,r->mba_digest);
     if(!pgcd_actual_arch(0,&r->entry)||!pwea_native_arch_valid(&r->entry)||(r->entry.cpu.sctlr&5)!=5||
        !pwfc_arch_stable(&h->final.cpu,&r->entry.cpu)||h->final.cpacr!=r->entry.cpacr||
-       r->entry.cpu.ticks<h->final.cpu.ticks||r->entry.cpu.ticks-h->final.cpu.ticks>PGCD_FRESH_TICKS||
-       r->entry.cpu.ticks<b->restored.cpu.ticks||r->entry.cpu.ticks>UINT64_MAX-PMSC_TOTAL)return pmsc_fail(r,1);
+       r->entry.cpu.ticks<h->final.cpu.ticks||r->entry.cpu.ticks<b->restored.cpu.ticks||
+       r->entry.cpu.ticks-b->restored.cpu.ticks>PGCD_FRESH_TICKS||
+       r->entry.cpu.ticks>UINT64_MAX-PMSC_TOTAL)return pmsc_fail(r,1);
+    /* Staging and secure assignment already revalidated the retained chain.
+     * Fresh handoff is measured from successful MBA restore, not the old
+     * pre-staging GetMap. Admission has its own nonrenewable bounded window;
+     * current map key/Core/locks/source/architecture checks still run below. */
     r->opening=r->last=r->entry.cpu.ticks;r->phase=1;
     if(!pmsc_checkpoint(r)||!pgcd_actual_fp_save(0,&r->fp)||r->fp.saved!=1||r->fp.restored||
        r->fp.cpacr_before!=r->entry.cpacr)return pmsc_fail(r,3);

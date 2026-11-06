@@ -26,6 +26,7 @@ static int owner_arch(void*p,struct pgcd_arch*a)
 static int pmsc_affinity(uint64_t target,int64_t*raw)
 {
     CHECK(local_mask&&target==(owner_peers%7+1)*0x100);owner_peers++;*raw=1;
+    if(owner_peers==1&&owner_fault==11)owner_delay+=PMSC_ADMISSION_TICKS+1;
     if(owner_peers==owner_trigger){
         if(owner_fault==5)*raw=0;
         if(owner_fault==6)return 0;
@@ -98,6 +99,18 @@ int PMSC_TEST_ENTRY(int argc,char**argv)
         }
     }
     owner_setup(0,0);owner_delay=PGCD_FRESH_TICKS+1;CHECK(!owner_begin()&&!owner->mask_issued);
+    /* A fully checked long MBA caller is a fresh predecessor even though
+     * the pre-staging GetMap is now older than a single GCD-call budget. */
+    owner_setup(0,0);share_setup(27,0,0);CHECK(pmsb_share(share,stage));
+    owner_delay=share_clock_delay;CHECK(owner_begin()&&owner->phase==2&&owner->held);
+    CHECK(owner->entry.cpu.ticks-held->final.cpu.ticks>PGCD_FRESH_TICKS);
+    CHECK(owner->entry.cpu.ticks-share->restored.cpu.ticks<=PGCD_FRESH_TICKS);
+    CHECK(pmsc_close_unused(owner));
+    /* Once started, admission may exceed200ms but never renew its500ms bound. */
+    owner_setup(0,0);CHECK(owner_begin());
+    owner->phase=1;owner_delay=PGCD_FRESH_TICKS+1;CHECK(pmsc_arch(owner,&owner->current,1));
+    owner_delay=PMSC_ADMISSION_TICKS+1;CHECK(!pmsc_arch(owner,&owner->current,1));
+    owner_setup(11,0);CHECK(!owner_begin()&&owner->unknown&&owner->held&&owner_peers==1);
     for(unsigned changed=0;changed<8;changed++){
         owner_setup(0,0);CHECK(owner_begin());
         unsigned at=(unsigned[]){0x1cdb0,0x1cc08,0x1dc10,0x1b350,0x1bd58,0x1c208,0x1b098,0x1cb78}[changed];

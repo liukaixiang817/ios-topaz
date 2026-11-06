@@ -39,7 +39,7 @@ def cpu(a,b,masked):
     return (stage.memory.admitted(a) and a['cpu']['sctlr']&5==5 and a['cpacr']==b['cpacr'] and
             all(a['cpu'][k]==b['cpu'][k] for k in a['cpu'] if k not in ('ticks','daif','group1')) and
             b['cpu']['daif']==(0xc0 if masked else 0) and b['cpu']['group1']==(0 if masked else 1) and
-            0<=b['cpu']['ticks']-a['cpu']['ticks']<=3840000)
+            0<=b['cpu']['ticks']-a['cpu']['ticks']<=9600000)
 
 
 def transition(t,restore):

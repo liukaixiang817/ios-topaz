@@ -18,6 +18,7 @@ static int share_restore_fp(void*,struct pgcd_fp_guard*);
 static struct pmsb_result*share;
 static unsigned local_mask,share_fault,share_trigger,peers,cache_count,smcs,continuations,descriptor_protected,target_protected;
 static uint64_t share_clock_delay;
+static uint64_t share_boundary_ticks;
 static int share_arch(void*p,struct pgcd_arch*a)
 {
     int ok=early_arch(p,a);a->cpu.daif=local_mask?0xc0:0;a->cpu.group1=local_mask?0:1;
@@ -25,7 +26,8 @@ static int share_arch(void*p,struct pgcd_arch*a)
     if(share_fault==20&&share->transaction.started&&!share->transaction.events)a->cpu.ticks+=PWMT_TICKS+1;
     if(share_fault==23&&share->transaction.started&&!share->transaction.events)a->cpu.ticks=share->transaction.opening-1;
     if(share_fault==25&&peers==8)a->cpu.ttbr0^=4096;
-    if(smcs==share_trigger){if(share_fault==14)a->cpu.ttbr0^=4096;if(share_fault==15)a->cpu.ticks+=PGCD_FRESH_TICKS+1;}
+    if(share_fault==28)a->cpu.ticks=share->entry.cpu.ticks+share_boundary_ticks;
+    if(smcs==share_trigger){if(share_fault==14)a->cpu.ttbr0^=4096;if(share_fault==15)a->cpu.ticks+=PMSB_TOTAL_TICKS+1;}
     return ok;
 }
 static int share_save(void*p,struct pgcd_fp_guard*f)
@@ -36,9 +38,14 @@ static int pmsb_affinity(uint64_t target,int64_t*raw)
 {
     CHECK(local_mask&&target==0x100*(peers%7+1));peers++;*raw=1;
     if(peers==7&&(share_fault==18||share_fault==22))
-        share_clock_delay=share_fault==18?PWMT_TICKS+192000:PGCD_FRESH_TICKS+1;
-    if(peers==8&&share_fault==24)share_clock_delay=PGCD_FRESH_TICKS+1;
+        share_clock_delay=share_fault==18?PWMT_TICKS+192000:PMSB_TOTAL_TICKS+1;
+    if(peers==8&&share_fault==24)share_clock_delay=PMSB_TOTAL_TICKS+1;
     if(peers==8&&share_fault==26)stage->copied_hash[0][0]^=1;
+    if(share_fault==27){
+        if(peers==7)share_clock_delay=0x28aeb8; /* photo: preparation ~139ms */
+        if(peers==8)share_clock_delay=0x402a32; /* photo: post peer1 ~219ms */
+        if(peers>8)share_clock_delay+=288000; /* remaining peers:15ms each */
+    }
     if(peers==share_trigger){
         if(share_fault==1)*raw=0;
         if(share_fault==2)share->fp.q8_q15[0]^=1;
@@ -74,6 +81,7 @@ static int pmsb_round(struct pwma_registers*r)
 {
     CHECK(local_mask&&peers==7&&cache_count==1&&stage_writes==259);smcs++;
     if(share_fault==21&&smcs==1)share_clock_delay+=PWMT_TICKS+1;
+    if(share_fault==27&&smcs==1)share_clock_delay+=0xed158; /* photo: transaction ~51ms */
     if(smcs==1){
         CHECK(r->x[0]==PWMA_FN&&r->x[1]==PWMA_ARGS);
         CHECK(pwfi_le(share->page.data+PWMA_REGION_OFFSET,8)==mss->memory.claim[1].requested);
@@ -128,17 +136,27 @@ int PMSB_TEST_ENTRY(int argc,char**argv)
         CHECK(!pmsb_share(share,stage)&&smcs==n+1);
     }
     /* A 110ms preparation phase must not backdate the 100ms transaction.
-     * The complete caller still has its original 200ms upper bound. */
+     * The complete caller has a separate finite 500ms upper bound. */
     share_setup(18,0,0);CHECK(pmsb_share(share,stage));
     CHECK(share->transaction.opening-share->masked.cpu.ticks>PWMT_TICKS);
     CHECK(share->transaction.last-share->transaction.opening<=PWMT_TICKS);
-    CHECK(share->restored.cpu.ticks-share->entry.cpu.ticks<=PGCD_FRESH_TICKS);
+    CHECK(share->restored.cpu.ticks-share->entry.cpu.ticks<=PMSB_TOTAL_TICKS);
+    share_setup(27,0,0);CHECK(pmsb_share(share,stage)&&!share->reserved);
+    CHECK(share->restored.cpu.ticks-share->entry.cpu.ticks>PGCD_FRESH_TICKS);
+    CHECK(share->restored.cpu.ticks-share->entry.cpu.ticks<=PMSB_TOTAL_TICKS);
+    CHECK(share->transaction.last-share->transaction.opening<=PWMT_TICKS);
+    if(argc==3)write_records(argv[2],".photo");
+    share_fault=28;
+    const uint64_t boundaries[]={0,PMSB_TOTAL_TICKS-1,PMSB_TOTAL_TICKS,PMSB_TOTAL_TICKS+1};
+    for(unsigned n=0;n<4;n++){
+        struct pgcd_arch sample;share_boundary_ticks=boundaries[n];CHECK(pmsb_arch(share,&sample,0)==(n<3));
+    }
     for(unsigned kind=19;kind<=23;kind++){
         share_setup(kind,0,0);CHECK(!pmsb_share(share,stage)&&share->unknown&&!share->complete);
         CHECK(!share->restore_issued&&local_mask);
         if(kind==22){
             CHECK(!share->transaction.started&&!smcs&&share->error==5);
-            CHECK(share->reserved==0x01070005&&share->assigned.cpu.ticks-share->entry.cpu.ticks>PGCD_FRESH_TICKS);
+            CHECK(share->reserved==0x01070005&&share->assigned.cpu.ticks-share->entry.cpu.ticks>PMSB_TOTAL_TICKS);
         }
         else{
             CHECK(share->transaction.error==PWMT_TIME&&smcs==(kind==21));
@@ -158,7 +176,7 @@ int PMSB_TEST_ENTRY(int argc,char**argv)
         share_setup(kind,0,0);CHECK(!pmsb_share(share,stage)&&share->error==11&&share->unknown);
         CHECK(share->assignment_returned_zero&&share->transaction.complete&&!share->transaction.error&&smcs==1);
         CHECK(share->reserved==(kind==26?0x02010003u:0x02010005u)&&peers==8&&!share->restore_issued&&local_mask);
-        if(kind==24)CHECK(share->assigned.cpu.ticks-share->entry.cpu.ticks>PGCD_FRESH_TICKS);
+        if(kind==24)CHECK(share->assigned.cpu.ticks-share->entry.cpu.ticks>PMSB_TOTAL_TICKS);
         if(kind==25)CHECK(share->assigned.cpu.ttbr0!=share->entry.cpu.ttbr0);
     }
     for(unsigned kind=6;kind<=7;kind++)for(unsigned n=1;n<=2;n++){
