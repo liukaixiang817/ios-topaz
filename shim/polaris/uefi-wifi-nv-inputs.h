@@ -39,6 +39,7 @@ struct pnv_result {
     uint64_t boot,allocation,enumeration_status,release_status;
     uint64_t handles,handle_count,read_status,last_lba,last_bytes;
     uint32_t attempted,unknown,error,reads,returned,passes,complete,reserved;
+    uint32_t selection_stage,selection_index;uint64_t selection_status;
     uint8_t hash[PNV_PARTS][32],digest[32];
 };
 static inline int pnv_equal(const void*a,const void*b,size_t n)
@@ -138,17 +139,26 @@ static inline int pnv_collect(struct efi_boot*bs,const struct pnv_plan*plan,uint
             struct pnv_device*d=&r->part[n];d->matches++;d->handle=handles[i];d->path_bytes=bytes;pnv_copy(d->path,path,bytes);
         }
     }
+    /* Cached selection diagnostics: 1..5 partition match/protocol/media/prefix/parent,
+     * 6..9 disk path/match/protocol/media, 10 distinct disks, 11 selected.
+     * No new service calls or relaxed acceptance conditions. */
     for(unsigned n=0;n<PNV_PARTS;n++){
-        struct pnv_device*d=&r->part[n];if(d->matches!=1||bs->handle_protocol(d->handle,&bg,(void**)&d->io)||
-           !pnv_media_valid(d->io,r->plan.part[n].blocks,1))goto fail;
-        d->protocol=*d->io;d->media=*d->io->media;unsigned prefix=pnv_parent_bytes(d->path,d->path_bytes);
+        struct pnv_device*d=&r->part[n];r->selection_index=n;r->selection_stage=1;
+        if(d->matches!=1)goto fail;
+        r->selection_stage=2;r->selection_status=bs->handle_protocol(d->handle,&bg,(void**)&d->io);
+        if(r->selection_status)goto fail;
+        r->selection_stage=3;
+        if(d->io){d->protocol=*d->io;if(d->io->media)d->media=*d->io->media;}
+        if(!pnv_media_valid(d->io,r->plan.part[n].blocks,1))goto fail;
+        r->selection_stage=4;unsigned prefix=pnv_parent_bytes(d->path,d->path_bytes);
         if(!prefix||pwfi_le(d->path+prefix+4,4)!=r->plan.part[n].number)goto fail;
         struct pnv_device*parent=&r->disk[r->plan.part[n].disk];
+        r->selection_stage=5;
         if(parent->path_bytes){if(parent->path_bytes!=prefix+4||!pnv_equal(parent->path,d->path,prefix))goto fail;continue;}
         parent->path_bytes=prefix+4;pnv_copy(parent->path,d->path,prefix);parent->path[prefix]=0x7f;parent->path[prefix+1]=0xff;parent->path[prefix+2]=4;
     }
     for(unsigned n=0;n<PNV_DISKS;n++){
-        struct pnv_device*d=&r->disk[n];if(!d->path_bytes)goto fail;
+        struct pnv_device*d=&r->disk[n];r->selection_index=n;r->selection_stage=6;if(!d->path_bytes)goto fail;
         for(unsigned i=0;i<r->handle_count;i++){
             const uint8_t*path=0;if(bs->handle_protocol(handles[i],&dg,(void**)&path)||!path)continue;
             /* Compare node-by-node so a short returned path is never read past
@@ -158,9 +168,16 @@ static inline int pnv_collect(struct efi_boot*bs,const struct pnv_plan*plan,uint
                 if(bytes<4||bytes>d->path_bytes-at||!pnv_equal(path+at,d->path+at,bytes)){match=0;break;}at+=bytes;}
             if(match&&at==d->path_bytes){d->matches++;d->handle=handles[i];}
         }
-        if(d->matches!=1||bs->handle_protocol(d->handle,&bg,(void**)&d->io)||!pnv_media_valid(d->io,r->plan.disk[n].blocks,0))goto fail;d->protocol=*d->io;d->media=*d->io->media;
+        r->selection_stage=7;if(d->matches!=1)goto fail;
+        r->selection_stage=8;r->selection_status=bs->handle_protocol(d->handle,&bg,(void**)&d->io);
+        if(r->selection_status)goto fail;
+        r->selection_stage=9;
+        if(d->io){d->protocol=*d->io;if(d->io->media)d->media=*d->io->media;}
+        if(!pnv_media_valid(d->io,r->plan.disk[n].blocks,0))goto fail;
     }
+    r->selection_stage=10;r->selection_index=0;
     if(r->disk[0].handle==r->disk[1].handle)goto fail;
+    r->selection_stage=11;
     r->release_status=bs->free_pool(handles);handles=0;if(r->release_status)return pnv_fail(r,3);
     if(!pnv_gpt(r))return 0;
     for(unsigned pass=0;pass<2;pass++){

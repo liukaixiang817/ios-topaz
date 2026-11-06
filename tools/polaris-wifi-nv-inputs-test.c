@@ -38,7 +38,11 @@ static efi_status read_blocks(struct pnv_block*io,uint32_t id,uint64_t lba,uint6
 static efi_status locate(uint32_t how,const efi_guid*guid,void*key,uint64_t*count,efi_handle**out)
 {CHECK(how==2&&guid->a==0x964e5b21&&!key);*count=mode==1?7:6;*out=handles;return 0;}
 static efi_status handle(efi_handle h,const efi_guid*guid,void**out)
-{struct device*d=h;CHECK(d>=device&&d<device+6);if(guid->a==0x9576e91)*out=d->path;else{CHECK(guid->a==0x964e5b21);*out=&d->io;}return 0;}
+{struct device*d=h;CHECK(d>=device&&d<device+6);if(guid->a==0x9576e91)*out=d->path;else{
+    CHECK(guid->a==0x964e5b21);
+    if((mode==13&&d==&device[2])||(mode==14&&d==&device[0]))return EFI_ERROR|7;
+    *out=&d->io;
+}return 0;}
 static efi_status release(void*p){CHECK(p==handles&&!freed);freed++;return mode==8?EFI_ERROR|7:0;}
 static void nv_setup(unsigned fault)
 {
@@ -57,6 +61,13 @@ static void nv_setup(unsigned fault)
         d->path[end]=0x7f;d->path[end+1]=0xff;d->path[end+2]=4;
     }
     handles[6]=handles[2];if(mode==2)device[2].path[44]^=1;
+    if(mode==9)device[2].media.logical=0;
+    if(mode==10)device[3].path[4]^=0x40;
+    if(mode==11)device[0].path[4]^=0x40;
+    if(mode==12){uint8_t*p=device[2].path;p[62]=1;p[63]=4;p[64]=4;p[66]=0x7f;p[67]=0xff;p[68]=4;}
+    if(mode==15)device[0].media.block=512;
+    if(mode==16)device[2].io.media=0;
+    if(mode==17)device[2].io.read=0;
 }
 static void load(const char*dir,const char*name,void*out,unsigned bytes)
 {char path[4096];CHECK(snprintf(path,sizeof(path),"%s/%s",dir,name)>0);FILE*f=fopen(path,"rb");CHECK(f&&fread(out,1,bytes,f)==bytes&&fgetc(f)==EOF&&!fclose(f));}
@@ -81,5 +92,14 @@ int PNV_TEST_ENTRY(int argc,char**argv)
     for(unsigned n=PNV_INPUT_BYTES;n<PNV_SCRATCH;n++)CHECK(memory[n]==0xa5);
     CHECK(!pnv_collect(&boot,&polaris_nv_plan,(uintptr_t)memory,result));
     for(unsigned fault=1;fault<=8;fault++){nv_setup(fault);CHECK(!pnv_collect(&boot,&polaris_nv_plan,(uintptr_t)memory,result)&&result->unknown&&!result->complete&&freed==1);}
+    const unsigned steps[]={3,5,7,4,2,8,9,3,3};
+    for(unsigned fault=9;fault<=17;fault++){
+        nv_setup(fault);CHECK(!pnv_collect(&boot,&polaris_nv_plan,(uintptr_t)memory,result));
+        CHECK(result->error==2&&result->unknown&&!result->complete&&freed==1&&!reads);
+        CHECK(result->selection_stage==steps[fault-9]&&result->selection_index==(fault==10?1u:0u));
+        CHECK(result->selection_status==((fault==13||fault==14)?EFI_ERROR|7:0));
+        if(fault==9)CHECK(result->part[0].media.logical==0&&result->part[0].media.block==4096);
+        if(fault==15)CHECK(result->disk[0].media.block==512);
+    }
     free(memory);free(result);printf("PASS %u NV input checks, %u scenarios; own GPT fixtures/synthetic NV/UEFI, no device\n",nv_checks,scenario);return 0;
 }

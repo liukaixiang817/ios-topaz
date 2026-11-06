@@ -54,6 +54,37 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: physical NV selection failure located; detailed diagnostic ready
+
+- New user photo from diagnostic imageef7c7edd... shows stage1/load0,
+  NV error4/calls3/pending4/complete0, AT0=0x3450/AT1=0, inputs.error2/unknown1,
+  allocated1/unknown1, all CE/HTT counters0, NO RADIO0. Actual source establishes
+  early MSA/RMTFS and MSS backing allocation completed; NV allocation/first AT
+  pass completed. Collector enumerated but failed partition/disk selection
+  before any GPT/NV ReadBlocks. Exact failing selection branch is still unknown.
+  Private photo/evidence: wifi/nv-selection-0001/{user-NV-hold.jpg,photo-evidence.json}.
+- Added cached selection stage/index/protocol status and observed media snapshot
+  to existing NV result; original error2 and all acceptance/no-write conditions
+  retained. Existing calls are split for diagnosis, no new service calls/retry.
+  Error2 screen now gives exact selection phase, partition/disk match counts,
+  observed revision/block/last/alignment/flags. No identifiers or NV bytes shown.
+- Actual collector ASan/UBSan PASS18 scenarios/54791320 assertions; actual native
+  wrapper PASS13/4614. Extracted real screen function PASS792 mapping/bounds/
+  guard cases (SOFTWARE draw leaf). Full EFI PASS; arm64 compile830functions,
+  maximum stack816B. Full startup/worker/terminal composition PASS2889178
+  (SOFTWARE hardware/kernel/radio; not physical networking). Initial test
+  invocation omitted required WPA-vector environment and stopped; corrected
+  launcher rerun passed with production code unchanged. Logs retained.
+- Driver807424B SHA94dea6f1f2a0f59c1439c7536c0c40ec8e29c4580fc2a564d17e2261119ae45c;
+  new image6227968B SHAa1a07c0e8fbd59ee388589cce35e50bd2e2add0948351a8515a2dd813141aae1.
+  Original decoder PASS/all81 original firmware files preserved. Same CI
+ 42091724671 kernel and payload. Fresh nonce unused, offline audit validation
+  PASS. Existing unowned remote-memory context hunk preserved/not committed.
+- User asked to return FASTBOOT; bounded actual query00:03:55Z confirmed
+  expected polaris even before a text reply. Continue authorized new candidate
+  readonly audit and one-use boot directly. Step2/5; current plus3 remain.
+  Goal user explicitly reactivated. Current detailed report00:03Z,next00:18Z.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: diagnostic image sent; full210s discovery failed
 
 - Source/handoff9d30caa pushed. New diagnostic imageef7c7edd... actually sent

@@ -495,6 +495,29 @@ static void wifi_native_memory_gop_evidence(void)
        r->headers.address[0]!=(uintptr_t)gop){
         (void)pwtg_fail(r,PWTG_ARGUMENT);early_wifi_gop_raw();return;
     }
+    if(wifi_native_nv.inputs.error==2){
+        const struct pnv_result*v=&wifi_native_nv.inputs;
+        const struct pnv_device*d=0;
+        if(v->selection_stage<=5&&v->selection_index<PNV_PARTS)d=&v->part[v->selection_index];
+        else if(v->selection_stage>=6&&v->selection_stage<=9&&v->selection_index<PNV_DISKS)d=&v->disk[v->selection_index];
+        pwtg_line(r,0,"NV SELECT HOLD",wifi_native_memory_stage,load_state);
+        pwtg_line(r,1,"NV ERROR CALL",wifi_native_nv.error,wifi_native_nv.calls);
+        pwtg_line(r,2,"NV PEND DONE",wifi_native_nv.pending,wifi_native_nv.complete);
+        pwtg_line(r,3,"NV INPUT E U",v->error,v->unknown);
+        pwtg_line(r,4,"SELECT STEP IDX",v->selection_stage,v->selection_index);
+        pwtg_line(r,5,"PROTO STATUS",(uint32_t)v->selection_status,(uint32_t)(v->selection_status>>32));
+        pwtg_line(r,6,"HANDLES READS",(uint32_t)v->handle_count,v->reads);
+        pwtg_line(r,7,"PART MATCH 0 1",v->part[0].matches,v->part[1].matches);
+        pwtg_line(r,8,"PART MATCH 2 3",v->part[2].matches,v->part[3].matches);
+        pwtg_line(r,9,"DISK MATCH 0 1",v->disk[0].matches,v->disk[1].matches);
+        pwtg_line(r,10,"MEDIA REV BLOCK",d?(uint32_t)d->protocol.revision:0,d?d->media.block:0);
+        pwtg_line(r,11,"MEDIA LAST",d?(uint32_t)d->media.last:0,d?(uint32_t)(d->media.last>>32):0);
+        pwtg_line(r,12,"ALIGN FLAGS",d?d->media.align:0,d?((uint32_t)d->media.removable<<24)|((uint32_t)d->media.present<<16)|((uint32_t)d->media.logical<<8)|d->media.readonly:0);
+        pwtg_line(r,13,"NV AT0 AT1",wifi_native_nv.translated[0],wifi_native_nv.translated[1]);
+        pwtg_line(r,14,"CE HTT ERROR",wifi_native_ce_memory.error,wifi_native_htt_memory.error);
+        pwtg_line(r,15,"NO RADIO",wln_cpu_on_issued,0);
+        (void)pwtg_draw(r);early_wifi_gop_raw();return;
+    }
     pwtg_line(r,0,"NATIVE MEM HOLD",wifi_native_memory_stage,load_state);
     pwtg_line(r,1,"NV ERROR CALL",wifi_native_nv.error,wifi_native_nv.calls);
     pwtg_line(r,2,"NV PEND DONE",wifi_native_nv.pending,wifi_native_nv.complete);
