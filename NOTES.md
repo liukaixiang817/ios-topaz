@@ -72,6 +72,10 @@ early samples only. On0029 the human already confirmed boot complete and said
   Async text question requested current heading/error/phase/step/address.
   Prior feedback dependency resolved; this is the first occurrence of the
   new candidate's physical-feedback dependency. Do not inherit old blocked count.
+- Continuation06:27Z: prior turn made progress (source/test/build/physical trial).
+  Current host result is terminal0 at06:26:09Z; no new device result exists.
+  Same new-screen dependency, occurrence2 including the initiating turn. No
+  live job remains to poll; no retry or USB observer. Goal remains active.
 - Execution2/5,current plus3steps remain. MBA-ready/modem-auth/WLAN scan,
   Cyberpunk AU join/IP/DNS/data/stability remain unproven. Last15min06:15Z,
   next06:30Z while active. Kernel CI42091724671/payload unchanged. Unowned
