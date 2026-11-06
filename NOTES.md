@@ -54,6 +54,61 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: physical MODEM COPY READY confirmed; copied-mode diagnostic building
+
+- Human explicitly reports MODEM COPY READY for current firmware-copy-ready-
+  checkpoint-0002, boundto sent12:19:44.667497Z/image2a0c4f8295041dedb07e776d41e95e51e9e2c7ea69b1417ca1fb3390ab74bc5b.
+  Direct evidence is title, not independently reported numeric rows. Guarded
+  title requires authCOPY/assignments3/shared-bank assignment2 complete, modem
+  source admission and copyREADY1/COMPLETE0/pages0/segments0 before first bank
+  store. Thus this boundary is physical proof; full copy/auth/WLAN unproven.
+- Same host90374 TERMINAL0 ended12:21:44.231403Z. Full100593664B validated ACK
+  and queried validated_state true; native-start12:21:24.711258Z,ACK record
+  updated12:21:44.204105Z. CandidateSPENT, no replay. No active device job or
+  observer. Phone held at checkpoint; no pending physical action requested yet.
+- New privatecase firmware-modem-copy-checkpoint-0001 building70508. SAME b7a5224
+  C/builder/payload/hardware producers; only checkpoint enum changes4copy-ready
+  ->3copied, new per-image nonce and explicit firmware-only guard. Four modes
+  already qualified by1040actual entry cases; new actual objects/image still
+  need inspection/binding. No root audit or storage repair repeated. Current
+  normal iOS boot stays38/40REFUSED; no kernel may execute in this scope.
+- This next trial differs from prior copied-mode spontaneous-reset trial by
+  compile-time unconditional pre-XNU stop even if a checkpoint predicate misses.
+  It can therefore distinguish a missed-checkpoint/kernel-fallthrough outcome
+  from earlier copy/publication failure; do not assume the cause before result.
+- Next finish fresh copied-mode artifacts/control proof/review, one-time FASTBOOT
+  check and request physical reentry ONLY if absent; then authorized once-only
+  diagnostic. Expected MODEM COPY STOP, otherwise capture exact title/error/reset.
+- GoalACTIVE,step2/5,four including current;1done,3..5unverified. Formal12:13Z,
+  next12:28Z. Sourceb7a5224 pushed/synced; unownedhunk retained. Firmware readiness
+  title is not real scan/join/IP/DNS/data success.
+
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: firmware-only candidate sent ONCE; payload transfer running
+
+- Completed source/documentation b7a5224 committed/synced/pushed successfully.
+  New firmware-copy-ready-checkpoint-0002 review0002 freezes750inputs incl exact
+  actual code proof/compiler config/two diagnostic objects and two default
+  comparison baselines. OfflinePASS and10actual invalid-review refusalsPASS;
+  nonce remainedUNUSED until physical send. Normal root38/40 remainsREFUSED.
+- Private first host wrapper rejected relative-vs-absolute helper path BEFORE
+  helper launch/output/nonce/device command. Corrected host-only canonical path
+  check; no source/driver/review changed. Actual host90374 started12:19:44.029058Z.
+- Exact diagnostic image sentONCE12:19:44.667497Z after durable nonce consumption,
+  FASTBOOT product validated/temporary ACK. Current state staging_RAM_payload;
+  last recorded12:20:55.538713Z host bytes69206016 of100593664. Native-start not
+  yet issued at that snapshot. Image/nonce nowSPENT: no replay even on timeout.
+  Wait for same running host; do not start a different boot or USB observer.
+- Scope explicitly prohibits XNU execution; only pre-kernel firmware diagnostic
+  may run, no root consumer/partition write. Original Android/Windows/data,
+  freshfailed root evidence and all prior spent trials retained. Unowned header
+  remains unchanged/uncommitted. New source/tests/builds all complete.
+- After actual native ACK, obtain human current title/status. Expected MODEM
+  COPY READY requires shared-bank assignment/source admission before first
+  modem-bank target store. ACK alone is not that proof. If reset/no title,
+  record exact observation; no permission/time/memory relaxation by guessing.
+- GoalACTIVE,step2/5,four including current;1done,3..5unverified. Formal12:13Z
+  window reported,next12:28Z whileactive. No pending human request yet.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: separate firmware-only diagnostic qualified; not sent
 
 - Freshcase firmware-copy-ready-checkpoint-0002 built successfully. Driver

@@ -14,6 +14,17 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+## Physical copy-admission boundary (0189, 2026-11-06)
+
+Human confirms MODEM COPY READY on the once-only separate firmware diagnostic.
+The guarded title requires completed shared-bank assignment2, source admission
+and copyREADY/COMPLETE0 with no target pages/segments copied. Numeric rows were
+not independently reported. Full modem copy/authentication/WLAN remain unproven.
+Next same-source copied-mode image keeps unconditional pre-XNU stop, allowing
+another diagnostic without changing the ordinary40check root-boot policy. A
+previous nonisolated copied-mode trial reset spontaneously; exact cause remains
+unknown and cannot be assigned to copy or kernel fallthrough from that alone.
+
 ## Separate pre-kernel firmware diagnostic (0189, 2026-11-06)
 
 Third actual strictROreview remains38/40REFUSED after runtime power-service exit.
