@@ -54,6 +54,44 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: supply correction passes; MBA delivery failure isolated
+
+- New user photo30373E68 resolves the prior physical-feedback blocker and
+  resumes work. It belongs to SPENT vrm-read-format-0001: NATIVE5/error4,
+  parent0x11/PWNS_BOOT, flags0x101, owner0/phase2, power0x0b, clocks0/AOP0,
+  boot3/auth0. Parent sequencing establishes supply/proxy HELD and six active
+  clocks completed before MBA begin. Voltage regulation was not independently
+  measured. MBA-ready/modem-auth/WLAN remain unproven.
+- pmbn_fail propagates every boot failure as power11: this is NOT a renewed
+  supply6 failure. Boot3 wraps target/architecture/native access/live-check/
+  command-binding/pmba_complete failure; photo has no inner MBA/reset error,
+  current step or access result. Do not label it timeout, bad address, reset
+  or authentication failure without the missing delivery evidence.
+- Add only failure-only pre-CPU_ON GOP projection for parentPWNS_BOOT/boot3:
+  inner MBA/reset errors, phase/step/events/polls, bounded pending delivery,
+  effective nested-reset/normal command address/kind/step, native error/value/
+  flags/target completion/PAR and saved timing deltas. Strict records binding
+  and pending bounds prevent dereference on malformed evidence. No provider,
+  MMIO observation, retry, protocol/timeout/voltage/ownership or ABI change.
+- Exact extracted display passes594+42 existing and98 new sanitizer cases,
+  including nested reset/write PAR, last record, invalid pointers/counts,
+  underflow/missing timestamps, wrong phase/error and CPU_ON/GOP binding guards;
+  input state unchanged. Full EFI and arm64841 functions/max816B PASS; original
+  image codec81 unchanged files. Prior unchanged normal/metadata composed and
+  VRM consumer results retained by hashes; no new kernel CI required.
+- mba-boot-diagnostic-0001 driver823808B SHA
+  99e2e50afa85a105e290f9657cda399b57f6e04aedcd857202850cc0694de17c.
+  Image6236160B SHAd170b86acb00bcf520cd10b20f7ee2e6a9958370e323bc67922bdb5206169ebb.
+  Compiled input change exactly shim/polaris/uefi-xnu.c, input set unchanged.
+  Kernel CI42091724671/payload unchanged. Photo and command evidence private.
+- Expected FASTBOOT05:47:21.516644Z; fresh readonly audit host14860 running.
+  Next independent40checks/freeze/admission and ONE new temporary trial.
+  Candidate not yet sent. Previous blocker resolved; reset any future blocked
+  audit for this resumed run. Execution2/5,current plus3steps remain; next
+  physical result must qualify MBA and later stages. Last15min05:42Z,next05:57Z.
+  USB observer remains paused; preserve Android/Windows/backups, unowned remote-
+  memory header and private artifacts. No existing image/nonce replay.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: VRM response correction sent once; new physical result pending
 
 - Source6c21c1a pushed/synchronized. vrm-read-format-0001 readonly audit28807

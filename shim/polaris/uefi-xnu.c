@@ -1268,6 +1268,43 @@ static void wifi_native_startup_gop_evidence(void)
             pwtg_line(r,15,"REQ AGE TICKS",(uint32_t)(age>>32),(uint32_t)age);
         }
     }
+    /* Project only the failed MBA delivery already retained by the parent.
+     * No live target read, protocol retry or timing change on this path. */
+    if(s->phase==PWNS_BOOT&&s->boot.error==3){
+        const struct pmbn_state*b=&s->boot;const struct pmba_boot*m=&b->mba;
+        uint64_t window=o->last>=m->window?o->last-m->window:UINT64_MAX;
+        uint64_t total=o->last>=m->opening?o->last-m->opening:UINT64_MAX;
+        pwtg_line(r,0,"MBA HOLD",wifi_native_boot_phase,s->phase);
+        pwtg_line(r,1,"MBA ERRORS",b->error,m->error);
+        pwtg_line(r,2,"MBA PHASE STEP",m->phase,m->step);
+        pwtg_line(r,3,"MBA PEND DELIV",b->pending,b->deliveries);
+        pwtg_line(r,4,"MBA EVENTS POLLS",m->events,m->polls);
+        pwtg_line(r,5,"RESET ERR STEP",m->reset.error,m->reset.step);
+        pwtg_line(r,6,"MBA WINDOW AGE",(uint32_t)(window>>32),(uint32_t)window);
+        pwtg_line(r,7,"MBA TOTAL AGE",(uint32_t)(total>>32),(uint32_t)total);
+        pwtg_line(r,8,"MBA KIND STEP",0,0);pwtg_line(r,9,"MBA ADDRESS",0,0);
+        pwtg_line(r,10,"MBA IO ERR VALUE",0,0);pwtg_line(r,11,"MBA IO FLAGS",0,0);
+        pwtg_line(r,12,"MBA TARGETS",0,0);pwtg_line(r,13,"MBA ACCESS PAR",0,0);
+        pwtg_line(r,14,"MBA IO AGE",0,0);
+        uint64_t reset=m->reset.opening&&o->last>=m->reset.opening?o->last-m->reset.opening:UINT64_MAX;
+        pwtg_line(r,15,"MBA RESET AGE",(uint32_t)(reset>>32),(uint32_t)reset);
+        if(b->records==(uintptr_t)s->boot_records&&b->pending&&b->pending<=PMBN_RECORDS&&b->pending==b->deliveries){
+            const struct pmbn_delivery*d=&s->boot_records[b->pending-1];
+            unsigned kind=d->command.phase==2?d->command.reset.kind:d->command.kind;
+            unsigned step=d->command.phase==2?d->command.reset.step:d->command.step;
+            uint64_t address=d->command.phase==2?d->command.reset.address:d->command.address;
+            uint64_t par=kind==PMSR_WRITE?d->native.AT.write_par:d->native.AT.read_par;
+            uint64_t age=d->native.before.ticks&&d->native.after.ticks>=d->native.before.ticks?
+                d->native.after.ticks-d->native.before.ticks:UINT64_MAX;
+            pwtg_line(r,8,"MBA KIND STEP",kind,step);
+            pwtg_line(r,9,"MBA ADDRESS",(uint32_t)(address>>32),(uint32_t)address);
+            pwtg_line(r,10,"MBA IO ERR VALUE",d->native.error,d->native.value);
+            pwtg_line(r,11,"MBA IO FLAGS",d->native.issued|(d->native.returned<<8)|(d->native.complete<<16),d->error);
+            pwtg_line(r,12,"MBA TARGETS",d->target[0].complete,d->target[1].complete);
+            pwtg_line(r,13,"MBA ACCESS PAR",(uint32_t)(par>>32),(uint32_t)par);
+            pwtg_line(r,14,"MBA IO AGE",(uint32_t)(age>>32),(uint32_t)age);
+        }
+    }
     /* All19 reads returned before the phase1 value check. Display the actual
      * saved inputs; this does not recompute, relax or retry the vote policy. */
     if(s->power.error==6&&s->supply.error==PMSP_VALUE&&s->supply.phase==1&&
