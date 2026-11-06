@@ -42,8 +42,10 @@ returned512/512 words,bytes0,cache0/complete0. Human manually FASTBOOT. Fresh
 before224-0002 photo0AADD229 confirms page223 cache/completion returned,
 224/224 pages,partial3,error0. Thus all three gap pages221..223 completed.
 Own MDT next asset starts917504/page224; a fresh after-write224 variant under
-unchanged848d878 tests its first4096 data bytes before cache. Earlier224 exit
-stage remains unknown.
+unchanged848d878 photoCB79E234 proves first4096 data bytes/512 words returned
+before cache. Human manually FASTBOOT. A fresh before256-0002 now checks first32
+real data pages and their cache/completion before the1MiB bank crossing. Earlier
+224/256 Android exit stages remain unknown.
 
 ## Idle hold policy and watchdog evidence (0189, 2026-11-07 Melbourne)
 

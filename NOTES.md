@@ -164,8 +164,25 @@ early samples only. On0029 the human already confirmed boot complete and said
   real producer after-write224 peer passed512 words and expected4096 source data
   bytes,cache/completion/publication0; fresh GOP504 and both actual object
   closure695frames/max816B pass. Reuses exact current source15 public tests.
-  No source modification needed. Freeze/preflight/single fresh send are next;
-  physical first data-page224 write/readback remains UNPROVEN.
+  No source modification needed. Review2190/offlinePASS; verified selected
+  Polaris FASTBOOT,then new imagee1eac4993a70... sentONCE2026-11-06T18:15:10.861059+00:00,
+  native2026-11-06T18:16:51.038995+00:00/ACK2026-11-06T18:17:10.494830+00:00.
+  Host28257 TERMINAL0 collected; image/nonce now SPENT. Current PAGE WRITE HOLD/
+  PAGE WORDS/HOOK WRITE BYTES/PAGE CACHE or spontaneous-exit result requested
+  now resolved by photoCB79E234:PAGE WRITE HOLD,E0/E0,words200/200hex
+  (512/512),HOOK WRITE BYTES1/1000hex(4096),cache0/0,complete0/0,error0.
+  Actual first data-page224 write/readback returned; cache still unissued.
+  Human explicitly manually returned FASTBOOT. No networking/auth success.
+  No live host job or post-native observer; wait for actual result before
+  another trial or producer change. Current handoff ef413f9 was pushed/synced.
+- Fresh firmware-copy-page-before256-0002 built under unchanged848d878 code;
+  current selected preparation covers first32 real data pages224..255 before
+  first1MiB target crossing. Expected COPY PAGE HOLD,100/100hex,completed8/error0,
+  currentfirstDD/partial23hex(35),nextF8200000,modemsegment8/submitted8/events22hex,
+  lengthD051C. Original page256 trial black/Android stage remains unknown; this
+  fresh trial follows new physical224 data-write progress and is not a replay.
+  No source/producer change or fault-cause claim. Finish current qualification,
+  freeze and single fresh boot next; selected page256 access remains unproven.
 - Own original peripheral-loader.c source pinned to MiCode c7cb50c18f812629b9620b2b8fa684bc40d82080
   is saved in modem-copy-gap-source-audit-0001. Normal vendor load copies filesz
   and zeros memsz-filesz; our loader also zeros inter-segment holes/page padding.
@@ -174,9 +191,8 @@ early samples only. On0029 the human already confirmed boot complete and said
   found in static audit. Local HackiOS references remain indexed below and in
   REFERENCE_REPOS.md; no foreign address, firmware or provider imported.
 - Kernel/payload and CI42091724671 unchanged; loader-only work needs no new
-  kernel CI. Next: build/qualify fresh firmware-copy-page224-after-write-0001
-  with unchanged848d878, then send once in verified FASTBOOT. This isolates first
-  real data page224 write/readback before cache,expected512/512 words,bytes4096.
+  kernel CI. Next: fresh before256-0002 under unchanged848d878; this checks
+  pages224..255 full write/cache/completion before first1MiB bank boundary.
   Never replay spent images; standing normal-service Android return applies.
   Preserve unowned remote-memory9-line hunk SHA
   7215a3786b3b9226aa4f839648bbecc80d9c575f3fd3fb00250481dd91786a01.
