@@ -54,6 +54,41 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: early MSS final-map rejection identified; exact difference diagnostic built
+
+- New physical photo3C2FBC30 supersedes the previous USB/cable uncertainty:
+  supply-diagnostic-0001 shows MSS1/8, memory7/7, three AllocatePages status0,
+  final map call returned but incomplete, retained0/0. Source maps this to
+  final GetMemoryMap PWEA_DELTA7 and outer PWEA_EFFECT8. No payload or native
+  supply path ran. Exact changed descriptor/predicate is absent from old GOP;
+  no claim of padding, pool allocation, invalid ownership or cable cause.
+  Goal ACTIVE again; physical feedback clears the prior blocker.
+- Add pure saved-map failure projection and sixteen GOP rows for first failing
+  predicate, descriptor/index/byte, before/after type/base/pages/attributes/VA,
+  raw differing word and requested claim. Validate whole saved maps before
+  walking them, mirror existing bidirectional semantic comparison. No target
+  access, allocation, map acceptance, hardware, protocol or timer change.
+- Software250 checks/39 scenarios PASS with actual MSS producer fixtures,
+  including forward/reverse coverage, malformed maps, retained claims and
+  field/extension differences; source maps unchanged by projection. Exact
+  extracted GOP25 display/binding/bounds cases PASS. Initial EFI build caught
+  wrong local include prefix; fixed before successful full build. No failed
+  build was sent to the phone. Preserved failed local logs separately.
+- Full EFI/arm64 build838 functions/max stack816B; original codec81 unchanged
+  files PASS. Driver821248B SHA c2f585aa11ef203172756076dc7307e9f51d569e47cafdc591e4bbe9a1c2251c.
+  Image6234112B SHA48586d1c56ce0ec1011c0ae0d433b3608e7bab89ba8130a4ab2b73577c04e079.
+  Private case mss-map-diagnostic-0001; compiled common input change ONLY
+  uefi-xnu.c plus new diagnostic header. Earlier unchanged native/protocol/
+  composed tests retained, not rerun. Kernel CI42091724671/payload unchanged.
+- Expected polaris FASTBOOT confirmed04:39:20.452604Z. Current fresh readonly
+  audit host81345 running; next independent40-check review, freeze/admission
+  and single temporary trial. No current diagnostic boot sent yet. Previous
+  supply and handshake pools remain spent. Actual AOP ON completion remains
+  established by earlier photo; power6, MSS startup and all WLAN steps remain
+  unfinished. Execution2/5, including current4 steps remain. Last15min report
+ 04:33Z,next04:48Z. USB continuous observer paused. Preserve unowned
+  remote-memory hunk and Android/Windows/backups/private exclusions.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: supply diagnostic boot sent once; pre-payload USB service absent
 
 - Source4bff22c pushed/synchronized. Current supply-diagnostic-0001 readonly

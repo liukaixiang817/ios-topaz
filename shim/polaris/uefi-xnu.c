@@ -541,6 +541,7 @@ static void wifi_native_memory_gop_evidence(void)
 }
 #endif
 #if EFI_XNU_MSS_MEMORY_AVAILABLE
+#include "uefi-mss-memory-diagnostic.h"
 static void mss_memory_gop_evidence(void)
 {
     struct pwtg_result*r=&early_wifi_gop;const struct pmme_memory*m=&mss_memory.memory;
@@ -560,6 +561,27 @@ static void mss_memory_gop_evidence(void)
     pwtg_line(r,13,"MBA BASE",(uint32_t)(m->claim[1].requested>>32),(uint32_t)m->claim[1].requested);
     pwtg_line(r,14,"MDT BASE",(uint32_t)(m->claim[2].requested>>32),(uint32_t)m->claim[2].requested);
     pwtg_line(r,15,"RETAINED",mss_retained_attempted,mss_retained_ok);
+    if(m->error==PWEA_DELTA){
+        struct pmmd_difference d={0};pmmd_capture(m,&d);
+        pwtg_line(r,0,"MSS DELTA",d.reason,d.direction);
+        pwtg_line(r,1,"CALL KIND",m->calls,d.kind);
+        pwtg_line(r,2,"DIFF BYTE INDEX",d.byte,(d.old_index<<16)|d.new_index);
+        pwtg_line(r,3,"DIFF ADDRESS",(uint32_t)(d.address>>32),(uint32_t)d.address);
+        pwtg_line(r,4,"BEFORE AFTER T",d.before.type,d.after.type);
+        pwtg_line(r,5,"BEFORE BASE",(uint32_t)(d.before.physical>>32),(uint32_t)d.before.physical);
+        pwtg_line(r,6,"AFTER BASE",(uint32_t)(d.after.physical>>32),(uint32_t)d.after.physical);
+        pwtg_line(r,7,"BEFORE PAGES",(uint32_t)(d.before.pages>>32),(uint32_t)d.before.pages);
+        pwtg_line(r,8,"AFTER PAGES",(uint32_t)(d.after.pages>>32),(uint32_t)d.after.pages);
+        pwtg_line(r,9,"BEFORE ATTR",(uint32_t)(d.before.attributes>>32),(uint32_t)d.before.attributes);
+        pwtg_line(r,10,"AFTER ATTR",(uint32_t)(d.after.attributes>>32),(uint32_t)d.after.attributes);
+        pwtg_line(r,11,"BEFORE VIRT",(uint32_t)(d.before.virtual_address>>32),(uint32_t)d.before.virtual_address);
+        pwtg_line(r,12,"AFTER VIRT",(uint32_t)(d.after.virtual_address>>32),(uint32_t)d.after.virtual_address);
+        pwtg_line(r,13,"DIFF RAW WORD",d.old_word,d.new_word);
+        uint64_t base=d.kind<PMME_CLAIMS?m->claim[d.kind].requested:0;
+        uint64_t bytes=d.kind<PMME_CLAIMS?m->claim[d.kind].bytes:0;
+        pwtg_line(r,14,"CLAIM BASE",(uint32_t)(base>>32),(uint32_t)base);
+        pwtg_line(r,15,"CLAIM BYTES",(uint32_t)(bytes>>32),(uint32_t)bytes);
+    }
 #if EFI_XNU_MSS_STAGING_AVAILABLE
     if(mss_stage.unknown){
         pwtg_line(r,0,"STAGE HOLD",mss_stage.attempted,mss_stage.error);
