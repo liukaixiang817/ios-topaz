@@ -68,6 +68,17 @@ early samples only. On0029 the human already confirmed boot complete and said
   query09:34:52.136173Z confirms expectedFASTBOOT; audit11470 now runs into
   phone-root-audit-0002, retaining0001failed evidence. Next independently review
   actual0002; only40/40PASS permits freeze/once native checkpoint send.
+- Second audit11470 ended0 at09:37:14.284229Z; independent review again38/40,
+  same two pending-journal checks refused. Human explicitly clarified they
+  directly pressed power+volume-down, NOT system-menu shutdown. Ordinary
+  fastboot reboot at09:38:07.294696Z returned0 to let original Android boot;
+  no flash/image replay. Asked user to wait for Android desktop, use system
+  menu Power off, wait fully off, then power+volume-down to FASTBOOT. Await
+  that physical completion; no repeated audit until it changes actual state.
+  Prepared phone-root-audit-0003 command and freeze root mapping, not executed.
+  Candidate image/nonce remains UNSENT/UNUSED; no40check review or trial freeze
+  exists yet. No live host job remains. This current user-action dependency
+  is first occurrence after explicit clarification, not a live-process wait.
 - GoalACTIVE, execution2/5,four steps including current. No new physical auth
   completion or scan/join/IP/DNS/data proof. Formal09:30,next09:45Z. All tests
   already passed; do not repeat them without a new change/failure.
