@@ -14,6 +14,15 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+## Physical first initial RMB return (0189, 2026-11-07 Melbourne)
+
+Human photo546A1EDB confirms FIRST RMB STOP: events1/1,value/expected0/0,
+step/next0/1,copy2pages/1segment,error0. Own PMIM initial CODE_LENGTH read
+returned0; next START write is unproven. FreshN2 diagnostic uses unchanged
+source/producers and stops after that write before COMMAND. Prior source tests
+already coverN2; fresh artifact bindings still required. Fullbank/authentication/
+WLAN remain unproven. Normal root38/40 refusal remains unchanged.
+
 ## Physical first copy and exact initial RMB return boundaries (0189, 2026-11-07 Melbourne)
 
 ActualE7770EC6 confirms first segment:2pages/1segment,copyerror0,modemevents0.

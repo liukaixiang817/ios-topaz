@@ -54,6 +54,33 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-07 Melbourne: physical first RMB length read returned
+
+- Source94cec0b committed, pushed and synced. N1 diagnostic review0001 froze845
+  inputs; offlinePASS. Host66363 sentONCE13:22:28.610221Z, full100593664B staged
+  and validated, native-start13:24:08.729510Z/ACK13:24:28.176077Z,
+  TERMINAL0 ended13:24:28.231586Z. Candidate/image/nonce SPENT; no replay.
+- Human explicitly reports FIRST RMB STOP and photo546A1EDB shows events1/1,
+  value/expected0/0,step/next0/1,pages/segments2/1,copycomplete/error0/0,
+  ready/unknown1/0,modemphase/segment2/0,submitted/events1/1. Thus initial
+  CODE_LENGTH read physically returned0 as expected. Firststartwrite,fullbank,
+  modem authentication and WLAN remain unproven. Photo/decodedbinding private.
+- Next fresh firmware-first-rmb-start-0001 selectsN2, same94cec0b code and all
+  producers, newimage/nonce. This stops after initialstartaddresswrite returns,
+  beforecommand. Existing2860terminalcases and2358N2projectioncases alreadyPASS;
+  do not rerun unchanged tests. Fresh3buildsPASS, bothactualentrychains inspected,
+  704frames/max816B,81originalfilescodecPASS. Driver714240B
+  5a739ae6aebb72e57d3b2acc9fafc0a3b6e8102c92c2e1d75bca9be4c1f965f7;
+  image6189056B2e36d2d45d47d7a223dd48657f085f3b240019578e4e080f98f60310fd8dddf9.
+  Review0001 froze851inputs/offlinePASS; candidateUNSENT/unused atthismilestone.
+- Newimage ready; one-timeinventory13:33:10.206493Z findsselectedFASTBOOTpresent,
+  so continueauthorizedonce-onlyN2trialwithoutkeyrequest. Commonhelper still
+  checksactualproduct beforedurableconsume/send. Continuousobserverremainspaused.
+  Normalfullrootadmission stays38/40REFUSED; noXNU/storageconsumer indiagnostics.
+- GoalACTIVE,step2/5,four includingcurrent. Formal13:30Zwindow delivered,
+  next13:45Z whileactive. No pending humanrequest or livehostjob. Unowned9line
+  remote-memoryhunk untouched. No scan/join/IP/DNS/data success yet.
+
 ### Continuous Wi-Fi milestone — 2026-11-07 Melbourne: physical first segment copied; first RMB read diagnostic qualified
 
 - First-copy host90347 TERMINAL0 ended2026-11-06T12:53:14.211342Z; sentONCE
