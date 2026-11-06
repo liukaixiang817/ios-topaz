@@ -54,6 +54,29 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Active resumed handoff — 2026-11-07 Melbourne: first segment STATUS diagnostic sent ONCE
+
+- User confirmsFASTBOOT andexplicitlyresumesgoalACTIVE. Prior3turnblocked audit
+  ishistorical; startfreshaudit. Actualcommonhelperpolarisproductreturn0 and
+  frozenreview0002validated862inputs beforenonceconsume/send.
+- QualifiedN6 firmware-first-rmb-status-0001 sentONCE13:55:04.672733Z;
+  host45286 started13:55:04.227295Z,TERMINAL0 ended13:57:04.320802Z/collected.
+  Full100593664B staged,validationACK/queriedvalidated_state true. Native-start
+  13:56:44.785297Z,ACKrecord13:57:04.270764Z. Imageed4f0f2d.../driverb0057479...
+  SPENT; neverreplay/resetnonce. ThisstopsafterfirstsegmentSTATUS/beforesecondcopy.
+  XNUexecutionforbidden,normalfullroot38/40remainsREFUSED; noobserver/partition
+  write/storageconsumer. HostACKisnotphysicalfirstSTATUS/auth/networkproof.
+- PreviousphysicalN1read0 andN2STARTreturn2events/step1->2 alreadyconfirmed.
+  N6physicaloutcomePENDING untilactualscreen; hosttransfer/ACKisnotauth/WLANproof.
+  Askedcurrenttitle/FIRST RMB EVENTS/RMB VALUE EXPECT/RMB STEP NEXT; expected
+  events6/6,step5/5. Holdscreen; no post-nativeUSBquery/observer/anotherboot.
+  ThisisFIRSTpendingdependencyafterresumedactualhardwareprogress; oldblocked
+  auditmustnotcarryover. No livehostprocessremainsonceterminalcollected.
+- GoalACTIVE,step2/5,fourincludingcurrentremain. Source94cec0bunchanged,
+  kernelCI42091724671unchanged; no newbuild/testsneeded. Source/docshead371bf8f
+  beforethisrecord. Unownedremote-memory9linehunk preserved. Lastformal13:45Z,
+  next14:00Z whileactive. No physicalactionrequestedwhilecurrenttesttransfers.
+
 ### Current blocking handoff — 2026-11-07 Melbourne: physical FASTBOOT reentry required
 
 - Three consecutive goalturns share the same external dependency: phone has
