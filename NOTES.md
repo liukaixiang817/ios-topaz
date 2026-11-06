@@ -66,6 +66,12 @@ early samples only. On0029 the human already confirmed boot complete and said
   validation ACK and independently queried validated-state true. Native-start
  04:07:27.798784Z; ACK04:07:47.293548Z. Host64200 ended0. No post-native
   retry/reset/USB observer. ACK does not prove kernel/AOP handshake/scan.
+- Follow-up physical-feedback audit04:10Z: current checkout remains d2d1a66
+  with only the preserved unowned hunk dirty. Host log is terminal; boot record
+  still ends at04:07:47 native ACK with kernel/scan/networking unproven. No new
+  screen result supplied. Same external-feedback blocker, second consecutive
+  goal turn including the successful implementation/trial turn; leave goal
+  ACTIVE pending the already-requested current screen. No retry or new boot.
 - Previous human photo51E41FC2 is own-resource candidate: descriptor readable,
   pristine link/channel state unconnected. Current handshake result unknown.
   Async text request for current HOLD/PARENT/CLOCK AOP or WHY/STEP/PROTO rows
