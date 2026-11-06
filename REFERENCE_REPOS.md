@@ -14,6 +14,23 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+## Normal Android exit and journal admission (0189, 2026-11-06)
+
+Fresh read-only admission after a reported menu shutdown still found ext4
+needs-recovery and journal start1/errno0;38of40checks passed. This is pending
+journal state, not proof of corruption. No manual fsck, journal replay or
+metadata rewrite was performed. Normal Android boot/sync/reboot-to-bootloader
+was used before a separate new strict read-only review. Host return0 does not
+prove that the next filesystem capture will be clean.
+
+The [Android13 reference init reboot source](https://github.com/aosp-mirror/platform_system_core/blob/android-13.0.0_r1/init/reboot.cpp)
+blanks the screen before continuing cleanup/unmount. Thus screen-off timing
+is a possible explanation; the current phone's actual cause is unproven.
+Actual original OS SDK33/boot_completed1/polaris identity and normal reboot
+return were checked once; this does not restart the paused continuous USB
+observer or change the native Wi-Fi protocol. Fresh40check evidence remains
+authoritative for boot admission.
+
 ## Spontaneous reset and copy-admission checkpoint (0189, 2026-11-06)
 
 Human reports the copied-mode trial spontaneously returned to MIX/Android,
