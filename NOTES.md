@@ -54,6 +54,31 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: AOP delivery diagnostic sent once; awaiting detailed physical failure
+
+- Sourceb11dd49 pushed and four owned paths synchronized. Candidate
+  aop-delivery-0001 audit89175 ended0; independent40 checks PASS, current
+  roots/GPT/critical/ESP/NV unchanged. Actual unmount/FASTBOOT03:19:09.024628Z.
+  Frozen434 inputs; offline one-use admission91257 ended0.
+- Image7dcd61e073b4f2da7d23f497023c60317947f44b0555be7b01741196918480a9
+  (6234112B) sent ONCE03:19:35.713367Z, fastboot exit0. Nonce consumed before
+  send; image/pool SPENT. Expected UEFI;100593664B/1535 chunks fully sent,
+  device validation ACK and independently queried validated-state true.
+  Native-start03:21:15.812725Z; ACK03:21:35.297971Z. Host22517 ended0.
+  No post-native retry/reset/USB observer; no kernel/radio proof follows ACK.
+- Previous user photo is cmddb-target-0001/native phase9/AOP4; current detailed
+  AOP outcome still unknown. Async request for WHY EVENT/STEP INDEX/KIND ERROR/
+  PROTO ERROR and DESC rows pending. Post-native USB intentionally stops, so
+  current screen is required. Direct AOP diagnostics distinguish all10 failed
+  delivery stages and show captured descriptor on protocol geometry failure.
+  No acceptance predicate/timer/mapping/protocol change was made this round.
+- Evidence: aop-delivery-0001/phone-native-0001/{boot.json,fastboot.log}, sibling
+  log, frozen/current readonly reviews and aop-reasons.json. All host jobs
+  ended; source/tests complete. Next actual AOP failure, then native MSS/WLAN
+  scan/Cyberpunk AU join/IP/DNS/data/stability. Execution2/5/current plus3 steps;
+  goal ACTIVE unfinished. Last15min report03:18Z; next03:33Z if active.
+  Preserve unowned remote-memory9-line hunk and private artifact exclusions.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: physical CmdDb/RSC passed; diagnose AOP delivery4 without relaxing access
 
 - New cmddb-target-0001 photo shows native HOLD5/4, parent phase9, owner0/2,
