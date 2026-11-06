@@ -54,7 +54,7 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### Current Wi-Fi handoff — 2026-11-07 Melbourne: idle entry proven; long test paused; prefix7 proven; prefix11 reset; prefix8 physical result pending
+### Current Wi-Fi handoff — 2026-11-07 Melbourne: idle entry proven; long test paused; prefix7 proven; prefix11 reset; prefix8 manually exited; prefix9 running
 
 - User requested no automatic Android return on inactivity. Source 95993eb was
   committed, pushed and synced: physical default RAM idle recovery is zero,
@@ -94,7 +94,7 @@ early samples only. On0029 the human already confirmed boot complete and said
 - N11 firmware-copy-prefix11-idle-policy-0001 / image9f973a50... is SPENT.
   Host69087 finished0 at2026-11-06T15:54:19.319118+00:00. User reports spontaneous Android
   return within a few minutes. Exact stage UNKNOWN; a brief prefix checkpoint
-  before exit remains possible. Current title-before-exit question is pending.
+  before exit remains possible. Human later said the prior title was not noticed.
   Actual pre-native watchdog0/idle0 did NOT prevent this reset; do not describe
   no-idle policy as a fix for it. No physical N11 copy/auth completion claim.
 - Read-only original Android exactidentity/boot_completed1/root verified after
@@ -109,21 +109,29 @@ early samples only. On0029 the human already confirmed boot complete and said
   equal. Same current exact-source tests/projections reused; frozen1994 inputs/
   offline PASS. Original Android normal power-service rebootbootloader used
   after exact identity check. No manual journal repair or forced runtime reset.
-- Host77004 TERMINAL0 collected, ended2026-11-06T16:04:13.742962+00:00.
-  N8 once-only sent2026-11-06T16:02:13.899264+00:00, native start2026-11-06T16:03:54.184161+00:00,
-  ACK2026-11-06T16:04:13.674643+00:00. Actual pre-native watchdog0/idle0; full payload
-  validated. Current N8 physical title/rows/reset result is PENDING. Image and
-  nonce are SPENT; no replay or post-native USB query/observer. Ask bound to N8,
-  not the prior N11 reset. Expected prefix8/8,copy221pages(hexDD)/8segments,
-  priorlength852216(hex000D00F8)/error0,phase2/segment7/submitted8/events30.
-- Independent candidate firmware-copy-prefix9-idle-policy-0001 built locally;
-  both actual entries onlystartup/step/hold,704frames/max816B,81filecodec PASS.
-  It is UNUSED/unselected, selection depends on actual N8 result. Fresh N14
-  variant0002 is also UNUSED and not selected after N11 reset. Do not boot any
-  new candidate before interpreting current phone outcome. No source evidence
-  yet justifies a mapping/permission/timing producer change. Current physical
-  dependency is fresh after N8 trial; previous blocked audits do not carry over.
-  Keep overall Wi-Fi goal ACTIVE; long idle subtest stays paused by user.
+- N8 host77004 TERMINAL0 collected, sent16:02:13.899264Z/ACK16:04:13.674643Z.
+  Human now explicitly reports manual return to FASTBOOT, not a spontaneous
+  N8 reset. Numeric/title completion UNREPORTED: do not claim N8 passed.
+  Prior current-screen dependency is resolved by manual exit; no stale pending
+  screen can be retrieved. N11 human says prior title not noticed, so a brief
+  checkpoint before its spontaneous reset still cannot be excluded.
+- Current firmware-copy-prefix9-idle-policy-0001 is selected between physically
+  proven7 and unproven11. Own segment9 crosses target1MiB; do not treat this as
+  a proven fault cause or require unsupported N8 success to proceed. Both new
+  objects onlystartup/step/hold,704frames/max816B,81originalfilecodec PASS;
+  exact current-source tests/projections reused. Full review2002 frozen inputs
+  includes N8 manual exit/N11 not-noticed/current selection; offline PASS.
+- Exact Polaris FASTBOOT checked after human manual return. Host98076 RUNNING,
+  once-only sent2026-11-06T16:12:28.419361+00:00; payload staging. Next collect exact handle
+  then current N9 title/rows/error/reset. Expected prefix9/9,874pages(hex036A)/
+  9segments, priorlength853276(hex000D051C)/error0, modemphase2/segment8/
+  submitted9/events34 before ninth RMB. Do not infer physical completion from
+  host ACK. Current image/nonce will be SPENT upon transfer; never replay.
+- Fresh N14 variant0002 remains UNUSED and not selected after N11 reset. No
+  source evidence yet justifies mapping/permission/timing producer changes.
+  Overall Wi-Fi goal ACTIVE; long idle test remains paused by user. Current
+  pending physical dependency is new after this selected N9 trial, not a
+  continuation of the resolved N8 manual-exit question.
 - Kernel/payload and CI42091724671 unchanged; no new kernel CI required for
   loader-only changes. No flash, root-reader, XNU, userdata/Windows write,
   observer or manual fsck/journal replay. Preserve unowned9-line remote-memory
