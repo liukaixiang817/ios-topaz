@@ -49,7 +49,7 @@ static void nv_setup(unsigned fault)
     scenario++;mode=fault;reads=freed=0;memset(part_reads,0,sizeof(part_reads));memset(result,0,sizeof(*result));
     memset(memory,0xa5,PNV_BYTES);memset(device,0,sizeof(device));boot=(struct efi_boot){.locate_buffer=locate,.handle_protocol=handle,.free_pool=release};
     for(unsigned n=0;n<6;n++){
-        struct device*d=&device[n];d->index=n;handles[n]=d;d->io=(struct pnv_block){.revision=0x2001f,.media=&d->media,.read=read_blocks};
+        struct device*d=&device[n];d->index=n;handles[n]=d;d->io=(struct pnv_block){.revision=0x20031,.media=&d->media,.read=read_blocks};
         unsigned disk=n<2?n:polaris_nv_plan.part[n-2].disk;
         d->media=(struct pnv_media){.id=100+n,.present=1,.logical=n>=2,.block=4096,.align=4096,
             .last=(n<2?polaris_nv_plan.disk[n].blocks:polaris_nv_plan.part[n-2].blocks)-1};
@@ -69,6 +69,27 @@ static void nv_setup(unsigned fault)
     if(mode==16)device[2].io.media=0;
     if(mode==17)device[2].io.read=0;
 }
+/* Spec revisions and the independently observed old EDK2 value share only
+ * the prefix this reader consumes. Unknown revisions and bad media still fail. */
+static void revision_cases(void)
+{
+    const uint64_t accepted[]={0x10000,0x20001,0x2001f,0x20031};
+    const uint64_t refused[]={0,0x10001,0x20000,0x20002,0x20030,0x20032,0x30000,UINT64_MAX};
+    struct pnv_media m={.present=1,.logical=1,.block=4096,.last=0x7ff};
+    struct pnv_block b={.media=&m,.read=read_blocks};
+    for(unsigned i=0;i<sizeof(accepted)/sizeof(*accepted);i++){
+        b.revision=accepted[i];CHECK(pnv_media_valid(&b,0x800,1));
+        m.block=512;CHECK(!pnv_media_valid(&b,0x800,1));m.block=4096;
+        m.last=0x800;CHECK(!pnv_media_valid(&b,0x800,1));m.last=0x7ff;
+        m.logical=0;CHECK(!pnv_media_valid(&b,0x800,1));m.logical=1;
+        m.present=0;CHECK(!pnv_media_valid(&b,0x800,1));m.present=1;
+        m.removable=1;CHECK(!pnv_media_valid(&b,0x800,1));m.removable=0;
+        m.align=3;CHECK(!pnv_media_valid(&b,0x800,1));m.align=8192;CHECK(!pnv_media_valid(&b,0x800,1));m.align=0;
+        b.media=0;CHECK(!pnv_media_valid(&b,0x800,1));b.media=&m;
+        b.read=0;CHECK(!pnv_media_valid(&b,0x800,1));b.read=read_blocks;
+    }
+    for(unsigned i=0;i<sizeof(refused)/sizeof(*refused);i++){b.revision=refused[i];CHECK(!pnv_media_valid(&b,0x800,1));}
+}
 static void load(const char*dir,const char*name,void*out,unsigned bytes)
 {char path[4096];CHECK(snprintf(path,sizeof(path),"%s/%s",dir,name)>0);FILE*f=fopen(path,"rb");CHECK(f&&fread(out,1,bytes,f)==bytes&&fgetc(f)==EOF&&!fclose(f));}
 #ifndef PNV_TEST_ENTRY
@@ -76,7 +97,7 @@ static void load(const char*dir,const char*name,void*out,unsigned bytes)
 #endif
 int PNV_TEST_ENTRY(int argc,char**argv)
 {
-    CHECK(argc==2);result=calloc(1,sizeof(*result));memory=aligned_alloc(4096,PNV_BYTES);CHECK(result&&memory);
+    revision_cases();CHECK(argc==2);result=calloc(1,sizeof(*result));memory=aligned_alloc(4096,PNV_BYTES);CHECK(result&&memory);
     load(argv[1],"gpt0-primary.bin",headers[0][0],4096);load(argv[1],"gpt0-backup.bin",headers[0][1],4096);load(argv[1],"gpt0-table.bin",tables[0],polaris_nv_plan.disk[0].table_bytes);
     load(argv[1],"gpt1-primary.bin",headers[1][0],4096);load(argv[1],"gpt1-backup.bin",headers[1][1],4096);load(argv[1],"gpt1-table.bin",tables[1],polaris_nv_plan.disk[1].table_bytes);
     nv_setup(0);CHECK(pnv_collect(&boot,&polaris_nv_plan,(uintptr_t)memory,result)&&result->complete&&result->passes==2&&freed==1&&result->reads==reads&&result->reads==result->returned);

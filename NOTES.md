@@ -54,6 +54,38 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: observed old EDK2 BlockIO revision compatibility fixed
+
+- New photo of a1a07c0e... establishes selection step3/index0, protocol status0,
+ 93 handles/0 reads, all four partition matches1, disk matches0 (not reached),
+  media revision0x20031/block4096/last0x7ff/align0/flags0x00010100. Thus exact
+  partition matching and BlockIO lookup passed; revision whitelist definitely
+  rejects this media before reads. No radio/native kernel. Read function pointer
+  is not shown in photo; successful later execution still requires device proof.
+- Corrected initial conversational hypothesis: 0x2001f IS the canonical UEFI
+  revision3 (2<<16 | decimal31), not a typo. Official Tianocore UDK2018 and
+  edk2-stable201903 BlockIo.h both define legacy0x20031 with identical used
+  Media prefix through LastBlock/ReadBlocks ABI. Added only that exact legacy
+  value, preserving canonical10000/20001/2001f and all existing media guards.
+  Sources: https://uefi.org/specs/UEFI/2.10/13_Protocols_Media_Access.html?highlight=efi_file
+  and https://github.com/tianocore/edk2/blob/edk2-stable201903/MdePkg/Include/Protocol/BlockIo.h
+  Official files/hashes plus photo stay private in wifi/nv-revision-0001.
+- Actual photo-parameter regression reproduces accepted0 before / accepted1
+  after, no read called. ASan/UBSan collector18 scenarios/54791368 assertions
+  and actual native NV13/4614 PASS, fixtures now exercise observed0x20031.
+  Canonical revisions, unknown-revision rejection and every media guard tested.
+  Full rebuilt startup/worker/terminal model2889178 PASS with legacy revision;
+  SOFTWARE hardware/kernel/radio only. Full EFI+arm64 PASS,max stack816B,
+ 830functions. Original decoder PASS, all81 original firmware files preserved.
+- Fresh driver807424B SHA5fba2d71382b3a3414277efa8dc12c961f9bfa5b8486e189f324afbc801ac934;
+  image6227968B SHA3ad6a79aeae51e324ab5f61a851e682765a5d85246ea5641b705dc2632cd4650.
+  Same kernel CI42091724671/payload; nonce unused, offline root-audit validation
+  PASS. Existing unowned remote-memory hunk preserved and not committed.
+- Actual expected polaris FASTBOOT query01:07:23Z passed; proceed directly
+  with new candidate readonly audit/one-use temporary boot. Photo feedback
+  resolves prior blocker. Step2/5; current plus3 remain; no network proof.
+  Current report01:07Z,next01:22Z. Do not label software acceptance physical.
+
 ### Continuous Wi-Fi blocked audit — 2026-11-06 Melbourne: detailed selection screen required
 
 - Third consecutive goal turn with the same current physical-feedback blocker.

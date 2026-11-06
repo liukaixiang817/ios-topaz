@@ -70,7 +70,12 @@ static inline int pnv_plan_valid(const struct pnv_plan*p)
 }
 static inline int pnv_media_valid(const struct pnv_block*b,uint64_t blocks,unsigned logical)
 {
-    if(!b||!b->media||!b->read||(b->revision!=0x10000&&b->revision!=0x20001&&b->revision!=0x2001f))return 0;
+    /* UEFI's revision3 is0x2001f. Older EDK2 (UDK2018/stable201903)
+     * used0x20031, also observed on this phone. Both expose the same prefix
+     * through Media.LastBlock/ReadBlocks used here; no extension fields used.
+     * https://github.com/tianocore/edk2/blob/edk2-stable201903/MdePkg/Include/Protocol/BlockIo.h */
+    if(!b||!b->media||!b->read||(b->revision!=0x10000&&b->revision!=0x20001&&
+       b->revision!=0x2001f&&b->revision!=0x20031))return 0;
     const struct pnv_media*m=b->media;return !m->removable&&m->present==1&&m->logical==logical&&m->block==4096&&
         m->last==blocks-1&&(m->align<=1||(m->align<=4096&&!(m->align&(m->align-1))));
 }
