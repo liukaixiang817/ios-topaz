@@ -172,7 +172,10 @@ static inline int pmni_allowed(const struct pmni_command*c)
      * then let the other explicit profiles below inspect their own masks. */
     if(c->address==PMAQ_IRQ&&c->kind==PMNI_WRITE&&c->value==1)return 1;
     if(!(c->address&3)&&c->address>=PMAQ_BASE&&c->address<PMAQ_BASE+PMAQ_BYTES)
-        return c->kind==PMNI_READ||c->address>=PMAQ_BASE+64;
+        return c->kind==PMNI_READ||c->address>=PMAQ_BASE+64||
+            (c->kind==PMNI_WRITE&&c->value==PMAQ_UP&&
+             (c->address==PMAQ_BASE+16||c->address==PMAQ_BASE+36||
+              c->address==PMAQ_BASE+44||c->address==PMAQ_BASE+24));
 #endif
 #if EFI_XNU_MSS_PROXY_IO_AVAILABLE
     if(c->address==0x134004)return c->kind==PMNI_READ;
@@ -343,6 +346,12 @@ static inline int pmni_aop(const struct pmaq_notify*q,const struct pmaq_command*
        !pmsr_equal(c,&q->event[q->events-1].command,sizeof(*c))||c->step!=q->step||c->index!=q->index||
        c->kind<PMAQ_READ||c->kind>PMAQ_FULL_ORDER)return 0;
     if(c->kind==PMAQ_WRITE32){
+        if(c->step==PMAQ_CONNECT_WRITE){
+            if(!pmaq_connect_write(q,c->index)||c->address!=PMAQ_BASE+4*c->index||c->value!=PMAQ_UP)return 0;
+        }else if(c->step==PMAQ_CONNECT_IRQ){
+            if(q->connecting!=1||q->connected_at||q->on!=1||q->require_previous||
+               !pmaq_layout(q->descriptor)||c->address!=PMAQ_IRQ||c->value!=1)return 0;
+        }else{
         if(!pmaq_geometry(q->descriptor))return 0;
         uint64_t tx=PMAQ_BASE+q->descriptor[14];
         if(c->step==PMAQ_DOORBELL){if(c->address!=PMAQ_IRQ||c->value!=1)return 0;}
@@ -351,6 +360,7 @@ static inline int pmni_aop(const struct pmaq_notify*q,const struct pmaq_command*
             if(c->index>=24||c->address!=tx+4+4*c->index||
                c->value!=(c->step==PMAQ_WRITE?pmaq_word(q->on,c->index):q->saved[c->index]))return 0;
         }else return 0;
+        }
     }
     struct pmni_command access={c->address,c->kind==PMAQ_FULL_ORDER?PMNI_FULL_ORDER:c->kind,c->value};
     return pmni_access(opening,&access,r);

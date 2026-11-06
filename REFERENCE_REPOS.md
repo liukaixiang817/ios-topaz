@@ -14,6 +14,28 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+## Own AOP QMP connection (0189, 2026-11-06)
+
+The own msm_qmp.c blob d6e41ae5d88db0f91e1c6fd13f1005dbb5e56481
+uses LINK_DISCONNECTED -> LINK_NEGOTIATION -> LINK_CONNECTED, then local
+channel open and remote channel acknowledgment. QMP_TOUT_MS is5000 and
+QMP_TX_TOUT_MS is1000. Current physical photo proves the descriptor is
+readable, with remote link UP and the AP/channel fields DOWN; the earlier
+connected-only transport therefore cannot start. Mailbox offsets/sizes remain
+runtime descriptor inputs, never numbers inferred from a blurred photograph.
+The native path only opens a pristine, twice-confirmed idle endpoint under
+continuous exclusive AP ownership. It writes ucore.link_ack, mcore.link_state,
+mcore.ch_state and ucore.ch_ack UP, with Device readback/order/doorbell. It
+preserves remote-owned ACKs and mailbox allocation; unlike cold Linux init it
+does not redundantly overwrite already-DOWN remote ACK words. Remote UP-only
+transitions are accepted at the matching phase; resets/mixed inherited states,
+allocation changes and nonempty RX/TX refuse without draining or canceling.
+One absolute5s connection budget precedes the existing2s transport budget;
+TX consumption retains its1s bound. The fixed2048-event journal may refuse
+sooner if exhausted. OFF never reopens a channel or renews connection time.
+Private evidence: aop-handshake-0001. Software tests do not prove physical
+AOP negotiation, MSS boot or Wi-Fi networking.
+
 ## Own AOP message-RAM resource (0189, 2026-11-06)
 
 Rechecked own live.dts qcom,qmp-aop@c300000: message RAM c300000/1MiB,
@@ -26,8 +48,8 @@ Our native AOP path uses the exact own-DT resource, requires no EFI/image
 backing and a current zero/unallocated whole-aperture GCD node, then unchanged
 identity Device R/W translations before each access. Actual type0 is retained;
 no generic MMIO acceptance, GCD/page-table mutation or foreign mapping is used.
-Private source/DT provenance: aop-own-resource-0001. Physical access/protocol
-and Wi-Fi remain unverified until current device evidence exists.
+Private source/DT provenance: aop-own-resource-0001. The subsequent photo
+proves actual descriptor reads; connection protocol and Wi-Fi remain unverified.
 
 ## Own userland launch probe (0189, 2026-11-06)
 

@@ -1,5 +1,6 @@
 /* Native AOP load_state on/off within the same current CPU/resource owner.
- * Uses only an already connected idle channel. No link takeover, provider,
+ * Uses an idle connected channel or the own-source pristine link handshake.
+ * No in-flight link takeover, provider,
  * RX drain, timer renewal, UNKNOWN cleanup or secure/DMA handback inference. */
 #ifndef POLARIS_UEFI_MSS_AOP_NATIVE_H
 #define POLARIS_UEFI_MSS_AOP_NATIVE_H

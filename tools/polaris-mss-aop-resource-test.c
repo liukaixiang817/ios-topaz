@@ -31,7 +31,11 @@ static void aop_dt_map(struct pwea_map*m)
     struct efi_memory*d=(void*)(m->data+m->map.bytes);
     emit_descriptor((void*)d,dt_fault==6?4:11,PMAQ_BASE,4096);d->attributes=dt_fault==6?8:1;m->map.bytes+=40;
 }
-int main(int argc,char**argv)
+
+#ifndef PMAN_RESOURCE_ENTRY
+#define PMAN_RESOURCE_ENTRY main
+#endif
+int PMAN_RESOURCE_ENTRY(int argc,char**argv)
 {
     aop_test_open(argc,argv);aop_setup();
     struct pmrg_target t={0};CHECK(!pmpn_target(power,PMAQ_BASE,&t));

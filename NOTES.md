@@ -54,6 +54,42 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: actual AOP descriptor read; implement own QMP handshake
+
+- Latest human photo51E41FC2 belongs to spent aop-own-resource-0001: first16
+  descriptor reads completed, native error0, protocol error5, MAIL/version1,
+  remote link UP and other link/channel words DOWN. The own-DT access path
+  therefore progressed physically past target/Device AT. Exact blurred mailbox
+  sizes are not transcribed into code; offsets/sizes remain runtime input.
+- Own msm_qmp.c blobd6e41ae5d88db0f91e1c6fd13f1005dbb5e56481 confirms link
+  negotiation then channel startup, including remote channel open before local
+  startup. Implement pristine twice-confirmed idle admission, AP-owned words
+ 4/9/11/6 UP with readback/order/IRQ, remote-owned monotonic ACK/state changes,
+  unchanged allocation, full connected confirmation before payload transport.
+  Existing connected path and OFF retirement remain. No RX drain, occupied TX
+  cancellation, ACK overwrite, reset/retry or UNKNOWN cleanup. Absolute5s
+  connection deadline, existing2s transport and1s TX; journal cap2048 unchanged.
+- Initial native tests exposed the old raw-leaf first64-byte write exclusion;
+  added only the four exact UP words beneath the typed pending-command checks.
+  An overly broad all-message fault sweep was intentionally stopped before
+  completion; narrowed to all30 NEW step/index positions (old message failure
+  coverage remains separate). First44-scenario suite2606551 checks PASS.
+  Source then added vendor-valid proactive remote channel open plus three
+  invalid transition cases. FINAL handshake suite2991902 checks/48 scenarios/
+ 30 new delivery failures PASS (software native leaves). Existing AOP1227959/
+ 17 scenarios and DT resource787852/12 PASS. Full parent/runtime/terminal
+ 2889178 PASS SOFTWARE CPU/kernel/radio. EFI/arm64 build837 functions,max
+ stack816B; codec81 original files PASS. Driver816640B SHA
+ 7ff6d9e215f3de1d2f677c2f74cd6a3f6f80b96b897eb35063c55c29ed957810.
+ New image SHAad8344771a64130989b13147d0bd9ef22e870cfb1ba549f4a80aee83edb4c5bc
+ (6232064B). All build/test jobs ended0; actual FASTBOOT04:02:04Z.
+ Next fresh readonly audit40-check review, frozen admission then one-use boot.
+ No new image sent yet; unchanged kernel CI42091724671/payload reused.
+- Current physical AOP negotiation/MSS/scan/Cyberpunk AU join/IP/DNS/data and
+  stability remain unverified. Execution2/5/current plus3 steps, goal ACTIVE.
+  Last15min report03:48Z,next04:03Z. Unowned remote-memory9-line hunk preserved;
+  source commit follows this completed validation. USB observer remains paused.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: own-DT AOP resource candidate sent once; actual translation/protocol pending
 
 - Source11e1523 pushed and four owned paths synchronized. Current
