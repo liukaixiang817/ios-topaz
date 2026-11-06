@@ -16,6 +16,13 @@ their build/setup scripts or prebuilts has been executed.
 
 ## Idle hold policy and watchdog evidence (0189, 2026-11-07 Melbourne)
 
+Latest physical copy proof: photoFF7C1E2D shows prefix7/7,220pages,copy/modem
+errors0, modemphase2/segment6/submitted7/events26 and priorlength733432. This
+validates the first seven own-geometry segments and preceding STATUS records;
+full authentication/WLAN remain unproven. Fresh prefix11 with unchanged source
+has both actual entry objects qualified, original81-file codec and1984 frozen
+inputs/offline PASS; currently in temporary RAM trial. No foreign import.
+
 Physical update: source95993eb temporary idle-only boot recorded actual watchdog
 status0 and idle0, then photo9DED59AD/human reply proved IDLE HOLD with MSS0.
 User paused the long stationary window and manually returned FASTBOOT, so long

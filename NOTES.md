@@ -54,7 +54,7 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### Current Wi-Fi handoff — 2026-11-07 Melbourne: idle entry proven; long test paused; prefix7 running
+### Current Wi-Fi handoff — 2026-11-07 Melbourne: idle entry proven; long test paused; prefix7 proven, prefix11 running
 
 - User requested no automatic Android return on inactivity. Source 95993eb was
   committed, pushed and synced: physical default RAM idle recovery is zero,
@@ -87,13 +87,19 @@ early samples only. On0029 the human already confirmed boot complete and said
   prefix7 has1631 prefix cases plus prior/saved failure cases. No repeat tests
   needed without source changes. Prefix28 publication timing correction and
   m.last coherence checks are diagnostic-only, not a prefix14 reset explanation.
-- Exact Polaris FASTBOOT was checked after human manual return. Host42128 is
-  RUNNING: once-only boot sent15:46:19.794660Z, payload staging in progress.
-  Next collect this exact handle and read its private boot result; require
-  watchdog0/idle0 before native command. Then request CURRENT phone title/rows.
-  Expected COPY PREFIX STOP: count7/7, pages000000DC/segments7, prior length
-  733432/error0, modem phase2/segment6/submitted7/26events before seventh RMB.
-  Do not infer physical copy completion from host ACK or reuse a spent image.
+- Host42128 finished0 at2026-11-06T15:48:19.500983+00:00. Current photoFF7C1E2D proves prefix7/7, copy220pages/
+  7segments, ready1/error0, modemphase2/segment6/submitted7/events26,
+  priorlength733432/error0 and pending0/step0. This advances actual copy proof
+  beyond first segment; full bank/auth/WLAN remain unproven. N7 image is SPENT.
+- Current firmware-copy-prefix11-idle-policy-0001 is fresh under exact same
+  source qualification: driver3b138229... / image9f973a50...,704 frames/max816B,
+  81 original files codec equal; selected11 projection2415 plus prior/saved
+  cases. Frozen1984 inputs/offline PASS. Exact Polaris FASTBOOT found15:50:36Z
+  after N7 photo; return reason not reported (do not infer spontaneous reset).
+  Host69087 RUNNING, once-only sent2026-11-06T15:52:19.600683+00:00.
+  Next collect this exact handle and current phone screen. Expected prefix11/11,
+  copy1650pages(hex0672)/11segments, priorlength4822300(hex0049951C)/error0,
+  modemphase2/segment10/submitted11/events42, before eleventh RMB. No replay.
 - Kernel/payload and CI42091724671 unchanged; no new kernel CI required for
   loader-only changes. No flash, root-reader, XNU, userdata/Windows write,
   observer or manual fsck/journal replay. Preserve unowned9-line remote-memory
