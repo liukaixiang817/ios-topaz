@@ -54,6 +54,34 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: revision fix passed physical pre-USB admission; full payload/start ACK
+
+- Source6d2ad40 pushed and all three owned files synchronized to original
+  workspace. Current readonly candidate audit76642 PASS: roots56.357/56.549s,
+  six GPT/five critical partitions/ESP/current NV matched; actual unmount and
+  returned polaris FASTBOOT01:10:49.396168Z. Independent40-check review PASS,
+  limited trial frozen381 files, offline one-use boot validation PASS.
+- New image3ad6a79a... sent ONCE01:11:16.211689Z: send OKAY0.144s,
+  boot OKAY0.091s,total0.236s. New nonce consumed before send; this image/pool
+  is SPENT. Expected synthetic UEFI product verified and payload staging began
+ 01:11:25.284728Z (~9s after send). Source path establishes the previously
+  rejected pre-USB NV/CE/HTT preparation now passed, not merely longer waiting.
+- Actual100593664-byte payload completed1535 host chunks, device validation
+  ACK true and independently queried state validated. OEM native-start sent
+ 01:12:56.239173Z; native_start_ACK recorded01:13:15.690280Z. Host helper97084
+  ended exit0. Actual prepare_boot succeeded; command handler replies before
+  calling native startup, so ACK does NOT prove native CPU0/MSS/kernel/scan.
+- Evidence: nv-revision-0001/phone-native-0001/{boot.json,fastboot.log}, sibling
+  log/native-boot-command.json. No post-start USB observer or reset/retry issued.
+  Native runtime intentionally does not return to original USB/provider loop.
+- Asked user for current screen/interface/new HOLD or ERROR values after this
+  successful start ACK; reply pending. Do not use previous media-error photo
+  as current evidence. Next identify physical native startup progress, then
+  complete WLAN scan, Cyberpunk AU join/IP/DNS and real data/stability. Goal
+  remains unfinished, execution2/5/current plus3 remaining. All host build/test/
+  device jobs ended; only new screen feedback can confirm post-ACK progress.
+  Current progress report01:14Z. Root evidence only covers before this attempt.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: observed old EDK2 BlockIO revision compatibility fixed
 
 - New photo of a1a07c0e... establishes selection step3/index0, protocol status0,
