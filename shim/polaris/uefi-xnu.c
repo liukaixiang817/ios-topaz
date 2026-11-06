@@ -1412,6 +1412,36 @@ static void wifi_native_startup_gop_evidence(void)
             }
         }
     }
+    /* Existing control records only. Never inspect an assignment descriptor
+     * or a transferred target while secure ownership may be uncertain. */
+    if(s->phase==PWNS_AUTH&&s->auth.error==2&&s->auth.assignments<PMSN_ASSIGNMENTS){
+        const struct pmsn_state*a=&s->auth;
+        const struct pmsn_assignment*q=&a->assignment[a->assignments];
+        const struct pwmt_transaction*t=&q->transaction;
+        unsigned valid=t->events>0&&t->events<=PWMT_EVENTS,k=valid?t->events-1:0;
+        uint64_t age=t->last>=t->opening?t->last-t->opening:UINT64_MAX;
+        pwtg_line(r,0,"AUTH HOLD",a->error,a->phase);
+        pwtg_line(r,1,"AUTH INDEX PEND",a->assignments,a->pending);
+        pwtg_line(r,2,"ASSIGN ERR FLAGS",q->error,q->attempted|(q->unknown<<8)|(q->complete<<16));
+        pwtg_line(r,3,"TX ERR STEP",t->error,t->step);
+        pwtg_line(r,4,"TX EVENTS ROUNDS",t->events,t->rounds);
+        pwtg_line(r,5,"TX PEND FLAGS",t->pending,t->started|(t->unknown<<8)|(t->complete<<16));
+        pwtg_line(r,6,"TX AGE",(uint32_t)(age>>32),(uint32_t)age);
+        for(unsigned n=0;n<2;n++)pwtg_line(r,7+n,n?"SOURCE1 STAGE":"SOURCE0 STAGE",
+            q->source[n].pages|(q->source[n].hash_count<<16),q->source[n].complete|(q->source[n].hash_failed<<8));
+        uint64_t read=valid?q->descriptor_AT[k].read_par:0,write=valid?q->descriptor_AT[k].write_par:0;
+        pwtg_line(r,9,"DESC READ PAR",(uint32_t)(read>>32),(uint32_t)read);
+        pwtg_line(r,10,"DESC WRITE PAR",(uint32_t)(write>>32),(uint32_t)write);
+        pwtg_line(r,11,"EVENT OP FLAGS",valid?t->event[k].command.operation:0,
+            valid?(t->event[k].issued|(t->event[k].returned<<8)):0);
+        for(unsigned n=0;n<2;n++){
+            uint64_t x=valid?q->response[k].x[n]:0;
+            pwtg_line(r,12+n,n?"SMC X1":"SMC X0",(uint32_t)(x>>32),(uint32_t)x);
+        }
+        pwtg_line(r,14,"CACHE ERR FLAGS",valid?q->cache[k].error:0,
+            valid?(q->cache[k].attempted|(q->cache[k].barrier_issued<<8)|(q->cache[k].barrier_returned<<16)|(q->cache[k].complete<<24)):0);
+        pwtg_line(r,15,"SOURCE TPL",(uint32_t)q->source[0].TPL,(uint32_t)q->source[1].TPL);
+    }
     /* All19 reads returned before the phase1 value check. Display the actual
      * saved inputs; this does not recompute, relax or retry the vote policy. */
     if(s->power.error==6&&s->supply.error==PMSP_VALUE&&s->supply.phase==1&&

@@ -14,6 +14,26 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+## Auth assignment control evidence after native MBA readiness (0189, 2026-11-06)
+
+Physical992D5165 from restart-page-map-0001 reaches PWNS_AUTH19 with boot0,
+auth2, owner0 and propagated power12. The parent cannot reach this stage
+without native MBA ready and pmsn_begin returning; actual modem authentication
+and WLAN are still unproven. Error2 is the common pmsn_secure failure path,
+not enough to attribute a secure-monitor denial, timeout or source failure.
+The existing own DT/pil-msa metadata/MP_ASSIGN references below remain the
+hardware protocol authority. No foreign VMID/SMC, ownership assumption or
+changed timeout is introduced to guess a fix.
+
+Failure display adds only saved control evidence: bounded assignment/event
+indices, phase/pending/flags, transaction error/step/counts/elapsed ticks,
+source check stage/TPL, descriptor AT results, saved SMC x0/x1 and cache
+status. It never dereferences the descriptor page or transferred target, and
+makes no new call/retry. All code outside this one GOP evidence function is
+byte-identical to702277b; all native headers are unchanged.336 additional
+extracted production cases cover five assignment slots, boundary indices,
+zero/valid/overflow events, saved64bit values and CPU_ON/display guards.
+
 ## Own MSS restart page namespace/mapping (0189, 2026-11-06)
 
 Physical406C0C17 from pdc-leaf-map-0001 reaches MBA MAP HOLD, target0c2b0000,

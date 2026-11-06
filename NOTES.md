@@ -54,6 +54,35 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: native MBA reached auth; saved assignment diagnostic built
+
+- Human992D5165 from spent restart-page-map-0001 resolves the screen wait.
+  NATIVE HOLD5/error4, parent phase13hex=PWNS_AUTH19, owner error0, boot0/
+  auth2 and propagated power0c. Actual producer order proves native MBA-ready
+  and auth begin passed. This does not prove authenticated modem/WLAN. Error2
+  is pmsn_secure's shared failure path; no evidence yet of which assignment,
+  source/AT/cache/SMC/time check failed. Do not guess or relax the policy.
+- Only wifi_native_startup_gop_evidence changes: bounded saved assignment and
+  transaction control display (phase/index/pending/flags/error/step/events/
+  rounds/age/source stages+TPL/AT/SMC x0,x1/cache). No descriptor or transferred
+  target reads, new calls, retry, protocol/timeout/permission changes. Entire
+  source outside that function and all native headers equal702277b.
+- PASS336 new auth-display index/event/guard/control cases plus1266 prior
+  extracted display cases=1602. EFI/MachO/image/offline root admission PASS,
+ 852functions/max816B compile stack; original81innerfiles roundtrip unchanged.
+  Unchanged runtime suites retained, not pointlessly rerun. Diagnostic7447 and
+  build17475 ended0. Driver835072B SHA
+  b0a01e0574377ee393c22efb8f4dca885f532f0899fa91b2f3a31f3ffb8e6f8a;
+  image6240256B SHA854d41e02ed9e2472b038a3a6b318861afab94bc5cdfa9ed56f9e0f66dfac8b7.
+- New auth-assignment-diagnostic-0001 decoded readonly query confirmed
+  FASTBOOT08:42:05.259189Z. Fresh audit53843 started08:42:18.479504Z and is
+  running. No native candidate sent yet. Next independent40check review,
+  source publication/freeze/offline admission and once-only diagnostic boot.
+- Goal ACTIVE, execution2/5,current plus3remaining. Auth/native scan/Cyberpunk
+  AU join/IP/DNS/data/stability unproven. Last formal08:30Z,next08:45Z. Kernel
+  CI42091724671/payload unchanged. No partition writes or postnative observer.
+  Unowned remote-memory9line hunk preserved/excluded; prior wait count reset.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: restart-page repair sent once; actual next stage pending
 
 - Sourcecfb9388 pushed/synchronized. Fresh restart-page-map-0001 audit67656
