@@ -54,6 +54,41 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: copied-mode spontaneous reboot; copy-admission checkpoint building
+
+- Human resolved copied-mode missing-screen dependency: returned to MIX/Android,
+  explicitly spontaneous reboot/no keys and no new title observed. Cannot
+  infer exact fault stage or exclude a brief checkpoint before later reset.
+  Source225542e/candidate modem-copy-checkpoint-0001 remainsSPENT. Old metadata
+  authentication/return proof37B693C3 remains valid; full copy/auth/network
+  unproven. Missing-screen blocker resolved; goalACTIVE and diagnosis continues.
+- New copy-ready mode4 selects native shared-bank assignment2 DONE and all
+  source authentication/admission complete: authCOPY5/assignments3, copyREADY1/
+  COMPLETE0/no error/unknown/pages/segments, source_pages1..16384, modemphase1/
+  segment0/submitted0/stepLENGTH_READ/no events/length/pending/error/unknown/
+  exclusive/authenticated timestamp. It terminal-holds BEFORE first target
+  store and first code-load RMB command. No source/target/descriptor pointer
+  read in predicate. Existing copied3/returned2/assigned1/OFF modes retained.
+- This is a diagnostic boundary to split reset before target writes from
+  copy/publication behavior; no native producer/header/protocol, operation
+  ordering, permission or deadline change. MODEM COPY READY projects saved
+  counters including source pages; existing AUTH STAGE HOLD stays available.
+- modem-copy-ready-checkpoint-0001 verification PASS:5configs1987/1987/2001/
+  2141/2169actual extracted dispatch/GOP cases, including new admission count/
+  state guards, all1602prior cases and210saved failure cases per mode.
+  EFI/MachO/image/offlinePASS;854functions/max816B,81originalfiles unchanged.
+  Actual native producer/header hashes unchanged; loader outside predicate/
+  GOP exactly unchanged51f36b3. Builder incompatible profile refused.
+  Driver837632B SHAd8dd6c5b03552245c26a806e46ba7cab4c6e2eb846ba0f43c9d72ca912b24847;
+  image6242304B SHA85354a17310f7e43ad2f2850e06a37a64e04b401113970698e5d9baccffd2cb6.
+- Readonly FASTBOOT query10:44:56.367473Z timed out; no device action. Asked
+  user to enter Android, use SYSTEM MENU normal shutdown, wait off, then
+  power+volume-down to FASTBOOT. Current physical-FASTBOOT dependency FIRST
+  occurrence for this unused copy-ready candidate. No native send/freeze/new
+  root audit exists yet; all host jobs terminal. Keep goalACTIVE pending keys.
+- Execution2/5,four steps including current; formal10:33,next10:48Z. No new
+  physical copy/auth/WLAN proof, no kernelCI or partition writes/USB observer.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: user resumed; actual modem-copy result pending
 
 - Continuation audit10:35Z: previous resumed goal turn was NO PROGRESS

@@ -14,6 +14,31 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+## Spontaneous reset and copy-admission checkpoint (0189, 2026-11-06)
+
+Human reports the copied-mode trial spontaneously returned to MIX/Android,
+without pressing keys or observing a new title. This establishes a reset but
+not its exact stage; it does not exclude a briefly reached checkpoint before
+a later reset. No completed full copy, authentication or WLAN result follows.
+
+The unchanged native pmlc_begin sets READY only after shared-bank assignment,
+geometry/source qualification and every modem source hash are complete.
+New copy-ready mode4 stops at authCOPY5/assignments3 before pmlc_next_segment:
+copyREADY1/COMPLETE0/no error/unknown/pages/segments, source_pages1..16384,
+modemphase1/segment0/submitted0/stepLENGTH_READ, with no events/length/pending/
+error/unknown/exclusive/authenticated timestamps. No target store or modem
+code-load RMB command has occurred. Predicate and MODEM COPY READY projection
+read resident scalar state only. Existing producer/order/budget/permissions and
+all older checkpoint/OFF modes remain unchanged. This isolates admission from
+copy/publication without adding a wait inside an issued hardware operation.
+
+Five extracted actual configurations pass1987/1987/2001/2141/2169cases,
+including all1602prior projections and210saved error cases each. Actual EFI/
+MachO formats pass854functions/max816B;81original firmware files codec equal.
+No foreign hardware source/addresses imported; own DT/vendor paths and local
+HackiOS comparisons indexed below remain authoritative. Physical admission/
+full copy/modem authentication/scan/network still require real results.
+
 ## Actual metadata return and full modem-copy checkpoint (0189, 2026-11-06)
 
 Physical37B693C3 shows AUTH RETURN STOP2/4, metadata phase3/events6,
