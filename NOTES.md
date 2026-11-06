@@ -54,6 +54,43 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: actual metadata authenticated/returned; modem-copy checkpoint building
+
+- Human37B693C3 resolves returned-mode screen wait: AUTH RETURN STOP2/4,
+  metadata phase3/events6, transaction DONE1/error0, events3/round1,
+  stepDONE4/pending0, auth0/pending0 and owner0/held1. By actual control flow
+  metadata status3 and full secure return assignment1 completed. This is actual
+  metadata authentication/return evidence, not merely host ACK. Main modem
+  copy/auth and native WLAN/scan/network still unproven. Goal resumedACTIVE;
+  previous missing-screen blocker resolved, no current external blocker yet.
+- Own pil-msa verify_blob publishes length per segment then final auth poll;
+  native pmim_publish marks the last copy ready BEFORE that segment's first
+  LENGTH_READ/RMB delivery. New copied-mode diagnostic requires assignment2
+  DONE, authPUBLISH6/assignments3, copyREADY/COMPLETE/all30720pages/28segments,
+  modem phase2/segment27/submitted28/stepLENGTH_READ/no pending/error/unknown/
+  exclusive/authenticated timestamp. It terminal-holds before final length
+  publication, keeping the image incomplete to the remote loader. No hardware
+  protocol, permission, source/copy/cache check or timeout change.
+- New title MODEM COPY STOP and saved-control nontransaction error display
+  AUTH STAGE HOLD show copy counters/metadata/modem errors without reading
+  targets/descriptors or resuming. Existing assigned/returned/OFF profiles
+  remain supported. Only builder/config and loader predicate/display change;
+  all native auth/copy/IO headers unchanged. No foreign code/addresses imported.
+- New modem-copy-checkpoint-0001 verification PASS: OFF1987/assigned1987/
+  returned2001/copied2141 extracted actual predicate/dispatch/GOP cases,
+  including210nontransaction failure cases per config and all1602prior cases.
+  First private fixture warning fixed with explicit braces; initial logs kept.
+  EFI/MachO/image/offline PASS,854functions/max816B,81innerfiles unchanged;
+  native producers and loader outside predicate/GOP exactly unchanged from51f36b3.
+  Builder incompatible checkpoint profile refused. No device command on failures.
+  Driver837632B SHAca8edfd0f736ff503f604f4deac5247e49df5b443ca6394a8a08fd68af27a207;
+  image6242304B SHA09b185023f958acea7bb7706de6ac1ac21aa7b84c8e4d8306095d233d554069b.
+- Fresh readonly query10:25:13.311166Z confirms expectedFASTBOOT. Root-audit69145
+  nowRUNNING into this new candidate phone-root-audit-0001. Next independent
+  strictRO40check review/freeze/offline admission and once-only new trial.
+  Current returned-mode image/nonce staysSPENT. USB observer remains paused.
+  Execution2/5,four steps including current. Progress10:18,next10:33Z.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: returned checkpoint native ACK; actual screen pending
 
 - THIRD consecutive current-screen dependency audit10:11Z. Previous goal turn

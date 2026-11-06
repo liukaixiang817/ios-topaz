@@ -14,6 +14,33 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+## Actual metadata return and full modem-copy checkpoint (0189, 2026-11-06)
+
+Physical37B693C3 shows AUTH RETURN STOP2/4, metadata phase3/events6,
+transaction complete1/error0/DONE4/pending0, events3/round1 and owner held1.
+Own native control flow requires metadata status3 and completed secure return
+assignment1 to reach this boundary. Main modem image authentication and WLAN
+are still unproven; this is not a networking result.
+
+Own pil-msa.c verify_blob writes the running code length per segment before
+final status authentication. Current pmim_publish records copy completion
+BEFORE issuing that segment's first LENGTH_READ/RMB operation. New copied
+mode terminal-holds after30720bank pages/28segments/source authentication/
+actual copy/readback/cache and secure shared-bank assignment2, with native
+copyREADY/COMPLETE, authPUBLISH6/assignments3, modem phase2/segment27/submitted28/
+stepLENGTH_READ and no error/unknown/pending/exclusive/authenticated state.
+The final length remains unpublished. No target, descriptor or source pointer
+is followed by the diagnostic predicate. Existing production protocol/order,
+time budgets, hashing, permission, source and cache checks remain unchanged.
+
+New saved-scalar AUTH STAGE HOLD covers existing nontransaction auth errors3..8
+without a new call/retry/cleanup or target access. Actual extracted dispatch/
+GOP tests pass OFF1987/assigned1987/returned2001/copied2141 cases, including
+210failure cases each and all1602prior cases. Actual native formats pass
+854functions/max816B;81original firmware files survive codec byte-identically.
+This uses own DT/vendor sources and the previously reviewed HackiOS comparison;
+no foreign addresses/firmware or native producer implementation changes.
+
 ## Actual metadata assignment completed; returned checkpoint (0189, 2026-11-06)
 
 Physical F732A128 shows AUTH CHECKPOINT1/2, metadata phase1/events0,
