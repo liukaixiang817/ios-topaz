@@ -56,6 +56,18 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: actual metadata assignment complete; return checkpoint ready
 
+- THIRD consecutive current physical-FASTBOOT dependency audit09:55:38.959601Z:
+  readonly query again8s timeout; host72236 terminal, no live process/job.
+  Previous goal turn was NO PROGRESS (revalidation/status only). No new user
+  confirmation, physical screen or available safe device action. Candidate
+  remains built/verified/UNSENT, no fresh root review/freeze/native output.
+  Blocked-audit threshold satisfied: mark goal BLOCKED pending user's direct
+  power+volume-down return from AUTH CHECKPOINT to FASTBOOT, NOT complete.
+  Next resume: fresh readonly device query, fresh root40checks, prepared
+  /private/tmp/polaris-freeze-auth-return-checkpoint.py, offline verification,
+  once-only new candidate send, actual AUTH RETURN STOP/other result.
+  No repeated passing tests, source speculation, replay or USB observer.
+
 - Continuation audit09:54:13.496749Z: preceding goal turn made real progress
   (physical assignment completion, returned-checkpoint implementation/build).
   This continuation only revalidated and is NO PROGRESS, not a live-job wait:
