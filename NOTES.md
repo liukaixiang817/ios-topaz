@@ -56,6 +56,13 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: user resumed; actual modem-copy result pending
 
+- Continuation audit10:35Z: previous resumed goal turn was NO PROGRESS
+  (revalidation/handoff/status only), not a verified live-process wait. Current
+  host remains terminal0/native ACK; no physical result for copied-mode trial.
+  SECOND consecutive missing-screen dependency on this resumed run. GoalACTIVE;
+  existing input request stays pending. No evidence-driven code/device action
+  available; no replay, new boot/query, USB observer or repeated passing tests.
+
 - User explicitly resumed goalACTIVE. Previous substantive turn made progress:
   actual metadata authentication/return evidence, new copied-mode diagnostic,
   software/native builds and once-only phone trial. Resume audit revalidated
