@@ -14,6 +14,27 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+## MSS translation evidence after first target admission (0189, 2026-11-06)
+
+Own06A68979 physical screen reports both read/write PAR output PA zero for
+requested QDSP page04080000, with equal saved/restored PAR and all AT flags1.
+The actual generated pmni_translate uses the retained target page as both AT
+operands. This is not evidence that reading physical0 is permitted.
+
+Arm's [PAR register definition](https://documentation-service.arm.com/static/5e7e1405b471823cb9de57ae)
+describes the translated output address separately from attributes. The own
+live TTBR0/TCR must determine any table diagnosis; no HackiOS/redwood table
+address substitutes for it. HackiOS XnuLoader.c logs these registers but does
+not establish this phone's mapping. No foreign mapping code was imported.
+
+Failure-only diagnostics now decode only 4KiB TTBR0,16..39 T0SZ, <=48-bit PA
+formats. At most four descriptors are read through the existing live owner,
+BootServicesData/image exclusions and WB identity translation reader; every
+entry is reread for stability. Raw tables, source addresses/PAR/flags and
+reader refusal codes remain recorded. Decoded PA is evidence only, including
+zero. No leaf PA dereference, table update, TLB change, access-policy change,
+firmware call or hardware timing change is introduced.
+
 ## Own MSS pages absent from firmware resource enumeration (0189, 2026-11-06)
 
 Physical468560A1 shows QDSP page04080000 inside one GCD type0 record with

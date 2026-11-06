@@ -54,6 +54,75 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: bounded readonly table diagnostic verified and ready for physical trial
+
+- New failure-only diagnostic uses retained TTBR0/TCR and existing live RAM
+  reader for <=4 page-table descriptors, then rereads every entry. Supports
+  4KiB16..39T0SZ/<=48bitPA only; rejects disabled/unsupported walks, cycles,
+  malformed/unaligned descriptors, changed entries, non-WB source translation
+  and loaded-image overlap. Raw first/second source evidence retained. Leaf
+  PA is NEVER dereferenced; no table/TLB/permission/MMIO/timing change.
+- Native adapter runs only on first phase1/step0 MBA native error3 before raw
+  IO while original resource/CPU owner is still live; eventual failure remains
+  retained. Last source-read refusal code and captured EFI type displayed.
+  Full generated AT implementation was checked against current object code.
+- Tests PASS: pure decoder39 sanitizer scenarios; native8 actual composition
+  scenarios/988840 checks; exact display1007 prior+112 new sanitizer cases;
+  full normal composition2889178 and gap+VRM composition2889179, bothphase46.
+  All SOFTWARE only. Initial native fixture put mock tables inside already
+  loaded mock images (+80000,+90000); exclusion correctly rejected them.
+  Relocated positive fixture to unused+60000 and retained explicit overlap
+  negative. Failure/debug logs preserved; no failed build sent to phone.
+- mba-table-diagnostic-0001 all14 final compile/test/build/offline commands0.
+  EFI/arm64846functions/max816B; original codec81unchanged files PASS.
+  Driver830464B SHA4edefdfb47720e300e3f83140a7490644242af494736556db7091d528565dd0f.
+  Image6238208B SHAb6e3b954b1aa4d4efe865824216b4fe039e3fa612491cff58090178160161638.
+  Compiled changes exactly uefi-xnu.c,uefi-mss-boot-native.h; added pure
+  tools/polaris-arm64-table-walk.h. Kernel CI42091724671/payload unchanged.
+- Expected FASTBOOT07:17:07.924738Z. Fresh readonly audit host24036 running;
+  next40checks/freeze/offline admission and ONE new temporary boot. No device
+  command for this candidate yet beyond readonly audit. No previous nonce
+  reused; all earlier native trials terminal/SPENT. Unowned header preserved.
+- Execution2/5,current plus3steps remain. Source page-table evidence is needed
+  before any mapping repair; register/MBA/modem/WLAN scan/join/IP/DNS/data
+  unproven. Report07:15Z,next07:30Z. Preserve Android/Windows/backups/private
+  artifacts. No continuous USB observer, automatic reset or partition write.
+
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: full AT pair shows wrong physical page; readonly table diagnostic in progress
+
+- User returned to FASTBOOT, confirmed06:54:43.020059Z. mba-at-diagnostic-0002
+  fresh audit9664 ended0, independent40checks PASS, FASTBOOT06:57:08.733564Z.
+  Frozen569 files/offline admission PASS. New image9875bea8... sent ONCE
+  06:57:38.465513Z. Complete100593664B/1535chunks with validation ACK and
+  independently queried validated state; native-start06:59:18.612218Z,
+  ACK06:59:38.078312Z. Host77191 ended0. Image/nonce SPENT; no USB observer.
+  Previous transport blocker resolved. EC24FFDA photo belongs to FAILED0001;
+  USB_TX_ERROR low18 is the driver's completed-transfer status/buffer/length
+  rejection, not proof of a cable cause. No failed0001payload resumed/replayed.
+- New06A68979 photo of0002: MBA AT HOLD5/17, wrapper3/inner0, phase1/step0,
+  command04080018/page04080000. Read/write PAR equal with PA bits zero; saved/
+  restored equal, all6 translation flags1, targets1/0, MAIRffbb4400, native
+  error3/IOflags0. Lower PAR B/8 digit ambiguous but zero PA is clear. Identity
+  PA check fails before raw MMIO; do not permit MMIO to zero or replace its
+  result with intended address. Generated pmni_translate reads t->page for
+  both AT operands; assembly shows no zero operand/substitution.
+- Implementing a failure-only readonly4KiB TTBR0 walk under the live owner:
+  each descriptor uses existing BootServicesData/image-exclusion/live WB RAM
+  checks; reread all entries for stability. No leaf PA dereference, mapping
+  mutation, MMIO permission/timing change, firmware callback or target access.
+  Pure decoder39sanitizer cases PASS; native integration/display/full build
+  tests IN PROGRESS. Candidate mba-table-diagnostic-0001 not built or sent.
+  Do not freeze/admit until all relevant new tests/builds pass.
+- Source references: existing own DT still defines QDSP04080000/RMB04180000;
+  Arm PAR definition confirms output PA semantics. HackiOS kernel XnuLoader
+  logs TTBR/TCR but supplies no own-phone resource authority. Broad userland
+  search hit iCloud delay and was interrupted; no foreign map imported.
+- All previous host jobs terminal. Current private disassembly and photos
+  retained; active work now source/tests. Report07:00Z,next07:15Z while active.
+  Execution2/5,current plus3steps remain; actual register/MBA/modem/WLAN scan/
+  Cyberpunk AU join/IP/DNS/data/stability unproven. Preserve unowned remote-
+  memory header, Android/Windows/backups. Resolved feedback blockers reset.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: diagnostic USB transfer failed before native-start; fresh candidate ready
 
 - Source612c007 pushed/synchronized. mba-at-diagnostic-0001 readonly audit

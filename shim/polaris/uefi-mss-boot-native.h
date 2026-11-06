@@ -12,15 +12,18 @@
 #error Native MBA startup requires the actual AOP/power/clock composition
 #endif
 #include "uefi-mss-aop-native.h"
+#include "../../tools/polaris-arm64-table-walk.h"
 #define PMBN_RECORDS (PMBA_EVENTS+PMSR_EVENTS)
 struct pmbn_delivery {
     struct pmba_command command;struct pmrg_target target[2];
     struct pmni_arch opening;struct pmni_result native;
     uint32_t attempted,unknown,error,complete;uint8_t digest[32];
 };
+struct pmbn_walk {uint32_t read_error,reserved;struct pmpt_walk table;struct pmli_read source[2][4];struct pmni_arch after;};
 struct pmbn_state {
     uint64_t aop,power,clocks,owner,records,opening;struct pmba_boot mba;
     uint32_t attempted,ready,unknown,error,pending,deliveries,complete,reserved;
+    struct pmbn_walk translation;
     uint8_t records_digest[32],digest[32];
 };
 static inline int pmbn_fail(struct pmbn_state*s,unsigned error)
@@ -79,6 +82,31 @@ static inline int pmbn_finish(struct pmbn_state*s)
     pweh_digest(r,s->deliveries*sizeof(*r),s->records_digest);
     if(!pmbn_live(s))return 0;s->complete=1;pweh_digest(s,offsetof(struct pmbn_state,digest),s->digest);return 1;
 }
+/* Failure-only table evidence under the still-held CPU/resource owner. The
+ * existing RAM reader checks BootServicesData, image exclusion and live WB
+ * identity AT before reading each descriptor; never dereference a leaf PA. */
+static inline int pmbn_table_read(void*context,unsigned pass,unsigned index,uint64_t at,uint64_t*value)
+{
+    struct pmbn_state*s=context;struct pmpn_state*p=(void*)(uintptr_t)s->power;
+    if(pass>1||index>=4||!pmbn_live(s)){s->translation.read_error=1;return 0;}
+    struct pmrg_map*g=(void*)(uintptr_t)p->namespace;struct pmli_ledger*l=(void*)(uintptr_t)g->images;
+    struct pmli_read*q=&s->translation.source[pass][index];
+    if(!pmli_heap_excluded(&l->pass[1],at,8)){s->translation.read_error=2;return 0;}
+    if(!pmli_read_ram(l,q,at,8,1)){s->translation.read_error=3;return 0;}
+    if(!pmbn_live(s)){s->translation.read_error=4;return 0;}
+    *value=pwfi_le(q->raw,8);return 1;
+}
+static inline void pmbn_table_diagnostic(struct pmbn_state*s,const struct pmbn_delivery*r)
+{
+    const struct pmni_result*n=&r->native;const struct pmni_translation*t=&n->AT;
+    if(s->deliveries!=1||s->mba.phase!=1||s->mba.step||!r->target[0].complete||
+       !n->attempted||n->error!=3||n->issued||n->returned||
+       (t->page!=UINT64_C(0x4080000)&&t->page!=UINT64_C(0x4180000))||!pmbn_live(s))return;
+    (void)pmpt_collect(&s->translation.table,n->before.ttbr0,n->before.tcr,t->page,pmbn_table_read,s);
+    if(!pmni_arch_read(&s->translation.after)||!pmni_arch_same(&n->before,&s->translation.after,n->before.ticks)){
+        s->translation.table.error=5;s->translation.table.complete=0;
+    }
+}
 static inline int pmbn_step(struct pmbn_state*s)
 {
     if(!pmbn_live(s)||s->pending)return PMBA_FAILED;
@@ -103,7 +131,7 @@ static inline int pmbn_step(struct pmbn_state*s)
     result=pmba_complete(&s->mba,&r->command,o->last,1,r->native.value);if(result<0)goto fail;
     r->unknown=0;r->complete=1;pweh_digest(r,offsetof(struct pmbn_delivery,digest),r->digest);s->pending=0;
     if(result==PMBA_READY)return pmbn_finish(s)?PMBA_READY:pmbn_fail(s,2);return result;
-fail:r->error=3;return pmbn_fail(s,3);
+fail:pmbn_table_diagnostic(s,r);r->error=3;return pmbn_fail(s,3);
 }
 #endif
 #endif

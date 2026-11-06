@@ -1321,6 +1321,27 @@ static void wifi_native_startup_gop_evidence(void)
                 pwtg_line(r,14,"AT ERROR IO",d->native.error,d->native.issued|(d->native.returned<<8)|(d->native.complete<<16));
                 pwtg_line(r,15,"MBA KIND ERROR",kind,d->error);
             }
+            if(b->pending==1&&d->native.error==3&&!d->native.issued&&s->boot.translation.table.attempted){
+                const struct pmpt_walk*w=&s->boot.translation.table;
+                pwtg_line(r,0,"MBA PT HOLD",wifi_native_boot_phase,s->phase);
+                pwtg_line(r,1,"PT TTBR0",(uint32_t)(w->ttbr>>32),(uint32_t)w->ttbr);
+                pwtg_line(r,2,"PT TCR",(uint32_t)(w->tcr>>32),(uint32_t)w->tcr);
+                pwtg_line(r,3,"PT VA",(uint32_t)(w->address>>32),(uint32_t)w->address);
+                pwtg_line(r,4,"PT AT PAR",(uint32_t)(par>>32),(uint32_t)par);
+                pwtg_line(r,5,"PT ERR FLAGS",w->error,w->levels|(w->stable<<8)|(w->complete<<16));
+                static const char*const labels[]={"PT DESC 0","PT DESC 1","PT DESC 2","PT DESC 3"};
+                for(unsigned n=0;n<4;n++)pwtg_line(r,6+n,labels[n],(uint32_t)(w->descriptor[n]>>32),(uint32_t)w->descriptor[n]);
+                pwtg_line(r,10,"PT LAST ADDRESS",0,0);pwtg_line(r,12,"PT SOURCE PAR",0,0);pwtg_line(r,14,"PT SOURCE FLAGS",0,0);
+                if(w->levels&&w->levels<=4){
+                    unsigned n=w->levels-1;const struct pmli_read*q=&s->boot.translation.source[0][n];
+                    pwtg_line(r,10,"PT LAST ADDRESS",(uint32_t)(w->entry[n]>>32),(uint32_t)w->entry[n]);
+                    pwtg_line(r,12,"PT SOURCE PAR",(uint32_t)(q->AT[0].read_par>>32),(uint32_t)q->AT[0].read_par);
+                    pwtg_line(r,14,"PT SOURCE FLAGS",q->issued|(q->returned<<8),q->bytes);
+                }
+                pwtg_line(r,11,"PT DECODED PA",(uint32_t)(w->physical>>32),(uint32_t)w->physical);
+                pwtg_line(r,13,"PT FIRST LEAF",w->first,w->leaf);
+                pwtg_line(r,15,"PT READ WHY TYPE",s->boot.translation.read_error,s->images.failure.type);
+            }
             /* A failed first namespace check precedes any native access.
              * Inspect only already captured GCD/EFI records for that page. */
             if(!d->target[0].complete&&!d->native.attempted){
