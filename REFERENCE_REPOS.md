@@ -19,10 +19,15 @@ their build/setup scripts or prebuilts has been executed.
 Ordinary Android sync/adb reboot bootloader also left the next actual capture
 pending, so it is not a verified solution. Read actual mount topology before
 attributing the failure. [Android13 PowerCommand](https://github.com/aosp-mirror/platform_frameworks_base/blob/android-13.0.0_r1/cmds/svc/src/com/android/commands/svc/PowerCommand.java)
-shows that svc power reboot invokes the runtime power-manager shutdown path;
-this alternative is only planned, not yet run. It is not a journal repair
-or a promise that our phone will unmount successfully. Current40check storage
-admission remains unchanged and authoritative.
+shows that svc power reboot invokes the runtime power-manager shutdown path.
+It was executed11:40:35Z after actual polaris/SDK33/boot_completed1/power-service
+checks; ADB disconnected255, then independent polaris FASTBOOT responded
+11:40:45Z. New strictROaudit0003 is running; no clean-journal claim yet.
+Actual Android mountinfo proves /data ext4rw is userdata ->sda22, same target
+as the audit. Its kernel boot log reports normal automatic recovery complete
+and ext4 errorcount0; no manual replay/repair was invoked. These observations
+do not establish complete filesystem health or successful clean exit.
+Current40check storage admission remains unchanged and authoritative.
 
 Fresh read-only admission after a reported menu shutdown still found ext4
 needs-recovery and journal start1/errno0;38of40checks passed. This is pending

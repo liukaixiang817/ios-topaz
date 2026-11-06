@@ -54,6 +54,35 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: FASTBOOT recovered; actual Android mount and runtime exit captured
+
+- One-time direct libusb read-only product query11:36:25Z timed out bulkOUT
+  (-7,0/14B); open/claim/release had succeeded. Device-level ChatGPT USB client
+  exists but is NOT proven blocking; no application terminated/security change.
+  Human cold FASTBOOT restart restored exact polaris product response11:38:01Z.
+  Ordinary fastboot reboot then started original Android; no new Wi-Fi image.
+- Actual Android mountinfo confirms /data is ext4rw on userdata -> /dev/block/
+  sda22 (dev_t259:6), same target as audit. Saved three superblocks shareUUID;
+  journal sequence/mount count changed across normal Android interval. Thus
+  wrong-target hypothesis excluded by actual current topology, not guessed.
+- Actual SDK33/boot_completed1/bootanimstopped/power service found11:39:28Z;
+  existing Magisk su grants uid0. Read-only kernel capture shows normal Android
+  automatic sda22 recovery complete during boot and reported ext4 errorcount0.
+  This is Android's normal boot activity, NOT a manually invoked repair/replay;
+  neither whole filesystem health nor next clean exit follows from this alone.
+  Previous pstore console unavailable. Actual /proc1 mount snapshot saved.
+- Ordinary runtime svc power reboot bootloader sent11:40:35.859119Z after
+  rechecking polaris/boot_completed1. ADB returned255/empty on disconnect;
+  independent actual FASTBOOT product succeeded11:40:45.916981Z. Do not infer
+  journal state from ADB exit. This differs from earlier bare adb reboot path.
+- Fresh strictROaudit49904 started11:41:07.664586Z into phone-root-audit-0003,
+  RUNNING; no result or admission claim yet. Independently review40checks on
+  completion; if PASS rebind fresh audit0003 before freeze/offline/once-only
+  copy-ready trial. Preserve failed0001/0002 and all spent trial evidence.
+- Source6dd809f/tests/image unchanged; candidate UNUSED/UNSENT, no trial freeze.
+  No flash, manual replay/repair, metadata/GPT/Windows write, or USB observer.
+  GoalACTIVE,execution2/5,four including current; formal11:28Z,next11:43Z.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: journal still pending; FASTBOOT interface unresponsive
 
 - Human confirmed FASTBOOT and unplugged/replugged USB. Fresh identity query
