@@ -54,6 +54,34 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: final bounded-window candidate sent once; native-start ACK
+
+- Final source7252513 pushed/synchronized (includes efcf353 timing repair).
+  Candidate mba-window-0002 audit13450 ended0; new/old root whole hashes
+ 56.741/56.835s, six GPT/five critical partitions/ESP/current NV unchanged.
+  Actual unmount/returned polaris FASTBOOT02:16:19.498162Z; independent40 checks
+  PASS. Trial frozen405 files with current source/artifact bindings and reused
+  unchanged caller tests; offline one-use admission PASS.
+- Final imagef5b509f5... sent ONCE02:17:13.461547Z, send OKAY0.145s,
+  boot OKAY0.091s,total0.237s. Nonce consumed before send: this image/pool now
+  SPENT. Synthetic UEFI verified and payload staging02:17:22.658135Z (~9s).
+ 100593664 bytes/1535 chunks completed, device validation ACK and independently
+  queried validated state true. Native-start sent02:18:53.578874Z;
+  ACK02:19:13.056070Z. Host39636 ended0. No native retry/reset/observer issued.
+- This proves prepare_boot/command acceptance only. Current physical MBA
+  completion/CPU-owner admission/MSS/radio/kernel remain unverified. Asked via
+  async text for latest title and NATIVE HOLD/PARENT PH FLAGS/OWNER ERR PHASE
+  or MBA CHECK DETAIL/new interface; reply pending. Post-native USB deliberately
+  stops, so current physical screen is needed. Prior219ms photo belongs to
+  mba-post-check-0001 and must not be reused as this boot's result.
+- Evidence: mba-window-0002/phone-native-0001/{boot.json,fastboot.log}, sibling
+  log and trial-review-0001.json. All host build/test/device jobs ended.
+  mba-window-0001 was superseded unsent, nonce unconsumed; do not deploy it.
+- Next decode fresh current outcome, continue actual MSS/WLAN scan, Cyberpunk
+  AU join/IP/DNS and real data/stability. Goal unfinished, execution2/5/current
+  plus3 subsequent steps. Last15min report02:18Z; next due02:33Z if ongoing.
+  Unowned remote-memory9-line WIP preserved and excluded from commits.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: cover native startup diagnostics before sending final window fix
 
 - efcf353 pushed and seven owned files synchronized. mba-window-0001 audit
