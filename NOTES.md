@@ -54,6 +54,31 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: MSS two-page repair sent once; new physical result pending
+
+- Sourcee6952d6 pushed/synchronized. New mss-page-map-0001 strict-readonly
+  audit99783 ended0; independent40checks PASS, actual returned FASTBOOT
+  07:45:15.645272Z. All roots/GPT/critical/ESP/NV unchanged.600files frozen,
+  offline native admission PASS. This candidate does perform the narrowly
+  qualified invalid-L2 mapping publication described below, not diagnostic-only.
+- Image045cca91ecdaedb161ecef7e522d8b51ecfc81d3e16be5d61149046f96bbbda2 sent
+  ONCE07:46:45.260577Z, fastboot0. Full100593664B/1535chunks, validation_ACK
+  and independently queried validated_state true. Native-start07:48:25.386539Z,
+  ACK07:48:44.876810Z; host59020 ended0 at07:48:44.917870Z. All commands terminal.
+- Image/nonce SPENT; no replay/reset/post-native USB observer/partition write.
+  Host ACK does not prove table publication, MSS register read, MBA or WLAN.
+  Asked human for current heading; if MSS PAGE HOLD, PAGE ERROR FLAGS,
+  PAGE AFTER0/1; otherwise actual heading/error rows. Keep current screen.
+  Physical8C01476D belongs to PREVIOUS table diagnostic, not this repair.
+- New dependency is this candidate's current screen, FIRST occurrence. Prior
+  screen/FASTBOOT dependencies resolved; do not inherit their blocked counts.
+  Goal ACTIVE, not complete. No running job or terminal handle needs polling.
+  Next concrete action: interpret actual repair result, then fix only the
+  evidenced remaining failure under existing own-resource/owner constraints.
+- Execution2/5,current plus3remaining. Real scan/Cyberpunk AU join/IP/DNS/data/
+  stability remain unproven. Last formal report07:45Z,next08:00Z while active.
+  Kernel CI42091724671/payload unchanged. Unowned9line header remains untouched.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: actual invalid L2 proven; two-page repair built, fresh audit running
 
 - Human8C01476D physical MBA PT HOLD resolves the previous screen dependency.
