@@ -14,6 +14,28 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+## Metadata assignment terminal checkpoint after reported reboot (0189, 2026-11-06)
+
+Human reports auth-owner-seal-spans-0001 returned to MIX then booted Android;
+no terminal native screen was captured. Host ACK/validated payload are not
+proof of secure completion. Current source's normal error path masks and
+WFE-holds; reset cause and last reached phase are not known. No claim of a
+watchdog, secure-monitor fault or successful modem authentication is justified.
+
+An explicit default-OFF builder flag stops at the actual parent step boundary
+with auth phaseMD_IO, one complete secure assignment, no pending/unknown/error,
+metadata phase1/events0. It uses existing terminal GOP and nonreturning hold,
+never reads transferred metadata or descriptor, never issues RMB metadata IO,
+never resumes or starts the OS CPU. This distinguishes first-assignment failure
+from later auth work. It does not change DT/vendor protocol or import foreign
+firmware. Existing local references and own pil-msa metadata review remain the
+basis; no change to native auth timing, operation order or permission rules.
+Extracted actual predicate/dispatch/GOP:1763cases each with flagOFF/ON PASS;
+this includes22invalid state predicates and7display guards, positive stop
+before parent call, unchanged state bytes, and all1602prior display cases.
+Actual EFI/MachO builds pass with853functions/max816B; original81firmware
+innerfiles remain byte-identical through codec roundtrip.
+
 ## Auth inter-step CPU budget after accepted SMC (0189, 2026-11-06)
 
 Physical FC72DB1B from auth-seal-spans-0001 reports transaction error3,

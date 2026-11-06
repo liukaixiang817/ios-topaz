@@ -1138,6 +1138,25 @@ _Static_assert(sizeof(log_buffer)>=2*(PWBD_RAW_BYTES+sizeof(pwrpt_record)+sizeof
 #include "uefi-wifi-worker-native.h"
 #include "uefi-wifi-system-off-native.h"
 static struct pwns_parent wifi_native_parent;
+#ifndef EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT
+#define EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT 0
+#endif
+/* Diagnostic-only terminal boundary. Inspect saved control records, never
+ * the transferred metadata or descriptor. No resume path is provided. */
+static int wifi_native_auth_metadata_checkpoint(void)
+{
+#if EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT
+    const struct pwns_parent*s=&wifi_native_parent;const struct pmsn_state*a=&s->auth;
+    const struct pmsn_assignment*q=&a->assignment[0];const struct pwmt_transaction*t=&q->transaction;
+    return wifi_native_boot_phase==5&&!wln_cpu_on_issued&&s->phase==PWNS_AUTH&&!s->error&&!s->unknown&&
+        a->ready==1&&!a->error&&!a->unknown&&a->phase==PMSN_MD_IO&&a->assignments==1&&!a->pending&&
+        a->metadata.phase==1&&!a->metadata.events&&!a->metadata.pending&&
+        q->complete==1&&!q->error&&!q->unknown&&t->complete==1&&t->step==PWMT_DONE&&!t->error&&!t->unknown&&!t->pending;
+#else
+    return 0;
+#endif
+}
+
 #if EFI_XNU_WIFI_TERMINAL_GOP_DIAGNOSTICS
 /* Failure-only projection of resident startup records. Use the already armed
  * early GOP before CPU_ON; never poll a provider or draw after CPU_ON here. */
@@ -1442,6 +1461,20 @@ static void wifi_native_startup_gop_evidence(void)
         pwtg_line(r,14,"CACHE ERR FLAGS",valid?q->cache[k].error:0,
             valid?(q->cache[k].attempted|(q->cache[k].barrier_issued<<8)|(q->cache[k].barrier_returned<<16)|(q->cache[k].complete<<24)):0);
         pwtg_line(r,15,"SOURCE TPL",(uint32_t)q->source[0].TPL,(uint32_t)q->source[1].TPL);
+    }
+    if(wifi_native_auth_metadata_checkpoint()){
+        const struct pmsn_state*a=&s->auth;const struct pwmt_transaction*t=&a->assignment[0].transaction;
+        uint64_t age=t->last>=t->opening?t->last-t->opening:UINT64_MAX;
+        pwtg_line(r,0,"AUTH CHECKPOINT",a->assignments,a->phase);
+        pwtg_line(r,1,"META PH EVENTS",a->metadata.phase,a->metadata.events);
+        pwtg_line(r,2,"TX DONE ERR",t->complete,t->error);
+        pwtg_line(r,3,"TX EVENTS ROUNDS",t->events,t->rounds);
+        pwtg_line(r,4,"TX LAST AGE",(uint32_t)(age>>32),(uint32_t)age);
+        pwtg_line(r,5,"TX STEP PEND",t->step,t->pending);
+        pwtg_line(r,6,"AUTH ERR PEND",a->error,a->pending);
+        pwtg_line(r,7,"OWNER ERR HELD",o->error,o->held);
+        pwtg_line(r,8,"BEFORE META IO",1,0);
+        for(unsigned n=9;n<16;n++)pwtg_line(r,n,"",0,0);
     }
     /* All19 reads returned before the phase1 value check. Display the actual
      * saved inputs; this does not recompute, relax or retry the vote policy. */
@@ -1895,7 +1928,7 @@ __attribute__((noinline)) static void wifi_native_startup(void)
 }
 /* The staged producer switch has its own bounded temporary storage. */
 __attribute__((noinline)) static int wifi_native_startup_step(void)
-{return pwns_step(&wifi_native_parent);}
+{if(wifi_native_auth_metadata_checkpoint())power_unknown_hold();return pwns_step(&wifi_native_parent);}
 __attribute__((noreturn)) static void wifi_native_boot(void)
 {
     wifi_native_startup();

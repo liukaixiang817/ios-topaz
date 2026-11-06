@@ -54,6 +54,50 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: native ACK followed by reported reboot to Android
+
+- auth-owner-seal-spans-0001 source51f36b3 pushed. SentONCE09:20:34.990143Z,
+  full100593664B validation_ACK/queried validated_state true. Native-start
+  09:22:14.998052Z,ACK09:22:34.448959Z; host4946 ended0 at09:22:34.467431Z.
+  Human reports exited to MIX then entered Android, now manually FASTBOOT.
+  This resolves the screen wait but proves NO auth completion or Wi-Fi.
+  Exact reset source/stage unknown; ordinary failure path only WFE-holds.
+  No post-native USB observer, replay or partition writes were performed.
+- New default-OFF --wifi-native-auth-metadata-checkpoint selects a terminal
+  diagnostic boundary after assignment0 fully completed and pmmd_begin,
+  BEFORE any RMB metadata authentication write. Inspect saved control only;
+  retain existing terminal GOP/WFE, no resume/cleanup/retry/CPU_ON. It is a
+  diagnostic stop, NOT successful authentication/networking. Purpose: split
+  reset during first secure assignment from reset during later operations.
+- Auth timing/seal/permission/protocol headers remain byte-identical51f36b3.
+  Only builder explicit flag/config/manifest and actual loader checkpoint/
+  saved-control display change. Extracted actual predicate, dispatch and GOP
+  PASS in both OFF/ON configurations: prior1602display cases plus161new
+  dispatch/guard cases each (1763each). Positive dispatch terminal-holds before
+  pwns_step; every failed guard continues normal dispatch; no state mutation
+  from rendering. Initial private fixture signedness warning fixed; no device
+  action on failure. Builder refuses checkpoint without native/GOP profile.
+  EFI/MachO/image/offline admission PASS;853functions/max816B,81original inner
+  files unchanged. Driver837120B SHA477193b8c2b17281bec85d3b6ddee0d66ea5de00df7ac616eee1d61d8c80c15c;
+  image6242304B SHA74b86d126432622ed86156d09722dd451d1ba2ebdcb5d2c8df817462f3af32a9.
+  Fresh readonly query09:30:23.011570Z confirms expectedFASTBOOT. Root-audit
+  62352 running; no checkpoint native image sent yet.
+  KernelCI42091724671 and payload unchanged; no kernel build needed.
+- Goal ACTIVE,execution2/5,four steps including current. Formal09:30Z report delivered,next09:45Z.
+
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: auth inter-step budget candidate in RAM transfer
+
+- Source51f36b3 pushed/synchronized. Root-audit96580 ended0 at09:19:13.125670Z;
+  independent40checks PASS, actual FASTBOOT09:19:13.057116Z. Roots/GPT/critical/
+  ESP/NV match, no partition writes.681files frozen; native offline admission
+  passed. Fresh candidate auth-owner-seal-spans-0001 image/nonce consumed once;
+  host4946 currently staging100593664B RAM payload, no native ACK yet.
+- Do not replay this spent candidate. Keep post-native USB observer paused.
+  Next consume authoritative host completion, then obtain actual phone screen.
+  Host ACK will not prove completed auth or Wi-Fi. Execution2/5,four steps
+  including current remain. Formal09:15 report delivered,next09:30Z.
+- Unowned remote-memory9line hunk preserved/uncommitted; no new kernelCI.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: optimized SMC accepted, next invalidate issue timed out
 
 - Human FC72DB1B resolves the current-screen dependency for auth-seal-spans-0001.
