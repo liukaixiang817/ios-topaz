@@ -56,6 +56,14 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: existing-PDC-L3 repair sent once; new physical result pending
 
+- Continuation audit08:24:53Z: previous turn made concrete progress (new
+  source/tests/image and actual once-only trial). Re-read authoritative host
+  result:90793 terminal0, ACK unchanged, no physical-result evidence for this
+  candidate yet. This is SECOND consecutive current-screen dependency, not a
+  verified wait on a live process. No safe evidence-driven next device change
+  exists until the requested screen arrives; goal remains ACTIVE. Do not
+  replay the spent candidate or restart the explicitly paused USB observer.
+
 - Sourcef8d0029 pushed/synchronized. Fresh pdc-leaf-map-0001 audit42669 ended0
   at08:20:53.847985Z; independent40checks PASS and actual returned FASTBOOT
   08:20:53.821212Z. Roots/GPT/critical/ESP/NV unchanged.634files frozen, offline
