@@ -54,6 +54,35 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: journal still pending; FASTBOOT interface unresponsive
+
+- Second readonly audit12115/phone-root-audit-0002 ended0 at11:00:02.293463Z;
+  independent review again38/40REFUSED the same recovery-bit/journal-start
+  checks. Successful ordinary Android sync/reboot return DID NOT prove clean
+  exit. No corruption claim; no manual journal replay/repair/partition write.
+  Copy-ready candidate remains UNSENT/nonceUNUSED. Source6dd809f/tests/image
+  unchanged, docsadf5718 pushed; root0001/0002failed evidence preserved.
+- Need inspect original Android's actual /data/target mount relation and
+  runtime shutdown, not blindly repeat normal boot/close. AOSP Android13
+  PowerCommand verifies svc power reboot requests runtime PowerManager reboot;
+  this framework path is PLANNED, NOT executed. Actual mount relation has NOT
+  been captured. Bare adb reboot bootloader was executed only at10:56:28.
+- Fresh product queries11:13:42.393597Z and11:17:01.350618Z timed out; their
+  guarded original-system reboot commands were NOT sent. One-time ADB check
+  11:15:01.095545Z selected device absent. Inventory11:16:13.528898Z shows ONE
+  FASTBOOT/selected serial present and ZERO ADB. Targeted process inventory
+  11:19:03.580450Z finds only existing adb server, no stale fastboot/device job;
+  read-only process check required escalation and succeeded, no signals sent.
+- Human confirms current FASTBOOT screen. Asked unplug/replug phone-end USB,
+  keep FASTBOOT and reply 已重新连接. Current physical USB recovery dependency
+  FIRST occurrence. After reconnection revalidate identity; if responsive,
+  normal Android boot, readonly actual mount snapshot, then consider verified
+  framework normal reboot-to-bootloader and fresh strictROreview. No native
+  copy-ready trial until its current root admission actually passes40/40.
+- GoalACTIVE,execution2/5,four including current;1done,3..5unverified. Formal
+  update11:13Z delivered,next11:28Z while active. No live host process remains.
+  Keep observer paused and all spent trials unreplayed; unownedhunk intact.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: copy-ready verified; journal admission repeated after normal Android reboot
 
 - Human confirms copied-mode spontaneous reset/no keys/no new title observed.

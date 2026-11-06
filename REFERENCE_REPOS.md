@@ -16,6 +16,14 @@ their build/setup scripts or prebuilts has been executed.
 
 ## Normal Android exit and journal admission (0189, 2026-11-06)
 
+Ordinary Android sync/adb reboot bootloader also left the next actual capture
+pending, so it is not a verified solution. Read actual mount topology before
+attributing the failure. [Android13 PowerCommand](https://github.com/aosp-mirror/platform_frameworks_base/blob/android-13.0.0_r1/cmds/svc/src/com/android/commands/svc/PowerCommand.java)
+shows that svc power reboot invokes the runtime power-manager shutdown path;
+this alternative is only planned, not yet run. It is not a journal repair
+or a promise that our phone will unmount successfully. Current40check storage
+admission remains unchanged and authoritative.
+
 Fresh read-only admission after a reported menu shutdown still found ext4
 needs-recovery and journal start1/errno0;38of40checks passed. This is pending
 journal state, not proof of corruption. No manual fsck, journal replay or
