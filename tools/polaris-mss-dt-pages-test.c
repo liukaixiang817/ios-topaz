@@ -7,6 +7,7 @@ static unsigned dt_pages_fault;
 #define PMBN_TEST_ENTRY unused_boot_suite
 #define PMRG_TEST_UNREGISTERED_MSS 1
 #define PMRG_TEST_UNREGISTERED_PDC 1
+#define PMRG_TEST_UNREGISTERED_RESTART 1
 #include "polaris-mss-boot-native-test.c"
 static void dt_pages_at(struct pmni_translation*t)
 {
@@ -31,12 +32,14 @@ int main(int argc,char**argv)
     CHECK(resource_page(0x4080000)&&resource_target->complete&&!resource_target->descriptor.type);
     CHECK(resource_page(0x4180000)&&resource_target->complete&&!resource_target->descriptor.type);
     CHECK(resource_page(0xb2e0000)&&resource_target->complete&&!resource_target->descriptor.type);
+    CHECK(resource_page(0xc2b0000)&&resource_target->complete&&!resource_target->descriptor.type);
+    CHECK(!resource_page(0xc2b1000)&&!resource_page(0xc2afff));
     CHECK(!resource_page(0x4084000)&&!resource_page(0x4081000)&&!resource_page(0xb2e1000));
     uint8_t raw[80];memcpy(raw,image_heap+0x70000,80);
     struct pweh_result*h=malloc(sizeof(*h));CHECK(h);memcpy(h,held,sizeof(*h));
-    for(unsigned k=0;k<3;k++){
-        uint64_t page=k==2?0xb2e0000:k?0x4180000:0x4080000;
-        memcpy(raw,image_heap+(k==2?0x75000:0x70000),80);
+    for(unsigned k=0;k<4;k++){
+        uint64_t page=k==3?0xc2b0000:k==2?0xb2e0000:k?0x4180000:0x4080000;
+        memcpy(raw,image_heap+(k==3?0x77000:k==2?0x75000:0x70000),80);
         CHECK(pmrg_device_descriptor(h,page,raw));
         for(unsigned fault=0;fault<16;fault++){
             uint8_t q[80];memcpy(q,raw,80);memcpy(h,held,sizeof(*h));

@@ -133,9 +133,9 @@ static inline int pmrg_map_excludes(const struct pweh_result*h,uint64_t page)
            (d->type!=11||d->virtual_address||(d->attributes!=0&&d->attributes!=1)))return 0;
     }return 1;
 }
-/* The original Core leaves own QDSP/RMB/PDC pages in a NonExistent GCD
+/* The original Core leaves own QDSP/RMB/PDC/restart pages in a NonExistent GCD
  * gap. Own live DT qdsp6_base/rmb_base and qdsp6v65 vendor offsets identify
- * ONLY these pages (PDC pdc_sync=b2e0100, own vendor bit9). A gap is not an MMIO or CPU permission grant: retain
+ * ONLY these pages (PDC pdc_sync=b2e0100, bit9; restart_reg=c2b0000/4). A gap is not an MMIO or CPU permission grant: retain
  * its actual type0 record, fresh node equality, exclusive owner and the
  * exact pending command's Device R/W AT checks before any target access.
  * No foreign/unallocated RAM, other device page or EFI overlap is admitted. */
@@ -158,7 +158,7 @@ static inline int pmrg_device_descriptor(const struct pweh_result*h,uint64_t pag
     if(base>page||end<page||end-page<4095||end-base==UINT64_MAX)return 0;
     uint64_t cap=pwfi_le(raw+40,8),attr=pwfi_le(raw+48,8);unsigned type=(unsigned)pwfi_le(raw+56,4);
     if(type==3)return (cap&1)&&attr<=1;
-    return (page==UINT64_C(0x4080000)||page==UINT64_C(0x4180000)||page==UINT64_C(0xb2e0000))&&
+    return (page==UINT64_C(0x4080000)||page==UINT64_C(0x4180000)||page==UINT64_C(0xb2e0000)||page==UINT64_C(0xc2b0000))&&
         !type&&!cap&&!attr&&!pwfi_le(raw+60,4)&&!pwfi_le(raw+64,8)&&!pwfi_le(raw+72,8)&&pmrg_efi_absent(h,page);
 }
 /* Current namespace comparison only. No Device address is dereferenced here;

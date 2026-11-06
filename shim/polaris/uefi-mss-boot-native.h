@@ -26,7 +26,7 @@ struct pmbn_state {
     uint32_t attempted,ready,unknown,error,pending,deliveries,complete,reserved;
     struct pmbn_walk translation;
 #if EFI_XNU_MSS_PAGE_MAP_AVAILABLE
-    struct pmbm_state mapping,pdc_mapping;
+    struct pmbm_state mapping,pdc_mapping,restart_mapping;
 #endif
     uint8_t records_digest[32],digest[32];
 };
@@ -37,7 +37,8 @@ static inline int pmbn_live(struct pmbn_state*s)
     if(!s||s->ready!=1||s->unknown||s->error||s->deliveries>PMBN_RECORDS)return 0;
 #if EFI_XNU_MSS_PAGE_MAP_AVAILABLE
     if((s->mapping.complete&&!pmbm_current(&s->mapping))||
-       (s->pdc_mapping.complete&&!pmbm_current(&s->pdc_mapping)))return 0;
+       (s->pdc_mapping.complete&&!pmbm_current(&s->pdc_mapping))||
+       (s->restart_mapping.complete&&!pmbm_current(&s->restart_mapping)))return 0;
 #endif
     struct pmpn_state*p=(void*)(uintptr_t)s->power;struct pmcn_state*c=(void*)(uintptr_t)s->clocks;
     struct pman_state*a=(void*)(uintptr_t)s->aop;
@@ -59,7 +60,7 @@ struct pmbm_reader {struct pmbn_state*owner;struct pmbm_state*map;};
 static inline int pmbm_read(void*context,unsigned pass,unsigned index,uint64_t at,uint64_t*value)
 {
     struct pmbm_reader*c=context;struct pmbn_state*s=c->owner;struct pmbm_state*m=c->map;
-    if(m!=&s->mapping&&m!=&s->pdc_mapping)return 0;
+    if(m!=&s->mapping&&m!=&s->pdc_mapping&&m!=&s->restart_mapping)return 0;
     if(pass>1||index>=4||!pmbn_live(s)){m->read_error=1;return 0;}
     struct pmpn_state*p=(void*)(uintptr_t)s->power;struct pmrg_map*g=(void*)(uintptr_t)p->namespace;
     struct pmli_ledger*l=(void*)(uintptr_t)g->images;struct pmli_read*q=&m->source[pass][index];
@@ -71,7 +72,7 @@ static inline int pmbm_prepare(struct pmbn_state*s,struct pmbm_state*m,uint64_t 
 {
     struct pmpn_state*p=(void*)(uintptr_t)s->power;
     unsigned count=pmbm_pages(base);
-    if(!count||(base==UINT64_C(0x4080000)?m!=&s->mapping:m!=&s->pdc_mapping)||
+    if(!count||(base==UINT64_C(0x4080000)?m!=&s->mapping:base==UINT64_C(0xb2e0000)?m!=&s->pdc_mapping:m!=&s->restart_mapping)||
        !pwmc_zero(m,sizeof(*m))||!pmbn_live(s))return 0;
     m->attempted=1;m->error=1;m->base=base;
     m->error=10;if(!pmpn_arch(p,&m->architecture)||!pgcd_equal(&p->architecture,&m->architecture,offsetof(struct pmni_arch,ticks)))return 0;
@@ -137,7 +138,8 @@ static inline int pmbn_begin(struct pmbn_state*s,struct pmbn_delivery*r,struct p
     s->records=(uintptr_t)r;s->ready=1;
 #if EFI_XNU_MSS_PAGE_MAP_AVAILABLE
     if(!pmbm_prepare(s,&s->mapping,UINT64_C(0x4080000))||
-       !pmbm_prepare(s,&s->pdc_mapping,UINT64_C(0xb2e0000))){pmbn_fail(s,4);return 0;}
+       !pmbm_prepare(s,&s->pdc_mapping,UINT64_C(0xb2e0000))||
+       !pmbm_prepare(s,&s->restart_mapping,UINT64_C(0xc2b0000))){pmbn_fail(s,4);return 0;}
 #endif
     if(!pmbn_live(s)||pmba_begin(&s->mba,(const void*)(uintptr_t)c->clocks,&b->transaction,stage->asset[0].bytes,o->last)<0){pmbn_fail(s,1);return 0;}
     return 1;

@@ -14,6 +14,30 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+## Own MSS restart page namespace/mapping (0189, 2026-11-06)
+
+Physical406C0C17 from pdc-leaf-map-0001 reaches MBA MAP HOLD, target0c2b0000,
+GCD type0/matches1, cap/attr0, no EFI overlap, gap0c266000..0c3fffff. By the
+actual reset producer order this follows PDC map preparation and PDC/ALT-on
+operations; it is not a direct PTE dump or an MBA-ready indication.
+Own live DT5572..5573 names restart_reg=0c2b0000/4. Own pil-msa.c229..255
+writes the direct restart register when present/non-secure, then mb/2us;
+264..281 orders PDC,ALT,restart and inverse release. Current own DT has no
+secure restart resource property. Existing typed reset command sequence is
+unchanged; no secure-call substitution or foreign address is introduced.
+
+Only0c2b0000 gains empty-type0/no-EFI admission; its whole observed gap does
+not. A separate retained restart mapping state keeps an already-valid Device
+page untouched or applies the same stable-zero L2/L3 insertion machinery,
+exact single leaf(index176), live exclusive owner, qualified WB source/table,
+zero-only publication and strict post R/W AT. Existing PDC/QDSP mappings are
+checked throughout. Nonzero/valid foreign entries, adjacent pages and changed
+ancestors still refuse. RESET PAGE HOLD exposes the failing page and DESC3.
+Software fixtures reproduce the actual gap and exercise all three mapping
+groups independently and simultaneously. No actual restart/MBA/WLAN success
+is claimed. The earlier Arm/EDK2 and local HackiOS review still applies;
+no reference supplies this phone's resource ownership or physical results.
+
 ## Own PDC existing-L3 empty leaf (0189, 2026-11-06)
 
 Physical945DC9B8 reports PDC PAGE HOLD, error2/no publication, walk error3,

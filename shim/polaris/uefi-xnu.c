@@ -1167,9 +1167,9 @@ static void wifi_native_startup_gop_evidence(void)
     pwtg_line(r,14,"CE WMI ERR",s->ce.error,s->wmi.error);
     pwtg_line(r,15,"HTT NONCE ERR",s->htt.error,s->nonce.error);
 #if EFI_XNU_MSS_PAGE_MAP_AVAILABLE
-    if(s->boot.error==4&&(s->boot.mapping.attempted||s->boot.pdc_mapping.attempted)){
-        const struct pmbm_state*m=s->boot.pdc_mapping.attempted?&s->boot.pdc_mapping:&s->boot.mapping;
-        pwtg_line(r,0,m==&s->boot.pdc_mapping?"PDC PAGE HOLD":"MSS PAGE HOLD",wifi_native_boot_phase,s->phase);
+    if(s->boot.error==4&&(s->boot.mapping.attempted||s->boot.pdc_mapping.attempted||s->boot.restart_mapping.attempted)){
+        const struct pmbm_state*m=s->boot.restart_mapping.attempted?&s->boot.restart_mapping:s->boot.pdc_mapping.attempted?&s->boot.pdc_mapping:&s->boot.mapping;
+        pwtg_line(r,0,m==&s->boot.restart_mapping?"RESET PAGE HOLD":m==&s->boot.pdc_mapping?"PDC PAGE HOLD":"MSS PAGE HOLD",wifi_native_boot_phase,s->phase);
         pwtg_line(r,1,"PAGE ERROR FLAGS",m->error,m->issued|(m->returned<<8)|(m->installed<<16)|(m->complete<<24));
         pwtg_line(r,2,"PAGE WALK FLAGS",m->walk.error,m->walk.levels|(m->walk.stable<<8));
         pwtg_line(r,3,"PAGE TTBR0",(uint32_t)(m->walk.ttbr>>32),(uint32_t)m->walk.ttbr);
@@ -1182,7 +1182,7 @@ static void wifi_native_startup_gop_evidence(void)
         pwtg_line(r,10,"PAGE BEFORE0",(uint32_t)(m->before[0].read_par>>32),(uint32_t)m->before[0].read_par);
         pwtg_line(r,11,"PAGE BEFORE1",(uint32_t)(m->before[1].read_par>>32),(uint32_t)m->before[1].read_par);
         pwtg_line(r,12,"PAGE AFTER0",(uint32_t)(m->after[0].read_par>>32),(uint32_t)m->after[0].read_par);
-        if(m==&s->boot.pdc_mapping)pwtg_line(r,13,"PAGE DESC3",(uint32_t)(m->walk.descriptor[3]>>32),(uint32_t)m->walk.descriptor[3]);
+        if(m!=&s->boot.mapping)pwtg_line(r,13,"PAGE DESC3",(uint32_t)(m->walk.descriptor[3]>>32),(uint32_t)m->walk.descriptor[3]);
         else pwtg_line(r,13,"PAGE AFTER1",(uint32_t)(m->after[1].read_par>>32),(uint32_t)m->after[1].read_par);
         pwtg_line(r,14,"PAGE STORAGE PAR",(uint32_t)(m->storage_AT.read_par>>32),(uint32_t)m->storage_AT.read_par);
         pwtg_line(r,15,"PAGE READ ERROR",m->read_error,s->images.failure.reason);

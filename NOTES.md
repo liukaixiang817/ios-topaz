@@ -54,6 +54,40 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
+### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: PDC passed to restart target; exact restart-page repair ready
+
+- Human406C0C17 resolves the prior screen dependency before blocked status.
+  From spent pdc-leaf-map-0001: MBA MAP HOLD5/phase17, boot3/inner0, target
+  0c2b0000, GCDtype0/matches1 cap/attr0 gap0c266000..0c3fffff, no EFI overlap.
+  Actual producer order implies PDC mapping preparation and PDC/ALT-on passed;
+  this is control-flow evidence, not direct PTE capture or MBA-ready. Target
+  restart write was not issued. Previous dependency count is resolved/reset.
+- Own DT5572..5573 names restart_reg0c2b0000/4; own pil-msa229..255 direct
+  write, full order and2us;264..281 reset ordering. Add only this exact page
+  to empty-type0/noEFI policy. Third independent retained map preserves valid
+  Device identity mappings; otherwise same qualified exact-zero L2/L3 insert,
+  single leaf176, exclusive owner, WB RAM source, CAS, cache/TLB, strict post
+  read/write AT and retained ancestry. No whole-gap or adjacent-page grant.
+  Reset command order unchanged. RESET PAGE HOLD now displays its own evidence.
+- PASS82 native composed L2/L3 mapping scenarios/10164008checks, covering all
+  three groups and simultaneous retention;135 namespace/negative cases/
+  865703checks; full normal2889178 and gap+VRM2889181 bothphase46/result2;
+ 1266 extracted display cases. These are SOFTWARE hardware/firmware peers.
+  All test jobs ended0 including4262/58574; build16021 ended0. Actual EFI COFF
+  publication instructions checked; MachO852functions/max816B stack only.
+  Original81innerfiles byte-identical codec roundtrip. Driver835072B SHA
+  7aae6cbbf92be533c725153463e4d33a6de348c268397cbb0527947a6e959724;
+  image6240256B SHAcf637b326584bf1912e0b899c7c76a96c101d634536cc6f91946f43eee18cf44.
+- Readonly query confirmed FASTBOOT08:29:46.101960Z without human key prompt.
+  Fresh restart-page-map-0001 audit67656 ended0 at08:32:33.799264Z; independent
+  40checks PASS, actual return FASTBOOT08:32:33.743626Z. Roots/GPT/critical/ESP/
+  NV unchanged. Next freeze/source publication/offline admission/once-only
+  native trial. No new candidate sent yet; all jobs terminal at this milestone.
+- Goal ACTIVE, execution2/5,current plus3remaining. Real restart/MBA/auth/native
+  scan/Cyberpunk AU join/IP/DNS/data/stability unproven. Formal08:30 delivered,
+  next08:45Z while active. Kernel CI42091724671/payload unchanged. No partition
+  writes or postnative USB observer. Unowned9line remote-memory hunk preserved.
+
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: existing-PDC-L3 repair sent once; new physical result pending
 
 - Continuation audit08:24:53Z: previous turn made concrete progress (new
