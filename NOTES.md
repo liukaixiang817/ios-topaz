@@ -56,6 +56,16 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Continuous Wi-Fi milestone — 2026-11-06 Melbourne: actual metadata assignment complete; return checkpoint ready
 
+- Continuation audit09:54:13.496749Z: preceding goal turn made real progress
+  (physical assignment completion, returned-checkpoint implementation/build).
+  This continuation only revalidated and is NO PROGRESS, not a live-job wait:
+  host5547 terminal after bounded8s readonly FASTBOOT timeout. Current image/
+  source digests match;4build and6diagnostic results all0; no fresh trial review
+  or native output exists. SECOND consecutive physical-FASTBOOT dependency
+  for this returned candidate. Goal remains ACTIVE pending physical keys;
+  no replay, repeated tests or speculative protocol edits. Existing question
+  remains pending; next actual FASTBOOT confirmation enables fresh audit.
+
 - Human F732A128 resolves current screen wait: AUTH CHECKPOINT1/2,
   META PH EVENTS1/0, TX DONE ERR1/0, TX EVENTS ROUNDS3/1, TX STEP PEND4/0,
   AUTH ERR PEND0/0, OWNER ERR HELD0/1. This is actual completion of assignment0
