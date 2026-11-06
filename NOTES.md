@@ -54,11 +54,11 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### Current Wi-Fi handoff — 2026-11-07 Melbourne: page256 diagnostic qualified, not yet sent
+### Current Wi-Fi handoff — 2026-11-07 Melbourne: page221 running after page256 black-screen reset
 
 - Goal ACTIVE, execution2/5; four steps remain including current. Hardware1
   confirmed; MSS/copy/auth2 ongoing; scan3,join/IP/DNS4,data/stability5 unproven.
-  Last formal16:30Z report; next16:45Z. Long stationary subtest PAUSED BY USER;
+  Last formal16:45Z report; next17:00Z. Long stationary subtest PAUSED BY USER;
   this does not pause Wi-Fi. Initial idle-only photo9DED59AD proved IDLE HOLD,
   watchdog0/idle0/MSS0, not long stability. Timer50222 was stopped130.
 - Physical lower bound is N7 photoFF7C1E2D:7/7,220pages,copy/modem errors0,
@@ -85,12 +85,29 @@ early samples only. On0029 the human already confirmed boot complete and said
   AT/write/cache, reports partial copy progress; it does not publish/complete
   the partial segment. Default-OFF path has no new call/branch. Invalid hook
   context is also terminal (PAGE GUARD HOLD), never resumes target work.
-- New case firmware-copy-page-checkpoint-0001, page256: driveredef90ea...
-  (702464B),image1a9b5ea5...(6189056B). Expected COPY PAGE HOLD pages0100/0100,
-  complete segments8/error0,current firstpageDD/pages23hex(35),nexttarget
-  F8200000,modemphase1/segment8/submitted8/events22hex(34),length000D051C/
-  error0,step5; ready1/unknown1 is expected mid-copy, not complete segment9.
-  PAGE EARLY HOLD means the hook was not reached; preserve raw errors/title.
+- Page checkpoint source57aad40 committed/pushed/synced. First page256 case
+  firmware-copy-page-checkpoint-0001 / driveredef90ea... / image1a9b5ea5... was
+  frozen2069/offlinePASS,sentONCE16:43:52.075366Z,native16:45:32.343653Z,
+  ACK16:45:51.798029Z;host77360 TERMINAL0 collected,SPENT. Human closely observed
+  UEFI -> BLACK -> Android and no new top diagnostic title. Page256 checkpoint
+  UNPROVEN; do not claim it was reached or identify a target fault yet.
+- Standing authorization used: exact original Polaris Android boot_completed1/
+  root verified, normal power service returned phone to bootloader (host33732
+  terminal0,adbdisconnect255). Actual FASTBOOT product checked before nextboot.
+  User does not need another manual-return request when Android service works.
+- Current firmware-copy-page-before221-0001 uses EXACT same committed source.
+  Fresh bothactual objects695frames/max816B,81-filecodec; fresh parameter221
+  GOP504cases PASS,all other source-bound tests reused. Frozen2076/offlinePASS.
+  Host23772 RUNNING,one-use sent2026-11-06T16:52:48.006123+00:00; payload staging.
+  Next collect exact handle promptly and ask CURRENT title/first five rows.
+  Expected COPY PAGE HOLD pagesDD/DD,completeSegments8/error0,currentfirstDD/
+  partialpages0,nexttargetF81DD000 (if bank remainsF8100000),ready1/unknown1,
+  modemphase1/segment8/submitted8/events22hex(34),length000D051C/error0,step5.
+  This observes before segment9's first target AT/write; partialsegment9 not
+  complete/published. PAGE EARLY HOLD means hook was not reached; preserve errors.
+- Conditional page220 candidate is being built locally (session54216) only;
+  not selected or device-sent. Do not overwrite/replay any spent image. Use
+  actual page221 result to select next action. No physical networking proof.
 - Actual COFF/MachO entry onlystartup/step/terminalhold; hook only calls
   power_unknown_hold (compiler has multiple equivalent terminal call sites),
   hold only own GOP/WFE; no runtime kernel symbols. 695frames/max816B.
@@ -106,13 +123,12 @@ early samples only. On0029 the human already confirmed boot complete and said
   normalizing assertion diagnostic line numbers only, so old runtime evidence
   reused; new projection makes42. Eleven builder/packager scope/range refusals
   PASS. Initial CPP line-metadata mismatch and private fixture indentation
-  warning fixed without changing the device producer. No phone send yet.
+  warning fixed without changing the device producer. Initial software qualification preceded both physical sends above.
 - Ordinary full-runtime root validator and shared transport unchanged; full
   root admission38/40 remains REFUSED. Firmware mode9 compiles kernel/root
-  reader closed. Freeze/offline next, then bounded FASTBOOT check and one-use
-  RAM send; use authorized normal Android service if needed. Current source
-  changes and this handoff are committed together; record new commit and exact
-  physical send/result next. Preserve unowned remote-memory9-line hunk SHA
+  reader closed. Page221 is the current selected physical trial; use authorized normal Android
+  service if it returns Android. Page source57aad40 is already published;
+  update the exact phone result and source handoff after each milestone. Preserve unowned remote-memory9-line hunk SHA
   7215a3786b3b9226aa4f839648bbecc80d9c575f3fd3fb00250481dd91786a01.
 
 ### Historical blocked handoff — resolved by reported prefix14 reset and new idle request
