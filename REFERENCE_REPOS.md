@@ -14,6 +14,14 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+Own-RAM COPY boundary markers11..15 are qualified/defaultOFF/fault-only:
+parent-before-live/auth-after-live/copy-entry/copy-after-live/copy-after-bound.
+Exact native pointer identity,zero word counts,no target access or reordered
+checks.40tests/full36scenario auth/refusals and legacy32scenario auth PASS;
+actual OFF COFF/MachO equal oldcopy/auth/parent sources,original81 codec PASS.
+Fresh trial pending;reader OBS limits stage15/page30719 reflect bounded own
+markers,not target-write receipts. No Wi-Fi READY proof.
+
 RMTFS-envelope FIRST4nonce trial retained874processed9segments,TFzero,noerror;
 no effectiveness or exact cause is inferred. Phone explicitly backFASTBOOT.
 Next defaultOFF own-RAM inter-segment boundary markers keep hardware/protocol/

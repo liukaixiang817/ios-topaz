@@ -56,6 +56,32 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: fresh native nonce plus first combined witness
 
+- COPY-boundary trace QUALIFIED,NOT SENT. Explicit defaultOFF
+  --wifi-native-copy-boundary-trace requires terminalfault/native-ready scope.
+  Own markers:11parent before owner-live,12auth after live,13copy entry,
+ 14copy after live,15copy after bound. Native callbacks verify exact parent/
+  copy identity before mutation;no s.copy pointer is followed. Marker records
+  current pages,stage,zero word counts;they are NOT write receipts. No target/
+  MMIO/provider/secure/clock/deadline/check-order change. Prior errors aresticky.
+- Actual ownpolicy153600page/stage combinations,invalid identity/state/stages,
+  failed publication preserved marker,parent callback-before-live/failure/
+  no-retry paths PASS.40tests PASS12.689s. Full actual auth ASAN/UBSAN enabled
+ 10889707checks/36scenarios83.430s with112boundary observations on one complete
+  auth/all4refusal positions PASS;legacy10392140checks/32scenarios74.251s PASS.
+  Existing610RMBobservations/all5RMBrefusals/fullfirmwarecanaries retained.
+  Initial publicfixture indentation warning refused compilation;fixed braces,
+  no warning suppression. All actual shipping checks passed after that fix.
+- Actual shippingCOFF reproduced,currentMachO;boundaryOFF objects equal
+ 00fd827 with oldcopy/auth/parent header VFS overlays;terminalclosure13,
+  maxframe816B/stack304+320B. Existing entry/publisher/cache/handler unchanged;
+  original81/EDK2codec PASS. Fresh driverc978d0f4c534470a9f8da4c5ca1928b474c391d1a5195ba3e6b7e73c13896093,
+  image3c1d51de5937e3b2926e1c385a02963ee0a1e5ac9ab30cd52b701c2d6f743fc3;nonceUNUSED/NO SEND. Firstreader must useOBSstage15 and
+  OBSpage30719 (markersspanallsegments),same64fields292B/fault272B/all4nonce.
+  Other vendor/CIVAC/FAST/noWD/RMTFSscreen/auth-envelope flags retained. NEXT
+  commit/push/mirror,freshselectedFASTBOOT/freeze/offline/ONE native+FIRSTreader.
+  ACTIVE2/5,current+3;observerPAUSED,idleUSERPAUSED,ALLsourcepushesapproved.
+
+
 - PHYSICAL RMTFS envelope source2ef1696/image6a0d74db... sentONCE
   2026-11-07T15:11:51.775146Z,ACK15:13:49.473909Z,host11906TERMINAL0/SPENT.
   SelectedfactoryFASTBOOT found15:15:58.338763Z,verified15:17:59.155443Z,

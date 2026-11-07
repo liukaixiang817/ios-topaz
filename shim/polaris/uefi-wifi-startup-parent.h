@@ -83,6 +83,9 @@ static inline int pwns_begin(struct pwns_parent*s,const struct pweh_result*h,
 static inline int pwns_step(struct pwns_parent*s)
 {
     if(!s||!s->attempted||s->unknown||s->error||s->phase<PWNS_IMAGES||s->phase>PWNS_READY)return -1;
+#if EFI_XNU_WIFI_NATIVE_COPY_BOUNDARY_TRACE
+    if(s->phase==PWNS_AUTH&&s->auth.phase==PMSN_COPY&&!pmsn_copy_boundary(&s->auth,11))return pwns_fail(s,3);
+#endif
     if(s->turns==UINT64_MAX||!pmsc_live(&s->owner))return pwns_fail(s,3);
     s->turns++;int ok=0,result=0;uint64_t now=s->owner.last;
     switch(s->phase){

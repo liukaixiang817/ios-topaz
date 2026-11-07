@@ -71,6 +71,9 @@ static inline int pmsn_affinity(uint64_t target,int64_t*raw){return pwrpc_actual
 #endif
 static inline int pmsn_fail(struct pmsn_state*s,unsigned error)
 {s->unknown=1;if(!s->error)s->error=error;if(s->power)pmpn_fail((void*)(uintptr_t)s->power,12);return 0;}
+#if EFI_XNU_WIFI_NATIVE_COPY_BOUNDARY_TRACE
+static int pmsn_copy_boundary(struct pmsn_state*,unsigned);
+#endif
 static inline int pmsn_live(struct pmsn_state*s)
 {
     if(!s||s->ready!=1||s->unknown||s->error||s->assignments>PMSN_ASSIGNMENTS||s->deliveries>PMSN_RECORDS)return 0;
@@ -329,6 +332,9 @@ static inline int pmsn_current(struct pmsn_state*s)
 static inline int pmsn_step(struct pmsn_state*s)
 {
     if(!pmsn_live(s)||s->pending)return 0;if(s->complete)return pmsn_current(s)?2:0;
+#if EFI_XNU_WIFI_NATIVE_COPY_BOUNDARY_TRACE
+    if(s->phase==PMSN_COPY&&!pmsn_copy_boundary(s,12))return pmsn_fail(s,20);
+#endif
     struct pmsc_owner*o=(void*)(uintptr_t)s->owner;struct pmcn_state*c=(void*)(uintptr_t)s->clocks;
     const struct pmck_lifecycle*clocks=(const void*)(uintptr_t)c->clocks;
     struct pmbn_state*b=(void*)(uintptr_t)s->boot;struct pmlc_copy*copy=(void*)(uintptr_t)s->copy;

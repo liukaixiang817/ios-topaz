@@ -19,6 +19,12 @@
 #include "../../tools/polaris-mss-modem-auth.h"
 #define PMLC_PAGES 30720u
 #define PMLC_SOURCE_PAGES 16384u
+#ifndef EFI_XNU_WIFI_NATIVE_COPY_BOUNDARY_TRACE
+#define EFI_XNU_WIFI_NATIVE_COPY_BOUNDARY_TRACE 0
+#endif
+#if (EFI_XNU_WIFI_NATIVE_COPY_BOUNDARY_TRACE != 0 && EFI_XNU_WIFI_NATIVE_COPY_BOUNDARY_TRACE != 1) || (EFI_XNU_WIFI_NATIVE_COPY_BOUNDARY_TRACE && !EFI_XNU_WIFI_NATIVE_FAULT_HOLD)
+#error "Copy boundary trace requires the terminal native fault diagnostic"
+#endif
 #ifndef EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS
 #define EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS 0
 #endif
@@ -55,6 +61,17 @@ struct pmlc_copy {
     uint32_t vendor_written_pages,vendor_untouched_pages;
 #endif
 };
+#if EFI_XNU_WIFI_NATIVE_COPY_BOUNDARY_TRACE
+/* A boundary is an own-state observation, never a page-write receipt. */
+static inline int pmlc_mark_boundary(struct pmlc_copy*r,struct pmlc_copy*expected,unsigned stage)
+{
+    if(!r||r!=expected||stage<11||stage>15||r->attempted!=1||r->ready!=1||r->unknown||r->error||
+       r->complete||r->pages>=PMLC_PAGES||r->segments>=PMIM_SEGMENTS)return 0;
+    r->observe_page=r->pages;r->observe_stage=stage;
+    r->observe_words_issued=r->observe_words_returned=0;return 1;
+}
+static int pmlc_copy_boundary(struct pmlc_copy*,unsigned);
+#endif
 #if EFI_XNU_WIFI_NATIVE_FAULT_HOLD
 /* Explicit terminal diagnostic only; own-RAM progress publication, no
  * provider/secure operation, remote target access or deadline renewal. */
@@ -242,7 +259,15 @@ static inline int pmlc_begin(struct pmlc_copy*r,struct pmsc_owner*o,struct pmim_
 static inline int pmlc_next_segment(struct pmlc_copy*r)
 {
     if(!r||r->unknown||r->error||r->ready!=1||r->complete||r->segments>=PMIM_SEGMENTS)return 0;
+#if EFI_XNU_WIFI_NATIVE_COPY_BOUNDARY_TRACE
+    if(!pmlc_copy_boundary(r,13))return pmlc_fail(r,2);
+    if(!pmlc_live(r))return pmlc_fail(r,6);
+    if(!pmlc_copy_boundary(r,14))return pmlc_fail(r,2);
+    if(!pmlc_bound(r))return pmlc_fail(r,6);
+    if(!pmlc_copy_boundary(r,15))return pmlc_fail(r,2);
+#else
     if(!pmlc_live(r)||!pmlc_bound(r))return pmlc_fail(r,6);
+#endif
     struct pmsc_owner*o=(void*)(uintptr_t)r->owner;struct pmim_auth*a=(void*)(uintptr_t)r->auth;
     const struct pmsf_segment*g=&r->geometry[r->segments];
     const struct pmsf_asset*f=g->filesz?&((const struct pmsf_asset*)(uintptr_t)r->assets)[g->asset]:0;

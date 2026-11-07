@@ -71,6 +71,9 @@ def main():
     marker=manifest.get('wifi_native_bootloader_marker',False)
     rmtfs_diagnostics=manifest.get('wifi_native_rmtfs_diagnostics',False)
     rmtfs_envelope=manifest.get('wifi_rmtfs_auth_envelope',False)
+    copy_boundary=manifest.get('wifi_native_copy_boundary_trace',False)
+    require(type(copy_boundary) is bool and (not copy_boundary or fault_hold),
+            'copy boundary trace requires terminal native fault scope')
     require(type(rmtfs_envelope) is bool and (not rmtfs_envelope or fault_hold) and
             manifest.get('rmtfs_transaction_whole_ticks',1920000)==(19200000 if rmtfs_envelope else 1920000) and
             manifest.get('rmtfs_issued_step_ticks',1920000)==1920000,
@@ -191,6 +194,7 @@ def main():
         wifi_vendor_segment_extents=vendor_extents,modem_copy_gap_pages_written=not vendor_extents,
         wifi_native_rmtfs_diagnostics=rmtfs_diagnostics,
         wifi_rmtfs_auth_envelope=rmtfs_envelope,
+        wifi_native_copy_boundary_trace=copy_boundary,
         rmtfs_transaction_whole_ticks=19200000 if rmtfs_envelope else 1920000,
         rmtfs_issued_step_ticks=1920000,
         modem_copy_page_tail_written=not vendor_extents,modem_copy_untouched_page_record=2 if vendor_extents else None,

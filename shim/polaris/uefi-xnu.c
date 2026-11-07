@@ -21,6 +21,12 @@
 #ifndef EFI_XNU_WIFI_NATIVE_RMTFS_DIAGNOSTICS
 #define EFI_XNU_WIFI_NATIVE_RMTFS_DIAGNOSTICS 0
 #endif
+#ifndef EFI_XNU_WIFI_NATIVE_COPY_BOUNDARY_TRACE
+#define EFI_XNU_WIFI_NATIVE_COPY_BOUNDARY_TRACE 0
+#endif
+#if (EFI_XNU_WIFI_NATIVE_COPY_BOUNDARY_TRACE != 0 && EFI_XNU_WIFI_NATIVE_COPY_BOUNDARY_TRACE != 1) || (EFI_XNU_WIFI_NATIVE_COPY_BOUNDARY_TRACE && !EFI_XNU_WIFI_NATIVE_FAULT_HOLD)
+#error "Copy boundary trace requires the terminal native fault diagnostic"
+#endif
 #ifndef EFI_XNU_WIFI_RMTFS_AUTH_ENVELOPE
 #define EFI_XNU_WIFI_RMTFS_AUTH_ENVELOPE 0
 #endif
@@ -1393,6 +1399,15 @@ static int pmlc_observe(struct pmlc_copy*r)
 {return r==&wifi_native_parent.copy&&wifi_native_fault_publish(1);}
 static int pmsn_observe(struct pmsn_state*s)
 {return s==&wifi_native_parent.auth&&wifi_native_fault_publish(1);}
+#if EFI_XNU_WIFI_NATIVE_COPY_BOUNDARY_TRACE
+static int pmlc_copy_boundary(struct pmlc_copy*r,unsigned stage)
+{return pmlc_mark_boundary(r,&wifi_native_parent.copy,stage)&&wifi_native_fault_publish(1);}
+static int pmsn_copy_boundary(struct pmsn_state*s,unsigned stage)
+{
+    return s==&wifi_native_parent.auth&&s->copy==(uintptr_t)&wifi_native_parent.copy&&
+        pmlc_copy_boundary(&wifi_native_parent.copy,stage);
+}
+#endif
 static int wifi_native_fault_word_progress(struct pmsi_page*p,unsigned stage)
 {
     struct pmlc_copy*c=&wifi_native_parent.copy;

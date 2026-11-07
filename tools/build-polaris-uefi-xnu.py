@@ -509,6 +509,7 @@ def main():
     ap.add_argument('--wifi-vendor-segment-extents',action='store_true',help='terminal native diagnostic only: own vendor filesz+BSS writes, explicit untouched holes, exact partial tails')
     ap.add_argument('--wifi-native-rmtfs-diagnostics',action='store_true',help='terminal native fault diagnostic only: show saved RMTFS transaction error and returned timestamps, no new target access')
     ap.add_argument('--wifi-rmtfs-auth-envelope',action='store_true',help='terminal native fault diagnostic only: existing absolute1s auth envelope for RMTFS; original100ms per-issued-step ceiling retained')
+    ap.add_argument('--wifi-native-copy-boundary-trace',action='store_true',help='terminal native fault diagnostic only: own-RAM segment-entry/live/binding markers, no target access')
     ap.add_argument('--wifi-native-progress-invalidate',action='store_true',help='terminal fault diagnostic only: CIVAC for the existing bounded own-image progress lines, not remote firmware')
     ap.add_argument('--wifi-scalar-sha256-fast',action='store_true',help='terminal native diagnostic only: equivalent scalar unrolled SHA256 and bounded block feed, no SIMD')
     ap.add_argument('--wifi-native-copy-trace-first',type=int,default=0,help='first page of the terminal fault diagnostic256-page fine-copy window (0..30464)')
@@ -538,6 +539,8 @@ def main():
         ap.error('--wifi-native-rmtfs-diagnostics requires --wifi-native-fault-hold')
     if a.wifi_rmtfs_auth_envelope and not a.wifi_native_fault_hold:
         ap.error('--wifi-rmtfs-auth-envelope requires --wifi-native-fault-hold')
+    if a.wifi_native_copy_boundary_trace and not a.wifi_native_fault_hold:
+        ap.error('--wifi-native-copy-boundary-trace requires --wifi-native-fault-hold')
     if a.wifi_native_progress_invalidate and not a.wifi_native_fault_hold:
         ap.error('--wifi-native-progress-invalidate requires --wifi-native-fault-hold')
     if a.wifi_scalar_sha256_fast and not a.wifi_native_fault_hold:
@@ -1169,6 +1172,8 @@ def main():
         with config.open('a') as f:f.write('#define EFI_XNU_WIFI_NATIVE_RMTFS_DIAGNOSTICS 1\n')
     if a.wifi_rmtfs_auth_envelope:
         with config.open('a') as f:f.write('#define EFI_XNU_WIFI_RMTFS_AUTH_ENVELOPE 1\n')
+    if a.wifi_native_copy_boundary_trace:
+        with config.open('a') as f:f.write('#define EFI_XNU_WIFI_NATIVE_COPY_BOUNDARY_TRACE 1\n')
     if a.wifi_vendor_segment_extents:
         with config.open('a') as f:f.write('#define EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS 1\n')
     if a.wifi_native_progress_invalidate:
@@ -2224,6 +2229,7 @@ def main():
             wifi_native_fault_hold=a.wifi_native_fault_hold,
             wifi_native_rmtfs_diagnostics=a.wifi_native_rmtfs_diagnostics,
             wifi_rmtfs_auth_envelope=a.wifi_rmtfs_auth_envelope,
+            wifi_native_copy_boundary_trace=a.wifi_native_copy_boundary_trace,
             rmtfs_transaction_whole_ticks=19200000 if a.wifi_rmtfs_auth_envelope else 1920000,
             rmtfs_issued_step_ticks=1920000,
             wifi_vendor_segment_extents=a.wifi_vendor_segment_extents,

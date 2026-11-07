@@ -50,6 +50,16 @@ static unsigned auth_fault,auth_fault_assignment,auth_io_fault,auth_io_trigger,a
 static unsigned metadata_owner,modem_owner,peer_segments,metadata_polls,final_polls,full_bank_verified;
 static uint32_t rmb_length,rmb_metadata,rmb_start,rmb_command;
 static unsigned auth_bad_status;
+#if EFI_XNU_WIFI_NATIVE_COPY_BOUNDARY_TRACE
+static unsigned auth_boundary_calls,auth_boundary_fail;
+static int pmlc_copy_boundary(struct pmlc_copy*r,unsigned stage){
+    CHECK(r==auth_copy&&pmlc_mark_boundary(r,auth_copy,stage));auth_boundary_calls++;
+    return stage!=auth_boundary_fail;
+}
+static int pmsn_copy_boundary(struct pmsn_state*s,unsigned stage){
+    CHECK(s==auth_owner&&s->copy==(uintptr_t)auth_copy);return pmlc_copy_boundary(auth_copy,stage);
+}
+#endif
 static uint64_t auth_peer_delay;
 #if defined(PMSN_TEST_OBSERVE)
 static unsigned auth_observations,auth_observe_fail,auth_observe_before;
@@ -250,6 +260,9 @@ static void auth_unprotect_fixture(void)
 }
 static void auth_setup(unsigned continuations)
 {
+#if EFI_XNU_WIFI_NATIVE_COPY_BOUNDARY_TRACE
+    auth_boundary_fail=0;
+#endif
     auth_unprotect_fixture();auth_owner=0;auth_continuations=continuations;auth_scenarios++;
     memset(auth_rounds,0,sizeof(auth_rounds));memset(auth_caches,0,sizeof(auth_caches));memset(auth_protected,0,sizeof(auth_protected));
     auth_fault=auth_fault_assignment=auth_io_fault=auth_io_trigger=auth_io_calls=auth_copy_fault=auth_copies=auth_cache_pages=auth_peers=0;
@@ -313,6 +326,16 @@ int PMSN_TEST_ENTRY(int argc,char**argv)
     printf("PASS %u actual RMB progress observations across all complete commands\n",auth_observations);fflush(stdout);
 #endif
     auth_records[0].native.value^=1;CHECK(!pmsn_current(auth_owner));auth_records[0].native.value^=1;
+#if EFI_XNU_WIFI_NATIVE_COPY_BOUNDARY_TRACE
+    CHECK(auth_boundary_calls);unsigned boundary_success=auth_boundary_calls;
+    for(unsigned stage=12;stage<=15;stage++){
+        auth_setup(0);auth_boundary_fail=stage;CHECK(!auth_drive()&&auth_owner->unknown&&!auth_owner->complete&&!auth_copies);
+        unsigned stopped=auth_io_calls+auth_copies+auth_peers+auth_boundary_calls;
+        CHECK(!pmsn_step(auth_owner)&&stopped==auth_io_calls+auth_copies+auth_peers+auth_boundary_calls);
+        CHECK(auth_copy->observe_stage==stage&&owner->held&&!pmsc_close_unused(owner));
+    }
+    fprintf(stderr,"actual COPY boundary observations=%u/all4 callback refusal positions PASS\n",boundary_success);
+#endif
     auth_setup(3);auth_success();fprintf(stderr,"all5 four-round descriptor-protected continuations PASS; checking failures\n");
     for(unsigned fault=1;fault<=8;fault++){
         auth_setup(1);auth_fault=fault;CHECK(!auth_drive()&&auth_owner->unknown&&!auth_owner->complete&&owner->held);

@@ -72,6 +72,12 @@ def validate(review_path):
     marker=driver.get('wifi_native_bootloader_marker',False)
     rmtfs_diagnostics=driver.get('wifi_native_rmtfs_diagnostics',False)
     rmtfs_envelope=driver.get('wifi_rmtfs_auth_envelope',False)
+    copy_boundary=driver.get('wifi_native_copy_boundary_trace',False)
+    boundary_config=[x for x in config if x.startswith('#define EFI_XNU_WIFI_NATIVE_COPY_BOUNDARY_TRACE')]
+    require(type(copy_boundary) is bool and (not copy_boundary or fault_hold) and
+            image.get('wifi_native_copy_boundary_trace',False) is copy_boundary and
+            boundary_config==(['#define EFI_XNU_WIFI_NATIVE_COPY_BOUNDARY_TRACE 1'] if copy_boundary else []),
+            'copy boundary trace compiler/image scope mismatch')
     envelope_config=[x for x in config if x.startswith('#define EFI_XNU_WIFI_RMTFS_AUTH_ENVELOPE')]
     require(type(rmtfs_envelope) is bool and (not rmtfs_envelope or fault_hold) and
             image.get('wifi_rmtfs_auth_envelope',False) is rmtfs_envelope and
@@ -227,6 +233,11 @@ def validate(review_path):
                     proof.get('rmtfs_auth_envelope_per_step_100ms_and_whole_1s_refusal_tested') is True and
                     proof.get('rmtfs_auth_envelope_default_OFF_objects_identical') is True,
                     'RMTFS auth envelope qualification missing')
+        if copy_boundary:
+            require(proof.get('copy_boundary_actual_policy_and_failures_tested') is True and
+                    proof.get('copy_boundary_full_auth_software_peer_tested') is True and
+                    proof.get('copy_boundary_default_OFF_objects_identical') is True,
+                    'copy boundary trace qualification missing')
         if invalidate:
             require(proof.get('own_progress_CIVAC_actual_EL1_QEMU') is True and
                     proof.get('own_progress_CIVAC_actual_EL2_refused_QEMU') is True and
