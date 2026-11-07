@@ -1,10 +1,24 @@
 /* UEFI inventory: never exits Boot Services, writes storage/NVRAM or enters
- * XNU. Optional USB diagnostics expose only bounded RAM logs/map/GOP reads. */
+ * XNU. Bounded RAM logs/map/GOP reads; a separately enabled, explicit host
+ * FASTBOOT return may set only the existing volatile restart markers. */
 #include "uefi-memory.h"
 #ifdef POLARIS_EFI_APPS_WATCHDOG_READONLY
 #include "uefi-apps-watchdog-readonly.h"
 #if !defined(POLARIS_EFI_READY_TO_BOOT) || !defined(POLARIS_EFI_USB_DIAG) || !POLARIS_EFI_HOLD
 #error Apps watchdog inventory requires a hold-only USB diagnostic driver
+#endif
+#endif
+#ifdef POLARIS_EFI_NATIVE_FAULT_WITNESS
+#include "uefi-native-fault-witness.h"
+#include "native-fault-witness-config.h"
+#if !defined(POLARIS_EFI_READY_TO_BOOT) || !defined(POLARIS_EFI_USB_DIAG) || !POLARIS_EFI_HOLD
+#error Native fault witness requires a hold-only USB diagnostic driver
+#endif
+#endif
+#ifdef POLARIS_EFI_PROBE_BOOTLOADER_RESET
+#include "uefi-probe-reset.h"
+#if !defined(POLARIS_EFI_READY_TO_BOOT) || !defined(POLARIS_EFI_USB_DIAG) || !POLARIS_EFI_HOLD
+#error Probe FASTBOOT return requires a hold-only USB diagnostic driver
 #endif
 #endif
 #ifdef POLARIS_EFI_USB_DIAG
@@ -33,8 +47,8 @@ static void hex(const char *label,uint64_t v)
     for(unsigned i=0;i<16;i++)b[2+i]="0123456789abcdef"[(v>>(60-i*4))&15];
     b[18]=0;text(label);text(b);text("\r\n");
 }
-#ifdef POLARIS_EFI_APPS_WATCHDOG_READONLY
-static int watchdog_arch(void *context,struct pawr_arch *a)
+#if defined(POLARIS_EFI_APPS_WATCHDOG_READONLY) || defined(POLARIS_EFI_NATIVE_FAULT_WITNESS) || defined(POLARIS_EFI_PROBE_BOOTLOADER_RESET)
+static int probe_arch(void *context,struct pawr_arch *a)
 {
     (void)context;
     __asm__ volatile("mrs %0,CurrentEL":"=r"(a->el));
@@ -47,6 +61,52 @@ static int watchdog_arch(void *context,struct pawr_arch *a)
 #undef PAWR_MRS
     return 1;
 }
+#endif
+#ifdef POLARIS_EFI_PROBE_BOOTLOADER_RESET
+static struct efi_system *reset_system_table;
+static struct ppr_result reset_result;
+static struct ppr_ops reset_ops;
+static int probe_reset_translate(void *context,unsigned write,struct pawr_translation*t)
+{
+    (void)context;uint64_t at=PPR_REASON;
+    if(write)__asm__ volatile("mrs %0,par_el1; at s1e1w,%3; isb; mrs %1,par_el1; msr par_el1,%0; isb; mrs %2,par_el1"
+        :"=&r"(t->saved),"=&r"(t->par),"=&r"(t->restored):"r"(at):"memory");
+    else __asm__ volatile("mrs %0,par_el1; at s1e1r,%3; isb; mrs %1,par_el1; msr par_el1,%0; isb; mrs %2,par_el1"
+        :"=&r"(t->saved),"=&r"(t->par),"=&r"(t->restored):"r"(at):"memory");
+    return 1;
+}
+static int probe_reason_read(void *context,uint32_t*v)
+{(void)context;*v=*(const volatile uint32_t*)(uintptr_t)PPR_REASON;return 1;}
+static int probe_reason_write(void *context,uint32_t v)
+{
+    (void)context;volatile uint32_t*p=(void*)(uintptr_t)PPR_REASON;
+    *p=v;__asm__ volatile("dsb sy":::"memory");return *p==v;
+}
+static void probe_reset_system(void *context)
+{(void)context;reset_system_table->runtime->reset_system(0,0,0,0);}
+static int probe_prepare_reset(void *context,unsigned mode)
+{
+    (void)context;
+    if(mode!=2||reset_result.attempted||!reset_system_table||
+       !reset_system_table->runtime||reset_system_table->runtime->hdr.size<112||
+       reset_system_table->runtime->hdr.signature!=UINT64_C(0x56524553544e5552)||
+       !reset_system_table->runtime->reset_system)return 0;
+    static const efi_guid pon_guid={0x97044b58,0xfea4,0x4ad0,{0x9d,0x0b,0xe4,0x17,0xd6,0x0f,0x11,0xa1}};
+    struct polaris_efi_pon*pon=0;
+    struct pawr_arch a={0};if(!probe_arch(0,&a)||!pawr_arch_valid(&a))return 0;
+    if(reset_system_table->boot->locate_protocol(&pon_guid,0,(void**)&pon))return 0;
+    reset_ops=(struct ppr_ops){0,probe_arch,probe_reset_translate,probe_reason_read,probe_reason_write,probe_reset_system,pon};
+    return ppr_prepare(&reset_result,&reset_ops,mode);
+}
+static void probe_reset(void *context,unsigned mode)
+{
+    (void)context;ppr_execute(&reset_result,&reset_ops,mode);
+    hex("PROBE_RESET_RETURNED_ERROR=",reset_result.error);
+    hex("PROBE_RESET_REASON_RESTORED=",reset_result.reason_restored);
+    hex("PROBE_RESET_PON_RESTORED=",reset_result.pon_restored);
+}
+#endif
+#ifdef POLARIS_EFI_APPS_WATCHDOG_READONLY
 static int watchdog_translate(void *context,uint64_t address,struct pawr_translation *t)
 {
     (void)context;
@@ -70,7 +130,7 @@ static void watchdog_inventory(const void *map,uint64_t bytes,uint64_t capacity,
     uint64_t stride,uint32_t version)
 {
     static struct pawr_result r;
-    const struct pawr_ops ops={0,watchdog_arch,watchdog_translate,watchdog_read};
+    const struct pawr_ops ops={0,probe_arch,watchdog_translate,watchdog_read};
     int ok=pawr_run(map,bytes,capacity,stride,version,&ops,&r);
     hex("APPS_WDT_READONLY_OK=",ok);hex("APPS_WDT_ERROR=",r.error);
     hex("APPS_WDT_MAP_PRESENT=",r.map_present);
@@ -82,6 +142,49 @@ static void watchdog_inventory(const void *map,uint64_t bytes,uint64_t capacity,
     static const char *label[2][4]={{"APPS_WDT_EN_0=","APPS_WDT_STS_0=","APPS_WDT_BARK_0=","APPS_WDT_BITE_0="},
         {"APPS_WDT_EN_1=","APPS_WDT_STS_1=","APPS_WDT_BARK_1=","APPS_WDT_BITE_1="}};
     for(unsigned n=0;n<8;n++){hex("APPS_WDT_PAR=",r.translation[n].par);hex(label[n/4][n%4],r.value[n/4][n%4]);}
+}
+#endif
+#ifdef POLARIS_EFI_NATIVE_FAULT_WITNESS
+static int witness_translate(void *context,uint64_t address,struct pawr_translation *t)
+{
+    (void)context;if(!pnfw_range(&pnfw_configuration,address))return 0;
+    __asm__ volatile("mrs %0,par_el1; at s1e1r,%3; isb; mrs %1,par_el1; "
+        "msr par_el1,%0; isb; mrs %2,par_el1"
+        :"=&r"(t->saved),"=&r"(t->par),"=&r"(t->restored):"r"(address):"memory");
+    return 1;
+}
+static int witness_read(void *context,uint64_t address,uint8_t *value)
+{
+    (void)context;if(!pnfw_range(&pnfw_configuration,address))return 0;
+    *value=*(const volatile uint8_t *)(uintptr_t)address;return 1;
+}
+static void witness_inventory(const void *map,uint64_t bytes,uint64_t capacity,
+    uint64_t stride,uint32_t version)
+{
+    static struct pnfw_result r;
+    const struct pnfw_ops ops={0,probe_arch,witness_translate,witness_read};
+    int ok=pnfw_run(&pnfw_configuration,map,bytes,capacity,stride,version,&ops,&r);
+    hex("FAULT_WITNESS_OK=",ok);hex("FAULT_WITNESS_ERROR=",r.error);
+    hex("FAULT_WITNESS_READ_ISSUED=",r.issued);hex("FAULT_WITNESS_READ_RETURNED=",r.returned);
+    hex("FAULT_WITNESS_NONCE_0=",r.nonce_match[0]);hex("FAULT_WITNESS_NONCE_1=",r.nonce_match[1]);
+    hex("FAULT_WITNESS_STABLE=",r.stable);hex("FAULT_WITNESS_ZERO=",r.zero);
+    hex("FAULT_WITNESS_VALID=",r.valid);
+    /* Unmatched/zero/corrupt remnants are not exception evidence. No raw RAM
+     * is exported; only this candidate's validated record has scalar fields. */
+    if(!ok||!r.valid)return;
+    const struct pfnf_record*f=&r.record;
+#define PNFW_FIELD(name) hex("OLD_FAULT_" #name "=",f->name)
+    PNFW_FIELD(attempted);PNFW_FIELD(armed);PNFW_FIELD(error);PNFW_FIELD(draw_result);
+    PNFW_FIELD(entered);PNFW_FIELD(reentered);PNFW_FIELD(old_vbar);PNFW_FIELD(vbar);
+    PNFW_FIELD(vector);PNFW_FIELD(esr);PNFW_FIELD(elr);PNFW_FIELD(far);
+    PNFW_FIELD(spsr);PNFW_FIELD(sp);PNFW_FIELD(sp0);PNFW_FIELD(ticks);
+    PNFW_FIELD(boot_phase);PNFW_FIELD(parent_phase);PNFW_FIELD(parent_error);
+    PNFW_FIELD(parent_unknown);PNFW_FIELD(parent_turns);PNFW_FIELD(copy_pages);
+    PNFW_FIELD(copy_segments);PNFW_FIELD(copy_error);PNFW_FIELD(copy_ready);
+    PNFW_FIELD(auth_phase);PNFW_FIELD(modem_step);PNFW_FIELD(owner_error);
+    PNFW_FIELD(owner_held);PNFW_FIELD(owner_opening);PNFW_FIELD(owner_last);
+#undef PNFW_FIELD
+    hex("OLD_FAULT_DRIVER_BASE=",f->layout.image);
 }
 #endif
 static const efi_guid loaded_guid={0x5b1b31a1,0x9562,0x11d2,{0x8e,0x3f,0,0xa0,0xc9,0x69,0x72,0x3b}};
@@ -155,6 +258,9 @@ static efi_status probe(efi_handle image,struct efi_system *st)
 #ifdef POLARIS_EFI_APPS_WATCHDOG_READONLY
     if(valid)watchdog_inventory(map,bytes,capacity,stride,version);
 #endif
+#ifdef POLARIS_EFI_NATIVE_FAULT_WITNESS
+    if(valid)witness_inventory(map,bytes,capacity,stride,version);
+#endif
     st->boot->free_pool(map);
     if(!valid){text("MAP_REFUSED\r\n");return EFI_ERROR|2;}
     if(st->runtime && st->runtime->get_variable){
@@ -178,8 +284,17 @@ static efi_status inspect(efi_handle image,struct efi_system *st)
             if(boot && boot->watchdog)hex("WATCHDOG_DISABLE=",boot->watchdog(0,0,0,0));
             text("POLARIS EFI HOLD: inventory only; no operating system started\r\n");
 #ifdef POLARIS_EFI_USB_DIAG
-            if(!result)hex("USB_DIAG_RESULT=",polaris_efi_usb_serve(st,ram_log,&ram_log_bytes,
-                (const uint8_t*)&saved_map,saved_map_bytes,hex));
+            if(!result){
+#ifdef POLARIS_EFI_PROBE_BOOTLOADER_RESET
+                reset_system_table=st;
+                struct polaris_usb_control control={.prepare_reset=probe_prepare_reset,.reset=probe_reset};
+                hex("USB_DIAG_RESULT=",polaris_efi_usb_serve_control(st,ram_log,&ram_log_bytes,
+                    (const uint8_t*)&saved_map,saved_map_bytes,hex,&control));
+#else
+                hex("USB_DIAG_RESULT=",polaris_efi_usb_serve(st,ram_log,&ram_log_bytes,
+                    (const uint8_t*)&saved_map,saved_map_bytes,hex));
+#endif
+            }
 #endif
         }
         for(;;){

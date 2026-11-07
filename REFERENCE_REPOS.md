@@ -38,6 +38,18 @@ or reset-cause claim; full authentication and WLAN remain unproven.
 
 ## Continuous native startup diagnostic (0189, 2026-11-07 Melbourne)
 
+The next short standalone remnant probe binds only the spent diagnostic's
+actual linked nonce and272B exception record. Current EFI map/AT/CPU checks
+still apply; no old pointer or ownership claim is followed. Retention through
+Android is unknown. It grants no scan/radio/native authority. A separately
+enabled explicit host FASTBOOT return reuses the existing own-DT IMEM marker
+and original PM8998 PON ABI,reviewed again against0058 own msm-poweroff.c,
+EFIPmicPon.h and0059 retained reset verification. No foreign watchdog/address/
+driver imported. All25 source tests/four actual generic EFI USB cases pass;
+actual original decoder preserves81files and decodes27677384B. Source changes
+leave existing native startup source/producers unchanged; physical remnant/
+reset result still pending. No idle timeout or hardware-watchdog write added.
+
 New explicit firmware-only native-ready fault hold uses own existing AP vector
 layout as an architectural reference only; no foreign firmware or MMIO driver.
 Own CPU0 continuous owner must succeed before own-image vectors/16KiB stack/

@@ -54,7 +54,54 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### Current Wi-Fi handoff — 2026-11-07 Melbourne: terminal native exception diagnostic qualified
+### Current Wi-Fi handoff — 2026-11-07 Melbourne: bounded spent-record witness qualified
+
+- Goal ACTIVE2/5,current plus3 remain; no native READY/scan/join/IP/DNS/data
+  proof. Long idle test USER-PAUSED,continuous observer PAUSED. Latest selected
+  original FASTBOOT verification05:44:39Z; fresh query required before sending.
+  No human screen result for the spent native-fault image74458d... yet.
+- New default-OFF --native-fault-witness binds one already-spent firmware-only
+  diagnostic to its actual linked PE,source/COFF/nonce/ACK/outcome hashes.
+  Only its fixed2128B nonce and272B record are read,twice,under a current valid
+  disjoint EFI RAM map,Normal-WB/NS/identity AT and unchanged live CPU0EL1
+  context bounded20ms. Hash the unique nonce BEFORE any record read. Export
+  scalar exception fields only with matching nonce,stable record and exact
+ 12-u64 layout/state validation. No arbitrary read command,old pointer follow,
+  old RAM write,allocation/ownership inference or radio/native startup.
+  Zero/missing/corrupt remnants mean UNKNOWN retention,not no-fault/no-arm.
+- New separate --bootloader-reset retains HOLD until an explicit host command.
+  Only reboot-bootloader mode2; download/kernel/normal-reboot callbacks absent.
+  Prepare validates only. After successful ACK delivery,revalidate live CPU0,
+  read/write identity translations of own-DT IMEM146bf65c,original PON ABI,
+  then use existing masked PM8998 SOFT_SPARE3 bootloader reason and volatile
+  IMEM77665500,original ResetSystem. No hardware watchdog,partition,NVRAM
+  variable or inactivity reset. One attempt; failure/returned ResetSystem
+  attempts bounded marker restoration and HOLDS. ACK is not actual FASTBOOT
+  proof; host must verify selected original product. Rechecked own0058 vendor
+  msm-poweroff/PON header and existing0059 physical reset proof,not a new ABI.
+- Final25 public tests PASS3.134s,including all4800 possible byte-read failures,
+  wrong/mutated/spent candidate binding,nonce-before-record,zero ambiguity,
+  map/AT/liveness refusal and actual USB parser ACK ordering/reset rollback.
+  Four actual EFI QEMU cases PASS(EL1/EL2,USB absent/mock); generic QEMU issues
+  zero old-RAM reads. Final driver is byte-identical to those harnesses' build.
+  Actual enabled COFF timestamp-only equals driver object;22frames,max720B.
+  Both new options OFF: hold+ReadyToBoot+USB COFF timestamp-only equalsdfc27c9.
+  Existing native source/hash79187ee5... and hardware producers untouched.
+- Native-fault-remnant-0001 final driver-0003=195584B,
+  SHA88a71042f52718ff27ae70a9c15f6eee1f681e79bd0ab62eabf0499ee9549a24;
+  image5933056B SHAae182a3a095cae45ac3346095a4b51fa390da2726c3ac86d060c9a462a937d64.
+  Original81 files byte-preserved;actual retained EDK2 decoderd5d093... decoded
+ 27677384B exactly. Earlier no-reset driver0001 and pre-comment driver0002
+  remain UNSELECTED/NOT SENT; driver0002 and final0003 PE/harness bytes equal.
+  No new kernel CI: same existing42091724671 kernel6241bdc3... untouched.
+- Next commit/push/mirror only these completed source/test/docs,freeze actual
+  inputs and one-use host receipt,fresh selected FASTBOOT query,ONE new short
+  probe capture,then explicit normal FASTBOOT return and product verification.
+  Remnant retention is UNKNOWN; no exception/reset cause claimed yet. All
+  earlier images/nonces remain SPENT. Original owned mirror baseline=dfc27c9;
+  preserve unowned remote-memory7215a378... hunk. Formal report06:24Z,next06:39Z.
+
+### Prior terminal native exception diagnostic
 
 - ACTUAL SEND/RECOVERY: sourcee215ff0 pushed/mirrored. Frozen633 actual inputs,
   offline93184 PASS; new image74458d... sent ONCE05:39:41.236648Z. Payload

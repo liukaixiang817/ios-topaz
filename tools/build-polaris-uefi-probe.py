@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import struct
 import subprocess
+import importlib.util
 
 
 def main():
@@ -17,12 +18,23 @@ def main():
     ap.add_argument('--ready-to-boot',action='store_true',help='boot-service driver; hold at the pre-OS event, preserve the original menu')
     ap.add_argument('--usb-diag',action='store_true',help='enable RAM-only USB log/map/screenshot commands; no XNU or disk writes')
     ap.add_argument('--apps-watchdog-readonly',action='store_true',help='read only four own-DT watchdog registers if already mapped Device MMIO; never pet or disable')
+    ap.add_argument('--native-fault-witness',type=Path,help='private descriptor: only the nonce and fixed record of one spent diagnostic; no old RAM writes')
+    ap.add_argument('--bootloader-reset',action='store_true',help='only an explicit host reboot-bootloader command may set volatile boot markers and call original ResetSystem; no idle timer')
     a=ap.parse_args();root=Path(__file__).resolve().parents[1]
     if a.ready_to_boot and not a.hold:ap.error('--ready-to-boot requires --hold')
     if a.usb_diag and not a.ready_to_boot:ap.error('--usb-diag requires --ready-to-boot and --hold')
     if a.apps_watchdog_readonly and not (a.usb_diag and a.ready_to_boot and a.hold):
         ap.error('--apps-watchdog-readonly requires --hold --ready-to-boot --usb-diag')
+    if a.native_fault_witness and not (a.usb_diag and a.ready_to_boot and a.hold):
+        ap.error('--native-fault-witness requires --hold --ready-to-boot --usb-diag')
+    if a.bootloader_reset and not (a.usb_diag and a.ready_to_boot and a.hold):
+        ap.error('--bootloader-reset requires --hold --ready-to-boot --usb-diag')
     out=a.output.resolve();out.mkdir(parents=True,exist_ok=True)
+    witness=None
+    if a.native_fault_witness:
+        spec=importlib.util.spec_from_file_location('fault_witness',root/'tools/polaris-native-fault-witness.py')
+        module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+        witness=module.prepare(root,a.native_fault_witness,out)
     obj=out/'probe.obj';image=out/('PolarisProbeDxe.efi' if a.ready_to_boot else 'PolarisProbe.efi')
     env=dict(os.environ,ZIG_GLOBAL_CACHE_DIR=str(out/'zig-global'),ZIG_LOCAL_CACHE_DIR=str(out/'zig-local'))
     jobs=[['/usr/bin/clang','--target=aarch64-unknown-windows','-std=c11',
@@ -36,6 +48,9 @@ def main():
     if a.ready_to_boot:jobs[0].insert(-4,'-DPOLARIS_EFI_READY_TO_BOOT=1')
     if a.usb_diag:jobs[0].insert(-4,'-DPOLARIS_EFI_USB_DIAG=1')
     if a.apps_watchdog_readonly:jobs[0].insert(-4,'-DPOLARIS_EFI_APPS_WATCHDOG_READONLY=1')
+    if witness:
+        jobs[0][1:1]=['-DPOLARIS_EFI_NATIVE_FAULT_WITNESS=1','-I'+str(out)]
+    if a.bootloader_reset:jobs[0].insert(1,'-DPOLARIS_EFI_PROBE_BOOTLOADER_RESET=1')
     extra_inputs=[]
     if a.usb_diag:
         extra_inputs=['shim/polaris/uefi-usb.h','shim/polaris/uefi-usb.c','shim/polaris/uefi-usb-command.c','shim/polaris/uefi-usb-control.c']
@@ -67,12 +82,26 @@ def main():
                   RAM_only_USB_diagnostics=a.usb_diag,
                   apps_watchdog_readonly=a.apps_watchdog_readonly,
                   apps_watchdog_register_writes=False,
+                  native_fault_witness=witness,
+                  diagnostic_bootloader_reset=a.bootloader_reset,
+                  explicit_command_volatile_boot_marker_writes=a.bootloader_reset,
+                  inactivity_reset=False,
                   inputs={n:hashlib.sha256((root/n).read_bytes()).hexdigest() for n in
                           ['shim/polaris/uefi.h','shim/polaris/uefi-memory.h','shim/polaris/uefi-probe.c','tools/build-polaris-uefi-probe.py']})
     for n in extra_inputs:manifest['inputs'][n]=hashlib.sha256((root/n).read_bytes()).hexdigest()
     if a.apps_watchdog_readonly:
         n='shim/polaris/uefi-apps-watchdog-readonly.h'
         manifest['inputs'][n]=hashlib.sha256((root/n).read_bytes()).hexdigest()
+    if witness:
+        manifest['inputs'].update(witness['inputs'])
+        for n in ('shim/polaris/uefi-native-fault-witness.h','shim/polaris/uefi-apps-watchdog-readonly.h',
+                  'shim/polaris/uefi-wifi-native-fault.h','tools/polaris-native-fault-witness.py',
+                  'tools/polaris-scalar-sha256.h'):
+            manifest['inputs'][n]=hashlib.sha256((root/n).read_bytes()).hexdigest()
+        manifest['witness_configuration_sha256']=hashlib.sha256((out/'native-fault-witness-config.h').read_bytes()).hexdigest()
+    if a.bootloader_reset:
+        for n in ('shim/polaris/uefi-apps-watchdog-readonly.h','shim/polaris/uefi-probe-reset.h','shim/polaris/uefi-reset.h'):
+            manifest['inputs'][n]=hashlib.sha256((root/n).read_bytes()).hexdigest()
     if a.usb_diag:
         n='tools/polaris-uefi-input.h';manifest['inputs'][n]=hashlib.sha256((root/n).read_bytes()).hexdigest()
     (out/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')

@@ -321,6 +321,26 @@ def main():
     require(harness.parent.resolve() == a.probe_manifest.parent.resolve() and harness.is_file() and
             sha(harness.read_bytes()) == m.get('harness_sha256'), 'emulated driver harness changed')
     result, record = package(original, app)
+    witness=m.get('native_fault_witness')
+    if witness:
+        require(witness.get('enabled') is True and
+                witness.get('scope')=='one_spent_native_fault_record_readonly' and
+                witness.get('record_bytes')==272 and 0<witness.get('nonce_bytes',0)<=4096 and
+                witness.get('old_RAM_writes') is False and
+                witness.get('arbitrary_memory_read_API') is False,
+                'not the bounded spent-record witness')
+        record['native_fault_witness']=witness
+    if m.get('diagnostic_bootloader_reset'):
+        require(m.get('explicit_command_volatile_boot_marker_writes') is True and
+                m.get('inactivity_reset') is False,
+                'diagnostic reset requires explicit host command; no inactivity reset')
+        # The historical phone_writes=False described the original read-only
+        # scope. State the added volatile intent writes separately and exactly.
+        record.pop('phone_writes')
+        record.update(diagnostic_bootloader_reset=True,
+                      explicit_command_volatile_boot_marker_writes=True,
+                      partition_write_api=False,NVRAM_variable_write_api=False,
+                      apps_watchdog_register_writes=False,inactivity_reset=False)
     if m.get('RAM_only_USB_diagnostics'):
         abi = json.loads(a.usb_abi_proof.read_text())
         require(abi.get('source_sha256') == record['original_USB_device_DXE_sha256'] and
