@@ -56,6 +56,36 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: fresh native nonce plus first combined witness
 
+- FIRST COMBINED PHYSICAL RESULT: source689e7a1 pushed/mirrored,358 local+9
+  external frozen inputs/offline PASS. Image1542fe... sent ONCE07:25:17.340998Z,
+  fastbootexit0 at07:25:17.591352Z;host39085 TERMINAL0 collected/SPENT. Full
+  logs/map/PPM capture PASS;PNG visually inspected. All4 nonce hashes match,
+ 9576/9576 bytes,error0,stable valid fault record AND all60 bounded scalars.
+  This is the FIRST probe after native0002,not an old-native replay.
+- Retained snapshot: parent PWNS_AUTH19,unknown0/error0,turns13347;ownerphase2/
+  held1/effects7/errors0;auth PMSN_MODEM_SHARE4,modemphase1/step0/submitted0/
+  events0/errors0. Copy attempted/ready/source_pages/pages/segments all0;all28
+  segment counters0. Owner and modem last ticks agree;owner elapsed10.675588s.
+  Fault record armed1/error0/entered0. These are coherent RETAINED values,not
+  proof that later cached changes/exception entries never happened. Do not
+  claim that copy never ran or that this establishes the reset cause.
+- Source maps the retained boundary near pmlc_begin's initial10,505,832B zero
+  predicate,which was also checked earlier in pmsn_begin. Own actual cache
+  producer requires SCTLR M/C on;do not assume this byte scan itself explains
+  the reboot. Current fault/progress stores were not explicitly cleaned to
+  PoC,so last dirty cache lines may be lost on reset. Next add scoped own-RAM
+  progress/fault record publication with explicit cache clean,plus bounded
+  checkpoints inside long copy initialization/source checks,then qualify it.
+  No new hardware watchdog write,driver protocol change or native image yet.
+- Explicit probe return ACK07:25:29.362388Z;actual selected original FASTBOOT
+ 07:25:33.443139Z. No Android recovery after this probe. Native0002 Android
+  kernel start estimate07:17:46.126188..162016Z,35.150..185876s afterACK;
+  consistent timing is not cause proof. All current images/nonces SPENT.
+  Scalar log labels omitted an equals separator;private parser handled their
+  exact OLD_PROGRESS_NAME0x form. Formatting fix can accompany next change.
+  Goal ACTIVE2/5,current plus3;no READY/scan/join/IP/DNS/data proof. Current
+  original mirror689e7a1;preserve7215a378... hunk. Report07:21Z,next07:36Z.
+
 - ACTUAL native0002: source8144cab pushed/mirrored; corrected frozen review2
  771 inputs/offline recheck PASS. First review included its own writing stdout
   log; post-output recheck caught that before any send. Review2 excludes only

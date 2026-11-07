@@ -38,6 +38,17 @@ or reset-cause claim; full authentication and WLAN remain unproven.
 
 ## Continuous native startup diagnostic (0189, 2026-11-07 Melbourne)
 
+First combined probe1542fe... physically captured all4 matching nonce hashes,
+9576reads/error0 and60 stable bounded scalars,then verified actual FASTBOOT
+07:25:33Z. Retained parentAUTH19/authMODEM_SHARE4/modemphase1;copy attempted,
+sourcepages/pages/segments0;ownerheld1/effects7,no errors/exception entry stored.
+The source boundary is near pmlc_begin's initial10MiB zero check. This remains
+a retained-cache observation,not proof no later copy/fault occurred or cause.
+Next explicitly publish own RAM progress/fault cache lines to PoC and observe
+bounded long-operation checkpoints. Existing own cache leaf already requires
+SCTLR M/C enabled;do not blame this scan solely from timing. No new foreign
+driver/address or hardware-watchdog write is warranted by these observations.
+
 Fresh native fault candidate0002 changes only its nonce/digest. Main source,
 config and own producer headers/kernel/payload remain exact. Shipping COFF
 raw equality covers all bytes after verifying only its2128B+32B arrays,
