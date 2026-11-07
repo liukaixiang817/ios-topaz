@@ -56,6 +56,30 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: fresh native nonce plus first combined witness
 
+- PHYSICAL own-CIVAC source898f8b7/imagef2ada17d... sentONCE
+  2026-11-07T12:19:26.835841+00:00,native2026-11-07T12:21:05.808834+00:00,ACK2026-11-07T12:21:24.441717+00:00;
+  host95924 TERMINAL0/SPENT. Original FASTBOOT already12:23:27.428838Z,
+  no Android service reboot. FIRST readerf4e2ac22... freeze599local+9external/
+  offline PASS;host62670 TERMINAL0,4nonce/9640B/stable272B+64scalars292B PASS.
+  Last retained874pages/9segments,source14687/ready1,owner5.824874427s,
+  errors0/armed1/entered0. Actual window221..476 reached:observe476/stage5/
+  words512/512;13 watchdog samplesEN0/STS0/stable/error0. Do NOT infer fixed874
+  failure or exact cause/DRAM-persistence guarantee. RecordAUTH6/scalarAUTH5
+  and copy-last vs owner-last are separately cleaned samples,not one instant.
+  Explicit reset/selected FASTBOOT verified2026-11-07T12:25:01.554857+00:00;all
+  images/nonce SPENT. Source898f8b7 PUSH SUCCEEDED (all-source direct approval).
+- NEXT implement explicit defaultOFF firmware-diagnostic vendor extent profile:
+  own peripheral-loader uses SKIP_ZEROING and writes only filesz+BSS within
+  each memsz. Stop current out-of-ELF hole/page-tail writes. Keep complete
+  source authentication/ownership/range/translation/cache/protocol/deadline
+  checks;gap pages must have distinct UNTOUCHED records,never fabricated write/
+  read/cache completion. Partial final words need exact byte accesses,not
+  whole8-byte overrun. Qualify canary/protected bounds/full own-firmware flow
+  and defaultOFF objects before any new phone send. This is conformance to
+  actual own vendor source,not an established explanation of the reset.
+  ACTIVE2/5,current+3;observer PAUSED,idle USER-PAUSED,all source pushes approved.
+
+
 - Own-progress CIVAC qualified,NOT SENT. Explicit defaultOFF option requires
   existing terminal native fault scope. ONLY existing bounded own-image line
   loop changes CVAC->CIVAC;EL1/SCTLR/CTR/whole-line image bounds/barriers and
