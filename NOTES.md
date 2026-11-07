@@ -56,6 +56,30 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: fresh native nonce plus first combined witness
 
+- PHYSICAL relocated trace source3264cfc/imaged269b523... sentONCE
+  2026-11-07T11:05:44.453309+00:00,native2026-11-07T11:07:25.016705+00:00,ACK2026-11-07T11:07:44.505928+00:00;
+  host46606 TERMINAL0/SPENT. Selected original FASTBOOT already present
+  11:08:38.175007Z,no Android service reboot. FIRST readerf390c6c2...,
+  freeze528local+9external/offline PASS,4 actual EFI/QEMU/current object/
+  original81+actual decoder PASS;host18589 TERMINAL0,4nonce/9640B/stable
+  272B+64scalars292B PASS. Last cleaned221pages/8segments,source14687/ready1,
+  errors0,owner13.591650052s;recordarmed1/entered0/error0. Window864..1119
+  NOT reached in retained record (observe fields0);22 watchdog snapshots
+  EN0/STS0,stable/error0. This earlier result rejects assuming fixed874 gap
+  as final failure location. Explicit reader reset/selected FASTBOOT verified
+  2026-11-07T11:09:51.255669+00:00;both images/nonce SPENT.
+- DIAGNOSTIC DEFECT identified by source inspection: new watchdog sample/
+  own-state clean/refusal currently occur BEFORE progress fields/record clean.
+  If native owner becomes error/unknown,watchdog admission rejects and can
+  hide the final error snapshot. This is an observed code-order defect,NOT
+  evidence that it caused the actual reset or that any specific error exists.
+  NEXT publish fixed own progress first,then optional watchdog;skip new MMIO
+  after parent/owner/copy/auth failure,return refusal only AFTER own record
+  and watchdog state have been attempted. Keep fault-handler/no-MMIO path
+  unchanged. Add actual publisher failure tests before next one-use trial.
+  ACTIVE2/5,current+3;observer PAUSED,idle USER-PAUSED,push pending approval.
+
+
 - Relocated fine trace qualified,NOT SENT. New explicit first-page864 opt-in
   remains fault-diagnostic-only,bounds0..30464,exact256-page window864..1119.
   Same4 own fields/5 page stages+sampled4 word stages/max9216 word publications;
