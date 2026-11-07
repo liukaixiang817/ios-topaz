@@ -56,6 +56,23 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: fresh native nonce plus first combined witness
 
+- Optional-watchdog-read OFF candidate QUALIFIED,NOT SENT. All compiled
+  project source inputs exactly match physical47762cf vendor profile;ONLY
+  existing watchdog diagnostic flag removed,FIRST221 restored. Native objects
+  contain no wifi_native_watchdog_sample/arch/read functions. Hardware WD is
+  not disabled/petted/reset;only optional diagnostics are compiled out. Existing
+  CIVAC/vendor extent/FAST/sourceauth/assignment/target/protocol/deadlines remain.
+  Actual221 word/page/untouchedstage10 selectors PASS;full vendor+legacy copy/
+  auth35tests evidence reused by exact source identity. ShippingCOFF reproduced,
+  MachO719frames/max816B,terminalclosure13/stack304+320,original81/EDK2codec PASS.
+  Planned actual ARM reader64fields292B confirmed:absent WD fields replaced by
+  SEG10..19 pages andSEG09 opening/finished;written/untouched counters retained.
+  Selected drivercea84ede7a032e30aca81da10230476f8475e092525e0ffba8cdc1f0c810cbc8,
+  image0f323ac3e842e8e51bd32a78ae1fd4c4966bb5b80020c63e196ac00cdfd59484;
+  freshnonceUNUSED/NO SEND. NEXT selectedFASTBOOT/freeze/offline/ONE native+
+  FIRSTreader. ACTIVE2/5,current+3;observerPAUSED,idleUSERPAUSED,pushapproved.
+
+
 - PHYSICAL vendor boundary FIRST864 sourcee965925/imagebc7a7550... sentONCE
   2026-11-07T13:00:13.342518Z,ACK13:02:11.073949Z,host23747TERMINAL0/SPENT.
   Original FASTBOOT already13:03:11.611375Z,noAndroidservice. FIRST reader
