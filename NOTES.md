@@ -135,9 +135,20 @@ early samples only. On0029 the human already confirmed boot complete and said
   The physical225 photo makes this control unnecessary: retained UNSELECTED,
   NOT PACKAGED/NOT SENT, nonce never consumed. No source/producer change.
 - Fresh firmware-copy-page-before240-0001 under unchanged848d878 source and
-  exact dc522cdb... payload now built35345 TERMINAL0. Selected240,probeOFF,
-  after-writeOFF,new nonce pool. Actual producer/GOP,both-object closure and
- 81-file codec qualification26566 running. No device send yet. Expected F0/F0,
+  exact dc522cdb... payload built35345 TERMINAL0 (runner label inherited224,
+  actual frozen command/config select240). Driver702464B SHA15d7d0b2c56ac5f0b713fab853be40ac1f5ae010a5c94b7f90e1345b837678fa;
+  image6189056B SHAcfbe0f4e3c5074f3c05fc9d257fae1a5aa2b74d5ad2eb06cc672b793a9a2e6d8.
+  Selected240,probeOFF,after-writeOFF,new nonce pool. Qualification26566 TERMINAL0:
+  real producer14687 source translations/2302checks,actual-parent GOP504,both
+  actual entry/callback/hold objects695frames/max816B,original81-file codec pass.
+ 15 public tests/OFF comparison reused only after all260 source/input hashes
+  equal225 qualification; no changed source and no repeated stable test suite.
+  Frozen732 inputs/offline24102 TERMINAL0; image sentONCE03:29:38.094226Z,
+  native03:31:18.280726Z,ACK03:31:37.749326Z;host24454 TERMINAL0 collected.
+  Image/nonce SPENT, screen result PENDING. Actual pre-native watchdog0/idle0.
+  Async title/numeric outcome requested; no live process/post-native observer.
+ 417cc31 own-doc milestone pushed and mirrored; source remains848d878.
+  Expected F0/F0,
   completed8/error0,currentfirstDD/partial13hex(19),nextF81F0000 if same bank.
   This checks original pages225..239 and cache/completion before first1MiB
   crossing at256. No exact reset cause or physical240 success is claimed.
