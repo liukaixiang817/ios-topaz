@@ -54,7 +54,7 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### Current Wi-Fi handoff — 2026-11-07 Melbourne: resumed in persistent workspace; page225 ready
+### Current Wi-Fi handoff — 2026-11-07 Melbourne: physical page225 PASS; fresh before240 qualification
 
 - Goal ACTIVE, execution2/5; current plus3 remain. Previous goal turn PROGRESS:
   committed5d45cbe/848d878 diagnostics, physical AT/write/cache evidence through
@@ -107,17 +107,47 @@ early samples only. On0029 the human already confirmed boot complete and said
   producer change. Fresh OFF comparison before95993eb main+modem-copy header
   versus current at identical prefix9 config: MachO EXACT,COFF timestamp-only.
   Normal root validator/shared transport bytes exactly equal95993eb.
-- Current action: complete exact freeze/offline review, verify expected FASTBOOT,
-  then send this NEW225 candidate ONCE. Expected COPY PAGE HOLD,E1/E1,completed8/
-  error0,currentfirstDD/partial4,nextF81E1000. Reaching it demonstrates current
-  page224 cache/live check/completion returned; none of these are yet physical
-  proof for this reconstructed candidate. Never replay previous images.
+- Current firmware-copy-page-before225-0001 review2 froze1558 inputs and
+  offline validation passed. Review1 lacked host-tool digest fields and was
+  never sent; preserved without overwrite. Review2 adds exact fastboot/libusb
+  hashes and versioned commands/runner. No nonce consumed by offline tests.
+  Source recovery milestone4e6ff47 committed/pushed/mirrored to original.
+- Verified selected Polaris FASTBOOT, then this NEW225 candidate sentONCE
+  2026-11-07T03:12:45.775231+00:00,native2026-11-07T03:14:26.059736+00:00,
+  ACK2026-11-07T03:14:45.541529+00:00 . Host43515 TERMINAL0 collected;
+  nonce/image SPENT. Earlier human NO-title/Android report is retained privately
+  but SUPERSEDED for this case by new photo99152033: COPY PAGE HOLD E1/E1,
+  completed8/error0,currentfirstDD/partial4,nextF81E1000,modem1/8,submitted8/
+  events22hex,lengthD051C/error0,parentAUTH13hex/COPY5,ownerheld1,error0,hook1,
+  partial segment complete/published0,copycomplete0,watchdog0. This proves
+  page224 write/cache/live/completion returned, NOT whole segment/auth/WLAN.
+  User explicitly manually returned FASTBOOT. Fresh selected original product
+  verified03:24:42.757728Z, no reboot issued. Photo and decoded record are
+  private under the case; do NOT replay its spent image/nonce.
+- Bounded recovery28400 TERMINAL2 initially failed because sandbox denied ADB
+  daemon/socket, NOT evidence Android absent. Elevated73097 TERMINAL2 found no
+  selected original Android/FASTBOOT, so NO reboot issued. Inventory then saw
+  synthetic UEFI USB name; read-only product query8376 timed out8s, no serial
+  query/mutation. Later photo plus manual FASTBOOT statement resolves current
+  state; do not turn stale UEFI enumeration into a different-device claim.
+- Fresh after-write224-0002 control driver built80777 TERMINAL0,702976B
+  SHA61424c1b7c48ab81a44a3c9708a784b2a8f15ace9127f97ad3a8d6eb36c77603.
+  The physical225 photo makes this control unnecessary: retained UNSELECTED,
+  NOT PACKAGED/NOT SENT, nonce never consumed. No source/producer change.
+- Fresh firmware-copy-page-before240-0001 under unchanged848d878 source and
+  exact dc522cdb... payload now built35345 TERMINAL0. Selected240,probeOFF,
+  after-writeOFF,new nonce pool. Actual producer/GOP,both-object closure and
+ 81-file codec qualification26566 running. No device send yet. Expected F0/F0,
+  completed8/error0,currentfirstDD/partial13hex(19),nextF81F0000 if same bank.
+  This checks original pages225..239 and cache/completion before first1MiB
+  crossing at256. No exact reset cause or physical240 success is claimed.
 - Standing own-source push and temporary fastboot boot authorization remains.
   If original Android is actually detected, verify exact Polaris/boot_completed1/
   root, then normal svc power reboot bootloader. Continuous observer stays paused.
   No flash/erase/GPT/Windows/manual journal repair; full runtime root review was
   historically REFUSED38/40 and is not re-admitted by firmware diagnostics.
-  Last resumed formal report02:54Z; next03:09Z,then every15min.
+  Last formal report03:24Z; next03:39Z,then every15min.
+  Latest positive photo immediately corrected the report's unproven225 state.
 
 ### Previous Wi-Fi handoff — 2026-11-07 Melbourne: page223 cache returned; next first data page224
 
