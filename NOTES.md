@@ -172,14 +172,22 @@ early samples only. On0029 the human already confirmed boot complete and said
   current producer check count is parsed from actual software output. No new
   kernel source/CI or cache/mapping/ownership protocol change. Current identity
   verified after build03:35:32.312361Z; already original FASTBOOT,so no keys
-  request is needed. Next freeze and fresh once-only temporary boot.
+  request is needed. Frozen740/offline72401 TERMINAL0; driver702464B
+  SHAab657126b279317beb61085bb98772fc6c52a7bd71aea0e16dc99303255db555,
+  image6189056B SHAe2aee83bfce019f9ab31d5aa017a2f91a9c2a073552f0d2c0a4edeb6e1a5a9a3.
+  SentONCE 2026-11-07T03:36:37.384837+00:00,native2026-11-07T03:38:17.604040+00:00,ACK2026-11-07T03:38:37.073584+00:00;host85418
+  TERMINAL0 collected; image/nonce SPENT. Actual watchdog0/idle0 before native.
+  Current874 screen result PENDING; async title and six numeric rows requested.
+  Do not replay or send another image before actual current outcome. No live
+  host/device process or post-native observer. 4f16a29 milestone pushed/mirrored.
+
  47e7dc0 handoff committed/pushed/mirrored after417cc31; source unchanged.
 - Standing own-source push and temporary fastboot boot authorization remains.
   If original Android is actually detected, verify exact Polaris/boot_completed1/
   root, then normal svc power reboot bootloader. Continuous observer stays paused.
   No flash/erase/GPT/Windows/manual journal repair; full runtime root review was
   historically REFUSED38/40 and is not re-admitted by firmware diagnostics.
-  Last formal report03:24Z; next03:39Z,then every15min.
+  Last formal report03:39Z; next03:54Z,then every15min.
   Latest positive photo immediately corrected the report's unproven225 state.
 
 ### Previous Wi-Fi handoff — 2026-11-07 Melbourne: page223 cache returned; next first data page224
