@@ -56,6 +56,29 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: fresh native nonce plus first combined witness
 
+- PHYSICAL fast SHA sourceb06426c/imagea9e6d0a7... sentONCE
+  2026-11-07T11:41:46.617394+00:00,native2026-11-07T11:43:25.699668+00:00,ACK2026-11-07T11:43:44.330122+00:00;
+  host50804 TERMINAL0/SPENT. Original FASTBOOT already present11:45:00.290586Z,
+  no Android service reboot. FIRST readerb2ccd544... freeze564local+9external/
+  offline PASS;actual4 EFI/QEMU/object/original81+codec PASS;host78587 TERMINAL0,
+  4nonce/9640B/stable272B+64scalars292B PASS. Same retained221pages/8segments,
+  source14687/ready1/errors0,owner5.546365208s (previous same checkpoint
+  13.590713021s). Physical time-to-checkpoint improved;NO Wi-Fi/overall-speed/
+  exact terminal-cause claim. Recordarmed1/entered0/error0;12 watchdog samples
+  EN0/STS0,error0/stable thresholds. Window864..1119 NOT reached in retained
+  record/fields0. Explicit reader reset/selected FASTBOOT verified
+  2026-11-07T11:46:15.648420+00:00;both images/nonce SPENT.
+- Own geometry also has a FIRST inter-segment gap221..223,following segment
+  index9 ending page221;next actual data(index10) begins224. Earlier874 gap
+  is not a proven fixed fault. NEXT use existing trace-first builder flag221,
+  window221..476,with FAST SHA retained and unchanged target/protocol/deadline.
+  Qualify that actual constant window and fresh linked objects before ONE new
+  native/FIRST witness. Do not skip/alter gap writes without own-source and
+  actual evidence;pre-initialization or vendor-compatible gap behavior remains
+  a possible later design,not an implemented fix. ACTIVE2/5,current+3;
+  observer PAUSED,idle USER-PAUSED,push pending approval.
+
+
 - Fast scalar SHA256 qualified,NOT SENT. Explicit new builder/config flag
   is terminal native fault-diagnostic-only,defaultOFF,no SIMD. Same SHA256
   constants/state/padding/comparisons;Clang fully unrolls schedule/round loops.

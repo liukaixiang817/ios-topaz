@@ -14,6 +14,11 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+Physical FAST SHA witness reaches same retained221pages/8segments in5.546s
+versus13.591s previously;all4nonce and9640B valid. No exact terminal cause or
+Wi-Fi-ready claim. Own geometry first gap221..223,nextdata224 motivates
+existing256-page trace window221..476;no gap/target operation changed yet.
+
 Equivalent scalar SHA unrolling/local64-byte volatile feed uses own current
 source/header only,no SIMD or foreign driver/hardware. Current actual header
 hashlib/bounded-memory/partial-state tests and FAST full-copy/auth software
