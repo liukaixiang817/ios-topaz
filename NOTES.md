@@ -56,6 +56,33 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: fresh native nonce plus first combined witness
 
+- HUMAN PHOTO2026-11-08 resolves previous unknown screen: NATIVE HOLD5/4,
+  parentphase0x15(21=PWNS_RMTFS),flags0x101;ownererror0/phase2/held1,
+  BOOT/AUTHerror0,SMEMerror0/RMTFSerror4. This establishes advancement past
+  native MSS authentication into guarded RMTFS sharing,NOT WLAN-ready or scan.
+  Exact pmtf error4 is pwmt_complete OR post-SMC peer refusal;do not assume
+  permission denial or TIME before reading actual state.
+- Initial user-return check14:39:13..38Z still saw polaris-uefi (not selected
+  factoryFASTBOOT);readonly product query on that name timedout/no mutation.
+  User confirmed rabbit+FASTBOOT;fresh helper0002 verified selected original
+  polaris14:42:49.745373Z. No continuousobserver or partitionwrite.
+- Replaced UNSENT initial segment-only reader with fresh fixed RMTFS-control
+  FIRST reader native-no-watchdog-rmtfs-remnant-0001,image92a70ca2... .
+  Original draft markedNOT_SELECTED_UNSENT,never physically booted. Current
+  64fields292B/272B record/all4nonce/actualEFI4QEMU/COFF/defaultOFF/original81/
+  codec qualified;freeze656local+9external/offline PASS. SentONCEhost98339
+  TERMINAL0;nonceguardERROR6 after2128bytes,NONCE0 mismatch,NO old record or
+  scalar bytes exported. Never loosen guard/replay. Explicit normal selected
+  FASTBOOT returned14:45:30.453275Z. Both native and selectedreader SPENT.
+- NEXT add native-ready DIAGNOSTIC-ONLY RMTFS terminal GOP rows showing saved
+  transaction error/step/events/returned timestamp age/SMC result/cache state.
+  No protocol,deadline,ownership,hardware-read or reset change. Existing screen
+  lacks precise transaction reason,and cold-key reset lost oldnonce;use live
+  terminal display rather than guessing a fix. FIRST future reader if used
+  must bind freshimage;oldonesSPENT. Allsourcepushesapproved;observerPAUSED,
+  idleUSERPAUSED. ACTIVE2/5 now at post-MSS RMTFS grant,current+3 remain.
+
+
 - LATEST PHYSICAL optional-watchdog-read OFF source2a6c2ff/image0f323ac3...
   sentONCE2026-11-07T13:09:21.725587Z,ACK13:11:19.342536Z;
   host62682TERMINAL0/SPENT. Bounded recovery helper26599 finished13:12:46.734341Z
