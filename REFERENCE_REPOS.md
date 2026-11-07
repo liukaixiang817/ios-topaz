@@ -14,6 +14,10 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+Fresh page-trace native302685... returned Android;authorized normal power
+service recovered selected FASTBOOT08:29:02Z. First64-field276B witness now
+qualified from actual new layout and42 references;no physical read yet.
+No new foreign hardware reference or speculative reset-cause claim.
 Bounded pages221..255 observation uses existing own-image PoC publication;
 current23 tests/full copy65898797 checks/383 observations/all5 refusal stages
 PASS. Current actual COFF/MachO qualify;unchanged cache/vector QEMU evidence

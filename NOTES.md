@@ -56,6 +56,25 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: fresh native nonce plus first combined witness
 
+- a5bd43b pushed/mirrored exact5 owned files;new page-trace image302685...
+  frozen1142inputs/offline PASS,sentONCE08:25:40.998889Z,native
+ 08:27:21.259100Z,ACK08:27:40.711065Z,host28706 TERMINAL0 collected/SPENT.
+  Selected original Android/root/bootcomplete seen;normal-service recovery
+ 96872 TERMINAL0,selected original FASTBOOT08:29:02.472836Z/service255
+  expected disconnect. No physical READY/faulttitle confirmed;reset cause
+  remains unproven. Native image and nonce SPENT,never replay.
+- FIRST page-trace remnant reader native-page-trace-remnant-0001 has64 fixed
+  compiler-derived scalars276B(actual42 parent references),record272B and
+  four2128B nonce guards. All4 fresh actual EFI/USB QEMU cases pass/zero old
+  RAM reads;enabled COFF matches driver/OFF baseline unchanged,maxframe720B.
+  Original81 plus actual EDK2 decoded27683016B exact. Driver201216B
+  SHA81a77714e59d605a5af2709b586872632f9b76eb4101a2d6007fe47168517fd8;
+  image5933056B SHA42ed9e87369c52da6bb1233c4d68ed9586a90e4b89a1900af5afed3cdd1683c3.
+  NO intermediate physical probe. NEXT freeze/offline,ONE first capture,
+  explicit verified FASTBOOT return,interpret actual page/stage. Goal ACTIVE
+ 2/5,current plus3;no scan/join/IP/DNS/data. Owned mirror=a5bd43b before this
+  milestone,unowned7215a378... intact. Report08:23Z,next08:38Z.
+
 - NEW bounded page trace qualified,NO SEND yet. Explicit native fault-hold
   only:four extra uint32 copy-control fields(recordABI272B unchanged),fixed
   page221..255/stages1beforeinit,2aftertranslations,3afterwrite/readback,
