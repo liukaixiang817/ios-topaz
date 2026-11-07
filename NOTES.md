@@ -56,6 +56,29 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: fresh native nonce plus first combined witness
 
+- PHYSICAL RMTFS envelope source2ef1696/image6a0d74db... sentONCE
+  2026-11-07T15:11:51.775146Z,ACK15:13:49.473909Z,host11906TERMINAL0/SPENT.
+  SelectedfactoryFASTBOOT found15:15:58.338763Z,verified15:17:59.155443Z,
+  no Androidservice. Human automatic-vs-key provenance remains unanswered;
+  requested keysreleased. Do not assert spontaneous reboot cause.
+- FIRST readere9e607cd... freeze693local+9external/offlinePASS;host59973TERMINAL0,
+  4nonce/9640B/stable272B+64scalars292B PASS. Retained874processed9segments=
+  860written+14UNTOUCHED,source14687/ready1,owner5.793467448s,error0/entered0,
+  window221..476completed;RMTFSfields0. This does NOT demonstrate new RMTFS
+  envelope was reached/effective or set a later-progress upperbound. Prior
+  humanphoto remains only phase21/RMTFSerror4 evidence;exactreasonunknown.
+  Explicit normal selectedFASTBOOT2026-11-07T15:18:35.692690+00:00;allimagesSPENT.
+  Source2ef1696 PUSH SUCCEEDED. Physical result private in matchingreader.
+- NEXT explicit defaultOFF own-RAM COPY boundary markers before parent live,
+  after auth live,and before/after copy live/binding checks;no target/MMIO/
+  protocol/deadline change. Existing fine window cannot distinguish these
+  inter-segment points. Preserve old target/auth checks and defaultOFF objects;
+  qualify own pointer identity,stage/count/refusal paths and actual full auth
+  before ONE fresh trial. Current38tests/RMTFS15+15scenarios remain valid for
+  unchanged policy. ACTIVE2/5,current+3;observerPAUSED,idleUSERPAUSED,
+  allsourcepushesapproved. User TX-row/key-provenance questions stillpending.
+
+
 - RMTFS auth-envelope candidate QUALIFIED,NOT SENT. Explicit defaultOFF
   --wifi-rmtfs-auth-envelope requires terminalfault/native-ready scope. ONLY
   RMTFS switches existing pwmt_next/complete to existing pwmt_auth_next/complete:

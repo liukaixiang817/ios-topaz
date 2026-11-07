@@ -14,6 +14,12 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+RMTFS-envelope FIRST4nonce trial retained874processed9segments,TFzero,noerror;
+no effectiveness or exact cause is inferred. Phone explicitly backFASTBOOT.
+Next defaultOFF own-RAM inter-segment boundary markers keep hardware/protocol/
+checks unchanged and distinguish caller-live vs copy-live/binding boundaries.
+Pending human key provenance and live RMTFS rows;Wi-Fi stillstep2/5.
+
 RMTFS defaultOFF auth-envelope is qualified:reuse existing absolutewhole1s
 protocol helpers while retaining per-issued-step100ms/max4SMC/nonrenewable
 opening and all source/descriptor/ownership checks. Both actual RMTFS legacy
