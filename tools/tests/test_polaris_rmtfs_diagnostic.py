@@ -8,6 +8,25 @@ from tools.tests.test_polaris_mss_word_trace import ROOT, execute, function
 
 
 class RmtfsDiagnosticTests(unittest.TestCase):
+    def test_auth_envelope_compiler_and_builder_scope(self):
+        text = (ROOT/'shim/polaris/uefi-mss-rmtfs-native.h').read_text()
+        start = text.index('#ifndef EFI_XNU_WIFI_RMTFS_AUTH_ENVELOPE')
+        guard = text[start:text.index('#ifndef EFI_XNU_MSS_RMTFS_NATIVE_AVAILABLE', start)]
+        for value, fault, accepted in [(0, 0, True), (1, 1, True), (1, 0, False),
+                                       (2, 1, False), (-1, 1, False)]:
+            result = subprocess.run(['/usr/bin/clang', '-E', '-x', 'c', '-'],
+                input=f'#define EFI_XNU_WIFI_RMTFS_AUTH_ENVELOPE {value}\n#define EFI_XNU_WIFI_NATIVE_FAULT_HOLD {fault}\n'+guard,
+                capture_output=True, text=True)
+            self.assertEqual(result.returncode == 0, accepted)
+        with tempfile.TemporaryDirectory() as folder:
+            p = Path(folder)
+            result = subprocess.run(['python3', str(ROOT/'tools/build-polaris-uefi-xnu.py'),
+                '--zig', str(p/'missing'), '--kernel', str(p/'kernel'), '--payload', str(p/'payload'),
+                '--output', str(p/'output'), '--wifi-rmtfs-auth-envelope'], capture_output=True, text=True)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn('requires --wifi-native-fault-hold', result.stderr)
+            self.assertFalse((p/'output').exists())
+
     def test_actual_compiler_and_builder_refuse_wrong_scope(self):
         text = (ROOT/'shim/polaris/uefi-xnu.c').read_text()
         start = text.index('#ifndef EFI_XNU_WIFI_NATIVE_RMTFS_DIAGNOSTICS')

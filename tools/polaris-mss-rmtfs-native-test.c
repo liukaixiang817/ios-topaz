@@ -12,6 +12,7 @@
 static struct pmtf_state*rmtfs;
 static uint8_t*rmtfs_shadow;
 static unsigned rmtfs_rounds,rmtfs_continuations,rmtfs_protected,rmtfs_zeroes,rmtfs_caches,rmtfs_fault,rmtfs_scenarios;
+static uint64_t rmtfs_peer_delay;
 static int pmtf_write_zero(uint64_t at,struct pmtf_zero*z)
 {
     CHECK(rmtfs&&rmtfs->pending==1&&at==rmtfs->base+4096*rmtfs_zeroes&&!rmtfs_rounds);
@@ -31,7 +32,8 @@ static int pmtf_cache_page(uint64_t at,unsigned op,struct pwmk_record*r)
     if(rmtfs_fault==2&&rmtfs_zeroes==2)return 0;return 1;
 }
 static int pmtf_affinity(uint64_t target,int64_t*raw)
-{CHECK(target>=0x100&&target<=0x700&&!(target&255)&&local_mask);*raw=rmtfs_fault==5?0:1;return 1;}
+{CHECK(target>=0x100&&target<=0x700&&!(target&255)&&local_mask);*raw=rmtfs_fault==5?0:1;
+ if(rmtfs_rounds)owner_delay+=rmtfs_peer_delay;return 1;}
 static int pmtf_round(struct pwma_registers*r)
 {
     CHECK(rmtfs->pending==2&&rmtfs->pages==512&&(owner->effects&PMSC_SECURE));rmtfs_rounds++;
@@ -53,6 +55,7 @@ static void rmtfs_setup(unsigned continuation,unsigned fault)
     rmtfs=0;auth_setup(0);auth_success();rmtfs=(void*)(arena+0x7600000);CHECK(sizeof(*rmtfs)<0x100000);
     memset(rmtfs,0,sizeof(*rmtfs));memset(rmtfs_shadow,0xa5,0x202000);
     rmtfs_rounds=rmtfs_zeroes=rmtfs_caches=0;rmtfs_continuations=continuation;rmtfs_fault=fault;rmtfs_scenarios++;
+    rmtfs_peer_delay=0;
     CHECK(pmtf_begin(rmtfs,auth_owner));
 }
 static int rmtfs_drive(void)
@@ -69,8 +72,23 @@ int PMTF_TEST_ENTRY(int argc,char**argv)
         CHECK(pmsn_current(auth_owner)&&owner->held&&!pmsc_close_unused(owner));
     }
     fprintf(stderr,"continuous native RMTFS guarded zero/share + protected4-round continuation PASS; checking faults\n");
+    /* CPU-only peer work happens after the returned SMC has been accepted,
+     * before the next issue. Descriptor remains PROT_NONE across all rounds. */
+    for(unsigned continuation=0;continuation<=3;continuation+=3){
+        rmtfs_setup(continuation,0);rmtfs_peer_delay=19200000/40; /*25ms/peer,175ms/round*/
+#if EFI_XNU_WIFI_RMTFS_AUTH_ENVELOPE
+        CHECK(rmtfs_drive()==2&&rmtfs_rounds==continuation+1&&!rmtfs_protected&&pmtf_current(rmtfs));
+#else
+        CHECK(!rmtfs_drive()&&rmtfs->unknown&&rmtfs->error==2&&rmtfs->assignment.transaction.error==PWMT_TIME&&rmtfs_rounds==1);
+#endif
+    }
+    rmtfs_setup(0,0);rmtfs_peer_delay=PWMT_AUTH_TICKS/7+1;
+    CHECK(!rmtfs_drive()&&rmtfs->unknown&&rmtfs->assignment.transaction.error==PWMT_TIME&&!rmtfs->complete);
+    unsigned stopped=rmtfs_zeroes+rmtfs_rounds+rmtfs_caches;
+    CHECK(!pmtf_step(rmtfs)&&stopped==rmtfs_zeroes+rmtfs_rounds+rmtfs_caches);
     for(unsigned fault=1;fault<=10;fault++){
         rmtfs_setup(0,fault);CHECK(!rmtfs_drive()&&rmtfs->unknown&&!rmtfs->complete&&owner->held);
+        if(fault==7)CHECK(rmtfs->assignment.transaction.error==PWMT_TIME); /*issued SMC >100ms*/
         unsigned issued=rmtfs_zeroes+rmtfs_rounds+rmtfs_caches;CHECK(!pmtf_step(rmtfs)&&!pmtf_current(rmtfs)&&issued==rmtfs_zeroes+rmtfs_rounds+rmtfs_caches);
     }
     if(rmtfs_protected)CHECK(!mprotect(&rmtfs->assignment.page,host_page,PROT_READ|PROT_WRITE));

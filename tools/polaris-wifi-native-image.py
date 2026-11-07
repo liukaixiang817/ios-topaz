@@ -70,6 +70,11 @@ def main():
             'native fault hold requires its terminal firmware-only scope')
     marker=manifest.get('wifi_native_bootloader_marker',False)
     rmtfs_diagnostics=manifest.get('wifi_native_rmtfs_diagnostics',False)
+    rmtfs_envelope=manifest.get('wifi_rmtfs_auth_envelope',False)
+    require(type(rmtfs_envelope) is bool and (not rmtfs_envelope or fault_hold) and
+            manifest.get('rmtfs_transaction_whole_ticks',1920000)==(19200000 if rmtfs_envelope else 1920000) and
+            manifest.get('rmtfs_issued_step_ticks',1920000)==1920000,
+            'RMTFS auth envelope must retain the issued-step limit in terminal scope')
     require(type(rmtfs_diagnostics) is bool and (not rmtfs_diagnostics or fault_hold),
             'RMTFS terminal diagnostics require the terminal native fault diagnostic')
     vendor_extents=manifest.get('wifi_vendor_segment_extents',False)
@@ -185,6 +190,9 @@ def main():
         payload_sha256=sha(args.payload), kernel_handoff=not args.firmware_diagnostic_only,
         wifi_vendor_segment_extents=vendor_extents,modem_copy_gap_pages_written=not vendor_extents,
         wifi_native_rmtfs_diagnostics=rmtfs_diagnostics,
+        wifi_rmtfs_auth_envelope=rmtfs_envelope,
+        rmtfs_transaction_whole_ticks=19200000 if rmtfs_envelope else 1920000,
+        rmtfs_issued_step_ticks=1920000,
         modem_copy_page_tail_written=not vendor_extents,modem_copy_untouched_page_record=2 if vendor_extents else None,
         wifi_native_progress_invalidate=invalidate,native_progress_cache_operation='CIVAC' if invalidate else 'CVAC',
         wifi_scalar_sha256_fast=fast_sha,scalar_sha256_uses_SIMD=False,

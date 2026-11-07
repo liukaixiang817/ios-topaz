@@ -4,6 +4,12 @@
 #ifndef POLARIS_UEFI_MSS_RMTFS_NATIVE_H
 #define POLARIS_UEFI_MSS_RMTFS_NATIVE_H
 #include "uefi-mss-auth-native.h"
+#ifndef EFI_XNU_WIFI_RMTFS_AUTH_ENVELOPE
+#define EFI_XNU_WIFI_RMTFS_AUTH_ENVELOPE 0
+#endif
+#if (EFI_XNU_WIFI_RMTFS_AUTH_ENVELOPE != 0 && EFI_XNU_WIFI_RMTFS_AUTH_ENVELOPE != 1) || (EFI_XNU_WIFI_RMTFS_AUTH_ENVELOPE && !EFI_XNU_WIFI_NATIVE_FAULT_HOLD)
+#error "RMTFS authentication envelope requires the terminal native fault diagnostic"
+#endif
 #ifndef EFI_XNU_MSS_RMTFS_NATIVE_AVAILABLE
 #define EFI_XNU_MSS_RMTFS_NATIVE_AVAILABLE 0
 #endif
@@ -107,7 +113,15 @@ static inline int pmtf_step(struct pmtf_state*s)
        pwmt_begin(&q->transaction,&q->page,&spec,o->last,o->current.cpu.frequency)<0)return pmtf_fail(s,2);
     for(unsigned k=0;k<PWMT_EVENTS;k++){
         struct pwmt_command c;if(!pmtf_live(s))return pmtf_fail(s,2);
-        int next=pwmt_next(&q->transaction,o->last,&c);if(next==PWMT_ZERO)break;if(next!=PWMT_IO)return pmtf_fail(s,2);
+        /* Existing auth policy separates CPU-only inter-step validation from
+         * the issued-step ceiling. Opening never renews; every step still has
+         * its original100ms limit and the same maximum4 secure rounds. */
+#if EFI_XNU_WIFI_RMTFS_AUTH_ENVELOPE
+        int next=pwmt_auth_next(&q->transaction,o->last,&c);
+#else
+        int next=pwmt_next(&q->transaction,o->last,&c);
+#endif
+        if(next==PWMT_ZERO)break;if(next!=PWMT_IO)return pmtf_fail(s,2);
         if(!pmtf_at(s,&q->descriptor_AT[k],(uintptr_t)&q->page))return pmtf_fail(s,3);
         uint8_t before[32],after[32],ob[32],oa[32];int returned;
         if(c.operation==PWMT_SMC){
@@ -122,7 +136,12 @@ static inline int pmtf_step(struct pmtf_state*s)
             pmtf_seal(s,&q->cache[k],sizeof(q->cache[k]),after);pmsc_seal(o,0,0,oa);
         }
         if(!pgcd_equal(before,after,32)||!pgcd_equal(ob,oa,32)||!pmtf_live(s)||!pmsn_current((void*)(uintptr_t)s->auth))return pmtf_fail(s,3);q->after[k]=o->current;
-        if(pwmt_complete(&q->transaction,&c,o->last,returned,c.operation==PWMT_SMC?&q->response[k]:0,c.operation==PWMT_SMC?0:&q->cache[k])<0||
+#if EFI_XNU_WIFI_RMTFS_AUTH_ENVELOPE
+        int completed=pwmt_auth_complete(&q->transaction,&c,o->last,returned,c.operation==PWMT_SMC?&q->response[k]:0,c.operation==PWMT_SMC?0:&q->cache[k]);
+#else
+        int completed=pwmt_complete(&q->transaction,&c,o->last,returned,c.operation==PWMT_SMC?&q->response[k]:0,c.operation==PWMT_SMC?0:&q->cache[k]);
+#endif
+        if(completed<0||
            (c.operation==PWMT_SMC&&!pmtf_peers(s,q->transaction.rounds)))return pmtf_fail(s,4);
     }
     if(q->transaction.complete!=1||q->transaction.unknown||q->transaction.error||q->transaction.pending||

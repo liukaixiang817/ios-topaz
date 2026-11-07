@@ -71,6 +71,16 @@ def validate(review_path):
             'native fault hold compiler scope not frozen')
     marker=driver.get('wifi_native_bootloader_marker',False)
     rmtfs_diagnostics=driver.get('wifi_native_rmtfs_diagnostics',False)
+    rmtfs_envelope=driver.get('wifi_rmtfs_auth_envelope',False)
+    envelope_config=[x for x in config if x.startswith('#define EFI_XNU_WIFI_RMTFS_AUTH_ENVELOPE')]
+    require(type(rmtfs_envelope) is bool and (not rmtfs_envelope or fault_hold) and
+            image.get('wifi_rmtfs_auth_envelope',False) is rmtfs_envelope and
+            envelope_config==(['#define EFI_XNU_WIFI_RMTFS_AUTH_ENVELOPE 1'] if rmtfs_envelope else []),
+            'RMTFS auth envelope compiler/image scope mismatch')
+    for data in (driver,image):
+        require(data.get('rmtfs_transaction_whole_ticks',1920000)==(19200000 if rmtfs_envelope else 1920000) and
+                data.get('rmtfs_issued_step_ticks',1920000)==1920000,
+                'RMTFS auth whole/issued-step policy mismatch')
     rmtfs_config=[x for x in config if x.startswith('#define EFI_XNU_WIFI_NATIVE_RMTFS_DIAGNOSTICS')]
     require(type(rmtfs_diagnostics) is bool and (not rmtfs_diagnostics or fault_hold) and
             image.get('wifi_native_rmtfs_diagnostics',False) is rmtfs_diagnostics and
@@ -212,6 +222,11 @@ def validate(review_path):
             require(proof.get('rmtfs_terminal_actual_rows_tested') is True and
                     proof.get('rmtfs_terminal_default_OFF_objects_identical') is True,
                     'RMTFS terminal diagnostic qualification missing')
+        if rmtfs_envelope:
+            require(proof.get('rmtfs_auth_envelope_actual_guarded_CPU_delay_tested') is True and
+                    proof.get('rmtfs_auth_envelope_per_step_100ms_and_whole_1s_refusal_tested') is True and
+                    proof.get('rmtfs_auth_envelope_default_OFF_objects_identical') is True,
+                    'RMTFS auth envelope qualification missing')
         if invalidate:
             require(proof.get('own_progress_CIVAC_actual_EL1_QEMU') is True and
                     proof.get('own_progress_CIVAC_actual_EL2_refused_QEMU') is True and

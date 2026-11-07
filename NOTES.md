@@ -56,6 +56,33 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: fresh native nonce plus first combined witness
 
+- RMTFS auth-envelope candidate QUALIFIED,NOT SENT. Explicit defaultOFF
+  --wifi-rmtfs-auth-envelope requires terminalfault/native-ready scope. ONLY
+  RMTFS switches existing pwmt_next/complete to existing pwmt_auth_next/complete:
+  absolutewhole1s(19200000ticks),same per-issued-step100ms(1920000ticks),same
+  max4SMC and nonrenewable opening. Legacy default remainswhole100ms. No
+  descriptor encoding/VMID/target/ownership/hash/secure/cache/outer180s change.
+  This is deliberate local CPU-budget policy correction,not phone cause proof.
+- Current38 publictests PASS12.149s. Actual complete guarded RMTFS ASAN/UBSAN:
+  envelope21398640checks/15scenarios58.757s and legacy21398593checks/15scenarios
+  58.206s PASS. 175ms CPU-only post-SMC peer work accepted for1round and700ms
+  for4rounds only by new mode;legacyrefuses. Cumulative>1s and issuedSMC>100ms
+  still refused withstickyTIME/no further IO;all10prior faults/PROT_NONE
+  descriptor/guardcanaries/fullsourceauth remain. No hardware permission proof.
+- Actual shippingCOFF reproduced,currentMachO;envelope-OFF formats match
+  ccf0902 WITH old RMTFS header VFS overlay;719frames/max816B,terminalclosure13/
+  stack304+320B. Original81/actualEDK2codec PASS. Private proof-helper metadata
+  string replacement produced a TypeError AFTER checks/beforeimage;resumed
+  exact compiled outputs and38test log,guards unchanged,failure retained.
+  Fresh driver67f4f9f017521659b91827845276fb17a1e7cc602407e5f26e45652ca17c29fe,
+  image6a0d74db0d96fa8162b1312e11ffc429f77269cb9d3320c0bef6d17b477208e1;
+  nonceUNUSED/NO SEND. RMTFSscreen/CIVAC/vendor/FAST/trace221 and optionalWD-read
+  OFF remain. NEXT commit/push/mirror,freshselectedFASTBOOT/freeze/offline/ONE
+  native;human keepkeysreleased/read new terminal rows;FIRST freshreader only
+  ifreturnedFASTBOOT,never replayoldnative/readers. ACTIVE2/5,current+3;
+  observerPAUSED,idleUSERPAUSED,allsourcepushesapproved.
+
+
 - PHYSICAL RMTFS-screen sourcedf35a73/image1d656f69... sentONCE
   2026-11-07T14:55:57.497924Z,ACK14:57:55.126999Z,host44621TERMINAL0/SPENT.
   One bounded check found selected factoryFASTBOOT14:59:43.282391Z,verified
