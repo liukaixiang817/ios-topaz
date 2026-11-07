@@ -14,6 +14,13 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+Second Android-baseline candidate fullpayload/nativeACK;FIRST4nonce valid
+retains221processed8segments/210written11untouched/PAGE221STAGE15/noerror.
+No laterprogress/resetcause/nativeREADY inferred;explicitselectedFASTBOOT.
+OwnCore DS SetMemorySpaceAttributes slot0x40 verifiedactualPE->0x89f8,dispatch
+0x24;no setter call/mappingchange. Next examine ownallocated-modem-bank NormalNC
+matching actual ownvendor DMA mapping,retainallsource/ownership/check guards.
+
 First Android-baseline native candidate failed during75MB USB payload transfer;
 no validation/native start command or ACK,allspent/no reader. Failed hostchild
 cleanup only,no extra devicecommands. Human returned rabbitFASTBOOT/keysreleased.

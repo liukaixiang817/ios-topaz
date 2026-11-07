@@ -56,6 +56,27 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: fresh native nonce plus first combined witness
 
+- PHYSICAL normal-Android-baseline0002 sourceb919df8/image0a38512c...
+  sentONCE2026-11-07T16:19:28.557440Z,full100573184B accepted/markerACK/
+  nativeACK16:21:26.294218Z,host1586TERMINAL0/SPENT. SelectedFASTBOOT
+  already16:21:59.318251Z,no hostreboot/Androidservice. Human hadconfirmed
+  keysreleased beforethistrial;no continuousobserver or claimed exactreset.
+  FIRST5bf45fba... freeze748+9/offlinePASS,host24270TERMINAL0,4nonce/9640B/
+  stable272B+64scalars292B PASS. Retains221processed8segments=210written+
+  11UNTOUCHED,source14687/ready1,error0/entered0,PAGE221/STAGE15/words0,
+  owner5.528611563s,RMBstatus3/events34,TFall0. Controlled Android
+  baseline did not yieldlaterretainedprogress;no exactfault/upperbound/cause
+  or RMTFS effectiveness inferred. Explicit selectedFASTBOOT2026-11-07T16:23:07.270397+00:00;
+  allnative+readerimagesSPENT. No READY/scan/join/IP/DNS/data proof.
+- Offline ownCore DS actualPE verifiesSetMemorySpaceAttributes tableoffset0x40
+  ->RVA0x89f8,entrydispatch0x24 to0x8434;getter0x38->0x2c68 aspriorguard.
+  This is only sourceidentity;no setter call/mappingchange implemented.
+  Ownvendor map_fw_mem usesnoncoherent dma_remap/NormalNC,currentpmlc target
+  demandsWB. NEXT examine narrowly scoped own-modem-bank mapping lifecycle
+  against actual originalsetter and freshmap/source/arch/translation guards;
+  no global WB-check weakening or raw page-table rewrite. ACTIVE2/5,current+3,
+  observerPAUSED,idleUSERPAUSED;allsourcepushesapproved.
+
 - Android-baseline trial0001 imageaaf5fd4f... sentONCE16:13:57.341580Z,
   stopped16:15:12.511791Z duringRAMpayload75366400/100573184B (1150chunks),
   libusbIO-1/0of65536B. No validationACK/no pre-native marker/no native start
