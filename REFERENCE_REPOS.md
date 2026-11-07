@@ -14,6 +14,13 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+Fresh physical early-page witness retained page255 stage2 after actual source/
+target translations and live checks,copy255pages/8segments,RMBstatus3 returned.
+The original pmsi_words source/hash/store/readback loop precedes stage3. Next
+observe its existing operations via bounded own-RAM fields;no new target/MMIO
+operation,foreign board code or reset-cause assumption. Own pil-msa868..891
+rechecked: incremental status3 remains valid;final authentication requires4.
+
 The diagnostic now records the first256 own-copy pages with existing5 stages.
 Actual full-copy65938877checks/1488publications/256x5 ordered stages PASS;
 no target operation/protocol/deadline change. Fresh physical trial pending.

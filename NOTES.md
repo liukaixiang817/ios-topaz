@@ -56,6 +56,27 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: fresh native nonce plus first combined witness
 
+- PHYSICAL early-page trace native205236b6... sourcecf78c2a sentONCE
+  09:16:43.904745Z,native09:18:24.165403Z,ACK09:18:43.639343Z;
+  host26869 TERMINAL0/SPENT. Original Android/root/complete normal service
+  recovery48666 TERMINAL0,selected FASTBOOT09:20:25.836496Z. Estimated Android
+  kernelstart38.774..38.838s afterACK;no physical native title confirmed.
+- FIRST witness25fedc29... frozen431local+9external/offline PASS,host22853
+  TERMINAL0;4nonce/9624bytes/error0,stable valid272B record+64scalars284B.
+  New latest published copy255pages/8segments,source14687/ready1,copyunknown1/
+  error0;OBSERVE_PAGE255/STAGE2/words0/0. Existing source+target translations
+  and live checks returned forpage255;stage3(write/readback return) not retained.
+  ParentAUTH19/error0/unknown0,turns13303;ownerheld1/effects7/error0,elapsed
+  13.7293736458s;authCOPY5/modemphase1/segment8/submitted8/events34/errors0.
+  Latest RMB trace5/READ0418000C/value3. Recordarmed1/entered0/error0. No exact
+  reset instruction/cause or later dirty-store upper bound follows. Explicit
+  resetACK09:21:24.041132Z,actual selected FASTBOOT09:21:28.135198Z;PNG inspected.
+  Both images/nonces SPENT. NEXT bounded word-level own-RAM trace inside actual
+  page255 source/hash/store/readback loop,and publish fixed final control fields
+  before existing terminal hold draw. No new target read/write/MMIO/protocol/
+  deadline/watchdog operation. Goal ACTIVE2/5,current+3;push approval pending,
+  observer PAUSED,idle USER-PAUSED,no READY/scan/join/IP/DNS/data proof.
+
 - Early-page trace0..255 qualified;only prior diagnostic predicate and host
   assertions changed. Actual complete copy65938877checks/1488publications,
   256x5 ordered page stages/all5 refusal boundaries PASS. OFF0/9/10 actual
