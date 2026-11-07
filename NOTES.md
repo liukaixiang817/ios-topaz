@@ -54,7 +54,7 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### Current Wi-Fi handoff — 2026-11-07 Melbourne: physical page225 PASS; fresh before240 qualification
+### Current Wi-Fi handoff — 2026-11-07 Melbourne: physical pages225/240 PASS; fresh before874 qualification
 
 - Goal ACTIVE, execution2/5; current plus3 remain. Previous goal turn PROGRESS:
   committed5d45cbe/848d878 diagnostics, physical AT/write/cache evidence through
@@ -145,13 +145,35 @@ early samples only. On0029 the human already confirmed boot complete and said
   equal225 qualification; no changed source and no repeated stable test suite.
   Frozen732 inputs/offline24102 TERMINAL0; image sentONCE03:29:38.094226Z,
   native03:31:18.280726Z,ACK03:31:37.749326Z;host24454 TERMINAL0 collected.
-  Image/nonce SPENT, screen result PENDING. Actual pre-native watchdog0/idle0.
-  Async title/numeric outcome requested; no live process/post-native observer.
+  Image/nonce SPENT. Actual pre-native watchdog0/idle0. New photo6B966B4E
+  physically proves COPY PAGE HOLD F0/F0,completed8/error0,currentfirstDD/
+  partial13hex(19),nextF81F0000,modem1/8,submitted8/events22hex,lengthD051C/
+  error0,parentAUTH13hex/COPY5,ownerheld1/error0,hook1,partial complete/pub0,
+  copycomplete0,watchdog0. Thus data pages224..239 write/cache/live/completion
+  returned; segment9 is still partial, no full auth/WLAN proof.
+  Photo and decoded physical-page240-0001 are private; screen at photo was
+  terminal hold. Fresh selected original FASTBOOT/product verified03:35:32Z;
+  no reboot was issued. No
+  live device process/post-native observer; do not replay current240 image.
  417cc31 own-doc milestone pushed and mirrored; source remains848d878.
   Expected F0/F0,
   completed8/error0,currentfirstDD/partial13hex(19),nextF81F0000 if same bank.
   This checks original pages225..239 and cache/completion before first1MiB
   crossing at256. No exact reset cause or physical240 success is claimed.
+- Fresh firmware-copy-page-before874-0001 uses unchanged source848d878 and
+  same dc522cdb payload, selecting whole current segment plus subsequent RMB
+  before next target page874. Build45281 TERMINAL0; qualification1672 TERMINAL0,real producer4857
+  software checks/14687 source translations,actual-parent GOP504,both actual
+  objects695frames/max816B and81-file codec pass. No device send yet.
+  Expected36A/36A,completed9/error0,currentfirst36A/partial0,nextF846A000 if
+  same bank,modem1/9,submitted9/events26hex(38),length35A51C,error0. It covers
+  the first1MiB crossing; selected874 access and full auth remain unproven.
+  Versioned private helpers preserve frozen scripts from spent240 review;
+  current producer check count is parsed from actual software output. No new
+  kernel source/CI or cache/mapping/ownership protocol change. Current identity
+  verified after build03:35:32.312361Z; already original FASTBOOT,so no keys
+  request is needed. Next freeze and fresh once-only temporary boot.
+ 47e7dc0 handoff committed/pushed/mirrored after417cc31; source unchanged.
 - Standing own-source push and temporary fastboot boot authorization remains.
   If original Android is actually detected, verify exact Polaris/boot_completed1/
   root, then normal svc power reboot bootloader. Continuous observer stays paused.
