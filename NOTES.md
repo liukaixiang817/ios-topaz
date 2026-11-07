@@ -56,6 +56,25 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: fresh native nonce plus first combined witness
 
+- FIRST-gap trace221..476 qualified,NOT SENT. Uses existing builder parameter,
+  ALL compiled project source inputs identical to sourceb06426c (current HEAD
+  ebe5695 changed handoff only). Only constant trace-first changes864->221;
+  no new target/cache/protocol/deadline operation. Actual221-window word
+  selector256x512x4/exact9216publications and page macro30720x5/exact1280
+  observations,invalid pointers/counters/edges/refusals PASS. Previous25 SHA/
+  publisher/watchdog/marker/host tests and full FAST auth/copy evidence reused
+  by exact source identity;reused paths+hashes bound in current proof.
+  New shipping COFF reproduces,both compiled formats/721frames/max816B,
+  terminal closure13/stack304/320B;original81+actual EDK2 codec PASS.
+  Selected firmware-native-first-gap-0001 driver88a4679621b5d30b963dc3a43602bafb301209b26df7d0750159608e759b31b3,
+  image254b89af547a4a3e576625f332102ca694b8c8142c9467554312c75988c47498;fresh nonce UNUSED/NO SEND. NEXT
+  selected FASTBOOT preflight,freeze/offline,ONE new native trial,FIRST
+  fresh64field292B witness with observed-page max476,explicit return.
+  No fixed fault/cause claimed;gap221..223 is the next candidate operations
+  suggested by retained221page progress. ACTIVE2/5,current+3;observer PAUSED,
+  idle USER-PAUSED,source push pending direct approval.
+
+
 - PHYSICAL fast SHA sourceb06426c/imagea9e6d0a7... sentONCE
   2026-11-07T11:41:46.617394+00:00,native2026-11-07T11:43:25.699668+00:00,ACK2026-11-07T11:43:44.330122+00:00;
   host50804 TERMINAL0/SPENT. Original FASTBOOT already present11:45:00.290586Z,
