@@ -49,7 +49,12 @@ admit only these fixed own-DT reads, rejecting listed RAM/reserved ranges.
 HackiOS xnuloader/efi.h and userland README were reconsulted; their generic
 SetWatchdogTimer ABI is a UEFI service and supplies no Polaris hardware address.
 No redwood/sweet MMIO or userland watchdog workaround was ported. Four actual
-QEMU inventory/USB mock cases and23 public tests pass; physical config pending.
+QEMU inventory/USB mock cases and23 public tests pass. Physical short probe
+source3eb739e/image51c365... sent05:03:23Z,8/8 reads/error0,EN0/0,STS0/0,
+BARK7ffff/BITEfffff,Device/NS identity PAR17980b00,DAIF0. The apps watchdog
+was disabled in this independent pre-native snapshot; no hardware write/pet
+was made. This does not establish state inside a later native interval or
+the reset cause. Readonly USB logs/map/screenshot captured successfully.
 
 Physical225/240 prove original data224..239 write/readback/cache/completion.
 Later240 automatic Android exit does not negate the positive checkpoint;

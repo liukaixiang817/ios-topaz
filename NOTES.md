@@ -56,6 +56,27 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: continuous startup returned Android; readonly watchdog probe
 
+- PHYSICAL READONLY RESULT: source3eb739e pushed and six owned files mirrored.
+  Frozen45 inputs/offline PASS. New image51c365... sent ONCE05:03:23.576024Z,
+  fastboot exit0 at05:03:23.819248Z,host80425 TERMINAL0 collected. Image/host
+  candidate ID SPENT; never replay. Existing ReadOnlyProtocol found endpoint
+  after7.133s and captured logs2179B,map2624B,PPM6998417B,all PASS/no errors.
+  Actual panel1080x2160; PPM preserved,sips PNG visually inspected. No payload,
+  native command,partition/NVRAM write or observer was used.
+- Actual watchdog8/8 reads returned,stable configuration,error0,CPU0EL1/DAIF0,
+  TCR0x280803518,all read PAR0x17980b00. EFI currently omits this peripheral
+  (map54descriptors). EN0/0,STS0/0,BARK0x7ffff/0x7ffff,BITE0xfffff/0xfffff.
+  Thus apps watchdog was NOT ENABLED in this separate pre-native snapshot.
+  The nominal30s hypothesis is NOT supported as a direct fix; do not write
+  disable/pet. This does not establish its state later in a different native
+  boot or rule out other reset/fault causes. Full native startup remains
+  unproven. User was asked to return this no-reset-command probe to FASTBOOT;
+  physical reply PENDING. Continue independent source analysis meanwhile.
+- Next investigate whether the native path faults versus waiting/resetting;
+  check original producer timing and consider a separately gated terminal
+  native fault record. No new native image selected/built/sent yet. Current
+  firmware mode10 image remains SPENT. Long idle test stays USER-PAUSED.
+
 - Mode10 host20902 is TERMINAL0/SPENT. No physical NATIVE READY title was
   confirmed. Bounded recovery26681 found the exact selected original Android,
   bootcomplete1/root0, then used the authorized normal power service; selected
@@ -80,7 +101,7 @@ early samples only. On0029 the human already confirmed boot complete and said
   exact Device/NS/identity translation and PAR restoration before every read.
   No page-table/GCD changes or ownership claim. Bound20ms; stable config across
   both passes required, live status counter may differ.
-- Probe source/test changes are complete, not yet physically sent.
+- Probe source/test qualification was complete before the physical send above.
   Four final QEMU cases (EL1/EL2,USB absent/mock) PASS, no watchdog MMIO issued;
   actual guarded-read policy plus memory/firmware/USB reader/transport23 tests
   PASS1.103s. Initial stricter registration-only driver12cc1f... is retained
@@ -92,19 +113,18 @@ early samples only. On0029 the human already confirmed boot complete and said
   helper byte-identical tob0c6a65 (actual SHAb3b2c7c3...,earlier959 prefix in
   history was not its current whole-file hash). Unowned remote-memory hunk
   SHA7215a378... unchanged. Existing root admission remains unchanged.
-- Next: package via existing independent hold-only probe admission and original
+- Packaging used existing independent hold-only probe admission and original
   81-file codec. Packaging now PASS,image5928960B,
   SHA51c3652615c65031527146f469d5cff144c7fb2f9bb719201c9be59fae31b0c6;
   actual original decoder returned27670728 exact bytes. Initial packaging
   refused stale historical client proof (no image produced); fresh actual
   stock fastboot/current C parser loopback test passed and was used unchanged.
-  Final default-OFF actual COFF also rechecked against8f62a9b,PASS. Freeze
-  actual sources/proofs/image and consume one-use host
-  receipt BEFORE a fresh selected-device fastboot boot. Capture only logs/map/
-  screenshot over ReadOnlyProtocol. No native command,partition/NVRAM access
-  or long idle test. First establish actual EN/BARK/BITE; do not guess-disable.
-- Sourceb0c6a65/doc8f62a9b pushed; original owned mirror sync8f62a9b. New probe
-  changes are only in persistent R until qualification/commit. Goal remains
+  Final default-OFF actual COFF also rechecked against8f62a9b,PASS. Actual45
+  inputs were frozen and one-use host receipt consumed BEFORE fastboot boot.
+  Only logs/map/screenshot were captured over ReadOnlyProtocol. No native
+  command,partition/NVRAM access or long idle test. No watchdog write.
+- Sourceb0c6a65/doc8f62a9b/probe3eb739e pushed; original owned mirror sync3eb739e.
+  Goal remains
   ACTIVE2/5,current plus3 remain. Latest formal report04:54Z,next05:09Z.
 
 ### Prior mode10 qualification details
