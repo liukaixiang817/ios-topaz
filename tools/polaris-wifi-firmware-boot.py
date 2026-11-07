@@ -70,6 +70,13 @@ def validate(review_path):
             fault_config==(['#define EFI_XNU_WIFI_NATIVE_FAULT_HOLD 1'] if fault_hold else []),
             'native fault hold compiler scope not frozen')
     marker=driver.get('wifi_native_bootloader_marker',False)
+    invalidate=driver.get('wifi_native_progress_invalidate',False)
+    invalidate_config=[x for x in config if x.startswith('#define EFI_XNU_WIFI_NATIVE_PROGRESS_INVALIDATE')]
+    require(type(invalidate) is bool and (not invalidate or fault_hold) and
+            image.get('wifi_native_progress_invalidate',False) is invalidate and
+            driver.get('native_progress_cache_operation','CVAC')==image.get('native_progress_cache_operation','CVAC')==('CIVAC' if invalidate else 'CVAC') and
+            invalidate_config==(['#define EFI_XNU_WIFI_NATIVE_PROGRESS_INVALIDATE 1'] if invalidate else []),
+            'own progress CIVAC compiler/image scope mismatch')
     fast_sha=driver.get('wifi_scalar_sha256_fast',False)
     fast_config=[x for x in config if x.startswith('#define POLARIS_WIFI_SCALAR_SHA256_FAST')]
     require(type(fast_sha) is bool and (not fast_sha or fault_hold) and
@@ -178,6 +185,12 @@ def validate(review_path):
                     proof.get('pre_native_marker_host_order_tested') is True and
                     proof.get('pre_native_marker_USB_ACK_after_readback_tested') is True,
                     'pre-native marker qualification missing')
+        if invalidate:
+            require(proof.get('own_progress_CIVAC_actual_EL1_QEMU') is True and
+                    proof.get('own_progress_CIVAC_actual_EL2_refused_QEMU') is True and
+                    proof.get('own_progress_CIVAC_default_OFF_objects_identical') is True and
+                    proof.get('own_progress_CIVAC_remote_cache_operation_changed') is False,
+                    'own progress CIVAC qualification missing')
         if fast_sha:
             require(proof.get('scalar_SHA256_actual_header_vectors_tested') is True and
                     proof.get('scalar_SHA256_admitted_read_bounds_tested') is True and

@@ -69,6 +69,10 @@ def main():
              manifest.get('wifi_native_fault_foreign_calls') is False)),
             'native fault hold requires its terminal firmware-only scope')
     marker=manifest.get('wifi_native_bootloader_marker',False)
+    invalidate=manifest.get('wifi_native_progress_invalidate',False)
+    require(type(invalidate) is bool and (not invalidate or fault_hold) and
+            manifest.get('native_progress_cache_operation','CVAC')==('CIVAC' if invalidate else 'CVAC'),
+            'own progress CIVAC requires the explicit terminal diagnostic')
     fast_sha=manifest.get('wifi_scalar_sha256_fast',False)
     require(type(fast_sha) is bool and (not fast_sha or fault_hold) and
             manifest.get('scalar_sha256_uses_SIMD',False) is False,
@@ -170,6 +174,7 @@ def main():
         sha256=sha(target), bytes=len(image), driver_sha256=sha(driver),
         driver_manifest_sha256=sha(args.driver_manifest), kernel_sha256=sha(args.kernel),
         payload_sha256=sha(args.payload), kernel_handoff=not args.firmware_diagnostic_only,
+        wifi_native_progress_invalidate=invalidate,native_progress_cache_operation='CIVAC' if invalidate else 'CVAC',
         wifi_scalar_sha256_fast=fast_sha,scalar_sha256_uses_SIMD=False,
         wifi_native_copy_trace_first=trace_first,
         wifi_native_watchdog_readonly=watchdog,native_apps_watchdog_register_writes=False,

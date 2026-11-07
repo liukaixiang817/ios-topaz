@@ -21,6 +21,12 @@
 #ifndef POLARIS_WIFI_SCALAR_SHA256_FAST
 #define POLARIS_WIFI_SCALAR_SHA256_FAST 0
 #endif
+#ifndef EFI_XNU_WIFI_NATIVE_PROGRESS_INVALIDATE
+#define EFI_XNU_WIFI_NATIVE_PROGRESS_INVALIDATE 0
+#endif
+#if (EFI_XNU_WIFI_NATIVE_PROGRESS_INVALIDATE != 0 && EFI_XNU_WIFI_NATIVE_PROGRESS_INVALIDATE != 1) || (EFI_XNU_WIFI_NATIVE_PROGRESS_INVALIDATE && !EFI_XNU_WIFI_NATIVE_FAULT_HOLD)
+#error "Own progress invalidation requires the terminal native fault diagnostic"
+#endif
 #if (POLARIS_WIFI_SCALAR_SHA256_FAST != 0 && POLARIS_WIFI_SCALAR_SHA256_FAST != 1) || (POLARIS_WIFI_SCALAR_SHA256_FAST && !EFI_XNU_WIFI_NATIVE_FAULT_HOLD)
 #error "Scalar SHA256 fast path requires the terminal native fault diagnostic"
 #endif
@@ -1310,7 +1316,11 @@ static int wifi_native_fault_clean(uint64_t address,uint64_t bytes)
     __asm__ volatile("dsb ishst":::"memory");
     for(unsigned n=0;n<count;n++){
         uint64_t at=first+(uint64_t)n*line;
+#if EFI_XNU_WIFI_NATIVE_PROGRESS_INVALIDATE
+        __asm__ volatile("dc civac,%0"::"r"(at):"memory");
+#else
         __asm__ volatile("dc cvac,%0"::"r"(at):"memory");
+#endif
     }
     __asm__ volatile("dsb sy; isb; mrs %0,ctr_el0":"=r"(after)::"memory");
     return after==ctr;

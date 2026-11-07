@@ -56,6 +56,27 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: fresh native nonce plus first combined witness
 
+- Own-progress CIVAC qualified,NOT SENT. Explicit defaultOFF option requires
+  existing terminal native fault scope. ONLY existing bounded own-image line
+  loop changes CVAC->CIVAC;EL1/SCTLR/CTR/whole-line image bounds/barriers and
+  all control callers remain. No remote firmware/descriptor/bank cache change,
+  new MMIO/secure/provider/deadline/ownership operation. This tests empirical
+  retained progress;no architectural guarantee of reset-persistent DRAM.
+- Actual current cache leaf QEMU EL1 executes CIVAC and bounds refusals PASS
+  (5.8756s),EL2 refuses before maintenance PASS(5.8380s);actual leaf object
+  opcode CIVAC/notCVAC confirmed. Current32 tests PASS9.104s include new
+  compiler/builder scope and original ownership/layout/line-bound tests.
+  New shipping COFF reproduced,CIVAC-OFF COFF/MachO matcha4fd9ee source,
+  721frames/max816B,terminal closure13/stack304/320B. Existing vector/
+  handler source unchanged;current changed leaf has separate actual QEMU proof.
+  Original81+actual EDK2 codec PASS,same CI/kernel6241/payload dc522.
+  Selected firmware-native-progress-civac-0001 driver5770c594e34f0393200d55661b813395bbe21d48030a3c66445e4b38ebf29c07,
+  imagef2ada17dd972fb272218fbed7d679e8c0c3ac12b461fc34e0a806dbd6c876f71;fresh nonce UNUSED/NO SEND. NEXT
+  commit/push/mirror,selected FASTBOOT preflight,freeze/offline,ONE native,
+  FIRST64field292B witness(maxOBS476/WDOG8),explicit FASTBOOT return.
+  ACTIVE2/5,current+3;observer PAUSED,idle USER-PAUSED,all source pushes approved.
+
+
 - SOURCE PUSH UNBLOCKED by direct human2026-11-07 reply in THIS chat:
   “批准源码推送” then “我批准你的所有源码推送”. Standing authorization applies
   to all subsequent project source pushes to own liukaixiang817/ios-topaz;

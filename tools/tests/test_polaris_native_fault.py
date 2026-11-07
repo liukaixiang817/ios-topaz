@@ -8,6 +8,27 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class NativeFaultTests(unittest.TestCase):
+    def test_own_progress_invalidate_compiler_scope(self):
+        text = (ROOT/'shim/polaris/uefi-xnu.c').read_text()
+        start = text.index('#ifndef EFI_XNU_WIFI_NATIVE_PROGRESS_INVALIDATE')
+        guard = text[start:text.index('#if (POLARIS_WIFI_SCALAR_SHA256_FAST', start)]
+        for option, fault, accepted in [(0, 0, True), (1, 1, True), (1, 0, False),
+                                        (-1, 1, False), (2, 1, False)]:
+            source = f'#define EFI_XNU_WIFI_NATIVE_PROGRESS_INVALIDATE {option}\n#define EFI_XNU_WIFI_NATIVE_FAULT_HOLD {fault}\n'+guard
+            result = subprocess.run(['/usr/bin/clang', '-E', '-x', 'c', '-'],
+                                    input=source, capture_output=True, text=True)
+            self.assertEqual(result.returncode == 0, accepted)
+
+    def test_own_progress_invalidate_builder_requires_fault_scope(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder)
+            result = subprocess.run(['python3', str(ROOT/'tools/build-polaris-uefi-xnu.py'),
+                '--zig', str(path/'missing'), '--kernel', str(path/'kernel'), '--payload', str(path/'payload'),
+                '--output', str(path/'output'), '--wifi-native-progress-invalidate'], capture_output=True, text=True)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn('requires --wifi-native-fault-hold', result.stderr)
+            self.assertFalse((path/'output').exists())
+
     def test_progress_cache_lines_stay_inside_owned_image(self):
         source = r'''
 #include "uefi-wifi-native-fault.h"
