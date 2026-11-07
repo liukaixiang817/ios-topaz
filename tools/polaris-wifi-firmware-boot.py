@@ -179,7 +179,8 @@ def validate(review_path):
         if watchdog:
             require(proof.get('native_watchdog_actual_policy_tested') is True and
                     proof.get('native_watchdog_actual_callbacks_qualified') is True and
-                    proof.get('native_watchdog_default_OFF_objects_identical') is True,
+                    proof.get('native_watchdog_default_OFF_objects_identical') is True and
+                    proof.get('native_progress_published_before_optional_watchdog') is True,
                     'native watchdog readonly qualification missing')
         qualified=proof.get('native_fault_qualified_objects',{})
         require(set(qualified)=={'driver-0001/uefi-wifi-native-fault.obj','actual-native-fault-macho.obj'},

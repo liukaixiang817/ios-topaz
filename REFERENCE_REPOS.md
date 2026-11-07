@@ -14,6 +14,12 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+Final own-RAM progress now precedes optional watchdog reads. Known native
+errors skip new MMIO;status8 describes diagnostic admission/skip,not hardware
+cause. Actual publisher tests cover optional failure/nonreturn,all11 cleanup
+boundaries and6 known errors;22 current tests and actual compiled objects pass.
+No new hardware,foreign board assumptions,protocol or deadline modification.
+
 Actual relocated-window witness retained earlier221pages/8segments,so874 is
 not a proven fixed fault boundary. Source inspection found new optional native
 watchdog admission can prevent final error publication;publish own progress

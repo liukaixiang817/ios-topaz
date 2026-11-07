@@ -1279,10 +1279,12 @@ static int wifi_native_watchdog_sample(void)
 {
     struct pawn_state*s=&wifi_native_parent.watchdog;struct pmsc_owner*o=&wifi_native_parent.owner;
     struct pawn_arch bound={0};
-    if(s->result.error||s->snapshots>720)return 0;
-    if(!wifi_native_watchdog_arch(o,&bound))return 0;
+    if(s->result.error)return 0;
+    if(s->snapshots>720||!wifi_native_watchdog_arch(o,&bound)){
+        s->result.error=8;return 0;
+    }
     if(s->snapshots&&bound.cpu.ticks>=s->last&&bound.cpu.ticks-s->last<4800000)return 1;
-    if(s->snapshots==720)return 0;
+    if(s->snapshots==720){s->result.error=8;return 0;}
     const struct pweh_result*h=(const void*)(uintptr_t)o->retained;
     const struct pawn_ops ops={o,wifi_native_watchdog_arch,wifi_native_watchdog_translate,wifi_native_watchdog_read};
     s->last=bound.cpu.ticks;
@@ -1323,11 +1325,6 @@ static int wifi_native_fault_publish(unsigned force)
     struct pfnf_record*f=&wifi_native_fault;const struct pwns_parent*s=&wifi_native_parent;
     if(f->armed!=1||f->entered||s->turns<f->parent_turns)return 0;
     if(!force&&f->parent_phase==s->phase&&s->turns-f->parent_turns<256&&!s->error&&!s->unknown)return 1;
-#if EFI_XNU_WIFI_NATIVE_WATCHDOG_READONLY
-    int watchdog_ok=wifi_native_watchdog_sample();
-    if(!wifi_native_fault_clean((uintptr_t)&s->watchdog,sizeof(s->watchdog)))return 0;
-    if(!watchdog_ok)return 0;
-#endif
     wifi_native_fault_progress_fields();
     /* Fixed scalar/control lines only. Never clean the entire parent,
      * remote firmware bank, descriptor ownership or original-provider state. */
@@ -1337,7 +1334,20 @@ static int wifi_native_fault_publish(unsigned force)
         (uintptr_t)&s->auth.modem.opening,(uintptr_t)&s->auth.modem.phase};
     const unsigned bytes[]={24,16,48,16,48,sizeof(s->copy.segment),64,16,40};
     for(unsigned n=0;n<sizeof(at)/sizeof(at[0]);n++)if(!wifi_native_fault_clean(at[n],bytes[n]))return 0;
-    return wifi_native_fault_clean((uintptr_t)f,sizeof(*f));
+    int published=wifi_native_fault_clean((uintptr_t)f,sizeof(*f));
+#if EFI_XNU_WIFI_NATIVE_WATCHDOG_READONLY
+    /* Preserve the terminal error even when an optional sample is refused or
+     * its hardware read never returns. Known failures issue no new MMIO. */
+    if(!published)return 0;
+    int watchdog_ok=0;
+    if(s->error||s->unknown||s->owner.error||s->owner.unknown||s->copy.error||s->auth.error){
+        if(!wifi_native_parent.watchdog.result.error)wifi_native_parent.watchdog.result.error=8;
+    }else watchdog_ok=wifi_native_watchdog_sample();
+    int watchdog_cleaned=wifi_native_fault_clean((uintptr_t)&s->watchdog,sizeof(s->watchdog));
+    return watchdog_ok&&watchdog_cleaned;
+#else
+    return published;
+#endif
 }
 static int pmlc_observe(struct pmlc_copy*r)
 {return r==&wifi_native_parent.copy&&wifi_native_fault_publish(1);}

@@ -56,6 +56,29 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: fresh native nonce plus first combined witness
 
+- Final progress preservation fix qualified,NOT SENT. Fixed own fields/scalars/
+  272B record are published BEFORE any optional watchdog operation. Known
+  parent/owner/copy/auth error or unknown issues NO new watchdog MMIO;diagnostic
+  status8 means skipped/refused eligibility,not proof of watchdog hardware
+  failure. Optional read failure/refusal returns only AFTER own record and
+  own watchdog state publication attempts. Native watchdog admission failures
+  are terminal (no implicit later retry). Fault handler/vector/cache leaf and
+  all target/protocol/deadline operations unchanged;window864..1119 unchanged.
+- Actual new publisher test covers6 known-error flags/no sample,optional
+  failure,simulated never-returning sample after record clean,all11 cache-clean
+  refusal boundaries,pre-arm/entered refusal;actual sampler tests status8/no
+  retry. Current22 tests PASS5.816s. Actual shipping COFF reproduced;
+  watchdog-OFF COFF/MachO identical to f42c520 source+old copy header,
+  717frames/max816B,terminal closure13/stack304/320B. Original81+actual
+  EDK2 decoder PASS,same kernel6241/payload dc522. Selected
+  firmware-native-final-progress-0001 driver303bade3a80b852f20d997defc340dfd9eefa54f056937ef4a7c4301b004de48,
+  imaged90eb56a8092c47d3c2b2b80b60f9f6959841709e207deff4772af4ad2f1f236;fresh nonce UNUSED/NO SEND. NEXT
+  commit/mirror,selected FASTBOOT preflight,freeze/offline,ONE native trial,
+  FIRST fresh64field292B witness with WDOG_ERROR max8/OBSERVE_PAGE max1119,
+  explicit return. ACTIVE2/5,current+3;observer PAUSED,idle USER-PAUSED,
+  external source push awaits direct approval.
+
+
 - PHYSICAL relocated trace source3264cfc/imaged269b523... sentONCE
   2026-11-07T11:05:44.453309+00:00,native2026-11-07T11:07:25.016705+00:00,ACK2026-11-07T11:07:44.505928+00:00;
   host46606 TERMINAL0/SPENT. Selected original FASTBOOT already present

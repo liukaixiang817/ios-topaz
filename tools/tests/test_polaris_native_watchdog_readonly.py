@@ -127,7 +127,9 @@ int main(void){
  ticks+=4799999;assert(wifi_native_watchdog_sample()&&calls==1);
  ticks++;assert(wifi_native_watchdog_sample()&&calls==2&&wifi_native_parent.watchdog.snapshots==2);
  assert(wifi_native_parent.watchdog.initial[0]==1);
- arch_ok=0;assert(!wifi_native_watchdog_sample()&&calls==2);arch_ok=1;
+ arch_ok=0;assert(!wifi_native_watchdog_sample()&&calls==2&&wifi_native_parent.watchdog.result.error==8);
+ arch_ok=1;assert(!wifi_native_watchdog_sample()&&calls==2);
+ wifi_native_parent.watchdog.result.error=0;
  ticks+=4800000;run_ok=0;assert(!wifi_native_watchdog_sample()&&calls==3);
  run_ok=1;ticks+=4800000;assert(!wifi_native_watchdog_sample()&&calls==3);
  wifi_native_parent.watchdog.result.error=0;wifi_native_parent.watchdog.snapshots=720;
