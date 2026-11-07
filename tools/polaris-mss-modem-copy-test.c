@@ -45,10 +45,18 @@ static struct pwma_page*copy_descriptor;
 static uint8_t*modem_shadow,*modem_mapping;
 static unsigned copy_fault,copy_at,copy_ats,copy_writes,copy_caches,copy_source_changed;
 static unsigned fresh_retained;
+#if EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS
+static unsigned written_before(unsigned page){
+    unsigned total=0;for(unsigned k=0;k<28;k++){
+        unsigned first=pmsf_segments[k].target_offset/4096,end=(pmsf_segments[k].target_offset+pmsf_segments[k].memsz+4095)/4096;
+        if(first<page)total+=(end<page?end:page)-first;
+    }return total;
+}
+#endif
 #if defined(PMLC_TEST_OBSERVE)
 static unsigned observed,observed_ready,observed_source,observed_pages;
-static unsigned observed_page,observed_stage,observed_stages[6];
-static unsigned observe_fail_stage;
+static unsigned observed_page,observed_stage,observed_stages[11];
+static unsigned observe_fail_stage,observe_fail_page=221;
 static int pmlc_observe(struct pmlc_copy*r)
 {
     CHECK(r==copy_record&&r->attempted==1&&r->source_pages<=PMLC_SOURCE_PAGES&&r->pages<=PMLC_PAGES);
@@ -56,16 +64,25 @@ static int pmlc_observe(struct pmlc_copy*r)
     CHECK(r->source_pages>=observed_source&&r->pages>=observed_pages);
     observed_source=r->source_pages;observed_pages=r->pages;
     if(r->observe_stage&&(r->observe_stage!=observed_stage||r->observe_page!=observed_page)){
+#if EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS
+        CHECK(r->observe_page<256&&((r->observe_stage>=1&&r->observe_stage<=5)||r->observe_stage==10));
+        if(r->observe_stage==1||r->observe_stage==10)CHECK((!observed_stage&&!r->observe_page)||
+            ((observed_stage==5||observed_stage==10)&&r->observe_page==observed_page+1));
+        else CHECK(r->observe_page==observed_page&&r->observe_stage==observed_stage+1);
+        unsigned words=r->observe_stage>=3&&r->observe_stage<=5?r->page[r->observe_page].words_issued:0;
+        CHECK(r->observe_words_issued==words);
+#else
         CHECK(r->observe_page<256&&r->observe_stage>=1&&r->observe_stage<=5);
         if(r->observe_stage==1)CHECK((!observed_stage&&r->observe_page==0)||
             (observed_stage==5&&r->observe_page==observed_page+1));
         else CHECK(r->observe_page==observed_page&&r->observe_stage==observed_stage+1);
         CHECK(r->observe_words_issued==(r->observe_stage>=3?512u:0u));
+#endif
         CHECK(r->observe_words_returned==r->observe_words_issued);
         observed_page=r->observe_page;observed_stage=r->observe_stage;observed_stages[observed_stage]++;
     }
     if(r->ready)observed_ready++;observed++;
-    return !(observe_fail_stage&&r->observe_page==221&&r->observe_stage==observe_fail_stage);
+    return !(observe_fail_stage&&r->observe_page==observe_fail_page&&r->observe_stage==observe_fail_stage);
 }
 #endif
 #if defined(PMLC_TEST_PAGE_BEFORE)
@@ -91,6 +108,12 @@ static void copy_prepare_assets(void)
 }
 static int copy_translate(struct pwmc_translation*t)
 {
+#if EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS
+    if(copy_record&&copy_record->ready&&t->page>=copy_auth->base&&t->page-copy_auth->base<0x7800000){
+        const struct pmsf_segment*g=&pmsf_segments[copy_record->segments];
+        CHECK(t->page-copy_auth->base>=g->target_offset&&t->page-copy_auth->base<g->target_offset+g->memsz);
+    }
+#endif
 #if defined(PMLC_TEST_PAGE_BEFORE)
     if(copy_record&&copy_record->ready&&t->page==copy_auth->base+4096*(uint64_t)PMLC_TEST_PAGE_BEFORE)
         page_checkpoint_target_AT++;
@@ -101,10 +124,21 @@ static int copy_translate(struct pwmc_translation*t)
         if(copy_fault==3)t->page+=4096;if(copy_fault==4)t->restored++;
     }return ok;
 }
+#if EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS
+static int pmlc_vendor_write(uint64_t to,uint64_t from,unsigned bytes,unsigned extent,struct pwfi_sha256*h,struct pmsi_page*p)
+#else
 static int pmlc_write(uint64_t to,uint64_t from,unsigned bytes,struct pwfi_sha256*h,struct pmsi_page*p)
+#endif
 {
     CHECK(local_mask&&target_protected&&copy_tx->complete&&!copy_tx->unknown);
+#if EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS
+    CHECK(to==copy_auth->base+4096*copy_record->pages&&p->target.page==to&&pwmc_translation_valid(&p->target));
+    const struct pmsf_segment*g=&pmsf_segments[copy_record->segments];
+    CHECK(to-copy_auth->base>=g->target_offset&&extent&&extent<=4096&&
+        to-copy_auth->base+extent<=g->target_offset+g->memsz);
+#else
     CHECK(to==copy_auth->base+4096*copy_writes&&p->target.page==to&&pwmc_translation_valid(&p->target));
+#endif
     CHECK(!bytes||(p->source.page==from&&pwmc_translation_valid(&p->source)));
     copy_writes++;
     if(copy_writes==copy_at){
@@ -112,10 +146,18 @@ static int pmlc_write(uint64_t to,uint64_t from,unsigned bytes,struct pwfi_sha25
         if(copy_fault==6&&bytes){*(uint8_t*)(uintptr_t)from^=1;copy_source_changed=1;}
         if(copy_fault==7)put(core+0x1cdb0,held->map.map.key+1,8);
     }
+#if EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS
+    return pmlc_vendor_words((uintptr_t)modem_shadow+to-copy_auth->base,from,bytes,extent,h,p);
+#else
     return pmsi_words((uintptr_t)modem_shadow+to-copy_auth->base,from,bytes,h,p);
+#endif
 }
 static int pmlc_cache(uint64_t to,struct pwmk_record*c)
 {
+#if EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS
+    const struct pmsf_segment*g=&pmsf_segments[copy_record->segments];
+    CHECK(to-copy_auth->base>=g->target_offset&&to-copy_auth->base<g->target_offset+g->memsz);
+#endif
     copy_caches++;CHECK(copy_caches==copy_writes);
     *c=(struct pwmk_record){.address=to,.ctr_before=4u<<16,.ctr_after=4u<<16,.el=4,.sctlr=5,
         .operation=PWMK_CLEAN_INVALIDATE,.line_bytes=64,.lines_issued=64,.lines_returned=64,
@@ -213,18 +255,53 @@ int main(int argc,char**argv)
         CHECK(copy_auth->submitted==k+1);
         copy_publish_io();
     }
+#if EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS
+    unsigned expected_writes=0,expected_gaps=0,vendor_cursor=0;
+    for(unsigned k=0;k<28;k++){
+        const struct pmsf_segment*g=&pmsf_segments[k];expected_writes+=(g->memsz+4095)/4096;
+        for(;vendor_cursor<g->target_offset;vendor_cursor++)CHECK(modem_shadow[vendor_cursor]==0xa5);
+        CHECK(!g->filesz||!memcmp(modem_shadow+vendor_cursor,firmware+pmsf_assets[g->asset].offset,g->filesz));vendor_cursor+=g->filesz;
+        for(unsigned j=g->filesz;j<g->memsz;j++,vendor_cursor++)CHECK(modem_shadow[vendor_cursor]==0);
+    }
+    CHECK(vendor_cursor==0x7800000);expected_gaps=30720-expected_writes;
+    CHECK(copy_record->complete&&copy_record->pages==30720&&copy_writes==expected_writes&&copy_caches==expected_writes);
+    CHECK(copy_record->vendor_written_pages==expected_writes&&copy_record->vendor_untouched_pages==expected_gaps);
+    for(unsigned k=0;k<28;k++){
+        const struct pmsf_segment*g=&pmsf_segments[k];unsigned first=k?(pmsf_segments[k-1].target_offset+pmsf_segments[k-1].memsz+4095)/4096:0;
+        for(unsigned page=first;page<(g->target_offset+g->memsz+4095)/4096;page++){
+            const struct pmsi_page*p=&copy_record->page[page];struct pmve_extent extent;CHECK(pmve_plan(g,first,page,&extent));
+            if(extent.kind==PMVE_UNTOUCHED)CHECK(p->complete==2&&!p->bytes&&!p->words_issued&&!p->words_returned&&
+                pwmc_zero(&p->source,sizeof(p->source))&&pwmc_zero(&p->target,sizeof(p->target))&&pwmc_zero(&p->cache,sizeof(p->cache)));
+            else CHECK(p->complete==1&&p->bytes==extent.source_bytes&&p->words_issued==(extent.target_bytes+7)/8&&p->words_returned==p->words_issued);
+        }
+    }
+    printf("PASS vendor extents: %u written pages, %u explicitly untouched pages, every gap/tail canary intact\n",expected_writes,expected_gaps);
+#else
     CHECK(copy_record->complete&&copy_record->pages==30720&&copy_writes==30720&&copy_caches==30720);
+#endif
 #if defined(PMLC_TEST_OBSERVE)
+#if EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS
+    unsigned fine_written=written_before(256),fine_gaps=256-fine_written;
+    CHECK(observed==1488-4*fine_gaps&&observed_source==14687&&observed_pages==30720&&observed_ready==1429-4*fine_gaps);
+    CHECK(observed_stages[10]==fine_gaps);for(unsigned n=1;n<=5;n++)CHECK(observed_stages[n]==fine_written);
+#else
     CHECK(observed==1488&&observed_source==14687&&observed_pages==30720&&observed_ready==1429);
-    CHECK(observed_page==255&&observed_stage==5);
     for(unsigned n=1;n<=5;n++)CHECK(observed_stages[n]==256);
+#endif
+    CHECK(observed_page==255&&observed_stage==5);
     printf("PASS actual diagnostic progress hooks: %u bounded observations; all source/target pages retained\n",observed);
 #endif
     CHECK(copy_auth->phase==3&&copy_auth->length==124977057);
     unsigned cursor=0;
     for(unsigned k=0;k<28;k++){
         const struct pmsf_segment*g=&pmsf_segments[k];
-        for(;cursor<g->target_offset;cursor++)CHECK(modem_shadow[cursor]==0);
+        for(;cursor<g->target_offset;cursor++)CHECK(modem_shadow[cursor]==
+#if EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS
+            0xa5
+#else
+            0
+#endif
+        );
         if(g->filesz){CHECK(!memcmp(modem_shadow+cursor,firmware+pmsf_assets[g->asset].offset,g->filesz));cursor+=g->filesz;}
         for(;cursor<g->target_offset+g->memsz;cursor++)CHECK(modem_shadow[cursor]==0);
     }
@@ -236,14 +313,29 @@ int main(int argc,char**argv)
         copy_setup();CHECK(copy_begin());
         for(unsigned k=0;k<8;k++){CHECK(pmlc_next_segment(copy_record));copy_publish_io();}
         CHECK(copy_record->pages==221&&copy_record->segments==8);
+#if EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS
+        observe_fail_page=224;
+#endif
         observe_fail_stage=stage;
         CHECK(!pmlc_next_segment(copy_record)&&copy_record->unknown&&copy_record->error==2);
-        CHECK(copy_record->pages==221+(stage==5)&&copy_record->segments==8&&copy_auth->submitted==8);
+        CHECK(copy_record->pages==observe_fail_page+(stage==5)&&copy_record->segments==8&&copy_auth->submitted==8);
+#if EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS
+        CHECK(copy_writes==written_before(observe_fail_page)+(stage>=3)&&copy_caches==written_before(observe_fail_page)+(stage>=4));
+#else
         CHECK(copy_writes==221+(stage>=3)&&copy_caches==221+(stage>=4));
-        CHECK(copy_record->observe_page==221&&copy_record->observe_stage==stage);
+#endif
+        CHECK(copy_record->observe_page==observe_fail_page&&copy_record->observe_stage==stage);
         CHECK(owner->held&&!pmsc_close_unused(owner));observe_fail_stage=0;
     }
     printf("PASS all5 page-publication refusals stop at exact target/write/cache boundary\n");fflush(stdout);
+#if EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS
+    copy_setup();CHECK(copy_begin());for(unsigned k=0;k<8;k++){CHECK(pmlc_next_segment(copy_record));copy_publish_io();}
+    observe_fail_page=221;observe_fail_stage=10;
+    CHECK(!pmlc_next_segment(copy_record)&&copy_record->unknown&&copy_record->error==2);
+    CHECK(copy_record->pages==222&&copy_record->vendor_untouched_pages==222-written_before(222)&&copy_writes==written_before(221)&&copy_caches==copy_writes);
+    CHECK(copy_record->page[221].complete==2&&!copy_record->page[221].words_issued&&!copy_record->page[221].words_returned);
+    CHECK(copy_auth->submitted==8&&owner->held&&!pmsc_close_unused(owner));observe_fail_stage=0;
+#endif
 #endif
     for(unsigned fault=1;fault<=11;fault++){
         copy_setup();CHECK(copy_begin());copy_fault=fault;copy_at=fault<=4?copy_ats+1:1;

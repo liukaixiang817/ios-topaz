@@ -506,6 +506,7 @@ def main():
     ap.add_argument('--wifi-native-copy-page-probe',action='store_true',help='copy-page firmware diagnostic only: issue read/write AT for the selected page without reading or writing it, then hold')
     ap.add_argument('--wifi-native-copy-page-after-write',action='store_true',help='copy-page firmware diagnostic only: hold after the original page write/readback and before cache; incompatible with AT-only probe')
     ap.add_argument('--wifi-native-fault-hold',action='store_true',help='firmware-only native-ready diagnostic: install terminal CPU0 exception vectors on an independent owned stack; no exception return or reset')
+    ap.add_argument('--wifi-vendor-segment-extents',action='store_true',help='terminal native diagnostic only: own vendor filesz+BSS writes, explicit untouched holes, exact partial tails')
     ap.add_argument('--wifi-native-progress-invalidate',action='store_true',help='terminal fault diagnostic only: CIVAC for the existing bounded own-image progress lines, not remote firmware')
     ap.add_argument('--wifi-scalar-sha256-fast',action='store_true',help='terminal native diagnostic only: equivalent scalar unrolled SHA256 and bounded block feed, no SIMD')
     ap.add_argument('--wifi-native-copy-trace-first',type=int,default=0,help='first page of the terminal fault diagnostic256-page fine-copy window (0..30464)')
@@ -529,6 +530,8 @@ def main():
         ap.error('copy-page checkpoint requires the terminal firmware-only diagnostic')
     if a.wifi_native_auth_metadata_checkpoint=='native-ready' and not a.wifi_firmware_diagnostic_only:
         ap.error('native-ready checkpoint requires the terminal firmware-only diagnostic')
+    if a.wifi_vendor_segment_extents and not a.wifi_native_fault_hold:
+        ap.error('--wifi-vendor-segment-extents requires --wifi-native-fault-hold')
     if a.wifi_native_progress_invalidate and not a.wifi_native_fault_hold:
         ap.error('--wifi-native-progress-invalidate requires --wifi-native-fault-hold')
     if a.wifi_scalar_sha256_fast and not a.wifi_native_fault_hold:
@@ -1156,6 +1159,8 @@ def main():
         with config.open('a') as f:f.write(f'#define EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT {auth_checkpoint_mode}\n')
     if a.wifi_native_fault_hold:
         with config.open('a') as f:f.write('#define EFI_XNU_WIFI_NATIVE_FAULT_HOLD 1\n')
+    if a.wifi_vendor_segment_extents:
+        with config.open('a') as f:f.write('#define EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS 1\n')
     if a.wifi_native_progress_invalidate:
         with config.open('a') as f:f.write('#define EFI_XNU_WIFI_NATIVE_PROGRESS_INVALIDATE 1\n')
     if a.wifi_scalar_sha256_fast:
@@ -1232,6 +1237,8 @@ def main():
     if a.wifi_native_fault_hold:sources.append('uefi-wifi-native-fault.S')
     if a.test_wled_native_lifecycle=='lease':flags.append('-DPOLARIS_RAM_LEASE_SECONDS=1800u')
     inputs=['shim/polaris/'+n for n in sources]+['shim/polaris/uefi.h','shim/polaris/uefi-xnu.h','shim/polaris/uefi-usb.h','shim/polaris/uefi-memory.h','shim/polaris/uefi-reset.h','shim/polaris/uefi-file.h','shim/polaris/uefi-boot-options.h','shim/polaris/uefi-ram-lease.h','shim/polaris/payload.h','tools/build-polaris-uefi-xnu.py','tools/polaris-uefi-input.h']
+    if a.wifi_vendor_segment_extents:
+        inputs.append('shim/polaris/uefi-mss-vendor-extent.h')
     if a.wifi_native_watchdog_readonly:
         inputs+=['shim/polaris/uefi-apps-watchdog-native-readonly.h','shim/polaris/uefi-apps-watchdog-readonly.h']
     if a.wifi_native_fault_hold:inputs.append('shim/polaris/uefi-wifi-native-fault.h')
@@ -2205,6 +2212,10 @@ def main():
     if a.wifi_native_runtime:
         manifest.update(wifi_native_runtime_enabled=True,wifi_native_runtime_default_OFF=True,
             wifi_native_fault_hold=a.wifi_native_fault_hold,
+            wifi_vendor_segment_extents=a.wifi_vendor_segment_extents,
+            modem_copy_gap_pages_written=not a.wifi_vendor_segment_extents,
+            modem_copy_page_tail_written=not a.wifi_vendor_segment_extents,
+            modem_copy_untouched_page_record=2 if a.wifi_vendor_segment_extents else None,
             wifi_native_progress_invalidate=a.wifi_native_progress_invalidate,
             native_progress_cache_operation='CIVAC' if a.wifi_native_progress_invalidate else 'CVAC',
             wifi_scalar_sha256_fast=a.wifi_scalar_sha256_fast,scalar_sha256_uses_SIMD=False,

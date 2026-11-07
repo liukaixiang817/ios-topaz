@@ -70,6 +70,17 @@ def validate(review_path):
             fault_config==(['#define EFI_XNU_WIFI_NATIVE_FAULT_HOLD 1'] if fault_hold else []),
             'native fault hold compiler scope not frozen')
     marker=driver.get('wifi_native_bootloader_marker',False)
+    vendor_extents=driver.get('wifi_vendor_segment_extents',False)
+    vendor_config=[x for x in config if x.startswith('#define EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS')]
+    require(type(vendor_extents) is bool and (not vendor_extents or fault_hold) and
+            image.get('wifi_vendor_segment_extents',False) is vendor_extents and
+            vendor_config==(['#define EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS 1'] if vendor_extents else []),
+            'vendor segment extent compiler/image scope mismatch')
+    for record in (driver,image):
+        require(record.get('modem_copy_gap_pages_written',True) is (not vendor_extents) and
+                record.get('modem_copy_page_tail_written',True) is (not vendor_extents) and
+                record.get('modem_copy_untouched_page_record')==(2 if vendor_extents else None),
+                'vendor segment extent record semantics mismatch')
     invalidate=driver.get('wifi_native_progress_invalidate',False)
     invalidate_config=[x for x in config if x.startswith('#define EFI_XNU_WIFI_NATIVE_PROGRESS_INVALIDATE')]
     require(type(invalidate) is bool and (not invalidate or fault_hold) and
@@ -185,6 +196,12 @@ def validate(review_path):
                     proof.get('pre_native_marker_host_order_tested') is True and
                     proof.get('pre_native_marker_USB_ACK_after_readback_tested') is True,
                     'pre-native marker qualification missing')
+        if vendor_extents:
+            require(proof.get('vendor_extents_actual_word_and_plan_bounds_tested') is True and
+                    proof.get('vendor_extents_full_copy_auth_canaries_tested') is True and
+                    proof.get('vendor_extents_default_OFF_objects_identical') is True and
+                    proof.get('vendor_extents_own_vendor_source_compared') is True,
+                    'vendor segment extent qualification missing')
         if invalidate:
             require(proof.get('own_progress_CIVAC_actual_EL1_QEMU') is True and
                     proof.get('own_progress_CIVAC_actual_EL2_refused_QEMU') is True and

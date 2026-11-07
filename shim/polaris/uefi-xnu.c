@@ -24,6 +24,12 @@
 #ifndef EFI_XNU_WIFI_NATIVE_PROGRESS_INVALIDATE
 #define EFI_XNU_WIFI_NATIVE_PROGRESS_INVALIDATE 0
 #endif
+#ifndef EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS
+#define EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS 0
+#endif
+#if (EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS != 0 && EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS != 1) || (EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS && !EFI_XNU_WIFI_NATIVE_FAULT_HOLD)
+#error "Vendor segment extents require the terminal native fault diagnostic"
+#endif
 #if (EFI_XNU_WIFI_NATIVE_PROGRESS_INVALIDATE != 0 && EFI_XNU_WIFI_NATIVE_PROGRESS_INVALIDATE != 1) || (EFI_XNU_WIFI_NATIVE_PROGRESS_INVALIDATE && !EFI_XNU_WIFI_NATIVE_FAULT_HOLD)
 #error "Own progress invalidation requires the terminal native fault diagnostic"
 #endif
@@ -1348,7 +1354,13 @@ static int wifi_native_fault_publish(unsigned force)
         (uintptr_t)&s->owner.attempted,(uintptr_t)&s->copy.opening,(uintptr_t)&s->copy.attempted,
         (uintptr_t)&s->copy.segment,(uintptr_t)&s->auth.attempted,
         (uintptr_t)&s->auth.modem.opening,(uintptr_t)&s->auth.modem.phase};
-    const unsigned bytes[]={24,16,48,16,48,sizeof(s->copy.segment),64,16,40};
+    const unsigned bytes[]={24,16,48,16,
+#if EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS
+        56,
+#else
+        48,
+#endif
+        sizeof(s->copy.segment),64,16,40};
     for(unsigned n=0;n<sizeof(at)/sizeof(at[0]);n++)if(!wifi_native_fault_clean(at[n],bytes[n]))return 0;
     int published=wifi_native_fault_clean((uintptr_t)f,sizeof(*f));
 #if EFI_XNU_WIFI_NATIVE_WATCHDOG_READONLY

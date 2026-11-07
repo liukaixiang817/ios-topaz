@@ -56,6 +56,35 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: fresh native nonce plus first combined witness
 
+- Vendor segment extent profile QUALIFIED,NOT SENT. Explicit defaultOFF,
+  terminal fault/native-ready firmware diagnostic only. Uses own successful PIL
+  filesz+BSS semantics;205 complete gap pages are UNTOUCHED(complete2),no target
+  AT/store/readback/cache,stage10 records zero issued/returned words.30515 actual
+  written pages retain translation/readback/cache checks;partial last slots use
+  exact remaining byte accesses,not8-byte overruns. All source authentication,
+  assignment/RMB length124977057,ownership/freshness/deadlines remain.
+- Current35 public tests PASS11.176s,actual planner and every extent1..4096 /
+  four source lengths,ASAN/UBSAN exact allocation/tail canaries and protected
+  refusal positions PASS. Full own-firmware copy131827569checks/1432observations,
+  all5 page-publication refusals plus gap-stage10 refusal PASS. Full auth
+  10392140checks/32scenarios/610RMBobservations/all5 IO refusals PASS. Legacy
+  full copy65938877checks and auth4920169checks PASS. Tests confirm every
+  out-of-ELF hole/tail canary intact. Correct geometry:there is also an earlier
+  gap5..15;221..223 is NOT the first gap. Do not infer a fixed reset cause.
+- Actual shipping COFF reproduces,COFF/MachO vendor-OFF equal92ebe4a with old
+  copy header;723frames/max816B,terminal closure13/stack304/320B. Actual ARM
+  own-counter clean span56B and fault272B ABI verified. CIVAC leaf source exact,
+  existing EL1/EL2 QEMU evidence reused only for that unchanged leaf. Original81
+  and actual EDK2 codec PASS. Same CI42091724671/kernel6241/payload dc522.
+  Fresh selected driver76819d64137256c3dd95e2c129b87c6fa009a705ec37ba25d80298fef8d8a478,
+  image4e351a994894abcbf129593cf2ff81f78d967bcdffa837752b1e856c64e1d4a6;nonceUNUSED/NO SEND. Existing-output rebuild attempt
+  refused before any mutation/send;valid initial image does not bind proof JSON,
+  completed proof is frozen separately by firmware helper. NEXT commit/push/
+  mirror,selected FASTBOOT/preflight/freeze/offline,ONE native+FIRST witness.
+  Reader replaces2 threshold scalars with written/untouched counters,still64/
+  292B,OBSstage10. ACTIVE2/5,current+3;observerPAUSED,idleUSERPAUSED.
+
+
 - PHYSICAL own-CIVAC source898f8b7/imagef2ada17d... sentONCE
   2026-11-07T12:19:26.835841+00:00,native2026-11-07T12:21:05.808834+00:00,ACK2026-11-07T12:21:24.441717+00:00;
   host95924 TERMINAL0/SPENT. Original FASTBOOT already12:23:27.428838Z,

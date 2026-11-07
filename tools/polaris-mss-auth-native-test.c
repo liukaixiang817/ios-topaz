@@ -77,18 +77,45 @@ static void auth_at_hook(struct pmni_translation*t){
     if(auth_io_selected()&&auth_io_fault==2)t->restored++;
 }
 static void auth_assets(void){memcpy(blob,auth_firmware,PMSF_BLOB_BYTES);memcpy(assets,pmsf_assets,sizeof(pmsf_assets));}
-static int auth_translate(struct pwmc_translation*t){return early_translate(t);}
+static int auth_translate(struct pwmc_translation*t){
+#if EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS
+    if(auth_owner&&auth_copy&&auth_copy->ready&&auth_owner->phase==PMSN_COPY&&t->page>=auth_copy->base&&t->page-auth_copy->base<0x7800000){
+        const struct pmsf_segment*g=&pmsf_segments[auth_copy->segments];
+        CHECK(t->page-auth_copy->base>=g->target_offset&&t->page-auth_copy->base<g->target_offset+g->memsz);
+    }
+#endif
+    return early_translate(t);
+}
+#if EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS
+static int pmlc_vendor_write(uint64_t to,uint64_t from,unsigned bytes,unsigned extent,struct pwfi_sha256*h,struct pmsi_page*p)
+#else
 static int pmlc_write(uint64_t to,uint64_t from,unsigned bytes,struct pwfi_sha256*h,struct pmsi_page*p)
+#endif
 {
     CHECK(auth_owner&&auth_owner->phase==PMSN_COPY&&modem_owner==1&&metadata_owner==3&&target_protected);
-    CHECK(auth_owner->assignment[2].transaction.complete&&to==auth_copy->base+4096*auth_copies);
+    CHECK(auth_owner->assignment[2].transaction.complete);
+#if EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS
+    const struct pmsf_segment*g=&pmsf_segments[auth_copy->segments];
+    CHECK(to==auth_copy->base+4096*auth_copy->pages&&to-auth_copy->base>=g->target_offset&&
+        extent&&extent<=4096&&to-auth_copy->base+extent<=g->target_offset+g->memsz);
+#else
+    CHECK(to==auth_copy->base+4096*auth_copies);
+#endif
     CHECK(p->target.page==to&&pwmc_translation_valid(&p->target));auth_copies++;
     if(auth_copy_fault==1&&auth_copies==1){p->words_issued=1;return 0;}
     if(auth_copy_fault==2&&auth_copies==1&&bytes)*(uint8_t*)(uintptr_t)from^=1;
+#if EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS
+    return pmlc_vendor_words((uintptr_t)auth_modem+to-auth_copy->base,from,bytes,extent,h,p);
+#else
     return pmsi_words((uintptr_t)auth_modem+to-auth_copy->base,from,bytes,h,p);
+#endif
 }
 static int pmlc_cache(uint64_t to,struct pwmk_record*c)
 {
+#if EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS
+    const struct pmsf_segment*g=&pmsf_segments[auth_copy->segments];
+    CHECK(to-auth_copy->base>=g->target_offset&&to-auth_copy->base<g->target_offset+g->memsz);
+#endif
     CHECK(modem_owner==1&&auth_copies==++auth_cache_pages);
     *c=(struct pwmk_record){.address=to,.ctr_before=4u<<16,.ctr_after=4u<<16,.el=4,.sctlr=5,
         .operation=PWMK_CLEAN_INVALIDATE,.line_bytes=64,.lines_issued=64,.lines_returned=64,
@@ -96,14 +123,24 @@ static int pmlc_cache(uint64_t to,struct pwmk_record*c)
 }
 static void verify_modem_bank(void)
 {
-    unsigned cursor=0;
+    unsigned cursor=0,expected=0;
     for(unsigned n=0;n<28;n++){
         const struct pmsf_segment*g=&pmsf_segments[n];
+#if EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS
+        for(;cursor<g->target_offset;cursor++)CHECK(auth_modem[cursor]==0xa5);
+        expected+=(g->memsz+4095)/4096;
+#else
         CHECK(pwmc_zero(auth_modem+cursor,g->target_offset-cursor));cursor=g->target_offset;
+#endif
         if(g->filesz){CHECK(!memcmp(auth_modem+cursor,auth_firmware+pmsf_assets[g->asset].offset,g->filesz));cursor+=g->filesz;}
         CHECK(pwmc_zero(auth_modem+cursor,g->target_offset+g->memsz-cursor));cursor=g->target_offset+g->memsz;
     }
-    CHECK(cursor==0x7800000&&auth_copies==30720&&auth_cache_pages==30720);full_bank_verified=1;
+#if EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS
+    CHECK(auth_copy->vendor_written_pages==expected&&auth_copy->vendor_untouched_pages==30720-expected);
+#else
+    expected=30720;
+#endif
+    CHECK(cursor==0x7800000&&auth_copies==expected&&auth_cache_pages==expected);full_bank_verified=1;
 }
 static int pmsn_affinity(uint64_t target,int64_t*raw)
 {
@@ -217,7 +254,11 @@ static void auth_setup(unsigned continuations)
     memset(auth_rounds,0,sizeof(auth_rounds));memset(auth_caches,0,sizeof(auth_caches));memset(auth_protected,0,sizeof(auth_protected));
     auth_fault=auth_fault_assignment=auth_io_fault=auth_io_trigger=auth_io_calls=auth_copy_fault=auth_copies=auth_cache_pages=auth_peers=0;
     auth_peer_delay=0;auth_bad_status=peer_segments=metadata_polls=final_polls=full_bank_verified=0;metadata_owner=modem_owner=3;
-    rmb_length=rmb_metadata=rmb_start=rmb_command=0;CHECK(!mprotect(auth_modem,0x7800000,PROT_NONE));
+    rmb_length=rmb_metadata=rmb_start=rmb_command=0;
+#if EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS
+    CHECK(!mprotect(auth_modem,0x7800000,PROT_READ|PROT_WRITE));memset(auth_modem,0xa5,0x7800000);
+#endif
+    CHECK(!mprotect(auth_modem,0x7800000,PROT_NONE));
     boot_setup();CHECK(pmbn_begin(boot_owner,boot_records,aop_owner)&&boot_drive());
     uintptr_t at=(uintptr_t)arena+0x4000000;
     at+=(-(at+offsetof(struct pmsn_state,assignment)+offsetof(struct pmsn_assignment,page)))&(host_page-1);
@@ -245,7 +286,7 @@ static void auth_success(void)
         auth_owner->phase,auth_owner->error,auth_owner->assignments,auth_owner->deliveries,auth_owner->metadata.error,
         auth_owner->modem.error,auth_copy->error,owner->error);
     CHECK(result&&pmsn_current(auth_owner)&&auth_owner->assignments==5&&auth_owner->modem.length==124977057);
-    CHECK(metadata_owner==3&&modem_owner==2&&!target_protected&&full_bank_verified&&auth_copies==30720&&owner->held);
+    CHECK(metadata_owner==3&&modem_owner==2&&!target_protected&&full_bank_verified&&auth_copies==auth_cache_pages&&owner->held);
     CHECK(!memcmp(shadow,auth_firmware,238304)&&!memcmp(shadow+0x100000,auth_firmware+pmsf_assets[1].offset,8412));
     CHECK(!pmsc_close_unused(owner));for(unsigned n=0;n<5;n++)CHECK(auth_rounds[n]==auth_continuations+1&&!auth_protected[n]&&auth_caches[n]==2);
 }

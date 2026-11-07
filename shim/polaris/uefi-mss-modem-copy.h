@@ -2,8 +2,10 @@
  * Consumes the continuous CPU interval and returned shared-bank assignment.
  * No original provider, MMIO or SMC is called here. RMB publication becomes
  * eligible only after source authentication, actual writes/readback and CIVAC.
- * Every bank page is initialized once, including inter-segment holes; the
- * advertised length remains the vendor sum of memsz, never the bank span. */
+ * The legacy profile initializes the whole bank. The explicit vendor profile
+ * records gaps as UNTOUCHED and writes only segment memsz. pages counts the
+ * processed span; vendor counters distinguish writes from untouched pages.
+ * Advertised length remains the vendor sum of memsz, never the bank span. */
 #ifndef POLARIS_UEFI_MSS_MODEM_COPY_H
 #define POLARIS_UEFI_MSS_MODEM_COPY_H
 #ifndef EFI_XNU_MSS_MODEM_COPY_AVAILABLE
@@ -17,6 +19,15 @@
 #include "../../tools/polaris-mss-modem-auth.h"
 #define PMLC_PAGES 30720u
 #define PMLC_SOURCE_PAGES 16384u
+#ifndef EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS
+#define EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS 0
+#endif
+#if (EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS != 0 && EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS != 1) || (EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS && !EFI_XNU_WIFI_NATIVE_FAULT_HOLD)
+#error "Vendor segment extents require the terminal native fault diagnostic"
+#endif
+#if EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS
+#include "uefi-mss-vendor-extent.h"
+#endif
 #ifndef EFI_XNU_WIFI_NATIVE_COPY_TRACE_FIRST
 #define EFI_XNU_WIFI_NATIVE_COPY_TRACE_FIRST 0
 #endif
@@ -40,6 +51,9 @@ struct pmlc_copy {
 #if EFI_XNU_WIFI_NATIVE_FAULT_HOLD
     uint32_t observe_page,observe_stage,observe_words_issued,observe_words_returned;
 #endif
+#if EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS
+    uint32_t vendor_written_pages,vendor_untouched_pages;
+#endif
 };
 #if EFI_XNU_WIFI_NATIVE_FAULT_HOLD
 /* Explicit terminal diagnostic only; own-RAM progress publication, no
@@ -53,9 +67,13 @@ static int pmlc_observe(struct pmlc_copy*);
     (r)->observe_page=page_index;(r)->observe_stage=(where); \
     (r)->observe_words_issued=(where)>=3?(p)->words_issued:0; \
     (r)->observe_words_returned=(where)>=3?(p)->words_returned:0;PMLC_OBSERVE(r);}}while(0)
+#define PMLC_TRACE_UNTOUCHED(r,index) do{unsigned page_index=(index);if(page_index>=EFI_XNU_WIFI_NATIVE_COPY_TRACE_FIRST&&page_index-EFI_XNU_WIFI_NATIVE_COPY_TRACE_FIRST<256){ \
+    (r)->observe_page=page_index;(r)->observe_stage=10; \
+    (r)->observe_words_issued=0;(r)->observe_words_returned=0;PMLC_OBSERVE(r);}}while(0)
 #else
 #define PMLC_OBSERVE(r) do{}while(0)
 #define PMLC_TRACE_PAGE(r,p,index,where) do{}while(0)
+#define PMLC_TRACE_UNTOUCHED(r,index) do{}while(0)
 #endif
 #if EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 9
 #if !EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY || EFI_XNU_WIFI_COPY_PAGE_BEFORE < 1 || EFI_XNU_WIFI_COPY_PAGE_BEFORE >= PMLC_PAGES
@@ -67,6 +85,10 @@ static inline int pmlc_fail(struct pmlc_copy*r,unsigned error)
 {r->unknown=1;if(!r->error)r->error=error;return 0;}
 static inline int pmlc_live(struct pmlc_copy*r)
 {
+#if EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS
+    if(r->pages>PMLC_PAGES||r->vendor_written_pages>r->pages||r->vendor_untouched_pages>r->pages||
+       r->vendor_written_pages+r->vendor_untouched_pages!=r->pages)return pmlc_fail(r,2);
+#endif
     struct pmsc_owner*o=(void*)(uintptr_t)r->owner;
     const struct pmim_auth*a=(const void*)(uintptr_t)r->auth;
     if(!pmsc_live(o)||(o->effects&7)!=7||o->opening!=r->opening||a->unknown||a->error||a->pending||
@@ -90,13 +112,48 @@ static inline int pmlc_bound(struct pmlc_copy*r)
         t->page==a->shared_page&&t->last==a->shared_at&&t->opening>=o->opening;
 }
 #if defined(POLARIS_MSS_MODEM_COPY_SOFTWARE_PEER)
+#if EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS
+static int pmlc_vendor_write(uint64_t,uint64_t,unsigned,unsigned,struct pwfi_sha256*,struct pmsi_page*);
+#else
 static int pmlc_write(uint64_t,uint64_t,unsigned,struct pwfi_sha256*,struct pmsi_page*);
+#endif
 static int pmlc_cache(uint64_t,struct pwmk_record*);
 #else
+#if !EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS
 static inline int pmlc_write(uint64_t to,uint64_t from,unsigned bytes,struct pwfi_sha256*h,struct pmsi_page*p)
 {return pmsi_words(to,from,bytes,h,p);}
+#endif
 static inline int pmlc_cache(uint64_t to,struct pwmk_record*c)
 {return pwma_actual_cache_page((void*)(uintptr_t)to,PWMK_CLEAN_INVALIDATE,c);}
+#endif
+#if EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS
+/* Each full slot is one aligned64-bit store/readback. A partial last slot
+ * accesses exactly its remaining bytes; it never touches the page tail. */
+static inline int pmlc_vendor_words(uint64_t to,uint64_t from,unsigned bytes,unsigned extent,
+    struct pwfi_sha256*h,struct pmsi_page*p)
+{
+    if((to&4095)||!extent||extent>4096||bytes>extent||(bytes&&!from))return 0;
+    p->bytes=bytes;
+    for(unsigned offset=0;offset<extent;offset+=8){
+        PMSI_WORD_OBSERVE(p,6);uint64_t value=0;unsigned width=extent-offset;if(width>8)width=8;
+        for(unsigned j=0;j<width;j++)if(offset+j<bytes){
+            uint8_t b=*(const volatile uint8_t*)(uintptr_t)(from+offset+j);
+            value|=(uint64_t)b<<(8*j);pwfi_byte(h,b);
+        }
+        PMSI_WORD_OBSERVE(p,7);p->words_issued++;
+        if(width==8)*(volatile uint64_t*)(uintptr_t)(to+offset)=value;
+        else for(unsigned j=0;j<width;j++)*(volatile uint8_t*)(uintptr_t)(to+offset+j)=(uint8_t)(value>>(8*j));
+        PMSI_WORD_OBSERVE(p,8);
+        if(width==8){if(*(const volatile uint64_t*)(uintptr_t)(to+offset)!=value)return 0;}
+        else for(unsigned j=0;j<width;j++)if(*(const volatile uint8_t*)(uintptr_t)(to+offset+j)!=(uint8_t)(value>>(8*j)))return 0;
+        p->words_returned++;PMSI_WORD_OBSERVE(p,9);
+    }return 1;
+}
+#if !defined(POLARIS_MSS_MODEM_COPY_SOFTWARE_PEER)
+static inline int pmlc_vendor_write(uint64_t to,uint64_t from,unsigned bytes,unsigned extent,
+    struct pwfi_sha256*h,struct pmsi_page*p)
+{return pmlc_vendor_words(to,from,bytes,extent,h,p);}
+#endif
 #endif
 static inline int pmlc_begin(struct pmlc_copy*r,struct pmsc_owner*o,struct pmim_auth*a,const struct pwmt_transaction*t)
 {
@@ -201,6 +258,22 @@ static inline int pmlc_next_segment(struct pmlc_copy*r)
 #endif
         struct pmsi_page*p=&r->page[r->pages];uint64_t to=r->base+4096*r->pages,from=0;unsigned bytes=0;
         unsigned offset=4096*r->pages;
+#if EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS
+        struct pmve_extent extent;
+        unsigned first=r->segments?(r->geometry[r->segments-1].target_offset+r->geometry[r->segments-1].memsz+4095)/4096:0;
+        if(!pmve_plan(g,first,r->pages,&extent))return pmlc_fail(r,6);
+        if(extent.kind==PMVE_UNTOUCHED){
+            /* Explicit non-access record, not write/cache completion. No AT,
+             * target load/store or target maintenance is issued for a hole. */
+            if(!pwmc_zero(p,sizeof(*p))||!pmlc_live(r))return pmlc_fail(r,7);
+            p->after=o->current;p->complete=2;
+            r->pages++;s->pages++;r->vendor_untouched_pages++;
+            PMLC_TRACE_UNTOUCHED(r,r->pages-1);
+            if(!(r->pages&255))PMLC_OBSERVE(r);
+            continue;
+        }
+        if(extent.kind!=PMVE_WRITE)return pmlc_fail(r,6);
+#endif
         if(f&&offset>=g->target_offset&&offset-g->target_offset<g->filesz){
             unsigned position=offset-g->target_offset;bytes=g->filesz-position;if(bytes>4096)bytes=4096;
             from=r->blob+f->offset+position;
@@ -213,8 +286,14 @@ static inline int pmlc_next_segment(struct pmlc_copy*r)
         if(!pwmc_actual_translate(&p->target)||!pwmc_translation_valid(&p->target)||p->target.page!=to||!pmlc_live(r))
             return pmlc_fail(r,8);
         PMLC_TRACE_PAGE(r,p,r->pages,2);
+#if EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS
+        if(bytes!=extent.source_bytes||!pmlc_vendor_write(to,from,bytes,extent.target_bytes,&hash,p)||
+           p->bytes!=bytes||p->words_issued!=(extent.target_bytes+7)/8||
+           p->words_returned!=p->words_issued||!pmlc_live(r))return pmlc_fail(r,9);
+#else
         if(!pmlc_write(to,from,bytes,&hash,p)||p->bytes!=bytes||p->words_issued!=512||p->words_returned!=512||!pmlc_live(r))
             return pmlc_fail(r,9);
+#endif
         PMLC_TRACE_PAGE(r,p,r->pages,3);
 #if EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 9 && EFI_XNU_WIFI_COPY_PAGE_AFTER_WRITE
         /* Original write/readback and its live check returned; cache and
@@ -225,6 +304,9 @@ static inline int pmlc_next_segment(struct pmlc_copy*r)
             return pmlc_fail(r,10);
         PMLC_TRACE_PAGE(r,p,r->pages,4);
         p->after=o->current;p->complete=1;r->pages++;s->pages++;
+#if EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS
+        r->vendor_written_pages++;
+#endif
         PMLC_TRACE_PAGE(r,p,r->pages-1,5);
         if(!(r->pages&255))PMLC_OBSERVE(r);
     }
