@@ -40,10 +40,10 @@ struct pmlc_copy {
  * provider/secure operation, remote target access or deadline renewal. */
 static int pmlc_observe(struct pmlc_copy*);
 #define PMLC_OBSERVE(r) do{if(!pmlc_observe(r))return pmlc_fail(r,2);}while(0)
-/* Last physical publication stopped at221. Bound the finer diagnostic to
- * pages221..255; neither the producer's operations nor its deadline changes.
+/* Retained progress can precede page221 even after a returned RMB command.
+ * Bound the finer diagnostic to pages0..255; operations and deadline stay fixed.
  * Stage1 precedes initialization, so it never reads the page's old fields. */
-#define PMLC_TRACE_PAGE(r,p,index,where) do{unsigned page_index=(index);if(page_index>=221&&page_index<256){ \
+#define PMLC_TRACE_PAGE(r,p,index,where) do{unsigned page_index=(index);if(page_index<256){ \
     (r)->observe_page=page_index;(r)->observe_stage=(where); \
     (r)->observe_words_issued=(where)>=3?(p)->words_issued:0; \
     (r)->observe_words_returned=(where)>=3?(p)->words_returned:0;PMLC_OBSERVE(r);}}while(0)

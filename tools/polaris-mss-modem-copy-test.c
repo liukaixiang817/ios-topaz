@@ -56,8 +56,8 @@ static int pmlc_observe(struct pmlc_copy*r)
     CHECK(r->source_pages>=observed_source&&r->pages>=observed_pages);
     observed_source=r->source_pages;observed_pages=r->pages;
     if(r->observe_stage&&(r->observe_stage!=observed_stage||r->observe_page!=observed_page)){
-        CHECK(r->observe_page>=221&&r->observe_page<256&&r->observe_stage>=1&&r->observe_stage<=5);
-        if(r->observe_stage==1)CHECK((!observed_stage&&r->observe_page==221)||
+        CHECK(r->observe_page<256&&r->observe_stage>=1&&r->observe_stage<=5);
+        if(r->observe_stage==1)CHECK((!observed_stage&&r->observe_page==0)||
             (observed_stage==5&&r->observe_page==observed_page+1));
         else CHECK(r->observe_page==observed_page&&r->observe_stage==observed_stage+1);
         CHECK(r->observe_words_issued==(r->observe_stage>=3?512u:0u));
@@ -215,9 +215,9 @@ int main(int argc,char**argv)
     }
     CHECK(copy_record->complete&&copy_record->pages==30720&&copy_writes==30720&&copy_caches==30720);
 #if defined(PMLC_TEST_OBSERVE)
-    CHECK(observed==383&&observed_source==14687&&observed_pages==30720&&observed_ready==324);
+    CHECK(observed==1488&&observed_source==14687&&observed_pages==30720&&observed_ready==1429);
     CHECK(observed_page==255&&observed_stage==5);
-    for(unsigned n=1;n<=5;n++)CHECK(observed_stages[n]==35);
+    for(unsigned n=1;n<=5;n++)CHECK(observed_stages[n]==256);
     printf("PASS actual diagnostic progress hooks: %u bounded observations; all source/target pages retained\n",observed);
 #endif
     CHECK(copy_auth->phase==3&&copy_auth->length==124977057);

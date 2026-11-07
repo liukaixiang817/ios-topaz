@@ -56,6 +56,18 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: fresh native nonce plus first combined witness
 
+- Early-page trace0..255 qualified;only prior diagnostic predicate and host
+  assertions changed. Actual complete copy65938877checks/1488publications,
+  256x5 ordered page stages/all5 refusal boundaries PASS. OFF0/9/10 actual
+  objects remain exact. Current production COFF reproduced;both700frames/
+  max816B,closure13/stack304/320B. Unchanged RMB/auth/publisher/handler/cache/
+  vector/entry software evidence explicitly REUSED,not new hardware evidence.
+  New firmware-native-early-page-trace-0001 driverf952cd1209f18898d6b98bc1884ca54195a5e5e925cadf1ccd4ed76c9648f129,
+  image205236b6b5760671dbc7a339c61fb8f5655f403b226385e936edb06c1ff4cb77. Same kernel6241/payload dc522;
+  original81/actual codec PASS,new nonce UNUSED/NO SEND. NEXT fresh selected
+  FASTBOOT preflight,freeze/offline,ONE native start and FIRST fresh combined
+  witness64scalars284B. Goal ACTIVE2/5,current+3;push approval pending.
+
 - PHYSICAL RMB-trace native4f5fcad9... sentONCE09:05:50.147918Z,
   native09:07:30.232688Z,ACK09:07:49.716870Z;host62981 TERMINAL0/SPENT.
   Original Android/root/complete recovered selected FASTBOOT09:09:23.477533Z
