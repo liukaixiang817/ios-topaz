@@ -56,6 +56,26 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: fresh native nonce plus first combined witness
 
+- PHYSICAL word-trace native68c3caa7... source35d0cf6 sentONCE
+  09:30:50.931250Z,native09:32:31.055423Z,ACK09:32:50.566928Z;
+  host16432 TERMINAL0/SPENT. Original Android/root/complete normal recovery
+ 32918 TERMINAL0,selected FASTBOOT09:34:18.077695Z. Estimated Android kernel
+  start36.629..36.662s afterACK;reset cause remains UNPROVEN.
+- FIRST witness e117bca4 driver,actual54 parent references,448local+9external
+  freeze/offline PASS;host44697 TERMINAL0,4nonce/9624bytes/error0,stable valid
+  272B record+64scalars284B. Last published page160 stage2/words0/0,copy160pages/
+  5segments,source14687/ready1/unknown1/error0. Fixed page255 word hooks not
+  reached in retained record. ParentAUTH19/error0/unknown0,turns13287;
+  authCOPY5/modemphase1/segment5/submitted5/events22/errors0;RMB5/READ0418000C/
+  value3. Ownerheld1/effects7/error0,elapsed13.4620072396s;recordarmed1/entered0/
+  error0. No retained final error or exception;this does NOT prove no later
+  entry/dirty progress or identify one fixed page/reset cause. Actual probe
+  explicit return/FASTBOOT times are in phone-0001/result.json. Both native/
+  witness images and nonce SPENT. NEXT sample actual word stages6..9 on ALL
+  first256 pages at words0,64,..448,511 (36publications/page,max9216),using
+  same4 fixed own fields;avoid selecting another guessed fixed page.
+  Goal ACTIVE2/5,current+3;push approval pending,observer PAUSED,idle USER-PAUSED.
+
 - Word-level diagnostic qualified,NOT SENT. Existing pmsi_words loop gains
   optional own-RAM observer at stages6before source/hash,7before store,
   8after original store/before original readback,9after original readback.

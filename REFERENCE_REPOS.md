@@ -14,6 +14,11 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+Latest word diagnostic retained an earlier page160/stage2,so selected page255
+word hooks are unobserved. This rules out treating page255 as one established
+fault boundary. Next bound word observations over first256 pages,every64words
+plus last word;no new hardware/target access or reset-cause assumption.
+
 Page255 word trace brackets existing source/hash/store/readback operations;
 actual loop4097lengths/2048 protected publication refusals PASS,actual final
 hold prefix publishes before logging. No new foreign hardware/driver/read/write
