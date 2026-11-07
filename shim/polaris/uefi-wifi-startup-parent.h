@@ -9,6 +9,9 @@
 #endif
 #if EFI_XNU_WIFI_STARTUP_PARENT_AVAILABLE
 #include "uefi-wifi-network-native.h"
+#if EFI_XNU_WIFI_NATIVE_WATCHDOG_READONLY
+#include "uefi-apps-watchdog-native-readonly.h"
+#endif
 #if !EFI_XNU_WIFI_NETWORK_NATIVE_AVAILABLE || !EFI_XNU_WIFI_NONCE_NATIVE_AVAILABLE
 #error Complete native startup requires network and candidate-bound nonce producers
 #endif
@@ -43,6 +46,9 @@ struct pwns_parent {
     struct pmce_state ce;struct pmct_state transport;struct pmhc_state htc;
     struct pmwi_state wmi;struct pmht_state htt;struct pmhd_state data;
     struct pmnp_state nonce;
+#if EFI_XNU_WIFI_NATIVE_WATCHDOG_READONLY
+    struct pawn_state watchdog;
+#endif
 };
 static inline int pwns_fail(struct pwns_parent*s,unsigned error)
 {s->unknown=1;if(!s->error)s->error=error;return -1;}

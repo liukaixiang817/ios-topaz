@@ -56,6 +56,32 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: fresh native nonce plus first combined witness
 
+- Native watchdog READONLY qualified,NOT SENT. New explicit builder flag
+  requires existing firmware-only native-ready/fault/marker scope. Original
+  unmasked pawr policy unchanged. Separate masked policy binds actual owner
+  EL1 CPU0,DAIFc0/Grp0/MMU+cache/current architecture/absolute180s lease;
+  fresh saved/restored AT must prove own-DT17980000 Device/NS identity.
+  Only EN+8/STS+c/BARK+10/BITE+14,8 bounded reads/snapshot;250ms minimum,
+  max720 snapshots,stable config,20ms snapshot bound. No RST/pet/disable/
+  original-provider/secure/partition operation added. Fixed own parent suffix
+  retains latest result+first config;fault record ABI272B unchanged.
+- Current17 tests PASS3.842s (exact elapsed in public-tests.log),including
+  actual native arch callback guards,policy failure boundaries and actual
+  sampler frequency/failure/cap. Current shipping COFF reproduced,watchdog-OFF
+  COFF/MachO identical to ffcd3c2;716frames/max816B,13-function terminal fault
+  closure/stack304/320B unchanged. Existing native boot/copy/auth/word/cache/
+  vectors/idle/marker code unchanged except scoped publisher call. Same
+  kernel6241/payload dc522,original81+actual EDK2 decoder PASS.
+  Selected firmware-native-watchdog-readonly-0001 driver2ccd2c9d360d489934d1c8c8369f8438f22f651bc8c10d3abd9cf5516e47efd0,
+  image546d07a0c33c4e15bdbfda166c768785bc74e9ee3f3e02a4ba969e399ea25aba;fresh nonce UNUSED/NO SEND. Build initially
+  refused missing input/existing empty output;qualification initially refused
+  a harness include path and erroneous tick-test expectation;all preserved,
+  corrected locally before selected image/phone send. NEXT commit/mirror,
+  fresh selected FASTBOOT preflight,freeze/offline,ONE native trial,FIRST
+  new64-field witness carrying own watchdog scalars;explicit FASTBOOT return.
+  ACTIVE2/5,current+3;observer PAUSED,idle USER-PAUSED,push pending approval.
+
+
 - PHYSICAL pre-native marker/native trial source007c413 sentONCE
   10:31:32.337068Z,native10:33:12.840416Z,ACK10:33:32.354983Z;
   marker ACK preceded native start;host72480 TERMINAL0/SPENT. Bounded selected

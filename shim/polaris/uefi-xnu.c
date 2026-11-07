@@ -21,6 +21,12 @@
 #ifndef EFI_XNU_WIFI_NATIVE_BOOTLOADER_MARKER
 #define EFI_XNU_WIFI_NATIVE_BOOTLOADER_MARKER 0
 #endif
+#ifndef EFI_XNU_WIFI_NATIVE_WATCHDOG_READONLY
+#define EFI_XNU_WIFI_NATIVE_WATCHDOG_READONLY 0
+#endif
+#if (EFI_XNU_WIFI_NATIVE_WATCHDOG_READONLY != 0 && EFI_XNU_WIFI_NATIVE_WATCHDOG_READONLY != 1) || (EFI_XNU_WIFI_NATIVE_WATCHDOG_READONLY && (!EFI_XNU_WIFI_NATIVE_FAULT_HOLD || !EFI_XNU_WIFI_NATIVE_BOOTLOADER_MARKER))
+#error "Native watchdog inventory requires the explicit fault/bootloader-marker diagnostic"
+#endif
 #if EFI_XNU_WIFI_NATIVE_BOOTLOADER_MARKER != 0 && EFI_XNU_WIFI_NATIVE_BOOTLOADER_MARKER != 1
 #error "Pre-native bootloader marker must be explicitly0 or1"
 #endif
@@ -1236,6 +1242,53 @@ extern const uint8_t polaris_wifi_fault_vectors[],polaris_wifi_fault_vectors_end
 uint8_t polaris_wifi_fault_stack[PFNF_STACK_BYTES] __attribute__((aligned(4096),used));
 static struct pfnf_record wifi_native_fault __attribute__((aligned(16)));
 static struct pwtg_result wifi_native_fault_gop;
+#if EFI_XNU_WIFI_NATIVE_WATCHDOG_READONLY
+static int wifi_native_watchdog_arch(void*context,struct pawn_arch*a)
+{
+    const struct pmsc_owner*o=&wifi_native_parent.owner;struct pgcd_arch current;
+    if(context!=o||wifi_native_boot_phase!=5||wln_cpu_on_issued||o->phase!=2||
+       o->held!=1||o->complete||o->unknown||o->error||!pgcd_actual_arch(0,&current))return 0;
+    const struct pwfc_arch*b=&current.cpu,*e=&o->entry.cpu;
+    if(b->el!=e->el||b->mpidr!=e->mpidr||b->ttbr0!=e->ttbr0||b->ttbr1!=e->ttbr1||
+       b->tcr!=e->tcr||b->sctlr!=e->sctlr||b->mair!=e->mair||b->sre!=e->sre||
+       b->frequency!=e->frequency||current.cpacr!=o->entry.cpacr||
+       b->ticks<o->last||!pmsc_time(o,b->ticks))return 0;
+    a->cpu=(struct pawr_arch){b->el,b->mpidr,b->daif,b->sctlr,b->tcr,b->ttbr0,
+        b->ttbr1,b->mair,b->frequency,b->ticks};a->group1=b->group1;a->cpacr=current.cpacr;
+    return pawn_valid(a);
+}
+static int wifi_native_watchdog_translate(void*context,uint64_t address,struct pawr_translation*t)
+{
+    if(context!=&wifi_native_parent.owner||!t||
+       (address!=PAWR_BASE+8&&address!=PAWR_BASE+12&&address!=PAWR_BASE+16&&address!=PAWR_BASE+20))return 0;
+    __asm__ volatile("mrs %0,par_el1; at s1e1r,%3; isb; mrs %1,par_el1; "
+        "msr par_el1,%0; isb; mrs %2,par_el1"
+        :"=&r"(t->saved),"=&r"(t->par),"=&r"(t->restored):"r"(address):"memory");return 1;
+}
+static int wifi_native_watchdog_read(void*context,uint64_t address,uint32_t*value)
+{
+    if(context!=&wifi_native_parent.owner||!value||
+       (address!=PAWR_BASE+8&&address!=PAWR_BASE+12&&address!=PAWR_BASE+16&&address!=PAWR_BASE+20))return 0;
+    __asm__ volatile("dsb sy":::"memory");*value=*(const volatile uint32_t*)(uintptr_t)address;
+    __asm__ volatile("dsb sy":::"memory");return 1;
+}
+static int wifi_native_watchdog_sample(void)
+{
+    struct pawn_state*s=&wifi_native_parent.watchdog;struct pmsc_owner*o=&wifi_native_parent.owner;
+    struct pawn_arch bound={0};
+    if(s->result.error||s->snapshots>720)return 0;
+    if(!wifi_native_watchdog_arch(o,&bound))return 0;
+    if(s->snapshots&&bound.cpu.ticks>=s->last&&bound.cpu.ticks-s->last<4800000)return 1;
+    if(s->snapshots==720)return 0;
+    const struct pweh_result*h=(const void*)(uintptr_t)o->retained;
+    const struct pawn_ops ops={o,wifi_native_watchdog_arch,wifi_native_watchdog_translate,wifi_native_watchdog_read};
+    s->last=bound.cpu.ticks;
+    if(!pawn_run(h->map.data,h->map.map.bytes,sizeof(h->map.data),h->map.map.stride,h->map.map.version,
+       &bound,&ops,&s->result))return 0;
+    if(!s->snapshots){s->first=s->last;for(unsigned n=0;n<4;n++)s->initial[n]=s->result.value[0][n];}
+    s->snapshots++;return 1;
+}
+#endif
 static int wifi_native_fault_clean(uint64_t address,uint64_t bytes)
 {
     uint64_t el,sctlr,ctr,after,first;unsigned count;
@@ -1267,6 +1320,11 @@ static int wifi_native_fault_publish(unsigned force)
     struct pfnf_record*f=&wifi_native_fault;const struct pwns_parent*s=&wifi_native_parent;
     if(f->armed!=1||f->entered||s->turns<f->parent_turns)return 0;
     if(!force&&f->parent_phase==s->phase&&s->turns-f->parent_turns<256&&!s->error&&!s->unknown)return 1;
+#if EFI_XNU_WIFI_NATIVE_WATCHDOG_READONLY
+    int watchdog_ok=wifi_native_watchdog_sample();
+    if(!wifi_native_fault_clean((uintptr_t)&s->watchdog,sizeof(s->watchdog)))return 0;
+    if(!watchdog_ok)return 0;
+#endif
     wifi_native_fault_progress_fields();
     /* Fixed scalar/control lines only. Never clean the entire parent,
      * remote firmware bank, descriptor ownership or original-provider state. */
