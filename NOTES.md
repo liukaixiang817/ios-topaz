@@ -56,6 +56,36 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: fresh native nonce plus first combined witness
 
+- PHYSICAL fineboundary864 source2b0167e/image3e39bb9f... sentONCE
+  2026-11-07T15:47:29.268734Z,ACK15:49:26.981259Z,host33478TERMINAL0/SPENT.
+  OriginalFASTBOOT already15:51:37.700118Z,noAndroidservice. FIRST reader
+  21161cc2... freeze730local+9external/offlinePASS;host39717TERMINAL0,
+  4nonce/9640B/stable272B+64scalars292B PASS. Retained221processed8segments=
+  210written+11UNTOUCHED,source14687/ready1,owner5.528963177s,error0/entered0,
+  PAGE221/STAGE15/words0;864window NOT retained. Thus874 not a fixed failure
+  or upperbound. Explicit selectedFASTBOOT2026-11-07T15:52:45.462810+00:00;all
+  imagesSPENT. Source2b0167e pushed. No RMTFS effectiveness/cause inferred.
+- Read-only sanitized host ps check foundNO repository USBobserve/reset
+  scripts. Initial sandboxps denied;escalatedread-only filteredcheckPASS,no
+  processes killed or continuousobserver started. Human key provenance still
+  unanswered;do not assert automatic vs manualreset.
+- Own vendor audit:public pinned c7cb50... arch/arm64/mm/dma-mapping.c SHA
+ 04c6868c.../59088B and dma-mapping.h d2a163a2.../26863B fetchedprivately via
+  curl(gh absentfromPATH,webcachemiss). Own PIL map_fw_mem calls dma_remap;
+  arm64_dma_remap selects pgprot_writecombine/NormalNC for noncoherentdevice.
+  Parsed exact own live.dts MSS node+ALLancestors:no dma-coherent property.
+  Current native pwmc_translation_valid requiresNormalWB0xff. This is a real
+  expected-source mapping difference,NOT measured currentAndroid mapping or
+  established reset cause;no attribute change implemented. Primaryproof in
+  own-dma-mapping-primary-0001/own-DT-vendor-correspondence.json.
+- NEXT controlled normal Android boot + verified rooted normal service reboot
+  tobootloader,then fresh identical-code/constant fine864 native image. This
+  tests vendor initialization/teardown baseline before guessing cache/permission
+  changes. Standardfastbootreboot only,no erase/flash/GPT/rootfswrite command.
+  Boundedselected checks only;continuousobserver remainsPAUSED. ACTIVE2/5,
+  current+3;idleUSERPAUSED,allsourcepushesapproved. AlloldimagesSPENT.
+
+
 - Fine COPY-boundary window864..1119 candidate QUALIFIED,NOT SENT. ALL
   compiled project source inputs identical to physicalb4d8e2f profile;ONLY
   existing fine trace constant221->864 changes. Actual864 word/page selectors
