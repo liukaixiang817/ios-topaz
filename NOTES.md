@@ -56,6 +56,21 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: fresh native nonce plus first combined witness
 
+- Vendor-boundary FIRST864..1119 candidate QUALIFIED,NOT SENT. All project
+  source inputs byte-identical to physical47762cf profile;only existing trace
+  constant221->864 changes. Actual864 word selector256x512x4/9216publications,
+  page selector30720x5/1280publications,and actual untouched-stage10 macro
+  30720pages/exact256publications/refusal PASS. Complete vendor/legacy copy+
+  auth35tests evidence reused by exact source identity;no target/protocol/
+  secure/ownership/deadline changes. Current shippingCOFF reproduces,MachO,
+  723frames/max816B,terminalclosure13/stack304+320;original81/EDK2codec PASS.
+  Selected driver51af885bb98d93b8871573201f12e9e501d408825ec7cc285d445c3b14369e2a,
+  imagebc7a7550da395ecf67fddc83c1fc0494dba08ef200bfa3796a7df21ff3848957;freshnonceUNUSED/NO SEND. FIRST readermaxOBS1119/stage10/
+  written+untouched counters64fields292B remains exact-bound. NEXT selected
+  FASTBOOT/freeze/offline/ONE native+FIRSTreader. Source5d00415 pushSUCCEEDED.
+  ACTIVE2/5,current+3;observerPAUSED,idleUSERPAUSED,allsourcepushesapproved.
+
+
 - PHYSICAL vendor extent source47762cf/image4e351a99... sentONCE
   2026-11-07T12:51:45.044981Z,ACK2026-11-07T12:53:42.682213Z;
   host54890 TERMINAL0/SPENT. Original FASTBOOT already12:54:37.419700Z,
