@@ -40,4 +40,15 @@ static inline int pfnf_layout_valid(const struct pfnf_layout *l)
     for(unsigned n=1;n<4;n++)if(!pfnf_disjoint(l->handler,4,at[n],size[n]))return 0;
     return 1;
 }
+/* Plan only whole cache lines inside this diagnostic's already-owned image.
+ * The native caller separately verifies EL1, live cache state and CTR. */
+static inline int pfnf_clean_span(const struct pfnf_layout*l,uint64_t at,uint64_t bytes,
+    unsigned line,uint64_t*first,unsigned*count)
+{
+    if(!l||!first||!count||!bytes||bytes>4096||line<16||line>4096||
+       (line&(line-1))||at>UINT64_MAX-bytes||at+bytes>UINT64_MAX-(line-1))return 0;
+    uint64_t begin=at&~(uint64_t)(line-1),end=(at+bytes+line-1)&~(uint64_t)(line-1);
+    if(!pfnf_inside(l->image,l->image_bytes,begin,end-begin))return 0;
+    *first=begin;*count=(unsigned)((end-begin)/line);return *count&&*count<=257;
+}
 #endif

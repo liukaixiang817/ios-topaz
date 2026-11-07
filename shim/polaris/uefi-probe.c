@@ -188,7 +188,7 @@ static void witness_inventory(const void *map,uint64_t bytes,uint64_t capacity,
 #undef PNFW_FIELD
     hex("OLD_FAULT_DRIVER_BASE=",f->layout.image);
     if(r.scalar_valid)for(unsigned n=0;n<pnfw_configuration.scalar_count;n++){
-        text("OLD_PROGRESS_");hex(pnfw_scalar_names[n],r.scalar_value[0][n]);
+        text("OLD_PROGRESS_");text(pnfw_scalar_names[n]);hex("=",r.scalar_value[0][n]);
     }
 }
 #endif

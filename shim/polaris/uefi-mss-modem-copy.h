@@ -32,6 +32,14 @@ struct pmlc_copy {
     struct pmsi_page page[PMLC_PAGES];
     uint32_t attempted,unknown,error,ready,complete,source_pages,pages,segments;
 };
+#if EFI_XNU_WIFI_NATIVE_FAULT_HOLD
+/* Explicit terminal diagnostic only; own-RAM progress publication, no
+ * provider/secure operation, remote target access or deadline renewal. */
+static int pmlc_observe(struct pmlc_copy*);
+#define PMLC_OBSERVE(r) do{if(!pmlc_observe(r))return pmlc_fail(r,2);}while(0)
+#else
+#define PMLC_OBSERVE(r) do{}while(0)
+#endif
 #if EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 9
 #if !EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY || EFI_XNU_WIFI_COPY_PAGE_BEFORE < 1 || EFI_XNU_WIFI_COPY_PAGE_BEFORE >= PMLC_PAGES
 #error "Page checkpoint requires the explicit terminal firmware diagnostic and page1..30719"
@@ -76,6 +84,7 @@ static inline int pmlc_cache(uint64_t to,struct pwmk_record*c)
 static inline int pmlc_begin(struct pmlc_copy*r,struct pmsc_owner*o,struct pmim_auth*a,const struct pwmt_transaction*t)
 {
     if(!r||!o||!a||!t||!pwmc_zero(r,sizeof(*r)))return 0;r->attempted=1;
+    PMLC_OBSERVE(r);
     if(!pmsc_live(o)||!pmsc_bound(o)||(o->effects&7)!=7)return pmlc_fail(r,1);
     const struct pweh_result*h=(const void*)(uintptr_t)o->retained;
     const struct pmmn_native*m=(const void*)(uintptr_t)o->memory;
@@ -132,6 +141,7 @@ static inline int pmlc_begin(struct pmlc_copy*r,struct pmsc_owner*o,struct pmim_
     if(end!=0x7800000||total>0x7800000||asset_index!=27||!pmlc_live(r)||!pmlc_bound(r)||!pmsc_checkpoint(o))
         return pmlc_fail(r,3);
     r->unknown=1;
+    PMLC_OBSERVE(r);
     /* Authenticate every modem asset before the first target store. */
     for(unsigned k=0;k<PMIM_SEGMENTS;k++){
         const struct pmsf_segment*g=&r->geometry[k];if(!g->filesz)continue;
@@ -144,11 +154,12 @@ static inline int pmlc_begin(struct pmlc_copy*r,struct pmsc_owner*o,struct pmim_
             unsigned bytes=f->bytes-offset;if(bytes>4096)bytes=4096;
             for(unsigned j=0;j<bytes;j++)pwfi_byte(&hash,*(const volatile uint8_t*)(uintptr_t)(page+j));
             r->source_pages++;
+            if(!(r->source_pages&255))PMLC_OBSERVE(r);
         }
         pwfi_final(&hash,r->source_hash[k]);if(!pgcd_equal(r->source_hash[k],f->sha256,32))return pmlc_fail(r,5);
     }
     if(!pmlc_live(r)||!pmlc_bound(r))return pmlc_fail(r,5);
-    r->unknown=0;r->ready=1;return 1;
+    r->unknown=0;r->ready=1;PMLC_OBSERVE(r);return 1;
 }
 static inline int pmlc_next_segment(struct pmlc_copy*r)
 {
@@ -189,13 +200,15 @@ static inline int pmlc_next_segment(struct pmlc_copy*r)
         if(!pmlc_cache(to,&p->cache)||!pwmk_record_valid(&p->cache,to,PWMK_CLEAN_INVALIDATE)||!pmlc_live(r))
             return pmlc_fail(r,10);
         p->after=o->current;p->complete=1;r->pages++;s->pages++;
+        if(!(r->pages&255))PMLC_OBSERVE(r);
     }
     pwfi_final(&hash,s->copied_hash);
     if((f&&!pgcd_equal(s->copied_hash,f->sha256,32))||!pmlc_live(r)||!pmlc_bound(r))return pmlc_fail(r,11);
     s->finished=r->last;s->complete=1;
     if(r->segments==PMIM_SEGMENTS-1&&(r->pages!=PMLC_PAGES||!pmsc_checkpoint(o)))return pmlc_fail(r,12);
     if(pmim_publish(a,r->segments,o->last)!=PMIM_WAIT)return pmlc_fail(r,12);
-    s->published=1;r->segments++;r->unknown=0;if(r->segments==PMIM_SEGMENTS)r->complete=1;return 1;
+    s->published=1;r->segments++;r->unknown=0;if(r->segments==PMIM_SEGMENTS)r->complete=1;
+    PMLC_OBSERVE(r);return 1;
 }
 #endif
 #endif

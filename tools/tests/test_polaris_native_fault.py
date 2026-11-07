@@ -8,6 +8,44 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class NativeFaultTests(unittest.TestCase):
+    def test_progress_cache_lines_stay_inside_owned_image(self):
+        source = r'''
+#include "uefi-wifi-native-fault.h"
+#include <assert.h>
+int main(void){
+ struct pfnf_layout l={.image=0x100000,.image_bytes=0x20000};uint64_t first;unsigned count;
+ for(unsigned line=16;line<=4096;line*=2)for(unsigned offset=0;offset<4096;offset++){
+  for(unsigned bytes=1;bytes<=512;bytes+=17){
+   uint64_t at=l.image+4096+offset;
+   assert(pfnf_clean_span(&l,at,bytes,line,&first,&count));
+   assert(!(first&(line-1)) && first<=at && first+(uint64_t)count*line>=at+bytes);
+   assert(first>=l.image && first+(uint64_t)count*line<=l.image+l.image_bytes);
+  }
+ }
+ for(unsigned line=16;line<=4096;line*=2){
+  assert(pfnf_clean_span(&l,l.image,4096,line,&first,&count)&&count==4096/line);
+  assert(!pfnf_clean_span(&l,l.image-1,1,line,&first,&count));
+  assert(!pfnf_clean_span(&l,l.image+l.image_bytes-1,2,line,&first,&count));
+ }
+ assert(!pfnf_clean_span(&l,l.image,0,64,&first,&count));
+ assert(!pfnf_clean_span(&l,l.image,4097,64,&first,&count));
+ assert(!pfnf_clean_span(&l,UINT64_MAX-3,4,64,&first,&count));
+ assert(!pfnf_clean_span(&l,l.image,1,0,&first,&count));
+ assert(!pfnf_clean_span(&l,l.image,1,8,&first,&count));
+ assert(!pfnf_clean_span(&l,l.image,1,48,&first,&count));
+ assert(!pfnf_clean_span(&l,l.image,1,8192,&first,&count));
+ assert(!pfnf_clean_span(0,l.image,1,64,&first,&count));
+ assert(!pfnf_clean_span(&l,l.image,1,64,0,&count));
+ assert(!pfnf_clean_span(&l,l.image,1,64,&first,0));return 0;
+}
+'''
+        with tempfile.TemporaryDirectory() as folder:
+            p=Path(folder);(p/'test.c').write_text(source)
+            subprocess.run(['/usr/bin/clang','-std=c11','-O1','-g','-Wall','-Wextra','-Werror',
+                            '-fsanitize=address,undefined','-I',str(ROOT/'shim/polaris'),
+                            str(p/'test.c'),'-o',str(p/'test')],check=True)
+            subprocess.run([str(p/'test')],check=True)
+
     def test_actual_enabled_entry_arms_once_and_stays_terminal(self):
         from tools.tests.test_polaris_wifi_firmware_only import ACTUAL
         source = r'''

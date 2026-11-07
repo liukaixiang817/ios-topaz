@@ -14,6 +14,12 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+Current2026-11-07 PoC diagnostic adds only bounded own-image cache publication.
+Own Polaris/ARM cache path is reused; no foreign board MMIO,watchdog,firmware
+or driver imported. HackiOS kernel/userland comparison above remains the
+reference scope. Software23 tests/actual publisher+handler/full copy/QEMU
+cache-leaf pass;physical last progress/reset cause/Wi-Fi remain unproven.
+
 ## Resumed persistent build scope (2026-11-07 Melbourne)
 
 Temporary checkout/artifacts were absent after user pause/resume. Published

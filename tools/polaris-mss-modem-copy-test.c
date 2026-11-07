@@ -3,6 +3,9 @@
  * receipts. Shared-bank transactions use the real protocol with software SMC.
  * Own private firmware is DATA. MBA and in-flight descriptor are inaccessible. */
 #include <stdint.h>
+#if defined(PMLC_TEST_OBSERVE)
+#define EFI_XNU_WIFI_NATIVE_FAULT_HOLD 1
+#endif
 #if defined(PMLC_TEST_PAGE_BEFORE)
 #include <setjmp.h>
 #define EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT 9
@@ -42,6 +45,17 @@ static struct pwma_page*copy_descriptor;
 static uint8_t*modem_shadow,*modem_mapping;
 static unsigned copy_fault,copy_at,copy_ats,copy_writes,copy_caches,copy_source_changed;
 static unsigned fresh_retained;
+#if defined(PMLC_TEST_OBSERVE)
+static unsigned observed,observed_ready,observed_source,observed_pages;
+static int pmlc_observe(struct pmlc_copy*r)
+{
+    CHECK(r==copy_record&&r->attempted==1&&r->source_pages<=PMLC_SOURCE_PAGES&&r->pages<=PMLC_PAGES);
+    if(!r->pages&&!r->source_pages&&!r->ready)observed_source=observed_pages=0;
+    CHECK(r->source_pages>=observed_source&&r->pages>=observed_pages);
+    observed_source=r->source_pages;observed_pages=r->pages;
+    if(r->ready)observed_ready++;observed++;return 1;
+}
+#endif
 #if defined(PMLC_TEST_PAGE_BEFORE)
 __attribute__((noreturn)) static void pmlc_page_checkpoint(struct pmlc_copy*r)
 {
@@ -188,6 +202,10 @@ int main(int argc,char**argv)
         copy_publish_io();
     }
     CHECK(copy_record->complete&&copy_record->pages==30720&&copy_writes==30720&&copy_caches==30720);
+#if defined(PMLC_TEST_OBSERVE)
+    CHECK(observed==208&&observed_source==14687&&observed_pages==30720&&observed_ready==149);
+    printf("PASS actual diagnostic progress hooks: %u bounded observations; all source/target pages retained\n",observed);
+#endif
     CHECK(copy_auth->phase==3&&copy_auth->length==124977057);
     unsigned cursor=0;
     for(unsigned k=0;k<28;k++){

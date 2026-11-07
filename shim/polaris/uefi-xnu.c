@@ -1209,6 +1209,50 @@ extern const uint8_t polaris_wifi_fault_vectors[],polaris_wifi_fault_vectors_end
 uint8_t polaris_wifi_fault_stack[PFNF_STACK_BYTES] __attribute__((aligned(4096),used));
 static struct pfnf_record wifi_native_fault __attribute__((aligned(16)));
 static struct pwtg_result wifi_native_fault_gop;
+static int wifi_native_fault_clean(uint64_t address,uint64_t bytes)
+{
+    uint64_t el,sctlr,ctr,after,first;unsigned count;
+    __asm__ volatile("mrs %0,CurrentEL":"=r"(el));if(el!=4)return 0;
+    __asm__ volatile("mrs %0,sctlr_el1; mrs %1,ctr_el0":"=r"(sctlr),"=r"(ctr)::"memory");
+    unsigned line=4u<<((ctr>>16)&15);
+    if((sctlr&5)!=5||!pfnf_clean_span(&wifi_native_fault.layout,address,bytes,line,&first,&count))return 0;
+    __asm__ volatile("dsb ishst":::"memory");
+    for(unsigned n=0;n<count;n++){
+        uint64_t at=first+(uint64_t)n*line;
+        __asm__ volatile("dc cvac,%0"::"r"(at):"memory");
+    }
+    __asm__ volatile("dsb sy; isb; mrs %0,ctr_el0":"=r"(after)::"memory");
+    return after==ctr;
+}
+static void wifi_native_fault_progress_fields(void)
+{
+    struct pfnf_record*f=&wifi_native_fault;const struct pwns_parent*s=&wifi_native_parent;
+    f->boot_phase=wifi_native_boot_phase;f->parent_phase=s->phase;
+    f->parent_error=s->error;f->parent_unknown=s->unknown;f->parent_turns=s->turns;
+    f->copy_pages=s->copy.pages;f->copy_segments=s->copy.segments;
+    f->copy_error=s->copy.error;f->copy_ready=s->copy.ready;
+    f->auth_phase=s->auth.phase;f->modem_step=s->auth.modem.step;
+    f->owner_error=s->owner.error;f->owner_held=s->owner.held;
+    f->owner_opening=s->owner.opening;f->owner_last=s->owner.last;
+}
+static int wifi_native_fault_publish(unsigned force)
+{
+    struct pfnf_record*f=&wifi_native_fault;const struct pwns_parent*s=&wifi_native_parent;
+    if(f->armed!=1||f->entered||s->turns<f->parent_turns)return 0;
+    if(!force&&f->parent_phase==s->phase&&s->turns-f->parent_turns<256&&!s->error&&!s->unknown)return 1;
+    wifi_native_fault_progress_fields();
+    /* Fixed scalar/control lines only. Never clean the entire parent,
+     * remote firmware bank, descriptor ownership or original-provider state. */
+    const uint64_t at[]={(uintptr_t)&s->attempted,(uintptr_t)&s->owner.opening,
+        (uintptr_t)&s->owner.attempted,(uintptr_t)&s->copy.opening,(uintptr_t)&s->copy.attempted,
+        (uintptr_t)&s->copy.segment,(uintptr_t)&s->auth.attempted,
+        (uintptr_t)&s->auth.modem.opening,(uintptr_t)&s->auth.modem.phase};
+    const unsigned bytes[]={24,16,48,16,32,sizeof(s->copy.segment),40,16,40};
+    for(unsigned n=0;n<sizeof(at)/sizeof(at[0]);n++)if(!wifi_native_fault_clean(at[n],bytes[n]))return 0;
+    return wifi_native_fault_clean((uintptr_t)f,sizeof(*f));
+}
+static int pmlc_observe(struct pmlc_copy*r)
+{return r==&wifi_native_parent.copy&&wifi_native_fault_publish(1);}
 __attribute__((noreturn,noinline,used)) void polaris_wifi_fault_hold(uint64_t vector,uint64_t esr,
     uint64_t elr,uint64_t far,uint64_t spsr,uint64_t sp,uint64_t sp0,uint64_t ticks)
 {
@@ -1217,14 +1261,9 @@ __attribute__((noreturn,noinline,used)) void polaris_wifi_fault_hold(uint64_t ve
     f->entered=1;f->vector=vector;f->esr=esr;f->elr=elr;f->far=far;
     f->spsr=spsr;f->sp=sp;f->sp0=sp0;f->ticks=ticks;
     __asm__ volatile("mrs %0,vbar_el1":"=r"(f->vbar)::"memory");
-    const struct pwns_parent*s=&wifi_native_parent;
-    f->boot_phase=wifi_native_boot_phase;f->parent_phase=s->phase;
-    f->parent_error=s->error;f->parent_unknown=s->unknown;f->parent_turns=s->turns;
-    f->copy_pages=s->copy.pages;f->copy_segments=s->copy.segments;
-    f->copy_error=s->copy.error;f->copy_ready=s->copy.ready;
-    f->auth_phase=s->auth.phase;f->modem_step=s->auth.modem.step;
-    f->owner_error=s->owner.error;f->owner_held=s->owner.held;
-    f->owner_opening=s->owner.opening;f->owner_last=s->owner.last;
+    wifi_native_fault_progress_fields();
+    /* Preserve first exception evidence before drawing or formatting logs. */
+    (void)wifi_native_fault_clean((uintptr_t)f,sizeof(*f));
     struct pwtg_result*r=&wifi_native_fault_gop;
     pwtg_line(r,0,"NATIVE FAULT",(uint32_t)vector,f->armed);
 #define PFNF_LINE(row,label,value) pwtg_line(r,row,label,(uint32_t)((uint64_t)(value)>>32),(uint32_t)(value))
@@ -1242,6 +1281,7 @@ __attribute__((noreturn,noinline,used)) void polaris_wifi_fault_hold(uint64_t ve
     /* This independent pre-bound GOP copy has never drawn. No original
      * provider, USB, console, secure operation or reset is called on fault. */
     f->draw_result=pwtg_draw(r);
+    (void)wifi_native_fault_clean((uintptr_t)f,sizeof(*f));
     ram_text("NATIVE_FAULT_TERMINAL_RAW_V1_BEGIN\r\n");ram_hex((const void*)f,sizeof(*f));
     ram_text("NATIVE_FAULT_TERMINAL_RAW_V1_END\r\n");
     for(;;)__asm__ volatile("wfe":::"memory");
@@ -1284,7 +1324,8 @@ static int wifi_native_fault_arm(void)
     bytes_copy(&wifi_native_fault_gop,&early_wifi_gop,sizeof(early_wifi_gop));
     __asm__ volatile("msr vbar_el1,%1; isb; mrs %0,vbar_el1":"=r"(f->vbar):"r"(f->layout.vectors):"memory");
     if(f->vbar!=f->layout.vectors){f->error=4;return 0;}
-    f->armed=1;return 1;
+    f->armed=1;
+    if(!wifi_native_fault_publish(1)){f->error=4;return 0;}return 1;
 }
 static int wifi_native_fault_live(void)
 {
@@ -1292,7 +1333,7 @@ static int wifi_native_fault_live(void)
     if(wifi_native_fault.armed!=1||wifi_native_fault.entered||current!=wifi_native_fault.layout.vectors){
         wifi_native_fault.error=4;return 0;
     }
-    return 1;
+    if(!wifi_native_fault_publish(0)){wifi_native_fault.error=4;return 0;}return 1;
 }
 #endif
 #if EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 9

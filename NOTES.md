@@ -56,6 +56,37 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: fresh native nonce plus first combined witness
 
+- NEW OWN-RAM PoC publication qualification: explicit fault-hold only. Native
+  scalar/control progress plus272B first-fault record are cleaned with bounded
+  DC CVAC/DSB to PoC;no invalidate,no whole-parent/bank/provider/hardware
+  watchdog change. Long source verification publishes every256 pages and
+  successful target/cache completion every256 pages plus segment boundaries.
+  Current line planner confines complete16..4096B lines to owned image;actual
+  EL1/SCTLR M/C/CTR guards refuse wrong contexts. Record ABI272B unchanged.
+- Software PASS:23 public tests22.415s;actual publisher throttle/all10 failure
+  points/no parent stores;actual192 first/nested handler cases. Real full-copy
+  peer with hooks ON:208 observations,14687 source/30720 target pages,
+ 65885900 checks. Actual DC CVAC leaf QEMU EL1 executes and preserves data;
+  EL2 refuses before EL1/cache access. Production vectors remain byte-identical
+  to qualified3 EL1-exception/EL2-refusal baseline;that vector result REUSED.
+  Main default-OFF COFF(timestamp excepted)/MachO exact in modes0/9/10.
+- Fresh actual candidate firmware-native-progress-poc-0001: driver712704B
+  SHA5e39cff4b445dc4a6b9ab0959122b029810a0c8c63b29847e6e31f52bb4c2037;
+  image6187008B SHAd4a9cf40390c7ef15a30c07c461e3dd2e2944be80ae32250ff8081f65701e58d.
+  Actual COFF recompilation matches shipped object,COFF/MachO closure13 local
+  functions/no foreign or indirect fault calls;handler stack304/320B inside
+ 16KiB. Both700 frames/max816B. New publication functions tested;
+  unchanged entry/idle guard,ordinary root helper and old semantic/READY
+  evidence reused under exact source identities. Same kernel6241/payloaddc522,
+  original81+actual decoder preserved. New nonce NOT CONSUMED/NO SEND yet.
+- Selected original Polaris FASTBOOT freshly verified08:08:19.156368Z.
+  NEXT publish source,freeze complete new proof graph/offline admission,ONE
+  native trial,then FIRST combined nonce/fault/scalar remnant capture. No
+  intermediate probe;cache survival and physical progress remain UNKNOWN.
+  Goal ACTIVE2/5,current plus3;no scan/join/IP/DNS/data proof. Observer PAUSED,
+  idle test USER-PAUSED. Existing7215a378... unowned hunk preserved. Formal
+  report08:08Z,next08:23Z. Original owned mirror before this milestone=d86033f.
+
 - FIRST COMBINED PHYSICAL RESULT: source689e7a1 pushed/mirrored,358 local+9
   external frozen inputs/offline PASS. Image1542fe... sent ONCE07:25:17.340998Z,
   fastbootexit0 at07:25:17.591352Z;host39085 TERMINAL0 collected/SPENT. Full
