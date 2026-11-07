@@ -36,6 +36,30 @@ to the entire current segment and its following STATUS boundary, using own
 MDT-derived36A pages and length35A51C. No foreign firmware/provider/protocol
 or reset-cause claim; full authentication and WLAN remain unproven.
 
+## Continuous native startup diagnostic (0189, 2026-11-07 Melbourne)
+
+Physical225/240 prove original data224..239 write/readback/cache/completion.
+Later240 automatic Android exit does not negate the positive checkpoint;
+874/256 host-confirmed Android exits do not identify checkpoint reaches or
+fault stage. Own WatchdogTimer PE b5f7936b... static SetTimerPeriod uses UEFI
+SetTimer/TimerCancel; this is not a live apps-watchdog observation. Own pinned
+MiCode c7cb50c...DT describes17980000 watchdog,bark20000ms/pet15000ms. No new
+watchdog MMIO read/write or foreign platform address was introduced.
+
+New explicit firmware-only native-ready mode10 runs the existing complete
+parent without partial-load stops, then requires a second actual READY turn.
+No producer/order/deadline changes and no CPU_ON/kernel/root/worker. Saved-state
+NATIVE READY also checks complete30720page/28segment copy,returned/authenticated
+modem and retained owner. Errors retain their original phase-specific display.
+Pinned HackiOS kernel/userland refs were reconsulted for the complete-startup
+and configd division; no redwood firmware/address/driver was ported to Polaris.
+17 public tests/11549 terminal cases,182 actual-parent display cases,both actual
+objects694frames/max816B and81-file original codec pass. Existing non-ready
+source modes0..9 differ only by a redundant break compound; actual normal0 and
+page9 MachO exact/COFF timestamp-only. All existing native producer inputs are
+hash-identical; full software30720page copy remains software evidence. Physical
+continuous native READY/scan/join/IP/DNS/data remain unproven.
+
 ## Terminal page checkpoint localization (0189, 2026-11-07 Melbourne)
 
 Own uefi-mss-modem-copy.h and generated own MDT geometry show segment9 crosses

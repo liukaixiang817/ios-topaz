@@ -45,6 +45,9 @@ class FirmwareOnlyTests(unittest.TestCase):
 static jmp_buf stop;
 static unsigned wifi_native_boot_phase, starts, steps, holds, prefix;
 static int terminal;
+#if EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 10
+static unsigned wifi_native_firmware_ready_seen;
+#endif
 #if EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 8
 static const unsigned char polaris_wifi_image_nonces[32]={1};
 static const unsigned char polaris_wifi_image_nonce_sha256[32]={2};
@@ -63,8 +66,17 @@ int main(void){
  unsigned cases=0;const int values[]={2,-1,-7,INT_MIN};
  for(prefix=0;prefix<=64;prefix++)for(unsigned n=0;n<4;n++){
   terminal=values[n];starts=steps=holds=wifi_native_boot_phase=0;
+#if EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 10
+  wifi_native_firmware_ready_seen=0;
+#endif
   if(!setjmp(stop))wifi_native_boot();
-  assert(starts==1&&steps==prefix+1&&holds==1&&wifi_native_boot_phase==5);
+  assert(starts==1&&holds==1&&wifi_native_boot_phase==5);
+#if EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 10
+  assert(steps==prefix+1+(terminal==2));
+  assert(wifi_native_firmware_ready_seen==(terminal==2));
+#else
+  assert(steps==prefix+1);
+#endif
   cases++;
  }
  printf("PASS %u actual firmware-only terminal cases\n",cases);
@@ -77,7 +89,8 @@ int main(void){
             profiles = ([(n, None, None, None) for n in range(1, 6)] +
                         [(6, n, None, None) for n in range(1, 7)] +
                         [(7, None, n, None) for n in range(1, 29)] + [(8, None, None, None)] +
-                        [(9, None, None, n) for n in (1, 221, 256, 30719)])
+                        [(9, None, None, n) for n in (1, 221, 256, 30719)] +
+                        [(10, None, None, None)])
             for checkpoint, events, segments, page in profiles:
                 source = folder/f'checkpoint-{checkpoint}-{events}-{segments}-{page}.c'
                 source.write_text('#define EFI_XNU_WIFI_NATIVE_RUNTIME_AVAILABLE 1\n'
@@ -105,7 +118,8 @@ int main(void){
                     (6, 1, False, 1, 14), (5, 1, False, None, 14),
                     (8, 0, False, None, None), (8, 1, True, None, None))
         profiles = tuple((*p, None) for p in profiles) + (
-            (10, 1, False, None, None, None),
+            (11, 1, False, None, None, None),
+            (10, 0, False, None, None, None), (10, 1, True, None, None, None),
             (9, 1, False, None, None, 0), (9, 1, False, None, None, -1),
             (9, 1, False, None, None, 30720), (9, 0, False, None, None, 256),
             (9, 1, True, None, None, 256), (9, 1, False, 1, None, 256),
@@ -123,6 +137,51 @@ int main(void){
                                         input=text, capture_output=True, text=True)
                 self.assertNotEqual(result.returncode, 0)
                 self.assertIn('Firmware-only diagnostic requires', result.stderr)
+
+    def test_native_ready_requires_a_second_successful_actual_ready_turn(self):
+        peer = r'''
+#include <assert.h>
+#include <limits.h>
+#include <setjmp.h>
+#include <stdio.h>
+static jmp_buf stop;
+static unsigned wifi_native_boot_phase,wifi_native_firmware_ready_seen;
+static unsigned starts,steps,holds,prefix;
+static int first,second;
+static void wifi_native_startup(void){starts++;}
+static int wifi_native_startup_step(void){
+ steps++;if(steps<=prefix)return 1;return steps==prefix+1?first:second;
+}
+__attribute__((noreturn)) static void power_unknown_hold(void){holds++;longjmp(stop,1);}
+'''
+        main = r'''
+int main(void){unsigned cases=0;const int initial[]={2,-1,INT_MIN},again[]={2,1,-1,INT_MIN};
+ for(prefix=0;prefix<9;prefix++)for(unsigned a=0;a<3;a++)for(unsigned b=0;b<4;b++){
+  first=initial[a];second=again[b];starts=steps=holds=wifi_native_boot_phase=wifi_native_firmware_ready_seen=0;
+  if(!setjmp(stop))wifi_native_boot();
+  assert(starts==1&&holds==1&&wifi_native_boot_phase==5);
+  assert(steps==prefix+1+(first==2));
+  assert(wifi_native_firmware_ready_seen==(first==2&&second==2));cases++;
+ }
+ printf("PASS %u native READY recheck terminal cases\n",cases);return cases==108?0:1;
+}
+'''
+        with tempfile.TemporaryDirectory() as directory:
+            source=Path(directory)/'native-ready.c'
+            config=('#define EFI_XNU_WIFI_NATIVE_RUNTIME_AVAILABLE 1\n'
+                    '#define EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY 1\n'
+                    '#define EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT 10\n')
+            source.write_text(config+GUARD+'\n'+peer+ACTUAL+'\n'+main)
+            binary=source.with_suffix('')
+            subprocess.run(['clang','-std=c11','-O1','-g','-Wall','-Wextra','-Werror',
+                            '-fsanitize=address,undefined','-fno-sanitize-recover=all',str(source),'-o',str(binary)],
+                           check=True,capture_output=True)
+            result=subprocess.run([str(binary)],check=True,capture_output=True,text=True)
+            self.assertIn('PASS 108 native READY recheck terminal cases',result.stdout)
+            refused=config.replace('DIAGNOSTIC_ONLY 1','DIAGNOSTIC_ONLY 0')+GUARD
+            result=subprocess.run(['clang','-x','c','-fsyntax-only','-'],input=refused,capture_output=True,text=True)
+            self.assertNotEqual(result.returncode,0)
+            self.assertIn('terminal native-ready scope',result.stderr)
 
     def test_normal_runtime_still_refuses_incomplete_or_dirty_root(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -147,6 +206,26 @@ int main(void){
                      patch.object(native, 'ROOT', root), patch.object(native, 'sha', return_value='hash'), \
                      self.assertRaisesRegex(ValueError, 'current readonly root review incomplete'):
                     native.validate(path)
+
+    def test_native_ready_cannot_be_packaged_as_normal_runtime(self):
+        image = module('polaris-wifi-native-image')
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            manifest = dict(wifi_native_runtime_enabled=True,wifi_native_display_input_integrated=True,
+                RAM_only_XNU_loader=True,payload_C_admission=True,rebased_kernel_bytes_match=True,
+                kernel_handoff=True,storage_write_api=False,NVRAM_write_api=False,QEMU_variant=False,
+                physical_owned_marker_test=False,RAM_native_shutdown_bridge=True,
+                kernel_CPU_affinity=0x700,kernel_CPU_count=4,mss_firmware_in_payload=True,
+                wifi_host_nonce_native_enabled=True,wifi_native_boot_admission=False,
+                wifi_firmware_diagnostic_only=False,wifi_native_auth_metadata_checkpoint_phase='native-ready')
+            path = root/'manifest.json';path.write_text(json.dumps(manifest))
+            argv = ['image']
+            for name in ('original','kernel','payload','codec-directory'):
+                argv += ['--'+name,str(root/'unused')]
+            argv += ['--driver-manifest',str(path),'--output',str(root/'research/output')]
+            with patch.object(image,'ROOT',root), patch.object(sys,'argv',argv), \
+                 self.assertRaisesRegex(ValueError,'native-ready requires firmware-only scope'):
+                image.main()
 
     def test_actual_page_callback_is_terminal_for_valid_and_invalid_contexts(self):
         start = SOURCE.index('__attribute__((noinline,noreturn)) static void pmlc_page_checkpoint(struct pmlc_copy*c)')

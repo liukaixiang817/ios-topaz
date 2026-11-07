@@ -45,8 +45,11 @@
 #if EFI_XNU_WIFI_COPY_PAGE_AFTER_WRITE < 0 || EFI_XNU_WIFI_COPY_PAGE_AFTER_WRITE > 1 || (EFI_XNU_WIFI_COPY_PAGE_AFTER_WRITE && (EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT != 9 || !EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY || EFI_XNU_WIFI_COPY_PAGE_PROBE))
 #error "Firmware-only diagnostic requires checkpoint9 without AT-only probe for the after-write hold"
 #endif
+#if EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 10 && !EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY
+#error "Firmware-only diagnostic requires terminal native-ready scope for checkpoint10"
+#endif
 #if EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY
-#if !EFI_XNU_WIFI_NATIVE_RUNTIME_AVAILABLE || !defined(EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT) || EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT < 1 || EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT > 9
+#if !EFI_XNU_WIFI_NATIVE_RUNTIME_AVAILABLE || !defined(EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT) || EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT < 1 || EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT > 10
 #error "Firmware-only diagnostic requires native runtime and an explicit authentication checkpoint"
 #endif
 #if defined(EFI_XNU_DISK_GUID)
@@ -214,6 +217,9 @@ static int64_t cpu_status;
 static uint32_t wifi_native_boot_phase;
 #if EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 9
 static unsigned wifi_native_copy_page_seen;
+#endif
+#if EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 10
+static unsigned wifi_native_firmware_ready_seen;
 #endif
 #if EFI_XNU_WIFI_TERMINAL_GOP_DIAGNOSTICS
 static void wifi_native_startup_gop_evidence(void);
@@ -880,7 +886,7 @@ __attribute__((noreturn)) static void power_unknown_hold(void)
 #if EFI_XNU_WIFI_TERMINAL_GOP_DIAGNOSTICS
     /* Remains terminal even if this local draw fails or is partial. No
      * foreign method, cleanup, response or CPU/private restoration follows. */
-#if EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY && (EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 8 || EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 9)
+#if EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY && (EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 8 || EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 9 || EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 10)
     if(1){wifi_native_startup_gop_evidence();}else
 #endif
     {
@@ -1238,7 +1244,7 @@ __attribute__((noinline,noreturn)) static void pmlc_page_checkpoint(struct pmlc_
  * the transferred metadata or descriptor. No resume path is provided. */
 static int wifi_native_auth_metadata_checkpoint(void)
 {
-#if EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT && EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT != 8 && EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT != 9
+#if EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT && EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT != 8 && EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT != 9 && EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT != 10
     const struct pwns_parent*s=&wifi_native_parent;const struct pmsn_state*a=&s->auth;
 #if EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 1
     const unsigned index=0,phase=PMSN_MD_IO;
@@ -1744,6 +1750,31 @@ static void wifi_native_startup_gop_evidence(void)
     pwtg_line(r,15,"PAGE COMPLETE",p->complete,0);
 #endif
 #endif
+#if EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY && EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 10
+    /* The original parent has run without a mid-load hold. Only a second
+     * successful READY turn can produce this marker; failure keeps the
+     * existing phase-specific diagnostics above. No target is read here. */
+    if(wifi_native_firmware_ready_seen==1&&wifi_native_boot_phase==5&&
+       s->phase==PWNS_READY&&!s->error&&!s->unknown&&
+       o->held==1&&!o->error&&!o->unknown&&
+       s->copy.ready==1&&s->copy.complete==1&&!s->copy.error&&!s->copy.unknown&&
+       s->copy.pages==PMLC_PAGES&&s->copy.segments==PMIM_SEGMENTS&&
+       s->auth.ready==1&&s->auth.complete==1&&s->auth.phase==PMSN_DONE&&!s->auth.error&&!s->auth.unknown&&
+       !s->auth.pending&&s->auth.assignments==PMSN_ASSIGNMENTS&&
+       s->auth.modem.phase==5&&s->auth.modem.authenticated_at&&
+       !s->auth.modem.error&&!s->auth.modem.unknown&&!s->auth.modem.pending){
+        const struct pmsn_state*a=&s->auth;const struct pmim_auth*m=&a->modem;
+        pwtg_line(r,0,"NATIVE READY",wifi_native_boot_phase,s->phase);
+        pwtg_line(r,1,"COPY PAGES SEGS",s->copy.pages,s->copy.segments);
+        pwtg_line(r,2,"COPY AUTH DONE",s->copy.complete,a->complete);
+        pwtg_line(r,3,"AUTH PH ASSIGNS",a->phase,a->assignments);
+        pwtg_line(r,4,"MODEM PH EVENTS",m->phase,m->events);
+        pwtg_line(r,5,"MODEM LEN ERR",m->length,m->error);
+        pwtg_line(r,6,"AUTH TICK",(uint32_t)(m->authenticated_at>>32),(uint32_t)m->authenticated_at);
+        pwtg_line(r,7,"OWNER ERR HELD",o->error,o->held);
+        pwtg_line(r,8,"READY RECHECK",wifi_native_firmware_ready_seen,0);
+    }
+#endif
     (void)pwtg_draw(r);early_wifi_gop_raw();
 }
 #endif
@@ -2189,7 +2220,15 @@ __attribute__((noreturn)) static void wifi_native_boot(void)
 #else
     wifi_native_startup();
     wifi_native_boot_phase=5;
-    for(;;){int result=wifi_native_startup_step();if(result<0)power_unknown_hold();if(result==2)break;}
+    for(;;){int result=wifi_native_startup_step();if(result<0)power_unknown_hold();if(result==2){
+#if EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY && EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 10
+        /* Execute the actual READY live checks, not only the phase increment
+         * into READY. No CPU_ON, kernel copy, worker or root reader follows. */
+        if(wifi_native_startup_step()!=2)power_unknown_hold();
+        wifi_native_firmware_ready_seen=1;
+#endif
+        break;
+    }}
 #if EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY
     /* Even if a checkpoint predicate never matches, this separate diagnostic
      * cannot enter XNU, consume its root map, or start its kernel worker. */

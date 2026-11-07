@@ -59,12 +59,14 @@ def main():
                 'wrong native runtime scope: '+key)
     require(manifest.get('wifi_firmware_diagnostic_only', False) is args.firmware_diagnostic_only,
             'firmware diagnostic scope mismatch')
+    require(manifest.get('wifi_native_auth_metadata_checkpoint_phase') != 'native-ready' or
+            args.firmware_diagnostic_only, 'native-ready requires firmware-only scope')
     if args.firmware_diagnostic_only:
         require(manifest.get('XNU_execution_forbidden') is True and
                 manifest.get('userdata_access_api') is False and
                 manifest.get('disk_payload_path') is None and
                 manifest.get('wifi_native_auth_metadata_checkpoint_phase') in
-                ('assigned', 'returned', 'copied', 'copy-ready', 'first-copy', 'first-rmb', 'copy-prefix', 'idle-hold', 'copy-page'), 'firmware diagnostic is not terminal RAM-only')
+                ('assigned', 'returned', 'copied', 'copy-ready', 'first-copy', 'first-rmb', 'copy-prefix', 'idle-hold', 'copy-page', 'native-ready'), 'firmware diagnostic is not terminal RAM-only')
         events = manifest.get('wifi_native_first_rmb_events')
         require((type(events) is int and 1 <= events <= 6) if
                 manifest['wifi_native_auth_metadata_checkpoint_phase'] == 'first-rmb' else events is None,

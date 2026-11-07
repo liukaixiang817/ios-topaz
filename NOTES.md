@@ -54,7 +54,82 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### Current Wi-Fi handoff — 2026-11-07 Melbourne: physical225/240 PASS; fresh256 awaiting screen
+### Current Wi-Fi handoff — 2026-11-07 Melbourne: new native-ready mode10 qualification
+
+- Goal ACTIVE, execution2/5; current plus3 remain. Current goal turn PROGRESS:
+  new physical225/240 proofs, complete software copy and new continuous native
+  startup diagnostic. Long idle test remains USER-PAUSED. No scan/join/IP/DNS/
+  data proof. Standing own-source pushes and temporary fastboot boot approved.
+- Physical225 photo99152033 proves E1/E1,partial4,nextF81E1000,error0; physical240
+  photo6B966B4E proves F0/F0,partial19,nextF81F0000,error0. Data224..239 writes,
+  cache/live checks/completion returned. Later human async reply explicitly
+  confirms240 then automatically entered Android; positive checkpoint proof
+  remains valid. Human874 reply confirms Android return, no title/numbers.
+- Spent874 host85418 and spent256-0003 host71805 had native ACKs but checkpoint
+  reaches remain UNKNOWN. Exact selected original Android/root/bootcomplete1
+  was found after each; normal service return24690/67374 both TERMINAL0,final
+  selected FASTBOOT verified03:45:23.016740Z and03:56:26.942337Z respectively.
+  Neither later human240/874 reply describes current256. No new phone send
+  since256-0003. e43e214 pushed/mirrored; all spent images/nonces never replay.
+- Read-only reset records: after874 bootreason shutdown,userrequested,pstore
+  empty. After256 bootreason bootloader,pstore has prior Android console;
+  lines show init signal11 then reboot bootloader. Its relationship to our
+  earlier normal power-service request must be checked; it is NOT proof of
+  a UEFI fault or a kernel panic in this diagnostic. No exact reset cause.
+- Own WatchdogTimer PE b5f7936b... (f099d67f...) privately disassembled only;
+  SetTimerPeriod atRVA10f4 calls UEFI SetTimer with TimerCancel for period0.
+  It does not establish current apps-watchdog state. Own pinned MiCode
+  c7cb50c...sdm845.dtsi has wdt17980000,bark20000ms,pet15000ms. No watchdog
+  MMIO was read/written and no foreign watchdog address/driver was imported.
+  Kernel IOwatchdog mock patches are unrelated to this pre-kernel reset.
+- New mode10 `native-ready` runs the existing full parent WITHOUT a mid-load
+  metadata/page checkpoint. After first READY it executes a SECOND actual
+  startup turn, requiring result2 again, then records READY and remains in
+  own terminal GOP/WFE. CPU_ON/kernel/root/worker remain compiled closed.
+  Errors and original absolute deadlines retain their old paths; no hardware
+  producer, ordering, permission, memory geometry or watchdog write changed.
+  Success title NATIVE READY also requires saved copy30720pages/28segments,
+  complete/error-free auth phaseDONE/5 assignments,authenticated modemphase5,
+  ownerheld/error-free and parentREADY. Failure retains phase-specific GOP.
+- Source WIP in five owned files:shim/polaris/uefi-xnu.c,builder,native-image,
+  firmware-boot helper and firmware-only tests. Newmode10 requires explicit
+  terminal firmware-only scope in C/builder/packager. Normal native-boot.py
+  whole file still exactly95993eb; normal40check root admission still refused
+  historically38/40 and is not overridden. Unowned9-line remote-memory hunk
+  remains SHA7215a3786b3b9226aa4f839648bbecc80d9c575f3fd3fb00250481dd91786a01.
+- Fresh private firmware-native-ready-0001. Earlier driver59977 built before
+  final GOP guards is retained driver-before-final-GOP-0001,UNSELECTED/NOT SENT/
+  nonce unused. Final rebuilt99488 TERMINAL0 uses a NEW pool; driver702464B
+  SHA3dd7bb470335ff91d994bed42621694a3c4045e02a8b26782b1fd029418815c3.
+  Same kernel6241bdc3/current payloaddc522cdb... and own firmware, inert f790
+  graphics. No new kernel CI or userland/root admission.
+- Public17 tests PASSED19.569s/session22331,11549 terminal cases incl108 actual
+  READY rechecks; all normal dirty-root/scope refusals retained. Actual-parent
+  source GOP182 scenarios PASS. Two private fixture errors (forward-declaration
+  extraction,unused old-profile variable) retained and corrected only in fixture.
+  Initial non-ready CPP difference is exactly an extra compound around break;
+  allmodes0..9 otherwise token-equal under explicit normalization. Actual normal0
+  and page9 MachO EXACT,COFF timestamp-only versus pre-change source; no behavior
+  change claimed from token normalization alone. Full copy source/header unchanged;
+  prior host whole-bank peer30720pages/65883059 checks remains software evidence.
+- Both actual new COFF/MachO entry/hold/startup objects and original81-file codec
+  qualified; control proof39660 TERMINAL0,694frames/max816B. Seven malformed
+  builder profiles refuse before output/nonce generation. All17 public tests
+  and182 actual-parent GOP cases passed; source/data producer inputs only main
+  andbuilder differ from prior225,all existing hardware producers hash-identical. The complete parent
+  is inlined into startup_step: its relative callees must all be defined in the
+  hash-identical existing native inputs, with READY WMI/data/nonce live checks.
+  No page callback/kernel/worker symbols. Next finalize private proof,explicit
+  malformed-profile refusals,own-source commit/push,freeze/offline review and
+  selected-original FASTBOOT check,then one fresh native-ready boot. No image
+  for mode10 has been sent yet; do not reuse page-case reviews for new source.
+- Latest formal report04:24Z; next04:39Z,then every15min. Continuous observer
+  stays paused; bounded selected recovery remains authorized. No flash/erase/
+  GPT/Windows/manual journal repair. Original checkout is stale4f0ed6b; active
+  persistent R=research/polaris/local-workspaces/wifi-20261107. Last owned-doc
+  sync=e43e214; compare original docs against it before mirroring newer docs.
+
+### Prior detailed Wi-Fi handoff — 2026-11-07 Melbourne: physical225/240 PASS; fresh256 awaiting screen
 
 - Goal ACTIVE, execution2/5; current plus3 remain. Previous goal turn PROGRESS:
   committed5d45cbe/848d878 diagnostics, physical AT/write/cache evidence through
