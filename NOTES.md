@@ -56,6 +56,38 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: fresh native nonce plus first combined witness
 
+- ACTUAL native0002: source8144cab pushed/mirrored; corrected frozen review2
+ 771 inputs/offline recheck PASS. First review included its own writing stdout
+  log; post-output recheck caught that before any send. Review2 excludes only
+  future mutable review-output logs;source/artifact inputs remain all frozen.
+  Imagebb4157... sent ONCE07:15:11.395853Z,native07:16:51.509652Z,
+  ACK07:17:10.976140Z;100573184B/1535chunks validated,host39020 TERMINAL0
+  collected,nonce/image SPENT. No physical native READY/fault title confirmed.
+  Bounded recovery47829 observed selected original Android/bootcomplete/root,
+  then normal power service returned original FASTBOOT07:18:38.054620Z,
+  TERMINAL0/service255 expected. Optional bounded secure-debug reads timed out;
+  no mount/config change,no continuing observer. No native scan/network proof.
+- FIRST combined witness prepared for this NEW candidate: native-parent-
+  remnant-0002. Fresh linked base verified by five anchors,37 parent references,
+  fresh exact ARM sizes/layout;no intervening phone probe has been sent.
+  Initial private copied layout script still referenced old descriptor0001;
+  prior-image/identical-artifact check caught it BEFORE SEND. Corrected script
+  now asserts prior_case equals the fresh native case. Driver0001 is explicitly
+  UNSELECTED/NOT SENT and never replayed. Selected driver0002 is201216B,
+  SHA83720c96cd8f30c68315fdab9c4f03da6f4365536746ff1247de6f46f06c5566;
+  new image5933056B SHA1542fe470f1dcdd31cff98ff23000831ee5a4cea17d705f4caa4c764bfb239fe.
+  Explicit host admission also binds prior imagebb4157...,rejects old probe
+  driver19929e...,and current nonce hash128adf... differs from oldbd2cd6....
+- Fresh four actual EFI/USB cases PASS,zero old-RAM reads;actual enabled COFF
+  matches driver/default-OFF baseline,23frames/max720B. Original81 preserved,
+  actual EDK2 decode27683016B exact. Public witness/parser/reset source/test
+  hashes unchanged since25-case PASS;that result is explicitly REUSED,not
+  rerun or represented as new hardware proof. NEXT freeze corrected combined
+  probe inputs,ONE first capture,explicit FASTBOOT return,interpret actual
+  state. All old native/probe images remain SPENT;no root/kernel/radio claim.
+  Original mirror baseline8144cab;unowned7215a378... intact. Formal report
+ 07:21Z,next07:36Z. Goal ACTIVE2/5,current plus3 remain.
+
 - Goal ACTIVE2/5,current plus3 remain. Previous turn made physical progress:
   valid retained vector-arm record and autonomous verified FASTBOOT return;
   later scalar probe correctly refused the stale nonce. Still no native READY/

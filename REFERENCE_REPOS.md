@@ -49,6 +49,16 @@ imagebb4157... original81/actual decoder PASS. Next fresh one-use native trial,
 then FIRST combined record/scalar witness after normal selected recovery.
 Existing semantic/QEMU proofs reused for identical code;this is not WLAN proof.
 
+Nativebb4157... was sent once07:15:11Z,ACK07:17:10Z,later selected original
+Android/root/complete was observed;normal power service recovered verified
+FASTBOOT07:18:38Z. It is SPENT. First combined witness for that exact candidate
+is now driver83720c.../image1542fe...,with fresh actual link/ARM layout and four
+actual generic EFI cases/actual object/original81/decoder checks. A copied
+private old-descriptor path was caught by identical-artifact/prior-image check
+before send;its driver is unselected. Corrected witness explicitly binds the
+new prior image/nonce and has not yet been sent. Existing public source tests
+are reused only under unchanged source hashes. No networking/cause claim.
+
 After the first valid retained arm record,the next short probe binds only60
 fixed parent/copy/auth/owner scalar fields(260B),from37 actual linked PE/COFF
 base references and the exact original ARM compiler layout. It does not scan
