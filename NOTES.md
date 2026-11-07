@@ -56,6 +56,40 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: fresh native nonce plus first combined witness
 
+- SOURCE PUSH UNBLOCKED by direct human2026-11-07 reply in THIS chat:
+  “批准源码推送” then “我批准你的所有源码推送”. Standing authorization applies
+  to all subsequent project source pushes to own liukaixiang817/ios-topaz;
+  no repeat approval needed. Audited outgoing file names:only source/tests/
+  handoff,no research dumps/serials/firmware/Apple assets. Actual git push
+ 59869b4..7c82153 (19 commits) to codex/polaris-preflight SUCCEEDED. Previous
+  auto-review source-export block is resolved. No new kernel CI;keep using
+  CI42091724671/kernel6241/payload dc522 for these firmware-only diagnostics.
+- PHYSICAL first-gap image254b89af... source7c82153 sentONCE
+  2026-11-07T11:57:12.502904+00:00,native2026-11-07T11:58:51.548145+00:00,ACK2026-11-07T11:59:10.190441+00:00;
+  host56077 TERMINAL0/SPENT. Original FASTBOOT already present12:02:06.374350Z,
+  no Android service reboot. FIRST readerac07b2ba... freeze581local+9external/
+  offline PASS;host8888 TERMINAL0,4nonce/9640B/stable272B+64scalars292B PASS.
+  Last cleaned220pages/7segments,source14687/ready1,owner5.515567969s,
+  errors0/armed1/entered0. Window221..476 NOT reached in retained record;
+  observe fields0.12 watchdog samplesEN0/STS0/stable/error0. Explicit reader
+  reset/selected FASTBOOT verified2026-11-07T12:05:25.436752+00:00;all images/nonce
+  SPENT. Narrowing the selected window keeps yielding earlier retained samples;
+  do NOT infer fixed page220/221 or exact cause. NEXT strengthen only own-image
+  progress cache publication:defaultOFF explicit CIVAC option,scoped existing
+  bounds/EL1/cache guards;actual EL1/non-EL1 QEMU qualification precedes trial.
+  This is an empirical retention test,not a guaranteed DRAM-persistence claim.
+- Additional own-source audit:actual ARM ABI decodes prior5 immutable MSS
+  journals,all modem banksbaseF8100000/size07800000;page221 F81DD000.
+  Own peripheral-loader536..541 uses SKIP_ZEROING|NO_KERNEL_MAPPING;745..810
+  copies only filesz and zeros only memsz-filesz,not inter-segment holes.
+  Full-region clear694..719 is error cleanup only(1047..1048),not pre-load.
+  Own pil_mss_mem_setup508..544 is conditional on own DT boolean,absent in
+  inspected DTS;do NOT invent that secure call. Existing whole-bank/page-tail
+  filling diverges from vendor;possible future extent fix needs explicit
+  untouched-gap evidence/producer tests,not fabricated page completion.
+  ACTIVE2/5,current+3;observer PAUSED,idle USER-PAUSED;source pushes authorized.
+
+
 - FIRST-gap trace221..476 qualified,NOT SENT. Uses existing builder parameter,
   ALL compiled project source inputs identical to sourceb06426c (current HEAD
   ebe5695 changed handoff only). Only constant trace-first changes864->221;
