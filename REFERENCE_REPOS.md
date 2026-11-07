@@ -14,6 +14,13 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+Actual pre-native marker ACK followed by native start returned selected original
+FASTBOOT without Android service reboot. Fresh first witness4nonce/9624bytes
+passed;last cleaned874pages/9segments,first256pages complete,owner13.863373s,
+no retained error/exception. No reset-cause or Wi-Fi-ready claim. Next inspect
+own DT/vendor watchdog through a separate native read-only policy;existing
+unmasked inventory policy stays strict and no watchdog write is authorized.
+
 Pre-native one-shot marker reuses exact own original PON get/set spare ABI and
 own-DT IMEM reason,while original services are allowed. Actual copied reason
 read/write/AT leaves match the qualified short probe;old ppr reset functions

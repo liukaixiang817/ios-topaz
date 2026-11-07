@@ -56,6 +56,30 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: fresh native nonce plus first combined witness
 
+- PHYSICAL pre-native marker/native trial source007c413 sentONCE
+  10:31:32.337068Z,native10:33:12.840416Z,ACK10:33:32.354983Z;
+  marker ACK preceded native start;host72480 TERMINAL0/SPENT. Bounded selected
+  query10:34:44.467668Z found original FASTBOOT ALREADY present;no Android
+  service reboot issued. This observation alone does not identify reset cause.
+- FIRST fresh reader71d7d467... freeze493local+9external/offline PASS;
+  current real-fastboot TCP-loopback proof PASS(no phone);4 actual EFI/QEMU
+  cases/enabled object/original81+actual EDK2 decoder PASS,maxframe720B.
+  Initial image packaging correctly refused stale USB-header client proof;
+  refreshed proof passed before first reader image/send;old proof preserved.
+  Physical host35411 TERMINAL0,4nonce/9624bytes/stable272B+64scalars284B PASS.
+  Last cleaned874pages/9segments,source14687/ready1,copycomplete0,errors0;
+  owner elapsed13.863373s,held1/effects7/error0;recordarmed1/entered0/error0.
+  First256pages completed:observe255/stage5/words512/512. RMB5/READ0418000C/
+  value3 returned. Exact raw fields/times in native-preboot-marker-remnant-0001/
+  physical-result-0001.json and phone-0001/result.json. Native/witness/nonce
+  SPENT;explicit reader reset ACK and actual selected FASTBOOT VERIFIED.
+  No fixed copy page or reset cause proven;record AUTH6/scalar AUTH5 are
+  separately cleaned samples,not one coherent instant. NEXT own-source scoped
+  native read-only watchdog snapshot to check reset hypothesis;no watchdog
+  writes or foreign hardware import. ACTIVE2/5,current+3;observer PAUSED,
+  idle USER-PAUSED,GitHub source push remains blocked pending direct approval.
+
+
 - Pre-native FASTBOOT marker qualified,NOT SENT. Explicit new builder flag
   requires physical firmware-only native-ready/fault hold. New exact OEM
   command is bound once to the resident global controls pointer;inventory/
