@@ -54,7 +54,7 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### Current Wi-Fi handoff — 2026-11-07 Melbourne: physical pages225/240 PASS; fresh before874 qualification
+### Current Wi-Fi handoff — 2026-11-07 Melbourne: physical225/240 PASS; fresh256 awaiting screen
 
 - Goal ACTIVE, execution2/5; current plus3 remain. Previous goal turn PROGRESS:
   committed5d45cbe/848d878 diagnostics, physical AT/write/cache evidence through
@@ -195,8 +195,20 @@ early samples only. On0029 the human already confirmed boot complete and said
   title clarification still absent; because actual prior trial exited and the
   phone is safely back in original FASTBOOT, select this fresh once-only256
   localization using known physical240 as baseline. No statement that874
-  checkpoint failed and no exact reset cause is made. Freeze/boot is next;
-  no second phone image has been sent yet.
+  checkpoint failed and no exact reset cause is made. Frozen748/offline85737 TERMINAL0; actual producer2366checks,
+  driver702464B SHAc053d5cca7026c8d1beb17b9a949ed67976d1c7b06640ce2621800d96a4d884b,
+  image6189056B SHAffe7b66a6c8055250a0c07ff105b17fe17e6e68c59aa13d4be3b36a2b2cdb000.
+  New256-0003 sentONCE 2026-11-07T03:52:11.090599+00:00,native2026-11-07T03:53:51.312070+00:00,ACK2026-11-07T03:54:10.777127+00:00.
+  Host71805 TERMINAL0 collected; image/nonce SPENT. Actual watchdog0/idle0.
+  Current256 screen PENDING; latest async question asks only title/first-row
+  two numbers or actual Android/FASTBOOT/black screen. No further image is
+  currently selected. If physical100/100 is confirmed, next fresh257 isolates
+  the first page beyond the physical2MiB boundary. If supplementary874 photo
+  proves36A/36A,skip backward localization and expand directly. Do not infer
+  cache/MMU/watchdog cause from the unknown874 exit or ACK-only256.
+ 77a888b milestone pushed/mirrored; source remains848d878,unowned hunk unchanged.
+  No current live host job/post-native observer. Root38/40 still REFUSED.
+
   While awaiting the human874 outcome, the actual complete producer also
   passed on protected host software shadows:69391 TERMINAL0,all28 segments,
   14687 source pages/30720 target pages,65883059 checks including fault rejects.
@@ -212,7 +224,7 @@ early samples only. On0029 the human already confirmed boot complete and said
   root, then normal svc power reboot bootloader. Continuous observer stays paused.
   No flash/erase/GPT/Windows/manual journal repair; full runtime root review was
   historically REFUSED38/40 and is not re-admitted by firmware diagnostics.
-  Last formal report03:39Z; next03:54Z,then every15min.
+  Last formal report03:54Z; next04:09Z,then every15min.
   Latest positive photo immediately corrected the report's unproven225 state.
 
 ### Previous Wi-Fi handoff — 2026-11-07 Melbourne: page223 cache returned; next first data page224
