@@ -56,6 +56,21 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: fresh native nonce plus first combined witness
 
+- Fine COPY-boundary window864..1119 candidate QUALIFIED,NOT SENT. ALL
+  compiled project source inputs identical to physicalb4d8e2f profile;ONLY
+  existing fine trace constant221->864 changes. Actual864 word/page selectors
+  and untouchedstage10 across entire30720bank/refusal PASS. Globalboundary
+  stages11..15 unchanged. Existing40tests/full36scenarioauth/legacy32scenario
+  evidence reused by exactsourceidentity. ShippingCOFF reproduces,MachO720
+  frames/max816B/terminalclosure13/stack304+320;original81/EDK2codec PASS.
+  Fresh driver0daa61005eda57918f14c3e599c28ac05753687144d401de3f93af9757c75c87,
+  image3e39bb9fccf2e89ddc8e46c1e1a8cfd3eb27efc71f57413d361467b694cfdc9a;nonceUNUSED/NO SEND. FIRST reader keeps64/292B,global
+  OBSmaxstage15/page30719,all4nonce. NEXT commit/push/mirror,selectedFASTBOOT/
+  freeze/offline/ONE native+FIRSTreader to observe gap874..879 and data880.
+  No exact failure or RMTFS-effectiveness inferred from earlierstage15.
+  ACTIVE2/5,current+3;observerPAUSED,idleUSERPAUSED,allsourcepushesapproved.
+
+
 - PHYSICAL COPY-boundary sourceb4d8e2f/image3c1d51de... sentONCE
   2026-11-07T15:34:37.593668Z,ACK15:36:35.303372Z,host13389TERMINAL0/SPENT.
   OriginalFASTBOOT already15:37:49.252163Z,noAndroidservice. FIRST reader
