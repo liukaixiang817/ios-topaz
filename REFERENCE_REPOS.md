@@ -14,6 +14,13 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+Controlled normal Android baseline completed/root verified;own MSS Power/Clock
+ready interrupt observed,normal service reboot returned selectedFASTBOOT.
+Fresh identical-source+fine864 profile qualified/currentCOFF+MachO/closure/
+original81codec;one-use native/FIRST reader pending. Historical backup supplies
+GPT identities only;currentNV remains freshly read twice,guards unchanged.
+No nativeREADY inference,sourcepushes approved,active2/5/observerPAUSED.
+
 Physical fine864 variant retained earlierPAGE221/STAGE15,not selectedwindow;
 all4noncevalid/noerror. No fixed874 fault or upperbound inferred. Sanitized
 host check found no repository USB reset/observer processes. Next normal

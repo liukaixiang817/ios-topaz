@@ -56,6 +56,24 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: fresh native nonce plus first combined witness
 
+- Controlled normal Android baseline COMPLETE: boot_completed1/root0 verified,
+  own MSS Power/Clock ready interrupt observed in current kernel log;no claim
+  of nativeWLAN READY. Normal svc reboot bootloader returned selected original
+  FASTBOOT2026-11-07T16:08:22.186368Z;read-only recheck16:12:42.779672Z.
+  No observer/flash/GPT/format command. Private normal-android-baseline-0001
+  contains exact bounded command/results/logs;no device identities in git.
+- Fresh firmware-native-android-baseline-0001 QUALIFIED/UNSENT:
+  identical compiled source AND fine864 configuration to preceding3e39bb9f
+  profile;fresh nonce only. Current shippingCOFF/MachO/720frames/max816B/
+  terminalclosure13 stack304+320/original81+EDK2codec PASS;actual864selectors
+  rerun. Existing40tests/full36scenarioauth/legacy32scenarioauth reused by
+  exactsourceidentity. Drivere2383a269938d7f8742068cc74e6381bc7c8eb0eb78ae69d79d51c1d8c5c61a2,
+  imageaaf5fd4f547d71d0a76a915420772de0d8ccb7735aea347ddc07fd181eee9f19. No NV content
+  hash pinned from backup:own historical GPT identities only;each runtime
+  collector reads current NV twice. Existing freshness guards retained.
+  NEXT commit/push/mirror,freeze/offline/ONE native+FIRST matching64/292B
+  all4nonce reader. ACTIVE2/5,current+3;observerPAUSED,idleUSERPAUSED.
+
 - PHYSICAL fineboundary864 source2b0167e/image3e39bb9f... sentONCE
   2026-11-07T15:47:29.268734Z,ACK15:49:26.981259Z,host33478TERMINAL0/SPENT.
   OriginalFASTBOOT already15:51:37.700118Z,noAndroidservice. FIRST reader
