@@ -18,6 +18,21 @@
 #ifndef EFI_XNU_WIFI_NATIVE_FAULT_HOLD
 #define EFI_XNU_WIFI_NATIVE_FAULT_HOLD 0
 #endif
+#ifndef EFI_XNU_WIFI_NATIVE_BOOTLOADER_MARKER
+#define EFI_XNU_WIFI_NATIVE_BOOTLOADER_MARKER 0
+#endif
+#if EFI_XNU_WIFI_NATIVE_BOOTLOADER_MARKER != 0 && EFI_XNU_WIFI_NATIVE_BOOTLOADER_MARKER != 1
+#error "Pre-native bootloader marker must be explicitly0 or1"
+#endif
+#if EFI_XNU_WIFI_NATIVE_BOOTLOADER_MARKER
+#if !EFI_XNU_WIFI_NATIVE_FAULT_HOLD || !defined(EFI_XNU_WLED_NATIVE_RUNTIME_PHYSICAL)
+#error "Pre-native bootloader marker requires the explicit terminal native fault diagnostic"
+#endif
+#include "uefi-probe-reset.h"
+static unsigned native_marker_requested,native_marker_ready;
+static struct ppr_result native_marker_result;
+static int native_bootloader_marker(void *);
+#endif
 #if EFI_XNU_WIFI_NATIVE_FAULT_HOLD != 0 && EFI_XNU_WIFI_NATIVE_FAULT_HOLD != 1
 #error "Native fault hold must be explicitly0 or1"
 #endif
@@ -372,6 +387,7 @@ static int host_utc_command(void *context,const uint8_t *command,uint64_t bytes,
 #endif
 static int prepare_reset(void *,unsigned);
 static int runtime_arm_reset(unsigned);
+
 static int runtime_unarm_reset(void);
 static int cache_reset_protocol(void);
 static int shutdown_reset_ready(void *,unsigned);
@@ -2059,6 +2075,9 @@ static int disk_payload(void)
 static int prepare_boot(void *context)
 {
     (void)context;if(load_state!=2)return 0;
+#if EFI_XNU_WIFI_NATIVE_BOOTLOADER_MARKER
+    if(!native_marker_ready||!native_marker_result.prepared||native_marker_result.error)return 0;
+#endif
 #if EFI_XNU_WIFI_NATIVE_RUNTIME_AVAILABLE
     if(wifi_native_prepared||wifi_native_boot_phase)return 0;
 #endif
@@ -2703,6 +2722,55 @@ static int cache_reset_protocol(void)
 #endif
     return 1;
 }
+#if EFI_XNU_WIFI_NATIVE_BOOTLOADER_MARKER
+static int marker_arch(void *context,struct pawr_arch *a)
+{
+    (void)context;
+    __asm__ volatile("mrs %0,CurrentEL":"=r"(a->el));
+    if(a->el!=4)return 0;
+#define PAWR_MRS(member,reg) __asm__ volatile("mrs %0," #reg:"=r"(a->member))
+    PAWR_MRS(mpidr,mpidr_el1);PAWR_MRS(daif,daif);PAWR_MRS(sctlr,sctlr_el1);
+    PAWR_MRS(tcr,tcr_el1);PAWR_MRS(ttbr0,ttbr0_el1);PAWR_MRS(ttbr1,ttbr1_el1);
+    PAWR_MRS(mair,mair_el1);PAWR_MRS(frequency,cntfrq_el0);
+    __asm__ volatile("isb; mrs %0,cntvct_el0":"=r"(a->ticks)::"memory");
+#undef PAWR_MRS
+    uint64_t group;__asm__ volatile("mrs %0,ICC_IGRPEN1_EL1":"=r"(group));
+    return a->daif==0&&group==1;
+}
+static int marker_translate(void *context,unsigned write,struct pawr_translation*t)
+{
+    (void)context;uint64_t at=PPR_REASON;
+    if(write)__asm__ volatile("mrs %0,par_el1; at s1e1w,%3; isb; mrs %1,par_el1; msr par_el1,%0; isb; mrs %2,par_el1"
+        :"=&r"(t->saved),"=&r"(t->par),"=&r"(t->restored):"r"(at):"memory");
+    else __asm__ volatile("mrs %0,par_el1; at s1e1r,%3; isb; mrs %1,par_el1; msr par_el1,%0; isb; mrs %2,par_el1"
+        :"=&r"(t->saved),"=&r"(t->par),"=&r"(t->restored):"r"(at):"memory");
+    return 1;
+}
+static int marker_reason_read(void *context,uint32_t*v)
+{(void)context;*v=*(const volatile uint32_t*)(uintptr_t)PPR_REASON;return 1;}
+static int marker_reason_write(void *context,uint32_t v)
+{
+    (void)context;volatile uint32_t*p=(void*)(uintptr_t)PPR_REASON;
+    *p=v;__asm__ volatile("dsb sy":::"memory");return *p==v;
+}
+static int native_bootloader_marker(void *context)
+{
+    (void)context;
+    if(load_state!=2||wifi_native_prepared||wifi_native_boot_phase||wln_cpu_on_issued||
+       native_marker_requested||new_original_unknown())return 0;
+    native_marker_requested=1;
+    struct pawr_arch arch={0};
+    if(!marker_arch(0,&arch)||!pawr_arch_valid(&arch)||!cache_reset_protocol())return 0;
+    const struct ppr_ops ops={.arch=marker_arch,.translate=marker_translate,
+        .read_reason=marker_reason_read,.write_reason=marker_reason_write,.pon=reset_pon};
+    native_marker_ready=ppr_arm_marker(&native_marker_result,&ops);
+    if(!native_marker_ready&&native_marker_result.attempted)original_service_unknown=1;
+    report("NATIVE_BOOTLOADER_MARKER_READY=",native_marker_ready);
+    report("NATIVE_BOOTLOADER_MARKER_ERROR=",native_marker_result.error);
+    return native_marker_ready;
+}
+#endif
+
 static int runtime_unarm_reset(void)
 {
     if(!runtime_reset_armed)return !runtime_reset_error;
@@ -3136,7 +3204,8 @@ static struct polaris_usb_control controls={.begin=begin,.write=write_payload,.f
 #if EFI_XNU_HOST_UTC_AVAILABLE
     .host_utc=host_utc_command,
 #endif
-    .autoboot=disk_autoboot,.idle_guard=idle_guard,.host_activity=host_activity};
+    .autoboot=disk_autoboot,.idle_guard=idle_guard,.host_activity=host_activity,
+};
 #if defined(POLARIS_EFI_TEST_QEMU)
 struct file {
     uint64_t revision;
@@ -3645,6 +3714,12 @@ static void ready(void *event,void *context)
     }
 #else
     if(!(s&EFI_ERROR)){
+#if EFI_XNU_WIFI_NATIVE_BOOTLOADER_MARKER
+        if(!polaris_usb_bind_native_marker(&controls,native_bootloader_marker)){
+            report("NATIVE_BOOTLOADER_MARKER_BIND_REFUSED=",1);
+            rescue_service();for(;;)system_table->boot->stall(1000000);
+        }
+#endif
 #if defined(EFI_XNU_DISK_GUID)
         report("DISK_PAYLOAD_VALID=",disk_payload());
 #endif

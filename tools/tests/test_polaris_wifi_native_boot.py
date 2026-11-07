@@ -16,7 +16,7 @@ spec.loader.exec_module(boot)
 
 
 class NativeBootOrder(unittest.TestCase):
-    def scenario(self, fault='', execute=True, watchdog=False):
+    def scenario(self, fault='', execute=True, watchdog=False, marker=False, marker_scope=True):
         calls = []
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory).resolve()
@@ -30,6 +30,9 @@ class NativeBootOrder(unittest.TestCase):
             driver = dict(sha256='driver')
             if watchdog:driver.update(UEFI_watchdog_status_before_native_required=True,RAM_idle_reboot_enabled=False)
             review = dict(fastboot_sha256='hash', libusb_sha256='hash')
+            if marker:
+                driver.update(wifi_native_bootloader_marker=True,wifi_native_fault_hold=True,wifi_firmware_diagnostic_only=True)
+                if marker_scope:review.update(XNU_execution_forbidden=True,scope='one_native_WiFi_firmware_diagnostic_RAM_trial')
 
             def consume(*_):
                 calls.append('consume')
@@ -82,6 +85,11 @@ class NativeBootOrder(unittest.TestCase):
                     if fault == 'start':
                         raise RuntimeError('software unknown ACK')
 
+                def arm_native_bootloader_marker(self, manifest):
+                    calls.append('marker')
+                    assert manifest['wifi_native_bootloader_marker'] is True
+                    if fault=='marker':raise RuntimeError('software unknown marker ACK')
+
             argv = ['boot', '--review', str(root/'review'), '--serial-file', str(serial),
                     '--fastboot', str(root/'fastboot'), '--libusb', str(root/'libusb'), '--output', str(output)]
             if execute:
@@ -91,7 +99,7 @@ class NativeBootOrder(unittest.TestCase):
                  patch.object(boot.subprocess, 'run', side_effect=run), \
                  patch.object(boot, 'LibusbTransport', Transport), patch.object(boot, 'KernelProtocol', Protocol), \
                  patch.object(sys, 'argv', argv):
-                if fault:
+                if fault or (marker and not marker_scope):
                     with self.assertRaises(RuntimeError):
                         boot.main()
                 else:
@@ -99,7 +107,7 @@ class NativeBootOrder(unittest.TestCase):
             if execute:
                 record = json.loads((output/'boot.json').read_text())
                 self.assertFalse(record['physical_networking_verified'])
-                self.assertEqual(record['state'], 'stopped_no_retry' if fault else 'native_start_ACK')
+                self.assertEqual(record['state'], 'stopped_no_retry' if fault or (marker and not marker_scope) else 'native_start_ACK')
             else:
                 self.assertFalse(output.exists())
             return calls
@@ -127,6 +135,42 @@ class NativeBootOrder(unittest.TestCase):
                 self.assertEqual(calls.count('consume'), 0 if fault == 'product' else 1)
                 self.assertLessEqual(calls.count('send'), 1)
                 self.assertLessEqual(calls.count('start'), 1)
+
+    def test_marker_is_after_validation_before_start_and_never_retried(self):
+        calls=self.scenario(marker=True,watchdog=True)
+        self.assertLess(calls.index('stage'),calls.index('marker'))
+        self.assertLess(calls.index('upload'),calls.index('marker'))
+        self.assertLess(calls.index('marker'),calls.index('start'))
+        self.assertEqual(calls.count('marker'),1)
+        calls=self.scenario(fault='marker',marker=True)
+        self.assertNotIn('start',calls)
+        self.assertEqual(calls.count('consume'),1)
+        self.assertEqual(calls.count('marker'),1)
+        calls=self.scenario(marker=True,marker_scope=False)
+        self.assertNotIn('marker',calls)
+        self.assertNotIn('start',calls)
+
+    def test_protocol_marker_requires_validated_explicit_scope(self):
+        class Transport:
+            def __init__(self):self.calls=[];self.command=b'';self.state=b'validated';self.marker=b'OKAY'
+            def write(self,command):self.command=command;self.calls.append(command)
+            def read(self,_):
+                return b'OKAY'+self.state if self.command==b'getvar:kernel-state' else self.marker
+        manifest=dict(wifi_native_bootloader_marker=True,wifi_firmware_diagnostic_only=True,wifi_native_fault_hold=True)
+        for name in manifest:
+            transport=Transport();protocol=boot.KernelProtocol(transport);protocol.verified=True
+            bad=dict(manifest);bad[name]=False
+            with self.assertRaises(ValueError):protocol.arm_native_bootloader_marker(bad)
+            self.assertEqual(transport.calls,[])
+        transport=Transport();protocol=boot.KernelProtocol(transport);protocol.verified=True
+        protocol.arm_native_bootloader_marker(manifest)
+        self.assertEqual(transport.calls,[b'getvar:kernel-state',b'oem native-bootloader-marker'])
+        for state in (b'prepared',b'waiting-payload'):
+            transport=Transport();transport.state=state;protocol=boot.KernelProtocol(transport);protocol.verified=True
+            with self.assertRaises(ValueError):protocol.arm_native_bootloader_marker(manifest)
+            self.assertNotIn(b'oem native-bootloader-marker',transport.calls)
+        transport=Transport();transport.marker=b'FAILunknown';protocol=boot.KernelProtocol(transport);protocol.verified=True
+        with self.assertRaises(RuntimeError):protocol.arm_native_bootloader_marker(manifest)
 
 
 if __name__ == '__main__':

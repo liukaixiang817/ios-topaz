@@ -68,6 +68,10 @@ def main():
              manifest.get('wifi_native_fault_exception_return') is False and
              manifest.get('wifi_native_fault_foreign_calls') is False)),
             'native fault hold requires its terminal firmware-only scope')
+    marker=manifest.get('wifi_native_bootloader_marker',False)
+    require(type(marker) is bool and (not marker or fault_hold) and
+            manifest.get('pre_native_volatile_boot_reason_writes',False) is marker,
+            'pre-native marker requires the explicit fault diagnostic')
     if args.firmware_diagnostic_only:
         require(manifest.get('XNU_execution_forbidden') is True and
                 manifest.get('userdata_access_api') is False and
@@ -155,6 +159,7 @@ def main():
         sha256=sha(target), bytes=len(image), driver_sha256=sha(driver),
         driver_manifest_sha256=sha(args.driver_manifest), kernel_sha256=sha(args.kernel),
         payload_sha256=sha(args.payload), kernel_handoff=not args.firmware_diagnostic_only,
+        wifi_native_bootloader_marker=marker,pre_native_volatile_boot_reason_writes=marker,
         original_decoder_sha256=DECODER, original_codec_round_trip=True,
         source_inputs=evidence, packager_sha256=sha(Path(__file__)),
         boot_admission=False, physical_networking_verified=False,

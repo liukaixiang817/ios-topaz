@@ -69,6 +69,15 @@ def validate(review_path):
     require(type(fault_hold) is bool and (not fault_hold or mode==10) and
             fault_config==(['#define EFI_XNU_WIFI_NATIVE_FAULT_HOLD 1'] if fault_hold else []),
             'native fault hold compiler scope not frozen')
+    marker=driver.get('wifi_native_bootloader_marker',False)
+    marker_config=[x for x in config if x.startswith('#define EFI_XNU_WIFI_NATIVE_BOOTLOADER_MARKER')]
+    require(type(marker) is bool and (not marker or fault_hold) and
+            marker_config==(['#define EFI_XNU_WIFI_NATIVE_BOOTLOADER_MARKER 1'] if marker else []),
+            'pre-native bootloader marker compiler scope not frozen')
+    require(driver.get('pre_native_volatile_boot_reason_writes',False) is marker and
+            image.get('wifi_native_bootloader_marker',False) is marker and
+            image.get('pre_native_volatile_boot_reason_writes',False) is marker,
+            'pre-native marker image/driver binding mismatch')
     require(config.count('#define EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY 1') == 1 and
             config.count(f'#define EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT {mode}') == 1 and
             not any(x.startswith('#define EFI_XNU_DISK_GUID') for x in config),
@@ -143,6 +152,11 @@ def validate(review_path):
                 proof.get('native_fault_default_OFF_objects_identical') is True and
                 proof.get('native_fault_terminal_handler_qualified') is True,
                 'native terminal fault evidence qualification missing')
+        if marker:
+            require(proof.get('pre_native_marker_actual_policy_tested') is True and
+                    proof.get('pre_native_marker_host_order_tested') is True and
+                    proof.get('pre_native_marker_USB_ACK_after_readback_tested') is True,
+                    'pre-native marker qualification missing')
         qualified=proof.get('native_fault_qualified_objects',{})
         require(set(qualified)=={'driver-0001/uefi-wifi-native-fault.obj','actual-native-fault-macho.obj'},
                 'both actual native fault vector objects required')

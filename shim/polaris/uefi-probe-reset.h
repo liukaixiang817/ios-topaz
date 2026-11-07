@@ -54,6 +54,22 @@ static inline void ppr_restore(struct ppr_result*r,const struct ppr_ops*o)
     r->pon_restored=!o->pon->set(0,3,r->marker.before,0xfe)&&
         !o->pon->get(0,3,&restored)&&(restored&0xfe)==(r->marker.before&0xfe);
 }
+/* Explicit pre-native command only. Arm the same one-boot marker while
+ * original services are still allowed; never call ResetSystem here. */
+static inline int ppr_arm_marker(struct ppr_result*r,const struct ppr_ops*o)
+{
+    if(!r||r->attempted||!o||!o->arch||!o->translate||!o->read_reason||!o->write_reason||
+       !o->pon||o->pon->revision!=0x10001||!o->pon->get||!o->pon->set)return 0;
+    if(!o->arch(o->context,&r->opening)||!pawr_arch_valid(&r->opening)||!ppr_live(r,o))return 0;
+    r->attempted=1;r->prepared=0;
+    if(!o->read_reason(o->context,&r->before)){r->error=1;return 0;}
+    if(!polaris_efi_pon_marker(o->pon,2,&r->marker)){r->error=2;return 0;}
+    if(!ppr_live(r,o)){r->error=3;ppr_restore(r,o);return 0;}
+    r->reason_written=1;
+    if(!o->write_reason(o->context,0x77665500u)){r->error=4;ppr_restore(r,o);return 0;}
+    if(!ppr_live(r,o)){r->error=3;ppr_restore(r,o);return 0;}
+    r->prepared=1;return 1;
+}
 static inline void ppr_execute(struct ppr_result*r,const struct ppr_ops*o,unsigned mode)
 {
     /* The USB parser calls this only AFTER delivering its successful ACK.

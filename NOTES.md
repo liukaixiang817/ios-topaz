@@ -56,6 +56,44 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: fresh native nonce plus first combined witness
 
+- Pre-native FASTBOOT marker qualified,NOT SENT. Explicit new builder flag
+  requires physical firmware-only native-ready/fault hold. New exact OEM
+  command is bound once to the resident global controls pointer;inventory/
+  rescue/other controllers cannot inherit it. COMPLETE old control ABI remains
+  224B/28fields/all offsets exact in actual COFF+MachO. Ordinary clients do not
+  bind this extension. Marker callback only at validated loadstate2,not prepared/
+  native phase/CPU_ON/unknown/requested;strict EL1 CPU0/DAIF0/Grp1 and current
+  R/W NS identity AT. Reuses original PM8998 spare3 maskedFE/value04 and own
+  IMEM146bf65c/77665500;one attempt with readback,existing rollback on refusal,
+  NO ResetSystem call. Failed attempted marker marks original unknown. Raw
+  OEM boot refuses unless required marker prepared/ready/error0. No original
+  provider added after masking/native ownership;native startup/word/copy/cache/
+  vectors/handler/idle functions unchanged. No partition/NVRAM-variable write.
+- Host consumes nonce before send as before,validates payload+idle/watchdog,
+  then explicitly requests marker and records its ACK BEFORE native start.
+  Any failure/unknown ACK stops/no retry. Normal root40 validator AST and
+  complete old one-use prefix/suffix exact;firmware-specific manifest/config/
+  image/proof gates bind marker capability. Physical reset target remains
+  UNPROVEN until actual selected FASTBOOT is observed;ACK alone is not proof.
+- Software:main27 PASS23.566s;guards3 PASS0.853s;final interface25 PASS3.969s
+  include actual arm-only policy/old reset rollback/new ACK AFTER writes,
+  failed ACK no second writes,other-controller/NULL binding refusal,191 negative
+  pre-ownership combinations+positive/failures,48 actual raw boot prefixcases,
+  real host ordering/protocol scope. Counts overlap;do not sum. Default-OFF
+  normal0/page9/ready10 AND faultON/markerOFF mode10 actual COFF/MachO match
+  old120e3af source WITH old stage/USB headers;NO ABI exception. Current main
+  and USB-control COFF reproduce shipped objects;both713frames/max816B,
+  local faultclosure13/stack304/320B. Original81+actual EDK2 decoder PASS.
+- Selected firmware-native-preboot-marker-0001 driverd5d17e18743f0f1e457ea608f7b0d472b9ea414d5f6e88df4f8929da861bc796,
+  image40f6f2766e49f82c0e1f7ed1ab979d501a2b5eb685dd40803f4c282c999feb66;same kernel6241/payload dc522,
+  fresh nonce UNUSED/NO SEND. Initial early-macro guard compile was refused
+  before image;corrected to existing PHYSICAL opt-in. Intermediate232B ABI
+  draft driver/qualification are preserved UNSELECTED/UNSENT;final224B binder
+  has fresh nonce/driver. NEXT commit/mirror,preflight,freeze/offline,ONE native
+  trial,check FASTBOOT first (Android normal service fallback only if actually
+  needed),FIRST fresh64field284B witness. Goal ACTIVE2/5,current+3;observer
+  PAUSED,idle USER-PAUSED,external source push approval still pending.
+
 - PHYSICAL word-range nativee38c2b7a... source99d26c2 sentONCE
   09:45:35.395381Z,native09:47:15.529466Z,ACK2026-11-07T09:47:35.037652+00:00;host58923 TERMINAL0/SPENT. Original
   Android/root/complete recovery8206 TERMINAL0,FASTBOOT09:50:41.869150Z.

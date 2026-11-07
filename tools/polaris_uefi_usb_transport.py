@@ -293,7 +293,8 @@ class KernelProtocol(ReadOnlyProtocol):
             if not callable(reader):raise ValueError('transport has no bounded boot ACK reader')
         contact=re.fullmatch(rb'oem touch:[01]:[0-9]{1,4}:[0-9]{1,4}',command)
         if not self.verified or (command not in [b'getvar:kernel-state',b'getvar:input',b'oem boot',b'reboot',b'reboot-bootloader',
-                b'oem shutdown:1',b'oem shutdown:2',b'oem drained-reboot:1',b'oem drained-reboot:2'] and not contact):
+                b'oem shutdown:1',b'oem shutdown:2',b'oem drained-reboot:1',b'oem drained-reboot:2',
+                b'oem native-bootloader-marker'] and not contact):
             raise ValueError('unsupported or unverified control command')
         self.transport.write(command)
         reply=reader(timeout_seconds=boot_ack_seconds) if reader else self.transport.read(64)
@@ -307,6 +308,14 @@ class KernelProtocol(ReadOnlyProtocol):
                           b'AP-start-pending',b'prepared',b'validated',b'receiving',b'waiting-payload',b'admission-refused']:
             raise ValueError('unknown kernel state')
         return result.decode()
+
+    def arm_native_bootloader_marker(self, manifest):
+        if (manifest.get('wifi_native_bootloader_marker') is not True or
+                manifest.get('wifi_firmware_diagnostic_only') is not True or
+                manifest.get('wifi_native_fault_hold') is not True or self.state()!='validated'):
+            raise ValueError('pre-native marker requires the explicit validated firmware diagnostic')
+        if self._control(b'oem native-bootloader-marker'):
+            raise ValueError('invalid pre-native marker acknowledgement')
 
     def stage_payload(self,data,manifest):
         if self.state()!='waiting-payload':raise ValueError('RAM loader is not idle; reset before replacing a kernel')

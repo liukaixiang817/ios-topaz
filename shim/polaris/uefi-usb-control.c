@@ -5,6 +5,14 @@
 /* One firmware command loop; keep the transfer scratch out of the UEFI
  * thread's small stack and within the admitted driver image allocation. */
 static uint8_t receive_buffer[65536];
+static struct polaris_usb_control *native_marker_control;
+static int (*native_marker_callback)(void *);
+int polaris_usb_bind_native_marker(struct polaris_usb_control*c,int (*callback)(void *))
+{
+    if(!c||!callback||(native_marker_control&&
+       (native_marker_control!=c||native_marker_callback!=callback)))return 0;
+    native_marker_control=c;native_marker_callback=callback;return 1;
+}
 static int same(const uint8_t *p,uint64_t n,const char *s)
 {uint64_t i=0;while(i<n&&s[i]){if(p[i]!=(uint8_t)s[i])return 0;i++;}return i==n&&!s[i];}
 static int reply(struct polaris_usb_diag *d,const char *s)
@@ -37,6 +45,11 @@ int polaris_usb_control_command(struct polaris_usb_diag *d,struct polaris_usb_co
         while(s[i]&&i<60){b[4+i]=(uint8_t)s[i];i++;}return d->transmit(d->context,b,4+i);
     }
     if(same(p,n,"getvar:max-download-size"))return reply(d,"OKAY0x08000000");
+    if(same(p,n,"oem native-bootloader-marker")){
+        if(c!=native_marker_control||!native_marker_callback||!native_marker_callback(c->context))
+            return reply(d,"FAILnative bootloader marker unavailable");
+        return reply(d,"OKAY");
+    }
     if((n==14&&same(p,n,"oem utc-status")) ||
        (n==22&&p[0]=='o'&&p[1]=='e'&&p[2]=='m'&&p[3]==' '&&p[4]=='u'&&p[5]=='t'&&p[6]=='c'&&p[7]=='-') ||
        (n==63&&p[0]=='o'&&p[1]=='e'&&p[2]=='m'&&p[3]==' '&&p[4]=='u'&&p[5]=='t'&&p[6]=='c'&&p[7]=='-')) {

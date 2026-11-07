@@ -159,6 +159,17 @@ def run_trial(args, review, case, image, driver, nonce):
             save()
             require(statuses and all(int(x,16)==0 for x in statuses) and
                     idle and all(int(x,16)==0 for x in idle), 'watchdog/idle hold not confirmed; native start refused')
+        if driver.get('wifi_native_bootloader_marker') is True:
+            require(review.get('XNU_execution_forbidden') is True and
+                    driver.get('wifi_firmware_diagnostic_only') is True and
+                    driver.get('wifi_native_fault_hold') is True,
+                    'pre-native marker is outside the separate firmware diagnostic')
+            record.update(state='pre_native_bootloader_marker_attempted')
+            save()
+            protocol.arm_native_bootloader_marker(driver)
+            record.update(state='pre_native_bootloader_marker_ACK',pre_native_bootloader_marker_ACK=True,
+                          unexpected_reset_FASTBOOT_verified=False)
+            save()
         record.update(state='native_start_attempted', native_start_utc=now())
         save()
         protocol.boot(ack_seconds=90)

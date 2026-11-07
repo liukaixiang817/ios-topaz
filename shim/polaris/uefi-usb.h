@@ -75,6 +75,9 @@ struct polaris_usb_control {
     /* Optional fixed calendar metadata only. NULL keeps this scope disabled. */
     int (*host_utc)(void *,const uint8_t *,uint64_t,uint8_t [60],uint64_t *);
 };
+/* Optional extension bound to one exact resident controller. No old field or
+ * ABI offset changes, and another controller cannot inherit this command. */
+int polaris_usb_bind_native_marker(struct polaris_usb_control *,int (*)(void *));
 /* Command parsing is shared by the native host test and the real EFI driver. */
 int polaris_usb_command(struct polaris_usb_diag *,const uint8_t *,uint64_t);
 int polaris_usb_control_command(struct polaris_usb_diag *,struct polaris_usb_control *,const uint8_t *,uint64_t);

@@ -506,6 +506,7 @@ def main():
     ap.add_argument('--wifi-native-copy-page-probe',action='store_true',help='copy-page firmware diagnostic only: issue read/write AT for the selected page without reading or writing it, then hold')
     ap.add_argument('--wifi-native-copy-page-after-write',action='store_true',help='copy-page firmware diagnostic only: hold after the original page write/readback and before cache; incompatible with AT-only probe')
     ap.add_argument('--wifi-native-fault-hold',action='store_true',help='firmware-only native-ready diagnostic: install terminal CPU0 exception vectors on an independent owned stack; no exception return or reset')
+    ap.add_argument('--wifi-native-bootloader-marker',action='store_true',help='explicit terminal fault diagnostic: require a host command to arm the existing PON/IMEM FASTBOOT marker before native ownership')
     ap.add_argument('--wifi-firmware-diagnostic-only',action='store_true',help='separate default-OFF RAM firmware diagnostic with mandatory authentication checkpoint and unconditional terminal hold before XNU/CPU_ON; USB payload only')
     ap.add_argument('--wifi-native-runtime',action='store_true',help='build the complete native radio/runtime and retained terminal path; does not grant physical boot admission')
     ap.add_argument('--wifi-nv-backup-directory',type=Path,help='private own GPT backup used only to generate expected identities; current NV is reread on each boot')
@@ -524,6 +525,8 @@ def main():
         ap.error('copy-page checkpoint requires the terminal firmware-only diagnostic')
     if a.wifi_native_auth_metadata_checkpoint=='native-ready' and not a.wifi_firmware_diagnostic_only:
         ap.error('native-ready checkpoint requires the terminal firmware-only diagnostic')
+    if a.wifi_native_bootloader_marker and not a.wifi_native_fault_hold:
+        ap.error('--wifi-native-bootloader-marker requires --wifi-native-fault-hold')
     if a.wifi_native_fault_hold and not (a.wifi_firmware_diagnostic_only and
             a.wifi_native_auth_metadata_checkpoint=='native-ready'):
         ap.error('native fault hold requires firmware-only native-ready')
@@ -1141,6 +1144,8 @@ def main():
         with config.open('a') as f:f.write(f'#define EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT {auth_checkpoint_mode}\n')
     if a.wifi_native_fault_hold:
         with config.open('a') as f:f.write('#define EFI_XNU_WIFI_NATIVE_FAULT_HOLD 1\n')
+    if a.wifi_native_bootloader_marker:
+        with config.open('a') as f:f.write('#define EFI_XNU_WIFI_NATIVE_BOOTLOADER_MARKER 1\n')
     if a.wifi_native_first_rmb_events is not None:
         with config.open('a') as f:f.write(f'#define EFI_XNU_WIFI_FIRST_RMB_EVENTS {a.wifi_native_first_rmb_events}\n')
     if a.wifi_native_copy_segments is not None:
@@ -1208,6 +1213,8 @@ def main():
     if a.test_wled_native_lifecycle=='lease':flags.append('-DPOLARIS_RAM_LEASE_SECONDS=1800u')
     inputs=['shim/polaris/'+n for n in sources]+['shim/polaris/uefi.h','shim/polaris/uefi-xnu.h','shim/polaris/uefi-usb.h','shim/polaris/uefi-memory.h','shim/polaris/uefi-reset.h','shim/polaris/uefi-file.h','shim/polaris/uefi-boot-options.h','shim/polaris/uefi-ram-lease.h','shim/polaris/payload.h','tools/build-polaris-uefi-xnu.py','tools/polaris-uefi-input.h']
     if a.wifi_native_fault_hold:inputs.append('shim/polaris/uefi-wifi-native-fault.h')
+    if a.wifi_native_bootloader_marker:
+        inputs.extend(['shim/polaris/uefi-probe-reset.h','shim/polaris/uefi-apps-watchdog-readonly.h'])
     inputs+=['tools/polaris_uefi_cpu_tree.py','tools/adt.py','tools/mkpayload.py']
     inputs.append('shim/polaris/runtime-marker.h')
     if a.wifi_power_terminal_gop_diagnostics:inputs.append('shim/polaris/uefi-wifi-terminal-gop.h')
@@ -2176,6 +2183,8 @@ def main():
     if a.wifi_native_runtime:
         manifest.update(wifi_native_runtime_enabled=True,wifi_native_runtime_default_OFF=True,
             wifi_native_fault_hold=a.wifi_native_fault_hold,
+            wifi_native_bootloader_marker=a.wifi_native_bootloader_marker,
+            pre_native_volatile_boot_reason_writes=a.wifi_native_bootloader_marker,
             wifi_native_fault_stack_bytes=16384 if a.wifi_native_fault_hold else 0,
             wifi_native_fault_exception_return=False,
             wifi_native_fault_foreign_calls=False,

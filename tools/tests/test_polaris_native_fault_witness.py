@@ -94,12 +94,15 @@ class NativeFaultWitnessTests(unittest.TestCase):
 #include <assert.h>
 #include <string.h>
 struct fixture {unsigned bad,archs,reads,writes,sets,gets,resets;uint32_t reason;uint8_t pon;} f;
+static unsigned marker_ack_expected;
 static int arch(void*ctx,struct pawr_arch*a){
  (void)ctx;f.archs++;
  *a=(struct pawr_arch){4,0x81000000,0,1,0x80803518,0x13ffe89000,0,0,19200000,10+f.archs};
  if(f.bad==1)a->el=8;
  if(f.bad==2)a->daif=0x80;
  if(f.bad==3)a->ttbr0=0;
+ if(f.bad==10&&f.sets)a->ttbr0^=4096;
+ if(f.bad==11&&f.writes)a->ticks+=19200000;
  return 1;
 }
 static int at(void*ctx,unsigned write,struct pawr_translation*t){
@@ -122,12 +125,15 @@ static efi_status set(uint32_t chip,uint32_t reg,uint8_t value,uint8_t mask){
 static struct polaris_efi_pon pon={0x10001,get,set};
 static struct ppr_result result;
 static struct ppr_ops ops={0,arch,at,read_reason,write_reason,reset_system,&pon};
-static void init(void){memset(&f,0,sizeof(f));memset(&result,0,sizeof(result));f.reason=0x12345678;f.pon=0xa1;}
+static void init(void){memset(&f,0,sizeof(f));memset(&result,0,sizeof(result));f.reason=0x12345678;f.pon=0xa1;marker_ack_expected=0;}
 static int prepare(void*ctx,unsigned mode){(void)ctx;return ppr_prepare(&result,&ops,mode);}
 static void execute(void*ctx,unsigned mode){(void)ctx;ppr_execute(&result,&ops,mode);}
+static int arm_marker(void*ctx){(void)ctx;int ok=ppr_arm_marker(&result,&ops);if(ok)marker_ack_expected=1;return ok;}
 static int tx_ok=1;static unsigned replies;static uint8_t response[128];
 static int tx(void*ctx,const uint8_t*p,uint64_t n){
- (void)ctx;assert(n<sizeof(response));memcpy(response,p,n);replies++;return tx_ok;
+ (void)ctx;assert(n<sizeof(response));memcpy(response,p,n);replies++;
+ if(marker_ack_expected&&!memcmp(p,"OKAY",4))assert(result.prepared&&f.reason==0x77665500&&f.pon==5&&!f.resets);
+ return tx_ok;
 }
 static int stage(void*ctx,unsigned which,const uint8_t**p,uint64_t*n){
  (void)ctx;(void)which;(void)p;(void)n;return 0;
@@ -158,6 +164,38 @@ int main(void){
  init();tx_ok=1;assert(polaris_usb_control_command(&d,&c,(const void*)"reboot-bootloader",17));
  assert(!memcmp(response,"OKAY",4)&&f.resets==1&&result.reason_restored&&result.pon_restored);
  assert(replies==7);
+ /* The new command ACK follows verified writes; it never invokes reset. */
+ const char*marker="oem native-bootloader-marker";
+ init();assert(polaris_usb_control_command(&d,&c,(const void*)marker,strlen(marker)));
+ assert(!memcmp(response,"FAIL",4)&&!f.writes&&!f.sets&&!f.resets);
+ assert(!polaris_usb_bind_native_marker(0,arm_marker));
+ assert(!polaris_usb_bind_native_marker(&c,0));
+ assert(polaris_usb_bind_native_marker(&c,arm_marker));
+ assert(polaris_usb_bind_native_marker(&c,arm_marker));
+ struct polaris_usb_control other=c;
+ assert(!polaris_usb_bind_native_marker(&other,arm_marker));
+ init();assert(polaris_usb_control_command(&d,&other,(const void*)marker,strlen(marker)));
+ assert(!memcmp(response,"FAIL",4)&&!f.writes&&!f.sets&&!f.resets);
+ init();assert(polaris_usb_control_command(&d,&c,(const void*)marker,strlen(marker)));
+ assert(!memcmp(response,"OKAY",4)&&result.prepared&&result.attempted&&!f.resets);
+ writes=f.writes;sets=f.sets;
+ assert(polaris_usb_control_command(&d,&c,(const void*)marker,strlen(marker)));
+ assert(!memcmp(response,"FAIL",4)&&writes==f.writes&&sets==f.sets&&!f.resets);
+ for(unsigned bad=1;bad<=11;bad++){
+  init();f.bad=bad;assert(polaris_usb_control_command(&d,&c,(const void*)marker,strlen(marker)));
+  assert(!memcmp(response,"FAIL",4)&&!f.resets);
+  if(bad<=6)assert(!f.writes&&!f.sets);
+  if(bad==7||bad==8||bad==9||bad==10)assert(f.reason==0x12345678&&f.pon==0xa1);
+  if(bad==11)assert(result.error==3&&!result.prepared&&f.pon==0xa1&&!result.reason_restored);
+ }
+ init();tx_ok=0;assert(!polaris_usb_control_command(&d,&c,(const void*)marker,strlen(marker)));
+ assert(result.prepared&&f.reason==0x77665500&&f.pon==5&&!f.resets);
+ writes=f.writes;sets=f.sets;tx_ok=1;
+ assert(polaris_usb_control_command(&d,&c,(const void*)marker,strlen(marker)));
+ assert(!memcmp(response,"FAIL",4)&&writes==f.writes&&sets==f.sets&&!f.resets);
+ /* Arm-only needs no ResetSystem callback at all. */
+ init();struct ppr_ops no_reset=ops;no_reset.reset_system=0;
+ assert(ppr_arm_marker(&result,&no_reset)&&result.prepared&&!f.resets);
  return 0;
 }
 '''
