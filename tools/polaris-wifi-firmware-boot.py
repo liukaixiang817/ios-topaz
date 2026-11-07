@@ -64,6 +64,11 @@ def validate(review_path):
             'diagnostic compiler configuration not frozen')
     config = config_path.read_text().splitlines()
     mode = {'assigned': 1, 'returned': 2, 'copied': 3, 'copy-ready': 4, 'first-copy': 5, 'first-rmb': 6, 'copy-prefix': 7, 'idle-hold': 8, 'copy-page': 9, 'native-ready': 10}[driver['wifi_native_auth_metadata_checkpoint_phase']]
+    fault_hold=driver.get('wifi_native_fault_hold',False)
+    fault_config=[x for x in config if x.startswith('#define EFI_XNU_WIFI_NATIVE_FAULT_HOLD')]
+    require(type(fault_hold) is bool and (not fault_hold or mode==10) and
+            fault_config==(['#define EFI_XNU_WIFI_NATIVE_FAULT_HOLD 1'] if fault_hold else []),
+            'native fault hold compiler scope not frozen')
     require(config.count('#define EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY 1') == 1 and
             config.count(f'#define EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT {mode}') == 1 and
             not any(x.startswith('#define EFI_XNU_DISK_GUID') for x in config),
@@ -129,6 +134,23 @@ def validate(review_path):
                 proof.get('native_ready_GOP_saved_state_tested') is True and
                 proof.get('non_ready_objects_identical') is True,
                 'continuous native-ready qualification missing')
+    if fault_hold:
+        require(driver.get('wifi_native_fault_stack_bytes')==16384 and
+                driver.get('wifi_native_fault_exception_return') is False and
+                driver.get('wifi_native_fault_foreign_calls') is False and
+                proof.get('native_fault_actual_EL1_exception_cases')==3 and
+                proof.get('native_fault_non_EL1_refused') is True and
+                proof.get('native_fault_default_OFF_objects_identical') is True and
+                proof.get('native_fault_terminal_handler_qualified') is True,
+                'native terminal fault evidence qualification missing')
+        qualified=proof.get('native_fault_qualified_objects',{})
+        require(set(qualified)=={'driver-0001/uefi-wifi-native-fault.obj','actual-native-fault-macho.obj'},
+                'both actual native fault vector objects required')
+        for name,digest in qualified.items():
+            path=(case/name).resolve()
+            require(path.is_relative_to(case) and sha(path)==digest and
+                    str(path.relative_to(ROOT)) in review['files'],
+                    'native fault vector object changed or not frozen')
     if mode == 9:
         require(proof.get('page_hook_context_and_GOP_tested') is True and
                 proof.get('non_page_objects_identical') is True,

@@ -54,7 +54,68 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### Current Wi-Fi handoff — 2026-11-07 Melbourne: continuous startup returned Android; readonly watchdog probe
+### Current Wi-Fi handoff — 2026-11-07 Melbourne: terminal native exception diagnostic qualified
+
+- Goal ACTIVE2/5,current plus3 remain. No scan/join/IP/DNS/data proof. Long
+  idle test USER-PAUSED,continuous observer PAUSED. User now answered“已到
+  fastboot”after the separate readonly probe; host must freshly reverify exact
+  selected original product before sending a new image. No repeat permission.
+- Own short probe3eb739e physically read apps watchdog EN0 twice; this only
+  establishes the separate pre-native snapshot,NOT the later native state or
+  reset cause. Source3eb739e and physical doc80454c2 pushed/mirrored. No pet/
+  disable/register write was made. That probe51c365... is SPENT.
+- New explicit --wifi-native-fault-hold requires firmware-only native-ready10
+  and terminal GOP. Native startup/producers/order/deadlines remain unchanged.
+  After successful continuous CPU0 ownership, before its first parent action,
+  validate own-image vector/text/16KiB stack/record/GOP bounds,disjointness,
+  current RAM translations,owner/source binding and EL1h/SPSel1. Only then
+  install own VBAR_EL1. Live VBAR is checked before/after each parent turn.
+  Normal0..10 without this flag compile no vector/handler/stack path.
+- All16 vector slots use an independent owned stack and terminal C record;
+  no ERET,original provider,USB,console,secure operation or reset on fault.
+  Save vector/ESR/ELR/FAR/SPSR/SP/SP_EL0/counter and parent/copy/owner fields.
+  Independently pre-bound GOP copy projects NATIVE FAULT plus16 rows; nested
+  fault retains first record and holds. This diagnoses ARM faults; it does
+  not claim to prevent higher-EL/external/hardware resets or complete Wi-Fi.
+- Actual new assembly COFF/MachO text is identical; all16 slots/stub targets
+  checked. Same production COFF vector bytes passed real QEMU EL1 BRK,data
+  abort and instruction abort; QEMU EL2 refused without installing it. These
+  are architectural emulator proofs,not phone fault evidence. Actual current
+  handler192 scenarios with real parent types pass,no parent mutation; nested
+  entry preserves first record. Current READY GOP182 cases also pass.
+- Final20 public tests PASS20.143s/session31971,including ordinary dirty-root
+  refusal/shared one-use transport,11549 existing terminal cases and260 new
+  fault-enabled entry cases. Full actual enabled COFF exactly equals built
+  driver modulo timestamp; both object formats698frames,max816B. Actual
+  terminal fault call stack352B COFF/368B MachO;12 local callees,no BLR or
+  external fault-path calls. boot_kernel calls only wifi_native_boot; its
+  startup54 direct native actions and existing hardware producers remain
+  qualified. Default-OFF normal0,page9,ready10 MachO exact/COFF timestamp-only
+  against80454c2. No broader raw-token identity claim.
+- Initial precheck omitted existing WLED/GLINK compiler defines and refused;
+  rerun with exact production defines passed. Initial enabled-object comparison
+  used stdin source filename and refused a whole-object match; exact filename
+  rerun passed. Both private failures retained; no production guard weakened
+  and no failed/unselected object was sent. No source changed after final build.
+- Fresh firmware-native-fault-0001 driver710656B,
+  SHA27e68d6c0a324af8e68dac3833eb7944c8aff20dc9ea7260421e5d10f59d4900;
+  new image6184960B SHA74458d24df237eb7d384eeaa0701756d10508c63bf9ad9272e77e6293335d1f4.
+  Existing original81 files and actual decoder PASS. Same CI42091724671 exact
+  kernel6241bdc3 and payloaddc522cdb/inert f790 graphics. Only driver inputs
+  mainC/builder changed plus new faultS/header; all old hardware producer
+  input hashes identical. Normal native-boot.py whole file unchangedb3b2c7c3.
+  Unowned remote-memory hunk SHA7215a378... preserved/uncommitted.
+- Physical native-fault trial NOT SENT yet. Source qualification complete;
+  commit/push and exact original-checkout mirror,next fresh selected FASTBOOT
+  query,freeze all actual proof inputs,offline admission,then ONE new temporary
+  image/nonce. Keep all previous images/nonces SPENT. No CPU_ON/kernel/root/
+  worker admission or flash/erase/GPT/Windows/manual journal repair.
+- Active persistent R=research/polaris/local-workspaces/wifi-20261107. Original
+  O still stale4f0ed6b with owned mirror80454c2; compare that exact baseline
+  before copying the9 completed source/doc files. Latest formal report05:23Z,
+  next05:38Z. Source commit/actual boot result will update this handoff.
+
+### Prior readonly-watchdog handoff
 
 - PHYSICAL READONLY RESULT: source3eb739e pushed and six owned files mirrored.
   Frozen45 inputs/offline PASS. New image51c365... sent ONCE05:03:23.576024Z,

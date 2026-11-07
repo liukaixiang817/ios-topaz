@@ -15,6 +15,15 @@
 #ifndef EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY
 #define EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY 0
 #endif
+#ifndef EFI_XNU_WIFI_NATIVE_FAULT_HOLD
+#define EFI_XNU_WIFI_NATIVE_FAULT_HOLD 0
+#endif
+#if EFI_XNU_WIFI_NATIVE_FAULT_HOLD != 0 && EFI_XNU_WIFI_NATIVE_FAULT_HOLD != 1
+#error "Native fault hold must be explicitly0 or1"
+#endif
+#if EFI_XNU_WIFI_NATIVE_FAULT_HOLD && (!EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY || EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT != 10 || !EFI_XNU_WIFI_NATIVE_RUNTIME_AVAILABLE || !EFI_XNU_WIFI_TERMINAL_GOP_DIAGNOSTICS)
+#error "Native fault hold requires firmware-only native-ready with terminal GOP"
+#endif
 #ifndef EFI_XNU_WIFI_FIRST_RMB_EVENTS
 #define EFI_XNU_WIFI_FIRST_RMB_EVENTS 0
 #endif
@@ -1194,6 +1203,98 @@ _Static_assert(sizeof(log_buffer)>=2*(PWBD_RAW_BYTES+sizeof(pwrpt_record)+sizeof
 #include "uefi-wifi-worker-native.h"
 #include "uefi-wifi-system-off-native.h"
 static struct pwns_parent wifi_native_parent;
+#if EFI_XNU_WIFI_NATIVE_FAULT_HOLD
+#include "uefi-wifi-native-fault.h"
+extern const uint8_t polaris_wifi_fault_vectors[],polaris_wifi_fault_vectors_end[],polaris_wifi_fault_code_end[];
+uint8_t polaris_wifi_fault_stack[PFNF_STACK_BYTES] __attribute__((aligned(4096),used));
+static struct pfnf_record wifi_native_fault __attribute__((aligned(16)));
+static struct pwtg_result wifi_native_fault_gop;
+__attribute__((noreturn,noinline,used)) void polaris_wifi_fault_hold(uint64_t vector,uint64_t esr,
+    uint64_t elr,uint64_t far,uint64_t spsr,uint64_t sp,uint64_t sp0,uint64_t ticks)
+{
+    struct pfnf_record*f=&wifi_native_fault;
+    if(f->entered){f->reentered=1;for(;;)__asm__ volatile("wfe":::"memory");}
+    f->entered=1;f->vector=vector;f->esr=esr;f->elr=elr;f->far=far;
+    f->spsr=spsr;f->sp=sp;f->sp0=sp0;f->ticks=ticks;
+    __asm__ volatile("mrs %0,vbar_el1":"=r"(f->vbar)::"memory");
+    const struct pwns_parent*s=&wifi_native_parent;
+    f->boot_phase=wifi_native_boot_phase;f->parent_phase=s->phase;
+    f->parent_error=s->error;f->parent_unknown=s->unknown;f->parent_turns=s->turns;
+    f->copy_pages=s->copy.pages;f->copy_segments=s->copy.segments;
+    f->copy_error=s->copy.error;f->copy_ready=s->copy.ready;
+    f->auth_phase=s->auth.phase;f->modem_step=s->auth.modem.step;
+    f->owner_error=s->owner.error;f->owner_held=s->owner.held;
+    f->owner_opening=s->owner.opening;f->owner_last=s->owner.last;
+    struct pwtg_result*r=&wifi_native_fault_gop;
+    pwtg_line(r,0,"NATIVE FAULT",(uint32_t)vector,f->armed);
+#define PFNF_LINE(row,label,value) pwtg_line(r,row,label,(uint32_t)((uint64_t)(value)>>32),(uint32_t)(value))
+    PFNF_LINE(1,"ESR",esr);PFNF_LINE(2,"ELR",elr);PFNF_LINE(3,"FAR",far);
+    PFNF_LINE(4,"SPSR",spsr);PFNF_LINE(5,"FAULT SP",sp);PFNF_LINE(6,"FAULT TICK",ticks);
+    PFNF_LINE(7,"DRIVER BASE",f->layout.image);PFNF_LINE(8,"VECTOR BASE",f->vbar);
+    PFNF_LINE(9,"OLD VBAR",f->old_vbar);
+#undef PFNF_LINE
+    pwtg_line(r,10,"BOOT PARENT",f->boot_phase,f->parent_phase);
+    pwtg_line(r,11,"PARENT ERROR",f->parent_error,f->parent_unknown);
+    pwtg_line(r,12,"COPY PAGE SEG",f->copy_pages,f->copy_segments);
+    pwtg_line(r,13,"AUTH MODEM",f->auth_phase,f->modem_step);
+    pwtg_line(r,14,"OWNER ERR HEL",f->owner_error,f->owner_held);
+    pwtg_line(r,15,"COPY ERR RDY",f->copy_error,f->copy_ready);
+    /* This independent pre-bound GOP copy has never drawn. No original
+     * provider, USB, console, secure operation or reset is called on fault. */
+    f->draw_result=pwtg_draw(r);
+    ram_text("NATIVE_FAULT_TERMINAL_RAW_V1_BEGIN\r\n");ram_hex((const void*)f,sizeof(*f));
+    ram_text("NATIVE_FAULT_TERMINAL_RAW_V1_END\r\n");
+    for(;;)__asm__ volatile("wfe":::"memory");
+}
+static int wifi_native_fault_arm(void)
+{
+    struct pfnf_record*f=&wifi_native_fault;struct pmsc_owner*o=&wifi_native_parent.owner;
+    if(!pwmc_zero(f,sizeof(*f)))return 0;f->attempted=1;
+    f->layout=(struct pfnf_layout){pgcd_record.self_base,pgcd_record.self_bytes,
+        (uintptr_t)polaris_wifi_fault_vectors,(uintptr_t)polaris_wifi_fault_vectors_end,
+        (uintptr_t)polaris_wifi_fault_code_end,(uintptr_t)polaris_wifi_fault_hold,
+        (uintptr_t)polaris_wifi_fault_stack,sizeof(polaris_wifi_fault_stack),(uintptr_t)f,sizeof(*f),
+        (uintptr_t)&wifi_native_fault_gop,sizeof(wifi_native_fault_gop)};
+    if(!pfnf_layout_valid(&f->layout)||wifi_native_boot_phase!=5||wln_cpu_on_issued||
+       wifi_native_parent.phase!=PWNS_IMAGES||o->phase!=2||o->held!=1||o->effects||
+       !pmsc_live(o)||!pmsc_bound(o)||!early_wifi_gop.armed||early_wifi_gop.error||
+       early_wifi_gop.terminal_attempted||early_wifi_gop.self_base!=f->layout.image||
+       early_wifi_gop.self_bytes!=f->layout.image_bytes){f->error=1;return 0;}
+    const uint64_t at[]={f->layout.vectors,f->layout.stack,f->layout.record,f->layout.gop,f->layout.handler};
+    const uint64_t size[]={f->layout.code_end-f->layout.vectors,f->layout.stack_bytes,
+        f->layout.record_bytes,f->layout.gop_bytes,4};
+    for(unsigned n=0;n<5;n++){
+        if(!pmsi_image_range(&early_wifi_memory,&retained_wifi_memory.map,at[n],size[n])){f->error=2;return 0;}
+        for(uint64_t page=at[n]&~UINT64_C(4095);page<at[n]+size[n];page+=4096){
+            if(n==0||n==4){
+                struct pwmc_irq_AT t={.page=page};
+                if(!pwea_core_at(&t)||t.issued!=1||t.returned!=1||t.raw!=(UINT64_C(0xff00000000000b80)|page)){
+                    f->error=2;return 0;
+                }
+            }else{
+                struct pwmc_translation t={.page=page};
+                if(!pwmc_actual_translate(&t)||!pwmc_translation_valid(&t)){f->error=2;return 0;}
+            }
+        }
+    }
+    uint64_t select;__asm__ volatile("mrs %0,SPSel; mrs %1,vbar_el1":"=r"(select),"=r"(f->old_vbar));
+    if(select!=1||!f->old_vbar||(f->old_vbar&2047)||!pmsc_live(o)){
+        f->error=3;return 0;
+    }
+    bytes_copy(&wifi_native_fault_gop,&early_wifi_gop,sizeof(early_wifi_gop));
+    __asm__ volatile("msr vbar_el1,%1; isb; mrs %0,vbar_el1":"=r"(f->vbar):"r"(f->layout.vectors):"memory");
+    if(f->vbar!=f->layout.vectors){f->error=4;return 0;}
+    f->armed=1;return 1;
+}
+static int wifi_native_fault_live(void)
+{
+    uint64_t current;__asm__ volatile("mrs %0,vbar_el1":"=r"(current)::"memory");
+    if(wifi_native_fault.armed!=1||wifi_native_fault.entered||current!=wifi_native_fault.layout.vectors){
+        wifi_native_fault.error=4;return 0;
+    }
+    return 1;
+}
+#endif
 #if EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 9
 #if EFI_XNU_WIFI_COPY_PAGE_PROBE
 static struct pwmc_translation wifi_native_copy_page_AT;
@@ -1775,6 +1876,13 @@ static void wifi_native_startup_gop_evidence(void)
         pwtg_line(r,8,"READY RECHECK",wifi_native_firmware_ready_seen,0);
     }
 #endif
+#if EFI_XNU_WIFI_NATIVE_FAULT_HOLD
+    if(wifi_native_fault.attempted&&wifi_native_fault.error){
+        pwtg_line(r,0,"FAULT ARM ERR",wifi_native_fault.error,wifi_native_fault.armed);
+        pwtg_line(r,1,"FAULT VBAR",(uint32_t)(wifi_native_fault.vbar>>32),(uint32_t)wifi_native_fault.vbar);
+        pwtg_line(r,2,"FAULT OLD VBR",(uint32_t)(wifi_native_fault.old_vbar>>32),(uint32_t)wifi_native_fault.old_vbar);
+    }
+#endif
     (void)pwtg_draw(r);early_wifi_gop_raw();
 }
 #endif
@@ -2210,7 +2318,17 @@ __attribute__((noinline)) static void wifi_native_startup(void)
 }
 /* The staged producer switch has its own bounded temporary storage. */
 __attribute__((noinline)) static int wifi_native_startup_step(void)
-{if(wifi_native_auth_metadata_checkpoint())power_unknown_hold();return pwns_step(&wifi_native_parent);}
+{
+#if EFI_XNU_WIFI_NATIVE_FAULT_HOLD
+    if(!wifi_native_fault_live())power_unknown_hold();
+#endif
+    if(wifi_native_auth_metadata_checkpoint())power_unknown_hold();
+    int result=pwns_step(&wifi_native_parent);
+#if EFI_XNU_WIFI_NATIVE_FAULT_HOLD
+    if(!wifi_native_fault_live())power_unknown_hold();
+#endif
+    return result;
+}
 __attribute__((noreturn)) static void wifi_native_boot(void)
 {
 #if EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY && EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 8
@@ -2220,6 +2338,9 @@ __attribute__((noreturn)) static void wifi_native_boot(void)
 #else
     wifi_native_startup();
     wifi_native_boot_phase=5;
+#if EFI_XNU_WIFI_NATIVE_FAULT_HOLD
+    if(!wifi_native_fault_arm())power_unknown_hold();
+#endif
     for(;;){int result=wifi_native_startup_step();if(result<0)power_unknown_hold();if(result==2){
 #if EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY && EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 10
         /* Execute the actual READY live checks, not only the phase increment

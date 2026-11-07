@@ -38,6 +38,19 @@ or reset-cause claim; full authentication and WLAN remain unproven.
 
 ## Continuous native startup diagnostic (0189, 2026-11-07 Melbourne)
 
+New explicit firmware-only native-ready fault hold uses own existing AP vector
+layout as an architectural reference only; no foreign firmware or MMIO driver.
+Own CPU0 continuous owner must succeed before own-image vectors/16KiB stack/
+record/independent GOP bounds/translations are admitted. It requires live EL1h,
+then terminal VBAR evidence captures ARM fault state and parent/copy progress;
+no ERET/provider/secure call/USB/reset on fault. All16 vector entries byte-check
+and actual production COFF/MachO text match. Three real QEMU EL1 exception
+classes and EL2 refusal pass;192 actual-handler/182 READY GOP cases and20 public
+tests pass. Both enabled objects698frames,max816B;352/368B terminal call stack.
+Actual default-OFF objects normal0/page9/ready10 match previous source. Existing
+native producer inputs/ordering/deadlines remain unchanged. No physical fault
+or WLAN success is inferred; the new image is not yet sent.
+
 Mode10 subsequently returned to original Android; host normal-service recovery
 verified selected FASTBOOT04:35:54Z. Approx Android boot34.32s after native ACK
 is consistent with own DT20s bark/vendor+10s bite but does not prove the cause.

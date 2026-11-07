@@ -61,6 +61,13 @@ def main():
             'firmware diagnostic scope mismatch')
     require(manifest.get('wifi_native_auth_metadata_checkpoint_phase') != 'native-ready' or
             args.firmware_diagnostic_only, 'native-ready requires firmware-only scope')
+    fault_hold=manifest.get('wifi_native_fault_hold',False)
+    require(type(fault_hold) is bool and (not fault_hold or
+            (args.firmware_diagnostic_only and manifest.get('wifi_native_auth_metadata_checkpoint_phase')=='native-ready' and
+             manifest.get('wifi_native_fault_stack_bytes')==16384 and
+             manifest.get('wifi_native_fault_exception_return') is False and
+             manifest.get('wifi_native_fault_foreign_calls') is False)),
+            'native fault hold requires its terminal firmware-only scope')
     if args.firmware_diagnostic_only:
         require(manifest.get('XNU_execution_forbidden') is True and
                 manifest.get('userdata_access_api') is False and

@@ -505,6 +505,7 @@ def main():
     ap.add_argument('--wifi-native-copy-page-before',type=int,help='copy-page firmware diagnostic only: hold before translating/writing target page1..30719; no resume')
     ap.add_argument('--wifi-native-copy-page-probe',action='store_true',help='copy-page firmware diagnostic only: issue read/write AT for the selected page without reading or writing it, then hold')
     ap.add_argument('--wifi-native-copy-page-after-write',action='store_true',help='copy-page firmware diagnostic only: hold after the original page write/readback and before cache; incompatible with AT-only probe')
+    ap.add_argument('--wifi-native-fault-hold',action='store_true',help='firmware-only native-ready diagnostic: install terminal CPU0 exception vectors on an independent owned stack; no exception return or reset')
     ap.add_argument('--wifi-firmware-diagnostic-only',action='store_true',help='separate default-OFF RAM firmware diagnostic with mandatory authentication checkpoint and unconditional terminal hold before XNU/CPU_ON; USB payload only')
     ap.add_argument('--wifi-native-runtime',action='store_true',help='build the complete native radio/runtime and retained terminal path; does not grant physical boot admission')
     ap.add_argument('--wifi-nv-backup-directory',type=Path,help='private own GPT backup used only to generate expected identities; current NV is reread on each boot')
@@ -523,6 +524,9 @@ def main():
         ap.error('copy-page checkpoint requires the terminal firmware-only diagnostic')
     if a.wifi_native_auth_metadata_checkpoint=='native-ready' and not a.wifi_firmware_diagnostic_only:
         ap.error('native-ready checkpoint requires the terminal firmware-only diagnostic')
+    if a.wifi_native_fault_hold and not (a.wifi_firmware_diagnostic_only and
+            a.wifi_native_auth_metadata_checkpoint=='native-ready'):
+        ap.error('native fault hold requires firmware-only native-ready')
     if a.wifi_native_copy_page_probe and (a.wifi_native_auth_metadata_checkpoint!='copy-page' or not a.wifi_firmware_diagnostic_only):
         ap.error('copy-page translation probe requires the terminal copy-page diagnostic')
     if a.wifi_native_copy_page_after_write and (a.wifi_native_auth_metadata_checkpoint!='copy-page' or not a.wifi_firmware_diagnostic_only or a.wifi_native_copy_page_probe):
@@ -1135,6 +1139,8 @@ def main():
     if a.wifi_native_auth_metadata_checkpoint:
         auth_checkpoint_mode={'assigned':1,'returned':2,'copied':3,'copy-ready':4,'first-copy':5,'first-rmb':6,'copy-prefix':7,'idle-hold':8,'copy-page':9,'native-ready':10}[a.wifi_native_auth_metadata_checkpoint]
         with config.open('a') as f:f.write(f'#define EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT {auth_checkpoint_mode}\n')
+    if a.wifi_native_fault_hold:
+        with config.open('a') as f:f.write('#define EFI_XNU_WIFI_NATIVE_FAULT_HOLD 1\n')
     if a.wifi_native_first_rmb_events is not None:
         with config.open('a') as f:f.write(f'#define EFI_XNU_WIFI_FIRST_RMB_EVENTS {a.wifi_native_first_rmb_events}\n')
     if a.wifi_native_copy_segments is not None:
@@ -1198,8 +1204,10 @@ def main():
     if a.test_wled_write_timeout:flags.append('-DEFI_XNU_TEST_WLED_WRITE_TIMEOUT=1')
     if a.test_wled_read_failure:flags.append('-DEFI_XNU_TEST_WLED_READ_FAILURE=1')
     sources=['uefi-xnu.c','uefi-xnu-ap.S','uefi-xnu-crc.c','payload.c','uefi-usb.c','uefi-usb-command.c','uefi-usb-control.c']
+    if a.wifi_native_fault_hold:sources.append('uefi-wifi-native-fault.S')
     if a.test_wled_native_lifecycle=='lease':flags.append('-DPOLARIS_RAM_LEASE_SECONDS=1800u')
     inputs=['shim/polaris/'+n for n in sources]+['shim/polaris/uefi.h','shim/polaris/uefi-xnu.h','shim/polaris/uefi-usb.h','shim/polaris/uefi-memory.h','shim/polaris/uefi-reset.h','shim/polaris/uefi-file.h','shim/polaris/uefi-boot-options.h','shim/polaris/uefi-ram-lease.h','shim/polaris/payload.h','tools/build-polaris-uefi-xnu.py','tools/polaris-uefi-input.h']
+    if a.wifi_native_fault_hold:inputs.append('shim/polaris/uefi-wifi-native-fault.h')
     inputs+=['tools/polaris_uefi_cpu_tree.py','tools/adt.py','tools/mkpayload.py']
     inputs.append('shim/polaris/runtime-marker.h')
     if a.wifi_power_terminal_gop_diagnostics:inputs.append('shim/polaris/uefi-wifi-terminal-gop.h')
@@ -1281,6 +1289,7 @@ def main():
     for source in sources:
         obj=out/(Path(source).stem+'.obj');objects.append(str(obj))
         cmd=['/usr/bin/clang','--target=aarch64-unknown-windows','-ffreestanding','-fno-builtin','-fno-stack-protector','-fshort-wchar','-mgeneral-regs-only','-O2','-Wall','-Wextra','-Werror',*flags,'-I'+str(out),'-c',str(r/'shim/polaris'/source),'-o',str(obj)]
+        if source=='uefi-wifi-native-fault.S':cmd.insert(2,'-DPOLARIS_WIFI_NATIVE_FAULT_VECTORS=1')
         if a.wifi_early_memory:cmd+=['-Wframe-larger-than=1024','-MMD','-MF',str(obj.with_suffix('.d'))]
         p=subprocess.run(cmd,capture_output=True);(out/(source+'.log')).write_bytes(p.stdout+p.stderr)
         if p.returncode:raise RuntimeError('EFI module compile failed: '+source)
@@ -2166,6 +2175,10 @@ def main():
             wifi_host_nonce_native_enabled=False,wifi_host_nonce_physical_candidate_ready=False)
     if a.wifi_native_runtime:
         manifest.update(wifi_native_runtime_enabled=True,wifi_native_runtime_default_OFF=True,
+            wifi_native_fault_hold=a.wifi_native_fault_hold,
+            wifi_native_fault_stack_bytes=16384 if a.wifi_native_fault_hold else 0,
+            wifi_native_fault_exception_return=False,
+            wifi_native_fault_foreign_calls=False,
             wifi_native_auth_metadata_checkpoint=bool(a.wifi_native_auth_metadata_checkpoint),
             wifi_native_auth_metadata_checkpoint_phase=a.wifi_native_auth_metadata_checkpoint,
             wifi_native_first_rmb_events=a.wifi_native_first_rmb_events,
