@@ -56,6 +56,28 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: fresh native nonce plus first combined witness
 
+- PHYSICAL vendor boundary FIRST864 sourcee965925/imagebc7a7550... sentONCE
+  2026-11-07T13:00:13.342518Z,ACK13:02:11.073949Z,host23747TERMINAL0/SPENT.
+  Original FASTBOOT already13:03:11.611375Z,noAndroidservice. FIRST reader
+  762f5840... freeze638local+9external/offline PASS;host91971TERMINAL0,
+  4nonce/9640B/stable272B+64scalars292B PASS. Retained74processed/3segments=
+  63written+11UNTOUCHED,source14687/ready1,owner5.390574844s,error0/entered0,
+  11watchdog samplesEN0/STS0/stable/error0. Window864..1119 NOT retained/
+  observe0. Latest accepted RMBstage5/status3/events14/segment3 nextCOPY.
+  RecordAUTH6/scalarAUTH5 separately cleaned,not oneinstant. Do NOT assert
+  fixed874 reset/finalprogressbound/READY/network. Explicit selectedFASTBOOT
+  2026-11-07T13:04:19.227998+00:00;allimages/nonceSPENT.
+- Reader initial freeze correctly refused because prior SPENT native outcome
+  was finalized after that prior reader freeze. Bound finalized outcome to its
+  actual first4nonce PASS reader result,then re-froze/offline passed;no guard
+  weakened,earlier images never replayed. NEXT remove OPTIONAL watchdog-read
+  diagnostic via its existing defaultOFF option;keepCIVAC/vendor/FAST/trace221
+  and all sourceauthentication/ownership/protocol/deadlines. This isolates a
+  diagnostic MMIO path,not an established cause. Reader replaces absent WDOG
+  fields with fixed segment counters/timestamps,still64/292B. ACTIVE2/5,
+  current+3;observerPAUSED,idleUSERPAUSED,allsourcepushesapproved.
+
+
 - Vendor-boundary FIRST864..1119 candidate QUALIFIED,NOT SENT. All project
   source inputs byte-identical to physical47762cf profile;only existing trace
   constant221->864 changes. Actual864 word selector256x512x4/9216publications,
