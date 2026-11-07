@@ -31,14 +31,25 @@ struct pmlc_copy {
     struct pwmc_translation source_AT[PMLC_SOURCE_PAGES];
     struct pmsi_page page[PMLC_PAGES];
     uint32_t attempted,unknown,error,ready,complete,source_pages,pages,segments;
+#if EFI_XNU_WIFI_NATIVE_FAULT_HOLD
+    uint32_t observe_page,observe_stage,observe_words_issued,observe_words_returned;
+#endif
 };
 #if EFI_XNU_WIFI_NATIVE_FAULT_HOLD
 /* Explicit terminal diagnostic only; own-RAM progress publication, no
  * provider/secure operation, remote target access or deadline renewal. */
 static int pmlc_observe(struct pmlc_copy*);
 #define PMLC_OBSERVE(r) do{if(!pmlc_observe(r))return pmlc_fail(r,2);}while(0)
+/* Last physical publication stopped at221. Bound the finer diagnostic to
+ * pages221..255; neither the producer's operations nor its deadline changes.
+ * Stage1 precedes initialization, so it never reads the page's old fields. */
+#define PMLC_TRACE_PAGE(r,p,index,where) do{unsigned page_index=(index);if(page_index>=221&&page_index<256){ \
+    (r)->observe_page=page_index;(r)->observe_stage=(where); \
+    (r)->observe_words_issued=(where)>=3?(p)->words_issued:0; \
+    (r)->observe_words_returned=(where)>=3?(p)->words_returned:0;PMLC_OBSERVE(r);}}while(0)
 #else
 #define PMLC_OBSERVE(r) do{}while(0)
+#define PMLC_TRACE_PAGE(r,p,index,where) do{}while(0)
 #endif
 #if EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 9
 #if !EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY || EFI_XNU_WIFI_COPY_PAGE_BEFORE < 1 || EFI_XNU_WIFI_COPY_PAGE_BEFORE >= PMLC_PAGES
@@ -184,14 +195,17 @@ static inline int pmlc_next_segment(struct pmlc_copy*r)
             unsigned position=offset-g->target_offset;bytes=g->filesz-position;if(bytes>4096)bytes=4096;
             from=r->blob+f->offset+position;
         }
+        PMLC_TRACE_PAGE(r,p,r->pages,1);
         if(!pwmc_zero(p,sizeof(*p))||!pmlc_live(r))return pmlc_fail(r,7);
         if(bytes){p->source.page=from;if(!pwmc_actual_translate(&p->source)||!pwmc_translation_valid(&p->source)||p->source.page!=from)
             return pmlc_fail(r,7);}
         p->target.page=to;
         if(!pwmc_actual_translate(&p->target)||!pwmc_translation_valid(&p->target)||p->target.page!=to||!pmlc_live(r))
             return pmlc_fail(r,8);
+        PMLC_TRACE_PAGE(r,p,r->pages,2);
         if(!pmlc_write(to,from,bytes,&hash,p)||p->bytes!=bytes||p->words_issued!=512||p->words_returned!=512||!pmlc_live(r))
             return pmlc_fail(r,9);
+        PMLC_TRACE_PAGE(r,p,r->pages,3);
 #if EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 9 && EFI_XNU_WIFI_COPY_PAGE_AFTER_WRITE
         /* Original write/readback and its live check returned; cache and
          * completion/publication have not been issued for this page. */
@@ -199,7 +213,9 @@ static inline int pmlc_next_segment(struct pmlc_copy*r)
 #endif
         if(!pmlc_cache(to,&p->cache)||!pwmk_record_valid(&p->cache,to,PWMK_CLEAN_INVALIDATE)||!pmlc_live(r))
             return pmlc_fail(r,10);
+        PMLC_TRACE_PAGE(r,p,r->pages,4);
         p->after=o->current;p->complete=1;r->pages++;s->pages++;
+        PMLC_TRACE_PAGE(r,p,r->pages-1,5);
         if(!(r->pages&255))PMLC_OBSERVE(r);
     }
     pwfi_final(&hash,s->copied_hash);

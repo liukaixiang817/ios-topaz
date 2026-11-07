@@ -1247,7 +1247,7 @@ static int wifi_native_fault_publish(unsigned force)
         (uintptr_t)&s->owner.attempted,(uintptr_t)&s->copy.opening,(uintptr_t)&s->copy.attempted,
         (uintptr_t)&s->copy.segment,(uintptr_t)&s->auth.attempted,
         (uintptr_t)&s->auth.modem.opening,(uintptr_t)&s->auth.modem.phase};
-    const unsigned bytes[]={24,16,48,16,32,sizeof(s->copy.segment),40,16,40};
+    const unsigned bytes[]={24,16,48,16,48,sizeof(s->copy.segment),40,16,40};
     for(unsigned n=0;n<sizeof(at)/sizeof(at[0]);n++)if(!wifi_native_fault_clean(at[n],bytes[n]))return 0;
     return wifi_native_fault_clean((uintptr_t)f,sizeof(*f));
 }

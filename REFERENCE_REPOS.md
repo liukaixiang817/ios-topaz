@@ -14,6 +14,11 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+Bounded pages221..255 observation uses existing own-image PoC publication;
+current23 tests/full copy65898797 checks/383 observations/all5 refusal stages
+PASS. Current actual COFF/MachO qualify;unchanged cache/vector QEMU evidence
+is explicitly reused by source/code identity. No new foreign hardware source.
+Next fresh native and first64-field276B bound witness,physical result pending.
 First PoC combined PHYSICAL witness verified4/4 nonce,9576 bytes and stable
 record/scalars:14687 source pages verified,221 target pages/8segments published.
 Last cleaned progress is not a final-stage or reset-cause proof. Further own-RAM

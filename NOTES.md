@@ -56,6 +56,37 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: fresh native nonce plus first combined witness
 
+- NEW bounded page trace qualified,NO SEND yet. Explicit native fault-hold
+  only:four extra uint32 copy-control fields(recordABI272B unchanged),fixed
+  page221..255/stages1beforeinit,2aftertranslations,3afterwrite/readback,
+ 4aftercache,5aftercompletion. Existing operations/deadlines unchanged.
+  Publication cleans48B copy-control instead of32B to include the four fields.
+  Default-OFF struct/code remains exact in actual normal0/page9/ready10 objects.
+- Software:current23 public tests22.289s;full observed30720page/14687source
+  copy65898797checks,383 observations including35x5 ordered page stages.
+  All5 injected publication refusals stop at exact expected writes/cache/
+  completion,ownerheld and no further segment submission. Actual publisher
+ 10 failurepoints and192 first/nested handler cases PASS with current real
+  parent types. Actual unchanged cache-leaf QEMU result explicitly REUSED by
+  equality to f2c69a9;production vectors unchanged/old QEMU evidence reused.
+  Initial private comparator looked in d86033f before cache helper existed;
+  rejected before image/send. Final comparator uses actual f2c69a9 helper,
+  verifies equality;no guard lowered. Logs and initial failure preserved.
+- Fresh firmware-native-page-trace-0001 driver712704B
+  SHAd76f26d5a444fe53d339c78784bf936cd3930fed5f749f797f623929c4266549;
+  image6187008B SHA3026854e0c5ef1f388e2811aec58bb887d91d0b0474b51968f7f7f358ae46d1a.
+  Actual COFF reproduces driver;both700frames/max816B,terminal closure13
+  local functions/no BLR,stack304/320B. Same exact kernel6241/payloaddc522,
+  original81/actual codec preserved. New nonce NOT CONSUMED yet.
+- Selected original FASTBOOT reverified08:24:17.138786Z. NEXT publish exact
+  three source/test changes+docs,freeze new trial graph/offline,ONE fresh
+  native start,normal selected-Android recovery if needed,then FIRST new
+  combined witness extended to64 compiler-derived scalars276B. This is the
+  existing64-field/512B limit,not arbitrary pointer reading. No spent-image
+  replay. Current original owned mirror0c0423a;unowned7215a378... untouched.
+  Goal ACTIVE2/5,current plus3;no READY/scan/join/IP/DNS/data proof. Formal
+  report08:23Z,next08:38Z;observer PAUSED,idle test USER-PAUSED.
+
 - FIRST PoC combined PHYSICAL capture PASS: sourceab8fc98 pushed/mirrored,
  396local+9external frozen/offline inputs. Probe3b2ffe... sentONCE
  08:16:49.204150Z,all4 nonce matches,9576/9576,error0,valid/stable272B

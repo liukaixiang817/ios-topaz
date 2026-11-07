@@ -47,13 +47,25 @@ static unsigned copy_fault,copy_at,copy_ats,copy_writes,copy_caches,copy_source_
 static unsigned fresh_retained;
 #if defined(PMLC_TEST_OBSERVE)
 static unsigned observed,observed_ready,observed_source,observed_pages;
+static unsigned observed_page,observed_stage,observed_stages[6];
+static unsigned observe_fail_stage;
 static int pmlc_observe(struct pmlc_copy*r)
 {
     CHECK(r==copy_record&&r->attempted==1&&r->source_pages<=PMLC_SOURCE_PAGES&&r->pages<=PMLC_PAGES);
-    if(!r->pages&&!r->source_pages&&!r->ready)observed_source=observed_pages=0;
+    if(!r->pages&&!r->source_pages&&!r->ready){observed_source=observed_pages=0;observed_page=observed_stage=0;}
     CHECK(r->source_pages>=observed_source&&r->pages>=observed_pages);
     observed_source=r->source_pages;observed_pages=r->pages;
-    if(r->ready)observed_ready++;observed++;return 1;
+    if(r->observe_stage&&(r->observe_stage!=observed_stage||r->observe_page!=observed_page)){
+        CHECK(r->observe_page>=221&&r->observe_page<256&&r->observe_stage>=1&&r->observe_stage<=5);
+        if(r->observe_stage==1)CHECK((!observed_stage&&r->observe_page==221)||
+            (observed_stage==5&&r->observe_page==observed_page+1));
+        else CHECK(r->observe_page==observed_page&&r->observe_stage==observed_stage+1);
+        CHECK(r->observe_words_issued==(r->observe_stage>=3?512u:0u));
+        CHECK(r->observe_words_returned==r->observe_words_issued);
+        observed_page=r->observe_page;observed_stage=r->observe_stage;observed_stages[observed_stage]++;
+    }
+    if(r->ready)observed_ready++;observed++;
+    return !(observe_fail_stage&&r->observe_page==221&&r->observe_stage==observe_fail_stage);
 }
 #endif
 #if defined(PMLC_TEST_PAGE_BEFORE)
@@ -203,7 +215,9 @@ int main(int argc,char**argv)
     }
     CHECK(copy_record->complete&&copy_record->pages==30720&&copy_writes==30720&&copy_caches==30720);
 #if defined(PMLC_TEST_OBSERVE)
-    CHECK(observed==208&&observed_source==14687&&observed_pages==30720&&observed_ready==149);
+    CHECK(observed==383&&observed_source==14687&&observed_pages==30720&&observed_ready==324);
+    CHECK(observed_page==255&&observed_stage==5);
+    for(unsigned n=1;n<=5;n++)CHECK(observed_stages[n]==35);
     printf("PASS actual diagnostic progress hooks: %u bounded observations; all source/target pages retained\n",observed);
 #endif
     CHECK(copy_auth->phase==3&&copy_auth->length==124977057);
@@ -217,6 +231,20 @@ int main(int argc,char**argv)
     CHECK(cursor==0x7800000);CHECK(!mprotect(modem_shadow,0x7800000,PROT_NONE));
     CHECK(!pmlc_next_segment(copy_record)&&!pmsc_close_unused(owner));
     printf("PASS whole modem copy: %u source pages, %u target pages; %u checks so far\n",first_ats,copy_writes,checks);fflush(stdout);
+#if defined(PMLC_TEST_OBSERVE)
+    for(unsigned stage=1;stage<=5;stage++){
+        copy_setup();CHECK(copy_begin());
+        for(unsigned k=0;k<8;k++){CHECK(pmlc_next_segment(copy_record));copy_publish_io();}
+        CHECK(copy_record->pages==221&&copy_record->segments==8);
+        observe_fail_stage=stage;
+        CHECK(!pmlc_next_segment(copy_record)&&copy_record->unknown&&copy_record->error==2);
+        CHECK(copy_record->pages==221+(stage==5)&&copy_record->segments==8&&copy_auth->submitted==8);
+        CHECK(copy_writes==221+(stage>=3)&&copy_caches==221+(stage>=4));
+        CHECK(copy_record->observe_page==221&&copy_record->observe_stage==stage);
+        CHECK(owner->held&&!pmsc_close_unused(owner));observe_fail_stage=0;
+    }
+    printf("PASS all5 page-publication refusals stop at exact target/write/cache boundary\n");fflush(stdout);
+#endif
     for(unsigned fault=1;fault<=11;fault++){
         copy_setup();CHECK(copy_begin());copy_fault=fault;copy_at=fault<=4?copy_ats+1:1;
         CHECK(!pmlc_next_segment(copy_record)&&copy_record->unknown&&!copy_auth->submitted);
