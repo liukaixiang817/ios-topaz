@@ -50,6 +50,15 @@ actual original decoder preserves81files and decodes27677384B. Source changes
 leave existing native startup source/producers unchanged; physical remnant/
 reset result still pending. No idle timeout or hardware-watchdog write added.
 
+That probea9d826f/ae182a... was sent06:30:16Z and captured matching nonce2/2,
+4800reads/error0/stable valid record:attempted1/armed1/error0/entered0. Thus
+the retained arm record is identifiable; no persisted exception-entry record
+was found. Cache persistence across reset is unknown,so this is not a proof
+that no exception occurred. Explicit original marker/ResetSystem request then
+returned actual selected original FASTBOOT06:30:30Z,without Android recovery.
+Next inspect only compiler-derived scalar parent progress if separately bound;
+no old pointer/raw parent dump or native/radio authority follows from remnants.
+
 New explicit firmware-only native-ready fault hold uses own existing AP vector
 layout as an architectural reference only; no foreign firmware or MMIO driver.
 Own CPU0 continuous owner must succeed before own-image vectors/16KiB stack/

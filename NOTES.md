@@ -56,6 +56,23 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: bounded spent-record witness qualified
 
+- PHYSICAL RESULT: a9d826f pushed/mirrored. Frozen98 local+9 external inputs,
+  offline PASS. Probeae182a... sent ONCE06:30:16.934316Z,fastbootexit0 at
+ 06:30:17.188602Z;host25685 TERMINAL0 collected,image SPENT. Bounded readonly
+  logs2769B/map2624B/PPM6998417B captured PASS,PNG visually inspected. Matching
+  nonce2/2,4800/4800 reads,error0,stable/nonzero/exact-layout record VALID.
+  Retained attempted1/armed1/error0/entered0/reentered0: vector installation
+  returned,with no persisted handler-entry evidence. This does NOT exclude an
+  exception whose last cached writes were lost,nor prove full startup/cause.
+  No old RAM or hardware-watchdog write. After capture,explicit normal marker/
+  ResetSystem command ACK06:30:26.861795Z;actual selected original FASTBOOT
+  verified06:30:30.974931Z. No Android service/recovery needed for this probe.
+- Next derive a small fixed set of the SAME spent native parent's scalar
+  phase/copy/owner fields from its actual linked symbol and compiler layouts.
+  Consider a separate new nonce-qualified read-only witness; no raw parent
+  dump/pointer following/native replay. Retention/current scalar validity must
+  be proved again. No new native image selected. Phone currently FASTBOOT.
+
 - Goal ACTIVE2/5,current plus3 remain; no native READY/scan/join/IP/DNS/data
   proof. Long idle test USER-PAUSED,continuous observer PAUSED. Latest selected
   original FASTBOOT verification05:44:39Z; fresh query required before sending.
