@@ -56,6 +56,23 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: fresh native nonce plus first combined witness
 
+- Android-baseline trial0001 imageaaf5fd4f... sentONCE16:13:57.341580Z,
+  stopped16:15:12.511791Z duringRAMpayload75366400/100573184B (1150chunks),
+  libusbIO-1/0of65536B. No validationACK/no pre-native marker/no native start
+  command/ACK. Not Wi-Fi execution evidence. Image+nonce SPENT,no reader sent.
+  Bounded selected FASTBOOT/Android recovery unavailable16:16:19.923216Z;
+  only failed hostchild stuckinlibusbcleanup terminated16:17:38Z,exit-15,
+  no device command issued. Human thenconfirmedNEW rabbitFASTBOOT/keysreleased.
+- Fresh Android-baseline0002 QUALIFIED/UNSENT,identical code+configuration
+  to0001/precedingfine864 profile,one freshnonce. Actual selector/current
+  COFF+MachO720frames/max816B/terminalclosure13/original81+EDK2codec PASS;
+  prior40tests/full36auth/legacy32auth reuse byexactcompiledsourceidentity.
+  Driverf678894a9789434c84fe2dd5e5b08fcc3c715bd66a238225e6e9ff68489c69bf,
+  image0a38512c1061eb71436e92df56cfe15301295ab373da880d118170e9cad6d13f. NEXTselected
+  FASTBOOT/freeze/offline/ONEsend,thenFIRSTmatching64/292B all4nonce reader
+  onlyifnativeACK. No payloadretry onspentimage,no causeguessed. ACTIVE2/5,
+  current+3,observerPAUSED,idleUSERPAUSED;allsourcepushesapproved.
+
 - Controlled normal Android baseline COMPLETE: boot_completed1/root0 verified,
   own MSS Power/Clock ready interrupt observed in current kernel log;no claim
   of nativeWLAN READY. Normal svc reboot bootloader returned selected original

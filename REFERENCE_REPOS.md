@@ -14,6 +14,12 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+First Android-baseline native candidate failed during75MB USB payload transfer;
+no validation/native start command or ACK,allspent/no reader. Failed hostchild
+cleanup only,no extra devicecommands. Human returned rabbitFASTBOOT/keysreleased.
+Second fresh identical-code+fine864 candidate qualified;selected identity/
+freeze/offline/ONEsend pending. No nativeWi-Fi observation inferred fromIOerror.
+
 Controlled normal Android baseline completed/root verified;own MSS Power/Clock
 ready interrupt observed,normal service reboot returned selectedFASTBOOT.
 Fresh identical-source+fine864 profile qualified/currentCOFF+MachO/closure/
