@@ -56,6 +56,28 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: fresh native nonce plus first combined witness
 
+- PHYSICAL final-progress sourcec53ea95/imaged90eb56a... sentONCE
+  2026-11-07T11:18:06.156163+00:00,native2026-11-07T11:19:46.688222+00:00,ACK2026-11-07T11:20:06.172913+00:00;
+  host95398 TERMINAL0/SPENT. Selected FASTBOOT already present11:21:33.360081Z,
+  no Android service reboot. FIRST readerd9ad1f23... freeze546local+9external/
+  offline PASS,4 actual EFI/QEMU/object/original81+actual codec PASS;host88862
+  TERMINAL0,4nonce/9640B/stable272B+64scalars292B PASS. Last cleaned221pages/
+  8segments,source14687/ready1,errors0,owner13.590713021s;recordarmed1/entered0/
+  error0. Observe864..1119 unobserved/fields0;22 watchdog snapshots,error0,
+  EN0/STS0/stable thresholds. Correcting own-progress-before-optional-MMIO
+  did NOT expose a terminal error in this retained sample. Do not infer no
+  later failure/dirty progress or a specific reset cause. Actual explicit
+  reset/selected FASTBOOT verified2026-11-07T11:22:07.374742+00:00;all images/nonce
+  SPENT. Exact raw in native-final-progress-remnant-0001/physical-result-0001.json.
+- NEXT quantify scalar SHA256 schedule/round unrolling on actual local ARM
+  with general-regs-only and own firmware inputs,compare exact digests and
+  code/stack sizes BEFORE changing production. Repeated source/Core/state
+  hashing is a plausible startup cost,NOT an established reset cause. Keep
+  all authentication/range/freshness/deadline checks;do not skip or predate
+  them to gain speed. No proposed hardware/watchdog/partition write.
+  ACTIVE2/5,current+3;observer PAUSED,idle USER-PAUSED,push pending approval.
+
+
 - Final progress preservation fix qualified,NOT SENT. Fixed own fields/scalars/
   272B record are published BEFORE any optional watchdog operation. Known
   parent/owner/copy/auth error or unknown issues NO new watchdog MMIO;diagnostic
