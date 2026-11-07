@@ -73,6 +73,14 @@ def validate(review_path):
     rmtfs_diagnostics=driver.get('wifi_native_rmtfs_diagnostics',False)
     rmtfs_envelope=driver.get('wifi_rmtfs_auth_envelope',False)
     copy_boundary=driver.get('wifi_native_copy_boundary_trace',False)
+    modem_nc=driver.get('mss_modem_normal_nc',False)
+    nc_config=[x for x in config if x.startswith('#define EFI_XNU_MSS_MODEM_NORMAL_NC')]
+    require(type(modem_nc) is bool and (not modem_nc or fault_hold) and
+            image.get('mss_modem_normal_nc',False) is modem_nc and
+            nc_config==(['#define EFI_XNU_MSS_MODEM_NORMAL_NC 1'] if modem_nc else []),
+            'Modem NormalNC compiler/image scope mismatch')
+    require(driver.get('modem_normal_nc_policy')==image.get('modem_normal_nc_policy')==({'bank_bytes': 125829120, 'UEFI_attribute': 2, 'getter_RVA': 11368, 'setter_RVA': 35320, 'phase': 'incoming_UEFI_before_payload', 'original_calls': 5, 'pre_WB_pages': 30720, 'post_NC_pages': 30720, 'target_data_accesses': False, 'native_provider_calls': False} if modem_nc else None),
+            'Modem NormalNC incoming-only service scope mismatch')
     boundary_config=[x for x in config if x.startswith('#define EFI_XNU_WIFI_NATIVE_COPY_BOUNDARY_TRACE')]
     require(type(copy_boundary) is bool and (not copy_boundary or fault_hold) and
             image.get('wifi_native_copy_boundary_trace',False) is copy_boundary and
@@ -186,6 +194,12 @@ def validate(review_path):
     proof_path = case/'firmware-only-control-proof.json'
     require(str(proof_path.relative_to(ROOT)) in review['files'], 'firmware code proof not frozen')
     proof = json.loads(proof_path.read_text())
+    if modem_nc:
+        require(proof.get('modem_normal_nc_guarded_producer_tested') is True and
+                proof.get('modem_normal_nc_full_auth_tested') is True and
+                proof.get('modem_normal_nc_default_OFF_objects_identical') is True and
+                proof.get('modem_normal_nc_own_vendor_DT_and_setter_verified') is True,
+                'Modem NormalNC qualification evidence missing')
     require(proof.get('passed') is True and
             proof.get('source_sha256') == sha(ROOT/'shim/polaris/uefi-xnu.c') and
             proof.get('builder_sha256') == sha(ROOT/'tools/build-polaris-uefi-xnu.py') and

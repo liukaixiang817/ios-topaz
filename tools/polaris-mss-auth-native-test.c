@@ -50,6 +50,21 @@ static unsigned auth_fault,auth_fault_assignment,auth_io_fault,auth_io_trigger,a
 static unsigned metadata_owner,modem_owner,peer_segments,metadata_polls,final_polls,full_bank_verified;
 static uint32_t rmb_length,rmb_metadata,rmb_start,rmb_command;
 static unsigned auth_bad_status;
+#if EFI_XNU_MSS_MODEM_NORMAL_NC
+/* Mapping producer has its own full guarded service/AT suite. Here the
+ * complete authentication flow consumes software NC target translations;
+ * all actual firmware writes/readbacks/canaries remain exercised below. */
+#define EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY 1
+#define EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT 10
+#define POLARIS_MSS_MODEM_MAPPING_SOFTWARE_PEER 1
+#include "uefi-mss-modem-mapping.h"
+static efi_status pmnc_service(struct pmnc_result*r,unsigned index)
+{(void)r;(void)index;CHECK(0);return EFI_ERROR|9;}
+static int pmlc_normal_nc_bound(struct pmlc_copy*r)
+{return r==auth_copy&&r->base==mss->memory.claim[0].requested;}
+static int pmlc_normal_nc_target(struct pmlc_copy*r,const struct pwmc_translation*t,uint64_t page)
+{return r==auth_copy&&page>=r->base&&page-r->base<PMNC_BYTES&&pmnc_translation(t,page,UINT64_C(0x4400000000000b80));}
+#endif
 #if EFI_XNU_WIFI_NATIVE_COPY_BOUNDARY_TRACE
 static unsigned auth_boundary_calls,auth_boundary_fail;
 static int pmlc_copy_boundary(struct pmlc_copy*r,unsigned stage){
@@ -94,7 +109,16 @@ static int auth_translate(struct pwmc_translation*t){
         CHECK(t->page-auth_copy->base>=g->target_offset&&t->page-auth_copy->base<g->target_offset+g->memsz);
     }
 #endif
-    return early_translate(t);
+    int result=early_translate(t);
+#if EFI_XNU_MSS_MODEM_NORMAL_NC
+    if(result&&auth_owner&&auth_copy&&auth_copy->ready&&auth_owner->phase==PMSN_COPY&&
+       t->page>=auth_copy->base&&t->page-auth_copy->base<PMNC_BYTES)
+    {
+        t->read_par=(t->read_par&UINT64_C(0x00ffffffffffffff))|UINT64_C(0x4400000000000000);
+        t->write_par=(t->write_par&UINT64_C(0x00ffffffffffffff))|UINT64_C(0x4400000000000000);
+    }
+#endif
+    return result;
 }
 #if EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS
 static int pmlc_vendor_write(uint64_t to,uint64_t from,unsigned bytes,unsigned extent,struct pwfi_sha256*h,struct pmsi_page*p)
@@ -111,7 +135,12 @@ static int pmlc_write(uint64_t to,uint64_t from,unsigned bytes,struct pwfi_sha25
 #else
     CHECK(to==auth_copy->base+4096*auth_copies);
 #endif
-    CHECK(p->target.page==to&&pwmc_translation_valid(&p->target));auth_copies++;
+#if EFI_XNU_MSS_MODEM_NORMAL_NC
+    CHECK(p->target.page==to&&pmlc_normal_nc_target(auth_copy,&p->target,to));
+#else
+    CHECK(p->target.page==to&&pwmc_translation_valid(&p->target));
+#endif
+    auth_copies++;
     if(auth_copy_fault==1&&auth_copies==1){p->words_issued=1;return 0;}
     if(auth_copy_fault==2&&auth_copies==1&&bytes)*(uint8_t*)(uintptr_t)from^=1;
 #if EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS

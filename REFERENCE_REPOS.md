@@ -14,6 +14,16 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+Own modem-bank NormalNC profile qualified/defaultOFF/incomingUEFI only.
+Current ownDT+ancestors/pinned noncoherent dma_remap/Core DS setter actualPE
+checked;local HackiOS kernel freshmap and userland scope reviewed,no foreign
+hardware imported. Five original calls,only120MiB ownclaim/WC2/fullmap ONLY
+attribute delta/preWB+postNC30720AT/absolute1s passes;source/FP/arch seals,
+UNKNOWN/no retry. Native copy target scoped to sealedmappingrecord/currentAT;
+all other WB checks remain. Producer2391092checks/44tests/full NC+OFF auth
+36scenarios/COFF+MachO actual OFF identity/original81codec PASS. Physical
+result pending,no mapping/resetcause/nativeREADY claim. SelectedFASTBOOT.
+
 Second Android-baseline candidate fullpayload/nativeACK;FIRST4nonce valid
 retains221processed8segments/210written11untouched/PAGE221STAGE15/noerror.
 No laterprogress/resetcause/nativeREADY inferred;explicitselectedFASTBOOT.

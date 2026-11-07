@@ -56,6 +56,38 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: fresh native nonce plus first combined witness
 
+- Optional incoming-only modem NormalNC profile QUALIFIED/UNSENT. Own vendor
+  noncoherent dma_remap expectation checked against current own DT+ancestors
+  and pinned source c7cb50...,actual ownCore DS0x40->0x89f8/dispatch0x24. Both
+  local HackiOS clones consulted(kernel XnuLoader freshmap approach/userland
+  README);no foreign hardware mapping or userland API imported.
+- New defaultOFF --mss-modem-normal-nc uses original incoming UEFI GetMap,
+  GetDescriptor,SetMemorySpaceAttributes(WC2),GetDescriptor,GetMap EXACTLYONCE
+  beforepayload/native/assignment,only thisboot's independent120MiB modem
+  claim. Originalsource/DS/lock/FP/arch/service-output seals retained;UNKNOWN
+  has no retry/restore/free. Full map union permits ONLY WB8->WC2 in thatbank;
+  any extra allocation/type/VA/extension change refuses. Actual preWB/postNC
+  AT traversals each30720pages(including copyholes),absolute1s each;original
+  calls200ms each. No explicit targetdata load/store or new MMIO/SMC. PostNC
+  must beexactidentity/NS/0x44/oneconsistent outer-or-inner shareable domain.
+  Only pmlc's own exactmodembank target predicate changes;source/descriptor/
+  MBA/RMTFS/global WB checks unchanged. Nativesegment boundaries validate
+  sealedownmappingrecord;freshAT remains beforeeverytargetcopy. Copyholes
+  still UNTOUCHED records/no explicitdatawrite;mappingstage doesATallpages.
+- Actual guarded producer ASAN/UBSAN2391092checks7.642s,all5servicefaults/
+  protectedcontrol/source/FP mutations/AT first+last pages/sticky refusal/
+  one-second CPUspan refusal/canaries PASS. 44tests14.596s PASS. Full actual
+  NC andOFF auth both10889707checks/36scenarios82.236/82.231s,610RMBobs/
+  all5RMBrefusals/112boundaries/all4boundaryrefusals/protectedcontinuations
+  PASS. ActualOFF COFF/MachO equalad48d6c witholdcopyoverlay;currentCOFF
+  reproduced/MachO732frames/max816B/terminalclosure13 stack304+320/
+  original81+EDK2codec PASS. Driver6e8a0e1e67c5dd3d8e599cfd8a48fabae8f2a79d7bb22660da234f2c20d608a5,
+  image857d21ac1af885b089ecdb73818d404d57002a013fbd788cee039b4e1dff5234. Phone NOT yettested
+  thismapping;not proven resetcause or READY. Selected originalFASTBOOT
+  verified2026-11-07T16:52:24.443074Z. NEXTcommit/push/mirror/freeze/offline/
+  ONE temporarynative,thenFIRSTreader onlyifnativeACK. ACTIVE2/5,current+3;
+  observerPAUSED,idleUSERPAUSED,allsourcepushesapproved.
+
 - PHYSICAL normal-Android-baseline0002 sourceb919df8/image0a38512c...
   sentONCE2026-11-07T16:19:28.557440Z,full100573184B accepted/markerACK/
   nativeACK16:21:26.294218Z,host1586TERMINAL0/SPENT. SelectedFASTBOOT

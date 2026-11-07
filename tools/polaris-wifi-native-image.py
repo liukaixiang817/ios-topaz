@@ -72,6 +72,11 @@ def main():
     rmtfs_diagnostics=manifest.get('wifi_native_rmtfs_diagnostics',False)
     rmtfs_envelope=manifest.get('wifi_rmtfs_auth_envelope',False)
     copy_boundary=manifest.get('wifi_native_copy_boundary_trace',False)
+    modem_nc=manifest.get('mss_modem_normal_nc',False)
+    require(type(modem_nc) is bool and (not modem_nc or fault_hold),
+            'Modem NormalNC mapping requires terminal native fault scope')
+    require(manifest.get('modem_normal_nc_policy')==({'bank_bytes': 125829120, 'UEFI_attribute': 2, 'getter_RVA': 11368, 'setter_RVA': 35320, 'phase': 'incoming_UEFI_before_payload', 'original_calls': 5, 'pre_WB_pages': 30720, 'post_NC_pages': 30720, 'target_data_accesses': False, 'native_provider_calls': False} if modem_nc else None),
+            'Modem NormalNC mapping scope mismatch')
     require(type(copy_boundary) is bool and (not copy_boundary or fault_hold),
             'copy boundary trace requires terminal native fault scope')
     require(type(rmtfs_envelope) is bool and (not rmtfs_envelope or fault_hold) and
@@ -195,6 +200,8 @@ def main():
         wifi_native_rmtfs_diagnostics=rmtfs_diagnostics,
         wifi_rmtfs_auth_envelope=rmtfs_envelope,
         wifi_native_copy_boundary_trace=copy_boundary,
+        mss_modem_normal_nc=modem_nc,
+        modem_normal_nc_policy=manifest.get('modem_normal_nc_policy'),
         rmtfs_transaction_whole_ticks=19200000 if rmtfs_envelope else 1920000,
         rmtfs_issued_step_ticks=1920000,
         modem_copy_page_tail_written=not vendor_extents,modem_copy_untouched_page_record=2 if vendor_extents else None,

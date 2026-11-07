@@ -19,6 +19,9 @@
 #include "../../tools/polaris-mss-modem-auth.h"
 #define PMLC_PAGES 30720u
 #define PMLC_SOURCE_PAGES 16384u
+#ifndef EFI_XNU_MSS_MODEM_NORMAL_NC
+#define EFI_XNU_MSS_MODEM_NORMAL_NC 0
+#endif
 #ifndef EFI_XNU_WIFI_NATIVE_COPY_BOUNDARY_TRACE
 #define EFI_XNU_WIFI_NATIVE_COPY_BOUNDARY_TRACE 0
 #endif
@@ -61,6 +64,10 @@ struct pmlc_copy {
     uint32_t vendor_written_pages,vendor_untouched_pages;
 #endif
 };
+#if EFI_XNU_MSS_MODEM_NORMAL_NC
+static int pmlc_normal_nc_bound(struct pmlc_copy*);
+static int pmlc_normal_nc_target(struct pmlc_copy*,const struct pwmc_translation*,uint64_t);
+#endif
 #if EFI_XNU_WIFI_NATIVE_COPY_BOUNDARY_TRACE
 /* A boundary is an own-state observation, never a page-write receipt. */
 static inline int pmlc_mark_boundary(struct pmlc_copy*r,struct pmlc_copy*expected,unsigned stage)
@@ -126,7 +133,11 @@ static inline int pmlc_bound(struct pmlc_copy*r)
     pweh_digest((const void*)(uintptr_t)r->assets,r->asset_count*sizeof(struct pmsf_asset),hash);
     return pgcd_equal(hash,r->assets_digest,32)&&pgcd_equal(a->segments,r->geometry,sizeof(r->geometry))&&
         pmsc_bound(o)&&pmsi_binding(s)&&pmim_assignment(t,0,r->base,a->metadata_returned)&&
-        t->page==a->shared_page&&t->last==a->shared_at&&t->opening>=o->opening;
+        t->page==a->shared_page&&t->last==a->shared_at&&t->opening>=o->opening
+#if EFI_XNU_MSS_MODEM_NORMAL_NC
+        &&pmlc_normal_nc_bound(r)
+#endif
+        ;
 }
 #if defined(POLARIS_MSS_MODEM_COPY_SOFTWARE_PEER)
 #if EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS
@@ -308,7 +319,13 @@ static inline int pmlc_next_segment(struct pmlc_copy*r)
         if(bytes){p->source.page=from;if(!pwmc_actual_translate(&p->source)||!pwmc_translation_valid(&p->source)||p->source.page!=from)
             return pmlc_fail(r,7);}
         p->target.page=to;
-        if(!pwmc_actual_translate(&p->target)||!pwmc_translation_valid(&p->target)||p->target.page!=to||!pmlc_live(r))
+        if(!pwmc_actual_translate(&p->target)||
+#if EFI_XNU_MSS_MODEM_NORMAL_NC
+           !pmlc_normal_nc_target(r,&p->target,to)||
+#else
+           !pwmc_translation_valid(&p->target)||
+#endif
+           p->target.page!=to||!pmlc_live(r))
             return pmlc_fail(r,8);
         PMLC_TRACE_PAGE(r,p,r->pages,2);
 #if EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS

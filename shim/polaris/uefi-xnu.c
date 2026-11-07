@@ -481,6 +481,10 @@ static uint8_t early_wifi_digest[32];
 static struct pweh_result retained_wifi_memory;
 #if EFI_XNU_MSS_MEMORY_AVAILABLE
 #include "uefi-mss-memory.h"
+#include "uefi-mss-modem-mapping.h"
+#if EFI_XNU_MSS_MODEM_NORMAL_NC
+static struct pmnc_result mss_modem_mapping;
+#endif
 static struct pmmn_native mss_memory;
 static uint8_t mss_memory_digest[32];
 static uint32_t mss_retained_attempted,mss_retained_ok;
@@ -676,6 +680,22 @@ static void mss_memory_gop_evidence(void)
        r->self_bytes!=pgcd_record.self_bytes||r->headers.address[0]!=(uintptr_t)gop){
         (void)pwtg_fail(r,PWTG_ARGUMENT);early_wifi_gop_raw();return;
     }
+#if EFI_XNU_MSS_MODEM_NORMAL_NC
+    if(mss_modem_mapping.unknown){
+        const struct pmnc_result*n=&mss_modem_mapping;
+        pwtg_line(r,0,"MODEM NC",n->attempted,n->error);
+        pwtg_line(r,1,"CALL PENDING",n->calls,n->pending);
+        pwtg_line(r,2,"AT PRE POST",n->translated[0],n->translated[1]);
+        pwtg_line(r,3,"BANK",(uint32_t)(n->base>>32),(uint32_t)n->base);
+        pwtg_line(r,4,"PAR",(uint32_t)(n->AT.read_par>>32),(uint32_t)n->AT.read_par);
+        pwtg_line(r,5,"GCD PRE",(uint32_t)n->descriptor[0].capabilities,(uint32_t)n->descriptor[0].attributes);
+        pwtg_line(r,6,"GCD POST",(uint32_t)n->descriptor[1].capabilities,(uint32_t)n->descriptor[1].attributes);
+        pwtg_line(r,7,"STATUS PRE",(uint32_t)(n->status[0]>>32),(uint32_t)n->status[0]);
+        pwtg_line(r,8,"STATUS SET",(uint32_t)(n->status[1]>>32),(uint32_t)n->status[1]);
+        pwtg_line(r,9,"STATUS POST",(uint32_t)(n->status[2]>>32),(uint32_t)n->status[2]);
+        (void)pwtg_draw(r);early_wifi_gop_raw();return;
+    }
+#endif
     pwtg_line(r,0,"MSS HOLD",mss_memory.attempted,mss_memory.error);
     pwtg_line(r,1,"MEM CALL E",m->calls,m->error);
     for(unsigned n=0;n<3;n++)pwtg_line(r,2+n,"CLAIM S LO",(uint32_t)(m->claim[n].status>>32),(uint32_t)m->claim[n].status);
@@ -916,6 +936,9 @@ static int new_original_unknown(void)
 #endif
 #if EFI_XNU_MSS_MEMORY_AVAILABLE
     ||mss_memory.unknown||mss_memory.memory.unknown||(mss_retained_attempted&&!mss_retained_ok)
+#if EFI_XNU_MSS_MODEM_NORMAL_NC
+    ||mss_modem_mapping.unknown
+#endif
 #endif
 #if EFI_XNU_MSS_STAGING_AVAILABLE
     ||mss_stage.unknown
@@ -985,7 +1008,11 @@ __attribute__((noreturn)) static void power_unknown_hold(void)
     if(mss_stage.unknown)mss_memory_gop_evidence();
     else
 #endif
-    if(mss_memory.unknown||mss_memory.memory.unknown||(mss_retained_attempted&&!mss_retained_ok))mss_memory_gop_evidence();
+    if(mss_memory.unknown||mss_memory.memory.unknown||(mss_retained_attempted&&!mss_retained_ok)
+#if EFI_XNU_MSS_MODEM_NORMAL_NC
+       ||mss_modem_mapping.unknown
+#endif
+    )mss_memory_gop_evidence();
     else
 #endif
     if(early_wifi_memory.unknown||early_wifi_memory.memory.unknown)early_wifi_gop_evidence();
@@ -1233,6 +1260,9 @@ _Static_assert(sizeof(log_buffer)>=2*(sizeof(pwsp_record)+sizeof(pwrpt_record)+s
 #if EFI_XNU_MSS_MEMORY_AVAILABLE
     2*sizeof(mss_memory)+
 #endif
+#if EFI_XNU_MSS_MODEM_NORMAL_NC
+    2*sizeof(mss_modem_mapping)+
+#endif
 #if EFI_XNU_MSS_STAGING_AVAILABLE
     2*sizeof(mss_stage)+
 #endif
@@ -1399,6 +1429,24 @@ static int pmlc_observe(struct pmlc_copy*r)
 {return r==&wifi_native_parent.copy&&wifi_native_fault_publish(1);}
 static int pmsn_observe(struct pmsn_state*s)
 {return s==&wifi_native_parent.auth&&wifi_native_fault_publish(1);}
+#if EFI_XNU_MSS_MODEM_NORMAL_NC
+static int pmlc_normal_nc_bound(struct pmlc_copy*c)
+{
+    const struct pmnc_result*n=&mss_modem_mapping;uint8_t hash[32];
+    if(c!=&wifi_native_parent.copy||n->self!=(uintptr_t)n||n->early!=(uintptr_t)&early_wifi_memory||
+       n->memory!=(uintptr_t)&mss_memory||n->attempted!=1||n->unknown||n->error||n->pending||
+       n->complete!=1||n->calls!=PMNC_CALLS||n->translated[0]!=PMNC_BYTES/4096||n->translated[1]!=PMNC_BYTES/4096||n->bytes!=PMNC_BYTES||
+       c->base!=n->base||n->base!=mss_memory.memory.claim[0].requested)return 0;
+    pweh_digest(n,offsetof(struct pmnc_result,digest),hash);return pgcd_equal(hash,n->digest,32);
+}
+static int pmlc_normal_nc_target(struct pmlc_copy*c,const struct pwmc_translation*t,uint64_t page)
+{
+    const struct pmnc_result*n=&mss_modem_mapping;
+    return c==&wifi_native_parent.copy&&n->complete==1&&!n->unknown&&!n->error&&
+        c->base==n->base&&n->bytes==PMNC_BYTES&&page>=n->base&&page-n->base<PMNC_BYTES&&
+        pmnc_translation(t,page,n->par);
+}
+#endif
 #if EFI_XNU_WIFI_NATIVE_COPY_BOUNDARY_TRACE
 static int pmlc_copy_boundary(struct pmlc_copy*r,unsigned stage)
 {return pmlc_mark_boundary(r,&wifi_native_parent.copy,stage)&&wifi_native_fault_publish(1);}
@@ -3216,6 +3264,15 @@ static efi_status admission(void)
     if(!mss_ok){original_service_unknown=1;power_unknown_hold();}
     pweh_digest(&mss_memory,sizeof(mss_memory),mss_memory_digest);
     early_map=&mss_memory.memory.map[3];
+#if EFI_XNU_MSS_MODEM_NORMAL_NC
+    int nc_ok=pmnc_run(&mss_modem_mapping,&early_wifi_memory,&mss_memory,mss_memory_digest);
+    ram_report("MSS_MODEM_NORMAL_NC_ACCEPTED=",nc_ok);
+    ram_report("MSS_MODEM_NORMAL_NC_RAW_V1_BYTES=",sizeof(mss_modem_mapping));
+    ram_text("MSS_MODEM_NORMAL_NC_RAW_V1_BEGIN\r\n");ram_hex((const void*)&mss_modem_mapping,sizeof(mss_modem_mapping));
+    ram_text("MSS_MODEM_NORMAL_NC_RAW_V1_END\r\n");
+    if(!nc_ok){original_service_unknown=1;power_unknown_hold();}
+    early_map=&mss_modem_mapping.map[1];
+#endif
 #endif
 #if EFI_XNU_WIFI_NATIVE_MEMORY_AVAILABLE
     /* All original BlockIO reads and independent allocations finish before
