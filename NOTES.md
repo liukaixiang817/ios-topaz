@@ -56,6 +56,25 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: fresh native nonce plus first combined witness
 
+- PHYSICAL COPY-boundary sourceb4d8e2f/image3c1d51de... sentONCE
+  2026-11-07T15:34:37.593668Z,ACK15:36:35.303372Z,host13389TERMINAL0/SPENT.
+  OriginalFASTBOOT already15:37:49.252163Z,noAndroidservice. FIRST reader
+  f051b993... freeze712local+9external/offlinePASS;host56009TERMINAL0,
+  4nonce/9640B/stable272B+64scalars292B PASS. Retained874processed9segments=
+  860written+14UNTOUCHED,source14687/ready1,owner5.777596354s,error0/entered0.
+  NEW observedPAGE874/STAGE15/WORDS0:next segment entry,live and binding checks
+  actually returned before that clean sample. Boundary words0 are NOT writes.
+  AuthCOPY5/RMBstatus3/events38/nextsegment9,RMTFSfields0. No terminal cause,
+  finalprogress upperbound or RMTFS-effectiveness inferred. Explicit selected
+  FASTBOOT2026-11-07T15:38:58.269316+00:00;allnative/readerimagesSPENT.
+- NEXT existing finewindow864..1119 with same boundary/vendor/noWD/CIVAC/FAST/
+  RMTFSscreen+envelope code to observe gap874..879 and actualdata880. No new
+  production source or target operation needed;qualify actual constant window,
+  exact linked objects/closure/codec/source identity,then ONE native+FIRST
+  reader. Sourceb4d8e2f pushed. ACTIVE2/5,current+3;observerPAUSED,idleUSERPAUSED,
+  allsourcepushesapproved. User key-provenance and terminal-row repliespending.
+
+
 - COPY-boundary trace QUALIFIED,NOT SENT. Explicit defaultOFF
   --wifi-native-copy-boundary-trace requires terminalfault/native-ready scope.
   Own markers:11parent before owner-live,12auth after live,13copy entry,
