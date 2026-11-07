@@ -56,6 +56,29 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: fresh native nonce plus first combined witness
 
+- FIRST PoC combined PHYSICAL capture PASS: sourceab8fc98 pushed/mirrored,
+ 396local+9external frozen/offline inputs. Probe3b2ffe... sentONCE
+ 08:16:49.204150Z,all4 nonce matches,9576/9576,error0,valid/stable272B
+  fault record+60scalars. Logs/map/PPM captured;PNG visually inspected.
+  Host16114 TERMINAL0 collected/SPENT. Explicit returnACK08:17:01.213435Z,
+  actual selected original FASTBOOT08:17:05.372856Z;no Android service after
+  this shortprobe. Both native d4a9cf... and probe3b2ffe... remain SPENT.
+- Actual retained published progress NOW shows source verification complete:
+  copy attempted1/ready1/source_pages14687,pages221(0xDD),segments8;segment
+  counts2,3,69,73,13,31,29,1,then20 zeros. ParentAUTH19/error0/unknown0,
+  turns13296;ownerphase2/held1/effects7/errors0,elapsed13.629420052s.
+  AuthCOPY5/modemphase2/step0/submitted8/segment7/events30/errors0.
+  Faultarmed1/error0/entered0. Record/scalars agree. This identifies the LAST
+  explicitly cleaned progress,not an upper bound on later dirty stores and
+  not a reset-cause proof. No physical native READY/network success.
+- Next narrow own-RAM publication around pages221..255 before/after target
+  translate,write/readback,cache and completion,without extra target access,
+  altered target cache operation,hardware watchdog write or deadline renewal.
+  Keep recordABI272B;derive any extra fixed scalar offsets from actual compiler
+  and new one-use native image. Goal ACTIVE2/5,current plus3. Continuous
+  observer PAUSED,idle test USER-PAUSED. Owned original mirror=ab8fc98 before
+  this milestone;unowned7215a378... intact. Report08:08Z,next08:23Z.
+
 - PUBLICATION f2c69a9 pushed/mirrored exact8 owned files;unowned7215a378...
   preserved. Actual new native image d4a9cf... frozen969 inputs/offline PASS,
   sentONCE08:10:49.905802Z,native08:12:29.977691Z,ACK08:12:49.445347Z.

@@ -14,6 +14,10 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+First PoC combined PHYSICAL witness verified4/4 nonce,9576 bytes and stable
+record/scalars:14687 source pages verified,221 target pages/8segments published.
+Last cleaned progress is not a final-stage or reset-cause proof. Further own-RAM
+page checkpoints will narrow221..255;no foreign hardware/firmware imported.
 Actual PoC-native trial d4a9cf... still returned original Android. Normal
 selected/root/complete service recovery verified FASTBOOT08:14:07Z. First
 combined reader prepared for new runtimebase/fresh nonce;no physical read yet.
