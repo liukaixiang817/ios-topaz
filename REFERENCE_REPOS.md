@@ -38,6 +38,17 @@ or reset-cause claim; full authentication and WLAN remain unproven.
 
 ## Continuous native startup diagnostic (0189, 2026-11-07 Melbourne)
 
+Fresh native fault candidate0002 changes only its nonce/digest. Main source,
+config and own producer headers/kernel/payload remain exact. Shipping COFF
+raw equality covers all bytes after verifying only its2128B+32B arrays,
+independently recomputed section CRC and timestamp. Supplemental MachO changes
+only32 CMP expected-digest immediates,verified using each preceding LDRB stack
+offset and both actual hashes. Vectors unchanged,both698frames/max816B. Initial
+strict rejections retained and explained; no gate bypass. Driver eb4099...,
+imagebb4157... original81/actual decoder PASS. Next fresh one-use native trial,
+then FIRST combined record/scalar witness after normal selected recovery.
+Existing semantic/QEMU proofs reused for identical code;this is not WLAN proof.
+
 After the first valid retained arm record,the next short probe binds only60
 fixed parent/copy/auth/owner scalar fields(260B),from37 actual linked PE/COFF
 base references and the exact original ARM compiler layout. It does not scan

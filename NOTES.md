@@ -54,11 +54,45 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### Current Wi-Fi handoff — 2026-11-07 Melbourne: fixed parent scalar witness qualified
+### Current Wi-Fi handoff — 2026-11-07 Melbourne: fresh native nonce plus first combined witness
+
+- Goal ACTIVE2/5,current plus3 remain. Previous turn made physical progress:
+  valid retained vector-arm record and autonomous verified FASTBOOT return;
+  later scalar probe correctly refused the stale nonce. Still no native READY/
+  scan/join/IP/DNS/data proof. Observer PAUSED,idle test USER-PAUSED. Latest
+  selected original FASTBOOT freshly verified07:10:22.619280Z,no new send yet.
+- Fresh firmware-native-fault-0002 uses EXACT same source79187ee5...,compiler
+  config,kernel6241/payload dc522 and hardware producers as spent0001. Only
+  the one-use nonce pool/digest is new. Actual COFF raw comparison accounts for
+  exactly2128B pool+32B digest,independently recomputed zero-seed section CRC
+  and timestamp;everything else,including full shipping instructions,identical.
+  Fresh actual COFF recompilation matches driver. MachO has32 changed CMP
+  immediates,each verified against the corresponding loaded digest-byte stack
+  offset/new hash;all other instruction bytes/branches identical. Vector COFF/
+  MachO bytes unchanged;both main objects698frames/max816B. Prior complete
+  semantic/model/QEMU-vector qualification reused only under these equalities.
+- Initial comparison rejected the derived COFF section checksum; next rejected
+  MachO's inlined expected-digest bytes; both identified and fully verified,
+  not ignored. Initial failures/objects retained private. No hardware guard,
+  source producer,normal root40/helper or diagnostic scope changed.
+- New driver710656B SHAeb4099222f953004908b89902ef716e22cc8aa7d3d8707c7d27991272de5254e;
+  image6184960B SHAbb4157717ae00afe95268c6cc30c554cbab9ef756f4956a90839c51d972d383b.
+  All81 original files preserved and actual EDK2 decoder PASS. Same exact
+  kernel CI42091724671;no new kernel/source change or root/userland admission.
+- NEXT freeze complete actual graph/new one-use review,offline admission,ONE
+  temporary native trial. If original Android returns,use existing exact
+  selected/root/complete normal service recovery; then build ONE FIRST short
+  witness combining record+60 scalar fields for this NEW nonce. Derive actual
+  physical base from this trial's pre-native log/linked PE;never assume old PA.
+  Do not run a record-only probe first or replay any spent image. New native
+  nonce UNCONSUMED at this milestone. Current owned mirror baseline8f198b1;
+  preserve7215a378... unowned hunk. Latest formal report07:06Z,next07:21Z.
+
+### Prior fixed parent scalar witness
 
 - PHYSICAL RESULT: source7c94138 pushed/mirrored. Frozen356 local+9 external
-  actual inputs/offline PASS. New imaged68d7a... sent ONCE06:42:18Z(see exact
-  boot.json),host61979 TERMINAL0 collected/SPENT. Capture PASS,but first nonce
+  actual inputs/offline PASS. New imaged68d7a... sent ONCE06:42:19.409951Z,
+  host61979 TERMINAL0 collected/SPENT. Capture PASS,but first nonce
   no longer matched:error6,2128/2128 reads,zero old record/scalar bytes read,
   no fields exported. Earlier matching arm record remains a valid earlier
   observation; retention through the intervening probe/reset is now UNKNOWN.
