@@ -14,6 +14,12 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+Physical vendor extent trial confirms860written+14UNTOUCHED=874processed pages/
+9segments,all4nonce valid,fine221..476 completed. No terminal error/nativeREADY/
+network proof;not an upper bound or exact reset cause. Latest accepted RMB
+status3/segment9 next COPY. Next existingFIRST864 window with CIVAC/vendor
+profile covers gap874..879 and data880. Phone explicitly back in FASTBOOT.
+
 Own vendor extent profile now qualified/defaultOFF:30515 written pages and205
 explicitly untouched gap pages;exact partial tails preserve every out-of-ELF
 canary. Full copy/auth and legacy regressions plus35 public tests PASS,actual

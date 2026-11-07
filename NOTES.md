@@ -56,6 +56,25 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: fresh native nonce plus first combined witness
 
+- PHYSICAL vendor extent source47762cf/image4e351a99... sentONCE
+  2026-11-07T12:51:45.044981Z,ACK2026-11-07T12:53:42.682213Z;
+  host54890 TERMINAL0/SPENT. Original FASTBOOT already12:54:37.419700Z,
+  no Android service reboot. FIRST reader3db6530a... freeze620local+9external/
+  offline PASS;host99690 TERMINAL0,4nonce/9640B/stable272B+64scalars292B PASS.
+  Retained processed874pages/9segments,ACTUAL860written+14UNTOUCHED pages,
+  source14687/ready1,owner5.829909479s,errors0/armed1/entered0;window221..476
+  complete476/stage5/512words.13watchdog samplesEN0/STS0/stable/error0. Last
+  RMB IO stage5/address0418000c/value3,modem segment9/events38;next COPY.
+  RecordAUTH6/scalarAUTH5 are separately cleaned,not one instant. No exact
+  terminal cause/no later-progress bound/nativeREADY/network claimed. Explicit
+  reader reset/selected FASTBOOT2026-11-07T12:55:17.624239Z;allimages/nonceSPENT.
+- NEXT use existing traceFIRST864 with current CIVAC/vendor profile;qualify
+  stage10 untouched records and actual relocated window. Need distinguish
+  next gap874..879 from data880 and next segment binding/RMB,without changing
+  protocol/ownership/timeout. Current source47762cf PUSH SUCCEEDED. ACTIVE2/5,
+  current+3;observerPAUSED,idleUSERPAUSED,all project source pushes approved.
+
+
 - Vendor segment extent profile QUALIFIED,NOT SENT. Explicit defaultOFF,
   terminal fault/native-ready firmware diagnostic only. Uses own successful PIL
   filesz+BSS semantics;205 complete gap pages are UNTOUCHED(complete2),no target
