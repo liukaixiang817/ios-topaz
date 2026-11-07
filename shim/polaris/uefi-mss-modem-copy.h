@@ -169,7 +169,11 @@ static inline int pmlc_begin(struct pmlc_copy*r,struct pmsc_owner*o,struct pmim_
             struct pwmc_translation*x=&r->source_AT[r->source_pages];uint64_t page=r->blob+f->offset+offset;x->page=page;
             if(!pwmc_actual_translate(x)||!pwmc_translation_valid(x)||x->page!=page||!pmlc_live(r))return pmlc_fail(r,4);
             unsigned bytes=f->bytes-offset;if(bytes>4096)bytes=4096;
+#if POLARIS_WIFI_SCALAR_SHA256_FAST
+            pwfi_volatile_bytes(&hash,(const volatile uint8_t*)(uintptr_t)page,bytes);
+#else
             for(unsigned j=0;j<bytes;j++)pwfi_byte(&hash,*(const volatile uint8_t*)(uintptr_t)(page+j));
+#endif
             r->source_pages++;
             if(!(r->source_pages&255))PMLC_OBSERVE(r);
         }

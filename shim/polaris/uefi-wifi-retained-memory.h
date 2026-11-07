@@ -25,7 +25,15 @@ _Static_assert(sizeof(struct pweh_result)==69584,"RETAINED_WIFI_MEMORY_RAW_V1 AB
 static efi_status pweh_test_map(struct efi_system*,struct pwea_map*);
 #endif
 static inline void pweh_digest(const void*data,size_t bytes,uint8_t out[32])
-{struct pwfi_sha256 h;pwfi_init(&h);for(size_t k=0;k<bytes;k++)pwfi_byte(&h,((const uint8_t*)data)[k]);pwfi_final(&h,out);}
+{
+    struct pwfi_sha256 h;pwfi_init(&h);
+#if POLARIS_WIFI_SCALAR_SHA256_FAST
+    pwfi_volatile_bytes(&h,(const volatile uint8_t*)data,bytes);
+#else
+    for(size_t k=0;k<bytes;k++)pwfi_byte(&h,((const uint8_t*)data)[k]);
+#endif
+    pwfi_final(&h,out);
+}
 static inline int pweh_fail(struct pweh_result*r,unsigned error)
 {if(!r->error)r->error=error;r->unknown=1;return 0;}
 static inline int pweh_binding_at(const struct pweh_result*r,unsigned native,unsigned state)

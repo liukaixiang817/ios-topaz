@@ -56,6 +56,39 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: fresh native nonce plus first combined witness
 
+- Fast scalar SHA256 qualified,NOT SENT. Explicit new builder/config flag
+  is terminal native fault-diagnostic-only,defaultOFF,no SIMD. Same SHA256
+  constants/state/padding/comparisons;Clang fully unrolls schedule/round loops.
+  Exact64-byte local copies via volatile byte reads feed full blocks;prefix/
+  tail use original byte path,no read outside admitted length. Used only at
+  already admitted pweh_digest and per-page staging/modem source-auth feeds;
+  all source authentication remains before target writes. Every old range,
+  translation,source/descriptor/ownership/freshness/deadline check remains.
+- Actual local ARM general-regs-only benchmark,own64,061,440B blob,5 shuffled
+  samples/mode:baseline median359173000ns,combined225204000ns(1.595x HOST),
+  digest06543d17... exact.7 variants/8302 hashlib comparisons PASS;current
+  actual header1031 length/fragmented known digest checks,guarded tail0..4096/
+  all64 partial states and fast actual words4097lengths/2048 protected refusal
+  positions PASS. Current25 tests PASS7.516s. FAST actual full-copy ASAN/
+  UBSAN65938877checks/14687source/30720target pages and all5 publication
+  refusals PASS;complete native auth4735834checks/32scenarios/610observations/
+  all5 IO-refusal boundaries PASS. All software leaves;NO phone-speed claim.
+- Actual shipping COFF reproduced;FAST-OFF COFF/MachO identical to83edd5e
+  source WITH old identity/stage/copy/retained headers. Actual hash function
+  operand inspection proves no SIMD registers;compiler general-regs-only.
+  721frames/max816B,terminal closure13/stack304/320B. Same kernel6241/
+  payload dc522,original81+actual EDK2 decoder PASS. Initial helper annotation
+  draft is preserved UNSELECTED/UNSENT;corrected fresh nonce driver selected.
+  Host test CLI omissions and SIMD-parser encoded-word false-positive were
+  refused before image/phone and corrected without weakening actual checks.
+  Selected firmware-native-fast-sha-0001 driverec4ca844c3acb8901c6ab6a96cafd225cd899ffc3937b50a541ea39d11bde609,
+  imagea9e6d0a796119877c9f3809d47229324e961b61842acdbfc07afa1b6ddeb7e6a;fresh nonce UNUSED/NO SEND. NEXT
+  commit/mirror,selected FASTBOOT preflight,freeze/offline,ONE native trial,
+  FIRST fresh64field292B witness,explicit return. Faster hashing may shorten
+  startup;reset cause and Wi-Fi-ready remain UNPROVEN. ACTIVE2/5,current+3;
+  observer PAUSED,idle USER-PAUSED,push pending direct approval.
+
+
 - PHYSICAL final-progress sourcec53ea95/imaged90eb56a... sentONCE
   2026-11-07T11:18:06.156163+00:00,native2026-11-07T11:19:46.688222+00:00,ACK2026-11-07T11:20:06.172913+00:00;
   host95398 TERMINAL0/SPENT. Selected FASTBOOT already present11:21:33.360081Z,

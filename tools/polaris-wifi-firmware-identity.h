@@ -5,6 +5,12 @@
 #define POLARIS_WIFI_FIRMWARE_IDENTITY_H
 #include <stdint.h>
 #include <stddef.h>
+#ifndef POLARIS_WIFI_SCALAR_SHA256_FAST
+#define POLARIS_WIFI_SCALAR_SHA256_FAST 0
+#endif
+#if (POLARIS_WIFI_SCALAR_SHA256_FAST != 0 && POLARIS_WIFI_SCALAR_SHA256_FAST != 1) || (POLARIS_WIFI_SCALAR_SHA256_FAST && !defined(__clang__))
+#error "Scalar SHA256 fast path requires an explicit Clang opt-in"
+#endif
 struct pwfi_range {uint32_t rva,bytes;uint8_t sha256[32];};
 #include "uefi-wifi-cache-binding.h"
 struct pwfi_sha256 {uint32_t h[8];uint64_t bytes;uint8_t block[64];unsigned used;};
@@ -22,11 +28,17 @@ static inline void pwfi_transform(struct pwfi_sha256 *s,const uint8_t *p)
         0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2};
     uint32_t w[64];
     for(unsigned i=0;i<16;i++)w[i]=(uint32_t)p[4*i]<<24|(uint32_t)p[4*i+1]<<16|(uint32_t)p[4*i+2]<<8|p[4*i+3];
+#if POLARIS_WIFI_SCALAR_SHA256_FAST
+#pragma clang loop unroll(full)
+#endif
     for(unsigned i=16;i<64;i++){
         uint32_t a=w[i-15],b=w[i-2];
         w[i]=w[i-16]+(pwfi_ror(a,7)^pwfi_ror(a,18)^(a>>3))+w[i-7]+(pwfi_ror(b,17)^pwfi_ror(b,19)^(b>>10));
     }
     uint32_t a=s->h[0],b=s->h[1],c=s->h[2],d=s->h[3],e=s->h[4],f=s->h[5],g=s->h[6],h=s->h[7];
+#if POLARIS_WIFI_SCALAR_SHA256_FAST
+#pragma clang loop unroll(full)
+#endif
     for(unsigned i=0;i<64;i++){
         uint32_t t=h+(pwfi_ror(e,6)^pwfi_ror(e,11)^pwfi_ror(e,25))+((e&f)^(~e&g))+k[i]+w[i];
         uint32_t u=(pwfi_ror(a,2)^pwfi_ror(a,13)^pwfi_ror(a,22))+((a&b)^(a&c)^(b&c));
@@ -41,6 +53,22 @@ static inline void pwfi_init(struct pwfi_sha256 *s)
 }
 static inline void pwfi_byte(struct pwfi_sha256 *s,uint8_t b)
 {s->block[s->used++]=b;s->bytes++;if(s->used==64){pwfi_transform(s,s->block);s->used=0;}}
+/* Read exactly the admitted bytes, including unaligned/partial blocks. All
+ * source reads remain volatile bytes; the transform sees only our local copy.
+ * No page/range admission, hash comparison or timing guard is omitted. */
+static inline __attribute__((unused)) void pwfi_volatile_bytes(struct pwfi_sha256*s,const volatile uint8_t*p,size_t bytes)
+{
+#if POLARIS_WIFI_SCALAR_SHA256_FAST
+    while(bytes&&s->used){pwfi_byte(s,*p++);bytes--;}
+    while(bytes>=64){
+        uint8_t block[64];for(unsigned n=0;n<64;n++)block[n]=p[n];
+        pwfi_transform(s,block);s->bytes+=64;p+=64;bytes-=64;
+    }
+    while(bytes){pwfi_byte(s,*p++);bytes--;}
+#else
+    for(size_t n=0;n<bytes;n++)pwfi_byte(s,p[n]);
+#endif
+}
 static inline void pwfi_final(struct pwfi_sha256 *s,uint8_t out[32])
 {
     uint64_t bits=s->bytes*8;pwfi_byte(s,0x80);

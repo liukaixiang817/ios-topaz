@@ -69,6 +69,10 @@ def main():
              manifest.get('wifi_native_fault_foreign_calls') is False)),
             'native fault hold requires its terminal firmware-only scope')
     marker=manifest.get('wifi_native_bootloader_marker',False)
+    fast_sha=manifest.get('wifi_scalar_sha256_fast',False)
+    require(type(fast_sha) is bool and (not fast_sha or fault_hold) and
+            manifest.get('scalar_sha256_uses_SIMD',False) is False,
+            'fast scalar SHA256 requires the explicit terminal diagnostic without SIMD')
     trace_first=manifest.get('wifi_native_copy_trace_first',0)
     require(type(trace_first) is int and 0<=trace_first<=30464 and (not trace_first or fault_hold),
             'fine copy trace must be a bounded fault diagnostic window')
@@ -166,6 +170,7 @@ def main():
         sha256=sha(target), bytes=len(image), driver_sha256=sha(driver),
         driver_manifest_sha256=sha(args.driver_manifest), kernel_sha256=sha(args.kernel),
         payload_sha256=sha(args.payload), kernel_handoff=not args.firmware_diagnostic_only,
+        wifi_scalar_sha256_fast=fast_sha,scalar_sha256_uses_SIMD=False,
         wifi_native_copy_trace_first=trace_first,
         wifi_native_watchdog_readonly=watchdog,native_apps_watchdog_register_writes=False,
         wifi_native_bootloader_marker=marker,pre_native_volatile_boot_reason_writes=marker,

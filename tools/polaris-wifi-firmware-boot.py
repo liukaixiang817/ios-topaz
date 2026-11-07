@@ -70,6 +70,13 @@ def validate(review_path):
             fault_config==(['#define EFI_XNU_WIFI_NATIVE_FAULT_HOLD 1'] if fault_hold else []),
             'native fault hold compiler scope not frozen')
     marker=driver.get('wifi_native_bootloader_marker',False)
+    fast_sha=driver.get('wifi_scalar_sha256_fast',False)
+    fast_config=[x for x in config if x.startswith('#define POLARIS_WIFI_SCALAR_SHA256_FAST')]
+    require(type(fast_sha) is bool and (not fast_sha or fault_hold) and
+            image.get('wifi_scalar_sha256_fast',False) is fast_sha and
+            driver.get('scalar_sha256_uses_SIMD',False) is False and image.get('scalar_sha256_uses_SIMD',False) is False and
+            fast_config==(['#define POLARIS_WIFI_SCALAR_SHA256_FAST 1'] if fast_sha else []),
+            'fast scalar SHA256 compiler/image scope mismatch')
     trace_first=driver.get('wifi_native_copy_trace_first',0)
     trace_config=[x for x in config if x.startswith('#define EFI_XNU_WIFI_NATIVE_COPY_TRACE_FIRST')]
     require(type(trace_first) is int and 0<=trace_first<=30464 and (not trace_first or fault_hold) and
@@ -171,6 +178,12 @@ def validate(review_path):
                     proof.get('pre_native_marker_host_order_tested') is True and
                     proof.get('pre_native_marker_USB_ACK_after_readback_tested') is True,
                     'pre-native marker qualification missing')
+        if fast_sha:
+            require(proof.get('scalar_SHA256_actual_header_vectors_tested') is True and
+                    proof.get('scalar_SHA256_admitted_read_bounds_tested') is True and
+                    proof.get('scalar_SHA256_default_OFF_objects_identical') is True and
+                    proof.get('scalar_SHA256_actual_objects_general_regs_only') is True,
+                    'fast scalar SHA256 qualification missing')
         if trace_first:
             require(proof.get('relocated_copy_trace_actual_policy_tested') is True and
                     proof.get('relocated_copy_trace_default_objects_identical') is True and

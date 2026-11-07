@@ -153,7 +153,11 @@ static inline int pmsi_stage(struct pmsi_result*r,const struct pmmn_native*m,con
             if(!pmsi_arch(r,&now)||!pwmc_actual_translate(t)||!pwmc_translation_valid(t)||
                t->page!=(uintptr_t)blob+a->offset+4096*n)return pmsi_fail(r,4);
             unsigned bytes=a->bytes-4096*n;if(bytes>4096)bytes=4096;
+#if POLARIS_WIFI_SCALAR_SHA256_FAST
+            pwfi_volatile_bytes(&hash,(const volatile uint8_t*)(uintptr_t)t->page,bytes);
+#else
             for(unsigned j=0;j<bytes;j++)pwfi_byte(&hash,*(const volatile uint8_t*)(uintptr_t)(t->page+j));
+#endif
             r->source_pages[kind]++;
         }
         pwfi_final(&hash,r->source_hash[kind]);if(!pgcd_equal(r->source_hash[kind],a->sha256,32))return pmsi_fail(r,5);
