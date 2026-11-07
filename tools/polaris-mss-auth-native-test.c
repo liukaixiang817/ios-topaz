@@ -2,6 +2,9 @@
  * DATA. Every privileged operation is a software leaf. Descriptor, metadata,
  * MBA and modem host shadows are protected across the corresponding phases. */
 #include <stdint.h>
+#if defined(PMSN_TEST_OBSERVE)
+#define EFI_XNU_WIFI_NATIVE_FAULT_HOLD 1
+#endif
 static uint8_t*auth_payload,*auth_firmware;
 static void auth_assets(void);
 struct pmni_arch;struct pmni_translation;struct pmni_command;
@@ -48,6 +51,22 @@ static unsigned metadata_owner,modem_owner,peer_segments,metadata_polls,final_po
 static uint32_t rmb_length,rmb_metadata,rmb_start,rmb_command;
 static unsigned auth_bad_status;
 static uint64_t auth_peer_delay;
+#if defined(PMSN_TEST_OBSERVE)
+static unsigned auth_observations,auth_observe_fail,auth_observe_before;
+static int pmlc_observe(struct pmlc_copy*r){CHECK(r==auth_copy&&r->attempted);return 1;}
+static int pmsn_observe(struct pmsn_state*s)
+{
+    CHECK(s==auth_owner&&s->observe_stage>=1&&s->observe_stage<=5&&s->deliveries);
+    const struct pmsn_delivery*r=&auth_records[s->deliveries-1];
+    CHECK(s->observe_kind==(r->kind==1?r->command.metadata.kind:r->command.modem.kind));
+    CHECK(s->observe_address==(r->kind==1?r->command.metadata.address:r->command.modem.address));
+    CHECK(s->observe_value==(s->observe_stage>=3?r->native.value:0));
+    CHECK(s->observe_stage==5?!s->pending:s->pending==s->deliveries);
+    auth_observations++;
+    if(r->kind==2&&s->observe_stage==auth_observe_fail){auth_observe_before=auth_io_calls;return 0;}
+    return 1;
+}
+#endif
 static int auth_io_selected(void){return auth_owner&&auth_owner->pending&&auth_owner->deliveries==auth_io_trigger&&
     (auth_owner->phase==PMSN_MD_IO||auth_owner->phase==PMSN_PUBLISH||auth_owner->phase==PMSN_AUTH);}
 static void auth_arch_hook(struct pmni_arch*a){if(auth_io_selected()&&auth_io_fault==3)a->ttbr0^=4096;}
@@ -248,6 +267,10 @@ int PMSN_TEST_ENTRY(int argc,char**argv)
 {
     auth_test_open(argc,argv);
     auth_setup(0);auth_success();fprintf(stderr,"native metadata/full modem copy/5 secure transitions PASS; checking protected continuations\n");
+#if defined(PMSN_TEST_OBSERVE)
+    CHECK(auth_observations==5*auth_owner->deliveries);
+    printf("PASS %u actual RMB progress observations across all complete commands\n",auth_observations);fflush(stdout);
+#endif
     auth_records[0].native.value^=1;CHECK(!pmsn_current(auth_owner));auth_records[0].native.value^=1;
     auth_setup(3);auth_success();fprintf(stderr,"all5 four-round descriptor-protected continuations PASS; checking failures\n");
     for(unsigned fault=1;fault<=8;fault++){
@@ -273,6 +296,18 @@ int PMSN_TEST_ENTRY(int argc,char**argv)
     auth_setup(3);auth_peer_delay=960000;CHECK(!auth_drive()&&auth_owner->unknown&&!auth_owner->complete&&owner->held);
     CHECK(auth_owner->assignment[0].transaction.error==PWMT_TIME&&auth_protected[0]);
     unsigned before=auth_io_calls+auth_copies+auth_peers;CHECK(!pmsn_step(auth_owner)&&before==auth_io_calls+auth_copies+auth_peers);
+#if defined(PMSN_TEST_OBSERVE)
+    for(unsigned stage=1;stage<=5;stage++){
+        auth_setup(0);auth_observe_fail=stage;
+        CHECK(!auth_drive()&&auth_owner->unknown&&auth_owner->error==3&&owner->held);
+        CHECK(auth_owner->observe_stage==stage&&auth_owner->observe_address==0x4180018);
+        CHECK(auth_io_calls==auth_observe_before&&auth_copy->pages==2&&auth_owner->modem.submitted==1);
+        CHECK(auth_owner->modem.events==1&&auth_owner->modem.event[0].returned==(stage>=5));
+        before=auth_io_calls+auth_copies+auth_peers;CHECK(!pmsn_step(auth_owner)&&before==auth_io_calls+auth_copies+auth_peers);
+        auth_observe_fail=0;
+    }
+    printf("PASS all5 RMB publication refusals keep owner and stop further IO/copy\n");fflush(stdout);
+#endif
     auth_test_close();
     printf("PASS %u complete native MSS auth checks, %u scenarios; software privileged leaves, no hardware/provider/USB\n",checks,auth_scenarios);return 0;
 }

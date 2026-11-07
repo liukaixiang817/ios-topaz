@@ -56,8 +56,27 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: fresh native nonce plus first combined witness
 
+- Fresh RMB-trace candidate qualified after user confirmed FASTBOOT. Selected
+  original Polaris verified read-only08:57:59Z. Existing five RMB boundaries
+  publish stage/kind/address/returned-value in24B owned control;no new hardware
+  access/deadline/watchdog policy. Copy trace and272B fault record unchanged.
+  Current19 public tests PASS22.750s;actual full auth4729132checks/32scenarios,
+  610 ordered trace observations/all5 publication refusals PASS ASAN/UBSAN.
+  Actual publisher10 failurepoints/192 handlercases PASS,current OFF0/9/10
+  COFF/MachO identical. Both700frames/max816B,local faultclosure13/stack304/320B;
+  actual COFF reproduces shipping driver;vectors/cache/unchanged entry evidence
+  reused by exact source/code identity. Initial fixture/link and pre-completion
+  proof attempts refused offline;logs retained;NO device send yet.
+- firmware-native-rmb-trace-0001 driver7ecb7cc8f1e557a78e280609e7e48ac61d7fb63f0fec25825df2ce9e5e0a74ed (712704B),
+  image4f5fcad96d41db1a78717a6899d46f84e6f4f4edfa479b33cb204d212618a314 (6187008B).
+  New nonce UNUSED. Same kernel6241/payload dc522;original81+actual codec pass.
+  NEXT freeze/offline,ONE fresh native trial,normal selected recovery if needed,
+  FIRST combined witness64fixed scalars284B (omit last4 segment counters),then
+  explicit verified FASTBOOT return. Goal ACTIVE2/5,current plus3;no physical
+  READY/scan/join/IP/DNS/data. Observer PAUSED,idle test USER-PAUSED.
+
 - PHYSICAL fine-trace witness42ed9e... source08ba7d5 pushed/mirrored,
- 399local+9external frozen/offline PASS,sentONCE08:30:18.235Z(see exact
+ 399local+9external frozen/offline PASS,sentONCE2026-11-07T08:30:18.292756+00:00 (actual
   phone boot.json),host11550 TERMINAL0 collected/SPENT. All4 nonce guards
   match,9608/9608 bytes,error0,stable valid record+64 scalars. Full capture
   PASS;PNG visually inspected. Explicit resetACK08:30:30.283833Z and actual

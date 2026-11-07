@@ -1247,12 +1247,14 @@ static int wifi_native_fault_publish(unsigned force)
         (uintptr_t)&s->owner.attempted,(uintptr_t)&s->copy.opening,(uintptr_t)&s->copy.attempted,
         (uintptr_t)&s->copy.segment,(uintptr_t)&s->auth.attempted,
         (uintptr_t)&s->auth.modem.opening,(uintptr_t)&s->auth.modem.phase};
-    const unsigned bytes[]={24,16,48,16,48,sizeof(s->copy.segment),40,16,40};
+    const unsigned bytes[]={24,16,48,16,48,sizeof(s->copy.segment),64,16,40};
     for(unsigned n=0;n<sizeof(at)/sizeof(at[0]);n++)if(!wifi_native_fault_clean(at[n],bytes[n]))return 0;
     return wifi_native_fault_clean((uintptr_t)f,sizeof(*f));
 }
 static int pmlc_observe(struct pmlc_copy*r)
 {return r==&wifi_native_parent.copy&&wifi_native_fault_publish(1);}
+static int pmsn_observe(struct pmsn_state*s)
+{return s==&wifi_native_parent.auth&&wifi_native_fault_publish(1);}
 __attribute__((noreturn,noinline,used)) void polaris_wifi_fault_hold(uint64_t vector,uint64_t esr,
     uint64_t elr,uint64_t far,uint64_t spsr,uint64_t sp,uint64_t sp0,uint64_t ticks)
 {

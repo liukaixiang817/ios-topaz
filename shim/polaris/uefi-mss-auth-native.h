@@ -44,9 +44,22 @@ struct pmsn_state {
     uint8_t segments_digest[32];struct pmmd_metadata metadata;struct pmim_auth modem;
     struct pmsn_assignment assignment[PMSN_ASSIGNMENTS];
     uint32_t attempted,ready,unknown,error,phase,pending,deliveries,assignments,complete,reserved;
+#if EFI_XNU_WIFI_NATIVE_FAULT_HOLD
+    uint32_t observe_stage,observe_kind;
+    uint64_t observe_address,observe_value;
+#endif
     uint8_t records_digest[32],copy_digest[32],digest[32];
     uint64_t rmtfs; /* One later shared-memory owner, excluded from auth seal. */
 };
+#if EFI_XNU_WIFI_NATIVE_FAULT_HOLD
+/* Diagnostic writes stay in this owned control record. The existing RMB
+ * access, validation, completion and absolute deadline remain unchanged. */
+static int pmsn_observe(struct pmsn_state*);
+#define PMSN_TRACE_IO(s,where,op,at,val) do{(s)->observe_stage=(where);(s)->observe_kind=(op); \
+    (s)->observe_address=(at);(s)->observe_value=(val);if(!pmsn_observe(s))return pmsn_fail(s,3);}while(0)
+#else
+#define PMSN_TRACE_IO(s,where,op,at,val) do{}while(0)
+#endif
 #if defined(POLARIS_MSS_AUTH_SOFTWARE_PEER)
 static int pmsn_cache(struct pwma_page*,unsigned,struct pwmk_record*);
 static int pmsn_round(struct pwma_registers*);
@@ -261,17 +274,22 @@ static inline int pmsn_io(struct pmsn_state*s,unsigned kind)
     r->kind=kind;r->attempted=r->unknown=1;if(kind==1)r->command.metadata=md;else r->command.modem=modem;
     s->pending=++s->deliveries;
     uint64_t address=kind==1?md.address:modem.address;unsigned operation=kind==1?md.kind:modem.kind;
+    PMSN_TRACE_IO(s,1,operation,address,0);
     unsigned memory=operation==PMSR_READ||operation==PMSR_WRITE;
     if((memory&&!pmpn_target(p,address&~UINT64_C(4095),&r->target[0]))||!pmpn_arch(p,&r->opening)||
        !pgcd_equal(&r->opening,&p->architecture,offsetof(struct pmni_arch,ticks)))goto fail;
     if(operation==PMSR_WRITE&&!pmsc_mark_effect(o,PMSC_REMOTE))goto fail;
+    PMSN_TRACE_IO(s,2,operation,address,0);
     int returned=kind==1?pmni_metadata(&s->metadata,&r->command.metadata,&r->opening,&r->native):
         pmni_modem(&s->modem,&r->command.modem,&r->opening,&r->native);
+    PMSN_TRACE_IO(s,3,operation,address,r->native.value);
     if(!returned||(memory&&(!pmpn_target(p,address&~UINT64_C(4095),&r->target[1])||r->target[0].index!=r->target[1].index))||!pmsn_live(s))goto fail;
+    PMSN_TRACE_IO(s,4,operation,address,r->native.value);
     if(kind==1){
         if(!pgcd_equal(&md,&r->command.metadata,sizeof(md))||pmmd_complete(&s->metadata,&r->command.metadata,o->last,1,r->native.value)<0)goto fail;
     }else if(!pgcd_equal(&modem,&r->command.modem,sizeof(modem))||pmim_complete(&s->modem,&r->command.modem,o->last,1,r->native.value)<0)goto fail;
-    r->unknown=0;r->complete=1;pweh_digest(r,offsetof(struct pmsn_delivery,digest),r->digest);s->pending=0;return 1;
+    r->unknown=0;r->complete=1;pweh_digest(r,offsetof(struct pmsn_delivery,digest),r->digest);s->pending=0;
+    PMSN_TRACE_IO(s,5,operation,address,r->native.value);return 1;
 fail:r->error=3;return pmsn_fail(s,3);
 }
 static inline int pmsn_finish(struct pmsn_state*s)

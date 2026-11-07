@@ -14,6 +14,12 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+Current RMB trace adds only fixed own-control progress around existing Polaris
+MMIO leaves. No foreign board register/firmware/protocol imported. Current
+ASAN/UBSAN auth32scenarios/4729132checks and5 publication refusal boundaries
+PASS;physical native start and fresh first witness remain pending. Existing
+own-source comparison and HackiOS reference scope above remain applicable.
+
 Actual fine-trace witness42ed9e... passed9608B/4 nonce guards/64 stable
 scalars. Last retained progress2pages/1segment,all fine trace fields0;prior221
 page result remains separate. No fixed-page/reset-cause conclusion. Next own
