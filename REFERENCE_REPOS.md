@@ -48,8 +48,14 @@ and actual production COFF/MachO text match. Three real QEMU EL1 exception
 classes and EL2 refusal pass;192 actual-handler/182 READY GOP cases and20 public
 tests pass. Both enabled objects698frames,max816B;352/368B terminal call stack.
 Actual default-OFF objects normal0/page9/ready10 match previous source. Existing
-native producer inputs/ordering/deadlines remain unchanged. No physical fault
-or WLAN success is inferred; the new image is not yet sent.
+native producer inputs/ordering/deadlines remain unchanged. Image74458d... was
+sent05:39:41Z,ACK05:41:40Z;later exact original Android was observed and normal
+service recovered FASTBOOT05:44:39Z. No fault/READY title confirmed yet; no WLAN
+success inferred. Approx Android kernel start34.17..34.23s after ACK repeats the
+earlier timing without establishing cause. Exact linked PE/COFF instruction
+mapping and old record/nonce relocations were audited for a possible bounded
+nonce-qualified RAM remnant read; actual retention is unknown. No new memory
+ownership,hardware watchdog write or foreign radio approach is inferred.
 
 Mode10 subsequently returned to original Android; host normal-service recovery
 verified selected FASTBOOT04:35:54Z. Approx Android boot34.32s after native ACK

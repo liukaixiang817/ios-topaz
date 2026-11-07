@@ -56,6 +56,30 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: terminal native exception diagnostic qualified
 
+- ACTUAL SEND/RECOVERY: sourcee215ff0 pushed/mirrored. Frozen633 actual inputs,
+  offline93184 PASS; new image74458d... sent ONCE05:39:41.236648Z. Payload
+ 100573184B/1535chunks validated;native05:41:21.356537Z,ACK05:41:40.814580Z,
+  host55164 TERMINAL0 collected. Image/nonce SPENT,never replay. No physical
+  NATIVE FAULT/FAULT ARM ERR/NATIVE READY title confirmed yet; async screen
+  question remains pending. Native ACK is not physical startup/WLAN proof.
+- Bounded selected Android check39467 found original Android/root/complete1,
+  used authorized normal power service;selected original FASTBOOT verified
+ 05:44:39.675113Z,TERMINAL0/service255 expected disconnect. Continuous observer
+  remains PAUSED. Android uptime133.53 gives estimated kernel start bracket
+ 05:42:14.983659..15.043759Z,34.169..34.229s after ACK. Prior mode10 estimate
+ 34.32s is similar; this does NOT identify a watchdog or exact fault time.
+  Bootreason bootloader. Retained pstore is partly corrupt Android console
+  with init signal11/bootloader reboot,not a UEFI exception or reset-cause proof.
+- Exact linked PE/main COFF mapping verified with five independent instruction
+  anchors. Actual old record/nonce addresses can be derived from matching
+  ADRP/ADD relocations; the short-probe retained map classifies those addresses
+  as conventional RAM. Investigating a new bounded readonly remnant probe,
+  requiring this spent candidate's unique nonce before exporting only its
+  record/scalar progress. Retention across Android is UNKNOWN. No such new
+  probe built/sent yet; no arbitrary memory dump or storage write proposed.
+- Current owned original mirror=e215ff0. Keep the unowned7215a378... hunk.
+  Latest formal report05:54Z,next06:09Z. Goal remains ACTIVE2/5,current plus3.
+
 - Goal ACTIVE2/5,current plus3 remain. No scan/join/IP/DNS/data proof. Long
   idle test USER-PAUSED,continuous observer PAUSED. User now answered“已到
   fastboot”after the separate readonly probe; host must freshly reverify exact
@@ -105,7 +129,7 @@ early samples only. On0029 the human already confirmed boot complete and said
   mainC/builder changed plus new faultS/header; all old hardware producer
   input hashes identical. Normal native-boot.py whole file unchangedb3b2c7c3.
   Unowned remote-memory hunk SHA7215a378... preserved/uncommitted.
-- Physical native-fault trial NOT SENT yet. Source qualification complete;
+- Before the actual send above, source qualification was complete;
   commit/push and exact original-checkout mirror,next fresh selected FASTBOOT
   query,freeze all actual proof inputs,offline admission,then ONE new temporary
   image/nonce. Keep all previous images/nonces SPENT. No CPU_ON/kernel/root/
