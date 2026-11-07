@@ -14,6 +14,17 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+## Resumed persistent build scope (2026-11-07 Melbourne)
+
+Temporary checkout/artifacts were absent after user pause/resume. Published
+848d878 driver source recovered in project-local persistent checkout; original
+working tree/unowned hunk preserved. Same kernel6241bdc3... and own firmware
+restored; diagnostic payload rebuilt with retained f7905125... graphics as inert
+data because temporary c3e456d2... bundle was unavailable. No kernel/root entry.
+Human before256-0002 result: no title observed, automatic Android; exact stage
+unknown. Fresh before225 isolates next boundary after first4096 data-byte write.
+No foreign firmware/provider/address imported and no producer protocol changed.
+
 ## Terminal page checkpoint localization (0189, 2026-11-07 Melbourne)
 
 Own uefi-mss-modem-copy.h and generated own MDT geometry show segment9 crosses

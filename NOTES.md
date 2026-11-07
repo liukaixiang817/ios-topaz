@@ -54,7 +54,72 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### Current Wi-Fi handoff — 2026-11-07 Melbourne: page223 cache returned; next first data page224
+### Current Wi-Fi handoff — 2026-11-07 Melbourne: resumed in persistent workspace; page225 ready
+
+- Goal ACTIVE, execution2/5; current plus3 remain. Previous goal turn PROGRESS:
+  committed5d45cbe/848d878 diagnostics, physical AT/write/cache evidence through
+  gap page223, physical first data-page224 write/readback4096bytes/512words,
+  then a fresh before256-0002 trial. Human reported NO top title observed and
+  automatic Android restart. Exact exit stage is unknown; no cache/fault cause
+  is proven. No scan/join/IP/DNS/data success. Long idle subtest remains paused.
+- User paused and resumed the overall goal. After the pause the entire previous
+  /private/tmp/polaris-wifi-local-9286b3c and its tool/private-artifact caches
+  were absent; old session21381 is missing. Its last observed output verified
+  original Polaris/root and began normal service return; final result lost.
+  Do not claim that old command succeeded. Fresh current unique FASTBOOT
+  inventory/getvar product verified Polaris and selected identity privately.
+- Active persistent checkout:
+  /Users/lkx/Documents/GitHub/ios-topaz/research/polaris/local-workspaces/wifi-20261107
+  cloned published50149b1; device source remains848d878. Do not reset the original
+  checkout: it has stale4f0ed6b HEAD and mirrored working files. Unowned9-line
+  remote-memory hunk preserved, SHA7215a3786b3b9226aa4f839648bbecc80d9c575f3fd3fb00250481dd91786a01.
+  Current recovery records live under this checkout's ignored
+  research/polaris/uefi-ios-0189/wifi/recovery-20261107. Historical temporary
+  case files/photos/reviews are unavailable; public handoff and conversation
+  observations remain, but do NOT fabricate lost raw records or reuse reviews.
+  All previously sent case names/images/nonces remain SPENT even if files lost.
+- Recovered exact CI42091724671/artifact13445524374. Official ZIP67193706B
+  SHAb305a33ffe0529c6ec4c15fff858fd269ecd43dce3f8121302f49f37588618ff,
+  kernel17358112B SHA6241bdc31a583ae87940e7a45e0ee25ca96c4cafb05085b466c4a8e447dc406c.
+  gh first transfer timed out after45MB; HTTP206 resume completed and full hash
+  passed. No new kernel build. Original firmware8588a9..., EDK2 decoderd5d093...,
+  41 source-bound inputs, own provider/firmware files and six historical GPT
+  identity inputs copied and verified; three historical GPU/CPU logs restored.
+- Prior payload904f5a71... and new graphics bundlec3e456d2... were in lost temp
+  artifacts. Current FW-only reconstruction uses the SAME exact CI kernel and
+  own firmware, with retained validated20F66 bundlef7905125... as INERT data.
+  Unused sweetscan=- token removed to add required polariswifi=1 within608bytes.
+  New payload100573184B SHAdc522cdb8c159d7d2cd7b2e7aa679cd210bd6873ad3ca63c8a81312eb8499d0a;
+  it is NOT byte-identical to the old payload. No new userland/root admission
+  is claimed. Kernel entry/root reader remain compiled closed in this scope.
+- Fresh firmware-copy-page-before225-0001: driver702464B SHAe5056ea45791b48d61b446a9d64e3b9160e23ed93307ae6ecc75dd5bd3b3b102;
+  before225,probeOFF,after-writeOFF. First build stopped at missing historical
+  inventory JSON; unused partial driver/nonce retained as driver-build-failed-0001,
+  explicitly NOT selected/sent/consumed. Valid rebuild uses a fresh pool.
+  Original81-file codec/package and both actual COFF/MachO entry/hold/callback
+  closure pass; no kernel/worker runtime symbols,695frames/max816B.
+- New public15 tests PASS20.710s/session20645;11181 terminal entry cases plus
+  actual callback22/probe12/after-write17 cases included. Real producer225 peer
+  PASS14687 source translations/2242 checks; selected target has no AT/write/cache.
+  Fresh actual GOP504 cases use actual parent types and real software-peer
+  protocol libraries; they PASS and never execute the unrelated peer main.
+  Initial private fixture header/main/link setup failures retained; no device
+  producer change. Fresh OFF comparison before95993eb main+modem-copy header
+  versus current at identical prefix9 config: MachO EXACT,COFF timestamp-only.
+  Normal root validator/shared transport bytes exactly equal95993eb.
+- Current action: complete exact freeze/offline review, verify expected FASTBOOT,
+  then send this NEW225 candidate ONCE. Expected COPY PAGE HOLD,E1/E1,completed8/
+  error0,currentfirstDD/partial4,nextF81E1000. Reaching it demonstrates current
+  page224 cache/live check/completion returned; none of these are yet physical
+  proof for this reconstructed candidate. Never replay previous images.
+- Standing own-source push and temporary fastboot boot authorization remains.
+  If original Android is actually detected, verify exact Polaris/boot_completed1/
+  root, then normal svc power reboot bootloader. Continuous observer stays paused.
+  No flash/erase/GPT/Windows/manual journal repair; full runtime root review was
+  historically REFUSED38/40 and is not re-admitted by firmware diagnostics.
+  Last resumed formal report02:54Z; next03:09Z,then every15min.
+
+### Previous Wi-Fi handoff — 2026-11-07 Melbourne: page223 cache returned; next first data page224
 
 - Goal ACTIVE, execution2/5; four remain including current. Scan3,join/IP/DNS4,
   data/stability5 unproven. Long idle testing remains USER-PAUSED; Wi-Fi is active.
