@@ -38,6 +38,17 @@ or reset-cause claim; full authentication and WLAN remain unproven.
 
 ## Continuous native startup diagnostic (0189, 2026-11-07 Melbourne)
 
+After the first valid retained arm record,the next short probe binds only60
+fixed parent/copy/auth/owner scalar fields(260B),from37 actual linked PE/COFF
+base references and the exact original ARM compiler layout. It does not scan
+the entire parent or follow old pointers. Two nonce/record passes validate before
+two scalar passes with two further nonce hashes,unchanged20ms/current map/AT/
+CPU policy. All25 source tests/four actual generic EFI cases pass;actual object
+and default-OFF baseline match,original81 files preserved. Driver19929e...,
+imaged68d7a... await single physical capture. Existing native source/protocols
+and already-proven explicit original-service FASTBOOT return remain unchanged.
+No startup,radio authority or reset-cause claim follows from retained scalars.
+
 The next short standalone remnant probe binds only the spent diagnostic's
 actual linked nonce and272B exception record. Current EFI map/AT/CPU checks
 still apply; no old pointer or ownership claim is followed. Retention through

@@ -329,6 +329,10 @@ def main():
                 witness.get('old_RAM_writes') is False and
                 witness.get('arbitrary_memory_read_API') is False,
                 'not the bounded spent-record witness')
+        if witness.get('scalar_count'):
+            require(witness.get('scalar_ABI_bound') is True and
+                    1<=witness['scalar_count']<=64 and 0<witness.get('scalar_bytes',0)<=512,
+                    'parent witness is not a fixed bounded scalar ABI')
         record['native_fault_witness']=witness
     if m.get('diagnostic_bootloader_reset'):
         require(m.get('explicit_command_volatile_boot_marker_writes') is True and

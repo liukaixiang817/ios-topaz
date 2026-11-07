@@ -169,6 +169,8 @@ static void witness_inventory(const void *map,uint64_t bytes,uint64_t capacity,
     hex("FAULT_WITNESS_NONCE_0=",r.nonce_match[0]);hex("FAULT_WITNESS_NONCE_1=",r.nonce_match[1]);
     hex("FAULT_WITNESS_STABLE=",r.stable);hex("FAULT_WITNESS_ZERO=",r.zero);
     hex("FAULT_WITNESS_VALID=",r.valid);
+    hex("FAULT_WITNESS_SCALAR_VALID=",r.scalar_valid);hex("FAULT_WITNESS_SCALAR_STABLE=",r.scalar_stable);
+    hex("FAULT_WITNESS_NONCE_2=",r.nonce_match[2]);hex("FAULT_WITNESS_NONCE_3=",r.nonce_match[3]);
     /* Unmatched/zero/corrupt remnants are not exception evidence. No raw RAM
      * is exported; only this candidate's validated record has scalar fields. */
     if(!ok||!r.valid)return;
@@ -185,6 +187,9 @@ static void witness_inventory(const void *map,uint64_t bytes,uint64_t capacity,
     PNFW_FIELD(owner_held);PNFW_FIELD(owner_opening);PNFW_FIELD(owner_last);
 #undef PNFW_FIELD
     hex("OLD_FAULT_DRIVER_BASE=",f->layout.image);
+    if(r.scalar_valid)for(unsigned n=0;n<pnfw_configuration.scalar_count;n++){
+        text("OLD_PROGRESS_");hex(pnfw_scalar_names[n],r.scalar_value[0][n]);
+    }
 }
 #endif
 static const efi_guid loaded_guid={0x5b1b31a1,0x9562,0x11d2,{0x8e,0x3f,0,0xa0,0xc9,0x69,0x72,0x3b}};

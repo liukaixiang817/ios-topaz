@@ -3,6 +3,7 @@ import hashlib
 import json
 from pathlib import Path
 import struct
+import re
 
 
 def sha(path):
@@ -76,13 +77,48 @@ def prepare(root, descriptor, output):
     digest = bytes.fromhex(d['nonce_sha256'])
     if len(digest)!=32:
         raise ValueError('nonce digest size')
+    parent=parent_bytes=0;scalars=[]
+    if d.get('scalar_witness'):
+        progress=d['scalar_witness'];p=(root/progress['layout']).resolve()
+        if not p.is_relative_to(root/'research') or str(p.relative_to(root)) not in bound:
+            raise ValueError('unbound scalar ABI proof')
+        abi=json.loads(p.read_text());parent=progress['parent_address'];parent_bytes=progress['parent_bytes']
+        if (abi.get('target')!='aarch64-unknown-windows' or abi.get('actual_base_references',0)<2 or
+            abi.get('native_source_sha256')!=d['native_source_sha256'] or
+            abi.get('native_driver_sha256')!=d['driver_sha256'] or
+            abi.get('parent_address')!=parent or abi.get('parent_bytes')!=parent_bytes or
+            not layout[0]<=parent<parent+parent_bytes<=layout[0]+layout[1] or
+            any(parent<a+n and a<parent+parent_bytes for a,n in spans)):
+            raise ValueError('scalar parent does not bind the actual old native object')
+        scalars=abi['scalars']
+        if not 1<=len(scalars)<=64 or sum(s['bytes'] for s in scalars)>512:
+            raise ValueError('scalar read size bound')
+        seen=[];names=set()
+        for s in scalars:
+            offset,width,maximum=s['offset'],s['bytes'],s['maximum'];name=s['name']
+            if (not re.fullmatch(r'[A-Z][A-Z_0-9]{0,39}',name) or name in names or
+                width not in (4,8) or type(offset) is not int or offset%width or
+                not 0<=offset<offset+width<=parent_bytes or
+                type(maximum) is not int or not 0<=maximum<(1<<(width*8)) or
+                any(offset<a+n and a<offset+width for a,n in seen)):
+                raise ValueError('invalid fixed scalar field')
+            seen.append((offset,width));names.add(name)
+        if scalars[0]['name']!='ATTEMPTED' or scalars[0]['field']!='attempted' or scalars[0]['bytes']!=4 or scalars[0]['maximum']!=1:
+            raise ValueError('first scalar must be the old parent initialization flag')
     text = '/* Private, one spent image; generated addresses/digest, never commit. */\n'
-    text += 'static const struct pnfw_config pnfw_configuration={\n {'
+    text += 'static const struct pnfw_config pnfw_configuration={\n .layout={'
     text += ','.join('UINT64_C(0x%x)'%v for v in layout)+'},\n'
-    text += ' UINT64_C(0x%x),UINT64_C(%d),{'%(d['nonce_address'],d['nonce_bytes'])
-    text += ','.join('0x%02x'%b for b in digest)+'}};\n'
+    text += ' .nonce=UINT64_C(0x%x),.nonce_bytes=UINT64_C(%d),.nonce_sha256={'%(d['nonce_address'],d['nonce_bytes'])
+    text += ','.join('0x%02x'%b for b in digest)+'},\n'
+    text += ' .scalar_parent=UINT64_C(0x%x),.scalar_parent_bytes=UINT64_C(0x%x),.scalar_count=%d,.scalar={\n'%(parent,parent_bytes,len(scalars))
+    text += ',\n'.join(' {UINT64_C(0x%x),UINT64_C(0x%x),%d,0}'%(parent+s['offset'],s['maximum'],s['bytes']) for s in scalars)
+    if not scalars:text+=' {0}'
+    text += '}};\nstatic const char *const pnfw_scalar_names[64]={'
+    text += ','.join('"'+s['name']+'"' for s in scalars) if scalars else '0'
+    text += '};\n'
     (output/'native-fault-witness-config.h').write_text(text)
     return dict(enabled=True,scope=d['scope'],prior_image_sha256=d['prior_image_sha256'],
                 prior_driver_sha256=d['driver_sha256'],record_bytes=272,nonce_bytes=d['nonce_bytes'],
                 descriptor_sha256=sha(descriptor),old_RAM_writes=False,
-                arbitrary_memory_read_API=False,inputs=bound)
+                arbitrary_memory_read_API=False,inputs=bound,scalar_count=len(scalars),
+                scalar_bytes=sum(s['bytes'] for s in scalars),scalar_ABI_bound=bool(scalars))

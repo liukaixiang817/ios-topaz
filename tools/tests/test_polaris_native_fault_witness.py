@@ -48,11 +48,29 @@ class NativeFaultWitnessTests(unittest.TestCase):
                 d['inputs'] = {str(p.relative_to(root)): module.sha(p) for p in (
                     image, driver / 'manifest.json', case / 'phone-native-0001/boot.json',
                     case / 'physical-outcome-0001.json')}
+                if (root / 'research/scalar-layout.json').exists():
+                    d['inputs']['research/scalar-layout.json'] = module.sha(root / 'research/scalar-layout.json')
                 write_json(root / 'research/descriptor.json', d)
             descriptor = root / 'research/descriptor.json';bind()
             result = module.prepare(root, descriptor, out)
             self.assertTrue(result['enabled']);self.assertFalse(result['old_RAM_writes'])
             self.assertTrue((out / 'native-fault-witness-config.h').is_file())
+            abi = dict(target='aarch64-unknown-windows', actual_base_references=2,
+                       native_source_sha256='native-source', native_driver_sha256=image_hash,
+                       parent_address=base+0x12000, parent_bytes=4096,
+                       scalars=[dict(name='ATTEMPTED', field='attempted', offset=0, bytes=4, maximum=1),
+                                dict(name='PHASE', field='phase', offset=4, bytes=4, maximum=46)])
+            write_json(root / 'research/scalar-layout.json', abi)
+            d['scalar_witness'] = dict(parent_address=base+0x12000, parent_bytes=4096, layout='research/scalar-layout.json')
+            bind();result = module.prepare(root, descriptor, out)
+            self.assertEqual(result['scalar_count'], 2);self.assertEqual(result['scalar_bytes'], 8)
+            abi['scalars'][1]['offset'] = 0;write_json(root / 'research/scalar-layout.json', abi);bind()
+            with self.assertRaisesRegex(ValueError, 'invalid fixed scalar'):
+                module.prepare(root, descriptor, out)
+            abi['scalars'][1]['offset'] = 4096;write_json(root / 'research/scalar-layout.json', abi);bind()
+            with self.assertRaisesRegex(ValueError, 'invalid fixed scalar'):
+                module.prepare(root, descriptor, out)
+            d.pop('scalar_witness');bind()
             outcome['image_and_nonce_spent'] = False;write_json(case / 'physical-outcome-0001.json', outcome);bind()
             with self.assertRaisesRegex(ValueError, 'spent firmware-only'):
                 module.prepare(root, descriptor, out)
@@ -161,7 +179,8 @@ int main(void){
 #include <string.h>
 struct fixture {
  struct pnfw_config config;struct pfnf_record record;
- unsigned reads,record_reads,ats,archs,fail_at;int bad,zero;
+ unsigned reads,record_reads,scalar_reads,ats,archs,fail_at;int bad,zero;
+ uint64_t scalar[4];
 };
 static int arch(void *opaque,struct pawr_arch *a){
  struct fixture *f=opaque;f->archs++;
@@ -186,8 +205,16 @@ static int read8(void *opaque,uint64_t address,uint8_t *v){
  if(f->fail_at==f->reads)return 0;
  if(address>=f->config.nonce && address-f->config.nonce<f->config.nonce_bytes){
   unsigned n=(unsigned)(address-f->config.nonce);*v=(uint8_t)(n*73+11);
-  if(f->bad==11 || (f->bad==12 && f->record_reads))(*v)^=1;
+  if(f->bad==11 || (f->bad==12 && f->record_reads) || (f->bad==14 && f->scalar_reads))(*v)^=1;
  }else{
+  for(unsigned k=0;k<f->config.scalar_count;k++){
+   struct pnfw_scalar*s=&f->config.scalar[k];
+   if(address>=s->address&&address-s->address<s->bytes){
+    *v=(uint8_t)(f->scalar[k]>>(8*(address-s->address)));f->scalar_reads++;
+    if(f->bad==15 && f->scalar_reads>20)(*v)^=1;
+    return 1;
+   }
+  }
   assert(f->reads>f->config.nonce_bytes);f->record_reads++;
   unsigned n=(unsigned)(address-f->config.layout.record);
   *v=f->zero?0:((const uint8_t *)&f->record)[n];
@@ -198,12 +225,21 @@ static int read8(void *opaque,uint64_t address,uint8_t *v){
 static void init(struct fixture*f){
  memset(f,0,sizeof(*f));uint64_t base=UINT64_C(0x100000000);
  f->config=(struct pnfw_config){
-  {base,0x20000,base+0x1000,base+0x1800,base+0x1880,base+0x2000,
+  .layout={base,0x20000,base+0x1000,base+0x1800,base+0x1880,base+0x2000,
    base+0xa000,16384,base+0x5010,sizeof(struct pfnf_record),base+0x6000,256},
-  base+0x3cf0,2128,{DIGEST}};
+  .nonce=base+0x3cf0,.nonce_bytes=2128,.nonce_sha256={DIGEST}};
  f->record.layout=f->config.layout;f->record.attempted=1;f->record.armed=1;
  f->record.entered=1;f->record.vector=4;f->record.ticks=123;
  f->record.esr=0x96000010;f->record.elr=base+0x100;f->record.copy_pages=240;
+}
+static void progress(struct fixture*f){
+ init(f);f->config.scalar_parent=f->config.layout.image+0x12000;f->config.scalar_parent_bytes=4096;
+ f->config.scalar_count=4;
+ f->config.scalar[0]=(struct pnfw_scalar){f->config.scalar_parent,1,4,0};
+ f->config.scalar[1]=(struct pnfw_scalar){f->config.scalar_parent+4,46,4,0};
+ f->config.scalar[2]=(struct pnfw_scalar){f->config.scalar_parent+8,30720,4,0};
+ f->config.scalar[3]=(struct pnfw_scalar){f->config.scalar_parent+16,UINT64_MAX,8,0};
+ f->scalar[0]=1;f->scalar[1]=19;f->scalar[2]=240;f->scalar[3]=1234;
 }
 int main(void){
  _Static_assert(sizeof(struct pfnf_record)==272,"fixed old record ABI");
@@ -248,6 +284,21 @@ int main(void){
  init(&f);assert(!pnfw_run(&f.config,map,sizeof(map),sizeof(map),40,2,&ops,&r) && !f.reads);
  init(&f);assert(!pnfw_run(&f.config,map,sizeof(map),sizeof(map)-1,40,1,&ops,&r) && !f.reads);
  init(&f);assert(!pnfw_run(&f.config,map,sizeof(map),sizeof(map),40,1,0,&r) && !f.reads);
+ progress(&f);assert(RUN() && r.scalar_valid && r.scalar_stable && r.issued==9096);
+ assert(r.nonce_match[2] && r.nonce_match[3] && f.scalar_reads==40 && r.scalar_value[0][2]==240);
+ progress(&f);f.bad=14;assert(!RUN() && r.error==6 && !r.scalar_valid && f.scalar_reads==20);
+ progress(&f);f.bad=15;assert(!RUN() && r.error==11 && !r.scalar_valid);
+ progress(&f);f.scalar[2]=30721;assert(!RUN() && r.error==12 && !r.scalar_valid);
+ progress(&f);f.scalar[0]=0;assert(!RUN() && r.error==12 && !r.scalar_valid);
+ progress(&f);f.record.layout.handler+=4;assert(!RUN() && r.error==8 && !f.scalar_reads);
+ progress(&f);f.config.scalar[1].address=f.config.scalar[0].address;
+ assert(!RUN() && r.error==10 && !f.reads);
+ progress(&f);f.config.scalar_count=65;assert(!RUN() && !f.reads);
+ unsigned failures[]={4801,6928,6929,6948,6949,9076,9077,9096};
+ for(unsigned n=0;n<sizeof(failures)/sizeof(failures[0]);n++){
+  progress(&f);f.fail_at=failures[n];assert(!RUN() && r.error==5 && !r.scalar_valid);
+  assert(r.issued==f.fail_at && r.returned==f.fail_at-1);
+ }
  return 0;
 }
 '''.replace('DIGEST', digest)

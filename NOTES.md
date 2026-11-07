@@ -54,7 +54,42 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### Current Wi-Fi handoff — 2026-11-07 Melbourne: bounded spent-record witness qualified
+### Current Wi-Fi handoff — 2026-11-07 Melbourne: fixed parent scalar witness qualified
+
+- Goal ACTIVE2/5,current plus3 remain; no new native/scan/join/IP/DNS/data
+  proof. Phone last selected original FASTBOOT verified06:30:30.974931Z after
+  successful explicit probe return. Continuous observer PAUSED,idle test
+  USER-PAUSED. First short probeae182a... and old native74458d... both SPENT.
+- New native-parent-remnant-0001 observes the SAME spent native candidate,
+  without replaying it. Actual linked PE/COFF gives37 independent zero-addend
+  parent-base references; same full production ARM C config/layout yields60
+  fixed scalar fields,total260B(parent/copy/auth/modem/owner state plus28
+  segment-page counters). Bound old parent span69316608B is only a containing
+  range: it is NOT dumped or scanned. No scalar/pointer value is dereferenced.
+- Existing two nonce/272B-record passes must validate first. Then reread the
+  candidate nonce before each of two scalar passes; current map/Normal-WB NS
+  identity AT/unchanged CPU0EL1 and20ms overall deadline remain mandatory.
+  Require fixed disjoint4/8B fields,<=64/512B,current mapped RAM,bounded values,
+  stable samples and parent attempted1. Maximum configured read9576B includes
+  four nonce hashes; progress itself520B over two passes. Remnants never grant
+  native/radio ownership,prove cause or replace actual current runtime checks.
+- All25 source tests PASS3.272s,including legacy4800read-failure points,new
+  scalar map/nonce/order/size/duplicate/ABI/bounds/mutation/read-failure cases
+  and unchanged explicit-reset parser/rollback. Four actual generic EFI cases
+  PASS6.2s each,zero old-RAM reads. Actual enabled COFF matches built object
+  except timestamp;23frames,max720B. Both new options OFF COFF equals686f2ab.
+- Driver-0001=201216B SHA19929e92071cfbb8a943d2c3dcaa44be9ae9fc26862e1e61aaaf08de492154cc;
+  image5933056B SHAd68d7a59135092ca25fdeeaea76d1e61f0cbf6c7dacb20fc0acd2402c00c488f.
+  Original81 files preserved,actual EDK2 decoder decoded27683016B exactly.
+  Native source79187ee5... unchanged; no kernel CI needed (same42091724671).
+- NEXT publish/mirror completed source/tests/docs,freeze all actual inputs,
+  fresh selected FASTBOOT query,ONE new bounded scalar capture,then already
+  physically proven explicit FASTBOOT return and product verification. No
+  new native boot until interpreting the retained progress. Current original
+  mirror baseline686f2ab;unowned7215a378... hunk preserved. Formal report06:39Z,
+  next06:54Z. Actual scalar retention/results still UNKNOWN.
+
+### Prior bounded spent-record witness
 
 - PHYSICAL RESULT: a9d826f pushed/mirrored. Frozen98 local+9 external inputs,
   offline PASS. Probeae182a... sent ONCE06:30:16.934316Z,fastbootexit0 at
