@@ -507,6 +507,7 @@ def main():
     ap.add_argument('--wifi-native-copy-page-after-write',action='store_true',help='copy-page firmware diagnostic only: hold after the original page write/readback and before cache; incompatible with AT-only probe')
     ap.add_argument('--wifi-native-fault-hold',action='store_true',help='firmware-only native-ready diagnostic: install terminal CPU0 exception vectors on an independent owned stack; no exception return or reset')
     ap.add_argument('--wifi-vendor-segment-extents',action='store_true',help='terminal native diagnostic only: own vendor filesz+BSS writes, explicit untouched holes, exact partial tails')
+    ap.add_argument('--wifi-native-rmtfs-diagnostics',action='store_true',help='terminal native fault diagnostic only: show saved RMTFS transaction error and returned timestamps, no new target access')
     ap.add_argument('--wifi-native-progress-invalidate',action='store_true',help='terminal fault diagnostic only: CIVAC for the existing bounded own-image progress lines, not remote firmware')
     ap.add_argument('--wifi-scalar-sha256-fast',action='store_true',help='terminal native diagnostic only: equivalent scalar unrolled SHA256 and bounded block feed, no SIMD')
     ap.add_argument('--wifi-native-copy-trace-first',type=int,default=0,help='first page of the terminal fault diagnostic256-page fine-copy window (0..30464)')
@@ -532,6 +533,8 @@ def main():
         ap.error('native-ready checkpoint requires the terminal firmware-only diagnostic')
     if a.wifi_vendor_segment_extents and not a.wifi_native_fault_hold:
         ap.error('--wifi-vendor-segment-extents requires --wifi-native-fault-hold')
+    if a.wifi_native_rmtfs_diagnostics and not a.wifi_native_fault_hold:
+        ap.error('--wifi-native-rmtfs-diagnostics requires --wifi-native-fault-hold')
     if a.wifi_native_progress_invalidate and not a.wifi_native_fault_hold:
         ap.error('--wifi-native-progress-invalidate requires --wifi-native-fault-hold')
     if a.wifi_scalar_sha256_fast and not a.wifi_native_fault_hold:
@@ -1159,6 +1162,8 @@ def main():
         with config.open('a') as f:f.write(f'#define EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT {auth_checkpoint_mode}\n')
     if a.wifi_native_fault_hold:
         with config.open('a') as f:f.write('#define EFI_XNU_WIFI_NATIVE_FAULT_HOLD 1\n')
+    if a.wifi_native_rmtfs_diagnostics:
+        with config.open('a') as f:f.write('#define EFI_XNU_WIFI_NATIVE_RMTFS_DIAGNOSTICS 1\n')
     if a.wifi_vendor_segment_extents:
         with config.open('a') as f:f.write('#define EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS 1\n')
     if a.wifi_native_progress_invalidate:
@@ -2212,6 +2217,7 @@ def main():
     if a.wifi_native_runtime:
         manifest.update(wifi_native_runtime_enabled=True,wifi_native_runtime_default_OFF=True,
             wifi_native_fault_hold=a.wifi_native_fault_hold,
+            wifi_native_rmtfs_diagnostics=a.wifi_native_rmtfs_diagnostics,
             wifi_vendor_segment_extents=a.wifi_vendor_segment_extents,
             modem_copy_gap_pages_written=not a.wifi_vendor_segment_extents,
             modem_copy_page_tail_written=not a.wifi_vendor_segment_extents,

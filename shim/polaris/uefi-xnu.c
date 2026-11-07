@@ -18,6 +18,12 @@
 #ifndef EFI_XNU_WIFI_NATIVE_FAULT_HOLD
 #define EFI_XNU_WIFI_NATIVE_FAULT_HOLD 0
 #endif
+#ifndef EFI_XNU_WIFI_NATIVE_RMTFS_DIAGNOSTICS
+#define EFI_XNU_WIFI_NATIVE_RMTFS_DIAGNOSTICS 0
+#endif
+#if (EFI_XNU_WIFI_NATIVE_RMTFS_DIAGNOSTICS != 0 && EFI_XNU_WIFI_NATIVE_RMTFS_DIAGNOSTICS != 1) || (EFI_XNU_WIFI_NATIVE_RMTFS_DIAGNOSTICS && !EFI_XNU_WIFI_NATIVE_FAULT_HOLD)
+#error "RMTFS terminal diagnostics require the terminal native fault diagnostic"
+#endif
 #ifndef POLARIS_WIFI_SCALAR_SHA256_FAST
 #define POLARIS_WIFI_SCALAR_SHA256_FAST 0
 #endif
@@ -1622,6 +1628,41 @@ static int wifi_native_auth_metadata_checkpoint(void)
 #if EFI_XNU_WIFI_TERMINAL_GOP_DIAGNOSTICS
 /* Failure-only projection of resident startup records. Use the already armed
  * early GOP before CPU_ON; never poll a provider or draw after CPU_ON here. */
+#if EFI_XNU_WIFI_NATIVE_RMTFS_DIAGNOSTICS
+/* Saved own control fields only. Never follow transaction.page or read an
+ * uncertain assignment descriptor/remote target. Ages use saved timestamps,
+ * not a new clock read; a later next-step refusal may predate this sample. */
+static void wifi_native_rmtfs_diagnostic_lines(struct pwtg_result*r,const struct pwns_parent*s)
+{
+    if(s->phase!=PWNS_RMTFS||!s->rmtfs.error)return;
+    const struct pmtf_state*f=&s->rmtfs;const struct pmsn_assignment*q=&f->assignment;
+    const struct pwmt_transaction*t=&q->transaction;
+    unsigned valid=t->events>0&&t->events<=PWMT_EVENTS,k=valid?t->events-1:0;
+    const struct pwmt_event*e=valid?&t->event[k]:0;
+    uint64_t check=e&&e->returned?e->after:t->last;
+    uint64_t age=check>=t->opening?check-t->opening:UINT64_MAX;
+    uint64_t step=e&&e->returned&&e->after>=e->before?e->after-e->before:UINT64_MAX;
+    pwtg_line(r,0,"RMTFS HOLD",f->error,s->phase);
+    pwtg_line(r,1,"TF PAGES DONE",f->pages,f->complete);
+    pwtg_line(r,2,"TF PEND FLAGS",f->pending,f->attempted|(f->ready<<8)|(f->unknown<<16));
+    pwtg_line(r,3,"ASSIGN ERR FLAGS",q->error,q->attempted|(q->unknown<<8)|(q->complete<<16));
+    pwtg_line(r,4,"TX ERR STEP",t->error,t->step);
+    pwtg_line(r,5,"TX EVENTS ROUNDS",t->events,t->rounds);
+    pwtg_line(r,6,"TX PEND FLAGS",t->pending,t->started|(t->unknown<<8)|(t->complete<<16));
+    pwtg_line(r,7,"TX CHECK AGE",(uint32_t)(age>>32),(uint32_t)age);
+    pwtg_line(r,8,"EVENT STEP AGE",(uint32_t)(step>>32),(uint32_t)step);
+    pwtg_line(r,9,"EVENT OP RETURN",e?e->command.operation:0,e?(uint32_t)e->return_raw:0);
+    pwtg_line(r,10,"EVENT ISS RET",e?e->issued:0,e?e->returned:0);
+    for(unsigned n=0;n<2;n++){
+        uint64_t x=valid?q->response[k].x[n]:0;
+        pwtg_line(r,11+n,n?"SMC X1":"SMC X0",(uint32_t)(x>>32),(uint32_t)x);
+    }
+    pwtg_line(r,13,"CACHE ERR FLAGS",valid?q->cache[k].error:0,
+        valid?(q->cache[k].attempted|(q->cache[k].barrier_issued<<8)|(q->cache[k].barrier_returned<<16)|(q->cache[k].complete<<24)):0);
+    pwtg_line(r,14,"AUTH DONE ERROR",s->auth.complete,s->auth.error);
+    pwtg_line(r,15,"OWNER ERR HELD",s->owner.error,s->owner.held);
+}
+#endif
 static void wifi_native_startup_gop_evidence(void)
 {
     struct pwtg_result*r=&early_wifi_gop;const struct pwns_parent*s=&wifi_native_parent;
@@ -2036,6 +2077,9 @@ static void wifi_native_startup_gop_evidence(void)
 #endif
 #endif
 #if EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY && EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT == 10
+#if EFI_XNU_WIFI_NATIVE_RMTFS_DIAGNOSTICS
+    wifi_native_rmtfs_diagnostic_lines(r,s);
+#endif
     /* The original parent has run without a mid-load hold. Only a second
      * successful READY turn can produce this marker; failure keeps the
      * existing phase-specific diagnostics above. No target is read here. */

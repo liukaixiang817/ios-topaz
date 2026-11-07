@@ -70,6 +70,12 @@ def validate(review_path):
             fault_config==(['#define EFI_XNU_WIFI_NATIVE_FAULT_HOLD 1'] if fault_hold else []),
             'native fault hold compiler scope not frozen')
     marker=driver.get('wifi_native_bootloader_marker',False)
+    rmtfs_diagnostics=driver.get('wifi_native_rmtfs_diagnostics',False)
+    rmtfs_config=[x for x in config if x.startswith('#define EFI_XNU_WIFI_NATIVE_RMTFS_DIAGNOSTICS')]
+    require(type(rmtfs_diagnostics) is bool and (not rmtfs_diagnostics or fault_hold) and
+            image.get('wifi_native_rmtfs_diagnostics',False) is rmtfs_diagnostics and
+            rmtfs_config==(['#define EFI_XNU_WIFI_NATIVE_RMTFS_DIAGNOSTICS 1'] if rmtfs_diagnostics else []),
+            'RMTFS terminal diagnostic scope/compiler/image binding mismatch')
     vendor_extents=driver.get('wifi_vendor_segment_extents',False)
     vendor_config=[x for x in config if x.startswith('#define EFI_XNU_WIFI_VENDOR_SEGMENT_EXTENTS')]
     require(type(vendor_extents) is bool and (not vendor_extents or fault_hold) and
@@ -202,6 +208,10 @@ def validate(review_path):
                     proof.get('vendor_extents_default_OFF_objects_identical') is True and
                     proof.get('vendor_extents_own_vendor_source_compared') is True,
                     'vendor segment extent qualification missing')
+        if rmtfs_diagnostics:
+            require(proof.get('rmtfs_terminal_actual_rows_tested') is True and
+                    proof.get('rmtfs_terminal_default_OFF_objects_identical') is True,
+                    'RMTFS terminal diagnostic qualification missing')
         if invalidate:
             require(proof.get('own_progress_CIVAC_actual_EL1_QEMU') is True and
                     proof.get('own_progress_CIVAC_actual_EL2_refused_QEMU') is True and

@@ -14,6 +14,12 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+RMTFS saved-control terminal GOP diagnostic is qualified/defaultOFF and
+fault-native-ready-only. Actual3385 cases/37tests and COFF+MachO featureOFF
+identity/terminal closure/original81+codec PASS. No new target/descriptor/MMIO/
+clock/secure/deadline operation. Ages are saved returned-event observations,
+not guaranteed times of later refusal. Fresh one-use native trial pending.
+
 Human NATIVE HOLD photo shows parentphase21/RMTFSerror4 and BOOT/AUTHerror0:
 MSS authentication has advanced to RMTFS memory sharing. Precise transaction
 reason remains unknown. FIRST RMTFS scalar reader correctly refusednonce0 after

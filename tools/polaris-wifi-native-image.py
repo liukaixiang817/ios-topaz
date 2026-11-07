@@ -69,6 +69,9 @@ def main():
              manifest.get('wifi_native_fault_foreign_calls') is False)),
             'native fault hold requires its terminal firmware-only scope')
     marker=manifest.get('wifi_native_bootloader_marker',False)
+    rmtfs_diagnostics=manifest.get('wifi_native_rmtfs_diagnostics',False)
+    require(type(rmtfs_diagnostics) is bool and (not rmtfs_diagnostics or fault_hold),
+            'RMTFS terminal diagnostics require the terminal native fault diagnostic')
     vendor_extents=manifest.get('wifi_vendor_segment_extents',False)
     require(type(vendor_extents) is bool and (not vendor_extents or fault_hold) and
             manifest.get('modem_copy_gap_pages_written',True) is (not vendor_extents) and
@@ -181,6 +184,7 @@ def main():
         driver_manifest_sha256=sha(args.driver_manifest), kernel_sha256=sha(args.kernel),
         payload_sha256=sha(args.payload), kernel_handoff=not args.firmware_diagnostic_only,
         wifi_vendor_segment_extents=vendor_extents,modem_copy_gap_pages_written=not vendor_extents,
+        wifi_native_rmtfs_diagnostics=rmtfs_diagnostics,
         modem_copy_page_tail_written=not vendor_extents,modem_copy_untouched_page_record=2 if vendor_extents else None,
         wifi_native_progress_invalidate=invalidate,native_progress_cache_operation='CIVAC' if invalidate else 'CVAC',
         wifi_scalar_sha256_fast=fast_sha,scalar_sha256_uses_SIMD=False,

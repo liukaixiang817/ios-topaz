@@ -56,6 +56,35 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: fresh native nonce plus first combined witness
 
+- RMTFS live-terminal diagnostic QUALIFIED,NOT SENT. New explicit defaultOFF
+  --wifi-native-rmtfs-diagnostics requires existing terminal native fault /
+  native-ready firmware-only scope. Reads only saved own pmtf/pwmt controls;
+  event index admitted1..6,otherwise no indexed access. NEVER follows page/
+  target/descriptor pointers. Existing16 GOP rows show RMTFSerr/pages/pending,
+  assignment flags,TXerror/step/events/rounds,returned-event CHECK AGE and STEP
+  AGE,SMCx0/x1,cache flags,AUTHdone and owner. No new hardware or clock read,
+  retry,secure/cache/protocol/ownership/deadline operation. Saved CHECK AGE
+  may predate a later next-step refusal;do not claim an exact failure duration.
+- Current37 tests PASS11.662s;actual helper3385 field-model cases verify all
+  phases/errors/event counts0/1/2/6/7/MAX/returned/backward-time,readonly state,
+  absence of descriptor/remote/hardware API and explicit compiler/builder guards.
+  Actual shippingCOFF reproduces,currentMachO;featureOFF COFF/MachO exactly
+  match292973e source,719frames/max816B,terminalclosure13/stack304+320. Existing
+  nativeentry/publisher/cache/vector/handler exact;previous full copy/auth35test
+  proof reused by exact other source identity. Original81/actualEDK2codec PASS.
+  Qualification initially referenced nonexistent no-watchdog/public-tests.log;
+  refused BEFORE image/send,resumed against existing exact vendor35-test log,
+  preserved failure log. No check weakened or phone action in qualification.
+  Fresh driver1e1b1f8a18c46125fe1f6ded0f53232c6e823ee98ab50022c42e44c6f2caa8a8,
+  image1d656f692d7802e9b9967a2086c2205b20a50e5c4ffb4f40395c004ea19795a1;
+  freshnonceUNUSED/NO SEND. NEXT commit/push/mirror,selectedFASTBOOT/freeze/
+  offline/ONE native;read live RMTFS HOLD rows before human hard-key reset.
+  Existing optional watchdog-read remainsOFF,CIVAC/vendor/FAST/trace221 retained.
+  Candidate local100ms RMTFS whole/step budget + full auth recheck is a possible
+  cause ONLY;need actual TXerror/event/timestamps before changing it. ACTIVE2/5,
+  post-MSS RMTFS,current+3;observerPAUSED,idleUSERPAUSED,ALLsourcepushesapproved.
+
+
 - HUMAN PHOTO2026-11-08 resolves previous unknown screen: NATIVE HOLD5/4,
   parentphase0x15(21=PWNS_RMTFS),flags0x101;ownererror0/phase2/held1,
   BOOT/AUTHerror0,SMEMerror0/RMTFSerror4. This establishes advancement past
