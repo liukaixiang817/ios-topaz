@@ -56,6 +56,32 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: fresh native nonce plus first combined witness
 
+- LATEST PHYSICAL optional-watchdog-read OFF source2a6c2ff/image0f323ac3...
+  sentONCE2026-11-07T13:09:21.725587Z,ACK13:11:19.342536Z;
+  host62682TERMINAL0/SPENT. Bounded recovery helper26599 finished13:12:46.734341Z
+  selected_Android_not_ready_or_unavailable,NOreboot. After original180s,
+  one-shot selected FASTBOOT/ADB checks13:14:48.768481Z bothabsent. This differs
+  from previous immediate FASTBOOT samples;does NOT prove healthy/stable
+  execution,reset cause,READY or Wi-Fi. Screen UNKNOWN. Native image/nonce
+  SPENT;neverreplay;observerPAUSED,no partitionwrites.
+- FIRST reader native-no-watchdog-remnant-0001 is BUILT/QUALIFIED,NOT FROZEN/
+  NOT SENT. Current actual ARM64field292B includes20segment page counts,
+  SEG09 opening/finished and written/untouched counters;no absentWDfields.
+  All4actual EFI/QEMU/currentCOFF/defaultOFFprobe/original81/EDK2codec PASS;
+  image and nonce UNSENT. Do NOT build/boot an intervening probe before this
+  FIRST reader. No source changes except documentation since2a6c2ff.
+- Awaiting human action:async asked screen-top text,then POWER+VOL_DOWN until
+  FASTBOOT,keepUSB. Required because neither host control channel is present;
+  not another source-push approval. When user returns,read-only verify selected
+  polaris using bounded helper basename
+  after-native-no-watchdog-0001-user-fastboot-0001. Freeze-first-witness.py now
+  expects THAT fresh result,not the failed earlier helper. Commit HEAD may
+  advance for docs BEFORE reader freeze;do not change it AFTER freezing until
+  FIRSTcapture is finished. Thenfreeze/offline/ONE FIRSTreader/explicit normal
+  returnFASTBOOT,recordactualresult,continue functionalWi-Fi. ACTIVE2/5,
+  current+3;idleUSERPAUSED,ALLsourcepushesapproved.
+
+
 - Optional-watchdog-read OFF candidate QUALIFIED,NOT SENT. All compiled
   project source inputs exactly match physical47762cf vendor profile;ONLY
   existing watchdog diagnostic flag removed,FIRST221 restored. Native objects

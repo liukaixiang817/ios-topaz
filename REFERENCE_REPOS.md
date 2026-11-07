@@ -14,6 +14,13 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+Latest optional-watchdog-read OFF native trial was sent once/ACK;after the
+original180s neither selected FASTBOOT nor AndroidADB is present. Screen and
+actual execution state remain unknown;no READY/network/reset-cause inference.
+FIRST matching reader is built/qualified but UNSENT. Await human POWER+VOL_DOWN
+return to FASTBOOT,then verify/freeze/one-reader/explicitFASTBOOT return. Source
+2a6c2ff already pushed;keep all current compiled source unchanged for this read.
+
 Optional watchdog-read OFF candidate is qualified using existing flag. Actual
 native COFF/MachO contain no optional sample/arch/read functions;hardware
 watchdog state is not modified. Same own vendor filesz+BSS/CIVAC/FAST protections,
