@@ -56,6 +56,30 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: fresh native nonce plus first combined witness
 
+- PHYSICAL RMB-trace native4f5fcad9... sentONCE09:05:50.147918Z,
+  native09:07:30.232688Z,ACK09:07:49.716870Z;host62981 TERMINAL0/SPENT.
+  Original Android/root/complete recovered selected FASTBOOT09:09:23.477533Z
+  by normal service;first early bounded recovery found Android not ready and
+  issued no reboot. Android kernel-start estimate36.458..36.567s afterACK;
+  reset cause remains unproven. Source1cab34e committed/mirrored;push rejected
+  twice by auto-review despite original direct user approval retrieved from
+  actual old chat,as historical tool output is not trusted authorization in
+  this transcript. Concrete source-only approval question is pending.
+- FIRST RMB witness1448d393... frozen415local+9external/offline PASS,
+  sentONCE;host68125 TERMINAL0;all4 fresh nonce guards,9624/9624 bytes/error0,
+  stable valid272B record+64scalars284B. Actual53 linked parent references.
+  IO_STAGE5/READ1/address0418000C/value3 proves that first-segment status leaf,
+  postchecks and completion returned before this publication. Last retained
+  source14687/ready1/copy2pages/1segment;ownerheld1/effects7/errors0,elapsed
+  13.0671521875s. Scalar authCOPY5/modemphase1/segment1/events6;record auth6
+  was sampled before later scalar5 survived. Recordarmed1/entered0/error0.
+  Do not claim coherent single-instant record/scalars or a reset cause.
+  Explicit resetACK09:11:01.948167Z,actual selected FASTBOOT09:11:06.046768Z.
+  PNG visually inspected. Both new images/nonces SPENT. NEXT broaden bounded
+  own-RAM page trace0..255 to capture earlier execution after returned RMB;
+  no new MMIO/deadline/watchdog/cache-target change. Goal ACTIVE2/5,current+3;
+  observer PAUSED,idle USER-PAUSED,no READY/scan/join/IP/DNS/data proof.
+
 - Fresh RMB-trace candidate qualified after user confirmed FASTBOOT. Selected
   original Polaris verified read-only08:57:59Z. Existing five RMB boundaries
   publish stage/kind/address/returned-value in24B owned control;no new hardware

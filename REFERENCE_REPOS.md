@@ -14,6 +14,11 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+Actual new first witness verifies all4nonce guards/9624bytes/64scalars. RMB
+status READ at0418000C returned3 and stage5/postchecks/completion published;
+retained2pages/1segment is not later progress/reset-cause proof. Broaden own
+RAM trace to0..255; no new foreign hardware or protocol import is warranted.
+
 Current RMB trace adds only fixed own-control progress around existing Polaris
 MMIO leaves. No foreign board register/firmware/protocol imported. Current
 ASAN/UBSAN auth32scenarios/4729132checks and5 publication refusal boundaries
