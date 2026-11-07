@@ -91,16 +91,26 @@ int main(void){
  }
  struct pmlc_copy*c=&wifi_native_parent.copy;c->pages=255;
  assert(wifi_native_fault_word_progress((void*)1,6) && !publications);
- for(unsigned stage=6;stage<=9;stage++){
-  c->page[255].words_issued=400;c->page[255].words_returned=399;
-  assert(wifi_native_fault_word_progress(&c->page[255],stage));
-  assert(c->observe_page==255 && c->observe_stage==stage && c->observe_words_issued==400 && c->observe_words_returned==399);
+ for(unsigned page=0;page<256;page++)for(unsigned word=0;word<512;word++)for(unsigned stage=6;stage<=9;stage++){
+  c->pages=page;c->page[page].words_issued=word+(stage>=8);c->page[page].words_returned=word+(stage==9);
+  unsigned before=publications;
+  assert(wifi_native_fault_word_progress(&c->page[page],stage));
+  assert(publications==before+(!(word&63)||word==511));
+  if(publications!=before)assert(c->observe_page==page && c->observe_stage==stage &&
+    c->observe_words_issued==word+(stage>=8) && c->observe_words_returned==word+(stage==9));
  }
- assert(publications==4);c->pages=254;assert(!wifi_native_fault_word_progress(&c->page[255],6));
+ assert(publications==9216);c->pages=254;assert(!wifi_native_fault_word_progress(&c->page[255],6));
  c->pages=255;assert(!wifi_native_fault_word_progress(&c->page[255],5));
- assert(!wifi_native_fault_word_progress(&c->page[255],10) && publications==4);
+ assert(!wifi_native_fault_word_progress(&c->page[255],10) && publications==9216);
+ assert(!wifi_native_fault_word_progress((void*)((uintptr_t)&c->page[255]+1),6));
+ c->pages=256;assert(!wifi_native_fault_word_progress(&c->page[0],6));
+ assert(wifi_native_fault_word_progress(&c->page[256],6));
+ c->pages=255;c->page[255].words_issued=c->page[255].words_returned=0;
+ assert(!wifi_native_fault_word_progress(&c->page[255],8));
+ c->page[255].words_returned=512;assert(!wifi_native_fault_word_progress(&c->page[255],6));
+ assert(publications==9216);
  assert(!munmap(src,page_bytes) && !munmap(dst,page_bytes));
- puts("PASS actual word loop4097lengths/2048 protected refusals and fixed-page observer");return 0;
+ puts("PASS actual word loop4097lengths/2048 protected refusals and bounded-range observer");return 0;
 }
 '''
         execute(source)

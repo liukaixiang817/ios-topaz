@@ -56,6 +56,25 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: fresh native nonce plus first combined witness
 
+- General bounded word observer qualified,NOT SENT. Only actual current
+  p in own copy.page0..255 and p==page[current pages] can publish;other
+  pointers are compared without follow. Sample words0,64,..448,511 at4stages,
+  36/page,max9216publications. Same4 diagnostic fields/272B record unchanged.
+  Invalid interior/misaligned pointer,currentpage>=256 or bad stage refuse
+  before p field follow;word counter underflow/>=512 refuses before publication. No new target/MMIO/
+  protocol/cache-target/deadline/watchdog operation. Terminal publication stays.
+- Current2 affected public tests PASS1.004s;actual loop4097lengths and2048
+  protected refusals,ALL256x512x4 observer routes/exact9216 publications and
+  boundaries PASS. Prior19 unchanged-function tests explicitly reused from
+  word-trace21 run. New OFF0/9/10 actual objects exact;shipping COFF matches,
+  both700frames/max816B,closure13/stack304/320B. Same kernel6241/payload dc522,
+  original81+actual decoder PASS. firmware-native-word-range-0001 driver
+  ea80dbee407c46a578a4431e342620ffcd6ee6d167771bce549e04b3d77fc256,image
+  e38c2b7a202c0f055675eba9a4ac83044ddbe99026a2533c31bdf1319573da3f,fresh nonce UNUSED.
+  NEXT fresh selected FASTBOOT,freeze/offline,ONE native trial,FIRST new
+  combined64field284B witness,explicit return. Goal ACTIVE2/5,current+3;
+  report09:43Z,next09:58Z;observer PAUSED,idle USER-PAUSED,push approval pending.
+
 - PHYSICAL word-trace native68c3caa7... source35d0cf6 sentONCE
   09:30:50.931250Z,native09:32:31.055423Z,ACK09:32:50.566928Z;
   host16432 TERMINAL0/SPENT. Original Android/root/complete normal recovery

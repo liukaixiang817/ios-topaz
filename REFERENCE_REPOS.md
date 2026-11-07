@@ -14,6 +14,11 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+Bound word diagnostics now select only own current pages0..255,with64word
+stride plus last word. All256x512x4 routes/exact9216publications and invalid
+pointer/counter bounds pass;actual loop4097lengths/2048 protected refusals pass.
+No foreign board source or new target/hardware/protocol operation imported.
+
 Latest word diagnostic retained an earlier page160/stage2,so selected page255
 word hooks are unobserved. This rules out treating page255 as one established
 fault boundary. Next bound word observations over first256 pages,every64words

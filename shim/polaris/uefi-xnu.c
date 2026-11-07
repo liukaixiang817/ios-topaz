@@ -1269,9 +1269,13 @@ static int pmsn_observe(struct pmsn_state*s)
 static int wifi_native_fault_word_progress(struct pmsi_page*p,unsigned stage)
 {
     struct pmlc_copy*c=&wifi_native_parent.copy;
-    if(p!=&c->page[255])return 1;
-    if(c->pages!=255||stage<6||stage>9)return 0;
-    c->observe_page=255;c->observe_stage=stage;
+    uintptr_t at=(uintptr_t)p,first=(uintptr_t)&c->page[0],end=(uintptr_t)&c->page[256];
+    if(at<first||at>=end)return 1;
+    if(c->pages>=256||p!=&c->page[c->pages]||stage<6||stage>9)return 0;
+    unsigned word=stage>=8?p->words_issued-1:p->words_returned;
+    if(word>=512)return 0;
+    if((word&63)&&word!=511)return 1;
+    c->observe_page=c->pages;c->observe_stage=stage;
     c->observe_words_issued=p->words_issued;c->observe_words_returned=p->words_returned;
     return wifi_native_fault_publish(1);
 }
