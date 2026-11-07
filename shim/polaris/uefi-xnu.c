@@ -24,6 +24,9 @@
 #ifndef EFI_XNU_WIFI_NATIVE_WATCHDOG_READONLY
 #define EFI_XNU_WIFI_NATIVE_WATCHDOG_READONLY 0
 #endif
+#ifndef EFI_XNU_WIFI_NATIVE_COPY_TRACE_FIRST
+#define EFI_XNU_WIFI_NATIVE_COPY_TRACE_FIRST 0
+#endif
 #if (EFI_XNU_WIFI_NATIVE_WATCHDOG_READONLY != 0 && EFI_XNU_WIFI_NATIVE_WATCHDOG_READONLY != 1) || (EFI_XNU_WIFI_NATIVE_WATCHDOG_READONLY && (!EFI_XNU_WIFI_NATIVE_FAULT_HOLD || !EFI_XNU_WIFI_NATIVE_BOOTLOADER_MARKER))
 #error "Native watchdog inventory requires the explicit fault/bootloader-marker diagnostic"
 #endif
@@ -1343,9 +1346,11 @@ static int pmsn_observe(struct pmsn_state*s)
 static int wifi_native_fault_word_progress(struct pmsi_page*p,unsigned stage)
 {
     struct pmlc_copy*c=&wifi_native_parent.copy;
-    uintptr_t at=(uintptr_t)p,first=(uintptr_t)&c->page[0],end=(uintptr_t)&c->page[256];
+    uintptr_t at=(uintptr_t)p,first=(uintptr_t)&c->page[EFI_XNU_WIFI_NATIVE_COPY_TRACE_FIRST],
+        end=(uintptr_t)&c->page[EFI_XNU_WIFI_NATIVE_COPY_TRACE_FIRST+256];
     if(at<first||at>=end)return 1;
-    if(c->pages>=256||p!=&c->page[c->pages]||stage<6||stage>9)return 0;
+    if(c->pages<EFI_XNU_WIFI_NATIVE_COPY_TRACE_FIRST||
+       c->pages-EFI_XNU_WIFI_NATIVE_COPY_TRACE_FIRST>=256||p!=&c->page[c->pages]||stage<6||stage>9)return 0;
     unsigned word=stage>=8?p->words_issued-1:p->words_returned;
     if(word>=512)return 0;
     if((word&63)&&word!=511)return 1;

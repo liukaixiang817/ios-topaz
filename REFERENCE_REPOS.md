@@ -14,6 +14,12 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+Fine trace relocation adds no hardware/protocol/target operation. Own geometry
+selects864..1119 around the repeated874-page boundary,using same fixed256-page
+window and9216 maximum word publications. Actual selectors/all30720x5 page
+routes and21 current tests pass;default0 compiled formats match old source
+and old copy header. Physical new boundary evidence remains pending.
+
 Actual native apps watchdog snapshots23,error0,EN0/STS0,stable thresholds
 through owner13.78017729s;last retained874pages/9segments again. Do not infer
 all watchdogs/reset cause. Own firmware geometry puts next gap at874..879,

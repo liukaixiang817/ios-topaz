@@ -56,6 +56,23 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: fresh native nonce plus first combined witness
 
+- Relocated fine trace qualified,NOT SENT. New explicit first-page864 opt-in
+  remains fault-diagnostic-only,bounds0..30464,exact256-page window864..1119.
+  Same4 own fields/5 page stages+sampled4 word stages/max9216 word publications;
+  no changed target/source access,cache target,protocol or absolute deadline.
+  Actual word selector all256x512x4 routes,all30720x5 page macro routes,
+  refusal/edge boundaries PASS. Current21 tests PASS5.554s (includes prior
+  word loop4097lengths/2048 protected refusals and watchdog/marker/host tests).
+  Default first0 actual COFF/MachO match d9bef92 source WITH old copy header;
+  shipping COFF reproduces,716frames/max816B,terminal closure13/stack304/320B.
+  Same kernel6241/payload dc522,original81+actual EDK2 codec PASS.
+  Selected firmware-native-gap-trace-0001 driver9db10c936688ef9cb96339b3a6336ad833d35e72b05b6b3f0f7c262bebd68545,
+  imaged269b5238be3f1cba68fffb642f401c9c33fd9229c255ca07a0408bf56287c1c;fresh nonce UNUSED/NO SEND. NEXT
+  commit/mirror,selected FASTBOOT preflight,freeze/offline,ONE trial,FIRST
+  fresh64field292B witness with observed-page maximum1119,explicit return.
+  ACTIVE2/5,current+3;observer PAUSED,idle USER-PAUSED,push pending approval.
+
+
 - PHYSICAL native watchdog sourceab3957b/image546d07a0... sentONCE
   10:53:25.594379Z,native10:55:06.099611Z,ACK10:55:25.589232Z;
   marker ACK preceded native start;host32798 TERMINAL0/SPENT. Bounded selected

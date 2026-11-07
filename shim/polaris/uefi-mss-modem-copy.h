@@ -17,6 +17,12 @@
 #include "../../tools/polaris-mss-modem-auth.h"
 #define PMLC_PAGES 30720u
 #define PMLC_SOURCE_PAGES 16384u
+#ifndef EFI_XNU_WIFI_NATIVE_COPY_TRACE_FIRST
+#define EFI_XNU_WIFI_NATIVE_COPY_TRACE_FIRST 0
+#endif
+#if EFI_XNU_WIFI_NATIVE_COPY_TRACE_FIRST < 0 || EFI_XNU_WIFI_NATIVE_COPY_TRACE_FIRST > 30464 || (EFI_XNU_WIFI_NATIVE_COPY_TRACE_FIRST && !EFI_XNU_WIFI_NATIVE_FAULT_HOLD)
+#error "Fine copy trace requires a bounded256-page fault diagnostic window"
+#endif
 struct pmlc_segment {
     uint64_t opening,finished;
     uint32_t first_page,pages,complete,published;
@@ -41,9 +47,9 @@ struct pmlc_copy {
 static int pmlc_observe(struct pmlc_copy*);
 #define PMLC_OBSERVE(r) do{if(!pmlc_observe(r))return pmlc_fail(r,2);}while(0)
 /* Retained progress can precede page221 even after a returned RMB command.
- * Bound the finer diagnostic to pages0..255; operations and deadline stay fixed.
+ * Bound the finer diagnostic to256 selected pages; operations/deadline stay fixed.
  * Stage1 precedes initialization, so it never reads the page's old fields. */
-#define PMLC_TRACE_PAGE(r,p,index,where) do{unsigned page_index=(index);if(page_index<256){ \
+#define PMLC_TRACE_PAGE(r,p,index,where) do{unsigned page_index=(index);if(page_index>=EFI_XNU_WIFI_NATIVE_COPY_TRACE_FIRST&&page_index-EFI_XNU_WIFI_NATIVE_COPY_TRACE_FIRST<256){ \
     (r)->observe_page=page_index;(r)->observe_stage=(where); \
     (r)->observe_words_issued=(where)>=3?(p)->words_issued:0; \
     (r)->observe_words_returned=(where)>=3?(p)->words_returned:0;PMLC_OBSERVE(r);}}while(0)

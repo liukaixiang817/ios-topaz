@@ -47,6 +47,7 @@ class WordTraceTests(unittest.TestCase):
 #include <sys/mman.h>
 #include <unistd.h>
 /* Field-only software types: production layouts are qualified separately. */
+#define EFI_XNU_WIFI_NATIVE_COPY_TRACE_FIRST 0
 struct pmsi_page {unsigned bytes,words_issued,words_returned;};
 struct pmlc_copy {struct pmsi_page page[256];unsigned pages,observe_page,observe_stage,
  observe_words_issued,observe_words_returned;};

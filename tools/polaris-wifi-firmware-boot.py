@@ -70,6 +70,12 @@ def validate(review_path):
             fault_config==(['#define EFI_XNU_WIFI_NATIVE_FAULT_HOLD 1'] if fault_hold else []),
             'native fault hold compiler scope not frozen')
     marker=driver.get('wifi_native_bootloader_marker',False)
+    trace_first=driver.get('wifi_native_copy_trace_first',0)
+    trace_config=[x for x in config if x.startswith('#define EFI_XNU_WIFI_NATIVE_COPY_TRACE_FIRST')]
+    require(type(trace_first) is int and 0<=trace_first<=30464 and (not trace_first or fault_hold) and
+            image.get('wifi_native_copy_trace_first',0)==trace_first and
+            trace_config==(['#define EFI_XNU_WIFI_NATIVE_COPY_TRACE_FIRST '+str(trace_first)] if trace_first else []),
+            'fine copy trace compiler/image scope mismatch')
     watchdog=driver.get('wifi_native_watchdog_readonly',False)
     watchdog_config=[x for x in config if x.startswith('#define EFI_XNU_WIFI_NATIVE_WATCHDOG_READONLY')]
     require(type(watchdog) is bool and (not watchdog or (marker and fault_hold)) and
@@ -165,6 +171,11 @@ def validate(review_path):
                     proof.get('pre_native_marker_host_order_tested') is True and
                     proof.get('pre_native_marker_USB_ACK_after_readback_tested') is True,
                     'pre-native marker qualification missing')
+        if trace_first:
+            require(proof.get('relocated_copy_trace_actual_policy_tested') is True and
+                    proof.get('relocated_copy_trace_default_objects_identical') is True and
+                    proof.get('relocated_copy_trace_first')==trace_first,
+                    'relocated fine copy trace qualification missing')
         if watchdog:
             require(proof.get('native_watchdog_actual_policy_tested') is True and
                     proof.get('native_watchdog_actual_callbacks_qualified') is True and
