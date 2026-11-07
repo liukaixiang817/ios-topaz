@@ -56,6 +56,28 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: fresh native nonce plus first combined witness
 
+- PHYSICAL fine-trace witness42ed9e... source08ba7d5 pushed/mirrored,
+ 399local+9external frozen/offline PASS,sentONCE08:30:18.235Z(see exact
+  phone boot.json),host11550 TERMINAL0 collected/SPENT. All4 nonce guards
+  match,9608/9608 bytes,error0,stable valid record+64 scalars. Full capture
+  PASS;PNG visually inspected. Explicit resetACK08:30:30.283833Z and actual
+  selected original FASTBOOT08:30:34.397580Z. No Android recovery afterprobe.
+- Last cleaned snapshot is EARLIER this time:source14687 verified,copyready1,
+  pages2/segments1;parentAUTH19/turns13263/unknown0/error0;ownerheld1/effects7/
+  errors0,elapsed13.023255885s. AuthCOPY5,modemphase2/step0/submitted1/
+  segment0/events0;all4 page-trace fields0. Faultarmed1/entered0/error0.
+  This does NOT establish a final2-page limit or a regression;it did not
+  retain any page221..255 checkpoint. Prior native retained221pages remains
+  a separate valid result. Cannot yet attribute resets to one fixed page.
+- Next also bracket existing pmsn_io RMB commands with fixed own-RAM
+  diagnostic stage/address/value fields,before/after the existing MMIO leaf
+  and its postchecks. No new MMIO operation,protocol/deadline/watchdog change.
+  Keep fine page trace and272B record. Select at most64 fixed scalars by
+  omitting unused final-segment counters if needed;no old pointer follow.
+  Goal ACTIVE2/5,current plus3. Owned mirror08ba7d5 before this milestone;
+  unowned7215a378... intact. Report08:23Z,next08:38Z. Observer PAUSED,
+  idle test USER-PAUSED. All302685/42ed9e images and nonce SPENT.
+
 - a5bd43b pushed/mirrored exact5 owned files;new page-trace image302685...
   frozen1142inputs/offline PASS,sentONCE08:25:40.998889Z,native
  08:27:21.259100Z,ACK08:27:40.711065Z,host28706 TERMINAL0 collected/SPENT.
