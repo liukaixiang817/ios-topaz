@@ -1,6 +1,12 @@
 /* UEFI inventory: never exits Boot Services, writes storage/NVRAM or enters
  * XNU. Optional USB diagnostics expose only bounded RAM logs/map/GOP reads. */
 #include "uefi-memory.h"
+#ifdef POLARIS_EFI_APPS_WATCHDOG_READONLY
+#include "uefi-apps-watchdog-readonly.h"
+#if !defined(POLARIS_EFI_READY_TO_BOOT) || !defined(POLARIS_EFI_USB_DIAG) || !POLARIS_EFI_HOLD
+#error Apps watchdog inventory requires a hold-only USB diagnostic driver
+#endif
+#endif
 #ifdef POLARIS_EFI_USB_DIAG
 #include "uefi-usb.h"
 static uint8_t ram_log[32768];static uint64_t ram_log_bytes;
@@ -27,6 +33,57 @@ static void hex(const char *label,uint64_t v)
     for(unsigned i=0;i<16;i++)b[2+i]="0123456789abcdef"[(v>>(60-i*4))&15];
     b[18]=0;text(label);text(b);text("\r\n");
 }
+#ifdef POLARIS_EFI_APPS_WATCHDOG_READONLY
+static int watchdog_arch(void *context,struct pawr_arch *a)
+{
+    (void)context;
+    __asm__ volatile("mrs %0,CurrentEL":"=r"(a->el));
+    if(a->el!=4)return 0;
+#define PAWR_MRS(member,reg) __asm__ volatile("mrs %0," #reg:"=r"(a->member))
+    PAWR_MRS(mpidr,mpidr_el1);PAWR_MRS(daif,daif);PAWR_MRS(sctlr,sctlr_el1);
+    PAWR_MRS(tcr,tcr_el1);PAWR_MRS(ttbr0,ttbr0_el1);PAWR_MRS(ttbr1,ttbr1_el1);
+    PAWR_MRS(mair,mair_el1);PAWR_MRS(frequency,cntfrq_el0);
+    __asm__ volatile("isb; mrs %0,cntvct_el0":"=r"(a->ticks)::"memory");
+#undef PAWR_MRS
+    return 1;
+}
+static int watchdog_translate(void *context,uint64_t address,struct pawr_translation *t)
+{
+    (void)context;
+    if(address!=PAWR_BASE+8 && address!=PAWR_BASE+12 &&
+       address!=PAWR_BASE+16 && address!=PAWR_BASE+20)return 0;
+    __asm__ volatile("mrs %0,par_el1; at s1e1r,%3; isb; mrs %1,par_el1; "
+        "msr par_el1,%0; isb; mrs %2,par_el1"
+        :"=&r"(t->saved),"=&r"(t->par),"=&r"(t->restored):"r"(address):"memory");
+    return 1;
+}
+static int watchdog_read(void *context,uint64_t address,uint32_t *value)
+{
+    (void)context;
+    if(address!=PAWR_BASE+8 && address!=PAWR_BASE+12 &&
+       address!=PAWR_BASE+16 && address!=PAWR_BASE+20)return 0;
+    __asm__ volatile("dsb sy":::"memory");
+    *value=*(const volatile uint32_t *)(uintptr_t)address;
+    __asm__ volatile("dsb sy":::"memory");return 1;
+}
+static void watchdog_inventory(const void *map,uint64_t bytes,uint64_t capacity,
+    uint64_t stride,uint32_t version)
+{
+    static struct pawr_result r;
+    const struct pawr_ops ops={0,watchdog_arch,watchdog_translate,watchdog_read};
+    int ok=pawr_run(map,bytes,capacity,stride,version,&ops,&r);
+    hex("APPS_WDT_READONLY_OK=",ok);hex("APPS_WDT_ERROR=",r.error);
+    hex("APPS_WDT_MAP_PRESENT=",r.map_present);
+    hex("APPS_WDT_MAP_TYPE=",r.map_type);hex("APPS_WDT_MAP_BASE=",r.map_base);
+    hex("APPS_WDT_MAP_PAGES=",r.map_pages);hex("APPS_WDT_MAP_ATTR=",r.map_attributes);
+    hex("APPS_WDT_EL=",r.opening.el);hex("APPS_WDT_DAIF=",r.opening.daif);
+    hex("APPS_WDT_TCR=",r.opening.tcr);hex("APPS_WDT_READ_ISSUED=",r.issued);
+    hex("APPS_WDT_READ_RETURNED=",r.returned);hex("APPS_WDT_CONFIG_STABLE=",r.stable);
+    static const char *label[2][4]={{"APPS_WDT_EN_0=","APPS_WDT_STS_0=","APPS_WDT_BARK_0=","APPS_WDT_BITE_0="},
+        {"APPS_WDT_EN_1=","APPS_WDT_STS_1=","APPS_WDT_BARK_1=","APPS_WDT_BITE_1="}};
+    for(unsigned n=0;n<8;n++){hex("APPS_WDT_PAR=",r.translation[n].par);hex(label[n/4][n%4],r.value[n/4][n%4]);}
+}
+#endif
 static const efi_guid loaded_guid={0x5b1b31a1,0x9562,0x11d2,{0x8e,0x3f,0,0xa0,0xc9,0x69,0x72,0x3b}};
 static const efi_guid gop_guid={0x9042a9de,0x23dc,0x4a38,{0x96,0xfb,0x7a,0xde,0xd0,0x80,0x51,0x6a}};
 static const efi_guid fs_guid={0x964e5b22,0x6459,0x11d2,{0x8e,0x39,0,0xa0,0xc9,0x69,0x72,0x3b}};
@@ -95,6 +152,9 @@ static efi_status probe(efi_handle image,struct efi_system *st)
             hex("RETAIN_BYTES=",m->pages*4096);hex("RETAIN_ATTR=",m->attributes);
         }
     }
+#ifdef POLARIS_EFI_APPS_WATCHDOG_READONLY
+    if(valid)watchdog_inventory(map,bytes,capacity,stride,version);
+#endif
     st->boot->free_pool(map);
     if(!valid){text("MAP_REFUSED\r\n");return EFI_ERROR|2;}
     if(st->runtime && st->runtime->get_variable){

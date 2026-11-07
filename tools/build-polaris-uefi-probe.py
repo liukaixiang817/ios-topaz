@@ -16,9 +16,12 @@ def main():
     ap.add_argument('--hold',action='store_true',help='stop before the original firmware menu; RAM compatibility trial only')
     ap.add_argument('--ready-to-boot',action='store_true',help='boot-service driver; hold at the pre-OS event, preserve the original menu')
     ap.add_argument('--usb-diag',action='store_true',help='enable RAM-only USB log/map/screenshot commands; no XNU or disk writes')
+    ap.add_argument('--apps-watchdog-readonly',action='store_true',help='read only four own-DT watchdog registers if already mapped Device MMIO; never pet or disable')
     a=ap.parse_args();root=Path(__file__).resolve().parents[1]
     if a.ready_to_boot and not a.hold:ap.error('--ready-to-boot requires --hold')
     if a.usb_diag and not a.ready_to_boot:ap.error('--usb-diag requires --ready-to-boot and --hold')
+    if a.apps_watchdog_readonly and not (a.usb_diag and a.ready_to_boot and a.hold):
+        ap.error('--apps-watchdog-readonly requires --hold --ready-to-boot --usb-diag')
     out=a.output.resolve();out.mkdir(parents=True,exist_ok=True)
     obj=out/'probe.obj';image=out/('PolarisProbeDxe.efi' if a.ready_to_boot else 'PolarisProbe.efi')
     env=dict(os.environ,ZIG_GLOBAL_CACHE_DIR=str(out/'zig-global'),ZIG_LOCAL_CACHE_DIR=str(out/'zig-local'))
@@ -32,6 +35,7 @@ def main():
            '-O','ReleaseSmall','-femit-bin='+str(image)]]
     if a.ready_to_boot:jobs[0].insert(-4,'-DPOLARIS_EFI_READY_TO_BOOT=1')
     if a.usb_diag:jobs[0].insert(-4,'-DPOLARIS_EFI_USB_DIAG=1')
+    if a.apps_watchdog_readonly:jobs[0].insert(-4,'-DPOLARIS_EFI_APPS_WATCHDOG_READONLY=1')
     extra_inputs=[]
     if a.usb_diag:
         extra_inputs=['shim/polaris/uefi-usb.h','shim/polaris/uefi-usb.c','shim/polaris/uefi-usb-command.c','shim/polaris/uefi-usb-control.c']
@@ -61,9 +65,14 @@ def main():
                   holds_before_original_boot_manager=a.hold,
                   ready_to_boot_driver=a.ready_to_boot,
                   RAM_only_USB_diagnostics=a.usb_diag,
+                  apps_watchdog_readonly=a.apps_watchdog_readonly,
+                  apps_watchdog_register_writes=False,
                   inputs={n:hashlib.sha256((root/n).read_bytes()).hexdigest() for n in
                           ['shim/polaris/uefi.h','shim/polaris/uefi-memory.h','shim/polaris/uefi-probe.c','tools/build-polaris-uefi-probe.py']})
     for n in extra_inputs:manifest['inputs'][n]=hashlib.sha256((root/n).read_bytes()).hexdigest()
+    if a.apps_watchdog_readonly:
+        n='shim/polaris/uefi-apps-watchdog-readonly.h'
+        manifest['inputs'][n]=hashlib.sha256((root/n).read_bytes()).hexdigest()
     if a.usb_diag:
         n='tools/polaris-uefi-input.h';manifest['inputs'][n]=hashlib.sha256((root/n).read_bytes()).hexdigest()
     (out/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')

@@ -54,7 +54,60 @@ stale confirmations must not stop a new boot. Historical ~61s records are
 early samples only. On0029 the human already confirmed boot complete and said
 “无需观察”; its observer remains stopped, without a full-window negative claim.**
 
-### Current Wi-Fi handoff — 2026-11-07 Melbourne: new native-ready mode10 qualification
+### Current Wi-Fi handoff — 2026-11-07 Melbourne: continuous startup returned Android; readonly watchdog probe
+
+- Mode10 host20902 is TERMINAL0/SPENT. No physical NATIVE READY title was
+  confirmed. Bounded recovery26681 found the exact selected original Android,
+  bootcomplete1/root0, then used the authorized normal power service; selected
+  original FASTBOOT verified04:35:54.765432Z. Recovery terminal0,service255 is
+  expected disconnect. No continuing observer. Latest bootreason bootloader;
+  retained pstore is Android output, not proof of a UEFI fault.
+- Android uptime208.15,host bracket04:35:43.187289..273737Z implies kernel boot
+  around04:32:15.12Z,about34.32s after native ACK04:31:40.802667Z. This is an
+  estimate, not an exact reset/fault timestamp. Own pinned vendor watchdog_v2.c
+  blobc79cad65dd8b196c860d906c4be8ff93843e859e/SHAf13a90dc... atc7cb50c...
+  uses EN8,STS12,BARK16,BITE20 (RST4 is NOT read). DT bark20s and vendor
+  bite=bark+10s are consistent with this timing; actual armed state/cause is
+  still UNKNOWN. Original WatchdogTimer SetTimerCancel only proves UEFI event
+  timer cancellation. Do not describe a physical watchdog as disabled.
+- New independent short probe apps-watchdog-readonly-0001 does NOT stage a
+  payload or enter native/MSS/XNU/root. Explicit default-OFF builder flag
+  requires hold+ReadyToBoot+USB inventory. Only four fixed own-DT registers,
+  two passes, no hardware watchdog writes/pet/disable. Complete EFI map must
+  be valid/disjoint; any listed RAM/reserved/non-UC range is refused. EFI may
+  omit peripherals (own retained56-descriptor map omits this address). An
+  omitted range still requires live CPU0/EL1/IRQ-enabled,unchanged MMU context,
+  exact Device/NS/identity translation and PAR restoration before every read.
+  No page-table/GCD changes or ownership claim. Bound20ms; stable config across
+  both passes required, live status counter may differ.
+- Probe source/test changes are complete, not yet physically sent.
+  Four final QEMU cases (EL1/EL2,USB absent/mock) PASS, no watchdog MMIO issued;
+  actual guarded-read policy plus memory/firmware/USB reader/transport23 tests
+  PASS1.103s. Initial stricter registration-only driver12cc1f... is retained
+  UNSELECTED/NOT SENT. Final driver-0002 is188928B,
+  SHAdc479df446637eb84795ebbc8f9621b30e56f81906a33ef515fc5a270752e625.
+  Default-OFF probe COFF timestamp-only equal to8f62a9b. Actual new COFF has
+  one fixed-target load site, guarded8-turn loop, AT read/PAR restore; no
+  target store. Main Wi-Fi/native source remainsf2b91f42...,normal native boot
+  helper byte-identical tob0c6a65 (actual SHAb3b2c7c3...,earlier959 prefix in
+  history was not its current whole-file hash). Unowned remote-memory hunk
+  SHA7215a378... unchanged. Existing root admission remains unchanged.
+- Next: package via existing independent hold-only probe admission and original
+  81-file codec. Packaging now PASS,image5928960B,
+  SHA51c3652615c65031527146f469d5cff144c7fb2f9bb719201c9be59fae31b0c6;
+  actual original decoder returned27670728 exact bytes. Initial packaging
+  refused stale historical client proof (no image produced); fresh actual
+  stock fastboot/current C parser loopback test passed and was used unchanged.
+  Final default-OFF actual COFF also rechecked against8f62a9b,PASS. Freeze
+  actual sources/proofs/image and consume one-use host
+  receipt BEFORE a fresh selected-device fastboot boot. Capture only logs/map/
+  screenshot over ReadOnlyProtocol. No native command,partition/NVRAM access
+  or long idle test. First establish actual EN/BARK/BITE; do not guess-disable.
+- Sourceb0c6a65/doc8f62a9b pushed; original owned mirror sync8f62a9b. New probe
+  changes are only in persistent R until qualification/commit. Goal remains
+  ACTIVE2/5,current plus3 remain. Latest formal report04:54Z,next05:09Z.
+
+### Prior mode10 qualification details
 
 - Goal ACTIVE, execution2/5; current plus3 remain. Current goal turn PROGRESS:
   new physical225/240 proofs, complete software copy and new continuous native
@@ -126,11 +179,11 @@ early samples only. On0029 the human already confirmed boot complete and said
   SHAded796e362334a6a080c354fca3cff61f5ea254ab0f6e2ffeee6a5fdc9a514e8. SentONCE 2026-11-07T04:29:41.104086+00:00,
   native2026-11-07T04:31:21.312361+00:00,ACK2026-11-07T04:31:40.802667+00:00;host20902 TERMINAL0 collected. New
   image/nonce SPENT,never replay. Actual pre-native watchdog0/idle0 recorded.
-  Mode10 screen result PENDING; latest async request asks current continuous
-  startup title and first two numeric rows,or actual Android/black screen.
+  Mode10 screen title remains UNKNOWN; later host verified original Android
+  and normal-service FASTBOOT recovery as recorded in current handoff above.
   No physical READY/scan proof. No new candidate currently selected. Do not
   reuse page-case reviews for new source or infer success from ACK.
-- Latest formal report04:24Z; next04:39Z,then every15min. Continuous observer
+- Historical formal report04:24Z. Current cadence is recorded above. Continuous observer
   stays paused; bounded selected recovery remains authorized. No flash/erase/
   GPT/Windows/manual journal repair. Original checkout is stale4f0ed6b; active
   persistent R=research/polaris/local-workspaces/wifi-20261107. Last owned-doc

@@ -38,6 +38,19 @@ or reset-cause claim; full authentication and WLAN remain unproven.
 
 ## Continuous native startup diagnostic (0189, 2026-11-07 Melbourne)
 
+Mode10 subsequently returned to original Android; host normal-service recovery
+verified selected FASTBOOT04:35:54Z. Approx Android boot34.32s after native ACK
+is consistent with own DT20s bark/vendor+10s bite but does not prove the cause.
+Pinned vendor watchdog_v2.c atc7cb50c... gives EN8,STS12,BARK16,BITE20,RST4.
+New standalone short readonly probe uses only the first four, no hardware write
+or imported watchdog driver. Own56-entry retained EFI map omits this peripheral;
+complete map plus live Device/NS/identity translation/unchanged CPU0 EL1 context
+admit only these fixed own-DT reads, rejecting listed RAM/reserved ranges.
+HackiOS xnuloader/efi.h and userland README were reconsulted; their generic
+SetWatchdogTimer ABI is a UEFI service and supplies no Polaris hardware address.
+No redwood/sweet MMIO or userland watchdog workaround was ported. Four actual
+QEMU inventory/USB mock cases and23 public tests pass; physical config pending.
+
 Physical225/240 prove original data224..239 write/readback/cache/completion.
 Later240 automatic Android exit does not negate the positive checkpoint;
 874/256 host-confirmed Android exits do not identify checkpoint reaches or
