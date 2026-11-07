@@ -56,6 +56,35 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: fresh native nonce plus first combined witness
 
+- PHYSICAL native watchdog sourceab3957b/image546d07a0... sentONCE
+  10:53:25.594379Z,native10:55:06.099611Z,ACK10:55:25.589232Z;
+  marker ACK preceded native start;host32798 TERMINAL0/SPENT. Bounded selected
+  query10:56:27.725086Z found original FASTBOOT ALREADY;no Android service
+  reboot. Selected review0003 freeze2072/offline PASS;earlier offline calls
+  refused unsupported CLI and missing case-local payload alias before phone
+  access. Exact inert payload copied/hash-bound;image/nonce unchanged before
+  the ONE successful send. Reader first build refused missing spent-outcome
+  schema key before producing image;correct actual spent flag and descriptor
+  hash bound,old refused output preserved. No guard weakened.
+- FIRST watchdog reader9a23eff4... freeze511local+9external/offline PASS;
+  host79954 TERMINAL0,4nonce/9640bytes/stable272B+64scalars292B PASS.
+  Last cleaned874pages/9segments again,source14687/ready1/errors0;
+  owner13.88202125s,first256 complete;recordarmed1/entered0/error0;
+  RMB5/READ0418000C/value3 returned.23 native snapshots,error0,8/8returned,
+  stable1,lastsample13.78017729s;EN0/STS0,BARK7ffff/BITEfffff;
+  initial EN0/same thresholds. These retained samples do not support apps
+  watchdog counting;do NOT rule out other/later watchdogs or prove reset cause.
+  Explicit reset ACK10:58:37.987135Z,selected FASTBOOT10:58:42.097992Z.
+  Both native/reader/nonce SPENT. Exact raw in native-watchdog-readonly-remnant-0001/
+  physical-result-0001.json. Same boundary as direct-marker round is a useful
+  repeat,not proof of the final dirty page/operation. Own geometry:874 pages
+  finishes segment index10;next segment index11 starts at page880,leaving
+  pages874..879 as an inter-segment hole currently zero-initialized by producer.
+  NEXT move bounded fine trace to pages864..1119 to bracket existing next
+  gap/data operations;no target,deadline or protocol change. ACTIVE2/5,current+3;
+  observer PAUSED,idle USER-PAUSED,push pending direct approval.
+
+
 - Native watchdog READONLY qualified,NOT SENT. New explicit builder flag
   requires existing firmware-only native-ready/fault/marker scope. Original
   unmasked pawr policy unchanged. Separate masked policy binds actual owner
