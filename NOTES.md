@@ -56,6 +56,21 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: fixed parent scalar witness qualified
 
+- PHYSICAL RESULT: source7c94138 pushed/mirrored. Frozen356 local+9 external
+  actual inputs/offline PASS. New imaged68d7a... sent ONCE06:42:18Z(see exact
+  boot.json),host61979 TERMINAL0 collected/SPENT. Capture PASS,but first nonce
+  no longer matched:error6,2128/2128 reads,zero old record/scalar bytes read,
+  no fields exported. Earlier matching arm record remains a valid earlier
+  observation; retention through the intervening probe/reset is now UNKNOWN.
+  Do not bypass the nonce or infer zero progress from this refusal. Explicit
+  return ACK06:42:28.380412Z,actual original selected FASTBOOT06:42:32.473574Z.
+- Next a FRESH nonce/native image in firmware-native-fault-0002,using unchanged
+  native source/kernel/payload/producer code. Combine the record and all fixed
+  scalars in the FIRST later witness,without an intermediate short probe.
+  New case/payload prepared,driver build running;no fresh native send yet.
+  Previous74458d/ae182a/d68d7a images and native nonce remain SPENT. No replay,
+  hardware-watchdog write,root/kernel/worker entry or reset-cause assumption.
+
 - Goal ACTIVE2/5,current plus3 remain; no new native/scan/join/IP/DNS/data
   proof. Phone last selected original FASTBOOT verified06:30:30.974931Z after
   successful explicit probe return. Continuous observer PAUSED,idle test

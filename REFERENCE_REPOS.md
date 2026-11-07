@@ -49,6 +49,13 @@ imaged68d7a... await single physical capture. Existing native source/protocols
 and already-proven explicit original-service FASTBOOT return remain unchanged.
 No startup,radio authority or reset-cause claim follows from retained scalars.
 
+Physical scalar probed68d7a... on06:42Z refused at its first nonce:error6,
+2128reads,zero record/scalar bytes,no invalid values exported. It returned
+actual selected FASTBOOT06:42:32Z. The earlier valid arm snapshot is retained,
+but the old nonce no longer qualifies this later observation. Next use a new
+native nonce with unchanged producer code and combine record/scalars in the
+first witness; do not weaken binding or replay the old native image.
+
 The next short standalone remnant probe binds only the spent diagnostic's
 actual linked nonce and272B exception record. Current EFI map/AT/CPU checks
 still apply; no old pointer or ownership claim is followed. Retention through
