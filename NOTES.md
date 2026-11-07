@@ -56,6 +56,35 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: fresh native nonce plus first combined witness
 
+- PHYSICAL RMTFS-screen sourcedf35a73/image1d656f69... sentONCE
+  2026-11-07T14:55:57.497924Z,ACK14:57:55.126999Z,host44621TERMINAL0/SPENT.
+  One bounded check found selected factoryFASTBOOT14:59:43.282391Z,verified
+  15:00:11.787716Z without Androidservice. Human provenance(question pending):
+  automatic vs keys UNKNOWN;do not assert spontaneous crash. Asked releasekeys
+  during next trial. Earlier human RMTFSphoto remains independent evidence.
+- FIRST readerf974ee4f... freeze674local+9external/offlinePASS;host52106TERMINAL0,
+  4nonce/9640B/stable272B+64scalars292B PASS. Last retained874processed/9segments
+  =860written+14UNTOUCHED,source14687/ready1,owner5.790321146s,errors0/entered0,
+  window221..476 complete;RMTFS scalar fields0. Not terminal/upperbound/cause.
+  Explicit reader-reset selectedFASTBOOT15:00:52.792842Z;bothimagesSPENT.
+- New HOST_ONLY actual guarded RMTFS step baseline236579459ns;instrumented
+  copy234418375ns,three issued-step CPU spans42907084/43436000/42917666ns.
+  Actual production function with software privileged leaves/own firmwareDATA,
+  hostARM generalregs/O2/FAST/vendor. Software clock fixture does NOT advance
+  with host walltime;this is a CPU-cost measurement,not a hardware return/time
+  or demonstrated phone refusal. Private prospective-rmtfs-cpu-cost-0001.
+- NEXT explicit diagnostic-only RMTFS auth-envelope option:reuse EXISTING
+  pwmt_auth_next/complete whole1s policy for RMTFS only,keep per-issued-step
+ 100ms/max4SMC/source/cache/ownership/outer180s checks and all legacy default
+  OFF behavior. Earlier auth already separated CPU peer-verification from the
+  whole100ms budget;RMTFS still uses legacywhole100ms. HostCPU cost proves that
+  legacywhole policy can reject local validation alone. Precise phone RMTFS
+  error4 reason still unknown;secure errors must remainsticky/no retries.
+  Qualify CPU-only delayed-peer and cumulative>1s refusal plus existing>100ms
+  issued-step failure before phone. ACTIVE2/5,current+3;observerPAUSED,
+  idleUSERPAUSED,allsourcepushesapproved. Pending user TX rows/key provenance.
+
+
 - RMTFS live-terminal diagnostic QUALIFIED,NOT SENT. New explicit defaultOFF
   --wifi-native-rmtfs-diagnostics requires existing terminal native fault /
   native-ready firmware-only scope. Reads only saved own pmtf/pwmt controls;
