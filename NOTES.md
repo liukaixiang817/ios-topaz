@@ -177,7 +177,32 @@ early samples only. On0029 the human already confirmed boot complete and said
   image6189056B SHAe2aee83bfce019f9ab31d5aa017a2f91a9c2a073552f0d2c0a4edeb6e1a5a9a3.
   SentONCE 2026-11-07T03:36:37.384837+00:00,native2026-11-07T03:38:17.604040+00:00,ACK2026-11-07T03:38:37.073584+00:00;host85418
   TERMINAL0 collected; image/nonce SPENT. Actual watchdog0/idle0 before native.
-  Current874 screen result PENDING; async title and six numeric rows requested.
+  Current874 screen reach remains UNKNOWN; async title/numeric question pending.
+  Bounded recovery24690 TERMINAL0 found exact original Android bootcomplete1/
+  root0 at03:45:12Z. Saved read-only bootreason/dmesg/pstore: shutdown,userrequested,
+  pstore empty; PMIC warm/hard reset/KPDPWR_N are not causal proof. No human or
+  spontaneous exit classification, no proof874 was or was not reached. Normal
+  service reboot requested03:45:13.367781Z,ADB exit255; selected original
+  FASTBOOT/product verified03:45:23.016740Z. No manual keys needed. This is an
+  observed post-trial Android exit, NOT a precise cache/MMU/watchdog fault.
+  Provisional fresh before256-0003 prepares the first physical2MiB boundary
+  (1MiB into selected bank),using same source/payload,new nonce. Do not send if
+  supplementary physical874 proof arrives; then advance directly. Native256
+  target access remains unproven. Fresh before256-0003 build84810 TERMINAL0,
+  qualification49435 TERMINAL0: real producer2366 checks/14687 source pages,
+  GOP504,both actual objects695frames/max816B,81-file codec pass. Current
+  selected original FASTBOOT/product reverified03:50:52.739923Z. Human874
+  title clarification still absent; because actual prior trial exited and the
+  phone is safely back in original FASTBOOT, select this fresh once-only256
+  localization using known physical240 as baseline. No statement that874
+  checkpoint failed and no exact reset cause is made. Freeze/boot is next;
+  no second phone image has been sent yet.
+  While awaiting the human874 outcome, the actual complete producer also
+  passed on protected host software shadows:69391 TERMINAL0,all28 segments,
+  14687 source pages/30720 target pages,65883059 checks including fault rejects.
+  Result/log/commands are private whole-bank-software-peer-0001 under874 case;
+  privileged operations/remote inputs are fixtures, NOT physical authentication
+  or WLAN evidence. No second phone image or USB query was issued.
   Do not replay or send another image before actual current outcome. No live
   host/device process or post-native observer. 4f16a29 milestone pushed/mirrored.
 
