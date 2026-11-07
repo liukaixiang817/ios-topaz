@@ -14,6 +14,12 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+First new range witness refused stale/mismatching nonce at2128reads,zero old
+record/scalars;no native result inferred. Next pre-native FASTBOOT marker
+will reuse only existing own-DT IMEM146bf65c and original PM8998 PON spare ABI,
+while original services are allowed before native ownership. Qualification
+and default-OFF scope precede trial;no watchdog or partition operation.
+
 Bound word diagnostics now select only own current pages0..255,with64word
 stride plus last word. All256x512x4 routes/exact9216publications and invalid
 pointer/counter bounds pass;actual loop4097lengths/2048 protected refusals pass.

@@ -56,6 +56,30 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: fresh native nonce plus first combined witness
 
+- PHYSICAL word-range nativee38c2b7a... source99d26c2 sentONCE
+  09:45:35.395381Z,native09:47:15.529466Z,ACK2026-11-07T09:47:35.037652+00:00;host58923 TERMINAL0/SPENT. Original
+  Android/root/complete recovery8206 TERMINAL0,FASTBOOT09:50:41.869150Z.
+  Estimated Android kernelstart35.550..35.650s afterACK;cause UNPROVEN.
+- FIRST new range witness freeze464local+9external/offline PASS;host97364
+  TERMINAL0. It correctly REFUSED first nonce:error6,2128/2128reads,nonce0=0,
+  ZERO old record/scalar bytes exported. Native progress cannot be inferred
+  this round. Explicit reset/actual selected FASTBOOT succeeded,exact times
+  in native-word-range-remnant-0001/phone-0001/result.json. Both images/nonces
+  SPENT,never replay or weaken nonce guard. NEXT explicit default-OFF pre-native
+  bootloader marker: original PON spare+own IMEM,BEFORE masked/native ownership,
+  after RAM payload validation;ACK only after readback success,raw OEM boot
+  refuses unless required marker is armed. This avoids assuming Android RAM
+  preservation;actual unexpected-reset return remains unproven. Reuse own
+  original-service marker source/ABI already qualified by short probe,not new
+  watchdog/partition/NVRAM variable operation. Build/test/freeze precede send.
+- Private prospective-source-feed-0001 benchmark only: actual64,061,440B own
+  firmware,scalar general-regs old304138000ns/new272697000ns (1.115x HOST),
+  identical digest. NOT production source/image,NOT phone result or reset fix.
+  Initial host harness used doubles under general-regs-only and was refused
+  by compiler;fixed integer-ns harness passed. No source-hash path changed.
+  Goal ACTIVE2/5,current+3;source push approval pending,observer PAUSED,idle
+  USER-PAUSED. Last source99d26c2,unowned7215a378... hunk remains intact.
+
 - General bounded word observer qualified,NOT SENT. Only actual current
   p in own copy.page0..255 and p==page[current pages] can publish;other
   pointers are compared without follow. Sample words0,64,..448,511 at4stages,
