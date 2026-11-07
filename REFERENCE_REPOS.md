@@ -14,6 +14,12 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+Page255 word trace brackets existing source/hash/store/readback operations;
+actual loop4097lengths/2048 protected publication refusals PASS,actual final
+hold prefix publishes before logging. No new foreign hardware/driver/read/write
+or watchdog operation. All own source/firmware and source-bound safety limits
+remain unchanged;new physical result pending.
+
 Fresh physical early-page witness retained page255 stage2 after actual source/
 target translations and live checks,copy255pages/8segments,RMBstatus3 returned.
 The original pmsi_words source/hash/store/readback loop precedes stage3. Next

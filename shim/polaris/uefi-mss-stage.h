@@ -63,18 +63,25 @@ static inline int pmsi_binding(const struct pmsi_result*r)
 {return pmsi_binding_at(r,0,2);}
 /* Shared with the software peer on guarded RAM shadows. All source accesses
  * stop at filesz; complete destination pages are initialized, including tails. */
+#ifndef PMSI_WORD_OBSERVE
+#define PMSI_WORD_OBSERVE(p,stage) do{}while(0)
+#endif
 static inline int pmsi_words(uint64_t destination,uint64_t source,unsigned bytes,struct pwfi_sha256*hash,struct pmsi_page*p)
 {
     if((destination&4095)||bytes>4096||(bytes&&!source))return 0;
     p->bytes=bytes;
     for(unsigned n=0;n<512;n++){
+        PMSI_WORD_OBSERVE(p,6);
         uint64_t value=0;
         for(unsigned j=0;j<8;j++)if(8*n+j<bytes){
             uint8_t b=*(const volatile uint8_t*)(uintptr_t)(source+8*n+j);
             value|=(uint64_t)b<<(8*j);pwfi_byte(hash,b);
         }
+        PMSI_WORD_OBSERVE(p,7);
         volatile uint64_t*to=(void*)(uintptr_t)(destination+8*n);p->words_issued++;
-        *to=value;if(*to!=value)return 0;p->words_returned++;
+        *to=value;PMSI_WORD_OBSERVE(p,8);
+        if(*to!=value)return 0;p->words_returned++;
+        PMSI_WORD_OBSERVE(p,9);
     }return 1;
 }
 #if defined(POLARIS_MSS_STAGE_SOFTWARE_PEER)

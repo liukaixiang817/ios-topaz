@@ -56,6 +56,28 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: fresh native nonce plus first combined witness
 
+- Word-level diagnostic qualified,NOT SENT. Existing pmsi_words loop gains
+  optional own-RAM observer at stages6before source/hash,7before store,
+  8after original store/before original readback,9after original readback.
+  Only native fault-hold page255 publishes;foreign page pointers are compared
+  but never followed. No extra target access/target cache/protocol/deadline.
+  Fixed fields/272B record ABI unchanged. Existing terminal hold now attempts
+  fixed own-control publication before RAM logging/GOP,even on error;unarmed
+  publisher refuses without parent access. No change to terminal restoration.
+- Current21 public tests PASS22.520s,actual original loop4097lengths equal
+  disabled observer including finalSHA/data/counters;all2048 publication
+  refusal positions protect source+destination PROT_NONE and return without
+  later access. Actual fixed-page callback and actual terminal prefix PASS.
+  Current OFF0/9/10 actual COFF/MachO exact;current shipping COFF reproduced,
+  both700frames/max816B,closure13/stack304/320B. Unchanged copy/auth/publisher/
+  handler/cache/vector/entry evidence reused by actual function/source identity.
+  New firmware-native-word-trace-0001 driver5f8ff8d00868f5d01f73ea9449ca5327f67e5a29f2771614d56fd624d56bc5cc,
+  image68c3caa77a723a3dd0cd4b96b9a3c6ac02090474b6905b5c364fe258763bcc8b. Same kernel6241/payload dc522;
+  original81+actual decoder PASS,new nonce UNUSED/NO SEND. NEXT fresh selected
+  FASTBOOT/freeze/offline,ONE native trial,FIRST64field284B witness with
+  OBSERVE_STAGE bound0..9,then explicit FASTBOOT. Goal ACTIVE2/5,current+3.
+  Report09:29Z,next09:44Z;observer PAUSED,idle USER-PAUSED,push approval pending.
+
 - PHYSICAL early-page trace native205236b6... sourcecf78c2a sentONCE
   09:16:43.904745Z,native09:18:24.165403Z,ACK09:18:43.639343Z;
   host26869 TERMINAL0/SPENT. Original Android/root/complete normal service

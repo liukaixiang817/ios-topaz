@@ -24,6 +24,12 @@
 #if EFI_XNU_WIFI_NATIVE_FAULT_HOLD && (!EFI_XNU_WIFI_FIRMWARE_DIAGNOSTIC_ONLY || EFI_XNU_WIFI_AUTH_METADATA_CHECKPOINT != 10 || !EFI_XNU_WIFI_NATIVE_RUNTIME_AVAILABLE || !EFI_XNU_WIFI_TERMINAL_GOP_DIAGNOSTICS)
 #error "Native fault hold requires firmware-only native-ready with terminal GOP"
 #endif
+#if EFI_XNU_WIFI_NATIVE_FAULT_HOLD
+struct pmsi_page;
+static int wifi_native_fault_publish(unsigned);
+static int wifi_native_fault_word_progress(struct pmsi_page*,unsigned);
+#define PMSI_WORD_OBSERVE(p,stage) do{if(!wifi_native_fault_word_progress(p,stage))return 0;}while(0)
+#endif
 #ifndef EFI_XNU_WIFI_FIRST_RMB_EVENTS
 #define EFI_XNU_WIFI_FIRST_RMB_EVENTS 0
 #endif
@@ -890,6 +896,11 @@ __attribute__((noreturn)) static void power_unknown_hold(void)
      * local mask is retained, never described as a successful restoration. */
     __asm__ volatile("msr daifset,#15; msr ICC_IGRPEN1_EL1,xzr; dsb sy; isb":::"memory");
     __asm__ volatile("mrs %0,daif; mrs %1,ICC_IGRPEN1_EL1":"=r"(power_hold_raw.daif_after),"=r"(power_hold_raw.group_after));
+#if EFI_XNU_WIFI_NATIVE_FAULT_HOLD
+    /* Fixed own-control publication precedes logging/drawing even on refusal.
+     * An unarmed diagnostic refuses without touching parent records. */
+    (void)wifi_native_fault_publish(1);
+#endif
     ram_text("WIFI_POWER_UNKNOWN_HOLD_RAW_V1_BEGIN\r\n");ram_hex((const void*)&power_hold_raw,sizeof(power_hold_raw));
     ram_text("WIFI_POWER_UNKNOWN_HOLD_RAW_V1_END\r\n");
 #if EFI_XNU_WIFI_TERMINAL_GOP_DIAGNOSTICS
@@ -1255,6 +1266,15 @@ static int pmlc_observe(struct pmlc_copy*r)
 {return r==&wifi_native_parent.copy&&wifi_native_fault_publish(1);}
 static int pmsn_observe(struct pmsn_state*s)
 {return s==&wifi_native_parent.auth&&wifi_native_fault_publish(1);}
+static int wifi_native_fault_word_progress(struct pmsi_page*p,unsigned stage)
+{
+    struct pmlc_copy*c=&wifi_native_parent.copy;
+    if(p!=&c->page[255])return 1;
+    if(c->pages!=255||stage<6||stage>9)return 0;
+    c->observe_page=255;c->observe_stage=stage;
+    c->observe_words_issued=p->words_issued;c->observe_words_returned=p->words_returned;
+    return wifi_native_fault_publish(1);
+}
 __attribute__((noreturn,noinline,used)) void polaris_wifi_fault_hold(uint64_t vector,uint64_t esr,
     uint64_t elr,uint64_t far,uint64_t spsr,uint64_t sp,uint64_t sp0,uint64_t ticks)
 {
