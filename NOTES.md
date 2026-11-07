@@ -56,6 +56,29 @@ early samples only. On0029 the human already confirmed boot complete and said
 
 ### Current Wi-Fi handoff — 2026-11-07 Melbourne: fresh native nonce plus first combined witness
 
+- PUBLICATION f2c69a9 pushed/mirrored exact8 owned files;unowned7215a378...
+  preserved. Actual new native image d4a9cf... frozen969 inputs/offline PASS,
+  sentONCE08:10:49.905802Z,native08:12:29.977691Z,ACK08:12:49.445347Z.
+  Host62983 TERMINAL0 collected;native image/nonce SPENT. Selected original
+  Android bootcomplete/root observed;normal-service helper36090 TERMINAL0,
+  actual selected FASTBOOT08:14:07.057209Z/service255 expected disconnect.
+  No physical READY/faulttitle confirmed. Android kernel-start estimate
+ 33.580195..33.628110s afterACK;reset cause remains UNPROVEN.
+- FIRST later combined witness native-progress-remnant-0001 prepared from
+  actual new runtimebase0x174e35000/five linked anchors and41 zero-addend
+  parent references;parent0x174f07000/span69316608B,60 fixedscalars260B.
+  Initial driver0001 build used nonexistent workspace-local Zig;compiler
+  never launched,NO IMAGE/NO SEND,marked NOTSELECTED. Correct driver0002
+ 201216B SHAc48925397ab9cbb0c4fcecf8d7982588a5453d949788007a65c1d8cc65347de5;
+  image5933056B SHA3b2ffe5285038f3096aed015a70f1bfb40c3611da8479a2c504130880456a66d.
+  All4 actual EFI/USB QEMU pass/zero old-RAM reads. Actual enabled COFF matches
+  driver,23frames/max720B;OFF baseline exact;original81/actual EDK2 decode
+ 27683016B exact. Current23 public result includes witness scope;old separate
+ 25-case witness/reset/parser result reused only for unchanged relevant code.
+  NO intermediate phone probe. NEXT freeze this new first combined reader,
+  ONE capture then explicit verified FASTBOOT return;no native image replay.
+  Current owned original mirror=f2c69a9. Goal ACTIVE2/5,current plus3 remain.
+
 - NEW OWN-RAM PoC publication qualification: explicit fault-hold only. Native
   scalar/control progress plus272B first-fault record are cleaned with bounded
   DC CVAC/DSB to PoC;no invalidate,no whole-parent/bank/provider/hardware

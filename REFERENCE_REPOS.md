@@ -14,6 +14,10 @@ their build/setup scripts or prebuilts has been executed.
 | [User-supplied UniXNU](https://github.com/UniXNU/UniXNU) | `research/reference-repos/unixnu-audit` (selected pinned source audit, not a full clone) | `40d21cc65171c3a24faa130a2a8e899f85790485` |
 | [User-supplied Mi 8 port](https://github.com/youzjuzi/dipper-xnu) | `research/reference-repos/dipper-xnu` (shallow source reference) | `e930c26c4303283d7f2f5fc87479946d46409783` |
 
+Actual PoC-native trial d4a9cf... still returned original Android. Normal
+selected/root/complete service recovery verified FASTBOOT08:14:07Z. First
+combined reader prepared for new runtimebase/fresh nonce;no physical read yet.
+Reset cause and physical Wi-Fi remain unproven;no imported hardware addresses.
 Current2026-11-07 PoC diagnostic adds only bounded own-image cache publication.
 Own Polaris/ARM cache path is reused; no foreign board MMIO,watchdog,firmware
 or driver imported. HackiOS kernel/userland comparison above remains the
