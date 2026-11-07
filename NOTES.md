@@ -91,7 +91,7 @@ early samples only. On0029 the human already confirmed boot complete and said
   Success title NATIVE READY also requires saved copy30720pages/28segments,
   complete/error-free auth phaseDONE/5 assignments,authenticated modemphase5,
   ownerheld/error-free and parentREADY. Failure retains phase-specific GOP.
-- Source WIP in five owned files:shim/polaris/uefi-xnu.c,builder,native-image,
+- Source committedb0c6a65 in five owned files:shim/polaris/uefi-xnu.c,builder,native-image,
   firmware-boot helper and firmware-only tests. Newmode10 requires explicit
   terminal firmware-only scope in C/builder/packager. Normal native-boot.py
   whole file still exactly95993eb; normal40check root admission still refused
@@ -119,15 +119,22 @@ early samples only. On0029 the human already confirmed boot complete and said
   andbuilder differ from prior225,all existing hardware producers hash-identical. The complete parent
   is inlined into startup_step: its relative callees must all be defined in the
   hash-identical existing native inputs, with READY WMI/data/nonce live checks.
-  No page callback/kernel/worker symbols. Next finalize private proof,explicit
-  malformed-profile refusals,own-source commit/push,freeze/offline review and
-  selected-original FASTBOOT check,then one fresh native-ready boot. No image
-  for mode10 has been sent yet; do not reuse page-case reviews for new source.
+  No page callback/kernel/worker symbols. All qualifications and7 malformed-profile refusals are complete; source
+  b0c6a65 committed and mirrored after strict original-baseline comparison.
+  Fresh selected original FASTBOOT/product verified04:26:59.042400Z. Next
+  Frozen735/offline26537 TERMINAL0; new native-ready image6189056B
+  SHAded796e362334a6a080c354fca3cff61f5ea254ab0f6e2ffeee6a5fdc9a514e8. SentONCE 2026-11-07T04:29:41.104086+00:00,
+  native2026-11-07T04:31:21.312361+00:00,ACK2026-11-07T04:31:40.802667+00:00;host20902 TERMINAL0 collected. New
+  image/nonce SPENT,never replay. Actual pre-native watchdog0/idle0 recorded.
+  Mode10 screen result PENDING; latest async request asks current continuous
+  startup title and first two numeric rows,or actual Android/black screen.
+  No physical READY/scan proof. No new candidate currently selected. Do not
+  reuse page-case reviews for new source or infer success from ACK.
 - Latest formal report04:24Z; next04:39Z,then every15min. Continuous observer
   stays paused; bounded selected recovery remains authorized. No flash/erase/
   GPT/Windows/manual journal repair. Original checkout is stale4f0ed6b; active
   persistent R=research/polaris/local-workspaces/wifi-20261107. Last owned-doc
-  sync=e43e214; compare original docs against it before mirroring newer docs.
+  sync=b0c6a65; compare original docs against it before mirroring newer docs.
 
 ### Prior detailed Wi-Fi handoff — 2026-11-07 Melbourne: physical225/240 PASS; fresh256 awaiting screen
 
